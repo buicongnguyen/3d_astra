@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { Simulation } from "../src/simulation.js";
 import { DEFINITIONS as D, ROCKS, distance } from "../src/data.js";
+import { Navigation } from "../src/navigation.js";
 
 function advance(sim, seconds) {
   for (let t = 0; t < seconds; t += 0.05) {
@@ -10,6 +11,129 @@ function advance(sim, seconds) {
   }
 }
 const own = (sim, type, team = 0) => sim.own(team).find((e) => e.type === type);
+
+test("supply loss holds completed production until capacity is restored", () => {
+  const sim = new Simulation({ ai: false }),
+    hq = own(sim, "hq");
+  const relay = sim.spawn("relay", 0, -10, 32);
+  for (let i = 0; i < 8; i++) sim.spawn("ranger", 0, i * 2, 30);
+  assert.equal(sim.population(0).used, 15);
+  assert.equal(sim.enqueue(hq.id, "worker"), true);
+  relay.hp = 0;
+  advance(sim, 10);
+  assert.equal(sim.population(0).used, 15);
+  assert.equal(hq.queue[0].blocked, "Awaiting supply");
+  sim.spawn("relay", 0, -10, 32);
+  advance(sim, 0.2);
+  assert.equal(sim.population(0).used, 16);
+  assert.equal(hq.queue.length, 0);
+});
+
+test("research remains available when the army is over supply", () => {
+  const sim = new Simulation({ ai: false }),
+    foundry = sim.spawn("foundry", 0, -10, 32);
+  sim.players[0].alloy = sim.players[0].energy = 1000;
+  for (let i = 0; i < 10; i++) sim.spawn("ranger", 0, i * 2, 30);
+  assert.ok(sim.population(0).used > sim.population(0).cap);
+  assert.equal(sim.enqueue(foundry.id, "upgrade"), true);
+  advance(sim, 26);
+  assert.equal(sim.players[0].upgrade, true);
+});
+
+test("rock collisions participate in line checks and swept movement", () => {
+  const nav = new Navigation();
+  nav.rebuild([]);
+  assert.equal(nav.clearLine({ x: -20, z: -5 }, { x: 0, z: -5 }), false);
+  assert.equal(nav.canTraverse({ x: -20, z: -5 }, { x: 0, z: -5 }), false);
+  assert.equal(nav.canStand(NaN, 0), false);
+  assert.equal(nav.canTraverse({ x: NaN, z: 0 }, { x: 0, z: 0 }), false);
+  assert.deepEqual(nav.path({ x: 0, z: 0 }, { x: Infinity, z: 0 }), []);
+});
+
+test("units displaced just inside obstacle clearance can escape but cannot move inward", () => {
+  const nav = new Navigation();
+  nav.rebuild([]);
+  const [x, z, r] = ROCKS[0];
+  assert.equal(
+    nav.canTraverse({ x: x + r + 0.4, z }, { x: x + r + 0.45, z }, 0.55),
+    true,
+  );
+  assert.equal(
+    nav.canTraverse({ x: x + r + 0.4, z }, { x: x + r + 0.3, z }, 0.55),
+    false,
+  );
+});
+
+test("a finished match rejects production and construction refunds and new orders", () => {
+  const sim = new Simulation({ ai: false }),
+    hq = own(sim, "hq"),
+    worker = own(sim, "worker");
+  sim.enqueue(hq.id, "worker");
+  const building = sim.spawn("relay", 0, -10, 32, false);
+  own(sim, "hq", 1).hp = 0;
+  sim.tick(0.05);
+  const alloy = sim.players[0].alloy;
+  assert.equal(sim.cancelQueue(hq.id, 0), false);
+  assert.equal(sim.cancelBuilding(building.id), false);
+  assert.equal(sim.enqueue(hq.id, "worker"), false);
+  assert.equal(sim.build(worker.id, "relay", -10, 35), null);
+  sim.issue([worker.id], { type: "move", x: 0, z: 0 });
+  assert.equal(worker.orders.length, 0);
+  assert.equal(sim.players[0].alloy, alloy);
+});
+
+test("a new obstacle invalidates an active route without allowing penetration", () => {
+  const sim = new Simulation({ ai: false }),
+    unit = own(sim, "ranger");
+  unit.x = -8;
+  unit.z = 30;
+  sim.issue([unit.id], { type: "move", x: 16, z: 30 });
+  advance(sim, 0.3);
+  const revision = unit.pathRevision;
+  const obstacle = sim.spawn("relay", 0, 3, 30);
+  sim.nav.rebuild(sim.entities);
+  for (let i = 0; i < 400; i++) {
+    sim.tick(0.05);
+    assert.ok(distance(unit, obstacle) >= obstacle.radius + 0.49);
+  }
+  assert.ok(unit.pathRevision > revision);
+  assert.ok(distance(unit, { x: 16, z: 30 }) < 2);
+});
+
+test("orders reject invalid targets and coordinates and bound queued commands", () => {
+  const sim = new Simulation({ ai: false }),
+    unit = own(sim, "ranger");
+  for (const order of [
+    { type: "move", x: NaN, z: 0 },
+    { type: "teleport", x: 0, z: 0 },
+    { type: "attack", target: own(sim, "hq").id },
+    { type: "attack", target: sim.resources[0].id },
+  ]) {
+    sim.issue([unit.id], order);
+    assert.equal(unit.orders.length, 0);
+  }
+  sim.issue([unit.id, unit.id], { type: "move", x: 0, z: 20 }, true);
+  assert.equal(unit.orders.length, 1);
+  for (let i = 0; i < 100; i++)
+    sim.issue([unit.id], { type: "move", x: i % 30, z: 20 }, true);
+  assert.equal(unit.orders.length, 32);
+});
+
+test("a nearby worker can resume construction while the previous builder is away", () => {
+  const sim = new Simulation({ ai: false });
+  const workers = sim.own(0).filter((e) => e.type === "worker");
+  const building = sim.spawn("relay", 0, -10, 32, false);
+  building.builder = workers[0].id;
+  sim.issue([workers[0].id, workers[1].id], {
+    type: "build",
+    target: building.id,
+  });
+  workers[1].x = building.x + building.radius + 1;
+  workers[1].z = building.z;
+  sim.tick(0.05);
+  assert.equal(building.builder, workers[1].id);
+  assert.ok(building.progress > 0);
+});
 
 test("production charges once, reserves population, and cancellation refunds", () => {
   const sim = new Simulation({ ai: false }),

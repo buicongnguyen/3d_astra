@@ -14,7 +14,12 @@ const chrome =
 const browser = await chromium.launch({
   headless: true,
   ...(chrome && existsSync(chrome) ? { executablePath: chrome } : {}),
-  args: ["--enable-unsafe-swiftshader", ...(process.env.SOFTWARE_RENDER ? ['--use-angle=swiftshader', '--use-gl=angle'] : [])],
+  args: [
+    "--enable-unsafe-swiftshader",
+    ...(process.env.SOFTWARE_RENDER
+      ? ["--use-angle=swiftshader", "--use-gl=angle"]
+      : []),
+  ],
 });
 const page = await browser.newPage({
   viewport: { width: 1440, height: 960 },
@@ -57,9 +62,15 @@ try {
     await page.evaluate(() => window.__frontier.sim.players[0].alloy),
     before - 50,
   );
-  const queueButton = await page.locator('#queue [data-cancel="0"]').elementHandle();
+  const queueButton = await page
+    .locator('#queue [data-cancel="0"]')
+    .elementHandle();
   await page.evaluate(() => window.__frontier.step(1));
-  assert.equal(await queueButton.evaluate(button => button.isConnected), true, 'Progress updates must preserve the clickable queue button');
+  assert.equal(
+    await queueButton.evaluate((button) => button.isConnected),
+    true,
+    "Progress updates must preserve the clickable queue button",
+  );
   await page.locator('#queue [data-cancel="0"]').click();
   assert.equal(
     await page.evaluate(() => window.__frontier.sim.players[0].alloy),

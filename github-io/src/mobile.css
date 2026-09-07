@@ -1,0 +1,530 @@
+/* One game, two HUD arrangements. The battlefield gets its own unobscured rect. */
+body {
+  overscroll-behavior: none;
+}
+button {
+  touch-action: manipulation;
+}
+#world canvas,
+#minimap {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.touch-controls,
+#dock-tabs {
+  display: none;
+}
+.quality-button {
+  font:
+    10px Consolas,
+    monospace;
+}
+#mode-controls {
+  position: absolute;
+  top: 132px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9;
+  display: flex;
+  gap: 8px;
+}
+#mode-controls button {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid #789b77;
+  background: #21392d;
+  border-radius: 4px;
+}
+#confirm-build {
+  background: #b4ddad !important;
+  color: #1d372a;
+  font-weight: 600;
+}
+.modal {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  width: min(480px, calc(100vw - 24px));
+}
+.compact-ui {
+  --header-height: 96px;
+  --dock-height: 202px;
+  --tabs-height: 48px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+.compact-ui .topbar {
+  height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 10px 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: 48px 48px;
+  gap: 0;
+}
+.compact-ui .brand {
+  gap: 5px;
+  font-size: 11px;
+  letter-spacing: 1.4px;
+}
+.compact-ui .brand-mark {
+  width: 25px;
+  height: 32px;
+}
+.compact-ui .brand-mark .icon {
+  width: 25px;
+  height: 25px;
+}
+.compact-ui .brand-sub {
+  font-size: 6px;
+  letter-spacing: 2px;
+  margin-top: 3px;
+}
+.compact-ui .top-actions {
+  gap: 0;
+}
+.compact-ui .icon-button {
+  width: 40px;
+  height: 44px;
+}
+.compact-ui #clock {
+  font-size: 10px;
+  margin-right: 3px;
+}
+.compact-ui .resource-bar {
+  grid-column: 1/-1;
+  grid-row: 2;
+  width: 100%;
+  justify-content: space-between;
+  border-top: 1px solid var(--line);
+}
+.compact-ui .resource {
+  flex: 1;
+  min-width: 0;
+  padding: 0 12px;
+  gap: 8px;
+}
+.compact-ui .resource strong {
+  font-size: 17px;
+}
+.compact-ui .resource strong em {
+  font-size: 13px;
+}
+.compact-ui .resource > .icon {
+  width: 21px;
+  height: 21px;
+}
+.compact-ui .resource small {
+  font-size: 7px;
+  margin-top: 2px;
+  letter-spacing: 1.3px;
+}
+.compact-ui #stage {
+  height: calc(100dvh - var(--header-height) - env(safe-area-inset-top, 0px));
+}
+.compact-ui #world {
+  inset: 78px 0
+    calc(var(--dock-height) + var(--tabs-height) + var(--safe-bottom)) 0;
+}
+.compact-ui .map-heading {
+  left: 12px;
+  top: 8px;
+}
+.compact-ui .map-heading .eyebrow,
+.compact-ui .map-heading p,
+.compact-ui .mission,
+.compact-ui .sector-status,
+.compact-ui .statusbar {
+  display: none;
+}
+.compact-ui .map-heading h1 {
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: -0.4px;
+}
+.compact-ui .touch-controls {
+  display: flex;
+  position: absolute;
+  top: 33px;
+  left: 8px;
+  right: 8px;
+  gap: 4px;
+  overflow-x: auto;
+  touch-action: pan-x;
+  scrollbar-width: none;
+  z-index: 6;
+}
+.compact-ui .touch-controls button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 44px;
+  height: 44px;
+  flex: 1 0 44px;
+  padding: 3px;
+  border: 1px solid #60856955;
+  background: #1a3029f0;
+  border-radius: 4px;
+  font-size: 9px;
+  color: #c4dec1;
+}
+.compact-ui .touch-controls button .icon {
+  width: 17px;
+  height: 17px;
+}
+.compact-ui .touch-controls #zoom-in,
+.compact-ui .touch-controls #zoom-out {
+  font-size: 23px;
+  font-weight: 300;
+  flex: 0 0 40px;
+  min-width: 40px;
+}
+.compact-ui .touch-controls #clear-selection {
+  flex: 0 0 40px;
+  min-width: 40px;
+}
+.compact-ui [aria-pressed="true"] {
+  background: #a4cc9f !important;
+  color: #173323 !important;
+  border-color: #a4cc9f !important;
+}
+.compact-ui .bottom-dock {
+  bottom: calc(var(--tabs-height) + var(--safe-bottom));
+  left: 8px;
+  right: 8px;
+  display: block;
+  height: var(--dock-height);
+}
+.compact-ui .bottom-dock > .panel {
+  display: none;
+  height: 100%;
+  min-height: 0;
+  padding: 0 12px 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 5px;
+  backdrop-filter: none;
+  background: #162721;
+}
+.compact-ui[data-dock="selection"] .selection-panel,
+.compact-ui[data-dock="actions"] .command-panel,
+.compact-ui[data-dock="map"] .minimap-panel {
+  display: block;
+}
+.compact-ui .bottom-dock .panel-label {
+  height: 29px;
+  font-size: 9px;
+}
+.compact-ui #dock-tabs {
+  position: absolute;
+  bottom: var(--safe-bottom);
+  left: 8px;
+  right: 8px;
+  height: var(--tabs-height);
+  display: flex;
+  gap: 4px;
+  padding: 4px 0;
+}
+.compact-ui #dock-tabs button {
+  flex: 1;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 11px;
+  border: 1px solid #526f4859;
+  background: #1a3026;
+  border-radius: 4px;
+}
+.compact-ui #dock-tabs .icon {
+  width: 17px;
+  height: 17px;
+}
+.compact-ui #commands {
+  padding: 8px 0 0;
+  gap: 6px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.compact-ui .command-tile {
+  min-height: 69px;
+  padding: 7px 3px;
+}
+.compact-ui .command-tile > .icon {
+  width: 21px;
+  height: 21px;
+  margin-bottom: 4px;
+}
+.compact-ui .command-tile > span {
+  font-size: 10px;
+}
+.compact-ui .command-tile > small {
+  margin-top: 4px;
+  font-size: 10px;
+}
+.compact-ui #command-hint {
+  display: none;
+}
+.compact-ui .tactical-hint {
+  padding-top: 16px;
+}
+.compact-ui .tactical-hint p {
+  font-size: 12px;
+}
+.compact-ui #selection-info {
+  min-height: 73px;
+  gap: 10px;
+}
+.compact-ui .portrait {
+  height: 51px;
+  width: 51px;
+}
+.compact-ui .portrait .icon {
+  height: 29px;
+  width: 29px;
+}
+.compact-ui .entity-details h3 {
+  font-size: 17px;
+  margin: 3px 0 7px;
+}
+.compact-ui .entity-details .eyebrow {
+  font-size: 8px;
+}
+.compact-ui .entity-stats {
+  font-size: 9px;
+}
+.compact-ui .entity-stats > span:last-child {
+  font-size: 8px;
+}
+.compact-ui .order-buttons {
+  padding-top: 7px;
+  gap: 5px;
+}
+.compact-ui .order-buttons button {
+  min-height: 44px;
+  font-size: 10px;
+  padding: 6px;
+  justify-content: center;
+}
+.compact-ui .order-buttons kbd {
+  display: none;
+}
+.compact-ui #unit-list {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  max-height: 48px;
+  padding-bottom: 3px;
+}
+.compact-ui #unit-list button {
+  min-width: 44px;
+  min-height: 40px;
+}
+.compact-ui #queue {
+  overflow-x: auto;
+  margin-bottom: 3px;
+}
+.compact-ui #queue button {
+  min-height: 44px;
+  flex-shrink: 0;
+}
+.compact-ui .minimap-panel #minimap {
+  width: min(100%, 285px);
+  height: 142px;
+  margin: 5px auto;
+}
+.compact-ui .map-legend {
+  max-width: 285px;
+  margin: 0 auto;
+  font-size: 8px;
+}
+.compact-ui .minimap-panel .panel-label button {
+  min-width: 44px;
+  min-height: 28px;
+}
+.compact-ui #notice {
+  top: 88px;
+  width: calc(100% - 24px);
+  max-width: 390px;
+  font-size: 11px;
+  padding: 10px 12px;
+  text-align: center;
+}
+.compact-ui #mode-banner {
+  top: 84px;
+  white-space: normal;
+  width: calc(100% - 24px);
+  text-align: center;
+  font-size: 10px;
+  padding: 9px;
+  pointer-events: none;
+}
+.compact-ui #mode-controls {
+  top: auto;
+  bottom: calc(
+    var(--dock-height) + var(--tabs-height) + var(--safe-bottom) + 8px
+  );
+  white-space: nowrap;
+}
+.compact-ui #hover-label {
+  display: none;
+}
+.compact-ui .briefing {
+  top: 50%;
+  left: 50%;
+  right: auto;
+  width: min(340px, calc(100% - 28px));
+  transform: translate(-50%, -50%);
+  padding: 22px;
+  max-height: calc(100% - 48px);
+  overflow-y: auto;
+  backdrop-filter: none;
+}
+.compact-ui .briefing h2 {
+  font-size: 26px;
+}
+.compact-ui .briefing p {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.compact-ui .briefing-note {
+  font-size: 8px;
+}
+.compact-ui.in-briefing #world {
+  inset: 36px 0 0;
+}
+.compact-ui.in-briefing .touch-controls,
+.compact-ui.in-briefing .bottom-dock,
+.compact-ui.in-briefing #dock-tabs {
+  display: none;
+}
+.compact-ui .modal {
+  padding: 23px;
+  background: #172820;
+  backdrop-filter: none;
+}
+.compact-ui .modal h2 {
+  font-size: 25px;
+}
+.compact-ui .controls-grid {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px 8px;
+  font-size: 11px;
+}
+.compact-ui .controls-grid kbd {
+  font-size: 9px;
+  white-space: normal;
+  max-width: 175px;
+}
+.compact-ui .modal .primary,
+.compact-ui .modal .secondary {
+  min-height: 48px;
+}
+@media (min-aspect-ratio: 1.35) {
+  .compact-ui {
+    --header-height: 48px;
+    --side-width: 286px;
+  }
+  .compact-ui .topbar {
+    display: flex;
+    gap: 4px;
+    padding-left: max(8px, env(safe-area-inset-left, 0px));
+    padding-right: max(8px, env(safe-area-inset-right, 0px));
+  }
+  .compact-ui .brand > span:last-child {
+    display: none;
+  }
+  .compact-ui .resource-bar {
+    width: auto;
+    flex: 1;
+    border: 0;
+    justify-content: center;
+  }
+  .compact-ui .resource {
+    flex: 0 1 120px;
+    padding: 0 10px;
+  }
+  .compact-ui .resource strong {
+    font-size: 16px;
+  }
+  .compact-ui #world {
+    inset: 78px calc(var(--side-width) + 14px + env(safe-area-inset-right, 0px))
+      var(--safe-bottom) env(safe-area-inset-left, 0px);
+  }
+  .compact-ui .touch-controls {
+    right: calc(var(--side-width) + 22px + env(safe-area-inset-right, 0px));
+    left: max(8px, env(safe-area-inset-left, 0px));
+  }
+  .compact-ui .map-heading {
+    left: max(12px, env(safe-area-inset-left, 0px));
+  }
+  .compact-ui .bottom-dock {
+    left: auto;
+    right: max(8px, env(safe-area-inset-right, 0px));
+    top: 8px;
+    bottom: calc(var(--tabs-height) + var(--safe-bottom));
+    height: auto;
+    width: var(--side-width);
+  }
+  .compact-ui #dock-tabs {
+    left: auto;
+    right: max(8px, env(safe-area-inset-right, 0px));
+    width: var(--side-width);
+  }
+  .compact-ui #dock-tabs button {
+    font-size: 10px;
+    gap: 4px;
+  }
+  .compact-ui #notice,
+  .compact-ui #mode-banner {
+    left: calc((100% - var(--side-width) - 14px) / 2);
+    max-width: calc(100% - var(--side-width) - 40px);
+  }
+  .compact-ui #mode-controls {
+    left: calc((100% - var(--side-width) - 14px) / 2);
+    bottom: calc(8px + var(--safe-bottom));
+  }
+  .compact-ui .briefing {
+    padding: 17px 22px;
+    width: min(440px, calc(100% - 28px));
+    max-height: calc(100% - 20px);
+  }
+  .compact-ui .briefing h2 {
+    font-size: 22px;
+    margin: 8px 0;
+  }
+  .compact-ui .briefing h2 br {
+    display: none;
+  }
+  .compact-ui .briefing p {
+    margin: 8px 0;
+    font-size: 11px;
+  }
+  .compact-ui .briefing-rule {
+    padding: 7px 0;
+  }
+  .compact-ui .briefing .primary {
+    margin-top: 10px;
+    min-height: 44px;
+  }
+  .compact-ui .briefing-note {
+    margin-top: 9px;
+  }
+  .compact-ui.in-briefing #world {
+    inset: 0;
+  }
+}
+@media (max-width: 359px) {
+  .compact-ui .touch-controls button {
+    flex-basis: 40px;
+    min-width: 40px;
+  }
+  .compact-ui .brand > span:last-child {
+    display: none;
+  }
+  .compact-ui .resource {
+    padding: 0 5px;
+  }
+  .compact-ui .entity-stats {
+    font-size: 8px;
+  }
+}

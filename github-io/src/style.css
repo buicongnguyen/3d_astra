@@ -971,9 +971,6 @@ button kbd {
   color: #d5e6c8;
   margin-bottom: 8px;
 }
-.small-screen {
-  display: none;
-}
 @media (min-width: 1600px) {
   .bottom-dock {
     grid-template-columns: 255px minmax(400px, 600px) 330px;
@@ -1130,37 +1127,6 @@ button kbd {
   }
   .statusbar b {
     margin: 0 4px;
-  }
-}
-@media (max-width: 899px), (max-height: 699px) {
-  .small-screen {
-    position: fixed;
-    inset: 0;
-    background: #16271fed;
-    backdrop-filter: blur(15px);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 50;
-    padding: 35px;
-    text-align: center;
-  }
-  .small-screen h2 {
-    font-weight: 400;
-    font-size: 26px;
-  }
-  .small-screen p {
-    color: #9fb69c;
-    max-width: 380px;
-    line-height: 1.8;
-  }
-  .small-screen .brand-mark {
-    height: 60px;
-  }
-  .small-screen .brand-mark .icon {
-    height: 50px;
-    width: 50px;
   }
 }
 @media (prefers-reduced-motion: reduce) {

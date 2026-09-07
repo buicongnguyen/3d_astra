@@ -1,4 +1,5 @@
 import "./style.css";
+import "./mobile.css";
 import { Simulation } from "./simulation.js";
 import { WorldView } from "./view.js";
 import {
@@ -11,6 +12,7 @@ import {
   distance,
 } from "./data.js";
 import { icon } from "./icons.js";
+import { TouchControls } from "./touch-controls.js";
 
 document.querySelector("#app").innerHTML = `
   <header class="topbar">
@@ -29,6 +31,15 @@ document.querySelector("#app").innerHTML = `
     <div class="sector-status"><span class="eyebrow">TACTICAL UPLINK</span><span><i class="live-dot"></i> <span id="uplink">STANDBY</span></span></div>
     <div id="notice" role="status" aria-live="polite"></div>
     <div id="mode-banner" hidden></div>
+    <div id="mode-controls" hidden><button id="confirm-build" hidden disabled>Build here</button><button id="cancel-mode">Cancel</button></div>
+    <nav class="touch-controls" aria-label="Touch battlefield controls">
+      <button id="select-workers" title="Select all Harvesters">${icon("worker")}<span>Workers</span></button>
+      <button id="select-army" title="Select all combat units">${icon("people")}<span>Army</span></button>
+      <button id="box-select" aria-pressed="false">${icon("expand")}<span>Box</span></button>
+      <button id="queue-orders" aria-pressed="false">${icon("flag")}<span>Queue</span></button>
+      <button id="clear-selection" aria-label="Clear selection">${icon("close")}</button>
+      <button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button>
+    </nav>
     <div id="selection-box"></div>
     <div id="hover-label" hidden></div>
     <section id="briefing" class="briefing panel">
@@ -44,10 +55,10 @@ document.querySelector("#app").innerHTML = `
       <section class="selection-panel panel"><div class="panel-label"><span id="selection-label">EXPEDITION COMMAND</span><span id="selection-count">READY</span></div><div id="selection-info"></div><div id="unit-list"></div><div id="queue"></div><div class="order-buttons"><button id="move-order" title="Click a destination">${icon("move")} Move</button><button id="attack-order" title="Attack-move · F">${icon("crosshair")} Attack-move <kbd>F</kbd></button><button id="stop-order" title="Stop · X">${icon("stop")} Stop <kbd>X</kbd></button></div></section>
       <section class="command-panel panel"><div class="panel-label"><span id="command-label">COMMAND CENTER</span><span id="command-context">ACTIONS</span></div><div id="commands"></div><div id="command-hint">Select a unit or structure to issue commands.</div></section>
     </div>
+    <nav id="dock-tabs" aria-label="Command panels"><button data-dock="selection" aria-pressed="true">${icon("people")} Selection</button><button data-dock="actions" aria-pressed="false">${icon("worker")} Actions</button><button data-dock="map" aria-pressed="false">${icon("flag")} Map</button></nav>
     <div class="statusbar"><span><i class="live-dot"></i> <span id="status-text">EXPEDITION SYSTEMS INITIALIZING</span></span><span>WASD pan <b>·</b> Scroll zoom <b>·</b> Right-click command <b>·</b> <button id="controls-link">? Controls</button></span><span id="fps">— FPS</span></div>
   </main>
   <div id="modal" class="modal-backdrop" hidden><section class="modal panel" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div id="modal-content"></div></section></div>
-  <div class="small-screen"><span class="brand-mark">${icon("logo")}</span><h2>Your command station awaits.</h2><p>Frontier Command is designed for a desktop browser with a mouse and keyboard. Open it in a wider window (at least 900 × 700).</p></div>
 `;
 
 const $ = (id) => document.getElementById(id);
@@ -78,6 +89,40 @@ let pointer = { x: 0, y: 0, inside: false },
   lastQueueKey = "",
   modalType = null;
 const milestones = { economy: false, army: false };
+let touchInput = matchMedia("(pointer: coarse)").matches,
+  touchControls,
+  boxSelection = false,
+  queueOrders = false,
+  buildPoint = null;
+const compactMedia = matchMedia("(max-width: 1000px), (max-height: 650px)");
+document
+  .querySelector(".top-actions")
+  .insertAdjacentHTML(
+    "afterbegin",
+    '<button id="quality" class="icon-button quality-button" aria-label="Toggle graphics quality" title="Toggle graphics quality">Eco</button>',
+  );
+document.documentElement.classList.add("in-briefing");
+document.documentElement.dataset.dock = "selection";
+function setLayout() {
+  document.documentElement.classList.toggle(
+    "compact-ui",
+    compactMedia.matches || touchInput,
+  );
+  document.documentElement.classList.toggle("touch-ui", touchInput);
+  touchControls?.reset();
+  drag = null;
+  pointer.inside = false;
+  $("selection-box").style.display = "none";
+  requestAnimationFrame(() => view?.resize());
+}
+compactMedia.addEventListener("change", setLayout);
+window.addEventListener("resize", setLayout);
+setLayout();
+function dockTab(name) {
+  document.documentElement.dataset.dock = name;
+  for (const button of $("dock-tabs").querySelectorAll("button"))
+    button.setAttribute("aria-pressed", String(button.dataset.dock === name));
+}
 
 function tone(frequency = 520, duration = 0.065) {
   if (muted || !audioContext || performance.now() - lastTone < 70) return;
@@ -117,11 +162,22 @@ function setSelection(ids) {
   selected = new Set(ids);
   lastSelectionKey = "";
   updateUI();
+  if (document.documentElement.classList.contains("compact-ui")) {
+    const es = selectedEntities();
+    dockTab(
+      es.length === 1 && (es[0].trains || es[0].type === "worker")
+        ? "actions"
+        : "selection",
+    );
+  }
   tone(650);
 }
 function clearMode() {
   mode = null;
   buildType = null;
+  buildPoint = null;
+  $("mode-controls").hidden = true;
+  $("confirm-build").hidden = true;
   if (view) view.preview.visible = false;
   $("mode-banner").hidden = true;
   $("world").classList.remove("targeting");
@@ -139,6 +195,10 @@ function enterMode(type) {
     type === "attackmove"
       ? "ATTACK-MOVE · Click a destination · Esc to cancel"
       : "MOVE · Click a destination · Esc to cancel";
+  if (touchInput)
+    $("mode-banner").textContent =
+      `${type === "attackmove" ? "ATTACK-MOVE" : "MOVE"} · Tap your destination`;
+  $("mode-controls").hidden = false;
   $("world").classList.add("targeting");
 }
 function enterBuild(type) {
@@ -153,7 +213,13 @@ function enterBuild(type) {
   $("mode-banner").hidden = false;
   $("mode-banner").textContent =
     `PLACE ${D[type].name.toUpperCase()} · Click to build · Esc to cancel`;
-  view.preview.visible = true;
+  if (touchInput)
+    $("mode-banner").textContent =
+      `PLACE ${D[type].name.toUpperCase()} · Tap a location, then Build here`;
+  $("mode-controls").hidden = false;
+  $("confirm-build").hidden = !touchInput;
+  $("confirm-build").disabled = true;
+  view.preview.visible = false;
   view.preview.scale.set(D[type].radius, 1, D[type].radius);
 }
 function formatTime(s) {
@@ -270,7 +336,7 @@ function updateUI() {
           own.some((b) => b.queue.some((q) => q.type === "upgrade"))));
     button.disabled = !!unavailable;
   }
-  const queueKey = `${e?.id}/${e?.complete}/${e?.queue.map(q => q.id).join(',')}`;
+  const queueKey = `${e?.id}/${e?.complete}/${e?.queue.map((q) => q.id).join(",")}`;
   // Preserve interactive nodes while updating progress, including on slow frames.
   if (queueKey !== lastQueueKey) {
     lastQueueKey = queueKey;
@@ -280,14 +346,22 @@ function updateUI() {
         ? `<button class="cancel-build" data-cancel-build="${e.id}">Cancel construction · 75% refund</button>`
         : "";
   }
-  for (const button of $("queue").querySelectorAll('[data-cancel]')) {
+  for (const button of $("queue").querySelectorAll("[data-cancel]")) {
     const q = e.queue[Number(button.dataset.cancel)];
-    const progress = Math.min(100, q.elapsed / D[q.type].time * 100);
-    button.querySelector('span').textContent = `${Math.floor(progress)}%`;
-    button.querySelector('i').style.width = `${progress}%`;
+    const progress = Math.min(100, (q.elapsed / D[q.type].time) * 100);
+    button.querySelector("span").textContent =
+      q.blocked || `${Math.floor(progress)}%`;
+    button.querySelector("i").style.width = `${progress}%`;
   }
   for (const b of document.querySelectorAll(".order-buttons button"))
     b.disabled = !started || paused || !es.some((u) => u.kind === "unit");
+  for (const b of document.querySelectorAll(".touch-controls button"))
+    b.disabled = !started || paused || !!sim.result;
+  if (mode === "build" && buildPoint) {
+    const error = sim.placement(buildType, 0, buildPoint.x, buildPoint.z);
+    $("confirm-build").disabled = !!error || paused || !started;
+    view.preview.material.color.setHex(error ? 0xef7660 : 0x92ebc5);
+  }
 }
 
 function minimap() {
@@ -424,10 +498,121 @@ function commandAt(point, target, append = false, forced = null) {
   tone(440);
 }
 
+function drawTouchBox(p) {
+  if (!p) {
+    $("selection-box").style.display = "none";
+    return;
+  }
+  const rect = $("stage").getBoundingClientRect();
+  Object.assign($("selection-box").style, {
+    display: "block",
+    left: `${Math.min(p.startX, p.x) - rect.left}px`,
+    top: `${Math.min(p.startY, p.y) - rect.top}px`,
+    width: `${Math.abs(p.x - p.startX)}px`,
+    height: `${Math.abs(p.y - p.startY)}px`,
+  });
+}
+function selectTouchBox(p) {
+  const rect = view.renderer.domElement.getBoundingClientRect();
+  const ids = sim
+    .own(0)
+    .filter((e) => {
+      if (e.kind !== "unit") return false;
+      const point = view.project(e.x, e.z, 1),
+        x = point.x + rect.left,
+        y = point.y + rect.top;
+      return (
+        x >= Math.min(p.startX, p.x) &&
+        x <= Math.max(p.startX, p.x) &&
+        y >= Math.min(p.startY, p.y) &&
+        y <= Math.max(p.startY, p.y)
+      );
+    })
+    .map((e) => e.id);
+  setSelection(ids);
+  boxSelection = false;
+  $("box-select").setAttribute("aria-pressed", "false");
+}
+function showBuildPoint(point) {
+  buildPoint = point;
+  view.preview.visible = true;
+  view.preview.position.set(point.x, 0.23, point.z);
+  const error = sim.placement(buildType, 0, point.x, point.z);
+  view.preview.material.color.setHex(error ? 0xef7660 : 0x92ebc5);
+  $("confirm-build").disabled = !!error;
+  if (error) notice(error);
+}
+function confirmBuild(point = buildPoint) {
+  if (!point || mode !== "build" || paused || !started || sim.result) return;
+  const worker = selectedEntities().find((e) => e.type === "worker");
+  const b = worker && sim.build(worker.id, buildType, point.x, point.z);
+  if (b) {
+    clearMode();
+    setSelection([b.id]);
+    tone(330, 0.15);
+  }
+}
+function touchTap(x, y) {
+  const point = view.point(x, y),
+    target = view.pick(x, y, sim, 24);
+  if (!point) return;
+  if (mode === "build") {
+    showBuildPoint(point);
+    return;
+  }
+  if (mode) {
+    commandAt(point, null, queueOrders, mode);
+    clearMode();
+    return;
+  }
+  if (boxSelection) {
+    if (target?.team === 0) setSelection([...selected, target.id]);
+    return;
+  }
+  if (target?.team === 0) {
+    const workers = selectedEntities().filter((e) => e.type === "worker");
+    if (
+      workers.length &&
+      (!target.complete ||
+        (target.type === "hq" && workers.some((e) => e.carry > 0)))
+    )
+      commandAt(point, target, queueOrders);
+    else setSelection([target.id]);
+  } else if (selected.size) commandAt(point, target, queueOrders);
+  else if (target?.kind === "resource")
+    notice(
+      `${target.type.toUpperCase()} · ${Math.floor(target.amount)} remaining. Select Harvesters to gather.`,
+    );
+  else notice("Select a unit, or use the Workers and Army buttons.");
+}
 function bindInput() {
   const canvas = view.renderer.domElement;
+  touchControls = new TouchControls(canvas, {
+    enabled: () => started && !paused && !sim.result,
+    boxMode: () => boxSelection && !mode,
+    activate: () => {
+      unlockAudio();
+      if (!touchInput) {
+        touchInput = true;
+        setLayout();
+      }
+      pointer.inside = false;
+      hover = null;
+    },
+    tap: touchTap,
+    box: selectTouchBox,
+    rectangle: drawTouchBox,
+    panZoom: (dx, dy, ratio) => {
+      view.screenPan(
+        (-dx * view.zoom) / view.height,
+        (dy * view.zoom) / view.height,
+      );
+      if (ratio !== 1) view.zoomBy(view.zoom * (ratio - 1));
+    },
+  });
   canvas.addEventListener("contextmenu", (e) => {
     e.preventDefault();
+    if (e.pointerType === "touch") return;
     if (mode) {
       clearMode();
       return;
@@ -439,6 +624,7 @@ function bindInput() {
     );
   });
   canvas.addEventListener("pointerdown", (e) => {
+    if (e.pointerType !== "mouse") return;
     unlockAudio();
     if (e.button === 2 || !started || paused || sim.result) return;
     canvas.setPointerCapture(e.pointerId);
@@ -451,6 +637,7 @@ function bindInput() {
     };
   });
   canvas.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse") return;
     pointer = { x: e.clientX, y: e.clientY, inside: true };
     hover = view.pick(e.clientX, e.clientY, sim);
     if (drag?.button === 1) {
@@ -465,7 +652,7 @@ function bindInput() {
       !mode &&
       Math.hypot(e.clientX - drag.x, e.clientY - drag.y) > 6
     ) {
-      const rect = canvas.getBoundingClientRect();
+      const rect = $("stage").getBoundingClientRect();
       Object.assign($("selection-box").style, {
         display: "block",
         left: `${Math.min(e.clientX, drag.x) - rect.left}px`,
@@ -477,6 +664,7 @@ function bindInput() {
     if (mode === "build") {
       const p = view.point(e.clientX, e.clientY);
       if (p) {
+        view.preview.visible = true;
         view.preview.position.set(p.x, 0.23, p.z);
         view.preview.material.color.setHex(
           sim.placement(buildType, 0, p.x, p.z) ? 0xef7660 : 0x92ebc5,
@@ -501,6 +689,7 @@ function bindInput() {
     $("hover-label").hidden = true;
   });
   canvas.addEventListener("pointerup", (e) => {
+    if (e.pointerType !== "mouse") return;
     if (!drag) return;
     const old = drag;
     drag = null;
@@ -510,13 +699,7 @@ function bindInput() {
     if (old.button !== 0 || paused || !started) return;
     const point = view.point(e.clientX, e.clientY);
     if (mode === "build" && point) {
-      const worker = selectedEntities().find((e) => e.type === "worker");
-      const b = worker && sim.build(worker.id, buildType, point.x, point.z);
-      if (b) {
-        clearMode();
-        setSelection([b.id]);
-        tone(330, 0.15);
-      }
+      confirmBuild(point);
       return;
     }
     if (mode) {
@@ -558,6 +741,11 @@ function bindInput() {
           .filter((u) => u.type === target.type && sim.isVisible(u))
           .map((u) => u.id),
       );
+  });
+  canvas.addEventListener("pointercancel", () => {
+    drag = null;
+    pointer.inside = false;
+    $("selection-box").style.display = "none";
   });
   canvas.addEventListener(
     "wheel",
@@ -616,6 +804,9 @@ function bindInput() {
   window.addEventListener("blur", () => keys.clear());
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
+      touchControls.reset();
+      drag = null;
+      pointer.inside = false;
       keys.clear();
       if (started && !paused && !sim.result) togglePause();
     }
@@ -630,7 +821,10 @@ function bindInput() {
   $("minimap").addEventListener("pointerdown", (e) => {
     if (e.button === 0) {
       const p = mapPoint(e);
-      view.focusOn(p.x, p.z);
+      if (mode && mode !== "build") {
+        commandAt(p, null, queueOrders, mode);
+        clearMode();
+      } else view.focusOn(p.x, p.z);
     }
   });
   $("minimap").addEventListener("contextmenu", (e) => {
@@ -658,6 +852,9 @@ function togglePause() {
     return;
   }
   paused = true;
+  touchControls?.reset();
+  drag = null;
+  pointer.inside = false;
   modalType = "pause";
   keys.clear();
   $("modal").hidden = false;
@@ -668,12 +865,19 @@ function togglePause() {
 function showHelp() {
   if (sim.result) return;
   paused = true;
+  touchControls?.reset();
   keys.clear();
   modalType = "help";
   $("modal").hidden = false;
   $("modal-content").innerHTML =
     `<span class="eyebrow">COMMANDER'S FIELD GUIDE</span><h2 id="modal-title">Your command station.</h2><div class="controls-grid"><span>Select / box select</span><kbd>Left-click / drag</kbd><span>Add to selection / queue order</span><kbd>Shift + click</kbd><span>Move, gather, build, attack</span><kbd>Right-click target</kbd><span>Pan camera</span><kbd>WASD / arrows / middle drag</kbd><span>Zoom</span><kbd>Mouse wheel</kbd><span>Attack-move / stop</span><kbd>F / X</kbd><span>Assign / recall group</span><kbd>Ctrl + 1–9 / 1–9</kbd><span>Focus base / toggle grid</span><kbd>H / G</kbd><span>Pause / cancel</span><kbd>Space / Esc</kbd></div><p class="help-note">Select a Harvester and right-click amber or blue deposits to gather. Select a building to train units; select a Harvester to construct. Click a queued unit to cancel and refund it. Build Supply relays before reaching the population cap.</p><button class="primary" data-resume>Return to the frontier ${icon("arrow")}</button>`;
   $("modal").querySelector("[data-resume]").focus();
+  if (touchInput) {
+    $("modal-content").querySelector(".controls-grid").innerHTML =
+      "<span>Select a unit / structure</span><kbd>Tap it</kbd><span>Move / gather / attack</span><kbd>Select, then tap target</kbd><span>Pan the battlefield</span><kbd>Drag one finger</kbd><span>Zoom / pan together</span><kbd>Pinch / two fingers</kbd><span>Select multiple units</span><kbd>Box, then drag</kbd><span>Select your forces</span><kbd>Workers / Army</kbd><span>Queue multiple orders</span><kbd>Enable Queue</kbd><span>Place a structure</span><kbd>Tap location → Build here</kbd><span>Change HUD panel</span><kbd>Selection / Actions / Map</kbd>";
+    $("modal-content").querySelector(".help-note").textContent =
+      "Tap Workers, then tap amber or blue deposits to gather. Tap a building to train units in Actions. Use Move or Attack-move in Selection, then tap a destination. To set a rally point, select a production building and tap ground. Eco graphics reduces rendering cost on phones.";
+  }
 }
 function showResult() {
   paused = true;
@@ -686,6 +890,14 @@ function showResult() {
     `<span class="eyebrow">OPERATION ${sim.result === "draw" ? "CONCLUDED" : win ? "SUCCESSFUL" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}">${icon(win ? "flag" : "shield")}</div><h2 id="modal-title">${win ? "The frontier is yours." : sim.result === "draw" ? "Mutual destruction." : "Your outpost has fallen."}</h2><p>${win ? "Enemy command has been eliminated. Meridian holds the valley." : sim.result === "draw" ? "Both Command cores were destroyed." : "The Crimson Collective destroyed your Command core. Regroup and try a different approach."}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${sim.players[0].kills}</strong>ENEMIES ELIMINATED</span></div><button class="primary" data-restart>Deploy again ${icon("arrow")}</button>`;
 }
 function restart() {
+  touchControls?.reset();
+  drag = null;
+  keys.clear();
+  pointer.inside = false;
+  boxSelection = false;
+  queueOrders = false;
+  $("box-select").setAttribute("aria-pressed", "false");
+  $("queue-orders").setAttribute("aria-pressed", "false");
   sim = new Simulation();
   view.reset();
   selected.clear();
@@ -701,6 +913,8 @@ function restart() {
   hover = null;
   $("modal").hidden = true;
   $("briefing").hidden = true;
+  document.documentElement.classList.remove("in-briefing");
+  view.resize();
   $("status-text").textContent = "OPERATION ACTIVE";
   setSelection([sim.own(0).find((e) => e.type === "hq").id]);
 }
@@ -710,10 +924,14 @@ $("start").onclick = () => {
   started = true;
   paused = false;
   $("briefing").hidden = true;
+  document.documentElement.classList.remove("in-briefing");
+  view.resize();
   $("status-text").textContent = "OPERATION ACTIVE";
   setSelection([sim.own(0).find((e) => e.type === "hq").id]);
   notice(
-    "Select Harvesters, then right-click amber crystals to start your economy.",
+    touchInput
+      ? "Tap Workers, then tap amber crystals. Drag to pan; pinch to zoom."
+      : "Select Harvesters, then right-click amber crystals to start your economy.",
   );
   tone(780, 0.15);
 };
@@ -721,6 +939,66 @@ $("pause").onclick = togglePause;
 $("help").onclick = showHelp;
 $("controls-link").onclick = showHelp;
 $("home").onclick = focusHome;
+$("dock-tabs").onclick = (event) => {
+  const button = event.target.closest("[data-dock]");
+  if (button) dockTab(button.dataset.dock);
+};
+$("confirm-build").onclick = () => confirmBuild();
+$("cancel-mode").onclick = clearMode;
+$("select-workers").onclick = () => {
+  clearMode();
+  setSelection(
+    sim
+      .own(0)
+      .filter((e) => e.type === "worker")
+      .map((e) => e.id),
+  );
+  dockTab("actions");
+};
+$("select-army").onclick = () => {
+  clearMode();
+  setSelection(
+    sim
+      .own(0)
+      .filter((e) => e.kind === "unit" && e.type !== "worker")
+      .map((e) => e.id),
+  );
+};
+$("clear-selection").onclick = () => {
+  clearMode();
+  setSelection([]);
+};
+$("box-select").onclick = () => {
+  clearMode();
+  boxSelection = !boxSelection;
+  $("box-select").setAttribute("aria-pressed", String(boxSelection));
+  notice(
+    boxSelection
+      ? "Drag a box around your units. Tap Box again to return to panning."
+      : "Drag to pan the battlefield.",
+  );
+};
+$("queue-orders").onclick = () => {
+  queueOrders = !queueOrders;
+  $("queue-orders").setAttribute("aria-pressed", String(queueOrders));
+  notice(
+    queueOrders
+      ? "New commands will be queued."
+      : "New commands replace existing orders.",
+  );
+};
+$("zoom-in").onclick = () => view.zoomBy(-4);
+$("zoom-out").onclick = () => view.zoomBy(4);
+$("quality").onclick = () => {
+  if (!view) return;
+  view.setQuality(view.lowPower ? "high" : "low");
+  $("quality").textContent = view.lowPower ? "Eco" : "High";
+  notice(
+    view.lowPower
+      ? "Eco graphics: reduced resolution and simple shadows."
+      : "High graphics: detailed shadows and higher resolution.",
+  );
+};
 $("audio").onclick = () => {
   unlockAudio();
   muted = !muted;
@@ -768,7 +1046,8 @@ $("modal").onclick = (event) => {
 
 function frame(now) {
   requestAnimationFrame(frame);
-  const dt = Math.min((now - timePrevious) / 1000, 0.1);
+  const elapsed = Math.max(0, (now - timePrevious) / 1000),
+    dt = Math.min(elapsed, 0.25);
   timePrevious = now;
   if (started && !paused && !sim.result) {
     accumulator += dt;
@@ -807,7 +1086,7 @@ function frame(now) {
     uiClock = 0.15;
   }
   frameCount++;
-  frameTime += dt;
+  frameTime += elapsed;
   if (frameTime >= 1) {
     $("fps").textContent = `${Math.round(frameCount / frameTime)} FPS`;
     frameCount = 0;
@@ -818,6 +1097,10 @@ function frame(now) {
 async function boot() {
   try {
     view = new WorldView($("world"));
+    $("quality").textContent = view.lowPower ? "Eco" : "High";
+    if (touchInput)
+      $("briefing").querySelector(".briefing-note").textContent =
+        "SINGLE PLAYER · TOUCH + MOUSE";
     await view.loadModels();
     bindInput();
     $("start").disabled = false;
@@ -855,7 +1138,7 @@ async function boot() {
     $("start").textContent = "Unable to initialize";
     $("status-text").textContent = "INITIALIZATION FAILED";
     notice(
-      "The 3D engine could not start. Enable hardware acceleration and reload in a current desktop browser.",
+      "The 3D engine could not start. Enable hardware acceleration and reload in a browser with WebGL 2 support.",
     );
     $("briefing").querySelector("p").textContent =
       "Check your connection and WebGL support, then reload. All game assets must be served from the built site.";

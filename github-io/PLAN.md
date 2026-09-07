@@ -28,7 +28,7 @@ Build Frontier Command in this isolated `github-io/` folder using Three.js, Java
 
 ## Browser constraints
 
-- Mouse and keyboard desktop play is the primary target. Small screens receive an explanatory overlay.
+- Mouse/keyboard desktop play and touch phone/tablet play use the same simulation. A compact HUD, tap commands, drag pan, pinch zoom, and touch construction confirmation replace the original small-screen overlay. See `CODE_REVIEW.md` for the September 2026 review and mobile work.
 - Start with a compact 96 × 96 meter map and a 100-population cap per side.
 - No multiplayer backend, paid services, runtime CDN dependencies, or remote model generation.
 - Simplified articulated model motion in the first release; elaborate skeletal animation is deferred.

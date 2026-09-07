@@ -163,12 +163,45 @@ export class Simulation {
     }
   }
   issue(ids, order, append = false) {
+    if (
+      this.result ||
+      ![
+        "move",
+        "attackmove",
+        "attack",
+        "gather",
+        "deliver",
+        "build",
+        "stop",
+      ].includes(order.type)
+    )
+      return;
+    if (
+      ["move", "attackmove"].includes(order.type) &&
+      ![order.x, order.z].every(Number.isFinite)
+    )
+      return;
+    ids = [...new Set(ids)];
     let index = 0;
     const size = Math.ceil(Math.sqrt(ids.length));
     for (const id of ids) {
       const e = this.get(id);
       if (!e || e.kind !== "unit" || !e.complete) continue;
       const target = order.target ? this.get(order.target) : null;
+      if (
+        order.type === "attack" &&
+        (!target || target.kind === "resource" || target.team === e.team)
+      )
+        continue;
+      if (order.type === "gather" && target?.kind !== "resource") continue;
+      if (
+        order.type === "build" &&
+        (!target ||
+          target.kind !== "building" ||
+          target.team !== e.team ||
+          target.complete)
+      )
+        continue;
       if (
         ["gather", "build", "deliver"].includes(order.type) &&
         e.type !== "worker"
@@ -198,13 +231,14 @@ export class Simulation {
         e.pathClock = 0;
         e.stalled = 0;
       }
-      if (o.type !== "stop") e.orders.push(o);
+      if (o.type !== "stop" && e.orders.length < 32) e.orders.push(o);
     }
   }
   enqueue(buildingId, type) {
     const b = this.get(buildingId),
       d = D[type];
-    if (!b || !b.complete || !b.trains?.includes(type) || !d) return false;
+    if (this.result || !b || !b.complete || !b.trains?.includes(type) || !d)
+      return false;
     const fail = (text) => {
       this.message(text, b.team);
       return false;
@@ -213,7 +247,7 @@ export class Simulation {
     if (!this.canPay(b.team, d.cost))
       return fail("Insufficient resources. Assign more Harvesters.");
     const p = this.population(b.team);
-    if (p.used + p.reserved + (d.pop || 0) > p.cap)
+    if (d.pop && p.used + p.reserved + d.pop > p.cap)
       return fail("Population limit reached. Build a Supply relay.");
     if (
       type === "upgrade" &&
@@ -228,12 +262,14 @@ export class Simulation {
   }
   cancelQueue(id, index) {
     const b = this.get(id);
-    if (!b || !b.queue[index]) return false;
+    if (this.result || !b || !Number.isInteger(index) || !b.queue[index])
+      return false;
     this.pay(b.team, D[b.queue[index].type].cost, -1);
     b.queue.splice(index, 1);
     return true;
   }
   placement(type, team, x, z) {
+    if (![x, z].every(Number.isFinite)) return "Invalid position.";
     const d = D[type];
     if (!d || d.kind !== "building") return "Invalid structure.";
     if (Math.abs(x) > HALF - d.radius - 2 || Math.abs(z) > HALF - d.radius - 2)
@@ -280,7 +316,7 @@ export class Simulation {
   }
   build(workerId, type, x, z) {
     const w = this.get(workerId);
-    if (!w || w.type !== "worker") return null;
+    if (this.result || !w || w.type !== "worker") return null;
     const error = this.placement(type, w.team, x, z);
     if (error) {
       this.message(error, w.team);
@@ -312,7 +348,7 @@ export class Simulation {
   }
   cancelBuilding(id) {
     const b = this.get(id);
-    if (!b || b.kind !== "building" || b.complete) return false;
+    if (this.result || !b || b.kind !== "building" || b.complete) return false;
     this.pay(b.team, b.cost, -0.75);
     b.hp = 0;
     this.nav.rebuild(this.entities);
@@ -345,9 +381,10 @@ export class Simulation {
       return false;
     }
     e.pathClock -= dt;
-    if (e.pathClock <= 0) {
+    if (e.pathClock <= 0 || e.pathRevision !== this.nav.revision) {
       e.path = this.nav.path(e, goal);
       e.pathClock = 1.3 + (e.id % 7) * 0.08;
+      e.pathRevision = this.nav.revision;
     }
     if (!e.path.length) {
       e.moving = false;
@@ -366,8 +403,18 @@ export class Simulation {
       dz = next.z - e.z,
       d = Math.hypot(dx, dz),
       step = Math.min(d, e.speed * dt);
-    e.x += (dx / d) * step;
-    e.z += (dz / d) * step;
+    if (d < 0.0001) {
+      e.path.shift();
+      return false;
+    }
+    const nextPosition = { x: e.x + (dx / d) * step, z: e.z + (dz / d) * step };
+    if (!this.nav.canTraverse(e, nextPosition, 0.5)) {
+      e.path = [];
+      e.pathClock = 0;
+      return false;
+    }
+    e.x = nextPosition.x;
+    e.z = nextPosition.z;
     e.angle = Math.atan2(dx, dz);
     e.moving = true;
     return false;
@@ -435,7 +482,14 @@ export class Simulation {
     e.cooldown = e.interval;
   }
   fight(e, t, dt, chase = true) {
-    if (!t || t.hp <= 0 || !this.isVisible(t, e.team)) return false;
+    if (
+      !t ||
+      !Number.isFinite(t.hp) ||
+      t.hp <= 0 ||
+      t.team === e.team ||
+      !this.isVisible(t, e.team)
+    )
+      return false;
     const inRange = distance(e, t) <= e.range + t.radius;
     if (inRange && this.nav.clearLine(e, t, t.id)) {
       e.angle = Math.atan2(t.x - e.x, t.z - e.z);
@@ -448,7 +502,7 @@ export class Simulation {
   updateWorker(e, o, dt) {
     const t = this.get(o.target);
     if (o.type === "build") {
-      if (!t || t.complete) {
+      if (!t || t.kind !== "building" || t.team !== e.team || t.complete) {
         this.finish(e);
         return;
       }
@@ -458,10 +512,13 @@ export class Simulation {
       }
       e.moving = false;
       // One active builder per construction site.
+      const activeBuilder = this.get(t.builder);
       if (
-        t.builder &&
-        t.builder !== e.id &&
-        this.get(t.builder)?.orders[0]?.target === t.id
+        activeBuilder &&
+        activeBuilder.id !== e.id &&
+        activeBuilder.orders[0]?.type === "build" &&
+        activeBuilder.orders[0]?.target === t.id &&
+        distance(activeBuilder, t) <= t.radius + 2.2
       )
         return;
       t.builder = e.id;
@@ -542,6 +599,13 @@ export class Simulation {
       );
       return;
     }
+    // Supply lost after enqueueing must not let completed units bypass the cap.
+    const population = this.population(b.team);
+    if (population.used + d.pop > population.cap) {
+      q.blocked = "Awaiting supply";
+      return;
+    }
+    q.blocked = null;
     let pos;
     for (let i = 0; i < 24; i++) {
       const angle = (i / 24) * Math.PI * 2,
@@ -562,7 +626,10 @@ export class Simulation {
         break;
       }
     }
-    if (!pos) return;
+    if (!pos) {
+      q.blocked = "Exit blocked";
+      return;
+    }
     b.queue.shift();
     const u = this.spawn(q.type, b.team, pos.x, pos.z);
     if (b.rally) this.issue([u.id], { type: "move", ...b.rally });

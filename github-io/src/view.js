@@ -29,12 +29,15 @@ function mesh(geometry, material, x = 0, y = 0, z = 0) {
 export class WorldView {
   constructor(container) {
     this.container = container;
+    this.lowPower = matchMedia("(pointer: coarse)").matches;
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       powerPreference: "high-performance",
     });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 1.6));
-    this.renderer.shadowMap.enabled = true;
+    this.renderer.setPixelRatio(
+      Math.min(devicePixelRatio, this.lowPower ? 1 : 1.6),
+    );
+    this.renderer.shadowMap.enabled = !this.lowPower;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -48,8 +51,13 @@ export class WorldView {
     this.scene.background = new THREE.Color(0x283630);
     this.scene.fog = new THREE.Fog(0x283630, 105, 190);
     this.camera = new THREE.OrthographicCamera(-40, 40, 30, -30, 0.1, 240);
-    this.focus = new THREE.Vector3(-20, 0, 19);
-    this.zoom = 42;
+    this.focus = new THREE.Vector3(
+      this.lowPower ? -25 : -20,
+      0,
+      this.lowPower ? 21 : 19,
+    );
+    this.defaultZoom = this.lowPower ? 34 : 42;
+    this.zoom = this.defaultZoom;
     this.raycaster = new THREE.Raycaster();
     this.plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     this.models = new Map();
@@ -91,6 +99,24 @@ export class WorldView {
     this.selection = new Set();
     this.resize();
     window.addEventListener("resize", () => this.resize());
+    this.resizeObserver = new ResizeObserver(() => this.resize());
+    this.resizeObserver.observe(container);
+  }
+  setQuality(level) {
+    this.lowPower = level === "low";
+    this.renderer.setPixelRatio(
+      Math.min(devicePixelRatio, this.lowPower ? 1 : 1.6),
+    );
+    this.renderer.shadowMap.enabled = !this.lowPower;
+    for (const o of this.objects.values())
+      o.userData.contactShadow.visible = this.lowPower;
+    this.scene.traverse((o) => {
+      if (o.isMesh) {
+        const materials = Array.isArray(o.material) ? o.material : [o.material];
+        materials.forEach((m) => (m.needsUpdate = true));
+      }
+    });
+    this.resize();
   }
   async loadModels() {
     const loader = new GLTFLoader();
@@ -333,8 +359,8 @@ export class WorldView {
     this.scene.add(this.fogMesh);
   }
   resize() {
-    this.width = this.container.clientWidth;
-    this.height = this.container.clientHeight;
+    this.width = Math.max(1, this.container.clientWidth);
+    this.height = Math.max(1, this.container.clientHeight);
     this.renderer.setSize(this.width, this.height);
     this.updateCamera();
   }
@@ -396,7 +422,7 @@ export class WorldView {
       y: ((1 - p.y) / 2) * this.height,
     };
   }
-  pick(clientX, clientY, sim) {
+  pick(clientX, clientY, sim, minRadius = 14) {
     const rect = this.renderer.domElement.getBoundingClientRect(),
       x = clientX - rect.left,
       y = clientY - rect.top;
@@ -410,7 +436,10 @@ export class WorldView {
         e.kind === "building" ? 1.8 : e.kind === "resource" ? 1 : 0.9,
       );
       const d = Math.hypot(p.x - x, p.y - y),
-        radius = Math.max(14, ((e.radius + 0.6) * this.height) / this.zoom);
+        radius = Math.max(
+          minRadius,
+          ((e.radius + 0.6) * this.height) / this.zoom,
+        );
       if (d < radius && d / radius < score) {
         best = e;
         score = d / radius;
@@ -422,6 +451,20 @@ export class WorldView {
     const root = new THREE.Group(),
       model = this.teamTemplates.get(`${e.type}-${e.team}`).clone(true);
     root.add(model);
+    const contactShadow = new THREE.Mesh(
+      new THREE.CircleGeometry(e.radius * 1.25, 20),
+      new THREE.MeshBasicMaterial({
+        color: 0x13251b,
+        transparent: true,
+        opacity: 0.24,
+        depthWrite: false,
+      }),
+    );
+    contactShadow.rotation.x = -Math.PI / 2;
+    contactShadow.position.y = 0.07;
+    contactShadow.visible = this.lowPower;
+    root.add(contactShadow);
+    root.userData.contactShadow = contactShadow;
     root.userData.model = model;
     root.userData.legs = [];
     model.traverse((o) => {
@@ -623,7 +666,11 @@ export class WorldView {
   disposeEntity(o) {
     this.scene.remove(o);
     // Model geometry and materials belong to shared templates; only dispose per-instance UI.
-    for (const m of [o.userData.ring, ...o.userData.bar.children]) {
+    for (const m of [
+      o.userData.ring,
+      o.userData.contactShadow,
+      ...o.userData.bar.children,
+    ]) {
       m.geometry.dispose();
       m.material.dispose();
     }
@@ -645,8 +692,11 @@ export class WorldView {
       e.mesh.material.dispose();
     }
     this.effects = [];
-    this.focusOn(-20, 19);
-    this.zoom = 42;
+    this.focusOn(
+      this.defaultZoom === 34 ? -25 : -20,
+      this.defaultZoom === 34 ? 21 : 19,
+    );
+    this.zoom = this.defaultZoom;
     this.updateCamera();
     this.fogClock = 0;
   }

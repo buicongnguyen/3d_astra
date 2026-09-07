@@ -11,11 +11,34 @@ npm ci
 npm run dev
 ```
 
-Open the printed localhost URL in a current desktop browser with WebGL enabled. Click **Deploy expedition** to start. The game pauses when the tab is hidden.
+Open the printed localhost URL in a browser with WebGL 2 support. Tap or click **Deploy expedition** to start. Phones, tablets, and desktop layouts share the same game. The game pauses when the tab is hidden.
 
 You start with a Command core, Barracks, four Harvesters, two Rangers, one Vanguard, 450 alloy, and 150 energy. This browser prototype deliberately gives you an initial production building and defenders so that you can learn the controls immediately.
 
 ## Controls
+
+### Phones and tablets
+
+| Action | Touch input |
+|---|---|
+| Select a unit or structure | Tap it |
+| Select all workers / combat units | Workers / Army toolbar button |
+| Move, gather, attack, or resume construction | Select units, then tap terrain or the target |
+| Pan the camera | Drag one finger |
+| Zoom / pan together | Pinch / move two fingers; + and − also zoom |
+| Select a group | Tap Box, then drag a rectangle; Box also lets taps add to selection |
+| Queue commands | Turn on Queue before issuing orders |
+| Construct | Workers → Actions → structure → tap location → Build here |
+| Train units | Tap a production building → Actions → unit |
+| Cancel production | Select its building → Selection → tap the queued unit |
+| Move / attack-move / stop | Selection panel buttons |
+| Camera overview / focus base | Map tab / home button |
+| Rally point | Select a production building, then tap terrain |
+| Pause / help / graphics | Header buttons; Eco / High toggles graphics quality |
+
+The command panel sits below the battlefield in portrait and beside it in landscape. Scroll a panel if needed on a short screen. Phones default to **Eco** rendering: capped pixel density and simple contact shadows. The first actual touch enables the touch controls on a hybrid device; merely having a touchscreen does not replace the mouse layout.
+
+### Mouse and keyboard
 
 | Action | Input |
 |---|---|
@@ -42,7 +65,7 @@ You start with a Command core, Barracks, four Harvesters, two Rangers, one Vangu
 
 - Harvesters collect amber **alloy** or blue **energy**, carry up to 10, deliver to a completed Command core, and repeat.
 - Select a Harvester to expose construction actions. Click a structure, then an unobstructed visible location. One nearby Harvester builds at a time.
-- A Supply relay adds 10 population capacity, up to 100. Queued units reserve population immediately.
+- A Supply relay adds 10 population capacity, up to 100. Queued units reserve population immediately. If a relay is destroyed, completed production waits for sufficient supply; the queue shows **Awaiting supply**. Research can continue while over capacity.
 - Select a Command core, Barracks, or Foundry to queue production. Click an item in its queue to cancel for a full refund.
 - Cancel unfinished structures from their selection panel for a 75% refund. Enemy destruction provides no refund.
 - Vanguards counter Rangers; Rangers counter Breakers; Breakers deal splash damage to clustered infantry.
@@ -98,7 +121,8 @@ The `.tools/` directory is ignored and is not uploaded to GitHub.
 | `src/simulation.js` | Economy, queues, construction, unit orders, combat, AI, visibility, outcomes |
 | `src/view.js` | Three.js rendering, Blender model loading, effects, fog, camera |
 | `src/main.js` | Browser input, selection, command UI, minimap, match flow |
-| `src/style.css` | Responsive desktop interface |
+| `src/touch-controls.js` | Pointer capture, tap/pan/pinch/box gesture lifecycle and cancellation |
+| `src/style.css`, `src/mobile.css` | Desktop and compact portrait/landscape interfaces |
 
 Simulation uses a fixed 20 Hz tick. Visibility updates four times per second; AI strategy updates every 2.5 seconds. Model parts are merged by material where possible, while preserving animated leg pivots. Tests opt into a local diagnostic hook with `?test=1`; ordinary players do not expose that hook.
 
@@ -109,8 +133,11 @@ npm test
 npm run build
 # With the dev server or preview already running:
 npm run test:browser
+npm run test:mobile
+# Optional second-engine smoke check after npx playwright install webkit:
+npm run test:webkit
 ```
 
 Browser tests use installed Chrome on Windows, or Playwright Chromium elsewhere (`npx playwright install chromium`). Override `CHROME_PATH` if necessary. Set `TEST_URL` to test a production server or deployed URL. Screenshots and performance results go into the ignored `test-results/` directory.
 
-See `VERIFICATION.md` for recorded results and prototype limitations.
+See `VERIFICATION.md` for recorded results and prototype limitations, and `CODE_REVIEW.md` for the logic/code review and fixes. Automated touch tests use browser emulation; physical iOS and Android devices have not been verified.

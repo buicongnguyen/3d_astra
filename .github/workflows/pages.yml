@@ -38,6 +38,7 @@ jobs:
             sleep 1
           done
           TEST_URL=http://127.0.0.1:4173/ npm run test:browser
+          TEST_URL=http://127.0.0.1:4173/ npm run test:mobile
       - name: Preserve browser diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
