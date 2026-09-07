@@ -1,5 +1,10 @@
 import "./style.css";
 import "./mobile.css";
+import "./settings.css";
+import { loadSettings, saveSettings, palette } from "./settings.js";
+import { SettingsUI } from "./settings-ui.js";
+import { MAPS, SURFACES } from "./terrain.js";
+import { Ambience } from "./ambience.js";
 import { Simulation } from "./simulation.js";
 import { WorldView } from "./view.js";
 import {
@@ -48,6 +53,7 @@ document.querySelector("#app").innerHTML = `
       <p>Build your outpost. Harvest the valley. Lead your expedition against the Crimson Collective.</p>
       <div class="briefing-rule"><span>YOUR FORCE</span><strong>4 Harvesters · 3 defenders</strong></div>
       <div class="briefing-rule"><span>OBJECTIVE</span><strong>Eliminate enemy command</strong></div>
+      <div class="briefing-tools"><select id="scenario" aria-label="Battlefield"><option value="riverlands">Meridian Riverlands</option><option value="classic">Ashen Frontier</option></select><button id="briefing-settings">Settings</button></div>
       <button id="start" class="primary" disabled>Preparing expedition…</button><small class="briefing-note">SINGLE PLAYER <span>·</span> MOUSE + KEYBOARD</small>
     </section>
     <div class="bottom-dock">
@@ -62,7 +68,10 @@ document.querySelector("#app").innerHTML = `
 `;
 
 const $ = (id) => document.getElementById(id);
-let sim = new Simulation(),
+let settings = loadSettings(matchMedia("(pointer:coarse)").matches),
+  mapId = "riverlands",
+  ambience;
+let sim = new Simulation({ map: mapId }),
   view,
   selected = new Set(),
   hover = null,
@@ -70,7 +79,7 @@ let sim = new Simulation(),
   paused = false,
   mode = null,
   buildType = null,
-  muted = false;
+  muted = settings.muted;
 let uiClock = 0,
   timePrevious = performance.now(),
   accumulator = 0,
@@ -125,13 +134,22 @@ function dockTab(name) {
 }
 
 function tone(frequency = 520, duration = 0.065) {
-  if (muted || !audioContext || performance.now() - lastTone < 70) return;
+  if (
+    muted ||
+    settings.masterVolume <= 0 ||
+    !audioContext ||
+    performance.now() - lastTone < 70
+  )
+    return;
   lastTone = performance.now();
   const oscillator = audioContext.createOscillator(),
     gain = audioContext.createGain();
   oscillator.type = "sine";
   oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
-  gain.gain.setValueAtTime(0.025, audioContext.currentTime);
+  gain.gain.setValueAtTime(
+    Math.max(0.0001, 0.05 * settings.masterVolume),
+    audioContext.currentTime,
+  );
   gain.gain.exponentialRampToValueAtTime(
     0.001,
     audioContext.currentTime + duration,
@@ -144,6 +162,7 @@ function tone(frequency = 520, duration = 0.065) {
 function unlockAudio() {
   try {
     audioContext ||= new AudioContext();
+    ambience ||= new Ambience(audioContext);
     if (audioContext.state === "suspended") audioContext.resume();
   } catch {
     /* Audio is optional. */
@@ -373,12 +392,24 @@ function minimap() {
     pz = (z) => ((z + HALF) / MAP_SIZE) * h;
   ctx.fillStyle = "#485243";
   ctx.fillRect(0, 0, w, h);
+  if (sim.terrain.id === "riverlands")
+    for (let z = 0; z < GRID; z++)
+      for (let x = 0; x < GRID; x++) {
+        ctx.fillStyle =
+          SURFACES[sim.terrain.at(x * 2 - HALF + 1, z * 2 - HALF + 1)];
+        ctx.fillRect(
+          (x * w) / GRID,
+          (z * h) / GRID,
+          w / GRID + 1,
+          h / GRID + 1,
+        );
+      }
   ctx.strokeStyle = "#64715a";
   ctx.lineWidth = 9;
   ctx.beginPath();
   ctx.moveTo(px(-25), pz(24));
   ctx.lineTo(px(25), pz(-24));
-  ctx.stroke();
+  if (sim.terrain.id === "classic") ctx.stroke();
   for (const [x, z, r] of ROCKS) {
     ctx.fillStyle = "#263c33";
     ctx.beginPath();
@@ -413,15 +444,26 @@ function minimap() {
       continue;
     }
     if (!sim.isVisible(e)) {
-      ctx.fillStyle = "#774b41";
+      ctx.fillStyle = palette(settings)[1];
+      ctx.globalAlpha = 0.45;
       ctx.fillRect(px(e.x) - 3, pz(e.z) - 3, 6, 6);
+      ctx.globalAlpha = 1;
     }
   }
   for (const e of sim.entities)
     if (sim.isVisible(e)) {
-      ctx.fillStyle = e.team === 0 ? "#a3efcb" : "#ff8169";
+      ctx.fillStyle = palette(settings)[e.team];
       const r = e.kind === "building" ? 3.5 : selected.has(e.id) ? 2.5 : 1.6;
-      ctx.fillRect(px(e.x) - r, pz(e.z) - r, r * 2, r * 2);
+      ctx.beginPath();
+      if (e.team === 0) ctx.arc(px(e.x), pz(e.z), r, 0, Math.PI * 2);
+      else {
+        ctx.moveTo(px(e.x), pz(e.z) - r - 1);
+        ctx.lineTo(px(e.x) + r + 1, pz(e.z));
+        ctx.lineTo(px(e.x), pz(e.z) + r + 1);
+        ctx.lineTo(px(e.x) - r - 1, pz(e.z));
+        ctx.closePath();
+      }
+      ctx.fill();
     }
   ctx.strokeStyle = "rgba(218,239,219,.7)";
   ctx.lineWidth = 1;
@@ -493,7 +535,7 @@ function commandAt(point, target, append = false, forced = null) {
   view.marker(
     point.x,
     point.z,
-    order.type === "attack" || forced === "attackmove" ? 0xef9f75 : 0xa3efcb,
+    order.type === "attack" || forced === "attackmove" ? 0xef9f75 : view.colors[0],
   );
   tone(440);
 }
@@ -756,6 +798,7 @@ function bindInput() {
     { passive: false },
   );
   window.addEventListener("keydown", (e) => {
+    if (settingsUI.active) return;
     if (
       e.target.matches("input, textarea") ||
       (e.repeat && [" ", "Escape"].includes(e.key))
@@ -845,6 +888,61 @@ function closeModal() {
   if (started && !sim.result) paused = false;
   keys.clear();
 }
+function applyPreferences(value) {
+  settings = value;
+  muted = settings.muted;
+  view?.applySettings(settings);
+  $("quality").textContent = settings.quality === "eco" ? "Eco" : "High";
+  $("audio").innerHTML = icon(muted ? "muted" : "volume");
+  $("audio").setAttribute("aria-label", muted ? "Enable sound" : "Mute sound");
+  document.documentElement.style.setProperty(
+    "--team-friendly",
+    palette(settings)[0],
+  );
+  document.documentElement.style.setProperty(
+    "--team-hostile",
+    palette(settings)[1],
+  );
+  if (!saveSettings(settings))
+    notice(
+      "Settings applied for this session. Browser storage is unavailable.",
+    );
+}
+const settingsUI = new SettingsUI({
+  get: () => settings,
+  apply: applyPreferences,
+  enter: () => {
+    const state = { paused, modalType };
+    paused = true;
+    keys.clear();
+    touchControls?.reset();
+    drag = null;
+    pointer.inside = false;
+    clearMode();
+    ambience?.update(settings, false, false);
+    return state;
+  },
+  leave: (state) => {
+    paused = state.paused || !!sim.result;
+    modalType = state.modalType;
+    if (document.hidden && started) paused = true;
+    updateUI();
+  },
+});
+$("briefing-settings").onclick = () => settingsUI.open();
+$("scenario").onchange = () => {
+  if (started) return;
+  mapId = $("scenario").value;
+  sim = new Simulation({ map: mapId });
+  view?.reset();
+  view?.setTerrain(sim.terrain);
+  selected.clear();
+  rememberedBuildings.clear();
+  rememberedResources.clear();
+  updateUI();
+  document.querySelector(".map-heading h1").innerHTML =
+    `${MAPS[mapId]}<span>.</span>`;
+};
 function togglePause() {
   if (!started || sim.result) return;
   if (paused) {
@@ -859,7 +957,7 @@ function togglePause() {
   keys.clear();
   $("modal").hidden = false;
   $("modal-content").innerHTML =
-    `<span class="eyebrow">TACTICAL PAUSE</span><h2 id="modal-title">Hold your position.</h2><p>The battlefield is paused. Take a moment to plan your next move.</p><button class="primary" data-resume>Resume operation ${icon("play")}</button><button class="secondary" data-restart>Restart skirmish</button>`;
+    `<span class="eyebrow">TACTICAL PAUSE</span><h2 id="modal-title">Hold your position.</h2><p>The battlefield is paused. Take a moment to plan your next move.</p><button class="primary" data-resume>Resume operation ${icon("play")}</button><button class="secondary" data-restart>Restart skirmish</button><button class="pause-settings" data-settings>Settings · army, graphics & sound</button>`;
   $("modal").querySelector("[data-resume]").focus();
 }
 function showHelp() {
@@ -898,7 +996,7 @@ function restart() {
   queueOrders = false;
   $("box-select").setAttribute("aria-pressed", "false");
   $("queue-orders").setAttribute("aria-pressed", "false");
-  sim = new Simulation();
+  sim = new Simulation({ map: mapId });
   view.reset();
   selected.clear();
   groups.clear();
@@ -991,7 +1089,7 @@ $("zoom-in").onclick = () => view.zoomBy(-4);
 $("zoom-out").onclick = () => view.zoomBy(4);
 $("quality").onclick = () => {
   if (!view) return;
-  view.setQuality(view.lowPower ? "high" : "low");
+  applyPreferences({ ...settings, quality: view.lowPower ? "high" : "eco" });
   $("quality").textContent = view.lowPower ? "Eco" : "High";
   notice(
     view.lowPower
@@ -1002,6 +1100,7 @@ $("quality").onclick = () => {
 $("audio").onclick = () => {
   unlockAudio();
   muted = !muted;
+  applyPreferences({ ...settings, muted });
   $("audio").innerHTML = icon(muted ? "muted" : "volume");
   $("audio").title = muted ? "Enable sound" : "Mute sound";
   $("audio").setAttribute("aria-label", $("audio").title);
@@ -1040,6 +1139,7 @@ $("queue").onclick = (event) => {
   updateUI();
 };
 $("modal").onclick = (event) => {
+  if (event.target.closest("[data-settings]")) settingsUI.open();
   if (event.target.closest("[data-resume]")) closeModal();
   if (event.target.closest("[data-restart]")) restart();
 };
@@ -1049,6 +1149,11 @@ function frame(now) {
   const elapsed = Math.max(0, (now - timePrevious) / 1000),
     dt = Math.min(elapsed, 0.25);
   timePrevious = now;
+  ambience?.update(
+    settings,
+    started && !paused && !sim.result,
+    sim.terrain.id === "riverlands" && Math.abs(view.focus.z) < 14,
+  );
   if (started && !paused && !sim.result) {
     accumulator += dt;
     while (accumulator >= 0.05) {
@@ -1096,12 +1201,15 @@ function frame(now) {
 
 async function boot() {
   try {
-    view = new WorldView($("world"));
+    view = new WorldView($("world"), { terrain: sim.terrain, settings });
     $("quality").textContent = view.lowPower ? "Eco" : "High";
     if (touchInput)
       $("briefing").querySelector(".briefing-note").textContent =
         "SINGLE PLAYER · TOUCH + MOUSE";
     await view.loadModels();
+    applyPreferences(settings);
+    document.querySelector(".map-heading h1").innerHTML =
+      `${MAPS[mapId]}<span>.</span>`;
     bindInput();
     $("start").disabled = false;
     $("start").innerHTML = `Deploy expedition ${icon("arrow")}`;
@@ -1131,6 +1239,9 @@ async function boot() {
         },
         get started() {
           return started;
+        },
+        get settings() {
+          return settings;
         },
       };
   } catch (error) {

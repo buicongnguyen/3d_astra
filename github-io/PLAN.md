@@ -2,6 +2,8 @@
 
 ## Decision
 
+Next feature plan: [Army settings, terrain and water](SETTINGS_AND_WORLD_PLAN.md).
+
 Build Frontier Command in this isolated `github-io/` folder using Three.js, JavaScript modules, Vite, and original Blender-generated GLB models. Deploy the static production output on GitHub Pages. Defer Godot entirely; share Blender source models and design data when that project starts.
 
 ## Playable release scope

@@ -1,0 +1,26 @@
+{
+  "generator": "Blender 4.5 Python",
+  "provenance": "Original procedural scenery, no external assets",
+  "assets": [
+    {
+      "name": "asset_tree",
+      "triangles": 70
+    },
+    {
+      "name": "asset_bush",
+      "triangles": 60
+    },
+    {
+      "name": "asset_reed",
+      "triangles": 80
+    },
+    {
+      "name": "asset_crate",
+      "triangles": 36
+    },
+    {
+      "name": "asset_bridge",
+      "triangles": 180
+    }
+  ]
+}

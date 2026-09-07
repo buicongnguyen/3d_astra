@@ -1,5 +1,7 @@
 # Logic and code review — desktop and mobile
 
+Subsequent settings/Riverlands review and fixes: [EVALUATION_AND_RELEASE.md](EVALUATION_AND_RELEASE.md). The original mobile review below is retained as historical context.
+
 Reviewed 2026-09-08. Scope: simulation, navigation, browser input, rendering lifecycle, responsive HUD, tests, and GitHub Pages deployment. Changes preserve the original Three.js/Blender project and the deferred Godot plan.
 
 ## Findings and fixes

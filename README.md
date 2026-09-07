@@ -2,6 +2,8 @@
 
 An original stylized 3D RTS inspired by economic base-building and tactical unit combat.
 
+Now includes customizable army colors, saved settings, and the Riverlands battlefield with bridges, a ford, varied ground and Blender scenery. [Evaluation and release review](github-io/EVALUATION_AND_RELEASE.md).
+
 [Play on desktop, phone, or tablet](https://buicongnguyen.github.io/3d_astra/). Touch controls include tap commands, drag pan, pinch zoom, and portrait/landscape layouts.
 
 ![Frontier Command preview](github-io/docs/preview.png)

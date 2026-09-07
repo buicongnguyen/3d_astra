@@ -1,6 +1,13 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { Terrain } from "./terrain.js";
+import { defaults, palette } from "./settings.js";
+import {
+  EnvironmentView,
+  paintTerrain,
+  optimizeEnvironment,
+} from "./environment-view.js";
 import {
   DEFINITIONS as D,
   MAP_SIZE,
@@ -10,7 +17,6 @@ import {
   clamp,
 } from "./data.js";
 
-const COLORS = [0x92ebc5, 0xef7660];
 const mat = (color, extra = {}) =>
   new THREE.MeshStandardMaterial({ color, roughness: 0.88, ...extra });
 let seed = 1482;
@@ -27,9 +33,15 @@ function mesh(geometry, material, x = 0, y = 0, z = 0) {
 }
 
 export class WorldView {
-  constructor(container) {
+  constructor(
+    container,
+    { terrain = new Terrain(), settings = defaults() } = {},
+  ) {
     this.container = container;
-    this.lowPower = matchMedia("(pointer: coarse)").matches;
+    this.terrain = terrain;
+    this.settings = settings;
+    this.colors = palette(settings).map((c) => new THREE.Color(c).getHex());
+    this.lowPower = settings.quality === "eco";
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       powerPreference: "high-performance",
@@ -88,7 +100,7 @@ export class WorldView {
     this.preview = mesh(
       new THREE.CylinderGeometry(1, 1, 0.09, 48),
       new THREE.MeshBasicMaterial({
-        color: COLORS[0],
+        color: this.colors[0],
         transparent: true,
         opacity: 0.3,
         depthWrite: false,
@@ -101,6 +113,66 @@ export class WorldView {
     window.addEventListener("resize", () => this.resize());
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(container);
+    this.reducedMotion = matchMedia("(prefers-reduced-motion:reduce)");
+    this.reducedMotion.addEventListener("change", () =>
+      this.environment?.configure(this.settings),
+    );
+  }
+  applySettings(settings) {
+    this.settings = settings;
+    this.colors = palette(settings).map((c) => new THREE.Color(c).getHex());
+    for (const [key, template] of this.teamTemplates) {
+      const team = Number(key.split("-").at(-1));
+      template.traverse((o) => {
+        if (!o.isMesh || !o.material.name.startsWith("Team")) return;
+        o.material.color.setHex(this.colors[team]);
+        if (o.material.name.startsWith("TeamGlow"))
+          o.material.emissive.setHex(this.colors[team]);
+      });
+    }
+    for (const o of this.objects.values()) {
+      o.userData.ring.material.color.setHex(this.colors[o.userData.team]);
+      o.userData.fill.material.color.setHex(this.colors[o.userData.team]);
+    }
+    for (const e of this.effects)
+      if (e.team !== undefined)
+        e.mesh.material.color.setHex(this.colors[e.team]);
+    this.terrainRoot?.traverse((o) => {
+      if (o.userData.team !== undefined)
+        o.material.color.setHex(this.colors[o.userData.team]);
+    });
+    if (this.lowPower !== (settings.quality === "eco"))
+      this.setQuality(settings.quality === "eco" ? "low" : "high");
+    this.environment?.configure(settings);
+    if (this.grass) this.grass.visible = settings.detail;
+  }
+  setTerrain(terrain) {
+    this.terrain = terrain;
+    this.environment?.dispose();
+    if (this.terrainRoot) {
+      this.scene.remove(this.terrainRoot);
+      const geometries = new Set(),
+        materials = new Set();
+      this.terrainRoot.traverse((o) => {
+        if (o.isInstancedMesh) o.dispose();
+        if (o.geometry) geometries.add(o.geometry);
+        if (o.material) materials.add(o.material);
+      });
+      for (const g of geometries) g.dispose();
+      for (const m of materials) {
+        m.map?.dispose();
+        m.dispose();
+      }
+    }
+    this.createTerrain();
+    if (this.environmentAssets) {
+      this.environment = new EnvironmentView(
+        this.scene,
+        terrain,
+        this.environmentAssets,
+      );
+      this.environment.configure(this.settings);
+    }
   }
   setQuality(level) {
     this.lowPower = level === "low";
@@ -166,9 +238,9 @@ export class WorldView {
               if (!materials.has(name)) {
                 const m = o.material.clone();
                 if (name.startsWith("Team")) {
-                  m.color.setHex(COLORS[team]);
+                  m.color.setHex(this.colors[team]);
                   if (name.startsWith("TeamGlow")) {
-                    m.emissive.setHex(COLORS[team]);
+                    m.emissive.setHex(this.colors[team]);
                     m.emissiveIntensity = 0.8;
                   }
                 }
@@ -183,13 +255,29 @@ export class WorldView {
           this.models.set(type, true);
         }),
     );
+    this.environmentAssets = (
+      await loader.loadAsync(
+        `${import.meta.env.BASE_URL}models/environment.glb`,
+      )
+    ).scene;
+    optimizeEnvironment(this.environmentAssets);
+    this.environment = new EnvironmentView(
+      this.scene,
+      this.terrain,
+      this.environmentAssets,
+    );
+    this.environment.configure(this.settings);
   }
   createTerrain() {
+    seed = 1482;
+    this.terrainRoot = new THREE.Group();
+    this.scene.add(this.terrainRoot);
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = 1024;
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#777d58";
     ctx.fillRect(0, 0, 1024, 1024);
+    if (this.terrain.id === "riverlands") paintTerrain(ctx, this.terrain, 1024);
     for (let i = 0; i < 16000; i++) {
       const x = random() * 1024,
         y = random() * 1024,
@@ -234,19 +322,27 @@ export class WorldView {
     }
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    const ground = mesh(
-      new THREE.PlaneGeometry(MAP_SIZE, MAP_SIZE),
-      mat(0xffffff, { map: texture }),
-    );
+    const groundGeometry = new THREE.PlaneGeometry(MAP_SIZE, MAP_SIZE, 96, 96);
+    if (this.terrain.id === "riverlands") {
+      const p = groundGeometry.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        const x = p.getX(i),
+          z = -p.getY(i);
+        if (Math.abs(z) < 4 && Math.abs(x) > 5)
+          p.setZ(i, -0.5 * Math.min(1, 4 - Math.abs(z)));
+      }
+      groundGeometry.computeVertexNormals();
+    }
+    const ground = mesh(groundGeometry, mat(0xffffff, { map: texture }));
     ground.rotation.x = -Math.PI / 2;
     ground.castShadow = false;
-    this.scene.add(ground);
-    this.scene.add(
+    this.terrainRoot.add(ground);
+    this.terrainRoot.add(
       mesh(
         new THREE.BoxGeometry(MAP_SIZE, 2.5, MAP_SIZE),
         mat(0x424634),
         0,
-        -1.3,
+        this.terrain.id === "riverlands" ? -1.85 : -1.3,
         0,
       ),
     );
@@ -255,7 +351,7 @@ export class WorldView {
     this.grid.material.transparent = true;
     this.grid.material.opacity = 0.15;
     this.grid.visible = false;
-    this.scene.add(this.grid);
+    this.terrainRoot.add(this.grid);
     const edge = new THREE.LineSegments(
       new THREE.EdgesGeometry(new THREE.BoxGeometry(MAP_SIZE, 0.1, MAP_SIZE)),
       new THREE.LineBasicMaterial({
@@ -264,7 +360,7 @@ export class WorldView {
         opacity: 0.3,
       }),
     );
-    this.scene.add(edge);
+    this.terrainRoot.add(edge);
     const rockMat = mat(0x626957),
       topMat = mat(0x888872);
     for (const [x, z, r] of ROCKS) {
@@ -282,7 +378,7 @@ export class WorldView {
           r * (0.6 + random() * 0.4),
         );
         stone.rotation.set(random() * 0.7, random() * 6, random() * 0.4);
-        this.scene.add(stone);
+        this.terrainRoot.add(stone);
       }
     }
     const pebbles = new THREE.InstancedMesh(
@@ -294,11 +390,13 @@ export class WorldView {
     for (let i = 0; i < 500; i++) {
       dummy.position.set((random() - 0.5) * 95, 0.08, (random() - 0.5) * 95);
       dummy.scale.setScalar(0.5 + random());
+      if (this.terrain.id === "riverlands" && Math.abs(dummy.position.z) < 5)
+        dummy.scale.setScalar(0);
       dummy.rotation.set(random(), random() * 6, random());
       dummy.updateMatrix();
       pebbles.setMatrixAt(i, dummy.matrix);
     }
-    this.scene.add(pebbles);
+    this.terrainRoot.add(pebbles);
     const grass = new THREE.InstancedMesh(
       new THREE.ConeGeometry(0.22, 0.6, 3),
       mat(0x515f40),
@@ -307,11 +405,18 @@ export class WorldView {
     for (let i = 0; i < 850; i++) {
       dummy.position.set((random() - 0.5) * 95, 0.22, (random() - 0.5) * 95);
       dummy.scale.setScalar(0.4 + random() * 0.7);
+      if (
+        this.terrain.id === "riverlands" &&
+        this.terrain.at(dummy.position.x, dummy.position.z) !== "grass"
+      )
+        dummy.scale.setScalar(0);
       dummy.rotation.set(0, random() * 6, 0.15);
       dummy.updateMatrix();
       grass.setMatrixAt(i, dummy.matrix);
     }
-    this.scene.add(grass);
+    this.terrainRoot.add(grass);
+    this.grass = grass;
+    grass.visible = this.settings.detail;
     // Subtle starting-base landing pad.
     for (const side of [1, -1]) {
       const pad = mesh(
@@ -323,7 +428,7 @@ export class WorldView {
       );
       pad.rotation.y = Math.PI / 8;
       pad.castShadow = false;
-      this.scene.add(pad);
+      this.terrainRoot.add(pad);
       const ring = new THREE.Mesh(
         new THREE.RingGeometry(6.3, 6.38, 64),
         new THREE.MeshBasicMaterial({
@@ -334,7 +439,7 @@ export class WorldView {
       );
       ring.rotation.x = -Math.PI / 2;
       ring.position.set(-25 * side, 0.052, 24 * side);
-      this.scene.add(ring);
+      this.terrainRoot.add(ring);
     }
   }
   createFog() {
@@ -466,6 +571,7 @@ export class WorldView {
     root.add(contactShadow);
     root.userData.contactShadow = contactShadow;
     root.userData.model = model;
+    root.userData.team = e.team;
     root.userData.legs = [];
     model.traverse((o) => {
       if (o.name.startsWith("leg_"))
@@ -474,7 +580,7 @@ export class WorldView {
     const ring = new THREE.Mesh(
       new THREE.RingGeometry(e.radius + 0.3, e.radius + 0.42, 40),
       new THREE.MeshBasicMaterial({
-        color: COLORS[e.team],
+        color: this.colors[e.team],
         side: THREE.DoubleSide,
         transparent: true,
         opacity: 0.95,
@@ -494,7 +600,10 @@ export class WorldView {
       );
     const fill = new THREE.Mesh(
       new THREE.PlaneGeometry(2, 0.09),
-      new THREE.MeshBasicMaterial({ color: COLORS[e.team], depthTest: false }),
+      new THREE.MeshBasicMaterial({
+        color: this.colors[e.team],
+        depthTest: false,
+      }),
     );
     fill.position.z = 0.01;
     bar.add(back, fill);
@@ -541,7 +650,7 @@ export class WorldView {
     this.resourceObjects.set(e.id, group);
     return group;
   }
-  marker(x, z, color = COLORS[0]) {
+  marker(x, z, color = this.colors[0]) {
     const m = new THREE.Mesh(
       new THREE.RingGeometry(0.7, 0.85, 32),
       new THREE.MeshBasicMaterial({
@@ -555,7 +664,7 @@ export class WorldView {
     m.position.set(x, 0.23, z);
     m.renderOrder = 4;
     this.scene.add(m);
-    this.effects.push({ mesh: m, life: 0.8, max: 0.8, marker: true });
+    this.effects.push({ mesh: m, life: 0.8, max: 0.8, marker: true, team: color===this.colors[0]?0:undefined });
   }
   event(event, sim) {
     if (
@@ -568,13 +677,18 @@ export class WorldView {
           new THREE.Vector3(event.tx, 0.9, event.tz),
         ]),
         new THREE.LineBasicMaterial({
-          color: event.heavy ? 0xffc679 : COLORS[event.team],
+          color: event.heavy ? 0xffc679 : this.colors[event.team],
           transparent: true,
           opacity: 0.9,
         }),
       );
       this.scene.add(line);
-      this.effects.push({ mesh: line, life: 0.12, max: 0.12 });
+      this.effects.push({
+        mesh: line,
+        life: 0.12,
+        max: 0.12,
+        team: event.heavy ? undefined : event.team,
+      });
     } else if (event.type === "death" && sim.isVisible(event)) {
       const m = mesh(
         new THREE.IcosahedronGeometry(event.building ? 2 : 0.8, 0),
@@ -592,6 +706,7 @@ export class WorldView {
     }
   }
   update(sim, dt, selected, hover) {
+    this.environment?.update(sim, dt);
     const alive = new Set();
     for (const e of sim.entities) {
       alive.add(e.id);
@@ -676,6 +791,7 @@ export class WorldView {
     }
   }
   reset() {
+    this.environment?.reset();
     for (const o of this.objects.values()) this.disposeEntity(o);
     this.objects.clear();
     for (const o of this.resourceObjects.values()) {

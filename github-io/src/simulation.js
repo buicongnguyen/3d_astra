@@ -10,9 +10,10 @@ import {
   clamp,
 } from "./data.js";
 import { Navigation } from "./navigation.js";
+import { Terrain } from "./terrain.js";
 
 export class Simulation {
-  constructor({ ai = true } = {}) {
+  constructor({ ai = true, map = "classic" } = {}) {
     this.aiEnabled = ai;
     this.entities = [];
     this.resources = [];
@@ -27,7 +28,8 @@ export class Simulation {
     }));
     this.events = [];
     this.result = null;
-    this.nav = new Navigation();
+    this.terrain = new Terrain(map);
+    this.nav = new Navigation(this.terrain);
     this.aiClock = 0;
     this.waveAt = 85;
     this.visionClock = 0;
@@ -272,6 +274,8 @@ export class Simulation {
     if (![x, z].every(Number.isFinite)) return "Invalid position.";
     const d = D[type];
     if (!d || d.kind !== "building") return "Invalid structure.";
+    const terrainError = this.terrain.placement(x, z, d.radius);
+    if (terrainError) return terrainError;
     if (Math.abs(x) > HALF - d.radius - 2 || Math.abs(z) > HALF - d.radius - 2)
       return "Outside the buildable area.";
     if (!this.isVisible({ x, z }, team))
@@ -382,7 +386,7 @@ export class Simulation {
     }
     e.pathClock -= dt;
     if (e.pathClock <= 0 || e.pathRevision !== this.nav.revision) {
-      e.path = this.nav.path(e, goal);
+      e.path = this.nav.path(e, goal, e.radius);
       e.pathClock = 1.3 + (e.id % 7) * 0.08;
       e.pathRevision = this.nav.revision;
     }
@@ -408,7 +412,8 @@ export class Simulation {
       return false;
     }
     const nextPosition = { x: e.x + (dx / d) * step, z: e.z + (dz / d) * step };
-    if (!this.nav.canTraverse(e, nextPosition, 0.5)) {
+    if (!this.nav.canTraverse(e, nextPosition, e.radius)) {
+      e.moving = false;
       e.path = [];
       e.pathClock = 0;
       return false;
@@ -760,15 +765,11 @@ export class Simulation {
         const nx = d > 0.001 ? dx / d : 1,
           nz = d > 0.001 ? dz / d : 0,
           push = Math.min((min - d) * 0.5, dt * 2);
-        if (
-          this.nav.canStand(a.x + nx * push, a.z + nz * push, a.radius * 0.8)
-        ) {
+        if (this.nav.canStand(a.x + nx * push, a.z + nz * push, a.radius)) {
           a.x += nx * push;
           a.z += nz * push;
         }
-        if (
-          this.nav.canStand(b.x - nx * push, b.z - nz * push, b.radius * 0.8)
-        ) {
+        if (this.nav.canStand(b.x - nx * push, b.z - nz * push, b.radius)) {
           b.x -= nx * push;
           b.z -= nz * push;
         }

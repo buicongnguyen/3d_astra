@@ -2,6 +2,8 @@
 
 An original single-player 3D RTS: establish an economy, build an outpost, produce an army, and destroy the opposing Command core. Built with Three.js, Vite, and nine original Blender-generated GLB models.
 
+The **Riverlands** update adds saved army colors, graphics/audio settings, varied ground, a river with two bridges and a shallow ford, and original Blender scenery. Choose Riverlands or the classic Ashen Frontier in the briefing. Open **Settings** there or through **Pause → Settings** during play. See [the evaluation and release review](EVALUATION_AND_RELEASE.md).
+
 ## Play locally
 
 Requires Node.js 22.12+ (or a compatible newer release).
@@ -63,6 +65,9 @@ The command panel sits below the battlefield in portrait and beside it in landsc
 
 ### Economy and combat
 
+- Riverlands deep water blocks land units. Use the bridges or pale central ford; buildings must stay clear of water, banks and crossing approaches. Surface types currently have equal movement speeds.
+- Army colors affect paint and team markers, not unit statistics. Preferences save locally; matches are not saved. Eco/High, decoration, water motion, ambience, mute and master volume share one settings model.
+
 - Harvesters collect amber **alloy** or blue **energy**, carry up to 10, deliver to a completed Command core, and repeat.
 - Select a Harvester to expose construction actions. Click a structure, then an unobstructed visible location. One nearby Harvester builds at a time.
 - A Supply relay adds 10 population capacity, up to 100. Queued units reserve population immediately. If a relay is destroyed, completed production waits for sufficient supply; the queue shows **Awaiting supply**. Research can continue while over capacity.
@@ -93,6 +98,7 @@ Exported models are committed in `public/models/`; Blender is **not required** t
 - Editable source: `assets/source/frontier-library.blend`.
 - Generator: `tools/blender/generate_assets.py`.
 - Asset inventory: `public/models/manifest.json`.
+- Riverlands scenery: `public/models/environment.glb`, `environment-manifest.json`, `assets/source/riverlands-library.blend`, and `tools/blender/generate_environment.py`. All scenery is original; no external textures/audio services are required.
 - Generated and verified with official **Blender 4.5.3 LTS**, using background Python execution. No Blender MCP connection was used.
 - Coordinates use meters, ground-level origins, and glTF Y-up export.
 - All nine models are original procedural geometry. Material names `Team` and `TeamGlow` control team colors.
@@ -134,6 +140,7 @@ npm run build
 # With the dev server or preview already running:
 npm run test:browser
 npm run test:mobile
+npm run test:improvements
 # Optional second-engine smoke check after npx playwright install webkit:
 npm run test:webkit
 ```

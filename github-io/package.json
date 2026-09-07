@@ -7,10 +7,11 @@
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node --test tests/simulation.test.js",
+    "test": "node --test tests/*.test.js",
     "test:browser": "node tests/browser.mjs",
     "test:mobile": "node tests/mobile.mjs",
-    "test:webkit": "node tests/webkit.mjs"
+    "test:webkit": "node tests/webkit.mjs",
+    "test:improvements": "node tests/improvements.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

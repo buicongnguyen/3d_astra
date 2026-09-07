@@ -1,0 +1,243 @@
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  background: #081615dc;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: max(12px, env(safe-area-inset-top))
+    max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom))
+    max(12px, env(safe-area-inset-left));
+}
+.settings-panel {
+  width: min(600px, 100%);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 24px;
+  background: #172b26;
+  border: 1px solid #597363;
+  border-radius: 10px;
+  box-shadow: 0 25px 100px #0008;
+}
+.settings-panel header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.settings-panel h2 {
+  font-size: 30px;
+  font-weight: 400;
+  margin: 7px 0 16px;
+}
+.settings-panel button,
+.settings-panel select {
+  min-height: 44px;
+  border: 1px solid #58756066;
+  background: #20392f;
+  border-radius: 5px;
+  padding: 8px 12px;
+  color: #dae6ce;
+  cursor: pointer;
+}
+.settings-panel header > button {
+  font-size: 28px;
+  width: 44px;
+}
+.settings-panel nav {
+  display: flex;
+  gap: 8px;
+  padding-bottom: 16px;
+}
+.settings-panel nav button {
+  flex: 1;
+  text-transform: capitalize;
+}
+.settings-panel [aria-pressed="true"] {
+  border-color: #bddba8;
+  background: #35583e;
+}
+.settings-body {
+  overflow: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+}
+.settings-panel fieldset {
+  border: 0;
+  padding: 0;
+  margin: 18px 0;
+}
+.settings-panel legend {
+  font-size: 12px;
+  color: #c2cdb2;
+  margin-bottom: 8px;
+}
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+}
+.swatches button {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 7px 3px;
+  font-size: 10px;
+  text-transform: capitalize;
+}
+.swatches i {
+  display: block;
+  width: 25px;
+  height: 18px;
+  border-radius: 3px;
+  background: var(--swatch);
+  box-shadow: inset 0 0 0 1px #fff4;
+}
+.army-preview {
+  display: flex;
+  gap: 12px;
+  background: radial-gradient(ellipse at center, #62745455, #10221e);
+  border: 1px solid #5f776355;
+  border-radius: 6px;
+  padding: 20px 10px;
+}
+.preview-unit {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  gap: 16px;
+  color: var(--preview-player);
+}
+.preview-unit.enemy {
+  color: var(--preview-enemy);
+}
+.preview-unit i {
+  display: block;
+  width: 64px;
+  height: 52px;
+  background: linear-gradient(
+    90deg,
+    #273638 20%,
+    currentColor 20% 80%,
+    #344443 80%
+  );
+  border: 6px solid #8f9b89;
+  box-shadow:
+    7px 9px 0 #111e20,
+    -7px 9px 0 #111e20;
+  transform: perspective(120px) rotateX(12deg);
+  border-radius: 8px 8px 2px 2px;
+}
+.preview-unit b {
+  font:
+    10px Consolas,
+    monospace;
+  letter-spacing: 1px;
+}
+.settings-note,
+#palette-warning {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #a9bba7;
+}
+.settings-panel footer {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+}
+.settings-panel footer .primary {
+  margin: 0;
+  flex: 1;
+  background: #b7d8a2;
+  color: #1d3526;
+  min-height: 44px;
+}
+.setting-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  border-bottom: 1px solid #7b96702f;
+  font-size: 13px;
+}
+.setting-row input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  accent-color: #b7d8a2;
+}
+.setting-row input[type="range"] {
+  max-width: 45%;
+  accent-color: #b7d8a2;
+}
+.settings-panel :focus-visible {
+  outline: 2px solid #f3d48e;
+  outline-offset: 2px;
+}
+.briefing-tools {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  margin-top: 12px;
+}
+.briefing-tools button,
+.briefing-tools select {
+  min-height: 44px;
+  background: #20382d;
+  border: 1px solid #55755088;
+  color: #d5dfc7;
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 11px;
+}
+.briefing-tools select {
+  min-width: 0;
+  flex: 1;
+}
+.pause-settings {
+  width: 100%;
+  margin-top: 10px;
+  min-height: 44px;
+  background: #284431;
+  border: 1px solid #658256;
+  color: #d5dfc7;
+  border-radius: 4px;
+}
+@media (max-width: 600px), (max-height: 600px) {
+  .settings-panel {
+    padding: 15px;
+  }
+  .settings-panel h2 {
+    font-size: 23px;
+  }
+  .settings-panel nav {
+    padding-bottom: 8px;
+  }
+  .settings-panel fieldset {
+    margin: 12px 0;
+  }
+  .army-preview {
+    padding: 14px 6px;
+  }
+  .settings-note {
+    margin: 7px 0;
+  }
+  .settings-panel footer button {
+    padding: 8px;
+    font-size: 11px;
+  }
+  .swatches button {
+    min-height: 44px;
+  }
+  .swatches {
+    gap: 4px;
+  }
+}
+.map-legend .friendly {
+  background: var(--team-friendly, #92ebc5);
+}
+.map-legend .hostile {
+  background: var(--team-hostile, #ef7660);
+  transform: rotate(45deg);
+}

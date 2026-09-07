@@ -1,5 +1,7 @@
 # Verification record
 
+Latest release: [Settings and Riverlands verification](EVALUATION_AND_RELEASE.md#verification), including **33 tests**, the expanded browser suites and the new performance sample. The record below documents the earlier mobile release.
+
 Updated: 2026-09-08. Initial asset/deployment verification: 2026-09-07.
 
 ## Executed checks
