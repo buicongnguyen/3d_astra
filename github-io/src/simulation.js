@@ -17,6 +17,7 @@ export class Simulation {
     this.entities = [];
     this.resources = [];
     this.nextId = 1;
+    this.nextQueueId = 1;
     this.time = 0;
     this.players = [0, 1].map(() => ({
       alloy: 450,
@@ -221,7 +222,7 @@ export class Simulation {
     )
       return fail("Weapon upgrade is already researched or queued.");
     this.pay(b.team, d.cost);
-    b.queue.push({ type, elapsed: 0 });
+    b.queue.push({ id: this.nextQueueId++, type, elapsed: 0 });
     this.message(`${d.name} queued.`, b.team);
     return true;
   }

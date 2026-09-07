@@ -11,6 +11,8 @@ Date: 2026-09-07.
 - **Browser interaction suite passed** in installed Chrome 152, both against the development server and against the production build mounted at `/3d_astra/`.
 - Browser checks cover all nine model loads, start, production/refund, mouse selection, context gathering and delivery, construction placement and completion, pause/resume, controls, control groups, victory/defeat screens, restart, and a 100-friendly-unit render scenario.
 - **No JavaScript exceptions or HTTP asset errors** occurred in those browser runs.
+- A slower GitHub runner exposed production-queue buttons being recreated during progress updates. Queue items now retain stable IDs and DOM nodes. A browser regression check verifies the button survives progress updates before clicking it.
+- The complete interaction suite also passed with **forced SwiftShader software rendering** on Windows. That 100-friendly-unit sample measured approximately 116.6 ms median and 133.3 ms p95 frame intervals. Hardware acceleration is needed for smooth play at that scale.
 - Screenshots of the briefing and gameplay were inspected for layout, unit visibility, model appearance, selection feedback, and HUD readability at 1440 × 960.
 - Official portable **Blender 4.5.3 LTS** ran the asset generator successfully. All nine GLB exports and the editable `.blend` asset library were generated locally.
 

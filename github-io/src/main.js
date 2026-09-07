@@ -75,6 +75,7 @@ let pointer = { x: 0, y: 0, inside: false },
   rememberedBuildings = new Map(),
   rememberedResources = new Map(),
   lastSelectionKey = "",
+  lastQueueKey = "",
   modalType = null;
 const milestones = { economy: false, army: false };
 
@@ -269,11 +270,22 @@ function updateUI() {
           own.some((b) => b.queue.some((q) => q.type === "upgrade"))));
     button.disabled = !!unavailable;
   }
-  $("queue").innerHTML = e?.queue.length
-    ? `<span class="queue-label">QUEUE</span>${e.queue.map((q, i) => `<button data-cancel="${i}" title="Cancel ${D[q.type].name} — full refund">${icon(D[q.type].icon)}<span>${Math.min(100, Math.floor((q.elapsed / D[q.type].time) * 100))}%</span><i style="width:${Math.min(100, (q.elapsed / D[q.type].time) * 100)}%"></i></button>`).join("")}`
-    : e && !e.complete
-      ? `<button class="cancel-build" data-cancel-build="${e.id}">Cancel construction · 75% refund</button>`
-      : "";
+  const queueKey = `${e?.id}/${e?.complete}/${e?.queue.map(q => q.id).join(',')}`;
+  // Preserve interactive nodes while updating progress, including on slow frames.
+  if (queueKey !== lastQueueKey) {
+    lastQueueKey = queueKey;
+    $("queue").innerHTML = e?.queue.length
+      ? `<span class="queue-label">QUEUE</span>${e.queue.map((q, i) => `<button data-cancel="${i}" title="Cancel ${D[q.type].name} — full refund">${icon(D[q.type].icon)}<span></span><i></i></button>`).join("")}`
+      : e && !e.complete
+        ? `<button class="cancel-build" data-cancel-build="${e.id}">Cancel construction · 75% refund</button>`
+        : "";
+  }
+  for (const button of $("queue").querySelectorAll('[data-cancel]')) {
+    const q = e.queue[Number(button.dataset.cancel)];
+    const progress = Math.min(100, q.elapsed / D[q.type].time * 100);
+    button.querySelector('span').textContent = `${Math.floor(progress)}%`;
+    button.querySelector('i').style.width = `${progress}%`;
+  }
   for (const b of document.querySelectorAll(".order-buttons button"))
     b.disabled = !started || paused || !es.some((u) => u.kind === "unit");
 }

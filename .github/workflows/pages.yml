@@ -38,6 +38,13 @@ jobs:
             sleep 1
           done
           TEST_URL=http://127.0.0.1:4173/ npm run test:browser
+      - name: Preserve browser diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-diagnostics
+          path: github-io/test-results/
+          retention-days: 7
       - name: Configure Pages
         uses: actions/configure-pages@v5
       - name: Upload static game
