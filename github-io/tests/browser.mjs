@@ -47,6 +47,9 @@ try {
   await page.getByRole("button", { name: "Deploy expedition" }).click();
   assert.equal(await page.locator("#briefing").isVisible(), false);
   assert.equal(await page.evaluate(() => window.__frontier.started), true);
+  // UI checks must not race a timed AI raid on slower rendering machines.
+  // Normal AI economy/combat/victory are covered separately on both maps.
+  await page.evaluate(() => { window.__frontier.sim.aiEnabled = false; });
 
   // Actual UI production and cancellation.
   const before = await page.evaluate(

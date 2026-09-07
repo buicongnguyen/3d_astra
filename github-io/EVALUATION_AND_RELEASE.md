@@ -39,6 +39,7 @@ This executes the practical settings/terrain/water/scenery release from [SETTING
 | Particle time advanced only on simulation-changing render frames, but used render delta. | Use elapsed simulation time for particles and pause animation with the match. |
 | Old instancing buffers and water textures needed explicit disposal during scenario changes. | Dispose map-owned geometry/materials/textures and instance buffers; retain only shared Blender templates. Five restart/settings cycles keep reported GPU resource counts unchanged. |
 | Volume zero still allowed a tiny synthesized tone; reduced motion was only sampled initially. | Silence tones at zero volume and respond to changes in the reduced-motion media query. |
+| CI's older control-group UI test assumed all starting defenders survived while a timed AI raid remained active. On the slower runner, two defenders were killed before that assertion. | Disable strategic AI during the deterministic UI sequence. Keep normal AI economy/combat/victory tests enabled separately on both maps. The captured CI screenshot confirmed the raid, rather than a control-group defect. |
 
 No unresolved blocking issue was found in the tested release flows. This is a bounded prototype review, not a claim that every possible gameplay state is verified.
 
