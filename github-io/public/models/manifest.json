@@ -1,0 +1,61 @@
+{
+  "generator": "Blender Python",
+  "units": "meters",
+  "assets": [
+    {
+      "name": "worker",
+      "file": "worker.glb",
+      "triangles": 724,
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "vanguard",
+      "file": "vanguard.glb",
+      "triangles": 748,
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "ranger",
+      "file": "ranger.glb",
+      "triangles": 704,
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "breaker",
+      "file": "breaker.glb",
+      "triangles": 968,
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "hq",
+      "file": "hq.glb",
+      "triangles": 1048,
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "barracks",
+      "file": "barracks.glb",
+      "triangles": 620,
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "foundry",
+      "file": "foundry.glb",
+      "triangles": 508,
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "relay",
+      "file": "relay.glb",
+      "triangles": 448,
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "tower",
+      "file": "tower.glb",
+      "triangles": 484,
+      "animation": "Runtime articulated parts; no baked clips"
+    }
+  ],
+  "provenance": "Original assets generated for this repository; no third-party model sources."
+}

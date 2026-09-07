@@ -1,0 +1,60 @@
+name: Test and deploy Frontier Command
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: github-io
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: github-io/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Install browser for smoke tests
+        run: npx playwright install --with-deps chromium
+      - name: Test the built game
+        run: |
+          npm run preview -- --port 4173 > /tmp/frontier-preview.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:4173/ > /dev/null; then break; fi
+            sleep 1
+          done
+          TEST_URL=http://127.0.0.1:4173/ npm run test:browser
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload static game
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: github-io/dist
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
