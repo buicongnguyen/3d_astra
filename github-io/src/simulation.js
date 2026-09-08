@@ -246,6 +246,12 @@ export class Simulation {
         );
         index++;
       }
+      if (["move", "attackmove"].includes(o.type)) {
+        // A center point inside the map can still leave a large vehicle outside it.
+        const limit = this.terrain.half - Math.max(1, e.radius + 0.1);
+        o.x = clamp(o.x, -limit, limit);
+        o.z = clamp(o.z, -limit, limit);
+      }
       if (!append || o.type === "stop") {
         e.orders = [];
         e.path = [];
@@ -425,7 +431,7 @@ export class Simulation {
     }
     if (!next) {
       e.moving = false;
-      return distance(e, goal) < 2.1 || !this.nav.canStand(goal.x, goal.z);
+      return distance(e, goal) < 2.1 || !this.nav.canStand(goal.x, goal.z, e.radius);
     }
     const dx = next.x - e.x,
       dz = next.z - e.z,

@@ -753,6 +753,14 @@ function bindInput() {
     hover = null;
     $("hover-label").hidden = true;
   });
+  // The footer covers the canvas's bottom edge. Track hover there without
+  // passing clicks through the UI or scrolling while using its Controls link.
+  const statusbar = document.querySelector(".statusbar");
+  statusbar.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse") return;
+    pointer = { x: e.clientX, y: e.clientY, inside: !e.target.closest("button") };
+  });
+  statusbar.addEventListener("pointerleave", () => { pointer.inside = false; });
   canvas.addEventListener("pointerup", (e) => {
     if (e.pointerType !== "mouse") return;
     if (!drag) return;
@@ -886,7 +894,9 @@ function bindInput() {
       z: ((e.clientY - r.top) / r.height) * MAP_SIZE - HALF,
     };
   };
-  $("minimap").addEventListener("pointerdown", (e) => {
+  // Use a click target so Chrome's touch adjustment recognizes the whole map
+  // instead of redirecting taps near its corners to the neighboring Home button.
+  $("minimap").addEventListener("click", (e) => {
     if (e.button === 0) {
       const p = mapPoint(e);
       if (mode && mode !== "build") {
@@ -1216,6 +1226,7 @@ function frame(now) {
       if (pointer.x < r.left + 8) dx--;
       if (pointer.x > r.right - 8) dx++;
       if (pointer.y < r.top + 8) dy++;
+      if (pointer.y > r.bottom - 8) dy--;
     }
     if (dx || dy) view.screenPan(dx * speed, dy * speed);
   }

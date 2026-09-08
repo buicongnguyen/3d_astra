@@ -43,6 +43,7 @@ jobs:
           TEST_URL=http://127.0.0.1:4173/ npm run test:improvements
           TEST_URL=http://127.0.0.1:4173/ npm run test:progression
           TEST_URL=http://127.0.0.1:4173/ npm run test:stages
+          TEST_URL=http://127.0.0.1:4173/ npm run test:corners
       - name: Preserve browser diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
