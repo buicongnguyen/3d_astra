@@ -10,6 +10,7 @@
     "test": "node --test tests/*.test.js",
     "test:browser": "node tests/browser.mjs",
     "test:mobile": "node tests/mobile.mjs",
+    "test:mobile-controls": "node tests/mobile-controls.mjs",
     "test:webkit": "node tests/webkit.mjs",
     "test:improvements": "node tests/improvements.mjs",
     "test:progression": "node tests/progression.mjs"
