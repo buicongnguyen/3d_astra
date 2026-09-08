@@ -23,6 +23,136 @@ button {
 .selection-scroll, .briefing-copy {
   display: contents;
 }
+/* Keep desktop status panels compact instead of stretching across the battlefield. */
+:root:not(.compact-ui) .bottom-dock {
+  grid-template-columns: 176px minmax(320px, 440px) 260px;
+  justify-content: space-between;
+  gap: 10px;
+  left: 16px;
+  right: 16px;
+  bottom: 30px;
+}
+:root:not(.compact-ui) .bottom-dock > .panel {
+  height: 188px;
+  min-height: 0;
+  min-width: 0;
+  padding: 0 10px 8px;
+}
+:root:not(.compact-ui) .bottom-dock .panel-label {
+  height: 26px;
+  flex-shrink: 0;
+  letter-spacing: 1px;
+}
+:root:not(.compact-ui) .selection-panel,
+:root:not(.compact-ui) .command-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+:root:not(.compact-ui) .selection-scroll {
+  display: block;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+:root:not(.compact-ui) #selection-info {
+  min-height: 78px;
+  gap: 10px;
+  padding: 6px 0;
+}
+:root:not(.compact-ui) .portrait {
+  width: 46px;
+  height: 50px;
+}
+:root:not(.compact-ui) .portrait .icon {
+  width: 28px;
+  height: 28px;
+}
+:root:not(.compact-ui) .entity-details h3,
+:root:not(.compact-ui) .selection-empty h3 {
+  font-size: 16px;
+  margin: 3px 0 5px;
+}
+:root:not(.compact-ui) .order-buttons {
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  gap: 4px;
+  padding-top: 6px;
+}
+:root:not(.compact-ui) .order-buttons button {
+  min-width: 0;
+  min-height: 32px;
+  padding: 6px;
+  justify-content: center;
+  white-space: normal;
+}
+:root:not(.compact-ui) .order-buttons kbd,
+:root:not(.compact-ui) .order-buttons .icon {
+  display: none;
+}
+:root:not(.compact-ui) #unit-list {
+  flex-wrap: nowrap;
+  padding-bottom: 4px;
+}
+:root:not(.compact-ui) #commands {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  align-content: start;
+  padding: 6px 0;
+  gap: 4px;
+}
+:root:not(.compact-ui) .command-tile {
+  min-height: 58px;
+  padding: 5px 3px;
+}
+:root:not(.compact-ui) .command-tile > .icon {
+  width: 17px;
+  height: 17px;
+  margin-bottom: 3px;
+}
+:root:not(.compact-ui) .command-tile > small {
+  margin-top: 3px;
+}
+:root:not(.compact-ui) .upgrade-actions {
+  flex-shrink: 0;
+  margin-top: 4px;
+  gap: 4px;
+}
+:root:not(.compact-ui) .upgrade-actions:empty {
+  display: none;
+}
+:root:not(.compact-ui) .upgrade-actions button {
+  min-height: 34px;
+  padding: 5px 8px;
+}
+:root:not(.compact-ui) #command-hint {
+  display: none;
+}
+:root:not(.compact-ui) .minimap-panel #minimap {
+  height: 128px;
+  margin: 6px 0;
+}
+:root:not(.compact-ui) .map-legend {
+  letter-spacing: 0;
+}
+:root:not(.compact-ui) .mission {
+  width: 218px;
+  padding: 0 12px;
+}
+:root:not(.compact-ui) .mission .panel-label {
+  height: 27px;
+}
+:root:not(.compact-ui) .objective {
+  gap: 8px;
+  margin: 10px 0;
+}
+:root:not(.compact-ui) .objective small {
+  margin-top: 3px;
+}
+:root:not(.compact-ui) .mission-footer {
+  padding: 8px 0;
+}
 #mode-controls {
   position: absolute;
   top: 132px;
@@ -51,9 +181,12 @@ button {
 }
 .compact-ui {
   --header-height: 96px;
-  --dock-height: 202px;
+  --dock-height: 178px;
   --tabs-height: 48px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+.compact-ui[data-dock="actions"] {
+  --dock-height: 202px;
 }
 .compact-ui .topbar {
   height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
@@ -362,7 +495,7 @@ button {
 }
 .compact-ui .minimap-panel #minimap {
   width: min(100%, 285px);
-  height: 142px;
+  height: 120px;
   margin: 5px auto;
 }
 .compact-ui .map-legend {
@@ -467,7 +600,7 @@ button {
 @media (min-aspect-ratio: 1.35) {
   .compact-ui {
     --header-height: 48px;
-    --side-width: 286px;
+    --side-width: 252px;
   }
   .compact-ui .topbar {
     display: flex;
