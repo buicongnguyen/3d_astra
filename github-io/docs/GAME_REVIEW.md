@@ -10,6 +10,8 @@ Scope: both Godot and Three.js editions, all four skirmish maps, desktop control
 4. **Medium — Three.js restart left the camera at the previous battle.** Restart now returns the camera to the new headquarters instead of leaving the player looking at a distant location. Godot already resets its camera.
 5. **Medium — Godot AI construction retained a fixed headquarters location.** Construction searches now center on a surviving completed headquarters, matching the Three.js behavior.
 
+6. **Medium — Godot opening selection text overflowed the phone panel.** Text wrapping is now enabled before its first layout, preventing the single-line minimum width from enlarging the label. Browser checks verify the rendered description wraps and stays within the phone panel.
+
 ## Gameplay evaluation
 
 The strongest systems are the distinct combat/support roles, readable costs and upgrade messages, and the larger maps' symmetric mining locations. Matchup tests support keeping the current tank price and stats for this pass; no additional numerical balance changes are justified by this review alone.
@@ -20,7 +22,7 @@ The main remaining weaknesses are enemy strategy, stage progression and onboardi
 
 1. **AI scouting and expansion:** remember observed resource sites and enemy bases, send scouts, establish remote Command cores, and retarget attack waves when an old enemy base is empty. Do not reveal hidden enemy state. Validate depleted starting mines and multi-base matches.
 2. **Stage selection after a match:** provide a consistent battlefield chooser and an optional next-stage action in both engines. Keep replay available and clearly separate campaign progress from independent skirmishes.
-3. **Economy onboarding:** show idle-worker and supply warnings, explain why remote Command cores shorten delivery trips, and provide a short guided opening objective. Avoid covering the phone battlefield with extra panels.
+3. **Economy onboarding:** build on the existing opening objectives and idle-worker count with a tap-to-select idle-worker action and mine-depletion/supply alerts, and explain why remote Command cores shorten delivery trips. Avoid covering the phone battlefield with extra panels.
 4. **Mobile command access:** evaluate a compact production category selector against the current pager, then test raw touch hit targets at 320px width and landscape sizes.
 5. **Performance and balance evidence:** profile a physical Android phone with moving mixed armies on Frontier Expanse; collect wins, game length and unit usage before changing costs again. Desktop GPU and emulated phone measurements do not prove physical-phone performance.
 
