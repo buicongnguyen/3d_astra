@@ -2,7 +2,7 @@
 
 An original single-player 3D RTS: establish an economy, build an outpost, produce an army, and destroy the opposing Command core. Built with Three.js, Vite, and eleven original Blender-generated entity models.
 
-The [progression update](PROGRESSION_PLAN.md) matches the [Godot edition](https://buicongnguyen.github.io/3d_astra_godot/): six unit types, rechargeable shields, building information and three upgrade levels. Select any entity and open **Info & stats** in Selection. Upgrade your Command core to L2, then Barracks L2 for Medics or Foundry L2 for Engineers. Use **Support → friendly target** to heal infantry or repair buildings and Breakers.
+The [progression update](PROGRESSION_PLAN.md) matches the [Godot edition](https://buicongnguyen.github.io/3d_astra_godot/): eight unit types, rechargeable shields, building information and three upgrade levels. Select any entity and open **Info & stats** in Selection. Upgrade your Command core to L2, then Barracks L2 for Medics or Foundry L2 for Engineers. Use **Support → friendly target** to heal infantry or repair buildings, Breakers and Battle tanks. Barracks L2 also unlocks Anti-tank soldiers; Foundry L3 unlocks Battle tanks. See [heavy weapon stats](docs/HEAVY_WEAPONS.md).
 
 The **Riverlands** update adds saved army colors, graphics/audio settings, varied ground, a river with two bridges and a shallow ford, and original Blender scenery. Choose Riverlands or the classic Ashen Frontier in the briefing. Open **Settings** there or through **Pause → Settings** during play. See [the evaluation and release review](EVALUATION_AND_RELEASE.md).
 
