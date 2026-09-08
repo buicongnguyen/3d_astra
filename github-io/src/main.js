@@ -503,7 +503,7 @@ function commandAt(point, target, append = false, forced = null) {
     units = es.filter((e) => e.kind === "unit");
   if (forced === "support") {
     const helpers = units.filter(e => sim.supportValid(e,target));
-    if (!helpers.length) { notice("Choose friendly infantry for a Medic, or a completed building / Breaker for an Engineer."); return; }
+    if (!helpers.length) { notice("Medic: select allied infantry. Engineer: select a completed building or vehicle."); return; }
     sim.issue(helpers.map(e => e.id),{type:"support",target:target.id},append);
     return;
   }
@@ -1024,6 +1024,7 @@ function restart() {
   $("queue-orders").setAttribute("aria-pressed", "false");
   sim = new Simulation({ map: mapId });
   view.reset();
+  focusHome();
   selected.clear();
   groups.clear();
   rememberedBuildings.clear();

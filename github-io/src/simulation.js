@@ -238,11 +238,11 @@ export class Simulation {
       }
       const o = { ...order };
       if (["move", "attackmove"].includes(o.type) && ids.length > 1) {
-        o.x = clamp(o.x + ((index % size) - (size - 1) / 2) * 1.9, -45, 45);
+        o.x = clamp(o.x + ((index % size) - (size - 1) / 2) * 1.9, -this.terrain.half+3, this.terrain.half-3);
         o.z = clamp(
           o.z + (Math.floor(index / size) - (size - 1) / 2) * 1.9,
-          -45,
-          45,
+          -this.terrain.half+3,
+          this.terrain.half-3,
         );
         index++;
       }
@@ -689,7 +689,8 @@ export class Simulation {
     for (const b of own.filter(
       (e) => e.complete && ["barracks", "foundry"].includes(e.type),
     )) {
-      if (b.level < this.techLevel(1) && this.time > 190) {
+      if (b.levelJob) continue;
+      if (b.level < this.techLevel(1) && this.time > 190 && this.canPay(1,this.levelCost(b))) {
         if (!b.queue.length) this.upgradeBuilding(b.id,1);
         continue;
       }
@@ -699,7 +700,10 @@ export class Simulation {
         if (b.type === 'barracks' && b.level >= 2 && army.filter(e => e.type === 'antitank').length < 3) choice = 'antitank';
         const support = b.type === 'foundry' ? 'engineer' : 'medic';
         if (b.level >= 2 && army.filter(e => e.type === support).length < 2) choice = support;
-        this.enqueue(b.id,choice);
+        const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : ['breaker'])])];
+        const pop = this.population(1);
+        const affordable = choices.find(type => b.level >= (D[type].required_level || 1) && this.canPay(1,D[type].cost) && pop.used+pop.reserved+D[type].pop <= pop.cap);
+        if (affordable) this.enqueue(b.id,affordable);
       }
     }
     const threat =

@@ -41,6 +41,9 @@ try{
    const r=await page.locator('#minimap').boundingBox();await click(r.x+r.width*.9,r.y+r.height*.7);
    await page.waitForFunction(()=>Math.abs(window.__frontier.view.focus.x-64)<2);
    await page.locator('#home').click();await page.waitForFunction(()=>Math.abs(window.__frontier.view.focus.x+44)<2);
+   await page.evaluate(()=>window.__frontier.view.focusOn(65,-60));
+   await page.locator('#pause').click();await page.locator('[data-restart]').click();
+   await page.waitForFunction(()=>Math.abs(window.__frontier.view.focus.x+44)<2&&Math.abs(window.__frontier.view.focus.z-43)<2);
   }
   assert.deepEqual(errors,[]);console.log(`${engine}: ${mobile?'touch':'desktop'} stage switching, fog, expansion reserves and minimap passed`);
   await context.close();
