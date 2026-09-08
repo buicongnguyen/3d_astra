@@ -102,6 +102,11 @@ def infantry(kind):
         box('Mining_tool', (.68, -.55, 1.22), (.3, .95, .3), steel)
         box('Tool_tip', (.68, -1.08, 1.22), (.23, .18, .23), amber)
         cylinder('Cargo', (0, .52, 1.75), .27, .65, amber, 6)
+    elif kind == 'antitank':
+        box('Rocket_launcher', (.66, -.55, 1.83), (.44, 1.8, .44), steel, .06)
+        box('Launcher_muzzle', (.66, -1.5, 1.83), (.5, .12, .5), dark, .03)
+        box('Launcher_sight', (.66, -.7, 2.13), (.12, .35, .16), glow, .01)
+        for x in [-.2, .2]: cylinder('Spare_rocket', (x, .57, 1.55), .12, 1.15, amber, 8)
     elif kind == 'medic':
         box('Medical_pack', (0, .53, 1.6), (.85, .42, .9), steel)
         box('Medical_vertical', (0, -.39, 1.46), (.12, .08, .44), glow, .01)
@@ -133,6 +138,20 @@ def breaker():
         box('Cannon', (s * .35, -1.05, 1.5), (.25, 1.5, .25), steel, .035)
         box('Muzzle', (s * .35, -1.84, 1.5), (.27, .13, .27), glow, .02)
     box('Team_stripe', (0, .13, 1.83), (.27, 1., .03), team, .01)
+
+
+def tank():
+    box('Heavy_hull', (0, 0, .78), (2.05, 2.8, .85), team)
+    for side in [-1, 1]:
+        box('Track', (side*1.12, 0, .5), (.55, 3.15, .75), dark)
+        box('Side_armor', (side*1.17, .05, .98), (.28, 2.65, .48), armor)
+        for i in range(6): box('Tread', (side*1.12, -1.2+i*.48, .89), (.58, .14, .07), steel, .01)
+    cylinder('Turret_ring', (0, .25, 1.32), .85, .26, steel)
+    box('turret', (0, .2, 1.7), (1.65, 1.55, .7), armor)
+    box('Main_cannon', (0, -1.35, 1.7), (.32, 2.05, .32), steel, .04)
+    box('Muzzle_brake', (0, -2.4, 1.7), (.48, .36, .42), dark, .04)
+    box('Recognition_stripe', (0, .2, 2.07), (.42, 1.25, .04), team, .01)
+    cylinder('Hatch', (.43, .48, 2.13), .25, .12, team, 8)
 
 
 def foundation(sx, sy):
@@ -195,12 +214,14 @@ def building(kind):
 
 
 manifest = {'generator': 'Blender Python', 'units': 'meters', 'provenance': 'Original assets generated for this repository; no third-party model sources.', 'assets': []}
-for index, kind in enumerate(['worker', 'vanguard', 'ranger', 'breaker', 'medic', 'engineer', 'hq', 'barracks', 'foundry', 'relay', 'tower']):
+for index, kind in enumerate(['worker', 'vanguard', 'ranger', 'breaker', 'medic', 'engineer', 'tank', 'antitank', 'hq', 'barracks', 'foundry', 'relay', 'tower']):
     parts = []
-    if kind in ['worker', 'vanguard', 'ranger', 'medic', 'engineer']:
+    if kind in ['worker', 'vanguard', 'ranger', 'medic', 'engineer', 'antitank']:
         infantry(kind)
     elif kind == 'breaker':
         breaker()
+    elif kind == 'tank':
+        tank()
     else:
         building(kind)
     bpy.ops.object.select_all(action='DESELECT')

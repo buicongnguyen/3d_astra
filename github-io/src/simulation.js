@@ -465,7 +465,7 @@ export class Simulation {
   }
   hit(e, target) {
     const bonus = e.counter === target.type ? 1.6 : 1;
-    const damage = this.attackValue(e)*bonus;
+    const damage = this.attackValue(e)*bonus*(target.mechanical ? (e.mechanical_bonus || 1) : 1);
     const apply = (t,scale = 1) => this.applyDamage(t,damage*scale,e.team);
     apply(target);
     if (e.type === "breaker")
@@ -479,7 +479,7 @@ export class Simulation {
       tx: target.x,
       tz: target.z,
       team: e.team,
-      heavy: e.type === "breaker",
+      heavy: ["breaker", "tank", "antitank"].includes(e.type),
     });
     e.cooldown = e.interval;
   }
@@ -687,6 +687,8 @@ export class Simulation {
       }
       if (b.queue.length < 2) {
         let choice = b.type === 'foundry' ? 'breaker' : Math.floor(this.time/4)%3 === 0 ? 'vanguard' : 'ranger';
+        if (b.type === 'foundry' && b.level >= 3 && army.filter(e => e.type === 'tank').length <= army.filter(e => e.type === 'breaker').length) choice = 'tank';
+        if (b.type === 'barracks' && b.level >= 2 && army.filter(e => e.type === 'antitank').length < 3) choice = 'antitank';
         const support = b.type === 'foundry' ? 'engineer' : 'medic';
         if (b.level >= 2 && army.filter(e => e.type === support).length < 2) choice = support;
         this.enqueue(b.id,choice);

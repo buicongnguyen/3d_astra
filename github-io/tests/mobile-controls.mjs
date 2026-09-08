@@ -23,24 +23,24 @@ try {
     return buttons;
   };
   const tap = async selector => { const [b] = await inspect(selector); await page.touchscreen.tap(b.x+b.w/2,b.y+b.h/2); await page.waitForTimeout(150); };
-  await page.goto(base+'?test=1'); await page.waitForFunction(() => window.__frontier?.view.models.size===11);
+  await page.goto(base+'?test=1'); await page.waitForFunction(() => window.__frontier?.view.models.size===13);
   for (const viewport of [{width:320,height:568},{width:667,height:375},{width:390,height:844}]) {
     await page.setViewportSize(viewport); await page.waitForTimeout(200);
     await inspect('#start, #briefing-settings, #scenario');
   }
   await tap('#start');
-  await page.evaluate(() => { const s=window.__frontier.sim; s.aiEnabled=false; Object.assign(s.players[0],{alloy:5000,energy:5000}); s.spawn('medic',0,-15,15); });
+  await page.evaluate(() => { const s=window.__frontier.sim; s.aiEnabled=false; Object.assign(s.players[0],{alloy:5000,energy:5000}); s.spawn('medic',0,-15,15); s.spawn('foundry',0,-9,34); });
   for (const viewport of [{width:320,height:568},{width:390,height:844},{width:667,height:375},{width:844,height:390},{width:768,height:1024}]) {
     await page.setViewportSize(viewport); await page.waitForTimeout(250);
     await inspect('.touch-controls button, .top-actions button, #dock-tabs button');
-    for (const type of ['worker','hq','barracks','medic']) {
+    for (const type of ['worker','hq','barracks','foundry','medic']) {
       await page.evaluate(type => { const f=window.__frontier; f.select([f.sim.own(0).find(e=>e.type===type).id]); },type);
       await tap('button[data-dock="selection"]');
       await inspect('.order-buttons button');
       await tap('#field-guide'); await inspect('#guide-close'); await tap('#guide-close');
       await tap('button[data-dock="actions"]');
       if(type!=='medic') await inspect('#commands button');
-      if(type==='hq'||type==='barracks') await inspect('#upgrade-actions button');
+      if(['hq','barracks','foundry'].includes(type)) await inspect('#upgrade-actions button');
     }
     await page.screenshot({ path:`test-results/mobile-controls-${viewport.width}x${viewport.height}.png` });
     console.log(`Visible and reachable controls: ${viewport.width}x${viewport.height}`);

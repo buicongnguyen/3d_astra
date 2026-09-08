@@ -40,6 +40,18 @@
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
+      "name": "tank",
+      "file": "tank.glb",
+      "triangles": 996,
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "antitank",
+      "file": "antitank.glb",
+      "triangles": 804,
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
       "name": "hq",
       "file": "hq.glb",
       "triangles": 1048,

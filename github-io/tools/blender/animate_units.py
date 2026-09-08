@@ -12,7 +12,7 @@ OUT = ROOT / 'public' / 'models'
 SOURCE = ROOT / 'assets' / 'source'
 CLIPS = ['Idle', 'Walk', 'Work', 'Attack', 'Death']
 report = {}
-for kind in ['worker', 'vanguard', 'ranger', 'breaker', 'medic', 'engineer']:
+for kind in ['worker', 'vanguard', 'ranger', 'breaker', 'medic', 'engineer', 'tank', 'antitank']:
     bpy.ops.object.select_all(action='SELECT')
     bpy.ops.object.delete(use_global=False)
     bpy.ops.import_scene.gltf(filepath=str(OUT / f'{kind}.glb'))

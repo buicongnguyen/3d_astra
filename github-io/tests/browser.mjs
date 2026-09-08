@@ -42,7 +42,7 @@ try {
   });
   assert.equal(
     await page.evaluate(() => window.__frontier.view.models.size),
-    11,
+    13,
   );
   await page.getByRole("button", { name: "Deploy expedition" }).click();
   assert.equal(await page.locator("#briefing").isVisible(), false);

@@ -75,7 +75,7 @@ export const progression = {
   },
   supportValid(e,t) {
     if (!e.support || !t || t.team !== e.team || t.id === e.id || !(t.hp > 0) || !t.complete) return false;
-    return e.type === 'medic' ? t.kind === 'unit' && t.type !== 'breaker' : t.kind === 'building' || t.type === 'breaker';
+    return e.type === 'medic' ? t.kind === 'unit' && !t.mechanical : t.kind === 'building' || t.mechanical === true;
   },
   supportTarget(e) {
     return this.entities.filter(t => this.supportValid(e,t) && t.hp < t.maxHp && distance(e,t) <= e.range+t.radius && this.nav.clearLine(e,t,t.id))

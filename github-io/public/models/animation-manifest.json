@@ -70,5 +70,29 @@
     "fps": 24,
     "duration_seconds": 1,
     "rig": "original rigid articulated parts"
+  },
+  "tank": {
+    "clips": [
+      "Idle",
+      "Walk",
+      "Work",
+      "Attack",
+      "Death"
+    ],
+    "fps": 24,
+    "duration_seconds": 1,
+    "rig": "original rigid articulated parts"
+  },
+  "antitank": {
+    "clips": [
+      "Idle",
+      "Walk",
+      "Work",
+      "Attack",
+      "Death"
+    ],
+    "fps": 24,
+    "duration_seconds": 1,
+    "rig": "original rigid articulated parts"
   }
 }

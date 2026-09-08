@@ -15,7 +15,7 @@ try {
     const select=async type=>{await page.evaluate(type=>{const f=window.__frontier;f.select([f.sim.own(0).find(e=>e.type===type).id]);},type);await page.waitForTimeout(150);};
     const step=async n=>{await page.evaluate(n=>window.__frontier.step(n),n);await page.waitForTimeout(100);};
     try {
-      await page.goto(base+'?test=1');await page.waitForFunction(()=>window.__frontier?.view.models.size===11);
+      await page.goto(base+'?test=1');await page.waitForFunction(()=>window.__frontier?.view.models.size===13);
       await click('#start');await page.evaluate(()=>{const s=window.__frontier.sim;s.aiEnabled=false;Object.assign(s.players[0],{alloy:5000,energy:5000});});
       await select('hq');await tab('selection');await click('#field-guide');
       assert.equal(await page.locator('.field-guide').isVisible(),true);
@@ -40,6 +40,18 @@ try {
       await step(2);assert.ok(await page.evaluate(()=>window.__frontier.sim.own(0).find(e=>e.type==='ranger').hp>20));
       await page.screenshot({path:`test-results/progression-${mobile?'mobile':'desktop'}-support.png`});
       await select('hq');await tab('actions');await click('[data-level]');await step(31);assert.equal(await page.evaluate(()=>window.__frontier.sim.techLevel()),3);
+      await select('barracks');await tab('actions');await click('[data-action="antitank"]');await step(15);
+      assert.ok(await page.evaluate(()=>window.__frontier.sim.own(0).some(e=>e.type==='antitank')));
+      await page.evaluate(()=>{const s=window.__frontier.sim;s.spawn('foundry',0,-9,34);s.spawn('relay',0,-4,34);s.nav.rebuild(s.entities);});
+      await select('foundry');await click('[data-action="tank"]');
+      await page.waitForFunction(()=>document.body.innerText.includes('level 3 to train Battle tank'));
+      await click('[data-level]');await step(21);await click('[data-level]');await step(31);
+      await click('[data-action="tank"]');await step(21);
+      assert.ok(await page.evaluate(()=>window.__frontier.sim.own(0).some(e=>e.type==='tank')));
+      await select('tank');await tab('selection');await click('#field-guide');
+      assert.match(await page.locator('#guide-detail').innerText(),/Requires level 3 Foundry/);
+      await click('#guide-close');
+      await page.screenshot({path:`test-results/heavy-${mobile?'mobile':'desktop'}.png`});
       // Roof picking and shield stats are independent of the center-selection fallback.
       await page.evaluate(()=>{const f=window.__frontier,b=f.sim.own(0).find(e=>e.type==='hq');f.view.focusOn(b.x,b.z);f.view.zoom=26;f.select([]);});await page.waitForTimeout(250);
       const hit=await page.evaluate(()=>{const f=window.__frontier,b=f.sim.own(0).find(e=>e.type==='hq'),p=f.view.project(b.x+2,b.z,2.7),r=f.view.renderer.domElement.getBoundingClientRect();return f.view.pick(p.x+r.left,p.y+r.top,f.sim)?.id===b.id;});assert.equal(hit,true);

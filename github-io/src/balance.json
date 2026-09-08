@@ -84,7 +84,8 @@
       "time": 20,
       "icon": "tank",
       "description": "Heavy splash damage against clustered infantry.",
-      "shield": 80
+      "shield": 80,
+      "mechanical": true
     },
     "hq": {
       "name": "Command core",
@@ -138,10 +139,11 @@
       "trains": [
         "vanguard",
         "ranger",
-        "medic"
+        "medic",
+        "antitank"
       ],
       "icon": "barracks",
-      "description": "Trains Vanguards and Rangers. Level 2 unlocks Medics. Required to construct a Foundry. Upgrades accelerate production.",
+      "description": "Trains Vanguards and Rangers. Level 2 unlocks Medics and Anti-tank soldiers. Required to construct a Foundry. Upgrades accelerate production.",
       "shield": 60
     },
     "foundry": {
@@ -159,11 +161,12 @@
       "trains": [
         "breaker",
         "upgrade",
-        "engineer"
+        "engineer",
+        "tank"
       ],
       "requires": "barracks",
       "icon": "foundry",
-      "description": "Produces Breakers and researches +10% combat-unit damage. Level 2 unlocks Engineers. Upgrades accelerate production.",
+      "description": "Produces Breakers and researches +10% combat-unit damage. Level 2 unlocks Engineers; level 3 unlocks Battle tanks. Upgrades accelerate production.",
       "shield": 90
     },
     "tower": {
@@ -239,7 +242,53 @@
       "time": 15,
       "required_level": 2,
       "support": 18,
-      "description": "Automatically repairs nearby completed buildings and Breakers. Cannot construct, gather, or attack. Use Support, then select a repair target."
+      "description": "Automatically repairs nearby completed buildings, Breakers and Battle tanks. Cannot construct, gather, or attack. Use Support, then select a repair target."
+    },
+    "tank": {
+      "name": "Battle tank",
+      "role": "Heavy assault vehicle",
+      "kind": "unit",
+      "hp": 520,
+      "shield": 100,
+      "speed": 2.5,
+      "damage": 48,
+      "interval": 2.2,
+      "range": 10,
+      "radius": 1.05,
+      "vision": 16,
+      "cost": [
+        275,
+        125
+      ],
+      "pop": 4,
+      "time": 28,
+      "icon": "tank",
+      "required_level": 3,
+      "mechanical": true,
+      "description": "Durable tracked vehicle with a long-range single-target cannon (48 damage every 2.2s). No splash. Vulnerable to anti-tank rockets; escort with infantry. Engineers repair its hull. Requires level 3 Foundry."
+    },
+    "antitank": {
+      "name": "Anti-tank soldier",
+      "role": "Vehicle counter",
+      "kind": "unit",
+      "hp": 80,
+      "shield": 20,
+      "speed": 3.7,
+      "damage": 20,
+      "interval": 2.4,
+      "range": 11,
+      "radius": 0.6,
+      "vision": 16,
+      "cost": [
+        125,
+        50
+      ],
+      "pop": 2,
+      "time": 17,
+      "icon": "crosshair",
+      "required_level": 2,
+      "mechanical_bonus": 3,
+      "description": "Shoulder-fired rockets deal 60 damage to mechanical units (Battle tanks and Breakers), or 20 to infantry and buildings, every 2.4s. No splash. Fragile against close assault; protect with Vanguards. Medics heal this soldier. Requires level 2 Barracks."
     }
   },
   "rocks": [
