@@ -154,3 +154,6 @@ npm run test:webkit
 Browser tests use installed Chrome on Windows, or Playwright Chromium elsewhere (`npx playwright install chromium`). Override `CHROME_PATH` if necessary. Set `TEST_URL` to test a production server or deployed URL. Screenshots and performance results go into the ignored `test-results/` directory.
 
 See `VERIFICATION.md` for recorded results and prototype limitations, and `CODE_REVIEW.md` for the logic/code review and fixes. Automated touch tests use browser emulation; physical iOS and Android devices have not been verified.
+
+
+The [resource and stage expansion](docs/EXPANSION_STAGES.md) adds 25% more deposit reserves, Copper Basin (128×128), and Frontier Expanse (160×160). Choose a battlefield before Deploy. Build a Command core near remote deposits to shorten delivery trips. Tanks now have 460 HP / 100 shield; anti-tank rockets deal 80 damage to vehicles.

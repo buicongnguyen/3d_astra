@@ -165,6 +165,7 @@ export class WorldView {
       }
     }
     this.createTerrain();
+    this.createFog();
     if (this.environmentAssets) {
       this.environment = new EnvironmentView(
         this.scene,
@@ -277,7 +278,7 @@ export class WorldView {
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#777d58";
     ctx.fillRect(0, 0, 1024, 1024);
-    if (this.terrain.id === "riverlands") paintTerrain(ctx, this.terrain, 1024);
+    if (this.terrain.id !== "classic") paintTerrain(ctx, this.terrain, 1024);
     for (let i = 0; i < 16000; i++) {
       const x = random() * 1024,
         y = random() * 1024,
@@ -322,8 +323,8 @@ export class WorldView {
     }
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
-    const groundGeometry = new THREE.PlaneGeometry(MAP_SIZE, MAP_SIZE, 96, 96);
-    if (this.terrain.id === "riverlands") {
+    const groundGeometry = new THREE.PlaneGeometry(this.terrain.size, this.terrain.size, 96, 96);
+    if (this.terrain.river) {
       const p = groundGeometry.attributes.position;
       for (let i = 0; i < p.count; i++) {
         const x = p.getX(i),
@@ -339,21 +340,21 @@ export class WorldView {
     this.terrainRoot.add(ground);
     this.terrainRoot.add(
       mesh(
-        new THREE.BoxGeometry(MAP_SIZE, 2.5, MAP_SIZE),
+        new THREE.BoxGeometry(this.terrain.size, 2.5, this.terrain.size),
         mat(0x424634),
         0,
-        this.terrain.id === "riverlands" ? -1.85 : -1.3,
+        this.terrain.river ? -1.85 : -1.3,
         0,
       ),
     );
-    this.grid = new THREE.GridHelper(MAP_SIZE, 48, 0xd8d8b4, 0xa6b087);
+    this.grid = new THREE.GridHelper(this.terrain.size, 48, 0xd8d8b4, 0xa6b087);
     this.grid.position.y = 0.035;
     this.grid.material.transparent = true;
     this.grid.material.opacity = 0.15;
     this.grid.visible = false;
     this.terrainRoot.add(this.grid);
     const edge = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(MAP_SIZE, 0.1, MAP_SIZE)),
+      new THREE.EdgesGeometry(new THREE.BoxGeometry(this.terrain.size, 0.1, this.terrain.size)),
       new THREE.LineBasicMaterial({
         color: 0xb7b38a,
         transparent: true,
@@ -390,7 +391,7 @@ export class WorldView {
     for (let i = 0; i < 500; i++) {
       dummy.position.set((random() - 0.5) * 95, 0.08, (random() - 0.5) * 95);
       dummy.scale.setScalar(0.5 + random());
-      if (this.terrain.id === "riverlands" && Math.abs(dummy.position.z) < 5)
+      if (this.terrain.river && Math.abs(dummy.position.z) < 5)
         dummy.scale.setScalar(0);
       dummy.rotation.set(random(), random() * 6, random());
       dummy.updateMatrix();
@@ -406,7 +407,7 @@ export class WorldView {
       dummy.position.set((random() - 0.5) * 95, 0.22, (random() - 0.5) * 95);
       dummy.scale.setScalar(0.4 + random() * 0.7);
       if (
-        this.terrain.id === "riverlands" &&
+        this.terrain.river &&
         this.terrain.at(dummy.position.x, dummy.position.z) !== "grass"
       )
         dummy.scale.setScalar(0);
@@ -443,10 +444,12 @@ export class WorldView {
     }
   }
   createFog() {
+    if (this.fogMesh) { this.scene.remove(this.fogMesh); this.fogMesh.geometry.dispose(); this.fogMesh.material.dispose(); this.fogTexture.dispose(); }
+    this.fogClock = 0;
     this.fogCanvas = document.createElement("canvas");
-    this.fogCanvas.width = this.fogCanvas.height = GRID;
+    this.fogCanvas.width = this.fogCanvas.height = this.terrain.grid;
     this.fogContext = this.fogCanvas.getContext("2d");
-    this.fogImage = this.fogContext.createImageData(GRID, GRID);
+    this.fogImage = this.fogContext.createImageData(this.terrain.grid, this.terrain.grid);
     this.fogTexture = new THREE.CanvasTexture(this.fogCanvas);
     this.fogTexture.magFilter = THREE.LinearFilter;
     const material = new THREE.MeshBasicMaterial({
@@ -455,7 +458,7 @@ export class WorldView {
       depthWrite: false,
     });
     this.fogMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(MAP_SIZE, MAP_SIZE),
+      new THREE.PlaneGeometry(this.terrain.size, this.terrain.size),
       material,
     );
     this.fogMesh.rotation.x = -Math.PI / 2;
@@ -481,8 +484,8 @@ export class WorldView {
     this.camera.updateMatrixWorld();
   }
   pan(dx, dz) {
-    this.focus.x = clamp(this.focus.x + dx, -42, 42);
-    this.focus.z = clamp(this.focus.z + dz, -42, 42);
+    this.focus.x = clamp(this.focus.x + dx, -this.terrain.half+6, this.terrain.half-6);
+    this.focus.z = clamp(this.focus.z + dz, -this.terrain.half+6, this.terrain.half-6);
     this.updateCamera();
   }
   screenPan(dx, dy) {
@@ -503,7 +506,7 @@ export class WorldView {
     this.updateCamera();
   }
   focusOn(x, z) {
-    this.focus.set(clamp(x, -42, 42), 0, clamp(z, -42, 42));
+    this.focus.set(clamp(x, -this.terrain.half+6, this.terrain.half-6), 0, clamp(z, -this.terrain.half+6, this.terrain.half-6));
     this.updateCamera();
   }
   point(clientX, clientY) {
@@ -517,7 +520,7 @@ export class WorldView {
     );
     const p = new THREE.Vector3();
     return this.raycaster.ray.intersectPlane(this.plane, p)
-      ? { x: clamp(p.x, -47, 47), z: clamp(p.z, -47, 47) }
+      ? { x: clamp(p.x, -this.terrain.half+1, this.terrain.half-1), z: clamp(p.z, -this.terrain.half+1, this.terrain.half-1) }
       : null;
   }
   project(x, z, y = 0) {
@@ -771,7 +774,7 @@ export class WorldView {
     this.fogClock -= dt;
     if (this.fogClock <= 0) {
       this.fogClock = 0.25;
-      for (let i = 0; i < GRID * GRID; i++) {
+      for (let i = 0; i < this.terrain.grid * this.terrain.grid; i++) {
         const j = i * 4;
         this.fogImage.data[j] = 14;
         this.fogImage.data[j + 1] = 26;

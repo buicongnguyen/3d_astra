@@ -29,8 +29,8 @@ export function optimizeEnvironment(assets) {
 export function paintTerrain(ctx, terrain, size) {
   for (let y = 0; y < size; y += 4)
     for (let x = 0; x < size; x += 4) {
-      const wx = (x / size) * 96 - 48,
-        wz = (y / size) * 96 - 48;
+      const wx = (x / size) * terrain.size - terrain.half,
+        wz = (y / size) * terrain.size - terrain.half;
       ctx.fillStyle = SURFACES[terrain.at(wx, wz)];
       ctx.fillRect(x, y, 4, 4);
     }
@@ -46,7 +46,7 @@ export class EnvironmentView {
     this.water = null;
     this.particles = [];
     this.lastTime = 0;
-    if (terrain.id !== "riverlands") return;
+    if (!terrain.river) return;
     const waterMat = new THREE.MeshStandardMaterial({
       color: 0x428a94,
       roughness: 0.32,
@@ -54,7 +54,7 @@ export class EnvironmentView {
     });
     // A real channel bed is cut into the ground; water stays below the banks.
     this.water = new THREE.Mesh(
-      new THREE.PlaneGeometry(96, 6, 96, 6),
+      new THREE.PlaneGeometry(terrain.size, 6, terrain.size, 6),
       waterMat,
     );
     this.water.rotation.x = -Math.PI / 2;

@@ -1,0 +1,52 @@
+{
+  "classic": {
+    "name": "Ashen Frontier",
+    "size": 96,
+    "river": false,
+    "offset": 0,
+    "sites": []
+  },
+  "riverlands": {
+    "name": "Meridian Riverlands",
+    "size": 96,
+    "river": true,
+    "offset": 0,
+    "sites": []
+  },
+  "basin": {
+    "name": "Copper Basin",
+    "size": 128,
+    "river": false,
+    "offset": 12,
+    "sites": [
+      [
+        -50,
+        -28
+      ],
+      [
+        -8,
+        50
+      ]
+    ]
+  },
+  "expanse": {
+    "name": "Frontier Expanse",
+    "size": 160,
+    "river": true,
+    "offset": 24,
+    "sites": [
+      [
+        -64,
+        -35
+      ],
+      [
+        -12,
+        64
+      ],
+      [
+        -64,
+        18
+      ]
+    ]
+  }
+}

@@ -56,7 +56,7 @@ document.querySelector("#app").innerHTML = `
       <div class="briefing-rule"><span>YOUR FORCE</span><strong>4 Harvesters · 3 defenders</strong></div>
       <div class="briefing-rule"><span>OBJECTIVE</span><strong>Eliminate enemy command</strong></div>
       </div>
-      <div class="briefing-tools"><select id="scenario" aria-label="Battlefield"><option value="riverlands">Meridian Riverlands</option><option value="classic">Ashen Frontier</option></select><button id="briefing-settings">Settings</button></div>
+      <div class="briefing-tools"><select id="scenario" aria-label="Battlefield"><option value="riverlands">Meridian Riverlands · 96×96</option><option value="classic">Ashen Frontier · 96×96</option><option value="basin">Copper Basin · 128×128</option><option value="expanse">Frontier Expanse · 160×160</option></select><button id="briefing-settings">Settings</button></div>
       <button id="start" class="primary" disabled>Preparing expedition…</button><small class="briefing-note">SINGLE PLAYER <span>·</span> MOUSE + KEYBOARD</small>
     </section>
     <div class="bottom-dock">
@@ -395,6 +395,7 @@ function updateUI() {
 }
 
 function minimap() {
+  const {size:MAP_SIZE,half:HALF,grid:GRID}=sim.terrain;
   const c = $("minimap"),
     ctx = c.getContext("2d"),
     w = c.width,
@@ -403,7 +404,7 @@ function minimap() {
     pz = (z) => ((z + HALF) / MAP_SIZE) * h;
   ctx.fillStyle = "#485243";
   ctx.fillRect(0, 0, w, h);
-  if (sim.terrain.id === "riverlands")
+  if (sim.terrain.river)
     for (let z = 0; z < GRID; z++)
       for (let x = 0; x < GRID; x++) {
         ctx.fillStyle =
@@ -878,6 +879,7 @@ function bindInput() {
     }
   });
   const mapPoint = (e) => {
+    const {size:MAP_SIZE,half:HALF}=sim.terrain;
     const r = $("minimap").getBoundingClientRect();
     return {
       x: ((e.clientX - r.left) / r.width) * MAP_SIZE - HALF,
@@ -959,6 +961,7 @@ $("scenario").onchange = () => {
   sim = new Simulation({ map: mapId });
   view?.reset();
   view?.setTerrain(sim.terrain);
+  focusHome();
   selected.clear();
   rememberedBuildings.clear();
   rememberedResources.clear();
@@ -1189,7 +1192,7 @@ function frame(now) {
   ambience?.update(
     settings,
     started && !paused && !sim.result,
-    sim.terrain.id === "riverlands" && Math.abs(view.focus.z) < 14,
+    sim.terrain.river && Math.abs(view.focus.z) < 14,
   );
   if (started && !paused && !sim.result) {
     accumulator += dt;

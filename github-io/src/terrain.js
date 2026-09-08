@@ -1,8 +1,6 @@
 import { HALF, ROCKS } from "./data.js";
-export const MAPS = {
-  classic: "Ashen Frontier",
-  riverlands: "Meridian Riverlands",
-};
+import MAP_CONFIG from './maps.json' with { type: 'json' };
+export const MAPS = Object.fromEntries(Object.entries(MAP_CONFIG).map(([id,m])=>[id,`${m.name} · ${m.size}×${m.size}`]));
 export const CROSSINGS = [
   { x: -22, half: 5, type: "bridge" },
   { x: 0, half: 5, type: "ford" },
@@ -37,13 +35,17 @@ function overlaps(x, z, r, b) {
 export class Terrain {
   constructor(id = "classic") {
     this.id = Object.hasOwn(MAPS, id) ? id : "classic";
-    this.water = this.id === "riverlands" ? waterRects : [];
+    Object.assign(this, MAP_CONFIG[this.id]);
+    this.half = this.size/2; this.grid = this.size/2;
+    this.water = this.river ? waterRects.map((r,i)=>({...r,left:i===0 ? -this.half:r.left,right:i===3 ? this.half:r.right})) : [];
   }
+  cellAt(x,z) { return [x,z].map(v=>Math.max(0,Math.min(this.grid-1,Math.floor((v+this.half)/2)))); }
+  worldAt(x,z) { return {x:x*2-this.half+1,z:z*2-this.half+1}; }
   at(x, z) {
     if (this.id === "classic") return "dirt";
-    if (Math.abs(z) < 3)
+    if (this.river && Math.abs(z) < 3)
       return CROSSINGS.find((c) => Math.abs(x - c.x) < c.half)?.type ?? "water";
-    if (Math.abs(z) < 5)
+    if (this.river && Math.abs(z) < 5)
       return CROSSINGS.some((c) => Math.abs(x - c.x) < c.half) ? "road" : "mud";
     if (ROCKS.some(([rx, rz, r]) => Math.hypot(x - rx, z - rz) < r + 1))
       return "stone";
@@ -62,8 +64,8 @@ export class Terrain {
       Number.isFinite(z) &&
       Number.isFinite(r) &&
       r >= 0 &&
-      Math.abs(x) < HALF - r &&
-      Math.abs(z) < HALF - r &&
+      Math.abs(x) < this.half - r &&
+      Math.abs(z) < this.half - r &&
       !this.water.some((b) => overlaps(x, z, r, b))
     );
   }
@@ -88,7 +90,7 @@ export class Terrain {
     return true;
   }
   placement(x, z, r) {
-    if (this.id === "riverlands" && Math.abs(z) < 7 + r)
+    if (this.river && Math.abs(z) < 7 + r)
       return "Keep water, banks and crossing approaches clear.";
     return "";
   }

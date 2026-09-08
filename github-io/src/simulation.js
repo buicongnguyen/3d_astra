@@ -34,8 +34,8 @@ export class Simulation {
     this.aiClock = 0;
     this.waveAt = 85;
     this.visionClock = 0;
-    this.visible = [new Uint8Array(GRID * GRID), new Uint8Array(GRID * GRID)];
-    this.explored = [new Uint8Array(GRID * GRID), new Uint8Array(GRID * GRID)];
+    this.visible = [new Uint8Array(this.terrain.grid * this.terrain.grid), new Uint8Array(this.terrain.grid * this.terrain.grid)];
+    this.explored = [new Uint8Array(this.terrain.grid * this.terrain.grid), new Uint8Array(this.terrain.grid * this.terrain.grid)];
     for (let team = 0; team < 2; team++) {
       const side = team === 0 ? 1 : -1;
       this.spawn("hq", team, -25 * side, 24 * side);
@@ -50,10 +50,18 @@ export class Simulation {
         [-37, 22],
         [-35, 26],
       ])
-        this.resource("alloy", x * side, z * side, 1600);
-      this.resource("energy", -30 * side, 34 * side, 1400);
-      this.resource("alloy", -31 * side, -25 * side, 2400);
-      this.resource("energy", -25 * side, -32 * side, 1800);
+        this.resource("alloy", x * side, z * side, 2000);
+      this.resource("energy", -30 * side, 34 * side, 1750);
+      const offset=this.terrain.offset;
+      for (const e of this.own(team)) { e.x-=offset*side; e.z+=offset*side; }
+      for (const r of this.resources.slice(-4)) { r.x-=offset*side; r.z+=offset*side; }
+      this.resource("alloy", -31 * side, -25 * side, 3000);
+      this.resource("energy", -25 * side, -32 * side, 2250);
+      for (const [x,z] of this.terrain.sites) {
+        this.resource("alloy",x*side,z*side,3000);
+        this.resource("alloy",(x+4)*side,z*side,3000);
+        this.resource("energy",(x+2)*side,(z+5)*side,2250);
+      }
     }
     this.nav.rebuild(this.entities);
     this.updateVision();
@@ -143,28 +151,28 @@ export class Simulation {
     }
   }
   isVisible(e, team = 0) {
-    const [x, z] = cellAt(e.x, e.z);
-    return e.team === team || !!this.visible[team][z * GRID + x];
+    const [x, z] = this.nav.cellAt(e.x, e.z);
+    return e.team === team || !!this.visible[team][z * this.terrain.grid + x];
   }
   isExplored(e, team = 0) {
-    const [x, z] = cellAt(e.x, e.z);
-    return !!this.explored[team][z * GRID + x];
+    const [x, z] = this.nav.cellAt(e.x, e.z);
+    return !!this.explored[team][z * this.terrain.grid + x];
   }
   updateVision() {
     for (let team = 0; team < 2; team++) {
       this.visible[team].fill(0);
       for (const e of this.own(team)) {
-        const [cx, cz] = cellAt(e.x, e.z),
+        const [cx, cz] = this.nav.cellAt(e.x, e.z),
           r = Math.ceil(e.vision / 2);
-        for (let z = Math.max(0, cz - r); z <= Math.min(GRID - 1, cz + r); z++)
+        for (let z = Math.max(0, cz - r); z <= Math.min(this.terrain.grid - 1, cz + r); z++)
           for (
             let x = Math.max(0, cx - r);
-            x <= Math.min(GRID - 1, cx + r);
+            x <= Math.min(this.terrain.grid - 1, cx + r);
             x++
           ) {
-            if (distance(e, worldAt(x, z)) <= e.vision)
-              this.visible[team][z * GRID + x] = this.explored[team][
-                z * GRID + x
+            if (distance(e, this.nav.worldAt(x, z)) <= e.vision)
+              this.visible[team][z * this.terrain.grid + x] = this.explored[team][
+                z * this.terrain.grid + x
               ] = 1;
           }
       }
@@ -292,7 +300,7 @@ export class Simulation {
     if (missing) return missing;
     const terrainError = this.terrain.placement(x, z, d.radius);
     if (terrainError) return terrainError;
-    if (Math.abs(x) > HALF - d.radius - 2 || Math.abs(z) > HALF - d.radius - 2)
+    if (Math.abs(x) > this.terrain.half - d.radius - 2 || Math.abs(z) > this.terrain.half - d.radius - 2)
       return "Outside the buildable area.";
     if (!this.isVisible({ x, z }, team))
       return "Explore this area before building.";
@@ -670,8 +678,8 @@ export class Simulation {
     ) {
       outer: for (const r of [10, 17, 23])
         for (let i = 0; i < 12; i++) {
-          const x = 25 + Math.cos((i / 12) * Math.PI * 2) * r,
-            z = -24 + Math.sin((i / 12) * Math.PI * 2) * r;
+          const x = (hq?.x ?? 25) + Math.cos((i / 12) * Math.PI * 2) * r,
+            z = (hq?.z ?? -24) + Math.sin((i / 12) * Math.PI * 2) * r;
           if (!this.placement(want, 1, x, z)) {
             if (this.build(workers[0].id, want, x, z)) break outer;
           }
@@ -713,7 +721,7 @@ export class Simulation {
     else if (this.time >= this.waveAt && army.length >= 4) {
       this.issue(
         army.map((e) => e.id),
-        { type: "attackmove", x: -25, z: 24 },
+        { type: "attackmove", x: -25-this.terrain.offset, z: 24+this.terrain.offset },
       );
       this.waveAt = this.time + 50;
     }

@@ -13,7 +13,8 @@
     "test:mobile-controls": "node tests/mobile-controls.mjs",
     "test:webkit": "node tests/webkit.mjs",
     "test:improvements": "node tests/improvements.mjs",
-    "test:progression": "node tests/progression.mjs"
+    "test:progression": "node tests/progression.mjs",
+    "test:stages": "node tests/stages.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

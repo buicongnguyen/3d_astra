@@ -4,8 +4,8 @@ Both games now have eight unit types. The existing Breaker retains its anti-infa
 
 | Unit | Production | HP / shield | Attack | Cost (alloy / energy) | Supply |
 |---|---|---|---|---|---|
-| Battle tank | Foundry level 3 | 520 / 100 | 48 per 2.2s; range 10; single target | 275 / 125 | 4 |
-| Anti-tank soldier | Barracks level 2 | 80 / 20 | 20 per 2.4s; 60 against mechanical units; range 11 | 125 / 50 | 2 |
+| Battle tank | Foundry level 3 | 460 / 100 | 48 per 2.2s; range 10; single target | 275 / 125 | 4 |
+| Anti-tank soldier | Barracks level 2 | 80 / 20 | 20 per 2.4s; 80 against mechanical units; range 11 | 125 / 50 | 2 |
 
 Upgrade the Command core to the matching level before upgrading production buildings. Locked training explains the required building level. Research adds 10% damage, including vehicle bonus damage. Rockets counter both tanks and Breakers; they get no bonus against infantry or buildings. Neither new weapon deals splash damage. Engineers repair tanks; Medics heal anti-tank soldiers.
 

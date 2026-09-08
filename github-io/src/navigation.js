@@ -4,10 +4,13 @@ import { Terrain } from "./terrain.js";
 export class Navigation {
   constructor(terrain = new Terrain()) {
     this.terrain = terrain;
-    this.blocked = new Uint8Array(GRID * GRID);
+    this.grid = terrain.grid;
+    this.blocked = new Uint8Array(this.grid * this.grid);
     this.revision = 0;
     this.obstacles = [];
   }
+  cellAt(x,z) { return this.terrain.cellAt(x,z); }
+  worldAt(x,z) { return this.terrain.worldAt(x,z); }
   rebuild(entities) {
     this.revision++;
     this.obstacles = ROCKS.map(([x, z, r]) => ({ x, z, radius: r }));
@@ -15,25 +18,25 @@ export class Navigation {
       ...entities.filter((e) => e.hp > 0 && e.kind === "building"),
     );
     this.blocked.fill(0);
-    for (let z = 0; z < GRID; z++)
-      for (let x = 0; x < GRID; x++) {
-        const p = worldAt(x, z);
+    for (let z = 0; z < this.grid; z++)
+      for (let x = 0; x < this.grid; x++) {
+        const p = this.worldAt(x, z);
         if (
           !this.terrain.canStand(p.x, p.z, 0.65) ||
           this.obstacles.some((o) => distance(p, o) < o.radius + 0.65)
         )
-          this.blocked[z * GRID + x] = 1;
+          this.blocked[z * this.grid + x] = 1;
       }
   }
   free(x, z, radius = 0.55) {
     return (
       x >= 0 &&
       z >= 0 &&
-      x < GRID &&
-      z < GRID &&
-      !this.blocked[z * GRID + x] &&
+      x < this.grid &&
+      z < this.grid &&
+      !this.blocked[z * this.grid + x] &&
       (radius <= 0.65 ||
-        this.canStand(worldAt(x, z).x, worldAt(x, z).z, radius))
+        this.canStand(this.worldAt(x, z).x, this.worldAt(x, z).z, radius))
     );
   }
   nearest(x, z, radius = 0.55) {
@@ -51,21 +54,21 @@ export class Navigation {
   }
   path(from, to, radius = 0.55) {
     if (![from.x, from.z, to.x, to.z].every(Number.isFinite)) return [];
-    const start = this.nearest(...cellAt(from.x, from.z), radius),
-      end = this.nearest(...cellAt(to.x, to.z), radius);
+    const start = this.nearest(...this.cellAt(from.x, from.z), radius),
+      end = this.nearest(...this.cellAt(to.x, to.z), radius);
     if (!start || !end) return [];
-    const s = start[1] * GRID + start[0],
-      goal = end[1] * GRID + end[0];
-    const g = new Float32Array(GRID * GRID).fill(Infinity),
-      parent = new Int32Array(GRID * GRID).fill(-1),
-      closed = new Uint8Array(GRID * GRID);
+    const s = start[1] * this.grid + start[0],
+      goal = end[1] * this.grid + end[0];
+    const g = new Float32Array(this.grid * this.grid).fill(Infinity),
+      parent = new Int32Array(this.grid * this.grid).fill(-1),
+      closed = new Uint8Array(this.grid * this.grid);
     const heuristic = (id) =>
-      Math.hypot((id % GRID) - end[0], Math.floor(id / GRID) - end[1]);
+      Math.hypot((id % this.grid) - end[0], Math.floor(id / this.grid) - end[1]);
     const open = [s];
     g[s] = 0;
     for (
       let iteration = 0;
-      open.length && iteration < GRID * GRID;
+      open.length && iteration < this.grid * this.grid;
       iteration++
     ) {
       let best = 0;
@@ -80,11 +83,11 @@ export class Navigation {
         const nodes = [];
         let p = current;
         while (p !== s && p !== -1) {
-          nodes.push(worldAt(p % GRID, Math.floor(p / GRID)));
+          nodes.push(this.worldAt(p % this.grid, Math.floor(p / this.grid)));
           p = parent[p];
         }
         nodes.reverse();
-        if (!nodes.length) nodes.push(worldAt(...end));
+        if (!nodes.length) nodes.push(this.worldAt(...end));
         const last = nodes[nodes.length - 1];
         if (
           this.canStand(to.x, to.z, radius) &&
@@ -94,8 +97,8 @@ export class Navigation {
         return nodes;
       }
       closed[current] = 1;
-      const x = current % GRID,
-        z = Math.floor(current / GRID);
+      const x = current % this.grid,
+        z = Math.floor(current / this.grid);
       for (let dz = -1; dz <= 1; dz++)
         for (let dx = -1; dx <= 1; dx++) {
           if ((!dx && !dz) || !this.free(x + dx, z + dz, radius)) continue;
@@ -105,7 +108,7 @@ export class Navigation {
             (!this.free(x + dx, z, radius) || !this.free(x, z + dz, radius))
           )
             continue;
-          const next = (z + dz) * GRID + x + dx;
+          const next = (z + dz) * this.grid + x + dx;
           if (closed[next]) continue;
           const score = g[current] + (dx && dz ? Math.SQRT2 : 1);
           if (score < g[next]) {
@@ -138,8 +141,8 @@ export class Navigation {
     return (
       Number.isFinite(x) &&
       Number.isFinite(z) &&
-      Math.abs(x) < HALF - radius &&
-      Math.abs(z) < HALF - radius &&
+      Math.abs(x) < this.terrain.half - radius &&
+      Math.abs(z) < this.terrain.half - radius &&
       this.terrain.canStand(x, z, radius) &&
       !this.obstacles.some(
         (o) => Math.hypot(x - o.x, z - o.z) < o.radius + radius,
@@ -149,8 +152,8 @@ export class Navigation {
   canTraverse(a, b, radius = 0.55) {
     if (
       ![a.x, a.z, b.x, b.z].every(Number.isFinite) ||
-      Math.abs(b.x) >= HALF - radius ||
-      Math.abs(b.z) >= HALF - radius
+      Math.abs(b.x) >= this.terrain.half - radius ||
+      Math.abs(b.z) >= this.terrain.half - radius
     )
       return false;
     if (!this.terrain.canTraverse(a, b, radius)) return false;

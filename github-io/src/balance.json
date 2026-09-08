@@ -248,7 +248,7 @@
       "name": "Battle tank",
       "role": "Heavy assault vehicle",
       "kind": "unit",
-      "hp": 520,
+      "hp": 460,
       "shield": 100,
       "speed": 2.5,
       "damage": 48,
@@ -287,8 +287,8 @@
       "time": 17,
       "icon": "crosshair",
       "required_level": 2,
-      "mechanical_bonus": 3,
-      "description": "Shoulder-fired rockets deal 60 damage to mechanical units (Battle tanks and Breakers), or 20 to infantry and buildings, every 2.4s. No splash. Fragile against close assault; protect with Vanguards. Medics heal this soldier. Requires level 2 Barracks."
+      "mechanical_bonus": 4,
+      "description": "Shoulder-fired rockets deal 80 damage to mechanical units (Battle tanks and Breakers), or 20 to infantry and buildings, every 2.4s. No splash. Fragile against close assault; protect with Vanguards. Medics heal this soldier. Requires level 2 Barracks."
     }
   },
   "rocks": [

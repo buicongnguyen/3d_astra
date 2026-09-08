@@ -4,14 +4,14 @@ import {Simulation} from '../src/simulation.js';
 
 test('rockets counter both vehicles, without bonus to infantry/buildings or splash',()=>{
   const s=new Simulation({ai:false}), a=s.spawn('antitank',0,0,20);
-  for(const [type,damage] of [['tank',60],['breaker',60],['ranger',20],['tower',20]]){
+  for(const [type,damage] of [['tank',80],['breaker',80],['ranger',20],['tower',20]]){
     const t=s.spawn(type,1,0,24), ally=s.spawn('ranger',0,.5,24), near=s.spawn('ranger',1,1,24);
     const before=t.hp+t.shield; s.hit(a,t);
     assert.equal(before-t.hp-t.shield,damage); assert.equal(a.cooldown,2.4);
     assert.equal(ally.hp,ally.maxHp);assert.equal(near.shield,near.maxShield);
   }
   s.players[0].upgrade=true;const t=s.spawn('tank',1,0,24);s.hit(a,t);
-  assert.ok(Math.abs(t.shield-34)<.0001);
+  assert.ok(Math.abs(t.shield-12)<.0001);
 });
 test('tank fires single-target cannon and only Engineer can repair its hull',()=>{
   const s=new Simulation({ai:false}), t=s.spawn('tank',0,0,20), a=s.spawn('antitank',0,1,20), m=s.spawn('medic',0,0,21), e=s.spawn('engineer',0,1,21), enemy=s.spawn('ranger',1,0,24), near=s.spawn('ranger',1,.5,24);
