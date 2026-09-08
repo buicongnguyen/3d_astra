@@ -222,7 +222,7 @@ function enterMode(type) {
     $("mode-banner").textContent =
       `${type === "attackmove" ? "ATTACK-MOVE" : "MOVE"} · Tap your destination`;
   $("mode-controls").hidden = false;
-  if (type === "support") $("mode-banner").textContent = "SUPPORT · Choose friendly infantry (Medic) or a building / Breaker (Engineer)";
+  if (type === "support") $("mode-banner").textContent = "SUPPORT · Choose friendly infantry (Medic) or a building / vehicle (Engineer)";
   $("world").classList.add("targeting");
 }
 function enterBuild(type) {
@@ -283,6 +283,8 @@ function updateUI() {
   $("obj-economy").classList.toggle("complete", milestones.economy);
   $("obj-army").classList.toggle("complete", milestones.army);
   $("obj-win").classList.toggle("complete", sim.result === "victory");
+  const rivals = sim.players.slice(1).filter(player => !player.eliminated).length;
+  $("obj-win").querySelector("small").textContent = `Destroy enemy cores: ${rivals} ${rivals === 1 ? "rival remains" : "rivals remain"}`;
   const es = selectedEntities(),
     e = es[0];
   $("selection-count").textContent =
@@ -313,7 +315,7 @@ function updateUI() {
     if (e.levelJob) details.insertAdjacentHTML('beforeend',`<div class="progression-stats">Upgrading L${e.level+1}: ${Math.floor(100*e.levelJob.elapsed/e.levelJob.time)}%</div>`);
   }
   $("command-context").title = `Command core technology ${sim.techLevel()} / 3`;
-  const signature = `${es.map((e) => e.id).join(",")}/${e?.complete}/${p.upgrade}/${e?.level}/${!!e?.levelJob}`;
+  const signature = `${es.map((e) => e.id).join(",")}/${e?.complete}/${p.upgrade}/${e?.level}/${!!e?.levelJob}/${sim.techLevel()}/${touchInput}`;
   if (lastSelectionKey !== signature) {
     lastSelectionKey = signature;
     $("unit-list").innerHTML =
@@ -354,11 +356,11 @@ function updateUI() {
     $("command-hint").textContent =
       e?.kind === "building"
         ? e.complete
-          ? `Tech ${sim.techLevel()} / 3 · Right-click terrain to set a rally point.`
+          ? `Tech ${sim.techLevel()} / 3 · ${touchInput ? "Tap" : "Right-click"} terrain to set a rally point.`
           : "A Harvester must remain nearby to finish construction."
         : es.some((u) => u.type === "worker")
           ? "Select a structure, then place it on clear terrain."
-          : "Hold Shift to queue orders. Ctrl + 1–9 saves a group.";
+          : touchInput ? "Enable Queue to chain orders. Use Army or Box to select a group." : "Hold Shift to queue orders. Ctrl + 1–9 saves a group.";
   }
   for (const button of $("commands").querySelectorAll("[data-action]")) {
     const unavailable =

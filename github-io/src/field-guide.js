@@ -1,5 +1,6 @@
 import { DEFINITIONS as D } from './data.js';
 import './progression.css';
+import { MAPS } from './terrain.js';
 
 export function entryHTML(type) {
   const d = D[type];
@@ -17,7 +18,7 @@ export function entryHTML(type) {
     ${d.kind === 'building' ? `<h3>Building functions</h3><ul>${(d.trains || []).map(k => `<li>${D[k].name}${D[k].required_level ? ` · level ${D[k].required_level}` : ''}: ${D[k].cost[0]} alloy / ${D[k].cost[1]} energy</li>`).join('')}${d.supply ? `<li>Provides ${d.supply} supply at level 1.</li>` : ''}${type === 'tower' ? '<li>Automatically attacks visible enemies.</li>' : ''}</ul>
     <h3>Building upgrades</h3><p>L2: +25% base HP, +25 shield, 1.2× production rate.<br>L3: +50% base HP, +50 shield, 1.4× production rate, total.</p><p>Towers gain 25% / 50% base attack; Relays gain 5 / 10 supply. Supply is capped at 100.</p>
     <p>Command core: L2 costs 200/100; L3 costs 350/175 alloy/energy.<br>Other buildings: L2 costs 100/50; L3 costs 200/100.<br>Upgrade time: 20s / 30s.</p><p>Other buildings require a completed Command core at the next level. Finish or cancel production first. Cancel an upgrade for a full refund; destruction gives no refund.</p>` : ''}
-    <h3>Three technology stages</h3><ol><li>Establish an economy and mixed army.</li><li>Upgrade your core and production to L2; unlock Medics, Engineers and Anti-tank soldiers.</li><li>Reach L3 to unlock Battle tanks at the Foundry, with stronger defenses and faster production, then defeat enemy cores.</li></ol><p>These stages occur within any of the four skirmish stages; they are not separate campaign missions.</p>`;
+    <h3>Three technology stages</h3><ol><li>Establish an economy and mixed army.</li><li>Upgrade your core and production to L2; unlock Medics, Engineers and Anti-tank soldiers.</li><li>Reach L3 to unlock Battle tanks at the Foundry, with stronger defenses and faster production, then defeat enemy cores.</li></ol><p>These stages occur within any of the ${Object.keys(MAPS).length} skirmish maps; they are not separate campaign missions. Select 1-3 AI enemies in the briefing. Multiple enemies fight free-for-all. A faction loses all remaining forces and production when its last Command core is destroyed.</p>`;
 }
 
 export function createFieldGuide(onOpen,onClose) {

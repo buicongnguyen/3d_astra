@@ -27,6 +27,7 @@ export class Simulation {
       energy: 150,
       upgrade: false,
       kills: 0,
+      eliminated: false,
     }));
     this.events = [];
     this.result = null;
@@ -80,6 +81,11 @@ export class Simulation {
       !this.entities.some(e => e.kind === "building" && distance(e, r) < e.radius + r.radius + 2) &&
       ![...startingDeposits].some(other => distance(other, r) < other.radius + r.radius + 1)
     ));
+    // Initial deployment locations are public; later cores require scouting.
+    this.knownCores = this.players.map((_, team) => new Map(this.entities
+      .filter(e => e.type === "hq" && e.team !== team)
+      .map(e => [e.id, { id: e.id, team: e.team, x: e.x, z: e.z }])));
+    this.scoutIndex = this.players.map(() => 0);
     this.nav.rebuild(this.entities);
     this.updateVision();
     this.message(
@@ -670,11 +676,36 @@ export class Simulation {
     if (b.rally) this.issue([u.id], { type: "move", ...b.rally });
     this.message(`${d.name} ready.`, b.team);
   }
+  updateKnownCores(team) {
+    const known = this.knownCores[team];
+    for (const e of this.entities)
+      if (e.hp > 0 && e.type === "hq" && e.team !== team && this.isVisible(e, team))
+        known.set(e.id, { id: e.id, team: e.team, x: e.x, z: e.z });
+    for (const [id, remembered] of known)
+      if (this.players[remembered.team].eliminated || (this.isVisible(remembered, team) && !this.get(id)))
+        known.delete(id);
+  }
+  scoutDestination(team) {
+    const points = [], limit = this.terrain.half - 8;
+    const coordinates = [];
+    for (let value = -limit; value < limit; value += 18) coordinates.push(value);
+    coordinates.push(limit);
+    // Search unknown territory, including the outer edges, in alternating rows.
+    for (const [row, z] of coordinates.entries()) {
+      const line = [];
+      for (const x of coordinates)
+        if (this.nav.canStand(x, z, 1.05)) line.push({ x, z });
+      points.push(...(row % 2 ? line.reverse() : line));
+    }
+    const index = this.scoutIndex[team]++;
+    return points.length ? points[(index + team * 3) % points.length] : null;
+  }
   updateAI(team = 1) {
     const own = this.own(team),
       workers = own.filter((e) => e.type === "worker"),
       army = own.filter((e) => e.kind === "unit" && e.type !== "worker");
     if (!own.some(e => e.type === "hq")) return;
+    this.updateKnownCores(team);
     for (let i = 0; i < workers.length; i++) {
       const w = workers[i];
       if (w.orders.length) continue;
@@ -684,7 +715,7 @@ export class Simulation {
         .sort((a, b) => distance(w, a) - distance(w, b))[0];
       if (deposit) this.issue([w.id], { type: "gather", target: deposit.id });
     }
-    const hq = own.find((e) => e.type === "hq" && e.complete);
+    const hq = own.find((e) => e.type === "hq" && e.complete) || own.find(e => e.type === "hq");
     if (hq && workers.length < 9 && hq.queue.length < 1)
       this.enqueue(hq.id, "worker");
     const pop = this.population(team);
@@ -748,9 +779,8 @@ export class Simulation {
         { type: "attack", target: threat.id },
       );
     else if (this.time >= this.waveAt[team] && army.length >= 4) {
-      // Base locations are known at deployment; fog still controls firing.
-      const target = this.entities.filter(e => e.team !== team && e.type === "hq" && e.hp > 0)
-        .sort((a, b) => distance(hq, a) - distance(hq, b))[0];
+      const target = [...this.knownCores[team].values()]
+        .sort((a, b) => distance(hq, a) - distance(hq, b))[0] || this.scoutDestination(team);
       if (target) this.issue(army.map(e => e.id), { type: "attackmove", x: target.x, z: target.z });
       this.waveAt[team] = this.time + 50;
     }
@@ -836,6 +866,24 @@ export class Simulation {
     const alive = this.players.map((_, team) =>
       this.own(team).some((e) => e.type === "hq"),
     );
+    let eliminated = false;
+    for (let team = 0; team < this.players.length; team++) {
+      if (alive[team] || this.players[team].eliminated) continue;
+      this.players[team].eliminated = true;
+      for (const e of this.own(team)) {
+        // Surrender removes the faction without awarding unearned combat kills.
+        e.hp = 0;
+        e.orders = [];
+        e.queue = [];
+        e.levelJob = null;
+      }
+      this.message(team === 0 ? "Your expedition has been eliminated." : `Enemy ${team} eliminated: all Command cores destroyed.`);
+      eliminated = true;
+    }
+    if (eliminated) {
+      this.nav.rebuild(this.entities);
+      this.updateVision();
+    }
     const enemiesAlive = alive.slice(1).some(Boolean);
     if (!alive[0] || !enemiesAlive)
       this.result =

@@ -70,6 +70,23 @@ try{
     await page.waitForFunction(({unit,id})=>window.__frontier.sim.get(unit).orders[0]?.target===id,{unit:targets.unit,id});
     assert.equal(await page.evaluate(id=>window.__frontier.sim.get(id).orders[0].type,targets.unit),'attack');
    }
+   await page.evaluate(()=>{const f=window.__frontier;f.select([f.sim.own(0).find(e=>e.type==='barracks').id]);});
+   if(mobile)await page.locator('button[data-dock="selection"]').tap();
+   await page.locator('#field-guide').click();
+   assert.match(await page.locator('.field-guide article').innerText(),/7 skirmish maps/);
+   assert.match(await page.locator('.field-guide article').innerText(),/last Command core is destroyed/);
+   await page.locator('#guide-close').click();
+   await page.evaluate(()=>{const f=window.__frontier;f.sim.own(0).find(e=>e.type==='hq').level=2;f.step(.05);});
+   assert.match(await page.locator('#command-hint').textContent(),/Tech 2 \/ 3/);
+   if(mobile)assert.match(await page.locator('#command-hint').textContent(),/Tap terrain/);
+   const eliminated=await page.evaluate(()=>{
+    const f=window.__frontier,s=f.sim,b=s.own(1).find(e=>e.type==='barracks');s.enqueue(b.id,'vanguard');
+    s.own(1).find(e=>e.type==='hq').hp=0;f.step(.05);
+    return {remaining:s.own(1).length,eliminated:s.players[1].eliminated,result:s.result,queue:b.queue.length};
+   });
+   assert.deepEqual(eliminated,{remaining:0,eliminated:true,result:null,queue:0});
+   assert.match(await page.locator('#obj-win small').textContent(),/2 rivals remain/);
+   await page.waitForFunction(()=>[...window.__frontier.view.objects.values()].every(o=>o.userData.team!==1));
   }
   assert.deepEqual(errors,[]);console.log(`${engine}: ${mobile?'touch':'desktop'} stage switching, fog, expansion reserves and minimap passed`);
   await context.close();
