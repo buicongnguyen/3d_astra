@@ -33,7 +33,7 @@ document.querySelector("#app").innerHTML = `
   <main id="stage">
     <div id="world"></div>
     <div class="map-heading"><span class="eyebrow"><i class="live-dot"></i> OPERATION 01 / SKIRMISH</span><h1>Outpost Meridian<span>.</span></h1><p>THE ASHEN FRONTIER <span>·</span> SECTOR 07</p></div>
-    <aside class="mission panel"><div class="panel-label">MISSION OBJECTIVES <span>01—03</span></div><div class="objective" id="obj-economy"><span class="objective-num">01</span><span>Establish your economy<small>Assign Harvesters to resources</small></span></div><div class="objective" id="obj-army"><span class="objective-num">02</span><span>Mobilize a strike force<small>Field 8 combat units</small></span></div><div class="objective" id="obj-win"><span class="objective-num">03</span><span>Break their command<small>Destroy the enemy Command core</small></span></div><div class="mission-footer">${icon("flag")} MERIDIAN EXPEDITION</div></aside>
+    <aside class="mission panel"><div class="panel-label">MISSION OBJECTIVES <span>01—03</span></div><div class="objective" id="obj-economy"><span class="objective-num">01</span><span>Establish your economy<small>Assign Harvesters to resources</small></span></div><div class="objective" id="obj-army"><span class="objective-num">02</span><span>Mobilize a strike force<small>Field 8 combat units</small></span></div><div class="objective" id="obj-win"><span class="objective-num">03</span><span>Break their command<small>Destroy all enemy Command cores</small></span></div><div class="mission-footer">${icon("flag")} MERIDIAN EXPEDITION</div></aside>
     <div class="sector-status"><span class="eyebrow">TACTICAL UPLINK</span><span><i class="live-dot"></i> <span id="uplink">STANDBY</span></span></div>
     <div id="notice" role="status" aria-live="polite"></div>
     <div id="mode-banner" hidden></div>
@@ -52,11 +52,11 @@ document.querySelector("#app").innerHTML = `
       <div class="briefing-copy">
       <div class="eyebrow">EXPEDITION BRIEFING</div><div class="briefing-emblem">${icon("logo")}</div>
       <h2>A new frontier.<br>A foothold to defend.</h2>
-      <p>Build your outpost. Harvest the valley. Lead your expedition against the Crimson Collective.</p>
+      <p>Build your outpost. Harvest the valley. Lead your expedition against rival commanders. With multiple enemies, every faction fights for itself.</p>
       <div class="briefing-rule"><span>YOUR FORCE</span><strong>4 Harvesters · 3 defenders</strong></div>
       <div class="briefing-rule"><span>OBJECTIVE</span><strong>Eliminate enemy command</strong></div>
       </div>
-      <div class="briefing-tools"><select id="scenario" aria-label="Battlefield"><option value="riverlands">Meridian Riverlands · 96×96</option><option value="classic">Ashen Frontier · 96×96</option><option value="basin">Copper Basin · 128×128</option><option value="expanse">Frontier Expanse · 160×160</option></select><button id="briefing-settings">Settings</button></div>
+      <div class="briefing-tools"><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select><select id="enemy-count" aria-label="Number of AI enemies"><option value="1">1 AI enemy</option><option value="2">2 AI enemies · FFA</option><option value="3">3 AI enemies · FFA</option></select><button id="briefing-settings">Settings</button></div>
       <button id="start" class="primary" disabled>Preparing expedition…</button><small class="briefing-note">SINGLE PLAYER <span>·</span> MOUSE + KEYBOARD</small>
     </section>
     <div class="bottom-dock">
@@ -73,8 +73,9 @@ document.querySelector("#app").innerHTML = `
 const $ = (id) => document.getElementById(id);
 let settings = loadSettings(matchMedia("(pointer:coarse)").matches),
   mapId = "riverlands",
+  enemyCount = 1,
   ambience;
-let sim = new Simulation({ map: mapId }),
+let sim = new Simulation({ map: mapId, enemyCount }),
   view,
   selected = new Set(),
   hover = null,
@@ -448,15 +449,15 @@ function minimap() {
     }
   }
   for (const e of sim.entities)
-    if (e.team === 1 && e.kind === "building" && sim.isVisible(e))
-      rememberedBuildings.set(e.id, { x: e.x, z: e.z, radius: e.radius });
+    if (e.team !== 0 && e.kind === "building" && sim.isVisible(e))
+      rememberedBuildings.set(e.id, { x: e.x, z: e.z, radius: e.radius, team: e.team });
   for (const [id, e] of rememberedBuildings) {
     if (sim.isVisible(e) && !sim.get(id)) {
       rememberedBuildings.delete(id);
       continue;
     }
     if (!sim.isVisible(e)) {
-      ctx.fillStyle = palette(settings)[1];
+      ctx.fillStyle = palette(settings)[e.team];
       ctx.globalAlpha = 0.45;
       ctx.fillRect(px(e.x) - 3, pz(e.z) - 3, 6, 6);
       ctx.globalAlpha = 1;
@@ -521,7 +522,7 @@ function commandAt(point, target, append = false, forced = null) {
     return;
   }
   let order = { type: forced || "move", ...point };
-  if (!forced && target?.team === 1 && sim.isVisible(target))
+  if (!forced && target?.team > 0 && sim.isVisible(target))
     order = { type: "attack", target: target.id };
   if (
     !forced &&
@@ -741,7 +742,7 @@ function bindInput() {
       $("hover-label").textContent =
         hover.kind === "resource"
           ? `${hover.type.toUpperCase()} · ${Math.floor(hover.amount)}`
-          : `${hover.name}${hover.team === 1 ? " · ENEMY" : ""}`;
+          : `${hover.name}${hover.team > 0 ? " · ENEMY" : ""}`;
       const rect = canvas.getBoundingClientRect();
       $("hover-label").style.left =
         `${Math.min(e.clientX - rect.left + 16, view.width - 240)}px`;
@@ -965,10 +966,11 @@ const settingsUI = new SettingsUI({
   },
 });
 $("briefing-settings").onclick = () => settingsUI.open();
-$("scenario").onchange = () => {
+$("scenario").onchange = $("enemy-count").onchange = () => {
   if (started) return;
   mapId = $("scenario").value;
-  sim = new Simulation({ map: mapId });
+  enemyCount = Number($("enemy-count").value);
+  sim = new Simulation({ map: mapId, enemyCount });
   view?.reset();
   view?.setTerrain(sim.terrain);
   focusHome();
@@ -1021,7 +1023,7 @@ function showResult() {
   tone(sim.result === "victory" ? 880 : 220, 0.3);
   const win = sim.result === "victory";
   $("modal-content").innerHTML =
-    `<span class="eyebrow">OPERATION ${sim.result === "draw" ? "CONCLUDED" : win ? "SUCCESSFUL" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}">${icon(win ? "flag" : "shield")}</div><h2 id="modal-title">${win ? "The frontier is yours." : sim.result === "draw" ? "Mutual destruction." : "Your outpost has fallen."}</h2><p>${win ? "Enemy command has been eliminated. Meridian holds the valley." : sim.result === "draw" ? "Both Command cores were destroyed." : "The Crimson Collective destroyed your Command core. Regroup and try a different approach."}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${sim.players[0].kills}</strong>ENEMIES ELIMINATED</span></div><button class="primary" data-restart>Deploy again ${icon("arrow")}</button>`;
+    `<span class="eyebrow">OPERATION ${sim.result === "draw" ? "CONCLUDED" : win ? "SUCCESSFUL" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}">${icon(win ? "flag" : "shield")}</div><h2 id="modal-title">${win ? "The frontier is yours." : sim.result === "draw" ? "Mutual destruction." : "Your outpost has fallen."}</h2><p>${win ? "Enemy command has been eliminated. Meridian holds the valley." : sim.result === "draw" ? "All Command cores were destroyed." : "An enemy destroyed your Command core. Regroup and try a different approach."}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${sim.players[0].kills}</strong>ENEMIES ELIMINATED</span></div><button class="primary" data-restart>Deploy again ${icon("arrow")}</button>`;
 }
 function restart() {
   touchControls?.reset();
@@ -1032,7 +1034,7 @@ function restart() {
   queueOrders = false;
   $("box-select").setAttribute("aria-pressed", "false");
   $("queue-orders").setAttribute("aria-pressed", "false");
-  sim = new Simulation({ map: mapId });
+  sim = new Simulation({ map: mapId, enemyCount });
   view.reset();
   focusHome();
   selected.clear();

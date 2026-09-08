@@ -14,7 +14,7 @@ try{
   await page.goto(base+'?test=1');
   if(engine==='three')await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});
   else await page.waitForFunction(()=>window.frontierState?.ready,null,{timeout:90000});
-  for(const [id,index,size,offset,sites] of [['riverlands',0,96,0,0],['basin',2,128,12,2],['expanse',3,160,24,3],['classic',1,96,0,0]]){
+  for(const [id,index,size,offset,sites] of [['riverlands',0,96,0,0],['basin',2,128,12,2],['expanse',3,160,24,3],['classic',1,96,0,0],['dunes',4,128,12,2],['woodlands',5,160,24,3],['highlands',6,192,36,4]]){
    if(engine==='three'){
     await page.locator('#scenario').selectOption(id);
     await page.waitForFunction(id=>window.__frontier.sim.terrain.id===id,id);
@@ -35,6 +35,10 @@ try{
    await page.screenshot({path:`test-results/stage-${engine}-${mobile?'mobile':'desktop'}-${id}.png`});
   }
   if(engine==='three'){
+   for(const count of [3,2,1,3]) {
+    await page.locator('#enemy-count').selectOption(String(count));
+    assert.equal(await page.evaluate(()=>window.__frontier.sim.players.length),count+1);
+   }
    await page.locator('#scenario').selectOption('expanse');await page.locator('#start').click();
    await page.evaluate(()=>window.__frontier.sim.aiEnabled=false);
    if(mobile)await page.locator('button[data-dock="map"]').tap();
@@ -44,6 +48,28 @@ try{
    await page.evaluate(()=>window.__frontier.view.focusOn(65,-60));
    await page.locator('#pause').click();await page.locator('[data-restart]').click();
    await page.waitForFunction(()=>Math.abs(window.__frontier.view.focus.x+44)<2&&Math.abs(window.__frontier.view.focus.z-43)<2);
+   assert.equal(await page.evaluate(()=>window.__frontier.sim.enemyCount),3,'restart retains selected opponents');
+   const targets=await page.evaluate(()=>{
+    const f=window.__frontier,s=f.sim;s.aiEnabled=false;
+    const unit=s.spawn('ranger',0,0,20);
+    const enemies=[s.spawn('worker',2,10,20),s.spawn('worker',3,-10,20)];
+    for(const e of enemies){e.damage=0;e.hp=e.maxHp=10000;}
+    unit.range=40;unit.cooldown=9999;
+    s.updateVision();f.view.focusOn(0,20);f.select([unit.id]);
+    return {unit:unit.id,enemies:enemies.map(e=>e.id)};
+   });
+   await page.waitForFunction(ids=>ids.every(id=>window.__frontier.view.objects.get(id)?.visible),targets.enemies);
+   assert.equal(await page.evaluate(()=>new Set(window.__frontier.view.colors).size),4);
+   for(const id of targets.enemies){
+    const point=await page.evaluate(id=>{
+     const f=window.__frontier,e=f.sim.get(id),p=f.view.project(e.x,e.z,1),r=f.view.renderer.domElement.getBoundingClientRect();
+     return {x:r.x+p.x,y:r.y+p.y};
+    },id);
+    if(mobile)await page.touchscreen.tap(point.x,point.y);
+    else await page.mouse.click(point.x,point.y,{button:'right'});
+    await page.waitForFunction(({unit,id})=>window.__frontier.sim.get(unit).orders[0]?.target===id,{unit:targets.unit,id});
+    assert.equal(await page.evaluate(id=>window.__frontier.sim.get(id).orders[0].type,targets.unit),'attack');
+   }
   }
   assert.deepEqual(errors,[]);console.log(`${engine}: ${mobile?'touch':'desktop'} stage switching, fog, expansion reserves and minimap passed`);
   await context.close();

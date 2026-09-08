@@ -26,7 +26,7 @@ try {
   await page.goto(base+'?test=1'); await page.waitForFunction(() => window.__frontier?.view.models.size===13);
   for (const viewport of [{width:320,height:568},{width:667,height:375},{width:390,height:844}]) {
     await page.setViewportSize(viewport); await page.waitForTimeout(200);
-    await inspect('#start, #briefing-settings, #scenario');
+    await inspect('#start, #briefing-settings, #scenario, #enemy-count');
   }
   await tap('#start');
   await page.evaluate(() => { const s=window.__frontier.sim; s.aiEnabled=false; Object.assign(s.players[0],{alloy:5000,energy:5000}); s.spawn('medic',0,-15,15); s.spawn('foundry',0,-9,34); });

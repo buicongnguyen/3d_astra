@@ -8,6 +8,8 @@ The **Riverlands** update adds saved army colors, graphics/audio settings, varie
 
 ## Play locally
 
+Choose from **seven maps** and **1–3 AI enemies** in the opening briefing. Multiple enemies play free-for-all with separate colors and economies. Win by destroying all enemy Command cores. The new maps are Amber Dunes, Verdant Crossing and Obsidian Highlands; see [map details](docs/EXPANSION_STAGES.md). Online multiplayer is planned for later in [INTERNET_MULTIPLAYER_PLAN.md](docs/INTERNET_MULTIPLAYER_PLAN.md).
+
 Requires Node.js 22.12+ (or a compatible newer release).
 
 ```sh

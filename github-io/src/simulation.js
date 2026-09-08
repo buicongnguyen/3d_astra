@@ -14,14 +14,15 @@ import { progression } from "./progression.js";
 import { Terrain } from "./terrain.js";
 
 export class Simulation {
-  constructor({ ai = true, map = "classic" } = {}) {
+  constructor({ ai = true, map = "classic", enemyCount = 1 } = {}) {
     this.aiEnabled = ai;
     this.entities = [];
     this.resources = [];
     this.nextId = 1;
     this.nextQueueId = 1;
     this.time = 0;
-    this.players = [0, 1].map(() => ({
+    this.enemyCount = Number.isInteger(enemyCount) ? clamp(enemyCount, 1, 3) : 1;
+    this.players = Array.from({ length: this.enemyCount + 1 }, () => ({
       alloy: 450,
       energy: 150,
       upgrade: false,
@@ -32,10 +33,11 @@ export class Simulation {
     this.terrain = new Terrain(map);
     this.nav = new Navigation(this.terrain);
     this.aiClock = 0;
-    this.waveAt = 85;
+    this.waveAt = this.players.map((_, team) => 85 + Math.max(0, team - 1) * 15);
     this.visionClock = 0;
-    this.visible = [new Uint8Array(this.terrain.grid * this.terrain.grid), new Uint8Array(this.terrain.grid * this.terrain.grid)];
-    this.explored = [new Uint8Array(this.terrain.grid * this.terrain.grid), new Uint8Array(this.terrain.grid * this.terrain.grid)];
+    this.visible = this.players.map(() => new Uint8Array(this.terrain.grid * this.terrain.grid));
+    this.explored = this.players.map(() => new Uint8Array(this.terrain.grid * this.terrain.grid));
+    const startingDeposits = new Set();
     for (let team = 0; team < 2; team++) {
       const side = team === 0 ? 1 : -1;
       this.spawn("hq", team, -25 * side, 24 * side);
@@ -52,6 +54,7 @@ export class Simulation {
       ])
         this.resource("alloy", x * side, z * side, 2000);
       this.resource("energy", -30 * side, 34 * side, 1750);
+      for (const r of this.resources.slice(-4)) startingDeposits.add(r);
       const offset=this.terrain.offset;
       for (const e of this.own(team)) { e.x-=offset*side; e.z+=offset*side; }
       for (const r of this.resources.slice(-4)) { r.x-=offset*side; r.z+=offset*side; }
@@ -63,6 +66,20 @@ export class Simulation {
         this.resource("energy",(x+2)*side,(z+5)*side,2250);
       }
     }
+    for (let team = 2; team < this.players.length; team++) {
+      // Reflect the starting camp into the two unused quadrants.
+      const sx = team === 2 ? -1 : 1, sz = -sx;
+      for (const e of this.own(0)) this.spawn(e.type, team, e.x * sx, e.z * sz);
+      for (const r of this.resources.slice(0, 4)) {
+        this.resource(r.type, r.x * sx, r.z * sz, r.initial);
+        startingDeposits.add(this.resources.at(-1));
+      }
+    }
+    // Keep shared expansions clear of additional bases and starting deposits.
+    if (this.enemyCount > 1) this.resources = this.resources.filter(r => startingDeposits.has(r) || (
+      !this.entities.some(e => e.kind === "building" && distance(e, r) < e.radius + r.radius + 2) &&
+      ![...startingDeposits].some(other => distance(other, r) < other.radius + r.radius + 1)
+    ));
     this.nav.rebuild(this.entities);
     this.updateVision();
     this.message(
@@ -159,7 +176,7 @@ export class Simulation {
     return !!this.explored[team][z * this.terrain.grid + x];
   }
   updateVision() {
-    for (let team = 0; team < 2; team++) {
+    for (let team = 0; team < this.players.length; team++) {
       this.visible[team].fill(0);
       for (const e of this.own(team)) {
         const [cx, cz] = this.nav.cellAt(e.x, e.z),
@@ -653,23 +670,24 @@ export class Simulation {
     if (b.rally) this.issue([u.id], { type: "move", ...b.rally });
     this.message(`${d.name} ready.`, b.team);
   }
-  updateAI() {
-    const own = this.own(1),
+  updateAI(team = 1) {
+    const own = this.own(team),
       workers = own.filter((e) => e.type === "worker"),
       army = own.filter((e) => e.kind === "unit" && e.type !== "worker");
+    if (!own.some(e => e.type === "hq")) return;
     for (let i = 0; i < workers.length; i++) {
       const w = workers[i];
       if (w.orders.length) continue;
       const type = i % 4 === 0 ? "energy" : "alloy";
       const deposit = this.resources
-        .filter((r) => r.amount > 0 && r.type === type && this.isExplored(r, 1))
+        .filter((r) => r.amount > 0 && r.type === type && this.isExplored(r, team))
         .sort((a, b) => distance(w, a) - distance(w, b))[0];
       if (deposit) this.issue([w.id], { type: "gather", target: deposit.id });
     }
     const hq = own.find((e) => e.type === "hq" && e.complete);
     if (hq && workers.length < 9 && hq.queue.length < 1)
       this.enqueue(hq.id, "worker");
-    const pop = this.population(1);
+    const pop = this.population(team);
     const want = !own.some((e) => e.type === "barracks")
       ? "barracks"
       : pop.cap - pop.used - pop.reserved < 5 && pop.cap < MAX_POP
@@ -679,7 +697,7 @@ export class Simulation {
           : null;
     if (
       want &&
-      this.canPay(1, D[want].cost) &&
+      this.canPay(team, D[want].cost) &&
       !own.some((e) => !e.complete) &&
       workers.length
     ) {
@@ -687,18 +705,18 @@ export class Simulation {
         for (let i = 0; i < 12; i++) {
           const x = (hq?.x ?? 25) + Math.cos((i / 12) * Math.PI * 2) * r,
             z = (hq?.z ?? -24) + Math.sin((i / 12) * Math.PI * 2) * r;
-          if (!this.placement(want, 1, x, z)) {
+          if (!this.placement(want, team, x, z)) {
             if (this.build(workers[0].id, want, x, z)) break outer;
           }
         }
     }
-    if (this.time > 160 && hq && workers.length >= 9 && hq.level < (this.time > 300 ? 3 : 2) && !hq.queue.length) this.upgradeBuilding(hq.id,1);
+    if (this.time > 160 && hq && workers.length >= 9 && hq.level < (this.time > 300 ? 3 : 2) && !hq.queue.length) this.upgradeBuilding(hq.id,team);
     for (const b of own.filter(
       (e) => e.complete && ["barracks", "foundry"].includes(e.type),
     )) {
       if (b.levelJob) continue;
-      if (b.level < this.techLevel(1) && this.time > 190 && this.canPay(1,this.levelCost(b))) {
-        if (!b.queue.length) this.upgradeBuilding(b.id,1);
+      if (b.level < this.techLevel(team) && this.time > 190 && this.canPay(team,this.levelCost(b))) {
+        if (!b.queue.length) this.upgradeBuilding(b.id,team);
         continue;
       }
       if (b.queue.length < 2) {
@@ -708,8 +726,8 @@ export class Simulation {
         const support = b.type === 'foundry' ? 'engineer' : 'medic';
         if (b.level >= 2 && army.filter(e => e.type === support).length < 2) choice = support;
         const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : ['breaker'])])];
-        const pop = this.population(1);
-        const affordable = choices.find(type => b.level >= (D[type].required_level || 1) && this.canPay(1,D[type].cost) && pop.used+pop.reserved+D[type].pop <= pop.cap);
+        const pop = this.population(team);
+        const affordable = choices.find(type => b.level >= (D[type].required_level || 1) && this.canPay(team,D[type].cost) && pop.used+pop.reserved+D[type].pop <= pop.cap);
         if (affordable) this.enqueue(b.id,affordable);
       }
     }
@@ -717,9 +735,9 @@ export class Simulation {
       hq &&
       this.entities.find(
         (e) =>
-          e.team === 0 &&
+          e.team !== team &&
           e.hp > 0 &&
-          this.isVisible(e, 1) &&
+          this.isVisible(e, team) &&
           distance(hq, e) < 25,
       );
     if (threat)
@@ -729,12 +747,12 @@ export class Simulation {
           .map((e) => e.id),
         { type: "attack", target: threat.id },
       );
-    else if (this.time >= this.waveAt && army.length >= 4) {
-      this.issue(
-        army.map((e) => e.id),
-        { type: "attackmove", x: -25-this.terrain.offset, z: 24+this.terrain.offset },
-      );
-      this.waveAt = this.time + 50;
+    else if (this.time >= this.waveAt[team] && army.length >= 4) {
+      // Base locations are known at deployment; fog still controls firing.
+      const target = this.entities.filter(e => e.team !== team && e.type === "hq" && e.hp > 0)
+        .sort((a, b) => distance(hq, a) - distance(hq, b))[0];
+      if (target) this.issue(army.map(e => e.id), { type: "attackmove", x: target.x, z: target.z });
+      this.waveAt[team] = this.time + 50;
     }
   }
   tick(dt) {
@@ -811,16 +829,17 @@ export class Simulation {
     if (this.aiEnabled) {
       this.aiClock -= dt;
       if (this.aiClock <= 0) {
-        this.updateAI();
+        for (let team = 1; team < this.players.length; team++) this.updateAI(team);
         this.aiClock = 2.5;
       }
     }
-    const alive = [0, 1].map((team) =>
+    const alive = this.players.map((_, team) =>
       this.own(team).some((e) => e.type === "hq"),
     );
-    if (!alive[0] || !alive[1])
+    const enemiesAlive = alive.slice(1).some(Boolean);
+    if (!alive[0] || !enemiesAlive)
       this.result =
-        !alive[0] && !alive[1] ? "draw" : alive[0] ? "victory" : "defeat";
+        !alive[0] && !enemiesAlive ? "draw" : alive[0] ? "victory" : "defeat";
     // Retain only live simulation objects; selection and orders use stable IDs.
     this.entities = this.entities.filter((e) => e.hp > 0);
   }

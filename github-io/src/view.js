@@ -230,7 +230,7 @@ export class WorldView {
             if (combined) template.add(new THREE.Mesh(combined, material));
             geometries.forEach((g) => g.dispose());
           }
-          for (let team = 0; team < 2; team++) {
+          for (let team = 0; team < this.colors.length; team++) {
             const variant = template.clone(true),
               materials = new Map();
             variant.traverse((o) => {

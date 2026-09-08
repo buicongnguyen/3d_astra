@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {Simulation} from '../src/simulation.js';
 import {Terrain} from '../src/terrain.js';
 import maps from '../src/maps.json' with {type:'json'};
-test('four stages have symmetric reachable reserves and correctly sized fog/navigation',()=>{
+test('seven stages have symmetric reachable reserves and correctly sized fog/navigation',()=>{
  for(const [id,m] of Object.entries(maps)){
   const s=new Simulation({ai:false,map:id});
   assert.equal(s.visible[0].length,(m.size/2)**2);

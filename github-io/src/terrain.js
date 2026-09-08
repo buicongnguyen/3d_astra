@@ -56,6 +56,9 @@ export class Terrain {
       return "road";
     const n =
       Math.sin(x * 0.13) * Math.cos(z * 0.17) + Math.sin((x + z) * 0.09);
+    if (this.biome === "desert") return n < -0.8 ? "dirt" : "sand";
+    if (this.biome === "woodland") return n > 1.2 ? "dirt" : "grass";
+    if (this.biome === "highland") return n > 0.4 ? "stone" : n < -0.8 ? "grass" : "dirt";
     return n > 0.65 ? "sand" : n < -0.4 ? "dirt" : "grass";
   }
   canStand(x, z, r = 0.55) {

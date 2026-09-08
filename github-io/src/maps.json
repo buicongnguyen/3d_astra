@@ -48,5 +48,68 @@
         18
       ]
     ]
+  },
+  "dunes": {
+    "name": "Amber Dunes",
+    "size": 128,
+    "river": false,
+    "offset": 12,
+    "biome": "desert",
+    "sites": [
+      [
+        -48,
+        -12
+      ],
+      [
+        -8,
+        48
+      ]
+    ]
+  },
+  "woodlands": {
+    "name": "Verdant Crossing",
+    "size": 160,
+    "river": true,
+    "offset": 24,
+    "biome": "woodland",
+    "sites": [
+      [
+        -60,
+        -14
+      ],
+      [
+        -10,
+        58
+      ],
+      [
+        -30,
+        32
+      ]
+    ]
+  },
+  "highlands": {
+    "name": "Obsidian Highlands",
+    "size": 192,
+    "river": false,
+    "offset": 36,
+    "biome": "highland",
+    "sites": [
+      [
+        -76,
+        -18
+      ],
+      [
+        -12,
+        76
+      ],
+      [
+        -46,
+        -45
+      ],
+      [
+        -76,
+        18
+      ]
+    ]
   }
 }

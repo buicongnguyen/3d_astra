@@ -302,7 +302,7 @@ test("AI gathers resources, produces troops, and launches an attack", () => {
     sim.own(1).filter((e) => e.kind === "unit" && e.type !== "worker").length >
       3,
   );
-  assert.ok(sim.waveAt > 95, "AI should have launched its first wave");
+  assert.ok(sim.waveAt[1] > 95, "AI should have launched its first wave");
   assert.ok(sim.players.every((p) => p.alloy >= 0 && p.energy >= 0));
 });
 

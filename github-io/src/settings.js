@@ -58,7 +58,7 @@ export function saveSettings(value, storage) {
     return false;
   }
 }
-export const palette = (settings) => [
-  PRESETS[settings.playerColor],
-  PRESETS[settings.enemyColor],
-];
+export const palette = (settings) => {
+  const chosen = [PRESETS[settings.playerColor], PRESETS[settings.enemyColor]];
+  return [...chosen, ...["blue", "gold", "violet", "orange"].map(key => PRESETS[key]).filter(color => !chosen.includes(color))].slice(0, 4);
+};

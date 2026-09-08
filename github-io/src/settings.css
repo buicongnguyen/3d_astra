@@ -176,7 +176,8 @@
   outline-offset: 2px;
 }
 .briefing-tools {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 6px;
   align-items: center;
   margin-top: 12px;
@@ -241,3 +242,5 @@
   background: var(--team-hostile, #ef7660);
   transform: rotate(45deg);
 }
+
+.briefing-tools #scenario { grid-column: 1 / -1; width: 100%; }
