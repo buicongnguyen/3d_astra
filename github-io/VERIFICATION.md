@@ -52,3 +52,12 @@ This is a short rendering and simulation smoke test on a powerful desktop, not a
 ## Deployment
 
 The root GitHub Actions workflow repeats the simulation suite, production build, desktop browser suite and mobile touch suite before deploying the static artifact. Consult the repository's Actions tab for the exact commit and deployment outcome. `npm run test:webkit` provides an optional second-engine smoke check after installing Playwright WebKit.
+
+## Progression parity release — 2026-09-08
+
+- 42 Node tests passed, including new shields, support units, building levels, production gates, resource messages and refunds.
+- All 11 Blender entity models loaded. Desktop, touch across five viewport layouts, improvements, and progression browser suites passed. WebKit touch smoke passed; physical Safari/iOS remains unverified.
+- New browser scenarios exercised the field guide, pause restoration, L2/L3 upgrades, cancellation, Medic production and Support targeting. Guide portrait/landscape and support screenshots were inspected.
+- The 100-friendly-unit hardware sample measured 16.7 ms median and 16.8 ms p95 on the development RTX 4080 SUPER; this is not a physical-phone benchmark.
+- The balance JSON exactly matches Godot commit 2e8b275. Godot's 47 simulation and 37 progression checks and its asset/UI suite passed again.
+- See PROGRESSION_PLAN.md for the three review passes and the completed scope.

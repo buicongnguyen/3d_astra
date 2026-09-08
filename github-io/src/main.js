@@ -5,6 +5,7 @@ import { loadSettings, saveSettings, palette } from "./settings.js";
 import { SettingsUI } from "./settings-ui.js";
 import { MAPS, SURFACES } from "./terrain.js";
 import { Ambience } from "./ambience.js";
+import { createFieldGuide } from "./field-guide.js";
 import { Simulation } from "./simulation.js";
 import { WorldView } from "./view.js";
 import {
@@ -58,8 +59,8 @@ document.querySelector("#app").innerHTML = `
     </section>
     <div class="bottom-dock">
       <section class="minimap-panel panel"><div class="panel-label">SECTOR OVERVIEW <button id="home" title="Focus base · H" aria-label="Focus base">${icon("hq")}</button></div><canvas id="minimap" width="240" height="200" aria-label="Minimap: click to pan; right-click to command"></canvas><div class="map-legend"><span><i class="friendly"></i>YOU</span><span><i class="hostile"></i>ENEMY</span><span><i class="deposit"></i>RESOURCE</span></div></section>
-      <section class="selection-panel panel"><div class="panel-label"><span id="selection-label">EXPEDITION COMMAND</span><span id="selection-count">READY</span></div><div id="selection-info"></div><div id="unit-list"></div><div id="queue"></div><div class="order-buttons"><button id="move-order" title="Click a destination">${icon("move")} Move</button><button id="attack-order" title="Attack-move · F">${icon("crosshair")} Attack-move <kbd>F</kbd></button><button id="stop-order" title="Stop · X">${icon("stop")} Stop <kbd>X</kbd></button></div></section>
-      <section class="command-panel panel"><div class="panel-label"><span id="command-label">COMMAND CENTER</span><span id="command-context">ACTIONS</span></div><div id="commands"></div><div id="command-hint">Select a unit or structure to issue commands.</div></section>
+      <section class="selection-panel panel"><div class="panel-label"><span id="selection-label">EXPEDITION COMMAND</span><span id="selection-count">READY</span></div><div id="selection-info"></div><div id="unit-list"></div><div id="queue"></div><div class="order-buttons"><button id="field-guide">Info & stats</button><button id="support-order" hidden>Support</button><button id="move-order" title="Click a destination">${icon("move")} Move</button><button id="attack-order" title="Attack-move · F">${icon("crosshair")} Attack-move <kbd>F</kbd></button><button id="stop-order" title="Stop · X">${icon("stop")} Stop <kbd>X</kbd></button></div></section>
+      <section class="command-panel panel"><div class="panel-label"><span id="command-label">COMMAND CENTER</span><span id="command-context">ACTIONS</span></div><div id="commands"></div><div id="upgrade-actions" class="upgrade-actions"></div><div id="command-hint">Select a unit or structure to issue commands.</div></section>
     </div>
     <nav id="dock-tabs" aria-label="Command panels"><button data-dock="selection" aria-pressed="true">${icon("people")} Selection</button><button data-dock="actions" aria-pressed="false">${icon("worker")} Actions</button><button data-dock="map" aria-pressed="false">${icon("flag")} Map</button></nav>
     <div class="statusbar"><span><i class="live-dot"></i> <span id="status-text">EXPEDITION SYSTEMS INITIALIZING</span></span><span>WASD pan <b>·</b> Scroll zoom <b>·</b> Right-click command <b>·</b> <button id="controls-link">? Controls</button></span><span id="fps">— FPS</span></div>
@@ -218,6 +219,7 @@ function enterMode(type) {
     $("mode-banner").textContent =
       `${type === "attackmove" ? "ATTACK-MOVE" : "MOVE"} · Tap your destination`;
   $("mode-controls").hidden = false;
+  if (type === "support") $("mode-banner").textContent = "SUPPORT · Choose friendly infantry (Medic) or a building / Breaker (Engineer)";
   $("world").classList.add("targeting");
 }
 function enterBuild(type) {
@@ -226,6 +228,8 @@ function enterBuild(type) {
     notice("Select a Harvester to construct a building.");
     return;
   }
+  const missing = sim.constructionRequirements(type);
+  if (missing) { notice(missing); return; }
   clearMode();
   mode = "build";
   buildType = type;
@@ -296,9 +300,17 @@ function updateUI() {
     const hp = es.reduce((s, u) => s + u.hp, 0),
       max = es.reduce((s, u) => s + u.maxHp, 0);
     $("selection-info").innerHTML =
-      `<div class="portrait">${icon(es.length > 1 ? "people" : e.icon)}<span>ME</span></div><div class="entity-details"><span class="eyebrow">${es.length > 1 ? "MERIDIAN EXPEDITION" : e.role.toUpperCase()}</span><h3>${es.length > 1 ? "Expedition squad" : e.name}</h3><div class="health-track"><i style="width:${(hp / max) * 100}%"></i></div><div class="entity-stats"><span>${Math.ceil(hp)} / ${max} HP</span><span>${!e.complete ? `BUILDING ${Math.floor(e.progress * 100)}%` : e.carry ? `${e.carry} ${e.carryType.toUpperCase()} CARRIED` : e.orders[0]?.type.toUpperCase() || (e.kind === "building" ? "OPERATIONAL" : "STANDING BY")}</span></div></div>`;
+      `<div class="portrait">${icon(es.length > 1 ? "people" : (e.icon || e.type))}<span>ME</span></div><div class="entity-details"><span class="eyebrow">${es.length > 1 ? "MERIDIAN EXPEDITION" : e.role.toUpperCase()}</span><h3>${es.length > 1 ? "Expedition squad" : e.name}</h3><div class="health-track"><i style="width:${(hp / max) * 100}%"></i></div><div class="entity-stats"><span>${Math.ceil(hp)} / ${max} HP</span><span>${!e.complete ? `BUILDING ${Math.floor(e.progress * 100)}%` : e.carry ? `${e.carry} ${e.carryType.toUpperCase()} CARRIED` : e.orders[0]?.type.toUpperCase() || (e.kind === "building" ? "OPERATIONAL" : "STANDING BY")}</span></div></div>`;
   }
-  const signature = `${es.map((e) => e.id).join(",")}/${e?.complete}/${p.upgrade}`;
+  $("support-order").hidden = !es.some(u => u.support);
+  if (e) {
+    const details = $("selection-info").querySelector('.entity-details');
+    details.insertAdjacentHTML('beforeend',`<div class="progression-stats">Shield ${Math.ceil(es.reduce((s,u) => s+u.shield,0))}/${es.reduce((s,u) => s+u.maxShield,0)} · ATK ${sim.attackValue(e).toFixed(1)}${es.length > 1 ? ' (first unit)' : ''}${e.support ? ` · Restore ${e.support} HP/s` : ''}${e.kind === 'building' ? ` · L${e.level}` : ''}</div>`);
+    if (es.length === 1) details.insertAdjacentHTML('beforeend',`<p class="entity-purpose">${e.description.split('. ')[0].replace(/\.$/,'')}.</p>`);
+    if (e.levelJob) details.insertAdjacentHTML('beforeend',`<div class="progression-stats">Upgrading L${e.level+1}: ${Math.floor(100*e.levelJob.elapsed/e.levelJob.time)}%</div>`);
+  }
+  $("command-context").title = `Command core technology ${sim.techLevel()} / 3`;
+  const signature = `${es.map((e) => e.id).join(",")}/${e?.complete}/${p.upgrade}/${e?.level}/${!!e?.levelJob}`;
   if (lastSelectionKey !== signature) {
     lastSelectionKey = signature;
     $("unit-list").innerHTML =
@@ -307,7 +319,7 @@ function updateUI() {
             .slice(0, 18)
             .map(
               (u) =>
-                `<button data-select="${u.id}" title="${u.name}">${icon(u.icon)}</button>`,
+                `<button data-select="${u.id}" title="${u.name}">${icon(u.icon || u.type)}</button>`,
             )
             .join("") +
           (es.length > 18 ? `<span>+${es.length - 18}</span>` : "")
@@ -330,29 +342,26 @@ function updateUI() {
       actions
         .map((type) => {
           const d = D[type];
-          return `<button class="command-tile" data-action="${type}" title="${d.description}">${icon(d.icon)}<span>${d.name}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
+          return `<button class="command-tile" data-action="${type}" title="${d.description}">${icon(d.icon || type)}<span>${d.name}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
         })
         .join("") ||
       `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : "Your expedition is ready"}</strong><p>${e ? "Right-click to move or engage.<br>Attack-move to advance and fight." : "Select the Command core to train Harvesters, or the Barracks to grow your army."}</p></div>`;
+    $("upgrade-actions").innerHTML = e?.kind === 'building' && es.length === 1 && e.complete ?
+      (e.levelJob ? '<button data-cancel-level>Cancel upgrade · full refund</button>' : e.level < 3 ? `<button data-level>Upgrade L${e.level+1} · ${sim.levelCost(e).join('/')}</button>` : '<span>Maximum level 3</span>') : '';
     $("command-hint").textContent =
       e?.kind === "building"
         ? e.complete
-          ? "Right-click terrain to set a rally point."
+          ? `Tech ${sim.techLevel()} / 3 · Right-click terrain to set a rally point.`
           : "A Harvester must remain nearby to finish construction."
         : es.some((u) => u.type === "worker")
           ? "Select a structure, then place it on clear terrain."
           : "Hold Shift to queue orders. Ctrl + 1–9 saves a group.";
   }
   for (const button of $("commands").querySelectorAll("[data-action]")) {
-    const d = D[button.dataset.action];
     const unavailable =
       !started ||
       paused ||
-      sim.result ||
-      !sim.canPay(0, d.cost) ||
-      (button.dataset.action === "upgrade" &&
-        (p.upgrade ||
-          own.some((b) => b.queue.some((q) => q.type === "upgrade"))));
+      sim.result;
     button.disabled = !!unavailable;
   }
   const queueKey = `${e?.id}/${e?.complete}/${e?.queue.map((q) => q.id).join(",")}`;
@@ -360,7 +369,7 @@ function updateUI() {
   if (queueKey !== lastQueueKey) {
     lastQueueKey = queueKey;
     $("queue").innerHTML = e?.queue.length
-      ? `<span class="queue-label">QUEUE</span>${e.queue.map((q, i) => `<button data-cancel="${i}" title="Cancel ${D[q.type].name} — full refund">${icon(D[q.type].icon)}<span></span><i></i></button>`).join("")}`
+      ? `<span class="queue-label">QUEUE</span>${e.queue.map((q, i) => `<button data-cancel="${i}" title="Cancel ${D[q.type].name} — full refund">${icon(D[q.type].icon || q.type)}<span></span><i></i></button>`).join("")}`
       : e && !e.complete
         ? `<button class="cancel-build" data-cancel-build="${e.id}">Cancel construction · 75% refund</button>`
         : "";
@@ -373,7 +382,7 @@ function updateUI() {
     button.querySelector("i").style.width = `${progress}%`;
   }
   for (const b of document.querySelectorAll(".order-buttons button"))
-    b.disabled = !started || paused || !es.some((u) => u.kind === "unit");
+    b.disabled = !started || paused || (b.id !== "field-guide" && !es.some((u) => u.kind === "unit"));
   for (const b of document.querySelectorAll(".touch-controls button"))
     b.disabled = !started || paused || !!sim.result;
   if (mode === "build" && buildPoint) {
@@ -489,6 +498,17 @@ function commandAt(point, target, append = false, forced = null) {
   if (!point || !started || paused || sim.result) return;
   const es = selectedEntities(),
     units = es.filter((e) => e.kind === "unit");
+  if (forced === "support") {
+    const helpers = units.filter(e => sim.supportValid(e,target));
+    if (!helpers.length) { notice("Choose friendly infantry for a Medic, or a completed building / Breaker for an Engineer."); return; }
+    sim.issue(helpers.map(e => e.id),{type:"support",target:target.id},append);
+    return;
+  }
+  if (!forced && target?.team === 0) {
+    const helpers = units.filter(e => sim.supportValid(e,target));
+    sim.issue(helpers.map(e => e.id),{type:"support",target:target.id},append);
+    for (const helper of helpers) units.splice(units.indexOf(helper),1);
+  }
   for (const b of es.filter((e) => e.kind === "building" && e.complete)) {
     b.rally = { ...point };
     notice("Rally point established.");
@@ -603,7 +623,7 @@ function touchTap(x, y) {
     return;
   }
   if (mode) {
-    commandAt(point, null, queueOrders, mode);
+    commandAt(point, mode === "support" ? target : null, queueOrders, mode);
     clearMode();
     return;
   }
@@ -745,7 +765,7 @@ function bindInput() {
       return;
     }
     if (mode) {
-      commandAt(point, null, e.shiftKey, mode);
+      commandAt(point, mode === "support" ? view.pick(e.clientX,e.clientY,sim) : null, e.shiftKey, mode);
       clearMode();
       return;
     }
@@ -799,6 +819,7 @@ function bindInput() {
   );
   window.addEventListener("keydown", (e) => {
     if (settingsUI.active) return;
+    if (modalType === "guide") return; // Native dialog owns Escape and selector keys.
     if (
       e.target.matches("input, textarea") ||
       (e.repeat && [" ", "Escape"].includes(e.key))
@@ -1104,6 +1125,20 @@ $("audio").onclick = () => {
   $("audio").innerHTML = icon(muted ? "muted" : "volume");
   $("audio").title = muted ? "Enable sound" : "Mute sound";
   $("audio").setAttribute("aria-label", $("audio").title);
+};
+let guidePrevious = null;
+const showGuide = createFieldGuide(() => {
+  guidePrevious = {paused,modalType}; paused = true; modalType = 'guide'; keys.clear();
+}, () => { paused = guidePrevious.paused; modalType = guidePrevious.modalType; keys.clear(); });
+$("field-guide").onclick = () => showGuide(selectedEntities()[0]?.type);
+$("support-order").onclick = () => enterMode('support');
+$("upgrade-actions").onclick = event => {
+  if (!started || paused || sim.result) return;
+  const e = selectedEntities()[0];
+  if (!e) return;
+  if (event.target.closest('[data-level]')) sim.upgradeBuilding(e.id);
+  if (event.target.closest('[data-cancel-level]')) sim.cancelLevel(e.id);
+  updateUI();
 };
 $("move-order").onclick = () => enterMode("move");
 $("attack-order").onclick = () => enterMode("attackmove");

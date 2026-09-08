@@ -531,10 +531,19 @@ export class WorldView {
     const rect = this.renderer.domElement.getBoundingClientRect(),
       x = clientX - rect.left,
       y = clientY - rect.top;
+    this.raycaster.setFromCamera(new THREE.Vector2(x/rect.width*2-1,-y/rect.height*2+1),this.camera);
+    const candidates = sim.entities.filter(e => e.hp > 0 && sim.isVisible(e) && this.objects.has(e.id));
+    const meshes = candidates.map(e => this.objects.get(e.id).userData.model);
+    const hits = this.raycaster.intersectObjects(meshes,true);
+    if (hits.length) {
+      let node = hits[0].object;
+      while (node && !meshes.includes(node)) node = node.parent;
+      if (node) return candidates[meshes.indexOf(node)];
+    }
     let best = null,
       score = Infinity;
     for (const e of [...sim.entities, ...sim.resources]) {
-      if (!sim.isVisible(e) || e.amount === 0) continue;
+      if (!sim.isVisible(e) || e.amount === 0 || e.hp <= 0) continue;
       const p = this.project(
         e.x,
         e.z,
@@ -613,6 +622,13 @@ export class WorldView {
     root.add(bar);
     root.userData.bar = bar;
     root.userData.fill = fill;
+    const shield = new THREE.Mesh(new THREE.PlaneGeometry(2,0.07),new THREE.MeshBasicMaterial({color:0x69cbee,depthTest:false}));
+    shield.position.set(0,0.15,0.02); bar.add(shield); root.userData.shield = shield;
+    if (e.kind === 'building') {
+      const levels = new THREE.Group();
+      for (let i=0;i<3;i++) { const pip = new THREE.Mesh(new THREE.PlaneGeometry(0.18,0.12),new THREE.MeshBasicMaterial({color:0xedc76f,depthTest:false})); pip.position.set(-0.24+i*0.24,0.38,0); levels.add(pip); }
+      root.add(levels); levels.position.y = 5.2; root.userData.levels = levels;
+    }
     this.scene.add(root);
     this.objects.set(e.id, root);
     return root;
@@ -668,7 +684,7 @@ export class WorldView {
   }
   event(event, sim) {
     if (
-      event.type === "shot" &&
+      ["shot","support"].includes(event.type) &&
       (sim.isVisible(event) || sim.isVisible({ x: event.tx, z: event.tz }))
     ) {
       const line = new THREE.Line(
@@ -677,7 +693,7 @@ export class WorldView {
           new THREE.Vector3(event.tx, 0.9, event.tz),
         ]),
         new THREE.LineBasicMaterial({
-          color: event.heavy ? 0xffc679 : this.colors[event.team],
+          color: event.type === "support" ? 0x76f2c4 : event.heavy ? 0xffc679 : this.colors[event.team],
           transparent: true,
           opacity: 0.9,
         }),
@@ -687,7 +703,7 @@ export class WorldView {
         mesh: line,
         life: 0.12,
         max: 0.12,
-        team: event.heavy ? undefined : event.team,
+        team: event.heavy || event.type === "support" ? undefined : event.team,
       });
     } else if (event.type === "death" && sim.isVisible(event)) {
       const m = mesh(
@@ -729,10 +745,16 @@ export class WorldView {
       }
       o.userData.ring.visible = selected.has(e.id) || hover?.id === e.id;
       o.userData.bar.visible =
-        selected.has(e.id) || hover?.id === e.id || e.hp < e.maxHp;
+        selected.has(e.id) || hover?.id === e.id || e.hp < e.maxHp || e.shield < e.maxShield;
       o.userData.bar.quaternion.copy(this.camera.quaternion);
       o.userData.fill.scale.x = Math.max(0, e.hp / e.maxHp);
       o.userData.fill.position.x = -(1 - e.hp / e.maxHp);
+      o.userData.shield.scale.x = e.shield/e.maxShield;
+      o.userData.shield.position.x = -(1-e.shield/e.maxShield);
+      if (o.userData.levels) {
+        o.userData.levels.quaternion.copy(this.camera.quaternion);
+        o.userData.levels.children.forEach((pip,i) => { pip.visible = i < e.level; });
+      }
     }
     for (const [id, object] of this.objects)
       if (!alive.has(id)) {
@@ -785,6 +807,7 @@ export class WorldView {
       o.userData.ring,
       o.userData.contactShadow,
       ...o.userData.bar.children,
+      ...(o.userData.levels?.children || []),
     ]) {
       m.geometry.dispose();
       m.material.dispose();

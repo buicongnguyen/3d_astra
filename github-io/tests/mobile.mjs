@@ -133,7 +133,7 @@ const layout = async (label) => {
 try {
   await page.goto(`${base}?test=1`, { waitUntil: "networkidle" });
   await page.waitForFunction(() => window.__frontier, { timeout: 30000 });
-  assert.equal(await read(() => window.__frontier.view.models.size), 9);
+  assert.equal(await read(() => window.__frontier.view.models.size), 11);
   await screenshot("briefing");
   await tap("#start");
   await page.waitForFunction(

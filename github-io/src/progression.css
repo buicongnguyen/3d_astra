@@ -1,0 +1,20 @@
+.field-guide { color: #e1ebe2; background: #10272e; border: 1px solid #557876; border-radius: 16px; width: min(580px,calc(100vw - 24px)); height: min(700px,calc(100dvh - 24px)); padding: 0; }
+.field-guide[open] { display: flex; flex-direction: column; }
+.field-guide::backdrop { background: #020f14bd; }
+.field-guide header,.field-guide footer { flex: 0 0 auto; padding: 16px 20px; background: #132d34; }
+.field-guide h2 { font-size: 21px; margin: 0 0 12px; }
+.field-guide h3 { font-size: 16px; margin-top: 24px; color: #a7e7d2; }
+.field-guide label { display: block; font-size: 13px; margin-bottom: 6px; }
+.field-guide select,.field-guide button { width: 100%; min-height: 44px; color: #e1ebe2; background: #22434b; border: 1px solid #628984; border-radius: 8px; padding: 8px; font: inherit; }
+.field-guide article { overflow-y: auto; min-height: 0; padding: 20px; line-height: 1.55; }
+.field-guide dl { display: grid; grid-template-columns: 100px 1fr; gap: 10px; font-size: 14px; }
+.field-guide dd { margin: 0; }
+.field-guide ul,.field-guide ol { padding-left: 22px; }
+.field-guide article p { margin: 12px 0; }
+.progression-stats { color: #96dcef; font-size: 12px; line-height: 1.5; }
+.entity-purpose { font-size: 11px; color: #bbcec7; margin-top: 4px; }
+.upgrade-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.upgrade-actions button { min-height: 40px; background: #22434b; border: 1px solid #557876; color: #e1ebe2; border-radius: 7px; padding: 6px 12px; }
+.order-buttons { flex-wrap: wrap; }
+.command-panel,.selection-panel { overflow-y: auto; }
+@media (max-height: 480px) { .field-guide header,.field-guide footer { padding: 8px 16px; } .field-guide h2 { font-size: 17px; margin-bottom: 6px; } }

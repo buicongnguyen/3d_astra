@@ -22,7 +22,7 @@ try {
   await page.waitForFunction(() => window.__frontier, { timeout: 30000 });
   assert.equal(
     await page.evaluate(() => window.__frontier.view.models.size),
-    9,
+    11,
   );
   await page.locator("#start").tap();
   await page.waitForFunction(()=>window.__frontier.sim.time > .2 && window.__frontier.view.renderer.info.render.calls > 0,{timeout:15000});

@@ -1,0 +1,317 @@
+{
+  "definitions": {
+    "worker": {
+      "name": "Harvester",
+      "role": "Economy",
+      "kind": "unit",
+      "hp": 55,
+      "speed": 4.6,
+      "damage": 4,
+      "interval": 1,
+      "range": 1.8,
+      "radius": 0.55,
+      "vision": 13,
+      "cost": [
+        50,
+        0
+      ],
+      "pop": 1,
+      "time": 8,
+      "icon": "worker",
+      "description": "Collects resources and constructs your outpost.",
+      "shield": 10
+    },
+    "vanguard": {
+      "name": "Vanguard",
+      "role": "Close assault",
+      "kind": "unit",
+      "hp": 150,
+      "speed": 5,
+      "damage": 15,
+      "interval": 0.85,
+      "range": 2,
+      "radius": 0.65,
+      "vision": 14,
+      "cost": [
+        75,
+        0
+      ],
+      "pop": 1,
+      "time": 10,
+      "icon": "shield",
+      "counter": "ranger",
+      "description": "Fast armored fighter. Strong against Rangers.",
+      "shield": 60
+    },
+    "ranger": {
+      "name": "Ranger",
+      "role": "Ranged support",
+      "kind": "unit",
+      "hp": 85,
+      "speed": 4.2,
+      "damage": 12,
+      "interval": 1.05,
+      "range": 9,
+      "radius": 0.55,
+      "vision": 15,
+      "cost": [
+        100,
+        25
+      ],
+      "pop": 1,
+      "time": 13,
+      "icon": "crosshair",
+      "counter": "breaker",
+      "description": "Long-range precision. Strong against Breakers.",
+      "shield": 25
+    },
+    "breaker": {
+      "name": "Breaker",
+      "role": "Heavy artillery",
+      "kind": "unit",
+      "hp": 300,
+      "speed": 2.7,
+      "damage": 30,
+      "interval": 1.7,
+      "range": 7.5,
+      "radius": 0.95,
+      "vision": 15,
+      "cost": [
+        175,
+        75
+      ],
+      "pop": 3,
+      "time": 20,
+      "icon": "tank",
+      "description": "Heavy splash damage against clustered infantry.",
+      "shield": 80
+    },
+    "hq": {
+      "name": "Command core",
+      "role": "Headquarters",
+      "kind": "building",
+      "hp": 2200,
+      "radius": 3.4,
+      "vision": 19,
+      "cost": [
+        400,
+        0
+      ],
+      "time": 40,
+      "supply": 15,
+      "trains": [
+        "worker"
+      ],
+      "icon": "hq",
+      "description": "Receives resources and trains Harvesters. Provides 15 supply. Upgrade this core to unlock matching levels for other buildings. Losing every Command core loses the match.",
+      "shield": 150
+    },
+    "relay": {
+      "name": "Supply relay",
+      "role": "Infrastructure",
+      "kind": "building",
+      "hp": 450,
+      "radius": 1.8,
+      "vision": 12,
+      "cost": [
+        100,
+        0
+      ],
+      "time": 12,
+      "supply": 10,
+      "icon": "relay",
+      "description": "Provides 10 supply, plus 5 per upgrade level (15 at L2, 20 at L3). Army capacity is capped at 100.",
+      "shield": 40
+    },
+    "barracks": {
+      "name": "Barracks",
+      "role": "Infantry production",
+      "kind": "building",
+      "hp": 850,
+      "radius": 2.5,
+      "vision": 14,
+      "cost": [
+        150,
+        0
+      ],
+      "time": 18,
+      "trains": [
+        "vanguard",
+        "ranger",
+        "medic"
+      ],
+      "icon": "barracks",
+      "description": "Trains Vanguards and Rangers. Level 2 unlocks Medics. Required to construct a Foundry. Upgrades accelerate production.",
+      "shield": 60
+    },
+    "foundry": {
+      "name": "Foundry",
+      "role": "Advanced production",
+      "kind": "building",
+      "hp": 1100,
+      "radius": 2.8,
+      "vision": 14,
+      "cost": [
+        200,
+        100
+      ],
+      "time": 25,
+      "trains": [
+        "breaker",
+        "upgrade",
+        "engineer"
+      ],
+      "requires": "barracks",
+      "icon": "foundry",
+      "description": "Produces Breakers and researches +10% combat-unit damage. Level 2 unlocks Engineers. Upgrades accelerate production.",
+      "shield": 90
+    },
+    "tower": {
+      "name": "Sentinel tower",
+      "role": "Static defense",
+      "kind": "building",
+      "hp": 650,
+      "radius": 1.5,
+      "vision": 19,
+      "cost": [
+        125,
+        25
+      ],
+      "time": 15,
+      "damage": 19,
+      "interval": 1.2,
+      "range": 13,
+      "icon": "tower",
+      "description": "Automatically attacks visible enemies within range. Each upgrade adds 25% of its base attack damage.",
+      "shield": 50
+    },
+    "upgrade": {
+      "name": "Overcharged weapons",
+      "role": "Research",
+      "cost": [
+        150,
+        100
+      ],
+      "time": 25,
+      "pop": 0,
+      "icon": "bolt",
+      "description": "One-time +10% damage for all combat units."
+    },
+    "medic": {
+      "name": "Medic",
+      "role": "Infantry healing",
+      "kind": "unit",
+      "hp": 75,
+      "shield": 30,
+      "speed": 4.3,
+      "damage": 0,
+      "interval": 1,
+      "range": 6,
+      "radius": 0.6,
+      "vision": 14,
+      "cost": [
+        100,
+        50
+      ],
+      "pop": 1,
+      "time": 15,
+      "required_level": 2,
+      "support": 12,
+      "description": "Automatically heals nearby friendly infantry (including Harvesters and Engineers), excluding itself. Cannot attack. Use Support, then select an ally to follow and heal."
+    },
+    "engineer": {
+      "name": "Engineer",
+      "role": "Mechanical repair",
+      "kind": "unit",
+      "hp": 100,
+      "shield": 30,
+      "speed": 4.3,
+      "damage": 0,
+      "interval": 1,
+      "range": 6,
+      "radius": 0.6,
+      "vision": 14,
+      "cost": [
+        125,
+        50
+      ],
+      "pop": 1,
+      "time": 15,
+      "required_level": 2,
+      "support": 18,
+      "description": "Automatically repairs nearby completed buildings and Breakers. Cannot construct, gather, or attack. Use Support, then select a repair target."
+    }
+  },
+  "rocks": [
+    [
+      -9,
+      -5,
+      3
+    ],
+    [
+      -12,
+      -8,
+      2.8
+    ],
+    [
+      -15,
+      -11,
+      2.4
+    ],
+    [
+      9,
+      5,
+      3
+    ],
+    [
+      12,
+      8,
+      2.8
+    ],
+    [
+      15,
+      11,
+      2.4
+    ],
+    [
+      -30,
+      -9,
+      2.3
+    ],
+    [
+      -33,
+      -11,
+      2
+    ],
+    [
+      30,
+      9,
+      2.3
+    ],
+    [
+      33,
+      11,
+      2
+    ],
+    [
+      -8,
+      34,
+      2.2
+    ],
+    [
+      -6,
+      37,
+      2.5
+    ],
+    [
+      8,
+      -34,
+      2.2
+    ],
+    [
+      6,
+      -37,
+      2.5
+    ]
+  ]
+}

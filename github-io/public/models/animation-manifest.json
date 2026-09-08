@@ -1,0 +1,74 @@
+{
+  "worker": {
+    "clips": [
+      "Idle",
+      "Walk",
+      "Work",
+      "Attack",
+      "Death"
+    ],
+    "fps": 24,
+    "duration_seconds": 1,
+    "rig": "original rigid articulated parts"
+  },
+  "vanguard": {
+    "clips": [
+      "Idle",
+      "Walk",
+      "Work",
+      "Attack",
+      "Death"
+    ],
+    "fps": 24,
+    "duration_seconds": 1,
+    "rig": "original rigid articulated parts"
+  },
+  "ranger": {
+    "clips": [
+      "Idle",
+      "Walk",
+      "Work",
+      "Attack",
+      "Death"
+    ],
+    "fps": 24,
+    "duration_seconds": 1,
+    "rig": "original rigid articulated parts"
+  },
+  "breaker": {
+    "clips": [
+      "Idle",
+      "Walk",
+      "Work",
+      "Attack",
+      "Death"
+    ],
+    "fps": 24,
+    "duration_seconds": 1,
+    "rig": "original rigid articulated parts"
+  },
+  "medic": {
+    "clips": [
+      "Idle",
+      "Walk",
+      "Work",
+      "Attack",
+      "Death"
+    ],
+    "fps": 24,
+    "duration_seconds": 1,
+    "rig": "original rigid articulated parts"
+  },
+  "engineer": {
+    "clips": [
+      "Idle",
+      "Walk",
+      "Work",
+      "Attack",
+      "Death"
+    ],
+    "fps": 24,
+    "duration_seconds": 1,
+    "rig": "original rigid articulated parts"
+  }
+}

@@ -10,6 +10,7 @@ import {
   clamp,
 } from "./data.js";
 import { Navigation } from "./navigation.js";
+import { progression } from "./progression.js";
 import { Terrain } from "./terrain.js";
 
 export class Simulation {
@@ -83,6 +84,11 @@ export class Simulation {
       z,
       hp: complete ? d.hp : 1,
       maxHp: d.hp,
+      shield: complete ? d.shield : 0,
+      maxShield: d.shield,
+      shieldDelay: 0,
+      level: 1,
+      levelJob: null,
       complete,
       progress: complete ? 1 : 0,
       orders: [],
@@ -175,6 +181,7 @@ export class Simulation {
         "deliver",
         "build",
         "stop",
+        "support",
       ].includes(order.type)
     )
       return;
@@ -216,6 +223,11 @@ export class Simulation {
         !this.isVisible(target, e.team)
       )
         continue;
+      if (order.type === 'support' && !this.supportValid(e,target)) continue;
+      if (order.type === 'attack' && e.support) {
+        this.message(`${e.name} cannot attack. Use Support on a friendly target.`,e.team);
+        continue;
+      }
       const o = { ...order };
       if (["move", "attackmove"].includes(o.type) && ids.length > 1) {
         o.x = clamp(o.x + ((index % size) - (size - 1) / 2) * 1.9, -45, 45);
@@ -226,7 +238,7 @@ export class Simulation {
         );
         index++;
       }
-      if (!append) {
+      if (!append || o.type === "stop") {
         e.orders = [];
         e.path = [];
         e.target = null;
@@ -245,18 +257,20 @@ export class Simulation {
       this.message(text, b.team);
       return false;
     };
+    if (b.levelJob) return fail('Finish or cancel the building upgrade before training.');
+    if (b.level < (d.required_level || 1)) return fail(`Upgrade ${b.name} to level ${d.required_level} to train ${d.name}.`);
     if (b.queue.length >= 5) return fail("Production queue is full.");
-    if (!this.canPay(b.team, d.cost))
-      return fail("Insufficient resources. Assign more Harvesters.");
-    const p = this.population(b.team);
-    if (d.pop && p.used + p.reserved + d.pop > p.cap)
-      return fail("Population limit reached. Build a Supply relay.");
     if (
       type === "upgrade" &&
       (this.players[b.team].upgrade ||
         this.own(b.team).some((e) => e.queue.some((q) => q.type === "upgrade")))
     )
       return fail("Weapon upgrade is already researched or queued.");
+    if (!this.canPay(b.team, d.cost))
+      return fail(`${this.resourceShortage(d.cost,b.team)} to train/research ${d.name}.`);
+    const p = this.population(b.team);
+    if (d.pop && p.used + p.reserved + d.pop > p.cap)
+      return fail("Population limit reached. Build a Supply relay.");
     this.pay(b.team, d.cost);
     b.queue.push({ id: this.nextQueueId++, type, elapsed: 0 });
     this.message(`${d.name} queued.`, b.team);
@@ -274,6 +288,8 @@ export class Simulation {
     if (![x, z].every(Number.isFinite)) return "Invalid position.";
     const d = D[type];
     if (!d || d.kind !== "building") return "Invalid structure.";
+    const missing = this.constructionRequirements(type,team);
+    if (missing) return missing;
     const terrainError = this.terrain.placement(x, z, d.radius);
     if (terrainError) return terrainError;
     if (Math.abs(x) > HALF - d.radius - 2 || Math.abs(z) > HALF - d.radius - 2)
@@ -449,27 +465,8 @@ export class Simulation {
   }
   hit(e, target) {
     const bonus = e.counter === target.type ? 1.6 : 1;
-    const damage =
-      e.damage *
-      bonus *
-      (this.players[e.team].upgrade && e.kind === "unit" && e.type !== "worker"
-        ? 1.1
-        : 1);
-    const apply = (t, scale = 1) => {
-      if (t.hp <= 0) return;
-      t.hp -= damage * scale;
-      if (t.hp <= 0) {
-        this.players[e.team].kills++;
-        this.events.push({
-          type: "death",
-          x: t.x,
-          z: t.z,
-          team: t.team,
-          building: t.kind === "building",
-        });
-        if (t.kind === "building") this.nav.rebuild(this.entities);
-      }
-    };
+    const damage = this.attackValue(e)*bonus;
+    const apply = (t,scale = 1) => this.applyDamage(t,damage*scale,e.team);
     apply(target);
     if (e.type === "breaker")
       for (const t of this.entities)
@@ -488,6 +485,7 @@ export class Simulation {
   }
   fight(e, t, dt, chase = true) {
     if (
+      !e.damage ||
       !t ||
       !Number.isFinite(t.hp) ||
       t.hp <= 0 ||
@@ -590,10 +588,10 @@ export class Simulation {
     }
   }
   updateProduction(b, dt) {
-    if (!b.complete || !b.queue.length) return;
+    if (!b.complete || b.levelJob || !b.queue.length) return;
     const q = b.queue[0],
       d = D[q.type];
-    q.elapsed += dt;
+    q.elapsed += dt*(1+0.2*(b.level-1));
     if (q.elapsed < d.time) return;
     if (q.type === "upgrade") {
       this.players[b.team].upgrade = true;
@@ -679,18 +677,21 @@ export class Simulation {
           }
         }
     }
+    if (this.time > 160 && hq && workers.length >= 9 && hq.level < (this.time > 300 ? 3 : 2) && !hq.queue.length) this.upgradeBuilding(hq.id,1);
     for (const b of own.filter(
       (e) => e.complete && ["barracks", "foundry"].includes(e.type),
-    ))
-      if (b.queue.length < 2)
-        this.enqueue(
-          b.id,
-          b.type === "foundry"
-            ? "breaker"
-            : Math.floor(this.time / 4) % 3 === 0
-              ? "vanguard"
-              : "ranger",
-        );
+    )) {
+      if (b.level < this.techLevel(1) && this.time > 190) {
+        if (!b.queue.length) this.upgradeBuilding(b.id,1);
+        continue;
+      }
+      if (b.queue.length < 2) {
+        let choice = b.type === 'foundry' ? 'breaker' : Math.floor(this.time/4)%3 === 0 ? 'vanguard' : 'ranger';
+        const support = b.type === 'foundry' ? 'engineer' : 'medic';
+        if (b.level >= 2 && army.filter(e => e.type === support).length < 2) choice = support;
+        this.enqueue(b.id,choice);
+      }
+    }
     const threat =
       hq &&
       this.entities.find(
@@ -703,7 +704,7 @@ export class Simulation {
     if (threat)
       this.issue(
         army
-          .filter((e) => !e.orders.length || e.orders[0].type !== "attack")
+          .filter((e) => e.damage > 0 && (!e.orders.length || e.orders[0].type !== "attack"))
           .map((e) => e.id),
         { type: "attack", target: threat.id },
       );
@@ -716,7 +717,7 @@ export class Simulation {
     }
   }
   tick(dt) {
-    if (this.result) return;
+    if (this.result || !Number.isFinite(dt) || dt <= 0) return;
     this.time += dt;
     this.visionClock -= dt;
     if (this.visionClock <= 0) {
@@ -726,13 +727,17 @@ export class Simulation {
     for (const e of this.entities) {
       if (e.hp <= 0) continue;
       e.cooldown -= dt;
+      e.shieldDelay = Math.max(0,e.shieldDelay-dt);
+      if (e.complete && e.shieldDelay <= 0) e.shield = Math.min(e.maxShield,e.shield+4*dt);
       e.moving = false;
       if (e.kind === "building") {
+        this.updateLevel(e,dt);
         this.updateProduction(e, dt);
         if (e.complete && e.damage)
           this.fight(e, this.enemy(e, e.range), dt, false);
         continue;
       }
+      if (e.support) { this.updateSupport(e,dt); continue; }
       const o = e.orders[0];
       if (!o) {
         if (e.type !== "worker")
@@ -791,3 +796,5 @@ export class Simulation {
     this.entities = this.entities.filter((e) => e.hp > 0);
   }
 }
+
+Object.assign(Simulation.prototype, progression);

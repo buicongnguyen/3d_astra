@@ -1,4 +1,6 @@
 const paths = {
+  medic: '<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/>',
+  engineer: '<path d="M14 4a6 6 0 0 0-7 8L2 17a3 3 0 0 0 5 5l5-5a6 6 0 0 0 8-7l-4 4-4-4z"/>',
   logo: '<path d="M12 2 22 20H2Z"/><path d="m12 9 5 9H7Z"/>',
   alloy:
     '<path d="m12 2 7 6-2 11-7 3-6-8 2-8Z"/><path d="m6 6 6 5 7-3M12 11l-2 11M12 11l5 8"/>',

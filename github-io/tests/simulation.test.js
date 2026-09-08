@@ -206,7 +206,7 @@ test("placement rejects overlap, hidden terrain, and missing prerequisites", () 
   assert.match(sim.placement("relay", 0, -25, 24), /structure/);
   assert.match(sim.placement("relay", 0, 30, -30), /Explore/);
   own(sim, "barracks").hp = 0;
-  assert.match(sim.placement("foundry", 0, -15, 34), /Requires/);
+  assert.match(sim.placement("foundry", 0, -15, 34), /Build Barracks before building Foundry/);
 });
 
 test("worker constructs relay and completed relay supplies population", () => {
@@ -276,6 +276,7 @@ test("upgrade cannot be duplicated and affects existing and future combat units"
   const attacker = own(sim, "ranger"),
     enemy = sim.spawn("worker", 1, attacker.x + 3, attacker.z),
     before = enemy.hp;
+  enemy.shield = 0; // Isolate weapon research from the separately tested shield layer.
   sim.hit(attacker, enemy);
   assert.ok(Math.abs(before - enemy.hp - D.ranger.damage * 1.1) < 0.0001);
 });

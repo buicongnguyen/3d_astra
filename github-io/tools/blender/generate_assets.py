@@ -2,7 +2,7 @@
 
 Run: blender --background --python tools/blender/generate_assets.py
 Outputs: public/models/*.glb, assets/source/frontier-library.blend, manifest.json.
-Units use named articulated parts; walking/weapon motion is applied in Three.js.
+Units use named articulated parts; walking/weapon clips are authored by animate_units.py.
 """
 import bpy
 import math
@@ -102,6 +102,16 @@ def infantry(kind):
         box('Mining_tool', (.68, -.55, 1.22), (.3, .95, .3), steel)
         box('Tool_tip', (.68, -1.08, 1.22), (.23, .18, .23), amber)
         cylinder('Cargo', (0, .52, 1.75), .27, .65, amber, 6)
+    elif kind == 'medic':
+        box('Medical_pack', (0, .53, 1.6), (.85, .42, .9), steel)
+        box('Medical_vertical', (0, -.39, 1.46), (.12, .08, .44), glow, .01)
+        box('Medical_horizontal', (0, -.40, 1.46), (.42, .08, .12), glow, .01)
+        cylinder('Healing_projector', (.68, -.65, 1.3), .23, .65, energy, 8)
+    elif kind == 'engineer':
+        box('Tool_pack', (0, .55, 1.6), (.8, .45, .85), amber)
+        box('Repair_handle', (.68, -.55, 1.22), (.18, .8, .18), steel)
+        for s in [-1, 1]: box('Wrench_jaw', (.68+s*.17, -.98, 1.22), (.12, .32, .3), amber)
+        box('Safety_visor', (0, -.37, 2.13), (.55, .08, .22), amber, .01)
     elif heavy:
         box('Shield', (-.77, -.42, 1.24), (.67, .23, 1.25), team)
         box('Shield_stripe', (-.77, -.56, 1.25), (.12, .03, .95), glow, .01)
@@ -185,9 +195,9 @@ def building(kind):
 
 
 manifest = {'generator': 'Blender Python', 'units': 'meters', 'provenance': 'Original assets generated for this repository; no third-party model sources.', 'assets': []}
-for index, kind in enumerate(['worker', 'vanguard', 'ranger', 'breaker', 'hq', 'barracks', 'foundry', 'relay', 'tower']):
+for index, kind in enumerate(['worker', 'vanguard', 'ranger', 'breaker', 'medic', 'engineer', 'hq', 'barracks', 'foundry', 'relay', 'tower']):
     parts = []
-    if kind in ['worker', 'vanguard', 'ranger']:
+    if kind in ['worker', 'vanguard', 'ranger', 'medic', 'engineer']:
         infantry(kind)
     elif kind == 'breaker':
         breaker()

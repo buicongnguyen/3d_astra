@@ -1,6 +1,7 @@
 {
   "generator": "Blender Python",
   "units": "meters",
+  "provenance": "Original assets generated for this repository; no third-party model sources.",
   "assets": [
     {
       "name": "worker",
@@ -24,6 +25,18 @@
       "name": "breaker",
       "file": "breaker.glb",
       "triangles": 968,
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "medic",
+      "file": "medic.glb",
+      "triangles": 776,
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "engineer",
+      "file": "engineer.glb",
+      "triangles": 836,
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
@@ -56,6 +69,5 @@
       "triangles": 484,
       "animation": "Runtime articulated parts; no baked clips"
     }
-  ],
-  "provenance": "Original assets generated for this repository; no third-party model sources."
+  ]
 }

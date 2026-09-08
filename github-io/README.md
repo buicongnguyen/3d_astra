@@ -1,6 +1,8 @@
 # Frontier Command — browser edition
 
-An original single-player 3D RTS: establish an economy, build an outpost, produce an army, and destroy the opposing Command core. Built with Three.js, Vite, and nine original Blender-generated GLB models.
+An original single-player 3D RTS: establish an economy, build an outpost, produce an army, and destroy the opposing Command core. Built with Three.js, Vite, and eleven original Blender-generated entity models.
+
+The [progression update](PROGRESSION_PLAN.md) matches the [Godot edition](https://buicongnguyen.github.io/3d_astra_godot/): six unit types, rechargeable shields, building information and three upgrade levels. Select any entity and open **Info & stats** in Selection. Upgrade your Command core to L2, then Barracks L2 for Medics or Foundry L2 for Engineers. Use **Support → friendly target** to heal infantry or repair buildings and Breakers.
 
 The **Riverlands** update adds saved army colors, graphics/audio settings, varied ground, a river with two bridges and a shallow ford, and original Blender scenery. Choose Riverlands or the classic Ashen Frontier in the briefing. Open **Settings** there or through **Pause → Settings** during play. See [the evaluation and release review](EVALUATION_AND_RELEASE.md).
 
@@ -101,13 +103,14 @@ Exported models are committed in `public/models/`; Blender is **not required** t
 - Riverlands scenery: `public/models/environment.glb`, `environment-manifest.json`, `assets/source/riverlands-library.blend`, and `tools/blender/generate_environment.py`. All scenery is original; no external textures/audio services are required.
 - Generated and verified with official **Blender 4.5.3 LTS**, using background Python execution. No Blender MCP connection was used.
 - Coordinates use meters, ground-level origins, and glTF Y-up export.
-- All nine models are original procedural geometry. Material names `Team` and `TeamGlow` control team colors.
-- Models use runtime articulated leg motion and body movement; there are no baked skeletal animation clips in this version.
+- All eleven entity models are original procedural geometry. Material names `Team` and `TeamGlow` control team colors.
+- Six unit GLBs include five rigid-part Blender clips each, with editable `animated-*.blend` sources. This renderer keeps its runtime articulated leg motion and body movement; the Godot renderer evaluates the clips.
 
 To regenerate from any working directory:
 
 ```sh
 blender --background --python /absolute/path/to/github-io/tools/blender/generate_assets.py
+blender --background --python /absolute/path/to/github-io/tools/blender/animate_units.py
 ```
 
 For the portable Blender downloaded on the initial development machine, from the repository root in PowerShell:
@@ -123,6 +126,9 @@ The `.tools/` directory is ignored and is not uploaded to GitHub.
 | File | Responsibility |
 |---|---|
 | `src/data.js` | Unit/building definitions, map constants, terrain obstacles |
+| `src/balance.json` | Balance data matching the Godot edition |
+| `src/progression.js` | Building levels, shields, support rules and requirement messages |
+| `src/field-guide.js` | Accessible unit and building reference dialog |
 | `src/navigation.js` | Grid A*, building clearance, line-of-fire checks |
 | `src/simulation.js` | Economy, queues, construction, unit orders, combat, AI, visibility, outcomes |
 | `src/view.js` | Three.js rendering, Blender model loading, effects, fog, camera |

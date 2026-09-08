@@ -11,7 +11,8 @@
     "test:browser": "node tests/browser.mjs",
     "test:mobile": "node tests/mobile.mjs",
     "test:webkit": "node tests/webkit.mjs",
-    "test:improvements": "node tests/improvements.mjs"
+    "test:improvements": "node tests/improvements.mjs",
+    "test:progression": "node tests/progression.mjs"
   },
   "dependencies": {
     "three": "0.185.1"
