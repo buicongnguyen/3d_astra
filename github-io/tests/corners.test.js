@@ -6,9 +6,10 @@ for(const map of ['basin','expanse']) {
   test(`${map}: infantry and tanks reach all corner clicks without false blockage`,()=>{
     for(const type of ['ranger','tank'])for(const [sx,sz] of [[-1,-1],[-1,1],[1,-1],[1,1]]) {
       const s=new Simulation({ai:false,map});
-      // Isolate travel from enemy defenders killing the test unit en route.
+      // Keep enemy buildings as path obstacles, but isolate travel from combat.
       s.entities=s.entities.filter(e=>e.team!==1||e.kind==='building');
       s.nav.rebuild(s.entities);
+      s.visible.forEach(cells=>cells.fill(0));s.visionClock=1000;
       const unit=s.spawn(type,0,-39,14),edge=s.terrain.half-1;
       s.events=[];
       s.issue([unit.id],{type:'move',x:sx*edge,z:sz*edge});

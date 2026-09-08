@@ -463,14 +463,14 @@ export class Simulation {
     e.stalled = 0;
     e.moveSample = null;
   }
-  enemy(e, radius = e.vision) {
+  enemy(e, radius = e.vision, clearShot = false) {
     let best = null,
       bestD = radius;
     for (const t of this.entities) {
       if (t.hp <= 0 || t.team === e.team || !this.isVisible(t, e.team))
         continue;
       const d = distance(e, t) - t.radius;
-      if (d < bestD) {
+      if (d <= bestD && (!clearShot || this.nav.clearLine(e, t, t.id))) {
         best = t;
         bestD = d;
       }
@@ -509,6 +509,7 @@ export class Simulation {
       return false;
     const inRange = distance(e, t) <= e.range + t.radius;
     if (inRange && this.nav.clearLine(e, t, t.id)) {
+      e.attacking = true;
       e.angle = Math.atan2(t.x - e.x, t.z - e.z);
       e.moving = false;
       if (e.cooldown <= 0) this.hit(e, t);
@@ -750,20 +751,28 @@ export class Simulation {
       e.shieldDelay = Math.max(0,e.shieldDelay-dt);
       if (e.complete && e.shieldDelay <= 0) e.shield = Math.min(e.maxShield,e.shield+4*dt);
       e.moving = false;
+      e.attacking = false;
       if (e.kind === "building") {
         this.updateLevel(e,dt);
         this.updateProduction(e, dt);
         if (e.complete && e.damage)
-          this.fight(e, this.enemy(e, e.range), dt, false);
+          this.fight(e, this.enemy(e, e.range, true), dt, false);
         continue;
       }
       if (e.support) { this.updateSupport(e,dt); continue; }
       const o = e.orders[0];
-      if (!o) {
-        if (e.type !== "worker")
-          this.fight(e, this.enemy(e, e.range + 2), dt, false);
-        continue;
+      if (e.type !== "worker" && e.damage > 0 && (!o || ["move", "attackmove"].includes(o.type))) {
+        const target = this.enemy(e, e.range, true);
+        if (target) {
+          this.fight(e, target, dt, false);
+          // Combat suspends the route; retain queued orders and replan on resume.
+          e.stalled = 0;
+          e.moveSample = null;
+          e.pathClock = 0;
+          continue;
+        }
       }
+      if (!o) continue;
       if (["gather", "build", "deliver"].includes(o.type)) {
         this.updateWorker(e, o, dt);
         continue;

@@ -9,6 +9,7 @@ export function entryHTML(type) {
     <dt>Cost</dt><dd>${d.cost[0]} alloy / ${d.cost[1]} energy</dd><dt>Time</dt><dd>${d.time}s</dd>
     ${d.pop ? `<dt>Supply / speed</dt><dd>${d.pop} / ${d.speed}</dd>` : ''}</dl>
     <p>Shields absorb damage before HP. They recharge at 4/s after five seconds without damage.</p>
+    ${d.kind === 'unit' && d.damage && type !== 'worker' ? '<p>Automatically attacks visible enemies in weapon range with a clear line of fire, even during Move orders. Movement pauses during combat and resumes afterward; queued destinations are kept. Attack-move also pursues nearby enemies. A direct attack order keeps its chosen target.</p>' : ''}
     ${d.mechanical_bonus ? `<p>Deals ${d.mechanical_bonus}× damage to mechanical units: ${d.damage*d.mechanical_bonus} per hit before weapon research.</p>` : ''}
     ${d.counter ? `<p>Deals 1.6× damage to ${D[d.counter].name}s.</p>` : ''}
     ${d.support ? `<p>Restores ${d.support} HP each second within range ${d.range}. Requires a clear line. No resource cost. Does not refill shields, heal itself, finish construction or revive casualties.</p><p>Use <strong>Support → friendly target</strong> to follow an ally. Idle helpers automatically assist injured allies in range.</p>` : ''}

@@ -302,7 +302,7 @@ function updateUI() {
     const hp = es.reduce((s, u) => s + u.hp, 0),
       max = es.reduce((s, u) => s + u.maxHp, 0);
     $("selection-info").innerHTML =
-      `<div class="portrait">${icon(es.length > 1 ? "people" : (e.icon || e.type))}<span>ME</span></div><div class="entity-details"><span class="eyebrow">${es.length > 1 ? "MERIDIAN EXPEDITION" : e.role.toUpperCase()}</span><h3>${es.length > 1 ? "Expedition squad" : e.name}</h3><div class="health-track"><i style="width:${(hp / max) * 100}%"></i></div><div class="entity-stats"><span>${Math.ceil(hp)} / ${max} HP</span><span>${!e.complete ? `BUILDING ${Math.floor(e.progress * 100)}%` : e.carry ? `${e.carry} ${e.carryType.toUpperCase()} CARRIED` : e.orders[0]?.type.toUpperCase() || (e.kind === "building" ? "OPERATIONAL" : "STANDING BY")}</span></div></div>`;
+      `<div class="portrait">${icon(es.length > 1 ? "people" : (e.icon || e.type))}<span>ME</span></div><div class="entity-details"><span class="eyebrow">${es.length > 1 ? "MERIDIAN EXPEDITION" : e.role.toUpperCase()}</span><h3>${es.length > 1 ? "Expedition squad" : e.name}</h3><div class="health-track"><i style="width:${(hp / max) * 100}%"></i></div><div class="entity-stats"><span>${Math.ceil(hp)} / ${max} HP</span><span>${!e.complete ? `BUILDING ${Math.floor(e.progress * 100)}%` : e.carry ? `${e.carry} ${e.carryType.toUpperCase()} CARRIED` : (es.some(unit => unit.attacking) ? "ATTACKING" : e.orders[0]?.type.toUpperCase()) || (e.kind === "building" ? "OPERATIONAL" : "STANDING BY")}</span></div></div>`;
   }
   $("support-order").hidden = !es.some(u => u.support);
   if (e) {
