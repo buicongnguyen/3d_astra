@@ -1,5 +1,13 @@
 # Code, logic and gameplay review
 
+## Withdrawal and micro control
+
+The automatic targeting check interrupted every Move order whenever an enemy was in weapon range. This prevented retreating and made movement commands ineffective during combat.
+
+Explicit Move orders now override combat for Vanguards, Rangers, Breakers, Battle tanks and Anti-tank soldiers. A normal Move cancels the current attack and old queue immediately; queued moves wait their turn. Units finish their movement without stopping to fire, then resume idle automatic targeting. Idle and Attack-move behavior still engages enemies automatically. Weapon cooldowns are preserved across commands, so repositioning cannot produce extra shots.
+
+Verification: 72 logic tests pass, including immediate withdrawal from idle engagement, direct attack and Attack-move for every combat type; queued-order handling; cooldown conservation; and automatic attack after arrival. Browser checks exercise desktop right-click withdrawal and the mobile Move button plus a battlefield tap. The field guide explains these controls.
+
 ## Three.js review: seven-map free-for-all release
 
 Scope: the current Three.js simulation, economy, construction, production, combat/support, navigation, faction state, AI visibility, selection UI and desktop/touch controls. This section supersedes the earlier four-map review below for the browser edition. No Godot changes are included in this pass.

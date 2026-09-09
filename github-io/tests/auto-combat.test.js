@@ -12,10 +12,10 @@ function setup(type='ranger') {
 }
 const health=e=>e.hp+e.shield;
 
-test('all combat unit types automatically fire during Move, preserving queued destinations',()=>{
+test('all combat unit types automatically fire during Attack-move, preserving queued destinations',()=>{
   for(const type of ['vanguard','ranger','breaker','tank','antitank']) {
     const {s,unit,enemy}=setup(type),before=health(enemy);
-    s.issue([unit.id],{type:'move',x:20,z:20});
+    s.issue([unit.id],{type:'attackmove',x:20,z:20});
     s.issue([unit.id],{type:'move',x:20,z:30},true);
     const orders=structuredClone(unit.orders);
     s.tick(.05);
@@ -33,25 +33,23 @@ test('all combat unit types automatically fire during Move, preserving queued de
   }
 });
 
-test('idle and moving units acquire an enemy exactly at weapon range',()=>{
+test('idle and attack-moving units acquire an enemy exactly at weapon range',()=>{
   for(const moving of [false,true]) {
     const {s,unit,enemy}=setup();enemy.x=unit.range+enemy.radius;
-    if(moving)s.issue([unit.id],{type:'move',x:20,z:20});
+    if(moving)s.issue([unit.id],{type:'attackmove',x:20,z:20});
     const before=health(enemy);s.tick(.05);
     assert.ok(health(enemy)<before);assert.equal(unit.attacking,true);
   }
 });
 
-test('automatic fire requires visibility, weapon range, and clear line of fire',()=>{
+test('idle automatic fire requires visibility, weapon range, and clear line of fire',()=>{
   for(const reason of ['hidden','out-of-range','blocked']) {
     const {s,unit,enemy}=setup();
     if(reason==='hidden'){s.visible[0].fill(0);s.visionClock=100;}
     if(reason==='out-of-range')enemy.x=unit.range+enemy.radius+1;
     if(reason==='blocked'){s.spawn('barracks',0,3,20);s.nav.rebuild(s.entities);}
-    s.issue([unit.id],{type:'move',x:0,z:30});
     const before=health(enemy);s.tick(.05);
     assert.equal(health(enemy),before,reason);assert.equal(unit.attacking,false);
-    assert.equal(unit.moving,true,reason+' does not suspend movement');
   }
 });
 
@@ -84,8 +82,48 @@ test('workers and support units keep their non-combat roles while moving',()=>{
 
 test('units resume a queued route after automatically killing the enemy',()=>{
   const {s,unit,enemy}=setup('tank');enemy.hp=1;enemy.shield=0;
-  s.issue([unit.id],{type:'move',x:20,z:20});s.tick(.05);
+  s.issue([unit.id],{type:'attackmove',x:20,z:20});s.tick(.05);
   assert.equal(s.get(enemy.id),undefined);
   s.tick(.05);assert.equal(unit.moving,true);assert.equal(unit.attacking,false);
-  assert.equal(unit.orders[0].type,'move');
+  assert.equal(unit.orders[0].type,'attackmove');
+});
+
+
+test('Move immediately withdraws every combat type from idle, direct attack, and attack-move combat',()=>{
+  for(const type of ['vanguard','ranger','breaker','tank','antitank']) for(const combat of ['idle','attack','attackmove']) {
+    const {s,unit,enemy}=setup(type);
+    if(combat==='attack')s.issue([unit.id],{type:'attack',target:enemy.id});
+    if(combat==='attackmove')s.issue([unit.id],{type:'attackmove',x:20,z:20});
+    s.tick(.05);assert.equal(unit.attacking,true);
+    const hp=health(enemy),cooldown=unit.cooldown;
+    s.issue([unit.id],{type:'move',x:0,z:32});
+    assert.equal(unit.attacking,false,'clears combat status as soon as the order is accepted');
+    assert.equal(unit.cooldown,cooldown,'issuing movement cannot reset the weapon');
+    s.tick(.05);assert.equal(unit.moving,true,`${type}: retreat from ${combat}`);
+    assert.equal(unit.attacking,false);assert.equal(health(enemy),hp);
+    for(let i=0;i<20;i++)s.tick(.05);
+    assert.ok(unit.z>21,`${type} continues withdrawing`);assert.equal(health(enemy),hp);
+    assert.equal(unit.orders[0]?.type,'move');
+  }
+});
+
+test('queued retreat waits behind explicit attack, while a new Move cancels the attack and old queue',()=>{
+  const {s,unit,enemy}=setup();
+  s.issue([unit.id],{type:'attack',target:enemy.id});
+  s.issue([unit.id],{type:'move',x:0,z:32},true);s.tick(.05);
+  assert.equal(unit.attacking,true);assert.equal(unit.orders.length,2);
+  s.issue([unit.id],{type:'move',x:0,z:30});
+  assert.equal(unit.orders.length,1);s.tick(.05);assert.equal(unit.moving,true);
+});
+
+test('micro commands preserve weapon cooldown and idle auto-attack resumes after arrival',()=>{
+  const {s,unit,enemy}=setup('tank');s.tick(.05);
+  const hp=health(enemy);
+  s.issue([unit.id],{type:'move',x:0,z:22});s.tick(.05);
+  s.issue([unit.id],{type:'attack',target:enemy.id});s.tick(.05);
+  assert.equal(health(enemy),hp,'cannot fire again by alternating attack and move');
+  s.issue([unit.id],{type:'move',x:0,z:22});
+  for(let i=0;i<80;i++)s.tick(.05);
+  assert.equal(unit.orders.length,0);assert.equal(unit.attacking,true);
+  assert.ok(health(enemy)<hp,'auto-attack resumes once the destination is reached');
 });

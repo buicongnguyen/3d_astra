@@ -281,6 +281,8 @@ export class Simulation {
         e.target = null;
         e.pathClock = 0;
         e.stalled = 0;
+        e.moveSample = null;
+        e.attacking = false;
       }
       if (o.type !== "stop" && e.orders.length < 32) e.orders.push(o);
     }
@@ -809,7 +811,8 @@ export class Simulation {
       }
       if (e.support) { this.updateSupport(e,dt); continue; }
       const o = e.orders[0];
-      if (e.type !== "worker" && e.damage > 0 && (!o || ["move", "attackmove"].includes(o.type))) {
+      // Explicit Move orders take priority so units can retreat and kite.
+      if (e.type !== "worker" && e.damage > 0 && (!o || o.type === "attackmove")) {
         const target = this.enemy(e, e.range, true);
         if (target) {
           this.fight(e, target, dt, false);
