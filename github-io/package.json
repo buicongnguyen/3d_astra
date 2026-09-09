@@ -16,7 +16,8 @@
     "test:progression": "node tests/progression.mjs",
     "test:stages": "node tests/stages.mjs",
     "test:corners": "node tests/corner-camera.mjs",
-    "test:auto-combat": "node tests/auto-combat.mjs"
+    "test:auto-combat": "node tests/auto-combat.mjs",
+    "test:harvesters": "node tests/harvesters.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

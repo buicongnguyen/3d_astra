@@ -260,6 +260,7 @@ export class Simulation {
         continue;
       }
       const o = { ...order };
+      if (o.type === "gather") o.resourceType = target.type;
       if (["move", "attackmove"].includes(o.type) && ids.length > 1) {
         o.x = clamp(o.x + ((index % size) - (size - 1) / 2) * 1.9, -this.terrain.half+3, this.terrain.half-3);
         o.z = clamp(
@@ -427,10 +428,14 @@ export class Simulation {
       e.path = [];
       return true;
     }
-    if (e.moveSample && distance(e, e.moveSample) < 0.04)
+    // Measure progress across frames. A fixed per-frame threshold falsely
+    // marked healthy movement as stuck on high-refresh-rate displays.
+    if (e.moveSample && distance(e, e.moveSample) < 0.1)
       e.stalled = (e.stalled || 0) + dt;
-    else e.stalled = 0;
-    e.moveSample = { x: e.x, z: e.z };
+    else {
+      e.stalled = 0;
+      e.moveSample = { x: e.x, z: e.z };
+    }
     if (e.stalled > 6) {
       this.finish(e);
       this.message(
@@ -481,12 +486,42 @@ export class Simulation {
   }
   finish(e) {
     e.orders.shift();
-    e.path = [];
-    e.pathClock = 0;
+    this.resetWorkerRoute(e);
     e.target = null;
     e.work = 0;
+  }
+  resetWorkerRoute(e) {
+    e.path = [];
+    e.pathClock = 0;
     e.stalled = 0;
     e.moveSample = null;
+  }
+  resumeGathering(e, o) {
+    // Explicit queued commands take priority over automatic reassignment.
+    if (e.orders.length > 1) { this.finish(e); return; }
+    let resource = this.get(e.resource);
+    if (!resource && !o.resourceType) { this.finish(e); return; }
+    if (!resource || resource.kind !== "resource") {
+      resource = this.resources
+        .filter(r => r.amount > 0 && r.type === o.resourceType &&
+          this.isExplored(r, e.team) && distance(e, r) <= 30)
+        .sort((a, b) => distance(e, a) - distance(e, b))
+        .find(r => {
+          const goal = this.approach(e, r, 0.8);
+          const path = this.nav.path(e, goal, e.radius);
+          return path.length && distance(path.at(-1), r) <= r.radius + 1.4;
+        });
+    }
+    if (!resource) {
+      this.message(`No reachable nearby ${o.resourceType || "resource"} deposit. Assign this Harvester to another deposit.`, e.team);
+      this.finish(e);
+      return;
+    }
+    e.resource = resource.id;
+    o.type = "gather";
+    o.target = resource.id;
+    o.resourceType = resource.type;
+    this.resetWorkerRoute(e);
   }
   enemy(e, radius = e.vision, clearShot = false) {
     let best = null,
@@ -576,20 +611,25 @@ export class Simulation {
     }
     if (o.type === "gather") {
       if (!t || t.kind !== "resource") {
-        if (e.carry > 0) o.type = "deliver";
-        else this.finish(e);
+        e.resource = o.target;
+        if (e.carry > 0) { o.type = "deliver"; this.resetWorkerRoute(e); }
+        else this.resumeGathering(e, o);
         return;
       }
       e.resource = t.id;
+      o.resourceType = t.type;
       if (e.carry >= 10 || (e.carry > 0 && e.carryType !== t.type)) {
         o.type = "deliver";
+        this.resetWorkerRoute(e);
         return;
       }
       if (distance(e, t) > t.radius + 1.4) {
-        this.move(e, this.approach(e, t, 1), dt);
+        // Arrival tolerance must end inside the harvesting radius (0.8 + 0.2 < 1.4).
+        this.move(e, this.approach(e, t, 0.8), dt, 0.2);
         return;
       }
       e.moving = false;
+      this.resetWorkerRoute(e);
       e.work += dt;
       if (e.work >= 0.7) {
         e.work -= 0.7;
@@ -606,6 +646,7 @@ export class Simulation {
         .sort((a, b) => distance(e, a) - distance(e, b));
       const depot = depots[0];
       if (!depot) {
+        this.message("Harvester needs a completed Command core to deliver cargo. Finish or build one, then order delivery.", e.team);
         this.finish(e);
         return;
       }
@@ -616,15 +657,7 @@ export class Simulation {
       if (e.carryType) this.players[e.team][e.carryType] += e.carry;
       e.carry = 0;
       e.carryType = null;
-      if (e.orders.length > 1) {
-        this.finish(e);
-        return;
-      }
-      if (e.resource && this.get(e.resource)) {
-        o.type = "gather";
-        o.target = e.resource;
-        e.path = [];
-      } else this.finish(e);
+      this.resumeGathering(e, o);
     }
   }
   updateProduction(b, dt) {

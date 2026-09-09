@@ -192,6 +192,7 @@ test("exhausted deposit delivers its final partial load and stops safely", () =>
     worker = own(sim, "worker"),
     resource = sim.resources[0];
   resource.amount = 3;
+  sim.resources = [resource]; // No nearby replacement exists in this scenario.
   const bank = sim.players[0].alloy;
   sim.issue([worker.id], { type: "gather", target: resource.id });
   advance(sim, 35);

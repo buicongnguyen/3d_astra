@@ -10,6 +10,7 @@ export function entryHTML(type) {
     <dt>Cost</dt><dd>${d.cost[0]} alloy / ${d.cost[1]} energy</dd><dt>Time</dt><dd>${d.time}s</dd>
     ${d.pop ? `<dt>Supply / speed</dt><dd>${d.pop} / ${d.speed}</dd>` : ''}</dl>
     <p>Shields absorb damage before HP. They recharge at 4/s after five seconds without damage.</p>
+    ${type === 'worker' ? '<p>Harvesters gather up to 10 resources, deliver them to a completed friendly Command core, then resume gathering. When a deposit runs out, they deliver any remaining cargo and switch to a reachable explored deposit of the same type within 30 world units. Queued orders take priority. If no replacement or completed core is available, a message explains what to do; carried resources are preserved.</p>' : ''}
     ${d.kind === 'unit' && d.damage && type !== 'worker' ? '<p>Automatically attacks visible enemies in weapon range with a clear line of fire when idle or using Attack-move. Move orders override combat so you can retreat or kite; units do not stop to fire until they arrive or receive another combat order. Attack-move pursues nearby enemies and resumes its route afterward. A direct attack order keeps its chosen target. A normal Move command cancels the current attack; queued Move commands wait their turn. Moving never resets the weapon cooldown.</p>' : ''}
     ${d.mechanical_bonus ? `<p>Deals ${d.mechanical_bonus}× damage to mechanical units: ${d.damage*d.mechanical_bonus} per hit before weapon research.</p>` : ''}
     ${d.counter ? `<p>Deals 1.6× damage to ${D[d.counter].name}s.</p>` : ''}

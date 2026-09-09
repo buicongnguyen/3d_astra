@@ -1,5 +1,15 @@
 # Code, logic and gameplay review
 
+## Harvester reliability
+
+Reproduced four starting Harvesters gathering the same deposit for five simulated minutes: one lost its order with cargo still carried, while others repeatedly stalled. The movement arrival tolerance stopped workers up to 3.2 units from a deposit, but gathering required 3.1 or less. Gathering now aims further inside the working radius with a smaller arrival tolerance. Working and switching between collection and delivery reset stale routes and stuck timers.
+
+The shared stuck detector also compared each frame's travel against a fixed 0.04-unit threshold. Healthy movement on high-refresh-rate screens could therefore clear long orders. It now measures accumulated displacement, while retaining the six-second timeout for units that make no progress.
+
+Depleted deposits now trigger delivery of remaining cargo, followed by a reachable explored deposit of the same type within 30 world units of the worker. Explicit queued commands take priority. No available replacement or completed Command core produces a message; cargo is preserved. The worker field guide describes this behavior.
+
+Validation: 77 logic tests, including five-minute gathering by all four factions on all seven maps; 30/60/144/240 FPS movement and harvesting; partial-load accounting; queued commands; exploration/distance limits; and missing-core recovery. The desktop/touch browser regression exercises real gathering input, sustained income, depleted-deposit recovery and the field guide. Physical phone performance remains unmeasured.
+
 ## Withdrawal and micro control
 
 The automatic targeting check interrupted every Move order whenever an enemy was in weapon range. This prevented retreating and made movement commands ineffective during combat.
