@@ -1,0 +1,33 @@
+/* Stats and production have reserved space; only the optional unit roster scrolls. */
+.in-briefing .bottom-dock{display:none}
+.selection-panel.has-entity>.panel-label{display:none}
+.selection-panel.has-entity #selection-info{flex:0 0 auto;min-height:0;padding:2px 0;display:block}
+.selection-panel.has-entity .entity-details{min-width:0}
+.selection-heading{display:flex;align-items:center;gap:8px;min-width:0}
+.selection-panel.has-entity .selection-heading h3{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px;line-height:20px;margin:0}
+.selection-level{font-size:12px;color:#edcc86;white-space:nowrap}
+.unit-metrics{display:flex;gap:6px;margin:2px 0;line-height:14px;font-variant-numeric:tabular-nums}
+.unit-metrics>div{flex:1;min-width:0;white-space:nowrap}
+.unit-metrics dt{font-size:10px;color:#b3c9c1}
+.unit-metrics dd{font-size:12px;font-weight:600;color:#edf5e9;margin:0;white-space:nowrap}
+.selection-activity{font-size:11px;line-height:15px;color:#c9e4d2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:capitalize}
+.selection-panel .selection-scroll{flex:1;min-height:0;overflow:hidden}
+.selection-panel:not(.has-roster) .selection-scroll{display:none}
+.selection-panel #unit-list{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;padding:0;gap:4px}
+.selection-panel #unit-list button{flex-shrink:0}
+.selection-panel #queue{flex:0 0 auto;flex-wrap:nowrap;gap:4px;min-width:0;overflow:visible;margin:0}
+.selection-panel #queue .queue-label{flex:0 0 28px;margin:0;font:10px/14px system-ui;text-align:center;white-space:nowrap;color:#c3d8cc}
+.selection-panel #queue button[data-cancel]{flex:0 1 60px;min-width:44px;min-height:44px;height:44px;padding:3px 2px;display:flex;flex-direction:column;gap:2px;white-space:nowrap}
+.selection-panel #queue button[data-cancel] span{white-space:nowrap;font-size:10px;line-height:12px}
+.selection-panel #queue button[data-cancel] .queue-index{position:absolute;top:2px;left:3px;font-size:8px;font-weight:400;color:#bad0c6}
+.selection-panel .order-buttons{margin-top:auto;padding-top:4px}
+.selection-panel #queue .cancel-build{min-height:44px;white-space:nowrap;font-size:11px!important}
+/* Population is one number group, even when the queued count grows. */
+.resource-bar .population strong{white-space:nowrap}
+.compact-ui .resource-bar .population>.icon{display:none}
+.compact-ui .resource-bar .population strong{font-size:15px}
+.compact-ui .resource-bar .population strong em{font-size:12px}
+@media(min-aspect-ratio:1.35){
+  .compact-ui .selection-panel #queue{gap:1px}
+  .compact-ui .selection-panel #queue .queue-label{display:none}
+}

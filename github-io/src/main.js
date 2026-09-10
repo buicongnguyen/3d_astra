@@ -22,6 +22,7 @@ import { TouchControls } from "./touch-controls.js";
 import { ACTION_KEYS, HOTKEYS, HOTKEY_HELP, physicalKey } from "./hotkeys.js";
 import { createConstructionUI } from "./construction-ui.js";
 import { createProductionUI } from "./production-ui.js";
+import { selectionStatus } from "./selection-status.js";
 
 document.querySelector("#app").innerHTML = `
   <header class="topbar">
@@ -65,7 +66,7 @@ document.querySelector("#app").innerHTML = `
     </section>
     <div class="bottom-dock">
       <section class="minimap-panel panel"><div class="panel-label">SECTOR OVERVIEW <button id="home" title="Focus base · H" aria-label="Focus base">${icon("hq")}</button></div><canvas id="minimap" width="240" height="200" aria-label="Minimap: click to pan; right-click to command"></canvas><div class="map-legend"><span><i class="friendly"></i>YOU</span><span><i class="hostile"></i>ENEMY</span><span><i class="deposit"></i>RESOURCE</span></div></section>
-      <section class="selection-panel panel"><div class="panel-label"><span id="selection-label">EXPEDITION COMMAND</span><span id="selection-count">READY</span></div><div class="selection-scroll"><div id="selection-info"></div><div id="unit-list"></div><div id="queue"></div></div><div class="order-buttons"><button id="field-guide">Info & stats</button><button id="support-order" hidden>Support</button><button id="move-order" title="Click a destination">${icon("move")} Move</button><button id="attack-order" title="Attack-move · F">${icon("crosshair")} Attack-move <kbd>F</kbd></button><button id="stop-order" title="Stop · X">${icon("stop")} Stop <kbd>X</kbd></button></div></section>
+      <section class="selection-panel panel"><div class="panel-label"><span id="selection-label">EXPEDITION COMMAND</span><span id="selection-count">READY</span></div><div id="selection-info"></div><div class="selection-scroll"><div id="unit-list"></div></div><div id="queue"></div><div class="order-buttons"><button id="field-guide">Info & stats</button><button id="support-order" hidden>Support</button><button id="move-order" title="Click a destination">${icon("move")} Move</button><button id="attack-order" title="Attack-move · F">${icon("crosshair")} Attack-move <kbd>F</kbd></button><button id="stop-order" title="Stop · X">${icon("stop")} Stop <kbd>X</kbd></button></div></section>
       <section class="command-panel panel"><div class="panel-label"><span id="command-label">COMMAND CENTER</span><span id="command-context">ACTIONS</span></div><div id="commands"></div><div id="upgrade-actions" class="upgrade-actions"></div><div id="command-hint">Select a unit or structure to issue commands.</div></section>
     </div>
     <nav id="dock-tabs" aria-label="Command panels"><button data-dock="selection" aria-pressed="true">${icon("people")} Selection</button><button data-dock="actions" aria-pressed="false">${icon("worker")} Actions</button><button data-dock="map" aria-pressed="false">${icon("flag")} Map</button></nav>
@@ -382,6 +383,8 @@ function updateUI() {
   $("obj-win").querySelector("small").textContent = `Destroy enemy cores: ${rivals} ${rivals === 1 ? "rival remains" : "rivals remain"}`;
   const es = selectedEntities(),
     e = es[0];
+  document.querySelector('.selection-panel').classList.toggle('has-entity',!!e);
+  document.querySelector('.selection-panel').classList.toggle('has-roster',es.length>1);
   $("selection-count").textContent =
     es.length > 1
       ? `${es.length} SELECTED`
@@ -396,22 +399,11 @@ function updateUI() {
   if (!e)
     $("selection-info").innerHTML =
       `<div class="selection-empty">${icon("logo")}<div><h3>Awaiting your command</h3><p>Click a unit or drag to select your expedition.</p></div></div>`;
-  else {
-    const hp = es.reduce((s, u) => s + u.hp, 0),
-      max = es.reduce((s, u) => s + u.maxHp, 0);
-    $("selection-info").innerHTML =
-      `<div class="portrait">${icon(es.length > 1 ? "people" : (e.icon || e.type))}<span>ME</span></div><div class="entity-details"><span class="eyebrow">${es.length > 1 ? "MERIDIAN EXPEDITION" : e.role.toUpperCase()}</span><h3>${es.length > 1 ? "Expedition squad" : e.name}</h3><div class="health-track"><i style="width:${(hp / max) * 100}%"></i></div><div class="entity-stats"><span>${Math.ceil(hp)} / ${max} HP</span><span>${!e.complete ? `BUILDING ${Math.floor(e.progress * 100)}%` : e.carry ? `${e.carry} ${e.carryType.toUpperCase()} CARRIED` : (es.some(unit => unit.attacking) ? "ATTACKING" : e.orders[0]?.type.toUpperCase()) || (e.kind === "building" ? "OPERATIONAL" : "STANDING BY")}</span></div></div>`;
-  }
+  else $("selection-info").innerHTML = selectionStatus(sim,es);
   $("support-order").hidden = !es.some(u => u.support);
   $("patrol-order").hidden = !es.some(u => u.kind === 'unit' && u.type !== 'worker' && u.damage > 0);
   $("attack-target-order").hidden = !es.some(u => u.type === 'worker');
   document.documentElement.classList.toggle('many-orders', [...document.querySelectorAll('.order-buttons button')].filter(b => !b.hidden).length > 5);
-  if (e) {
-    const details = $("selection-info").querySelector('.entity-details');
-    details.insertAdjacentHTML('beforeend',`<div class="progression-stats">Shield ${Math.ceil(es.reduce((s,u) => s+u.shield,0))}/${es.reduce((s,u) => s+u.maxShield,0)} · ATK ${sim.attackValue(e).toFixed(1)}${es.length > 1 ? ' (first unit)' : ''}${e.support ? ` · Restore ${e.support} HP/s` : ''}${e.kind === 'building' ? ` · L${e.level}` : ''}</div>`);
-    if (es.length === 1) details.insertAdjacentHTML('beforeend',`<p class="entity-purpose">${e.description.split('. ')[0].replace(/\.$/,'')}.</p>`);
-    if (e.levelJob) details.insertAdjacentHTML('beforeend',`<div class="progression-stats">Upgrading L${e.level+1}: ${Math.floor(100*e.levelJob.elapsed/e.levelJob.time)}%</div>`);
-  }
   $("command-context").title = `Command core technology ${sim.techLevel()} / 3`;
   const signature = `${es.map((e) => e.id).join(",")}/${e?.complete}/${p.upgrade}/${e?.level}/${!!e?.levelJob}/${sim.techLevel()}/${touchInput}`;
   if (lastSelectionKey !== signature) {
@@ -467,14 +459,15 @@ function updateUI() {
       sim.result;
     button.disabled = !!unavailable;
   }
-  const queueKey = `${e?.id}/${e?.complete}/${e?.queue.map((q) => q.id).join(",")}`;
+  const queueEntity = es.length === 1 ? e : null;
+  const queueKey = `${queueEntity?.id}/${queueEntity?.complete}/${queueEntity?.queue.map((q) => `${q.id}:${q.type}`).join(",")}`;
   productionUI.update(es.length===1?e:null, !started || paused || !!sim.result);
   // Preserve interactive nodes while updating progress, including on slow frames.
   if (queueKey !== lastQueueKey) {
     lastQueueKey = queueKey;
-    $("queue").innerHTML = e?.queue.length
-      ? `<span class="queue-label">QUEUE</span>${e.queue.map((q, i) => `<button data-cancel="${i}" data-job="${q.id}" data-building="${e.id}" title="Cancel ${D[q.type].name} — full refund">${icon(D[q.type].icon || q.type)}<span></span><i></i></button>`).join("")}`
-      : e && !e.complete
+    $("queue").innerHTML = queueEntity?.queue.length
+      ? `<span class="queue-label">Queue<br>${e.queue.length}/5</span>${e.queue.map((q, i) => `<button data-cancel="${i}" data-job="${q.id}" data-building="${e.id}" title="Cancel ${D[q.type].name} — full refund"><b class="queue-index">${i+1}</b>${icon(D[q.type].icon || q.type)}<span></span><i></i></button>`).join("")}`
+      : queueEntity && !e.complete
         ? `<button class="cancel-build" data-cancel-build="${e.id}">Cancel construction · 75% refund</button>`
         : "";
   }
@@ -482,7 +475,8 @@ function updateUI() {
     const q = e.queue[Number(button.dataset.cancel)];
     const progress = Math.min(100, (q.elapsed / D[q.type].time) * 100);
     button.querySelector("span").textContent =
-      q.blocked || `${Math.floor(progress)}%`;
+      q.blocked ? 'Wait' : `${Math.floor(progress)}%`;
+    button.setAttribute('aria-label',`Cancel ${D[q.type].name}, queue item ${Number(button.dataset.cancel)+1}, ${q.blocked || `${Math.floor(progress)}%`}, full refund`);
     button.querySelector("i").style.width = `${progress}%`;
   }
   for (const b of document.querySelectorAll(".order-buttons button"))

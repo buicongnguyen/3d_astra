@@ -16,6 +16,7 @@ export function createProductionUI(definitions, cancel) {
     card.parentElement.classList.toggle('production-open',!card.hidden);
     if(card.hidden)return;
     card.dataset.building=e.id;
+    card.querySelector('small').textContent=`PRODUCTION · ${e.queue.length}/5 · SCROLL ↔`;
     const key=`${e.id}/${e.queue.map(q=>`${q.id}:${q.type}`).join(',')}`;
     if(key!==identity){
       identity=key;

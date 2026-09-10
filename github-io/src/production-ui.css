@@ -1,9 +1,9 @@
 #production-status[hidden]{display:none}
 #production-status{flex-shrink:0;min-width:0;margin-bottom:3px;color:#f0edda}
 #production-status>small{font-size:10px;letter-spacing:.6px}
-.production-jobs{display:flex;gap:6px;overflow-x:auto;padding:3px 0 5px;touch-action:pan-x}
+.production-jobs{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;overflow-y:hidden;padding:3px 0 5px;touch-action:pan-x;scrollbar-width:thin}
 .production-jobs button{position:relative;flex:0 0 auto;min-width:150px;min-height:48px;padding:5px 9px 8px;text-align:left;border:1px solid #8f9570;background:#10251f;color:#f0edda;border-radius:4px;overflow:hidden}
-.production-jobs strong,.production-jobs span{display:block;font-size:12px}
+.production-jobs strong,.production-jobs span{display:block;font-size:12px;white-space:nowrap}
 .production-jobs span{font-size:11px;color:#d2ddd1;margin-top:3px}
 .production-jobs i{position:absolute;bottom:0;left:0;height:3px;background:#a8edc6}
 .production-open>#command-hint,.production-open>#upgrade-actions{display:none}

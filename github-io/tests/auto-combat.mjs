@@ -17,7 +17,7 @@ try {
       s.updateVision();f.step(.05);
       return {unit:unit.id,enemy:enemy.id};
     });
-    await page.waitForFunction(()=>document.querySelector('.entity-stats').textContent.includes('ATTACKING'));
+    await page.waitForFunction(()=>document.querySelector('.selection-activity').textContent==='Attacking');
     const fighting=await page.evaluate(ids=>{
       const s=window.__frontier.sim,u=s.get(ids.unit),e=s.get(ids.enemy);
       return {attacking:u.attacking,moving:u.moving,orders:u.orders.length,damaged:e.hp<10000};
@@ -27,7 +27,7 @@ try {
       const f=window.__frontier,worker=f.sim.own(0).find(e=>e.type==='worker');
       f.select([worker.id,ids.unit]);
     },ids);
-    await page.waitForFunction(()=>document.querySelector('.entity-stats').textContent.includes('ATTACKING'));
+    await page.waitForFunction(()=>document.querySelector('.selection-activity').textContent==='Attacking');
     await page.evaluate(id=>window.__frontier.select([id]),ids.unit);
     await page.locator('#field-guide').click();
     assert.match(await page.locator('.field-guide article').innerText(),/Automatically attacks visible enemies/);
@@ -45,7 +45,7 @@ try {
     if(mobile)await page.touchscreen.tap(retreat.x,retreat.y);
     else await page.mouse.click(retreat.x,retreat.y,{button:'right'});
     await page.waitForFunction(id=>{const u=window.__frontier.sim.get(id);return u.moving&&!u.attacking&&u.orders[0]?.type==='move';},ids.unit);
-    await page.waitForFunction(()=>!document.querySelector('.entity-stats').textContent.includes('ATTACKING'));
+    await page.waitForFunction(()=>document.querySelector('.selection-activity').textContent!=='Attacking');
     const withdrawing=await page.evaluate(ids=>{
       const f=window.__frontier,u=f.sim.get(ids.unit),enemy=f.sim.get(ids.enemy),hp=enemy.hp+enemy.shield,x=u.x,z=u.z;
       f.step(.5);

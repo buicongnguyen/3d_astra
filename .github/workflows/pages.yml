@@ -53,6 +53,8 @@ jobs:
         run: TEST_URL=http://127.0.0.1:4173/ npm run test:patrol
       - name: Verify production and harvesting feedback
         run: TEST_URL=http://127.0.0.1:4173/ npm run test:activity
+      - name: Verify compact stats and full production queues
+        run: TEST_URL=http://127.0.0.1:4173/ npm run test:status-layout
       - name: Preserve browser diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
