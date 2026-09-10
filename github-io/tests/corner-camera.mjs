@@ -18,7 +18,7 @@ try {
       } else {
         await page.mouse.move(640,400);
         await page.evaluate(({sx,sz,half})=>window.__frontier.view.focusOn(sx*(half-8),sz*(half-8)),{sx,sz,half});
-        const r=await page.locator('#world canvas').boundingBox();
+        const r=await page.locator('#world canvas:not(.activity-overlay)').boundingBox();
         // Raw screen corners exercise mouse events over the bottom status bar too.
         await page.mouse.move(sx<0?r.x+2:r.x+r.width-2,sz<0?r.y+2:r.y+r.height-2);
       }

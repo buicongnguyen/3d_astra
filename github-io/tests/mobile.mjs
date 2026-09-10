@@ -76,7 +76,7 @@ const gesture = async (frames, cancel = false) => {
 };
 const layout = async (label) => {
   const result = await read(() => {
-    const canvas = document.querySelector("#world canvas"),
+    const canvas = document.querySelector("#world canvas:not(.activity-overlay)"),
       r = canvas.getBoundingClientRect();
     const controls = [
       "#select-workers",
@@ -238,7 +238,7 @@ try {
 
   await tap("#select-army");
   await tap("#stop-order");
-  let rect = await page.locator("#world canvas").boundingBox();
+  let rect = await page.locator("#world canvas:not(.activity-overlay)").boundingBox();
   const cx = rect.x + rect.width / 2,
     cy = rect.y + rect.height / 2;
   const beforePan = await read(() => ({
@@ -318,7 +318,7 @@ try {
     window.__frontier.view.resize();
   });
   await tap("#box-select");
-  rect = await page.locator("#world canvas").boundingBox();
+  rect = await page.locator("#world canvas:not(.activity-overlay)").boundingBox();
   await gesture([
     [{ id: 1, x: rect.x + 8, y: rect.y + 55 }],
     [{ id: 1, x: rect.x + rect.width - 8, y: rect.y + rect.height - 10 }],
