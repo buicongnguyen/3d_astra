@@ -46,6 +46,8 @@ The command panel sits below the battlefield in portrait and beside it in landsc
 
 ### Mouse and keyboard
 
+**B** opens construction; **Q E R T Y** activate the displayed build/train tiles. **F1** selects an idle Harvester, **F2** selects the army, **F3** all Harvesters, and **H/J/K** cycle production buildings. Open **PC commands & selection** for clickable commands and key hints. See the [complete desktop shortcut list and references](docs/PC_SHORTCUTS.md).
+
 | Action | Input |
 |---|---|
 | Select one entity | Left-click |
@@ -58,8 +60,8 @@ The command panel sits below the battlefield in portrait and beside it in landsc
 | Stop | X |
 | Pan | WASD, arrow keys, middle-mouse drag; left/right/top screen edges |
 | Zoom | Mouse wheel |
-| Focus base | H or minimap home button |
-| Save / recall a control group | Ctrl + 1–9 / 1–9 |
+| Select next Command core / focus selection | H / Home |
+| Save / add / recall a control group | Ctrl + 1–9 / Shift + 1–9 / 1–9 |
 | Toggle placement grid | G |
 | Pause / resume | Space |
 | Cancel current mode / pause | Escape |

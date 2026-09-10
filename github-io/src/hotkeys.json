@@ -1,0 +1,31 @@
+{
+  "actionKeys": ["Q", "E", "R", "T", "Y"],
+  "commands": [
+    {"id":"build","label":"Build menu","key":"B"},
+    {"id":"move","label":"Move / withdraw","key":"M"},
+    {"id":"attackmove","label":"Attack-move","key":"F"},
+    {"id":"stop","label":"Stop","key":"X"},
+    {"id":"context","label":"Gather / attack / assist","key":"C"},
+    {"id":"deliver","label":"Return cargo","key":"V"},
+    {"id":"support","label":"Heal / repair","key":"R"},
+    {"id":"rally","label":"Set rally point","key":"L"},
+    {"id":"upgrade","label":"Upgrade building","key":"U"},
+    {"id":"cancel","label":"Cancel last job / site","key":"Backspace"},
+    {"id":"idle","label":"Next idle Harvester","key":"F1 / ."},
+    {"id":"army","label":"Select army","key":"F2"},
+    {"id":"workers","label":"Select Harvesters","key":"F3"},
+    {"id":"buildings","label":"Select buildings","key":"F4"},
+    {"id":"hq","label":"Next Command core","key":"H"},
+    {"id":"barracks","label":"Next Barracks","key":"J"},
+    {"id":"foundry","label":"Next Foundry","key":"K"},
+    {"id":"same","label":"Select same type","key":"Z"},
+    {"id":"all","label":"Select all units","key":"Ctrl+A"},
+    {"id":"clear","label":"Clear selection","key":"`"},
+    {"id":"focus","label":"Focus selection","key":"Home"},
+    {"id":"queue","label":"Toggle order queue","key":"O"},
+    {"id":"info","label":"Unit / building info","key":"I"},
+    {"id":"pause","label":"Pause / resume","key":"Space"},
+    {"id":"zoom-in","label":"Zoom in","key":"+"},
+    {"id":"zoom-out","label":"Zoom out","key":"−"}
+  ]
+}

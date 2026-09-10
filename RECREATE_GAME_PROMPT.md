@@ -196,6 +196,11 @@ Desktop:
 - Right-click context orders: move, gather, attack, build assistance or deliver.
 - Shift to queue, control groups, Attack-move, Stop, Home, pause and camera shortcuts.
 - Wheel zoom, WASD/arrow panning and edge scrolling.
+- Provide clickable command/selection controls and a compact PC shortcut menu with visible key hints; include a scrollable keyboard-help dialog. Keep the same commands in both engines.
+- B selects a Harvester and opens construction. Contextual Q/E/R/T/Y activate the displayed build/train tiles; do not bind these actions to WASD. Worker slots: Relay, Barracks, Foundry, Tower, Core. Core Q: Harvester. Barracks Q/E/R/T: Vanguard, Ranger, Medic, Anti-tank. Foundry Q/E/R/T: Breaker, research, Engineer, Tank.
+- M: explicit Move/withdraw; F: Attack-move; X: Stop; C: contextual target; V: return cargo; R: support when a support unit is selected; L: rally; U: building upgrade; Backspace: cancel mode/site/active upgrade/last queued job, in that priority order.
+- F1 or period: next idle Harvester; F2: army; F3: Harvesters; F4: buildings; H/J/K: cycle Core/Barracks/Foundry; Z: same type; Ctrl+A: all units; backquote: clear; Home: focus selection. Ctrl+1–9 saves, Shift+1–9 adds, number recalls, double-number focuses. Provide clickable group alternatives for browser-reserved combinations.
+- O toggles queue mode; I opens entity information; Space pauses/resumes; Escape cancels a mode before pausing; Slash/? opens help. Holding a key must not repeat purchases. Ignore gameplay shortcuts in menus and text fields; preserve unrelated browser shortcuts. Exercise actual key events in browser regression tests, including forced retreat, production, groups, and modal guards.
 
 Mobile:
 

@@ -19,6 +19,7 @@ import {
 } from "./data.js";
 import { icon } from "./icons.js";
 import { TouchControls } from "./touch-controls.js";
+import { ACTION_KEYS, HOTKEYS, HOTKEY_HELP, physicalKey } from "./hotkeys.js";
 
 document.querySelector("#app").innerHTML = `
   <header class="topbar">
@@ -32,6 +33,7 @@ document.querySelector("#app").innerHTML = `
   </header>
   <main id="stage">
     <div id="world"></div>
+    <details class="pc-shortcuts" id="pc-shortcuts"><summary>PC commands & selection <kbd>?</kbd></summary><div class="shortcut-list">${HOTKEYS.map(k=>`<button data-shortcut="${k.id}" title="${k.label} · ${k.key}"><span>${k.label}</span><kbd>${k.key}</kbd></button>`).join('')}</div><div class="control-group-buttons">${Array.from({length:9},(_,i)=>`<button data-group="${i+1}" title="Group ${i+1}: click to recall, Ctrl-click to assign, Shift-click to add">${i+1}</button>`).join('')}</div><p class="group-help">Ctrl + number saves · Shift + number adds<br>Number recalls · twice focuses</p></details>
     <div class="map-heading"><span class="eyebrow"><i class="live-dot"></i> OPERATION 01 / SKIRMISH</span><h1>Outpost Meridian<span>.</span></h1><p>THE ASHEN FRONTIER <span>·</span> SECTOR 07</p></div>
     <aside class="mission panel"><div class="panel-label">MISSION OBJECTIVES <span>01—03</span></div><div class="objective" id="obj-economy"><span class="objective-num">01</span><span>Establish your economy<small>Assign Harvesters to resources</small></span></div><div class="objective" id="obj-army"><span class="objective-num">02</span><span>Mobilize a strike force<small>Field 8 combat units</small></span></div><div class="objective" id="obj-win"><span class="objective-num">03</span><span>Break their command<small>Destroy all enemy Command cores</small></span></div><div class="mission-footer">${icon("flag")} MERIDIAN EXPEDITION</div></aside>
     <div class="sector-status"><span class="eyebrow">TACTICAL UPLINK</span><span><i class="live-dot"></i> <span id="uplink">STANDBY</span></span></div>
@@ -182,6 +184,7 @@ function selectedEntities() {
   return [...selected].map((id) => sim.get(id)).filter((e) => e?.team === 0);
 }
 function setSelection(ids) {
+  clearMode();
   selected = new Set(ids);
   lastSelectionKey = "";
   updateUI();
@@ -207,8 +210,8 @@ function clearMode() {
 }
 function enterMode(type) {
   if (!started || paused || sim.result) return;
-  if (!selectedEntities().some((e) => e.kind === "unit")) {
-    notice("Select units first.");
+  if (!selectedEntities().some((e) => type === 'rally' ? e.kind === 'building' && e.complete && e.trains?.length : e.kind === 'unit')) {
+    notice(type === 'rally' ? "Select a completed production building first." : "Select units first.");
     return;
   }
   clearMode();
@@ -223,6 +226,8 @@ function enterMode(type) {
       `${type === "attackmove" ? "ATTACK-MOVE" : "MOVE"} · Tap your destination`;
   $("mode-controls").hidden = false;
   if (type === "support") $("mode-banner").textContent = "SUPPORT · Choose friendly infantry (Medic) or a building / vehicle (Engineer)";
+  if (type === "context") $("mode-banner").textContent = "CONTEXT ORDER · Choose a deposit, enemy or friendly construction site";
+  if (type === "rally") $("mode-banner").textContent = "RALLY POINT · Choose a destination for newly trained units";
   $("world").classList.add("targeting");
 }
 function enterBuild(type) {
@@ -254,6 +259,64 @@ function formatTime(s) {
     .padStart(2, "0")}:${Math.floor(s % 60)
     .toString()
     .padStart(2, "0")}`;
+}
+let lastGroup = { key: '', time: 0 };
+function focusSelection() {
+  const es=selectedEntities();
+  if(es.length) view.focusOn(es.reduce((s,e)=>s+e.x,0)/es.length,es.reduce((s,e)=>s+e.z,0)/es.length);
+}
+function useGroup(key, assign=false, add=false) {
+  if(assign) groups.set(key,[...selected]);
+  else if(add) groups.set(key,[...new Set([...(groups.get(key)||[]),...selected])]);
+  else {
+    setSelection((groups.get(key)||[]).filter(id=>sim.get(id)?.team===0));
+    if(lastGroup.key===key && performance.now()-lastGroup.time<400) focusSelection();
+    lastGroup={key,time:performance.now()};
+  }
+  if(assign||add) notice(`Control group ${key} ${add?'extended':'assigned'}.`);
+}
+function runShortcut(id) {
+  if(id==='pause') {togglePause();return;}
+  if(!started||paused||sim.result) return;
+  const es=selectedEntities(),e=es[0],own=sim.own(0);
+  const choose=(items,cycle=false)=>{
+    if(!items.length){notice('No matching units or buildings.');return;}
+    const next=cycle?items[(items.findIndex(u=>u.id===e?.id)+1)%items.length]:null;
+    setSelection(next?[next.id]:items.map(u=>u.id));
+    if(cycle)focusSelection();
+  };
+  if(id==='build') {
+    if(!es.some(u=>u.type==='worker')) choose(own.filter(u=>u.type==='worker').sort((a,b)=>a.orders.length-b.orders.length).slice(0,1));
+    if(selectedEntities().some(u=>u.type==='worker')) {clearMode();dockTab('actions');notice('BUILD: Q Relay · E Barracks · R Foundry · T Tower · Y Core');}
+  } else if(['move','attackmove','support','context','rally'].includes(id)) enterMode(id);
+  else if(id==='stop') {clearMode();sim.issue([...selected],{type:'stop'});notice('Orders cleared.');}
+  else if(id==='deliver') {
+    const ws=es.filter(u=>u.type==='worker'&&u.carry>0);
+    if(ws.length){clearMode();sim.issue(ws.map(u=>u.id),{type:'deliver'},queueOrders);}
+    else notice('Select Harvesters carrying resources.');
+  } else if(id==='upgrade') {if(e?.kind==='building')sim.upgradeBuilding(e.id);else notice('Select a building to upgrade.');}
+  else if(id==='cancel') {
+    if(mode)clearMode();
+    else if(e?.kind==='building') {
+      if(!e.complete)sim.cancelBuilding(e.id);
+      else if(e.levelJob)sim.cancelLevel(e.id);
+      else if(e.queue.length)sim.cancelQueue(e.id,e.queue.length-1);
+      else notice('No queued job to cancel.');
+    }
+  } else if(id==='idle')choose(own.filter(u=>u.type==='worker'&&!u.orders.length),true);
+  else if(id==='army')choose(own.filter(u=>u.kind==='unit'&&u.type!=='worker'));
+  else if(id==='workers')choose(own.filter(u=>u.type==='worker'));
+  else if(id==='buildings')choose(own.filter(u=>u.kind==='building'));
+  else if(['hq','barracks','foundry'].includes(id))choose(own.filter(u=>u.type===id),true);
+  else if(id==='same'&&e)choose(own.filter(u=>u.type===e.type));
+  else if(id==='all')choose(own.filter(u=>u.kind==='unit'));
+  else if(id==='clear')setSelection([]);
+  else if(id==='focus')focusSelection();
+  else if(id==='queue')$('queue-orders').click();
+  else if(id==='info')showGuide(e?.type);
+  else if(id==='zoom-in')view.zoomBy(-4);
+  else if(id==='zoom-out')view.zoomBy(4);
+  updateUI();
 }
 function updateUI() {
   const p = sim.players[0],
@@ -345,14 +408,14 @@ function updateUI() {
       : "TACTICAL";
     $("commands").innerHTML =
       actions
-        .map((type) => {
+        .map((type, index) => {
           const d = D[type];
-          return `<button class="command-tile" data-action="${type}" title="${d.description}">${icon(d.icon || type)}<span>${d.name}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
+          return `<button class="command-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" title="${ACTION_KEYS[index]} · ${d.description}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${icon(d.icon || type)}<span>${d.name}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
         })
         .join("") ||
       `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : "Your expedition is ready"}</strong><p>${e ? (touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : "Select the Command core to train Harvesters, or the Barracks to grow your army."}</p></div>`;
     $("upgrade-actions").innerHTML = e?.kind === 'building' && es.length === 1 && e.complete ?
-      (e.levelJob ? '<button data-cancel-level>Cancel upgrade · full refund</button>' : e.level < 3 ? `<button data-level>Upgrade L${e.level+1} · ${sim.levelCost(e).join('/')}</button>` : '<span>Maximum level 3</span>') : '';
+      (e.levelJob ? '<button data-cancel-level title="Backspace · Cancel upgrade">Cancel upgrade · full refund</button>' : e.level < 3 ? `<button data-level title="U · Upgrade building">Upgrade L${e.level+1} · ${sim.levelCost(e).join('/')} <kbd>U</kbd></button>` : '<span>Maximum level 3</span>') : '';
     $("command-hint").textContent =
       e?.kind === "building"
         ? e.complete
@@ -502,8 +565,13 @@ function minimap() {
 
 function commandAt(point, target, append = false, forced = null) {
   if (!point || !started || paused || sim.result) return;
+  if (forced === 'context') forced = null;
   const es = selectedEntities(),
     units = es.filter((e) => e.kind === "unit");
+  if (forced === 'rally') {
+    for (const b of es.filter(e=>e.kind==='building' && e.complete && e.trains)) b.rally={...point};
+    notice('Rally point established.'); view.marker(point.x,point.z); return;
+  }
   if (forced === "support") {
     const helpers = units.filter(e => sim.supportValid(e,target));
     if (!helpers.length) { notice("Medic: select allied infantry. Engineer: select a completed building or vehicle."); return; }
@@ -629,7 +697,7 @@ function touchTap(x, y) {
     return;
   }
   if (mode) {
-    commandAt(point, mode === "support" ? target : null, queueOrders, mode);
+    commandAt(point, ["support","context"].includes(mode) ? target : null, queueOrders, mode);
     clearMode();
     return;
   }
@@ -779,7 +847,7 @@ function bindInput() {
       return;
     }
     if (mode) {
-      commandAt(point, mode === "support" ? view.pick(e.clientX,e.clientY,sim) : null, e.shiftKey, mode);
+      commandAt(point, ["support","context"].includes(mode) ? view.pick(e.clientX,e.clientY,sim) : null, e.shiftKey||queueOrders, mode);
       clearMode();
       return;
     }
@@ -832,53 +900,37 @@ function bindInput() {
     { passive: false },
   );
   window.addEventListener("keydown", (e) => {
-    if (settingsUI.active) return;
-    if (modalType === "guide") return; // Native dialog owns Escape and selector keys.
-    if (
-      e.target.matches("input, textarea") ||
-      (e.repeat && [" ", "Escape"].includes(e.key))
-    )
-      return;
-    const key = e.key.toLowerCase();
-    if (
-      [" ", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key) ||
-      (e.ctrlKey && /^[1-9]$/.test(key))
-    )
-      e.preventDefault();
-    if (key === "escape") {
-      if (mode) clearMode();
-      else if (modalType === "help") closeModal();
-      else if (started && !sim.result) togglePause();
+    if(settingsUI.active || modalType==='guide' || e.isComposing ||
+      (e.target instanceof Element && e.target.closest('input,textarea,select,[contenteditable="true"]'))) return;
+    const key=physicalKey(e);
+    if(e.altKey||e.metaKey) return;
+    if(e.ctrlKey && !/^[1-9]$/.test(key) && key!=='a')return;
+    if(key==='escape') {
+      if(e.repeat)return;
+      e.preventDefault();keys.clear();
+      if(mode)clearMode();
+      else if(modalType==='help')closeModal();
+      else if(started&&!sim.result)togglePause();
       return;
     }
-    if (modalType) {
-      if (key === " " && modalType === "pause") closeModal();
-      return;
+    if(key===' '&&!e.ctrlKey) {
+      e.preventDefault();if(!e.repeat) {keys.clear();if(modalType==='pause')closeModal();else if(!modalType)togglePause();}return;
     }
-    if (key === " ") {
-      togglePause();
-      return;
+    if(modalType||!started||paused||sim.result)return;
+    if(/^[1-9]$/.test(key)) {
+      e.preventDefault();if(!e.repeat)useGroup(key,e.ctrlKey,e.shiftKey);return;
     }
-    keys.add(key);
-    if (key === "h") focusHome();
-    if (key === "f") enterMode("attackmove");
-    if (key === "x" && !paused && started) {
-      sim.issue([...selected], { type: "stop" });
-      notice("Orders cleared.");
-    }
-    if (key === "g") {
-      view.grid.visible = !view.grid.visible;
-    }
-    if (key === "?") showHelp();
-    if (/^[1-9]$/.test(key)) {
-      if (e.ctrlKey) {
-        groups.set(key, [...selected]);
-        notice(`Control group ${key} assigned.`);
-      } else if (groups.has(key))
-        setSelection(groups.get(key).filter((id) => sim.get(id)));
-    }
+    if(e.ctrlKey&&key==='a') {e.preventDefault();if(!e.repeat)runShortcut('all');return;}
+    if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) {e.preventDefault();keys.add(key);return;}
+    const tile=ACTION_KEYS.includes(key.toUpperCase()) ? document.querySelector(`#commands [data-hotkey="${key.toUpperCase()}"]`) : null;
+    if(tile&&!mode) {e.preventDefault();if(!e.repeat&&!tile.disabled)tile.click();return;}
+    const binding=HOTKEYS.find(k=>k.key.split(' / ')[0].toLowerCase()===key);
+    const id=key==='.'?'idle':key==='-'?'zoom-out':key==='q'&&!mode?'attackmove':binding?.id;
+    if(id) {e.preventDefault();if(!e.repeat)runShortcut(id);return;}
+    if(key==='?'){e.preventDefault();if(!e.repeat){keys.clear();showHelp();}}
+    if(key==='g'&&!e.repeat)view.grid.visible=!view.grid.visible;
   });
-  window.addEventListener("keyup", (e) => keys.delete(e.key.toLowerCase()));
+  window.addEventListener("keyup",e=>keys.delete(physicalKey(e)));
   window.addEventListener("blur", () => keys.clear());
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
@@ -1010,6 +1062,7 @@ function showHelp() {
   $("modal-content").innerHTML =
     `<span class="eyebrow">COMMANDER'S FIELD GUIDE</span><h2 id="modal-title">Your command station.</h2><div class="controls-grid"><span>Select / box select</span><kbd>Left-click / drag</kbd><span>Add to selection / queue order</span><kbd>Shift + click</kbd><span>Move, gather, build, attack</span><kbd>Right-click target</kbd><span>Pan camera</span><kbd>WASD / arrows / middle drag</kbd><span>Zoom</span><kbd>Mouse wheel</kbd><span>Attack-move / stop</span><kbd>F / X</kbd><span>Assign / recall group</span><kbd>Ctrl + 1–9 / 1–9</kbd><span>Focus base / toggle grid</span><kbd>H / G</kbd><span>Pause / cancel</span><kbd>Space / Esc</kbd></div><p class="help-note">Select a Harvester and right-click amber or blue deposits to gather. Select a building to train units; select a Harvester to construct. Click a queued unit to cancel and refund it. Build Supply relays before reaching the population cap.</p><button class="primary" data-resume>Return to the frontier ${icon("arrow")}</button>`;
   $("modal").querySelector("[data-resume]").focus();
+  if (!touchInput) $("modal-content").querySelector(".controls-grid").outerHTML = HOTKEY_HELP;
   if (touchInput) {
     $("modal-content").querySelector(".controls-grid").innerHTML =
       "<span>Select a unit / structure</span><kbd>Tap it</kbd><span>Move / gather / attack</span><kbd>Select, then tap target</kbd><span>Pan the battlefield</span><kbd>Drag one finger</kbd><span>Zoom / pan together</span><kbd>Pinch / two fingers</kbd><span>Select multiple units</span><kbd>Box, then drag</kbd><span>Select your forces</span><kbd>Workers / Army</kbd><span>Queue multiple orders</span><kbd>Enable Queue</kbd><span>Place a structure</span><kbd>Tap location → Build here</kbd><span>Change HUD panel</span><kbd>Selection / Actions / Map</kbd>";
@@ -1152,6 +1205,14 @@ const showGuide = createFieldGuide(() => {
 }, () => { paused = guidePrevious.paused; modalType = guidePrevious.modalType; keys.clear(); });
 $("field-guide").onclick = () => showGuide(selectedEntities()[0]?.type);
 $("support-order").onclick = () => enterMode('support');
+for(const [id,key] of [['field-guide','I'],['support-order','R'],['move-order','M']]) {
+  $(id).insertAdjacentHTML('beforeend',` <kbd>${key}</kbd>`);$(id).title+=` · ${key}`;
+}
+$('pc-shortcuts').addEventListener('click',event=>{
+  const command=event.target.closest('[data-shortcut]'),group=event.target.closest('[data-group]');
+  if(command){runShortcut(command.dataset.shortcut);$('pc-shortcuts').open=false;}
+  if(group&&started&&!paused&&!sim.result)useGroup(group.dataset.group,event.ctrlKey,event.shiftKey);
+});
 $("upgrade-actions").onclick = event => {
   if (!started || paused || sim.result) return;
   const e = selectedEntities()[0];
