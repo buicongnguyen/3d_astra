@@ -22,6 +22,8 @@ Construction requires a ground click after choosing a blueprint. Production queu
 | Action | Key |
 |---|---|
 | Move / withdraw, then click destination | M |
+| Patrol between two points (soldiers / tanks) | P |
+| Attack a chosen enemy (including Harvesters) | N |
 | Attack-move, then click destination | F |
 | Stop current orders | X |
 | Context command, then click deposit, enemy or friendly site | C |

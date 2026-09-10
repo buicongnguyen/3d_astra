@@ -188,6 +188,9 @@ button {
 .compact-ui[data-dock="actions"] {
   --dock-height: 202px;
 }
+.compact-ui.many-orders[data-dock="selection"] {
+  --dock-height: 227px;
+}
 .compact-ui .topbar {
   height: calc(var(--header-height) + env(safe-area-inset-top, 0px));
   padding: env(safe-area-inset-top, 0px) 10px 0;
@@ -468,6 +471,10 @@ button {
   font-size: 10px;
   padding: 6px;
   justify-content: center;
+}
+.compact-ui.many-orders .order-buttons {
+  grid-auto-flow: row;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .compact-ui .order-buttons kbd {
   display: none;

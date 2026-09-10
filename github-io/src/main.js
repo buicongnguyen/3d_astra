@@ -219,6 +219,10 @@ function clearMode() {
 }
 function enterMode(type) {
   if (!started || paused || sim.result) return;
+  if (['patrol', 'attack'].includes(type) && !selectedEntities().some(e => e.kind === 'unit' && e.damage > 0 && (type !== 'patrol' || e.type !== 'worker'))) {
+    notice(type === 'patrol' ? 'Select soldiers or tanks to patrol.' : 'Select a Harvester or combat unit to attack.');
+    return;
+  }
   if (!selectedEntities().some((e) => type === 'rally' ? e.kind === 'building' && e.complete && e.trains?.length : e.kind === 'unit')) {
     notice(type === 'rally' ? "Select a completed production building first." : "Select units first.");
     return;
@@ -237,6 +241,9 @@ function enterMode(type) {
   if (type === "support") $("mode-banner").textContent = "SUPPORT · Choose friendly infantry (Medic) or a building / vehicle (Engineer)";
   if (type === "context") $("mode-banner").textContent = "CONTEXT ORDER · Choose a deposit, enemy or friendly construction site";
   if (type === "rally") $("mode-banner").textContent = "RALLY POINT · Choose a destination for newly trained units";
+  if (type === 'patrol') $("mode-banner").textContent = 'PATROL · Choose the other end of a repeating route';
+  if (type === 'attack') $("mode-banner").textContent = 'ATTACK · Choose a visible enemy unit or building';
+  $("notice").classList.remove('show');
   $("world").classList.add("targeting");
 }
 function enterBuild(type) {
@@ -306,7 +313,7 @@ function runShortcut(id) {
   if(id==='build') {
     if(!es.some(u=>u.type==='worker')) choose(own.filter(u=>u.type==='worker').sort((a,b)=>a.orders.length-b.orders.length).slice(0,1));
     if(selectedEntities().some(u=>u.type==='worker')) {clearMode();dockTab('actions');notice('BUILD: Q Relay · E Barracks · R Foundry · T Tower · Y Core');}
-  } else if(['move','attackmove','support','context','rally'].includes(id)) enterMode(id);
+  } else if(['move','attackmove','patrol','attack','support','context','rally'].includes(id)) enterMode(id);
   else if(id==='stop') {clearMode();sim.issue([...selected],{type:'stop'});notice('Orders cleared.');}
   else if(id==='deliver') {
     const ws=es.filter(u=>u.type==='worker'&&u.carry>0);
@@ -389,6 +396,9 @@ function updateUI() {
       `<div class="portrait">${icon(es.length > 1 ? "people" : (e.icon || e.type))}<span>ME</span></div><div class="entity-details"><span class="eyebrow">${es.length > 1 ? "MERIDIAN EXPEDITION" : e.role.toUpperCase()}</span><h3>${es.length > 1 ? "Expedition squad" : e.name}</h3><div class="health-track"><i style="width:${(hp / max) * 100}%"></i></div><div class="entity-stats"><span>${Math.ceil(hp)} / ${max} HP</span><span>${!e.complete ? `BUILDING ${Math.floor(e.progress * 100)}%` : e.carry ? `${e.carry} ${e.carryType.toUpperCase()} CARRIED` : (es.some(unit => unit.attacking) ? "ATTACKING" : e.orders[0]?.type.toUpperCase()) || (e.kind === "building" ? "OPERATIONAL" : "STANDING BY")}</span></div></div>`;
   }
   $("support-order").hidden = !es.some(u => u.support);
+  $("patrol-order").hidden = !es.some(u => u.kind === 'unit' && u.type !== 'worker' && u.damage > 0);
+  $("attack-target-order").hidden = !es.some(u => u.type === 'worker');
+  document.documentElement.classList.toggle('many-orders', [...document.querySelectorAll('.order-buttons button')].filter(b => !b.hidden).length > 5);
   if (e) {
     const details = $("selection-info").querySelector('.entity-details');
     details.insertAdjacentHTML('beforeend',`<div class="progression-stats">Shield ${Math.ceil(es.reduce((s,u) => s+u.shield,0))}/${es.reduce((s,u) => s+u.maxShield,0)} · ATK ${sim.attackValue(e).toFixed(1)}${es.length > 1 ? ' (first unit)' : ''}${e.support ? ` · Restore ${e.support} HP/s` : ''}${e.kind === 'building' ? ` · L${e.level}` : ''}</div>`);
@@ -591,6 +601,16 @@ function commandAt(point, target, append = false, forced = null) {
     for (const b of es.filter(e=>e.kind==='building' && e.complete && e.trains)) b.rally={...point};
     notice('Rally point established.'); view.marker(point.x,point.z); return;
   }
+  if (forced === 'attack') {
+    if (!target || target.kind === 'resource' || !(target.team > 0) || !sim.isVisible(target)) {
+      $("mode-banner").textContent = 'ATTACK · Choose a visible enemy unit or building';
+      return false;
+    }
+    sim.issue(units.filter(e => e.damage > 0).map(e => e.id), { type: 'attack', target: target.id }, append);
+    view.marker(target.x, target.z, 0xef9f75);
+    tone(440);
+    return true;
+  }
   if (forced === "support") {
     const helpers = units.filter(e => sim.supportValid(e,target));
     if (!helpers.length) { notice("Medic: select allied infantry. Engineer: select a completed building or vehicle."); return; }
@@ -722,8 +742,7 @@ function touchTap(x, y) {
     return;
   }
   if (mode) {
-    commandAt(point, ["support","context"].includes(mode) ? target : null, queueOrders, mode);
-    clearMode();
+    if (commandAt(point, ["support","context","attack"].includes(mode) ? target : null, queueOrders, mode) !== false) clearMode();
     return;
   }
   if (boxSelection) {
@@ -872,8 +891,7 @@ function bindInput() {
       return;
     }
     if (mode) {
-      commandAt(point, ["support","context"].includes(mode) ? view.pick(e.clientX,e.clientY,sim) : null, e.shiftKey||queueOrders, mode);
-      clearMode();
+      if (commandAt(point, ["support","context","attack"].includes(mode) ? view.pick(e.clientX,e.clientY,sim) : null, e.shiftKey||queueOrders, mode) !== false) clearMode();
       return;
     }
     const next = e.shiftKey ? new Set(selected) : new Set();
@@ -980,16 +998,14 @@ function bindInput() {
     if (e.button === 0) {
       const p = mapPoint(e);
       if (mode && mode !== "build") {
-        commandAt(p, null, queueOrders, mode);
-        clearMode();
+        if (commandAt(p, null, queueOrders, mode) !== false) clearMode();
       } else view.focusOn(p.x, p.z);
     }
   });
   $("minimap").addEventListener("contextmenu", (e) => {
     e.preventDefault();
     const p = mapPoint(e);
-    commandAt(p, null, e.shiftKey, mode === "attackmove" ? "attackmove" : null);
-    clearMode();
+    if (commandAt(p, null, e.shiftKey, ['attackmove','patrol','attack'].includes(mode) ? mode : null) !== false) clearMode();
   });
 }
 
@@ -1248,10 +1264,10 @@ $("upgrade-actions").onclick = event => {
 };
 $("move-order").onclick = () => enterMode("move");
 $("attack-order").onclick = () => enterMode("attackmove");
-$("stop-order").onclick = () => {
-  sim.issue([...selected], { type: "stop" });
-  notice("Orders cleared.");
-};
+$("attack-order").insertAdjacentHTML('afterend', '<button id="patrol-order" hidden title="Patrol between two points · P">Patrol <kbd>P</kbd></button><button id="attack-target-order" hidden title="Attack a chosen enemy · N">Attack <kbd>N</kbd></button>');
+$("patrol-order").onclick = () => enterMode('patrol');
+$("attack-target-order").onclick = () => enterMode('attack');
+$("stop-order").onclick = () => runShortcut('stop');
 $("commands").onclick = (event) => {
   const button = event.target.closest("[data-action]");
   if (!button || button.disabled) return;

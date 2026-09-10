@@ -4,6 +4,8 @@
     {"id":"build","label":"Build menu","key":"B"},
     {"id":"move","label":"Move / withdraw","key":"M"},
     {"id":"attackmove","label":"Attack-move","key":"F"},
+    {"id":"patrol","label":"Patrol (soldiers / tanks)","key":"P"},
+    {"id":"attack","label":"Attack chosen enemy","key":"N"},
     {"id":"stop","label":"Stop","key":"X"},
     {"id":"context","label":"Gather / attack / assist","key":"C"},
     {"id":"deliver","label":"Return cargo","key":"V"},

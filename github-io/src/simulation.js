@@ -207,6 +207,7 @@ export class Simulation {
       ![
         "move",
         "attackmove",
+        "patrol",
         "attack",
         "gather",
         "deliver",
@@ -217,7 +218,7 @@ export class Simulation {
     )
       return;
     if (
-      ["move", "attackmove"].includes(order.type) &&
+      ["move", "attackmove", "patrol"].includes(order.type) &&
       ![order.x, order.z].every(Number.isFinite)
     )
       return;
@@ -227,6 +228,7 @@ export class Simulation {
     for (const id of ids) {
       const e = this.get(id);
       if (!e || e.kind !== "unit" || !e.complete) continue;
+      if (order.type === 'patrol' && (e.type === 'worker' || !(e.damage > 0))) continue;
       const target = order.target ? this.get(order.target) : null;
       if (
         order.type === "attack" &&
@@ -260,8 +262,10 @@ export class Simulation {
         continue;
       }
       const o = { ...order };
+      // Capture the return point when this order starts, after earlier queued moves.
+      if (o.type === 'patrol') o.origin = null;
       if (o.type === "gather") o.resourceType = target.type;
-      if (["move", "attackmove"].includes(o.type) && ids.length > 1) {
+      if (["move", "attackmove", "patrol"].includes(o.type) && ids.length > 1) {
         o.x = clamp(o.x + ((index % size) - (size - 1) / 2) * 1.9, -this.terrain.half+3, this.terrain.half-3);
         o.z = clamp(
           o.z + (Math.floor(index / size) - (size - 1) / 2) * 1.9,
@@ -270,7 +274,7 @@ export class Simulation {
         );
         index++;
       }
-      if (["move", "attackmove"].includes(o.type)) {
+      if (["move", "attackmove", "patrol"].includes(o.type)) {
         // A center point inside the map can still leave a large vehicle outside it.
         const limit = this.terrain.half - Math.max(1, e.radius + 0.1);
         o.x = clamp(o.x, -limit, limit);
@@ -530,7 +534,7 @@ export class Simulation {
       if (t.hp <= 0 || t.team === e.team || !this.isVisible(t, e.team))
         continue;
       const d = distance(e, t) - t.radius;
-      if (d <= bestD && (!clearShot || this.nav.clearLine(e, t, t.id))) {
+      if (d <= bestD + 0.00001 && (!clearShot || this.nav.clearLine(e, t, t.id))) {
         best = t;
         bestD = d;
       }
@@ -567,7 +571,7 @@ export class Simulation {
       !this.isVisible(t, e.team)
     )
       return false;
-    const inRange = distance(e, t) <= e.range + t.radius;
+    const inRange = distance(e, t) <= e.range + t.radius + 0.00001;
     if (inRange && this.nav.clearLine(e, t, t.id)) {
       e.attacking = true;
       e.angle = Math.atan2(t.x - e.x, t.z - e.z);
@@ -844,8 +848,9 @@ export class Simulation {
       }
       if (e.support) { this.updateSupport(e,dt); continue; }
       const o = e.orders[0];
+      if (o?.type === 'patrol' && !o.origin) o.origin = { x: e.x, z: e.z };
       // Explicit Move orders take priority so units can retreat and kite.
-      if (e.type !== "worker" && e.damage > 0 && (!o || o.type === "attackmove")) {
+      if (e.type !== "worker" && e.damage > 0 && (!o || ['attackmove', 'patrol'].includes(o.type))) {
         const target = this.enemy(e, e.range, true);
         if (target) {
           this.fight(e, target, dt, false);
@@ -868,6 +873,17 @@ export class Simulation {
         const t = this.enemy(e, 12);
         if (t) this.fight(e, t, dt);
         else if (this.move(e, o, dt, 1.2)) this.finish(e);
+      } else if (o.type === 'patrol') {
+        if (this.move(e, o, dt, 1.2)) {
+          // A queued follow-up takes over at the next endpoint. Otherwise loop.
+          if (e.orders.length > 1) this.finish(e);
+          else {
+            const destination = { x: o.x, z: o.z };
+            Object.assign(o, o.origin);
+            o.origin = destination;
+            this.resetWorkerRoute(e);
+          }
+        }
       } else if (o.type === "move" && this.move(e, o, dt, 1.2)) this.finish(e);
     }
     const units = this.entities.filter((e) => e.hp > 0 && e.kind === "unit");

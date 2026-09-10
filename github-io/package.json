@@ -19,7 +19,8 @@
     "test:corners": "node tests/corner-camera.mjs",
     "test:auto-combat": "node tests/auto-combat.mjs",
     "test:harvesters": "node tests/harvesters.mjs",
-    "test:hotkeys": "node tests/hotkeys.mjs"
+    "test:hotkeys": "node tests/hotkeys.mjs",
+    "test:patrol": "node tests/patrol.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

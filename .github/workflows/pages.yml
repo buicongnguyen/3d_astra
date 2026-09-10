@@ -49,6 +49,8 @@ jobs:
           TEST_URL=http://127.0.0.1:4173/ npm run test:hotkeys
       - name: Verify mobile construction feedback
         run: TEST_URL=http://127.0.0.1:4173/ npm run test:mobile-construction
+      - name: Verify Patrol and Harvester Attack controls
+        run: TEST_URL=http://127.0.0.1:4173/ npm run test:patrol
       - name: Preserve browser diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
