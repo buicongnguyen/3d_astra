@@ -20,6 +20,7 @@ import {
 import { icon } from "./icons.js";
 import { TouchControls } from "./touch-controls.js";
 import { ACTION_KEYS, HOTKEYS, HOTKEY_HELP, physicalKey } from "./hotkeys.js";
+import { createConstructionUI } from "./construction-ui.js";
 
 document.querySelector("#app").innerHTML = `
   <header class="topbar">
@@ -108,7 +109,9 @@ let touchInput = matchMedia("(pointer: coarse)").matches,
   touchControls,
   boxSelection = false,
   queueOrders = false,
-  buildPoint = null;
+  buildPoint = null,
+  blockedBuildType = null,
+  buildFailure = '';
 const compactMedia = matchMedia("(max-width: 1000px), (max-height: 650px)");
 document
   .querySelector(".top-actions")
@@ -191,7 +194,7 @@ function setSelection(ids) {
   if (document.documentElement.classList.contains("compact-ui")) {
     const es = selectedEntities();
     dockTab(
-      es.length === 1 && (es[0].trains || es[0].type === "worker")
+      es.length === 1 && (es[0].trains || es[0].type === "worker" || (es[0].kind === 'building' && !es[0].complete))
         ? "actions"
         : "selection",
     );
@@ -199,9 +202,15 @@ function setSelection(ids) {
   tone(650);
 }
 function clearMode() {
+  if (document.documentElement.classList.contains('construction-notice-repeated')) {
+    $('notice').classList.remove('show');
+    clearTimeout(noticeTimeout);
+  }
   mode = null;
   buildType = null;
   buildPoint = null;
+  blockedBuildType = null;
+  buildFailure = '';
   $("mode-controls").hidden = true;
   $("confirm-build").hidden = true;
   if (view) view.preview.visible = false;
@@ -237,7 +246,14 @@ function enterBuild(type) {
     return;
   }
   const missing = sim.constructionRequirements(type);
-  if (missing) { notice(missing); return; }
+  if (missing) {
+    clearMode();
+    blockedBuildType = type;
+    notice(missing);
+    if (document.documentElement.classList.contains('compact-ui')) dockTab('actions');
+    updateUI();
+    return;
+  }
   clearMode();
   mode = "build";
   buildType = type;
@@ -252,6 +268,8 @@ function enterBuild(type) {
   $("confirm-build").disabled = true;
   view.preview.visible = false;
   view.preview.scale.set(D[type].radius, 1, D[type].radius);
+  if (document.documentElement.classList.contains('compact-ui')) dockTab('actions');
+  updateUI();
 }
 function formatTime(s) {
   return `${Math.floor(s / 60)
@@ -296,7 +314,7 @@ function runShortcut(id) {
     else notice('Select Harvesters carrying resources.');
   } else if(id==='upgrade') {if(e?.kind==='building')sim.upgradeBuilding(e.id);else notice('Select a building to upgrade.');}
   else if(id==='cancel') {
-    if(mode)clearMode();
+    if(mode || blockedBuildType)clearMode();
     else if(e?.kind==='building') {
       if(!e.complete)sim.cancelBuilding(e.id);
       else if(e.levelJob)sim.cancelLevel(e.id);
@@ -458,6 +476,7 @@ function updateUI() {
     $("confirm-build").disabled = !!error || paused || !started;
     view.preview.material.color.setHex(error ? 0xef7660 : 0x92ebc5);
   }
+  constructionUI.update({sim, selected:es, mode, type:buildType, point:buildPoint, blockedType:blockedBuildType, failure:buildFailure, started, paused, touch:touchInput});
 }
 
 function minimap() {
@@ -671,21 +690,27 @@ function selectTouchBox(p) {
 }
 function showBuildPoint(point) {
   buildPoint = point;
+  buildFailure = '';
   view.preview.visible = true;
   view.preview.position.set(point.x, 0.23, point.z);
   const error = sim.placement(buildType, 0, point.x, point.z);
   view.preview.material.color.setHex(error ? 0xef7660 : 0x92ebc5);
   $("confirm-build").disabled = !!error;
   if (error) notice(error);
+  updateUI();
 }
 function confirmBuild(point = buildPoint) {
   if (!point || mode !== "build" || paused || !started || sim.result) return;
   const worker = selectedEntities().find((e) => e.type === "worker");
+  const previousEvents = sim.events.length;
   const b = worker && sim.build(worker.id, buildType, point.x, point.z);
   if (b) {
     clearMode();
     setSelection([b.id]);
     tone(330, 0.15);
+  } else {
+    buildFailure = sim.events.slice(previousEvents).findLast(e => e.type === 'message')?.text || 'Select a Harvester to construct this building.';
+    updateUI();
   }
 }
 function touchTap(x, y) {
@@ -908,7 +933,7 @@ function bindInput() {
     if(key==='escape') {
       if(e.repeat)return;
       e.preventDefault();keys.clear();
-      if(mode)clearMode();
+      if(mode || blockedBuildType)clearMode();
       else if(modalType==='help')closeModal();
       else if(started&&!sim.result)togglePause();
       return;
@@ -1133,10 +1158,10 @@ $("controls-link").onclick = showHelp;
 $("home").onclick = focusHome;
 $("dock-tabs").onclick = (event) => {
   const button = event.target.closest("[data-dock]");
-  if (button) dockTab(button.dataset.dock);
+  if (button) { dockTab(button.dataset.dock); updateUI(); }
 };
 $("confirm-build").onclick = () => confirmBuild();
-$("cancel-mode").onclick = clearMode;
+$("cancel-mode").onclick = () => { clearMode(); updateUI(); };
 $("select-workers").onclick = () => {
   clearMode();
   setSelection(
@@ -1315,6 +1340,12 @@ function frame(now) {
     frameTime = 0;
   }
 }
+
+const constructionUI = createConstructionUI(D, {
+  retry: type => enterBuild(type),
+  back: () => { clearMode(); updateUI(); },
+  cancelSite: id => { if (!paused && started && sim.cancelBuilding(id)) setSelection([]); },
+});
 
 async function boot() {
   try {

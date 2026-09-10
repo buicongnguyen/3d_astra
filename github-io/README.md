@@ -44,6 +44,8 @@ You start with a Command core, Barracks, four Harvesters, two Rangers, one Vangu
 
 The command panel sits below the battlefield in portrait and beside it in landscape. Scroll a panel if needed on a short screen. Phones default to **Eco** rendering: capped pixel density and simple contact shadows. The first actual touch enables the touch controls on a hybrid device; merely having a touchscreen does not replace the mouse layout.
 
+During construction, **Actions** keeps the building name, resource cost, placement feedback, and Build/Cancel buttons together in a solid, readable panel. Missing-resource and prerequisite messages stay visible until resolved or dismissed. Once a site is placed, the same panel shows its progress and whether a Harvester is building, travelling, or needs to be assigned. The panel occupies the existing dock and leaves the battlefield clear. Regression coverage: `npm run test:mobile-construction`.
+
 ### Mouse and keyboard
 
 **B** opens construction; **Q E R T Y** activate the displayed build/train tiles. **F1** selects an idle Harvester, **F2** selects the army, **F3** all Harvesters, and **H/J/K** cycle production buildings. Open **PC commands & selection** for clickable commands and key hints. See the [complete desktop shortcut list and references](docs/PC_SHORTCUTS.md).
