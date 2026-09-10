@@ -40,6 +40,15 @@ try{
       for(let i=0;i<100;i++)v.activity.event({type:'death',x:h.x,z:h.z,team:0,heavy:true},s);
       const count=v.activity.effects.length;v.activity.draw(s,1,new Set(),null);return {count,remaining:v.activity.effects.length};
     });assert.deepEqual(effectCheck,{count:32,remaining:0});
+    if(!mobile){
+      for(const type of ['ranger','vanguard']){
+        await page.evaluate(type=>{
+          const f=window.__frontier;f.restart();f.sim.aiEnabled=false;
+          const b=f.sim.own(0).find(e=>e.type==='barracks');f.sim.enqueue(b.id,type);f.select([b.id]);
+        },type);
+        await page.waitForFunction(name=>document.querySelector('#production-status strong')?.textContent===`Cancel ${name}`,type==='ranger'?'Ranger':'Vanguard');
+      }
+    }
     assert.deepEqual(errors,[]);console.log(`Activity bars, cancellation, mining and FX budget passed ${viewport.width}x${viewport.height}`);await page.close();
   }
 }finally{await browser.close();}

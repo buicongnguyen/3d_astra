@@ -84,5 +84,5 @@ export class ActivityView {
     }
     this.snapshot=snapshot;
   }
-  reset(){this.effects.length=0;this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);}
+  reset(){this.effects.length=0;this.snapshot={buildings:[],resources:[],workers:[]};this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);}
 }

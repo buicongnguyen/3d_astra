@@ -16,7 +16,7 @@ export function createProductionUI(definitions, cancel) {
     card.parentElement.classList.toggle('production-open',!card.hidden);
     if(card.hidden)return;
     card.dataset.building=e.id;
-    const key=`${e.id}/${e.queue.map(q=>q.id).join(',')}`;
+    const key=`${e.id}/${e.queue.map(q=>`${q.id}:${q.type}`).join(',')}`;
     if(key!==identity){
       identity=key;
       jobs.innerHTML=e.queue.map(q=>`<button data-job="${q.id}" aria-label="Cancel ${definitions[q.type].name}, full refund"><strong>Cancel ${definitions[q.type].name}</strong><span></span><i></i></button>`).join('');
