@@ -81,5 +81,11 @@ try {
   assert.deepEqual(preserved,[true,true]);await press('Quote');await press('Backslash');
   await page.locator('#pc-shortcuts summary').click();await page.locator('[data-shortcut="workers"]').click();assert.deepEqual(await selected(),ids.workers);
   await page.screenshot({path:'test-results/pc-hotkeys.png'});assert.deepEqual(errors,[]);
+  for(const viewport of [{width:960,height:540},{width:844,height:390},{width:800,height:500}]){
+    await page.setViewportSize(viewport);await page.locator('#pc-shortcuts summary').click();
+    const fits=await page.locator('.control-group-buttons button').evaluateAll(bs=>bs.every(b=>{const r=b.getBoundingClientRect();return r.x>=0&&r.right<=innerWidth&&r.bottom<=innerHeight;}));
+    assert.ok(fits,`control groups fit ${viewport.width}x${viewport.height}`);
+    await page.locator('#pc-shortcuts summary').click();
+  }
   console.log('PC shortcuts: selection, groups, every build/train tile, repeat guard, orders, rally, modal/input guards and command buttons passed.');
 } finally {await browser.close();}
