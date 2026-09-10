@@ -1,5 +1,7 @@
 # Detailed Plan: 3D Real-Time Strategy Game
 
+For a future rebuild, use [RTS_GAME_PLAN_V2.md](RTS_GAME_PLAN_V2.md), which incorporates the desktop/mobile, gameplay and release lessons from this project. This original plan is retained as historical context.
+
 Build a small, complete RTS inspired by **Age of Empires' economy and construction** and **StarCraft II's responsive controls and readable combat**, using original assets and game design.
 
 This plan assumes **Godot with GDScript and Blender**. Unity or Unreal can replace Godot using the architecture mapping at the end. Use one engine for the entire project.
