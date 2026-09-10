@@ -3,6 +3,7 @@ import "./mobile.css";
 import "./settings.css";
 import "./start-screen.css";
 import "./desktop-dock.css";
+import "./hud-readability.css";
 import { loadSettings, saveSettings, palette } from "./settings.js";
 import { SettingsUI } from "./settings-ui.js";
 import { MAPS, SURFACES } from "./terrain.js";
@@ -40,7 +41,8 @@ document.querySelector("#app").innerHTML = `
     <div id="world"></div>
     <details class="pc-shortcuts" id="pc-shortcuts"><summary>PC commands & selection <kbd>?</kbd></summary><div class="shortcut-list">${HOTKEYS.map(k=>`<button data-shortcut="${k.id}" title="${k.label} · ${k.key}"><span>${k.label}</span><kbd>${k.key}</kbd></button>`).join('')}</div><div class="control-group-buttons">${Array.from({length:9},(_,i)=>`<button data-group="${i+1}" title="Group ${i+1}: click to recall, Ctrl-click to assign, Shift-click to add">${i+1}</button>`).join('')}</div><p class="group-help">Ctrl + number saves · Shift + number adds<br>Number recalls · twice focuses</p></details>
     <div class="map-heading"><span class="eyebrow"><i class="live-dot"></i> OPERATION 01 / SKIRMISH</span><h1>Outpost Meridian<span>.</span></h1><p>THE ASHEN FRONTIER <span>·</span> SECTOR 07</p></div>
-    <aside class="mission panel"><div class="panel-label">MISSION OBJECTIVES <span>01—03</span></div><div class="objective" id="obj-economy"><span class="objective-num">01</span><span>Establish your economy<small>Assign Harvesters to resources</small></span></div><div class="objective" id="obj-army"><span class="objective-num">02</span><span>Mobilize a strike force<small>Field 8 combat units</small></span></div><div class="objective" id="obj-win"><span class="objective-num">03</span><span>Break their command<small>Destroy all enemy Command cores</small></span></div><div class="mission-footer">${icon("flag")} MERIDIAN EXPEDITION</div></aside>
+    <button id="mission-toggle" aria-expanded="false" aria-controls="mission-objectives">${icon("flag")} Objectives</button>
+    <aside id="mission-objectives" class="mission panel" aria-label="Mission objectives"><div class="panel-label">MISSION OBJECTIVES <span>01—03</span></div><div class="objective" id="obj-economy"><span class="objective-num">01</span><span>Establish your economy<small>Assign Harvesters to resources</small></span></div><div class="objective" id="obj-army"><span class="objective-num">02</span><span>Mobilize a strike force<small>Field 8 combat units</small></span></div><div class="objective" id="obj-win"><span class="objective-num">03</span><span>Break their command<small>Destroy all enemy Command cores</small></span></div></aside>
     <div class="sector-status"><span class="eyebrow">TACTICAL UPLINK</span><span><i class="live-dot"></i> <span id="uplink">STANDBY</span></span></div>
     <div id="notice" role="status" aria-live="polite"></div>
     <div id="mode-banner" hidden></div>
@@ -129,12 +131,17 @@ document
   );
 document.documentElement.classList.add("in-briefing");
 document.documentElement.dataset.dock = "selection";
+function setObjectivesOpen(open) {
+  document.documentElement.classList.toggle('objectives-open', open);
+  $('mission-toggle').setAttribute('aria-expanded', String(open));
+}
 function setLayout() {
   document.documentElement.classList.toggle(
     "compact-ui",
     compactMedia.matches || touchInput,
   );
   document.documentElement.classList.toggle("touch-ui", touchInput);
+  if (!document.documentElement.classList.contains('compact-ui')) setObjectivesOpen(false);
   touchControls?.reset();
   drag = null;
   pointer.inside = false;
@@ -442,7 +449,8 @@ function updateUI() {
       actions
         .map((type, index) => {
           const d = D[type];
-          return `<button class="command-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" title="${ACTION_KEYS[index]} · ${d.description}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${icon(d.icon || type)}<span>${d.name}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
+          const label = type === 'upgrade' ? 'Weapons +' : d.name;
+          return `<button class="command-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" aria-label="${d.name}, ${d.cost[0]} alloy${d.cost[1] ? ` and ${d.cost[1]} energy` : ''}" title="${ACTION_KEYS[index]} · ${d.name} · ${d.description}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${icon(d.icon || type)}<span>${label}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
         })
         .join("") || (e?.kind==='building' ? '' :
       `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : "Your expedition is ready"}</strong><p>${e ? (touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : "Select the Command core to train Harvesters, or the Barracks to grow your army."}</p></div>`);
@@ -941,12 +949,14 @@ function bindInput() {
     if(key==='escape') {
       if(e.repeat)return;
       e.preventDefault();keys.clear();
-      if(mode || blockedBuildType)clearMode();
+      if(document.documentElement.classList.contains('objectives-open'))setObjectivesOpen(false);
+      else if(mode || blockedBuildType)clearMode();
       else if(modalType==='help')closeModal();
       else if(started&&!sim.result)togglePause();
       return;
     }
     if(key===' '&&!e.ctrlKey) {
+      if(e.target instanceof Element && e.target.closest('#mission-toggle'))return;
       // Before play, Space must activate the focused Start/Settings button.
       if(!started && e.target instanceof Element && e.target.closest('button'))return;
       e.preventDefault();if(!e.repeat) {keys.clear();if(modalType==='pause')closeModal();else if(!modalType)togglePause();}return;
@@ -1130,6 +1140,7 @@ function restart() {
   rememberedBuildings.clear();
   rememberedResources.clear();
   milestones.economy = milestones.army = false;
+  setObjectivesOpen(false);
   clearMode();
   modalType = null;
   started = true;
@@ -1161,6 +1172,11 @@ $("start").onclick = () => {
   tone(780, 0.15);
 };
 $("pause").onclick = togglePause;
+$("mission-toggle").onclick = () => setObjectivesOpen(!document.documentElement.classList.contains('objectives-open'));
+document.addEventListener('pointerdown', event => {
+  if (document.documentElement.classList.contains('objectives-open') &&
+      event.target instanceof Element && !event.target.closest('#mission-toggle, #mission-objectives')) setObjectivesOpen(false);
+});
 $("help").onclick = showHelp;
 $("controls-link").onclick = showHelp;
 $("home").onclick = focusHome;

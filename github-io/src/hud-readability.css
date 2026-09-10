@@ -1,0 +1,65 @@
+/* A small mission card at the right edge; phones reveal it on demand. */
+#mission-toggle { display: none; }
+:root:not(.compact-ui) #mission-objectives {
+  left: auto;
+  right: 18px;
+  top: 118px;
+  width: 204px;
+  padding: 0 10px 4px;
+}
+#mission-objectives .panel-label { height: 26px; letter-spacing: .6px; }
+:root:not(.compact-ui) #mission-objectives .objective { margin: 8px 0; gap: 6px; font-size: 12px; line-height: 15px; }
+#mission-objectives .objective small { color: #bdcdbb; margin-top: 2px; line-height: 14px; }
+#mission-objectives .objective-num { padding: 3px; }
+.compact-ui #mission-toggle {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  top: 0;
+  right: 8px;
+  width: 112px;
+  height: 44px;
+  border: 1px solid #608569;
+  border-radius: 4px;
+  background: #193128;
+  color: #e3f2df;
+  font-size: 13px;
+  z-index: 10;
+}
+.compact-ui #mission-toggle .icon { width: 16px; height: 16px; }
+.compact-ui #mission-toggle[aria-expanded="true"] { background: #a4cc9f; color: #173323; }
+.compact-ui .map-heading { right: 128px; }
+.compact-ui .map-heading h1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 28px; }
+.compact-ui.objectives-open #mission-objectives {
+  display: block;
+  left: auto;
+  top: 46px;
+  right: 8px;
+  width: min(284px, calc(100vw - 24px));
+  max-height: calc(100dvh - 180px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 12px 4px;
+  background: #162b22;
+  backdrop-filter: none;
+  z-index: 10;
+}
+.compact-ui #mission-objectives .objective { margin: 10px 0; gap: 8px; font-size: 13px; line-height: 17px; }
+.compact-ui #mission-objectives .objective small { font-size: 12px; line-height: 16px; }
+.in-briefing #mission-objectives, .in-briefing #mission-toggle { display: none !important; }
+@media (min-aspect-ratio: 1.35) {
+  .compact-ui #mission-toggle, .compact-ui.objectives-open #mission-objectives {
+    right: calc(var(--side-width) + 22px + env(safe-area-inset-right, 0px));
+  }
+  .compact-ui .map-heading { right: calc(var(--side-width) + 142px + env(safe-area-inset-right, 0px)); }
+  .compact-ui .order-buttons { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+/* Bigger command text without changing the reserved queue or panel height. */
+:root:not(.compact-ui) .command-deck .command-tile > small { font-size: 12px; line-height: 14px; margin-top: 2px; }
+:root .selection-panel .order-buttons button { font-size: 12px; line-height: 14px; padding: 4px 3px; }
+:root .selection-panel .selection-activity { font-size: 13px; height: 18px; line-height: 18px; }
+:root .command-panel .upgrade-actions button { font-size: 13px; }
+:root #notice, :root #mode-banner { font-size: 14px; line-height: 1.4; }
+:root:not(.compact-ui) #notice, :root:not(.compact-ui) #mode-banner { width: max-content; max-width: min(520px, calc(100% - 32px)); white-space: normal; text-align: center; }

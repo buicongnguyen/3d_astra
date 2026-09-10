@@ -259,7 +259,7 @@ button {
   height: calc(100dvh - var(--header-height) - env(safe-area-inset-top, 0px));
 }
 .compact-ui #world {
-  inset: 78px 0
+  inset: 92px 0
     calc(var(--dock-height) + var(--tabs-height) + var(--safe-bottom)) 0;
 }
 .compact-ui .map-heading {
@@ -281,7 +281,7 @@ button {
 .compact-ui .touch-controls {
   display: flex;
   position: absolute;
-  top: 33px;
+  top: 47px;
   left: 8px;
   right: 8px;
   gap: 4px;
@@ -405,22 +405,26 @@ button {
   overflow-y: auto;
   align-content: start;
   padding: 8px 0 0;
-  gap: 6px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
 }
 .compact-ui .command-tile {
-  min-height: 48px;
-  padding: 5px 3px;
+  min-height: 44px;
+  height: 44px;
+  padding: 4px 3px;
 }
 .compact-ui .command-tile > .icon {
   display: none;
 }
 .compact-ui .command-tile > span {
-  font-size: 10px;
+  font-size: 13px;
+  line-height: 16px;
+  white-space: nowrap;
 }
 .compact-ui .command-tile > small {
-  margin-top: 4px;
-  font-size: 10px;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 14px;
 }
 .compact-ui #command-hint {
   display: none;
@@ -631,7 +635,7 @@ button {
     font-size: 16px;
   }
   .compact-ui #world {
-    inset: 78px calc(var(--side-width) + 14px + env(safe-area-inset-right, 0px))
+    inset: 92px calc(var(--side-width) + 14px + env(safe-area-inset-right, 0px))
       var(--safe-bottom) env(safe-area-inset-left, 0px);
   }
   .compact-ui .touch-controls {

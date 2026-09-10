@@ -32,7 +32,7 @@ try {
   await page.evaluate(() => { const s=window.__frontier.sim; s.aiEnabled=false; Object.assign(s.players[0],{alloy:5000,energy:5000}); s.spawn('medic',0,-15,15); s.spawn('foundry',0,-9,34); });
   for (const viewport of [{width:320,height:568},{width:390,height:844},{width:667,height:375},{width:844,height:390},{width:768,height:1024}]) {
     await page.setViewportSize(viewport); await page.waitForTimeout(250);
-    await inspect('.touch-controls button, .top-actions button, #dock-tabs button');
+    await inspect('.touch-controls button, .top-actions button, #dock-tabs button, #mission-toggle');
     for (const type of ['worker','hq','barracks','foundry','medic']) {
       await page.evaluate(type => { const f=window.__frontier; f.select([f.sim.own(0).find(e=>e.type===type).id]); },type);
       await tap('button[data-dock="selection"]');

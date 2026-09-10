@@ -15,7 +15,7 @@
 .command-panel:has(#production-status:not([hidden])) #commands{padding:4px 0 0;gap:4px}
 .command-panel:has(#production-status:not([hidden])) .command-tile{min-height:44px;height:44px;padding:4px 3px}
 .command-panel:has(#production-status:not([hidden])) .command-tile>.icon{display:none}
-.command-panel:has(#production-status:not([hidden])) .command-tile>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:9px;line-height:13px}
-.command-panel:has(#production-status:not([hidden])) .command-tile>small{margin-top:2px;line-height:13px}
+.command-panel:has(#production-status:not([hidden])) .command-tile>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px;line-height:16px}
+.command-panel:has(#production-status:not([hidden])) .command-tile>small{margin-top:2px;font-size:12px;line-height:14px}
 .command-panel:has(#production-status:not([hidden])) .command-tile>.action-key{top:auto;bottom:2px;right:2px;padding:0 1px;font-size:8px}
 .command-panel:has(#production-status:not([hidden])) .upgrade-actions{margin-top:4px}

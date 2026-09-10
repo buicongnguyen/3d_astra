@@ -12,6 +12,27 @@ try{
   const click=async selector=>page.locator(selector)[mobile?'tap':'click']();
   await page.goto((process.env.TEST_URL||'http://127.0.0.1:4180/')+'?test=1');
   await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});await click('#start');
+  if(mobile){
+   assert.equal(await page.locator('#mission-objectives').isVisible(),false,'phone objectives start collapsed');
+   const toggle=await page.locator('#mission-toggle').boundingBox(),controls=await page.locator('.touch-controls').boundingBox();
+   assert.ok(toggle.height>=44&&toggle.y+toggle.height<=controls.y,'Objectives is above the touch controls');
+   await click('#mission-toggle');
+   assert.equal(await page.locator('#mission-toggle').getAttribute('aria-expanded'),'true');
+   const mission=await page.locator('#mission-objectives').boundingBox();
+   assert.ok(mission.x>=0&&mission.x+mission.width<=viewport.width&&mission.y+mission.height<=viewport.height,'objectives fit the phone');
+   await page.screenshot({path:`test-results/objectives-${viewport.width}x${viewport.height}.png`});
+   await click('#mission-toggle');assert.equal(await page.locator('#mission-objectives').isVisible(),false);
+   await page.locator('#mission-toggle').focus();await page.keyboard.press('Space');
+   assert.equal(await page.locator('#mission-objectives').isVisible(),true,'Space activates the focused Objectives button');
+   await page.keyboard.press('Escape');
+   assert.equal(await page.locator('#mission-objectives').isVisible(),false);
+   assert.equal(await page.evaluate(()=>window.__frontier.paused),false,'dismissing objectives does not pause play');
+   await click('#mission-toggle');await click('#clock');
+   assert.equal(await page.locator('#mission-objectives').isVisible(),false,'outside tap dismisses objectives');
+  }else{
+   const mission=await page.locator('#mission-objectives').boundingBox();
+   assert.ok(mission.width<=204&&mission.height<200&&viewport.width-mission.x-mission.width<=20,'small objective card hugs the right edge');
+  }
   await page.evaluate(()=>{
    const f=window.__frontier,s=f.sim;s.aiEnabled=false;s.tick=()=>{};s.players[0].alloy=10000;s.players[0].energy=10000;
    const h=s.own(0).find(e=>e.type==='hq');f.select([h.id]);
@@ -81,6 +102,11 @@ try{
     });
    });
    assert.ok(buttons.every(b=>b.fits&&b.visible),`${type}: ${JSON.stringify(buttons)}`);
+   const labels=await page.locator('#commands button').evaluateAll(buttons=>buttons.map(b=>{
+    const name=b.querySelector('span'),cost=b.querySelector('small');
+    return {name:name.textContent,font:parseFloat(getComputedStyle(name).fontSize),costFont:parseFloat(getComputedStyle(cost).fontSize),fits:name.scrollWidth<=name.clientWidth&&cost.scrollWidth<=cost.clientWidth};
+   }));
+   assert.ok(labels.every(l=>l.font>=13&&l.costFont>=12&&l.fits),`Readable command labels: ${JSON.stringify(labels)}`);
    await page.screenshot({path:`test-results/status-${type}-actions-${viewport.width}x${viewport.height}.png`});
   }
   for(const type of ['worker','medic','engineer','tank','hq','group']){
