@@ -76,9 +76,10 @@ try{
    assert.match(await page.locator('.field-guide article').innerText(),/7 skirmish maps/);
    assert.match(await page.locator('.field-guide article').innerText(),/last Command core is destroyed/);
    await page.locator('#guide-close').click();
-   await page.evaluate(()=>{const f=window.__frontier;f.sim.own(0).find(e=>e.type==='hq').level=2;f.step(.05);});
-   assert.match(await page.locator('#command-hint').textContent(),/Tech 2 \/ 3/);
-   if(mobile)assert.match(await page.locator('#command-hint').textContent(),/Tap terrain/);
+   await page.evaluate(()=>{const f=window.__frontier,hq=f.sim.own(0).find(e=>e.type==='hq');hq.level=2;f.select([hq.id]);f.step(.05);});
+   assert.equal(await page.evaluate(()=>window.__frontier.sim.techLevel(0)),2);
+   assert.equal(await page.locator('.selection-level').textContent(),'L2','the compact selected-building label shows its level');
+   assert.equal(await page.locator('#command-hint').textContent(),'','building commands do not restore the removed verbose hint');
    const eliminated=await page.evaluate(()=>{
     const f=window.__frontier,s=f.sim,b=s.own(1).find(e=>e.type==='barracks');s.enqueue(b.id,'vanguard');
     s.own(1).find(e=>e.type==='hq').hp=0;f.step(.05);
