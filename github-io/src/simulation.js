@@ -135,6 +135,7 @@ export class Simulation {
       angle: 0,
       moving: false,
       work: 0,
+      working: false,
     };
     this.entities.push(e);
     return e;
@@ -281,6 +282,7 @@ export class Simulation {
         o.z = clamp(o.z, -limit, limit);
       }
       if (!append || o.type === "stop") {
+        e.working = false;
         e.orders = [];
         e.path = [];
         e.target = null;
@@ -489,6 +491,7 @@ export class Simulation {
     return false;
   }
   finish(e) {
+    e.working = false;
     e.orders.shift();
     this.resetWorkerRoute(e);
     e.target = null;
@@ -604,6 +607,7 @@ export class Simulation {
       )
         return;
       t.builder = e.id;
+      e.working = true;
       t.progress = Math.min(1, t.progress + dt / t.time);
       t.hp = Math.min(t.maxHp, t.hp + (dt * t.maxHp) / t.time);
       if (t.progress >= 1) {
@@ -634,6 +638,8 @@ export class Simulation {
       }
       e.moving = false;
       this.resetWorkerRoute(e);
+      e.working = true;
+      e.angle = Math.atan2(t.x - e.x, t.z - e.z);
       e.work += dt;
       if (e.work >= 0.7) {
         e.work -= 0.7;
@@ -839,6 +845,7 @@ export class Simulation {
       if (e.complete && e.shieldDelay <= 0) e.shield = Math.min(e.maxShield,e.shield+4*dt);
       e.moving = false;
       e.attacking = false;
+      e.working = false;
       if (e.kind === "building") {
         this.updateLevel(e,dt);
         this.updateProduction(e, dt);

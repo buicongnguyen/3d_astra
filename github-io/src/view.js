@@ -2,6 +2,8 @@ import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Terrain } from "./terrain.js";
+import { ActivityView } from "./activity-view.js";
+import { isHarvesting } from "./activity.js";
 import { defaults, palette } from "./settings.js";
 import {
   EnvironmentView,
@@ -76,6 +78,7 @@ export class WorldView {
     this.objects = new Map();
     this.resourceObjects = new Map();
     this.effects = [];
+    this.activity = new ActivityView(this);
     this.teamTemplates = new Map();
     this.fogClock = 0;
     this.gridVisible = false;
@@ -686,6 +689,7 @@ export class WorldView {
     this.effects.push({ mesh: m, life: 0.8, max: 0.8, marker: true, team: color===this.colors[0]?0:undefined });
   }
   event(event, sim) {
+    this.activity.event(event, sim);
     if (
       ["shot","support"].includes(event.type) &&
       (sim.isVisible(event) || sim.isVisible({ x: event.tx, z: event.tz }))
@@ -708,20 +712,10 @@ export class WorldView {
         max: 0.12,
         team: event.heavy || event.type === "support" ? undefined : event.team,
       });
-    } else if (event.type === "death" && sim.isVisible(event)) {
-      const m = mesh(
-        new THREE.IcosahedronGeometry(event.building ? 2 : 0.8, 0),
-        new THREE.MeshBasicMaterial({
-          color: 0xffcc79,
-          transparent: true,
-          opacity: 1,
-        }),
-        event.x,
-        1,
-        event.z,
-      );
-      this.scene.add(m);
-      this.effects.push({ mesh: m, life: 0.45, max: 0.45, explosion: true });
+    }
+    while (this.effects.length > 64) {
+      const e = this.effects.shift();
+      this.scene.remove(e.mesh); e.mesh.geometry.dispose(); e.mesh.material.dispose();
     }
   }
   update(sim, dt, selected, hover) {
@@ -740,6 +734,7 @@ export class WorldView {
           ? Math.sin(sim.time * 13 + e.id) * 0.045
           : 0;
       m.scale.y = e.complete ? 1 : 0.15 + e.progress * 0.85;
+      m.rotation.z = isHarvesting(sim,e) && !this.reducedMotion.matches ? Math.sin(sim.time*7+e.id)*0.045 : 0;
       for (let i = 0; i < o.userData.legs.length; i++) {
         const leg = o.userData.legs[i];
         leg.node.quaternion.copy(leg.base);
@@ -802,6 +797,7 @@ export class WorldView {
       }
     }
     this.renderer.render(this.scene, this.camera);
+    this.activity.draw(sim,dt,selected,hover);
   }
   disposeEntity(o) {
     this.scene.remove(o);
@@ -817,6 +813,7 @@ export class WorldView {
     }
   }
   reset() {
+    this.activity.reset();
     this.environment?.reset();
     for (const o of this.objects.values()) this.disposeEntity(o);
     this.objects.clear();

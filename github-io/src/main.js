@@ -21,6 +21,7 @@ import { icon } from "./icons.js";
 import { TouchControls } from "./touch-controls.js";
 import { ACTION_KEYS, HOTKEYS, HOTKEY_HELP, physicalKey } from "./hotkeys.js";
 import { createConstructionUI } from "./construction-ui.js";
+import { createProductionUI } from "./production-ui.js";
 
 document.querySelector("#app").innerHTML = `
   <header class="topbar">
@@ -113,6 +114,12 @@ let touchInput = matchMedia("(pointer: coarse)").matches,
   blockedBuildType = null,
   buildFailure = '';
 const compactMedia = matchMedia("(max-width: 1000px), (max-height: 650px)");
+const productionUI = createProductionUI(D, (building, job) => {
+  if (paused || !started || sim.result) return;
+  const e = sim.get(building), index = e?.queue.findIndex(q=>q.id === job) ?? -1;
+  if(index >= 0 && sim.cancelQueue(building,index)) notice('Production cancelled · full refund.');
+  updateUI();
+});
 document
   .querySelector(".top-actions")
   .insertAdjacentHTML(
@@ -461,11 +468,12 @@ function updateUI() {
     button.disabled = !!unavailable;
   }
   const queueKey = `${e?.id}/${e?.complete}/${e?.queue.map((q) => q.id).join(",")}`;
+  productionUI.update(es.length===1?e:null, !started || paused || !!sim.result);
   // Preserve interactive nodes while updating progress, including on slow frames.
   if (queueKey !== lastQueueKey) {
     lastQueueKey = queueKey;
     $("queue").innerHTML = e?.queue.length
-      ? `<span class="queue-label">QUEUE</span>${e.queue.map((q, i) => `<button data-cancel="${i}" title="Cancel ${D[q.type].name} — full refund">${icon(D[q.type].icon || q.type)}<span></span><i></i></button>`).join("")}`
+      ? `<span class="queue-label">QUEUE</span>${e.queue.map((q, i) => `<button data-cancel="${i}" data-job="${q.id}" data-building="${e.id}" title="Cancel ${D[q.type].name} — full refund">${icon(D[q.type].icon || q.type)}<span></span><i></i></button>`).join("")}`
       : e && !e.complete
         ? `<button class="cancel-build" data-cancel-build="${e.id}">Cancel construction · 75% refund</button>`
         : "";
@@ -1290,8 +1298,11 @@ $("queue").onclick = (event) => {
   if (paused || !started) return;
   const button = event.target.closest("[data-cancel]"),
     cancel = event.target.closest("[data-cancel-build]");
-  if (button)
-    sim.cancelQueue(selectedEntities()[0].id, Number(button.dataset.cancel));
+  if (button) {
+    const b = sim.get(Number(button.dataset.building));
+    const index = b?.queue.findIndex(q=>q.id===Number(button.dataset.job)) ?? -1;
+    if(index>=0) sim.cancelQueue(b.id,index);
+  }
   if (cancel) sim.cancelBuilding(Number(cancel.dataset.cancelBuild));
   updateUI();
 };

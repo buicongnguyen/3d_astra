@@ -20,7 +20,8 @@
     "test:auto-combat": "node tests/auto-combat.mjs",
     "test:harvesters": "node tests/harvesters.mjs",
     "test:hotkeys": "node tests/hotkeys.mjs",
-    "test:patrol": "node tests/patrol.mjs"
+    "test:patrol": "node tests/patrol.mjs",
+    "test:activity": "node tests/activity.mjs"
   },
   "dependencies": {
     "three": "0.185.1"
