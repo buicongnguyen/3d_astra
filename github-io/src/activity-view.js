@@ -20,14 +20,15 @@ export class ActivityView {
     // Strict budget, even if many units die in a single simulation frame.
     if (this.effects.length > 32) this.effects.shift();
   }
-  badge(p, label, progress, color, width = 116) {
+  badge(p, progress, color) {
     const c = this.ctx;
+    const width=59;
     if (p.x < -width || p.x > this.view.width+width || p.y < -40 || p.y > this.view.height+40) return;
-    c.fillStyle = '#0b1c20'; c.fillRect(p.x-width/2-3,p.y-19,width+6,30);
-    c.font = '600 11px system-ui'; c.textAlign = 'center'; c.fillStyle = '#f5f5df';
-    c.fillText(label,p.x,p.y-5,width);
-    c.fillStyle = '#3d5152'; c.fillRect(p.x-width/2,p.y+2,width,5);
-    c.fillStyle = color; c.fillRect(p.x-width/2,p.y+2,width*Math.max(0,Math.min(1,progress)),5);
+    c.fillStyle = '#0b1c20'; c.fillRect(p.x-width/2-2,p.y-2,width+4,9);
+    for(let i=0;i<10;i++){
+      c.fillStyle=i<Math.ceil(Math.max(0,Math.min(1,progress))*10)?color:'#304a3a';
+      c.fillRect(p.x-width/2+i*6,p.y,5,5);
+    }
   }
   draw(sim,dt,selected,hover) {
     const v=this.view,c=this.ctx,dpr=Math.min(devicePixelRatio || 1, v.lowPower?1:1.5);
@@ -40,7 +41,7 @@ export class ActivityView {
       const a=buildingActivity(sim,e);
       if(a){
         const p=v.project(e.x,e.z,6.4);
-        this.badge(p,`${a.label} · ${Math.floor(a.progress*100)}%`,a.progress,a.waiting?'#ffbd75':'#a8edc6');
+        this.badge(p,a.progress,a.waiting?'#ffbd75':'#a8edc6');
         snapshot.buildings.push({id:e.id,...a,...p});
       }
       if(e.type!=='worker')continue;
@@ -56,7 +57,7 @@ export class ActivityView {
       }
       if(selected.has(e.id) && (r || e.carry>0)){
         const label=mining?'Harvesting':e.orders[0]?.type==='deliver'?'Returning cargo':r?(e.moving?'To deposit':'Waiting'):'Cargo';
-        this.badge(v.project(e.x,e.z,4),`${label} · ${e.carry}/10`,e.carry/10,'#ffd17d',100);
+        this.badge(v.project(e.x,e.z,4),e.carry/10,'#ffd17d');
         snapshot.workers.push({id:e.id,label,carry:e.carry,mining});
       }
     }

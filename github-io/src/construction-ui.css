@@ -10,14 +10,10 @@
 #construction-cost{font-size:13px;line-height:1.3;color:#c6ddcf;margin:0 0 8px}
 #construction-message{font-size:14px;line-height:1.35;margin:0;color:#d7f3e2}
 #construction-status[data-warning="true"] #construction-message{color:#ffdc9b}
-#construction-percent{display:block;font-size:14px;line-height:1.35;margin-bottom:5px}
-.construction-track{height:8px;border-radius:4px;background:#354d41;overflow:hidden;margin-bottom:8px}
-.construction-track i{display:block;height:100%;background:#a5e6ba}
 .compact-ui #construction-status #mode-controls,
 #construction-actions{position:static;transform:none;display:flex;gap:8px;flex-shrink:0;white-space:normal}
 .compact-ui #construction-status button{min-width:0;min-height:44px;flex:1;padding:7px 8px;border:1px solid #719f85;border-radius:4px;font-size:13px;line-height:1.2;background:#274b3c;color:#f0f7f2}
 .compact-ui #construction-status button:disabled{opacity:1;background:#34463f!important;color:#b9c6bf!important;border-color:#52665a;cursor:not-allowed}
-.compact-ui #construction-cancel{background:#382f28;border-color:#aa9674}
 .compact-ui.construction-open #mode-banner{display:none}
 /* Toasts no longer cover placement instructions; the dock retains build feedback. */
 .compact-ui.construction-open #notice{background:#10251f;color:#f0f7f2;font-size:13px;border-color:#719f85}

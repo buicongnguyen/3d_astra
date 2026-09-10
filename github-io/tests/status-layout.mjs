@@ -13,8 +13,19 @@ try{
   await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});await click('#start');
   await page.evaluate(()=>{
    const f=window.__frontier,s=f.sim;s.aiEnabled=false;s.tick=()=>{};s.players[0].alloy=10000;s.players[0].energy=10000;
-   const h=s.own(0).find(e=>e.type==='hq');for(let i=0;i<5;i++)s.enqueue(h.id,'worker');f.select([h.id]);
+   const h=s.own(0).find(e=>e.type==='hq');f.select([h.id]);
   });
+  if(mobile)await click('button[data-dock=actions]');
+  const commandLayout=()=>page.evaluate(()=>[...document.querySelectorAll('#commands [data-action],#upgrade-actions button')].map(e=>{const r=e.getBoundingClientRect();return [e.textContent,r.x,r.y,r.width,r.height];}));
+  const idleCommands=await commandLayout();
+  await page.evaluate(()=>{const f=window.__frontier,h=f.sim.own(0).find(e=>e.type==='hq');for(let i=0;i<5;i++)f.sim.enqueue(h.id,'worker');h.queue[0].elapsed=4;f.step(0);});
+  assert.deepEqual(await commandLayout(),idleCommands,'training does not move or replace commands');
+  const work=await page.evaluate(()=>[...document.querySelectorAll('#production-status .work-job')].map(b=>{
+   const r=b.getBoundingClientRect(),cells=[...b.querySelectorAll('.work-blocks i')];
+   return {text:b.textContent.trim(),filled:cells.filter(c=>c.classList.contains('filled')).length,cells:cells.map(c=>{const s=c.getBoundingClientRect();return {x:s.x,y:s.y,w:s.width,h:s.height,fits:s.x>=r.x&&s.right<=r.right&&s.y>=r.y&&s.bottom<=r.bottom};})};
+  }));
+  assert.ok(work.every(b=>b.text==='×'&&b.cells.length===10&&b.cells.every(c=>c.w===3&&c.h===3&&c.fits)),'small squares fit each work tile');
+  assert.ok(work[0].filled>0&&work[0].filled<10,'green blocks reflect progress');
   if(mobile)await click('button[data-dock=selection]');
   const inspect=async()=>page.evaluate(()=>{
    const panel=document.querySelector('.selection-panel').getBoundingClientRect();
@@ -25,7 +36,14 @@ try{
   const queue=cells.filter(c=>c.queue);assert.equal(queue.length,5);assert.ok(queue.every(c=>c.h>=44&&c.w>=44&&c.top===queue[0].top),'queue stays on one row');
   await page.screenshot({path:`test-results/status-queue-${viewport.width}x${viewport.height}.png`});
   const before=await page.evaluate(()=>window.__frontier.sim.players[0].alloy);
-  await click('#queue button[data-cancel="4"]');assert.equal(await page.evaluate(()=>window.__frontier.sim.players[0].alloy),before+50);
+  await click('#queue button[data-cancel="4"] .work-cancel');assert.equal(await page.evaluate(()=>window.__frontier.sim.players[0].alloy),before+50);
+  for(let i=0;i<4;i++)await click('#queue button[data-cancel="0"] .work-cancel');
+  if(mobile)await click('button[data-dock=actions]');
+  assert.deepEqual(await commandLayout(),idleCommands,'cancellation does not shift commands');
+  await page.evaluate(()=>{const f=window.__frontier,h=f.sim.own(0).find(e=>e.type==='hq');f.sim.upgradeBuilding(h.id);f.step(0);});
+  assert.deepEqual(await commandLayout(),idleCommands,'upgrading preserves command order and positions');
+  await click('#production-status [data-kind="level"] .work-cancel');
+  assert.deepEqual(await commandLayout(),idleCommands);
   for(const type of ['medic','engineer','tank','hq','group']){
    await page.evaluate(type=>{
     const f=window.__frontier,s=f.sim,e=type==='hq'?s.own(0).find(e=>e.type==='hq'):s.spawn(type==='group'?'tank':type,0,-20,15);

@@ -46,7 +46,7 @@ try{
           const f=window.__frontier;f.restart();f.sim.aiEnabled=false;
           const b=f.sim.own(0).find(e=>e.type==='barracks');f.sim.enqueue(b.id,type);f.select([b.id]);
         },type);
-        await page.waitForFunction(name=>document.querySelector('#production-status strong')?.textContent===`Cancel ${name}`,type==='ranger'?'Ranger':'Vanguard');
+        await page.waitForFunction(name=>document.querySelector('#production-status button')?.getAttribute('aria-label').startsWith(`Cancel ${name},`),type==='ranger'?'Ranger':'Vanguard');
       }
     }
     assert.deepEqual(errors,[]);console.log(`Activity bars, cancellation, mining and FX budget passed ${viewport.width}x${viewport.height}`);await page.close();

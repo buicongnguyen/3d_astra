@@ -64,21 +64,23 @@ try{
       await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{id:1,x:b.x+b.width/2,y:b.y+b.height/2}]});
       await page.waitForTimeout(450);
       await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await cdp.detach();
-      await page.waitForFunction(()=>!document.querySelector('#construction-progress').hidden);
+      await page.waitForFunction(()=>!!document.querySelector('#production-status [data-kind="site"]'));
     }else await tap('#confirm-build');
     const site=await page.evaluate(()=>[...window.__frontier.selected][0]);
-    assert.ok(await page.locator('#construction-progress').isVisible());
+    assert.ok(await page.locator('#production-status [data-kind="site"]').isVisible());
+    assert.ok(await page.locator('[data-action="breaker"]').isDisabled(),'training stays in place while construction finishes');
     await page.evaluate(id=>{const f=window.__frontier;for(let i=0;i<12&&f.sim.get(id).progress===0;i++)f.step(3);f.step(2);},site);
-    const progress=Number(await page.locator('.construction-track').getAttribute('aria-valuenow'));assert.ok(progress>0&&progress<100);
+    const progress=Number(await page.locator('#production-status [data-kind="site"]').getAttribute('data-progress'));assert.ok(progress>0&&progress<1);
     await page.evaluate(()=>{const f=window.__frontier;f.sim.issue(f.sim.own(0).filter(e=>e.type==='worker').map(e=>e.id),{type:'stop'});f.step(0);});
-    assert.match(await page.locator('#construction-message').innerText(),/Waiting for a Harvester/);await inspect();
+    assert.match(await page.locator('#production-status [data-kind="site"]').getAttribute('aria-label'),/Needs Harvester/);
+    assert.ok(await panel.isHidden(),'routine progress does not replace the commands');
     await page.screenshot({path:`test-results/construction-progress-${viewport.width}x${viewport.height}.png`});
     if(index===layouts.length-1){
       await page.evaluate(id=>{const f=window.__frontier,w=f.sim.own(0).find(e=>e.type==='worker');f.sim.issue([w.id],{type:'build',target:id});f.step(90);},site);
-      assert.ok(await panel.isHidden());assert.ok(await page.locator('[data-action="breaker"]').isVisible());
+      assert.ok(await panel.isHidden());assert.ok(await page.locator('[data-action="breaker"]').isEnabled());
     }else{
       const before=await page.evaluate(()=>window.__frontier.sim.players[0].alloy);
-      await tap('#construction-cancel');assert.ok(await panel.isHidden());
+      await tap('#production-status [data-kind="site"] .work-cancel');assert.ok(await panel.isHidden());
       assert.equal(await page.evaluate(()=>window.__frontier.sim.players[0].alloy),before+150,'site cancellation retains the 75% refund');
     }
     console.log(`Construction feedback, placement, progress and controls passed: ${viewport.width}x${viewport.height}`);

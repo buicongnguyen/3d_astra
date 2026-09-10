@@ -1,9 +1,12 @@
-#production-status[hidden]{display:none}
-#production-status{flex-shrink:0;min-width:0;margin-bottom:3px;color:#f0edda}
-#production-status>small{font-size:10px;letter-spacing:.6px}
-.production-jobs{display:flex;flex-wrap:nowrap;gap:6px;overflow-x:auto;overflow-y:hidden;padding:3px 0 5px;touch-action:pan-x;scrollbar-width:thin}
-.production-jobs button{position:relative;flex:0 0 auto;min-width:150px;min-height:48px;padding:5px 9px 8px;text-align:left;border:1px solid #8f9570;background:#10251f;color:#f0edda;border-radius:4px;overflow:hidden}
-.production-jobs strong,.production-jobs span{display:block;font-size:12px;white-space:nowrap}
-.production-jobs span{font-size:11px;color:#d2ddd1;margin-top:3px}
-.production-jobs i{position:absolute;bottom:0;left:0;height:3px;background:#a8edc6}
-.production-open>#command-hint,.production-open>#upgrade-actions{display:none}
+/* The red strip is small; its full job tile remains a 44px touch target. */
+.work-strip[hidden]{display:none!important}
+.work-strip,#queue.work-strip:not(:empty),#queue.work-strip:empty{display:flex;flex:0 0 44px;min-height:44px;gap:1px;margin:0;align-items:flex-start;overflow:visible}
+.work-strip button.work-job,#queue.work-strip button.work-job{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;flex:0 0 44px;width:44px;min-width:44px;height:44px;min-height:44px;padding:3px 1px 11px;gap:3px;border:1px solid #47614f;background:#14271f;border-radius:3px;overflow:hidden}
+.work-strip .work-job>.icon{width:16px;height:16px;color:#d3e4d6}
+.work-strip .work-job .work-blocks{display:flex;gap:1px;height:3px;line-height:0}
+.work-strip .work-job .work-blocks i,#queue.work-strip .work-blocks i{position:static;width:3px;height:3px;background:#304d3c}
+.work-strip .work-job .work-blocks i.filled,#queue.work-strip .work-blocks i.filled{background:#72e990}
+.work-strip .work-job[data-waiting="true"] .work-blocks i{outline:1px solid #c79842}
+.work-strip .work-job .work-cancel{position:absolute;inset:auto 0 0;display:block;height:9px;background:#b84040;color:#fff;font:12px/9px system-ui;text-align:center}
+.work-strip .work-job:hover .work-cancel,.work-strip .work-job:focus-visible .work-cancel{background:#e25d5d}
+.work-strip .work-job:disabled{opacity:.5}

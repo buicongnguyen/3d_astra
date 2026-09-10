@@ -21,7 +21,7 @@ import { icon } from "./icons.js";
 import { TouchControls } from "./touch-controls.js";
 import { ACTION_KEYS, HOTKEYS, HOTKEY_HELP, physicalKey } from "./hotkeys.js";
 import { createConstructionUI } from "./construction-ui.js";
-import { createProductionUI } from "./production-ui.js";
+import { createProductionUI, createWorkStrip } from "./production-ui.js";
 import { selectionStatus } from "./selection-status.js";
 
 document.querySelector("#app").innerHTML = `
@@ -104,7 +104,6 @@ let pointer = { x: 0, y: 0, inside: false },
   rememberedBuildings = new Map(),
   rememberedResources = new Map(),
   lastSelectionKey = "",
-  lastQueueKey = "",
   modalType = null;
 const milestones = { economy: false, army: false };
 let touchInput = matchMedia("(pointer: coarse)").matches,
@@ -115,12 +114,9 @@ let touchInput = matchMedia("(pointer: coarse)").matches,
   blockedBuildType = null,
   buildFailure = '';
 const compactMedia = matchMedia("(max-width: 1000px), (max-height: 650px)");
-const productionUI = createProductionUI(D, (building, job) => {
-  if (paused || !started || sim.result) return;
-  const e = sim.get(building), index = e?.queue.findIndex(q=>q.id === job) ?? -1;
-  if(index >= 0 && sim.cancelQueue(building,index)) notice('Production cancelled · full refund.');
-  updateUI();
-});
+const workCallbacks={getSim:()=>sim,canAct:()=>started&&!paused&&!sim.result,refresh:updateUI};
+const productionUI=createProductionUI(D,workCallbacks);
+const selectionWorkUI=createWorkStrip(document.querySelector('#queue'),D,workCallbacks);
 document
   .querySelector(".top-actions")
   .insertAdjacentHTML(
@@ -186,6 +182,10 @@ function unlockAudio() {
   }
 }
 function notice(text) {
+  // Successful work is acknowledged by its compact strip, without covering the map.
+  if (Object.values(D).some(d=>text===`${d.name} queued.`||text===`${d.name} construction started.`||[2,3].some(level=>text===`${d.name} upgrading to level ${level}.`))) {
+    clearTimeout(noticeTimeout); $('notice').classList.remove('show'); return;
+  }
   $("notice").textContent = text;
   $("notice").classList.add("show");
   clearTimeout(noticeTimeout);
@@ -405,7 +405,7 @@ function updateUI() {
   $("attack-target-order").hidden = !es.some(u => u.type === 'worker');
   document.documentElement.classList.toggle('many-orders', [...document.querySelectorAll('.order-buttons button')].filter(b => !b.hidden).length > 5);
   $("command-context").title = `Command core technology ${sim.techLevel()} / 3`;
-  const signature = `${es.map((e) => e.id).join(",")}/${e?.complete}/${p.upgrade}/${e?.level}/${!!e?.levelJob}/${sim.techLevel()}/${touchInput}`;
+  const signature = `${es.map((e) => e.id).join(",")}/${p.upgrade}/${e?.level}/${sim.techLevel()}/${touchInput}`;
   if (lastSelectionKey !== signature) {
     lastSelectionKey = signature;
     $("unit-list").innerHTML =
@@ -420,7 +420,7 @@ function updateUI() {
           (es.length > 18 ? `<span>+${es.length - 18}</span>` : "")
         : "";
     const actions =
-      e && es.length === 1 && e.kind === "building" && e.complete
+      e && es.length === 1 && e.kind === "building"
         ? e.trains || []
         : es.some((u) => u.type === "worker")
           ? BUILDINGS
@@ -439,15 +439,13 @@ function updateUI() {
           const d = D[type];
           return `<button class="command-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" title="${ACTION_KEYS[index]} · ${d.description}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${icon(d.icon || type)}<span>${d.name}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
         })
-        .join("") ||
-      `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : "Your expedition is ready"}</strong><p>${e ? (touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : "Select the Command core to train Harvesters, or the Barracks to grow your army."}</p></div>`;
-    $("upgrade-actions").innerHTML = e?.kind === 'building' && es.length === 1 && e.complete ?
-      (e.levelJob ? '<button data-cancel-level title="Backspace · Cancel upgrade">Cancel upgrade · full refund</button>' : e.level < 3 ? `<button data-level title="U · Upgrade building">Upgrade L${e.level+1} · ${sim.levelCost(e).join('/')} <kbd>U</kbd></button>` : '<span>Maximum level 3</span>') : '';
+        .join("") || (e?.kind==='building' ? '' :
+      `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : "Your expedition is ready"}</strong><p>${e ? (touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : "Select the Command core to train Harvesters, or the Barracks to grow your army."}</p></div>`);
+    $("upgrade-actions").innerHTML = e?.kind === 'building' && es.length === 1 ?
+      `<button data-level title="U · Upgrade building">${e.level < 3 ? `Upgrade L${e.level+1} · ${sim.levelCost(e).join('/')} <kbd>U</kbd>` : 'Maximum level 3'}</button>` : '';
     $("command-hint").textContent =
       e?.kind === "building"
-        ? e.complete
-          ? `Tech ${sim.techLevel()} / 3 · ${touchInput ? "Tap" : "Right-click"} terrain to set a rally point.`
-          : "A Harvester must remain nearby to finish construction."
+        ? ''
         : es.some((u) => u.type === "worker")
           ? "Select a structure, then place it on clear terrain."
           : touchInput ? "Enable Queue to chain orders. Use Army or Box to select a group." : "Hold Shift to queue orders. Ctrl + 1–9 saves a group.";
@@ -457,28 +455,12 @@ function updateUI() {
       !started ||
       paused ||
       sim.result;
-    button.disabled = !!unavailable;
+    button.disabled = !!unavailable || (e?.kind==='building' && (!e.complete || !!e.levelJob));
   }
-  const queueEntity = es.length === 1 ? e : null;
-  const queueKey = `${queueEntity?.id}/${queueEntity?.complete}/${queueEntity?.queue.map((q) => `${q.id}:${q.type}`).join(",")}`;
   productionUI.update(es.length===1?e:null, !started || paused || !!sim.result);
-  // Preserve interactive nodes while updating progress, including on slow frames.
-  if (queueKey !== lastQueueKey) {
-    lastQueueKey = queueKey;
-    $("queue").innerHTML = queueEntity?.queue.length
-      ? `<span class="queue-label">Queue<br>${e.queue.length}/5</span>${e.queue.map((q, i) => `<button data-cancel="${i}" data-job="${q.id}" data-building="${e.id}" title="Cancel ${D[q.type].name} — full refund"><b class="queue-index">${i+1}</b>${icon(D[q.type].icon || q.type)}<span></span><i></i></button>`).join("")}`
-      : queueEntity && !e.complete
-        ? `<button class="cancel-build" data-cancel-build="${e.id}">Cancel construction · 75% refund</button>`
-        : "";
-  }
-  for (const button of $("queue").querySelectorAll("[data-cancel]")) {
-    const q = e.queue[Number(button.dataset.cancel)];
-    const progress = Math.min(100, (q.elapsed / D[q.type].time) * 100);
-    button.querySelector("span").textContent =
-      q.blocked ? 'Wait' : `${Math.floor(progress)}%`;
-    button.setAttribute('aria-label',`Cancel ${D[q.type].name}, queue item ${Number(button.dataset.cancel)+1}, ${q.blocked || `${Math.floor(progress)}%`}, full refund`);
-    button.querySelector("i").style.width = `${progress}%`;
-  }
+  selectionWorkUI.update(es.length===1?e:null, !started || paused || !!sim.result);
+  const levelButton=$('upgrade-actions').querySelector('[data-level]');
+  if(levelButton)levelButton.disabled=!started||paused||!!sim.result||!e.complete||!!e.levelJob||e.queue.length>0||e.level>=3;
   for (const b of document.querySelectorAll(".order-buttons button"))
     b.disabled = !started || paused || (b.id !== "field-guide" && !es.some((u) => u.kind === "unit"));
   for (const b of document.querySelectorAll(".touch-controls button"))
@@ -1288,18 +1270,6 @@ $("unit-list").onclick = (event) => {
   const button = event.target.closest("[data-select]");
   if (button) setSelection([Number(button.dataset.select)]);
 };
-$("queue").onclick = (event) => {
-  if (paused || !started) return;
-  const button = event.target.closest("[data-cancel]"),
-    cancel = event.target.closest("[data-cancel-build]");
-  if (button) {
-    const b = sim.get(Number(button.dataset.building));
-    const index = b?.queue.findIndex(q=>q.id===Number(button.dataset.job)) ?? -1;
-    if(index>=0) sim.cancelQueue(b.id,index);
-  }
-  if (cancel) sim.cancelBuilding(Number(cancel.dataset.cancelBuild));
-  updateUI();
-};
 $("modal").onclick = (event) => {
   if (event.target.closest("[data-settings]")) settingsUI.open();
   if (event.target.closest("[data-resume]")) closeModal();
@@ -1365,7 +1335,6 @@ function frame(now) {
 const constructionUI = createConstructionUI(D, {
   retry: type => enterBuild(type),
   back: () => { clearMode(); updateUI(); },
-  cancelSite: id => { if (!paused && started && sim.cancelBuilding(id)) setSelection([]); },
 });
 
 async function boot() {
