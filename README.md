@@ -6,6 +6,8 @@ Now includes customizable army colors, saved settings, and the Riverlands battle
 
 [Play on desktop, phone, or tablet](https://buicongnguyen.github.io/3d_astra/). Touch controls include tap commands, drag pan, pinch zoom, and portrait/landscape layouts.
 
+[Read and copy the complete game-building prompt](https://buicongnguyen.github.io/3d_astra/prompt/), [download it as Markdown](https://buicongnguyen.github.io/3d_astra/RECREATE_GAME_PROMPT.md), or [read the source in this repository](RECREATE_GAME_PROMPT.md). The website publishes this source file during each build.
+
 ![Frontier Command preview](github-io/docs/preview.png)
 
 - **Active project:** [`github-io/`](github-io/) — Three.js browser game with Blender-generated assets, built for GitHub Pages.
