@@ -1,0 +1,59 @@
+/* Mobile keeps its tabs. Desktop combines selection and commands in one shell. */
+.command-deck { display: contents; }
+:root:not(.compact-ui) .command-deck {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(740px, calc(100vw - 416px));
+  height: 188px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 254px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  backdrop-filter: blur(12px);
+  pointer-events: auto;
+}
+:root:not(.compact-ui) .command-deck > .panel {
+  height: 100%;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+:root:not(.compact-ui) .command-deck > .command-panel {
+  border-left: 1px solid var(--line);
+}
+/* Keep command positions fixed as work starts, completes, or is cancelled. */
+:root:not(.compact-ui) .command-deck .command-tile {
+  min-height: 52px;
+  height: 52px;
+  padding: 14px 3px 4px;
+}
+:root:not(.compact-ui) .command-deck .command-tile > .icon {
+  display: none;
+}
+:root:not(.compact-ui) .command-deck .command-tile > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+:root:not(.compact-ui) .command-deck .command-tile > .action-key {
+  top: 2px;
+  right: 3px;
+  font-size: 8px;
+  line-height: 10px;
+}
+:root:not(.compact-ui) .command-deck #commands {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+/* Without build/train/upgrade actions, keep just the compact selection panel. */
+:root:not(.compact-ui) .command-deck:not(:has([data-action], [data-level])) {
+  width: min(440px, calc(100vw - 416px));
+  grid-template-columns: minmax(0, 1fr);
+}
+:root:not(.compact-ui) .command-deck:not(:has([data-action], [data-level])) > .command-panel {
+  display: none;
+}

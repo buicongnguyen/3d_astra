@@ -510,7 +510,7 @@ button kbd {
   align-items: end;
   pointer-events: none;
 }
-.bottom-dock > .panel {
+.bottom-dock .panel {
   pointer-events: auto;
 }
 .minimap-panel {

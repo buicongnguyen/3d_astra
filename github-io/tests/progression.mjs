@@ -25,7 +25,7 @@ try {
       if(mobile){await page.setViewportSize({width:844,height:390});await page.screenshot({path:'test-results/progression-landscape-guide.png'});}
       await click('#guide-close');await page.waitForFunction(()=>!window.__frontier.paused);
       if(mobile)await page.setViewportSize({width:390,height:844});
-      await tab('actions');await click('[data-level]');await click('#production-status [data-cancel-level]');
+      await tab('actions');await click('[data-level]');await click(`${mobile?'#production-status':'#queue'} [data-cancel-level]`);
       assert.equal(await page.evaluate(()=>window.__frontier.sim.players[0].alloy),5000);
       await click('[data-level]');await step(21);assert.equal(await page.evaluate(()=>window.__frontier.sim.techLevel()),2);
       await select('barracks');await tab('actions');await click('[data-action="medic"]');

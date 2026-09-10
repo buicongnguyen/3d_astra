@@ -20,7 +20,7 @@ try{
     });
     await page.waitForFunction(()=>window.__frontier.view.activity.snapshot.buildings.length>0);
     const before=await page.evaluate(()=>window.__frontier.sim.players[0].alloy);
-    const b=page.locator('#production-status [data-job]').first();await b.waitFor({state:'visible'});
+    const b=page.locator(`${mobile?'#production-status':'#queue'} [data-job]`).first();await b.waitFor({state:'visible'});
     const box=await b.boundingBox();assert.ok(box.width>=44 && box.height>=44 && box.y+box.height<=viewport.height,'cancel button fits');
     await page.screenshot({path:`test-results/activity-production-${viewport.width}.png`});
     await b[mobile?'tap':'click']();
@@ -46,7 +46,7 @@ try{
           const f=window.__frontier;f.restart();f.sim.aiEnabled=false;
           const b=f.sim.own(0).find(e=>e.type==='barracks');f.sim.enqueue(b.id,type);f.select([b.id]);
         },type);
-        await page.waitForFunction(name=>document.querySelector('#production-status button')?.getAttribute('aria-label').startsWith(`Cancel ${name},`),type==='ranger'?'Ranger':'Vanguard');
+        await page.waitForFunction(name=>document.querySelector('#queue button')?.getAttribute('aria-label').startsWith(`Cancel ${name},`),type==='ranger'?'Ranger':'Vanguard');
       }
     }
     assert.deepEqual(errors,[]);console.log(`Activity bars, cancellation, mining and FX budget passed ${viewport.width}x${viewport.height}`);await page.close();

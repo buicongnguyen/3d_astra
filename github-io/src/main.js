@@ -2,6 +2,7 @@ import "./style.css";
 import "./mobile.css";
 import "./settings.css";
 import "./start-screen.css";
+import "./desktop-dock.css";
 import { loadSettings, saveSettings, palette } from "./settings.js";
 import { SettingsUI } from "./settings-ui.js";
 import { MAPS, SURFACES } from "./terrain.js";
@@ -67,8 +68,10 @@ document.querySelector("#app").innerHTML = `
     </section>
     <div class="bottom-dock">
       <section class="minimap-panel panel"><div class="panel-label">SECTOR OVERVIEW <button id="home" title="Focus base · H" aria-label="Focus base">${icon("hq")}</button></div><canvas id="minimap" width="240" height="200" aria-label="Minimap: click to pan; right-click to command"></canvas><div class="map-legend"><span><i class="friendly"></i>YOU</span><span><i class="hostile"></i>ENEMY</span><span><i class="deposit"></i>RESOURCE</span></div></section>
+      <div class="command-deck">
       <section class="selection-panel panel"><div class="panel-label"><span id="selection-label">EXPEDITION COMMAND</span><span id="selection-count">READY</span></div><div id="selection-info"></div><div class="selection-scroll"><div id="unit-list"></div></div><div id="queue"></div><div class="order-buttons"><button id="field-guide">Info & stats</button><button id="support-order" hidden>Support</button><button id="move-order" title="Click a destination">${icon("move")} Move</button><button id="attack-order" title="Attack-move · F">${icon("crosshair")} Attack-move <kbd>F</kbd></button><button id="stop-order" title="Stop · X">${icon("stop")} Stop <kbd>X</kbd></button></div></section>
       <section class="command-panel panel"><div class="panel-label"><span id="command-label">COMMAND CENTER</span><span id="command-context">ACTIONS</span></div><div id="commands"></div><div id="upgrade-actions" class="upgrade-actions"></div><div id="command-hint">Select a unit or structure to issue commands.</div></section>
+      </div>
     </div>
     <nav id="dock-tabs" aria-label="Command panels"><button data-dock="selection" aria-pressed="true">${icon("people")} Selection</button><button data-dock="actions" aria-pressed="false">${icon("worker")} Actions</button><button data-dock="map" aria-pressed="false">${icon("flag")} Map</button></nav>
     <div class="statusbar"><span><i class="live-dot"></i> <span id="status-text">EXPEDITION SYSTEMS INITIALIZING</span></span><span>WASD pan <b>·</b> Scroll zoom <b>·</b> Right-click command <b>·</b> <button id="controls-link">? Controls</button></span><span id="fps">— FPS</span></div>
@@ -136,6 +139,7 @@ function setLayout() {
   drag = null;
   pointer.inside = false;
   $("selection-box").style.display = "none";
+  if (view) updateUI();
   requestAnimationFrame(() => view?.resize());
 }
 compactMedia.addEventListener("change", setLayout);
@@ -458,7 +462,8 @@ function updateUI() {
       sim.result;
     button.disabled = !!unavailable || (e?.kind==='building' && (!e.complete || !!e.levelJob));
   }
-  productionUI.update(es.length===1?e:null, !started || paused || !!sim.result);
+  // Desktop shares the selection queue; mobile retains a queue in each tab.
+  productionUI.update(document.documentElement.classList.contains('compact-ui') && es.length===1?e:null, !started || paused || !!sim.result);
   selectionWorkUI.update(es.length===1?e:null, !started || paused || !!sim.result);
   const levelButton=$('upgrade-actions').querySelector('[data-level]');
   if(levelButton)levelButton.disabled=!started||paused||!!sim.result||!e.complete||!!e.levelJob||e.queue.length>0||e.level>=3;

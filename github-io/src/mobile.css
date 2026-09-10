@@ -25,14 +25,13 @@ button {
 }
 /* Keep desktop status panels compact instead of stretching across the battlefield. */
 :root:not(.compact-ui) .bottom-dock {
-  grid-template-columns: 176px minmax(320px, 440px) 260px;
-  justify-content: space-between;
+  grid-template-columns: 176px;
   gap: 10px;
   left: 16px;
   right: 16px;
   bottom: 30px;
 }
-:root:not(.compact-ui) .bottom-dock > .panel {
+:root:not(.compact-ui) .bottom-dock .panel {
   height: 188px;
   min-height: 0;
   min-width: 0;
@@ -334,7 +333,7 @@ button {
   display: block;
   height: var(--dock-height);
 }
-.compact-ui .bottom-dock > .panel {
+.compact-ui .bottom-dock .panel {
   display: none;
   height: 100%;
   min-height: 0;
