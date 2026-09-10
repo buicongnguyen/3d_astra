@@ -34,6 +34,9 @@ try {
       assert.equal(await page.evaluate(()=>window.__frontier.sim.own(0).filter(e=>e.type==='medic').length),1);
       await page.evaluate(()=>{const f=window.__frontier,m=f.sim.own(0).find(e=>e.type==='medic'),r=f.sim.own(0).find(e=>e.type==='ranger');Object.assign(m,{x:-15,z:14,orders:[]});Object.assign(r,{x:-12,z:14,hp:20});f.view.focusOn(-16,16);f.view.zoom=32;f.select([m.id]);});
       await tab('selection');await click('#support-order');await page.waitForTimeout(150);
+      const invalid=await page.evaluate(()=>{const f=window.__frontier,m=f.sim.own(0).find(e=>e.type==='medic'),p=f.view.project(m.x,m.z,1),r=f.view.renderer.domElement.getBoundingClientRect();return {x:p.x+r.left,y:p.y+r.top};});
+      if(mobile)await page.touchscreen.tap(invalid.x,invalid.y);else await page.mouse.click(invalid.x,invalid.y);
+      assert.ok(await page.locator('#mode-banner').isVisible(),'invalid self-support target keeps the command pending');
       const point=await page.evaluate(()=>{const f=window.__frontier,r=f.sim.own(0).find(e=>e.type==='ranger'),p=f.view.project(r.x,r.z,1),rect=f.view.renderer.domElement.getBoundingClientRect();return {x:p.x+rect.left,y:p.y+rect.top};});
       if(mobile)await page.touchscreen.tap(point.x,point.y);else await page.mouse.click(point.x,point.y);
       await page.waitForFunction(()=>window.__frontier.sim.own(0).find(e=>e.type==='medic').orders[0]?.type==='support');

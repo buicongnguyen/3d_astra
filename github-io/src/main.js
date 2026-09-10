@@ -598,9 +598,9 @@ function commandAt(point, target, append = false, forced = null) {
   }
   if (forced === "support") {
     const helpers = units.filter(e => sim.supportValid(e,target));
-    if (!helpers.length) { notice("Medic: select allied infantry. Engineer: select a completed building or vehicle."); return; }
+    if (!helpers.length) { notice("Medic: select allied infantry. Engineer: select a completed building or vehicle."); return false; }
     sim.issue(helpers.map(e => e.id),{type:"support",target:target.id},append);
-    return;
+    return true;
   }
   if (!forced && target?.team === 0) {
     const helpers = units.filter(e => sim.supportValid(e,target));
@@ -942,6 +942,8 @@ function bindInput() {
       return;
     }
     if(key===' '&&!e.ctrlKey) {
+      // Before play, Space must activate the focused Start/Settings button.
+      if(!started && e.target instanceof Element && e.target.closest('button'))return;
       e.preventDefault();if(!e.repeat) {keys.clear();if(modalType==='pause')closeModal();else if(!modalType)togglePause();}return;
     }
     if(modalType||!started||paused||sim.result)return;

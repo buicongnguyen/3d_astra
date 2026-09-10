@@ -10,11 +10,12 @@ permissions:
 
 concurrency:
   group: github-pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: github-io
@@ -28,57 +29,98 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontier-${{ github.sha }}
+          path: github-io/dist/
+          retention-days: 1
+
+  browser:
+    name: Browser checks (${{ matrix.name }})
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        include:
+          - name: desktop
+            scripts: browser
+          - name: mobile
+            scripts: mobile mobile-controls
+          - name: settings
+            scripts: improvements
+          - name: progression
+            scripts: progression
+          - name: maps
+            scripts: stages corners
+          - name: commands
+            scripts: auto-combat harvesters hotkeys
+          - name: construction
+            scripts: mobile-construction patrol
+          - name: feedback
+            scripts: activity status-layout
+    defaults:
+      run:
+        working-directory: github-io
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: github-io/package-lock.json
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontier-${{ github.sha }}
+          path: github-io/dist/
       - name: Install browser for smoke tests
         run: npx playwright install --with-deps chromium
       - name: Test the built game
+        env:
+          TEST_SCRIPTS: ${{ matrix.scripts }}
+          TEST_URL: http://127.0.0.1:4173/
         run: |
           npm run preview -- --port 4173 > /tmp/frontier-preview.log 2>&1 &
+          preview_pid=$!
+          trap 'kill "$preview_pid" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:4173/ > /dev/null; then break; fi
+            if curl -fsS "$TEST_URL" > /dev/null; then break; fi
             sleep 1
           done
-          TEST_URL=http://127.0.0.1:4173/ npm run test:browser
-          TEST_URL=http://127.0.0.1:4173/ npm run test:mobile
-          TEST_URL=http://127.0.0.1:4173/ npm run test:mobile-controls
-          TEST_URL=http://127.0.0.1:4173/ npm run test:improvements
-          TEST_URL=http://127.0.0.1:4173/ npm run test:progression
-          TEST_URL=http://127.0.0.1:4173/ npm run test:stages
-          TEST_URL=http://127.0.0.1:4173/ npm run test:corners
-          TEST_URL=http://127.0.0.1:4173/ npm run test:auto-combat
-          TEST_URL=http://127.0.0.1:4173/ npm run test:harvesters
-          TEST_URL=http://127.0.0.1:4173/ npm run test:hotkeys
-      - name: Verify mobile construction feedback
-        run: TEST_URL=http://127.0.0.1:4173/ npm run test:mobile-construction
-      - name: Verify Patrol and Harvester Attack controls
-        run: TEST_URL=http://127.0.0.1:4173/ npm run test:patrol
-      - name: Verify production and harvesting feedback
-        run: TEST_URL=http://127.0.0.1:4173/ npm run test:activity
-      - name: Verify compact stats and full production queues
-        run: TEST_URL=http://127.0.0.1:4173/ npm run test:status-layout
+          curl -fsS "$TEST_URL" > /dev/null
+          for script in $TEST_SCRIPTS; do
+            npm run "test:$script"
+          done
       - name: Preserve browser diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: browser-diagnostics
+          name: browser-diagnostics-${{ matrix.name }}
           path: github-io/test-results/
           retention-days: 7
-      - name: Configure Pages
-        uses: actions/configure-pages@v5
-      - name: Upload static game
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: github-io/dist
 
   deploy:
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, browser]
     permissions:
       pages: write
       id-token: write
+      contents: read
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontier-${{ github.sha }}
+          path: dist/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
       - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4

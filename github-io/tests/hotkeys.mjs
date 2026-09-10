@@ -10,7 +10,11 @@ const press=async key=>{await page.keyboard.press(key);await page.waitForTimeout
 try {
   await page.goto((process.env.TEST_URL||'http://127.0.0.1:4173/')+'?test=1');
   await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});
-  await page.locator('#start').click();
+  await page.locator('#briefing-settings').focus();await press('Space');
+  assert.ok(await page.locator('.settings-backdrop').isVisible(),'Space opens focused briefing Settings');
+  await page.getByRole('button',{name:'Close settings',exact:true}).click();
+  await page.locator('#start').focus();await press('Space');
+  assert.ok(await page.evaluate(()=>window.__frontier.started),'Space activates focused Start');
   const ids=await page.evaluate(()=>{
     const f=window.__frontier,s=f.sim;s.aiEnabled=false;s.own(0).forEach(e=>e.orders=[]);
     Object.assign(s.players[0],{alloy:5000,energy:5000});
