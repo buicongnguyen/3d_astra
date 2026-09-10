@@ -44,7 +44,7 @@ try {
     await page.evaluate(() => window.__frontier.view.models.size),
     13,
   );
-  await page.getByRole("button", { name: "Deploy expedition" }).click();
+  await page.getByRole("button", { name: "Start", exact: true }).click();
   assert.equal(await page.locator("#briefing").isVisible(), false);
   assert.equal(await page.evaluate(() => window.__frontier.started), true);
   // UI checks must not race a timed AI raid on slower rendering machines.
