@@ -1,6 +1,7 @@
 import "./style.css";
 import "./mobile.css";
 import "./settings.css";
+import "./start-screen.css";
 import { loadSettings, saveSettings, palette } from "./settings.js";
 import { SettingsUI } from "./settings-ui.js";
 import { MAPS, SURFACES } from "./terrain.js";
@@ -56,13 +57,13 @@ document.querySelector("#app").innerHTML = `
     <section id="briefing" class="briefing panel">
       <div class="briefing-copy">
       <div class="eyebrow">EXPEDITION BRIEFING</div><div class="briefing-emblem">${icon("logo")}</div>
-      <h2>A new frontier.<br>A foothold to defend.</h2>
+      <h2>A new frontier.<br> A foothold to defend.</h2>
       <p>Build your outpost. Harvest the valley. Lead your expedition against rival commanders. With multiple enemies, every faction fights for itself.</p>
       <div class="briefing-rule"><span>YOUR FORCE</span><strong>4 Harvesters · 3 defenders</strong></div>
       <div class="briefing-rule"><span>OBJECTIVE</span><strong>Eliminate enemy command</strong></div>
       </div>
-      <div class="briefing-tools"><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select><select id="enemy-count" aria-label="Number of AI enemies"><option value="1">1 AI enemy</option><option value="2">2 AI enemies · FFA</option><option value="3">3 AI enemies · FFA</option></select><button id="briefing-settings">Settings</button></div>
-      <button id="start" class="primary" disabled>Preparing expedition…</button><small class="briefing-note">SINGLE PLAYER <span>·</span> MOUSE + KEYBOARD</small>
+      <button id="start" class="primary" disabled>Preparing expedition…</button>
+      <div class="briefing-setup"><div class="briefing-tools"><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select><select id="enemy-count" aria-label="Number of AI enemies"><option value="1">1 AI enemy</option><option value="2">2 AI enemies · FFA</option><option value="3">3 AI enemies · FFA</option></select><button id="briefing-settings">Settings</button></div><small class="briefing-note">SINGLE PLAYER <span>·</span> MOUSE + KEYBOARD</small></div>
     </section>
     <div class="bottom-dock">
       <section class="minimap-panel panel"><div class="panel-label">SECTOR OVERVIEW <button id="home" title="Focus base · H" aria-label="Focus base">${icon("hq")}</button></div><canvas id="minimap" width="240" height="200" aria-label="Minimap: click to pan; right-click to command"></canvas><div class="map-legend"><span><i class="friendly"></i>YOU</span><span><i class="hostile"></i>ENEMY</span><span><i class="deposit"></i>RESOURCE</span></div></section>
@@ -1350,7 +1351,7 @@ async function boot() {
       `${MAPS[mapId]}<span>.</span>`;
     bindInput();
     $("start").disabled = false;
-    $("start").innerHTML = `Deploy expedition ${icon("arrow")}`;
+    $("start").textContent = "Start";
     $("status-text").textContent = "ALL SYSTEMS READY";
     updateUI();
     requestAnimationFrame(frame);

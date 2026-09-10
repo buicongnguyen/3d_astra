@@ -1,0 +1,10 @@
+/* Equal outer rows keep Start at the viewport center on desktop and phones. */
+.in-briefing #notice{display:none}
+#briefing{position:fixed;inset:12px;width:auto;height:auto;max-height:none;padding:0;transform:none;display:grid;grid-template-columns:minmax(0,380px);grid-template-rows:minmax(0,1fr) 52px minmax(0,1fr);justify-content:center;background:none;border:0;box-shadow:none;backdrop-filter:none;overflow:hidden;pointer-events:none;z-index:6}
+#briefing>.briefing-copy,#briefing>.briefing-setup{display:block;min-height:0;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow-y:auto;pointer-events:auto}
+#briefing>.briefing-copy{align-self:end;max-height:calc(100% - 12px);margin-bottom:12px}
+#briefing>.briefing-setup{align-self:start;max-height:calc(100% - 8px);margin-top:8px;padding:10px}
+#briefing .briefing-emblem{display:none}
+#briefing .briefing-tools{margin-top:0}
+#briefing .briefing-note{margin-top:8px}
+#briefing>#start{width:100%;height:52px;min-height:52px;margin:0;justify-content:center;font-size:18px;pointer-events:auto}
