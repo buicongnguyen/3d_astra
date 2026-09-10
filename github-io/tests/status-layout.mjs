@@ -44,6 +44,22 @@ try{
   assert.deepEqual(await commandLayout(),idleCommands,'upgrading preserves command order and positions');
   await click('#production-status [data-kind="level"] .work-cancel');
   assert.deepEqual(await commandLayout(),idleCommands);
+  // Buildings with two training rows must fit beside their work strip too.
+  for(const type of ['barracks','foundry']){
+   await page.evaluate(type=>{const f=window.__frontier,e=f.sim.own(0).find(e=>e.type===type)||f.sim.spawn(type,0,-9,34);f.select([e.id]);},type);
+   const layout=await commandLayout();
+   const unit=await page.locator('#commands [data-action]').first().getAttribute('data-action');
+   await page.evaluate(({type,unit})=>{const f=window.__frontier,e=f.sim.own(0).find(e=>e.type===type);for(let i=0;i<5;i++)f.sim.enqueue(e.id,unit);f.step(0);},{type,unit});
+   assert.deepEqual(await commandLayout(),layout,`${type} queue preserves commands`);
+   const buttons=await page.evaluate(()=>{
+    const panel=document.querySelector('.command-panel').getBoundingClientRect();
+    return [...document.querySelectorAll('#commands button,#upgrade-actions button,#production-status button')].map(e=>{
+     const r=e.getBoundingClientRect();return {text:e.textContent,fits:r.left>=panel.left&&r.right<=panel.right&&r.top>=panel.top&&r.bottom<=panel.bottom,visible:[[.1,.1],[.5,.5],[.9,.9]].every(([x,y])=>e.contains(document.elementFromPoint(r.x+r.width*x,r.y+r.height*y)))};
+    });
+   });
+   assert.ok(buttons.every(b=>b.fits&&b.visible),`${type}: ${JSON.stringify(buttons)}`);
+   await page.screenshot({path:`test-results/status-${type}-actions-${viewport.width}x${viewport.height}.png`});
+  }
   for(const type of ['medic','engineer','tank','hq','group']){
    await page.evaluate(type=>{
     const f=window.__frontier,s=f.sim,e=type==='hq'?s.own(0).find(e=>e.type==='hq'):s.spawn(type==='group'?'tank':type,0,-20,15);
