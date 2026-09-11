@@ -37,9 +37,43 @@ try{
     await page.waitForFunction(()=>!window.__frontier.view.activity.snapshot.resources.length);
     const effectCheck=await page.evaluate(()=>{
       const f=window.__frontier,s=f.sim,v=f.view,h=s.own(0).find(e=>e.type==='hq');
+      const hidden=s.own(1).find(e=>!s.isVisible(e));
+      if(!hidden)throw new Error('Expected a hidden enemy');
+      v.activity.effects.length=0;
+      v.activity.event({type:'death',x:hidden.x,z:hidden.z,team:1,heavy:true},s);
+      if(v.activity.effects.length)throw new Error('Hidden destruction leaked through fog');
+      hidden.hp=hidden.maxHp*.2;v.activity.draw(s,0,new Set(),null);
+      if(v.activity.snapshot.burning.includes(hidden.id))throw new Error('Hidden fire leaked through fog');
       for(let i=0;i<100;i++)v.activity.event({type:'death',x:h.x,z:h.z,team:0,heavy:true},s);
-      const count=v.activity.effects.length;v.activity.draw(s,1,new Set(),null);return {count,remaining:v.activity.effects.length};
+      v.activity.event({type:'impact',x:h.x,z:h.z,team:0},s);
+      if(v.activity.effects.some(e=>e.type!=='death'))throw new Error('Hit spam discarded destruction feedback');
+      const count=v.activity.effects.length;v.activity.draw(s,0,new Set(),null);
+      if(v.activity.effects[0].life!==v.activity.effects[0].max)throw new Error('Paused feedback advanced');
+      v.activity.draw(s,3,new Set(),null);return {count,remaining:v.activity.effects.length};
     });assert.deepEqual(effectCheck,{count:32,remaining:0});
+    if(viewport.width===1280||viewport.width===390){
+      const fx=await page.evaluate(()=>{
+        const f=window.__frontier,s=f.sim,v=f.view,h=s.own(0).find(e=>e.type==='barracks');
+        h.hp=h.maxHp*.2;h.shield=0;
+        const tank=s.spawn('tank',0,h.x+5,h.z+4);tank.hp=tank.maxHp*.2;tank.shield=0;
+        s.updateVision();v.focusOn(h.x+2,h.z+5);v.zoom=44;v.updateCamera();f.select([h.id]);v.update(s,0,f.selected,null);
+        return {building:h.id,tank:tank.id,burning:v.activity.snapshot.burning,calls:v.renderer.info.render.calls};
+      });
+      assert.ok(fx.burning.includes(fx.building)&&fx.burning.includes(fx.tank),'critical buildings and vehicles burn');
+      await page.screenshot({path:`test-results/combat-burning-${viewport.width}.png`});
+      const repair=await page.evaluate(fx=>{
+        const f=window.__frontier,s=f.sim,v=f.view;s.get(fx.building).hp=s.get(fx.building).maxHp;v.update(s,0,f.selected,null);
+        return {burning:v.activity.snapshot.burning,calls:v.renderer.info.render.calls};
+      },fx);
+      assert.ok(!repair.burning.includes(fx.building),'repair stops fire');
+      assert.equal(repair.calls,fx.calls,'fire adds no 3D draw calls');
+      await page.evaluate(id=>{const f=window.__frontier;f.sim.applyDamage(f.sim.get(id),10000,1);f.step(0);},fx.tank);
+      await page.waitForFunction(()=>window.__frontier.view.activity.snapshot.combat.some(e=>e.type==='death'&&e.heavy));
+      await page.screenshot({path:`test-results/combat-destruction-${viewport.width}.png`});
+      await page.emulateMedia({reducedMotion:'reduce'});
+      assert.equal(await page.evaluate(()=>window.__frontier.view.activity.combat.motion),false);
+      await page.emulateMedia({reducedMotion:'no-preference'});
+    }
     if(!mobile){
       for(const type of ['ranger','vanguard']){
         await page.evaluate(type=>{

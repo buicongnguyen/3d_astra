@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Simulation } from '../src/simulation.js';
 import { buildingActivity, harvestTarget, isHarvesting } from '../src/activity.js';
+import { isBurning, effectDuration } from '../src/combat-feedback.js';
 const step=(s,n)=>{for(let i=0;i<n*20;i++)s.tick(.05);};
 test('Harvest feedback follows work, delivery, withdrawal and depletion',()=>{
   const s=new Simulation({ai:false});
@@ -45,4 +46,21 @@ test('Building hits are throttled and destruction records distinguish tanks',()=
   assert.equal(s.events.filter(e=>e.type==='impact').length,1);
   const tank=s.spawn('tank',0,0,20);s.applyDamage(tank,10000,1);
   assert.equal(s.events.find(e=>e.type==='death').heavy,true);
+});
+test('Damage feedback distinguishes shields, critical armor and destroyed vehicles',()=>{
+  const s=new Simulation({ai:false}),tank=s.spawn('tank',0,0,20),infantry=s.spawn('ranger',0,4,20);
+  s.events=[];s.applyDamage(tank,1,1);
+  assert.equal(s.events[0].type,'impact');assert.equal(s.events[0].shield,true);
+  for(let i=0;i<20;i++)s.applyDamage(tank,1,1);
+  assert.equal(s.events.filter(e=>e.type==='impact').length,1,'unit impacts are throttled too');
+  tank.hp=tank.maxHp*.2;assert.equal(isBurning(tank),true);
+  tank.hp=tank.maxHp;assert.equal(isBurning(tank),false,'repair immediately clears burning');
+  infantry.hp=1;assert.equal(isBurning(infantry),false,'injured soldiers do not catch fire');
+  const site=s.spawn('relay',0,10,20,false);site.hp=1;
+  assert.equal(isBurning(site),false,'low construction HP is not damage');
+  site.complete=true;assert.equal(isBurning(site),true);
+  site.hp=0;assert.equal(isBurning(site),false);
+  const breaker=s.spawn('breaker',0,14,20);s.applyDamage(breaker,10000,1);
+  const death=s.events.find(e=>e.type==='death');assert.equal(death.heavy,true);
+  assert.equal(effectDuration(death),2.2);assert.equal(effectDuration({type:'death'}),.75);
 });

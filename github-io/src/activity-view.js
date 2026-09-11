@@ -1,4 +1,5 @@
 import { buildingActivity, harvestTarget, isHarvesting } from './activity.js';
+import { CombatPainter, effectDuration, isBurning } from './combat-feedback.js';
 
 // One canvas for all feedback: no particle emitters, lights or per-unit DOM nodes.
 export class ActivityView {
@@ -10,15 +11,19 @@ export class ActivityView {
     Object.assign(this.canvas.style, {position:'absolute',inset:'0',width:'100%',height:'100%',pointerEvents:'none'});
     view.container.append(this.canvas);
     this.ctx = this.canvas.getContext('2d');
+    this.combat = new CombatPainter(view,this.ctx);
     this.effects = [];
-    this.snapshot = {buildings:[],resources:[],workers:[]};
+    this.snapshot = {buildings:[],resources:[],workers:[],burning:[],combat:[]};
   }
   event(e, sim) {
     if (!['impact','death'].includes(e.type) || !sim.isVisible(e)) return;
-    const max = e.type === 'impact' ? .3 : .65;
+    const max = effectDuration(e);
     this.effects.push({...e,life:max,max});
     // Strict budget, even if many units die in a single simulation frame.
-    if (this.effects.length > 32) this.effects.shift();
+    if (this.effects.length > 32) {
+      const impact=this.effects.findIndex(effect=>effect.type==='impact');
+      this.effects.splice(impact<0?0:impact,1); // Preserve destruction smoke over hit spam.
+    }
   }
   badge(p, progress, color) {
     const c = this.ctx;
@@ -35,7 +40,12 @@ export class ActivityView {
     const w=Math.round(v.width*dpr),h=Math.round(v.height*dpr);
     if(this.canvas.width!==w || this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h;}
     c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,v.width,v.height);
-    const targets=new Map(), snapshot={buildings:[],resources:[],workers:[]};
+    const targets=new Map(), snapshot={buildings:[],resources:[],workers:[],burning:[],combat:[]};
+    const burnLimit=v.lowPower?8:16;
+    for(const e of sim.entities){
+      if(snapshot.burning.length>=burnLimit)break;
+      if(isBurning(e)&&sim.isVisible(e)&&this.combat.burn(e,sim.time))snapshot.burning.push(e.id);
+    }
     for(const e of sim.entities){
       if(e.hp<=0 || e.team!==0)continue;
       const a=buildingActivity(sim,e);
@@ -73,17 +83,9 @@ export class ActivityView {
       const e=this.effects[i];e.life-=dt;
       if(e.life<=0){this.effects.splice(i,1);continue;}
       if(!sim.isVisible(e))continue;
-      const p=v.project(e.x,e.z,e.type==='impact'?3:1),fade=e.life/e.max;
-      const size=e.type==='impact'?12:e.building?28:e.heavy?22:13;
-      const radius=size*(v.reducedMotion.matches?1:1+(1-fade));
-      c.globalAlpha=fade;c.strokeStyle=e.shield?'#9beaff':'#ffd199';c.lineWidth=e.type==='impact'?3:2;
-      c.beginPath();c.arc(p.x,p.y,radius,0,Math.PI*2);c.stroke();
-      if(!v.reducedMotion.matches){
-        for(let j=0;j<6;j++){const a=j*Math.PI/3; c.beginPath();c.moveTo(p.x+Math.cos(a)*radius*.55,p.y+Math.sin(a)*radius*.55);c.lineTo(p.x+Math.cos(a)*radius,p.y+Math.sin(a)*radius);c.stroke();}
-      }
-      c.globalAlpha=1;
+      if(this.combat.effect(e))snapshot.combat.push({type:e.type,life:e.life,shield:!!e.shield,heavy:!!e.heavy});
     }
     this.snapshot=snapshot;
   }
-  reset(){this.effects.length=0;this.snapshot={buildings:[],resources:[],workers:[]};this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);}
+  reset(){this.effects.length=0;this.snapshot={buildings:[],resources:[],workers:[],burning:[],combat:[]};this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);}
 }

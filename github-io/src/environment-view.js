@@ -191,7 +191,7 @@ export class EnvironmentView {
     }
     for (const [name, list] of Object.entries(transforms))
       instances(name, list);
-    // One bounded particle pool for dust, spray and damaged-structure smoke.
+    // One bounded pool for dust and spray. Combat smoke uses the HUD canvas.
     this.positions = new Float32Array(64 * 3);
     this.positions.fill(10000);
     this.particleGeometry = new THREE.BufferGeometry();
@@ -248,21 +248,12 @@ export class EnvironmentView {
       this.emission = 0;
       for (const e of sim.entities) {
         if (!sim.isVisible(e)) continue;
-        const smoke = e.kind === "building" && e.hp < e.maxHp * 0.45;
-        if (
-          !smoke &&
-          !(
-            e.moving &&
-            (e.id % 3 === 0 || this.terrain.at(e.x, e.z) === "ford")
-          )
-        )
-          continue;
+        if (e.hp<=0 || !e.moving || !(e.id%3===0 || this.terrain.at(e.x,e.z)==="ford")) continue;
         this.particles[this.cursor] = {
           x: e.x,
-          y: smoke ? 3 : 0.2,
+          y: 0.2,
           z: e.z,
-          life: smoke ? 1.2 : 0.45,
-          smoke,
+          life: 0.45,
         };
         this.cursor = (this.cursor + 1) % 64;
       }
@@ -271,7 +262,7 @@ export class EnvironmentView {
       const p = this.particles[i];
       if (p && p.life > 0) {
         p.life -= dt;
-        p.y += dt * (p.smoke ? 0.7 : 0.3);
+        p.y += dt * 0.3;
         this.positions.set([p.x, p.y, p.z], i * 3);
       } else this.positions.set([10000, 10000, 10000], i * 3);
     }

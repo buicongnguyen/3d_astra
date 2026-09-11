@@ -67,13 +67,13 @@ export const progression = {
     const absorbed = Math.min(t.shield,damage);
     t.shield -= absorbed;
     t.hp -= damage-absorbed;
-    if (t.kind === 'building' && this.time >= (t.nextHitEffect || 0)) {
-      this.events.push({type:'impact',x:t.x,z:t.z,team:t.team,shield:absorbed > 0});
+    if (t.hp > 0 && this.time >= (t.nextHitEffect || 0)) {
+      this.events.push({type:'impact',x:t.x,z:t.z,team:t.team,shield:absorbed > 0,building:t.kind==='building',seed:t.id});
       t.nextHitEffect = this.time + 0.2;
     }
     if (t.hp <= 0) {
       this.players[team].kills++;
-      this.events.push({type:'death',x:t.x,z:t.z,team:t.team,building:t.kind === 'building',heavy:t.type === 'tank'});
+      this.events.push({type:'death',x:t.x,z:t.z,team:t.team,building:t.kind === 'building',heavy:!!t.mechanical,seed:t.id});
       if (t.kind === 'building') this.nav.rebuild(this.entities);
     }
   },
