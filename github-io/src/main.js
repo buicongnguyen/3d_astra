@@ -590,13 +590,25 @@ function minimap() {
   ctx.stroke();
 }
 
+function selectScreenType(target,additive=false) {
+  const canvas=view.renderer.domElement,r=canvas.getBoundingClientRect();
+  const same=sim.own(0).filter(u=>{
+    if(u.type!==target.type)return false;
+    const p=view.project(u.x,u.z,1),x=p.x+r.left,y=p.y+r.top;
+    return x>=r.left&&x<r.right&&y>=r.top&&y<r.bottom&&document.elementFromPoint(x,y)===canvas;
+  });
+  const next=additive?new Set(selected):new Set(),remove=additive&&selected.has(target.id);
+  for(const u of same){if(remove)next.delete(u.id);else next.add(u.id);}
+  setSelection(next);
+}
+
 function commandAt(point, target, append = false, forced = null) {
   if (!point || !started || paused || sim.result) return;
   if (forced === 'context') forced = null;
   const es = selectedEntities(),
     units = es.filter((e) => e.kind === "unit");
   if (forced === 'rally') {
-    for (const b of es.filter(e=>e.kind==='building' && e.complete && e.trains)) b.rally={...point};
+    for (const b of es.filter(e=>e.kind==='building' && e.complete && e.trains?.length)) b.rally={...point};
     notice('Rally point established.'); view.marker(point.x,point.z); return;
   }
   if (forced === 'attack') {
@@ -620,7 +632,7 @@ function commandAt(point, target, append = false, forced = null) {
     sim.issue(helpers.map(e => e.id),{type:"support",target:target.id},append);
     for (const helper of helpers) units.splice(units.indexOf(helper),1);
   }
-  for (const b of es.filter((e) => e.kind === "building" && e.complete)) {
+  for (const b of es.filter((e) => !forced && !es.some(u=>u.kind==='unit') && e.kind === "building" && e.complete && e.trains?.length)) {
     b.rally = { ...point };
     notice("Rally point established.");
   }
@@ -629,8 +641,13 @@ function commandAt(point, target, append = false, forced = null) {
     return;
   }
   let order = { type: forced || "move", ...point };
-  if (!forced && target?.team > 0 && sim.isVisible(target))
+  if ((!forced || forced==='attackmove') && target?.team > 0 && sim.isVisible(target))
     order = { type: "attack", target: target.id };
+  if(order.type==='attack'){
+    sim.issue(units.filter(e=>e.damage>0).map(e=>e.id),order,append);
+    sim.issue(units.filter(e=>!(e.damage>0)).map(e=>e.id),{type:'move',...point},append);
+    view.marker(point.x,point.z,0xef9f75);tone(440);return;
+  }
   if (
     !forced &&
     target &&
@@ -740,7 +757,7 @@ function touchTap(x, y) {
     return;
   }
   if (mode) {
-    if (commandAt(point, ["support","context","attack"].includes(mode) ? target : null, queueOrders, mode) !== false) clearMode();
+    if (commandAt(point, ["support","context","attack","attackmove"].includes(mode) ? target : null, queueOrders, mode) !== false) clearMode();
     return;
   }
   if (boxSelection) {
@@ -791,6 +808,7 @@ function bindInput() {
   canvas.addEventListener("contextmenu", (e) => {
     e.preventDefault();
     if (e.pointerType === "touch") return;
+    drag=null;$("selection-box").style.display="none";
     if (mode) {
       clearMode();
       return;
@@ -798,13 +816,13 @@ function bindInput() {
     commandAt(
       view.point(e.clientX, e.clientY),
       view.pick(e.clientX, e.clientY, sim),
-      e.shiftKey,
+      e.shiftKey || queueOrders,
     );
   });
   canvas.addEventListener("pointerdown", (e) => {
     if (e.pointerType !== "mouse") return;
     unlockAudio();
-    if (e.button === 2 || !started || paused || sim.result) return;
+    if (![0,1].includes(e.button) || !started || paused || sim.result) return;
     canvas.setPointerCapture(e.pointerId);
     drag = {
       x: e.clientX,
@@ -882,14 +900,14 @@ function bindInput() {
     $("selection-box").style.display = "none";
     if (canvas.hasPointerCapture(e.pointerId))
       canvas.releasePointerCapture(e.pointerId);
-    if (old.button !== 0 || paused || !started) return;
+    if (old.button !== 0 || e.button!==0 || paused || !started || sim.result || document.elementFromPoint(e.clientX,e.clientY)!==canvas) return;
     const point = view.point(e.clientX, e.clientY);
     if (mode === "build" && point) {
       confirmBuild(point);
       return;
     }
     if (mode) {
-      if (commandAt(point, ["support","context","attack"].includes(mode) ? view.pick(e.clientX,e.clientY,sim) : null, e.shiftKey||queueOrders, mode) !== false) clearMode();
+      if (commandAt(point, ["support","context","attack","attackmove"].includes(mode) ? view.pick(e.clientX,e.clientY,sim) : null, e.shiftKey||queueOrders, mode) !== false) clearMode();
       return;
     }
     const next = e.shiftKey ? new Set(selected) : new Set();
@@ -910,6 +928,7 @@ function bindInput() {
     } else {
       const target = view.pick(e.clientX, e.clientY, sim);
       if (target?.team === 0) {
+        if(e.ctrlKey && target.kind==='unit'){selectScreenType(target,e.shiftKey);return;}
         if (e.shiftKey && next.has(target.id)) next.delete(target.id);
         else next.add(target.id);
       }
@@ -917,15 +936,10 @@ function bindInput() {
     setSelection(next);
   });
   canvas.addEventListener("dblclick", (e) => {
-    if (!started || paused) return;
+    if (!started || paused || sim.result || mode || e.ctrlKey) return;
     const target = view.pick(e.clientX, e.clientY, sim);
     if (target?.team === 0 && target.kind === "unit")
-      setSelection(
-        sim
-          .own(0)
-          .filter((u) => u.type === target.type && sim.isVisible(u))
-          .map((u) => u.id),
-      );
+      selectScreenType(target,e.shiftKey);
   });
   canvas.addEventListener("pointercancel", () => {
     drag = null;
@@ -1000,14 +1014,15 @@ function bindInput() {
     if (e.button === 0) {
       const p = mapPoint(e);
       if (mode && mode !== "build") {
-        if (commandAt(p, null, queueOrders, mode) !== false) clearMode();
+        if (commandAt(p, null, e.shiftKey||queueOrders, mode) !== false) clearMode();
       } else view.focusOn(p.x, p.z);
     }
   });
   $("minimap").addEventListener("contextmenu", (e) => {
     e.preventDefault();
+    if(mode){clearMode();return;}
     const p = mapPoint(e);
-    if (commandAt(p, null, e.shiftKey, ['attackmove','patrol','attack'].includes(mode) ? mode : null) !== false) clearMode();
+    commandAt(p, null, e.shiftKey||queueOrders);
   });
 }
 

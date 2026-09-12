@@ -20,6 +20,7 @@
     "test:auto-combat": "node tests/auto-combat.mjs",
     "test:harvesters": "node tests/harvesters.mjs",
     "test:hotkeys": "node tests/hotkeys.mjs",
+    "test:pc-controls": "node tests/pc-controls.mjs",
     "test:patrol": "node tests/patrol.mjs",
     "test:activity": "node tests/activity.mjs",
     "test:status-layout": "node tests/status-layout.mjs"
