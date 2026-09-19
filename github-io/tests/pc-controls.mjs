@@ -22,7 +22,9 @@ const select = async ids => {if(godot)await cmd({action:'select',ids});else{awai
 const keys = async key => {await page.keyboard.press(key);await settle();};
 const click = async (point,button='left',modifiers=[],count=1) => {
   for(const k of modifiers)await page.keyboard.down(k);
-  await page.mouse.click(...point,{button,clickCount:count,delay:60});await settle();
+  if(count===2)await page.mouse.dblclick(...point,{button,delay:60});
+  else await page.mouse.click(...point,{button,delay:60});
+  await settle();
   for(const k of modifiers)await page.keyboard.up(k);
 };
 const entity = async id => (await state()).entities.find(e=>e.id===id);
