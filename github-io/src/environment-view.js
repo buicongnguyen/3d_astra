@@ -40,6 +40,7 @@ export function paintTerrain(ctx, terrain, size) {
 export class EnvironmentView {
   constructor(scene, terrain, assets) {
     this.scene = scene;
+    this.reducedMotion = matchMedia("(prefers-reduced-motion:reduce)");
     this.terrain = terrain;
     this.root = new THREE.Group();
     this.decor = new THREE.Group();
@@ -254,9 +255,10 @@ export class EnvironmentView {
   configure(settings) {
     this.settings = settings;
     this.decor.visible = settings.detail;
-    this.motion =
-      settings.waterMotion &&
-      !matchMedia("(prefers-reduced-motion:reduce)").matches;
+
+  }
+  get motion() {
+    return this.settings?.waterMotion === true && !this.reducedMotion.matches;
   }
   update(sim, dt) {
     if (!this.water) return;

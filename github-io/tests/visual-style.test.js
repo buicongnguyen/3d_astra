@@ -33,3 +33,14 @@ test('old settings gain an independent combat motion preference without losing c
   assert.equal(old.combatMotion,true);assert.equal(old.waterMotion,false);assert.equal(old.playerColor,'gold');
   assert.equal(normalize({...old,combatMotion:false}).combatMotion,false);
 });
+
+// A delayed media-query change notification must not leave water animating.
+test('environment reads the current motion preference without waiting for an event',async()=>{
+  const {EnvironmentView}=await import('../src/environment-view.js');
+  const environment=Object.create(EnvironmentView.prototype);
+  environment.settings={waterMotion:true};environment.reducedMotion={matches:false};
+  assert.equal(environment.motion,true);environment.reducedMotion.matches=true;
+  assert.equal(environment.motion,false);environment.reducedMotion.matches=false;
+  assert.equal(environment.motion,true);environment.settings.waterMotion=false;
+  assert.equal(environment.motion,false);
+});
