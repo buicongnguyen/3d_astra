@@ -736,12 +736,12 @@ export class WorldView {
     for (const e of sim.entities) {
       alive.add(e.id);
       const o = this.objects.get(e.id) || this.createEntity(e);
+      o.userData.recoil=Math.max(0,o.userData.recoil-dt);
       o.visible = sim.isVisible(e);
       if (!o.visible) continue;
       o.position.set(e.x, 0, e.z);
       const m = o.userData.model;
       m.rotation.y = e.kind === "unit" ? e.angle : e.team === 0 ? 0 : Math.PI;
-      o.userData.recoil=Math.max(0,o.userData.recoil-dt);
       if(o.userData.barrel){
         const rig=o.userData.barrel;
         rig.rotation.y=e.type==='tower'?e.angle-m.rotation.y:0;

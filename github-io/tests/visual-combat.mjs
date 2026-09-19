@@ -39,9 +39,12 @@ try{
         v.applySettings({...original,combatMotion:false});const disabled=!v.activity.combat.motion;v.applySettings(original);
         window.emitVisual();window.renderVisual(s,.08,f.selected,null);
         const barrels=[...v.objects.values()].filter(o=>o.userData.barrel?.children.length).length;
-        return {hidden,count,paused,expired,independent,disabled,barrels};
+        const enemy=s.entities.find(e=>e.team===1&&e.type==='tank'),object=v.objects.get(enemy.id);
+        object.userData.recoil=.22;s.visible[0].fill(0);window.renderVisual(s,.3,f.selected,null);
+        const hiddenRecoil=object.userData.recoil;s.visible[0].fill(1);
+        return {hidden,count,paused,expired,independent,disabled,barrels,hiddenRecoil};
       });
-      assert.equal(check.hidden,0);assert.equal(check.count,64);assert.ok(check.paused);assert.equal(check.expired,0);assert.ok(check.independent&&check.disabled&&check.barrels>0);
+      assert.equal(check.hiddenRecoil,0,"recoil expires while hidden");assert.equal(check.hidden,0);assert.equal(check.count,64);assert.ok(check.paused);assert.equal(check.expired,0);assert.ok(check.independent&&check.disabled&&check.barrels>0);
     }
     await page.screenshot({path:`test-results/visual-${baseline?'before':'after'}-weapons-${viewport.width}.png`});
     await page.evaluate(()=>{
