@@ -92,7 +92,7 @@ export const progression = {
     } else if (t.hp < t.maxHp && e.cooldown <= 0) {
       t.hp = Math.min(t.maxHp,t.hp+e.support);
       e.cooldown = e.interval;
-      this.events.push({type:'support',x:e.x,z:e.z,tx:t.x,tz:t.z,team:e.team});
+      this.events.push({type:'support',weapon:e.type,x:e.x,z:e.z,tx:t.x,tz:t.z,team:e.team});
     }
     return true;
   },

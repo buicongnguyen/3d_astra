@@ -23,7 +23,8 @@
     "test:pc-controls": "node tests/pc-controls.mjs",
     "test:patrol": "node tests/patrol.mjs",
     "test:activity": "node tests/activity.mjs",
-    "test:status-layout": "node tests/status-layout.mjs"
+    "test:status-layout": "node tests/status-layout.mjs",
+    "test:visual-combat": "node tests/visual-combat.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

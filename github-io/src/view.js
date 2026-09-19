@@ -3,6 +3,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Terrain } from "./terrain.js";
 import { ActivityView } from "./activity-view.js";
+import {themeFor,shotVisible,weaponStyle} from './visual-style.js';
 import { isHarvesting } from "./activity.js";
 import { defaults, palette } from "./settings.js";
 import {
@@ -82,8 +83,10 @@ export class WorldView {
     this.teamTemplates = new Map();
     this.fogClock = 0;
     this.gridVisible = false;
-    this.scene.add(new THREE.HemisphereLight(0xc1ddd7, 0x736145, 2.0));
+    this.ambientLight=new THREE.HemisphereLight(0xc1ddd7, 0x736145, 2.0);
+    this.scene.add(this.ambientLight);
     const sun = new THREE.DirectionalLight(0xffe1b0, 3.2);
+    this.sun=sun;
     sun.position.set(-25, 55, 20);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
@@ -98,6 +101,7 @@ export class WorldView {
     sun.shadow.bias = -0.0003;
     sun.shadow.normalBias = 0.04;
     this.scene.add(sun);
+    this.applyTheme();
     this.createTerrain();
     this.createFog();
     this.preview = mesh(
@@ -120,6 +124,11 @@ export class WorldView {
     this.reducedMotion.addEventListener("change", () =>
       this.environment?.configure(this.settings),
     );
+  }
+  applyTheme() {
+    const style=themeFor(this.terrain.id);
+    this.scene.background.set(style.sky);this.scene.fog.color.set(style.sky);
+    this.ambientLight.color.set(style.ambient);this.sun.color.set(style.sun);
   }
   applySettings(settings) {
     this.settings = settings;
@@ -151,6 +160,7 @@ export class WorldView {
   }
   setTerrain(terrain) {
     this.terrain = terrain;
+    this.applyTheme();
     this.environment?.dispose();
     if (this.terrainRoot) {
       this.scene.remove(this.terrainRoot);
@@ -207,6 +217,7 @@ export class WorldView {
           // Merge stationary pieces by material, preserving the two articulated leg pivots.
           const template = new THREE.Group(),
             buckets = new Map(),
+            barrelBuckets = new Map(),
             legs = [];
           gltf.scene.traverse((o) => {
             if (o.name.startsWith("leg_")) {
@@ -221,10 +232,13 @@ export class WorldView {
               if (parent.name.startsWith("leg_")) return;
               parent = parent.parent;
             }
+            // Keep the existing named Blender cannon pieces articulated while
+            // still merging the barrel's materials into a compact rig.
+            const target=/^(Main_cannon|Muzzle_brake|Barrel|Cannon|Muzzle)(\.|$)/i.test(o.name)?barrelBuckets:buckets;
             const key = o.material.name;
-            if (!buckets.has(key))
-              buckets.set(key, { material: o.material, geometries: [] });
-            buckets
+            if (!target.has(key))
+              target.set(key, { material: o.material, geometries: [] });
+            target
               .get(key)
               .geometries.push(o.geometry.clone().applyMatrix4(o.matrixWorld));
           });
@@ -233,6 +247,13 @@ export class WorldView {
             if (combined) template.add(new THREE.Mesh(combined, material));
             geometries.forEach((g) => g.dispose());
           }
+          const barrel=new THREE.Group();barrel.name='BarrelRig';
+          for(const {material,geometries} of barrelBuckets.values()){
+            const combined=mergeGeometries(geometries,false);
+            if(combined)barrel.add(new THREE.Mesh(combined,material));
+            geometries.forEach(g=>g.dispose());
+          }
+          template.add(barrel);
           for (let team = 0; team < this.colors.length; team++) {
             const variant = template.clone(true),
               materials = new Map();
@@ -279,7 +300,7 @@ export class WorldView {
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = 1024;
     const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#777d58";
+    ctx.fillStyle = themeFor(this.terrain.id).dirt;
     ctx.fillRect(0, 0, 1024, 1024);
     if (this.terrain.id !== "classic") paintTerrain(ctx, this.terrain, 1024);
     for (let i = 0; i < 16000; i++) {
@@ -586,16 +607,26 @@ export class WorldView {
     root.add(contactShadow);
     root.userData.contactShadow = contactShadow;
     root.userData.model = model;
+    root.userData.barrel=model.getObjectByName('BarrelRig');
+    root.userData.recoil=0;
     root.userData.team = e.team;
     root.userData.legs = [];
     model.traverse((o) => {
       if (o.name.startsWith("leg_"))
         root.userData.legs.push({ node: o, base: o.quaternion.clone() });
     });
+    const ringGeometry=new THREE.RingGeometry(e.radius+.26,e.radius+.46,40,4);
+    const ringColors=new Float32Array(ringGeometry.attributes.position.count*3);
+    for(let i=0;i<ringGeometry.attributes.position.count;i++){
+      const band=Math.floor(i/41),shade=band===0||band===4?.12:1;
+      ringColors.set([shade,shade,shade],i*3);
+    }
+    ringGeometry.setAttribute('color',new THREE.BufferAttribute(ringColors,3));
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(e.radius + 0.3, e.radius + 0.42, 40),
+      ringGeometry,
       new THREE.MeshBasicMaterial({
         color: this.colors[e.team],
+        vertexColors:true,
         side: THREE.DoubleSide,
         transparent: true,
         opacity: 0.95,
@@ -687,35 +718,16 @@ export class WorldView {
     m.renderOrder = 4;
     this.scene.add(m);
     this.effects.push({ mesh: m, life: 0.8, max: 0.8, marker: true, team: color===this.colors[0]?0:undefined });
+    while(this.effects.length>64){
+      const old=this.effects.shift();this.scene.remove(old.mesh);
+      old.mesh.geometry.dispose();old.mesh.material.dispose();
+    }
   }
   event(event, sim) {
     this.activity.event(event, sim);
-    if (
-      ["shot","support"].includes(event.type) &&
-      (sim.isVisible(event) || sim.isVisible({ x: event.tx, z: event.tz }))
-    ) {
-      const line = new THREE.Line(
-        new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(event.x, 1.5, event.z),
-          new THREE.Vector3(event.tx, 0.9, event.tz),
-        ]),
-        new THREE.LineBasicMaterial({
-          color: event.type === "support" ? 0x76f2c4 : event.heavy ? 0xffc679 : this.colors[event.team],
-          transparent: true,
-          opacity: 0.9,
-        }),
-      );
-      this.scene.add(line);
-      this.effects.push({
-        mesh: line,
-        life: 0.12,
-        max: 0.12,
-        team: event.heavy || event.type === "support" ? undefined : event.team,
-      });
-    }
-    while (this.effects.length > 64) {
-      const e = this.effects.shift();
-      this.scene.remove(e.mesh); e.mesh.geometry.dispose(); e.mesh.material.dispose();
+    if(event.type==='shot' && shotVisible(event,sim)){
+      const o=this.objects.get(event.source);
+      if(o && weaponStyle(event).kind==='cannon')o.userData.recoil=.22;
     }
   }
   update(sim, dt, selected, hover) {
@@ -729,6 +741,13 @@ export class WorldView {
       o.position.set(e.x, 0, e.z);
       const m = o.userData.model;
       m.rotation.y = e.kind === "unit" ? e.angle : e.team === 0 ? 0 : Math.PI;
+      o.userData.recoil=Math.max(0,o.userData.recoil-dt);
+      if(o.userData.barrel){
+        const rig=o.userData.barrel;
+        rig.rotation.y=e.type==='tower'?e.angle-m.rotation.y:0;
+        const kick=this.activity.combat.motion?Math.sin(o.userData.recoil/.22*Math.PI)*.18:0;
+        rig.position.set(-Math.sin(rig.rotation.y)*kick,0,-Math.cos(rig.rotation.y)*kick);
+      }
       m.position.y =
         e.kind === "unit" && e.moving
           ? Math.sin(sim.time * 13 + e.id) * 0.045

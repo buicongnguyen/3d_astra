@@ -1,0 +1,19 @@
+{
+  "themes": {
+    "classic": {"sky":"#55534a","sun":"#ffe5bd","ambient":"#ced4c8","rock":"#737064","dust":"#b6a181","dirt":"#887b60","grass":"#74806a","sand":"#b9a77d","road":"#a18c69","stone":"#75756d"},
+    "basin": {"sky":"#65564c","sun":"#ffe0b1","ambient":"#d1d1bf","rock":"#857266","dust":"#bf9e78","dirt":"#937b60","grass":"#737967","sand":"#b8a079","road":"#ad9270","stone":"#82756a"},
+    "riverlands": {"sky":"#43565b","sun":"#ffe9ca","ambient":"#c0d9d8","rock":"#687775","dust":"#a59e80","dirt":"#887e66","grass":"#74846a","sand":"#ada280","road":"#ab9775","stone":"#6c7b77"},
+    "expanse": {"sky":"#4e6064","sun":"#ffe4bf","ambient":"#c2d5d5","rock":"#727b77","dust":"#b0a385","dirt":"#8e8068","grass":"#7b886f","sand":"#b8ab85","road":"#aa9674","stone":"#747e79"},
+    "dunes": {"sky":"#83705c","sun":"#ffe4ba","ambient":"#d9d2c0","rock":"#9a856e","dust":"#ccb58b","dirt":"#a08c70","grass":"#7c8464","sand":"#c2ae87","road":"#aa9372","stone":"#9b8a72"},
+    "woodlands": {"sky":"#394f49","sun":"#e7edcf","ambient":"#b6cfc6","rock":"#69796d","dust":"#929b78","dirt":"#7c755a","grass":"#61785d","sand":"#a8a17a","road":"#a0906e","stone":"#687b6c"},
+    "highlands": {"sky":"#454f60","sun":"#e1eaff","ambient":"#bfccde","rock":"#697286","dust":"#a1a5ac","dirt":"#807b70","grass":"#747f72","sand":"#ada795","road":"#9c9380","stone":"#6e7887"}
+  },
+  "weapons": {
+    "rifle":{"height":1.4,"reach":0.75,"life":0.14,"kind":"rifle"},
+    "tank":{"height":1.7,"reach":2.5,"life":0.32,"kind":"cannon"},
+    "breaker":{"height":1.5,"reach":1.9,"life":0.28,"kind":"cannon"},
+    "tower":{"height":3.65,"reach":1.8,"life":0.26,"kind":"cannon"},
+    "antitank":{"height":1.83,"reach":1.55,"life":0.24,"kind":"rocket"},
+    "support":{"height":1.5,"reach":0.5,"life":0.22,"kind":"support"}
+  }
+}

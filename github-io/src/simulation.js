@@ -555,6 +555,8 @@ export class Simulation {
           apply(t, 0.5);
     this.events.push({
       type: "shot",
+      weapon: e.type,
+      source: e.id,
       x: e.x,
       z: e.z,
       tx: target.x,

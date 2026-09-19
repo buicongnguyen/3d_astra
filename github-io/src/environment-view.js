@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { CROSSINGS, SURFACES } from "./terrain.js";
+import { themeFor } from './visual-style.js';
 export function optimizeEnvironment(assets) {
   assets.updateMatrixWorld(true);
   const original = new Set();
@@ -27,11 +28,12 @@ export function optimizeEnvironment(assets) {
   for (const geometry of original) geometry.dispose();
 }
 export function paintTerrain(ctx, terrain, size) {
+  const colors={...SURFACES,...themeFor(terrain.id)};
   for (let y = 0; y < size; y += 4)
     for (let x = 0; x < size; x += 4) {
       const wx = (x / size) * terrain.size - terrain.half,
         wz = (y / size) * terrain.size - terrain.half;
-      ctx.fillStyle = SURFACES[terrain.at(wx, wz)];
+      ctx.fillStyle = colors[terrain.at(wx, wz)];
       ctx.fillRect(x, y, 4, 4);
     }
 }
@@ -46,6 +48,8 @@ export class EnvironmentView {
     this.water = null;
     this.particles = [];
     this.lastTime = 0;
+    this.owned=[];
+    this.backdrop(assets);
     if (!terrain.river) return;
     const waterMat = new THREE.MeshStandardMaterial({
       color: 0x428a94,
@@ -173,7 +177,7 @@ export class EnvironmentView {
       transforms.reed.push(dummy.matrix.clone());
     }
     for (let i = 0; i < 40; i++) {
-      dummy.position.set(i % 2 ? 49 : -49, 0, -46 + Math.floor(i / 2) * 4.8);
+      dummy.position.set(i % 2 ? terrain.half+3 : -terrain.half-3, 0, -terrain.half+2 + Math.floor(i / 2) * (terrain.size-4)/19);
       dummy.scale.setScalar(0.8 + rand() * 0.5);
       dummy.updateMatrix();
       transforms.tree.push(dummy.matrix.clone());
@@ -213,6 +217,39 @@ export class EnvironmentView {
     this.root.add(this.particleMesh);
     this.cursor = 0;
     this.emission = 0;
+  }
+  backdrop(assets) {
+    const style=themeFor(this.terrain.id),dummy=new THREE.Object3D();
+    const geometry=new THREE.DodecahedronGeometry(1,0),material=new THREE.MeshStandardMaterial({color:style.rock,roughness:1});
+    this.owned.push(geometry,material);
+    const hills=new THREE.InstancedMesh(geometry,material,16);
+    for(let i=0;i<16;i++){
+      const x=(i%2?1:-1)*(this.terrain.half+7),z=-this.terrain.half+8+Math.floor(i/2)*(this.terrain.size-16)/7;
+      dummy.position.set(x,.4,z);dummy.rotation.set(.1,i*2.4,.1);
+      dummy.scale.set(3+i%3,this.terrain.id==='dunes'?1.4:2.5+i%2,4+i%3);dummy.updateMatrix();hills.setMatrixAt(i,dummy.matrix);
+    }
+    this.decor.add(hills);
+    if(this.terrain.id==='woodlands'){
+      const tree=assets.getObjectByName('asset_tree');
+      tree?.traverse(m=>{
+        if(!m.isMesh)return;
+        const batch=new THREE.InstancedMesh(m.geometry,m.material,16);
+        for(let i=0;i<16;i++){
+          dummy.position.set(-this.terrain.half+4+i*(this.terrain.size-8)/15,0,-this.terrain.half-4);
+          dummy.rotation.set(0,i*2.4,0);dummy.scale.setScalar(.8+(i%3)*.15);dummy.updateMatrix();batch.setMatrixAt(i,dummy.matrix);
+        }
+        this.decor.add(batch);
+      });
+    }
+    if(['classic','basin','highlands'].includes(this.terrain.id)){
+      const shape=new THREE.BoxGeometry(1,1,1);this.owned.push(shape);
+      const ruins=new THREE.InstancedMesh(shape,material,12);
+      for(let i=0;i<12;i++){
+        dummy.position.set(-this.terrain.half+8+i*3,1,-this.terrain.half-3);dummy.rotation.set(0,0,i%3*.1);
+        dummy.scale.set(i%3===0?1:2.8,i%3===0?4:1.5,.8);dummy.updateMatrix();ruins.setMatrixAt(i,dummy.matrix);
+      }
+      this.decor.add(ruins);
+    }
   }
   configure(settings) {
     this.settings = settings;
@@ -286,5 +323,6 @@ export class EnvironmentView {
     this.decor.traverse((o) => {
       if (o.isInstancedMesh) o.dispose();
     });
+    for(const resource of this.owned)resource.dispose();
   }
 }
