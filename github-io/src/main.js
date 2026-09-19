@@ -66,7 +66,7 @@ document.querySelector("#app").innerHTML = `
       <div class="briefing-rule"><span>OBJECTIVE</span><strong>Eliminate enemy command</strong></div>
       </div>
       <button id="start" class="primary" disabled>Preparing expedition…</button>
-      <div class="briefing-setup"><div class="briefing-tools"><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select><select id="enemy-count" aria-label="Number of AI enemies"><option value="1">1 AI enemy</option><option value="2">2 AI enemies · FFA</option><option value="3">3 AI enemies · FFA</option></select><button id="briefing-settings">Settings</button></div><small class="briefing-note">SINGLE PLAYER <span>·</span> MOUSE + KEYBOARD</small></div>
+      <div class="briefing-setup"><div class="briefing-tools"><label class="map-select-label" for="scenario">Choose map / stage</label><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select><select id="enemy-count" aria-label="Number of AI enemies"><option value="1">1 AI enemy</option><option value="2">2 AI enemies · FFA</option><option value="3">3 AI enemies · FFA</option></select><button id="briefing-settings">Settings</button></div><small class="briefing-note">SINGLE PLAYER <span>·</span> MOUSE + KEYBOARD</small></div>
     </section>
     <div class="bottom-dock">
       <section class="minimap-panel panel"><div class="panel-label">SECTOR OVERVIEW <button id="home" title="Focus base · H" aria-label="Focus base">${icon("hq")}</button></div><canvas id="minimap" width="240" height="200" aria-label="Minimap: click to pan; right-click to command"></canvas><div class="map-legend"><span><i class="friendly"></i>YOU</span><span><i class="hostile"></i>ENEMY</span><span><i class="deposit"></i>RESOURCE</span></div></section>
@@ -1107,7 +1107,7 @@ function togglePause() {
   keys.clear();
   $("modal").hidden = false;
   $("modal-content").innerHTML =
-    `<span class="eyebrow">TACTICAL PAUSE</span><h2 id="modal-title">Hold your position.</h2><p>The battlefield is paused. Take a moment to plan your next move.</p><button class="primary" data-resume>Resume operation ${icon("play")}</button><button class="secondary" data-restart>Restart skirmish</button><button class="pause-settings" data-settings>Settings · army, graphics & sound</button>`;
+    `<span class="eyebrow">TACTICAL PAUSE</span><h2 id="modal-title">Hold your position.</h2><p>The battlefield is paused. Take a moment to plan your next move.</p><button class="primary" data-resume>Resume operation ${icon("play")}</button><button class="secondary" data-new-game>New game / choose map</button><button class="secondary" data-restart>Restart this map</button><button class="pause-settings" data-settings>Settings · army, graphics & sound</button>`;
   $("modal").querySelector("[data-resume]").focus();
 }
 function showHelp() {
@@ -1136,7 +1136,19 @@ function showResult() {
   tone(sim.result === "victory" ? 880 : 220, 0.3);
   const win = sim.result === "victory";
   $("modal-content").innerHTML =
-    `<span class="eyebrow">OPERATION ${sim.result === "draw" ? "CONCLUDED" : win ? "SUCCESSFUL" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}">${icon(win ? "flag" : "shield")}</div><h2 id="modal-title">${win ? "The frontier is yours." : sim.result === "draw" ? "Mutual destruction." : "Your outpost has fallen."}</h2><p>${win ? "Enemy command has been eliminated. Meridian holds the valley." : sim.result === "draw" ? "All Command cores were destroyed." : "An enemy destroyed your Command core. Regroup and try a different approach."}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${sim.players[0].kills}</strong>ENEMIES ELIMINATED</span></div><button class="primary" data-restart>Deploy again ${icon("arrow")}</button>`;
+    `<span class="eyebrow">OPERATION ${sim.result === "draw" ? "CONCLUDED" : win ? "SUCCESSFUL" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}">${icon(win ? "flag" : "shield")}</div><h2 id="modal-title">${win ? "The frontier is yours." : sim.result === "draw" ? "Mutual destruction." : "Your outpost has fallen."}</h2><p>${win ? "Enemy command has been eliminated. Meridian holds the valley." : sim.result === "draw" ? "All Command cores were destroyed." : "An enemy destroyed your Command core. Regroup and try a different approach."}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${sim.players[0].kills}</strong>ENEMIES ELIMINATED</span></div><button class="primary" data-new-game>New game / choose map ${icon("arrow")}</button><button class="secondary" data-restart>Replay this map</button>`;
+}
+function newGame() {
+  restart();
+  started = false;
+  paused = true;
+  selected.clear();
+  $("briefing").hidden = false;
+  document.documentElement.classList.add("in-briefing");
+  $("status-text").textContent = "CHOOSE YOUR BATTLEFIELD";
+  view.resize();
+  updateUI();
+  $("scenario").focus();
 }
 function restart() {
   touchControls?.reset();
@@ -1313,6 +1325,7 @@ $("modal").onclick = (event) => {
   if (event.target.closest("[data-settings]")) settingsUI.open();
   if (event.target.closest("[data-resume]")) closeModal();
   if (event.target.closest("[data-restart]")) restart();
+  if (event.target.closest("[data-new-game]")) newGame();
 };
 
 function frame(now) {

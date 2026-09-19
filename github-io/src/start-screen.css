@@ -8,3 +8,6 @@
 #briefing .briefing-tools{margin-top:0}
 #briefing .briefing-note{margin-top:8px}
 #briefing>#start{width:100%;height:52px;min-height:52px;margin:0;justify-content:center;font-size:18px;pointer-events:auto}
+
+#briefing .map-select-label{grid-column:1 / -1;font-size:14px;font-weight:700;color:var(--text)}
+#briefing .briefing-tools select{font-size:14px}

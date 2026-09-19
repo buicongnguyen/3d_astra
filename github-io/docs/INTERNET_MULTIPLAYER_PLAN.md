@@ -90,3 +90,27 @@ Test simultaneous builds/upgrades, contested deposits, support units, tank count
 - Which physical Android phone will be the minimum performance target.
 
 No multiplayer code or hosting is being provisioned by this plan.
+
+## Implementation decision — 20 September 2026
+
+Start with private 1v1 Three.js games; preserve offline play. Keep the client and Blender assets on GitHub Pages. Use Render Free as the initial hosting candidate for the Node.js authoritative server, subject to current account eligibility, quotas and measured performance. No service has been provisioned and no paid plan is authorized by this document.
+
+### First implementation tasks
+
+1. Introduce LocalSession and NetworkSession, then route every gameplay command through the session. Replace player-zero assumptions throughout selection, economy, minimap, orders and fog. Keep camera/selection local. Preserve the New game / choose map menu for offline games; online map changes belong in the room lobby before Ready.
+2. Extract and test the existing simulation under Node. Add versioned command schemas and server validation for ownership, prerequisites, finite coordinates, costs, queue limits and duplicate command IDs.
+3. Implement private room creation/join, unguessable invite codes, separate reconnect credentials, map/color choice, readiness, loading acknowledgement, surrender and rematch. Start with one room for load testing, not an unmeasured player-capacity promise.
+4. Run a fixed 20 Hz server simulation; initially send player-filtered snapshots at 10 Hz. Add interpolation and immediate local command markers. Preserve direct Move/retreat priority and Shift queues. Never send hidden enemy state or privately owned resources/queues to opponents.
+5. Add secure WebSocket transport, bounded queues, heartbeat, reconnect/resync and user-visible errors. A sleeping free service needs an HTTP wake-up/loading screen before room creation. Backgrounding Android must use reconnect; a local menu never pauses the shared match.
+6. Supply a Dockerfile or native Node start command, Render deployment configuration, PORT binding on 0.0.0.0, /health endpoint and environment settings. Keep credentials server-side. Deploy one process until explicit room routing and persistence are implemented.
+7. Set the Pages client server URL, allow the intended frontend origin, and enforce protocol/catalog compatibility. Deploy backward-compatible server updates before client updates. Free-host restarts can end in-memory matches; show cancellation honestly until crash recovery is implemented.
+8. Test two real internet connections and physical Android Chrome. Verify simultaneous purchases, build cancellation, healer/engineer commands, tanks, fog changes, disconnects, duplicate joins, full rooms and version mismatch. Record tick time, bandwidth and memory before increasing room capacity.
+9. Add Godot as a client of the same protocol after the Three.js beta passes. Reuse Blender assets. Cross-play needs matching coordinate, map and catalog definitions; the Godot client must not act as a second simulation authority.
+
+### Hosting setup and spending controls
+
+A Render account and deployment access are needed when provisioning begins. Recheck [Render free-service limits](https://render.com/docs/free) and choose a region near the players. Configure spending controls before attaching paid resources; keep assets on Pages to reduce backend bandwidth. Do not rely on a free database for permanent match history without checking its retention policy. Choose a paid service only after an explicit budget decision.
+
+### Release acceptance
+
+Two people must complete a full private match from different networks, see the same result, and reconnect without duplicated purchases or units. Existing offline maps, AI opponents and mobile controls must continue to work. Online remains labelled unavailable until a healthy compatible server is configured; never advertise working multiplayer from frontend-only deployment.

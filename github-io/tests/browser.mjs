@@ -190,7 +190,7 @@ try {
     window.__frontier.sim.own(1).find((e) => e.type === "hq").hp = 0;
   });
   await page.getByRole("heading", { name: "The frontier is yours." }).waitFor();
-  await page.getByRole("button", { name: "Deploy again" }).click();
+  await page.getByRole("button", { name: "Replay this map" }).click();
   assert.equal(await page.evaluate(() => window.__frontier.sim.result), null);
   assert.equal(
     await page.evaluate(
@@ -205,7 +205,7 @@ try {
   await page
     .getByRole("heading", { name: "Your outpost has fallen." })
     .waitFor();
-  await page.getByRole("button", { name: "Deploy again" }).click();
+  await page.getByRole("button", { name: "Replay this map" }).click();
 
   // Snapshot an active 100-unit scene. This measures this browser/hardware only.
   await page.evaluate(() => {

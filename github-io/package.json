@@ -24,7 +24,8 @@
     "test:patrol": "node tests/patrol.mjs",
     "test:activity": "node tests/activity.mjs",
     "test:status-layout": "node tests/status-layout.mjs",
-    "test:visual-combat": "node tests/visual-combat.mjs"
+    "test:visual-combat": "node tests/visual-combat.mjs",
+    "test:new-game": "node tests/new-game.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

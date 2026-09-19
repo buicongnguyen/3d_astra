@@ -54,7 +54,7 @@ jobs:
           - name: progression
             scripts: progression
           - name: maps
-            scripts: stages corners
+            scripts: stages corners new-game
           - name: commands
             scripts: auto-combat harvesters hotkeys pc-controls
           - name: construction
