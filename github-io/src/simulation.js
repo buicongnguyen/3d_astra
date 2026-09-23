@@ -545,9 +545,15 @@ export class Simulation {
     return best;
   }
   hit(e, target) {
-    const bonus = e.counter === target.type ? 1.6 : 1;
-    const damage = this.attackValue(e)*bonus*(target.mechanical ? (e.mechanical_bonus || 1) : 1);
-    const apply = (t,scale = 1) => this.applyDamage(t,damage*scale,e.team);
+    // Counter and anti-vehicle multipliers depend on each victim, including splash victims.
+    const apply = (t, scale = 1) =>
+      this.applyDamage(
+        t,
+        this.attackValue(e) * scale *
+          (e.counter === t.type ? 1.6 : 1) *
+          (t.mechanical ? e.mechanical_bonus || 1 : 1),
+        e.team,
+      );
     apply(target);
     if (e.type === "breaker")
       for (const t of this.entities)
@@ -582,9 +588,59 @@ export class Simulation {
       e.angle = Math.atan2(t.x - e.x, t.z - e.z);
       e.moving = false;
       if (e.cooldown <= 0) this.hit(e, t);
-    } else if (chase && e.kind === "unit")
-      this.move(e, this.approach(e, t, Math.max(1.2, e.range * 0.7)), dt);
+    } else if (chase && e.kind === "unit") {
+      if (this.noFiringPosition(e, t)) return false;
+      if (!inRange) {
+        this.move(e, this.approach(e, t, Math.max(1.2, e.range * 0.7)), dt);
+        return true;
+      }
+      // In range but screened by a rock or building: walk around to a clear shot
+      // instead of pressing into the obstacle until the order times out.
+      const goal = this.firingPosition(e, t);
+      if (!goal) return false;
+      // Arriving still screened, or 3 s without progress (an unreachable spot), fails this
+      // candidate before the generic 6 s stall could cancel the whole order.
+      if (this.move(e, goal, dt) || e.stalled > 3) {
+        goal.failed = true;
+        e.stalled = 0;
+        e.moveSample = null;
+      }
+    }
     return true;
+  }
+  noFiringPosition(e, t) {
+    const f = e.firing;
+    return !!f?.exhausted && f.target === t.id && f.revision === this.nav.revision &&
+      Math.hypot(f.tx - t.x, f.tz - t.z) < 1;
+  }
+  // The nearest standable point with a clear shot on rings around the target, widest ring
+  // first; each failed candidate moves on to the next ring. Returns null once every ring
+  // failed, so an attack ends (attack-move passes on) instead of waiting forever.
+  firingPosition(e, t) {
+    const cached = e.firing;
+    let attempt = 0;
+    if (
+      cached?.target === t.id &&
+      cached.revision === this.nav.revision &&
+      Math.hypot(cached.tx - t.x, cached.tz - t.z) < 1
+    ) {
+      if (cached.exhausted) return null;
+      if (!cached.failed) return cached;
+      attempt = cached.attempt + 1;
+    }
+    const rings = [0.7, 0.45, 0.2];
+    let best = null;
+    for (; attempt < rings.length && !best; attempt += best ? 0 : 1) {
+      const r = t.radius + Math.max(1.2, e.range * rings[attempt]);
+      for (let i = 0; i < 16; i++) {
+        const a = (i / 16) * Math.PI * 2,
+          p = { x: t.x + Math.cos(a) * r, z: t.z + Math.sin(a) * r };
+        if (!this.nav.canStand(p.x, p.z, e.radius) || !this.nav.clearLine(p, t, t.id)) continue;
+        if (!best || distance(e, p) < distance(e, best)) best = p;
+      }
+    }
+    e.firing = { ...best, target: t.id, tx: t.x, tz: t.z, revision: this.nav.revision, attempt, exhausted: !best };
+    return best ? e.firing : null;
   }
   updateWorker(e, o, dt) {
     const t = this.get(o.target);
@@ -765,6 +821,27 @@ export class Simulation {
     const hq = own.find((e) => e.type === "hq" && e.complete) || own.find(e => e.type === "hq");
     if (hq && workers.length < 9 && hq.queue.length < 1)
       this.enqueue(hq.id, "worker");
+    // Resume construction whose builder died or gave up on its route. Otherwise one
+    // abandoned site blocks every later AI structure, including supply relays.
+    for (const site of own.filter((e) => e.kind === "building" && !e.complete)) {
+      if (workers.some((w) => w.orders.some((o) => o.type === "build" && o.target === site.id)))
+        continue;
+      // Retries count reassignments that made no progress: builders killed mid-way on a
+      // reachable site never exhaust them, while an unreachable site is given up.
+      if (site.progress > (site.aiProgress ?? -1)) {
+        site.aiProgress = site.progress;
+        site.aiRetries = 0;
+      }
+      const builder = workers
+        .filter((w) => !w.orders.some((o) => o.type === "build"))
+        .sort((a, b) => distance(a, site) - distance(b, site))[0];
+      if (!builder) continue;
+      if (++site.aiRetries > 3) {
+        this.cancelBuilding(site.id);
+        continue;
+      }
+      this.issue([builder.id], { type: "build", target: site.id });
+    }
     const pop = this.population(team);
     const want = !own.some((e) => e.type === "barracks")
       ? "barracks"
@@ -809,26 +886,39 @@ export class Simulation {
         if (affordable) this.enqueue(b.id,affordable);
       }
     }
-    const threat =
-      hq &&
-      this.entities.find(
-        (e) =>
-          e.team !== team &&
-          e.hp > 0 &&
-          this.isVisible(e, team) &&
-          distance(hq, e) < 25,
+    const threats = hq
+      ? this.entities
+          .filter((e) => e.team !== team && e.hp > 0 && this.isVisible(e, team) && distance(hq, e) < 25)
+          .sort((a, b) => distance(hq, a) - distance(hq, b))
+      : [];
+    const threatIds = new Set(threats.map((e) => e.id));
+    const engaged = (e) => e.orders[0]?.type === "attack" && threatIds.has(e.orders[0].target);
+    let incursion = false;
+    if (threats.length) {
+      const power = threats.reduce(
+        (sum, e) => sum + (e.kind === "building" ? 4 : e.type === "worker" ? 0.5 : e.pop || 1),
+        0,
       );
-    if (threat)
-      this.issue(
-        army
-          .filter((e) => e.damage > 0 && (!e.orders.length || e.orders[0].type !== "attack"))
-          .map((e) => e.id),
-        { type: "attack", target: threat.id },
+      incursion = power >= 4;
+      const ready = army.filter(
+        (e) => e.damage > 0 && (!e.orders.length || e.orders[0].type !== "attack"),
       );
-    else if (this.time >= this.waveAt[team] && army.length >= 4) {
+      // A real incursion recalls everyone. A lone scout or harvester is answered by units
+      // near the core, or the two closest units if none are home, and never recalls a wave.
+      const home = ready.filter((e) => distance(e, hq) < 40);
+      const answer = incursion
+        ? ready
+        : home.length
+          ? home
+          : ready.sort((a, b) => distance(a, hq) - distance(b, hq)).slice(0, 2);
+      if (answer.length)
+        this.issue(answer.map((e) => e.id), { type: "attack", target: threats[0].id });
+    }
+    const wave = army.filter((e) => !engaged(e));
+    if (!incursion && this.time >= this.waveAt[team] && wave.length >= 4) {
       const target = [...this.knownCores[team].values()]
         .sort((a, b) => distance(hq, a) - distance(hq, b))[0] || this.scoutDestination(team);
-      if (target) this.issue(army.map(e => e.id), { type: "attackmove", x: target.x, z: target.z });
+      if (target) this.issue(wave.map(e => e.id), { type: "attackmove", x: target.x, z: target.z });
       this.waveAt[team] = this.time + 50;
     }
   }
@@ -877,11 +967,15 @@ export class Simulation {
       }
       if (o.type === "attack") {
         const t = this.get(o.target);
-        if (!this.fight(e, t, dt)) this.finish(e);
+        if (!this.fight(e, t, dt)) {
+          if (t && this.noFiringPosition(e, t))
+            this.message(`${e.name} has no clear line of fire on that target. Order cleared.`, e.team);
+          this.finish(e);
+        }
       } else if (o.type === "attackmove") {
+        // A target with no reachable firing position is passed by; the advance continues.
         const t = this.enemy(e, 12);
-        if (t) this.fight(e, t, dt);
-        else if (this.move(e, o, dt, 1.2)) this.finish(e);
+        if ((!t || !this.fight(e, t, dt)) && this.move(e, o, dt, 1.2)) this.finish(e);
       } else if (o.type === 'patrol') {
         if (this.move(e, o, dt, 1.2)) {
           // A queued follow-up takes over at the next endpoint. Otherwise loop.

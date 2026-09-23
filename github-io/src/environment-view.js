@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { CROSSINGS, SURFACES } from "./terrain.js";
+import { ROCKS } from "./data.js";
 import { themeFor } from './visual-style.js';
 export function optimizeEnvironment(assets) {
   assets.updateMatrixWorld(true);
@@ -50,6 +51,7 @@ export class EnvironmentView {
     this.particles = [];
     this.lastTime = 0;
     this.owned=[];
+    this.rocks(assets);
     this.backdrop(assets);
     if (!terrain.river) return;
     const waterMat = new THREE.MeshStandardMaterial({
@@ -219,11 +221,47 @@ export class EnvironmentView {
     this.cursor = 0;
     this.emission = 0;
   }
+  // Rock obstacles block movement, so they stay visible regardless of the decoration setting.
+  // Each obstacle gets a main boulder and a smaller companion from the Blender variants.
+  rocks(assets) {
+    const variants=['a','b','c'].map(k=>assets.getObjectByName(`asset_rock_${k}`)?.children.find(m=>m.isMesh)).filter(Boolean);
+    if(!variants.length)return;
+    const material=variants[0].material.clone();
+    material.color.set(themeFor(this.terrain.id).rock);
+    material.envMapIntensity=.35;
+    this.owned.push(material);
+    // Scale by each variant's measured footprint so the drawn rock stays inside the collision
+    // circle units path around (radius r); the companion sits wholly inside it too.
+    const reach=variants.map(({geometry})=>{
+      const p=geometry.attributes.position;let max=0;
+      for(let i=0;i<p.count;i++)max=Math.max(max,Math.hypot(p.getX(i),p.getZ(i)));
+      return max||1;
+    });
+    const transforms=variants.map(()=>[]),dummy=new THREE.Object3D();
+    ROCKS.forEach(([x,z,r],i)=>{
+      for(const [k,size,dx,dz] of [[i,r*.98,0,0],[i+1,r*.4,r*.35,-r*.35]]){
+        const v=k%variants.length,scale=size/reach[v];
+        dummy.position.set(x+dx,0,z+dz);dummy.rotation.set(0,i*2.1+k,0);dummy.scale.set(scale,scale*(.9+(i%3)*.12),scale);
+        dummy.updateMatrix();transforms[v].push(dummy.matrix.clone());
+      }
+    });
+    variants.forEach((source,k)=>{
+      const batch=new THREE.InstancedMesh(source.geometry,material,transforms[k].length);
+      transforms[k].forEach((matrix,i)=>batch.setMatrixAt(i,matrix));
+      batch.castShadow=batch.receiveShadow=true;
+      this.root.add(batch);
+    });
+  }
   backdrop(assets) {
     const style=themeFor(this.terrain.id),dummy=new THREE.Object3D();
-    const geometry=new THREE.DodecahedronGeometry(1,0),material=new THREE.MeshStandardMaterial({color:style.rock,roughness:1});
-    this.owned.push(geometry,material);
-    const hills=new THREE.InstancedMesh(geometry,material,16);
+    // Distant hills reuse the boulder model when available; otherwise a faceted placeholder.
+    const boulder=assets.getObjectByName('asset_rock_b')?.children.find(m=>m.isMesh);
+    const geometry=boulder?null:new THREE.DodecahedronGeometry(1,0),material=new THREE.MeshStandardMaterial({color:style.rock,roughness:1,vertexColors:!!boulder});
+    // Ruins use plain boxes without a colour attribute, so they need their own material:
+    // vertexColors on geometry lacking colours renders black.
+    const ruinMaterial=new THREE.MeshStandardMaterial({color:style.rock,roughness:1});
+    this.owned.push(...[geometry,material,ruinMaterial].filter(Boolean));
+    const hills=new THREE.InstancedMesh(boulder?.geometry??geometry,material,16);
     for(let i=0;i<16;i++){
       const x=(i%2?1:-1)*(this.terrain.half+7),z=-this.terrain.half+8+Math.floor(i/2)*(this.terrain.size-16)/7;
       dummy.position.set(x,.4,z);dummy.rotation.set(.1,i*2.4,.1);
@@ -244,7 +282,7 @@ export class EnvironmentView {
     }
     if(['classic','basin','highlands'].includes(this.terrain.id)){
       const shape=new THREE.BoxGeometry(1,1,1);this.owned.push(shape);
-      const ruins=new THREE.InstancedMesh(shape,material,12);
+      const ruins=new THREE.InstancedMesh(shape,ruinMaterial,12);
       for(let i=0;i<12;i++){
         dummy.position.set(-this.terrain.half+8+i*3,1,-this.terrain.half-3);dummy.rotation.set(0,0,i%3*.1);
         dummy.scale.set(i%3===0?1:2.8,i%3===0?4:1.5,.8);dummy.updateMatrix();ruins.setMatrixAt(i,dummy.matrix);
@@ -322,7 +360,7 @@ export class EnvironmentView {
     this.water?.material.dispose();
     this.particleGeometry?.dispose();
     this.particleMesh?.material.dispose();
-    this.decor.traverse((o) => {
+    this.root.traverse((o) => {
       if (o.isInstancedMesh) o.dispose();
     });
     for(const resource of this.owned)resource.dispose();

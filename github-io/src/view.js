@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Terrain } from "./terrain.js";
 import { ActivityView } from "./activity-view.js";
@@ -22,6 +23,14 @@ import {
 
 const mat = (color, extra = {}) =>
   new THREE.MeshStandardMaterial({ color, roughness: 0.88, ...extra });
+// Meshes named like this in the Blender models aim (towers) and recoil together. Blender
+// duplicate suffixes arrive sanitised by GLTFLoader ("Barrel.001" -> "Barrel001").
+export const RIG_PART = /^(Main_cannon|Muzzle_brake|Barrel|Cannon|Muzzle|Turret_head)(?![a-z])/i;
+const SUN_OFFSET = new THREE.Vector3(-25, 55, 20);
+// Shadow camera basis, as Matrix4.lookAt builds it (looking from SUN_OFFSET, up +Y).
+const LIGHT_Z = SUN_OFFSET.clone().normalize();
+const LIGHT_X = new THREE.Vector3(0, 1, 0).cross(LIGHT_Z).normalize();
+const LIGHT_Y = LIGHT_Z.clone().cross(LIGHT_X);
 let seed = 1482;
 function random() {
   seed = (seed * 1664525 + 1013904223) >>> 0;
@@ -83,21 +92,27 @@ export class WorldView {
     this.teamTemplates = new Map();
     this.fogClock = 0;
     this.gridVisible = false;
+    this.previous = new Map();
+    // Image-based lighting gives the Blender PBR materials (bare steel, painted armour,
+    // crystals) real reflections. It is assigned per material (reflect()), not as
+    // scene.environment: three.js would then override every material's envMapIntensity and
+    // wash out the terrain, which is tuned for the sun and hemisphere light alone.
+    const pmrem = new THREE.PMREMGenerator(this.renderer),
+      room = new RoomEnvironment();
+    this.environmentMap = pmrem.fromScene(room, 0.04).texture;
+    room.dispose();
+    pmrem.dispose();
     this.ambientLight=new THREE.HemisphereLight(0xc1ddd7, 0x736145, 2.0);
     this.scene.add(this.ambientLight);
     const sun = new THREE.DirectionalLight(0xffe1b0, 3.2);
     this.sun=sun;
-    sun.position.set(-25, 55, 20);
+    // The shadow frustum follows the camera focus and is sized to the view (updateCamera):
+    // a fixed frustum around the origin left whole bases unshadowed on the 160 and 192 maps.
+    sun.position.copy(SUN_OFFSET);
+    this.scene.add(sun.target);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
-    Object.assign(sun.shadow.camera, {
-      left: -65,
-      right: 65,
-      top: 65,
-      bottom: -65,
-      near: 0.5,
-      far: 150,
-    });
+    Object.assign(sun.shadow.camera, { near: 0.5, far: 220 });
     sun.shadow.bias = -0.0003;
     sun.shadow.normalBias = 0.04;
     this.scene.add(sun);
@@ -234,7 +249,7 @@ export class WorldView {
             }
             // Keep the existing named Blender cannon pieces articulated while
             // still merging the barrel's materials into a compact rig.
-            const target=/^(Main_cannon|Muzzle_brake|Barrel|Cannon|Muzzle)(\.|$)/i.test(o.name)?barrelBuckets:buckets;
+            const target=RIG_PART.test(o.name)?barrelBuckets:buckets;
             const key = o.material.name;
             if (!target.has(key))
               target.set(key, { material: o.material, geometries: [] });
@@ -269,6 +284,7 @@ export class WorldView {
                     m.emissiveIntensity = 0.8;
                   }
                 }
+                this.reflect(m, 0.6);
                 materials.set(name, m);
               }
               o.material = materials.get(name);
@@ -286,6 +302,11 @@ export class WorldView {
       )
     ).scene;
     optimizeEnvironment(this.environmentAssets);
+    this.environmentAssets.traverse((o) => {
+      if (o.isMesh) this.reflect(o.material, 0.35);
+    });
+    // Blender boulders (EnvironmentView) replace the placeholder rocks drawn before loading.
+    if (this.environmentAssets.getObjectByName("asset_rock_a")) this.removePlaceholderRocks();
     this.environment = new EnvironmentView(
       this.scene,
       this.terrain,
@@ -302,7 +323,18 @@ export class WorldView {
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = themeFor(this.terrain.id).dirt;
     ctx.fillRect(0, 0, 1024, 1024);
-    if (this.terrain.id !== "classic") paintTerrain(ctx, this.terrain, 1024);
+    if (this.terrain.id !== "classic") {
+      paintTerrain(ctx, this.terrain, 1024);
+      // Surfaces are sampled in 4-pixel blocks; blur them into natural transitions instead
+      // of staircase borders. Browsers without canvas filters keep the blocks.
+      const soft = document.createElement("canvas");
+      soft.width = soft.height = 1024;
+      const softContext = soft.getContext("2d");
+      softContext.drawImage(canvas, 0, 0);
+      ctx.filter = "blur(4px)";
+      ctx.drawImage(soft, 0, 0);
+      ctx.filter = "none";
+    }
     for (let i = 0; i < 16000; i++) {
       const x = random() * 1024,
         y = random() * 1024,
@@ -371,7 +403,8 @@ export class WorldView {
         0,
       ),
     );
-    this.grid = new THREE.GridHelper(this.terrain.size, 48, 0xd8d8b4, 0xa6b087);
+    // One grid line per two-unit navigation cell on every map size.
+    this.grid = new THREE.GridHelper(this.terrain.size, this.terrain.grid, 0xd8d8b4, 0xa6b087);
     this.grid.position.y = 0.035;
     this.grid.material.transparent = true;
     this.grid.material.opacity = 0.15;
@@ -386,53 +419,61 @@ export class WorldView {
       }),
     );
     this.terrainRoot.add(edge);
-    const rockMat = mat(0x626957),
-      topMat = mat(0x888872);
+    const rockMat = mat(0x626957);
+    this.pebbleMaterial = rockMat;
+    // Placeholder obstacles until the Blender boulders load (EnvironmentView draws those).
+    // The random sequence is consumed either way, so the scatter below is identical on
+    // every build of a map regardless of when the models finished loading.
+    const placeholders = !this.environmentAssets?.getObjectByName("asset_rock_a"),
+      topMat = placeholders ? mat(0x888872) : null;
+    this.placeholderRocks = new THREE.Group();
+    this.terrainRoot.add(this.placeholderRocks);
     for (const [x, z, r] of ROCKS) {
       for (let i = 0; i < 4; i++) {
-        const stone = mesh(
-          new THREE.DodecahedronGeometry(1, 0),
-          i === 0 ? topMat : rockMat,
-          x + (random() - 0.5) * r,
-          0.6 + random() * r * 0.3,
-          z + (random() - 0.5) * r,
-        );
-        stone.scale.set(
-          r * (0.6 + random() * 0.4),
-          r * (0.45 + random() * 0.55),
-          r * (0.6 + random() * 0.4),
-        );
-        stone.rotation.set(random() * 0.7, random() * 6, random() * 0.4);
-        this.terrainRoot.add(stone);
+        const position = [x + (random() - 0.5) * r, 0.6 + random() * r * 0.3, z + (random() - 0.5) * r],
+          scale = [r * (0.6 + random() * 0.4), r * (0.45 + random() * 0.55), r * (0.6 + random() * 0.4)],
+          rotation = [random() * 0.7, random() * 6, random() * 0.4];
+        if (!placeholders) continue;
+        const stone = mesh(new THREE.DodecahedronGeometry(1, 0), i === 0 ? topMat : rockMat, ...position);
+        stone.scale.set(...scale);
+        stone.rotation.set(...rotation);
+        this.placeholderRocks.add(stone);
       }
     }
+    const inRock = (p) => ROCKS.some(([x, z, r]) => Math.hypot(p.x - x, p.z - z) < r + 0.3);
+    // Scatter scales with map area so large maps are not bare beyond the central 96 units.
+    const spread = this.terrain.size - 1,
+      density = (this.terrain.size / 96) ** 2;
+    const pebbleCount = Math.round(500 * density);
     const pebbles = new THREE.InstancedMesh(
       new THREE.DodecahedronGeometry(0.22, 0),
       rockMat,
-      500,
+      pebbleCount,
     );
     const dummy = new THREE.Object3D();
-    for (let i = 0; i < 500; i++) {
-      dummy.position.set((random() - 0.5) * 95, 0.08, (random() - 0.5) * 95);
+    for (let i = 0; i < pebbleCount; i++) {
+      dummy.position.set((random() - 0.5) * spread, 0.08, (random() - 0.5) * spread);
       dummy.scale.setScalar(0.5 + random());
-      if (this.terrain.river && Math.abs(dummy.position.z) < 5)
+      if ((this.terrain.river && Math.abs(dummy.position.z) < 5) || inRock(dummy.position))
         dummy.scale.setScalar(0);
       dummy.rotation.set(random(), random() * 6, random());
       dummy.updateMatrix();
       pebbles.setMatrixAt(i, dummy.matrix);
     }
     this.terrainRoot.add(pebbles);
+    const grassCount = Math.round(850 * density);
     const grass = new THREE.InstancedMesh(
       new THREE.ConeGeometry(0.22, 0.6, 3),
       mat(0x515f40),
-      850,
+      grassCount,
     );
-    for (let i = 0; i < 850; i++) {
-      dummy.position.set((random() - 0.5) * 95, 0.22, (random() - 0.5) * 95);
+    for (let i = 0; i < grassCount; i++) {
+      dummy.position.set((random() - 0.5) * spread, 0.22, (random() - 0.5) * spread);
       dummy.scale.setScalar(0.4 + random() * 0.7);
       if (
-        this.terrain.river &&
-        this.terrain.at(dummy.position.x, dummy.position.z) !== "grass"
+        (this.terrain.river &&
+          this.terrain.at(dummy.position.x, dummy.position.z) !== "grass") ||
+        inRock(dummy.position)
       )
         dummy.scale.setScalar(0);
       dummy.rotation.set(0, random() * 6, 0.15);
@@ -442,14 +483,17 @@ export class WorldView {
     this.terrainRoot.add(grass);
     this.grass = grass;
     grass.visible = this.settings.detail;
-    // Subtle starting-base landing pad.
+    // Subtle starting-base landing pad under each Command core spawn (maps offset bases outward).
+    const offset = this.terrain.offset || 0;
     for (const side of [1, -1]) {
+      const px = (-25 - offset) * side,
+        pz = (24 + offset) * side;
       const pad = mesh(
         new THREE.CylinderGeometry(6.2, 6.2, 0.04, 8),
         mat(0x6a7262),
-        -25 * side,
+        px,
         0.025,
-        24 * side,
+        pz,
       );
       pad.rotation.y = Math.PI / 8;
       pad.castShadow = false;
@@ -463,9 +507,27 @@ export class WorldView {
         }),
       );
       ring.rotation.x = -Math.PI / 2;
-      ring.position.set(-25 * side, 0.052, 24 * side);
+      ring.position.set(px, 0.052, pz);
       this.terrainRoot.add(ring);
     }
+  }
+  reflect(material, intensity) {
+    if (!material.isMeshStandardMaterial) return;
+    material.envMap = this.environmentMap;
+    material.envMapIntensity = intensity;
+  }
+  removePlaceholderRocks() {
+    if (!this.placeholderRocks) return;
+    this.placeholderRocks.removeFromParent();
+    const materials = new Set();
+    this.placeholderRocks.traverse((o) => {
+      if (!o.isMesh) return;
+      o.geometry.dispose();
+      materials.add(o.material);
+    });
+    // The darker rock material is shared with the pebbles, which stay.
+    for (const m of materials) if (m !== this.pebbleMaterial) m.dispose();
+    this.placeholderRocks = null;
   }
   createFog() {
     if (this.fogMesh) { this.scene.remove(this.fogMesh); this.fogMesh.geometry.dispose(); this.fogMesh.material.dispose(); this.fogTexture.dispose(); }
@@ -506,6 +568,24 @@ export class WorldView {
     this.camera.lookAt(this.focus);
     this.camera.updateProjectionMatrix();
     this.camera.updateMatrixWorld();
+    // Shadow frustum: cover the farthest visible ground corner (the tilted view reaches about
+    // 0.64 x zoom deep), then snap its centre to whole shadow texels in light space so
+    // shadow edges do not shimmer while the camera pans.
+    const half = Math.min(130, this.zoom * Math.hypot(aspect / 2, 0.64) + 6),
+      shadow = this.sun.shadow.camera;
+    if (shadow.right !== half) {
+      Object.assign(shadow, { left: -half, right: half, top: half, bottom: -half });
+      shadow.updateProjectionMatrix();
+    }
+    const texel = (2 * half) / this.sun.shadow.mapSize.x,
+      snap = (axis) => Math.round(this.focus.dot(axis) / texel) * texel;
+    const center = LIGHT_X.clone()
+      .multiplyScalar(snap(LIGHT_X))
+      .addScaledVector(LIGHT_Y, snap(LIGHT_Y))
+      .addScaledVector(LIGHT_Z, this.focus.dot(LIGHT_Z));
+    this.sun.target.position.copy(center);
+    this.sun.target.updateMatrixWorld();
+    this.sun.position.copy(center).add(SUN_OFFSET);
   }
   pan(dx, dz) {
     this.focus.x = clamp(this.focus.x + dx, -this.terrain.half+6, this.terrain.half-6);
@@ -570,7 +650,9 @@ export class WorldView {
     let best = null,
       score = Infinity;
     for (const e of [...sim.entities, ...sim.resources]) {
-      if (!sim.isVisible(e) || e.amount === 0 || e.hp <= 0) continue;
+      // Explored deposits stay drawn under fog, so they must stay targetable for gathering.
+      const shown = e.kind === "resource" ? this.resourceObjects.get(e.id)?.visible : sim.isVisible(e);
+      if (!shown || e.amount === 0 || e.hp <= 0) continue;
       const p = this.project(
         e.x,
         e.z,
@@ -671,6 +753,20 @@ export class WorldView {
     return root;
   }
   createResource(e) {
+    const template = this.environmentAssets?.getObjectByName(`asset_crystal_${e.type}`);
+    if (template) {
+      // Shared Blender crystal cluster; each deposit gets its own stable heading.
+      const cluster = template.clone(true);
+      cluster.userData.shared = true;
+      cluster.rotation.y = (e.id * 2.39996) % (Math.PI * 2);
+      cluster.position.set(e.x, 0, e.z);
+      cluster.traverse((m) => {
+        if (m.isMesh) m.castShadow = m.receiveShadow = true;
+      });
+      this.scene.add(cluster);
+      this.resourceObjects.set(e.id, cluster);
+      return cluster;
+    }
     const group = new THREE.Group(),
       color = e.type === "alloy" ? 0xd59d43 : 0x65c9e2;
     const material = mat(color, {
@@ -730,18 +826,44 @@ export class WorldView {
       if(o && weaponStyle(event).kind==='cannon')o.userData.recoil=.22;
     }
   }
-  update(sim, dt, selected, hover) {
+  // Record the state before each fixed simulation step so frames between steps can
+  // interpolate: the simulation runs at 20 Hz, displays at 60-240 Hz.
+  beforeTick(sim) {
+    this.previousTime = sim.time;
+    for (const e of sim.entities) {
+      if (e.kind !== "unit") continue;
+      const p = this.previous.get(e.id);
+      if (p) {
+        p.x = e.x;
+        p.z = e.z;
+        p.angle = e.angle;
+      } else this.previous.set(e.id, { x: e.x, z: e.z, angle: e.angle });
+    }
+  }
+  update(sim, dt, selected, hover, alpha = 1) {
     this.environment?.update(sim, dt);
     const alive = new Set();
+    // Interpolate only from a snapshot taken exactly one tick before the current state;
+    // ticks run outside the frame loop (test stepping) leave the snapshot stale.
+    const interpolate = alpha < 1 && Math.abs(sim.time - 0.05 - this.previousTime) < 1e-6;
     for (const e of sim.entities) {
       alive.add(e.id);
       const o = this.objects.get(e.id) || this.createEntity(e);
       o.userData.recoil=Math.max(0,o.userData.recoil-dt);
       o.visible = sim.isVisible(e);
       if (!o.visible) continue;
-      o.position.set(e.x, 0, e.z);
+      let p = e.kind === "unit" && interpolate ? this.previous.get(e.id) : null;
+      // No unit covers more than ~0.3 units per tick; a larger jump is a teleport.
+      if (p && Math.hypot(e.x - p.x, e.z - p.z) > 1) p = null;
       const m = o.userData.model;
-      m.rotation.y = e.kind === "unit" ? e.angle : e.team === 0 ? 0 : Math.PI;
+      if (p) {
+        o.position.set(p.x + (e.x - p.x) * alpha, 0, p.z + (e.z - p.z) * alpha);
+        const turn = Math.atan2(Math.sin(e.angle - p.angle), Math.cos(e.angle - p.angle));
+        m.rotation.y = p.angle + turn * alpha;
+      } else {
+        o.position.set(e.x, 0, e.z);
+        m.rotation.y = e.kind === "unit" ? e.angle : e.team === 0 ? 0 : Math.PI;
+      }
       if(o.userData.barrel){
         const rig=o.userData.barrel;
         rig.rotation.y=e.type==='tower'?e.angle-m.rotation.y:0;
@@ -778,6 +900,7 @@ export class WorldView {
         this.disposeEntity(object);
         this.objects.delete(id);
       }
+    for (const id of this.previous.keys()) if (!alive.has(id)) this.previous.delete(id);
     for (const r of sim.resources) {
       const o = this.resourceObjects.get(r.id) || this.createResource(r);
       if (sim.isVisible(r)) o.userData.lastAmount = r.amount;
@@ -838,12 +961,14 @@ export class WorldView {
     this.objects.clear();
     for (const o of this.resourceObjects.values()) {
       this.scene.remove(o);
+      if (o.userData.shared) continue; // Blender clusters share the loaded template's data.
       o.traverse((m) => {
         if (m.isMesh) m.geometry.dispose();
       });
       o.children[0]?.material.dispose();
     }
     this.resourceObjects.clear();
+    this.previous.clear();
     for (const e of this.effects) {
       this.scene.remove(e.mesh);
       e.mesh.geometry.dispose();

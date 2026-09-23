@@ -201,9 +201,11 @@ try {
     ),
     0,
   );
-  assert.equal(
-    await read(() => window.__frontier.sim.players[0].alloy),
-    alloyBefore,
+  // Harvesters are still gathering in real time, so a +10 delivery may land during the
+  // tap; the preview must simply never spend (a relay would cost 100).
+  assert.ok(
+    (await read(() => window.__frontier.sim.players[0].alloy)) >= alloyBefore,
+    "Placement preview does not spend resources",
   );
   assert.equal(await page.locator("#confirm-build").isEnabled(), true);
   await tap("#confirm-build");

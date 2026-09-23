@@ -9,11 +9,11 @@
     "highlands": {"sky":"#454f60","sun":"#e1eaff","ambient":"#bfccde","rock":"#697286","dust":"#a1a5ac","dirt":"#807b70","grass":"#747f72","sand":"#ada795","road":"#9c9380","stone":"#6e7887"}
   },
   "weapons": {
-    "rifle":{"height":1.4,"reach":0.75,"life":0.14,"kind":"rifle"},
-    "tank":{"height":1.7,"reach":2.5,"life":0.32,"kind":"cannon"},
-    "breaker":{"height":1.5,"reach":1.9,"life":0.28,"kind":"cannon"},
-    "tower":{"height":3.65,"reach":1.8,"life":0.26,"kind":"cannon"},
-    "antitank":{"height":1.83,"reach":1.55,"life":0.24,"kind":"rocket"},
-    "support":{"height":1.5,"reach":0.5,"life":0.22,"kind":"support"}
+    "rifle":{"height":1.42,"reach":1.25,"life":0.14,"kind":"rifle"},
+    "tank":{"height":1.7,"reach":2.85,"life":0.32,"kind":"cannon"},
+    "breaker":{"height":1.44,"reach":1.9,"life":0.28,"kind":"cannon"},
+    "tower":{"height":3.65,"reach":1.72,"life":0.26,"kind":"cannon"},
+    "antitank":{"height":1.83,"reach":1.1,"life":0.24,"kind":"rocket"},
+    "support":{"height":1.34,"reach":0.82,"life":0.22,"kind":"support"}
   }
 }

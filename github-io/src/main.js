@@ -98,6 +98,7 @@ let sim = new Simulation({ map: mapId, enemyCount }),
 let uiClock = 0,
   timePrevious = performance.now(),
   accumulator = 0,
+  renderAlpha = 1,
   frameCount = 0,
   frameTime = 0,
   noticeTimeout,
@@ -1338,9 +1339,11 @@ function frame(now) {
     started && !paused && !sim.result,
     sim.terrain.river && Math.abs(view.focus.z) < 14,
   );
-  if (started && !paused && !sim.result) {
+  const running = started && !paused && !sim.result;
+  if (running) {
     accumulator += dt;
     while (accumulator >= 0.05) {
+      view.beforeTick(sim);
       sim.tick(0.05);
       accumulator -= 0.05;
     }
@@ -1368,7 +1371,11 @@ function frame(now) {
     if (event.type === "message") notice(event.text);
     else view.event(event, sim);
   }
-  view.update(sim, dt, selected, hover);
+  // Presentation effects hold still while paused; units render between the last two
+  // 20 Hz simulation steps so movement stays smooth on high-refresh displays. The blend
+  // is kept while paused so pausing and resuming never snap units back and forth.
+  if (running && !sim.result) renderAlpha = accumulator / 0.05;
+  view.update(sim, started && !paused ? dt : 0, selected, hover, renderAlpha);
   uiClock -= dt;
   if (uiClock <= 0) {
     updateUI();

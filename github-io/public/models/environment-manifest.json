@@ -1,26 +1,46 @@
 {
-  "generator": "Blender 4.5 Python",
+  "generator": "Blender Python (frontier_kit)",
   "provenance": "Original procedural scenery, no external assets",
   "assets": [
     {
+      "name": "asset_rock_a",
+      "triangles": 480
+    },
+    {
+      "name": "asset_rock_b",
+      "triangles": 480
+    },
+    {
+      "name": "asset_rock_c",
+      "triangles": 480
+    },
+    {
+      "name": "asset_crystal_alloy",
+      "triangles": 688
+    },
+    {
+      "name": "asset_crystal_energy",
+      "triangles": 596
+    },
+    {
       "name": "asset_tree",
-      "triangles": 70
+      "triangles": 124
     },
     {
       "name": "asset_bush",
-      "triangles": 60
+      "triangles": 320
     },
     {
       "name": "asset_reed",
-      "triangles": 80
+      "triangles": 156
     },
     {
       "name": "asset_crate",
-      "triangles": 36
+      "triangles": 416
     },
     {
       "name": "asset_bridge",
-      "triangles": 180
+      "triangles": 3976
     }
   ]
 }

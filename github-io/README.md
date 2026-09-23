@@ -1,6 +1,6 @@
 # Frontier Command — browser edition
 
-An original single-player 3D RTS: establish an economy, build an outpost, produce an army, and destroy the opposing Command core. Built with Three.js, Vite, and eleven original Blender-generated entity models.
+An original single-player 3D RTS: establish an economy, build an outpost, produce an army, and destroy the opposing Command core. Built with Three.js, Vite, and thirteen original Blender-generated unit and structure models plus Blender scenery.
 
 The [progression update](PROGRESSION_PLAN.md) matches the [Godot edition](https://buicongnguyen.github.io/3d_astra_godot/): eight unit types, rechargeable shields, building information and three upgrade levels. Select any entity and open **Info & stats** in Selection. Upgrade your Command core to L2, then Barracks L2 for Medics or Foundry L2 for Engineers. Use **Support → friendly target** to heal infantry or repair buildings, Breakers and Battle tanks. Barracks L2 also unlocks Anti-tank soldiers; Foundry L3 unlocks Battle tanks. See [heavy weapon stats](docs/HEAVY_WEAPONS.md).
 
@@ -105,26 +105,21 @@ The published game has no server-side code, runtime CDN imports, paid model serv
 
 Exported models are committed in `public/models/`; Blender is **not required** to run, build, or deploy the web game.
 
-- Editable source: `assets/source/frontier-library.blend`.
-- Generator: `tools/blender/generate_assets.py`.
-- Asset inventory: `public/models/manifest.json`.
-- Riverlands scenery: `public/models/environment.glb`, `environment-manifest.json`, `assets/source/riverlands-library.blend`, and `tools/blender/generate_environment.py`. All scenery is original; no external textures/audio services are required.
-- Generated and verified with official **Blender 4.5.3 LTS**, using background Python execution. No Blender MCP connection was used.
-- Coordinates use meters, ground-level origins, and glTF Y-up export.
-- All eleven entity models are original procedural geometry. Material names `Team` and `TeamGlow` control team colors.
-- Six unit GLBs include five rigid-part Blender clips each, with editable `animated-*.blend` sources. This renderer keeps its runtime articulated leg motion and body movement; the Godot renderer evaluates the clips.
+The pipeline, look development, triangle budgets and runtime naming rules are documented in [docs/ASSET_PIPELINE.md](docs/ASSET_PIPELINE.md).
+
+- Toolkit and generators: `tools/blender/frontier_kit.py`, `generate_assets.py` (units and structures), `generate_environment.py` (boulders, crystal deposits, foliage, crates, truss bridges), `animate_units.py` (Godot clips) and `preview_assets.py` (review renders).
+- Editable sources: `assets/source/frontier-library.blend`, `riverlands-library.blend` and `animated-*.blend`. Inventories: `public/models/manifest.json` and `environment-manifest.json`.
+- Generated with **Blender 4.5.9 LTS**. The models were authored live through MCP for Blender and are reproducible headless; the committed files come from the headless run.
+- Style: bevelled hard-surface models with weighted normals, PBR materials, and ray-traced ambient occlusion, edge wear and grime baked into vertex colours. The renderer adds a reflection environment to model materials.
+- Coordinates use meters, ground-level origins, and glTF Y-up export. Material names `Team*` and `TeamGlow*` control team colors. `tests/assets.test.js` checks the runtime naming contract on every GLB.
+- Eight unit GLBs include five rigid-part Blender clips each. This renderer keeps its runtime articulated leg motion and body movement; the Godot renderer evaluates the clips.
 
 To regenerate from any working directory:
 
 ```sh
 blender --background --python /absolute/path/to/github-io/tools/blender/generate_assets.py
+blender --background --python /absolute/path/to/github-io/tools/blender/generate_environment.py
 blender --background --python /absolute/path/to/github-io/tools/blender/animate_units.py
-```
-
-For the portable Blender downloaded on the initial development machine, from the repository root in PowerShell:
-
-```powershell
-& '.tools/blender-4.5.3-windows-x64/blender.exe' --background --python 'github-io/tools/blender/generate_assets.py'
 ```
 
 The `.tools/` directory is ignored and is not uploaded to GitHub.
@@ -144,7 +139,7 @@ The `.tools/` directory is ignored and is not uploaded to GitHub.
 | `src/touch-controls.js` | Pointer capture, tap/pan/pinch/box gesture lifecycle and cancellation |
 | `src/style.css`, `src/mobile.css` | Desktop and compact portrait/landscape interfaces |
 
-Simulation uses a fixed 20 Hz tick. Visibility updates four times per second; AI strategy updates every 2.5 seconds. Model parts are merged by material where possible, while preserving animated leg pivots. Tests opt into a local diagnostic hook with `?test=1`; ordinary players do not expose that hook.
+Simulation uses a fixed 20 Hz tick; the renderer interpolates unit positions and headings between the last two ticks. Visibility updates four times per second; AI strategy updates every 2.5 seconds. Pathfinding is grid A* with a binary heap. Model parts are merged by material where possible, while preserving animated leg pivots and the barrel/turret rig. Tests opt into a local diagnostic hook with `?test=1`; ordinary players do not expose that hook.
 
 ## Verify
 

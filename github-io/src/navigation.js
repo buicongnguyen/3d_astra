@@ -8,6 +8,7 @@ export class Navigation {
     this.blocked = new Uint8Array(this.grid * this.grid);
     this.revision = 0;
     this.obstacles = [];
+    this.clearance = new Map();
   }
   cellAt(x,z) { return this.terrain.cellAt(x,z); }
   worldAt(x,z) { return this.terrain.worldAt(x,z); }
@@ -18,6 +19,7 @@ export class Navigation {
       ...entities.filter((e) => e.hp > 0 && e.kind === "building"),
     );
     this.blocked.fill(0);
+    this.clearance.clear();
     for (let z = 0; z < this.grid; z++)
       for (let x = 0; x < this.grid; x++) {
         const p = this.worldAt(x, z);
@@ -29,15 +31,19 @@ export class Navigation {
       }
   }
   free(x, z, radius = 0.55) {
-    return (
-      x >= 0 &&
-      z >= 0 &&
-      x < this.grid &&
-      z < this.grid &&
-      !this.blocked[z * this.grid + x] &&
-      (radius <= 0.65 ||
-        this.canStand(this.worldAt(x, z).x, this.worldAt(x, z).z, radius))
-    );
+    if (x < 0 || z < 0 || x >= this.grid || z >= this.grid) return false;
+    const i = z * this.grid + x;
+    if (this.blocked[i]) return false;
+    if (radius <= 0.65) return true;
+    // Vehicle clearance scans every obstacle; cache it per radius until the next rebuild.
+    let cache = this.clearance.get(radius);
+    if (!cache)
+      this.clearance.set(radius, (cache = new Int8Array(this.grid * this.grid).fill(-1)));
+    if (cache[i] < 0) {
+      const p = this.worldAt(x, z);
+      cache[i] = this.canStand(p.x, p.z, radius) ? 1 : 0;
+    }
+    return cache[i] === 1;
   }
   nearest(x, z, radius = 0.55) {
     if (this.free(x, z, radius)) return [x, z];
@@ -64,21 +70,53 @@ export class Navigation {
       closed = new Uint8Array(this.grid * this.grid);
     const heuristic = (id) =>
       Math.hypot((id % this.grid) - end[0], Math.floor(id / this.grid) - end[1]);
-    const open = [s];
+    // Binary min-heap keyed by f = g + h. Improved nodes are pushed again and
+    // stale entries are skipped once closed (lazy deletion).
+    const heapIds = [],
+      heapKeys = [];
+    const push = (id, key) => {
+      let i = heapIds.length;
+      heapIds.push(id);
+      heapKeys.push(key);
+      while (i > 0) {
+        const up = (i - 1) >> 1;
+        if (heapKeys[up] <= key) break;
+        heapIds[i] = heapIds[up];
+        heapKeys[i] = heapKeys[up];
+        i = up;
+      }
+      heapIds[i] = id;
+      heapKeys[i] = key;
+    };
+    const pop = () => {
+      const top = heapIds[0],
+        id = heapIds.pop(),
+        key = heapKeys.pop();
+      if (heapIds.length) {
+        let i = 0;
+        for (;;) {
+          const l = 2 * i + 1,
+            r = l + 1;
+          let m = i,
+            mKey = key;
+          if (l < heapIds.length && heapKeys[l] < mKey) (m = l), (mKey = heapKeys[l]);
+          if (r < heapIds.length && heapKeys[r] < mKey) m = r;
+          if (m === i) break;
+          heapIds[i] = heapIds[m];
+          heapKeys[i] = heapKeys[m];
+          i = m;
+        }
+        heapIds[i] = id;
+        heapKeys[i] = key;
+      }
+      return top;
+    };
     g[s] = 0;
-    for (
-      let iteration = 0;
-      open.length && iteration < this.grid * this.grid;
-      iteration++
-    ) {
-      let best = 0;
-      for (let i = 1; i < open.length; i++)
-        if (
-          g[open[i]] + heuristic(open[i]) <
-          g[open[best]] + heuristic(open[best])
-        )
-          best = i;
-      const current = open.splice(best, 1)[0];
+    push(s, heuristic(s));
+    for (let iteration = 0; heapIds.length && iteration < this.grid * this.grid; ) {
+      const current = pop();
+      if (closed[current]) continue;
+      iteration++;
       if (current === goal) {
         const nodes = [];
         let p = current;
@@ -112,9 +150,9 @@ export class Navigation {
           if (closed[next]) continue;
           const score = g[current] + (dx && dz ? Math.SQRT2 : 1);
           if (score < g[next]) {
-            if (!Number.isFinite(g[next])) open.push(next);
             g[next] = score;
             parent[next] = current;
+            push(next, score + heuristic(next));
           }
         }
     }
