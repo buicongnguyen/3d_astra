@@ -39,7 +39,6 @@ document.querySelector("#app").innerHTML = `
   </header>
   <main id="stage">
     <div id="world"></div>
-    <details class="pc-shortcuts" id="pc-shortcuts"><summary>PC commands & selection <kbd>?</kbd></summary><div class="shortcut-list">${HOTKEYS.map(k=>`<button data-shortcut="${k.id}" title="${k.label} · ${k.key}"><span>${k.label}</span><kbd>${k.key}</kbd></button>`).join('')}</div><div class="control-group-buttons">${Array.from({length:9},(_,i)=>`<button data-group="${i+1}" title="Group ${i+1}: click to recall, Ctrl-click to assign, Shift-click to add">${i+1}</button>`).join('')}</div><p class="group-help">Ctrl + number saves · Shift + number adds<br>Number recalls · twice focuses</p></details>
     <div class="map-heading"><span class="eyebrow"><i class="live-dot"></i> OPERATION 01 / SKIRMISH</span><h1>Outpost Meridian<span>.</span></h1><p>THE ASHEN FRONTIER <span>·</span> SECTOR 07</p></div>
     <button id="mission-toggle" aria-expanded="false" aria-controls="mission-objectives">${icon("flag")} Objectives</button>
     <aside id="mission-objectives" class="mission panel" aria-label="Mission objectives"><div class="panel-label">MISSION OBJECTIVES <span>01—03</span></div><div class="objective" id="obj-economy"><span class="objective-num">01</span><span>Establish your economy<small>Assign Harvesters to resources</small></span></div><div class="objective" id="obj-army"><span class="objective-num">02</span><span>Mobilize a strike force<small>Field 8 combat units</small></span></div><div class="objective" id="obj-win"><span class="objective-num">03</span><span>Break their command<small>Destroy all enemy Command cores</small></span></div></aside>
@@ -71,9 +70,10 @@ document.querySelector("#app").innerHTML = `
     <div class="bottom-dock">
       <section class="minimap-panel panel"><div class="panel-label">SECTOR OVERVIEW <button id="home" title="Focus base · H" aria-label="Focus base">${icon("hq")}</button></div><canvas id="minimap" width="240" height="200" aria-label="Minimap: click to pan; right-click to command"></canvas><div class="map-legend"><span><i class="friendly"></i>YOU</span><span><i class="hostile"></i>ENEMY</span><span><i class="deposit"></i>RESOURCE</span></div></section>
       <div class="command-deck">
-      <section class="selection-panel panel"><div class="panel-label"><span id="selection-label">EXPEDITION COMMAND</span><span id="selection-count">READY</span></div><div id="selection-info"></div><div class="selection-scroll"><div id="unit-list"></div></div><div id="queue"></div><div class="order-buttons"><button id="field-guide">Info & stats</button><button id="support-order" hidden>Support</button><button id="move-order" title="Click a destination">${icon("move")} Move</button><button id="attack-order" title="Attack-move · F">${icon("crosshair")} Attack-move <kbd>F</kbd></button><button id="stop-order" title="Stop · X">${icon("stop")} Stop <kbd>X</kbd></button></div></section>
+      <section class="selection-panel panel"><div id="group-strip" class="group-strip" aria-label="Control groups"></div><div class="panel-label"><span id="selection-label">EXPEDITION COMMAND</span><span id="selection-count">READY</span></div><div id="selection-info"></div><div class="selection-scroll"><div id="unit-list"></div></div><div id="queue"></div><div class="order-buttons"><button id="field-guide" title="Info & stats">${icon("info","desk")}<span class="order-label">Info & stats</span></button><button id="support-order" hidden title="Support: heal / repair">${icon("medic","desk")}<span class="order-label">Support</span></button><button id="move-order" title="Move">${icon("move")}<span class="order-label">Move</span></button><button id="attack-order" title="Attack-move · F">${icon("crosshair")}<span class="order-label">Attack-move</span> <kbd>F</kbd></button><button id="stop-order" title="Stop · X">${icon("stop")}<span class="order-label">Stop</span> <kbd>X</kbd></button></div></section>
       <section class="command-panel panel"><div class="panel-label"><span id="command-label">COMMAND CENTER</span><span id="command-context">ACTIONS</span></div><div id="commands"></div><div id="upgrade-actions" class="upgrade-actions"></div><div id="command-hint">Select a unit or structure to issue commands.</div></section>
       </div>
+      <div id="order-tip" aria-hidden="true" hidden></div>
     </div>
     <nav id="dock-tabs" aria-label="Command panels"><button data-dock="selection" aria-pressed="true">${icon("people")} Selection</button><button data-dock="actions" aria-pressed="false">${icon("worker")} Actions</button><button data-dock="map" aria-pressed="false">${icon("flag")} Map</button></nav>
     <div class="statusbar"><span><i class="live-dot"></i> <span id="status-text">EXPEDITION SYSTEMS INITIALIZING</span></span><span>WASD pan <b>·</b> Scroll zoom <b>·</b> Right-click command <b>·</b> <button id="controls-link">? Controls</button></span><span id="fps">— FPS</span></div>
@@ -136,12 +136,25 @@ function setObjectivesOpen(open) {
   document.documentElement.classList.toggle('objectives-open', open);
   $('mission-toggle').setAttribute('aria-expanded', String(open));
 }
+// Desktop console: unit orders and the targeting Cancel live on the command card (bottom right).
+// Compact layouts keep orders under Selection and Cancel on the battlefield or construction card.
+function placeConsole(desktop) {
+  const orders = document.querySelector(".order-buttons"), card = document.querySelector(".command-panel"), controls = $("mode-controls");
+  if (desktop) {
+    if (orders.parentElement !== card) $("commands").before(orders);
+    if (controls.parentElement !== card) card.append(controls);
+  } else {
+    if (orders.parentElement === card) $("queue").after(orders);
+    if (controls.parentElement === card) $("stage").append(controls);
+  }
+}
 function setLayout() {
   document.documentElement.classList.toggle(
     "compact-ui",
     compactMedia.matches || touchInput,
   );
   document.documentElement.classList.toggle("touch-ui", touchInput);
+  placeConsole(!document.documentElement.classList.contains('compact-ui'));
   if (!document.documentElement.classList.contains('compact-ui')) setObjectivesOpen(false);
   touchControls?.reset();
   drag = null;
@@ -222,6 +235,11 @@ function setSelection(ids) {
   }
   tone(650);
 }
+// The order button for the pending targeting mode stays lit, as on an RTS command card.
+const ORDER_MODES = { move: 'move-order', attackmove: 'attack-order', patrol: 'patrol-order', attack: 'attack-target-order', support: 'support-order' };
+function markOrderMode() {
+  for (const [type, id] of Object.entries(ORDER_MODES)) $(id)?.classList.toggle('active', mode === type);
+}
 function clearMode() {
   if (document.documentElement.classList.contains('construction-notice-repeated')) {
     $('notice').classList.remove('show');
@@ -237,6 +255,7 @@ function clearMode() {
   if (view) view.preview.visible = false;
   $("mode-banner").hidden = true;
   $("world").classList.remove("targeting");
+  markOrderMode();
 }
 function enterMode(type) {
   if (!started || paused || sim.result) return;
@@ -266,6 +285,7 @@ function enterMode(type) {
   if (type === 'attack') $("mode-banner").textContent = 'ATTACK · Choose a visible enemy unit or building';
   $("notice").classList.remove('show');
   $("world").classList.add("targeting");
+  markOrderMode();
 }
 function enterBuild(type) {
   if (!started || paused || sim.result) return;
@@ -307,9 +327,23 @@ function formatTime(s) {
     .padStart(2, "0")}`;
 }
 let lastGroup = { key: '', time: 0 };
+let groupStripHtml = '';
 function focusSelection() {
   const es=selectedEntities();
   if(es.length) view.focusOn(es.reduce((s,e)=>s+e.x,0)/es.length,es.reduce((s,e)=>s+e.z,0)/es.length);
+}
+function groupMembers(key) {
+  return (groups.get(key) || []).filter(id => sim.get(id)?.team === 0);
+}
+// Assigned control groups as tabs on the console, with a unit icon and live count.
+function renderGroupStrip() {
+  const tabs = [...groups.keys()].sort().map(key => [key, groupMembers(key)]).filter(([, ids]) => ids.length);
+  const html = tabs.map(([key, ids]) => {
+    const lead = sim.get(ids[0]), active = ids.length === selected.size && ids.every(id => selected.has(id));
+    return `<button data-group="${key}" class="${active ? "active" : ""}" title="Group ${key} · ${ids.length} ${ids.length === 1 ? "unit" : "units"} — click or press ${key} to recall, Ctrl-click to save, Shift-click to add"><kbd>${key}</kbd>${icon(lead.icon || lead.type)}<span>${ids.length}</span></button>`;
+  }).join("");
+  // Rebuild only on change so a click is never lost to a re-render between press and release.
+  if (groupStripHtml !== html) $("group-strip").innerHTML = groupStripHtml = html;
 }
 function useGroup(key, assign=false, add=false) {
   if(assign) groups.set(key,[...selected]);
@@ -320,6 +354,7 @@ function useGroup(key, assign=false, add=false) {
     lastGroup={key,time:performance.now()};
   }
   if(assign||add) notice(`Control group ${key} ${add?'extended':'assigned'}.`);
+  renderGroupStrip();
 }
 function runShortcut(id) {
   if(id==='pause') {togglePause();return;}
@@ -480,6 +515,7 @@ function updateUI() {
     card.style.setProperty("--sh", u.maxShield ? (u.shield / u.maxShield).toFixed(3) : "0");
     card.classList.toggle("critical", hp < 0.35);
   }
+  renderGroupStrip();
   // Desktop shares the selection queue; mobile retains a queue in each tab.
   productionUI.update(document.documentElement.classList.contains('compact-ui') && es.length===1?e:null, !started || paused || !!sim.result);
   selectionWorkUI.update(es.length===1?e:null, !started || paused || !!sim.result);
@@ -1042,6 +1078,7 @@ function focusHome() {
 }
 function closeModal() {
   $("modal").hidden = true;
+  $("modal").classList.remove("help-wide");
   modalType = null;
   if (started && !sim.result) paused = false;
   keys.clear();
@@ -1129,8 +1166,16 @@ function showHelp() {
   $("modal").hidden = false;
   $("modal-content").innerHTML =
     `<span class="eyebrow">COMMANDER'S FIELD GUIDE</span><h2 id="modal-title">Your command station.</h2><div class="controls-grid"><span>Select / box select</span><kbd>Left-click / drag</kbd><span>Add to selection / queue order</span><kbd>Shift + click</kbd><span>Move, gather, build, attack</span><kbd>Right-click target</kbd><span>Pan camera</span><kbd>WASD / arrows / middle drag</kbd><span>Zoom</span><kbd>Mouse wheel</kbd><span>Attack-move / stop</span><kbd>F / X</kbd><span>Assign / recall group</span><kbd>Ctrl + 1–9 / 1–9</kbd><span>Focus base / toggle grid</span><kbd>H / G</kbd><span>Pause / cancel</span><kbd>Space / Esc</kbd></div><p class="help-note">Select a Harvester and right-click amber or blue deposits to gather. Select a building to train units; select a Harvester to construct. Click a queued unit to cancel and refund it. Build Supply relays before reaching the population cap.</p><button class="primary" data-resume>Return to the frontier ${icon("arrow")}</button>`;
-  $("modal").querySelector("[data-resume]").focus();
-  if (!touchInput) $("modal-content").querySelector(".controls-grid").outerHTML = HOTKEY_HELP;
+  $("modal").querySelector("[data-resume]").focus({ preventScroll: true });
+  if (!touchInput) {
+    $("modal-content").querySelector(".controls-grid").outerHTML = HOTKEY_HELP;
+    $("modal-content").querySelector(".help-note").remove();
+    $("modal").classList.add("help-wide");
+    for (const button of $("modal-content").querySelectorAll("[data-group]")) {
+      const count = groupMembers(button.dataset.group).length;
+      if (count) button.dataset.count = count;
+    }
+  }
   if (touchInput) {
     $("modal-content").querySelector(".controls-grid").innerHTML =
       "<span>Select a unit / structure</span><kbd>Tap it</kbd><span>Move / gather / attack</span><kbd>Select, then tap target</kbd><span>Pan the battlefield</span><kbd>Drag one finger</kbd><span>Zoom / pan together</span><kbd>Pinch / two fingers</kbd><span>Select multiple units</span><kbd>Box, then drag</kbd><span>Select your forces</span><kbd>Workers / Army</kbd><span>Queue multiple orders</span><kbd>Enable Queue</kbd><span>Place a structure</span><kbd>Tap location → Build here</kbd><span>Change HUD panel</span><kbd>Selection / Actions / Map</kbd>";
@@ -1294,11 +1339,33 @@ $("support-order").onclick = () => enterMode('support');
 for(const [id,key] of [['field-guide','I'],['support-order','R'],['move-order','M']]) {
   $(id).insertAdjacentHTML('beforeend',` <kbd>${key}</kbd>`);$(id).title+=` · ${key}`;
 }
-$('pc-shortcuts').addEventListener('click',event=>{
-  const command=event.target.closest('[data-shortcut]'),group=event.target.closest('[data-group]');
-  if(command){runShortcut(command.dataset.shortcut);$('pc-shortcuts').open=false;}
-  if(group&&started&&!paused&&!sim.result)useGroup(group.dataset.group,event.ctrlKey,event.shiftKey);
-});
+$('group-strip').onclick=event=>{
+  const group=event.target.closest('[data-group]');
+  if(group&&started&&!paused&&!sim.result)useGroup(group.dataset.group,event.ctrlKey||event.metaKey,event.shiftKey);
+};
+// Command card tooltip line: names the hovered order or tile above the card, as RTS consoles do.
+// While it shows, the title moves to data-tip so the browser tooltip does not repeat it.
+let tipButton = null;
+function showOrderTip(button) {
+  if (tipButton && tipButton !== button && tipButton.dataset.tip) {
+    tipButton.title = tipButton.dataset.tip;
+    delete tipButton.dataset.tip;
+  }
+  tipButton = button && !document.documentElement.classList.contains('compact-ui') ? button : null;
+  if (tipButton?.title) {
+    tipButton.dataset.tip = tipButton.title;
+    tipButton.removeAttribute('title');
+  }
+  $('order-tip').hidden = !tipButton?.dataset.tip;
+  if (tipButton) $('order-tip').textContent = tipButton.dataset.tip;
+}
+{
+  const card = document.querySelector('.command-panel'), target = event => event.target.closest('button[title],button[data-tip]');
+  card.addEventListener('pointerover', event => showOrderTip(target(event)));
+  card.addEventListener('focusin', event => showOrderTip(target(event)));
+  card.addEventListener('pointerleave', () => showOrderTip(null));
+  card.addEventListener('focusout', () => showOrderTip(null));
+}
 $("upgrade-actions").onclick = event => {
   if (!started || paused || sim.result) return;
   const e = selectedEntities()[0];
@@ -1309,7 +1376,7 @@ $("upgrade-actions").onclick = event => {
 };
 $("move-order").onclick = () => enterMode("move");
 $("attack-order").onclick = () => enterMode("attackmove");
-$("attack-order").insertAdjacentHTML('afterend', '<button id="patrol-order" hidden title="Patrol between two points · P">Patrol <kbd>P</kbd></button><button id="attack-target-order" hidden title="Attack a chosen enemy · N">Attack <kbd>N</kbd></button>');
+$("attack-order").insertAdjacentHTML('afterend', `<button id="patrol-order" hidden title="Patrol between two points · P">${icon("patrol","desk")}<span class="order-label">Patrol</span> <kbd>P</kbd></button><button id="attack-target-order" hidden title="Attack a chosen enemy · N">${icon("attack","desk")}<span class="order-label">Attack</span> <kbd>N</kbd></button>`);
 $("patrol-order").onclick = () => enterMode('patrol');
 $("attack-target-order").onclick = () => enterMode('attack');
 $("stop-order").onclick = () => runShortcut('stop');
@@ -1332,6 +1399,15 @@ $("unit-list").onclick = (event) => {
   if (button) setSelection([Number(button.dataset.select)]);
 };
 $("modal").onclick = (event) => {
+  // Help lists every PC command and control group; running one returns to the battlefield.
+  const shortcut = event.target.closest("[data-shortcut]"), group = event.target.closest("[data-group]");
+  if ((shortcut || group) && modalType === "help") {
+    closeModal();
+    if (shortcut) runShortcut(shortcut.dataset.shortcut);
+    else if (started && !sim.result) useGroup(group.dataset.group, event.ctrlKey || event.metaKey, event.shiftKey);
+    updateUI();
+    return;
+  }
   if (event.target.closest("[data-settings]")) settingsUI.open();
   if (event.target.closest("[data-resume]")) closeModal();
   if (event.target.closest("[data-restart]")) restart();

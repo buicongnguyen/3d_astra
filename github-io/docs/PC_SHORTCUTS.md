@@ -1,6 +1,20 @@
 # PC commands and selection
 
-Open **PC commands & selection** in the Three.js game or **Keys** in Godot for clickable commands. **? / Slash** opens keyboard help. Construction and production buttons show their action keys on desktop. Touch controls remain available on phones.
+In the Three.js game, **? / Slash** or the help button opens the command guide: every command below is clickable there, along with the nine control groups. Running a command closes the guide and resumes play. Godot keeps its **Keys** panel. Touch controls remain available on phones.
+
+## Desktop console
+
+The desktop HUD follows StarCraft's layout, leaving the rest of the battlefield clear:
+
+- **Bottom-left:** minimap.
+- **Centre:** selection with portrait, health, shield, attack and activity, plus the unit roster or the production queue. Saved control groups appear as tabs above it, each with its number, unit icon and live count. Click a tab to recall, Ctrl-click to save, Shift-click to add.
+- **Bottom-right: command card.**
+  - The top row holds the unit orders, each with a hotkey badge: Info **I**, Support **R**, Move **M**, Attack-move **F**, Patrol **P**, Attack **N**, Stop **X**. The order you are aiming stays lit.
+  - Below it are the build/train tiles (**Q E R T Y**) and the building upgrade (**U**).
+  - Hovering any button shows its name and description above the card.
+  - While you aim an order or place a building, the prompt appears above the console and **Cancel** takes the card's corner.
+
+Phones and narrow windows keep the Selection / Actions / Map dock.
 
 ## Construction and production
 

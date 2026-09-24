@@ -1,13 +1,20 @@
-.pc-shortcuts{position:absolute;right:18px;top:70px;z-index:9;width:240px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:12px}
-.pc-shortcuts summary{padding:10px 12px;cursor:pointer;color:var(--mint)}
-.pc-shortcuts .shortcut-list{display:grid;grid-template-columns:1fr;max-height:min(55vh,440px,calc(100dvh - 270px));overflow:auto;padding:0 8px 8px}
-.pc-shortcuts button{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:38px;text-align:left;padding:6px;border-bottom:1px solid var(--line)}
-.pc-shortcuts .control-group-buttons{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;padding:6px}
-.pc-shortcuts .control-group-buttons button{justify-content:center;min-height:30px;padding:0}
-.pc-shortcuts .group-help{font-size:10px;color:var(--dim);padding:0 8px 8px;margin:0}
 .command-tile{position:relative}.command-tile>.action-key{position:absolute;right:5px;top:3px;font-size:10px;color:var(--mint)}
 .order-buttons{flex-wrap:wrap}.order-buttons button{min-width:0}
 @media(pointer:fine){.order-buttons button{position:relative}.order-buttons kbd{display:inline;position:absolute;right:3px;top:1px;font-size:8px;line-height:10px;padding:0 2px}}
 .modal .controls-grid{max-height:45vh;overflow:auto;padding-right:10px}
-@media(pointer:coarse){.pc-shortcuts,.action-key{display:none!important}}
-@media(max-width:800px){.pc-shortcuts{width:205px;right:10px;top:10px}.pc-shortcuts .shortcut-list{max-height:min(55vh,440px,calc(100dvh - 210px))}}
+@media(pointer:coarse){.action-key{display:none!important}}
+/* PC help (? button): clickable commands and control groups instead of a panel over the battlefield. */
+#modal.help-wide .modal{width:min(820px,calc(100vw - 24px));padding:26px 30px}
+#modal.help-wide .modal h2{font-size:26px;margin:8px 0 4px}
+.modal .help-heading{display:flex;align-items:baseline;gap:10px;margin:16px 0 8px;font-size:13px;font-weight:600;color:#dce9d8}
+.modal .help-heading small{font-size:11px;font-weight:400;color:#93a89a}
+.modal .control-group-buttons{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px}
+.modal .control-group-buttons button{position:relative;min-height:36px;border:1px solid #48643c88;border-radius:4px;background:#1f3327;font-size:14px;color:#dbe9d4}
+.modal .control-group-buttons button[data-count]{border-color:var(--team-friendly,#92ebc5)}
+.modal .control-group-buttons button[data-count]::after{content:attr(data-count);position:absolute;right:3px;bottom:1px;font-size:10px;color:var(--team-friendly,#92ebc5)}
+.modal .group-help{margin:6px 0 0;font-size:11px;line-height:1.5}
+.modal .shortcut-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px}
+.modal .shortcut-list button{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:32px;padding:4px 8px;text-align:left;border:1px solid #48643c55;border-radius:4px;background:#1b2d24;font-size:12px;color:#d3e0cc}
+.modal .shortcut-list button:hover,.modal .control-group-buttons button:hover{border-color:var(--mint);background:#274231}
+.modal .shortcut-list kbd{flex-shrink:0;margin:0}
+#modal.help-wide .modal p{margin:6px 0;font-size:12px;line-height:1.6}

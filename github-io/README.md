@@ -52,7 +52,7 @@ During construction, **Actions** keeps the building name, resource cost, placeme
 
 ### Mouse and keyboard
 
-**B** opens construction; **Q E R T Y** activate the displayed build/train tiles. **F1** selects an idle Harvester, **F2** selects the army, **F3** all Harvesters, and **H/J/K** cycle production buildings. Open **PC commands & selection** for clickable commands and key hints. See the [complete desktop shortcut list and references](docs/PC_SHORTCUTS.md).
+**B** opens construction; **Q E R T Y** activate the displayed build/train tiles. **F1** selects an idle Harvester, **F2** selects the army, **F3** all Harvesters, and **H/J/K** cycle production buildings. Press **?** or the help button for clickable commands, control groups and key hints; nothing covers the battlefield. The HUD is a StarCraft-style console: minimap bottom-left, selection in the middle with saved control groups as tabs, and the command card bottom-right with orders, build/train tiles and upgrades. See the [complete desktop shortcut list and references](docs/PC_SHORTCUTS.md).
 
 | Action | Input |
 |---|---|

@@ -1,63 +1,270 @@
-/* Mobile keeps its tabs. Desktop combines selection and commands in one shell. */
+/* Mobile keeps its tabs. Desktop uses a StarCraft-style console along the bottom edge:
+   minimap bottom-left, selection in the middle, command card bottom-right. */
 .command-deck { display: contents; }
-:root:not(.compact-ui) .command-deck {
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  transform: translateX(-50%);
-  width: min(740px, calc(100vw - 416px));
-  height: 188px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 254px;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  backdrop-filter: blur(12px);
-  pointer-events: auto;
+.group-strip, #order-tip { display: none; }
+.compact-ui .order-buttons .icon.desk { display: none; }
+
+:root:not(.compact-ui) {
+  --console-side: 192px;
+  --console-mid: 156px;
+  --console-map: 200px;
+  --console-card: 372px;
+  --console-edge: color-mix(in srgb, var(--team-friendly, #92ebc5) 40%, #34504a);
 }
-:root:not(.compact-ui) .command-deck > .panel {
-  height: 100%;
-  background: none;
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
+:root:not(.compact-ui) .bottom-dock {
+  left: 0;
+  right: 0;
+  bottom: 27px;
+  gap: 0;
+  grid-template-columns: var(--console-map) minmax(0, 680px) var(--console-card);
+  justify-content: space-between;
+  align-items: end;
+}
+:root:not(.compact-ui) .bottom-dock .panel {
+  height: var(--console-side);
+  padding: 0 10px 8px;
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+  background: linear-gradient(180deg, rgba(28, 45, 43, 0.97), rgba(14, 24, 25, 0.97) 60%);
+  box-shadow: inset 0 1px 0 var(--console-edge), 0 -8px 26px #0610104d;
+  /* Nearly opaque, so skip the per-frame backdrop blur over the WebGL canvas. */
   backdrop-filter: none;
 }
-:root:not(.compact-ui) .command-deck > .command-panel {
-  border-left: 1px solid var(--line);
+:root:not(.compact-ui) .bottom-dock .panel-label {
+  height: 22px;
+  border-bottom-color: #c6dec714;
 }
-/* Keep command positions fixed as work starts, completes, or is cancelled. */
-:root:not(.compact-ui) .command-deck .command-tile {
-  min-height: 44px;
-  height: 44px;
-  padding: 4px 3px;
+
+/* Minimap corner. */
+:root:not(.compact-ui) .minimap-panel {
+  display: flex;
+  flex-direction: column;
 }
-:root:not(.compact-ui) .command-deck .command-tile > .icon {
-  display: none;
+:root:not(.compact-ui) .minimap-panel #minimap {
+  height: 144px;
+  margin: 5px 0 4px;
 }
-:root:not(.compact-ui) .command-deck .command-tile > span {
+
+/* Selection: large portrait, name, live vitals and activity; roster or work queue below. */
+:root:not(.compact-ui) .bottom-dock .selection-panel {
+  position: relative;
+  height: var(--console-mid);
+  padding: 8px 14px;
+  overflow: visible;
+}
+:root:not(.compact-ui) .selection-panel .entity-details {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  column-gap: 12px;
+  row-gap: 3px;
+  align-items: center;
+}
+:root:not(.compact-ui) .selection-panel .selection-heading { display: contents; }
+:root:not(.compact-ui) .selection-panel .selection-heading .sel-portrait {
+  grid-row: 1 / span 3;
+  grid-column: 1;
+  width: 58px;
+  height: 58px;
+  border-radius: 6px;
+}
+:root:not(.compact-ui) .selection-panel .selection-heading .sel-portrait .icon {
+  width: 34px;
+  height: 34px;
+}
+:root:not(.compact-ui) .selection-panel.has-entity .selection-heading h3 {
+  grid-column: 2;
+  font-size: 16px;
+}
+:root:not(.compact-ui) .selection-panel .selection-level { grid-column: 3; }
+:root:not(.compact-ui) .selection-panel .unit-metrics,
+:root:not(.compact-ui) .selection-panel .selection-activity { grid-column: 2 / -1; }
+:root:not(.compact-ui) .selection-panel .unit-metrics { max-width: 460px; }
+:root:not(.compact-ui) .selection-panel.has-entity #selection-info { padding: 0 0 6px; }
+:root:not(.compact-ui) .selection-panel #unit-list button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+}
+
+/* Saved control groups hang above the selection panel as tabs. */
+:root:not(.compact-ui) .group-strip {
+  position: absolute;
+  left: 14px;
+  bottom: 100%;
+  display: flex;
+  gap: 3px;
+}
+:root:not(.compact-ui) .group-strip button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+  padding: 0 7px 0 5px;
+  border: 1px solid var(--console-edge);
+  border-bottom: 0;
+  border-radius: 6px 6px 0 0;
+  background: #142320f2;
+  color: #cfe3d8;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+:root:not(.compact-ui) .group-strip button:hover,
+:root:not(.compact-ui) .group-strip button.active {
+  background: color-mix(in srgb, var(--team-friendly, #92ebc5) 26%, #142320);
+  color: #fff;
+}
+:root:not(.compact-ui) .group-strip kbd {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 11px;
+  color: var(--team-friendly, #92ebc5);
+}
+:root:not(.compact-ui) .group-strip .icon { width: 14px; height: 14px; }
+
+/* Command card: an order row, then build/train tiles in fixed slots, then the upgrade. */
+:root:not(.compact-ui) .bottom-dock .command-panel { position: relative; }
+:root:not(.compact-ui) .command-panel .order-buttons {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 4px;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 6px 0 0;
+  border: 0;
+}
+:root:not(.compact-ui) .command-panel .order-buttons button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 1px solid #4b6a5b;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #2a463d, #192b27);
+  color: #d3e9da;
+}
+:root:not(.compact-ui) .command-panel .order-buttons button:hover:not(:disabled) {
+  border-color: var(--team-friendly, #92ebc5);
+  background: linear-gradient(180deg, #365a4d, #20362f);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--team-friendly, #92ebc5) 30%, transparent);
+}
+:root:not(.compact-ui) .command-panel .order-buttons button.active {
+  border-color: var(--team-friendly, #92ebc5);
+  background: color-mix(in srgb, var(--team-friendly, #92ebc5) 34%, #192b27);
+  color: #fff;
+}
+:root:not(.compact-ui) .command-panel .order-buttons .icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+:root:not(.compact-ui) .command-panel .order-buttons .order-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+:root:not(.compact-ui) .command-panel .order-buttons kbd {
+  display: block;
+  position: absolute;
+  top: 1px;
+  right: 2px;
+  margin: 0;
+  padding: 0 2px;
+  border: 0;
+  font-size: 9px;
+  line-height: 11px;
+  color: var(--mint);
+}
+:root:not(.compact-ui) .command-panel #commands {
+  flex: 0 0 auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 6px 0 0;
+  overflow: visible;
+}
+:root:not(.compact-ui) .command-panel .command-tile {
+  height: 40px;
+  min-height: 40px;
+  padding: 3px 3px 2px;
+}
+:root:not(.compact-ui) .command-panel .command-tile > .icon { display: none; }
+:root:not(.compact-ui) .command-panel .command-tile > span {
   font-size: 13px;
   line-height: 16px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-:root:not(.compact-ui) .command-deck .command-tile > .action-key {
+:root:not(.compact-ui) .command-panel .command-tile > .action-key {
   top: auto;
-  bottom: 3px;
+  bottom: 2px;
   right: 3px;
-  font-size: 10px;
-  line-height: 12px;
+  font-size: 9px;
+  line-height: 11px;
 }
-:root:not(.compact-ui) .command-deck #commands {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding: 4px 0 0;
+:root:not(.compact-ui) .command-panel .tactical-hint {
+  min-height: 0;
+  padding: 6px 4px 0 34px;
 }
-/* Without build/train/upgrade actions, keep just the compact selection panel. */
-:root:not(.compact-ui) .command-deck:not(:has([data-action], [data-level])) {
-  width: min(440px, calc(100vw - 416px));
-  grid-template-columns: minmax(0, 1fr);
+:root:not(.compact-ui) .command-panel .tactical-hint > .icon { left: 2px; top: 8px; width: 22px; height: 22px; }
+:root:not(.compact-ui) .command-panel .tactical-hint strong { font-size: 13px; }
+:root:not(.compact-ui) .command-panel .tactical-hint p { font-size: 12px; line-height: 1.5; margin: 4px 0 0; color: #a3b8a8; }
+:root:not(.compact-ui) .command-panel .upgrade-actions {
+  margin-top: auto;
+  padding-top: 4px;
 }
-:root:not(.compact-ui) .command-deck:not(:has([data-action], [data-level])) > .command-panel {
-  display: none;
+:root:not(.compact-ui) .command-panel .upgrade-actions button {
+  min-height: 30px;
+  height: 30px;
+  padding: 0 10px;
+}
+
+/* Targeting and placement: the prompt sits above the console, Cancel in the card's corner. */
+:root:not(.compact-ui) #mode-banner {
+  top: auto;
+  bottom: calc(27px + var(--console-side) + 12px);
+  pointer-events: none;
+}
+:root:not(.compact-ui) .command-panel #mode-controls {
+  position: absolute;
+  top: auto;
+  left: auto;
+  right: 10px;
+  bottom: 8px;
+  transform: none;
+  z-index: 2;
+}
+:root:not(.compact-ui) .command-panel #mode-controls button {
+  min-height: 30px;
+  height: 30px;
+  padding: 0 16px;
+  font-size: 13px;
+  border-color: #c26a5c;
+  background: #4a2622;
+  color: #ffe0da;
+}
+:root:not(.compact-ui) .command-panel #mode-controls button:hover { background: #6a312b; }
+
+/* Tooltip line above the command card for the hovered order or tile. */
+:root:not(.compact-ui) #order-tip {
+  display: block;
+  position: absolute;
+  right: 8px;
+  bottom: calc(100% + 8px);
+  max-width: calc(var(--console-card) - 16px);
+  padding: 6px 10px;
+  border: 1px solid var(--console-edge);
+  border-radius: 4px;
+  background: #0f1c1bf2;
+  color: #e6f3ea;
+  font-size: 13px;
+  line-height: 1.35;
+  pointer-events: none;
 }
