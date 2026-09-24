@@ -427,7 +427,7 @@ function updateUI() {
             .slice(0, 18)
             .map(
               (u) =>
-                `<button data-select="${u.id}" title="${u.name}">${icon(u.icon || u.type)}</button>`,
+                `<button data-select="${u.id}" title="${u.name}">${icon(u.icon || u.type)}<i class="vitals"></i></button>`,
             )
             .join("") +
           (es.length > 18 ? `<span>+${es.length - 18}</span>` : "")
@@ -470,6 +470,15 @@ function updateUI() {
       paused ||
       sim.result;
     button.disabled = !!unavailable || (e?.kind==='building' && (!e.complete || !!e.levelJob));
+  }
+  // Live vitals on each roster card; the cards themselves are rebuilt only on selection change.
+  for (const card of $("unit-list").querySelectorAll("[data-select]")) {
+    const u = sim.get(Number(card.dataset.select));
+    if (!u) continue;
+    const hp = u.hp / u.maxHp;
+    card.style.setProperty("--hp", hp.toFixed(3));
+    card.style.setProperty("--sh", u.maxShield ? (u.shield / u.maxShield).toFixed(3) : "0");
+    card.classList.toggle("critical", hp < 0.35);
   }
   // Desktop shares the selection queue; mobile retains a queue in each tab.
   productionUI.update(document.documentElement.classList.contains('compact-ui') && es.length===1?e:null, !started || paused || !!sim.result);

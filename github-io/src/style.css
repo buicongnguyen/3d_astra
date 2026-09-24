@@ -391,11 +391,24 @@ button kbd {
   white-space: nowrap;
   z-index: 7;
 }
+/* Drag selection: team-coloured frame, corner brackets and a soft inner glow. */
 #selection-box {
+  --c: var(--team-friendly, #92ebc5);
   display: none;
   position: absolute;
-  border: 1px solid #b0e9bd;
-  background: #b0e9bd18;
+  border: 1px solid color-mix(in srgb, var(--c) 70%, transparent);
+  border-radius: 2px;
+  background:
+    linear-gradient(var(--c), var(--c)) left top / 14px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) left top / 2px 14px no-repeat,
+    linear-gradient(var(--c), var(--c)) right top / 14px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) right top / 2px 14px no-repeat,
+    linear-gradient(var(--c), var(--c)) left bottom / 14px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) left bottom / 2px 14px no-repeat,
+    linear-gradient(var(--c), var(--c)) right bottom / 14px 2px no-repeat,
+    linear-gradient(var(--c), var(--c)) right bottom / 2px 14px no-repeat,
+    color-mix(in srgb, var(--c) 9%, transparent);
+  box-shadow: 0 0 0 1px #040e0c8c, inset 0 0 26px color-mix(in srgb, var(--c) 16%, transparent);
   pointer-events: none;
 }
 #hover-label {

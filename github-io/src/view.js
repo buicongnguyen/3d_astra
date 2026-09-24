@@ -4,6 +4,8 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Terrain } from "./terrain.js";
 import { ActivityView } from "./activity-view.js";
+import { Effects } from "./fx.js";
+import { createRing, updateRing, createBar, updateBar, setTeamColor, createMarker } from "./selection-view.js";
 import {themeFor,shotVisible,weaponStyle} from './visual-style.js';
 import { isHarvesting } from "./activity.js";
 import { defaults, palette } from "./settings.js";
@@ -89,6 +91,8 @@ export class WorldView {
     this.resourceObjects = new Map();
     this.effects = [];
     this.activity = new ActivityView(this);
+    this.fx = new Effects(this);
+    this.dying = [];
     this.teamTemplates = new Map();
     this.fogClock = 0;
     this.gridVisible = false;
@@ -157,13 +161,10 @@ export class WorldView {
           o.material.emissive.setHex(this.colors[team]);
       });
     }
-    for (const o of this.objects.values()) {
-      o.userData.ring.material.color.setHex(this.colors[o.userData.team]);
-      o.userData.fill.material.color.setHex(this.colors[o.userData.team]);
-    }
+    for (const o of this.objects.values()) setTeamColor(o, this.colors[o.userData.team]);
     for (const e of this.effects)
       if (e.team !== undefined)
-        e.mesh.material.color.setHex(this.colors[e.team]);
+        e.mesh.material.uniforms.color.value.setHex(this.colors[e.team], THREE.LinearSRGBColorSpace);
     this.terrainRoot?.traverse((o) => {
       if (o.userData.team !== undefined)
         o.material.color.setHex(this.colors[o.userData.team]);
@@ -439,8 +440,9 @@ export class WorldView {
       }
     }
     const inRock = (p) => ROCKS.some(([x, z, r]) => Math.hypot(p.x - x, p.z - z) < r + 0.3);
-    // Scatter scales with map area so large maps are not bare beyond the central 96 units.
-    const spread = this.terrain.size - 1,
+    // Scatter scales with map area so large maps are not bare beyond the central 96 units,
+    // and stays 3 units inside the edge: nothing is drawn on or beyond the map boundary.
+    const spread = this.terrain.size - 6,
       density = (this.terrain.size / 96) ** 2;
     const pebbleCount = Math.round(500 * density);
     const pebbles = new THREE.InstancedMesh(
@@ -706,57 +708,14 @@ export class WorldView {
       if (o.name.startsWith("leg_"))
         root.userData.legs.push({ node: o, base: o.quaternion.clone() });
     });
-    const ringGeometry=new THREE.RingGeometry(e.radius+.26,e.radius+.46,40,4);
-    const ringColors=new Float32Array(ringGeometry.attributes.position.count*3);
-    for(let i=0;i<ringGeometry.attributes.position.count;i++){
-      const band=Math.floor(i/41),shade=band===0||band===4?.12:1;
-      ringColors.set([shade,shade,shade],i*3);
-    }
-    ringGeometry.setAttribute('color',new THREE.BufferAttribute(ringColors,3));
-    const ring = new THREE.Mesh(
-      ringGeometry,
-      new THREE.MeshBasicMaterial({
-        color: this.colors[e.team],
-        vertexColors:true,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.95,
-        depthWrite: false,
-      }),
-    );
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0.19;
-    ring.visible = false;
-    ring.renderOrder = 3;
+    // Selection ring and vitals bar (health, damage ghost, shield, level pips): one shader
+    // mesh each, see selection-view.js.
+    const ring = createRing(e.radius, this.colors[e.team]);
     root.add(ring);
     root.userData.ring = ring;
-    const bar = new THREE.Group(),
-      back = new THREE.Mesh(
-        new THREE.PlaneGeometry(2.1, 0.16),
-        new THREE.MeshBasicMaterial({ color: 0x111a1a, depthTest: false }),
-      );
-    const fill = new THREE.Mesh(
-      new THREE.PlaneGeometry(2, 0.09),
-      new THREE.MeshBasicMaterial({
-        color: this.colors[e.team],
-        depthTest: false,
-      }),
-    );
-    fill.position.z = 0.01;
-    bar.add(back, fill);
-    bar.position.y = e.kind === "building" ? 5.2 : 2.9;
-    bar.visible = false;
-    bar.renderOrder = 10;
+    const bar = createBar(e, this.colors[e.team]);
     root.add(bar);
     root.userData.bar = bar;
-    root.userData.fill = fill;
-    const shield = new THREE.Mesh(new THREE.PlaneGeometry(2,0.07),new THREE.MeshBasicMaterial({color:0x69cbee,depthTest:false}));
-    shield.position.set(0,0.15,0.02); bar.add(shield); root.userData.shield = shield;
-    if (e.kind === 'building') {
-      const levels = new THREE.Group();
-      for (let i=0;i<3;i++) { const pip = new THREE.Mesh(new THREE.PlaneGeometry(0.18,0.12),new THREE.MeshBasicMaterial({color:0xedc76f,depthTest:false})); pip.position.set(-0.24+i*0.24,0.38,0); levels.add(pip); }
-      root.add(levels); levels.position.y = 5.2; root.userData.levels = levels;
-    }
     this.scene.add(root);
     this.objects.set(e.id, root);
     return root;
@@ -808,19 +767,11 @@ export class WorldView {
     this.resourceObjects.set(e.id, group);
     return group;
   }
-  marker(x, z, color = this.colors[0]) {
-    const m = new THREE.Mesh(
-      new THREE.RingGeometry(0.7, 0.85, 32),
-      new THREE.MeshBasicMaterial({
-        color,
-        transparent: true,
-        opacity: 1,
-        depthWrite: false,
-      }),
-    );
-    m.rotation.x = -Math.PI / 2;
-    m.position.set(x, 0.23, z);
-    m.renderOrder = 4;
+  // Command confirmation on the ground: attack orders get crosshair ticks.
+  marker(x, z, color = this.colors[0], attack = color !== this.colors[0]) {
+    const m = createMarker(color, attack);
+    m.position.x = x;
+    m.position.z = z;
     this.scene.add(m);
     this.effects.push({ mesh: m, life: 0.8, max: 0.8, marker: true, team: color===this.colors[0]?0:undefined });
     while(this.effects.length>64){
@@ -833,6 +784,48 @@ export class WorldView {
     if(event.type==='shot' && shotVisible(event,sim)){
       const o=this.objects.get(event.source);
       if(o && weaponStyle(event).kind==='cannon')o.userData.recoil=.22;
+    }
+    if (event.type === 'death' && sim.isVisible(event)) this.beginDeath(event);
+  }
+  // The destroyed entity's model stays for a short death animation instead of vanishing:
+  // buildings shake and sink with a tilt, vehicles are thrown and settle as a wreck, infantry
+  // fall. Models are clones sharing template materials, so only transforms animate.
+  beginDeath(event) {
+    const o = this.objects.get(event.seed);
+    if (!o) return;
+    this.objects.delete(event.seed);
+    for (const part of [o.userData.ring, o.userData.bar, o.userData.contactShadow]) part.visible = false;
+    if (this.dying.length >= 24) { this.disposeEntity(o); return; }
+    const kind = event.building ? 'building' : event.heavy ? 'vehicle' : 'infantry';
+    const model = o.userData.model;
+    model.rotation.order = 'YXZ';
+    this.dying.push({ object: o, kind, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1),
+      life: { building: 2.8, vehicle: 2.6, infantry: 1.6 }[kind], baseY: model.rotation.y });
+  }
+  updateDying(sim, dt) {
+    const motion = this.activity.combat.motion;
+    for (let i = this.dying.length - 1; i >= 0; i--) {
+      const d = this.dying[i], o = d.object, m = o.userData.model;
+      d.age += dt;
+      if (d.age >= d.life) { this.disposeEntity(o); this.dying.splice(i, 1); continue; }
+      o.visible = sim.isVisible(d);
+      const t = d.age, clamp01 = (x) => Math.min(1, Math.max(0, x));
+      const ease = (x) => 1 - (1 - clamp01(x)) ** 3, heavy = (x) => { x = clamp01(x); return x * x * (3 - 2 * x); };
+      if (d.kind === 'building') {
+        // A heavy collapse: a shudder, then a slow start that accelerates into the ground.
+        const shake = motion ? Math.max(0, 1 - t / 1.1) * 0.12 : 0;
+        o.position.set(d.x + Math.sin(t * 61) * shake, -heavy((t - 0.35) / 2.35) * 5.6, d.z + Math.cos(t * 53) * shake);
+        m.rotation.z = d.tilt * heavy((t - 0.4) / 2.2) * 0.16;
+        m.rotation.x = d.tilt * heavy((t - 0.4) / 2.2) * 0.07;
+      } else if (d.kind === 'vehicle') {
+        const hop = motion ? Math.sin(Math.min(1, t / 0.45) * Math.PI) * 0.55 : 0;
+        o.position.y = hop - ease((t - 1.7) / 0.9) * 1.8;
+        m.rotation.z = d.tilt * ease(t / 0.45) * 0.18;
+        m.rotation.x = -ease(t / 0.45) * 0.1;
+      } else {
+        m.rotation.x = -ease(t / 0.4) * 1.45;
+        o.position.y = -ease((t - 0.9) / 0.7) * 1.2;
+      }
     }
   }
   // Record the state before each fixed simulation step so frames between steps can
@@ -891,18 +884,12 @@ export class WorldView {
         if (e.moving)
           leg.node.rotateX(Math.sin(sim.time * 11 + i * Math.PI) * 0.4);
       }
-      o.userData.ring.visible = selected.has(e.id) || hover?.id === e.id;
-      o.userData.bar.visible =
+      updateRing(o.userData.ring, selected.has(e.id), hover?.id === e.id, sim.time, dt);
+      const bar = o.userData.bar;
+      bar.visible =
         selected.has(e.id) || hover?.id === e.id || e.hp < e.maxHp || e.shield < e.maxShield;
-      o.userData.bar.quaternion.copy(this.camera.quaternion);
-      o.userData.fill.scale.x = Math.max(0, e.hp / e.maxHp);
-      o.userData.fill.position.x = -(1 - e.hp / e.maxHp);
-      o.userData.shield.scale.x = e.shield/e.maxShield;
-      o.userData.shield.position.x = -(1-e.shield/e.maxShield);
-      if (o.userData.levels) {
-        o.userData.levels.quaternion.copy(this.camera.quaternion);
-        o.userData.levels.children.forEach((pip,i) => { pip.visible = i < e.level; });
-      }
+      bar.quaternion.copy(this.camera.quaternion);
+      updateBar(bar, e, dt);
     }
     for (const [id, object] of this.objects)
       if (!alive.has(id)) {
@@ -937,9 +924,7 @@ export class WorldView {
     for (let i = this.effects.length - 1; i >= 0; i--) {
       const e = this.effects[i];
       e.life -= dt;
-      e.mesh.material.opacity = Math.max(0, e.life / e.max);
-      if (e.marker || e.explosion)
-        e.mesh.scale.setScalar(1 + (1 - e.life / e.max) * 2);
+      e.mesh.material.uniforms.progress.value = Math.min(1, 1 - e.life / e.max);
       if (e.life <= 0) {
         this.scene.remove(e.mesh);
         e.mesh.geometry.dispose();
@@ -947,18 +932,15 @@ export class WorldView {
         this.effects.splice(i, 1);
       }
     }
+    this.updateDying(sim, dt);
+    this.fx.update(sim, dt);
     this.renderer.render(this.scene, this.camera);
     this.activity.draw(sim,dt,selected,hover);
   }
   disposeEntity(o) {
     this.scene.remove(o);
     // Model geometry and materials belong to shared templates; only dispose per-instance UI.
-    for (const m of [
-      o.userData.ring,
-      o.userData.contactShadow,
-      ...o.userData.bar.children,
-      ...(o.userData.levels?.children || []),
-    ]) {
+    for (const m of [o.userData.ring, o.userData.contactShadow, o.userData.bar]) {
       m.geometry.dispose();
       m.material.dispose();
     }
@@ -968,6 +950,8 @@ export class WorldView {
     this.environment?.reset();
     for (const o of this.objects.values()) this.disposeEntity(o);
     this.objects.clear();
+    for (const d of this.dying) this.disposeEntity(d.object);
+    this.dying = [];
     for (const o of this.resourceObjects.values()) {
       this.scene.remove(o);
       if (o.userData.shared) continue; // Blender clusters share the loaded template's data.

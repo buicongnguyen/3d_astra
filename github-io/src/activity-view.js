@@ -1,8 +1,10 @@
 import { buildingActivity, harvestTarget, isHarvesting } from './activity.js';
-import { CombatPainter, effectDuration, isBurning } from './combat-feedback.js';
+import { CombatPainter, effectDuration, burningEntities } from './combat-feedback.js';
 import {ShotPool,shotVisible} from './visual-style.js';
 
-// One canvas for all feedback: no particle emitters, lights or per-unit DOM nodes.
+// HUD canvas for work feedback (progress badges, cargo, mining beams, deposit outlines).
+// Combat effects render in 3D (src/fx.js); this class keeps their fog-aware, budgeted and
+// pause-aware bookkeeping and hands each accepted event to the 3D effects.
 export class ActivityView {
   constructor(view) {
     this.view = view;
@@ -12,17 +14,18 @@ export class ActivityView {
     Object.assign(this.canvas.style, {position:'absolute',inset:'0',width:'100%',height:'100%',pointerEvents:'none'});
     view.container.append(this.canvas);
     this.ctx = this.canvas.getContext('2d');
-    this.combat = new CombatPainter(view,this.ctx);
+    this.combat = new CombatPainter(view);
     this.effects = [];
     this.shots = new ShotPool();
     this.snapshot = {buildings:[],resources:[],workers:[],burning:[],combat:[]};
   }
   event(e, sim) {
     if(['shot','support'].includes(e.type)){
-      if(shotVisible(e,sim))this.shots.add(e);
+      if(shotVisible(e,sim)){this.shots.add(e);this.view.fx?.shot(e,sim);}
       return;
     }
     if (!['impact','death'].includes(e.type) || !sim.isVisible(e)) return;
+    this.view.fx?.[e.type](e);
     const max = effectDuration(e);
     this.effects.push({...e,life:max,max});
     // Strict budget, even if many units die in a single simulation frame.
@@ -47,28 +50,14 @@ export class ActivityView {
     if(this.canvas.width!==w || this.canvas.height!==h){this.canvas.width=w;this.canvas.height=h;}
     c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,v.width,v.height);
     const targets=new Map(), snapshot={buildings:[],resources:[],workers:[],burning:[],combat:[]};
-    // Mask health bars while painting cosmetics, then draw work feedback on top.
-    c.save();const healthRects=[];
-    for(const e of sim.entities){
-      if(!sim.isVisible(e)||(!selected.has(e.id)&&hover?.id!==e.id&&e.hp>=e.maxHp&&e.shield>=e.maxShield))continue;
-      const p=v.project(e.x,e.z,e.kind==='building'?5.2:2.9),q=v.project(e.x+2,e.z,e.kind==='building'?5.2:2.9);
-      const width=Math.max(24,Math.hypot(q.x-p.x,q.y-p.y));healthRects.push([p.x-width/2-3,p.y-11,width+6,16]);
-    }
     this.shots.step(dt);
-    for(const e of this.shots.items)if(shotVisible(e,sim))this.combat.shot(e);
     for(let i=this.effects.length-1;i>=0;i--){
       const e=this.effects[i];e.life-=dt;
       if(e.life<=0){this.effects.splice(i,1);continue;}
-      if(!sim.isVisible(e))continue;
-      if(this.combat.effect(e))snapshot.combat.push({type:e.type,life:e.life,shield:!!e.shield,heavy:!!e.heavy});
+      if(sim.isVisible(e))snapshot.combat.push({type:e.type,life:e.life,shield:!!e.shield,heavy:!!e.heavy});
     }
-    const burnLimit=v.lowPower?8:16;
-    for(const e of sim.entities){
-      if(snapshot.burning.length>=burnLimit)break;
-      if(isBurning(e)&&sim.isVisible(e)&&this.combat.burn(e,sim.time))snapshot.burning.push(e.id);
-    }
-    for(const rect of healthRects)c.clearRect(...rect);
-    c.restore();c.globalAlpha=1;
+    snapshot.burning=burningEntities(sim,v.lowPower).map(e=>e.id);
+    c.globalAlpha=1;
     for(const e of sim.entities){
       if(e.hp<=0 || e.team!==0)continue;
       const a=buildingActivity(sim,e);
@@ -105,5 +94,5 @@ export class ActivityView {
     snapshot.shots=this.shots.items.length;
     this.snapshot=snapshot;
   }
-  reset(){this.effects.length=0;this.shots.clear();this.snapshot={buildings:[],resources:[],workers:[],burning:[],combat:[]};this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);}
+  reset(){this.effects.length=0;this.shots.clear();this.view.fx?.clear();this.snapshot={buildings:[],resources:[],workers:[],burning:[],combat:[]};this.ctx.clearRect(0,0,this.canvas.width,this.canvas.height);}
 }

@@ -51,8 +51,8 @@ export class EnvironmentView {
     this.particles = [];
     this.lastTime = 0;
     this.owned=[];
+    // Everything drawn here lies inside the map; the area beyond the edge stays empty.
     this.rocks(assets);
-    this.backdrop(assets);
     if (!terrain.river) return;
     const waterMat = new THREE.MeshStandardMaterial({
       color: 0x428a94,
@@ -154,11 +154,12 @@ export class EnvironmentView {
         this.decor.add(batch);
       });
     };
-    const transforms = { tree: [], bush: [], reed: [], crate: [] },
+    const transforms = { bush: [], reed: [], crate: [] },
       dummy = new THREE.Object3D();
+    // Decoration stays well inside the playable edge; nothing is placed on or beyond it.
     for (let i = 0; i < 120; i++) {
-      const x = (rand() - 0.5) * 94,
-        z = (rand() - 0.5) * 94,
+      const x = (rand() - 0.5) * 88,
+        z = (rand() - 0.5) * 88,
         type = terrain.at(x, z);
       if (
         type !== "grass" ||
@@ -173,18 +174,12 @@ export class EnvironmentView {
       transforms.bush.push(dummy.matrix.clone());
     }
     for (let i = 0; i < 60; i++) {
-      const x = -46 + i * 1.55;
+      const x = -44 + i * 1.48;
       if (CROSSINGS.some((c) => Math.abs(x - c.x) < 6)) continue;
       dummy.position.set(x, 0, (i % 2 ? 1 : -1) * (3.5 + rand()));
       dummy.scale.setScalar(0.6 + rand() * 0.5);
       dummy.updateMatrix();
       transforms.reed.push(dummy.matrix.clone());
-    }
-    for (let i = 0; i < 40; i++) {
-      dummy.position.set(i % 2 ? terrain.half+3 : -terrain.half-3, 0, -terrain.half+2 + Math.floor(i / 2) * (terrain.size-4)/19);
-      dummy.scale.setScalar(0.8 + rand() * 0.5);
-      dummy.updateMatrix();
-      transforms.tree.push(dummy.matrix.clone());
     }
     for (const [x, z] of [
       [-30, 29],
@@ -199,7 +194,7 @@ export class EnvironmentView {
     }
     for (const [name, list] of Object.entries(transforms))
       instances(name, list);
-    // One bounded pool for dust and spray. Combat smoke uses the HUD canvas.
+    // One bounded pool for movement dust and ford spray. Combat effects live in fx.js.
     this.positions = new Float32Array(64 * 3);
     this.positions.fill(10000);
     this.particleGeometry = new THREE.BufferGeometry();
@@ -250,44 +245,6 @@ export class EnvironmentView {
       batch.castShadow=batch.receiveShadow=true;
       this.root.add(batch);
     });
-  }
-  backdrop(assets) {
-    const style=themeFor(this.terrain.id),dummy=new THREE.Object3D();
-    // Distant hills reuse the boulder model when available; otherwise a faceted placeholder.
-    const boulder=assets.getObjectByName('asset_rock_b')?.children.find(m=>m.isMesh);
-    const geometry=boulder?null:new THREE.DodecahedronGeometry(1,0),material=new THREE.MeshStandardMaterial({color:style.rock,roughness:1,vertexColors:!!boulder});
-    // Ruins use plain boxes without a colour attribute, so they need their own material:
-    // vertexColors on geometry lacking colours renders black.
-    const ruinMaterial=new THREE.MeshStandardMaterial({color:style.rock,roughness:1});
-    this.owned.push(...[geometry,material,ruinMaterial].filter(Boolean));
-    const hills=new THREE.InstancedMesh(boulder?.geometry??geometry,material,16);
-    for(let i=0;i<16;i++){
-      const x=(i%2?1:-1)*(this.terrain.half+7),z=-this.terrain.half+8+Math.floor(i/2)*(this.terrain.size-16)/7;
-      dummy.position.set(x,.4,z);dummy.rotation.set(.1,i*2.4,.1);
-      dummy.scale.set(3+i%3,this.terrain.id==='dunes'?1.4:2.5+i%2,4+i%3);dummy.updateMatrix();hills.setMatrixAt(i,dummy.matrix);
-    }
-    this.decor.add(hills);
-    if(this.terrain.id==='woodlands'){
-      const tree=assets.getObjectByName('asset_tree');
-      tree?.traverse(m=>{
-        if(!m.isMesh)return;
-        const batch=new THREE.InstancedMesh(m.geometry,m.material,16);
-        for(let i=0;i<16;i++){
-          dummy.position.set(-this.terrain.half+4+i*(this.terrain.size-8)/15,0,-this.terrain.half-4);
-          dummy.rotation.set(0,i*2.4,0);dummy.scale.setScalar(.8+(i%3)*.15);dummy.updateMatrix();batch.setMatrixAt(i,dummy.matrix);
-        }
-        this.decor.add(batch);
-      });
-    }
-    if(['classic','basin','highlands'].includes(this.terrain.id)){
-      const shape=new THREE.BoxGeometry(1,1,1);this.owned.push(shape);
-      const ruins=new THREE.InstancedMesh(shape,ruinMaterial,12);
-      for(let i=0;i<12;i++){
-        dummy.position.set(-this.terrain.half+8+i*3,1,-this.terrain.half-3);dummy.rotation.set(0,0,i%3*.1);
-        dummy.scale.set(i%3===0?1:2.8,i%3===0?4:1.5,.8);dummy.updateMatrix();ruins.setMatrixAt(i,dummy.matrix);
-      }
-      this.decor.add(ruins);
-    }
   }
   configure(settings) {
     this.settings = settings;

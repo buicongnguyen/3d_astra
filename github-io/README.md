@@ -6,6 +6,8 @@ The [progression update](PROGRESSION_PLAN.md) matches the [Godot edition](https:
 
 The **Riverlands** update adds saved army colors, graphics/audio settings, varied ground, a river with two bridges and a shallow ford, and original Blender scenery. Choose Riverlands or the classic Ashen Frontier in the briefing. Open **Settings** there or through **Pause → Settings** during play. See [the evaluation and release review](EVALUATION_AND_RELEASE.md).
 
+Combat renders in 3D: muzzle flashes, tracers, shells, rocket trails, sparks, explosions with debris and scorch marks, burning machines and buildings, and buildings that collapse into the ground. Selection uses animated ground rings, segmented health bars with a damage ghost, and a selection panel with live unit vitals. See [combat feedback, destruction and selection](../COMBAT_FEEDBACK.md). Nothing is drawn beyond the playable map edge.
+
 ## Play locally
 
 Soldiers and tanks can **Patrol (P)** between two points and engage enemies along the route. Harvesters have an explicit **Attack (N)** command. See [Patrol and Harvester Attack](docs/PATROL_AND_ATTACK.md) for mouse, touch and order-queue behavior.
