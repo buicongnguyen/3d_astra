@@ -82,7 +82,7 @@ def infantry(a, kind):
     team = a.part('Chest', 'Team')
     team.box((.68 * b, .44, .44), loc=(0, 0, 1.52), bevel=.1, taper=(1.1, 1.0))
     for s, _ in SIDES:
-        team.box((.3 * b, .08, .24), loc=(s * .15 * b, -.215, 1.56), rot=(.12, 0, s * .18), bevel=.04)
+        team.box((.3 * b, .08, .24), loc=(s * .15 * b, -.215, 1.56), rot=(.12, 0, s * .18), bevel=.04, seg=1)
     gear.box((.04, .05, .26), loc=(0, -.25, 1.54), bevel=.01, seg=1)
     armor.box((.5 * b, .4, .1), loc=(0, 0, 1.77), bevel=.035, seg=1)
     glow = a.part('Lights', 'TeamGlow')
@@ -135,11 +135,11 @@ def infantry(a, kind):
         cargo = a.part('Cargo', 'Alloy')
         cargo.cyl(.17, .46, loc=(0, .43, 1.58), seg=12, bevel=.03)
         for z in (1.36, 1.8):
-            steel.torus(.19, .03, loc=(0, .43, z), seg=16, ring=6)
+            steel.torus(.19, .03, loc=(0, .43, z), seg=12, ring=4)
         armor.box((.2, .32, .2), loc=(.42, -.46, 1.27), bevel=.045)
         steel.cyl(.12, .46, loc=(.42, -.84, 1.27), rot=FORWARD, seg=12, r2=.02, bevel=0)
         for y in (-.68, -.8):
-            steel.torus(.1, .02, loc=(.42, y, 1.27), rot=FORWARD, seg=12, ring=4)
+            steel.torus(.1, .02, loc=(.42, y, 1.27), rot=FORWARD, seg=8, ring=3)
         helm.box((.46, .5, .04), loc=(0, -.02, 2.06), bevel=.015, seg=1)
         cargo.cyl(.05, .07, loc=(-.5, 0, 1.87), seg=8, bevel=.01, bseg=1)
     elif kind == 'medic':
@@ -501,10 +501,10 @@ BUILDERS = {
 def build(kind, root):
     unit = kind in UNITS
     infantry_unit = kind in GRIPS
-    # Infantry parts are small enough for corner AO; vehicles use tighter contact AO;
-    # structures get a coarse lattice so long walls and roofs carry AO gradients.
+    # Infantry parts are small enough for corner AO; vehicles use tighter contact AO.
+    # No lattice slicing: at game zoom it tripled wall geometry for little visible gain.
     a = Asset(kind, root, ao_distance=.7 if infantry_unit else .5 if unit else 1.6,
-              grime_height=.45 if unit else .9, lattice=0 if unit else 1.2)
+              grime_height=.45 if unit else .9)
     BUILDERS[kind](a)
     return a.finish()
 

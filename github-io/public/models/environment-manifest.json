@@ -4,15 +4,15 @@
   "assets": [
     {
       "name": "asset_rock_a",
-      "triangles": 480
+      "triangles": 360
     },
     {
       "name": "asset_rock_b",
-      "triangles": 480
+      "triangles": 360
     },
     {
       "name": "asset_rock_c",
-      "triangles": 480
+      "triangles": 360
     },
     {
       "name": "asset_crystal_alloy",
@@ -28,7 +28,7 @@
     },
     {
       "name": "asset_bush",
-      "triangles": 320
+      "triangles": 80
     },
     {
       "name": "asset_reed",
@@ -40,7 +40,7 @@
     },
     {
       "name": "asset_bridge",
-      "triangles": 3976
+      "triangles": 1080
     }
   ]
 }

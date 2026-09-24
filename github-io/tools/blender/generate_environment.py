@@ -40,8 +40,8 @@ def rocks(root):
         a, p = asset(root, f'rock_{letter}', ao_distance=.9, grime_height=.3)
         rock = a.part('Rock', 'Rock', p, flat=True)
         rock.ico(size, loc=(0, 0, size[2] * .5), sub=3, jitter=.3, seed=seed)
-        rock.ico((.46, .4, .32), loc=(.78, .38, .14), sub=2, jitter=.32, seed=seed + 2)
-        rock.ico((.32, .28, .22), loc=(-.7, -.52, .08), sub=2, jitter=.32, seed=seed + 5)
+        rock.ico((.46, .4, .32), loc=(.78, .38, .14), sub=1, jitter=.32, seed=seed + 2)
+        rock.ico((.32, .28, .22), loc=(-.7, -.52, .08), sub=1, jitter=.32, seed=seed + 5)
         built.append(a.finish())
     return built
 
@@ -86,7 +86,7 @@ def bush(root):
     a, p = asset(root, 'bush', ao_distance=.7, grime_height=.3)
     for i, (x, y, r) in enumerate(((-.38, .05, .62), (.35, .12, .56), (0, -.28, .5), (.05, .3, .44))):
         a.part('Leaves', 'Foliage' if i % 2 == 0 else 'FoliageLight', p).ico(
-            (r, r * .95, r * .78), loc=(x, y, r * .62), sub=2, jitter=.2, seed=i * 2.3)
+            (r, r * .95, r * .78), loc=(x, y, r * .62), sub=1, jitter=.2, seed=i * 2.3)
     return a.finish()
 
 
@@ -121,7 +121,7 @@ def crate(root):
 
 def bridge(root):
     """10 x 10 crossing deck with Warren trusses along both edges (Blender Y spans the river)."""
-    a, p = asset(root, 'bridge', ao_distance=1.2, grime_height=.2, lattice=1.5)
+    a, p = asset(root, 'bridge', ao_distance=1.2, grime_height=.2)
     a.part('Deck', 'Concrete', p).box((10, 10, .3), loc=(0, 0, -.08), bevel=.04)
     seams = a.part('Seams', 'Undercarriage', p)
     for i in range(5):
@@ -133,9 +133,9 @@ def bridge(root):
         steel.box((.18, 9.7, .18), loc=(x, 0, 1.15), bevel=.03, seg=1)
         posts = [-4.8 + i * 2.4 for i in range(5)]
         for y in posts:
-            steel.limb((x, y, .3), (x, y, 1.1), .14, .14, bevel=.02, seg=1)
+            steel.limb((x, y, .3), (x, y, 1.1), .14, .14, bevel=0)
         for y0, y1 in zip(posts, posts[1:]):
-            steel.limb((x, y0, .32), (x, y1, 1.1), .1, .1, bevel=.015, seg=1)
+            steel.limb((x, y0, .32), (x, y1, 1.1), .1, .1, bevel=0)
         a.part('Lamps', 'Lamp', p).box((.14, .14, .14), loc=(x, -4.85, 1.32), bevel=.03, seg=1)
         a.part('Lamps', 'Lamp', p).box((.14, .14, .14), loc=(x, 4.85, 1.32), bevel=.03, seg=1)
     abut = a.part('Deck', 'Concrete', p)

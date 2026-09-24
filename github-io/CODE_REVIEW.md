@@ -42,6 +42,25 @@ A second review of the diff found ten problems in the first round of fixes and a
 - **Terrain scatter:** it depended on model load timing, and pebbles and grass sat inside rocks.
 - **Leak:** the room scene used to bake the reflection map was never disposed.
 
+### Deployment check: software-renderer performance
+
+The first deployment run was cancelled. The CI browser suites render with SwiftShader, and one test group hit its 20-minute limit because the new art doubled frame cost there:
+
+| Build | Frame time | Triangles in the start scene |
+|---|---|---|
+| Previous release | ~250 ms | 79k |
+| New art as first shipped | 520 ms | 221k |
+
+The reflection lookup was the largest single cost, followed by triangles, which the shadow pass renders a second time.
+
+Fixes:
+- **Reflections:** limited to metal, glass and crystal materials, and off in Eco quality.
+- **Structures:** no AO lattice slicing, which cuts the Command core from 8.1k to 4.7k triangles.
+- **Scenery:** lighter bushes, bridges and boulders (one boulder per obstacle); reeds no longer cast shadows.
+- **Infantry:** cheaper rings and louvres, 2.8–3.2k triangles.
+
+The start scene now renders in 160–230 ms under SwiftShader, level with the previous release's 170–250 ms in the same session. Startup is about 1–2 s slower from the larger model files.
+
 **Test change:** `tests/mobile.mjs` asserted that alloy was exactly unchanged while Harvesters were gathering in real time. The new pathfinding breaks ties between equal-length routes differently, which moves a +10 delivery into that window. The assertion now checks the intent, that the placement preview never spends (a relay costs 100).
 
 **Checked and found correct:**

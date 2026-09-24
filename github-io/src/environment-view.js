@@ -142,7 +142,8 @@ export class EnvironmentView {
           m.material,
           transforms.length,
         );
-        batch.castShadow = true;
+        // Thin reed blades cast no visible shadow; skip them in the shadow pass.
+        batch.castShadow = name !== "reed";
         batch.receiveShadow = true;
         transforms.forEach((matrix, i) =>
           batch.setMatrixAt(
@@ -222,7 +223,7 @@ export class EnvironmentView {
     this.emission = 0;
   }
   // Rock obstacles block movement, so they stay visible regardless of the decoration setting.
-  // Each obstacle gets a main boulder and a smaller companion from the Blender variants.
+  // Each obstacle gets one Blender boulder (its satellite stones already break the outline).
   rocks(assets) {
     const variants=['a','b','c'].map(k=>assets.getObjectByName(`asset_rock_${k}`)?.children.find(m=>m.isMesh)).filter(Boolean);
     if(!variants.length)return;
@@ -231,7 +232,7 @@ export class EnvironmentView {
     material.envMapIntensity=.35;
     this.owned.push(material);
     // Scale by each variant's measured footprint so the drawn rock stays inside the collision
-    // circle units path around (radius r); the companion sits wholly inside it too.
+    // circle units path around (radius r).
     const reach=variants.map(({geometry})=>{
       const p=geometry.attributes.position;let max=0;
       for(let i=0;i<p.count;i++)max=Math.max(max,Math.hypot(p.getX(i),p.getZ(i)));
@@ -239,11 +240,9 @@ export class EnvironmentView {
     });
     const transforms=variants.map(()=>[]),dummy=new THREE.Object3D();
     ROCKS.forEach(([x,z,r],i)=>{
-      for(const [k,size,dx,dz] of [[i,r*.98,0,0],[i+1,r*.4,r*.35,-r*.35]]){
-        const v=k%variants.length,scale=size/reach[v];
-        dummy.position.set(x+dx,0,z+dz);dummy.rotation.set(0,i*2.1+k,0);dummy.scale.set(scale,scale*(.9+(i%3)*.12),scale);
-        dummy.updateMatrix();transforms[v].push(dummy.matrix.clone());
-      }
+      const v=i%variants.length,scale=r*.98/reach[v];
+      dummy.position.set(x,0,z);dummy.rotation.set(0,i*2.1,0);dummy.scale.set(scale,scale*(.9+(i%3)*.12),scale);
+      dummy.updateMatrix();transforms[v].push(dummy.matrix.clone());
     });
     variants.forEach((source,k)=>{
       const batch=new THREE.InstancedMesh(source.geometry,material,transforms[k].length);

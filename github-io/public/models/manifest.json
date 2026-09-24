@@ -6,79 +6,79 @@
     {
       "name": "worker",
       "file": "worker.glb",
-      "triangles": 3660,
+      "triangles": 3116,
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "vanguard",
       "file": "vanguard.glb",
-      "triangles": 3128,
+      "triangles": 2872,
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "ranger",
       "file": "ranger.glb",
-      "triangles": 3252,
+      "triangles": 2996,
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "breaker",
       "file": "breaker.glb",
-      "triangles": 4680,
+      "triangles": 4520,
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "medic",
       "file": "medic.glb",
-      "triangles": 3076,
+      "triangles": 2820,
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "engineer",
       "file": "engineer.glb",
-      "triangles": 3028,
+      "triangles": 2772,
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "tank",
       "file": "tank.glb",
-      "triangles": 6456,
+      "triangles": 6264,
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "antitank",
       "file": "antitank.glb",
-      "triangles": 3448,
+      "triangles": 3192,
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "hq",
       "file": "hq.glb",
-      "triangles": 8068,
+      "triangles": 4720,
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "barracks",
       "file": "barracks.glb",
-      "triangles": 4816,
+      "triangles": 2816,
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "foundry",
       "file": "foundry.glb",
-      "triangles": 6504,
+      "triangles": 3952,
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "relay",
       "file": "relay.glb",
-      "triangles": 3500,
+      "triangles": 2776,
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "tower",
       "file": "tower.glb",
-      "triangles": 3192,
+      "triangles": 2080,
       "animation": "Runtime articulated parts; no baked clips"
     }
   ]

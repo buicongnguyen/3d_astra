@@ -18,20 +18,21 @@ All 13 unit and structure models and the scenery set (boulders, crystal deposits
   - Rays that hit a back face start inside another part. They are ignored, so buried vertices cannot darken the faces they share.
   - Aim/recoil parts (barrels, the tower head) do not occlude the body, because they move at runtime.
 - **Grey vertex colour.** The colour is kept grey so the runtime recolouring of `Team*` materials multiplies cleanly.
-- **PBR materials.** Materials only describe the surface: painted armour, bare steel, rubber, glass, emissive lights, crystals. The renderer adds a PMREM room environment to these materials (not to the terrain) so metals reflect.
-- **Coarse lattice for structures.** Structures are sliced on a coarse grid so long walls and roofs carry AO gradients. Units are not sliced, to keep their triangle count down.
+- **PBR materials.** Materials only describe the surface: painted armour, bare steel, rubber, glass, emissive lights, crystals. In High quality the renderer adds a PMREM room environment to metallic, glass and crystal materials so they reflect. Matte paint, fabric, scenery and terrain do not get it, and Eco quality skips it entirely, because the lookup is the most expensive part of the model shaders on weak GPUs.
+- **Optional lattice slicing.** `Asset(lattice=…)` can slice large faces so they carry AO gradients. No shipped asset uses it: at game zoom it tripled wall geometry for little visible gain.
 
 Current budgets (triangles):
 
 | Group | Budget |
 |---|---|
-| Infantry | 3.0–3.7k |
-| Breaker, Battle tank | 4.7k, 6.5k |
-| Structures | 3.2k (tower) – 8.1k (Command core) |
-| Boulders | 480 each |
+| Infantry | 2.8–3.2k |
+| Breaker, Battle tank | 4.5k, 6.3k |
+| Structures | 2.1k (tower) – 4.7k (Command core) |
+| Boulders | 360 each |
 | Crystal clusters | 600–700 each |
+| Bush, tree, reed, bridge | 80, 124, 156, 1.1k |
 
-The manifests record exact counts.
+The manifests record exact counts. Budgets are set by the CI browser tests, which render with SwiftShader, a CPU software renderer. A frame of the start scene must stay near the previous release (about 160–250 ms there, versus about 520 ms before the budgets were trimmed).
 
 ## Runtime contract (`src/view.js`, `src/environment-view.js`)
 

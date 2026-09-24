@@ -94,7 +94,7 @@ export class WorldView {
     this.gridVisible = false;
     this.previous = new Map();
     // Image-based lighting gives the Blender PBR materials (bare steel, painted armour,
-    // crystals) real reflections. It is assigned per material (reflect()), not as
+    // crystals) real reflections. It is assigned per material (applyReflections()), not as
     // scene.environment: three.js would then override every material's envMapIntensity and
     // wash out the terrain, which is tuned for the sun and hemisphere light alone.
     const pmrem = new THREE.PMREMGenerator(this.renderer),
@@ -205,6 +205,7 @@ export class WorldView {
   }
   setQuality(level) {
     this.lowPower = level === "low";
+    this.applyReflections();
     this.renderer.setPixelRatio(
       Math.min(devicePixelRatio, this.lowPower ? 1 : 1.6),
     );
@@ -284,7 +285,6 @@ export class WorldView {
                     m.emissiveIntensity = 0.8;
                   }
                 }
-                this.reflect(m, 0.6);
                 materials.set(name, m);
               }
               o.material = materials.get(name);
@@ -302,9 +302,6 @@ export class WorldView {
       )
     ).scene;
     optimizeEnvironment(this.environmentAssets);
-    this.environmentAssets.traverse((o) => {
-      if (o.isMesh) this.reflect(o.material, 0.35);
-    });
     // Blender boulders (EnvironmentView) replace the placeholder rocks drawn before loading.
     if (this.environmentAssets.getObjectByName("asset_rock_a")) this.removePlaceholderRocks();
     this.environment = new EnvironmentView(
@@ -313,6 +310,7 @@ export class WorldView {
       this.environmentAssets,
     );
     this.environment.configure(this.settings);
+    this.applyReflections();
   }
   createTerrain() {
     seed = 1482;
@@ -511,10 +509,21 @@ export class WorldView {
       this.terrainRoot.add(ring);
     }
   }
-  reflect(material, intensity) {
-    if (!material.isMeshStandardMaterial) return;
-    material.envMap = this.environmentMap;
-    material.envMapIntensity = intensity;
+  // Reflections pay off on metal, glass and crystals. Matte paint, fabric and scenery gain
+  // little, and the per-pixel environment lookup is the most expensive part of the model
+  // shaders on weak GPUs and software renderers, so Eco quality skips it entirely.
+  applyReflections() {
+    const map = this.lowPower ? null : this.environmentMap;
+    const apply = (o) => {
+      const m = o.material;
+      if (!o.isMesh || !m.isMeshStandardMaterial || !(m.metalness >= 0.5 || m.roughness <= 0.25)) return;
+      if (m.envMap === map) return;
+      m.envMap = map;
+      m.envMapIntensity = 0.6;
+      m.needsUpdate = true;
+    };
+    for (const template of this.teamTemplates.values()) template.traverse(apply);
+    this.environmentAssets?.traverse(apply);
   }
   removePlaceholderRocks() {
     if (!this.placeholderRocks) return;

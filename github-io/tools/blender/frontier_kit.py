@@ -301,7 +301,7 @@ class Shape:
         for i in range(slats):
             z = -height / 2 + (i + 0.5) * height / slats
             m = frame @ _matrix((0, 0, z), (math.radians(-25), 0, 0))
-            self.box((width, depth, thickness), loc=m.to_translation(), rot=m.to_euler('XYZ'), bevel=0.008, seg=1)
+            self.box((width, depth, thickness), loc=m.to_translation(), rot=m.to_euler('XYZ'), bevel=0)
         return self
 
     def bolts(self, points, r=0.035, h=0.03, rot=(0, 0, 0), seg=6):
