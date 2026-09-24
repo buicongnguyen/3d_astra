@@ -1,28 +1,62 @@
 /* Mobile keeps its tabs. Desktop uses a StarCraft-style console along the bottom edge:
-   minimap bottom-left, selection in the middle, command card bottom-right. */
+   minimap bottom-left, selection in the middle, command card bottom-right. Every panel
+   is sized to its content so as much of the battlefield as possible stays visible. */
 .command-deck { display: contents; }
 .group-strip, #order-tip { display: none; }
 .compact-ui .order-buttons .icon.desk { display: none; }
 
 :root:not(.compact-ui) {
-  --console-side: 192px;
-  --console-mid: 156px;
-  --console-map: 200px;
-  --console-card: 372px;
+  --top-height: 48px;
+  --console-map: 180px;
+  --console-map-height: 152px;
+  --console-card: 348px;
+  --console-card-height: 118px;
+  --console-mid: 84px;
   --console-edge: color-mix(in srgb, var(--team-friendly, #92ebc5) 40%, #34504a);
 }
+
+/* Slim top bar; no status bar (the frame rate moves up beside the clock). */
+:root:not(.compact-ui) .topbar { height: var(--top-height); padding: 0 16px; }
+:root:not(.compact-ui) #stage { height: calc(100dvh - var(--top-height)); }
+:root:not(.compact-ui) .brand { gap: 8px; font-size: 14px; letter-spacing: 2px; }
+:root:not(.compact-ui) .brand-mark { width: 26px; height: 28px; }
+:root:not(.compact-ui) .brand-mark .icon { width: 24px; height: 24px; }
+:root:not(.compact-ui) .brand-sub { display: inline; margin: 0 0 0 8px; font-size: 9px; letter-spacing: 3px; }
+:root:not(.compact-ui) .resource { gap: 9px; padding: 0 20px; min-width: 118px; }
+:root:not(.compact-ui) .resource > .icon { width: 19px; height: 19px; }
+:root:not(.compact-ui) .resource strong { font-size: 17px; line-height: 19px; }
+:root:not(.compact-ui) .resource strong em { font-size: 13px; }
+:root:not(.compact-ui) .resource small { margin-top: 1px; font-size: 8px; }
+:root:not(.compact-ui) .top-actions { gap: 4px; }
+:root:not(.compact-ui) .icon-button { width: 30px; height: 30px; }
+:root:not(.compact-ui) #clock { margin-right: 6px; }
+:root:not(.compact-ui) .top-actions #fps { margin-right: 4px; font: 10px Consolas, monospace; color: #8a9c91; white-space: nowrap; }
+:root:not(.compact-ui) .statusbar { display: none; }
+
+/* During play the map name is one small line; the briefing keeps its large title. */
+:root:not(.compact-ui):not(.in-briefing) .map-heading { top: 10px; left: 16px; }
+:root:not(.compact-ui):not(.in-briefing) .map-heading .eyebrow,
+:root:not(.compact-ui):not(.in-briefing) .map-heading p,
+:root:not(.compact-ui):not(.in-briefing) .sector-status { display: none; }
+:root:not(.compact-ui):not(.in-briefing) .map-heading h1 { margin: 0; font-size: 16px; letter-spacing: 0; }
+
+/* Objectives: a tight card in the top-right corner; completed goals shrink to one line. */
+:root:not(.compact-ui) #mission-objectives { padding: 0 10px 2px; }
+:root:not(.compact-ui) #mission-objectives .panel-label { height: 22px; }
+:root:not(.compact-ui) #mission-objectives .objective { margin: 6px 0; }
+:root:not(.compact-ui) #mission-objectives .objective.complete small { display: none; }
+
 :root:not(.compact-ui) .bottom-dock {
   left: 0;
   right: 0;
-  bottom: 27px;
+  bottom: 0;
   gap: 0;
-  grid-template-columns: var(--console-map) minmax(0, 680px) var(--console-card);
+  grid-template-columns: var(--console-map) minmax(0, 600px) var(--console-card);
   justify-content: space-between;
   align-items: end;
 }
 :root:not(.compact-ui) .bottom-dock .panel {
-  height: var(--console-side);
-  padding: 0 10px 8px;
+  padding: 6px 8px;
   border-bottom: 0;
   border-radius: 10px 10px 0 0;
   background: linear-gradient(180deg, rgba(28, 45, 43, 0.97), rgba(14, 24, 25, 0.97) 60%);
@@ -30,67 +64,88 @@
   /* Nearly opaque, so skip the per-frame backdrop blur over the WebGL canvas. */
   backdrop-filter: none;
 }
-:root:not(.compact-ui) .bottom-dock .panel-label {
-  height: 22px;
-  border-bottom-color: #c6dec714;
-}
 
-/* Minimap corner. */
-:root:not(.compact-ui) .minimap-panel {
-  display: flex;
-  flex-direction: column;
+/* Minimap corner: just the map, with the home button over its top-right corner. */
+:root:not(.compact-ui) .bottom-dock .minimap-panel {
+  position: relative;
+  height: var(--console-map-height);
 }
-:root:not(.compact-ui) .minimap-panel #minimap {
-  height: 144px;
-  margin: 5px 0 4px;
+:root:not(.compact-ui) .minimap-panel .panel-label {
+  position: absolute;
+  top: 9px;
+  right: 11px;
+  height: auto;
+  border: 0;
+  font-size: 0;
+  pointer-events: none;
 }
+:root:not(.compact-ui) .minimap-panel .panel-label button {
+  pointer-events: auto;
+  border-radius: 3px;
+  background: #0d1a18cc;
+}
+:root:not(.compact-ui) .minimap-panel #minimap { height: 100%; margin: 0; }
+:root:not(.compact-ui) .minimap-panel .map-legend { display: none; }
 
-/* Selection: large portrait, name, live vitals and activity; roster or work queue below. */
+/* Selection: portrait, name, vitals and activity, with the queue or roster beside them. */
 :root:not(.compact-ui) .bottom-dock .selection-panel {
   position: relative;
   height: var(--console-mid);
-  padding: 8px 14px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
   overflow: visible;
 }
+:root:not(.compact-ui) .selection-panel > .panel-label { display: none; }
+:root:not(.compact-ui) .selection-panel #selection-info { flex: 1 1 auto; min-width: 0; min-height: 0; padding: 0; }
+:root:not(.compact-ui) .selection-panel .selection-empty { gap: 12px; }
+:root:not(.compact-ui) .selection-panel .selection-empty > .icon { width: 30px; height: 30px; }
+:root:not(.compact-ui) .selection-panel .selection-empty h3 { margin: 0 0 3px; font-size: 15px; }
+:root:not(.compact-ui) .selection-panel .selection-empty p { margin: 0; font-size: 12px; color: #a3b8a8; }
 :root:not(.compact-ui) .selection-panel .entity-details {
   display: grid;
-  grid-template-columns: 58px minmax(0, 1fr) auto;
-  column-gap: 12px;
-  row-gap: 3px;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  column-gap: 10px;
+  row-gap: 2px;
   align-items: center;
 }
 :root:not(.compact-ui) .selection-panel .selection-heading { display: contents; }
 :root:not(.compact-ui) .selection-panel .selection-heading .sel-portrait {
   grid-row: 1 / span 3;
   grid-column: 1;
-  width: 58px;
-  height: 58px;
+  width: 48px;
+  height: 48px;
   border-radius: 6px;
 }
-:root:not(.compact-ui) .selection-panel .selection-heading .sel-portrait .icon {
-  width: 34px;
-  height: 34px;
-}
-:root:not(.compact-ui) .selection-panel.has-entity .selection-heading h3 {
-  grid-column: 2;
-  font-size: 16px;
-}
+:root:not(.compact-ui) .selection-panel .selection-heading .sel-portrait .icon { width: 28px; height: 28px; }
+:root:not(.compact-ui) .selection-panel.has-entity .selection-heading h3 { grid-column: 2; font-size: 15px; }
 :root:not(.compact-ui) .selection-panel .selection-level { grid-column: 3; }
 :root:not(.compact-ui) .selection-panel .unit-metrics,
 :root:not(.compact-ui) .selection-panel .selection-activity { grid-column: 2 / -1; }
-:root:not(.compact-ui) .selection-panel .unit-metrics { max-width: 460px; }
-:root:not(.compact-ui) .selection-panel.has-entity #selection-info { padding: 0 0 6px; }
+:root:not(.compact-ui) .selection-panel .unit-metrics { max-width: 360px; }
+:root:not(.compact-ui) .selection-panel .unit-metrics > div { flex: 1 1 auto; }
+:root:not(.compact-ui) .selection-panel .selection-scroll {
+  flex: 0 1 auto;
+  max-width: 50%;
+  max-height: 68px;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+:root:not(.compact-ui) .selection-panel #unit-list { flex-wrap: wrap; overflow: visible; }
 :root:not(.compact-ui) .selection-panel #unit-list button {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
 }
+:root:not(.compact-ui) .selection-panel #queue { flex: 0 0 auto; margin: 0; }
 
 /* Saved control groups hang above the selection panel as tabs. */
 :root:not(.compact-ui) .group-strip {
   position: absolute;
-  left: 14px;
+  left: 12px;
   bottom: 100%;
   display: flex;
   gap: 3px;
@@ -99,7 +154,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  height: 24px;
+  height: 22px;
   padding: 0 7px 0 5px;
   border: 1px solid var(--console-edge);
   border-bottom: 0;
@@ -123,24 +178,30 @@
 }
 :root:not(.compact-ui) .group-strip .icon { width: 14px; height: 14px; }
 
-/* Command card: an order row, then build/train tiles in fixed slots, then the upgrade. */
-:root:not(.compact-ui) .bottom-dock .command-panel { position: relative; }
+/* Command card: one row of orders, then six fixed slots. Build/train tiles fill them from
+   the left; the building upgrade (or Cancel while aiming) takes the last slot. */
+:root:not(.compact-ui) .bottom-dock .command-panel {
+  --slot: calc((100% - 16px - 8px) / 3);
+  position: relative;
+  height: var(--console-card-height);
+}
+:root:not(.compact-ui) .command-panel > .panel-label { display: none; }
 :root:not(.compact-ui) .command-panel .order-buttons {
   display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 4px;
   flex-shrink: 0;
   margin: 0;
-  padding: 6px 0 0;
+  padding: 0;
   border: 0;
 }
+:root.no-units:not(.compact-ui) .command-panel .order-buttons :is(#move-order, #attack-order, #stop-order) { display: none; }
 :root:not(.compact-ui) .command-panel .order-buttons button {
   position: relative;
   display: grid;
   place-items: center;
-  height: 34px;
-  min-height: 34px;
+  height: 30px;
+  min-height: 30px;
   padding: 0;
   border: 1px solid #4b6a5b;
   border-radius: 4px;
@@ -157,11 +218,7 @@
   background: color-mix(in srgb, var(--team-friendly, #92ebc5) 34%, #192b27);
   color: #fff;
 }
-:root:not(.compact-ui) .command-panel .order-buttons .icon {
-  display: block;
-  width: 18px;
-  height: 18px;
-}
+:root:not(.compact-ui) .command-panel .order-buttons .icon { display: block; width: 17px; height: 17px; }
 :root:not(.compact-ui) .command-panel .order-buttons .order-label {
   position: absolute;
   width: 1px;
@@ -173,26 +230,26 @@
 :root:not(.compact-ui) .command-panel .order-buttons kbd {
   display: block;
   position: absolute;
-  top: 1px;
-  right: 2px;
+  top: 0;
+  right: 1px;
   margin: 0;
   padding: 0 2px;
   border: 0;
   font-size: 9px;
-  line-height: 11px;
+  line-height: 10px;
   color: var(--mint);
 }
 :root:not(.compact-ui) .command-panel #commands {
   flex: 0 0 auto;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
-  padding: 6px 0 0;
+  padding: 4px 0 0;
   overflow: visible;
 }
 :root:not(.compact-ui) .command-panel .command-tile {
-  height: 40px;
-  min-height: 40px;
-  padding: 3px 3px 2px;
+  height: 34px;
+  min-height: 34px;
+  padding: 1px 3px 0;
 }
 :root:not(.compact-ui) .command-panel .command-tile > .icon { display: none; }
 :root:not(.compact-ui) .command-panel .command-tile > span {
@@ -202,49 +259,74 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+:root:not(.compact-ui) .bottom-dock .command-panel .command-tile > small { margin-top: 0; }
 :root:not(.compact-ui) .command-panel .command-tile > .action-key {
   top: auto;
-  bottom: 2px;
-  right: 3px;
+  bottom: 1px;
+  right: 2px;
   font-size: 9px;
-  line-height: 11px;
+  line-height: 10px;
 }
-:root:not(.compact-ui) .command-panel .tactical-hint {
-  min-height: 0;
-  padding: 6px 4px 0 34px;
-}
-:root:not(.compact-ui) .command-panel .tactical-hint > .icon { left: 2px; top: 8px; width: 22px; height: 22px; }
+:root:not(.compact-ui) .command-panel .tactical-hint { min-height: 0; padding: 2px 4px 0 30px; }
+:root:not(.compact-ui) .command-panel .tactical-hint > .icon { left: 2px; top: 4px; width: 20px; height: 20px; }
 :root:not(.compact-ui) .command-panel .tactical-hint strong { font-size: 13px; }
-:root:not(.compact-ui) .command-panel .tactical-hint p { font-size: 12px; line-height: 1.5; margin: 4px 0 0; color: #a3b8a8; }
+:root:not(.compact-ui) .command-panel .tactical-hint p { font-size: 12px; line-height: 1.45; margin: 2px 0 0; color: #a3b8a8; }
 :root:not(.compact-ui) .command-panel .upgrade-actions {
-  margin-top: auto;
-  padding-top: 4px;
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  width: var(--slot);
+  margin: 0;
+  padding: 0;
 }
 :root:not(.compact-ui) .command-panel .upgrade-actions button {
-  min-height: 30px;
-  height: 30px;
-  padding: 0 10px;
+  position: relative;
+  width: 100%;
+  height: 34px;
+  min-height: 34px;
+  padding: 1px 3px 0;
+  border-radius: 3px;
+  text-align: center;
+  line-height: 16px;
 }
+:root:not(.compact-ui) .command-panel .upgrade-actions .up-name { display: block; font-size: 13px; white-space: nowrap; }
+:root:not(.compact-ui) .command-panel .upgrade-actions .up-cost { display: block; font: 12px/14px Consolas, monospace; color: var(--amber); }
+:root:not(.compact-ui) .command-panel .upgrade-actions .sep { display: none; }
+:root:not(.compact-ui) .command-panel .upgrade-actions kbd {
+  position: absolute;
+  right: 2px;
+  bottom: 1px;
+  margin: 0;
+  padding: 0 2px;
+  border: 0;
+  font-size: 9px;
+  line-height: 10px;
+  color: var(--mint);
+}
+/* A building with a sixth action falls back to a row of its own. */
+:root:not(.compact-ui) .command-panel:has(#commands > :nth-child(6)) .upgrade-actions { position: static; width: auto; margin-top: 4px; }
 
-/* Targeting and placement: the prompt sits above the console, Cancel in the card's corner. */
+/* Targeting and placement: the prompt sits above the console, Cancel in the card's last slot. */
 :root:not(.compact-ui) #mode-banner {
   top: auto;
-  bottom: calc(27px + var(--console-side) + 12px);
+  bottom: calc(var(--console-map-height) + 10px);
   pointer-events: none;
 }
 :root:not(.compact-ui) .command-panel #mode-controls {
   position: absolute;
   top: auto;
   left: auto;
-  right: 10px;
-  bottom: 8px;
+  right: 8px;
+  bottom: 6px;
+  width: var(--slot);
   transform: none;
   z-index: 2;
 }
 :root:not(.compact-ui) .command-panel #mode-controls button {
-  min-height: 30px;
-  height: 30px;
-  padding: 0 16px;
+  flex: 1;
+  min-height: 34px;
+  height: 34px;
+  padding: 0 8px;
   font-size: 13px;
   border-color: #c26a5c;
   background: #4a2622;
@@ -257,7 +339,7 @@
   display: block;
   position: absolute;
   right: 8px;
-  bottom: calc(100% + 8px);
+  bottom: calc(var(--console-card-height) + 8px);
   max-width: calc(var(--console-card) - 16px);
   padding: 6px 10px;
   border: 1px solid var(--console-edge);

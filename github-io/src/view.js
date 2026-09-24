@@ -5,7 +5,7 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Terrain } from "./terrain.js";
 import { ActivityView } from "./activity-view.js";
 import { Effects } from "./fx.js";
-import { createRing, updateRing, createBar, updateBar, setTeamColor, createMarker } from "./selection-view.js";
+import { createRing, updateRing, createBar, updateBar, setTeamColor, createMarker, createRally, updateRally } from "./selection-view.js";
 import {themeFor,shotVisible,weaponStyle} from './visual-style.js';
 import { isHarvesting } from "./activity.js";
 import { defaults, palette } from "./settings.js";
@@ -934,6 +934,9 @@ export class WorldView {
     }
     this.updateDying(sim, dt);
     this.fx.update(sim, dt);
+    if (!this.rally) this.scene.add(this.rally = createRally());
+    const rallying = [...selected].map((id) => sim.get(id)).find((e) => e?.team === 0 && e.kind === "building" && e.rally);
+    updateRally(this.rally, rallying, rallying?.rally, this.colors[0], sim.time);
     this.renderer.render(this.scene, this.camera);
     this.activity.draw(sim,dt,selected,hover);
   }

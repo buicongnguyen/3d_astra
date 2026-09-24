@@ -20,13 +20,13 @@ function setup(level=1){
  s.time=200;hq.level=2;hq.supply=100;b.level=level;
  for(let i=0;i<5;i++)s.spawn('worker',1,32+i,-16);
  s.spawn('foundry',1,10,-34).level=2;
- Object.assign(s.players[1],{alloy:75,energy:0});return {s,b};
+ Object.assign(s.players[1],{alloy:100,energy:0});return {s,b};
 }
 test('AI trains affordable defenses instead of stalling on upgrades or support',()=>{
  for(const level of [1,2]){const {s,b}=setup(level);s.updateAI();assert.equal(b.queue[0]?.type,'vanguard');assert.equal(s.players[1].alloy,0);assert.equal(s.players[1].energy,0);}
 });
 test('AI still drains production for affordable upgrades and respects supply',()=>{
- const {s,b}=setup();Object.assign(s.players[1],{alloy:175,energy:50});s.enqueue(b.id,'vanguard');
+ const {s,b}=setup();Object.assign(s.players[1],{alloy:200,energy:50});s.enqueue(b.id,'vanguard');
  s.updateAI();assert.equal(b.queue.length,1);assert.equal(b.levelJob,null);
  s.updateProduction(b,11);s.updateAI();assert.ok(b.levelJob);assert.equal(b.queue.length,0);
  const blocked=setup(2);blocked.s.own(1).find(e=>e.type==='hq').supply=1;blocked.s.updateAI();assert.equal(blocked.b.queue.length,0);

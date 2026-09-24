@@ -25,33 +25,33 @@
       "name": "Vanguard",
       "role": "Close assault",
       "kind": "unit",
-      "hp": 150,
+      "hp": 140,
       "speed": 5,
-      "damage": 15,
+      "damage": 12,
       "interval": 0.85,
       "range": 2,
       "radius": 0.65,
       "vision": 14,
       "cost": [
-        75,
+        100,
         0
       ],
       "pop": 1,
       "time": 10,
       "icon": "shield",
       "counter": "ranger",
-      "description": "Fast armored fighter. Strong against Rangers.",
-      "shield": 60
+      "description": "Fast armored fighter. Strong against Rangers and Anti-tank soldiers; weak against Breakers and Battle tanks.",
+      "shield": 50
     },
     "ranger": {
       "name": "Ranger",
       "role": "Ranged support",
       "kind": "unit",
-      "hp": 85,
+      "hp": 95,
       "speed": 4.2,
-      "damage": 12,
+      "damage": 13,
       "interval": 1.05,
-      "range": 9,
+      "range": 10,
       "radius": 0.55,
       "vision": 15,
       "cost": [
@@ -62,8 +62,9 @@
       "time": 13,
       "icon": "crosshair",
       "counter": "breaker",
-      "description": "Long-range precision. Strong against Breakers.",
-      "shield": 25
+      "description": "Long-range precision. Deals 2.6× damage to Breakers; weak against Vanguards.",
+      "shield": 25,
+      "counter_bonus": 2.6
     },
     "breaker": {
       "name": "Breaker",
@@ -83,9 +84,13 @@
       "pop": 3,
       "time": 20,
       "icon": "tank",
-      "description": "Heavy splash damage against clustered infantry.",
+      "description": "Heavy artillery. Each shell also hits enemies within 3 m of the target for 40% damage. Strong against clustered infantry, especially Vanguards (1.5×).",
       "shield": 80,
-      "mechanical": true
+      "mechanical": true,
+      "splash_radius": 3,
+      "splash_damage": 0.4,
+      "counter": "vanguard",
+      "counter_bonus": 1.5
     },
     "hq": {
       "name": "Command core",
@@ -253,7 +258,7 @@
       "speed": 2.5,
       "damage": 48,
       "interval": 2.2,
-      "range": 10,
+      "range": 12,
       "radius": 1.05,
       "vision": 16,
       "cost": [
@@ -265,18 +270,22 @@
       "icon": "tank",
       "required_level": 3,
       "mechanical": true,
-      "description": "Durable tracked vehicle with a long-range single-target cannon (48 damage every 2.2s). No splash. Vulnerable to anti-tank rockets; escort with infantry. Engineers repair its hull. Requires level 3 Foundry."
+      "description": "Durable tracked vehicle with a long-range cannon: 48 damage every 2.2s at 12 m. Each shell also hits enemies within 2 m of the target for 40% damage and hits Vanguards 1.5× harder. Vulnerable to anti-tank rockets; escort with infantry. Engineers repair its hull. Requires level 3 Foundry.",
+      "splash_radius": 2,
+      "splash_damage": 0.4,
+      "counter": "vanguard",
+      "counter_bonus": 1.5
     },
     "antitank": {
       "name": "Anti-tank soldier",
       "role": "Vehicle counter",
       "kind": "unit",
-      "hp": 80,
+      "hp": 90,
       "shield": 20,
       "speed": 3.7,
       "damage": 20,
       "interval": 2.4,
-      "range": 11,
+      "range": 12,
       "radius": 0.6,
       "vision": 16,
       "cost": [
@@ -287,8 +296,8 @@
       "time": 17,
       "icon": "crosshair",
       "required_level": 2,
-      "mechanical_bonus": 4,
-      "description": "Shoulder-fired rockets deal 80 damage to mechanical units (Battle tanks and Breakers), or 20 to infantry and buildings, every 2.4s. No splash. Fragile against close assault; protect with Vanguards. Medics heal this soldier. Requires level 2 Barracks."
+      "mechanical_bonus": 6,
+      "description": "Shoulder-fired rockets deal 120 damage to mechanical units (Battle tanks and Breakers), or 20 to infantry and buildings, every 2.4s, at the same 12 m range as a tank. No splash. Fragile against close assault; protect with Vanguards. Medics heal this soldier. Requires level 2 Barracks."
     }
   },
   "rocks": [

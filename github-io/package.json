@@ -26,7 +26,8 @@
     "test:status-layout": "node tests/status-layout.mjs",
     "test:visual-combat": "node tests/visual-combat.mjs",
     "test:new-game": "node tests/new-game.mjs",
-    "test:boundary-fx": "node tests/boundary-fx.mjs"
+    "test:boundary-fx": "node tests/boundary-fx.mjs",
+    "test:repair-rally": "node tests/repair-rally.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

@@ -58,7 +58,7 @@ jobs:
           - name: commands
             scripts: auto-combat harvesters hotkeys pc-controls
           - name: construction
-            scripts: mobile-construction patrol
+            scripts: mobile-construction patrol repair-rally
           - name: feedback
             scripts: activity status-layout visual-combat
     defaults:

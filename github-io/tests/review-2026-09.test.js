@@ -145,7 +145,7 @@ test('splash damage applies anti-vehicle multipliers per victim', () => {
   for (const t of [infantry, vehicle]) t.shield = 0;
   s.hit(shooter, infantry);
   assert.equal(infantry.maxHp - infantry.hp, 30, 'primary infantry target takes base damage');
-  assert.equal(vehicle.maxHp - vehicle.hp, 45, 'vehicle splash takes half of the anti-vehicle damage');
+  assert.equal(vehicle.maxHp - vehicle.hp, 36, 'vehicle splash takes the 40% splash share of the anti-vehicle damage');
 });
 
 test('binary-heap pathfinding finds equal-length routes on the largest map quickly', () => {

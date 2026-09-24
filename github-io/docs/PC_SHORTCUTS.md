@@ -9,12 +9,13 @@ The desktop HUD follows StarCraft's layout, leaving the rest of the battlefield 
 - **Bottom-left:** minimap.
 - **Centre:** selection with portrait, health, shield, attack and activity, plus the unit roster or the production queue. Saved control groups appear as tabs above it, each with its number, unit icon and live count. Click a tab to recall, Ctrl-click to save, Shift-click to add.
 - **Bottom-right: command card.**
-  - The top row holds the unit orders, each with a hotkey badge: Info **I**, Support **R**, Move **M**, Attack-move **F**, Patrol **P**, Attack **N**, Stop **X**. The order you are aiming stays lit.
-  - Below it are the build/train tiles (**Q E R T Y**) and the building upgrade (**U**).
+  - The top row holds the orders, each with a hotkey badge: Info **I**, Support **R**, Move **M**, Attack-move **F**, Patrol **P**, Attack **N**, Stop **X**, **Repair** (Harvesters) and **Rally** **L** (production buildings). With only buildings selected, the row shows just Info and Rally. The order you are aiming stays lit.
+  - Below it, build/train tiles (**Q E R T Y**) fill six fixed slots. The building upgrade (**U**) takes the last slot.
   - Hovering any button shows its name and description above the card.
-  - While you aim an order or place a building, the prompt appears above the console and **Cancel** takes the card's corner.
+  - While you aim an order or place a building, the prompt appears above the console and **Cancel** takes the last slot.
+- **Top bar and corners:** a slim top bar with the frame rate beside the clock, a one-line map name and a compact objectives card. There is no status bar. Screen-edge scrolling works along the whole border, including over the console.
 
-Phones and narrow windows keep the Selection / Actions / Map dock.
+Phones and narrow windows keep the Selection / Actions / Map dock. On a phone, repair by tapping a damaged building with Harvesters selected.
 
 ## Construction and production
 

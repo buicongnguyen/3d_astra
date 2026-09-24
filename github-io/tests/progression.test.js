@@ -68,12 +68,12 @@ test('support orders follow allies, stop clears queued orders, and death cannot 
 });
 test('shield absorption, overflow, delay, recharge and effective attack are real',()=>{
   const s=new Simulation({ai:false}),u=first(s,'vanguard');
-  s.applyDamage(u,50,1);assert.equal(u.hp,150);assert.equal(u.shield,10);
-  s.applyDamage(u,25,1);assert.equal(u.hp,135);assert.equal(u.shield,0);
-  step(s,4);assert.equal(u.shield,0);step(s,3);assert.ok(u.shield>7&&u.shield<9);assert.equal(u.hp,135);
+  s.applyDamage(u,40,1);assert.equal(u.hp,140);assert.equal(u.shield,10);
+  s.applyDamage(u,25,1);assert.equal(u.hp,125);assert.equal(u.shield,0);
+  step(s,4);assert.equal(u.shield,0);step(s,3);assert.ok(u.shield>7&&u.shield<9);assert.equal(u.hp,125);
   s.applyDamage(u,1,1);assert.equal(u.shieldDelay,5);
   u.shield=u.maxShield-.1;u.shieldDelay=0;s.tick(.05);assert.equal(u.shield,u.maxShield);
-  s.players[0].upgrade=true;assert.ok(Math.abs(s.attackValue(first(s,'ranger'))-13.2)<.0001);
+  s.players[0].upgrade=true;assert.ok(Math.abs(s.attackValue(first(s,'ranger'))-14.3)<.0001);
 });
 test('missing construction requirements are exact and precede terrain errors',()=>{
   const s=new Simulation({ai:false});first(s,'barracks').complete=false;

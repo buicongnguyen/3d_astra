@@ -52,17 +52,20 @@ try{
    // StarCraft-style console: minimap bottom-left, selection centre, command card bottom-right.
    const layout=await page.evaluate(()=>{
     const rect=s=>document.querySelector(s).getBoundingClientRect();
-    const map=rect('.minimap-panel'),panel=rect('.selection-panel'),card=rect('.command-panel'),status=rect('.statusbar');
+    const map=rect('.minimap-panel'),panel=rect('.selection-panel'),card=rect('.command-panel');
     const controls=[...document.querySelectorAll('.command-panel button')].filter(e=>e.getClientRects().length);
-    return {corners:map.left===0&&card.right===innerWidth&&map.bottom===status.top&&panel.bottom===status.top&&card.bottom===status.top,
+    // Flush with the bottom edge: the desktop has no status bar; frame rate is in the top bar.
+    return {corners:map.left===0&&card.right===innerWidth&&[map,panel,card].every(r=>r.bottom===innerHeight),
+     statusbar:!document.querySelector('.statusbar').getClientRects().length&&!!document.querySelector('.top-actions #fps'),
      order:map.right<=panel.left&&panel.right<=card.left,heights:[map.height,panel.height,card.height],
      orders:document.querySelector('.order-buttons').parentElement.classList.contains('command-panel'),
      jobs:document.querySelectorAll('#queue .work-job').length,duplicate:document.querySelector('#production-status').hidden,
      contained:controls.every(e=>{const r=e.getBoundingClientRect();return r.left>=card.left&&r.right<=card.right&&r.top>=card.top&&r.bottom<=card.bottom;}),
-     clear:[[innerWidth/2,card.top-40],[innerWidth-200,96]].every(([x,y])=>!!document.elementFromPoint(x,y)?.closest('#world'))};
+     clear:[[innerWidth/2,card.top-40],[innerWidth-300,80],[240,innerHeight-110]].every(([x,y])=>!!document.elementFromPoint(x,y)?.closest('#world'))};
    });
-   assert.deepEqual(layout.heights,[192,156,192]);
-   assert.ok(layout.corners&&layout.order&&layout.orders&&layout.contained&&layout.duplicate&&layout.clear,JSON.stringify(layout));assert.equal(layout.jobs,5);
+   // Compact console: minimap 152 px, selection 84 px, command card 118 px tall.
+   assert.deepEqual(layout.heights,[152,84,118]);
+   assert.ok(layout.corners&&layout.statusbar&&layout.order&&layout.orders&&layout.contained&&layout.duplicate&&layout.clear,JSON.stringify(layout));assert.equal(layout.jobs,5);
    if(viewport.width===1280){
     const job=await page.locator('#queue .work-job').first().elementHandle();
     await page.setViewportSize({width:900,height:600});
@@ -77,7 +80,7 @@ try{
   }
   if(mobile)await click('button[data-dock=selection]');
   const inspect=async()=>page.evaluate(()=>{
-   const elements=[...document.querySelectorAll('.unit-metrics dd,#queue button,.selection-activity,.order-buttons button:not([hidden])')];
+   const elements=[...document.querySelectorAll('.unit-metrics dd,#queue button,.selection-activity,.order-buttons button:not([hidden])')].filter(e=>e.getClientRects().length);
    // Desktop orders sit on the command card; compact layouts keep them under Selection.
    return elements.map(e=>{const r=e.getBoundingClientRect(),host=e.closest('.selection-panel,.command-panel').getBoundingClientRect();return {text:e.textContent,queue:e.parentElement.id==='queue',top:r.top,bottom:r.bottom,w:r.width,h:r.height,oneLine:e.scrollWidth<=e.clientWidth+1,fits:r.top>=host.top&&r.bottom<=host.bottom+1&&r.left>=host.left&&r.right<=host.right+1,hit:e.tagName!=='BUTTON'||e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))};});
   });

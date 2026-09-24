@@ -2,8 +2,8 @@
 #mission-toggle { display: none; }
 :root:not(.compact-ui) #mission-objectives {
   left: auto;
-  right: 18px;
-  top: 118px;
+  right: 12px;
+  top: 10px;
   width: 204px;
   padding: 0 10px 4px;
 }

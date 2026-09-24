@@ -215,6 +215,7 @@ export class Simulation {
         "build",
         "stop",
         "support",
+        "repair",
       ].includes(order.type)
     )
       return;
@@ -246,10 +247,11 @@ export class Simulation {
       )
         continue;
       if (
-        ["gather", "build", "deliver"].includes(order.type) &&
+        ["gather", "build", "deliver", "repair"].includes(order.type) &&
         e.type !== "worker"
       )
         continue;
+      if (order.type === "repair" && !this.repairValid(e, target)) continue;
       if (
         target &&
         target.team !== undefined &&
@@ -550,15 +552,16 @@ export class Simulation {
       this.applyDamage(
         t,
         this.attackValue(e) * scale *
-          (e.counter === t.type ? 1.6 : 1) *
+          (e.counter === t.type ? e.counter_bonus || 1.6 : 1) *
           (t.mechanical ? e.mechanical_bonus || 1 : 1),
         e.team,
       );
     apply(target);
-    if (e.type === "breaker")
+    // Area weapons (balance.json splash_radius / splash_damage share) also hit nearby enemies.
+    if (e.splash_radius)
       for (const t of this.entities)
-        if (t.id !== target.id && t.team !== e.team && distance(t, target) < 3)
-          apply(t, 0.5);
+        if (t.id !== target.id && t.team !== e.team && distance(t, target) < e.splash_radius)
+          apply(t, e.splash_damage);
     this.events.push({
       type: "shot",
       weapon: e.type,
@@ -644,6 +647,10 @@ export class Simulation {
   }
   updateWorker(e, o, dt) {
     const t = this.get(o.target);
+    if (o.type === "repair") {
+      if (!this.repair(e, t, dt)) this.finish(e);
+      return;
+    }
     if (o.type === "build") {
       if (!t || t.kind !== "building" || t.team !== e.team || t.complete) {
         this.finish(e);
@@ -776,7 +783,10 @@ export class Simulation {
     }
     b.queue.shift();
     const u = this.spawn(q.type, b.team, pos.x, pos.z);
-    if (b.rally) this.issue([u.id], { type: "move", ...b.rally });
+    // A rally point on a deposit sends new Harvesters straight to work.
+    const deposit = b.rally?.target && this.get(b.rally.target);
+    if (u.type === "worker" && deposit?.kind === "resource") this.issue([u.id], { type: "gather", target: deposit.id });
+    else if (b.rally) this.issue([u.id], { type: "move", x: b.rally.x, z: b.rally.z });
     this.message(`${d.name} ready.`, b.team);
   }
   updateKnownCores(team) {
@@ -961,7 +971,7 @@ export class Simulation {
         }
       }
       if (!o) continue;
-      if (["gather", "build", "deliver"].includes(o.type)) {
+      if (["gather", "build", "deliver", "repair"].includes(o.type)) {
         this.updateWorker(e, o, dt);
         continue;
       }

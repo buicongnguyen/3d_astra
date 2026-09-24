@@ -85,7 +85,9 @@ During construction, **Actions** keeps the building name, resource cost, placeme
 - A Supply relay adds 10 population capacity, up to 100. Queued units reserve population immediately. If a relay is destroyed, completed production waits for sufficient supply; the queue shows **Awaiting supply**. Research can continue while over capacity.
 - Select a Command core, Barracks, or Foundry to queue production. Click an item in its queue to cancel for a full refund.
 - Cancel unfinished structures from their selection panel for a 75% refund. Enemy destruction provides no refund.
-- Vanguards counter Rangers; Rangers counter Breakers; Breakers deal splash damage to clustered infantry.
+- Vanguards counter Rangers and Anti-tank soldiers; Rangers counter Breakers; Breakers and Battle tanks splash clustered infantry and hit Vanguards harder; Anti-tank rockets counter tanks and Breakers. See the [balance review](docs/BALANCE.md) for equal-cost battle results.
+- Harvesters repair damaged buildings: right-click the building, or use **Repair** on the command card. Each Harvester restores 10 HP per second, and a full repair costs a quarter of the building's price.
+- Production buildings show their **Rally** point as a flag. Set it with **L**, the Rally button, or a right-click. A rally on a deposit sends new Harvesters straight to mining.
 - The Foundry researches a one-time 10% combat-unit damage upgrade.
 - Destroy all enemy Command cores to win. Losing all yours causes defeat. Simultaneous destruction is a draw.
 - Enemy visibility governs targeting and minimap markers. The AI uses the same costs and commands, with no free reinforcements.
@@ -161,4 +163,4 @@ Browser tests use installed Chrome on Windows, or Playwright Chromium elsewhere 
 See `VERIFICATION.md` for recorded results and prototype limitations, and `CODE_REVIEW.md` for the logic/code review and fixes. Automated touch tests use browser emulation; physical iOS and Android devices have not been verified.
 
 
-The [resource and stage expansion](docs/EXPANSION_STAGES.md) adds 25% more deposit reserves, Copper Basin (128×128), and Frontier Expanse (160×160). Choose a battlefield before Deploy. Build a Command core near remote deposits to shorten delivery trips. Tanks now have 460 HP / 100 shield; anti-tank rockets deal 80 damage to vehicles.
+The [resource and stage expansion](docs/EXPANSION_STAGES.md) adds 25% more deposit reserves, Copper Basin (128×128), and Frontier Expanse (160×160). Choose a battlefield before Deploy. Build a Command core near remote deposits to shorten delivery trips. Tanks have 460 HP / 100 shield and a 12 m cannon with splash; anti-tank rockets deal 120 damage to vehicles.

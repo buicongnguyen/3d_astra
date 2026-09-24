@@ -38,9 +38,9 @@ try {
     if(!mobile) {
       await page.mouse.move(640,400);
       await page.evaluate(()=>window.__frontier.view.focusOn(0,0));
-      await page.locator('#controls-link').hover();await page.waitForTimeout(250);
+      await page.locator('.selection-panel').hover({position:{x:40,y:40}});await page.waitForTimeout(250);
       const focus=await page.evaluate(()=>[window.__frontier.view.focus.x,window.__frontier.view.focus.z]);
-      assert.deepEqual(focus,[0,0],'footer Controls link does not pan the camera');
+      assert.deepEqual(focus,[0,0],'hovering the bottom console does not pan the camera');
     }
     assert.deepEqual(errors,[]);
     console.log(`${map}: all four corners reachable with ${mobile?'touch minimap':'mouse edge scrolling'}`);

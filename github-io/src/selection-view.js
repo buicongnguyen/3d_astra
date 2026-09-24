@@ -174,3 +174,44 @@ export function createMarker(hex, attack) {
   marker.renderOrder = 4;
   return marker;
 }
+
+// Rally point: a team-coloured flag with a pulsing base ring and a dashed route from the
+// building. One shared object (4 draw calls), shown only while a building with a rally is selected.
+export function createRally() {
+  const group = new THREE.Group();
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 3.1, 8), new THREE.MeshBasicMaterial({ color: 0x1b2a27 }));
+  pole.position.y = 1.55;
+  const shape = new THREE.Shape([new THREE.Vector2(0, 0), new THREE.Vector2(1.6, -0.45), new THREE.Vector2(0, -0.9)]);
+  const banner = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide }));
+  banner.position.y = 3.05;
+  const base = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.8, 24), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, depthWrite: false }));
+  base.rotation.x = -Math.PI / 2;
+  base.position.y = 0.1;
+  const flag = new THREE.Group();
+  flag.add(pole, banner, base);
+  const route = new THREE.Line(
+    new THREE.BufferGeometry().setAttribute("position", new THREE.BufferAttribute(new Float32Array(6), 3)),
+    new THREE.LineDashedMaterial({ color: 0xffffff, dashSize: 0.7, gapSize: 0.45, transparent: true, opacity: 0.9, depthWrite: false }),
+  );
+  route.frustumCulled = false;
+  route.renderOrder = 4;
+  group.add(flag, route);
+  group.visible = false;
+  group.userData = { flag, banner, base, route, key: "" };
+  return group;
+}
+export function updateRally(group, building, rally, hex, time) {
+  const { flag, banner, base, route } = group.userData;
+  group.visible = !!rally;
+  if (!rally) return;
+  for (const m of [banner.material, base.material, route.material]) m.color.setHex(hex);
+  base.scale.setScalar(1 + 0.12 * Math.sin(time * 4));
+  flag.position.set(rally.x, 0, rally.z);
+  banner.rotation.y = Math.sin(time * 2.2) * 0.25;
+  const key = `${building.x},${building.z},${rally.x},${rally.z}`;
+  if (group.userData.key === key) return;
+  group.userData.key = key;
+  route.geometry.attributes.position.array.set([building.x, 0.18, building.z, rally.x, 0.18, rally.z]);
+  route.geometry.attributes.position.needsUpdate = true;
+  route.computeLineDistances();
+}

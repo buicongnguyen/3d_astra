@@ -262,7 +262,8 @@ export class Effects {
     const travel = style.life, anchor = { ...e, shot: true };
     const kind = style.kind, m = this.motion;
     if (kind === "support") {
-      const engineer = e.weapon === "engineer", tint = engineer ? [0.75, 0.9, 1, 0.9] : [0.5, 1, 0.75, 0.9];
+      // Engineer: cool white beam. Harvester repair: warm welding sparks. Medic: green.
+      const engineer = e.weapon === "engineer", tint = e.weapon === "repair" ? [1, 0.78, 0.4, 0.9] : engineer ? [0.75, 0.9, 1, 0.9] : [0.5, 1, 0.75, 0.9];
       this.particle(this.glow, { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2, z: (from.z + to.z) / 2, mode: STRETCH,
         ax: dir.x / len, ay: dir.y / len, az: dir.z / len, length: len, s0: 0.2, s1: 0.1, life: 0.3, cell: CELL.glow,
         c0: tint, c1: [...tint.slice(0, 3), 0], anchor });

@@ -136,14 +136,17 @@ function setObjectivesOpen(open) {
   document.documentElement.classList.toggle('objectives-open', open);
   $('mission-toggle').setAttribute('aria-expanded', String(open));
 }
-// Desktop console: unit orders and the targeting Cancel live on the command card (bottom right).
+// Desktop console: unit orders and the targeting Cancel live on the command card (bottom right),
+// and the frame rate moves to the top bar because the desktop hides the status bar.
 // Compact layouts keep orders under Selection and Cancel on the battlefield or construction card.
 function placeConsole(desktop) {
   const orders = document.querySelector(".order-buttons"), card = document.querySelector(".command-panel"), controls = $("mode-controls");
   if (desktop) {
     if (orders.parentElement !== card) $("commands").before(orders);
     if (controls.parentElement !== card) card.append(controls);
+    $("clock").before($("fps"));
   } else {
+    document.querySelector(".statusbar").append($("fps"));
     if (orders.parentElement === card) $("queue").after(orders);
     if (controls.parentElement === card) $("stage").append(controls);
   }
@@ -236,7 +239,7 @@ function setSelection(ids) {
   tone(650);
 }
 // The order button for the pending targeting mode stays lit, as on an RTS command card.
-const ORDER_MODES = { move: 'move-order', attackmove: 'attack-order', patrol: 'patrol-order', attack: 'attack-target-order', support: 'support-order' };
+const ORDER_MODES = { move: 'move-order', attackmove: 'attack-order', patrol: 'patrol-order', attack: 'attack-target-order', support: 'support-order', repair: 'repair-order', rally: 'rally-order' };
 function markOrderMode() {
   for (const [type, id] of Object.entries(ORDER_MODES)) $(id)?.classList.toggle('active', mode === type);
 }
@@ -259,6 +262,10 @@ function clearMode() {
 }
 function enterMode(type) {
   if (!started || paused || sim.result) return;
+  if (type === 'repair' && !selectedEntities().some(e => e.type === 'worker')) {
+    notice('Select Harvesters to repair a building.');
+    return;
+  }
   if (['patrol', 'attack'].includes(type) && !selectedEntities().some(e => e.kind === 'unit' && e.damage > 0 && (type !== 'patrol' || e.type !== 'worker'))) {
     notice(type === 'patrol' ? 'Select soldiers or tanks to patrol.' : 'Select a Harvester or combat unit to attack.');
     return;
@@ -279,8 +286,9 @@ function enterMode(type) {
       `${type === "attackmove" ? "ATTACK-MOVE" : "MOVE"} · Tap your destination`;
   $("mode-controls").hidden = false;
   if (type === "support") $("mode-banner").textContent = "SUPPORT · Choose friendly infantry (Medic) or a building / vehicle (Engineer)";
-  if (type === "context") $("mode-banner").textContent = "CONTEXT ORDER · Choose a deposit, enemy or friendly construction site";
-  if (type === "rally") $("mode-banner").textContent = "RALLY POINT · Choose a destination for newly trained units";
+  if (type === "context") $("mode-banner").textContent = "CONTEXT ORDER · Choose a deposit, enemy, construction site or damaged building";
+  if (type === "repair") $("mode-banner").textContent = "REPAIR · Choose a damaged building";
+  if (type === "rally") $("mode-banner").textContent = "RALLY POINT · Choose ground, or a deposit to send new Harvesters mining";
   if (type === 'patrol') $("mode-banner").textContent = 'PATROL · Choose the other end of a repeating route';
   if (type === 'attack') $("mode-banner").textContent = 'ATTACK · Choose a visible enemy unit or building';
   $("notice").classList.remove('show');
@@ -451,6 +459,11 @@ function updateUI() {
   $("support-order").hidden = !es.some(u => u.support);
   $("patrol-order").hidden = !es.some(u => u.kind === 'unit' && u.type !== 'worker' && u.damage > 0);
   $("attack-target-order").hidden = !es.some(u => u.type === 'worker');
+  // Phones repair by tapping a damaged building; the button would add a row to the small dock.
+  $("repair-order").hidden = document.documentElement.classList.contains('compact-ui') || !es.some(u => u.type === 'worker' && u.team === 0);
+  $("rally-order").hidden = !es.some(u => u.kind === 'building' && u.team === 0 && u.complete && u.trains?.length);
+  // Desktop hides unit-only orders while only buildings are selected.
+  document.documentElement.classList.toggle('no-units', !es.some(u => u.kind === 'unit'));
   document.documentElement.classList.toggle('many-orders', [...document.querySelectorAll('.order-buttons button')].filter(b => !b.hidden).length > 5);
   $("command-context").title = `Command core technology ${sim.techLevel()} / 3`;
   const signature = `${es.map((e) => e.id).join(",")}/${p.upgrade}/${e?.level}/${sim.techLevel()}/${touchInput}`;
@@ -491,7 +504,7 @@ function updateUI() {
         .join("") || (e?.kind==='building' ? '' :
       `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : "Your expedition is ready"}</strong><p>${e ? (touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : "Select the Command core to train Harvesters, or the Barracks to grow your army."}</p></div>`);
     $("upgrade-actions").innerHTML = e?.kind === 'building' && es.length === 1 ?
-      `<button data-level title="U · Upgrade building">${e.level < 3 ? `Upgrade L${e.level+1} · ${sim.levelCost(e).join('/')} <kbd>U</kbd>` : 'Maximum level 3'}</button>` : '';
+      `<button data-level title="U · Upgrade building">${e.level < 3 ? `<span class="up-name">Upgrade L${e.level+1}</span><span class="up-cost"><span class="sep"> · </span>${sim.levelCost(e).join('/')}</span> <kbd>U</kbd>` : '<span class="up-name">Maximum level 3</span>'}</button>` : '';
     $("command-hint").textContent =
       e?.kind === "building"
         ? ''
@@ -522,7 +535,7 @@ function updateUI() {
   const levelButton=$('upgrade-actions').querySelector('[data-level]');
   if(levelButton)levelButton.disabled=!started||paused||!!sim.result||!e.complete||!!e.levelJob||e.queue.length>0||e.level>=3;
   for (const b of document.querySelectorAll(".order-buttons button"))
-    b.disabled = !started || paused || (b.id !== "field-guide" && !es.some((u) => u.kind === "unit"));
+    b.disabled = !started || paused || (!["field-guide", "rally-order"].includes(b.id) && !es.some((u) => u.kind === "unit"));
   for (const b of document.querySelectorAll(".touch-controls button"))
     b.disabled = !started || paused || !!sim.result;
   if (mode === "build" && buildPoint) {
@@ -648,14 +661,25 @@ function selectScreenType(target,additive=false) {
   setSelection(next);
 }
 
+// A rally on a deposit remembers it, so new Harvesters gather there instead of standing idle.
+function rallyAt(point, target) {
+  return target?.kind === "resource" ? { x: target.x, z: target.z, target: target.id } : { x: point.x, z: point.z };
+}
 function commandAt(point, target, append = false, forced = null) {
   if (!point || !started || paused || sim.result) return;
   if (forced === 'context') forced = null;
   const es = selectedEntities(),
     units = es.filter((e) => e.kind === "unit");
   if (forced === 'rally') {
-    for (const b of es.filter(e=>e.kind==='building' && e.complete && e.trains?.length)) b.rally={...point};
-    notice('Rally point established.'); view.marker(point.x,point.z); return;
+    for (const b of es.filter(e=>e.kind==='building' && e.team===0 && e.complete && e.trains?.length)) b.rally=rallyAt(point,target);
+    notice(target?.kind==='resource' ? 'Rally point on the deposit: new Harvesters start mining.' : 'Rally point established.');
+    view.marker(point.x,point.z); return;
+  }
+  if (forced === 'repair') {
+    const workers = units.filter(e => sim.repairValid(e,target));
+    if (!workers.length || target.hp >= target.maxHp) { $("mode-banner").textContent = 'REPAIR · Choose a damaged building'; return false; }
+    sim.issue(workers.map(e => e.id),{type:'repair',target:target.id},append);
+    view.marker(target.x,target.z); tone(440); return true;
   }
   if (forced === 'attack') {
     if (!target || target.kind === 'resource' || !(target.team > 0) || !sim.isVisible(target)) {
@@ -678,9 +702,9 @@ function commandAt(point, target, append = false, forced = null) {
     sim.issue(helpers.map(e => e.id),{type:"support",target:target.id},append);
     for (const helper of helpers) units.splice(units.indexOf(helper),1);
   }
-  for (const b of es.filter((e) => !forced && !es.some(u=>u.kind==='unit') && e.kind === "building" && e.complete && e.trains?.length)) {
-    b.rally = { ...point };
-    notice("Rally point established.");
+  for (const b of es.filter((e) => !forced && !es.some(u=>u.kind==='unit') && e.team === 0 && e.kind === "building" && e.complete && e.trains?.length)) {
+    b.rally = rallyAt(point, target);
+    notice(target?.kind === 'resource' ? 'Rally point on the deposit: new Harvesters start mining.' : "Rally point established.");
   }
   if (!units.length) {
     view.marker(point.x, point.z);
@@ -698,23 +722,14 @@ function commandAt(point, target, append = false, forced = null) {
     !forced &&
     target &&
     (target.kind === "resource" ||
-      (target.team === 0 && !target.complete) ||
-      (target.team === 0 && target.type === "hq"))
+      (target.team === 0 && target.kind === "building" && (!target.complete || target.type === "hq" || target.hp < target.maxHp)))
   ) {
+    // Per Harvester: gather, build, return cargo to a Command core, or repair a damaged building.
+    const job = (w) => target.kind === "resource" ? "gather" : !target.complete ? "build"
+      : target.type === "hq" && (w.carry > 0 || target.hp >= target.maxHp) ? "deliver" : "repair";
     const workers = units.filter((e) => e.type === "worker");
-    sim.issue(
-      workers.map((e) => e.id),
-      {
-        type:
-          target.kind === "resource"
-            ? "gather"
-            : !target.complete
-              ? "build"
-              : "deliver",
-        target: target.id,
-      },
-      append,
-    );
+    for (const type of ["gather", "build", "deliver", "repair"])
+      sim.issue(workers.filter((w) => job(w) === type).map((e) => e.id), { type, target: target.id }, append);
     sim.issue(
       units.filter((e) => e.type !== "worker").map((e) => e.id),
       order,
@@ -803,7 +818,7 @@ function touchTap(x, y) {
     return;
   }
   if (mode) {
-    if (commandAt(point, ["support","context","attack","attackmove"].includes(mode) ? target : null, queueOrders, mode) !== false) clearMode();
+    if (commandAt(point, ["support","context","attack","attackmove","repair","rally"].includes(mode) ? target : null, queueOrders, mode) !== false) clearMode();
     return;
   }
   if (boxSelection) {
@@ -815,7 +830,8 @@ function touchTap(x, y) {
     if (
       workers.length &&
       (!target.complete ||
-        (target.type === "hq" && workers.some((e) => e.carry > 0)))
+        (target.type === "hq" && workers.some((e) => e.carry > 0)) ||
+        (target.kind === "building" && target.hp < target.maxHp))
     )
       commandAt(point, target, queueOrders);
     else setSelection([target.id]);
@@ -930,14 +946,16 @@ function bindInput() {
     hover = null;
     $("hover-label").hidden = true;
   });
-  // The footer covers the canvas's bottom edge. Track hover there without
-  // passing clicks through the UI or scrolling while using its Controls link.
-  const statusbar = document.querySelector(".statusbar");
-  statusbar.addEventListener("pointermove", (e) => {
-    if (e.pointerType !== "mouse") return;
-    pointer = { x: e.clientX, y: e.clientY, inside: !e.target.closest("button") };
-  });
-  statusbar.addEventListener("pointerleave", () => { pointer.inside = false; });
+  // The footer and the desktop console cover the canvas's bottom edge. Track hover there so
+  // screen-edge scrolling works along the whole border (as in StarCraft), without passing
+  // clicks through the UI or scrolling while a button is under the pointer.
+  for (const hud of [document.querySelector(".statusbar"), document.querySelector(".bottom-dock")]) {
+    hud.addEventListener("pointermove", (e) => {
+      if (e.pointerType !== "mouse") return;
+      pointer = { x: e.clientX, y: e.clientY, inside: !e.target.closest("button") };
+    });
+    hud.addEventListener("pointerleave", () => { pointer.inside = false; });
+  }
   canvas.addEventListener("pointerup", (e) => {
     if (e.pointerType !== "mouse") return;
     if (!drag) return;
@@ -953,7 +971,7 @@ function bindInput() {
       return;
     }
     if (mode) {
-      if (commandAt(point, ["support","context","attack","attackmove"].includes(mode) ? view.pick(e.clientX,e.clientY,sim) : null, e.shiftKey||queueOrders, mode) !== false) clearMode();
+      if (commandAt(point, ["support","context","attack","attackmove","repair","rally"].includes(mode) ? view.pick(e.clientX,e.clientY,sim) : null, e.shiftKey||queueOrders, mode) !== false) clearMode();
       return;
     }
     const next = e.shiftKey ? new Set(selected) : new Set();
@@ -1380,6 +1398,9 @@ $("attack-order").insertAdjacentHTML('afterend', `<button id="patrol-order" hidd
 $("patrol-order").onclick = () => enterMode('patrol');
 $("attack-target-order").onclick = () => enterMode('attack');
 $("stop-order").onclick = () => runShortcut('stop');
+$("stop-order").insertAdjacentHTML('afterend', `<button id="repair-order" hidden title="Repair a damaged building (or right-click it) · costs a quarter of its price for a full repair">${icon("engineer","desk")}<span class="order-label">Repair</span></button><button id="rally-order" hidden title="Rally point: new units gather here; on a deposit, new Harvesters start mining · L">${icon("flag","desk")}<span class="order-label">Rally</span> <kbd>L</kbd></button>`);
+$("repair-order").onclick = () => enterMode('repair');
+$("rally-order").onclick = () => enterMode('rally');
 $("commands").onclick = (event) => {
   const button = event.target.closest("[data-action]");
   if (!button || button.disabled) return;

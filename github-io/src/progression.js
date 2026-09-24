@@ -1,5 +1,9 @@
 import { DEFINITIONS as D, distance } from './data.js';
 
+// Harvester repair: slower than an Engineer (18 HP/s) and not free. A full repair costs a
+// quarter of the building's price, charged as health is restored.
+export const REPAIR = { rate: 10, costShare: 0.25 };
+
 // Simulation methods shared by player commands and AI; rendering never changes stats.
 export const progression = {
   resourceShortage(cost, team = 0) {
@@ -76,6 +80,40 @@ export const progression = {
       this.events.push({type:'death',x:t.x,z:t.z,team:t.team,building:t.kind === 'building',heavy:!!t.mechanical,seed:t.id});
       if (t.kind === 'building') this.nav.rebuild(this.entities);
     }
+  },
+  repairValid(e,t) {
+    return e?.type === 'worker' && t?.kind === 'building' && t.team === e.team && t.complete && t.hp > 0;
+  },
+  // Returns false when the job is over (repaired, invalid or unaffordable).
+  repair(e,t,dt) {
+    if (!this.repairValid(e,t) || t.hp >= t.maxHp) return false;
+    if (distance(e,t) > t.radius+2.2) {
+      e.working = false;
+      this.move(e,this.approach(e,t),dt);
+      return true;
+    }
+    e.moving = false;
+    e.angle = Math.atan2(t.x-e.x,t.z-e.z);
+    const gain = Math.min(REPAIR.rate*dt,t.maxHp-t.hp);
+    // Whole resource units are charged from a per-building balance, so short ticks stay exact.
+    const due = D[t.type].cost.map((c,i) => (t.repairDue?.[i] || 0)+c*REPAIR.costShare*gain/t.maxHp);
+    const charge = due.map(Math.floor);
+    if (!this.canPay(e.team,charge)) {
+      this.message(`${this.resourceShortage(charge,e.team)} to keep repairing ${t.name}.`,e.team);
+      return false;
+    }
+    this.pay(e.team,charge);
+    t.repairDue = due.map((d,i) => d-charge[i]);
+    t.hp += gain;
+    e.working = true;
+    e.work = (e.work || 0)+dt;
+    if (e.work >= 0.6) {
+      e.work = 0;
+      this.events.push({type:'support',weapon:'repair',x:e.x,z:e.z,tx:t.x,tz:t.z,team:e.team});
+    }
+    if (t.hp < t.maxHp) return true;
+    this.message(`${t.name} repaired.`,e.team);
+    return false;
   },
   supportValid(e,t) {
     if (!e.support || !t || t.team !== e.team || t.id === e.id || !(t.hp > 0) || !t.complete) return false;
