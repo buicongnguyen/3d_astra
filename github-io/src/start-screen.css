@@ -11,3 +11,29 @@
 
 #briefing .map-select-label{grid-column:1 / -1;font-size:14px;font-weight:700;color:var(--text)}
 #briefing .briefing-tools select{font-size:14px}
+
+/* Mode row: Skirmish · Campaign · Settings. */
+#briefing .mode-switch{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:6px;margin-bottom:8px}
+#briefing .mode-switch button{min-height:44px;padding:0 12px;border:1px solid #55755088;border-radius:4px;background:#20382d;color:#d5dfc7;font-size:14px}
+#briefing .mode-switch button[aria-pressed="true"]{background:#b4ddad;border-color:#b4ddad;color:#183428;font-weight:600}
+#briefing #skirmish-setup{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+#briefing #skirmish-setup #alliance{grid-column:1 / -1}
+#briefing .briefing-tools select:disabled{opacity:.5}
+/* Campaign stages: number, name, battlefield and rivals, then cleared time or a lock. */
+#briefing .stage-list{display:grid;gap:4px;margin:0;padding:0;list-style:none}
+#briefing .stage-list button{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 10px;border:1px solid #55755066;border-radius:4px;background:#1b3027;color:#dce9d8;text-align:left}
+#briefing .stage-list button[aria-current="true"]{border-color:#b4ddad;background:#28473a;box-shadow:inset 3px 0 0 #b4ddad}
+#briefing .stage-list button:disabled{opacity:.55}
+#briefing .stage-list b{display:grid;place-items:center;width:28px;height:28px;border:1px solid #6f9a7c;border-radius:50%;font:600 13px Consolas,monospace}
+#briefing .stage-list strong{display:block;font-size:14px;font-weight:600}
+#briefing .stage-list small{display:block;overflow:hidden;font-size:12px;color:#a9bfb0;white-space:nowrap;text-overflow:ellipsis}
+#briefing .stage-list em{display:flex;align-items:center;gap:4px;font:12px Consolas,monospace;color:#b4ddad;white-space:nowrap}
+#briefing .stage-list em .icon{width:16px;height:16px}
+/* Short landscape screens: briefing and Start on the left, setup on the right, so every
+   setting stays on screen without scrolling. */
+@media (max-height: 520px) and (orientation: landscape) {
+  #briefing{grid-template-columns:minmax(0,340px) minmax(0,340px);grid-template-rows:minmax(0,1fr) 52px;column-gap:12px}
+  #briefing>.briefing-copy{grid-column:1;grid-row:1;align-self:end;max-height:100%;margin:0 0 10px}
+  #briefing>#start{grid-column:1;grid-row:2}
+  #briefing>.briefing-setup{grid-column:2;grid-row:1 / span 2;align-self:center;max-height:100%;margin:0}
+}

@@ -11,10 +11,11 @@ import {
 } from "./data.js";
 import { Navigation } from "./navigation.js";
 import { progression } from "./progression.js";
+import { AI_SPEEDS, coalitionPlan, roleOf } from "./ai-plan.js";
 import { Terrain } from "./terrain.js";
 
 export class Simulation {
-  constructor({ ai = true, map = "classic", enemyCount = 1 } = {}) {
+  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null } = {}) {
     this.aiEnabled = ai;
     this.entities = [];
     this.resources = [];
@@ -22,6 +23,10 @@ export class Simulation {
     this.nextQueueId = 1;
     this.time = 0;
     this.enemyCount = Number.isInteger(enemyCount) ? clamp(enemyCount, 1, 3) : 1;
+    this.aiSpeed = Object.hasOwn(AI_SPEEDS, aiSpeed) ? aiSpeed : "normal";
+    this.pace = AI_SPEEDS[this.aiSpeed];
+    // A coalition of AIs shares vision and plans and never fights itself.
+    this.coalition = alliance === "coalition" && this.enemyCount > 1;
     this.players = Array.from({ length: this.enemyCount + 1 }, () => ({
       alloy: 450,
       energy: 150,
@@ -34,7 +39,8 @@ export class Simulation {
     this.terrain = new Terrain(map);
     this.nav = new Navigation(this.terrain);
     this.aiClock = 0;
-    this.waveAt = this.players.map((_, team) => 85 + Math.max(0, team - 1) * 15);
+    this.waveAt = this.players.map((_, team) => this.pace.firstWave + Math.max(0, team - 1) * 15);
+    if (this.coalition) this.initCoalition();
     this.visionClock = 0;
     this.visible = this.players.map(() => new Uint8Array(this.terrain.grid * this.terrain.grid));
     this.explored = this.players.map(() => new Uint8Array(this.terrain.grid * this.terrain.grid));
@@ -83,14 +89,32 @@ export class Simulation {
     ));
     // Initial deployment locations are public; later cores require scouting.
     this.knownCores = this.players.map((_, team) => new Map(this.entities
-      .filter(e => e.type === "hq" && e.team !== team)
+      .filter(e => e.type === "hq" && this.hostile(team, e.team))
       .map(e => [e.id, { id: e.id, team: e.team, x: e.x, z: e.z }])));
     this.scoutIndex = this.players.map(() => 0);
     this.nav.rebuild(this.entities);
     this.updateVision();
+    if (playerBonus) this.reinforce(playerBonus);
     this.message(
       "Meridian is online. Assign Harvesters to the amber alloy deposits.",
     );
+  }
+  // Campaign handicap against allied AIs: extra supplies and a Sentinel tower facing the map centre.
+  reinforce({ alloy = 0, energy = 0, tower = false }) {
+    this.players[0].alloy += alloy;
+    this.players[0].energy += energy;
+    const hq = this.own(0).find((e) => e.type === "hq");
+    if (!tower || !hq) return;
+    const toward = Math.atan2(-hq.z, -hq.x);
+    for (const r of [8, 10, 12])
+      for (const turn of [0, 0.4, -0.4, 0.8, -0.8]) {
+        const x = hq.x + Math.cos(toward + turn) * r, z = hq.z + Math.sin(toward + turn) * r;
+        if (this.placement("tower", 0, x, z)) continue;
+        this.spawn("tower", 0, x, z);
+        this.nav.rebuild(this.entities);
+        this.updateVision();
+        return;
+      }
   }
   resource(type, x, z, amount) {
     this.resources.push({
@@ -174,6 +198,10 @@ export class Simulation {
       if (this.events.length > 300) this.events.splice(0, 100);
     }
   }
+  // Teams at war. In a coalition the AI teams (1+) are allies against the player.
+  hostile(a, b) {
+    return a !== b && a !== undefined && b !== undefined && !(this.coalition && a > 0 && b > 0);
+  }
   isVisible(e, team = 0) {
     const [x, z] = this.nav.cellAt(e.x, e.z);
     return e.team === team || !!this.visible[team][z * this.terrain.grid + x];
@@ -201,6 +229,13 @@ export class Simulation {
           }
       }
     }
+    // Allied AIs pool what they see.
+    if (this.coalition)
+      for (let i = 0; i < this.visible[1].length; i++) {
+        let seen = 0, known = 0;
+        for (let team = 1; team < this.players.length; team++) { seen |= this.visible[team][i]; known |= this.explored[team][i]; }
+        for (let team = 1; team < this.players.length; team++) { this.visible[team][i] = seen; this.explored[team][i] = known; }
+      }
   }
   issue(ids, order, append = false) {
     if (
@@ -234,7 +269,7 @@ export class Simulation {
       const target = order.target ? this.get(order.target) : null;
       if (
         order.type === "attack" &&
-        (!target || target.kind === "resource" || target.team === e.team)
+        (!target || target.kind === "resource" || !this.hostile(e.team, target.team))
       )
         continue;
       if (order.type === "gather" && target?.kind !== "resource") continue;
@@ -536,7 +571,7 @@ export class Simulation {
     let best = null,
       bestD = radius;
     for (const t of this.entities) {
-      if (t.hp <= 0 || t.team === e.team || !this.isVisible(t, e.team))
+      if (t.hp <= 0 || !this.hostile(e.team, t.team) || !this.isVisible(t, e.team))
         continue;
       const d = distance(e, t) - t.radius;
       if (d <= bestD + 0.00001 && (!clearShot || this.nav.clearLine(e, t, t.id))) {
@@ -560,7 +595,7 @@ export class Simulation {
     // Area weapons (balance.json splash_radius / splash_damage share) also hit nearby enemies.
     if (e.splash_radius)
       for (const t of this.entities)
-        if (t.id !== target.id && t.team !== e.team && distance(t, target) < e.splash_radius)
+        if (t.id !== target.id && this.hostile(e.team, t.team) && distance(t, target) < e.splash_radius)
           apply(t, e.splash_damage);
     this.events.push({
       type: "shot",
@@ -581,7 +616,7 @@ export class Simulation {
       !t ||
       !Number.isFinite(t.hp) ||
       t.hp <= 0 ||
-      t.team === e.team ||
+      !this.hostile(e.team, t.team) ||
       !this.isVisible(t, e.team)
     )
       return false;
@@ -792,7 +827,7 @@ export class Simulation {
   updateKnownCores(team) {
     const known = this.knownCores[team];
     for (const e of this.entities)
-      if (e.hp > 0 && e.type === "hq" && e.team !== team && this.isVisible(e, team))
+      if (e.hp > 0 && e.type === "hq" && this.hostile(team, e.team) && this.isVisible(e, team))
         known.set(e.id, { id: e.id, team: e.team, x: e.x, z: e.z });
     for (const [id, remembered] of known)
       if (this.players[remembered.team].eliminated || (this.isVisible(remembered, team) && !this.get(id)))
@@ -829,7 +864,8 @@ export class Simulation {
       if (deposit) this.issue([w.id], { type: "gather", target: deposit.id });
     }
     const hq = own.find((e) => e.type === "hq" && e.complete) || own.find(e => e.type === "hq");
-    if (hq && workers.length < 9 && hq.queue.length < 1)
+    const pace = this.pace, role = roleOf(this, team);
+    if (hq && workers.length < pace.workers && hq.queue.length < 1)
       this.enqueue(hq.id, "worker");
     // Resume construction whose builder died or gave up on its route. Otherwise one
     // abandoned site blocks every later AI structure, including supply relays.
@@ -857,9 +893,11 @@ export class Simulation {
       ? "barracks"
       : pop.cap - pop.used - pop.reserved < 5 && pop.cap < MAX_POP
         ? "relay"
-        : !own.some((e) => e.type === "foundry") && this.time > 100
+        : !own.some((e) => e.type === "foundry") && this.time > pace.foundryAt * (role === "siege" ? 0.6 : 1)
           ? "foundry"
-          : null;
+          : pace.secondBarracks && this.time > pace.secondBarracks && own.filter((e) => e.type === "barracks").length < 2
+            ? "barracks"
+            : null;
     if (
       want &&
       this.canPay(team, D[want].cost) &&
@@ -875,18 +913,20 @@ export class Simulation {
           }
         }
     }
-    if (this.time > 160 && hq && workers.length >= 9 && hq.level < (this.time > 300 ? 3 : 2) && !hq.queue.length) this.upgradeBuilding(hq.id,team);
+    if (this.time > pace.techAt[0] && hq && workers.length >= Math.min(9, pace.workers) && hq.level < (this.time > pace.techAt[1] ? 3 : 2) && !hq.queue.length) this.upgradeBuilding(hq.id,team);
     for (const b of own.filter(
       (e) => e.complete && ["barracks", "foundry"].includes(e.type),
     )) {
       if (b.levelJob) continue;
-      if (b.level < this.techLevel(team) && this.time > 190 && this.canPay(team,this.levelCost(b))) {
+      if (b.level < this.techLevel(team) && this.time > pace.upgradeAt && this.canPay(team,this.levelCost(b))) {
         if (!b.queue.length) this.upgradeBuilding(b.id,team);
         continue;
       }
       if (b.queue.length < 2) {
-        let choice = b.type === 'foundry' ? 'breaker' : Math.floor(this.time/4)%3 === 0 ? 'vanguard' : 'ranger';
-        if (b.type === 'foundry' && b.level >= 3 && army.filter(e => e.type === 'tank').length <= army.filter(e => e.type === 'breaker').length) choice = 'tank';
+        // One Vanguard per two Rangers; a raider AI trains two Vanguards per Ranger.
+        const cycle = Math.floor(this.time/4)%3;
+        let choice = b.type === 'foundry' ? 'breaker' : cycle === 0 || (role === 'raider' && cycle === 1) ? 'vanguard' : 'ranger';
+        if (b.type === 'foundry' && b.level >= 3 && army.filter(e => e.type === 'tank').length <= army.filter(e => e.type === 'breaker').length + (role === 'siege' ? 2 : 0)) choice = 'tank';
         if (b.type === 'barracks' && b.level >= 2 && army.filter(e => e.type === 'antitank').length < 3) choice = 'antitank';
         const support = b.type === 'foundry' ? 'engineer' : 'medic';
         if (b.level >= 2 && army.filter(e => e.type === support).length < 2) choice = support;
@@ -898,7 +938,7 @@ export class Simulation {
     }
     const threats = hq
       ? this.entities
-          .filter((e) => e.team !== team && e.hp > 0 && this.isVisible(e, team) && distance(hq, e) < 25)
+          .filter((e) => this.hostile(team, e.team) && e.hp > 0 && this.isVisible(e, team) && distance(hq, e) < 25)
           .sort((a, b) => distance(hq, a) - distance(hq, b))
       : [];
     const threatIds = new Set(threats.map((e) => e.id));
@@ -925,11 +965,15 @@ export class Simulation {
         this.issue(answer.map((e) => e.id), { type: "attack", target: threats[0].id });
     }
     const wave = army.filter((e) => !engaged(e));
-    if (!incursion && this.time >= this.waveAt[team] && wave.length >= 4) {
+    if (this.coalition) {
+      this.coalitionOrders(team, { hq, army, wave, incursion });
+      return;
+    }
+    if (!incursion && this.time >= this.waveAt[team] && wave.length >= pace.minWave) {
       const target = [...this.knownCores[team].values()]
         .sort((a, b) => distance(hq, a) - distance(hq, b))[0] || this.scoutDestination(team);
       if (target) this.issue(wave.map(e => e.id), { type: "attackmove", x: target.x, z: target.z });
-      this.waveAt[team] = this.time + 50;
+      this.waveAt[team] = this.time + pace.waveGap;
     }
   }
   tick(dt) {
@@ -1025,7 +1069,8 @@ export class Simulation {
       this.aiClock -= dt;
       if (this.aiClock <= 0) {
         for (let team = 1; team < this.players.length; team++) this.updateAI(team);
-        this.aiClock = 2.5;
+        if (this.coalition) this.advanceCoalition();
+        this.aiClock = this.pace.think;
       }
     }
     const alive = this.players.map((_, team) =>
@@ -1058,4 +1103,4 @@ export class Simulation {
   }
 }
 
-Object.assign(Simulation.prototype, progression);
+Object.assign(Simulation.prototype, progression, coalitionPlan);

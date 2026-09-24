@@ -26,6 +26,8 @@ import { ACTION_KEYS, HOTKEYS, HOTKEY_HELP, physicalKey } from "./hotkeys.js";
 import { createConstructionUI } from "./construction-ui.js";
 import { createProductionUI, createWorkStrip } from "./production-ui.js";
 import { selectionStatus } from "./selection-status.js";
+import { AI_SPEEDS, ALLIANCES } from "./ai-plan.js";
+import { STAGES, loadProgress, saveProgress, isUnlocked, isCleared, recordClear, nextStage } from "./campaign.js";
 
 document.querySelector("#app").innerHTML = `
   <header class="topbar">
@@ -39,7 +41,7 @@ document.querySelector("#app").innerHTML = `
   </header>
   <main id="stage">
     <div id="world"></div>
-    <div class="map-heading"><span class="eyebrow"><i class="live-dot"></i> OPERATION 01 / SKIRMISH</span><h1>Outpost Meridian<span>.</span></h1><p>THE ASHEN FRONTIER <span>·</span> SECTOR 07</p></div>
+    <div class="map-heading"><span class="eyebrow"><i class="live-dot"></i> <span id="operation-label">OPERATION 01 / SKIRMISH</span></span><h1>Outpost Meridian<span>.</span></h1><p>THE ASHEN FRONTIER <span>·</span> SECTOR 07</p></div>
     <button id="mission-toggle" aria-expanded="false" aria-controls="mission-objectives">${icon("flag")} Objectives</button>
     <aside id="mission-objectives" class="mission panel" aria-label="Mission objectives"><div class="panel-label">MISSION OBJECTIVES <span>01—03</span></div><div class="objective" id="obj-economy"><span class="objective-num">01</span><span>Establish your economy<small>Assign Harvesters to resources</small></span></div><div class="objective" id="obj-army"><span class="objective-num">02</span><span>Mobilize a strike force<small>Field 8 combat units</small></span></div><div class="objective" id="obj-win"><span class="objective-num">03</span><span>Break their command<small>Destroy all enemy Command cores</small></span></div></aside>
     <div class="sector-status"><span class="eyebrow">TACTICAL UPLINK</span><span><i class="live-dot"></i> <span id="uplink">STANDBY</span></span></div>
@@ -59,13 +61,13 @@ document.querySelector("#app").innerHTML = `
     <section id="briefing" class="briefing panel">
       <div class="briefing-copy">
       <div class="eyebrow">EXPEDITION BRIEFING</div><div class="briefing-emblem">${icon("logo")}</div>
-      <h2>A new frontier.<br> A foothold to defend.</h2>
-      <p>Build your outpost. Harvest the valley. Lead your expedition against rival commanders. With multiple enemies, every faction fights for itself.</p>
-      <div class="briefing-rule"><span>YOUR FORCE</span><strong>4 Harvesters · 3 defenders</strong></div>
+      <h2 id="briefing-title">A new frontier.<br> A foothold to defend.</h2>
+      <p id="briefing-text">Build your outpost. Harvest the valley. Lead your expedition against rival commanders.</p>
+      <div class="briefing-rule"><span>RIVALS</span><strong id="briefing-rivals">1 AI · Normal speed</strong></div>
       <div class="briefing-rule"><span>OBJECTIVE</span><strong>Eliminate enemy command</strong></div>
       </div>
       <button id="start" class="primary" disabled>Preparing expedition…</button>
-      <div class="briefing-setup"><div class="briefing-tools"><label class="map-select-label" for="scenario">Choose map / stage</label><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select><select id="enemy-count" aria-label="Number of AI enemies"><option value="1">1 AI enemy</option><option value="2">2 AI enemies · FFA</option><option value="3">3 AI enemies · FFA</option></select><button id="briefing-settings">Settings</button></div><small class="briefing-note">SINGLE PLAYER <span>·</span> MOUSE + KEYBOARD</small></div>
+      <div class="briefing-setup"><div class="mode-switch" aria-label="Game mode"><button data-mode="skirmish" aria-pressed="true">Skirmish</button><button data-mode="campaign" aria-pressed="false">Campaign</button><button id="briefing-settings">Settings</button></div><div class="briefing-tools" id="skirmish-setup"><label class="map-select-label" for="scenario">Choose map / stage</label><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select><select id="enemy-count" aria-label="Number of AI enemies"><option value="1">1 AI enemy</option><option value="2">2 AI enemies</option><option value="3">3 AI enemies</option></select><select id="ai-speed" aria-label="AI speed" title="AI speed: how fast rivals build, tech up and attack">${Object.entries(AI_SPEEDS).map(([id, p]) => `<option value="${id}"${id === "normal" ? " selected" : ""}>${p.label} AI</option>`).join("")}</select><select id="alliance" aria-label="AI teams" disabled>${Object.entries(ALLIANCES).map(([id, label]) => `<option value="${id}">${label}</option>`).join("")}</select></div><div id="campaign-setup" hidden><ol class="stage-list" aria-label="Campaign stages"></ol></div><small class="briefing-note">SINGLE PLAYER <span>·</span> MOUSE + KEYBOARD</small></div>
     </section>
     <div class="bottom-dock">
       <section class="minimap-panel panel"><div class="panel-label">SECTOR OVERVIEW <button id="home" title="Focus base · H" aria-label="Focus base">${icon("hq")}</button></div><canvas id="minimap" width="240" height="200" aria-label="Minimap: click to pan; right-click to command"></canvas><div class="map-legend"><span><i class="friendly"></i>YOU</span><span><i class="hostile"></i>ENEMY</span><span><i class="deposit"></i>RESOURCE</span></div></section>
@@ -85,8 +87,16 @@ const $ = (id) => document.getElementById(id);
 let settings = loadSettings(matchMedia("(pointer:coarse)").matches),
   mapId = "riverlands",
   enemyCount = 1,
+  aiSpeed = "normal",
+  alliance = "ffa",
+  bonus = null,
   ambience;
-let sim = new Simulation({ map: mapId, enemyCount }),
+// Campaign: progress is saved in this browser; activeStage is the stage being played.
+let playMode = "skirmish",
+  campaign = loadProgress(),
+  stagePick = nextStage(campaign),
+  activeStage = null;
+let sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance }),
   view,
   selected = new Set(),
   hover = null,
@@ -1143,20 +1153,84 @@ const settingsUI = new SettingsUI({
   },
 });
 $("briefing-settings").onclick = () => settingsUI.open();
-$("scenario").onchange = $("enemy-count").onchange = () => {
+// Briefing: Skirmish picks the map, rivals, AI speed and alliance; Campaign plays the
+// stages in order. The battle behind the briefing always previews the current choice.
+function battleSetup() {
+  const stage = STAGES[stagePick];
+  return playMode === "campaign"
+    ? { map: stage.map, enemyCount: stage.enemies, aiSpeed: stage.speed, alliance: stage.alliance, bonus: stage.bonus || null }
+    : { map: $("scenario").value, enemyCount: Number($("enemy-count").value), aiSpeed: $("ai-speed").value, alliance: $("alliance").value, bonus: null };
+}
+function describeRivals({ enemyCount: count, aiSpeed: speed, alliance: side }) {
+  const pace = `${AI_SPEEDS[speed].label} speed`;
+  return count === 1 ? `1 AI · ${pace}` : `${count} AIs · ${side === "coalition" ? "allied against you" : "free-for-all"} · ${pace}`;
+}
+const mapName = (id) => MAPS[id].split(" · ")[0];
+function updateHeading() {
+  const stage = started ? activeStage : playMode === "campaign" ? stagePick : null;
+  document.querySelector(".map-heading p").innerHTML = `${mapName(mapId).toUpperCase()} <span>·</span> SECTOR 07`;
+  document.querySelector(".map-heading h1").innerHTML = stage === null
+    ? `${MAPS[mapId]}<span>.</span>` : `Stage ${stage + 1} · ${STAGES[stage].name}<span>.</span>`;
+  $("operation-label").textContent = stage === null
+    ? "OPERATION 01 / SKIRMISH" : `CAMPAIGN · STAGE ${String(stage + 1).padStart(2, "0")} / ${String(STAGES.length).padStart(2, "0")}`;
+}
+function renderBriefing() {
+  const setup = battleSetup(), inCampaign = playMode === "campaign";
+  for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String(b.dataset.mode === playMode));
+  $("skirmish-setup").hidden = inCampaign;
+  $("campaign-setup").hidden = !inCampaign;
+  // Alliances need at least two AIs.
+  $("alliance").disabled = Number($("enemy-count").value) < 2;
+  $("briefing-rivals").textContent = describeRivals(setup);
+  if (inCampaign) {
+    const stage = STAGES[stagePick];
+    $("briefing-title").textContent = `Stage ${stagePick + 1} · ${stage.name}`;
+    $("briefing-text").textContent = stage.story;
+    $("campaign-setup").querySelector(".stage-list").innerHTML = STAGES.map((st, i) => {
+      const open = isUnlocked(campaign, i), done = isCleared(campaign, i);
+      return `<li><button data-stage="${i}"${i === stagePick ? ' aria-current="true"' : ""}${open ? "" : " disabled"} title="${open ? st.story : "Clear the previous stage to unlock"}"><b>${i + 1}</b><span><strong>${st.name}</strong><small>${mapName(st.map)} · ${st.enemies} AI${st.enemies > 1 ? `s ${st.alliance === "coalition" ? "allied" : "FFA"}` : ""} · ${AI_SPEEDS[st.speed].label}</small></span><em>${done ? `${icon("check")}${formatTime(campaign.cleared[st.id])}` : open ? "" : icon("lock")}</em></button></li>`;
+    }).join("");
+  } else {
+    $("briefing-title").innerHTML = "A new frontier.<br> A foothold to defend.";
+    $("briefing-text").textContent = "Build your outpost. Harvest the valley. Lead your expedition against rival commanders." +
+      (setup.enemyCount < 2 ? "" : setup.alliance === "coalition"
+        ? " Your rivals are allied: they share scouting, raid your Harvesters and attack together."
+        : " Every faction fights for itself.");
+  }
+  if (!$("start").disabled) $("start").textContent = inCampaign ? `Start stage ${stagePick + 1}` : "Start";
+}
+function previewBattle() {
   if (started) return;
-  mapId = $("scenario").value;
-  enemyCount = Number($("enemy-count").value);
-  sim = new Simulation({ map: mapId, enemyCount });
-  view?.reset();
-  view?.setTerrain(sim.terrain);
+  const setup = battleSetup();
+  const same = setup.map === mapId && setup.enemyCount === enemyCount && setup.aiSpeed === aiSpeed && setup.alliance === alliance && setup.bonus === bonus;
+  if (!same) {
+    const terrain = setup.map !== mapId || setup.enemyCount !== enemyCount;
+    ({ map: mapId, enemyCount, aiSpeed, alliance, bonus } = setup);
+    sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus });
+    view?.reset();
+    if (terrain) view?.setTerrain(sim.terrain);
+    selected.clear();
+    rememberedBuildings.clear();
+    rememberedResources.clear();
+    updateUI();
+  }
+  // Choosing a battle (even the same one) re-centres the preview on your base.
   focusHome();
-  selected.clear();
-  rememberedBuildings.clear();
-  rememberedResources.clear();
-  updateUI();
-  document.querySelector(".map-heading h1").innerHTML =
-    `${MAPS[mapId]}<span>.</span>`;
+  updateHeading();
+  renderBriefing();
+}
+for (const id of ["scenario", "enemy-count", "ai-speed", "alliance"]) $(id).onchange = previewBattle;
+$("briefing").querySelector(".mode-switch").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-mode]");
+  if (!button || started) return;
+  playMode = button.dataset.mode;
+  previewBattle();
+});
+$("campaign-setup").onclick = (event) => {
+  const button = event.target.closest("[data-stage]");
+  if (!button || button.disabled || started) return;
+  stagePick = Number(button.dataset.stage);
+  previewBattle();
 };
 function togglePause() {
   if (!started || sim.result) return;
@@ -1208,12 +1282,42 @@ function showResult() {
   $("modal").hidden = false;
   tone(sim.result === "victory" ? 880 : 220, 0.3);
   const win = sim.result === "victory";
+  if (activeStage !== null) return showStageResult(win);
   $("modal-content").innerHTML =
     `<span class="eyebrow">OPERATION ${sim.result === "draw" ? "CONCLUDED" : win ? "SUCCESSFUL" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}">${icon(win ? "flag" : "shield")}</div><h2 id="modal-title">${win ? "The frontier is yours." : sim.result === "draw" ? "Mutual destruction." : "Your outpost has fallen."}</h2><p>${win ? "Enemy command has been eliminated. Meridian holds the valley." : sim.result === "draw" ? "All Command cores were destroyed." : "An enemy destroyed your Command core. Regroup and try a different approach."}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${sim.players[0].kills}</strong>ENEMIES ELIMINATED</span></div><button class="primary" data-new-game>New game / choose map ${icon("arrow")}</button><button class="secondary" data-restart>Replay this map</button>`;
+}
+// Campaign results save progress and lead on to the next stage.
+function showStageResult(win) {
+  const n = activeStage, stage = STAGES[n], last = n === STAGES.length - 1, next = STAGES[n + 1];
+  if (win) {
+    campaign = recordClear(campaign, n, sim.time);
+    saveProgress(campaign);
+    stagePick = last ? n : n + 1;
+  }
+  const text = win
+    ? last ? "Every stage cleared. The campaign is complete and the frontier is yours."
+      : `Next: Stage ${n + 2} · ${next.name}, ${describeRivals({ enemyCount: next.enemies, aiSpeed: next.speed, alliance: next.alliance })}.`
+    : sim.result === "draw" ? "All Command cores were destroyed. Try the stage again." : "Your Command core fell. Regroup and try a different approach.";
+  const buttons = win && !last
+    ? `<button class="primary" data-next-stage>Next stage ${icon("arrow")}</button><button class="secondary" data-restart>Replay stage</button><button class="secondary" data-new-game>Campaign menu</button>`
+    : `<button class="primary" data-restart>${win ? "Replay stage" : "Retry stage"} ${icon("arrow")}</button><button class="secondary" data-new-game>Campaign menu</button>`;
+  $("modal-content").innerHTML =
+    `<span class="eyebrow">STAGE ${n + 1} · ${win ? "CLEARED" : sim.result === "draw" ? "CONCLUDED" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}">${icon(win ? "flag" : "shield")}</div><h2 id="modal-title">${win ? (last ? "Campaign complete." : `${stage.name} cleared.`) : "Your outpost has fallen."}</h2><p>${text}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${win ? formatTime(campaign.cleared[stage.id]) : sim.players[0].kills}</strong>${win ? "BEST TIME" : "ENEMIES ELIMINATED"}</span></div>${buttons}`;
+  $("modal").querySelector(".primary").focus();
+}
+function nextStageNow() {
+  activeStage = stagePick;
+  ({ map: mapId, enemyCount, aiSpeed, alliance, bonus } = battleSetup());
+  restart();
+  view.setTerrain(sim.terrain);
+  focusHome();
+  updateHeading();
 }
 function newGame() {
   restart();
   started = false;
+  activeStage = null;
+  previewBattle();
   paused = true;
   selected.clear();
   $("briefing").hidden = false;
@@ -1232,7 +1336,7 @@ function restart() {
   queueOrders = false;
   $("box-select").setAttribute("aria-pressed", "false");
   $("queue-orders").setAttribute("aria-pressed", "false");
-  sim = new Simulation({ map: mapId, enemyCount });
+  sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus });
   view.reset();
   focusHome();
   selected.clear();
@@ -1257,6 +1361,7 @@ function restart() {
 
 $("start").onclick = () => {
   unlockAudio();
+  activeStage = playMode === "campaign" ? stagePick : null;
   started = true;
   paused = false;
   $("briefing").hidden = true;
@@ -1264,6 +1369,7 @@ $("start").onclick = () => {
   view.resize();
   $("status-text").textContent = "OPERATION ACTIVE";
   setSelection([sim.own(0).find((e) => e.type === "hq").id]);
+  updateHeading();
   notice(
     touchInput
       ? "Tap Workers, then tap amber crystals. Drag to pan; pinch to zoom."
@@ -1433,6 +1539,7 @@ $("modal").onclick = (event) => {
   if (event.target.closest("[data-resume]")) closeModal();
   if (event.target.closest("[data-restart]")) restart();
   if (event.target.closest("[data-new-game]")) newGame();
+  if (event.target.closest("[data-next-stage]")) nextStageNow();
 };
 
 function frame(now) {
@@ -1511,11 +1618,10 @@ async function boot() {
         "SINGLE PLAYER · TOUCH + MOUSE";
     await view.loadModels();
     applyPreferences(settings);
-    document.querySelector(".map-heading h1").innerHTML =
-      `${MAPS[mapId]}<span>.</span>`;
+    updateHeading();
     bindInput();
     $("start").disabled = false;
-    $("start").textContent = "Start";
+    renderBriefing();
     $("status-text").textContent = "ALL SYSTEMS READY";
     updateUI();
     requestAnimationFrame(frame);

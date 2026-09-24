@@ -12,7 +12,7 @@ Combat renders in 3D: muzzle flashes, tracers, shells, rocket trails, sparks, ex
 
 Soldiers and tanks can **Patrol (P)** between two points and engage enemies along the route. Harvesters have an explicit **Attack (N)** command. See [Patrol and Harvester Attack](docs/PATROL_AND_ATTACK.md) for mouse, touch and order-queue behavior.
 
-Choose from **seven maps** and **1–3 AI enemies** in the opening briefing. Multiple enemies play free-for-all with separate colors and economies. Win by destroying all enemy Command cores. The new maps are Amber Dunes, Verdant Crossing and Obsidian Highlands; see [map details](docs/EXPANSION_STAGES.md). Online multiplayer is planned for later in [INTERNET_MULTIPLAYER_PLAN.md](docs/INTERNET_MULTIPLAYER_PLAN.md).
+The briefing has two modes. **Campaign** is seven stages, from one relaxed rival to three allied AIs, unlocked in order with best times saved in your browser. **Skirmish** lets you choose from **seven maps**, **1–3 AI enemies**, an **AI speed** (Relaxed, Normal, Fast or Relentless) and **AI teams**: free-for-all, or *united against you*. United AIs share vision, raid your Harvesters, reinforce each other and launch joint offensives from several sides. See [campaign, AI speed and allied AIs](docs/CAMPAIGN_AND_AI.md). Win by destroying all enemy Command cores. The new maps are Amber Dunes, Verdant Crossing and Obsidian Highlands; see [map details](docs/EXPANSION_STAGES.md). Online multiplayer is planned for later in [INTERNET_MULTIPLAYER_PLAN.md](docs/INTERNET_MULTIPLAYER_PLAN.md).
 
 Requires Node.js 22.12+ (or a compatible newer release).
 

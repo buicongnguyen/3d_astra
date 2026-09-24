@@ -35,6 +35,7 @@ const paths = {
   check: '<path d="m5 12 4 4L19 6"/>',
   expand: '<path d="M8 3H3v5m13-5h5v5M3 16v5h5m8 0h5v-5"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
   patrol: '<path d="M5 9h12l-3-3M19 15H7l3 3"/><circle cx="4" cy="9" r="1"/><circle cx="20" cy="15" r="1"/>',
   attack: '<path d="M20 4 9 15M20 4h-5M20 4v5M7 13l4 4M4 20l4-4"/>',
 };
