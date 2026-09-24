@@ -1,8 +1,9 @@
 import { DEFINITIONS as D, distance } from './data.js';
 
 // Harvester repair: slower than an Engineer (18 HP/s) and not free. A full repair costs a
-// quarter of the building's price, charged as health is restored.
-export const REPAIR = { rate: 10, costShare: 0.25 };
+// quarter of the building's price, charged as health is restored. Two Harvesters at most
+// work on one building, so a cheap tower cannot be kept alive by a crowd of repairers.
+export const REPAIR = { rate: 10, costShare: 0.25, crew: 2 };
 
 // Simulation methods shared by player commands and AI; rendering never changes stats.
 export const progression = {
@@ -25,7 +26,8 @@ export const progression = {
     return Math.max(1,...this.own(team).filter(e => e.type === 'hq' && e.complete).map(e => e.level));
   },
   levelCost(b) {
-    return b.type === 'hq' ? (b.level === 1 ? [200,100] : [350,175]) : [100*b.level,50*b.level];
+    // Tower upgrades are cheaper so that levelling one competes with building another.
+    return b.type === 'hq' ? (b.level === 1 ? [200,100] : [350,175]) : b.type === 'tower' ? [75*b.level,25*b.level] : [100*b.level,50*b.level];
   },
   upgradeBuilding(id, team = 0) {
     const b = this.get(id);
@@ -58,7 +60,9 @@ export const progression = {
     b.hp += b.maxHp-previous;
     b.maxShield = base.shield+25*(b.level-1);
     if (base.supply) b.supply = base.supply+(b.type === 'relay' ? 5*(b.level-1) : 0);
-    if (base.damage) b.damage = base.damage*(1+0.25*(b.level-1));
+    // Towers: +50% base damage and +1 m range per level (balance.json level_damage / level_range).
+    if (base.damage) b.damage = base.damage*(1+(base.level_damage ?? 0.25)*(b.level-1));
+    if (base.level_range) b.range = base.range+base.level_range*(b.level-1);
     b.levelJob = null;
     this.message(`${b.name} reached level ${b.level}.`,b.team);
   },
@@ -94,6 +98,12 @@ export const progression = {
     }
     e.moving = false;
     e.angle = Math.atan2(t.x-e.x,t.z-e.z);
+    // At most two Harvesters repair one building; the rest wait nearby and take over.
+    const crew = this.entities.filter(w => w !== e && w.working && w.hp > 0 && w.orders[0]?.type === 'repair' && w.orders[0].target === t.id);
+    if (crew.length >= REPAIR.crew) {
+      e.working = false;
+      return true;
+    }
     const gain = Math.min(REPAIR.rate*dt,t.maxHp-t.hp);
     // Whole resource units are charged from a per-building balance, so short ticks stay exact.
     const due = D[t.type].cost.map((c,i) => (t.repairDue?.[i] || 0)+c*REPAIR.costShare*gain/t.maxHp);

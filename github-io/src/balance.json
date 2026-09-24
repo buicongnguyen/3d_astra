@@ -190,8 +190,10 @@
       "interval": 1.2,
       "range": 13,
       "icon": "tower",
-      "description": "Automatically attacks visible enemies within range. Each upgrade adds 25% of its base attack damage.",
-      "shield": 50
+      "description": "Automatically attacks visible enemies within range, shooting combat units first, then Harvesters, then buildings. Each upgrade adds 50% of its base attack damage and 1 m of range.",
+      "shield": 50,
+      "level_damage": 0.5,
+      "level_range": 1
     },
     "upgrade": {
       "name": "Overcharged weapons",

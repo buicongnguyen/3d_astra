@@ -13,12 +13,14 @@ The opening briefing has two modes: **Skirmish** and **Campaign**.
 
 **AI speed never cheats.** Every AI pays the same costs and harvests at the same rate as you, from the same starting resources. Speed only changes how the AI plays:
 
-| Speed | Thinks every | Harvesters | Foundry after | First attack | Between attacks |
-|---|---|---|---|---|---|
-| Relaxed | 4 s | 7 | 160 s | 150 s | 75 s |
-| Normal (original AI) | 2.5 s | 9 | 100 s | 85 s | 50 s |
-| Fast | 1.5 s | 11 | 80 s | 70 s | 42 s |
-| Relentless | 1 s | 12 | 60 s | 60 s | 34 s |
+| Speed | Thinks every | Harvesters | Foundry after | Sentinel towers | First attack | Between attacks |
+|---|---|---|---|---|---|---|
+| Relaxed | 4 s | 7 | 160 s | none | 150 s | 75 s |
+| Normal (original tempo) | 2.5 s | 9 | 100 s | 1, after 180 s | 85 s | 50 s |
+| Fast | 1.5 s | 11 | 80 s | 1, after 120 s | 70 s | 42 s |
+| Relentless | 1 s | 12 | 60 s | 2, after 90 s | 60 s | 34 s |
+
+Towers go on the side of the AI's base facing the map centre, and only once its Foundry stands. See [the tower balance review](BALANCE.md#sentinel-tower).
 
 Faster AIs also upgrade their Command cores and production earlier. A Relentless AI adds a second Barracks after 150 s.
 
@@ -28,7 +30,7 @@ With **United against you**, the AIs share vision and never shoot each other. Ea
 
 1. **Assault.** It leads the main attacks.
 2. **Raider.** About 20 seconds before each offensive, it sends its 2–3 fastest fighters at the deposit nearest your Command core. The aim is to pull your defenders away from the main attack.
-3. **Siege corps.** It builds its Foundry earlier and fields more Battle tanks.
+3. **Siege corps.** It builds its Foundry earlier, fields more Battle tanks and builds one extra Sentinel tower.
 
 The coalition coordinates in three ways:
 

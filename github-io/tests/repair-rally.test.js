@@ -20,14 +20,18 @@ test('Harvesters repair damaged buildings for a quarter of the build cost',()=>{
   assert.ok(s.events.some(e=>e.type==='support'&&e.weapon==='repair'),'repair shows welding sparks');
 });
 
-test('repair is slower than an Engineer, stacks across Harvesters and stops without resources',()=>{
+test('repair is slower than an Engineer, uses at most two Harvesters and stops without resources',()=>{
   assert.ok(REPAIR.rate<18);
   const s=new Simulation({ai:false}),hq=first(s,'hq'),workers=s.own(0).filter(e=>e.type==='worker');
   s.aiEnabled=false;
   for(const w of workers){w.x=hq.x+hq.radius+1;w.z=hq.z;}
   hq.hp=1000;s.issue(workers.map(w=>w.id),{type:'repair',target:hq.id});
   step(s,1);
-  assert.ok(Math.abs(hq.hp-(1000+workers.length*REPAIR.rate))<3,`hp ${hq.hp}`);
+  // Two of the four repair; the others wait and take over when a repairer stops.
+  assert.equal(REPAIR.crew,2);
+  assert.ok(Math.abs(hq.hp-(1000+REPAIR.crew*REPAIR.rate))<3,`hp ${hq.hp}`);
+  assert.equal(workers.filter(w=>w.working).length,2);assert.ok(workers.every(w=>w.orders[0]?.type==='repair'));
+  workers.filter(w=>w.working)[0].orders=[];step(s,1);assert.equal(workers.filter(w=>w.working).length,2,'a waiting Harvester takes over');
   s.players[0].alloy=0;step(s,2);
   const stalled=hq.hp;step(s,2);
   assert.equal(hq.hp,stalled);assert.ok(workers.every(w=>!w.orders.length));assert.match(message(s),/alloy.*keep repairing/);

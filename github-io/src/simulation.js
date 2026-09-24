@@ -581,6 +581,23 @@ export class Simulation {
     }
     return best;
   }
+  // Static defenses shoot the nearest combat or support unit first, then Harvesters, and
+  // buildings last, so a tower is never busy with a wall while troops destroy it.
+  defenseTarget(e) {
+    let best = null, bestRank = 3, bestD = Infinity;
+    for (const t of this.entities) {
+      if (t.hp <= 0 || !this.hostile(e.team, t.team) || !this.isVisible(t, e.team)) continue;
+      const d = distance(e, t) - t.radius;
+      if (d > e.range + 0.00001) continue;
+      const rank = t.kind !== "unit" ? 2 : t.type === "worker" ? 1 : 0;
+      if ((rank < bestRank || (rank === bestRank && d < bestD)) && this.nav.clearLine(e, t, t.id)) {
+        best = t;
+        bestRank = rank;
+        bestD = d;
+      }
+    }
+    return best;
+  }
   hit(e, target) {
     // Counter and anti-vehicle multipliers depend on each victim, including splash victims.
     const apply = (t, scale = 1) =>
@@ -897,17 +914,24 @@ export class Simulation {
           ? "foundry"
           : pace.secondBarracks && this.time > pace.secondBarracks && own.filter((e) => e.type === "barracks").length < 2
             ? "barracks"
-            : null;
+            : this.time > pace.towerAt && own.some((e) => e.type === "foundry" && e.complete) &&
+                own.filter((e) => e.type === "tower").length < pace.towers + (role === "siege" ? 1 : 0)
+              ? "tower"
+              : null;
     if (
       want &&
       this.canPay(team, D[want].cost) &&
       !own.some((e) => !e.complete) &&
       workers.length
     ) {
-      outer: for (const r of [10, 17, 23])
-        for (let i = 0; i < 12; i++) {
-          const x = (hq?.x ?? 25) + Math.cos((i / 12) * Math.PI * 2) * r,
-            z = (hq?.z ?? -24) + Math.sin((i / 12) * Math.PI * 2) * r;
+      // Towers go on the side facing the map centre; other buildings anywhere around the core.
+      const facing = want === "tower" && hq ? Math.atan2(-hq.z, -hq.x) : 0;
+      const turns = want === "tower" ? [0, 1, -1, 2, -2, 3, -3] : [...Array(12).keys()];
+      outer: for (const r of want === "tower" ? [11, 14, 17] : [10, 17, 23])
+        for (const i of turns) {
+          const angle = want === "tower" ? facing + i * 0.35 : (i / 12) * Math.PI * 2;
+          const x = (hq?.x ?? 25) + Math.cos(angle) * r,
+            z = (hq?.z ?? -24) + Math.sin(angle) * r;
           if (!this.placement(want, team, x, z)) {
             if (this.build(workers[0].id, want, x, z)) break outer;
           }
@@ -996,7 +1020,7 @@ export class Simulation {
         this.updateLevel(e,dt);
         this.updateProduction(e, dt);
         if (e.complete && e.damage)
-          this.fight(e, this.enemy(e, e.range, true), dt, false);
+          this.fight(e, this.defenseTarget(e), dt, false);
         continue;
       }
       if (e.support) { this.updateSupport(e,dt); continue; }

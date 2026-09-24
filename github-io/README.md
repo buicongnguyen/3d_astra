@@ -86,7 +86,8 @@ During construction, **Actions** keeps the building name, resource cost, placeme
 - Select a Command core, Barracks, or Foundry to queue production. Click an item in its queue to cancel for a full refund.
 - Cancel unfinished structures from their selection panel for a 75% refund. Enemy destruction provides no refund.
 - Vanguards counter Rangers and Anti-tank soldiers; Rangers counter Breakers; Breakers and Battle tanks splash clustered infantry and hit Vanguards harder; Anti-tank rockets counter tanks and Breakers. See the [balance review](docs/BALANCE.md) for equal-cost battle results.
-- Harvesters repair damaged buildings: right-click the building, or use **Repair** on the command card. Each Harvester restores 10 HP per second, and a full repair costs a quarter of the building's price.
+- Harvesters repair damaged buildings: right-click the building, or use **Repair** on the command card. Each Harvester restores 10 HP per second, up to two at once per building, and a full repair costs a quarter of the building's price.
+- Sentinel towers shoot combat units first, then Harvesters, then buildings. Each tower level adds 50% damage and 1 m range, for 75 alloy + 25 energy per level. See the [tower balance review](docs/BALANCE.md#sentinel-tower).
 - Production buildings show their **Rally** point as a flag. Set it with **L**, the Rally button, or a right-click. A rally on a deposit sends new Harvesters straight to mining.
 - The Foundry researches a one-time 10% combat-unit damage upgrade.
 - Destroy all enemy Command cores to win. Losing all yours causes defeat. Simultaneous destruction is a draw.

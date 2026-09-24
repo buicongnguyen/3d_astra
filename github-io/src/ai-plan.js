@@ -2,12 +2,13 @@ import { distance } from './data.js';
 
 // AI tempo. Every preset uses the same costs, income and rules as the player (no cheats);
 // faster AIs think more often, grow a larger economy, tech sooner and attack earlier.
-// "normal" reproduces the original AI exactly.
+// "normal" keeps the original AI's tempo; like every speed from Normal up it also builds
+// Sentinel towers once its Foundry stands, as the player can.
 export const AI_SPEEDS = {
-  relaxed: { label: 'Relaxed', think: 4, workers: 7, foundryAt: 160, techAt: [240, 420], upgradeAt: 280, firstWave: 150, waveGap: 75, minWave: 4 },
-  normal: { label: 'Normal', think: 2.5, workers: 9, foundryAt: 100, techAt: [160, 300], upgradeAt: 190, firstWave: 85, waveGap: 50, minWave: 4 },
-  fast: { label: 'Fast', think: 1.5, workers: 11, foundryAt: 80, techAt: [120, 240], upgradeAt: 150, firstWave: 70, waveGap: 42, minWave: 5 },
-  relentless: { label: 'Relentless', think: 1, workers: 12, foundryAt: 60, techAt: [95, 190], upgradeAt: 115, firstWave: 60, waveGap: 34, minWave: 5, secondBarracks: 150 },
+  relaxed: { label: 'Relaxed', think: 4, workers: 7, foundryAt: 160, techAt: [240, 420], upgradeAt: 280, firstWave: 150, waveGap: 75, minWave: 4, towers: 0, towerAt: Infinity },
+  normal: { label: 'Normal', think: 2.5, workers: 9, foundryAt: 100, techAt: [160, 300], upgradeAt: 190, firstWave: 85, waveGap: 50, minWave: 4, towers: 1, towerAt: 180 },
+  fast: { label: 'Fast', think: 1.5, workers: 11, foundryAt: 80, techAt: [120, 240], upgradeAt: 150, firstWave: 70, waveGap: 42, minWave: 5, towers: 1, towerAt: 120 },
+  relentless: { label: 'Relentless', think: 1, workers: 12, foundryAt: 60, techAt: [95, 190], upgradeAt: 115, firstWave: 60, waveGap: 34, minWave: 5, secondBarracks: 150, towers: 2, towerAt: 90 },
 };
 export const ALLIANCES = { ffa: 'Free-for-all', coalition: 'United against you' };
 

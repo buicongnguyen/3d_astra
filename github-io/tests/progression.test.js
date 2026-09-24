@@ -45,7 +45,7 @@ test('level 3 effects, maximum level and shortages match the Godot rules',()=>{
   assert.equal(core.maxHp,3300);assert.equal(s.techLevel(),3);assert.equal(s.upgradeBuilding(core.id),false);
   const relay=s.spawn('relay',0,-9,34),tower=s.spawn('tower',0,-9,24);
   for(const b of [relay,tower])for(const duration of [20,30]){s.upgradeBuilding(b.id);s.updateLevel(b,duration);}
-  assert.equal(relay.supply,20);assert.equal(s.population(0).cap,35);assert.equal(tower.damage,28.5);
+  assert.equal(relay.supply,20);assert.equal(s.population(0).cap,35);assert.equal(tower.damage,38);assert.equal(tower.range,15);
   Object.assign(s.players[0],{alloy:0,energy:0});assert.equal(s.upgradeBuilding(first(s,'barracks').id),false);
   assert.match(message(s),/100 alloy and 50 energy/);
   const site=s.spawn('relay',0,3,30,false);assert.equal(s.upgradeBuilding(site.id),false);
