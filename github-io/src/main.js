@@ -1,3 +1,5 @@
+import { Tutorial } from "./tutorial.js";
+import "./tutorial.css";
 import "./style.css";
 import "./mobile.css";
 import "./settings.css";
@@ -40,7 +42,7 @@ document.querySelector("#app").innerHTML = `
     <div class="top-actions"><span id="clock">00:00</span><button id="audio" class="icon-button" title="Mute sound" aria-label="Mute sound">${icon("volume")}</button><button id="help" class="icon-button" title="Controls" aria-label="Show controls">${icon("help")}</button><button id="pause" class="icon-button" title="Pause · Space" aria-label="Pause game">${icon("pause")}</button></div>
   </header>
   <main id="stage">
-    <div id="world"></div>
+    <div id="world"></div><div id="training-marker" hidden aria-hidden="true">◎</div><aside id="training" hidden><button id="training-toggle" aria-expanded="true">Training</button><div id="training-card" class="panel"><strong id="training-title"></strong><p id="training-copy"></p><small>Training supplies replenish · no AI attacks</small><div><button id="training-focus">Focus target</button><button id="training-exit">Leave training</button></div></div></aside>
     <div class="map-heading"><span class="eyebrow"><i class="live-dot"></i> <span id="operation-label">OPERATION 01 / SKIRMISH</span></span><h1>Outpost Meridian<span>.</span></h1><p>THE ASHEN FRONTIER <span>·</span> SECTOR 07</p></div>
     <button id="mission-toggle" aria-expanded="false" aria-controls="mission-objectives">${icon("flag")} Objectives</button>
     <aside id="mission-objectives" class="mission panel" aria-label="Mission objectives"><div class="panel-label">MISSION OBJECTIVES <span>01—03</span></div><div class="objective" id="obj-economy"><span class="objective-num">01</span><span>Establish your economy<small>Assign Harvesters to resources</small></span></div><div class="objective" id="obj-army"><span class="objective-num">02</span><span>Mobilize a strike force<small>Field 8 combat units</small></span></div><div class="objective" id="obj-win"><span class="objective-num">03</span><span>Break their command<small>Destroy all enemy Command cores</small></span></div></aside>
@@ -64,10 +66,10 @@ document.querySelector("#app").innerHTML = `
       <h2 id="briefing-title">A new frontier.<br> A foothold to defend.</h2>
       <p id="briefing-text">Build your outpost. Harvest the valley. Lead your expedition against rival commanders.</p>
       <div class="briefing-rule"><span>RIVALS</span><strong id="briefing-rivals">1 AI · Normal speed</strong></div>
-      <div class="briefing-rule"><span>OBJECTIVE</span><strong>Eliminate enemy command</strong></div>
+      <div class="briefing-rule"><span>OBJECTIVE</span><strong id="briefing-goal">Eliminate enemy command</strong></div>
       </div>
       <button id="start" class="primary" disabled>Preparing expedition…</button>
-      <div class="briefing-setup"><div class="mode-switch" aria-label="Game mode"><button data-mode="skirmish" aria-pressed="true">Skirmish</button><button data-mode="campaign" aria-pressed="false">Campaign</button><button id="briefing-settings">Settings</button></div><div class="briefing-tools" id="skirmish-setup"><label class="map-select-label" for="scenario">Choose map / stage</label><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select><select id="enemy-count" aria-label="Number of AI enemies"><option value="1">1 AI enemy</option><option value="2">2 AI enemies</option><option value="3">3 AI enemies</option></select><select id="ai-speed" aria-label="AI speed" title="AI speed: how fast rivals build, tech up and attack">${Object.entries(AI_SPEEDS).map(([id, p]) => `<option value="${id}"${id === "normal" ? " selected" : ""}>${p.label} AI</option>`).join("")}</select><select id="alliance" aria-label="AI teams" disabled>${Object.entries(ALLIANCES).map(([id, label]) => `<option value="${id}">${label}</option>`).join("")}</select></div><div id="campaign-setup" hidden><ol class="stage-list" aria-label="Campaign stages"></ol></div><small class="briefing-note">SINGLE PLAYER <span>·</span> MOUSE + KEYBOARD</small></div>
+      <div class="briefing-setup"><div class="mode-switch" aria-label="Game mode"><button data-mode="training" aria-pressed="false">Training · start here</button><button data-mode="skirmish" aria-pressed="true">Skirmish</button><button data-mode="campaign" aria-pressed="false">Campaign</button><button id="briefing-settings">Settings</button></div><div class="briefing-tools" id="skirmish-setup"><label class="map-select-label" for="scenario">Choose map / stage</label><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select><select id="enemy-count" aria-label="Number of AI enemies"><option value="1">1 AI enemy</option><option value="2">2 AI enemies</option><option value="3">3 AI enemies</option></select><select id="ai-speed" aria-label="AI speed" title="AI speed: how fast rivals build, tech up and attack">${Object.entries(AI_SPEEDS).map(([id, p]) => `<option value="${id}"${id === "normal" ? " selected" : ""}>${p.label} AI</option>`).join("")}</select><select id="alliance" aria-label="AI teams" disabled>${Object.entries(ALLIANCES).map(([id, label]) => `<option value="${id}">${label}</option>`).join("")}</select></div><div id="campaign-setup" hidden><ol class="stage-list" aria-label="Campaign stages"></ol></div><small class="briefing-note">SINGLE PLAYER <span>·</span> MOUSE + KEYBOARD</small></div>
     </section>
     <div class="bottom-dock">
       <section class="minimap-panel panel"><div class="panel-label">SECTOR OVERVIEW <button id="home" title="Focus base · H" aria-label="Focus base">${icon("hq")}</button></div><canvas id="minimap" width="240" height="200" aria-label="Minimap: click to pan; right-click to command"></canvas><div class="map-legend"><span><i class="friendly"></i>YOU</span><span><i class="hostile"></i>ENEMY</span><span><i class="deposit"></i>RESOURCE</span></div></section>
@@ -92,6 +94,7 @@ let settings = loadSettings(matchMedia("(pointer:coarse)").matches),
   bonus = null,
   ambience;
 // Campaign: progress is saved in this browser; activeStage is the stage being played.
+let tutorial = null, tutorialShown = -1;
 let playMode = "skirmish",
   campaign = loadProgress(),
   stagePick = nextStage(campaign),
@@ -418,6 +421,7 @@ function runShortcut(id) {
   updateUI();
 }
 function updateUI() {
+  renderTutorial();
   const p = sim.players[0],
     pop = sim.population(0);
   $("alloy").textContent = Math.floor(p.alloy).toLocaleString();
@@ -1156,6 +1160,7 @@ $("briefing-settings").onclick = () => settingsUI.open();
 // Briefing: Skirmish picks the map, rivals, AI speed and alliance; Campaign plays the
 // stages in order. The battle behind the briefing always previews the current choice.
 function battleSetup() {
+  if(playMode === "training") return {map:"classic",enemyCount:1,aiSpeed:"relaxed",alliance:"ffa",bonus:null};
   const stage = STAGES[stagePick];
   return playMode === "campaign"
     ? { map: stage.map, enemyCount: stage.enemies, aiSpeed: stage.speed, alliance: stage.alliance, bonus: stage.bonus || null }
@@ -1176,12 +1181,13 @@ function updateHeading() {
 }
 function renderBriefing() {
   const setup = battleSetup(), inCampaign = playMode === "campaign";
+  $("briefing-goal").textContent = playMode === "training" ? "Complete eight guided lessons" : "Eliminate enemy command";
   for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String(b.dataset.mode === playMode));
-  $("skirmish-setup").hidden = inCampaign;
+  $("skirmish-setup").hidden = playMode !== "skirmish";
   $("campaign-setup").hidden = !inCampaign;
   // Alliances need at least two AIs.
   $("alliance").disabled = Number($("enemy-count").value) < 2;
-  $("briefing-rivals").textContent = describeRivals(setup);
+  $("briefing-rivals").textContent = playMode === "training" ? "Practice field · no AI attacks" : describeRivals(setup);
   if (inCampaign) {
     const stage = STAGES[stagePick];
     $("briefing-title").textContent = `Stage ${stagePick + 1} · ${stage.name}`;
@@ -1197,7 +1203,8 @@ function renderBriefing() {
         ? " Your rivals are allied: they share scouting, raid your Harvesters and attack together."
         : " Every faction fights for itself.");
   }
-  if (!$("start").disabled) $("start").textContent = inCampaign ? `Start stage ${stagePick + 1}` : "Start";
+  if(playMode === "training"){ $("briefing-title").textContent="Commander training"; $("briefing-text").textContent="Learn selection, movement, harvesting, construction, production, attack and withdrawal in eight guided steps. Training supplies replenish. Leave or replay whenever you like."; }
+  if (!$("start").disabled) $("start").textContent = playMode === "training" ? "Start training" : inCampaign ? `Start stage ${stagePick + 1}` : "Start";
 }
 function previewBattle() {
   if (started) return;
@@ -1282,6 +1289,10 @@ function showResult() {
   $("modal").hidden = false;
   tone(sim.result === "victory" ? 880 : 220, 0.3);
   const win = sim.result === "victory";
+  if(tutorial){
+    if(tutorial.done){try{localStorage.setItem("frontier-training-complete","1");}catch{}}
+    $("modal-content").innerHTML = `<h2 id="modal-title">${tutorial.done?"Training complete!":"Training ended"}</h2><p>You practiced selection, economy, construction, production, attacking and withdrawal. Campaign introduces an active opponent.</p><button class="primary" data-training-campaign>Campaign menu</button><button class="secondary" data-restart>Replay training</button><button class="secondary" data-new-game>Choose a game</button>`;return;
+  }
   if (activeStage !== null) return showStageResult(win);
   $("modal-content").innerHTML =
     `<span class="eyebrow">OPERATION ${sim.result === "draw" ? "CONCLUDED" : win ? "SUCCESSFUL" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}">${icon(win ? "flag" : "shield")}</div><h2 id="modal-title">${win ? "The frontier is yours." : sim.result === "draw" ? "Mutual destruction." : "Your outpost has fallen."}</h2><p>${win ? "Enemy command has been eliminated. Meridian holds the valley." : sim.result === "draw" ? "All Command cores were destroyed." : "An enemy destroyed your Command core. Regroup and try a different approach."}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${sim.players[0].kills}</strong>ENEMIES ELIMINATED</span></div><button class="primary" data-new-game>New game / choose map ${icon("arrow")}</button><button class="secondary" data-restart>Replay this map</button>`;
@@ -1316,6 +1327,7 @@ function nextStageNow() {
 function newGame() {
   restart();
   started = false;
+  tutorial = null;
   activeStage = null;
   previewBattle();
   paused = true;
@@ -1337,6 +1349,7 @@ function restart() {
   $("box-select").setAttribute("aria-pressed", "false");
   $("queue-orders").setAttribute("aria-pressed", "false");
   sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus });
+  tutorial = null;
   view.reset();
   focusHome();
   selected.clear();
@@ -1357,10 +1370,14 @@ function restart() {
   view.resize();
   $("status-text").textContent = "OPERATION ACTIVE";
   setSelection([sim.own(0).find((e) => e.type === "hq").id]);
+  if(playMode === "training") beginTutorial();
 }
 
 $("start").onclick = () => {
   unlockAudio();
+  sim = new Simulation({map:mapId,enemyCount,aiSpeed,alliance,playerBonus:bonus});
+  view.reset();
+  tutorial = null;
   activeStage = playMode === "campaign" ? stagePick : null;
   started = true;
   paused = false;
@@ -1375,6 +1392,7 @@ $("start").onclick = () => {
       ? "Tap Workers, then tap amber crystals. Drag to pan; pinch to zoom."
       : "Select Harvesters, then right-click amber crystals to start your economy.",
   );
+  if(playMode === "training") beginTutorial();
   tone(780, 0.15);
 };
 $("pause").onclick = togglePause;
@@ -1540,6 +1558,7 @@ $("modal").onclick = (event) => {
   if (event.target.closest("[data-restart]")) restart();
   if (event.target.closest("[data-new-game]")) newGame();
   if (event.target.closest("[data-next-stage]")) nextStageNow();
+  if(event.target.closest("[data-training-campaign]")){playMode="campaign";newGame();}
 };
 
 function frame(now) {
@@ -1557,7 +1576,9 @@ function frame(now) {
     accumulator += dt;
     while (accumulator >= 0.05) {
       view.beforeTick(sim);
+      tutorial?.update(sim,[...selected]);
       sim.tick(0.05);
+      tutorial?.update(sim,[...selected]);
       accumulator -= 0.05;
     }
     if (sim.result) showResult();
@@ -1628,6 +1649,7 @@ async function boot() {
     // Explicit opt-in hook used by browser integration tests. Absent in normal play.
     if (new URLSearchParams(location.search).has("test"))
       window.__frontier = {
+        get tutorial(){return tutorial;},
         get sim() {
           return sim;
         },
@@ -1643,7 +1665,7 @@ async function boot() {
           return paused;
         },
         step: (seconds) => {
-          for (let i = 0; i < seconds / 0.05; i++) sim.tick(0.05);
+          for (let i = 0; i < seconds / 0.05; i++){tutorial?.update(sim,[...selected]);sim.tick(0.05);tutorial?.update(sim,[...selected]);}
           updateUI();
         },
         get started() {
@@ -1665,3 +1687,22 @@ async function boot() {
   }
 }
 boot();
+
+function beginTutorial(){
+  tutorial = new Tutorial(sim); tutorialShown = -1; setSelection([]); renderTutorial();
+}
+function renderTutorial(){
+  const active=!!tutorial && started && !tutorial.done && !sim.result;
+  $("training").hidden=!active;$("training-marker").hidden=!active;
+  document.documentElement.classList.toggle("in-training",active);
+  if(!active)return;
+  const step=tutorial.step;
+  $("training-toggle").textContent=`Training ${tutorial.index+1}/8`;
+  $("training-title").textContent=step.title;
+  $("training-copy").textContent=touchInput?step.touch:step.desktop;
+  if(tutorialShown!==tutorial.index){tutorialShown=tutorial.index;$("training-card").hidden=false;$("training-toggle").setAttribute("aria-expanded","true");}
+  if(view){const target=tutorial.point(sim),p=view.project(target.x,target.z,0.2);$("training-marker").style.left=p.x+"px";$("training-marker").style.top=p.y+"px";}
+}
+$("training-toggle").onclick=()=>{const card=$("training-card");card.hidden=!card.hidden;$("training-toggle").setAttribute("aria-expanded",String(!card.hidden));};
+$("training-focus").onclick=()=>{if(!tutorial)return;const p=tutorial.point(sim);view.focusOn(p.x,p.z);$("training-card").hidden=true;$("training-toggle").setAttribute("aria-expanded","false");};
+$("training-exit").onclick=()=>{playMode="skirmish";newGame();};

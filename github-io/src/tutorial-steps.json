@@ -1,0 +1,10 @@
+[
+ {"title":"Select a Harvester","desktop":"Left-click a Harvester near your Command core.","touch":"Tap a Harvester near your Command core."},
+ {"title":"Move to the marker","desktop":"With a Harvester selected, right-click the yellow marker.","touch":"Select a Harvester, choose Move, then tap the yellow marker."},
+ {"title":"Gather 10 alloy","desktop":"Select a Harvester and right-click amber crystals. Cargo returns automatically.","touch":"Select a Harvester, then tap amber crystals. Cargo returns automatically."},
+ {"title":"Build a Supply relay","desktop":"Select a Harvester, choose Supply relay, then click a clear site. Wait for completion.","touch":"Select a Harvester, choose Supply relay, tap a clear site, then confirm placement."},
+ {"title":"Train a Ranger","desktop":"Select Barracks and click Ranger. Wait for the production queue to finish.","touch":"Tap Barracks, choose Ranger and wait for the production queue to finish."},
+ {"title":"Attack the practice target","desktop":"Select soldiers and right-click the marked target. Land a hit; it cannot fire back.","touch":"Select soldiers, choose Attack, then tap the marked target. It cannot fire back."},
+ {"title":"Withdraw with Move","desktop":"Select a soldier fighting the target. Press M, then click the yellow marker to withdraw.","touch":"Select a soldier fighting the target. Choose Move and tap the yellow marker to withdraw."},
+ {"title":"Finish the target","desktop":"The target is weakened. Select your soldiers and right-click it to finish training.","touch":"The target is weakened. Select soldiers, choose Attack and tap it to finish training."}
+]

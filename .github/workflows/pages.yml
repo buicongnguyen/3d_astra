@@ -47,6 +47,8 @@ jobs:
         include:
           - name: desktop
             scripts: browser
+          - name: training
+            scripts: tutorial
           - name: mobile
             scripts: mobile mobile-controls
           - name: settings

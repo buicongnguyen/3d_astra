@@ -6,6 +6,8 @@ Now includes customizable army colors, saved settings, and the Riverlands battle
 
 [Play on desktop, phone, or tablet](https://buicongnguyen.github.io/3d_astra/). Touch controls include tap commands, drag pan, pinch zoom, and portrait/landscape layouts.
 
+New players can choose **Training · start here** before starting. Eight safe, guided lessons teach selection, movement, harvesting, construction, production, attack and withdrawal. **Focus target** centers the camera and folds the instruction card; **Leave training** returns to game setup. See the [training implementation plan](TUTORIAL_IMPLEMENTATION_PLAN.md).
+
 Desktop players can use **B** for construction, **Q E R T Y** for the displayed build/train actions, **F2** for army selection, and **H/J/K** for production buildings. Press **?** (or the help button) in the game for clickable commands and control groups, or read the [full shortcut reference](github-io/docs/PC_SHORTCUTS.md).
 
 [Read and copy the complete game-building prompt](https://buicongnguyen.github.io/3d_astra/prompt/), [download it as Markdown](https://buicongnguyen.github.io/3d_astra/RECREATE_GAME_PROMPT.md), or [read the source in this repository](RECREATE_GAME_PROMPT.md). The website publishes this source file during each build.

@@ -71,6 +71,7 @@ export const progression = {
   },
   applyDamage(t,damage,team) {
     if (t.hp <= 0 || !Number.isFinite(damage) || damage <= 0) return;
+    if(t.trainingGuard) damage=Math.min(damage,Math.max(0,t.hp+t.shield-1));
     t.shieldDelay = 5;
     const absorbed = Math.min(t.shield,damage);
     t.shield -= absorbed;

@@ -28,7 +28,8 @@
     "test:new-game": "node tests/new-game.mjs",
     "test:boundary-fx": "node tests/boundary-fx.mjs",
     "test:repair-rally": "node tests/repair-rally.mjs",
-    "test:campaign": "node tests/campaign.mjs"
+    "test:campaign": "node tests/campaign.mjs",
+    "test:tutorial": "node tests/tutorial.mjs"
   },
   "dependencies": {
     "three": "0.185.1"
