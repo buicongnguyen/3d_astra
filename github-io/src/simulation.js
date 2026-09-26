@@ -326,6 +326,8 @@ export class Simulation {
         e.pathClock = 0;
         e.stalled = 0;
         e.moveSample = null;
+        // A fresh command must reconsider a firing search that failed before repositioning.
+        e.firing = null;
         e.attacking = false;
       }
       if (o.type !== "stop" && e.orders.length < 32) e.orders.push(o);

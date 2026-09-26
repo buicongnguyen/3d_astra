@@ -126,6 +126,27 @@ test('attack-move passes a target it cannot shoot and keeps advancing', () => {
   assert.ok(Math.hypot(ranger.x + 20, ranger.z + 20) < 3, 'arrived away from the enemy base');
 });
 
+test('a fresh attack after repositioning retries a previously screened target', () => {
+  const s = new Simulation({ai:false});
+  const target = s.spawn('relay', 1, 0, -20);
+  for (let i = 0; i < 8; i++) s.spawn('relay', 0, Math.cos(i * Math.PI / 4) * 4, -20 + Math.sin(i * Math.PI / 4) * 4);
+  const ranger = s.spawn('ranger', 0, 0, -9);
+  s.nav.rebuild(s.entities); s.updateVision();
+  s.issue([ranger.id], {type:'attack', target:target.id});
+  for (let i = 0; i < 600 && ranger.orders.length; i++) s.tick(.05);
+  assert.equal(ranger.orders.length, 0, 'the original blocked attack ends');
+  assert.ok(s.noFiringPosition(ranger, target));
+  s.issue([ranger.id], {type:'move', x:-10, z:-9});
+  for (let i = 0; i < 200 && ranger.orders.length; i++) s.tick(.05);
+  assert.ok(Math.hypot(ranger.x + 10, ranger.z + 9) < 3, 'manual reposition completes');
+  s.updateVision();
+  s.issue([ranger.id], {type:'attack', target:target.id});
+  const before = {x:ranger.x,z:ranger.z};
+  s.tick(.05);
+  assert.equal(ranger.orders[0]?.type, 'attack', 'fresh attack can approach from the new position');
+  assert.ok(Math.hypot(ranger.x-before.x,ranger.z-before.z)>0, 'it does not immediately discard the new command');
+});
+
 test('a real incursion still recalls the whole AI army', () => {
   const s = new Simulation({map:'classic'});
   const hq = s.own(1).find(e => e.type === 'hq');
