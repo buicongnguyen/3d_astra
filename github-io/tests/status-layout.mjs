@@ -4,7 +4,7 @@ import fs from 'node:fs';
 fs.mkdirSync('test-results',{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':undefined,args:['--enable-unsafe-swiftshader']});
 try{
- for(const viewport of [{width:1280,height:800},{width:1024,height:768},{width:320,height:568},{width:390,height:844},{width:667,height:375},{width:844,height:390},{width:768,height:1024}]){
+ for(const viewport of [{width:1920,height:1080},{width:1280,height:800},{width:1024,height:768},{width:320,height:568},{width:390,height:844},{width:667,height:375},{width:844,height:390},{width:768,height:1024}]){
   const mobile=viewport.width<1000;
   const workHost=mobile?'#production-status':'#queue';
   const page=await browser.newPage({viewport,isMobile:mobile,hasTouch:mobile,deviceScaleFactor:mobile?3:1});
@@ -49,23 +49,27 @@ try{
   assert.ok(work.every(b=>b.text==='×'&&b.cells.length===10&&b.cells.every(c=>c.w===3&&c.h===3&&c.fits)),'small squares fit each work tile');
   assert.ok(work[0].filled>0&&work[0].filled<10,'green blocks reflect progress');
   if(!mobile){
-   // StarCraft-style console: minimap bottom-left, selection centre, command card bottom-right.
+   // Selection and actions share a compact dock; unused space still accepts world input.
    const layout=await page.evaluate(()=>{
     const rect=s=>document.querySelector(s).getBoundingClientRect();
-    const map=rect('.minimap-panel'),panel=rect('.selection-panel'),card=rect('.command-panel');
+    const map=rect('.minimap-panel'),panel=rect('.selection-panel'),card=rect('.command-panel'),deck=rect('.command-deck');
     const controls=[...document.querySelectorAll('.command-panel button')].filter(e=>e.getClientRects().length);
     // Flush with the bottom edge: the desktop has no status bar; frame rate is in the top bar.
-    return {corners:map.left===0&&card.right===innerWidth&&[map,panel,card].every(r=>r.bottom===innerHeight),
+    return {corners:map.left===0&&[map,panel,card].every(r=>r.bottom===innerHeight),
+     compact:deck.width<=700&&deck.height<=140&&card.right<=innerWidth-12,
+     centered:Math.abs(deck.left+deck.width/2-innerWidth/2)<=Math.max(0,map.right+12-(innerWidth-deck.width)/2)+1,
      statusbar:!document.querySelector('.statusbar').getClientRects().length&&!!document.querySelector('.top-actions #fps'),
-     order:map.right<=panel.left&&panel.right<=card.left,heights:[map.height,panel.height,card.height],
+     order:map.right+12<=panel.left&&Math.abs(panel.right-card.left)<=1,
      orders:document.querySelector('.order-buttons').parentElement.classList.contains('command-panel'),
      jobs:document.querySelectorAll('#queue .work-job').length,duplicate:document.querySelector('#production-status').hidden,
      contained:controls.every(e=>{const r=e.getBoundingClientRect();return r.left>=card.left&&r.right<=card.right&&r.top>=card.top&&r.bottom<=card.bottom;}),
-     clear:[[innerWidth/2,card.top-40],[innerWidth-300,80],[240,innerHeight-110]].every(([x,y])=>!!document.elementFromPoint(x,y)?.closest('#world'))};
+     clear:[[innerWidth/2,card.top-40],[innerWidth-300,80],[card.right+12,innerHeight-24],[map.right+4,innerHeight-24]].every(([x,y])=>!!document.elementFromPoint(x,y)?.closest('#world'))};
    });
-   // Compact console: minimap 152 px, selection 84 px, command card 118 px tall.
-   assert.deepEqual(layout.heights,[152,84,118]);
-   assert.ok(layout.corners&&layout.statusbar&&layout.order&&layout.orders&&layout.contained&&layout.duplicate&&layout.clear,JSON.stringify(layout));assert.equal(layout.jobs,5);
+   assert.ok(layout.corners&&layout.compact&&layout.centered&&layout.statusbar&&layout.order&&layout.orders&&layout.contained&&layout.duplicate&&layout.clear,JSON.stringify(layout));assert.equal(layout.jobs,5);
+   await page.locator('#rally-order').hover();
+   const tooltip=await page.locator('#order-tip').boundingBox(),card=await page.locator('.command-panel').boundingBox();
+   assert.ok(tooltip&&tooltip.x>=card.x&&tooltip.x+tooltip.width<=card.x+card.width&&tooltip.y+tooltip.height<=card.y,'tooltips stay above the relocated command panel');
+   await page.mouse.move(viewport.width/2,100);
    if(viewport.width===1280){
     const job=await page.locator('#queue .work-job').first().elementHandle();
     await page.setViewportSize({width:900,height:600});
@@ -125,6 +129,24 @@ try{
    },type);
    if(mobile)await click('button[data-dock=selection]');
    cells=await inspect();assert.ok(cells.every(c=>c.fits&&c.oneLine),`${type}: ${JSON.stringify(cells)}`);
+  }
+  if(viewport.width===1280){
+   // A large roster and all nine saved groups must remain accessible in the narrower panel.
+   for(let i=1;i<=9;i++)await page.keyboard.press(`Control+${i}`);
+   assert.equal(await page.locator('#group-strip button').count(),9);
+   await page.locator('#group-strip button').last().scrollIntoViewIfNeeded();
+   const strip=await page.locator('#group-strip').boundingBox(),selection=await page.locator('.selection-panel').boundingBox();
+   assert.ok(strip.x>=selection.x&&strip.x+strip.width<=selection.x+selection.width,'saved groups do not overflow into commands');
+   await click('#group-strip button:last-child');
+   const last=page.locator('#unit-list button').last(),unit=Number(await last.getAttribute('data-select'));
+   await last.scrollIntoViewIfNeeded();await last.click();
+   assert.deepEqual(await page.evaluate(()=>[...window.__frontier.selected]),[unit],'a scrolled roster item can still be selected');
+   await page.evaluate(()=>{const f=window.__frontier;f.select([f.sim.own(0).find(e=>e.type==='worker').id]);});
+   await click('#commands [data-action="relay"]');
+   const cancel=await page.locator('#mode-controls').boundingBox(),card=await page.locator('.command-panel').boundingBox();
+   assert.ok(cancel.x>=card.x&&cancel.x+cancel.width<=card.x+card.width&&cancel.y>=card.y&&cancel.y+cancel.height<=card.y+card.height,'placement Cancel stays inside the dock');
+   await click('#cancel-mode');
+   assert.equal(await page.locator('#mode-controls').isVisible(),false,'the relocated Cancel button ends placement');
   }
   // Render a valid full-army total through the UI, including reserved supply.
   await page.evaluate(()=>{const f=window.__frontier;f.sim.population=()=>({used:85,reserved:15,cap:100});f.step(0);});

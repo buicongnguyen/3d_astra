@@ -53,6 +53,8 @@ jobs:
             scripts: mobile mobile-controls
           - name: settings
             scripts: improvements campaign
+          - name: languages
+            scripts: language
           - name: progression
             scripts: progression
           - name: maps

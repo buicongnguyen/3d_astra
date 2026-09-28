@@ -8,6 +8,8 @@ import "./desktop-dock.css";
 import "./hud-readability.css";
 import { loadSettings, saveSettings, palette } from "./settings.js";
 import { SettingsUI } from "./settings-ui.js";
+import { localizeDOM } from "./i18n.js";
+import "./language.css";
 import { MAPS, SURFACES } from "./terrain.js";
 import { Ambience } from "./ambience.js";
 import { createFieldGuide } from "./field-guide.js";
@@ -75,9 +77,8 @@ document.querySelector("#app").innerHTML = `
       <section class="minimap-panel panel"><div class="panel-label">SECTOR OVERVIEW <button id="home" title="Focus base · H" aria-label="Focus base">${icon("hq")}</button></div><canvas id="minimap" width="240" height="200" aria-label="Minimap: click to pan; right-click to command"></canvas><div class="map-legend"><span><i class="friendly"></i>YOU</span><span><i class="hostile"></i>ENEMY</span><span><i class="deposit"></i>RESOURCE</span></div></section>
       <div class="command-deck">
       <section class="selection-panel panel"><div id="group-strip" class="group-strip" aria-label="Control groups"></div><div class="panel-label"><span id="selection-label">EXPEDITION COMMAND</span><span id="selection-count">READY</span></div><div id="selection-info"></div><div class="selection-scroll"><div id="unit-list"></div></div><div id="queue"></div><div class="order-buttons"><button id="field-guide" title="Info & stats">${icon("info","desk")}<span class="order-label">Info & stats</span></button><button id="support-order" hidden title="Support: heal / repair">${icon("medic","desk")}<span class="order-label">Support</span></button><button id="move-order" title="Move">${icon("move")}<span class="order-label">Move</span></button><button id="attack-order" title="Attack-move · F">${icon("crosshair")}<span class="order-label">Attack-move</span> <kbd>F</kbd></button><button id="stop-order" title="Stop · X">${icon("stop")}<span class="order-label">Stop</span> <kbd>X</kbd></button></div></section>
-      <section class="command-panel panel"><div class="panel-label"><span id="command-label">COMMAND CENTER</span><span id="command-context">ACTIONS</span></div><div id="commands"></div><div id="upgrade-actions" class="upgrade-actions"></div><div id="command-hint">Select a unit or structure to issue commands.</div></section>
+      <section class="command-panel panel"><div class="panel-label"><span id="command-label">COMMAND CENTER</span><span id="command-context">ACTIONS</span></div><div id="commands"></div><div id="upgrade-actions" class="upgrade-actions"></div><div id="command-hint">Select a unit or structure to issue commands.</div><div id="order-tip" aria-hidden="true" hidden></div></section>
       </div>
-      <div id="order-tip" aria-hidden="true" hidden></div>
     </div>
     <nav id="dock-tabs" aria-label="Command panels"><button data-dock="selection" aria-pressed="true">${icon("people")} Selection</button><button data-dock="actions" aria-pressed="false">${icon("worker")} Actions</button><button data-dock="map" aria-pressed="false">${icon("flag")} Map</button></nav>
     <div class="statusbar"><span><i class="live-dot"></i> <span id="status-text">EXPEDITION SYSTEMS INITIALIZING</span></span><span>WASD pan <b>·</b> Scroll zoom <b>·</b> Right-click command <b>·</b> <button id="controls-link">? Controls</button></span><span id="fps">— FPS</span></div>
@@ -93,6 +94,13 @@ let settings = loadSettings(matchMedia("(pointer:coarse)").matches),
   alliance = "ffa",
   bonus = null,
   ambience;
+const localization = localizeDOM(document.body, settings.language);
+const languageRow = document.createElement('label');
+languageRow.className = 'language-choice';
+languageRow.innerHTML = '<span translate="no">Language / Ngôn ngữ</span><select id="language" aria-label="Language" translate="no"><option value="en">English</option><option value="vi">Tiếng Việt</option></select>';
+document.querySelector('.mode-switch').after(languageRow);
+$('language').value = settings.language;
+$('language').onchange = () => applyPreferences({...settings, language: $('language').value});
 // Campaign: progress is saved in this browser; activeStage is the stage being played.
 let tutorial = null, tutorialShown = -1;
 let playMode = "skirmish",
@@ -149,7 +157,7 @@ function setObjectivesOpen(open) {
   document.documentElement.classList.toggle('objectives-open', open);
   $('mission-toggle').setAttribute('aria-expanded', String(open));
 }
-// Desktop console: unit orders and the targeting Cancel live on the command card (bottom right),
+// Desktop console: unit orders and targeting Cancel sit beside the selected object's stats,
 // and the frame rate moves to the top bar because the desktop hides the status bar.
 // Compact layouts keep orders under Selection and Cancel on the battlefield or construction card.
 function placeConsole(desktop) {
@@ -1117,6 +1125,8 @@ function closeModal() {
 }
 function applyPreferences(value) {
   settings = value;
+  localization.apply(settings.language);
+  $('language').value = settings.language;
   muted = settings.muted;
   view?.applySettings(settings);
   $("quality").textContent = settings.quality === "eco" ? "Eco" : "High";
@@ -1495,7 +1505,7 @@ function showOrderTip(button) {
   }
   tipButton = button && !document.documentElement.classList.contains('compact-ui') ? button : null;
   if (tipButton?.title) {
-    tipButton.dataset.tip = tipButton.title;
+    tipButton.dataset.tip = localization.sourceAttribute(tipButton, 'title');
     tipButton.removeAttribute('title');
   }
   $('order-tip').hidden = !tipButton?.dataset.tip;

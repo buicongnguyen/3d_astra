@@ -1,6 +1,5 @@
-/* Mobile keeps its tabs. Desktop uses a StarCraft-style console along the bottom edge:
-   minimap bottom-left, selection in the middle, command card bottom-right. Every panel
-   is sized to its content so as much of the battlefield as possible stays visible. */
+/* Mobile keeps its tabs. Desktop joins selection and commands in a compact central
+   console, leaving the battlefield clickable on either side. */
 .command-deck { display: contents; }
 .group-strip, #order-tip { display: none; }
 .compact-ui .order-buttons .icon.desk { display: none; }
@@ -10,8 +9,10 @@
   --console-map: 180px;
   --console-map-height: 152px;
   --console-card: 348px;
-  --console-card-height: 118px;
-  --console-mid: 84px;
+  --console-selection: 324px;
+  --console-deck: calc(var(--console-selection) + var(--console-card));
+  --console-card-height: 136px;
+  --console-mid: 136px;
   --console-edge: color-mix(in srgb, var(--team-friendly, #92ebc5) 40%, #34504a);
 }
 
@@ -50,9 +51,17 @@
   left: 0;
   right: 0;
   bottom: 0;
-  gap: 0;
-  grid-template-columns: var(--console-map) minmax(0, 600px) var(--console-card);
-  justify-content: space-between;
+  display: block;
+  height: var(--console-map-height);
+}
+:root:not(.compact-ui) .command-deck {
+  position: absolute;
+  bottom: 0;
+  /* On smaller desktops, keep clear of the minimap instead of overlapping it. */
+  left: max(calc(var(--console-map) + 12px), calc(50% - var(--console-deck) / 2));
+  width: var(--console-deck);
+  display: grid;
+  grid-template-columns: var(--console-selection) var(--console-card);
   align-items: end;
 }
 :root:not(.compact-ui) .bottom-dock .panel {
@@ -67,7 +76,10 @@
 
 /* Minimap corner: just the map, with the home button over its top-right corner. */
 :root:not(.compact-ui) .bottom-dock .minimap-panel {
-  position: relative;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: var(--console-map);
   height: var(--console-map-height);
 }
 :root:not(.compact-ui) .minimap-panel .panel-label {
@@ -87,19 +99,21 @@
 :root:not(.compact-ui) .minimap-panel #minimap { height: 100%; margin: 0; }
 :root:not(.compact-ui) .minimap-panel .map-legend { display: none; }
 
-/* Selection: portrait, name, vitals and activity, with the queue or roster beside them. */
+/* A fixed stats row and a single queue/roster row: starting work never shifts commands. */
 :root:not(.compact-ui) .bottom-dock .selection-panel {
   position: relative;
   height: var(--console-mid);
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  padding: 6px 8px;
+  border-radius: 10px 0 0 0;
   overflow: visible;
 }
 :root:not(.compact-ui) .selection-panel > .panel-label { display: none; }
-:root:not(.compact-ui) .selection-panel #selection-info { flex: 1 1 auto; min-width: 0; min-height: 0; padding: 0; }
+:root:not(.compact-ui) .selection-panel #selection-info { flex: 0 0 auto; min-width: 0; min-height: 0; padding: 0; }
+:root:not(.compact-ui) .selection-panel:not(.has-entity) #selection-info { flex: 1; }
 :root:not(.compact-ui) .selection-panel .selection-empty { gap: 12px; }
 :root:not(.compact-ui) .selection-panel .selection-empty > .icon { width: 30px; height: 30px; }
 :root:not(.compact-ui) .selection-panel .selection-empty h3 { margin: 0 0 3px; font-size: 15px; }
@@ -127,20 +141,21 @@
 :root:not(.compact-ui) .selection-panel .unit-metrics { max-width: 360px; }
 :root:not(.compact-ui) .selection-panel .unit-metrics > div { flex: 1 1 auto; }
 :root:not(.compact-ui) .selection-panel .selection-scroll {
-  flex: 0 1 auto;
-  max-width: 50%;
-  max-height: 68px;
-  overflow-x: hidden;
-  overflow-y: auto;
+  flex: 0 0 44px;
+  width: 100%;
+  max-width: 100%;
+  height: 44px;
+  margin-top: auto;
+  overflow: hidden;
 }
-:root:not(.compact-ui) .selection-panel #unit-list { flex-wrap: wrap; overflow: visible; }
+:root:not(.compact-ui) .selection-panel #unit-list { flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
 :root:not(.compact-ui) .selection-panel #unit-list button {
   width: 32px;
   height: 32px;
   display: grid;
   place-items: center;
 }
-:root:not(.compact-ui) .selection-panel #queue { flex: 0 0 auto; margin: 0; }
+:root:not(.compact-ui) .selection-panel #queue { flex: 0 0 44px; margin: auto 0 0; }
 
 /* Saved control groups hang above the selection panel as tabs. */
 :root:not(.compact-ui) .group-strip {
@@ -149,9 +164,13 @@
   bottom: 100%;
   display: flex;
   gap: 3px;
+  max-width: calc(100% - 24px);
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 :root:not(.compact-ui) .group-strip button {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 4px;
   height: 22px;
@@ -184,6 +203,9 @@
   --slot: calc((100% - 16px - 8px) / 3);
   position: relative;
   height: var(--console-card-height);
+  overflow: visible;
+  border-left: 1px solid var(--line);
+  border-radius: 0 10px 0 0;
 }
 :root:not(.compact-ui) .command-panel > .panel-label { display: none; }
 :root:not(.compact-ui) .command-panel .order-buttons {
@@ -200,8 +222,8 @@
   position: relative;
   display: grid;
   place-items: center;
-  height: 30px;
-  min-height: 30px;
+  height: 34px;
+  min-height: 34px;
   padding: 0;
   border: 1px solid #4b6a5b;
   border-radius: 4px;
@@ -247,9 +269,9 @@
   overflow: visible;
 }
 :root:not(.compact-ui) .command-panel .command-tile {
-  height: 34px;
-  min-height: 34px;
-  padding: 1px 3px 0;
+  height: 40px;
+  min-height: 40px;
+  padding: 4px 3px 0;
 }
 :root:not(.compact-ui) .command-panel .command-tile > .icon { display: none; }
 :root:not(.compact-ui) .command-panel .command-tile > span {
@@ -282,8 +304,8 @@
 :root:not(.compact-ui) .command-panel .upgrade-actions button {
   position: relative;
   width: 100%;
-  height: 34px;
-  min-height: 34px;
+  height: 40px;
+  min-height: 40px;
   padding: 1px 3px 0;
   border-radius: 3px;
   text-align: center;
@@ -324,8 +346,8 @@
 }
 :root:not(.compact-ui) .command-panel #mode-controls button {
   flex: 1;
-  min-height: 34px;
-  height: 34px;
+  min-height: 40px;
+  height: 40px;
   padding: 0 8px;
   font-size: 13px;
   border-color: #c26a5c;
@@ -339,7 +361,7 @@
   display: block;
   position: absolute;
   right: 8px;
-  bottom: calc(var(--console-card-height) + 8px);
+  bottom: calc(100% + 8px);
   max-width: calc(var(--console-card) - 16px);
   padding: 6px 10px;
   border: 1px solid var(--console-edge);

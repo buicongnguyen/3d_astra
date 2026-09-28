@@ -1,4 +1,5 @@
 import './construction-ui.css';
+import {translate} from './i18n.js';
 
 // Keep mobile construction feedback together in the Actions dock. The existing
 // placement buttons are moved, not duplicated, so mouse and touch share handlers.
@@ -64,7 +65,7 @@ export function createConstructionUI(definitions, { retry, back }) {
         if (placing) controls.querySelector('#confirm-build').disabled = !point || !!error || paused;
       }
       put('message', message);
-      const repeatedNotice = toast.textContent === message;
+      const repeatedNotice = toast.textContent === message || toast.textContent === translate(message);
       document.documentElement.classList.toggle('construction-notice-repeated', repeatedNotice);
       if (repeatedNotice) toast.classList.remove('show');
       card.dataset.warning = String(warning);
