@@ -98,7 +98,7 @@ const localization = localizeDOM(document.body, settings.language);
 const languageRow = document.createElement('label');
 languageRow.className = 'language-choice';
 languageRow.innerHTML = '<span translate="no">Language / Ngôn ngữ</span><select id="language" aria-label="Language" translate="no"><option value="en">English</option><option value="vi">Tiếng Việt</option></select>';
-document.querySelector('.mode-switch').after(languageRow);
+document.querySelector('.briefing-copy').prepend(languageRow);
 $('language').value = settings.language;
 $('language').onchange = () => applyPreferences({...settings, language: $('language').value});
 // Campaign: progress is saved in this browser; activeStage is the stage being played.

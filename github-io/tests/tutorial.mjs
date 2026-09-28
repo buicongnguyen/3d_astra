@@ -14,6 +14,13 @@ try {
     const page = await browser.newPage({viewport:{width,height},isMobile:mobile,hasTouch:mobile});
     const errors = [];
     page.on('pageerror',e=>errors.push(e.message));
+    await page.addInitScript(()=>{
+      window.trainingInputTrace=[];
+      for(const type of ['pointerdown','pointerup','click']) document.addEventListener(type,event=>{
+        trainingInputTrace.push({type,target:event.target.id||event.target.tagName,x:event.clientX,y:event.clientY,lesson:window.__frontier?.tutorial?.index});
+        if(trainingInputTrace.length>32)trainingInputTrace.shift();
+      },true);
+    });
     const press = selector => mobile ? page.locator(selector).tap() : page.locator(selector).click();
     try {
       await page.goto((process.env.TEST_URL || 'http://127.0.0.1:4173/')+'?test=1');
@@ -56,7 +63,7 @@ try {
       await page.screenshot({path:`test-results/training-failed-${width}.png`});
       fs.writeFileSync(`test-results/training-failed-${width}.json`,JSON.stringify(await page.evaluate(()=>({
         started:window.__frontier?.started,lesson:window.__frontier?.tutorial?.index,
-        selected:[...(window.__frontier?.selected || [])],cardHidden:document.querySelector('#training-card')?.hidden,
+        selected:[...(window.__frontier?.selected || [])],cardHidden:document.querySelector('#training-card')?.hidden,input:window.trainingInputTrace,
       })),null,2));
       throw error;
     } finally { await page.close(); }
