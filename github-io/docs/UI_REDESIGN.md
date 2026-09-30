@@ -87,6 +87,7 @@ A separate review pass read the whole change. Every finding below was reproduced
 | Settings tabs were 42 px tall; resource and objective labels 9–10 px. | 44 px tabs; 11 px labels. |
 | The field guide listed stale Sentinel tower upgrade costs. A global phone rule forced every pressed button gold, including menu cards. | Costs match `levelCost` (75/25, 150/50). The pressed rule is scoped to HUD toggles. |
 | Result dialogs did not focus their primary action. "7 stages" was hard-coded. Colour buttons had English-only screen-reader labels. | Focus the primary; `STAGES.length` with a Vietnamese pattern; `Your/Enemy <colour>` patterns. |
+| First CI run (Linux): `system-ui` in the new font stack resolved to the wide DejaVu Sans, so "Anti-tank soldier" overflowed its tile. The 14 px dock tabs also overran the 252 px landscape side column. | The stack drops `system-ui` (Arial metrics on Linux, as before; the platform font on Apple, Android and Windows). Landscape tabs place the icon above an 11 px label. Checked locally with an Arial-first build. |
 | Dead code: superseded `language.css` rules, icon-era brand and result-emblem rules, a flex rule on the grid mode switch, a duplicate import. The Blender script treated `-- portraits` as an output folder. | Removed. Part names and the output folder can be given in any order. |
 
 ## Blender art pipeline

@@ -2,8 +2,9 @@
    One palette, type scale and set of controls for menus, dialogs and the HUD:
    deep teal ink panels, warm gold for the one primary action, team colours for sides. */
 :root {
-  --font-ui: Inter, "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-display: "Segoe UI Variable Display", "Segoe UI", Inter, system-ui, -apple-system, Roboto, Arial, sans-serif;
+  /* No system-ui: on Linux it resolves to wide DejaVu Sans; Arial keeps the original metrics there. */
+  --font-ui: Inter, "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
   --ink-0: #04111a;
   --ink-1: #0a1b24;
   --ink-2: #0f2733;
@@ -320,8 +321,13 @@ input:focus-visible {
 }
 @media (max-width: 359px) { .compact-ui .touch-controls button { font-size: 10px; } }
 .compact-ui #dock-tabs button {
+  min-width: 0;
   border-radius: 12px;
   font: 650 14px var(--font-ui);
+}
+/* The landscape side dock is 252 px wide: icon above a smaller label keeps three tabs in the column. */
+@media (min-aspect-ratio: 1.35) {
+  .compact-ui #dock-tabs button { flex-direction: column; gap: 2px; font-size: 11px; line-height: 1.1; }
 }
 .compact-ui #mission-toggle { border-radius: 12px; }
 .map-legend { font-size: 11px; letter-spacing: 0.06em; }
