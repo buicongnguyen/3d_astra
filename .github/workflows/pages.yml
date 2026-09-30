@@ -55,6 +55,8 @@ jobs:
             scripts: improvements campaign
           - name: languages
             scripts: language
+          - name: interface
+            scripts: ui-quality
           - name: progression
             scripts: progression
           - name: maps

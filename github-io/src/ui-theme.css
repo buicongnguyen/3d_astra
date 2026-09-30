@@ -1,0 +1,444 @@
+/* Frontier Command UI theme. Loaded after every other stylesheet.
+   One palette, type scale and set of controls for menus, dialogs and the HUD:
+   deep teal ink panels, warm gold for the one primary action, team colours for sides. */
+:root {
+  --font-ui: Inter, "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Segoe UI Variable Display", "Segoe UI", Inter, system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --ink-0: #04111a;
+  --ink-1: #0a1b24;
+  --ink-2: #0f2733;
+  --ink-3: #153342;
+  --ink-4: #1d4354;
+  --line-1: rgba(168, 214, 212, 0.14);
+  --line-2: rgba(168, 214, 212, 0.3);
+  --text-1: #f1f6f3;
+  --text-2: #c6d6d2;
+  --text-3: #97aeab;
+  --gold-1: #ffe9a8;
+  --gold-2: #ffc75e;
+  --gold-3: #eb9432;
+  --gold-ink: #2b1603;
+  --gold-line: rgba(255, 199, 94, 0.6);
+  --panel-bg: linear-gradient(180deg, rgba(21, 47, 58, 0.98), rgba(8, 23, 31, 0.98));
+  --panel-edge: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 0 0 1px rgba(168, 214, 212, 0.16);
+  --shadow-l: 0 24px 64px rgba(0, 0, 0, 0.55);
+  --r-s: 8px;
+  --r-m: 12px;
+  --r-l: 18px;
+  /* Shared HUD tokens from style.css, moved to the same ink family. */
+  --panel: rgba(10, 27, 36, 0.95);
+  --line: rgba(168, 214, 212, 0.14);
+  font-family: var(--font-ui);
+}
+body { background: var(--ink-0); }
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Focus is an outline, so component shadows (pressed cards, switches, tabs) never hide it. */
+button:focus-visible,
+select:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--gold-2);
+  outline-offset: 2px;
+}
+/* Inside edge-to-edge scrollers the ring is drawn inside the control so it is not clipped. */
+.command-tile:focus-visible,
+#unit-list button:focus-visible,
+.work-strip button:focus-visible { outline-offset: -3px; }
+
+/* ---------- Buttons ---------- */
+.primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  margin-top: 0;
+  padding: 0 22px;
+  border: 0;
+  border-radius: var(--r-m);
+  background: linear-gradient(180deg, var(--gold-1) 0%, var(--gold-2) 46%, var(--gold-3) 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -3px 0 rgba(120, 58, 0, 0.3), 0 10px 26px rgba(235, 148, 50, 0.3);
+  color: var(--gold-ink);
+  font: 800 17px/1.1 var(--font-display);
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: filter 0.12s, transform 0.12s, box-shadow 0.12s;
+}
+.primary:hover:not(:disabled) { filter: brightness(1.07) saturate(1.05); background: linear-gradient(180deg, var(--gold-1) 0%, var(--gold-2) 46%, var(--gold-3) 100%); color: var(--gold-ink); }
+.primary:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), inset 0 -1px 0 rgba(120, 58, 0, 0.3), 0 4px 12px rgba(235, 148, 50, 0.25); }
+.primary:disabled { filter: grayscale(0.7) brightness(0.8); opacity: 0.75; }
+.primary .icon { width: 20px; height: 20px; }
+
+.secondary,
+.pause-settings,
+.ghost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  margin-top: 10px;
+  padding: 0 16px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-m);
+  background: linear-gradient(180deg, rgba(36, 78, 94, 0.55), rgba(14, 36, 46, 0.75));
+  color: var(--text-1);
+  font: 650 15px/1.2 var(--font-ui);
+  transition: border-color 0.12s, background 0.12s;
+}
+.secondary:hover,
+.pause-settings:hover { border-color: var(--gold-line); background: linear-gradient(180deg, rgba(44, 92, 110, 0.6), rgba(16, 42, 54, 0.8)); color: #fff; }
+.ghost { border-color: transparent; background: transparent; color: var(--text-2); }
+.ghost:hover { background: rgba(21, 50, 63, 0.6); color: #fff; }
+.settings-panel footer .secondary,
+.settings-panel footer .ghost { width: auto; margin-top: 0; }
+
+/* ---------- Select menus ---------- */
+.field select,
+.language-choice select,
+.settings-panel select,
+.field-guide select {
+  appearance: none;
+  -webkit-appearance: none;
+  min-height: 48px;
+  padding: 0 40px 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-m);
+  background: var(--ink-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffc75e' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center / 16px;
+  color: var(--text-1);
+  font: 600 15px/1.2 var(--font-ui);
+  cursor: pointer;
+}
+.field select:hover,
+.language-choice select:hover,
+.settings-panel select:hover { border-color: var(--gold-line); }
+.field select:disabled { opacity: 0.5; cursor: not-allowed; }
+.field select option,
+.language-choice select option,
+.settings-panel select option { background: #0f2733; color: #f1f6f3; }
+
+/* ---------- Top bar ---------- */
+.topbar {
+  background: linear-gradient(180deg, #0c1f28, #06141b);
+  border-bottom: 1px solid var(--line-1);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+.brand { align-items: center; gap: 10px; }
+.brand-mark { display: grid; place-items: center; width: 38px; height: 38px; }
+.brand-mark img { width: 38px; height: 38px; filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.55)); }
+.brand-name {
+  display: flex;
+  flex-direction: column;
+  font: 800 16px/1 var(--font-display);
+  letter-spacing: 0.16em;
+  color: #fff;
+}
+.brand-sub {
+  display: block;
+  margin-top: 4px;
+  font: 700 10px/1 var(--font-ui);
+  letter-spacing: 0.42em;
+  color: var(--gold-2);
+}
+:root:not(.compact-ui) .brand-mark,
+:root:not(.compact-ui) .brand-mark img { width: 32px; height: 32px; }
+.compact-ui .brand { gap: 8px; min-width: 44px; min-height: 44px; }
+.compact-ui .brand-mark,
+.compact-ui .brand-mark img { width: 32px; height: 32px; }
+.compact-ui .brand-name { font-size: 14px; letter-spacing: 0.12em; }
+.compact-ui .brand-sub { font-size: 10px; letter-spacing: 0.3em; margin-top: 3px; }
+.icon-button { border-radius: 10px; color: var(--text-2); }
+.icon-button:hover { background: var(--ink-3); border-color: var(--line-1); color: #fff; }
+.language-choice {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--text-3);
+}
+.language-choice > .icon { width: 18px; height: 18px; color: var(--gold-2); }
+.language-choice select { min-height: 44px; min-width: 0; width: 132px; padding-left: 12px; font-size: 14px; }
+.top-actions .language-choice select { min-height: 40px; }
+.compact-ui .top-actions .language-choice select { min-height: 44px; width: 124px; }
+.compact-ui .top-actions { gap: 2px; }
+.compact-ui.in-briefing .top-actions { gap: 4px; }
+@media (max-width: 380px) {
+  .top-actions .language-choice > .icon { display: none; }
+  .compact-ui .top-actions .language-choice select { width: 112px; }
+}
+
+/* ---------- Dialogs ---------- */
+/* Above the start screen (30) and the training card (35); Settings (100) opens over it. */
+.modal-backdrop {
+  z-index: 40;
+  background: rgba(3, 10, 14, 0.74);
+  backdrop-filter: blur(6px);
+}
+.modal,
+.compact-ui .modal {
+  padding: 28px;
+  border: 0;
+  border-radius: var(--r-l);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow-l), var(--panel-edge);
+  backdrop-filter: none;
+}
+.modal .eyebrow {
+  font: 700 12px/1.2 var(--font-ui);
+  letter-spacing: 0.16em;
+  color: var(--gold-2);
+}
+.modal h2,
+.compact-ui .modal h2 {
+  margin: 10px 0 10px;
+  font: 800 30px/1.1 var(--font-display);
+  letter-spacing: -0.01em;
+  color: #fff;
+}
+.modal p {
+  font: 400 15px/1.55 var(--font-ui);
+  color: var(--text-2);
+}
+.modal .primary { margin-top: 18px; }
+.help-note { font-size: 14px !important; color: var(--text-2) !important; }
+.controls-grid { font-size: 14px; color: var(--text-2); }
+.controls-grid kbd { font-size: 12px; color: var(--text-1); border-color: var(--line-2); background: var(--ink-3); border-radius: 6px; padding: 3px 7px; }
+.result-emblem { display: grid; place-items: start; margin: 14px 0 4px; color: inherit; }
+.result-emblem img { width: 92px; height: 92px; filter: drop-shadow(0 8px 18px rgba(255, 199, 94, 0.35)); }
+.result-emblem.loss img { filter: grayscale(1) sepia(0.6) hue-rotate(-40deg) saturate(2.2) brightness(0.85) drop-shadow(0 8px 18px rgba(239, 118, 96, 0.3)); }
+.result-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 18px 0 6px;
+  padding: 0;
+  border: 0;
+}
+.result-stats span {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-m);
+  background: rgba(4, 17, 26, 0.55);
+  font: 700 11px/1.2 var(--font-ui);
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+}
+.result-stats strong {
+  font: 800 26px/1.1 var(--font-display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  color: #fff;
+}
+
+/* ---------- Field guide ---------- */
+.field-guide {
+  color: var(--text-1);
+  background: var(--panel-bg);
+  border: 0;
+  border-radius: var(--r-l);
+  box-shadow: var(--shadow-l), var(--panel-edge);
+}
+.field-guide::backdrop { background: rgba(3, 10, 14, 0.78); backdrop-filter: blur(4px); }
+.field-guide header,
+.field-guide footer { background: rgba(4, 17, 26, 0.45); border-color: var(--line-1); }
+.field-guide header { border-bottom: 1px solid var(--line-1); }
+.field-guide footer { border-top: 1px solid var(--line-1); }
+.field-guide h2 { font: 800 22px/1.2 var(--font-display); color: #fff; }
+.field-guide label { font: 700 12px var(--font-ui); letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); }
+.field-guide select { width: 100%; }
+.field-guide h3 { font: 750 15px var(--font-display); letter-spacing: 0.02em; color: var(--gold-2); }
+.field-guide article { font-size: 15px; color: var(--text-2); }
+.field-guide dl { font-size: 14px; }
+.field-guide dt { color: var(--text-3); }
+.field-guide dd { color: var(--text-1); font-weight: 600; }
+.field-guide footer button { width: 100%; }
+.guide-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: -4px 0 6px;
+}
+.guide-hero .portrait-art {
+  --size: 84px;
+  border-radius: var(--r-m);
+  background-color: rgba(120, 170, 180, 0.14);
+  box-shadow: inset 0 0 0 1px var(--line-1);
+}
+.guide-hero h2 { margin: 0; }
+
+/* ---------- Training card ---------- */
+#training-toggle {
+  border: 1px solid var(--gold-line);
+  border-radius: var(--r-m);
+  background: linear-gradient(180deg, rgba(40, 70, 64, 0.95), rgba(14, 34, 40, 0.95));
+  color: var(--gold-1);
+  font: 800 14px var(--font-display);
+}
+#training-card {
+  border: 0;
+  border-radius: var(--r-m);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow-l), var(--panel-edge);
+}
+#training-title { font: 800 16px/1.25 var(--font-display); color: #fff; }
+#training-copy { color: var(--text-2); }
+#training-card small { font-size: 12px; color: var(--text-3); }
+#training-card button {
+  flex: 1;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-s);
+  background: rgba(21, 50, 63, 0.8);
+  font: 650 14px var(--font-ui);
+  color: var(--text-1);
+}
+
+/* ---------- HUD: readable sizes and matching surfaces ---------- */
+.resource small { font: 700 11px/1.2 var(--font-ui); letter-spacing: 0.1em; color: var(--text-3); }
+/* Explicit sizes: mobile.css and desktop-dock.css set 7–8 px with more specific selectors. */
+.compact-ui .resource small { font-size: 11px; letter-spacing: 0.05em; }
+:root:not(.compact-ui) .resource small { font-size: 11px; }
+.compact-ui .touch-controls button {
+  border-color: var(--line-2);
+  border-radius: 10px;
+  background: rgba(10, 27, 36, 0.92);
+  font-size: 11px;
+  color: var(--text-2);
+}
+@media (max-width: 359px) { .compact-ui .touch-controls button { font-size: 10px; } }
+.compact-ui #dock-tabs button {
+  border-radius: 12px;
+  font: 650 14px var(--font-ui);
+}
+.compact-ui #mission-toggle { border-radius: 12px; }
+.map-legend { font-size: 11px; letter-spacing: 0.06em; }
+.unit-metrics dt { font-size: 11px; }
+.compact-ui .map-heading h1 { font-family: var(--font-display); font-weight: 750; }
+#notice { border-radius: var(--r-m); }
+
+/* Portraits in the HUD: selection card, build/train tiles and the unit roster. */
+.sel-portrait:has(.portrait-art) { padding: 0; overflow: hidden; background: radial-gradient(circle at 50% 35%, rgba(150, 200, 205, 0.25), rgba(6, 18, 24, 0.9) 70%); }
+.sel-portrait .portrait-art { --size: 100%; }
+/* Portrait phones use the desktop card: portrait beside name, vitals and status, so the short
+   fixed-height dock never grows. The narrow landscape dock has height to spare but not width,
+   so there the portrait sits in the name row and the vitals keep the full width. */
+@media (orientation: portrait) {
+  .compact-ui .selection-panel .entity-details { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; column-gap: 10px; align-items: center; }
+  .compact-ui .selection-panel .selection-heading { display: contents; }
+  .compact-ui .selection-panel .selection-heading .sel-portrait { grid-row: 1 / span 3; grid-column: 1; width: 52px; height: 52px; border-radius: 8px; }
+  .compact-ui .selection-panel .selection-heading .sel-portrait .icon { width: 28px; height: 28px; }
+  .compact-ui .selection-panel.has-entity .selection-heading h3 { grid-column: 2; }
+  .compact-ui .selection-panel .selection-level { grid-column: 3; }
+  .compact-ui .selection-panel .unit-metrics,
+  .compact-ui .selection-panel .selection-activity { grid-column: 2 / -1; }
+}
+@media (orientation: landscape) {
+  .compact-ui .selection-heading .sel-portrait { width: 30px; height: 30px; }
+  .compact-ui .selection-heading .sel-portrait .icon { width: 18px; height: 18px; }
+}
+:root:not(.compact-ui) .command-panel .command-tile > .portrait-art { display: none; }
+#unit-list button > .portrait-art { --size: 26px; display: block; }
+
+/* ---------- Start-screen top bar on phones ---------- */
+.in-briefing #fps { display: none; }
+:root:not(.compact-ui) .top-actions #fps { font-size: 11px; color: var(--text-3); }
+.compact-ui .top-actions .language-choice > .icon { display: none; }
+@media (max-width: 430px) {
+  .compact-ui.in-briefing .brand-name { display: none; }
+}
+
+/* ---------- HUD surfaces in the same ink family ---------- */
+#notice,
+.compact-ui #notice {
+  border: 1px solid var(--line-2);
+  background: rgba(8, 24, 32, 0.95);
+  color: var(--text-1);
+  font-size: 13px;
+  line-height: 1.45;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+}
+.compact-ui .bottom-dock .panel {
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-m);
+  background: var(--panel-bg);
+}
+.compact-ui #clock { font-size: 12px; }
+/* Focus base keeps the slim map header but gets a 44 px hit area. */
+.compact-ui .minimap-panel .panel-label button { position: relative; }
+.compact-ui .minimap-panel .panel-label button::after { content: ""; position: absolute; inset: -8px 0; }
+#mission-objectives .panel-label,
+#mission-objectives .panel-label > span:last-child { font-size: 11px; }
+.compact-ui .bottom-dock .panel-label,
+.compact-ui .bottom-dock .panel-label > span:last-child { font-size: 11px; letter-spacing: 0.1em; color: var(--text-3); }
+/* An idle building shows its heading in the work queue's slot, so tiles never move when a job starts. */
+.compact-ui .command-panel:has(#production-status:not([hidden]):empty) > .panel-label { display: flex; height: 44px; }
+.compact-ui .command-panel > #production-status:empty { display: none; }
+.structure-hint { grid-column: 1 / -1; margin: 6px 2px 0; font: 400 13px/1.5 var(--font-ui); color: var(--text-2); }
+:root:not(.compact-ui) .structure-hint { display: none; }
+.compact-ui .map-legend { font-size: 11px; }
+.compact-ui #dock-tabs button {
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: rgba(10, 27, 36, 0.96);
+  color: var(--text-2);
+}
+.compact-ui :is(.touch-controls, #dock-tabs) [aria-pressed="true"] {
+  border-color: var(--gold-line) !important;
+  background: linear-gradient(180deg, rgba(255, 199, 94, 0.3), rgba(255, 199, 94, 0.12)) !important;
+  color: #fff !important;
+}
+.compact-ui #mission-toggle {
+  border: 1px solid var(--line-2);
+  background: rgba(10, 27, 36, 0.94);
+  color: var(--text-1);
+}
+.compact-ui #mission-toggle[aria-expanded="true"] { border-color: var(--gold-line); background: linear-gradient(180deg, rgba(255, 199, 94, 0.3), rgba(255, 199, 94, 0.12)); color: #fff; }
+.command-tile,
+.upgrade-actions button {
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(36, 78, 94, 0.55), rgba(12, 32, 42, 0.8));
+  color: var(--text-1);
+}
+.command-tile:hover:not(:disabled),
+.upgrade-actions button:hover:not(:disabled) { border-color: var(--gold-line); background: linear-gradient(180deg, rgba(44, 92, 110, 0.65), rgba(14, 38, 50, 0.85)); }
+
+/* Phones: portrait beside the name and cost when the tile has room; text only otherwise. */
+.compact-ui .command-tile > .portrait-art { display: none; }
+@media (min-width: 360px) and (orientation: portrait) {
+  .compact-ui .command-tile:has(> .portrait-art) {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+    column-gap: 8px;
+    padding: 3px 8px 3px 5px;
+    text-align: left;
+  }
+  .compact-ui .command-tile > .portrait-art {
+    display: block;
+    --size: 36px;
+    grid-row: 1 / span 2;
+    margin: 0;
+  }
+  .compact-ui .command-tile:has(> .portrait-art) > span,
+  .compact-ui .command-tile:has(> .portrait-art) > small { grid-column: 2; margin-top: 0; }
+}
+
+/* Desktop: readable small labels. */
+:root:not(.compact-ui) .brand-sub { font-size: 10px; }
+#mission-objectives .objective small { font-size: 11px; }
+.objective-num { font-size: 11px; }

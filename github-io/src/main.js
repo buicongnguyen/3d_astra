@@ -1,4 +1,4 @@
-import { Tutorial } from "./tutorial.js";
+import { Tutorial, TRAINING_STEPS } from "./tutorial.js";
 import "./tutorial.css";
 import "./style.css";
 import "./mobile.css";
@@ -32,16 +32,21 @@ import { createProductionUI, createWorkStrip } from "./production-ui.js";
 import { selectionStatus } from "./selection-status.js";
 import { AI_SPEEDS, ALLIANCES } from "./ai-plan.js";
 import { STAGES, loadProgress, saveProgress, isUnlocked, isCleared, recordClear, nextStage } from "./campaign.js";
+import { portrait, hasPortrait } from "./portraits.js";
+import keyartUrl from "./art/keyart.webp";
+import keyartSmallUrl from "./art/keyart-960.webp";
+import emblemUrl from "./art/emblem.webp";
+import "./ui-theme.css";
 
 document.querySelector("#app").innerHTML = `
   <header class="topbar">
-    <a class="brand" href="./" aria-label="Frontier Command home"><span class="brand-mark">${icon("logo")}</span><span>FRONTIER<span class="brand-sub">C O M M A N D</span></span></a>
+    <a class="brand" href="./" aria-label="Frontier Command home" translate="no"><span class="brand-mark"><img src="${emblemUrl}" alt="" width="40" height="40" decoding="async"></span><span class="brand-name">FRONTIER<span class="brand-sub">COMMAND</span></span></a>
     <div class="resource-bar" aria-label="Resources">
       <div class="resource alloy" title="Alloy — harvested from amber deposits">${icon("alloy")}<span><strong id="alloy">450</strong><small>ALLOY</small></span></div>
       <div class="resource energy" title="Energy — harvested from blue deposits">${icon("energy")}<span><strong id="energy">150</strong><small>ENERGY</small></span></div>
       <div class="resource population" title="Used + queued population / capacity">${icon("people")}<span><strong id="population">7 <em>/ 15</em></strong><small>POPULATION</small></span></div>
     </div>
-    <div class="top-actions"><span id="clock">00:00</span><button id="audio" class="icon-button" title="Mute sound" aria-label="Mute sound">${icon("volume")}</button><button id="help" class="icon-button" title="Controls" aria-label="Show controls">${icon("help")}</button><button id="pause" class="icon-button" title="Pause · Space" aria-label="Pause game">${icon("pause")}</button></div>
+    <div class="top-actions"><button id="briefing-settings" class="icon-button menu-only" title="Settings" aria-label="Settings">${icon("gear")}</button><span id="clock">00:00</span><button id="audio" class="icon-button" title="Mute sound" aria-label="Mute sound">${icon("volume")}</button><button id="help" class="icon-button" title="Controls" aria-label="Show controls">${icon("help")}</button><button id="pause" class="icon-button" title="Pause · Space" aria-label="Pause game">${icon("pause")}</button></div>
   </header>
   <main id="stage">
     <div id="world"></div><div id="training-marker" hidden aria-hidden="true">◎</div><aside id="training" hidden><button id="training-toggle" aria-expanded="true">Training</button><div id="training-card" class="panel"><strong id="training-title"></strong><p id="training-copy"></p><small>Training supplies replenish · no AI attacks</small><div><button id="training-focus">Focus target</button><button id="training-exit">Leave training</button></div></div></aside>
@@ -62,16 +67,35 @@ document.querySelector("#app").innerHTML = `
     </nav>
     <div id="selection-box"></div>
     <div id="hover-label" hidden></div>
-    <section id="briefing" class="briefing panel">
-      <div class="briefing-copy">
-      <div class="eyebrow">EXPEDITION BRIEFING</div><div class="briefing-emblem">${icon("logo")}</div>
-      <h2 id="briefing-title">A new frontier.<br> A foothold to defend.</h2>
-      <p id="briefing-text">Build your outpost. Harvest the valley. Lead your expedition against rival commanders.</p>
-      <div class="briefing-rule"><span>RIVALS</span><strong id="briefing-rivals">1 AI · Normal speed</strong></div>
-      <div class="briefing-rule"><span>OBJECTIVE</span><strong id="briefing-goal">Eliminate enemy command</strong></div>
+    <section id="briefing" class="briefing" aria-labelledby="briefing-title">
+      <div class="briefing-hero">
+        <picture class="briefing-art" aria-hidden="true"><source media="(max-width: 720px)" srcset="${keyartSmallUrl}"><img src="${keyartUrl}" alt="" width="1600" height="900" decoding="async"></picture>
+        <div class="briefing-copy">
+          <div class="eyebrow">EXPEDITION BRIEFING</div>
+          <h2 id="briefing-title">A new frontier.<br> A foothold to defend.</h2>
+          <p id="briefing-text">Build your outpost. Harvest the valley. Lead your expedition against rival commanders.</p>
+          <div class="briefing-facts">
+            <div class="briefing-rule"><span>RIVALS</span><strong id="briefing-rivals">1 AI · Normal speed</strong></div>
+            <div class="briefing-rule"><span>OBJECTIVE</span><strong id="briefing-goal">Eliminate enemy command</strong></div>
+          </div>
+        </div>
       </div>
-      <button id="start" class="primary" disabled>Preparing expedition…</button>
-      <div class="briefing-setup"><div class="mode-switch" aria-label="Game mode"><button data-mode="training" aria-pressed="false">Training · start here</button><button data-mode="skirmish" aria-pressed="true">Skirmish</button><button data-mode="campaign" aria-pressed="false">Campaign</button><button id="briefing-settings">Settings</button></div><div class="briefing-tools" id="skirmish-setup"><label class="map-select-label" for="scenario">Choose map / stage</label><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select><select id="enemy-count" aria-label="Number of AI enemies"><option value="1">1 AI enemy</option><option value="2">2 AI enemies</option><option value="3">3 AI enemies</option></select><select id="ai-speed" aria-label="AI speed" title="AI speed: how fast rivals build, tech up and attack">${Object.entries(AI_SPEEDS).map(([id, p]) => `<option value="${id}"${id === "normal" ? " selected" : ""}>${p.label} AI</option>`).join("")}</select><select id="alliance" aria-label="AI teams" disabled>${Object.entries(ALLIANCES).map(([id, label]) => `<option value="${id}">${label}</option>`).join("")}</select></div><div id="campaign-setup" hidden><ol class="stage-list" aria-label="Campaign stages"></ol></div><small class="briefing-note">SINGLE PLAYER <span>·</span> MOUSE + KEYBOARD</small></div>
+      <div class="briefing-setup">
+        <div class="mode-switch" role="group" aria-label="Game mode">
+          <button data-mode="training" aria-pressed="false">${icon("flag")}<span>Training</span><small>Start here</small></button>
+          <button data-mode="skirmish" aria-pressed="true">${icon("crosshair")}<span>Skirmish</span><small>Custom battle</small></button>
+          <button data-mode="campaign" aria-pressed="false">${icon("logo")}<span>Campaign</span><small>${STAGES.length} stages</small></button>
+        </div>
+        <div class="briefing-tools" id="skirmish-setup">
+          <label class="field field-wide"><span>Battlefield</span><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select></label>
+          <label class="field"><span>Rivals</span><select id="enemy-count" aria-label="Number of AI enemies"><option value="1">1 AI enemy</option><option value="2">2 AI enemies</option><option value="3">3 AI enemies</option></select></label>
+          <label class="field"><span>AI speed</span><select id="ai-speed" aria-label="AI speed" title="AI speed: how fast rivals build, tech up and attack">${Object.entries(AI_SPEEDS).map(([id, p]) => `<option value="${id}"${id === "normal" ? " selected" : ""}>${p.label} AI</option>`).join("")}</select></label>
+          <label class="field field-wide"><span>AI teams</span><select id="alliance" aria-label="AI teams" disabled>${Object.entries(ALLIANCES).map(([id, label]) => `<option value="${id}">${label}</option>`).join("")}</select></label>
+        </div>
+        <div id="campaign-setup" hidden><ol class="stage-list" aria-label="Campaign stages"></ol></div>
+        <div id="training-setup" hidden><ol class="lesson-list" aria-label="Training lessons">${TRAINING_STEPS.map(step => `<li>${step.title}</li>`).join("")}</ol></div>
+        <button id="start" class="primary" disabled>Preparing expedition…</button>
+      </div>
     </section>
     <div class="bottom-dock">
       <section class="minimap-panel panel"><div class="panel-label">SECTOR OVERVIEW <button id="home" title="Focus base · H" aria-label="Focus base">${icon("hq")}</button></div><canvas id="minimap" width="240" height="200" aria-label="Minimap: click to pan; right-click to command"></canvas><div class="map-legend"><span><i class="friendly"></i>YOU</span><span><i class="hostile"></i>ENEMY</span><span><i class="deposit"></i>RESOURCE</span></div></section>
@@ -96,9 +120,10 @@ let settings = loadSettings(matchMedia("(pointer:coarse)").matches),
   ambience;
 const localization = localizeDOM(document.body, settings.language);
 const languageRow = document.createElement('label');
-languageRow.className = 'language-choice';
-languageRow.innerHTML = '<span translate="no">Language / Ngôn ngữ</span><select id="language" aria-label="Language" translate="no"><option value="en">English</option><option value="vi">Tiếng Việt</option></select>';
-document.querySelector('.briefing-copy').prepend(languageRow);
+languageRow.className = 'language-choice menu-only';
+languageRow.title = 'Language / Ngôn ngữ';
+languageRow.innerHTML = `${icon('globe')}<span class="visually-hidden" translate="no">Language / Ngôn ngữ</span><select id="language" aria-label="Language / Ngôn ngữ" translate="no"><option value="en">English</option><option value="vi">Tiếng Việt</option></select>`;
+document.querySelector('.top-actions').prepend(languageRow);
 $('language').value = settings.language;
 $('language').onchange = () => applyPreferences({...settings, language: $('language').value});
 // Campaign: progress is saved in this browser; activeStage is the stage being played.
@@ -122,6 +147,7 @@ let uiClock = 0,
   renderAlpha = 1,
   frameCount = 0,
   frameTime = 0,
+  coveredRedraw = 0,
   noticeTimeout,
   audioContext,
   lastTone = 0;
@@ -497,7 +523,7 @@ function updateUI() {
             .slice(0, 18)
             .map(
               (u) =>
-                `<button data-select="${u.id}" title="${u.name}">${icon(u.icon || u.type)}<i class="vitals"></i></button>`,
+                `<button data-select="${u.id}" title="${u.name}">${hasPortrait(u.type) ? portrait(u.type, u.team === 0 ? "friendly" : "hostile") : icon(u.icon || u.type)}<i class="vitals"></i></button>`,
             )
             .join("") +
           (es.length > 18 ? `<span>+${es.length - 18}</span>` : "")
@@ -508,22 +534,23 @@ function updateUI() {
         : es.some((u) => u.type === "worker")
           ? BUILDINGS
           : [];
+    const structure = es.length === 1 && e?.kind === "building" && !e.trains;
     $("command-label").textContent = es.some((u) => u.type === "worker")
       ? "CONSTRUCTION"
       : e?.trains
         ? "PRODUCTION"
-        : "FIELD ORDERS";
+        : structure ? "STRUCTURE" : "FIELD ORDERS";
     $("command-context").textContent = actions.length
       ? `${actions.length} AVAILABLE`
-      : "TACTICAL";
+      : structure ? `LEVEL ${e.level}` : "TACTICAL";
     $("commands").innerHTML =
       actions
         .map((type, index) => {
           const d = D[type];
           const label = type === 'upgrade' ? 'Weapons +' : d.name;
-          return `<button class="command-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" aria-label="${d.name}, ${d.cost[0]} alloy${d.cost[1] ? ` and ${d.cost[1]} energy` : ''}" title="${ACTION_KEYS[index]} · ${d.name} · ${d.description}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${icon(d.icon || type)}<span>${label}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
+          return `<button class="command-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" aria-label="${d.name}, ${d.cost[0]} alloy${d.cost[1] ? ` and ${d.cost[1]} energy` : ''}" title="${ACTION_KEYS[index]} · ${d.name} · ${d.description}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${hasPortrait(type) ? portrait(type) : icon(d.icon || type)}<span>${label}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
         })
-        .join("") || (e?.kind==='building' ? '' :
+        .join("") || (structure ? `<p class="structure-hint">${e.description}</p>` : e?.kind==='building' ? '' :
       `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : "Your expedition is ready"}</strong><p>${e ? (touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : "Select the Command core to train Harvesters, or the Barracks to grow your army."}</p></div>`);
     $("upgrade-actions").innerHTML = e?.kind === 'building' && es.length === 1 ?
       `<button data-level title="U · Upgrade building">${e.level < 3 ? `<span class="up-name">Upgrade L${e.level+1}</span><span class="up-cost"><span class="sep"> · </span>${sim.levelCost(e).join('/')}</span> <kbd>U</kbd>` : '<span class="up-name">Maximum level 3</span>'}</button>` : '';
@@ -1195,6 +1222,7 @@ function renderBriefing() {
   for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String(b.dataset.mode === playMode));
   $("skirmish-setup").hidden = playMode !== "skirmish";
   $("campaign-setup").hidden = !inCampaign;
+  $("training-setup").hidden = playMode !== "training";
   // Alliances need at least two AIs.
   $("alliance").disabled = Number($("enemy-count").value) < 2;
   $("briefing-rivals").textContent = playMode === "training" ? "Practice field · no AI attacks" : describeRivals(setup);
@@ -1301,11 +1329,12 @@ function showResult() {
   const win = sim.result === "victory";
   if(tutorial){
     if(tutorial.done){try{localStorage.setItem("frontier-training-complete","1");}catch{}}
-    $("modal-content").innerHTML = `<h2 id="modal-title">${tutorial.done?"Training complete!":"Training ended"}</h2><p>You practiced selection, economy, construction, production, attacking and withdrawal. Campaign introduces an active opponent.</p><button class="primary" data-training-campaign>Campaign menu</button><button class="secondary" data-restart>Replay training</button><button class="secondary" data-new-game>Choose a game</button>`;return;
+    $("modal-content").innerHTML = `<h2 id="modal-title">${tutorial.done?"Training complete!":"Training ended"}</h2><p>You practiced selection, economy, construction, production, attacking and withdrawal. Campaign introduces an active opponent.</p><button class="primary" data-training-campaign>Campaign menu</button><button class="secondary" data-restart>Replay training</button><button class="secondary" data-new-game>Choose a game</button>`;$("modal").querySelector(".primary").focus();return;
   }
   if (activeStage !== null) return showStageResult(win);
   $("modal-content").innerHTML =
-    `<span class="eyebrow">OPERATION ${sim.result === "draw" ? "CONCLUDED" : win ? "SUCCESSFUL" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}">${icon(win ? "flag" : "shield")}</div><h2 id="modal-title">${win ? "The frontier is yours." : sim.result === "draw" ? "Mutual destruction." : "Your outpost has fallen."}</h2><p>${win ? "Enemy command has been eliminated. Meridian holds the valley." : sim.result === "draw" ? "All Command cores were destroyed." : "An enemy destroyed your Command core. Regroup and try a different approach."}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${sim.players[0].kills}</strong>ENEMIES ELIMINATED</span></div><button class="primary" data-new-game>New game / choose map ${icon("arrow")}</button><button class="secondary" data-restart>Replay this map</button>`;
+    `<span class="eyebrow">OPERATION ${sim.result === "draw" ? "CONCLUDED" : win ? "SUCCESSFUL" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}"><img src="${emblemUrl}" alt="" width="92" height="92"></div><h2 id="modal-title">${win ? "The frontier is yours." : sim.result === "draw" ? "Mutual destruction." : "Your outpost has fallen."}</h2><p>${win ? "Enemy command has been eliminated. Meridian holds the valley." : sim.result === "draw" ? "All Command cores were destroyed." : "An enemy destroyed your Command core. Regroup and try a different approach."}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${sim.players[0].kills}</strong>ENEMIES ELIMINATED</span></div><button class="primary" data-new-game>New game / choose map ${icon("arrow")}</button><button class="secondary" data-restart>Replay this map</button>`;
+  $("modal").querySelector(".primary").focus();
 }
 // Campaign results save progress and lead on to the next stage.
 function showStageResult(win) {
@@ -1323,7 +1352,7 @@ function showStageResult(win) {
     ? `<button class="primary" data-next-stage>Next stage ${icon("arrow")}</button><button class="secondary" data-restart>Replay stage</button><button class="secondary" data-new-game>Campaign menu</button>`
     : `<button class="primary" data-restart>${win ? "Replay stage" : "Retry stage"} ${icon("arrow")}</button><button class="secondary" data-new-game>Campaign menu</button>`;
   $("modal-content").innerHTML =
-    `<span class="eyebrow">STAGE ${n + 1} · ${win ? "CLEARED" : sim.result === "draw" ? "CONCLUDED" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}">${icon(win ? "flag" : "shield")}</div><h2 id="modal-title">${win ? (last ? "Campaign complete." : `${stage.name} cleared.`) : "Your outpost has fallen."}</h2><p>${text}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${win ? formatTime(campaign.cleared[stage.id]) : sim.players[0].kills}</strong>${win ? "BEST TIME" : "ENEMIES ELIMINATED"}</span></div>${buttons}`;
+    `<span class="eyebrow">STAGE ${n + 1} · ${win ? "CLEARED" : sim.result === "draw" ? "CONCLUDED" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}"><img src="${emblemUrl}" alt="" width="92" height="92"></div><h2 id="modal-title">${win ? (last ? "Campaign complete." : `${stage.name} cleared.`) : "Your outpost has fallen."}</h2><p>${text}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${win ? formatTime(campaign.cleared[stage.id]) : sim.players[0].kills}</strong>${win ? "BEST TIME" : "ENEMIES ELIMINATED"}</span></div>${buttons}`;
   $("modal").querySelector(".primary").focus();
 }
 function nextStageNow() {
@@ -1406,6 +1435,12 @@ $("start").onclick = () => {
   tone(780, 0.15);
 };
 $("pause").onclick = togglePause;
+// Mid-match the logo opens the pause menu (New game lives there); following the link would drop the battle.
+document.querySelector(".brand").addEventListener("click", (event) => {
+  if (!started || sim.result) return;
+  event.preventDefault();
+  if (!paused) togglePause();
+});
 $("mission-toggle").onclick = () => setObjectivesOpen(!document.documentElement.classList.contains('objectives-open'));
 document.addEventListener('pointerdown', event => {
   if (document.documentElement.classList.contains('objectives-open') &&
@@ -1619,7 +1654,14 @@ function frame(now) {
   // 20 Hz simulation steps so movement stays smooth on high-refresh displays. The blend
   // is kept while paused so pausing and resuming never snap units back and forth.
   if (running && !sim.result) renderAlpha = accumulator / 0.05;
-  view.update(sim, started && !paused ? dt : 0, selected, hover, renderAlpha);
+  // The phone start screen is opaque: redraw the hidden battlefield twice a second, enough to keep
+  // models and shaders warm for Start without spending battery on frames nobody sees.
+  const root = document.documentElement;
+  coveredRedraw -= elapsed;
+  if (started || !root.classList.contains("compact-ui") || !root.classList.contains("in-briefing") || coveredRedraw <= 0) {
+    view.update(sim, started && !paused ? dt : 0, selected, hover, renderAlpha);
+    coveredRedraw = 0.5;
+  }
   uiClock -= dt;
   if (uiClock <= 0) {
     updateUI();
@@ -1644,9 +1686,6 @@ async function boot() {
   try {
     view = new WorldView($("world"), { terrain: sim.terrain, settings });
     $("quality").textContent = view.lowPower ? "Eco" : "High";
-    if (touchInput)
-      $("briefing").querySelector(".briefing-note").textContent =
-        "SINGLE PLAYER · TOUCH + MOUSE";
     await view.loadModels();
     applyPreferences(settings);
     updateHeading();

@@ -1,6 +1,7 @@
 import './selection-status.css';
 import {buildingActivity} from './activity.js';
 import {icon} from './icons.js';
+import {portrait, hasPortrait} from './portraits.js';
 
 const number = value => value >= 10000 ? `${(value / 1000).toFixed(value < 100000 ? 1 : 0)}k` : `${Math.ceil(value)}`;
 const ratio = (value, max) => max > 0 ? Math.max(0, Math.min(1, value / max)).toFixed(3) : 0;
@@ -20,7 +21,7 @@ export function selectionStatus(sim, entities) {
   }
   const name = group ? `${entities.length} units selected` : e.name;
   const side = entities.every(u=>u.team===0) ? 'friendly' : 'hostile';
-  return `<div class="entity-details"><div class="selection-heading"><span class="sel-portrait ${side}" aria-hidden="true">${icon(group ? 'people' : e.icon || e.type)}</span><h3 title="${group ? name : e.description}">${name}</h3>${e.kind==='building'&&!group?`<span class="selection-level">L${e.level}</span>`:''}</div>
+  return `<div class="entity-details"><div class="selection-heading"><span class="sel-portrait ${side}" aria-hidden="true">${!group && hasPortrait(e.type) ? portrait(e.type, side) : icon(group ? 'people' : e.icon || e.type)}</span><h3 title="${group ? name : e.description}">${name}</h3>${e.kind==='building'&&!group?`<span class="selection-level">L${e.level}</span>`:''}</div>
     <dl class="unit-metrics" aria-label="Selected object stats">
     ${metric('HP',`${number(hp)}/${number(maxHp)}`,`Health ${Math.ceil(hp)} of ${maxHp}`,['hp',ratio(hp,maxHp)])}
     ${metric('Shield',`${number(shield)}/${number(maxShield)}`,`Shield ${Math.ceil(shield)} of ${maxShield}`,['sh',ratio(shield,maxShield)])}

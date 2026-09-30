@@ -1,6 +1,4 @@
-.language-choice { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 8px 0; font-size: 13px; }
-.language-choice select { min-width: 120px; min-height: 44px; padding: 6px 10px; color: #e5f2ec; background: #19332d; border: 1px solid #4c695b; border-radius: 5px; font: inherit; }
-.settings-body > .language-choice { margin-top: 0; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+/* The language picker itself is styled in ui-theme.css. */
 :root[lang="vi"] .unit-metrics dt { white-space: nowrap; }
 :root[lang="vi"]:not(.compact-ui) .top-actions #quality { width: auto; max-width: 74px; padding: 0 5px; }
 :root[lang="vi"]:not(.compact-ui) .command-panel .tactical-hint p { line-height: 1.25; }

@@ -20,7 +20,7 @@ button {
     10px Consolas,
     monospace;
 }
-.selection-scroll, .briefing-copy {
+.selection-scroll {
   display: contents;
 }
 /* Keep desktop status panels compact instead of stretching across the battlefield. */
@@ -203,14 +203,6 @@ button {
   font-size: 11px;
   letter-spacing: 1.4px;
 }
-.compact-ui .brand-mark {
-  width: 25px;
-  height: 32px;
-}
-.compact-ui .brand-mark .icon {
-  width: 25px;
-  height: 25px;
-}
 .compact-ui .brand-sub {
   font-size: 6px;
   letter-spacing: 2px;
@@ -320,11 +312,6 @@ button {
 .compact-ui .touch-controls #clear-selection {
   flex: 0 0 40px;
   min-width: 40px;
-}
-.compact-ui [aria-pressed="true"] {
-  background: #a4cc9f !important;
-  color: #173323 !important;
-  border-color: #a4cc9f !important;
 }
 .compact-ui .bottom-dock {
   bottom: calc(var(--tabs-height) + var(--safe-bottom));
@@ -544,39 +531,6 @@ button {
 .compact-ui #hover-label {
   display: none;
 }
-.compact-ui .briefing {
-  display: flex;
-  flex-direction: column;
-  top: 50%;
-  left: 50%;
-  right: auto;
-  width: min(340px, calc(100% - 28px));
-  transform: translate(-50%, -50%);
-  padding: 22px;
-  max-height: calc(100% - 48px);
-  overflow: hidden;
-  backdrop-filter: none;
-}
-.compact-ui .briefing-copy {
-  display: block;
-  min-height: 0;
-  overflow-y: auto;
-}
-.compact-ui .briefing-tools,
-.compact-ui .briefing .primary,
-.compact-ui .briefing-note {
-  flex-shrink: 0;
-}
-.compact-ui .briefing h2 {
-  font-size: 26px;
-}
-.compact-ui .briefing p {
-  font-size: 12px;
-  line-height: 1.6;
-}
-.compact-ui .briefing-note {
-  font-size: 8px;
-}
 .compact-ui.in-briefing #world {
   inset: 36px 0 0;
 }
@@ -670,32 +624,6 @@ button {
   .compact-ui #mode-controls {
     left: calc((100% - var(--side-width) - 14px) / 2);
     bottom: calc(8px + var(--safe-bottom));
-  }
-  .compact-ui .briefing {
-    padding: 17px 22px;
-    width: min(440px, calc(100% - 28px));
-    max-height: calc(100% - 20px);
-  }
-  .compact-ui .briefing h2 {
-    font-size: 22px;
-    margin: 8px 0;
-  }
-  .compact-ui .briefing h2 br {
-    display: none;
-  }
-  .compact-ui .briefing p {
-    margin: 8px 0;
-    font-size: 11px;
-  }
-  .compact-ui .briefing-rule {
-    padding: 7px 0;
-  }
-  .compact-ui .briefing .primary {
-    margin-top: 10px;
-    min-height: 44px;
-  }
-  .compact-ui .briefing-note {
-    margin-top: 9px;
   }
   .compact-ui.in-briefing #world {
     inset: 0;

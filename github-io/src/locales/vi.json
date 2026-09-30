@@ -564,7 +564,11 @@
     "Language / Ngôn ngữ": "Ngôn ngữ",
     "Previous": "Trước",
     "More actions": "Thêm lệnh",
-    "Select your expedition": "Chọn quân đội"
+    "Select your expedition": "Chọn quân đội",
+    "Start here": "Dành cho người mới",
+    "Custom battle": "Trận tùy chỉnh",
+    "Training lessons": "Các bài tập",
+    "Sentinel tower: L2 costs 75/25; L3 costs 150/50.": "Tháp pháo: cấp 2 tốn 75/25; cấp 3 tốn 150/50."
   },
   "patterns": [
     [
@@ -662,6 +666,22 @@
     [
       "^(\\d+) AVAILABLE$",
       "{1} LỰA CHỌN"
+    ],
+    [
+      "^LEVEL (\\d+)$",
+      "CẤP {1}"
+    ],
+    [
+      "^(\\d+) stages$",
+      "{1} màn"
+    ],
+    [
+      "^Your (mint|coral|blue|cyan|gold|orange|violet|rose|ivory)$",
+      "Quân ta: {1}"
+    ],
+    [
+      "^Enemy (mint|coral|blue|cyan|gold|orange|violet|rose|ivory)$",
+      "Quân địch: {1}"
     ],
     [
       "^Upgrade L(\\d+)$",

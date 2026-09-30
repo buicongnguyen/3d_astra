@@ -1,39 +1,415 @@
-/* Equal outer rows keep Start at the viewport center on desktop and phones. */
-.in-briefing #notice{display:none}
-#briefing{position:fixed;inset:12px;width:auto;height:auto;max-height:none;padding:0;transform:none;display:grid;grid-template-columns:minmax(0,380px);grid-template-rows:minmax(0,1fr) 52px minmax(0,1fr);justify-content:center;background:none;border:0;box-shadow:none;backdrop-filter:none;overflow:hidden;pointer-events:none;z-index:6}
-#briefing>.briefing-copy,#briefing>.briefing-setup{display:block;min-height:0;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow-y:auto;pointer-events:auto}
-#briefing>.briefing-copy{align-self:end;max-height:calc(100% - 12px);margin-bottom:12px}
-#briefing>.briefing-setup{align-self:start;max-height:calc(100% - 8px);margin-top:8px;padding:10px}
-#briefing .briefing-emblem{display:none}
-#briefing .briefing-tools{margin-top:0}
-#briefing .briefing-note{margin-top:8px}
-#briefing>#start{width:100%;height:52px;min-height:52px;margin:0;justify-content:center;font-size:18px;pointer-events:auto}
+/* Start screen: Blender key art with the briefing, mode cards and match setup. Every control and
+   label stays HTML, so it scales, translates and remains accessible. Art: tools/blender/render_ui_art.py. */
 
-#briefing .map-select-label{grid-column:1 / -1;font-size:14px;font-weight:700;color:var(--text)}
-#briefing .briefing-tools select{font-size:14px}
+/* While the briefing is open, in-game controls and readouts are hidden; Settings and the language
+   picker live in the top bar instead. */
+.in-briefing #notice,
+.in-briefing .resource-bar,
+.in-briefing #clock,
+.in-briefing #pause,
+.in-briefing #quality,
+.in-briefing .map-heading,
+.in-briefing .sector-status,
+.in-briefing #mission-toggle,
+.in-briefing #mission-objectives,
+.in-briefing .bottom-dock,
+.in-briefing #dock-tabs,
+.in-briefing .touch-controls,
+.in-briefing .statusbar,
+.in-briefing #training { display: none !important; }
+:root:not(.in-briefing) .menu-only { display: none !important; }
+.in-briefing #stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 29;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 45%, rgba(4, 14, 20, 0.2), rgba(4, 14, 20, 0.82) 72%);
+}
 
-/* Mode row: Skirmish · Campaign · Settings. */
-#briefing .mode-switch{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:6px;margin-bottom:8px}
-#briefing .mode-switch button{min-height:44px;padding:0 12px;border:1px solid #55755088;border-radius:4px;background:#20382d;color:#d5dfc7;font-size:14px}
-#briefing .mode-switch button[aria-pressed="true"]{background:#b4ddad;border-color:#b4ddad;color:#183428;font-weight:600}
-#briefing #skirmish-setup{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-#briefing #skirmish-setup #alliance{grid-column:1 / -1}
-#briefing .briefing-tools select:disabled{opacity:.5}
-/* Campaign stages: number, name, battlefield and rivals, then cleared time or a lock. */
-#briefing .stage-list{display:grid;gap:4px;margin:0;padding:0;list-style:none}
-#briefing .stage-list button{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 10px;border:1px solid #55755066;border-radius:4px;background:#1b3027;color:#dce9d8;text-align:left}
-#briefing .stage-list button[aria-current="true"]{border-color:#b4ddad;background:#28473a;box-shadow:inset 3px 0 0 #b4ddad}
-#briefing .stage-list button:disabled{opacity:.55}
-#briefing .stage-list b{display:grid;place-items:center;width:28px;height:28px;border:1px solid #6f9a7c;border-radius:50%;font:600 13px Consolas,monospace}
-#briefing .stage-list strong{display:block;font-size:14px;font-weight:600}
-#briefing .stage-list small{display:block;overflow:hidden;font-size:12px;color:#a9bfb0;white-space:nowrap;text-overflow:ellipsis}
-#briefing .stage-list em{display:flex;align-items:center;gap:4px;font:12px Consolas,monospace;color:#b4ddad;white-space:nowrap}
-#briefing .stage-list em .icon{width:16px;height:16px}
-/* Short landscape screens: briefing and Start on the left, setup on the right, so every
-   setting stays on screen without scrolling. */
-@media (max-height: 520px) and (orientation: landscape) {
-  #briefing{grid-template-columns:minmax(0,340px) minmax(0,340px);grid-template-rows:minmax(0,1fr) 52px;column-gap:12px}
-  #briefing>.briefing-copy{grid-column:1;grid-row:1;align-self:end;max-height:100%;margin:0 0 10px}
-  #briefing>#start{grid-column:1;grid-row:2}
-  #briefing>.briefing-setup{grid-column:2;grid-row:1 / span 2;align-self:center;max-height:100%;margin:0}
+#briefing {
+  position: absolute;
+  z-index: 30;
+  inset: clamp(16px, 4vh, 40px) clamp(16px, 4vw, 48px);
+  margin: auto;
+  max-width: 1180px;
+  max-height: 760px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(340px, 440px);
+  overflow: hidden;
+  border-radius: var(--r-l);
+  background: var(--ink-1);
+  box-shadow: var(--shadow-l), 0 0 0 1px var(--line-2), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+#briefing[hidden] { display: none; }
+
+.briefing-hero {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--ink-0);
+}
+.briefing-art,
+.briefing-art img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.briefing-art img {
+  object-fit: cover;
+  object-position: 50% 42%;
+}
+.briefing-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(4, 14, 20, 0) 30%, rgba(4, 14, 20, 0.7) 66%, rgba(4, 14, 20, 0.95) 100%),
+    linear-gradient(90deg, rgba(4, 14, 20, 0.4), transparent 50%);
+}
+.briefing-copy {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 28px 32px 30px;
+}
+.briefing .eyebrow {
+  font: 700 12px/1.2 var(--font-ui);
+  letter-spacing: 0.16em;
+  color: var(--gold-2);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+.briefing h2 {
+  margin: 8px 0 10px;
+  font: 800 clamp(28px, 3.1vw, 42px)/1.08 var(--font-display);
+  letter-spacing: -0.01em;
+  color: #fff;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
+}
+.briefing p {
+  max-width: 60ch;
+  margin: 0 0 16px;
+  font: 400 16px/1.5 var(--font-ui);
+  color: var(--text-2);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.7);
+}
+.briefing-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.briefing-rule {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-s);
+  background: rgba(6, 20, 28, 0.78);
+}
+.briefing-rule span {
+  font: 700 11px/1.2 var(--font-ui);
+  letter-spacing: 0.12em;
+  color: var(--text-3);
+}
+.briefing-rule strong {
+  font: 600 14px/1.3 var(--font-ui);
+  color: var(--text-1);
+}
+
+.briefing-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 22px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-left: 1px solid var(--line-1);
+  background: linear-gradient(180deg, var(--ink-2), var(--ink-1));
+}
+
+/* Mode cards: Training · Skirmish · Campaign. */
+.mode-switch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.mode-switch button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  align-content: center;
+  row-gap: 3px;
+  min-height: 62px;
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-m);
+  background: linear-gradient(180deg, rgba(28, 64, 78, 0.55), rgba(12, 32, 42, 0.8));
+  color: var(--text-2);
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+}
+.mode-switch button > .icon {
+  width: 20px;
+  height: 20px;
+  margin-bottom: 2px;
+  color: var(--text-3);
+}
+.mode-switch button > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 750 15px/1.2 var(--font-display);
+  color: var(--text-1);
+}
+.mode-switch button > small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 11px/1.2 var(--font-ui);
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+}
+.mode-switch button:hover:not([aria-pressed="true"]) {
+  border-color: var(--line-2);
+  background: linear-gradient(180deg, rgba(36, 80, 96, 0.6), rgba(14, 38, 50, 0.85));
+}
+.mode-switch button[aria-pressed="true"] {
+  border-color: var(--gold-line);
+  background: linear-gradient(180deg, rgba(255, 199, 94, 0.2), rgba(255, 199, 94, 0.06));
+  box-shadow: inset 0 0 0 1px rgba(255, 199, 94, 0.3), 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+.mode-switch button[aria-pressed="true"] > .icon,
+.mode-switch button[aria-pressed="true"] > small { color: var(--gold-2); }
+
+/* Skirmish fields. */
+.briefing-tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.field-wide { grid-column: 1 / -1; }
+.field > span {
+  font: 700 12px/1.2 var(--font-ui);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.field select { width: 100%; }
+
+/* Campaign stage cards. */
+.stage-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.stage-list button {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 60px;
+  padding: 8px 12px;
+  text-align: left;
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-m);
+  background: rgba(16, 40, 52, 0.7);
+  color: var(--text-1);
+}
+.stage-list button:hover:not(:disabled) { border-color: var(--line-2); }
+.stage-list button[aria-current="true"] {
+  border-color: var(--gold-line);
+  background: linear-gradient(90deg, rgba(255, 199, 94, 0.18), rgba(255, 199, 94, 0.04));
+  box-shadow: inset 3px 0 0 var(--gold-2);
+}
+.stage-list button:disabled { opacity: 0.5; }
+.stage-list b {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--ink-1);
+  font: 800 14px var(--font-display);
+  color: var(--text-1);
+}
+.stage-list button[aria-current="true"] b {
+  border-color: var(--gold-2);
+  color: var(--gold-2);
+}
+.stage-list strong {
+  display: block;
+  font: 700 15px/1.25 var(--font-display);
+}
+.stage-list small {
+  display: block;
+  overflow: hidden;
+  font: 500 12px/1.4 var(--font-ui);
+  color: var(--text-3);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.stage-list em {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font: 700 12px var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  font-style: normal;
+  color: var(--mint);
+  white-space: nowrap;
+}
+.stage-list em .icon { width: 16px; height: 16px; }
+
+/* Training lessons. */
+.lesson-list {
+  counter-reset: lesson;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lesson-list li {
+  counter-increment: lesson;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-s);
+  background: rgba(16, 40, 52, 0.6);
+  font: 600 13px/1.25 var(--font-ui);
+  color: var(--text-1);
+}
+.lesson-list li::before {
+  content: counter(lesson);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 199, 94, 0.16);
+  font: 800 12px var(--font-display);
+  color: var(--gold-2);
+}
+
+#start {
+  --start-backing: var(--ink-1);
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: 56px;
+  margin-top: auto;
+  font-size: 18px;
+  /* A ring in the column colour fills the gap around the pinned button, so scrolled fields never show beside it. */
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -3px 0 rgba(120, 58, 0, 0.3), 0 10px 26px rgba(235, 148, 50, 0.3),
+    0 0 0 12px var(--start-backing);
+}
+
+/* Phones and narrow windows: one scrolling column; Start stays pinned at the bottom. */
+.compact-ui.in-briefing { --header-height: 56px; }
+.compact-ui.in-briefing .topbar { grid-template-rows: 56px; }
+.compact-ui #briefing {
+  inset: 0;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--ink-0);
+}
+.compact-ui .briefing-hero {
+  flex: 0 0 auto;
+  height: clamp(168px, 36vh, 320px);
+}
+@media (min-height: 760px) {
+  .compact-ui .briefing-hero { height: clamp(260px, 44vh, 420px); }
+}
+.compact-ui .briefing-copy { padding: 14px 16px 14px; }
+.compact-ui .briefing h2 {
+  margin: 4px 0 6px;
+  font-size: clamp(22px, 6.2vw, 32px);
+}
+.compact-ui .briefing h2 br { display: none; }
+.compact-ui .briefing p {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+.compact-ui .briefing-rule { padding: 6px 10px; }
+.compact-ui .briefing-rule strong { font-size: 13px; }
+.compact-ui .briefing-setup {
+  flex: 1 0 auto;
+  overflow: visible;
+  padding: 14px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  gap: 12px;
+  border-left: 0;
+  background: none;
+}
+.compact-ui #start {
+  --start-backing: var(--ink-0);
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+}
+@media (max-height: 700px) {
+  .compact-ui .briefing-facts { display: none; }
+  .compact-ui .briefing p { -webkit-line-clamp: 2; }
+}
+@media (max-width: 420px) {
+  .mode-switch button {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    padding: 8px 6px;
+    text-align: center;
+  }
+  .mode-switch button > .icon { display: none; }
+  .mode-switch button > span { font-size: 14px; }
+  .lesson-list { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Short landscape phones: art and briefing left, setup right with its own scroll. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .compact-ui #briefing {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 400px);
+    overflow: hidden;
+  }
+  .compact-ui .briefing-hero { height: auto; }
+  .compact-ui .briefing-facts { display: none; }
+  .compact-ui .briefing-setup {
+    overflow-y: auto;
+    padding: 12px 14px;
+    border-left: 1px solid var(--line-1);
+    background: linear-gradient(180deg, var(--ink-2), var(--ink-1));
+  }
+  .compact-ui #start { --start-backing: var(--ink-1); bottom: 0; }
 }

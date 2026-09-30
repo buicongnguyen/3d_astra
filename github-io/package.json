@@ -30,7 +30,8 @@
     "test:boundary-fx": "node tests/boundary-fx.mjs",
     "test:repair-rally": "node tests/repair-rally.mjs",
     "test:campaign": "node tests/campaign.mjs",
-    "test:tutorial": "node tests/tutorial.mjs"
+    "test:tutorial": "node tests/tutorial.mjs",
+    "test:ui-quality": "node tests/ui-quality.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

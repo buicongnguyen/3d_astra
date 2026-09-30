@@ -76,6 +76,16 @@ blender --background --python tools/blender/preview_assets.py -- out.png hero wo
 
 Then run `npm test`, which includes `tests/assets.test.js`, and the browser suites.
 
+### Interface art
+
+`render_ui_art.py` renders the start-screen key art, the emblem and the HUD portrait atlas from the exported GLBs, so the art always matches the models in play. Run it headless after the models change:
+
+```sh
+blender --background --factory-startup --python tools/blender/render_ui_art.py -- src/art
+```
+
+Arguments after the output folder (`keyart`, `portraits`, `emblem`) render only those parts. The portrait atlas is paired with a mask render in which team paint is white and everything else is held out. The page multiplies the player's army colour through that mask, so one atlas serves every colour choice. Portrait order is part of the page contract (`PORTRAIT_ORDER` in `src/portraits.js`). Buttons and labels are never baked into images. See [UI_REDESIGN.md](UI_REDESIGN.md).
+
 ## Known limits
 
 - Vertex-colour AO is limited by vertex density. Very large, unsliced faces show only corner-to-corner gradients.

@@ -6,6 +6,8 @@ The [progression update](PROGRESSION_PLAN.md) matches the [Godot edition](https:
 
 The **Riverlands** update adds saved army colors, graphics/audio settings, varied ground, a river with two bridges and a shallow ford, and original Blender scenery. Choose Riverlands or the classic Ashen Frontier in the briefing. Open **Settings** there or through **Pause → Settings** during play. See [the evaluation and release review](EVALUATION_AND_RELEASE.md).
 
+The start screen, Settings and phone HUD share one design system. Blender-rendered key art, an emblem, and unit and building portraits are rendered from the game's own models and tinted with your army colour; every button and label stays HTML so it scales, translates and reads aloud. See [the UI redesign](docs/UI_REDESIGN.md).
+
 Combat renders in 3D: muzzle flashes, tracers, shells, rocket trails, sparks, explosions with debris and scorch marks, burning machines and buildings, and buildings that collapse into the ground. Selection uses animated ground rings, segmented health bars with a damage ghost, and a selection panel with live unit vitals. See [combat feedback, destruction and selection](../COMBAT_FEEDBACK.md). Nothing is drawn beyond the playable map edge.
 
 ## Play locally
@@ -21,7 +23,7 @@ npm ci
 npm run dev
 ```
 
-Open the printed localhost URL in a browser with WebGL 2 support. Tap or click **Deploy expedition** to start. Phones, tablets, and desktop layouts share the same game. The game pauses when the tab is hidden.
+Open the printed localhost URL in a browser with WebGL 2 support. Choose **Training**, **Skirmish** or **Campaign**, then tap or click **Start**. Phones, tablets, and desktop layouts share the same game. The game pauses when the tab is hidden.
 
 You start with a Command core, Barracks, four Harvesters, two Rangers, one Vanguard, 450 alloy, and 150 energy. This browser prototype deliberately gives you an initial production building and defenders so that you can learn the controls immediately.
 
@@ -112,7 +114,7 @@ Exported models are committed in `public/models/`; Blender is **not required** t
 
 The pipeline, look development, triangle budgets and runtime naming rules are documented in [docs/ASSET_PIPELINE.md](docs/ASSET_PIPELINE.md).
 
-- Toolkit and generators: `tools/blender/frontier_kit.py`, `generate_assets.py` (units and structures), `generate_environment.py` (boulders, crystal deposits, foliage, crates, truss bridges), `animate_units.py` (Godot clips) and `preview_assets.py` (review renders).
+- Toolkit and generators: `tools/blender/frontier_kit.py`, `generate_assets.py` (units and structures), `generate_environment.py` (boulders, crystal deposits, foliage, crates, truss bridges), `animate_units.py` (Godot clips), `preview_assets.py` (review renders) and `render_ui_art.py` (start-screen key art, emblem and the portrait atlas in `src/art/`).
 - Editable sources: `assets/source/frontier-library.blend`, `riverlands-library.blend` and `animated-*.blend`. Inventories: `public/models/manifest.json` and `environment-manifest.json`.
 - Generated with **Blender 4.5.9 LTS**. The models were authored live through MCP for Blender and are reproducible headless; the committed files come from the headless run.
 - Style: bevelled hard-surface models with weighted normals, PBR materials, and ray-traced ambient occlusion, edge wear and grime baked into vertex colours. The renderer adds a reflection environment to model materials.
@@ -125,6 +127,7 @@ To regenerate from any working directory:
 blender --background --python /absolute/path/to/github-io/tools/blender/generate_assets.py
 blender --background --python /absolute/path/to/github-io/tools/blender/generate_environment.py
 blender --background --python /absolute/path/to/github-io/tools/blender/animate_units.py
+blender --background --factory-startup --python /absolute/path/to/github-io/tools/blender/render_ui_art.py
 ```
 
 The `.tools/` directory is ignored and is not uploaded to GitHub.
@@ -143,6 +146,9 @@ The `.tools/` directory is ignored and is not uploaded to GitHub.
 | `src/main.js` | Browser input, selection, command UI, minimap, match flow |
 | `src/touch-controls.js` | Pointer capture, tap/pan/pinch/box gesture lifecycle and cancellation |
 | `src/style.css`, `src/mobile.css` | Desktop and compact portrait/landscape interfaces |
+| `src/ui-theme.css` | Design tokens, buttons, selects, dialogs; loaded last |
+| `src/start-screen.css`, `src/settings.css`, `src/settings-ui.js` | Start screen and Settings dialog |
+| `src/portraits.js`, `src/portraits.css`, `src/art/` | Blender-rendered portraits, tinted with the army colour |
 
 Simulation uses a fixed 20 Hz tick; the renderer interpolates unit positions and headings between the last two ticks. Visibility updates four times per second; AI strategy updates every 2.5 seconds. Pathfinding is grid A* with a binary heap. Model parts are merged by material where possible, while preserving animated leg pivots and the barrel/turret rig. Tests opt into a local diagnostic hook with `?test=1`; ordinary players do not expose that hook.
 
@@ -155,6 +161,7 @@ npm run build
 npm run test:browser
 npm run test:mobile
 npm run test:improvements
+npm run test:ui-quality
 # Optional second-engine smoke check after npx playwright install webkit:
 npm run test:webkit
 ```

@@ -20,9 +20,6 @@
 :root:not(.compact-ui) .topbar { height: var(--top-height); padding: 0 16px; }
 :root:not(.compact-ui) #stage { height: calc(100dvh - var(--top-height)); }
 :root:not(.compact-ui) .brand { gap: 8px; font-size: 14px; letter-spacing: 2px; }
-:root:not(.compact-ui) .brand-mark { width: 26px; height: 28px; }
-:root:not(.compact-ui) .brand-mark .icon { width: 24px; height: 24px; }
-:root:not(.compact-ui) .brand-sub { display: inline; margin: 0 0 0 8px; font-size: 9px; letter-spacing: 3px; }
 :root:not(.compact-ui) .resource { gap: 9px; padding: 0 20px; min-width: 118px; }
 :root:not(.compact-ui) .resource > .icon { width: 19px; height: 19px; }
 :root:not(.compact-ui) .resource strong { font-size: 17px; line-height: 19px; }

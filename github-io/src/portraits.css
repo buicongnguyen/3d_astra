@@ -1,0 +1,29 @@
+/* Rendered unit and building portraits from a 4x4 atlas. The <i> layer multiplies the army
+   colour into the white team paint, masked to exactly the painted parts. */
+.portrait-art {
+  --size: 40px;
+  --tint: var(--team-friendly, #92ebc5);
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: var(--size);
+  height: var(--size);
+  isolation: isolate;
+  background: url("./art/portraits.webp") no-repeat;
+  background-size: 400% 400%;
+  background-position: calc(var(--px) * 100% / 3) calc(var(--py) * 100% / 3);
+  vertical-align: middle;
+}
+.portrait-art.hostile { --tint: var(--team-hostile, #ef7660); }
+.portrait-art > i {
+  position: absolute;
+  inset: 0;
+  background: var(--tint);
+  mix-blend-mode: multiply;
+  -webkit-mask: url("./art/portrait-mask.webp") no-repeat;
+  mask: url("./art/portrait-mask.webp") no-repeat;
+  -webkit-mask-size: 400% 400%;
+  mask-size: 400% 400%;
+  -webkit-mask-position: calc(var(--px) * 100% / 3) calc(var(--py) * 100% / 3);
+  mask-position: calc(var(--px) * 100% / 3) calc(var(--py) * 100% / 3);
+}
