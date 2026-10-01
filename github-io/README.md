@@ -8,6 +8,8 @@ The **Riverlands** update adds saved army colors, graphics/audio settings, varie
 
 The start screen, Settings and phone HUD share one design system. Blender-rendered key art, an emblem, and unit and building portraits are rendered from the game's own models and tinted with your army colour; every button and label stays HTML so it scales, translates and reads aloud. See [the UI redesign](docs/UI_REDESIGN.md).
 
+Every battlefield is alive with small, cheap details: gulls, hawks, vultures and geese overhead with shadows sweeping the ground, butterflies, dragonflies, fish in the rivers, and drifting ash, dust, pollen, fireflies or embers. Units are drawn in instanced batches (a 60-unit phone battle went from 641 to 174 draw calls), and a frame-time governor calms, then stills, those details on devices that struggle. See [living battlefields and phone performance](docs/LIFE_AND_PERFORMANCE.md).
+
 Combat renders in 3D: muzzle flashes, tracers, shells, rocket trails, sparks, explosions with debris and scorch marks, burning machines and buildings, and buildings that collapse into the ground. Selection uses animated ground rings, segmented health bars with a damage ghost, and a selection panel with live unit vitals. See [combat feedback, destruction and selection](../COMBAT_FEEDBACK.md). Nothing is drawn beyond the playable map edge.
 
 ## Play locally
@@ -149,6 +151,9 @@ The `.tools/` directory is ignored and is not uploaded to GitHub.
 | `src/ui-theme.css` | Design tokens, buttons, selects, dialogs; loaded last |
 | `src/start-screen.css`, `src/settings.css`, `src/settings-ui.js` | Start screen and Settings dialog |
 | `src/portraits.js`, `src/portraits.css`, `src/art/` | Blender-rendered portraits, tinted with the army colour |
+| `src/ambient-life.js` | Per-map birds, butterflies, dragonflies, fish and motes; one instanced draw per family |
+| `src/entity-batches.js` | Draws unit and building parts as instanced batches |
+| `src/governor.js` | Frame-time governor: calm, then still, cosmetic motion on slow devices |
 
 Simulation uses a fixed 20 Hz tick; the renderer interpolates unit positions and headings between the last two ticks. Visibility updates four times per second; AI strategy updates every 2.5 seconds. Pathfinding is grid A* with a binary heap. Model parts are merged by material where possible, while preserving animated leg pivots and the barrel/turret rig. Tests opt into a local diagnostic hook with `?test=1`; ordinary players do not expose that hook.
 
@@ -162,6 +167,7 @@ npm run test:browser
 npm run test:mobile
 npm run test:improvements
 npm run test:ui-quality
+npm run test:ambient-life
 # Optional second-engine smoke check after npx playwright install webkit:
 npm run test:webkit
 ```

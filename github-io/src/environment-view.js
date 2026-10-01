@@ -251,8 +251,9 @@ export class EnvironmentView {
     this.decor.visible = settings.detail;
 
   }
+  // `still` is set by the frame-time governor when the device struggles.
   get motion() {
-    return this.settings?.waterMotion === true && !this.reducedMotion.matches;
+    return this.settings?.waterMotion === true && !this.reducedMotion.matches && !this.still;
   }
   update(sim, dt) {
     if (!this.water) return;

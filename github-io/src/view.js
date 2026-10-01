@@ -8,6 +8,8 @@ import { Effects } from "./fx.js";
 import { createRing, updateRing, createBar, updateBar, setTeamColor, createMarker, createRally, updateRally } from "./selection-view.js";
 import {themeFor,shotVisible,weaponStyle} from './visual-style.js';
 import { isHarvesting } from "./activity.js";
+import { EntityBatches, adoptBatchedParts, SOURCE_LAYER } from "./entity-batches.js";
+import { AmbientLife } from "./ambient-life.js";
 import { defaults, palette } from "./settings.js";
 import {
   EnvironmentView,
@@ -60,11 +62,10 @@ export class WorldView {
       antialias: true,
       powerPreference: "high-performance",
     });
-    this.renderer.setPixelRatio(
-      Math.min(devicePixelRatio, this.lowPower ? 1 : 1.6),
-    );
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, this.lowPower ? 1 : 1.6));
     this.renderer.shadowMap.enabled = !this.lowPower;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // three r185 replaced PCFSoftShadowMap with PCFShadowMap (it logs a deprecation and falls back).
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.2;
@@ -85,6 +86,8 @@ export class WorldView {
     this.defaultZoom = this.lowPower ? 34 : 42;
     this.zoom = this.defaultZoom;
     this.raycaster = new THREE.Raycaster();
+    // Picking hits the cloned model parts, which the batches draw (entity-batches.js).
+    this.raycaster.layers.enable(SOURCE_LAYER);
     this.plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     this.models = new Map();
     this.objects = new Map();
@@ -123,6 +126,9 @@ export class WorldView {
     this.applyTheme();
     this.createTerrain();
     this.createFog();
+    this.motionLevel = 2;
+    this.renderScale = 1;
+    this.createLife();
     this.preview = mesh(
       new THREE.CylinderGeometry(1, 1, 0.09, 48),
       new THREE.MeshBasicMaterial({
@@ -135,6 +141,14 @@ export class WorldView {
     this.preview.visible = false;
     this.scene.add(this.preview);
     this.selection = new Set();
+    this.batches = new EntityBatches(this.scene);
+    this.contactShadowMaterial = new THREE.MeshBasicMaterial({
+      color: 0x13251b,
+      transparent: true,
+      opacity: 0.24,
+      depthWrite: false,
+    });
+    this.contactShadowGeometries = new Map();
     this.resize();
     window.addEventListener("resize", () => this.resize());
     this.resizeObserver = new ResizeObserver(() => this.resize());
@@ -172,6 +186,7 @@ export class WorldView {
     if (this.lowPower !== (settings.quality === "eco"))
       this.setQuality(settings.quality === "eco" ? "low" : "high");
     this.environment?.configure(settings);
+    this.life?.configure(settings);
     if (this.grass) this.grass.visible = settings.detail;
   }
   setTerrain(terrain) {
@@ -195,6 +210,7 @@ export class WorldView {
     }
     this.createTerrain();
     this.createFog();
+    this.createLife();
     if (this.environmentAssets) {
       this.environment = new EnvironmentView(
         this.scene,
@@ -202,14 +218,37 @@ export class WorldView {
         this.environmentAssets,
       );
       this.environment.configure(this.settings);
+      this.environment.still = this.motionLevel === 0;
     }
+  }
+  // Per-map birds, butterflies, fish and motes (ambient-life.js); fewer on Eco.
+  createLife() {
+    this.life?.dispose();
+    this.life = new AmbientLife(this.scene, this.terrain, { fogTexture: this.fogTexture, budget: this.lowPower ? 0.6 : 1 });
+    this.life.configure(this.settings);
+    this.life.setLevel(this.motionLevel);
+  }
+  // Frame-time governor hooks (main.js). Motion: 2 full, 1 calm, 0 still; still also freezes
+  // water ripples and dust. Render scale multiplies the quality's pixel-ratio cap.
+  setMotionLevel(level) {
+    this.motionLevel = level;
+    this.life?.setLevel(level);
+    if (this.environment) this.environment.still = level === 0;
+  }
+  setRenderScale(scale) {
+    if (scale === this.renderScale) return;
+    this.renderScale = scale;
+    this.renderer.setPixelRatio(this.pixelRatio());
+    this.resize();
+  }
+  pixelRatio() {
+    return Math.min(devicePixelRatio, this.lowPower ? 1 : 1.6) * (this.renderScale || 1);
   }
   setQuality(level) {
     this.lowPower = level === "low";
     this.applyReflections();
-    this.renderer.setPixelRatio(
-      Math.min(devicePixelRatio, this.lowPower ? 1 : 1.6),
-    );
+    this.createLife();
+    this.renderer.setPixelRatio(this.pixelRatio());
     this.renderer.shadowMap.enabled = !this.lowPower;
     for (const o of this.objects.values())
       o.userData.contactShadow.visible = this.lowPower;
@@ -292,6 +331,7 @@ export class WorldView {
               o.castShadow = true;
               o.receiveShadow = true;
             });
+            adoptBatchedParts(variant);
             this.teamTemplates.set(`${type}-${team}`, variant);
           }
           this.models.set(type, true);
@@ -311,6 +351,7 @@ export class WorldView {
       this.environmentAssets,
     );
     this.environment.configure(this.settings);
+    this.environment.still = this.motionLevel === 0;
     this.applyReflections();
   }
   createTerrain() {
@@ -685,15 +726,12 @@ export class WorldView {
     const root = new THREE.Group(),
       model = this.teamTemplates.get(`${e.type}-${e.team}`).clone(true);
     root.add(model);
-    const contactShadow = new THREE.Mesh(
-      new THREE.CircleGeometry(e.radius * 1.25, 20),
-      new THREE.MeshBasicMaterial({
-        color: 0x13251b,
-        transparent: true,
-        opacity: 0.24,
-        depthWrite: false,
-      }),
-    );
+    // Shared per radius, so every blob shadow joins one batch.
+    let shadowGeometry = this.contactShadowGeometries.get(e.radius);
+    if (!shadowGeometry)
+      this.contactShadowGeometries.set(e.radius, (shadowGeometry = new THREE.CircleGeometry(e.radius * 1.25, 20)));
+    const contactShadow = new THREE.Mesh(shadowGeometry, this.contactShadowMaterial);
+    contactShadow.layers.set(SOURCE_LAYER);
     contactShadow.rotation.x = -Math.PI / 2;
     contactShadow.position.y = 0.07;
     contactShadow.visible = this.lowPower;
@@ -844,6 +882,10 @@ export class WorldView {
   }
   update(sim, dt, selected, hover, alpha = 1) {
     this.environment?.update(sim, dt);
+    if (this.life) {
+      this.life.quiet = this.reducedMotion.matches;
+      this.life.update(dt, this.camera, this.renderer.domElement.height);
+    }
     const alive = new Set();
     // Interpolate only from a snapshot taken exactly one tick before the current state;
     // ticks run outside the frame loop (test stepping) leave the snapshot stale.
@@ -937,13 +979,23 @@ export class WorldView {
     if (!this.rally) this.scene.add(this.rally = createRally());
     const rallying = [...selected].map((id) => sim.get(id)).find((e) => e?.team === 0 && e.kind === "building" && e.rally);
     updateRally(this.rally, rallying, rallying?.rally, this.colors[0], sim.time);
+    // Update world matrices once, copy entity parts into their batches, then render without
+    // a second scene-wide matrix pass.
+    this.scene.updateMatrixWorld();
+    this.batches.begin();
+    for (const o of this.objects.values()) this.batches.collect(o);
+    for (const d of this.dying) this.batches.collect(d.object);
+    this.batches.end();
+    this.scene.matrixWorldAutoUpdate = false;
     this.renderer.render(this.scene, this.camera);
+    this.scene.matrixWorldAutoUpdate = true;
     this.activity.draw(sim,dt,selected,hover);
   }
   disposeEntity(o) {
     this.scene.remove(o);
-    // Model geometry and materials belong to shared templates; only dispose per-instance UI.
-    for (const m of [o.userData.ring, o.userData.contactShadow, o.userData.bar]) {
+    // Model geometry and materials belong to shared templates, and blob shadows share theirs;
+    // only dispose per-instance UI.
+    for (const m of [o.userData.ring, o.userData.bar]) {
       m.geometry.dispose();
       m.material.dispose();
     }

@@ -1,4 +1,5 @@
 import { Tutorial, TRAINING_STEPS } from "./tutorial.js";
+import { Governor } from "./governor.js";
 import "./tutorial.css";
 import "./style.css";
 import "./mobile.css";
@@ -141,6 +142,16 @@ let sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance }),
   mode = null,
   buildType = null,
   muted = settings.muted;
+// Slow devices give up cosmetic motion, then resolution, to keep play smooth (governor.js).
+// Browser tests opt in with ?governor=1 so their measurements see fixed quality.
+const query = new URLSearchParams(location.search);
+const governor = new Governor({
+  onChange: (level) => {
+    view?.setMotionLevel(level.motion);
+    view?.setRenderScale(level.scale);
+  },
+});
+const governed = !query.has("test") || query.get("governor") === "1";
 let uiClock = 0,
   timePrevious = performance.now(),
   accumulator = 0,
@@ -1390,6 +1401,7 @@ function restart() {
   sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus });
   tutorial = null;
   view.reset();
+  governor.reset();
   focusHome();
   selected.clear();
   groups.clear();
@@ -1416,6 +1428,7 @@ $("start").onclick = () => {
   unlockAudio();
   sim = new Simulation({map:mapId,enemyCount,aiSpeed,alliance,playerBonus:bonus});
   view.reset();
+  governor.reset();
   tutorial = null;
   activeStage = playMode === "campaign" ? stagePick : null;
   started = true;
@@ -1668,6 +1681,8 @@ function frame(now) {
     minimap();
     uiClock = 0.15;
   }
+  if (governed)
+    governor.sample(elapsed, performance.now() - now, started && !paused && !sim.result && !modalType && !document.hidden);
   frameCount++;
   frameTime += elapsed;
   if (frameTime >= 1) {
@@ -1723,6 +1738,7 @@ async function boot() {
         get settings() {
           return settings;
         },
+        governor,
       };
   } catch (error) {
     console.error(error);
