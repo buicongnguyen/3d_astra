@@ -45,6 +45,9 @@ try {
       .filter((e) => e.type === "worker")
       .every((e) => e.orders[0]?.type === "gather"),
   );
+  // Harvesters given a job are let go, so the next tap can select a building.
+  assert.equal(await page.evaluate(() => window.__frontier.selected.size), 0, "assigned Harvesters are deselected");
+  await page.locator("#select-workers").tap();
   await page.locator('[data-action="relay"]').tap();
   await page.locator("#cancel-mode").tap();
   await page.locator("#pause").tap();

@@ -554,7 +554,7 @@ export class WorldView {
         }),
       );
       ring.rotation.x = -Math.PI / 2;
-      ring.position.set(px, 0.052, pz);
+      ring.position.set(px, 0.065, pz); // clear of the pad top (0.045) to avoid z-fighting
       this.terrainRoot.add(ring);
     }
   }

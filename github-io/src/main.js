@@ -797,6 +797,14 @@ function commandAt(point, target, append = false, forced = null) {
       order,
       append,
     );
+    // Harvesters with a job need no more orders: let go of them so the next tap can select
+    // a building (tapping the Command core would otherwise order a cargo delivery).
+    if (units.every((e) => e.type === "worker") && !append) {
+      view.marker(target.x, target.z, view.colors[0]);
+      tone(440);
+      setSelection([]);
+      return;
+    }
   } else
     sim.issue(
       units.map((e) => e.id),

@@ -68,6 +68,8 @@ try {
   const deposit=await page.evaluate(()=>{const f=window.__frontier,r=f.sim.resources.find(r=>r.type==='alloy'),v=f.view;v.focusOn(r.x,r.z);v.updateCamera();const p=v.project(r.x,r.z,1.2),rect=v.renderer.domElement.getBoundingClientRect();return {id:r.id,x:p.x+rect.x,y:p.y+rect.y};});
   await press('c');await page.mouse.click(deposit.x,deposit.y);
   assert.equal(await page.evaluate(id=>window.__frontier.sim.get(id).orders[0]?.type,ids.workers[0]),'gather');
+  assert.equal(await page.evaluate(()=>window.__frontier.selected.size),0,'Harvesters given a job are deselected');
+  await page.evaluate(id=>window.__frontier.select([id]),ids.workers[0]);
   await page.evaluate(id=>{Object.assign(window.__frontier.sim.get(id),{carry:4,carryType:'alloy'});},ids.workers[0]);
   await press('m');await press('v');assert.equal(await page.locator('#mode-banner').isHidden(),true);
   assert.equal(await page.evaluate(id=>window.__frontier.sim.get(id).orders[0]?.type,ids.workers[0]),'deliver');

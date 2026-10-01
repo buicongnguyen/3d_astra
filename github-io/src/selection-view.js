@@ -35,7 +35,9 @@ export function createRing(radius, hex) {
   });
   const ring = new THREE.Mesh(new THREE.PlaneGeometry(size, size), material);
   ring.rotation.x = -Math.PI / 2;
-  ring.position.y = 0.07;
+  // Clear of the ground, the start pads (top 0.045) and building base plates (up to 0.080) and below unit feet (from 0.093):
+  // a ring level with a plate z-fights and the footprint blinks.
+  ring.position.y = 0.088;
   ring.renderOrder = 3;
   ring.visible = false;
   ring.userData.appear = 0;
