@@ -148,6 +148,7 @@ const query = new URLSearchParams(location.search);
 const governor = new Governor({
   onChange: (level) => {
     view?.setMotionLevel(level.motion);
+    view?.setLifeShare(level.life);
     view?.setRenderScale(level.scale);
   },
 });

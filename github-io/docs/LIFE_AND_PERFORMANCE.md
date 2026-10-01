@@ -35,6 +35,11 @@ Counts are set per 96 × 96 of map area. Eco quality (the phone default) draws 6
 
 All three are within noise.
 
+## Creatures can be killed, and are thinned when needed
+
+- **Combat kills them.** Impacts (1.5 m), deaths (2.5 m), vehicle wrecks (4 m) and building collapses (6 m) kill the butterflies, dragonflies, fish and motes they reach. Birds fly above the battle and survive. A killed creature swaps places with the last live one in the instance buffers and the draw shrinks by one, so dead creatures cost nothing. A new match brings the full cast back.
+- **The governor thins them.** At "still" only half the creatures are drawn, and at "rescue" none are.
+
 ## Units drawn in batches
 
 Units and buildings of one type and team are clones that share geometry and materials (`src/entity-batches.js`). Their parts are now drawn through shared `InstancedMesh` batches:
@@ -58,8 +63,8 @@ Phone GPU drivers pay roughly 10–30 µs per draw call, so this is the change t
 |---|---|
 | full | everything moves |
 | calm | ambient life slower, with smaller wingbeats |
-| still | ambient life, water ripples and dust hold still |
-| rescue | render scale 0.8, kept only if frames get at least 10% faster within 3 s; otherwise undone and never retried |
+| still | ambient life, water ripples and dust hold still; half the creatures are hidden |
+| rescue | all creatures hidden; render scale 0.8, kept only if frames get at least 10% faster within 3 s; otherwise undone and never retried |
 
 - **Stepping down and up.** Two slow seconds step down one level; eight smooth seconds step back up.
 - **Ignored time.** Hitches over 250 ms, pauses, dialogs and the first 3 s of a match are ignored.

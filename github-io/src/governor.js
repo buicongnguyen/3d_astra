@@ -4,15 +4,17 @@
 //   a steady ~33 ms with little work is a 30 Hz display cap (battery saver), not slowness;
 // - smooth: 90% of frames under 19 ms.
 // Two slow seconds step down: ambient life moves calmer, then everything cosmetic holds still
-// (creatures, water ripples, dust), then the render scale drops to 0.8 as a trial. The trial
+// (creatures, water ripples, dust) and half the creatures go, then the rest go and the render
+// scale drops to 0.8 as a trial. The trial
 // is undone, and never retried, unless frames get at least 10% faster within 3 s.
 // Eight smooth seconds step back up. Hitches over 250 ms, pauses and the first seconds after
 // a match starts are ignored.
+// `life` is the share of ambient creatures still drawn: half when still, none at rescue.
 export const LEVELS = [
-  { name: "rescue", motion: 0, scale: 0.8 },
-  { name: "still", motion: 0, scale: 1 },
-  { name: "calm", motion: 1, scale: 1 },
-  { name: "full", motion: 2, scale: 1 },
+  { name: "rescue", motion: 0, scale: 0.8, life: 0 },
+  { name: "still", motion: 0, scale: 1, life: 0.5 },
+  { name: "calm", motion: 1, scale: 1, life: 1 },
+  { name: "full", motion: 2, scale: 1, life: 1 },
 ];
 
 const median = (values) => values[values.length >> 1];

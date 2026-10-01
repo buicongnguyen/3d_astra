@@ -82,3 +82,30 @@ test('ambient life is seeded, scales with area and budget, and stays inside ever
   assert.equal(planLife(new Terrain('classic')).fish.length, 0, 'no fish without a river');
   assert.ok(planLife(new Terrain('woodlands')).butterflies.length > planLife(new Terrain('riverlands')).butterflies.length);
 });
+
+test('combat kills the small creatures it reaches, the governor thins the rest, birds survive', async () => {
+  const THREE = await import('three');
+  const { AmbientLife } = await import('../src/ambient-life.js');
+  const life = new AmbientLife(new THREE.Scene(), new Terrain('riverlands'));
+  const group = (name) => life.groups.find((g) => g.name === name);
+  const butterflies = group('butterflies'), fish = group('fish'), birds = group('birds');
+  const total = life.aliveCount, target = butterflies.rows[3], targetColor = [...butterflies.geometry.attributes.aColor.array.slice(3 * 3, 3 * 3 + 3)];
+  const killed = life.disturb(target.x, target.z, 1);
+  assert.ok(killed >= 1, 'a blast on a butterfly kills it');
+  assert.equal(life.aliveCount, total - killed);
+  assert.equal(butterflies.geometry.instanceCount, butterflies.alive, 'dead ones are no longer drawn');
+  assert.ok(!butterflies.rows.slice(0, butterflies.alive).includes(target), 'the dead butterfly moved past the live ones');
+  const at = butterflies.rows.indexOf(target), colors = butterflies.geometry.attributes.aColor.array;
+  assert.deepEqual([...colors.slice(at * 3, at * 3 + 3)], targetColor, 'its buffers moved with it');
+  const f = fish.rows[0], [fx, fz] = fish.at(f, life.uniforms.uTime.value);
+  assert.ok(life.disturb(fx, fz, 0.5) >= 1, 'fish are hit where they swim now');
+  life.disturb(birds.rows[0].x, birds.rows[0].z, 50);
+  assert.equal(birds.alive, birds.rows.length, 'birds fly above the battle');
+  life.setShare(0.5);
+  assert.equal(birds.geometry.instanceCount, Math.ceil(birds.alive / 2));
+  assert.equal(birds.shadow.instanceCount, birds.geometry.instanceCount, 'shadows follow their birds');
+  life.setShare(0);
+  assert.equal(life.root.visible, false, 'rescue hides all ambient life');
+  life.setShare(1);
+  assert.equal(life.root.visible, true);
+});

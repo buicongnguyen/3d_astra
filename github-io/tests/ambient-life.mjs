@@ -68,19 +68,19 @@ try {
     feed(2.1, 45, 20); // two slow seconds
     const calm = { level: g.current.name, motion: v.motionLevel };
     feed(2.1, 45, 20);
-    const still = { level: g.current.name, motion: v.motionLevel, water: v.environment.still };
+    const still = { level: g.current.name, motion: v.motionLevel, water: v.environment.still, share: v.life.share };
     const before = clock(); for (let i = 0; i < 10; i++) await new Promise(requestAnimationFrame);
     still.frozen = clock() === before;
     feed(30, 16, 2);
-    const back = { level: g.current.name, motion: v.motionLevel, water: v.environment.still };
+    const back = { level: g.current.name, motion: v.motionLevel, water: v.environment.still, share: v.life.share };
     const resumed = clock(); for (let i = 0; i < 10; i++) await new Promise(requestAnimationFrame);
     back.moving = clock() !== resumed;
     return { start, calm, still, back };
   });
   assert.deepEqual(governed.start, { level: 'full', motion: 2 });
   assert.deepEqual(governed.calm, { level: 'calm', motion: 1 });
-  assert.deepEqual(governed.still, { level: 'still', motion: 0, water: true, frozen: true });
-  assert.deepEqual(governed.back, { level: 'full', motion: 2, water: false, moving: true });
+  assert.deepEqual(governed.still, { level: 'still', motion: 0, water: true, share: 0.5, frozen: true });
+  assert.deepEqual(governed.back, { level: 'full', motion: 2, water: false, share: 1, moving: true });
 
   // Reduced motion holds every creature still.
   await page.emulateMedia({ reducedMotion: 'reduce' });

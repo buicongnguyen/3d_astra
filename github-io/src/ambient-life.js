@@ -366,7 +366,18 @@ export class AmbientLife {
     this.uniforms = { uTime: { value: 0 }, uAmp: { value: 1 }, uHalf: { value: terrain.half }, uFog: { value: fogTexture } };
     this.level = 2;
     this.quiet = false;
+    this.share = 1;
+    this.shown = true;
     this.materials = [];
+    // Each family's live creatures sit first in its buffers; `alive` of them are drawn (times
+    // `share`), so killed or thinned creatures cost nothing at all.
+    this.groups = [];
+    const half = terrain.half;
+    const register = (name, geometry, rows, at, points = false) => {
+      const group = { name, geometry, rows: rows.slice(), alive: rows.length, at, points };
+      this.groups.push(group);
+      return group;
+    };
     const plan = this.plan, shared = this.uniforms;
     const material = (vertexShader, fragmentShader, extra = {}, options = {}) => {
       const m = new THREE.ShaderMaterial({ uniforms: { ...shared, ...extra }, vertexShader, fragmentShader, ...options });
@@ -392,20 +403,26 @@ export class AmbientLife {
       for (const [name] of names) quad.setAttribute(name, birds.getAttribute(name));
       quad.instanceCount = plan.birds.length;
       add(quad, material(SHADOW_VERTEX, SHADOW_FRAGMENT, { uSun: { value: new THREE.Vector2(...sunShift) } }, { transparent: true, depthWrite: false }), "life:bird-shadows", 1);
+      // Birds fly above the battle: never killed, only thinned. Shadows follow their birds.
+      register("birds", birds, plan.birds, null).shadow = quad;
     }
     const flutter = (rows, dragonfly) => {
       if (!rows.length) return;
       const pick = (b, name) => name === "aA" ? [b.x, b.y, b.z, b.size] : name === "aB" ? [b.rx, b.rz, b.speed, b.phase]
         : name === "aC" ? [dragonfly ? 1 : 0, dragonfly ? 46 : 16, 0, 0] : hex(b.color).toArray();
-      add(instanced(flutterGeometry(dragonfly), rows, pick, [["aA", 4], ["aB", 4], ["aC", 4], ["aColor", 3]]),
-        material(FLUTTER_VERTEX, SOLID_FRAGMENT, {}, { side: THREE.DoubleSide }), dragonfly ? "life:dragonflies" : "life:butterflies");
+      const geometry = instanced(flutterGeometry(dragonfly), rows, pick, [["aA", 4], ["aB", 4], ["aC", 4], ["aColor", 3]]);
+      add(geometry, material(FLUTTER_VERTEX, SOLID_FRAGMENT, {}, { side: THREE.DoubleSide }), dragonfly ? "life:dragonflies" : "life:butterflies");
+      register(dragonfly ? "dragonflies" : "butterflies", geometry, rows, (b) => [b.x, b.z, Math.max(b.rx, b.rz)]);
     };
     flutter(plan.butterflies, false);
     flutter(plan.dragonflies, true);
     if (plan.fish.length) {
       const pick = (f, name) => name === "aA" ? [f.x, f.z, f.size, f.dir] : [f.speed, f.phase, f.koi, 0];
-      add(instanced(fishGeometry(), plan.fish, pick, [["aA", 4], ["aB", 4]]),
-        material(FISH_VERTEX, FISH_FRAGMENT, {}, { transparent: true, depthWrite: false, side: THREE.DoubleSide }), "life:fish");
+      const geometry = instanced(fishGeometry(), plan.fish, pick, [["aA", 4], ["aB", 4]]);
+      add(geometry, material(FISH_VERTEX, FISH_FRAGMENT, {}, { transparent: true, depthWrite: false, side: THREE.DoubleSide }), "life:fish");
+      // Same path as FISH_VERTEX, so a blast kills the fish that is actually there now.
+      const span = half * 2 - 4, wrap = (a, n) => ((a % n) + n) % n;
+      register("fish", geometry, plan.fish, (f, t) => [wrap(f.x + half - 2 + t * f.speed * f.dir, span) - span / 2, f.z, 0.6]);
     }
     if (plan.motes.length) {
       const look = MOTES[plan.moteLook], g = new THREE.BufferGeometry();
@@ -421,14 +438,60 @@ export class AmbientLife {
       points.name = "life:motes";
       points.frustumCulled = false;
       this.root.add(points);
+      register("motes", g, plan.motes, (m) => [m.x, m.z, 1.5], true);
     }
   }
   configure(settings) {
-    this.root.visible = settings.detail !== false;
+    this.shown = settings.detail !== false;
+    this.root.visible = this.shown && this.share > 0;
   }
   // level: 2 full, 1 calm, 0 still. quiet (reduced motion) holds everything still.
   setLevel(level) {
     this.level = level;
+  }
+  // Fraction of the live creatures drawn: the governor thins them on slow devices.
+  setShare(share) {
+    this.share = share;
+    this.root.visible = this.shown && share > 0;
+    for (const group of this.groups) this.applyCount(group);
+  }
+  applyCount(group) {
+    const n = Math.ceil(group.alive * this.share);
+    if (group.points) group.geometry.setDrawRange(0, n);
+    else group.geometry.instanceCount = n;
+    if (group.shadow) group.shadow.instanceCount = n;
+  }
+  // Combat kills the small creatures it reaches (birds fly above it). A dead creature swaps
+  // places with the last live one in every per-instance buffer, and the draw shrinks by one.
+  disturb(x, z, radius) {
+    const t = this.uniforms.uTime.value;
+    let killed = 0;
+    for (const group of this.groups) {
+      if (!group.at) continue;
+      const before = group.alive;
+      for (let i = group.alive - 1; i >= 0; i--) {
+        const [cx, cz, reach] = group.at(group.rows[i], t);
+        if (Math.hypot(cx - x, cz - z) > radius + reach * 0.5) continue;
+        const last = --group.alive;
+        for (const [name, attribute] of Object.entries(group.geometry.attributes)) {
+          if (name === "position" || !(group.points || attribute.isInstancedBufferAttribute)) continue;
+          const size = attribute.itemSize, array = attribute.array;
+          for (let k = 0; k < size; k++) {
+            const a = array[i * size + k];
+            array[i * size + k] = array[last * size + k];
+            array[last * size + k] = a;
+          }
+          attribute.needsUpdate = true;
+        }
+        [group.rows[i], group.rows[last]] = [group.rows[last], group.rows[i]];
+        killed++;
+      }
+      if (group.alive !== before) this.applyCount(group);
+    }
+    return killed;
+  }
+  get aliveCount() {
+    return this.groups.reduce((n, g) => n + g.alive, 0);
   }
   update(dt, camera, bufferHeight) {
     const level = this.quiet ? 0 : this.level, speed = [0, 0.35, 1][level];

@@ -227,6 +227,11 @@ export class WorldView {
     this.life = new AmbientLife(this.scene, this.terrain, { fogTexture: this.fogTexture, budget: this.lowPower ? 0.6 : 1 });
     this.life.configure(this.settings);
     this.life.setLevel(this.motionLevel);
+    this.life.setShare(this.lifeShare ?? 1);
+  }
+  setLifeShare(share) {
+    this.lifeShare = share;
+    this.life?.setShare(share);
   }
   // Frame-time governor hooks (main.js). Motion: 2 full, 1 calm, 0 still; still also freezes
   // water ripples and dust. Render scale multiplies the quality's pixel-ratio cap.
@@ -824,6 +829,9 @@ export class WorldView {
       if(o && weaponStyle(event).kind==='cannon')o.userData.recoil=.22;
     }
     if (event.type === 'death' && sim.isVisible(event)) this.beginDeath(event);
+    // Blasts kill the small creatures they reach; a new match brings the full cast back.
+    if (event.type === 'death' || event.type === 'impact')
+      this.life?.disturb(event.x, event.z, event.type === 'impact' ? 1.5 : event.building ? 6 : event.heavy ? 4 : 2.5);
   }
   // The destroyed entity's model stays for a short death animation instead of vanishing:
   // buildings shake and sink with a tilt, vehicles are thrown and settle as a wreck, infantry
@@ -1001,6 +1009,7 @@ export class WorldView {
     }
   }
   reset() {
+    if (this.life && this.life.aliveCount < this.life.groups.reduce((n, g) => n + g.rows.length, 0)) this.createLife();
     this.activity.reset();
     this.environment?.reset();
     for (const o of this.objects.values()) this.disposeEntity(o);
