@@ -538,34 +538,8 @@ export class WorldView {
     this.terrainRoot.add(grass);
     this.grass = grass;
     grass.visible = this.settings.detail;
-    // Subtle starting-base landing pad under each Command core spawn (maps offset bases outward).
-    const offset = this.terrain.offset || 0;
-    for (const side of [1, -1]) {
-      const px = (-25 - offset) * side,
-        pz = (24 + offset) * side;
-      const pad = mesh(
-        new THREE.CylinderGeometry(6.2, 6.2, 0.04, 8),
-        // The core's base plates stand 4 mm above this pad: biased, the pad always loses.
-        mat(0x6a7262, { polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 2 }),
-        px,
-        0.025,
-        pz,
-      );
-      pad.rotation.y = Math.PI / 8;
-      pad.castShadow = false;
-      this.terrainRoot.add(pad);
-      const ring = new THREE.Mesh(
-        new THREE.RingGeometry(6.3, 6.38, 64),
-        new THREE.MeshBasicMaterial({
-          color: 0xdad4af,
-          transparent: true,
-          opacity: 0.35,
-        }),
-      );
-      ring.rotation.x = -Math.PI / 2;
-      ring.position.set(px, 0.065, pz); // clear of the pad top (0.045) to avoid z-fighting
-      this.terrainRoot.add(ring);
-    }
+    // No raised start pads under the Command cores: a floor a few millimetres above the ground
+    // z-fought with the cores' base plates and blinked on phones.
   }
   // Reflections pay off on metal, glass and crystals. Matte paint, fabric and scenery gain
   // little, and the per-pixel environment lookup is the most expensive part of the model
