@@ -32,6 +32,7 @@ export function createRing(radius, hex) {
     uniforms: { color: { value: raw(hex) }, time: { value: 0 }, appear: { value: 0 }, strength: { value: 1 },
       radius: { value: radius }, selected: { value: 1 } },
     vertexShader: PLAIN, fragmentShader: RING, transparent: true, depthWrite: false,
+    polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 2, // ties go to models
   });
   const ring = new THREE.Mesh(new THREE.PlaneGeometry(size, size), material);
   ring.rotation.x = -Math.PI / 2;

@@ -855,6 +855,8 @@ function selectTouchBox(p) {
   $("box-select").setAttribute("aria-pressed", "false");
 }
 function showBuildPoint(point) {
+  // Snap to the nearest valid site so a tap beside a blocked spot still builds.
+  point = sim.findPlacement(buildType, 0, point.x, point.z) || point;
   buildPoint = point;
   buildFailure = '';
   view.preview.visible = true;
@@ -990,7 +992,8 @@ function bindInput() {
       });
     }
     if (mode === "build") {
-      const p = view.point(e.clientX, e.clientY);
+      const aim = view.point(e.clientX, e.clientY),
+        p = aim && (sim.findPlacement(buildType, 0, aim.x, aim.z) || aim);
       if (p) {
         view.preview.visible = true;
         view.preview.position.set(p.x, 0.23, p.z);
@@ -1037,7 +1040,7 @@ function bindInput() {
     if (old.button !== 0 || e.button!==0 || paused || !started || sim.result || document.elementFromPoint(e.clientX,e.clientY)!==canvas) return;
     const point = view.point(e.clientX, e.clientY);
     if (mode === "build" && point) {
-      confirmBuild(point);
+      confirmBuild(sim.findPlacement(buildType, 0, point.x, point.z) || point);
       return;
     }
     if (mode) {

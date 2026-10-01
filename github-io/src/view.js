@@ -147,6 +147,11 @@ export class WorldView {
       transparent: true,
       opacity: 0.24,
       depthWrite: false,
+      // The blob lies at y=0.07, level with building base plates; biased, the plates always
+      // win the tie instead of flickering through it (Eco/phone mode draws these blobs).
+      polygonOffset: true,
+      polygonOffsetFactor: 1,
+      polygonOffsetUnits: 2,
     });
     this.contactShadowGeometries = new Map();
     this.resize();
@@ -435,7 +440,10 @@ export class WorldView {
       }
       groundGeometry.computeVertexNormals();
     }
-    const ground = mesh(groundGeometry, mat(0xffffff, { map: texture }));
+    // Depth bias: building bases, pads and decals sit level with (or millimetres above) the
+    // ground, which z-fights and blinks, worst on phones' coarser depth buffers. The biased
+    // ground always loses those ties.
+    const ground = mesh(groundGeometry, mat(0xffffff, { map: texture, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 4 }));
     ground.rotation.x = -Math.PI / 2;
     ground.castShadow = false;
     this.terrainRoot.add(ground);
@@ -537,7 +545,8 @@ export class WorldView {
         pz = (24 + offset) * side;
       const pad = mesh(
         new THREE.CylinderGeometry(6.2, 6.2, 0.04, 8),
-        mat(0x6a7262),
+        // The core's base plates stand 4 mm above this pad: biased, the pad always loses.
+        mat(0x6a7262, { polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 2 }),
         px,
         0.025,
         pz,

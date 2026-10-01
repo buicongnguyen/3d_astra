@@ -74,7 +74,9 @@ test("river footprint and swept checks block water but permit every crossing", (
       true,
     );
   assert.ok(t.placement(22, 0, 2));
-  assert.ok(t.placement(22, 8, 2));
+  assert.ok(t.placement(22, 8, 2), "bridge approaches stay clear");
+  assert.equal(t.placement(40, 8, 2), "", "away from crossings, structures may stand near the bank");
+  assert.ok(t.placement(40, 7, 2), "but never on the bank");
   assert.equal(t.placement(22, 14, 2), "");
 });
 test("navigation retains river restrictions on rebuild and bullets may cross water", () => {

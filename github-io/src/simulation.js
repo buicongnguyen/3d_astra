@@ -418,14 +418,14 @@ export class Simulation {
       return "Outside the buildable area.";
     if (!this.isVisible({ x, z }, team))
       return "Explore this area before building.";
-    if (this.entities.some((w) => w.kind === "wall" && w.hp > 0 && Math.hypot(x - w.x, z - w.z) < d.radius + w.radius + 1))
+    if (this.entities.some((w) => w.kind === "wall" && w.hp > 0 && Math.hypot(x - w.x, z - w.z) < d.radius + w.radius + 0.5))
       return "A concrete wall blocks this location.";
     if (
       this.entities.some(
         (e) =>
           e.hp > 0 &&
           e.kind === "building" &&
-          Math.hypot(x - e.x, z - e.z) < d.radius + e.radius + 1.5,
+          Math.hypot(x - e.x, z - e.z) < d.radius + e.radius + 0.8,
       )
     )
       return "Too close to another structure.";
@@ -433,7 +433,7 @@ export class Simulation {
       this.resources.some(
         (e) =>
           e.amount > 0 &&
-          Math.hypot(x - e.x, z - e.z) < d.radius + e.radius + 1.5,
+          Math.hypot(x - e.x, z - e.z) < d.radius + e.radius + 1,
       )
     )
       return "Keep resource deposits clear.";
@@ -442,6 +442,7 @@ export class Simulation {
         (e) =>
           e.hp > 0 &&
           e.kind === "unit" &&
+          e.team !== team &&
           Math.hypot(x - e.x, z - e.z) < d.radius + e.radius + 0.3,
       )
     )
@@ -453,6 +454,19 @@ export class Simulation {
       return `Requires a completed ${D[d.requires].name}.`;
     if (!this.canPay(team, d.cost)) return "Insufficient resources.";
     return "";
+  }
+  // The nearest valid site to (x, z) within a few metres, or null: a tap just beside a blocked
+  // spot still builds instead of refusing.
+  findPlacement(type, team, x, z, reach = 6) {
+    if (!this.placement(type, team, x, z)) return { x, z };
+    for (let r = 0.75; r <= reach; r += 0.75) {
+      const steps = Math.max(12, Math.round(r * 6));
+      for (let i = 0; i < steps; i++) {
+        const a = (i / steps) * Math.PI * 2, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r;
+        if (!this.placement(type, team, px, pz)) return { x: px, z: pz };
+      }
+    }
+    return null;
   }
   build(workerId, type, x, z) {
     const w = this.get(workerId);
@@ -467,17 +481,16 @@ export class Simulation {
       this.message("The Harvester cannot reach that site.", w.team);
       return null;
     }
-    // Prevent trapping units inside a new footprint, including enemy units.
-    if (
-      this.entities.some(
-        (e) =>
-          e.hp > 0 &&
-          e.kind === "unit" &&
-          Math.hypot(x - e.x, z - e.z) < D[type].radius + e.radius + 0.3,
-      )
-    ) {
-      this.message("Units are standing in the construction footprint.", w.team);
-      return null;
+    // Never trap units inside a new footprint: own units standing there step out to its edge
+    // (enemy units already refuse the placement).
+    for (const e of this.entities) {
+      if (e.hp <= 0 || e.kind !== "unit") continue;
+      const dx = e.x - x, dz = e.z - z, d = Math.hypot(dx, dz), clear = D[type].radius + e.radius + 0.35;
+      if (d >= clear) continue;
+      const a = d > 1e-3 ? Math.atan2(dz, dx) : e.id;
+      e.x = x + Math.cos(a) * clear;
+      e.z = z + Math.sin(a) * clear;
+      e.path = [];
     }
     this.pay(w.team, D[type].cost);
     const b = this.spawn(type, w.team, x, z, false);

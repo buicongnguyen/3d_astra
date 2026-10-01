@@ -9,7 +9,10 @@ const legalSite = s => {
   for (const r of [10, 17])
     for (let i = 0; i < 12; i++) {
       const x = hq.x + Math.cos(i / 6 * Math.PI) * r, z = hq.z + Math.sin(i / 6 * Math.PI) * r;
-      if (!s.placement('relay', 1, x, z)) return s.spawn('relay', 1, x, z, false);
+      // No unit on the spot either: own units no longer block placement (sim.build moves them
+      // aside), but these scenarios need a site nobody is already standing at.
+      const occupied = s.entities.some(e => e.kind === 'unit' && e.hp > 0 && Math.hypot(e.x - x, e.z - z) < 4);
+      if (!occupied && !s.placement('relay', 1, x, z)) return s.spawn('relay', 1, x, z, false);
     }
 };
 
