@@ -66,7 +66,9 @@ jobs:
           - name: construction
             scripts: mobile-construction patrol repair-rally
           - name: feedback
-            scripts: activity status-layout visual-combat
+            scripts: activity status-layout
+          - name: visuals
+            scripts: visual-combat
     defaults:
       run:
         working-directory: github-io
