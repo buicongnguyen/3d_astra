@@ -175,7 +175,7 @@ export class WorldView {
           o.material.emissive.setHex(this.colors[team]);
       });
     }
-    for (const o of this.objects.values()) setTeamColor(o, this.colors[o.userData.team]);
+    for (const o of this.objects.values()) if (o.userData.team >= 0) setTeamColor(o, this.colors[o.userData.team]);
     for (const e of this.effects)
       if (e.team !== undefined)
         e.mesh.material.uniforms.color.value.setHex(this.colors[e.team], THREE.LinearSRGBColorSpace);
@@ -469,7 +469,8 @@ export class WorldView {
     // Placeholder obstacles until the Blender boulders load (EnvironmentView draws those).
     // The random sequence is consumed either way, so the scatter below is identical on
     // every build of a map regardless of when the models finished loading.
-    const placeholders = !this.environmentAssets?.getObjectByName("asset_rock_a"),
+    // Obstacles are concrete wall entities now; no placeholder boulders are drawn.
+    const placeholders = false,
       topMat = placeholders ? mat(0x888872) : null;
     this.placeholderRocks = new THREE.Group();
     this.terrainRoot.add(this.placeholderRocks);
@@ -727,9 +728,43 @@ export class WorldView {
     }
     return best;
   }
+  // Concrete wall: three crossing slabs with hazard-striped caps, built once at radius 1 and
+  // scaled per wall, so every wall shares two batches (entity-batches.js).
+  wallTemplate() {
+    if (this.wallParts) return this.wallParts;
+    const concrete = new THREE.MeshStandardMaterial({ color: 0xa9a59b, roughness: 0.94, name: "Concrete" });
+    const trim = new THREE.MeshStandardMaterial({ color: 0x6f6c66, roughness: 0.9, name: "WallTrim" });
+    const slabs = [], caps = [];
+    for (const [angle, length] of [[0, 1.9], [Math.PI / 3, 1.75], [-Math.PI / 3, 1.6]]) {
+      const slab = new THREE.BoxGeometry(length, 1.45, 0.42).translate(0, 0.72, 0);
+      // Darker weathered caps and a hazard band low on each slab.
+      const cap = new THREE.BoxGeometry(length + 0.04, 0.12, 0.46).translate(0, 1.5, 0);
+      const band = new THREE.BoxGeometry(length + 0.02, 0.14, 0.44).translate(0, 0.42, 0);
+      for (const g of [slab, cap, band]) g.rotateY(angle);
+      slabs.push(slab);
+      caps.push(cap, band);
+    }
+    // A low footing ring fills the obstacle's footprint.
+    slabs.push(new THREE.CylinderGeometry(0.98, 1, 0.22, 10).translate(0, 0.11, 0));
+    this.wallParts = [
+      new THREE.Mesh(mergeGeometries(slabs.map((g) => g.toNonIndexed()), false), concrete),
+      new THREE.Mesh(mergeGeometries(caps.map((g) => g.toNonIndexed()), false), trim),
+    ];
+    for (const m of this.wallParts) m.castShadow = m.receiveShadow = true;
+    return this.wallParts;
+  }
+  createWallModel(e) {
+    const model = new THREE.Group(), inner = new THREE.Group();
+    for (const part of this.wallTemplate()) inner.add(part.clone());
+    inner.rotation.y = (e.x * 0.37 + e.z * 0.61) % Math.PI;
+    inner.scale.set(e.radius, 1, e.radius);
+    model.add(inner);
+    adoptBatchedParts(model);
+    return model;
+  }
   createEntity(e) {
     const root = new THREE.Group(),
-      model = this.teamTemplates.get(`${e.type}-${e.team}`).clone(true);
+      model = e.kind === "wall" ? this.createWallModel(e) : this.teamTemplates.get(`${e.type}-${e.team}`).clone(true);
     root.add(model);
     // Shared per radius, so every blob shadow joins one batch.
     let shadowGeometry = this.contactShadowGeometries.get(e.radius);
@@ -753,10 +788,11 @@ export class WorldView {
     });
     // Selection ring and vitals bar (health, damage ghost, shield, level pips): one shader
     // mesh each, see selection-view.js.
-    const ring = createRing(e.radius, this.colors[e.team]);
+    const side = e.team >= 0 ? this.colors[e.team] : 0xb8b2a4; // walls are neutral grey
+    const ring = createRing(e.radius, side);
     root.add(ring);
     root.userData.ring = ring;
-    const bar = createBar(e, this.colors[e.team]);
+    const bar = createBar(e, side);
     root.add(bar);
     root.userData.bar = bar;
     this.scene.add(root);

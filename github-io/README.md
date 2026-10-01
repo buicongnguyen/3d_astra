@@ -8,6 +8,8 @@ The **Riverlands** update adds saved army colors, graphics/audio settings, varie
 
 The start screen, Settings and phone HUD share one design system. Blender-rendered key art, an emblem, and unit and building portraits are rendered from the game's own models and tinted with your army colour; every button and label stays HTML so it scales, translates and reads aloud. See [the UI redesign](docs/UI_REDESIGN.md).
 
+The old boulders are now concrete walls: they block movement and fire, nothing shoots them on its own, and an ordered attack brings one down after sustained fire, opening a new route. Every map also has ten more contested alloy and energy deposits in the middle lanes.
+
 Every battlefield is alive with small, cheap details: gulls, hawks, vultures and geese overhead with shadows sweeping the ground, butterflies, dragonflies, fish in the rivers, and drifting ash, dust, pollen, fireflies or embers. Units are drawn in instanced batches (a 60-unit phone battle went from 641 to 174 draw calls), and a frame-time governor calms, then stills, those details on devices that struggle. See [living battlefields and phone performance](docs/LIFE_AND_PERFORMANCE.md).
 
 Combat renders in 3D: muzzle flashes, tracers, shells, rocket trails, sparks, explosions with debris and scorch marks, burning machines and buildings, and buildings that collapse into the ground. Selection uses animated ground rings, segmented health bars with a damage ghost, and a selection panel with live unit vitals. See [combat feedback, destruction and selection](../COMBAT_FEEDBACK.md). Nothing is drawn beyond the playable map edge.

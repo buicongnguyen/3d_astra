@@ -52,7 +52,7 @@ export class EnvironmentView {
     this.lastTime = 0;
     this.owned=[];
     // Everything drawn here lies inside the map; the area beyond the edge stays empty.
-    this.rocks(assets);
+    // The old boulder obstacles are concrete walls now, drawn as entities (view.js).
     if (!terrain.river) return;
     const waterMat = new THREE.MeshStandardMaterial({
       color: 0x428a94,

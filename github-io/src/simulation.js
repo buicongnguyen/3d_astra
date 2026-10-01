@@ -14,6 +14,15 @@ import { progression } from "./progression.js";
 import { AI_SPEEDS, coalitionPlan, roleOf } from "./ai-plan.js";
 import { Terrain } from "./terrain.js";
 
+export const NEUTRAL = -1;
+// Contested middle-lane deposits on every map: [type, x, z, amount], mirrored for the rival.
+const MIDFIELD_DEPOSITS = [
+  ["alloy", 14, 27, 2500],
+  ["alloy", 18, 27, 2500],
+  ["energy", 16, 32, 2000],
+  ["alloy", -42, 9, 2500],
+  ["energy", -38, 12, 2000],
+];
 export class Simulation {
   constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null } = {}) {
     this.aiEnabled = ai;
@@ -87,6 +96,16 @@ export class Simulation {
       !this.entities.some(e => e.kind === "building" && distance(e, r) < e.radius + r.radius + 2) &&
       ![...startingDeposits].some(other => distance(other, r) < other.radius + r.radius + 1)
     ));
+    // More contested deposits in the middle lanes of every map, mirrored for fairness.
+    for (const side of [1, -1]) {
+      for (const [type, x, z, amount] of MIDFIELD_DEPOSITS) {
+        // Extra rival bases (two or three enemies) take precedence over a midfield deposit.
+        if (this.entities.some((e) => e.kind === "building" && Math.hypot(e.x - x * side, e.z - z * side) < e.radius + 6)) continue;
+        this.resource(type, x * side, z * side, amount);
+      }
+    }
+    // Concrete walls stand where the boulders were (see spawnWall).
+    for (const [x, z, r] of ROCKS) this.spawnWall(x, z, r);
     // Initial deployment locations are public; later cores require scouting.
     this.knownCores = this.players.map((_, team) => new Map(this.entities
       .filter(e => e.type === "hq" && this.hostile(team, e.team))
@@ -164,6 +183,24 @@ export class Simulation {
     this.entities.push(e);
     return e;
   }
+  // Concrete walls: neutral obstacles that block movement and fire until enough shots bring
+  // them down. Nothing auto-targets them; players attack them with an explicit order.
+  spawnWall(x, z, radius) {
+    const hp = Math.round(260 * radius);
+    const e = {
+      type: "wall", kind: "wall", name: "Concrete wall", id: this.nextId++, team: NEUTRAL, x, z, radius,
+      description: "Reinforced concrete. Blocks movement and fire; attack it to break through.",
+      hp, maxHp: hp, shield: 0, maxShield: 0, shieldDelay: 0, level: 1, levelJob: null, complete: true, progress: 1,
+      orders: [], path: [], pathClock: 0, cooldown: 0, target: null, carry: 0, carryType: null, resource: null,
+      queue: [], rally: null, angle: 0, moving: false, work: 0, working: false, vision: 0,
+    };
+    this.entities.push(e);
+    return e;
+  }
+  // Explicit attack orders may target enemies or neutral walls.
+  attackable(team, t) {
+    return !!t && (this.hostile(team, t.team) || t.team === NEUTRAL);
+  }
   get(id) {
     return (
       this.entities.find((e) => e.id === id && e.hp > 0) ||
@@ -200,7 +237,7 @@ export class Simulation {
   }
   // Teams at war. In a coalition the AI teams (1+) are allies against the player.
   hostile(a, b) {
-    return a !== b && a !== undefined && b !== undefined && !(this.coalition && a > 0 && b > 0);
+    return a !== b && a >= 0 && b >= 0 && !(this.coalition && a > 0 && b > 0);
   }
   isVisible(e, team = 0) {
     const [x, z] = this.nav.cellAt(e.x, e.z);
@@ -269,7 +306,7 @@ export class Simulation {
       const target = order.target ? this.get(order.target) : null;
       if (
         order.type === "attack" &&
-        (!target || target.kind === "resource" || !this.hostile(e.team, target.team))
+        (!target || target.kind === "resource" || !this.attackable(e.team, target))
       )
         continue;
       if (order.type === "gather" && target?.kind !== "resource") continue;
@@ -381,10 +418,8 @@ export class Simulation {
       return "Outside the buildable area.";
     if (!this.isVisible({ x, z }, team))
       return "Explore this area before building.";
-    if (
-      ROCKS.some(([rx, rz, r]) => Math.hypot(x - rx, z - rz) < d.radius + r + 1)
-    )
-      return "Terrain blocks this location.";
+    if (this.entities.some((w) => w.kind === "wall" && w.hp > 0 && Math.hypot(x - w.x, z - w.z) < d.radius + w.radius + 1))
+      return "A concrete wall blocks this location.";
     if (
       this.entities.some(
         (e) =>
@@ -635,7 +670,7 @@ export class Simulation {
       !t ||
       !Number.isFinite(t.hp) ||
       t.hp <= 0 ||
-      !this.hostile(e.team, t.team) ||
+      !this.attackable(e.team, t) ||
       !this.isVisible(t, e.team)
     )
       return false;

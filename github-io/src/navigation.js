@@ -14,9 +14,12 @@ export class Navigation {
   worldAt(x,z) { return this.terrain.worldAt(x,z); }
   rebuild(entities) {
     this.revision++;
-    this.obstacles = ROCKS.map(([x, z, r]) => ({ x, z, radius: r }));
+    // Concrete walls (where the boulders were) block until destroyed. Before the simulation
+    // has spawned them, the boulder positions stand in.
+    const walls = entities.some((e) => e.kind === "wall");
+    this.obstacles = walls ? [] : ROCKS.map(([x, z, r]) => ({ x, z, radius: r }));
     this.obstacles.push(
-      ...entities.filter((e) => e.hp > 0 && e.kind === "building"),
+      ...entities.filter((e) => e.hp > 0 && (e.kind === "building" || e.kind === "wall")),
     );
     this.blocked.fill(0);
     this.clearance.clear();

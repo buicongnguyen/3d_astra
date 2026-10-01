@@ -116,7 +116,8 @@ export function createBar(e, hex) {
     vertexShader: PLAIN, fragmentShader: BAR, transparent: true, depthTest: false, depthWrite: false,
   });
   const bar = new THREE.Mesh(new THREE.PlaneGeometry(size.x, size.y), material);
-  bar.position.y = building ? 5.4 : 2.95;
+  bar.position.y = building ? 4.9 : 2.55;
+  bar.scale.setScalar(building ? 0.58 : 0.62); // compact plates leave the battlefield visible
   bar.renderOrder = 10;
   bar.visible = false;
   bar.userData = { ghost: 1, last: 1, hold: 0 };

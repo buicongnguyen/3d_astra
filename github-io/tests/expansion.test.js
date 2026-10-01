@@ -7,7 +7,7 @@ test('seven stages have symmetric reachable reserves and correctly sized fog/nav
  for(const [id,m] of Object.entries(maps)){
   const s=new Simulation({ai:false,map:id});
   assert.equal(s.visible[0].length,(m.size/2)**2);
-  assert.equal(s.resources.length,12+m.sites.length*6);
+  assert.equal(s.resources.length,22+m.sites.length*6); // 12 base reserves + 10 midfield deposits
   for(const r of s.resources){
    assert.ok(s.resources.some(other=>other.type===r.type&&other.x===-r.x&&other.z===-r.z&&other.amount===r.amount),id+' mirrored reserves');
    assert.ok(s.nav.canStand(r.x,r.z,r.radius),id+' clear deposit');

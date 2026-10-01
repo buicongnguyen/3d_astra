@@ -448,3 +448,32 @@ input:focus-visible {
 :root:not(.compact-ui) .brand-sub { font-size: 10px; }
 #mission-objectives .objective small { font-size: 11px; }
 .objective-num { font-size: 11px; }
+
+/* ---------- More battlefield on screen ---------- */
+/* Desktop: a slimmer top bar. */
+:root:not(.compact-ui) { --top-height: 42px; }
+/* Portrait phones and tablets in a match: a slimmer header and dock tabs; the map-name row
+   goes (the name is on the start screen) and Objectives becomes a flag button in the top bar,
+   so the toolbar sits right under the header and the battlefield starts below it. */
+@media (max-aspect-ratio: 1.35) {
+  .compact-ui:not(.in-briefing) { --header-height: 86px; --tabs-height: 44px; }
+  .compact-ui:not(.in-briefing) .topbar { grid-template-rows: 46px 40px; }
+  .compact-ui:not(.in-briefing) .brand-name,
+  .compact-ui:not(.in-briefing) .map-heading { display: none; }
+  .compact-ui:not(.in-briefing) .brand { justify-self: start; flex: 0 0 auto; width: 48px; }
+  .compact-ui:not(.in-briefing) #mission-toggle {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 1px);
+    left: calc(env(safe-area-inset-left, 0px) + 60px); /* between the 48 px logo link and the top actions */
+    right: auto;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    font-size: 0;
+    z-index: 30;
+  }
+  .compact-ui:not(.in-briefing) #mission-toggle .icon { width: 19px; height: 19px; }
+  .compact-ui:not(.in-briefing) .touch-controls { top: 2px; }
+  .compact-ui:not(.in-briefing) #world { top: 48px; }
+  .compact-ui:not(.in-briefing).objectives-open #mission-objectives { top: 4px; left: 8px; right: auto; }
+}

@@ -635,10 +635,11 @@ function minimap() {
   ctx.moveTo(px(-25), pz(24));
   ctx.lineTo(px(25), pz(-24));
   if (sim.terrain.id === "classic") ctx.stroke();
-  for (const [x, z, r] of ROCKS) {
-    ctx.fillStyle = "#263c33";
+  for (const wall of sim.entities) {
+    if (wall.kind !== "wall" || wall.hp <= 0) continue;
+    ctx.fillStyle = "#8d8a80";
     ctx.beginPath();
-    ctx.arc(px(x), pz(z), (r / MAP_SIZE) * w, 0, Math.PI * 2);
+    ctx.arc(px(wall.x), pz(wall.z), (wall.radius / MAP_SIZE) * w, 0, Math.PI * 2);
     ctx.fill();
   }
   for (let z = 0; z < GRID; z++)
@@ -676,7 +677,7 @@ function minimap() {
     }
   }
   for (const e of sim.entities)
-    if (sim.isVisible(e)) {
+    if (e.team >= 0 && sim.isVisible(e)) {
       ctx.fillStyle = palette(settings)[e.team];
       const r = e.kind === "building" ? 3.5 : selected.has(e.id) ? 2.5 : 1.6;
       ctx.beginPath();
@@ -743,8 +744,8 @@ function commandAt(point, target, append = false, forced = null) {
     view.marker(target.x,target.z); tone(440); return true;
   }
   if (forced === 'attack') {
-    if (!target || target.kind === 'resource' || !(target.team > 0) || !sim.isVisible(target)) {
-      $("mode-banner").textContent = 'ATTACK · Choose a visible enemy unit or building';
+    if (!target || target.kind === 'resource' || !(target.team > 0 || target.kind === 'wall') || !sim.isVisible(target)) {
+      $("mode-banner").textContent = 'ATTACK · Choose a visible enemy or a concrete wall';
       return false;
     }
     sim.issue(units.filter(e => e.damage > 0).map(e => e.id), { type: 'attack', target: target.id }, append);
@@ -772,7 +773,7 @@ function commandAt(point, target, append = false, forced = null) {
     return;
   }
   let order = { type: forced || "move", ...point };
-  if ((!forced || forced==='attackmove') && target?.team > 0 && sim.isVisible(target))
+  if ((!forced || forced==='attackmove') && (target?.team > 0 || target?.kind === 'wall') && sim.isVisible(target))
     order = { type: "attack", target: target.id };
   if(order.type==='attack'){
     sim.issue(units.filter(e=>e.damage>0).map(e=>e.id),order,append);
