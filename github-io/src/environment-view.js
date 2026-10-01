@@ -257,9 +257,11 @@ export class EnvironmentView {
   }
   update(sim, dt) {
     if (!this.water) return;
-    const active = sim.time !== this.lastTime;
-    dt = Math.max(0, Math.min(0.25, sim.time - this.lastTime));
-    this.lastTime = sim.time;
+    // Animate on the smooth frame clock: the 20 Hz simulation clock stepped the ripples and
+    // made the water flicker between ticks. dt is 0 while paused.
+    dt = Math.max(0, Math.min(0.25, dt));
+    const active = dt > 0;
+    this.clock = (this.clock || 0) + dt;
     if (this.motion && active) {
       const p = this.water.geometry.attributes.position;
       for (let i = 0; i < p.count; i++)
@@ -268,12 +270,12 @@ export class EnvironmentView {
           Math.sin(
             this.waterBase[i * 3] * 1.5 +
               this.waterBase[i * 3 + 1] * 2 +
-              sim.time * 1.6,
+              this.clock * 1.6,
           ) *
             0.018;
       p.needsUpdate = true;
-      this.normalTexture.offset.x = sim.time * 0.018;
-      this.normalTexture.offset.y = sim.time * 0.007;
+      this.normalTexture.offset.x = this.clock * 0.018;
+      this.normalTexture.offset.y = this.clock * 0.007;
     }
     this.particleMesh.visible = this.motion && this.settings.detail;
     if (!active || !this.particleMesh.visible) return;

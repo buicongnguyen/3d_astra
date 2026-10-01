@@ -477,3 +477,19 @@ input:focus-visible {
   .compact-ui:not(.in-briefing) #world { top: 48px; }
   .compact-ui:not(.in-briefing).objectives-open #mission-objectives { top: 4px; left: 8px; right: auto; }
 }
+
+/* ---------- Phones: a little smaller large text, and a battlefield that never resizes ---------- */
+.compact-ui .resource strong { font-size: 15px; }
+.compact-ui .resource strong em { font-size: 12px; }
+.compact-ui:not(.in-briefing) #dock-tabs button { font-size: 13px; }
+.compact-ui .upgrade-actions button { font-size: 13px; }
+.compact-ui #notice { font-size: 12px; padding: 7px 10px; }
+.compact-ui .selection-panel.has-entity .selection-heading h3 { font-size: 14px; }
+/* Switching Selection / Actions used to change the dock height, which resized the 3D view and
+   flickered. The view now always reserves the tallest dock; a taller panel simply overlaps. */
+@media (max-aspect-ratio: 1.35) {
+  .compact-ui:not(.in-briefing) #world { bottom: calc(202px + var(--tabs-height) + var(--safe-bottom)); }
+}
+@media (max-aspect-ratio: 1.35) {
+  .compact-ui:not(.in-briefing) { --dock-height: 202px; }
+}

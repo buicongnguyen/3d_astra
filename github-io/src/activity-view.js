@@ -36,12 +36,13 @@ export class ActivityView {
   }
   badge(p, progress, color) {
     const c = this.ctx;
-    const width=59;
+    // Compact ten-step strip (34 x 3 px cells), small enough to sit over a unit unobtrusively.
+    const width=34;
     if (p.x < -width || p.x > this.view.width+width || p.y < -40 || p.y > this.view.height+40) return;
-    c.fillStyle = '#0b1c20'; c.fillRect(p.x-width/2-2,p.y-2,width+4,9);
+    c.fillStyle = '#0b1c20'; c.fillRect(p.x-width/2-1.5,p.y-1.5,width+3,6);
     for(let i=0;i<10;i++){
       c.fillStyle=i<Math.ceil(Math.max(0,Math.min(1,progress))*10)?color:'#304a3a';
-      c.fillRect(p.x-width/2+i*6,p.y,5,5);
+      c.fillRect(p.x-width/2+i*3.4,p.y,2.8,3);
     }
   }
   draw(sim,dt,selected,hover) {
