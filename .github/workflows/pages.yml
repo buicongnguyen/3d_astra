@@ -39,7 +39,7 @@ jobs:
     name: Browser checks (${{ matrix.name }})
     needs: build
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       max-parallel: 8
@@ -66,7 +66,9 @@ jobs:
           - name: construction
             scripts: mobile-construction patrol repair-rally
           - name: feedback
-            scripts: activity status-layout
+            scripts: activity
+          - name: layout
+            scripts: status-layout
           - name: visuals
             scripts: visual-combat
     defaults:
