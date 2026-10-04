@@ -483,6 +483,7 @@ export class Simulation {
     }
     // Never trap units inside a new footprint: own units standing there step out to its edge
     // (enemy units already refuse the placement).
+    const moved = [];
     for (const e of this.entities) {
       if (e.hp <= 0 || e.kind !== "unit") continue;
       const dx = e.x - x, dz = e.z - z, d = Math.hypot(dx, dz), clear = D[type].radius + e.radius + 0.35;
@@ -491,10 +492,26 @@ export class Simulation {
       e.x = x + Math.cos(a) * clear;
       e.z = z + Math.sin(a) * clear;
       e.path = [];
+      moved.push({ e, a, clear });
     }
     this.pay(w.team, D[type].cost);
     const b = this.spawn(type, w.team, x, z, false);
     this.nav.rebuild(this.entities);
+    // The edge push may land beside a neighbour, wall or water: take the first standable spot
+    // on widening rings around the site (keeps the plain push when nothing is clear).
+    for (const { e, a, clear } of moved) {
+      if (this.nav.canStand(e.x, e.z, e.radius)) continue;
+      search: for (let r = clear; r <= clear + 4; r += 0.6) {
+        for (let k = 0; k < 16; k++) {
+          const ang = a + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * (Math.PI / 8);
+          const px = x + Math.cos(ang) * r, pz = z + Math.sin(ang) * r;
+          if (!this.nav.canStand(px, pz, e.radius)) continue;
+          e.x = px;
+          e.z = pz;
+          break search;
+        }
+      }
+    }
     this.issue([w.id], { type: "build", target: b.id });
     this.message(`${b.name} construction started.`, w.team);
     return b;
@@ -955,6 +972,11 @@ export class Simulation {
       }
       this.issue([builder.id], { type: "build", target: site.id });
     }
+    // Save alloy for the Command core upgrade once it is due; otherwise training and
+    // builds spend every alloy as it arrives and tech never gets afforded.
+    const hqDue = this.time > pace.techAt[0] && hq && !hq.levelJob && workers.length >= Math.min(9, pace.workers) && hq.level < (this.time > pace.techAt[1] ? 3 : 2);
+    const reserve = hqDue ? this.levelCost(hq)[0] : 0;
+    const afford = (cost) => this.canPay(team, [cost[0] + reserve, cost[1]]);
     const pop = this.population(team);
     const want = !own.some((e) => e.type === "barracks")
       ? "barracks"
@@ -970,7 +992,7 @@ export class Simulation {
               : null;
     if (
       want &&
-      this.canPay(team, D[want].cost) &&
+      afford(D[want].cost) &&
       !own.some((e) => !e.complete) &&
       workers.length
     ) {
@@ -992,7 +1014,7 @@ export class Simulation {
       (e) => e.complete && ["barracks", "foundry"].includes(e.type),
     )) {
       if (b.levelJob) continue;
-      if (b.level < this.techLevel(team) && this.time > pace.upgradeAt && this.canPay(team,this.levelCost(b))) {
+      if (b.level < this.techLevel(team) && this.time > pace.upgradeAt && afford(this.levelCost(b))) {
         if (!b.queue.length) this.upgradeBuilding(b.id,team);
         continue;
       }
@@ -1006,7 +1028,7 @@ export class Simulation {
         if (b.level >= 2 && army.filter(e => e.type === support).length < 2) choice = support;
         const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : ['breaker'])])];
         const pop = this.population(team);
-        const affordable = choices.find(type => b.level >= (D[type].required_level || 1) && this.canPay(team,D[type].cost) && pop.used+pop.reserved+D[type].pop <= pop.cap);
+        const affordable = choices.find(type => b.level >= (D[type].required_level || 1) && afford(D[type].cost) && pop.used+pop.reserved+D[type].pop <= pop.cap);
         if (affordable) this.enqueue(b.id,affordable);
       }
     }
@@ -1102,7 +1124,15 @@ export class Simulation {
         }
       } else if (o.type === "attackmove") {
         // A target with no reachable firing position is passed by; the advance continues.
-        const t = this.enemy(e, 12);
+        let t = this.enemy(e, 12);
+        // A chase that stalls (no path to the target) is dropped for a while so the advance resumes.
+        if (t && o.skip && o.skip.id === t.id && this.time < o.skip.until) t = null;
+        if (t && e.stalled > 3) {
+          o.skip = { id: t.id, until: this.time + 8 };
+          e.stalled = 0;
+          e.path = [];
+          t = null;
+        }
         if ((!t || !this.fight(e, t, dt)) && this.move(e, o, dt, 1.2)) this.finish(e);
       } else if (o.type === 'patrol') {
         if (this.move(e, o, dt, 1.2)) {

@@ -84,7 +84,8 @@ void main() {
 
 class Layer {
   constructor(capacity, blending, renderOrder, texture) {
-    this.capacity = capacity;
+    this.capacity = capacity; // allocated size; `share` scales the live cap with quality
+    this.share = () => 1;
     this.items = [];
     const quad = new THREE.PlaneGeometry(1, 1);
     const g = new THREE.InstancedBufferGeometry();
@@ -116,7 +117,7 @@ class Layer {
     quad.dispose();
   }
   add(p) {
-    if (this.items.length >= this.capacity) this.items.shift();
+    if (this.items.length >= Math.max(1, Math.round(this.capacity * this.share()))) this.items.shift();
     this.items.push(p);
     return p;
   }
@@ -160,15 +161,15 @@ export class Effects {
   constructor(view) {
     this.view = view;
     this.texture = atlas();
-    const scale = view.lowPower ? 0.5 : 1;
+    // Buffers are allocated at High size; the live cap follows view.lowPower so a quality switch needs no rebuild.
     this.decals = new Layer(48, THREE.NormalBlending, 1, this.texture);
-    this.smoke = new Layer(Math.round(420 * scale) || 1, THREE.NormalBlending, 5, this.texture);
-    this.glow = new Layer(Math.round(900 * scale) || 1, THREE.AdditiveBlending, 6, this.texture);
-    this.debrisCapacity = view.lowPower ? 24 : 64;
+    this.smoke = new Layer(420, THREE.NormalBlending, 5, this.texture);
+    this.glow = new Layer(900, THREE.AdditiveBlending, 6, this.texture);
+    this.smoke.share = this.glow.share = () => this.budget;
     this.debrisMesh = new THREE.InstancedMesh(
       new THREE.DodecahedronGeometry(0.16, 0),
       new THREE.MeshStandardMaterial({ color: 0x2c3230, roughness: 0.7, metalness: 0.3, emissive: 0x401a08, emissiveIntensity: 0.6 }),
-      this.debrisCapacity,
+      64,
     );
     this.debrisMesh.frustumCulled = false;
     this.debrisMesh.count = 1;
@@ -184,6 +185,7 @@ export class Effects {
     view.scene.add(this.root);
     this.dummy = new THREE.Object3D();
   }
+  get debrisCapacity() { return this.view.lowPower ? 24 : 64; }
   get motion() { return this.view.activity.combat.motion; }
   get budget() { return this.view.lowPower ? 0.5 : 1; }
   count(n) { return Math.max(1, Math.round(n * this.budget)); }
@@ -317,7 +319,7 @@ export class Effects {
     }
   }
   impact(e) {
-    const at = { x: e.x, y: e.building ? 2.2 : 1.1, z: e.z }, anchor = { x: e.x, z: e.z };
+    const at = { x: e.x, y: e.building ? 2.2 : 1.1, z: e.z }, anchor = { x: e.x, z: e.z, team: e.team };
     if (e.shield) {
       // Shield: a cyan ripple shell and flash where the round is stopped.
       this.particle(this.glow, { ...at, cell: CELL.ring, s0: e.building ? 2 : 1.1, s1: e.building ? 4.4 : 2.4, life: 0.3,
@@ -330,7 +332,7 @@ export class Effects {
     }
   }
   death(e) {
-    const anchor = { x: e.x, z: e.z };
+    const anchor = { x: e.x, z: e.z, team: e.team };
     if (e.building) {
       // Collapse: staged blasts across the footprint, a rolling dust wall, a smoke column,
       // debris and a large scorch; the model itself sinks in WorldView.

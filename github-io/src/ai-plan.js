@@ -55,8 +55,8 @@ export const coalitionPlan = {
         for (const e of raiders) e.raiding = true;
         this.issue(raiders.map(e => e.id), { type: 'attackmove', x: deposit.x, z: deposit.z });
         this.message('Scouts report enemy raiders heading for your Harvesters.');
+        this.raidAt = this.offensiveAt + this.pace.waveGap - 20;
       }
-      this.raidAt = this.offensiveAt + this.pace.waveGap - 20;
     }
     // Joint offensive: every allied AI with a force attacks together, so you are hit
     // from several sides at once. The shared timer advances once all AIs have acted.

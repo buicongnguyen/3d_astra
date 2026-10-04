@@ -416,7 +416,9 @@ function useGroup(key, assign=false, add=false) {
   if(assign) groups.set(key,[...selected]);
   else if(add) groups.set(key,[...new Set([...(groups.get(key)||[]),...selected])]);
   else {
-    setSelection((groups.get(key)||[]).filter(id=>sim.get(id)?.team===0));
+    const live=(groups.get(key)||[]).filter(id=>sim.get(id)?.team===0);
+    if(!live.length) { groups.delete(key); renderGroupStrip(); return; }
+    setSelection(live);
     if(lastGroup.key===key && performance.now()-lastGroup.time<400) focusSelection();
     lastGroup={key,time:performance.now()};
   }
@@ -665,7 +667,7 @@ function minimap() {
     if (e.team !== 0 && e.kind === "building" && sim.isVisible(e))
       rememberedBuildings.set(e.id, { x: e.x, z: e.z, radius: e.radius, team: e.team });
   for (const [id, e] of rememberedBuildings) {
-    if (sim.isVisible(e) && !sim.get(id)) {
+    if (sim.players[e.team]?.eliminated || (sim.isVisible(e) && !sim.get(id))) {
       rememberedBuildings.delete(id);
       continue;
     }
@@ -1110,6 +1112,8 @@ function bindInput() {
       if(e.target instanceof Element && e.target.closest('#mission-toggle'))return;
       // Before play, Space must activate the focused Start/Settings button.
       if(!started && e.target instanceof Element && e.target.closest('button'))return;
+      // Inside a modal, Space activates the focused button natively.
+      if(modalType && e.target instanceof Element && e.target.closest('#modal button'))return;
       e.preventDefault();if(!e.repeat) {keys.clear();if(modalType==='pause')closeModal();else if(!modalType)togglePause();}return;
     }
     if(modalType||!started||paused||sim.result)return;
@@ -1157,6 +1161,7 @@ function bindInput() {
   });
   $("minimap").addEventListener("contextmenu", (e) => {
     e.preventDefault();
+    if (e.pointerType === "touch") return;
     if(mode){clearMode();return;}
     const p = mapPoint(e);
     commandAt(p, null, e.shiftKey||queueOrders);
@@ -1165,7 +1170,7 @@ function bindInput() {
 
 function focusHome() {
   const hq = sim.own(0).find((e) => e.type === "hq");
-  if (hq) view.focusOn(hq.x + 5, hq.z - 5);
+  if (hq) view?.focusOn(hq.x + 5, hq.z - 5);
 }
 function closeModal() {
   $("modal").hidden = true;
@@ -1183,6 +1188,7 @@ function applyPreferences(value) {
   $("quality").textContent = settings.quality === "eco" ? "Eco" : "High";
   $("audio").innerHTML = icon(muted ? "muted" : "volume");
   $("audio").setAttribute("aria-label", muted ? "Enable sound" : "Mute sound");
+  $("audio").title = muted ? "Enable sound" : "Mute sound";
   document.documentElement.style.setProperty(
     "--team-friendly",
     palette(settings)[0],
@@ -1277,6 +1283,8 @@ function previewBattle() {
     ({ map: mapId, enemyCount, aiSpeed, alliance, bonus } = setup);
     sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus });
     view?.reset();
+    hover = null;
+    $("hover-label").hidden = true;
     if (terrain) view?.setTerrain(sim.terrain);
     selected.clear();
     rememberedBuildings.clear();
@@ -1389,6 +1397,8 @@ function nextStageNow() {
 }
 function newGame() {
   restart();
+  // restart() may have begun the tutorial, which mutates the sim; give the preview a clean one.
+  sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus });
   started = false;
   tutorial = null;
   activeStage = null;
@@ -1441,6 +1451,9 @@ $("start").onclick = () => {
   unlockAudio();
   sim = new Simulation({map:mapId,enemyCount,aiSpeed,alliance,playerBonus:bonus});
   view.reset();
+  focusHome();
+  hover = null;
+  $("hover-label").hidden = true;
   governor.reset();
   tutorial = null;
   activeStage = playMode === "campaign" ? stagePick : null;
@@ -1690,6 +1703,7 @@ function frame(now) {
   }
   uiClock -= dt;
   if (uiClock <= 0) {
+    if (hover && !sim.get(hover.id)) { hover = null; $("hover-label").hidden = true; }
     updateUI();
     minimap();
     uiClock = 0.15;

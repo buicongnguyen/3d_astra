@@ -24,7 +24,9 @@ const storage = () => { try { return globalThis.localStorage; } catch { return n
 export function loadProgress(store = storage()) {
   try {
     const cleared = JSON.parse(store?.getItem(KEY) || '{}').cleared;
-    return { cleared: cleared && typeof cleared === 'object' ? { ...cleared } : {} };
+    // Keep only finite, non-negative times; anything else is a corrupt entry.
+    const ok = cleared && typeof cleared === 'object' ? Object.entries(cleared).filter(([, v]) => typeof v === 'number' && Number.isFinite(v) && v >= 0) : [];
+    return { cleared: Object.fromEntries(ok) };
   } catch {
     return { cleared: {} };
   }
@@ -38,7 +40,7 @@ export const isUnlocked = (progress, index) => index === 0 || (index < STAGES.le
 // Best (shortest) clear time in seconds.
 export function recordClear(progress, index, time) {
   const id = STAGES[index].id, best = progress.cleared[id];
-  return { cleared: { ...progress.cleared, [id]: best === undefined ? time : Math.min(best, time) } };
+  return { cleared: { ...progress.cleared, [id]: !Number.isFinite(best) ? time : Math.min(best, time) } };
 }
 export const nextStage = (progress) => {
   const open = STAGES.findIndex((_, i) => isUnlocked(progress, i) && !isCleared(progress, i));

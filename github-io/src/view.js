@@ -104,11 +104,10 @@ export class WorldView {
     // crystals) real reflections. It is assigned per material (applyReflections()), not as
     // scene.environment: three.js would then override every material's envMapIntensity and
     // wash out the terrain, which is tuned for the sun and hemisphere light alone.
-    const pmrem = new THREE.PMREMGenerator(this.renderer),
-      room = new RoomEnvironment();
-    this.environmentMap = pmrem.fromScene(room, 0.04).texture;
-    room.dispose();
-    pmrem.dispose();
+    this.buildEnvironmentMap();
+    // A restored GL context keeps textures and programs (three.js re-uploads them) but not the
+    // PMREM render target's pixels, so the map is rendered again and reassigned.
+    this.renderer.domElement?.addEventListener?.('webglcontextrestored', () => this.restoreEnvironmentMap());
     this.ambientLight=new THREE.HemisphereLight(0xc1ddd7, 0x736145, 2.0);
     this.scene.add(this.ambientLight);
     const sun = new THREE.DirectionalLight(0xffe1b0, 3.2);
@@ -544,6 +543,18 @@ export class WorldView {
   // Reflections pay off on metal, glass and crystals. Matte paint, fabric and scenery gain
   // little, and the per-pixel environment lookup is the most expensive part of the model
   // shaders on weak GPUs and software renderers, so Eco quality skips it entirely.
+  buildEnvironmentMap() {
+    const pmrem = new THREE.PMREMGenerator(this.renderer),
+      room = new RoomEnvironment();
+    this.environmentMap = pmrem.fromScene(room, 0.04).texture;
+    room.dispose();
+    pmrem.dispose();
+  }
+  restoreEnvironmentMap() {
+    this.environmentMap?.dispose();
+    this.buildEnvironmentMap();
+    this.applyReflections();
+  }
   applyReflections() {
     const map = this.lowPower ? null : this.environmentMap;
     const apply = (o) => {
@@ -864,7 +875,7 @@ export class WorldView {
     const kind = event.building ? 'building' : event.heavy ? 'vehicle' : 'infantry';
     const model = o.userData.model;
     model.rotation.order = 'YXZ';
-    this.dying.push({ object: o, kind, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1),
+    this.dying.push({ object: o, kind, team: event.team, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1),
       life: { building: 2.8, vehicle: 2.6, infantry: 1.6 }[kind], baseY: model.rotation.y });
   }
   updateDying(sim, dt) {

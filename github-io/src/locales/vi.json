@@ -200,6 +200,8 @@
     "? Controls": "? Điều khiển",
     "Show controls": "Xem điều khiển",
     "Info & stats": "Thông tin",
+    "Selected object stats": "Chỉ số đối tượng đã chọn",
+    "Attack of first selected unit. Open Info & stats for unit details.": "Sức tấn công của đơn vị đầu tiên được chọn. Mở Thông tin để xem chi tiết đơn vị.",
     "Move": "Di chuyển",
     "Attack": "Tấn công",
     "Attack-move": "Tiến đánh",
@@ -559,6 +561,9 @@
     "Overcharged weapons is already queued.": "Cường hóa vũ khí đã nằm trong hàng chờ.",
     "Supply limit: construct a Relay.": "Hết quân số: hãy xây Trạm tiếp tế.",
     "Harvester cannot reach this site.": "Thợ mỏ không thể đến vị trí này.",
+    "Enemy reinforcements are moving to defend an allied base.": "Quân tiếp viện của địch đang đến bảo vệ căn cứ đồng minh.",
+    "An enemy army is marching on your base.": "Một đội quân địch đang tiến về căn cứ của bạn.",
+    "Order cleared.": "Đã xóa lệnh.",
     "Scouts report enemy raiders heading for your Harvesters.": "Trinh sát báo địch đang tập kích Thợ mỏ của bạn.",
     "Repair a damaged building (or right-click it) · costs a quarter of its price for a full repair": "Sửa công trình bị hư (hoặc nhấp phải vào nó). Sửa toàn bộ tốn một phần tư giá xây.",
     "Patrol between two points": "Tuần tra giữa hai điểm",
@@ -572,7 +577,33 @@
     "Start here": "Dành cho người mới",
     "Custom battle": "Trận tùy chỉnh",
     "Training lessons": "Các bài tập",
-    "Sentinel tower: L2 costs 75/25; L3 costs 150/50.": "Tháp pháo: cấp 2 tốn 75/25; cấp 3 tốn 150/50."
+    "Sentinel tower: L2 costs 75/25; L3 costs 150/50.": "Tháp pháo: cấp 2 tốn 75/25; cấp 3 tốn 150/50.",
+    "Paused": "Tạm dừng",
+    "Operation complete": "Chiến dịch hoàn tất",
+    "Choose your battlefield": "Chọn chiến trường của bạn",
+    "Operation active": "Chiến dịch đang diễn ra",
+    "All systems ready": "Mọi hệ thống sẵn sàng",
+    "Initialization failed": "Khởi tạo thất bại",
+    "Unable to initialize": "Không thể khởi tạo",
+    "Select Harvesters to repair a building.": "Chọn Thợ mỏ để sửa công trình.",
+    "No matching units or buildings.": "Không có quân hoặc công trình phù hợp.",
+    "BUILD: Q Relay · E Barracks · R Foundry · T Tower · Y Core": "XÂY: Q Trạm tiếp vận · E Doanh trại · R Nhà máy · T Tháp pháo · Y Sở chỉ huy",
+    "SUPPORT · Choose friendly infantry (Medic) or a building / vehicle (Engineer)": "HỖ TRỢ · Chọn bộ binh phe ta (Quân y) hoặc công trình / xe (Kỹ sư)",
+    "Rally point on the deposit: new Harvesters start mining.": "Điểm tập kết đặt trên mỏ: Thợ mỏ mới sẽ bắt đầu khai thác.",
+    "Rally point established.": "Đã đặt điểm tập kết.",
+    "Medic: select allied infantry. Engineer: select a completed building or vehicle.": "Quân y: chọn bộ binh phe ta. Kỹ sư: chọn công trình đã xây xong hoặc xe.",
+    "Select a unit, or use the Workers and Army buttons.": "Chọn một quân, hoặc dùng nút Thợ mỏ và Quân đội.",
+    "Tap Workers, then tap amber crystals. Drag to pan; pinch to zoom.": "Chạm Thợ mỏ, rồi chạm tinh thể hổ phách. Kéo để di chuyển; chụm để thu phóng.",
+    "Select Harvesters, then right-click amber crystals to start your economy.": "Chọn Thợ mỏ, rồi nhấp chuột phải vào tinh thể hổ phách để khởi động kinh tế.",
+    "Drag a box around your units. Tap Box again to return to panning.": "Kéo khung quanh quân của bạn. Chạm Khung lần nữa để quay lại kéo bản đồ.",
+    "Drag to pan the battlefield.": "Kéo để di chuyển chiến trường.",
+    "New commands will be queued.": "Lệnh mới sẽ được xếp hàng.",
+    "New commands replace existing orders.": "Lệnh mới thay thế lệnh hiện có.",
+    "Eco graphics: reduced resolution and simple shadows.": "Đồ họa Eco: giảm độ phân giải và bóng đơn giản.",
+    "High graphics: detailed shadows and higher resolution.": "Đồ họa High: bóng chi tiết và độ phân giải cao hơn.",
+    "The 3D engine could not start. Enable hardware acceleration and reload in a browser with WebGL 2 support.": "Không thể khởi động công cụ 3D. Hãy bật tăng tốc phần cứng và tải lại trong trình duyệt hỗ trợ WebGL 2.",
+    "Check your connection and WebGL support, then reload. All game assets must be served from the built site.": "Hãy kiểm tra kết nối và hỗ trợ WebGL, rồi tải lại. Mọi tài nguyên trò chơi phải được phục vụ từ trang đã xây dựng.",
+    "1 AI": "1 AI"
   },
   "patterns": [
     [
@@ -580,7 +611,7 @@
       "ĐẶT {1}"
     ],
     [
-      "^Joint offensive: (\\d+) enemy armies are attacking!$",
+      "^Joint offensive: (\\d+) enemy armies are attacking you from different sides!$",
       "Tiến công phối hợp: {1} đội quân địch đang đánh!"
     ],
     [
@@ -600,8 +631,40 @@
       "Hoàn thành {1} trước khi xây {2}."
     ],
     [
-      "^(.+) cleared\\.$",
+      "^([^.]+?) cleared\\.$",
       "Đã vượt qua {1}."
+    ],
+    [
+      "^Next: Stage (\\d+) · (.+?), (\\d+ AIs?.*)\\.$",
+      "Tiếp theo: Màn {1} · {2}, {3}."
+    ],
+    [
+      "^Control group (\\d+) assigned\\.$",
+      "Đã gán nhóm {1}."
+    ],
+    [
+      "^Control group (\\d+) extended\\.$",
+      "Đã thêm vào nhóm {1}."
+    ],
+    [
+      "^(.+?) · (\\d+) remaining\\. Select Harvesters to gather\\.$",
+      "{1} · còn {2}. Chọn Thợ mỏ để khai thác."
+    ],
+    [
+      "^Group (\\d+) · (\\d+) units? — click or press (\\d+) to recall, Ctrl-click to save, Shift-click to add$",
+      "Nhóm {1} · {2} quân — nhấp hoặc bấm {3} để gọi lại, Ctrl-nhấp để lưu, Shift-nhấp để thêm"
+    ],
+    [
+      "^(\\d+) AIs?$",
+      "{1} AI"
+    ],
+    [
+      "^(\\d+) AIs? allied$",
+      "{1} AI liên minh"
+    ],
+    [
+      "^(\\d+) AIs? FFA$",
+      "{1} AI tự do"
     ],
     [
       "^Next: (.+)$",
@@ -792,6 +855,10 @@
       "{1} không thể đánh. Dùng Hỗ trợ lên đồng minh."
     ],
     [
+      "^(.+) cannot reach its destination\\. Order cleared\\.$",
+      "{1} không thể đến đích. Đã xóa lệnh."
+    ],
+    [
       "^(.+) has no clear line of fire on that target\\. Order cleared\\.$",
       "{1} bị khuất đường bắn. Đã xóa lệnh."
     ],
@@ -804,12 +871,12 @@
       "Đã loại phe địch {1}: mọi Sở chỉ huy bị phá."
     ],
     [
-      "^Cancel (.+), queue item (\\d+), (\\d+)%, full refund(.*)$",
-      "Hủy {1}, mục {2}, {3}%, hoàn đủ tài nguyên{4}"
+      "^Cancel ([^,]+), queue item (\\d+), (\\d+)%, (full refund|75% refund)(, )?(.*)$",
+      "Hủy {1}, mục {2}, {3}%, {4}{5}{6}"
     ],
     [
-      "^Cancel (.+), (\\d+)%, (.+)$",
-      "Hủy {1}, {2}%, {3}"
+      "^Cancel ([^,]+), (\\d+)%, (full refund|75% refund)(, )?(.*)$",
+      "Hủy {1}, {2}%, {3}{4}{5}"
     ],
     [
       "^Cancel (.+) #(\\d+) · refund$",

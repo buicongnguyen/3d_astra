@@ -7,6 +7,7 @@ export class Navigation {
     this.grid = terrain.grid;
     this.blocked = new Uint8Array(this.grid * this.grid);
     this.revision = 0;
+    this.wallsSpawned = false;
     this.obstacles = [];
     this.clearance = new Map();
   }
@@ -16,8 +17,9 @@ export class Navigation {
     this.revision++;
     // Concrete walls (where the boulders were) block until destroyed. Before the simulation
     // has spawned them, the boulder positions stand in.
-    const walls = entities.some((e) => e.kind === "wall");
-    this.obstacles = walls ? [] : ROCKS.map(([x, z, r]) => ({ x, z, radius: r }));
+    // Latched: once walls have been seen, destroyed ones must not bring the boulders back.
+    if (entities.some((e) => e.kind === "wall")) this.wallsSpawned = true;
+    this.obstacles = this.wallsSpawned ? [] : ROCKS.map(([x, z, r]) => ({ x, z, radius: r }));
     this.obstacles.push(
       ...entities.filter((e) => e.hp > 0 && (e.kind === "building" || e.kind === "wall")),
     );
@@ -151,6 +153,15 @@ export class Navigation {
             continue;
           const next = (z + dz) * this.grid + x + dx;
           if (closed[next]) continue;
+          // Cell centres can both be clear while the segment between them clips an obstacle.
+          if (
+            !this.canTraverse(
+              this.worldAt(x, z),
+              this.worldAt(x + dx, z + dz),
+              radius,
+            )
+          )
+            continue;
           const score = g[current] + (dx && dz ? Math.SQRT2 : 1);
           if (score < g[next]) {
             g[next] = score;

@@ -19,7 +19,8 @@ try{
     await page.locator('#scenario').selectOption(id);
     await page.waitForFunction(id=>window.__frontier.sim.terrain.id===id,id);
     const state=await page.evaluate(()=>{const f=window.__frontier;return {size:f.sim.terrain.size,fog:f.view.fogImage.width,reserves:f.sim.resources.length,focus:f.view.focus.x};});
-    assert.equal(state.size,size);assert.equal(state.fog,size/2);assert.equal(state.reserves,22+sites*6); // Three.js adds 10 midfield depositsassert.ok(Math.abs(state.focus-(-20-offset))<2);
+    assert.equal(state.size,size);assert.equal(state.fog,size/2);assert.equal(state.reserves,22+sites*6); // Three.js adds 10 midfield deposits
+    assert.ok(Math.abs(state.focus-(-20-offset))<2);
    }else{
     await cmd({action:'stage',index});await cmd({action:'start',manual_clock:true});
     await page.waitForFunction(id=>window.frontierState.map_id===id,id);
