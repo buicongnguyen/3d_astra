@@ -97,7 +97,7 @@ export class Terrain {
     // never blocks a crossing; elsewhere structures may stand close to the bank.
     const approach = CROSSINGS.some((c) => Math.abs(x - c.x) < c.half + r + 1.5);
     if (this.river && Math.abs(z) < (approach ? 7 : 5.5) + r)
-      return "Keep water, banks and crossing approaches clear.";
+      return "Keep river banks and crossing approaches clear.";
     return "";
   }
 }

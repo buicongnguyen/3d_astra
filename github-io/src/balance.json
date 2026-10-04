@@ -40,7 +40,7 @@
       "time": 10,
       "icon": "shield",
       "counter": "ranger",
-      "description": "Fast armored fighter. Strong against Rangers and Anti-tank soldiers; weak against Breakers and Battle tanks.",
+      "description": "Fast armored fighter. Strong against Rangers; weak against Breakers and Battle tanks.",
       "shield": 50
     },
     "ranger": {

@@ -468,6 +468,7 @@ function runShortcut(id) {
   else if(id==='zoom-out')view.zoomBy(4);
   updateUI();
 }
+let lastInfoHtml = null;
 function updateUI() {
   renderTutorial();
   const p = sim.players[0],
@@ -514,10 +515,14 @@ function updateUI() {
   $("selection-label").textContent = e
     ? "SELECTION DETAILS"
     : "EXPEDITION COMMAND";
-  if (!e)
-    $("selection-info").innerHTML =
-      `<div class="selection-empty">${icon("logo")}<div><h3>Awaiting your command</h3><p>Click a unit or drag to select your expedition.</p></div></div>`;
-  else $("selection-info").innerHTML = selectionStatus(sim,es);
+  const infoHtml = !e
+    ? `<div class="selection-empty">${icon("logo")}<div><h3>Awaiting your command</h3><p>Click a unit or drag to select your expedition.</p></div></div>`
+    : selectionStatus(sim,es);
+  // Only touch the DOM when the panel text changed, so hover and text selection survive.
+  if (infoHtml !== lastInfoHtml) {
+    lastInfoHtml = infoHtml;
+    $("selection-info").innerHTML = infoHtml;
+  }
   $("support-order").hidden = !es.some(u => u.support);
   $("patrol-order").hidden = !es.some(u => u.kind === 'unit' && u.type !== 'worker' && u.damage > 0);
   $("attack-target-order").hidden = !es.some(u => u.type === 'worker');
@@ -609,6 +614,7 @@ function updateUI() {
   constructionUI.update({sim, selected:es, mode, type:buildType, point:buildPoint, blockedType:blockedBuildType, failure:buildFailure, started, paused, touch:touchInput});
 }
 
+let minimapBase = null, minimapFog = null;
 function minimap() {
   const {size:MAP_SIZE,half:HALF,grid:GRID}=sim.terrain;
   const c = $("minimap"),
@@ -617,26 +623,30 @@ function minimap() {
     h = c.height,
     px = (x) => ((x + HALF) / MAP_SIZE) * w,
     pz = (z) => ((z + HALF) / MAP_SIZE) * h;
-  ctx.fillStyle = "#485243";
-  ctx.fillRect(0, 0, w, h);
-  if (sim.terrain.river)
-    for (let z = 0; z < GRID; z++)
-      for (let x = 0; x < GRID; x++) {
-        ctx.fillStyle =
-          SURFACES[sim.terrain.at(x * 2 - HALF + 1, z * 2 - HALF + 1)];
-        ctx.fillRect(
-          (x * w) / GRID,
-          (z * h) / GRID,
-          w / GRID + 1,
-          h / GRID + 1,
-        );
-      }
-  ctx.strokeStyle = "#64715a";
-  ctx.lineWidth = 9;
-  ctx.beginPath();
-  ctx.moveTo(px(-25), pz(24));
-  ctx.lineTo(px(25), pz(-24));
-  if (sim.terrain.id === "classic") ctx.stroke();
+  // Terrain and road depend only on the map: paint them once per terrain into an offscreen canvas.
+  if (minimapBase?.terrain !== sim.terrain || minimapBase.canvas.width !== w || minimapBase.canvas.height !== h) {
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const b = canvas.getContext("2d");
+    b.fillStyle = "#485243";
+    b.fillRect(0, 0, w, h);
+    if (sim.terrain.river)
+      for (let z = 0; z < GRID; z++)
+        for (let x = 0; x < GRID; x++) {
+          b.fillStyle =
+            SURFACES[sim.terrain.at(x * 2 - HALF + 1, z * 2 - HALF + 1)];
+          b.fillRect((x * w) / GRID, (z * h) / GRID, w / GRID + 1, h / GRID + 1);
+        }
+    b.strokeStyle = "#64715a";
+    b.lineWidth = 9;
+    b.beginPath();
+    b.moveTo(px(-25), pz(24));
+    b.lineTo(px(25), pz(-24));
+    if (sim.terrain.id === "classic") b.stroke();
+    minimapBase = { terrain: sim.terrain, canvas };
+  }
+  ctx.drawImage(minimapBase.canvas, 0, 0);
   for (const wall of sim.entities) {
     if (wall.kind !== "wall" || wall.hp <= 0) continue;
     ctx.fillStyle = "#8d8a80";
@@ -644,18 +654,24 @@ function minimap() {
     ctx.arc(px(wall.x), pz(wall.z), (wall.radius / MAP_SIZE) * w, 0, Math.PI * 2);
     ctx.fill();
   }
-  for (let z = 0; z < GRID; z++)
-    for (let x = 0; x < GRID; x++) {
-      const i = z * GRID + x;
-      if (sim.visible[0][i]) continue;
-      ctx.fillStyle = sim.explored[0][i] ? "rgba(8,20,19,.45)" : "#111f20";
-      ctx.fillRect(
-        (x / GRID) * w,
-        (z / GRID) * h,
-        w / GRID + 0.5,
-        h / GRID + 0.5,
-      );
-    }
+  // Fog is one pixel per cell, scaled up in a single draw instead of a fillRect per cell.
+  if (minimapFog?.grid !== GRID) {
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = GRID;
+    const fctx = canvas.getContext("2d");
+    minimapFog = { grid: GRID, canvas, fctx, image: fctx.createImageData(GRID, GRID) };
+  }
+  const fogPx = minimapFog.image.data;
+  for (let i = 0; i < GRID * GRID; i++) {
+    const o = i * 4;
+    if (sim.visible[0][i]) fogPx[o + 3] = 0;
+    else if (sim.explored[0][i]) { fogPx[o] = 8; fogPx[o + 1] = 20; fogPx[o + 2] = 19; fogPx[o + 3] = 115; }
+    else { fogPx[o] = 17; fogPx[o + 1] = 31; fogPx[o + 2] = 32; fogPx[o + 3] = 255; }
+  }
+  minimapFog.fctx.putImageData(minimapFog.image, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(minimapFog.canvas, 0, 0, w, h);
+  ctx.imageSmoothingEnabled = true;
   for (const r of sim.resources) {
     if (sim.isVisible(r)) rememberedResources.set(r.id, r.amount);
     if (rememberedResources.get(r.id) > 0 && sim.isExplored(r)) {
@@ -1172,8 +1188,36 @@ function focusHome() {
   const hq = sim.own(0).find((e) => e.type === "hq");
   if (hq) view?.focusOn(hq.x + 5, hq.z - 5);
 }
+// One place to show/hide the modal: inert the HUD behind it and restore focus on close.
+let modalReturnFocus = null;
+function setModalOpen(open) {
+  const modal = $("modal"), main = document.querySelector("main");
+  if (open) {
+    if (modal.hidden) modalReturnFocus = document.activeElement;
+    if (main) main.inert = true;
+    modal.hidden = false;
+    return;
+  }
+  const wasOpen = !modal.hidden;
+  modal.hidden = true;
+  if (main) main.inert = false;
+  const back = modalReturnFocus;
+  modalReturnFocus = null;
+  if (!wasOpen) return;
+  const target = back && back.isConnected && !back.closest("[hidden]") && !back.disabled ? back : $("pause");
+  target?.focus?.({ preventScroll: true });
+}
+$("modal").addEventListener("keydown", (event) => {
+  if (event.key !== "Tab") return;
+  const items = [...$("modal").querySelectorAll("button:not([disabled])")].filter((b) => !b.hidden);
+  if (!items.length) return;
+  const first = items[0], last = items[items.length - 1];
+  if (!$("modal").contains(document.activeElement)) { event.preventDefault(); first.focus(); }
+  else if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+  else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+});
 function closeModal() {
-  $("modal").hidden = true;
+  setModalOpen(false);
   $("modal").classList.remove("help-wide");
   modalType = null;
   if (started && !sim.result) paused = false;
@@ -1266,10 +1310,11 @@ function renderBriefing() {
     }).join("");
   } else {
     $("briefing-title").innerHTML = "A new frontier.<br> A foothold to defend.";
-    $("briefing-text").textContent = "Build your outpost. Harvest the valley. Lead your expedition against rival commanders." +
-      (setup.enemyCount < 2 ? "" : setup.alliance === "coalition"
+    // Separate text nodes so each catalog sentence translates on its own.
+    $("briefing-text").replaceChildren("Build your outpost. Harvest the valley. Lead your expedition against rival commanders.",
+      ...(setup.enemyCount < 2 ? [] : [setup.alliance === "coalition"
         ? " Your rivals are allied: they share scouting, raid your Harvesters and attack together."
-        : " Every faction fights for itself.");
+        : " Every faction fights for itself."]));
   }
   if(playMode === "training"){ $("briefing-title").textContent="Commander training"; $("briefing-text").textContent="Learn selection, movement, harvesting, construction, production, attack and withdrawal in eight guided steps. Training supplies replenish. Leave or replay whenever you like."; }
   if (!$("start").disabled) $("start").textContent = playMode === "training" ? "Start training" : inCampaign ? `Start stage ${stagePick + 1}` : "Start";
@@ -1321,7 +1366,7 @@ function togglePause() {
   pointer.inside = false;
   modalType = "pause";
   keys.clear();
-  $("modal").hidden = false;
+  setModalOpen(true);
   $("modal-content").innerHTML =
     `<span class="eyebrow">TACTICAL PAUSE</span><h2 id="modal-title">Hold your position.</h2><p>The battlefield is paused. Take a moment to plan your next move.</p><button class="primary" data-resume>Resume operation ${icon("play")}</button><button class="secondary" data-new-game>New game / choose map</button><button class="secondary" data-restart>Restart this map</button><button class="pause-settings" data-settings>Settings · army, graphics & sound</button>`;
   $("modal").querySelector("[data-resume]").focus();
@@ -1332,7 +1377,7 @@ function showHelp() {
   touchControls?.reset();
   keys.clear();
   modalType = "help";
-  $("modal").hidden = false;
+  setModalOpen(true);
   $("modal-content").innerHTML =
     `<span class="eyebrow">COMMANDER'S FIELD GUIDE</span><h2 id="modal-title">Your command station.</h2><div class="controls-grid"><span>Select / box select</span><kbd>Left-click / drag</kbd><span>Add to selection / queue order</span><kbd>Shift + click</kbd><span>Move, gather, build, attack</span><kbd>Right-click target</kbd><span>Pan camera</span><kbd>WASD / arrows / middle drag</kbd><span>Zoom</span><kbd>Mouse wheel</kbd><span>Attack-move / stop</span><kbd>F / X</kbd><span>Assign / recall group</span><kbd>Ctrl + 1–9 / 1–9</kbd><span>Focus base / toggle grid</span><kbd>H / G</kbd><span>Pause / cancel</span><kbd>Space / Esc</kbd></div><p class="help-note">Select a Harvester and right-click amber or blue deposits to gather. Select a building to train units; select a Harvester to construct. Click a queued unit to cancel and refund it. Build Supply relays before reaching the population cap.</p><button class="primary" data-resume>Return to the frontier ${icon("arrow")}</button>`;
   $("modal").querySelector("[data-resume]").focus({ preventScroll: true });
@@ -1356,7 +1401,7 @@ function showResult() {
   paused = true;
   modalType = "result";
   clearMode();
-  $("modal").hidden = false;
+  setModalOpen(true);
   tone(sim.result === "victory" ? 880 : 220, 0.3);
   const win = sim.result === "victory";
   if(tutorial){
@@ -1410,7 +1455,8 @@ function newGame() {
   $("status-text").textContent = "CHOOSE YOUR BATTLEFIELD";
   view.resize();
   updateUI();
-  $("scenario").focus();
+  // #scenario is hidden in campaign and training, so focus the first visible control instead.
+  (playMode === "skirmish" ? $("scenario") : document.querySelector("[data-mode][aria-pressed=true]") || $("start"))?.focus();
 }
 function restart() {
   touchControls?.reset();
@@ -1438,7 +1484,7 @@ function restart() {
   paused = false;
   accumulator = 0;
   hover = null;
-  $("modal").hidden = true;
+  setModalOpen(false);
   $("briefing").hidden = true;
   document.documentElement.classList.remove("in-briefing");
   view.resize();

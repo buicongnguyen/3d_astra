@@ -932,7 +932,8 @@ export class WorldView {
       alive.add(e.id);
       const o = this.objects.get(e.id) || this.createEntity(e);
       o.userData.recoil=Math.max(0,o.userData.recoil-dt);
-      o.visible = sim.isVisible(e);
+      // Walls are neutral and see nothing: keep them drawn once explored, like the minimap does.
+      o.visible = e.kind === "wall" ? sim.isExplored(e) : sim.isVisible(e);
       if (!o.visible) continue;
       let p = e.kind === "unit" && interpolate ? this.previous.get(e.id) : null;
       // No unit covers more than ~0.3 units per tick; a larger jump is a teleport.

@@ -28,7 +28,9 @@ export function translate(text, locale = language, depth = 0) {
   }
   if (result === undefined) {
     // Translate complete clauses, never substitute arbitrary words inside prose.
-    const pieces = source.split(/(\n+| · | — | \/ |(?<=[.!?])\s+(?=[A-Z]))/);
+    // Split hierarchically: label/description joints first so whole parts hit the catalog, then ' / ' and sentences.
+    let pieces = source.split(/(\n+| · | — )/);
+    if (pieces.length < 2) pieces = source.split(/( \/ |(?<=[.!?])\s+(?=[A-Z]))/);
     result = pieces.length > 1 ? pieces.map(part => translate(part, locale, depth + 1)).join('') : source;
   }
   result = text.slice(0, text.indexOf(source)) + result + text.slice(text.indexOf(source) + source.length);

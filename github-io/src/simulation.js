@@ -638,8 +638,14 @@ export class Simulation {
     let best = null,
       bestD = radius;
     for (const t of this.entities) {
-      if (t.hp <= 0 || !this.hostile(e.team, t.team) || !this.isVisible(t, e.team))
-        continue;
+      if (t.hp <= 0) continue;
+      // Cheap squared-distance prune first: it rejects nearly every candidate before the
+      // costlier hostile/fog checks, with the same bound as the exact test below.
+      const lim = bestD + t.radius + 0.00001,
+        dx = t.x - e.x,
+        dz = t.z - e.z;
+      if (lim < 0 || dx * dx + dz * dz > lim * lim) continue;
+      if (!this.hostile(e.team, t.team) || !this.isVisible(t, e.team)) continue;
       const d = distance(e, t) - t.radius;
       if (d <= bestD + 0.00001 && (!clearShot || this.nav.clearLine(e, t, t.id))) {
         best = t;
@@ -653,7 +659,12 @@ export class Simulation {
   defenseTarget(e) {
     let best = null, bestRank = 3, bestD = Infinity;
     for (const t of this.entities) {
-      if (t.hp <= 0 || !this.hostile(e.team, t.team) || !this.isVisible(t, e.team)) continue;
+      if (t.hp <= 0) continue;
+      const lim = e.range + t.radius + 0.00001,
+        dx = t.x - e.x,
+        dz = t.z - e.z;
+      if (dx * dx + dz * dz > lim * lim) continue;
+      if (!this.hostile(e.team, t.team) || !this.isVisible(t, e.team)) continue;
       const d = distance(e, t) - t.radius;
       if (d > e.range + 0.00001) continue;
       const rank = t.kind !== "unit" ? 2 : t.type === "worker" ? 1 : 0;

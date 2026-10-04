@@ -276,7 +276,8 @@
     "Heavy assault vehicle": "Xe chiến đấu hạng nặng",
     "Vehicle counter": "Chống cơ giới",
     "Collects resources and constructs your outpost.": "Khai thác tài nguyên và xây dựng căn cứ.",
-    "Fast armored fighter. Strong against Rangers and Anti-tank soldiers; weak against Breakers and Battle tanks.": "Lính giáp di chuyển nhanh. Mạnh khi đấu Xạ thủ và Chống tăng; yếu trước Pháo binh và Xe tăng.",
+    "Fast armored fighter. Strong against Rangers; weak against Breakers and Battle tanks.": "Lính giáp di chuyển nhanh. Mạnh khi đấu Xạ thủ; yếu trước Pháo binh và Xe tăng.",
+    "Overcharged weapons online. Combat damage increased by 10%.": "Vũ khí cường hóa đã sẵn sàng. Sát thương chiến đấu tăng 10%.",
     "Long-range precision. Deals 2.6× damage to Breakers; weak against Vanguards.": "Bắn chính xác từ xa. Gây sát thương gấp 2,6 lần lên Pháo binh; yếu trước Tiên phong.",
     "Heavy artillery. Each shell also hits enemies within 3 m of the target for 40% damage. Strong against clustered infantry, especially Vanguards (1.5×).": "Pháo hạng nặng. Mỗi đạn gây thêm 40% sát thương lên địch trong bán kính 3 m. Mạnh khi đánh bộ binh tụ tập, nhất là Tiên phong (1,5 lần).",
     "Receives resources and trains Harvesters. Provides 15 supply. Upgrade this core to unlock matching levels for other buildings. Losing every Command core loses the match.": "Nhận tài nguyên, tạo thợ mỏ và cung cấp 15 quân số. Nâng cấp để mở cấp tương ứng cho công trình khác. Mất mọi Sở chỉ huy là thua trận.",
@@ -587,11 +588,11 @@
     "Unable to initialize": "Không thể khởi tạo",
     "Select Harvesters to repair a building.": "Chọn Thợ mỏ để sửa công trình.",
     "No matching units or buildings.": "Không có quân hoặc công trình phù hợp.",
-    "BUILD: Q Relay · E Barracks · R Foundry · T Tower · Y Core": "XÂY: Q Trạm tiếp vận · E Doanh trại · R Nhà máy · T Tháp pháo · Y Sở chỉ huy",
-    "SUPPORT · Choose friendly infantry (Medic) or a building / vehicle (Engineer)": "HỖ TRỢ · Chọn bộ binh phe ta (Quân y) hoặc công trình / xe (Kỹ sư)",
+    "BUILD: Q Relay · E Barracks · R Foundry · T Tower · Y Core": "XÂY: Q Trạm tiếp tế · E Doanh trại · R Nhà máy · T Tháp pháo · Y Sở chỉ huy",
+    "SUPPORT · Choose friendly infantry (Medic) or a building / vehicle (Engineer)": "HỖ TRỢ · Chọn bộ binh phe ta (Quân y) hoặc công trình / xe (Công binh)",
     "Rally point on the deposit: new Harvesters start mining.": "Điểm tập kết đặt trên mỏ: Thợ mỏ mới sẽ bắt đầu khai thác.",
     "Rally point established.": "Đã đặt điểm tập kết.",
-    "Medic: select allied infantry. Engineer: select a completed building or vehicle.": "Quân y: chọn bộ binh phe ta. Kỹ sư: chọn công trình đã xây xong hoặc xe.",
+    "Medic: select allied infantry. Engineer: select a completed building or vehicle.": "Quân y: chọn bộ binh phe ta. Công binh: chọn công trình đã xây xong hoặc xe.",
     "Select a unit, or use the Workers and Army buttons.": "Chọn một quân, hoặc dùng nút Thợ mỏ và Quân đội.",
     "Tap Workers, then tap amber crystals. Drag to pan; pinch to zoom.": "Chạm Thợ mỏ, rồi chạm tinh thể hổ phách. Kéo để di chuyển; chụm để thu phóng.",
     "Select Harvesters, then right-click amber crystals to start your economy.": "Chọn Thợ mỏ, rồi nhấp chuột phải vào tinh thể hổ phách để khởi động kinh tế.",
@@ -627,7 +628,11 @@
       "Tập {1}/{2}"
     ],
     [
-      "^(?:Build|Finish building) (.+) before building (.+)\\.$",
+      "^Build (.+) before building (.+)\\.$",
+      "Cần xây {1} trước khi xây {2}."
+    ],
+    [
+      "^Finish building (.+) before building (.+)\\.$",
       "Hoàn thành {1} trước khi xây {2}."
     ],
     [
@@ -815,10 +820,6 @@
       "Cần thêm {1}."
     ],
     [
-      "^(?:Build|Finish) (.+) before building (.+)\\.$",
-      "Cần hoàn thành {1} trước khi xây {2}."
-    ],
-    [
       "^Requires a completed (.+)\\.$",
       "Cần {1} đã hoàn thành."
     ],
@@ -917,6 +918,14 @@
     [
       "^Idle workers: (\\d+)$",
       "Thợ nhàn rỗi: {1}"
+    ],
+    [
+      "^Command core technology (\\d+) / (\\d+)$",
+      "Công nghệ Sở chỉ huy {1} / {2}"
+    ],
+    [
+      "^(.+), (\\d+ alloy(?: and \\d+ energy)?)$",
+      "{1}, {2}"
     ],
     [
       "^Tech (\\d+) / 3$",

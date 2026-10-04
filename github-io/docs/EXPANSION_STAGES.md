@@ -4,7 +4,7 @@
 
 ### Additional Three.js skirmishes
 
-The browser edition now has **seven maps** and a **1–3 AI enemies** selector in the opening briefing. Multiple opponents play free-for-all: each has its own economy, starting force, fog, color and attack waves, and fights any other faction. Destroy every enemy Command core to win. Restart keeps the current map and enemy count; reload the page to return to match setup. One enemy remains the default. Larger maps and more armies increase device workload; use Eco graphics and fewer enemies on slower phones.
+The browser edition now has **seven maps** and a **1–3 AI enemies** selector in the opening briefing. Multiple opponents play free-for-all by default (or united, see CAMPAIGN_AND_AI.md): each has its own economy, starting force, fog, color and attack waves, and fights any other faction. Destroy every enemy Command core to win. Restart keeps the current map and enemy count; use New game / choose map in the pause or result dialog to return to match setup. One enemy remains the default. Larger maps and more armies increase device workload; use Eco graphics and fewer enemies on slower phones.
 
 | New map | Size | Terrain and expansion layout |
 | --- | --- | --- |

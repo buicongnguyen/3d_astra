@@ -70,7 +70,7 @@ During construction, **Actions** keeps the building name, resource cost, placeme
 | Queue an order | Shift + right-click |
 | Attack-move | F, then click terrain |
 | Stop | X |
-| Pan | WASD, arrow keys, middle-mouse drag; left/right/top screen edges |
+| Pan | WASD, arrow keys, middle-mouse drag; any screen edge (including over the console) |
 | Zoom | Mouse wheel |
 | Select next Command core / focus selection | H / Home |
 | Save / add / recall a control group | Ctrl + 1–9 / Shift + 1–9 / 1–9 |
@@ -88,7 +88,7 @@ During construction, **Actions** keeps the building name, resource cost, placeme
 
 - Harvesters collect amber **alloy** or blue **energy**, carry up to 10, deliver to a completed Command core, and repeat.
 - Select a Harvester to expose construction actions. Click a structure, then an unobstructed visible location. One nearby Harvester builds at a time.
-- A Supply relay adds 10 population capacity, up to 100. Queued units reserve population immediately. If a relay is destroyed, completed production waits for sufficient supply; the queue shows **Awaiting supply**. Research can continue while over capacity.
+- A Supply relay adds 10 population capacity (15 at L2, 20 at L3); a Command core adds 15; the total is capped at 100. Queued units reserve population immediately. If a relay is destroyed, completed production waits for sufficient supply; the queue shows **Awaiting supply**. Research can continue while over capacity.
 - Select a Command core, Barracks, or Foundry to queue production. Click an item in its queue to cancel for a full refund.
 - Cancel unfinished structures from their selection panel for a 75% refund. Enemy destruction provides no refund.
 - Vanguards counter Rangers and Anti-tank soldiers; Rangers counter Breakers; Breakers and Battle tanks splash clustered infantry and hit Vanguards harder; Anti-tank rockets counter tanks and Breakers. See the [balance review](docs/BALANCE.md) for equal-cost battle results.
