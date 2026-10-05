@@ -1,0 +1,4 @@
+interface:
+  display_name: "Mobile Web Gesture Fixes"
+  short_description: "Fix mobile touch, safe edges and fullscreen controls"
+  default_prompt: "Use $fix-mobile-web-gestures to review this app's mobile input and fullscreen behavior, fix confirmed issues, and explain what still needs a physical iPhone check."
