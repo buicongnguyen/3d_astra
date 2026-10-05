@@ -1,4 +1,5 @@
 /* One game, two HUD arrangements. The battlefield gets its own unobscured rect. */
+html,
 body {
   overscroll-behavior: none;
 }
@@ -10,6 +11,7 @@ button {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .touch-controls,
 #dock-tabs {
@@ -182,7 +184,11 @@ button {
   --header-height: 96px;
   --dock-height: 178px;
   --tabs-height: 48px;
-  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* Safe-area values can be zero in browser/in-app views. Keep taps above the
+     bottom gesture edge even there; a web page cannot disable iOS app switching. */
+  --safe-bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+  --gesture-left: max(12px, env(safe-area-inset-left, 0px));
+  --gesture-right: max(12px, env(safe-area-inset-right, 0px));
 }
 .compact-ui[data-dock="actions"] {
   --dock-height: 202px;
@@ -251,8 +257,8 @@ button {
   height: calc(100dvh - var(--header-height) - env(safe-area-inset-top, 0px));
 }
 .compact-ui #world {
-  inset: 92px 0
-    calc(var(--dock-height) + var(--tabs-height) + var(--safe-bottom)) 0;
+  inset: 92px var(--gesture-right)
+    calc(var(--dock-height) + var(--tabs-height) + var(--safe-bottom)) var(--gesture-left);
 }
 .compact-ui .map-heading {
   left: 12px;
@@ -279,6 +285,7 @@ button {
   gap: 4px;
   overflow-x: auto;
   touch-action: pan-x;
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
   z-index: 6;
 }
@@ -590,7 +597,7 @@ button {
   }
   .compact-ui #world {
     inset: 92px calc(var(--side-width) + 14px + env(safe-area-inset-right, 0px))
-      var(--safe-bottom) env(safe-area-inset-left, 0px);
+      var(--safe-bottom) var(--gesture-left);
   }
   .compact-ui .touch-controls {
     right: calc(var(--side-width) + 22px + env(safe-area-inset-right, 0px));

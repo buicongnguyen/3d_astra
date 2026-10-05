@@ -27,6 +27,7 @@ import {
 } from "./data.js";
 import { icon } from "./icons.js";
 import { TouchControls } from "./touch-controls.js";
+import { createFullscreen } from "./fullscreen.js";
 import { ACTION_KEYS, HOTKEYS, HOTKEY_HELP, physicalKey } from "./hotkeys.js";
 import { createConstructionUI } from "./construction-ui.js";
 import { createProductionUI, createWorkStrip } from "./production-ui.js";
@@ -95,6 +96,7 @@ document.querySelector("#app").innerHTML = `
         </div>
         <div id="campaign-setup" hidden><ol class="stage-list" aria-label="Campaign stages"></ol></div>
         <div id="training-setup" hidden><ol class="lesson-list" aria-label="Training lessons">${TRAINING_STEPS.map(step => `<li>${step.title}</li>`).join("")}</ol></div>
+        <button id="fullscreen" class="secondary fullscreen-launch" data-fullscreen aria-pressed="false">${icon("expand")}<span>Full screen</span></button>
         <button id="start" class="primary" disabled>Preparing expedition…</button>
       </div>
     </section>
@@ -1118,7 +1120,8 @@ function bindInput() {
     if(key==='escape') {
       if(e.repeat)return;
       e.preventDefault();keys.clear();
-      if(document.documentElement.classList.contains('objectives-open'))setObjectivesOpen(false);
+      if(modalType==='fullscreen')closeModal();
+      else if(document.documentElement.classList.contains('objectives-open'))setObjectivesOpen(false);
       else if(mode || blockedBuildType)clearMode();
       else if(modalType==='help')closeModal();
       else if(started&&!sim.result)togglePause();
@@ -1147,15 +1150,20 @@ function bindInput() {
     if(key==='g'&&!e.repeat)view.grid.visible=!view.grid.visible;
   });
   window.addEventListener("keyup",e=>keys.delete(physicalKey(e)));
-  window.addEventListener("blur", () => keys.clear());
+  const suspendInput = () => {
+    touchControls.reset();
+    drag = null;
+    pointer.inside = false;
+    keys.clear();
+    $("selection-box").style.display = "none";
+    // Safari/embedded browsers can blur before visibilitychange or pagehide.
+    // Stay paused on return, so an interrupted gesture cannot issue an order.
+    if (started && !paused && !sim.result) togglePause();
+  };
+  window.addEventListener("blur", suspendInput);
+  window.addEventListener("pagehide", suspendInput);
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      touchControls.reset();
-      drag = null;
-      pointer.inside = false;
-      keys.clear();
-      if (started && !paused && !sim.result) togglePause();
-    }
+    if (document.hidden) suspendInput();
   });
   const mapPoint = (e) => {
     const {size:MAP_SIZE,half:HALF}=sim.terrain;
@@ -1223,6 +1231,50 @@ function closeModal() {
   if (started && !sim.result) paused = false;
   keys.clear();
 }
+function showFullscreenHelp(reason) {
+  if (sim.result) return;
+  paused = true;
+  touchControls?.reset();
+  drag = null;
+  pointer.inside = false;
+  keys.clear();
+  $("selection-box").style.display = "none";
+  modalType = "fullscreen";
+  $("modal").classList.remove("help-wide");
+  setModalOpen(true);
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  const message = reason === 'exit'
+    ? '<p>Could not leave full screen. Use your browser’s exit control or press Esc on a keyboard.</p>'
+    : standalone
+      ? '<p>You are already playing in a home-screen web app without the browser bars.</p>'
+      : '<p>This browser could not enter full screen.</p><p>On iPhone, open this game in Safari, tap Share → Add to Home Screen, then enable Open as Web App if shown. Launch the game from that new icon.</p>';
+  $("modal-content").innerHTML = `<h2 id="modal-title">Full screen</h2>${message}<p>iPhone app-switching gestures still work. Start camera drags away from the screen edges.</p><button class="primary" data-resume>${started ? 'Resume operation' : 'Back'}</button>`;
+  $("modal").querySelector('[data-resume]').focus({ preventScroll: true });
+}
+const fullscreen = createFullscreen({
+  onUnavailable: showFullscreenHelp,
+  onChange: ({ active, pending }) => {
+    const label = active ? 'Exit full screen' : 'Full screen';
+    for (const button of document.querySelectorAll('[data-fullscreen]')) {
+      // Keep keyboard focus during the asynchronous request. The controller
+      // ignores duplicate activations while pending; native disabled loses focus.
+      button.setAttribute('aria-disabled', String(pending));
+      button.setAttribute('aria-pressed', String(active));
+      button.title = label;
+      button.innerHTML = `${icon(active ? 'collapse' : 'expand')}<span>${label}</span>`;
+    }
+  },
+});
+function toggleFullscreenFrom(button) {
+  // Safari does not focus a button on touch/click by default. Remember a useful
+  // return target before opening fallback help, including before the game starts.
+  button.focus({ preventScroll: true });
+  fullscreen.toggle();
+}
+$("fullscreen").onclick = (event) => toggleFullscreenFrom(event.currentTarget);
+fullscreen.refresh();
+document.addEventListener('fullscreenchange', setLayout);
+document.addEventListener('webkitfullscreenchange', setLayout);
 function applyPreferences(value) {
   settings = value;
   localization.apply(settings.language);
@@ -1368,7 +1420,8 @@ function togglePause() {
   keys.clear();
   setModalOpen(true);
   $("modal-content").innerHTML =
-    `<span class="eyebrow">TACTICAL PAUSE</span><h2 id="modal-title">Hold your position.</h2><p>The battlefield is paused. Take a moment to plan your next move.</p><button class="primary" data-resume>Resume operation ${icon("play")}</button><button class="secondary" data-new-game>New game / choose map</button><button class="secondary" data-restart>Restart this map</button><button class="pause-settings" data-settings>Settings · army, graphics & sound</button>`;
+    `<span class="eyebrow">TACTICAL PAUSE</span><h2 id="modal-title">Hold your position.</h2><p>The battlefield is paused. Take a moment to plan your next move.</p><button class="primary" data-resume>Resume operation ${icon("play")}</button><button class="secondary" data-new-game>New game / choose map</button><button class="secondary" data-restart>Restart this map</button><button class="secondary fullscreen-launch" data-fullscreen></button><button class="pause-settings" data-settings>Settings · army, graphics & sound</button>`;
+  fullscreen.refresh();
   $("modal").querySelector("[data-resume]").focus();
 }
 function showHelp() {
@@ -1674,6 +1727,8 @@ $("unit-list").onclick = (event) => {
   if (button) setSelection([Number(button.dataset.select)]);
 };
 $("modal").onclick = (event) => {
+  const fullscreenButton = event.target.closest('[data-fullscreen]');
+  if (fullscreenButton) { toggleFullscreenFrom(fullscreenButton); return; }
   // Help lists every PC command and control group; running one returns to the battlefield.
   const shortcut = event.target.closest("[data-shortcut]"), group = event.target.closest("[data-group]");
   if ((shortcut || group) && modalType === "help") {
@@ -1839,7 +1894,12 @@ function renderTutorial(){
   $("training-title").textContent=step.title;
   $("training-copy").textContent=touchInput?step.touch:step.desktop;
   if(tutorialShown!==tutorial.index){tutorialShown=tutorial.index;$("training-card").hidden=false;$("training-toggle").setAttribute("aria-expanded","true");}
-  if(view){const target=tutorial.point(sim),p=view.project(target.x,target.z,0.2);$("training-marker").style.left=p.x+"px";$("training-marker").style.top=p.y+"px";}
+  if(view){
+    const target=tutorial.point(sim),p=view.project(target.x,target.z,0.2);
+    const canvas=view.renderer.domElement.getBoundingClientRect(),stage=$("stage").getBoundingClientRect();
+    $("training-marker").style.left=(p.x+canvas.left-stage.left)+"px";
+    $("training-marker").style.top=(p.y+canvas.top-stage.top)+"px";
+  }
 }
 $("training-toggle").onclick=()=>{const card=$("training-card");card.hidden=!card.hidden;$("training-toggle").setAttribute("aria-expanded",String(!card.hidden));};
 $("training-focus").onclick=()=>{if(!tutorial)return;const p=tutorial.point(sim);view.focusOn(p.x,p.z);$("training-card").hidden=true;$("training-toggle").setAttribute("aria-expanded","false");};

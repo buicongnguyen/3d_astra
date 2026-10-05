@@ -31,6 +31,11 @@ try {
       assert.equal(await page.evaluate(()=>window.__frontier.sim.aiEnabled),false);
       await press('#training-focus');
       await page.locator('#training-card').waitFor({state:'hidden'});
+      await page.waitForFunction(()=>{
+        const f=window.__frontier,target=f.tutorial.point(f.sim),p=f.view.project(target.x,target.z,.2);
+        const canvas=f.view.renderer.domElement.getBoundingClientRect(),marker=document.querySelector('#training-marker').getBoundingClientRect();
+        return Math.abs(marker.x+marker.width/2-canvas.x-p.x)<1&&Math.abs(marker.y+marker.height/2-canvas.y-p.y)<1;
+      });
       // Wait for the rendered model and layout, then hit-test the actual canvas target.
       // CI software rendering can lag behind the simulation and the DOM controls.
       const point = await page.waitForFunction(()=>{

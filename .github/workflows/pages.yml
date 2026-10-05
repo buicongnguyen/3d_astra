@@ -50,7 +50,7 @@ jobs:
           - name: training
             scripts: tutorial
           - name: mobile
-            scripts: mobile mobile-controls
+            scripts: mobile mobile-controls mobile-gestures fullscreen
           - name: settings
             scripts: improvements campaign
           - name: languages

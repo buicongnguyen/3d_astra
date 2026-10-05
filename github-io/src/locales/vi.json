@@ -1,5 +1,13 @@
 {
   "messages": {
+    "Full screen": "Toàn màn hình",
+    "Back": "Quay lại",
+    "Exit full screen": "Thoát toàn màn hình",
+    "This browser could not enter full screen.": "Trình duyệt này không thể mở chế độ toàn màn hình.",
+    "Could not leave full screen. Use your browser’s exit control or press Esc on a keyboard.": "Chưa thể thoát toàn màn hình. Hãy dùng nút thoát của trình duyệt hoặc nhấn Esc trên bàn phím.",
+    "You are already playing in a home-screen web app without the browser bars.": "Bạn đang chơi từ biểu tượng trên Màn hình chính, không có thanh trình duyệt.",
+    "On iPhone, open this game in Safari, tap Share → Add to Home Screen, then enable Open as Web App if shown. Launch the game from that new icon.": "Trên iPhone, mở trò chơi bằng Safari, chọn Chia sẻ → Thêm vào Màn hình chính, rồi bật Mở dưới dạng ứng dụng web nếu có. Mở trò chơi từ biểu tượng vừa tạo.",
+    "iPhone app-switching gestures still work. Start camera drags away from the screen edges.": "Cử chỉ chuyển ứng dụng trên iPhone vẫn hoạt động. Hãy bắt đầu kéo camera ở vị trí cách xa mép màn hình.",
     "Language": "Ngôn ngữ",
     "Start": "Bắt đầu",
     "Start training": "Tập chơi",

@@ -71,6 +71,11 @@ export class TouchControls {
     const p = this.pointers.get(e.pointerId);
     if (!p) return;
     e.preventDefault();
+    // A browser interruption can omit the last pointermove. Never turn a swipe
+    // into a command just because only its down/up positions were delivered.
+    p.x = e.clientX;
+    p.y = e.clientY;
+    if (Math.hypot(p.x - p.startX, p.y - p.startY) > 9) p.moved = true;
     this.pointers.delete(e.pointerId);
     if (this.canvas.hasPointerCapture(e.pointerId))
       this.canvas.releasePointerCapture(e.pointerId);

@@ -212,6 +212,8 @@ input:focus-visible {
   color: var(--text-2);
 }
 .modal .primary { margin-top: 18px; }
+.fullscreen-launch { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; width: 100%; }
+.fullscreen-launch[aria-disabled="true"] { opacity: 0.65; cursor: progress; }
 .help-note { font-size: 14px !important; color: var(--text-2) !important; }
 .controls-grid { font-size: 14px; color: var(--text-2); }
 .controls-grid kbd { font-size: 12px; color: var(--text-1); border-color: var(--line-2); background: var(--ink-3); border-radius: 6px; padding: 3px 7px; }

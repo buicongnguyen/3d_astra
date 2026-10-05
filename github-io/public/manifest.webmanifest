@@ -1,0 +1,11 @@
+{
+  "name": "Frontier Command",
+  "short_name": "Frontier",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111b1d",
+  "theme_color": "#111b1d",
+  "icons": [{ "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
