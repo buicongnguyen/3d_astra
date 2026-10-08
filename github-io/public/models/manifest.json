@@ -80,6 +80,12 @@
       "file": "tower.glb",
       "triangles": 2080,
       "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "refinery",
+      "file": "refinery.glb",
+      "triangles": 6672,
+      "animation": "Runtime articulated parts; no baked clips"
     }
   ]
 }

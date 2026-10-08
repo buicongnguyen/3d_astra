@@ -29,7 +29,7 @@ SOURCE = ROOT / 'assets' / 'source'
 R90 = math.pi / 2
 SIDES = ((-1, 'L'), (1, 'R'))
 UNITS = ['worker', 'vanguard', 'ranger', 'breaker', 'medic', 'engineer', 'tank', 'antitank']
-BUILDINGS = ['hq', 'barracks', 'foundry', 'relay', 'tower']
+BUILDINGS = ['hq', 'barracks', 'foundry', 'relay', 'tower', 'refinery']
 FORWARD = (R90, 0, 0)   # cylinder axis along Y; a cone's narrow end points to the front (-Y)
 ACROSS = (0, R90, 0)    # cylinder axis along X
 
@@ -486,6 +486,82 @@ def tower(a):
         muzzle.cyl(.11, .18, loc=(s * .25, -1.62, 3.65), rot=FORWARD, seg=12, bevel=.02, bseg=1)
 
 
+def refinery(a):
+    """Gas refinery: Horton pressure spheres, a fractionation column and a
+    flare stack — deliberately unlike the foundry's hall-and-chimneys."""
+    h = foundation(a, 4.9, 4.5, .85)
+    steel = a.part('Steel', 'Steel')
+    dark = a.part('Gear', 'Undercarriage')
+    team = a.part('Band', 'Team')
+    glow = a.part('Lights', 'TeamGlow')
+    lamps = a.part('Lamps', 'Lamp')
+    hazard = a.part('Hazard', 'Hazard')
+
+    # --- Pump hall: low sloped block, rear-left, with a team roof band.
+    hall = a.part('Hall', 'Armor')
+    hall.prism(chamfered(2.9, 2.6, .6), 1.35, loc=(-.85, .55, h + .68), axis='Z', bevel=.06, taper=.9)
+    team.prism(chamfered(3.0, 2.7, .62), .18, loc=(-.85, .55, h + 1.44), axis='Z', bevel=.03, taper=.96)
+    a.part('Windows', 'Glass').box((.06, 1.6, .3), loc=(-2.28, .55, h + .95), bevel=.01, seg=1)
+    # Intake door on the hall's front face.
+    dark.box((1.2, .1, .95), loc=(-.85, -.78, h + .48), bevel=.02, seg=1)
+    for i in range(4):
+        dark.box((1.14, .05, .03), loc=(-.85, -.84, h + .16 + i * .24), bevel=0)
+    lamps.box((.1, .05, .16), loc=(.05, -.85, h + 1.05), bevel=.012, seg=1)
+    lamps.box((.1, .05, .16), loc=(-1.75, -.85, h + 1.05), bevel=.012, seg=1)
+    glow.box((1.3, .04, .08), loc=(-.85, -.86, h + 1.3), bevel=.01, seg=1)
+    hazard.box((1.5, .34, .02), loc=(-.85, -.92, h + .02), bevel=0)
+
+    # --- Horton spheres: the signature element. Steel tank on four stub legs.
+    for s in (-1, 1):
+        x, y = s * 1.75, -1.35
+        steel.sphere(.78, loc=(x, y, h + 1.28), seg=20, rings=14)
+        team.torus(.8, .07, loc=(x, y, h + 1.28), seg=20, ring=6)  # equator band
+        for lx, ly in ((-.42, -.42), (.42, -.42), (-.42, .42), (.42, .42)):
+            dark.cyl(.09, .68, loc=(x + lx, y + ly, h + .34), seg=8, bevel=.02, bseg=1)
+        dark.cyl(.82, .08, loc=(x, y, h + .62), seg=18, bevel=.02, bseg=1)  # cradle ring
+        # Fill neck + valve wheel on top of each sphere.
+        steel.cyl(.1, .3, loc=(x, y, h + 2.1), seg=10, bevel=.02, bseg=1)
+        dark.cyl(.16, .04, loc=(x, y, h + 2.28), seg=12, bevel=.01, bseg=1)
+        a.part('Gauge', 'Lamp').sphere(.07, loc=(x + s * .2, y - .7, h + 1.5), seg=8, rings=5)
+
+    # --- Fractionation column: tall stepped tower, rear-right.
+    cx, cy = 1.6, 1.15
+    for (z0, z1, r) in ((0, .9, .5), (.9, 1.9, .44), (1.9, 2.75, .38), (2.75, 3.4, .3)):
+        steel.cyl(r, z1 - z0, loc=(cx, cy, h + (z0 + z1) / 2), seg=18, bevel=.035)
+    for z in (.9, 1.9, 2.75):  # deck rings between stages
+        dark.cyl(.56, .09, loc=(cx, cy, h + z), seg=18, bevel=.02, bseg=1)
+        team.torus(.56, .05, loc=(cx, cy, h + z + .07), seg=18, ring=5)
+    dark.cyl(.34, .12, loc=(cx, cy, h + 3.42), seg=14, bevel=.02, bseg=1)
+    a.part('Beacon', 'TeamGlow').sphere(.13, loc=(cx, cy, h + 3.56), seg=10, rings=6)
+    # Column access ladder rail.
+    for z in (.5, 1.4, 2.3):
+        dark.box((.05, .05, .9), loc=(cx - .52, cy + .3, h + z), rot=(0, 0, .06), bevel=0, seg=1)
+
+    # --- Flare stack: thin vent rear-left, capped with an amber burner ring.
+    fx, fy = -1.95, 1.55
+    dark.cyl(.14, 2.6, loc=(fx, fy, h + 1.3), seg=10, bevel=.02, bseg=1)
+    dark.cyl(.09, 1.2, loc=(fx, fy, h + 3.1), seg=8, bevel=.01, bseg=1)
+    a.part('Flare', 'Alloy').cyl(.12, .16, loc=(fx, fy, h + 3.72), seg=10, r2=.07, bevel=.01, bseg=1)
+    steel.box((.5, .05, .05), loc=(fx + .22, fy, h + 1.1), rot=(0, 0, -.25), bevel=.01, seg=1)
+
+    # --- Pipe manifold: overground lines from spheres into the hall + column.
+    for s in (-1, 1):
+        steel.tube([(s * 1.75, -1.35, h + 2.32), (s * 1.75, -.6, h + 2.32), (s * 1.05, -.1, h + 1.62),
+                    (-.85 + s * .2, .2, h + 1.62)], .09, seg=8)
+    steel.tube([(1.6, 1.15, h + 2.95), (1.6, .3, h + 2.95), (.35, .3, h + 1.85), (.35, .55, h + 1.5)],
+               .08, seg=8)
+    # Front pipe rack crossing the pad.
+    for s in (-1, 1):
+        steel.box((.1, .1, 1.0), loc=(s * .55, -2.0, h + .5), bevel=.02, seg=1)
+    steel.tube([(-.55, -2.0, h + 1.0), (.55, -2.0, h + 1.0)], .07, seg=8)
+    steel.tube([(-.55, -2.0, h + .86), (.55, -2.0, h + .86)], .05, seg=8)
+    hazard.box((.7, .12, .1), loc=(0, -2.0, h + .5), rot=(0, 0, .12), bevel=.02, seg=1)
+
+    # Corner floodlights on the pad rim.
+    for sx, sy in ((2.0, -1.8), (-2.05, -1.8), (2.05, 1.8)):
+        lamps.box((.12, .1, .1), loc=(sx, sy, h + .1), rot=(0, 0, math.pi / 4), bevel=.015, seg=1)
+
+
 # ----------------------------------------------------------------------------- pipeline
 def _infantry(kind):
     return lambda a: infantry(a, kind)
@@ -495,6 +571,7 @@ BUILDERS = {
     **{k: _infantry(k) for k in ['worker', 'vanguard', 'ranger', 'medic', 'engineer', 'antitank']},
     'breaker': breaker, 'tank': tank,
     'hq': hq, 'barracks': barracks, 'foundry': foundry, 'relay': relay, 'tower': tower,
+    'refinery': refinery,
 }
 
 
