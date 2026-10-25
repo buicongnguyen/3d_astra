@@ -56,7 +56,7 @@ jobs:
           - name: languages
             scripts: language
           - name: interface
-            scripts: ui-quality ambient-life
+            scripts: ui-quality ambient-life render-budget
           - name: progression
             scripts: progression
           - name: maps

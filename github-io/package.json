@@ -34,7 +34,8 @@
     "test:campaign": "node tests/campaign.mjs",
     "test:tutorial": "node tests/tutorial.mjs",
     "test:ui-quality": "node tests/ui-quality.mjs",
-    "test:ambient-life": "node tests/ambient-life.mjs"
+    "test:ambient-life": "node tests/ambient-life.mjs",
+    "test:render-budget": "node tests/render-budget.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

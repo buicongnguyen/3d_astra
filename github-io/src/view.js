@@ -9,6 +9,7 @@ import { createRing, updateRing, createBar, updateBar, setTeamColor, createMarke
 import {themeFor,shotVisible,weaponStyle} from './visual-style.js';
 import { isHarvesting } from "./activity.js";
 import { EntityBatches, adoptBatchedParts, SOURCE_LAYER } from "./entity-batches.js";
+import { cacheTransforms } from "./transform-cache.js";
 import { AmbientLife } from "./ambient-life.js";
 import { defaults, palette } from "./settings.js";
 import {
@@ -75,6 +76,7 @@ export class WorldView {
       "3D battlefield. Left-click selects; right-click commands.",
     );
     this.scene = new THREE.Scene();
+    cacheTransforms(this.scene);
     this.scene.background = new THREE.Color(0x283630);
     this.scene.fog = new THREE.Fog(0x283630, 105, 190);
     this.camera = new THREE.OrthographicCamera(-40, 40, 30, -30, 0.1, 240);
@@ -319,13 +321,16 @@ export class WorldView {
             geometries.forEach(g=>g.dispose());
           }
           template.add(barrel);
+          // Only Team/TeamGlow materials vary by faction. Share the other finishes
+          // so identical armour, tyres and suits can join one batch across armies.
+          const materials = new Map();
           for (let team = 0; team < this.colors.length; team++) {
-            const variant = template.clone(true),
-              materials = new Map();
+            const variant = template.clone(true);
             variant.traverse((o) => {
               if (!o.isMesh) return;
               const name = o.material.name;
-              if (!materials.has(name)) {
+              const key = `${name.startsWith("Team") ? team : "shared"}:${name}`;
+              if (!materials.has(key)) {
                 const m = o.material.clone();
                 if (name.startsWith("Team")) {
                   m.color.setHex(this.colors[team]);
@@ -334,9 +339,9 @@ export class WorldView {
                     m.emissiveIntensity = 0.8;
                   }
                 }
-                materials.set(name, m);
+                materials.set(key, m);
               }
-              o.material = materials.get(name);
+              o.material = materials.get(key);
               o.castShadow = true;
               o.receiveShadow = true;
             });
@@ -789,6 +794,7 @@ export class WorldView {
     const bar = createBar(e, side);
     root.add(bar);
     root.userData.bar = bar;
+    cacheTransforms(root);
     this.scene.add(root);
     this.objects.set(e.id, root);
     return root;
@@ -804,6 +810,10 @@ export class WorldView {
       cluster.traverse((m) => {
         if (m.isMesh) m.castShadow = m.receiveShadow = true;
       });
+      // Deposits retain their own fog/remaining-amount state and pick target, but
+      // repeated Blender crystal parts render through the same instanced path.
+      adoptBatchedParts(cluster);
+      cacheTransforms(cluster);
       this.scene.add(cluster);
       this.resourceObjects.set(e.id, cluster);
       return cluster;
@@ -836,6 +846,7 @@ export class WorldView {
       group.add(crystal);
     }
     group.position.set(e.x, 0, e.z);
+    cacheTransforms(group);
     this.scene.add(group);
     this.resourceObjects.set(e.id, group);
     return group;
@@ -1021,9 +1032,12 @@ export class WorldView {
     // Update world matrices once, copy entity parts into their batches, then render without
     // a second scene-wide matrix pass.
     this.scene.updateMatrixWorld();
-    this.batches.begin();
+    const shadows = this.renderer.shadowMap.enabled && this.sun.castShadow;
+    if (shadows) this.sun.shadow.updateMatrices(this.sun);
+    this.batches.begin(this.camera, shadows ? this.sun.shadow.getFrustum() : null);
     for (const o of this.objects.values()) this.batches.collect(o);
     for (const d of this.dying) this.batches.collect(d.object);
+    for (const o of this.resourceObjects.values()) this.batches.collect(o);
     this.batches.end();
     this.scene.matrixWorldAutoUpdate = false;
     this.renderer.render(this.scene, this.camera);

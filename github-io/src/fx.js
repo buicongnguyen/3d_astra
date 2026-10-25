@@ -82,11 +82,22 @@ void main() {
   gl_FragColor = vec4(vColor.rgb * t.rgb, a);
 }`;
 
+// The pools keep their capacity, but only the live prefix needs to cross to the
+// GPU. Retain pending data if several updates happen before a render.
+function uploadPrefix(attribute, count) {
+  let end = count * attribute.itemSize;
+  for (const range of attribute.updateRanges) end = Math.max(end, range.start + range.count);
+  attribute.clearUpdateRanges();
+  attribute.addUpdateRange(0, end);
+  attribute.needsUpdate = true;
+}
+
 class Layer {
   constructor(capacity, blending, renderOrder, texture) {
     this.capacity = capacity; // allocated size; `share` scales the live cap with quality
     this.share = () => 1;
     this.items = [];
+    this.drawn = 0;
     const quad = new THREE.PlaneGeometry(1, 1);
     const g = new THREE.InstancedBufferGeometry();
     g.index = quad.index;
@@ -146,9 +157,16 @@ class Layer {
       drawn++;
     }
     this.items.length = keep;
-    if (!drawn) { S[0] = 0; C[3] = 0; drawn = 1; } // keep one invisible instance: a fixed draw call
+    const previous = this.drawn;
+    this.drawn = drawn;
+    if (!drawn) {
+      // Keep the invisible instance so shaders stay warm, without uploading the
+      // same empty pools every frame. Clear it once when the last effect ends.
+      if (!previous) return;
+      S[0] = 0; C[3] = 0; drawn = 1;
+    }
     this.mesh.geometry.instanceCount = drawn;
-    for (const a of [this.pos, this.color, this.axis, this.size]) a.needsUpdate = true;
+    for (const a of [this.pos, this.color, this.axis, this.size]) uploadPrefix(a, drawn);
   }
   clear() { this.items.length = 0; }
   dispose() { this.mesh.geometry.dispose(); this.material.dispose(); }
@@ -175,6 +193,7 @@ export class Effects {
     this.debrisMesh.count = 1;
     this.debrisMesh.setMatrixAt(0, new THREE.Matrix4().makeScale(0, 0, 0));
     this.debris = [];
+    this.debrisDrawn = 0;
     this.projectiles = [];
     this.timeline = [];
     this.emitters = new Map();
@@ -450,9 +469,16 @@ export class Effects {
       this.dummy.updateMatrix();
       this.debrisMesh.setMatrixAt(drawn++, this.dummy.matrix);
     }
-    if (!drawn) { this.debrisMesh.setMatrixAt(0, new THREE.Matrix4().makeScale(0, 0, 0)); drawn = 1; }
+    const previous = this.debrisDrawn;
+    this.debrisDrawn = drawn;
+    if (!drawn) {
+      if (!previous) return;
+      this.dummy.scale.setScalar(0);
+      this.dummy.updateMatrix();
+      this.debrisMesh.setMatrixAt(0, this.dummy.matrix); drawn = 1;
+    }
     this.debrisMesh.count = drawn;
-    this.debrisMesh.instanceMatrix.needsUpdate = true;
+    uploadPrefix(this.debrisMesh.instanceMatrix, drawn);
   }
   get active() {
     return this.glow.items.length + this.smoke.items.length + this.decals.items.length + this.debris.length + this.projectiles.length;
