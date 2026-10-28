@@ -337,6 +337,48 @@ export class Effects {
       this.sparks(at, 3, anchor, 0.45);
     }
   }
+  // -- celebration effects: a unit arriving, a building finishing, an upgrade, a cargo drop-off.
+  // A handful of pooled particles each (halved in Eco, still when combat motion is off), team coloured.
+  tint(team) {
+    const hex = this.view.colors[team] ?? 0xb8b2a4;
+    return [((hex >> 16) & 255) / 255, ((hex >> 8) & 255) / 255, (hex & 255) / 255];
+  }
+  spawn(e) {
+    const [r, g, b] = this.tint(e.team), anchor = { x: e.x, z: e.z, team: e.team };
+    this.decal({ x: e.x, z: e.z }, 2.4, 0.45, anchor, CELL.ring, [r, g, b, 0.85], this.glow, 0.4, { hold: 0, y: 0.1 });
+    this.particle(this.glow, { x: e.x, y: 0.9, z: e.z, cell: CELL.flare, s0: 1.8, s1: 0.4, life: 0.3, c0: [1, 1, 1, 0.9], c1: [r, g, b, 0], anchor });
+    for (let i = 0; i < this.count(3); i++)
+      this.particle(this.glow, { x: e.x + (Math.random() - 0.5) * 0.9, y: 0.2, z: e.z + (Math.random() - 0.5) * 0.9, vy: this.motion ? 2.4 + Math.random() : 0,
+        drag: 1.2, life: 0.5 + Math.random() * 0.2, s0: 0.35, s1: 0.05, c0: [r, g, b, 0.9], c1: [r, g, b, 0], anchor, delay: i * 0.04 });
+  }
+  built(e) {
+    const [r, g, b] = this.tint(e.team), anchor = { x: e.x, z: e.z, team: e.team }, size = e.radius * 1.15;
+    this.decal({ x: e.x, z: e.z }, size * 3, 0.7, anchor, CELL.ring, [r, g, b, 0.8], this.glow, size * 0.6, { hold: 0, y: 0.1 });
+    this.decal({ x: e.x, z: e.z }, size * 2.1, 0.5, anchor, CELL.ring, [1, 0.95, 0.8, 0.7], this.glow, size * 0.4, { hold: 0, y: 0.12, delay: 0.08 });
+    this.particle(this.glow, { x: e.x, y: e.radius * 0.6, z: e.z, cell: CELL.flare, s0: size * 1.6, s1: size * 0.5, life: 0.35, c0: [1, 0.97, 0.85, 0.95], c1: [r, g, b, 0], anchor });
+    this.dust({ x: e.x, y: 0.25, z: e.z }, 4, anchor, 0.9 + e.radius * 0.12, 1);
+    for (let i = 0; i < this.count(5); i++) {
+      const a = (i / 5) * Math.PI * 2 + Math.random() * 0.6, d = e.radius * (0.6 + Math.random() * 0.5);
+      this.particle(this.glow, { x: e.x + Math.cos(a) * d, y: 0.3, z: e.z + Math.sin(a) * d, vy: this.motion ? 3.2 + Math.random() * 2 : 0,
+        drag: 1.4, life: 0.6 + Math.random() * 0.3, s0: 0.3, s1: 0.05, cell: CELL.flare, c0: [1, 0.95, 0.7, 0.9], c1: [r, g, b, 0], anchor, delay: i * 0.05 });
+    }
+  }
+  levelup(e) {
+    const anchor = { x: e.x, z: e.z, team: e.team }, [r, g, b] = this.tint(e.team);
+    for (let i = 0; i < this.count(3); i++)
+      this.particle(this.glow, { x: e.x, y: 0.4 + i * 1.1, z: e.z, cell: CELL.ring, s0: e.radius * 1.1, s1: e.radius * 0.7, life: 0.55,
+        c0: [1, 0.86, 0.4, 0.85], c1: [r, g, b, 0], anchor, delay: i * 0.12, vy: this.motion ? 1.5 : 0 });
+    this.particle(this.glow, { x: e.x, y: e.radius * 1.2, z: e.z, cell: CELL.flare, s0: 2.6, s1: 0.6, life: 0.45, c0: [1, 0.95, 0.6, 0.95], c1: [1, 0.7, 0.2, 0], anchor, delay: 0.1 });
+  }
+  deliver(e) {
+    // Cargo drop-off: a small coloured glint at the depot (amber alloy, blue energy).
+    const energy = e.resource === "energy", c0 = energy ? [0.5, 0.88, 1, 0.9] : [1, 0.78, 0.3, 0.9], c1 = energy ? [0.3, 0.7, 1, 0] : [1, 0.55, 0.1, 0];
+    const at = { x: e.tx ?? e.x, y: 1.6, z: e.tz ?? e.z }, anchor = { x: e.x, z: e.z, team: e.team };
+    this.particle(this.glow, { ...at, cell: CELL.flare, s0: 0.9, s1: 0.2, life: 0.28, c0, c1, anchor });
+    for (let i = 0; i < this.count(2); i++)
+      this.particle(this.glow, { x: at.x + (Math.random() - 0.5) * 0.8, y: at.y, z: at.z + (Math.random() - 0.5) * 0.8, vy: this.motion ? 1.8 : 0, drag: 1,
+        life: 0.4 + Math.random() * 0.15, s0: 0.22, s1: 0.04, c0, c1, anchor, delay: i * 0.05 });
+  }
   impact(e) {
     const at = { x: e.x, y: e.building ? 2.2 : 1.1, z: e.z }, anchor = { x: e.x, z: e.z, team: e.team };
     if (e.shield) {

@@ -55,6 +55,7 @@ export const progression = {
     b.levelJob.elapsed += dt;
     if (b.levelJob.elapsed < b.levelJob.time) return;
     b.level++;
+    this.events.push({type:'levelup',x:b.x,z:b.z,team:b.team,radius:b.radius,level:b.level,seed:b.id});
     const base = D[b.type], previous = b.maxHp;
     b.maxHp = base.hp*(1+0.25*(b.level-1));
     b.hp += b.maxHp-previous;

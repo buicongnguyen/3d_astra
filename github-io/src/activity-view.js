@@ -24,6 +24,11 @@ export class ActivityView {
       if(shotVisible(e,sim)){this.shots.add(e);this.view.fx?.shot(e,sim);}
       return;
     }
+    if (['spawn','built','deliver','levelup'].includes(e.type)) {
+      // Celebration effects: pooled particles only, nothing for the 2D overlay to track.
+      if (sim.isVisible(e)) this.view.fx?.[e.type](e);
+      return;
+    }
     if (!['impact','death'].includes(e.type) || !sim.isVisible(e)) return;
     this.view.fx?.[e.type](e);
     const max = effectDuration(e);

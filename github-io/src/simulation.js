@@ -807,6 +807,7 @@ export class Simulation {
       t.hp = Math.min(t.maxHp, t.hp + (dt * t.maxHp) / t.time);
       if (t.progress >= 1) {
         t.complete = true;
+        this.events.push({ type: "built", x: t.x, z: t.z, team: t.team, radius: t.radius, seed: t.id });
         this.message(`${t.name} is operational.`, e.team);
         this.finish(e);
       }
@@ -860,6 +861,7 @@ export class Simulation {
         return;
       }
       if (e.carryType) this.players[e.team][e.carryType] += e.carry;
+      if (e.carry > 0) this.events.push({ type: "deliver", x: e.x, z: e.z, tx: depot.x, tz: depot.z, team: e.team, resource: e.carryType, seed: e.id });
       e.carry = 0;
       e.carryType = null;
       this.resumeGathering(e, o);
@@ -913,6 +915,7 @@ export class Simulation {
     }
     b.queue.shift();
     const u = this.spawn(q.type, b.team, pos.x, pos.z);
+    this.events.push({ type: "spawn", x: pos.x, z: pos.z, team: b.team, seed: u.id });
     // A rally point on a deposit sends new Harvesters straight to work.
     const deposit = b.rally?.target && this.get(b.rally.target);
     if (u.type === "worker" && deposit?.kind === "resource") this.issue([u.id], { type: "gather", target: deposit.id });
