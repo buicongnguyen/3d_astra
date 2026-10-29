@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { themeFor, weaponStyle, shotVisible } from "./visual-style.js";
 import { burningEntities } from "./combat-feedback.js";
+import { isHarvesting, harvestTarget } from "./activity.js";
 
 // 3D combat effects: muzzle flashes, tracers, shells, rockets, sparks, fireballs, smoke,
 // shockwaves, scorch marks, debris and fire on damaged machines and buildings.
@@ -179,6 +180,8 @@ export class Effects {
   constructor(view) {
     this.view = view;
     this.texture = atlas();
+    this.workTimers = new Map(); // per-Harvester countdown to its next spark
+    this.depositLive = new Map(); // resource id -> had stock last frame (for the shatter)
     // Buffers are allocated at High size; the live cap follows view.lowPower so a quality switch needs no rebuild.
     this.decals = new Layer(48, THREE.NormalBlending, 1, this.texture);
     this.smoke = new Layer(420, THREE.NormalBlending, 5, this.texture);
@@ -379,6 +382,57 @@ export class Effects {
       this.particle(this.glow, { x: at.x + (Math.random() - 0.5) * 0.8, y: at.y, z: at.z + (Math.random() - 0.5) * 0.8, vy: this.motion ? 1.8 : 0, drag: 1,
         life: 0.4 + Math.random() * 0.15, s0: 0.22, s1: 0.04, c0, c1, anchor, delay: i * 0.05 });
   }
+  // -- continuous work effects, rate-limited per worker and capped per frame (halved in Eco)
+  glint(at, c0, c1, anchor, n, power = 1) {
+    for (let i = 0; i < this.count(n); i++) {
+      const a = Math.random() * Math.PI * 2, v = (2.4 + Math.random() * 3.2) * power, vx = Math.cos(a) * v, vz = Math.sin(a) * v, vy = (1.2 + Math.random() * 2.4) * power;
+      const len = Math.hypot(vx, vy, vz) || 1;
+      this.particle(this.glow, { x: at.x, y: at.y, z: at.z, vx, vy, vz, gravity: 11, drag: 1.2, life: 0.22 + Math.random() * 0.22, mode: STRETCH,
+        ax: vx / len, ay: vy / len, az: vz / len, length: 0.5 * power, s0: 0.1, s1: 0.04, cell: CELL.streak, c0, c1, floor: 0.05, anchor });
+    }
+  }
+  work(sim, dt) {
+    if (!this.motion || dt <= 0) return;
+    const limit = this.view.lowPower ? 6 : 12, gap = this.view.lowPower ? 1.5 : 1;
+    let n = 0;
+    if (this.workTimers.size > 96) this.workTimers.clear();
+    for (const e of sim.entities) {
+      if (n >= limit) break;
+      if (e.type !== "worker" || e.hp <= 0 || !e.working || e.moving) continue;
+      const o = e.orders[0];
+      if (!o) continue;
+      let kind = null, target = null;
+      if (o.type === "gather") { if (isHarvesting(sim, e)) { kind = "mine"; target = harvestTarget(sim, e); } }
+      else if (o.type === "build") { target = sim.get(o.target); if (target && target.kind === "building" && !target.complete && target.hp > 0) kind = "build"; }
+      if (!kind || !sim.isVisible(e)) continue;
+      n++;
+      const left = (this.workTimers.get(e.id) ?? Math.random() * 0.25) - dt;
+      if (left > 0) { this.workTimers.set(e.id, left); continue; }
+      this.workTimers.set(e.id, (kind === "mine" ? 0.26 : 0.17) * gap * (0.8 + Math.random() * 0.4));
+      const dx = target.x - e.x, dz = target.z - e.z, d = Math.hypot(dx, dz) || 1, ux = dx / d, uz = dz / d, anchor = { x: e.x, z: e.z, team: e.team };
+      if (kind === "mine") {
+        // Chips fly off the crystal face the Harvester is working, in the deposit's own colour.
+        const energy = target.type === "energy", reach = Math.max(0.3, d - target.radius * 0.75);
+        const at = { x: e.x + ux * reach, y: 0.8 + Math.random() * 0.5, z: e.z + uz * reach };
+        this.glint(at, energy ? [0.6, 0.92, 1, 1] : [1, 0.82, 0.38, 1], energy ? [0.3, 0.7, 1, 0] : [1, 0.5, 0.12, 0], anchor, 2, 0.9);
+        this.particle(this.glow, { ...at, cell: CELL.flare, s0: 0.5, s1: 0.1, life: 0.16, c0: energy ? [0.7, 0.95, 1, 0.9] : [1, 0.9, 0.55, 0.9], c1: energy ? [0.3, 0.7, 1, 0] : [1, 0.5, 0.1, 0], anchor });
+      } else {
+        // Welding: white-hot sparks and a puff of site dust where the Harvester meets the frame.
+        const reach = Math.max(0.3, d - target.radius * 0.85), at = { x: e.x + ux * reach, y: 0.9 + Math.random() * 0.8, z: e.z + uz * reach };
+        this.glint(at, [1, 0.97, 0.8, 1], [1, 0.6, 0.15, 0], anchor, 3, 1);
+        this.particle(this.glow, { ...at, cell: CELL.flare, s0: 0.7, s1: 0.15, life: 0.12, c0: [1, 1, 0.9, 0.95], c1: [1, 0.7, 0.3, 0], anchor });
+        if (Math.random() < 0.4) this.dust({ x: at.x, y: 0.25, z: at.z }, 1, anchor, 0.55, 0.9);
+      }
+    }
+  }
+  shatter(r) {
+    // A deposit running dry: its crystals burst into glints and a faint ring.
+    const energy = r.type === "energy", anchor = { x: r.x, z: r.z, team: -1 }, c0 = energy ? [0.6, 0.92, 1, 1] : [1, 0.82, 0.38, 1], c1 = energy ? [0.3, 0.7, 1, 0] : [1, 0.5, 0.12, 0];
+    this.decal({ x: r.x, z: r.z }, r.radius * 3, 0.6, anchor, CELL.ring, [c0[0], c0[1], c0[2], 0.7], this.glow, r.radius * 0.8, { hold: 0, y: 0.1 });
+    this.particle(this.glow, { x: r.x, y: 1, z: r.z, cell: CELL.flare, s0: r.radius * 2, s1: r.radius * 0.5, life: 0.3, c0: [1, 1, 0.92, 0.95], c1, anchor });
+    if (this.motion) this.glint({ x: r.x, y: 0.9, z: r.z }, c0, c1, anchor, 9, 1.4);
+    this.dust({ x: r.x, y: 0.3, z: r.z }, 3, anchor, 1, 1);
+  }
   impact(e) {
     const at = { x: e.x, y: e.building ? 2.2 : 1.1, z: e.z }, anchor = { x: e.x, z: e.z, team: e.team };
     if (e.shield) {
@@ -486,6 +540,12 @@ export class Effects {
     // Fire on critically damaged machines and buildings; same fog-aware budget as the HUD.
     this.burning = burningEntities(sim, this.view.lowPower);
     if (dt > 0) for (const e of this.burning) this.burn(e, dt);
+    this.work(sim, dt);
+    for (const r of sim.resources ?? []) {
+      const live = r.amount > 0, was = this.depositLive.get(r.id);
+      if (was && !live && sim.isVisible(r)) this.shatter(r);
+      this.depositLive.set(r.id, live);
+    }
     for (const [id, em] of this.emitters) if (this.time - em.seen > 1) this.emitters.delete(id);
     this.decals.update(dt, visible);
     this.smoke.update(dt, visible);
@@ -529,6 +589,8 @@ export class Effects {
     for (const layer of [this.decals, this.smoke, this.glow]) layer.clear();
     this.debris.length = this.projectiles.length = this.timeline.length = 0;
     this.emitters.clear();
+    this.workTimers.clear();
+    this.depositLive.clear();
     this.burning = [];
     this.update({ isVisible: () => false, entities: [] }, 0);
   }

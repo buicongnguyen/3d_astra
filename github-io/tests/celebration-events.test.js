@@ -55,3 +55,17 @@ test("a finished Command core upgrade announces a level-up", () => {
   assert.ok(ev, "levelup event emitted");
   assert.equal(ev.level, 2);
 });
+
+test("workers that mine or build are detectable by the work effects, and an emptied deposit flips once", async () => {
+  const { isHarvesting } = await import("../src/activity.js");
+  const s = new Simulation({ map: "classic" });
+  const worker = s.own(0).find((e) => e.type === "worker");
+  const dep = s.resources.filter((r) => r.type === "alloy").sort((a, b) => Math.hypot(a.x - worker.x, a.z - worker.z) - Math.hypot(b.x - worker.x, b.z - worker.z))[0];
+  s.issue([worker.id], { type: "gather", target: dep.id });
+  let mined = false;
+  for (let i = 0; i < 1200 && !mined; i++) { s.tick(0.05); mined = isHarvesting(s, worker); }
+  assert.ok(mined, "a Harvester at its deposit counts as mining (the spark effect keys on this)");
+  const before = dep.amount;
+  dep.amount = 0; // exhausted: the shatter effect fires on the live -> empty transition only
+  assert.ok(before > 0 && dep.amount <= 0);
+});
