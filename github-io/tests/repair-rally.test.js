@@ -37,13 +37,14 @@ test('repair is slower than an Engineer, uses at most two Harvesters and stops w
   assert.equal(hq.hp,stalled);assert.ok(workers.every(w=>!w.orders.length));assert.match(message(s),/alloy.*keep repairing/);
 });
 
-test('repair orders reject enemies, construction sites and non-Harvesters',()=>{
+test('repair orders reject enemies, construction sites and vehicles (infantry may help)',()=>{
   const s=new Simulation({ai:false}),w=first(s,'worker'),enemy=first(s,'hq',1),soldier=s.own(0).find(e=>e.kind==='unit'&&e.type!=='worker');
   s.aiEnabled=false;
   const site=s.spawn('relay',0,-4,34);site.complete=false;
   for(const target of [enemy,site]){s.issue([w.id],{type:'repair',target:target.id});assert.equal(w.orders.length,0);}
   const b=first(s,'barracks');b.hp-=100;
-  s.issue([soldier.id],{type:'repair',target:b.id});assert.equal(soldier.orders.length,0);
+  s.issue([soldier.id],{type:'repair',target:b.id});assert.equal(soldier.orders[0]?.type,'repair','ordinary infantry help repair');
+  const tank=s.spawn('tank',0,b.x+5,b.z);s.issue([tank.id],{type:'repair',target:b.id});assert.equal(tank.orders.length,0,'vehicles do not repair');
 });
 
 test('a rally point on a deposit sends new Harvesters to gather; other units move there',()=>{

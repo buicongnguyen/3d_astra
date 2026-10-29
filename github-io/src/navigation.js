@@ -6,6 +6,9 @@ export class Navigation {
     this.terrain = terrain;
     this.grid = terrain.grid;
     this.blocked = new Uint8Array(this.grid * this.grid);
+    // A finer view used only when no normal route exists: cells within 0.3 m of a footprint instead of 0.65 m,
+    // so a slim body can find its way through a narrow gap between buildings (canTraverse still checks clearance).
+    this.looseBlocked = new Uint8Array(this.grid * this.grid);
     this.revision = 0;
     this.wallsSpawned = false;
     this.obstacles = [];
@@ -24,6 +27,7 @@ export class Navigation {
       ...entities.filter((e) => e.hp > 0 && (e.kind === "building" || e.kind === "wall")),
     );
     this.blocked.fill(0);
+    this.looseBlocked.fill(0);
     this.clearance.clear();
     for (let z = 0; z < this.grid; z++)
       for (let x = 0; x < this.grid; x++) {
@@ -33,11 +37,17 @@ export class Navigation {
           this.obstacles.some((o) => distance(p, o) < o.radius + 0.65)
         )
           this.blocked[z * this.grid + x] = 1;
+        if (
+          !this.terrain.canStand(p.x, p.z, 0.3) ||
+          this.obstacles.some((o) => distance(p, o) < o.radius + 0.3)
+        )
+          this.looseBlocked[z * this.grid + x] = 1;
       }
   }
-  free(x, z, radius = 0.55) {
+  free(x, z, radius = 0.55, loose = false) {
     if (x < 0 || z < 0 || x >= this.grid || z >= this.grid) return false;
     const i = z * this.grid + x;
+    if (loose) return !this.looseBlocked[i];
     if (this.blocked[i]) return false;
     if (radius <= 0.65) return true;
     // Vehicle clearance scans every obstacle; cache it per radius until the next rebuild.
@@ -50,23 +60,23 @@ export class Navigation {
     }
     return cache[i] === 1;
   }
-  nearest(x, z, radius = 0.55) {
-    if (this.free(x, z, radius)) return [x, z];
+  nearest(x, z, radius = 0.55, loose = false) {
+    if (this.free(x, z, radius, loose)) return [x, z];
     for (let r = 1; r < 10; r++)
       for (let dz = -r; dz <= r; dz++)
         for (let dx = -r; dx <= r; dx++) {
           if (
             Math.max(Math.abs(dx), Math.abs(dz)) === r &&
-            this.free(x + dx, z + dz, radius)
+            this.free(x + dx, z + dz, radius, loose)
           )
             return [x + dx, z + dz];
         }
     return null;
   }
-  path(from, to, radius = 0.55) {
+  path(from, to, radius = 0.55, loose = false) {
     if (![from.x, from.z, to.x, to.z].every(Number.isFinite)) return [];
-    const start = this.nearest(...this.cellAt(from.x, from.z), radius),
-      end = this.nearest(...this.cellAt(to.x, to.z), radius);
+    const start = this.nearest(...this.cellAt(from.x, from.z), radius, loose),
+      end = this.nearest(...this.cellAt(to.x, to.z), radius, loose);
     if (!start || !end) return [];
     const s = start[1] * this.grid + start[0],
       goal = end[1] * this.grid + end[0];
@@ -144,11 +154,11 @@ export class Navigation {
         z = Math.floor(current / this.grid);
       for (let dz = -1; dz <= 1; dz++)
         for (let dx = -1; dx <= 1; dx++) {
-          if ((!dx && !dz) || !this.free(x + dx, z + dz, radius)) continue;
+          if ((!dx && !dz) || !this.free(x + dx, z + dz, radius, loose)) continue;
           if (
             dx &&
             dz &&
-            (!this.free(x + dx, z, radius) || !this.free(x, z + dz, radius))
+            (!this.free(x + dx, z, radius, loose) || !this.free(x, z + dz, radius, loose))
           )
             continue;
           const next = (z + dz) * this.grid + x + dx;

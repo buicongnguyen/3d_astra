@@ -15,6 +15,8 @@ import { AI_SPEEDS, coalitionPlan, roleOf } from "./ai-plan.js";
 import { Terrain } from "./terrain.js";
 
 export const NEUTRAL = -1;
+// The slimmest unit body: the radius used to push a larger unit through a gap it cannot otherwise leave.
+const SQUEEZE = 0.55;
 // Contested middle-lane deposits on every map: [type, x, z, amount], mirrored for the rival.
 const MIDFIELD_DEPOSITS = [
   ["alloy", 14, 27, 2500],
@@ -319,7 +321,7 @@ export class Simulation {
       )
         continue;
       if (
-        ["gather", "build", "deliver", "repair"].includes(order.type) &&
+        ["gather", "build", "deliver"].includes(order.type) &&
         e.type !== "worker"
       )
         continue;
@@ -425,7 +427,8 @@ export class Simulation {
         (e) =>
           e.hp > 0 &&
           e.kind === "building" &&
-          Math.hypot(x - e.x, z - e.z) < d.radius + e.radius + 0.8,
+          // 1.25 m: wider than the smallest unit (1.1 m), so no placement can seal a gap shut.
+          Math.hypot(x - e.x, z - e.z) < d.radius + e.radius + 1.25,
       )
     )
       return "Too close to another structure.";
@@ -532,11 +535,54 @@ export class Simulation {
       z: target.z + Math.sin(angle) * r,
     };
   }
+  // Nearest clear ground for a unit that is wedged against (or inside) a building, wall or the
+  // bank: the grid keeps a wider margin than a unit's body, so a unit hugging a footprint can
+  // stand legally yet start its route in a blocked cell. Rings widen from the side facing away
+  // from the nearest obstacle; null when nothing is clear within a few metres.
+  escapePoint(e, goal = null) {
+    let near = null, best = Infinity;
+    for (const o of this.nav.obstacles) {
+      const d = Math.hypot(e.x - o.x, e.z - o.z) - o.radius;
+      if (d < best) { best = d; near = o; }
+    }
+    const base = near ? Math.atan2(e.z - near.z, e.x - near.x) || 0 : 0;
+    let tried = 0;
+    for (let r = 0.5; r <= 5; r += 0.5)
+      for (let k = 0; k < 16; k++) {
+        const a = base + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * (Math.PI / 8), x = e.x + Math.cos(a) * r, z = e.z + Math.sin(a) * r;
+        if (!this.nav.canStand(x, z, e.radius)) continue;
+        const [cx, cz] = this.nav.cellAt(x, z);
+        if (!this.nav.free(cx, cz, e.radius)) continue;
+        // With a goal, only a spot that has a route to it counts: hopping toward an unreachable goal
+        // would just reset the stall clock the order logic uses to give up. Few candidates are tried.
+        if (goal && (++tried > 8 || !this.nav.path({ x, z }, goal, e.radius).length)) { if (tried > 8) return null; continue; }
+        return { x, z };
+      }
+    return null;
+  }
   move(e, goal, dt, tolerance = 0.5) {
     if (distance(e, goal) < tolerance) {
       e.moving = false;
       e.path = [];
+      e.escape = null;
       return true;
+    }
+    if (e.escape) {
+      // A short straight hop out of a tight spot, ignoring the footprint it is leaving.
+      const dx = e.escape.x - e.x, dz = e.escape.z - e.z, d = Math.hypot(dx, dz);
+      if (d < 0.2) { e.escape = null; e.path = []; e.pathClock = 0; e.stalled = 0; e.moveSample = null; }
+      else {
+        const step = Math.min(d, e.speed * dt);
+        e.x += (dx / d) * step;
+        e.z += (dz / d) * step;
+        e.angle = Math.atan2(dx, dz);
+        e.moving = true;
+        return false;
+      }
+    }
+    if (!this.nav.canStand(e.x, e.z, e.radius)) {
+      const out = this.escapePoint(e);
+      if (out) { e.escape = out; e.path = []; e.moving = true; return false; }
     }
     // Measure progress across frames. A fixed per-frame threshold falsely
     // marked healthy movement as stuck on high-refresh-rate displays.
@@ -546,7 +592,16 @@ export class Simulation {
       e.stalled = 0;
       e.moveSample = { x: e.x, z: e.z };
     }
+    if (e.stalled > 1.5 && !e.escapeTried) {
+      // Stalled: one hop to clear ground that HAS a route to the goal before giving up. A goal no spot
+      // can reach (a walled-in target) finds no hop, so the order logic's stall clock keeps running.
+      e.escapeTried = true;
+      // (A unit that does have a route, ending beside an unreachable target, is not wedged: no hop.)
+      const out = this.nav.path(e, goal, e.radius).length ? null : this.escapePoint(e, goal);
+      if (out) { e.escape = out; e.path = []; e.moving = true; return false; }
+    }
     if (e.stalled > 6) {
+      e.escapeTried = false;
       this.finish(e);
       this.message(
         `${e.name} cannot reach its destination. Order cleared.`,
@@ -557,6 +612,14 @@ export class Simulation {
     e.pathClock -= dt;
     if (e.pathClock <= 0 || e.pathRevision !== this.nav.revision) {
       e.path = this.nav.path(e, goal, e.radius);
+      // No route for the full body: squeeze a big unit through a narrow gap on a slim one instead of
+      // leaving it sealed in beside the buildings (it may clip a corner, which beats staying stuck).
+      e.squeeze = false;
+      if (!e.path.length) {
+        // A slim body on the finer grid: a gap that cannot hold a whole 2 m cell centre can still pass it.
+        e.path = this.nav.path(e, goal, Math.min(e.radius, SQUEEZE), true);
+        e.squeeze = e.path.length > 0;
+      }
       e.pathClock = 1.3 + (e.id % 7) * 0.08;
       e.pathRevision = this.nav.revision;
     }
@@ -582,12 +645,24 @@ export class Simulation {
       return false;
     }
     const nextPosition = { x: e.x + (dx / d) * step, z: e.z + (dz / d) * step };
-    if (!this.nav.canTraverse(e, nextPosition, e.radius)) {
+    if (!this.nav.canTraverse(e, nextPosition, e.squeeze ? SQUEEZE : e.radius)) {
       e.moving = false;
       e.path = [];
       e.pathClock = 0;
+      // The first step crosses a footprint (the unit hugs a building, in a blocked grid cell). First try
+      // a slim-body route on the finer grid (it holds for a moment so the unit can actually follow it);
+      // otherwise hop to clear ground that has a route to the goal, at most four times per order.
+      if (!e.squeeze) {
+        const slim = this.nav.path(e, goal, Math.min(e.radius, SQUEEZE), true);
+        if (slim.length) { e.path = slim; e.squeeze = true; e.pathClock = 1.2; return false; }
+      }
+      if ((e.hops || 0) < 4) {
+        const out = this.escapePoint(e, goal);
+        if (out) { e.escape = out; e.hops = (e.hops || 0) + 1; }
+      }
       return false;
     }
+    e.escapeTried = false;
     e.x = nextPosition.x;
     e.z = nextPosition.z;
     e.angle = Math.atan2(dx, dz);
@@ -603,6 +678,8 @@ export class Simulation {
   }
   resetWorkerRoute(e) {
     e.path = [];
+    e.hops = 0;
+    e.squeeze = false;
     e.pathClock = 0;
     e.stalled = 0;
     e.moveSample = null;
@@ -867,6 +944,24 @@ export class Simulation {
       this.resumeGathering(e, o);
     }
   }
+  // Where a freshly trained unit appears: the nearest clear ground around the building, widening
+  // ring by ring so a building boxed in by neighbours still releases its units (beyond the wall if it
+  // must). Spots with a route to the rally point or the Command core are preferred, so a unit does
+  // not appear in a sealed pocket.
+  exitPoint(b, d) {
+    const hq = this.own(b.team).find((e) => e.type === "hq"), goal = b.rally || hq || b;
+    const free = [];
+    for (let r = b.radius + 2.5; r <= b.radius + 16 && free.length < 8; r += 1.5)
+      for (let i = 0; i < 28; i++) {
+        const angle = (i / 28) * Math.PI * 2 + r * 0.7, c = { x: b.x + Math.cos(angle) * r, z: b.z + Math.sin(angle) * r };
+        if (this.nav.canStand(c.x, c.z, d.radius) &&
+          !this.entities.some((e) => e.hp > 0 && e.kind === "unit" && distance(c, e) < e.radius + d.radius + 0.2)) {
+          free.push(c);
+          if (free.length >= 8) break;
+        }
+      }
+    return free.find((c) => this.nav.path(c, goal, d.radius).length) || free[0] || null;
+  }
   updateProduction(b, dt) {
     if (!b.complete || b.levelJob || !b.queue.length) return;
     const q = b.queue[0],
@@ -889,26 +984,7 @@ export class Simulation {
       return;
     }
     q.blocked = null;
-    let pos;
-    for (let i = 0; i < 24; i++) {
-      const angle = (i / 24) * Math.PI * 2,
-        candidate = {
-          x: b.x + Math.cos(angle) * (b.radius + 2.5),
-          z: b.z + Math.sin(angle) * (b.radius + 2.5),
-        };
-      if (
-        this.nav.canStand(candidate.x, candidate.z, d.radius) &&
-        !this.entities.some(
-          (e) =>
-            e.hp > 0 &&
-            e.kind === "unit" &&
-            distance(candidate, e) < e.radius + d.radius + 0.2,
-        )
-      ) {
-        pos = candidate;
-        break;
-      }
-    }
+    const pos = this.exitPoint(b, d);
     if (!pos) {
       q.blocked = "Exit blocked";
       return;

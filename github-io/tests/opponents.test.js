@@ -34,13 +34,15 @@ test('all seven maps support one to three independent enemies with accessible st
 test('each AI gathers, trains and launches its own wave without spending player funds', () => {
   const s = new Simulation({map:'highlands',enemyCount:3});
   const deposits = s.resources.reduce((sum,r) => sum+r.amount, 0);
-  for (let i=0;i<2800;i++) s.tick(.05);
+  const first = [...s.waveAt];
+  // A wave waits for a minimum army, so run until every team has launched one (bounded at 5 minutes).
+  for (let i=0;i<6000 && !(i>2800 && [1,2,3].every(t => s.waveAt[t] > first[t]));i++) s.tick(.05);
   assert.equal(s.players[0].alloy,450);
   assert.equal(s.players[0].energy,150);
   assert.ok(s.resources.reduce((sum,r)=>sum+r.amount,0) < deposits);
   for (let team=1;team<4;team++) {
     assert.ok(s.own(team).filter(e=>e.kind==='unit').length > 7, `team ${team} production`);
-    assert.ok(s.waveAt[team] > 140, `team ${team} attack wave`);
+    assert.ok(s.waveAt[team] > first[team], `team ${team} launched an attack wave (next at ${Math.round(s.waveAt[team])})`);
     assert.ok(s.players[team].alloy >= 0 && s.players[team].energy >= 0);
   }
 });

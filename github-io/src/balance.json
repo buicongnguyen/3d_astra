@@ -4,7 +4,7 @@
       "name": "Harvester",
       "role": "Economy",
       "kind": "unit",
-      "hp": 55,
+      "hp": 100,
       "speed": 4.6,
       "damage": 4,
       "interval": 1,
@@ -183,7 +183,7 @@
       "vision": 19,
       "cost": [
         125,
-        25
+        0
       ],
       "time": 15,
       "damage": 19,

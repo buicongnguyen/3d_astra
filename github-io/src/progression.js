@@ -3,7 +3,7 @@ import { DEFINITIONS as D, distance } from './data.js';
 // Harvester repair: slower than an Engineer (18 HP/s) and not free. A full repair costs a
 // quarter of the building's price, charged as health is restored. Two Harvesters at most
 // work on one building, so a cheap tower cannot be kept alive by a crowd of repairers.
-export const REPAIR = { rate: 10, costShare: 0.25, crew: 2 };
+export const REPAIR = { rate: 16, costShare: 0.25, crew: 2, soldier: 0.6 };
 
 // Simulation methods shared by player commands and AI; rendering never changes stats.
 export const progression = {
@@ -87,8 +87,13 @@ export const progression = {
       if (t.kind === 'building' || t.kind === 'wall') this.nav.rebuild(this.entities);
     }
   },
+  // Harvesters repair at full rate; ordinary infantry (not vehicles, not Medics or Engineers, which
+  // heal through the support order) help at 60%, so a burning building can be saved by whoever is nearby.
+  canRepair(e) {
+    return e?.type === 'worker' || (e?.kind === 'unit' && !e.mechanical && !e.support && e.damage > 0);
+  },
   repairValid(e,t) {
-    return e?.type === 'worker' && t?.kind === 'building' && t.team === e.team && t.complete && t.hp > 0;
+    return this.canRepair(e) && t?.kind === 'building' && t.team === e.team && t.complete && t.hp > 0;
   },
   // Returns false when the job is over (repaired, invalid or unaffordable).
   repair(e,t,dt) {
@@ -106,7 +111,7 @@ export const progression = {
       e.working = false;
       return true;
     }
-    const gain = Math.min(REPAIR.rate*dt,t.maxHp-t.hp);
+    const gain = Math.min(REPAIR.rate*(e.type === 'worker' ? 1 : REPAIR.soldier)*dt,t.maxHp-t.hp);
     // Whole resource units are charged from a per-building balance, so short ticks stay exact.
     const due = D[t.type].cost.map((c,i) => (t.repairDue?.[i] || 0)+c*REPAIR.costShare*gain/t.maxHp);
     const charge = due.map(Math.floor);

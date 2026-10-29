@@ -529,7 +529,7 @@ function updateUI() {
   $("patrol-order").hidden = !es.some(u => u.kind === 'unit' && u.type !== 'worker' && u.damage > 0);
   $("attack-target-order").hidden = !es.some(u => u.type === 'worker');
   // Phones repair by tapping a damaged building; the button would add a row to the small dock.
-  $("repair-order").hidden = document.documentElement.classList.contains('compact-ui') || !es.some(u => u.type === 'worker' && u.team === 0);
+  $("repair-order").hidden = document.documentElement.classList.contains('compact-ui') || !es.some(u => u.team === 0 && sim.canRepair(u));
   $("rally-order").hidden = !es.some(u => u.kind === 'building' && u.team === 0 && u.complete && u.trains?.length);
   // Desktop hides unit-only orders while only buildings are selected.
   document.documentElement.classList.toggle('no-units', !es.some(u => u.kind === 'unit'));
@@ -812,14 +812,18 @@ function commandAt(point, target, append = false, forced = null) {
     const workers = units.filter((e) => e.type === "worker");
     for (const type of ["gather", "build", "deliver", "repair"])
       sim.issue(workers.filter((w) => job(w) === type).map((e) => e.id), { type, target: target.id }, append);
+    // Soldiers right-clicking a damaged friendly building pitch in and repair it; otherwise they just move.
+    const fixers = target.kind === "building" && target.complete && target.hp < target.maxHp
+      ? units.filter((e) => e.type !== "worker" && sim.repairValid(e, target)) : [];
+    if (fixers.length) sim.issue(fixers.map((e) => e.id), { type: "repair", target: target.id }, append);
     sim.issue(
-      units.filter((e) => e.type !== "worker").map((e) => e.id),
+      units.filter((e) => e.type !== "worker" && !fixers.includes(e)).map((e) => e.id),
       order,
       append,
     );
     // Harvesters with a job need no more orders: let go of them so the next tap can select
     // a building (tapping the Command core would otherwise order a cargo delivery).
-    if (units.every((e) => e.type === "worker") && !append) {
+    if (units.every((e) => e.type === "worker" || fixers.includes(e)) && !append) {
       view.marker(target.x, target.z, view.colors[0]);
       tone(440);
       setSelection([]);

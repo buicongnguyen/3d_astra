@@ -79,7 +79,7 @@ Specialists score below zero overall because half their opponents are not their 
 
 ## Sentinel tower
 
-The tower costs 125 alloy + 25 energy (value 162.5) and uses no supply. It has 650 HP / 50 shield and deals 19 damage every 1.2 s at 13 m, which outranges every unit.
+The tower costs 125 alloy and no energy (value 125, so it can be placed before any blue deposit is tapped) and uses no supply. It has 650 HP / 50 shield and deals 19 damage every 1.2 s at 13 m, which outranges every unit.
 
 To measure it, armies of one unit type attack-moved into a single tower until it fell. The tables show the smallest army that destroyed it, that army's value as a multiple of what was invested in the tower, and the attacker's losses.
 
