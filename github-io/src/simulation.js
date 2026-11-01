@@ -360,6 +360,7 @@ export class Simulation {
       if (!append || o.type === "stop") {
         e.working = false;
         e.orders = [];
+        e.escape = null; e.hops = 0; e.escapeTried = false; e.escapeAt = 0; e.squeeze = false; // per-order movement state
         e.path = [];
         e.target = null;
         e.pathClock = 0;
@@ -450,6 +451,8 @@ export class Simulation {
       )
     )
       return "Units are standing in the construction footprint.";
+    // A building must never wall in the ground behind it: the route search needs real room to pass.
+    if (this.nav.wouldSeal(x, z, d.radius)) return "That would wall in the ground behind it.";
     if (
       d.requires &&
       !this.own(team).some((e) => e.type === d.requires && e.complete)
@@ -553,12 +556,19 @@ export class Simulation {
         if (!this.nav.canStand(x, z, e.radius)) continue;
         const [cx, cz] = this.nav.cellAt(x, z);
         if (!this.nav.free(cx, cz, e.radius)) continue;
+        // The hop is a straight line: it may leave the footprint it is in, never cut through another one.
+        if (!this.nav.canTraverse(e, { x, z }, e.radius)) continue;
         // With a goal, only a spot that has a route to it counts: hopping toward an unreachable goal
         // would just reset the stall clock the order logic uses to give up. Few candidates are tried.
         if (goal && (++tried > 8 || !this.nav.path({ x, z }, goal, e.radius).length)) { if (tried > 8) return null; continue; }
         return { x, z };
       }
     return null;
+  }
+  startEscape(e, out) {
+    e.escape = { x: out.x, z: out.z, until: this.time + 2 }; // a blocked hop must not repeat forever
+    e.path = [];
+    e.moving = true;
   }
   move(e, goal, dt, tolerance = 0.5) {
     if (distance(e, goal) < tolerance) {
@@ -570,7 +580,7 @@ export class Simulation {
     if (e.escape) {
       // A short straight hop out of a tight spot, ignoring the footprint it is leaving.
       const dx = e.escape.x - e.x, dz = e.escape.z - e.z, d = Math.hypot(dx, dz);
-      if (d < 0.2) { e.escape = null; e.path = []; e.pathClock = 0; e.stalled = 0; e.moveSample = null; }
+      if (d < 0.2 || this.time > e.escape.until) { e.escape = null; e.path = []; e.pathClock = 0; e.stalled = 0; e.moveSample = null; }
       else {
         const step = Math.min(d, e.speed * dt);
         e.x += (dx / d) * step;
@@ -580,9 +590,10 @@ export class Simulation {
         return false;
       }
     }
-    if (!this.nav.canStand(e.x, e.z, e.radius)) {
+    if (!this.nav.canStand(e.x, e.z, e.radius) && this.time >= (e.escapeAt || 0)) {
       const out = this.escapePoint(e);
-      if (out) { e.escape = out; e.path = []; e.moving = true; return false; }
+      if (out) { this.startEscape(e, out); return false; }
+      e.escapeAt = this.time + 0.5; // nothing clear nearby: do not rescan every frame
     }
     // Measure progress across frames. A fixed per-frame threshold falsely
     // marked healthy movement as stuck on high-refresh-rate displays.
@@ -598,7 +609,7 @@ export class Simulation {
       e.escapeTried = true;
       // (A unit that does have a route, ending beside an unreachable target, is not wedged: no hop.)
       const out = this.nav.path(e, goal, e.radius).length ? null : this.escapePoint(e, goal);
-      if (out) { e.escape = out; e.path = []; e.moving = true; return false; }
+      if (out) { this.startEscape(e, out); return false; }
     }
     if (e.stalled > 6) {
       e.escapeTried = false;
@@ -658,7 +669,7 @@ export class Simulation {
       }
       if ((e.hops || 0) < 4) {
         const out = this.escapePoint(e, goal);
-        if (out) { e.escape = out; e.hops = (e.hops || 0) + 1; }
+        if (out) { this.startEscape(e, out); e.hops = (e.hops || 0) + 1; }
       }
       return false;
     }
@@ -1189,7 +1200,8 @@ export class Simulation {
       const o = e.orders[0];
       if (o?.type === 'patrol' && !o.origin) o.origin = { x: e.x, z: e.z };
       // Explicit Move orders take priority so units can retreat and kite.
-      if (e.type !== "worker" && e.damage > 0 && (!o || ['attackmove', 'patrol'].includes(o.type))) {
+      // Soldiers on a repair job still shoot back at an enemy in range, then carry on repairing.
+      if (e.type !== "worker" && e.damage > 0 && (!o || ['attackmove', 'patrol', 'repair'].includes(o.type))) {
         const target = this.enemy(e, e.range, true);
         if (target) {
           this.fight(e, target, dt, false);

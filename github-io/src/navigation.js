@@ -182,6 +182,76 @@ export class Navigation {
     }
     return [];
   }
+  // Connected regions of ground a soldier-sized body can cross, cached until the next rebuild. Uses the
+  // same cells and the same diagonal rule as the route search, so "connected here" means "a route exists".
+  regions() {
+    if (this.regionRevision === this.revision) return this.regionData;
+    const n = this.grid, comp = new Int32Array(n * n).fill(-1);
+    for (let s0 = 0, id = 0; s0 < n * n; s0++) {
+      if (this.blocked[s0] || comp[s0] >= 0) continue;
+      comp[s0] = id;
+      const stack = [s0];
+      while (stack.length) {
+        const c = stack.pop(), x = c % n, z = (c / n) | 0;
+        for (let dz = -1; dz <= 1; dz++)
+          for (let dx = -1; dx <= 1; dx++) {
+            const nx = x + dx, nz = z + dz;
+            if ((!dx && !dz) || nx < 0 || nz < 0 || nx >= n || nz >= n) continue;
+            const i = nz * n + nx;
+            if (this.blocked[i] || comp[i] >= 0) continue;
+            if (dx && dz && (this.blocked[z * n + nx] || this.blocked[nz * n + x])) continue;
+            comp[i] = id;
+            stack.push(i);
+          }
+      }
+      id++;
+    }
+    this.regionRevision = this.revision;
+    return (this.regionData = { comp });
+  }
+  // Would a footprint of this radius at (x, z) cut off ground within `reach` metres that is connected to the
+  // wider map right now? (Ground already isolated before the building does not count.)
+  wouldSeal(x, z, radius, reach = 24) {
+    const n = this.grid, { comp } = this.regions(), r2 = radius + 0.65;
+    const covered = (i) => { const p = this.worldAt(i % n, (i / n) | 0); return Math.hypot(p.x - x, p.z - z) < r2; };
+    // The region around the site: the one holding the free cell nearest to it.
+    let id = -1, near = Infinity;
+    for (let i = 0; i < n * n; i++) {
+      if (comp[i] < 0) continue;
+      const p = this.worldAt(i % n, (i / n) | 0), d = Math.hypot(p.x - x, p.z - z);
+      if (d < near) { near = d; id = comp[i]; }
+    }
+    if (id < 0) return false;
+    // Seed from a cell of that region well away from the site; everything near the site must stay reachable.
+    let seed = -1;
+    for (let i = 0; i < n * n && seed < 0; i++) {
+      if (comp[i] !== id || covered(i)) continue;
+      const p = this.worldAt(i % n, (i / n) | 0);
+      if (Math.hypot(p.x - x, p.z - z) > reach + 2) seed = i;
+    }
+    if (seed < 0) return false;
+    const seen = new Uint8Array(n * n), stack = [seed], ok = (i) => !this.blocked[i] && !covered(i);
+    seen[seed] = 1;
+    while (stack.length) {
+      const c = stack.pop(), cx = c % n, cz = (c / n) | 0;
+      for (let dz = -1; dz <= 1; dz++)
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = cx + dx, nz = cz + dz;
+          if ((!dx && !dz) || nx < 0 || nz < 0 || nx >= n || nz >= n) continue;
+          const i = nz * n + nx;
+          if (seen[i] || !ok(i)) continue;
+          if (dx && dz && (!ok(cz * n + nx) || !ok(nz * n + cx))) continue;
+          seen[i] = 1;
+          stack.push(i);
+        }
+    }
+    for (let i = 0; i < n * n; i++) {
+      if (comp[i] !== id || seen[i] || covered(i)) continue;
+      const p = this.worldAt(i % n, (i / n) | 0);
+      if (Math.hypot(p.x - x, p.z - z) < reach) return true;
+    }
+    return false;
+  }
   clearLine(a, b, ignored) {
     const dx = b.x - a.x,
       dz = b.z - a.z,

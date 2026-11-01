@@ -22,20 +22,33 @@ test("units hugging or overlapping a building leave it and reach their destinati
   }
 });
 
-test("a big unit squeezes out of a pocket between buildings instead of staying sealed in", () => {
-  const s = new Simulation({ map: "classic", enemyCount: 1 });
-  const hq = hqOf(s);
-  // Two buildings 1.25 m apart (the minimum the placement rule now allows): narrower than a vanguard, wider than a Harvester.
-  for (const [kind, ang] of [["relay", 0], ["barracks", Math.PI * 0.6]]) {
-    const r = hq.radius + 1.25 + D[kind].radius, b = s.spawn(kind, 0, hq.x + Math.cos(ang) * r, hq.z + Math.sin(ang) * r);
-    b.complete = true;
+test("a building that would wall in the ground behind it is refused; ordinary building is not", () => {
+  const s = new Simulation({ map: "classic", enemyCount: 1, ai: false });
+  s.players[0].alloy = s.players[0].energy = 9999;
+  s.isVisible = () => true; // the placement rule under test is the geometry, not fog of war
+  const centre = { x: 6, z: 40 }, ring = D.relay.radius * 2 + 1.5; // 1.5 m gaps: rarely passable on the 2 m route grid
+  const spots = Array.from({ length: 6 }, (_, i) => ({ x: centre.x + Math.cos((i / 6) * Math.PI * 2) * ring, z: centre.z + Math.sin((i / 6) * Math.PI * 2) * ring }));
+  let refused = 0, placed = 0;
+  for (const p of spots) {
+    const why = s.placement("relay", 0, p.x, p.z);
+    if (why === "That would wall in the ground behind it.") refused++;
+    else if (why === "") { const b = s.spawn("relay", 0, p.x, p.z); b.complete = true; s.nav.rebuild(s.entities); placed++; }
   }
+  // Whatever got built, nothing near the ring may have been sealed off from the rest of the map.
+  assert.equal(s.nav.wouldSeal(centre.x + 30, centre.z, 0.1, 40), false);
+  assert.ok(placed >= 1, `some of the ring can be built (${placed} placed, ${refused} refused)`);
+  const free = s.findPlacement("relay", 0, s.own(0).find((e) => e.type === "hq").x + 12, s.own(0).find((e) => e.type === "hq").z);
+  assert.ok(free && s.placement("relay", 0, free.x, free.z) === "", "ordinary building next to the base is still allowed");
+});
+
+test("the sealing check refuses the last building of a closed ring and nothing in the open", () => {
+  const s = new Simulation({ map: "classic", enemyCount: 1, ai: false });
+  const centre = { x: 0, z: 36 }, rel = D.relay.radius, ring = rel * 2 + 0.2; // buildings 0.2 m apart: a solid wall
+  for (let i = 0; i < 5; i++) { const a = (i / 6) * Math.PI * 2, b = s.spawn("relay", 0, centre.x + Math.cos(a) * ring, centre.z + Math.sin(a) * ring); b.complete = true; }
   s.nav.rebuild(s.entities);
-  const u = s.spawn("vanguard", 0, hq.x + Math.cos(Math.PI * 0.3) * (hq.radius + 1.2), hq.z + Math.sin(Math.PI * 0.3) * (hq.radius + 1.2));
-  const goal = { x: hq.x - 5, z: hq.z - 24 };
-  s.issue([u.id], { type: "move", ...goal });
-  for (let t = 0; t < 400 && !s.result; t++) s.tick(0.05);
-  assert.ok(Math.hypot(u.x - goal.x, u.z - goal.z) < 5, `vanguard reached ${u.x.toFixed(1)},${u.z.toFixed(1)}`);
+  const last = { x: centre.x + Math.cos((5 / 6) * Math.PI * 2) * ring, z: centre.z + Math.sin((5 / 6) * Math.PI * 2) * ring };
+  assert.equal(s.nav.wouldSeal(last.x, last.z, rel), true, "closing the ring seals the middle");
+  assert.equal(s.nav.wouldSeal(centre.x + 25, centre.z - 10, rel), false, "a building in open ground seals nothing");
 });
 
 test("buildings keep a gap wide enough for the smallest unit", () => {
@@ -116,4 +129,20 @@ test("Harvesters have 100 health and repair at 16 HP per second", () => {
   const before = bar.hp;
   for (let t = 0; t < 20; t++) s.tick(0.05); // one second at the work site
   assert.ok(Math.abs(bar.hp - before - 16) < 4, `restored ${(bar.hp - before).toFixed(1)} HP in about a second`);
+});
+
+test("a soldier on a repair job shoots back at an enemy in range, then resumes repairing", () => {
+  const s = new Simulation({ map: "classic", enemyCount: 1, ai: false });
+  s.players[0].alloy = s.players[0].energy = 9999;
+  const bar = s.own(0).find((e) => e.type === "barracks");
+  const ranger = s.spawn("ranger", 0, bar.x + bar.radius + 1.5, bar.z);
+  bar.hp = bar.maxHp * 0.2;
+  s.issue([ranger.id], { type: "repair", target: bar.id });
+  for (let i = 0; i < 30; i++) s.tick(0.05);
+  const enemy = s.spawn("vanguard", 1, ranger.x + 5, ranger.z);
+  s.updateVision();
+  const before = enemy.hp + enemy.shield;
+  for (let i = 0; i < 80; i++) s.tick(0.05);
+  assert.ok(enemy.hp + enemy.shield < before || enemy.hp <= 0, "the ranger fired at the enemy while on a repair order");
+  assert.equal(ranger.orders[0]?.type, "repair", "and still holds its repair order");
 });

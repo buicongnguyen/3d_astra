@@ -181,6 +181,7 @@ export class Effects {
     this.view = view;
     this.texture = atlas();
     this.workTimers = new Map(); // per-Harvester countdown to its next spark
+    this.workCursor = 0; // where the work-effect scan resumes, for fairness between busy Harvesters
     this.depositLive = new Map(); // resource id -> had stock last frame (for the shatter)
     // Buffers are allocated at High size; the live cap follows view.lowPower so a quality switch needs no rebuild.
     this.decals = new Layer(48, THREE.NormalBlending, 1, this.texture);
@@ -393,11 +394,13 @@ export class Effects {
   }
   work(sim, dt) {
     if (!this.motion || dt <= 0) return;
-    const limit = this.view.lowPower ? 6 : 12, gap = this.view.lowPower ? 1.5 : 1;
-    let n = 0;
+    const limit = this.view.lowPower ? 6 : 12, gap = this.view.lowPower ? 1.5 : 1, all = sim.entities, total = all.length;
+    let n = 0, i = 0;
     if (this.workTimers.size > 96) this.workTimers.clear();
-    for (const e of sim.entities) {
-      if (n >= limit) break;
+    // The cap counts effects emitted, not workers seen, and the scan starts where the last one stopped,
+    // so every working Harvester gets its turn however many are busy.
+    for (; i < total && n < limit; i++) {
+      const e = all[(this.workCursor + i) % total];
       if (e.type !== "worker" || e.hp <= 0 || !e.working || e.moving) continue;
       const o = e.orders[0];
       if (!o) continue;
@@ -405,9 +408,9 @@ export class Effects {
       if (o.type === "gather") { if (isHarvesting(sim, e)) { kind = "mine"; target = harvestTarget(sim, e); } }
       else if (o.type === "build") { target = sim.get(o.target); if (target && target.kind === "building" && !target.complete && target.hp > 0) kind = "build"; }
       if (!kind || !sim.isVisible(e)) continue;
-      n++;
       const left = (this.workTimers.get(e.id) ?? Math.random() * 0.25) - dt;
       if (left > 0) { this.workTimers.set(e.id, left); continue; }
+      n++;
       this.workTimers.set(e.id, (kind === "mine" ? 0.26 : 0.17) * gap * (0.8 + Math.random() * 0.4));
       const dx = target.x - e.x, dz = target.z - e.z, d = Math.hypot(dx, dz) || 1, ux = dx / d, uz = dz / d, anchor = { x: e.x, z: e.z, team: e.team };
       if (kind === "mine") {
@@ -424,6 +427,7 @@ export class Effects {
         if (Math.random() < 0.4) this.dust({ x: at.x, y: 0.25, z: at.z }, 1, anchor, 0.55, 0.9);
       }
     }
+    this.workCursor = total ? (this.workCursor + i) % total : 0;
   }
   shatter(r) {
     // A deposit running dry: its crystals burst into glints and a faint ring.
@@ -590,6 +594,7 @@ export class Effects {
     this.debris.length = this.projectiles.length = this.timeline.length = 0;
     this.emitters.clear();
     this.workTimers.clear();
+    this.workCursor = 0;
     this.depositLive.clear();
     this.burning = [];
     this.update({ isVisible: () => false, entities: [] }, 0);
