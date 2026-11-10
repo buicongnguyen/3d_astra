@@ -34,7 +34,8 @@ Campaign
 Rules
 - Units earn up to three ranks from kills (8% damage and health each).
 - Stances: guard, hold, aggressive.
-- Seven unit abilities (Shield wall, Focus fire, Barrage, Overdrive, Lock-on, Triage, Field repair); the AI uses them, the player can switch on auto-cast. No buttons for these yet: the interface comes next.
+- Seven unit abilities (Shield wall, Focus fire, Barrage, Overdrive, Lock-on, Triage, Field repair); the AI uses them, the player can switch on auto-cast.
+- Interface for these: ability tiles with cooldowns (E / T / Y), a stance switch ([ ] \), Barrage aiming with a range ring, rank chevrons, promotion and ability effects, and an auto-cast setting (on by default on touch devices).
 - A deposit takes three Harvesters; a core or relay supports two towers; Breakers out-range towers against buildings; battle tanks are tougher and take 3 population.
 - The AI army grows on a curve per speed instead of arriving at full size.
 - Tagged mission entities are left alone by the AI and by automatic harvesting.

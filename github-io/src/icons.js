@@ -41,6 +41,9 @@ const paths = {
   globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/>',
   patrol: '<path d="M5 9h12l-3-3M19 15H7l3 3"/><circle cx="4" cy="9" r="1"/><circle cx="20" cy="15" r="1"/>',
   attack: '<path d="M20 4 9 15M20 4h-5M20 4v5M7 13l4 4M4 20l4-4"/>',
+  rapid: '<path d="M3 7h11l3 5-3 5H3M7 7l3 5-3 5M19 8l2 4-2 4"/>',
+  barrage: '<circle cx="12" cy="15" r="6"/><path d="M12 2v9m-3-3 3 3 3-3M12 13v4m-2-2h4"/>',
+  hold: '<path d="M12 3v18M7 8l5-5 5 5M5 14a7 7 0 0 0 14 0M3 14h4m10 0h4"/>',
 };
 export function icon(name, cls = "") {
   return `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.logo}</svg>`;

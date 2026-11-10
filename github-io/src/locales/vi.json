@@ -663,7 +663,32 @@
     "BEST TIME": "THỜI GIAN TỐT NHẤT",
     "Next mission": "Nhiệm vụ tiếp theo",
     "Every mission cleared. The campaign is complete.": "Đã hoàn thành mọi nhiệm vụ. Chiến dịch kết thúc.",
-    "The saved match could not be loaded and was removed.": "Không tải được trận đã lưu nên trận đó đã bị xóa."
+    "The saved match could not be loaded and was removed.": "Không tải được trận đã lưu nên trận đó đã bị xóa.",
+    "Guard": "Phòng thủ",
+    "Hold": "Giữ vị trí",
+    "Aggressive": "Truy kích",
+    "Stance": "Thế trận",
+    "Stance: mixed": "Thế trận: khác nhau",
+    "Stance: Guard": "Thế trận: Phòng thủ",
+    "Stance: Hold": "Thế trận: Giữ vị trí",
+    "Stance: Hold position": "Thế trận: Giữ vị trí",
+    "Stance: Aggressive": "Thế trận: Truy kích",
+    "Guard: answer threats nearby, then return to the post": "Phòng thủ: đánh trả mối nguy ở gần rồi quay về vị trí",
+    "Hold position: fire from the spot, never chase": "Giữ vị trí: bắn tại chỗ, không đuổi theo",
+    "Aggressive: chase enemies freely": "Truy kích: tự do đuổi đánh địch",
+    "Select soldiers or tanks to set a stance.": "Hãy chọn lính hoặc xe tăng để đặt thế trận.",
+    "No injured infantry in range.": "Không có bộ binh bị thương trong tầm.",
+    "No damaged vehicle or building in range.": "Không có xe hay công trình hư hại trong tầm.",
+    "Tap a target inside the ring": "Chạm mục tiêu bên trong vòng",
+    "Click a target inside the ring": "Nhấp mục tiêu bên trong vòng",
+    "Out of range: choose a spot inside the ring": "Ngoài tầm: hãy chọn điểm bên trong vòng",
+    "Auto-cast abilities": "Tự dùng kỹ năng",
+    "Your units use their abilities on their own in a fight, as rival armies do.": "Quân của bạn tự dùng kỹ năng khi giao chiến, giống quân đối thủ.",
+    "Off: you give the order from the command card.": "Khi tắt: bạn ra lệnh từ bảng lệnh.",
+    "Abilities:": "Kỹ năng:",
+    "use the ability tiles of the selected soldiers and vehicles; Barrage then asks for a target area.": "dùng ô kỹ năng của lính và xe đang chọn; Pháo kích sẽ hỏi vùng mục tiêu.",
+    "Use an ability / set a stance": "Dùng kỹ năng / đặt thế trận",
+    "Select soldiers, then Actions": "Chọn lính, rồi mở Thao tác"
   },
   "patterns": [
     [
@@ -1057,6 +1082,26 @@
     [
       "^(.+) lost$",
       "Đã mất {1}"
+    ],
+    [
+      "^Ready (\\d+)/(\\d+)$",
+      "Sẵn sàng {1}/{2}"
+    ],
+    [
+      "^(.+) is recharging\\.$",
+      "{1} đang hồi."
+    ],
+    [
+      "^(.+) promoted to rank (\\d)$",
+      "{1} được thăng bậc {2}"
+    ],
+    [
+      "^Rank (\\d)$",
+      "Bậc {1}"
+    ],
+    [
+      "^\\+(\\d+)% damage and health$",
+      "+{1}% sát thương và máu"
     ]
   ]
 }

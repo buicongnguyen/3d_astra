@@ -70,6 +70,8 @@ During construction, **Actions** keeps the building name, resource cost, placeme
 | Queue an order | Shift + right-click |
 | Attack-move | F, then click terrain |
 | Stop | X |
+| Use an ability (soldiers and vehicles selected) | E / T / Y, or its tile on the command card; Barrage then needs a click inside the reach ring (Esc or right-click cancels) |
+| Stance: Guard / Hold position / Aggressive | [ / ] / \ or the switch on the command card |
 | Pan | WASD, arrow keys, middle-mouse drag; any screen edge (including over the console) |
 | Zoom | Mouse wheel |
 | Select next Command core / focus selection | H / Home |

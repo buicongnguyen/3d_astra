@@ -34,6 +34,7 @@
     "test:repair-rally": "node tests/repair-rally.mjs",
     "test:campaign": "node tests/campaign.mjs",
     "test:missions": "node tests/missions.mjs",
+    "test:tactics-ui": "node tests/tactics-ui.mjs",
     "test:tutorial": "node tests/tutorial.mjs",
     "test:ui-quality": "node tests/ui-quality.mjs",
     "test:ambient-life": "node tests/ambient-life.mjs",

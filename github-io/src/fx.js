@@ -383,6 +383,45 @@ export class Effects {
       this.particle(this.glow, { x: at.x + (Math.random() - 0.5) * 0.8, y: at.y, z: at.z + (Math.random() - 0.5) * 0.8, vy: this.motion ? 1.8 : 0, drag: 1,
         life: 0.4 + Math.random() * 0.15, s0: 0.22, s1: 0.04, c0, c1, anchor, delay: i * 0.05 });
   }
+  // -- veterancy and abilities (events from sim/tactics.js; fog is checked by the caller)
+  promote(e) {
+    // A promotion: a gold ring opening at the unit's feet, a glint overhead and rising motes.
+    const anchor = { x: e.x, z: e.z, team: e.team }, gold = [1, 0.84, 0.4];
+    this.decal({ x: e.x, z: e.z }, 3.4, 0.6, anchor, CELL.ring, [...gold, 0.9], this.glow, 0.6, { hold: 0, y: 0.1 });
+    this.particle(this.glow, { x: e.x, y: 2.2, z: e.z, cell: CELL.flare, s0: 2.2, s1: 0.5, life: 0.4, c0: [1, 0.97, 0.8, 0.95], c1: [...gold, 0], anchor });
+    for (let i = 0; i < this.count(4); i++)
+      this.particle(this.glow, { x: e.x + (Math.random() - 0.5) * 0.9, y: 0.5, z: e.z + (Math.random() - 0.5) * 0.9, vy: this.motion ? 2.6 + Math.random() : 0,
+        drag: 1.1, life: 0.6 + Math.random() * 0.2, s0: 0.32, s1: 0.05, cell: CELL.flare, c0: [...gold, 0.95], c1: [...gold, 0], anchor, delay: i * 0.05 });
+  }
+  ability(e) {
+    const anchor = { x: e.x, z: e.z, team: e.team };
+    const tint = { shieldwall: [0.42, 0.8, 1], focus: [1, 0.8, 0.3], overdrive: [1, 0.5, 0.2], lockon: [0.84, 0.56, 1], triage: [0.5, 1, 0.72], fortify: [0.75, 0.9, 1], barrage: [1, 0.8, 0.45] }[e.ability] || [1, 1, 1];
+    if (e.ability === 'triage' || e.ability === 'fortify') {
+      // A pulse that opens to the ability's reach (the ring sits at 0.8 of the sprite's half width).
+      this.decal({ x: e.x, z: e.z }, (e.radius || 6) * 2.5, 0.7, anchor, CELL.ring, [...tint, 0.85], this.glow, 1, { hold: 0, y: 0.1 });
+      for (let i = 0; i < this.count(5); i++) {
+        const a = Math.random() * Math.PI * 2, d = Math.random() * (e.radius || 6) * 0.7;
+        this.particle(this.glow, { x: e.x + Math.cos(a) * d, y: 0.4, z: e.z + Math.sin(a) * d, vy: this.motion ? 1.6 + Math.random() : 0, drag: 1, life: 0.7 + Math.random() * 0.2,
+          s0: 0.3, s1: 0.06, cell: CELL.flare, c0: [...tint, 0.9], c1: [...tint, 0], anchor, delay: i * 0.04 });
+      }
+    } else if (e.ability === 'barrage') {
+      // The launch: a flash and a streak climbing out of the Breaker.
+      this.particle(this.glow, { x: e.x, y: 1.8, z: e.z, cell: CELL.flare, s0: 2.2, s1: 2.6, life: 0.14, c0: WARM.flash, c1: [1, 0.55, 0.15, 0], anchor });
+      if (this.motion) this.particle(this.glow, { x: e.x, y: 2.2, z: e.z, vy: 26, mode: STRETCH, ax: 0, ay: 1, az: 0, length: 2.6, s0: 0.3, s1: 0.2, life: 0.35,
+        cell: CELL.streak, c0: [...tint, 1], c1: [...tint, 0], anchor });
+      this.dust({ x: e.x, y: 0.3, z: e.z }, 3, anchor, 0.9, 0.9);
+    } else {
+      this.decal({ x: e.x, z: e.z }, 3.2, 0.4, anchor, CELL.ring, [...tint, 0.9], this.glow, 0.8, { hold: 0, y: 0.1 });
+      this.particle(this.glow, { x: e.x, y: 1.3, z: e.z, cell: CELL.flare, s0: 1.9, s1: 0.4, life: 0.3, c0: [1, 1, 1, 0.9], c1: [...tint, 0], anchor });
+    }
+  }
+  strike(e) {
+    // A Barrage shell landing: one heavy blast and a shockwave out to the damage radius.
+    const anchor = { x: e.x, z: e.z, team: e.team }, r = e.radius || 4;
+    this.explosion({ x: e.x, y: 0.7, z: e.z }, 1.35, anchor, true);
+    this.decal({ x: e.x, z: e.z }, r * 2.5, 0.5, anchor, CELL.ring, [1, 0.8, 0.5, 0.8], this.glow, r * 0.4, { hold: 0, y: 0.12 });
+    this.dust({ x: e.x, y: 0.3, z: e.z }, 5, anchor, 1.4, 1.3);
+  }
   // -- continuous work effects, rate-limited per worker and capped per frame (halved in Eco)
   glint(at, c0, c1, anchor, n, power = 1) {
     for (let i = 0; i < this.count(n); i++) {

@@ -7,6 +7,7 @@ import { ActivityView } from "./activity-view.js";
 import { Effects } from "./fx.js";
 import { createRing, updateRing, createBar, updateBar, setTeamColor, createMarker, createRally, updateRally } from "./selection-view.js";
 import { CaptureRings } from "./capture-view.js";
+import { TacticsView } from "./tactics-view.js";
 import {themeFor,shotVisible,weaponStyle} from './visual-style.js';
 import { isHarvesting } from "./activity.js";
 import { EntityBatches, adoptBatchedParts, SOURCE_LAYER } from "./entity-batches.js";
@@ -98,6 +99,7 @@ export class WorldView {
     this.effects = [];
     this.activity = new ActivityView(this);
     this.fx = new Effects(this);
+    this.tactics = new TacticsView(this);
     this.dying = [];
     this.teamTemplates = new Map();
     this.fogClock = 0;
@@ -894,12 +896,14 @@ export class WorldView {
   }
   event(event, sim) {
     this.activity.event(event, sim);
+    this.tactics.event(event, sim);
     if(event.type==='shot' && shotVisible(event,sim)){
       const o=this.objects.get(event.source);
       if(o && weaponStyle(event).kind==='cannon')o.userData.recoil=.22;
     }
     if (event.type === 'death' && sim.isVisible(event)) this.beginDeath(event);
     // Blasts kill the small creatures they reach; a new match brings the full cast back.
+    if (event.type === 'strike') this.life?.disturb(event.x, event.z, event.radius || 4);
     if (event.type === 'death' || event.type === 'impact')
       this.life?.disturb(event.x, event.z, event.type === 'impact' ? 1.5 : event.building ? 6 : event.heavy ? 4 : 2.5);
   }
@@ -1056,6 +1060,7 @@ export class WorldView {
     }
     this.updateDying(sim, dt);
     this.fx.update(sim, dt);
+    this.tactics.update(sim, dt);
     // Story missions: a ground ring at each capture point.
     if (sim.mission || this.captureRings) {
       this.captureRings ||= new CaptureRings(this.scene);
@@ -1091,6 +1096,7 @@ export class WorldView {
   reset() {
     if (this.life && this.life.aliveCount < this.life.groups.reduce((n, g) => n + g.rows.length, 0)) this.createLife();
     this.activity.reset();
+    this.tactics.reset();
     this.environment?.reset();
     for (const o of this.objects.values()) this.disposeEntity(o);
     this.objects.clear();

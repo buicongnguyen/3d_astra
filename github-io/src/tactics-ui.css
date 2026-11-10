@@ -1,0 +1,161 @@
+/* Abilities, stance switch and rank marks (tactics-card.js, selection-status.js).
+   Desktop: three ability tiles on the card's first row, the stance switch on the second.
+   Phones: two tiles per row, then the stance switch; every control at least 44 px. */
+.ability-tile,
+.stance-control button {
+  position: relative;
+  min-width: 0;
+  border: 1px solid #4b6a5b;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #2a463d, #192b27);
+  color: #d3e9da;
+  font: inherit;
+  cursor: pointer;
+}
+.ability-tile {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  grid-template-rows: 1fr 1fr;
+  column-gap: 6px;
+  align-items: center;
+  min-height: 44px;
+  padding: 3px 6px;
+  overflow: hidden;
+  text-align: left;
+}
+.ability-tile > .icon { grid-row: 1 / span 2; width: 20px; height: 20px; color: var(--team-friendly, #92ebc5); }
+.ability-tile > .ability-name {
+  align-self: end;
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ability-tile > .ability-status {
+  align-self: start;
+  font-size: 12px;
+  line-height: 14px;
+  color: #a8e6c0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-variant-numeric: tabular-nums;
+}
+.ability-tile.cooling > .ability-status { color: #f0c66f; }
+.ability-tile.cooling > .icon, .ability-tile.cooling > .ability-name { opacity: 0.6; }
+.ability-tile > .action-key {
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 11px;
+  line-height: 12px;
+  color: var(--mint, #92ebc5);
+}
+/* Cooldown sweep: the dark wedge shrinks clockwise as the ability recharges. */
+.ability-tile > .ability-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: conic-gradient(rgba(3, 9, 8, 0.6) calc(var(--cd, 0) * 1turn), transparent 0);
+}
+.ability-tile:hover:not(:disabled),
+.stance-control button:hover:not(:disabled) {
+  border-color: var(--team-friendly, #92ebc5);
+  background: linear-gradient(180deg, #365a4d, #20362f);
+}
+.ability-tile.active,
+.stance-control button[aria-pressed="true"] {
+  border-color: var(--team-friendly, #92ebc5);
+  background: color-mix(in srgb, var(--team-friendly, #92ebc5) 34%, #192b27);
+  color: #fff;
+}
+/* Mixed selection: the stances in use are outlined, none is pressed. */
+.stance-control button[aria-pressed="mixed"] { border-style: dashed; border-color: var(--team-friendly, #92ebc5); color: #fff; }
+.ability-tile:disabled, .stance-control button:disabled { cursor: default; }
+.ability-tile:focus-visible, .stance-control button:focus-visible { outline: 2px solid var(--team-friendly, #92ebc5); outline-offset: 1px; }
+
+.stance-control {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  min-width: 0;
+}
+.stance-control button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 0 4px;
+  font-size: 12px;
+  line-height: 14px;
+  font-weight: 600;
+}
+.stance-control button > .icon { flex: 0 0 auto; width: 16px; height: 16px; }
+.stance-control button > span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stance-control button > kbd {
+  position: absolute;
+  top: 1px;
+  right: 3px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 11px;
+  line-height: 12px;
+  color: var(--mint, #92ebc5);
+}
+
+/* Desktop card: 40 px rows like the build and train tiles. */
+:root:not(.compact-ui) .command-panel #commands.tactics-card .ability-tile,
+:root:not(.compact-ui) .command-panel #commands.tactics-card .stance-control button { height: 40px; min-height: 40px; }
+/* While aiming, Cancel takes the card's last slot: the stance switch makes room. */
+:root:not(.compact-ui) .command-panel:has(#mode-controls:not([hidden])) .stance-control { grid-column: 1 / span 2; }
+:root:not(.compact-ui) .command-panel:has(#mode-controls:not([hidden])) .stance-control button > :is(.icon, kbd) { display: none; }
+
+/* Phones: fixed 48 px tiles; the switch spans both columns. */
+.compact-ui #commands.tactics-card { align-content: start; }
+.compact-ui #commands.tactics-card .ability-tile { height: 48px; min-height: 48px; }
+.compact-ui #commands.tactics-card .ability-tile > .ability-name { font-size: 14px; }
+.compact-ui #commands.tactics-card .stance-control button { height: 44px; font-size: 13px; }
+
+/* Rank chevrons: beside the unit's name, and in the corner of each roster card. */
+.rank-badge { flex: 0 0 auto; display: inline-grid; place-items: center; color: #f2c75c; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6)); }
+.rank-badge svg { display: block; }
+:root:not(.compact-ui) .selection-panel .rank-badge { grid-column: 3; grid-row: 1; }
+#unit-list button[data-rank="1"]::before,
+#unit-list button[data-rank="2"]::before,
+#unit-list button[data-rank="3"]::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 10px;
+  height: 5px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 5'%3E%3Cpath d='M1 4.2 5 1l4 3.2' fill='none' stroke='%23f2c75c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") top / 10px 5px repeat-y;
+  pointer-events: none;
+}
+#unit-list button[data-rank="2"]::before { height: 10px; }
+#unit-list button[data-rank="3"]::before { height: 15px; }
+/* A recharging tile stays readable: the sweep and the amber seconds say it is not ready. */
+.ability-tile:disabled { opacity: 1; filter: none; }
+.ability-tile:disabled > .ability-status { opacity: 1; }
+/* Desktop tiles are narrow: a smaller glyph leaves the name more room. */
+:root:not(.compact-ui) .command-panel #commands.tactics-card .ability-tile { grid-template-columns: 16px minmax(0, 1fr); column-gap: 5px; padding: 3px 4px; }
+:root:not(.compact-ui) .command-panel #commands.tactics-card .ability-tile > .icon { width: 16px; height: 16px; }
+/* Landscape phones dock the card at the side, 226 px wide: one tile per row, text-only stances. */
+@media (min-aspect-ratio: 1.35) {
+  .compact-ui #commands.tactics-card { grid-template-columns: minmax(0, 1fr); }
+  .compact-ui #commands.tactics-card .stance-control button { font-size: 12px; padding: 0 2px; }
+  .compact-ui #commands.tactics-card .stance-control button > .icon { display: none; }
+}
+@media (max-width: 359px) {
+  .compact-ui #commands.tactics-card .stance-control button { font-size: 12px; padding: 0 2px; }
+  .compact-ui #commands.tactics-card .stance-control button > .icon { display: none; }
+}

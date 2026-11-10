@@ -32,6 +32,8 @@ import { ACTION_KEYS, HOTKEYS, HOTKEY_HELP, physicalKey } from "./hotkeys.js";
 import { createConstructionUI } from "./construction-ui.js";
 import { createProductionUI, createWorkStrip } from "./production-ui.js";
 import { selectionStatus } from "./selection-status.js";
+import { abilityGroups, aimState, tacticalUnits, takesStance, clampRank, STANCE_INFO } from "./tactics-ui.js";
+import { tacticsCardHTML, updateTacticsCard } from "./tactics-card.js";
 import { AI_SPEEDS, ALLIANCES } from "./ai-plan.js";
 import { MISSIONS, ACTS, loadProgress, saveProgress, isUnlocked, isCleared, recordClear, nextMission, bestTime, bestMedal, missionIndex } from "./campaign.js";
 import { createMissionUI, pointLabel, medalBadge, clock as missionClock } from "./mission-ui.js";
@@ -206,8 +208,11 @@ let touchInput = matchMedia("(pointer: coarse)").matches,
   queueOrders = false,
   buildPoint = null,
   blockedBuildType = null,
-  buildFailure = '';
+  buildFailure = '',
+  aimPoint = null;
 const compactMedia = matchMedia("(max-width: 1000px), (max-height: 650px)");
+// Compact layouts dock the panels at the side on wide screens (mobile.css).
+const sideDock = matchMedia("(min-aspect-ratio: 1.35)");
 const workCallbacks={getSim:()=>sim,canAct:()=>started&&!paused&&!sim.result,refresh:updateUI};
 const productionUI=createProductionUI(D,workCallbacks);
 const selectionWorkUI=createWorkStrip(document.querySelector('#queue'),D,workCallbacks);
@@ -375,6 +380,9 @@ function clearMode() {
   $("mode-controls").hidden = true;
   $("confirm-build").hidden = true;
   if (view) view.preview.visible = false;
+  aimPoint = null;
+  view?.tactics.clearAim();
+  for (const tile of $("commands").querySelectorAll(".ability-tile.active")) tile.classList.remove("active");
   $("mode-banner").hidden = true;
   $("world").classList.remove("targeting");
   markOrderMode();
@@ -499,6 +507,7 @@ function runShortcut(id) {
     if(!es.some(u=>u.type==='worker')) choose(own.filter(u=>u.type==='worker').sort((a,b)=>a.orders.length-b.orders.length).slice(0,1));
     if(selectedEntities().some(u=>u.type==='worker')) {clearMode();dockTab('actions');notice('BUILD: Q Relay · E Barracks · R Foundry · T Tower · Y Core');}
   } else if(['move','attackmove','patrol','attack','support','context','rally'].includes(id)) enterMode(id);
+  else if(id.startsWith('stance-')) setStance(id.slice(7), true);
   else if(id==='stop') {clearMode();sendOrder([...selected],{type:'stop'});notice('Orders cleared.');}
   else if(id==='deliver') {
     const ws=es.filter(u=>u.type==='worker'&&u.carry>0);
@@ -594,7 +603,7 @@ function updateUI() {
   document.documentElement.classList.toggle('no-units', !es.some(u => u.kind === 'unit'));
   document.documentElement.classList.toggle('many-orders', [...document.querySelectorAll('.order-buttons button')].filter(b => !b.hidden).length > 5);
   $("command-context").title = `Command core technology ${sim.techLevel()} / 3`;
-  const signature = `${es.map((e) => e.id).join(",")}/${p.upgrade}/${e?.level}/${sim.techLevel()}/${touchInput}`;
+  const signature = `${es.map((e) => e.id).join(",")}/${p.upgrade}/${e?.level}/${sim.techLevel()}/${touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}`;
   if (lastSelectionKey !== signature) {
     lastSelectionKey = signature;
     $("unit-list").innerHTML =
@@ -615,6 +624,10 @@ function updateUI() {
           ? BUILDINGS
           : [];
     const structure = es.length === 1 && e?.kind === "building" && !e.trains;
+    // Fighting units without a Harvester among them: abilities and stance take the card.
+    const tactics = !actions.length && tacticalUnits(es).length
+      ? tacticsCardHTML(sim, es, { compact: document.documentElement.classList.contains("compact-ui"), side: sideDock.matches, keys: !touchInput }) : "";
+    $("commands").classList.toggle("tactics-card", !!tactics);
     $("command-label").textContent = es.some((u) => u.type === "worker")
       ? "CONSTRUCTION"
       : e?.trains
@@ -630,7 +643,7 @@ function updateUI() {
           const label = type === 'upgrade' ? 'Weapons +' : d.name;
           return `<button class="command-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" aria-label="${d.name}, ${d.cost[0]} alloy${d.cost[1] ? ` and ${d.cost[1]} energy` : ''}" title="${ACTION_KEYS[index]} · ${d.name} · ${d.description}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${hasPortrait(type) ? portrait(type) : icon(d.icon || type)}<span>${label}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
         })
-        .join("") || (structure ? `<p class="structure-hint">${e.description}</p>` : e?.kind==='building' ? '' :
+        .join("") || tactics || (structure ? `<p class="structure-hint">${e.description}</p>` : e?.kind==='building' ? '' :
       `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : "Your expedition is ready"}</strong><p>${e ? (touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : "Select the Command core to train Harvesters, or the Barracks to grow your army."}</p></div>`);
     $("upgrade-actions").innerHTML = e?.kind === 'building' && es.length === 1 ?
       `<button data-level title="U · Upgrade building">${e.level < 3 ? `<span class="up-name">Upgrade L${e.level+1}</span><span class="up-cost"><span class="sep"> · </span>${sim.levelCost(e).join('/')}</span> <kbd>U</kbd>` : '<span class="up-name">Maximum level 3</span>'}</button>` : '';
@@ -648,6 +661,12 @@ function updateUI() {
       sim.result;
     button.disabled = !!unavailable || (e?.kind==='building' && (!e.complete || !!e.levelJob));
   }
+  // Ability cooldowns and the pressed stance, refreshed in place.
+  if ($("commands").classList.contains("tactics-card")) {
+    if (mode === "barrage") refreshAim(aimPoint);
+    updateTacticsCard($("commands"), sim, es, { compact: document.documentElement.classList.contains("compact-ui"), side: sideDock.matches,
+      blocked: !started || paused || !!sim.result, aiming: mode === "barrage" ? "barrage" : null });
+  } else if (mode === "barrage") clearMode();
   // Live vitals on each roster card; the cards themselves are rebuilt only on selection change.
   for (const card of $("unit-list").querySelectorAll("[data-select]")) {
     const u = sim.get(Number(card.dataset.select));
@@ -656,6 +675,8 @@ function updateUI() {
     card.style.setProperty("--hp", hp.toFixed(3));
     card.style.setProperty("--sh", u.maxShield ? (u.shield / u.maxShield).toFixed(3) : "0");
     card.classList.toggle("critical", hp < 0.35);
+    const rank = String(clampRank(u.rank));
+    if (card.dataset.rank !== rank) card.dataset.rank = rank;
   }
   renderGroupStrip();
   // Desktop shares the selection queue; mobile retains a queue in each tab.
@@ -675,6 +696,74 @@ function updateUI() {
   constructionUI.update({sim, selected:es, mode, type:buildType, point:buildPoint, blockedType:blockedBuildType, failure:buildFailure, started, paused, touch:touchInput});
 }
 
+// ---- Abilities, stances and veterancy (rules: sim/tactics.js; logic: tactics-ui.js).
+function useAbility(id) {
+  if (!started || paused || sim.result) return;
+  const group = abilityGroups(sim, selectedEntities(), 99).find((g) => g.id === id);
+  if (!group) return;
+  if (!group.ready) { notice(`${group.name} is recharging.`); return; }
+  if (group.aimed) { enterAim(); return; }
+  clearMode();
+  if (sim.command({ team: 0, type: "ability", ids: group.ids })) tone(700, 0.1);
+  else notice(id === "triage" ? "No injured infantry in range." : id === "fortify" ? "No damaged vehicle or building in range." : `${group.name} is recharging.`);
+  updateUI();
+}
+function setStance(stance, announce = false) {
+  if (!started || paused || sim.result) return;
+  const ids = selectedEntities().filter(takesStance).map((e) => e.id);
+  if (!ids.length) { notice("Select soldiers or tanks to set a stance."); return; }
+  if (sim.command({ team: 0, type: "stance", ids, stance })) {
+    tone(600);
+    if (announce) notice(`Stance: ${STANCE_INFO[stance].label}`);
+  }
+  updateUI();
+}
+// Barrage is aimed: a target circle follows the pointer (or the last tap), a ring around each
+// ready Breaker shows its reach, and the circle turns red beyond it.
+function enterAim() {
+  clearMode();
+  mode = "barrage";
+  $("mode-banner").hidden = false;
+  $("mode-banner").textContent = touchInput ? "BARRAGE · Tap a target inside the ring" : "BARRAGE · Click a target inside the ring · Esc to cancel";
+  $("mode-controls").hidden = false;
+  $("notice").classList.remove("show");
+  $("world").classList.add("targeting");
+  refreshAim(!touchInput && hoverPoint ? view.point(hoverPoint.x, hoverPoint.y) : null);
+  updateUI();
+}
+function refreshAim(point) {
+  const aim = aimState(sim, selectedEntities(), point);
+  if (!aim.sources.length) { clearMode(); return null; }
+  aimPoint = point;
+  view.tactics.showAim(aim.sources, aim.range, aim.radius, point, aim.ok);
+  return aim;
+}
+function fireBarrage(point) {
+  if (!point || !started || paused || sim.result) return;
+  const aim = refreshAim(point);
+  if (!aim) { notice("Barrage is recharging."); updateUI(); return; }
+  if (!aim.ok) {
+    $("mode-banner").textContent = "BARRAGE · Out of range: choose a spot inside the ring";
+    tone(260, 0.12);
+    return;
+  }
+  if (sim.command({ team: 0, type: "ability", ids: aim.casters, x: point.x, z: point.z })) {
+    tone(520, 0.12);
+    clearMode();
+  }
+  updateUI();
+}
+// Auto-cast is a setting (settings.js): the match is told at its start, after a save is
+// loaded and whenever the setting changes.
+function syncAutocast(always = true) {
+  if (!started || sim.result) return;
+  if (always || !!sim.players[0].autocast !== !!settings.autocast) sim.command({ team: 0, type: "autocast", on: !!settings.autocast });
+}
+function promoted(event) {
+  const unit = sim.get(event.id);
+  notice(`${unit?.name || "Unit"} promoted to rank ${event.rank}`);
+  tone(990, 0.16);
+}
 // An enemy wave has set out for our core: warn, and ping where it gathers for about 6 s.
 const pings = [];
 function incomingAlert(event) {
@@ -1058,6 +1147,10 @@ function touchTap(x, y) {
     showBuildPoint(point);
     return;
   }
+  if (mode === "barrage") {
+    fireBarrage(point);
+    return;
+  }
   if (mode) {
     if (commandAt(point, ["support","context","attack","attackmove","repair","rally"].includes(mode) ? target : null, queueOrders, mode) !== false) clearMode();
     return;
@@ -1161,6 +1254,7 @@ function bindInput() {
         height: `${Math.abs(e.clientY - drag.y)}px`,
       });
     }
+    if (mode === "barrage") refreshAim(view.point(e.clientX, e.clientY));
     if (mode === "build") {
       const aim = view.point(e.clientX, e.clientY),
         p = aim && (sim.findPlacement(buildType, 0, aim.x, aim.z) || aim);
@@ -1174,6 +1268,7 @@ function bindInput() {
     }
   });
   canvas.addEventListener("pointerleave", () => {
+    if (mode === "barrage" && !touchInput) refreshAim(null);
     pointer.inside = false;
     hover = hoverPoint = null;
     $("hover-label").hidden = true;
@@ -1200,6 +1295,10 @@ function bindInput() {
     const point = view.point(e.clientX, e.clientY);
     if (mode === "build" && point) {
       confirmBuild(sim.findPlacement(buildType, 0, point.x, point.z) || point);
+      return;
+    }
+    if (mode === "barrage") {
+      fireBarrage(point);
       return;
     }
     if (mode) {
@@ -1318,7 +1417,8 @@ function bindInput() {
   $("minimap").addEventListener("click", (e) => {
     if (e.button === 0) {
       const p = mapPoint(e);
-      if (mode && mode !== "build") {
+      if (mode === "barrage") fireBarrage(p);
+      else if (mode && mode !== "build") {
         if (commandAt(p, null, e.shiftKey||queueOrders, mode) !== false) clearMode();
       } else view.focusOn(p.x, p.z);
     }
@@ -1463,6 +1563,7 @@ function applyPreferences(value) {
   muted = settings.muted;
   $("fps").hidden = !settings.showFps;
   view?.applySettings(settings);
+  syncAutocast(false);
   $("quality").textContent = settings.quality === "eco" ? "Eco" : "High";
   $("audio").innerHTML = icon(muted ? "muted" : "volume");
   $("audio").setAttribute("aria-label", muted ? "Enable sound" : "Mute sound");
@@ -1655,7 +1756,7 @@ function showHelp() {
   }
   if (touchInput) {
     $("modal-content").querySelector(".controls-grid").innerHTML =
-      "<span>Select a unit / structure</span><kbd>Tap it</kbd><span>Move / gather / attack</span><kbd>Select, then tap target</kbd><span>Pan the battlefield</span><kbd>Drag one finger</kbd><span>Zoom / pan together</span><kbd>Pinch / two fingers</kbd><span>Select multiple units</span><kbd>Box, then drag</kbd><span>Select your forces</span><kbd>Workers / Army</kbd><span>Queue multiple orders</span><kbd>Enable Queue</kbd><span>Place a structure</span><kbd>Tap location → Build here</kbd><span>Change HUD panel</span><kbd>Selection / Actions / Map</kbd>";
+      "<span>Select a unit / structure</span><kbd>Tap it</kbd><span>Move / gather / attack</span><kbd>Select, then tap target</kbd><span>Pan the battlefield</span><kbd>Drag one finger</kbd><span>Zoom / pan together</span><kbd>Pinch / two fingers</kbd><span>Select multiple units</span><kbd>Box, then drag</kbd><span>Select your forces</span><kbd>Workers / Army</kbd><span>Queue multiple orders</span><kbd>Enable Queue</kbd><span>Use an ability / set a stance</span><kbd>Select soldiers, then Actions</kbd><span>Place a structure</span><kbd>Tap location → Build here</kbd><span>Change HUD panel</span><kbd>Selection / Actions / Map</kbd>";
     $("modal-content").querySelector(".help-note").textContent =
       "Tap Workers, then tap amber or blue deposits to gather. Tap a building to train units in Actions. Use Move or Attack-move in Selection, then tap a destination. To set a rally point, select a production building and tap ground. Eco graphics reduces rendering cost on phones.";
   }
@@ -1766,6 +1867,7 @@ function restart(play = true, resume = false) {
   view.resize();
   $("status-text").textContent = "OPERATION ACTIVE";
   selectHome();
+  if (play !== false || resume) syncAutocast();
   if (!resume) startEconomy();
   if(play !== false && playMode === "training") beginTutorial();
 }
@@ -1841,6 +1943,7 @@ function beginMatch() {
   $("status-text").textContent = "OPERATION ACTIVE";
   selectHome();
   updateHeading();
+  syncAutocast();
   startEconomy();
   // A story mission opens with its own first line instead of the general hint.
   if (playMode !== "campaign") notice(
@@ -1990,6 +2093,9 @@ $("stop-order").insertAdjacentHTML('afterend', `<button id="repair-order" hidden
 $("repair-order").onclick = () => enterMode('repair');
 $("rally-order").onclick = () => enterMode('rally');
 $("commands").onclick = (event) => {
+  const ability = event.target.closest("[data-ability]"), stance = event.target.closest("[data-stance]");
+  if (ability) { if (!ability.disabled) useAbility(ability.dataset.ability); return; }
+  if (stance) { if (!stance.disabled) setStance(stance.dataset.stance); return; }
   const button = event.target.closest("[data-action]");
   if (!button || button.disabled) return;
   const type = button.dataset.action;
@@ -2088,6 +2194,7 @@ function frame(now) {
     else if (event.type === "ping") { pings.push({ x: event.x, z: event.z, at: sim.time }); tone(520, 0.1); }
     else if (event.type === "music") setMusicMood(event.mood);
     else if (event.type === "missionEnd") { /* The debrief opens from sim.result (showResult). */ }
+    else if (event.type === "promote") { if (event.team === 0 && started) promoted(event); view.event(event, sim); }
     else view.event(event, sim);
   }
   // Presentation effects hold still while paused; units render between the last two
@@ -2210,6 +2317,7 @@ function ready() {
         mission: missionUI,
         get campaign() { return campaign; },
         get cameraPan() { return cameraPan; },
+        get mode() { return mode; },
         get musicMood() { return musicMood(); },
         save: autosave,
       };

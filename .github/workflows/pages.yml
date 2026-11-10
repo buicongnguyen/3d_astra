@@ -54,7 +54,7 @@ jobs:
           - name: settings
             scripts: improvements campaign
           - name: story
-            scripts: missions
+            scripts: missions tactics-ui
           - name: languages
             scripts: language
           - name: interface

@@ -45,6 +45,9 @@ Construction requires a ground click after choosing a blueprint. Production queu
 | Return carried resources to a completed Command core | V |
 | Heal / repair, then click friendly target | R with support units selected |
 | Set rally point, then click destination | L with completed production buildings selected |
+| Use the selected units' abilities (first, second, third ability tile) | E / T / Y with soldiers or vehicles selected and no Harvester |
+| Aim Barrage after its tile or key | Click inside the reach ring; Esc, right-click or Cancel leaves aiming |
+| Stance: Guard / Hold position / Aggressive | `[` / `]` / `\` (backslash) |
 | Next idle Harvester | F1 or . |
 | Select army / Harvesters / buildings | F2 / F3 / F4 |
 | Cycle Command cores / Barracks / Foundries | H / J / K |
