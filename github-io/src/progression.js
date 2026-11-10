@@ -68,11 +68,12 @@ export const progression = {
     this.message(`${b.name} reached level ${b.level}.`,b.team);
   },
   attackValue(e) {
-    return (e.damage || 0)*(this.players[e.team].upgrade && e.kind === 'unit' && e.type !== 'worker' ? 1.1 : 1);
+    return (e.damage || 0)*(this.players[e.team].upgrade && e.kind === 'unit' && e.type !== 'worker' ? 1.1 : 1)*this.rankFactor(e);
   },
   applyDamage(t,damage,team,by = null) {
     if (t.hp <= 0 || !Number.isFinite(damage) || damage <= 0) return;
     if (by !== null) { t.hitBy = by; t.hitAt = this.time; }
+    if (t.buff?.guard) damage *= t.buff.guard;
     if(t.trainingGuard) damage=Math.min(damage,Math.max(0,t.hp+t.shield-1));
     t.shieldDelay = 5;
     const absorbed = Math.min(t.shield,damage);
@@ -84,6 +85,7 @@ export const progression = {
     }
     if (t.hp <= 0) {
       if (t.kind !== 'wall') this.players[team].kills++;
+      this.creditKill(by,t);
       this.events.push({type:'death',x:t.x,z:t.z,team:t.team,building:t.kind === 'building' || t.kind === 'wall',heavy:!!t.mechanical,seed:t.id});
       if (t.kind === 'building' || t.kind === 'wall') this.nav.rebuild(this.entities);
     }

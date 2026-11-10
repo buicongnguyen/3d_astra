@@ -13,6 +13,7 @@ import { combat } from "./sim/combat.js";
 import { economy } from "./sim/economy.js";
 import { ai } from "./sim/ai.js";
 import { missions } from "./sim/missions.js";
+import { tactics } from "./sim/tactics.js";
 
 export { NEUTRAL } from "./sim/constants.js";
 // The match state and its fixed 20 Hz step. Behaviour lives in the systems under sim/, mixed
@@ -266,6 +267,7 @@ export class Simulation {
     }
     for (const e of this.entities) if (e.hp > 0) this.stepEntity(e, dt);
     this.separate(dt);
+    this.stepTactics(dt);
     this.stepAI(dt);
     this.stepMission(dt);
     this.settle();
@@ -385,5 +387,5 @@ export class Simulation {
   }
 }
 
-Object.assign(Simulation.prototype, vision, orders, movement, combat, economy, ai, missions, progression, coalitionPlan, commands, snapshot);
+Object.assign(Simulation.prototype, vision, orders, movement, combat, economy, ai, missions, tactics, progression, coalitionPlan, commands, snapshot);
 Simulation.load = (saved) => restore(Simulation, saved);

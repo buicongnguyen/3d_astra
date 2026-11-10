@@ -24,6 +24,16 @@ const COMMANDS = {
       return true;
     },
   },
+  stance: {
+    allowed: (sim, c) => Array.isArray(c.ids) && c.ids.some((id) => ownUnit(sim, c.team, id)),
+    run: (sim, c) => sim.setStance(c.ids.filter((id) => ownUnit(sim, c.team, id)), c.stance),
+  },
+  ability: {
+    allowed: (sim, c) => Array.isArray(c.ids) && c.ids.some((id) => ownUnit(sim, c.team, id)),
+    run: (sim, c) => sim.castAbilities(c.ids.filter((id) => ownUnit(sim, c.team, id)), Number.isFinite(c.x) ? { x: c.x, z: c.z } : null),
+  },
+  // Lets the player's units use their abilities on their own, as the computer's do.
+  autocast: { allowed: () => true, run: (sim, c) => ((sim.players[c.team].autocast = !!c.on), true) },
   harvest: { allowed: () => true, run: (sim, c) => (sim.assignHarvesters(c.team), true) },
 };
 

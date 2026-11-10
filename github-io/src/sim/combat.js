@@ -54,9 +54,11 @@ export const combat = {
   // An idle fighter guards the spot it was left on. It answers whoever shot it and chases
   // enemies it can see, but only within a leash of that spot, and then walks back.
   holdPost(e, dt) {
+    if (e.stance === "hold") return;
     e.post ??= { x: e.x, z: e.z };
+    const leash = e.stance === "aggressive" ? Infinity : e.vision + LEASH;
     let t = this.attacker(e) || this.enemy(e, e.vision);
-    if (t && (distance(e.post, t) - t.radius > e.vision + LEASH || (e.postSkip?.id === t.id && this.time < e.postSkip.until))) t = null;
+    if (t && (distance(e.post, t) - t.radius > leash || (e.postSkip?.id === t.id && this.time < e.postSkip.until))) t = null;
     if (t && e.stalled > 3) {
       e.postSkip = { id: t.id, until: this.time + 8 };
       e.stalled = 0;
@@ -67,7 +69,9 @@ export const combat = {
       // An unseen shooter (longer range than this unit's sight) is closed on until it is seen.
       if (this.isVisible(t, e.team) ? this.fight(e, t, dt) : (this.move(e, this.approach(e, t, Math.max(1.2, e.range * 0.7)), dt), true)) return;
     }
-    if (distance(e, e.post) > 1.5) this.move(e, e.post, dt, 1.2);
+    // An aggressive unit stays where the chase ended; a guard walks back to its post.
+    if (e.stance === "aggressive") e.post = { x: e.x, z: e.z };
+    else if (distance(e, e.post) > 1.5) this.move(e, e.post, dt, 1.2);
   },
   hit(e, target) {
     // Counter and anti-vehicle multipliers depend on each victim, including splash victims.
@@ -76,7 +80,7 @@ export const combat = {
         t,
         this.attackValue(e) * scale *
           (e.counter === t.type ? e.counter_bonus || 1.6 : 1) *
-          (t.mechanical ? e.mechanical_bonus || 1 : 1),
+          (t.mechanical ? (e.mechanical_bonus || 1) * (e.buff?.mech || 1) : 1),
         e.team,
         e.id,
       );

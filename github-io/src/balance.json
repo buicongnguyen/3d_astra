@@ -41,7 +41,16 @@
       "icon": "shield",
       "counter": "ranger",
       "description": "Fast armored fighter. Strong against Rangers; weak against Breakers and Battle tanks.",
-      "shield": 50
+      "shield": 50,
+      "ability": {
+        "id": "shieldwall",
+        "name": "Shield wall",
+        "cooldown": 30,
+        "duration": 6,
+        "damage_taken": 0.5,
+        "speed": 0.7,
+        "description": "Brace for 6 seconds: take half damage, move 30% slower."
+      }
     },
     "ranger": {
       "name": "Ranger",
@@ -64,7 +73,15 @@
       "counter": "breaker",
       "description": "Long-range precision. Deals 2.6× damage to Breakers; weak against Vanguards.",
       "shield": 25,
-      "counter_bonus": 2.6
+      "counter_bonus": 2.6,
+      "ability": {
+        "id": "focus",
+        "name": "Rapid fire",
+        "cooldown": 30,
+        "duration": 6,
+        "interval": 0.6,
+        "description": "Fire 40% faster for 6 seconds."
+      }
     },
     "breaker": {
       "name": "Breaker",
@@ -90,7 +107,17 @@
       "splash_radius": 3,
       "splash_damage": 0.4,
       "counter": "vanguard",
-      "counter_bonus": 1.5
+      "counter_bonus": 1.5,
+      "ability": {
+        "id": "barrage",
+        "name": "Barrage",
+        "cooldown": 40,
+        "range": 14,
+        "delay": 1.5,
+        "radius": 4,
+        "damage": 90,
+        "description": "Shell a marked area up to 14 m away after 1.5 seconds: 90 damage within 4 m, half to buildings."
+      }
     },
     "hq": {
       "name": "Command core",
@@ -227,7 +254,15 @@
       "time": 15,
       "required_level": 2,
       "support": 12,
-      "description": "Automatically heals nearby friendly infantry (including Harvesters and Engineers), excluding itself. Cannot attack. Use Support, then select an ally to follow and heal."
+      "description": "Automatically heals nearby friendly infantry (including Harvesters and Engineers), excluding itself. Cannot attack. Use Support, then select an ally to follow and heal.",
+      "ability": {
+        "id": "triage",
+        "name": "Triage pulse",
+        "cooldown": 40,
+        "radius": 6,
+        "heal": 40,
+        "description": "Instantly heal infantry within 6 m by 40."
+      }
     },
     "engineer": {
       "name": "Engineer",
@@ -249,7 +284,15 @@
       "time": 15,
       "required_level": 2,
       "support": 18,
-      "description": "Automatically repairs nearby completed buildings, Breakers and Battle tanks. Cannot construct, gather, or attack. Use Support, then select a repair target."
+      "description": "Automatically repairs nearby completed buildings, Breakers and Battle tanks. Cannot construct, gather, or attack. Use Support, then select a repair target.",
+      "ability": {
+        "id": "fortify",
+        "name": "Field repair",
+        "cooldown": 40,
+        "radius": 6,
+        "heal": 80,
+        "description": "Instantly repair vehicles and buildings within 6 m by 80."
+      }
     },
     "tank": {
       "name": "Battle tank",
@@ -276,7 +319,16 @@
       "splash_radius": 2,
       "splash_damage": 0.4,
       "counter": "vanguard",
-      "counter_bonus": 1.5
+      "counter_bonus": 1.5,
+      "ability": {
+        "id": "overdrive",
+        "name": "Overdrive",
+        "cooldown": 45,
+        "duration": 6,
+        "speed": 1.5,
+        "damage": 1.25,
+        "description": "For 6 seconds: 50% faster and 25% more damage."
+      }
     },
     "antitank": {
       "name": "Anti-tank soldier",
@@ -299,7 +351,16 @@
       "icon": "crosshair",
       "required_level": 2,
       "mechanical_bonus": 6,
-      "description": "Shoulder-fired rockets deal 120 damage to mechanical units (Battle tanks and Breakers), or 20 to infantry and buildings, every 2.4s, at the same 12 m range as a tank. No splash. Fragile against close assault; protect with Vanguards. Medics heal this soldier. Requires level 2 Barracks."
+      "description": "Shoulder-fired rockets deal 120 damage to mechanical units (Battle tanks and Breakers), or 20 to infantry and buildings, every 2.4s, at the same 12 m range as a tank. No splash. Fragile against close assault; protect with Vanguards. Medics heal this soldier. Requires level 2 Barracks.",
+      "ability": {
+        "id": "lockon",
+        "name": "Lock-on",
+        "cooldown": 35,
+        "duration": 8,
+        "range": 3,
+        "mechanical": 1.5,
+        "description": "For 8 seconds: 3 m more range and 50% more damage to vehicles."
+      }
     }
   },
   "rocks": [
