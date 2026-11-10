@@ -13,6 +13,8 @@ import { Navigation } from "./navigation.js";
 import { progression } from "./progression.js";
 import { AI_SPEEDS, coalitionPlan, roleOf } from "./ai-plan.js";
 import { Terrain } from "./terrain.js";
+import { commands } from "./commands.js";
+import { snapshot, restore } from "./snapshot.js";
 
 export const NEUTRAL = -1;
 // The slimmest unit body: the radius used to push a larger unit through a gap it cannot otherwise leave.
@@ -37,6 +39,9 @@ export class Simulation {
     this.nextId = 1;
     this.nextQueueId = 1;
     this.time = 0;
+    // Whole steps taken; commands are logged against it (see commands.js).
+    this.ticks = 0;
+    this.commandLog = [];
     this.enemyCount = Number.isInteger(enemyCount) ? clamp(enemyCount, 1, 3) : 1;
     this.aiSpeed = Object.hasOwn(AI_SPEEDS, aiSpeed) ? aiSpeed : "normal";
     this.pace = AI_SPEEDS[this.aiSpeed];
@@ -1219,6 +1224,7 @@ export class Simulation {
   tick(dt) {
     if (this.result || !Number.isFinite(dt) || dt <= 0) return;
     this.time += dt;
+    this.ticks++;
     this.visionClock -= dt;
     if (this.visionClock <= 0) {
       this.updateVision();
@@ -1364,4 +1370,5 @@ export class Simulation {
   }
 }
 
-Object.assign(Simulation.prototype, progression, coalitionPlan);
+Object.assign(Simulation.prototype, progression, coalitionPlan, commands, snapshot);
+Simulation.load = (saved) => restore(Simulation, saved);

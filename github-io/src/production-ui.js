@@ -26,9 +26,9 @@ export function createWorkStrip(host, definitions, {getSim, canAct, refresh}) {
         button.onclick=()=>{
           if(!canAct() || getSim()!==sim || sim.get(e.id)!==e) return;
           if(job.kind==='train'){
-            const index=e.queue.indexOf(job.ref); if(index>=0)sim.cancelQueue(e.id,index);
-          } else if(job.kind==='level') { if(e.levelJob===job.ref)sim.cancelLevel(e.id); }
-          else if(!e.complete)sim.cancelBuilding(e.id);
+            const index=e.queue.indexOf(job.ref); if(index>=0)sim.command({team:0,type:'cancelTrain',building:e.id,index});
+          } else if(job.kind==='level') { if(e.levelJob===job.ref)sim.command({team:0,type:'cancelUpgrade',building:e.id}); }
+          else if(!e.complete)sim.command({team:0,type:'cancelBuild',building:e.id});
           refresh();
         };
         host.append(button);

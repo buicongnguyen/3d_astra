@@ -489,18 +489,18 @@ function runShortcut(id) {
     if(!es.some(u=>u.type==='worker')) choose(own.filter(u=>u.type==='worker').sort((a,b)=>a.orders.length-b.orders.length).slice(0,1));
     if(selectedEntities().some(u=>u.type==='worker')) {clearMode();dockTab('actions');notice('BUILD: Q Relay · E Barracks · R Foundry · T Tower · Y Core');}
   } else if(['move','attackmove','patrol','attack','support','context','rally'].includes(id)) enterMode(id);
-  else if(id==='stop') {clearMode();sim.issue([...selected],{type:'stop'});notice('Orders cleared.');}
+  else if(id==='stop') {clearMode();sendOrder([...selected],{type:'stop'});notice('Orders cleared.');}
   else if(id==='deliver') {
     const ws=es.filter(u=>u.type==='worker'&&u.carry>0);
-    if(ws.length){clearMode();sim.issue(ws.map(u=>u.id),{type:'deliver'},queueOrders);}
+    if(ws.length){clearMode();sendOrder(ws.map(u=>u.id),{type:'deliver'},queueOrders);}
     else notice('Select Harvesters carrying resources.');
-  } else if(id==='upgrade') {if(e?.kind==='building')sim.upgradeBuilding(e.id);else notice('Select a building to upgrade.');}
+  } else if(id==='upgrade') {if(e?.kind==='building')sim.command({team:0,type:"upgrade",building:e.id});else notice('Select a building to upgrade.');}
   else if(id==='cancel') {
     if(mode || blockedBuildType)clearMode();
     else if(e?.kind==='building') {
-      if(!e.complete)sim.cancelBuilding(e.id);
-      else if(e.levelJob)sim.cancelLevel(e.id);
-      else if(e.queue.length)sim.cancelQueue(e.id,e.queue.length-1);
+      if(!e.complete)sim.command({team:0,type:"cancelBuild",building:e.id});
+      else if(e.levelJob)sim.command({team:0,type:"cancelUpgrade",building:e.id});
+      else if(e.queue.length)sim.command({team:0,type:"cancelTrain",building:e.id,index:e.queue.length-1});
       else notice('No queued job to cancel.');
     }
   } else if(id==='idle')choose(own.filter(u=>u.type==='worker'&&!u.orders.length),true);
@@ -843,14 +843,14 @@ function commandAt(point, target, append = false, forced = null) {
   const es = selectedEntities(),
     units = es.filter((e) => e.kind === "unit");
   if (forced === 'rally') {
-    for (const b of es.filter(e=>e.kind==='building' && e.team===0 && e.complete && e.trains?.length)) b.rally=rallyAt(point,target);
+    sim.command({team:0,type:'rally',ids:es.filter(e=>e.kind==='building' && e.team===0 && e.complete && e.trains?.length).map(e=>e.id),rally:rallyAt(point,target)});
     notice(target?.kind==='resource' ? 'Rally point on the deposit: new Harvesters start mining.' : 'Rally point established.');
     view.marker(point.x,point.z); return;
   }
   if (forced === 'repair') {
     const workers = units.filter(e => sim.repairValid(e,target));
     if (!workers.length || target.hp >= target.maxHp) { $("mode-banner").textContent = 'REPAIR · Choose a damaged building'; return false; }
-    sim.issue(workers.map(e => e.id),{type:'repair',target:target.id},append);
+    sendOrder(workers.map(e => e.id),{type:'repair',target:target.id},append);
     view.marker(target.x,target.z); tone(440); return true;
   }
   if (forced === 'attack') {
@@ -858,7 +858,7 @@ function commandAt(point, target, append = false, forced = null) {
       $("mode-banner").textContent = 'ATTACK · Choose a visible enemy or a concrete wall';
       return false;
     }
-    sim.issue(units.filter(e => e.damage > 0).map(e => e.id), { type: 'attack', target: target.id }, append);
+    sendOrder(units.filter(e => e.damage > 0).map(e => e.id), { type: 'attack', target: target.id }, append);
     view.marker(target.x, target.z, 0xef9f75);
     tone(440);
     return true;
@@ -866,16 +866,16 @@ function commandAt(point, target, append = false, forced = null) {
   if (forced === "support") {
     const helpers = units.filter(e => sim.supportValid(e,target));
     if (!helpers.length) { notice("Medic: select allied infantry. Engineer: select a completed building or vehicle."); return false; }
-    sim.issue(helpers.map(e => e.id),{type:"support",target:target.id},append);
+    sendOrder(helpers.map(e => e.id),{type:"support",target:target.id},append);
     return true;
   }
   if (!forced && target?.team === 0) {
     const helpers = units.filter(e => sim.supportValid(e,target));
-    sim.issue(helpers.map(e => e.id),{type:"support",target:target.id},append);
+    sendOrder(helpers.map(e => e.id),{type:"support",target:target.id},append);
     for (const helper of helpers) units.splice(units.indexOf(helper),1);
   }
   for (const b of es.filter((e) => !forced && !es.some(u=>u.kind==='unit') && e.team === 0 && e.kind === "building" && e.complete && e.trains?.length)) {
-    b.rally = rallyAt(point, target);
+    sim.command({ team: 0, type: "rally", ids: [b.id], rally: rallyAt(point, target) });
     notice(target?.kind === 'resource' ? 'Rally point on the deposit: new Harvesters start mining.' : "Rally point established.");
   }
   if (!units.length) {
@@ -886,8 +886,8 @@ function commandAt(point, target, append = false, forced = null) {
   if ((!forced || forced==='attackmove') && (target?.team > 0 || target?.kind === 'wall') && sim.isVisible(target))
     order = { type: "attack", target: target.id };
   if(order.type==='attack'){
-    sim.issue(units.filter(e=>e.damage>0).map(e=>e.id),order,append);
-    sim.issue(units.filter(e=>!(e.damage>0)).map(e=>e.id),{type:'move',...point},append);
+    sendOrder(units.filter(e=>e.damage>0).map(e=>e.id),order,append);
+    sendOrder(units.filter(e=>!(e.damage>0)).map(e=>e.id),{type:'move',...point},append);
     view.marker(point.x,point.z,0xef9f75);tone(440);return;
   }
   if (
@@ -901,12 +901,12 @@ function commandAt(point, target, append = false, forced = null) {
       : target.type === "hq" && (w.carry > 0 || target.hp >= target.maxHp) ? "deliver" : "repair";
     const workers = units.filter((e) => e.type === "worker");
     for (const type of ["gather", "build", "deliver", "repair"])
-      sim.issue(workers.filter((w) => job(w) === type).map((e) => e.id), { type, target: target.id }, append);
+      sendOrder(workers.filter((w) => job(w) === type).map((e) => e.id), { type, target: target.id }, append);
     // Soldiers right-clicking a damaged friendly building pitch in and repair it; otherwise they just move.
     const fixers = target.kind === "building" && target.complete && target.hp < target.maxHp
       ? units.filter((e) => e.type !== "worker" && sim.repairValid(e, target)) : [];
-    if (fixers.length) sim.issue(fixers.map((e) => e.id), { type: "repair", target: target.id }, append);
-    sim.issue(
+    if (fixers.length) sendOrder(fixers.map((e) => e.id), { type: "repair", target: target.id }, append);
+    sendOrder(
       units.filter((e) => e.type !== "worker" && !fixers.includes(e)).map((e) => e.id),
       order,
       append,
@@ -920,7 +920,7 @@ function commandAt(point, target, append = false, forced = null) {
       return;
     }
   } else
-    sim.issue(
+    sendOrder(
       units.map((e) => e.id),
       order,
       append,
@@ -985,7 +985,7 @@ function confirmBuild(point = buildPoint) {
   if (!point || mode !== "build" || paused || !started || sim.result) return;
   const worker = selectedEntities().find((e) => e.type === "worker");
   const previousEvents = sim.events.length;
-  const b = worker && sim.build(worker.id, buildType, point.x, point.z);
+  const b = worker && sim.command({ team: 0, type: "build", worker: worker.id, building: buildType, x: point.x, z: point.z });
   if (b) {
     clearMode();
     setSelection([b.id]);
@@ -1639,9 +1639,13 @@ function newGame() {
   (playMode === "skirmish" ? $("scenario") : document.querySelector("[data-mode][aria-pressed=true]") || $("start"))?.focus();
 }
 // Harvesters start mining on their own, except in Training, which teaches the order.
+// Every player action goes through sim.command (see commands.js).
+function sendOrder(ids, order, append = false) {
+  return sim.command({ team: 0, type: "order", ids, order, append });
+}
 function startEconomy() {
   // Browser suites (?test) measure a still economy; ?autoharvest gives them the real start.
-  if (playMode !== "training" && (!query.has("test") || query.has("autoharvest"))) sim.assignHarvesters(0);
+  if (playMode !== "training" && (!query.has("test") || query.has("autoharvest"))) sim.command({ team: 0, type: "harvest" });
 }
 function restart(play = true) {
   touchControls?.reset();
@@ -1835,8 +1839,8 @@ $("upgrade-actions").onclick = event => {
   if (!started || paused || sim.result) return;
   const e = selectedEntities()[0];
   if (!e) return;
-  if (event.target.closest('[data-level]')) sim.upgradeBuilding(e.id);
-  if (event.target.closest('[data-cancel-level]')) sim.cancelLevel(e.id);
+  if (event.target.closest('[data-level]')) sim.command({team:0,type:"upgrade",building:e.id});
+  if (event.target.closest('[data-cancel-level]')) sim.command({team:0,type:"cancelUpgrade",building:e.id});
   updateUI();
 };
 $("move-order").onclick = () => enterMode("move");
@@ -1856,7 +1860,7 @@ $("commands").onclick = (event) => {
   else {
     const b = selectedEntities()[0];
     if (b) {
-      sim.enqueue(b.id, type);
+      sim.command({ team: 0, type: "train", building: b.id, unit: type });
       tone();
       updateUI();
     }
