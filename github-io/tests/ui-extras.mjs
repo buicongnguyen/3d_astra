@@ -23,6 +23,7 @@ const want = name => !only || only.includes(name);
 async function boot(w, h, mobile, { training = false, lang } = {}) {
   const page = await browser.newPage({ viewport: { width: w, height: h }, isMobile: mobile, hasTouch: mobile });
   page.errors = [];
+  if (process.env.THROTTLE) { const cdp = await page.context().newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: Number(process.env.THROTTLE) }); }
   page.on('pageerror', e => page.errors.push(e.message));
   await page.goto(base + '?test=1');
   await page.waitForFunction(() => window.__frontier && !document.querySelector('#start').disabled, null, { timeout: 90000 });
@@ -179,7 +180,10 @@ if (want('minimap')) for (const [name, w, h, mobile] of VIEWS) {
     const target = document.querySelector('#minimap');
     for (let i = 0; i < 2; i++) { target.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: x, clientY: y, button: 0 })); if (!i) await new Promise(r => setTimeout(r, 100)); }
   }, [px, py]);
-  await page.waitForFunction(() => window.__frontier.pings.some(p => p.own), null, { timeout: 3000 });
+  await page.waitForFunction(() => window.__frontier.pings.some(p => p.own), null, { timeout: 3000 }).catch(async (error) => {
+    console.error(`${name}: no own ping; state`, JSON.stringify(await page.evaluate(() => ({ pings: window.__frontier.pings, time: window.__frontier.sim.time, mode: window.__frontier.mode, started: window.__frontier.started, hidden: document.querySelector('#minimap').offsetParent === null }))));
+    throw error;
+  });
   assert.equal(await ownPings(), 1, `${name}: double tap sends one own ping`);
   // It is client-side only: the simulation never saw it, and it fades.
   assert.equal(await page.evaluate(() => window.__frontier.sim.events.some(e => e.type === 'ping')), false);
