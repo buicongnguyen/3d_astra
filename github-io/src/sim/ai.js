@@ -96,7 +96,8 @@ export const ai = {
         continue;
       }
       // Army size follows the speed's curve; a base under attack may always train.
-      const cap = pace.army ? pace.army[0] + pace.army[1] * (this.time / 60) : Infinity;
+      // In skirmish, alloy piling up beyond the cap is spent anyway: a rich base that sits idle looks broken.
+      const cap = pace.army && (this.mission || this.players[team].alloy < 600) ? pace.army[0] + pace.army[1] * (this.time / 60) : Infinity;
       if (b.queue.length < 2 && (army.length + own.reduce((n, e) => n + (e.queue?.length || 0), 0) < cap || own.some((e) => e.kind === "building" && this.time - (e.hitAt ?? -99) < 10))) {
         // One Vanguard per two Rangers; a raider AI trains two Vanguards per Ranger.
         const cycle = Math.floor(this.time/4)%3;
@@ -140,6 +141,8 @@ export const ai = {
       if (answer.length)
         this.issue(answer.map((e) => e.id), { type: "attack", target: threats[0].id });
     }
+    // A mission that sends its own waves lets the computer build up and defend at home only.
+    if (this.aiHome) return;
     if (!incursion) this.aiPoints(team, hq, army, pace);
     const wave = army.filter((e) => !engaged(e) && !e.pointDuty);
     if (this.coalition) {

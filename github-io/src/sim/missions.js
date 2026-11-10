@@ -27,7 +27,9 @@ export const missions = {
       banked: { alloy: 0, energy: 0 },
       medal: null,
     };
+    // rules.ai: true (full computer opponent), "home" (builds, harvests and defends but never attacks; the script sends the waves) or false (no AI).
     if (!rules.ai) this.aiEnabled = false;
+    this.aiHome = rules.ai === "home";
     // A side without a base takes the field with only what the setup gives it.
     const clear = (team) => { for (const e of this.own(team)) e.hp = 0; };
     if (!rules.playerBase) clear(0);

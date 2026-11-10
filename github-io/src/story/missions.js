@@ -12,7 +12,7 @@ export const MISSIONS = [
     map: "riverlands",
     enemies: 1, speed: "relaxed", alliance: "ffa",
     factions: { 1: "ashfall" },
-    rules: { ai: false, playerBase: true, enemyBase: true },
+    rules: { ai: "home", playerBase: true, enemyBase: true },
     briefing: {
       place: "Meridian Riverlands, day 1",
       lines: [

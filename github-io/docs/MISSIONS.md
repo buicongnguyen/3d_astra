@@ -14,7 +14,7 @@ Status: format agreed 2026-11-10; engine and campaign in progress.
   map: "riverlands",                    // a maps.json id
   enemies: 1, speed: "relaxed", alliance: "ffa",   // as in Skirmish
   bonus: { alloy: 200, energy: 100, tower: true }, // optional starting help
-  rules: { ai: true, playerBase: true, enemyBase: true }, // false playerBase = no-base mission
+  rules: { ai: true, playerBase: true, enemyBase: true }, // ai "home": harvests, builds and defends but never attacks (scripted waves only); false playerBase = no-base mission
 
   briefing: {
     place: "Meridian Riverlands, day 9",

@@ -44,6 +44,12 @@ Known limits
 - Story text is English only for now.
 - Destroying an enemy core also removes that side's tagged buildings, so a "destroy the siphons" objective can be finished that way.
 
+## 0.8.1: the computer opponent
+
+- Mission 1: the enemy camp now harvests, builds and trains (it used to stand still with 450 alloy and four idle Harvesters). It defends but never marches by itself; the scripted waves still come on the clock (`rules.ai: "home"`, see MISSIONS.md).
+- Skirmish: a rival with 600 or more alloy in the bank trains past its army curve instead of sitting on the pile (relaxed rivals banked over 1,300 alloy by minute four).
+- New tests in `tests/ai-economy.test.js`: every speed harvests, builds and trains; no alloy hoarding; mission 1 camp works but does not march.
+
 ## 0.8.0: structure
 
 No visible change; the client is easier to work in.

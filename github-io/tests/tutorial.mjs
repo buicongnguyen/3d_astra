@@ -11,7 +11,7 @@ fs.mkdirSync('test-results',{recursive:true});
 try {
   for (const [width,height] of [[1280,800],[320,568],[844,390]]) {
     const mobile = width !== 1280;
-    const page = await browser.newPage({viewport:{width,height},isMobile:mobile,hasTouch:mobile});
+    const page = await browser.newPage({viewport:{width,height},isMobile:mobile,hasTouch:mobile}); if (process.env.THROTTLE) { const cdp = await page.context().newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate',{rate:Number(process.env.THROTTLE)}); }
     const errors = [];
     page.on('pageerror',e=>errors.push(e.message));
     await page.addInitScript(()=>{
@@ -66,10 +66,12 @@ try {
       console.log(`Tutorial entry, selection, controls and exit passed ${width}x${height}`);
     } catch (error) {
       await page.screenshot({path:`test-results/training-failed-${width}.png`});
-      fs.writeFileSync(`test-results/training-failed-${width}.json`,JSON.stringify(await page.evaluate(()=>({
+      const failure=JSON.stringify(await page.evaluate(()=>({
         started:window.__frontier?.started,lesson:window.__frontier?.tutorial?.index,
-        selected:[...(window.__frontier?.selected || [])],cardHidden:document.querySelector('#training-card')?.hidden,input:window.trainingInputTrace,
-      })),null,2));
+        selected:[...(window.__frontier?.selected || [])],layout:['training','training-card','training-focus','training-toggle'].map(id=>{const e=document.getElementById(id),r=e?.getBoundingClientRect(),c=e&&getComputedStyle(e);return {id,hidden:e?.hidden,display:c?.display,visibility:c?.visibility,box:r&&[Math.round(r.x),Math.round(r.y),Math.round(r.width),Math.round(r.height)]};}),tutorialShown:window.__frontier?.tutorialShown,cardHidden:document.querySelector('#training-card')?.hidden,input:window.trainingInputTrace,
+      })),null,2);
+      fs.writeFileSync(`test-results/training-failed-${width}.json`,failure);
+      console.error(`tutorial ${width}x${height} failed state: ${failure}`);
       throw error;
     } finally { await page.close(); }
   }
