@@ -214,12 +214,13 @@ export function setupMinimap(S, A) {
       if (performance.now() - dragged < 80) return;
       if (e.button === 0) {
         const p = mapPoint(e);
-        if (!S.mode && (e.altKey || (lastTap && performance.now() - lastTap.t < 380 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 16))) {
+        if (!S.mode && (e.altKey || (lastTap && e.timeStamp - lastTap.t < 380 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 16))) {
           lastTap = null;
           ping(p);
           return;
         }
-        lastTap = { t: performance.now(), x: e.clientX, y: e.clientY };
+        // The event's own timestamp: a busy main thread must not stretch the double-tap window.
+        lastTap = { t: e.timeStamp, x: e.clientX, y: e.clientY };
         if (S.mode === "barrage") A.fireBarrage(p);
         else if (S.mode && S.mode !== "build") {
           if (A.commandAt(p, null, e.shiftKey||S.queueOrders, S.mode) !== false) A.clearMode();
