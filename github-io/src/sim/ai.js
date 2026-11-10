@@ -4,7 +4,8 @@ import { roleOf } from "../ai-plan.js";
 // The computer opponent's build, production and attack decisions (coalition play is in ai-plan.js). Mixed into Simulation (see simulation.js).
 export const ai = {
   updateAI(team = 1) {
-    const own = this.own(team),
+    // Tagged entities belong to the mission script (an objective, an escort): the AI never uses them.
+    const own = this.own(team).filter((e) => !e.tag),
       workers = own.filter((e) => e.type === "worker"),
       army = own.filter((e) => e.kind === "unit" && e.type !== "worker" && !e.garrison);
     if (!own.some(e => e.type === "hq")) return;

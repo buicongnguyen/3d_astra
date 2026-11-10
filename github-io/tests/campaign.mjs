@@ -7,9 +7,23 @@ const url = (process.env.TEST_URL || 'http://127.0.0.1:4180/') + '?test=1';
 const ready = page => page.waitForFunction(() => window.__frontier?.view.models.size === 13 && !document.querySelector('#start').disabled, null, {timeout: 90000});
 const battle = page => page.evaluate(() => { const s = window.__frontier.sim; return {map: s.terrain.id ?? null, enemies: s.enemyCount, speed: s.aiSpeed, coalition: s.coalition, alloy: s.players[0].alloy, towers: s.own(0).filter(e => e.type === 'tower').length}; });
 const heading = page => page.locator('.map-heading h1').innerText();
+// The mission being previewed or played, with its place in the campaign.
+const def = page => page.evaluate(() => { const m = window.__frontier.sim.missionDef; return {id: m.id, title: m.title, map: m.map, enemies: m.enemies, speed: m.speed, alliance: m.alliance, bonus: m.bonus || null, index: [...document.querySelectorAll('[data-mission]')].findIndex(b => b.dataset.mission === m.id)}; });
+// Start opens the mission briefing; Skip and Begin mission start the match.
+const begin = async page => {
+  await page.locator('#start').click();
+  await page.locator('#mission-briefing').waitFor({state: 'visible'});
+  await page.locator('#mb-skip').click(); await page.locator('#mb-next').click();
+  await page.waitForFunction(() => window.__frontier.started);
+};
 // Every enemy core falls (victory) or ours does (defeat); the frame loop then shows the result.
+// A story mission is won by its objectives and lost with its Command core.
 const finish = async (page, win) => {
-  await page.evaluate(win => { const s = window.__frontier.sim; for (const e of s.entities) if (win ? e.team > 0 : e.team === 0) e.hp = 0; }, win);
+  await page.evaluate(win => {
+    const s = window.__frontier.sim;
+    if (win && s.mission) { for (const id of s.missionDef.win) s.setObjective(id, 'done'); return; }
+    for (const e of s.entities) if (win ? e.team > 0 : e.team === 0) e.hp = 0;
+  }, win);
   await page.locator('#modal-title').waitFor({state: 'visible', timeout: 15000});
 };
 try {
@@ -34,49 +48,62 @@ try {
   await page.locator('#pause').click(); await page.locator('[data-new-game]').click();
   await page.locator('#briefing').waitFor({state: 'visible'});
 
-  // Campaign: stage 1 open, the rest locked.
+  // Campaign: twelve story missions; mission 1 open, the rest locked.
   await page.locator('[data-mode="campaign"]').click();
   assert.equal(await page.locator('#skirmish-setup').isHidden(), true);
   const stages = page.locator('[data-stage]');
-  assert.equal(await stages.count(), 7);
-  assert.deepEqual(await stages.evaluateAll(bs => bs.map(b => b.disabled)), [false, true, true, true, true, true, true]);
-  assert.equal(await page.locator('#start').innerText(), 'Start stage 1');
-  assert.match(await heading(page), /Stage 1 · First Contact/);
+  assert.equal(await stages.count(), 12);
+  assert.deepEqual(await stages.evaluateAll(bs => bs.map(b => b.disabled)), [false, ...Array(11).fill(true)]);
+  assert.equal(await page.locator('#start').innerText(), 'Start mission 1');
+  let m = await def(page);
+  assert.match(await heading(page), new RegExp(`Mission 1 · ${m.title}`));
   b = await battle(page);
-  assert.deepEqual([b.map, b.enemies, b.speed, b.coalition], ['riverlands', 1, 'relaxed', false]);
+  assert.deepEqual([b.map, b.enemies, b.speed, b.coalition], [m.map, m.enemies, m.speed, m.alliance === 'coalition']);
   await page.screenshot({path: 'test-results/campaign-briefing.png'});
-  await page.locator('#start').click();
+  await begin(page);
   await finish(page, true);
-  assert.match(await page.locator('#modal-content').innerText(), /STAGE 1 · CLEARED/);
-  assert.ok(await page.evaluate(() => JSON.parse(localStorage.getItem('frontier-campaign-v1')).cleared['first-contact'] > 0), 'progress is saved');
+  assert.match(await page.locator('#modal-content').innerText(), /MISSION 01 · COMPLETE/);
+  assert.ok(await page.evaluate(id => JSON.parse(localStorage.getItem('frontier-campaign-v2')).cleared[id].time > 0, m.id), 'progress is saved');
+  assert.equal(await page.evaluate(() => localStorage.getItem('frontier-campaign-v1')), null, 'the old stage record is left alone');
   await page.screenshot({path: 'test-results/campaign-cleared.png'});
 
-  // Next stage starts the Ashen Line directly.
-  await page.locator('[data-next-stage]').click();
-  await page.waitForFunction(() => document.querySelector('#modal').hidden);
-  assert.match(await heading(page), /Stage 2 · The Ashen Line/);
+  // Next mission opens the next briefing; Begin starts it.
+  await page.locator('[data-next-mission]').click();
+  await page.locator('#mission-briefing').waitFor({state: 'visible'});
+  await page.locator('#mb-skip').click(); await page.locator('#mb-next').click();
+  await page.waitForFunction(() => window.__frontier.started && document.querySelector('#modal').hidden);
+  m = await def(page);
+  assert.equal(m.index, 1);
+  assert.match(await heading(page), new RegExp(`Mission 2 · ${m.title}`));
   b = await battle(page);
-  assert.deepEqual([b.map, b.enemies, b.speed, b.coalition], ['classic', 1, 'normal', false]);
+  assert.deepEqual([b.map, b.enemies, b.speed, b.coalition], [m.map, m.enemies, m.speed, m.alliance === 'coalition']);
   assert.equal(await page.evaluate(() => window.__frontier.paused), false);
 
-  // Defeat offers a retry of the same stage.
+  // Defeat offers a retry of the same mission.
   await finish(page, false);
-  assert.match(await page.locator('#modal-content').innerText(), /STAGE 2 · FAILED/);
+  assert.match(await page.locator('#modal-content').innerText(), /MISSION 02 · FAILED/);
   await page.locator('[data-restart]').click();
-  assert.match(await heading(page), /Stage 2 · The Ashen Line/);
+  assert.match(await heading(page), new RegExp(`Mission 2 · ${m.title}`));
   assert.equal(await page.evaluate(() => window.__frontier.sim.result), null);
 
-  // Progress survives a reload; allied stages bring reinforcements.
-  await page.evaluate(() => localStorage.setItem('frontier-campaign-v1', JSON.stringify({cleared: {'first-contact': 300, 'ashen-line': 400, 'three-way-dunes': 500}})));
+  // Progress survives a reload; a mission with a bonus brings its reinforcements. Old v1 progress unlocks nothing.
+  const ids = await page.evaluate(() => window.__frontier.campaign && [...document.querySelectorAll('[data-mission]')].map(b => b.dataset.mission));
+  await page.evaluate(ids => {
+    localStorage.setItem('frontier-campaign-v1', JSON.stringify({cleared: {'first-contact': 300, 'ashen-line': 400, 'three-way-dunes': 500}}));
+    localStorage.setItem('frontier-campaign-v2', JSON.stringify({cleared: Object.fromEntries(ids.slice(0, 4).map((id, i) => [id, {time: 300 + i * 100, medal: 'silver'}]))}));
+  }, ids);
   await page.reload(); await ready(page);
   await page.locator('[data-mode="campaign"]').click();
-  assert.deepEqual(await stages.evaluateAll(bs => bs.map(b => b.disabled)), [false, false, false, false, true, true, true]);
-  assert.match(await page.locator('[data-stage="0"]').innerText(), /5:00|05:00/);
-  assert.equal(await page.locator('[data-stage="3"]').getAttribute('aria-current'), 'true', 'the next open stage is selected');
-  await page.locator('#start').click();
+  assert.deepEqual(await stages.evaluateAll(bs => bs.map(b => b.disabled)), [false, false, false, false, false, ...Array(7).fill(true)]);
+  assert.match(await page.locator('[data-stage="0"]').innerText(), /5:00/);
+  assert.equal(await page.locator('[data-stage="4"]').getAttribute('aria-current'), 'true', 'the next open mission is selected');
+  await begin(page);
+  m = await def(page);
   b = await battle(page);
-  assert.deepEqual([b.map, b.enemies, b.speed, b.coalition, b.towers, b.alloy], ['woodlands', 2, 'relaxed', true, 1, 650]);
-  assert.match(await heading(page), /Stage 4 · The Verdant Pact/);
+  assert.deepEqual([b.map, b.enemies, b.speed, b.coalition], [m.map, m.enemies, m.speed, m.alliance === 'coalition']);
+  if (m.bonus?.tower) assert.ok(b.towers >= 1, 'the mission bonus builds a Sentinel tower');
+  assert.match(await heading(page), new RegExp(`Mission 5 · ${m.title}`));
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('frontier-campaign-v1')).cleared['first-contact']), 300, 'v1 data is untouched');
   assert.deepEqual(errors, []);
   await page.close();
 
@@ -98,5 +125,5 @@ try {
     assert.deepEqual(phoneErrors, []);
     await phone.close();
   }
-  console.log('Skirmish AI speed and alliance, campaign unlocks, next stage, retry, saved progress, allied reinforcements and phone layout passed.');
+  console.log('Skirmish AI speed and alliance, campaign unlocks, next mission, retry, saved progress, mission bonus and phone layout passed.');
 } finally { await browser.close(); }

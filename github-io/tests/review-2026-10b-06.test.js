@@ -1,16 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadProgress, recordClear, isCleared } from '../src/campaign.js';
+import { MISSIONS, loadProgress, recordClear, isCleared } from '../src/campaign.js';
 
 const store = (v) => ({ getItem: () => JSON.stringify(v) });
 
 test('loadProgress drops non-numeric or negative stored times', () => {
-  const p = loadProgress(store({ cleared: { 'first-contact': 'abc', 'ashen-line': 0, 'three-way-dunes': -5, 'verdant-pact': null, 'copper-siege': 90 } }));
-  assert.deepEqual(p.cleared, { 'ashen-line': 0, 'copper-siege': 90 });
+  const [a, b, c, d, e] = MISSIONS.map((m) => m.id);
+  const p = loadProgress(store({ cleared: { [a]: { time: 'abc', medal: 'gold' }, [b]: { time: 0, medal: 'silver' }, [c]: { time: -5 }, [d]: null, [e]: { time: 90, medal: 'platinum' } } }));
+  assert.deepEqual(p.cleared, { [b]: { time: 0, medal: 'silver' }, [e]: { time: 90, medal: 'bronze' } });
   assert.equal(isCleared(p, 0), false);
 });
 
 test('recordClear never produces NaN', () => {
-  const p = recordClear({ cleared: { 'first-contact': 'abc' } }, 0, 120);
-  assert.equal(p.cleared['first-contact'], 120);
+  const id = MISSIONS[0].id;
+  const p = recordClear({ cleared: { [id]: { time: 'abc', medal: 'gold' } } }, 0, 120);
+  assert.deepEqual(p.cleared[id], { time: 120, medal: 'bronze' });
 });

@@ -92,6 +92,8 @@ Twelve missions in three acts. The seven original stages are the spine, with the
 
 ### Act 1: Landfall
 
+Note (tuning pass, 2026-11-10): every mission AI now opens Relaxed and some step up to Normal by script; several goals and times changed. `src/story/missions.js` (each mission's `design` field) is the source of truth where it differs from the tables below.
+
 | # | id | Map | Enemies | You must | Twist |
 |---|---|---|---|---|---|
 | 1 | `m01-first-light` | Meridian Riverlands | 1, passive | Build a Supply relay, reach and hold the river relay | The relay wakes and the camp across the river goes dark; Hale demands you shut it down |

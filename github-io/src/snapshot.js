@@ -53,7 +53,7 @@ export const snapshot = {
     state.entities = this.entities.map(slim);
     return JSON.stringify({
       version: SAVE_VERSION,
-      options: { map: this.terrain.id, enemyCount: this.enemyCount, aiSpeed: this.aiSpeed, alliance: this.coalition ? "coalition" : "ffa", ai: this.aiEnabled, mission: this.missionDef || null },
+      options: { map: this.terrain.id, enemyCount: this.enemyCount, aiSpeed: this.aiSpeed, alliance: this.coalition ? "coalition" : "ffa", ai: this.aiEnabled, mission: this.missionDef || null, playerBonus: this.playerBonus || null },
       nav: { revision: this.nav.revision, wallsSpawned: this.nav.wallsSpawned },
       state,
     }, encode);

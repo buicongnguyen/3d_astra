@@ -6,6 +6,7 @@ import { Terrain } from "./terrain.js";
 import { ActivityView } from "./activity-view.js";
 import { Effects } from "./fx.js";
 import { createRing, updateRing, createBar, updateBar, setTeamColor, createMarker, createRally, updateRally } from "./selection-view.js";
+import { CaptureRings } from "./capture-view.js";
 import {themeFor,shotVisible,weaponStyle} from './visual-style.js';
 import { isHarvesting } from "./activity.js";
 import { EntityBatches, adoptBatchedParts, SOURCE_LAYER } from "./entity-batches.js";
@@ -1055,6 +1056,11 @@ export class WorldView {
     }
     this.updateDying(sim, dt);
     this.fx.update(sim, dt);
+    // Story missions: a ground ring at each capture point.
+    if (sim.mission || this.captureRings) {
+      this.captureRings ||= new CaptureRings(this.scene);
+      this.captureRings.update(sim, this.colors, this.lowPower || this.motionLevel === 0 || this.reducedMotion.matches);
+    }
     if (!this.rally) this.scene.add(this.rally = createRally());
     const rallying = [...selected].map((id) => sim.get(id)).find((e) => e?.team === 0 && e.kind === "building" && e.rally);
     updateRally(this.rally, rallying, rallying?.rally, this.colors[0], sim.time);
@@ -1106,6 +1112,7 @@ export class WorldView {
       e.mesh.material.dispose();
     }
     this.effects = [];
+    this.captureRings?.clear();
     this.focusOn(
       this.defaultZoom === 34 ? -25 : -20,
       this.defaultZoom === 34 ? 21 : 19,

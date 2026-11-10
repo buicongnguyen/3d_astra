@@ -33,7 +33,10 @@ import { createConstructionUI } from "./construction-ui.js";
 import { createProductionUI, createWorkStrip } from "./production-ui.js";
 import { selectionStatus } from "./selection-status.js";
 import { AI_SPEEDS, ALLIANCES } from "./ai-plan.js";
-import { STAGES, loadProgress, saveProgress, isUnlocked, isCleared, recordClear, nextStage } from "./campaign.js";
+import { MISSIONS, ACTS, loadProgress, saveProgress, isUnlocked, isCleared, recordClear, nextMission, bestTime, bestMedal, missionIndex } from "./campaign.js";
+import { createMissionUI, pointLabel, medalBadge, clock as missionClock } from "./mission-ui.js";
+import { writeSave, readSave, clearSave, AUTOSAVE_SECONDS } from "./savegame.js";
+import { setMusicMood, musicMood } from "./music.js";
 import { portrait, hasPortrait } from "./portraits.js";
 import keyartUrl from "./art/keyart.webp";
 import keyartSmallUrl from "./art/keyart-960.webp";
@@ -83,10 +86,11 @@ document.querySelector("#app").innerHTML = `
         </div>
       </div>
       <div class="briefing-setup">
+        <button id="continue" class="secondary continue-launch" hidden></button>
         <div class="mode-switch" role="group" aria-label="Game mode">
           <button data-mode="training" aria-pressed="false">${icon("flag")}<span>Training</span><small>Start here</small></button>
           <button data-mode="skirmish" aria-pressed="true">${icon("crosshair")}<span>Skirmish</span><small>Custom battle</small></button>
-          <button data-mode="campaign" aria-pressed="false">${icon("logo")}<span>Campaign</span><small>${STAGES.length} stages</small></button>
+          <button data-mode="campaign" aria-pressed="false">${icon("logo")}<span>Campaign</span><small>${MISSIONS.length} missions</small></button>
         </div>
         <div class="briefing-tools" id="skirmish-setup">
           <label class="field field-wide"><span>Battlefield</span><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select></label>
@@ -94,7 +98,7 @@ document.querySelector("#app").innerHTML = `
           <label class="field"><span>AI speed</span><select id="ai-speed" aria-label="AI speed" title="AI speed: how fast rivals build, tech up and attack">${Object.entries(AI_SPEEDS).map(([id, p]) => `<option value="${id}"${id === "normal" ? " selected" : ""}>${p.label} AI</option>`).join("")}</select></label>
           <label class="field field-wide"><span>AI teams</span><select id="alliance" aria-label="AI teams" disabled>${Object.entries(ALLIANCES).map(([id, label]) => `<option value="${id}">${label}</option>`).join("")}</select></label>
         </div>
-        <div id="campaign-setup" hidden><ol class="stage-list" aria-label="Campaign stages"></ol></div>
+        <div id="campaign-setup" hidden></div>
         <div id="training-setup" hidden><ol class="lesson-list" aria-label="Training lessons">${TRAINING_STEPS.map(step => `<li>${step.title}</li>`).join("")}</ol></div>
         <button id="fullscreen" class="secondary fullscreen-launch" data-fullscreen aria-pressed="false">${icon("expand")}<span>Full screen</span></button>
         <button id="start" class="primary" disabled>Preparing expedition…</button>
@@ -120,7 +124,10 @@ let settings = loadSettings(matchMedia("(pointer:coarse)").matches),
   aiSpeed = "normal",
   alliance = "ffa",
   bonus = null,
+  mission = null,
   ambience;
+// Story missions: briefing overlay, dialogue box, objectives list and debrief (mission-ui.js).
+const missionUI = createMissionUI({ stage: $("stage"), objectivesPanel: $("mission-objectives"), tone: (frequency, duration) => tone(frequency, duration) });
 const localization = localizeDOM(document.body, settings.language);
 const languageRow = document.createElement('label');
 languageRow.className = 'language-choice menu-only';
@@ -129,7 +136,8 @@ languageRow.innerHTML = `${icon('globe')}<span class="visually-hidden" translate
 document.querySelector('.top-actions').prepend(languageRow);
 $('language').value = settings.language;
 $('language').onchange = () => applyPreferences({...settings, language: $('language').value});
-// Campaign: progress is saved in this browser; activeStage is the stage being played.
+// Campaign: progress is saved in this browser; stagePick is the mission chosen on the campaign
+// screen and activeStage the one being played (indexes into MISSIONS).
 let tutorial = null, tutorialShown = -1;
 const query = new URLSearchParams(location.search);
 // New players open on Campaign; returning players keep the mode they last started. Browser
@@ -148,10 +156,12 @@ function initialMode(progress) {
 }
 let campaign = loadProgress(),
   playMode = initialMode(campaign),
-  stagePick = nextStage(campaign),
+  stagePick = nextMission(campaign),
   activeStage = null;
-({ map: mapId, enemyCount, aiSpeed, alliance, bonus } = battleSetup());
-let sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus }),
+({ map: mapId, enemyCount, aiSpeed, alliance, bonus, mission } = battleSetup());
+// Every match, preview and restart is built from the current setup (a story mission included).
+const createSim = () => new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus, mission });
+let sim = createSim(),
   view,
   selected = new Set(),
   hover = null,
@@ -521,6 +531,7 @@ function runShortcut(id) {
 let lastInfoHtml = null;
 function updateUI() {
   renderTutorial();
+  missionUI.renderObjectives(sim);
   const p = sim.players[0],
     pop = sim.population(0);
   $("alloy").textContent = Math.floor(p.alloy).toLocaleString();
@@ -672,6 +683,34 @@ function incomingAlert(event) {
   if (Number.isFinite(event.x) && Number.isFinite(event.z)) pings.push({ x: event.x, z: event.z, at: sim.time });
   tone(300, 0.3);
 }
+// Capture points: a toast and a ping when one changes hands.
+const pointOwners = new Map();
+function syncPointOwners() {
+  pointOwners.clear();
+  for (const [name, p] of Object.entries(sim.mission?.points || {})) pointOwners.set(name, p.owner ?? null);
+}
+function pointAlert(event) {
+  const name = pointLabel(sim.missionDef, event.name), before = pointOwners.get(event.name) ?? null;
+  pointOwners.set(event.name, event.owner);
+  if (event.owner === 0) { notice(`${name} captured`); tone(880, 0.15); }
+  else {
+    notice(before === 0 ? `${name} lost` : `${name} taken by the enemy`);
+    $("notice").classList.add("warning");
+    tone(260, 0.25);
+  }
+  pings.push({ x: event.x, z: event.z, at: sim.time });
+}
+// A mission camera cue: a smooth 1.2 s pan that any camera input from the player cancels.
+let cameraPan = null;
+function startCameraPan(x, z) {
+  if (!view) return;
+  if (view.reducedMotion?.matches) { view.focusOn(x, z); return; }
+  cameraPan = { fromX: view.focus.x, fromZ: view.focus.z, x, z, t: 0 };
+}
+for (const type of ["pointerdown", "wheel", "keydown"])
+  window.addEventListener(type, (event) => {
+    if (cameraPan && (type === "keydown" || (event.target instanceof Element && event.target.closest("#world, #minimap, #home, .touch-controls")))) cameraPan = null;
+  }, { capture: true, passive: true });
 let minimapBase = null, minimapFog = null;
 function minimap() {
   const {size:MAP_SIZE,half:HALF,grid:GRID}=sim.terrain;
@@ -730,6 +769,22 @@ function minimap() {
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(minimapFog.canvas, 0, 0, w, h);
   ctx.imageSmoothingEnabled = true;
+  // Capture points: a ring in the owner's colour (grey while neutral) and the taker's progress.
+  for (const p of Object.values(sim.mission?.points || {})) {
+    const cx = px(p.x), cy = pz(p.z), radius = Math.max(4.5, (p.r / MAP_SIZE) * w), owned = p.owner !== null && p.owner !== undefined;
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = ctx.fillStyle = owned ? palette(settings)[p.owner] : "#d3dadb";
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    if (owned) { ctx.globalAlpha = 0.3; ctx.fill(); ctx.globalAlpha = 1; }
+    ctx.stroke();
+    if (p.taker !== null && p.taker !== undefined) {
+      ctx.strokeStyle = palette(settings)[p.taker];
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius + 2.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, p.since / 5));
+      ctx.stroke();
+    }
+  }
   for (const r of sim.resources) {
     if (sim.isVisible(r)) rememberedResources.set(r.id, r.amount);
     if (rememberedResources.get(r.id) > 0 && sim.isExplored(r)) {
@@ -1277,15 +1332,24 @@ function bindInput() {
   });
 }
 
+// A mission can field the player without a Command core: the squad is home then.
 function focusHome() {
-  const hq = sim.own(0).find((e) => e.type === "hq");
+  cameraPan = null;
+  const own = sim.own(0), hq = own.find((e) => e.type === "hq");
+  const squad = hq ? null : own.find((e) => e.kind === "unit" && e.type !== "worker") || own[0];
   if (hq) view?.focusOn(hq.x + 5, hq.z - 5);
+  else if (squad) view?.focusOn(squad.x, squad.z);
+}
+function selectHome() {
+  const own = sim.own(0), hq = own.find((e) => e.type === "hq");
+  setSelection(hq ? [hq.id] : own.filter((e) => e.kind === "unit" && e.type !== "worker").map((e) => e.id));
 }
 // One place to show/hide the modal: inert the HUD behind it and restore focus on close.
 let modalReturnFocus = null;
 function setModalOpen(open) {
   // The top bar is a sibling of the modal: everything in it goes inert except sound, Help and Pause.
   const modal = $("modal"), main = document.querySelector("main");
+  modal.classList.remove("debrief-wide");
   const behind = [main, document.querySelector(".brand"), document.querySelector(".resource-bar"),
     ...[...document.querySelector(".top-actions").children].filter((node) => !["audio", "help", "pause"].includes(node.id))];
   if (open) {
@@ -1441,28 +1505,49 @@ $("briefing-settings").onclick = () => settingsUI.open();
 // Briefing: Skirmish picks the map, rivals, AI speed and alliance; Campaign plays the
 // stages in order. The battle behind the briefing always previews the current choice.
 function battleSetup() {
-  if(playMode === "training") return {map:"classic",enemyCount:1,aiSpeed:"relaxed",alliance:"ffa",bonus:null};
-  const stage = STAGES[stagePick];
+  if(playMode === "training") return {map:"classic",enemyCount:1,aiSpeed:"relaxed",alliance:"ffa",bonus:null,mission:null};
+  const m = MISSIONS[stagePick];
   return playMode === "campaign"
-    ? { map: stage.map, enemyCount: stage.enemies, aiSpeed: stage.speed, alliance: stage.alliance, bonus: stage.bonus || null }
-    : { map: $("scenario").value, enemyCount: Number($("enemy-count").value), aiSpeed: $("ai-speed").value, alliance: $("alliance").value, bonus: null };
+    ? { map: m.map, enemyCount: m.enemies, aiSpeed: m.speed, alliance: m.alliance, bonus: m.bonus || null, mission: m }
+    : { map: $("scenario").value, enemyCount: Number($("enemy-count").value), aiSpeed: $("ai-speed").value, alliance: $("alliance").value, bonus: null, mission: null };
 }
 function describeRivals({ enemyCount: count, aiSpeed: speed, alliance: side }) {
   const pace = `${AI_SPEEDS[speed].label} speed`;
   return count === 1 ? `1 AI · ${pace}` : `${count} AIs · ${side === "coalition" ? "allied against you" : "free-for-all"} · ${pace}`;
 }
-const mapName = (id) => MAPS[id].split(" · ")[0];
+const mapName = (id) => (MAPS[id] || String(id)).split(" · ")[0];
 function updateHeading() {
   const stage = started ? activeStage : playMode === "campaign" ? stagePick : null;
   document.querySelector(".map-heading p").innerHTML = `${mapName(mapId).toUpperCase()} <span>·</span> SECTOR 07`;
   document.querySelector(".map-heading h1").innerHTML = stage === null
-    ? `${mapName(mapId)}<span>.</span>` : `Stage ${stage + 1} · ${STAGES[stage].name}<span>.</span>`;
+    ? `${mapName(mapId)}<span>.</span>` : `Mission ${stage + 1} · ${MISSIONS[stage].title}<span>.</span>`;
   $("operation-label").textContent = stage === null
-    ? "OPERATION 01 / SKIRMISH" : `CAMPAIGN · STAGE ${String(stage + 1).padStart(2, "0")} / ${String(STAGES.length).padStart(2, "0")}`;
+    ? "OPERATION 01 / SKIRMISH" : `CAMPAIGN · MISSION ${String(stage + 1).padStart(2, "0")} / ${String(MISSIONS.length).padStart(2, "0")}`;
+}
+// The Continue button appears while a saved match exists (savegame.js).
+function renderContinue() {
+  const save = started ? null : readSave(), button = $("continue");
+  const known = save && (save.mode !== "campaign" || missionIndex(save.missionId) >= 0);
+  button.hidden = !known;
+  if (!known) return;
+  const title = save.mode === "campaign" ? MISSIONS[missionIndex(save.missionId)].title : mapName(save.map);
+  const html = `${icon("play")}<span class="continue-text"><strong>Continue</strong><small><span>${title}</span> · <span translate="no">${formatTime(save.time)}</span></small></span>`;
+  if (button.dataset.html !== html) { button.dataset.html = html; button.innerHTML = html; }
+}
+function renderCampaign() {
+  const card = (m, i) => {
+    const open = isUnlocked(campaign, i), done = isCleared(campaign, i), medal = bestMedal(campaign, i);
+    const state = done ? `${medalBadge(medal)}<span translate="no">${missionClock(bestTime(campaign, i))}</span>` : open ? "" : icon("lock");
+    return `<li><button data-stage="${i}" data-mission="${m.id}"${i === stagePick ? ' aria-current="true"' : ""}${open ? "" : " disabled"}${open ? "" : ' title="Clear the previous mission to unlock"'}><b>${i + 1}</b><span><strong>${m.title}</strong><small>${mapName(m.map)}</small></span><em${done ? ` data-medal="${medal}"` : ""}>${state}</em></button></li>`;
+  };
+  $("campaign-setup").innerHTML = ACTS.map(({ act, title }) =>
+    `<section class="act" aria-labelledby="act-${act}"><h3 class="act-title" id="act-${act}"><span>ACT ${act}</span> <strong>${title}</strong></h3><ol class="stage-list" aria-label="Campaign missions">${MISSIONS.map((m, i) => (m.act === act ? card(m, i) : "")).join("")}</ol></section>`).join("");
 }
 function renderBriefing() {
   const setup = battleSetup(), inCampaign = playMode === "campaign";
-  $("briefing-goal").textContent = playMode === "training" ? "Complete eight guided lessons" : "Eliminate enemy command";
+  renderContinue();
+  $("briefing-goal").textContent = playMode === "training" ? "Complete eight guided lessons"
+    : inCampaign ? (MISSIONS[stagePick].objectives.find((o) => !o.hidden && !o.optional) || MISSIONS[stagePick].objectives[0]).text : "Eliminate enemy command";
   for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String(b.dataset.mode === playMode));
   $("skirmish-setup").hidden = playMode !== "skirmish";
   $("campaign-setup").hidden = !inCampaign;
@@ -1471,13 +1556,10 @@ function renderBriefing() {
   $("alliance").disabled = Number($("enemy-count").value) < 2;
   $("briefing-rivals").textContent = playMode === "training" ? "Practice field · no AI attacks" : describeRivals(setup);
   if (inCampaign) {
-    const stage = STAGES[stagePick];
-    $("briefing-title").textContent = `Stage ${stagePick + 1} · ${stage.name}`;
-    $("briefing-text").textContent = stage.story;
-    $("campaign-setup").querySelector(".stage-list").innerHTML = STAGES.map((st, i) => {
-      const open = isUnlocked(campaign, i), done = isCleared(campaign, i);
-      return `<li><button data-stage="${i}"${i === stagePick ? ' aria-current="true"' : ""}${open ? "" : " disabled"} title="${open ? st.story : "Clear the previous stage to unlock"}"><b>${i + 1}</b><span><strong>${st.name}</strong><small>${mapName(st.map)} · ${st.enemies} AI${st.enemies > 1 ? `s ${st.alliance === "coalition" ? "allied" : "FFA"}` : ""} · ${AI_SPEEDS[st.speed].label}</small></span><em>${done ? `${icon("check")}${formatTime(campaign.cleared[st.id])}` : open ? "" : icon("lock")}</em></button></li>`;
-    }).join("");
+    const m = MISSIONS[stagePick];
+    $("briefing-title").textContent = `Mission ${stagePick + 1} · ${m.title}`;
+    $("briefing-text").textContent = m.briefing.lines[0]?.text || m.briefing.place;
+    renderCampaign();
   } else {
     $("briefing-title").innerHTML = "A new frontier.<br> A foothold to defend.";
     // Separate text nodes so each catalog sentence translates on its own.
@@ -1487,16 +1569,16 @@ function renderBriefing() {
         : " Every faction fights for itself."]));
   }
   if(playMode === "training"){ $("briefing-title").textContent="Commander training"; $("briefing-text").textContent="Learn selection, movement, harvesting, construction, production, attack and withdrawal in eight guided steps. Training supplies replenish. Leave or replay whenever you like."; }
-  if (!$("start").disabled && !loadFailed) $("start").textContent = playMode === "training" ? "Start training" : inCampaign ? `Start stage ${stagePick + 1}` : "Start";
+  if (!$("start").disabled && !loadFailed) $("start").textContent = playMode === "training" ? "Start training" : inCampaign ? `Start mission ${stagePick + 1}` : "Start";
 }
 function previewBattle() {
   if (started) return;
   const setup = battleSetup();
-  const same = setup.map === mapId && setup.enemyCount === enemyCount && setup.aiSpeed === aiSpeed && setup.alliance === alliance && setup.bonus === bonus;
+  const same = setup.map === mapId && setup.enemyCount === enemyCount && setup.aiSpeed === aiSpeed && setup.alliance === alliance && setup.bonus === bonus && setup.mission === mission;
   if (!same) {
     const terrain = setup.map !== mapId || setup.enemyCount !== enemyCount;
-    ({ map: mapId, enemyCount, aiSpeed, alliance, bonus } = setup);
-    sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus });
+    ({ map: mapId, enemyCount, aiSpeed, alliance, bonus, mission } = setup);
+    sim = createSim();
     view?.reset();
     hover = null;
     $("hover-label").hidden = true;
@@ -1543,6 +1625,7 @@ function showPause() {
   pointer.inside = false;
   modalType = "pause";
   keys.clear();
+  autosave();
   setModalOpen(true);
   $("modal-content").innerHTML =
     `<span class="eyebrow">TACTICAL PAUSE</span><h2 id="modal-title">Hold your position.</h2><p>The battlefield is paused. Take a moment to plan your next move.</p><button class="primary" data-resume>Resume operation ${icon("play")}</button><button class="secondary" data-new-game>New game / choose map</button><button class="secondary" data-restart>Restart this map</button><button class="secondary fullscreen-launch" data-fullscreen></button><button class="pause-settings" data-settings>Settings · army, graphics & sound</button>`;
@@ -1584,45 +1667,41 @@ function showResult() {
   setModalOpen(true);
   tone(sim.result === "victory" ? 880 : 220, 0.3);
   const win = sim.result === "victory";
+  // A finished match cannot be continued (Training never had a save of its own).
+  if (!tutorial && playMode !== "training") clearSave();
+  missionUI.endMatch();
   if(tutorial){
     if(tutorial.done){try{localStorage.setItem("frontier-training-complete","1");}catch{}}
     $("modal-content").innerHTML = `<h2 id="modal-title">${tutorial.done?"Training complete!":"Training ended"}</h2><p>You practiced selection, economy, construction, production, attacking and withdrawal. Campaign introduces an active opponent.</p><button class="primary" data-training-campaign>Campaign menu</button><button class="secondary" data-restart>Replay training</button><button class="secondary" data-new-game>Choose a game</button>`;$("modal").querySelector(".primary").focus();return;
   }
-  if (activeStage !== null) return showStageResult(win);
+  if (activeStage !== null) return showDebrief(win);
   $("modal-content").innerHTML =
     `<span class="eyebrow">OPERATION ${sim.result === "draw" ? "CONCLUDED" : win ? "SUCCESSFUL" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}"><img src="${emblemUrl}" alt="" width="92" height="92"></div><h2 id="modal-title">${win ? "The frontier is yours." : sim.result === "draw" ? "Mutual destruction." : "Your outpost has fallen."}</h2><p>${win ? "Enemy command has been eliminated. Meridian holds the valley." : sim.result === "draw" ? "All Command cores were destroyed." : "An enemy destroyed your Command core. Regroup and try a different approach."}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${sim.players[0].kills}</strong>ENEMIES ELIMINATED</span></div><button class="primary" data-new-game>New game / choose map ${icon("arrow")}</button><button class="secondary" data-restart>Replay this map</button>`;
   $("modal").querySelector(".primary").focus();
 }
-// Campaign results save progress and lead on to the next stage.
-function showStageResult(win) {
-  const n = activeStage, stage = STAGES[n], last = n === STAGES.length - 1, next = STAGES[n + 1];
+// Mission debrief: result, medal, time, objectives and the closing lines. A win records the
+// best time and medal and opens the next mission.
+function showDebrief(win) {
+  const n = activeStage, m = sim.missionDef || MISSIONS[n], last = n === MISSIONS.length - 1;
   if (win) {
-    campaign = recordClear(campaign, n, sim.time);
+    campaign = recordClear(campaign, n, sim.mission?.clock ?? sim.time, sim.mission?.medal || "bronze");
     saveProgress(campaign);
     stagePick = last ? n : n + 1;
   }
-  const text = win
-    ? last ? "Every stage cleared. The campaign is complete and the frontier is yours."
-      : `Next: Stage ${n + 2} · ${next.name}, ${describeRivals({ enemyCount: next.enemies, aiSpeed: next.speed, alliance: next.alliance })}.`
-    : sim.result === "draw" ? "All Command cores were destroyed. Try the stage again." : "Your Command core fell. Regroup and try a different approach.";
-  const buttons = win && !last
-    ? `<button class="primary" data-next-stage>Next stage ${icon("arrow")}</button><button class="secondary" data-restart>Replay stage</button><button class="secondary" data-new-game>Campaign menu</button>`
-    : `<button class="primary" data-restart>${win ? "Replay stage" : "Retry stage"} ${icon("arrow")}</button><button class="secondary" data-new-game>Campaign menu</button>`;
-  $("modal-content").innerHTML =
-    `<span class="eyebrow">STAGE ${n + 1} · ${win ? "CLEARED" : sim.result === "draw" ? "CONCLUDED" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}"><img src="${emblemUrl}" alt="" width="92" height="92"></div><h2 id="modal-title">${win ? (last ? "Campaign complete." : `${stage.name} cleared.`) : "Your outpost has fallen."}</h2><p>${text}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${win ? formatTime(campaign.cleared[stage.id]) : sim.players[0].kills}</strong>${win ? "BEST TIME" : "ENEMIES ELIMINATED"}</span></div>${buttons}`;
-  $("modal").querySelector(".primary").focus();
+  $("modal").classList.add("debrief-wide");
+  $("modal-content").innerHTML = missionUI.debriefHTML({ mission: m, index: n, total: MISSIONS.length, sim, win, best: bestTime(campaign, n), hasNext: win && !last });
+  document.querySelector("#modal .modal").scrollTop = 0;
+  $("modal").querySelector(".primary").focus({ preventScroll: true });
 }
-function nextStageNow() {
-  activeStage = stagePick;
-  ({ map: mapId, enemyCount, aiSpeed, alliance, bonus } = battleSetup());
-  restart();
-  view.setTerrain(sim.terrain);
-  focusHome();
-  updateHeading();
+// Next mission: back to the campaign screen with the next mission picked, straight into its briefing.
+function nextMissionNow() {
+  playMode = "campaign";
+  newGame();
+  openMissionBriefing();
 }
 function newGame() {
   // One clean simulation for the briefing preview: restart(false) reuses it and starts no tutorial.
-  sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus });
+  sim = createSim();
   restart(false);
   started = false;
   tutorial = null;
@@ -1647,9 +1726,15 @@ function startEconomy() {
   // Browser suites (?test) measure a still economy; ?autoharvest gives them the real start.
   if (playMode !== "training" && (!query.has("test") || query.has("autoharvest"))) sim.command({ team: 0, type: "harvest" });
 }
-function restart(play = true) {
+// restart() starts the current setup again; restart(false) only resets the interface around
+// the simulation that is already there (the briefing preview, or a saved match with resume).
+function restart(play = true, resume = false) {
   touchControls?.reset();
   pings.length = 0;
+  cameraPan = null;
+  saveClock = 0;
+  missionUI.resetMatch();
+  setMusicMood("calm");
   drag = null;
   keys.clear();
   pointer.inside = false;
@@ -1657,7 +1742,8 @@ function restart(play = true) {
   queueOrders = false;
   $("box-select").setAttribute("aria-pressed", "false");
   $("queue-orders").setAttribute("aria-pressed", "false");
-  if (play !== false) sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus });
+  if (play !== false) sim = createSim();
+  syncPointOwners();
   tutorial = null;
   view.reset();
   governor.reset();
@@ -1679,17 +1765,67 @@ function restart(play = true) {
   document.documentElement.classList.remove("in-briefing");
   view.resize();
   $("status-text").textContent = "OPERATION ACTIVE";
-  setSelection([sim.own(0).find((e) => e.type === "hq").id]);
-  startEconomy();
+  selectHome();
+  if (!resume) startEconomy();
   if(play !== false && playMode === "training") beginTutorial();
+}
+// Autosave: every 30 s of play, on pause and when the page is hidden. Training is never saved.
+let saveClock = 0;
+function autosave() {
+  if (!started || sim.result || playMode === "training" || tutorial) return false;
+  saveClock = 0;
+  return writeSave({ mode: playMode, missionId: activeStage !== null ? MISSIONS[activeStage].id : null, sim });
+}
+document.addEventListener("visibilitychange", () => { if (document.hidden) autosave(); });
+window.addEventListener("pagehide", () => autosave());
+// Continue: restore the saved match and come back paused on the pause menu.
+$("continue").onclick = () => {
+  const save = readSave(), index = save?.missionId ? missionIndex(save.missionId) : -1;
+  const loaded = save && (save.mode !== "campaign" || index >= 0) ? Simulation.load(save.text) : null;
+  if (!loaded) {
+    clearSave();
+    renderContinue();
+    notice("The saved match could not be loaded and was removed.");
+    $("start").focus();
+    return;
+  }
+  unlockAudio();
+  try { localStorage.setItem(MODE_KEY, save.mode); } catch { /* Storage is optional. */ }
+  playMode = save.mode;
+  sim = loaded;
+  mapId = sim.terrain.id; enemyCount = sim.enemyCount; aiSpeed = sim.aiSpeed; alliance = sim.coalition ? "coalition" : "ffa";
+  mission = index >= 0 ? MISSIONS[index] : null;
+  bonus = mission?.bonus || null;
+  if (index >= 0) stagePick = index;
+  restart(false, true);
+  activeStage = index >= 0 ? index : null;
+  view.setTerrain(sim.terrain);
+  focusHome();
+  $("hover-label").hidden = true;
+  updateHeading();
+  showPause();
+};
+
+// Campaign: Start opens the mission briefing; the match begins from its "Begin mission".
+function openMissionBriefing() {
+  missionUI.openBriefing(MISSIONS[stagePick], stagePick, { onBegin: beginMatch });
 }
 
 $("start").onclick = () => {
   if (loadFailed) { loadAssets(); return; }
   unlockAudio();
+  if (playMode === "campaign") { openMissionBriefing(); return; }
+  beginMatch();
+};
+function beginMatch() {
   try { localStorage.setItem(MODE_KEY, playMode); } catch { /* Storage is optional. */ }
   pings.length = 0;
-  sim = new Simulation({map:mapId,enemyCount,aiSpeed,alliance,playerBonus:bonus});
+  cameraPan = null;
+  saveClock = 0;
+  missionUI.resetMatch();
+  setMusicMood("calm");
+  sim = createSim();
+  syncPointOwners();
   view.reset();
   focusHome();
   hover = null;
@@ -1703,10 +1839,11 @@ $("start").onclick = () => {
   document.documentElement.classList.remove("in-briefing");
   view.resize();
   $("status-text").textContent = "OPERATION ACTIVE";
-  setSelection([sim.own(0).find((e) => e.type === "hq").id]);
+  selectHome();
   updateHeading();
   startEconomy();
-  notice(
+  // A story mission opens with its own first line instead of the general hint.
+  if (playMode !== "campaign") notice(
     playMode !== "training"
       ? "Your Harvesters are mining. Train more at the Command core, then build a Barracks."
       : touchInput
@@ -1715,7 +1852,7 @@ $("start").onclick = () => {
   );
   if(playMode === "training") beginTutorial();
   tone(780, 0.15);
-};
+}
 $("pause").onclick = togglePause;
 // Mid-match the logo opens the pause menu (New game lives there); following the link would drop the battle.
 document.querySelector(".brand").addEventListener("click", (event) => {
@@ -1886,7 +2023,7 @@ $("modal").onclick = (event) => {
   if (event.target.closest("[data-resume]")) closeModal();
   if (event.target.closest("[data-restart]")) restart();
   if (event.target.closest("[data-new-game]")) newGame();
-  if (event.target.closest("[data-next-stage]")) nextStageNow();
+  if (event.target.closest("[data-next-mission]")) nextMissionNow();
   if(event.target.closest("[data-training-campaign]")){playMode="campaign";newGame();}
 };
 
@@ -1913,7 +2050,9 @@ function frame(now) {
       accumulator -= 0.05;
     }
     if (sim.result) showResult();
+    else if ((saveClock += dt) >= AUTOSAVE_SECONDS) autosave();
   }
+  missionUI.tick(running ? dt : 0);
   if (!modalType) {
     const speed = dt * view.zoom * 0.65;
     let dx =
@@ -1929,12 +2068,26 @@ function frame(now) {
       if (pointer.y < r.top + 8) dy++;
       if (pointer.y > r.bottom - 8) dy--;
     }
-    if (dx || dy) view.screenPan(dx * speed, dy * speed);
+    if (dx || dy) { cameraPan = null; view.screenPan(dx * speed, dy * speed); }
+  }
+  if (cameraPan && started && !paused) {
+    const k = (cameraPan.t = Math.min(1, cameraPan.t + dt / 1.2)), ease = k * k * (3 - 2 * k);
+    view.focusOn(cameraPan.fromX + (cameraPan.x - cameraPan.fromX) * ease, cameraPan.fromZ + (cameraPan.z - cameraPan.fromZ) * ease);
+    if (k >= 1) cameraPan = null;
   }
   const events = sim.events.splice(0);
   for (const event of events) {
     if (event.type === "message") notice(event.text);
     else if (event.type === "incoming") { if (event.team === 0) incomingAlert(event); }
+    // Story mission cues (sim/missions.js).
+    // A line spoken on the tick that ended the match goes straight to the Comms log.
+    else if (event.type === "say") { if (started) { missionUI.say(event.who, event.text); if (sim.result) missionUI.endMatch(); } }
+    else if (event.type === "objective") { missionUI.objectiveEvent(event, sim); if (event.state === "revealed") notice("New objective"); }
+    else if (event.type === "point") pointAlert(event);
+    else if (event.type === "camera") startCameraPan(event.x, event.z);
+    else if (event.type === "ping") { pings.push({ x: event.x, z: event.z, at: sim.time }); tone(520, 0.1); }
+    else if (event.type === "music") setMusicMood(event.mood);
+    else if (event.type === "missionEnd") { /* The debrief opens from sim.result (showResult). */ }
     else view.event(event, sim);
   }
   // Presentation effects hold still while paused; units render between the last two
@@ -2053,6 +2206,12 @@ function ready() {
           return settings;
         },
         governor,
+        // Story missions and saves.
+        mission: missionUI,
+        get campaign() { return campaign; },
+        get cameraPan() { return cameraPan; },
+        get musicMood() { return musicMood(); },
+        save: autosave,
       };
   } catch (error) {
     initFailed(error);

@@ -102,9 +102,10 @@ export const missions = {
           this.players[p.owner][type] += rate * dt;
           this.missionBank(p.owner, type, rate * dt);
         }
+    // Carry the remainder over (and allow for float residue), so the checks credit exactly the time that passed.
     m.due = (m.due ?? 0) - dt;
-    if (m.due <= 0) {
-      m.due = CHECK;
+    if (m.due <= 1e-9) {
+      m.due += CHECK;
       this.stepPoints(CHECK);
       for (const o of def.objectives) this.stepObjective(o, m.objectives[o.id], CHECK);
     }
@@ -121,8 +122,9 @@ export const missions = {
       if (p.taker !== taker) { p.taker = taker; p.since = 0; }
       p.since += dt;
       if (p.since >= CAPTURE_SECONDS) {
+        const previous = p.owner;
         p.owner = taker; p.taker = null; p.since = 0;
-        this.events.push({ type: "point", name, owner: taker, x: p.x, z: p.z });
+        this.events.push({ type: "point", name, owner: taker, previous, x: p.x, z: p.z });
       }
     }
   },
@@ -134,7 +136,8 @@ export const missions = {
     this.events.push({ type: "objective", id, state });
   },
   stepObjective(o, s, dt) {
-    if (s.state !== "active") return;
+    // A hidden objective does not count until a trigger reveals it.
+    if (s.state !== "active" || s.hidden) return;
     const inside = (e, region) => { const p = this.missionPlace(region); return distance(e, p) <= p.r; };
     let done = false;
     if (o.type === "destroyCores") done = !this.entities.some((e) => e.type === "hq" && e.hp > 0 && this.hostile(0, e.team));

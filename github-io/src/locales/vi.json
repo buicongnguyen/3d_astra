@@ -641,7 +641,29 @@
     "Some game files did not download. Check your connection, then press Retry.": "Một số tệp trò chơi chưa tải được. Hãy kiểm tra kết nối rồi bấm Thử lại.",
     "Enemy attack incoming!": "Địch đang kéo quân tấn công!",
     "Show FPS": "Hiện FPS",
-    "Version": "Phiên bản"
+    "Version": "Phiên bản",
+    "Clear the previous mission to unlock": "Hoàn thành nhiệm vụ trước để mở khóa",
+    "Campaign missions": "Các nhiệm vụ chiến dịch",
+    "Continue": "Chơi tiếp",
+    "Skip": "Bỏ qua",
+    "Next": "Tiếp",
+    "Begin mission": "Bắt đầu nhiệm vụ",
+    "Intel": "Tin tình báo",
+    "Optional": "Tùy chọn",
+    "Dismiss message": "Đóng tin nhắn",
+    "Comms log": "Nhật ký liên lạc",
+    "No messages yet.": "Chưa có tin nhắn.",
+    "New objective": "Mục tiêu mới",
+    "COMPLETE": "HOÀN THÀNH",
+    "FAILED": "THẤT BẠI",
+    "Gold medal": "Huy chương vàng",
+    "Silver medal": "Huy chương bạc",
+    "Bronze medal": "Huy chương đồng",
+    "MISSION TIME": "THỜI GIAN NHIỆM VỤ",
+    "BEST TIME": "THỜI GIAN TỐT NHẤT",
+    "Next mission": "Nhiệm vụ tiếp theo",
+    "Every mission cleared. The campaign is complete.": "Đã hoàn thành mọi nhiệm vụ. Chiến dịch kết thúc.",
+    "The saved match could not be loaded and was removed.": "Không tải được trận đã lưu nên trận đó đã bị xóa."
   },
   "patterns": [
     [
@@ -975,6 +997,66 @@
     [
       "^Loading (\\d+) of (\\d+)\u2026$",
       "Đang tải {1}/{2}…"
+    ],
+    [
+      "^Start mission (\\d+)$",
+      "Bắt đầu nhiệm vụ {1}"
+    ],
+    [
+      "^Mission (\\d+) · (.+)$",
+      "Nhiệm vụ {1} · {2}"
+    ],
+    [
+      "^CAMPAIGN · MISSION (\\d+) / (\\d+)$",
+      "CHIẾN DỊCH · NHIỆM VỤ {1} / {2}"
+    ],
+    [
+      "^MISSION (\\d+)$",
+      "NHIỆM VỤ {1}"
+    ],
+    [
+      "^(\\d+) missions$",
+      "{1} nhiệm vụ"
+    ],
+    [
+      "^ACT (\\d+)$",
+      "HỒI {1}"
+    ],
+    [
+      "^(\\d+) more in Comms log$",
+      "Còn {1} tin trong nhật ký liên lạc"
+    ],
+    [
+      "^(\\d+) more$",
+      "Còn {1} tin"
+    ],
+    [
+      "^(\\d+)/(\\d+) held$",
+      "Đang giữ {1}/{2}"
+    ],
+    [
+      "^(\\d+)/(\\d+) arrived$",
+      "Đã đến {1}/{2}"
+    ],
+    [
+      "^(\\d+:\\d+) left$",
+      "Còn {1}"
+    ],
+    [
+      "^(\\d+) left$",
+      "Còn {1}"
+    ],
+    [
+      "^(.+) taken by the enemy$",
+      "Địch đã chiếm {1}"
+    ],
+    [
+      "^(.+) captured$",
+      "Đã chiếm {1}"
+    ],
+    [
+      "^(.+) lost$",
+      "Đã mất {1}"
     ]
   ]
 }

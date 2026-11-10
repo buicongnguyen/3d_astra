@@ -114,6 +114,7 @@ export class Simulation {
     this.scoutIndex = this.players.map(() => 0);
     this.nav.rebuild(this.entities);
     this.updateVision();
+    this.playerBonus = playerBonus;
     if (playerBonus) this.reinforce(playerBonus);
     if (mission) this.initMission(mission);
     this.message(

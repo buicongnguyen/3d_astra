@@ -10,10 +10,11 @@ test("start recentres on HQ and clears hover", () => {
   assert.match(b, /hover = null/);
 });
 test("previewBattle clears hover when replacing sim", () => {
-  assert.match(body("sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus });\n    view?.reset", "focusHome"), /hover = null/);
+  assert.match(body("sim = createSim();\n    view?.reset", "focusHome"), /hover = null/);
 });
 test("newGame rebuilds a clean sim", () => {
-  assert.match(body("function newGame()", "tutorial = null"), /sim = new Simulation/);
+  assert.match(body("function newGame()", "tutorial = null"), /sim = createSim\(\)/);
+  assert.ok(src.includes("const createSim = () => new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus, mission });"));
 });
 test("Space does not swallow modal buttons", () => {
   assert.match(body("if(key===' '&&!e.ctrlKey)", "e.preventDefault()"), /#modal button/);

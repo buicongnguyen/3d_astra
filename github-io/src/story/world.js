@@ -62,7 +62,7 @@ export const CAST = {
   commander: {
     id: "commander",
     name: "Commander",
-    role: "Field commander of the Meridian Expedition (the player)",
+    role: "Field commander of the Meridian Expedition",
     faction: "meridian",
     personality: "Listens first, decides once, and is trusted because of it.",
     speech: "Never speaks on screen. Others address them as \"Commander\" only; no name, no gender.",
@@ -101,7 +101,7 @@ export const CAST = {
   hale: {
     id: "hale",
     name: "Corvin Hale",
-    role: "Director of the Ashfall Combine (antagonist)",
+    role: "Director of the Ashfall Combine",
     faction: "ashfall",
     personality: "Courteous, tired and unbending; he carries forty thousand lives and trusts nobody else to carry them.",
     speech: "Polite and formal. Speaks in schedules and numbers. Never insults, never jokes.",
@@ -114,7 +114,7 @@ export const CAST = {
   sol: {
     id: "sol",
     name: "Tamsin Sol",
-    role: "Captain of the Sunward Caravan (rival, later ally)",
+    role: "Captain of the Sunward Caravan",
     faction: "sunward",
     personality: "Proud, generous and sharp at a bargain; she fights hard and pays every debt in full.",
     speech: "Warm and direct. Talks about water, roads, debts and guests. Laughs before a fight.",
@@ -140,7 +140,7 @@ export const CAST = {
   echo: {
     id: "echo",
     name: "ECHO",
-    role: "Caretaker mind of the Lattice (the ancient voice)",
+    role: "Unknown signal",
     faction: "wardens",
     personality: "Patient, literal and fond of people; it has counted every quiet year and is glad of company.",
     speech: "Plain short statements. Counts things. Says \"this one\" instead of \"I\" until the last mission.",

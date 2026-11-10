@@ -1,0 +1,316 @@
+/* Story mission interface: cast portraits, campaign acts, the briefing overlay, the dialogue
+   box with its Comms log, mission objectives and the debrief. Colours and type come from
+   ui-theme.css (ink panels, one gold primary action). */
+
+/* ---------- Cast portraits ---------- */
+.cast-portrait {
+  --size: 48px;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: var(--size);
+  height: var(--size);
+  overflow: hidden;
+  border-radius: 22%;
+  background: #0c2029;
+  box-shadow: 0 0 0 2px var(--faction, #92ebc5), 0 4px 12px rgba(0, 0, 0, 0.4);
+  vertical-align: middle;
+}
+.cast-portrait svg,
+.cast-portrait img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.cast-portrait.large { --size: 160px; box-shadow: 0 0 0 3px var(--faction, #92ebc5), 0 14px 34px rgba(0, 0, 0, 0.5); }
+.cast-portrait.small { --size: 28px; box-shadow: 0 0 0 1.5px var(--faction, #92ebc5); }
+
+/* ---------- Medal badge ---------- */
+.medal-badge { display: block; flex: 0 0 auto; width: 20px; height: 23px; }
+
+/* ---------- Start screen: Continue and the campaign acts ---------- */
+.secondary.continue-launch {
+  justify-content: flex-start;
+  gap: 12px;
+  min-height: 56px;
+  margin-top: 0;
+  padding: 8px 16px;
+  border-color: var(--gold-line);
+  text-align: left;
+}
+.continue-launch[hidden] { display: none; }
+.continue-launch .icon { flex: 0 0 auto; width: 20px; height: 20px; color: var(--gold-2); }
+.continue-text { display: grid; gap: 2px; min-width: 0; }
+.continue-text strong { font: 800 16px/1.2 var(--font-display); color: #fff; }
+.continue-text small { overflow: hidden; font: 500 13px/1.3 var(--font-ui); color: var(--text-2); white-space: nowrap; text-overflow: ellipsis; }
+#campaign-setup { display: grid; gap: 14px; }
+#campaign-setup[hidden] { display: none; }
+.act-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 8px;
+  font: 800 16px/1.2 var(--font-display);
+  color: var(--text-1);
+}
+.act-title span { font: 700 12px/1.2 var(--font-ui); letter-spacing: 0.14em; color: var(--gold-2); }
+.act-title strong { font: inherit; }
+.stage-list em .medal-badge { width: 20px; height: 23px; }
+.stage-list em[data-medal] { color: var(--text-1); }
+
+/* ---------- Mission briefing overlay ---------- */
+.mission-briefing {
+  position: fixed;
+  inset: 0;
+  z-index: 36;
+  display: grid;
+  place-items: center;
+  padding: max(20px, env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) max(20px, env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(29, 67, 84, 0.55), transparent 60%),
+    linear-gradient(180deg, #06161f, #030c12);
+  color: var(--text-1);
+}
+.mission-briefing[hidden] { display: none; }
+.mb-card {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(860px, 100%);
+  height: min(560px, 100%);
+  overflow: hidden;
+  border-radius: var(--r-l);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow-l), var(--panel-edge);
+}
+.mb-head { padding: 24px 32px 14px; border-bottom: 1px solid var(--line-1); }
+.mb-head .eyebrow { display: block; font: 700 12px/1.3 var(--font-ui); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold-2); }
+.mb-head h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; margin: 8px 0 0; font: 800 32px/1.1 var(--font-display); color: #fff; }
+.mb-head h2 small { font: 700 13px/1.2 var(--font-ui); letter-spacing: 0.14em; color: var(--text-3); }
+.mb-body { min-height: 0; padding: 26px 32px; overflow-y: auto; overscroll-behavior: contain; }
+.mission-briefing:not(.orders) .mb-body { cursor: pointer; }
+.mb-speech { display: flex; align-items: flex-start; gap: 28px; }
+.mb-speech[hidden], .mb-orders[hidden] { display: none; }
+.mb-words { flex: 1; min-width: 0; }
+.mb-who strong { display: block; font: 800 22px/1.2 var(--font-display); color: #fff; }
+.mb-who span { display: block; margin-top: 3px; font: 500 14px/1.35 var(--font-ui); color: var(--text-3); }
+#mb-line { margin: 16px 0 0; font: 400 21px/1.5 var(--font-ui); color: var(--text-1); }
+.mb-orders { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+.mb-orders h3,
+.debrief h3 { margin: 0 0 10px; font: 700 12px/1.2 var(--font-ui); letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold-2); }
+.mb-orders ul,
+.mb-orders ol { display: grid; gap: 10px; margin: 0; padding: 0; list-style: none; }
+.mb-orders li { position: relative; padding-left: 22px; font: 400 15px/1.5 var(--font-ui); color: var(--text-1); }
+.mb-orders ul li::before { content: ""; position: absolute; left: 4px; top: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--mint, #92ebc5); }
+.mb-orders ol { counter-reset: goal; }
+.mb-orders ol li { counter-increment: goal; padding-left: 34px; }
+.mb-orders ol li::before {
+  content: counter(goal);
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--line-2);
+  border-radius: 50%;
+  font: 800 12px/1 var(--font-display);
+  color: var(--text-1);
+}
+.mb-orders li.optional { color: var(--text-2); }
+.mb-orders em,
+.debrief-objectives em,
+.objective-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 7px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  font: 700 11px/1.45 var(--font-ui);
+  font-style: normal;
+  letter-spacing: 0.04em;
+  color: var(--text-3);
+  white-space: nowrap;
+  vertical-align: 1px;
+}
+.mb-foot { display: flex; align-items: center; gap: 10px; padding: 14px 32px 20px; border-top: 1px solid var(--line-1); background: rgba(4, 17, 26, 0.4); }
+.mb-foot button { width: auto; min-height: 48px; margin-top: 0; padding: 0 20px; }
+.mb-foot button[hidden] { display: none; }
+.mb-foot .primary { min-width: 190px; }
+.mb-step { flex: 1; font: 700 13px/1 var(--font-ui); font-variant-numeric: tabular-nums; letter-spacing: 0.08em; color: var(--text-3); text-align: center; }
+
+@media (max-width: 720px) {
+  .mission-briefing { padding: 0; }
+  .mb-card { width: 100%; height: 100%; border-radius: 0; }
+  .mb-head { padding: max(16px, env(safe-area-inset-top, 0px)) 18px 12px; }
+  .mb-head h2 { font-size: 26px; }
+  .mb-body { padding: 20px 18px; }
+  .mb-speech { flex-direction: column; gap: 16px; }
+  .cast-portrait.large { --size: 120px; }
+  #mb-line { margin-top: 12px; font-size: 18px; }
+  .mb-orders { grid-template-columns: 1fr; gap: 22px; }
+  .mb-foot { gap: 8px; padding: 10px 14px calc(12px + env(safe-area-inset-bottom, 0px)); }
+  .mb-foot button { padding: 0 14px; }
+  .mb-foot .primary { flex: 1; min-width: 0; padding: 0 12px; }
+  .mb-step { flex: 0 0 auto; min-width: 38px; }
+}
+/* Short landscape screens: one compact row for the head, portrait beside the words. */
+@media (max-height: 500px) {
+  .mission-briefing { padding: 0; }
+  .mb-card { width: 100%; height: 100%; border-radius: 0; }
+  .mb-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; padding: 10px max(18px, env(safe-area-inset-right, 0px)) 8px max(18px, env(safe-area-inset-left, 0px)); }
+  .mb-head h2 { margin: 0; font-size: 20px; }
+  .mb-head h2 small { font-size: 12px; }
+  .mb-body { padding: 14px max(18px, env(safe-area-inset-right, 0px)) 12px max(18px, env(safe-area-inset-left, 0px)); }
+  .mb-speech { flex-direction: row; gap: 18px; }
+  .cast-portrait.large { --size: 104px; }
+  .mb-who strong { font-size: 18px; }
+  .mb-who span { font-size: 13px; }
+  #mb-line { margin-top: 8px; font-size: 16px; }
+  .mb-orders { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+  .mb-orders li { font-size: 14px; }
+  .mb-foot { padding: 8px max(18px, env(safe-area-inset-right, 0px)) calc(8px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px)); }
+  .mb-foot button { min-height: 44px; }
+  .mb-foot .primary { flex: 0 1 auto; min-width: 170px; }
+  .mb-step { flex: 1; }
+}
+
+/* ---------- In-match dialogue ---------- */
+.dialogue {
+  position: absolute;
+  z-index: 8;
+  left: 14px;
+  bottom: calc(var(--dialogue-floor, 200px) + 12px);
+  width: min(400px, calc(100% - 28px));
+  pointer-events: none;
+}
+.dialogue[hidden],
+.in-briefing .dialogue { display: none; }
+.dialogue-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 6px 10px 12px;
+  border-radius: var(--r-m);
+  background: linear-gradient(180deg, rgba(21, 47, 58, 0.97), rgba(8, 23, 31, 0.97));
+  box-shadow: var(--panel-edge), 0 10px 28px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.dialogue-card.arrive { animation: dialogue-arrive 0.22s ease-out; }
+@keyframes dialogue-arrive { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.dialogue-words { min-width: 0; }
+#dialogue-name { display: block; font: 800 13px/1.2 var(--font-display); letter-spacing: 0.04em; color: var(--gold-2); }
+#dialogue-text { margin: 3px 0 0; font: 400 14px/1.4 var(--font-ui); color: var(--text-1); }
+#dialogue-more { display: block; margin-top: 3px; font: 600 11px/1.3 var(--font-ui); color: var(--text-3); }
+#dialogue-more[hidden] { display: none; }
+#dialogue-close {
+  display: grid;
+  place-items: center;
+  align-self: start;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-3);
+}
+#dialogue-close:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+#dialogue-close .icon { width: 14px; height: 14px; }
+/* Desktop: beside the map heading, clear of the objectives card and the console. */
+:root:not(.compact-ui) .dialogue { top: 96px; bottom: auto; left: 20px; width: min(420px, calc(100% - 300px)); }
+/* Phones, portrait: under the battlefield buttons, above the dock. */
+.compact-ui .dialogue { top: 98px; bottom: auto; left: 8px; right: 8px; width: auto; }
+.compact-ui .dialogue-card { gap: 10px; padding: 8px 2px 8px 10px; }
+.compact-ui #dialogue-close { width: 44px; height: 44px; align-self: center; }
+.compact-ui #dialogue-text { font-size: 13px; }
+/* Toasts and the targeting prompt sit at the same height on phones: they move below the box. */
+.compact-ui.dialogue-open:not(.in-briefing) #notice { top: calc(106px + var(--dialogue-h, 64px)); }
+.compact-ui.dialogue-open:not(.in-briefing) #mode-banner { top: calc(102px + var(--dialogue-h, 64px)); }
+/* Phones, landscape: a slim strip over the battlefield, beside the side console. */
+@media (min-aspect-ratio: 1.35) {
+  .compact-ui .dialogue {
+    left: max(8px, env(safe-area-inset-left, 0px));
+    right: calc(var(--side-width) + 22px + env(safe-area-inset-right, 0px));
+  }
+  .compact-ui .dialogue-card { gap: 8px; padding: 4px 0 4px 8px; }
+  .compact-ui .dialogue .cast-portrait { --size: 36px; }
+  .compact-ui #dialogue-name { display: inline; margin-right: 6px; font-size: 12px; }
+  .compact-ui #dialogue-text { display: inline; margin: 0; font-size: 12px; line-height: 1.35; }
+  .compact-ui #dialogue-more { display: inline; margin-left: 6px; }
+  .compact-ui #dialogue-more[hidden] { display: none; }
+}
+
+/* ---------- Mission objectives and Comms log ---------- */
+.objectives-mission { margin: 0; padding: 0; list-style: none; }
+.objectives-mission[hidden], #objectives-default[hidden], .comms[hidden] { display: none; }
+:root:not(.compact-ui) #mission-objectives.story { width: 264px; max-height: calc(100% - 300px); overflow-y: auto; }
+#mission-objectives .objectives-mission .objective { padding: 3px 4px; margin-left: -4px; margin-right: -4px; border-radius: 6px; }
+.objective-body { min-width: 0; }
+.objective-num .icon { display: block; width: 11px; height: 11px; stroke-width: 3; }
+#mission-objectives .objective small { font-variant-numeric: tabular-nums; }
+#mission-objectives .objective small[hidden] { display: none; }
+#mission-objectives .objective.optional .objective-text { color: var(--text-2); }
+#mission-objectives .objective.failed .objective-text { color: var(--text-3); text-decoration: line-through; }
+#mission-objectives .objective.failed .objective-num { border-color: #ef7660; color: #ef7660; }
+.objective.flash { animation: objective-flash 1.6s ease-out; }
+@keyframes objective-flash { 0%, 25% { background: rgba(255, 199, 94, 0.4); } 100% { background: transparent; } }
+.comms { margin: 4px 0 8px; padding-top: 8px; border-top: 1px solid var(--line-1); }
+.comms-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  background: rgba(16, 40, 52, 0.7);
+  color: var(--text-1);
+  font: 650 13px/1.2 var(--font-ui);
+}
+.comms-toggle:hover, .comms-toggle[aria-expanded="true"] { border-color: var(--gold-line); }
+.comms-toggle .icon { width: 15px; height: 15px; }
+.compact-ui .comms-toggle { min-height: 44px; }
+.comms-log { display: grid; gap: 10px; max-height: 240px; margin: 10px 0 0; padding: 0 2px 2px 2px; overflow-y: auto; overscroll-behavior: contain; list-style: none; }
+.comms-log[hidden] { display: none; }
+.comms-log li { display: flex; align-items: flex-start; gap: 8px; font: 400 12px/1.4 var(--font-ui); color: var(--text-2); }
+.comms-log li > span:last-child { display: block; min-width: 0; }
+.comms-log strong { display: block; font: 700 12px/1.3 var(--font-ui); color: var(--gold-2); }
+.comms-log .empty { color: var(--text-3); }
+
+/* ---------- Debrief ---------- */
+.modal-backdrop.debrief-wide .modal { width: min(640px, calc(100vw - 24px)); }
+.debrief .eyebrow { text-transform: uppercase; }
+.debrief-head { display: flex; align-items: center; gap: 18px; margin: 12px 0 4px; }
+.debrief-head .medal-badge { width: 76px; height: 88px; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45)); }
+.debrief-loss { display: grid; place-items: center; flex: 0 0 auto; width: 72px; height: 72px; border: 2px solid #ef7660; border-radius: 50%; color: #ef7660; background: rgba(239, 118, 96, 0.12); }
+.debrief-loss .icon { width: 30px; height: 30px; }
+.debrief .debrief-head h2 { margin: 0; }
+.debrief .debrief-result { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 6px 0 0; font: 700 15px/1.3 var(--font-ui); letter-spacing: 0.04em; }
+.debrief.won .debrief-result strong { color: var(--mint, #92ebc5); }
+.debrief.lost .debrief-result strong { color: #ef7660; }
+.debrief-result span { color: var(--gold-2); }
+.debrief h3 { margin-top: 16px; }
+.debrief-objectives { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.debrief-objectives li { display: flex; align-items: center; gap: 10px; font: 500 14px/1.4 var(--font-ui); color: var(--text-1); }
+.debrief-objectives i { display: grid; place-items: center; flex: 0 0 auto; width: 22px; height: 22px; border: 1px solid var(--line-2); border-radius: 50%; }
+.debrief-objectives i .icon { width: 12px; height: 12px; stroke-width: 3; }
+.debrief-objectives li.done i { border-color: var(--mint, #92ebc5); background: var(--mint, #92ebc5); color: #0c2a22; }
+.debrief-objectives li.failed i { border-color: #ef7660; color: #ef7660; }
+.debrief-objectives li.failed > span { color: var(--text-3); text-decoration: line-through; }
+.debrief-objectives li.active > span { color: var(--text-2); }
+.debrief-objectives em { margin-left: 0; }
+.debrief-lines { display: grid; gap: 12px; margin-top: 16px; padding: 14px; border: 1px solid var(--line-1); border-radius: var(--r-m); background: rgba(4, 17, 26, 0.5); }
+.debrief-line { display: flex; align-items: flex-start; gap: 12px; }
+.debrief-line strong { display: block; font: 800 13px/1.2 var(--font-display); letter-spacing: 0.04em; color: var(--gold-2); }
+.modal .debrief-line p { margin: 3px 0 0; font: 400 14px/1.45 var(--font-ui); color: var(--text-1); }
+.modal .debrief-end { margin: 14px 0 0; }
+.debrief-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 18px; }
+.debrief-actions .primary { grid-column: 1 / -1; }
+.modal .debrief-actions .primary, .debrief-actions .secondary { margin-top: 0; }
+@media (max-height: 500px) {
+  .debrief-head .medal-badge { width: 52px; height: 60px; }
+  .debrief-loss { width: 52px; height: 52px; }
+  .debrief .result-stats { margin: 10px 0 0; }
+  .debrief .result-stats span { padding: 8px 12px; }
+  .debrief .result-stats strong { font-size: 20px; }
+  .debrief-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .debrief-actions .primary { grid-column: auto; min-height: 48px; }
+}

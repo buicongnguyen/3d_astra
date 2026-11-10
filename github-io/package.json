@@ -1,6 +1,6 @@
 {
   "name": "frontier-command",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test tests/*.test.js",
+    "check:missions": "node tools/mission-check.mjs",
     "test:browser": "node tests/browser.mjs",
     "test:mobile": "node tests/mobile.mjs",
     "test:mobile-controls": "node tests/mobile-controls.mjs",
@@ -32,6 +33,7 @@
     "test:boundary-fx": "node tests/boundary-fx.mjs",
     "test:repair-rally": "node tests/repair-rally.mjs",
     "test:campaign": "node tests/campaign.mjs",
+    "test:missions": "node tests/missions.mjs",
     "test:tutorial": "node tests/tutorial.mjs",
     "test:ui-quality": "node tests/ui-quality.mjs",
     "test:ambient-life": "node tests/ambient-life.mjs",

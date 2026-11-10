@@ -53,6 +53,8 @@ jobs:
             scripts: mobile mobile-controls mobile-gestures fullscreen
           - name: settings
             scripts: improvements campaign
+          - name: story
+            scripts: missions
           - name: languages
             scripts: language
           - name: interface

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Simulation} from '../src/simulation.js';
 import {AI_SPEEDS} from '../src/ai-plan.js';
-import {STAGES, loadProgress, saveProgress, isUnlocked, recordClear, nextStage} from '../src/campaign.js';
+import {MISSIONS, ACTS, loadProgress, saveProgress, isUnlocked, isCleared, recordClear, nextMission, bestTime, bestMedal} from '../src/campaign.js';
 import {MAPS} from '../src/terrain.js';
 const step = (s, n) => { for (let i = 0; i < n * 20; i++) s.tick(.05); };
 const messages = s => s.events.filter(e => e.type === 'message').map(e => e.text);
@@ -104,31 +104,38 @@ test('allies reinforce a coalition base under attack', () => {
   assert.ok(helpers.length < s.own(2).filter(e => e.kind === 'unit' && e.type !== 'worker').length, 'half stays home');
 });
 
-test('campaign: seven escalating stages on real maps, unlocked in order', () => {
-  assert.equal(STAGES.length, 7);
-  for (const [i, stage] of STAGES.entries()) {
-    assert.ok(MAPS[stage.map], stage.map); assert.ok(AI_SPEEDS[stage.speed]);
-    if (i) assert.ok(stage.enemies >= STAGES[i - 1].enemies, 'never fewer rivals');
-    if (stage.alliance === 'coalition') assert.ok(stage.enemies > 1 && stage.bonus?.tower, 'allied stages reinforce the player');
+test('campaign: twelve story missions in three acts on real maps, unlocked in order', () => {
+  assert.equal(MISSIONS.length, 12);
+  assert.deepEqual(ACTS.map(a => a.act), [1, 2, 3]);
+  for (const m of MISSIONS) {
+    assert.ok(MAPS[m.map], m.map); assert.ok(AI_SPEEDS[m.speed]);
+    assert.ok(ACTS.some(a => a.act === m.act), `${m.id} belongs to an act`);
   }
-  // Difficulty rises every stage: rivals first, then alliance, then AI speed.
-  const speeds = Object.keys(AI_SPEEDS), score = st => st.enemies * 10 + (st.alliance === 'coalition' ? 5 : 0) + speeds.indexOf(st.speed);
-  for (let i = 1; i < STAGES.length; i++) assert.ok(score(STAGES[i]) > score(STAGES[i - 1]), `stage ${i + 1} is harder`);
-  assert.equal(new Set(STAGES.map(s => s.map)).size, 7, 'every map is used once');
+  assert.equal(new Set(MISSIONS.map(m => m.id)).size, 12, 'mission ids are unique');
   let p = {cleared: {}};
-  assert.deepEqual(STAGES.map((_, i) => isUnlocked(p, i)), [true, false, false, false, false, false, false]);
-  p = recordClear(p, 0, 300); p = recordClear(p, 0, 420);
-  assert.equal(p.cleared['first-contact'], 300, 'best time is kept');
+  assert.deepEqual(MISSIONS.map((_, i) => isUnlocked(p, i)), [true, ...Array(11).fill(false)]);
+  p = recordClear(p, 0, 300, 'silver'); p = recordClear(p, 0, 420, 'gold'); p = recordClear(p, 0, 500, 'bronze');
+  assert.deepEqual(p.cleared[MISSIONS[0].id], {time: 300, medal: 'gold'}, 'best time and best medal are kept separately');
+  assert.equal(bestTime(p, 0), 300); assert.equal(bestMedal(p, 0), 'gold'); assert.equal(bestTime(p, 1), null);
   assert.equal(isUnlocked(p, 1), true); assert.equal(isUnlocked(p, 2), false);
-  assert.equal(nextStage(p), 1);
+  assert.equal(nextMission(p), 1);
   assert.equal(isUnlocked(recordClear({cleared: {}}, 0, 0), 1), true, 'an instant clear still counts');
+  assert.equal(isCleared(p, -1), false); assert.equal(isUnlocked(p, 12), false);
+  let all = {cleared: {}};
+  for (let i = 0; i < MISSIONS.length; i++) all = recordClear(all, i, 100 + i);
+  assert.equal(nextMission(all), MISSIONS.length - 1, 'a finished campaign rests on the last mission');
 });
 
-test('campaign progress survives reloads and tolerates broken storage', () => {
+test('campaign progress survives reloads, ignores the old stage record and tolerates broken storage', () => {
   const store = new Map(), fake = {getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, v)};
-  saveProgress(recordClear({cleared: {}}, 0, 200), fake);
-  assert.equal(loadProgress(fake).cleared['first-contact'], 200);
-  store.set('frontier-campaign-v1', '{oops');
+  // The seven-stage record of earlier versions is left alone and does not unlock anything.
+  store.set('frontier-campaign-v1', JSON.stringify({cleared: {'first-contact': 300}}));
+  assert.deepEqual(loadProgress(fake), {cleared: {}});
+  saveProgress(recordClear({cleared: {}}, 0, 200, 'silver'), fake);
+  assert.deepEqual(loadProgress(fake).cleared[MISSIONS[0].id], {time: 200, medal: 'silver'});
+  assert.equal(store.get('frontier-campaign-v1'), JSON.stringify({cleared: {'first-contact': 300}}), 'v1 data is untouched');
+  assert.ok(store.has('frontier-campaign-v2'));
+  store.set('frontier-campaign-v2', '{oops');
   assert.deepEqual(loadProgress(fake), {cleared: {}});
   const broken = {getItem: () => { throw new Error('denied'); }, setItem: () => { throw new Error('denied'); }};
   assert.deepEqual(loadProgress(broken), {cleared: {}});

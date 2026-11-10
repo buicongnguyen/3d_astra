@@ -23,6 +23,26 @@ No visible change to play; this is groundwork for saves, missions and deeper com
 - The rules step is about five times faster on the largest map with three AIs (average 7.0 ms to 1.3 ms; spikes of about 300 ms to under 30 ms): square-root distances, obstacle buckets, reused route buffers, six route searches per step, one AI thinking per step.
 - The 1,400-line rules file is split into systems under `src/sim/` (vision, orders, movement, combat, economy, AI).
 
+## 0.4.0: campaign, tactics and balance
+
+Campaign
+- Twelve story missions in three acts replace the old six-stage ladder: mission list with medals, briefings, in-match dialogue with portraits, objectives with progress, capture points, a debrief screen.
+- Missions are data (`src/story/missions.js`, format in `docs/MISSIONS.md`): setup, objectives, lose conditions, triggers, waves, medals. The story bible is `docs/WORLD.md`.
+- The match autosaves; the menu offers Continue.
+- A test bot plays every mission through the command door (`npm run check:missions`); each mission must be survivable when idle and winnable by the objective bot.
+
+Rules
+- Units earn up to three ranks from kills (8% damage and health each).
+- Stances: guard, hold, aggressive.
+- Seven unit abilities (Shield wall, Focus fire, Barrage, Overdrive, Lock-on, Triage, Field repair); the AI uses them, the player can switch on auto-cast. No buttons for these yet: the interface comes next.
+- A deposit takes three Harvesters; a core or relay supports two towers; Breakers out-range towers against buildings; battle tanks are tougher and take 3 population.
+- The AI army grows on a curve per speed instead of arriving at full size.
+- Tagged mission entities are left alone by the AI and by automatic harvesting.
+
+Known limits
+- Story text is English only for now.
+- Destroying an enemy core also removes that side's tagged buildings, so a "destroy the siphons" objective can be finished that way.
+
 ## 0.1.0
 
 Everything up to 2 November 2026. See the dated review documents for the history.

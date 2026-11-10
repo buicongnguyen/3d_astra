@@ -205,7 +205,7 @@ export const economy = {
   },
   // Sends a team's idle Harvesters to the nearest explored deposits, one in four to energy.
   assignHarvesters(team = 0) {
-    const workers = this.own(team).filter((e) => e.type === "worker");
+    const workers = this.own(team).filter((e) => e.type === "worker" && !e.tag);
     for (let i = 0; i < workers.length; i++) {
       const w = workers[i];
       if (w.orders.length) continue;
