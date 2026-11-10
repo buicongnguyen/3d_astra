@@ -158,7 +158,7 @@ try {
     // ---- Skirmish results: win, lose and draw, with the match counters.
     for (const result of ['victory', 'defeat', 'draw']) {
       // The tick that ends the match also reports two enemy and one own unit destroyed, and one enemy building.
-      await frontier(r => { const f = window.__frontier; f.step(10); const s = f.sim; s.tick = () => { s.events.push({ type: 'death', team: 1, building: false }, { type: 'death', team: 1, building: false }, { type: 'death', team: 0, building: false }, { type: 'death', team: 1, building: true }); s.result = r; }; }, result);
+      await frontier(r => { const f = window.__frontier; f.step(10); const s = f.sim; s.tick = () => { s.events.push({ type: 'death', team: 1, building: false }, { type: 'death', team: 1, building: false }, { type: 'death', team: 0, building: false }, { type: 'death', team: 1, building: true }); s.result = r; delete s.tick; }; }, result); // fires once: a slow machine can run several ticks before the frame notices the result
       await page.locator('.result-card').waitFor({ state: 'visible' });
       const card = await page.evaluate(() => ({
         kind: document.querySelector('.result-card').dataset.result,
