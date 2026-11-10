@@ -221,9 +221,10 @@ try {
     const pan = await frontier(async () => {
       const f = window.__frontier, s = f.sim, from = { x: f.view.focus.x, z: f.view.focus.z }, to = { x: -20, z: 20 };
       s.events.push({ type: 'camera', ...to }, { type: 'ping', ...to }, { type: 'music', mood: 'tense' });
-      await new Promise(r => setTimeout(r, 300));
+      // Frames can be slow on a loaded machine: sample the middle once the camera has really started to move.
+      for (let i = 0; i < 400 && Math.hypot(f.view.focus.x - from.x, f.view.focus.z - from.z) < 0.5; i++) await new Promise(r => requestAnimationFrame(r));
       const mid = { x: f.view.focus.x, z: f.view.focus.z, panning: !!f.cameraPan };
-      await new Promise(r => setTimeout(r, 1500));
+      for (let i = 0; i < 600 && f.cameraPan; i++) await new Promise(r => requestAnimationFrame(r));
       return { from, to, mid, end: { x: f.view.focus.x, z: f.view.focus.z, panning: !!f.cameraPan }, mood: f.musicMood };
     });
     assert.equal(pan.mid.panning, true, 'the camera pans, it does not jump');

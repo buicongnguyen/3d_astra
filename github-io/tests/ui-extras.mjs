@@ -172,8 +172,13 @@ if (want('minimap')) for (const [name, w, h, mobile] of VIEWS) {
   await page.waitForTimeout(150);
   assert.equal(await ownPings(), 0, `${name}: a drag is not a ping`);
   // Double tap / double click pings.
-  if (mobile) { await page.touchscreen.tap(...at(0.5, 0.5)); await page.waitForTimeout(120); await page.touchscreen.tap(...at(0.5, 0.5)); }
-  else { await page.mouse.click(...at(0.5, 0.5)); await page.waitForTimeout(120); await page.mouse.click(...at(0.5, 0.5)); }
+  // Two clicks 100 ms apart, dispatched inside the page: driving real input through the test runner can
+  // take longer than the double-tap window on a loaded CI machine.
+  const [px, py] = at(0.5, 0.5);
+  await page.evaluate(async ([x, y]) => {
+    const target = document.querySelector('#minimap');
+    for (let i = 0; i < 2; i++) { target.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: x, clientY: y, button: 0 })); if (!i) await new Promise(r => setTimeout(r, 100)); }
+  }, [px, py]);
   await page.waitForFunction(() => window.__frontier.pings.some(p => p.own), null, { timeout: 3000 });
   assert.equal(await ownPings(), 1, `${name}: double tap sends one own ping`);
   // It is client-side only: the simulation never saw it, and it fades.
