@@ -1,4 +1,5 @@
 import { DEFINITIONS as D, hyp, clamp } from "../data.js";
+import { TOWERS_PER_SUPPORT } from "./constants.js";
 
 // Orders, production queues and construction: the actions a team can take. Mixed into Simulation (see simulation.js).
 export const orders = {
@@ -179,6 +180,10 @@ export const orders = {
       return "Units are standing in the construction footprint.";
     // A building must never wall in the ground behind it: the route search needs real room to pass.
     if (this.nav.wouldSeal(x, z, d.radius)) return "That would wall in the ground behind it.";
+    if (type === "tower") {
+      const mine = this.own(team), supports = mine.filter((e) => (e.type === "hq" || e.type === "relay") && e.complete).length;
+      if (mine.filter((e) => e.type === "tower").length >= supports * TOWERS_PER_SUPPORT) return "Build another Supply relay to support more Sentinel towers.";
+    }
     if (
       d.requires &&
       !this.own(team).some((e) => e.type === d.requires && e.complete)

@@ -113,7 +113,9 @@ export const combat = {
       !this.isVisible(t, e.team)
     )
       return false;
-    const inRange = distance(e, t) <= e.range + t.radius + 0.00001;
+    // Siege weapons reach further against buildings and walls than against units.
+    const range = t.kind !== "unit" && e.siege_range ? e.siege_range : e.range;
+    const inRange = distance(e, t) <= range + t.radius + 0.00001;
     if (inRange && this.nav.clearLine(e, t, t.id)) {
       e.attacking = true;
       e.angle = Math.atan2(t.x - e.x, t.z - e.z);
@@ -122,7 +124,7 @@ export const combat = {
     } else if (chase && e.kind === "unit") {
       if (this.noFiringPosition(e, t)) return false;
       if (!inRange) {
-        this.move(e, this.approach(e, t, Math.max(1.2, e.range * 0.7)), dt);
+        this.move(e, this.approach(e, t, Math.max(1.2, range * 0.7)), dt);
         return true;
       }
       // In range but screened by a rock or building: walk around to a clear shot

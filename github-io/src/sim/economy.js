@@ -1,4 +1,5 @@
 import { DEFINITIONS as D, distance } from "../data.js";
+import { MINERS_PER_DEPOSIT } from "./constants.js";
 
 // Harvesting, construction work and unit production. Mixed into Simulation (see simulation.js).
 export const economy = {
@@ -88,8 +89,32 @@ export const economy = {
       }
       e.moving = false;
       this.resetWorkerRoute(e);
-      e.working = true;
       e.angle = Math.atan2(t.x - e.x, t.z - e.z);
+      // A deposit has room for a few Harvesters; the rest wait their turn, and after a short
+      // wait move to a free deposit of the same kind if one is near.
+      if (t.crewTick !== this.ticks) {
+        t.crewLast = t.crewTick === this.ticks - 1 ? t.crew : 0;
+        t.crewTick = this.ticks;
+        t.crew = 0;
+      }
+      if (t.crew >= MINERS_PER_DEPOSIT) {
+        e.wait = (e.wait || 0) + dt;
+        if (e.wait > 1.5) {
+          e.wait = 0;
+          const busy = (r) => (r.crewTick >= this.ticks - 1 ? Math.max(r.crew, r.crewLast || 0) : 0);
+          const free = this.resources
+            .filter((r) => r.id !== t.id && r.type === t.type && r.amount > 0 && this.isExplored(r, e.team) && distance(r, t) < 30 && busy(r) < MINERS_PER_DEPOSIT)
+            .sort((a, b) => distance(e, a) - distance(e, b))[0];
+          if (free) {
+            o.target = free.id;
+            e.resource = free.id;
+          }
+        }
+        return;
+      }
+      t.crew++;
+      e.wait = 0;
+      e.working = true;
       e.work += dt;
       if (e.work >= 0.7) {
         e.work -= 0.7;

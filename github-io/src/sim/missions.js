@@ -77,7 +77,8 @@ export const missions = {
     return made;
   },
   missionSetup(step) {
-    if (step.spawn) this.missionSpawn(step);
+    // Enemy units placed by the setup are a garrison: they guard their spot and the AI leaves them out of its waves.
+    if (step.spawn) for (const e of this.missionSpawn(step)) { if (e.team > 0 && e.kind === "unit") e.garrison = true; }
     else if (step.capturePoint) {
       const place = this.missionPlace(step.capturePoint);
       this.mission.points[step.capturePoint] = { x: place.x, z: place.z, r: place.r, owner: step.owner ?? null, taker: null, since: 0, gives: step.gives || null };

@@ -31,10 +31,10 @@ test('heavy training gates, supply reservation and full cancellation refunds',()
     building.level=level-1;assert.equal(s.enqueue(building.id,type),false);
     assert.equal(s.players[0].alloy,5000);building.level=level;
     assert.equal(s.enqueue(building.id,type),true);
-    assert.equal(s.population(0).reserved,type==='tank'?4:2);
+    assert.equal(s.population(0).reserved,type==='tank'?3:2);
     assert.equal(s.cancelQueue(building.id,0),true);assert.equal(s.players[0].alloy,5000);
   }
-  s.own(0).find(e=>e.type==='hq').supply=10;assert.equal(s.enqueue(f.id,'tank'),false);
+  s.own(0).find(e=>e.type==='hq').supply=9;assert.equal(s.enqueue(f.id,'tank'),false);
   s.own(0).find(e=>e.type==='hq').supply=15;assert.equal(s.enqueue(f.id,'tank'),true);
   s.updateProduction(f,21);assert.ok(s.own(0).some(e=>e.type==='tank'));
 });

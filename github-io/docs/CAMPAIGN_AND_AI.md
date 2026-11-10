@@ -13,12 +13,14 @@ The opening briefing has two modes: **Skirmish** and **Campaign**.
 
 **AI speed never cheats.** Every AI pays the same costs and harvests at the same rate as you, from the same starting resources. Speed only changes how the AI plays:
 
-| Speed | Thinks every | Harvesters | Foundry after | Sentinel towers | First attack | Between attacks |
-|---|---|---|---|---|---|---|
-| Relaxed | 4 s | 7 | 160 s | none | 210 s | 90 s |
-| Normal (original tempo) | 2.5 s | 9 | 100 s | 1, after 180 s | 85 s | 50 s |
-| Fast | 1.5 s | 11 | 80 s | 1, after 120 s | 70 s | 42 s |
-| Relentless | 1 s | 12 | 60 s | 2, after 90 s | 60 s | 34 s |
+| Speed | Thinks every | Harvesters | Foundry after | Sentinel towers | First attack | Between attacks | Army size allowed |
+|---|---|---|---|---|---|---|---|
+| Relaxed | 4 s | 7 | 160 s | none | 210 s | 90 s | 3, plus 2 a minute |
+| Normal | 2.5 s | 9 | 100 s | 1, after 180 s | 110 s | 50 s | 5, plus 3 a minute |
+| Fast | 1.5 s | 11 | 80 s | 1, after 120 s | 70 s | 42 s | 7, plus 4 a minute |
+| Relentless | 1 s | 12 | 60 s | 2, after 90 s | 60 s | 34 s | no limit |
+
+Below Relentless the AI stops training when its army reaches the allowed size and saves for technology instead; a base under attack may always train.
 
 Towers go on the side of the AI's base facing the map centre, and only once its Foundry stands. See [the tower balance review](BALANCE.md#sentinel-tower).
 

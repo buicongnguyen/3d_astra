@@ -8,6 +8,10 @@ export const LEASH = 4;
 export const CORE_GRACE = 90;
 // Route searches per 50 ms tick; each costs up to a few milliseconds on the largest maps.
 export const ROUTES_PER_TICK = 6;
+// Harvesters that can work one deposit at a time; more must wait or use another deposit.
+export const MINERS_PER_DEPOSIT = 3;
+// Sentinel towers each Command core or Supply relay can support.
+export const TOWERS_PER_SUPPORT = 2;
 // Contested middle-lane deposits on every map: [type, x, z, amount], mirrored for the rival.
 export const MIDFIELD_DEPOSITS = [
   ["alloy", 14, 27, 2500],

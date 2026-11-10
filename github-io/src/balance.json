@@ -101,7 +101,7 @@
       "pop": 3,
       "time": 20,
       "icon": "tank",
-      "description": "Heavy artillery. Each shell also hits enemies within 3 m of the target for 40% damage. Strong against clustered infantry, especially Vanguards (1.5×).",
+      "description": "Heavy artillery. Each shell also hits enemies within 3 m of the target for 40% damage. Strong against clustered infantry, especially Vanguards (1.5×). Shells buildings from 15 m, beyond a Sentinel tower's reach.",
       "shield": 80,
       "mechanical": true,
       "splash_radius": 3,
@@ -117,7 +117,8 @@
         "radius": 4,
         "damage": 90,
         "description": "Shell a marked area up to 14 m away after 1.5 seconds: 90 damage within 4 m, half to buildings."
-      }
+      },
+      "siege_range": 15
     },
     "hq": {
       "name": "Command core",
@@ -217,7 +218,7 @@
       "interval": 1.2,
       "range": 13,
       "icon": "tower",
-      "description": "Automatically attacks visible enemies within range, shooting combat units first, then Harvesters, then buildings. Each upgrade adds 50% of its base attack damage and 1 m of range.",
+      "description": "Automatically attacks visible enemies within range, shooting combat units first, then Harvesters, then buildings. Each upgrade adds 50% of its base attack damage and 1 m of range. Each Command core and Supply relay supports two towers.",
       "shield": 50,
       "level_damage": 0.5,
       "level_range": 1
@@ -298,7 +299,7 @@
       "name": "Battle tank",
       "role": "Heavy assault vehicle",
       "kind": "unit",
-      "hp": 460,
+      "hp": 520,
       "shield": 100,
       "speed": 2.5,
       "damage": 48,
@@ -310,7 +311,7 @@
         275,
         125
       ],
-      "pop": 4,
+      "pop": 3,
       "time": 28,
       "icon": "tank",
       "required_level": 3,

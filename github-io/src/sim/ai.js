@@ -6,7 +6,7 @@ export const ai = {
   updateAI(team = 1) {
     const own = this.own(team),
       workers = own.filter((e) => e.type === "worker"),
-      army = own.filter((e) => e.kind === "unit" && e.type !== "worker");
+      army = own.filter((e) => e.kind === "unit" && e.type !== "worker" && !e.garrison);
     if (!own.some(e => e.type === "hq")) return;
     this.updateKnownCores(team);
     this.assignHarvesters(team);
@@ -85,7 +85,9 @@ export const ai = {
         if (!b.queue.length) this.upgradeBuilding(b.id,team);
         continue;
       }
-      if (b.queue.length < 2) {
+      // Army size follows the speed's curve; a base under attack may always train.
+      const cap = pace.army ? pace.army[0] + pace.army[1] * (this.time / 60) : Infinity;
+      if (b.queue.length < 2 && (army.length + own.reduce((n, e) => n + (e.queue?.length || 0), 0) < cap || own.some((e) => e.kind === "building" && this.time - (e.hitAt ?? -99) < 10))) {
         // One Vanguard per two Rangers; a raider AI trains two Vanguards per Ranger.
         const cycle = Math.floor(this.time/4)%3;
         let choice = b.type === 'foundry' ? 'breaker' : cycle === 0 || (role === 'raider' && cycle === 1) ? 'vanguard' : 'ranger';

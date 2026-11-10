@@ -8,10 +8,10 @@ const step = (s, n) => { for (let i = 0; i < n * 20; i++) s.tick(.05); };
 const messages = s => s.events.filter(e => e.type === 'message').map(e => e.text);
 const core = (s, team) => s.own(team).find(e => e.type === 'hq');
 
-test('defaults keep the original AI: normal speed, free-for-all', () => {
+test('defaults: normal speed, free-for-all', () => {
   const s = new Simulation({ai: false});
   assert.equal(s.aiSpeed, 'normal'); assert.equal(s.coalition, false);
-  assert.deepEqual([s.pace.think, s.waveAt[1], s.pace.waveGap, s.pace.workers], [2.5, 85, 50, 9]);
+  assert.deepEqual([s.pace.think, s.waveAt[1], s.pace.waveGap, s.pace.workers], [2.5, 110, 50, 9]);
   assert.equal(new Simulation({ai: false, aiSpeed: 'warp'}).aiSpeed, 'normal', 'unknown speeds fall back');
 });
 
