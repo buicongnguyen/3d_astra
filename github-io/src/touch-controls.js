@@ -1,4 +1,8 @@
 // A pan or pinch never becomes a command tap. Mouse handling stays separate.
+// A pen is a precise pointer: it plays as a mouse wherever a fine pointer exists.
+export function isTouchPointer(e, fine = globalThis.matchMedia?.("(any-pointer: fine)").matches ?? false) {
+  return e.pointerType !== "mouse" && !(e.pointerType === "pen" && fine);
+}
 export class TouchControls {
   constructor(canvas, callbacks) {
     this.canvas = canvas;
@@ -10,11 +14,14 @@ export class TouchControls {
     canvas.addEventListener("pointermove", (e) => this.move(e));
     canvas.addEventListener("pointerup", (e) => this.up(e));
     canvas.addEventListener("pointercancel", (e) => {
-      if (e.pointerType !== "mouse") this.reset();
+      if (this.touch(e)) this.reset();
     });
     canvas.addEventListener("lostpointercapture", (e) => {
       if (this.pointers.has(e.pointerId)) this.reset();
     });
+  }
+  touch(e) {
+    return this.callbacks.isTouch ? this.callbacks.isTouch(e) : e.pointerType !== "mouse";
   }
   snapshot() {
     const [a, b] = [...this.pointers.values()];
@@ -27,7 +34,7 @@ export class TouchControls {
       : null;
   }
   down(e) {
-    if (e.pointerType === "mouse" || !this.callbacks.enabled()) return;
+    if (!this.touch(e) || !this.callbacks.enabled()) return;
     e.preventDefault();
     this.callbacks.activate();
     this.canvas.setPointerCapture(e.pointerId);

@@ -62,4 +62,6 @@
 :root .selection-panel .selection-activity { font-size: 13px; height: 18px; line-height: 18px; }
 :root .command-panel .upgrade-actions button { font-size: 13px; }
 :root #notice, :root #mode-banner { font-size: 14px; line-height: 1.4; }
+/* Incoming attack: the same toast in the hostile colour. */
+:root #notice.warning { background: #3a1712f2; border-color: #ef7660; color: #ffe1d8; font-weight: 700; }
 :root:not(.compact-ui) #notice, :root:not(.compact-ui) #mode-banner { width: max-content; max-width: min(520px, calc(100% - 32px)); white-space: normal; text-align: center; }

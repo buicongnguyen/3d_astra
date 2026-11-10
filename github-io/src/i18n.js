@@ -44,7 +44,10 @@ export function translate(text, locale = language, depth = 0) {
 export function localizeDOM(root, initialLanguage = 'en') {
   const originals = new WeakMap();
   const attributes = ['title', 'aria-label', 'placeholder'];
-  const excluded = 'script,style,svg,canvas,[translate="no"],[data-no-localize]';
+  // A canvas has no text to translate, but its label is read by screen readers.
+  const excluded = 'script,style,svg,[translate="no"],[data-no-localize]';
+  const doc = root.ownerDocument, description = doc.querySelector?.('meta[name="description"]');
+  const head = {title: doc.title, description: description?.getAttribute('content')};
   function source(node, key, value) {
     let record = originals.get(node);
     if (!record) originals.set(node, record = new Map());
@@ -68,7 +71,7 @@ export function localizeDOM(root, initialLanguage = 'en') {
       const value = node.getAttribute(key), next = source(node, key, value);
       if (value !== next) node.setAttribute(key, next);
     }
-    for (const child of node.childNodes) walk(child);
+    if (node.localName !== 'canvas') for (const child of node.childNodes) walk(child);
   }
   const observer = new MutationObserver(records => {
     observer.disconnect();
@@ -86,7 +89,9 @@ export function localizeDOM(root, initialLanguage = 'en') {
   function apply(locale) {
     observer.disconnect();
     setLanguage(locale);
-    root.ownerDocument.documentElement.lang = language;
+    doc.documentElement.lang = language;
+    if (head.title) doc.title = translate(head.title);
+    if (head.description) description.setAttribute('content', translate(head.description));
     walk(root);
     observe();
   }

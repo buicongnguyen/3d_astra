@@ -65,6 +65,7 @@ test('AI never cancels a reachable site whose builders keep being killed, nor on
 
 test('units ordered to attack a screened target walk to a clear firing position', () => {
   const s = new Simulation({ai:false});
+  for (const e of s.own(1)) if (e.kind === 'unit') e.hp = 0; // idle defenders would now come out and interfere
   const target = s.spawn('relay', 1, 0, -20);
   s.spawn('barracks', 1, 0, -14.5);
   const ranger = s.spawn('ranger', 0, 0, -6);

@@ -17,6 +17,10 @@ import { Terrain } from "./terrain.js";
 export const NEUTRAL = -1;
 // The slimmest unit body: the radius used to push a larger unit through a gap it cannot otherwise leave.
 const SQUEEZE = 0.55;
+// How far beyond its sight an idle fighter follows an enemy from the spot it guards.
+const LEASH = 4;
+// Seconds a team with only an unfinished Command core has to complete it.
+const CORE_GRACE = 90;
 // Contested middle-lane deposits on every map: [type, x, z, amount], mirrored for the rival.
 const MIDFIELD_DEPOSITS = [
   ["alloy", 14, 27, 2500],
@@ -254,14 +258,15 @@ export class Simulation {
       this.visible[team].fill(0);
       for (const e of this.own(team)) {
         const [cx, cz] = this.nav.cellAt(e.x, e.z),
-          r = Math.ceil(e.vision / 2);
+          sight = e.kind === "building" && !e.complete ? Math.min(e.vision, e.radius + 3) : e.vision,
+          r = Math.ceil(sight / 2);
         for (let z = Math.max(0, cz - r); z <= Math.min(this.terrain.grid - 1, cz + r); z++)
           for (
             let x = Math.max(0, cx - r);
             x <= Math.min(this.terrain.grid - 1, cx + r);
             x++
           ) {
-            if (distance(e, this.nav.worldAt(x, z)) <= e.vision)
+            if (distance(e, this.nav.worldAt(x, z)) <= sight)
               this.visible[team][z * this.terrain.grid + x] = this.explored[team][
                 z * this.terrain.grid + x
               ] = 1;
@@ -525,7 +530,9 @@ export class Simulation {
   cancelBuilding(id) {
     const b = this.get(id);
     if (this.result || !b || b.kind !== "building" || b.complete) return false;
-    this.pay(b.team, b.cost, -0.75);
+    // A damaged site returns less: no free scouting posts or tower hops under fire.
+    const whole = Math.min(1, b.hp / Math.max(1, b.maxHp * b.progress));
+    this.pay(b.team, b.cost, -0.75 * whole);
     b.hp = 0;
     this.nav.rebuild(this.entities);
     return true;
@@ -764,6 +771,30 @@ export class Simulation {
     }
     return best;
   }
+  // Whoever damaged this unit in the last few seconds, if still a valid enemy.
+  attacker(e) {
+    if (this.time - (e.hitAt ?? -9) > 4) return null;
+    const t = this.get(e.hitBy);
+    return t && t.hp > 0 && this.hostile(e.team, t.team) ? t : null;
+  }
+  // An idle fighter guards the spot it was left on. It answers whoever shot it and chases
+  // enemies it can see, but only within a leash of that spot, and then walks back.
+  holdPost(e, dt) {
+    e.post ??= { x: e.x, z: e.z };
+    let t = this.attacker(e) || this.enemy(e, e.vision);
+    if (t && (distance(e.post, t) - t.radius > e.vision + LEASH || (e.postSkip?.id === t.id && this.time < e.postSkip.until))) t = null;
+    if (t && e.stalled > 3) {
+      e.postSkip = { id: t.id, until: this.time + 8 };
+      e.stalled = 0;
+      e.path = [];
+      t = null;
+    }
+    if (t) {
+      // An unseen shooter (longer range than this unit's sight) is closed on until it is seen.
+      if (this.isVisible(t, e.team) ? this.fight(e, t, dt) : (this.move(e, this.approach(e, t, Math.max(1.2, e.range * 0.7)), dt), true)) return;
+    }
+    if (distance(e, e.post) > 1.5) this.move(e, e.post, dt, 1.2);
+  }
   hit(e, target) {
     // Counter and anti-vehicle multipliers depend on each victim, including splash victims.
     const apply = (t, scale = 1) =>
@@ -773,12 +804,13 @@ export class Simulation {
           (e.counter === t.type ? e.counter_bonus || 1.6 : 1) *
           (t.mechanical ? e.mechanical_bonus || 1 : 1),
         e.team,
+        e.id,
       );
     apply(target);
     // Area weapons (balance.json splash_radius / splash_damage share) also hit nearby enemies.
     if (e.splash_radius)
       for (const t of this.entities)
-        if (t.id !== target.id && this.hostile(e.team, t.team) && distance(t, target) < e.splash_radius)
+        if (t.id !== target.id && this.hostile(e.team, t.team) && distance(t, target) - (t.kind === "unit" ? 0 : t.radius) < e.splash_radius)
           apply(t, e.splash_damage);
     this.events.push({
       type: "shot",
@@ -1033,12 +1065,9 @@ export class Simulation {
     const index = this.scoutIndex[team]++;
     return points.length ? points[(index + team * 3) % points.length] : null;
   }
-  updateAI(team = 1) {
-    const own = this.own(team),
-      workers = own.filter((e) => e.type === "worker"),
-      army = own.filter((e) => e.kind === "unit" && e.type !== "worker");
-    if (!own.some(e => e.type === "hq")) return;
-    this.updateKnownCores(team);
+  // Sends a team's idle Harvesters to the nearest explored deposits, one in four to energy.
+  assignHarvesters(team = 0) {
+    const workers = this.own(team).filter((e) => e.type === "worker");
     for (let i = 0; i < workers.length; i++) {
       const w = workers[i];
       if (w.orders.length) continue;
@@ -1048,6 +1077,14 @@ export class Simulation {
         .sort((a, b) => distance(w, a) - distance(w, b))[0];
       if (deposit) this.issue([w.id], { type: "gather", target: deposit.id });
     }
+  }
+  updateAI(team = 1) {
+    const own = this.own(team),
+      workers = own.filter((e) => e.type === "worker"),
+      army = own.filter((e) => e.kind === "unit" && e.type !== "worker");
+    if (!own.some(e => e.type === "hq")) return;
+    this.updateKnownCores(team);
+    this.assignHarvesters(team);
     const hq = own.find((e) => e.type === "hq" && e.complete) || own.find(e => e.type === "hq");
     const pace = this.pace, role = roleOf(this, team);
     if (hq && workers.length < pace.workers && hq.queue.length < 1)
@@ -1111,10 +1148,14 @@ export class Simulation {
         }
     }
     if (this.time > pace.techAt[0] && hq && workers.length >= Math.min(9, pace.workers) && hq.level < (this.time > pace.techAt[1] ? 3 : 2) && !hq.queue.length) this.upgradeBuilding(hq.id,team);
-    for (const b of own.filter(
-      (e) => e.complete && ["barracks", "foundry"].includes(e.type),
-    )) {
+    // The Barracks spends alloy in small steps and would starve the Foundry for good, so while
+    // the Foundry stands idle, has the energy and vehicles are under a quarter of the army, infantry waits.
+    const vehicles = army.filter((e) => e.mechanical).length;
+    const foundryIdle = own.some((e) => e.type === "foundry" && e.complete && !e.levelJob && !e.queue.length);
+    const hold = foundryIdle && vehicles * 4 < army.length && this.players[team].energy >= D.breaker.cost[1] ? D.breaker.cost[0] : 0;
+    for (const b of own.filter((e) => e.complete && ["barracks", "foundry"].includes(e.type))) {
       if (b.levelJob) continue;
+      if (b.type === "foundry" && !this.players[team].upgrade && this.time > pace.upgradeAt && vehicles >= 2 && !b.queue.length && afford(D.upgrade.cost) && this.enqueue(b.id, "upgrade")) continue;
       if (b.level < this.techLevel(team) && this.time > pace.upgradeAt && afford(this.levelCost(b))) {
         if (!b.queue.length) this.upgradeBuilding(b.id,team);
         continue;
@@ -1129,7 +1170,8 @@ export class Simulation {
         if (b.level >= 2 && army.filter(e => e.type === support).length < 2) choice = support;
         const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : ['breaker'])])];
         const pop = this.population(team);
-        const affordable = choices.find(type => b.level >= (D[type].required_level || 1) && afford(D[type].cost) && pop.used+pop.reserved+D[type].pop <= pop.cap);
+        const save = b.type === 'barracks' ? hold : 0;
+        const affordable = choices.find(type => b.level >= (D[type].required_level || 1) && afford([D[type].cost[0] + save, D[type].cost[1]]) && pop.used+pop.reserved+D[type].pop <= pop.cap);
         if (affordable) this.enqueue(b.id,affordable);
       }
     }
@@ -1143,7 +1185,7 @@ export class Simulation {
     let incursion = false;
     if (threats.length) {
       const power = threats.reduce(
-        (sum, e) => sum + (e.kind === "building" ? 4 : e.type === "worker" ? 0.5 : e.pop || 1),
+        (sum, e) => sum + (e.kind === "building" ? (e.damage ? 4 : 1) : e.type === "worker" ? 0.5 : e.pop || 1),
         0,
       );
       incursion = power >= 4;
@@ -1170,6 +1212,7 @@ export class Simulation {
       const target = [...this.knownCores[team].values()]
         .sort((a, b) => distance(hq, a) - distance(hq, b))[0] || this.scoutDestination(team);
       if (target) this.issue(wave.map(e => e.id), { type: "attackmove", x: target.x, z: target.z });
+      if (target?.team !== undefined) this.events.push({ type: "incoming", team: target.team, x: hq.x, z: hq.z, count: wave.length });
       this.waveAt[team] = this.time + pace.waveGap;
     }
   }
@@ -1212,7 +1255,11 @@ export class Simulation {
           continue;
         }
       }
-      if (!o) continue;
+      if (!o) {
+        if (e.kind === "unit" && e.type !== "worker" && e.damage > 0) this.holdPost(e, dt);
+        continue;
+      }
+      e.post = null;
       if (["gather", "build", "deliver", "repair"].includes(o.type)) {
         this.updateWorker(e, o, dt);
         continue;
@@ -1237,6 +1284,9 @@ export class Simulation {
         }
         if ((!t || !this.fight(e, t, dt)) && this.move(e, o, dt, 1.2)) this.finish(e);
       } else if (o.type === 'patrol') {
+        // A patrol answers whoever shoots at it, then picks its route up again.
+        const t = this.attacker(e);
+        if (t && e.stalled <= 3 && this.fight(e, t, dt)) continue;
         if (this.move(e, o, dt, 1.2)) {
           // A queued follow-up takes over at the next endpoint. Otherwise loop.
           if (e.orders.length > 1) this.finish(e);
@@ -1279,9 +1329,14 @@ export class Simulation {
         this.aiClock = this.pace.think;
       }
     }
-    const alive = this.players.map((_, team) =>
-      this.own(team).some((e) => e.type === "hq"),
-    );
+    // A finished core keeps a team in the match. A core still under construction buys it
+    // CORE_GRACE seconds to finish one, so a hidden foundation cannot stall the ending.
+    const alive = this.players.map((p, team) => {
+      const cores = this.own(team).filter((e) => e.type === "hq");
+      if (cores.some((e) => e.complete)) return ((p.coreLostAt = null), true);
+      if (!cores.length) return false;
+      return this.time - (p.coreLostAt ??= this.time) < CORE_GRACE;
+    });
     let eliminated = false;
     for (let team = 0; team < this.players.length; team++) {
       if (alive[team] || this.players[team].eliminated) continue;

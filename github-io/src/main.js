@@ -12,7 +12,7 @@ import { SettingsUI } from "./settings-ui.js";
 import { localizeDOM } from "./i18n.js";
 import "./language.css";
 import { MAPS, SURFACES } from "./terrain.js";
-import { Ambience } from "./ambience.js";
+import { Ambience, audioPower } from "./ambience.js";
 import { createFieldGuide } from "./field-guide.js";
 import { Simulation } from "./simulation.js";
 import { WorldView } from "./view.js";
@@ -26,7 +26,7 @@ import {
   distance,
 } from "./data.js";
 import { icon } from "./icons.js";
-import { TouchControls } from "./touch-controls.js";
+import { TouchControls, isTouchPointer } from "./touch-controls.js";
 import { createFullscreen } from "./fullscreen.js";
 import { ACTION_KEYS, HOTKEYS, HOTKEY_HELP, physicalKey } from "./hotkeys.js";
 import { createConstructionUI } from "./construction-ui.js";
@@ -131,11 +131,27 @@ $('language').value = settings.language;
 $('language').onchange = () => applyPreferences({...settings, language: $('language').value});
 // Campaign: progress is saved in this browser; activeStage is the stage being played.
 let tutorial = null, tutorialShown = -1;
-let playMode = "skirmish",
-  campaign = loadProgress(),
+const query = new URLSearchParams(location.search);
+// New players open on Campaign; returning players keep the mode they last started. Browser
+// tests (?test) keep the Skirmish default unless they ask for the first visit with ?firstrun.
+const MODE_KEY = "frontier-command.mode";
+function initialMode(progress) {
+  if (query.has("test") && !query.has("firstrun")) return "skirmish";
+  try {
+    const last = localStorage.getItem(MODE_KEY);
+    if (["training", "skirmish", "campaign"].includes(last)) return last;
+    if (localStorage.getItem("frontier-training-complete") || Object.keys(progress.cleared || {}).length) return "skirmish";
+  } catch {
+    /* Storage is optional. */
+  }
+  return "campaign";
+}
+let campaign = loadProgress(),
+  playMode = initialMode(campaign),
   stagePick = nextStage(campaign),
   activeStage = null;
-let sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance }),
+({ map: mapId, enemyCount, aiSpeed, alliance, bonus } = battleSetup());
+let sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus }),
   view,
   selected = new Set(),
   hover = null,
@@ -146,7 +162,6 @@ let sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance }),
   muted = settings.muted;
 // Slow devices give up cosmetic motion, then resolution, to keep play smooth (governor.js).
 // Browser tests opt in with ?governor=1 so their measurements see fixed quality.
-const query = new URLSearchParams(location.search);
 const governor = new Governor({
   onChange: (level) => {
     view?.setMotionLevel(level.motion);
@@ -175,6 +190,7 @@ let pointer = { x: 0, y: 0, inside: false },
   modalType = null;
 const milestones = { economy: false, army: false };
 let touchInput = matchMedia("(pointer: coarse)").matches,
+  lastTouch = -Infinity,
   touchControls,
   boxSelection = false,
   queueOrders = false,
@@ -230,6 +246,22 @@ function setLayout() {
 compactMedia.addEventListener("change", setLayout);
 window.addEventListener("resize", setLayout);
 setLayout();
+// The HUD follows the last pointer used: touch brings the touch HUD, a mouse (or a pen beside
+// a fine pointer) the desktop one. Browsers send mouse events after a touch; those are ignored.
+const finePointer = matchMedia("(any-pointer: fine)");
+const isTouch = (e) => isTouchPointer(e, finePointer.matches);
+function setInputMode(touch) {
+  if (touchInput === touch) return;
+  touchInput = touch;
+  if (mode === "build") $("confirm-build").hidden = !touch;
+  lastSelectionKey = "";
+  setLayout();
+}
+for (const type of ["pointerdown", "pointermove"])
+  window.addEventListener(type, (e) => {
+    if (isTouch(e)) lastTouch = performance.now();
+    else if (touchInput && finePointer.matches && performance.now() - lastTouch > 800) setInputMode(false);
+  }, { capture: true, passive: true });
 function dockTab(name) {
   document.documentElement.dataset.dock = name;
   for (const button of $("dock-tabs").querySelectorAll("button"))
@@ -241,6 +273,7 @@ function tone(frequency = 520, duration = 0.065) {
     muted ||
     settings.masterVolume <= 0 ||
     !audioContext ||
+    audioQuiet() ||
     performance.now() - lastTone < 70
   )
     return;
@@ -266,17 +299,32 @@ function unlockAudio() {
   try {
     audioContext ||= new AudioContext();
     ambience ||= new Ambience(audioContext);
-    if (audioContext.state === "suspended") audioContext.resume();
+    // "interrupted" is iOS after a call or app switch; only a user gesture brings it back.
+    if (audioContext.state !== "running" && !audioQuiet()) audioPower(audioContext, false);
   } catch {
     /* Audio is optional. */
   }
 }
+// The audio clock sleeps while the match is paused or the page is hidden. A pause waits for
+// the ambience to fade first; the result screen keeps sound for its jingle.
+let audioIdle = 0, audioRetry = 0;
+const audioQuiet = () => document.hidden || (started && paused && !sim.result);
+function syncAudio(dt = 0) {
+  if (!audioContext) return;
+  const quiet = audioQuiet();
+  audioIdle = quiet ? audioIdle + dt : 0;
+  if (quiet ? !document.hidden && audioIdle < 0.5 : (audioRetry -= dt) > 0) return;
+  audioRetry = 1;
+  audioPower(audioContext, quiet);
+}
+document.addEventListener("visibilitychange", () => syncAudio());
 function notice(text) {
   // Successful work is acknowledged by its compact strip, without covering the map.
   if (Object.values(D).some(d=>text===`${d.name} queued.`||text===`${d.name} construction started.`||[2,3].some(level=>text===`${d.name} upgrading to level ${level}.`))) {
     clearTimeout(noticeTimeout); $('notice').classList.remove('show'); return;
   }
   $("notice").textContent = text;
+  $("notice").classList.remove("warning");
   $("notice").classList.add("show");
   clearTimeout(noticeTimeout);
   noticeTimeout = setTimeout(() => $("notice").classList.remove("show"), 4500);
@@ -616,6 +664,14 @@ function updateUI() {
   constructionUI.update({sim, selected:es, mode, type:buildType, point:buildPoint, blockedType:blockedBuildType, failure:buildFailure, started, paused, touch:touchInput});
 }
 
+// An enemy wave has set out for our core: warn, and ping where it gathers for about 6 s.
+const pings = [];
+function incomingAlert(event) {
+  notice("Enemy attack incoming!");
+  $("notice").classList.add("warning");
+  if (Number.isFinite(event.x) && Number.isFinite(event.z)) pings.push({ x: event.x, z: event.z, at: sim.time });
+  tone(300, 0.3);
+}
 let minimapBase = null, minimapFog = null;
 function minimap() {
   const {size:MAP_SIZE,half:HALF,grid:GRID}=sim.terrain;
@@ -711,6 +767,18 @@ function minimap() {
       }
       ctx.fill();
     }
+  for (let i = pings.length - 1; i >= 0; i--) {
+    const ping = pings[i], age = sim.time - ping.at;
+    if (!(age >= 0 && age < 6)) { pings.splice(i, 1); continue; }
+    const pulse = (performance.now() / 900) % 1;
+    ctx.strokeStyle = "#ff8a6a";
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = 1 - pulse * 0.75;
+    ctx.beginPath();
+    ctx.arc(px(ping.x), pz(ping.z), 4 + pulse * 9, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
   ctx.strokeStyle = "rgba(218,239,219,.7)";
   ctx.lineWidth = 1;
   const rect = view.renderer.domElement.getBoundingClientRect();
@@ -731,6 +799,28 @@ function minimap() {
   ctx.stroke();
 }
 
+// Hover picking raycasts every visible model: at most once a frame, and only after the pointer
+// or the camera moved.
+let hoverPoint = null, hoverStale = false, hoverCamera = "";
+function refreshHover() {
+  if (!hoverPoint) return;
+  const camera = `${view.focus.x},${view.focus.z},${view.zoom},${view.width},${view.height}`;
+  if (!hoverStale && camera === hoverCamera) return;
+  hoverStale = false;
+  hoverCamera = camera;
+  const { x, y } = hoverPoint;
+  hover = view.pick(x, y, sim);
+  $("hover-label").hidden = !hover || !!drag || !!mode;
+  if (hover && !drag && !mode) {
+    $("hover-label").textContent =
+      hover.kind === "resource"
+        ? `${hover.type.toUpperCase()} · ${Math.floor(hover.amount)}`
+        : `${hover.name}${hover.team > 0 ? " · ENEMY" : ""}`;
+    const rect = view.renderer.domElement.getBoundingClientRect();
+    $("hover-label").style.left = `${Math.min(x - rect.left + 16, view.width - 240)}px`;
+    $("hover-label").style.top = `${y - rect.top + 20}px`;
+  }
+}
 function selectScreenType(target,additive=false) {
   const canvas=view.renderer.domElement,r=canvas.getBoundingClientRect();
   const same=sim.own(0).filter(u=>{
@@ -943,14 +1033,14 @@ function bindInput() {
   touchControls = new TouchControls(canvas, {
     enabled: () => started && !paused && !sim.result,
     boxMode: () => boxSelection && !mode,
+    isTouch,
     activate: () => {
       unlockAudio();
-      if (!touchInput) {
-        touchInput = true;
-        setLayout();
-      }
+      lastTouch = performance.now();
+      setInputMode(true);
       pointer.inside = false;
-      hover = null;
+      hover = hoverPoint = null;
+      $("hover-label").hidden = true;
     },
     tap: touchTap,
     box: selectTouchBox,
@@ -978,7 +1068,7 @@ function bindInput() {
     );
   });
   canvas.addEventListener("pointerdown", (e) => {
-    if (e.pointerType !== "mouse") return;
+    if (isTouch(e)) return;
     unlockAudio();
     if (![0,1].includes(e.button) || !started || paused || sim.result) return;
     canvas.setPointerCapture(e.pointerId);
@@ -991,9 +1081,10 @@ function bindInput() {
     };
   });
   canvas.addEventListener("pointermove", (e) => {
-    if (e.pointerType !== "mouse") return;
+    if (isTouch(e)) return;
     pointer = { x: e.clientX, y: e.clientY, inside: true };
-    hover = view.pick(e.clientX, e.clientY, sim);
+    hoverPoint = { x: e.clientX, y: e.clientY };
+    hoverStale = true;
     if (drag?.button === 1) {
       view.screenPan(
         (-(e.clientX - drag.lastX) * view.zoom) / view.height,
@@ -1026,21 +1117,10 @@ function bindInput() {
         );
       }
     }
-    $("hover-label").hidden = !hover || !!drag || !!mode;
-    if (hover && !drag && !mode) {
-      $("hover-label").textContent =
-        hover.kind === "resource"
-          ? `${hover.type.toUpperCase()} · ${Math.floor(hover.amount)}`
-          : `${hover.name}${hover.team > 0 ? " · ENEMY" : ""}`;
-      const rect = canvas.getBoundingClientRect();
-      $("hover-label").style.left =
-        `${Math.min(e.clientX - rect.left + 16, view.width - 240)}px`;
-      $("hover-label").style.top = `${e.clientY - rect.top + 20}px`;
-    }
   });
   canvas.addEventListener("pointerleave", () => {
     pointer.inside = false;
-    hover = null;
+    hover = hoverPoint = null;
     $("hover-label").hidden = true;
   });
   // The footer and the desktop console cover the canvas's bottom edge. Track hover there so
@@ -1048,13 +1128,13 @@ function bindInput() {
   // clicks through the UI or scrolling while a button is under the pointer.
   for (const hud of [document.querySelector(".statusbar"), document.querySelector(".bottom-dock")]) {
     hud.addEventListener("pointermove", (e) => {
-      if (e.pointerType !== "mouse") return;
+      if (isTouch(e)) return;
       pointer = { x: e.clientX, y: e.clientY, inside: !e.target.closest("button") };
     });
     hud.addEventListener("pointerleave", () => { pointer.inside = false; });
   }
   canvas.addEventListener("pointerup", (e) => {
-    if (e.pointerType !== "mouse") return;
+    if (isTouch(e)) return;
     if (!drag) return;
     const old = drag;
     drag = null;
@@ -1162,7 +1242,8 @@ function bindInput() {
     $("selection-box").style.display = "none";
     // Safari/embedded browsers can blur before visibilitychange or pagehide.
     // Stay paused on return, so an interrupted gesture cannot issue an order.
-    if (started && !paused && !sim.result) togglePause();
+    // Only a running match pauses: an open modal, settings or the guide already hold it.
+    if (started && !paused && !sim.result && !modalType && !settingsUI.active) togglePause();
   };
   window.addEventListener("blur", suspendInput);
   window.addEventListener("pagehide", suspendInput);
@@ -1203,16 +1284,19 @@ function focusHome() {
 // One place to show/hide the modal: inert the HUD behind it and restore focus on close.
 let modalReturnFocus = null;
 function setModalOpen(open) {
+  // The top bar is a sibling of the modal: everything in it goes inert except sound, Help and Pause.
   const modal = $("modal"), main = document.querySelector("main");
+  const behind = [main, document.querySelector(".brand"), document.querySelector(".resource-bar"),
+    ...[...document.querySelector(".top-actions").children].filter((node) => !["audio", "help", "pause"].includes(node.id))];
   if (open) {
     if (modal.hidden) modalReturnFocus = document.activeElement;
-    if (main) main.inert = true;
+    for (const node of behind) if (node) node.inert = true;
     modal.hidden = false;
     return;
   }
   const wasOpen = !modal.hidden;
   modal.hidden = true;
-  if (main) main.inert = false;
+  for (const node of behind) if (node) node.inert = false;
   const back = modalReturnFocus;
   modalReturnFocus = null;
   if (!wasOpen) return;
@@ -1229,14 +1313,43 @@ $("modal").addEventListener("keydown", (event) => {
   else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
 });
 function closeModal() {
+  // Help opened over the pause menu goes back to it instead of resuming the match.
+  if (modalType === "help" && helpOverPause && started && !sim.result) { showPause(); return; }
   setModalOpen(false);
   $("modal").classList.remove("help-wide");
   modalType = null;
   if (started && !sim.result) paused = false;
+  if (audioContext) unlockAudio();
   keys.clear();
 }
+// WebGL context loss (GPU reset, a long time in the background): hold the match and say so.
+// A lost match in progress comes back on the pause menu, never straight into play.
+let graphicsHeld = false, graphicsNoticed = false;
+function graphicsLost() {
+  const text = "Graphics were interrupted. Restoring…";
+  graphicsHeld = started && !sim.result && (!paused || modalType === "pause" || modalType === "help");
+  if (settingsUI.active || (modalType && !graphicsHeld)) { notice(text); graphicsNoticed = true; return; }
+  if (started) paused = true;
+  touchControls?.reset();
+  drag = null;
+  pointer.inside = false;
+  keys.clear();
+  clearMode();
+  modalType = "graphics";
+  $("modal").classList.remove("help-wide");
+  setModalOpen(true);
+  $("modal-content").innerHTML = `<h2 id="modal-title">Graphics were interrupted.</h2><p role="status">Restoring…</p>`;
+}
+function graphicsRestored() {
+  if (graphicsNoticed) $("notice").classList.remove("show");
+  graphicsNoticed = false;
+  if (modalType !== "graphics") return;
+  if (graphicsHeld && started && !sim.result) showPause();
+  else { modalType = null; setModalOpen(false); }
+  graphicsHeld = false;
+}
 function showFullscreenHelp(reason) {
-  if (sim.result) return;
+  if (sim.result || modalType === "graphics") return;
   paused = true;
   touchControls?.reset();
   drag = null;
@@ -1284,6 +1397,7 @@ function applyPreferences(value) {
   localization.apply(settings.language);
   $('language').value = settings.language;
   muted = settings.muted;
+  $("fps").hidden = !settings.showFps;
   view?.applySettings(settings);
   $("quality").textContent = settings.quality === "eco" ? "Eco" : "High";
   $("audio").innerHTML = icon(muted ? "muted" : "volume");
@@ -1342,7 +1456,7 @@ function updateHeading() {
   const stage = started ? activeStage : playMode === "campaign" ? stagePick : null;
   document.querySelector(".map-heading p").innerHTML = `${mapName(mapId).toUpperCase()} <span>·</span> SECTOR 07`;
   document.querySelector(".map-heading h1").innerHTML = stage === null
-    ? `${MAPS[mapId]}<span>.</span>` : `Stage ${stage + 1} · ${STAGES[stage].name}<span>.</span>`;
+    ? `${mapName(mapId)}<span>.</span>` : `Stage ${stage + 1} · ${STAGES[stage].name}<span>.</span>`;
   $("operation-label").textContent = stage === null
     ? "OPERATION 01 / SKIRMISH" : `CAMPAIGN · STAGE ${String(stage + 1).padStart(2, "0")} / ${String(STAGES.length).padStart(2, "0")}`;
 }
@@ -1373,7 +1487,7 @@ function renderBriefing() {
         : " Every faction fights for itself."]));
   }
   if(playMode === "training"){ $("briefing-title").textContent="Commander training"; $("briefing-text").textContent="Learn selection, movement, harvesting, construction, production, attack and withdrawal in eight guided steps. Training supplies replenish. Leave or replay whenever you like."; }
-  if (!$("start").disabled) $("start").textContent = playMode === "training" ? "Start training" : inCampaign ? `Start stage ${stagePick + 1}` : "Start";
+  if (!$("start").disabled && !loadFailed) $("start").textContent = playMode === "training" ? "Start training" : inCampaign ? `Start stage ${stagePick + 1}` : "Start";
 }
 function previewBattle() {
   if (started) return;
@@ -1411,11 +1525,18 @@ $("campaign-setup").onclick = (event) => {
   previewBattle();
 };
 function togglePause() {
-  if (!started || sim.result) return;
+  if (!started || sim.result || modalType === "graphics") return;
   if (paused) {
+    helpOverPause = false;
     closeModal();
     return;
   }
+  showPause();
+}
+let helpOverPause = false;
+function showPause() {
+  helpOverPause = false;
+  $("modal").classList.remove("help-wide");
   paused = true;
   touchControls?.reset();
   drag = null;
@@ -1429,7 +1550,9 @@ function togglePause() {
   $("modal").querySelector("[data-resume]").focus();
 }
 function showHelp() {
-  if (sim.result) return;
+  if (sim.result || modalType === "graphics") return;
+  if (modalType === "help") { closeModal(); return; }
+  helpOverPause = modalType === "pause";
   paused = true;
   touchControls?.reset();
   keys.clear();
@@ -1498,9 +1621,9 @@ function nextStageNow() {
   updateHeading();
 }
 function newGame() {
-  restart();
-  // restart() may have begun the tutorial, which mutates the sim; give the preview a clean one.
+  // One clean simulation for the briefing preview: restart(false) reuses it and starts no tutorial.
   sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus });
+  restart(false);
   started = false;
   tutorial = null;
   activeStage = null;
@@ -1515,8 +1638,13 @@ function newGame() {
   // #scenario is hidden in campaign and training, so focus the first visible control instead.
   (playMode === "skirmish" ? $("scenario") : document.querySelector("[data-mode][aria-pressed=true]") || $("start"))?.focus();
 }
-function restart() {
+// Harvesters start mining on their own, except in Training, which teaches the order.
+function startEconomy() {
+  if (playMode !== "training") sim.assignHarvesters(0);
+}
+function restart(play = true) {
   touchControls?.reset();
+  pings.length = 0;
   drag = null;
   keys.clear();
   pointer.inside = false;
@@ -1524,7 +1652,7 @@ function restart() {
   queueOrders = false;
   $("box-select").setAttribute("aria-pressed", "false");
   $("queue-orders").setAttribute("aria-pressed", "false");
-  sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus });
+  if (play !== false) sim = new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus });
   tutorial = null;
   view.reset();
   governor.reset();
@@ -1547,11 +1675,15 @@ function restart() {
   view.resize();
   $("status-text").textContent = "OPERATION ACTIVE";
   setSelection([sim.own(0).find((e) => e.type === "hq").id]);
-  if(playMode === "training") beginTutorial();
+  startEconomy();
+  if(play !== false && playMode === "training") beginTutorial();
 }
 
 $("start").onclick = () => {
+  if (loadFailed) { loadAssets(); return; }
   unlockAudio();
+  try { localStorage.setItem(MODE_KEY, playMode); } catch { /* Storage is optional. */ }
+  pings.length = 0;
   sim = new Simulation({map:mapId,enemyCount,aiSpeed,alliance,playerBonus:bonus});
   view.reset();
   focusHome();
@@ -1568,10 +1700,13 @@ $("start").onclick = () => {
   $("status-text").textContent = "OPERATION ACTIVE";
   setSelection([sim.own(0).find((e) => e.type === "hq").id]);
   updateHeading();
+  startEconomy();
   notice(
-    touchInput
-      ? "Tap Workers, then tap amber crystals. Drag to pan; pinch to zoom."
-      : "Select Harvesters, then right-click amber crystals to start your economy.",
+    playMode !== "training"
+      ? "Your Harvesters are mining. Train more at the Command core, then build a Barracks."
+      : touchInput
+        ? "Tap Workers, then tap amber crystals. Drag to pan; pinch to zoom."
+        : "Select Harvesters, then right-click amber crystals to start your economy.",
   );
   if(playMode === "training") beginTutorial();
   tone(780, 0.15);
@@ -1760,6 +1895,8 @@ function frame(now) {
     started && !paused && !sim.result,
     sim.terrain.river && Math.abs(view.focus.z) < 14,
   );
+  syncAudio(elapsed);
+  refreshHover();
   const running = started && !paused && !sim.result;
   if (running) {
     accumulator += dt;
@@ -1792,6 +1929,7 @@ function frame(now) {
   const events = sim.events.splice(0);
   for (const event of events) {
     if (event.type === "message") notice(event.text);
+    else if (event.type === "incoming") { if (event.team === 0) incomingAlert(event); }
     else view.event(event, sim);
   }
   // Presentation effects hold still while paused; units render between the last two
@@ -1829,16 +1967,55 @@ const constructionUI = createConstructionUI(D, {
   back: () => { clearMode(); updateUI(); },
 });
 
-async function boot() {
+// Model downloads show their progress on the Start button; a failure turns it into Retry,
+// which fetches only the files still missing.
+let loadFailed = false;
+async function loadAssets() {
+  loadFailed = false;
+  $("start").disabled = true;
+  try {
+    await view.loadModels((done, total) => { $("start").textContent = `Loading ${done} of ${total}…`; });
+  } catch (error) {
+    console.error(error);
+    loadFailed = true;
+    $("start").disabled = false;
+    $("start").textContent = "Retry";
+    $("status-text").textContent = "DOWNLOAD FAILED";
+    notice("Some game files did not download. Check your connection, then press Retry.");
+    return;
+  }
+  ready();
+}
+function boot() {
   try {
     view = new WorldView($("world"), { terrain: sim.terrain, settings });
+    view.onContextLost = graphicsLost;
+    view.onContextRestored = graphicsRestored;
     $("quality").textContent = view.lowPower ? "Eco" : "High";
-    await view.loadModels();
+  } catch (error) {
+    initFailed(error);
+    return;
+  }
+  loadAssets();
+}
+function initFailed(error) {
+  console.error(error);
+  $("start").textContent = "Unable to initialize";
+  $("status-text").textContent = "INITIALIZATION FAILED";
+  notice(
+    "The 3D engine could not start. Enable hardware acceleration and reload in a browser with WebGL 2 support.",
+  );
+  $("briefing").querySelector("p").textContent =
+    "Check your connection and WebGL support, then reload. All game assets must be served from the built site.";
+}
+function ready() {
+  try {
     applyPreferences(settings);
     updateHeading();
     bindInput();
     $("start").disabled = false;
     renderBriefing();
+    focusHome();
     $("status-text").textContent = "ALL SYSTEMS READY";
     updateUI();
     requestAnimationFrame(frame);
@@ -1873,14 +2050,7 @@ async function boot() {
         governor,
       };
   } catch (error) {
-    console.error(error);
-    $("start").textContent = "Unable to initialize";
-    $("status-text").textContent = "INITIALIZATION FAILED";
-    notice(
-      "The 3D engine could not start. Enable hardware acceleration and reload in a browser with WebGL 2 support.",
-    );
-    $("briefing").querySelector("p").textContent =
-      "Check your connection and WebGL support, then reload. All game assets must be served from the built site.";
+    initFailed(error);
   }
 }
 boot();
@@ -1894,7 +2064,7 @@ function renderTutorial(){
   document.documentElement.classList.toggle("in-training",active);
   if(!active)return;
   const step=tutorial.step;
-  $("training-toggle").textContent=`Training ${tutorial.index+1}/8`;
+  $("training-toggle").textContent=`Training ${tutorial.index+1}/${TRAINING_STEPS.length}`;
   $("training-title").textContent=step.title;
   $("training-copy").textContent=touchInput?step.touch:step.desktop;
   if(tutorialShown!==tutorial.index){tutorialShown=tutorial.index;$("training-card").hidden=false;$("training-toggle").setAttribute("aria-expanded","true");}

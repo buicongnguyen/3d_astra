@@ -109,7 +109,17 @@ export class WorldView {
     this.buildEnvironmentMap();
     // A restored GL context keeps textures and programs (three.js re-uploads them) but not the
     // PMREM render target's pixels, so the map is rendered again and reassigned.
-    this.renderer.domElement?.addEventListener?.('webglcontextrestored', () => this.restoreEnvironmentMap());
+    // While the context is gone nothing is drawn; main.js pauses the match and tells the player.
+    this.renderer.domElement?.addEventListener?.('webglcontextlost', (event) => {
+      event.preventDefault();
+      this.contextLost = true;
+      this.onContextLost?.();
+    });
+    this.renderer.domElement?.addEventListener?.('webglcontextrestored', () => {
+      this.contextLost = false;
+      this.restoreEnvironmentMap();
+      this.onContextRestored?.();
+    });
     this.ambientLight=new THREE.HemisphereLight(0xc1ddd7, 0x736145, 2.0);
     this.scene.add(this.ambientLight);
     const sun = new THREE.DirectionalLight(0xffe1b0, 3.2);
@@ -156,7 +166,7 @@ export class WorldView {
     });
     this.contactShadowGeometries = new Map();
     this.resize();
-    window.addEventListener("resize", () => this.resize());
+    // The observer covers window resizes too; resize() itself ignores an unchanged size.
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(container);
     this.reducedMotion = matchMedia("(prefers-reduced-motion:reduce)");
@@ -250,7 +260,7 @@ export class WorldView {
     if (scale === this.renderScale) return;
     this.renderScale = scale;
     this.renderer.setPixelRatio(this.pixelRatio());
-    this.resize();
+    this.updateCamera();
   }
   pixelRatio() {
     return Math.min(devicePixelRatio, this.lowPower ? 1 : 1.6) * (this.renderScale || 1);
@@ -271,15 +281,30 @@ export class WorldView {
     });
     this.resize();
   }
-  async loadModels() {
-    const loader = new GLTFLoader();
-    await Promise.all(
-      Object.keys(D)
-        .filter((k) => k !== "upgrade")
+  // Each file is tried three times. A later call (the player's Retry) fetches only what is missing.
+  async loadModels(onProgress) {
+    const loader = new GLTFLoader(),
+      types = Object.keys(D).filter((k) => k !== "upgrade"),
+      total = types.length + 1;
+    let loaded = types.filter((type) => this.models.has(type)).length + (this.environmentAssets ? 1 : 0);
+    onProgress?.(loaded, total);
+    const fetchModel = async (name) => {
+      for (let attempt = 0; ; attempt++) {
+        try {
+          const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/${name}.glb`);
+          onProgress?.(++loaded, total);
+          return gltf;
+        } catch (error) {
+          if (attempt >= 2) throw error;
+          await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
+        }
+      }
+    };
+    const results = await Promise.allSettled([
+      ...types
+        .filter((type) => !this.models.has(type))
         .map(async (type) => {
-          const gltf = await loader.loadAsync(
-            `${import.meta.env.BASE_URL}models/${type}.glb`,
-          );
+          const gltf = await fetchModel(type);
           gltf.scene.updateMatrixWorld(true);
           // Merge stationary pieces by material, preserving the two articulated leg pivots.
           const template = new THREE.Group(),
@@ -350,13 +375,13 @@ export class WorldView {
           }
           this.models.set(type, true);
         }),
-    );
-    this.environmentAssets = (
-      await loader.loadAsync(
-        `${import.meta.env.BASE_URL}models/environment.glb`,
-      )
-    ).scene;
-    optimizeEnvironment(this.environmentAssets);
+      this.environmentAssets || fetchModel("environment").then((gltf) => {
+        this.environmentAssets = gltf.scene;
+        optimizeEnvironment(this.environmentAssets);
+      }),
+    ]);
+    const failed = results.find((result) => result.status === "rejected");
+    if (failed) throw failed.reason;
     // Blender boulders (EnvironmentView) replace the placeholder rocks drawn before loading.
     if (this.environmentAssets.getObjectByName("asset_rock_a")) this.removePlaceholderRocks();
     this.environment = new EnvironmentView(
@@ -610,9 +635,12 @@ export class WorldView {
     this.scene.add(this.fogMesh);
   }
   resize() {
-    this.width = Math.max(1, this.container.clientWidth);
-    this.height = Math.max(1, this.container.clientHeight);
-    this.renderer.setSize(this.width, this.height);
+    const width = Math.max(1, this.container.clientWidth),
+      height = Math.max(1, this.container.clientHeight);
+    if (width === this.width && height === this.height) return;
+    this.width = width;
+    this.height = height;
+    this.renderer.setSize(width, height);
     this.updateCamera();
   }
   updateCamera() {
@@ -930,6 +958,7 @@ export class WorldView {
     }
   }
   update(sim, dt, selected, hover, alpha = 1) {
+    if (this.contextLost) return;
     this.environment?.update(sim, dt);
     if (this.life) {
       this.life.quiet = this.reducedMotion.matches;

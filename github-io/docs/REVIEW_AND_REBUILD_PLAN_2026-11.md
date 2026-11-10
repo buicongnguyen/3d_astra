@@ -140,7 +140,18 @@ Each phase ends with tests green, a deploy and a version tag. Phases A and B are
 ### Documentation
 Create `VISION.md`, `ROADMAP.md`, `DESIGN.md`, `ARCHITECTURE.md`, `CHANGELOG.md` and `TESTING.md` in `github-io/docs/`; move finished plans and dated reviews to `docs/archive/`; correct the README claims above.
 
-## 7. Decisions for the owner
+## 7. Decisions (owner, 2026-11-10)
+
+The owner approved all phases, asked for both a phone and a PC version, and left the rest to the implementer:
+
+- **Scope:** all phases, in order 0, then A to F.
+- **Platform:** phone and PC are both first-class. Every screen is checked on desktop, phone portrait and phone landscape.
+- **Story:** keep and deepen the Meridian expedition premise.
+- **Godot twin:** frozen as a snapshot of 2026-10-01; no further porting.
+- **Multiplayer:** after this rebuild. Phase A still adds the command layer and ownership checks so it stays possible.
+- **Music and sound:** made in-house (generated tracks and synthesised effects), no licensed audio.
+
+The questions as originally asked:
 
 1. **Scope:** all phases, or a subset first (for example 0 + C + D)?
 2. **Platform priority:** phone first or PC first? This decides HUD density and visual budget.

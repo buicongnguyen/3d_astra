@@ -15,7 +15,7 @@ The opening briefing has two modes: **Skirmish** and **Campaign**.
 
 | Speed | Thinks every | Harvesters | Foundry after | Sentinel towers | First attack | Between attacks |
 |---|---|---|---|---|---|---|
-| Relaxed | 4 s | 7 | 160 s | none | 150 s | 75 s |
+| Relaxed | 4 s | 7 | 160 s | none | 210 s | 90 s |
 | Normal (original tempo) | 2.5 s | 9 | 100 s | 1, after 180 s | 85 s | 50 s |
 | Fast | 1.5 s | 11 | 80 s | 1, after 120 s | 70 s | 42 s |
 | Relentless | 1 s | 12 | 60 s | 2, after 90 s | 60 s | 34 s |

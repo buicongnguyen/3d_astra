@@ -1,3 +1,14 @@
+// Power state for the shared AudioContext: asleep while the match is paused or the page is
+// hidden. iOS reports "interrupted" after a call or app switch; resume() recovers it too.
+export function audioPower(context, quiet) {
+  if (!context || context.state === "closed") return;
+  try {
+    const done = quiet ? context.state === "running" && context.suspend() : context.state !== "running" && context.resume();
+    done?.catch?.(() => {});
+  } catch {
+    /* Audio is optional. */
+  }
+}
 export class Ambience {
   constructor(context) {
     this.context = context;

@@ -23,6 +23,7 @@ export function defaults(coarse = false) {
     combatMotion: true,
     ambient: true,
     detail: true,
+    showFps: false,
   };
 }
 export function normalize(value, coarse = false) {
@@ -36,7 +37,7 @@ export function normalize(value, coarse = false) {
   if (["eco", "high"].includes(value.quality)) d.quality = value.quality;
   if (Number.isFinite(value.masterVolume))
     d.masterVolume = Math.max(0, Math.min(1, value.masterVolume));
-  for (const key of ["muted", "waterMotion", "combatMotion", "ambient", "detail"])
+  for (const key of ["muted", "waterMotion", "combatMotion", "ambient", "detail", "showFps"])
     if (typeof value[key] === "boolean") d[key] = value[key];
   return d;
 }

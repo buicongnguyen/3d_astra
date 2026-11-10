@@ -37,6 +37,7 @@ test('coalition AIs are allies: no mutual fire, shared vision, only the player i
   assert.ok(s.coalition);
   assert.equal(s.hostile(1, 2), false); assert.equal(s.hostile(0, 1), true); assert.equal(s.hostile(2, 0), true);
   const a = s.spawn('ranger', 1, 0, 0), b = s.spawn('ranger', 2, 3, 0), p = s.spawn('vanguard', 0, 12, -6);
+  p.damage = 0; // unarmed, so the idle Rangers' new guard reaction cannot muddy the no-friendly-fire check
   step(s, 3);
   assert.equal(a.hp + a.shield, a.maxHp + a.maxShield); assert.equal(b.hp + b.shield, b.maxHp + b.maxShield);
   assert.equal(s.isVisible(p, 1), s.isVisible(p, 2), 'allies see the same battlefield');

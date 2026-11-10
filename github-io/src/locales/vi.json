@@ -325,6 +325,7 @@
     "Click the site to start construction.": "Nhấp vị trí để bắt đầu xây.",
     "Harvester needs a completed Command core to deliver cargo. Finish or build one, then order delivery.": "Thợ mỏ cần Sở chỉ huy đã hoàn thành để giao hàng. Hãy xây xong một sở rồi ra lệnh chở về.",
     "Your expedition has been eliminated.": "Quân đội của bạn đã bị loại.",
+    "Your Harvesters are mining. Train more at the Command core, then build a Barracks.": "Thợ mỏ đang khai thác. Huấn luyện thêm tại Sở chỉ huy, rồi xây Doanh trại.",
     "Assign Harvesters to the amber alloy deposits.": "Cho Thợ mỏ khai thác các tinh thể hợp kim màu vàng.",
     "Meridian is online. Assign Harvesters to the amber alloy deposits.": "Meridian đã sẵn sàng. Cho Thợ mỏ khai thác tinh thể hợp kim màu vàng.",
     "Resource rally set. New Harvesters will gather here.": "Đã đặt điểm tập kết tại mỏ. Thợ mỏ mới sẽ khai thác ở đây.",
@@ -613,7 +614,19 @@
     "High graphics: detailed shadows and higher resolution.": "Đồ họa High: bóng chi tiết và độ phân giải cao hơn.",
     "The 3D engine could not start. Enable hardware acceleration and reload in a browser with WebGL 2 support.": "Không thể khởi động công cụ 3D. Hãy bật tăng tốc phần cứng và tải lại trong trình duyệt hỗ trợ WebGL 2.",
     "Check your connection and WebGL support, then reload. All game assets must be served from the built site.": "Hãy kiểm tra kết nối và hỗ trợ WebGL, rồi tải lại. Mọi tài nguyên trò chơi phải được phục vụ từ trang đã xây dựng.",
-    "1 AI": "1 AI"
+    "1 AI": "1 AI",
+    "Minimap: click to pan; right-click to command": "Bản đồ nhỏ: nhấp để xem; chuột phải để ra lệnh",
+    "3D battlefield. Left-click selects; right-click commands.": "Chiến trường 3D. Chuột trái để chọn; chuột phải để ra lệnh.",
+    "Frontier Command — Outpost Meridian": "Frontier Command — Tiền đồn Meridian",
+    "Command an expedition, harvest the frontier, and outmaneuver a rival force in this original 3D real-time strategy game.": "Chỉ huy đoàn viễn chinh, khai thác vùng biên và vượt mặt đối thủ trong trò chơi chiến thuật thời gian thực 3D nguyên bản này.",
+    "Graphics were interrupted.": "Đồ họa bị gián đoạn.",
+    "Restoring…": "Đang khôi phục…",
+    "Retry": "Thử lại",
+    "DOWNLOAD FAILED": "Tải thất bại",
+    "Some game files did not download. Check your connection, then press Retry.": "Một số tệp trò chơi chưa tải được. Hãy kiểm tra kết nối rồi bấm Thử lại.",
+    "Enemy attack incoming!": "Địch đang kéo quân tấn công!",
+    "Show FPS": "Hiện FPS",
+    "Version": "Phiên bản"
   },
   "patterns": [
     [
@@ -943,6 +956,10 @@
     [
       "^Training (\\d+) / (\\d+)(.*)$",
       "Tập {1} / {2}{3}"
+    ],
+    [
+      "^Loading (\\d+) of (\\d+)\u2026$",
+      "Đang tải {1}/{2}…"
     ]
   ]
 }

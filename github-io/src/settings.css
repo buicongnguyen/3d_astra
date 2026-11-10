@@ -241,6 +241,7 @@
   color: var(--text-3);
 }
 #palette-warning { margin: 0; padding: 8px 20px 0; }
+.settings-version { margin: 0; padding: 4px 20px 8px; font: 400 11px/1.4 var(--font-ui); color: var(--text-3); text-align: right; }
 .settings-panel > footer {
   display: grid;
   grid-template-columns: auto auto minmax(0, 1fr);
@@ -282,6 +283,7 @@
   .settings-body { padding: 14px 16px 8px; }
   .settings-panel > footer { padding: 10px 16px 12px; }
   #palette-warning { padding: 6px 16px 0; }
+  .settings-version { padding: 2px 16px 6px; }
   .preview-unit .portrait-art { --size: 80px; }
 }
 @media (max-width: 380px) {

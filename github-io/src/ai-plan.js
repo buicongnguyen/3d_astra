@@ -5,7 +5,7 @@ import { distance } from './data.js';
 // "normal" keeps the original AI's tempo; like every speed from Normal up it also builds
 // Sentinel towers once its Foundry stands, as the player can.
 export const AI_SPEEDS = {
-  relaxed: { label: 'Relaxed', think: 4, workers: 7, foundryAt: 160, techAt: [240, 420], upgradeAt: 280, firstWave: 150, waveGap: 75, minWave: 4, towers: 0, towerAt: Infinity },
+  relaxed: { label: 'Relaxed', think: 4, workers: 7, foundryAt: 160, techAt: [240, 420], upgradeAt: 280, firstWave: 210, waveGap: 90, minWave: 4, towers: 0, towerAt: Infinity },
   normal: { label: 'Normal', think: 2.5, workers: 9, foundryAt: 100, techAt: [160, 300], upgradeAt: 190, firstWave: 85, waveGap: 50, minWave: 4, towers: 1, towerAt: 180 },
   fast: { label: 'Fast', think: 1.5, workers: 11, foundryAt: 80, techAt: [120, 240], upgradeAt: 150, firstWave: 70, waveGap: 42, minWave: 5, towers: 1, towerAt: 120 },
   relentless: { label: 'Relentless', think: 1, workers: 12, foundryAt: 60, techAt: [95, 190], upgradeAt: 115, firstWave: 60, waveGap: 34, minWave: 5, secondBarracks: 150, towers: 2, towerAt: 90 },
@@ -71,6 +71,7 @@ export const coalitionPlan = {
         const troops = force.sort((a, b) => distance(a, target) - distance(b, target)).slice(0, commit);
         for (const e of troops) e.raiding = false;
         this.issue(troops.map(e => e.id), { type: 'attackmove', x: target.x, z: target.z });
+        if (target.team !== undefined) this.events.push({ type: 'incoming', team: target.team, x: hq.x, z: hq.z, count: troops.length });
         this.launched.add(team);
       }
     }
