@@ -173,12 +173,13 @@ if (want('minimap')) for (const [name, w, h, mobile] of VIEWS) {
   await page.waitForTimeout(150);
   assert.equal(await ownPings(), 0, `${name}: a drag is not a ping`);
   // Double tap / double click pings.
-  // Two clicks 100 ms apart, dispatched inside the page: driving real input through the test runner can
+  // Two clicks dispatched back to back inside the page: driving real input through the test runner can
   // take longer than the double-tap window on a loaded CI machine.
   const [px, py] = at(0.5, 0.5);
   await page.evaluate(async ([x, y]) => {
     const target = document.querySelector('#minimap');
-    for (let i = 0; i < 2; i++) { target.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: x, clientY: y, button: 0 })); if (!i) await new Promise(r => setTimeout(r, 100)); }
+    // Back to back: even a 100 ms timer can stall for a quarter of a second on a software-rendered CI page.
+    for (let i = 0; i < 2; i++) target.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: x, clientY: y, button: 0 }));
   }, [px, py]);
   await page.waitForFunction(() => window.__frontier.pings.some(p => p.own), null, { timeout: 3000 }).catch(async (error) => {
     console.error(`${name}: no own ping; state`, JSON.stringify(await page.evaluate(() => ({ pings: window.__frontier.pings, time: window.__frontier.sim.time, mode: window.__frontier.mode, started: window.__frontier.started, hidden: document.querySelector('#minimap').offsetParent === null }))));
