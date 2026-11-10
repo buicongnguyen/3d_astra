@@ -228,11 +228,15 @@ try {
     assert.ok(Math.hypot(pan.end.x - pan.to.x, pan.end.z - pan.to.z) < 0.01 && !pan.end.panning, `the pan ends on the spot (${JSON.stringify(pan.end)})`);
     assert.equal(pan.mood, 'tense');
     // Any camera input cancels the pan.
-    await frontier(() => { window.__frontier.sim.events.push({ type: 'camera', x: 20, z: -20 }); });
-    await page.waitForFunction(() => !!window.__frontier.cameraPan);
-    const canvas = await page.locator('#world canvas[data-engine]').boundingBox();
-    if (touch) await page.touchscreen.tap(canvas.x + canvas.width / 2, canvas.y + canvas.height * 0.7);
-    else { await page.mouse.move(canvas.x + canvas.width / 2, canvas.y + canvas.height / 2); await page.mouse.wheel(0, 120); }
+    // The input is sent from inside the page as soon as the pan starts: a slow machine would
+    // otherwise let the 1.2 s pan finish before a real tap arrives.
+    await frontier(async () => {
+      const f = window.__frontier;
+      f.sim.events.push({ type: 'camera', x: 20, z: -20 });
+      for (let i = 0; i < 600 && !f.cameraPan; i++) await new Promise(r => requestAnimationFrame(r));
+      if (!f.cameraPan) throw new Error('the pan never started');
+      document.querySelector('#world canvas[data-engine]').dispatchEvent(new WheelEvent('wheel', { bubbles: true, deltaY: 0 }));
+    });
     await page.waitForFunction(() => !window.__frontier.cameraPan);
     assert.ok(await frontier(() => Math.hypot(window.__frontier.view.focus.x - 20, window.__frontier.view.focus.z + 20) > 1), 'the cancelled pan stops short');
 
