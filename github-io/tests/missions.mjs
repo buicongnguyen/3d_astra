@@ -183,8 +183,8 @@ try {
     await shot('comms');
     await press('#comms-toggle');
     await openObjectives(false);
-    await frontier(() => { const m = window.__frontier.mission; while (m.queue.current) m.dismiss(); });
-    assert.equal(await page.locator('#dialogue').isHidden(), true);
+    // Checked in the same step as the dismissal: on a slow machine a scripted line can arrive in between.
+    assert.equal(await frontier(() => { const m = window.__frontier.mission; while (m.queue.current) m.dismiss(); const d = document.querySelector('#dialogue'); return d.hidden || getComputedStyle(d).display === 'none'; }), true);
 
     // ---- Capture point: one ring, its colour follows the owner, a toast and a minimap ping.
     const ring = await frontier(async () => {
