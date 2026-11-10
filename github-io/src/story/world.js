@@ -1,5 +1,6 @@
 // Story data for the campaign: factions and cast. Plain data only (see docs/WORLD.md).
-// `color` is a key of PRESETS in settings.js; `hex` repeats it for artists.
+// `color` is a key of PRESETS in settings.js; `hex` repeats it for artists. `glow` is the light
+// a faction's machines give off in a mission (lamps and visors; see src/faction-colors.js).
 export const FACTIONS = {
   meridian: {
     id: "meridian",
@@ -7,6 +8,7 @@ export const FACTIONS = {
     short: "Meridian",
     color: "mint",
     hex: "#92ebc5",
+    glow: "#92ebc5",
     emblem: "A ring crossed by one vertical line: a relay standing on the horizon.",
     character: "Surveyors, engineers and settlers. They repair before they take and they keep their promises.",
     goal: "Restart the Builder relays so the frontier can hold a real settlement.",
@@ -18,6 +20,7 @@ export const FACTIONS = {
     short: "Ashfall",
     color: "coral",
     hex: "#ef7660",
+    glow: "#ffb347",
     emblem: "A falling spark above three stacked bars.",
     character: "A salvage fleet that has lived on wrecks for three generations. Disciplined, punctual, short of everything.",
     goal: "Send enough power to orbit to keep forty thousand sleepers alive, by any means that is fast.",
@@ -29,6 +32,7 @@ export const FACTIONS = {
     short: "Sunward",
     color: "gold",
     hex: "#edc76f",
+    glow: "#fff2a8",
     emblem: "A half sun over a wheel.",
     character: "Desert traders who arrived twenty years ago and stayed. Proud, fair, loud at the table and exact with a debt.",
     goal: "Keep the oasis relays lit: their wells and gardens run on them.",
@@ -40,6 +44,7 @@ export const FACTIONS = {
     short: "The Veil",
     color: "violet",
     hex: "#b397ee",
+    glow: "#f0b3ff",
     emblem: "An open book with a closed eye on the page.",
     character: "Scholars who came first and lost their first camp to a surge storm. Careful, quiet, certain they are saving everyone.",
     goal: "Keep the relays dark until the Lattice is understood.",
@@ -51,6 +56,7 @@ export const FACTIONS = {
     short: "Wardens",
     color: "blue",
     hex: "#689dff",
+    glow: "#c8f1ff",
     emblem: "Three small circles joined in a triangle.",
     character: "The Lattice's own guardians: the original machines every expedition has been copying. They obey whoever holds a Keystone key.",
     goal: "Guard the Keystone. They have no wishes of their own.",

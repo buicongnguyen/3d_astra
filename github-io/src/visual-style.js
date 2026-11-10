@@ -1,6 +1,11 @@
 import STYLE from './visual-style.json' with {type:'json'};
 export const themeFor = id => Object.hasOwn(STYLE.themes,id)?STYLE.themes[id]:STYLE.themes.classic;
-export const weaponStyle = e => {const key=e.type==='support'?'support':e.weapon;return Object.hasOwn(STYLE.weapons,key)?STYLE.weapons[key]:STYLE.weapons.rifle;};
+// Light strengths, exposure and the time of day each map is set at (numbers, kept apart from
+// the colour table so every theme value stays a colour).
+export const lightFor = id => Object.hasOwn(STYLE.light,id)?STYLE.light[id]:STYLE.light.classic;
+// The surfaces units stand on; team colours must stay readable against each of them.
+export const GROUND_KEYS = ['dirt','grass','sand','road','stone'];
+export const weaponStyle =e => {const key=e.type==='support'?'support':e.weapon;return Object.hasOwn(STYLE.weapons,key)?STYLE.weapons[key]:STYLE.weapons.rifle;};
 
 // Conservative visibility: a visible target must not expose an unseen shooter or
 // reveal a route through fog. Rechecked each frame while a trail is alive.

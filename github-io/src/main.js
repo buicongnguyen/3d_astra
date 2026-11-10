@@ -11,7 +11,9 @@ import { loadSettings, saveSettings, palette } from "./settings.js";
 import { SettingsUI } from "./settings-ui.js";
 import { localizeDOM, loadStory } from "./i18n.js";
 import "./language.css";
-import { MAPS, SURFACES } from "./terrain.js";
+import { MAPS } from "./terrain.js";
+import { surfaceColors } from "./ground-paint.js";
+import { teamColors } from "./faction-colors.js";
 import { Ambience, audioPower } from "./ambience.js";
 import { createFieldGuide } from "./field-guide.js";
 import { Simulation } from "./simulation.js";
@@ -822,16 +824,18 @@ function minimap() {
     canvas.width = w;
     canvas.height = h;
     const b = canvas.getContext("2d");
-    b.fillStyle = "#485243";
+    // The same surface colours as the battlefield (visual-style.json), on every map.
+    const surfaces = surfaceColors(sim.terrain.id);
+    b.fillStyle = surfaces.dirt;
     b.fillRect(0, 0, w, h);
-    if (sim.terrain.river)
+    if (sim.terrain.id !== "classic")
       for (let z = 0; z < GRID; z++)
         for (let x = 0; x < GRID; x++) {
           b.fillStyle =
-            SURFACES[sim.terrain.at(x * 2 - HALF + 1, z * 2 - HALF + 1)];
+            surfaces[sim.terrain.at(x * 2 - HALF + 1, z * 2 - HALF + 1)];
           b.fillRect((x * w) / GRID, (z * h) / GRID, w / GRID + 1, h / GRID + 1);
         }
-    b.strokeStyle = "#64715a";
+    b.strokeStyle = surfaces.road;
     b.lineWidth = 9;
     b.beginPath();
     b.moveTo(px(-25), pz(24));
@@ -869,13 +873,13 @@ function minimap() {
   for (const p of Object.values(sim.mission?.points || {})) {
     const cx = px(p.x), cy = pz(p.z), radius = Math.max(4.5, (p.r / MAP_SIZE) * w), owned = p.owner !== null && p.owner !== undefined;
     ctx.lineWidth = 2;
-    ctx.strokeStyle = ctx.fillStyle = owned ? palette(settings)[p.owner] : "#d3dadb";
+    ctx.strokeStyle = ctx.fillStyle = owned ? teamColors(settings, mission)[p.owner] : "#d3dadb";
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     if (owned) { ctx.globalAlpha = 0.3; ctx.fill(); ctx.globalAlpha = 1; }
     ctx.stroke();
     if (p.taker !== null && p.taker !== undefined) {
-      ctx.strokeStyle = palette(settings)[p.taker];
+      ctx.strokeStyle = teamColors(settings, mission)[p.taker];
       ctx.beginPath();
       ctx.arc(cx, cy, radius + 2.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, p.since / 5));
       ctx.stroke();
@@ -897,15 +901,16 @@ function minimap() {
       continue;
     }
     if (!sim.isVisible(e)) {
-      ctx.fillStyle = palette(settings)[e.team];
+      ctx.fillStyle = teamColors(settings, mission)[e.team];
       ctx.globalAlpha = 0.45;
       ctx.fillRect(px(e.x) - 3, pz(e.z) - 3, 6, 6);
       ctx.globalAlpha = 1;
     }
   }
+  const teams = teamColors(settings, mission);
   for (const e of sim.entities)
     if (e.team >= 0 && sim.isVisible(e)) {
-      ctx.fillStyle = palette(settings)[e.team];
+      ctx.fillStyle = teams[e.team];
       const r = e.kind === "building" ? 3.5 : selected.has(e.id) ? 2.5 : 1.6;
       ctx.beginPath();
       if (e.team === 0) ctx.arc(px(e.x), pz(e.z), r, 0, Math.PI * 2);
@@ -1582,7 +1587,7 @@ function applyPreferences(value) {
   );
   document.documentElement.style.setProperty(
     "--team-hostile",
-    palette(settings)[1],
+    teamColors(settings, mission)[1],
   );
   if (!saveSettings(settings))
     notice(
@@ -1692,6 +1697,8 @@ function previewBattle() {
     hover = null;
     $("hover-label").hidden = true;
     if (terrain) view?.setTerrain(sim.terrain);
+    view?.setMission(mission);
+    document.documentElement.style.setProperty("--team-hostile", teamColors(settings, mission)[1]);
     selected.clear();
     rememberedBuildings.clear();
     rememberedResources.clear();
@@ -1910,6 +1917,7 @@ $("continue").onclick = () => {
   restart(false, true);
   activeStage = index >= 0 ? index : null;
   view.setTerrain(sim.terrain);
+  view.setMission(mission);
   focusHome();
   $("hover-label").hidden = true;
   updateHeading();
@@ -2261,7 +2269,7 @@ async function loadAssets() {
 }
 function boot() {
   try {
-    view = new WorldView($("world"), { terrain: sim.terrain, settings });
+    view = new WorldView($("world"), { terrain: sim.terrain, settings, mission });
     view.onContextLost = graphicsLost;
     view.onContextRestored = graphicsRestored;
     $("quality").textContent = view.lowPower ? "Eco" : "High";

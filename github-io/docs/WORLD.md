@@ -48,7 +48,7 @@ Both grow only near a relay that is awake. This is the fact the plot turns on: t
 
 ## Factions
 
-Colours are keys of `PRESETS` in `settings.js`. Enemy colours are a player setting today, so the mission data carries a `factions` note (enemy team number to faction) for the interface to use.
+Colours are keys of `PRESETS` in `settings.js`. Each mission carries a `factions` map (enemy team number to faction), and in a mission every enemy team is painted in its faction's colour and gives off its faction's `glow` (`src/faction-colors.js`). The player's own chosen colour always wins a clash: a faction that would share it takes the next free colour and keeps its glow. In a skirmish the enemy colour is still the player's setting.
 
 | Faction | Colour | Who they are | What they want |
 |---|---|---|---|

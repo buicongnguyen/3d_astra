@@ -9,17 +9,19 @@ const raw = (hex) => new THREE.Color().setHex(hex, THREE.LinearSRGBColorSpace);
 // Ground ring: bright core, soft halo, faint footprint disc and a slowly rotating dashed band
 // that appears only when selected. `appear` animates the lock-on (fade and scale in).
 const RING = `
-uniform vec3 color; uniform float time, appear, strength, radius, selected;
+uniform vec3 color; uniform float time, appear, strength, radius, selected, px;
 varying vec2 vUv;
 void main() {
   vec2 p = (vUv * 2.0 - 1.0) * (radius + 0.9);
   float r = length(p), a = atan(p.y, p.x), w = fwidth(r);
   float edge = radius + 0.28;
-  float core = 1.0 - smoothstep(0.045, 0.045 + w * 1.5, abs(r - edge));
-  float halo = exp(-pow((r - edge) / 0.24, 2.0)) * 0.45;
+  // px: world units per screen pixel. The line never gets thinner than about 2.5 px.
+  float thick = max(0.045, px * 1.25);
+  float core = 1.0 - smoothstep(thick, thick + w * 1.5, abs(r - edge));
+  float halo = exp(-pow((r - edge) / max(0.24, px * 4.5), 2.0)) * 0.45;
   float disc = (1.0 - smoothstep(edge - 0.12, edge, r)) * 0.12;
   float segments = floor(radius * 5.0 + 8.0);
-  float band = 1.0 - smoothstep(0.035, 0.035 + w * 1.5, abs(r - edge - 0.3));
+  float band = 1.0 - smoothstep(thick * 0.8, thick * 0.8 + w * 1.5, abs(r - edge - 0.3));
   float dash = step(0.45, fract(a / 6.2831853 * segments + time * 0.07)) * band;
   float alpha = (core + halo + disc + dash * selected * 0.9) * strength * appear;
   if (alpha < 0.01) discard;
@@ -30,7 +32,7 @@ export function createRing(radius, hex) {
   const size = 2 * (radius + 0.9);
   const material = new THREE.ShaderMaterial({
     uniforms: { color: { value: raw(hex) }, time: { value: 0 }, appear: { value: 0 }, strength: { value: 1 },
-      radius: { value: radius }, selected: { value: 1 } },
+      radius: { value: radius }, selected: { value: 1 }, px: { value: 0 } },
     vertexShader: PLAIN, fragmentShader: RING, transparent: true, depthWrite: false,
     polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 2, // ties go to models
   });
@@ -46,7 +48,7 @@ export function createRing(radius, hex) {
 }
 
 // Advance a ring: selected rings lock on over 0.2 s; hover shows a dim ring without dashes.
-export function updateRing(ring, selected, hovered, time, dt) {
+export function updateRing(ring, selected, hovered, time, dt, unitsPerPixel = 0) {
   const on = selected || hovered;
   const target = on ? 1 : 0;
   ring.userData.appear = dt > 0 ? Math.min(1, Math.max(0, ring.userData.appear + Math.sign(target - ring.userData.appear) * dt * 5)) : target;
@@ -55,6 +57,7 @@ export function updateRing(ring, selected, hovered, time, dt) {
   if (!on) return;
   const u = ring.material.uniforms, t = ring.userData.appear;
   u.appear.value = t;
+  u.px.value = unitsPerPixel;
   u.time.value = time;
   u.selected.value = selected ? 1 : 0;
   u.strength.value = selected ? 1 : 0.5;
@@ -123,7 +126,7 @@ export function createBar(e, hex) {
   bar.scale.setScalar(building ? 0.58 : 0.62); // compact plates leave the battlefield visible
   bar.renderOrder = 10;
   bar.visible = false;
-  bar.userData = { ghost: 1, last: 1, hold: 0 };
+  bar.userData = { ghost: 1, last: 1, hold: 0, base: building ? 0.58 : 0.62 };
   return bar;
 }
 

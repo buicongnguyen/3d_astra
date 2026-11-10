@@ -8,12 +8,17 @@ import { Effects } from "./fx.js";
 import { createRing, updateRing, createBar, updateBar, setTeamColor, createMarker, createRally, updateRally } from "./selection-view.js";
 import { CaptureRings } from "./capture-view.js";
 import { TacticsView } from "./tactics-view.js";
-import {themeFor,shotVisible,weaponStyle} from './visual-style.js';
+import {themeFor,lightFor,shotVisible,weaponStyle} from './visual-style.js';
+import { Scatter } from "./scatter.js";
+import { createMapEdge } from "./map-edge.js";
+import { paintGround } from "./ground-paint.js";
+import { fogAware } from "./fog-aware.js";
+import { teamColors, teamGlows } from "./faction-colors.js";
 import { isHarvesting } from "./activity.js";
 import { EntityBatches, adoptBatchedParts, SOURCE_LAYER } from "./entity-batches.js";
 import { cacheTransforms } from "./transform-cache.js";
 import { AmbientLife } from "./ambient-life.js";
-import { defaults, palette } from "./settings.js";
+import { defaults } from "./settings.js";
 import {
   EnvironmentView,
   paintTerrain,
@@ -54,12 +59,15 @@ function mesh(geometry, material, x = 0, y = 0, z = 0) {
 export class WorldView {
   constructor(
     container,
-    { terrain = new Terrain(), settings = defaults() } = {},
+    { terrain = new Terrain(), settings = defaults(), mission = null } = {},
   ) {
     this.container = container;
     this.terrain = terrain;
     this.settings = settings;
-    this.colors = palette(settings).map((c) => new THREE.Color(c).getHex());
+    // A story mission paints each enemy team in its faction's colour (faction-colors.js).
+    this.mission = mission;
+    this.colors = teamColors(settings, mission).map((c) => new THREE.Color(c).getHex());
+    this.glows = teamGlows(settings, mission).map((c) => new THREE.Color(c).getHex());
     this.lowPower = settings.quality === "eco";
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -70,8 +78,10 @@ export class WorldView {
     // three r185 replaced PCFSoftShadowMap with PCFShadowMap (it logs a deprecation and falls back).
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.2;
+    // Khronos neutral tone mapping keeps the palette's saturated colours as painted;
+    // ACES pulled every map toward the same dusty grey.
+    this.renderer.toneMapping = THREE.NeutralToneMapping;
+    this.renderer.toneMappingExposure = 1;
     container.appendChild(this.renderer.domElement);
     this.renderer.domElement.setAttribute(
       "aria-label",
@@ -79,8 +89,13 @@ export class WorldView {
     );
     this.scene = new THREE.Scene();
     cacheTransforms(this.scene);
-    this.scene.background = new THREE.Color(0x283630);
-    this.scene.fog = new THREE.Fog(0x283630, 105, 190);
+    this.scene.background = new THREE.Color(0x123f63);
+    this.scene.fog = new THREE.Fog(0x123f63, 105, 190);
+    // Shared by every material that sinks into the fog of war (fog-aware.js).
+    this.fogUniforms = { uFogMap: { value: null }, uFogColor: { value: new THREE.Color() }, uFogHalf: { value: terrain.half } };
+    this.fogRGB = [11, 34, 54];
+    this.lifeClock = 0;
+    this.pulsing = [];
     this.camera = new THREE.OrthographicCamera(-40, 40, 30, -30, 0.1, 240);
     this.focus = new THREE.Vector3(
       this.lowPower ? -25 : -20,
@@ -140,6 +155,7 @@ export class WorldView {
     this.applyTheme();
     this.createTerrain();
     this.createFog();
+    this.createScatter();
     this.motionLevel = 2;
     this.renderScale = 1;
     this.createLife();
@@ -177,21 +193,58 @@ export class WorldView {
       this.environment?.configure(this.settings),
     );
   }
+  // Each map has its own time of day: a warm key light, a cool sky fill, a warm bounce from
+  // the ground, and a deep fog-of-war colour from the same family as its horizon.
   applyTheme() {
-    const style=themeFor(this.terrain.id);
+    const style=themeFor(this.terrain.id),light=lightFor(this.terrain.id);
     this.scene.background.set(style.sky);this.scene.fog.color.set(style.sky);
-    this.ambientLight.color.set(style.ambient);this.sun.color.set(style.sun);
+    this.ambientLight.color.set(style.ambient);this.ambientLight.groundColor.set(style.bounce);
+    this.ambientLight.intensity=light.ambient;
+    this.sun.color.set(style.sun);this.sun.intensity=light.sun;
+    this.renderer.toneMappingExposure=light.exposure;
+    this.fogUniforms.uFogColor.value.set(style.fog);
+    this.fogUniforms.uFogHalf.value=this.terrain.half;
+    this.fogRGB=[1,3,5].map(i=>parseInt(style.fog.slice(i,i+2),16));
+    this.tintFog();
+    if(this.wallParts){this.wallParts[0].material.color.set(style.wall);this.wallParts[1].material.color.set(style.glow);this.wallParts[1].material.emissive.set(style.glow);}
+    this.applyAssetTheme();
+  }
+  // The fog image keeps one colour; each refresh then writes only how thick it is.
+  tintFog() {
+    this.fogClock=0;
+    const data=this.fogImage?.data;
+    if(!data)return;
+    for(let j=0;j<data.length;j+=4){data[j]=this.fogRGB[0];data[j+1]=this.fogRGB[1];data[j+2]=this.fogRGB[2];}
+  }
+  // The shared Blender scenery takes the map's foliage colours.
+  applyAssetTheme() {
+    if(!this.environmentAssets)return;
+    const style=themeFor(this.terrain.id);
+    this.environmentAssets.traverse(o=>{
+      const m=o.material;if(!o.isMesh||!m)return;
+      if(m.name==='Foliage')m.color.set(style.leaf);
+      else if(m.name==='FoliageLight')m.color.set(style.leafAlt);
+      else if(m.name==='Bark')m.color.set(style.wood);
+      else if(m.name==='Rock')m.color.set(style.rock);
+    });
+  }
+  // A story mission (or none): enemy teams take their faction's colour and glow.
+  setMission(mission) {
+    if (mission === this.mission) return;
+    this.mission = mission;
+    this.applySettings(this.settings);
   }
   applySettings(settings) {
     this.settings = settings;
-    this.colors = palette(settings).map((c) => new THREE.Color(c).getHex());
+    this.colors = teamColors(settings, this.mission).map((c) => new THREE.Color(c).getHex());
+    this.glows = teamGlows(settings, this.mission).map((c) => new THREE.Color(c).getHex());
     for (const [key, template] of this.teamTemplates) {
       const team = Number(key.split("-").at(-1));
       template.traverse((o) => {
         if (!o.isMesh || !o.material.name.startsWith("Team")) return;
         o.material.color.setHex(this.colors[team]);
         if (o.material.name.startsWith("TeamGlow"))
-          o.material.emissive.setHex(this.colors[team]);
+          o.material.emissive.setHex(this.glows[team]);
       });
     }
     for (const o of this.objects.values()) if (o.userData.team >= 0) setTeamColor(o, this.colors[o.userData.team]);
@@ -206,7 +259,18 @@ export class WorldView {
       this.setQuality(settings.quality === "eco" ? "low" : "high");
     this.environment?.configure(settings);
     this.life?.configure(settings);
-    if (this.grass) this.grass.visible = settings.detail;
+    this.showScatter();
+  }
+  // Dressing follows the "ground detail" setting and goes when the governor is rescuing frames.
+  showScatter() {
+    if (this.scatter) this.scatter.root.visible = this.settings.detail !== false && (this.lifeShare ?? 1) > 0;
+  }
+  createScatter() {
+    this.scatter?.dispose();
+    this.scatter = new Scatter(this.scene, this.terrain, { budget: this.lowPower ? 0.6 : 1, fog: this.fogUniforms });
+    this.showScatter();
+    for (const o of this.objects.values()) o.userData.pressed = false;
+    for (const o of this.resourceObjects.values()) o.userData.pressed = false;
   }
   setTerrain(terrain) {
     this.terrain = terrain;
@@ -229,6 +293,7 @@ export class WorldView {
     }
     this.createTerrain();
     this.createFog();
+    this.createScatter();
     this.createLife();
     if (this.environmentAssets) {
       this.environment = new EnvironmentView(
@@ -251,6 +316,7 @@ export class WorldView {
   setLifeShare(share) {
     this.lifeShare = share;
     this.life?.setShare(share);
+    this.showScatter();
   }
   // Frame-time governor hooks (main.js). Motion: 2 full, 1 calm, 0 still; still also freezes
   // water ripples and dust. Render scale multiplies the quality's pixel-ratio cap.
@@ -272,6 +338,7 @@ export class WorldView {
     this.lowPower = level === "low";
     this.applyReflections();
     this.createLife();
+    this.createScatter();
     this.renderer.setPixelRatio(this.pixelRatio());
     this.renderer.shadowMap.enabled = !this.lowPower;
     for (const o of this.objects.values())
@@ -363,10 +430,11 @@ export class WorldView {
                 if (name.startsWith("Team")) {
                   m.color.setHex(this.colors[team]);
                   if (name.startsWith("TeamGlow")) {
-                    m.emissive.setHex(this.colors[team]);
+                    m.emissive.setHex(this.glows[team]);
                     m.emissiveIntensity = 0.8;
+                    this.pulsing.push({ m, base: 0.8, depth: 0.3, rate: 2.2, phase: team * 1.3 });
                   }
-                }
+                } else if (name.startsWith("Energy")) this.pulsing.push({ m, base: m.emissiveIntensity, depth: 0.35, rate: 3.1, phase: 0 });
                 materials.set(key, m);
               }
               o.material = materials.get(key);
@@ -381,6 +449,18 @@ export class WorldView {
       this.environmentAssets || fetchModel("environment").then((gltf) => {
         this.environmentAssets = gltf.scene;
         optimizeEnvironment(this.environmentAssets);
+        // Crystals glow from inside and shimmer slowly; shrubs and reeds sink into the fog of war.
+        const seen = new Set();
+        this.environmentAssets.traverse((o) => {
+          const m = o.material;
+          if (!o.isMesh || seen.has(m)) return;
+          seen.add(m);
+          if (m.name.startsWith("Crystal")) {
+            m.emissiveIntensity = 1.5;
+            this.pulsing.push({ m, base: 1.5, depth: 0.22, rate: 1.4, phase: m.name.length });
+          } else if (["Foliage", "FoliageLight", "Bark"].includes(m.name)) fogAware(m, this.fogUniforms);
+        });
+        this.applyAssetTheme();
       }),
     ]);
     const failed = results.find((result) => result.status === "rejected");
@@ -403,64 +483,11 @@ export class WorldView {
     const canvas = document.createElement("canvas");
     canvas.width = canvas.height = 1024;
     const ctx = canvas.getContext("2d");
-    ctx.fillStyle = themeFor(this.terrain.id).dirt;
-    ctx.fillRect(0, 0, 1024, 1024);
-    if (this.terrain.id !== "classic") {
-      paintTerrain(ctx, this.terrain, 1024);
-      // Surfaces are sampled in 4-pixel blocks; blur them into natural transitions instead
-      // of staircase borders. Browsers without canvas filters keep the blocks.
-      const soft = document.createElement("canvas");
-      soft.width = soft.height = 1024;
-      const softContext = soft.getContext("2d");
-      softContext.drawImage(canvas, 0, 0);
-      ctx.filter = "blur(4px)";
-      ctx.drawImage(soft, 0, 0);
-      ctx.filter = "none";
-    }
-    for (let i = 0; i < 16000; i++) {
-      const x = random() * 1024,
-        y = random() * 1024,
-        r = 1 + random() * 10;
-      ctx.fillStyle =
-        random() > 0.5
-          ? `rgba(209,188,128,${random() * 0.09})`
-          : `rgba(31,58,40,${random() * 0.08})`;
-      ctx.beginPath();
-      ctx.arc(x, y, r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.lineCap = "round";
-    for (const points of [
-      [
-        [230, 780],
-        [370, 610],
-        [680, 420],
-        [800, 210],
-      ],
-      [
-        [230, 780],
-        [130, 480],
-        [220, 220],
-        [800, 210],
-      ],
-      [
-        [230, 780],
-        [790, 800],
-        [910, 490],
-        [800, 210],
-      ],
-    ]) {
-      for (let w = 90; w > 0; w -= 7) {
-        ctx.strokeStyle = "rgba(185,159,105,0.025)";
-        ctx.lineWidth = w;
-        ctx.beginPath();
-        ctx.moveTo(...points[0]);
-        ctx.bezierCurveTo(...points[1], ...points[2], ...points[3]);
-        ctx.stroke();
-      }
-    }
+    // Surfaces, accent patches and painted detail (ground-paint.js); seeded, so identical each build.
+    paintGround(ctx, this.terrain, 1024, random);
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
+    texture.anisotropy = this.lowPower ? 1 : 4;
     const groundGeometry = new THREE.PlaneGeometry(this.terrain.size, this.terrain.size, 96, 96);
     if (this.terrain.river) {
       const p = groundGeometry.attributes.position;
@@ -479,15 +506,11 @@ export class WorldView {
     ground.rotation.x = -Math.PI / 2;
     ground.castShadow = false;
     this.terrainRoot.add(ground);
-    this.terrainRoot.add(
-      mesh(
-        new THREE.BoxGeometry(this.terrain.size, 2.5, this.terrain.size),
-        mat(0x424634),
-        0,
-        this.terrain.river ? -1.85 : -1.3,
-        0,
-      ),
-    );
+    // The edge of the world: a cliff skirt and the land or sea below it, fading into the
+    // horizon haze (map-edge.js). The old slab under the map also had a top face 5 cm below
+    // the ground, which won the biased depth test and hid the ground texture on every map
+    // without a river; the skirt has sides only.
+    this.terrainRoot.add(createMapEdge(this.terrain));
     // One grid line per two-unit navigation cell on every map size.
     this.grid = new THREE.GridHelper(this.terrain.size, this.terrain.grid, 0xd8d8b4, 0xa6b087);
     this.grid.position.y = 0.035;
@@ -495,81 +518,8 @@ export class WorldView {
     this.grid.material.opacity = 0.15;
     this.grid.visible = false;
     this.terrainRoot.add(this.grid);
-    const edge = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(this.terrain.size, 0.1, this.terrain.size)),
-      new THREE.LineBasicMaterial({
-        color: 0xb7b38a,
-        transparent: true,
-        opacity: 0.3,
-      }),
-    );
-    this.terrainRoot.add(edge);
-    const rockMat = mat(0x626957);
-    this.pebbleMaterial = rockMat;
-    // Placeholder obstacles until the Blender boulders load (EnvironmentView draws those).
-    // The random sequence is consumed either way, so the scatter below is identical on
-    // every build of a map regardless of when the models finished loading.
-    // Obstacles are concrete wall entities now; no placeholder boulders are drawn.
-    const placeholders = false,
-      topMat = placeholders ? mat(0x888872) : null;
-    this.placeholderRocks = new THREE.Group();
-    this.terrainRoot.add(this.placeholderRocks);
-    for (const [x, z, r] of ROCKS) {
-      for (let i = 0; i < 4; i++) {
-        const position = [x + (random() - 0.5) * r, 0.6 + random() * r * 0.3, z + (random() - 0.5) * r],
-          scale = [r * (0.6 + random() * 0.4), r * (0.45 + random() * 0.55), r * (0.6 + random() * 0.4)],
-          rotation = [random() * 0.7, random() * 6, random() * 0.4];
-        if (!placeholders) continue;
-        const stone = mesh(new THREE.DodecahedronGeometry(1, 0), i === 0 ? topMat : rockMat, ...position);
-        stone.scale.set(...scale);
-        stone.rotation.set(...rotation);
-        this.placeholderRocks.add(stone);
-      }
-    }
-    const inRock = (p) => ROCKS.some(([x, z, r]) => Math.hypot(p.x - x, p.z - z) < r + 0.3);
-    // Scatter scales with map area so large maps are not bare beyond the central 96 units,
-    // and stays 3 units inside the edge: nothing is drawn on or beyond the map boundary.
-    const spread = this.terrain.size - 6,
-      density = (this.terrain.size / 96) ** 2;
-    const pebbleCount = Math.round(500 * density);
-    const pebbles = new THREE.InstancedMesh(
-      new THREE.DodecahedronGeometry(0.22, 0),
-      rockMat,
-      pebbleCount,
-    );
-    const dummy = new THREE.Object3D();
-    for (let i = 0; i < pebbleCount; i++) {
-      dummy.position.set((random() - 0.5) * spread, 0.08, (random() - 0.5) * spread);
-      dummy.scale.setScalar(0.5 + random());
-      if ((this.terrain.river && Math.abs(dummy.position.z) < 5) || inRock(dummy.position))
-        dummy.scale.setScalar(0);
-      dummy.rotation.set(random(), random() * 6, random());
-      dummy.updateMatrix();
-      pebbles.setMatrixAt(i, dummy.matrix);
-    }
-    this.terrainRoot.add(pebbles);
-    const grassCount = Math.round(850 * density);
-    const grass = new THREE.InstancedMesh(
-      new THREE.ConeGeometry(0.22, 0.6, 3),
-      mat(0x515f40),
-      grassCount,
-    );
-    for (let i = 0; i < grassCount; i++) {
-      dummy.position.set((random() - 0.5) * spread, 0.22, (random() - 0.5) * spread);
-      dummy.scale.setScalar(0.4 + random() * 0.7);
-      if (
-        (this.terrain.river &&
-          this.terrain.at(dummy.position.x, dummy.position.z) !== "grass") ||
-        inRock(dummy.position)
-      )
-        dummy.scale.setScalar(0);
-      dummy.rotation.set(0, random() * 6, 0.15);
-      dummy.updateMatrix();
-      grass.setMatrixAt(i, dummy.matrix);
-    }
-    this.terrainRoot.add(grass);
-    this.grass = grass;
-    grass.visible = this.settings.detail;
+    this.placeholderRocks = null;
+    // Grass, flowers, rocks, ruins and each map's own props are planned and drawn by scatter.js.
     // No raised start pads under the Command cores: a floor a few millimetres above the ground
     // z-fought with the cores' base plates and blinked on phones.
   }
@@ -623,6 +573,12 @@ export class WorldView {
     this.fogImage = this.fogContext.createImageData(this.terrain.grid, this.terrain.grid);
     this.fogTexture = new THREE.CanvasTexture(this.fogCanvas);
     this.fogTexture.magFilter = THREE.LinearFilter;
+    // Always magnified (one texel per two-unit cell), so no mipmaps to rebuild on each refresh.
+    this.fogTexture.minFilter = THREE.LinearFilter;
+    this.fogTexture.generateMipmaps = false;
+    this.fogTexture.colorSpace = THREE.SRGBColorSpace;
+    this.tintFog();
+    this.fogUniforms.uFogMap.value = this.fogTexture;
     const material = new THREE.MeshBasicMaterial({
       map: this.fogTexture,
       transparent: true,
@@ -656,6 +612,12 @@ export class WorldView {
     this.camera.lookAt(this.focus);
     this.camera.updateProjectionMatrix();
     this.camera.updateMatrixWorld();
+    // Vitals bars and selection rings keep a readable size on small screens: a unit's bar
+    // is never under about 30 px wide (a phone shows as little as 11 px per world unit).
+    const pixels = this.height / this.zoom, grow = clamp(30 / (1.43 * pixels), 1, 1.9);
+    this.barScale = grow;
+    this.barTall = 1 + 0.35 * Math.min(1, (grow - 1) * 2);
+    this.unitsPerPixel = 1 / pixels;
     // Shadow frustum: cover the farthest visible ground corner (the tilted view reaches about
     // 0.64 x zoom deep), then snap its centre to whole shadow texels in light space so
     // shadow edges do not shimmer while the camera pans.
@@ -762,18 +724,23 @@ export class WorldView {
   // scaled per wall, so every wall shares two batches (entity-batches.js).
   wallTemplate() {
     if (this.wallParts) return this.wallParts;
-    const concrete = new THREE.MeshStandardMaterial({ color: 0xa9a59b, roughness: 0.94, name: "Concrete" });
-    const trim = new THREE.MeshStandardMaterial({ color: 0x6f6c66, roughness: 0.9, name: "WallTrim" });
+    // Builder stone with a band of Lattice light, in the map's colours (applyTheme recolours them).
+    const style = themeFor(this.terrain.id);
+    const concrete = new THREE.MeshStandardMaterial({ color: style.wall, roughness: 0.94, name: "Concrete" });
+    const trim = new THREE.MeshStandardMaterial({ color: style.glow, emissive: style.glow, emissiveIntensity: 0.55, roughness: 0.6, name: "WallTrim" });
+    // A ruined Builder pylon: six standing stones of uneven height on a plinth, around a
+    // core that still holds Lattice light. Everything stays inside the obstacle's circle.
     const slabs = [], caps = [];
-    for (const [angle, length] of [[0, 1.9], [Math.PI / 3, 1.75], [-Math.PI / 3, 1.6]]) {
-      const slab = new THREE.BoxGeometry(length, 1.45, 0.42).translate(0, 0.72, 0);
-      // Darker weathered caps and a hazard band low on each slab.
-      const cap = new THREE.BoxGeometry(length + 0.04, 0.12, 0.46).translate(0, 1.5, 0);
-      const band = new THREE.BoxGeometry(length + 0.02, 0.14, 0.44).translate(0, 0.42, 0);
-      for (const g of [slab, cap, band]) g.rotateY(angle);
-      slabs.push(slab);
-      caps.push(cap, band);
-    }
+    [1.5, 0.95, 1.7, 0.7, 1.35, 1.1].forEach((height, i) => {
+      const angle = (i / 6) * Math.PI * 2 + 0.26, lean = i % 2 ? 0.07 : -0.05;
+      const stone = new THREE.BoxGeometry(0.56, height, 0.34).translate(0, height / 2 + 0.2, 0);
+      const band = new THREE.BoxGeometry(0.58, 0.09, 0.36).translate(0, height * 0.55 + 0.2, 0);
+      for (const g of [stone, band]) g.rotateZ(lean).translate(0, 0, 0.62).rotateY(angle);
+      slabs.push(stone);
+      caps.push(band);
+    });
+    slabs.push(new THREE.CylinderGeometry(0.3, 0.36, 0.95, 6).translate(0, 0.67, 0));
+    caps.push(new THREE.CylinderGeometry(0.2, 0.31, 0.3, 6).translate(0, 1.29, 0));
     // A low footing ring fills the obstacle's footprint.
     slabs.push(new THREE.CylinderGeometry(0.98, 1, 0.22, 10).translate(0, 0.11, 0));
     this.wallParts = [
@@ -810,6 +777,9 @@ export class WorldView {
     root.userData.model = model;
     root.userData.barrel=model.getObjectByName('BarrelRig');
     root.userData.recoil=0;
+    root.userData.kick=0;root.userData.kickSize=0;
+    root.userData.gait=0;root.userData.stride=(e.id*0.7)%6.28;
+    root.userData.pop=0;root.userData.built=e.complete!==false;
     root.userData.team = e.team;
     root.userData.legs = [];
     model.traverse((o) => {
@@ -898,8 +868,10 @@ export class WorldView {
     this.activity.event(event, sim);
     this.tactics.event(event, sim);
     if(event.type==='shot' && shotVisible(event,sim)){
-      const o=this.objects.get(event.source);
-      if(o && weaponStyle(event).kind==='cannon')o.userData.recoil=.22;
+      const o=this.objects.get(event.source),kind=weaponStyle(event).kind;
+      if(o && kind==='cannon')o.userData.recoil=.22;
+      // Every shooter rocks back a little: hulls and rocket troops most, rifles barely.
+      if(o && kind!=='support'){o.userData.kick=.16;o.userData.kickSize=kind==='rocket'?.11:kind==='cannon'?.07:.03;}
     }
     if (event.type === 'death' && sim.isVisible(event)) this.beginDeath(event);
     // Blasts kill the small creatures they reach; a new match brings the full cast back.
@@ -969,6 +941,17 @@ export class WorldView {
       this.life.quiet = this.reducedMotion.matches;
       this.life.update(dt, this.camera, this.renderer.domElement.height);
     }
+    // Cosmetic clocks stop with the game (dt 0), with reduced motion and when the governor
+    // holds everything still. Lamps and crystals breathe; grass leans with the wind.
+    const lively = this.motionLevel > 0 && !this.reducedMotion.matches;
+    if (lively && dt > 0) {
+      this.lifeClock = (this.lifeClock + Math.min(0.05, dt)) % 3600;
+      for (const p of this.pulsing) p.m.emissiveIntensity = p.base * (1 + p.depth * Math.sin(this.lifeClock * p.rate + p.phase));
+    }
+    this.scatter?.update(dt, lively && this.settings.waterMotion !== false);
+    // Idle troops breathe only at full quality and full motion: it re-poses every idle unit.
+    const breathing = lively && this.motionLevel === 2 && !this.lowPower;
+    const kicking = this.activity.combat.motion;
     const alive = new Set();
     // Interpolate only from a snapshot taken exactly one tick before the current state;
     // ticks run outside the frame loop (test stepping) leave the snapshot stale.
@@ -976,7 +959,8 @@ export class WorldView {
     for (const e of sim.entities) {
       alive.add(e.id);
       const o = this.objects.get(e.id) || this.createEntity(e);
-      o.userData.recoil=Math.max(0,o.userData.recoil-dt);
+      const u=o.userData;
+      u.recoil=Math.max(0,u.recoil-dt);u.kick=Math.max(0,u.kick-dt);
       // Walls are neutral and see nothing: keep them drawn once explored, like the minimap does.
       o.visible = e.kind === "wall" ? sim.isExplored(e) : sim.isVisible(e);
       if (!o.visible) continue;
@@ -998,23 +982,45 @@ export class WorldView {
         const kick=this.activity.combat.motion?Math.sin(o.userData.recoil/.22*Math.PI)*.18:0;
         rig.position.set(-Math.sin(rig.rotation.y)*kick,0,-Math.cos(rig.rotation.y)*kick);
       }
-      m.position.y =
-        e.kind === "unit" && e.moving
-          ? Math.sin(sim.time * 13 + e.id) * 0.045
-          : 0;
-      m.scale.y = e.complete ? 1 : 0.15 + e.progress * 0.85;
-      m.rotation.z = isHarvesting(sim,e) && !this.reducedMotion.matches ? Math.sin(sim.time*7+e.id)*0.045 : 0;
-      for (let i = 0; i < o.userData.legs.length; i++) {
-        const leg = o.userData.legs[i];
-        leg.node.quaternion.copy(leg.base);
-        if (e.moving)
-          leg.node.rotateX(Math.sin(sim.time * 11 + i * Math.PI) * 0.4);
+      let lift = 0, squash = 0, back = 0;
+      if (e.kind === "unit") {
+        // The gait follows the ground actually covered this tick, so feet neither slide nor
+        // march on the spot: stride length drives the leg swing, speed its size.
+        const speed = p ? Math.sqrt((e.x - p.x) ** 2 + (e.z - p.z) ** 2) * 20 : e.moving ? D[e.type].speed || 3 : 0;
+        const pace = Math.min(1, speed / 2.4);
+        if (dt > 0) {
+          u.gait += (pace - u.gait) * Math.min(1, dt * 10);
+          if (pace === 0 && u.gait < 0.03) u.gait = 0;
+          u.stride += speed * dt * (u.legs.length ? 2.5 : 3.4);
+        } else if (!p) u.gait = pace;
+        lift = u.legs.length ? Math.abs(Math.sin(u.stride)) * 0.07 * u.gait : Math.sin(u.stride * 2.1) * 0.016 * u.gait;
+        if (breathing && u.gait === 0 && u.legs.length) squash = Math.sin(this.lifeClock * 2.1 + e.id * 1.7) * 0.012;
+        if (kicking && u.kick > 0) back = Math.sin((u.kick / 0.16) * Math.PI) * u.kickSize;
+      } else if (e.kind === "building") {
+        // A finished building settles with a small bounce.
+        if (e.complete && !u.built && kicking) u.pop = 0.4;
+        u.built = !!e.complete;
+        if (u.pop > 0) { u.pop = Math.max(0, u.pop - dt); squash = Math.sin((u.pop / 0.4) * Math.PI) * 0.07; }
+        // Dressing under a building the player has seen is pressed flat (visual only).
+        if (!u.pressed) { u.pressed = true; this.scatter?.flatten(e.x, e.z, e.radius + 0.5); }
       }
-      updateRing(o.userData.ring, selected.has(e.id), hover?.id === e.id, sim.time, dt);
-      const bar = o.userData.bar;
+      m.position.set(back ? -Math.sin(m.rotation.y) * back : 0, lift, back ? -Math.cos(m.rotation.y) * back : 0);
+      m.scale.set(1 + squash * 0.5, (e.complete ? 1 : 0.15 + e.progress * 0.85) + squash, 1 + squash * 0.5);
+      m.rotation.z = isHarvesting(sim,e) && !this.reducedMotion.matches ? Math.sin(sim.time*7+e.id)*0.045 : 0;
+      for (let i = 0; i < u.legs.length; i++) {
+        const leg = u.legs[i];
+        leg.node.quaternion.copy(leg.base);
+        if (u.gait > 0)
+          leg.node.rotateX(Math.sin(u.stride + i * Math.PI) * 0.46 * u.gait);
+      }
+      updateRing(u.ring, selected.has(e.id), hover?.id === e.id, sim.time, dt, this.unitsPerPixel);
+      const bar = u.bar;
       bar.visible =
         selected.has(e.id) || hover?.id === e.id || e.hp < e.maxHp || e.shield < e.maxShield;
-      bar.quaternion.copy(this.camera.quaternion);
+      if (bar.visible) {
+        bar.quaternion.copy(this.camera.quaternion);
+        bar.scale.set(bar.userData.base * this.barScale, bar.userData.base * this.barScale * this.barTall, 1);
+      }
       updateBar(bar, e, dt);
     }
     for (const [id, object] of this.objects)
@@ -1029,21 +1035,14 @@ export class WorldView {
       const amount = o.userData.lastAmount || 0;
       o.visible = amount > 0 && sim.isExplored(r);
       o.scale.y = 0.4 + (0.6 * amount) / r.initial;
+      if (o.visible && !o.userData.pressed) { o.userData.pressed = true; this.scatter?.flatten(r.x, r.z, (r.radius || 1.6) + 0.6); }
     }
     this.fogClock -= dt;
     if (this.fogClock <= 0) {
       this.fogClock = 0.25;
-      for (let i = 0; i < this.terrain.grid * this.terrain.grid; i++) {
-        const j = i * 4;
-        this.fogImage.data[j] = 14;
-        this.fogImage.data[j + 1] = 26;
-        this.fogImage.data[j + 2] = 25;
-        this.fogImage.data[j + 3] = sim.visible[0][i]
-          ? 0
-          : sim.explored[0][i]
-            ? 145
-            : 232;
-      }
+      const fog = this.fogImage.data, seen = sim.visible[0], known = sim.explored[0];
+      for (let i = 0, j = 3, n = this.terrain.grid * this.terrain.grid; i < n; i++, j += 4)
+        fog[j] = seen[i] ? 0 : known[i] ? 128 : 246;
       this.fogContext.putImageData(this.fogImage, 0, 0);
       this.fogTexture.needsUpdate = true;
     }
@@ -1098,6 +1097,7 @@ export class WorldView {
     this.activity.reset();
     this.tactics.reset();
     this.environment?.reset();
+    this.scatter?.restore();
     for (const o of this.objects.values()) this.disposeEntity(o);
     this.objects.clear();
     for (const d of this.dying) this.disposeEntity(d.object);

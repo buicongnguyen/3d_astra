@@ -13,6 +13,9 @@ try{
   const maps=await page.evaluate(()=>[...document.querySelectorAll('#scenario option')].map(o=>o.value));
   assert.equal(maps.length,7);
   // Nothing may be drawn beyond the playable edge: meshes and every instance of batches.
+  // The one exception since the 2026-11 look pass is the backdrop (src/map-edge.js): the cliff
+  // skirt and the land or sea below it, which replace the empty colour beyond the edge. It
+  // must exist, and every prop, creature and building still has to stay inside the map.
   for(const map of maps){
     await page.locator('#scenario').selectOption(map);
     const outside=await page.evaluate(async()=>{
@@ -21,6 +24,7 @@ try{
       v.scene.updateMatrixWorld(true);
       v.scene.traverse(o=>{
         if(!o.isMesh||!o.visible||o===v.fogMesh)return;
+        if(o.name==='backdrop'){bad.backdrop=true;return;}
         let node=o;while(node){if(!node.visible)return;node=node.parent;}
         const geometry=o.geometry;if(!geometry.boundingBox)geometry.computeBoundingBox();
         const check=(matrix,label)=>{
@@ -31,6 +35,7 @@ try{
         else if(!o.frustumCulled&&o.geometry.isInstancedBufferGeometry)return; // effect layers: covered below
         else check(o.matrixWorld,o.name||o.geometry.type);
       });
+      if(!bad.backdrop)bad.push('no backdrop beyond the edge');
       return bad.slice(0,5);
     });
     assert.deepEqual(outside,[],`${map}: objects outside the map boundary`);

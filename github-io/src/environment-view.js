@@ -54,10 +54,15 @@ export class EnvironmentView {
     // Everything drawn here lies inside the map; the area beyond the edge stays empty.
     // The old boulder obstacles are concrete walls now, drawn as entities (view.js).
     if (!terrain.river) return;
+    // Clear, saturated water in the map's own colours: deep in mid-stream, pale over the
+    // shallows and foam-white where it meets the banks. No metalness: without an environment
+    // map it only greyed the colour.
+    const theme = themeFor(terrain.id);
     const waterMat = new THREE.MeshStandardMaterial({
-      color: 0x428a94,
-      roughness: 0.32,
-      metalness: 0.25,
+      color: 0xffffff,
+      roughness: 0.2,
+      metalness: 0,
+      emissive: new THREE.Color(theme.water).multiplyScalar(0.16),
     });
     // A real channel bed is cut into the ground; water stays below the banks.
     this.water = new THREE.Mesh(
@@ -73,10 +78,14 @@ export class EnvironmentView {
       if (Math.abs(positions.getX(i)) <= 5) positions.setZ(i, 0.12);
     this.waterBase = positions.array.slice();
     const colors = new Float32Array(positions.count * 3);
+    const deep = new THREE.Color(theme.water), shallow = new THREE.Color(theme.shallow), ford = new THREE.Color(theme.ford),
+      foam = new THREE.Color(theme.foam), c = new THREE.Color();
     for (let i = 0; i < positions.count; i++) {
-      const c = new THREE.Color(
-        Math.abs(positions.getX(i)) <= 5 ? 0x94c6b5 : 0x428a94,
-      );
+      const bank = Math.abs(positions.getY(i));
+      if (Math.abs(positions.getX(i)) <= 5) c.copy(ford).lerp(foam, bank > 2.5 ? 0.45 : 0.1);
+      else if (bank > 2.5) c.copy(shallow).lerp(foam, 0.6);
+      else if (bank > 1.5) c.copy(shallow);
+      else c.copy(deep).lerp(shallow, bank > 0.5 ? 0.3 : 0);
       c.toArray(colors, i * 3);
     }
     this.water.geometry.setAttribute(
@@ -84,7 +93,6 @@ export class EnvironmentView {
       new THREE.BufferAttribute(colors, 3),
     );
     waterMat.vertexColors = true;
-    waterMat.color.setHex(0xffffff);
     const normalCanvas = document.createElement("canvas");
     normalCanvas.width = 128;
     normalCanvas.height = 128;
@@ -107,7 +115,7 @@ export class EnvironmentView {
     this.normalTexture.wrapS = this.normalTexture.wrapT = THREE.RepeatWrapping;
     this.normalTexture.repeat.set(20, 2);
     waterMat.normalMap = this.normalTexture;
-    waterMat.normalScale.set(0.4, 0.4);
+    waterMat.normalScale.set(0.55, 0.55);
     const add = (name, x, z, scale = 1, target = this.root) => {
       const source = assets.getObjectByName("asset_" + name);
       if (!source) return;
@@ -205,7 +213,7 @@ export class EnvironmentView {
     this.particleMesh = new THREE.Points(
       this.particleGeometry,
       new THREE.PointsMaterial({
-        color: 0xc8c8aa,
+        color: theme.dust,
         size: 0.19,
         transparent: true,
         opacity: 0.4,
