@@ -1,22 +1,24 @@
 # Frontier Command — browser edition
 
+Documentation index: [docs/README.md](docs/README.md). Twelve-mission campaign, skirmish against four AI speeds, veterancy, stances and unit abilities.
+
 An original single-player 3D RTS: establish an economy, build an outpost, produce an army, and destroy the opposing Command core. Built with Three.js, Vite, and thirteen original Blender-generated unit and structure models plus Blender scenery.
 
-The [progression update](PROGRESSION_PLAN.md) matches the [Godot edition](https://buicongnguyen.github.io/3d_astra_godot/): eight unit types, rechargeable shields, building information and three upgrade levels. Select any entity and open **Info & stats** in Selection. Upgrade your Command core to L2, then Barracks L2 for Medics or Foundry L2 for Engineers. Use **Support → friendly target** to heal infantry or repair buildings, Breakers and Battle tanks. Barracks L2 also unlocks Anti-tank soldiers; Foundry L3 unlocks Battle tanks. See [heavy weapon stats](docs/HEAVY_WEAPONS.md).
+The [progression update](docs/archive/PROGRESSION_PLAN.md) matched the [Godot edition](https://buicongnguyen.github.io/3d_astra_godot/), a frozen snapshot of 1 October 2026 that no longer receives new features: eight unit types, rechargeable shields, building information and three upgrade levels. Select any entity and open **Info & stats** in Selection. Upgrade your Command core to L2, then Barracks L2 for Medics or Foundry L2 for Engineers. Use **Support → friendly target** to heal infantry or repair buildings, Breakers and Battle tanks. Barracks L2 also unlocks Anti-tank soldiers; Foundry L3 unlocks Battle tanks. See [heavy weapon stats](docs/HEAVY_WEAPONS.md).
 
 The **Riverlands** update adds saved army colors, graphics/audio settings, varied ground, a river with two bridges and a shallow ford, and original Blender scenery. Choose Riverlands or the classic Ashen Frontier in the briefing. Open **Settings** there or through **Pause → Settings** during play. See [the evaluation and release review](EVALUATION_AND_RELEASE.md).
 
-The start screen, Settings and phone HUD share one design system. Blender-rendered key art, an emblem, and unit and building portraits are rendered from the game's own models and tinted with your army colour; every button and label stays HTML so it scales, translates and reads aloud. See [the UI redesign](docs/UI_REDESIGN.md).
+The start screen, Settings and phone HUD share one design system. Blender-rendered key art, an emblem, and unit and building portraits are rendered from the game's own models and tinted with your army colour; every button and label stays HTML so it scales, translates and reads aloud. See [the UI redesign](docs/archive/UI_REDESIGN.md).
 
 The old boulders are now concrete walls: they block movement and fire, nothing shoots them on its own, and an ordered attack brings one down after sustained fire, opening a new route. Every map also has ten more contested alloy and energy deposits in the middle lanes.
 
-Every battlefield is alive with small, cheap details: gulls, hawks, vultures and geese overhead with shadows sweeping the ground, butterflies, dragonflies, fish in the rivers, and drifting ash, dust, pollen, fireflies or embers. Units are drawn in instanced batches (a 60-unit phone battle went from 641 to 174 draw calls), and a frame-time governor calms, then stills, those details on devices that struggle. See [living battlefields and phone performance](docs/LIFE_AND_PERFORMANCE.md).
+Every battlefield is alive with small, cheap details: gulls, hawks, vultures and geese overhead with shadows sweeping the ground, butterflies, dragonflies, fish in the rivers, and drifting ash, dust, pollen, fireflies or embers. Units are drawn in instanced batches (a 60-unit phone battle went from 641 to 174 draw calls), and a frame-time governor calms, then stills, those details on devices that struggle. See [living battlefields and phone performance](docs/archive/LIFE_AND_PERFORMANCE.md).
 
 Combat renders in 3D: muzzle flashes, tracers, shells, rocket trails, sparks, explosions with debris and scorch marks, burning machines and buildings, and buildings that collapse into the ground. Selection uses animated ground rings, segmented health bars with a damage ghost, and a selection panel with live unit vitals. See [combat feedback, destruction and selection](../COMBAT_FEEDBACK.md). Nothing is drawn beyond the playable map edge.
 
 ## Play locally
 
-Soldiers and tanks can **Patrol (P)** between two points and engage enemies along the route. Harvesters have an explicit **Attack (N)** command. See [Patrol and Harvester Attack](docs/PATROL_AND_ATTACK.md) for mouse, touch and order-queue behavior.
+Soldiers and tanks can **Patrol (P)** between two points and engage enemies along the route. Harvesters have an explicit **Attack (N)** command. See [Patrol and Harvester Attack](docs/archive/PATROL_AND_ATTACK.md) for mouse, touch and order-queue behavior.
 
 The briefing has two modes. **Campaign** is seven stages, from one relaxed rival to three allied AIs, unlocked in order with best times saved in your browser. **Skirmish** lets you choose from **seven maps**, **1–3 AI enemies**, an **AI speed** (Relaxed, Normal, Fast or Relentless) and **AI teams**: free-for-all, or *united against you*. United AIs share vision, raid your Harvesters, reinforce each other and launch joint offensives from several sides. See [campaign, AI speed and allied AIs](docs/CAMPAIGN_AND_AI.md). Win by destroying all enemy Command cores. The new maps are Amber Dunes, Verdant Crossing and Obsidian Highlands; see [map details](docs/EXPANSION_STAGES.md). Online multiplayer is planned for later in [INTERNET_MULTIPLAYER_PLAN.md](docs/INTERNET_MULTIPLAYER_PLAN.md).
 
@@ -112,7 +114,7 @@ The deployable site is **`dist/`**, not the source directory. Vite emits relativ
 
 The repository-root workflow `.github/workflows/pages.yml` runs simulation tests, builds the site, runs browser interaction checks against that build, and deploys only `github-io/dist/`. Set the repository's Pages source to **GitHub Actions**. Push to `main` using the SSH origin to deploy subsequent changes.
 
-The published game has no server-side code, runtime CDN imports, paid model services, analytics, or account requirements. This release does not include multiplayer or saved matches.
+The published game has no server-side code, runtime CDN imports, paid model services, analytics, or account requirements. Matches autosave and can be continued from the start screen; online multiplayer is planned after the rebuild.
 
 ## Blender assets
 
@@ -147,7 +149,8 @@ The `.tools/` directory is ignored and is not uploaded to GitHub.
 | `src/progression.js` | Building levels, shields, support rules and requirement messages |
 | `src/field-guide.js` | Accessible unit and building reference dialog |
 | `src/navigation.js` | Grid A*, building clearance, line-of-fire checks |
-| `src/simulation.js` | Economy, queues, construction, unit orders, combat, AI, visibility, outcomes |
+| `src/simulation.js`, `src/sim/*.js` | The rules, split into systems (vision, orders, movement, combat, economy, AI, tactics, missions); see docs/ARCHITECTURE.md |
+| `src/commands.js`, `src/snapshot.js` | Command layer for every action; save, load, state hash |
 | `src/view.js` | Three.js rendering, Blender model loading, effects, fog, camera |
 | `src/main.js` | Browser input, selection, command UI, minimap, match flow |
 | `src/touch-controls.js` | Pointer capture, tap/pan/pinch/box gesture lifecycle and cancellation |
@@ -178,7 +181,7 @@ npm run test:webkit
 
 Browser tests use installed Chrome on Windows, or Playwright Chromium elsewhere (`npx playwright install chromium`). Override `CHROME_PATH` if necessary. Set `TEST_URL` to test a production server or deployed URL. Screenshots and performance results go into the ignored `test-results/` directory.
 
-See `VERIFICATION.md` for recorded results and prototype limitations, and `CODE_REVIEW.md` for the logic/code review and fixes. Automated touch tests use browser emulation; physical iOS and Android devices have not been verified.
+See `docs/archive/VERIFICATION.md` for recorded results and prototype limitations, and `docs/archive/CODE_REVIEW.md` for the logic/code review and fixes. Automated touch tests use browser emulation; physical iOS and Android devices have not been verified.
 
 
 The [resource and stage expansion](docs/EXPANSION_STAGES.md) adds 25% more deposit reserves, Copper Basin (128×128), and Frontier Expanse (160×160). Choose a battlefield before Deploy. Build a Command core near remote deposits to shorten delivery trips. Tanks have 460 HP / 100 shield and a 12 m cannon with splash; anti-tank rockets deal 120 damage to vehicles.

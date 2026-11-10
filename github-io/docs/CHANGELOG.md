@@ -44,7 +44,7 @@ Known limits
 - Story text is English only for now.
 - Destroying an enemy core also removes that side's tagged buildings, so a "destroy the siphons" objective can be finished that way.
 
-## Unreleased: rebuild phase E (look)
+## 0.5.0: rebuild phase E (look)
 
 Palette and light
 - Every map has its own vivid palette, time of day and light (`src/visual-style.json`): bright morning on the Riverlands, golden hour on the Dunes, green noon in the Verdant Crossing, ember dusk on the Ashen Frontier, late afternoon in the Copper Basin, clear noon on the Expanse, twilight on the Highlands. Warm sun, cool sky fill, warm bounce light.
