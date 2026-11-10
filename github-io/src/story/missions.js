@@ -239,7 +239,7 @@ export const MISSIONS = [
       lose: [{ who: "vale", text: "He kept to his schedule and we did not keep to ours. Regroup at the river." }],
     },
     medals: { gold: { seconds: 480 }, silver: { seconds: 660 } },
-    design: "About 8 minutes against one Relaxed AI (first wave near 3:30, then every 90 seconds). The player starts with two towers and a wall guard of 3 Rangers and 3 Vanguards. Each siphon (6000 HP) has a hardened tower and 4-5 guards; Hale's camp has two hardened towers and 8 guards. Intended: break the first wave at the walls, then take the west and east siphons and finish with the north one beside the enemy camp. Twist: entering the north siphon reveals that Hale feeds a fleet in orbit and calls a 7-unit counter-attack. The enemy core is optional, but destroying it removes Ashfall and its siphons with it (an engine rule), so it is a second way to win.",
+    design: "About 8 minutes against one Relaxed AI (first wave near 3:30, then every 90 seconds). The player starts with two towers and a wall guard of 3 Rangers and 3 Vanguards. Each siphon (6000 HP) has a hardened tower and 4-5 guards; Hale's camp has two hardened towers and 8 guards. Intended: break the first wave at the walls, then take the west and east siphons and finish with the north one beside the enemy camp. Twist: entering the north siphon reveals that Hale feeds a fleet in orbit and calls a 7-unit counter-attack. The enemy core is optional: destroying it removes Ashfall but its tagged siphons stay standing, so the siphons must still be destroyed.",
   },
 
   {

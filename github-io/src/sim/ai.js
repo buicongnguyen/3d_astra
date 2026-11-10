@@ -1,5 +1,6 @@
 import { DEFINITIONS as D, MAX_POP, distance } from "../data.js";
 import { roleOf } from "../ai-plan.js";
+import { EXPAND_CREW } from "./expand.js";
 
 // The computer opponent's build, production and attack decisions (coalition play is in ai-plan.js). Mixed into Simulation (see simulation.js).
 export const ai = {
@@ -13,8 +14,14 @@ export const ai = {
     this.assignHarvesters(team);
     const hq = own.find((e) => e.type === "hq" && e.complete) || own.find(e => e.type === "hq");
     const pace = this.pace, role = roleOf(this, team);
-    if (hq && workers.length < pace.workers && hq.queue.length < 1)
-      this.enqueue(hq.id, "worker");
+    // A second core brings more Harvesters, trained at the core with the fewest nearby.
+    const cores = own.filter((e) => e.type === "hq" && e.complete);
+    const crewCap = pace.workers + EXPAND_CREW * Math.max(0, cores.length - 1);
+    if (hq && workers.length < crewCap) {
+      const near = (c) => workers.filter((w) => distance(w, c) < 30).length;
+      const trainer = cores.filter((c) => !c.queue.length && !c.levelJob).sort((a, b) => near(a) - near(b) || a.id - b.id)[0];
+      if (trainer) this.enqueue(trainer.id, "worker");
+    }
     // Resume construction whose builder died or gave up on its route. Otherwise one
     // abandoned site blocks every later AI structure, including supply relays.
     for (const site of own.filter((e) => e.kind === "building" && !e.complete)) {
@@ -39,7 +46,9 @@ export const ai = {
     // Save alloy for the Command core upgrade once it is due; otherwise training and
     // builds spend every alloy as it arrives and tech never gets afforded.
     const hqDue = this.time > pace.techAt[0] && hq && !hq.levelJob && workers.length >= Math.min(9, pace.workers) && hq.level < (this.time > pace.techAt[1] ? 3 : 2);
-    const reserve = hqDue ? this.levelCost(hq)[0] : 0;
+    // A second core is due once the first is levelled; its alloy is saved like the core upgrade.
+    const expanding = !hqDue && this.aiExpand(team, own, workers, hq, pace);
+    const reserve = (hqDue ? this.levelCost(hq)[0] : 0) + (expanding ? D.hq.cost[0] : 0);
     const afford = (cost) => this.canPay(team, [cost[0] + reserve, cost[1]]);
     const pop = this.population(team);
     const want = !own.some((e) => e.type === "barracks")
@@ -131,7 +140,8 @@ export const ai = {
       if (answer.length)
         this.issue(answer.map((e) => e.id), { type: "attack", target: threats[0].id });
     }
-    const wave = army.filter((e) => !engaged(e));
+    if (!incursion) this.aiPoints(team, hq, army, pace);
+    const wave = army.filter((e) => !engaged(e) && !e.pointDuty);
     if (this.coalition) {
       this.coalitionOrders(team, { hq, army, wave, incursion });
       return;

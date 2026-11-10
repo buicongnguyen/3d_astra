@@ -354,7 +354,7 @@ export class WorldView {
   // Each file is tried three times. A later call (the player's Retry) fetches only what is missing.
   async loadModels(onProgress) {
     const loader = new GLTFLoader(),
-      types = Object.keys(D).filter((k) => k !== "upgrade"),
+      types = Object.keys(D).filter((k) => D[k].role !== "Research"),
       total = types.length + 1;
     let loaded = types.filter((type) => this.models.has(type)).length + (this.environmentAssets ? 1 : 0);
     onProgress?.(loaded, total);
@@ -1061,7 +1061,7 @@ export class WorldView {
     this.fx.update(sim, dt);
     this.tactics.update(sim, dt);
     // Story missions: a ground ring at each capture point.
-    if (sim.mission || this.captureRings) {
+    if (sim.mission || sim.capturePointsOn || this.captureRings) {
       this.captureRings ||= new CaptureRings(this.scene);
       this.captureRings.update(sim, this.colors, this.lowPower || this.motionLevel === 0 || this.reducedMotion.matches);
     }

@@ -14,7 +14,7 @@ test("previewBattle clears hover when replacing sim", () => {
 });
 test("newGame rebuilds a clean sim", () => {
   assert.match(body("function newGame()", "tutorial = null"), /sim = createSim\(\)/);
-  assert.ok(src.includes("const createSim = () => new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus, mission });"));
+  assert.ok(src.includes("const createSim = () => new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus, mission, capturePoints: !mission && playMode === \"skirmish\" });"));
 });
 test("Space does not swallow modal buttons", () => {
   assert.match(body("if(key===' '&&!e.ctrlKey)", "e.preventDefault()"), /#modal button/);

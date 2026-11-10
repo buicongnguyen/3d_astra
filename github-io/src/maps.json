@@ -4,14 +4,22 @@
     "size": 96,
     "river": false,
     "offset": 0,
-    "sites": []
+    "sites": [],
+    "flank": [
+      13,
+      14
+    ]
   },
   "riverlands": {
     "name": "Meridian Riverlands",
     "size": 96,
     "river": true,
     "offset": 0,
-    "sites": []
+    "sites": [],
+    "flank": [
+      13,
+      14
+    ]
   },
   "basin": {
     "name": "Copper Basin",
@@ -27,6 +35,10 @@
         -8,
         50
       ]
+    ],
+    "flank": [
+      18,
+      19
     ]
   },
   "expanse": {
@@ -47,6 +59,10 @@
         -64,
         18
       ]
+    ],
+    "flank": [
+      22,
+      23
     ]
   },
   "dunes": {
@@ -64,6 +80,10 @@
         -8,
         48
       ]
+    ],
+    "flank": [
+      18,
+      19
     ]
   },
   "woodlands": {
@@ -85,6 +105,10 @@
         -30,
         32
       ]
+    ],
+    "flank": [
+      22,
+      23
     ]
   },
   "highlands": {
@@ -110,6 +134,10 @@
         -76,
         18
       ]
+    ],
+    "flank": [
+      27,
+      27
     ]
   }
 }

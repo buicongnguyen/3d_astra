@@ -11,7 +11,7 @@ const gltf = name => {
 };
 // GLTFLoader strips reserved characters from node names ("Barrel.001" -> "Barrel001").
 const runtimeNames = json => json.nodes.map(n => PropertyBinding.sanitizeNodeName(n.name || ''));
-const types = Object.keys(balance.definitions).filter(t => t !== 'upgrade');
+const types = Object.keys(balance.definitions).filter(t => balance.definitions[t].role !== 'Research');
 
 test('aim/recoil rig matches Blender duplicate names after GLTFLoader sanitising', () => {
   for (const name of ['Barrel', 'Barrel.001', 'Cannon_L', 'Muzzle.002', 'Muzzle_glow', 'Main_cannon', 'Muzzle_brake', 'Turret_head.003'])

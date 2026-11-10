@@ -194,6 +194,7 @@
       "trains": [
         "breaker",
         "upgrade",
+        "plating",
         "engineer",
         "tank"
       ],
@@ -222,6 +223,18 @@
       "shield": 50,
       "level_damage": 0.5,
       "level_range": 1
+    },
+    "plating": {
+      "name": "Reinforced plating",
+      "role": "Research",
+      "cost": [
+        100,
+        150
+      ],
+      "time": 30,
+      "pop": 0,
+      "icon": "shield",
+      "description": "One-time research after Overcharged weapons: combat units take 12% less damage."
     },
     "upgrade": {
       "name": "Overcharged weapons",

@@ -383,7 +383,7 @@ try {
     await press('#start');
     await page.waitForFunction(() => window.__frontier.started);
     assert.deepEqual(await frontier(() => ({ mission: !!window.__frontier.sim.mission, fallback: document.querySelector('#objectives-default').hidden, list: document.querySelector('#objectives-mission').hidden, comms: document.querySelector('.comms').hidden, rings: window.__frontier.view.captureRings?.rings.size || 0 })),
-      { mission: false, fallback: false, list: true, comms: true, rings: 0 });
+      { mission: false, fallback: false, list: true, comms: true, rings: 3 });
     assert.doesNotMatch(await page.locator('.map-heading h1').innerText(), /Mission/);
     await press('#pause');
     assert.deepEqual(await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('frontier-save-v1')); return [s.mode, s.missionId]; }), ['skirmish', null]);

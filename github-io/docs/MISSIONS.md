@@ -86,6 +86,8 @@ Status: format agreed 2026-11-10; engine and campaign in progress.
 
 ## Rules for authors
 
+- Tagged objects of an eliminated enemy stay standing. When an enemy loses its last Command core every untagged unit and building of that team is removed, but entities with a `tag` remain (they stop acting but still fight if armed), so `destroyTag` objectives such as the siphons (mission 3) and conduits (mission 11) are always won by destroying them, never by killing the core. Keep tagged objects reachable once the base is gone.
+
 - Positions are world metres, origin at map centre, `x` and `z` within ± half the map size minus 6. Check them with a node script against `new Simulation({ map })`: use `s.nav.canStand(x, z, 2)` and keep 8 m clear of bases unless intended.
 - A mission must be winnable with the units and buildings the player has unlocked by then. State the intended solution in a `design` string on the mission.
 - No objective may depend on something the player cannot see or be told about.

@@ -182,6 +182,12 @@ export const economy = {
       );
       return;
     }
+    if (q.type === "plating") {
+      this.players[b.team].plating = true;
+      b.queue.shift();
+      this.message("Reinforced plating fitted. Combat units take 12% less damage.", b.team);
+      return;
+    }
     // Supply lost after enqueueing must not let completed units bypass the cap.
     const population = this.population(b.team);
     if (population.used + d.pop > population.cap) {

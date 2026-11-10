@@ -14,12 +14,14 @@ import { economy } from "./sim/economy.js";
 import { ai } from "./sim/ai.js";
 import { missions } from "./sim/missions.js";
 import { tactics } from "./sim/tactics.js";
+import { points } from "./sim/points.js";
+import { expansion } from "./sim/expand.js";
 
 export { NEUTRAL } from "./sim/constants.js";
 // The match state and its fixed 20 Hz step. Behaviour lives in the systems under sim/, mixed
 // in at the bottom of this file; this class holds setup, shared lookups and the step order.
 export class Simulation {
-  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null, mission = null } = {}) {
+  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null, mission = null, capturePoints = false } = {}) {
     this.aiEnabled = ai;
     this.entities = [];
     this.resources = [];
@@ -40,6 +42,7 @@ export class Simulation {
       alloy: 450,
       energy: 150,
       upgrade: false,
+      plating: false,
       kills: 0,
       eliminated: false,
     }));
@@ -116,6 +119,9 @@ export class Simulation {
     this.updateVision();
     this.playerBonus = playerBonus;
     if (playerBonus) this.reinforce(playerBonus);
+    this.capturePointsOn = capturePoints && !mission;
+    this.skirmishPoints = {};
+    if (this.capturePointsOn) this.initSkirmishPoints();
     if (mission) this.initMission(mission);
     this.message(
       "Meridian is online. Assign Harvesters to the amber alloy deposits.",
@@ -271,6 +277,7 @@ export class Simulation {
     this.stepTactics(dt);
     this.stepAI(dt);
     this.stepMission(dt);
+    this.stepSkirmishPoints(dt);
     this.settle();
   }
   // One entity's turn: timers, then its building, support or order behaviour.
@@ -365,6 +372,9 @@ export class Simulation {
       if (alive[team] || this.players[team].eliminated) continue;
       this.players[team].eliminated = true;
       for (const e of this.own(team)) {
+        // Mission-tagged objects of an eliminated enemy stay standing: objectives such as
+        // "destroy the siphons" must be won by destroying them, not by killing the core.
+        if (e.tag && team !== 0 && this.mission) { e.orders = []; e.queue = []; e.levelJob = null; continue; }
         // Surrender removes the faction without awarding unearned combat kills.
         e.hp = 0;
         e.orders = [];
@@ -388,5 +398,5 @@ export class Simulation {
   }
 }
 
-Object.assign(Simulation.prototype, vision, orders, movement, combat, economy, ai, missions, tactics, progression, coalitionPlan, commands, snapshot);
+Object.assign(Simulation.prototype, points, expansion, vision, orders, movement, combat, economy, ai, missions, tactics, progression, coalitionPlan, commands, snapshot);
 Simulation.load = (saved) => restore(Simulation, saved);

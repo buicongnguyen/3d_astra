@@ -61,7 +61,7 @@ export class CaptureRings {
   // `colors` are the army colours by team (hex numbers); `still` turns the pulse off for Eco
   // graphics and reduced motion.
   update(sim, colors, still) {
-    const points = sim.mission?.points;
+    const points = sim.mission ? sim.mission.points : sim.skirmishPoints;
     if (!points || !Object.keys(points).length) { if (this.rings.size) this.clear(); return; }
     if (points !== this.source) this.build(points);
     for (const [name, ring] of this.rings) {

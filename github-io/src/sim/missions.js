@@ -111,8 +111,21 @@ export const missions = {
     }
     for (let i = 0; i < (def.triggers || []).length; i++) this.stepTrigger(def.triggers[i], i);
   },
-  stepPoints(dt) {
-    for (const [name, p] of Object.entries(this.mission.points)) {
+  // Skirmish capture points (see sim/points.js): the same ring mechanics, a small steady income.
+  stepSkirmishPoints(dt) {
+    const points = this.skirmishPoints;
+    if (!points || this.mission) return;
+    for (const p of Object.values(points))
+      if (p.gives && p.owner !== null && this.players[p.owner] && !this.players[p.owner].eliminated)
+        for (const [type, rate] of Object.entries(p.gives)) this.players[p.owner][type] += rate * dt;
+    this.pointDue = (this.pointDue ?? 0) - dt;
+    if (this.pointDue <= 1e-9) {
+      this.pointDue += CHECK;
+      this.stepPoints(CHECK, points);
+    }
+  },
+  stepPoints(dt, points = this.mission.points) {
+    for (const [name, p] of Object.entries(points)) {
       const present = new Set();
       for (const e of this.entities) if (fighter(e) && distance(e, p) <= p.r) present.add(e.team);
       // Allied AIs count as one side: they never contest each other's points.

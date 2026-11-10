@@ -177,7 +177,7 @@ let campaign = loadProgress(),
   activeStage = null;
 ({ map: mapId, enemyCount, aiSpeed, alliance, bonus, mission } = battleSetup());
 // Every match, preview and restart is built from the current setup (a story mission included).
-const createSim = () => new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus, mission });
+const createSim = () => new Simulation({ map: mapId, enemyCount, aiSpeed, alliance, playerBonus: bonus, mission, capturePoints: !mission && playMode === "skirmish" });
 let sim = createSim(),
   view,
   selected = new Set(),
@@ -640,7 +640,8 @@ function updateUI() {
         : "";
     const actions =
       e && es.length === 1 && e.kind === "building"
-        ? e.trains || []
+        // Weapons and plating share one slot on the card: plating takes over once weapons are researched.
+        ? (e.trains || []).filter((t) => t !== "plating").map((t) => t === "upgrade" && e.team === 0 && p.upgrade ? "plating" : t)
         : es.some((u) => u.type === "worker")
           ? BUILDINGS
           : [];
@@ -661,7 +662,7 @@ function updateUI() {
       actions
         .map((type, index) => {
           const d = D[type];
-          const label = type === 'upgrade' ? 'Weapons +' : d.name;
+          const label = type === 'upgrade' ? 'Weapons +' : type === 'plating' ? 'Plating' : d.name;
           return `<button class="command-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" aria-label="${d.name}, ${d.cost[0]} alloy${d.cost[1] ? ` and ${d.cost[1]} energy` : ''}" title="${ACTION_KEYS[index]} · ${d.name} · ${d.description}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${hasPortrait(type) ? portrait(type) : icon(d.icon || type)}<span>${label}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
         })
         .join("") || tactics || (structure ? `<p class="structure-hint">${e.description}</p>` : e?.kind==='building' ? '' :
@@ -797,7 +798,7 @@ function incomingAlert(event) {
 const pointOwners = new Map();
 function syncPointOwners() {
   pointOwners.clear();
-  for (const [name, p] of Object.entries(sim.mission?.points || {})) pointOwners.set(name, p.owner ?? null);
+  for (const [name, p] of Object.entries(sim.mission?.points || sim.skirmishPoints || {})) pointOwners.set(name, p.owner ?? null);
 }
 function pointAlert(event) {
   const name = pointLabel(sim.missionDef, event.name), before = pointOwners.get(event.name) ?? null;
@@ -881,7 +882,7 @@ function minimap() {
   ctx.drawImage(minimapFog.canvas, 0, 0, w, h);
   ctx.imageSmoothingEnabled = true;
   // Capture points: a ring in the owner's colour (grey while neutral) and the taker's progress.
-  for (const p of Object.values(sim.mission?.points || {})) {
+  for (const p of Object.values(sim.mission?.points || sim.skirmishPoints || {})) {
     const cx = px(p.x), cy = pz(p.z), radius = Math.max(4.5, (p.r / MAP_SIZE) * w), owned = p.owner !== null && p.owner !== undefined;
     ctx.lineWidth = 2;
     ctx.strokeStyle = ctx.fillStyle = owned ? teamColors(settings, mission)[p.owner] : "#d3dadb";

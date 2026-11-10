@@ -88,7 +88,9 @@ export class PlayBot {
     // No march while an attack warning is fresh or enemies stand near the core.
     const raid = s.time < this.alarm || s.entities.some((e) => e.hp > 0 && e.kind === "unit" && s.hostile(team, e.team) && s.isVisible(e, team) && Math.hypot(e.x - hq.x, e.z - hq.z) < 30);
     if (fighters.length >= this.attackAt && s.time >= this.attackAfter && !raid && !fighters.some((e) => e.orders.length)) {
-      const target = [...s.knownCores[team].values()][0];
+      s.updateKnownCores(team);
+      // With no core in sight (an expansion the AI built out of view) the army sweeps the map.
+      const target = [...s.knownCores[team].values()][0] || s.scoutDestination(team);
       if (target) {
         s.command({ team, type: "order", ids: fighters.map((e) => e.id), order: { type: "attackmove", x: target.x, z: target.z } });
         this.party = fighters.map((e) => e.id);
