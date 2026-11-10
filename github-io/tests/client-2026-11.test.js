@@ -6,7 +6,9 @@ import { isTouchPointer, TouchControls } from "../src/touch-controls.js";
 import { audioPower } from "../src/ambience.js";
 import { translate } from "../src/i18n.js";
 
-const main = readFileSync(new URL("../src/main.js", import.meta.url), "utf8");
+import { clientSource } from "./lib/client-source.js";
+// The client is src/main.js plus src/app/*.js (split in 0.8.0); look through all of it.
+const main = clientSource();
 
 test("the FPS readout is a setting, off by default", () => {
   assert.equal(defaults().showFps, false);

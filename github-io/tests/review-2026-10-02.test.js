@@ -1,8 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { clientFile, functionBody } from "./lib/client-source.js";
 
-const src = readFileSync(new URL("../src/main.js", import.meta.url), "utf8");
+// Source text of the modules that own each behaviour (src/app/, split from main.js in 0.8.0).
+const src = clientFile("minimap.js");
+const preferences = clientFile("preferences.js");
+const frame = clientFile("frame.js");
 
 test("minimap contextmenu ignores touch long-press", () => {
   const i = src.indexOf('$("minimap").addEventListener("contextmenu"');
@@ -10,10 +13,8 @@ test("minimap contextmenu ignores touch long-press", () => {
   assert.match(src.slice(i, i + 250), /pointerType === "touch"\) return/);
 });
 test("applyPreferences refreshes audio title", () => {
-  const i = src.indexOf("function applyPreferences");
-  const j = src.indexOf("\nfunction ", i + 10);
-  assert.match(src.slice(i, j), /\$\("audio"\)\.title =/);
+  assert.match(functionBody(preferences, "applyPreferences"), /\$\("audio"\)\.title =/);
 });
 test("focusHome tolerates missing view", () => {
-  assert.match(src, /view\?\.focusOn\(hq\.x \+ 5/);
+  assert.match(frame, /view\?\.focusOn\(hq\.x \+ 5/);
 });

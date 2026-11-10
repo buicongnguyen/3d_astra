@@ -28,7 +28,25 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 
 | File | Responsibility |
 |---|---|
-| `main.js` | Input, selection, command UI, match flow (large; to be split) |
+| `main.js` (153 lines) | Composition root: imports (their order fixes the stylesheet order), creates the page and the shared state, runs each module's `setup` then `bind`, boots the 3D view and loads the models |
+| `app/state.js` | The one shared mutable state object `S` (match, selection, modes, input, audio, settings, campaign picks) and the frame governor |
+| `app/screens.js` | Screen-state machine: `menu`, `playing`, `held`, `pause`, `help`, `result`, `graphics`, `fullscreen`, `guide`, `settings`. Every move goes through `begin`, `toMenu`, `open`, `close`, `dismiss`, `hold`/`release` or `snapshot`/`restore`; the legal-move table is unit-tested |
+| `app/shell.js`, `app/dom.js` | The static page markup; the `$(id)` helper |
+| `app/hud.js` | Layout (compact, touch, desktop console), notices, top bar and selection / command panel refresh (`updateUI`), training panel, objectives toggle, mission UI |
+| `app/preferences.js` | `applyPreferences`, the settings dialog, language row, quality and sound buttons |
+| `app/sound.js` | Audio context, UI tones, the audio clock that sleeps while paused or hidden |
+| `app/selection.js` | Selection, control groups, select-all-of-a-type |
+| `app/orders.js` | Targeting modes, building placement, the order a click or tap sends (`commandAt`) |
+| `app/abilities.js` | Abilities, stances, Barrage aiming, auto-cast |
+| `app/command-card.js` | Order buttons, command tiles, tooltip line, production and construction panels |
+| `app/input-pointer.js` | Mouse and touch: hover, drag boxes, taps, camera drag, touch buttons |
+| `app/input-keyboard.js` | Keyboard shortcuts (`runShortcut`), key handling, pause on blur |
+| `app/minimap.js` | Minimap drawing, remembered buildings and deposits, minimap clicks |
+| `app/modals.js` | Modal shell, pause, help, full screen, graphics-lost and field-guide dialogs |
+| `app/briefing.js` | Start screen: mode switch, campaign list, battle setup and preview |
+| `app/match-flow.js` | Start, restart, new game, autosave and Continue, result and debrief |
+| `app/frame.js` | The frame loop (simulation steps, event dispatch, camera pan, governor sampling) and alerts |
+| `app/debug-hooks.js` | `window.__frontier`, the opt-in hook for browser tests (`?test`) |
 | `view.js` | Rendering, models, effects, fog, camera |
 | `scatter.js`, `map-edge.js`, `ground-paint.js`, `fog-aware.js`, `visual-style.json` | Map look: palettes, lighting, dressing |
 | `faction-colors.js` | Faction colours for mission enemies |
@@ -38,6 +56,8 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 | `i18n.js`, `locales/` | Text catalogue (keyed by the English string); the story catalogue loads on demand |
 | `governor.js`, `entity-batches.js`, `ambient-life.js` | Frame-time governor, instanced batches, ambient life |
 | `music.js` | Music and sound |
+
+**How the app modules fit together.** Each `app/` module exports `setupX(S, A)`. `S` is the shared state; `A` is what modules offer one another (functions and widgets). `setup` registers functions on `A` and builds widgets; it returns a `bind()` that attaches listeners and does one-off DOM changes. `main.js` runs all setups, then all binds in a fixed order (same-type listeners keep their order). Modules never import each other, so there are no cycles. A module that is the only user of a value keeps it as a local; everything shared lives on `S`. The hot frame loop is in `frame.js` only.
 
 ## Rules that keep it correct
 - The simulation never imports the client; the client reads it and sends commands.

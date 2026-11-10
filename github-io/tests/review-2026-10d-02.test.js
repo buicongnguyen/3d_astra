@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { clientFile, clientSource, functionBody } from "./lib/client-source.js";
 
-// main.js needs a DOM, so these assert on its source text.
-const src = readFileSync(new URL("../src/main.js", import.meta.url), "utf8");
-const body = (name) => src.slice(src.indexOf(`function ${name}(`), src.indexOf("\nfunction ", src.indexOf(`function ${name}(`) + 10));
+// The client needs a DOM, so these assert on the source text of src/app/ (split from main.js in 0.8.0).
+const files = { minimap: "minimap.js", updateUI: "hud.js", setModalOpen: "modals.js", newGame: "match-flow.js" };
+const body = (name) => functionBody(clientFile(files[name]), name);
+const src = clientSource();
 
 test("minimap caches static terrain and draws fog from ImageData", () => {
   const m = body("minimap");

@@ -44,6 +44,16 @@ Known limits
 - Story text is English only for now.
 - Destroying an enemy core also removes that side's tagged buildings, so a "destroy the siphons" objective can be finished that way.
 
+## 0.8.0: structure
+
+No visible change; the client is easier to work in.
+
+- `src/main.js` (2,389 lines, one closure with about 50 shared variables) is now a 153-line composition root plus 19 modules under `src/app/`: state, screens, shell, HUD, preferences, sound, selection, orders, abilities, command card, pointer and keyboard input, minimap, modals, briefing, match flow, frame loop and test hooks.
+- The app flow is an explicit screen-state machine (`src/app/screens.js`): `menu`, `playing`, `held`, `pause`, `help`, `result`, `graphics`, `fullscreen`, `guide`, `settings`. `started`, `paused` and the dialog flag are no longer assigned all over the code; screens change through `begin`, `toMenu`, `open`, `close`, `dismiss`, `hold` / `release` and `snapshot` / `restore`. A unit test checks the legal-move table and every transition.
+- Shared mutable state is one object (`S`); modules reach one another through a registry (`A`), so there are no import cycles. `window.__frontier`, DOM ids and classes, listener order, event order and match hashes are unchanged (checked by a before/after DOM and listener snapshot across start, play, pause and help).
+- Source-text tests now read the module that owns each behaviour (`tests/lib/client-source.js`): `client-2026-11`, `review-2026-10-02`, `review-2026-10b-00`, `review-2026-10b-01`, `review-2026-10d-02`, `review-2026-10d-07`.
+- Bundle: main chunk 493.3 kB to 507.3 kB (gzip 164.7 kB to 167.3 kB); the growth is the `S.`, `A.` and `Z.` property accesses that a minifier cannot shorten. Draw calls are unchanged (`test:render-budget`).
+
 ## 0.7.0: rebuild phase C (rules depth)
 
 Rules

@@ -12,7 +12,8 @@ Status of the rebuild plan ([REVIEW_AND_REBUILD_PLAN_2026-11.md](REVIEW_AND_REBU
 | E | The look: per-map palettes and lighting, seeded dressing, map edge, unit and building life, faction colours | Done (0.5.0). Left: tank turret tracking (needs a model export), terrain height |
 | E | Music and sound, made in-house | Done (0.6.0), not yet judged by ear |
 | F | Phone landscape rework, desktop HUD sizes, results screen | Done (0.6.0). Left: idle-worker shortcuts, draggable minimap with pings, core-destruction camera beat |
-| B | Leftovers: screen-state machine, split of main.js, keyed text catalogue, staged loading, move to Playwright Test | Later |
+| B | Client restructure: screen-state machine and split of main.js | Done (0.8.0) |
+| B | Leftovers: keyed text catalogue, staged loading, move to Playwright Test | Later |
 | After | Online multiplayer | Not started |
 
 ## Known gaps
