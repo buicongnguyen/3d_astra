@@ -7,6 +7,7 @@ import {
   cellAt,
   worldAt,
   distance,
+  hyp,
   clamp,
 } from "./data.js";
 import { Navigation } from "./navigation.js";
@@ -23,6 +24,8 @@ const SQUEEZE = 0.55;
 const LEASH = 4;
 // Seconds a team with only an unfinished Command core has to complete it.
 const CORE_GRACE = 90;
+// Route searches per 50 ms tick; each costs up to a few milliseconds on the largest maps.
+const ROUTES_PER_TICK = 6;
 // Contested middle-lane deposits on every map: [type, x, z, amount], mirrored for the rival.
 const MIDFIELD_DEPOSITS = [
   ["alloy", 14, 27, 2500],
@@ -41,6 +44,8 @@ export class Simulation {
     this.time = 0;
     // Whole steps taken; commands are logged against it (see commands.js).
     this.ticks = 0;
+    // Route searches still allowed this tick (see move()); unlimited outside tick().
+    this.routeBudget = Infinity;
     this.commandLog = [];
     this.enemyCount = Number.isInteger(enemyCount) ? clamp(enemyCount, 1, 3) : 1;
     this.aiSpeed = Object.hasOwn(AI_SPEEDS, aiSpeed) ? aiSpeed : "normal";
@@ -59,6 +64,7 @@ export class Simulation {
     this.terrain = new Terrain(map);
     this.nav = new Navigation(this.terrain);
     this.aiClock = 0;
+    this.aiTurn = 0;
     this.waveAt = this.players.map((_, team) => this.pace.firstWave + Math.max(0, team - 1) * 15);
     if (this.coalition) this.initCoalition();
     this.visionClock = 0;
@@ -111,7 +117,7 @@ export class Simulation {
     for (const side of [1, -1]) {
       for (const [type, x, z, amount] of MIDFIELD_DEPOSITS) {
         // Extra rival bases (two or three enemies) take precedence over a midfield deposit.
-        if (this.entities.some((e) => e.kind === "building" && Math.hypot(e.x - x * side, e.z - z * side) < e.radius + 6)) continue;
+        if (this.entities.some((e) => e.kind === "building" && hyp(e.x - x * side, e.z - z * side) < e.radius + 6)) continue;
         this.resource(type, x * side, z * side, amount);
       }
     }
@@ -212,11 +218,18 @@ export class Simulation {
   attackable(team, t) {
     return !!t && (this.hostile(team, t.team) || t.team === NEUTRAL);
   }
+  // Live entity or unspent deposit by id. Ids are unique across both lists; the lookup table
+  // is rebuilt whenever either list changes (the entity list is replaced every tick).
   get(id) {
-    return (
-      this.entities.find((e) => e.id === id && e.hp > 0) ||
-      this.resources.find((e) => e.id === id && e.amount > 0)
-    );
+    if (this.lookupFor !== this.entities || this.lookupSize !== this.entities.length + this.resources.length) {
+      this.lookup = new Map();
+      for (const r of this.resources) this.lookup.set(r.id, r);
+      for (const e of this.entities) this.lookup.set(e.id, e);
+      this.lookupFor = this.entities;
+      this.lookupSize = this.entities.length + this.resources.length;
+    }
+    const e = this.lookup.get(id);
+    return e && (e.kind === "resource" ? e.amount > 0 : e.hp > 0) ? e : undefined;
   }
   own(team) {
     return this.entities.filter((e) => e.team === team && e.hp > 0);
@@ -431,7 +444,7 @@ export class Simulation {
       return "Outside the buildable area.";
     if (!this.isVisible({ x, z }, team))
       return "Explore this area before building.";
-    if (this.entities.some((w) => w.kind === "wall" && w.hp > 0 && Math.hypot(x - w.x, z - w.z) < d.radius + w.radius + 0.5))
+    if (this.entities.some((w) => w.kind === "wall" && w.hp > 0 && hyp(x - w.x, z - w.z) < d.radius + w.radius + 0.5))
       return "A concrete wall blocks this location.";
     if (
       this.entities.some(
@@ -439,7 +452,7 @@ export class Simulation {
           e.hp > 0 &&
           e.kind === "building" &&
           // 1.25 m: wider than the smallest unit (1.1 m), so no placement can seal a gap shut.
-          Math.hypot(x - e.x, z - e.z) < d.radius + e.radius + 1.25,
+          hyp(x - e.x, z - e.z) < d.radius + e.radius + 1.25,
       )
     )
       return "Too close to another structure.";
@@ -447,7 +460,7 @@ export class Simulation {
       this.resources.some(
         (e) =>
           e.amount > 0 &&
-          Math.hypot(x - e.x, z - e.z) < d.radius + e.radius + 1,
+          hyp(x - e.x, z - e.z) < d.radius + e.radius + 1,
       )
     )
       return "Keep resource deposits clear.";
@@ -457,7 +470,7 @@ export class Simulation {
           e.hp > 0 &&
           e.kind === "unit" &&
           e.team !== team &&
-          Math.hypot(x - e.x, z - e.z) < d.radius + e.radius + 0.3,
+          hyp(x - e.x, z - e.z) < d.radius + e.radius + 0.3,
       )
     )
       return "Units are standing in the construction footprint.";
@@ -502,7 +515,7 @@ export class Simulation {
     const moved = [];
     for (const e of this.entities) {
       if (e.hp <= 0 || e.kind !== "unit") continue;
-      const dx = e.x - x, dz = e.z - z, d = Math.hypot(dx, dz), clear = D[type].radius + e.radius + 0.35;
+      const dx = e.x - x, dz = e.z - z, d = hyp(dx, dz), clear = D[type].radius + e.radius + 0.35;
       if (d >= clear) continue;
       const a = d > 1e-3 ? Math.atan2(dz, dx) : e.id;
       e.x = x + Math.cos(a) * clear;
@@ -557,7 +570,7 @@ export class Simulation {
   escapePoint(e, goal = null) {
     let near = null, best = Infinity;
     for (const o of this.nav.obstacles) {
-      const d = Math.hypot(e.x - o.x, e.z - o.z) - o.radius;
+      const d = hyp(e.x - o.x, e.z - o.z) - o.radius;
       if (d < best) { best = d; near = o; }
     }
     const base = near ? Math.atan2(e.z - near.z, e.x - near.x) || 0 : 0;
@@ -591,7 +604,7 @@ export class Simulation {
     }
     if (e.escape) {
       // A short straight hop out of a tight spot, ignoring the footprint it is leaving.
-      const dx = e.escape.x - e.x, dz = e.escape.z - e.z, d = Math.hypot(dx, dz);
+      const dx = e.escape.x - e.x, dz = e.escape.z - e.z, d = hyp(dx, dz);
       if (d < 0.2 || this.time > e.escape.until) { e.escape = null; e.path = []; e.pathClock = 0; e.stalled = 0; e.moveSample = null; }
       else {
         const step = Math.min(d, e.speed * dt);
@@ -633,7 +646,15 @@ export class Simulation {
       return false;
     }
     e.pathClock -= dt;
-    if (e.pathClock <= 0 || e.pathRevision !== this.nav.revision) {
+    if ((e.pathClock <= 0 || e.pathRevision !== this.nav.revision) && this.routeBudget <= 0) {
+      // No search slot left this tick: a unit with a current route keeps following it, any
+      // other waits a moment. A large group therefore sets off over a few ticks, not in one hitch.
+      if (!e.path.length || e.pathRevision !== this.nav.revision) {
+        e.moving = false;
+        return false;
+      }
+    } else if (e.pathClock <= 0 || e.pathRevision !== this.nav.revision) {
+      this.routeBudget--;
       e.path = this.nav.path(e, goal, e.radius);
       // No route for the full body: squeeze a big unit through a narrow gap on a slim one instead of
       // leaving it sealed in beside the buildings (it may clip a corner, which beats staying stuck).
@@ -661,7 +682,7 @@ export class Simulation {
     }
     const dx = next.x - e.x,
       dz = next.z - e.z,
-      d = Math.hypot(dx, dz),
+      d = hyp(dx, dz),
       step = Math.min(d, e.speed * dt);
     if (d < 0.0001) {
       e.path.shift();
@@ -869,7 +890,7 @@ export class Simulation {
   noFiringPosition(e, t) {
     const f = e.firing;
     return !!f?.exhausted && f.target === t.id && f.revision === this.nav.revision &&
-      Math.hypot(f.tx - t.x, f.tz - t.z) < 1;
+      hyp(f.tx - t.x, f.tz - t.z) < 1;
   }
   // The nearest standable point with a clear shot on rings around the target, widest ring
   // first; each failed candidate moves on to the next ring. Returns null once every ring
@@ -880,7 +901,7 @@ export class Simulation {
     if (
       cached?.target === t.id &&
       cached.revision === this.nav.revision &&
-      Math.hypot(cached.tx - t.x, cached.tz - t.z) < 1
+      hyp(cached.tx - t.x, cached.tz - t.z) < 1
     ) {
       if (cached.exhausted) return null;
       if (!cached.failed) return cached;
@@ -1225,6 +1246,7 @@ export class Simulation {
     if (this.result || !Number.isFinite(dt) || dt <= 0) return;
     this.time += dt;
     this.ticks++;
+    this.routeBudget = ROUTES_PER_TICK;
     this.visionClock -= dt;
     if (this.visionClock <= 0) {
       this.updateVision();
@@ -1312,8 +1334,10 @@ export class Simulation {
           b = units[j],
           dx = a.x - b.x,
           dz = a.z - b.z,
-          d = Math.hypot(dx, dz),
           min = (a.radius + b.radius) * 0.9;
+        // Cheap reject for the vast majority of pairs, with a margin so the exact test below decides ties.
+        if (dx * dx + dz * dz > min * min * 1.001 + 1e-9) continue;
+        const d = hyp(dx, dz);
         if (d >= min) continue;
         const nx = d > 0.001 ? dx / d : 1,
           nz = d > 0.001 ? dz / d : 0,
@@ -1330,9 +1354,16 @@ export class Simulation {
     if (this.aiEnabled) {
       this.aiClock -= dt;
       if (this.aiClock <= 0) {
-        for (let team = 1; team < this.players.length; team++) this.updateAI(team);
-        if (this.coalition) this.advanceCoalition();
+        this.aiTurn = 1;
         this.aiClock = this.pace.think;
+      }
+      // One AI thinks per tick, so three rivals placing buildings do not land in the same step.
+      if (this.aiTurn) {
+        this.updateAI(this.aiTurn);
+        if (++this.aiTurn >= this.players.length) {
+          this.aiTurn = 0;
+          if (this.coalition) this.advanceCoalition();
+        }
       }
     }
     // A finished core keeps a team in the match. A core still under construction buys it

@@ -24,7 +24,10 @@ export const ROCKS = [
   [8, -34, 2.2],
   [6, -37, 2.5],
 ];
-export const distance = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
+// Plain square root, not Math.hypot: it is several times faster and, unlike hypot, gives the
+// same last digit in every browser, which replays and saves rely on.
+export const hyp = (x, z) => Math.sqrt(x * x + z * z);
+export const distance = (a, b) => hyp(a.x - b.x, a.z - b.z);
 export const clamp = (n, low, high) => Math.max(low, Math.min(high, n));
 export function cellAt(x, z) {
   return [

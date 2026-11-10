@@ -1,6 +1,8 @@
-import { CELL, GRID, HALF, ROCKS, cellAt, worldAt, distance } from "./data.js";
+import { CELL, GRID, HALF, ROCKS, cellAt, worldAt, distance, hyp } from "./data.js";
 import { Terrain } from "./terrain.js";
 
+// Side of an obstacle bucket in metres (see near()).
+const BUCKET = 8;
 export class Navigation {
   constructor(terrain = new Terrain()) {
     this.terrain = terrain;
@@ -13,6 +15,43 @@ export class Navigation {
     this.wallsSpawned = false;
     this.obstacles = [];
     this.clearance = new Map();
+    this.scratch = [];
+    this.bucketed = -1;
+  }
+  // Obstacle lookups by area. Obstacles are filed by the 8 m bucket their centre is in; a query
+  // returns those in the buckets a box touches, widened by the largest footprint, so callers
+  // test a handful of candidates instead of every building and wall on the map. The callers'
+  // own distance tests still decide, so results are exactly those of scanning the full list.
+  bucketObstacles() {
+    const half = this.terrain.half;
+    this.bucketSide = Math.max(1, Math.ceil((half * 2) / BUCKET));
+    this.buckets = Array.from({ length: this.bucketSide * this.bucketSide }, () => []);
+    this.reach = 0;
+    for (const o of this.obstacles) {
+      this.buckets[this.bucketOf(o.z) * this.bucketSide + this.bucketOf(o.x)].push(o);
+      if (o.radius > this.reach) this.reach = o.radius;
+    }
+    this.bucketed = this.obstacles.length;
+  }
+  bucketOf(v) {
+    const i = Math.floor((v + this.terrain.half) / BUCKET);
+    return i < 0 ? 0 : i >= this.bucketSide ? this.bucketSide - 1 : i;
+  }
+  near(x0, z0, x1, z1, pad) {
+    if (this.bucketed !== this.obstacles.length) this.bucketObstacles();
+    const m = this.reach + pad;
+    const c0 = this.bucketOf(Math.min(x0, x1) - m), c1 = this.bucketOf(Math.max(x0, x1) + m),
+      r0 = this.bucketOf(Math.min(z0, z1) - m), r1 = this.bucketOf(Math.max(z0, z1) + m);
+    if (c0 === c1 && r0 === r1) return this.buckets[r0 * this.bucketSide + c0];
+    if ((c1 - c0 + 1) * (r1 - r0 + 1) > 24) return this.obstacles;
+    const out = this.scratch;
+    out.length = 0;
+    for (let r = r0; r <= r1; r++)
+      for (let c = c0; c <= c1; c++) {
+        const bucket = this.buckets[r * this.bucketSide + c];
+        for (let i = 0; i < bucket.length; i++) out.push(bucket[i]);
+      }
+    return out;
   }
   cellAt(x,z) { return this.terrain.cellAt(x,z); }
   worldAt(x,z) { return this.terrain.worldAt(x,z); }
@@ -26,6 +65,7 @@ export class Navigation {
     this.obstacles.push(
       ...entities.filter((e) => e.hp > 0 && (e.kind === "building" || e.kind === "wall")),
     );
+    this.bucketObstacles();
     this.blocked.fill(0);
     this.looseBlocked.fill(0);
     this.clearance.clear();
@@ -34,12 +74,12 @@ export class Navigation {
         const p = this.worldAt(x, z);
         if (
           !this.terrain.canStand(p.x, p.z, 0.65) ||
-          this.obstacles.some((o) => distance(p, o) < o.radius + 0.65)
+          this.near(p.x, p.z, p.x, p.z, 0.65).some((o) => distance(p, o) < o.radius + 0.65)
         )
           this.blocked[z * this.grid + x] = 1;
         if (
           !this.terrain.canStand(p.x, p.z, 0.3) ||
-          this.obstacles.some((o) => distance(p, o) < o.radius + 0.3)
+          this.near(p.x, p.z, p.x, p.z, 0.3).some((o) => distance(p, o) < o.radius + 0.3)
         )
           this.looseBlocked[z * this.grid + x] = 1;
       }
@@ -80,11 +120,13 @@ export class Navigation {
     if (!start || !end) return [];
     const s = start[1] * this.grid + start[0],
       goal = end[1] * this.grid + end[0];
-    const g = new Float32Array(this.grid * this.grid).fill(Infinity),
-      parent = new Int32Array(this.grid * this.grid).fill(-1),
-      closed = new Uint8Array(this.grid * this.grid);
+    // Search buffers are kept between calls; a route search runs many times a second.
+    const pool = (this.pool ??= { g: new Float32Array(this.grid * this.grid), parent: new Int32Array(this.grid * this.grid), closed: new Uint8Array(this.grid * this.grid) });
+    const g = pool.g.fill(Infinity),
+      parent = pool.parent.fill(-1),
+      closed = pool.closed.fill(0);
     const heuristic = (id) =>
-      Math.hypot((id % this.grid) - end[0], Math.floor(id / this.grid) - end[1]);
+      hyp((id % this.grid) - end[0], Math.floor(id / this.grid) - end[1]);
     // Binary min-heap keyed by f = g + h. Improved nodes are pushed again and
     // stale entries are skipped once closed (lazy deletion).
     const heapIds = [],
@@ -213,12 +255,12 @@ export class Navigation {
   // wider map right now? (Ground already isolated before the building does not count.)
   wouldSeal(x, z, radius, reach = 24) {
     const n = this.grid, { comp } = this.regions(), r2 = radius + 0.65;
-    const covered = (i) => { const p = this.worldAt(i % n, (i / n) | 0); return Math.hypot(p.x - x, p.z - z) < r2; };
+    const covered = (i) => { const p = this.worldAt(i % n, (i / n) | 0); return hyp(p.x - x, p.z - z) < r2; };
     // The region around the site: the one holding the free cell nearest to it.
     let id = -1, near = Infinity;
     for (let i = 0; i < n * n; i++) {
       if (comp[i] < 0) continue;
-      const p = this.worldAt(i % n, (i / n) | 0), d = Math.hypot(p.x - x, p.z - z);
+      const p = this.worldAt(i % n, (i / n) | 0), d = hyp(p.x - x, p.z - z);
       if (d < near) { near = d; id = comp[i]; }
     }
     if (id < 0) return false;
@@ -227,7 +269,7 @@ export class Navigation {
     for (let i = 0; i < n * n && seed < 0; i++) {
       if (comp[i] !== id || covered(i)) continue;
       const p = this.worldAt(i % n, (i / n) | 0);
-      if (Math.hypot(p.x - x, p.z - z) > reach + 2) seed = i;
+      if (hyp(p.x - x, p.z - z) > reach + 2) seed = i;
     }
     if (seed < 0) return false;
     const seen = new Uint8Array(n * n), stack = [seed], ok = (i) => !this.blocked[i] && !covered(i);
@@ -248,7 +290,7 @@ export class Navigation {
     for (let i = 0; i < n * n; i++) {
       if (comp[i] !== id || seen[i] || covered(i)) continue;
       const p = this.worldAt(i % n, (i / n) | 0);
-      if (Math.hypot(p.x - x, p.z - z) < reach) return true;
+      if (hyp(p.x - x, p.z - z) < reach) return true;
     }
     return false;
   }
@@ -256,7 +298,7 @@ export class Navigation {
     const dx = b.x - a.x,
       dz = b.z - a.z,
       length2 = dx * dx + dz * dz;
-    return !this.obstacles.some((o) => {
+    return !this.near(a.x, a.z, b.x, b.z, 0.2).some((o) => {
       if (
         (ignored !== undefined && o.id === ignored) ||
         distance(a, o) < o.radius + 0.2
@@ -266,7 +308,7 @@ export class Navigation {
         0,
         Math.min(1, ((o.x - a.x) * dx + (o.z - a.z) * dz) / (length2 || 1)),
       );
-      return Math.hypot(a.x + t * dx - o.x, a.z + t * dz - o.z) < o.radius;
+      return hyp(a.x + t * dx - o.x, a.z + t * dz - o.z) < o.radius;
     });
   }
   canStand(x, z, radius = 0.55) {
@@ -276,8 +318,8 @@ export class Navigation {
       Math.abs(x) < this.terrain.half - radius &&
       Math.abs(z) < this.terrain.half - radius &&
       this.terrain.canStand(x, z, radius) &&
-      !this.obstacles.some(
-        (o) => Math.hypot(x - o.x, z - o.z) < o.radius + radius,
+      !this.near(x, z, x, z, radius).some(
+        (o) => hyp(x - o.x, z - o.z) < o.radius + radius,
       )
     );
   }
@@ -292,7 +334,7 @@ export class Navigation {
     const dx = b.x - a.x,
       dz = b.z - a.z,
       length2 = dx * dx + dz * dz;
-    return !this.obstacles.some((o) => {
+    return !this.near(a.x, a.z, b.x, b.z, radius).some((o) => {
       const clearance = o.radius + radius;
       // Allow a unit displaced into a footprint to move outward, never further in.
       if (distance(a, o) < clearance)
@@ -301,7 +343,7 @@ export class Navigation {
         0,
         Math.min(1, ((o.x - a.x) * dx + (o.z - a.z) * dz) / (length2 || 1)),
       );
-      return Math.hypot(a.x + t * dx - o.x, a.z + t * dz - o.z) < clearance;
+      return hyp(a.x + t * dx - o.x, a.z + t * dz - o.z) < clearance;
     });
   }
 }

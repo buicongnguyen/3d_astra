@@ -1,4 +1,4 @@
-import { HALF, ROCKS } from "./data.js";
+import { HALF, ROCKS, hyp } from "./data.js";
 import MAP_CONFIG from './maps.json' with { type: 'json' };
 export const MAPS = Object.fromEntries(Object.entries(MAP_CONFIG).map(([id,m])=>[id,`${m.name} · ${m.size}×${m.size}`]));
 export const CROSSINGS = [
@@ -25,7 +25,7 @@ const waterRects = [
 ].map(([left, right]) => ({ left, right, top: -3, bottom: 3 }));
 function overlaps(x, z, r, b) {
   return (
-    Math.hypot(
+    hyp(
       x - Math.max(b.left, Math.min(b.right, x)),
       z - Math.max(b.top, Math.min(b.bottom, z)),
     ) <
@@ -47,7 +47,7 @@ export class Terrain {
       return CROSSINGS.find((c) => Math.abs(x - c.x) < c.half)?.type ?? "water";
     if (this.river && Math.abs(z) < 5)
       return CROSSINGS.some((c) => Math.abs(x - c.x) < c.half) ? "road" : "mud";
-    if (ROCKS.some(([rx, rz, r]) => Math.hypot(x - rx, z - rz) < r + 1))
+    if (ROCKS.some(([rx, rz, r]) => hyp(x - rx, z - rz) < r + 1))
       return "stone";
     if (
       Math.min(Math.abs(x + 22), Math.abs(x - 22)) < 2.3 ||
@@ -79,7 +79,7 @@ export class Terrain {
     if (!this.water.length) return true;
     const steps = Math.max(
       1,
-      Math.ceil(Math.hypot(b.x - a.x, b.z - a.z) / 0.4),
+      Math.ceil(hyp(b.x - a.x, b.z - a.z) / 0.4),
     );
     for (let i = 0; i <= steps; i++)
       if (

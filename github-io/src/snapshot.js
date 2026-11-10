@@ -5,7 +5,7 @@ import { DEFINITIONS as D } from "./data.js";
 // or transient (the event queue). Bump SAVE_VERSION whenever a stored field changes meaning;
 // older saves are then refused instead of loading wrongly.
 export const SAVE_VERSION = 1;
-const DERIVED = new Set(["nav", "terrain", "pace", "events", "commandLog"]);
+const DERIVED = new Set(["nav", "terrain", "pace", "events", "commandLog", "lookup", "lookupFor", "lookupSize"]);
 
 const packBits = (cells) => {
   let text = "";
