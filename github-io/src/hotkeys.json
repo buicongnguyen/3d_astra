@@ -17,6 +17,7 @@
     {"id":"upgrade","label":"Upgrade building","key":"U"},
     {"id":"cancel","label":"Cancel last job / site","key":"Backspace"},
     {"id":"idle","label":"Next idle Harvester","key":"F1 / ."},
+    {"id":"idle-army","label":"Next idle army unit","key":","},
     {"id":"army","label":"Select army","key":"F2"},
     {"id":"workers","label":"Select Harvesters","key":"F3"},
     {"id":"buildings","label":"Select buildings","key":"F4"},

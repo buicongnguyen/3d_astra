@@ -76,7 +76,7 @@ try {
     assert.equal(await page.locator('#mb-line').innerText(), mission.lines[0]);
     assert.equal(await page.locator('#mb-speaker').innerText(), 'Mira Vale');
     assert.match(await page.locator('#mb-role').innerText(), /Operations officer/);
-    assert.equal(await page.locator('#mb-portrait .cast-portrait svg').count(), 1, 'the speaker has a portrait');
+    assert.equal(await page.locator('#mb-portrait .cast-portrait :is(svg, img)').count(), 1, 'the speaker has a portrait');
     assert.match(await page.locator('#mb-place').innerText(), /MERIDIAN RIVERLANDS/i);
     assert.equal(await frontier(() => window.__frontier.started), false);
     const before = await frontier(() => window.__frontier.sim.time);
@@ -143,7 +143,7 @@ try {
     await page.locator('#dialogue').waitFor({ state: 'visible' });
     assert.equal(await page.locator('#dialogue').getAttribute('aria-live'), 'polite');
     assert.ok((await page.locator('#dialogue-name').innerText()).length > 2);
-    assert.equal(await page.locator('#dialogue-portrait .cast-portrait svg').count(), 1);
+    assert.equal(await page.locator('#dialogue-portrait .cast-portrait :is(svg, img)').count(), 1);
     assert.equal(await page.locator('#dialogue-text').innerText(), mission.say.text);
     await frontier(() => { const m = window.__frontier.mission; m.say('okoro', 'Pick a Harvester and raise a Supply relay near camp. It drinks from the old Lattice, and it lets you field more troops.'); });
     // Toasts slide below the box over a quarter of a second.

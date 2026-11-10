@@ -1,11 +1,35 @@
-import vietnamese from './locales/vi.json' with {type: 'json'};
-
 export const LANGUAGES = Object.freeze({en: 'English', vi: 'Tiếng Việt'});
 let language = 'en';
 const normalize = text => text.trim().replace(/\s+/g, ' ').toLowerCase();
-const messages = new Map(Object.entries(vietnamese.messages).map(([key, value]) => [normalize(key), value]));
-const patterns = vietnamese.patterns.map(([source, target]) => [new RegExp(source, 'i'), target]);
+const messages = new Map();
+let patterns = [];
 const cache = new Map();
+// The Vietnamese catalog (src/locales/vi.json) is its own chunk: English players never download
+// it. Browsers fetch it when Vietnamese is first shown (loadLocale); Node (unit tests) loads it
+// up front so translate() stays synchronous everywhere.
+let locale = null;
+function install(catalog) {
+  for (const [key, value] of Object.entries(catalog.messages)) messages.set(normalize(key), value);
+  patterns = catalog.patterns.map(([source, target]) => [new RegExp(source, 'i'), target]);
+  cache.clear();
+}
+export function loadLocale() {
+  locale ??= import('./locales/vi.json', {with: {type: 'json'}}).then(module => { install(module.default); return true; });
+  locale.catch(() => { locale = null; });
+  return locale;
+}
+if (typeof document === 'undefined') await loadLocale();
+
+// Dev aid: untranslated English reaching the screen is listed once in the console. Only in
+// development builds (never production), or when a page opts in with ?i18nwarn.
+const warned = new Set();
+const warnEnabled = () => import.meta.env?.DEV === true || (typeof location !== 'undefined' && /[?&]i18nwarn/.test(location.search));
+function warnMissing(text) {
+  if (warned.has(text) || !/[a-z]{3}/i.test(text) || /^[w.-]+$/.test(text) && !/[A-Z]/.test(text.slice(1)) && !text.includes(' ')) return;
+  if (!warnEnabled() || !locale) return;
+  warned.add(text);
+  console.warn('[i18n] no Vietnamese entry for: ' + JSON.stringify(text));
+}
 // The campaign story (src/locales/story-vi.json) is a separate catalog, fetched the first time
 // Vietnamese is shown, so English players never download it and the main catalog stays small.
 // Entries of the main catalog win; the translation cache is dropped because results may change.
@@ -45,7 +69,7 @@ export function translate(text, locale = language, depth = 0) {
     // Split hierarchically: label/description joints first so whole parts hit the catalog, then ' / ' and sentences.
     let pieces = source.split(/(\n+| · | — )/);
     if (pieces.length < 2) pieces = source.split(/( \/ |(?<=[.!?])\s+(?=[A-Z]))/);
-    result = pieces.length > 1 ? pieces.map(part => translate(part, locale, depth + 1)).join('') : source;
+    result = pieces.length > 1 ? pieces.map(part => translate(part, locale, depth + 1)).join('') : (warnMissing(source), source);
   }
   result = text.slice(0, text.indexOf(source)) + result + text.slice(text.indexOf(source) + source.length);
   if (cache.size >= 1024) cache.clear();

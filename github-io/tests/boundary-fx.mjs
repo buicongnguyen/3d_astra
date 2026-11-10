@@ -44,6 +44,8 @@ try{
   await page.locator('#start').click();
   const fx=await page.evaluate(()=>{
     const f=window.__frontier,s=f.sim,v=f.view;s.aiEnabled=false;s.tick=()=>{};
+    // The rival may already have a Harvester welding a new site; a frozen worker would emit sparks forever, so stand them all down.
+    for(const e of s.entities){if(e.type==='worker'){e.orders=[];e.working=false;}}
     s.visible[0].fill(1);s.updateVision=()=>{};
     const render=v.update.bind(v);v.update=(sim,dt,sel,hover)=>render(sim,0,sel,hover);
     const frame=(dt=1/60)=>render(s,dt,f.selected,null);

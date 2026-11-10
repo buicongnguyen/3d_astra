@@ -52,7 +52,7 @@ jobs:
           - name: mobile
             scripts: mobile mobile-controls mobile-gestures fullscreen
           - name: settings
-            scripts: improvements campaign
+            scripts: improvements campaign offline
           - name: story
             scripts: missions tactics-ui audio
           - name: languages
@@ -71,6 +71,8 @@ jobs:
             scripts: activity
           - name: layout
             scripts: status-layout layout-f
+          - name: ui-extras
+            scripts: ui-extras
           - name: visuals
             scripts: visual-combat
     defaults:
@@ -103,9 +105,16 @@ jobs:
             sleep 1
           done
           curl -fsS "$TEST_URL" > /dev/null
+          echo "### Browser suites (${{ matrix.name }})" >> "$GITHUB_STEP_SUMMARY"
+          echo "| suite | result | time |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          status=0
           for script in $TEST_SCRIPTS; do
-            npm run "test:$script"
+            started=$(date +%s)
+            if npm run "test:$script"; then result=pass; else result=FAIL; status=1; fi
+            echo "| $script | $result | $(( $(date +%s) - started )) s |" >> "$GITHUB_STEP_SUMMARY"
           done
+          exit $status
       - name: Preserve browser diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v7.0.1

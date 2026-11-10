@@ -1,15 +1,12 @@
-import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-const browser=await chromium.launch({headless:true,executablePath:process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':undefined,args:['--enable-unsafe-swiftshader']});
-fs.mkdirSync('test-results',{recursive:true});
-const page=await browser.newPage({viewport:{width:1280,height:800}});
-const errors=[];page.on('pageerror',e=>errors.push(e.message));
+import {launchBrowser,openPage,testUrl,suite,TIMEOUT} from './lib/harness.mjs';
+const browser=await launchBrowser();
+const {page,errors}=await openPage(browser,{width:1280,height:800});
 const selected=()=>page.evaluate(()=>[...window.__frontier.selected]);
 const press=async key=>{await page.keyboard.press(key);await page.waitForTimeout(90);};
-try {
-  await page.goto((process.env.TEST_URL||'http://127.0.0.1:4173/')+'?test=1');
-  await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});
+await suite('hotkeys',async()=>{
+  await page.goto(testUrl());
+  await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:TIMEOUT.models});
   await page.locator('#briefing-settings').focus();await press('Space');
   assert.ok(await page.locator('.settings-backdrop').isVisible(),'Space opens focused briefing Settings');
   await page.getByRole('button',{name:'Close settings',exact:true}).click();
@@ -47,7 +44,9 @@ try {
   for(const [building,types] of [['j',['vanguard','ranger','medic','antitank']],['k',['breaker','upgrade','engineer','tank']]]){
     await press(building);
     for(const [i,type] of types.entries()){
-      await press(['q','e','r','t'][i]);
+      // 0.9.1: the research slot opens a choice sheet first (weapons, plating, back).
+      if(type==='upgrade')await press('e');
+      await press(type==='upgrade'?'q':['q','e','r','t'][i]);
       assert.equal(await page.evaluate(()=>{const f=window.__frontier;return f.sim.get([...f.selected][0]).queue.at(-1)?.type;}),type);
       await press('Backspace');
     }
@@ -104,4 +103,4 @@ try {
     await page.locator('#modal [data-resume]').click();
   }
   console.log('PC shortcuts: selection, groups, every build/train tile, repeat guard, orders, rally, modal/input guards and command buttons passed.');
-} finally {await browser.close();}
+},{browser});

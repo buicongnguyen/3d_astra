@@ -1,5 +1,76 @@
 # Changelog
 
+## 0.9.0: interface
+
+Training
+- Bug fixed (CI only, phone landscape): a new lesson could open its card under the finger, and on a slow machine the click that ended the tap was hit-tested after the card had appeared, landed on "Focus target" and folded the card away. A click on the card buttons now counts only when its pointer-down began on the same button (keyboard clicks always count). The panel also moves (across, to the bottom of the battlefield, or to the opposite corner) whenever the lesson target would sit under it; before, in phone portrait and landscape it could cover the target.
+- tests/tutorial.mjs is strict again (the "stayed collapsed" workaround is gone); tests/ui-extras.mjs forces the stray click and fails on the old code.
+
+Idle units
+- New key `,` selects the next idle army unit and centres the camera on it (F1 and `.` still cycle idle Harvesters). The empty dock lists both with their counts; phones get two 44 px buttons that appear only while something is idle (in the landscape rail, floating at the right edge in portrait). Listed in the help.
+
+Minimap
+- Dragging the minimap moves the camera. Double-tap, double-click or Alt-click sends your own ping (cool colour, two ripples, fades in 2.5 s, client-only, the simulation never sees it); right-click pings when nothing is selected and still gives orders when something is. Your buildings or units being hit raise an "Under attack!" toast and a minimap ping (at most one per ten seconds of play).
+
+In-fight hints
+- When your army and a visible, on-screen enemy unit type meet, a small non-blocking hint says which of your types counters it or is countered by it (from balance.json `counter` and `mechanical_bonus`). Once per enemy type per match, dismissible, auto-hides after 9 s, never in Training.
+
+Core beat
+- The match-ending Command core death now holds the result for 1.5 s: the camera moves to the core and the effects play at 30% speed, then the result screen. Presentation only: the simulation has already finished, so replays and hashes are unchanged. Skipped with reduced motion and in Training. The `death` event gained `core: true` for this.
+
+Tests
+- tests/ui-extras.mjs (`npm run test:ui-extras`, CI group ui-extras): the six items above on 1440x900, 390x844 and 844x390, plus a notch test that sets 44 px safe-area insets through the browser (`Emulation.setSafeAreaInsetsOverride`; custom-property fallback) and checks no control, resource, minimap, toast or card sits under them (portrait: top and bottom, landscape: all four edges).
+
+## 0.9.1: rules
+
+AI
+- Normal and faster AIs now compose their army against what they have seen: they remember the enemy fighters, towers and cores that were in their vision (nothing from the fog; forgotten when seen dead) and counter them. Mostly vehicles: Anti-tank soldiers (Level 2 Barracks) up to half the seen vehicles, else Rangers. Mostly infantry: Rangers, and Breakers from the Foundry. Two or more towers: Breakers. Relaxed stays simple.
+- Surplus is used: a rich AI (500+ alloy) builds a third Barracks and extra towers, keeps more supply headroom (10 instead of 5) so a destroyed Supply relay is rebuilt sooner, and picks a research branch by role (siege: plating, others: weapons).
+- Badly hurt fighters (under 35% health) fall back to a Medic when the AI has one and rejoin at 70%.
+- Bug fixed (found by the new soak test): the expansion scout was re-picked on every think, so up to half the Harvesters walked off mining while a second core site was unexplored. One scout every 25 s now. Normal AI on Highlands no longer beats the bench bot by waiting out its economy.
+- tests/ai-soak.test.js: eight matches of ten sim-minutes (1 to 3 rivals, every speed, FFA and coalition, no human): every AI keeps 70% of its Harvesters busy, spends (alloy under 900), grows an army and never stalls on a full queue.
+
+Research
+- Overcharged weapons and Reinforced plating are now exclusive branches of the Foundry research: one per team. The old "needs weapons first" rule is gone. A save from 0.7.0 that holds both keeps both.
+- Card: the Foundry still shows four tiles. The research tile reads "Research / Choose one" and opens a sheet with Weapons +, Plating and Back; once one is chosen the slot shows it and the other is locked (message and tooltip say so).
+
+Energy
+- Energy sinks documented in docs/BALANCE.md (units, the research branch, building levels).
+
+## 0.9.2: loading
+
+Startup
+- Measured on a phone profile (390x844, Fast 3G 1.6 Mbit/s with 562 ms latency, CPU 4x, cold cache, median of 5): before, 3.36 MB over the wire (JS 328 kB, models 2.95 MB), start screen drawn at 3.7 s, Start enabled at 19.2 s, first match frame 0.38 s after tapping Start. After, 3.35 MB (JS 311 kB), 4.0 s, 19.7 s, 0.47 s: within run-to-run noise, because 88% of the bytes are the 14 .glb models and the link is the limit. Smaller models (meshopt or Draco compression, owned by the art work) are the only way to move that number; the service worker below makes every later visit instant.
+- The main chunk is 437 kB (144 kB gzip, was 507 kB / 167 kB): the Vietnamese catalogue (69 kB, 23 kB gzip) is its own chunk fetched when Vietnamese is first shown, and the sound engine (audio.js, sfx.js) is its own chunk fetched on the first tap. three stays its own chunk. The campaign story data, the mission, settings and tactics interfaces, scatter and the map edge stay in the main chunk: each is built synchronously for the start screen's preview match or the setup of the HUD, so deferring them would add a visible pop-in for no earlier start screen.
+- index.html carries a small inline splash that paints with the HTML, before any script runs.
+- Real load progress: the Start button shows "Loading terrain... 34%" (stage name, byte-true percent, a fill behind the label). Files are fetched in order (terrain, headquarters, harvester, then the rest) six at a time and handed to three.js' own cache, so WorldView.loadModels parses them without downloading again; failures fall back to its own retries. Start still stays disabled until every model is parsed.
+
+Offline
+- New service worker (tools/sw.template.js, published as sw.js by vite.config.js with the build's file list and hashes): the app files are precached per build (fc-shell-<build>), models are cached cache-first (fc-models-<hash of the model files>), pages go network first with the cached copy only when offline. A new worker waits (no skipWaiting), so an open match keeps its files; a small "A new version is ready" notice appears and the new version runs the next time the game is opened, which also deletes the old caches. Works under /3d_astra/. Not registered in development or under ?test (add ?sw to opt in).
+- tests/offline.mjs (npm run test:offline, DIST_DIR=<build>): first visit, offline reload shows a ready start screen, a new build waits beside the old one and replaces it when the game is reopened.
+
+Text
+- tests/i18n-coverage.test.js scans the UI source for visible English strings (templates, titles, aria-labels, notices, textContent) and fails when one has no Vietnamese entry. It found ten help-dialog rows; they are translated now. In development builds (or with ?i18nwarn) untranslated text reaching the screen in Vietnamese is listed once in the console; never in production.
+
+Screens
+- The start screen modes (Training, Skirmish, Campaign) are states of the screen machine (S.playMode now reads and writes Screens.mode) and the campaign mission briefing is a fourth state that opens only from Campaign; illegal moves are recorded like screen moves. Unit tests cover the legal transitions.
+
+Tests
+- tests/lib/harness.mjs (launch, three standard viewports, page factory with error capture, ?test URL helper, screenshots, timeouts, PASS/FAIL line with time); browser, hotkeys and language use it, behaviour unchanged. CI writes each suite's result and time to the job summary.
+
+## 0.9.3: art
+
+Models
+- The battle tank and the Breaker have a separate turret (`Turret_head*` parts plus a `Turret_pivot` empty in the GLB); the barrel stays its own recoil part inside it. Same triangle counts as before.
+- The view turns the turret toward its target (3 rad/s, shortest way, snaps with reduced motion or combat motion off) while the hull keeps its heading; recoil is along the barrel. Towers behave as before.
+- Tests: tests/assets.test.js checks the pivot, turret head and barrel on both vehicles.
+
+Portraits
+- The seven story busts (Commander, Vale, Okoro, Hale, Sol, Maren, ECHO) are Blender renders (`tools/blender/render_cast_portraits.py`, `tools/portraits_to_webp.py`): 256 px webp, 4-6 KB each, one lighting rig, faction-colour halo. Commander and ECHO stay faceless. The SVG drawings remain as the fallback.
+- tests/missions.mjs accepts an img as well as an svg portrait.
+
+Cost: a 60-unit battle draws about 9 more calls (battle-eco 113 -> 122) for the extra turret batches; triangles unchanged.
+
 ## 0.2.0: rebuild phase 0
 
 Rules

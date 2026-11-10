@@ -89,6 +89,9 @@ export function setupCommandCard(S, A) {
       const button = event.target.closest("[data-action]");
       if (!button || button.disabled) return;
       const type = button.dataset.action;
+      // The research tile opens a choice sheet of two exclusive upgrades; Back or a choice closes it.
+      if (type === "research" || type === "back") { S.researchOpen = type === "research"; A.tone(); A.updateUI(); return; }
+      if (type === "upgrade" || type === "plating") S.researchOpen = false;
       if (D[type].kind === "building") A.enterBuild(type);
       else {
         const b = A.selectedEntities()[0];

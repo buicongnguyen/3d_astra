@@ -49,6 +49,7 @@ Construction requires a ground click after choosing a blueprint. Production queu
 | Aim Barrage after its tile or key | Click inside the reach ring; Esc, right-click or Cancel leaves aiming |
 | Stance: Guard / Hold position / Aggressive | `[` / `]` / `\` (backslash) |
 | Next idle Harvester | F1 or . |
+| Next idle army unit (selects it and moves the camera) | , |
 | Select army / Harvesters / buildings | F2 / F3 / F4 |
 | Cycle Command cores / Barracks / Foundries | H / J / K |
 | Select all owned entities of the first selected type | Z |

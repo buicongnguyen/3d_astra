@@ -3,6 +3,8 @@ import { $ } from "./dom.js";
 import { surfaceColors } from "../ground-paint.js";
 import { teamColors } from "../faction-colors.js";
 
+const OWN_PING_SECONDS = 2.5;
+
 export function setupMinimap(S, A) {
   let minimapBase = null,
     minimapFog = null;
@@ -122,8 +124,26 @@ export function setupMinimap(S, A) {
       }
     for (let i = S.pings.length - 1; i >= 0; i--) {
       const ping = S.pings[i], age = S.sim.time - ping.at;
-      if (!(age >= 0 && age < 6)) { S.pings.splice(i, 1); continue; }
+      if (!(age >= 0 && age < (ping.own ? OWN_PING_SECONDS : 6))) { S.pings.splice(i, 1); continue; }
       const pulse = (performance.now() / 900) % 1;
+      if (ping.own) {
+        // The player's own marker: cool colour, two ripples, fades out over its short life.
+        const fade = 1 - age / OWN_PING_SECONDS;
+        if (fade <= 0) { S.pings.splice(i, 1); continue; }
+        ctx.strokeStyle = "#8fe8ff";
+        ctx.lineWidth = 2;
+        for (const phase of [pulse, (pulse + 0.5) % 1]) {
+          ctx.globalAlpha = fade * (1 - phase * 0.7);
+          ctx.beginPath();
+          ctx.arc(px(ping.x), pz(ping.z), 3 + phase * 10, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.fillStyle = "#8fe8ff";
+        ctx.globalAlpha = fade;
+        ctx.fillRect(px(ping.x) - 1.5, pz(ping.z) - 1.5, 3, 3);
+        ctx.globalAlpha = 1;
+        continue;
+      }
       ctx.strokeStyle = "#ff8a6a";
       ctx.lineWidth = 2;
       ctx.globalAlpha = 1 - pulse * 0.75;
@@ -161,11 +181,45 @@ export function setupMinimap(S, A) {
         z: ((e.clientY - r.top) / r.height) * MAP_SIZE - HALF,
       };
     };
+    // Your own ping: visible to you only, client-side (the simulation never sees it).
+    const ping = (p) => {
+      let own = 0;
+      for (let i = S.pings.length - 1; i >= 0; i--) if (S.pings[i].own && ++own >= 4) S.pings.splice(i, 1);
+      S.pings.push({ x: p.x, z: p.z, at: S.sim.time, own: true });
+      A.tone(700, 0.08);
+    };
+    // Dragging the map moves the camera along with the finger or pointer (not while aiming an order).
+    let drag = null, dragged = 0, lastTap = null;
+    const mm = $("minimap");
+    mm.addEventListener("pointerdown", (e) => {
+      if (e.button !== 0 || S.mode || !S.screen.started) return;
+      drag = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: false };
+    });
+    mm.addEventListener("pointermove", (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return;
+      if (!drag.moved) { drag.moved = true; try { mm.setPointerCapture(e.pointerId); } catch { /* Capture is optional. */ } }
+      const p = mapPoint(e);
+      S.cameraPan = null;
+      S.view.focusOn(p.x, p.z);
+    });
+    const endDrag = (e) => {
+      if (drag && e.pointerId === drag.id) { if (drag.moved) dragged = performance.now(); drag = null; }
+    };
+    mm.addEventListener("pointerup", endDrag);
+    mm.addEventListener("pointercancel", endDrag);
     // Use a click target so Chrome's touch adjustment recognizes the whole map
     // instead of redirecting taps near its corners to the neighboring Home button.
     $("minimap").addEventListener("click", (e) => {
+      if (performance.now() - dragged < 80) return;
       if (e.button === 0) {
         const p = mapPoint(e);
+        if (!S.mode && (e.altKey || (lastTap && performance.now() - lastTap.t < 380 && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < 16))) {
+          lastTap = null;
+          ping(p);
+          return;
+        }
+        lastTap = { t: performance.now(), x: e.clientX, y: e.clientY };
         if (S.mode === "barrage") A.fireBarrage(p);
         else if (S.mode && S.mode !== "build") {
           if (A.commandAt(p, null, e.shiftKey||S.queueOrders, S.mode) !== false) A.clearMode();
@@ -177,6 +231,7 @@ export function setupMinimap(S, A) {
       if (e.pointerType === "touch") return;
       if(S.mode){A.clearMode();return;}
       const p = mapPoint(e);
+      if (!S.selected.size) { ping(p); return; }
       A.commandAt(p, null, e.shiftKey||S.queueOrders);
     });
   }

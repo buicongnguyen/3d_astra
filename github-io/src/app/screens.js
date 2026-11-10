@@ -35,6 +35,19 @@ export const LEGAL = {
 };
 export const isLegal = (from, to) => !!LEGAL[from]?.includes(to);
 
+// The start screen is itself a small machine: the play mode picked there (Training, Skirmish,
+// Campaign) is its state, and the campaign mission briefing is a fourth state that only opens
+// from Campaign. Any mode may follow any other; the briefing returns to Campaign (Back) or ends
+// by starting the match. Moves outside this table are recorded in `violations` like screen moves.
+export const MODES = ["training", "skirmish", "campaign"];
+export const MENU_LEGAL = {
+  training: MODES,
+  skirmish: MODES,
+  campaign: [...MODES, "briefing"],
+  briefing: ["briefing", "campaign"],
+};
+export const isLegalMenuMove = (from, to) => !!MENU_LEGAL[from]?.includes(to);
+
 export class Screens {
   started = false;
   paused = false;
@@ -42,6 +55,37 @@ export class Screens {
   settingsOpen = false;
   // Moves the machine was not told were legal (it still makes them; tests assert this stays empty).
   violations = [];
+  // The play mode chosen on the start screen, and whether the mission briefing is open over it.
+  mode = "skirmish";
+  briefing = false;
+
+  // What the start screen shows: its mode, or the mission briefing over the campaign list.
+  get menuView() {
+    return this.briefing ? "briefing" : this.mode;
+  }
+
+  // Picks Training, Skirmish or Campaign (also used when a save or a button changes the mode).
+  setMode(mode) {
+    if (!MODES.includes(mode)) throw new Error(`Unknown mode ${mode}`);
+    const from = this.menuView;
+    this.mode = mode;
+    this.briefing = false;
+    this.#menuMoved(from);
+  }
+
+  // The campaign mission briefing opens over the start screen and closes back to Campaign.
+  openBriefing() {
+    const from = this.menuView;
+    this.mode = "campaign";
+    this.briefing = true;
+    this.#menuMoved(from);
+  }
+
+  closeBriefing() {
+    const from = this.menuView;
+    this.briefing = false;
+    this.#menuMoved(from);
+  }
 
   get screen() {
     if (this.settingsOpen) return "settings";
@@ -53,6 +97,7 @@ export class Screens {
   begin() {
     const from = this.screen;
     this.modalType = null;
+    this.briefing = false;
     this.started = true;
     this.paused = false;
     this.#moved(from);
@@ -124,6 +169,11 @@ export class Screens {
   // Hold a running match without a dialog (settings closing on a hidden page).
   holdIfStarted() {
     if (this.started) this.paused = true;
+  }
+
+  #menuMoved(from) {
+    const to = this.menuView;
+    if (from !== to && !isLegalMenuMove(from, to)) this.violations.push(`menu:${from}>${to}`);
   }
 
   #moved(from) {

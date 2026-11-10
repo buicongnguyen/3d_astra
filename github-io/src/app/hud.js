@@ -132,8 +132,10 @@ export function setupHud(S, A) {
     $("selection-label").textContent = e
       ? "SELECTION DETAILS"
       : "EXPEDITION COMMAND";
+    const idle = A.idleCounts?.() || { worker: 0, army: 0 };
+    const idleRow = `<div class="idle-row"><button type="button" data-idle="worker" title="F1 · Next idle Harvester"${idle.worker ? "" : " disabled"}>${icon("worker")}<span>Idle Harvesters</span><kbd>F1</kbd><b>${idle.worker}</b></button><button type="button" data-idle="army" title=", · Next idle army unit"${idle.army ? "" : " disabled"}>${icon("crosshair")}<span>Idle army</span><kbd>,</kbd><b>${idle.army}</b></button></div>`;
     const infoHtml = !e
-      ? `<div class="selection-empty">${icon("logo")}<div><h3>Awaiting your command</h3><p>Click a unit or drag to select your expedition.</p></div></div>`
+      ? `<div class="selection-empty">${icon("logo")}<div><h3>Awaiting your command</h3><p>Click a unit or drag to select your expedition.</p>${idleRow}</div></div>`
       : selectionStatus(S.sim,es);
     // Only touch the DOM when the panel text changed, so hover and text selection survive.
     if (infoHtml !== lastInfoHtml) {
@@ -150,7 +152,7 @@ export function setupHud(S, A) {
     document.documentElement.classList.toggle('no-units', !es.some(u => u.kind === 'unit'));
     document.documentElement.classList.toggle('many-orders', [...document.querySelectorAll('.order-buttons button')].filter(b => !b.hidden).length > 5);
     $("command-context").title = `Command core technology ${S.sim.techLevel()} / 3`;
-    const signature = `${es.map((e) => e.id).join(",")}/${p.upgrade}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}`;
+    const signature = `${es.map((e) => e.id).join(",")}/${p.upgrade}/${p.plating}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}`;
     if (S.lastSelectionKey !== signature) {
       S.lastSelectionKey = signature;
       $("unit-list").innerHTML =
@@ -164,10 +166,17 @@ export function setupHud(S, A) {
               .join("") +
             (es.length > 18 ? `<span>+${es.length - 18}</span>` : "")
           : "";
+      // A research that is only queued counts as chosen: the other branch is locked at once.
+      const queued = (type) => S.sim.own(0).some((b) => b.queue?.some((q) => q.type === type));
+      const wChosen = p.upgrade || queued("upgrade"), pChosen = p.plating || queued("plating");
       const actions =
         e && es.length === 1 && e.kind === "building"
-          // Weapons and plating share one slot on the card: plating takes over once weapons are researched.
-          ? (e.trains || []).filter((t) => t !== "plating").map((t) => t === "upgrade" && e.team === 0 && p.upgrade ? "plating" : t)
+          // Weapons and plating are exclusive branches sharing one slot: the "research" tile opens a
+          // choice sheet (weapons, plating, back); once one is chosen the slot shows it and the other stays locked.
+          ? e.team === 0 && e.trains?.includes("upgrade") && !wChosen && !pChosen && S.researchOpen
+            ? ["upgrade", "plating", "back"]
+            : (e.trains || []).filter((t) => t !== "plating").map((t) => t !== "upgrade" || e.team !== 0 ? t
+              : wChosen || pChosen ? (pChosen && !wChosen ? "plating" : "upgrade") : "research")
           : es.some((u) => u.type === "worker")
             ? BUILDINGS
             : [];
@@ -181,15 +190,21 @@ export function setupHud(S, A) {
         : e?.trains
           ? "PRODUCTION"
           : structure ? "STRUCTURE" : "FIELD ORDERS";
-      $("command-context").textContent = actions.length
+      $("command-context").textContent = actions.includes("back")
+        ? "CHOOSE ONE"
+        : actions.length
         ? `${actions.length} AVAILABLE`
         : structure ? `LEVEL ${e.level}` : "TACTICAL";
       $("commands").innerHTML =
         actions
           .map((type, index) => {
+            if (type === "research" || type === "back") {
+              const open = type === "research";
+              return `<button class="command-tile branch-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" aria-label="${open ? "Research: choose one of two exclusive upgrades" : "Back"}" title="${ACTION_KEYS[index]} · ${open ? "Research · choose Overcharged weapons or Reinforced plating; the other is then locked" : "Back"}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${icon(open ? "bolt" : "stop")}<span>${open ? "Research" : "Back"}</span>${open ? "<small>Choose one</small>" : ""}</button>`;
+            }
             const d = D[type];
             const label = type === 'upgrade' ? 'Weapons +' : type === 'plating' ? 'Plating' : d.name;
-            return `<button class="command-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" aria-label="${d.name}, ${d.cost[0]} alloy${d.cost[1] ? ` and ${d.cost[1]} energy` : ''}" title="${ACTION_KEYS[index]} · ${d.name} · ${d.description}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${hasPortrait(type) ? portrait(type) : icon(d.icon || type)}<span>${label}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
+            return `<button class="command-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" aria-label="${d.name}, ${d.cost[0]} alloy${d.cost[1] ? ` and ${d.cost[1]} energy` : ''}" title="${ACTION_KEYS[index]} · ${d.name} · ${d.description}${S.researchOpen && (type === "upgrade" || type === "plating") ? " Choosing it locks the other branch." : ""}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${hasPortrait(type) ? portrait(type) : icon(d.icon || type)}<span>${label}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
           })
           .join("") || tactics || (structure ? `<p class="structure-hint">${e.description}</p>` : e?.kind==='building' ? '' :
         `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : "Your expedition is ready"}</strong><p>${e ? (S.touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : "Select the Command core to train Harvesters, or the Barracks to grow your army."}</p></div>`);
@@ -244,6 +259,40 @@ export function setupHud(S, A) {
     A.constructionUI.update({sim: S.sim, selected:es, mode: S.mode, type:S.buildType, point:S.buildPoint, blockedType:S.blockedBuildType, failure:S.buildFailure, started: Z.started, paused: Z.paused, touch:S.touchInput});
   }
 
+  // Training panel guards (the lesson card opens while the player is still tapping the battlefield).
+  let pressedIn = null;
+  // A press on a card button counts only when its pointer-down also began on that button. Without this,
+  // a tap on a unit that completes a lesson raises the card under the finger (pointer-down is on the
+  // battlefield), the click that ends the tap lands on "Focus target" and folds the card away again.
+  // It only happens when the page is slow enough to lay the card out between pointer-down and the click.
+  function trainingPress(event, button) {
+    if (event.detail === 0) return true; // keyboard activation has no pointer
+    return pressedIn === button;
+  }
+  // The panel must never sit on the lesson's target. When the marker is under it, it tries the other side,
+  // the bottom of the battlefield and the opposite corner, and keeps the first spot that is clear. It looks
+  // again only while it overlaps, and at most every 1.5 s, so it cannot flicker.
+  function keepTargetClear() {
+    const panel = $("training"), marker = $("training-marker");
+    if (panel.hidden || marker.hidden) return;
+    const m = marker.getBoundingClientRect();
+    const covered = () => [$("training-toggle"), $("training-card")].some((e) => {
+      if (!e.getClientRects().length) return false;
+      const r = e.getBoundingClientRect();
+      return m.right > r.left - 4 && m.left < r.right + 4 && m.bottom > r.top - 4 && m.top < r.bottom + 4;
+    });
+    if (!covered() || performance.now() - (S.trainingFlipAt || -Infinity) < 1500) return;
+    S.trainingFlipAt = performance.now();
+    const stage = $("stage").getBoundingClientRect(), world = $("world").getBoundingClientRect();
+    const place = (x, y) => {
+      panel.classList.toggle("flip-x", x);
+      panel.classList.toggle("flip-y", y);
+      panel.style.top = y ? Math.round(world.bottom - stage.top - panel.getBoundingClientRect().height - 8) + "px" : "";
+    };
+    for (const [x, y] of [[true, false], [false, true], [true, true]]) { place(x, y); if (!covered()) return; }
+    place(false, false);
+  }
+
   function renderTutorial(){
     const active=!!S.tutorial && Z.started && !S.tutorial.done && !S.sim.result;
     $("training").hidden=!active;$("training-marker").hidden=!active;
@@ -253,12 +302,16 @@ export function setupHud(S, A) {
     $("training-toggle").textContent=`Training ${S.tutorial.index+1}/${TRAINING_STEPS.length}`;
     $("training-title").textContent=step.title;
     $("training-copy").textContent=S.touchInput?step.touch:step.desktop;
-    if(S.tutorialShown!==S.tutorial.index){S.tutorialShown=S.tutorial.index;$("training-card").hidden=false;$("training-toggle").setAttribute("aria-expanded","true");}
+    if(S.tutorialShown!==S.tutorial.index){
+      S.tutorialShown=S.tutorial.index;
+      $("training-card").hidden=false;$("training-toggle").setAttribute("aria-expanded","true");
+    }
     if(S.view){
       const target=S.tutorial.point(S.sim),p=S.view.project(target.x,target.z,0.2);
       const canvas=S.view.renderer.domElement.getBoundingClientRect(),stage=$("stage").getBoundingClientRect();
       $("training-marker").style.left=(p.x+canvas.left-stage.left)+"px";
       $("training-marker").style.top=(p.y+canvas.top-stage.top)+"px";
+      keepTargetClear();
     }
   }
 
@@ -286,9 +339,10 @@ export function setupHud(S, A) {
       if (button) { dockTab(button.dataset.dock); updateUI(); }
     };
 
-    $("training-toggle").onclick=()=>{const card=$("training-card");card.hidden=!card.hidden;$("training-toggle").setAttribute("aria-expanded",String(!card.hidden));};
+    document.addEventListener("pointerdown",(event)=>{pressedIn=event.target instanceof Element?event.target.closest("#training-toggle, #training-focus"):null;},true);
+    $("training-toggle").onclick=(event)=>{if(!trainingPress(event,$("training-toggle")))return;const card=$("training-card");card.hidden=!card.hidden;$("training-toggle").setAttribute("aria-expanded",String(!card.hidden));};
 
-    $("training-focus").onclick=()=>{if(!S.tutorial)return;const p=S.tutorial.point(S.sim);S.view.focusOn(p.x,p.z);$("training-card").hidden=true;$("training-toggle").setAttribute("aria-expanded","false");};
+    $("training-focus").onclick=(event)=>{if(!S.tutorial||!trainingPress(event,$("training-focus")))return;const p=S.tutorial.point(S.sim);S.view.focusOn(p.x,p.z);$("training-card").hidden=true;$("training-toggle").setAttribute("aria-expanded","false");};
 
     $("training-exit").onclick=()=>{S.playMode="skirmish";A.newGame();};
   };

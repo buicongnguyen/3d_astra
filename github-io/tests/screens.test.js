@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { LEGAL, SCREENS, Screens, createScreens, isLegal } from "../src/app/screens.js";
+import { LEGAL, MENU_LEGAL, MODES, SCREENS, Screens, createScreens, isLegal, isLegalMenuMove } from "../src/app/screens.js";
 
 test("the machine starts on the menu, not paused", () => {
   const z = createScreens();
@@ -111,4 +111,43 @@ test("the legal-move table covers every screen and only names real ones", () => 
   assert.ok(isLegal("menu", "playing"));
   assert.ok(!isLegal("menu", "pause"), "there is no pause menu without a match");
   assert.ok(!isLegal("result", "help"));
+});
+
+test("the start screen modes are states: any mode follows any other", () => {
+  const z = new Screens();
+  assert.equal(z.menuView, "skirmish");
+  for (const from of MODES) for (const to of MODES) {
+    z.setMode(from);
+    z.setMode(to);
+    assert.equal(z.menuView, to);
+  }
+  assert.throws(() => z.setMode("deathmatch"));
+  assert.deepEqual(z.violations, []);
+});
+
+test("the mission briefing opens over Campaign and closes back to it", () => {
+  const z = new Screens();
+  z.setMode("campaign");
+  z.openBriefing();
+  assert.equal(z.menuView, "briefing");
+  assert.equal(z.screen, "menu", "the briefing is part of the menu screen");
+  z.closeBriefing();
+  assert.equal(z.menuView, "campaign");
+  z.openBriefing();
+  z.begin();
+  assert.equal(z.briefing, false, "beginning the match closes the briefing");
+  assert.equal(z.screen, "playing");
+  assert.deepEqual(z.violations, []);
+});
+
+test("illegal menu moves are recorded: a mode change under the briefing, a briefing from Training", () => {
+  assert.equal(isLegalMenuMove("training", "briefing"), false);
+  assert.equal(isLegalMenuMove("briefing", "training"), false);
+  assert.equal(isLegalMenuMove("briefing", "campaign"), true);
+  assert.deepEqual(MENU_LEGAL.skirmish, MODES);
+  const z = new Screens();
+  z.setMode("campaign");
+  z.openBriefing();
+  z.setMode("training"); // the briefing is a modal overlay: this is not a legal move
+  assert.deepEqual(z.violations, ["menu:briefing>training"]);
 });

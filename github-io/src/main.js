@@ -60,7 +60,11 @@ import { setupModals } from "./app/modals.js";
 import { setupBriefing } from "./app/briefing.js";
 import { setupMatchFlow } from "./app/match-flow.js";
 import { setupFrame } from "./app/frame.js";
+import { setupUiExtras } from "./app/ui-extras.js";
 import { setupDebugHooks } from "./app/debug-hooks.js";
+import { prefetchModels, releaseModelBytes } from "./app/loading.js";
+import "./loading.css";
+import { registerOffline } from "./app/offline.js";
 
 renderShell();
 // S is the shared state; A is what each module offers the others (functions and widgets).
@@ -73,9 +77,20 @@ const createSim = () => new Simulation({ map: S.mapId, enemyCount: S.enemyCount,
 async function loadAssets() {
   S.loadFailed = false;
   $("start").disabled = true;
+  const start = $("start");
+  start.setAttribute("aria-busy", "true");
   try {
-    await S.view.loadModels((done, total) => { $("start").textContent = `Loading ${done} of ${total}…`; });
+    // Staged download first (terrain, headquarters, harvester, then the rest), then the parse.
+    await prefetchModels(({ stage, percent }) => {
+      start.textContent = `Loading ${stage}… ${percent}%`;
+      start.style.setProperty("--load", `${percent}%`);
+    });
+    await S.view.loadModels();
+    releaseModelBytes();
+    start.removeAttribute("aria-busy");
+    start.style.removeProperty("--load");
   } catch (error) {
+    start.removeAttribute("aria-busy");
     console.error(error);
     S.loadFailed = true;
     $("start").disabled = false;
@@ -141,13 +156,14 @@ const SETUP = [
   ["hud", setupHud], ["preferences", setupPreferences], ["sound", setupSound], ["selection", setupSelection],
   ["orders", setupOrders], ["abilities", setupAbilities], ["command-card", setupCommandCard], ["minimap", setupMinimap],
   ["input-pointer", setupInputPointer], ["input-keyboard", setupInputKeyboard], ["modals", setupModals],
-  ["briefing", setupBriefing], ["match-flow", setupMatchFlow], ["frame", setupFrame], ["debug-hooks", setupDebugHooks],
+  ["briefing", setupBriefing], ["match-flow", setupMatchFlow], ["frame", setupFrame], ["ui-extras", setupUiExtras], ["debug-hooks", setupDebugHooks],
 ];
 const BIND = ["preferences", "hud", "input-pointer", "sound", "frame", "modals", "briefing", "match-flow", "selection",
-  "orders", "abilities", "command-card", "input-keyboard", "minimap", "debug-hooks"];
+  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "debug-hooks"];
 const binds = Object.fromEntries(SETUP.map(([name, setup]) => [name, setup(S, A)]));
 // The start screen shows the battle chosen there, so the first simulation is built from it.
 ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission } = A.battleSetup());
 S.sim = createSim();
 for (const name of BIND) binds[name]();
 boot();
+registerOffline(A, S.query);

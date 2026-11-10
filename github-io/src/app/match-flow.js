@@ -82,6 +82,8 @@ export function setupMatchFlow(S, A) {
     S.matchStats.reset();
     S.touchControls?.reset();
     S.pings.length = 0;
+    S.endBeat = null;
+    A.resetHints?.();
     S.cameraPan = null;
     S.saveClock = 0;
     A.missionUI.resetMatch();
@@ -129,12 +131,15 @@ export function setupMatchFlow(S, A) {
 
   // Campaign: Start opens the mission briefing; the match begins from its "Begin mission".
   function openMissionBriefing() {
-    A.missionUI.openBriefing(MISSIONS[S.stagePick], S.stagePick, { onBegin: beginMatch });
+    Z.openBriefing();
+    A.missionUI.openBriefing(MISSIONS[S.stagePick], S.stagePick, { onBegin: () => { Z.closeBriefing(); beginMatch(); }, onBack: () => Z.closeBriefing() });
   }
 
   function beginMatch() {
     try { localStorage.setItem(MODE_KEY, S.playMode); } catch { /* Storage is optional. */ }
     S.pings.length = 0;
+    S.endBeat = null;
+    A.resetHints?.();
     S.cameraPan = null;
     S.saveClock = 0;
     A.missionUI.resetMatch();

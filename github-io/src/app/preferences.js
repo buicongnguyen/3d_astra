@@ -2,7 +2,7 @@
 import { $ } from "./dom.js";
 import { SettingsUI } from "../settings-ui.js";
 import { icon } from "../icons.js";
-import { localizeDOM, loadStory } from "../i18n.js";
+import { localizeDOM, loadLocale, loadStory } from "../i18n.js";
 import { palette, saveSettings } from "../settings.js";
 import { teamColors } from "../faction-colors.js";
 
@@ -14,7 +14,7 @@ export function setupPreferences(S, A) {
   // Story text is plain text nodes, so open briefings, objectives and the Comms log follow.
   function syncStoryLanguage() {
     if (S.settings.language !== 'vi') return;
-    loadStory().then(() => { if (S.settings.language === 'vi') localization.apply('vi'); }, () => {});
+    Promise.all([loadLocale(), loadStory()]).then(() => { if (S.settings.language === 'vi') localization.apply('vi'); }, () => {});
   }
 
   const languageRow = document.createElement('label');

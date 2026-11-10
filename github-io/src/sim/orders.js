@@ -118,10 +118,15 @@ export const orders = {
         this.own(b.team).some((e) => e.queue.some((q) => q.type === "upgrade")))
     )
       return fail("Weapon upgrade is already researched or queued.");
-    // Plating is the second step of the Foundry research line.
-    if (type === "plating" && !this.players[b.team].upgrade) return fail("Reinforced plating needs Overcharged weapons first.");
+    // Weapons and plating are the two exclusive branches of the Foundry research: one per match.
+    // (Saves from 0.7.0 that already hold both keep both; nothing re-checks them.)
     if (type === "plating" && (this.players[b.team].plating || this.own(b.team).some((e) => e.queue.some((q) => q.type === "plating"))))
       return fail("Reinforced plating is already researched or queued.");
+    if (type === "upgrade" || type === "plating") {
+      const other = type === "upgrade" ? "plating" : "upgrade", pl = this.players[b.team];
+      if (pl[other] || this.own(b.team).some((e) => e.queue.some((q) => q.type === other)))
+        return fail(type === "upgrade" ? "Overcharged weapons are locked: Reinforced plating was chosen." : "Reinforced plating is locked: Overcharged weapons were chosen.");
+    }
     if (!this.canPay(b.team, d.cost))
       return fail(`${this.resourceShortage(d.cost,b.team)} to train/research ${d.name}.`);
     const p = this.population(b.team);

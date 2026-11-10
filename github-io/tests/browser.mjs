@@ -1,41 +1,16 @@
-import { chromium } from "playwright";
 import assert from "node:assert/strict";
 import { mkdir, writeFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { launchBrowser, openPage, baseUrl, testUrl, suite } from "./lib/harness.mjs";
 
-const base = process.env.TEST_URL || "http://127.0.0.1:5173/";
+const base = baseUrl("http://127.0.0.1:5173/");
 const output = new URL("../test-results/", import.meta.url);
 await mkdir(output, { recursive: true });
-const chrome =
-  process.env.CHROME_PATH ||
-  (process.platform === "win32"
-    ? "C:/Program Files/Google/Chrome/Application/chrome.exe"
-    : undefined);
-const browser = await chromium.launch({
-  headless: true,
-  ...(chrome && existsSync(chrome) ? { executablePath: chrome } : {}),
-  args: [
-    "--enable-unsafe-swiftshader",
-    ...(process.env.SOFTWARE_RENDER
-      ? ["--use-angle=swiftshader", "--use-gl=angle"]
-      : []),
-  ],
-});
-const page = await browser.newPage({
-  viewport: { width: 1440, height: 960 },
-  deviceScaleFactor: 1,
-});
-const errors = [],
-  badResponses = [];
-page.on("pageerror", (e) => errors.push(e.message));
-page.on("response", (r) => {
-  if (r.status() >= 400) badResponses.push(`${r.status()} ${r.url()}`);
-});
+const browser = await launchBrowser();
+const { page, errors, badResponses } = await openPage(browser, { width: 1440, height: 960 }, { deviceScaleFactor: 1 });
 
+await suite("browser", async () => {
 try {
-  await page.goto(`${base}${base.includes("?") ? "&" : "?"}test=1`, {
-    waitUntil: "networkidle",
-  });
+  await page.goto(testUrl(), { waitUntil: "networkidle" });
   await page.waitForFunction(() => window.__frontier, { timeout: 30000 });
   await page.screenshot({
     path: new URL("briefing.png", output).pathname.replace(/^\/(\w:)/, "$1"),
@@ -288,6 +263,5 @@ try {
   });
   console.error({ errors, badResponses });
   throw error;
-} finally {
-  await browser.close();
 }
+}, { browser });

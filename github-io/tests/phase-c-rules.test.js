@@ -20,12 +20,13 @@ test('killing the enemy core does not complete a "destroy the tagged objects" ob
   assert.equal(s.result, 'victory');
 });
 
-test('Reinforced plating: needs weapons first, costs energy, 12% less damage, saved', () => {
+test('Reinforced plating: an exclusive branch with weapons (0.9.1), costs energy, 12% less damage, saved', () => {
   const s = new Simulation({ ai: false });
   const f = s.spawn('foundry', 0, -10, 32);
   Object.assign(s.players[0], { alloy: 1000, energy: 1000 });
-  assert.equal(s.enqueue(f.id, 'plating'), false, 'needs weapons first');
   s.players[0].upgrade = true;
+  assert.equal(s.enqueue(f.id, 'plating'), false, 'locked once weapons were chosen (was: needed weapons first)');
+  s.players[0].upgrade = false;
   assert.equal(s.enqueue(f.id, 'plating'), true);
   assert.equal(s.players[0].energy, 850);
   assert.equal(s.enqueue(f.id, 'plating'), false, 'not twice');

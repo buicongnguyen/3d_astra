@@ -35,8 +35,10 @@ export const expansion = {
       this.build(builder.id, "hq", site.x, site.z);
       return false;
     }
-    if (!site && distance(builder, deposit) > 14) {
-      // Not visible yet: send the Harvester ahead so the ground is seen, then try again.
+    if (!site && distance(builder, deposit) > 14 && this.time >= (this.players[team].scoutUntil || 0)) {
+      // Not visible yet: send ONE Harvester ahead so the ground is seen, then try again. Without the
+      // pause every think picked a fresh nearest Harvester and half the crew walked off mining (0.9.1).
+      this.players[team].scoutUntil = this.time + 25;
       this.issue([builder.id], { type: "move", x: deposit.x + (dx / len) * 9, z: deposit.z + (dz / len) * 9 });
     }
     return true;

@@ -1,11 +1,11 @@
 // Browser audio context, UI tones and the audio clock (sleeps while paused or hidden).
 import { Ambience, audioPower } from "../ambience.js";
-import { AudioDirector } from "../audio.js";
 import { screenMix } from "../audio-logic.js";
 
 export function setupSound(S, A) {
   const Z = S.screen;
-  let lastTone = 0;
+  let lastTone = 0,
+    audioLoading = null;
   function tone(frequency = 520, duration = 0.065) {
     if (
       S.muted ||
@@ -39,9 +39,14 @@ export function setupSound(S, A) {
     try {
       S.audioContext ||= new AudioContext();
       S.ambience ||= new Ambience(S.audioContext);
-      if (!S.audio) {
-        S.audio = new AudioDirector(S.audioContext, { project: (x, z) => { const p = S.view.project(x, z, 0.5); return screenMix(p.x, p.y, S.view.width, S.view.height); } });
-        S.audio.applySettings(S.settings);
+      // The sound engine (audio.js, sfx.js) is its own chunk, fetched on the first gesture.
+      if (!S.audio && !audioLoading) {
+        const context = S.audioContext;
+        audioLoading = import("../audio.js").then(({ AudioDirector }) => {
+          if (S.audio) return;
+          S.audio = new AudioDirector(context, { project: (x, z) => { const p = S.view.project(x, z, 0.5); return screenMix(p.x, p.y, S.view.width, S.view.height); } });
+          S.audio.applySettings(S.settings);
+        }).catch(() => { audioLoading = null; });
       }
       // "interrupted" is iOS after a call or app switch; only a user gesture brings it back.
       if (S.audioContext.state !== "running" && !audioQuiet()) audioPower(S.audioContext, false);

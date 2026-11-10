@@ -1,0 +1,5 @@
+/* Real load progress on the Start button: the fill follows the downloaded bytes (--load). */
+#start:disabled[aria-busy="true"] {
+  background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.28) var(--load, 0%), rgba(255, 255, 255, 0) var(--load, 0%));
+  background-repeat: no-repeat;
+}

@@ -234,7 +234,7 @@
       "time": 30,
       "pop": 0,
       "icon": "shield",
-      "description": "One-time research after Overcharged weapons: combat units take 12% less damage."
+      "description": "Research branch, exclusive with Overcharged weapons: combat units take 12% less damage. Costs 100 alloy and 150 energy."
     },
     "upgrade": {
       "name": "Overcharged weapons",
@@ -246,7 +246,7 @@
       "time": 25,
       "pop": 0,
       "icon": "bolt",
-      "description": "One-time +10% damage for all combat units."
+      "description": "Research branch, exclusive with Reinforced plating: +10% damage for all combat units. Costs 150 alloy and 100 energy."
     },
     "medic": {
       "name": "Medic",

@@ -33,7 +33,8 @@ export function setupInputKeyboard(S, A) {
         else if(e.queue.length)S.sim.command({team:0,type:"cancelTrain",building:e.id,index:e.queue.length-1});
         else A.notice('No queued job to cancel.');
       }
-    } else if(id==='idle')choose(own.filter(u=>u.type==='worker'&&!u.orders.length),true);
+    } else if(id==='idle')A.cycleIdle('worker');
+    else if(id==='idle-army')A.cycleIdle('army');
     else if(id==='army')choose(own.filter(u=>u.kind==='unit'&&u.type!=='worker'));
     else if(id==='workers')choose(own.filter(u=>u.type==='worker'));
     else if(id==='buildings')choose(own.filter(u=>u.kind==='building'));

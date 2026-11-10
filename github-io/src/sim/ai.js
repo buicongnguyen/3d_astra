@@ -11,7 +11,9 @@ export const ai = {
       army = own.filter((e) => e.kind === "unit" && e.type !== "worker" && !e.garrison);
     if (!own.some(e => e.type === "hq")) return;
     this.updateKnownCores(team);
+    if (this.pace.counter) this.observeEnemies(team);
     this.assignHarvesters(team);
+    this.aiRetreat(team, army);
     const hq = own.find((e) => e.type === "hq" && e.complete) || own.find(e => e.type === "hq");
     const pace = this.pace, role = roleOf(this, team);
     // A second core brings more Harvesters, trained at the core with the fewest nearby.
@@ -53,7 +55,7 @@ export const ai = {
     const pop = this.population(team);
     const want = !own.some((e) => e.type === "barracks")
       ? "barracks"
-      : pop.cap - pop.used - pop.reserved < 5 && pop.cap < MAX_POP
+      : pop.cap - pop.used - pop.reserved < (pace.counter && this.players[team].alloy >= 400 ? 10 : 5) && pop.cap < MAX_POP
         ? "relay"
         : !own.some((e) => e.type === "foundry") && this.time > pace.foundryAt * (role === "siege" ? 0.6 : 1)
           ? "foundry"
@@ -62,7 +64,7 @@ export const ai = {
             : this.time > pace.towerAt && own.some((e) => e.type === "foundry" && e.complete) &&
                 own.filter((e) => e.type === "tower").length < pace.towers + (role === "siege" ? 1 : 0)
               ? "tower"
-              : null;
+              : this.surplusBuilding(team, own, role);
     if (
       want &&
       afford(D[want].cost) &&
@@ -90,7 +92,8 @@ export const ai = {
     const hold = foundryIdle && vehicles * 4 < army.length && this.players[team].energy >= D.breaker.cost[1] ? D.breaker.cost[0] : 0;
     for (const b of own.filter((e) => e.complete && ["barracks", "foundry"].includes(e.type))) {
       if (b.levelJob) continue;
-      if (b.type === "foundry" && !this.players[team].upgrade && this.time > pace.upgradeAt && vehicles >= 2 && !b.queue.length && afford(D.upgrade.cost) && this.enqueue(b.id, "upgrade")) continue;
+      const branch = this.researchBranch(team, role);
+      if (b.type === "foundry" && !this.players[team].upgrade && !this.players[team].plating && this.time > pace.upgradeAt && vehicles >= 2 && !b.queue.length && afford(D[branch].cost) && this.enqueue(b.id, branch)) continue;
       if (b.level < this.techLevel(team) && this.time > pace.upgradeAt && afford(this.levelCost(b))) {
         if (!b.queue.length) this.upgradeBuilding(b.id,team);
         continue;
@@ -104,6 +107,7 @@ export const ai = {
         let choice = b.type === 'foundry' ? 'breaker' : cycle === 0 || (role === 'raider' && cycle === 1) ? 'vanguard' : 'ranger';
         if (b.type === 'foundry' && b.level >= 3 && army.filter(e => e.type === 'tank').length <= army.filter(e => e.type === 'breaker').length + (role === 'siege' ? 2 : 0)) choice = 'tank';
         if (b.type === 'barracks' && b.level >= 2 && army.filter(e => e.type === 'antitank').length < 3) choice = 'antitank';
+        choice = this.counterChoice(team, b, army, choice);
         const support = b.type === 'foundry' ? 'engineer' : 'medic';
         if (b.level >= 2 && army.filter(e => e.type === support).length < 2) choice = support;
         const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : ['breaker'])])];
@@ -128,7 +132,7 @@ export const ai = {
       );
       incursion = power >= 4;
       const ready = army.filter(
-        (e) => e.damage > 0 && (!e.orders.length || e.orders[0].type !== "attack"),
+        (e) => e.damage > 0 && !e.retreating && (!e.orders.length || e.orders[0].type !== "attack"),
       );
       // A real incursion recalls everyone. A lone scout or harvester is answered by units
       // near the core, or the two closest units if none are home, and never recalls a wave.
@@ -144,7 +148,7 @@ export const ai = {
     // A mission that sends its own waves lets the computer build up and defend at home only.
     if (this.aiHome) return;
     if (!incursion) this.aiPoints(team, hq, army, pace);
-    const wave = army.filter((e) => !engaged(e) && !e.pointDuty);
+    const wave = army.filter((e) => !engaged(e) && !e.pointDuty && !e.retreating);
     if (this.coalition) {
       this.coalitionOrders(team, { hq, army, wave, incursion });
       return;

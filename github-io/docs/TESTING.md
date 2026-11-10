@@ -18,6 +18,28 @@ Notes
 - Under `?test` automatic harvesting is off unless `?autoharvest`.
 - Suites that are sensitive to machine load (patrol, mobile-controls, webkit) can flake locally; run them again before suspecting the code.
 - The webkit suite needs `npx playwright install webkit`.
+- `ui-extras` (idle units, minimap drag and pings, fight hints, core beat, notch insets, training-card tap guard) writes screenshots to `SHOTS` (default `test-results`); `EXTRAS_ONLY=idle,minimap,...` runs part of it.
+
+## Writing a suite (tests/lib/harness.mjs)
+New browser suites use the shared harness; `browser.mjs`, `hotkeys.mjs` and `language.mjs` are the examples (the other scripts keep their own setup and move over one at a time).
+
+```js
+import { launchBrowser, openPage, suite, shot } from "./lib/harness.mjs";
+const browser = await launchBrowser();
+await suite("my-suite", async () => {
+  for (const viewport of ["desktop", "portrait", "landscape"]) {   // 1440x900, 390x844, 844x390
+    const { page, errors, tap, goto, ready } = await openPage(browser, viewport);
+    await goto();                          // TEST_URL with ?test=1 (goto("firstrun") adds more)
+    await ready();                         // models parsed and Start enabled
+    await tap("#start");                   // tap on phones, click on desktop
+    await shot(page, `my-suite-${viewport}`);   // test-results/<name>.png
+    assert.deepEqual(errors, []);          // page errors are collected for you
+  }
+}, { browser });
+```
+`openPage` also takes `{width, height, mobile}` for odd sizes and `{deviceScaleFactor, timeout}`, and returns `badResponses`. `suite` prints `PASS name (12.3s)` or `FAIL`, closes the browser and sets the exit code; the CI job collects every script's result and time in its step summary.
+
+Service worker: `DIST_DIR=<build folder> npm run test:offline` (default dist/). It serves its own copy of the build under /3d_astra/ and needs no preview server. The worker is not registered under `?test` unless the URL also has `?sw`.
 
 ## Mission bot
 `npm run check:missions` (about 90 s) plays all twelve missions through the command layer. Each must stay alive for a passive player, not be won by a generic bot too easily, and be won by the objective bot within its time targets. Run it after any change to `src/story/missions.js` or to rules that affect balance.

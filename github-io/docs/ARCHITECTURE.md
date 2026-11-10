@@ -53,11 +53,18 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 | `tactics-ui.js`, `tactics-card.js`, `tactics-view.js` | Ability tiles, stances, Barrage aiming, rank marks |
 | `mission-ui.js`, `mission-text.js`, `capture-view.js`, `campaign.js`, `savegame.js` | Campaign interface, progress, autosave |
 | `story/world.js`, `story/missions.js` | Factions, cast, mission data |
-| `i18n.js`, `locales/` | Text catalogue (keyed by the English string); the story catalogue loads on demand |
+| `i18n.js`, `locales/` | Text catalogue (keyed by the English string); the Vietnamese and story catalogues are separate chunks loaded when Vietnamese is shown |
+| `app/loading.js`, `app/offline.js`, `tools/sw.template.js` | Staged model download with progress; service worker registration; the worker (published as `sw.js`) |
 | `governor.js`, `entity-batches.js`, `ambient-life.js` | Frame-time governor, instanced batches, ambient life |
 | `music.js` | Music and sound |
 
 **How the app modules fit together.** Each `app/` module exports `setupX(S, A)`. `S` is the shared state; `A` is what modules offer one another (functions and widgets). `setup` registers functions on `A` and builds widgets; it returns a `bind()` that attaches listeners and does one-off DOM changes. `main.js` runs all setups, then all binds in a fixed order (same-type listeners keep their order). Modules never import each other, so there are no cycles. A module that is the only user of a value keeps it as a local; everything shared lives on `S`. The hot frame loop is in `frame.js` only.
+
+## Text and translation
+Every visible English string is its own key in `locales/vi.json` (`messages`, matched ignoring case and spacing); sentences with numbers or names use a `patterns` entry (regex, `{1}` is the translated capture). Convention for new text: write the English in the source as a plain literal or HTML template text, add the Vietnamese to `vi.json` in the same change, and list names, key labels and units that stay English in the `KEEP` set of `tests/i18n-coverage.test.js`. That test scans the UI source for visible strings (template text, `title`/`aria-label`/`placeholder`, `notice(...)`, `.textContent = "..."`) and fails when one has no Vietnamese entry; strings built with `${...}` need a pattern and are covered by `tests/language.mjs`. At runtime, development builds (and any page opened with `?i18nwarn`) log each untranslated string once with `[i18n]`; production never does. In the browser the Vietnamese catalogue is fetched when Vietnamese is first shown (`loadLocale`), the story catalogue likewise (`loadStory`); Node loads the catalogue up front so `translate()` stays synchronous.
+
+## Loading and offline
+`main.js` renders the shell, then `prefetchModels` (app/loading.js) downloads the .glb files in a fixed order into three.js' cache while the Start button shows stage and percent; `WorldView.loadModels` parses them. The sound engine is imported on the first gesture (app/sound.js). `vite.config.js` publishes `sw.js` from `tools/sw.template.js`: precache of the build's files (`fc-shell-<build>`), models cached on first fetch (`fc-models-<hash>`), network-first pages, no skipWaiting. Both cache families are versioned by content; old ones are deleted when the new worker activates.
 
 ## Rules that keep it correct
 - The simulation never imports the client; the client reads it and sends commands.

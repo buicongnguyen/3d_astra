@@ -380,7 +380,10 @@ export class WorldView {
           const template = new THREE.Group(),
             buckets = new Map(),
             barrelBuckets = new Map(),
+            turretBuckets = new Map(), // vehicles: Turret_head* parts turn about Turret_pivot
             legs = [];
+          let pivot = null;
+          gltf.scene.traverse((o) => { if (o.name.startsWith("Turret_pivot")) pivot = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld); });
           gltf.scene.traverse((o) => {
             if (o.name.startsWith("leg_")) {
               const leg = o.clone(true);
@@ -396,13 +399,13 @@ export class WorldView {
             }
             // Keep the existing named Blender cannon pieces articulated while
             // still merging the barrel's materials into a compact rig.
-            const target=RIG_PART.test(o.name)?barrelBuckets:buckets;
+            const rigged=RIG_PART.test(o.name),target=rigged?(pivot&&/^Turret_head/i.test(o.name)?turretBuckets:barrelBuckets):buckets;
             const key = o.material.name;
             if (!target.has(key))
               target.set(key, { material: o.material, geometries: [] });
-            target
-              .get(key)
-              .geometries.push(o.geometry.clone().applyMatrix4(o.matrixWorld));
+            const geometry = o.geometry.clone().applyMatrix4(o.matrixWorld);
+            if (rigged && pivot) geometry.translate(-pivot.x, 0, -pivot.z);
+            target.get(key).geometries.push(geometry);
           });
           for (const { material, geometries } of buckets.values()) {
             const combined = mergeGeometries(geometries, false);
@@ -415,7 +418,15 @@ export class WorldView {
             if(combined)barrel.add(new THREE.Mesh(combined,material));
             geometries.forEach(g=>g.dispose());
           }
-          template.add(barrel);
+          if(pivot){
+            const turret=new THREE.Group();turret.name='TurretRig';turret.position.set(pivot.x,0,pivot.z);
+            for(const {material,geometries} of turretBuckets.values()){
+              const combined=mergeGeometries(geometries,false);
+              if(combined)turret.add(new THREE.Mesh(combined,material));
+              geometries.forEach(g=>g.dispose());
+            }
+            turret.add(barrel);template.add(turret);
+          }else template.add(barrel);
           // Only Team/TeamGlow materials vary by faction. Share the other finishes
           // so identical armour, tyres and suits can join one batch across armies.
           const materials = new Map();
@@ -776,6 +787,7 @@ export class WorldView {
     root.userData.contactShadow = contactShadow;
     root.userData.model = model;
     root.userData.barrel=model.getObjectByName('BarrelRig');
+    root.userData.turret=model.getObjectByName('TurretRig');
     root.userData.recoil=0;
     root.userData.kick=0;root.userData.kickSize=0;
     root.userData.gait=0;root.userData.stride=(e.id*0.7)%6.28;
@@ -976,11 +988,23 @@ export class WorldView {
         o.position.set(e.x, 0, e.z);
         m.rotation.y = e.kind === "unit" ? e.angle : e.team === 0 ? 0 : Math.PI;
       }
+      if(u.turret){
+        // Vehicles: the hull keeps its heading while the turret swings to the target (turn-rate limited, shortest way).
+        if(e.moving||u.hullYaw===undefined)u.hullYaw=m.rotation.y;else m.rotation.y=u.hullYaw;
+        const aim=e.attacking?e.angle-m.rotation.y:0,diff=Math.atan2(Math.sin(aim-u.turret.rotation.y),Math.cos(aim-u.turret.rotation.y));
+        const step=this.activity.combat.motion&&!this.reducedMotion.matches?3*dt:Math.PI;
+        u.turret.rotation.y+=Math.max(-step,Math.min(step,diff));
+      }
       if(o.userData.barrel){
         const rig=o.userData.barrel;
+        if(u.turret){
+          rig.rotation.y=0;
+          rig.position.set(0,0,-(this.activity.combat.motion?Math.sin(u.recoil/.22*Math.PI)*.18:0));
+        }else{
         rig.rotation.y=e.type==='tower'?e.angle-m.rotation.y:0;
         const kick=this.activity.combat.motion?Math.sin(o.userData.recoil/.22*Math.PI)*.18:0;
         rig.position.set(-Math.sin(rig.rotation.y)*kick,0,-Math.cos(rig.rotation.y)*kick);
+        }
       }
       let lift = 0, squash = 0, back = 0;
       if (e.kind === "unit") {

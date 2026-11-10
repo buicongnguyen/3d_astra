@@ -1,4 +1,5 @@
-// Story character portraits. There is no painted art yet, so each bust is an inline SVG drawn
+// Story character portraits: Blender busts in public/portraits/<id>.webp (tools/blender/render_cast_portraits.py);
+// where a file is missing, each bust falls back to an inline SVG drawn
 // from the CAST and FACTIONS data: faction colour, and a silhouette, hair and headgear chosen
 // by character id. Shapes are bold and flat so they stay crisp from 48 px to 160 px.
 // Dropping a file at public/portraits/<id>.webp replaces the drawing for that character at the

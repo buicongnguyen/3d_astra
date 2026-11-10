@@ -12,6 +12,7 @@ import { movement } from "./sim/movement.js";
 import { combat } from "./sim/combat.js";
 import { economy } from "./sim/economy.js";
 import { ai } from "./sim/ai.js";
+import { aiCounter } from "./sim/ai-counter.js";
 import { missions } from "./sim/missions.js";
 import { tactics } from "./sim/tactics.js";
 import { points } from "./sim/points.js";
@@ -47,6 +48,8 @@ export class Simulation {
       eliminated: false,
     }));
     this.events = [];
+    // What each AI team has seen of the enemy army (id -> type); see sim/ai-counter.js.
+    this.intel = this.players.map(() => new Map());
     this.result = null;
     this.terrain = new Terrain(map);
     this.nav = new Navigation(this.terrain);
@@ -398,5 +401,5 @@ export class Simulation {
   }
 }
 
-Object.assign(Simulation.prototype, points, expansion, vision, orders, movement, combat, economy, ai, missions, tactics, progression, coalitionPlan, commands, snapshot);
+Object.assign(Simulation.prototype, points, expansion, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot);
 Simulation.load = (saved) => restore(Simulation, saved);

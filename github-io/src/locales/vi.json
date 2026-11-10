@@ -1,5 +1,26 @@
 {
   "messages": {
+    "Select / box select": "Chọn / chọn khung",
+    "Left-click / drag": "Nhấp trái / kéo",
+    "Add to selection / queue order": "Thêm vào vùng chọn / xếp hàng lệnh",
+    "Shift + click": "Shift + nhấp",
+    "Move, gather, build, attack": "Di chuyển, khai thác, xây, tấn công",
+    "Right-click target": "Nhấp phải vào mục tiêu",
+    "Pan camera": "Di chuyển camera",
+    "WASD / arrows / middle drag": "WASD / phím mũi tên / kéo chuột giữa",
+    "Mouse wheel": "Con lăn chuột",
+    "Assign / recall group": "Gán / gọi nhóm",
+    "A new version is ready. It starts the next time you open the game.": "Đã có phiên bản mới. Phiên bản này sẽ chạy ở lần mở game tiếp theo.",
+    "Under attack!": "Đang bị tấn công!",
+    "Dismiss hint": "Đóng gợi ý",
+    "Idle Harvesters": "Thợ mỏ nhàn rỗi",
+    "Idle army": "Quân nhàn rỗi",
+    "Next idle Harvester": "Thợ mỏ nhàn rỗi kế tiếp",
+    "Next idle army unit": "Đơn vị chiến đấu nhàn rỗi kế tiếp",
+    "F1 · Next idle Harvester": "F1 · Thợ mỏ nhàn rỗi kế tiếp",
+    ", · Next idle army unit": ", · Đơn vị chiến đấu nhàn rỗi kế tiếp",
+    "No idle Harvesters.": "Không có thợ mỏ nhàn rỗi.",
+    "No idle army units.": "Không có đơn vị chiến đấu nhàn rỗi.",
     "Full screen": "Toàn màn hình",
     "Back": "Quay lại",
     "Exit full screen": "Thoát toàn màn hình",
@@ -284,11 +305,17 @@
     "Overcharged weapons": "Cường hóa vũ khí",
     "Weapons +": "Vũ khí +",
     "Plating": "Giáp +",
+    "Choose one": "Chọn một",
+    "CHOOSE ONE": "CHỌN MỘT",
+    "Research: choose one of two exclusive upgrades": "Nghiên cứu: chọn một trong hai nâng cấp loại trừ nhau",
+    "Research · choose Overcharged weapons or Reinforced plating; the other is then locked": "Nghiên cứu · chọn Cường hóa vũ khí hoặc Giáp gia cố; cái còn lại bị khóa",
+    " Choosing it locks the other branch.": " Chọn nhánh này sẽ khóa nhánh còn lại.",
     "Reinforced plating": "Giáp gia cố",
     "Reinforced plating fitted. Combat units take 12% less damage.": "Giáp gia cố đã lắp xong. Quân chiến đấu nhận ít hơn 12% sát thương.",
-    "Reinforced plating needs Overcharged weapons first.": "Giáp gia cố cần Cường hóa vũ khí trước.",
+    "Reinforced plating is locked: Overcharged weapons were chosen.": "Giáp gia cố bị khóa: bạn đã chọn Cường hóa vũ khí.",
+    "Overcharged weapons are locked: Reinforced plating was chosen.": "Cường hóa vũ khí bị khóa: bạn đã chọn Giáp gia cố.",
     "Reinforced plating is already researched or queued.": "Giáp gia cố đã được nghiên cứu hoặc đang chờ.",
-    "One-time research after Overcharged weapons: combat units take 12% less damage.": "Nghiên cứu một lần sau Cường hóa vũ khí: quân chiến đấu nhận ít hơn 12% sát thương.",
+    "Research branch, exclusive with Overcharged weapons: combat units take 12% less damage. Costs 100 alloy and 150 energy.": "Nhánh nghiên cứu, loại trừ Cường hóa vũ khí: quân chiến đấu nhận ít hơn 12% sát thương. Tốn 100 hợp kim và 150 năng lượng.",
     "Maximum level 3": "Đã đạt cấp 3",
     "Max level": "Cấp tối đa",
     "Practice target": "Bia tập bắn",
@@ -316,7 +343,7 @@
     "Trains Vanguards and Rangers. Level 2 unlocks Medics and Anti-tank soldiers. Required to construct a Foundry. Upgrades accelerate production.": "Huấn luyện Tiên phong và Xạ thủ. Cấp 2 mở Quân y và Chống tăng. Cần có để xây Nhà máy. Nâng cấp giúp huấn luyện nhanh hơn.",
     "Produces Breakers and researches +10% combat-unit damage. Level 2 unlocks Engineers; level 3 unlocks Battle tanks. Upgrades accelerate production.": "Sản xuất Pháo binh và nghiên cứu tăng 10% sát thương. Cấp 2 mở Công binh; cấp 3 mở Xe tăng. Nâng cấp giúp sản xuất nhanh hơn.",
     "Automatically attacks visible enemies within range, shooting combat units first, then Harvesters, then buildings. Each upgrade adds 50% of its base attack damage and 1 m of range. Each Command core and Supply relay supports two towers.": "Tự bắn địch nhìn thấy trong tầm: ưu tiên quân chiến đấu, rồi thợ mỏ và công trình. Mỗi cấp nâng cấp thêm 50% sát thương gốc và 1 m tầm bắn. Mỗi Sở chỉ huy và Trạm tiếp tế hỗ trợ được hai tháp.",
-    "One-time +10% damage for all combat units.": "Nghiên cứu một lần, tăng 10% sát thương cho mọi đơn vị chiến đấu.",
+    "Research branch, exclusive with Reinforced plating: +10% damage for all combat units. Costs 150 alloy and 100 energy.": "Nhánh nghiên cứu, loại trừ Giáp gia cố: tăng 10% sát thương cho mọi đơn vị chiến đấu. Tốn 150 hợp kim và 100 năng lượng.",
     "Automatically heals nearby friendly infantry (including Harvesters and Engineers), excluding itself. Cannot attack. Use Support, then select an ally to follow and heal.": "Tự chữa trị bộ binh đồng minh ở gần, kể cả Thợ mỏ và Công binh; không tự hồi máu. Không thể đánh. Dùng Hỗ trợ để theo và chữa trị đồng minh.",
     "Automatically repairs nearby completed buildings, Breakers and Battle tanks. Cannot construct, gather, or attack. Use Support, then select a repair target.": "Tự sửa công trình đã hoàn thành, Pháo binh và Xe tăng ở gần. Không xây mới, khai thác hay đánh. Dùng Hỗ trợ để chọn mục tiêu sửa.",
     "Durable tracked vehicle with a long-range cannon: 48 damage every 2.2s at 12 m. Each shell also hits enemies within 2 m of the target for 40% damage and hits Vanguards 1.5× harder. Vulnerable to anti-tank rockets; escort with infantry. Engineers repair its hull. Requires level 3 Foundry.": "Xe bọc thép bền bỉ: 48 sát thương mỗi 2,2 giây, tầm 12 m. Đạn gây thêm 40% sát thương trong bán kính 2 m và sát thương gấp 1,5 lần lên Tiên phong. Yếu trước tên lửa chống tăng; nên có bộ binh hộ tống. Công binh sửa được xe. Cần Nhà máy cấp 3.",
@@ -704,6 +731,9 @@
     "Select soldiers, then Actions": "Chọn lính, rồi mở Thao tác"
   },
   "patterns": [
+    ["^(.+) counters your (.+)\\. Pull them back and bring (.+)\\.$", "{1} khắc chế {2} của bạn. Hãy rút {2} về và dùng {3}."],
+    ["^(.+) counters your (.+)\\. Pull them back\\.$", "{1} khắc chế {2} của bạn. Hãy rút {2} về."],
+    ["^Your (.+) counters (.+)\\. Let it lead the fight\\.$", "{1} của bạn khắc chế {2}. Hãy để {1} dẫn đầu trận đánh."],
     [
       "^PLACE (.+)$",
       "ĐẶT {1}"
@@ -1031,6 +1061,10 @@
     [
       "^Training (\\d+) / (\\d+)(.*)$",
       "Tập {1} / {2}{3}"
+    ],
+    [
+      "^Loading (.+)\u2026 (\\d+)%$",
+      "\u0110ang t\u1ea3i {1}\u2026 {2}%"
     ],
     [
       "^Loading (\\d+) of (\\d+)\u2026$",

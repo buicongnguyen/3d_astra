@@ -1,0 +1,31 @@
+/* Phase G extras: idle buttons, in-fight hint, minimap drag. Text 11 px or more, targets 44 px or more. */
+#minimap { touch-action: none; }
+
+#idle-chips { display: flex; gap: 8px; position: absolute; z-index: 20; }
+#idle-chips .idle-button { background: rgba(8, 23, 28, 0.92); color: #e9f3ea; border: 1px solid #68836a; border-radius: 10px; padding: 4px 8px; }
+@media (max-aspect-ratio: 1.35) { #idle-chips { flex-direction: column; bottom: 8px; right: 8px; } }
+@media (min-aspect-ratio: 1.35) { .compact-ui:not(.in-briefing) #idle-chips { top: 6px; left: calc(var(--edge-left) + var(--rail-width) + 130px - var(--gesture-left, 12px)); } }
+:root:not(.compact-ui) #idle-chips, .in-briefing #idle-chips, .in-training .idle-button { display: none !important; }
+.idle-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; min-width: 44px; }
+.idle-button[hidden] { display: none !important; }
+.idle-button b { font-size: 14px; line-height: 1; font-weight: 800; }
+.idle-button .icon { width: 20px; height: 20px; }
+
+.idle-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.idle-row button { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 6px 12px; font-size: 13px; }
+.idle-row button[disabled] { opacity: 0.5; }
+.idle-row kbd { font-size: 11px; opacity: 0.8; }
+.idle-row b { font-size: 13px; }
+.selection-empty { flex-wrap: wrap; }
+.selection-empty > div { min-width: 0; }
+
+/* Non-blocking counter hint: only its close button takes taps. */
+#fight-hint { position: absolute; z-index: 34; left: 50%; top: 56px; transform: translateX(-50%); display: flex; align-items: center; gap: 4px;
+  max-width: min(360px, calc(100% - 24px)); padding: 4px 4px 4px 12px; border-radius: 10px; background: rgba(8, 23, 28, 0.94);
+  border: 1px solid #c9a24a; color: #f1e6c4; font-size: 13px; line-height: 1.35; pointer-events: none; }
+#fight-hint[hidden] { display: none !important; }
+#fight-hint .fh-close { pointer-events: auto; flex: none; width: 44px; height: 44px; font-size: 22px; line-height: 1; border-radius: 8px;
+  background: transparent; color: inherit; border: 0; }
+@media (min-aspect-ratio: 1.35) {
+  .compact-ui:not(.in-briefing) #fight-hint { top: 54px; left: calc(var(--edge-left) + var(--rail-width) + 8px); transform: none; max-width: 300px; }
+}

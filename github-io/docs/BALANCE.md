@@ -124,3 +124,17 @@ Each cell gives the army size, its value as a multiple of the tower investment, 
 - **Upgrades.** An upgraded tower trades a little cost-efficiency for range and much heavier attacker losses. Upgrading is now a real alternative to building another tower.
 
 The Godot edition still uses the previous tower rules.
+
+## Energy sinks (0.9.1)
+
+Energy comes from the blue deposits (about 8,000 per default map against 18,000 alloy) and is spent on:
+
+1. **Units.** Rangers 25, Breakers 75, Medics, Engineers and Anti-tank 50, Battle tanks 125.
+2. **The Foundry research branch.** Overcharged weapons (150 alloy + 100 energy) or Reinforced plating (100 alloy + 150 energy). The two exclude each other: a team takes one. Plating is the energy-heavy choice, weapons the alloy-heavy one.
+3. **Building levels.** Command core L2 costs 200 alloy + 100 energy and L3 350 + 175; Barracks and Foundry levels cost 100 x level alloy + 50 x level energy; tower levels 75 x level + 25 x level.
+
+Support units (Medic, Engineer) are also energy sinks. Abilities have no energy cost: they use cooldowns only. The tests (tests/ai-rules-091.test.js) check the research branch cost, the six unit costs and the core level cost.
+
+## AI composition (0.9.1)
+
+Normal and faster AIs counter what they have seen. A rival remembers fighters, towers and cores in its vision. At 4 or more seen fighters: 40% vehicles or more draws Anti-tank soldiers (Rangers at Barracks Level 1), 60% infantry or more draws Rangers and Breakers; two or more towers draw Breakers. Skirmish bench (PlayBot at 16 fighters, win time): Normal 285-320 s before, 291-325 s after; Fast 282-293 s before, 338-1095 s after (the AI now spends surplus and counters; Normal on Highlands went from a bot defeat to a win at 302 s).

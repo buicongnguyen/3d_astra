@@ -25,6 +25,16 @@ export function setupFrame(S, A) {
     A.tone(300, 0.3);
   }
 
+  // Your own buildings or units hit: a toast and a minimap ping, at most once every ten seconds of play.
+  let attackedAt = -Infinity;
+  function underAttack(event) {
+    if (S.sim.time >= attackedAt && S.sim.time - attackedAt < 10) return;
+    attackedAt = S.sim.time;
+    A.notice("Under attack!");
+    $("notice").classList.add("warning");
+    S.pings.push({ x: event.x, z: event.z, at: S.sim.time });
+  }
+
   // Capture points: a toast and a ping when one changes hands.
   const pointOwners = new Map();
 
@@ -84,7 +94,7 @@ export function setupFrame(S, A) {
         S.tutorial?.update(S.sim,[...S.selected]);
         S.accumulator -= 0.05;
       }
-      if (S.sim.result) A.showResult();
+      if (S.sim.result) { if (!A.beginBeat()) A.showResult(); }
       else if ((S.saveClock += dt) >= AUTOSAVE_SECONDS) A.autosave();
     }
     A.missionUI.tick(running ? dt : 0);
@@ -110,8 +120,10 @@ export function setupFrame(S, A) {
       S.view.focusOn(S.cameraPan.fromX + (S.cameraPan.x - S.cameraPan.fromX) * ease, S.cameraPan.fromZ + (S.cameraPan.z - S.cameraPan.fromZ) * ease);
       if (k >= 1) S.cameraPan = null;
     }
+    const beatScale = A.stepBeat(dt);
     const events = S.sim.events.splice(0);
     for (const event of events) {
+      if (event.type === "impact" && event.team === 0 && Z.started) underAttack(event);
       if (Z.started) S.audio?.event(event, S.sim);
       if (event.type === "message") A.notice(event.text);
       else if (event.type === "incoming") { if (event.team === 0) incomingAlert(event); }
@@ -136,7 +148,7 @@ export function setupFrame(S, A) {
     const root = document.documentElement;
     coveredRedraw -= elapsed;
     if (Z.started || !root.classList.contains("compact-ui") || !root.classList.contains("in-briefing") || coveredRedraw <= 0) {
-      S.view.update(S.sim, Z.started && !Z.paused ? dt : 0, S.selected, S.hover, renderAlpha);
+      S.view.update(S.sim, Z.started && !Z.paused ? dt * beatScale : 0, S.selected, S.hover, renderAlpha);
       coveredRedraw = 0.5;
     }
     uiClock -= dt;
@@ -144,6 +156,7 @@ export function setupFrame(S, A) {
       if (S.hover && !S.sim.get(S.hover.id)) { S.hover = null; $("hover-label").hidden = true; }
       A.updateUI();
       A.minimap();
+      A.uiExtrasTick();
       uiClock = 0.15;
     }
     if (S.governed)

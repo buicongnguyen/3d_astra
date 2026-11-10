@@ -17,7 +17,7 @@ try {
     await page.addInitScript(()=>{
       window.trainingInputTrace=[];
       for(const type of ['pointerdown','pointerup','click']) document.addEventListener(type,event=>{
-        trainingInputTrace.push({type,target:event.target.id||event.target.tagName,x:event.clientX,y:event.clientY,lesson:window.__frontier?.tutorial?.index});
+        trainingInputTrace.push({type,target:event.target.id||event.target.tagName,html:String(event.target.outerHTML).slice(0,90),x:event.clientX,y:event.clientY,lesson:window.__frontier?.tutorial?.index});
         if(trainingInputTrace.length>32)trainingInputTrace.shift();
       },true);
     });
@@ -51,11 +51,9 @@ try {
       if (mobile) await page.touchscreen.tap(p.x,p.y);
       else await page.mouse.click(p.x,p.y);
       await page.waitForFunction(()=>window.__frontier.tutorial?.index === 1);
-      // On the CI machine's phone-landscape run the card sometimes stays collapsed after the lesson changes
-      // (seen twice, never reproduced locally even with the CPU slowed 8x). Expand it by hand and say so,
-      // so the controls below are still checked and the case stays visible in the log.
-      const shown = await page.locator('#training-focus').waitFor({state:'visible',timeout:5000}).then(()=>true,()=>false);
-      if (!shown) { console.warn(`tutorial ${width}x${height}: the card stayed collapsed after the lesson changed`); await press('#training-toggle'); }
+      // A new lesson always opens its card (the card used to fold away again when the click that ended the
+      // tap landed on it; see tests/ui-extras.mjs for the forced reproduction).
+      await page.locator('#training-card').waitFor({state:'visible',timeout:5000});
       for (const id of ['training-focus','training-exit']) {
         await page.locator('#'+id).waitFor({state:'visible'});
         const r=await page.locator('#'+id).boundingBox();

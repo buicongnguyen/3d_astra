@@ -1,16 +1,15 @@
-import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {translate,addMessages} from '../src/i18n.js';
 import {MISSIONS} from '../src/story/missions.js';
+import {launchBrowser,openPage,testUrl,suite} from './lib/harness.mjs';
 fs.mkdirSync('test-results', {recursive:true});
-const browser=await chromium.launch({headless:true,executablePath:process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':undefined,args:['--enable-unsafe-swiftshader']});
-try {
+const browser=await launchBrowser();
+await suite('language',async()=>{
  for(const mobile of [false,true]) {
-  const page=await browser.newPage({viewport:mobile?{width:390,height:844}:{width:1280,height:800},isMobile:mobile,hasTouch:mobile});
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const {page,errors}=await openPage(browser,mobile?'portrait':{width:1280,height:800});
   const click=selector=>page.locator(selector)[mobile?'tap':'click']();
-  await page.goto((process.env.TEST_URL||'http://127.0.0.1:4191/')+'?test=1');
+  await page.goto(testUrl('','http://127.0.0.1:4191/'));
   await page.waitForFunction(()=>window.__frontier?.view.models.size===13);
   await page.selectOption('#language','vi');
   await page.waitForFunction(()=>document.querySelector('#start').textContent==='Bắt đầu');
@@ -74,9 +73,7 @@ try {
  const firstSay=says.filter(t=>t.when.time!==undefined).sort((a,b)=>a.when.time-b.when.time)[0].do.find(a=>a.say).say;
  const laterSay=says.at(-1).do.find(a=>a.say).say;
  for(const [name,viewport,touch] of [['desktop',{width:1280,height:800},false],['portrait',{width:390,height:844},true],['landscape',{width:844,height:390},true]]) {
-  const page=await browser.newPage({viewport,isMobile:touch,hasTouch:touch,deviceScaleFactor:touch?2:1});
-  page.setDefaultTimeout(20000);
-  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const {page,errors}=await openPage(browser,{...viewport,mobile:touch},{deviceScaleFactor:touch?2:1,timeout:20000});
   const press=async selector=>{const target=page.locator(selector).first();if(touch)await target.tap();else await target.click();await page.waitForTimeout(120);};
   const text=selector=>page.locator(selector).first().innerText();
   // Visible text under 11 px, text cut off by its own box, or text outside the screen.
@@ -94,7 +91,7 @@ try {
    await press('[data-do="apply"]');await press('[data-resume]');
    await page.waitForFunction(value=>document.documentElement.lang===value,value);
   };
-  await page.goto((process.env.TEST_URL||'http://127.0.0.1:4191/')+'?test=1');
+  await page.goto(testUrl('','http://127.0.0.1:4191/'));
   await page.waitForFunction(()=>window.__frontier?.view.models.size===13&&!document.querySelector('#start').disabled,null,{timeout:90000});
   await page.selectOption('#language','vi');
   await press('[data-mode="campaign"]');
@@ -161,4 +158,4 @@ try {
   assert.deepEqual(errors,[]);console.log('Vietnamese campaign story passed: '+name);
   await page.close();
  }
-} finally {await browser.close();}
+},{browser});

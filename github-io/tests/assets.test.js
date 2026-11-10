@@ -35,6 +35,12 @@ test('every model keeps the runtime contract: mergeable meshes, team materials, 
     }
     if (['tank', 'breaker', 'tower'].includes(type))
       assert.ok(names.filter(n => RIG_PART.test(n)).length >= 2, `${type}: barrel rig`);
+    if (['tank', 'breaker'].includes(type)) {
+      const pivot = json.nodes.find(n => /^Turret_pivot/.test(n.name || ''));
+      assert.ok(pivot?.translation, `${type}: Turret_pivot empty marks the turret ring`);
+      assert.ok(names.some(n => /^Turret_head/.test(n)), `${type}: turret head is its own part so it can aim`);
+      assert.ok(names.some(n => /^(Main_cannon|Cannon)/.test(n)), `${type}: barrel stays a separate recoil part`);
+    }
     if (type === 'tower') assert.ok(names.some(n => /^Turret_head/.test(n)), 'tower head rotates with its barrels');
   }
 });

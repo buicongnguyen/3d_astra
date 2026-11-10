@@ -1,6 +1,6 @@
 {
   "name": "frontier-command",
-  "version": "0.8.1",
+  "version": "0.9.3",
   "private": true,
   "type": "module",
   "scripts": {
@@ -38,9 +38,11 @@
     "test:tutorial": "node tests/tutorial.mjs",
     "test:ui-quality": "node tests/ui-quality.mjs",
     "test:layout-f": "node tests/layout-f.mjs",
+    "test:ui-extras": "node tests/ui-extras.mjs",
     "test:ambient-life": "node tests/ambient-life.mjs",
     "test:render-budget": "node tests/render-budget.mjs",
     "test:audio": "node tests/audio.mjs",
+    "test:offline": "node tests/offline.mjs",
     "render:audio": "node tools/render-audio.mjs"
   },
   "dependencies": {

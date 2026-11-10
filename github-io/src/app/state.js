@@ -44,7 +44,6 @@ export function createState() {
     tutorial: null,
     tutorialShown: -1,
     campaign,
-    playMode: initialMode(query, campaign),
     stagePick: nextMission(campaign),
     activeStage: null,
     // The match and its view (sim is created by createSim in main.js, view by boot).
@@ -88,6 +87,10 @@ export function createState() {
     saveClock: 0,
     loadFailed: false,
   };
+  // The play mode lives in the screen machine (screens.js); S.playMode reads and sets it there,
+  // so every Training / Skirmish / Campaign change is checked against the legal moves.
+  Object.defineProperty(S, "playMode", { get: () => S.screen.mode, set: (mode) => S.screen.setMode(mode), enumerable: true });
+  S.playMode = initialMode(query, campaign);
   S.governor = new Governor({
     onChange: (level) => {
       S.view?.setMotionLevel(level.motion);
