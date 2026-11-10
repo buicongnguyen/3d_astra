@@ -114,7 +114,10 @@ export const economy = {
         this.move(e, this.approach(e, depot), dt);
         return;
       }
-      if (e.carryType) this.players[e.team][e.carryType] += e.carry;
+      if (e.carryType) {
+        this.players[e.team][e.carryType] += e.carry;
+        this.missionBank(e.team, e.carryType, e.carry);
+      }
       if (e.carry > 0) this.events.push({ type: "deliver", x: e.x, z: e.z, tx: depot.x, tz: depot.z, team: e.team, resource: e.carryType, seed: e.id });
       e.carry = 0;
       e.carryType = null;

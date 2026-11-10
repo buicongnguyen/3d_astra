@@ -12,12 +12,13 @@ import { movement } from "./sim/movement.js";
 import { combat } from "./sim/combat.js";
 import { economy } from "./sim/economy.js";
 import { ai } from "./sim/ai.js";
+import { missions } from "./sim/missions.js";
 
 export { NEUTRAL } from "./sim/constants.js";
 // The match state and its fixed 20 Hz step. Behaviour lives in the systems under sim/, mixed
 // in at the bottom of this file; this class holds setup, shared lookups and the step order.
 export class Simulation {
-  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null } = {}) {
+  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null, mission = null } = {}) {
     this.aiEnabled = ai;
     this.entities = [];
     this.resources = [];
@@ -113,6 +114,7 @@ export class Simulation {
     this.nav.rebuild(this.entities);
     this.updateVision();
     if (playerBonus) this.reinforce(playerBonus);
+    if (mission) this.initMission(mission);
     this.message(
       "Meridian is online. Assign Harvesters to the amber alloy deposits.",
     );
@@ -242,6 +244,11 @@ export class Simulation {
     }
   }
   // Teams at war. In a coalition the AI teams (1+) are allies against the player.
+  setAiSpeed(speed) {
+    if (!Object.hasOwn(AI_SPEEDS, speed)) return;
+    this.aiSpeed = speed;
+    this.pace = AI_SPEEDS[speed];
+  }
   hostile(a, b) {
     return a !== b && a >= 0 && b >= 0 && !(this.coalition && a > 0 && b > 0);
   }
@@ -250,6 +257,8 @@ export class Simulation {
     this.time += dt;
     this.ticks++;
     this.routeBudget = ROUTES_PER_TICK;
+    // Events raised from here on belong to this tick (mission triggers read them).
+    this.tickEvents = this.events.length;
     this.visionClock -= dt;
     if (this.visionClock <= 0) {
       this.updateVision();
@@ -258,6 +267,7 @@ export class Simulation {
     for (const e of this.entities) if (e.hp > 0) this.stepEntity(e, dt);
     this.separate(dt);
     this.stepAI(dt);
+    this.stepMission(dt);
     this.settle();
   }
   // One entity's turn: timers, then its building, support or order behaviour.
@@ -340,6 +350,8 @@ export class Simulation {
     // A finished core keeps a team in the match. A core still under construction buys it
     // CORE_GRACE seconds to finish one, so a hidden foundation cannot stall the ending.
     const alive = this.players.map((p, team) => {
+      // A mission can field the player without a base: the squad is the side.
+      if (team === 0 && this.mission && !this.mission.rules.playerBase) return this.own(0).some((e) => e.kind === "unit");
       const cores = this.own(team).filter((e) => e.type === "hq");
       if (cores.some((e) => e.complete)) return ((p.coreLostAt = null), true);
       if (!cores.length) return false;
@@ -364,7 +376,8 @@ export class Simulation {
       this.updateVision();
     }
     const enemiesAlive = alive.slice(1).some(Boolean);
-    if (!alive[0] || !enemiesAlive)
+    if (this.mission) this.result = this.missionResult(alive);
+    else if (!alive[0] || !enemiesAlive)
       this.result =
         !alive[0] && !enemiesAlive ? "draw" : alive[0] ? "victory" : "defeat";
     // Retain only live simulation objects; selection and orders use stable IDs.
@@ -372,5 +385,5 @@ export class Simulation {
   }
 }
 
-Object.assign(Simulation.prototype, vision, orders, movement, combat, economy, ai, progression, coalitionPlan, commands, snapshot);
+Object.assign(Simulation.prototype, vision, orders, movement, combat, economy, ai, missions, progression, coalitionPlan, commands, snapshot);
 Simulation.load = (saved) => restore(Simulation, saved);

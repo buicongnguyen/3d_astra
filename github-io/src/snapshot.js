@@ -1,11 +1,12 @@
 import { DEFINITIONS as D } from "./data.js";
+import { AI_SPEEDS } from "./ai-plan.js";
 
 // Match saves. A save is one JSON string: the options the match was created with plus every
 // field of the simulation except what is derived (navigation grid, terrain, AI tempo table)
 // or transient (the event queue). Bump SAVE_VERSION whenever a stored field changes meaning;
 // older saves are then refused instead of loading wrongly.
 export const SAVE_VERSION = 1;
-const DERIVED = new Set(["nav", "terrain", "pace", "events", "commandLog", "lookup", "lookupFor", "lookupSize"]);
+const DERIVED = new Set(["nav", "terrain", "pace", "events", "commandLog", "lookup", "lookupFor", "lookupSize", "missionDef", "tickEvents"]);
 
 const packBits = (cells) => {
   let text = "";
@@ -52,7 +53,7 @@ export const snapshot = {
     state.entities = this.entities.map(slim);
     return JSON.stringify({
       version: SAVE_VERSION,
-      options: { map: this.terrain.id, enemyCount: this.enemyCount, aiSpeed: this.aiSpeed, alliance: this.coalition ? "coalition" : "ffa", ai: this.aiEnabled },
+      options: { map: this.terrain.id, enemyCount: this.enemyCount, aiSpeed: this.aiSpeed, alliance: this.coalition ? "coalition" : "ffa", ai: this.aiEnabled, mission: this.missionDef || null },
       nav: { revision: this.nav.revision, wallsSpawned: this.nav.wallsSpawned },
       state,
     }, encode);
@@ -75,6 +76,7 @@ export function restore(Simulation, saved) {
   Object.assign(sim, data.state);
   sim.entities = data.state.entities.map((e) => ({ ...D[e.type], ...e }));
   sim.events = [];
+  sim.pace = AI_SPEEDS[sim.aiSpeed];
   sim.nav.wallsSpawned = data.nav.wallsSpawned;
   sim.nav.rebuild(sim.entities);
   sim.nav.revision = data.nav.revision;
