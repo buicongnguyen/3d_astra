@@ -18,6 +18,8 @@ export function defaults(coarse = false) {
     enemyColor: "coral",
     quality: coarse ? "eco" : "high",
     masterVolume: 0.5,
+    musicVolume: 0.6,
+    sfxVolume: 0.8,
     muted: false,
     waterMotion: true,
     combatMotion: true,
@@ -39,6 +41,8 @@ export function normalize(value, coarse = false) {
   if (["eco", "high"].includes(value.quality)) d.quality = value.quality;
   if (Number.isFinite(value.masterVolume))
     d.masterVolume = Math.max(0, Math.min(1, value.masterVolume));
+  for (const key of ["musicVolume", "sfxVolume"])
+    if (Number.isFinite(value[key])) d[key] = Math.max(0, Math.min(1, value[key]));
   for (const key of ["muted", "waterMotion", "combatMotion", "ambient", "detail", "showFps", "autocast"])
     if (typeof value[key] === "boolean") d[key] = value[key];
   return d;

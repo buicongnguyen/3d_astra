@@ -41,6 +41,8 @@ import { MISSIONS, ACTS, loadProgress, saveProgress, isUnlocked, isCleared, reco
 import { createMissionUI, pointLabel, medalBadge, clock as missionClock } from "./mission-ui.js";
 import { writeSave, readSave, clearSave, AUTOSAVE_SECONDS } from "./savegame.js";
 import { setMusicMood, musicMood } from "./music.js";
+import { AudioDirector } from "./audio.js";
+import { screenMix } from "./audio-logic.js";
 import { portrait, hasPortrait } from "./portraits.js";
 import keyartUrl from "./art/keyart.webp";
 import keyartSmallUrl from "./art/keyart-960.webp";
@@ -131,7 +133,7 @@ let settings = loadSettings(matchMedia("(pointer:coarse)").matches),
   mission = null,
   ambience;
 // Story missions: briefing overlay, dialogue box, objectives list and debrief (mission-ui.js).
-const missionUI = createMissionUI({ stage: $("stage"), objectivesPanel: $("mission-objectives"), tone: (frequency, duration) => tone(frequency, duration) });
+const missionUI = createMissionUI({ stage: $("stage"), objectivesPanel: $("mission-objectives"), tone: (frequency, duration) => (frequency === 988 ? audio?.sfx.play("objective") : frequency === 196 ? audio?.sfx.play("objective-failed") : null) ?? tone(frequency, duration) });
 const localization = localizeDOM(document.body, settings.language);
 // Vietnamese story text arrives in its own file; the page is translated again once it is in.
 // Story text is plain text nodes, so open briefings, objectives and the Comms log follow.
@@ -200,6 +202,7 @@ let uiClock = 0,
   coveredRedraw = 0,
   noticeTimeout,
   audioContext,
+  audio,
   lastTone = 0;
 let pointer = { x: 0, y: 0, inside: false },
   drag = null,
@@ -296,6 +299,7 @@ function tone(frequency = 520, duration = 0.065) {
   if (
     muted ||
     settings.masterVolume <= 0 ||
+    settings.sfxVolume <= 0 ||
     !audioContext ||
     audioQuiet() ||
     performance.now() - lastTone < 70
@@ -307,7 +311,7 @@ function tone(frequency = 520, duration = 0.065) {
   oscillator.type = "sine";
   oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
   gain.gain.setValueAtTime(
-    Math.max(0.0001, 0.05 * settings.masterVolume),
+    0.07,
     audioContext.currentTime,
   );
   gain.gain.exponentialRampToValueAtTime(
@@ -315,7 +319,7 @@ function tone(frequency = 520, duration = 0.065) {
     audioContext.currentTime + duration,
   );
   oscillator.connect(gain);
-  gain.connect(audioContext.destination);
+  gain.connect(audio?.bus.sfx ?? audioContext.destination);
   oscillator.start();
   oscillator.stop(audioContext.currentTime + duration);
 }
@@ -323,6 +327,10 @@ function unlockAudio() {
   try {
     audioContext ||= new AudioContext();
     ambience ||= new Ambience(audioContext);
+    if (!audio) {
+      audio = new AudioDirector(audioContext, { project: (x, z) => { const p = view.project(x, z, 0.5); return screenMix(p.x, p.y, view.width, view.height); } });
+      audio.applySettings(settings);
+    }
     // "interrupted" is iOS after a call or app switch; only a user gesture brings it back.
     if (audioContext.state !== "running" && !audioQuiet()) audioPower(audioContext, false);
   } catch {
@@ -790,11 +798,10 @@ function syncPointOwners() {
 function pointAlert(event) {
   const name = pointLabel(sim.missionDef, event.name), before = pointOwners.get(event.name) ?? null;
   pointOwners.set(event.name, event.owner);
-  if (event.owner === 0) { notice(`${name} captured`); tone(880, 0.15); }
+  if (event.owner === 0) { notice(`${name} captured`); }
   else {
     notice(before === 0 ? `${name} lost` : `${name} taken by the enemy`);
     $("notice").classList.add("warning");
-    tone(260, 0.25);
   }
   pings.push({ x: event.x, z: event.z, at: sim.time });
 }
@@ -1145,7 +1152,7 @@ function confirmBuild(point = buildPoint) {
   if (b) {
     clearMode();
     setSelection([b.id]);
-    tone(330, 0.15);
+    if (audio) audio.sfx.play("construct"); else tone(330, 0.15);
   } else {
     buildFailure = sim.events.slice(previousEvents).findLast(e => e.type === 'message')?.text || 'Select a Harvester to construct this building.';
     updateUI();
@@ -1574,6 +1581,7 @@ function applyPreferences(value) {
   syncStoryLanguage();
   $('language').value = settings.language;
   muted = settings.muted;
+  audio?.applySettings(settings);
   $("fps").hidden = !settings.showFps;
   view?.applySettings(settings);
   syncAutocast(false);
@@ -1781,7 +1789,7 @@ function showResult() {
   modalType = "result";
   clearMode();
   setModalOpen(true);
-  tone(sim.result === "victory" ? 880 : 220, 0.3);
+  if (audio) audio.sfx.play(sim.result === "victory" ? "win" : "lose"); else tone(sim.result === "victory" ? 880 : 220, 0.3);
   const win = sim.result === "victory";
   // A finished match cannot be continued (Training never had a save of its own).
   if (!tutorial && playMode !== "training") clearSave();
@@ -1851,6 +1859,7 @@ function restart(play = true, resume = false) {
   saveClock = 0;
   missionUI.resetMatch();
   setMusicMood("calm");
+  audio?.reset();
   drag = null;
   keys.clear();
   pointer.inside = false;
@@ -1942,6 +1951,7 @@ function beginMatch() {
   saveClock = 0;
   missionUI.resetMatch();
   setMusicMood("calm");
+  audio?.reset();
   sim = createSim();
   syncPointOwners();
   view.reset();
@@ -2160,6 +2170,7 @@ function frame(now) {
     sim.terrain.river && Math.abs(view.focus.z) < 14,
   );
   syncAudio(elapsed);
+  audio?.update(elapsed, { sim, settings, started, paused, hidden: document.hidden, mapId });
   refreshHover();
   const running = started && !paused && !sim.result;
   if (running) {
@@ -2199,6 +2210,7 @@ function frame(now) {
   }
   const events = sim.events.splice(0);
   for (const event of events) {
+    if (started) audio?.event(event, sim);
     if (event.type === "message") notice(event.text);
     else if (event.type === "incoming") { if (event.team === 0) incomingAlert(event); }
     // Story mission cues (sim/missions.js).
@@ -2335,6 +2347,7 @@ function ready() {
         get cameraPan() { return cameraPan; },
         get mode() { return mode; },
         get musicMood() { return musicMood(); },
+        get audio() { return audio; },
         save: autosave,
       };
   } catch (error) {
