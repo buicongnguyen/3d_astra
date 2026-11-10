@@ -6,6 +6,20 @@ const normalize = text => text.trim().replace(/\s+/g, ' ').toLowerCase();
 const messages = new Map(Object.entries(vietnamese.messages).map(([key, value]) => [normalize(key), value]));
 const patterns = vietnamese.patterns.map(([source, target]) => [new RegExp(source, 'i'), target]);
 const cache = new Map();
+// The campaign story (src/locales/story-vi.json) is a separate catalog, fetched the first time
+// Vietnamese is shown, so English players never download it and the main catalog stays small.
+// Entries of the main catalog win; the translation cache is dropped because results may change.
+export function addMessages(catalog) {
+  for (const [key, value] of Object.entries(catalog?.messages || {})) if (!messages.has(normalize(key))) messages.set(normalize(key), value);
+  cache.clear();
+}
+let story = null;
+export function loadStory() {
+  story ??= import('./locales/story-vi.json', {with: {type: 'json'}}).then(module => { addMessages(module.default); return true; });
+  // A failed download may be retried on the next language change.
+  story.catch(() => { story = null; });
+  return story;
+}
 export const getLanguage = () => language;
 export function setLanguage(value) {
   language = Object.hasOwn(LANGUAGES, value) ? value : 'en';

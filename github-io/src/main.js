@@ -9,7 +9,7 @@ import "./desktop-dock.css";
 import "./hud-readability.css";
 import { loadSettings, saveSettings, palette } from "./settings.js";
 import { SettingsUI } from "./settings-ui.js";
-import { localizeDOM } from "./i18n.js";
+import { localizeDOM, loadStory } from "./i18n.js";
 import "./language.css";
 import { MAPS, SURFACES } from "./terrain.js";
 import { Ambience, audioPower } from "./ambience.js";
@@ -131,6 +131,13 @@ let settings = loadSettings(matchMedia("(pointer:coarse)").matches),
 // Story missions: briefing overlay, dialogue box, objectives list and debrief (mission-ui.js).
 const missionUI = createMissionUI({ stage: $("stage"), objectivesPanel: $("mission-objectives"), tone: (frequency, duration) => tone(frequency, duration) });
 const localization = localizeDOM(document.body, settings.language);
+// Vietnamese story text arrives in its own file; the page is translated again once it is in.
+// Story text is plain text nodes, so open briefings, objectives and the Comms log follow.
+function syncStoryLanguage() {
+  if (settings.language !== 'vi') return;
+  loadStory().then(() => { if (settings.language === 'vi') localization.apply('vi'); }, () => {});
+}
+syncStoryLanguage();
 const languageRow = document.createElement('label');
 languageRow.className = 'language-choice menu-only';
 languageRow.title = 'Language / Ngôn ngữ';
@@ -1559,6 +1566,7 @@ document.addEventListener('webkitfullscreenchange', setLayout);
 function applyPreferences(value) {
   settings = value;
   localization.apply(settings.language);
+  syncStoryLanguage();
   $('language').value = settings.language;
   muted = settings.muted;
   $("fps").hidden = !settings.showFps;

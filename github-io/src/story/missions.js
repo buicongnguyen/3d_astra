@@ -34,7 +34,7 @@ export const MISSIONS = [
       { resources: { alloy: 600, energy: 200 } },
       { spawn: "worker", team: 0, at: { x: -30, z: 30 }, count: 2 },
       { spawn: "vanguard", team: 0, at: { x: -14, z: 13 }, count: 3 },
-      { capturePoint: "oldRelay", gives: { energy: 1 } },
+      { capturePoint: "oldRelay", label: "Builder relay", gives: { energy: 1 } },
     ],
     objectives: [
       { id: "relay", text: "Build a Supply relay", type: "build", building: "relay", count: 1 },
@@ -110,7 +110,7 @@ export const MISSIONS = [
       westRoad: { x: -24, z: -10, r: 6 },
     },
     setup: [
-      { capturePoint: "oldRelay", gives: { energy: 1 } },
+      { capturePoint: "oldRelay", label: "Builder relay", gives: { energy: 1 } },
       { spawn: "tower", team: 0, at: { x: -6, z: 15 } },
       { spawn: "tower", team: 0, at: { x: -14, z: 16 } },
       { spawn: "ranger", team: 0, at: { x: -19, z: 20 }, count: 3 },
@@ -269,9 +269,9 @@ export const MISSIONS = [
       oasisEast: { x: 24, z: 16, r: 8 },
     },
     setup: [
-      { capturePoint: "oasisNorth", gives: { alloy: 2 } },
-      { capturePoint: "oasisCentre", gives: { alloy: 2 } },
-      { capturePoint: "oasisEast", gives: { alloy: 2 } },
+      { capturePoint: "oasisNorth", label: "North oasis", gives: { alloy: 2 } },
+      { capturePoint: "oasisCentre", label: "Centre oasis", gives: { alloy: 2 } },
+      { capturePoint: "oasisEast", label: "East oasis", gives: { alloy: 2 } },
       { spawn: "vanguard", team: 1, at: { x: -8, z: -29 }, count: 3 },
       { spawn: "ranger", team: 1, at: { x: -13, z: -30 }, count: 2 },
       { spawn: "vanguard", team: 2, at: { x: 27, z: 18 }, count: 3 },
@@ -425,7 +425,7 @@ export const MISSIONS = [
       westPass: { x: -50, z: 6, r: 7 },
     },
     setup: [
-      { capturePoint: "seam", gives: { alloy: 3 } },
+      { capturePoint: "seam", label: "Copper seam", gives: { alloy: 3 } },
       { spawn: "relay", team: 0, at: "relayYard", name: "Basin relay", hp: 1200 },
       { spawn: "worker", team: 0, at: { x: -40, z: 26 }, count: 2 },
     ],
@@ -792,7 +792,7 @@ export const MISSIONS = [
       { spawn: "tower", team: 3, at: { x: -53, z: -3 } },
       { spawn: "tower", team: 3, at: { x: 5, z: 55 } },
       { spawn: "tower", team: 3, at: { x: 13, z: -25 } },
-      { capturePoint: "crown", gives: { energy: 2 } },
+      { capturePoint: "crown", label: "Crown relay", gives: { energy: 2 } },
       { spawn: "tower", team: 0, at: { x: -50, z: 50 } },
       { spawn: "tower", team: 0, at: { x: -46, z: 58 } },
       { spawn: "tower", team: 0, at: { x: -56, z: 47 } },

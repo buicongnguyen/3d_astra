@@ -206,7 +206,10 @@ try {
     assert.equal(ring.meshes, true, 'rings share one geometry');
     assert.notEqual(ring.neutral, ring.owned); assert.equal(ring.owned, ring.mine, 'an owned ring takes the army colour');
     assert.ok(Math.abs(ring.progress - 0.5) < 0.01, `the arc follows since / 5 s (${ring.progress})`);
-    const label = ring.key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
+    // The toast names the point by its label in the mission data; without one it spells out the id.
+    const label = await frontier(key => { const m = window.__frontier.sim.missionDef; return m.regions?.[key]?.label || m.setup.find(s => s.capturePoint === key)?.label || null; }, ring.key)
+      || ring.key.replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
+    assert.doesNotMatch(label, /^[A-Z][a-z]+ [A-Z]/, 'a capture point has a written label, not a spelled-out id');
     assert.equal(await page.locator('#notice').innerText(), `${label} captured`);
     await frontier(key => { const s = window.__frontier.sim, p = s.mission.points[key]; s.events.push({ type: 'point', name: key, owner: 1, x: p.x, z: p.z }); }, ring.key);
     await page.waitForFunction(text => document.querySelector('#notice').textContent === text, `${label} lost`);

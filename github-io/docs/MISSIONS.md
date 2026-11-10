@@ -82,7 +82,7 @@ Status: format agreed 2026-11-10; engine and campaign in progress.
 
 **Capture points** are neutral markers. A team owns one while it has a combat unit within the region and no enemy combat unit is there for 5 seconds; ownership stays until another team takes it. `gives` adds resources per second to the owner.
 
-**Speakers (`who`)** are ids from `src/story/world.js` (`CAST`). Text is English; every line also needs a Vietnamese entry (see LOCALIZATION.md). Keep lines under 140 characters so they fit a phone.
+**Speakers (`who`)** are ids from `src/story/world.js` (`CAST`). Text is English; every story string (titles, briefings, intel, objectives, lines, unit names, capture point labels) also needs a Vietnamese entry in `src/locales/story-vi.json`, keyed by the English text; `tests/story-vi.test.js` fails until it has one, with the same numbers and names (`node tools/story-strings.mjs` lists the strings). Give each `capturePoint` a `label`: it is the name in the capture toasts. Keep lines under 140 characters so they fit a phone.
 
 ## Rules for authors
 
