@@ -5,6 +5,7 @@
 import "./mission-ui.css";
 import { icon } from "./icons.js";
 import { castPortrait, castName, castRole } from "./cast-portraits.js";
+import { statTile, matchStatTiles } from "./results-ui.js";
 import { clock, pointLabel, objectiveProgress, DialogueQueue } from "./mission-text.js";
 
 export { clock, pointLabel };
@@ -322,7 +323,7 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
   }
 
   // ---------------------------------------------------------------- Debrief
-  function debriefHTML({ mission, index, total, sim, win, best, hasNext }) {
+  function debriefHTML({ mission, index, total, sim, win, best, hasNext, stats }) {
     const status = sim.missionStatus() || [], medal = win ? sim.mission.medal || "bronze" : null;
     const lines = (win ? mission.debrief?.win : mission.debrief?.lose) || [];
     const marks = { done: icon("check"), failed: icon("close"), active: "" };
@@ -335,7 +336,7 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
     return `<div class="debrief ${win ? "won" : "lost"}" data-result="${win ? "victory" : "defeat"}"${medal ? ` data-medal="${medal}"` : ""}>
       <span class="eyebrow">MISSION ${two(index + 1)} · ${win ? "COMPLETE" : "FAILED"}</span>
       <div class="debrief-head">${win ? medalBadge(medal) : `<span class="debrief-loss">${icon("close")}</span>`}<div><h2 id="modal-title">${esc(mission.title)}</h2><p class="debrief-result"><strong>${win ? "Victory" : "Defeat"}</strong>${medal ? `<span>${MEDAL_NAMES[medal]}</span>` : ""}</p></div></div>
-      <div class="result-stats"><span><strong>${clock(seconds)}</strong>MISSION TIME</span><span><strong>${best != null ? clock(best) : "—"}</strong>BEST TIME</span></div>
+      <div class="result-grid">${matchStatTiles(stats, { structures: false, extra: [statTile(clock(seconds), "Mission time", "time"), statTile(best != null ? clock(best) : "—", "Best time")] })}</div>
       <h3>Objectives</h3><ol class="debrief-objectives">${objectives}</ol>
       ${talk ? `<div class="debrief-lines">${talk}</div>` : ""}
       ${win && !hasNext && index === total - 1 ? "<p class=\"debrief-end\">Every mission cleared. The campaign is complete.</p>" : ""}

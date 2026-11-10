@@ -27,6 +27,13 @@
   --r-m: 12px;
   --r-l: 18px;
   /* Shared HUD tokens from style.css, moved to the same ink family. */
+  /* Phase F: sizes and surfaces every screen and HUD control shares. */
+  --hit: 44px;
+  --text-min: 11px;
+  --tip-bg: rgba(8, 24, 32, 0.96);
+  --tip-edge: var(--line-2);
+  --press-filter: brightness(0.9);
+  --disabled-opacity: 0.45;
   --panel: rgba(10, 27, 36, 0.95);
   --line: rgba(168, 214, 212, 0.14);
   font-family: var(--font-ui);
@@ -220,32 +227,6 @@ input:focus-visible {
 .result-emblem { display: grid; place-items: start; margin: 14px 0 4px; color: inherit; }
 .result-emblem img { width: 92px; height: 92px; filter: drop-shadow(0 8px 18px rgba(255, 199, 94, 0.35)); }
 .result-emblem.loss img { filter: grayscale(1) sepia(0.6) hue-rotate(-40deg) saturate(2.2) brightness(0.85) drop-shadow(0 8px 18px rgba(239, 118, 96, 0.3)); }
-.result-stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin: 18px 0 6px;
-  padding: 0;
-  border: 0;
-}
-.result-stats span {
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 4px;
-  padding: 12px 14px;
-  border: 1px solid var(--line-1);
-  border-radius: var(--r-m);
-  background: rgba(4, 17, 26, 0.55);
-  font: 700 11px/1.2 var(--font-ui);
-  letter-spacing: 0.12em;
-  color: var(--text-3);
-}
-.result-stats strong {
-  font: 800 26px/1.1 var(--font-display);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
-  color: #fff;
-}
 
 /* ---------- Field guide ---------- */
 .field-guide {
@@ -447,7 +428,7 @@ input:focus-visible {
 }
 
 /* Desktop: readable small labels. */
-:root:not(.compact-ui) .brand-sub { font-size: 10px; }
+:root:not(.compact-ui) .brand-sub { font-size: 11px; }
 #mission-objectives .objective small { font-size: 11px; }
 .objective-num { font-size: 11px; }
 
@@ -495,3 +476,80 @@ input:focus-visible {
 @media (max-aspect-ratio: 1.35) {
   .compact-ui:not(.in-briefing) { --dock-height: 202px; }
 }
+
+/* ---------- Results (skirmish result and mission debrief) ---------- */
+.modal-backdrop.result-wide .modal { width: min(600px, calc(100vw - 24px)); }
+.result-card { --tone: var(--gold-2); }
+.result-card.lost { --tone: #ef7660; }
+.result-card.draw { --tone: var(--text-2); }
+.result-banner {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: -28px -28px 0;
+  padding: 26px 28px 18px;
+  border-bottom: 1px solid var(--line-1);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--tone) 16%, transparent), transparent 70%);
+}
+.result-card .result-emblem { flex: 0 0 auto; margin: 0; }
+.result-card .eyebrow { color: var(--tone); text-transform: uppercase; }
+.result-card h2 { margin: 6px 0 6px; }
+.result-card .result-headline p { margin: 0; }
+.result-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 18px 0 4px; }
+.result-grid .stat {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 4px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-m);
+  background: rgba(4, 17, 26, 0.55);
+}
+.result-grid .stat span { font: 700 11px/1.25 var(--font-ui); letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); overflow-wrap: anywhere; }
+.result-grid .stat strong { font: 800 24px/1.1 var(--font-display); font-variant-numeric: tabular-nums; color: #fff; }
+.result-grid .stat.time strong { color: var(--gold-1); }
+.result-grid .stat.alloy strong { color: var(--gold-2); }
+.result-grid .stat.energy strong { color: #8fd8ff; }
+.result-grid .stat.loss strong { color: #ffb2a3; }
+.result-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; margin-top: 18px; }
+.result-actions .primary { margin-top: 0; }
+.modal .result-actions .secondary { margin-top: 0; }
+.debrief .result-grid { margin-top: 14px; }
+/* The buttons stay in reach while the objectives and the closing lines scroll. */
+.modal { --mp: 28px; }
+.debrief-actions { position: sticky; bottom: 0; z-index: 1; margin: 18px calc(-1 * var(--mp)) calc(-1 * var(--mp)); padding: 12px var(--mp) var(--mp); background: linear-gradient(180deg, rgba(11, 29, 39, 0), #0b1d27 14px); }
+@media (max-width: 420px) {
+  .result-banner { margin: -28px -28px 0; padding: 22px 28px 14px; gap: 12px; }
+  .result-card .result-emblem img { width: 64px; height: 64px; }
+  .result-grid { gap: 8px; }
+  .result-grid .stat { padding: 10px; }
+  .result-grid .stat strong { font-size: 20px; }
+  .result-grid .stat span { letter-spacing: 0.06em; }
+  .result-card h2 { font-size: 24px; }
+}
+/* Short landscape phones: one slim banner, six stats in a row, three buttons across. */
+@media (max-height: 500px) {
+  .modal-backdrop.result-wide .modal, .modal-backdrop.debrief-wide .modal { width: min(760px, calc(100vw - 24px)); padding: 16px 20px; }
+  .result-banner { margin: -16px -20px 0; padding: 14px 20px 10px; gap: 14px; }
+  .result-card .result-emblem img { width: 52px; height: 52px; }
+  .result-card h2 { margin: 2px 0 2px; font-size: 22px; }
+  .result-card .result-headline p { font-size: 13px; line-height: 1.4; }
+  .result-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
+  .modal { --mp: 20px; }
+  .debrief-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); padding-top: 8px; padding-bottom: 14px; margin-bottom: -16px; }
+  .result-grid .stat { padding: 7px 8px; gap: 2px; }
+  .result-grid .stat strong { font-size: 18px; }
+  .result-grid .stat span { font-size: 11px; letter-spacing: 0.02em; }
+  .result-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+  .result-actions .primary { min-height: 48px; font-size: 15px; }
+  .result-actions .secondary { min-height: 48px; }
+}
+
+/* ---------- HUD control states: hover, pressed, disabled look the same everywhere ---------- */
+:is(.command-tile, .upgrade-actions button, .order-buttons button, .touch-controls button, #dock-tabs button, #mission-toggle, .stance-control button) { transition: border-color 0.12s, background 0.12s, filter 0.12s, transform 0.08s; }
+:is(.command-tile, .upgrade-actions button, .order-buttons button, .touch-controls button, #dock-tabs button, #mission-toggle, .stance-control button):active:not(:disabled) { transform: translateY(1px); filter: var(--press-filter); }
+:is(.command-tile, .upgrade-actions button, .order-buttons button, .touch-controls button, #dock-tabs button, .stance-control button):disabled:not(.ability-tile) { opacity: var(--disabled-opacity); cursor: not-allowed; }
+:is(.touch-controls button, #dock-tabs button, #mission-toggle):hover:not(:disabled):not([aria-pressed="true"]) { border-color: var(--gold-line); color: #fff; }
+/* One tooltip look: the order tip, the hover label and toasts. */
+#order-tip, #hover-label { border: 1px solid var(--tip-edge); background: var(--tip-bg); color: var(--text-1); border-radius: var(--r-s); }

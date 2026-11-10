@@ -10,8 +10,8 @@ Status of the rebuild plan ([REVIEW_AND_REBUILD_PLAN_2026-11.md](REVIEW_AND_REBU
 | C | Rules depth | Partly done. Left: either/or upgrades, a real use for energy, capture points in skirmish, smarter AI expansion |
 | D | Story and campaign: twelve missions, briefings, dialogue, objectives, debrief, Vietnamese text | Done (0.4.0) |
 | E | The look: per-map palettes and lighting, seeded dressing, map edge, unit and building life, faction colours | Done (0.5.0). Left: tank turret tracking (needs a model export), terrain height |
-| E | Music and sound, made in-house | In progress |
-| F | Phone landscape rework, desktop HUD sizes, results screen | Next |
+| E | Music and sound, made in-house | Done (0.6.0), not yet judged by ear |
+| F | Phone landscape rework, desktop HUD sizes, results screen | Done (0.6.0). Left: idle-worker shortcuts, draggable minimap with pings, core-destruction camera beat |
 | B | Leftovers: screen-state machine, split of main.js, keyed text catalogue, staged loading, move to Playwright Test | Later |
 | After | Online multiplayer | Not started |
 

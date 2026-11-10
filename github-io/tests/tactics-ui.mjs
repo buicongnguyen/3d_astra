@@ -117,7 +117,7 @@ try {
         clear: shown('.minimap-panel, .touch-controls, #dock-tabs, .resource-bar, .selection-panel').every(r => apart(card, r)), height: Math.round(card.height) };
     });
     assert.deepEqual({ scroll: layout.scroll, panel: layout.panel, clear: layout.clear }, { scroll: true, panel: true, clear: true }, `${name}: the card neither overflows nor covers other controls: ${JSON.stringify(layout)}`);
-    if (!touch) assert.ok(layout.height <= 140, `desktop card height ${layout.height}`);
+    if (!touch) assert.ok(layout.height <= 180, `desktop card height ${layout.height}`); // Phase F: 172 px card
     await noSideScroll('selection');
     await shot('selection');
 

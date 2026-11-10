@@ -308,9 +308,6 @@
 @media (max-height: 500px) {
   .debrief-head .medal-badge { width: 52px; height: 60px; }
   .debrief-loss { width: 52px; height: 52px; }
-  .debrief .result-stats { margin: 10px 0 0; }
-  .debrief .result-stats span { padding: 8px 12px; }
-  .debrief .result-stats strong { font-size: 20px; }
   .debrief-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .debrief-actions .primary { grid-column: auto; min-height: 48px; }
 }

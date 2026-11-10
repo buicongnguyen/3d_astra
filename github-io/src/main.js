@@ -1,5 +1,7 @@
 import { Tutorial, TRAINING_STEPS } from "./tutorial.js";
 import { Governor } from "./governor.js";
+import { createMatchStats } from "./match-stats.js";
+import { skirmishResultHTML } from "./results-ui.js";
 import "./tutorial.css";
 import "./style.css";
 import "./mobile.css";
@@ -48,6 +50,7 @@ import keyartUrl from "./art/keyart.webp";
 import keyartSmallUrl from "./art/keyart-960.webp";
 import emblemUrl from "./art/emblem.webp";
 import "./ui-theme.css";
+import "./landscape-hud.css";
 
 document.querySelector("#app").innerHTML = `
   <header class="topbar">
@@ -124,6 +127,7 @@ document.querySelector("#app").innerHTML = `
 `;
 
 const $ = (id) => document.getElementById(id);
+const matchStats = createMatchStats();
 let settings = loadSettings(matchMedia("(pointer:coarse)").matches),
   mapId = "riverlands",
   enemyCount = 1,
@@ -1468,7 +1472,7 @@ let modalReturnFocus = null;
 function setModalOpen(open) {
   // The top bar is a sibling of the modal: everything in it goes inert except sound, Help and Pause.
   const modal = $("modal"), main = document.querySelector("main");
-  modal.classList.remove("debrief-wide");
+  modal.classList.remove("debrief-wide", "result-wide");
   const behind = [main, document.querySelector(".brand"), document.querySelector(".resource-bar"),
     ...[...document.querySelector(".top-actions").children].filter((node) => !["audio", "help", "pause"].includes(node.id))];
   if (open) {
@@ -1799,8 +1803,8 @@ function showResult() {
     $("modal-content").innerHTML = `<h2 id="modal-title">${tutorial.done?"Training complete!":"Training ended"}</h2><p>You practiced selection, economy, construction, production, attacking and withdrawal. Campaign introduces an active opponent.</p><button class="primary" data-training-campaign>Campaign menu</button><button class="secondary" data-restart>Replay training</button><button class="secondary" data-new-game>Choose a game</button>`;$("modal").querySelector(".primary").focus();return;
   }
   if (activeStage !== null) return showDebrief(win);
-  $("modal-content").innerHTML =
-    `<span class="eyebrow">OPERATION ${sim.result === "draw" ? "CONCLUDED" : win ? "SUCCESSFUL" : "FAILED"}</span><div class="result-emblem ${win ? "" : "loss"}"><img src="${emblemUrl}" alt="" width="92" height="92"></div><h2 id="modal-title">${win ? "The frontier is yours." : sim.result === "draw" ? "Mutual destruction." : "Your outpost has fallen."}</h2><p>${win ? "Enemy command has been eliminated. Meridian holds the valley." : sim.result === "draw" ? "All Command cores were destroyed." : "An enemy destroyed your Command core. Regroup and try a different approach."}</p><div class="result-stats"><span><strong>${formatTime(sim.time)}</strong>OPERATION TIME</span><span><strong>${sim.players[0].kills}</strong>ENEMIES ELIMINATED</span></div><button class="primary" data-new-game>New game / choose map ${icon("arrow")}</button><button class="secondary" data-restart>Replay this map</button>`;
+  $("modal").classList.add("result-wide");
+  $("modal-content").innerHTML = skirmishResultHTML({ result: sim.result, seconds: sim.time, stats: matchStats.stats, emblem: emblemUrl, arrow: icon("arrow") });
   $("modal").querySelector(".primary").focus();
 }
 // Mission debrief: result, medal, time, objectives and the closing lines. A win records the
@@ -1813,7 +1817,7 @@ function showDebrief(win) {
     stagePick = last ? n : n + 1;
   }
   $("modal").classList.add("debrief-wide");
-  $("modal-content").innerHTML = missionUI.debriefHTML({ mission: m, index: n, total: MISSIONS.length, sim, win, best: bestTime(campaign, n), hasNext: win && !last });
+  $("modal-content").innerHTML = missionUI.debriefHTML({ mission: m, index: n, total: MISSIONS.length, sim, win, best: bestTime(campaign, n), hasNext: win && !last, stats: matchStats.stats });
   document.querySelector("#modal .modal").scrollTop = 0;
   $("modal").querySelector(".primary").focus({ preventScroll: true });
 }
@@ -1853,6 +1857,7 @@ function startEconomy() {
 // restart() starts the current setup again; restart(false) only resets the interface around
 // the simulation that is already there (the briefing preview, or a saved match with resume).
 function restart(play = true, resume = false) {
+  matchStats.reset();
   touchControls?.reset();
   pings.length = 0;
   cameraPan = null;
@@ -2178,7 +2183,9 @@ function frame(now) {
     while (accumulator >= 0.05) {
       view.beforeTick(sim);
       tutorial?.update(sim,[...selected]);
+      matchStats.before(sim);
       sim.tick(0.05);
+      matchStats.after(sim);
       tutorial?.update(sim,[...selected]);
       accumulator -= 0.05;
     }
@@ -2331,7 +2338,7 @@ function ready() {
           return paused;
         },
         step: (seconds) => {
-          for (let i = 0; i < seconds / 0.05; i++){tutorial?.update(sim,[...selected]);sim.tick(0.05);tutorial?.update(sim,[...selected]);}
+          for (let i = 0; i < seconds / 0.05; i++){tutorial?.update(sim,[...selected]);matchStats.before(sim);sim.tick(0.05);matchStats.after(sim);tutorial?.update(sim,[...selected]);}
           updateUI();
         },
         get started() {

@@ -61,7 +61,7 @@ button .icon {
 }
 kbd {
   font:
-    10px "Consolas",
+    11px "Consolas",
     monospace;
   color: #99aaa1;
   border: 1px solid #4c5a50;
@@ -70,7 +70,7 @@ kbd {
 }
 button kbd {
   margin-left: auto;
-  font-size: 9px;
+  font-size: 11px;
 }
 .topbar {
   height: 76px;
@@ -880,29 +880,6 @@ button kbd {
   border-top: 1px solid var(--line);
   padding-top: 18px;
   margin-top: 22px !important;
-}
-.result-stats {
-  display: flex;
-  gap: 35px;
-  border-top: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
-  padding: 17px 0;
-  margin-top: 20px;
-}
-.result-stats span {
-  font:
-    8px Consolas,
-    monospace;
-  color: #92a781;
-  letter-spacing: 1px;
-}
-.result-stats strong {
-  display: block;
-  font:
-    24px Consolas,
-    monospace;
-  color: #d5e6c8;
-  margin-bottom: 8px;
 }
 @media (min-width: 1600px) {
   .bottom-dock {

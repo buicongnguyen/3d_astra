@@ -44,6 +44,14 @@ Known limits
 - Story text is English only for now.
 - Destroying an enemy core also removes that side's tagged buildings, so a "destroy the siphons" objective can be finished that way.
 
+## 0.6.0: music, sound and interface
+
+- In-house adaptive music (calm, tense, battle, victory, defeat; per-map key and scale, faction motifs) and about 40 synthesized sound effects with a voice budget and fog rules; separate Music and Effects volume.
+- Phone landscape layout: slim top strip, button rail, collapsed objectives chip, one right dock; at least 60% of the screen stays free for the battlefield.
+- Desktop HUD is larger at 1440x900 and 1920x1080; the remaining 9 and 10 px texts are fixed.
+- New result screens (win, loss, draw) with six stat tiles; the mission debrief has the same tiles and a sticky action bar.
+- Shared hover, pressed and disabled states and tooltip look.
+
 ## 0.5.0: rebuild phase E (look)
 
 Palette and light

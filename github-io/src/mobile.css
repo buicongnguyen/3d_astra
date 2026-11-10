@@ -19,7 +19,7 @@ button {
 }
 .quality-button {
   font:
-    10px Consolas,
+    12px Consolas,
     monospace;
 }
 .selection-scroll {
@@ -218,7 +218,7 @@ button {
   gap: 0;
 }
 .compact-ui .icon-button {
-  width: 40px;
+  width: 44px;
   height: 44px;
 }
 .compact-ui #clock {
@@ -313,12 +313,12 @@ button {
 .compact-ui .touch-controls #zoom-out {
   font-size: 23px;
   font-weight: 300;
-  flex: 0 0 40px;
-  min-width: 40px;
+  flex: 0 0 44px;
+  min-width: 44px;
 }
 .compact-ui .touch-controls #clear-selection {
-  flex: 0 0 40px;
-  min-width: 40px;
+  flex: 0 0 44px;
+  min-width: 44px;
 }
 .compact-ui .bottom-dock {
   bottom: calc(var(--tabs-height) + var(--safe-bottom));
@@ -375,11 +375,11 @@ button {
   height: var(--tabs-height);
   display: flex;
   gap: 4px;
-  padding: 4px 0;
+  padding: 0;
 }
 .compact-ui #dock-tabs button {
   flex: 1;
-  min-height: 40px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -487,7 +487,7 @@ button {
 }
 .compact-ui #unit-list button {
   min-width: 44px;
-  min-height: 40px;
+  min-height: 44px;
 }
 .compact-ui #queue {
   overflow-x: auto;
@@ -560,7 +560,7 @@ button {
   font-size: 11px;
 }
 .compact-ui .controls-grid kbd {
-  font-size: 9px;
+  font-size: 11px;
   white-space: normal;
   max-width: 175px;
 }
@@ -637,6 +637,15 @@ button {
   }
 }
 @media (max-width: 359px) {
+  .compact-ui .icon-button {
+    width: 40px;
+  }
+  .compact-ui .touch-controls #zoom-in,
+  .compact-ui .touch-controls #zoom-out,
+  .compact-ui .touch-controls #clear-selection {
+    flex: 0 0 40px;
+    min-width: 40px;
+  }
   .compact-ui .touch-controls button {
     flex-basis: 40px;
     min-width: 40px;

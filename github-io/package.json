@@ -1,6 +1,6 @@
 {
   "name": "frontier-command",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -37,6 +37,7 @@
     "test:tactics-ui": "node tests/tactics-ui.mjs",
     "test:tutorial": "node tests/tutorial.mjs",
     "test:ui-quality": "node tests/ui-quality.mjs",
+    "test:layout-f": "node tests/layout-f.mjs",
     "test:ambient-life": "node tests/ambient-life.mjs",
     "test:render-budget": "node tests/render-budget.mjs",
     "test:audio": "node tests/audio.mjs",

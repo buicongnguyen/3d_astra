@@ -1,0 +1,172 @@
+/* Phone landscape HUD (Phase F). Loaded after ui-theme.css.
+   The battlefield is full-bleed under the stage; everything else is a slim overlay:
+     top      a 44 px strip: logo, resources, clock, sound, help, pause
+     left     a two-column button rail (select / box / queue / zoom), the Objectives chip
+              beside it, and the minimap in the bottom-left corner
+     right    one 208 px dock sized to its content (selection or command card), tabs below it
+   Free battlefield: at least 60 % of the screen in normal play (tests/layout-f.mjs). All edges
+   respect the notch through env(safe-area-inset-*). */
+@media (min-aspect-ratio: 1.35) {
+  .compact-ui:not(.in-briefing) {
+    --header-height: calc(var(--hit) + 1px); /* 44 px of controls plus the 1 px border */
+    --side-width: 236px;
+    --tabs-height: var(--hit);
+    --rail-width: 110px;
+    --dock-gap: 8px;
+    --edge-left: max(8px, env(safe-area-inset-left, 0px));
+    --edge-right: max(8px, env(safe-area-inset-right, 0px));
+    --mini-w: 118px;
+    --mini-h: 94px;
+  }
+
+  /* Top strip: one row, 44 px controls. */
+  .compact-ui:not(.in-briefing) .topbar { padding-left: var(--edge-left); padding-right: var(--edge-right); }
+  .compact-ui:not(.in-briefing) .brand { flex: 0 0 44px; width: 44px; }
+  .compact-ui:not(.in-briefing) .brand-mark img { width: 30px; height: 30px; }
+  .compact-ui:not(.in-briefing) .resource { flex: 0 1 132px; padding: 0 8px; gap: 8px; }
+  .compact-ui:not(.in-briefing) .resource strong { font-size: 16px; line-height: 18px; }
+  .compact-ui:not(.in-briefing) .resource small { font-size: 11px; line-height: 12px; letter-spacing: 0.06em; margin-top: 0; }
+  .compact-ui:not(.in-briefing) .icon-button { width: 44px; height: 44px; }
+  .compact-ui:not(.in-briefing) #clock { font-size: 13px; margin-right: 4px; }
+
+  /* The map name is in the start screen; the strip stays clear. */
+  .compact-ui:not(.in-briefing) .map-heading,
+  .compact-ui:not(.in-briefing) .sector-status { display: none; }
+
+  /* Full-bleed battlefield. Left, right and bottom keep the gesture margins. */
+  .compact-ui:not(.in-briefing) #world { inset: 0 var(--gesture-right) var(--safe-bottom) var(--gesture-left); }
+
+  /* Left rail: Workers/Army, Box/Queue, Clear, zoom in/out. */
+  .compact-ui:not(.in-briefing) .touch-controls {
+    top: 6px;
+    left: var(--edge-left);
+    right: auto;
+    width: var(--rail-width);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 5px;
+    overflow: visible;
+  }
+  .compact-ui:not(.in-briefing) .touch-controls button { flex: none; width: auto; min-width: 0; height: var(--hit); font-size: var(--text-min); line-height: 1.1; border-radius: 10px; padding: 2px; }
+  .compact-ui:not(.in-briefing) .touch-controls #clear-selection { grid-column: 1 / -1; flex: none; min-width: 0; }
+  .compact-ui:not(.in-briefing) .touch-controls #zoom-in,
+  .compact-ui:not(.in-briefing) .touch-controls #zoom-out { flex: none; min-width: 0; }
+
+  /* Objectives: a 44 px chip beside the rail; the list opens below it on demand. */
+  .compact-ui:not(.in-briefing) #mission-toggle {
+    position: absolute;
+    top: 6px;
+    left: calc(var(--edge-left) + var(--rail-width) + 8px);
+    right: auto;
+    width: auto;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 12px;
+    gap: 6px;
+    font-size: 12px;
+  }
+  .compact-ui:not(.in-briefing).objectives-open #mission-objectives {
+    top: 54px;
+    left: calc(var(--edge-left) + var(--rail-width) + 8px);
+    right: auto;
+    width: min(284px, calc(100% - var(--rail-width) - var(--side-width) - 60px));
+    max-height: calc(100% - 66px);
+  }
+
+  /* Minimap: bottom-left corner, always there. The Map tab enlarges it. */
+  .compact-ui:not(.in-briefing) .bottom-dock .minimap-panel {
+    position: fixed;
+    display: block;
+    left: var(--edge-left);
+    bottom: var(--safe-bottom);
+    width: var(--mini-w);
+    height: var(--mini-h);
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--r-m);
+    z-index: 5;
+  }
+  .compact-ui:not(.in-briefing) .minimap-panel #minimap { width: 100%; height: 100%; margin: 0; }
+  .compact-ui:not(.in-briefing) .minimap-panel .map-legend { display: none; }
+  .compact-ui:not(.in-briefing) .minimap-panel .panel-label { position: absolute; top: 0; right: 0; height: auto; padding: 0; font-size: 0; border: 0; background: none; z-index: 1; }
+  .compact-ui:not(.in-briefing) .minimap-panel .panel-label button { min-width: 44px; min-height: 44px; border-radius: 0 0 0 10px; background: rgba(7, 20, 27, 0.78); }
+  .compact-ui:not(.in-briefing)[data-dock="map"] .minimap-panel { width: min(300px, calc(100vw - 2 * var(--side-width))); height: 250px; max-height: calc(100vh - 80px); }
+
+  .compact-ui:not(.in-briefing) #commands.tactics-card .stance-control button { font-size: var(--text-min); }
+
+  /* Right dock sized to its content; the three tabs sit under it. */
+  .compact-ui:not(.in-briefing) .bottom-dock {
+    top: auto;
+    left: auto;
+    right: var(--edge-right);
+    bottom: calc(var(--tabs-height) + var(--safe-bottom) + 6px);
+    width: var(--side-width);
+    height: auto;
+    max-height: calc(100% - 12px - var(--tabs-height) - var(--safe-bottom));
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    pointer-events: none;
+  }
+  .compact-ui:not(.in-briefing) .bottom-dock .panel:not(.minimap-panel) {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    height: auto;
+    max-height: calc(100vh - var(--header-height) - var(--tabs-height) - var(--safe-bottom) - 18px);
+    padding: 0 6px 8px;
+    border-radius: var(--r-m);
+    pointer-events: auto;
+  }
+  /* Nothing selected: no dock panel at all, only the tabs. */
+  .compact-ui:not(.in-briefing):has(.selection-panel:not(.has-entity)) .bottom-dock .panel:not(.minimap-panel) { display: none; }
+  /* Slimmer panel headings: the dock keeps its height for tiles. */
+  .compact-ui:not(.in-briefing) .bottom-dock .panel-label,
+  .compact-ui:not(.in-briefing) .command-panel:has(#production-status:not([hidden]):empty) > .panel-label { height: 26px; }
+  .compact-ui:not(.in-briefing)[data-dock="map"] .selection-panel,
+  .compact-ui:not(.in-briefing)[data-dock="map"] .command-panel { display: none; }
+  .compact-ui:not(.in-briefing) #dock-tabs {
+    right: var(--edge-right);
+    bottom: var(--safe-bottom);
+    left: auto;
+    width: var(--side-width);
+    height: var(--tabs-height);
+    padding: 0;
+    gap: 4px;
+  }
+  .compact-ui:not(.in-briefing) #dock-tabs button { min-height: var(--hit); height: var(--hit); padding: 0 2px; font-size: var(--text-min); gap: 1px; }
+  .compact-ui:not(.in-briefing) #dock-tabs .icon { width: 16px; height: 16px; }
+
+  /* Toasts, targeting prompts and the dialogue strip sit in the middle band, under the chip row. */
+  .compact-ui:not(.in-briefing) #notice,
+  .compact-ui:not(.in-briefing) #mode-banner {
+    top: 54px;
+    left: calc((100% + var(--rail-width) - var(--side-width)) / 2);
+    max-width: calc(100% - var(--rail-width) - var(--side-width) - 48px);
+    font-size: 12px;
+    line-height: 1.35;
+    padding: 6px 10px;
+  }
+  .compact-ui:not(.in-briefing) .dialogue {
+    top: 54px;
+    left: calc(var(--edge-left) + var(--rail-width) + 8px);
+    right: calc(var(--side-width) + var(--edge-right) + 8px);
+  }
+  .compact-ui.dialogue-open:not(.in-briefing) #notice { top: auto; }
+  .compact-ui.dialogue-open:not(.in-briefing) #mode-banner { top: calc(60px + var(--dialogue-h, 40px)); }
+  .compact-ui:not(.in-briefing) #mode-controls {
+    left: calc((100% + var(--rail-width) - var(--side-width)) / 2);
+    bottom: calc(8px + var(--safe-bottom));
+  }
+
+  /* Training: top-right beside the dock, out of the base area; short copy, no small print. */
+  .compact-ui:not(.in-briefing) #training { top: 6px; left: auto; right: calc(var(--side-width) + var(--edge-right) + 8px); width: 226px; max-width: 226px; display: flex; flex-direction: column; align-items: flex-end; }
+  .compact-ui:not(.in-briefing) #training-card { width: 100%; }
+  .compact-ui:not(.in-briefing) #training-card { max-height: none; margin-top: 4px; padding: 8px 10px; }
+  .compact-ui:not(.in-briefing) #training-card small { display: none; }
+  .compact-ui:not(.in-briefing) #training-title { font-size: 15px; }
+  .compact-ui:not(.in-briefing) #training-copy { font-size: 13px; line-height: 1.35; margin: 3px 0; }
+  .compact-ui:not(.in-briefing) #training-card > div { margin-top: 6px; }
+  /* Toasts sit at the bottom of the middle band, clear of the top row. */
+  .compact-ui:not(.in-briefing) #notice { top: auto; bottom: calc(var(--safe-bottom) + 6px); }
+}

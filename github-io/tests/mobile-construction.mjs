@@ -10,7 +10,7 @@ const tap=async selector=>{await page.locator(selector).tap();await page.waitFor
 const inspect=async()=>{
   const result=await page.evaluate(()=>{
     const card=document.querySelector('#construction-status'),body=card.querySelector('.construction-copy'),cr=card.getBoundingClientRect(),br=body.getBoundingClientRect(),wr=document.querySelector('#world canvas').getBoundingClientRect();
-    return {outside:cr.top>=wr.bottom-1||cr.left>=wr.right-1,viewport:document.documentElement.scrollWidth<=innerWidth,
+    return {outside:cr.top>=wr.bottom-1||cr.left>=wr.right-1||(innerWidth>innerHeight&&cr.left>=wr.left+wr.width*0.6),viewport:document.documentElement.scrollWidth<=innerWidth,
       copy:['#construction-title','#construction-cost','#construction-message'].filter(s=>card.querySelector(s).getClientRects().length).map(s=>{const e=card.querySelector(s),r=e.getBoundingClientRect();return {s,font:parseFloat(getComputedStyle(e).fontSize),fits:r.top>=br.top-1&&r.bottom<=br.bottom+1&&r.right<=br.right+1};}),
       buttons:[...card.querySelectorAll('button')].filter(e=>e.getClientRects().length).map(e=>{const r=e.getBoundingClientRect();return {text:e.textContent,fit:r.x>=0&&r.y>=0&&r.right<=innerWidth&&r.bottom<=innerHeight,h:r.height,hit:e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))};})};
   });

@@ -15,7 +15,8 @@ try{
   if(mobile){
    assert.equal(await page.locator('#mission-objectives').isVisible(),false,'phone objectives start collapsed');
    const toggle=await page.locator('#mission-toggle').boundingBox(),controls=await page.locator('.touch-controls').boundingBox();
-   assert.ok(toggle.height>=44&&toggle.y+toggle.height<=controls.y,'Objectives is above the touch controls');
+   // Phase F: in phone landscape the chip sits beside the button rail, otherwise above the toolbar.
+   assert.ok(toggle.height>=44&&(toggle.y+toggle.height<=controls.y||toggle.x>=controls.x+controls.width),'Objectives is above or beside the touch controls');
    await click('#mission-toggle');
    assert.equal(await page.locator('#mission-toggle').getAttribute('aria-expanded'),'true');
    const mission=await page.locator('#mission-objectives').boundingBox();
@@ -56,7 +57,7 @@ try{
     const controls=[...document.querySelectorAll('.command-panel button')].filter(e=>e.getClientRects().length);
     // Flush with the bottom edge: the desktop has no status bar; frame rate is in the top bar.
     return {corners:map.left===0&&[map,panel,card].every(r=>r.bottom===innerHeight),
-     compact:deck.width<=700&&deck.height<=140&&card.right<=innerWidth-12,
+     compact:deck.width<=(innerWidth>=1700?960:780)&&deck.height<=(innerWidth>=1700?220:180)&&card.right<=innerWidth-12,
      centered:Math.abs(deck.left+deck.width/2-innerWidth/2)<=Math.max(0,map.right+12-(innerWidth-deck.width)/2)+1,
      statusbar:!document.querySelector('.statusbar').getClientRects().length&&!!document.querySelector('.top-actions #fps'),
      order:map.right+12<=panel.left&&Math.abs(panel.right-card.left)<=1,

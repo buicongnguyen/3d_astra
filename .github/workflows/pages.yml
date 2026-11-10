@@ -70,7 +70,7 @@ jobs:
           - name: feedback
             scripts: activity
           - name: layout
-            scripts: status-layout
+            scripts: status-layout layout-f
           - name: visuals
             scripts: visual-combat
     defaults:

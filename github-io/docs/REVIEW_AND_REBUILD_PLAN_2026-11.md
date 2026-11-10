@@ -137,6 +137,8 @@ Each phase ends with tests green, a deploy and a version tag. Phases A and B are
 - Desktop HUD: minimum 11 px text, larger command buttons with labels, idle-worker and army shortcuts in the empty dock, larger draggable minimap with pings.
 - In-fight counter hints; briefing and dialogue overlay; results screen with army graph, breakdown and a core-destruction camera beat.
 
+**Status (2026-11-10):** done: phone landscape HUD (`src/landscape-hud.css`), larger desktop console and 11 px badges, results and debrief stat grid from read-only client counters (`src/match-stats.js`, `src/results-ui.js`), shared tokens in `src/ui-theme.css`, Vietnamese strings, `tests/layout-f.mjs`. Not done yet: idle-worker and army shortcuts in the empty dock, draggable minimap with pings, in-fight counter hints, army graph and core-destruction camera beat.
+
 ### Documentation
 Create `VISION.md`, `ROADMAP.md`, `DESIGN.md`, `ARCHITECTURE.md`, `CHANGELOG.md` and `TESTING.md` in `github-io/docs/`; move finished plans and dated reviews to `docs/archive/`; correct the README claims above.
 
