@@ -1640,7 +1640,8 @@ function newGame() {
 }
 // Harvesters start mining on their own, except in Training, which teaches the order.
 function startEconomy() {
-  if (playMode !== "training") sim.assignHarvesters(0);
+  // Browser suites (?test) measure a still economy; ?autoharvest gives them the real start.
+  if (playMode !== "training" && (!query.has("test") || query.has("autoharvest"))) sim.assignHarvesters(0);
 }
 function restart(play = true) {
   touchControls?.reset();

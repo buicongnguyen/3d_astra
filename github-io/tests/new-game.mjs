@@ -16,4 +16,11 @@ try{
   await page.locator('#scenario').selectOption('riverlands');await page.locator('#start').click();assert.equal(await page.evaluate(()=>window.__frontier.sim.terrain.id),'riverlands');
   assert.deepEqual(errors,[]);console.log(`Map menu, replay and result navigation passed ${viewport.width}x${viewport.height}`);await page.close();
  }
+ // A real match (not Training) starts with every Harvester already sent to a deposit.
+ const page=await browser.newPage({viewport:{width:1280,height:800}});
+ await page.goto((process.env.TEST_URL||'http://127.0.0.1:4180/')+'?test=1&autoharvest=1');
+ await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});
+ await page.locator('#start').click();
+ assert.ok(await page.evaluate(()=>{const s=window.__frontier.sim,w=s.own(0).filter(e=>e.type==='worker');return w.length>=4&&w.every(e=>e.orders[0]?.type==='gather');}),'Harvesters start mining');
+ console.log('Auto-harvest start passed');await page.close();
 }finally{await browser.close();}
