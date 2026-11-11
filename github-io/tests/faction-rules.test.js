@@ -171,13 +171,12 @@ test('Walker Brace: no movement, three metres more range, then back to normal', 
   assert.ok(walker.x > FIELD.x + 1, 'walks on afterwards');
 });
 
-test('Veil: more sight and less damage; Mark raises damage taken and does not stack', () => {
+test('Veil: more sight; Mark raises damage taken and does not stack', () => {
   const s = sim('veil'), watcher = s.spawn('watcher', 1, FIELD.x, FIELD.z);
   assert.equal(watcher.vision, D.watcher.vision + 3);
   const tank = s.spawn('tank', 0, FIELD.x + 8, FIELD.z); tank.shield = 0;
   let hp = tank.hp; s.hit(watcher, tank);
   assert.ok(near(hp - tank.hp, D.watcher.damage * 3 * balance.traits.farsight.damage), 'farsight costs some damage');
-  assert.ok(balance.traits.farsight.damage < 1);
   s.updateVision();
   assert.equal(s.useAbility(watcher), true);
   assert.ok(tank.markedUntil > s.time);
@@ -319,5 +318,20 @@ test('the models a mission needs include what its script spawns or unlocks later
   const twelve = modelsForMatch(new Simulation({ ai: false, mission: m12, map: m12.map, enemyCount: m12.enemies }));
   assert.ok(twelve.includes('rider'));
   const m1 = MISSIONS[0];
-  assert.ok(!modelsForMatch(new Simulation({ ai: false, mission: m1, map: m1.map })).some((t) => ['rider', 'walker', 'scrapper'].includes(t)), 'mission 1 downloads no faction model');
+  const one = modelsForMatch(new Simulation({ ai: false, mission: m1, map: m1.map }));
+  assert.ok(one.includes('scrapper') && !one.some((t) => ['rider', 'walker', 'shade'].includes(t)), 'mission 1 downloads Ashfall models only');
+});
+
+test('a hold is won at once when no enemy fighter is left to contest it', () => {
+  const mission = { id: 'hold-fixture', rules: { ai: false }, regions: { spot: { x: 0, z: 30, r: 6 } }, points: [{ id: 'spot', region: 'spot' }],
+    objectives: [{ id: 'h', text: 'Hold', type: 'hold', points: ['spot'], need: 1, seconds: 60 }], win: ['h'], setup: [], triggers: [] };
+  const s = new Simulation({ ai: false, mission });
+  s.mission.points.spot = { owner: 0 };
+  const hold = mission.objectives[0];
+  s.stepObjective(hold, s.mission.objectives.h, 0.05);
+  assert.equal(s.mission.objectives.h.state, 'active', 'enemy fighters still stand');
+  for (const e of s.entities) if (e.team === 1 && e.kind === 'unit' && e.type !== 'worker') e.hp = 0;
+  s.entities = s.entities.filter((e) => e.hp > 0);
+  s.stepObjective(hold, s.mission.objectives.h, 0.05);
+  assert.equal(s.mission.objectives.h.state, 'done');
 });

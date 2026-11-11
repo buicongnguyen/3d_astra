@@ -261,3 +261,7 @@ Scrapper 85 → 105 HP and 9 → 10 damage; Sentinel drone shield 90 → 60, dam
 
 - Sunward and Veil need to be more dangerous to a player; the Wardens at Normal may be too hard. Owner play-testing should decide before more numbers move.
 - The campaign stays on the base roster (see docs/MISSIONS.md, "Faction rosters"): the story says every faction prints the same patterns.
+
+### 0.12.1 pass
+
+Faction AIs now form up at a rally point 14 m out from their core before each wave, and the numbers in the changelog moved. Round robin at Normal (60 matches): Meridian 58, Ashfall 21, Sunward 50, Wardens 100, Veil 21%. The Wardens still win every AI-against-AI match because the other AIs attack into their towers; against the test bot they are the hardest faction (the bot wins 25% with its standard build, 75% with more Rangers and towers), which is what a player meets. Veil is now the easiest opponent for the bot (100%). Next step if the owner finds this in play: teach every AI to wait when it has seen a stronger defence, which is AI work and changes the Stage 1 ladder.

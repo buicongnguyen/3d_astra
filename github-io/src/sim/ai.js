@@ -163,10 +163,32 @@ export const ai = {
     if (!incursion && this.time >= this.waveAt[team] && wave.length >= pace.minWave) {
       const target = [...this.knownCores[team].values()]
         .sort((a, b) => distance(hq, a) - distance(hq, b))[0] || this.scoutDestination(team);
+      // Faction AIs form up first: the wave meets at a point outside the base on the road to the
+      // target and marches together, instead of arriving one unit at a time.
+      if (persona && target && hq && !this.aiFormed(team, hq, target, wave)) return;
       if (target) this.issue(wave.map(e => e.id), { type: "attackmove", x: target.x, z: target.z });
       if (target?.team !== undefined) this.events.push({ type: "incoming", team: target.team, x: hq.x, z: hq.z, count: wave.length });
       this.waveAt[team] = this.time + pace.waveGap;
     }
+  },
+  // True once the wave stands together at its rally point (or after 25 s of waiting). Until then
+  // it orders stragglers there. The point is 14 m from the core towards the target.
+  aiFormed(team, hq, target, wave) {
+    const form = (this.aiForm ||= {})[team];
+    if (!form || form.wave !== this.waveAt[team]) {
+      const d = distance(hq, target) || 1, x = hq.x + ((target.x - hq.x) / d) * 14, z = hq.z + ((target.z - hq.z) / d) * 14;
+      const spot = this.nav.canStand(x, z, 1) ? { x, z } : this.nav.nearest(x, z, 1) || { x: hq.x, z: hq.z };
+      this.aiForm[team] = { wave: this.waveAt[team], x: spot.x, z: spot.z, until: this.time + 25 };
+      this.issue(wave.map((e) => e.id), { type: "move", x: spot.x, z: spot.z });
+      return false;
+    }
+    const away = wave.filter((e) => distance(e, form) > 7);
+    if (away.length && this.time < form.until) {
+      const idle = away.filter((e) => !e.orders.length);
+      if (idle.length) this.issue(idle.map((e) => e.id), { type: "move", x: form.x, z: form.z });
+      return false;
+    }
+    return true;
   },
   // A faction's own building: Ashfall's yard right after the first Barracks, the others once the
   // Foundry stands. Wardens add a Pylon for every production building.

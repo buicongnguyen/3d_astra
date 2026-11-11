@@ -42,10 +42,13 @@ await suite('feel', async () => {
     v.applySettings({...v.settings,combatMotion:true}); v.cameraCue=true;
     v.event({type:'strike',x:0,z:0,team:0},s); v.update(s,.01,new Set(),null);
     const cue=v.shake.trauma===0; v.cameraCue=false;
+    v.applySettings({...v.settings,screenShake:false});
+    v.event({type:'strike',x:0,z:0,team:0},s); v.update(s,.01,new Set(),null);
+    const noShake=v.shake.trauma===0; v.applySettings({...v.settings,screenShake:true});
     const hash=s.hash();
     v.event({type:'death',core:true,x:0,z:0,team:0,seed:-1},s);
     const stopped=v.hitStop===.09; v.update(s,.1,new Set(),null);
-    return {cameraRestored,disabled,cue,stopped,clockUnaffected:s.hash()===hash,expired:v.hitStop===0};
+    return {cameraRestored,disabled,cue,noShake,stopped,clockUnaffected:s.hash()===hash,expired:v.hitStop===0};
   });
   for(const [key,value] of Object.entries(checks)) assert.equal(value,true,key);
   assert.deepEqual(errors,[]);

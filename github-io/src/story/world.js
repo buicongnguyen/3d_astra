@@ -24,7 +24,7 @@ export const FACTIONS = {
     emblem: "A falling spark above three stacked bars.",
     character: "A salvage fleet that has lived on wrecks for three generations. Disciplined, punctual, short of everything.",
     goal: "Send enough power to orbit to keep forty thousand sleepers alive, by any means that is fast.",
-    roster: "Their Command cores were cut out of a Builder wreck in orbit and print the same patterns.",
+    roster: "Their Command cores were cut out of a Builder wreck in orbit. They print the Builder patterns their own way: cheap, patched and many.",
   },
   sunward: {
     id: "sunward",
@@ -48,7 +48,7 @@ export const FACTIONS = {
     emblem: "An open book with a closed eye on the page.",
     character: "Scholars who came first and lost their first camp to a surge storm. Careful, quiet, certain they are saving everyone.",
     goal: "Keep the relays dark until the Lattice is understood.",
-    roster: "They study the Command core more than they use it, but it prints the same guardians for them.",
+    roster: "They study the Command core more than they use it, and it prints quiet, hidden guardians for them.",
   },
   wardens: {
     id: "wardens",

@@ -14,6 +14,9 @@ const CHECK = 0.25;
 
 const fighter = (e) => e.kind === "unit" && e.type !== "worker" && e.damage > 0 && e.hp > 0;
 
+// Scaled wave sizes round up, except heavy machines (supply 3 or more: tanks, Walkers, Breakers),
+// which round to nearest: one Walker more is a far bigger step than one Scrapper more.
+export const waveCount = (count, scale, d) => Math.max(1, (d?.pop || 1) >= 3 ? Math.round(count * scale) : Math.ceil(count * scale));
 export const missions = {
   initMission(def) {
     this.missionDef = def;
@@ -65,8 +68,9 @@ export const missions = {
     }
     return { x: place.x, z: place.z };
   },
-  missionSpawn({ spawn, team = 0, at, count = 1, tag, name, hp, hpByDifficulty, speed, complete = true }) {
-    spawn = this.typeFor(team,spawn);
+  missionSpawn({ spawn, team = 0, at, count = 1, tag, name, hp, hpByDifficulty, speed, complete = true, exact = false }) {
+    // exact: the script names this very type (a Breaker battery stays Breakers on an Ashfall roster).
+    if (!exact) spawn = this.typeFor(team,spawn);
     hp = hpByDifficulty?.[this.difficulty] ?? hp;
     const d = D[spawn];
     if (!d || !this.players[team]) return [];
@@ -74,7 +78,7 @@ export const missions = {
     for (let i = 0; i < count; i++) {
       // A single building stands exactly on its place; everything else takes the nearest free spot.
       const spot = d.kind === "building" && count === 1 ? place : this.missionSpot(place, i, d.radius || 0.7);
-      const e = this.spawn(spawn, team, spot.x, spot.z, complete);
+      const e = this.spawn(spawn, team, spot.x, spot.z, complete, exact);
       if (tag) e.tag = tag;
       if (name) e.name = name;
       if (hp) e.hp = e.maxHp = hp;
@@ -165,7 +169,9 @@ export const missions = {
     else if (o.type === "hold") {
       s.have = o.points.filter((name) => this.mission.points[name]?.owner === 0).length;
       s.held = s.have >= o.need ? s.held + dt : 0;
-      done = s.held >= o.seconds;
+      // Nobody left to take the points back: the hold is won as soon as they are ours.
+      const contested = this.entities.some((e) => e.hp > 0 && e.kind === "unit" && e.damage > 0 && e.type !== "worker" && this.hostile(0, e.team));
+      done = s.held >= o.seconds || (s.have >= o.need && !contested);
     } else if (o.type === "survive") { s.held = this.mission.clock; done = this.mission.clock >= o.seconds; }
     else if (o.type === "escort") {
       const group = this.tagged(o.tag);
@@ -209,7 +215,7 @@ export const missions = {
       const from = this.missionPlace(a.wave.from ?? "enemyBase", team), target = this.missionPlace(a.wave.target ?? "playerBase", team);
       const ids = [];
       for (const [type, count] of Object.entries(a.wave.units))
-        for (const e of this.missionSpawn({ spawn: type, team, at: from, count: Math.max(1, Math.ceil(count * difficultyRules(this).wave)) })) ids.push(e.id);
+        for (const e of this.missionSpawn({ spawn: type, team, at: from, count: waveCount(count, difficultyRules(this).wave, D[this.typeFor(team, type)]) })) ids.push(e.id);
       if (ids.length) {
         this.issue(ids, { type: "attackmove", x: target.x, z: target.z });
         this.events.push({ type: "incoming", team: 0, x: from.x, z: from.z, count: ids.length });

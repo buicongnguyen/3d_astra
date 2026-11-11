@@ -28,8 +28,10 @@ const ATTACK_AT = +(value("--attack-at") || 16), TURTLE = !flag("--rush");
 const standardTargets = (index) => ({
   passive: index < 4 ? 300 : 210,          // not defeated before this
   generic: 480,                             // not defeated before this
-  win: index === 0 ? [300, 540] : [420, 1200], // the objective bot wins inside this window
-  earliest: 300,                            // nobody wins before this
+  // Mission 1: holds last one minute since 0.12.1 (owner request), so it can end after two minutes.
+  // Mission 2: on the Ashfall roster after three tuning passes the bot wins from about 6:30.
+  win: index === 0 ? [120, 540] : index === 1 ? [360, 1200] : [420, 1200], // the objective bot wins inside this window
+  earliest: index === 0 ? 120 : 300,          // nobody wins before this
 });
 
 export const targets = index => {

@@ -12,7 +12,7 @@ export const MISSIONS = [
     map: "riverlands",
     enemies: 1, speed: "relaxed", alliance: "ffa",
     factions: { 1: "ashfall" },
-    rules: { ai: "home", playerBase: true, enemyBase: true },
+    rules: { ai: "home", playerBase: true, enemyBase: true, rosters: true },
     briefing: {
       place: "Meridian Riverlands, day 1",
       lines: [
@@ -21,6 +21,7 @@ export const MISSIONS = [
         { who: "vale", text: "Another expedition is camped across the water. We have no quarrel with them. Keep it that way if you can." },
       ],
       intel: [
+        "Ashfall fields Scrappers, cheap fighters that come in numbers, and Scorchers that burn the ground. Rangers and towers thin them out.",
         "A Supply relay taps the old Lattice and lets you field more troops.",
         "Stand combat units inside a relay circle to claim it. No enemy may share the circle.",
         "Rangers shoot far but break in close combat. Keep Vanguards in front of them.",
@@ -39,7 +40,7 @@ export const MISSIONS = [
     objectives: [
       { id: "relay", text: "Build a Supply relay", type: "build", building: "relay", count: 1 },
       { id: "reach", text: "March combat units to the Builder relay by the river", type: "reach", region: "oldRelay" },
-      { id: "hold", text: "Hold the Builder relay for 5 minutes", type: "hold", points: ["oldRelay"], need: 1, seconds: 300, hidden: true },
+      { id: "hold", text: "Hold the Builder relay for 1 minute", type: "hold", points: ["oldRelay"], need: 1, seconds: 60, hidden: true },
       { id: "tower", text: "Build a Sentinel tower", type: "build", building: "tower", count: 1, optional: true },
     ],
     win: ["relay", "reach", "hold"],
@@ -88,7 +89,7 @@ export const MISSIONS = [
     enemies: 1, speed: "relaxed", alliance: "ffa",
     factions: { 1: "ashfall" },
     bonus: { alloy: 200, energy: 100, tower: true },
-    rules: { ai: true, playerBase: true, enemyBase: true },
+    rules: { ai: true, playerBase: true, enemyBase: true, rosters: true },
     briefing: {
       place: "Meridian Riverlands, day 4",
       lines: [
@@ -118,16 +119,16 @@ export const MISSIONS = [
       { spawn: "tower", team: 1, at: { x: 17, z: -17 } },
       { spawn: "tower", team: 1, at: { x: 24, z: -14 } },
       { spawn: "tower", team: 1, at: { x: 12, z: -19 } },
-      { spawn: "vanguard", team: 1, at: { x: 20, z: -15 }, count: 8 },
-      { spawn: "ranger", team: 1, at: { x: 22, z: -19 }, count: 6 },
+      { spawn: "vanguard", team: 1, at: { x: 20, z: -15 }, count: 14 },
+      { spawn: "ranger", team: 1, at: { x: 22, z: -19 }, count: 8 },
       { spawn: "breaker", team: 1, at: { x: 28, z: -17 }, count: 3 },
-      { spawn: "vanguard", team: 1, at: { x: 2, z: -8 }, count: 4 },
+      { spawn: "vanguard", team: 1, at: { x: 2, z: -8 }, count: 8 },
       { spawn: "ranger", team: 1, at: { x: -1, z: -11 }, count: 2 },
     ],
     objectives: [
       { id: "foundry", text: "Build a Foundry", type: "build", building: "foundry", count: 1 },
       { id: "core", text: "Destroy the Ashfall Command core", type: "destroyCores" },
-      { id: "light", text: "Keep the Builder relay for 4 minutes", type: "hold", points: ["oldRelay"], need: 1, seconds: 240, optional: true },
+      { id: "light", text: "Keep the Builder relay for 1 minute", type: "hold", points: ["oldRelay"], need: 1, seconds: 60, optional: true },
       { id: "fast", text: "Finish in under 15 minutes", type: "timeUnder", seconds: 900, optional: true },
     ],
     win: ["foundry", "core"],
@@ -151,7 +152,7 @@ export const MISSIONS = [
     debrief: {
       win: [
         { who: "vale", text: "The Riverlands are ours. Hale has pulled back to the ash plains in the east." },
-        { who: "okoro", text: "His core printed the same Vanguards as ours. Same patterns exactly. Who wrote them?" },
+        { who: "okoro", text: "His core printed Scrappers where ours prints Vanguards. Different machines, the same patterns underneath. Who wrote them?" },
       ],
       lose: [{ who: "vale", text: "Our core is gone. Hale will let us leave. He only wants the relay dark." }],
     },
@@ -167,7 +168,7 @@ export const MISSIONS = [
     enemies: 1, speed: "relaxed", alliance: "ffa",
     factions: { 1: "ashfall" },
     bonus: { alloy: 200, energy: 100, tower: true },
-    rules: { ai: true, playerBase: true, enemyBase: true },
+    rules: { ai: true, playerBase: true, enemyBase: true, rosters: true },
     briefing: {
       place: "Ashen Frontier, day 9",
       lines: [
@@ -228,7 +229,7 @@ export const MISSIONS = [
         { wave: { team: 1, units: { vanguard: 4, ranger: 3 }, from: "enemyBase", target: "siphonNorth" } },
       ] },
       { when: { tagHpBelow: { tag: "siphon", percent: 50 } }, do: [{ say: { who: "vale", text: "Half his siphon line is down. He will throw everything at you now. Stay together." } }] },
-      { when: { time: 660 }, do: [{ say: { who: "vale", text: "Eleven minutes. His next wave will have Breakers in it. Finish the siphons." } }] },
+      { when: { time: 660 }, do: [{ say: { who: "vale", text: "Eleven minutes. His next wave will have Scorchers in it. Finish the siphons." } }] },
       { when: { objective: "siphons", is: "done" }, do: [{ music: "calm" }, { say: { who: "hale", text: "You have just made a cold night colder for people who never harmed you." } }] },
     ],
     debrief: {
@@ -249,15 +250,16 @@ export const MISSIONS = [
     map: "dunes",
     enemies: 2, speed: "relaxed", alliance: "ffa",
     factions: { 1: "ashfall", 2: "sunward" },
-    rules: { ai: true, playerBase: true, enemyBase: true },
+    rules: { ai: true, playerBase: true, enemyBase: true, rosters: true },
     briefing: {
       place: "Amber Dunes, day 15",
       lines: [
         { who: "vale", text: "Three oasis relays, Commander. Ashfall wants them. So does the Sunward Caravan, who were here first." },
         { who: "sol", text: "Captain Sol of the Caravan. Our wells run on those relays. Guests are welcome. Thieves are not." },
-        { who: "vale", text: "They are fighting each other. Let them. Hold two oases for three minutes and Okoro can tune them." },
+        { who: "vale", text: "They are fighting each other. Let them. Hold two oases for one minute and Okoro can tune them." },
       ],
       intel: [
+        "Sunward rides fast Riders and heals with Supply wagons. Guard your Harvesters before each attack.",
         "Hold any two of the three oasis relays for 3 minutes in a row.",
         "Ashfall and Sunward are enemies of each other too. A point they fight over is weakly held.",
         "An owned oasis pays alloy every second.",
@@ -278,7 +280,7 @@ export const MISSIONS = [
       { spawn: "ranger", team: 2, at: { x: 28, z: 13 }, count: 2 },
     ],
     objectives: [
-      { id: "hold", text: "Hold two oasis relays for 3 minutes", type: "hold", points: ["oasisNorth", "oasisCentre", "oasisEast"], need: 2, seconds: 180 },
+      { id: "hold", text: "Hold two oasis relays for 1 minute", type: "hold", points: ["oasisNorth", "oasisCentre", "oasisEast"], need: 2, seconds: 60 },
       { id: "all", text: "Hold all three oases for 30 seconds", type: "hold", points: ["oasisNorth", "oasisCentre", "oasisEast"], need: 3, seconds: 30, optional: true },
       { id: "fast", text: "Finish in under 13 minutes", type: "timeUnder", seconds: 780, optional: true },
     ],
@@ -303,7 +305,7 @@ export const MISSIONS = [
         { wave: { team: 1, units: { vanguard: 3, breaker: 1 }, from: "enemyBase", target: "oasisCentre" } },
         { wave: { team: 2, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "oasisCentre" } },
       ] },
-      { when: { time: 960 }, do: [{ say: { who: "vale", text: "Four minutes of daylight left. Two oases, three minutes in a row. Now, Commander." } }] },
+      { when: { time: 960 }, do: [{ say: { who: "vale", text: "Four minutes of daylight left. Two oases, one minute in a row. Now, Commander." } }] },
       { when: { objective: "hold", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Tuned! Both oases are steady. I wish I knew why the others keep going dim." } }] },
     ],
     debrief: {
@@ -326,7 +328,7 @@ export const MISSIONS = [
     enemies: 2, speed: "relaxed", alliance: "coalition",
     factions: { 1: "ashfall", 2: "sunward" },
     bonus: { alloy: 200, energy: 100, tower: true },
-    rules: { ai: true, playerBase: true, enemyBase: true },
+    rules: { ai: true, playerBase: true, enemyBase: true, rosters: true },
     briefing: {
       place: "Verdant Crossing, day 22",
       lines: [
@@ -405,7 +407,7 @@ export const MISSIONS = [
     map: "basin",
     enemies: 1, speed: "relaxed", alliance: "ffa",
     factions: { 1: "ashfall" },
-    rules: { ai: true, playerBase: true, enemyBase: true },
+    rules: { ai: true, playerBase: true, enemyBase: true, rosters: true },
     briefing: {
       place: "Copper Basin, day 30",
       lines: [
@@ -432,7 +434,7 @@ export const MISSIONS = [
     objectives: [
       { id: "first", text: "Bank 3000 alloy for the first charge", type: "collect", alloy: 3000 },
       { id: "full", text: "Bank 8000 alloy and 2600 energy in total", type: "collect", alloy: 8000, energy: 2600, hidden: true },
-      { id: "seam", text: "Hold the copper seam for 2 minutes", type: "hold", points: ["seam"], need: 1, seconds: 120, optional: true },
+      { id: "seam", text: "Hold the copper seam for 1 minute", type: "hold", points: ["seam"], need: 1, seconds: 60, optional: true },
       { id: "fast", text: "Finish in under 15 minutes", type: "timeUnder", seconds: 900, optional: true },
     ],
     win: ["first", "full"],
@@ -476,7 +478,7 @@ export const MISSIONS = [
     enemies: 2, speed: "relaxed", alliance: "coalition",
     factions: { 1: "ashfall", 2: "sunward" },
     bonus: { alloy: 200, energy: 100, tower: true },
-    rules: { ai: true, playerBase: true, enemyBase: true },
+    rules: { ai: true, playerBase: true, enemyBase: true, rosters: true },
     briefing: {
       place: "Copper Basin, day 34",
       lines: [
@@ -521,7 +523,7 @@ export const MISSIONS = [
       { when: { time: 330 }, do: [
         { say: { who: "vale", text: "Breakers on the ridge, shelling range in a moment. Sally out or they grind the towers down." } },
         { aiSpeed: "normal" },
-        { spawn: "breaker", team: 1, at: "ridge", count: 3, tag: "battery" },
+        { spawn: "breaker", team: 1, at: "ridge", count: 3, tag: "battery", exact: true },
         { reveal: "battery" }, { ping: "ridge" },
       ] },
       { when: { time: 420 }, do: [
@@ -557,7 +559,7 @@ export const MISSIONS = [
     map: "classic",
     enemies: 1, speed: "normal", alliance: "ffa",
     factions: { 1: "ashfall" },
-    rules: { ai: false, playerBase: false, enemyBase: true },
+    rules: { ai: false, playerBase: false, enemyBase: true, rosters: true },
     briefing: {
       place: "Ashen Frontier, night 38",
       lines: [
@@ -657,7 +659,7 @@ export const MISSIONS = [
     enemies: 1, speed: "relaxed", alliance: "ffa",
     factions: { 1: "ashfall" },
     bonus: { alloy: 200, energy: 100, tower: true },
-    rules: { ai: true, playerBase: true, enemyBase: true },
+    rules: { ai: true, playerBase: true, enemyBase: true, rosters: true },
     briefing: {
       place: "Amber Dunes, day 41",
       lines: [
@@ -686,7 +688,7 @@ export const MISSIONS = [
       { spawn: "tower", team: 0, at: { x: 41, z: 28 } },
       { spawn: "vanguard", team: 0, at: { x: 33, z: 38 }, count: 3, tag: "sunward" },
       { spawn: "rider", team: 0, at: { x: 40, z: 31 }, count: 2, tag: "sunward" },
-      { spawn: "breaker", team: 1, at: "duneRidge", count: 3, tag: "shellers" },
+      { spawn: "breaker", team: 1, at: "duneRidge", count: 3, tag: "shellers", exact: true },
       { spawn: "vanguard", team: 1, at: { x: 26, z: -2 }, count: 2 },
       { spawn: "tower", team: 1, at: { x: 29, z: -28 } },
       { spawn: "tower", team: 1, at: { x: 37, z: -25 } },
@@ -759,7 +761,7 @@ export const MISSIONS = [
     enemies: 3, speed: "relaxed", alliance: "coalition",
     factions: { 1: "ashfall", 2: "wardens", 3: "veil" },
     bonus: { alloy: 200, energy: 100, tower: true },
-    rules: { ai: true, playerBase: true, enemyBase: true, unlock: ["rider"] },
+    rules: { ai: true, playerBase: true, enemyBase: true, unlock: ["rider"], rosters: true },
     briefing: {
       place: "Obsidian Highlands, day 47",
       lines: [
@@ -768,6 +770,8 @@ export const MISSIONS = [
         { who: "sol", text: "Three camps against one, Commander. My riders will come up the south road when they can." },
       ],
       intel: [
+        "The Wardens send shielded drones and slow Walkers that outrange your tanks.",
+        "Veil Shades stay hidden until they strike. Keep towers near anything you value.",
         "Destroy the three Veil dampers: west, south and centre. Then hold the Crown relay for 3 minutes.",
         "Three allied commanders: an assault force, a raider and a siege corps. Expect attacks from every side.",
         "You do not have to destroy any Command core today.",
@@ -804,7 +808,7 @@ export const MISSIONS = [
     ],
     objectives: [
       { id: "dampers", text: "Destroy the three Veil dampers", type: "destroyTag", tag: "damper" },
-      { id: "crown", text: "Hold the Crown relay for 3 minutes", type: "hold", points: ["crown"], need: 1, seconds: 180, hidden: true },
+      { id: "crown", text: "Hold the Crown relay for 1 minute", type: "hold", points: ["crown"], need: 1, seconds: 60, hidden: true },
       { id: "cores", text: "Destroy all three enemy Command cores", type: "destroyCores", optional: true },
       { id: "fast", text: "Finish in under 18 minutes", type: "timeUnder", seconds: 1080, optional: true },
     ],
@@ -825,7 +829,7 @@ export const MISSIONS = [
       ] },
       { when: { time: 840 }, do: [{ aiSpeed: "normal" }] },
       { when: { objective: "dampers", is: "done" }, do: [
-        { say: { who: "echo", text: "The Crown is free. Stand in its circle for three minutes and this one will tune it." } },
+        { say: { who: "echo", text: "The Crown is free. Stand in its circle for one minute and this one will tune it." } },
         { reveal: "crown" }, { camera: "crown" }, { ping: "crown" },
         { say: { who: "hale", text: "All commands: the plateau centre. They must not finish." } },
         { wave: { team: 1, units: { vanguard: 3, ranger: 1 }, from: "enemyBase", target: "crown" } },
@@ -833,7 +837,7 @@ export const MISSIONS = [
         { wave: { team: 3, units: { ranger: 2, breaker: 1 }, from: "enemyBase", target: "crown" } },
       ] },
       { when: { pointOwned: { point: "crown", team: 0 } }, do: [{ say: { who: "echo", text: "Tuning. Sixty relays are answering. Sixty-one. Hold the circle." } }] },
-      { when: { time: 900 }, do: [{ say: { who: "vale", text: "Fifteen minutes. Their siege corps has Battle tanks now. Anti-tank soldiers to the front." } }] },
+      { when: { time: 900 }, do: [{ say: { who: "vale", text: "Fifteen minutes. Their siege corps has heavy machines now. Anti-tank soldiers to the front." } }] },
       { when: { objective: "crown", is: "done" }, do: [{ music: "calm" }, { say: { who: "maren", text: "The Crown is lit and the sky is clear. No storm. In thirty years I never once saw that." } }] },
     ],
     debrief: {
@@ -855,7 +859,7 @@ export const MISSIONS = [
     enemies: 2, speed: "relaxed", alliance: "coalition",
     factions: { 1: "ashfall", 2: "wardens" },
     bonus: { alloy: 200, energy: 100, tower: true },
-    rules: { ai: true, playerBase: true, enemyBase: true, unlock: ["rider"] },
+    rules: { ai: true, playerBase: true, enemyBase: true, unlock: ["rider"], rosters: true },
     briefing: {
       place: "Frontier Expanse, day 52",
       lines: [
@@ -950,7 +954,7 @@ export const MISSIONS = [
     enemies: 3, speed: "relaxed", alliance: "coalition",
     factions: { 1: "ashfall", 2: "wardens", 3: "veil" },
     bonus: { alloy: 200, energy: 100, tower: true },
-    rules: { ai: true, playerBase: true, enemyBase: true, unlock: ["rider"] },
+    rules: { ai: true, playerBase: true, enemyBase: true, unlock: ["rider"], rosters: true },
     briefing: {
       place: "Frontier Expanse, the Keystone, day 55",
       lines: [

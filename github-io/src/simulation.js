@@ -169,8 +169,8 @@ export class Simulation {
       kind: "resource",
     });
   }
-  spawn(type, team, x, z, complete = true) {
-    type = this.typeFor(team,type);
+  spawn(type, team, x, z, complete = true, exact = false) {
+    if (!exact) type = this.typeFor(team,type);
     const d = D[type];
     if (!d) throw new Error(`Unknown unit or building: ${type}`);
     const e = {

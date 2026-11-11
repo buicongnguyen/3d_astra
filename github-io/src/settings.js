@@ -24,6 +24,8 @@ export function defaults(coarse = false) {
     muted: false,
     waterMotion: true,
     combatMotion: true,
+    // Screen shake on the biggest blasts (a Command core falling, a Barrage landing). Off = steady camera.
+    screenShake: true,
     ambient: true,
     detail: true,
     showFps: false,
@@ -45,7 +47,7 @@ export function normalize(value, coarse = false) {
     d.masterVolume = Math.max(0, Math.min(1, value.masterVolume));
   for (const key of ["musicVolume", "sfxVolume"])
     if (Number.isFinite(value[key])) d[key] = Math.max(0, Math.min(1, value[key]));
-  for (const key of ["muted", "waterMotion", "combatMotion", "ambient", "detail", "showFps", "autocast"])
+  for (const key of ["muted", "waterMotion", "combatMotion", "screenShake", "ambient", "detail", "showFps", "autocast"])
     if (typeof value[key] === "boolean") d[key] = value[key];
   return d;
 }

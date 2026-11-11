@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.12.1: campaign on faction rosters, one-minute holds, lighter factions, optional screen shake
+
+- **The campaign's enemies now field their own faction's units** (owner decision, 2026-11-12). Every mission has `rules.rosters: true`: Ashfall sends Scrappers and Scorchers, Sunward Riders and Supply wagons, the Wardens drones and Walkers, the Veil Shades and Watchers. The story now says each faction prints the Builder patterns its own way (mission 2's debrief, two lines that named Breakers and Battle tanks on the enemy side, `story/world.js`). The two scripted Breaker batteries (missions 7 and 9) stay Breakers through a new `exact: true` spawn flag. Briefings name each faction's special units the first time you meet them (missions 1, 4 and 10).
+- **Hold objectives last one minute** (owner request), and a hold is won as soon as the points are yours and no enemy fighter is left anywhere to contest them. Mission 1 can now end after about two and a half minutes.
+- **Screen shake only for the biggest moments** (a Command core falling, a Barrage landing), and a new **Screen shake** switch in Settings turns it off. Ordinary shells and buildings no longer shake the camera.
+- **Fewer draw calls for every army:** within each rigid part of a model, the plain painted pieces are merged into one mesh that carries each piece's colour, roughness and metalness per vertex (`bakeFinishes` in `src/view.js`). The picture is unchanged (compared side by side with 0.12.0). Phone battle (390x844, Eco): mirror 122 → 106 draws; three rivals 148 → 132; three different factions 206 → 168. Desktop base view 172 → 140. The render-budget limits were tightened to match.
+- **Balance:** faction AIs gather their wave at a rally point before marching. Veil no longer deals less damage, Shades cost 100/15, Scrapper damage 10 → 11, Sentinel drone HP 60 → 50, Wardens self-repair 2% → 1.5% per second, the Wardens AI builds one extra tower instead of two. Round robin at Normal: Meridian 58, Ashfall 21, Sunward 50, Wardens 100, Veil 21%; the 40 to 60% target is still not met (docs/BALANCE.md explains why). Against the test bot at Normal (standard build): Ashfall 33%, Sunward 67%, Wardens 25%, Veil 100% player wins.
+- **Mission checks:** Standard and Story meet every target. Mission 2 was retuned three times for the Ashfall roster (more Scrappers and Rangers in the camp) and its window now starts at 6:00; mission 1's window starts at 2:00 because of the one-minute hold. Veteran: 10 of 12 missions won by the objective bot (the target); mission 10 as before, and mission 12 now loses to the Wardens' Walkers. Heavy machines in scaled waves round to the nearest whole unit instead of up, which fixed Veteran missions 9 and 11.
+- **Fix:** a unit whose model has not downloaded yet (for example offline, in a mission that needs a faction model not yet cached) is no longer drawn from a missing template, which threw an error; it appears once its model arrives.
+- Validation: 370 unit tests, all 37 browser suites locally, mission checks as above.
+
+
 ## 0.12.0: four enemy factions in Skirmish (packages 2.3 to 2.6)
 
 - **Skirmish has an "Enemy faction" choice:** Mirror (the old behaviour, still the default), Ashfall Combine, Sunward Caravan, The Wardens, Veil Survey, or Mixed (each rival a different faction, starting from one picked by the map). Rivals wear their faction's colour and emblem, and their models download only when a faction is chosen.

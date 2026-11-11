@@ -23,7 +23,7 @@ const scenarios = [
   {name:'three-factions-eco', map:'riverlands', enemies:3, teams:4, faction:'mixed', mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
 ];
 const results = [];
-const limits = {'base-high':200, 'river-overview-high':240, 'large-map-high':300, 'battle-eco':140, 'three-rivals-eco':170, 'three-factions-eco':220};
+const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185};
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},

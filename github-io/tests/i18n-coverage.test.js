@@ -20,6 +20,8 @@ const files = [];
 
 // Text that is the same in both languages on purpose: names, key labels, units, symbols.
 const KEEP = new Set([
+  // Shader source edited in view.js (bakeFinishes), not text on screen.
+  '", "#include',
   'FRONTIER', 'COMMAND', 'FPS', '— FPS', 'HQ', 'AI', 'Eco', 'High', 'Q', 'E', 'R', 'T', 'Y', 'WASD', 'Esc', 'Tab', 'Shift', 'Ctrl', 'Ctrl + 1–9 / 1–9', 'Space / Esc', 'Frontier Command home',
 ]);
 const isProse = (text) => /[A-Za-z]{3}/.test(text) && !/^[\w.#:/\\-]+$/.test(text) && !/[{}<>=;]|=>|\$\{/.test(text);

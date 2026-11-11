@@ -59,6 +59,71 @@ function mesh(geometry, material, x = 0, y = 0, z = 0) {
   return m;
 }
 
+// Draw-call relief: within each rigid group of a model (body, each leg, turret, barrel), the plain
+// painted parts become one mesh. Each vertex carries its part's colour, roughness and metalness, and
+// one shared material reads them, so the picture is unchanged while a unit type needs about half
+// the batches. Team paint (recoloured live), glows, glass, lamps, energy and textured or
+// see-through parts stay separate.
+const KEEP_FINISH = /^(Team|Glass|Lamp|Energy)/;
+// Two shared materials: parts that take image-based reflections (applyReflections: metal or very
+// glossy) and parts that do not. Their uniform roughness and metalness only steer that choice; the
+// shader reads the per-vertex values.
+const bakedShared = new Map();
+const reflects = (m) => m.metalness >= 0.5 || m.roughness <= 0.25;
+export function bakedMaterial(reflective) {
+  if (bakedShared.has(reflective)) return bakedShared.get(reflective);
+  const m = new THREE.MeshStandardMaterial({ name: reflective ? "BakedReflect" : "Baked", vertexColors: true, roughness: 1, metalness: reflective ? 1 : 0 });
+  m.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nattribute vec2 finish;\nvarying vec2 vFinish;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvFinish = finish;");
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying vec2 vFinish;")
+      .replace("#include <roughnessmap_fragment>", "float roughnessFactor = vFinish.x;")
+      .replace("#include <metalnessmap_fragment>", "float metalnessFactor = vFinish.y;");
+  };
+  m.customProgramCacheKey = () => "baked-finish";
+  bakedShared.set(reflective, m);
+  return m;
+}
+export function bakeFinishes(root) {
+  const groups = new Map();
+  root.traverse((o) => {
+    const m = o.material;
+    if (!o.isMesh || Array.isArray(m) || !m.isMeshStandardMaterial || KEEP_FINISH.test(m.name) || m.map || m.transparent || m.emissive?.getHex()) return;
+    const key = `${o.parent.uuid}|${reflects(m)}`;
+    if (!groups.has(key)) groups.set(key, { parent: o.parent, reflective: reflects(m), meshes: [] });
+    groups.get(key).meshes.push(o);
+  });
+  for (const { parent, reflective, meshes } of groups.values()) {
+    if (meshes.length < 2) continue;
+    const parts = meshes.map((o) => {
+      const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
+      g.applyMatrix4(new THREE.Matrix4().compose(o.position, o.quaternion, o.scale));
+      const m = o.material, source = m.vertexColors ? g.getAttribute("color") : null, n = g.getAttribute("position").count;
+      const colors = new Float32Array(n * 3), finish = new Float32Array(n * 2);
+      for (let i = 0; i < n; i++) {
+        colors[i * 3] = m.color.r * (source ? source.getX(i) : 1);
+        colors[i * 3 + 1] = m.color.g * (source ? source.getY(i) : 1);
+        colors[i * 3 + 2] = m.color.b * (source ? source.getZ(i) : 1);
+        finish[i * 2] = m.roughness;
+        finish[i * 2 + 1] = m.metalness;
+      }
+      for (const name of Object.keys(g.attributes)) if (name !== "position" && name !== "normal") g.deleteAttribute(name);
+      g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      g.setAttribute("finish", new THREE.BufferAttribute(finish, 2));
+      return g;
+    });
+    const merged = mergeGeometries(parts, false);
+    parts.forEach((g) => g.dispose());
+    if (!merged) continue;
+    for (const o of meshes) parent.remove(o);
+    const mesh = new THREE.Mesh(merged, bakedMaterial(reflective));
+    mesh.name = "baked";
+    parent.add(mesh);
+  }
+}
+
 export class WorldView {
   constructor(
     container,
@@ -455,6 +520,7 @@ export class WorldView {
             }
             turret.add(barrel);template.add(turret);
           }else template.add(barrel);
+          bakeFinishes(template);
           // Only Team/TeamGlow materials vary by faction. Share the other finishes
           // so identical armour, tyres and suits can join one batch across armies.
           const materials = new Map();
@@ -465,7 +531,8 @@ export class WorldView {
               const name = o.material.name;
               const key = `${name.startsWith("Team") ? team : "shared"}:${name}`;
               if (!materials.has(key)) {
-                const m = o.material.clone();
+                // The baked material is one shared program for every model; it is never cloned.
+                const m = name.startsWith("Baked") ? o.material : o.material.clone();
                 if (name.startsWith("Team")) {
                   m.color.setHex(this.colors[team]);
                   if (name.startsWith("TeamGlow")) {
@@ -938,6 +1005,7 @@ export class WorldView {
       old.mesh.geometry.dispose();old.mesh.material.dispose();
     }
   }
+  shakeEnabled() { return this.settings.screenShake !== false && this.feelEnabled(); }
   feelEnabled() { return this.settings.combatMotion !== false && !this.reducedMotion.matches && !this.cameraCue; }
   onScreen(event) {
     const p = new THREE.Vector3(event.x, 0, event.z).project(this.camera);
@@ -947,7 +1015,7 @@ export class WorldView {
     const enabled = this.feelEnabled();
     if (Number.isFinite(event.x) && Number.isFinite(event.z) && sim.isVisible(event)) {
       const trauma = event.type === 'strike' ? FEEL.barrageTrauma : event.type === 'death' ? (event.core ? FEEL.coreTrauma : event.building ? FEEL.buildingTrauma : 0) : 0;
-      if (trauma) this.shake.add(trauma, Math.hypot(event.x-this.focus.x,event.z-this.focus.z), enabled);
+      if (trauma) this.shake.add(trauma, Math.hypot(event.x-this.focus.x,event.z-this.focus.z), this.shakeEnabled());
       if (enabled && event.type === 'death' && event.core && this.onScreen(event)) this.hitStop = FEEL.stopSeconds;
       if (enabled && event.type === 'strike' && (event.victims || []).filter(v => sim.isVisible(v) && this.onScreen(v)).length >= FEEL.stopKills) this.hitStop = FEEL.stopSeconds;
       if (event.type === 'impact') {
@@ -956,8 +1024,8 @@ export class WorldView {
       }
     }
     // Rules resolve shells immediately; the existing shot event carries the landing point.
-    if (event.type === 'shot' && ['tank','breaker'].includes(event.weapon) && shotVisible(event,sim))
-      this.shake.add(FEEL.shellTrauma, Math.hypot(event.tx-this.focus.x,event.tz-this.focus.z), enabled);
+    if (FEEL.shellTrauma && event.type === 'shot' && ['tank','breaker'].includes(event.weapon) && shotVisible(event,sim))
+      this.shake.add(FEEL.shellTrauma, Math.hypot(event.tx-this.focus.x,event.tz-this.focus.z), this.shakeEnabled());
     this.activity.event(event, sim);
     this.tactics.event(event, sim);
     if(event.type==='shot' && shotVisible(event,sim)){
@@ -1060,6 +1128,8 @@ export class WorldView {
     // ticks run outside the frame loop (test stepping) leave the snapshot stale.
     const interpolate = alpha < 1 && Math.abs(sim.time - 0.05 - this.previousTime) < 1e-6;
     for (const e of sim.entities) {
+      // A unit whose model is still downloading (or failed offline) is drawn once it arrives.
+      if (!this.objects.has(e.id) && e.kind !== "wall" && !this.teamTemplates.has(`${e.type}-${e.team}`)) continue;
       alive.add(e.id);
       const o = this.objects.get(e.id) || this.createEntity(e);
       const u=o.userData;
