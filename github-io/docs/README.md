@@ -13,6 +13,7 @@ Start here. Current documents are listed first; older plans and reviews are kept
 | [CHANGELOG.md](CHANGELOG.md) | What changed in each version |
 | [REVIEW_AND_REBUILD_PLAN_2026-11.md](REVIEW_AND_REBUILD_PLAN_2026-11.md) | The review that started the rebuild, the phases, the owner's decisions |
 | [AAA_PLAN_2026-11.md](AAA_PLAN_2026-11.md) | Evaluation at 0.9.4 and the six-stage plan to reach the AAA bar; decisions waiting for the owner |
+| [aaa/](aaa/README.md) | The same plan as work packages for an implementing agent: rules, one file per stage, tests and acceptance for each package |
 | [WORLD.md](WORLD.md) | Story bible: factions, cast, the twelve missions |
 | [MISSIONS.md](MISSIONS.md) | Mission script format |
 | [CAMPAIGN_AND_AI.md](CAMPAIGN_AND_AI.md) | The computer opponent and its speed settings |
