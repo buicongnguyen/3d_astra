@@ -49,7 +49,7 @@ test('no prop is tall enough to hide a unit, and built geometry respects the pla
     const { mesher, props: records } = buildBlocks(terrain, props).values().next().value;
     assert.equal(records.length, props.length * 5);
     props.forEach((p, i) => {
-      const start = records[i * 5 + 3], count = records[i * 5 + 4], limit = HEIGHT[p.kind] * p.s + 0.02;
+      const start = records[i * 5 + 3], count = records[i * 5 + 4], limit = HEIGHT[p.kind] * p.s + 0.02 + terrain.heightAt(p.x, p.z);
       assert.ok(count > 0 && count % 3 === 0, `${id}: ${p.kind} has whole triangles`);
       for (let v = start; v < start + count; v++) {
         assert.ok(mesher.p[v * 3 + 1] <= limit, `${id}: ${p.kind} reaches ${mesher.p[v * 3 + 1].toFixed(2)} (limit ${limit.toFixed(2)})`);

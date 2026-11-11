@@ -2,6 +2,7 @@ import { DEFINITIONS as D, ROCKS, MAX_POP, distance, hyp, clamp } from "./data.j
 import { NEUTRAL, CORE_GRACE, ROUTES_PER_TICK, MIDFIELD_DEPOSITS } from "./sim/constants.js";
 import { factionRules, normalizedFactions } from "./factions.js";
 import { traits } from "./sim/traits.js";
+import { height } from "./sim/height.js";
 import { difficultyId, difficultySpeed } from "./difficulty.js";
 import { Navigation } from "./navigation.js";
 import { progression } from "./progression.js";
@@ -123,6 +124,7 @@ export class Simulation {
     }
     // Concrete walls stand where the boulders were (see spawnWall).
     for (const [x, z, r] of ROCKS) this.spawnWall(x, z, r);
+    this.spawnStraightWalls();
     // Initial deployment locations are public; later cores require scouting.
     this.knownCores = this.players.map((_, team) => new Map(this.entities
       .filter(e => e.type === "hq" && this.hostile(team, e.team))
@@ -416,5 +418,5 @@ export class Simulation {
   }
 }
 
-Object.assign(Simulation.prototype, factionRules, traits, points, expansion, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot);
+Object.assign(Simulation.prototype, factionRules, traits, height, points, expansion, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot);
 Simulation.load = (saved) => restore(Simulation, saved);

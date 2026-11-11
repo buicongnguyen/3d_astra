@@ -1,6 +1,6 @@
 {
   "name": "frontier-command",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -32,6 +32,7 @@
     "test:model-loading": "node tests/model-loading.mjs",
     "test:feel": "node tests/feel.mjs",
     "test:factions": "node tests/factions.mjs",
+    "test:terrain": "node tests/terrain.mjs",
     "bench:factions": "node tools/faction-bench.mjs",
     "test:visual-combat": "node tests/visual-combat.mjs",
     "test:new-game": "node tests/new-game.mjs",

@@ -84,6 +84,34 @@
     "flank": [
       18,
       19
+    ],
+    "plateaus": [
+      {
+        "shape": "disc",
+        "x": -22,
+        "z": 4,
+        "r": 8,
+        "mirror": true,
+        "ramps": [
+          {
+            "angle": 0,
+            "width": 7
+          },
+          {
+            "angle": 180,
+            "width": 7
+          }
+        ]
+      }
+    ],
+    "walls": [
+      {
+        "x": 0,
+        "z": 22,
+        "length": 10,
+        "axis": "h",
+        "mirror": true
+      }
     ]
   },
   "woodlands": {
@@ -109,6 +137,37 @@
     "flank": [
       22,
       23
+    ],
+    "plateaus": [
+      {
+        "shape": "box",
+        "x": -14,
+        "z": -58,
+        "w": 18,
+        "d": 12,
+        "mirror": true,
+        "ramps": [
+          {
+            "side": "north",
+            "at": 0,
+            "width": 7
+          },
+          {
+            "side": "east",
+            "at": 0,
+            "width": 7
+          }
+        ]
+      }
+    ],
+    "walls": [
+      {
+        "x": 40,
+        "z": -20,
+        "length": 12,
+        "axis": "h",
+        "mirror": true
+      }
     ]
   },
   "highlands": {
@@ -138,6 +197,41 @@
     "flank": [
       27,
       27
+    ],
+    "plateaus": [
+      {
+        "shape": "disc",
+        "x": 40,
+        "z": -14,
+        "r": 11,
+        "mirror": true,
+        "ramps": [
+          {
+            "angle": 180,
+            "width": 7
+          },
+          {
+            "angle": 60,
+            "width": 7
+          }
+        ]
+      }
+    ],
+    "walls": [
+      {
+        "x": -14,
+        "z": -40,
+        "length": 14,
+        "axis": "h",
+        "mirror": true
+      },
+      {
+        "x": 52,
+        "z": 22,
+        "length": 12,
+        "axis": "v",
+        "mirror": true
+      }
     ]
   }
 }

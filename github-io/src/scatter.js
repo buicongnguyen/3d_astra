@@ -71,7 +71,7 @@ export function planScatter(terrain, budget = 1) {
     const reach = half - (kind === "ruinFloor" ? 3.2 : 1.2);
     for (let i = 0; i < n; i++) {
       const x = (r() * 2 - 1) * reach, z = (r() * 2 - 1) * reach, s = 0.75 + r() * 0.5;
-      if (!on.includes(terrain.at(x, z))) continue;
+      if (!on.includes(terrain.at(x, z)) || terrain.cliff?.(x, z, 0.8) || terrain.onRamp?.(x, z, 0.8)) continue;
       if (nearWall(x, z, kind === "ruinFloor" ? 2.6 : 0.7)) continue;
       if ((solid || kind === "ruinFloor") && nearCamp(x, z)) continue;
       // Paving rings are wide: every part of one must lie on land.
@@ -346,7 +346,7 @@ export function buildBlocks(terrain, props, colors = scatterColors(terrain.id)) 
     let block = blocks.get(key);
     if (!block) blocks.set(key, (block = { mesher: new Mesher(), props: [] }));
     const m = block.mesher, start = m.vertices;
-    m.place(p.x, p.z, p.s, p.a);
+    m.place(p.x, p.z, p.s, p.a, terrain.heightAt ? terrain.heightAt(p.x, p.z) : 0);
     SHAPES[p.kind](m, p, colors, rng(p.seed));
     block.props.push(p.x, p.z, p.kind === "ruinFloor" ? 2.4 : 0.45, start, m.vertices - start);
   }

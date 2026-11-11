@@ -29,13 +29,13 @@ export const combat = {
     let best = null, bestRank = 3, bestD = Infinity;
     for (const t of this.entities) {
       if (t.hp <= 0) continue;
-      const lim = e.range + t.radius + 0.00001,
+      const lim = e.range + (this.terrain.plateaus.length ? 2 : 0) + t.radius + 0.00001,
         dx = t.x - e.x,
         dz = t.z - e.z;
       if (dx * dx + dz * dz > lim * lim) continue;
       if (!this.hostile(e.team, t.team) || !this.isVisible(t, e.team)) continue;
       const d = distance(e, t) - t.radius;
-      if (d > e.range + 0.00001) continue;
+      if (d > e.range + this.heightRange(e, t) + 0.00001) continue;
       const rank = t.kind !== "unit" ? 2 : t.type === "worker" ? 1 : 0;
       if ((rank < bestRank || (rank === bestRank && d < bestD)) && this.nav.clearLine(e, t, t.id)) {
         best = t;
@@ -81,7 +81,8 @@ export const combat = {
         this.attackValue(e) * scale *
           (e.counter && e.counter === t.class ? e.counter_bonus || 1.6 : 1) *
           (t.mechanical ? (e.mechanical_bonus || 1) * (e.buff?.mech || 1) : 1) *
-          (t.kind === "building" ? e.building_bonus || 1 : 1),
+          (t.kind === "building" ? e.building_bonus || 1 : 1) *
+          this.heightDamage(e, t),
         e.team,
         e.id,
       );
@@ -123,7 +124,7 @@ export const combat = {
     )
       return false;
     // Siege weapons reach further against buildings and walls than against units.
-    const range = t.kind !== "unit" && e.siege_range ? e.siege_range : e.range;
+    const range = (t.kind !== "unit" && e.siege_range ? e.siege_range : e.range) + this.heightRange(e, t);
     const inRange = distance(e, t) <= range + t.radius + 0.00001;
     if (inRange && this.nav.clearLine(e, t, t.id)) {
       e.attacking = true;

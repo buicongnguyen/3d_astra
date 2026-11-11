@@ -27,7 +27,7 @@ Status of the rebuild plan ([REVIEW_AND_REBUILD_PLAN_2026-11.md](REVIEW_AND_REBU
 |---|---|
 | 1 Feel | Pushed; CI/deployment green, documented balance exceptions accepted for continuation, owner play/listening review pending |
 | 2 Factions | Done (0.12.0 to 0.12.1): four factions in Skirmish and in the campaign, Rider unlock, faction bench. Open: round-robin balance target (see BALANCE.md) |
-| 3 Battlefield | Pending; air unit requires explicit owner confirmation |
+| 3 Battlefield | 3.1 terrain height done (0.13.0), plus straight walls; next 3.2 cover, 3.3 weather, 3.4 map rework |
 | 4 Story | Pending |
 | 5 Replay | Pending |
 | 6 Ship | Pending; physical iPhone/Android tests required |

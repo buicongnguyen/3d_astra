@@ -61,7 +61,7 @@ export function planLife(terrain, budget = 1) {
   const recipe = LIFE[terrain.id] || {}, r = rng(hashId(terrain.id)), half = terrain.half;
   const scale = (n) => Math.max(0, Math.round(n * (terrain.size / 96) ** 2 * budget));
   const plan = { birds: [], fish: [], butterflies: [], dragonflies: [], motes: [], look: recipe.birds?.look || (recipe.geese ? "goose" : null), moteLook: recipe.motes?.look || null };
-  const land = (x, z) => !["water", "ford", "bridge", "stone"].includes(terrain.at(x, z));
+  const land = (x, z) => !["water", "ford", "bridge", "stone"].includes(terrain.at(x, z)) && !(terrain.level?.(x, z));
   if (recipe.birds) {
     const b = recipe.birds;
     for (let i = 0; i < scale(b.count); i++) {

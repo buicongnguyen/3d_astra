@@ -214,6 +214,9 @@ export class Effects {
   count(n) { return Math.max(1, Math.round(n * this.budget)); }
   // -- particle helpers
   particle(layer, o) {
+    // On maps with plateaus every effect is lifted to the ground under it.
+    const t = this.view.terrain;
+    if (t?.plateaus?.length && !o.lifted && Number.isFinite(o.x) && Number.isFinite(o.z)) o = { ...o, y: (o.y || 0) + t.heightAt(o.x, o.z) };
     return layer.add({
       x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, age: -(o.delay || 0), life: 1, s0: 1, s1: 1, rot: Math.random() * 6.28,
       spin: 0, c0: WARM.flash, c1: WARM.ember, mode: BILLBOARD, ax: 0, ay: 1, az: 0, length: 0, cell: CELL.glow,
@@ -322,7 +325,8 @@ export class Effects {
       if (cannon || rocket)
         this.particle(this.glow, { ...from, ...v, s0: cannon ? 0.75 : 0.55, s1: cannon ? 0.75 : 0.55, life: travel, c0: [1, 0.85, 0.5, 1],
           c1: [1, 0.7, 0.4, 1], anchor });
-      this.projectiles.push({ from, to, travel, age: 0, rocket, cannon, anchor, trail: 0, weapon: e.weapon });
+      const lift = (p) => ({ ...p, y: p.y + (this.view.terrain?.plateaus?.length ? this.view.terrain.heightAt(p.x, p.z) : 0) });
+      this.projectiles.push({ from: lift(from), to: lift(to), land: to, travel, age: 0, rocket, cannon, anchor, trail: 0, weapon: e.weapon });
     } else {
       this.particle(this.glow, { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2, z: (from.z + to.z) / 2, mode: STRETCH,
         ax: dir.x / len, ay: dir.y / len, az: dir.z / len, length: len, s0: width * 0.7, s1: width * 0.7, life: 0.1,
@@ -591,14 +595,14 @@ export class Effects {
         p.trail += dt;
         while (p.trail > 0.025) {
           p.trail -= 0.025;
-          this.particle(this.smoke, { x: p.from.x + (p.to.x - p.from.x) * t, y: p.from.y + (p.to.y - p.from.y) * t,
+          this.particle(this.smoke, { lifted: true, x: p.from.x + (p.to.x - p.from.x) * t, y: p.from.y + (p.to.y - p.from.y) * t,
             z: p.from.z + (p.to.z - p.from.z) * t, vy: 0.3, drag: 1, life: 0.7 + Math.random() * 0.3, s0: 0.25, s1: 1,
             cell: CELL.puff, c0: [0.82, 0.8, 0.77, 0.5], c1: [0.7, 0.7, 0.7, 0], anchor: p.anchor, spin: 0.6 });
         }
       }
       if (t >= 1) {
         this.projectiles.splice(i, 1);
-        if (visible(p.anchor)) this.hit(p.to, p.cannon || p.rocket, p.anchor);
+        if (visible(p.anchor)) this.hit(p.land || p.to, p.cannon || p.rocket, p.anchor);
       }
     }
     // Fire on critically damaged machines and buildings; same fog-aware budget as the HUD.

@@ -1,4 +1,5 @@
 import { distance } from "../data.js";
+import { TERRAIN } from "../terrain.js";
 
 // What each team can see and remembers. Mixed into Simulation (see simulation.js).
 export const vision = {
@@ -13,11 +14,15 @@ export const vision = {
     return !!this.explored[team][z * this.terrain.grid + x];
   },
   updateVision() {
+    const t = this.terrain, high = t.plateaus.length > 0;
     for (let team = 0; team < this.players.length; team++) {
       this.visible[team].fill(0);
+      // Plateaus where this team has a unit: their tops are open to it from below too.
+      const up = high ? new Set(this.own(team).filter((e) => e.kind === "unit").map((e) => t.plateauAt(e.x, e.z))) : null;
       for (const e of this.own(team)) {
+        const low = high && !t.level(e.x, e.z);
         const [cx, cz] = this.nav.cellAt(e.x, e.z),
-          sight = e.kind === "building" && !e.complete ? Math.min(e.vision, e.radius + 3) : e.vision,
+          sight = (e.kind === "building" && !e.complete ? Math.min(e.vision, e.radius + 3) : e.vision) + (high && !low ? TERRAIN.high_vision : 0),
           r = Math.ceil(sight / 2);
         for (let z = Math.max(0, cz - r); z <= Math.min(this.terrain.grid - 1, cz + r); z++)
           for (
@@ -25,6 +30,9 @@ export const vision = {
             x <= Math.min(this.terrain.grid - 1, cx + r);
             x++
           ) {
+            const i = z * this.terrain.grid + x;
+            // From below, a plateau top is hidden beyond its rim unless a friendly unit stands on it.
+            if (low && t.cellDeep[i] && !up.has(t.cellPlateau[i])) continue;
             if (distance(e, this.nav.worldAt(x, z)) <= sight)
               this.visible[team][z * this.terrain.grid + x] = this.explored[team][
                 z * this.terrain.grid + x

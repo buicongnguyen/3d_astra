@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.13.0: high ground and straight walls (Stage 3, package 3.1 and the owner's wall request)
+
+- **Plateaus:** Amber Dunes, Verdant Crossing and Obsidian Highlands each have a pair of raised plateaus (2.4 m high, mirrored for fairness) reached by two ramps. Cliffs block movement and building; ramps are drawn as road. Units, effects, shells, fog and scenery follow the ground, and taps and clicks land on the raised ground.
+- **High ground matters:** a unit or tower on a plateau firing down gets +2 m range and +20% damage; firing up from below deals 15% less. From below, a plateau top more than 5 m inside its rim stays hidden unless one of your units stands on it; a unit on top sees 3 m further. Numbers in `balance.json` `terrain`.
+- **Straight walls** (owner request): maps can have horizontal or vertical concrete wall lines (`walls` in `maps.json`), each made of breakable 2 m pieces, so armies can blast a gap. Dunes, Verdant Crossing and Highlands have them.
+- **Readable on phones:** each plateau has a dark rock rim, a lighter top and road-coloured ramps painted into the ground texture, so it reads without shadows (Eco) at no draw cost.
+- Maps without plateaus or walls (Ashen Frontier, Riverlands, Copper Basin, Frontier Expanse) play exactly as before; the recorded state hash is unchanged.
+- 0.12.1 did not reach the site: GitHub's Pages deploy step failed to find the uploaded build (CI tests had passed). This release deploys both.
+- Validation: 375 unit tests (new `tests/terrain-height.test.js`), all 38 browser suites (new `npm run test:terrain`, three viewports, in the CI visuals group). Mission checks: Standard and Story meet every target on the new maps; Veteran unchanged (mission 10 exception; mission 12 runs longer than the checker's 4-minute limit on this machine and lost when played out directly).
+
 ## 0.12.1: campaign on faction rosters, one-minute holds, lighter factions, optional screen shake
 
 - **The campaign's enemies now field their own faction's units** (owner decision, 2026-11-12). Every mission has `rules.rosters: true`: Ashfall sends Scrappers and Scorchers, Sunward Riders and Supply wagons, the Wardens drones and Walkers, the Veil Shades and Watchers. The story now says each faction prints the Builder patterns its own way (mission 2's debrief, two lines that named Breakers and Battle tanks on the enemy side, `story/world.js`). The two scripted Breaker batteries (missions 7 and 9) stay Breakers through a new `exact: true` spawn flag. Briefings name each faction's special units the first time you meet them (missions 1, 4 and 10).
@@ -9,7 +19,7 @@
 - **Balance:** faction AIs gather their wave at a rally point before marching. Veil no longer deals less damage, Shades cost 100/15, Scrapper damage 10 → 11, Sentinel drone HP 60 → 50, Wardens self-repair 2% → 1.5% per second, the Wardens AI builds one extra tower instead of two. Round robin at Normal: Meridian 58, Ashfall 21, Sunward 50, Wardens 100, Veil 21%; the 40 to 60% target is still not met (docs/BALANCE.md explains why). Against the test bot at Normal (standard build): Ashfall 33%, Sunward 67%, Wardens 25%, Veil 100% player wins.
 - **Mission checks:** Standard and Story meet every target. Mission 2 was retuned three times for the Ashfall roster (more Scrappers and Rangers in the camp) and its window now starts at 6:00; mission 1's window starts at 2:00 because of the one-minute hold. Veteran: 10 of 12 missions won by the objective bot (the target); mission 10 as before, and mission 12 now loses to the Wardens' Walkers. Heavy machines in scaled waves round to the nearest whole unit instead of up, which fixed Veteran missions 9 and 11.
 - **Fix:** a unit whose model has not downloaded yet (for example offline, in a mission that needs a faction model not yet cached) is no longer drawn from a missing template, which threw an error; it appears once its model arrives.
-- Validation: 370 unit tests, all 37 browser suites locally, mission checks as above.
+- Validation: 369 unit tests, all 37 browser suites locally, mission checks as above.
 
 
 ## 0.12.0: four enemy factions in Skirmish (packages 2.3 to 2.6)

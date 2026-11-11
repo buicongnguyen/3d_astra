@@ -2,6 +2,12 @@
 
 The owner instructed commit, push and continuation on 2026-11-11.
 
+## Stage 3 started (Claude, 2026-11-12)
+
+- 0.12.1: campaign on faction rosters (owner decision), one-minute holds that end early when nobody is left to contest them (owner), screen shake only for cores and Barrages plus a Settings switch (owner), baked model finishes (fewer draws), faction AIs form up before attacking.
+- 0.13.0: package 3.1 terrain height on three maps, straight wall lines (owner request). Rules in `src/terrain.js` (plateaus, ramps, cliffs, `heightAt`) and `src/sim/height.js`; vision rule in `src/sim/vision.js`.
+- Next: 3.2 cover (woods and ruins), 3.3 weather, 3.4 map rework with more plateaus.
+
 ## Faction gameplay, packages 2.3 to 2.6 (Claude, 2026-11-12)
 
 Done, version 0.12.0:

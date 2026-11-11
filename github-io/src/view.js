@@ -589,17 +589,38 @@ export class WorldView {
     const ctx = canvas.getContext("2d");
     // Surfaces, accent patches and painted detail (ground-paint.js); seeded, so identical each build.
     paintGround(ctx, this.terrain, 1024, random);
+    // Plateaus read at a glance, even without shadows (Eco): a lighter top, a dark rock rim and
+    // the ramps in road colour. Painted into the same ground texture, so no extra draws.
+    if (this.terrain.plateaus.length) {
+      const k = 1024 / this.terrain.size, px = (v) => (v + this.terrain.half) * k;
+      const shape = (p, grow) => {
+        ctx.beginPath();
+        if (p.shape === "disc") ctx.arc(px(p.x), px(p.z), (p.r + grow) * k, 0, Math.PI * 2);
+        else ctx.rect(px(p.x - p.w / 2 - grow), px(p.z - p.d / 2 - grow), (p.w + grow * 2) * k, (p.d + grow * 2) * k);
+      };
+      for (const p of this.terrain.plateaus) {
+        shape(p, -1); ctx.fillStyle = "rgba(255, 244, 220, 0.16)"; ctx.fill();
+        shape(p, 0); ctx.lineWidth = 2.2 * k; ctx.strokeStyle = "rgba(38, 30, 24, 0.55)"; ctx.stroke();
+        for (const r of p.ramps) { ctx.beginPath(); ctx.arc(px(r.x), px(r.z), r.half * k, 0, Math.PI * 2); ctx.fillStyle = "rgba(176, 152, 116, 0.85)"; ctx.fill(); }
+      }
+    }
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = this.lowPower ? 1 : 4;
-    const groundGeometry = new THREE.PlaneGeometry(this.terrain.size, this.terrain.size, 96, 96);
+    const segments = this.terrain.plateaus.length ? this.terrain.size : 96;
+    const groundGeometry = new THREE.PlaneGeometry(this.terrain.size, this.terrain.size, segments, segments);
+    if (this.terrain.plateaus.length) {
+      const p = groundGeometry.attributes.position;
+      for (let i = 0; i < p.count; i++) p.setZ(i, this.terrain.heightAt(p.getX(i), -p.getY(i)));
+      groundGeometry.computeVertexNormals();
+    }
     if (this.terrain.river) {
       const p = groundGeometry.attributes.position;
       for (let i = 0; i < p.count; i++) {
         const x = p.getX(i),
           z = -p.getY(i);
         if (Math.abs(z) < 4 && Math.abs(x) > 5)
-          p.setZ(i, -0.5 * Math.min(1, 4 - Math.abs(z)));
+          p.setZ(i, Math.min(p.getZ(i), -0.5 * Math.min(1, 4 - Math.abs(z))));
       }
       groundGeometry.computeVertexNormals();
     }
@@ -688,10 +709,13 @@ export class WorldView {
       transparent: true,
       depthWrite: false,
     });
-    this.fogMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(this.terrain.size, this.terrain.size),
-      material,
-    );
+    const fogSegments = this.terrain.plateaus.length ? this.terrain.size / 2 : 1;
+    const fogGeometry = new THREE.PlaneGeometry(this.terrain.size, this.terrain.size, fogSegments, fogSegments);
+    if (this.terrain.plateaus.length) {
+      const p = fogGeometry.attributes.position;
+      for (let i = 0; i < p.count; i++) p.setZ(i, this.terrain.heightAt(p.getX(i), -p.getY(i)));
+    }
+    this.fogMesh = new THREE.Mesh(fogGeometry, material);
     this.fogMesh.rotation.x = -Math.PI / 2;
     this.fogMesh.position.y = 0.15;
     this.fogMesh.renderOrder = 2;
@@ -777,7 +801,16 @@ export class WorldView {
       this.camera,
     );
     const p = new THREE.Vector3();
-    return this.raycaster.ray.intersectPlane(this.plane, p)
+    let hit = this.raycaster.ray.intersectPlane(this.plane, p);
+    if (hit && this.terrain.plateaus.length) {
+      // Two refinements against the height field are enough for 2.4 m plateaus.
+      for (let k = 0; k < 2; k++) {
+        const level = new THREE.Plane(new THREE.Vector3(0, 1, 0), -this.terrain.heightAt(p.x, p.z));
+        const q = new THREE.Vector3();
+        if (this.raycaster.ray.intersectPlane(level, q)) p.copy(q);
+      }
+    }
+    return hit
       ? { x: clamp(p.x, -this.terrain.half+1, this.terrain.half-1), z: clamp(p.z, -this.terrain.half+1, this.terrain.half-1) }
       : null;
   }
@@ -855,6 +888,16 @@ export class WorldView {
     return this.wallParts;
   }
   createWallModel(e) {
+    if (e.axis) {
+      const model = new THREE.Group(), [concrete, trim] = this.wallTemplate();
+      this.straightWall ||= [new THREE.BoxGeometry(2.04, 1.7, 1.1).translate(0, 0.85, 0), new THREE.BoxGeometry(2.06, 0.12, 1.14).translate(0, 1.2, 0)];
+      const block = new THREE.Mesh(this.straightWall[0], concrete.material), band = new THREE.Mesh(this.straightWall[1], trim.material);
+      block.castShadow = block.receiveShadow = band.receiveShadow = true;
+      model.add(block, band);
+      model.rotation.y = e.axis === "v" ? Math.PI / 2 : 0;
+      adoptBatchedParts(model);
+      return model;
+    }
     const model = new THREE.Group(), inner = new THREE.Group();
     for (const part of this.wallTemplate()) inner.add(part.clone());
     inner.rotation.y = (e.x * 0.37 + e.z * 0.61) % Math.PI;
@@ -1142,11 +1185,12 @@ export class WorldView {
       if (p && Math.hypot(e.x - p.x, e.z - p.z) > 1) p = null;
       const m = o.userData.model;
       if (p) {
-        o.position.set(p.x + (e.x - p.x) * alpha, 0, p.z + (e.z - p.z) * alpha);
+        const ix = p.x + (e.x - p.x) * alpha, iz = p.z + (e.z - p.z) * alpha;
+        o.position.set(ix, this.terrain.heightAt(ix, iz), iz);
         const turn = Math.atan2(Math.sin(e.angle - p.angle), Math.cos(e.angle - p.angle));
         m.rotation.y = p.angle + turn * alpha;
       } else {
-        o.position.set(e.x, 0, e.z);
+        o.position.set(e.x, this.terrain.heightAt(e.x, e.z), e.z);
         m.rotation.y = e.kind === "unit" ? e.angle : e.team === 0 ? 0 : Math.PI;
       }
       if(u.turret){
