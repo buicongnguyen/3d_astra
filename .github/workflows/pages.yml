@@ -97,14 +97,13 @@ jobs:
           name: frontier-${{ github.sha }}
           path: github-io/dist/
       - name: Install browser for smoke tests
-        # The package mirror sometimes fails to resolve for a minute; retry instead of failing the run.
+        # The Ubuntu package mirror is sometimes unreachable from the runners for hours. Its packages here
+        # are extra fonts; the runner image already carries the libraries Chrome needs. So: give the full
+        # install four minutes, then install the browser alone (that download does not use the mirror).
         run: |
-          for attempt in 1 2 3 4; do
-            if npx playwright install --with-deps chromium; then exit 0; fi
-            echo "Browser install failed (attempt $attempt); retrying in 45 s"
-            sleep 45
-          done
-          exit 1
+          if timeout 240 npx playwright install --with-deps chromium; then exit 0; fi
+          echo "::warning::System packages unavailable; installing the browser without them."
+          npx playwright install chromium
       - name: Test the built game
         env:
           TEST_SCRIPTS: ${{ matrix.scripts }}
