@@ -98,6 +98,14 @@ export function setupUiExtras(S, A) {
     }
   }
 
+  // The first ambush by a hidden unit explains the cloak, once per match.
+  function factionEvent(event) {
+    if (event.type !== "reveal" || !event.ambush || event.victim !== 0 || seen.has("cloak") || !hintEl) return;
+    if (!Z.started || S.tutorial || S.sim.result) return;
+    seen.add("cloak");
+    showHint("Shades are hidden until they strike. Towers and Command cores reveal them.");
+  }
+
   function updateIdleButtons() {
     if (!idleButtons) return;
     const counts = idleCounts();
@@ -127,7 +135,7 @@ export function setupUiExtras(S, A) {
     return BEAT_SLOWDOWN;
   }
 
-  Object.assign(A, { cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); fightHints(); } });
+  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); fightHints(); } });
 
   return function bind() {
     makeHint();

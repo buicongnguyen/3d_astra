@@ -1,5 +1,6 @@
 // Mouse and touch input: hover, drag boxes, taps, camera drag and the touch buttons.
 import { $ } from "./dom.js";
+import { FACTIONS } from "../story/world.js";
 import { isTouchPointer, TouchControls } from "../touch-controls.js";
 
 export function setupInputPointer(S, A) {
@@ -32,10 +33,7 @@ export function setupInputPointer(S, A) {
     S.hover = S.view.pick(x, y, S.sim);
     $("hover-label").hidden = !S.hover || !!S.drag || !!S.mode;
     if (S.hover && !S.drag && !S.mode) {
-      $("hover-label").textContent =
-        S.hover.kind === "resource"
-          ? `${S.hover.type.toUpperCase()} · ${Math.floor(S.hover.amount)}`
-          : `${S.hover.name}${S.hover.team > 0 ? " · ENEMY" : ""}`;
+      $("hover-label").textContent = labelFor(S.hover);
       const rect = S.view.renderer.domElement.getBoundingClientRect();
       $("hover-label").style.left = `${Math.min(x - rect.left + 16, S.view.width - 240)}px`;
       $("hover-label").style.top = `${y - rect.top + 20}px`;
@@ -110,6 +108,8 @@ export function setupInputPointer(S, A) {
         A.commandAt(point, target, S.queueOrders);
       else A.setSelection([target.id]);
     } else if (S.selected.size) A.commandAt(point, target, S.queueOrders);
+    // Touch has no hover: a tap on an enemy with nothing selected names it.
+    else if (target && target.team > 0) A.notice(labelFor(target));
     else if (target?.kind === "resource")
       A.notice(
         `${target.type.toUpperCase()} · ${Math.floor(target.amount)} remaining. Select Harvesters to gather.`,
@@ -294,6 +294,14 @@ export function setupInputPointer(S, A) {
     A.bindMinimapInput();
   }
 
+  // What the pointer is on: a deposit and its stock, or a unit or building, with the enemy's faction when it has one.
+  function labelFor(e) {
+    if (e.kind === "resource") return `${e.type.toUpperCase()} · ${Math.floor(e.amount)}`;
+    if (!(e.team > 0)) return e.name;
+    const id = S.sim.missionDef?.factions?.[e.team] || S.sim.factions?.[e.team];
+    const faction = id && id !== "meridian" ? FACTIONS[id]?.short : null;
+    return `${e.name}${faction ? ` · ${faction}` : ""} · ENEMY`;
+  }
   Object.assign(A, { refreshHover, bindInput });
   return function bind() {
     for (const type of ["pointerdown", "pointermove"])

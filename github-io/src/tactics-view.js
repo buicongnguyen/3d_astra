@@ -192,6 +192,7 @@ export class TacticsView {
     if (event.type === "promote") { if (sim.isVisible(event)) fx.promote(event); }
     else if (event.type === "ability") { if (sim.isVisible(event)) fx.ability(event); }
     else if (event.type === "strike") { if (sim.isVisible(event)) fx.strike(event); }
+    else if (event.type === "reveal" || event.type === "salvage") { if (sim.isVisible(event)) fx.factionMark(event); }
   }
   // For tests and debugging: the marks drawn this frame.
   snapshot() {

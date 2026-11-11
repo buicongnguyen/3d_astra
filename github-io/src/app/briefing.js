@@ -15,11 +15,11 @@ export function setupBriefing(S, A) {
   // Briefing: Skirmish picks the map, rivals, AI speed and alliance; Campaign plays the
   // stages in order. The battle behind the briefing always previews the current choice.
   function battleSetup() {
-    if(S.playMode === "training") return {map:"classic",enemyCount:1,aiSpeed:"relaxed",alliance:"ffa",bonus:null,mission:null};
+    if(S.playMode === "training") return {map:"classic",enemyCount:1,aiSpeed:"relaxed",alliance:"ffa",bonus:null,mission:null,faction:"mirror"};
     const m = MISSIONS[S.stagePick];
     return S.playMode === "campaign"
-      ? { map: m.map, enemyCount: m.enemies, aiSpeed: m.speed, alliance: m.alliance, bonus: m.bonus || null, mission: m }
-      : { map: $("scenario").value, enemyCount: Number($("enemy-count").value), aiSpeed: $("ai-speed").value, alliance: $("alliance").value, bonus: null, mission: null };
+      ? { map: m.map, enemyCount: m.enemies, aiSpeed: m.speed, alliance: m.alliance, bonus: m.bonus || null, mission: m, faction: "mirror" }
+      : { map: $("scenario").value, enemyCount: Number($("enemy-count").value), aiSpeed: $("ai-speed").value, alliance: $("alliance").value, bonus: null, mission: null, faction: $("enemy-faction").value };
   }
 
   function describeRivals({ enemyCount: count, aiSpeed: speed, alliance: side }) {
@@ -94,18 +94,18 @@ export function setupBriefing(S, A) {
   function previewBattle() {
     if (Z.started) return;
     const setup = battleSetup();
-    const same = (!setup.mission || S.sim.difficulty === S.settings.campaignDifficulty) && setup.map === S.mapId && setup.enemyCount === S.enemyCount && setup.aiSpeed === S.aiSpeed && setup.alliance === S.alliance && setup.bonus === S.bonus && setup.mission === S.mission;
+    const same = (!setup.mission || S.sim.difficulty === S.settings.campaignDifficulty) && setup.map === S.mapId && setup.enemyCount === S.enemyCount && setup.aiSpeed === S.aiSpeed && setup.alliance === S.alliance && setup.faction === S.enemyFaction && setup.bonus === S.bonus && setup.mission === S.mission;
     if (!same) {
       const terrain = setup.map !== S.mapId || setup.enemyCount !== S.enemyCount;
-      ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission } = setup);
+      ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction } = setup);
       S.sim = A.createSim();
       S.view?.reset();
       A.ensureMatchModels();
       S.hover = null;
       $("hover-label").hidden = true;
       if (terrain) S.view?.setTerrain(S.sim.terrain);
-      S.view?.setMission(S.mission);
-      document.documentElement.style.setProperty("--team-hostile", teamColors(S.settings, S.mission)[1]);
+      S.view?.setMission(S.look);
+      document.documentElement.style.setProperty("--team-hostile", teamColors(S.settings, S.look)[1]);
       S.selected.clear();
       S.rememberedBuildings.clear();
       S.rememberedResources.clear();
@@ -126,7 +126,7 @@ export function setupBriefing(S, A) {
       saveSettings(S.settings);
       previewBattle();
     };
-    for (const id of ["scenario", "enemy-count", "ai-speed", "alliance"]) $(id).onchange = previewBattle;
+    for (const id of ["scenario", "enemy-count", "ai-speed", "alliance", "enemy-faction"]) $(id).onchange = previewBattle;
 
     $("briefing").querySelector(".mode-switch").addEventListener("click", (event) => {
       const button = event.target.closest("[data-mode]");

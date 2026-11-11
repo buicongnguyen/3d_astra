@@ -3,6 +3,8 @@ import { distance } from "../data.js";
 // What each team can see and remembers. Mixed into Simulation (see simulation.js).
 export const vision = {
   isVisible(e, team = 0) {
+    // A cloaked unit (sim/traits.js) is seen only by teams with a detector close to it.
+    if (e.cloaked && e.team !== team && !((e.seenBy >> team) & 1)) return false;
     const [x, z] = this.nav.cellAt(e.x, e.z);
     return e.team === team || !!this.visible[team][z * this.terrain.grid + x];
   },

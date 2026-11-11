@@ -18,9 +18,12 @@ const scenarios = [
   {name:'river-overview-high', map:'riverlands', enemies:1, mobile:false, zoom:70, focus:[0,0], reveal:true},
   {name:'large-map-high', map:'expanse', enemies:3, mobile:false, zoom:105, focus:[0,0], reveal:true},
   {name:'battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
+  // The same phone battle with three rivals, first on the mirror roster and then one faction each (package 2.6).
+  {name:'three-rivals-eco', map:'riverlands', enemies:3, teams:4, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
+  {name:'three-factions-eco', map:'riverlands', enemies:3, teams:4, faction:'mixed', mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
 ];
 const results = [];
-const limits = {'base-high':200, 'river-overview-high':240, 'large-map-high':300, 'battle-eco':140};
+const limits = {'base-high':200, 'river-overview-high':240, 'large-map-high':300, 'battle-eco':140, 'three-rivals-eco':170, 'three-factions-eco':220};
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -37,6 +40,8 @@ try {
     await page.waitForFunction(() => window.__frontier?.view.modelsReady, null, {timeout:90000});
     await page.selectOption('#scenario', scenario.map);
     await page.selectOption('#enemy-count', String(scenario.enemies));
+    if (scenario.faction) await page.selectOption('#enemy-faction', scenario.faction);
+    await page.waitForFunction(() => window.__frontier.modelsReady, null, {timeout:90000});
     await page.evaluate(scenario => {
       window.__freezeFrames = true;
       const f = window.__frontier;
@@ -48,7 +53,7 @@ try {
       if (scenario.army) {
         const kinds = ['ranger','vanguard','tank','breaker','antitank'];
         for (let i = 0; i < scenario.army; i++) {
-          const team = i % 2, row = Math.floor(i / 2);
+          const teams = scenario.teams || 2, team = i % teams, row = Math.floor(i / teams);
           s.spawn(kinds[row % kinds.length], team, -8 + row % 6 * 2, (team ? -1 : 1) * (6 + Math.floor(row / 6) * 2));
         }
       }

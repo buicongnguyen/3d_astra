@@ -80,10 +80,19 @@ export const combat = {
         t,
         this.attackValue(e) * scale *
           (e.counter && e.counter === t.class ? e.counter_bonus || 1.6 : 1) *
-          (t.mechanical ? (e.mechanical_bonus || 1) * (e.buff?.mech || 1) : 1),
+          (t.mechanical ? (e.mechanical_bonus || 1) * (e.buff?.mech || 1) : 1) *
+          (t.kind === "building" ? e.building_bonus || 1 : 1),
         e.team,
         e.id,
       );
+    // Faction teams remember when they last fired (self-repair and cloaks wait on it); firing drops a cloak at once.
+    if (this.factionFor(e.team).trait) {
+      e.shotAt = this.time;
+      if (e.cloaked) {
+        this.uncloak(e);
+        this.events.push({ type: "reveal", ambush: true, x: e.x, z: e.z, team: e.team, victim: target.team });
+      }
+    }
     apply(target);
     // Area weapons (balance.json splash_radius / splash_damage share) also hit nearby enemies.
     if (e.splash_radius)
@@ -92,14 +101,14 @@ export const combat = {
           apply(t, e.splash_damage);
     this.events.push({
       type: "shot",
-      weapon: e.type,
+      weapon: e.shot || e.type,
       source: e.id,
       x: e.x,
       z: e.z,
       tx: target.x,
       tz: target.z,
       team: e.team,
-      heavy: ["breaker", "tank", "antitank"].includes(e.type),
+      heavy: ["breaker", "tank", "antitank"].includes(e.shot || e.type),
     });
     e.cooldown = e.interval;
   },

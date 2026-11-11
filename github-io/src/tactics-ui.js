@@ -8,8 +8,8 @@ export { STANCES };
 // Attack-move and Heal / repair while units are selected.
 export const ABILITY_KEYS = ["E", "T", "Y"];
 // Fixed display order, so the same army always gets the same tile under the same key.
-export const ABILITY_ORDER = ["shieldwall", "focus", "barrage", "lockon", "overdrive", "triage", "fortify"];
-export const ABILITY_ICONS = { shieldwall: "shield", focus: "rapid", barrage: "barrage", lockon: "crosshair", overdrive: "bolt", triage: "medic", fortify: "engineer" };
+export const ABILITY_ORDER = ["shieldwall", "focus", "barrage", "lockon", "overdrive", "triage", "fortify", "rush", "dash", "burnline", "brace", "mark"];
+export const ABILITY_ICONS = { shieldwall: "shield", focus: "rapid", barrage: "barrage", lockon: "crosshair", overdrive: "bolt", triage: "medic", fortify: "engineer", rush: "bolt", dash: "bolt", burnline: "barrage", brace: "hold", mark: "crosshair" };
 // Abilities that need a point on the ground.
 export const AIMED = new Set(["barrage"]);
 export const STANCE_INFO = {

@@ -25,7 +25,7 @@ export { NEUTRAL } from "./sim/constants.js";
 // The match state and its fixed 20 Hz step. Behaviour lives in the systems under sim/, mixed
 // in at the bottom of this file; this class holds setup, shared lookups and the step order.
 export class Simulation {
-  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null, mission = null, factions = null, difficulty = "standard", capturePoints = false } = {}) {
+  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null, mission = null, factions = null, difficulty = "standard", capturePoints = false, aiPlayer = false } = {}) {
     this.difficulty = difficultyId(difficulty);
     if (mission) aiSpeed = difficultySpeed(aiSpeed, this.difficulty);
     this.aiEnabled = ai;
@@ -61,9 +61,11 @@ export class Simulation {
     this.result = null;
     this.terrain = new Terrain(map);
     this.nav = new Navigation(this.terrain);
+    // Headless balance runs only (tools/faction-bench.mjs): the computer also plays team 0.
+    if (aiPlayer && ai) this.aiPlayer = true;
     this.aiClock = 0;
     this.aiTurn = 0;
-    this.waveAt = this.players.map((_, team) => this.pace.firstWave + Math.max(0, team - 1) * 15);
+    this.waveAt = this.players.map((_, team) => (mission ? this.pace : this.paceFor(team)).firstWave + Math.max(0, team - 1) * 15);
     if (this.coalition) this.initCoalition();
     this.visionClock = 0;
     this.visible = this.players.map(() => new Uint8Array(this.terrain.grid * this.terrain.grid));
@@ -100,7 +102,7 @@ export class Simulation {
     for (let team = 2; team < this.players.length; team++) {
       // Reflect the starting camp into the two unused quadrants.
       const sx = team === 2 ? -1 : 1, sz = -sx;
-      for (const e of this.own(0)) this.spawn(e.type, team, e.x * sx, e.z * sz);
+      for (const e of this.own(0)) this.spawn(this.slotOf(e.type), team, e.x * sx, e.z * sz);
       for (const r of this.resources.slice(0, 4)) {
         this.resource(r.type, r.x * sx, r.z * sz, r.initial);
         startingDeposits.add(this.resources.at(-1));
@@ -203,6 +205,7 @@ export class Simulation {
       working: false,
     };
     if (d.trains) e.trains = this.resolvedTrains(team,d.trains);
+    this.traitSpawn(e);
     this.entities.push(e);
     return e;
   }
@@ -299,7 +302,7 @@ export class Simulation {
   stepEntity(e, dt) {
     e.cooldown -= dt;
     e.shieldDelay = Math.max(0,e.shieldDelay-dt);
-    if (e.complete && e.shieldDelay <= 0) e.shield = Math.min(e.maxShield,e.shield+4*dt);
+    if (e.complete && e.shieldDelay <= 0) e.shield = Math.min(e.maxShield,e.shield+4*dt*(e.shieldRate||1));
     e.moving = false;
     e.attacking = false;
     e.working = false;

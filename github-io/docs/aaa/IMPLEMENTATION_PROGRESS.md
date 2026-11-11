@@ -2,6 +2,19 @@
 
 The owner instructed commit, push and continuation on 2026-11-11.
 
+## Faction gameplay, packages 2.3 to 2.6 (Claude, 2026-11-12)
+
+Done, version 0.12.0:
+- 2.3 Ashfall and 2.4 Sunward, Wardens, Veil: twelve definitions, four traits, five abilities, three building auras, the cloak rule and four AI personalities, with tests for each rule.
+- 2.5: `npm run bench:factions` (round robin and test bot). Five tuning passes. **The 40 to 60% round-robin target is not met** (Meridian 63, Ashfall 15, Sunward 56, Wardens 96, Veil 21%); docs/BALANCE.md explains why this is AI behaviour rather than unit numbers, and gives the test-bot table a player's experience is closer to.
+- 2.6: Skirmish "Enemy faction" (Mirror, the four factions, Mixed) with faction colours and emblems; Riders for the player from mission 9. **Campaign rosters are not switched on**: the story says all factions print the same units (docs/MISSIONS.md). The mission 12 Walker gift was dropped (it destabilised that mission's bot check).
+- Stage 2 exit checks: first-visit download is 1297260 bytes gzipped against 1287022 at 0.9.4 (+10238 bytes, +0.8%, all of it script; the same 14 models are fetched at boot), so "not larger than 0.9.4" is missed by that margin. Mission checks: every target met at Standard and Story; Veteran misses only the mission 10 exception already recorded below. A battle against three different factions costs 206 draw calls on the phone view against 148 for three mirror rivals, and about 20 to 25% more render time, so the 10% line of package 2.6 is missed (follow-up: bake faction unit materials into vertex colour).
+- CI: the browser install step now retries (the run for 98c41f6 failed twice on a package mirror, not on the game).
+
+Open for the owner: play each faction in Skirmish and say which feel too weak or too strong; decide whether the campaign story changes so missions can use faction rosters.
+
+Not started: Stage 3 (terrain height, cover, weather, maps), Stage 4 (story), Stage 5 (replay value), Stage 6 (ship quality).
+
 ## Committed work
 
 - Stage 1: b80549d, pushed. [CI and deployment succeeded](https://github.com/buicongnguyen/3d_astra/actions/runs/43003557594).

@@ -63,6 +63,7 @@ import { setupFrame } from "./app/frame.js";
 import { setupUiExtras } from "./app/ui-extras.js";
 import { setupDebugHooks } from "./app/debug-hooks.js";
 import { CORE_MODEL_TYPES, modelsForMatch } from "./model-roster.js";
+import { skirmishFactions, matchLook } from "./factions.js";
 import { prefetchModels, releaseModelBytes } from "./app/loading.js";
 import "./loading.css";
 import { registerOffline } from "./app/offline.js";
@@ -73,7 +74,11 @@ const S = createState();
 const A = {};
 
 // Every match, preview and restart is built from the current setup (a story mission included).
-const createSim = () => new Simulation({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish" });
+const createSim = () => {
+  const sim = new Simulation({ factions: S.mission ? null : skirmishFactions(S.enemyFaction, S.enemyCount, S.mapId), map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish" });
+  S.look = matchLook(S.mission, sim);
+  return sim;
+};
 
 let bootReady = false, loadGeneration = 0;
 async function loadAssets(types = modelsForMatch(S.sim)) {
@@ -119,7 +124,7 @@ async function loadAssets(types = modelsForMatch(S.sim)) {
 
 function boot() {
   try {
-    S.view = new WorldView($("world"), { terrain: S.sim.terrain, settings: S.settings, mission: S.mission });
+    S.view = new WorldView($("world"), { terrain: S.sim.terrain, settings: S.settings, mission: S.look });
     S.view.onContextLost = A.graphicsLost;
     S.view.onContextRestored = A.graphicsRestored;
     $("quality").textContent = S.view.lowPower ? "Eco" : "High";
@@ -182,7 +187,7 @@ const BIND = ["preferences", "hud", "input-pointer", "sound", "frame", "modals",
   "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "debug-hooks"];
 const binds = Object.fromEntries(SETUP.map(([name, setup]) => [name, setup(S, A)]));
 // The start screen shows the battle chosen there, so the first simulation is built from it.
-({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission } = A.battleSetup());
+({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction } = A.battleSetup());
 S.sim = createSim();
 for (const name of BIND) binds[name]();
 boot();

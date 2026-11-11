@@ -40,6 +40,8 @@ export const targets = index => {
 };
 
 export function play(mission, kind, { cap = CAP, log = false } = {}) {
+  // Trial switch: ROSTERS=1 plays every mission on faction rosters, ROSTERS=0 on the base roster, whatever the mission says.
+  if (process.env.ROSTERS) mission = { ...mission, rules: { ...mission.rules, rosters: process.env.ROSTERS === "1" } };
   const s = new Simulation({ difficulty: DIFFICULTY, map: mission.map, enemyCount: mission.enemies, aiSpeed: mission.speed, alliance: mission.alliance, playerBonus: mission.bonus || null, mission });
   const bot = kind.startsWith("objective") ? new ObjectiveBot(s, mission, { marchDelta: +kind.slice(9) || 0 }) : kind === "generic" ? new PlayBot(s, { attackAt: ATTACK_AT, attackAfter: TURTLE && mission.enemies > 1 ? targets(MISSIONS.indexOf(mission)).generic : 0 }) : null;
   let wave = null, lost = 0, units = new Set();

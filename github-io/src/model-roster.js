@@ -9,6 +9,20 @@ export function modelsForMatch(match = {}, factions = balance.factions || {}) {
     for (const type of Object.values(faction?.swap || {})) types.add(type);
     if (faction?.building) types.add(faction.building);
   }
+  // Everything the mission script can put on the field later: spawns, waves and unlocks, resolved for each roster in play.
+  const def = match.missionDef, named = new Set(def?.rules?.unlock || []);
+  const scan = (o) => {
+    if (!o || typeof o !== 'object') return;
+    if (typeof o.spawn === 'string') named.add(o.spawn);
+    if (o.wave?.units) for (const type of Object.keys(o.wave.units)) named.add(type);
+    if (Array.isArray(o.unlock)) for (const type of o.unlock) named.add(type);
+    for (const v of Array.isArray(o) ? o : Object.values(o)) scan(v);
+  };
+  if (def) { scan(def.setup); scan(def.triggers); }
+  for (const type of named) {
+    if (balance.definitions[type]?.kind) types.add(type);
+    for (const id of ids) { const swapped = factions[id]?.swap?.[type]; if (swapped) types.add(swapped); }
+  }
   for (const entity of match.entities || []) if (entity.kind !== 'wall' && balance.definitions[entity.type]?.role !== 'Research') types.add(entity.type);
   return [...types];
 }

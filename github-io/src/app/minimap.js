@@ -72,13 +72,13 @@ export function setupMinimap(S, A) {
     for (const p of Object.values(S.sim.mission?.points || S.sim.skirmishPoints || {})) {
       const cx = px(p.x), cy = pz(p.z), radius = Math.max(4.5, (p.r / MAP_SIZE) * w), owned = p.owner !== null && p.owner !== undefined;
       ctx.lineWidth = 2;
-      ctx.strokeStyle = ctx.fillStyle = owned ? teamColors(S.settings, S.mission)[p.owner] : "#d3dadb";
+      ctx.strokeStyle = ctx.fillStyle = owned ? teamColors(S.settings, S.look)[p.owner] : "#d3dadb";
       ctx.beginPath();
       ctx.arc(cx, cy, radius, 0, Math.PI * 2);
       if (owned) { ctx.globalAlpha = 0.3; ctx.fill(); ctx.globalAlpha = 1; }
       ctx.stroke();
       if (p.taker !== null && p.taker !== undefined) {
-        ctx.strokeStyle = teamColors(S.settings, S.mission)[p.taker];
+        ctx.strokeStyle = teamColors(S.settings, S.look)[p.taker];
         ctx.beginPath();
         ctx.arc(cx, cy, radius + 2.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, p.since / 5));
         ctx.stroke();
@@ -100,13 +100,13 @@ export function setupMinimap(S, A) {
         continue;
       }
       if (!S.sim.isVisible(e)) {
-        ctx.fillStyle = teamColors(S.settings, S.mission)[e.team];
+        ctx.fillStyle = teamColors(S.settings, S.look)[e.team];
         ctx.globalAlpha = 0.45;
         ctx.fillRect(px(e.x) - 3, pz(e.z) - 3, 6, 6);
         ctx.globalAlpha = 1;
       }
     }
-    const teams = teamColors(S.settings, S.mission);
+    const teams = teamColors(S.settings, S.look);
     for (const e of S.sim.entities)
       if (e.team >= 0 && S.sim.isVisible(e)) {
         ctx.fillStyle = teams[e.team];

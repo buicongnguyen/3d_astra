@@ -7,6 +7,7 @@ import { MAPS } from "../terrain.js";
 import { MISSIONS } from "../campaign.js";
 import { TRAINING_STEPS } from "../tutorial.js";
 import { icon } from "../icons.js";
+import { ENEMY_FACTIONS } from "../factions.js";
 
 export function renderShell() {
   document.querySelector("#app").innerHTML = `
@@ -62,7 +63,8 @@ export function renderShell() {
           <label class="field field-wide"><span>Battlefield</span><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select></label>
           <label class="field"><span>Rivals</span><select id="enemy-count" aria-label="Number of AI enemies"><option value="1">1 AI enemy</option><option value="2">2 AI enemies</option><option value="3">3 AI enemies</option></select></label>
           <label class="field"><span>AI speed</span><select id="ai-speed" aria-label="AI speed" title="AI speed: how fast rivals build, tech up and attack">${Object.entries(AI_SPEEDS).map(([id, p]) => `<option value="${id}"${id === "normal" ? " selected" : ""}>${p.label} AI</option>`).join("")}</select></label>
-          <label class="field field-wide"><span>AI teams</span><select id="alliance" aria-label="AI teams" disabled>${Object.entries(ALLIANCES).map(([id, label]) => `<option value="${id}">${label}</option>`).join("")}</select></label>
+          <label class="field"><span>Enemy faction</span><select id="enemy-faction" aria-label="Enemy faction" title="Enemy faction: each has two units, one building and a way of fighting of its own">${Object.entries(ENEMY_FACTIONS).map(([id, label]) => `<option value="${id}">${label}</option>`).join("")}</select></label>
+          <label class="field"><span>AI teams</span><select id="alliance" aria-label="AI teams" disabled>${Object.entries(ALLIANCES).map(([id, label]) => `<option value="${id}">${label}</option>`).join("")}</select></label>
         </div>
         <div id="campaign-setup" hidden></div>
         <div id="training-setup" hidden><ol class="lesson-list" aria-label="Training lessons">${TRAINING_STEPS.map(step => `<li>${step.title}</li>`).join("")}</ol></div>

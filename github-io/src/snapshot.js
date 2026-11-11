@@ -53,7 +53,7 @@ export const snapshot = {
     state.entities = this.entities.map(slim);
     return JSON.stringify({
       version: SAVE_VERSION,
-      options: { ...(Object.values(this.factions).some(id => id !== "meridian") ? {factions:this.factions} : {}), map: this.terrain.id, enemyCount: this.enemyCount, aiSpeed: this.aiSpeed, alliance: this.coalition ? "coalition" : "ffa", ai: this.aiEnabled, mission: this.missionDef || null, difficulty: this.difficulty, playerBonus: this.playerBonus || null, capturePoints: !!this.capturePointsOn },
+      options: { ...(Object.values(this.factions).some(id => id !== "meridian") ? {factions:this.factions} : {}), map: this.terrain.id, enemyCount: this.enemyCount, aiSpeed: this.aiSpeed, alliance: this.coalition ? "coalition" : "ffa", ai: this.aiEnabled, mission: this.missionDef || null, difficulty: this.difficulty, playerBonus: this.playerBonus || null, capturePoints: !!this.capturePointsOn, ...(this.aiPlayer ? {aiPlayer:true} : {}) },
       nav: { revision: this.nav.revision, wallsSpawned: this.nav.wallsSpawned },
       state,
     }, encode);

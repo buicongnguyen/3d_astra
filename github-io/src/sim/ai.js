@@ -15,7 +15,7 @@ export const ai = {
     this.assignHarvesters(team);
     this.aiRetreat(team, army);
     const hq = own.find((e) => e.type === "hq" && e.complete) || own.find(e => e.type === "hq");
-    const pace = this.pace, role = roleOf(this, team);
+    const pace = this.paceFor(team), role = roleOf(this, team), persona = this.personality(team), extra = this.factionFor(team).building;
     // A second core brings more Harvesters, trained at the core with the fewest nearby.
     const cores = own.filter((e) => e.type === "hq" && e.complete);
     const crewCap = pace.workers + EXPAND_CREW * Math.max(0, cores.length - 1);
@@ -64,7 +64,7 @@ export const ai = {
             : this.time > pace.towerAt && own.some((e) => e.type === "foundry" && e.complete) &&
                 own.filter((e) => e.type === "tower").length < pace.towers + (role === "siege" ? 1 : 0)
               ? "tower"
-              : this.surplusBuilding(team, own, role);
+              : this.factionBuilding(team, own, persona, extra) || this.surplusBuilding(team, own, role);
     if (
       want &&
       afford(D[want].cost) &&
@@ -115,7 +115,7 @@ export const ai = {
         choice = this.counterChoice(team, b, army, choice);
         const support = b.type === 'foundry' ? 'engineer' : 'medic';
         if (b.level >= 2 && army.filter(e => this.slotOf(e.type) === support).length < 2) choice = support;
-        const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : ['breaker'])].map(slot => this.typeFor(team,slot)))];
+        const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : ['breaker'])].map(slot => this.typeFor(team,slot)))].filter(type => this.canTrain(team,type));
         const pop = this.population(team);
         const save = b.type === 'barracks' ? hold : 0;
         const affordable = choices.find(type => b.level >= (D[type].required_level || 1) && afford([D[type].cost[0] + save, D[type].cost[1]]) && pop.used+pop.reserved+D[type].pop <= pop.cap);
@@ -152,12 +152,14 @@ export const ai = {
     }
     // A mission that sends its own waves lets the computer build up and defend at home only.
     if (this.aiHome) return;
+    if (persona?.retreat && hq && this.aiFallBack(team, hq, army, pace, persona.retreat)) return;
     if (!incursion) this.aiPoints(team, hq, army, pace);
     const wave = army.filter((e) => !engaged(e) && !e.pointDuty && !e.retreating);
     if (this.coalition) {
       this.coalitionOrders(team, { hq, army, wave, incursion });
       return;
     }
+    if (persona?.raid && hq && !incursion) this.aiRaid(team, hq, wave, persona.raid);
     if (!incursion && this.time >= this.waveAt[team] && wave.length >= pace.minWave) {
       const target = [...this.knownCores[team].values()]
         .sort((a, b) => distance(hq, a) - distance(hq, b))[0] || this.scoutDestination(team);
@@ -166,11 +168,50 @@ export const ai = {
       this.waveAt[team] = this.time + pace.waveGap;
     }
   },
+  // A faction's own building: Ashfall's yard right after the first Barracks, the others once the
+  // Foundry stands. Wardens add a Pylon for every production building.
+  factionBuilding(team, own, persona, type) {
+    if (!type || !own.some((e) => e.type === "barracks" && e.complete)) return null;
+    if (persona?.building !== "early" && !own.some((e) => e.type === "foundry" && e.complete)) return null;
+    const have = own.filter((e) => e.type === type).length;
+    const wanted = persona?.building === "each" ? Math.min(3, own.filter((e) => e.type === "barracks" || e.type === "foundry").length) : 1;
+    return have < wanted ? type : null;
+  },
+  // Sunward: shortly before each wave, its fastest idle fighters go for the Harvesters at the
+  // nearest known enemy core. One raid per wave.
+  aiRaid(team, hq, wave, size) {
+    if (this.time < this.waveAt[team] - 20 || this.aiRaidFor?.[team] === this.waveAt[team]) return;
+    const core = [...this.knownCores[team].values()].sort((a, b) => distance(hq, a) - distance(hq, b) || a.id - b.id)[0];
+    const deposit = core && this.resources.filter((r) => r.amount > 0).sort((a, b) => distance(core, a) - distance(core, b) || a.id - b.id)[0];
+    const raiders = wave.filter((e) => e.damage > 0 && !e.orders.length).sort((a, b) => b.speed - a.speed || a.id - b.id).slice(0, size);
+    if (!deposit || raiders.length < 2) return;
+    (this.aiRaidFor ||= {})[team] = this.waveAt[team];
+    this.issue(raiders.map((e) => e.id), { type: "attackmove", x: deposit.x, z: deposit.z });
+    if (core.team === 0) this.message("Scouts report enemy raiders heading for your Harvesters.");
+  },
+  // Veil: a force in the field that sees itself outnumbered (by supply, `ratio` to 1) goes home
+  // and the next wave waits. Only enemies this team can see are counted.
+  aiFallBack(team, hq, army, pace, ratio) {
+    const out = army.filter((e) => e.orders[0]?.type === "attackmove" && distance(e, hq) > 40);
+    if (!out.length) return false;
+    const seen = new Set();
+    for (const e of out)
+      for (const t of this.entities)
+        if (t.hp > 0 && t.kind === "unit" && t.damage > 0 && this.hostile(team, t.team) && distance(e, t) < 16 && this.isVisible(t, team)) seen.add(t);
+    let foes = 0, mine = 0;
+    for (const t of seen) foes += t.pop || 1;
+    for (const e of out) mine += e.pop || 1;
+    if (foes < mine * ratio) return false;
+    this.issue(out.map((e) => e.id), { type: "move", x: hq.x, z: hq.z });
+    this.waveAt[team] = Math.max(this.waveAt[team], this.time + pace.waveGap / 2);
+    return true;
+  },
   stepAI(dt) {
     if (this.aiEnabled) {
       this.aiClock -= dt;
       if (this.aiClock <= 0) {
         this.aiTurn = 1;
+        if (this.aiPlayer) this.updateAI(0);
         this.aiClock = this.pace.think;
       }
       // One AI thinks per tick, so three rivals placing buildings do not land in the same step.

@@ -124,6 +124,7 @@ export function setupFrame(S, A) {
     const events = S.sim.events.splice(0);
     S.view.cameraCue = !!S.cameraPan || events.some(e => e.type === "camera");
     for (const event of events) {
+      A.factionEvent(event);
       if (event.type === "impact" && event.team === 0 && Z.started) underAttack(event);
       if (Z.started) S.audio?.event(event, S.sim);
       if (event.type === "message") A.notice(event.text);

@@ -13,13 +13,7 @@ test('base counter damage stays at its recorded golden values',()=>{
   const pairs=[['vanguard','ranger',19.2],['ranger','breaker',33.8],['breaker','vanguard',45],['tank','vanguard',72],['antitank','tank',120]];
   for(const [a,b,damage] of pairs){const s=new Simulation({ai:false});const shooter=s.spawn(a,0,0,0),target=s.spawn(b,1,3,0);target.shield=0;const hp=target.hp;s.hit(shooter,target);assert.ok(Math.abs(hp-target.hp-damage)<1e-9,`${a} vs ${b}`);}
 });
-test('faction slots resolve, reject foreign training/construction and survive saves',t=>{
-  // Framework fixtures provide definitions without wiring unapproved art into the game.
-  for(const faction of Object.values(FACTION_RULES)){
-    for(const [slot,type] of Object.entries(faction.swap)) D[type]={...D[slot]};
-    if(faction.building)D[faction.building]={...D.relay};
-  }
-  t.after(()=>{for(const f of Object.values(FACTION_RULES)){for(const type of Object.values(f.swap))delete D[type];if(f.building)delete D[f.building];}});
+test('faction slots resolve, reject foreign training/construction and survive saves',()=>{
   const s=new Simulation({ai:false,factions:{1:'ashfall'}});
   assert.equal(s.typeFor(1,'vanguard'),'scrapper');assert.equal(s.slotOf('scrapper'),'vanguard');
   for(const faction of Object.values(FACTION_RULES))for(const [slot,type] of Object.entries(faction.swap))assert.equal(s.slotOf(type),slot);

@@ -6,8 +6,8 @@
 import { DEFINITIONS as D } from "../src/data.js";
 
 export class PlayBot {
-  constructor(sim, { team = 0, attackAt = Infinity, attackAfter = 0, workers = 10, towers = 2 } = {}) {
-    Object.assign(this, { sim, team, attackAt, attackAfter, workers, towers, placed: 0, retries: new Map(), alarm: -Infinity, party: null });
+  constructor(sim, { team = 0, attackAt = Infinity, attackAfter = 0, workers = 10, towers = 2, rangerShare = 1.5 } = {}) {
+    Object.assign(this, { sim, team, attackAt, attackAfter, workers, towers, rangerShare, placed: 0, retries: new Map(), alarm: -Infinity, party: null });
     sim.command({ team, type: "autocast", on: true });
   }
   own(type) { return this.sim.own(this.team).filter((e) => e.type === type); }
@@ -78,7 +78,7 @@ export class PlayBot {
       const count = (type) => army.filter((e) => e.type === type).length;
       const wish = b.type === "foundry"
         ? [b.level >= 3 && count("tank") <= count("breaker") ? "tank" : "breaker", b.level >= 2 && count("engineer") < 1 ? "engineer" : null, "breaker"]
-        : [b.level >= 2 && count("medic") < 2 && army.length > 6 ? "medic" : null, count("ranger") <= count("vanguard") * 1.5 ? "ranger" : "vanguard", "vanguard"];
+        : [b.level >= 2 && count("medic") < 2 && army.length > 6 ? "medic" : null, count("ranger") <= count("vanguard") * this.rangerShare ? "ranger" : "vanguard", "vanguard"];
       const unit = wish.find((type) => type && b.level >= (D[type].required_level || 1) && can(type));
       if (unit) s.command({ team, type: "train", building: b.id, unit });
     }
@@ -135,7 +135,8 @@ export class ObjectiveBot extends PlayBot {
     // Troops the mission posts beside a far-off building it must not lose stay there as its guard.
     const hq = this.own("hq")[0];
     const posts = sim.own(this.team).filter((e) => e.kind === "building" && this.wards.has(e.tag) && (!hq || gap(e, hq) >= 40));
-    this.guards = new Set(sim.own(this.team).filter((e) => e.kind === "unit" && posts.some((b) => gap(e, b) < 20)).map((e) => e.id));
+    // A Walker lent by the story is far slower than a marching army: like most players, the bot leaves it guarding the camp.
+    this.guards = new Set(sim.own(this.team).filter((e) => e.kind === "unit" && (e.type === "walker" || posts.some((b) => gap(e, b) < 20))).map((e) => e.id));
   }
   order(units, order, key) {
     const ids = units.filter((e) => !e.orders.length || this.sent.get(e.id) !== key).map((e) => e.id);

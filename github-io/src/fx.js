@@ -395,7 +395,7 @@ export class Effects {
   }
   ability(e) {
     const anchor = { x: e.x, z: e.z, team: e.team };
-    const tint = { shieldwall: [0.42, 0.8, 1], focus: [1, 0.8, 0.3], overdrive: [1, 0.5, 0.2], lockon: [0.84, 0.56, 1], triage: [0.5, 1, 0.72], fortify: [0.75, 0.9, 1], barrage: [1, 0.8, 0.45] }[e.ability] || [1, 1, 1];
+    const tint = { shieldwall: [0.42, 0.8, 1], focus: [1, 0.8, 0.3], overdrive: [1, 0.5, 0.2], lockon: [0.84, 0.56, 1], triage: [0.5, 1, 0.72], fortify: [0.75, 0.9, 1], barrage: [1, 0.8, 0.45], rush: [1, 0.62, 0.3], dash: [1, 0.85, 0.4], brace: [0.55, 0.8, 1], mark: [0.8, 0.55, 1], burnline: [1, 0.5, 0.12] }[e.ability] || [1, 1, 1];
     if (e.ability === 'triage' || e.ability === 'fortify') {
       // A pulse that opens to the ability's reach (the ring sits at 0.8 of the sprite's half width).
       this.decal({ x: e.x, z: e.z }, (e.radius || 6) * 2.5, 0.7, anchor, CELL.ring, [...tint, 0.85], this.glow, 1, { hold: 0, y: 0.1 });
@@ -404,6 +404,21 @@ export class Effects {
         this.particle(this.glow, { x: e.x + Math.cos(a) * d, y: 0.4, z: e.z + Math.sin(a) * d, vy: this.motion ? 1.6 + Math.random() : 0, drag: 1, life: 0.7 + Math.random() * 0.2,
           s0: 0.3, s1: 0.06, cell: CELL.flare, c0: [...tint, 0.9], c1: [...tint, 0], anchor, delay: i * 0.04 });
       }
+    } else if (e.ability === 'burnline' && Number.isFinite(e.tx)) {
+      // Burning ground: a scorch and a glowing ring for as long as it burns, with flames rising inside it.
+      const at = { x: e.tx, z: e.tz }, r = e.radius || 3, life = e.duration || 6, zone = { x: e.tx, z: e.tz, team: e.team };
+      this.decal(at, r * 2.3, life + 4, zone);
+      this.decal(at, r * 2.5, life, zone, CELL.ring, [...tint, 0.8], this.glow, r * 2.5, { hold: 0.85, y: 0.1 });
+      for (let i = 0; i < this.count(14); i++) {
+        const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * r * 0.85;
+        this.particle(this.glow, { x: at.x + Math.cos(a) * d, y: 0.3, z: at.z + Math.sin(a) * d, vy: this.motion ? 1.4 + Math.random() : 0, drag: 0.8, life: 0.7 + Math.random() * 0.4,
+          s0: 0.9, s1: 0.2, cell: CELL.flare, c0: [1, 0.72, 0.25, 0.9], c1: [1, 0.3, 0.05, 0], anchor: zone, delay: (i / 14) * life });
+      }
+    } else if (e.ability === 'mark' && Number.isFinite(e.tx)) {
+      // The mark lands on the target, not on the Watcher.
+      const target = { x: e.tx, z: e.tz, team: e.team };
+      this.decal({ x: e.tx, z: e.tz }, 2.6, 1.2, target, CELL.ring, [...tint, 0.95], this.glow, 5, { hold: 0.4, y: 0.1 });
+      this.particle(this.glow, { x: e.tx, y: 1.6, z: e.tz, cell: CELL.flare, s0: 1.6, s1: 0.3, life: 0.5, c0: [1, 1, 1, 0.9], c1: [...tint, 0], anchor: target });
     } else if (e.ability === 'barrage') {
       // The launch: a flash and a streak climbing out of the Breaker.
       this.particle(this.glow, { x: e.x, y: 1.8, z: e.z, cell: CELL.flare, s0: 2.2, s1: 2.6, life: 0.14, c0: WARM.flash, c1: [1, 0.55, 0.15, 0], anchor });
@@ -414,6 +429,12 @@ export class Effects {
       this.decal({ x: e.x, z: e.z }, 3.2, 0.4, anchor, CELL.ring, [...tint, 0.9], this.glow, 0.8, { hold: 0, y: 0.1 });
       this.particle(this.glow, { x: e.x, y: 1.3, z: e.z, cell: CELL.flare, s0: 1.9, s1: 0.4, life: 0.3, c0: [1, 1, 1, 0.9], c1: [...tint, 0], anchor });
     }
+  }
+  // Faction signals: a hidden unit coming into view, and alloy pulled from a wreck.
+  factionMark(e) {
+    const anchor = { x: e.x, z: e.z, team: e.team }, tint = e.type === 'salvage' ? [1, 0.7, 0.3] : [0.8, 0.55, 1];
+    this.decal({ x: e.x, z: e.z }, 2.8, 0.5, anchor, CELL.ring, [...tint, 0.9], this.glow, 0.5, { hold: 0, y: 0.1 });
+    this.glint({ x: e.x, y: 0.9, z: e.z }, [...tint, 1], [...tint, 0], anchor, e.type === 'salvage' ? 6 : 4, 0.7);
   }
   strike(e) {
     // A Barrage shell landing: one heavy blast and a shockwave out to the damage radius.

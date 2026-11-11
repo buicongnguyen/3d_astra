@@ -50,12 +50,14 @@ export const movement = {
       e.escape = null;
       return true;
     }
+    // A braced Walker stands where it is; the order waits, it is not counted as stuck.
+    if (e.speed <= 0) { e.moving = false; return false; }
     if (e.escape) {
       // A short straight hop out of a tight spot, ignoring the footprint it is leaving.
       const dx = e.escape.x - e.x, dz = e.escape.z - e.z, d = hyp(dx, dz);
       if (d < 0.2 || this.time > e.escape.until) { e.escape = null; e.path = []; e.pathClock = 0; e.stalled = 0; e.moveSample = null; }
       else {
-        const step = Math.min(d, e.speed * dt);
+        const step = Math.min(d, this.moveSpeed(e) * dt);
         e.x += (dx / d) * step;
         e.z += (dz / d) * step;
         e.angle = Math.atan2(dx, dz);
@@ -131,7 +133,7 @@ export const movement = {
     const dx = next.x - e.x,
       dz = next.z - e.z,
       d = hyp(dx, dz),
-      step = Math.min(d, e.speed * dt);
+      step = Math.min(d, this.moveSpeed(e) * dt);
     if (d < 0.0001) {
       e.path.shift();
       return false;

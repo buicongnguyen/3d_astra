@@ -26,7 +26,7 @@ Status of the rebuild plan ([REVIEW_AND_REBUILD_PLAN_2026-11.md](REVIEW_AND_REBU
 | Stage | Status |
 |---|---|
 | 1 Feel | Pushed; CI/deployment green, documented balance exceptions accepted for continuation, owner play/listening review pending |
-| 2 Factions | Packages 2.0/2.1 implemented and CI green; owner approved all four looks; package 2.2 portraits appended; Ashfall gameplay (2.3) next |
+| 2 Factions | Packages 2.0 to 2.4 done (0.12.0): all four factions playable in Skirmish with their units, buildings, traits and AI personalities. 2.5 bench built, balance target not met (see BALANCE.md). 2.6: skirmish choice and Rider unlock done; campaign rosters wait for an owner decision on the story (see MISSIONS.md) |
 | 3 Battlefield | Pending; air unit requires explicit owner confirmation |
 | 4 Story | Pending |
 | 5 Replay | Pending |

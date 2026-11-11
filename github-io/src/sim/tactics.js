@@ -21,7 +21,14 @@ const TIMED = {
   overdrive: (e, a) => ({ speed: e.speed * a.speed, damage: a.damage }),
   // Anti-tank soldier: guided shots reach further and bite harder into vehicles.
   lockon: (e, a) => ({ range: e.range + a.range, mech: a.mechanical }),
+  // Scrapper and Rider: a short sprint.
+  rush: (e, a) => ({ speed: e.speed * a.speed }),
+  dash: (e, a) => ({ speed: e.speed * a.speed }),
+  // Walker: locked legs, longer reach.
+  brace: (e, a) => ({ speed: 0, range: e.range + a.range }),
 };
+// Burning ground kept at once (sim.zones); the oldest goes first.
+const MAX_ZONES = 16;
 
 export const tactics = {
   // Called when `victim` dies to a hit from entity `by`. Only fighting units earn ranks.
@@ -66,6 +73,18 @@ export const tactics = {
     } else if (a.id === "barrage") {
       if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.z) || distance(e, point) > a.range) return false;
       (this.strikes ||= []).push({ at: this.time + a.delay, x: point.x, z: point.z, team: e.team, by: e.id, damage: a.damage, radius: a.radius });
+    } else if (a.id === "burnline") {
+      if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.z) || distance(e, point) > a.range) return false;
+      (this.zones ||= []).push({ x: point.x, z: point.z, radius: a.radius, until: this.time + a.duration, dps: a.dps, team: e.team, by: e.id });
+      if (this.zones.length > MAX_ZONES) this.zones.shift();
+    } else if (a.id === "mark") {
+      // The nearest enemy this unit can see, to the chosen point if one was given.
+      const from = point && Number.isFinite(point.x) && Number.isFinite(point.z) ? { ...e, x: point.x, z: point.z, range: 3 } : e;
+      const t = this.enemy(from, from.range);
+      if (!t || t.kind !== "unit" || distance(e, t) > e.range + t.radius + 3) return false;
+      t.markedUntil = this.time + a.duration;
+      t.markTaken = a.taken;
+      point = { x: t.x, z: t.z };
     } else if (a.id === "triage" || a.id === "fortify") {
       // Medics mend people, Engineers mend machines and buildings; neither treats itself.
       const fits = (t) => t.id !== e.id && t.team === e.team && t.hp > 0 && t.hp < t.maxHp && distance(e, t) <= a.radius + (t.radius || 0) &&
@@ -102,18 +121,27 @@ export const tactics = {
         this.events.push({ type: "strike", x: s.x, z: s.z, radius: s.radius, team: s.team, victims: this.events.slice(eventStart).filter(e => e.type === "death" && !e.building).map(e => ({x:e.x,z:e.z,team:e.team})) });
       }
     }
+    if (this.zones?.length) {
+      this.zones = this.zones.filter((zone) => this.time < zone.until);
+      for (const zone of this.zones)
+        for (const t of this.entities)
+          if (t.hp > 0 && t.kind === "unit" && this.hostile(zone.team, t.team) && distance(t, zone) <= zone.radius)
+            this.applyDamage(t, zone.dps * dt, zone.team, zone.by);
+    }
     this.castClock = (this.castClock ?? 0) - dt;
     if (this.castClock > 0) return;
     this.castClock = AUTOCAST_EVERY;
     for (const e of this.entities) {
-      if (!this.abilityReady(e) || !(e.team > 0 ? this.aiEnabled : this.players[e.team]?.autocast)) continue;
+      if (!this.abilityReady(e) || !(e.team > 0 || this.aiPlayer ? this.aiEnabled : this.players[e.team]?.autocast)) continue;
       const a = e.ability;
       if (a.id === "triage" || a.id === "fortify") {
         // Worth it only when someone nearby is badly hurt.
         if (this.entities.some((t) => t.team === e.team && t.id !== e.id && t.hp > 0 && t.hp < t.maxHp * 0.6 && distance(e, t) <= a.radius)) this.useAbility(e);
-      } else if (a.id === "barrage") {
+      } else if (a.id === "barrage" || a.id === "burnline") {
         const t = this.enemy(e, a.range);
         if (t) this.useAbility(e, { x: t.x, z: t.z });
+      } else if (a.id === "mark") {
+        if (e.attacking) this.useAbility(e);
       } else if (e.attacking || this.time - (e.hitAt ?? -9) < 1) this.useAbility(e);
     }
   },

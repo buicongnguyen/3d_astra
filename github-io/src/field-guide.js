@@ -30,7 +30,7 @@ export function createFieldGuide(onOpen,onClose,getSim = () => null) {
   const dialog = document.createElement('dialog');
   dialog.className = 'field-guide';
   dialog.setAttribute('aria-labelledby','guide-title');
-  dialog.innerHTML = `<header><h2 id="guide-title">Field guide · 8 unit types</h2><label for="guide-entry">Unit or building</label><select id="guide-entry">${Object.keys(D).filter(k => D[k].kind).map(k => `<option value="${k}">${D[k].name}</option>`).join('')}</select></header><article id="guide-detail"></article><footer><button id="guide-close">Close field guide</button></footer>`;
+  dialog.innerHTML = `<header><h2 id="guide-title">Field guide · units and buildings</h2><label for="guide-entry">Unit or building</label><select id="guide-entry">${Object.keys(D).filter(k => D[k].kind).map(k => `<option value="${k}">${D[k].name}</option>`).join('')}</select></header><article id="guide-detail"></article><footer><button id="guide-close">Close field guide</button></footer>`;
   document.body.append(dialog);
   let team = 0;
   const pick = dialog.querySelector('select');

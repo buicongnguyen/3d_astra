@@ -80,7 +80,7 @@ jobs:
           - name: ui-extras
             scripts: ui-extras
           - name: visuals
-            scripts: visual-combat feel model-loading portraits
+            scripts: visual-combat feel model-loading portraits factions
     defaults:
       run:
         working-directory: github-io
@@ -97,7 +97,14 @@ jobs:
           name: frontier-${{ github.sha }}
           path: github-io/dist/
       - name: Install browser for smoke tests
-        run: npx playwright install --with-deps chromium
+        # The package mirror sometimes fails to resolve for a minute; retry instead of failing the run.
+        run: |
+          for attempt in 1 2 3 4; do
+            if npx playwright install --with-deps chromium; then exit 0; fi
+            echo "Browser install failed (attempt $attempt); retrying in 45 s"
+            sleep 45
+          done
+          exit 1
       - name: Test the built game
         env:
           TEST_SCRIPTS: ${{ matrix.scripts }}

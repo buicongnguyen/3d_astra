@@ -667,6 +667,7 @@ export const MISSIONS = [
       ],
       intel: [
         "Sunward troops fight under your command today. They wear your colours on the map.",
+        "Sol's Riders are the fastest fighters on the field. Once you reach her camp, your Barracks can train them.",
         "If the Caravan beacon is destroyed, the mission fails. Reach the camp early.",
         "Hale has the Keystone key. Expect machines that are not Ashfall's own.",
       ],
@@ -684,7 +685,7 @@ export const MISSIONS = [
       { spawn: "tower", team: 0, at: { x: 31, z: 31 } },
       { spawn: "tower", team: 0, at: { x: 41, z: 28 } },
       { spawn: "vanguard", team: 0, at: { x: 33, z: 38 }, count: 3, tag: "sunward" },
-      { spawn: "ranger", team: 0, at: { x: 40, z: 31 }, count: 2, tag: "sunward" },
+      { spawn: "rider", team: 0, at: { x: 40, z: 31 }, count: 2, tag: "sunward" },
       { spawn: "breaker", team: 1, at: "duneRidge", count: 3, tag: "shellers" },
       { spawn: "vanguard", team: 1, at: { x: 26, z: -2 }, count: 2 },
       { spawn: "tower", team: 1, at: { x: 29, z: -28 } },
@@ -720,8 +721,9 @@ export const MISSIONS = [
       { when: { objective: "link", is: "done" }, do: [
         { say: { who: "sol", text: "You came. You warned me and I did not listen. The Caravan pays its debts. We ride with you." } },
         { spawn: "vanguard", team: 0, at: "solCamp", count: 4, tag: "sunward" },
-        { spawn: "ranger", team: 0, at: "solCamp", count: 3, tag: "sunward" },
+        { spawn: "rider", team: 0, at: "solCamp", count: 3, tag: "sunward" },
         { spawn: "breaker", team: 0, at: "solCamp", count: 1, tag: "sunward" },
+        { unlock: ["rider"] },
         { give: { alloy: 300, energy: 100 } },
       ] },
       { when: { tagHpBelow: { tag: "caravan", percent: 50 } }, do: [{ say: { who: "sol", text: "The beacon is breaking! Commander, if it falls my people have no road home." } }, { ping: "solCamp" }] },
@@ -757,7 +759,7 @@ export const MISSIONS = [
     enemies: 3, speed: "relaxed", alliance: "coalition",
     factions: { 1: "ashfall", 2: "wardens", 3: "veil" },
     bonus: { alloy: 200, energy: 100, tower: true },
-    rules: { ai: true, playerBase: true, enemyBase: true },
+    rules: { ai: true, playerBase: true, enemyBase: true, unlock: ["rider"] },
     briefing: {
       place: "Obsidian Highlands, day 47",
       lines: [
@@ -853,7 +855,7 @@ export const MISSIONS = [
     enemies: 2, speed: "relaxed", alliance: "coalition",
     factions: { 1: "ashfall", 2: "wardens" },
     bonus: { alloy: 200, energy: 100, tower: true },
-    rules: { ai: true, playerBase: true, enemyBase: true },
+    rules: { ai: true, playerBase: true, enemyBase: true, unlock: ["rider"] },
     briefing: {
       place: "Frontier Expanse, day 52",
       lines: [
@@ -948,7 +950,7 @@ export const MISSIONS = [
     enemies: 3, speed: "relaxed", alliance: "coalition",
     factions: { 1: "ashfall", 2: "wardens", 3: "veil" },
     bonus: { alloy: 200, energy: 100, tower: true },
-    rules: { ai: true, playerBase: true, enemyBase: true },
+    rules: { ai: true, playerBase: true, enemyBase: true, unlock: ["rider"] },
     briefing: {
       place: "Frontier Expanse, the Keystone, day 55",
       lines: [
@@ -960,6 +962,7 @@ export const MISSIONS = [
         "Survive the first 10 minutes, then destroy the draw engine on the Keystone.",
         "The engine finishes its draw at 25 minutes. After that nothing can be saved.",
         "You do not need to destroy the three Command cores, but each one you break stops its attacks.",
+        "Sol's Riders ride with you to the end. Your Barracks can train them.",
       ],
     },
     regions: {

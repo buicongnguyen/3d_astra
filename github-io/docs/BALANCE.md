@@ -188,3 +188,76 @@ Before package 2.1, `new Simulation({ai:false})` after 1200 ticks of 0.05 second
 | Anti-tank | mechanical armor (Battle tank) | 120 |
 
 These values are asserted in tests/factions.test.js. Ordinary attacks without a counter must not match an absent target class; existing anti-tank tests continue to verify building and infantry damage.
+
+## Factions (0.12.0)
+
+Each enemy faction swaps two base units for its own and adds one building, one trait and an AI personality. All numbers are in `src/balance.json` (`definitions`, `factions`, `traits`, `ai_personalities`). The class counter table is unchanged: a faction unit keeps the class of the unit it replaces, so the same answers work (Rangers and towers against melee swarms, Anti-tank soldiers against vehicles, Breakers against packed infantry).
+
+| Unit | Replaces | HP / shield | Speed | Weapon | Alloy / energy | Supply | Notes |
+|---|---|---|---|---|---|---|---|
+| Scrapper (`scrapper`) | Vanguard | 105 / 0 | 5.4 | 10 every 0.8 s, range 2 | 60 / 0 | 1 | 1.6× ranged, ability Rush |
+| Scorcher (`scorcher`) | Breaker | 260 / 40 | 3.2 | 9 every 0.3 s, range 5 | 175 / 75 | 3 | 1.5× melee, 2× buildings, splash 2.5 m at 60%, ability Burn line |
+| Rider (`rider`) | Ranger | 120 / 25 | 6.4 | 11 every 0.85 s, range 9 | 110 / 25 | 1 | 2× siege, ability Dash |
+| Supply wagon (`wagon`) | Medic | 240 / 30 | 3.6 | heals 6/s, range 6 | 150 / 75 | 2 | +4 supply |
+| Sentinel drone (`drone`) | Ranger | 60 / 60 | 4.6 | 10 every 1 s, range 9 | 120 / 45 | 1 | 2.2× siege, shield returns after 3 s |
+| Walker (`walker`) | Battle tank | 700 / 150 | 1.9 | 60 every 2.6 s, range 13 | 325 / 150 | 4 | 1.5× melee, splash 2.5 m at 50%, ability Brace |
+| Shade (`shade`) | Vanguard | 130 / 40 | 5.6 | 20 every 0.9 s, range 2 | 110 / 25 | 1 | 1.6× ranged, cloaked |
+| Watcher (`watcher`) | Anti-tank soldier | 85 / 20 | 4 | 14 every 1.4 s, range 13 | 125 / 50 | 2 | 3× vehicles, ability Mark |
+
+| Building | Faction | HP / shield | Cost | Effect |
+|---|---|---|---|---|
+| Salvage yard (`salvageyard`) | Ashfall Combine | 700 / 40 | 150 / 0 | Vehicles and buildings of any side destroyed within 14 m of a Salvage yard or an Ashfall Command core pay Ashfall a quarter of their alloy cost. |
+| Waystation (`waystation`) | Sunward Caravan | 600 / 40 | 125 / 0 | Friendly shields within 10 m recharge three times faster. |
+| Shield pylon (`pylon`) | The Wardens | 500 / 200 | 100 / 50 | Other Wardens buildings within 10 m have 50% more shield and recharge it 50% faster. Destroy the pylon first. |
+| Veil relay (`veilrelay`) | Veil Survey | 450 / 40 | 125 / 75 | Veil units within 9 m are hidden while they have not attacked for 3 seconds. It also reveals hidden enemies within 9 m. |
+
+| Faction | Trait | AI personality |
+|---|---|---|
+| Ashfall | Salvage: a vehicle or building of any side destroyed within 14 m of a Salvage yard or an Ashfall core pays Ashfall 25% of its alloy cost | Rush: first wave at ×0.7 of the speed's time, waves every ×0.85, 3 more units per wave, army allowance ×1.5, Foundry later (×1.3); builds the yard right after its first Barracks |
+| Sunward | Roads: +15% speed on road and sand (nothing on the classic map, which is all dirt) | Raider: 2 of its fastest idle fighters go for the Harvesters at the nearest known core 20 s before each wave |
+| Wardens | Self-repair: a unit that neither fired nor was hit for 6 s regains 2% of its health per second; no Medics or Engineers | Turtle: first wave at ×1.3, 4 more units per wave, 2 more towers, one Pylon per production building (three at most) |
+| Veil | Farsight: +3 m sight on everything, damage ×0.95; Shades (and any Veil unit within 9 m of a Veil relay) are hidden while they have not fired for 3 s. Units within 4 m, and towers, Command cores and Veil relays within 9 m, reveal them. Splash and burning ground still hurt a hidden unit | Evasive: waves every ×0.8; a force in the field that sees 2.2 times its own supply in enemy fighters goes home |
+
+In a story mission the personality's tempo numbers are not applied: missions are paced by their script.
+
+### How it was measured
+
+`npm run bench:factions` (`tools/faction-bench.mjs`). The simulation has no random numbers, so every figure repeats exactly.
+
+- **Round robin:** each faction's AI against each other's, both seats, three maps (`classic`, `riverlands`, `dunes`), Normal and Fast: 120 matches. Headless only: the option `aiPlayer` lets the computer play the first seat.
+- **Test bot:** the scripted player (`tools/playbot.mjs`) against one faction's AI, 12 matches per cell (three maps, four attack thresholds), with its standard build and with a build of more Rangers (4 per Vanguard) and four towers.
+
+### Round robin after five tuning passes
+
+| Wins of the row against the column | meridian | ashfall | sunward | wardens | veil | All games |
+|---|---|---|---|---|---|---|
+| meridian | - | 12/12 | 6/12 | 0/12 | 12/12 | 63% |
+| ashfall | 0/12 | - | 0/12 | 0/12 | 7/12 | 15% |
+| sunward | 6/12 | 12/12 | - | 0/12 | 9/12 | 56% |
+| wardens | 12/12 | 12/12 | 12/12 | - | 10/12 | 96% |
+| veil | 0/12 | 5/12 | 3/12 | 2/12 | - | 21% |
+
+Median match 191 s, longest 863 s, no undecided matches, seats even (54 wins for the first seat, 66 for the second).
+
+**The 40 to 60% target of package 2.5 is not met.** Ashfall and Veil are far below it and the Wardens far above. The cause is the AI, not the unit prices: between two computer players the match is decided by the first big fight at about two minutes, and the side that attacks into the other's camp loses it (the defenders are gathered and the attackers arrive strung out). So the Wardens, who wait, win; Ashfall, who rush, lose; and unit numbers moved the table very little across five passes (Ashfall 15, 21, 25, 25, 15%; Wardens 100, 100, 85, 85, 96%). A fair round robin needs the AI to defend and attack with the same care, which is AI work rather than balance data. Tuning stopped here on purpose.
+
+### Test bot against each faction (player's win rate)
+
+| Enemy AI | Standard build, Normal | Standard build, Fast | More Rangers and towers, Normal | More Rangers and towers, Fast |
+|---|---|---|---|---|
+| meridian | 67% | 67% | 33% | 100% |
+| ashfall | 67% | 100% | 100% | 100% |
+| sunward | 100% | 100% | 100% | 100% |
+| wardens | 33% | 100% | 50% | 92% |
+| veil | 100% | 100% | 100% | 100% |
+
+What a player meets is closer to this table. At Normal, Ashfall is as hard for the bot as the mirror opponent, the Wardens are harder, and Sunward and Veil are easier (the bot wins every match). Package 2.3's check holds: against Ashfall at Normal the standard build wins 67% and the build with more Rangers and towers 100%. The instrument is coarse: the mirror figure of 67% is "loses all four matches on `classic` to the first wave, wins all eight on the other maps".
+
+### Changes made while tuning (from the plan's starting numbers)
+
+Scrapper 85 → 105 HP and 9 → 10 damage; Sentinel drone shield 90 → 60, damage 11 → 10 every 1 s, cost 110/40 → 120/45; Rider 110/20 → 120/25 HP and shield, damage 10 → 11 every 0.85 s, range 8 → 9; Shade 100/30 → 130/40 HP and shield, damage 16 → 20; Veil damage penalty 10% → 5%; rush wave +2 → +3 units with a ×1.5 army allowance; turtle first wave ×1.5 → ×1.3; evasive retreat at 1.5 → 2.2 times its supply and no smaller waves; raid party 3 → 2.
+
+### Still to do
+
+- Sunward and Veil need to be more dangerous to a player; the Wardens at Normal may be too hard. Owner play-testing should decide before more numbers move.
+- The campaign stays on the base roster (see docs/MISSIONS.md, "Faction rosters"): the story says every faction prints the same patterns.

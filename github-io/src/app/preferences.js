@@ -39,7 +39,7 @@ export function setupPreferences(S, A) {
     );
     document.documentElement.style.setProperty(
       "--team-hostile",
-      teamColors(S.settings, S.mission)[1],
+      teamColors(S.settings, S.look)[1],
     );
     if (!saveSettings(S.settings))
       A.notice(

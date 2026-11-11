@@ -39,6 +39,7 @@ export const missions = {
       this.aiEnabled = false;
     }
     this.entities = this.entities.filter((e) => e.hp > 0);
+    if (rules.unlock) this.unlockUnits(0, rules.unlock);
     for (const step of def.setup || []) this.missionSetup(step);
     this.players[0].alloy += difficultyRules(this).alloy;
     this.nav.rebuild(this.entities);
@@ -221,6 +222,7 @@ export const missions = {
     else if (a.camera || a.ping) { const p = this.missionPlace(a.camera || a.ping); this.events.push({ type: a.camera ? "camera" : "ping", x: p.x, z: p.z }); }
     else if (a.aiSpeed) this.setAiSpeed(difficultySpeed(a.aiSpeed, this.difficulty));
     else if (a.music) this.events.push({ type: "music", mood: a.music });
+    else if (a.unlock) { if (this.unlockUnits(0, a.unlock)) for (const type of a.unlock) this.message(`${D[type].name} can now be trained.`); }
   },
   // Victory, defeat or null, called from settle() with which teams still stand.
   missionResult(alive) {
