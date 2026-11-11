@@ -13,7 +13,8 @@ import { Scatter } from "./scatter.js";
 import { createMapEdge } from "./map-edge.js";
 import { paintGround } from "./ground-paint.js";
 import { fogAware } from "./fog-aware.js";
-import { teamColors, teamGlows } from "./faction-colors.js";
+import { teamColors, teamGlows, factionOf } from "./faction-colors.js";
+import { createEmblem, hasEmblem, recolorEmblems } from "./emblems.js";
 import { isHarvesting } from "./activity.js";
 import { EntityBatches, adoptBatchedParts, SOURCE_LAYER } from "./entity-batches.js";
 import { cacheTransforms } from "./transform-cache.js";
@@ -117,6 +118,7 @@ export class WorldView {
     this.tactics = new TacticsView(this);
     this.dying = [];
     this.teamTemplates = new Map();
+    this.buildingTops = new Map();
     this.fogClock = 0;
     this.gridVisible = false;
     this.previous = new Map();
@@ -238,6 +240,7 @@ export class WorldView {
     this.settings = settings;
     this.colors = teamColors(settings, this.mission).map((c) => new THREE.Color(c).getHex());
     this.glows = teamGlows(settings, this.mission).map((c) => new THREE.Color(c).getHex());
+    recolorEmblems(this.colors);
     for (const [key, template] of this.teamTemplates) {
       const team = Number(key.split("-").at(-1));
       template.traverse((o) => {
@@ -793,6 +796,19 @@ export class WorldView {
     root.userData.gait=0;root.userData.stride=(e.id*0.7)%6.28;
     root.userData.pop=0;root.userData.built=e.complete!==false;
     root.userData.team = e.team;
+    // Story missions: a faction emblem floats over each building (Meridian for the player's own).
+    if (e.kind === "building" && this.mission?.factions) {
+      const faction = e.team === 0 ? "meridian" : factionOf(this.mission, e.team)?.id;
+      if (hasEmblem(faction)) {
+        let top = this.buildingTops.get(e.type);
+        if (top === undefined) this.buildingTops.set(e.type, (top = new THREE.Box3().setFromObject(model).max.y));
+        const size = Math.min(2.8, Math.max(1.4, e.radius * 1)),
+          emblem = createEmblem(faction, e.team, this.colors[e.team], size);
+        emblem.position.y = top + size * 0.55;
+        root.add(emblem);
+        root.userData.emblem = emblem;
+      }
+    }
     root.userData.legs = [];
     model.traverse((o) => {
       if (o.name.startsWith("leg_"))
@@ -902,6 +918,7 @@ export class WorldView {
     if (this.dying.length >= 24) { this.disposeEntity(o); return; }
     const kind = event.building ? 'building' : event.heavy ? 'vehicle' : 'infantry';
     const model = o.userData.model;
+    if (o.userData.emblem) o.userData.emblem.visible = false;
     model.rotation.order = 'YXZ';
     this.dying.push({ object: o, kind, team: event.team, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1),
       life: { building: 2.8, vehicle: 2.6, infantry: 1.6 }[kind], baseY: model.rotation.y });

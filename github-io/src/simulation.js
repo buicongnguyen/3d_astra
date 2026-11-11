@@ -44,6 +44,8 @@ export class Simulation {
       energy: 150,
       upgrade: false,
       plating: false,
+      upgrade2: false,
+      plating2: false,
       kills: 0,
       eliminated: false,
     }));

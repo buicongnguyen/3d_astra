@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.9.4: faction emblems and research tier II
+
+Faction emblems (story missions)
+- Every building floats a small glyph in its team colour: Meridian's ring and line for you, and for each enemy the glyph from src/story/world.js (Ashfall spark over bars, Sunward half sun over a wheel, Veil book and eye, Wardens triangle of circles). One texture per faction and one sprite material per team, so it costs one extra draw per building and nothing in skirmish. The glyph hides when the building starts to fall and follows colour changes.
+
+Research tier II
+- Overcharged weapons II (+8% more damage, 250 alloy and 180 energy) and Reinforced plating II (a further 8% less damage taken, 200 alloy and 250 energy). Each needs its own first tier and a level 2 Foundry, so the either/or choice carries on into the second tier. They appear beside the chosen first-tier tile in the Foundry card.
+- Skirmish AIs that counter-build take the second tier of their branch once their Foundry is level 2; missions are unchanged (check:missions untouched).
+- Old saves load as before (the new flags default to off). Vietnamese strings added.
+
+Tried and dropped: meshopt-compressing the 13 unit and building models. Gzip already shrinks them to about 855 KB; meshopt with quantisation reached 540 KB but the batched renderer drew the quantised models distorted, and the safe setting only reached about 600 KB while losing vertex colours on some parts. A 250 KB saving was not worth a changed look.
+
 ## 0.9.0: interface
 
 Training

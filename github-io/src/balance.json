@@ -195,6 +195,8 @@
         "breaker",
         "upgrade",
         "plating",
+        "upgrade2",
+        "plating2",
         "engineer",
         "tank"
       ],
@@ -247,6 +249,32 @@
       "pop": 0,
       "icon": "bolt",
       "description": "Research branch, exclusive with Reinforced plating: +10% damage for all combat units. Costs 150 alloy and 100 energy."
+    },
+    "upgrade2": {
+      "name": "Overcharged weapons II",
+      "role": "Research",
+      "required_level": 2,
+      "cost": [
+        250,
+        180
+      ],
+      "time": 40,
+      "pop": 0,
+      "icon": "bolt",
+      "description": "Second weapons tier, needs Overcharged weapons and a level 2 Foundry: a further +8% damage for all combat units. Costs 250 alloy and 180 energy."
+    },
+    "plating2": {
+      "name": "Reinforced plating II",
+      "role": "Research",
+      "required_level": 2,
+      "cost": [
+        200,
+        250
+      ],
+      "time": 45,
+      "pop": 0,
+      "icon": "shield",
+      "description": "Second plating tier, needs Reinforced plating and a level 2 Foundry: combat units take a further 8% less damage. Costs 200 alloy and 250 energy."
     },
     "medic": {
       "name": "Medic",

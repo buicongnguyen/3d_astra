@@ -122,6 +122,13 @@ export const orders = {
     // (Saves from 0.7.0 that already hold both keep both; nothing re-checks them.)
     if (type === "plating" && (this.players[b.team].plating || this.own(b.team).some((e) => e.queue.some((q) => q.type === "plating"))))
       return fail("Reinforced plating is already researched or queued.");
+    // Second tier: needs its own first tier, and is researched once.
+    if (type === "upgrade2" || type === "plating2") {
+      const first = type === "upgrade2" ? "upgrade" : "plating", pl = this.players[b.team];
+      if (!pl[first]) return fail(type === "upgrade2" ? "Overcharged weapons must be researched first." : "Reinforced plating must be researched first.");
+      if (pl[type] || this.own(b.team).some((e) => e.queue.some((q) => q.type === type)))
+        return fail(type === "upgrade2" ? "Overcharged weapons II is already researched or queued." : "Reinforced plating II is already researched or queued.");
+    }
     if (type === "upgrade" || type === "plating") {
       const other = type === "upgrade" ? "plating" : "upgrade", pl = this.players[b.team];
       if (pl[other] || this.own(b.team).some((e) => e.queue.some((q) => q.type === other)))

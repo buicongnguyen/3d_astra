@@ -182,6 +182,12 @@ export const economy = {
       );
       return;
     }
+    if (q.type === "upgrade2" || q.type === "plating2") {
+      this.players[b.team][q.type] = true;
+      b.queue.shift();
+      this.message(q.type === "upgrade2" ? "Overcharged weapons II online. Combat damage is now 19% above base." : "Reinforced plating II fitted. Combat units take 19% less damage.", b.team);
+      return;
+    }
     if (q.type === "plating") {
       this.players[b.team].plating = true;
       b.queue.shift();

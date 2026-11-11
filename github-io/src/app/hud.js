@@ -152,7 +152,7 @@ export function setupHud(S, A) {
     document.documentElement.classList.toggle('no-units', !es.some(u => u.kind === 'unit'));
     document.documentElement.classList.toggle('many-orders', [...document.querySelectorAll('.order-buttons button')].filter(b => !b.hidden).length > 5);
     $("command-context").title = `Command core technology ${S.sim.techLevel()} / 3`;
-    const signature = `${es.map((e) => e.id).join(",")}/${p.upgrade}/${p.plating}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}`;
+    const signature = `${es.map((e) => e.id).join(",")}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}`;
     if (S.lastSelectionKey !== signature) {
       S.lastSelectionKey = signature;
       $("unit-list").innerHTML =
@@ -175,8 +175,10 @@ export function setupHud(S, A) {
           // choice sheet (weapons, plating, back); once one is chosen the slot shows it and the other stays locked.
           ? e.team === 0 && e.trains?.includes("upgrade") && !wChosen && !pChosen && S.researchOpen
             ? ["upgrade", "plating", "back"]
-            : (e.trains || []).filter((t) => t !== "plating").map((t) => t !== "upgrade" || e.team !== 0 ? t
+            : (e.trains || []).filter((t) => t !== "plating" && t !== "upgrade2" && t !== "plating2").map((t) => t !== "upgrade" || e.team !== 0 ? t
               : wChosen || pChosen ? (pChosen && !wChosen ? "plating" : "upgrade") : "research")
+              // The second tier of the chosen branch appears beside it once the first tier is done.
+              .concat(e.team === 0 && e.trains?.includes("upgrade2") ? (p.upgrade && !p.upgrade2 ? ["upgrade2"] : p.plating && !p.plating2 ? ["plating2"] : []) : [])
           : es.some((u) => u.type === "worker")
             ? BUILDINGS
             : [];
@@ -203,7 +205,7 @@ export function setupHud(S, A) {
               return `<button class="command-tile branch-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" aria-label="${open ? "Research: choose one of two exclusive upgrades" : "Back"}" title="${ACTION_KEYS[index]} · ${open ? "Research · choose Overcharged weapons or Reinforced plating; the other is then locked" : "Back"}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${icon(open ? "bolt" : "stop")}<span>${open ? "Research" : "Back"}</span>${open ? "<small>Choose one</small>" : ""}</button>`;
             }
             const d = D[type];
-            const label = type === 'upgrade' ? 'Weapons +' : type === 'plating' ? 'Plating' : d.name;
+            const label = type === 'upgrade' ? 'Weapons +' : type === 'plating' ? 'Plating' : type === 'upgrade2' ? 'Weapons II' : type === 'plating2' ? 'Plating II' : d.name;
             return `<button class="command-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" aria-label="${d.name}, ${d.cost[0]} alloy${d.cost[1] ? ` and ${d.cost[1]} energy` : ''}" title="${ACTION_KEYS[index]} · ${d.name} · ${d.description}${S.researchOpen && (type === "upgrade" || type === "plating") ? " Choosing it locks the other branch." : ""}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${hasPortrait(type) ? portrait(type) : icon(d.icon || type)}<span>${label}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
           })
           .join("") || tactics || (structure ? `<p class="structure-hint">${e.description}</p>` : e?.kind==='building' ? '' :

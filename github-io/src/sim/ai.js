@@ -94,6 +94,11 @@ export const ai = {
       if (b.levelJob) continue;
       const branch = this.researchBranch(team, role);
       if (b.type === "foundry" && !this.players[team].upgrade && !this.players[team].plating && this.time > pace.upgradeAt && vehicles >= 2 && !b.queue.length && afford(D[branch].cost) && this.enqueue(b.id, branch)) continue;
+      // Skirmish AIs that counter-build also take the second tier of their branch once the Foundry is level 2.
+      if (b.type === "foundry" && !this.mission && pace.counter && b.level >= 2 && !b.queue.length) {
+        const pl = this.players[team], next = pl.upgrade && !pl.upgrade2 ? "upgrade2" : pl.plating && !pl.plating2 ? "plating2" : null;
+        if (next && afford(D[next].cost) && this.enqueue(b.id, next)) continue;
+      }
       if (b.level < this.techLevel(team) && this.time > pace.upgradeAt && afford(this.levelCost(b))) {
         if (!b.queue.length) this.upgradeBuilding(b.id,team);
         continue;
