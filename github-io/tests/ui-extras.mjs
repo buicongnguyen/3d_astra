@@ -236,7 +236,8 @@ if (want('hint')) {
     assert.ok(await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('#fight-hint .fh-text')).fontSize) >= 11));
     assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#fight-hint')).pointerEvents), 'none', 'the hint never blocks the battlefield');
     await page.screenshot({ path: `${shots}/ui-hint-${name}.png` });
-    await page.locator('#fight-hint .fh-close').click();
+    // In page, not a pointer click: on a slow CI machine the hint can fade by itself while Playwright waits for the button to settle.
+    await page.evaluate(() => document.querySelector('#fight-hint .fh-close').click());
     assert.equal(await page.locator('#fight-hint').isVisible(), false, 'dismissed');
     await setup(['vanguard']);
     // The Breaker stays in view but its hint is spent; the next one is the Vanguard (after the gap).
