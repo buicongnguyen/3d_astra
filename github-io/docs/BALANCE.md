@@ -138,3 +138,39 @@ Support units (Medic, Engineer) are also energy sinks. Abilities have no energy 
 ## AI composition (0.9.1)
 
 Normal and faster AIs counter what they have seen. A rival remembers fighters, towers and cores in its vision. At 4 or more seen fighters: 40% vehicles or more draws Anti-tank soldiers (Rangers at Barracks Level 1), 60% infantry or more draws Rangers and Breakers; two or more towers draw Breakers. Skirmish bench (PlayBot at 16 fighters, win time): Normal 285-320 s before, 291-325 s after; Fast 282-293 s before, 338-1095 s after (the AI now spends surplus and counters; Normal on Highlands went from a bot defeat to a win at 302 s).
+
+## Stage 1 difficulty and skirmish measurements (0.10.0-alpha.4)
+
+All results use the existing deterministic objective bot. Numbers are simulated seconds, not wall time. Raw per-bot/per-map results are in [aaa/results/stage-1-benchmarks.json](aaa/results/stage-1-benchmarks.json).
+
+| Mission | Story | Standard | Veteran |
+|---|---:|---:|---:|
+| m01-first-light | 427 | 427 | 427 |
+| m02-first-contact | 475 | 529 | 615 |
+| m03-the-ashen-line | 581 | 470 | 465 |
+| m04-three-way-dunes | 545 | 643 | 603 |
+| m05-the-verdant-pact | 507 | 509 | 596 |
+| m06-copper-harvest | 646 | 661 | 678 |
+| m07-copper-siege | 660 | 660 | 660 |
+| m08-the-quiet-vault | 482 | 652 | 558 |
+| m09-a-debt-in-the-dunes | 408 | 693 | 370 |
+| m10-obsidian-storm | 583 | 845 | defeat at 648 |
+| m11-cut-the-draw | 421 | 644 | 1026 |
+| m12-frontiers-end | 774 | 778 | 749 |
+
+Story wins 12/12. Standard meets all original passive, generic and objective targets and has unchanged objective times. Veteran wins 11/12 within 1.5 times the Standard upper limit; every Veteran passive run survives 155 seconds. The strict Veteran checker still exits 1 for mission 10. The plan permits recording a mission after three unsuccessful tuning attempts; it is an outstanding exception, not a passing test.
+
+Difficulty-specific tuning (Standard unchanged): Story Okoro in mission 8 has 700 HP instead of 400; Veteran mission 10 dampers have 2200 HP, mission 11 conduits 4200 HP, and mission 12's engine 15000 HP. Mission 10 damper trials at 4200, 3000 and 2200 HP all failed the objective bot; mission 11 won at 1026 s and mission 12 at 749 s. No further mission-10 tuning was performed after the prescribed three passes.
+
+### Skirmish ladder
+
+Each speed uses classic, riverlands and dunes, with bot attack thresholds 12, 16, 20 and 24 (12 matches per speed). Capture points are on, matching the live skirmish default. The win rate is the test bot's, not a claim about human difficulty.
+
+| Speed | Bot win rate | Target | Median seconds |
+|---|---:|---:|---:|
+| relaxed | 100.0% | 90–100% | 445.5 |
+| normal | 100.0% | 60–80% | 313 |
+| fast | 100.0% | 30–50% | 387.5 |
+| relentless | 100.0% | 5–20% | 388 |
+
+Only Relaxed reaches its target. Before tuning the bot also won all 48 matches. More aggressive worker, technology, second-Barracks and minimum-wave settings improved some matchups (one trial gave Fast 25% and Relentless 58.3%), but broke existing affordable-defense and coalition-wave regression checks. Those settings were not retained and the tests were not weakened. The retained changes only increase Normal/Fast army caps and expand defensive response to approaching units; they preserve campaign tempo. Pace-only tuning did not establish the requested ladder. Further AI behavior work and human play review are still needed; this is not claimed as balanced.

@@ -1,3 +1,5 @@
+import { DIFFICULTY_DESCRIPTIONS } from "../difficulty.js";
+import { saveSettings } from "../settings.js";
 // The start screen: mode switch, campaign list, battle setup and preview.
 import { $ } from "./dom.js";
 import { AI_SPEEDS } from "../ai-plan.js";
@@ -50,7 +52,7 @@ export function setupBriefing(S, A) {
   function renderCampaign() {
     const card = (m, i) => {
       const open = isUnlocked(S.campaign, i), done = isCleared(S.campaign, i), medal = bestMedal(S.campaign, i);
-      const state = done ? `${medalBadge(medal)}<span translate="no">${missionClock(bestTime(S.campaign, i))}</span>` : open ? "" : icon("lock");
+      const state = done ? `${medalBadge(medal)}${S.campaign.cleared[m.id]?.difficulty === "veteran" ? '<span title="Veteran clear" aria-label="Veteran clear">★</span>' : ""}<span translate="no">${missionClock(bestTime(S.campaign, i))}</span>` : open ? "" : icon("lock");
       return `<li><button data-stage="${i}" data-mission="${m.id}"${i === S.stagePick ? ' aria-current="true"' : ""}${open ? "" : " disabled"}${open ? "" : ' title="Clear the previous mission to unlock"'}><b>${i + 1}</b><span><strong>${m.title}</strong><small>${mapName(m.map)}</small></span><em${done ? ` data-medal="${medal}"` : ""}>${state}</em></button></li>`;
     };
     $("campaign-setup").innerHTML = ACTS.map(({ act, title }) =>
@@ -65,6 +67,9 @@ export function setupBriefing(S, A) {
     for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String(b.dataset.mode === S.playMode));
     $("skirmish-setup").hidden = S.playMode !== "skirmish";
     $("campaign-setup").hidden = !inCampaign;
+    $("campaign-difficulty").hidden = !inCampaign;
+    for (const button of document.querySelectorAll('[data-difficulty]')) button.setAttribute('aria-pressed', String(button.dataset.difficulty === S.settings.campaignDifficulty));
+    $("difficulty-description").textContent = DIFFICULTY_DESCRIPTIONS[S.settings.campaignDifficulty];
     $("training-setup").hidden = S.playMode !== "training";
     // Alliances need at least two AIs.
     $("alliance").disabled = Number($("enemy-count").value) < 2;
@@ -89,7 +94,7 @@ export function setupBriefing(S, A) {
   function previewBattle() {
     if (Z.started) return;
     const setup = battleSetup();
-    const same = setup.map === S.mapId && setup.enemyCount === S.enemyCount && setup.aiSpeed === S.aiSpeed && setup.alliance === S.alliance && setup.bonus === S.bonus && setup.mission === S.mission;
+    const same = (!setup.mission || S.sim.difficulty === S.settings.campaignDifficulty) && setup.map === S.mapId && setup.enemyCount === S.enemyCount && setup.aiSpeed === S.aiSpeed && setup.alliance === S.alliance && setup.bonus === S.bonus && setup.mission === S.mission;
     if (!same) {
       const terrain = setup.map !== S.mapId || setup.enemyCount !== S.enemyCount;
       ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission } = setup);
@@ -113,6 +118,13 @@ export function setupBriefing(S, A) {
 
   Object.assign(A, { previewBattle, renderContinue, updateHeading, renderBriefing, battleSetup });
   return function bind() {
+    $("campaign-difficulty").onclick = event => {
+      const button = event.target.closest('[data-difficulty]');
+      if (!button || Z.started) return;
+      S.settings.campaignDifficulty = button.dataset.difficulty;
+      saveSettings(S.settings);
+      previewBattle();
+    };
     for (const id of ["scenario", "enemy-count", "ai-speed", "alliance"]) $(id).onchange = previewBattle;
 
     $("briefing").querySelector(".mode-switch").addEventListener("click", (event) => {

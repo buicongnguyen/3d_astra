@@ -134,3 +134,31 @@ try {
 } finally {
   await browser.close();
 }
+
+const {launchBrowser,openPage,suite} = await import('./lib/harness.mjs');
+const mixBrowser=await launchBrowser();
+await suite('audio mix',async()=>{
+  for(const viewport of ['desktop','portrait','landscape']) {
+    const {page,goto,ready,tap,errors}=await openPage(mixBrowser,viewport);
+    await goto();await ready();await tap('#start');await tap('#pause');await tap('[data-settings]');await tap('#settings-tab-audio');
+    const rows=await page.locator('[data-sound-test]').evaluateAll(bs=>bs.map(b=>{const r=b.getBoundingClientRect();return {w:r.width,h:r.height,font:parseFloat(getComputedStyle(b).fontSize)};}));
+    assert.equal(rows.length,7);for(const r of rows) assert.ok(r.w>=44&&r.h>=44&&r.font>=11);
+    await page.waitForFunction(()=>!!window.__frontier.audio);
+    const before=await page.evaluate(()=>window.__frontier.audio.sfx.played);
+    await tap('[data-sound-test="research"]');
+    await page.waitForFunction(n=>window.__frontier.audio.sfx.played>n,before);
+    const result=await page.evaluate(()=>{
+      const f=window.__frontier,a=f.audio;
+      a.sfx.budget.recent.clear();a.sfx.budget.lastPlayed.clear();a.sfx.budget.voices=[];
+      const accepted=Array.from({length:4},()=>a.sfx.play('tap',{gap:0}));
+      a.combatMix.times=[];
+      a.sfx.budget.recent.clear();a.sfx.budget.lastPlayed.clear();a.sfx.budget.voices=[];
+      for(const weapon of ['ranger','tank','breaker','antitank','vanguard','tower','worker']) a.event({type:'shot',weapon,team:0,x:0,z:0},f.sim);
+      a.update(0,{sim:f.sim,settings:f.settings,started:true,paused:true,hidden:false,mapId:f.sim.terrain.id});
+      return {accepted,gain:a.combatGain,overflow:document.documentElement.scrollWidth>innerWidth};
+    });
+    assert.deepEqual(result.accepted,[true,true,true,false]);
+    assert.equal(result.gain,10**(-4/20));assert.equal(result.overflow,false);
+    assert.deepEqual(errors,[]);await page.close();
+  }
+},{browser:mixBrowser});

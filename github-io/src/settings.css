@@ -302,3 +302,7 @@
   background: var(--team-hostile, #ef7660);
   transform: rotate(45deg);
 }
+
+.sound-tests { display:flex; flex-wrap:wrap; gap:8px; }
+.sound-tests h3 { flex-basis:100%; font-size:14px; }
+.sound-tests button { min-height:44px; min-width:44px; font-size:12px; }

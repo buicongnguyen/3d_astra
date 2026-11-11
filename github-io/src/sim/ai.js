@@ -124,7 +124,7 @@ export const ai = {
     }
     const threats = hq
       ? this.entities
-          .filter((e) => this.hostile(team, e.team) && e.hp > 0 && this.isVisible(e, team) && distance(hq, e) < 25)
+          .filter((e) => this.hostile(team, e.team) && e.hp > 0 && this.isVisible(e, team) && (distance(hq, e) < 25 || (e.kind === "unit" && distance(hq, e) < (pace.defendRadius ?? 25))))
           .sort((a, b) => distance(hq, a) - distance(hq, b))
       : [];
     const threatIds = new Set(threats.map((e) => e.id));

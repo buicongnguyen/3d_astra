@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { CameraShake, FEEL } from "./camera-shake.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
@@ -117,6 +118,11 @@ export class WorldView {
     this.fx = new Effects(this);
     this.tactics = new TacticsView(this);
     this.dying = [];
+    this.shake = new CameraShake();
+    this.hitStop = 0;
+    this.cameraCue = false;
+    this.shakePosition = new THREE.Vector3();
+    this.shakeRotation = new THREE.Quaternion();
     this.teamTemplates = new Map();
     this.buildingTops = new Map();
     this.fogClock = 0;
@@ -789,6 +795,26 @@ export class WorldView {
     root.add(contactShadow);
     root.userData.contactShadow = contactShadow;
     root.userData.model = model;
+    // Measure the template in the default camera projection, once per new unit.
+    // A capped visual scale never changes the simulation collision radius.
+    root.userData.readabilityScale = 1;
+    if (e.kind === 'unit') {
+      const up = new THREE.Vector3().setFromMatrixColumn(this.camera.matrixWorld, 1), point = new THREE.Vector3();
+      model.rotation.y = e.angle;
+      model.updateMatrixWorld(true);
+      let min = Infinity, max = -Infinity;
+      model.traverse(part => {
+        if (!part.isMesh) return;
+        if (!part.geometry.boundingBox) part.geometry.computeBoundingBox();
+        const box = part.geometry.boundingBox;
+        for (const x of [box.min.x,box.max.x]) for (const y of [box.min.y,box.max.y]) for (const z of [box.min.z,box.max.z]) {
+          const projected = point.set(x,y,z).applyMatrix4(part.matrixWorld).dot(up);
+          min = Math.min(min,projected); max = Math.max(max,projected);
+        }
+      });
+      const height = (max-min) * this.renderer.domElement.getBoundingClientRect().height / this.defaultZoom;
+      root.userData.readabilityScale = Math.min(FEEL.maxModelScale, Math.max(1, FEEL.minPixels / Math.max(height, Number.EPSILON)));
+    }
     root.userData.barrel=model.getObjectByName('BarrelRig');
     root.userData.turret=model.getObjectByName('TurretRig');
     root.userData.recoil=0;
@@ -823,6 +849,7 @@ export class WorldView {
     const bar = createBar(e, side);
     root.add(bar);
     root.userData.bar = bar;
+    bar.position.y *= root.userData.readabilityScale;
     cacheTransforms(root);
     this.scene.add(root);
     this.objects.set(e.id, root);
@@ -892,7 +919,26 @@ export class WorldView {
       old.mesh.geometry.dispose();old.mesh.material.dispose();
     }
   }
+  feelEnabled() { return this.settings.combatMotion !== false && !this.reducedMotion.matches && !this.cameraCue; }
+  onScreen(event) {
+    const p = new THREE.Vector3(event.x, 0, event.z).project(this.camera);
+    return Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1 && Math.abs(p.z) <= 1;
+  }
   event(event, sim) {
+    const enabled = this.feelEnabled();
+    if (Number.isFinite(event.x) && Number.isFinite(event.z) && sim.isVisible(event)) {
+      const trauma = event.type === 'strike' ? FEEL.barrageTrauma : event.type === 'death' ? (event.core ? FEEL.coreTrauma : event.building ? FEEL.buildingTrauma : 0) : 0;
+      if (trauma) this.shake.add(trauma, Math.hypot(event.x-this.focus.x,event.z-this.focus.z), enabled);
+      if (enabled && event.type === 'death' && event.core && this.onScreen(event)) this.hitStop = FEEL.stopSeconds;
+      if (enabled && event.type === 'strike' && (event.victims || []).filter(v => sim.isVisible(v) && this.onScreen(v)).length >= FEEL.stopKills) this.hitStop = FEEL.stopSeconds;
+      if (event.type === 'impact') {
+        const o = this.objects.get(event.seed);
+        if (o) o.userData.flash = FEEL.flashSeconds;
+      }
+    }
+    // Rules resolve shells immediately; the existing shot event carries the landing point.
+    if (event.type === 'shot' && ['tank','breaker'].includes(event.weapon) && shotVisible(event,sim))
+      this.shake.add(FEEL.shellTrauma, Math.hypot(event.tx-this.focus.x,event.tz-this.focus.z), enabled);
     this.activity.event(event, sim);
     this.tactics.event(event, sim);
     if(event.type==='shot' && shotVisible(event,sim)){
@@ -915,13 +961,13 @@ export class WorldView {
     if (!o) return;
     this.objects.delete(event.seed);
     for (const part of [o.userData.ring, o.userData.bar, o.userData.contactShadow]) part.visible = false;
-    if (this.dying.length >= 24) { this.disposeEntity(o); return; }
+    if (this.dying.length >= FEEL.wreckCap) this.disposeEntity(this.dying.shift().object);
     const kind = event.building ? 'building' : event.heavy ? 'vehicle' : 'infantry';
     const model = o.userData.model;
     if (o.userData.emblem) o.userData.emblem.visible = false;
     model.rotation.order = 'YXZ';
     this.dying.push({ object: o, kind, team: event.team, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1),
-      life: { building: 2.8, vehicle: 2.6, infantry: 1.6 }[kind], baseY: model.rotation.y });
+      life: { building: 2.8, vehicle: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, infantry: 1.6 }[kind], baseY: model.rotation.y, direction: event.direction ?? model.rotation.y });
   }
   updateDying(sim, dt) {
     const motion = this.activity.combat.motion;
@@ -940,11 +986,12 @@ export class WorldView {
         m.rotation.x = d.tilt * heavy((t - 0.4) / 2.2) * 0.07;
       } else if (d.kind === 'vehicle') {
         const hop = motion ? Math.sin(Math.min(1, t / 0.45) * Math.PI) * 0.55 : 0;
-        o.position.y = hop - ease((t - 1.7) / 0.9) * 1.8;
+        o.position.y = hop - ease((t - (d.life - 0.9)) / 0.9) * 1.8;
         m.rotation.z = d.tilt * ease(t / 0.45) * 0.18;
         m.rotation.x = -ease(t / 0.45) * 0.1;
       } else {
-        m.rotation.x = -ease(t / 0.4) * 1.45;
+        m.rotation.y = d.direction;
+        m.rotation.x = -ease(t / FEEL.fallSeconds) * 1.45;
         o.position.y = -ease((t - 0.9) / 0.7) * 1.2;
       }
     }
@@ -965,6 +1012,14 @@ export class WorldView {
   }
   update(sim, dt, selected, hover, alpha = 1) {
     if (this.contextLost) return;
+    const realDt = dt, enabled = this.feelEnabled();
+    this.shake.step(realDt, enabled, this.lowPower);
+    if (!enabled) this.hitStop = 0;
+    if (this.hitStop > 0) {
+      const held = Math.min(realDt, this.hitStop);
+      dt = realDt - held + held * FEEL.stopScale;
+      this.hitStop = Math.max(0, this.hitStop-realDt);
+    }
     this.environment?.update(sim, dt);
     if (this.life) {
       this.life.quiet = this.reducedMotion.matches;
@@ -1047,6 +1102,7 @@ export class WorldView {
       }
       m.position.set(back ? -Math.sin(m.rotation.y) * back : 0, lift, back ? -Math.cos(m.rotation.y) * back : 0);
       m.scale.set(1 + squash * 0.5, (e.complete ? 1 : 0.15 + e.progress * 0.85) + squash, 1 + squash * 0.5);
+      m.scale.multiplyScalar(u.readabilityScale);
       m.rotation.z = isHarvesting(sim,e) && !this.reducedMotion.matches ? Math.sin(sim.time*7+e.id)*0.045 : 0;
       for (let i = 0; i < u.legs.length; i++) {
         const leg = u.legs[i];
@@ -1063,6 +1119,11 @@ export class WorldView {
         bar.scale.set(bar.userData.base * this.barScale, bar.userData.base * this.barScale * this.barTall, 1);
       }
       updateBar(bar, e, dt);
+      u.flash = Math.max(0, (u.flash || 0)-realDt);
+      const flash = u.flash > 0 && this.settings.combatMotion !== false && !this.reducedMotion.matches;
+      u.ring.material.uniforms.flash.value = bar.material.uniforms.flash.value = flash ? 1 : 0;
+      if (flash) { u.ring.visible = bar.visible = true; u.ring.material.uniforms.appear.value = 1; }
+
     }
     for (const [id, object] of this.objects)
       if (!alive.has(id)) {
@@ -1120,8 +1181,25 @@ export class WorldView {
     for (const o of this.resourceObjects.values()) this.batches.collect(o);
     this.batches.end();
     this.scene.matrixWorldAutoUpdate = false;
-    this.renderer.render(this.scene, this.camera);
-    this.scene.matrixWorldAutoUpdate = true;
+    // Shake only during drawing: picking, panning and UI projections use the stable camera.
+    const shaking = this.shake.trauma > 0;
+    if (shaking) {
+      this.shakePosition.copy(this.camera.position);
+      this.shakeRotation.copy(this.camera.quaternion);
+      this.camera.translateX(this.shake.offset.x);
+      this.camera.translateY(this.shake.offset.y);
+      this.camera.rotateZ(this.shake.offset.roll);
+      this.camera.updateMatrixWorld();
+    }
+    try { this.renderer.render(this.scene, this.camera); }
+    finally {
+      if (shaking) {
+        this.camera.position.copy(this.shakePosition);
+        this.camera.quaternion.copy(this.shakeRotation);
+        this.camera.updateMatrixWorld();
+      }
+      this.scene.matrixWorldAutoUpdate = true;
+    }
     this.activity.draw(sim,dt,selected,hover);
   }
   disposeEntity(o) {
@@ -1143,6 +1221,11 @@ export class WorldView {
     this.objects.clear();
     for (const d of this.dying) this.disposeEntity(d.object);
     this.dying = [];
+    this.shake = new CameraShake();
+    this.hitStop = 0;
+    this.cameraCue = false;
+    this.shakePosition = new THREE.Vector3();
+    this.shakeRotation = new THREE.Quaternion();
     for (const o of this.resourceObjects.values()) {
       this.scene.remove(o);
       if (o.userData.shared) continue; // Blender clusters share the loaded template's data.

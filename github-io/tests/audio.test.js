@@ -111,3 +111,16 @@ test("music and effects have their own levels; mute silences both", () => {
   assert.equal(normalize({ ...defaults(), version: 1, musicVolume: 3, sfxVolume: -1 }).sfxVolume, 0);
   assert.equal(normalize({ version: 1 }).musicVolume, defaults().musicVolume, "old saves get the defaults");
 });
+
+test('identical sounds allow three starts per 80 ms even when short voices expire',()=>{
+  const b=new VoiceBudget(20);
+  for(const t of [0,.02,.04]) assert.ok(b.tryAcquire('test',2,t,.001));
+  assert.equal(b.tryAcquire('test',2,.06,.001),null);
+  assert.ok(b.tryAcquire('test',2,.081,.001));
+});
+test('combat ducking is 4 dB after seven heard effects and recovers after one second',async()=>{
+  const {CombatMix}=await import('../src/audio-logic.js');const m=new CombatMix();
+  for(let i=0;i<6;i++)m.played(0);
+  assert.equal(m.gain(0),1);m.played(.1);
+  assert.equal(m.gain(.1),10**(-4/20));assert.equal(m.gain(1.2),1);
+});

@@ -74,7 +74,7 @@ jobs:
           - name: ui-extras
             scripts: ui-extras
           - name: visuals
-            scripts: visual-combat
+            scripts: visual-combat feel
     defaults:
       run:
         working-directory: github-io

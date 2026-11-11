@@ -1,8 +1,9 @@
 import { DEFINITIONS as D, ROCKS, MAX_POP, distance, hyp, clamp } from "./data.js";
 import { NEUTRAL, CORE_GRACE, ROUTES_PER_TICK, MIDFIELD_DEPOSITS } from "./sim/constants.js";
+import { difficultyId, difficultySpeed } from "./difficulty.js";
 import { Navigation } from "./navigation.js";
 import { progression } from "./progression.js";
-import { AI_SPEEDS, coalitionPlan } from "./ai-plan.js";
+import { AI_SPEEDS, aiPace, coalitionPlan } from "./ai-plan.js";
 import { Terrain } from "./terrain.js";
 import { commands } from "./commands.js";
 import { snapshot, restore } from "./snapshot.js";
@@ -22,7 +23,9 @@ export { NEUTRAL } from "./sim/constants.js";
 // The match state and its fixed 20 Hz step. Behaviour lives in the systems under sim/, mixed
 // in at the bottom of this file; this class holds setup, shared lookups and the step order.
 export class Simulation {
-  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null, mission = null, capturePoints = false } = {}) {
+  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null, mission = null, difficulty = "standard", capturePoints = false } = {}) {
+    this.difficulty = difficultyId(difficulty);
+    if (mission) aiSpeed = difficultySpeed(aiSpeed, this.difficulty);
     this.aiEnabled = ai;
     this.entities = [];
     this.resources = [];
@@ -36,7 +39,7 @@ export class Simulation {
     this.commandLog = [];
     this.enemyCount = Number.isInteger(enemyCount) ? clamp(enemyCount, 1, 3) : 1;
     this.aiSpeed = Object.hasOwn(AI_SPEEDS, aiSpeed) ? aiSpeed : "normal";
-    this.pace = AI_SPEEDS[this.aiSpeed];
+    this.pace = aiPace(this.aiSpeed, !!mission);
     // A coalition of AIs shares vision and plans and never fights itself.
     this.coalition = alliance === "coalition" && this.enemyCount > 1;
     this.players = Array.from({ length: this.enemyCount + 1 }, () => ({
@@ -260,7 +263,7 @@ export class Simulation {
   setAiSpeed(speed) {
     if (!Object.hasOwn(AI_SPEEDS, speed)) return;
     this.aiSpeed = speed;
-    this.pace = AI_SPEEDS[speed];
+    this.pace = aiPace(speed, !!this.mission);
   }
   hostile(a, b) {
     return a !== b && a >= 0 && b >= 0 && !(this.coalition && a > 0 && b > 0);

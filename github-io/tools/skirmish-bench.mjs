@@ -1,21 +1,22 @@
-// Skirmish timing: the PlayBot (marches at 16 fighters) against one AI on four maps and three
-// speeds. Prints the result, game time of the ending and wall-clock ms per simulation tick.
-// Usage: node tools/skirmish-bench.mjs [--speeds relaxed,normal] [--maps classic,basin]
-import { Simulation } from "../src/simulation.js";
-import { PlayBot } from "./playbot.mjs";
-
-const args = process.argv.slice(2), value = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback).split(",");
-const CAP = 40 * 60, TICK = 0.05;
-for (const speed of value("--speeds", "relaxed,normal,fast")) for (const map of value("--maps", "classic,riverlands,basin,highlands")) {
-  const s = new Simulation({ map, aiSpeed: speed, capturePoints: !args.includes("--no-points") });
-  const bot = new PlayBot(s, { attackAt: 16 });
-  const t0 = performance.now();
-  let i = 0;
-  for (; i < CAP / TICK && !s.result; i++) {
-    bot.step();
-    s.tick(TICK);
-    for (const e of s.events) bot.see(e);
+// Deterministic ladder: three maps, four bot attack thresholds, every AI speed.
+// Usage: node tools/skirmish-bench.mjs [--speeds relaxed,normal] [--maps classic]
+import {Simulation} from '../src/simulation.js';
+import {PlayBot} from './playbot.mjs';
+const args=process.argv.slice(2), value=(name,fallback)=>(args.includes(name)?args[args.indexOf(name)+1]:fallback).split(',');
+const CAP=40*60,TICK=.05;
+for(const speed of value('--speeds','relaxed,normal,fast,relentless')) {
+  const results=[];
+  for(const map of value('--maps','classic,riverlands,dunes')) for(const attackAt of value('--attack-at','12,16,20,24').map(Number)) {
+    const s=new Simulation({map,aiSpeed:speed,capturePoints:!args.includes('--no-points')});
+    const bot=new PlayBot(s,{attackAt}),t0=performance.now();let ticks=0;
+    for(;ticks<CAP/TICK&&!s.result;ticks++) {
+      bot.step();s.tick(TICK);
+      for(const e of s.events) bot.see(e);
+      s.events.length=0;
+    }
+    const result={speed,map,attackAt,result:s.result||'timeout',seconds:Math.round(s.time),msPerTick:(performance.now()-t0)/ticks};
+    results.push(result);console.log(JSON.stringify(result));
   }
-  const ms = performance.now() - t0;
-  console.log(`${speed.padEnd(8)} ${map.padEnd(10)} ${String(s.result).padEnd(8)} t=${Math.round(s.time)}s  ${(ms / i).toFixed(3)} ms/tick`);
+  const times=results.map(r=>r.seconds).sort((a,b)=>a-b),mid=times.length>>1;
+  console.log(JSON.stringify({summary:speed,games:results.length,winRate:100*results.filter(r=>r.result==='victory').length/results.length,medianSeconds:times.length%2?times[mid]:(times[mid-1]+times[mid])/2}));
 }

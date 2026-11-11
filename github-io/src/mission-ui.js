@@ -1,3 +1,4 @@
+import { DIFFICULTY_LABELS, objectiveText } from "./difficulty.js";
 // Story mission interface: the briefing overlay, the in-match dialogue box with its Comms log,
 // the mission objectives list and the debrief. It only shows what the mission engine emits
 // (src/sim/missions.js); it never changes the match. Story text is written into the page as
@@ -82,7 +83,7 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
     closeBriefing(true);
     done?.();
   }
-  function openBriefing(mission, index, { onBegin, onBack } = {}) {
+  function openBriefing(mission, index, { onBegin, onBack, difficulty = "standard" } = {}) {
     briefReturn = document.activeElement;
     brief = { mission, step: 0, onBegin, onBack };
     q("mb-place").textContent = mission.briefing.place || "";
@@ -91,7 +92,7 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
     q("mb-portrait").dataset.who = "";
     q("mb-intel").innerHTML = (mission.briefing.intel || []).map((text) => `<li>${esc(text)}</li>`).join("");
     q("mb-objectives").innerHTML = mission.objectives.filter((o) => !o.hidden)
-      .map((o) => `<li${o.optional ? ' class="optional"' : ""}><span>${esc(o.text)}</span>${o.optional ? "<em>Optional</em>" : ""}</li>`).join("");
+      .map((o) => `<li${o.optional ? ' class="optional"' : ""}><span>${esc(objectiveText(o,difficulty))}</span>${o.optional ? "<em>Optional</em>" : ""}</li>`).join("");
     for (const node of behind()) if (node) node.inert = true;
     overlay.hidden = false;
     document.documentElement.classList.add("mission-briefing-open");
@@ -336,6 +337,7 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
     return `<div class="debrief ${win ? "won" : "lost"}" data-result="${win ? "victory" : "defeat"}"${medal ? ` data-medal="${medal}"` : ""}>
       <span class="eyebrow">MISSION ${two(index + 1)} · ${win ? "COMPLETE" : "FAILED"}</span>
       <div class="debrief-head">${win ? medalBadge(medal) : `<span class="debrief-loss">${icon("close")}</span>`}<div><h2 id="modal-title">${esc(mission.title)}</h2><p class="debrief-result"><strong>${win ? "Victory" : "Defeat"}</strong>${medal ? `<span>${MEDAL_NAMES[medal]}</span>` : ""}</p></div></div>
+      <p class="debrief-difficulty">${DIFFICULTY_LABELS[sim.difficulty || "standard"]}</p>
       <div class="result-grid">${matchStatTiles(stats, { structures: false, extra: [statTile(clock(seconds), "Mission time", "time"), statTile(best != null ? clock(best) : "—", "Best time")] })}</div>
       <h3>Objectives</h3><ol class="debrief-objectives">${objectives}</ol>
       ${talk ? `<div class="debrief-lines">${talk}</div>` : ""}

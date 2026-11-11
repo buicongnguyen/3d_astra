@@ -1,5 +1,23 @@
 {
   "messages": {
+    "Sound test": "Thử âm thanh",
+    "Unit ready": "Đơn vị sẵn sàng",
+    "Research done": "Nghiên cứu hoàn tất",
+    "Building lost": "Mất công trình",
+    "Objective done": "Hoàn thành mục tiêu",
+    "Objective failed": "Mục tiêu thất bại",
+    "Mission won": "Nhiệm vụ thắng lợi",
+    "Mission lost": "Nhiệm vụ thất bại",
+
+    "Story": "Cốt truyện",
+    "Standard": "Tiêu chuẩn",
+    "Veteran": "Kỳ cựu",
+    "Campaign difficulty": "Độ khó chiến dịch",
+    "Veteran clear": "Hoàn thành cấp Kỳ cựu",
+    "Smaller waves, gentler enemies and more starting alloy.": "Ít quân địch hơn, sát thương nhẹ hơn và thêm hợp kim ban đầu.",
+    "The original campaign balance.": "Độ cân bằng gốc của chiến dịch.",
+    "Larger waves, stronger enemies and faster AI.": "Nhiều quân địch hơn, sát thương mạnh hơn và AI nhanh hơn.",
+
     "Select / box select": "Chọn / chọn khung",
     "Left-click / drag": "Nhấp trái / kéo",
     "Add to selection / queue order": "Thêm vào vùng chọn / xếp hàng lệnh",
@@ -743,6 +761,7 @@
     "Select soldiers, then Actions": "Chọn lính, rồi mở Thao tác"
   },
   "patterns": [
+    ["^Finish within (\\d+) seconds$", "Hoàn thành trong {1} giây"],
     ["^(.+) counters your (.+)\\. Pull them back and bring (.+)\\.$", "{1} khắc chế {2} của bạn. Hãy rút {2} về và dùng {3}."],
     ["^(.+) counters your (.+)\\. Pull them back\\.$", "{1} khắc chế {2} của bạn. Hãy rút {2} về."],
     ["^Your (.+) counters (.+)\\. Let it lead the fight\\.$", "{1} của bạn khắc chế {2}. Hãy để {1} dẫn đầu trận đánh."],

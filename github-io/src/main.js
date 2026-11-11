@@ -72,7 +72,7 @@ const S = createState();
 const A = {};
 
 // Every match, preview and restart is built from the current setup (a story mission included).
-const createSim = () => new Simulation({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission, capturePoints: !S.mission && S.playMode === "skirmish" });
+const createSim = () => new Simulation({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish" });
 
 async function loadAssets() {
   S.loadFailed = false;

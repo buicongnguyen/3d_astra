@@ -50,6 +50,7 @@ export function setupPreferences(S, A) {
   const settingsUI = new SettingsUI({
     get: () => S.settings,
     apply: applyPreferences,
+    soundTest: name => A.playSoundTest(name),
     enter: () => {
       const state = Z.hold();
       S.keys.clear();

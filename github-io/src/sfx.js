@@ -1,3 +1,4 @@
+import { MIX } from "./audio-mix.js";
 // Synthesised sound effects (no audio files). Each effect is a short recipe of layers:
 //   ["o", wave, hz0, hz1, seconds, volume, delay]            an oscillator gliding hz0 -> hz1
 //   ["n", filter, hz0, hz1, seconds, volume, delay, q]       filtered noise sweeping hz0 -> hz1
@@ -28,6 +29,7 @@ const R = {
   // Construction, production, UI.
   construct: [["n", "bandpass", 2600, 2000, 0.04, 0.35, 0, 3], ["o", "square", 520, 500, 0.04, 0.15, 0], ["n", "bandpass", 2200, 1800, 0.04, 0.3, 0.12, 3]],
   complete: [["o", "triangle", 392, 392, 0.22, 0.4, 0], ["o", "triangle", 494, 494, 0.22, 0.4, 0.09], ["o", "triangle", 587, 587, 0.4, 0.45, 0.18], ["n", "highpass", 4000, 3000, 0.04, 0.2, 0.18]],
+  research: [["o", "sine", 440, 880, 0.25, 0.3, 0], ["o", "triangle", 1320, 1320, 0.4, 0.3, 0.25]],
   trained: [["o", "sine", 660, 660, 0.1, 0.35, 0], ["o", "sine", 880, 880, 0.16, 0.35, 0.07]],
   tap: [["o", "sine", 1150, 760, 0.045, 0.3, 0]],
   select: [["o", "sine", 700, 700, 0.05, 0.25, 0], ["o", "sine", 940, 940, 0.05, 0.2, 0.04]],
@@ -82,7 +84,7 @@ export class Sfx {
     priority ??= extra?.[0] ?? 3; gap ??= extra?.[1] ?? 0;
     const now = ctx.currentTime, got = this.budget.tryAcquire(name, priority, now, duration(recipe) + 0.05, gap);
     if (!got) { this.dropped++; return false; }
-    const pitch = 1 + (this.rnd() - 0.5) * 0.12, level = gain * (0.9 + this.rnd() * 0.2);
+    const pitch = 1 + (this.rnd() * 2 - 1) * MIX.pitchVariation, level = gain * (0.9 + this.rnd() * 0.2);
     let dest = this.out, panner = null;
     if (pan && ctx.createStereoPanner) { panner = ctx.createStereoPanner(); panner.pan.value = Math.max(-1, Math.min(1, pan)); panner.connect(this.out); dest = panner; }
     for (const layer of recipe) this.layer(layer, now, pitch, level * 0.5, dest);

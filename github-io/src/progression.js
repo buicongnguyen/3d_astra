@@ -1,3 +1,4 @@
+import { difficultyRules } from "./difficulty.js";
 import { DEFINITIONS as D, distance } from './data.js';
 
 // Harvester repair: slower than an Engineer (18 HP/s) and not free. A full repair costs a
@@ -73,6 +74,7 @@ export const progression = {
   applyDamage(t,damage,team,by = null) {
     if (t.hp <= 0 || !Number.isFinite(damage) || damage <= 0) return;
     if (by !== null) { t.hitBy = by; t.hitAt = this.time; }
+    if (this.mission && t.team === 0 && team !== 0) damage *= difficultyRules(this).damage;
     if (t.buff?.guard) damage *= t.buff.guard;
     if (t.kind === 'unit' && t.type !== 'worker' && this.players[t.team]?.plating) damage *= this.players[t.team].plating2 ? 0.88 * 0.92 : 0.88;
     if(t.trainingGuard) damage=Math.min(damage,Math.max(0,t.hp+t.shield-1));
@@ -87,7 +89,7 @@ export const progression = {
     if (t.hp <= 0) {
       if (t.kind !== 'wall') this.players[team].kills++;
       this.creditKill(by,t);
-      this.events.push({type:'death',x:t.x,z:t.z,team:t.team,building:t.kind === 'building' || t.kind === 'wall',heavy:!!t.mechanical,core:t.type==='hq',seed:t.id});
+      this.events.push({type:'death',x:t.x,z:t.z,team:t.team,building:t.kind === 'building' || t.kind === 'wall',heavy:!!t.mechanical,core:t.type==='hq',seed:t.id,direction:by !== null && this.get(by) ? Math.atan2(t.x-this.get(by).x,t.z-this.get(by).z) : t.angle});
       if (t.kind === 'building' || t.kind === 'wall') this.nav.rebuild(this.entities);
     }
   },

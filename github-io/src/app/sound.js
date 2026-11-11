@@ -1,3 +1,4 @@
+import { MIX, SOUND_TESTS } from "../audio-mix.js";
 // Browser audio context, UI tones and the audio clock (sleeps while paused or hidden).
 import { Ambience, audioPower } from "../ambience.js";
 import { screenMix } from "../audio-logic.js";
@@ -60,7 +61,17 @@ export function setupSound(S, A) {
   let audioIdle = 0,
     audioRetry = 0;
 
-  const audioQuiet = () => document.hidden || (Z.started && Z.paused && !S.sim.result);
+  let auditionUntil = 0;
+  const audioQuiet = () => document.hidden || (Z.started && Z.paused && !S.sim.result && performance.now() >= auditionUntil);
+  async function playSoundTest(name) {
+    if (!Object.hasOwn(SOUND_TESTS,name)) return;
+    auditionUntil = performance.now() + MIX.auditionSeconds * 1000;
+    unlockAudio();
+    await audioLoading;
+    if (!S.audioContext || document.hidden) return;
+    await S.audioContext.resume();
+    S.audio?.sfx.play(name);
+  }
 
   function syncAudio(dt = 0) {
     if (!S.audioContext) return;
@@ -71,7 +82,7 @@ export function setupSound(S, A) {
     audioPower(S.audioContext, quiet);
   }
 
-  Object.assign(A, { tone, unlockAudio, syncAudio });
+  Object.assign(A, { tone, unlockAudio, syncAudio, playSoundTest });
   return function bind() {
     document.addEventListener("visibilitychange", () => syncAudio());
   };

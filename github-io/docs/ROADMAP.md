@@ -20,3 +20,14 @@ Status of the rebuild plan ([REVIEW_AND_REBUILD_PLAN_2026-11.md](REVIEW_AND_REBU
 - Mission times swing by minutes with small data edits; `npm run check:missions` guards the winnable range.
 - Story portraits are rendered Blender busts (0.9.3); unit and building portraits are the atlas.
 - Not tested on a physical phone; all phone checks use browser emulation.
+
+## AAA stages
+
+| Stage | Status |
+|---|---|
+| 1 Feel | Local code and regression checks complete; Veteran checker acceptance conflict and owner listening/play review pending |
+| 2 Factions | Pending; faction art approval required before wiring models |
+| 3 Battlefield | Pending; air unit requires explicit owner confirmation |
+| 4 Story | Pending |
+| 5 Replay | Pending |
+| 6 Ship | Pending; physical iPhone/Android tests required |

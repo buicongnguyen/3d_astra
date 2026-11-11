@@ -16,22 +16,31 @@ import { MISSIONS } from "../src/story/missions.js";
 import { PlayBot, ObjectiveBot } from "./playbot.mjs";
 
 const args = process.argv.slice(2), flag = (name) => args.includes(name), value = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : null);
-const TICK = 0.05, CAP = 21 * 60;
+const DIFFICULTY = value('--difficulty') || 'standard';
+if (!['story','standard','veteran'].includes(DIFFICULTY)) throw new Error('Unknown difficulty');
+const TICK = 0.05, CAP = DIFFICULTY === 'veteran' ? 30 * 60 : 21 * 60;
 // The generic bot marches on the first enemy core once it has 16 fighters. Against two or three
 // enemy camps that march only loses the army and then the camp to the next offensive (even at
 // the Relaxed pace), so there it stays home for the 8 minutes the target asks for and marches after.
 // "--rush" lets it march at 16 everywhere.
 const ATTACK_AT = +(value("--attack-at") || 16), TURTLE = !flag("--rush");
 // Targets (seconds of game time).
-export const targets = (index) => ({
+const standardTargets = (index) => ({
   passive: index < 4 ? 300 : 210,          // not defeated before this
   generic: 480,                             // not defeated before this
   win: index === 0 ? [300, 540] : [420, 1200], // the objective bot wins inside this window
   earliest: 300,                            // nobody wins before this
 });
 
+export const targets = index => {
+  const t = standardTargets(index);
+  if (DIFFICULTY === 'story') return {...t, earliest:0, generic:0, win:[0,CAP]};
+  if (DIFFICULTY === 'veteran') return {...t, passive:150, earliest:0, generic:0, win:[0,t.win[1]*1.5]};
+  return t;
+};
+
 export function play(mission, kind, { cap = CAP, log = false } = {}) {
-  const s = new Simulation({ map: mission.map, enemyCount: mission.enemies, aiSpeed: mission.speed, alliance: mission.alliance, playerBonus: mission.bonus || null, mission });
+  const s = new Simulation({ difficulty: DIFFICULTY, map: mission.map, enemyCount: mission.enemies, aiSpeed: mission.speed, alliance: mission.alliance, playerBonus: mission.bonus || null, mission });
   const bot = kind.startsWith("objective") ? new ObjectiveBot(s, mission, { marchDelta: +kind.slice(9) || 0 }) : kind === "generic" ? new PlayBot(s, { attackAt: ATTACK_AT, attackAfter: TURTLE && mission.enemies > 1 ? targets(MISSIONS.indexOf(mission)).generic : 0 }) : null;
   let wave = null, lost = 0, units = new Set();
   for (let i = 0; i < cap / TICK && !s.result; i++) {
@@ -70,7 +79,7 @@ export function misses(index, run) {
 
 // "--spread" also plays the objective bot with a marching army three fighters smaller and
 // larger, to show how much a result depends on one decision. Those lines count as targets too.
-const kinds = [...(value("--bots") || "passive,generic,objective").split(","), ...(flag("--spread") ? ["objective-3", "objective+3"] : [])];
+const kinds = [...(value("--bots") || (DIFFICULTY === "standard" ? "passive,generic,objective" : "passive,objective")).split(","), ...(flag("--spread") ? ["objective-3", "objective+3"] : [])];
 // One run: a mission index and a player kind.
 function run(index, kind) {
   const t = targets(index);

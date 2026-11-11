@@ -9,6 +9,7 @@ const raw = (hex) => new THREE.Color().setHex(hex, THREE.LinearSRGBColorSpace);
 // Ground ring: bright core, soft halo, faint footprint disc and a slowly rotating dashed band
 // that appears only when selected. `appear` animates the lock-on (fade and scale in).
 const RING = `
+uniform float flash;
 uniform vec3 color; uniform float time, appear, strength, radius, selected, px;
 varying vec2 vUv;
 void main() {
@@ -25,13 +26,13 @@ void main() {
   float dash = step(0.45, fract(a / 6.2831853 * segments + time * 0.07)) * band;
   float alpha = (core + halo + disc + dash * selected * 0.9) * strength * appear;
   if (alpha < 0.01) discard;
-  gl_FragColor = vec4(mix(color, vec3(1.0), core * 0.35 * selected), min(1.0, alpha));
+  gl_FragColor = vec4(mix(color, vec3(1.0), max(flash, core * 0.35 * selected)), min(1.0, alpha));
 }`;
 
 export function createRing(radius, hex) {
   const size = 2 * (radius + 0.9);
   const material = new THREE.ShaderMaterial({
-    uniforms: { color: { value: raw(hex) }, time: { value: 0 }, appear: { value: 0 }, strength: { value: 1 },
+    uniforms: { flash: { value: 0 }, color: { value: raw(hex) }, time: { value: 0 }, appear: { value: 0 }, strength: { value: 1 },
       radius: { value: radius }, selected: { value: 1 }, px: { value: 0 } },
     vertexShader: PLAIN, fragmentShader: RING, transparent: true, depthWrite: false,
     polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 2, // ties go to models
@@ -67,6 +68,7 @@ export function updateRing(ring, selected, hovered, time, dt, unitsPerPixel = 0)
 // Vitals: framed plate, team tab, segmented health (green / amber / red) with a pale damage
 // ghost, shield bar and, on buildings, three level pips. One mesh per entity.
 const BAR = `
+uniform float flash;
 uniform float hp, ghost, shield, hasShield, segments, level, building;
 uniform vec3 team; uniform vec2 size;
 varying vec2 vUv;
@@ -107,6 +109,7 @@ void main() {
       col = mix(col, float(i) < level ? vec4(0.93, 0.78, 0.43, 1.0) : vec4(0.2, 0.26, 0.25, 0.9), pip);
     }
   if (col.a < 0.01) discard;
+  col.rgb = mix(col.rgb, vec3(1.0), flash);
   gl_FragColor = col;
 }`;
 
@@ -115,7 +118,7 @@ export function createBar(e, hex) {
   const size = new THREE.Vector2(building ? 3.6 : 2.3, building ? 0.62 : e.maxShield > 0 ? 0.39 : 0.29);
   const material = new THREE.ShaderMaterial({
     uniforms: {
-      hp: { value: 1 }, ghost: { value: 1 }, shield: { value: 1 }, hasShield: { value: e.maxShield > 0 ? 1 : 0 },
+      flash: { value: 0 }, hp: { value: 1 }, ghost: { value: 1 }, shield: { value: 1 }, hasShield: { value: e.maxShield > 0 ? 1 : 0 },
       segments: { value: Math.max(2, Math.min(40, Math.round(e.maxHp / 50))) }, level: { value: e.level || 1 },
       building: { value: building ? 1 : 0 }, team: { value: raw(hex) }, size: { value: size },
     },
@@ -153,6 +156,7 @@ export function setTeamColor(object, hex) {
 // Command marker: a lock-on ring that tightens onto the point, a centre ping and, for
 // attacks, crosshair ticks. `progress` runs 0 -> 1 over the marker's life.
 const MARKER = `
+uniform float flash;
 uniform vec3 color; uniform float progress, attack;
 varying vec2 vUv;
 void main() {
@@ -172,7 +176,7 @@ void main() {
 
 export function createMarker(hex, attack) {
   const material = new THREE.ShaderMaterial({
-    uniforms: { color: { value: raw(hex) }, progress: { value: 0 }, attack: { value: attack ? 1 : 0 } },
+    uniforms: { flash: { value: 0 }, color: { value: raw(hex) }, progress: { value: 0 }, attack: { value: attack ? 1 : 0 } },
     vertexShader: PLAIN, fragmentShader: MARKER, transparent: true, depthWrite: false,
   });
   const marker = new THREE.Mesh(new THREE.PlaneGeometry(3, 3), material);

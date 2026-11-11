@@ -1,3 +1,4 @@
+import { MIX } from "./audio-mix.js";
 // Pure audio logic: no Web Audio and no DOM, so it is unit-tested in Node (tests/audio.test.js).
 // The score and the sound effects are made in-house: this file holds the rules (which mood fits
 // the match, which notes a bar contains, how many voices may sound, which sounds the fog hides).
@@ -139,10 +140,13 @@ export function composeBar({ map = "classic", mood = "calm", faction = null, bar
 // priority than everything sounding is dropped; otherwise it replaces the lowest priority voice
 // (the replaced entry is returned so its gain can be faded). `gap` limits one sound's rate.
 export class VoiceBudget {
-  constructor(max = 14) { this.max = max; this.voices = []; this.lastPlayed = new Map(); }
+  constructor(max = 14) { this.max = max; this.voices = []; this.lastPlayed = new Map(); this.recent = new Map(); }
   tryAcquire(name, priority, now, duration, gap = 0) {
     this.voices = this.voices.filter((v) => v.end > now);
     if (gap && now - (this.lastPlayed.get(name) ?? -Infinity) < gap) return null;
+    const recent = (this.recent.get(name) || []).filter(t => now-t < MIX.windowSeconds);
+    this.recent.set(name,recent);
+    if (recent.length >= MIX.identicalVoices) return null;
     let stolen = null;
     if (this.voices.length >= this.max) {
       let low = this.voices[0];
@@ -154,6 +158,7 @@ export class VoiceBudget {
     const voice = { name, priority, end: now + duration };
     this.voices.push(voice);
     this.lastPlayed.set(name, now);
+    recent.push(now);
     return { voice, stolen };
   }
   get active() { return this.voices.length; }
@@ -167,6 +172,7 @@ export function soundFor(event) {
     case "death": return { name: event.building ? "boom:building" : event.heavy ? "boom:heavy" : "boom:small", priority: 5, gap: 0.08 };
     case "strike": return { name: "boom:strike", priority: 6, gap: 0.1 };
     case "built": return { name: "complete", priority: 4, gap: 0.2 };
+    case "research": return { name: "research", priority: 7, gap: 0.12 };
     case "spawn": return { name: "trained", priority: 3, gap: 0.12 };
     case "ability": return { name: `ability:${event.ability}`, priority: 6, gap: 0.1 };
     case "promote": return { name: "promote", priority: 7, gap: 0.3 };
@@ -205,4 +211,13 @@ export const MAKEUP = { music: 1.5, sfx: 1.8 };
 export function busLevels(settings) {
   const master = settings.muted ? 0 : Math.max(0, Math.min(1, settings.masterVolume ?? 0.5));
   return { music: master * MAKEUP.music * Math.max(0, Math.min(1, settings.musicVolume ?? 0.6)), sfx: master * MAKEUP.sfx * Math.max(0, Math.min(1, settings.sfxVolume ?? 0.8)) };
+}
+
+export class CombatMix {
+  constructor() { this.times=[]; }
+  played(now) { this.times.push(now); this.gain(now); }
+  gain(now) {
+    this.times=this.times.filter(t=>now-t < MIX.combatWindow);
+    return this.times.length>MIX.combatThreshold ? 10**(MIX.duckDb/20) : 1;
+  }
 }

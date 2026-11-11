@@ -115,7 +115,7 @@ test('campaign: twelve story missions in three acts on real maps, unlocked in or
   let p = {cleared: {}};
   assert.deepEqual(MISSIONS.map((_, i) => isUnlocked(p, i)), [true, ...Array(11).fill(false)]);
   p = recordClear(p, 0, 300, 'silver'); p = recordClear(p, 0, 420, 'gold'); p = recordClear(p, 0, 500, 'bronze');
-  assert.deepEqual(p.cleared[MISSIONS[0].id], {time: 300, medal: 'gold'}, 'best time and best medal are kept separately');
+  assert.deepEqual(p.cleared[MISSIONS[0].id], {time: 300, medal: 'gold', difficulty: 'standard'}, 'best time and best medal are kept separately');
   assert.equal(bestTime(p, 0), 300); assert.equal(bestMedal(p, 0), 'gold'); assert.equal(bestTime(p, 1), null);
   assert.equal(isUnlocked(p, 1), true); assert.equal(isUnlocked(p, 2), false);
   assert.equal(nextMission(p), 1);
@@ -132,7 +132,7 @@ test('campaign progress survives reloads, ignores the old stage record and toler
   store.set('frontier-campaign-v1', JSON.stringify({cleared: {'first-contact': 300}}));
   assert.deepEqual(loadProgress(fake), {cleared: {}});
   saveProgress(recordClear({cleared: {}}, 0, 200, 'silver'), fake);
-  assert.deepEqual(loadProgress(fake).cleared[MISSIONS[0].id], {time: 200, medal: 'silver'});
+  assert.deepEqual(loadProgress(fake).cleared[MISSIONS[0].id], {time: 200, medal: 'silver', difficulty: 'standard'});
   assert.equal(store.get('frontier-campaign-v1'), JSON.stringify({cleared: {'first-contact': 300}}), 'v1 data is untouched');
   assert.ok(store.has('frontier-campaign-v2'));
   store.set('frontier-campaign-v2', '{oops');

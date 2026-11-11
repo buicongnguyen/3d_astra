@@ -414,3 +414,9 @@
   }
   .compact-ui #start { --start-backing: var(--ink-1); bottom: 0; }
 }
+
+/* Campaign difficulty stays keyboard accessible and touch sized in both orientations. */
+.difficulty-buttons { display:flex; gap:6px; }
+.difficulty-buttons button { flex:1; min-width:44px; min-height:44px; font-size:12px; }
+.difficulty-buttons button[aria-pressed="true"] { border-color:var(--team-friendly,#92ebc5); background:#24483f; }
+#difficulty-description { font-size:12px; line-height:1.4; margin:6px 0; }

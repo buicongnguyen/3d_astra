@@ -1,0 +1,924 @@
+{
+  "difficulty": {
+    "story": [
+      {
+        "mission": "m01-first-light",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 305
+      },
+      {
+        "mission": "m01-first-light",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 427
+      },
+      {
+        "mission": "m02-first-contact",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 305
+      },
+      {
+        "mission": "m02-first-contact",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 475
+      },
+      {
+        "mission": "m03-the-ashen-line",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 305
+      },
+      {
+        "mission": "m03-the-ashen-line",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 581
+      },
+      {
+        "mission": "m04-three-way-dunes",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 305
+      },
+      {
+        "mission": "m04-three-way-dunes",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 545
+      },
+      {
+        "mission": "m05-the-verdant-pact",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m05-the-verdant-pact",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 507
+      },
+      {
+        "mission": "m06-copper-harvest",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m06-copper-harvest",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 646
+      },
+      {
+        "mission": "m07-copper-siege",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m07-copper-siege",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 660
+      },
+      {
+        "mission": "m08-the-quiet-vault",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m08-the-quiet-vault",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 482
+      },
+      {
+        "mission": "m09-a-debt-in-the-dunes",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m09-a-debt-in-the-dunes",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 408
+      },
+      {
+        "mission": "m10-obsidian-storm",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m10-obsidian-storm",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 583
+      },
+      {
+        "mission": "m11-cut-the-draw",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m11-cut-the-draw",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 421
+      },
+      {
+        "mission": "m12-frontiers-end",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m12-frontiers-end",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 774
+      }
+    ],
+    "standard": [
+      {
+        "mission": "m01-first-light",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 305
+      },
+      {
+        "mission": "m01-first-light",
+        "bot": "generic",
+        "result": "victory",
+        "seconds": 428
+      },
+      {
+        "mission": "m01-first-light",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 427
+      },
+      {
+        "mission": "m02-first-contact",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 305
+      },
+      {
+        "mission": "m02-first-contact",
+        "bot": "generic",
+        "result": "running",
+        "seconds": 485
+      },
+      {
+        "mission": "m02-first-contact",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 529
+      },
+      {
+        "mission": "m03-the-ashen-line",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 305
+      },
+      {
+        "mission": "m03-the-ashen-line",
+        "bot": "generic",
+        "result": "running",
+        "seconds": 485
+      },
+      {
+        "mission": "m03-the-ashen-line",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 470
+      },
+      {
+        "mission": "m04-three-way-dunes",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 305
+      },
+      {
+        "mission": "m04-three-way-dunes",
+        "bot": "generic",
+        "result": "running",
+        "seconds": 485
+      },
+      {
+        "mission": "m04-three-way-dunes",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 643
+      },
+      {
+        "mission": "m05-the-verdant-pact",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m05-the-verdant-pact",
+        "bot": "generic",
+        "result": "running",
+        "seconds": 485
+      },
+      {
+        "mission": "m05-the-verdant-pact",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 509
+      },
+      {
+        "mission": "m06-copper-harvest",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m06-copper-harvest",
+        "bot": "generic",
+        "result": "running",
+        "seconds": 485
+      },
+      {
+        "mission": "m06-copper-harvest",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 661
+      },
+      {
+        "mission": "m07-copper-siege",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m07-copper-siege",
+        "bot": "generic",
+        "result": "running",
+        "seconds": 485
+      },
+      {
+        "mission": "m07-copper-siege",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 660
+      },
+      {
+        "mission": "m08-the-quiet-vault",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m08-the-quiet-vault",
+        "bot": "generic",
+        "result": "running",
+        "seconds": 485
+      },
+      {
+        "mission": "m08-the-quiet-vault",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 652
+      },
+      {
+        "mission": "m09-a-debt-in-the-dunes",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m09-a-debt-in-the-dunes",
+        "bot": "generic",
+        "result": "running",
+        "seconds": 485
+      },
+      {
+        "mission": "m09-a-debt-in-the-dunes",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 693
+      },
+      {
+        "mission": "m10-obsidian-storm",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m10-obsidian-storm",
+        "bot": "generic",
+        "result": "running",
+        "seconds": 485
+      },
+      {
+        "mission": "m10-obsidian-storm",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 845
+      },
+      {
+        "mission": "m11-cut-the-draw",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m11-cut-the-draw",
+        "bot": "generic",
+        "result": "running",
+        "seconds": 485
+      },
+      {
+        "mission": "m11-cut-the-draw",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 644
+      },
+      {
+        "mission": "m12-frontiers-end",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 215
+      },
+      {
+        "mission": "m12-frontiers-end",
+        "bot": "generic",
+        "result": "running",
+        "seconds": 485
+      },
+      {
+        "mission": "m12-frontiers-end",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 778
+      }
+    ],
+    "veteran": [
+      {
+        "mission": "m01-first-light",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 155
+      },
+      {
+        "mission": "m01-first-light",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 427
+      },
+      {
+        "mission": "m02-first-contact",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 155
+      },
+      {
+        "mission": "m02-first-contact",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 615
+      },
+      {
+        "mission": "m03-the-ashen-line",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 155
+      },
+      {
+        "mission": "m03-the-ashen-line",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 465
+      },
+      {
+        "mission": "m04-three-way-dunes",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 155
+      },
+      {
+        "mission": "m04-three-way-dunes",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 603
+      },
+      {
+        "mission": "m05-the-verdant-pact",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 155
+      },
+      {
+        "mission": "m05-the-verdant-pact",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 596
+      },
+      {
+        "mission": "m06-copper-harvest",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 155
+      },
+      {
+        "mission": "m06-copper-harvest",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 678
+      },
+      {
+        "mission": "m07-copper-siege",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 155
+      },
+      {
+        "mission": "m07-copper-siege",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 660
+      },
+      {
+        "mission": "m08-the-quiet-vault",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 155
+      },
+      {
+        "mission": "m08-the-quiet-vault",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 558
+      },
+      {
+        "mission": "m09-a-debt-in-the-dunes",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 155
+      },
+      {
+        "mission": "m09-a-debt-in-the-dunes",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 370
+      },
+      {
+        "mission": "m10-obsidian-storm",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 155
+      },
+      {
+        "mission": "m10-obsidian-storm",
+        "bot": "objective",
+        "result": "defeat",
+        "seconds": 648
+      },
+      {
+        "mission": "m11-cut-the-draw",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 155
+      },
+      {
+        "mission": "m11-cut-the-draw",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 1026
+      },
+      {
+        "mission": "m12-frontiers-end",
+        "bot": "passive",
+        "result": "running",
+        "seconds": 155
+      },
+      {
+        "mission": "m12-frontiers-end",
+        "bot": "objective",
+        "result": "victory",
+        "seconds": 749
+      }
+    ]
+  },
+  "skirmish": [
+    {
+      "speed": "relaxed",
+      "map": "classic",
+      "attackAt": 12,
+      "result": "victory",
+      "seconds": 419,
+      "msPerTick": 0.17716779316933365
+    },
+    {
+      "speed": "relaxed",
+      "map": "classic",
+      "attackAt": 16,
+      "result": "victory",
+      "seconds": 577,
+      "msPerTick": 0.1866126517516476
+    },
+    {
+      "speed": "relaxed",
+      "map": "classic",
+      "attackAt": 20,
+      "result": "victory",
+      "seconds": 336,
+      "msPerTick": 0.18083884924174848
+    },
+    {
+      "speed": "relaxed",
+      "map": "classic",
+      "attackAt": 24,
+      "result": "victory",
+      "seconds": 406,
+      "msPerTick": 0.20863443733070675
+    },
+    {
+      "speed": "relaxed",
+      "map": "riverlands",
+      "attackAt": 12,
+      "result": "victory",
+      "seconds": 197,
+      "msPerTick": 0.14053939008894537
+    },
+    {
+      "speed": "relaxed",
+      "map": "riverlands",
+      "attackAt": 16,
+      "result": "victory",
+      "seconds": 515,
+      "msPerTick": 0.19381311698406534
+    },
+    {
+      "speed": "relaxed",
+      "map": "riverlands",
+      "attackAt": 20,
+      "result": "victory",
+      "seconds": 594,
+      "msPerTick": 0.22276748610877248
+    },
+    {
+      "speed": "relaxed",
+      "map": "riverlands",
+      "attackAt": 24,
+      "result": "victory",
+      "seconds": 429,
+      "msPerTick": 0.2884896399021093
+    },
+    {
+      "speed": "relaxed",
+      "map": "dunes",
+      "attackAt": 12,
+      "result": "victory",
+      "seconds": 391,
+      "msPerTick": 0.29092987843889956
+    },
+    {
+      "speed": "relaxed",
+      "map": "dunes",
+      "attackAt": 16,
+      "result": "victory",
+      "seconds": 579,
+      "msPerTick": 0.40057748727241344
+    },
+    {
+      "speed": "relaxed",
+      "map": "dunes",
+      "attackAt": 20,
+      "result": "victory",
+      "seconds": 462,
+      "msPerTick": 0.32366000216497104
+    },
+    {
+      "speed": "relaxed",
+      "map": "dunes",
+      "attackAt": 24,
+      "result": "victory",
+      "seconds": 485,
+      "msPerTick": 0.3555311095071148
+    },
+    {
+      "summary": "relaxed",
+      "games": 12,
+      "winRate": 100,
+      "medianSeconds": 445.5
+    },
+    {
+      "speed": "normal",
+      "map": "classic",
+      "attackAt": 12,
+      "result": "victory",
+      "seconds": 286,
+      "msPerTick": 0.19824599650349617
+    },
+    {
+      "speed": "normal",
+      "map": "classic",
+      "attackAt": 16,
+      "result": "victory",
+      "seconds": 324,
+      "msPerTick": 0.21130213094502767
+    },
+    {
+      "speed": "normal",
+      "map": "classic",
+      "attackAt": 20,
+      "result": "victory",
+      "seconds": 350,
+      "msPerTick": 0.23803109207708792
+    },
+    {
+      "speed": "normal",
+      "map": "classic",
+      "attackAt": 24,
+      "result": "victory",
+      "seconds": 483,
+      "msPerTick": 0.26581424728401426
+    },
+    {
+      "speed": "normal",
+      "map": "riverlands",
+      "attackAt": 12,
+      "result": "victory",
+      "seconds": 230,
+      "msPerTick": 0.2107959494773516
+    },
+    {
+      "speed": "normal",
+      "map": "riverlands",
+      "attackAt": 16,
+      "result": "victory",
+      "seconds": 263,
+      "msPerTick": 0.25227729257641934
+    },
+    {
+      "speed": "normal",
+      "map": "riverlands",
+      "attackAt": 20,
+      "result": "victory",
+      "seconds": 312,
+      "msPerTick": 0.2450510961753881
+    },
+    {
+      "speed": "normal",
+      "map": "riverlands",
+      "attackAt": 24,
+      "result": "victory",
+      "seconds": 351,
+      "msPerTick": 0.25181376708428255
+    },
+    {
+      "speed": "normal",
+      "map": "dunes",
+      "attackAt": 12,
+      "result": "victory",
+      "seconds": 232,
+      "msPerTick": 0.1666555914673569
+    },
+    {
+      "speed": "normal",
+      "map": "dunes",
+      "attackAt": 16,
+      "result": "victory",
+      "seconds": 264,
+      "msPerTick": 0.191192284417549
+    },
+    {
+      "speed": "normal",
+      "map": "dunes",
+      "attackAt": 20,
+      "result": "victory",
+      "seconds": 314,
+      "msPerTick": 0.22710839974497957
+    },
+    {
+      "speed": "normal",
+      "map": "dunes",
+      "attackAt": 24,
+      "result": "victory",
+      "seconds": 357,
+      "msPerTick": 0.2416784654158502
+    },
+    {
+      "summary": "normal",
+      "games": 12,
+      "winRate": 100,
+      "medianSeconds": 313
+    },
+    {
+      "speed": "fast",
+      "map": "classic",
+      "attackAt": 12,
+      "result": "victory",
+      "seconds": 245,
+      "msPerTick": 0.14366522894521613
+    },
+    {
+      "speed": "fast",
+      "map": "classic",
+      "attackAt": 16,
+      "result": "victory",
+      "seconds": 370,
+      "msPerTick": 0.1856347514856828
+    },
+    {
+      "speed": "fast",
+      "map": "classic",
+      "attackAt": 20,
+      "result": "victory",
+      "seconds": 370,
+      "msPerTick": 0.2288075323974077
+    },
+    {
+      "speed": "fast",
+      "map": "classic",
+      "attackAt": 24,
+      "result": "victory",
+      "seconds": 405,
+      "msPerTick": 0.2708487040236978
+    },
+    {
+      "speed": "fast",
+      "map": "riverlands",
+      "attackAt": 12,
+      "result": "victory",
+      "seconds": 233,
+      "msPerTick": 0.17220176192522632
+    },
+    {
+      "speed": "fast",
+      "map": "riverlands",
+      "attackAt": 16,
+      "result": "victory",
+      "seconds": 336,
+      "msPerTick": 0.21821242921013398
+    },
+    {
+      "speed": "fast",
+      "map": "riverlands",
+      "attackAt": 20,
+      "result": "victory",
+      "seconds": 604,
+      "msPerTick": 0.27822827597617433
+    },
+    {
+      "speed": "fast",
+      "map": "riverlands",
+      "attackAt": 24,
+      "result": "victory",
+      "seconds": 414,
+      "msPerTick": 0.27560612985128763
+    },
+    {
+      "speed": "fast",
+      "map": "dunes",
+      "attackAt": 12,
+      "result": "victory",
+      "seconds": 413,
+      "msPerTick": 0.19822874258743767
+    },
+    {
+      "speed": "fast",
+      "map": "dunes",
+      "attackAt": 16,
+      "result": "victory",
+      "seconds": 366,
+      "msPerTick": 0.282974024024024
+    },
+    {
+      "speed": "fast",
+      "map": "dunes",
+      "attackAt": 20,
+      "result": "victory",
+      "seconds": 417,
+      "msPerTick": 0.34669084152481433
+    },
+    {
+      "speed": "fast",
+      "map": "dunes",
+      "attackAt": 24,
+      "result": "victory",
+      "seconds": 410,
+      "msPerTick": 0.2864032686913036
+    },
+    {
+      "summary": "fast",
+      "games": 12,
+      "winRate": 100,
+      "medianSeconds": 387.5
+    },
+    {
+      "speed": "relentless",
+      "map": "classic",
+      "attackAt": 12,
+      "result": "victory",
+      "seconds": 224,
+      "msPerTick": 0.1438140241179078
+    },
+    {
+      "speed": "relentless",
+      "map": "classic",
+      "attackAt": 16,
+      "result": "victory",
+      "seconds": 382,
+      "msPerTick": 0.18956241004840924
+    },
+    {
+      "speed": "relentless",
+      "map": "classic",
+      "attackAt": 20,
+      "result": "victory",
+      "seconds": 440,
+      "msPerTick": 0.22908724733136543
+    },
+    {
+      "speed": "relentless",
+      "map": "classic",
+      "attackAt": 24,
+      "result": "victory",
+      "seconds": 493,
+      "msPerTick": 0.23794043848964758
+    },
+    {
+      "speed": "relentless",
+      "map": "riverlands",
+      "attackAt": 12,
+      "result": "victory",
+      "seconds": 282,
+      "msPerTick": 0.15833115916341867
+    },
+    {
+      "speed": "relentless",
+      "map": "riverlands",
+      "attackAt": 16,
+      "result": "victory",
+      "seconds": 297,
+      "msPerTick": 0.19195441374663005
+    },
+    {
+      "speed": "relentless",
+      "map": "riverlands",
+      "attackAt": 20,
+      "result": "victory",
+      "seconds": 344,
+      "msPerTick": 0.23056506321755643
+    },
+    {
+      "speed": "relentless",
+      "map": "riverlands",
+      "attackAt": 24,
+      "result": "victory",
+      "seconds": 403,
+      "msPerTick": 0.2580920426375796
+    },
+    {
+      "speed": "relentless",
+      "map": "dunes",
+      "attackAt": 12,
+      "result": "victory",
+      "seconds": 326,
+      "msPerTick": 0.17535864823348646
+    },
+    {
+      "speed": "relentless",
+      "map": "dunes",
+      "attackAt": 16,
+      "result": "victory",
+      "seconds": 394,
+      "msPerTick": 0.20974693049213528
+    },
+    {
+      "speed": "relentless",
+      "map": "dunes",
+      "attackAt": 20,
+      "result": "victory",
+      "seconds": 417,
+      "msPerTick": 0.23848498260765214
+    },
+    {
+      "speed": "relentless",
+      "map": "dunes",
+      "attackAt": 24,
+      "result": "victory",
+      "seconds": 617,
+      "msPerTick": 0.41550471093813296
+    },
+    {
+      "summary": "relentless",
+      "games": 12,
+      "winRate": 100,
+      "medianSeconds": 388
+    }
+  ]
+}

@@ -66,17 +66,19 @@ try{
     // Wrecks animate, then the collapse removes them; pause (dt 0) freezes everything.
     const before=v.fx.active;render(s,0,f.selected,null);const paused=v.fx.active===before;
     const heights=[];for(let i=0;i<200;i++){advance();if(i%50===0)heights.push(v.dying.find(d=>d.kind==='building')?.object.position.y??null);}
-    const done={dying:v.dying.length};
+    const done={dying:v.dying.length,kinds:v.dying.map(d=>d.kind)};
     for(let i=0;i<1100;i++)advance(); // the building scorch lasts 20 s
     frame();
-    return {selection,idleCalls,busy,paused,heights,done,settled:v.fx.active,settledCalls:v.renderer.info.render.calls};
+    return {selection,idleCalls,busy,paused,heights,done,settled:v.fx.active,expiredWrecks:v.dying.length,settledCalls:v.renderer.info.render.calls};
   });
   assert.deepEqual(fx.selection,{ring:true,bar:true},'selected units show ring and vitals');
   assert.ok(fx.busy.particles>150&&fx.busy.dying===2&&fx.busy.debris>0,`effects spawned: ${JSON.stringify(fx.busy)}`);
   assert.ok(fx.busy.calls<=fx.idleCalls+2,`effects keep a fixed draw-call budget: ${fx.idleCalls} -> ${fx.busy.calls}`);
   assert.ok(fx.paused,'paused effects do not advance');
   assert.ok(fx.heights[0]>fx.heights[3],'the destroyed building sinks');
-  assert.equal(fx.done.dying,0,'wrecks are removed after their animation');
+  assert.equal(fx.done.dying,1,'the vehicle wreck persists after the building collapse');
+  assert.deepEqual(fx.done.kinds,['vehicle']);
+  assert.equal(fx.expiredWrecks,0,'wrecks are removed after their new 20 second lifetime');
   assert.equal(fx.settled,0,'every effect expires');
   await page.screenshot({path:'test-results/boundary-fx.png'});
   // Reduced motion: no debris or drift, yet destruction stays visible.

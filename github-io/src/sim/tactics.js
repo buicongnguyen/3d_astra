@@ -95,10 +95,11 @@ export const tactics = {
       const due = this.strikes.filter((s) => this.time >= s.at);
       if (due.length) this.strikes = this.strikes.filter((s) => this.time < s.at);
       for (const s of due) {
+        const eventStart = this.events.length;
         for (const t of this.entities)
           if (t.hp > 0 && this.hostile(s.team, t.team) && distance(t, s) - (t.kind === "unit" ? 0 : t.radius) <= s.radius)
             this.applyDamage(t, s.damage * (t.kind === "unit" ? 1 : 0.5), s.team, s.by);
-        this.events.push({ type: "strike", x: s.x, z: s.z, radius: s.radius, team: s.team });
+        this.events.push({ type: "strike", x: s.x, z: s.z, radius: s.radius, team: s.team, victims: this.events.slice(eventStart).filter(e => e.type === "death" && !e.building).map(e => ({x:e.x,z:e.z,team:e.team})) });
       }
     }
     this.castClock = (this.castClock ?? 0) - dt;

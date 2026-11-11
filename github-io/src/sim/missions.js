@@ -1,3 +1,4 @@
+import { difficultyRules, difficultySpeed, objectiveText } from "../difficulty.js";
 import { DEFINITIONS as D, distance } from "../data.js";
 
 // Campaign missions (format: docs/MISSIONS.md). A mission is plain data given to the
@@ -39,6 +40,7 @@ export const missions = {
     }
     this.entities = this.entities.filter((e) => e.hp > 0);
     for (const step of def.setup || []) this.missionSetup(step);
+    this.players[0].alloy += difficultyRules(this).alloy;
     this.nav.rebuild(this.entities);
     this.updateVision();
   },
@@ -62,7 +64,8 @@ export const missions = {
     }
     return { x: place.x, z: place.z };
   },
-  missionSpawn({ spawn, team = 0, at, count = 1, tag, name, hp, speed, complete = true }) {
+  missionSpawn({ spawn, team = 0, at, count = 1, tag, name, hp, hpByDifficulty, speed, complete = true }) {
+    hp = hpByDifficulty?.[this.difficulty] ?? hp;
     const d = D[spawn];
     if (!d || !this.players[team]) return [];
     const place = this.missionPlace(at, team), made = [];
@@ -204,7 +207,7 @@ export const missions = {
       const from = this.missionPlace(a.wave.from ?? "enemyBase", team), target = this.missionPlace(a.wave.target ?? "playerBase", team);
       const ids = [];
       for (const [type, count] of Object.entries(a.wave.units))
-        for (const e of this.missionSpawn({ spawn: type, team, at: from, count })) ids.push(e.id);
+        for (const e of this.missionSpawn({ spawn: type, team, at: from, count: Math.max(1, Math.ceil(count * difficultyRules(this).wave)) })) ids.push(e.id);
       if (ids.length) {
         this.issue(ids, { type: "attackmove", x: target.x, z: target.z });
         this.events.push({ type: "incoming", team: 0, x: from.x, z: from.z, count: ids.length });
@@ -215,7 +218,7 @@ export const missions = {
     else if (a.fail) this.setObjective(a.fail, "failed");
     else if (a.give) for (const [type, amount] of Object.entries(a.give)) { this.players[0][type] += amount; this.missionBank(0, type, amount); }
     else if (a.camera || a.ping) { const p = this.missionPlace(a.camera || a.ping); this.events.push({ type: a.camera ? "camera" : "ping", x: p.x, z: p.z }); }
-    else if (a.aiSpeed) this.setAiSpeed(a.aiSpeed);
+    else if (a.aiSpeed) this.setAiSpeed(difficultySpeed(a.aiSpeed, this.difficulty));
     else if (a.music) this.events.push({ type: "music", mood: a.music });
   },
   // Victory, defeat or null, called from settle() with which teams still stand.
@@ -231,9 +234,9 @@ export const missions = {
     const won = !lost && def.win.every((id) => m.objectives[id]?.state === "done");
     if (!lost && !won) return null;
     if (won) {
-      for (const o of def.objectives) if (o.type === "timeUnder") this.setObjective(o.id, m.clock < o.seconds ? "done" : "failed");
+      for (const o of def.objectives) if (o.type === "timeUnder") this.setObjective(o.id, m.clock < o.seconds * difficultyRules(this).time ? "done" : "failed");
       const medals = def.medals || {};
-      m.medal = medals.gold && m.clock <= medals.gold.seconds ? "gold" : medals.silver && m.clock <= medals.silver.seconds ? "silver" : "bronze";
+      m.medal = medals.gold && m.clock <= medals.gold.seconds * difficultyRules(this).time ? "gold" : medals.silver && m.clock <= medals.silver.seconds * difficultyRules(this).time ? "silver" : "bronze";
     }
     this.events.push({ type: "missionEnd", result: won ? "victory" : "defeat", medal: m.medal, seconds: m.clock });
     return won ? "victory" : "defeat";
@@ -243,7 +246,7 @@ export const missions = {
     if (!this.mission) return null;
     return this.missionDef.objectives.filter((o) => !this.mission.objectives[o.id].hidden).map((o) => {
       const s = this.mission.objectives[o.id];
-      return { id: o.id, text: o.text, type: o.type, optional: !!o.optional, state: s.state, have: s.have, held: s.held, need: o.need ?? o.count ?? 1, seconds: o.seconds ?? 0 };
+      return { id: o.id, text: objectiveText(o, this.difficulty), type: o.type, optional: !!o.optional, state: s.state, have: s.have, held: s.held, need: o.need ?? o.count ?? 1, seconds: (o.seconds ?? 0) * (o.type === "timeUnder" ? difficultyRules(this).time : 1) };
     });
   },
 };

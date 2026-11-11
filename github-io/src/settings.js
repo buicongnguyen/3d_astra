@@ -14,6 +14,7 @@ export function defaults(coarse = false) {
   return {
     version: 1,
     language: "en",
+    campaignDifficulty: "standard",
     playerColor: "mint",
     enemyColor: "coral",
     quality: coarse ? "eco" : "high",
@@ -33,6 +34,7 @@ export function defaults(coarse = false) {
 export function normalize(value, coarse = false) {
   const d = defaults(coarse);
   if (!value || value.version !== 1) return d;
+  if (["story", "standard", "veteran"].includes(value.campaignDifficulty)) d.campaignDifficulty = value.campaignDifficulty;
   if (["en", "vi"].includes(value.language)) d.language = value.language;
   for (const key of ["playerColor", "enemyColor"])
     if (Object.hasOwn(PRESETS, value[key])) d[key] = value[key];

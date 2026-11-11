@@ -8,10 +8,11 @@ import { distance } from './data.js';
 // Sentinel towers once its Foundry stands, as the player can.
 export const AI_SPEEDS = {
   relaxed: { label: 'Relaxed', think: 4, workers: 7, foundryAt: 160, techAt: [240, 420], upgradeAt: 280, firstWave: 210, waveGap: 90, minWave: 4, towers: 0, towerAt: Infinity, army: [3, 2] },
-  normal: { label: 'Normal', counter: true, think: 2.5, workers: 9, foundryAt: 100, techAt: [160, 300], upgradeAt: 190, expandAt: 300, firstWave: 110, waveGap: 50, minWave: 4, towers: 1, towerAt: 180, army: [5, 3] },
-  fast: { label: 'Fast', counter: true, think: 1.5, workers: 11, foundryAt: 80, techAt: [120, 240], upgradeAt: 150, expandAt: 220, firstWave: 70, waveGap: 42, minWave: 5, towers: 1, towerAt: 120, army: [7, 4] },
-  relentless: { label: 'Relentless', counter: true, think: 1, workers: 12, foundryAt: 60, techAt: [95, 190], upgradeAt: 115, expandAt: 160, firstWave: 60, waveGap: 34, minWave: 5, secondBarracks: 150, towers: 2, towerAt: 90 },
+  normal: { skirmish: { army: [7,4], defendRadius: 35 }, label: 'Normal', counter: true, think: 2.5, workers: 9, foundryAt: 100, techAt: [160, 300], upgradeAt: 190, expandAt: 300, firstWave: 110, waveGap: 50, minWave: 4, towers: 1, towerAt: 180, army: [5, 3] },
+  fast: { skirmish: { army: [10,5], defendRadius: 40 }, label: 'Fast', counter: true, think: 1.5, workers: 11, foundryAt: 80, techAt: [120, 240], upgradeAt: 150, expandAt: 220, firstWave: 70, waveGap: 42, minWave: 5, towers: 1, towerAt: 120, army: [7, 4] },
+  relentless: { skirmish: { defendRadius: 45 }, label: 'Relentless', counter: true, think: 1, workers: 12, foundryAt: 60, techAt: [95, 190], upgradeAt: 115, expandAt: 160, firstWave: 60, waveGap: 34, minWave: 5, secondBarracks: 150, towers: 2, towerAt: 90 },
 };
+export const aiPace = (speed, mission = false) => mission ? AI_SPEEDS[speed] : {...AI_SPEEDS[speed], ...AI_SPEEDS[speed].skirmish};
 export const ALLIANCES = { ffa: 'Free-for-all', coalition: 'United against you' };
 
 // In a coalition each AI has a role: the first leads the main assault, the second

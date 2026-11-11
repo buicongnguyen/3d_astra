@@ -1,4 +1,5 @@
 {
+  "difficulty": {"story":{"wave":0.7,"damage":0.8,"alloy":150,"time":1.25},"standard":{"wave":1,"damage":1,"alloy":0,"time":1},"veteran":{"wave":1.35,"damage":1.1,"alloy":0,"time":1}},
   "definitions": {
     "worker": {
       "name": "Harvester",

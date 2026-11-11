@@ -72,3 +72,19 @@ Every visible English string is its own key in `locales/vi.json` (`messages`, ma
 - Fogged enemies are never revealed by anything visual or audible.
 - Visual changes need a before/after table of draw calls, triangles and frame time on a phone viewport.
 - Materials and shader programs outlive match restarts.
+
+## Stage 1 presentation and audio
+
+`camera-shake.js` owns deterministic cosmetic trauma. `visual-style.json.feel` contains the feedback settings. The view temporarily offsets the camera only during rendering and slows only cosmetic delta time during hit-stop. The rules emit presentation metadata but never read view state.
+
+`audio-mix.js` holds mix parameters and audition names. VoiceBudget enforces the burst ceiling; CombatMix counts only audible effects accepted by the voice budget. AudioDirector applies combat attenuation to the music bus independently of dialogue ducking.
+
+| Moment | Cue | Dispatch |
+|---|---|---|
+| Unit ready | trained | spawn event |
+| Research done | research | research event |
+| Building lost | boom:building | death event |
+| Objective done / failed | objective / objective-failed | mission UI |
+| Mission won / lost | win / lose | result flow |
+
+The settings Audio tab previews every cue without resuming the simulation. Mute and volume settings still apply.

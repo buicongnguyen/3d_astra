@@ -127,3 +127,26 @@ try {
   }
   console.log('Skirmish AI speed and alliance, campaign unlocks, next mission, retry, saved progress, mission bonus and phone layout passed.');
 } finally { await browser.close(); }
+
+// Difficulty controls use the common harness at the three supported viewport sizes.
+const {launchBrowser,openPage,suite} = await import('./lib/harness.mjs');
+const difficultyBrowser = await launchBrowser();
+await suite('campaign difficulty',async()=>{
+  for(const viewport of ['desktop','portrait','landscape']) {
+    const {page,goto,ready,tap,errors}=await openPage(difficultyBrowser,viewport);
+    await goto();await ready();await tap('[data-mode="campaign"]');
+    await tap('[data-difficulty="story"]');
+    assert.equal(await page.evaluate(()=>window.__frontier.sim.difficulty),'story');
+    await tap('[data-difficulty="veteran"]');
+    assert.equal(await page.evaluate(()=>window.__frontier.sim.difficulty),'veteran');
+    const dimensions=await page.locator('[data-difficulty]').evaluateAll(buttons=>buttons.map(b=>({width:b.getBoundingClientRect().width,height:b.getBoundingClientRect().height,font:parseFloat(getComputedStyle(b).fontSize)})));
+    for(const d of dimensions) assert.ok(d.width>=44&&d.height>=44&&d.font>=11,JSON.stringify(d));
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    await page.reload();await ready();await tap('[data-mode="campaign"]');
+    assert.equal(await page.locator('[data-difficulty="veteran"]').getAttribute('aria-pressed'),'true');
+    await page.evaluate(()=>{const k='frontier-command.settings.v1',s=JSON.parse(localStorage.getItem(k));s.language='vi';localStorage.setItem(k,JSON.stringify(s));});
+    await page.reload();await ready();await tap('[data-mode="campaign"]');
+    await page.waitForFunction(()=>document.querySelector('[data-difficulty="veteran"]').textContent.includes('Kỳ cựu'));
+    assert.deepEqual(errors,[]);await page.close();
+  }
+},{browser:difficultyBrowser});

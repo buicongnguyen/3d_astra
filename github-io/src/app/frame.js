@@ -122,6 +122,7 @@ export function setupFrame(S, A) {
     }
     const beatScale = A.stepBeat(dt);
     const events = S.sim.events.splice(0);
+    S.view.cameraCue = !!S.cameraPan || events.some(e => e.type === "camera");
     for (const event of events) {
       if (event.type === "impact" && event.team === 0 && Z.started) underAttack(event);
       if (Z.started) S.audio?.event(event, S.sim);

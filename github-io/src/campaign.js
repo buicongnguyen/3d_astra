@@ -1,3 +1,4 @@
+import { DIFFICULTIES, difficultyId } from "./difficulty.js";
 // Campaign: the twelve story missions (src/story/missions.js) played in order. This module is
 // the pure progress record: which missions are cleared, with the best time and best medal.
 // Progress is kept in this browser only, under a new key; the older seven-stage record
@@ -27,7 +28,7 @@ export function loadProgress(store = storage()) {
     if (cleared && typeof cleared === "object")
       for (const [id, entry] of Object.entries(cleared))
         if (entry && typeof entry === "object" && validTime(entry.time))
-          out[id] = { time: entry.time, medal: rank(entry.medal) >= 0 ? entry.medal : "bronze" };
+          out[id] = { time: entry.time, medal: rank(entry.medal) >= 0 ? entry.medal : "bronze", difficulty: difficultyId(entry.difficulty) };
     return { cleared: out };
   } catch {
     return { cleared: {} };
@@ -44,13 +45,14 @@ export const isUnlocked = (progress, index) => index === 0 || (index > 0 && inde
 export const bestTime = (progress, index) => (isCleared(progress, index) ? entry(progress, index).time : null);
 export const bestMedal = (progress, index) => (isCleared(progress, index) ? entry(progress, index).medal : null);
 // Keeps the best (shortest) time and the best medal, each on its own.
-export function recordClear(progress, index, time, medal = "bronze") {
+export function recordClear(progress, index, time, medal = "bronze", difficulty = "standard") {
   const id = MISSIONS[index].id, old = isCleared(progress, index) ? progress.cleared[id] : null;
   const earned = rank(medal) >= 0 ? medal : "bronze";
   return {
     cleared: {
       ...progress.cleared,
       [id]: {
+        difficulty: DIFFICULTIES[Math.max(old ? DIFFICULTIES.indexOf(difficultyId(old.difficulty)) : 0, DIFFICULTIES.indexOf(difficultyId(difficulty)))],
         time: old ? Math.min(old.time, time) : time,
         medal: old && rank(old.medal) > rank(earned) ? old.medal : earned,
       },

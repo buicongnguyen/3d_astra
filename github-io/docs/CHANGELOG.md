@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.10.0-alpha.4: Stage 1 implementation (local validation in progress)
+
+- Package 1.1: deterministic distance-attenuated camera shake, render-only hit-stop, 80 ms ring/vitals flashes, projected unit readability, directed infantry falls, and 20 s vehicle wrecks (8 s Eco), capped at 24 oldest-first. Camera transforms are restored immediately after drawing. Motion preferences and mission camera cues suppress shake and hit-stop. Unit materials remain shared: ring/vitals flash is the explicitly permitted fallback because batches currently store transforms only.
+- At 390x844 the Engineer needed scale 1.00885 to reach 28 px; the other seven unit types already pass. The browser assertion allows 1e-9 px arithmetic roundoff (the initial projection returned 27.999999999999993).
+- Presentation-only death direction and Barrage victim coordinates were added to existing events; simulation timing and damage are unchanged by feedback.
+- Package 1.2: saved Story/Standard/Veteran choice, translated selector and debrief, highest difficulty in campaign progress, and Veteran clear marks. Legacy progress defaults to Standard; medals and best times remain independent. Benchmark tooling accepts `--difficulty`. Mission-specific `hpByDifficulty` setup data tunes the Story escort and late Veteran objectives without changing Standard.
+- Package 1.3: reproducible 48-game ladder (three maps, four attack thresholds, four speeds), reporting win rates and median duration. Skirmish pace overrides preserve campaign tempo. Full results are in BALANCE.md. The requested Normal/Fast/Relentless win-rate ranges remain unmet after regression-safe tuning; only Relaxed meets its target.
+- Package 1.4: three-identical-effects/80 ms ceiling, 4 dB combat music duck after more than six audible combat effects in one second, seeded +/-4% pitch, research completion cue, and seven keyboard/touch sound-preview buttons. Preview works while settings pause gameplay.
+- Existing progress-shape assertions now require the new difficulty field. The new time-limit fixture uses an independent required objective and an active optional deadline, matching real missions; it asserts victory and both difficulty-specific outcomes. No failure assertions were removed.
+
+Phone render benchmark (390x844, Eco, 4x CPU throttle, RTX 4080 SUPER; emulation, not a real phone):
+
+| Metric | Before | After feedback |
+|---|---:|---:|
+| Draw calls | 122 | 122 |
+| Triangles | 281045 | 281045 |
+| CPU render median ms | 5.8 | 5.9 |
+| CPU render p95 ms | 8.6 | 6.6 |
+| Stationary GPU buffer uploads | 0 | 0 |
+
+The 0.1 ms median difference is not evidence of real-phone equivalence. Draw counts, triangles, transform counts and idle upload budgets are unchanged; physical-device timing remains unverified.
+
+Offline sound cues at default gain (linear peak, RMS dBFS; RMS is not LUFS):
+
+| Cue | Peak | RMS dBFS |
+|---|---:|---:|
+| Unit ready | 0.117 | -44.9 |
+| Research done | 0.126 | -42.1 |
+| Building lost | 0.238 | -30.0 |
+| Objective done | 0.181 | -38.9 |
+| Objective failed | 0.172 | -38.6 |
+| Mission won | 0.239 | -34.0 |
+| Mission lost | 0.349 | -31.7 |
+
+All offline sanity checks passed; no cue clips. Listening quality needs the owner. Story wins 12/12, Standard meets its original targets, Veteran wins 11/12. Veteran mission 10 remains a strict-check failure after three tuning passes. The boundary-effects test now requires a vehicle wreck at 3.3 seconds and zero wrecks after 21.7 seconds, replacing its obsolete 3.3-second cleanup deadline. CI, deployment and real-device reviews have not been performed. See aaa/IMPLEMENTATION_PROGRESS.md for current validation and outstanding packages.
+
+
 ## 0.9.4: faction emblems and research tier II
 
 Faction emblems (story missions)

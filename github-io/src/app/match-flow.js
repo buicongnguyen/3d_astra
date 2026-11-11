@@ -36,7 +36,7 @@ export function setupMatchFlow(S, A) {
   function showDebrief(win) {
     const n = S.activeStage, m = S.sim.missionDef || MISSIONS[n], last = n === MISSIONS.length - 1;
     if (win) {
-      S.campaign = recordClear(S.campaign, n, S.sim.mission?.clock ?? S.sim.time, S.sim.mission?.medal || "bronze");
+      S.campaign = recordClear(S.campaign, n, S.sim.mission?.clock ?? S.sim.time, S.sim.mission?.medal || "bronze", S.sim.difficulty);
       saveProgress(S.campaign);
       S.stagePick = last ? n : n + 1;
     }
@@ -132,7 +132,7 @@ export function setupMatchFlow(S, A) {
   // Campaign: Start opens the mission briefing; the match begins from its "Begin mission".
   function openMissionBriefing() {
     Z.openBriefing();
-    A.missionUI.openBriefing(MISSIONS[S.stagePick], S.stagePick, { onBegin: () => { Z.closeBriefing(); beginMatch(); }, onBack: () => Z.closeBriefing() });
+    A.missionUI.openBriefing(MISSIONS[S.stagePick], S.stagePick, { difficulty: S.settings.campaignDifficulty, onBegin: () => { Z.closeBriefing(); beginMatch(); }, onBack: () => Z.closeBriefing() });
   }
 
   function beginMatch() {

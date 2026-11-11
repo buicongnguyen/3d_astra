@@ -173,6 +173,7 @@ export const economy = {
       d = D[q.type];
     q.elapsed += dt*(1+0.2*(b.level-1));
     if (q.elapsed < d.time) return;
+    if (["upgrade", "plating", "upgrade2", "plating2"].includes(q.type)) this.events.push({type:"research",team:b.team,x:b.x,z:b.z});
     if (q.type === "upgrade") {
       this.players[b.team].upgrade = true;
       b.queue.shift();
