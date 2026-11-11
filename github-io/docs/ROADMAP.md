@@ -25,8 +25,8 @@ Status of the rebuild plan ([REVIEW_AND_REBUILD_PLAN_2026-11.md](REVIEW_AND_REBU
 
 | Stage | Status |
 |---|---|
-| 1 Feel | Local code and regression checks complete; Veteran checker acceptance conflict and owner listening/play review pending |
-| 2 Factions | Pending; faction art approval required before wiring models |
+| 1 Feel | Pushed; CI/deployment green, documented balance exceptions accepted for continuation, owner play/listening review pending |
+| 2 Factions | Packages 2.0/2.1 implemented; twelve model candidates and review sheets ready; owner art approval required before wiring models |
 | 3 Battlefield | Pending; air unit requires explicit owner confirmation |
 | 4 Story | Pending |
 | 5 Replay | Pending |

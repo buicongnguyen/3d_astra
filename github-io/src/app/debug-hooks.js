@@ -10,6 +10,7 @@ export function setupDebugHooks(S, A) {
       get sim() {
         return S.sim;
       },
+      loadModels: types => A.loadAssets(types),
       get modelsReady() { return S.view?.modelsReady === true; },
       get view() {
         return S.view;

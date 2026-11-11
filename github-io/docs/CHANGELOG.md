@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.11.0-alpha.2: faction model candidates (package 2.2, approval pending)
+
+- Generated twelve original faction GLBs and a Blender source library. Manifest records exact topology counts and per-type budgets; every candidate passes geometry attributes, materials, rig names and quantization checks.
+- Added reproducible `generate_assets.py -- --factions` and eight labeled review sheets (four faction colors plus greyscale) in aaa/review/. Existing base regeneration preserves faction manifest entries.
+- Review rendering now fits all projected bounds and labels below the silhouettes; this corrects clipping in wide sheets and removes label shadows on the models.
+- Loader retains the Drone hover marker. Cosmetic hover phase honors pause, reduced motion, combat-motion preference and Eco. New repeated faction units have no shadow pass.
+- Superseded roster downloads no longer change the current progress/Retry state. Only the current loading request can finish startup or update readiness.
+- Candidates are not connected to live rosters or portraits. Package 2.2 explicitly requires owner approval before that integration.
+- Local validation: all 352 unit tests and 36 browser scripts pass. The final loading guards were also checked after rebuilding (model-loading, new-game and offline). All 36 standard mission bot outcomes/times exactly match Stage 1. New CI is pending the push.
+- Phone render budget stays at 122 draws and 281045 triangles; median CPU render time is 5.8 ms (previous verified 5.9 ms), p95 6.6 ms, zero idle GPU uploads. Measurements are 390x844 emulation on the same PC, not a physical phone.
+- CI partitions the slow layout job into status, desktop/tablet and mobile jobs while preserving every existing viewport and assertion. Invalid layout selections now fail explicitly.
+
 ## 0.11.0-alpha.1: faction rules framework (package 2.1)
 
 - Unit counters now target classes; all recorded base damage matchups remain unchanged. The pre-framework default 60-second simulation hash remains d071360b, including after save/load.

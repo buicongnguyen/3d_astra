@@ -1,0 +1,430 @@
+{
+  "unitTests": 352,
+  "browserSuites": [
+    {
+      "suite": "test:browser",
+      "exit": 0
+    },
+    {
+      "suite": "test:mobile",
+      "exit": 0
+    },
+    {
+      "suite": "test:mobile-controls",
+      "exit": 0
+    },
+    {
+      "suite": "test:mobile-gestures",
+      "exit": 0
+    },
+    {
+      "suite": "test:fullscreen",
+      "exit": 0
+    },
+    {
+      "suite": "test:mobile-construction",
+      "exit": 0
+    },
+    {
+      "suite": "test:webkit",
+      "exit": 0
+    },
+    {
+      "suite": "test:improvements",
+      "exit": 0
+    },
+    {
+      "suite": "test:progression",
+      "exit": 0
+    },
+    {
+      "suite": "test:stages",
+      "exit": 0
+    },
+    {
+      "suite": "test:corners",
+      "exit": 0
+    },
+    {
+      "suite": "test:auto-combat",
+      "exit": 0
+    },
+    {
+      "suite": "test:harvesters",
+      "exit": 0
+    },
+    {
+      "suite": "test:hotkeys",
+      "exit": 0
+    },
+    {
+      "suite": "test:pc-controls",
+      "exit": 0
+    },
+    {
+      "suite": "test:patrol",
+      "exit": 0
+    },
+    {
+      "suite": "test:activity",
+      "exit": 0
+    },
+    {
+      "suite": "test:status-layout",
+      "exit": 0
+    },
+    {
+      "suite": "test:language",
+      "exit": 0
+    },
+    {
+      "suite": "test:model-loading",
+      "exit": 0
+    },
+    {
+      "suite": "test:feel",
+      "exit": 0
+    },
+    {
+      "suite": "test:visual-combat",
+      "exit": 0
+    },
+    {
+      "suite": "test:new-game",
+      "exit": 0
+    },
+    {
+      "suite": "test:boundary-fx",
+      "exit": 0
+    },
+    {
+      "suite": "test:repair-rally",
+      "exit": 0
+    },
+    {
+      "suite": "test:campaign",
+      "exit": 0
+    },
+    {
+      "suite": "test:missions",
+      "exit": 0
+    },
+    {
+      "suite": "test:tactics-ui",
+      "exit": 0
+    },
+    {
+      "suite": "test:tutorial",
+      "exit": 0
+    },
+    {
+      "suite": "test:ui-quality",
+      "exit": 0
+    },
+    {
+      "suite": "test:layout-f",
+      "exit": 0
+    },
+    {
+      "suite": "test:ui-extras",
+      "exit": 0
+    },
+    {
+      "suite": "test:ambient-life",
+      "exit": 0
+    },
+    {
+      "suite": "test:render-budget",
+      "exit": 0
+    },
+    {
+      "suite": "test:audio",
+      "exit": 0
+    },
+    {
+      "suite": "test:offline",
+      "exit": 0
+    }
+  ],
+  "postfixChecks": [
+    "model-loading exit=0",
+    "new-game exit=0",
+    "offline exit=0",
+    "unit exit=0"
+  ],
+  "standardMissions": [
+    {
+      "mission": "m01-first-light",
+      "bot": "passive",
+      "result": "running",
+      "seconds": 305
+    },
+    {
+      "mission": "m01-first-light",
+      "bot": "generic",
+      "result": "victory",
+      "seconds": 428
+    },
+    {
+      "mission": "m01-first-light",
+      "bot": "objective",
+      "result": "victory",
+      "seconds": 427
+    },
+    {
+      "mission": "m02-first-contact",
+      "bot": "passive",
+      "result": "running",
+      "seconds": 305
+    },
+    {
+      "mission": "m02-first-contact",
+      "bot": "generic",
+      "result": "running",
+      "seconds": 485
+    },
+    {
+      "mission": "m02-first-contact",
+      "bot": "objective",
+      "result": "victory",
+      "seconds": 529
+    },
+    {
+      "mission": "m03-the-ashen-line",
+      "bot": "passive",
+      "result": "running",
+      "seconds": 305
+    },
+    {
+      "mission": "m03-the-ashen-line",
+      "bot": "generic",
+      "result": "running",
+      "seconds": 485
+    },
+    {
+      "mission": "m03-the-ashen-line",
+      "bot": "objective",
+      "result": "victory",
+      "seconds": 470
+    },
+    {
+      "mission": "m04-three-way-dunes",
+      "bot": "passive",
+      "result": "running",
+      "seconds": 305
+    },
+    {
+      "mission": "m04-three-way-dunes",
+      "bot": "generic",
+      "result": "running",
+      "seconds": 485
+    },
+    {
+      "mission": "m04-three-way-dunes",
+      "bot": "objective",
+      "result": "victory",
+      "seconds": 643
+    },
+    {
+      "mission": "m05-the-verdant-pact",
+      "bot": "passive",
+      "result": "running",
+      "seconds": 215
+    },
+    {
+      "mission": "m05-the-verdant-pact",
+      "bot": "generic",
+      "result": "running",
+      "seconds": 485
+    },
+    {
+      "mission": "m05-the-verdant-pact",
+      "bot": "objective",
+      "result": "victory",
+      "seconds": 509
+    },
+    {
+      "mission": "m06-copper-harvest",
+      "bot": "passive",
+      "result": "running",
+      "seconds": 215
+    },
+    {
+      "mission": "m06-copper-harvest",
+      "bot": "generic",
+      "result": "running",
+      "seconds": 485
+    },
+    {
+      "mission": "m06-copper-harvest",
+      "bot": "objective",
+      "result": "victory",
+      "seconds": 661
+    },
+    {
+      "mission": "m07-copper-siege",
+      "bot": "passive",
+      "result": "running",
+      "seconds": 215
+    },
+    {
+      "mission": "m07-copper-siege",
+      "bot": "generic",
+      "result": "running",
+      "seconds": 485
+    },
+    {
+      "mission": "m07-copper-siege",
+      "bot": "objective",
+      "result": "victory",
+      "seconds": 660
+    },
+    {
+      "mission": "m08-the-quiet-vault",
+      "bot": "passive",
+      "result": "running",
+      "seconds": 215
+    },
+    {
+      "mission": "m08-the-quiet-vault",
+      "bot": "generic",
+      "result": "running",
+      "seconds": 485
+    },
+    {
+      "mission": "m08-the-quiet-vault",
+      "bot": "objective",
+      "result": "victory",
+      "seconds": 652
+    },
+    {
+      "mission": "m09-a-debt-in-the-dunes",
+      "bot": "passive",
+      "result": "running",
+      "seconds": 215
+    },
+    {
+      "mission": "m09-a-debt-in-the-dunes",
+      "bot": "generic",
+      "result": "running",
+      "seconds": 485
+    },
+    {
+      "mission": "m09-a-debt-in-the-dunes",
+      "bot": "objective",
+      "result": "victory",
+      "seconds": 693
+    },
+    {
+      "mission": "m10-obsidian-storm",
+      "bot": "passive",
+      "result": "running",
+      "seconds": 215
+    },
+    {
+      "mission": "m10-obsidian-storm",
+      "bot": "generic",
+      "result": "running",
+      "seconds": 485
+    },
+    {
+      "mission": "m10-obsidian-storm",
+      "bot": "objective",
+      "result": "victory",
+      "seconds": 845
+    },
+    {
+      "mission": "m11-cut-the-draw",
+      "bot": "passive",
+      "result": "running",
+      "seconds": 215
+    },
+    {
+      "mission": "m11-cut-the-draw",
+      "bot": "generic",
+      "result": "running",
+      "seconds": 485
+    },
+    {
+      "mission": "m11-cut-the-draw",
+      "bot": "objective",
+      "result": "victory",
+      "seconds": 644
+    },
+    {
+      "mission": "m12-frontiers-end",
+      "bot": "passive",
+      "result": "running",
+      "seconds": 215
+    },
+    {
+      "mission": "m12-frontiers-end",
+      "bot": "generic",
+      "result": "running",
+      "seconds": 485
+    },
+    {
+      "mission": "m12-frontiers-end",
+      "bot": "objective",
+      "result": "victory",
+      "seconds": 778
+    }
+  ],
+  "standardTimesUnchanged": true,
+  "default60SecondHash": "d071360b",
+  "phoneRenderBudget": {
+    "name": "battle-eco",
+    "calls": {
+      "median": 122,
+      "p95": 122
+    },
+    "main": {
+      "median": 122,
+      "p95": 122
+    },
+    "shadow": {
+      "median": 0,
+      "p95": 0
+    },
+    "instanced": {
+      "median": 107,
+      "p95": 107
+    },
+    "triangles": {
+      "median": 281045,
+      "p95": 281045
+    },
+    "cpuMs": {
+      "median": 5.799999713897705,
+      "p95": 6.599999904632568
+    },
+    "compose": {
+      "median": 282,
+      "p95": 282
+    },
+    "multiplyMatrices": {
+      "median": 307,
+      "p95": 307
+    },
+    "bufferUploads": {
+      "median": 0,
+      "p95": 0
+    },
+    "uploadBytes": {
+      "median": 0,
+      "p95": 0
+    },
+    "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4080 SUPER (0x00002702) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "geometries": 141,
+    "programs": 18,
+    "deposits": 22,
+    "units": 74,
+    "quality": "eco"
+  },
+  "stage1CI": {
+    "commit": "b80549d",
+    "conclusion": "success",
+    "url": "https://github.com/buicongnguyen/3d_astra/actions/runs/43003557594"
+  },
+  "artApproval": "pending"
+}

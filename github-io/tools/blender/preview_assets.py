@@ -40,7 +40,14 @@ def paint_team(mat):
 
 
 def main():
-    args = sys.argv[sys.argv.index('--') + 1:]
+    global TEAM
+    raw = sys.argv[sys.argv.index('--') + 1:]
+    greyscale = '--greyscale' in raw
+    for flag in raw:
+        if flag.startswith('--team='):
+            color = flag.split('=',1)[1].lstrip('#')
+            TEAM = tuple(srgb_to_linear(int(color[i:i+2],16)/255) for i in (0,2,4)) + (1,)
+    args = [value for value in raw if not value.startswith('--')]
     out, angle, names = args[0], args[1], args[2:]
     for o in list(bpy.data.objects):
         bpy.data.objects.remove(o)
@@ -51,6 +58,15 @@ def main():
         scene.render.engine = 'BLENDER_EEVEE'
     scene.render.resolution_x, scene.render.resolution_y = (1600, 900)
     scene.render.film_transparent = False
+    scene.use_nodes = greyscale
+    if greyscale:
+        nodes = scene.node_tree.nodes
+        nodes.clear()
+        source = nodes.new('CompositorNodeRLayers')
+        grey = nodes.new('CompositorNodeRGBToBW')
+        output = nodes.new('CompositorNodeComposite')
+        scene.node_tree.links.new(source.outputs['Image'],grey.inputs['Image'])
+        scene.node_tree.links.new(grey.outputs['Val'],output.inputs['Image'])
     scene.view_settings.view_transform = 'AgX' if 'AgX' in [i.identifier for i in scene.view_settings.bl_rna.properties['view_transform'].enum_items] else 'Filmic'
     scene.view_settings.look = 'None'
     world = bpy.data.worlds.new('preview') if not scene.world else scene.world
@@ -89,9 +105,9 @@ def main():
                     if slot.material and slot.material.name.startswith('Team'):
                         paint_team(slot.material)
     span = x - 0.9
-    for o in bpy.data.objects:
-        if o.type == 'MESH':
-            o.location.x -= span / 2
+    for _, roots, _ in items:
+        for root in roots:
+            root.location.x -= span / 2
 
     bpy.ops.mesh.primitive_plane_add(size=400, location=(0, 0, 0))
     ground = bpy.context.object
@@ -128,9 +144,39 @@ def main():
         co.location = target + direction * max(span * 1.25, height * 2.6)
     co.rotation_euler = (target - co.location).to_track_quat('-Z', 'Y').to_euler()
     cam.clip_end = 500
+    label_material = bpy.data.materials.new('Review labels')
+    label_material.use_nodes = True
+    principled = next(n for n in label_material.node_tree.nodes if n.type == 'BSDF_PRINCIPLED')
+    principled.inputs['Base Color'].default_value = (.025,.035,.04,1)
+    bpy.context.view_layer.update()
+    view = co.matrix_world.inverted()
+    mesh_points = [view @ (o.matrix_world @ Vector(c)) for o in bpy.data.objects if o.type == 'MESH' and o != ground for c in o.bound_box]
+    label_y = min(point.y for point in mesh_points) - .5
+    for name, center, top in placed:
+        text = bpy.data.curves.new('Review label','FONT')
+        text.body = Path(name).stem
+        text.align_x = 'CENTER'
+        text.size = max(.2,min(.32,span/45))
+        text.materials.append(label_material)
+        label = bpy.data.objects.new('Review label',text)
+        scene.collection.objects.link(label)
+        label_x = (view @ Vector((center-span/2,0,0))).x
+        label.location = co.matrix_world @ Vector((label_x,label_y,-1))
+        label.rotation_euler = co.rotation_euler
+        if hasattr(label,'visible_shadow'): label.visible_shadow = False
+    if angle == 'game':
+        bpy.context.view_layer.update()
+        view = co.matrix_world.inverted()
+        points = [view @ (o.matrix_world @ Vector(c)) for o in bpy.data.objects if o.type in {'MESH','FONT'} and o != ground for c in o.bound_box]
+        left,right = min(p.x for p in points),max(p.x for p in points)
+        bottom,top = min(p.y for p in points),max(p.y for p in points)
+        co.location += co.matrix_world.to_3x3() @ Vector(((left+right)/2,(bottom+top)/2,0))
+        aspect = scene.render.resolution_x / scene.render.resolution_y
+        cam.ortho_scale = max(right-left,(top-bottom)*aspect)*1.15
     scene.render.filepath = out
     bpy.ops.render.render(write_still=True)
     print('PREVIEW_WRITTEN', out)
 
 
-main()
+if __name__ == "__main__":
+    main()

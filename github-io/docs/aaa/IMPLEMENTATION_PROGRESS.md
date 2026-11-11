@@ -1,35 +1,33 @@
 # AAA implementation progress
 
-Stage 1 code: version 0.10.0-alpha.4. The owner instructed commit, push and continuation on 2026-11-11. Stage 2 is next.
+The owner instructed commit, push and continuation on 2026-11-11.
 
-## Implemented
+## Committed work
 
-- 1.1: combat shake, render-only hit-stop, ring/vitals damage flash, phone readability, directed infantry falls and persistent batched wrecks. Local checks pass; measurements are in CHANGELOG.md.
-- 1.2: Story/Standard/Veteran rules, saved settings and campaign progress, translated controls and debrief, difficulty-aware deadline text, benchmark CLI and targeted mission tuning.
-- 1.3: 48-game reproducible ladder and conservative skirmish-only army/defense tuning. The requested Normal/Fast/Relentless win-rate ranges remain unmet. BALANCE.md records all results and the failed aggressive tuning experiments; no AI regression tests were weakened.
-- 1.4: burst voice ceiling, combat music ducking, seeded pitch variation, research cue and seven sound-preview buttons. Offline sound sanity and built-browser audio checks pass.
+- Stage 1: b80549d, pushed. [CI and deployment succeeded](https://github.com/buicongnguyen/3d_astra/actions/runs/43003557594).
+- Package 2.0: 0f4ccb3, selective model loading, retry/recovery, readiness flag and offline late-model caching.
+- Package 2.1: aa6a9fb, faction slots/classes, resolved rosters, save compatibility, AI/UI integration and opt-in mission rosters.
+- Package 2.2: twelve original candidate GLBs, Blender source library, exact manifest budgets and eight color/greyscale review sheets. Review commit follows this record. Models and portraits are not activated before owner approval.
 
-## Validation
+## Local validation
 
-- Final build passes.
-- All 347 unit tests pass.
-- All 35 browser scripts have passing runs. The sweep initially failed boundary-fx because it still required vehicle removal after 3.3 seconds; its updated test requires persistence at 3.3 seconds and cleanup after 21.7 seconds, and passes. Campaign and boundary-fx were rerun after the final build.
-- Story: 12/12 objective wins; all checks pass.
-- Standard: all original passive/generic/objective checks pass, with unchanged objective times.
-- Veteran: 11/12 objective wins and all passive players survive 155 seconds. Mission 10 still fails after three tuning passes. The strict checker exits 1; this is not reported as a passing check.
-- Render-budget and offline audio sanity checks pass. Phone tests are emulation, not physical-device measurements.
-- CI has not run. Owner play/listening review remains pending.
+- Fresh build passes. All 352 unit tests and all 36 browser scripts have passing runs.
+- After final loading-guard changes: rebuilt and reran model-loading, new-game, offline and the full unit suite. Stale downloads cannot override a newer ready/Retry state; failed-load UI remains recoverable.
+- All standard mission outcomes and times exactly match Stage 1; every target passes.
+- All-Meridian 60-second hash remains d071360b, also after save/load. Golden counter-damage checks pass.
+- Every candidate passes topology/triangle limits, shared attribute sets, team materials and leg/weapon/hover marker checks. No quantization.
+- Boot still downloads only the thirteen base models plus environment. A late Drone template retains hover metadata and has no shadow pass.
+- Phone render budget: 122 calls, 281045 triangles, median CPU render 5.8 ms, p95 6.6 ms, zero idle GPU uploads (390x844 emulation on the existing PC).
+- Full measured results: results/stage-2-validation.json. Remote CI for the next push is tracked after it starts.
 
-## Accepted continuation
+## Required owner review
 
-STAGE_1_FEEL.md targets at least 10/12 Veteran objective wins and allows recording an exception after three tuning passes. README.md rule 13 also requires the mission checker to pass. Automatic approval review rejected changing the checker to accept the 10/12 aggregate target, calling it weakened validation. The checker remains strict. On 2026-11-11 the owner explicitly instructed committing, pushing and continuing the plan; continue with the documented exception and keep the failed individual benchmark visible.
+[Review all four factions here](review/README.md). Package 2.2 explicitly says: "Stop here for the owner's approval of the look before wiring the models in." Approval was requested in chat while validation finished. No response is inferred from elapsed time.
 
-The skirmish ladder's unmet ranges are separately documented as required by package 1.3. They are not claimed to be balanced.
+After approval: append portraits and implement the Ashfall gameplay slice (2.3), then the other faction gameplay packages. Default order remains factions before story. Stages 3-6 are pending. The optional air unit still requires explicit confirmation.
 
-## Review
+## Retained Stage 1 limitations
 
-- See ../CHANGELOG.md for changes, rendering measurements and sound levels.
-- See ../BALANCE.md and results/stage-1-benchmarks.json for complete mission and skirmish results.
-- PC preview: http://127.0.0.1:4269/
-- Play missions 1-4 and a Normal skirmish on PC and phone with sound. Use Settings > Audio > Sound test to review the cues.
-- Faction art sheets, later-stage features and real-device diagnostics are not yet prepared. The optional air unit still needs explicit owner confirmation.
+Story wins 12/12. Standard meets its original targets. Veteran wins 11/12 and all passive players survive 155 seconds; mission 10 still fails after three tuning passes. Its checker remains strict and exits 1. The owner authorized continuing with this documented exception.
+
+Normal/Fast/Relentless skirmish win-rate ranges are still unmet and documented in BALANCE.md; no AI regression tests were weakened. Owner play/listening review and physical-device testing remain pending.

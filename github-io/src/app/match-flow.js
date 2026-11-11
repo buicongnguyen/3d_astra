@@ -210,7 +210,8 @@ export function setupMatchFlow(S, A) {
       S.mission = index >= 0 ? MISSIONS[index] : null;
       S.bonus = S.mission?.bonus || null;
       if (index >= 0) S.stagePick = index;
-      await restart(false, true);
+      const resumed = await restart(false, true);
+      if (resumed === false) return;
       S.activeStage = index >= 0 ? index : null;
       S.view.setTerrain(S.sim.terrain);
       S.view.setMission(S.mission);

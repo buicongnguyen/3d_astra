@@ -80,6 +80,126 @@
       "file": "tower.glb",
       "triangles": 2080,
       "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "scrapper",
+      "file": "scrapper.glb",
+      "triangles": 2852,
+      "faction": "ashfall",
+      "kind": "unit",
+      "budget": 3200,
+      "review": "pending owner approval",
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "scorcher",
+      "file": "scorcher.glb",
+      "triangles": 1928,
+      "faction": "ashfall",
+      "kind": "unit",
+      "budget": 4500,
+      "review": "pending owner approval",
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "salvageyard",
+      "file": "salvageyard.glb",
+      "triangles": 2132,
+      "faction": "ashfall",
+      "kind": "building",
+      "budget": 4000,
+      "review": "pending owner approval",
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "rider",
+      "file": "rider.glb",
+      "triangles": 2388,
+      "faction": "sunward",
+      "kind": "unit",
+      "budget": 4500,
+      "review": "pending owner approval",
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "wagon",
+      "file": "wagon.glb",
+      "triangles": 1984,
+      "faction": "sunward",
+      "kind": "unit",
+      "budget": 4500,
+      "review": "pending owner approval",
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "waystation",
+      "file": "waystation.glb",
+      "triangles": 2112,
+      "faction": "sunward",
+      "kind": "building",
+      "budget": 4000,
+      "review": "pending owner approval",
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "drone",
+      "file": "drone.glb",
+      "triangles": 1568,
+      "faction": "wardens",
+      "kind": "unit",
+      "budget": 4500,
+      "review": "pending owner approval",
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "walker",
+      "file": "walker.glb",
+      "triangles": 2836,
+      "faction": "wardens",
+      "kind": "unit",
+      "budget": 6300,
+      "review": "pending owner approval",
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "pylon",
+      "file": "pylon.glb",
+      "triangles": 2416,
+      "faction": "wardens",
+      "kind": "building",
+      "budget": 4000,
+      "review": "pending owner approval",
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "shade",
+      "file": "shade.glb",
+      "triangles": 2804,
+      "faction": "veil",
+      "kind": "unit",
+      "budget": 3200,
+      "review": "pending owner approval",
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "watcher",
+      "file": "watcher.glb",
+      "triangles": 2856,
+      "faction": "veil",
+      "kind": "unit",
+      "budget": 3200,
+      "review": "pending owner approval",
+      "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "veilrelay",
+      "file": "veilrelay.glb",
+      "triangles": 2180,
+      "faction": "veil",
+      "kind": "building",
+      "budget": 4000,
+      "review": "pending owner approval",
+      "animation": "Runtime articulated parts; no baked clips"
     }
   ]
 }

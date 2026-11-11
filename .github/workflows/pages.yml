@@ -69,8 +69,14 @@ jobs:
             scripts: mobile-construction patrol repair-rally
           - name: feedback
             scripts: activity
-          - name: layout
-            scripts: status-layout layout-f
+          - name: status-layout
+            scripts: status-layout
+          - name: layout-desktop
+            scripts: layout-f
+            layoutOnly: desktop,hd,laptop,tablet
+          - name: layout-mobile
+            scripts: layout-f
+            layoutOnly: portrait,landscape,landscape-vi,portrait-vi
           - name: ui-extras
             scripts: ui-extras
           - name: visuals
@@ -95,6 +101,7 @@ jobs:
       - name: Test the built game
         env:
           TEST_SCRIPTS: ${{ matrix.scripts }}
+          LAYOUT_ONLY: ${{ matrix.layoutOnly }}
           TEST_URL: http://127.0.0.1:4173/
         run: |
           npm run preview -- --port 4173 > /tmp/frontier-preview.log 2>&1 &

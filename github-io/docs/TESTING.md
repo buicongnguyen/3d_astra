@@ -61,3 +61,7 @@ Real phones, real audio output and sound taste. Touch tests use browser emulatio
 Package 2.0 adds test:model-loading (harness): late asset retries, readiness gating, failed-load recovery and template reuse. test:offline also checks first-fetch-only caching of an additional model path.
 
 Package 2.1 adds factions.test.js: pre-change hash, golden counter damage, slot resolution, foreign roster rejection, mission opt-in and faction save/load. Isolated test definitions exercise future rosters without enabling their unapproved assets in gameplay.
+
+Package 2.2 extends assets.test.js to all twelve manifest-tagged candidates: triangle counts and caps, shared attribute sets, paint materials, required legs/weapon/hover markers, and absence of quantization. Approval sheets are visually inspected; aesthetic approval remains an owner step.
+
+CI runs status-layout independently and partitions the eight layout-f viewports into desktop/tablet and mobile groups. The same assertions run for every viewport; unknown or empty viewport selections fail. This avoids placing both expensive software-rendered layout suites inside one 30-minute job.

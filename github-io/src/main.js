@@ -75,8 +75,9 @@ const A = {};
 // Every match, preview and restart is built from the current setup (a story mission included).
 const createSim = () => new Simulation({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish" });
 
-let bootReady = false;
+let bootReady = false, loadGeneration = 0;
 async function loadAssets(types = modelsForMatch(S.sim)) {
+  const generation = ++loadGeneration;
   S.loadFailed = false;
   $("start").disabled = true;
   const start = $("start");
@@ -84,14 +85,18 @@ async function loadAssets(types = modelsForMatch(S.sim)) {
   try {
     // Staged download first (terrain, headquarters, harvester, then the rest), then the parse.
     await prefetchModels(({ stage, percent }) => {
+      if (generation !== loadGeneration) return;
       start.textContent = `Loading ${stage}… ${percent}%`;
       start.style.setProperty("--load", `${percent}%`);
     }, {types});
+    if (generation !== loadGeneration) return false;
     await S.view.loadModels(types);
+    if (generation !== loadGeneration) return false;
     releaseModelBytes();
     start.removeAttribute("aria-busy");
     start.style.removeProperty("--load");
   } catch (error) {
+    if (generation !== loadGeneration) return false;
     start.removeAttribute("aria-busy");
     console.error(error);
     S.loadFailed = true;
@@ -100,6 +105,7 @@ async function loadAssets(types = modelsForMatch(S.sim)) {
     $("status-text").textContent = "DOWNLOAD FAILED";
     A.notice("Some game files did not download. Check your connection, then press Retry.");
     if (bootReady) {
+      A.setModalOpen(false);
       S.screen.toMenu();
       $("briefing").hidden = false;
       document.documentElement.classList.add("in-briefing");

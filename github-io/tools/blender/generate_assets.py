@@ -534,11 +534,18 @@ def build_all(kinds=None, export=True, layout=True):
         if layout:
             a.offset((index % 5) * 9, (index // 5) * 9)
     if export and set(kinds) == set(UNITS + BUILDINGS):
+        previous = OUT / 'manifest.json'
+        if previous.exists():
+            manifest['assets'] += [entry for entry in json.loads(previous.read_text(encoding='utf-8'))['assets'] if entry['name'] not in UNITS + BUILDINGS]
         (OUT / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
     return built, manifest
 
 
 if __name__ == '__main__':
+    if '--factions' in sys.argv:
+        import generate_factions
+        generate_factions.build_all()
+        sys.exit(0)
     for o in list(bpy.context.scene.objects):
         bpy.data.objects.remove(o)
     _, result = build_all()

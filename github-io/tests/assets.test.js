@@ -52,3 +52,27 @@ test('scenery provides the assets the views look up by name, with mergeable mesh
   const sets = new Set(json.meshes.flatMap(m => m.primitives.map(p => Object.keys(p.attributes).sort().join())));
   assert.equal(sets.size, 1);
 });
+
+test('faction candidates satisfy export, topology and silhouette-rig budgets before approval',()=>{
+  const manifest=JSON.parse(readFileSync(new URL('../public/models/manifest.json',import.meta.url),'utf8'));
+  const candidates=manifest.assets.filter(a=>a.faction);
+  assert.equal(candidates.length,12);
+  for(const asset of candidates){
+    const json=gltf(asset.name),names=runtimeNames(json);
+    const triangles=json.meshes.reduce((n,m)=>n+m.primitives.reduce((k,p)=>k+(p.indices===undefined?json.accessors[p.attributes.POSITION].count:json.accessors[p.indices].count)/3,0),0);
+    assert.equal(triangles,asset.triangles,asset.name);
+    assert.ok(triangles<=asset.budget,`${asset.name}: ${triangles}/${asset.budget}`);
+    const sets=new Set(json.meshes.flatMap(m=>m.primitives.map(p=>Object.keys(p.attributes).sort().join())));
+    assert.equal(sets.size,1,asset.name);
+    for(const attribute of ['POSITION','NORMAL','TEXCOORD_0','COLOR_0'])assert.ok([...sets][0].includes(attribute),`${asset.name}: ${attribute}`);
+    assert.ok(json.materials.some(m=>m.name.startsWith('Team')));
+    assert.ok(json.materials.every(m=>!m.doubleSided));
+    if(['scrapper','rider','shade','watcher'].includes(asset.name)){
+      assert.ok(names.some(n=>/^leg_L/.test(n))&&names.some(n=>/^leg_R/.test(n)),asset.name);
+    }
+    if(['scrapper','shade','watcher'].includes(asset.name))assert.ok(triangles>=2800);
+    if(asset.name==='drone')assert.ok(names.includes('hover'));
+    if(['scorcher','walker'].includes(asset.name))assert.ok(names.some(n=>RIG_PART.test(n)),asset.name);
+    assert.ok(!JSON.stringify(json).includes('KHR_mesh_quantization'));
+  }
+});

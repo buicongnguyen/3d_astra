@@ -23,6 +23,8 @@ const devices = [
   ['landscape-vi', 844, 390, true, 'vi'],
   ['portrait-vi', 390, 844, true, 'vi'],
 ].filter(d => !only || only.includes(d[0]));
+assert.ok(devices.length > 0, 'at least one known layout viewport is selected');
+if (only) assert.equal(devices.length,new Set(only).size,'every selected layout viewport must be known');
 const TIMEOUT = 25000;
 const allProblems = [];
 

@@ -409,6 +409,7 @@ export class WorldView {
             barrelBuckets = new Map(),
             turretBuckets = new Map(), // vehicles: Turret_head* parts turn about Turret_pivot
             legs = [];
+          template.userData.hover = !!gltf.scene.getObjectByName("hover");
           let pivot = null;
           gltf.scene.traverse((o) => { if (o.name.startsWith("Turret_pivot")) pivot = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld); });
           gltf.scene.traverse((o) => {
@@ -476,7 +477,7 @@ export class WorldView {
                 materials.set(key, m);
               }
               o.material = materials.get(key);
-              o.castShadow = true;
+              o.castShadow = CORE_MODEL_TYPES.includes(type) || D[type]?.kind === "building";
               o.receiveShadow = true;
             });
             adoptBatchedParts(variant);
@@ -811,6 +812,8 @@ export class WorldView {
     root.add(contactShadow);
     root.userData.contactShadow = contactShadow;
     root.userData.model = model;
+    root.userData.hover = !!model.userData.hover;
+    root.userData.hoverClock = e.id * FEEL.hoverPhaseStep;
     // Measure the template in the default camera projection, once per new unit.
     // A capped visual scale never changes the simulation collision radius.
     root.userData.readabilityScale = 1;
@@ -1116,6 +1119,7 @@ export class WorldView {
         // Dressing under a building the player has seen is pressed flat (visual only).
         if (!u.pressed) { u.pressed = true; this.scatter?.flatten(e.x, e.z, e.radius + 0.5); }
       }
+      if (u.hover && lively && !this.lowPower && this.settings.combatMotion !== false) { u.hoverClock += dt * FEEL.hoverRate; lift += Math.sin(u.hoverClock) * FEEL.hoverAmplitude; }
       m.position.set(back ? -Math.sin(m.rotation.y) * back : 0, lift, back ? -Math.cos(m.rotation.y) * back : 0);
       m.scale.set(1 + squash * 0.5, (e.complete ? 1 : 0.15 + e.progress * 0.85) + squash, 1 + squash * 0.5);
       m.scale.multiplyScalar(u.readabilityScale);
