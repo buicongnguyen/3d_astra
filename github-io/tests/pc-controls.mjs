@@ -34,7 +34,7 @@ const selection = async expected => assert.deepEqual(new Set((await state()).sel
 const mini = async () => {const [x,y,w,h]=(await state()).minimap_rect;return [x+w*.63,y+h*.67];};
 try {
   await page.goto((process.env.TEST_URL || (godot?'http://127.0.0.1:4176/3d_astra_godot/':'http://127.0.0.1:4173/'))+'?test=1');
-  await page.waitForFunction(g=>g?window.frontierState?.ready:window.__frontier?.view.models.size===13,godot,{timeout:90000});
+  await page.waitForFunction(g=>g?window.frontierState?.ready:window.__frontier?.view.modelsReady,godot,{timeout:90000});
   if(godot){await cmd({action:'start',manual_clock:true});await cmd({action:'pc_setup'});}
   else {
     await page.locator('#start').click();

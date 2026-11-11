@@ -35,7 +35,7 @@ try {
     }).filter(c => !c.inside || c.covered || c.small), touch);
 
     await page.goto(`${base}?test=1`);
-    await page.waitForFunction(() => window.__frontier?.view.models.size === 13 && !document.querySelector('#start').disabled, null, { timeout: 90000 });
+    await page.waitForFunction(() => window.__frontier?.view.modelsReady && !document.querySelector('#start').disabled, null, { timeout: 90000 });
 
     // Start screen: art decoded, HUD hidden, no horizontal overflow, readable text, reachable controls.
     const start = await page.evaluate(() => {

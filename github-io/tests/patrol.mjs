@@ -16,7 +16,7 @@ try {
       await page.waitForTimeout(150);
     };
     await page.goto((process.env.TEST_URL || 'http://127.0.0.1:4173/') + '?test=1');
-    await page.waitForFunction(() => window.__frontier?.view.models.size === 13, null, {timeout: 90000}); await click('#start');
+    await page.waitForFunction(() => window.__frontier?.view.modelsReady, null, {timeout: 90000}); await click('#start');
     const ids = await page.evaluate(() => {
       const f = window.__frontier, s = f.sim; s.aiEnabled = false;
       s.entities = s.entities.filter(e => e.kind === 'building');

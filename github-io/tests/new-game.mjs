@@ -5,7 +5,7 @@ try{
  for(const viewport of [{width:1280,height:800},{width:320,height:568},{width:390,height:844},{width:844,height:390}]){
   const page=await browser.newPage({viewport,isMobile:viewport.width<1000,hasTouch:viewport.width<1000}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto((process.env.TEST_URL||'http://127.0.0.1:4180/')+'?test=1');
-  await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});
+  await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});
   assert.equal(await page.locator('#scenario option').count(),7);
   await page.locator('#start').click();await page.locator('#pause').click();await page.locator('[data-new-game]').click();
   assert.equal(await page.evaluate(()=>window.__frontier.started),false);assert.equal(await page.evaluate(()=>window.__frontier.paused),true);
@@ -19,7 +19,7 @@ try{
  // A real match (not Training) starts with every Harvester already sent to a deposit.
  const page=await browser.newPage({viewport:{width:1280,height:800}});
  await page.goto((process.env.TEST_URL||'http://127.0.0.1:4180/')+'?test=1&autoharvest=1');
- await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});
+ await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});
  await page.locator('#start').click();
  assert.ok(await page.evaluate(()=>{const s=window.__frontier.sim,w=s.own(0).filter(e=>e.type==='worker');return w.length>=4&&w.every(e=>e.orders[0]?.type==='gather');}),'Harvesters start mining');
  console.log('Auto-harvest start passed');await page.close();

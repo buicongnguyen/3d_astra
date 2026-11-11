@@ -34,7 +34,7 @@ try {
       window.requestAnimationFrame = cb => nativeRAF(time => { if (!window.__freezeFrames) cb(time); });
     });
     await page.goto((process.env.TEST_URL || 'http://127.0.0.1:4193/') + '?test=1');
-    await page.waitForFunction(() => window.__frontier?.view.models.size === 13, null, {timeout:90000});
+    await page.waitForFunction(() => window.__frontier?.view.modelsReady, null, {timeout:90000});
     await page.selectOption('#scenario', scenario.map);
     await page.selectOption('#enemy-count', String(scenario.enemies));
     await page.evaluate(scenario => {

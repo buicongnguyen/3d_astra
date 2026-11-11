@@ -149,7 +149,7 @@ export function setupFrame(S, A) {
     const root = document.documentElement;
     coveredRedraw -= elapsed;
     if (Z.started || !root.classList.contains("compact-ui") || !root.classList.contains("in-briefing") || coveredRedraw <= 0) {
-      S.view.update(S.sim, Z.started && !Z.paused ? dt * beatScale : 0, S.selected, S.hover, renderAlpha);
+      if (S.view.modelsReady) S.view.update(S.sim, Z.started && !Z.paused ? dt * beatScale : 0, S.selected, S.hover, renderAlpha);
       coveredRedraw = 0.5;
     }
     uiClock -= dt;

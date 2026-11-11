@@ -6,7 +6,7 @@ try {
   for(const mobile of [false,true]) {
     const page=await browser.newPage({viewport:mobile?{width:390,height:844}:{width:1280,height:800},isMobile:mobile,hasTouch:mobile});
     const errors=[];page.on('pageerror',e=>errors.push(e.message));
-    await page.goto(base+'?test=1');await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});
+    await page.goto(base+'?test=1');await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});
     await page.locator('#start').click();
     const ids=await page.evaluate(()=>{
       const f=window.__frontier,s=f.sim;s.aiEnabled=false;

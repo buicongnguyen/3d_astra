@@ -15,7 +15,7 @@ try {
     const select=async type=>{await page.evaluate(type=>{const f=window.__frontier;f.select([f.sim.own(0).find(e=>e.type===type).id]);},type);await page.waitForTimeout(150);};
     const step=async n=>{await page.evaluate(n=>window.__frontier.step(n),n);await page.waitForTimeout(100);};
     try {
-      await page.goto(base+'?test=1');await page.waitForFunction(()=>window.__frontier?.view.models.size===13);
+      await page.goto(base+'?test=1');await page.waitForFunction(()=>window.__frontier?.view.modelsReady);
       await click('#start');await page.evaluate(()=>{const s=window.__frontier.sim;s.aiEnabled=false;Object.assign(s.players[0],{alloy:5000,energy:5000});});
       await select('hq');await tab('selection');await click('#field-guide');
       assert.equal(await page.locator('.field-guide').isVisible(),true);

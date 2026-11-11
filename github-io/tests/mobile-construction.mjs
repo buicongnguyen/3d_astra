@@ -32,7 +32,7 @@ const point=async(target)=>page.evaluate(target=>{
 },target);
 try{
   await page.goto((process.env.TEST_URL||'http://127.0.0.1:4173/')+'?test=1');
-  await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});await tap('#start');
+  await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});await tap('#start');
   await page.evaluate(()=>{window.__frontier.sim.aiEnabled=false;});
   const layouts=[{width:320,height:568},{width:390,height:844},{width:667,height:375},{width:844,height:390},{width:768,height:1024}];
   for(const [index,viewport] of layouts.entries()){

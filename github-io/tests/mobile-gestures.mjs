@@ -11,7 +11,7 @@ try {
  const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto((process.env.TEST_URL||'http://127.0.0.1:4191/')+'?test=1');
- await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});
+ await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});
  await page.locator('#start').tap();
  await page.evaluate(()=>{window.__frontier.sim.aiEnabled=false;});
  const url=page.url();

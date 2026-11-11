@@ -89,7 +89,7 @@ try {
       await shot(label).catch(() => {});
       for (const kind of ['small', 'targets', 'outside', 'spill']) if (result[kind].length) problems.push(`${name} ${label}: ${kind}: ${[...new Set(result[kind])].join(' | ')}`);
     };
-    const ready = () => page.waitForFunction(() => window.__frontier?.view.models.size === 13 && !document.querySelector('#start').disabled, null, { timeout: 90000 });
+    const ready = () => page.waitForFunction(() => window.__frontier?.view.modelsReady && !document.querySelector('#start').disabled, null, { timeout: 90000 });
     const frontier = (fn, arg) => page.evaluate(fn, arg);
     const dockTab = async tab => { if (touch) await press(`button[data-dock="${tab}"]`); };
     const select = ids => frontier(type => { const f = window.__frontier; f.select(f.sim.own(0).filter(e => type.includes(e.type)).slice(0, 4).map(e => e.id)); }, ids);

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { CORE_MODEL_TYPES } from "./model-roster.js";
 import { CameraShake, FEEL } from "./camera-shake.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
@@ -111,6 +112,9 @@ export class WorldView {
     this.raycaster.layers.enable(SOURCE_LAYER);
     this.plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     this.models = new Map();
+    this.modelsReady = false;
+    this.requiredModels = [...CORE_MODEL_TYPES];
+    this.modelQueue = Promise.resolve();
     this.objects = new Map();
     this.resourceObjects = new Map();
     this.effects = [];
@@ -361,10 +365,24 @@ export class WorldView {
     this.resize();
   }
   // Each file is tried three times. A later call (the player's Retry) fetches only what is missing.
-  async loadModels(onProgress) {
-    const loader = new GLTFLoader(),
-      types = Object.keys(D).filter((k) => D[k].role !== "Research"),
-      total = types.length + 1;
+  hasModels(types = this.requiredModels) {
+    return !!this.environmentAssets && types.every(type => type === 'environment' || this.models.has(type));
+  }
+  loadModels(types = CORE_MODEL_TYPES, onProgress) {
+    if (typeof types === 'function') { onProgress = types; types = CORE_MODEL_TYPES; }
+    return this.ensureModels(types, onProgress);
+  }
+  ensureModels(types, onProgress) {
+    const required = [...new Set(types.filter(type => type !== 'environment'))];
+    if (required.some(type => !/^[a-z][a-z0-9_-]*$/.test(type))) return Promise.reject(new Error('Invalid model type'));
+    this.requiredModels = required;
+    this.modelsReady = this.hasModels(required);
+    const operation = this.modelQueue.catch(() => {}).then(() => this.prepareModels(required, onProgress));
+    this.modelQueue = operation;
+    return operation.finally(() => { this.modelsReady = this.hasModels(this.requiredModels); });
+  }
+  async prepareModels(types, onProgress) {
+    const loader = new GLTFLoader(), total = types.length + 1;
     let loaded = types.filter((type) => this.models.has(type)).length + (this.environmentAssets ? 1 : 0);
     onProgress?.(loaded, total);
     const fetchModel = async (name) => {
@@ -487,13 +505,11 @@ export class WorldView {
     if (failed) throw failed.reason;
     // Blender boulders (EnvironmentView) replace the placeholder rocks drawn before loading.
     if (this.environmentAssets.getObjectByName("asset_rock_a")) this.removePlaceholderRocks();
-    this.environment = new EnvironmentView(
-      this.scene,
-      this.terrain,
-      this.environmentAssets,
-    );
-    this.environment.configure(this.settings);
-    this.environment.still = this.motionLevel === 0;
+    if (!this.environment) {
+      this.environment = new EnvironmentView(this.scene, this.terrain, this.environmentAssets);
+      this.environment.configure(this.settings);
+      this.environment.still = this.motionLevel === 0;
+    }
     this.applyReflections();
   }
   createTerrain() {

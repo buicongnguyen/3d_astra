@@ -9,7 +9,7 @@ try{
   const page=await browser.newPage({viewport:{width:1280,height:800}});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto((process.env.TEST_URL||'http://127.0.0.1:4180/')+'?test=1');
-  await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});
+  await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});
   const maps=await page.evaluate(()=>[...document.querySelectorAll('#scenario option')].map(o=>o.value));
   assert.equal(maps.length,7);
   // Nothing may be drawn beyond the playable edge: meshes and every instance of batches.

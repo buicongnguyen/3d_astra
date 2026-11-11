@@ -10,12 +10,12 @@ await suite('language',async()=>{
   const {page,errors}=await openPage(browser,mobile?'portrait':{width:1280,height:800});
   const click=selector=>page.locator(selector)[mobile?'tap':'click']();
   await page.goto(testUrl('','http://127.0.0.1:4191/'));
-  await page.waitForFunction(()=>window.__frontier?.view.models.size===13);
+  await page.waitForFunction(()=>window.__frontier?.view.modelsReady);
   await page.selectOption('#language','vi');
   await page.waitForFunction(()=>document.querySelector('#start').textContent==='Bắt đầu');
   assert.equal(await page.locator('html').getAttribute('lang'),'vi');
   await page.reload();
-  await page.waitForFunction(()=>window.__frontier?.view.models.size===13&&document.querySelector('#start').textContent==='Bắt đầu');
+  await page.waitForFunction(()=>window.__frontier?.view.modelsReady&&document.querySelector('#start').textContent==='Bắt đầu');
   assert.equal(await page.locator('#language').inputValue(),'vi','language survives reload');
   await page.screenshot({path:'test-results/language-start-'+(mobile?'mobile':'desktop')+'.png'});
   await click('#start');
@@ -92,7 +92,7 @@ await suite('language',async()=>{
    await page.waitForFunction(value=>document.documentElement.lang===value,value);
   };
   await page.goto(testUrl('','http://127.0.0.1:4191/'));
-  await page.waitForFunction(()=>window.__frontier?.view.models.size===13&&!document.querySelector('#start').disabled,null,{timeout:90000});
+  await page.waitForFunction(()=>window.__frontier?.view.modelsReady&&!document.querySelector('#start').disabled,null,{timeout:90000});
   await page.selectOption('#language','vi');
   await press('[data-mode="campaign"]');
   // The story catalog is a separate download: the list turns Vietnamese when it arrives.

@@ -23,7 +23,7 @@ try {
     return buttons;
   };
   const tap = async selector => { const [b] = await inspect(selector); await page.touchscreen.tap(b.x+b.w/2,b.y+b.h/2); await page.waitForTimeout(150); };
-  await page.goto(base+'?test=1'); await page.waitForFunction(() => window.__frontier?.view.models.size===13);
+  await page.goto(base+'?test=1'); await page.waitForFunction(() => window.__frontier?.view.modelsReady);
   for (const viewport of [{width:320,height:568},{width:667,height:375},{width:390,height:844}]) {
     await page.setViewportSize(viewport); await page.waitForTimeout(200);
     await inspect('#start, #briefing-settings, #language, #scenario, #enemy-count');

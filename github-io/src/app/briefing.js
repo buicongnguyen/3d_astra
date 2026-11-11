@@ -100,6 +100,7 @@ export function setupBriefing(S, A) {
       ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission } = setup);
       S.sim = A.createSim();
       S.view?.reset();
+      A.ensureMatchModels();
       S.hover = null;
       $("hover-label").hidden = true;
       if (terrain) S.view?.setTerrain(S.sim.terrain);

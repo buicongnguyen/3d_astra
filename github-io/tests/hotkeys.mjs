@@ -6,7 +6,7 @@ const selected=()=>page.evaluate(()=>[...window.__frontier.selected]);
 const press=async key=>{await page.keyboard.press(key);await page.waitForTimeout(90);};
 await suite('hotkeys',async()=>{
   await page.goto(testUrl());
-  await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:TIMEOUT.models});
+  await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:TIMEOUT.models});
   await page.locator('#briefing-settings').focus();await press('Space');
   assert.ok(await page.locator('.settings-backdrop').isVisible(),'Space opens focused briefing Settings');
   await page.getByRole('button',{name:'Close settings',exact:true}).click();

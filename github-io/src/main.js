@@ -62,6 +62,7 @@ import { setupMatchFlow } from "./app/match-flow.js";
 import { setupFrame } from "./app/frame.js";
 import { setupUiExtras } from "./app/ui-extras.js";
 import { setupDebugHooks } from "./app/debug-hooks.js";
+import { CORE_MODEL_TYPES, modelsForMatch } from "./model-roster.js";
 import { prefetchModels, releaseModelBytes } from "./app/loading.js";
 import "./loading.css";
 import { registerOffline } from "./app/offline.js";
@@ -74,7 +75,8 @@ const A = {};
 // Every match, preview and restart is built from the current setup (a story mission included).
 const createSim = () => new Simulation({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish" });
 
-async function loadAssets() {
+let bootReady = false;
+async function loadAssets(types = modelsForMatch(S.sim)) {
   S.loadFailed = false;
   $("start").disabled = true;
   const start = $("start");
@@ -84,8 +86,8 @@ async function loadAssets() {
     await prefetchModels(({ stage, percent }) => {
       start.textContent = `Loading ${stage}… ${percent}%`;
       start.style.setProperty("--load", `${percent}%`);
-    });
-    await S.view.loadModels();
+    }, {types});
+    await S.view.loadModels(types);
     releaseModelBytes();
     start.removeAttribute("aria-busy");
     start.style.removeProperty("--load");
@@ -97,9 +99,16 @@ async function loadAssets() {
     $("start").textContent = "Retry";
     $("status-text").textContent = "DOWNLOAD FAILED";
     A.notice("Some game files did not download. Check your connection, then press Retry.");
-    return;
+    if (bootReady) {
+      S.screen.toMenu();
+      $("briefing").hidden = false;
+      document.documentElement.classList.add("in-briefing");
+    }
+    return false;
   }
-  ready();
+  if (!bootReady) { bootReady = true; ready(); }
+  else { $("start").disabled = false; A.renderBriefing(); A.updateUI(); }
+  return true;
 }
 
 function boot() {
@@ -112,7 +121,7 @@ function boot() {
     initFailed(error);
     return;
   }
-  loadAssets();
+  loadAssets(CORE_MODEL_TYPES);
 }
 
 function initFailed(error) {
@@ -145,7 +154,12 @@ function ready() {
   }
 }
 
-Object.assign(A, { createSim, loadAssets });
+Object.assign(A, { createSim, loadAssets, ensureMatchModels: (onReady) => {
+  const types = modelsForMatch(S.sim);
+  if (S.view.hasModels(types)) { S.view.modelsReady = true; return null; }
+  S.view.modelsReady = false;
+  return loadAssets(types).then(ok => ok ? onReady?.() : false);
+} });
 
 // Each module's setup(S, A) registers what it offers on A and returns its bind(): the listeners
 // and one-off DOM changes. Setup order is construction order (the mission UI exists before the

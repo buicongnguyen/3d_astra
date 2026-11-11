@@ -88,3 +88,5 @@ Every visible English string is its own key in `locales/vi.json` (`messages`, ma
 | Mission won / lost | win / lose | result flow |
 
 The settings Audio tab previews every cue without resuming the simulation. Mute and volume settings still apply.
+
+Model roster: model-roster.js defines a stable boot set and modelsForMatch. WorldView.ensureModels serializes missing-model preparation; modelsReady describes the current match requirement. loadAssets reuses the loading/Retry screen for later rosters and calls ready only once. Faction GLBs remain first-fetch cached by the existing service worker.

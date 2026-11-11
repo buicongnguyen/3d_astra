@@ -33,7 +33,7 @@ try {
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text().slice(0, 200)); });
   await page.goto(`${base}?test=1`);
-  await page.waitForFunction(() => window.__frontier?.view.models.size === 13 && !document.querySelector('#start').disabled, null, { timeout: 120000 });
+  await page.waitForFunction(() => window.__frontier?.view.modelsReady && !document.querySelector('#start').disabled, null, { timeout: 120000 });
 
   // Nothing sounds before a gesture.
   assert.equal(await page.evaluate(() => window.__ac.contexts.length), 0, 'no AudioContext before the first gesture');

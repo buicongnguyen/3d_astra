@@ -11,7 +11,7 @@ try{
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const click=async selector=>page.locator(selector)[mobile?'tap':'click']();
   await page.goto((process.env.TEST_URL||'http://127.0.0.1:4180/')+'?test=1');
-  await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});await click('#start');
+  await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});await click('#start');
   if(mobile){
    assert.equal(await page.locator('#mission-objectives').isVisible(),false,'phone objectives start collapsed');
    const toggle=await page.locator('#mission-toggle').boundingBox(),controls=await page.locator('.touch-controls').boundingBox();

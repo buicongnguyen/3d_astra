@@ -47,15 +47,17 @@ export function setupMatchFlow(S, A) {
   }
 
   // Next mission: back to the campaign screen with the next mission picked, straight into its briefing.
-  function nextMissionNow() {
+  async function nextMissionNow() {
     S.playMode = "campaign";
-    newGame();
+    await newGame();
     openMissionBriefing();
   }
 
   function newGame() {
     // One clean simulation for the briefing preview: restart(false) reuses it and starts no tutorial.
     S.sim = A.createSim();
+    const models = A.ensureMatchModels(() => newGame());
+    if (models) return models;
     restart(false);
     Z.toMenu();
     S.tutorial = null;
@@ -79,6 +81,9 @@ export function setupMatchFlow(S, A) {
   // restart() starts the current setup again; restart(false) only resets the interface around
   // the simulation that is already there (the briefing preview, or a saved match with resume).
   function restart(play = true, resume = false) {
+    if (play !== false) S.sim = A.createSim();
+    const models = A.ensureMatchModels(() => restart(play, resume));
+    if (models) return models;
     S.matchStats.reset();
     S.touchControls?.reset();
     S.pings.length = 0;
@@ -96,7 +101,6 @@ export function setupMatchFlow(S, A) {
     S.queueOrders = false;
     $("box-select").setAttribute("aria-pressed", "false");
     $("queue-orders").setAttribute("aria-pressed", "false");
-    if (play !== false) S.sim = A.createSim();
     A.syncPointOwners();
     S.tutorial = null;
     S.view.reset();
@@ -136,6 +140,9 @@ export function setupMatchFlow(S, A) {
   }
 
   function beginMatch() {
+    S.sim = A.createSim();
+    const models = A.ensureMatchModels(() => beginMatch());
+    if (models) return models;
     try { localStorage.setItem(MODE_KEY, S.playMode); } catch { /* Storage is optional. */ }
     S.pings.length = 0;
     S.endBeat = null;
@@ -145,7 +152,6 @@ export function setupMatchFlow(S, A) {
     A.missionUI.resetMatch();
     setMusicMood("calm");
     S.audio?.reset();
-    S.sim = A.createSim();
     A.syncPointOwners();
     S.view.reset();
     A.focusHome();
@@ -186,7 +192,7 @@ export function setupMatchFlow(S, A) {
     window.addEventListener("pagehide", () => autosave());
 
     // Continue: restore the saved match and come back paused on the pause menu.
-    $("continue").onclick = () => {
+    $("continue").onclick = async () => {
       const save = readSave(), index = save?.missionId ? missionIndex(save.missionId) : -1;
       const loaded = save && (save.mode !== "campaign" || index >= 0) ? Simulation.load(save.text) : null;
       if (!loaded) {
@@ -204,7 +210,7 @@ export function setupMatchFlow(S, A) {
       S.mission = index >= 0 ? MISSIONS[index] : null;
       S.bonus = S.mission?.bonus || null;
       if (index >= 0) S.stagePick = index;
-      restart(false, true);
+      await restart(false, true);
       S.activeStage = index >= 0 ? index : null;
       S.view.setTerrain(S.sim.terrain);
       S.view.setMission(S.mission);

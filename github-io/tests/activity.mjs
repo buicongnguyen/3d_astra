@@ -10,7 +10,7 @@ try{
     const errors=[];page.on('pageerror',e=>errors.push(e.message));
     const click=async selector=>page.locator(selector)[mobile?'tap':'click']();
     await page.goto((process.env.TEST_URL || 'http://127.0.0.1:4180/')+'?test=1');
-    await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});await click('#start');
+    await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});await click('#start');
     const ids=await page.evaluate(()=>{
       const f=window.__frontier,s=f.sim;s.aiEnabled=false;
       const tick=s.tick.bind(s);s.tick=()=>{};window.advance=n=>{for(let i=0;i<n*20;i++)tick(.05);f.step(0);};

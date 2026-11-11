@@ -58,7 +58,7 @@ try {
     }, [x, z]);
 
     await page.goto(`${base}?test=1`);
-    await page.waitForFunction(() => window.__frontier?.view.models.size === 13 && !document.querySelector('#start').disabled, null, { timeout: 90000 });
+    await page.waitForFunction(() => window.__frontier?.view.modelsReady && !document.querySelector('#start').disabled, null, { timeout: 90000 });
 
     // ---- Auto-cast: on by default on touch devices, off on desktop; a switch in Settings.
     assert.equal(await frontier(() => window.__frontier.settings.autocast), touch, `${name}: auto-cast default`);

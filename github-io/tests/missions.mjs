@@ -26,7 +26,7 @@ try {
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     const press = async selector => { const target = page.locator(selector).first(); if (touch) await target.tap(); else await target.click(); await page.waitForTimeout(120); };
-    const ready = () => page.waitForFunction(() => window.__frontier?.view.models.size === 13 && !document.querySelector('#start').disabled, null, { timeout: 90000 });
+    const ready = () => page.waitForFunction(() => window.__frontier?.view.modelsReady && !document.querySelector('#start').disabled, null, { timeout: 90000 });
     const shot = label => page.screenshot({ path: `test-results/missions-${name}-${label}.png` });
     // Visible text under 11 px in a region.
     const smallText = scope => page.evaluate(scope => [...document.querySelectorAll(`${scope} :is(p, span, strong, small, em, h2, h3, label, li, b, button)`)]

@@ -51,7 +51,7 @@ export async function openPage(browser, viewport = "desktop", { deviceScaleFacto
     tap: (selector) => page.locator(selector).first()[mobile ? "tap" : "click"](),
     goto: (extra = "", options) => page.goto(testUrl(extra), options),
     // The start screen is ready: every model parsed and Start enabled.
-    ready: (timeout = TIMEOUT.models) => page.waitForFunction(() => window.__frontier?.view.models.size === 13 && !document.querySelector("#start").disabled, null, { timeout }),
+    ready: (timeout = TIMEOUT.models) => page.waitForFunction(() => window.__frontier?.view.modelsReady && !document.querySelector("#start").disabled, null, { timeout }),
   };
 }
 

@@ -13,6 +13,8 @@ import { launchBrowser, suite, TIMEOUT, shot } from "./lib/harness.mjs";
 const dist = path.resolve(process.env.DIST_DIR || "dist");
 const root = mkdtempSync(path.join(tmpdir(), "fc-offline-"));
 cpSync(dist, root, { recursive: true });
+// A late faction-shaped asset uses original local geometry and is absent from boot.
+cpSync(path.join(root,'models/ranger.glb'),path.join(root,'models/faction-cache-test.glb'));
 const prefix = "/3d_astra/";
 const mime = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".glb": "model/gltf-binary", ".json": "application/json", ".svg": "image/svg+xml", ".webp": "image/webp", ".webmanifest": "application/manifest+json" };
 const server = createServer(async (req, res) => {
@@ -52,8 +54,19 @@ await suite("offline", async () => {
     assert.ok(first.some((key) => key.startsWith("fc-shell-")) && first.some((key) => key.startsWith("fc-models-")), `caches ${first}`);
     const oldShell = first.find((key) => key.startsWith("fc-shell-"));
 
+    const extra = `${origin}${prefix}models/faction-cache-test.glb`;
+    assert.equal(await page.evaluate(async url => {
+      const cache = await caches.open((await caches.keys()).find(k => k.startsWith('fc-models-')));
+      return !!(await cache.match(url));
+    }, extra), false, 'late models are not prefetched');
+    const lateBytes = await page.evaluate(async url => (await (await fetch(url)).arrayBuffer()).byteLength,extra);
+    await page.waitForFunction(async url => {
+      const cache=await caches.open((await caches.keys()).find(k=>k.startsWith('fc-models-')));
+      return !!(await cache.match(url));
+    },extra);
     // Offline reload: the start screen comes from the cache and, with the models cached, is ready to play.
     await context.setOffline(true);
+    assert.equal(await page.evaluate(async url => (await (await fetch(url)).arrayBuffer()).byteLength,extra),lateBytes,'a late faction model is served offline after one fetch');
     await page.reload();
     await page.waitForSelector("#start", { state: "visible", timeout: TIMEOUT.step });
     await page.waitForFunction(() => !document.querySelector("#start").disabled, null, { timeout: TIMEOUT.models });

@@ -12,7 +12,7 @@ try{
   const click=async(x,y)=>mobile?await page.touchscreen.tap(x,y):await page.mouse.click(x,y);
   const cmd=async o=>{await page.evaluate(o=>window.frontierCommand(JSON.stringify(o)),o);await page.waitForTimeout(200);};
   await page.goto(base+'?test=1');
-  if(engine==='three')await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});
+  if(engine==='three')await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});
   else await page.waitForFunction(()=>window.frontierState?.ready,null,{timeout:90000});
   for(const [id,index,size,offset,sites] of [['riverlands',0,96,0,0],['basin',2,128,12,2],['expanse',3,160,24,3],['classic',1,96,0,0],['dunes',4,128,12,2],['woodlands',5,160,24,3],['highlands',6,192,36,4]]){
    if(engine==='three'){

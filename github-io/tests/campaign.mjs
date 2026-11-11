@@ -4,7 +4,7 @@ import fs from 'node:fs';
 fs.mkdirSync('test-results', {recursive: true});
 const browser = await chromium.launch({headless: true, executablePath: process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : undefined, args: ['--enable-unsafe-swiftshader']});
 const url = (process.env.TEST_URL || 'http://127.0.0.1:4180/') + '?test=1';
-const ready = page => page.waitForFunction(() => window.__frontier?.view.models.size === 13 && !document.querySelector('#start').disabled, null, {timeout: 90000});
+const ready = page => page.waitForFunction(() => window.__frontier?.view.modelsReady && !document.querySelector('#start').disabled, null, {timeout: 90000});
 const battle = page => page.evaluate(() => { const s = window.__frontier.sim; return {map: s.terrain.id ?? null, enemies: s.enemyCount, speed: s.aiSpeed, coalition: s.coalition, alloy: s.players[0].alloy, towers: s.own(0).filter(e => e.type === 'tower').length}; });
 const heading = page => page.locator('.map-heading h1').innerText();
 // The mission being previewed or played, with its place in the campaign.

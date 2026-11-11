@@ -3,21 +3,21 @@
 // the part being fetched. Each file is handed to three.js' own cache, so WorldView.loadModels
 // (which still parses and retries by itself) finds the bytes there instead of downloading again.
 import { Cache } from "three";
+import { CORE_MODEL_TYPES } from "../model-roster.js";
 import { DEFINITIONS } from "../data.js";
 
 const FIRST = ["environment", "hq", "worker"];
 
 // The files WorldView.loadModels asks for, in the order to fetch them.
-export function modelPlan() {
-  const types = Object.keys(DEFINITIONS).filter((key) => DEFINITIONS[key].role !== "Research");
+export function modelPlan(types = CORE_MODEL_TYPES) {
   const names = [...new Set([...FIRST, ...types, "environment"])];
   return names.map((name) => ({ name, label: name === "environment" ? "terrain" : DEFINITIONS[name]?.name || name, url: `${import.meta.env.BASE_URL}models/${name}.glb` }));
 }
 
 // Fetches every model with a small number of parallel streams and reports stage and percent.
 // Never throws: a file that fails here is simply downloaded (and retried) by loadModels.
-export async function prefetchModels(onProgress, { concurrency = 6 } = {}) {
-  const plan = modelPlan();
+export async function prefetchModels(onProgress, { concurrency = 6, types = CORE_MODEL_TYPES } = {}) {
+  const plan = modelPlan(types);
   Cache.enabled = true;
   const sizes = new Map(), got = new Map();
   let stage = plan[0].label;

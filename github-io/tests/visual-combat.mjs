@@ -9,7 +9,7 @@ try{
     const mobile=viewport.width<1000,page=await browser.newPage({viewport,hasTouch:mobile,isMobile:mobile,deviceScaleFactor:1});
     const errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto((process.env.TEST_URL||'http://127.0.0.1:4180/')+'?test=1');
-    await page.waitForFunction(()=>window.__frontier?.view.models.size===13,null,{timeout:90000});
+    await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});
     await page.locator('#start').click();
     await page.evaluate(()=>{
       const f=window.__frontier,s=f.sim,v=f.view;s.aiEnabled=false;s.tick=()=>{};

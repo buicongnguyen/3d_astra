@@ -21,7 +21,7 @@ const countDraws = () => {
   requestAnimationFrame(tick);
   window.__draws = probe;
 };
-const ready = page => page.waitForFunction(() => window.__frontier?.view.models.size === 13 && !document.querySelector('#start').disabled, null, { timeout: 120000 });
+const ready = page => page.waitForFunction(() => window.__frontier?.view.modelsReady && !document.querySelector('#start').disabled, null, { timeout: 120000 });
 try {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
   await page.addInitScript(countDraws);

@@ -1,0 +1,37 @@
+import assert from 'node:assert/strict';
+import {launchBrowser,openPage,suite,baseUrl} from './lib/harness.mjs';
+const browser=await launchBrowser();
+await suite('model-loading',async()=>{
+  const {page,goto,ready,errors}=await openPage(browser,'portrait');
+  await goto();await ready();
+  let attempts=0;
+  await page.route('**/models/late-unit.glb',async route=>{
+    attempts++;
+    if(attempts<3) return route.fulfill({status:503,body:'retry'});
+    const response=await route.fetch({url:new URL('models/ranger.glb',baseUrl()).href});
+    return route.fulfill({response});
+  });
+  const state=await page.evaluate(async()=>{
+    const v=window.__frontier.view,old=v.models.size,progress=[];
+    const pending=v.ensureModels(['hq','late-unit'],(done,total)=>progress.push([done,total]));
+    const gated=!v.modelsReady;
+    await pending;
+    const template=v.teamTemplates.get('late-unit-0'),pulsing=v.pulsing.length;
+    await Promise.all([v.ensureModels(['hq','late-unit']),v.ensureModels(['late-unit'])]);
+    return {old,count:v.models.size,gated,ready:v.modelsReady,progress,reused:template===v.teamTemplates.get('late-unit-0')&&pulsing===v.pulsing.length};
+  });
+  assert.equal(attempts,3,'model fetch retries exactly three times');
+  assert.equal(state.count,state.old+1);assert.equal(state.gated,true);assert.equal(state.ready,true);assert.equal(state.reused,true);
+  assert.deepEqual(state.progress.at(-1),[3,3]);
+  let failures=0;
+  await page.route('**/models/failed-unit.glb',route=>{failures++;return route.fulfill({status:503,body:'unavailable'});});
+  assert.deepEqual(await page.evaluate(async()=>{
+    const v=window.__frontier.view;
+    try {await v.ensureModels(['failed-unit']);return null;}catch{return {ready:v.modelsReady,partial:v.models.has('failed-unit')};}
+  }),{ready:false,partial:false});
+  assert.equal(failures,3);
+  await page.unroute('**/models/failed-unit.glb');
+  await page.route('**/models/failed-unit.glb',async route=>route.fulfill({response:await route.fetch({url:new URL('models/ranger.glb',baseUrl()).href})}));
+  assert.equal(await page.evaluate(async()=>{const v=window.__frontier.view;await v.ensureModels(['failed-unit']);return v.modelsReady;}),true,'a failed queue remains retryable');
+  assert.deepEqual(errors,[]);
+},{browser});
