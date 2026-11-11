@@ -26,7 +26,7 @@ Status of the rebuild plan ([REVIEW_AND_REBUILD_PLAN_2026-11.md](REVIEW_AND_REBU
 | Stage | Status |
 |---|---|
 | 1 Feel | Pushed; CI/deployment green, documented balance exceptions accepted for continuation, owner play/listening review pending |
-| 2 Factions | Packages 2.0/2.1 implemented; twelve model candidates and review sheets ready; owner art approval required before wiring models |
+| 2 Factions | Packages 2.0/2.1 implemented and CI green; owner approved all four looks; package 2.2 portraits appended; Ashfall gameplay (2.3) next |
 | 3 Battlefield | Pending; air unit requires explicit owner confirmation |
 | 4 Story | Pending |
 | 5 Replay | Pending |

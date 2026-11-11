@@ -1,0 +1,211 @@
+{
+  "version": "0.11.0-alpha.3",
+  "approval": "All four faction looks approved by owner, 2026-11-11",
+  "unitTests": 353,
+  "build": "pass",
+  "browser": {
+    "portraits": "pass, desktop/portrait/landscape",
+    "ui-quality": "pass, desktop/phone/small/landscape",
+    "render-budget": "pass"
+  },
+  "render": [
+    {
+      "name": "base-high",
+      "calls": {
+        "median": 178,
+        "p95": 178
+      },
+      "main": {
+        "median": 97,
+        "p95": 97
+      },
+      "shadow": {
+        "median": 81,
+        "p95": 81
+      },
+      "instanced": {
+        "median": 153,
+        "p95": 153
+      },
+      "triangles": {
+        "median": 116311,
+        "p95": 116311
+      },
+      "cpuMs": {
+        "median": 1.0999999046325684,
+        "p95": 1.3000001907348633
+      },
+      "compose": {
+        "median": 146,
+        "p95": 146
+      },
+      "multiplyMatrices": {
+        "median": 307,
+        "p95": 307
+      },
+      "bufferUploads": {
+        "median": 0,
+        "p95": 0
+      },
+      "uploadBytes": {
+        "median": 0,
+        "p95": 0
+      },
+      "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4080 SUPER (0x00002702) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "geometries": 95,
+      "programs": 23,
+      "deposits": 5,
+      "units": 14,
+      "quality": "high"
+    },
+    {
+      "name": "river-overview-high",
+      "calls": {
+        "median": 207,
+        "p95": 207
+      },
+      "main": {
+        "median": 114,
+        "p95": 114
+      },
+      "shadow": {
+        "median": 93,
+        "p95": 93
+      },
+      "instanced": {
+        "median": 177,
+        "p95": 177
+      },
+      "triangles": {
+        "median": 203439,
+        "p95": 203439
+      },
+      "cpuMs": {
+        "median": 1.4000000953674316,
+        "p95": 1.5999999046325684
+      },
+      "compose": {
+        "median": 172,
+        "p95": 172
+      },
+      "multiplyMatrices": {
+        "median": 348,
+        "p95": 348
+      },
+      "bufferUploads": {
+        "median": 0,
+        "p95": 0
+      },
+      "uploadBytes": {
+        "median": 0,
+        "p95": 0
+      },
+      "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4080 SUPER (0x00002702) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "geometries": 95,
+      "programs": 23,
+      "deposits": 22,
+      "units": 14,
+      "quality": "high"
+    },
+    {
+      "name": "large-map-high",
+      "calls": {
+        "median": 255,
+        "p95": 255
+      },
+      "main": {
+        "median": 138,
+        "p95": 138
+      },
+      "shadow": {
+        "median": 117,
+        "p95": 117
+      },
+      "instanced": {
+        "median": 225,
+        "p95": 225
+      },
+      "triangles": {
+        "median": 376380,
+        "p95": 376380
+      },
+      "cpuMs": {
+        "median": 1.5,
+        "p95": 1.8000001907348633
+      },
+      "compose": {
+        "median": 224,
+        "p95": 224
+      },
+      "multiplyMatrices": {
+        "median": 420,
+        "p95": 420
+      },
+      "bufferUploads": {
+        "median": 0,
+        "p95": 0
+      },
+      "uploadBytes": {
+        "median": 0,
+        "p95": 0
+      },
+      "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4080 SUPER (0x00002702) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "geometries": 95,
+      "programs": 23,
+      "deposits": 48,
+      "units": 28,
+      "quality": "high"
+    },
+    {
+      "name": "battle-eco",
+      "calls": {
+        "median": 122,
+        "p95": 122
+      },
+      "main": {
+        "median": 122,
+        "p95": 122
+      },
+      "shadow": {
+        "median": 0,
+        "p95": 0
+      },
+      "instanced": {
+        "median": 107,
+        "p95": 107
+      },
+      "triangles": {
+        "median": 281045,
+        "p95": 281045
+      },
+      "cpuMs": {
+        "median": 6,
+        "p95": 7.099999904632568
+      },
+      "compose": {
+        "median": 282,
+        "p95": 282
+      },
+      "multiplyMatrices": {
+        "median": 307,
+        "p95": 307
+      },
+      "bufferUploads": {
+        "median": 0,
+        "p95": 0
+      },
+      "uploadBytes": {
+        "median": 0,
+        "p95": 0
+      },
+      "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4080 SUPER (0x00002702) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+      "geometries": 141,
+      "programs": 18,
+      "deposits": 22,
+      "units": 74,
+      "quality": "eco"
+    }
+  ],
+  "missions": "Not rerun: no simulation or mission changes",
+  "ci": "Pending push"
+}

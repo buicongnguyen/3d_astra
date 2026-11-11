@@ -65,3 +65,5 @@ Package 2.1 adds factions.test.js: pre-change hash, golden counter damage, slot 
 Package 2.2 extends assets.test.js to all twelve manifest-tagged candidates: triangle counts and caps, shared attribute sets, paint materials, required legs/weapon/hover markers, and absence of quantization. Approval sheets are visually inspected; aesthetic approval remains an owner step.
 
 CI runs status-layout independently and partitions the eight layout-f viewports into desktop/tablet and mobile groups. The same assertions run for every viewport; unknown or empty viewport selections fail. This avoids placing both expensive software-rendered layout suites inside one 30-minute job.
+
+`npm run test:portraits` checks all 25 portrait and team-mask cells, image dimensions, and CSS atlas coordinates at desktop, portrait-phone and landscape-phone sizes. It saves review contact sheets and runs in the CI visuals group.

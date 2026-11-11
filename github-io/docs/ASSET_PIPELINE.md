@@ -84,7 +84,7 @@ Then run `npm test`, which includes `tests/assets.test.js`, and the browser suit
 blender --background --factory-startup --python tools/blender/render_ui_art.py -- src/art
 ```
 
-Arguments after the output folder (`keyart`, `portraits`, `emblem`) render only those parts. The portrait atlas is paired with a mask render in which team paint is white and everything else is held out. The page multiplies the player's army colour through that mask, so one atlas serves every colour choice. Portrait order is part of the page contract (`PORTRAIT_ORDER` in `src/portraits.js`). Buttons and labels are never baked into images. See [UI_REDESIGN.md](UI_REDESIGN.md).
+Arguments after the output folder (`keyart`, `portraits`, `emblem`) render only those parts. The portrait atlas is paired with a mask render in which team paint is white and everything else is held out. The page multiplies the player's army colour through that mask, so one atlas serves every colour choice. The atlas is 4 columns by 7 rows (768 by 1344 pixels), with the twelve approved faction portraits appended after the original thirteen. Portrait order is part of the page contract (`PORTRAIT_ORDER` in `src/portraits.js`). Buttons and labels are never baked into images. See [UI_REDESIGN.md](UI_REDESIGN.md).
 
 ## Known limits
 
@@ -95,7 +95,7 @@ Arguments after the output folder (`keyart`, `portraits`, `emblem`) render only 
 
 ## Faction candidates (package 2.2)
 
-`generate_assets.py -- --factions` delegates to generate_factions.py and writes twelve candidate GLBs plus assets/source/frontier-factions.blend. All are built with frontier_kit; no external art is used. The manifest marks their faction, triangle limit and pending review. They are absent from runtime definitions and boot's core model set until approval and the faction gameplay packages.
+`generate_assets.py -- --factions` delegates to generate_factions.py and writes twelve candidate GLBs plus assets/source/frontier-factions.blend. All are built with frontier_kit; no external art is used. The manifest marks their faction, triangle limit and owner approval dated 2026-11-11. They are absent from runtime definitions and boot's core model set until the faction gameplay packages.
 
 `preview_factions.py` renders all eight approval sheets through preview_assets.py. The latter accepts --team=RRGGBB and --greyscale, and fits the full projected geometry at the game camera angle. See [aaa/review/README.md](aaa/review/README.md).
 

@@ -215,7 +215,7 @@ def build_all():
   triangles=count(a)
   if triangles>limit:raise RuntimeError(f'{name}: {triangles} triangles > {limit}')
   a.finish();a.export(OUT/f'{name}.glb')
-  entries.append(dict(name=name,file=name+'.glb',triangles=a.triangles(),faction=faction,kind=kind,budget=limit,review='pending owner approval',animation='Runtime articulated parts; no baked clips'))
+  entries.append(dict(name=name,file=name+'.glb',triangles=a.triangles(),faction=faction,kind=kind,budget=limit,review='approved by owner 2026-11-11',animation='Runtime articulated parts; no baked clips'))
   print('FACTION_ASSET',name,a.triangles(),flush=True)
  manifest=json.loads((OUT/'manifest.json').read_text(encoding='utf-8'))
  manifest['assets']=[e for e in manifest['assets'] if e['name'] not in CATALOG]+entries

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.11.0-alpha.3: approved faction portraits (package 2.2)
+
+- Owner approved all four faction looks on 2026-11-11. Recorded approval in the review packet, model manifest and reproducible generator.
+- Appended twelve portraits after the original thirteen entries; regenerated the 768x1344 atlas and team-paint mask, with matching CSS row coordinates. The renderer computes row count from its roster and cleans temporary renders automatically.
+- Added checks that every atlas and mask cell contains visible pixels at desktop, portrait-phone and landscape-phone sizes, that Blender and runtime orders agree, and that legacy positions stay unchanged. CI includes the new portrait suite.
+- Art files total 154290 bytes (previously 79858; +74432). The Stage 2 first-visit download budget still needs checking and optimization before the exit gate.
+- Validation: 353 unit tests, build, portraits (three viewports), UI quality (four viewports) and render-budget all pass locally. Phone emulation: 122 calls, 281045 triangles, median CPU 6.0 ms (previous 5.8), p95 7.1 ms (previous 6.6), zero idle GPU uploads. No simulation/mission data changed, so the mission bench was not rerun.
+- Faction gameplay remains package 2.3 onward; no rules or mission outcomes change in this art-only update. Previous framework CI and deployment are green.
+
 ## 0.11.0-alpha.2: faction model candidates (package 2.2, approval pending)
 
 - Generated twelve original faction GLBs and a Blender source library. Manifest records exact topology counts and per-type budgets; every candidate passes geometry attributes, materials, rig names and quantization checks.

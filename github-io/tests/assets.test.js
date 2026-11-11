@@ -53,7 +53,7 @@ test('scenery provides the assets the views look up by name, with mergeable mesh
   assert.equal(sets.size, 1);
 });
 
-test('faction candidates satisfy export, topology and silhouette-rig budgets before approval',()=>{
+test('approved faction models satisfy export, topology and silhouette-rig budgets',()=>{
   const manifest=JSON.parse(readFileSync(new URL('../public/models/manifest.json',import.meta.url),'utf8'));
   const candidates=manifest.assets.filter(a=>a.faction);
   assert.equal(candidates.length,12);
@@ -75,4 +75,17 @@ test('faction candidates satisfy export, topology and silhouette-rig budgets bef
     if(['scorcher','walker'].includes(asset.name))assert.ok(names.some(n=>RIG_PART.test(n)),asset.name);
     assert.ok(!JSON.stringify(json).includes('KHR_mesh_quantization'));
   }
+});
+
+
+test('portrait generation preserves legacy cells and appends every approved faction model', () => {
+  const read = name => readFileSync(new URL(`../${name}`, import.meta.url), 'utf8');
+  const order = JSON.parse(read('src/portraits.js').match(/PORTRAIT_ORDER = (\[[\s\S]*?\]);/)[1]);
+  assert.deepEqual(order.slice(0, 13), ['worker','vanguard','ranger','breaker','medic','engineer','tank','antitank','hq','relay','barracks','foundry','tower']);
+  const blender = JSON.parse(read('tools/blender/render_ui_art.py').match(/PORTRAITS = (\[[\s\S]*?\])/)[1].replaceAll("'", '"'));
+  assert.deepEqual(blender, order);
+  const assets = JSON.parse(read('public/models/manifest.json')).assets.filter(a => a.faction);
+  assert.equal(new Set(order).size, 25);
+  assert.deepEqual(new Set(order.slice(13)), new Set(assets.map(a => a.name)));
+  for (const asset of assets) assert.equal(asset.review, 'approved by owner 2026-11-11');
 });

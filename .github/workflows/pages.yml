@@ -80,7 +80,7 @@ jobs:
           - name: ui-extras
             scripts: ui-extras
           - name: visuals
-            scripts: visual-combat feel model-loading
+            scripts: visual-combat feel model-loading portraits
     defaults:
       run:
         working-directory: github-io

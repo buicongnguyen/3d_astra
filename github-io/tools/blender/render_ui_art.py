@@ -6,7 +6,7 @@ The default out_dir is src/art, where Vite fingerprints the files it bundles.
 
 Outputs (WebP, sRGB):
   keyart.webp / keyart-960.webp  golden-hour outpost scene for the start screen
-  portraits.webp                 4x4 atlas of 192 px unit and building portraits, team paint white
+  portraits.webp                 4x7 atlas of 192 px unit and building portraits, team paint white
   portrait-mask.webp             same atlas; alpha marks visible team paint so the page can tint
                                  portraits with the player's chosen army colour
   emblem.webp                    512 px Frontier Command emblem on a transparent background
@@ -26,8 +26,10 @@ ROOT = Path(__file__).resolve().parents[2]
 MODELS = ROOT / 'public' / 'models'
 # Atlas order is part of the page contract (see src/portraits.js).
 PORTRAITS = ['worker', 'vanguard', 'ranger', 'breaker', 'medic', 'engineer', 'tank', 'antitank',
-             'hq', 'relay', 'barracks', 'foundry', 'tower']
+             'hq', 'relay', 'barracks', 'foundry', 'tower',
+             'scrapper', 'scorcher', 'salvageyard', 'rider', 'wagon', 'waystation', 'drone', 'walker', 'pylon', 'shade', 'watcher', 'veilrelay']
 CELL, COLS = 192, 4
+ROWS = math.ceil(len(PORTRAITS) / COLS)
 
 
 def lin(hex_color, alpha=1.0):
@@ -361,50 +363,51 @@ def keyart(out):
 
 
 def portraits(out):
-    atlas = np.zeros((CELL * 4, CELL * COLS, 4), dtype=np.float32)
+    atlas = np.zeros((CELL * ROWS, CELL * COLS, 4), dtype=np.float32)
     mask_atlas = np.zeros_like(atlas)
-    tmp = Path(tempfile.mkdtemp())
-    for index, name in enumerate(PORTRAITS):
-        for is_mask in (False, True):
-            reset()
-            setup(CELL * 2, CELL * 2, True, samples=64)
-            world(lin('#6f8796'), 0.45)
-            roots, objects = import_glb(name)
-            paint_team(objects, PAINT, mask=is_mask)
-            pivot = place(roots, objects, (0, 0, 0), 0)
-            lo, hi = bounds(objects)
-            centre = (lo + hi) / 2
-            size = max(hi.x - lo.x, hi.y - lo.y, hi.z - lo.z)
-            # Three-quarter front view from the left, slightly above, like a unit card.
-            direction = Vector((-0.62, -1.0, 0.62)).normalized()
-            cam = camera(centre + direction * size * 4, centre, ortho=1.0)
-            bpy.context.view_layer.update()
-            inv = cam.matrix_world.inverted()
-            pts = [inv @ (o.matrix_world @ Vector(c)) for o in objects if o.type == 'MESH' for c in o.bound_box]
-            xs, ys = [p.x for p in pts], [p.y for p in pts]
-            cam.data.ortho_scale = max(max(xs) - min(xs), max(ys) - min(ys)) * 1.12
-            right = cam.matrix_world.to_3x3() @ Vector((1, 0, 0))
-            up = cam.matrix_world.to_3x3() @ Vector((0, 1, 0))
-            cam.location += right * (max(xs) + min(xs)) / 2 + up * (max(ys) + min(ys)) / 2
-            light('SUN', 'key', 3.6, lin('#ffe2b8'), rotation=(48, 0, -35), size=math.radians(4))
-            light('SUN', 'rim', 3.0, lin('#bfe6ff'), rotation=(62, 0, 160), size=math.radians(8))
-            light('SUN', 'fill', 0.9, lin('#9fc3ff'), rotation=(70, 0, 55), size=math.radians(20))
-            path = tmp / f'{name}{"-mask" if is_mask else ""}.png'
-            render(path)
-            image = bpy.data.images.load(str(path))
-            image.scale(CELL, CELL)
-            cell = np.empty(CELL * CELL * 4, dtype=np.float32)
-            image.pixels.foreach_get(cell)
-            bpy.data.images.remove(image)
-            row, col = divmod(index, COLS)
-            # Blender images start at the bottom row.
-            y0 = (3 - row) * CELL
-            target = mask_atlas if is_mask else atlas
-            target[y0:y0 + CELL, col * CELL:(col + 1) * CELL] = cell.reshape(CELL, CELL, 4)
-    save_webp(atlas, CELL * COLS, CELL * 4, out / 'portraits.webp', 86)
-    # The mask only needs alpha: team paint visible = opaque white.
-    mask_atlas[..., :3] = 1.0
-    save_webp(mask_atlas, CELL * COLS, CELL * 4, out / 'portrait-mask.webp', 80)
+    with tempfile.TemporaryDirectory(prefix="frontier-portraits-") as temp_dir:
+        tmp = Path(temp_dir)
+        for index, name in enumerate(PORTRAITS):
+            for is_mask in (False, True):
+                reset()
+                setup(CELL * 2, CELL * 2, True, samples=64)
+                world(lin('#6f8796'), 0.45)
+                roots, objects = import_glb(name)
+                paint_team(objects, PAINT, mask=is_mask)
+                pivot = place(roots, objects, (0, 0, 0), 0)
+                lo, hi = bounds(objects)
+                centre = (lo + hi) / 2
+                size = max(hi.x - lo.x, hi.y - lo.y, hi.z - lo.z)
+                # Three-quarter front view from the left, slightly above, like a unit card.
+                direction = Vector((-0.62, -1.0, 0.62)).normalized()
+                cam = camera(centre + direction * size * 4, centre, ortho=1.0)
+                bpy.context.view_layer.update()
+                inv = cam.matrix_world.inverted()
+                pts = [inv @ (o.matrix_world @ Vector(c)) for o in objects if o.type == 'MESH' for c in o.bound_box]
+                xs, ys = [p.x for p in pts], [p.y for p in pts]
+                cam.data.ortho_scale = max(max(xs) - min(xs), max(ys) - min(ys)) * 1.12
+                right = cam.matrix_world.to_3x3() @ Vector((1, 0, 0))
+                up = cam.matrix_world.to_3x3() @ Vector((0, 1, 0))
+                cam.location += right * (max(xs) + min(xs)) / 2 + up * (max(ys) + min(ys)) / 2
+                light('SUN', 'key', 3.6, lin('#ffe2b8'), rotation=(48, 0, -35), size=math.radians(4))
+                light('SUN', 'rim', 3.0, lin('#bfe6ff'), rotation=(62, 0, 160), size=math.radians(8))
+                light('SUN', 'fill', 0.9, lin('#9fc3ff'), rotation=(70, 0, 55), size=math.radians(20))
+                path = tmp / f'{name}{"-mask" if is_mask else ""}.png'
+                render(path)
+                image = bpy.data.images.load(str(path))
+                image.scale(CELL, CELL)
+                cell = np.empty(CELL * CELL * 4, dtype=np.float32)
+                image.pixels.foreach_get(cell)
+                bpy.data.images.remove(image)
+                row, col = divmod(index, COLS)
+                # Blender images start at the bottom row.
+                y0 = (ROWS - 1 - row) * CELL
+                target = mask_atlas if is_mask else atlas
+                target[y0:y0 + CELL, col * CELL:(col + 1) * CELL] = cell.reshape(CELL, CELL, 4)
+        save_webp(atlas, CELL * COLS, CELL * ROWS, out / 'portraits.webp', 86)
+        # The mask only needs alpha: team paint visible = opaque white.
+        mask_atlas[..., :3] = 1.0
+        save_webp(mask_atlas, CELL * COLS, CELL * ROWS, out / 'portrait-mask.webp', 80)
 
 
 def triangle_curve(name, outer, inner, depth, bevel):
