@@ -110,12 +110,12 @@ export const ai = {
         // One Vanguard per two Rangers; a raider AI trains two Vanguards per Ranger.
         const cycle = Math.floor(this.time/4)%3;
         let choice = b.type === 'foundry' ? 'breaker' : cycle === 0 || (role === 'raider' && cycle === 1) ? 'vanguard' : 'ranger';
-        if (b.type === 'foundry' && b.level >= 3 && army.filter(e => e.type === 'tank').length <= army.filter(e => e.type === 'breaker').length + (role === 'siege' ? 2 : 0)) choice = 'tank';
-        if (b.type === 'barracks' && b.level >= 2 && army.filter(e => e.type === 'antitank').length < 3) choice = 'antitank';
+        if (b.type === 'foundry' && b.level >= 3 && army.filter(e => this.slotOf(e.type) === 'tank').length <= army.filter(e => this.slotOf(e.type) === 'breaker').length + (role === 'siege' ? 2 : 0)) choice = 'tank';
+        if (b.type === 'barracks' && b.level >= 2 && army.filter(e => this.slotOf(e.type) === 'antitank').length < 3) choice = 'antitank';
         choice = this.counterChoice(team, b, army, choice);
         const support = b.type === 'foundry' ? 'engineer' : 'medic';
-        if (b.level >= 2 && army.filter(e => e.type === support).length < 2) choice = support;
-        const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : ['breaker'])])];
+        if (b.level >= 2 && army.filter(e => this.slotOf(e.type) === support).length < 2) choice = support;
+        const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : ['breaker'])].map(slot => this.typeFor(team,slot)))];
         const pop = this.population(team);
         const save = b.type === 'barracks' ? hold : 0;
         const affordable = choices.find(type => b.level >= (D[type].required_level || 1) && afford([D[type].cost[0] + save, D[type].cost[1]]) && pop.used+pop.reserved+D[type].pop <= pop.cap);

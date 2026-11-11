@@ -16,16 +16,16 @@ const isIdleArmy = (u) => u.kind === "unit" && u.type !== "worker" && !u.orders.
 // (`counter` = the type a unit is strong against, `mechanical_bonus` = strong against vehicles).
 export function strongAgainst(a, b) {
   const da = D[a], db = D[b];
-  return !!da && !!db && (da.counter === b || (!!da.mechanical_bonus && !!db.mechanical));
+  return !!da && !!db && (da.counter && da.counter === db.class || (!!da.mechanical_bonus && !!db.mechanical));
 }
 
 // The hint text for an enemy type, or null when nothing the player has is involved.
-export function counterHint(enemyType, ownTypes) {
+export function counterHint(enemyType, ownTypes, availableTypes = Object.keys(D)) {
   const e = D[enemyType];
   if (!e) return null;
   const weak = ownTypes.find((t) => strongAgainst(enemyType, t));
   if (weak) {
-    const answer = Object.keys(D).find((t) => D[t].kind === "unit" && t !== "worker" && strongAgainst(t, enemyType));
+    const answer = availableTypes.find((t) => D[t].kind === "unit" && t !== "worker" && strongAgainst(t, enemyType));
     return answer
       ? `${e.name} counters your ${D[weak].name}. Pull them back and bring ${D[answer].name}.`
       : `${e.name} counters your ${D[weak].name}. Pull them back.`;
@@ -92,7 +92,7 @@ export function setupUiExtras(S, A) {
       if (!p || p.x < 0 || p.y < 0 || p.x > rect.width || p.y > rect.height) continue;
       const near = army.filter((u) => Math.hypot(u.x - e.x, u.z - e.z) < 18);
       if (!near.length) continue;
-      const text = counterHint(e.type, [...new Set(near.map((u) => u.type))]);
+      const text = counterHint(e.type, [...new Set(near.map((u) => u.type))], S.sim.unitRoster(0));
       seen.add(e.type);
       if (text) { showHint(text); return; }
     }

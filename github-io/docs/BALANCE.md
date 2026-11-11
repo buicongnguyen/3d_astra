@@ -174,3 +174,17 @@ Each speed uses classic, riverlands and dunes, with bot attack thresholds 12, 16
 | relentless | 100.0% | 5–20% | 388 |
 
 Only Relaxed reaches its target. Before tuning the bot also won all 48 matches. More aggressive worker, technology, second-Barracks and minimum-wave settings improved some matchups (one trial gave Fast 25% and Relentless 58.3%), but broke existing affordable-defense and coalition-wave regression checks. Those settings were not retained and the tests were not weakened. The retained changes only increase Normal/Fast army caps and expand defensive response to approaching units; they preserve campaign tempo. Pace-only tuning did not establish the requested ladder. Further AI behavior work and human play review are still needed; this is not claimed as balanced.
+
+## Faction framework golden checks
+
+Before package 2.1, `new Simulation({ai:false})` after 1200 ticks of 0.05 seconds hashes to `d071360b`. Default/all-Meridian matches and their restored saves retain that hash after class and faction integration.
+
+| Attacker | Target class (representative) | Base hit damage |
+|---|---|---:|
+| Vanguard | ranged (Ranger) | 19.2 |
+| Ranger | siege (Breaker) | 33.8 |
+| Breaker | melee (Vanguard) | 45 |
+| Battle tank | melee (Vanguard) | 72 |
+| Anti-tank | mechanical armor (Battle tank) | 120 |
+
+These values are asserted in tests/factions.test.js. Ordinary attacks without a counter must not match an absent target class; existing anti-tank tests continue to verify building and infantry damage.

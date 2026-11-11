@@ -36,3 +36,5 @@
 #unit-list button.critical{border-color:#e0584a;animation:unit-critical 1.1s ease-in-out infinite}
 @keyframes unit-critical{50%{box-shadow:inset 0 0 0 1px #e0584a99,0 0 8px #e0584a66}}
 @media (prefers-reduced-motion:reduce){#unit-list button.critical{animation:none}}
+
+.selection-faction { margin:2px 0 6px; font-size:11px; color:var(--muted); }

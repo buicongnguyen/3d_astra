@@ -1,5 +1,7 @@
 import { DEFINITIONS as D, ROCKS, MAX_POP, distance, hyp, clamp } from "./data.js";
 import { NEUTRAL, CORE_GRACE, ROUTES_PER_TICK, MIDFIELD_DEPOSITS } from "./sim/constants.js";
+import { factionRules, normalizedFactions } from "./factions.js";
+import { traits } from "./sim/traits.js";
 import { difficultyId, difficultySpeed } from "./difficulty.js";
 import { Navigation } from "./navigation.js";
 import { progression } from "./progression.js";
@@ -23,7 +25,7 @@ export { NEUTRAL } from "./sim/constants.js";
 // The match state and its fixed 20 Hz step. Behaviour lives in the systems under sim/, mixed
 // in at the bottom of this file; this class holds setup, shared lookups and the step order.
 export class Simulation {
-  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null, mission = null, difficulty = "standard", capturePoints = false } = {}) {
+  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null, mission = null, factions = null, difficulty = "standard", capturePoints = false } = {}) {
     this.difficulty = difficultyId(difficulty);
     if (mission) aiSpeed = difficultySpeed(aiSpeed, this.difficulty);
     this.aiEnabled = ai;
@@ -38,6 +40,7 @@ export class Simulation {
     this.routeBudget = Infinity;
     this.commandLog = [];
     this.enemyCount = Number.isInteger(enemyCount) ? clamp(enemyCount, 1, 3) : 1;
+    this.factions = normalizedFactions(factions,mission,this.enemyCount);
     this.aiSpeed = Object.hasOwn(AI_SPEEDS, aiSpeed) ? aiSpeed : "normal";
     this.pace = aiPace(this.aiSpeed, !!mission);
     // A coalition of AIs shares vision and plans and never fights itself.
@@ -165,7 +168,9 @@ export class Simulation {
     });
   }
   spawn(type, team, x, z, complete = true) {
+    type = this.typeFor(team,type);
     const d = D[type];
+    if (!d) throw new Error(`Unknown unit or building: ${type}`);
     const e = {
       ...d,
       type,
@@ -197,6 +202,7 @@ export class Simulation {
       work: 0,
       working: false,
     };
+    if (d.trains) e.trains = this.resolvedTrains(team,d.trains);
     this.entities.push(e);
     return e;
   }
@@ -283,6 +289,7 @@ export class Simulation {
     for (const e of this.entities) if (e.hp > 0) this.stepEntity(e, dt);
     this.separate(dt);
     this.stepTactics(dt);
+    this.stepTraits(dt);
     this.stepAI(dt);
     this.stepMission(dt);
     this.stepSkirmishPoints(dt);
@@ -406,5 +413,5 @@ export class Simulation {
   }
 }
 
-Object.assign(Simulation.prototype, points, expansion, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot);
+Object.assign(Simulation.prototype, factionRules, traits, points, expansion, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot);
 Simulation.load = (saved) => restore(Simulation, saved);

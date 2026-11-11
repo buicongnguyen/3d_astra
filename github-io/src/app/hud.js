@@ -1,7 +1,7 @@
 // Layout, notices, the top bar and the selection / command panel refresh (updateUI), training panel, objectives toggle.
 import { $ } from "./dom.js";
 import { ACTION_KEYS } from "../hotkeys.js";
-import { DEFINITIONS as D, BUILDINGS } from "../data.js";
+import { DEFINITIONS as D } from "../data.js";
 import { TRAINING_STEPS } from "../tutorial.js";
 import { createMissionUI } from "../mission-ui.js";
 import { hasPortrait, portrait } from "../portraits.js";
@@ -180,7 +180,7 @@ export function setupHud(S, A) {
               // The second tier of the chosen branch appears beside it once the first tier is done.
               .concat(e.team === 0 && e.trains?.includes("upgrade2") ? (p.upgrade && !p.upgrade2 ? ["upgrade2"] : p.plating && !p.plating2 ? ["plating2"] : []) : [])
           : es.some((u) => u.type === "worker")
-            ? BUILDINGS
+            ? S.sim.buildable(0)
             : [];
       const structure = es.length === 1 && e?.kind === "building" && !e.trains;
       // Fighting units without a Harvester among them: abilities and stance take the card.

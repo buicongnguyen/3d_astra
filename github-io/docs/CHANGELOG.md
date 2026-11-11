@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.11.0-alpha.1: faction rules framework (package 2.1)
+
+- Unit counters now target classes; all recorded base damage matchups remain unchanged. The pre-framework default 60-second simulation hash remains d071360b, including after save/load.
+- Faction slot lookup, resolved training lists, roster-restricted training/construction, opt-in mission rosters and saved factions are implemented. Default all-Meridian state is omitted from snapshots and reconstructed on load to preserve legacy hashes.
+- AI composition and mission spawns/counts resolve slots. Trait hooks are deterministic and inert until each faction's gameplay package defines its behavior.
+- Command cards, guide production lists, counter hints and enemy details read rosters/classes. Shared faction names moved from the story catalog to the interface catalog with their original Vietnamese translations.
+- New faction definitions and gameplay are not enabled before the model approval step. Framework tests supply isolated definitions to verify foreign-roster rejection and persistence.
+- Complete unit suite passes (352 with candidate-asset checks); final browser sweep and CI tracked separately.
+
 ## 0.10.0-alpha.4: Stage 1 implementation (local validation in progress)
 
 - Package 1.1: deterministic distance-attenuated camera shake, render-only hit-stop, 80 ms ring/vitals flashes, projected unit readability, directed infantry falls, and 20 s vehicle wrecks (8 s Eco), capped at 24 oldest-first. Camera transforms are restored immediately after drawing. Motion preferences and mission camera cues suppress shake and hit-stop. Unit materials remain shared: ring/vitals flash is the explicitly permitted fallback because batches currently store transforms only.

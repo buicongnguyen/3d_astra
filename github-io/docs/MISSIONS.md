@@ -98,3 +98,7 @@ Status: format agreed 2026-11-10; engine and campaign in progress.
 Simulation accepts and saves `difficulty` (`story`, `standard`, `veteran`; default Standard). Values in `balance.json.difficulty` scale scripted wave counts, enemy damage to team 0, optional finish deadlines and time medals. Story grants 150 alloy after mission setup. Veteran advances Relaxed to Normal and Normal to Fast, including scripted speed changes. Skirmish ignores these modifiers.
 
 Spawn/setup records may specify `hpByDifficulty: {story: 700}`; an absent entry uses `hp` as before. This supports isolated mission tuning. Saves include the mission data and chosen difficulty. The benchmark is `npm run check:missions -- --difficulty story` (or standard/veteran). The plan's Veteran target permits at most two objective-bot misses, but the checker remains strict and exits nonzero for any miss. Report exceptions explicitly.
+
+## Faction roster opt-in
+
+A mission's faction colors remain cosmetic until `rules.rosters: true`. With that flag, its faction map configures simulation rosters. Spawn and wave data keep base slot names; count conditions resolve the same slots. Explicit faction type names are also accepted. No existing mission has been opted in yet.

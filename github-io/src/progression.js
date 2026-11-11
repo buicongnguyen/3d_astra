@@ -89,6 +89,7 @@ export const progression = {
     if (t.hp <= 0) {
       if (t.kind !== 'wall') this.players[team].kills++;
       this.creditKill(by,t);
+      this.traitDeath(t,team);
       this.events.push({type:'death',x:t.x,z:t.z,team:t.team,building:t.kind === 'building' || t.kind === 'wall',heavy:!!t.mechanical,core:t.type==='hq',seed:t.id,direction:by !== null && this.get(by) ? Math.atan2(t.x-this.get(by).x,t.z-this.get(by).z) : t.angle});
       if (t.kind === 'building' || t.kind === 'wall') this.nav.rebuild(this.entities);
     }

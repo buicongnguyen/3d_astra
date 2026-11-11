@@ -43,7 +43,7 @@ export const aiCounter = {
     if (!this.pace.counter) return choice;
     const mix = this.seenMix(team);
     if (mix.total < MIN_SEEN && mix.towers < 2) return choice;
-    const have = (type) => army.filter((e) => e.type === type).length;
+    const have = (type) => army.filter((e) => this.slotOf(e.type) === type).length;
     if (b.type === "barracks") {
       // Many vehicles: rockets (Anti-tank, Level 2) up to half of the seen vehicles; else Rangers.
       if (mix.total >= MIN_SEEN && mix.mech / mix.total >= MECH_SHARE)
@@ -76,9 +76,9 @@ export const aiCounter = {
   // Badly hurt fighters fall back to a Medic (if the team has one) and rejoin once healed.
   aiRetreat(team, army) {
     if (!this.pace.counter) return;
-    const medics = army.filter((e) => e.type === "medic" && e.hp > 0);
+    const medics = army.filter((e) => this.slotOf(e.type) === "medic" && e.hp > 0);
     for (const e of army) {
-      if (e.mechanical || e.type === "medic" || e.type === "engineer" || !e.damage) continue;
+      if (e.mechanical || this.slotOf(e.type) === "medic" || this.slotOf(e.type) === "engineer" || !e.damage) continue;
       if (e.retreating) {
         if (e.hp >= e.maxHp * RECOVER || !medics.length) { e.retreating = false; e.orders = []; }
         continue;

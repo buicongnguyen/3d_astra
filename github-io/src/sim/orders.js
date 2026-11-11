@@ -103,7 +103,7 @@ export const orders = {
   enqueue(buildingId, type) {
     const b = this.get(buildingId),
       d = D[type];
-    if (this.result || !b || !b.complete || !b.trains?.includes(type) || !d)
+    if (this.result || !b || !b.complete || !b.trains?.includes(type) || !this.canTrain(b.team,type) || !d)
       return false;
     const fail = (text) => {
       this.message(text, b.team);
@@ -155,7 +155,7 @@ export const orders = {
   placement(type, team, x, z) {
     if (![x, z].every(Number.isFinite)) return "Invalid position.";
     const d = D[type];
-    if (!d || d.kind !== "building") return "Invalid structure.";
+    if (!d || d.kind !== "building" || !this.buildable(team).includes(type)) return "Invalid structure.";
     const missing = this.constructionRequirements(type,team);
     if (missing) return missing;
     const terrainError = this.terrain.placement(x, z, d.radius);

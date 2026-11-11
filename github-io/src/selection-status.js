@@ -1,3 +1,4 @@
+import { FACTIONS } from './story/world.js';
 import './selection-status.css';
 import {buildingActivity} from './activity.js';
 import {icon} from './icons.js';
@@ -23,6 +24,7 @@ export function selectionStatus(sim, entities) {
   const name = group ? `${entities.length} units selected` : e.name;
   const side = entities.every(u=>u.team===0) ? 'friendly' : 'hostile';
   return `<div class="entity-details"><div class="selection-heading"><span class="sel-portrait ${side}" aria-hidden="true">${!group && hasPortrait(e.type) ? portrait(e.type, side) : icon(group ? 'people' : e.icon || e.type)}</span><h3 title="${group ? name : e.description}">${name}</h3>${e.kind==='building'&&!group?`<span class="selection-level">L${e.level}</span>`:''}${!group&&e.kind==='unit'?rankBadge(e.rank):''}</div>
+    ${!group && e.team > 0 ? `<p class="selection-faction">${FACTIONS[sim.missionDef?.factions?.[e.team] || sim.factions?.[e.team]]?.name || ""}</p>` : ""}
     <dl class="unit-metrics" aria-label="Selected object stats">
     ${metric('HP',`${number(hp)}/${number(maxHp)}`,`Health ${Math.ceil(hp)} of ${maxHp}`,['hp',ratio(hp,maxHp)])}
     ${metric('Shield',`${number(shield)}/${number(maxShield)}`,`Shield ${Math.ceil(shield)} of ${maxShield}`,['sh',ratio(shield,maxShield)])}

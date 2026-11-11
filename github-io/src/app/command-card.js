@@ -39,7 +39,7 @@ export function setupCommandCard(S, A) {
 
     $("cancel-mode").onclick = () => { A.clearMode(); A.updateUI(); };
 
-    $("field-guide").onclick = () => A.showGuide(A.selectedEntities()[0]?.type);
+    $("field-guide").onclick = () => { const e=A.selectedEntities()[0]; A.showGuide(e?.type,e?.team); };
 
     $("support-order").onclick = () => A.enterMode('support');
 

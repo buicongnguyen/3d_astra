@@ -79,7 +79,7 @@ export const combat = {
       this.applyDamage(
         t,
         this.attackValue(e) * scale *
-          (e.counter === t.type ? e.counter_bonus || 1.6 : 1) *
+          (e.counter && e.counter === t.class ? e.counter_bonus || 1.6 : 1) *
           (t.mechanical ? (e.mechanical_bonus || 1) * (e.buff?.mech || 1) : 1),
         e.team,
         e.id,

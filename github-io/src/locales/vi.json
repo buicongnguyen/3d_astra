@@ -1,5 +1,18 @@
 {
   "messages": {
+    "The Wardens": "Đội Wardens",
+    "workers": "công nhân",
+    "melee infantry": "bộ binh cận chiến",
+    "ranged infantry": "bộ binh tầm xa",
+    "siege units": "đơn vị công thành",
+    "armored units": "đơn vị thiết giáp",
+    "antiarmor infantry": "bộ binh chống tăng",
+    "support units": "đơn vị hỗ trợ",
+    "Meridian Expedition": "Đoàn viễn chinh Meridian",
+    "Ashfall Combine": "Liên hợp Ashfall",
+    "Sunward Caravan": "Đoàn Lữ hành Sunward",
+    "Veil Survey": "Đoàn Khảo sát Veil",
+
     "Sound test": "Thử âm thanh",
     "Unit ready": "Đơn vị sẵn sàng",
     "Research done": "Nghiên cứu hoàn tất",
@@ -761,6 +774,14 @@
     "Select soldiers, then Actions": "Chọn lính, rồi mở Thao tác"
   },
   "patterns": [
+    ["^Deals ([\\d.]+)× damage to melee infantry\\.$", "Gây {1}× sát thương lên bộ binh cận chiến."],
+    ["^Deals ([\\d.]+)× damage to ranged infantry\\.$", "Gây {1}× sát thương lên bộ binh tầm xa."],
+    ["^Deals ([\\d.]+)× damage to siege units\\.$", "Gây {1}× sát thương lên đơn vị công thành."],
+    ["^Deals ([\\d.]+)× damage to armored units\\.$", "Gây {1}× sát thương lên đơn vị thiết giáp."],
+    ["^Deals ([\\d.]+)× damage to antiarmor infantry\\.$", "Gây {1}× sát thương lên bộ binh chống tăng."],
+    ["^Deals ([\\d.]+)× damage to support units\\.$", "Gây {1}× sát thương lên đơn vị hỗ trợ."],
+    ["^Deals ([\\d.]+)× damage to workers\\.$", "Gây {1}× sát thương lên công nhân."],
+
     ["^Finish within (\\d+) seconds$", "Hoàn thành trong {1} giây"],
     ["^(.+) counters your (.+)\\. Pull them back and bring (.+)\\.$", "{1} khắc chế {2} của bạn. Hãy rút {2} về và dùng {3}."],
     ["^(.+) counters your (.+)\\. Pull them back\\.$", "{1} khắc chế {2} của bạn. Hãy rút {2} về."],

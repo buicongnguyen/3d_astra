@@ -59,3 +59,5 @@ Real phones, real audio output and sound taste. Touch tests use browser emulatio
 - `node tools/skirmish-bench.mjs`: 48 games; `--speeds`, `--maps`, `--attack-at` narrow an investigation without changing default coverage.
 
 Package 2.0 adds test:model-loading (harness): late asset retries, readiness gating, failed-load recovery and template reuse. test:offline also checks first-fetch-only caching of an additional model path.
+
+Package 2.1 adds factions.test.js: pre-change hash, golden counter damage, slot resolution, foreign roster rejection, mission opt-in and faction save/load. Isolated test definitions exercise future rosters without enabling their unapproved assets in gameplay.

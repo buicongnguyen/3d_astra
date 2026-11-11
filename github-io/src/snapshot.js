@@ -49,11 +49,11 @@ function slim(e) {
 export const snapshot = {
   serialize() {
     const state = {};
-    for (const [key, value] of Object.entries(this)) if (!DERIVED.has(key)) state[key] = value;
+    for (const [key, value] of Object.entries(this)) if (!DERIVED.has(key) && !(key === "factions" && Object.values(value).every(id => id === "meridian"))) state[key] = value;
     state.entities = this.entities.map(slim);
     return JSON.stringify({
       version: SAVE_VERSION,
-      options: { map: this.terrain.id, enemyCount: this.enemyCount, aiSpeed: this.aiSpeed, alliance: this.coalition ? "coalition" : "ffa", ai: this.aiEnabled, mission: this.missionDef || null, difficulty: this.difficulty, playerBonus: this.playerBonus || null, capturePoints: !!this.capturePointsOn },
+      options: { ...(Object.values(this.factions).some(id => id !== "meridian") ? {factions:this.factions} : {}), map: this.terrain.id, enemyCount: this.enemyCount, aiSpeed: this.aiSpeed, alliance: this.coalition ? "coalition" : "ffa", ai: this.aiEnabled, mission: this.missionDef || null, difficulty: this.difficulty, playerBonus: this.playerBonus || null, capturePoints: !!this.capturePointsOn },
       nav: { revision: this.nav.revision, wallsSpawned: this.nav.wallsSpawned },
       state,
     }, encode);

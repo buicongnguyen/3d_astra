@@ -65,6 +65,7 @@ export const missions = {
     return { x: place.x, z: place.z };
   },
   missionSpawn({ spawn, team = 0, at, count = 1, tag, name, hp, hpByDifficulty, speed, complete = true }) {
+    spawn = this.typeFor(team,spawn);
     hp = hpByDifficulty?.[this.difficulty] ?? hp;
     const d = D[spawn];
     if (!d || !this.players[team]) return [];
@@ -188,7 +189,7 @@ export const missions = {
     if (when.event) return this.events.slice(this.tickEvents).some((e) => e.type === when.event && (when.event !== "incoming" || e.team === 0));
     if (when.tagHpBelow) { const g = this.tagged(when.tagHpBelow.tag); return g.length > 0 && g.some((e) => e.hp / e.maxHp < when.tagHpBelow.percent / 100); }
     if (when.tagDead) return (m.fired["seen:" + when.tagDead] ||= this.tagged(when.tagDead).length > 0) && !this.tagged(when.tagDead).length;
-    if (when.count) return this.own(when.count.team ?? 0).filter((e) => e.type === when.count.type && e.complete !== false).length >= when.count.atLeast;
+    if (when.count) return this.own(when.count.team ?? 0).filter((e) => e.type === this.typeFor(when.count.team ?? 0,when.count.type) && e.complete !== false).length >= when.count.atLeast;
     if (when.pointOwned) return m.points[when.pointOwned.point]?.owner === (when.pointOwned.team ?? 0);
     return false;
   },

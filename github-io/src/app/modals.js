@@ -173,7 +173,7 @@ export function setupModals(S, A) {
 
   const showGuide = createFieldGuide(() => {
     guidePrevious = Z.snapshot(); Z.open('guide'); S.keys.clear();
-  }, () => { Z.restore(guidePrevious); S.keys.clear(); });
+  }, () => { Z.restore(guidePrevious); S.keys.clear(); }, () => S.sim);
 
   Object.assign(A, { togglePause, showGuide, closeModal, showHelp, setModalOpen, showPause, graphicsLost, graphicsRestored });
   return function bind() {
