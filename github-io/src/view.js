@@ -1096,8 +1096,18 @@ export class WorldView {
     const model = o.userData.model;
     if (o.userData.emblem) o.userData.emblem.visible = false;
     model.rotation.order = 'YXZ';
-    this.dying.push({ object: o, kind, team: event.team, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1),
-      life: { building: 2.8, vehicle: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, infantry: 1.6 }[kind], baseY: model.rotation.y, direction: event.direction ?? model.rotation.y });
+    // Wrecks lose their paint, team colour and lights: every part takes one shared burnt
+    // material, so a dead tank reads as dead at a glance and all wrecks share a few batches.
+    if (kind !== 'infantry') {
+      this.wreckMaterial ||= new THREE.MeshStandardMaterial({ name: 'Wreck', color: 0x2a2623, roughness: 0.95, metalness: 0.15 });
+      model.traverse?.((part) => {
+        if (!part.isMesh) return;
+        part.material = this.wreckMaterial;
+        this.batches?.byPart.delete(part);
+      });
+    }
+    this.dying.push({ baseY: o.position.y, object: o, kind, team: event.team, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1),
+      life: { building: 2.8, vehicle: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, infantry: 1.6 }[kind], baseAngle: model.rotation.y, direction: event.direction ?? model.rotation.y });
   }
   updateDying(sim, dt) {
     const motion = this.activity.combat.motion;
@@ -1111,18 +1121,18 @@ export class WorldView {
       if (d.kind === 'building') {
         // A heavy collapse: a shudder, then a slow start that accelerates into the ground.
         const shake = motion ? Math.max(0, 1 - t / 1.1) * 0.12 : 0;
-        o.position.set(d.x + Math.sin(t * 61) * shake, -heavy((t - 0.35) / 2.35) * 5.6, d.z + Math.cos(t * 53) * shake);
+        o.position.set(d.x + Math.sin(t * 61) * shake, d.baseY - heavy((t - 0.35) / 2.35) * 5.6, d.z + Math.cos(t * 53) * shake);
         m.rotation.z = d.tilt * heavy((t - 0.4) / 2.2) * 0.16;
         m.rotation.x = d.tilt * heavy((t - 0.4) / 2.2) * 0.07;
       } else if (d.kind === 'vehicle') {
         const hop = motion ? Math.sin(Math.min(1, t / 0.45) * Math.PI) * 0.55 : 0;
-        o.position.y = hop - ease((t - (d.life - 0.9)) / 0.9) * 1.8;
+        o.position.y = d.baseY + hop - ease((t - (d.life - 0.9)) / 0.9) * 1.8;
         m.rotation.z = d.tilt * ease(t / 0.45) * 0.18;
         m.rotation.x = -ease(t / 0.45) * 0.1;
       } else {
         m.rotation.y = d.direction;
         m.rotation.x = -ease(t / FEEL.fallSeconds) * 1.45;
-        o.position.y = -ease((t - 0.9) / 0.7) * 1.2;
+        o.position.y = d.baseY - ease((t - 0.9) / 0.7) * 1.2;
       }
     }
   }

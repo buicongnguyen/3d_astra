@@ -577,6 +577,16 @@ export class Effects {
         s1: building ? 3.4 : 2, cell: CELL.puff, c0: [0.14, 0.13, 0.13, 0.62], c1: [0.3, 0.29, 0.29, 0], fadeIn: 0.2, anchor, spin: 0.35 });
     }
   }
+  smoulder(d, dt) {
+    d.puff = (d.puff ?? Math.random()) + dt * 1.6 * this.budget;
+    const m = this.motion;
+    while (d.puff >= 1) {
+      d.puff -= 1;
+      this.particle(this.smoke, { x: d.x + (Math.random() - 0.5) * 0.5, y: 0.9, z: d.z + (Math.random() - 0.5) * 0.5,
+        vy: m ? 1.1 + Math.random() * 0.5 : 0.1, vx: m ? 0.35 : 0, drag: 0.3, life: m ? 2.4 : 1.1, s0: 0.5, s1: 1.8,
+        cell: CELL.puff, c0: [0.12, 0.11, 0.11, 0.5], c1: [0.28, 0.27, 0.27, 0], fadeIn: 0.2, anchor: d, spin: 0.35 });
+    }
+  }
   update(sim, dt) {
     this.time += dt;
     const cache = new Map();
@@ -608,6 +618,8 @@ export class Effects {
     // Fire on critically damaged machines and buildings; same fog-aware budget as the HUD.
     this.burning = burningEntities(sim, this.view.lowPower);
     if (dt > 0) for (const e of this.burning) this.burn(e, dt);
+    // Vehicle wrecks smoulder: a thin dark plume until they sink away.
+    if (dt > 0) for (const d of this.view.dying ?? []) if (d.kind === 'vehicle' && d.age < d.life - 1) this.smoulder(d, dt);
     this.work(sim, dt);
     for (const r of sim.resources ?? []) {
       const live = r.amount > 0, was = this.depositLive.get(r.id);
