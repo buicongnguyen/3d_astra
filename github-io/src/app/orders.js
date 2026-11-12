@@ -12,10 +12,7 @@ export function setupOrders(S, A) {
   }
 
   function clearMode() {
-    if (document.documentElement.classList.contains('construction-notice-repeated')) {
-      $('notice').classList.remove('show');
-      clearTimeout(S.noticeTimeout);
-    }
+    if (document.documentElement.classList.contains('construction-notice-repeated')) A.dismissNotice();
     S.mode = null;
     S.buildType = null;
     S.buildPoint = null;
@@ -63,7 +60,7 @@ export function setupOrders(S, A) {
     if (type === "rally") $("mode-banner").textContent = "RALLY POINT · Choose ground, or a deposit to send new Harvesters mining";
     if (type === 'patrol') $("mode-banner").textContent = 'PATROL · Choose the other end of a repeating route';
     if (type === 'attack') $("mode-banner").textContent = 'ATTACK · Choose a visible enemy unit or building';
-    $("notice").classList.remove('show');
+    A.dismissNotice(); // the prompt replaces a routine notice; an alert stays
     $("world").classList.add("targeting");
     markOrderMode();
   }

@@ -33,6 +33,7 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 | `app/screens.js` | Screen-state machine: `menu`, `playing`, `held`, `pause`, `help`, `result`, `graphics`, `fullscreen`, `guide`, `settings`. Every move goes through `begin`, `toMenu`, `open`, `close`, `dismiss`, `hold`/`release` or `snapshot`/`restore`; the legal-move table is unit-tested |
 | `app/shell.js`, `app/dom.js` | The static page markup; the `$(id)` helper |
 | `app/hud.js` | Layout (compact, touch, desktop console), notices, top bar and selection / command panel refresh (`updateUI`), training panel, objectives toggle, mission UI |
+| `message-queue.js` | Priority for the notice line: `A.alert` (under attack, attack incoming, point lost, raid warning) stays its full time, a routine `A.notice` waits behind it, the same alert again refreshes. Counter hints are a second slot that never covers it (`ui-extras.css`; phones: thin line, 4 s) |
 | `app/preferences.js` | `applyPreferences`, the settings dialog, language row, quality and sound buttons |
 | `app/sound.js` | Audio context, UI tones, the audio clock that sleeps while paused or hidden |
 | `app/selection.js` | Selection, control groups, select-all-of-a-type |
