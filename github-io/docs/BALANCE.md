@@ -265,3 +265,92 @@ Scrapper 85 → 105 HP and 9 → 10 damage; Sentinel drone shield 90 → 60, dam
 ### 0.12.1 pass
 
 Faction AIs now form up at a rally point 14 m out from their core before each wave, and the numbers in the changelog moved. Round robin at Normal (60 matches): Meridian 58, Ashfall 21, Sunward 50, Wardens 100, Veil 21%. The Wardens still win every AI-against-AI match because the other AIs attack into their towers; against the test bot they are the hardest faction (the bot wins 25% with its standard build, 75% with more Rangers and towers), which is what a player meets. Veil is now the easiest opponent for the bot (100%). Next step if the owner finds this in play: teach every AI to wait when it has seen a stronger defence, which is AI work and changes the Stage 1 ladder.
+
+## Field command AI (0.15.0)
+
+Plan item 5 (docs/aaa/IMPROVEMENT_PLAN_2026-11-13.md). The rules are in `src/sim/ai-attack.js`; the pull-back is `aiPullBack` in `src/sim/ai-counter.js`.
+
+### What the AI does now
+
+- **Gather, weigh, launch.** When a wave is due, its units meet at a rally point 14 m from the core towards the target. It marches when most of its strength stands there and that strength is at least `odds` times the defence it has *seen*: every enemy fighter and tower in its intel memory (vision only, remembered until seen dying), valued at alloy + 1.5 × energy with towers × 3 (the Sentinel tower table above). Past `wait` seconds it marches if it has three quarters of that defence; past three times `wait` it marches whatever it has, so it never turtles forever.
+- **Losing attacks fall back.** Each launched group is tracked (an `aiw` number on its orders). It falls back to the rally point when the visible enemies near it outweigh it by `retreat`, when it has lost 30% of its strength in the fight and clearly more than it dealt, or when it is down to a third of what it launched with. The next wave then waits half a wave gap. When its target core falls it moves on to the next known core; a group sent to search turns on the first core it finds.
+- **Hurt units pull back** below 35% health: to a Medic, Engineer or Supply wagon that can mend them, Wardens go home to self-repair, and anything else goes home and guards the base. A hurt unit at home keeps defending and is left out of the next wave. Healed units (70%) rejoin.
+- **Target priority.** Ranged units of a group shoot artillery (siege class) first, then Harvesters, support units, their counter class and the most damaged; Breakers prefer towers. A unit switches only to a target 1.35 times better than its current focus (or than the target automatic fire would pick), so it does not thrash.
+- **Second group.** When the main group alone would still clearly outweigh a defence it has actually seen, and the wave has eight fighters or more, part of it (the fastest third) sometimes goes another way: at an expansion core of the same enemy, at the Harvesters (Sunward), or at the same core by a flank waypoint. "Sometimes" is a hash of the match clock, team and wave number: the same match always makes the same choice; no random numbers.
+- **Defence.** Against a real incursion the defenders attack-move on the nearest threat, so each fights what it meets, instead of the whole army chasing one unit.
+- **Personalities** bend the same rules (`FIELD_PERSONA`): Ashfall (rush) marches at lower odds after half the wait; the Wardens (turtle) want 1.25 times the odds, wait 1.5 times longer and give ground earlier; Veil (evasive) breaks off sooner and likes a flank; Sunward (raider) splits most often, towards the Harvesters. The tempo numbers in `balance.json` are unchanged.
+- **Where it applies.** Normal, Fast and Relentless skirmish. Relaxed skirmish and Story missions keep the original AI exactly (Story mission results are identical to before, run for run). Standard and Veteran missions use it for a lone rival's waves, pull-backs and defence, but scripted coalition pushes stay untracked (tracking them broke the mission 11 and 12 targets), and on Standard an outweighed wave still marches at its longest wait, as the original waves did (holding back longer let the objective bot win mission 9 too early).
+
+New state is created only when used (`sim.aiWar`, `aiw` on orders, `retreating` on units), so `new Simulation({ai:false})` still hashes to `d071360b`, and saves taken in the middle of an attack load in step (tests/ai-attack.test.js).
+
+### Round robin, before and after
+
+`npm run bench:factions`, 120 matches (both seats, classic, riverlands and dunes, Normal and Fast). "Pair deviation" adds up, over the ten pairs, how far each pair's wins are from 6 of 12.
+
+Before (0.13.2):
+
+| Wins of the row against the column | meridian | ashfall | sunward | wardens | veil | All games |
+|---|---|---|---|---|---|---|
+| meridian | - | 12/12 | 5/12 | 0/12 | 8/12 | 52% |
+| ashfall | 0/12 | - | 3/12 | 0/12 | 5/12 | 17% |
+| sunward | 7/12 | 9/12 | - | 1/12 | 6/12 | 48% |
+| wardens | 12/12 | 12/12 | 11/12 | - | 12/12 | 98% |
+| veil | 4/12 | 7/12 | 6/12 | 0/12 | - | 35% |
+
+Pair deviation 36; 3 of 10 pairs inside 35 to 65%. Median match 234 s, longest 1702 s, no undecided matches; first seat 52 wins, second 68.
+
+After (0.15.0):
+
+| Wins of the row against the column | meridian | ashfall | sunward | wardens | veil | All games |
+|---|---|---|---|---|---|---|
+| meridian | - | 6/12 | 8/12 | 4/12 | 10/12 | 58% |
+| ashfall | 6/12 | - | 5/12 | 6/12 | 11/12 | 58% |
+| sunward | 4/12 | 7/12 | - | 2/12 | 5/12 | 38% |
+| wardens | 8/12 | 6/12 | 10/12 | - | 10/12 | 71% |
+| veil | 2/12 | 1/12 | 7/12 | 2/12 | - | 25% |
+
+Pair deviation 23; 4 of 10 pairs inside 35 to 65% (Meridian–Ashfall, Ashfall–Sunward, Ashfall–Wardens, Sunward–Veil) and two more at the edge (Meridian–Sunward 8/12, Meridian–Wardens 4/12). Median match 264 s, two matches reach the 30-minute cap (decided on strength), first seat 43 wins, second 77.
+
+**The 35 to 65% goal is not met for every pair.** It moved a long way: the Wardens no longer win nearly everything (98 → 71%) and Ashfall's rush now works (17 → 58%). Still outside: Veil (25%; Ashfall's early rush beats it 11 of 12, mostly at its own base before its towers stand), Sunward against the Wardens (2/12), and the Wardens against Veil (10/12). These are now decided by the first fight at home rather than by who attacks first, which points at roster and tempo numbers (balance data) more than AI behaviour. Five tuning passes were measured; between passes of similar quality the table moves by one or two games per pair, so finer tuning of the personalities would be tuning to noise. The bench also has a strong second-seat bias (77 of 120), larger than before.
+
+### Test bot against each faction (player's win rate), before → after
+
+`node tools/faction-bench.mjs --enemy <faction>` (no capture points), 12 matches per cell.
+
+| Enemy AI | Standard build, Normal | Standard build, Fast | More Rangers and towers, Normal | More Rangers and towers, Fast |
+|---|---|---|---|---|
+| meridian | 67% → 8% | 67% → 0% | 33% → 0% | 100% → 42% |
+| ashfall | 33% → 67% | 100% → 100% | 100% → 100% | 100% → 67% |
+| sunward | 67% → 92% | 100% → 92% | 100% → 100% | 100% → 58% |
+| wardens | 25% → 42% | 42% → 17% | 50% → 58% | 92% → 0% |
+| veil | 100% → 100% | 100% → 92% | 100% → 92% | 100% → 75% |
+
+The Mirror (Meridian) AI is now much harder for this bot without capture points, and every faction is harder at Fast. With capture points on (the live skirmish default) the Stage 1 ladder moved towards its targets but is still easier than them:
+
+| Speed (`node tools/skirmish-bench.mjs`) | Bot win rate before | After | Target |
+|---|---:|---:|---|
+| relaxed | 100% | 100% (original AI) | 90–100% |
+| normal | 100% (median 312 s) | 92% (325 s, one 40-minute timeout) | 60–80% |
+| fast | 100% (370 s) | 83% (403 s, 2 bot defeats) | 30–50% |
+| relentless | 100% (345 s) | 67% (482 s, 4 bot defeats) | 5–20% |
+
+Owner play should decide whether Normal Mirror without capture points is now too hard for a person (the bot is a fixed script that marches into whatever it meets).
+
+### Campaign (`npm run check:missions`, objective bot, seconds)
+
+| Mission | Story before → after | Standard before → after | Veteran before → after |
+|---|---|---|---|
+| m01 | 187 → 187 | 187 → 187 | 187 → 187 |
+| m02 | 316 → 316 | 388 → 560 | 359 → 360 |
+| m03 | 430 → 430 | 434 → 546 | 426 → 576 |
+| m04 | 319 → 319 | 516 → 434 | 410 → 505 |
+| m05 | 507 → 507 | 508 → 510 | 709 → 534 |
+| m06 | 667 → 667 | 672 → 635 | 652 → 634 |
+| m07 | 660 → 660 | 660 → 660 | 660 → 660 |
+| m08 | 457 → 457 | 469 → 469 | 494 → 494 |
+| m09 | 354 → 354 | 540 → 840 | 347 → 706 |
+| m10 | 461 → 461 | 633 → 537 | defeat 1292 → **563** |
+| m11 | 413 → 413 | 668 → 824 | 433 → 738 |
+| m12 | 758 → 758 | 776 → 857 | did not finish → did not finish |
+
+Story: all targets met, every run identical to before. Standard: all targets met (passive, generic and objective). Veteran: 11 of 12 objective wins; mission 12 still does not finish inside the checker's four minutes (the recorded exception), and mission 10, the other recorded exception, is now won. Every Veteran passive run survives 155 s.
