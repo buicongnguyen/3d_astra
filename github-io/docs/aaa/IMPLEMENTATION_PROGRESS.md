@@ -1,5 +1,21 @@
 # AAA implementation progress
 
+## Improvement round 1 (Claude, 2026-11-13, 0.14.0)
+
+Plan: docs/aaa/IMPROVEMENT_PLAN_2026-11-13.md. Items 1-4 shipped as 0.14.0 (see CHANGELOG); item 5 (enemy AI) ships separately as 0.15.0.
+
+Listen checklist for the owner (constants to tweak if something is wrong):
+1. Small arms crisp, not harsh: `src/sfx-bank.js` shot levels, or `bankLevel` in `src/audio-mix.js`.
+2. Tank and artillery shots thump, then the shell lands: `shot:tank`, `shot:artillery` in sfx-bank.js.
+3. Explosions grow: shell < artillery < vehicle < building < core: `blast()` in sfx-bank.js.
+4. A big fight does not turn to mush or pump: `maxVoices`/`groupCaps` in audio-mix.js; compressor and limiter in `src/music.js`.
+5. Music swells into fights and settles about 8 s after: `intensity` and `intensityWeight` in audio-mix.js.
+6. Blasts dip the music without breathing: `loudDuck` in audio-mix.js.
+7. Radio chirps short, not nagging: `radio` in audio-mix.js, `RADIO_VOICE` in sfx-bank.js.
+8. Engine hum barely there: `engine.level` in audio-mix.js.
+
+Known small points: a box-plateau ramp shows a small dark rock end where it cuts the top (close zoom only); the fog edge sits slightly high next to cliffs; phone hints are clamped to two lines (a long Vietnamese hint at 320 px may end in an ellipsis).
+
 The owner instructed commit, push and continuation on 2026-11-11.
 
 ## Stage 3 started (Claude, 2026-11-12)

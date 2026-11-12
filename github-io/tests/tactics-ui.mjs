@@ -51,10 +51,11 @@ try {
     }).filter(c => !c.inside || c.covered || c.small), [touch, panel]);
     const noSideScroll = async label => assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${name} ${label}: no horizontal scroll`);
     // A world point as a screen point the battlefield canvas owns (not under the HUD), or null.
+    // On phones the idle-unit buttons appear along the right edge once units go idle, so keep clear of it.
     const screenOf = (x, z) => frontier(([x, z]) => {
       const v = window.__frontier.view, canvas = v.renderer.domElement, r = canvas.getBoundingClientRect(), p = v.project(x, z);
-      const at = { x: p.x + r.x, y: p.y + r.y };
-      return at.x > r.left + 14 && at.x < r.right - 14 && at.y > r.top + 14 && at.y < r.bottom - 14 && document.elementFromPoint(at.x, at.y) === canvas ? at : null;
+      const at = { x: p.x + r.x, y: p.y + r.y }, edge = document.documentElement.classList.contains('compact-ui') ? 72 : 14;
+      return at.x > r.left + 14 && at.x < r.right - edge && at.y > r.top + 14 && at.y < r.bottom - 14 && document.elementFromPoint(at.x, at.y) === canvas ? at : null;
     }, [x, z]);
 
     await page.goto(`${base}?test=1`);

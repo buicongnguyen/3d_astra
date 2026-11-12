@@ -37,7 +37,7 @@ try {
     // Exercise ordinary desktop right-click and the mobile Move button.
     if(mobile)await page.locator('#move-order').tap();
     const retreat=await page.evaluate(()=>{
-      const view=window.__frontier.view,p=view.project(-12,26),r=view.renderer.domElement.getBoundingClientRect();
+      const view=window.__frontier.view,p=view.project(-8,26),r=view.renderer.domElement.getBoundingClientRect();
       const x=p.x+r.x,y=p.y+r.y;
       return {x,y,clear:document.elementFromPoint(x,y)===view.renderer.domElement};
     });

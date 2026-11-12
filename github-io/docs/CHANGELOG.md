@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.0: improvement round 1 (plan docs/aaa/IMPROVEMENT_PLAN_2026-11-13.md)
+
+- **Readable messages:** alerts ("Under attack!", "Enemy attack incoming!", points lost, raid warnings) keep the message line for their full time; hints and routine notices wait instead of covering them (`src/message-queue.js`). On phones, hints are a thin two-line strip outside the middle of the battlefield and leave after 4 s.
+- **Height you can see:** plateaus have lit rock cliff faces, a bright lip and a foot shadow; ramps are roads with uphill chevrons (`src/plateau-relief.js`, merged into the ground mesh, no extra draws). The camera looks down about 46° instead of 52° and starts a little closer. Highlands are warm peat, moss and granite instead of purple.
+- **Battles that feel big:** tank, artillery, rocket and Barrage hits have a flash, fireball, bouncing debris and fading scorch marks; damaged buildings smoke below half health and burn below a quarter; destroyed buildings collapse in a series of blasts and dust; units flash briefly when hit (per-instance tint, no extra draws).
+- **Sound that has weight (all made in code):** layered explosions sized by what blew up, a voice for each weapon class with faction pitch, a quiet engine hum, radio replies to orders and first enemy contact, battle music with a combat layer that follows the fighting, distance-based volume, music ducking on big blasts, a 24-voice cap and a limiter. Nobody has listened yet: see the listen checklist in docs/aaa/IMPLEMENTATION_PROGRESS.md.
+- Validation: 406 unit tests; all browser suites, new `test:messages`; draw calls unchanged in render-budget and boundary-fx.
+
 ## 0.13.2: escort and travel destinations are marked (owner report)
 
 - The place an escort or a "reach" objective must get to (for example the forest relay in mission 5) was only named in the objective text. It now shows as a pulsing gold ring with a beam of light on the map, visible through fog, and as a gold ring on the minimap, until that objective is done. Hidden objectives stay unmarked until revealed.
