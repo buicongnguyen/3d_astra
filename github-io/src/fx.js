@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { themeFor, weaponStyle, shotVisible } from "./visual-style.js";
 import { damagedEntities, damageState, BURNING, hitPower, scorchPlan, SCORCH } from "./combat-feedback.js";
 import { isHarvesting, harvestTarget } from "./activity.js";
+import { shotSlope } from "./terrain-labels.js";
 
 // 3D combat effects: muzzle flashes, tracers, shells, rockets, sparks, fireballs, smoke,
 // shockwaves, scorch marks, debris, smoke on damaged buildings and fire on critical ones.
@@ -477,6 +478,11 @@ export class Effects {
         cell: CELL.glow, c0: [...color.slice(0, 3), 0.7], c1: [...color.slice(0, 3), 0], anchor });
       this.hit(land, power, anchor);
     }
+    // High ground: a shot fired down lands with a small gold flare, one fired up with a dull puff.
+    const slope = shotSlope(this.view.terrain, e.x, e.z, e.tx, e.tz);
+    if (slope) this.timeline.push({ at: this.time + (m ? travel : 0), run: () => slope > 0
+      ? this.particle(this.glow, { ...to, cell: CELL.flare, s0: 1.2, s1: 0.35, life: 0.24, c0: [1, 0.86, 0.4, 0.95], c1: [1, 0.7, 0.2, 0], anchor })
+      : this.particle(this.smoke, { ...to, vy: m ? 0.4 : 0, s0: 0.35, s1: 0.9, life: 0.45, cell: CELL.puff, c0: [0.5, 0.5, 0.48, 0.4], c1: [0.5, 0.5, 0.5, 0], anchor }) });
   }
   // -- celebration effects: a unit arriving, a building finishing, an upgrade, a cargo drop-off.
   // A handful of pooled particles each (halved in Eco, still when combat motion is off), team coloured.

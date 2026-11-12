@@ -2,6 +2,7 @@
 import { $ } from "./dom.js";
 import { FACTIONS } from "../story/world.js";
 import { isTouchPointer, TouchControls } from "../touch-controls.js";
+import { CROSSING_TEXT, HIGH_GROUND_TEXT, crossingAt, onHighGround } from "../terrain-labels.js";
 
 export function setupInputPointer(S, A) {
   const Z = S.screen;
@@ -31,9 +32,11 @@ export function setupInputPointer(S, A) {
     hoverCamera = camera;
     const { x, y } = S.hoverPoint;
     S.hover = S.view.pick(x, y, S.sim);
-    $("hover-label").hidden = !S.hover || !!S.drag || !!S.mode;
-    if (S.hover && !S.drag && !S.mode) {
-      $("hover-label").textContent = labelFor(S.hover);
+    // Nothing under the pointer: a river crossing still gets a short label.
+    const ground = !S.hover && !S.drag && !S.mode ? groundLabel(S.view.point(x, y)) : "";
+    $("hover-label").hidden = (!S.hover && !ground) || !!S.drag || !!S.mode;
+    if ((S.hover || ground) && !S.drag && !S.mode) {
+      $("hover-label").textContent = S.hover ? labelFor(S.hover) : ground;
       const rect = S.view.renderer.domElement.getBoundingClientRect();
       $("hover-label").style.left = `${Math.min(x - rect.left + 16, S.view.width - 240)}px`;
       $("hover-label").style.top = `${y - rect.top + 20}px`;
@@ -114,7 +117,7 @@ export function setupInputPointer(S, A) {
       A.notice(
         `${target.type.toUpperCase()} · ${Math.floor(target.amount)} remaining. Select Harvesters to gather.`,
       );
-    else A.notice("Select a unit, or use the Workers and Army buttons.");
+    else A.notice(groundLabel(point) || "Select a unit, or use the Workers and Army buttons.");
   }
 
   function bindInput() {
@@ -295,12 +298,19 @@ export function setupInputPointer(S, A) {
   }
 
   // What the pointer is on: a deposit and its stock, or a unit or building, with the enemy's faction when it has one.
+  // A unit or tower on a plateau top adds what high ground gives it (src/terrain-labels.js).
   function labelFor(e) {
     if (e.kind === "resource") return `${e.type.toUpperCase()} · ${Math.floor(e.amount)}`;
-    if (!(e.team > 0)) return e.name;
+    const high = onHighGround(S.sim.terrain, e) ? ` · ${HIGH_GROUND_TEXT}` : "";
+    if (!(e.team > 0)) return `${e.name}${high}`;
     const id = S.sim.missionDef?.factions?.[e.team] || S.sim.factions?.[e.team];
     const faction = id && id !== "meridian" ? FACTIONS[id]?.short : null;
-    return `${e.name}${faction ? ` · ${faction}` : ""} · ENEMY`;
+    return `${e.name}${faction ? ` · ${faction}` : ""} · ENEMY${high}`;
+  }
+  // The ground itself: only river crossings have something to say.
+  function groundLabel(p) {
+    const c = p && crossingAt(S.sim.terrain, p.x, p.z);
+    return c ? CROSSING_TEXT[c.type] : "";
   }
   Object.assign(A, { refreshHover, bindInput });
   return function bind() {

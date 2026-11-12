@@ -3,6 +3,7 @@ import { $ } from "./dom.js";
 import { surfaceColors } from "../ground-paint.js";
 import { teamColors } from "../faction-colors.js";
 import { missionDestinations } from "../capture-view.js";
+import { CROSSINGS } from "../terrain.js";
 
 const OWN_PING_SECONDS = 2.5;
 
@@ -69,6 +70,26 @@ export function setupMinimap(S, A) {
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(minimapFog.canvas, 0, 0, w, h);
     ctx.imageSmoothingEnabled = true;
+    // River crossings stay marked under fog (they are part of the map): a bridge is a pale deck
+    // with dark rails, the ford a row of pale stepping dots between two short posts.
+    if (S.sim.terrain.river)
+      for (const c of CROSSINGS) {
+        const x0 = px(c.x - c.half + 1), x1 = px(c.x + c.half - 1), y0 = pz(-4), y1 = pz(4), dot = Math.max(1.4, w / 120);
+        ctx.lineWidth = Math.max(1.5, w / 110);
+        if (c.type === "bridge") {
+          ctx.fillStyle = "rgba(236,224,196,.92)";
+          ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+          ctx.strokeStyle = "rgba(24,30,28,.9)";
+          ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); ctx.moveTo(x1, y0); ctx.lineTo(x1, y1); ctx.stroke();
+        } else {
+          ctx.fillStyle = "rgba(246,236,206,.95)";
+          for (const z of [-2.6, 0, 2.6]) for (const x of [-2, 2]) { ctx.beginPath(); ctx.arc(px(c.x + x), pz(z), dot, 0, Math.PI * 2); ctx.fill(); }
+          ctx.strokeStyle = "rgba(246,236,206,.95)";
+          ctx.setLineDash([2, 2]);
+          ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); ctx.moveTo(x1, y0); ctx.lineTo(x1, y1); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
     // Capture points: a ring in the owner's colour (grey while neutral) and the taker's progress.
     for (const p of Object.values(S.sim.mission?.points || S.sim.skirmishPoints || {})) {
       const cx = px(p.x), cy = pz(p.z), radius = Math.max(4.5, (p.r / MAP_SIZE) * w), owned = p.owner !== null && p.owner !== undefined;

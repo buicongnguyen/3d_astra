@@ -55,17 +55,25 @@ export class Terrain {
       return CROSSINGS.some((c) => Math.abs(x - c.x) < c.half) ? "road" : "mud";
     if (ROCKS.some(([rx, rz, r]) => hyp(x - rx, z - rz) < r + 1))
       return "stone";
-    if (
-      Math.min(Math.abs(x + 22), Math.abs(x - 22)) < 2.3 ||
-      Math.abs(z + x * 0.35) < 1.8
-    )
-      return "road";
+    if (Math.min(Math.abs(x + 22), Math.abs(x - 22)) < 2.3 || this.diagonalRoad(x, z) || this.fordTrack(x, z)) return "road";
     const n =
       Math.sin(x * 0.13) * Math.cos(z * 0.17) + Math.sin((x + z) * 0.09);
     if (this.biome === "desert") return n < -0.8 ? "dirt" : "sand";
-    if (this.biome === "woodland") return n > 1.2 ? "dirt" : "grass";
+    // No bare-earth patch touches a river bank away from a crossing: from the game camera a
+    // brown strip at the water's edge reads as a way across.
+    const bank = this.river && Math.abs(z) < 8;
+    if (this.biome === "woodland") return n > 1.2 && !bank ? "dirt" : "grass";
     if (this.biome === "highland") return n > 0.4 ? "stone" : n < -0.8 ? "grass" : "dirt";
-    return n > 0.65 ? "sand" : n < -0.4 ? "dirt" : "grass";
+    return n > 0.65 ? "sand" : n < -0.4 && !bank ? "dirt" : "grass";
+  }
+  // The diagonal road. It runs at a shallow angle to the river, so on river maps it stops where it
+  // meets the bridge roads (|z| 6.5) instead of reaching the bank along 15 m of water; the ford
+  // gets its own short track straight across the river instead.
+  diagonalRoad(x, z) {
+    return Math.abs(z + x * 0.35) < 1.8 && (!this.river || Math.abs(z) >= 6.5);
+  }
+  fordTrack(x, z) {
+    return this.river && Math.abs(z) >= 5 && Math.abs(z) < 14 && Math.abs(x) < 2.2 - (Math.abs(z) - 5) * 0.1;
   }
   canStand(x, z, r = 0.55) {
     if (this.plateaus.length && this.cliff(x, z, r)) return false;

@@ -95,12 +95,12 @@ export const MISSIONS = [
       lines: [
         { who: "vale", text: "Ashfall raided our Harvesters twice last night. Director Hale says we stole his power." },
         { who: "okoro", text: "We did not touch his lines. But a Foundry would let me build Breakers and end the raids." },
-        { who: "vale", text: "Three fords cross the river. Hold the middle one, then take their Command core." },
+        { who: "vale", text: "Three crossings span the river: two bridges and a ford between them. Hold the ford, then take their Command core." },
       ],
       intel: [
         "A Foundry needs a Barracks first. Breakers flatten grouped infantry.",
         "The Builder relay at the middle ford still gives energy to whoever holds it.",
-        "The river can only be crossed at the west, middle and east fords.",
+        "The river can only be crossed at the west bridge, the middle ford and the east bridge.",
       ],
     },
     regions: {
@@ -157,7 +157,7 @@ export const MISSIONS = [
       lose: [{ who: "vale", text: "Our core is gone. Hale will let us leave. He only wants the relay dark." }],
     },
     medals: { gold: { seconds: 540 }, silver: { seconds: 750 } },
-    design: "A first full match against one Relaxed AI, about 9 minutes. The player starts with three towers (ford, camp, bonus) and a night watch of 3 Rangers and 3 Vanguards, so a slow start survives the first wave near 3:30. Ashfall's camp is garrisoned (8 Vanguards, 6 Rangers, 3 Breakers, 3 towers) and a picket of 6 holds the far side of the middle ford, so a rush with the starting units fails. Intended: Foundry, break the first wave at home, then push with 25 or more. Twist: when the army first reaches the far bank, a scripted 6-unit raid crosses the west ford to the player's camp, teaching the player to leave a home guard or a tower.",
+    design: "A first full match against one Relaxed AI, about 9 minutes. The player starts with three towers (ford, camp, bonus) and a night watch of 3 Rangers and 3 Vanguards, so a slow start survives the first wave near 3:30. Ashfall's camp is garrisoned (8 Vanguards, 6 Rangers, 3 Breakers, 3 towers) and a picket of 6 holds the far side of the middle ford, so a rush with the starting units fails. Intended: Foundry, break the first wave at home, then push with 25 or more. Twist: when the army first reaches the far bank, a scripted 6-unit raid crosses the west bridge to the player's camp, teaching the player to leave a home guard or a tower.",
   },
 
   {
@@ -338,7 +338,7 @@ export const MISSIONS = [
       ],
       intel: [
         "Escort the Survey crawler to the forest relay in the north-west. If it is destroyed, the mission fails.",
-        "The centre bridge is the short road. The east ford is longer and closer to the Pact camps.",
+        "The centre ford is the short road. The east bridge is longer and closer to the Pact camps.",
         "Medics heal the crawler's crew. Keep one beside it.",
       ],
     },
@@ -366,7 +366,7 @@ export const MISSIONS = [
     ],
     objectives: [
       { id: "escort", text: "Escort the Survey crawler to the forest relay", type: "escort", tag: "convoy", to: "relaySite" },
-      { id: "guns", text: "Destroy the Pact towers at the centre bridge", type: "destroyTag", tag: "bridgeGuns", optional: true },
+      { id: "guns", text: "Destroy the Pact towers at the centre ford", type: "destroyTag", tag: "bridgeGuns", optional: true },
       { id: "fast", text: "Finish in under 15 minutes", type: "timeUnder", seconds: 900, optional: true },
     ],
     win: ["escort"],
@@ -375,11 +375,11 @@ export const MISSIONS = [
       { when: { time: 5 }, do: [{ say: { who: "okoro", text: "I am driving the crawler myself. Please do not let anything large shoot at me." } }, { camera: "crawlerStart" }] },
       { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Both Pact armies are coming at once. Leave the crawler in camp until this wave breaks." } }] },
       { when: { enter: "bridgeSouth", team: 0 }, do: [
-        { say: { who: "vale", text: "Two Pact towers cover the far end of the bridge. Break them, or take the east ford." } },
+        { say: { who: "vale", text: "Two Pact towers cover the far bank of the ford. Break them, or take the east bridge." } },
         { ping: "bridgeNorth" }, { ping: "eastFord" },
         { wave: { team: 2, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "bridgeSouth" } },
       ] },
-      { when: { objective: "guns", is: "done" }, do: [{ say: { who: "okoro", text: "Bridge is clear! Crawler moving. Slowly. It only has one speed." } }] },
+      { when: { objective: "guns", is: "done" }, do: [{ say: { who: "okoro", text: "Ford is clear! Crawler moving. Slowly. It only has one speed." } }] },
       { when: { tagHpBelow: { tag: "convoy", percent: 50 } }, do: [{ say: { who: "okoro", text: "Crawler hull at half! A Medic would be very welcome right now, Commander." } }] },
       { when: { enter: "northRoad", team: 0 }, do: [
         { say: { who: "sol", text: "The forest road is Caravan ground, Commander. The Pact says I must stop you. So I will." } },
@@ -397,7 +397,7 @@ export const MISSIONS = [
       lose: [{ who: "vale", text: "The crawler is lost and the tuning core with it. Okoro walked out. That is something." }],
     },
     medals: { gold: { seconds: 540 }, silver: { seconds: 750 } },
-    design: "Escort in about 9 minutes against two Relaxed allied AIs whose first joint attack comes near 4:00. The crawler (800 HP, a little under half infantry speed) waits behind the camp, off the attack road. All three river crossings are held: two Pact towers and 5 guards at the centre bridge, a tower and 6 Sunward guards at the west ford, and the east ford runs past the Pact camps. A scripted 6-unit Sunward ambush hits on the north road, and a tower with 7 guards holds the relay site. Intended: break the first joint attack at home, then clear one crossing and lead the crawler through with the army a short way ahead; one Medic keeps the crew alive.",
+    design: "Escort in about 9 minutes against two Relaxed allied AIs whose first joint attack comes near 4:00. The crawler (800 HP, a little under half infantry speed) waits behind the camp, off the attack road. All three river crossings are held: two Pact towers and 5 guards at the centre ford, a tower and 6 Sunward guards at the west bridge, and the east bridge runs past the Pact camps. A scripted 6-unit Sunward ambush hits on the north road, and a tower with 7 guards holds the relay site. Intended: break the first joint attack at home, then clear one crossing and lead the crawler through with the army a short way ahead; one Medic keeps the crew alive.",
   },
 
   {
@@ -865,11 +865,11 @@ export const MISSIONS = [
       lines: [
         { who: "echo", text: "The draw has begun. Three conduits carry it to the Keystone. In twenty minutes the Lattice is empty." },
         { who: "vale", text: "Cut all three conduits and the draw stops. Each one you cut slows it and buys the Lattice time." },
-        { who: "sol", text: "The river has two crossings, Commander. My scouts say the bridge in the middle is the lighter guarded." },
+        { who: "sol", text: "The river has three crossings, Commander. My scouts say the ford in the middle is the lightest guarded." },
       ],
       intel: [
         "You have 20 minutes to cut the west, middle and north conduits.",
-        "All three conduits are north of the river. Cross at the centre bridge or the east ford.",
+        "All three conduits are north of the river. Cross at the centre ford or the east bridge.",
         "The north conduit stands beside the Ashfall camp. Leave it for last and bring Breakers.",
       ],
     },
@@ -910,9 +910,9 @@ export const MISSIONS = [
     win: ["west", "mid", "north"],
     lose: [{ type: "coreLost" }, { type: "time", seconds: 1200 }],
     triggers: [
-      { when: { time: 5 }, do: [{ say: { who: "vale", text: "The clock is running, Commander. Build as you march. The middle conduit is nearest the bridge." } }, { ping: "conduitMid" }, { music: "tense" }] },
+      { when: { time: 5 }, do: [{ say: { who: "vale", text: "The clock is running, Commander. Build as you march. The middle conduit is nearest the ford." } }, { ping: "conduitMid" }, { music: "tense" }] },
       { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Wardens and Ashfall together, on our camp. Hold with towers. The army keeps moving." } }] },
-      { when: { enter: "bridge", team: 0 }, do: [{ say: { who: "sol", text: "Bridge ahead. Go over in one group, Commander. A thin line gets cut on a bridge." } }] },
+      { when: { enter: "bridge", team: 0 }, do: [{ say: { who: "sol", text: "Ford ahead. Go over in one group, Commander. A thin line gets cut in the water." } }] },
       { when: { tagDead: "conduitMid" }, do: [
         { say: { who: "echo", text: "One conduit cut. The draw is slower by a third. This one can feel the fields breathe." } },
         { say: { who: "hale", text: "Wardens, to the west conduit. Guard it with everything." } },
@@ -958,7 +958,7 @@ export const MISSIONS = [
     briefing: {
       place: "Frontier Expanse, the Keystone, day 55",
       lines: [
-        { who: "vale", text: "This is the last one, Commander. Hale's draw engine sits on the Keystone, north of the centre bridge." },
+        { who: "vale", text: "This is the last one, Commander. Hale's draw engine sits on the Keystone, north of the centre ford." },
         { who: "echo", text: "Break the engine and I can tune the Keystone for every camp. Yes: I. This one has decided to be someone." },
         { who: "sol", text: "Ashfall, Wardens and the Veil will hit you together first. Stand through that, then we go north." },
       ],
@@ -1005,7 +1005,7 @@ export const MISSIONS = [
       { when: { time: 5 }, do: [{ say: { who: "vale", text: "Three armies will arrive inside four minutes. Towers and Rangers first. Nothing leaves camp yet." } }, { music: "tense" }] },
       { when: { event: "incoming" }, once: true, do: [{ say: { who: "sol", text: "Here they come, from three sides! Caravan, stand with Meridian. Not one step back." } }, { music: "battle" }] },
       { when: { objective: "stand", is: "done" }, do: [
-        { say: { who: "vale", text: "The first offensive is broken. Now north, over the bridge, to the engine." } },
+        { say: { who: "vale", text: "The first offensive is broken. Now north, across the ford, to the engine." } },
         { say: { who: "sol", text: "My heavy wagons have arrived, Commander. Breakers and a tank. Spend them well." } },
         { spawn: "breaker", team: 0, at: "solRoad", count: 2, tag: "sunward" },
         { spawn: "tank", team: 0, at: "solRoad", count: 1, tag: "sunward" },
@@ -1041,6 +1041,6 @@ export const MISSIONS = [
       lose: [{ who: "vale", text: "The Keystone is drained. Hale's fleet has one year, and this world has none. I am sorry, Commander." }],
     },
     medals: { gold: { seconds: 810 }, silver: { seconds: 1140 } },
-    design: "Finale, about 13 minutes, three Relaxed allied AIs. The player starts with 1000 alloy, five towers and 9 Sunward units. Phase 1: survive the joint offensives until 10:00 (they land near 4:00 and every 90 seconds after); then Sol's heavy group (2 Breakers, a Battle tank, 2 Medics) and 400 alloy arrive. Phase 2: cross the centre bridge and destroy the draw engine (30000 HP, three towers, 12 guards and 2 Warden Battle tanks) in one strong push between offensives; cores are optional. The engine is a relay-class building: the computer player trains from and upgrades any Foundry of its own team, which also resets its health. Twists: reaching the bridge sends a 5-unit Warden raid at the player's camp and a 12-unit Warden wave with two Battle tanks follows at 13:00; when the engine is at half health Maren stands the Veil down and 6 Veil units join the player (the coalition already plays Relaxed, so its pace does not change). A 25-minute limit (the full draw) gives the low-time beats.",
+    design: "Finale, about 13 minutes, three Relaxed allied AIs. The player starts with 1000 alloy, five towers and 9 Sunward units. Phase 1: survive the joint offensives until 10:00 (they land near 4:00 and every 90 seconds after); then Sol's heavy group (2 Breakers, a Battle tank, 2 Medics) and 400 alloy arrive. Phase 2: cross the centre ford and destroy the draw engine (30000 HP, three towers, 12 guards and 2 Warden Battle tanks) in one strong push between offensives; cores are optional. The engine is a relay-class building: the computer player trains from and upgrades any Foundry of its own team, which also resets its health. Twists: reaching the ford sends a 5-unit Warden raid at the player's camp and a 12-unit Warden wave with two Battle tanks follows at 13:00; when the engine is at half health Maren stands the Veil down and 6 Veil units join the player (the coalition already plays Relaxed, so its pace does not change). A 25-minute limit (the full draw) gives the low-time beats.",
   },
 ];

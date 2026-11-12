@@ -3,6 +3,7 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { CROSSINGS, SURFACES } from "./terrain.js";
 import { ROCKS } from "./data.js";
 import { themeFor } from './visual-style.js';
+import { fogAware } from "./fog-aware.js";
 export function optimizeEnvironment(assets) {
   assets.updateMatrixWorld(true);
   const original = new Set();
@@ -39,8 +40,9 @@ export function paintTerrain(ctx, terrain, size) {
     }
 }
 export class EnvironmentView {
-  constructor(scene, terrain, assets) {
+  constructor(scene, terrain, assets, fog = null) {
     this.scene = scene;
+    this.fog = fog;
     this.reducedMotion = matchMedia("(prefers-reduced-motion:reduce)");
     this.terrain = terrain;
     this.root = new THREE.Group();
@@ -79,10 +81,13 @@ export class EnvironmentView {
     this.waterBase = positions.array.slice();
     const colors = new Float32Array(positions.count * 3);
     const deep = new THREE.Color(theme.water), shallow = new THREE.Color(theme.shallow), ford = new THREE.Color(theme.ford),
-      foam = new THREE.Color(theme.foam), c = new THREE.Color();
+      foam = new THREE.Color(theme.foam), gravel = new THREE.Color(theme.dust), c = new THREE.Color();
     for (let i = 0; i < positions.count; i++) {
-      const bank = Math.abs(positions.getY(i));
-      if (Math.abs(positions.getX(i)) <= 5) c.copy(ford).lerp(foam, bank > 2.5 ? 0.45 : 0.1);
+      const bank = Math.abs(positions.getY(i)), x = Math.abs(positions.getX(i));
+      // The ford: a pale gravel bar under shallow water, edged across the river by white riffle
+      // lines where the deep channel spills over it, so the crossing reads from any zoom.
+      if (x <= 4) c.copy(ford).lerp(gravel, 0.82).lerp(foam, (positions.getX(i) + positions.getY(i)) % 2 ? 0.12 : 0.3).multiplyScalar(1.15);
+      else if (x <= 5) c.copy(foam).multiplyScalar(1.3);
       else if (bank > 2.5) c.copy(shallow).lerp(foam, 0.6);
       else if (bank > 1.5) c.copy(shallow);
       else c.copy(deep).lerp(shallow, bank > 0.5 ? 0.3 : 0);
@@ -138,6 +143,7 @@ export class EnvironmentView {
       seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
       return seed / 4294967296;
     };
+    for (const c of CROSSINGS.filter((c) => c.type === "ford")) this.fordMarks(c, theme);
     // Batch repeated meshes by source primitive: decoration adds a fixed number of draw calls.
     const instances = (name, transforms) => {
       const source = assets.getObjectByName("asset_" + name);
@@ -224,6 +230,54 @@ export class EnvironmentView {
     this.root.add(this.particleMesh);
     this.cursor = 0;
     this.emission = 0;
+  }
+  // The ford's marks, one merged vertex-coloured mesh (one draw, no shadow pass): a line of
+  // banded marker posts down each edge of the crossing, a cairn at each corner on the banks and
+  // flat cobbles just breaking the surface between them. Always shown, like the bridges.
+  fordMarks(c, theme) {
+    const parts = [], color = new THREE.Color(), matrix = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+    let seed = 991;
+    const rand = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+    const piece = (geometry, hex, x, y, z, sx, sy, sz, turn = 0) => {
+      const g = geometry.index ? geometry.toNonIndexed() : geometry;
+      if (g !== geometry) geometry.dispose();
+      g.deleteAttribute("uv");
+      g.applyMatrix4(matrix.compose(new THREE.Vector3(x, y, z), q.setFromEuler(e.set(0, turn, 0)), new THREE.Vector3(sx, sy, sz)));
+      color.set(hex);
+      const colors = new Float32Array(g.attributes.position.count * 3);
+      for (let i = 0; i < colors.length; i += 3) color.toArray(colors, i);
+      g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      parts.push(g);
+    };
+    const wood = theme.wood, band = "#ffe9a8", stone = new THREE.Color(theme.rock).lerp(new THREE.Color(theme.dust), 0.35).getHexString();
+    for (const side of [-1, 1]) {
+      const x = c.x + side * (c.half - 0.4);
+      for (const z of [-2.2, 0, 2.2]) {
+        piece(new THREE.CylinderGeometry(0.15, 0.17, 1.1, 6), wood, x, 0.45, z, 1, 1, 1);
+        piece(new THREE.CylinderGeometry(0.17, 0.17, 0.32, 6), band, x, 0.95, z, 1, 1, 1);
+        piece(new THREE.ConeGeometry(0.19, 0.18, 6), band, x, 1.2, z, 1, 1, 1);
+      }
+      for (const bankSide of [-1, 1]) {
+        const cx = c.x + side * (c.half + 0.3), cz = bankSide * 4.3;
+        piece(new THREE.DodecahedronGeometry(0.5), `#${stone}`, cx, 0.2, cz, 1.1, 0.55, 1, rand() * 6);
+        piece(new THREE.DodecahedronGeometry(0.36), `#${stone}`, cx + 0.05, 0.62, cz, 1, 0.6, 1, rand() * 6);
+        piece(new THREE.DodecahedronGeometry(0.22), band, cx, 0.9, cz, 1, 0.8, 1, rand() * 6);
+      }
+    }
+    for (let i = 0; i < 16; i++) {
+      const x = c.x + (rand() - 0.5) * (c.half * 2 - 2.2), z = (rand() - 0.5) * 5.2, s = 0.22 + rand() * 0.2;
+      piece(new THREE.DodecahedronGeometry(1), `#${stone}`, x, 0.06, z, s * 1.3, s * 0.4, s, rand() * 6);
+    }
+    const geometry = mergeGeometries(parts, false);
+    for (const p of parts) p.dispose();
+    // Posts and stones stand above the fog-of-war plane: they sink into the fog colour like scenery.
+    const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, flatShading: true });
+    if (this.fog) fogAware(material, this.fog);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = "ford-marks";
+    mesh.receiveShadow = true;
+    this.root.add(mesh);
+    this.owned.push(geometry, material);
   }
   // Rock obstacles block movement, so they stay visible regardless of the decoration setting.
   // Each obstacle gets one Blender boulder (its satellite stones already break the outline).
