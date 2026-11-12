@@ -10,6 +10,7 @@ import { selectionStatus } from "../selection-status.js";
 import { tacticalUnits, clampRank } from "../tactics-ui.js";
 import { tacticsCardHTML, updateTacticsCard } from "../tactics-card.js";
 import { createMessageQueue, ROUTINE, ALERT } from "../message-queue.js";
+import { productionTiles, researchState } from "../research-tiles.js";
 
 export function setupHud(S, A) {
   const Z = S.screen;
@@ -184,22 +185,12 @@ export function setupHud(S, A) {
               .join("") +
             (es.length > 18 ? `<span>+${es.length - 18}</span>` : "")
           : "";
-      // A research that is only queued counts as chosen: the other branch is locked at once.
-      const queued = (type) => S.sim.own(0).some((b) => b.queue?.some((q) => q.type === type));
-      const wChosen = p.upgrade || queued("upgrade"), pChosen = p.plating || queued("plating");
-      const actions =
-        e && es.length === 1 && e.kind === "building"
-          // Weapons and plating are exclusive branches sharing one slot: the "research" tile opens a
-          // choice sheet (weapons, plating, back); once one is chosen the slot shows it and the other stays locked.
-          ? e.team === 0 && e.trains?.includes("upgrade") && !wChosen && !pChosen && S.researchOpen
-            ? ["upgrade", "plating", "back"]
-            : (e.trains || []).filter((t) => t !== "plating" && t !== "upgrade2" && t !== "plating2").map((t) => t !== "upgrade" || e.team !== 0 ? t
-              : wChosen || pChosen ? (pChosen && !wChosen ? "plating" : "upgrade") : "research")
-              // The second tier of the chosen branch appears beside it once the first tier is done.
-              .concat(e.team === 0 && e.trains?.includes("upgrade2") ? (p.upgrade && !p.upgrade2 ? ["upgrade2"] : p.plating && !p.plating2 ? ["plating2"] : []) : [])
-          : es.some((u) => u.type === "worker")
-            ? S.sim.buildable(0)
-            : [];
+      // Production tiles with their state (research-tiles.js): research is one slot that moves forward
+      // (pick a branch, research it, tier II, done); locked tiles name the building level they need.
+      const production = e && es.length === 1 && e.kind === "building" ? productionTiles(S.sim, e, { choosing: S.researchOpen }) : null;
+      const tiles = production ? production.tiles
+        : es.some((u) => u.type === "worker") ? S.sim.buildable(0).map((type) => ({ type, action: type, label: D[type].name, state: "ready" })) : [];
+      const actions = tiles.map((t) => t.action);
       const structure = es.length === 1 && e?.kind === "building" && !e.trains;
       // Fighting units without a Harvester among them: abilities and stance take the card.
       const tactics = !actions.length && tacticalUnits(es).length
@@ -210,26 +201,32 @@ export function setupHud(S, A) {
         : e?.trains
           ? "PRODUCTION"
           : structure ? "STRUCTURE" : "FIELD ORDERS";
-      $("command-context").textContent = actions.includes("back")
-        ? "CHOOSE ONE"
+      const ready = tiles.filter((t) => t.state === "ready" && t.action !== "back").length;
+      $("command-context").textContent = production?.choosing
+        ? "PICK ONE FOR THIS MATCH"
         : actions.length
-        ? `${actions.length} AVAILABLE`
+        ? `${ready} AVAILABLE`
         : structure ? `LEVEL ${e.level}` : "TACTICAL";
       $("commands").innerHTML =
-        actions
-          .map((type, index) => {
-            if (type === "research" || type === "back") {
-              const open = type === "research";
-              return `<button class="command-tile branch-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" aria-label="${open ? "Research: choose one of two exclusive upgrades" : "Back"}" title="${ACTION_KEYS[index]} · ${open ? "Research · choose Overcharged weapons or Reinforced plating; the other is then locked" : "Back"}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${icon(open ? "bolt" : "stop")}<span>${open ? "Research" : "Back"}</span>${open ? "<small>Choose one</small>" : ""}</button>`;
+        tiles
+          .map((t, index) => {
+            const key = ACTION_KEYS[index];
+            if (t.action === "research" || t.action === "back") {
+              const open = t.action === "research";
+              return `<button class="command-tile branch-tile" data-action="${t.action}" data-state="ready" data-hotkey="${key}" aria-label="${open ? "Research: pick one of two upgrades for this match" : "Back"}" title="${key} · ${open ? "Research · pick Damage +10% or Armor +12% for this match; the other branch then stays locked" : "Back"}"><kbd class="action-key">${key}</kbd>${icon(open ? "bolt" : "stop")}<span>${open ? "Research" : "Back"}</span>${open ? `<small>${t.sub}</small>` : ""}</button>`;
             }
-            const d = D[type];
-            const label = type === 'upgrade' ? 'Weapons +' : type === 'plating' ? 'Plating' : type === 'upgrade2' ? 'Weapons II' : type === 'plating2' ? 'Plating II' : d.name;
-            return `<button class="command-tile" data-action="${type}" data-hotkey="${ACTION_KEYS[index]}" aria-label="${d.name}, ${d.cost[0]} alloy${d.cost[1] ? ` and ${d.cost[1]} energy` : ''}" title="${ACTION_KEYS[index]} · ${d.name} · ${d.description}${S.researchOpen && (type === "upgrade" || type === "plating") ? " Choosing it locks the other branch." : ""}"><kbd class="action-key">${ACTION_KEYS[index]}</kbd>${hasPortrait(type) ? portrait(type) : icon(d.icon || type)}<span>${label}</span><small><b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}</small></button>`;
+            const d = D[t.type];
+            const cost = `<b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}`;
+            // Done and researching tiles never show a price; locked tiles show what they need.
+            const sub = t.state === "done" ? `<small class="tile-state">✓ ${t.sub}</small>` : t.sub ? `<small class="tile-state">${t.sub}</small>` : `<small>${t.next ? `${t.next}: ` : ""}${cost}</small>`;
+            const lockNote = t.choice ? " Choosing it locks the other branch for this match." : t.state === "locked" ? ` ${t.sub}.` : "";
+            const priced = t.state === "ready" || t.state === "locked" ? `, ${d.cost[0]} alloy${d.cost[1] ? ` and ${d.cost[1]} energy` : ""}` : `, ${t.sub}`;
+            return `<button class="command-tile${t.research ? " research-tile" : ""}${t.partial ? " partial" : ""} state-${t.state}" data-action="${t.action}" data-state="${t.state}" data-hotkey="${key}"${t.state === "busy" ? ` style="--p:${(t.progress || 0).toFixed(3)}"` : ""} aria-label="${t.label}${priced}" title="${key} · ${d.name} · ${d.description}${lockNote}"><kbd class="action-key">${key}</kbd>${hasPortrait(t.type) ? portrait(t.type) : icon(d.icon || t.type)}<span>${t.label}</span>${sub}</button>`;
           })
           .join("") || tactics || (structure ? `<p class="structure-hint">${e.description}</p>` : e?.kind==='building' ? '' :
         `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : "Your expedition is ready"}</strong><p>${e ? (S.touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : "Select the Command core to train Harvesters, or the Barracks to grow your army."}</p></div>`);
       $("upgrade-actions").innerHTML = e?.kind === 'building' && es.length === 1 ?
-        `<button data-level title="U · Upgrade building">${e.level < 3 ? `<span class="up-name">Upgrade L${e.level+1}</span><span class="up-cost"><span class="sep"> · </span>${S.sim.levelCost(e).join('/')}</span> <kbd>U</kbd>` : '<span class="up-name">Maximum level 3</span>'}</button>` : '';
+        `<button data-level title="U · Upgrade building">${e.level < 3 ? `<span class="up-name">Upgrade to L${e.level+1}</span><span class="up-cost"><span class="sep"> · </span>${S.sim.levelCost(e).join('/')}</span> <kbd>U</kbd>` : '<span class="up-name">Maximum level 3</span>'}</button>` : '';
       $("command-hint").textContent =
         e?.kind === "building"
           ? ''
@@ -242,7 +239,17 @@ export function setupHud(S, A) {
         !Z.started ||
         Z.paused ||
         S.sim.result;
-      button.disabled = !!unavailable || (e?.kind==='building' && (!e.complete || !!e.levelJob));
+      button.disabled = !!unavailable || (e?.kind==='building' && (!e.complete || !!e.levelJob)) || button.dataset.state === "busy" || button.dataset.state === "done";
+    }
+    // A research in progress counts up on its tile.
+    const busy = $("commands").querySelector('[data-state="busy"]');
+    if (busy) {
+      const r = researchState(S.sim, 0), small = busy.querySelector("small");
+      if (r.state === "busy") {
+        busy.style.setProperty("--p", r.progress.toFixed(3));
+        const text = r.waiting ? "Waiting in queue" : `Researching ${Math.round(r.progress * 100)}%`;
+        if (small && small.dataset.text !== text) { small.dataset.text = text; small.textContent = text; }
+      }
     }
     // Ability cooldowns and the pressed stance, refreshed in place.
     if ($("commands").classList.contains("tactics-card")) {

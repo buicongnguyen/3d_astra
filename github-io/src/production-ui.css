@@ -19,3 +19,17 @@
 .command-panel:has(#production-status:not([hidden])) .command-tile>small{margin-top:2px;font-size:12px;line-height:14px}
 .command-panel:has(#production-status:not([hidden])) .command-tile>.action-key{top:auto;bottom:2px;right:2px;padding:0 1px;font-size:11px}
 .command-panel:has(#production-status:not([hidden])) .upgrade-actions{margin-top:4px}
+/* Tile states (research-tiles.js): locked names what it needs, a research fills a bar as it runs,
+   a finished research shows a check and its effect instead of a price. Specific enough to beat ui-theme.css. */
+.command-panel #commands .command-tile.state-locked{border-style:dashed;opacity:.7}
+.command-panel #commands .command-tile.state-locked>.tile-state{color:#f2c46b}
+.command-panel #commands .command-tile.state-busy::after{content:"";position:absolute;left:0;bottom:0;height:3px;width:calc(var(--p,0)*100%);background:#92ebc5;border-radius:0 0 0 3px;pointer-events:none}
+.command-panel #commands .command-tile:is(.state-busy,.state-done)>.tile-state{color:#92ebc5;font-weight:700}
+.command-panel #commands .command-tile.state-done{border-color:#5fbf93}
+/* First research tier in effect, second still to come: bright (it is working), green label. */
+.command-panel #commands .command-tile.partial{opacity:1}
+.command-panel #commands .command-tile:is(.partial,.state-done)>span{color:#92ebc5}
+.command-panel #commands .command-tile:is(.state-busy,.state-done):disabled{opacity:1;cursor:default}
+/* State lines are words, not prices: the proportional UI font keeps them inside the tile and clear of the hotkey. */
+.command-panel #commands .command-tile>small.tile-state{font-family:var(--font-ui);letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+:root:not(.compact-ui) .command-panel #commands .command-tile>small.tile-state{padding:0 16px 0 0;font-size:12px}

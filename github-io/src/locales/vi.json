@@ -406,6 +406,23 @@
     "Research: choose one of two exclusive upgrades": "Nghiên cứu: chọn một trong hai nâng cấp loại trừ nhau",
     "Research · choose Overcharged weapons or Reinforced plating; the other is then locked": "Nghiên cứu · chọn Cường hóa vũ khí hoặc Giáp gia cố; cái còn lại bị khóa",
     " Choosing it locks the other branch.": " Chọn nhánh này sẽ khóa nhánh còn lại.",
+    "Damage +10%": "Sát thương +10%",
+    "Damage +8%": "Sát thương +8%",
+    "Damage +19%": "Sát thương +19%",
+    "Armor +12%": "Giáp +12%",
+    "Armor +8%": "Giáp +8%",
+    "Armor +19%": "Giáp +19%",
+    "Damage +10% ✓": "Sát thương +10% ✓",
+    "Armor +12% ✓": "Giáp +12% ✓",
+    "Pick 1 of 2": "Chọn 1 trong 2",
+    "Active": "Đang hiệu lực",
+    "✓ Active": "✓ Đang hiệu lực",
+    "Waiting in queue": "Đang chờ trong hàng",
+    "PICK ONE FOR THIS MATCH": "CHỌN MỘT CHO TRẬN NÀY",
+    "Research: pick one of two upgrades for this match": "Nghiên cứu: chọn một trong hai nâng cấp cho trận này",
+    "Research · pick Damage +10% or Armor +12% for this match; the other branch then stays locked": "Nghiên cứu · chọn Sát thương +10% hoặc Giáp +12% cho trận này; nhánh còn lại sẽ bị khóa",
+    " Choosing it locks the other branch for this match.": " Chọn nhánh này sẽ khóa nhánh còn lại trong trận này.",
+    "Upgrade this building to the next level (unlocks its level-locked items and speeds up production)": "Nâng công trình lên cấp tiếp theo (mở khóa các mục cần cấp và tăng tốc sản xuất)",
     "Reinforced plating": "Giáp gia cố",
     "Reinforced plating fitted. Combat units take 12% less damage.": "Giáp gia cố đã lắp xong. Quân chiến đấu nhận ít hơn 12% sát thương.",
     "Reinforced plating is locked: Overcharged weapons were chosen.": "Giáp gia cố bị khóa: bạn đã chọn Cường hóa vũ khí.",
@@ -991,6 +1008,22 @@
     [
       "^Upgrade L(\\d+)$",
       "Nâng cấp {1}"
+    ],
+    [
+      "^Upgrade to L(\\d+)$",
+      "Nâng lên cấp {1}"
+    ],
+    [
+      "^Researching (\\d+)%$",
+      "Đang nghiên cứu {1}%"
+    ],
+    [
+      "^Needs (.+) L(\\d+)$",
+      "Cần {1} cấp {2}"
+    ],
+    [
+      "^\\+(\\d+)% at (.+) L(\\d+)$",
+      "+{1}% khi {2} cấp {3}"
     ],
     [
       "^Upgrade building to level (\\d+)$",
