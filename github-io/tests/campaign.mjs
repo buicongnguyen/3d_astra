@@ -102,6 +102,11 @@ try {
   b = await battle(page);
   assert.deepEqual([b.map, b.enemies, b.speed, b.coalition], [m.map, m.enemies, m.speed, m.alliance === 'coalition']);
   if (m.bonus?.tower) assert.ok(b.towers >= 1, 'the mission bonus builds a Sentinel tower');
+  // Mission 5 is an escort: its destination (the forest relay) is marked on the map.
+  await page.waitForFunction(() => window.__frontier.view.destinations?.markers.size === 1, null, {timeout: 10000});
+  await page.evaluate(() => { const v = window.__frontier.view, [d] = v.destinations.markers.values(); v.focusOn(d.position.x, d.position.z + 6); });
+  await page.waitForTimeout(400);
+  await page.screenshot({path: 'test-results/campaign-escort-destination.png'});
   assert.match(await heading(page), new RegExp(`Mission 5 · ${m.title}`));
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('frontier-campaign-v1')).cleared['first-contact']), 300, 'v1 data is untouched');
   assert.deepEqual(errors, []);

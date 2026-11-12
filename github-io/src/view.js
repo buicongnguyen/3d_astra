@@ -9,7 +9,7 @@ import { Terrain } from "./terrain.js";
 import { ActivityView } from "./activity-view.js";
 import { Effects } from "./fx.js";
 import { createRing, updateRing, createBar, updateBar, setTeamColor, createMarker, createRally, updateRally } from "./selection-view.js";
-import { CaptureRings } from "./capture-view.js";
+import { CaptureRings, DestinationMarkers } from "./capture-view.js";
 import { TacticsView } from "./tactics-view.js";
 import {themeFor,lightFor,shotVisible,weaponStyle} from './visual-style.js';
 import { Scatter } from "./scatter.js";
@@ -1314,6 +1314,11 @@ export class WorldView {
       this.captureRings ||= new CaptureRings(this.scene);
       this.captureRings.update(sim, this.colors, this.lowPower || this.motionLevel === 0 || this.reducedMotion.matches);
     }
+    // Where an escort or a "reach" objective must go: a gold ring and a beam of light.
+    if (sim.mission || this.destinations) {
+      this.destinations ||= new DestinationMarkers(this.scene, this.terrain);
+      this.destinations.update(sim, this.motionLevel === 0 || this.reducedMotion.matches);
+    }
     if (!this.rally) this.scene.add(this.rally = createRally());
     const rallying = [...selected].map((id) => sim.get(id)).find((e) => e?.team === 0 && e.kind === "building" && e.rally);
     updateRally(this.rally, rallying, rallying?.rally, this.colors[0], sim.time);
@@ -1390,6 +1395,8 @@ export class WorldView {
     }
     this.effects = [];
     this.captureRings?.clear();
+    this.destinations?.dispose();
+    this.destinations = null;
     this.focusOn(
       this.defaultZoom === 34 ? -25 : -20,
       this.defaultZoom === 34 ? 21 : 19,

@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.13.2: escort and travel destinations are marked (owner report)
+
+- The place an escort or a "reach" objective must get to (for example the forest relay in mission 5) was only named in the objective text. It now shows as a pulsing gold ring with a beam of light on the map, visible through fog, and as a gold ring on the minimap, until that objective is done. Hidden objectives stay unmarked until revealed.
+- Validation: 379 unit tests (new `tests/mission-destinations.test.js`); the campaign suite checks the mission 5 marker.
+
 ## 0.13.1: shots that land, wrecks that look dead (owner reports)
 
 - **Shots looked like misses:** a round takes 0.14 to 0.32 s to fly but was drawn to where the target stood when it fired, so a moving target was already gone when it arrived. Rounds now lead the target by its speed (up to 3 m). On plateau maps the tracer flew at the shooter's height and passed over or under a target on different ground; it now flies between the real heights.

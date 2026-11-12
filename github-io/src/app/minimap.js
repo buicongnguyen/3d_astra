@@ -2,6 +2,7 @@
 import { $ } from "./dom.js";
 import { surfaceColors } from "../ground-paint.js";
 import { teamColors } from "../faction-colors.js";
+import { missionDestinations } from "../capture-view.js";
 
 const OWN_PING_SECONDS = 2.5;
 
@@ -83,6 +84,14 @@ export function setupMinimap(S, A) {
         ctx.arc(cx, cy, radius + 2.5, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, p.since / 5));
         ctx.stroke();
       }
+    }
+    // Escort and "reach" destinations: a pulsing gold ring with a centre dot, drawn over fog.
+    for (const d of missionDestinations(S.sim)) {
+      const cx = px(d.x), cy = pz(d.z), radius = Math.max(5, (d.r / MAP_SIZE) * w) + Math.sin(performance.now() / 300) * 1.2;
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = ctx.fillStyle = "#ffc94a";
+      ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, 2.2, 0, Math.PI * 2); ctx.fill();
     }
     for (const r of S.sim.resources) {
       if (S.sim.isVisible(r)) S.rememberedResources.set(r.id, r.amount);
