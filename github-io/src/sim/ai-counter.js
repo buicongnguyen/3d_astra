@@ -74,7 +74,11 @@ export const aiCounter = {
     return role === "siege" ? "plating" : "upgrade";
   },
   // Badly hurt fighters fall back to a Medic (if the team has one) and rejoin once healed.
-  aiRetreat(team, army) {
+  // With the field commander (sim/ai-attack.js) they also use Engineers and Supply wagons, the
+  // Wardens' self-repair, and otherwise go home to guard the base instead of dying in the field.
+  aiRetreat(team, army, hq = null) {
+    const cmd = this.aiCommandFor(team);
+    if (cmd) return cmd.pullback && this.aiPullBack(team, army, hq);
     if (!this.pace.counter) return;
     const medics = army.filter((e) => this.slotOf(e.type) === "medic" && e.hp > 0);
     for (const e of army) {
@@ -88,6 +92,37 @@ export const aiCounter = {
       if (distance(e, medic) < 4) continue;
       e.retreating = true;
       this.issue([e.id], { type: "move", x: medic.x, z: medic.z });
+    }
+  },
+  aiPullBack(team, army, hq) {
+    const healers = army.filter((e) => e.support && e.hp > 0), mends = this.factionFor(team).trait === "selfrepair";
+    // A spot just outside the core on the unit's side of it (the core itself cannot be stood on).
+    const home = (e) => {
+      const d = distance(e, hq) || 1, r = hq.radius + 5, x = hq.x + ((e.x - hq.x) / d) * r, z = hq.z + ((e.z - hq.z) / d) * r;
+      return this.nav.canStand(x, z, e.radius) ? { x, z } : this.nav.nearest(x, z, e.radius) || { x: hq.x, z: hq.z };
+    };
+    for (const e of army) {
+      if (e.support || !(e.damage > 0)) continue;
+      const healer = healers.filter((h) => this.supportValid(h, e)).sort((a, b) => distance(a, e) - distance(b, e) || a.id - b.id)[0];
+      if (e.retreating) {
+        if (e.hp >= e.maxHp * RECOVER) {
+          e.retreating = false;
+          this.issue([e.id], { type: "stop" });
+        } else if (!healer && !mends && (!hq || !e.orders.length || distance(e, hq) < 16)) e.retreating = false; // home: guard it
+        else if (!healer && !mends && e.orders[0]?.type !== "move") this.issue([e.id], { type: "move", ...home(e) });
+        continue;
+      }
+      if (e.hp >= e.maxHp * HURT) continue;
+      if (healer) {
+        if (distance(e, healer) < 4) continue;
+        e.retreating = true;
+        this.issue([e.id], { type: "move", x: healer.x, z: healer.z });
+        continue;
+      }
+      // Nothing to heal it nearby: a unit already home keeps defending; one in the field goes home.
+      if (!hq || distance(e, hq) < 20) continue;
+      e.retreating = true;
+      this.issue([e.id], { type: "move", ...home(e) });
     }
   },
 };

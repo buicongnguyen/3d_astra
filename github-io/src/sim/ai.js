@@ -1,9 +1,12 @@
 import { DEFINITIONS as D, MAX_POP, distance } from "../data.js";
 import { roleOf } from "../ai-plan.js";
 import { EXPAND_CREW } from "./expand.js";
+import { aiAttack } from "./ai-attack.js";
 
-// The computer opponent's build, production and attack decisions (coalition play is in ai-plan.js). Mixed into Simulation (see simulation.js).
+// The computer opponent's build, production and attack decisions (coalition play is in ai-plan.js,
+// field command in ai-attack.js). Mixed into Simulation (see simulation.js).
 export const ai = {
+  ...aiAttack,
   updateAI(team = 1) {
     // Tagged entities belong to the mission script (an objective, an escort): the AI never uses them.
     const own = this.own(team).filter((e) => !e.tag),
@@ -11,10 +14,12 @@ export const ai = {
       army = own.filter((e) => e.kind === "unit" && e.type !== "worker" && !e.garrison);
     if (!own.some(e => e.type === "hq")) return;
     this.updateKnownCores(team);
-    if (this.pace.counter) this.observeEnemies(team);
+    // The field commander (ai-attack.js) or null for the original AI.
+    const cmd = this.aiCommandFor(team);
+    if (this.pace.counter || cmd) this.observeEnemies(team);
     this.assignHarvesters(team);
-    this.aiRetreat(team, army);
     const hq = own.find((e) => e.type === "hq" && e.complete) || own.find(e => e.type === "hq");
+    this.aiRetreat(team, army, hq);
     const pace = this.paceFor(team), role = roleOf(this, team), persona = this.personality(team), extra = this.factionFor(team).building;
     // A second core brings more Harvesters, trained at the core with the fewest nearby.
     const cores = own.filter((e) => e.type === "hq" && e.complete);
@@ -147,19 +152,25 @@ export const ai = {
         : home.length
           ? home
           : ready.sort((a, b) => distance(a, hq) - distance(b, hq)).slice(0, 2);
-      if (answer.length)
+      if (cmd && incursion) this.aiDefend(team, answer, threats[0]);
+      else if (answer.length)
         this.issue(answer.map((e) => e.id), { type: "attack", target: threats[0].id });
     }
     // A mission that sends its own waves lets the computer build up and defend at home only.
     if (this.aiHome) return;
-    if (persona?.retreat && hq && this.aiFallBack(team, hq, army, pace, persona.retreat)) return;
+    if (!cmd && persona?.retreat && hq && this.aiFallBack(team, hq, army, pace, persona.retreat)) return;
     if (!incursion) this.aiPoints(team, hq, army, pace);
     const wave = army.filter((e) => !engaged(e) && !e.pointDuty && !e.retreating);
+    if (cmd && hq) this.aiWatch(team, hq, army, cmd);
     if (this.coalition) {
       this.coalitionOrders(team, { hq, army, wave, incursion });
       return;
     }
     if (persona?.raid && hq && !incursion) this.aiRaid(team, hq, wave, persona.raid);
+    if (cmd) {
+      if (hq) this.aiWave(team, hq, wave, incursion, pace, cmd);
+      return;
+    }
     if (!incursion && this.time >= this.waveAt[team] && wave.length >= pace.minWave) {
       const target = [...this.knownCores[team].values()]
         .sort((a, b) => distance(hq, a) - distance(hq, b))[0] || this.scoutDestination(team);

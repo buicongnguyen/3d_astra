@@ -37,17 +37,21 @@ test('another completed or unfinished core keeps a faction in the game', () => {
   }
 });
 
+// 0.15.0: a wave first gathers at its rally point (sim/ai-attack.js); past its longest wait it marches.
+const gatherAndLaunch = (s, team) => { s.updateAI(team); s.time += 300; s.updateAI(team); };
+
 test('AI waves discover new cores through fog instead of reading unseen enemy state', () => {
   const s=new Simulation({map:'highlands',enemyCount:3,ai:false});
   const hidden=s.spawn('hq',0,30,-55);
   s.spawn('ranger',1,50,-45);s.time=200;s.waveAt[1]=0;
   s.visible[1].fill(0);s.players[1].alloy=s.players[1].energy=0;
-  s.updateAI(1);
+  gatherAndLaunch(s,1);
   assert.equal(s.knownCores[1].has(hidden.id),false);
   const army=s.own(1).filter(e=>e.kind==='unit'&&e.type!=='worker');
   assert.ok(army.every(e=>Math.hypot(e.orders[0].x-hidden.x,e.orders[0].z-hidden.z)>20));
   const [x,z]=s.terrain.cellAt(hidden.x,hidden.z);
-  s.visible[1][z*s.terrain.grid+x]=1;s.waveAt[1]=0;s.updateAI(1);
+  // The next wave (the first is called home first) marches on the core it has now seen.
+  s.visible[1][z*s.terrain.grid+x]=1;s.issue(army.map(e=>e.id),{type:'stop'});s.waveAt[1]=0;gatherAndLaunch(s,1);
   assert.equal(s.knownCores[1].has(hidden.id),true);
   assert.ok(army.every(e=>Math.hypot(e.orders[0].x-hidden.x,e.orders[0].z-hidden.z)<5));
   s.visible[1].fill(0);hidden.hp=0;s.updateKnownCores(1);
@@ -61,7 +65,7 @@ test('AI searches when known cores are gone, and every map supplies valid search
     const s=new Simulation({map,enemyCount:3,ai:false});
     s.knownCores[1].clear();s.visible[1].fill(0);s.time=200;s.waveAt[1]=0;
     s.players[1].alloy=s.players[1].energy=0;s.spawn('ranger',1,10,-17);
-    s.updateAI(1);assert.equal(s.scoutIndex[1],1);
+    gatherAndLaunch(s,1);assert.equal(s.scoutIndex[1],1);
     assert.ok(s.own(1).filter(e=>e.kind==='unit'&&e.type!=='worker').every(e=>e.orders[0]?.type==='attackmove'));
     const seen=new Set();
     for(let i=0;i<12;i++){const p=s.scoutDestination(1);assert.ok(p && s.nav.canStand(p.x,p.z,1.05));seen.add(`${p.x},${p.z}`);}

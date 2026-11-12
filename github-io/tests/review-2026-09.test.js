@@ -102,7 +102,10 @@ test('a lone scout is still answered when no defender is home, and waves still l
   s.aiClock = 0; s.tick(.05);
   const orders = army.map(e => e.orders[0]);
   assert.equal(orders.filter(o => o?.type === 'attack' && o.target === scout.id).length, 2, 'two closest answer');
-  assert.equal(orders.filter(o => o?.type === 'attackmove').length, 4, 'the rest launch the wave');
+  // 0.15.0: the rest first gather at the rally point, then march (at the latest after the longest wait).
+  assert.equal(orders.filter(o => o?.type === 'move').length, 4, 'the rest gather for the wave');
+  scout.hp = 0; s.time += 300; s.updateAI(1);
+  assert.equal(army.map(e => e.orders[0]).filter(o => o?.type === 'attackmove').length, 4, 'the rest launch the wave');
 });
 
 test('an attack on a target with no possible firing position ends instead of waiting forever', () => {
@@ -159,7 +162,17 @@ test('a real incursion still recalls the whole AI army', () => {
   for (let i = 0; i < 2; i++) s.spawn('breaker', 0, hq.x - 12 - i * 2, hq.z - 12);
   s.updateVision();
   s.aiClock = 0; s.tick(.05);
-  assert.deepEqual(wave.map(e => e.orders[0]?.type), Array(4).fill('attack'));
+  // 0.15.0 (sim/ai-attack.js): the defenders attack-move on the nearest threat, so each fights what it meets.
+  assert.deepEqual(wave.map(e => e.orders[0]?.type), Array(4).fill('attackmove'));
+  const threat = s.entities.filter(e => e.type === 'breaker' && e.team === 0).sort((a, b) => Math.hypot(a.x - hq.x, a.z - hq.z) - Math.hypot(b.x - hq.x, b.z - hq.z))[0];
+  assert.ok(wave.every(e => Math.hypot(e.orders[0].x - threat.x, e.orders[0].z - threat.z) < 4), 'towards the threat');
+  // The original AI (Relaxed) still sends an attack order on the threat.
+  const r = new Simulation({map:'classic', aiSpeed:'relaxed'});
+  const rhq = r.own(1).find(e => e.type === 'hq');
+  const rwave = [0, 1, 2, 3].map(i => r.spawn('ranger', 1, -20 + i, 20));
+  for (let i = 0; i < 2; i++) r.spawn('breaker', 0, rhq.x - 12 - i * 2, rhq.z - 12);
+  r.updateVision(); r.updateAI(1);
+  assert.deepEqual(rwave.map(e => e.orders[0]?.type), Array(4).fill('attack'));
 });
 
 test('splash damage applies anti-vehicle multipliers per victim', () => {

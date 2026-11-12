@@ -73,7 +73,9 @@ export const coalitionPlan = {
         const commit = Math.max(minimum, Math.ceil(force.length * (0.5 + 0.4 / this.enemyCount)));
         const troops = force.sort((a, b) => distance(a, target) - distance(b, target)).slice(0, commit);
         for (const e of troops) e.raiding = false;
-        this.issue(troops.map(e => e.id), { type: 'attackmove', x: target.x, z: target.z });
+        // With the field commander (sim/ai-attack.js) the push is tracked: it focuses fire and falls back when losing.
+        if (this.aiCommandFor(team)?.allied) this.aiLaunch(team, troops, target, null);
+        else this.issue(troops.map(e => e.id), { type: 'attackmove', x: target.x, z: target.z });
         if (target.team !== undefined) this.events.push({ type: 'incoming', team: target.team, x: hq.x, z: hq.z, count: troops.length });
         this.launched.add(team);
       }
