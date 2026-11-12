@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.15.1: research, crossings and high ground read clearly (owner reports)
+
+- **Research panel:** research is one slot that moves forward: "Research · Pick 1 of 2" opens Damage +10% or Armor +12% (the header says the pick is for this match), then "Researching 37%" with a bar, then "Damage +10% ✓" with the next step under it, then "Damage +19% ✓ Active". A finished research never shows a price again. Locked tiles say what they need ("Needs Foundry L2"); the building-level button reads "Upgrade to L2". Phones no longer hide a fifth tile. Rules unchanged (`src/research-tiles.js`).
+- **River crossings:** the middle crossing is a ford and now looks like one: a gravel bar with riffles, marker posts, cairns and stones (one merged mesh). Roads lead only to crossings; the minimap marks the two bridges and the ford; hovering (or tapping on a phone) a crossing names it. The campaign text had the crossings swapped (it called the middle one a bridge): missions 2, 5, 11 and 12 now say centre ford and west/east bridges, in English and Vietnamese.
+- **High ground:** units on a plateau top show a gold ▲; the card reads "High ground: +2 m range, +20% damage, +3 m sight"; a selected unit there shows its extended reach; downhill hits flare gold; a one-time hint and a Field guide section explain it. Measured with the new `tools/high-ground-bench.mjs`: the high side wins 161 of 162 equal fights (HP-weighted 72% against 50% on flat ground), so the numbers are unchanged.
+- Validation: 426 unit tests, all browser suites, `npm run check:missions` (all targets; Veteran m12 is the recorded exception). Draw calls +1 (the ford mesh).
+
 ## 0.15.0: enemy AI that attacks well (improvement plan item 5)
 
 - The AI gathers each wave at a rally point and marches when it clearly outweighs the defence it has seen (fog-fair memory), or after a wait so it never turtles. Losing waves fall back and regroup; units below 35% health pull back to a healer or home; ranged units focus artillery, Harvesters and support first without flipping targets; some waves send a fast second group to an expansion, the Harvesters or a flank (`src/sim/ai-attack.js`).
