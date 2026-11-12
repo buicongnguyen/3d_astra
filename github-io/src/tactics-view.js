@@ -1,5 +1,7 @@
 import * as THREE from "three";
 import { DEFINITIONS as D } from "./data.js";
+import { TERRAIN } from "./terrain.js";
+import { onHighGround } from "./terrain-labels.js";
 
 // 3D marks for veterancy, abilities and Barrage aiming: rank chevrons over ranked units, a
 // tinted ground ring under a unit while its ability lasts, the warning circle where a Barrage
@@ -10,12 +12,12 @@ import { DEFINITIONS as D } from "./data.js";
 // marks need the unit drawn, an enemy shell's circle needs the ground in sight.
 
 const CAPACITY = 192;
-const BUFF = 0, WARNING = 1, REACH = 2, AIM = 3, CHEVRONS = 10;
-export const MARK = { BUFF, WARNING, REACH, AIM, CHEVRONS };
+const BUFF = 0, WARNING = 1, REACH = 2, AIM = 3, CHEVRONS = 10, HIGH = 11;
+export const MARK = { BUFF, WARNING, REACH, AIM, CHEVRONS, HIGH };
 // Raw display colours (the shader writes them unconverted, like the selection rings).
 const BUFF_TINT = { shieldwall: [0.42, 0.8, 1], focus: [1, 0.8, 0.3], overdrive: [1, 0.5, 0.2], lockon: [0.84, 0.56, 1] };
 const GOLD = [1, 0.83, 0.38], IN_REACH = [0.6, 0.95, 0.78], OUT_OF_REACH = [0.96, 0.36, 0.28], REACH_TINT = [0.9, 0.95, 0.88];
-const BAR_HEIGHT = 2.55, CHEVRON_RISE = 0.36, CHEVRON_SIZE = 0.75;
+const BAR_HEIGHT = 2.55, CHEVRON_RISE = 0.36, CHEVRON_SIZE = 0.75, HIGH_SIZE = 0.42, HIGH_REACH = [1, 0.83, 0.38], BASE_REACH = [0.9, 0.95, 0.88];
 
 const VERTEX = `
 attribute vec4 iPlace; attribute vec4 iTint; attribute vec2 iKind;
@@ -57,7 +59,7 @@ void main() {
     float inside = 1.0 - smoothstep(0.95 - aa, 0.95, r);
     float cross = (1.0 - smoothstep(0.025, 0.025 + aa, min(abs(vP.x), abs(vP.y)))) * step(r, 0.28);
     alpha = band(r, 0.95, 0.035, aa) + inside * 0.17 + cross;
-  } else {
+  } else if (style < 10.5) {
     // Rank chevrons: v of them side by side, gold on a dark outline.
     float best = 9.0, aaP = fwidth(vP.y) * 1.5;
     for (int i = 0; i < 3; i++) {
@@ -66,6 +68,15 @@ void main() {
       best = min(best, max(abs(vP.y - 0.14 + abs(lx) * 1.15) - 0.1, abs(lx) - 0.25));
     }
     float gold = 1.0 - smoothstep(0.0, aaP, best), edge = 1.0 - smoothstep(0.07, 0.07 + aaP, best);
+    col = mix(vec3(0.04, 0.06, 0.055), col, gold);
+    alpha = max(gold, edge * 0.88);
+  } else {
+    // High ground: a gold triangle pointing up on a dark outline, beside the vitals bar.
+    vec2 q = vec2(abs(vP.x) - 0.62, vP.y + 0.62 / 1.7320508);
+    if (q.x + 1.7320508 * q.y > 0.0) q = vec2(q.x - 1.7320508 * q.y, -1.7320508 * q.x - q.y) / 2.0;
+    q.x -= clamp(q.x, -1.24, 0.0);
+    float d = -length(q) * sign(q.y), aaT = fwidth(d) * 1.5;
+    float gold = 1.0 - smoothstep(-0.06, -0.06 + aaT, d), edge = 1.0 - smoothstep(0.12, 0.12 + aaT, d);
     col = mix(vec3(0.04, 0.06, 0.055), col, gold);
     alpha = max(gold, edge * 0.88);
   }
@@ -135,7 +146,7 @@ export class TacticsView {
     if (t[3] !== hex) { t[0] = ((hex >> 16) & 255) / 255; t[1] = ((hex >> 8) & 255) / 255; t[2] = (hex & 255) / 255; t[3] = hex; }
     return t;
   }
-  update(sim, dt) {
+  update(sim, dt, selected = null) {
     const view = this.view, still = !view.activity.combat.motion || view.motionLevel === 0;
     // Rings hold still (no pulse, no turning dashes) with combat motion off or reduced motion.
     if (still) this.time = 0;
@@ -152,18 +163,33 @@ export class TacticsView {
         const left = Math.max(0, Math.min(1, (s.at - sim.time) / this.delay));
         this.put(s.x, 0.11, s.z, s.radius, this.teamTint(s.team), 1, WARNING, still ? 0.5 : Math.round((1 - left) * 40) / 40);
       }
-    const entities = sim.entities, m = view.camera.matrixWorld.elements;
+    const entities = sim.entities, m = view.camera.matrixWorld.elements, terrain = sim.terrain, plateaus = terrain?.plateaus?.length > 0;
+    // High ground: the ▲ sits left of where the vitals bar is drawn (half its width plus a gap).
+    const side = -(2.3 * 0.62 * (view.barScale || 1) / 2 + 0.34);
+    let rings = 0;
     for (let i = 0; i < entities.length; i++) {
       const e = entities[i];
-      if (!e.buff && !e.rank) continue;
+      const high = plateaus && e.hp > 0 && onHighGround(terrain, e);
+      if (!e.buff && !e.rank && !high) continue;
       const o = view.objects.get(e.id);
       if (!o || !o.visible || e.hp <= 0) continue;
+      if (high) {
+        const lift = o.position.y + (e.kind === "unit" ? BAR_HEIGHT * (o.userData.readabilityScale || 1) : 4.9);
+        this.put(o.position.x + m[0] * side, lift + m[1] * side, o.position.z + m[2] * side, HIGH_SIZE, GOLD, 1, HIGH, 0);
+        // A selected unit on high ground shows its reach: the extra metres in gold, the level-ground range dashed.
+        if (selected?.has(e.id) && e.team === 0 && e.range > 0 && e.damage > 0 && rings < 8) {
+          rings++;
+          // Drawn on the low ground, where the targets of the extra reach stand.
+          this.put(o.position.x, 0.12, o.position.z, e.range + TERRAIN.high_range, HIGH_REACH, 1, REACH, 0);
+          this.put(o.position.x, 0.12, o.position.z, e.range, BASE_REACH, 0.55, REACH, 0);
+        }
+      }
       if (e.buff) {
         const fade = Math.max(0, Math.min(1, (e.buff.until - sim.time) / 0.4));
-        this.put(o.position.x, 0.1, o.position.z, e.radius + 0.8, BUFF_TINT[e.buff.id] || GOLD, Math.round(fade * 20) / 20, BUFF, 0);
+        this.put(o.position.x, o.position.y + 0.1, o.position.z, e.radius + 0.8, BUFF_TINT[e.buff.id] || GOLD, Math.round(fade * 20) / 20, BUFF, 0);
       }
       if (e.rank > 0 && e.kind === "unit")
-        this.put(o.position.x + m[4] * CHEVRON_RISE, BAR_HEIGHT + m[5] * CHEVRON_RISE, o.position.z + m[6] * CHEVRON_RISE, CHEVRON_SIZE, GOLD, 1, CHEVRONS, Math.min(3, e.rank));
+        this.put(o.position.x + m[4] * CHEVRON_RISE, o.position.y + BAR_HEIGHT + m[5] * CHEVRON_RISE, o.position.z + m[6] * CHEVRON_RISE, CHEVRON_SIZE, GOLD, 1, CHEVRONS, Math.min(3, e.rank));
     }
     const aim = this.aim;
     if (aim.active) {

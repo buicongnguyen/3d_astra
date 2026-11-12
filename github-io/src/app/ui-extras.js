@@ -3,6 +3,7 @@
 import { $ } from "./dom.js";
 import { DEFINITIONS as D } from "../data.js";
 import { icon } from "../icons.js";
+import { HIGH_GROUND_HINT, onHighGround } from "../terrain-labels.js";
 import "../ui-extras.css";
 
 export const HINT_SECONDS = 9;
@@ -110,6 +111,15 @@ export function setupUiExtras(S, A) {
     showHint("Shades are hidden until they strike. Towers and Command cores reveal them.");
   }
 
+  // The first time one of the player's units stands on a plateau top, once per match.
+  function highGroundHint() {
+    if (!hintEl || seen.has("high") || !S.sim.terrain.plateaus.length || !hintEl.hidden || performance.now() < nextHintAt) return;
+    if (!Z.started || Z.paused || Z.modalType || S.sim.result || S.tutorial) return;
+    if (!S.sim.own(0).some((u) => u.kind === "unit" && u.hp > 0 && onHighGround(S.sim.terrain, u))) return;
+    seen.add("high");
+    showHint(HIGH_GROUND_HINT);
+  }
+
   function updateIdleButtons() {
     if (!idleButtons) return;
     const counts = idleCounts();
@@ -139,7 +149,7 @@ export function setupUiExtras(S, A) {
     return BEAT_SLOWDOWN;
   }
 
-  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); fightHints(); } });
+  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); fightHints(); highGroundHint(); } });
 
   return function bind() {
     makeHint();

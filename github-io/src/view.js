@@ -391,6 +391,7 @@ export class WorldView {
         this.scene,
         terrain,
         this.environmentAssets,
+        this.fogUniforms,
       );
       this.environment.configure(this.settings);
       this.environment.still = this.motionLevel === 0;
@@ -587,7 +588,7 @@ export class WorldView {
     // Blender boulders (EnvironmentView) replace the placeholder rocks drawn before loading.
     if (this.environmentAssets.getObjectByName("asset_rock_a")) this.removePlaceholderRocks();
     if (!this.environment) {
-      this.environment = new EnvironmentView(this.scene, this.terrain, this.environmentAssets);
+      this.environment = new EnvironmentView(this.scene, this.terrain, this.environmentAssets, this.fogUniforms);
       this.environment.configure(this.settings);
       this.environment.still = this.motionLevel === 0;
     }
@@ -1354,7 +1355,7 @@ export class WorldView {
     }
     this.updateDying(sim, dt);
     this.fx.update(sim, dt);
-    this.tactics.update(sim, dt);
+    this.tactics.update(sim, dt, selected);
     // Story missions: a ground ring at each capture point.
     if (sim.mission || sim.capturePointsOn || this.captureRings) {
       this.captureRings ||= new CaptureRings(this.scene);

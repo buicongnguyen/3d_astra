@@ -38,3 +38,8 @@
 @media (prefers-reduced-motion:reduce){#unit-list button.critical{animation:none}}
 
 .selection-faction { margin:2px 0 6px; font-size:11px; color:var(--muted); }
+/* A unit on a plateau top: the activity line names the high-ground bonuses in gold. */
+/* 11 px (the readability floor) so the whole line fits the card on phones and the desktop dock. */
+:root .selection-panel .selection-activity.high-ground { color:#f2c75c; text-transform:none; font-size:11px; letter-spacing:0; container-type:inline-size; }
+.selection-activity .hg-short { display:none; }
+@container (max-width: 272px) { .selection-activity .hg-long { display:none; } .selection-activity .hg-short { display:inline; } }

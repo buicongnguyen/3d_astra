@@ -825,7 +825,14 @@
     "Abilities:": "Kỹ năng:",
     "use the ability tiles of the selected soldiers and vehicles; Barrage then asks for a target area.": "dùng ô kỹ năng của lính và xe đang chọn; Pháo kích sẽ hỏi vùng mục tiêu.",
     "Use an ability / set a stance": "Dùng kỹ năng / đặt thế trận",
-    "Select soldiers, then Actions": "Chọn lính, rồi mở Thao tác"
+    "Select soldiers, then Actions": "Chọn lính, rồi mở Thao tác",
+    "Ford: infantry and vehicles can cross": "Bãi cạn: bộ binh và xe đều qua được",
+    "Bridge: infantry and vehicles can cross": "Cầu: bộ binh và xe đều qua được",
+    "High ground": "Điểm cao",
+    "High ground: +2 m range, +20% damage, +3 m sight": "Điểm cao: +2 m tầm bắn, +20% sát thương, +3 m tầm nhìn",
+    "High ground: +2 m range, +20% damage": "Điểm cao: +2 m tầm bắn, +20% sát thương",
+    "High ground: your units here shoot farther, hit harder and see farther.": "Điểm cao: quân của bạn ở đây bắn xa hơn, đánh mạnh hơn và nhìn xa hơn.",
+    "Plateaus are raised rock reached by ramps. A unit or tower on top gets +2 m range, +20% damage and +3 m sight against targets below; shooting up at it does 15% less damage. A gold ▲ marks units on high ground, and units deep on a plateau stay hidden from below until you climb it.": "Cao nguyên là khối đá nhô cao, lên bằng dốc. Đơn vị hoặc tháp ở trên được +2 m tầm bắn, +20% sát thương và +3 m tầm nhìn với mục tiêu bên dưới; bắn ngược lên thì giảm 15% sát thương. Dấu ▲ vàng đánh dấu đơn vị ở điểm cao, và đơn vị ở sâu trên cao nguyên bị che khuất với bên dưới cho tới khi bạn leo lên."
   },
   "patterns": [
     ["^Deals ([\\d.]+)× damage to melee infantry\\.$", "Gây {1}× sát thương lên bộ binh cận chiến."],
