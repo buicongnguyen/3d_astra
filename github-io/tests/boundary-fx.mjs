@@ -90,6 +90,6 @@ try{
   });
   assert.equal(reduced.debris,0);assert.ok(reduced.particles>0);
   assert.deepEqual(errors,[]);
-  console.log(`Boundary, 3D effects and selection passed: ${JSON.stringify(fx.busy)}`);
+  console.log(`Boundary, 3D effects and selection passed: idle ${fx.idleCalls} draws, busy ${JSON.stringify(fx.busy)}`);
   await page.close();
 }finally{await browser.close();}

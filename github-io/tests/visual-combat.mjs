@@ -53,6 +53,39 @@ try{
       window.renderVisual(s,.16,f.selected,null);
     });
     await page.screenshot({path:`test-results/visual-${baseline?'before':'after'}-destruction-${viewport.width}.png`});
+    if(!baseline){
+      // Battle effects pass 2026-11: a hit flashes the unit warm white through its per-instance
+      // tint (no new draw call) and restores it; damaged buildings smoke, critical ones burn.
+      const flash=await page.evaluate(()=>{
+        const f=window.__frontier,v=f.view,s=f.sim,tank=s.entities.find(e=>e.team===1&&e.type==='tank'),o=v.objects.get(tank.id);
+        let part=null;o.userData.model.traverse(p=>{if(!part&&p.isMesh)part=p;});
+        window.renderVisual(s,.5,f.selected,null);const calls=v.renderer.info.render.calls;
+        // The model flash alone (an impact event also lights the selection ring and vitals bar).
+        o.userData.flashWait=0;window.renderVisual(s,1/60,f.selected,null);
+        const litCalls=v.renderer.info.render.calls;
+        for(let i=0;i<12;i++)window.renderVisual(s,1/60,f.selected,null);
+        v.event({type:'impact',x:tank.x,z:tank.z,team:1,shield:false,seed:tank.id},s);
+        window.renderVisual(s,1/60,f.selected,null);
+        const lit=(part.userData.tint||[1,1,1])[0];
+        for(let i=0;i<12;i++)window.renderVisual(s,1/60,f.selected,null);
+        const after=(part.userData.tint||[1,1,1])[0];
+        const b=s.entities.filter(e=>e.kind==='building'&&e.team===0).slice(0,2);
+        b[0].hp=b[0].maxHp*.4;b[1].hp=b[1].maxHp*.15;
+        for(let i=0;i<90;i++)window.renderVisual(s,1/30,f.selected,null);
+        const emitted=id=>v.fx.smoke.items.filter(p=>p.anchor?.id===id).length;
+        const result={lit,after,calls,litCalls,smoking:emitted(b[0].id),burning:emitted(b[1].id),fireGlow:v.fx.glow.items.some(p=>p.anchor?.id===b[1].id),smokeGlow:v.fx.glow.items.some(p=>p.anchor?.id===b[0].id)};
+        v.focusOn((b[0].x+b[1].x)/2,(b[0].z+b[1].z)/2);v.updateCamera();window.renderVisual(s,1/30,f.selected,null);
+        window.restoreBuildings=()=>{for(const e of b)e.hp=e.maxHp;};
+        return result;
+      });
+      assert.ok(flash.lit>1.5,`a hit flashes the unit: ${JSON.stringify(flash)}`);
+      assert.equal(flash.after,1,'the flash ends at the normal tint');
+      assert.equal(flash.litCalls,flash.calls,'the hit flash adds no draw call');
+      assert.ok(flash.smoking>0&&!flash.smokeGlow,`a building below half health smokes without fire: ${JSON.stringify(flash)}`);
+      assert.ok(flash.burning>flash.smoking&&flash.fireGlow,`a building below a quarter burns: ${JSON.stringify(flash)}`);
+      await page.screenshot({path:`test-results/visual-after-damaged-buildings-${viewport.width}.png`});
+      await page.evaluate(()=>{window.restoreBuildings();const f=window.__frontier,v=f.view;v.focusOn(-6,18);v.zoom=52;v.updateCamera();});
+    }
     const metrics=await page.evaluate(async()=>{
       const f=window.__frontier,v=f.view,s=f.sim,frames=[];let calls=0,triangles=0;
       for(let i=0;i<65;i++){
