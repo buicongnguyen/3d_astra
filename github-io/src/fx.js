@@ -1,15 +1,16 @@
 import * as THREE from "three";
 import { themeFor, weaponStyle, shotVisible } from "./visual-style.js";
-import { burningEntities } from "./combat-feedback.js";
+import { damagedEntities, damageState, BURNING, hitPower, scorchPlan, SCORCH } from "./combat-feedback.js";
 import { isHarvesting, harvestTarget } from "./activity.js";
 
 // 3D combat effects: muzzle flashes, tracers, shells, rockets, sparks, fireballs, smoke,
-// shockwaves, scorch marks, debris and fire on damaged machines and buildings.
+// shockwaves, scorch marks, debris, smoke on damaged buildings and fire on critical ones.
 // Everything renders through four fixed draw calls (glow, smoke, ground decals, debris) no
 // matter how many effects are alive, so heavy fighting never adds draw calls, and each pool
 // is capped (halved in Eco). Effects follow fog of war every frame, freeze while paused
 // (dt = 0) and lose drift, debris and flicker when combat motion is off or reduced motion
-// is requested.
+// is requested. Particle and debris records are pooled: the per-frame emitters (fire, smoke,
+// trails) and the update loop allocate nothing once the pools are warm.
 
 const CELLS = ["glow", "puff", "ring", "streak", "scorch", "flare"];
 const CELL = Object.fromEntries(CELLS.map((name, i) => [name, i]));
@@ -93,11 +94,21 @@ function uploadPrefix(attribute, count) {
   attribute.needsUpdate = true;
 }
 
+// Every field a particle record carries, set in one order so pooled records keep one shape.
+function resetParticle(p) {
+  p.x = 0; p.y = 0; p.z = 0; p.vx = 0; p.vy = 0; p.vz = 0; p.age = 0; p.life = 1; p.s0 = 1; p.s1 = 1;
+  p.rot = Math.random() * 6.28; p.spin = 0; p.c0 = WARM.flash; p.c1 = WARM.ember; p.mode = BILLBOARD;
+  p.ax = 0; p.ay = 1; p.az = 0; p.length = 0; p.cell = CELL.glow; p.drag = 0; p.gravity = 0; p.floor = -10;
+  p.hold = 0; p.fadeIn = 0; p.anchor = null; p.lifted = false; p.delay = 0; p.hitScorch = false;
+  return p;
+}
+
 class Layer {
   constructor(capacity, blending, renderOrder, texture) {
     this.capacity = capacity; // allocated size; `share` scales the live cap with quality
     this.share = () => 1;
     this.items = [];
+    this.free = []; // expired records, reused by spawn()
     this.drawn = 0;
     const quad = new THREE.PlaneGeometry(1, 1);
     const g = new THREE.InstancedBufferGeometry();
@@ -128,8 +139,10 @@ class Layer {
     this.mesh.renderOrder = renderOrder;
     quad.dispose();
   }
-  add(p) {
-    if (this.items.length >= Math.max(1, Math.round(this.capacity * this.share()))) this.items.shift();
+  // A live record reset to defaults; at the cap the oldest one is recycled.
+  spawn() {
+    if (this.items.length >= Math.max(1, Math.round(this.capacity * this.share()))) this.free.push(this.items.shift());
+    const p = resetParticle(this.free.pop() || {});
     this.items.push(p);
     return p;
   }
@@ -138,7 +151,7 @@ class Layer {
     const P = this.pos.array, C = this.color.array, A = this.axis.array, S = this.size.array;
     for (const p of this.items) {
       p.age += dt;
-      if (p.age >= p.life) continue;
+      if (p.age >= p.life) { this.free.push(p); continue; }
       this.items[keep++] = p;
       if (p.age < 0) continue; // delayed start
       const damp = Math.max(0, 1 - p.drag * dt);
@@ -169,12 +182,25 @@ class Layer {
     this.mesh.geometry.instanceCount = drawn;
     for (const a of [this.pos, this.color, this.axis, this.size]) uploadPrefix(a, drawn);
   }
-  clear() { this.items.length = 0; }
+  clear() { for (const p of this.items) this.free.push(p); this.items.length = 0; }
   dispose() { this.mesh.geometry.dispose(); this.material.dispose(); }
 }
 
 const rgba = (hex, a = 1) => [((hex >> 16) & 255) / 255, ((hex >> 8) & 255) / 255, (hex & 255) / 255, a];
 const WARM = { flash: [1, 0.96, 0.82, 1], fire: [1, 0.78, 0.4, 1], ember: [0.85, 0.2, 0.04, 0], spark: [1, 0.88, 0.55, 1], sparkEnd: [1, 0.45, 0.12, 0] };
+const SCORCH_COLOR = [0.03, 0.028, 0.025, 0.8], HIT_SCORCH_COLOR = [0.035, 0.03, 0.026, 0.78];
+// Colours of the per-frame emitters (shared arrays: the pooled records only reference them).
+const PAL = {
+  flame: [1, 0.72, 0.24, 0.95], flameEnd: [0.7, 0.14, 0.04, 0], lick: [1, 0.85, 0.5, 0.8], lickEnd: [1, 0.3, 0.05, 0],
+  ember: [1, 0.7, 0.3, 1], emberEnd: [1, 0.3, 0.05, 0],
+  fireSmoke: [0.11, 0.1, 0.1, 0.8], fireSmokeEnd: [0.3, 0.29, 0.29, 0],
+  damageSmoke: [0.17, 0.16, 0.16, 0.82], damageSmokeEnd: [0.42, 0.41, 0.4, 0],
+  wreckSmoke: [0.12, 0.11, 0.11, 0.5], wreckSmokeEnd: [0.28, 0.27, 0.27, 0],
+  trail: [0.82, 0.8, 0.77, 0.5], trailEnd: [0.7, 0.7, 0.7, 0],
+  chunkTrail: [0.22, 0.2, 0.19, 0.5], chunkTrailEnd: [0.35, 0.34, 0.33, 0],
+};
+// Roof height of each building type (measured on the models), where its smoke and fire start.
+const ROOF = { hq: 5.2, barracks: 3.8, foundry: 4.4, relay: 3.6, tower: 3.8 };
 
 export class Effects {
   constructor(view) {
@@ -184,44 +210,76 @@ export class Effects {
     this.workCursor = 0; // where the work-effect scan resumes, for fairness between busy Harvesters
     this.depositLive = new Map(); // resource id -> had stock last frame (for the shatter)
     // Buffers are allocated at High size; the live cap follows view.lowPower so a quality switch needs no rebuild.
-    this.decals = new Layer(48, THREE.NormalBlending, 1, this.texture);
+    // Hit scorches share the decal pool with destruction scorches (combat-feedback.js SCORCH caps hits).
+    this.decals = new Layer(64, THREE.NormalBlending, 1, this.texture);
     this.smoke = new Layer(420, THREE.NormalBlending, 5, this.texture);
     this.glow = new Layer(900, THREE.AdditiveBlending, 6, this.texture);
     this.smoke.share = this.glow.share = () => this.budget;
     this.debrisMesh = new THREE.InstancedMesh(
       new THREE.DodecahedronGeometry(0.16, 0),
       new THREE.MeshStandardMaterial({ color: 0x2c3230, roughness: 0.7, metalness: 0.3, emissive: 0x401a08, emissiveIntensity: 0.6 }),
-      64,
+      96,
     );
     this.debrisMesh.frustumCulled = false;
     this.debrisMesh.count = 1;
     this.debrisMesh.setMatrixAt(0, new THREE.Matrix4().makeScale(0, 0, 0));
     this.debris = [];
+    this.debrisFree = [];
     this.debrisDrawn = 0;
     this.projectiles = [];
     this.timeline = [];
     this.emitters = new Map();
-    this.burning = [];
+    this.burning = []; // damaged entities drawn this frame (smoke and fire), refilled in place
+    this.emitShare = 1; // their shared emission budget (see update)
     this.time = 0;
     this.root = new THREE.Group();
     this.root.add(this.decals.mesh, this.smoke.mesh, this.glow.mesh, this.debrisMesh);
     view.scene.add(this.root);
     this.dummy = new THREE.Object3D();
+    // Per-frame fog checks are cached per anchor in a map reused every frame.
+    this.seen = new Map();
+    this.frameSim = null;
+    this.visible = (anchor) => {
+      if (!anchor) return true;
+      let v = this.seen.get(anchor);
+      if (v === undefined) this.seen.set(anchor, (v = anchor.shot ? shotVisible(anchor, this.frameSim) : this.frameSim.isVisible(anchor)));
+      return v;
+    };
+    this.sphere = new THREE.Sphere();
   }
-  get debrisCapacity() { return this.view.lowPower ? 24 : 64; }
+  get debrisCapacity() { return this.view.lowPower ? 32 : 96; }
   get motion() { return this.view.activity.combat.motion; }
   get budget() { return this.view.lowPower ? 0.5 : 1; }
-  count(n) { return Math.max(1, Math.round(n * this.budget)); }
+  // The frame governor (governor.js) thins cosmetic emission on slow frames: calm 3/4, still 1/2.
+  get governed() { const level = this.view.motionLevel; return level === 0 ? 0.5 : level === 1 ? 0.75 : 1; }
+  count(n) { return Math.max(1, Math.round(n * this.budget * this.governed)); }
+  ground(x, z) {
+    const t = this.view.terrain;
+    return t?.plateaus?.length ? t.heightAt(x, z) : 0;
+  }
   // -- particle helpers
   particle(layer, o) {
+    const p = Object.assign(layer.spawn(), o);
+    p.age = -(o.delay || 0);
     // On maps with plateaus every effect is lifted to the ground under it.
     const t = this.view.terrain;
-    if (t?.plateaus?.length && !o.lifted && Number.isFinite(o.x) && Number.isFinite(o.z)) o = { ...o, y: (o.y || 0) + t.heightAt(o.x, o.z) };
-    return layer.add({
-      x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, age: -(o.delay || 0), life: 1, s0: 1, s1: 1, rot: Math.random() * 6.28,
-      spin: 0, c0: WARM.flash, c1: WARM.ember, mode: BILLBOARD, ax: 0, ay: 1, az: 0, length: 0, cell: CELL.glow,
-      drag: 0, gravity: 0, floor: -10, hold: 0, fadeIn: 0, anchor: null, ...o,
-    });
+    if (t?.plateaus?.length && !o.lifted && Number.isFinite(o.x) && Number.isFinite(o.z)) p.y = (o.y || 0) + t.heightAt(o.x, o.z);
+    return p;
+  }
+  // The allocation-free path for per-frame emitters: a pooled record at (x, y above ground, z);
+  // the caller sets the rest. `lifted` means y already includes the ground.
+  emit(layer, x, y, z, anchor, lifted = false) {
+    const p = layer.spawn();
+    p.x = x; p.y = lifted ? y : y + this.ground(x, z); p.z = z; p.anchor = anchor;
+    return p;
+  }
+  // Damage emitters only run for buildings and machines on screen (last frame's camera frustum).
+  onScreen(e, reach) {
+    const batches = this.view.batches;
+    if (!batches?.cull) return true;
+    this.sphere.center.set(e.x, this.ground(e.x, e.z) + reach * 0.5, e.z);
+    this.sphere.radius = reach + 3;
+    return batches.frustum.intersectsSphere(this.sphere);
   }
   burst(layer, n, at, o, speed = [1, 2], up = 0) {
     for (let i = 0; i < n; i++) {
@@ -246,19 +304,42 @@ export class Effects {
     this.burst(this.smoke, this.count(n), at, { life, s0: 0.6 * size, s1: 2.2 * size, drag: 2.5, cell: CELL.puff,
       c0: [r, g, b, 0.55], c1: [r, g, b, 0], floor: 0.1, anchor, spin: (Math.random() - 0.5) * 0.6 }, [0.8 * size, 2 * size], 0.2);
   }
-  addDebris(at, n, anchor, power = 1) {
+  // Chunks thrown by a blast: they arc, bounce on the ground (plateaus included), tumble to a
+  // stop and shrink away. `trails` gives the first few a thin smoke trail while airborne.
+  addDebris(at, n, anchor, power = 1, trails = 0) {
     if (!this.motion) return;
-    for (let i = 0; i < this.count(n); i++) {
-      if (this.debris.length >= this.debrisCapacity) this.debris.shift();
+    const base = this.ground(at.x, at.z);
+    for (let i = 0, count = this.count(n); i < count; i++) {
+      if (this.debris.length >= this.debrisCapacity) this.debrisFree.push(this.debris.shift());
+      const d = this.debrisFree.pop() || {};
       const a = Math.random() * Math.PI * 2, v = (1.5 + Math.random() * 3) * power;
-      this.debris.push({ x: at.x, y: at.y, z: at.z, vx: Math.cos(a) * v, vy: (3 + Math.random() * 4) * power, vz: Math.sin(a) * v,
-        rx: Math.random() * 6, ry: Math.random() * 6, spin: (Math.random() - 0.5) * 14, age: 0, life: 1.6 + Math.random() * 1.2,
-        scale: (0.45 + Math.random() * 0.75) * Math.sqrt(power), anchor });
+      d.x = at.x; d.y = at.y + base; d.z = at.z; d.ground = base;
+      d.vx = Math.cos(a) * v; d.vy = (3 + Math.random() * 4) * power; d.vz = Math.sin(a) * v;
+      d.rx = Math.random() * 6; d.ry = Math.random() * 6; d.spin = (Math.random() - 0.5) * 14; d.age = 0;
+      d.life = 1.6 + Math.random() * 1.2; d.scale = (0.45 + Math.random() * 0.75) * Math.sqrt(power);
+      d.anchor = anchor; d.trail = i < trails ? 0 : -1;
+      this.debris.push(d);
     }
   }
-  decal(at, size, life, anchor, cell = CELL.scorch, color = [0.03, 0.028, 0.025, 0.8], layer = this.decals, s0 = size, extra = {}) {
+  decal(at, size, life, anchor, cell = CELL.scorch, color = SCORCH_COLOR, layer = this.decals, s0 = size, extra = {}) {
     return this.particle(layer, { x: at.x, y: 0.04 + layer.items.length * 0.0004, z: at.z, mode: GROUND, cell, s0, s1: size, life,
       c0: color, c1: [...color.slice(0, 3), 0], hold: 0.7, anchor, rot: Math.random() * 6.28, ...extra });
+  }
+  // A scorch left by a hit: fades over SCORCH.life seconds, capped (fewer in Eco); a hit on a
+  // fresh scorch darkens and slightly widens that one instead of stacking a new decal.
+  scorch(at, size, anchor) {
+    const items = this.decals.items, plan = scorchPlan(items, at.x, at.z, this.view.lowPower ? SCORCH.ecoCap : SCORCH.cap);
+    if (plan.merge !== undefined) {
+      const m = items[plan.merge];
+      m.age = Math.min(m.age, m.life * 0.1);
+      m.s0 = m.s1 = Math.min(Math.max(m.s1, size) * 1.06, size * 1.5);
+      return m;
+    }
+    if (plan.evict !== undefined) items[plan.evict].age = items[plan.evict].life; // recycled on the next update
+    const p = this.decal(at, size, SCORCH.life, anchor, CELL.scorch, HIT_SCORCH_COLOR);
+    p.hold = SCORCH.hold;
+    p.hitScorch = true;
+    return p;
   }
   shockwave(at, size, anchor) {
     this.decal(at, size, 0.45, anchor, CELL.ring, [1, 0.78, 0.5, 0.75], this.glow, size * 0.15, { hold: 0, y: 0.1 });
@@ -278,7 +359,38 @@ export class Effects {
     this.sparks(at, heavy ? 10 : 5, anchor, scale);
     if (m) this.shockwave(at, 7 * scale, anchor);
     this.decal(at, 3.4 * scale, 12, anchor);
-    if (heavy) this.addDebris(at, 6, anchor, scale);
+    if (heavy) this.addDebris(at, 7, anchor, scale, 2);
+  }
+  // A shell or rocket landing. Small arms (power 0) stay light: a spark and now and then a
+  // dust puff. Tank shells, artillery and rockets (power from combat-feedback.js hitPower)
+  // throw a white flash, a fireball rolling into smoke, sparks, dirt, debris chunks that arc
+  // and bounce, a brief hot glow on the ground and a scorch that fades over ~14 s.
+  hit(at, power, anchor) {
+    if (power === true) power = 1;
+    if (!(power > 0)) {
+      this.particle(this.glow, { ...at, s0: 0.5, s1: 0.7, life: 0.07, c0: [1, 0.9, 0.6, 0.9], c1: [1, 0.5, 0.2, 0], anchor });
+      this.sparks(at, 3, anchor, 0.45);
+      if (Math.random() < 0.3) this.dust({ x: at.x, y: 0.25, z: at.z }, 1, anchor, 0.45, 0.7);
+      return;
+    }
+    const s = power, m = this.motion, top = { x: at.x, y: at.y + 0.35, z: at.z };
+    this.particle(this.glow, { ...top, cell: CELL.flare, s0: 3.8 * s, s1: 4.6 * s, life: 0.12, c0: WARM.flash, c1: [1, 0.6, 0.2, 0], anchor });
+    this.particle(this.glow, { ...top, s0: 3.2 * s, s1: 4.2 * s, life: 0.22, c0: [1, 0.76, 0.42, 0.95], c1: [1, 0.35, 0.08, 0], anchor });
+    // Fireball: a normal-blended body (stays saturated on bright ground) and additive licks.
+    this.burst(this.smoke, this.count(7), top, { life: 0.8, s0: 1.3 * s, s1: 3.3 * s, drag: 3.2, cell: CELL.puff,
+      c0: [1, 0.6, 0.18, 0.96], c1: [0.22, 0.18, 0.16, 0], anchor, spin: 1, gravity: -1.6 }, [1.3 * s, 3.2 * s], 0.75);
+    this.burst(this.glow, this.count(5), top, { life: 0.5, s0: 1.1 * s, s1: 2.7 * s, drag: 3.5, c0: WARM.fire, c1: WARM.ember, anchor,
+      spin: 1.5 }, [1.4 * s, 3.4 * s], 0.6);
+    this.burst(this.smoke, this.count(4), { x: at.x, y: at.y + 0.7, z: at.z }, { life: m ? 2.1 : 0.9, s0: 1 * s, s1: 3.6 * s, drag: 1.4,
+      cell: CELL.puff, c0: [0.19, 0.18, 0.17, 0.74], c1: [0.38, 0.37, 0.36, 0], fadeIn: 0.1, delay: 0.1, anchor, gravity: -0.8,
+      spin: 0.4 }, [0.6 * s, 1.4 * s], 1.1);
+    this.dust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.1 * s, 1.1);
+    this.sparks(top, 8, anchor, s);
+    this.addDebris(at, Math.round(4 * s), anchor, 0.85 * s, s >= 1 ? 2 : 0);
+    if (m && s >= 0.9) this.shockwave(at, 5.2 * s, anchor);
+    // Hot ground: an orange glow that cools in about a second, then the scorch.
+    this.decal(at, 2.2 * s, 1.2, anchor, CELL.glow, [1, 0.45, 0.1, 0.85], this.glow, 1.7 * s, { hold: 0.15, y: 0.08 });
+    this.scorch(at, 2.6 * s, anchor);
   }
   // -- events
   // Muzzle and aim point of a shot, in world height (plateaus included). Rounds take
@@ -311,8 +423,8 @@ export class Effects {
       this.particle(this.glow, { ...from, cell: CELL.flare, s0: flash, s1: flash * 1.2, life: heavy ? 0.11 : 0.06, c0: WARM.flash, c1: [1, 0.55, 0.15, 0], anchor });
     }
     if (sim.isVisible({ x: e.tx, z: e.tz })) {
-      const anchor = { x: e.tx, z: e.tz };
-      this.timeline.push({ at: this.time + style.life, run: () => this.hit(land, heavy, anchor) });
+      const anchor = { x: e.tx, z: e.tz }, power = hitPower(e.weapon, style.kind);
+      this.timeline.push({ at: this.time + style.life, run: () => this.hit(land, power, anchor) });
     }
   }
   shot(e, sim) {
@@ -330,7 +442,7 @@ export class Effects {
         gravity: -1.5 }, [0.4, 1], 0.8);
       return;
     }
-    const cannon = kind === "cannon", rocket = kind === "rocket";
+    const cannon = kind === "cannon", rocket = kind === "rocket", power = hitPower(e.weapon, kind);
     // Muzzle: star flare, hot glow and (for heavy weapons) a smoke puff drifting forward.
     const flash = cannon ? (e.weapon === "tank" ? 1.9 : 1.4) : rocket ? 1 : 0.7;
     this.particle(this.glow, { ...from, cell: CELL.flare, s0: flash, s1: flash * 1.2, life: cannon ? 0.11 : 0.06, c0: WARM.flash,
@@ -344,6 +456,8 @@ export class Effects {
           vx: nx * back * (1.5 + i * 0.6), vy: 0.5 + Math.random() * 0.4, vz: nz * back * (1.5 + i * 0.6), drag: 2.2,
           life: 0.9 + Math.random() * 0.4, s0: 0.45, s1: 1.7, cell: CELL.puff, c0: [0.6, 0.58, 0.55, 0.5], c1: [0.55, 0.55, 0.55, 0],
           anchor, spin: 0.8 });
+      // A big gun's blast kicks up the ground under the muzzle.
+      if (cannon && e.weapon !== "tower") this.dust({ x: from.x, y: 0.25, z: from.z }, 1, anchor, 0.8, 0.8);
     }
     // Projectile: a streak (and shell/rocket glow) flying to the target; reduced motion
     // shows a brief static tracer along the whole path instead.
@@ -356,23 +470,12 @@ export class Effects {
       if (cannon || rocket)
         this.particle(this.glow, { ...from, ...v, s0: cannon ? 0.75 : 0.55, s1: cannon ? 0.75 : 0.55, life: travel, c0: [1, 0.85, 0.5, 1],
           c1: [1, 0.7, 0.4, 1], anchor });
-      this.projectiles.push({ from, to, land, travel, age: 0, rocket, cannon, anchor, trail: 0, weapon: e.weapon });
+      this.projectiles.push({ from, to, land, travel, age: 0, rocket, cannon, power, anchor, trail: 0, weapon: e.weapon });
     } else {
       this.particle(this.glow, { lifted: true, x: (from.x + to.x) / 2, y: (from.y + to.y) / 2, z: (from.z + to.z) / 2, mode: STRETCH,
         ax: dir.x / len, ay: dir.y / len, az: dir.z / len, length: len, s0: width * 0.7, s1: width * 0.7, life: 0.1,
         cell: CELL.glow, c0: [...color.slice(0, 3), 0.7], c1: [...color.slice(0, 3), 0], anchor });
-      this.hit(land, cannon || rocket, anchor);
-    }
-  }
-  hit(at, heavy, anchor) {
-    if (heavy) {
-      this.particle(this.glow, { ...at, s0: 1.6, s1: 2.2, life: 0.14, c0: WARM.flash, c1: [1, 0.4, 0.1, 0], anchor });
-      this.burst(this.glow, this.count(3), at, { life: 0.35, s0: 0.5, s1: 1.2, drag: 4, c0: WARM.fire, c1: WARM.ember, anchor }, [1, 2.5], 0.6);
-      this.sparks(at, 5, anchor, 0.8);
-      this.dust({ ...at, y: 0.3 }, 2, anchor, 0.8, 0.9);
-    } else {
-      this.particle(this.glow, { ...at, s0: 0.5, s1: 0.7, life: 0.07, c0: [1, 0.9, 0.6, 0.9], c1: [1, 0.5, 0.2, 0], anchor });
-      this.sparks(at, 3, anchor, 0.45);
+      this.hit(land, power, anchor);
     }
   }
   // -- celebration effects: a unit arriving, a building finishing, an upgrade, a cargo drop-off.
@@ -472,10 +575,17 @@ export class Effects {
   }
   strike(e) {
     // A Barrage shell landing: one heavy blast and a shockwave out to the damage radius.
-    const anchor = { x: e.x, z: e.z, team: e.team }, r = e.radius || 4;
-    this.explosion({ x: e.x, y: 0.7, z: e.z }, 1.35, anchor, true);
+    // A heavy blast, a fire column climbing out of it, dirt thrown wide, a ring out to the
+    // damage radius, a shower of debris and a wide crater scorch.
+    const anchor = { x: e.x, z: e.z, team: e.team }, r = e.radius || 4, m = this.motion;
+    this.explosion({ x: e.x, y: 0.9, z: e.z }, 2.1, anchor, true);
+    this.burst(this.smoke, this.count(8), { x: e.x, y: 1.4, z: e.z }, { life: m ? 1.5 : 0.8, s0: 1.8, s1: 4.6, drag: 1.2, cell: CELL.puff,
+      c0: [1, 0.56, 0.16, 0.96], c1: [0.18, 0.15, 0.13, 0], anchor, gravity: m ? -4.5 : 0, spin: 0.6 }, [0.5, 1.6], 2.6);
     this.decal({ x: e.x, z: e.z }, r * 2.5, 0.5, anchor, CELL.ring, [1, 0.8, 0.5, 0.8], this.glow, r * 0.4, { hold: 0, y: 0.12 });
-    this.dust({ x: e.x, y: 0.3, z: e.z }, 5, anchor, 1.4, 1.3);
+    this.decal({ x: e.x, z: e.z }, r * 0.9, 1.4, anchor, CELL.glow, [1, 0.42, 0.08, 0.9], this.glow, r * 0.7, { hold: 0.2, y: 0.08 });
+    this.dust({ x: e.x, y: 0.3, z: e.z }, 7, anchor, 1.6, 1.6);
+    this.addDebris({ x: e.x, y: 0.8, z: e.z }, 10, anchor, 1.45, 3);
+    this.decal({ x: e.x, z: e.z }, r * 1.35, 16, anchor, CELL.scorch, SCORCH_COLOR, this.decals, r * 1.35, { hold: 0.45 });
   }
   // -- continuous work effects, rate-limited per worker and capped per frame (halved in Eco)
   glint(at, c0, c1, anchor, n, power = 1) {
@@ -549,30 +659,44 @@ export class Effects {
     if (e.building) {
       // Collapse: staged blasts across the footprint, a rolling dust wall, a smoke column,
       // debris and a large scorch; the model itself sinks in WorldView.
-      const r = 2.4;
-      this.explosion({ x: e.x, y: 1.6, z: e.z }, 1.5, anchor);
-      for (const [delay, k] of [[0.3, 0.8], [0.65, 0.9], [1.0, 0.75], [1.45, 0.7]]) {
+      const r = 2.6;
+      this.explosion({ x: e.x, y: 1.8, z: e.z }, 2, anchor);
+      this.addDebris({ x: e.x, y: 2.2, z: e.z }, 12, anchor, 1.35, 4);
+      for (const [delay, k] of [[0.3, 0.8], [0.6, 0.95], [0.9, 0.75], [1.25, 0.85], [1.6, 0.7]]) {
         const a = Math.random() * Math.PI * 2, d = Math.random() * r;
-        this.timeline.push({ at: this.time + delay, run: () => this.explosion({ x: e.x + Math.cos(a) * d, y: 0.8 + Math.random() * 2, z: e.z + Math.sin(a) * d }, k, anchor, false) });
+        this.timeline.push({ at: this.time + delay, run: () => {
+          const at = { x: e.x + Math.cos(a) * d, y: 0.8 + Math.random() * 2, z: e.z + Math.sin(a) * d };
+          this.explosion(at, k, anchor, false);
+          this.addDebris(at, 3, anchor, 0.9 * k, 1);
+        } });
       }
+      // The collapse raises a big dust cloud: a wall rolling outward and a dome rising over the ruin.
       this.timeline.push({ at: this.time + 0.25, run: () => {
         const [r0, g0, b0] = rgba(parseInt(themeFor(this.view.terrain.id).dust.slice(1), 16));
-        const n = this.count(14);
+        const n = this.count(18), m = this.motion;
         for (let i = 0; i < n; i++) {
-          const a = (i / n) * Math.PI * 2, v = this.motion ? 2.4 + Math.random() : 0;
-          this.particle(this.smoke, { x: e.x + Math.cos(a) * 1.6, y: 0.5, z: e.z + Math.sin(a) * 1.6, vx: Math.cos(a) * v,
-            vy: 0.35, vz: Math.sin(a) * v, drag: 1.1, life: 2.6 + Math.random(), s0: 1.6, s1: 4.6, cell: CELL.puff,
-            c0: [r0, g0, b0, 0.7], c1: [r0, g0, b0, 0], anchor, fadeIn: 0.2, spin: 0.3 });
+          const a = (i / n) * Math.PI * 2 + Math.random() * 0.3, v = m ? 2.6 + Math.random() * 1.4 : 0;
+          this.particle(this.smoke, { x: e.x + Math.cos(a) * 1.8, y: 0.5, z: e.z + Math.sin(a) * 1.8, vx: Math.cos(a) * v,
+            vy: 0.4, vz: Math.sin(a) * v, drag: 1, life: 3 + Math.random(), s0: 1.8, s1: 5.4, cell: CELL.puff,
+            c0: [r0, g0, b0, 0.78], c1: [r0, g0, b0, 0], anchor, fadeIn: 0.2, spin: 0.3 });
         }
+        for (let i = 0, dome = this.count(8); i < dome; i++)
+          this.particle(this.smoke, { x: e.x + (Math.random() - 0.5) * 2.4, y: 1 + Math.random(), z: e.z + (Math.random() - 0.5) * 2.4,
+            vy: m ? 1 + Math.random() * 0.8 : 0.1, vx: m ? (Math.random() - 0.5) * 0.8 : 0, vz: m ? (Math.random() - 0.5) * 0.8 : 0, drag: 0.5,
+            life: 3.6 + Math.random(), s0: 2.4, s1: 6.8, cell: CELL.puff, c0: [r0 * 0.9, g0 * 0.9, b0 * 0.9, 0.72], c1: [r0, g0, b0, 0],
+            anchor, fadeIn: 0.3, spin: 0.2, delay: i * 0.08 });
+        if (m) this.shockwave({ x: e.x, y: 0.3, z: e.z }, 13, anchor);
       } });
-      for (let i = 0; i < 10; i++)
-        this.timeline.push({ at: this.time + 0.2 + i * 0.22, run: () => this.particle(this.smoke, { x: e.x + (Math.random() - 0.5) * 2,
-          y: 2.5, z: e.z + (Math.random() - 0.5) * 2, vy: this.motion ? 2.2 : 0.2, vx: this.motion ? 0.5 : 0, drag: 0.4,
-          life: 3.2, s0: 1.8, s1: 5.5, cell: CELL.puff, c0: [0.16, 0.15, 0.15, 0.7], c1: [0.33, 0.32, 0.31, 0], fadeIn: 0.25,
+      for (let i = 0; i < 12; i++)
+        this.timeline.push({ at: this.time + 0.2 + i * 0.2, run: () => this.particle(this.smoke, { x: e.x + (Math.random() - 0.5) * 2.4,
+          y: 2.5, z: e.z + (Math.random() - 0.5) * 2.4, vy: this.motion ? 2.4 : 0.2, vx: this.motion ? 0.5 : 0, drag: 0.4,
+          life: 3.2, s0: 2, s1: 6, cell: CELL.puff, c0: [0.16, 0.15, 0.15, 0.74], c1: [0.33, 0.32, 0.31, 0], fadeIn: 0.25,
           anchor, spin: 0.25 }) });
-      this.addDebris({ x: e.x, y: 2, z: e.z }, 8, anchor, 1.2);
-      this.decal(anchor, 8, 20, anchor);
-    } else if (e.heavy) this.explosion({ x: e.x, y: 0.9, z: e.z }, 1, anchor);
+      this.decal(anchor, 9, 20, anchor);
+    } else if (e.heavy) {
+      this.explosion({ x: e.x, y: 0.9, z: e.z }, 1.15, anchor);
+      this.decal({ x: e.x, z: e.z }, 2.2, 1.4, anchor, CELL.glow, [1, 0.45, 0.1, 0.85], this.glow, 1.8, { hold: 0.2, y: 0.08 });
+    }
     else {
       this.particle(this.glow, { x: e.x, y: 1, z: e.z, s0: 1.4, s1: 1.8, life: 0.12, c0: [1, 0.88, 0.62, 0.9], c1: [1, 0.5, 0.2, 0], anchor });
       this.sparks({ x: e.x, y: 1.1, z: e.z }, 6, anchor, 0.7);
@@ -581,50 +705,74 @@ export class Effects {
       this.decal(anchor, 1.8, 6, anchor);
     }
   }
-  // Fire and smoke from critically damaged buildings and machines (visual only).
-  burn(e, dt) {
+  // Damage on buildings and machines (visual only, combat-feedback.js damageState): grey smoke
+  // from two vents on a building below half health; below a quarter (machines below 35%)
+  // flames, embers and thick black smoke. Rates follow quality and the frame governor; only
+  // on-screen emitters run, and every record comes from the pools.
+  burn(e, state, dt) {
     let em = this.emitters.get(e.id);
-    if (!em) this.emitters.set(e.id, (em = { fire: Math.random(), smoke: Math.random(), seen: 0 }));
+    if (!em) this.emitters.set(e.id, (em = { fire: Math.random(), smoke: Math.random(), seen: 0, licks: 0, vent: 0 }));
     em.seen = this.time;
-    const building = e.kind === "building", h = building ? { hq: 3.9, barracks: 3.2, foundry: 3.4, relay: 2.4, tower: 3.8 }[e.type] || 3 : 1.3;
-    const spread = building ? e.radius * 0.45 : 0.35, m = this.motion, anchor = e;
-    em.fire += dt * (building ? 16 : 10) * this.budget;
-    em.smoke += dt * (building ? 5 : 3) * this.budget;
+    const building = e.kind === "building", h = building ? ROOF[e.type] || 3.8 : 1.3;
+    const spread = building ? e.radius * 0.5 : 0.35, m = this.motion, rate = dt * this.budget * this.governed * this.emitShare;
+    if (!this.onScreen(e, building ? h + 4 : 3)) return;
+    if (state !== BURNING) {
+      // Smoking: a steady dark-grey plume from two fixed vents on the roof.
+      em.smoke += rate * 4.5;
+      while (em.smoke >= 1) {
+        em.smoke -= 1;
+        const a = e.id * 2.399 + (em.vent++ % 2) * Math.PI, d = spread * 0.6;
+        const p = this.emit(this.smoke, e.x + Math.cos(a) * d + (Math.random() - 0.5) * 0.3, h * 0.9, e.z + Math.sin(a) * d + (Math.random() - 0.5) * 0.3, e);
+        p.vy = m ? 0.9 + Math.random() * 0.5 : 0.1; p.vx = m ? 0.45 : 0; p.drag = 0.2; p.life = m ? 2.8 : 1.2;
+        p.s0 = 1.4; p.s1 = 4; p.cell = CELL.puff; p.c0 = PAL.damageSmoke; p.c1 = PAL.damageSmokeEnd; p.fadeIn = 0.2; p.spin = 0.3;
+        p.hold = 0.3;
+      }
+      return;
+    }
+    em.fire += rate * (building ? 20 : 10);
+    em.smoke += rate * (building ? 6 : 3);
     while (em.fire >= 1) {
       em.fire -= 1;
       const a = Math.random() * 6.28, d = Math.random() * spread;
-      const flame = { x: e.x + Math.cos(a) * d, y: h * (0.6 + Math.random() * 0.3), z: e.z + Math.sin(a) * d,
-        vy: m ? 1.2 + Math.random() : 0, vx: m ? (Math.random() - 0.5) * 0.4 : 0, life: 0.5 + Math.random() * 0.3, anchor, spin: 2 };
-      this.particle(this.smoke, { ...flame, cell: CELL.puff, s0: building ? 1.1 : 0.75, s1: building ? 0.4 : 0.3,
-        c0: [1, 0.72, 0.24, 0.95], c1: [0.7, 0.14, 0.04, 0] });
-      if ((em.licks = (em.licks || 0) + 1) % 3 === 0)
-        this.particle(this.glow, { ...flame, s0: building ? 0.9 : 0.6, s1: 0.3, c0: [1, 0.85, 0.5, 0.8], c1: [1, 0.3, 0.05, 0] });
+      const x = e.x + Math.cos(a) * d, y = h * (building ? 0.7 + Math.random() * 0.3 : 0.6 + Math.random() * 0.3), z = e.z + Math.sin(a) * d;
+      const vy = m ? 1.4 + Math.random() * 1.2 : 0, vx = m ? (Math.random() - 0.5) * 0.4 : 0, life = 0.55 + Math.random() * 0.35;
+      const p = this.emit(this.smoke, x, y, z, e);
+      p.vy = vy; p.vx = vx; p.life = life; p.spin = 2; p.cell = CELL.puff;
+      p.s0 = building ? 2.1 : 0.8; p.s1 = building ? 0.6 : 0.3; p.c0 = PAL.flame; p.c1 = PAL.flameEnd; p.hold = 0.25;
+      if (++em.licks % (building ? 2 : 3) === 0) {
+        const g = this.emit(this.glow, x, y, z, e);
+        g.vy = vy; g.vx = vx; g.life = life; g.spin = 2; g.s0 = building ? 1.5 : 0.65; g.s1 = 0.3; g.c0 = PAL.lick; g.c1 = PAL.lickEnd;
+      }
+      if (building && m && em.licks % 4 === 0) {
+        // Embers drifting up out of the fire.
+        const k = this.emit(this.glow, x, y + 0.4, z, e);
+        k.vy = 2.2 + Math.random() * 1.4; k.vx = (Math.random() - 0.5) * 1.2; k.vz = (Math.random() - 0.5) * 1.2; k.drag = 0.6;
+        k.life = 0.9 + Math.random() * 0.5; k.s0 = 0.18; k.s1 = 0.06; k.cell = CELL.flare; k.c0 = PAL.ember; k.c1 = PAL.emberEnd;
+      }
     }
     while (em.smoke >= 1) {
       em.smoke -= 1;
-      this.particle(this.smoke, { x: e.x + (Math.random() - 0.5) * spread, y: h + 0.3, z: e.z + (Math.random() - 0.5) * spread,
-        vy: m ? 1.4 + Math.random() * 0.6 : 0.1, vx: m ? 0.45 : 0, drag: 0.3, life: m ? 2.6 : 1.2, s0: building ? 1 : 0.6,
-        s1: building ? 3.4 : 2, cell: CELL.puff, c0: [0.14, 0.13, 0.13, 0.62], c1: [0.3, 0.29, 0.29, 0], fadeIn: 0.2, anchor, spin: 0.35 });
+      const p = this.emit(this.smoke, e.x + (Math.random() - 0.5) * spread, h + 0.4, e.z + (Math.random() - 0.5) * spread, e);
+      p.vy = m ? 1.1 + Math.random() * 0.6 : 0.1; p.vx = m ? 0.5 : 0; p.drag = 0.2; p.life = m ? 2.8 : 1.2;
+      p.s0 = building ? 1.6 : 0.6; p.s1 = building ? 4.8 : 2; p.cell = CELL.puff; p.c0 = PAL.fireSmoke; p.c1 = PAL.fireSmokeEnd;
+      p.fadeIn = 0.2; p.spin = 0.35; p.hold = building ? 0.3 : 0;
     }
   }
   smoulder(d, dt) {
-    d.puff = (d.puff ?? Math.random()) + dt * 1.6 * this.budget;
+    d.puff = (d.puff ?? Math.random()) + dt * 1.6 * this.budget * this.governed;
     const m = this.motion;
     while (d.puff >= 1) {
       d.puff -= 1;
-      this.particle(this.smoke, { x: d.x + (Math.random() - 0.5) * 0.5, y: 0.9, z: d.z + (Math.random() - 0.5) * 0.5,
-        vy: m ? 1.1 + Math.random() * 0.5 : 0.1, vx: m ? 0.35 : 0, drag: 0.3, life: m ? 2.4 : 1.1, s0: 0.5, s1: 1.8,
-        cell: CELL.puff, c0: [0.12, 0.11, 0.11, 0.5], c1: [0.28, 0.27, 0.27, 0], fadeIn: 0.2, anchor: d, spin: 0.35 });
+      const p = this.emit(this.smoke, d.x + (Math.random() - 0.5) * 0.5, 0.9, d.z + (Math.random() - 0.5) * 0.5, d);
+      p.vy = m ? 1.1 + Math.random() * 0.5 : 0.1; p.vx = m ? 0.35 : 0; p.drag = 0.3; p.life = m ? 2.4 : 1.1; p.s0 = 0.5; p.s1 = 1.8;
+      p.cell = CELL.puff; p.c0 = PAL.wreckSmoke; p.c1 = PAL.wreckSmokeEnd; p.fadeIn = 0.2; p.spin = 0.35;
     }
   }
   update(sim, dt) {
     this.time += dt;
-    const cache = new Map();
-    const visible = (anchor) => {
-      if (!anchor) return true;
-      if (!cache.has(anchor)) cache.set(anchor, anchor.shot ? shotVisible(anchor, sim) : sim.isVisible(anchor));
-      return cache.get(anchor);
-    };
+    this.frameSim = sim;
+    this.seen.clear();
+    const visible = this.visible;
     for (let i = this.timeline.length - 1; i >= 0; i--)
       if (this.timeline[i].at <= this.time) this.timeline.splice(i, 1)[0].run();
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
@@ -635,21 +783,31 @@ export class Effects {
         p.trail += dt;
         while (p.trail > 0.025) {
           p.trail -= 0.025;
-          this.particle(this.smoke, { lifted: true, x: p.from.x + (p.to.x - p.from.x) * t, y: p.from.y + (p.to.y - p.from.y) * t,
-            z: p.from.z + (p.to.z - p.from.z) * t, vy: 0.3, drag: 1, life: 0.7 + Math.random() * 0.3, s0: 0.25, s1: 1,
-            cell: CELL.puff, c0: [0.82, 0.8, 0.77, 0.5], c1: [0.7, 0.7, 0.7, 0], anchor: p.anchor, spin: 0.6 });
+          const q = this.emit(this.smoke, p.from.x + (p.to.x - p.from.x) * t, p.from.y + (p.to.y - p.from.y) * t, p.from.z + (p.to.z - p.from.z) * t, p.anchor, true);
+          q.vy = 0.3; q.drag = 1; q.life = 0.7 + Math.random() * 0.3; q.s0 = 0.25; q.s1 = 1; q.cell = CELL.puff;
+          q.c0 = PAL.trail; q.c1 = PAL.trailEnd; q.spin = 0.6;
         }
       }
       if (t >= 1) {
         this.projectiles.splice(i, 1);
-        if (visible(p.anchor)) this.hit(p.land || p.to, p.cannon || p.rocket, p.anchor);
+        if (visible(p.anchor)) this.hit(p.land || p.to, p.power ?? (p.cannon || p.rocket ? 1 : 0), p.anchor);
       }
     }
-    // Fire on critically damaged machines and buildings; same fog-aware budget as the HUD.
-    this.burning = burningEntities(sim, this.view.lowPower);
-    if (dt > 0) for (const e of this.burning) this.burn(e, dt);
+    // Smoke on damaged buildings, fire on critical ones and on machines; fog-aware and capped
+    // like the HUD's fire list.
+    // Many damaged buildings share one smoke budget (about 220 live puffs at High) so they
+    // never crowd explosions out of the pool.
+    damagedEntities(sim, this.view.lowPower, this.burning);
+    let load = 0;
+    for (let i = 0; i < this.burning.length; i++) {
+      const e = this.burning[i];
+      load += damageState(e) !== BURNING ? 13 : e.kind === "building" ? 31 : 15; // live puffs each emitter keeps
+    }
+    this.emitShare = Math.min(1, 220 / Math.max(1, load));
+    if (dt > 0) for (let i = 0; i < this.burning.length; i++) this.burn(this.burning[i], damageState(this.burning[i]), dt);
     // Vehicle wrecks smoulder: a thin dark plume until they sink away.
-    if (dt > 0) for (const d of this.view.dying ?? []) if (d.kind === 'vehicle' && d.age < d.life - 1) this.smoulder(d, dt);
+    const dying = this.view.dying;
+    if (dt > 0 && dying) for (let i = 0; i < dying.length; i++) if (dying[i].kind === 'vehicle' && dying[i].age < dying[i].life - 1) this.smoulder(dying[i], dt);
     this.work(sim, dt);
     for (const r of sim.resources ?? []) {
       const live = r.amount > 0, was = this.depositLive.get(r.id);
@@ -661,15 +819,27 @@ export class Effects {
     this.smoke.update(dt, visible);
     this.glow.update(dt, visible);
     let n = 0;
+    const t = this.view.terrain, plateaus = t?.plateaus?.length;
     for (const d of this.debris) {
       d.age += dt;
-      if (d.age >= d.life) continue;
+      if (d.age >= d.life) { this.debrisFree.push(d); continue; }
       this.debris[n++] = d;
       d.vy -= 16 * dt;
       d.x += d.vx * dt; d.y += d.vy * dt; d.z += d.vz * dt;
       d.rx += d.spin * dt; d.ry += d.spin * 0.7 * dt;
-      const floor = 0.08 * d.scale;
-      if (d.y < floor) { d.y = floor; d.vy = Math.abs(d.vy) > 1.5 ? -d.vy * 0.3 : 0; d.vx *= 0.55; d.vz *= 0.55; d.spin *= 0.5; }
+      if (plateaus && dt > 0) d.ground = t.heightAt(d.x, d.z);
+      const floor = d.ground + 0.08 * d.scale;
+      if (d.y < floor) { d.y = floor; d.vy = Math.abs(d.vy) > 1.5 ? -d.vy * 0.38 : 0; d.vx *= 0.55; d.vz *= 0.55; d.spin *= 0.5; }
+      else if (d.trail >= 0 && dt > 0 && d.age < 0.8) {
+        // A thin smoke trail behind the first chunks while they fly.
+        d.trail += dt;
+        if (d.trail >= 0.05) {
+          d.trail = 0;
+          const q = this.emit(this.smoke, d.x, d.y, d.z, d.anchor, true);
+          q.vy = 0.2; q.drag = 1.2; q.life = 0.55; q.s0 = 0.3 * d.scale + 0.15; q.s1 = 0.8; q.cell = CELL.puff;
+          q.c0 = PAL.chunkTrail; q.c1 = PAL.chunkTrailEnd; q.spin = 0.5;
+        }
+      }
     }
     this.debris.length = n;
     let drawn = 0;
@@ -697,12 +867,13 @@ export class Effects {
   }
   clear() {
     for (const layer of [this.decals, this.smoke, this.glow]) layer.clear();
+    for (const d of this.debris) this.debrisFree.push(d);
     this.debris.length = this.projectiles.length = this.timeline.length = 0;
     this.emitters.clear();
     this.workTimers.clear();
     this.workCursor = 0;
     this.depositLive.clear();
-    this.burning = [];
+    this.burning.length = 0;
     this.update({ isVisible: () => false, entities: [] }, 0);
   }
   dispose() {

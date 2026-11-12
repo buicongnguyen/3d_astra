@@ -8,6 +8,7 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Terrain } from "./terrain.js";
 import { ActivityView } from "./activity-view.js";
 import { Effects } from "./fx.js";
+import { startFlash, stepFlash, HIT_FLASH } from "./combat-feedback.js";
 import { createRing, updateRing, createBar, updateBar, setTeamColor, createMarker, createRally, updateRally } from "./selection-view.js";
 import { CaptureRings, DestinationMarkers } from "./capture-view.js";
 import { TacticsView } from "./tactics-view.js";
@@ -188,6 +189,8 @@ export class WorldView {
     this.fx = new Effects(this);
     this.tactics = new TacticsView(this);
     this.dying = [];
+    this.flashBatch = []; // hit flashes started by this tick's impacts (see event)
+    this.flashBatchTime = -1;
     this.shake = new CameraShake();
     this.hitStop = 0;
     this.cameraCue = false;
@@ -1064,8 +1067,22 @@ export class WorldView {
       if (enabled && event.type === 'strike' && (event.victims || []).filter(v => sim.isVisible(v) && this.onScreen(v)).length >= FEEL.stopKills) this.hitStop = FEEL.stopSeconds;
       if (event.type === 'impact') {
         const o = this.objects.get(event.seed);
-        if (o) o.userData.flash = FEEL.flashSeconds;
+        if (o) {
+          o.userData.flash = FEEL.flashSeconds;
+          // The model flashes too (per-instance tint), timed below to the round's arrival.
+          startFlash(o.userData, 0, event.shield);
+          o.userData.flashX = event.x; o.userData.flashZ = event.z;
+          if (this.flashBatchTime !== sim.time) { this.flashBatch.length = 0; this.flashBatchTime = sim.time; }
+          this.flashBatch.push(o.userData);
+        }
       }
+    }
+    // Rules apply damage when a round is fired: a hit flash from the same tick waits until the
+    // drawn round lands (the target and anything in its splash).
+    if (event.type === 'shot' && this.flashBatchTime === sim.time && Number.isFinite(event.tx)) {
+      const travel = weaponStyle(event).life;
+      for (const u of this.flashBatch)
+        if (u.flashWait >= 0 && Math.hypot(u.flashX - event.tx, u.flashZ - event.tz) < 3.5) u.flashWait = travel;
     }
     // Rules resolve shells immediately; the existing shot event carries the landing point.
     if (FEEL.shellTrauma && event.type === 'shot' && ['tank','breaker'].includes(event.weapon) && shotVisible(event,sim))
@@ -1096,6 +1113,7 @@ export class WorldView {
     if (this.dying.length >= FEEL.wreckCap) this.disposeEntity(this.dying.shift().object);
     const kind = event.building ? 'building' : event.heavy ? 'vehicle' : 'infantry';
     const model = o.userData.model;
+    if (o.userData.flashLit) this.setFlashTint(o.userData, false);
     if (o.userData.emblem) o.userData.emblem.visible = false;
     model.rotation.order = 'YXZ';
     // Wrecks lose their paint, team colour and lights so a dead tank reads as dead at a
@@ -1112,6 +1130,23 @@ export class WorldView {
     this.dying.push({ baseY: o.position.y, object: o, kind, team: event.team, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1),
       life: { building: 2.8, vehicle: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, infantry: 1.6 }[kind], baseAngle: model.rotation.y, direction: event.direction ?? model.rotation.y });
   }
+  // Hit flash (combat-feedback.js stepFlash): every model part shares one tint array that the
+  // batches copy into instanceColor, so a flash costs no material, batch or draw call. Off
+  // with combat motion; paused frames hold it.
+  stepHitFlash(u, e, dt) {
+    u.flashTint ||= [1, 1, 1];
+    const lit = stepFlash(u, dt, u.flashTint, e.kind === 'unit' ? 1 : HIT_FLASH.building) && this.activity.combat.motion;
+    if (lit !== !!u.flashLit) this.setFlashTint(u, lit);
+  }
+  setFlashTint(u, lit) {
+    if (!u.flashParts) {
+      u.flashParts = [];
+      u.model?.traverse?.((part) => { if (part.isMesh) u.flashParts.push(part); });
+      u.flashBase = u.flashParts.map((part) => part.userData.tint);
+    }
+    for (let i = 0; i < u.flashParts.length; i++) u.flashParts[i].userData.tint = lit ? u.flashTint : u.flashBase[i];
+    u.flashLit = lit;
+  }
   updateDying(sim, dt) {
     const motion = this.activity.combat.motion;
     for (let i = this.dying.length - 1; i >= 0; i--) {
@@ -1122,11 +1157,12 @@ export class WorldView {
       const t = d.age, clamp01 = (x) => Math.min(1, Math.max(0, x));
       const ease = (x) => 1 - (1 - clamp01(x)) ** 3, heavy = (x) => { x = clamp01(x); return x * x * (3 - 2 * x); };
       if (d.kind === 'building') {
-        // A heavy collapse: a shudder, then a slow start that accelerates into the ground.
-        const shake = motion ? Math.max(0, 1 - t / 1.1) * 0.12 : 0;
+        // A heavy collapse: a shudder, then a slow start that accelerates into the ground
+        // while the structure keels over to one side.
+        const shake = motion ? Math.max(0, 1 - t / 1.1) * 0.14 : 0;
         o.position.set(d.x + Math.sin(t * 61) * shake, d.baseY - heavy((t - 0.35) / 2.35) * 5.6, d.z + Math.cos(t * 53) * shake);
-        m.rotation.z = d.tilt * heavy((t - 0.4) / 2.2) * 0.16;
-        m.rotation.x = d.tilt * heavy((t - 0.4) / 2.2) * 0.07;
+        m.rotation.z = d.tilt * heavy((t - 0.4) / 2.2) * 0.26;
+        m.rotation.x = d.tilt * heavy((t - 0.4) / 2.2) * 0.11;
       } else if (d.kind === 'vehicle') {
         const hop = motion ? Math.sin(Math.min(1, t / 0.45) * Math.PI) * 0.55 : 0;
         o.position.y = d.baseY + hop - ease((t - (d.life - 0.9)) / 0.9) * 1.8;
@@ -1190,6 +1226,7 @@ export class WorldView {
       const o = this.objects.get(e.id) || this.createEntity(e);
       const u=o.userData;
       u.recoil=Math.max(0,u.recoil-dt);u.kick=Math.max(0,u.kick-dt);
+      if (u.flashWait >= 0 || u.flashLeft > 0 || u.flashLit) this.stepHitFlash(u, e, dt);
       // Walls are neutral and see nothing: keep them drawn once explored, like the minimap does.
       o.visible = e.kind === "wall" ? sim.isExplored(e) : sim.isVisible(e);
       if (!o.visible) continue;
@@ -1373,6 +1410,8 @@ export class WorldView {
     this.objects.clear();
     for (const d of this.dying) this.disposeEntity(d.object);
     this.dying = [];
+    this.flashBatch.length = 0;
+    this.flashBatchTime = -1;
     this.shake = new CameraShake();
     this.hitStop = 0;
     this.cameraCue = false;

@@ -11,9 +11,10 @@ test("fx layer caps follow quality switches", async () => {
   const fill = (layer) => { for (let i = 0; i < 2000; i++) fx.particle(layer, { life: 5 }); return layer.items.length; };
   assert.equal(fill(fx.smoke), 210);
   assert.equal(fill(fx.glow), 450);
-  assert.equal(fx.debrisCapacity, 24);
+  assert.equal(fx.debrisCapacity, 32); // battle effects pass 2026-11: more chunks per hit
   view.lowPower = false;
   assert.equal(fill(fx.smoke), 420);
   assert.equal(fill(fx.glow), 900);
-  assert.equal(fx.debrisCapacity, 64);
+  assert.equal(fx.debrisCapacity, 96);
+  assert.ok(fx.debrisMesh.instanceMatrix.count >= 96, "the debris batch holds the High cap");
 });
