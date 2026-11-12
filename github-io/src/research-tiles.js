@@ -1,8 +1,8 @@
 // What each production tile of a building says and which state it is in, as plain data
 // (hud.js turns it into buttons). Research is one slot that moves forward:
 //   Research (pick 1 of 2) -> Damage +10% / Armor +12% -> researching -> tier II -> done.
-// Tile states: "ready" (can be ordered), "locked" (needs a building level: the reason is on the
-// tile), "busy" (researching, with progress) and "done" (in effect, never shown with a price).
+// Tile states: "ready" (can be ordered), "locked" (needs a level of the selected building: "Needs L2"
+// is on the tile), "busy" (researching, with progress) and "done" (in effect, never shown with a price).
 import { DEFINITIONS as D } from "./data.js";
 
 export const BRANCHES = {
@@ -60,7 +60,9 @@ const label = (type) => {
 export function productionTiles(sim, b, { choosing = false } = {}) {
   const tiles = [];
   const level = (type) => D[type].required_level || 1;
-  const levelLock = (type) => (b.level < level(type) ? `Needs ${b.name} L${level(type)}` : "");
+  // Short enough for the narrowest tile on Linux fonts; the selected building is the one meant,
+  // and the "Upgrade to L2" button sits right below.
+  const levelLock = (type) => (b.level < level(type) ? `Needs L${level(type)}` : "");
   const researches = b.team === 0 && b.trains?.includes("upgrade");
   const research = researches ? researchState(sim, b.team) : null;
   if (research && !research.branch && choosing) {
@@ -77,9 +79,9 @@ export function productionTiles(sim, b, { choosing = false } = {}) {
       if (research.state === "done") Object.assign(tile, { label: BRANCHES[research.branch].done, state: "done", sub: "Active" });
       else if (research.state === "busy") Object.assign(tile, { label: label(t), state: "busy", progress: research.progress, sub: research.waiting ? "Waiting in queue" : `Researching ${Math.round(research.progress * 100)}%` });
       else if (research.tier === 2) {
-        // First tier in effect, second next: "Damage +10% ✓" over "+8% at Foundry L2" or "+8%: price".
+        // First tier in effect, second next: "Damage +10% ✓" over "+8% at L2" or "+8%: price".
         const { active, next } = BRANCHES[research.branch], need = level(t);
-        Object.assign(tile, { label: active, next, partial: true, state: b.level < need ? "locked" : "ready", sub: b.level < need ? `${next} at ${b.name} L${need}` : null });
+        Object.assign(tile, { label: active, next, partial: true, state: b.level < need ? "locked" : "ready", sub: b.level < need ? `${next} at L${need}` : null });
       } else {
         const lock = levelLock(t);
         Object.assign(tile, { label: label(t), state: lock ? "locked" : "ready", sub: lock || null });

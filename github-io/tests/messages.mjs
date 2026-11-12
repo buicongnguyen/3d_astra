@@ -114,6 +114,14 @@ await suite("messages", async () => {
     await page.evaluate(() => { const h = window.__frontier.fightHint; h.querySelector(".fh-text").textContent = "Your Ranger counters Breaker. Let it lead the fight."; h.hidden = false; });
     await page.waitForFunction(() => /Enemy attack incoming/.test(document.querySelector("#notice").textContent) && !document.querySelector(".dialogue").hidden, null, { timeout: TIMEOUT.step });
     await page.waitForTimeout(300);
+    // On a slow runner the earlier hint's own timer (9 s) or the alert's 4.5 s can run out before this
+    // point: show both again right before measuring (the same alert text only refreshes its time).
+    await page.evaluate(() => {
+      const f = window.__frontier, s = f.sim, hq = s.own(0).find((e) => e.type === "hq");
+      f.fightHint.hidden = false;
+      s.events.push({ type: "incoming", team: 0, x: hq.x, z: hq.z });
+    });
+    await page.waitForFunction(() => /Enemy attack incoming/.test(document.querySelector("#notice").textContent) && !window.__frontier.fightHint.hidden && !document.querySelector(".dialogue").hidden, null, { timeout: TIMEOUT.step });
     const [line, alert2, hint2] = [await box(page, ".dialogue"), await box(page, "#notice"), await box(page, "#fight-hint")];
     assert.ok(line && alert2 && hint2, `${name}: dialogue, alert and hint drawn`);
     assert.equal(overlap(line, alert2), false, `${name}: alert over the dialogue line`);

@@ -19,8 +19,8 @@ test('before the choice the Foundry shows one Research slot; locked items name t
   assert.deepEqual(view(s, b, false), [
     'breaker:Breaker:ready',
     'research:Research:ready:Pick 1 of 2',
-    'engineer:Engineer:locked:Needs Foundry L2',
-    'tank:Battle tank:locked:Needs Foundry L3',
+    'engineer:Engineer:locked:Needs L2',
+    'tank:Battle tank:locked:Needs L3',
   ]);
   assert.deepEqual(view(s, b, true), ['upgrade:Damage +10%:ready', 'plating:Armor +12%:ready', 'back:Back:ready']);
 });
@@ -38,7 +38,7 @@ test('the slot moves forward: researching with progress, tier II (locked until F
   for (let i = 0; i < 500; i++) s.tick(0.05);
   assert.equal(s.players[0].upgrade, true);
   // Between tiers the first stays visible as active, with the next step under it.
-  assert.equal(view(s, b, false)[1], 'upgrade2:Damage +10% ✓:locked:+8% at Foundry L2');
+  assert.equal(view(s, b, false)[1], 'upgrade2:Damage +10% ✓:locked:+8% at L2');
   b.level = 2;
   assert.equal(view(s, b, false)[1], 'upgrade2:Damage +10% ✓:ready');
   assert.equal(productionTiles(s, b).tiles[1].next, '+8%');

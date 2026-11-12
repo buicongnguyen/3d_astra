@@ -1033,6 +1033,14 @@
       "+{1}% khi {2} cấp {3}"
     ],
     [
+      "^Needs L(\\d+)$",
+      "Cần cấp {1}"
+    ],
+    [
+      "^\\+(\\d+)% at L(\\d+)$",
+      "+{1}% khi cấp {2}"
+    ],
+    [
       "^Upgrade building to level (\\d+)$",
       "Nâng công trình lên cấp {1}"
     ],
