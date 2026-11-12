@@ -19,6 +19,7 @@ Notes
 - Suites that are sensitive to machine load (patrol, mobile-controls, webkit) can flake locally; run them again before suspecting the code.
 - The webkit suite needs `npx playwright install webkit`.
 - `ui-extras` (idle units, minimap drag and pings, fight hints, core beat, notch insets, training-card tap guard) writes screenshots to `SHOTS` (default `test-results`); `EXTRAS_ONLY=idle,minimap,...` runs part of it.
+- `messages` (harness, desktop, 390x844, 844x390, 320x568): a hint and an alert at once, the alert not covered (elementFromPoint), a routine notice waiting the alert's full time, phone hints outside the middle third and gone after about 4 s, an alert during targeting and with a dialogue line. Its rules are unit-tested in `message-queue.test.js`.
 
 ## Writing a suite (tests/lib/harness.mjs)
 New browser suites use the shared harness; `browser.mjs`, `hotkeys.mjs` and `language.mjs` are the examples (the other scripts keep their own setup and move over one at a time).

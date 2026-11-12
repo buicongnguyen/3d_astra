@@ -9,6 +9,7 @@ import { icon } from "../icons.js";
 import { selectionStatus } from "../selection-status.js";
 import { tacticalUnits, clampRank } from "../tactics-ui.js";
 import { tacticsCardHTML, updateTacticsCard } from "../tactics-card.js";
+import { createMessageQueue, ROUTINE, ALERT } from "../message-queue.js";
 
 export function setupHud(S, A) {
   const Z = S.screen;
@@ -63,17 +64,34 @@ export function setupHud(S, A) {
       button.setAttribute("aria-pressed", String(button.dataset.dock === name));
   }
 
+  // The notice line (#notice): routine notices and alerts share it with a priority (message-queue.js).
+  // An alert stays its full time; a routine notice that arrives meanwhile waits its turn.
+  const messages = createMessageQueue();
+  function showMessage() {
+    const now = performance.now(), current = messages.update(now), el = $("notice");
+    clearTimeout(S.noticeTimeout);
+    if (!current) { el.classList.remove("show"); return; }
+    el.textContent = current.text;
+    el.classList.toggle("warning", current.priority >= ALERT);
+    el.classList.add("show");
+    S.noticeTimeout = setTimeout(showMessage, Math.max(0, current.until - now) + 16);
+  }
   function notice(text) {
     // Successful work is acknowledged by its compact strip, without covering the map.
     if (Object.values(D).some(d=>text===`${d.name} queued.`||text===`${d.name} construction started.`||[2,3].some(level=>text===`${d.name} upgrading to level ${level}.`))) {
-      clearTimeout(S.noticeTimeout); $('notice').classList.remove('show'); return;
+      dismissNotice(); return;
     }
-    $("notice").textContent = text;
-    $("notice").classList.remove("warning");
-    $("notice").classList.add("show");
-    clearTimeout(S.noticeTimeout);
-    S.noticeTimeout = setTimeout(() => $("notice").classList.remove("show"), 4500);
+    messages.push(text, ROUTINE, performance.now());
+    showMessage();
   }
+  // Under attack, attack incoming, a point lost: never replaced by a routine notice or covered by a hint.
+  function alertNotice(text) {
+    messages.push(text, ALERT, performance.now());
+    showMessage();
+  }
+  function clearMessages() { messages.clear(); showMessage(); }
+  // Targeting prompts and build feedback take the place of a routine notice; an alert stays.
+  function dismissNotice() { messages.dismissRoutine(performance.now()); showMessage(); }
 
   function formatTime(s) {
     return `${Math.floor(s / 60)
@@ -317,7 +335,7 @@ export function setupHud(S, A) {
     }
   }
 
-  Object.assign(A, { notice, updateUI, dockTab, setObjectivesOpen, setLayout, formatTime, missionUI, renderTutorial });
+  Object.assign(A, { notice, alert: alertNotice, clearMessages, dismissNotice, updateUI, dockTab, setObjectivesOpen, setLayout, formatTime, missionUI, renderTutorial });
   return function bind() {
     document.documentElement.classList.add("in-briefing");
 

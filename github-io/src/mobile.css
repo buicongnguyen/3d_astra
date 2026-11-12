@@ -511,13 +511,20 @@ button {
   min-width: 44px;
   min-height: 28px;
 }
+/* 94 px: under the thin counter-hint line (top 50 px, at most two lines, ui-extras.css). */
 .compact-ui #notice {
-  top: 88px;
+  top: 94px;
   width: calc(100% - 24px);
   max-width: 390px;
   font-size: 11px;
   padding: 10px 12px;
   text-align: center;
+}
+/* Portrait: a targeting prompt (#mode-banner, top 84 px, up to two lines) takes the notice line's place, so a
+   notice that stays up during targeting (an alert) moves below the prompt instead of sitting on it. */
+@media (max-aspect-ratio: 1.35) {
+  .compact-ui:not(.in-briefing):not(.construction-open) #stage:has(> #mode-banner:not([hidden])) > #notice { top: 148px; }
+  .compact-ui.dialogue-open:not(.in-briefing):not(.construction-open) #stage:has(> #mode-banner:not([hidden])) > #notice { top: calc(166px + var(--dialogue-h, 64px)); }
 }
 .compact-ui #mode-banner {
   top: 84px;

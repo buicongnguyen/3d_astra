@@ -6,6 +6,9 @@ import { icon } from "../icons.js";
 import "../ui-extras.css";
 
 export const HINT_SECONDS = 9;
+// Phones: the hint is a thin line under the top bar (portrait) or above the notice line (landscape)
+// and leaves sooner, so it never sits on the battle for long (ui-extras.css).
+export const PHONE_HINT_SECONDS = 4;
 export const BEAT_SECONDS = 1.5;
 export const BEAT_SLOWDOWN = 0.3;
 
@@ -74,7 +77,8 @@ export function setupUiExtras(S, A) {
     hintEl.querySelector(".fh-text").textContent = text;
     hintEl.hidden = false;
     clearTimeout(hintTimer);
-    hintTimer = setTimeout(hideHint, HINT_SECONDS * 1000);
+    const compact = document.documentElement.classList.contains("compact-ui");
+    hintTimer = setTimeout(hideHint, (compact ? PHONE_HINT_SECONDS : HINT_SECONDS) * 1000);
     nextHintAt = performance.now() + 12000;
   }
 
@@ -135,7 +139,7 @@ export function setupUiExtras(S, A) {
     return BEAT_SLOWDOWN;
   }
 
-  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); fightHints(); } });
+  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); fightHints(); } });
 
   return function bind() {
     makeHint();

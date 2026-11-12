@@ -63,7 +63,7 @@ export function setupModals(S, A) {
   }
 
   function graphicsRestored() {
-    if (graphicsNoticed) $("notice").classList.remove("show");
+    if (graphicsNoticed) A.dismissNotice();
     graphicsNoticed = false;
     if (Z.modalType !== "graphics") return;
     if (graphicsHeld && Z.started && !S.sim.result) showPause();

@@ -33,8 +33,8 @@ function strings(source) {
   // Text after a real HTML tag, and title / aria-label / placeholder attributes, in templates.
   for (const m of source.matchAll(/<\/?[a-z][a-z0-9-]*(?:\s[^<>]*)?>([^<>{}$`]*[A-Za-z]{3}[^<>{}$`]*)</g)) add(m[1]);
   for (const m of source.matchAll(/\b(?:title|aria-label|placeholder)="([^"${}]+)"/g)) add(m[1]);
-  // Notices and text assigned from a plain string literal.
-  for (const m of source.matchAll(/\b(?:notice|setStatus|announce)\(\s*(["'])((?:(?!\1).)+)\1/g)) add(m[2]);
+  // Notices, alerts (A.alert) and text assigned from a plain string literal.
+  for (const m of source.matchAll(/\b(?:notice|alert|setStatus|announce)\(\s*(["'])((?:(?!\1).)+)\1/g)) add(m[2]);
   for (const m of source.matchAll(/\.textContent\s*=\s*(["'])((?:(?!\1).)+)\1/g)) add(m[2]);
   return found;
 }

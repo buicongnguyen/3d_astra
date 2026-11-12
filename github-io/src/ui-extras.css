@@ -19,13 +19,29 @@
 .selection-empty { flex-wrap: wrap; }
 .selection-empty > div { min-width: 0; }
 
-/* Non-blocking counter hint: only its close button takes taps. */
-#fight-hint { position: absolute; z-index: 34; left: 50%; top: 56px; transform: translateX(-50%); display: flex; align-items: center; gap: 4px;
+/* Non-blocking counter hint: only its close button takes taps. It is a second message slot that never
+   covers the notice line, where alerts show (#notice.warning, app/hud.js): desktop, under that line
+   (two lines of notice end at 97 px), and under the mission dialogue box while a line is up (it sits at
+   top 96 px on the left and reaches the middle below 1240 px); phones, see below. */
+#fight-hint { position: absolute; z-index: 34; left: 50%; top: 106px; transform: translateX(-50%); display: flex; align-items: center; gap: 4px;
   max-width: min(360px, calc(100% - 24px)); padding: 4px 4px 4px 12px; border-radius: 10px; background: rgba(8, 23, 28, 0.94);
   border: 1px solid #c9a24a; color: #f1e6c4; font-size: 13px; line-height: 1.35; pointer-events: none; }
+:root.dialogue-open:not(.compact-ui) #fight-hint { top: calc(104px + var(--dialogue-h, 64px)); }
 #fight-hint[hidden] { display: none !important; }
 #fight-hint .fh-close { pointer-events: auto; flex: none; width: 44px; height: 44px; font-size: 22px; line-height: 1; border-radius: 8px;
   background: transparent; color: inherit; border: 0; }
+/* Phones: a thin line of at most two lines that leaves by itself after 4 s (PHONE_HINT_SECONDS), so it has
+   no close button and takes no taps. Portrait: right under the top bar and the battlefield buttons, above
+   the notice line (top 94 px, mobile.css) and the mission dialogue (98 px); a targeting prompt takes its place. */
+.compact-ui:not(.in-briefing) #fight-hint { top: 50px; width: max-content; max-width: calc(100% - 24px); padding: 4px 10px; border-radius: 8px;
+  font-size: 12px; line-height: 1.3; }
+.compact-ui:not(.in-briefing) #fight-hint .fh-close { display: none; }
+.compact-ui:not(.in-briefing) #fight-hint .fh-text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
+.compact-ui:not(.in-briefing) #mode-banner:not([hidden]) ~ #fight-hint { visibility: hidden; }
+/* Landscape: the notice line is at the bottom of the middle band, so the hint sits just above it
+   (two notice lines end 53 px up), well below the middle third of the battlefield. */
 @media (min-aspect-ratio: 1.35) {
-  .compact-ui:not(.in-briefing) #fight-hint { top: 54px; left: calc(var(--edge-left) + var(--rail-width) + 8px); transform: none; max-width: 300px; }
+  .compact-ui:not(.in-briefing) #fight-hint { top: auto; bottom: calc(var(--safe-bottom) + 58px); left: calc((100% + var(--rail-width) - var(--side-width)) / 2);
+    max-width: calc(100% - var(--rail-width) - var(--side-width) - 48px); }
+  .compact-ui:not(.in-briefing) #mode-banner:not([hidden]) ~ #fight-hint { visibility: visible; }
 }

@@ -17,4 +17,6 @@
 .compact-ui.construction-open #mode-banner{display:none}
 /* Toasts no longer cover placement instructions; the dock retains build feedback. */
 .compact-ui.construction-open #notice{background:#10251f;color:#f0f7f2;font-size:13px;border-color:#719f85}
-.compact-ui.construction-notice-repeated #notice{visibility:hidden}
+/* An alert keeps its hostile colour and is never hidden by build feedback. */
+.compact-ui.construction-open #notice.warning{background:#3a1712f2;color:#ffe1d8;border-color:#ef7660}
+.compact-ui.construction-notice-repeated #notice:not(.warning){visibility:hidden}

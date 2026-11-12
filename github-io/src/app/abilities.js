@@ -36,7 +36,7 @@ export function setupAbilities(S, A) {
     $("mode-banner").hidden = false;
     $("mode-banner").textContent = S.touchInput ? "BARRAGE · Tap a target inside the ring" : "BARRAGE · Click a target inside the ring · Esc to cancel";
     $("mode-controls").hidden = false;
-    $("notice").classList.remove("show");
+    A.dismissNotice(); // the prompt replaces a routine notice; an alert stays
     $("world").classList.add("targeting");
     refreshAim(!S.touchInput && S.hoverPoint ? S.view.point(S.hoverPoint.x, S.hoverPoint.y) : null);
     A.updateUI();

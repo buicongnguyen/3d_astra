@@ -18,9 +18,12 @@ export function setupFrame(S, A) {
     A.tone(990, 0.16);
   }
 
+  // Alerts (A.alert, the warning style) keep the notice line their full time: a routine notice waits
+  // and a counter hint sits apart (app/hud.js, message-queue.js). The same alert again only refreshes.
+  // The rules' raid warning (ai.js, ai-plan.js) is an alert too.
+  const RAID_WARNING = /^Scouts report enemy raiders/;
   function incomingAlert(event) {
-    A.notice("Enemy attack incoming!");
-    $("notice").classList.add("warning");
+    A.alert("Enemy attack incoming!");
     if (Number.isFinite(event.x) && Number.isFinite(event.z)) S.pings.push({ x: event.x, z: event.z, at: S.sim.time });
     A.tone(300, 0.3);
   }
@@ -30,8 +33,7 @@ export function setupFrame(S, A) {
   function underAttack(event) {
     if (S.sim.time >= attackedAt && S.sim.time - attackedAt < 10) return;
     attackedAt = S.sim.time;
-    A.notice("Under attack!");
-    $("notice").classList.add("warning");
+    A.alert("Under attack!");
     S.pings.push({ x: event.x, z: event.z, at: S.sim.time });
   }
 
@@ -47,10 +49,7 @@ export function setupFrame(S, A) {
     const name = pointLabel(S.sim.missionDef, event.name), before = pointOwners.get(event.name) ?? null;
     pointOwners.set(event.name, event.owner);
     if (event.owner === 0) { A.notice(`${name} captured`); }
-    else {
-      A.notice(before === 0 ? `${name} lost` : `${name} taken by the enemy`);
-      $("notice").classList.add("warning");
-    }
+    else A.alert(before === 0 ? `${name} lost` : `${name} taken by the enemy`);
     S.pings.push({ x: event.x, z: event.z, at: S.sim.time });
   }
 
@@ -127,7 +126,7 @@ export function setupFrame(S, A) {
       A.factionEvent(event);
       if (event.type === "impact" && event.team === 0 && Z.started) underAttack(event);
       if (Z.started) S.audio?.event(event, S.sim);
-      if (event.type === "message") A.notice(event.text);
+      if (event.type === "message") (RAID_WARNING.test(event.text) ? A.alert : A.notice)(event.text);
       else if (event.type === "incoming") { if (event.team === 0) incomingAlert(event); }
       // Story mission cues (sim/missions.js).
       // A line spoken on the tick that ended the match goes straight to the Comms log.
