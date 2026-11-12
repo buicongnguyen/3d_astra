@@ -15,6 +15,7 @@ Three.js r185 and Vite. The game is a static site; there is no server.
 | `sim/combat.js` | Targeting, damage, stances (`holdPost`) |
 | `sim/economy.js` | Deposits, harvesting, income |
 | `sim/ai.js`, `ai-plan.js` | The computer opponent |
+| `sim/ai-attack.js` | Field command for the AI (0.15.0): gather at a rally point, launch on seen odds, retreat losing waves, target priority, seeded second group, faction personas |
 | `sim/tactics.js` | Veterancy, stances, unit abilities |
 | `sim/missions.js` | Mission engine (format in [MISSIONS.md](MISSIONS.md)) |
 

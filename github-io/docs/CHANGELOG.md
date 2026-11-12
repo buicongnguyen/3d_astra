@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.15.0: enemy AI that attacks well (improvement plan item 5)
+
+- The AI gathers each wave at a rally point and marches when it clearly outweighs the defence it has seen (fog-fair memory), or after a wait so it never turtles. Losing waves fall back and regroup; units below 35% health pull back to a healer or home; ranged units focus artillery, Harvesters and support first without flipping targets; some waves send a fast second group to an expansion, the Harvesters or a flank (`src/sim/ai-attack.js`).
+- Faction styles: Ashfall rushes, Wardens wait for better odds and give ground early, Veil breaks off sooner and flanks, Sunward raids Harvesters.
+- Applies to Normal and Fast skirmish and to Standard and Veteran missions; Relaxed skirmish and Story missions keep the previous AI unchanged.
+- Balance (docs/BALANCE.md): AI round robin Meridian 58, Ashfall 58, Sunward 38, Wardens 71, Veil 25% (was 52/17/48/98/35); the 35-65% target is met for 4 of 10 pairs. Mission targets still hold at every difficulty; Veteran mission 10 is now winnable.
+- Validation: unit tests (new `tests/ai-attack.test.js`), all browser suites, `npm run check:missions` per difficulty.
+
 ## 0.14.0: improvement round 1 (plan docs/aaa/IMPROVEMENT_PLAN_2026-11-13.md)
 
 - **Readable messages:** alerts ("Under attack!", "Enemy attack incoming!", points lost, raid warnings) keep the message line for their full time; hints and routine notices wait instead of covering them (`src/message-queue.js`). On phones, hints are a thin two-line strip outside the middle of the battlefield and leave after 4 s.

@@ -2,7 +2,9 @@
 
 ## Improvement round 1 (Claude, 2026-11-13, 0.14.0)
 
-Plan: docs/aaa/IMPROVEMENT_PLAN_2026-11-13.md. Items 1-4 shipped as 0.14.0 (see CHANGELOG); item 5 (enemy AI) ships separately as 0.15.0.
+Plan: docs/aaa/IMPROVEMENT_PLAN_2026-11-13.md. Items 1-4 shipped as 0.14.0, item 5 (enemy AI) as 0.15.0 (see CHANGELOG).
+
+Open after item 5: Mirror skirmish without capture points may now be too hard for a person (test bot 67% -> 8% at Normal); with capture points (the default) the ladder is still easier than its targets. Pairs still outside 35-65%: Ashfall-Veil, Sunward-Wardens, Wardens-Veil (decided by the first fight at home, so roster/tempo numbers are next).
 
 Listen checklist for the owner (constants to tweak if something is wrong):
 1. Small arms crisp, not harsh: `src/sfx-bank.js` shot levels, or `bankLevel` in `src/audio-mix.js`.
