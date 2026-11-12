@@ -67,14 +67,16 @@ const results = await page.evaluate(async () => {
     }
   const fx = [];
   for (const name of SFX_NAMES) {
-    const ctx = new OfflineAudioContext(2, SR * 2, SR), bus = createAudioBus(ctx);
+    // Effects start 0.3 s in: a DynamicsCompressor starts fully closed and opens over its release
+    // time, so a sound at t = 0 would be measured (and heard in the WAV) far too quiet.
+    const ctx = new OfflineAudioContext(2, SR * 4.5, SR), bus = createAudioBus(ctx);
     bus.master.gain.value = 1; bus.sfx.gain.value = levels.sfx;
     const sfx = new Sfx(ctx, bus.sfx, { seed: 1 });
-    sfx.play(name, { pan: 0.4 });
+    sfx.play(name, { pan: 0.4, delay: 0.3 });
     const buf = await ctx.startRendering(), l = buf.getChannelData(0), r = buf.getChannelData(1), st = stats(l, r, false);
     let last = 0; for (let i = 0; i < l.length; i++) if (Math.abs(l[i]) > 0.001 || Math.abs(r[i]) > 0.001) last = i;
-    fx.push({ kind: "sfx", name, lengthMs: Math.round((last / SR) * 1000), peak: st.peak, dc: st.dc, rmsDb: st.rmsDb, clipped: st.clipped });
-    if (["shot:tank", "boom:building", "ability:shieldwall", "promote", "win"].includes(name)) files[`sfx-${name.replace(":", "-")}.wav`] = toWav(l, r);
+    fx.push({ kind: "sfx", name, lengthMs: Math.round((last / SR) * 1000) - 300, peak: st.peak, dc: st.dc, rmsDb: st.rmsDb, clipped: st.clipped });
+    if (["shot:rifle", "shot:smg", "shot:rocket", "shot:tank", "shot:artillery", "hit:shell", "hit:artillery", "boom:heavy", "boom:building", "boom:core", "ability:shieldwall", "promote", "win"].includes(name)) files[`sfx-${name.replace(":", "-")}.wav`] = toWav(l, r);
   }
   return { rows, fx, files, levels };
 });

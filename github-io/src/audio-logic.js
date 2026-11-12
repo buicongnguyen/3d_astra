@@ -60,14 +60,15 @@ export const SCALES = {
 // One key, scale and voice colour per map (maps.json ids). `wave` is the lead/pluck oscillator,
 // `pad` the pad oscillator, `cutoff` the low-pass of the whole score, `degrees` the chord roots
 // (scale degrees) the four-bar progression walks through.
+// `tempo` is the field tempo shared by the calm, tense and combat layers, so they cross-fade in time.
 export const MAP_FLAVOUR = {
-  classic: { root: 50, scale: "dorian", wave: "triangle", pad: "sine", cutoff: 2600, degrees: [0, 5, 3, 4] },
-  riverlands: { root: 53, scale: "lydian", wave: "sine", pad: "triangle", cutoff: 3200, degrees: [0, 4, 5, 3] },
-  basin: { root: 48, scale: "phrygian", wave: "sawtooth", pad: "triangle", cutoff: 1900, degrees: [0, 1, 5, 4] },
-  expanse: { root: 57, scale: "aeolian", wave: "triangle", pad: "sine", cutoff: 2800, degrees: [0, 5, 2, 6] },
-  dunes: { root: 52, scale: "phrygianDominant", wave: "sawtooth", pad: "sine", cutoff: 2200, degrees: [0, 1, 0, 6] },
-  woodlands: { root: 55, scale: "pentatonic", wave: "sine", pad: "triangle", cutoff: 3400, degrees: [0, 2, 3, 1] },
-  highlands: { root: 49, scale: "minorPentatonic", wave: "sawtooth", pad: "sine", cutoff: 1700, degrees: [0, 3, 4, 2] },
+  classic: { root: 50, scale: "dorian", wave: "triangle", pad: "sine", cutoff: 2600, degrees: [0, 5, 3, 4], tempo: 92 },
+  riverlands: { root: 53, scale: "lydian", wave: "sine", pad: "triangle", cutoff: 3200, degrees: [0, 4, 5, 3], tempo: 88 },
+  basin: { root: 48, scale: "phrygian", wave: "sawtooth", pad: "triangle", cutoff: 1900, degrees: [0, 1, 5, 4], tempo: 96 },
+  expanse: { root: 57, scale: "aeolian", wave: "triangle", pad: "sine", cutoff: 2800, degrees: [0, 5, 2, 6], tempo: 90 },
+  dunes: { root: 52, scale: "phrygianDominant", wave: "sawtooth", pad: "sine", cutoff: 2200, degrees: [0, 1, 0, 6], tempo: 94 },
+  woodlands: { root: 55, scale: "pentatonic", wave: "sine", pad: "triangle", cutoff: 3400, degrees: [0, 2, 3, 1], tempo: 86 },
+  highlands: { root: 49, scale: "minorPentatonic", wave: "sawtooth", pad: "sine", cutoff: 1700, degrees: [0, 3, 4, 2], tempo: 98 },
 };
 // Faction motifs: scale-degree sequences (with beat lengths) that tag the enemy of a mission.
 export const FACTION_MOTIF = {
@@ -78,7 +79,12 @@ export const FACTION_MOTIF = {
   wardens: { degrees: [0, 4, 0, 5], beats: [2, 1, 1, 2] },
 };
 export const flavourFor = (map) => MAP_FLAVOUR[map] || MAP_FLAVOUR.classic;
-export const MOOD_TEMPO = { calm: 66, tense: 84, battle: 122, victory: 104, defeat: 54 };
+export const MOOD_TEMPO = { calm: 92, tense: 92, battle: 92, victory: 104, defeat: 54 };
+// The field moods (calm, tense, battle) share the map's tempo; the stings keep their own.
+export const FIELD_MOODS = ["calm", "tense", "battle"];
+export const tempoFor = (mood, map) => (FIELD_MOODS.includes(mood) ? flavourFor(map).tempo || MOOD_TEMPO[mood] : MOOD_TEMPO[mood] || 92);
+// The base layer under a mood: battle plays the tense layer under the combat layer.
+export const baseMood = (mood) => (mood === "battle" ? "tense" : mood);
 
 // Scale degree (may be negative or above one octave) to a MIDI note.
 export function degreeToMidi(flavour, degree) {
@@ -99,7 +105,7 @@ export function composeBar({ map = "classic", mood = "calm", faction = null, bar
   const chord = [chordDegree, chordDegree + 2, chordDegree + 4];
   if (mood === "calm") {
     if (bar % 2 === 0) for (const d of chord) add(0, "pad", deg(d) + 12, 8, 0.5);
-    for (let i = 0; i < 4; i++) if (rnd() < 0.55) add(i + (rnd() < 0.5 ? 0 : 0.5), "pluck", deg(pick(chord) + pick([0, 7])) + 12, 1.5, 0.45 + rnd() * 0.2);
+    for (let i = 0; i < 4; i++) if (rnd() < 0.45) add(i + (rnd() < 0.5 ? 0 : 0.5), "pluck", deg(pick(chord) + pick([0, 7])) + 12, 1.5, 0.45 + rnd() * 0.2);
     if (bar % 4 === 0) add(0, "bass", deg(chordDegree) - 12, 4, 0.5);
   } else if (mood === "tense") {
     add(0, "bass", deg(chordDegree) - 12, 1.5, 0.6);
@@ -108,12 +114,20 @@ export function composeBar({ map = "classic", mood = "calm", faction = null, bar
     for (let i = 0; i < 4; i++) add(i, "tick", 0, 0.1, 0.25);
     if (bar % 2 === 0) add(0, "pad", deg(chordDegree) + 12, 8, 0.4), add(0, "pad", deg(chordDegree + 1) + 12, 8, 0.25);
   } else if (mood === "battle") {
-    for (let i = 0; i < 4; i++) add(i, "kick", 0, 0.2, 0.9);
-    add(1, "snare", 0, 0.2, 0.7); add(3, "snare", 0, 0.2, 0.7);
-    for (let i = 0; i < 8; i++) add(i / 2 + 0.25, "hat", 0, 0.1, 0.35);
-    for (let i = 0; i < 8; i++) add(i / 2, "bass", deg(i % 4 === 3 ? chordDegree + 4 : chordDegree) - 12, 0.4, 0.7);
-    for (let i = 0; i < 4; i++) if (rnd() < 0.7) add(i + 0.5 * (rnd() < 0.4 ? 1 : 0), "lead", deg(pick(chord) + pick([0, 0, 7])) + 12, 0.8, 0.5);
-    if (bar % 4 === 0) add(0, "pad", deg(chordDegree) + 12, 16, 0.35);
+    // The combat layer (plays over the tense layer): low drums, a driving filtered bass, a string
+    // ostinato on the chord, brass-like stabs every other bar and a tom fill closing each phrase.
+    for (const t of [0, 1, 2, 2.5, 3]) add(t, "kick", 0, 0.2, t % 1 ? 0.7 : 0.9);
+    add(1, "snare", 0, 0.2, 0.75); add(3, "snare", 0, 0.2, 0.75);
+    if (rnd() < 0.35) add(3.75, "snare", 0, 0.1, 0.3);
+    for (let i = 0; i < 8; i++) add(i / 2 + 0.25, "hat", 0, 0.1, i % 2 ? 0.3 : 0.22);
+    if (bar % 2 === 0) add(0, "taiko", deg(chordDegree) - 24, 1, 0.8);
+    for (let i = 0; i < 8; i++) add(i / 2, "cbass", deg(i % 4 === 3 ? chordDegree + 4 : chordDegree) - 12, 0.4, i % 2 ? 0.55 : 0.75);
+    const ost = [0, 1, 2, 1];
+    for (let i = 0; i < 8; i++) add(i / 2, "ost", deg(chord[ost[i % 4]]) + 12, 0.35, i % 4 === 0 ? 0.45 : 0.32);
+    if (bar % 2 === 0) for (const d of chord) add(0, "stab", deg(d), 0.6, 0.5);
+    for (let i = 0; i < 4; i++) if (rnd() < 0.45) add(i + 0.5 * (rnd() < 0.4 ? 1 : 0), "lead", deg(pick(chord) + pick([0, 0, 7])) + 12, 0.8, 0.45);
+    if (bar % 4 === 3) [0, -1, -2, -3].forEach((s, i) => add(3 + i * 0.25, "tom", deg(chordDegree + 4 + s) - 24, 0.25, 0.6 + i * 0.08));
+    if (bar % 4 === 0) add(0, "pad", deg(chordDegree) + 12, 16, 0.3);
   } else if (mood === "victory") {
     const run = [0, 2, 4, 7, 9, 11, 14];
     if (bar === 0) for (let i = 0; i < run.length; i++) add(i * 0.5, "lead", deg(run[i]) + 12, i === run.length - 1 ? 4 : 0.6, 0.65);
@@ -136,50 +150,105 @@ export function composeBar({ map = "classic", mood = "calm", faction = null, bar
 }
 
 // ---------------------------------------------------------------- sound effects
-// Voice budget with priority: at most `max` sounds at once. A newcomer that is quieter in
-// priority than everything sounding is dropped; otherwise it replaces the lowest priority voice
-// (the replaced entry is returned so its gain can be faded). `gap` limits one sound's rate.
+// Voice budget with priority: at most `max` sounds at once, and at most `caps[group]` of one group
+// (weapons, impacts, explosions, radio, UI, moments). A newcomer that is lower in priority than
+// everything it would have to replace is dropped; otherwise it replaces the lowest priority voice
+// of its group (group full) or of all (budget full); the replaced entry is returned so its gain can
+// be faded. `gap` limits one sound's rate; identical sounds start at most MIX.identicalVoices times
+// per MIX.windowSeconds.
 export class VoiceBudget {
-  constructor(max = 14) { this.max = max; this.voices = []; this.lastPlayed = new Map(); this.recent = new Map(); }
-  tryAcquire(name, priority, now, duration, gap = 0) {
+  constructor(max = MIX.maxVoices, caps = MIX.groupCaps) { this.max = max; this.caps = caps || {}; this.voices = []; this.lastPlayed = new Map(); this.recent = new Map(); }
+  tryAcquire(name, priority, now, duration, gap = 0, group = null) {
     this.voices = this.voices.filter((v) => v.end > now);
     if (gap && now - (this.lastPlayed.get(name) ?? -Infinity) < gap) return null;
     const recent = (this.recent.get(name) || []).filter(t => now-t < MIX.windowSeconds);
     this.recent.set(name,recent);
     if (recent.length >= MIX.identicalVoices) return null;
+    const lowest = (list) => { let low = list[0]; for (const v of list) if (v.priority < low.priority || (v.priority === low.priority && v.end < low.end)) low = v; return low; };
     let stolen = null;
-    if (this.voices.length >= this.max) {
-      let low = this.voices[0];
-      for (const v of this.voices) if (v.priority < low.priority || (v.priority === low.priority && v.end < low.end)) low = v;
+    const cap = group ? this.caps[group] : undefined;
+    const same = cap !== undefined ? this.voices.filter((v) => v.group === group) : null;
+    if (same && same.length >= cap) {
+      const low = cap > 0 ? lowest(same) : null;
+      if (!low || low.priority >= priority) return null;
+      stolen = low;
+    } else if (this.voices.length >= this.max) {
+      const low = lowest(this.voices);
       if (low.priority >= priority) return null;
-      this.voices.splice(this.voices.indexOf(low), 1);
       stolen = low;
     }
-    const voice = { name, priority, end: now + duration };
+    if (stolen) this.voices.splice(this.voices.indexOf(stolen), 1);
+    const voice = { name, priority, group, end: now + duration };
     this.voices.push(voice);
     this.lastPlayed.set(name, now);
     recent.push(now);
     return { voice, stolen };
   }
   get active() { return this.voices.length; }
+  count(group) { let n = 0; for (const v of this.voices) if (v.group === group) n++; return n; }
 }
 
-// Sound name, priority and rate gap for a simulation event. null = silent event.
-export function soundFor(event) {
+// The weapon voice of a shot: the event's weapon (balance.json `shot`, else the unit type), refined
+// by the shooter's type where several units share one shot (drone, walker, watcher).
+export const WEAPON_VOICE = {
+  ranger: "rifle", rider: "rifle", drone: "drone", vanguard: "smg", scrapper: "scrap", shade: "silenced",
+  tank: "tank", walker: "walker", breaker: "artillery", scorcher: "flame", antitank: "rocket", watcher: "rail",
+  tower: "tower", medic: "support", wagon: "support", engineer: "engineer", worker: "worker", repair: "worker",
+};
+const REFINED = new Set(["drone", "walker", "watcher"]);
+export function weaponVoice(weapon, sourceType) {
+  if (REFINED.has(sourceType) && weapon !== "repair") return WEAPON_VOICE[sourceType];
+  return WEAPON_VOICE[weapon] || "smg";
+}
+// Heavy rounds land a little later (visual-style.json `life` is the flight time) with an explosion
+// at the target: name and delay per weapon voice. Light rounds only have the target's impact sound.
+export const HIT = {
+  tank: { name: "hit:shell", delay: 0.32 }, walker: { name: "hit:shell", delay: 0.32 }, artillery: { name: "hit:artillery", delay: 0.28 },
+  rocket: { name: "hit:rocket", delay: 0.24 }, rail: { name: "hit:small", delay: 0.24 }, tower: { name: "hit:small", delay: 0.26 },
+};
+export const hitFor = (voice) => HIT[voice] || null;
+const HEAVY_VOICES = new Set(["tank", "walker", "artillery", "rocket", "rail", "tower", "flame"]);
+
+// Sound name, priority, rate gap and voice group for a simulation event. null = silent event.
+// `sourceType` is the shooter's unit type when known (refines the weapon voice).
+export function soundFor(event, sourceType = null) {
   switch (event.type) {
-    case "shot": return { name: `shot:${event.weapon || "vanguard"}`, priority: 2, gap: 0.05 };
-    case "impact": return { name: event.shield ? "impact:shield" : event.building ? "impact:building" : "impact:body", priority: 1, gap: 0.07 };
-    case "death": return { name: event.building ? "boom:building" : event.heavy ? "boom:heavy" : "boom:small", priority: 5, gap: 0.08 };
-    case "strike": return { name: "boom:strike", priority: 6, gap: 0.1 };
-    case "built": return { name: "complete", priority: 4, gap: 0.2 };
-    case "research": return { name: "research", priority: 7, gap: 0.12 };
-    case "spawn": return { name: "trained", priority: 3, gap: 0.12 };
-    case "ability": return { name: `ability:${event.ability}`, priority: 6, gap: 0.1 };
-    case "promote": return { name: "promote", priority: 7, gap: 0.3 };
-    case "point": return { name: event.owner === 0 ? "capture" : "lost", priority: 8, gap: 0.3 };
-    case "incoming": return { name: "alarm", priority: 8, gap: 2 };
+    case "shot": {
+      const voice = weaponVoice(event.weapon || "vanguard", sourceType);
+      return { name: `shot:${voice}`, priority: HEAVY_VOICES.has(voice) ? 3 : 2, gap: voice === "flame" ? 0.22 : HEAVY_VOICES.has(voice) ? 0.08 : 0.05, group: "weapon", heavy: HEAVY_VOICES.has(voice) };
+    }
+    case "impact": return { name: event.shield ? "impact:shield" : event.building ? "impact:building" : "impact:body", priority: 1, gap: 0.07, group: "impact" };
+    case "death": return { name: event.core ? "boom:core" : event.building ? "boom:building" : event.heavy ? "boom:heavy" : "boom:small", priority: event.core ? 9 : event.building ? 7 : 5, gap: event.core ? 0 : 0.08, group: "explosion" };
+    case "strike": return { name: "boom:strike", priority: 6, gap: 0.1, group: "explosion" };
+    case "built": return { name: "complete", priority: 4, gap: 0.2, group: "moment" };
+    case "research": return { name: "research", priority: 7, gap: 0.12, group: "moment" };
+    case "spawn": return { name: "trained", priority: 3, gap: 0.12, group: "moment" };
+    case "ability": return { name: `ability:${event.ability}`, priority: 6, gap: 0.1, group: "moment" };
+    case "promote": return { name: "promote", priority: 7, gap: 0.3, group: "moment" };
+    case "point": return { name: event.owner === 0 ? "capture" : "lost", priority: 8, gap: 0.3, group: "moment" };
+    case "incoming": return { name: "alarm", priority: 8, gap: 2, group: "moment" };
     default: return null;
   }
+}
+
+// Explosion size class of a sound (drives music ducking): null for everything that is not loud.
+export const EXPLOSION_SIZE = {
+  "hit:rocket": "medium", "hit:shell": "medium", "hit:artillery": "large", "boom:heavy": "large",
+  "boom:strike": "large", "boom:building": "huge", "boom:core": "huge",
+};
+export const explosionSize = (name) => EXPLOSION_SIZE[name] || null;
+
+// Weight a heard sound adds to combat intensity (before closeness to the camera).
+export function intensityWeight(name) {
+  const w = MIX.intensityWeight;
+  if (name.startsWith("shot:")) return HEAVY_VOICES.has(name.slice(5)) ? w.heavyShot : name === "shot:support" || name === "shot:engineer" || name === "shot:worker" ? 0 : w.shot;
+  if (name.startsWith("impact:")) return w.impact;
+  if (name.startsWith("hit:")) return w.hit;
+  if (name === "boom:small") return w.death;
+  if (name === "boom:heavy") return w.heavyDeath;
+  if (name === "boom:building" || name === "boom:core") return w.building;
+  if (name === "boom:strike") return w.strike;
+  return 0;
 }
 
 // Fog rule: the player's own actions always sound; an enemy action sounds only if the place it
@@ -220,4 +289,121 @@ export class CombatMix {
     this.times=this.times.filter(t=>now-t < MIX.combatWindow);
     return this.times.length>MIX.combatThreshold ? 10**(MIX.duckDb/20) : 1;
   }
+}
+
+// ---------------------------------------------------------------- weight: mix rules
+export const dbToGain = (db) => 10 ** (db / 20);
+const clamp01 = (v) => Math.max(0, Math.min(1, v));
+export const smoothstep = (a, b, x) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+
+// Distance from the camera: zoomed out, the whole field is a little quieter.
+export function zoomGain(zoom) {
+  if (!Number.isFinite(zoom)) return 1;
+  const [near, far] = MIX.zoomRange;
+  return 1 - MIX.zoomQuiet * clamp01((zoom - near) / (far - near));
+}
+// Screen position (pan, off-screen attenuation) times the zoom gain.
+export function spatialMix(x, y, width, height, zoom) {
+  const m = screenMix(x, y, width, height);
+  return { pan: m.pan, gain: m.gain * zoomGain(zoom) };
+}
+// Small sounds (light shots, impacts) far off screen are skipped: they would only fill voices.
+// Heavy weapons and explosions always sound (quietly), so a distant battle is still heard.
+export const shouldCull = (group, gain, heavy = false) => !heavy && (group === "weapon" || group === "impact") && gain < MIX.cullGain;
+// Closeness 0..1 from a distance gain (0.35 far off screen .. 1 in the middle).
+export const closeness = (gain) => clamp01((gain - 0.35) / 0.65);
+// Priority bonus for nearer sounds, so a big fight keeps what is on screen.
+export const nearPriority = (priority, gain) => priority + closeness(gain) * 0.9;
+
+// Combat intensity from heard combat sounds (see MIX.intensity). Pure and clock-driven.
+export class CombatIntensity {
+  constructor(o = MIX.intensity) { this.o = o; this.sum = 0; this.at = 0; this.peak = 0; this.fightAt = -Infinity; }
+  sumAt(now) { return this.sum * Math.exp(-Math.max(0, now - this.at) / this.o.tau); }
+  raw(now) { return 1 - Math.exp(-this.sumAt(now) / this.o.scale); }
+  held(now) {
+    if (!Number.isFinite(this.fightAt)) return 0;
+    const after = now - this.fightAt - this.o.hold;
+    return after <= 0 ? this.peak : this.peak * Math.exp(-after / this.o.release);
+  }
+  add(now, weight) {
+    if (!(weight > 0)) return this.level(now);
+    const held = this.held(now);
+    this.sum = this.sumAt(now) + weight; this.at = now;
+    const raw = this.raw(now);
+    if (raw >= this.o.enter) { this.peak = Math.max(held, raw); this.fightAt = now; }
+    return this.level(now);
+  }
+  level(now) { return Math.max(this.raw(now), this.held(now)); }
+  reset() { this.sum = 0; this.at = 0; this.peak = 0; this.fightAt = -Infinity; }
+}
+// Intensity -> layer gains. `floor` is the least combat layer the mood asks for.
+export function crossfade(intensity, floor = 0) {
+  const combat = Math.max(clamp01(floor), smoothstep(MIX.intensity.enter, MIX.intensity.full, intensity));
+  return { combat, base: 1 - MIX.baseDip * combat };
+}
+// The least combat layer for a mood: a mission asking for battle gets it all, a recent fight a little.
+export const combatFloor = (mood, missionMood) => (missionMood === "battle" ? 1 : mood === "battle" ? MIX.battleFloor : 0);
+
+// Loud events duck the music: the deepest active duck wins, scaled by closeness. `delay` = the
+// explosion starts later (a shell in flight), so its duck does too.
+export class LoudDuck {
+  constructor() { this.ducks = []; }
+  hit(now, size, gain = 1, delay = 0) {
+    const spec = MIX.loudDuck[size];
+    if (!spec) return;
+    const db = spec[0] * (0.4 + 0.6 * closeness(gain));
+    this.ducks.push({ db, from: now + delay, until: now + delay + spec[1] });
+  }
+  db(now) {
+    let d = 0;
+    this.ducks = this.ducks.filter((x) => x.until > now);
+    for (const x of this.ducks) if (x.from <= now) d = Math.min(d, x.db);
+    return d;
+  }
+  gain(now) { return dbToGain(this.db(now)); }
+}
+
+// Radio replies: the kind of reply an order gets (null = no reply).
+export function radioKind(orderType) {
+  if (orderType === "attack" || orderType === "attackmove") return "attack";
+  if (orderType === "build") return "build";
+  if (["move", "patrol", "gather", "deliver", "repair", "support", "rally"].includes(orderType)) return "move";
+  return null;
+}
+// Rate limit for radio replies (MIX.radio): one at a time, not the same reply again and again.
+export class RadioGate {
+  constructor(o = MIX.radio) { this.o = o; this.last = -Infinity; this.byKind = new Map(); }
+  allow(kind, now) {
+    if (!kind || now - this.last < this.o.gap) return false;
+    const gap = kind === "contact" ? this.o.contact : this.o.sameKind;
+    if (now - (this.byKind.get(kind) ?? -Infinity) < gap) return false;
+    this.last = now; this.byKind.set(kind, now);
+    return true;
+  }
+}
+// Enemy contact: the first visible enemy of a match, and again after MIX.radio.quiet seconds with none.
+export class ContactWatch {
+  constructor(quiet = MIX.radio.quiet) { this.quiet = quiet; this.seenAt = -Infinity; }
+  update(now, visibleEnemies) {
+    if (!(visibleEnemies > 0)) return false;
+    const fresh = now - this.seenAt > this.quiet;
+    this.seenAt = now;
+    return fresh;
+  }
+  reset() { this.seenAt = -Infinity; }
+}
+
+// Engine hum: own vehicles, each { selected, moving, gain } -> one loop's level 0..1 and rate.
+export function engineMix(vehicles) {
+  const o = MIX.engine;
+  let sum = 0, moving = 0, weight = 0;
+  for (const v of vehicles) {
+    const w = v.selected ? (v.moving ? 1 : o.idle) : v.moving ? o.unselected : 0;
+    if (!w) continue;
+    const g = w * clamp01(v.gain ?? 1);
+    sum += g; weight += g; if (v.moving) moving += g;
+  }
+  const level = clamp01(sum);
+  const share = weight > 0 ? moving / weight : 0;
+  return { level, rate: o.rate[0] + (o.rate[1] - o.rate[0]) * share };
 }
