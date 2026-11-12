@@ -71,7 +71,9 @@ try{
         const after=(part.userData.tint||[1,1,1])[0];
         const b=s.entities.filter(e=>e.kind==='building'&&e.team===0).slice(0,2);
         b[0].hp=b[0].maxHp*.4;b[1].hp=b[1].maxHp*.15;
-        for(let i=0;i<90;i++)window.renderVisual(s,1/30,f.selected,null);
+        // Three seconds of emitters in 15 steps: each synchronous render queues a full frame, and
+        // 90 of them took over 30 s to flush on CI's software GL before the next screenshot.
+        for(let i=0;i<15;i++)window.renderVisual(s,.2,f.selected,null);
         const emitted=id=>v.fx.smoke.items.filter(p=>p.anchor?.id===id).length;
         const result={lit,after,calls,litCalls,smoking:emitted(b[0].id),burning:emitted(b[1].id),fireGlow:v.fx.glow.items.some(p=>p.anchor?.id===b[1].id),smokeGlow:v.fx.glow.items.some(p=>p.anchor?.id===b[0].id)};
         v.focusOn((b[0].x+b[1].x)/2,(b[0].z+b[1].z)/2);v.updateCamera();window.renderVisual(s,1/30,f.selected,null);
