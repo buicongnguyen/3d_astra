@@ -74,9 +74,14 @@ await suite("messages", async () => {
     await shot(page, `messages-${name}`);
 
     // A routine notice during the alert waits; it shows once the alert has had its full time.
-    await page.evaluate(() => { window.__frontier.sim.events.push({ type: "message", text: "Orders cleared." }); });
+    // Only meaningful while the alert still has time left: on a slow CI runner the checks above can
+    // outlast its 4.5 s, and then the routine notice rightly shows at once.
+    const alertAge = await page.evaluate(() => {
+      window.__frontier.sim.events.push({ type: "message", text: "Orders cleared." });
+      return performance.now() - window.__noticeLog.find((e) => /Under attack/.test(e.text)).t;
+    });
     await page.waitForTimeout(300);
-    assert.match(await page.locator("#notice").textContent(), /Under attack/, `${name}: alert replaced by a routine notice`);
+    if (alertAge < 4000) assert.match(await page.locator("#notice").textContent(), /Under attack/, `${name}: alert replaced by a routine notice`);
     await page.waitForFunction(() => document.querySelector("#notice").textContent === "Orders cleared.", null, { timeout: TIMEOUT.step });
     const log = await page.evaluate(() => window.__noticeLog);
     const at = (text) => log.find((e) => e.text === text)?.t;

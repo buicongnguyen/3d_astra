@@ -85,6 +85,9 @@ try{
       assert.equal(flash.litCalls,flash.calls,'the hit flash adds no draw call');
       assert.ok(flash.smoking>0&&!flash.smokeGlow,`a building below half health smokes without fire: ${JSON.stringify(flash)}`);
       assert.ok(flash.burning>flash.smoking&&flash.fireGlow,`a building below a quarter burns: ${JSON.stringify(flash)}`);
+      // The renders above are queued GL work; on CI's software GL they flush for longer than a
+      // screenshot may wait, so let two frames present first (evaluate has no timeout).
+      await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
       await page.screenshot({path:`test-results/visual-after-damaged-buildings-${viewport.width}.png`});
       await page.evaluate(()=>{window.restoreBuildings();const f=window.__frontier,v=f.view;v.focusOn(-6,18);v.zoom=52;v.updateCamera();});
     }
