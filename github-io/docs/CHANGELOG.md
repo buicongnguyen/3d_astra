@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.1: shots that land, wrecks that look dead (owner reports)
+
+- **Shots looked like misses:** a round takes 0.14 to 0.32 s to fly but was drawn to where the target stood when it fired, so a moving target was already gone when it arrived. Rounds now lead the target by its speed (up to 3 m). On plateau maps the tracer flew at the shooter's height and passed over or under a target on different ground; it now flies between the real heights.
+- **Firing you could not see:** a shot was drawn only when every metre of its path was in view, so an enemy firing from fog (or a shot over a hidden plateau top) hit your unit with nothing drawn, and your own unit rocked without a tracer. Now the end you can see is shown: the muzzle flash when only the shooter is in view, the hit landing when only the target is; the path through fog stays hidden.
+- **Wrecks:** a destroyed vehicle or building is tinted burnt and its lights go out, and vehicle wrecks smoke until they sink. The tint is per instance in the existing batches, so wrecks add no draw calls. Wrecks on a plateau stay at plateau height.
+- Validation: 377 unit tests (new `tests/shot-aim.test.js`); visual-combat, boundary-fx, render-budget, terrain, feel, activity, auto-combat, ambient-life and model-loading suites pass.
+
 ## 0.13.0: high ground and straight walls (Stage 3, package 3.1 and the owner's wall request)
 
 - **Plateaus:** Amber Dunes, Verdant Crossing and Obsidian Highlands each have a pair of raised plateaus (2.4 m high, mirrored for fairness) reached by two ramps. Cliffs block movement and building; ramps are drawn as road. Units, effects, shells, fog and scenery follow the ground, and taps and clicks land on the raised ground.

@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { CORE_MODEL_TYPES } from "./model-roster.js";
 import { CameraShake, FEEL } from "./camera-shake.js";
+const WRECK_TINT = [0.2, 0.18, 0.16]; // burnt: paint and team colour multiplied down to soot
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
@@ -1071,7 +1072,8 @@ export class WorldView {
       this.shake.add(FEEL.shellTrauma, Math.hypot(event.tx-this.focus.x,event.tz-this.focus.z), this.shakeEnabled());
     this.activity.event(event, sim);
     this.tactics.event(event, sim);
-    if(event.type==='shot' && shotVisible(event,sim)){
+    // The shooter recoils whenever the shooter itself is in view, even if the path is fogged.
+    if(event.type==='shot' && sim.isVisible({x:event.x,z:event.z})){
       const o=this.objects.get(event.source),kind=weaponStyle(event).kind;
       if(o && kind==='cannon')o.userData.recoil=.22;
       // Every shooter rocks back a little: hulls and rocket troops most, rifles barely.
@@ -1096,14 +1098,15 @@ export class WorldView {
     const model = o.userData.model;
     if (o.userData.emblem) o.userData.emblem.visible = false;
     model.rotation.order = 'YXZ';
-    // Wrecks lose their paint, team colour and lights: every part takes one shared burnt
-    // material, so a dead tank reads as dead at a glance and all wrecks share a few batches.
+    // Wrecks lose their paint, team colour and lights so a dead tank reads as dead at a
+    // glance: every part is tinted burnt per instance (same batches, no extra draws) and
+    // glowing parts go dark.
     if (kind !== 'infantry') {
-      this.wreckMaterial ||= new THREE.MeshStandardMaterial({ name: 'Wreck', color: 0x2a2623, roughness: 0.95, metalness: 0.15 });
       model.traverse?.((part) => {
         if (!part.isMesh) return;
-        part.material = this.wreckMaterial;
-        this.batches?.byPart.delete(part);
+        const glow = part.material?.emissive && part.material.emissiveIntensity > 0 && part.material.emissive.getHex() !== 0;
+        if (glow) part.visible = false;
+        else part.userData.tint = WRECK_TINT;
       });
     }
     this.dying.push({ baseY: o.position.y, object: o, kind, team: event.team, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1),

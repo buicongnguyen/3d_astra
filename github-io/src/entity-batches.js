@@ -6,6 +6,7 @@ import * as THREE from "three";
 // the camera and the shadow pass skip them and draw the batches instead. A 60-unit battle
 // drops from ~640 draws to about one per part/type (and team for team-coloured parts).
 export const SOURCE_LAYER = 1;
+const WHITE = [1, 1, 1];
 
 export function adoptBatchedParts(root) {
   root.traverse((o) => {
@@ -53,8 +54,14 @@ export class EntityBatches {
     next.castShadow = source.castShadow;
     next.receiveShadow = source.receiveShadow;
     next.renderOrder = source.renderOrder;
+    // Per-instance tint (white = as modelled). Wrecks draw burnt in the same batch as live
+    // units, so a destroyed tank costs no extra draw call. Allocated up front so every batch
+    // compiles one shader variant.
+    next.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 3).fill(1), 3);
+    next.instanceColor.setUsage(THREE.DynamicDrawUsage);
     if (batch.mesh) {
       next.instanceMatrix.array.set(batch.mesh.instanceMatrix.array.subarray(0, batch.count * 16));
+      next.instanceColor.array.set(batch.mesh.instanceColor.array.subarray(0, batch.count * 3));
       this.group.remove(batch.mesh);
       batch.mesh.dispose(); // instance buffers only; geometry and material belong to the templates
     }
@@ -83,6 +90,11 @@ export class EntityBatches {
         batch.dirtyEnd = offset + 16;
         break;
       }
+    }
+    const tint = mesh.userData.tint ?? WHITE, colors = batch.mesh.instanceColor.array, c = batch.count * 3;
+    if (colors[c] !== Math.fround(tint[0]) || colors[c + 1] !== Math.fround(tint[1]) || colors[c + 2] !== Math.fround(tint[2])) {
+      colors[c] = tint[0]; colors[c + 1] = tint[1]; colors[c + 2] = tint[2];
+      batch.colorDirty = true;
     }
     batch.count++;
   }
@@ -121,6 +133,11 @@ export class EntityBatches {
       mesh.count = batch.count;
       mesh.visible = batch.count > 0;
       if (!batch.count) continue;
+      if (batch.colorDirty) {
+        mesh.instanceColor.clearUpdateRanges();
+        mesh.instanceColor.needsUpdate = true;
+        batch.colorDirty = false;
+      }
       // Parts are offset from their entity origin by at most the template's size; models
       // scale by at most 1.6 (buildings), so 2x the part's own radius is a safe margin.
       const sphere = mesh.boundingSphere;

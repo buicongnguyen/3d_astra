@@ -281,21 +281,52 @@ export class Effects {
     if (heavy) this.addDebris(at, 6, anchor, scale);
   }
   // -- events
-  shot(e, sim) {
-    const style = weaponStyle(e), dx = e.tx - e.x, dz = e.tz - e.z, dist = Math.hypot(dx, dz) || 1;
+  // Muzzle and aim point of a shot, in world height (plateaus included). Rounds take
+  // style.life seconds to fly, so the aim leads a moving target by its last-tick velocity;
+  // otherwise shells land where the target was and look like misses.
+  aim(e, sim) {
+    const style = weaponStyle(e), t = this.view.terrain, ground = (x, z) => (t?.plateaus?.length ? t.heightAt(x, z) : 0);
+    let tx = e.tx, tz = e.tz;
+    const target = e.target != null ? sim?.get?.(e.target) : null, before = target && this.view.previous?.get(target.id);
+    if (target && before && e.type !== "support") {
+      const lead = Math.min(1, 3 / (Math.hypot(target.x - before.x, target.z - before.z) / 0.05 * style.life || Infinity));
+      tx = target.x + (target.x - before.x) / 0.05 * style.life * lead;
+      tz = target.z + (target.z - before.z) / 0.05 * style.life * lead;
+    }
+    const dx = tx - e.x, dz = tz - e.z, dist = Math.hypot(dx, dz) || 1;
     const nx = dx / dist, nz = dz / dist, reach = Math.min(style.reach, dist * 0.45);
-    const from = { x: e.x + nx * reach, y: style.height, z: e.z + nz * reach };
-    const to = { x: e.tx, y: e.type === "support" || e.weapon === "tower" ? 1 : 0.95, z: e.tz };
+    const fx = e.x + nx * reach, fz = e.z + nz * reach;
+    const from = { x: fx, y: style.height + ground(fx, fz), z: fz, lifted: true };
+    const land = { x: tx, y: e.type === "support" || e.weapon === "tower" ? 1 : 0.95, z: tz };
+    const to = { ...land, y: land.y + ground(tx, tz), lifted: true };
+    return { style, nx, nz, from, to, land };
+  }
+  // The shooter or the target is in fog: show only the end the player can see (a muzzle
+  // flash, or the hit landing), never the path, so fog still hides positions.
+  shotPartial(e, sim) {
+    if (e.type === "support" || !sim?.isVisible) return;
+    const { style, from, land } = this.aim(e, sim), heavy = style.kind === "cannon" || style.kind === "rocket";
+    if (sim.isVisible({ x: e.x, z: e.z })) {
+      const anchor = { x: e.x, z: e.z }, flash = heavy ? 1.4 : 0.7;
+      this.particle(this.glow, { ...from, cell: CELL.flare, s0: flash, s1: flash * 1.2, life: heavy ? 0.11 : 0.06, c0: WARM.flash, c1: [1, 0.55, 0.15, 0], anchor });
+    }
+    if (sim.isVisible({ x: e.tx, z: e.tz })) {
+      const anchor = { x: e.tx, z: e.tz };
+      this.timeline.push({ at: this.time + style.life, run: () => this.hit(land, heavy, anchor) });
+    }
+  }
+  shot(e, sim) {
+    const { style, nx, nz, from, to, land } = this.aim(e, sim);
     const dir = { x: to.x - from.x, y: to.y - from.y, z: to.z - from.z }, len = Math.hypot(dir.x, dir.y, dir.z) || 1;
     const travel = style.life, anchor = { ...e, shot: true };
     const kind = style.kind, m = this.motion;
     if (kind === "support") {
       // Engineer: cool white beam. Harvester repair: warm welding sparks. Medic: green.
       const engineer = e.weapon === "engineer", tint = e.weapon === "repair" ? [1, 0.78, 0.4, 0.9] : engineer ? [0.75, 0.9, 1, 0.9] : [0.5, 1, 0.75, 0.9];
-      this.particle(this.glow, { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2, z: (from.z + to.z) / 2, mode: STRETCH,
+      this.particle(this.glow, { lifted: true, x: (from.x + to.x) / 2, y: (from.y + to.y) / 2, z: (from.z + to.z) / 2, mode: STRETCH,
         ax: dir.x / len, ay: dir.y / len, az: dir.z / len, length: len, s0: 0.2, s1: 0.1, life: 0.3, cell: CELL.glow,
         c0: tint, c1: [...tint.slice(0, 3), 0], anchor });
-      this.burst(this.glow, this.count(4), to, { life: 0.55, s0: 0.35, s1: 0.1, c0: tint, c1: [...tint.slice(0, 3), 0], anchor,
+      this.burst(this.glow, this.count(4), land, { life: 0.55, s0: 0.35, s1: 0.1, c0: tint, c1: [...tint.slice(0, 3), 0], anchor,
         gravity: -1.5 }, [0.4, 1], 0.8);
       return;
     }
@@ -309,7 +340,7 @@ export class Effects {
     if ((cannon || rocket) && m) {
       const back = rocket ? -1 : 1;
       for (let i = 0; i < this.count(3); i++)
-        this.particle(this.smoke, { x: from.x - (rocket ? nx * 1.4 : 0), y: from.y, z: from.z - (rocket ? nz * 1.4 : 0),
+        this.particle(this.smoke, { lifted: true, x: from.x - (rocket ? nx * 1.4 : 0), y: from.y, z: from.z - (rocket ? nz * 1.4 : 0),
           vx: nx * back * (1.5 + i * 0.6), vy: 0.5 + Math.random() * 0.4, vz: nz * back * (1.5 + i * 0.6), drag: 2.2,
           life: 0.9 + Math.random() * 0.4, s0: 0.45, s1: 1.7, cell: CELL.puff, c0: [0.6, 0.58, 0.55, 0.5], c1: [0.55, 0.55, 0.55, 0],
           anchor, spin: 0.8 });
@@ -325,13 +356,12 @@ export class Effects {
       if (cannon || rocket)
         this.particle(this.glow, { ...from, ...v, s0: cannon ? 0.75 : 0.55, s1: cannon ? 0.75 : 0.55, life: travel, c0: [1, 0.85, 0.5, 1],
           c1: [1, 0.7, 0.4, 1], anchor });
-      const lift = (p) => ({ ...p, y: p.y + (this.view.terrain?.plateaus?.length ? this.view.terrain.heightAt(p.x, p.z) : 0) });
-      this.projectiles.push({ from: lift(from), to: lift(to), land: to, travel, age: 0, rocket, cannon, anchor, trail: 0, weapon: e.weapon });
+      this.projectiles.push({ from, to, land, travel, age: 0, rocket, cannon, anchor, trail: 0, weapon: e.weapon });
     } else {
-      this.particle(this.glow, { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2, z: (from.z + to.z) / 2, mode: STRETCH,
+      this.particle(this.glow, { lifted: true, x: (from.x + to.x) / 2, y: (from.y + to.y) / 2, z: (from.z + to.z) / 2, mode: STRETCH,
         ax: dir.x / len, ay: dir.y / len, az: dir.z / len, length: len, s0: width * 0.7, s1: width * 0.7, life: 0.1,
         cell: CELL.glow, c0: [...color.slice(0, 3), 0.7], c1: [...color.slice(0, 3), 0], anchor });
-      this.hit(to, cannon || rocket, anchor);
+      this.hit(land, cannon || rocket, anchor);
     }
   }
   hit(at, heavy, anchor) {

@@ -22,6 +22,7 @@ export class ActivityView {
   event(e, sim) {
     if(['shot','support'].includes(e.type)){
       if(shotVisible(e,sim)){this.shots.add(e);this.view.fx?.shot(e,sim);}
+      else this.view.fx?.shotPartial?.(e,sim);
       return;
     }
     if (['spawn','built','deliver','levelup'].includes(e.type)) {

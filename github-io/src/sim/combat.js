@@ -104,6 +104,7 @@ export const combat = {
       type: "shot",
       weapon: e.shot || e.type,
       source: e.id,
+      target: target.id,
       x: e.x,
       z: e.z,
       tx: target.x,
