@@ -1,5 +1,6 @@
 import { SURFACES } from "./terrain.js";
 import { themeFor } from "./visual-style.js";
+import { outward } from "./plateau-relief.js";
 
 // Paints a map's ground texture once: surface colours from the theme, broad patches of the
 // theme's accent colour so no map is one flat tone, then small hand-drawn detail (grass dabs,
@@ -25,6 +26,10 @@ const SOFT = new Set(["grass", "dirt", "sand", "stone", "mud"]);
 
 export function paintGround(ctx, terrain, size, random) {
   const colors = surfaceColors(terrain.id), table = Object.fromEntries(Object.entries(colors).map(([k, v]) => [k, rgb(v)]));
+  // A ramp counts as road for the rules (Terrain.at), but is painted as the ground around it:
+  // paintPlateaus() draws the road itself as a strip, so the ramp no longer reads as a blob.
+  const bare = terrain.plateaus?.length ? Object.assign(Object.create(terrain), { plateaus: [] }) : terrain;
+  const surface = (x, z) => (bare !== terrain && terrain.onRamp(x, z) ? bare.at(x, z) : terrain.at(x, z));
   const cells = size / 4, small = document.createElement("canvas");
   small.width = small.height = cells;
   const sctx = small.getContext("2d"), image = sctx.createImageData(cells, cells), data = image.data, accent = table.accent;
@@ -33,9 +38,9 @@ export function paintGround(ctx, terrain, size, random) {
       const wx = ((x + 0.5) / cells) * terrain.size - terrain.half, wz = ((y + 0.5) / cells) * terrain.size - terrain.half;
       // Borders between soft surfaces wander by up to a unit, so no patch has a ruler-straight
       // edge; water, crossings and banks keep their true outline.
-      let type = terrain.at(wx, wz);
+      let type = surface(wx, wz);
       if (SOFT.has(type) && type !== "mud") {
-        const warped = terrain.at(wx + (noise(wx * 0.3 + 5, wz * 0.3) - 0.5) * 2.4, wz + (noise(wx * 0.3 - 9, wz * 0.3 + 4) - 0.5) * 2.4);
+        const warped = surface(wx +(noise(wx * 0.3 + 5, wz * 0.3) - 0.5) * 2.4, wz + (noise(wx * 0.3 - 9, wz * 0.3 + 4) - 0.5) * 2.4);
         if (SOFT.has(warped) && warped !== "mud") type = warped;
       }
       let [r, g, b] = table[type];
@@ -80,7 +85,7 @@ export function paintGround(ctx, terrain, size, random) {
   ctx.lineCap = "round";
   const leaf = rgb(themeFor(terrain.id).leafAlt), shade = rgb(themeFor(terrain.id).leaf);
   for (let i = 0; i < 11000; i++) {
-    const x = random() * size, y = random() * size, pick = random(), turn = random(), type = terrain.at(world(x), world(y));
+    const x = random() * size, y = random() * size, pick = random(), turn = random(), type = surface(world(x), world(y));
     if (type === "grass") {
       ctx.strokeStyle = pick > 0.45 ? tint(leaf, 0.2 + pick * 0.16) : tint(shade.map((v) => v * 0.6), 0.22);
       ctx.lineWidth = 1.6;
@@ -107,6 +112,7 @@ export function paintGround(ctx, terrain, size, random) {
       ctx.stroke();
     }
   }
+  paintPlateaus(ctx, terrain, size);
   if (terrain.river) {
     // Wet sand, then a broken foam line where the water meets each bank.
     const foam = rgb(themeFor(terrain.id).foam), shallow = rgb(themeFor(terrain.id).shallow), mid = size / 2;
@@ -129,4 +135,80 @@ export function paintGround(ctx, terrain, size, random) {
       }
     }
   }
+}
+
+// Plateaus (Stage 3) in the ground texture, under the rock relief of plateau-relief.js: a
+// lighter top, a bright lip, a white ring the rock face takes its vertex colours over, a soft
+// shadow at the cliff foot (long on the side away from the sun) and each ramp as a road strip
+// with edge lines and chevrons pointing uphill. All painted once, so no extra draws.
+export function paintPlateaus(ctx, terrain, size) {
+  if (!terrain.plateaus?.length) return;
+  const theme = themeFor(terrain.id), k = size / terrain.size, px = (v) => (v + terrain.half) * k;
+  const tint = ([r, g, b], a) => `rgba(${r | 0},${g | 0},${b | 0},${a})`;
+  const mixed = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+  const sun = rgb(theme.sun), dust = rgb(theme.dust), deep = rgb(theme.cliffDeep), lip = mixed(dust, sun, 0.3);
+  // Adds one plateau outline, grown outward by `grow` metres (negative: inset), as a subpath.
+  const trace = (p, grow) => {
+    if (p.shape === "disc") {
+      const r = Math.max(0.05, p.r + grow) * k;
+      ctx.moveTo(px(p.x) + r, px(p.z));
+      ctx.arc(px(p.x), px(p.z), r, 0, Math.PI * 2);
+      return;
+    }
+    const w = p.w + grow * 2, d = p.d + grow * 2;
+    if (grow > 0 && ctx.roundRect) ctx.roundRect(px(p.x - w / 2), px(p.z - d / 2), w * k, d * k, grow * k);
+    else ctx.rect(px(p.x - w / 2), px(p.z - d / 2), w * k, d * k);
+  };
+  const ring = (p, inner, outer, style) => { ctx.beginPath(); trace(p, outer); trace(p, inner); ctx.fillStyle = style; ctx.fill("evenodd"); };
+  const SHADOW = [0.78, -0.62]; // away from the sun (view.js SUN_OFFSET: from -x, +z)
+  for (const p of terrain.plateaus) {
+    ctx.beginPath(); trace(p, -1.2); ctx.fillStyle = tint(sun, 0.16); ctx.fill();
+  }
+  // Rings and shadows stop short of the ramps, which keep their own ground.
+  const clipRamps = (grow) => {
+    ctx.beginPath();
+    ctx.rect(0, 0, size, size);
+    for (const p of terrain.plateaus) for (const r of p.ramps) { const radius = (r.half + grow) * k; ctx.moveTo(px(r.x) + radius, px(r.z)); ctx.arc(px(r.x), px(r.z), radius, 0, Math.PI * 2); }
+    ctx.clip("evenodd");
+  };
+  ctx.save();
+  clipRamps(-0.25);
+  for (const p of terrain.plateaus) {
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, size, size); trace(p, 0.79); ctx.clip("evenodd");
+    ctx.filter = `blur(${Math.max(1, 0.7 * k)}px)`;
+    ctx.save();
+    ctx.translate(SHADOW[0] * 1.3 * k, SHADOW[1] * 1.3 * k);
+    ctx.beginPath(); trace(p, 0.9); ctx.fillStyle = tint(deep, 0.45); ctx.fill();
+    ctx.restore();
+    ctx.beginPath(); trace(p, 1.15); ctx.lineWidth = 1.3 * k; ctx.strokeStyle = tint(deep, 0.24); ctx.stroke();
+    ctx.filter = "none";
+    ctx.restore();
+    ring(p, -1.2, -0.6, tint(lip, 0.4));
+    ring(p, -0.6, 0.15, tint(lip, 1));
+  }
+  // The white ring the rock samples stays well clear of the ramps, where the rock ends.
+  clipRamps(1.2);
+  for (const p of terrain.plateaus) ring(p, 0.15, 0.8, "#ffffff");
+  ctx.restore();
+  // Ramps: a road strip running up the slope (v is downhill, u across), edges and chevrons.
+  const line = "rgba(255, 241, 207, 0.92)";
+  for (const p of terrain.plateaus)
+    for (const r of p.ramps) {
+      const n = outward(terrain, p, r.x, r.z), w = r.half * 0.64;
+      ctx.setTransform(-n.z * k, n.x * k, n.x * k, n.z * k, px(r.x), px(r.z));
+      // The strip covers the slope (v from -3 to 3) and a short apron at each end.
+      // Faded ends, so the strip joins the ground above and below instead of lying on it.
+      const road = rgb(theme.road), fill = ctx.createLinearGradient(0, -3.6, 0, 3.9);
+      for (const [at, a] of [[0, 0], [0.12, 1], [0.86, 1], [1, 0]]) fill.addColorStop(at, tint(road, a));
+      ctx.fillStyle = fill;
+      ctx.fillRect(-w, -3.6, w * 2, 7.5);
+      ctx.lineWidth = 0.3; ctx.strokeStyle = tint(deep, 0.3);
+      for (const side of [-1, 1]) { ctx.beginPath(); ctx.moveTo(side * w, -3.2); ctx.lineTo(side * w, 3.5); ctx.stroke(); }
+      ctx.strokeStyle = line; ctx.lineWidth = 0.26; ctx.lineCap = "round";
+      for (const side of [-1, 1]) { ctx.beginPath(); ctx.moveTo(side * (w - 0.38), -3.1); ctx.lineTo(side * (w - 0.38), 3.4); ctx.stroke(); }
+      ctx.lineWidth = 0.42; ctx.lineJoin = "round";
+      for (const v of [-1.9, 0, 1.9]) { ctx.beginPath(); ctx.moveTo(-1.2, v + 0.85); ctx.lineTo(0, v - 0.15); ctx.lineTo(1.2, v + 0.85); ctx.stroke(); }
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
 }

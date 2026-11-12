@@ -16,6 +16,7 @@ import {themeFor,lightFor,shotVisible,weaponStyle} from './visual-style.js';
 import { Scatter } from "./scatter.js";
 import { createMapEdge } from "./map-edge.js";
 import { paintGround } from "./ground-paint.js";
+import { buildPlateauRelief, lowerCliffBand, fogLift } from "./plateau-relief.js";
 import { fogAware } from "./fog-aware.js";
 import { teamColors, teamGlows, factionOf } from "./faction-colors.js";
 import { createEmblem, hasEmblem, recolorEmblems } from "./emblems.js";
@@ -44,6 +45,13 @@ const mat = (color, extra = {}) =>
 // duplicate suffixes arrive sanitised by GLTFLoader ("Barrel.001" -> "Barrel001").
 export const RIG_PART = /^(Main_cannon|Muzzle_brake|Barrel|Cannon|Muzzle|Turret_head)(?![a-z])/i;
 const SUN_OFFSET = new THREE.Vector3(-25, 55, 20);
+// The game camera sits this far from its focus (the same 71 m as before 0.14, so the distance
+// haze is unchanged), looking down about 46 degrees: low enough that plateaus, cliffs and unit
+// silhouettes read as height. scatter.js winds foliage toward the same direction.
+const CAMERA_OFFSET = new THREE.Vector3(25, 51, 43);
+// How deep (in world units, per unit of zoom) half the view reaches across the ground.
+const VIEW_DEPTH = (0.5 * CAMERA_OFFSET.length()) / CAMERA_OFFSET.y;
+const ECO_ZOOM = 31;
 // Shadow camera basis, as Matrix4.lookAt builds it (looking from SUN_OFFSET, up +Y).
 const LIGHT_Z = SUN_OFFSET.clone().normalize();
 const LIGHT_X = new THREE.Vector3(0, 1, 0).cross(LIGHT_Z).normalize();
@@ -172,7 +180,8 @@ export class WorldView {
       0,
       this.lowPower ? 21 : 19,
     );
-    this.defaultZoom = this.lowPower ? 34 : 42;
+    // A little closer than before 0.14 (42 / 34), so units and height read from the start.
+    this.defaultZoom = this.lowPower ? ECO_ZOOM : 38;
     this.zoom = this.defaultZoom;
     this.raycaster = new THREE.Raycaster();
     // Picking hits the cloned model parts, which the batches draw (entity-batches.js).
@@ -592,30 +601,18 @@ export class WorldView {
     canvas.width = canvas.height = 1024;
     const ctx = canvas.getContext("2d");
     // Surfaces, accent patches and painted detail (ground-paint.js); seeded, so identical each build.
+    // Plateaus add a lighter top, a bright lip, foot shadows and road ramps (paintPlateaus).
     paintGround(ctx, this.terrain, 1024, random);
-    // Plateaus read at a glance, even without shadows (Eco): a lighter top, a dark rock rim and
-    // the ramps in road colour. Painted into the same ground texture, so no extra draws.
-    if (this.terrain.plateaus.length) {
-      const k = 1024 / this.terrain.size, px = (v) => (v + this.terrain.half) * k;
-      const shape = (p, grow) => {
-        ctx.beginPath();
-        if (p.shape === "disc") ctx.arc(px(p.x), px(p.z), (p.r + grow) * k, 0, Math.PI * 2);
-        else ctx.rect(px(p.x - p.w / 2 - grow), px(p.z - p.d / 2 - grow), (p.w + grow * 2) * k, (p.d + grow * 2) * k);
-      };
-      for (const p of this.terrain.plateaus) {
-        shape(p, -1); ctx.fillStyle = "rgba(255, 244, 220, 0.16)"; ctx.fill();
-        shape(p, 0); ctx.lineWidth = 2.2 * k; ctx.strokeStyle = "rgba(38, 30, 24, 0.55)"; ctx.stroke();
-        for (const r of p.ramps) { ctx.beginPath(); ctx.arc(px(r.x), px(r.z), r.half * k, 0, Math.PI * 2); ctx.fillStyle = "rgba(176, 152, 116, 0.85)"; ctx.fill(); }
-      }
-    }
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = this.lowPower ? 1 : 4;
     const segments = this.terrain.plateaus.length ? this.terrain.size : 96;
-    const groundGeometry = new THREE.PlaneGeometry(this.terrain.size, this.terrain.size, segments, segments);
+    let groundGeometry = new THREE.PlaneGeometry(this.terrain.size, this.terrain.size, segments, segments);
     if (this.terrain.plateaus.length) {
       const p = groundGeometry.attributes.position;
       for (let i = 0; i < p.count; i++) p.setZ(i, this.terrain.heightAt(p.getX(i), -p.getY(i)));
+      // The rock relief (plateau-relief.js) covers each cliff band; the ground drops under it.
+      lowerCliffBand(groundGeometry, this.terrain);
       groundGeometry.computeVertexNormals();
     }
     if (this.terrain.river) {
@@ -628,10 +625,21 @@ export class WorldView {
       }
       groundGeometry.computeVertexNormals();
     }
+    // Plateau cliffs: lit rock faces and a bright lip, merged into the ground (same material and
+    // texture, vertex-coloured), so height reads from the game camera at no extra draw.
+    const relief = buildPlateauRelief(this.terrain);
+    if (relief) {
+      const count = groundGeometry.attributes.position.count;
+      groundGeometry.setAttribute("color", new THREE.Float32BufferAttribute(new Float32Array(count * 3).fill(1), 3));
+      const merged = mergeGeometries([groundGeometry, relief], false);
+      groundGeometry.dispose();
+      relief.dispose();
+      groundGeometry = merged;
+    }
     // Depth bias: building bases, pads and decals sit level with (or millimetres above) the
     // ground, which z-fights and blinks, worst on phones' coarser depth buffers. The biased
     // ground always loses those ties.
-    const ground = mesh(groundGeometry, mat(0xffffff, { map: texture, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 4 }));
+    const ground = mesh(groundGeometry, mat(0xffffff, { map: texture, vertexColors: !!relief, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 4 }));
     ground.rotation.x = -Math.PI / 2;
     ground.castShadow = false;
     this.terrainRoot.add(ground);
@@ -716,8 +724,9 @@ export class WorldView {
     const fogSegments = this.terrain.plateaus.length ? this.terrain.size / 2 : 1;
     const fogGeometry = new THREE.PlaneGeometry(this.terrain.size, this.terrain.size, fogSegments, fogSegments);
     if (this.terrain.plateaus.length) {
+      // Over cliffs the fog rises to cover the rock relief (plateau-relief.js fogLift).
       const p = fogGeometry.attributes.position;
-      for (let i = 0; i < p.count; i++) p.setZ(i, this.terrain.heightAt(p.getX(i), -p.getY(i)));
+      for (let i = 0; i < p.count; i++) p.setZ(i, Math.max(this.terrain.heightAt(p.getX(i), -p.getY(i)), fogLift(this.terrain, p.getX(i), -p.getY(i))));
     }
     this.fogMesh = new THREE.Mesh(fogGeometry, material);
     this.fogMesh.rotation.x = -Math.PI / 2;
@@ -740,7 +749,7 @@ export class WorldView {
     this.camera.right = (this.zoom * aspect) / 2;
     this.camera.top = this.zoom / 2;
     this.camera.bottom = -this.zoom / 2;
-    this.camera.position.copy(this.focus).add(new THREE.Vector3(22, 56, 38));
+    this.camera.position.copy(this.focus).add(CAMERA_OFFSET);
     this.camera.lookAt(this.focus);
     this.camera.updateProjectionMatrix();
     this.camera.updateMatrixWorld();
@@ -751,9 +760,9 @@ export class WorldView {
     this.barTall = 1 + 0.35 * Math.min(1, (grow - 1) * 2);
     this.unitsPerPixel = 1 / pixels;
     // Shadow frustum: cover the farthest visible ground corner (the tilted view reaches about
-    // 0.64 x zoom deep), then snap its centre to whole shadow texels in light space so
+    // VIEW_DEPTH x zoom deep), then snap its centre to whole shadow texels in light space so
     // shadow edges do not shimmer while the camera pans.
-    const half = Math.min(130, this.zoom * Math.hypot(aspect / 2, 0.64) + 6),
+    const half = Math.min(130, this.zoom * Math.hypot(aspect / 2, VIEW_DEPTH) + 6),
       shadow = this.sun.shadow.camera;
     if (shadow.right !== half) {
       Object.assign(shadow, { left: -half, right: half, top: half, bottom: -half });
@@ -1437,8 +1446,8 @@ export class WorldView {
     this.destinations?.dispose();
     this.destinations = null;
     this.focusOn(
-      this.defaultZoom === 34 ? -25 : -20,
-      this.defaultZoom === 34 ? 21 : 19,
+      this.defaultZoom === ECO_ZOOM ? -25 : -20,
+      this.defaultZoom === ECO_ZOOM ? 21 : 19,
     );
     this.zoom = this.defaultZoom;
     this.updateCamera();

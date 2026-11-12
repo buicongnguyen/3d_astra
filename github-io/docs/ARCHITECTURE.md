@@ -49,7 +49,7 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 | `app/frame.js` | The frame loop (simulation steps, event dispatch, camera pan, governor sampling) and alerts |
 | `app/debug-hooks.js` | `window.__frontier`, the opt-in hook for browser tests (`?test`) |
 | `view.js` | Rendering, models, effects, fog, camera |
-| `scatter.js`, `map-edge.js`, `ground-paint.js`, `fog-aware.js`, `visual-style.json` | Map look: palettes, lighting, dressing |
+| `scatter.js`, `map-edge.js`, `ground-paint.js`, `plateau-relief.js`, `fog-aware.js`, `visual-style.json` | Map look: palettes, lighting, dressing; plateau rock faces, lips and road ramps merged into the ground mesh |
 | `faction-colors.js` | Faction colours for mission enemies |
 | `tactics-ui.js`, `tactics-card.js`, `tactics-view.js` | Ability tiles, stances, Barrage aiming, rank marks |
 | `mission-ui.js`, `mission-text.js`, `capture-view.js`, `campaign.js`, `savegame.js` | Campaign interface, progress, autosave |

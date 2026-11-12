@@ -99,7 +99,7 @@ export function planScatter(terrain, budget = 1) {
   return props;
 }
 
-const CAMERA = new THREE.Vector3(22, 56, 38).normalize();
+const CAMERA = new THREE.Vector3(25, 51, 43).normalize(); // view.js CAMERA_OFFSET
 
 // Collects triangles for one block. Solid shapes get flat normals facing away from their
 // centre; foliage is wound to face the (fixed) camera and lit like the ground it grows on.
