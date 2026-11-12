@@ -1,31 +1,23 @@
 import { MIX } from "./audio-mix.js";
-// Synthesised sound effects (no audio files). Each effect is a short recipe of layers:
-//   ["o", wave, hz0, hz1, seconds, volume, delay]            an oscillator gliding hz0 -> hz1
-//   ["n", filter, hz0, hz1, seconds, volume, delay, q]       filtered noise sweeping hz0 -> hz1
-// Every play gets a small random pitch/volume variation (own seeded generator, never the
-// simulation's), a stereo pan and a distance gain from its screen position, and must pass the
-// voice budget (priority + per-sound rate limit). Nothing is created while muted.
-import { VoiceBudget, audible, mulberry32, screenMix, soundFor } from "./audio-logic.js";
+// Sound effects, all made in code (no audio files), two kinds:
+//  * the rendered bank (sfx-bank.js + audio-synth.js): weapons, impacts, explosions, radio replies and
+//    engine loops, rendered once into small AudioBuffers (2 variants each, warmed up in idle time) and
+//    played with one buffer source + gain (+ pan) per play;
+//  * live recipes (below) for UI, abilities and moments, short layers of oscillators and noise:
+//      ["o", wave, hz0, hz1, seconds, volume, delay]            an oscillator gliding hz0 -> hz1
+//      ["n", filter, hz0, hz1, seconds, volume, delay, q]       filtered noise sweeping hz0 -> hz1
+// Every play gets a small random pitch/level variation (own seeded generator, never the simulation's),
+// a stereo pan and a distance gain from its screen position, and must pass the voice budget (global
+// cap, per-group caps, priority, per-sound rate limit). Nothing is created while effects are off.
+import { VoiceBudget, audible, dbToGain, hitFor, mulberry32, nearPriority, screenMix, shouldCull, soundFor } from "./audio-logic.js";
+import { BANK, ENGINE, radioSpec } from "./sfx-bank.js";
+import { SYNTH_RATE, renderEngine, renderSound, specLength } from "./audio-synth.js";
 
 const R = {
-  // Weapons, one signature per weapon identity.
-  "shot:vanguard": [["n", "bandpass", 2400, 900, 0.07, 0.5, 0, 1.2], ["o", "square", 190, 85, 0.06, 0.25, 0]],
-  "shot:ranger": [["n", "highpass", 4200, 2500, 0.05, 0.4, 0], ["o", "sawtooth", 820, 190, 0.13, 0.3, 0], ["o", "sine", 2800, 1500, 0.04, 0.12, 0.01]],
-  "shot:tank": [["o", "sine", 120, 38, 0.32, 0.9, 0], ["n", "lowpass", 1200, 150, 0.28, 0.7, 0], ["o", "square", 340, 110, 0.05, 0.25, 0.02]],
-  "shot:breaker": [["n", "bandpass", 300, 1500, 0.42, 0.55, 0, 0.9], ["o", "sine", 78, 34, 0.45, 0.8, 0], ["o", "sawtooth", 160, 60, 0.2, 0.2, 0.03]],
-  "shot:antitank": [["n", "bandpass", 900, 3200, 0.22, 0.45, 0, 1.4], ["o", "sawtooth", 360, 1100, 0.18, 0.18, 0], ["o", "sine", 100, 45, 0.18, 0.55, 0.12]],
-  "shot:tower": [["o", "triangle", 1100, 260, 0.2, 0.4, 0], ["n", "highpass", 3000, 1400, 0.12, 0.3, 0], ["o", "sine", 2200, 2200, 0.03, 0.12, 0]],
+  // Support "shots" (beams, tools): light, kept live.
   "shot:support": [["o", "sine", 520, 880, 0.18, 0.28, 0], ["o", "sine", 780, 1320, 0.2, 0.18, 0.05]],
   "shot:engineer": [["n", "highpass", 5000, 3500, 0.09, 0.35, 0], ["o", "square", 120, 90, 0.06, 0.15, 0]],
   "shot:worker": [["o", "triangle", 640, 380, 0.05, 0.18, 0], ["n", "bandpass", 1800, 1200, 0.04, 0.2, 0]],
-  // Impacts and explosions.
-  "impact:body": [["n", "lowpass", 1800, 300, 0.08, 0.5, 0], ["o", "sine", 160, 70, 0.07, 0.4, 0]],
-  "impact:building": [["n", "bandpass", 900, 260, 0.14, 0.55, 0, 0.8], ["o", "square", 210, 90, 0.07, 0.25, 0]],
-  "impact:shield": [["o", "sine", 1500, 900, 0.18, 0.3, 0], ["o", "sine", 2250, 1350, 0.14, 0.15, 0.01], ["n", "highpass", 5000, 3000, 0.05, 0.18, 0]],
-  "boom:small": [["o", "sine", 110, 40, 0.28, 0.7, 0], ["n", "lowpass", 2400, 200, 0.3, 0.7, 0]],
-  "boom:heavy": [["o", "sine", 85, 28, 0.55, 1, 0], ["n", "lowpass", 2000, 120, 0.6, 0.8, 0], ["n", "bandpass", 700, 200, 0.25, 0.4, 0.05, 0.7]],
-  "boom:building": [["o", "sine", 70, 24, 0.9, 1, 0], ["n", "lowpass", 1600, 90, 1, 0.85, 0], ["n", "bandpass", 500, 140, 0.5, 0.45, 0.2, 0.6], ["o", "sine", 55, 30, 0.6, 0.5, 0.3]],
-  "boom:strike": [["o", "sine", 95, 30, 0.6, 1, 0], ["n", "lowpass", 2600, 140, 0.55, 0.9, 0], ["n", "highpass", 4000, 1500, 0.2, 0.3, 0]],
   // Construction, production, UI.
   construct: [["n", "bandpass", 2600, 2000, 0.04, 0.35, 0, 3], ["o", "square", 520, 500, 0.04, 0.15, 0], ["n", "bandpass", 2200, 1800, 0.04, 0.3, 0.12, 3]],
   complete: [["o", "triangle", 392, 392, 0.22, 0.4, 0], ["o", "triangle", 494, 494, 0.22, 0.4, 0.09], ["o", "triangle", 587, 587, 0.4, 0.45, 0.18], ["n", "highpass", 4000, 3000, 0.04, 0.2, 0.18]],
@@ -53,43 +45,153 @@ const R = {
   lose: [["o", "triangle", 330, 330, 0.3, 0.4, 0], ["o", "triangle", 262, 262, 0.3, 0.4, 0.28], ["o", "triangle", 196, 196, 0.9, 0.5, 0.56], ["o", "sine", 98, 98, 0.9, 0.4, 0.56]],
   blip: [["o", "sine", 520, 520, 0.065, 0.4, 0]],
 };
-// Priority and rate limit for the effects that are not simulation events.
-const EXTRA = { construct: [4, 0.15], tap: [8, 0.03], select: [7, 0.05], error: [8, 0.1], objective: [8, 0.2], "objective-failed": [8, 0.2], win: [10, 1], lose: [10, 1], blip: [7, 0.07] };
+// Priority, rate limit and group for the effects that are not simulation events.
+const EXTRA = { construct: [4, 0.15, "ui"], tap: [8, 0.03, "ui"], select: [7, 0.05, "ui"], error: [8, 0.1, "ui"], objective: [8, 0.2, "moment"], "objective-failed": [8, 0.2, "moment"], win: [10, 1, "moment"], lose: [10, 1, "moment"], blip: [7, 0.07, "ui"] };
 const duration = (recipe) => recipe.reduce((m, l) => Math.max(m, l[4] + l[6]), 0);
-export const SFX_NAMES = Object.keys(R);
-export const recipeFor = (name) => R[name];
+export const SFX_NAMES = [...Object.keys(R), ...Object.keys(BANK)];
+export const recipeFor = (name) => R[name] || BANK[name];
+export const hasSound = (name) => Object.hasOwn(R, name) || Object.hasOwn(BANK, name);
+// The big, rare explosions keep one rendering (pitch jitter varies them); everything else has two.
+export const variantsFor = (name) => (name.startsWith("boom:") && name !== "boom:small" ? 1 : 2);
+// The voice group of a bank sound played directly (sound tests, the voice-cap check).
+export const groupOf = (name) => (name.startsWith("shot:") ? "weapon" : name.startsWith("impact:") ? "impact" : name.startsWith("hit:") || name.startsWith("boom:") ? "explosion" : "moment");
+// A faction's weapons sound a little different (playback rate of the shared voices).
+export const FACTION_TUNE = { meridian: 1, ashfall: 0.94, sunward: 1.05, wardens: 1.02, veil: 0.97 };
 
 export class Sfx {
   constructor(context, out, { isVisible = () => true, project = null, seed = 20261110 } = {}) {
     this.context = context; this.out = out; this.isVisible = isVisible; this.project = project;
-    this.rnd = mulberry32(seed); this.budget = new VoiceBudget(14);
-    this.enabled = true; this.played = 0; this.dropped = 0;
+    this.rnd = mulberry32(seed); this.budget = new VoiceBudget(MIX.maxVoices, MIX.groupCaps);
+    this.enabled = true; this.played = 0; this.dropped = 0; this.culled = 0;
+    this.buffers = new Map(); this.rendered = 0;
+    this.onPlay = null; // (name, gain, delay) for every effect heard; the director uses it for the music
+    this.engineVoice = null;
     const n = context.sampleRate, buffer = context.createBuffer(1, n, context.sampleRate), data = buffer.getChannelData(0), r = mulberry32(99);
     for (let i = 0; i < n; i++) data[i] = r() * 2 - 1;
     this.noise = buffer;
   }
-  // A simulation event: fog rule, then the sound for it. `pos` mixing comes from the screen.
-  event(event, sim) {
-    if (!this.enabled) return false;
-    const sound = soundFor(event);
-    if (sound && !R[sound.name] && sound.name.startsWith("shot:")) sound.name = sound.name === "shot:medic" ? "shot:support" : "shot:vanguard";
-    if (!sound || !R[sound.name] || !audible(event, (p) => sim.isVisible(p, 0), 0)) return false;
-    const mix = this.project && Number.isFinite(event.x) ? this.project(event.x, event.z) : null;
-    return this.play(sound.name, { pan: mix?.pan, gain: mix?.gain, priority: sound.priority, gap: sound.gap });
+  // The rendered buffer for a bank sound (rendered now if the warm-up has not reached it yet).
+  buffer(key, spec, variant = 0, engine = false) {
+    const id = `${key}#${variant}`;
+    let b = this.buffers.get(id);
+    if (!b) {
+      const data = engine ? renderEngine(spec, { seed: 3 + variant }) : renderSound(spec, { seed: 2 + variant * 7919 });
+      b = this.context.createBuffer(1, data.length, SYNTH_RATE);
+      b.getChannelData(0).set(data);
+      this.buffers.set(id, b); this.rendered++;
+    }
+    return b;
   }
-  play(name, { pan = 0, gain = 1, priority, gap } = {}) {
+  // Renders the common bank sounds a few at a time while the browser is idle, so the first big fight
+  // does not pay for it. The Command core blast renders when it is needed (the match ends there).
+  warm() {
+    if (this.warming) return;
+    const queue = [];
+    for (const name of Object.keys(BANK)) if (name !== "boom:core") for (let v = 0; v < variantsFor(name); v++) queue.push([name, v]);
+    this.warming = true;
+    const idle = globalThis.requestIdleCallback ? (f) => globalThis.requestIdleCallback(f, { timeout: 400 }) : (f) => setTimeout(f, 40);
+    const step = () => {
+      if (!queue.length) { this.warming = false; return; }
+      const [name, v] = queue.shift();
+      try { this.buffer(name, BANK[name], v); } catch { /* audio is optional */ }
+      idle(step);
+    };
+    idle(step);
+  }
+  mixAt(x, z) { return this.project && Number.isFinite(x) && Number.isFinite(z) ? this.project(x, z) : { pan: 0, gain: 1 }; }
+  // A simulation event: fog rule, then the sound for it (and, for heavy rounds, the explosion where
+  // they land). Returns the distance gain of what was heard (0 = nothing).
+  event(event, sim, sourceType = null) {
+    if (!this.enabled) return 0;
+    const sound = soundFor(event, sourceType);
+    if (!sound || !hasSound(sound.name)) return 0;
+    const isVisible = (p) => sim.isVisible(p, 0);
+    let heard = 0;
+    if (audible(event, isVisible, 0)) {
+      const mix = this.mixAt(event.x, event.z);
+      if (shouldCull(sound.group, mix.gain, sound.heavy)) this.culled++;
+      else {
+        const rate = sound.group === "weapon" ? FACTION_TUNE[sim.factions?.[event.team]] || 1 : 1;
+        if (this.play(sound.name, { pan: mix.pan, gain: mix.gain, priority: nearPriority(sound.priority, mix.gain), gap: sound.gap, group: sound.group, rate })) heard = mix.gain;
+      }
+    }
+    const hit = event.type === "shot" ? hitFor(sound.name.slice(5)) : null;
+    if (hit && Number.isFinite(event.tx) && Number.isFinite(event.tz) && (event.team === 0 || isVisible({ x: event.tx, z: event.tz }))) {
+      const mix = this.mixAt(event.tx, event.tz);
+      if (this.play(hit.name, { pan: mix.pan, gain: mix.gain, priority: nearPriority(4, mix.gain), gap: 0.06, group: "explosion", delay: hit.delay })) heard = Math.max(heard, mix.gain);
+    }
+    return heard;
+  }
+  play(name, { pan = 0, gain = 1, priority, gap, group, delay = 0, rate = 1 } = {}) {
+    if (!this.enabled) return false;
+    if (Object.hasOwn(BANK, name)) return this.playBank(name, BANK[name], { pan, gain, priority: priority ?? 3, gap: gap ?? 0, group: group ?? groupOf(name), delay, rate });
     const recipe = R[name], ctx = this.context;
-    if (!this.enabled || !recipe) return false;
+    if (!recipe) return false;
     const extra = EXTRA[name];
-    priority ??= extra?.[0] ?? 3; gap ??= extra?.[1] ?? 0;
-    const now = ctx.currentTime, got = this.budget.tryAcquire(name, priority, now, duration(recipe) + 0.05, gap);
+    priority ??= extra?.[0] ?? 3; gap ??= extra?.[1] ?? 0; group ??= extra?.[2] ?? (name.startsWith("shot:") ? "weapon" : "moment");
+    const now = ctx.currentTime, got = this.budget.tryAcquire(name, priority, now, duration(recipe) + 0.05, gap, group);
     if (!got) { this.dropped++; return false; }
+    got.stolen?.stop?.();
     const pitch = 1 + (this.rnd() * 2 - 1) * MIX.pitchVariation, level = gain * (0.9 + this.rnd() * 0.2);
     let dest = this.out, panner = null;
     if (pan && ctx.createStereoPanner) { panner = ctx.createStereoPanner(); panner.pan.value = Math.max(-1, Math.min(1, pan)); panner.connect(this.out); dest = panner; }
-    for (const layer of recipe) this.layer(layer, now, pitch, level * 0.5, dest);
+    for (const layer of recipe) this.layer(layer, now + delay, pitch, level * 0.5, dest);
     this.played++;
+    this.onPlay?.(name, gain, delay);
     return true;
+  }
+  playBank(key, spec, { pan, gain, priority, gap, group, delay, rate }, variants = variantsFor(key)) {
+    const ctx = this.context, now = ctx.currentTime, variant = variants > 1 ? Math.floor(this.rnd() * variants) % variants : 0;
+    const pitch = Math.max(0.5, rate * (1 + (this.rnd() * 2 - 1) * MIX.pitchVariation));
+    const cached = this.buffers.get(`${key}#${variant}`), length = cached ? cached.duration : specLength(spec);
+    const got = this.budget.tryAcquire(key, priority, now, delay + length / pitch, gap, group);
+    if (!got) { this.dropped++; return false; }
+    got.stolen?.stop?.();
+    const buffer = cached || this.buffer(key, spec, variant);
+    const src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = buffer; src.playbackRate.value = pitch;
+    g.gain.value = MIX.bankLevel * gain * dbToGain((this.rnd() * 2 - 1) * MIX.gainJitterDb);
+    let panner = null;
+    src.connect(g);
+    if (pan && ctx.createStereoPanner) { panner = ctx.createStereoPanner(); panner.pan.value = Math.max(-1, Math.min(1, pan)); g.connect(panner); panner.connect(this.out); }
+    else g.connect(this.out);
+    src.start(now + delay);
+    got.voice.stop = () => { try { const t = ctx.currentTime; g.gain.setTargetAtTime(0, t, 0.015); src.stop(t + 0.08); } catch { /* already stopped */ } };
+    src.onended = () => { src.disconnect(); g.disconnect(); panner?.disconnect(); };
+    this.played++;
+    this.onPlay?.(key, gain, delay);
+    return true;
+  }
+  // A radio reply in the player's ear (not panned): `kind` move | attack | build | contact, in the
+  // faction's tone motif. The rate limit is the caller's (RadioGate in audio-logic.js).
+  radio(kind, faction = "meridian") {
+    if (!this.enabled) return false;
+    const key = `radio:${faction}:${kind}`;
+    return this.playBank(key, radioSpec(kind, faction), { pan: 0, gain: MIX.radio.level, priority: 8, gap: 0, group: "radio", delay: 0, rate: 1 }, 1);
+  }
+  // Engine hum: one looping voice for the player's vehicles. Called a few times a second; level 0
+  // fades it out and, after two quiet seconds, stops the loop so it costs nothing.
+  engine(level, rate = 1, faction = "meridian") {
+    const ctx = this.context, now = ctx.currentTime, e = this.engineVoice;
+    if (!this.enabled || !(level > 0.001)) {
+      if (!e) return;
+      e.gain.gain.setTargetAtTime(0, now, 0.3);
+      e.quietSince ??= now;
+      if (now - e.quietSince > 2) { try { e.src.stop(); } catch { /* stopped */ } this.engineVoice = null; }
+      return;
+    }
+    if (!e || e.faction !== faction) {
+      if (e) { try { e.src.stop(now + 0.3); } catch { /* stopped */ } e.gain.gain.setTargetAtTime(0, now, 0.1); }
+      const src = ctx.createBufferSource(), gain = ctx.createGain();
+      src.buffer = this.buffer(`engine:${faction}`, ENGINE[faction] || ENGINE.meridian, 0, true); src.loop = true;
+      gain.gain.value = 0; src.connect(gain); gain.connect(this.out); src.start(now, this.rnd() * 0.9);
+      src.onended = () => { src.disconnect(); gain.disconnect(); };
+      this.engineVoice = { src, gain, faction, quietSince: null };
+    }
+    const v = this.engineVoice;
+    v.quietSince = null;
+    v.gain.gain.setTargetAtTime(level * MIX.engine.level, now, 0.35);
+    v.src.playbackRate.setTargetAtTime(rate, now, 0.5);
   }
   layer([kind, a, f0, f1, secs, vol, delay = 0, q = 1], now, pitch, level, dest) {
     const ctx = this.context, t = now + delay, g = ctx.createGain(), peak = Math.max(0.0002, vol * level);

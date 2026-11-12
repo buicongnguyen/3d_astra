@@ -222,6 +222,7 @@ export function setupOrders(S, A) {
       clearMode();
       A.setSelection([b.id]);
       if (S.audio) S.audio.sfx.play("construct"); else A.tone(330, 0.15);
+      S.audio?.order("build", S.sim);
     } else {
       S.buildFailure = S.sim.events.slice(previousEvents).findLast(e => e.type === 'message')?.text || 'Select a Harvester to construct this building.';
       A.updateUI();
@@ -231,7 +232,9 @@ export function setupOrders(S, A) {
   // Harvesters start mining on their own, except in Training, which teaches the order.
   // Every player action goes through sim.command (see commands.js).
   function sendOrder(ids, order, append = false) {
-    return S.sim.command({ team: 0, type: "order", ids, order, append });
+    const sent = S.sim.command({ team: 0, type: "order", ids, order, append });
+    if (sent !== false && ids.length) S.audio?.order(order.type, S.sim); // radio reply (rate-limited in audio-logic.js)
+    return sent;
   }
 
   Object.assign(A, { clearMode, enterMode, sendOrder, confirmBuild, enterBuild, commandAt, showBuildPoint });

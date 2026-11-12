@@ -89,7 +89,7 @@ test("every sound an event can ask for has a recipe", () => {
     { type: "strike" }, { type: "built" }, { type: "spawn" }, { type: "promote" }, { type: "point", owner: 0 }, { type: "point", owner: 1 }, { type: "incoming" },
     ...["shieldwall", "focus", "barrage", "overdrive", "lockon", "triage", "fortify"].map((ability) => ({ type: "ability", ability }))];
   for (const e of samples) assert.ok(recipeFor(soundFor(e).name), soundFor(e).name);
-  for (const w of ["vanguard", "ranger", "tank", "breaker", "antitank", "tower"]) assert.ok(recipeFor(`shot:${w}`), w);
+  for (const w of ["vanguard", "ranger", "tank", "breaker", "antitank", "tower"]) assert.ok(recipeFor(soundFor({ type: "shot", weapon: w }).name), w);
   for (const n of ["tap", "select", "error", "construct", "complete", "trained", "objective", "objective-failed", "win", "lose"]) assert.ok(SFX_NAMES.includes(n), n);
   assert.equal(soundFor({ type: "ping" }), null);
 });

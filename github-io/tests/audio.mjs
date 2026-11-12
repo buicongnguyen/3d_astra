@@ -61,17 +61,63 @@ try {
   const fog = await page.evaluate(() => {
     const f = window.__frontier, a = f.audio, sim = f.sim, hq = sim.own(0).find(e => e.type === 'hq');
     const far = { x: -sim.terrain.half + 3, z: -sim.terrain.half + 3 };
-    const at = (p, team) => { a.sfx.budget.voices.length = 0; a.sfx.budget.lastPlayed.clear(); const before = a.sfx.played; a.event({ type: 'shot', weapon: 'tank', source: 0, x: p.x, z: p.z, tx: p.x + 2, tz: p.z, team }, sim); return a.sfx.played - before; };
+    const at = (p, team) => { a.sfx.budget.voices.length = 0; a.sfx.budget.lastPlayed.clear(); a.sfx.budget.recent.clear(); const before = a.sfx.played; a.event({ type: 'shot', weapon: 'tank', source: 0, x: p.x, z: p.z, tx: p.x + 2, tz: p.z, team }, sim); return a.sfx.played - before; };
     return { fogVisible: sim.isVisible(far, 0), fogged: at(far, 1), near: at({ x: hq.x, z: hq.z }, 1), own: at(far, 0) };
   });
   assert.equal(fog.fogVisible, false, 'the corner is fogged');
-  assert.equal(fog.fogged, 0, 'a fogged enemy shot makes no sound');
-  assert.equal(fog.near, 1, 'a visible enemy shot is heard');
-  assert.equal(fog.own, 1, 'our own shot is heard');
+  assert.equal(fog.fogged, 0, 'a fogged enemy shot (and its landing) makes no sound');
+  assert.equal(fog.near, 2, 'a visible enemy tank shot is heard, and the shell landing');
+  assert.ok(fog.own >= 1, 'our own shot is heard');
 
-  // Voice budget: a burst of explosions never exceeds the cap.
-  const burst = await page.evaluate(() => { const a = window.__frontier.audio; for (let i = 0; i < 60; i++) a.sfx.play('boom:heavy', { priority: 5 + (i % 3), gap: 0 }); return a.sfx.budget.active; });
-  assert.ok(burst <= 14, `voice cap holds (${burst})`);
+  // Voice budget: a burst of explosions never exceeds the explosion group's cap or the total.
+  const burst = await page.evaluate(() => { const a = window.__frontier.audio; for (let i = 0; i < 60; i++) a.sfx.play('boom:heavy', { priority: 5 + (i % 3), gap: 0 }); return { all: a.sfx.budget.active, explosions: a.sfx.budget.count('explosion') }; });
+  assert.ok(burst.all <= 24 && burst.explosions <= 8, `voice cap holds (${JSON.stringify(burst)})`);
+
+  // A staged big fight by the camera: every weapon class, impacts, vehicle losses and a Barrage for
+  // 2.5 s. Voices stay under the cap, loud blasts duck the music and the combat layer comes in.
+  const fightScript = async (steps) => {
+    const f = window.__frontier, a = f.audio, sim = f.sim, c = f.view.focus;
+    const weapons = ['ranger', 'tank', 'breaker', 'antitank', 'vanguard', 'tower', 'scorcher', 'scrapper', 'shade', 'medic'];
+    const out = { maxVoices: 0, maxWeapon: 0, maxExplosion: 0, minDuck: 0, played: a.sfx.played, dropped: a.sfx.dropped };
+    for (let step = 0; step < steps; step++) {
+      for (let i = 0; i < 8; i++) {
+        const x = c.x + (i % 4) * 2 - 3, z = c.z + Math.floor(i / 4) * 2 - 1;
+        a.event({ type: 'shot', weapon: weapons[(i + step) % weapons.length], x, z, tx: x + 4, tz: z + 1, team: 0 }, sim);
+        a.event({ type: 'impact', x: x + 4, z: z + 1, team: 1 }, sim);
+      }
+      if (step % 4 === 0) a.event({ type: 'death', heavy: true, x: c.x + 2, z: c.z, team: 0 }, sim);
+      if (step === 10) a.event({ type: 'strike', x: c.x, z: c.z, radius: 4, team: 0 }, sim);
+      await new Promise(r => setTimeout(r, 50));
+      const b = a.sfx.budget, now = a.context.currentTime;
+      b.voices = b.voices.filter(v => v.end > now);
+      out.maxVoices = Math.max(out.maxVoices, b.active); out.maxWeapon = Math.max(out.maxWeapon, b.count('weapon')); out.maxExplosion = Math.max(out.maxExplosion, b.count('explosion'));
+      out.minDuck = Math.min(out.minDuck, a.duckDb);
+    }
+    out.played = a.sfx.played - out.played; out.dropped = a.sfx.dropped - out.dropped;
+    out.combat = a.music.combatLevel; out.mood = a.music.mood; out.battleLayer = a.music.layers.battle.target;
+    return out;
+  };
+  const combatNotes = await page.evaluate(() => window.__frontier.audio.music.combatNotes);
+  const fight = await page.evaluate(fightScript, 50);
+  console.log('staged fight:', JSON.stringify(fight));
+  assert.ok(fight.played > 40, `the fight is heard (${fight.played} effects)`);
+  assert.ok(fight.dropped > 0, 'the voice caps had to drop some effects');
+  assert.ok(fight.maxVoices <= 24 && fight.maxWeapon <= 12 && fight.maxExplosion <= 8, `voices under the caps (${fight.maxVoices}/${fight.maxWeapon}/${fight.maxExplosion})`);
+  assert.ok(fight.minDuck < -2, `loud blasts duck the music (${fight.minDuck} dB)`);
+  assert.equal(fight.mood, 'battle');
+  assert.ok(fight.combat > 0.9 && fight.battleLayer > 0.5, `the music switches to the combat layer (${fight.combat})`);
+  await page.waitForFunction(n => window.__frontier.audio.music.combatNotes > n, combatNotes, { timeout: 8000 });
+
+  // Radio replies: a burst of orders gets one reply; the gate then holds the next ones back.
+  const radio = await page.evaluate(() => {
+    const a = window.__frontier.audio, sim = window.__frontier.sim;
+    a.radioGate.last = -Infinity; a.radioGate.byKind.clear();
+    const before = a.radios, results = [];
+    for (let i = 0; i < 6; i++) results.push(a.order(i % 2 ? 'move' : 'attack', sim));
+    return { added: a.radios - before, results, rendered: a.sfx.buffers.has(`radio:${sim.factions?.[0] || 'meridian'}:attack#0`) };
+  });
+  assert.equal(radio.added, 1, `one radio reply for a burst of orders (${radio.results})`);
+  assert.equal(radio.rendered, true, 'the reply was rendered in the player faction voice');
 
   // Mute stops scheduling and effects; unmuting restarts it.
   await page.click('#audio');
@@ -84,6 +130,11 @@ try {
   await page.evaluate(() => { const f = window.__frontier; f.sim.events.push({ type: 'shot', weapon: 'tank', source: 0, x: 0, z: 0, tx: 1, tz: 1, team: 0 }); });
   await page.waitForTimeout(300);
   assert.equal((await ac()).osc, s.osc, 'muted: effects create nothing');
+  // Sound off: the same staged fight and an order are silent and error-free.
+  const silent = await page.evaluate(fightScript, 12);
+  assert.equal(silent.played, 0, 'muted: the fight plays no effects');
+  assert.equal(await page.evaluate(() => { const a = window.__frontier.audio; a.radioGate.last = -Infinity; a.radioGate.byKind.clear(); return a.order('move', window.__frontier.sim); }), false, 'muted: no radio reply');
+  assert.equal((await ac()).osc, s.osc, 'muted: the fight creates no oscillators');
   await page.click('#audio');
   await page.waitForFunction(() => window.__frontier.audio.music.active === true, null, { timeout: 5000 });
   const resumed = (await ac()).scheduled;
@@ -153,7 +204,8 @@ await suite('audio mix',async()=>{
       const accepted=Array.from({length:4},()=>a.sfx.play('tap',{gap:0}));
       a.combatMix.times=[];
       a.sfx.budget.recent.clear();a.sfx.budget.lastPlayed.clear();a.sfx.budget.voices=[];
-      for(const weapon of ['ranger','tank','breaker','antitank','vanguard','tower','worker']) a.event({type:'shot',weapon,team:0,x:0,z:0},f.sim);
+      const c=f.view.focus;
+      for(const weapon of ['ranger','tank','breaker','antitank','vanguard','tower','worker']) a.event({type:'shot',weapon,team:0,x:c.x,z:c.z},f.sim);
       a.update(0,{sim:f.sim,settings:f.settings,started:true,paused:true,hidden:false,mapId:f.sim.terrain.id});
       return {accepted,gain:a.combatGain,overflow:document.documentElement.scrollWidth>innerWidth};
     });

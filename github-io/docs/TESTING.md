@@ -55,7 +55,7 @@ Real phones, real audio output and sound taste. Touch tests use browser emulatio
 
 - `test:feel`: harness-based portrait test for all eight projected unit bounds, Barrage shake/decay, disabled motion, camera cues, camera restoration and render-only hit-stop.
 - `test:campaign`: additionally checks difficulty selection, persistence, Vietnamese and 44 px controls at desktop, portrait and landscape.
-- `test:audio`: additionally checks the burst limiter, combat ducking and seven cue buttons at all three viewports.
+- `test:audio`: additionally checks the burst limiter, combat ducking and seven cue buttons at all three viewports, and (2026-11-13) a staged big fight by the camera: voices under the caps (24 total, 12 weapons, 8 explosions), blasts duck the music, the combat music layer comes in, a burst of orders gets one radio reply, and the same fight is silent and error-free with sound off. `tests/audio-weight.test.js` covers the mixing rules and the rendered bank (levels, explosion sizes, seamless engine loops).
 - `check:missions -- --difficulty story|standard|veteran`: per-difficulty bot tables. The plan requires 10/12 Veteran objective wins and all passive players surviving 150 seconds, but the checker remains stricter: any individual failure produces a nonzero exit.
 - `node tools/skirmish-bench.mjs`: 48 games; `--speeds`, `--maps`, `--attack-at` narrow an investigation without changing default coverage.
 

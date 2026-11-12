@@ -1,7 +1,7 @@
 import { MIX, SOUND_TESTS } from "../audio-mix.js";
 // Browser audio context, UI tones and the audio clock (sleeps while paused or hidden).
 import { Ambience, audioPower } from "../ambience.js";
-import { screenMix } from "../audio-logic.js";
+import { spatialMix } from "../audio-logic.js";
 
 export function setupSound(S, A) {
   const Z = S.screen;
@@ -45,7 +45,11 @@ export function setupSound(S, A) {
         const context = S.audioContext;
         audioLoading = import("../audio.js").then(({ AudioDirector }) => {
           if (S.audio) return;
-          S.audio = new AudioDirector(context, { project: (x, z) => { const p = S.view.project(x, z, 0.5); return screenMix(p.x, p.y, S.view.width, S.view.height); } });
+          // Pan and distance gain from the screen position and the camera's zoom; the selection feeds the engine hum.
+          S.audio = new AudioDirector(context, {
+            project: (x, z) => { const p = S.view.project(x, z, 0.5); return spatialMix(p.x, p.y, S.view.width, S.view.height, S.view.zoom); },
+            selected: () => S.selected,
+          });
           S.audio.applySettings(S.settings);
         }).catch(() => { audioLoading = null; });
       }
