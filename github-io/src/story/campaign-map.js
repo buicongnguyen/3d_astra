@@ -15,7 +15,8 @@ export function mapLayout(missions) {
     const mid = (band.top + band.bottom) / 2 + 3;
     list.forEach((m, i) => {
       const k = n === 1 ? 0.5 : i / (n - 1), east = act !== 2;
-      out[m.id] = { x: round1(12 + (east ? k : 1 - k) * 74), y: round1(mid + (i % 2 ? 4 : -4)) };
+      // At most 84% down: a 44 px node stays inside the shortest phone board (150 px).
+      out[m.id] = { x: round1(12 + (east ? k : 1 - k) * 74), y: round1(Math.min(84, mid + (i % 2 ? 4 : -4))) };
     });
   }
   return out;

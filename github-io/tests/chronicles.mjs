@@ -12,6 +12,8 @@ import { CHRONICLES } from "../src/story/chronicles.js";
 
 const KEY = "frontier-campaign-v2", SETTINGS = "frontier-command.settings.v1";
 const progressWith = (count, extra = {}) => ({ cleared: Object.fromEntries(MISSIONS.slice(0, count).map((m, i) => [m.id, { time: 300 + i * 30, medal: "silver", difficulty: "standard" }])), ...extra });
+// Act 1 ends with the mission that opens the chronicles (its place moves as missions are inserted).
+const ACT1 = MISSIONS.findIndex((m) => m.id === CHRONICLES[0].unlockAfter) + 1;
 const chron = (id) => CHRONICLES.find((c) => c.id === id);
 const cleared = (id, n) => ({ cleared: chron(id).missions.slice(0, n).map((m) => m.id), done: n === 3, best: Object.fromEntries(chron(id).missions.slice(0, n).map((m) => [m.id, { time: 400, medal: "gold", difficulty: "standard" }])) });
 const ROSTER = { sunward: "rider", veil: "shade", ashfall: "scrapper", wardens: "drone" };
@@ -64,7 +66,7 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
     };
 
     // 1. Act 1 not finished: four locked cards that name the mission that opens them, and the list section.
-    await load(progressWith(3));
+    await load(progressWith(ACT1 - 1));
     await campaign();
     const locked = await page.evaluate(() => ({ cards: [...document.querySelectorAll(".chron-card")].map((c) => [c.dataset.chronicle, c.disabled, c.classList.contains("locked")]), entries: [...document.querySelectorAll(".chron-entry")].map((b) => b.disabled), title: document.querySelector(".chron-card").title, lock: document.querySelector(".chron-entry .chron-lock")?.textContent }));
     assert.deepEqual(locked.cards, [["ashfall", true, true], ["sunward", true, true], ["wardens", true, true], ["veil", true, true]]);
@@ -75,7 +77,7 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
     await shot(page, `chronicles-map-locked-${viewport}`);
 
     // 2. Act 1 cleared, one Sunward mission won: every card open, Sunward's first pip lit.
-    await load(progressWith(4, { chronicles: { sunward: cleared("sunward", 1), veil: cleared("veil", 3) } }));
+    await load(progressWith(ACT1, { chronicles: { sunward: cleared("sunward", 1), veil: cleared("veil", 3) } }));
     await campaign();
     const open = await page.evaluate(() => ({ cards: [...document.querySelectorAll(".chron-card")].map((c) => [c.dataset.chronicle, c.disabled, [...c.querySelectorAll(".chron-pips i.on")].length, c.classList.contains("done")]) }));
     assert.deepEqual(open.cards, [["ashfall", false, 0, false], ["sunward", false, 1, false], ["wardens", false, 0, false], ["veil", false, 3, true]]);
@@ -119,7 +121,7 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
 
     // The cards and the list in Vietnamese (desktop): locked text and pips read in Vietnamese.
     if (viewport === "desktop") {
-      await load(progressWith(3));
+      await load(progressWith(ACT1 - 1));
       await page.evaluate((k) => { const s = JSON.parse(localStorage.getItem(k) || "{}"); s.language = "vi"; localStorage.setItem(k, JSON.stringify(s)); }, SETTINGS);
       await page.reload(); await ready();
       await campaign();
@@ -134,7 +136,7 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
     }
 
     // 5. Veil: the first mission, no base, on the Veil roster.
-    await load(progressWith(4));
+    await load(progressWith(ACT1));
     await campaign();
     await tap(mobile ? '.chron-entry[data-chronicle="veil"]' : '.chron-card[data-chronicle="veil"]');
     await page.locator(".chron-missions").waitFor({ state: "visible" });
@@ -151,7 +153,7 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
   // chronicle (debrief, progress), then the list shows it done and the main campaign is one tap away.
   const { page, goto, ready, tap, errors } = await openPage(browser, "desktop");
   await goto();
-  await page.evaluate(([k, v]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); }, [KEY, progressWith(4, { chronicles: { ashfall: cleared("ashfall", 2) } })]);
+  await page.evaluate(([k, v]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); }, [KEY, progressWith(ACT1, { chronicles: { ashfall: cleared("ashfall", 2) } })]);
   await page.reload(); await ready();
   await tap('[data-mode="campaign"]');
   await tap('.chron-card[data-chronicle="ashfall"]');
@@ -192,7 +194,7 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
   if (process.env.CHRONICLES_ALL) for (const viewport of ["desktop", "portrait"]) for (const id of ["ashfall", "wardens"]) {
     const p = await openPage(browser, viewport);
     await p.goto();
-    await p.page.evaluate(([k, v]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); }, [KEY, progressWith(4)]);
+    await p.page.evaluate(([k, v]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); }, [KEY, progressWith(ACT1)]);
     await p.page.reload(); await p.ready();
     await p.tap('[data-mode="campaign"]');
     await p.tap(`.chron-entry[data-chronicle="${id}"]`);
