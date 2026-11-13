@@ -81,7 +81,8 @@ try {
     await press('#modal [data-resume]');
     if (!touch) {
       // Keyboard focus stays visible on the pressed mode card, whose own shadow once replaced the ring.
-      await page.focus('#scenario'); await page.keyboard.press('Shift+Tab'); await page.keyboard.press('Shift+Tab');
+      // Back from the battlefield list over Defence and Campaign to Skirmish.
+      await page.focus('#scenario'); await page.keyboard.press('Shift+Tab'); await page.keyboard.press('Shift+Tab'); await page.keyboard.press('Shift+Tab');
       assert.equal(await page.evaluate(() => { const e = document.activeElement, s = getComputedStyle(e);
         return [e.dataset.mode, e.getAttribute('aria-pressed'), e.matches(':focus-visible'), s.outlineStyle, parseFloat(s.outlineWidth) >= 2].join(); }), 'skirmish,true,true,solid,true');
     }

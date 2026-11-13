@@ -5,6 +5,8 @@ import assert from "node:assert/strict";
 import { DEFENCE_KEY, loadDefence, saveDefence, recordDefence, starsOf, levelOpen, totalStars, OPEN_FROM_START } from "../src/defence/progress.js";
 import { DEFENCE_LEVELS } from "../src/defence/levels.js";
 import { MODES, MENU_LEGAL, isLegalMenuMove } from "../src/app/screens.js";
+import { writeSave, readSave, SAVE_KEY } from "../src/savegame.js";
+import { Simulation } from "../src/simulation.js";
 
 const memory = (text = null) => {
   const data = new Map(text === null ? [] : [[DEFENCE_KEY, text]]);
@@ -47,4 +49,20 @@ test("Defence is the fourth start-screen mode and moves freely with the others",
   for (const from of MODES) assert.ok(isLegalMenuMove(from, "defence") && isLegalMenuMove("defence", from), from);
   assert.ok(!isLegalMenuMove("defence", "briefing"));
   assert.deepEqual(MENU_LEGAL.defence, MODES);
+});
+
+test("a defence match autosaves and offers Continue with its level", () => {
+  const level = DEFENCE_LEVELS[1], store = memory();
+  const sim = new Simulation({ map: level.map, enemyCount: 1, ai: false, mission: level });
+  sim.command({ team: 0, type: "padBuild", pad: level.defence.pads[0].id, crew: "ranger" });
+  for (let i = 0; i < 40; i++) sim.tick(0.05);
+  assert.ok(writeSave({ mode: "defence", missionId: level.id, sim }, store));
+  const save = readSave(store);
+  assert.equal(save.mode, "defence");
+  assert.equal(save.missionId, level.id);
+  assert.equal(save.map, "bridges");
+  const loaded = Simulation.load(save.text);
+  assert.equal(loaded.hash(), sim.hash());
+  assert.equal(loaded.missionDef.id, level.id);
+  assert.ok(store.data.has(SAVE_KEY));
 });

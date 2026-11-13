@@ -6,19 +6,10 @@
 //    command card; lives, wave and countdown chips, Call wave and Overview on the battlefield;
 //  - the result screen with stars, and the progress record.
 // The rules are in src/sim/defence.js; this module only reads the match and sends commands.
+// Everything it needs from the always-loaded app arrives as `deps` (app/defence-entry.js): a
+// shared import would make the bundler split those modules, and their CSS, into a new chunk.
 import * as THREE from "three";
 import "../defence-ui.css";
-import { $ } from "./dom.js";
-import { GARRISONS, starsFor } from "../sim/defence.js";
-import { DEFINITIONS as D } from "../data.js";
-import { hasPortrait, portrait } from "../portraits.js";
-import { icon } from "../icons.js";
-import { ACTION_KEYS } from "../hotkeys.js";
-import { DEFENCE_LEVELS } from "../defence/levels.js";
-import { loadDefence, recordDefence, saveDefence } from "../defence/progress.js";
-import { statTile, formatClock } from "../results-ui.js";
-import { DIFFICULTY_LABELS } from "../difficulty.js";
-import { FACTIONS } from "../story/world.js";
 
 // Tier trims multiply the tower's paint (never a material swap: the batches stay as they are).
 export const TIER_TINT = { 1: [1.08, 0.94, 0.8], 2: [0.92, 0.99, 1.1], 3: [1.25, 1.1, 0.62] };
@@ -42,7 +33,8 @@ const PAD_NOTE = {
 };
 const PICK_RADIUS = 26; // px: the nearest pad within this distance of a tap is picked
 
-export function createDefenceUI(S, A) {
+export function createDefenceUI(S, A, deps) {
+  const { $, GARRISONS, starsFor, D, hasPortrait, portrait, icon, ACTION_KEYS, DEFENCE_LEVELS, loadDefence, recordDefence, saveDefence, statTile, formatClock, DIFFICULTY_LABELS, FACTIONS } = deps;
   const Z = S.screen, root = document.documentElement;
   let pads = null, bar = null, seen = null, overview = false, leakAt = -Infinity, affordable = false, burstTier = 0;
   const color = new THREE.Color();
@@ -291,10 +283,22 @@ export function createDefenceUI(S, A) {
   }
 
   // Range of the picked tower (or of a Ranger nest on the picked pad), on the existing preview disc.
+  // The build preview of the other modes is borrowed: its look is put back when the ring goes.
+  let ring = null;
+  function hideRing() {
+    if (!ring) return;
+    const preview = S.view.preview;
+    preview.visible = false;
+    preview.scale.set(1, 1, 1);
+    preview.material.opacity = ring.opacity;
+    preview.material.color.setHex(ring.color);
+    ring = null;
+  }
   function rangeRing(es) {
     const t = es.length === 1 && es[0].crew ? es[0] : null, pad = !t && S.defencePad ? S.sim.padById(S.defencePad) : null, at = t || pad;
     const preview = S.view.preview;
-    if (!at || S.mode) { if (!S.mode) preview.visible = false; return; }
+    if (!at || S.mode) { hideRing(); return; }
+    ring ||= { opacity: preview.material.opacity, color: preview.material.color.getHex() };
     const reach = (t ? t.range : S.sim.garrisonStats("ranger", 1).range) + (S.view.terrain.level(at.x, at.z) ? 2 : 0);
     preview.visible = true;
     preview.position.set(at.x, S.view.terrain.heightAt(at.x, at.z) + 0.12, at.z);
@@ -335,6 +339,7 @@ export function createDefenceUI(S, A) {
   }
   // Not a defence match (any more): take the pads and the bar away.
   function idle() {
+    hideRing();
     disposePads();
     if (bar) bar.hidden = true;
     delete $("commands").dataset.tier;

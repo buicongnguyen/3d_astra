@@ -5,10 +5,18 @@
 import "../defence-menu.css";
 import { $ } from "./dom.js";
 import { DEFENCE_LEVELS } from "../defence/levels.js";
-import { loadDefence, starsOf, levelOpen } from "../defence/progress.js";
+import { loadDefence, saveDefence, recordDefence, starsOf, levelOpen } from "../defence/progress.js";
 import { icon } from "../icons.js";
 import { FACTIONS } from "../story/world.js";
 import { DIFFICULTY_LABELS } from "../difficulty.js";
+import { GARRISONS, starsFor } from "../sim/defence.js";
+import { DEFINITIONS as D } from "../data.js";
+import { hasPortrait, portrait } from "../portraits.js";
+import { ACTION_KEYS } from "../hotkeys.js";
+import { statTile, formatClock } from "../results-ui.js";
+
+// What the lazy match interface uses from the main bundle (see app/defence-ui.js).
+const DEPS = { $, GARRISONS, starsFor, D, hasPortrait, portrait, icon, ACTION_KEYS, DEFENCE_LEVELS, loadDefence, recordDefence, saveDefence, statTile, formatClock, DIFFICULTY_LABELS, FACTIONS };
 
 export const DEFENCE_DIFFICULTY = {
   story: "Smaller waves and more alloy to start.",
@@ -23,7 +31,7 @@ export function setupDefenceEntry(S, A) {
   let ui = null, loading = null;
   // The match interface, imported once; every later call is immediate.
   function load() {
-    loading ??= import("./defence-ui.js").then((m) => (ui = m.createDefenceUI(S, A)));
+    loading ??= import("./defence-ui.js").then((m) => (ui = m.createDefenceUI(S, A, DEPS)));
     return loading;
   }
   const level = () => DEFENCE_LEVELS[S.defencePick] || DEFENCE_LEVELS[0];

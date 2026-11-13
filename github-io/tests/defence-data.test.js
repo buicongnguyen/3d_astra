@@ -111,3 +111,13 @@ test("every string a level shows has a Vietnamese entry", () => {
   }
   for (const g of Object.values(GARRISONS.crews)) assert.notEqual(translate(g.name, "vi"), g.name, g.name);
 });
+
+test("defence maps borrow the look, life and score of the skirmish map they name", async () => {
+  const { flavourFor, MAP_FLAVOUR } = await import("../src/audio-logic.js");
+  const { themeFor } = await import("../src/visual-style.js");
+  for (const [id, m] of Object.entries(DEFENCE_MAPS)) {
+    assert.ok(MAPS[m.look] !== undefined, `${id}: look ${m.look}`);
+    assert.equal(flavourFor(id), MAP_FLAVOUR[m.look], `${id}: score`);
+    assert.equal(themeFor(id), themeFor(m.look), `${id}: palette`);
+  }
+});
