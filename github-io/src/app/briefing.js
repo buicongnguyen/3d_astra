@@ -4,9 +4,10 @@ import { saveSettings } from "../settings.js";
 import { $ } from "./dom.js";
 import { AI_SPEEDS } from "../ai-plan.js";
 import { MAPS } from "../terrain.js";
-import { MISSIONS, missionIndex, isUnlocked, isCleared, bestMedal, bestTime, ACTS } from "../campaign.js";
+import { MISSIONS, missionIndex, isUnlocked, isCleared, bestMedal, bestTime, ACTS, resolveMission } from "../campaign.js";
 import { icon } from "../icons.js";
 import { medalBadge, clock as missionClock } from "../mission-ui.js";
+import { campaignMapHTML, missionChoices } from "../campaign-map-ui.js";
 import { readSave } from "../savegame.js";
 import { teamColors } from "../faction-colors.js";
 
@@ -56,11 +57,17 @@ export function setupBriefing(S, A) {
     const card = (m, i) => {
       const open = isUnlocked(S.campaign, i), done = isCleared(S.campaign, i), medal = bestMedal(S.campaign, i);
       const state = done ? `${medalBadge(medal)}${S.campaign.cleared[m.id]?.difficulty === "veteran" ? '<span title="Veteran clear" aria-label="Veteran clear">★</span>' : ""}<span translate="no">${missionClock(bestTime(S.campaign, i))}</span>` : open ? "" : icon("lock");
-      return `<li><button data-stage="${i}" data-mission="${m.id}"${i === S.stagePick ? ' aria-current="true"' : ""}${open ? "" : " disabled"}${open ? "" : ' title="Clear the previous mission to unlock"'}><b>${i + 1}</b><span><strong>${m.title}</strong><small>${mapName(m.map)}</small></span><em${done ? ` data-medal="${medal}"` : ""}>${state}</em></button></li>`;
+      // A decision taken in this mission (0.19a): a small mark, with the order as its title.
+      const choices = missionChoices(S.campaign, m.id).map((c) => `<span class="stage-choice" title="${c.option.label.replace(/"/g, "&quot;")}"><i class="cmap-choice ${c.option.mercy ? "mercy" : "firm"}" aria-hidden="true"></i><span>${c.option.mercy ? "Merciful" : "Firm"}</span></span>`).join("");
+      return `<li><button data-stage="${i}" data-mission="${m.id}"${i === S.stagePick ? ' aria-current="true"' : ""}${open ? "" : " disabled"}${open ? "" : ' title="Clear the previous mission to unlock"'}><b>${i + 1}</b><span><strong>${m.title}</strong><small>${mapName(m.map)}${choices}</small></span><em${done ? ` data-medal="${medal}"` : ""}>${state}</em></button></li>`;
     };
     $("campaign-setup").innerHTML = ACTS.map(({ act, title }) =>
       `<section class="act" aria-labelledby="act-${act}"><h3 class="act-title" id="act-${act}"><span>ACT ${act}</span> <strong>${title}</strong></h3><ol class="stage-list" aria-label="Campaign missions">${MISSIONS.map((m, i) => (m.act === act ? card(m, i) : "")).join("")}</ol></section>`).join("");
+    // The campaign map in the hero (campaign-map-ui.js); redrawn only when what it shows changed.
+    const map = campaignMapHTML({ progress: S.campaign, pick: S.stagePick });
+    if (mapShown !== map) { mapShown = map; $("campaign-map").innerHTML = map; }
   }
+  let mapShown = "";
 
   function renderBriefing() {
     const setup = battleSetup(), inCampaign = S.playMode === "campaign";
@@ -71,6 +78,9 @@ export function setupBriefing(S, A) {
     $("skirmish-setup").hidden = S.playMode !== "skirmish";
     $("campaign-setup").hidden = !inCampaign;
     $("campaign-difficulty").hidden = !inCampaign;
+    // Campaign shows the campaign map where the key art is.
+    $("briefing").classList.toggle("campaign-view", inCampaign);
+    $("campaign-map").hidden = !inCampaign;
     for (const button of document.querySelectorAll('[data-difficulty]')) button.setAttribute('aria-pressed', String(button.dataset.difficulty === S.settings.campaignDifficulty));
     $("difficulty-description").textContent = DIFFICULTY_DESCRIPTIONS[S.settings.campaignDifficulty];
     $("training-setup").hidden = S.playMode !== "training";
@@ -148,6 +158,16 @@ export function setupBriefing(S, A) {
       const button = event.target.closest("[data-stage]");
       if (!button || button.disabled || Z.started) return;
       S.stagePick = Number(button.dataset.stage);
+      previewBattle();
+    };
+    // The map's relay nodes pick a mission like the list; a seen ending replays its epilogue.
+    $("campaign-map").onclick = (event) => {
+      if (Z.started) return;
+      const ending = event.target.closest("[data-ending]");
+      if (ending) { A.showEpilogue(ending.dataset.ending); return; }
+      const node = event.target.closest("[data-map-stage]");
+      if (!node || node.disabled) return;
+      S.stagePick = Number(node.dataset.mapStage);
       previewBattle();
     };
   };

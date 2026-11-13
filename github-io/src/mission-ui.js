@@ -8,6 +8,7 @@ import { icon } from "./icons.js";
 import { castPortrait, castName, castRole } from "./cast-portraits.js";
 import { statTile, matchStatTiles } from "./results-ui.js";
 import { clock, pointLabel, objectiveProgress, DialogueQueue } from "./mission-text.js";
+import { flagMatches } from "./story/choices.js";
 
 export { clock, pointLabel };
 
@@ -91,7 +92,8 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
     q("mb-name").textContent = mission.title;
     q("mb-portrait").dataset.who = "";
     q("mb-intel").innerHTML = (mission.briefing.intel || []).map((text) => `<li>${esc(text)}</li>`).join("");
-    q("mb-objectives").innerHTML = mission.objectives.filter((o) => !o.hidden)
+    // An objective that waits on a decision made in this mission (an `if` left by resolveMission) is not known yet.
+    q("mb-objectives").innerHTML = mission.objectives.filter((o) => !o.hidden && !o.if)
       .map((o) => `<li${o.optional ? ' class="optional"' : ""}><span>${esc(objectiveText(o,difficulty))}</span>${o.optional ? "<em>Optional</em>" : ""}</li>`).join("");
     for (const node of behind()) if (node) node.inert = true;
     overlay.hidden = false;
@@ -324,15 +326,19 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
   }
 
   // ---------------------------------------------------------------- Debrief
-  function debriefHTML({ mission, index, total, sim, win, best, hasNext, stats }) {
+  // `epilogue`: the ending reached when the finale is won; its button opens the epilogue cards.
+  function debriefHTML({ mission, index, total, sim, win, best, hasNext, stats, epilogue = null }) {
     const status = sim.missionStatus() || [], medal = win ? sim.mission.medal || "bronze" : null;
-    const lines = (win ? mission.debrief?.win : mission.debrief?.lose) || [];
+    // Lines may depend on a decision taken in this mission (earlier ones were settled before it began).
+    const lines = ((win ? mission.debrief?.win : mission.debrief?.lose) || []).filter((line) => flagMatches(line.if, sim.flags));
     const marks = { done: icon("check"), failed: icon("close"), active: "" };
     const objectives = status.map((o) => `<li class="${o.state}${o.optional ? " optional" : ""}"><i>${marks[o.state] || ""}</i><span>${esc(o.text)}</span>${o.optional ? "<em>Optional</em>" : ""}</li>`).join("");
     const talk = lines.map((line) => `<div class="debrief-line">${castPortrait(line.who)}<div><strong>${esc(castName(line.who))}</strong><p>${esc(line.text)}</p></div></div>`).join("");
     const buttons = win && hasNext
       ? `<button class="primary" data-next-mission><span>Next mission</span>${icon("arrow")}</button><button class="secondary" data-restart>Retry</button><button class="secondary" data-new-game>Campaign</button>`
-      : `<button class="primary" data-restart><span>Retry</span>${icon("arrow")}</button><button class="secondary" data-new-game>Campaign</button>`;
+      : win && epilogue
+        ? `<button class="primary" data-epilogue="${esc(epilogue)}"><span>Epilogue</span>${icon("arrow")}</button><button class="secondary" data-restart>Retry</button><button class="secondary" data-new-game>Campaign</button>`
+        : `<button class="primary" data-restart><span>Retry</span>${icon("arrow")}</button><button class="secondary" data-new-game>Campaign</button>`;
     const seconds = sim.mission.clock ?? sim.time;
     return `<div class="debrief ${win ? "won" : "lost"}" data-result="${win ? "victory" : "defeat"}"${medal ? ` data-medal="${medal}"` : ""}>
       <span class="eyebrow">MISSION ${two(index + 1)} · ${win ? "COMPLETE" : "FAILED"}</span>

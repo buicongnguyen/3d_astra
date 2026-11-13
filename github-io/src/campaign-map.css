@@ -1,0 +1,201 @@
+/* Campaign map (campaign-map-ui.js). It takes the key art's place in the start screen's hero while
+   Campaign is chosen: map above, mission copy below. Text 11 px or more, nodes 44 px, no sideways
+   scroll; the "next" pulse stops under :root.motion-off (style.css) and reduced motion. */
+#briefing.campaign-view .briefing-art,
+#briefing.campaign-view .briefing-hero::after { display: none; }
+#briefing.campaign-view .briefing-hero {
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(120% 80% at 70% 0%, rgba(29, 67, 84, 0.6), transparent 60%),
+    linear-gradient(180deg, #071822, var(--ink-0));
+}
+#campaign-map { display: flex; flex: 1 1 auto; min-height: 0; }
+#briefing.campaign-view .briefing-copy { position: relative; padding: 12px 32px 22px; }
+#briefing.campaign-view .briefing h2,
+#briefing.campaign-view .briefing-copy h2 { margin: 4px 0 6px; font-size: clamp(24px, 2.4vw, 32px); }
+#briefing.campaign-view .briefing-copy p { margin-bottom: 10px; font-size: 15px; }
+
+.cmap { display: flex; flex-direction: column; gap: 8px; width: 100%; min-width: 0; min-height: 0; padding: 18px 22px 0; }
+.cmap-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+.cmap-head .eyebrow { font: 700 12px/1.2 var(--font-ui); letter-spacing: 0.16em; color: var(--gold-2); }
+.cmap-head strong { font: 800 18px/1.2 var(--font-display); color: #fff; }
+.cmap-count { margin-left: auto; font: 700 12px/1.2 var(--font-ui); font-variant-numeric: tabular-nums; color: var(--mint, #92ebc5); }
+
+.cmap-board {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 210px;
+  overflow: hidden;
+  border: 1px solid var(--line-1);
+  border-radius: var(--r-m);
+  background: #0a1f28;
+  container-type: inline-size;
+}
+.cmap-ground { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cmap-band.band-1 { fill: rgba(47, 143, 154, 0.08); }
+.cmap-band.band-2 { fill: rgba(178, 106, 60, 0.07); }
+.cmap-band.band-3 { fill: rgba(138, 165, 156, 0.08); }
+.cmap-rule { stroke: rgba(168, 214, 212, 0.16); stroke-width: 1; stroke-dasharray: 4 6; }
+.cmap-land { opacity: 0.9; }
+.cmap-river { fill: none; stroke: rgba(79, 190, 210, 0.35); stroke-width: 6; stroke-linecap: round; }
+.cmap-route { stroke-width: 3; stroke-linecap: round; }
+.cmap-route.lit { stroke: var(--mint, #92ebc5); }
+.cmap-route.dim { stroke: rgba(168, 214, 212, 0.28); stroke-dasharray: 3 6; }
+.cmap-keystone { fill: rgba(255, 199, 94, 0.18); }
+
+.cmap-act {
+  position: absolute;
+  left: 10px;
+  z-index: 1;
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  max-width: calc(100% - 20px);
+  font: 700 12px/1.2 var(--font-ui);
+  color: var(--text-2);
+  pointer-events: none;
+  white-space: nowrap;
+}
+.cmap-act b { font-size: 11px; letter-spacing: 0.14em; color: var(--gold-2); }
+
+.cmap .cmap-node {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  transform: translate(-50%, -50%);
+}
+.cmap .cmap-node:disabled { opacity: 1; cursor: default; }
+.cmap-node b {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--line-2);
+  border-radius: 50%;
+  background: var(--ink-1);
+  font: 800 14px/1 var(--font-display);
+  color: var(--text-1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+}
+.cmap-node.locked b { border-style: dashed; background: rgba(10, 27, 36, 0.85); color: var(--text-3); opacity: 0.6; }
+.cmap-node.open b { border-color: var(--mint, #92ebc5); color: #fff; }
+.cmap-node.done b { border-color: rgba(255, 255, 255, 0.8); color: #24160a; box-shadow: 0 0 14px var(--glow, rgba(255, 199, 94, 0.5)); }
+.cmap-node.medal-gold b { --glow: rgba(255, 199, 94, 0.7); background: radial-gradient(circle at 35% 30%, #fff1b8, #ffc75e 55%, #b96d12); }
+.cmap-node.medal-silver b { --glow: rgba(207, 217, 223, 0.6); background: radial-gradient(circle at 35% 30%, #ffffff, #cfd9df 55%, #7d8c96); }
+.cmap-node.medal-bronze b { --glow: rgba(227, 154, 92, 0.6); background: radial-gradient(circle at 35% 30%, #ffd9b0, #e39a5c 55%, #8a4a1c); }
+.cmap-node.keystone b { width: 38px; height: 38px; }
+.cmap-node.picked b { outline: 3px solid var(--gold-2); outline-offset: 3px; }
+.cmap-node.next b { animation: cmap-pulse 1.8s ease-in-out infinite; }
+@keyframes cmap-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(146, 235, 197, 0.55); }
+  50% { box-shadow: 0 0 0 9px rgba(146, 235, 197, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .cmap-node.next b { animation: none; } }
+.cmap-node:hover:not(:disabled) b { border-color: var(--gold-2); }
+
+.cmap-choice {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ink-0);
+  vertical-align: -2px;
+}
+.cmap-choice.mercy { border-radius: 50%; background: var(--mint, #92ebc5); }
+.cmap-choice.firm { border-radius: 3px; background: var(--gold-2); transform: rotate(45deg); }
+.cmap-node .cmap-choice { position: absolute; top: 0; right: 0; }
+
+.cmap-title {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: max-content;
+  max-width: 20cqw;
+  transform: translateX(-50%);
+  font: 600 12px/1.25 var(--font-ui);
+  color: var(--text-2);
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  pointer-events: none;
+}
+.cmap-node.picked .cmap-title { color: #fff; }
+.cmap-node.locked .cmap-title { color: var(--text-3); }
+@container (max-width: 560px) { .cmap-title { display: none; } }
+
+.cmap-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding-bottom: 2px; }
+.cmap-label { font: 700 11px/1.2 var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); }
+.cmap-endings, .cmap-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.cmap-legend > span:not(.cmap-label) { display: inline-flex; align-items: center; gap: 6px; font: 600 12px/1.2 var(--font-ui); color: var(--text-2); }
+.cmap-ending {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line-1);
+  border-radius: 999px;
+  font: 600 12px/1.2 var(--font-ui);
+  color: var(--text-3);
+}
+.cmap-ending i { width: 10px; height: 10px; border: 2px solid currentColor; border-radius: 50%; }
+.cmap .cmap-ending.seen { border-color: var(--gold-line); background: rgba(255, 199, 94, 0.1); color: var(--gold-1); }
+.cmap .cmap-ending.seen.open-frontier { border-color: rgba(146, 235, 197, 0.6); background: rgba(146, 235, 197, 0.1); color: var(--mint, #92ebc5); }
+.cmap-ending.seen i { background: currentColor; }
+.cmap-chronicles {
+  display: grid;
+  gap: 2px;
+  margin-left: auto;
+  padding: 6px 12px;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r-s);
+}
+.cmap-chronicles strong { font: 700 12px/1.2 var(--font-ui); color: var(--text-2); }
+.cmap-chronicles small { font: 500 11px/1.3 var(--font-ui); color: var(--text-3); }
+
+/* List rows: a decision taken shows as a small chip beside the map name. */
+.stage-choice { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; font: 600 11px/1.2 var(--font-ui); color: var(--text-2); }
+
+/* Phones, portrait: the map gets its own height above the copy and the column scrolls. */
+.compact-ui #briefing.campaign-view .briefing-hero { height: auto; }
+.compact-ui #briefing.campaign-view #campaign-map { flex: 0 0 auto; height: clamp(340px, 96vw, 560px); }
+.compact-ui .cmap { padding: 12px 14px 0; }
+.compact-ui #briefing.campaign-view .briefing-copy { padding: 10px 16px 6px; }
+.compact-ui .cmap-chronicles { margin-left: 0; }
+
+/* Short landscape phones: the map fills the hero; the copy keeps only its title. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .compact-ui #briefing.campaign-view #campaign-map { height: auto; flex: 1 1 auto; }
+  .compact-ui #briefing.campaign-view .briefing-hero { height: auto; min-height: 0; }
+  .compact-ui #briefing.campaign-view .briefing-copy { padding: 4px 14px 8px; }
+  .compact-ui #briefing.campaign-view .briefing-copy .eyebrow,
+  .compact-ui #briefing.campaign-view .briefing-copy p,
+  .compact-ui #briefing.campaign-view .briefing-facts { display: none; }
+  .compact-ui #briefing.campaign-view .briefing-copy h2 { margin: 0; font-size: 18px; }
+  .compact-ui .cmap { gap: 4px; padding: 8px 12px 0; }
+  .compact-ui .cmap-head .eyebrow { display: none; }
+  .compact-ui .cmap-head strong { font-size: 14px; }
+  .compact-ui .cmap-board { min-height: 150px; }
+  /* Act names stand up along the left edge, clear of the first column of relays. */
+  .compact-ui .cmap-act { left: 2px; writing-mode: vertical-rl; transform: rotate(180deg); }
+  .compact-ui .cmap-act > span { display: none; }
+  /* One row under the map: endings as rings (a seen one keeps its name), then the chronicles slot. */
+  .compact-ui .cmap-foot { flex-wrap: nowrap; gap: 6px; }
+  .compact-ui .cmap-foot .cmap-label { display: none; }
+  .compact-ui .cmap-endings { flex-wrap: nowrap; gap: 6px; }
+  .compact-ui .cmap-ending { padding: 0 10px; }
+  .compact-ui .cmap-ending.unseen { justify-content: center; width: 44px; padding: 0; }
+  .compact-ui .cmap-ending.unseen > span { display: none; }
+  .compact-ui .cmap-chronicles small { display: none; }
+  .compact-ui .cmap-chronicles { padding: 4px 10px; }
+  .compact-ui .cmap-legend { display: none; }
+}

@@ -79,8 +79,11 @@ export function setupFrame(S, A) {
       S.sim.terrain.river && Math.abs(S.view.focus.z) < 14,
     );
     A.syncAudio(elapsed);
-    S.audio?.update(elapsed, { sim: S.sim, settings: S.settings, started: Z.started, paused: Z.paused, hidden: document.hidden, mapId: S.mapId, screen: A.musicScreen(), inBattle: S.sim.defence?.phase === "wave" });
+    // The decision card holds the match but its music plays on (screens.js "decision").
+    S.audio?.update(elapsed, { sim: S.sim, settings: S.settings, started: Z.started, paused: Z.paused && Z.modalType !== "decision", hidden: document.hidden, mapId: S.mapId, screen: A.musicScreen(), inBattle: S.sim.defence?.phase === "wave" });
     A.refreshHover();
+    // A story mission waiting for a Commander decision (also after loading a save) shows its card.
+    if (Z.started && !Z.paused && !S.sim.result && S.sim.mission?.pending) A.openDecision();
     const running = Z.started && !Z.paused && !S.sim.result;
     if (running) {
       S.accumulator += dt;
@@ -92,6 +95,8 @@ export function setupFrame(S, A) {
         S.matchStats.after(S.sim);
         S.tutorial?.update(S.sim,[...S.selected]);
         S.accumulator -= 0.05;
+        // A decision stops the clock on the tick that asked it; the card opens next frame.
+        if (S.sim.mission?.pending) { S.accumulator = 0; break; }
       }
       if (S.sim.result) { if (!A.beginBeat()) A.showResult(); }
       else if ((S.saveClock += dt) >= AUTOSAVE_SECONDS) A.autosave();
@@ -137,6 +142,7 @@ export function setupFrame(S, A) {
       else if (event.type === "ping") { S.pings.push({ x: event.x, z: event.z, at: S.sim.time }); A.tone(520, 0.1); }
       else if (event.type === "music") setMusicMood(event.mood);
       else if (event.type === "missionEnd") { /* The debrief opens from sim.result (showResult). */ }
+      else if (event.type === "decision" || event.type === "decided") { /* The card follows sim.mission.pending (above). */ }
       else if (event.type === "promote") { if (event.team === 0 && Z.started) promoted(event); S.view.event(event, S.sim); }
       else S.view.event(event, S.sim);
     }

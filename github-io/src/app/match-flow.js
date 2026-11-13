@@ -1,7 +1,7 @@
 // Starting, restarting, saving, continuing and finishing a match.
 import emblemUrl from "../art/emblem.webp";
 import { $ } from "./dom.js";
-import { MISSIONS, recordClear, saveProgress, bestTime, missionIndex } from "../campaign.js";
+import { MISSIONS, recordClear, recordDecisions, recordEnding, endingFor, resolveMission, saveProgress, bestTime, missionById } from "../campaign.js";
 import { MODE_KEY } from "./state.js";
 import { enemyFactionOf, playerFactionOf, matchLook } from "../factions.js";
 import { Simulation } from "../simulation.js";
@@ -33,16 +33,20 @@ export function setupMatchFlow(S, A) {
   }
 
   // Mission debrief: result, medal, time, objectives and the closing lines. A win records the
-  // best time and medal and opens the next mission.
+  // best time and medal, the Commander's decisions in this mission (a loss records nothing) and,
+  // after the finale, the ending reached; then it opens the next mission or the epilogue.
   function showDebrief(win) {
     const n = S.activeStage, m = S.sim.missionDef || MISSIONS[n], last = n === MISSIONS.length - 1;
+    let ending = null;
     if (win) {
       S.campaign = recordClear(S.campaign, n, S.sim.mission?.clock ?? S.sim.time, S.sim.mission?.medal || "bronze", S.sim.difficulty);
+      S.campaign = recordDecisions(S.campaign, S.sim.flags);
+      if (last) { ending = endingFor(S.campaign); S.campaign = recordEnding(S.campaign, ending); }
       saveProgress(S.campaign);
       S.stagePick = last ? n : n + 1;
     }
     $("modal").classList.add("debrief-wide");
-    $("modal-content").innerHTML = A.missionUI.debriefHTML({ mission: m, index: n, total: MISSIONS.length, sim: S.sim, win, best: bestTime(S.campaign, n), hasNext: win && !last, stats: S.matchStats.stats });
+    $("modal-content").innerHTML = A.missionUI.debriefHTML({ mission: m, index: n, total: MISSIONS.length, sim: S.sim, win, best: bestTime(S.campaign, n), hasNext: win && !last, stats: S.matchStats.stats, epilogue: ending });
     document.querySelector("#modal .modal").scrollTop = 0;
     $("modal").querySelector(".primary").focus({ preventScroll: true });
   }
@@ -131,13 +135,14 @@ export function setupMatchFlow(S, A) {
   function autosave() {
     if (!Z.started || S.sim.result || S.playMode === "training" || S.tutorial) return false;
     S.saveClock = 0;
-    return writeSave({ mode: S.playMode, missionId: S.activeStage !== null ? MISSIONS[S.activeStage].id : null, sim: S.sim });
+    return writeSave({ mode: S.playMode, missionId: S.activeStage !== null ? S.sim.missionDef?.id ?? MISSIONS[S.activeStage].id : null, sim: S.sim });
   }
 
   // Campaign: Start opens the mission briefing; the match begins from its "Begin mission".
+  // The briefing reads the mission as this campaign plays it (earlier decisions settled).
   function openMissionBriefing() {
     Z.openBriefing();
-    A.missionUI.openBriefing(MISSIONS[S.stagePick], S.stagePick, { difficulty: S.settings.campaignDifficulty, onBegin: () => { Z.closeBriefing(); beginMatch(); }, onBack: () => Z.closeBriefing() });
+    A.missionUI.openBriefing(resolveMission(MISSIONS[S.stagePick], S.campaign), S.stagePick, { difficulty: S.settings.campaignDifficulty, onBegin: () => { Z.closeBriefing(); beginMatch(); }, onBack: () => Z.closeBriefing() });
   }
 
   function beginMatch() {
@@ -192,9 +197,11 @@ export function setupMatchFlow(S, A) {
 
     window.addEventListener("pagehide", () => autosave());
 
-    // Continue: restore the saved match and come back paused on the pause menu.
+    // Continue: restore the saved match and come back paused on the pause menu, or on the
+    // decision card when the save was taken while one was open. A story mission continues with
+    // the mission data saved in the match (not today's), so it plays and replays exactly.
     $("continue").onclick = async () => {
-      const save = readSave(), index = save?.missionId ? missionIndex(save.missionId) : -1;
+      const save = readSave(), index = save?.missionId ? missionById(save.missionId)?.index ?? -1 : -1;
       const loaded = save && (save.mode !== "campaign" || index >= 0) ? Simulation.load(save.text) : null;
       if (!loaded) {
         clearSave();
@@ -208,7 +215,7 @@ export function setupMatchFlow(S, A) {
       S.playMode = save.mode;
       S.sim = loaded;
       S.mapId = S.sim.terrain.id; S.enemyCount = S.sim.enemyCount; S.aiSpeed = S.sim.aiSpeed; S.alliance = S.sim.coalition ? "coalition" : "ffa";
-      S.mission = index >= 0 ? MISSIONS[index] : null;
+      S.mission = index >= 0 ? S.sim.missionDef || MISSIONS[index] : null;
       S.bonus = S.mission?.bonus || null;
       S.enemyFaction = S.mission ? "mirror" : enemyFactionOf(S.sim);
       S.playerFaction = S.mission ? "meridian" : playerFactionOf(S.sim);
@@ -223,7 +230,7 @@ export function setupMatchFlow(S, A) {
       A.focusHome();
       $("hover-label").hidden = true;
       A.updateHeading();
-      A.showPause();
+      if (!(S.sim.mission?.pending && A.openDecision())) A.showPause();
     };
 
     $("start").onclick = () => {

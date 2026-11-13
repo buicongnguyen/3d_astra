@@ -66,7 +66,8 @@ export function setupSound(S, A) {
     audioRetry = 0;
 
   let auditionUntil = 0;
-  const audioQuiet = () => document.hidden || (Z.started && Z.paused && !S.sim.result && performance.now() >= auditionUntil);
+  // A Commander decision card holds the match but keeps its music (screens.js, "decision").
+  const audioQuiet = () => document.hidden || (Z.started && Z.paused && !S.sim.result && Z.modalType !== "decision" && performance.now() >= auditionUntil);
   async function playSoundTest(name) {
     if (!Object.hasOwn(SOUND_TESTS,name)) return;
     auditionUntil = performance.now() + MIX.auditionSeconds * 1000;

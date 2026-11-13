@@ -409,7 +409,7 @@ export const MISSIONS = [
       { when: { enter: "relaySite", team: 0 }, do: [{ say: { who: "vale", text: "Relay site in view. Clear the Sunward guards before the crawler rolls in." } }] },
       { when: { objective: "escort", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Core is in. Oh. Commander, the relays are not separate machines. It is one circuit." } }] },
     ],
-    // The second Commander decision (0.19a). Its answer changes Sol's link-up in mission 9.
+    // The second Commander decision (0.19a). Its answer changes Sol's words at the link-up in mission 9.
     decisions: {
       "m05-pact": {
         who: "sol",
@@ -755,10 +755,11 @@ export const MISSIONS = [
       { when: { time: 540 }, do: [{ wave: { team: 1, units: { tank: 2, vanguard: 3, ranger: 2 }, from: "wardenRise", target: "playerBase" } }] },
       { when: { time: 470 }, repeat: 150, do: [{ wave: { team: 1, units: { vanguard: 4, ranger: 2, breaker: 1 }, from: "duneRidge", target: "solCamp" } }] },
       { when: { objective: "link", is: "done" }, do: [
-        // Mission 5's pact: a shared forest relay brings two more Riders to the link-up.
+        // Mission 5's pact: Sol remembers a shared forest relay. Words only: this mission is finely
+        // balanced for the objective bot, and two more Riders, +200 alloy or one probe fewer each
+        // turned its win into a defeat (0.19a check).
         { if: { flag: "m05-pact", is: "drive" }, say: { who: "sol", text: "You came. You warned me and I did not listen. The Caravan pays its debts. We ride with you." } },
         { if: { flag: "m05-pact", is: "share" }, say: { who: "sol", text: "You came. You shared the forest light when you did not have to. The Caravan pays its debts twice." } },
-        { if: { flag: "m05-pact", is: "share" }, spawn: "rider", team: 0, at: "solCamp", count: 2, tag: "sunward" },
         { spawn: "vanguard", team: 0, at: "solCamp", count: 4, tag: "sunward" },
         { spawn: "rider", team: 0, at: "solCamp", count: 3, tag: "sunward" },
         { spawn: "breaker", team: 0, at: "solCamp", count: 1, tag: "sunward" },

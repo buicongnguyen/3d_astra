@@ -10,6 +10,7 @@ import { MAP_NODES, MAP_TEXT } from '../src/story/campaign-map.js';
 import { loadProgress, saveProgress, recordClear, recordDecisions, recordEnding, isUnlocked, isCleared, nextMission, missionById } from '../src/campaign.js';
 import { storyStrings } from '../tools/story-strings.mjs';
 import { answerDecision } from '../tools/playbot.mjs';
+import { translate } from '../src/i18n.js';
 
 const byId = (id) => MISSIONS.find((m) => m.id === id);
 const memory = (text) => { const store = new Map(text === undefined ? [] : [['frontier-campaign-v2', text]]); return { store, getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) }; };
@@ -88,8 +89,11 @@ test('resolveMission settles earlier answers and the ending; untouched missions 
   const wave7 = (p) => resolveMission(m07, p).triggers.find((t) => t.when.time === 420).do.find((a) => a.wave).wave.units;
   assert.deepEqual(wave7(null), { vanguard: 4, antitank: 2, breaker: 1 }, 'kept alloy: the full wave');
   assert.deepEqual(wave7({ decisions: { 'm03-alloy': 'return' } }), { vanguard: 4, antitank: 2 }, 'returned alloy: no Breaker');
-  const riders9 = (p) => resolveMission(m09, p).triggers.find((t) => t.when.objective === 'link').do.filter((a) => a.spawn === 'rider').reduce((n, a) => n + a.count, 0);
-  assert.equal(riders9(null), 3); assert.equal(riders9({ decisions: { 'm05-pact': 'share' } }), 5);
+  // Mission 9 changes only Sol's words: its balance flipped with any other change (see the data's note).
+  const link9 = (p) => resolveMission(m09, p).triggers.find((t) => t.when.objective === 'link').do;
+  assert.match(link9({ decisions: { 'm05-pact': 'share' } })[0].say.text, /You shared the forest light/);
+  assert.match(link9(null)[0].say.text, /You warned me/);
+  assert.deepEqual(link9(null).slice(1), link9({ decisions: { 'm05-pact': 'share' } }).slice(1), 'the same troops either way');
   for (const [p, ending] of [[null, 'meridian-line'], [{ decisions: mercy }, 'open-frontier']]) {
     const r = resolveMission(m12, p);
     assert.ok(!ifs(r), 'nothing left to settle in the finale');
@@ -234,6 +238,13 @@ test('the story-strings walk covers decisions, endings and the campaign map', ()
   }
   for (const text of Object.values(MAP_TEXT)) assert.ok(texts.has(text), text);
   assert.deepEqual(Object.keys(MAP_NODES), MISSIONS.map((m) => m.id), 'one map node per mission, in order');
+});
+
+test('the choice card, epilogue and campaign map words have Vietnamese', () => {
+  for (const text of ["COMMANDER'S DECISION", 'Your orders', 'The battle waits for your order.', 'EPILOGUE', 'Epilogue', 'CAMPAIGN MAP', 'Campaign map', 'Close', 'Skip', 'Next', 'Merciful', 'Firm', 'Replay the epilogue', '3 / 12 relays lit', 'ACT 2'])
+    assert.notEqual(translate(text, 'vi'), text, text);
+  assert.equal(translate('3 / 12 relays lit', 'vi'), '3 / 12 trạm đã sáng');
+  assert.equal(translate("COMMANDER'S DECISION", 'vi'), 'QUYẾT ĐỊNH CỦA CHỈ HUY');
 });
 
 test('flagMatches only passes a recorded answer', () => {

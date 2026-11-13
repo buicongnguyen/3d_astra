@@ -60,6 +60,8 @@ export function setupInputKeyboard(S, A) {
       if(key==='escape') {
         if(e.repeat)return;
         e.preventDefault();S.keys.clear();
+        // A decision card stays until an order is chosen (app/choices.js).
+        if(Z.modalType==='decision')return;
         if(Z.modalType==='fullscreen')A.closeModal();
         else if(document.documentElement.classList.contains('objectives-open'))A.setObjectivesOpen(false);
         else if(S.mode || S.blockedBuildType)A.clearMode();

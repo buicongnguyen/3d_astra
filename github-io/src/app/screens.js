@@ -13,18 +13,21 @@
 //   fullscreen  Full-screen help for browsers that refuse.
 //   guide       Field guide (unit and building stats).
 //   settings    Settings dialog, opened over any other screen and returning to it.
+//   decision    A Commander decision card (0.19a): it holds the match until an order is
+//               chosen, and is the one held screen that keeps the music playing.
 //
 // The data is deliberately the same three fields the app always had (`started`, `paused`,
 // `modalType`) so behaviour is identical; `screen` is derived from them.
 
-export const SCREENS = ["menu", "playing", "held", "pause", "help", "result", "graphics", "fullscreen", "guide", "settings"];
-const MODALS = ["pause", "help", "result", "graphics", "fullscreen", "guide"];
+export const SCREENS = ["menu", "playing", "held", "pause", "help", "result", "graphics", "fullscreen", "guide", "settings", "decision"];
+const MODALS = ["pause", "help", "result", "graphics", "fullscreen", "guide", "decision"];
 
 // Which screen may follow which. `settings` returns to wherever it was opened from.
 export const LEGAL = {
   menu: ["menu", "playing", "fullscreen", "guide", "graphics", "settings"],
-  playing: ["playing", "menu", "pause", "help", "result", "graphics", "fullscreen", "guide", "settings"],
-  held: ["held", "menu", "playing", "pause", "help", "result", "graphics", "fullscreen", "guide", "settings"],
+  playing: ["playing", "menu", "pause", "help", "result", "graphics", "fullscreen", "guide", "settings", "decision"],
+  held: ["held", "menu", "playing", "pause", "help", "result", "graphics", "fullscreen", "guide", "settings", "decision"],
+  decision: ["decision", "playing", "held", "menu", "result", "graphics", "settings"],
   pause: ["pause", "menu", "playing", "help", "result", "graphics", "fullscreen", "guide", "settings"],
   help: ["help", "pause", "menu", "playing", "graphics", "fullscreen", "guide", "settings"],
   result: ["result", "menu", "playing", "held", "settings"],
