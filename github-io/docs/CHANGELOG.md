@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.16.0: Hold the Line (round 3 plan, docs/aaa/PLAN_ROUND3_REFINED_2026-11-13.md)
+
+- **Choose your army in Skirmish:**
+  - A "Your faction" picker sits next to Enemy faction; all five armies are playable, each with its own roster and its own building in the build menu.
+  - Mirror means your faction, Mixed never includes it, and Meridian is now an enemy choice too.
+  - The opening and victory lines name your faction.
+  - Training and the campaign stay Meridian.
+  - The bots map unit names by slot, so they work for every faction.
+- **Terrain rules you can see:**
+  - Units in the ford move at 60% speed and can't use abilities (the card and tile say so).
+  - Barrage and Burn line can't target a plateau top nobody on your side can see ("Can't see up there").
+  - Units deep on a plateau, where no visible enemy stands, show an eye-slash mark, with "Hidden from below" on their card and a one-time hint.
+  - Ramps carry red-orange kill-zone stripes, painted into the ground (no extra draws), and red ticks on the minimap.
+- **Abilities you discover:**
+  - Ready abilities glow, and pulse when they become ready.
+  - The first time each ability is ready, a hint names it, says what it does and gives its key.
+  - Barrage shows its real blast ring while aiming (red out of reach), a closing ring where shells will land (enemy ones too, when seen), and a falling-shell whistle that ends on impact.
+- **Motion-off:** Eco quality, combat motion off or the system's reduced-motion setting stop every decorative CSS animation (`:root.motion-off`). Phones start in Eco.
+- **Recorded music player:**
+  - Tracks are decoded and loop at exact points, with crossfades.
+  - Nothing is downloaded before the first tap, and files are cached on first play.
+  - A Settings choice: Recorded + adaptive / Adaptive only / Off.
+  - The adaptive in-code score keeps playing in battle.
+  - The tracks themselves ship in 0.16.1.
+- **Balance:**
+  - The ford slow-down made river missions slightly easier: every target still holds; m02, m11 and m12 now reach gold at Normal.
+  - The faction round robin moved within noise: Meridian 65, Ashfall 42, Sunward 35, Wardens 71, Veil 38%.
+- **Validation:** 459 unit tests; all browser suites, including the new `test:abilities` and `test:music`.
+
 ## 0.15.1: research, crossings and high ground read clearly (owner reports)
 
 - **Research panel:** research is one slot that moves forward: "Research · Pick 1 of 2" opens Damage +10% or Armor +12% (the header says the pick is for this match), then "Researching 37%" with a bar, then "Damage +10% ✓" with the next step under it, then "Damage +19% ✓ Active". A finished research never shows a price again. Locked tiles say what they need ("Needs Foundry L2"); the building-level button reads "Upgrade to L2". Phones no longer hide a fifth tile. Rules unchanged (`src/research-tiles.js`).
