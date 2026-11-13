@@ -175,3 +175,32 @@
   #commands .command-tile[data-tier="3"]::after { animation: none; opacity: 0.7; }
   .defence-stars i.on { animation: none; }
 }
+
+/* 0.21: the commander button on the bar, ability tiles, tier-3 branch tiles, the bridge note and
+   the Endless score. No new animation: the branch tiles share the tier-3 glow (off under motion-off). */
+#defence-hero { padding: 0 10px !important; border-color: var(--line-2, rgba(168, 214, 212, 0.24)) !important; background: rgba(255, 255, 255, 0.06) !important; }
+#defence-hero[hidden] { display: none; }
+#defence-hero.ready { border-color: var(--gold-2, #ffc75e) !important; color: var(--gold-2, #ffc75e); }
+#defence-hero small:empty { display: none; }
+#commands .command-tile.defence-branch,
+#commands .command-tile.defence-ability,
+#commands .command-tile.defence-demolish { position: relative; overflow: visible; }
+#commands .command-tile.defence-info[data-branch] small b { color: var(--tier-3); }
+#commands .command-tile.defence-ability.ready { border-color: var(--gold-2, #ffc75e); }
+#commands .command-tile.defence-ability[aria-pressed="true"] { border-color: var(--mint, #92ebc5); box-shadow: inset 0 0 0 2px var(--mint, #92ebc5); }
+#commands .command-tile.defence-demolish { border-color: rgba(255, 122, 72, 0.6); }
+#commands .defence-bridge-state { grid-column: span 2; }
+#commands .defence-bridge-state p { margin: 0; font: 500 12px/1.35 var(--font-ui); }
+.defence-score-big {
+  display: inline-grid;
+  place-items: center;
+  min-width: 64px;
+  height: 64px;
+  padding: 0 10px;
+  border: 2px solid var(--gold-2, #ffc75e);
+  border-radius: 16px;
+  font: 800 34px/1 var(--font-ui);
+  color: var(--gold-2, #ffc75e);
+  font-variant-numeric: tabular-nums;
+}
+.compact-ui .defence-score-big { min-width: 54px; height: 54px; font-size: 28px; }

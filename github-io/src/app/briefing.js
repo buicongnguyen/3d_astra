@@ -21,8 +21,9 @@ export function setupBriefing(S, A) {
   function battleSetup() {
     // Training, the campaign and Defence always command Meridian; only a skirmish uses "Your faction".
     if(S.playMode === "training") return {map:"classic",enemyCount:1,aiSpeed:"relaxed",alliance:"ffa",bonus:null,mission:null,faction:"mirror",playerFaction:"meridian"};
-    // Frontier Defence: the level is a mission-shaped definition (src/defence/levels.js).
-    if (S.playMode === "defence") { const l = DEFENCE_LEVELS[S.defencePick] || DEFENCE_LEVELS[0]; return { map: l.map, enemyCount: l.enemies, aiSpeed: l.speed, alliance: l.alliance, bonus: null, mission: l, faction: "mirror", playerFaction: "meridian" }; }
+    // Frontier Defence: the level is a mission-shaped definition (src/defence/levels.js), with the
+    // Endless or Daily variant and the perks the player owns (app/defence-entry.js defenceMission).
+    if (S.playMode === "defence") { const l = DEFENCE_LEVELS[S.defencePick] || DEFENCE_LEVELS[0]; return { map: l.map, enemyCount: l.enemies, aiSpeed: l.speed, alliance: l.alliance, bonus: null, mission: A.defenceMission?.(l) || l, faction: "mirror", playerFaction: "meridian" }; }
     const m = MISSIONS[S.stagePick];
     return S.playMode === "campaign"
       ? { map: m.map, enemyCount: m.enemies, aiSpeed: m.speed, alliance: m.alliance, bonus: m.bonus || null, mission: m, faction: "mirror", playerFaction: "meridian" }

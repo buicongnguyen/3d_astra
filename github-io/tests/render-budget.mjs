@@ -24,10 +24,16 @@ const scenarios = [
   // Frontier Defence (0.17) on the phone: 120 Ashfall units along Gorge Road, half of them damaged,
   // and ten crewed towers at mixed tiers, at the level's own zoom.
   // Twice battle-eco's army, a quarter of it tanks and Scorchers: the triangle line is raised to match.
+  // 0.21: the towers take all six crews (Tank emplacements and Scorcher flame traps too) and the
+  // gold-trimmed commander stands on the road among them.
   {name:'defence-wave-eco', defence:'d-gorge', mobile:true, zoom:70, focus:[-1,0], reveal:true, wave:120, towers:10, triangles:600000},
+  // 0.21: a river level with the west bridge blown and a pontoon over the east crossing, the wave
+  // spread over all three roads. River scenery (water, reeds, fish, dragonflies) costs more than the
+  // valley: Twin Bridges measured 141 draws with both bridges standing at 0.17; its line is 135.
+  {name:'defence-river-eco', defence:'d-bridges', mobile:true, zoom:78, focus:[0,0], reveal:true, wave:120, towers:10, triangles:600000, crossings:{'-22':'blown', '22':'pontoon'}},
 ];
 const results = [];
-const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120};
+const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'defence-river-eco':135};
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -65,15 +71,19 @@ try {
       if (scenario.reveal) { s.visible[0].fill(1); s.explored[0].fill(1); }
       if (scenario.wave) {
         // Towers on the first pads at tiers 1-3, then the wave spread along the road, every other unit hurt.
-        const def = s.missionDef.defence, pts = def.routes.main, kinds = ['vanguard','ranger','breaker','tank'];
+        const def = s.missionDef.defence, routes = Object.values(def.routes), kinds = ['vanguard','ranger','breaker','tank'];
         s.players[0].alloy = 1e5;
         def.pads.slice(0, scenario.towers).forEach((p, i) => {
-          s.command({team:0, type:'padBuild', pad:p.id, crew:def.crews[i % 3]});
+          s.command({team:0, type:'padBuild', pad:p.id, crew:def.crews[i % def.crews.length]});
           for (let k = 0; k < i % 3; k++) s.command({team:0, type:'padUpgrade', building:s.towerOn(p.id).id});
         });
-        const legs = pts.slice(1).map((b, i) => Math.hypot(b.x - pts[i].x, b.z - pts[i].z)), total = legs.reduce((a, b) => a + b, 0);
+        if (scenario.crossings) {
+          s.crossings = Object.fromEntries(Object.entries(scenario.crossings).map(([x, state]) => [x, {state, at:0, progress:0}]));
+          s.applyCrossings();
+        }
         for (let i = 0; i < scenario.wave; i++) {
-          let d = (i + 0.5) / scenario.wave * total * 0.97, k = 0;
+          const pts = routes[i % routes.length], legs = pts.slice(1).map((b, j) => Math.hypot(b.x - pts[j].x, b.z - pts[j].z)), total = legs.reduce((a, b) => a + b, 0);
+          let d = (Math.floor(i / routes.length) + 0.5) / Math.ceil(scenario.wave / routes.length) * total * 0.97, k = 0;
           while (d > legs[k]) d -= legs[k++];
           const a = pts[k], b = pts[k + 1], t = d / legs[k], side = ((i * 0.618) % 1 - 0.5) * 2.4;
           const nx = -(b.z - a.z) / legs[k], nz = (b.x - a.x) / legs[k];
@@ -81,6 +91,11 @@ try {
           e.angle = Math.atan2(b.x - a.x, b.z - a.z);
           if (i % 2) e.hp = e.maxHp * 0.5;
         }
+        // The commander on the road in the middle of it all (left where it is if it is not there).
+        const hero = s.commander?.(), mid = routes[0][Math.floor(routes[0].length / 2)];
+        if (hero) { hero.x = mid.x + 2.5; hero.z = mid.z; }
+        // The interface pass draws the pontoons and hides the blown bridge (app/defence-ui.js).
+        f.step(0);
       }
       if (scenario.army) {
         const kinds = ['ranger','vanguard','tank','breaker','antitank'];
@@ -255,11 +270,14 @@ try {
     }
     if (scenario.defence) {
       // The wave really is on the field, and only the 12 weakest enemies carry a vitals bar.
-      const field = await page.evaluate(() => { const f = window.__frontier, v = f.view; return {units:f.sim.entities.filter(e => e.team === 1).length, bars:[...v.objects.values()].filter(o => o.userData.bar?.visible && o.userData.team === 1).length, crews:[...v.objects.values()].filter(o => o.userData.crew).length}; });
+      const field = await page.evaluate(() => { const f = window.__frontier, v = f.view; return {units:f.sim.entities.filter(e => e.team === 1).length, bars:[...v.objects.values()].filter(o => o.userData.bar?.visible && o.userData.team === 1).length, crews:[...v.objects.values()].filter(o => o.userData.crew).length,
+        commander:[...v.objects.values()].some(o => o.userData.dressed === 'hero'), pontoons:v.scene.children.filter(o => o.name === 'defence-pontoon' && o.visible).length, bridgesShown:[...(v.environment?.bridges?.values() || [])].filter(b => b.visible).length}; });
       console.log('defence field', JSON.stringify(field));
       assert.equal(field.units, scenario.wave);
       assert.ok(field.bars <= 12, `defence: ${field.bars} enemy vitals bars`);
       assert.equal(field.crews, scenario.towers);
+      assert.ok(field.commander, 'the commander is drawn in gold');
+      if (scenario.crossings) { assert.equal(field.pontoons, 1, 'one pontoon'); assert.equal(field.bridgesShown, 0, 'the blown bridge is hidden (and the pontoon replaces the other)'); }
     }
     if (record < 0 && !scenario.defence) {
       const state = await page.evaluate(() => {

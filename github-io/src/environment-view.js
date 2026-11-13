@@ -53,6 +53,8 @@ export class EnvironmentView {
     this.particles = [];
     this.lastTime = 0;
     this.owned=[];
+    // The bridge models by crossing x: Frontier Defence hides a blown one (app/defence-ui.js).
+    this.bridges = new Map();
     // Everything drawn here lies inside the map; the area beyond the edge stays empty.
     // The old boulder obstacles are concrete walls now, drawn as entities (view.js).
     if (!terrain.river) return;
@@ -136,8 +138,10 @@ export class EnvironmentView {
       target.add(o);
       return o;
     };
-    for (const c of CROSSINGS.filter((c) => c.type === "bridge"))
-      add("bridge", c.x, 0);
+    for (const c of CROSSINGS.filter((c) => c.type === "bridge")) {
+      const bridge = add("bridge", c.x, 0);
+      if (bridge) this.bridges.set(c.x, bridge);
+    }
     let seed = 773;
     const rand = () => {
       seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;

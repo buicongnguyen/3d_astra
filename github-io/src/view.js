@@ -1265,8 +1265,9 @@ export class WorldView {
         const step=this.activity.combat.motion&&!this.reducedMotion.matches?3*dt:Math.PI;
         u.turret.rotation.y+=Math.max(-step,Math.min(step,diff));
       }
-      // Frontier Defence: a crewed tower carries its crew (dressEntity, app/defence-ui.js), facing its target.
-      if (e.crew && u.dressed !== e.tier) this.dressEntity?.(o, e);
+      // Frontier Defence: a crewed tower carries its crew (dressEntity, app/defence-ui.js), facing its
+      // target; the commander wears gold trims (tints only, the batches keep their materials).
+      if ((e.crew || e.hero) && u.dressed !== dressKey(e)) this.dressEntity?.(o, e);
       if (u.crew) u.crew.rotation.y = e.angle;
       if(o.userData.barrel){
         const rig=o.userData.barrel;
@@ -1464,6 +1465,8 @@ export class WorldView {
     this.fogClock = 0;
   }
 }
+// What a Frontier Defence entity is dressed as: the commander, or a garrison's tier (and branch).
+export const dressKey = (e) => (e.hero ? "hero" : e.branch ? `${e.tier}${e.branch}` : e.tier);
 // The ids of the n enemy units with the lowest share of health left (damaged ones only).
 function weakest(sim, n) {
   const hurt = [];
