@@ -1,5 +1,25 @@
 # AAA implementation progress
 
+## Round 3 (Claude, 2026-11-13, 0.16.0–0.19.0): plan finished
+
+Plan: [PLAN_ROUND3_REFINED_2026-11-13.md](PLAN_ROUND3_REFINED_2026-11-13.md), built by agents in separate worktrees, merged and checked by Claude.
+
+| Plan release | Shipped in | State |
+|---|---|---|
+| 0.16 Hold the Line (faction pick, terrain rules, abilities, music) | 0.16.0, 0.16.1 | Done |
+| 0.17 Frontier Defence | 0.17.0 (reached the site with 0.19.0) | Done |
+| 0.18 Wings (air) | 0.18.0 (reached the site with 0.19.0) | Done; the Command core is the airfield (phones keep four tiles per building) |
+| 0.19a Choices (decisions, endings, map) | 0.17.0 | Done |
+| 0.19b Story you see (scenes, reworks, new missions) | 0.19.0 | Done, except: m06's ford idea dropped (Copper Basin has no river); voice tones skipped (optional) |
+| 0.20 Chronicles | 0.19.0 | Done; 3 Veteran misses for the objective bot (ca2, cs2, cw2) |
+| 0.21 Defence complete | 0.19.0 | Done, except: twin rivers (the river is fixed at z = 0, so Long Crossing uses the standard river) |
+
+**Open for the owner:**
+- Listen to the music: the listen page in 3D_claudeopus55 is `experiments/music-frontier-1113/listen/`.
+- Read the new story lines in `docs/aaa/review/story-lines.md` (0.19a, 0.19b, 0.18.3 and Chronicles sections).
+- Refine the air models (`docs/aaa/review/air-units-sheet.png`).
+- Play-test Defence pacing (Endless may be generous early), m06b's length (the bot takes 8.5 min) and the faction balance (Wardens and Meridian are above the 35–65% band; Veil is below).
+
 ## Improvement round 1 (Claude, 2026-11-13, 0.14.0)
 
 Plan: docs/aaa/IMPROVEMENT_PLAN_2026-11-13.md. Items 1-4 shipped as 0.14.0, item 5 (enemy AI) as 0.15.0 (see CHANGELOG).

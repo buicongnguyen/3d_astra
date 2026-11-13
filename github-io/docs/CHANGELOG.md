@@ -1,7 +1,35 @@
 # Changelog
 
-## Unreleased: Defence complete (round 3 plan, items 21.1–21.4)
+## 0.19.0: Story you see, Faction Chronicles, Defence complete (round 3 plan finished)
 
+The rest of the round 3 plan (docs/aaa/PLAN_ROUND3_REFINED_2026-11-13.md: releases 0.19b, 0.20 and 0.21, plus item 18.3). 0.17.0 and 0.18.0 never reached the site, because CI stopped on slow-runner test timing; this release carries them too.
+
+**Campaign: 15 missions**
+- **Staged scenes:**
+  - Six big moments play as short scenes: letterbox, eased camera, lines with portraits.
+  - The scenes are relay held (m01), the truce (m04), ECHO wakes (m08), the Crown lights (m10), the draw cut (m11), and the Keystone, by ending (m12).
+  - Skip with the button, Esc or Space. Music keeps playing. Under motion-off the camera cuts instead of panning.
+- **Reworked missions:**
+  - **Mission 2 is a bridge assault:** Ashfall towers cover the far half of the west bridge, and the ford is slow.
+  - **Mission 9 is a plateau hold:** hold the dune top for 3 minutes while Warden drones climb the ramps.
+  - Veil scouts appear in mission 6 and Wardens in mission 9, before the finale.
+- **Three new missions:**
+  - *Hold the River* (Act 1, Twin Bridges) and *Hold the Valley* (Act 2, Gorge Road) play under Defence rules, with story between the waves.
+  - *Wings over Copper* (Act 2) is the first air raid: guard the refinery through three balloon raids, research Flak, then burn the balloon yard.
+- **Anti-air hint:** when an enemy flyer is in sight and nothing you have can hit it, a hint says what can.
+- **No skirmish line in missions:** missions, Defence levels and chronicles no longer open with the skirmish line about Harvesters.
+
+**Faction Chronicles**
+- Four campaigns of three missions each, played as that faction:
+  - Ashfall, *Salvage Rights* (Hale)
+  - Sunward, *The Long Road* (Sol)
+  - Wardens, *ECHO's Key* (ECHO)
+  - Veil, *The Quiet Survey* (Maren)
+- They tell the same war from the other side, on the existing maps plus two Defence missions.
+- They open after Act 1. Each has its own card on the campaign map, its own headers and debrief, and works with Continue.
+- Each finished chronicle adds its lead's line to the finale's debrief.
+
+**Frontier Defence complete**
 - **Two more crews:** the Tank emplacement (heavy single shots, slow, strong against machines) and the Scorcher flame trap (short range, sets the road on fire; best against swarms on foot).
 - **Tier-3 branches:** a gold tower picks one of two upgrades, shown on its tile: Ranger Marksman or Suppressor (slows), Mortar Cluster or Guided, Anti-tank Heavy or Rapid, Watcher Beacon (marked targets take 25% more) or Far-eye, Tank Breacher or Shrapnel, Flame trap Inferno or Firewall.
 - **A commander on the field:** a gold-trimmed tank you send down the road with a tap. It holds and blocks the column, calls Barrage and Reinforce (three Vanguards hold the road for 20 s), and comes back 20 s after it falls.
@@ -9,7 +37,14 @@
 - **Bridges:** on river levels, tap a bridge to blow it (3 s fuse). The columns turn to another crossing; the ford and the last open way across can't be blown. Bridge builders stop at the bank and raise a pontoon in 20 s unless you bring them down.
 - **Endless and Daily:** any open level, waves forever from a seed; the score is waves held and your best is kept. The Daily seed is the same for everyone that day.
 - **Perks:** stars buy Quartermaster (first tower −20%), Reserves (+2 lives) and Fast guns (faster Barrage). Defence levels only, never the campaign.
-- Checks: the bot reaches its stars on all six levels at three difficulties, Endless holds 15+ waves, the wave scene stays at 109 draws on the phone (limit 120).
+- **Air waves:** on Gorge Road and Twin Bridges, Kites spot from above and Ember balloons and Swift gliders bomb. Crews whose unit hits air (Ranger, Anti-tank, Watcher) shoot flyers at ×1.5; Breaker, Tank and Scorcher crews can't.
+
+**Checks**
+- 561 unit tests and every browser suite, including the new `test:story`, `test:chronicles` and `test:air`.
+- The mission checker meets every target on all 15 missions and both decision branches.
+- All 12 chronicle missions are winnable at Normal and Story. Three miss at Veteran (recorded in docs/MISSIONS.md).
+- `check:defence`: the bot reaches its stars on all six levels at three difficulties, an empty field always loses, and no single crew type earns three stars.
+- Phone draws: Defence wave 109 (limit 120), river wave with a blown bridge 132 (limit 135), air battle 116.
 
 ## 0.18.0: Wings (air units)
 

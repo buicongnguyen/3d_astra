@@ -1,5 +1,8 @@
 # Round 3 plan, refined after logic and code review (2026-11-13, at 0.15.1)
 
+> **Status 2026-11-13: finished (0.16.0–0.19.0).** Each item's state and what was left out is
+> recorded in [IMPLEMENTATION_PROGRESS.md](IMPLEMENTATION_PROGRESS.md), "Round 3".
+
 This refines [PLAN_ROUND3_2026-11-13.md](PLAN_ROUND3_2026-11-13.md). The goals and the owner's decisions
 are unchanged: Defence in the campaign and as a mode, new light music, air units, more campaigns
 and endings.
