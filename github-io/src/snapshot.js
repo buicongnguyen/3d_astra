@@ -78,6 +78,9 @@ export function restore(Simulation, saved) {
   sim.events = [];
   sim.pace = aiPace(sim.aiSpeed, !!sim.mission);
   sim.nav.wallsSpawned = data.nav.wallsSpawned;
+  // Frontier Defence: blown bridges and pontoons live in the derived terrain; put them back
+  // before the grid is built, or a loaded match walks over a blown bridge.
+  sim.applyCrossings?.(false);
   sim.nav.rebuild(sim.entities);
   sim.nav.revision = data.nav.revision;
   return sim;

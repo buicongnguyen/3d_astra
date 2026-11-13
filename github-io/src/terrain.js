@@ -54,8 +54,11 @@ export class Terrain {
     if (this.id === "classic") return "dirt";
     // Defence maps: the enemy road is painted, and none of the skirmish roads or boulders are there.
     if (this.defence && !(this.river && Math.abs(z) < 5)) return this.onRoute(x, z) ? "road" : this.ground(x, z);
-    if (this.river && Math.abs(z) < 3)
-      return CROSSINGS.find((c) => Math.abs(x - c.x) < c.half)?.type ?? "water";
+    if (this.river && Math.abs(z) < 3) {
+      // Frontier Defence: a blown bridge is water, a pontoon wades like the ford (sim/defence.js applyCrossings).
+      const c = CROSSINGS.find((c) => Math.abs(x - c.x) < c.half);
+      return !c || this.blown?.has(c.x) ? "water" : this.pontoons?.includes(c.x) ? "ford" : c.type;
+    }
     if (this.river && Math.abs(z) < 5)
       return CROSSINGS.some((c) => Math.abs(x - c.x) < c.half) ? "road" : "mud";
     if (ROCKS.some(([rx, rz, r]) => hyp(x - rx, z - rz) < r + 1))

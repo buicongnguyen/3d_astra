@@ -121,3 +121,37 @@ test("defence maps borrow the look, life and score of the skirmish map they name
     assert.equal(themeFor(id), themeFor(m.look), `${id}: palette`);
   }
 });
+
+test("river levels name the crossing each road uses; the commander's post stands clear (0.21)", async () => {
+  const { CROSSINGS } = await import("../src/terrain.js");
+  const valleys = DEFENCE_LEVELS.filter((l) => !DEFENCE_MAPS[l.map].river), rivers = DEFENCE_LEVELS.filter((l) => DEFENCE_MAPS[l.map].river);
+  assert.ok(DEFENCE_LEVELS.length >= 6 && valleys.length >= 3 && rivers.length >= 3, "six levels: three valleys, three rivers");
+  for (const level of DEFENCE_LEVELS) {
+    const d = level.defence, s = make(level);
+    if (d.crossings) {
+      for (const [id, pts] of Object.entries(d.routes)) {
+        const x = d.crossings[id], c = CROSSINGS.find((k) => k.x === x);
+        assert.ok(c, `${level.id} ${id}: a crossing`);
+        // The road meets the river (z = 0) inside that crossing, lanes and the widest body included.
+        const i = pts.findIndex((p, k) => k > 0 && Math.sign(pts[k - 1].z) !== Math.sign(p.z));
+        const a = pts[i - 1], b = pts[i], at = a.x + (b.x - a.x) * (-a.z / (b.z - a.z));
+        assert.ok(Math.abs(at - x) + d.lane / 2 + 1.05 < c.half, `${level.id} ${id}: crosses at ${at}`);
+      }
+      for (const x of d.startBlown || []) assert.ok(!Object.values(d.crossings).includes(x), `${level.id}: a road over a crossing that is down`);
+      assert.ok(Object.values(d.crossings).some((x) => CROSSINGS.find((c) => c.x === x).type === "ford"), `${level.id}: the ford keeps the river open`);
+    }
+    if (d.bridges) assert.ok(d.crossings && DEFENCE_MAPS[level.map].river, `${level.id}: demolition needs a river and its crossings`);
+    if (d.commander) {
+      const p = d.commander;
+      assert.ok(s.terrain.canStand(p.x, p.z, 1.6) && !s.terrain.level(p.x, p.z), `${level.id}: commander post`);
+      assert.ok(routeDist(p, d.routes) > 12, `${level.id}: the commander waits out of reach until sent`);
+      for (const q of d.pads) assert.ok(Math.hypot(p.x - q.x, p.z - q.z) > 4, `${level.id}: commander post on pad ${q.id}`);
+    }
+    // Waves of one faction, with a mixed group naming a real roster.
+    for (const w of d.waves) for (const g of w.groups) if (g.faction) assert.ok(g.faction in (await import("../src/balance.json", { with: { type: "json" } })).default.factions);
+  }
+  for (const id of ["wardens", "veil"]) assert.ok(DEFENCE_LEVELS.some((l) => l.factions[1] === id || l.defence.waves.some((w) => w.groups.some((g) => g.faction === id))), `${id} waves`);
+  for (const g of Object.values(GARRISONS.crews)) for (const b of Object.values(g.branches)) assert.notEqual(translate(b.name, "vi"), b.name, b.name);
+  for (const p of Object.values(GARRISONS.perks)) assert.notEqual(translate(p.name, "vi"), p.name, p.name);
+  assert.notEqual(translate(GARRISONS.commander.name, "vi"), GARRISONS.commander.name);
+});

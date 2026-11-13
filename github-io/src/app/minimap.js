@@ -75,6 +75,8 @@ export function setupMinimap(S, A) {
     // with dark rails, the ford a row of pale stepping dots between two short posts.
     if (S.sim.terrain.river)
       for (const c of CROSSINGS) {
+        // Frontier Defence: a blown bridge is river again (sim/defence.js applyCrossings).
+        if (S.sim.terrain.blown?.has(c.x)) continue;
         const x0 = px(c.x - c.half + 1), x1 = px(c.x + c.half - 1), y0 = pz(-4), y1 = pz(4), dot = Math.max(1.4, w / 120);
         ctx.lineWidth = Math.max(1.5, w / 110);
         if (c.type === "bridge") {

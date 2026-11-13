@@ -1,4 +1,5 @@
 import { MIX } from "./audio-mix.js";
+import DEFENCE_MAPS from "./defence/maps.json" with { type: "json" };
 // Pure audio logic: no Web Audio and no DOM, so it is unit-tested in Node (tests/audio.test.js).
 // The score and the sound effects are made in-house: this file holds the rules (which mood fits
 // the match, which notes a bar contains, how many voices may sound, which sounds the fog hides).
@@ -79,7 +80,7 @@ export const FACTION_MOTIF = {
   wardens: { degrees: [0, 4, 0, 5], beats: [2, 1, 1, 2] },
 };
 // Frontier Defence maps play the score of the map they borrow their look from (src/defence/maps.json "look").
-const BORROWED = { gorge: "highlands", bridges: "riverlands" };
+const BORROWED = Object.fromEntries(Object.entries(DEFENCE_MAPS).map(([id, m]) => [id, m.look]));
 export const flavourFor = (map) => MAP_FLAVOUR[BORROWED[map] || map] || MAP_FLAVOUR.classic;
 export const MOOD_TEMPO = { calm: 92, tense: 92, battle: 92, victory: 104, defeat: 54 };
 // The field moods (calm, tense, battle) share the map's tempo; the stings keep their own.

@@ -40,6 +40,11 @@ const COMMANDS = {
   padUpgrade: { allowed: (sim, c) => !!sim.defence && ownBuilding(sim, c.team, c.building) && !!sim.get(c.building).crew, run: (sim, c) => sim.padUpgrade(c.team, c.building) },
   padSell: { allowed: (sim, c) => !!sim.defence && ownBuilding(sim, c.team, c.building) && !!sim.get(c.building).crew, run: (sim, c) => sim.padSell(c.team, c.building) },
   waveCall: { allowed: (sim) => !!sim.defence, run: (sim, c) => sim.waveCall(c.team) },
+  // 0.21: a tier-3 branch, the commander's moves and abilities, and blowing a bridge.
+  padBranch: { allowed: (sim, c) => !!sim.defence && ownBuilding(sim, c.team, c.building) && !!sim.get(c.building).crew && typeof c.branch === "string", run: (sim, c) => sim.padBranch(c.team, c.building, c.branch) },
+  heroMove: { allowed: (sim, c) => !!sim.defence?.hero && Number.isFinite(c.x) && Number.isFinite(c.z), run: (sim, c) => sim.heroMove(c.team, c.x, c.z) },
+  heroCast: { allowed: (sim, c) => !!sim.defence?.hero && typeof c.ability === "string" && Number.isFinite(c.x) && Number.isFinite(c.z), run: (sim, c) => sim.heroCast(c.team, c.ability, c.x, c.z) },
+  demolish: { allowed: (sim, c) => !!sim.defence && Number.isFinite(c.crossing), run: (sim, c) => sim.demolish(c.team, c.crossing) },
   // The Commander's answer to the decision a story mission is waiting for (sim/missions.js).
   decide: { allowed: (sim, c) => c.team === 0 && sim.canDecide?.(c.id, c.option), run: (sim, c) => sim.decide(c.id, c.option) },
 };
