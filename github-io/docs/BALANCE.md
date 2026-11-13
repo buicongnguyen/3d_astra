@@ -381,3 +381,26 @@ Five of 120 games changed winner, all long Fast games on Dunes. A trial in which
 alloy for the faction's flyer dropped Ashfall to 31, so flyers come from spare resources only. Campaign
 (`check:missions`, Standard, objective bot) is unchanged run for run: story missions keep their rosters
 (`rules.air` turns flyers on).
+
+### Air in the campaign and in Defence (0.18.3)
+
+`rules.air` is on in three places only: *Wings over Copper* (`m06b`, the first air raid), *Hold the
+Valley* (`m07b`) and the Defence levels Gorge Road and Twin Bridges. Every other mission and level, and
+the skirmish hash `d071360b`, are unchanged (`tests/wings.test.js` pins the other missions' resolved data).
+
+- **Defence towers that hit air.** Under `rules.air` a crew whose own unit has `hits_air` (Ranger,
+  Anti-tank, Watcher) makes its tower hit flyers; Breaker, Tank and Scorcher crews never do. Towers deal
+  ×1.5 to flyers (as with Flak) and keep the crew's machine factor, so against these all-mechanical
+  flyers an Anti-tank post (×6) one-shots most of them and a Ranger nest (×0.4) needs many hits. No flak
+  tier: one rule, no new tile, every level stays winnable for the bot.
+- **Wave additions.** Gorge Road: Kites (waves 5, 9) and Ember balloons (7, 9, 10). Twin Bridges: a Kite
+  (4), Swift gliders (6; 8 with Kites at hull ×1.5; 10 at hull ×1.8). Hold the Valley: a Kite (6) and
+  2 balloons (8). A balloon that leaks costs two lives (supply 3).
+- **Results** (`check:defence`, before → after): bot Gorge Road 3/3/3★ (Veteran 20 → 18 lives), Twin
+  Bridges 3/2/2★ (16 → 13 lives on Veteran); Breaker-only Gorge Road Story 1★ → 0★, Twin Bridges Story
+  2★ → 1★, Standard 1★ → 0★. Twin Bridges Endless falls at wave 27 (it held 40+). Hold the Valley
+  (`check:missions`): Story 3★ 20♥, Standard 3★ 18♥, Veteran 2★ 16♥ (was 12♥: the flyers' bounty buys
+  a tower sooner).
+- **Wings over Copper** (objective bot, seconds): Story 507, Standard 508, Veteran 508, all gold; passive
+  and generic targets met. The bot builds a large army while the AI stays home, so it is fast; a person
+  should take 9 to 12 minutes (8 minutes of raids, then the yard).

@@ -288,3 +288,66 @@ Every new or changed line of release 0.19b (staged scenes, the reworked missions
 | scene keystone-open | ECHO | I can see every camp from here. All of them are lit. | Từ đây tôi thấy được mọi trại. Tất cả đều đã sáng đèn. |
 
 Interface words (in `src/locales/vi.json`): Skip scene, Story scene; "N lives" and "N waves" use the existing patterns.
+
+---
+
+# Story lines for review: 0.18.3 "Wings"
+
+Every new line of release 0.18.3 (the first air raid, *Wings over Copper*, and flyers in Hold the Valley), in English and Vietnamese. Generated from `src/story/missions.js`, `src/story/defence-missions.js`, `src/story/scenes.js`, `src/air-hint.js` and the two Vietnamese catalogs (the data wins if they differ). Mission numbers are the campaign order since 0.18.3 (15 missions); ids are unchanged.
+
+## What changed
+
+- **Wings over Copper** (mission 8, `m06b-wings-over-copper`, Act 2, Copper Basin, day 32): new. Hale's Ember balloons raid the Copper refinery three times; the player learns air (Rangers, Anti-tank soldiers, Flak at a level 2 core, Hawks at level 3), then burns the balloon yard on the east rim. One staged scene, `first-balloon`, when the first flyer reaches the copper works. Mission 3's alloy changes Hale's third-raid line. The debrief sets up Copper Siege: Sunward silk on an Ashfall balloon, the Pact closer than it looked.
+- **Hold the Valley** (mission 10): two new lines for its Kite (wave 6) and balloons (wave 8).
+- **Anti-air hint**: three interface lines (one for armies, two for Defence crews).
+
+### m06b-wings-over-copper · mission 8, Wings over Copper
+
+| Where | Who | English | Vietnamese |
+|---|---|---|---|
+| title | — | Wings over Copper | Cánh bay trên mỏ đồng |
+| place | — | Copper Basin, day 32 | Lòng chảo Đồng, ngày 32 |
+| briefing | Mira Vale | The Basin relay is awake, and Okoro has built a refinery beside the new crystal growth. | Trạm Lòng chảo đã thức giấc, và Okoro đã dựng một nhà máy lọc bên cạnh chỗ tinh thể mới mọc. |
+| briefing | Tobi Okoro | Last night I saw lights drifting over the east rim. Slow, warm lights. They were not stars, Commander. | Đêm qua tôi thấy những đốm sáng trôi qua vành phía đông. Chậm và ấm. Đó không phải là sao đâu, thưa Chỉ huy. |
+| briefing | Mira Vale | Hale cannot break our towers on the ground. If he comes through the air, we need guns that point up. | Hale không phá nổi tháp của ta trên mặt đất. Nếu ông ta đến bằng đường không, ta cần súng chĩa lên trời. |
+| intel | — | Ember balloons fly over walls and towers and bomb buildings. The Copper refinery must not fall. | Khinh khí cầu Than hồng bay qua tường và tháp rồi ném bom xuống công trình. Không được để mất Nhà máy lọc đồng. |
+| intel | — | Only Rangers, Anti-tank soldiers and Hawk gunships can shoot flyers. Towers can after Flak. | Chỉ Xạ thủ, lính Chống tăng và Pháo hạm Hawk bắn được mục tiêu bay. Tháp pháo bắn được sau khi có Pháo phòng không. |
+| intel | — | Research Flak at a level 2 Command core. A level 3 core builds Hawk gunships. | Nghiên cứu Pháo phòng không tại Sở chỉ huy cấp 2. Sở chỉ huy cấp 3 chế tạo được Pháo hạm Hawk. |
+| intel | — | Guard the refinery through three raids, then burn the balloon yard on the east rim. | Bảo vệ nhà máy lọc qua ba đợt không kích, rồi đốt bãi khinh khí cầu ở vành phía đông. |
+| objective raids | — | Guard the Copper refinery through three air raids | Bảo vệ Nhà máy lọc đồng qua ba đợt không kích |
+| objective yard | — | Destroy the balloon yard on the east rim | Phá hủy bãi khinh khí cầu ở vành phía đông |
+| objective fast | — | Finish in under 13 minutes | Hoàn thành trong vòng 13 phút |
+| name | — | Copper refinery | Nhà máy lọc đồng |
+| name | — | Balloon yard | Bãi khinh khí cầu |
+| trigger time 5 | Mira Vale | Rangers to the refinery, Commander. Whatever is coming will come for the copper. | Đưa Xạ thủ tới nhà máy lọc, thưa Chỉ huy. Thứ gì đang tới thì cũng sẽ nhắm vào chỗ đồng. |
+| trigger time 50 | Tobi Okoro | The lights are rising over the east rim again. Big and slow, and coming this way. | Những đốm sáng lại đang bay lên trên vành phía đông. To, chậm, và đang tiến về phía này. |
+| trigger time 100 | Corvin Hale | Meridian camp. Your refinery feeds a relay that starves my fleet. My balloons will close it tonight. | Trại Meridian. Nhà máy lọc của các vị nuôi một trạm đang bỏ đói hạm đội của tôi. Đêm nay khinh khí cầu của tôi sẽ đóng cửa nó. |
+| scene first-balloon | Tobi Okoro | There, over the rim! A balloon with a fire under it, drifting straight at the refinery. | Kia, trên vành lòng chảo! Một khinh khí cầu có lửa bên dưới, đang trôi thẳng về phía nhà máy lọc. |
+| scene first-balloon | Mira Vale | Ember balloons. Our towers cannot aim that high. Rangers and Anti-tank soldiers can. | Khinh khí cầu Than hồng. Tháp của ta không ngắm cao được như vậy. Xạ thủ và lính Chống tăng thì được. |
+| scene first-balloon | Mira Vale | Research Flak at the Command core, and every tower will shoot at the sky. | Nghiên cứu Pháo phòng không ở Sở chỉ huy, rồi mọi tháp pháo sẽ bắn lên trời. |
+| trigger time 170 | Tobi Okoro | Our Foundry crew drew a gunship from the Ashfall wrecks. A level 3 core can build Hawks for us. | Đội Nhà máy của ta đã vẽ được một pháo hạm từ xác tàu Ashfall. Sở chỉ huy cấp 3 có thể chế tạo Hawk cho ta. |
+| trigger time 240 | Tobi Okoro | Kites in front! Spotters. They count your guns for the balloons behind them. | Diều trinh sát đi trước! Đó là quân do thám. Chúng đếm súng của ta cho đám khinh khí cầu phía sau. |
+| trigger tagHpBelow refinery 50 | Tobi Okoro | The refinery is burning! Shoot the balloons down first, Commander. I can mend the rest. | Nhà máy lọc đang cháy! Bắn hạ khinh khí cầu trước đã, thưa Chỉ huy. Phần còn lại tôi sửa được. |
+| trigger time 390 (m03-alloy keep) | Corvin Hale | You kept our alloy on the Ashen Line. I am collecting it tonight, Commander, from the air. | Các vị đã giữ hợp kim của chúng tôi ở Phòng tuyến Tro Tàn. Đêm nay tôi đến lấy lại, thưa Chỉ huy, từ trên không. |
+| trigger time 390 (m03-alloy return) | Corvin Hale | You returned our alloy once. I aim at the refinery, not at your people. That is all I can offer. | Các vị đã từng trả lại hợp kim cho chúng tôi. Tôi chỉ nhắm vào nhà máy lọc, không nhắm vào người của các vị. Tôi chỉ làm được đến thế. |
+| trigger objective raids, is done | Mira Vale | Three raids beaten. The balloons rise from a yard on the east rim. Burn it before Hale builds more. | Đã đẩy lùi ba đợt không kích. Khinh khí cầu bay lên từ một bãi ở vành phía đông. Đốt nó đi trước khi Hale làm thêm. |
+| trigger tagHpBelow balloonYard 50 | Corvin Hale | My yard is burning. Noted, Commander. Two weeks of work, gone in one evening. | Bãi của tôi đang cháy. Tôi đã ghi nhận, thưa Chỉ huy. Hai tuần làm việc, mất trong một buổi tối. |
+| trigger objective yard, is done | Tobi Okoro | The yard is down! No more balloons tonight. And look, the cloth is Sunward silk. | Bãi đã bị phá! Đêm nay hết khinh khí cầu rồi. Mà xem này, vải là lụa của Sunward. |
+| debrief win | Mira Vale | The yard is ash and the sky over the basin is ours. Hale has learned that we look up now. | Bãi đã thành tro và bầu trời trên lòng chảo là của ta. Hale đã biết rằng giờ ta cũng nhìn lên trời. |
+| debrief win | Tobi Okoro | Sunward silk, Ashfall burners. One balloon, two camps. The Pact is closer than we thought. | Lụa Sunward, lò đốt Ashfall. Một khinh khí cầu, hai trại. Hiệp ước khăng khít hơn ta tưởng. |
+| debrief lose | Mira Vale | The refinery burned, and the copper with it. We rebuild, and next time we watch the sky first. | Nhà máy lọc đã cháy, và cả số đồng theo nó. Ta sẽ xây lại, và lần sau ta canh bầu trời trước. |
+
+### m07b-hold-the-valley · mission 10, Hold the Valley
+
+| Where | Who | English | Vietnamese |
+|---|---|---|---|
+| trigger waveStart 6 | Mira Vale | A Kite over the gorge. Ranger and Anti-tank crews can shoot it down. Breaker crews cannot. | Một Diều trinh sát trên hẻm núi. Tháp Xạ thủ và tháp Chống tăng bắn hạ được nó. Tháp Pháo binh thì không. |
+| trigger waveStart 8 | Tobi Okoro | Balloons behind the column, the same as over the basin! Keep a Ranger crew near the top. | Khinh khí cầu sau đoàn quân, giống như ở lòng chảo! Giữ một tháp Xạ thủ gần đỉnh. |
+
+### Interface (src/locales/vi.json)
+
+| Where | Who | English | Vietnamese |
+|---|---|---|---|
+| hint, army | — | Flyers overhead! Towers cannot hit them yet. Train Rangers or Anti-tank soldiers, or research Flak at the Command core. | Mục tiêu bay trên đầu! Tháp pháo chưa bắn được chúng. Hãy huấn luyện Xạ thủ hoặc Chống tăng, hoặc nghiên cứu Pháo phòng không ở Sở chỉ huy. |
+| hint, Defence | — | Flyers on the road! Breaker crews cannot hit them. Ranger and Anti-tank crews can. | Mục tiêu bay trên đường! Tháp Pháo binh không bắn được chúng. Tháp Xạ thủ và Chống tăng thì bắn được. |
+| hint, Defence with Watchers | — | Flyers on the road! Breaker crews cannot hit them. Ranger, Anti-tank and Watcher crews can. | Mục tiêu bay trên đường! Tháp Pháo binh không bắn được chúng. Tháp Xạ thủ, Chống tăng và Trinh sát thì bắn được. |
