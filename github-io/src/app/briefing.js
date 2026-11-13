@@ -13,7 +13,6 @@ import { campaignMapHTML, missionChoices } from "../campaign-map-ui.js";
 import { readSave } from "../savegame.js";
 import { teamColors } from "../faction-colors.js";
 import { DEFENCE_LEVELS, defenceLevel } from "../defence/levels.js";
-import DEFENCE_MAPS from "../defence/maps.json" with { type: "json" };
 
 export function setupBriefing(S, A) {
   const Z = S.screen;
