@@ -28,6 +28,7 @@ jobs:
           cache-dependency-path: github-io/package-lock.json
       - run: npm ci
       - run: npm test
+      - run: npm run check:defence
       - run: npm run build
       - uses: actions/upload-artifact@v7.0.1
         with:
@@ -81,6 +82,8 @@ jobs:
             scripts: ui-extras messages
           - name: visuals
             scripts: visual-combat feel model-loading portraits factions terrain
+          - name: defence
+            scripts: defence
     defaults:
       run:
         working-directory: github-io

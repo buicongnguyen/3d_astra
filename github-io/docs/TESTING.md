@@ -42,6 +42,9 @@ await suite("my-suite", async () => {
 
 Service worker: `DIST_DIR=<build folder> npm run test:offline` (default dist/). It serves its own copy of the build under /3d_astra/ and needs no preview server. The worker is not registered under `?test` unless the URL also has `?sw`.
 
+## Frontier Defence
+`npm run check:defence` (`tools/defence-check.mjs`, ~10 s) plays both levels on all three difficulties: the DefenceBot (`tools/defence-bot.mjs`) must reach each level's `check` stars, a passive player must lose and no single crew type may reach 3 stars. CI runs it after the unit tests. `npm run test:defence` (harness, three viewports, its own CI group) taps a pad, crews and upgrades a tower, calls a wave, opens the result and Next level, and saves `test-results/defence-*.png`; `DEFENCE_VIEWPORTS=portrait` runs one viewport. The render budget has a `defence-wave-eco` scene (limit 120 draws).
+
 ## Mission bot
 `npm run check:missions` (about 90 s) plays all twelve missions through the command layer. Each must stay alive for a passive player, not be won by a generic bot too easily, and be won by the objective bot within its time targets. Run it after any change to `src/story/missions.js` or to rules that affect balance.
 

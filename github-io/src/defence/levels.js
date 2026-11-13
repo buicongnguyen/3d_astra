@@ -1,6 +1,6 @@
 // Frontier Defence levels (release 0.17). Each level is a mission-shaped definition with a
 // `defence` block, so the same object can later sit in the campaign MISSIONS list. The rules
-// live in src/sim/defence.js; the format is described in docs/DEFENCE.md.
+// live in src/sim/defence.js; the format is described in docs/MISSIONS.md ("Frontier Defence levels").
 //
 // Wave groups name roster slots (vanguard, ranger, breaker, tank, antitank, medic): on a faction
 // roster (rules.rosters) they become that faction's units, so Ashfall's vanguard is a Scrapper.

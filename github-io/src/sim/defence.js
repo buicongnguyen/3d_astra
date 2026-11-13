@@ -6,7 +6,7 @@ import GARRISONS from "../defence/garrisons.json" with { type: "json" };
 // Frontier Defence (release 0.17): enemy waves walk fixed routes while the player crews towers
 // on fixed pads. Everything this mode keeps is in `this.defence`, created only when the mission
 // definition has a `defence` block, so every other match serializes (and hashes) exactly as before.
-// Mixed into Simulation (see simulation.js). Format: docs/DEFENCE.md.
+// Mixed into Simulation (see simulation.js). Format: docs/MISSIONS.md ("Frontier Defence levels").
 export { GARRISONS };
 const TEAM = 0, FOE = 1;
 // Seconds between spawn attempts when the spawn spot is still crowded.
