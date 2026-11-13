@@ -287,7 +287,57 @@ export function screenMix(x, y, width, height) {
 export const MAKEUP = { music: 1.5, sfx: 1.8 };
 export function busLevels(settings) {
   const master = settings.muted ? 0 : Math.max(0, Math.min(1, settings.masterVolume ?? 0.5));
-  return { music: master * MAKEUP.music * Math.max(0, Math.min(1, settings.musicVolume ?? 0.6)), sfx: master * MAKEUP.sfx * Math.max(0, Math.min(1, settings.sfxVolume ?? 0.8)) };
+  const music = settings.music === "off" ? 0 : Math.max(0, Math.min(1, settings.musicVolume ?? 0.6));
+  return { music: master * MAKEUP.music * music, sfx: master * MAKEUP.sfx * Math.max(0, Math.min(1, settings.sfxVolume ?? 0.8)) };
+}
+
+// ---------------------------------------------------------------- recorded music
+// The Music setting: recorded tracks where they fit plus the adaptive score in matches, the
+// adaptive score only, or no music at all.
+export const MUSIC_SETTINGS = ["recorded", "adaptive", "off"];
+// Recorded cues (public/music/manifest.json keys). The stings play once; the others loop.
+export const RECORDED_CUES = ["title", "campaign", "defence", "victory", "defeat"];
+export const STINGS = new Set(["victory", "defeat"]);
+// Music screens: menu (start screen: Training, Skirmish), campaign (the campaign list or map),
+// briefing (a mission briefing), match, defence-calm (Frontier Defence between waves), victory and defeat.
+const SCREEN_CUE = { menu: "title", title: "title", campaign: "campaign", briefing: "campaign", "defence-calm": "defence", victory: "victory", defeat: "defeat" };
+
+// Which screen the music should follow, from the app state.
+export function musicScreen({ started = false, result = null, menuView = "skirmish", defenceCalm = false } = {}) {
+  if (started) return result === "victory" || result === "defeat" ? result : defenceCalm ? "defence-calm" : "match";
+  return menuView === "campaign" || menuView === "briefing" ? menuView : "menu";
+}
+
+// What plays: `cue` is the recorded track (null = none) and `adaptive` whether the synthesised score
+// sounds. The adaptive score rules in battle; recorded music plays on menus, briefings, the campaign
+// map, Defence between waves and the result stings, when the setting allows it and the track can
+// play. `loaded(cue)` (or a Set / array of cues) = listed in the manifest and not failed; a cue that
+// cannot play falls back to the adaptive score. `inBattle` = a Defence wave is running.
+export function musicPlan({ screen = "menu", setting = "recorded", loaded = null, inBattle = false } = {}) {
+  if (setting === "off") return { cue: null, adaptive: false };
+  const cue = screen === "defence-calm" && inBattle ? null : SCREEN_CUE[screen] || null;
+  const can = typeof loaded === "function" ? loaded : (c) => !!(loaded?.has?.(c) || (Array.isArray(loaded) && loaded.includes(c)));
+  if (setting === "recorded" && cue && can(cue)) return { cue, adaptive: false };
+  return { cue: null, adaptive: true };
+}
+
+// The cue worth fetching next while idle (encoded bytes only; stings are small and get decoded too).
+export const MUSIC_NEXT = { menu: ["campaign"], title: ["campaign"], campaign: ["victory", "defeat"], briefing: ["victory", "defeat"], match: ["victory", "defeat"], "defence-calm": ["victory", "defeat"], victory: ["title"], defeat: ["title"] };
+export const musicPrefetch = (screen, setting) => (setting === "recorded" ? MUSIC_NEXT[screen] || [] : []);
+
+// Gain that brings a track to the target loudness (manifest `lufs`), times the recorded level.
+export function recordedTrim(lufs, o = MIX.recorded) {
+  const db = Number.isFinite(lufs) ? Math.max(-o.maxTrimDb, Math.min(o.maxTrimDb, o.targetLufs - lufs)) : 0;
+  return o.level * dbToGain(db);
+}
+
+// A manifest track -> exact loop points in seconds within a decoded buffer of `duration` seconds.
+// Bad or missing points loop the whole buffer (AAC adds priming silence, hence stored points).
+export function loopPoints(track, duration) {
+  const start = Number(track?.loopStart), end = Number(track?.loopEnd);
+  const s = Number.isFinite(start) && start >= 0 && start < duration ? start : 0;
+  const e = Number.isFinite(end) && end > s + 0.05 && end <= duration + 0.001 ? Math.min(end, duration) : duration;
+  return { loopStart: s, loopEnd: e };
 }
 
 export class CombatMix {

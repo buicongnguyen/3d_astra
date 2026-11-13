@@ -1,0 +1,10 @@
+{
+  "note": "Test fixtures only: short sine tones made with ffmpeg (tests/music.mjs routes them in as /music/*). Same shape as public/music/manifest.json.",
+  "tracks": {
+    "title": { "file": "title.m4a", "loopStart": 0, "loopEnd": 2, "bpm": 120, "lufs": -24, "bytes": 9202 },
+    "campaign": { "file": "campaign.m4a", "loopStart": 0, "loopEnd": 2, "bpm": 120, "lufs": -24, "bytes": 9235 },
+    "defence": { "file": "defence.m4a", "loopStart": 0, "loopEnd": 2, "bpm": 120, "lufs": -24, "bytes": 9221 },
+    "victory": { "file": "victory.m4a", "bpm": 120, "lufs": -24, "bytes": 5077 },
+    "defeat": { "file": "defeat.m4a", "bpm": 120, "lufs": -24, "bytes": 5020 }
+  }
+}

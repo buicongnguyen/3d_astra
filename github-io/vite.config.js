@@ -10,7 +10,9 @@ function serviceWorker() {
   return {
     name: "publish-service-worker",
     generateBundle(_, bundle) {
-      const files = Object.keys(bundle).filter((name) => !name.endsWith(".md") && !name.endsWith(".map"));
+      // Audio never enters the precache: recorded music lives in public/music/ and is cached on first
+      // play (fc-music in sw.template.js); this filter only guards against a track imported by mistake.
+      const files = Object.keys(bundle).filter((name) => !name.endsWith(".md") && !name.endsWith(".map") && !/\.(m4a|mp3|ogg|opus|wav|aac|flac|webm)$/i.test(name));
       const precache = ["./", "manifest.webmanifest", "favicon.svg", ...files];
       const models = readdirSync(new URL("./public/models/", import.meta.url)).filter((name) => name.endsWith(".glb")).sort();
       const modelHash = hash(models.map((name) => name + readFileSync(new URL("./public/models/" + name, import.meta.url)).length + hash(readFileSync(new URL("./public/models/" + name, import.meta.url)))).join());

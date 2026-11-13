@@ -7,6 +7,10 @@
 //                                   name changes only when a model file changes
 //   pages        network first, cached copy only when offline, so a new release is seen on the
 //                next online load and the HTML is never stale forever
+//   music cache  fc-music           recorded tracks (public/music/*.m4a), never precached: each is
+//                                   stored on its first successful play and served cache-first
+//                                   (the page versions the URL with ?v=<bytes>). manifest.json is
+//                                   network first; a fresh copy drops tracks it no longer lists.
 //
 // A new worker installs in the background and waits (no skipWaiting): an open match keeps the
 // files it started with, and the new version takes over the next time the game is opened.
@@ -15,8 +19,22 @@ const MODELS = "__MODELS__";
 const PRECACHE = __PRECACHE__;
 const SHELL_CACHE = `fc-shell-${BUILD}`;
 const MODEL_CACHE = `fc-models-${MODELS}`;
+const MUSIC_CACHE = "fc-music";
 const scope = self.registration.scope;
 const abs = (path) => new URL(path, scope).href;
+const MUSIC_MANIFEST = abs("music/manifest.json");
+
+// The track URLs a music manifest refers to, exactly as music-recorded.js builds them.
+function musicUrls(manifest) {
+  const urls = new Set();
+  for (const track of Object.values(manifest?.tracks || {})) {
+    if (typeof track?.file !== "string") continue;
+    const url = new URL(track.file, MUSIC_MANIFEST);
+    if (Number.isFinite(track.bytes)) url.searchParams.set("v", String(track.bytes));
+    urls.add(url.href);
+  }
+  return urls;
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -28,7 +46,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       for (const key of await caches.keys()) {
-        if (key.startsWith("fc-") && key !== SHELL_CACHE && key !== MODEL_CACHE) await caches.delete(key);
+        if (key.startsWith("fc-") && key !== SHELL_CACHE && key !== MODEL_CACHE && key !== MUSIC_CACHE) await caches.delete(key);
       }
       await self.clients.claim();
     })(),
@@ -87,6 +105,45 @@ self.addEventListener("fetch", (event) => {
         if (hit) return hit;
         const response = await fetch(request);
         if (response.ok) cache.put(request, response.clone());
+        return response;
+      })(),
+    );
+    return;
+  }
+  if (url.href.split("?")[0] === MUSIC_MANIFEST) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(MUSIC_CACHE);
+        try {
+          const fresh = await fetch(request, { cache: "no-cache" });
+          if (fresh.ok) {
+            const copy = fresh.clone(), body = fresh.clone();
+            event.waitUntil((async () => {
+              await cache.put(MUSIC_MANIFEST, copy);
+              // Tracks the new manifest no longer lists (replaced or removed) leave the cache.
+              const data = await body.json().catch(() => null);
+              if (!data?.tracks) return;
+              const keep = musicUrls(data);
+              for (const key of await cache.keys()) if (key.url !== MUSIC_MANIFEST && !keep.has(key.url)) await cache.delete(key);
+            })());
+          }
+          return fresh;
+        } catch {
+          return (await cache.match(MUSIC_MANIFEST)) || Response.error();
+        }
+      })(),
+    );
+    return;
+  }
+  if (path.startsWith("music/") && path.split("?")[0].endsWith(".m4a")) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(MUSIC_CACHE);
+        const hit = await cache.match(request);
+        if (hit) return hit;
+        const response = await fetch(request);
+        // Only a whole file (200) is stored: a range reply (206) cannot be replayed.
+        if (response.status === 200) event.waitUntil(cache.put(request, response.clone()));
         return response;
       })(),
     );
