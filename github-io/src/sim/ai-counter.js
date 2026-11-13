@@ -47,11 +47,17 @@ export const aiCounter = {
   aiAirChoice(team, b, army, choice, pace) {
     if (!this.airAllowed()) return choice;
     const count = (pick) => army.filter(pick).length + this.own(team).reduce((n, e) => n + (e.queue || []).filter((q) => pick(D[q.type])).length, 0);
+    // A lost Kite is replaced at most every 90 s (aiKiteAt, created on first use).
     if (b.type === "barracks" && b.level >= 2 && this.time > pace.foundryAt && this.own(team).some((e) => e.type === "foundry" && e.complete) &&
-      !count((e) => e.type === "kite")) return "kite";
+      !count((e) => e.type === "kite") && this.time >= (this.aiKiteAt?.[team] ?? 0)) {
+      (this.aiKiteAt ||= {})[team] = this.time + 90;
+      return "kite";
+    }
     if (b.type === "foundry" && this.time > pace.upgradeAt) {
       const own = (this.factionFor(team).extra?.foundry || []).find((type) => b.trains?.includes(type));
-      if (own && b.level >= (D[own].required_level || 1) && count((e) => e.flying && e.damage > 0) < AIR.ai_cap && this.airCount(team) < AIR.cap) return own;
+      const pop = this.population(team);
+      if (own && b.level >= (D[own].required_level || 1) && count((e) => e.flying && e.damage > 0) < AIR.ai_cap && this.airCount(team) < AIR.cap &&
+        pop.used + pop.reserved + D[own].pop <= pop.cap) return own;
     }
     return choice;
   },

@@ -95,8 +95,10 @@ export const ai = {
     // The Barracks spends alloy in small steps and would starve the Foundry for good, so while
     // the Foundry stands idle, has the energy and vehicles are under a quarter of the army, infantry waits.
     const vehicles = army.filter((e) => e.mechanical).length;
-    const foundryIdle = own.some((e) => e.type === "foundry" && e.complete && !e.levelJob && !e.queue.length);
-    const hold = foundryIdle && vehicles * 4 < army.length && this.players[team].energy >= D.breaker.cost[1] ? D.breaker.cost[0] : 0;
+    const foundry = own.find((e) => e.type === "foundry" && e.complete && !e.levelJob && !e.queue.length), foundryIdle = !!foundry;
+    // The faction's own flyer, when due (sim/ai-counter.js aiAirChoice), is saved for the same way.
+    const flyer = foundry ? this.aiAirChoice(team, foundry, army, null, pace) : null, saving = flyer ? D[flyer] : D.breaker;
+    const hold = foundryIdle && (vehicles * 4 < army.length || flyer) && this.players[team].energy >= saving.cost[1] ? saving.cost[0] : 0;
     for (const b of own.filter((e) => e.complete && ["barracks", "foundry"].includes(e.type))) {
       if (b.levelJob) continue;
       const branch = this.researchBranch(team, role);
@@ -123,7 +125,8 @@ export const ai = {
         const support = b.type === 'foundry' ? 'engineer' : 'medic';
         if (b.level >= 2 && army.filter(e => this.slotOf(e.type) === support).length < 2) choice = support;
         choice = this.aiAirChoice(team, b, army, choice, pace);
-        const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : ['breaker'])].map(slot => this.typeFor(team,slot)))].filter(type => this.canTrain(team,type));
+        // A Foundry due its flyer waits for it (the Barracks saves alloy for it above) instead of falling back.
+        const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : D[choice]?.flying ? [] : ['breaker'])].map(slot => this.typeFor(team,slot)))].filter(type => this.canTrain(team,type));
         const pop = this.population(team);
         const save = b.type === 'barracks' ? hold : 0;
         const affordable = choices.find(type => b.level >= (D[type].required_level || 1) && afford([D[type].cost[0] + save, D[type].cost[1]]) && pop.used+pop.reserved+D[type].pop <= pop.cap);
