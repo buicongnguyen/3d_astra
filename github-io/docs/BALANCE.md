@@ -399,8 +399,9 @@ the skirmish hash `d071360b`, are unchanged (`tests/wings.test.js` pins the othe
 - **Results** (`check:defence`, before → after): bot Gorge Road 3/3/3★ (Veteran 20 → 18 lives), Twin
   Bridges 3/2/2★ (16 → 13 lives on Veteran); Breaker-only Gorge Road Story 1★ → 0★, Twin Bridges Story
   2★ → 1★, Standard 1★ → 0★. Twin Bridges Endless falls at wave 27 (it held 40+). Hold the Valley
-  (`check:missions`): Story 3★ 20♥, Standard 3★ 18♥, Veteran 2★ 16♥ (was 12♥: the flyers' bounty buys
-  a tower sooner).
+  (`check:missions`, target 3/2/1★): Story 3★ 20♥ (unchanged), Standard 2★ 12♥ (was 3★ 18♥: no flyer
+  leaks, but the bot's crew timing shifts and two Battle tanks get through in waves 7 and 8; with one
+  balloon instead of two the result is the same), Veteran 2★ 15♥ (was 12♥).
 - **Wings over Copper** (objective bot, seconds): Story 507, Standard 508, Veteran 508, all gold; passive
   and generic targets met. The bot builds a large army while the AI stays home, so it is fast; a person
   should take 9 to 12 minutes (8 minutes of raids, then the yard).
