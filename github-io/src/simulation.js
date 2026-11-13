@@ -325,7 +325,7 @@ export class Simulation {
     if (o?.type === 'patrol' && !o.origin) o.origin = { x: e.x, z: e.z };
     // Explicit Move orders take priority so units can retreat and kite.
     // Soldiers on a repair job still shoot back at an enemy in range, then carry on repairing.
-    if (e.type !== "worker" && e.damage > 0 && (!o || ['attackmove', 'patrol', 'repair', 'route'].includes(o.type))) {
+    if (e.type !== "worker" && e.damage > 0 && (!o || ['attackmove', 'patrol', 'repair'].includes(o.type))) {
       const target = this.enemy(e, e.range, true);
       if (target) {
         this.fight(e, target, dt, false);

@@ -59,13 +59,14 @@ export const defence = {
       interval: d.interval * (g.interval ?? 1) * t.interval,
       range: d.range + g.range + t.range,
       shot: d.shot || type,
-      maxHp: Math.round(D.tower.hp * t.hp),
+      maxHp: Math.round(D.tower.hp * (GARRISONS.hp ?? 1) * t.hp),
       maxShield: D.tower.shield,
       level: tier,
     };
     if (d.splash_radius) { s.splash_radius = d.splash_radius * (g.splash ?? 1); s.splash_damage = d.splash_damage; }
     if (d.counter) { s.counter = d.counter; s.counter_bonus = d.counter_bonus; }
-    if (d.mechanical_bonus) s.mechanical_bonus = d.mechanical_bonus;
+    // Armour: machines shrug off small arms and shrapnel (garrisons.json mech), not rockets.
+    if (d.mechanical_bonus || g.mech) s.mechanical_bonus = (d.mechanical_bonus || 1) * (g.mech ?? 1);
     if (g.reveal) s.reveal = g.reveal;
     return s;
   },
@@ -132,8 +133,13 @@ export const defence = {
     this.events.push({ type: "waveCall", bonus, team });
     return true;
   },
+  // Wave sizes by difficulty: the level's own table (defence.count), else the campaign's.
+  defenceWaveScale() {
+    const count = this.defenceDef()?.count;
+    return count?.[this.difficulty] ?? difficultyRules(this).wave;
+  },
   startWave() {
-    const d = this.defence, def = this.defenceDef(), wave = def.waves[d.wave], scale = difficultyRules(this).wave;
+    const d = this.defence, def = this.defenceDef(), wave = def.waves[d.wave], scale = this.defenceWaveScale();
     d.wave++;
     d.active = true;
     d.nextAt = null;
@@ -148,7 +154,11 @@ export const defence = {
         const entry = left[k % left.length];
         if (entry[1] <= 0) continue;
         entry[1]--;
-        d.queue.push({ at: this.time + (g.delay || 0) + i * (g.every ?? 0.7), type: entry[0], route: g.route });
+        const q = { at: this.time + (g.delay || 0) + i * (g.every ?? 0.7), type: entry[0], route: g.route };
+        // Tougher crews: the group's own factor times the difficulty's (defence.hp).
+        const hp = (g.hp ?? 1) * (typeof def.hp === "object" ? def.hp[this.difficulty] ?? 1 : def.hp ?? 1);
+        if (hp !== 1) q.hp = hp;
+        d.queue.push(q);
         i++;
         count++;
       }
@@ -172,6 +182,7 @@ export const defence = {
       }
       d.queue.shift();
       const e = this.spawn(q.type, FOE, start.x, start.z, true, true);
+      if (q.hp) e.hp = e.maxHp = Math.round(e.maxHp * q.hp);
       const next = pts[1] || pts[0];
       e.angle = Math.atan2(next.x - e.x, next.z - e.z);
       e.orders = [{ type: "route", route: q.route, leg: 1 }];
@@ -180,11 +191,13 @@ export const defence = {
     return spawned;
   },
   // Route order (sim/stepEntity): walk the lane leg by leg, straight when the way is clear and
-  // by the route search otherwise. Firing happens before this, only at targets in range; a wave
-  // never leaves its road to chase.
+  // by the route search otherwise, firing on the move at whatever is in range. A wave never
+  // stops or leaves its road to chase.
   stepRoute(e, o, dt) {
     const def = this.defenceDef(), pts = def?.routes[o.route];
     if (!pts) { this.finish(e); return; }
+    const foe = e.damage > 0 ? this.enemy(e, e.range, true) : null;
+    if (foe) this.fight(e, foe, dt, false);
     const lane = ((e.id * 0.618) % 1 - 0.5) * (def.lane ?? 2.4);
     let target = null;
     for (let guard = 0; guard < pts.length; guard++) {
@@ -197,11 +210,12 @@ export const defence = {
     }
     const dx = target.x - e.x, dz = target.z - e.z, d = hyp(dx, dz);
     if (d < 0.05) { e.moving = false; return; }
-    const step = Math.min(d, this.moveSpeed(e) * dt), next = { x: e.x + (dx / d) * step, z: e.z + (dz / d) * step };
+    const step = Math.min(d, this.moveSpeed(e) * (def.pace ?? 1) * dt), next = { x: e.x + (dx / d) * step, z: e.z + (dz / d) * step };
     if (e.speed > 0 && this.nav.canTraverse(e, next, e.radius)) {
       e.x = next.x;
       e.z = next.z;
-      e.angle = Math.atan2(dx, dz);
+      // A unit firing keeps facing its target (turrets and the shot read the angle).
+      if (!e.attacking) e.angle = Math.atan2(dx, dz);
       e.moving = true;
       e.path = [];
       e.stalled = 0;

@@ -171,6 +171,10 @@ export const progression = {
       const ally = o.type === 'attackmove' && this.supportTarget(e);
       if (ally) this.assist(e,ally,dt);
       else if (this.move(e,o,dt,1.2)) this.finish(e);
+    } else if (o.type === 'route') {
+      // Frontier Defence: a Supply wagon mends the column as it walks the road.
+      this.assist(e,this.supportTarget(e),dt);
+      this.stepRoute(e,o,dt);
     } else this.finish(e);
   },
 };
