@@ -96,10 +96,8 @@ export const ai = {
     // the Foundry stands idle, has the energy and vehicles are under a quarter of the army, infantry waits.
     const vehicles = army.filter((e) => e.mechanical).length;
     const foundryIdle = own.some((e) => e.type === "foundry" && e.complete && !e.levelJob && !e.queue.length);
-    // The faction's own flyer, when the core is due to train it (sim/ai-counter.js aiAirChoice), is saved for the same way.
-    const flyer = this.aiAirChoice(team, hq, army, pace), due = flyer && flyer !== "kite" ? D[flyer] : null;
-    const hold = due && this.players[team].energy >= due.cost[1] + 50 ? due.cost[0] + 100
-      : foundryIdle && vehicles * 4 < army.length && this.players[team].energy >= D.breaker.cost[1] ? D.breaker.cost[0] : 0;
+    // (Flyers are not saved for: the core trains them from spare resources, see aiAirTrain below.)
+    const hold = foundryIdle && vehicles * 4 < army.length && this.players[team].energy >= D.breaker.cost[1] ? D.breaker.cost[0] : 0;
     for (const b of own.filter((e) => e.complete && ["barracks", "foundry"].includes(e.type))) {
       if (b.levelJob) continue;
       const branch = this.researchBranch(team, role);

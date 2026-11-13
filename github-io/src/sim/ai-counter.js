@@ -44,7 +44,7 @@ export const aiCounter = {
   //   answer   enemy flyers seen: Rangers (or the faction's swap, every one of them hits air) from the Barracks
   //   flak     after AIR.flak_after flyers seen, the Command core researches Flak (towers shoot flyers)
   //   spotter  one Kite scout once the Foundry stands, replaced at most every 90 s; it flies ahead of each attack
-  //   flyer    the faction's own flyer, at most AIR.ai_cap at a time, from the upgrade time on (the Barracks saves for it)
+  //   flyer    the faction's own flyer, at most AIR.ai_cap at a time, from the upgrade time on, from spare resources
   // The flyer the core should train next, or null.
   aiAirChoice(team, hq, army, pace) {
     if (!this.airAllowed() || !hq?.complete || hq.levelJob) return null;
