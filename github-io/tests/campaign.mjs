@@ -58,6 +58,8 @@ try {
   const stages = page.locator('[data-stage]');
   assert.equal(await stages.count(), MISSIONS.length);
   assert.deepEqual(await stages.evaluateAll(bs => bs.map(b => b.disabled)), [false, ...Array(MISSIONS.length - 1).fill(true)]);
+  // The mission's own models (a faction building) may still be loading on a slow runner.
+  await ready(page);
   assert.equal(await page.locator('#start').innerText(), 'Start mission 1');
   let m = await def(page);
   assert.match(await heading(page), new RegExp(`Mission 1 · ${m.title}`));

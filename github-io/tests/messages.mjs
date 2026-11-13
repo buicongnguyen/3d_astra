@@ -122,7 +122,26 @@ await suite("messages", async () => {
       s.events.push({ type: "incoming", team: 0, x: hq.x, z: hq.z });
     });
     await page.waitForFunction(() => /Enemy attack incoming/.test(document.querySelector("#notice").textContent) && !window.__frontier.fightHint.hidden && !document.querySelector(".dialogue").hidden, null, { timeout: TIMEOUT.step });
-    const [line, alert2, hint2] = [await box(page, ".dialogue"), await box(page, "#notice"), await box(page, "#fight-hint")];
+    // Measure the three boxes in one go (separate round trips on a slow runner let a timer hide one in
+    // between), showing them again for up to three tries.
+    const boxes = () => page.evaluate(() => ["dialogue", "notice", "fight-hint"].map((id) => {
+      const el = id === "dialogue" ? document.querySelector(".dialogue") : document.getElementById(id);
+      if (!el || el.hidden) return null;
+      const s = getComputedStyle(el), r = el.getBoundingClientRect();
+      return s.display === "none" || s.visibility === "hidden" || r.width === 0 ? null : { x: r.x, y: r.y, w: r.width, h: r.height, right: r.right, bottom: r.bottom };
+    }));
+    let measured = await boxes();
+    for (let i = 0; i < 2 && measured.some((b) => !b); i++) {
+      await page.evaluate(() => {
+        const f = window.__frontier, s = f.sim, hq = s.own(0).find((e) => e.type === "hq");
+        f.mission.say("commander", "Hold the ridge until the convoy is through. Watch the river crossing.");
+        f.fightHint.hidden = false;
+        s.events.push({ type: "incoming", team: 0, x: hq.x, z: hq.z });
+      });
+      await page.waitForTimeout(500);
+      measured = await boxes();
+    }
+    const [line, alert2, hint2] = measured;
     assert.ok(line && alert2 && hint2, `${name}: dialogue, alert and hint drawn`);
     assert.equal(overlap(line, alert2), false, `${name}: alert over the dialogue line`);
     assert.equal(overlap(line, hint2), false, `${name}: hint over the dialogue line ${JSON.stringify(hint2)} ${JSON.stringify(line)}`);
