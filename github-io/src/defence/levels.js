@@ -1,15 +1,26 @@
-// Frontier Defence levels (release 0.17). Each level is a mission-shaped definition with a
-// `defence` block, so the same object can later sit in the campaign MISSIONS list. The rules
-// live in src/sim/defence.js; the format is described in docs/MISSIONS.md ("Frontier Defence levels").
+// Frontier Defence levels (release 0.17, six since 0.21). Each level is a mission-shaped
+// definition with a `defence` block, so the same object can later sit in the campaign MISSIONS
+// list. The rules live in src/sim/defence.js; the format is described in docs/MISSIONS.md
+// ("Frontier Defence levels").
 //
-// Wave groups name roster slots (vanguard, ranger, breaker, tank, antitank, medic): on a faction
-// roster (rules.rosters) they become that faction's units, so Ashfall's vanguard is a Scrapper.
-// Counts scale with the difficulty like campaign waves (balance.json difficulty.wave).
+// Wave groups name roster slots (vanguard, ranger, breaker, tank, antitank, medic) or any unit
+// type: on a faction roster (rules.rosters) a slot becomes that faction's unit, so Ashfall's
+// vanguard is a Scrapper. A group with `faction` uses that faction's roster instead (a mixed
+// wave); `tag: "bridger"` makes its units build a pontoon over a blown bridge. Counts scale with
+// the difficulty like campaign waves (balance.json difficulty.wave).
 import MAPS from "./maps.json" with { type: "json" };
 
 const route = (map) => Object.fromEntries(Object.entries(MAPS[map].routes).map(([id, pts]) => [id, pts.map(([x, z]) => ({ x, z }))]));
 const exitOf = (map, r = 4) => { const pts = Object.values(MAPS[map].routes)[0], [x, z] = pts.at(-1); return { x, z, r }; };
-const group = (units, route = "main", every = 0.7, delay = 0, hp) => ({ units, route, every, delay, ...(hp ? { hp } : {}) });
+const group = (units, route = "main", every = 0.7, delay = 0, hp, extra) => ({ units, route, every, delay, ...(hp ? { hp } : {}), ...extra });
+// A group from another faction's roster (mixed waves, 0.21).
+const allied = (faction, units, route, every, delay, hp) => group(units, route, every, delay, hp, { faction });
+// Bridge builders: they stop at a blown crossing on their route and put a pontoon over it.
+const bridgers = (units, route, every, delay, hp) => group(units, route, every, delay, hp, { tag: "bridger" });
+// Every crew the pads can take since 0.21.
+const CREWS = ["ranger", "breaker", "antitank", "watcher", "tank", "scorcher"];
+// River levels: which crossing each route uses (x of src/terrain.js CROSSINGS), for demolition and rerouting.
+const RIVER = { west: -22, ford: 0, east: 22 };
 
 export const DEFENCE_LEVELS = [
   {
@@ -48,7 +59,9 @@ export const DEFENCE_LEVELS = [
         { id: "r3", x: 7.8, z: -1, high: "rim" }, { id: "d3", x: 14.6, z: -1.4, high: "deep" },
         { id: "r4", x: 3.8, z: 27.1, high: "rim" }, { id: "d4", x: -0.5, z: 32.4, high: "deep" },
       ],
-      crews: ["ranger", "breaker", "antitank", "watcher"],
+      crews: CREWS,
+      // The commander's post at the start (0.21): out of reach of the road until it is sent somewhere.
+      commander: { x: 38.5, z: 37.5 },
       waves: [
         { groups: [group({ vanguard: 6 })], bonus: 25 },
         { groups: [group({ vanguard: 8 }), group({ ranger: 3 }, "main", 1, 5)], bonus: 30 },
@@ -98,6 +111,9 @@ export const DEFENCE_LEVELS = [
       hp: { story: 0.75, standard: 0.8, veteran: 0.8 },
       routes: route("bridges"),
       exit: exitOf("bridges"),
+      // Bridges can be blown (0.21); the ford always stays.
+      bridges: true,
+      crossings: RIVER,
       pads: [
         { id: "n1", x: -18, z: -33 }, { id: "n2", x: -4, z: -40 }, { id: "n3", x: -11, z: -7 },
         { id: "n4", x: 11, z: -7 }, { id: "n5", x: -30, z: -12 }, { id: "n6", x: 30, z: -12 },
@@ -106,7 +122,8 @@ export const DEFENCE_LEVELS = [
         { id: "s4", x: 30, z: 12 }, { id: "s5", x: -6, z: 26 }, { id: "s6", x: 14, z: 26 },
         { id: "s7", x: 0, z: 36 }, { id: "s8", x: 20, z: 34 },
       ],
-      crews: ["ranger", "breaker", "antitank", "watcher"],
+      crews: CREWS,
+      commander: { x: 26.5, z: 42 },
       waves: [
         { groups: [group({ vanguard: 4 }, "ford")], bonus: 40 },
         { groups: [group({ ranger: 2 }, "west", 0.9), group({ ranger: 2 }, "east", 0.9, 2)], bonus: 45 },
@@ -127,6 +144,239 @@ export const DEFENCE_LEVELS = [
     medals: { gold: { lives: 18 }, silver: { lives: 10 } },
     check: { story: 3, standard: 2, veteran: 1 },
   },
+  {
+    id: "d-switchback",
+    title: "Switchback Pass",
+    map: "switchback",
+    enemies: 1,
+    speed: "normal",
+    alliance: "ffa",
+    rules: { ai: false, mode: "defence", rosters: true },
+    factions: { 1: "wardens" },
+    briefing: {
+      place: "Switchback Pass, the high road to the relays",
+      text: "Warden machines grind up the pass, bend after bend between two plateaus. Every turn passes the same guns twice: use it.",
+      tip: "Walkers outrange most towers. Anti-tank posts and tank emplacements bring them down.",
+    },
+    defence: {
+      lives: 20,
+      alloy: { story: 340, standard: 280, veteran: 260 },
+      firstWave: 30,
+      gap: 16,
+      lane: 2.4,
+      pace: 0.9,
+      count: { story: 1, standard: 1.3, veteran: 1.65 },
+      hp: { story: 0.9, standard: 1, veteran: 1.05 },
+      routes: route("switchback"),
+      exit: exitOf("switchback"),
+      pads: [
+        { id: "r1", x: 17, z: 15, high: "rim" }, { id: "r2", x: -17, z: -25, high: "rim" }, { id: "r3", x: -17, z: -13, high: "rim" },
+        { id: "d1", x: 15, z: 25, high: "deep" }, { id: "d2", x: -17, z: -19, high: "deep" },
+        { id: "w1", x: -25, z: -7 }, { id: "w2", x: -23, z: -33 }, { id: "w3", x: -37, z: -9 }, { id: "w4", x: -35, z: -29 },
+        { id: "w5", x: -7, z: -35 }, { id: "w6", x: 11, z: -37 }, { id: "w7", x: 33, z: 11 }, { id: "w8", x: -25, z: 7 },
+        { id: "w9", x: -15, z: 7 }, { id: "w10", x: -11, z: -5 }, { id: "w11", x: -5, z: 7 }, { id: "w12", x: -1, z: -5 },
+      ],
+      crews: CREWS,
+      commander: { x: 15.5, z: 41 },
+      waves: [
+        { groups: [group({ vanguard: 6 })], bonus: 30 },
+        { groups: [group({ vanguard: 6 }), group({ ranger: 4 }, "main", 1, 5)], bonus: 35 },
+        { groups: [group({ vanguard: 10 }, "main", 0.55), group({ ranger: 4 }, "main", 1, 4)], bonus: 40 },
+        { groups: [group({ ranger: 8 }, "main", 0.8), group({ breaker: 2 }, "main", 1.6, 6)], bonus: 45 },
+        { groups: [group({ vanguard: 14 }, "main", 0.5), group({ antitank: 3 }, "main", 1.2, 5)], bonus: 50 },
+        { groups: [group({ tank: 2 }, "main", 3, 0, 1.2), group({ vanguard: 8 }, "main", 0.5, 4)], bonus: 55 },
+        { groups: [group({ ranger: 10 }, "main", 0.7), group({ breaker: 3 }, "main", 1.5, 6)], bonus: 60 },
+        { groups: [group({ vanguard: 18 }, "main", 0.45), group({ tank: 2 }, "main", 3, 6, 1.2)], bonus: 65 },
+        { groups: [group({ tank: 4 }, "main", 2.5, 0, 1.2), group({ ranger: 8 }, "main", 0.8, 4)], bonus: 70 },
+        { groups: [group({ vanguard: 20 }, "main", 0.4), group({ tank: 4, breaker: 3 }, "main", 2.2, 6, 1.2), group({ ranger: 8 }, "main", 0.7, 10)], bonus: 0 },
+      ],
+      camera: { x: 0, z: 0, zoom: 78, maxZoom: 96 },
+    },
+    objectives: [{ id: "hold", type: "waves", count: 10, text: "Hold the pass for 10 waves" }],
+    win: ["hold"],
+    lose: [{ type: "lives" }],
+    medals: { gold: { lives: 18 }, silver: { lives: 10 } },
+    check: { story: 3, standard: 2, veteran: 1 },
+  },
+  {
+    id: "d-fordwood",
+    title: "Fordwood",
+    map: "fordwood",
+    enemies: 1,
+    speed: "normal",
+    alliance: "ffa",
+    rules: { ai: false, mode: "defence", rosters: true },
+    factions: { 1: "ashfall" },
+    briefing: {
+      place: "Fordwood, where the east bridge fell",
+      text: "Ashfall and the Wardens march together: swarms through the ford, machines over the last bridge. Blow it if you must; their builders will bring pontoons.",
+      tip: "Tap a bridge to blow it. Bridge builders stop at the bank: bring them down before the pontoon is done.",
+    },
+    defence: {
+      lives: 20,
+      alloy: { story: 420, standard: 360, veteran: 340 },
+      firstWave: 30,
+      gap: 16,
+      lane: 2.4,
+      pace: 0.8,
+      count: { story: 1, standard: 1.3, veteran: 1.6 },
+      hp: { story: 0.9, standard: 1, veteran: 1 },
+      routes: route("fordwood"),
+      exit: exitOf("fordwood"),
+      bridges: true,
+      crossings: { west: -22, ford: 0 },
+      // The east bridge is already down: a ford and one bridge.
+      startBlown: [22],
+      pads: [
+        { id: "f1", x: 19, z: -37 }, { id: "f2", x: -21, z: 29 }, { id: "f3", x: -17, z: 15 }, { id: "f4", x: -33, z: 31 },
+        { id: "f5", x: 31, z: -33 }, { id: "f6", x: -5, z: -15 }, { id: "f7", x: 9, z: -31 }, { id: "f8", x: 11, z: -15 },
+        { id: "f9", x: 21, z: -21 }, { id: "f10", x: -31, z: 21 }, { id: "f11", x: -13, z: -9 }, { id: "f12", x: -21, z: 39 },
+        { id: "f13", x: -9, z: 7 }, { id: "f14", x: 5, z: -7 }, { id: "f15", x: -27, z: -9 },
+      ],
+      crews: CREWS,
+      commander: { x: -14.5, z: 42 },
+      waves: [
+        { groups: [group({ vanguard: 8 }, "ford")], bonus: 40 },
+        { groups: [group({ vanguard: 6 }, "west", 0.6), group({ ranger: 3 }, "ford", 0.9, 3)], bonus: 45 },
+        { groups: [allied("wardens", { ranger: 4 }, "west", 0.9), group({ vanguard: 8 }, "ford", 0.55, 3)], bonus: 50 },
+        { groups: [group({ vanguard: 14 }, "ford", 0.45), group({ breaker: 2 }, "west", 1.6, 4)], bonus: 55 },
+        { groups: [allied("wardens", { tank: 2 }, "west", 3, 0, 1.2), group({ vanguard: 14 }, "ford", 0.45, 3)], bonus: 60 },
+        { groups: [bridgers({ vanguard: 4 }, "west", 0.8), group({ vanguard: 8 }, "west", 0.5, 4), group({ ranger: 6 }, "ford", 0.7, 2)], bonus: 65 },
+        { groups: [group({ breaker: 3 }, "ford", 1.5), allied("wardens", { ranger: 6 }, "west", 0.8, 3)], bonus: 70 },
+        { groups: [group({ vanguard: 22 }, "ford", 0.4), allied("wardens", { tank: 2 }, "west", 3, 4, 1.2)], bonus: 75 },
+        { groups: [allied("wardens", { tank: 3 }, "west", 2.5, 0, 1.2), bridgers({ vanguard: 6 }, "west", 0.7, 3), group({ ranger: 6 }, "ford", 0.7, 5)], bonus: 80 },
+        { groups: [group({ vanguard: 28 }, "ford", 0.35), allied("wardens", { tank: 4 }, "west", 2.5, 4, 1.2), group({ breaker: 3 }, "west", 1.8, 8)], bonus: 0 },
+      ],
+      camera: { x: -2, z: 0, zoom: 78, maxZoom: 96 },
+    },
+    objectives: [{ id: "hold", type: "waves", count: 10, text: "Hold the river for 10 waves" }],
+    win: ["hold"],
+    lose: [{ type: "lives" }],
+    medals: { gold: { lives: 18 }, silver: { lives: 10 } },
+    check: { story: 3, standard: 2, veteran: 1 },
+  },
+  {
+    id: "d-canyon",
+    title: "Amber Canyon",
+    map: "canyon",
+    enemies: 1,
+    speed: "normal",
+    alliance: "ffa",
+    rules: { ai: false, mode: "defence", rosters: true },
+    factions: { 1: "veil" },
+    briefing: {
+      place: "Amber Canyon, the dry road south",
+      text: "Veil shades walk the canyon floor unseen until they strike. Light the road with Watcher posts and hold for ten waves.",
+      tip: "Only towers that see a shade can shoot it. A Watcher post reveals far more than the others.",
+    },
+    defence: {
+      lives: 20,
+      alloy: { story: 340, standard: 290, veteran: 270 },
+      firstWave: 30,
+      gap: 16,
+      lane: 2.4,
+      pace: 0.8,
+      count: { story: 1, standard: 1.3, veteran: 1.65 },
+      hp: { story: 0.9, standard: 1, veteran: 1.05 },
+      routes: route("canyon"),
+      exit: exitOf("canyon"),
+      pads: [
+        { id: "r1", x: -15, z: -31, high: "rim" }, { id: "r2", x: -15, z: 15, high: "rim" }, { id: "r3", x: -15, z: -21, high: "rim" }, { id: "r4", x: -15, z: 25, high: "rim" },
+        { id: "d1", x: 17, z: -7, high: "deep" }, { id: "d2", x: 17, z: 3, high: "deep" },
+        { id: "c1", x: -3, z: -7 }, { id: "c2", x: 3, z: 15 }, { id: "c3", x: 3, z: -23 }, { id: "c4", x: -5, z: 3 }, { id: "c5", x: -5, z: 33 },
+        { id: "c6", x: 3, z: -33 }, { id: "c7", x: 5, z: 25 }, { id: "c8", x: 7, z: -13 }, { id: "c9", x: 7, z: 3 }, { id: "c10", x: -7, z: -37 },
+      ],
+      crews: CREWS,
+      commander: { x: -14.5, z: 42 },
+      waves: [
+        { groups: [group({ vanguard: 5 })], bonus: 30 },
+        { groups: [group({ vanguard: 6 }), group({ ranger: 3 }, "main", 1, 4)], bonus: 35 },
+        { groups: [group({ ranger: 6 }, "main", 0.9), group({ vanguard: 6 }, "main", 0.6, 4)], bonus: 40 },
+        { groups: [group({ vanguard: 10 }, "main", 0.5), group({ medic: 1 }, "main", 1, 3)], bonus: 45 },
+        { groups: [group({ tank: 3 }, "main", 3, 0, 1.2), group({ vanguard: 8 }, "main", 0.5, 4)], bonus: 50 },
+        { groups: [group({ antitank: 4 }, "main", 1), group({ ranger: 6 }, "main", 0.8, 4)], bonus: 55 },
+        { groups: [group({ vanguard: 14 }, "main", 0.45), group({ breaker: 2 }, "main", 1.6, 6)], bonus: 60 },
+        { groups: [group({ tank: 4 }, "main", 2.5, 0, 1.2), group({ vanguard: 10, medic: 2 }, "main", 0.5, 4)], bonus: 65 },
+        { groups: [group({ ranger: 14 }, "main", 0.6), group({ antitank: 4, breaker: 3 }, "main", 1.4, 5)], bonus: 70 },
+        { groups: [group({ vanguard: 20 }, "main", 0.4), group({ tank: 6 }, "main", 2.2, 6, 1.2), group({ ranger: 10 }, "main", 0.7, 10)], bonus: 0 },
+      ],
+      camera: { x: 0, z: 0, zoom: 78, maxZoom: 96 },
+    },
+    objectives: [{ id: "hold", type: "waves", count: 10, text: "Hold the canyon for 10 waves" }],
+    win: ["hold"],
+    lose: [{ type: "lives" }],
+    medals: { gold: { lives: 18 }, silver: { lives: 10 } },
+    check: { story: 3, standard: 2, veteran: 1 },
+  },
+  {
+    id: "d-longcrossing",
+    title: "Long Crossing",
+    map: "longcrossing",
+    enemies: 1,
+    speed: "normal",
+    alliance: "ffa",
+    rules: { ai: false, mode: "defence", rosters: true },
+    factions: { 1: "veil" },
+    briefing: {
+      place: "Long Crossing, on the frontier expanse",
+      text: "The Veil has hired Sunward riders. Shades and caravans come over all three crossings at once. Hold for ten waves.",
+      tip: "Blowing a bridge turns its column toward the others: make them walk into your guns.",
+    },
+    defence: {
+      lives: 20,
+      alloy: { story: 460, standard: 400, veteran: 380 },
+      firstWave: 30,
+      gap: 16,
+      lane: 2.4,
+      pace: 0.75,
+      count: { story: 1, standard: 1.3, veteran: 1.6 },
+      hp: { story: 0.85, standard: 0.95, veteran: 0.95 },
+      routes: route("longcrossing"),
+      exit: exitOf("longcrossing"),
+      bridges: true,
+      crossings: RIVER,
+      pads: [
+        { id: "l1", x: 29, z: 31 }, { id: "l2", x: -29, z: -31 }, { id: "l3", x: 15, z: 27 }, { id: "l4", x: 25, z: 41 },
+        { id: "l5", x: -37, z: -23 }, { id: "l6", x: -17, z: -13 }, { id: "l7", x: 15, z: 39 }, { id: "l8", x: 5, z: 25 },
+        { id: "l9", x: -31, z: -15 }, { id: "l10", x: -19, z: -29 }, { id: "l11", x: -35, z: -39 }, { id: "l12", x: 3, z: 35 },
+        { id: "l13", x: -5, z: -9 }, { id: "l14", x: -7, z: 17 }, { id: "l15", x: 5, z: -11 }, { id: "l16", x: -5, z: -25 },
+      ],
+      crews: CREWS,
+      commander: { x: 40.5, z: 25 },
+      waves: [
+        { groups: [group({ vanguard: 5 }, "ford")], bonus: 40 },
+        { groups: [allied("sunward", { ranger: 4 }, "west", 0.8), group({ vanguard: 4 }, "east", 0.6, 2)], bonus: 45 },
+        { groups: [group({ vanguard: 8 }, "ford", 0.55), group({ ranger: 4 }, "east", 0.9, 3)], bonus: 50 },
+        { groups: [allied("sunward", { medic: 1, vanguard: 6 }, "west", 0.6), group({ vanguard: 6 }, "east", 0.6, 3)], bonus: 55 },
+        { groups: [group({ tank: 4 }, "ford", 2.5, 0, 1.2), allied("sunward", { ranger: 6 }, "west", 0.7, 3)], bonus: 60 },
+        { groups: [group({ vanguard: 12 }, "east", 0.5), group({ antitank: 3 }, "ford", 1.2, 3)], bonus: 65 },
+        { groups: [allied("sunward", { tank: 4, medic: 1 }, "west", 2.2, 0, 1.2), bridgers({ vanguard: 6 }, "east", 0.6, 2), group({ vanguard: 6 }, "ford", 0.5, 5)], bonus: 70 },
+        { groups: [group({ vanguard: 16 }, "east", 0.45), allied("sunward", { ranger: 8 }, "west", 0.7, 3), group({ medic: 2 }, "ford", 1, 4)], bonus: 75 },
+        { groups: [group({ tank: 6 }, "ford", 2.2, 0, 1.2), allied("sunward", { ranger: 6, medic: 2 }, "east", 0.7, 3), group({ breaker: 3 }, "west", 1.8, 5)], bonus: 80 },
+        { groups: [group({ vanguard: 20 }, "ford", 0.4), allied("sunward", { ranger: 10 }, "west", 0.6, 3), bridgers({ tank: 6 }, "east", 2.2, 5, 1.2)], bonus: 0 },
+      ],
+      camera: { x: 0, z: 0, zoom: 78, maxZoom: 96 },
+    },
+    objectives: [{ id: "hold", type: "waves", count: 10, text: "Hold the crossing for 10 waves" }],
+    win: ["hold"],
+    lose: [{ type: "lives" }],
+    medals: { gold: { lives: 18 }, silver: { lives: 10 } },
+    check: { story: 3, standard: 2, veteran: 1 },
+  },
 ];
 
 export const defenceLevel = (id) => DEFENCE_LEVELS.find((level) => level.id === id) || null;
+// Endless and the Daily seed (0.21): the same level, with waves generated from a seed forever.
+// Built by the Defence menu (with the perks the player owns); the id stays the level's, so a save
+// continues on the right map, and `variant` tells the result screen which best score to keep.
+export function defenceVariant(level, { variant = "levels", seed = 0, perks = [] } = {}) {
+  const extra = perks.length ? { perks: [...perks] } : {};
+  if (variant === "levels") return Object.keys(extra).length ? { ...level, defence: { ...level.defence, ...extra } } : level;
+  return {
+    ...level,
+    variant,
+    defence: { ...level.defence, ...extra, endless: { seed: seed >>> 0 } },
+    objectives: [{ id: "hold", type: "waves", count: 999, text: "Hold as many waves as you can" }],
+    medals: {},
+  };
+}

@@ -21,8 +21,11 @@ export function modelsForMatch(match = {}, factions = balance.factions || {}) {
   };
   if (def) { scan(def.setup); scan(def.triggers); }
   // Frontier Defence: every wave group and every crew the pads can take (sim/defence.js).
-  for (const w of def?.defence?.waves || []) for (const g of w.groups) for (const type of Object.keys(g.units)) named.add(type);
+  // A group of a mixed wave names its own faction: its slots resolve through that roster (0.21).
+  for (const w of def?.defence?.waves || []) for (const g of w.groups) for (const type of Object.keys(g.units)) { named.add(type); const swapped = factions[g.faction]?.swap?.[type]; if (swapped) types.add(swapped); }
   for (const crew of def?.defence?.crews || []) { const g = GARRISONS.crews[crew]; if (g) named.add(g.type || g.slot); }
+  // The commander and the Vanguards it calls in (0.21).
+  if (def?.defence?.commander) { named.add(GARRISONS.commander.slot); named.add(GARRISONS.commander.reinforce.slot); }
   for (const type of named) {
     if (balance.definitions[type]?.kind) types.add(type);
     for (const id of ids) { const swapped = factions[id]?.swap?.[type]; if (swapped) types.add(swapped); }
