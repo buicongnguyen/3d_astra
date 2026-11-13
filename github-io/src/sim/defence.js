@@ -68,6 +68,9 @@ export const defence = {
     // Armour: machines shrug off small arms and shrapnel (garrisons.json mech), not rockets.
     if (d.mechanical_bonus || g.mech) s.mechanical_bonus = (d.mechanical_bonus || 1) * (g.mech ?? 1);
     if (g.reveal) s.reveal = g.reveal;
+    // Air waves (0.18.3): in a level with rules.air, a crew whose unit hits air (Ranger, Anti-tank,
+    // Watcher; never Breaker) makes the tower hit flyers too (sim/air.js canHit; towers do ×AIR.flak_bonus).
+    if (d.hits_air && this.airAllowed()) s.hits_air = true;
     return s;
   },
   padById(id) {
@@ -211,7 +214,8 @@ export const defence = {
     const dx = target.x - e.x, dz = target.z - e.z, d = hyp(dx, dz);
     if (d < 0.05) { e.moving = false; return; }
     const step = Math.min(d, this.moveSpeed(e) * (def.pace ?? 1) * dt), next = { x: e.x + (dx / d) * step, z: e.z + (dz / d) * step };
-    if (e.speed > 0 && this.nav.canTraverse(e, next, e.radius)) {
+    // Flyers (0.18.3) fly the same lane straight from corner to corner, over any ground.
+    if (e.speed > 0 && (e.flying || this.nav.canTraverse(e, next, e.radius))) {
       e.x = next.x;
       e.z = next.z;
       // A unit firing keeps facing its target (turrets and the shot read the angle).
