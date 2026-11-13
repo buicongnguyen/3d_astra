@@ -95,6 +95,8 @@ export const combat = {
       }
     }
     apply(target);
+    // Frontier Defence garrisons: branch and crew effects on the target (sim/defence.js).
+    if (e.crew) this.garrisonHit(e, target);
     // Area weapons (balance.json splash_radius / splash_damage share) also hit nearby enemies.
     if (e.splash_radius)
       for (const t of this.entities)

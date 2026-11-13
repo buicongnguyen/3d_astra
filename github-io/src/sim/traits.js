@@ -99,13 +99,17 @@ export const traits = {
   },
   // Sunward units are quicker on roads and sand. Everyone wades the ford slowly.
   moveSpeed(e) {
-    const speed = this.factionFor(e.team).trait === 'roads' && ROAD.has(this.terrain.at(e.x, e.z)) ? e.speed * TRAITS.roads.speed : e.speed;
+    let speed = this.factionFor(e.team).trait === 'roads' && ROAD.has(this.terrain.at(e.x, e.z)) ? e.speed * TRAITS.roads.speed : e.speed;
+    // Frontier Defence: a Suppressor garrison's hits slow a unit for a moment (sim/defence.js).
+    if (e.slowUntil > this.time) speed *= e.slowBy;
     return this.inFord(e) ? speed * TERRAIN.ford_speed : speed;
   },
   // In the ford's water (river maps: |z| < 3 inside the middle crossing). A plain numeric test,
-  // cheap enough for every move step; flyers (a later `flying` flag) pass over it.
+  // cheap enough for every move step; flyers (a later `flying` flag) pass over it. A Defence
+  // pontoon (terrain.pontoons, sim/defence.js) wades like the ford.
   inFord(e) {
-    return !!this.terrain.river && !e.flying && Math.abs(e.z) < FORD_WATER && Math.abs(e.x - FORD.x) < FORD.half;
+    if (!this.terrain.river || e.flying || Math.abs(e.z) >= FORD_WATER) return false;
+    return Math.abs(e.x - FORD.x) < FORD.half || (!!this.terrain.pontoons && this.terrain.pontoons.some((x) => Math.abs(e.x - x) < FORD.half));
   },
   damageDealt(team) {
     return this.factionFor(team).trait === 'farsight' ? TRAITS.farsight.damage : 1;

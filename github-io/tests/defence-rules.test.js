@@ -26,7 +26,8 @@ test("an ordinary match keeps its hash; defence state exists only in defence", (
 test("a defence map has no bases, deposits or walls and nobody is eliminated", () => {
   for (const level of DEFENCE_LEVELS) {
     const s = make(level);
-    assert.equal(s.entities.length, 0);
+    // Only the commander (0.21) stands on the field at the start.
+    assert.deepEqual(s.entities.map((e) => e.hero ? "commander" : e.type), level.defence.commander ? ["commander"] : []);
     assert.equal(s.resources.length, 0);
     assert.equal(s.nav.wallsSpawned, true);
     assert.equal(s.nav.obstacles.length, 0, "no phantom boulders");
@@ -67,7 +68,8 @@ test("build, upgrade and sell cost and refund what garrisons.json says", () => {
   assert.equal(s.command({ team: 0, type: "padBuild", pad, crew: "ranger" }), false, "cannot build without alloy");
   assert.equal(s.command({ team: 1, type: "padBuild", pad, crew: "ranger" }), false, "only the defender builds");
   assert.equal(s.command({ team: 0, type: "padBuild", pad: "nowhere", crew: "ranger" }), false);
-  assert.equal(s.command({ team: 0, type: "padBuild", pad, crew: "tank" }), false, "crews come from the level's list");
+  const few = make({ ...GORGE, defence: { ...GORGE.defence, crews: ["ranger"] } });
+  assert.equal(few.command({ team: 0, type: "padBuild", pad, crew: "tank" }), false, "crews come from the level's list");
 });
 
 test("crews follow the player's roster, and a garrison is saved as differences only", () => {
@@ -77,7 +79,7 @@ test("crews follow the player's roster, and a garrison is saved as differences o
   assert.equal(s.crewType("watcher"), "watcher");
   assert.ok(s.command({ team: 0, type: "padBuild", pad: "g1", crew: "watcher" }));
   assert.equal(s.towerOn("g1").reveal, GARRISONS.crews.watcher.reveal);
-  const saved = JSON.parse(s.serialize()).state.entities[0];
+  const saved = JSON.parse(s.serialize()).state.entities.find((e) => e.crew);
   assert.equal(saved.crew, "watcher");
   assert.equal(saved.radius, undefined, "unchanged tower fields are not stored");
   assert.ok(modelsForMatch(make()).includes("watcher") && modelsForMatch(make()).includes("scrapper") && modelsForMatch(make()).includes("scorcher"));
@@ -166,7 +168,8 @@ test("with no towers the wave walks its road to the exit with hardly any route s
     let searches = 0;
     const path = s.nav.path.bind(s.nav);
     s.nav.path = (...a) => { searches++; return path(...a); };
-    run(s, 70);
+    // The longest roads (Switchback Pass) take the first wave a little longer.
+    run(s, 100);
     assert.ok(s.defence.leaked > 0, `${level.id}: the first wave reached the exit`);
     assert.ok(searches < 10, `${level.id}: ${searches} route searches`);
     // A route order never chases: every unit is still near its road.
