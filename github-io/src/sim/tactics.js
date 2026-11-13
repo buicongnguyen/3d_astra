@@ -118,7 +118,8 @@ export const tactics = {
       for (const s of due) {
         const eventStart = this.events.length;
         for (const t of this.entities)
-          if (t.hp > 0 && this.hostile(s.team, t.team) && distance(t, s) - (t.kind === "unit" ? 0 : t.radius) <= s.radius)
+          // Shells burst on the ground: flyers overhead are not hit (sim/air.js).
+          if (t.hp > 0 && !t.flying && this.hostile(s.team, t.team) && distance(t, s) - (t.kind === "unit" ? 0 : t.radius) <= s.radius)
             this.applyDamage(t, s.damage * (t.kind === "unit" ? 1 : 0.5), s.team, s.by);
         this.events.push({ type: "strike", x: s.x, z: s.z, radius: s.radius, team: s.team, victims: this.events.slice(eventStart).filter(e => e.type === "death" && !e.building).map(e => ({x:e.x,z:e.z,team:e.team})) });
       }
@@ -127,7 +128,7 @@ export const tactics = {
       this.zones = this.zones.filter((zone) => this.time < zone.until);
       for (const zone of this.zones)
         for (const t of this.entities)
-          if (t.hp > 0 && t.kind === "unit" && this.hostile(zone.team, t.team) && distance(t, zone) <= zone.radius)
+          if (t.hp > 0 && t.kind === "unit" && !t.flying && this.hostile(zone.team, t.team) && distance(t, zone) <= zone.radius)
             this.applyDamage(t, zone.dps * dt, zone.team, zone.by);
     }
     this.castClock = (this.castClock ?? 0) - dt;

@@ -74,7 +74,8 @@ export const TRAIT_HANDLERS = {
         let seen = 0;
         for (const d of sim.entities) {
           if (d.hp <= 0 || d.team < 0 || d.team === team || (seen >> d.team) & 1 || !sim.hostile(team, d.team)) continue;
-          const reach = d.kind === 'unit' ? rule.reveal_unit : d.complete && (d.type === 'tower' || d.type === 'hq' || d.type === 'veilrelay') ? (d.reveal || rule.reveal_building) : 0;
+          // A unit's own `detect` reach (the Kite scout) beats the plain 4 m; a Watcher post's `reveal` too.
+          const reach = d.kind === 'unit' ? Math.max(rule.reveal_unit, d.detect || 0) : d.complete && (d.type === 'tower' || d.type === 'hq' || d.type === 'veilrelay') ? (d.reveal || rule.reveal_building) : 0;
           if (reach && distance(d, e) <= reach) seen |= 1 << d.team;
         }
         // Allied AIs share what they detect, as they share vision.

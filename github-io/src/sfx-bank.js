@@ -117,3 +117,13 @@ export const ENGINE = {
   wardens: { f: 50, harm: [[1, 0.6, "sine"], [2, 0.1, "sine"]], noise: [500, 0.3], am: [3, 0.2], whine: [[600, 0.08], [900, 0.04]], lp: 1300 },
   veil: { f: 55, harm: [[1, 0.6, "sine"], [2, 0.2, "sine"]], noise: [250, 0.2], am: [2, 0.3], lp: 600 },
 };
+// ---------------------------------------------------------------- flyer loops (0.18), same format (whole Hz: seamless 1 s loops)
+//   rotor   Kite and Hawk: a low hum chopped by the blades (deep, fast amplitude beat) over air noise
+//   burner  Ember balloon: a soft roaring whoosh that swells slowly
+//   prop    Swift glider: a small engine's buzz with a quick propeller beat
+export const AIR_HUM = {
+  rotor: { f: 38, harm: [[1, 0.35, "sine"], [2, 0.18, "saw"]], noise: [520, 0.55], am: [19, 0.6], lp: 1100 },
+  burner: { f: 30, harm: [[1, 0.12, "sine"]], noise: [700, 0.9], am: [1, 0.65], lp: 900 },
+  prop: { f: 96, harm: [[1, 0.35, "saw"], [2, 0.12, "square"]], noise: [900, 0.25], am: [32, 0.35], whine: [[1440, 0.02]], lp: 1700 },
+};
+export const airHumFor = (type) => (type === "balloon" ? "burner" : type === "glider" ? "prop" : "rotor");

@@ -6,6 +6,8 @@ export const vision = {
   isVisible(e, team = 0) {
     // A cloaked unit (sim/traits.js) is seen only by teams with a detector close to it.
     if (e.cloaked && e.team !== team && !((e.seenBy >> team) & 1)) return false;
+    // A flyer is seen by any hostile team whose sight reaches it, even over a hidden plateau cell (sim/air.js).
+    if (e.flying && (e.airSeenBy >> team) & 1 && e.team !== team) return true;
     const [x, z] = this.nav.cellAt(e.x, e.z);
     return e.team === team || !!this.visible[team][z * this.terrain.grid + x];
   },
@@ -29,9 +31,10 @@ export const vision = {
       // Plateaus where this team has a unit: their tops are open to it from below too.
       const up = high ? new Set(this.own(team).filter((e) => e.kind === "unit").map((e) => t.plateauAt(e.x, e.z))) : null;
       for (const e of this.own(team)) {
-        const low = high && !t.level(e.x, e.z);
+        // A flyer looks down on every plateau top (it is never "low") but gets no high-ground bonus.
+        const low = high && !t.level(e.x, e.z) && !e.flying;
         const [cx, cz] = this.nav.cellAt(e.x, e.z),
-          sight = (e.kind === "building" && !e.complete ? Math.min(e.vision, e.radius + 3) : e.vision) + (high && !low ? TERRAIN.high_vision : 0),
+          sight = (e.kind === "building" && !e.complete ? Math.min(e.vision, e.radius + 3) : e.vision) + (high && !low && !e.flying ? TERRAIN.high_vision : 0),
           r = Math.ceil(sight / 2);
         for (let z = Math.max(0, cz - r); z <= Math.min(this.terrain.grid - 1, cz + r); z++)
           for (
@@ -58,6 +61,7 @@ export const vision = {
         for (let team = 1; team < this.players.length; team++) { seen |= this.visible[team][i]; known |= this.explored[team][i]; }
         for (let team = 1; team < this.players.length; team++) { this.visible[team][i] = seen; this.explored[team][i] = known; }
       }
+    this.updateAirSight();
   },
   updateKnownCores(team) {
     const known = this.knownCores[team];

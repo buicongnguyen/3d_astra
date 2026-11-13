@@ -35,8 +35,8 @@ await suite('portraits',async()=>{
       document.body.append(sheet);
       return {dimensions:images.map(i=>[i.width,i.height]),coverage,size:getComputedStyle(sample).backgroundSize,maskSize:getComputedStyle(sample.firstElementChild).maskSize,last:getComputedStyle(sheet.lastElementChild.firstElementChild).backgroundPosition};
     },order);
-    assert.deepEqual(result.dimensions,[[768,1344],[768,1344]]);
-    assert.equal(result.size,'400% 700%');assert.equal(result.maskSize,result.size);
+    assert.deepEqual(result.dimensions,[[768,1536],[768,1536]]);
+    assert.equal(result.size,'400% 800%');assert.equal(result.maskSize,result.size);
     assert.equal(result.last,'0% 100%');
     for(let layer=0;layer<2;layer++)for(let i=0;i<order.length;i++)assert.ok(result.coverage[layer][i]>20,`${viewport}: ${order[i]} layer ${layer} is populated`);
     await shot(page,`approved-portraits-${viewport}`);

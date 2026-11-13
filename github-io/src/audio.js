@@ -8,6 +8,7 @@ import { MIX } from "./audio-mix.js";
 import { Music, createAudioBus, musicMood } from "./music.js";
 import { RecordedMusic } from "./music-recorded.js";
 import { Sfx } from "./sfx.js";
+import { airHumFor } from "./sfx-bank.js";
 
 const COMBAT_SOUNDS = new Set(["shot", "impact", "death", "strike"]);
 
@@ -43,7 +44,7 @@ export class AudioDirector {
     this.levels = busLevels(settings);
     this.bus.sfx.gain.setTargetAtTime(this.levels.sfx, this.context.currentTime, 0.05);
     this.sfx.enabled = this.levels.sfx > 0;
-    if (!this.sfx.enabled) this.sfx.engine(0);
+    if (!this.sfx.enabled) { this.sfx.engine(0); this.sfx.airHum?.(0); }
     this.applyMusicGain();
   }
   // Music bus = setting x busy-fight attenuation (CombatMix) x loud-event duck (LoudDuck).
@@ -132,11 +133,18 @@ export class AudioDirector {
   }
   // Engine hum of the player's vehicles: selected ones (idle or moving) and moving ones near the camera.
   updateEngine(sim, live) {
-    if (!live || !this.sfx.enabled) { this.sfx.engine(0); return; }
-    const selected = this.selected?.() || null, list = [];
+    if (!live || !this.sfx.enabled) { this.sfx.engine(0); this.sfx.airHum?.(0); return; }
+    const selected = this.selected?.() || null, list = [], air = [];
+    let loudest = 0, kind = "rotor";
     for (const e of sim.entities) {
       if (e.team !== 0 || e.kind !== "unit" || !e.mechanical || !(e.hp > 0)) continue;
       const chosen = !!selected?.has?.(e.id);
+      // Flyers hum while they are in the air, selected or not, when near the camera (own flyers only: no fog leak).
+      if (e.flying) {
+        const gain = closeness(this.sfx.mixAt(e.x, e.z).gain) * (chosen ? 1 : 0.6);
+        if (gain > 0) { air.push({ selected: true, moving: !!e.moving, gain }); if (gain > loudest) { loudest = gain; kind = airHumFor(e.type); } }
+        continue;
+      }
       if (!chosen && !e.moving) continue;
       const gain = closeness(this.sfx.mixAt(e.x, e.z).gain);
       if (gain > 0) list.push({ selected: chosen, moving: !!e.moving, gain });
@@ -144,11 +152,13 @@ export class AudioDirector {
     const { level, rate } = engineMix(list);
     this.engine = level;
     this.sfx.engine(level, rate, sim.factions?.[0] || "meridian");
+    const hum = engineMix(air);
+    this.sfx.airHum?.(hum.level, hum.rate, kind);
   }
   // A new match starts with calm music and no memory of the old fight.
   reset() {
     this.combatMix.times.length = 0; this.lastCombatAt = -Infinity; this.incomingAt = -Infinity; this.enemyDistance = Infinity; this.scan = 0;
-    this.intensity.reset(); this.loud.ducks.length = 0; this.contact.reset(); this.music.setCombat(0); this.sfx.engine(0);
+    this.intensity.reset(); this.loud.ducks.length = 0; this.contact.reset(); this.music.setCombat(0); this.sfx.engine(0); this.sfx.airHum?.(0);
   }
 }
 

@@ -25,9 +25,14 @@ const scenarios = [
   // and ten crewed towers at mixed tiers, at the level's own zoom.
   // Twice battle-eco's army, a quarter of it tanks and Scorchers: the triangle line is raised to match.
   {name:'defence-wave-eco', defence:'d-gorge', mobile:true, zoom:70, focus:[-1,0], reveal:true, wave:120, towers:10, triangles:600000},
+  // 0.18: battle-eco with the air cap in play, 4 flyers per side (2 Kites and 2 Hawks each). Flyers add a
+  // body, a team paint and a rotor batch per type and one blob-shadow draw for all: at most 10% over
+  // battle-eco's 107 draws (2026-11-13).
+  {name:'air-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60,
+    air:[['kite',0],['kite',0],['hawk',0],['hawk',0],['kite',1],['kite',1],['hawk',1],['hawk',1]]},
 ];
 const results = [];
-const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120};
+const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118};
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -55,6 +60,8 @@ try {
       await page.locator('#start').click();
       await page.waitForFunction(() => window.__frontier.started && window.__frontier.sim.defence && document.querySelector('#defence-bar'), null, {timeout:30000});
     }
+    // Flyer models load in the background in play (WorldView.preloadModels); here, before the frozen scene.
+    if (scenario.air) await page.evaluate(types => window.__frontier.view.preloadModels(types), [...new Set(scenario.air.map(([type]) => type))]);
     await page.evaluate(scenario => {
       window.__freezeFrames = true;
       const f = window.__frontier;
@@ -89,6 +96,8 @@ try {
           s.spawn(kinds[row % kinds.length], team, -8 + row % 6 * 2, (team ? -1 : 1) * (6 + Math.floor(row / 6) * 2));
         }
       }
+      for (const [i, [type, team]] of (scenario.air || []).entries())
+        s.spawn(type, team, -6 + (i % 4) * 3, (team ? -1 : 1) * 3, true, true);
       v.life.uniforms.uTime.value = 0;
       v.focusOn(...scenario.focus); v.zoom = scenario.zoom; v.updateCamera(); v.resize();
       window.__renderOnce = () => v.update(s, 0, f.selected, null);

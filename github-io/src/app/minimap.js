@@ -156,7 +156,14 @@ export function setupMinimap(S, A) {
         ctx.fillStyle = teams[e.team];
         const r = e.kind === "building" ? 3.5 : S.selected.has(e.id) ? 2.5 : 1.6;
         ctx.beginPath();
-        if (e.team === 0) ctx.arc(px(e.x), pz(e.z), r, 0, Math.PI * 2);
+        // Flyers (0.18): a small triangle in the side's colour, for friend and foe alike.
+        if (e.flying) {
+          const t = r + 1.4;
+          ctx.moveTo(px(e.x), pz(e.z) - t);
+          ctx.lineTo(px(e.x) + t, pz(e.z) + t * 0.8);
+          ctx.lineTo(px(e.x) - t, pz(e.z) + t * 0.8);
+          ctx.closePath();
+        } else if (e.team === 0) ctx.arc(px(e.x), pz(e.z), r, 0, Math.PI * 2);
         else {
           ctx.moveTo(px(e.x), pz(e.z) - r - 1);
           ctx.lineTo(px(e.x) + r + 1, pz(e.z));

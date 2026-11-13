@@ -30,7 +30,8 @@ export const points = {
     for (const e of army) if (e.pointDuty && !rings[e.pointDuty]) e.pointDuty = null;
     const nearest = names.sort((a, b) => distance(hq, rings[a]) - distance(hq, rings[b]) || (a < b ? -1 : 1)).slice(0, squads);
     // Never strip the core: keep a home guard of at least minWave units off duty.
-    let spare = army.filter((e) => !e.pointDuty && !e.orders.length && e.damage > 0 && distance(e, hq) < 40);
+    // Flyers cannot take a ring (sim/air.js), so they never go on point duty.
+    let spare = army.filter((e) => !e.pointDuty && !e.orders.length && e.damage > 0 && !e.flying && distance(e, hq) < 40);
     for (const name of nearest) {
       const ring = rings[name], crew = army.filter((e) => e.pointDuty === name);
       const held = ring.owner === team || (ring.owner !== null && !this.hostile(team, ring.owner));

@@ -24,6 +24,8 @@ export const ai = {
     // A second core brings more Harvesters, trained at the core with the fewest nearby.
     const cores = own.filter((e) => e.type === "hq" && e.complete);
     const crewCap = pace.workers + EXPAND_CREW * Math.max(0, cores.length - 1);
+    // Enemy flyers seen: towers get Flak before the next Harvester (sim/ai-counter.js).
+    if (this.pace.counter || cmd) this.aiFlak(team, hq);
     if (hq && workers.length < crewCap) {
       const near = (c) => workers.filter((w) => distance(w, c) < 30).length;
       const trainer = cores.filter((c) => !c.queue.length && !c.levelJob).sort((a, b) => near(a) - near(b) || a.id - b.id)[0];
@@ -94,6 +96,7 @@ export const ai = {
     // the Foundry stands idle, has the energy and vehicles are under a quarter of the army, infantry waits.
     const vehicles = army.filter((e) => e.mechanical).length;
     const foundryIdle = own.some((e) => e.type === "foundry" && e.complete && !e.levelJob && !e.queue.length);
+    // (Flyers are not saved for: the core trains them from spare resources, see aiAirTrain below.)
     const hold = foundryIdle && vehicles * 4 < army.length && this.players[team].energy >= D.breaker.cost[1] ? D.breaker.cost[0] : 0;
     for (const b of own.filter((e) => e.complete && ["barracks", "foundry"].includes(e.type))) {
       if (b.levelJob) continue;
@@ -127,9 +130,13 @@ export const ai = {
         if (affordable) this.enqueue(b.id,affordable);
       }
     }
+    // Flyers come from the Command core, after the Barracks and Foundry had their turn (sim/ai-counter.js).
+    this.aiAirTrain(team, hq, army, pace, afford);
+    // Flyers count as threats only while this side has something that hits them (sim/air.js).
+    const antiAir = army.some((e) => e.hits_air) || (!!this.players[team].flak && own.some((e) => e.type === "tower" && e.complete));
     const threats = hq
       ? this.entities
-          .filter((e) => this.hostile(team, e.team) && e.hp > 0 && this.isVisible(e, team) && (distance(hq, e) < 25 || (e.kind === "unit" && distance(hq, e) < (pace.defendRadius ?? 25))))
+          .filter((e) => this.hostile(team, e.team) && e.hp > 0 && (!e.flying || antiAir) && this.isVisible(e, team) && (distance(hq, e) < 25 || (e.kind === "unit" && distance(hq, e) < (pace.defendRadius ?? 25))))
           .sort((a, b) => distance(hq, a) - distance(hq, b))
       : [];
     const threatIds = new Set(threats.map((e) => e.id));
@@ -153,8 +160,12 @@ export const ai = {
           ? home
           : ready.sort((a, b) => distance(a, hq) - distance(b, hq)).slice(0, 2);
       if (cmd && incursion) this.aiDefend(team, answer, threats[0]);
-      else if (answer.length)
-        this.issue(answer.map((e) => e.id), { type: "attack", target: threats[0].id });
+      else if (answer.length) {
+        // A flyer is taken on by the units that hit air; the rest take the nearest ground threat.
+        const aa = threats[0].flying ? answer.filter((e) => e.hits_air) : answer, ground = aa === answer ? null : threats.find((t) => !t.flying);
+        if (aa.length) this.issue(aa.map((e) => e.id), { type: "attack", target: threats[0].id });
+        if (ground) this.issue(answer.filter((e) => !e.hits_air).map((e) => e.id), { type: "attack", target: ground.id });
+      }
     }
     // A mission that sends its own waves lets the computer build up and defend at home only.
     if (this.aiHome) return;

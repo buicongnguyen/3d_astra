@@ -52,6 +52,29 @@ test('the slot moves forward: researching with progress, tier II (locked until F
   assert.equal(view(s, b, false).length, 4);
 });
 
+test('Flak is a one-off Command core research: locked below L2, then researching, then done', () => {
+  const s = new Simulation({ ai: false });
+  s.players[0].alloy = s.players[0].energy = 5000;
+  const hq = s.own(0).find((e) => e.type === 'hq');
+  const tile = () => productionTiles(s, hq).tiles.map((t) => `${t.action}:${t.label}:${t.state}${t.sub ? ':' + t.sub : ''}`);
+  // The core is the airfield (0.18): four tiles, as many as a phone shows.
+  assert.deepEqual(tile(), ['worker:Harvester:ready', 'flak:Flak guns:locked:Needs L2', 'kite:Kite scout:locked:Needs L2', 'hawk:Hawk gunship:locked:Needs L3']);
+  assert.equal(s.enqueue(hq.id, 'flak'), false);
+  hq.level = 2;
+  assert.equal(tile()[1], 'flak:Flak guns:ready');
+  assert.ok(s.enqueue(hq.id, 'flak'));
+  assert.equal(s.enqueue(hq.id, 'flak'), false, 'once per match');
+  for (let i = 0; i < 100; i++) s.tick(0.05);
+  assert.match(tile()[1], /^flak:Flak guns:busy:Researching \d+%$/);
+  for (let i = 0; i < 500; i++) s.tick(0.05);
+  assert.equal(s.players[0].flak, true);
+  assert.equal(tile()[1], 'flak:Flak guns:done:Active');
+  // Story missions without air keep the core's list as it was.
+  const m = { id: 'fixture', rules: {}, objectives: [], setup: [], win: [], triggers: [] };
+  const story = new Simulation({ ai: false, mission: m });
+  assert.deepEqual(story.own(0).find((e) => e.type === 'hq').trains, ['worker']);
+});
+
 test('the plating branch reads as armor, and a research queued behind a unit waits', () => {
   const { s, b } = setup();
   assert.ok(s.enqueue(b.id, 'breaker'));

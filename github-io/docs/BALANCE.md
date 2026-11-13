@@ -354,3 +354,30 @@ Owner play should decide whether Normal Mirror without capture points is now too
 | m12 | 758 → 758 | 776 → 857 | did not finish → did not finish |
 
 Story: all targets met, every run identical to before. Standard: all targets met (passive, generic and objective). Veteran: 11 of 12 objective wins; mission 12 still does not finish inside the checker's four minutes (the recorded exception), and mission 10, the other recorded exception, is now won. Every Veteran passive run survives 155 s.
+
+## Air (0.18 "Wings")
+
+Numbers in `balance.json` (`air` and the four flyer definitions). Flyers are trained at the Command core,
+the only building with room for them under the phone's four-tile card: Kite scout (all sides, core L2,
+75/25, unarmed, sees 18 m, reveals hidden units within 8 m), Hawk gunship (Meridian, L3, 225/125,
+13 per 0.7 s at 8 m, light splash, 1.5× to close assault, hits air), Ember balloon (Ashfall, L2, 200/100,
+38 per 2.8 s at 4 m, half within 3 m, 1.5× to buildings, ground only), Swift glider (Sunward, L2, 150/60,
+speed 7.4, 2× to Harvesters, ground only). All are mechanical, so Anti-tank rockets are the hard answer.
+`hits_air`: Ranger, Rider, Sentinel drone, Anti-tank soldier, Watcher and the Hawk; every faction keeps
+two or more. Flak guns (core L2, 125/75): towers shoot flyers at ×1.5. Air cap 4 per side (AI 2 combat
+flyers plus one Kite, trained only from spare resources).
+
+Round robin (`npm run bench:factions`, 120 games, score = wins + draws/2):
+
+| Faction | Before | After |
+|---|---:|---:|
+| Meridian | 65 | 69 |
+| Ashfall | 42 | 40 |
+| Sunward | 35 | 38 |
+| Wardens | 71 | 71 |
+| Veil | 38 | 33 |
+
+Five of 120 games changed winner, all long Fast games on Dunes. A trial in which the Barracks saved
+alloy for the faction's flyer dropped Ashfall to 31, so flyers come from spare resources only. Campaign
+(`check:missions`, Standard, objective bot) is unchanged run for run: story missions keep their rosters
+(`rules.air` turns flyers on).

@@ -66,7 +66,7 @@ export function setupSelection(S, A) {
     const canvas=S.view.renderer.domElement,r=canvas.getBoundingClientRect();
     const same=S.sim.own(0).filter(u=>{
       if(u.type!==target.type)return false;
-      const p=S.view.project(u.x,u.z,1),x=p.x+r.left,y=p.y+r.top;
+      const p=S.view.project(u.x,u.z,S.view.liftOf(u)),x=p.x+r.left,y=p.y+r.top;
       return x>=r.left&&x<r.right&&y>=r.top&&y<r.bottom&&document.elementFromPoint(x,y)===canvas;
     });
     const next=additive?new Set(S.selected):new Set(),remove=additive&&S.selected.has(target.id);

@@ -44,6 +44,29 @@ const mat = (color, extra = {}) =>
 // Meshes named like this in the Blender models aim (towers) and recoil together. Blender
 // duplicate suffixes arrive sanitised by GLTFLoader ("Barrel.001" -> "Barrel001").
 export const RIG_PART = /^(Main_cannon|Muzzle_brake|Barrel|Cannon|Muzzle|Turret_head)(?![a-z])/i;
+// Pivots kept as their own nodes: walking legs, and the flyers' rotors (spin_*) and burner flame (flicker_*).
+const MOVING_PART = /^(leg_|spin_|flicker_)/;
+// Flyers: rotor axes, a scratch quaternion, and where the altitude looks for higher ground (a rim ahead).
+const AXIS_Y = new THREE.Vector3(0, 1, 0), AXIS_Z = new THREE.Vector3(0, 0, 1), SPIN = new THREE.Quaternion();
+const FLY_SAMPLES = [[2.5, 0], [-2.5, 0], [0, 2.5], [0, -2.5]];
+// The left and right rotors of a flyer are the same part mirrored in place: after baking, the right
+// one draws with the left one's geometry, so both join one batch (one draw instead of two).
+function shareRotorGeometry(pivots) {
+  const first = new Map();
+  for (const pivot of pivots) {
+    if (!pivot.name.startsWith("spin_")) continue;
+    const key = pivot.name.replace(/_[LR]$/, "");
+    const meshes = pivot.children.filter((c) => c.isMesh);
+    const left = first.get(key);
+    if (!left) { first.set(key, meshes); continue; }
+    if (left.length !== meshes.length) continue;
+    meshes.forEach((m, i) => {
+      const a = left[i].geometry, b = m.geometry;
+      if (a !== b && a.attributes.position.count === b.attributes.position.count && left[i].material.name === m.material.name &&
+        left[i].position.equals(m.position) && left[i].quaternion.equals(m.quaternion) && left[i].scale.equals(m.scale)) { b.dispose(); m.geometry = a; }
+    });
+  }
+}
 const SUN_OFFSET = new THREE.Vector3(-25, 55, 20);
 // The game camera sits this far from its focus (the same 71 m as before 0.14, so the distance
 // haze is unchanged), looking down about 46 degrees: low enough that plateaus, cliffs and unit
@@ -96,14 +119,18 @@ export function bakedMaterial(reflective) {
   bakedShared.set(reflective, m);
   return m;
 }
-export function bakeFinishes(root) {
+// `compact` (flyers, 0.18): small craft seen from far above, so each rigid group bakes into ONE mesh,
+// glass included and metal and paint together (the reflective material if any part reflects).
+export function bakeFinishes(root, { compact = false } = {}) {
   const groups = new Map();
   root.traverse((o) => {
     const m = o.material;
-    if (!o.isMesh || Array.isArray(m) || !m.isMeshStandardMaterial || KEEP_FINISH.test(m.name) || m.map || m.transparent || m.emissive?.getHex()) return;
-    const key = `${o.parent.uuid}|${reflects(m)}`;
+    if (!o.isMesh || Array.isArray(m) || !m.isMeshStandardMaterial || (compact ? /^(Team|Lamp|Energy|Flame)/ : KEEP_FINISH).test(m.name) || m.map || (m.transparent && !compact) || (m.emissive?.getHex() && !(compact && m.name.startsWith("Glass")))) return;
+    const key = compact ? o.parent.uuid : `${o.parent.uuid}|${reflects(m)}`;
     if (!groups.has(key)) groups.set(key, { parent: o.parent, reflective: reflects(m), meshes: [] });
-    groups.get(key).meshes.push(o);
+    const group = groups.get(key);
+    group.reflective ||= reflects(m);
+    group.meshes.push(o);
   });
   for (const { parent, reflective, meshes } of groups.values()) {
     if (meshes.length < 2) continue;
@@ -434,7 +461,7 @@ export class WorldView {
     this.renderer.setPixelRatio(this.pixelRatio());
     this.renderer.shadowMap.enabled = !this.lowPower;
     for (const o of this.objects.values())
-      o.userData.contactShadow.visible = this.lowPower;
+      o.userData.contactShadow.visible = this.lowPower || !!o.userData.air; // flyers always mark their spot
     this.scene.traverse((o) => {
       if (o.isMesh) {
         const materials = Array.isArray(o.material) ? o.material : [o.material];
@@ -459,6 +486,16 @@ export class WorldView {
     const operation = this.modelQueue.catch(() => {}).then(() => this.prepareModels(required, onProgress));
     this.modelQueue = operation;
     return operation.finally(() => { this.modelsReady = this.hasModels(this.requiredModels); });
+  }
+  // Models a match may need later (its flyers, model-roster.js airModelsFor): parsed in the background
+  // after whatever is queued, without touching requiredModels or modelsReady, so the frame never waits.
+  // An entity whose model has not arrived yet is simply drawn once it has (see update()).
+  preloadModels(types) {
+    const missing = types.filter((type) => /^[a-z][a-z0-9_-]*$/.test(type) && !this.models.has(type));
+    if (!missing.length) return Promise.resolve();
+    const operation = this.modelQueue.catch(() => {}).then(() => this.prepareModels(missing));
+    this.modelQueue = operation;
+    return operation.catch(() => {});
   }
   async prepareModels(types, onProgress) {
     const loader = new GLTFLoader(), total = types.length + 1;
@@ -489,10 +526,15 @@ export class WorldView {
             turretBuckets = new Map(), // vehicles: Turret_head* parts turn about Turret_pivot
             legs = [];
           template.userData.hover = !!gltf.scene.getObjectByName("hover");
+          const flyer = !!D[type]?.flying;
+          let teamPaint = null;
+          if (flyer) gltf.scene.traverse((o) => { if (o.isMesh && o.material.name.startsWith("Team") && !o.material.name.startsWith("TeamGlow")) teamPaint ||= o.material; });
           let pivot = null;
           gltf.scene.traverse((o) => { if (o.name.startsWith("Turret_pivot")) pivot = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld); });
           gltf.scene.traverse((o) => {
-            if (o.name.startsWith("leg_")) {
+            // Leg pivots, and the flyers' spinning rotors and flickering burner flame (0.18), stay
+            // separate nodes so they can move per instance inside their batches.
+            if (MOVING_PART.test(o.name)) {
               const leg = o.clone(true);
               o.matrixWorld.decompose(leg.position, leg.quaternion, leg.scale);
               template.add(leg);
@@ -501,15 +543,18 @@ export class WorldView {
             if (!o.isMesh) return;
             let parent = o.parent;
             while (parent) {
-              if (parent.name.startsWith("leg_")) return;
+              if (MOVING_PART.test(parent.name)) return;
               parent = parent.parent;
             }
             // Keep the existing named Blender cannon pieces articulated while
             // still merging the barrel's materials into a compact rig.
-            const rigged=RIG_PART.test(o.name),target=rigged?(pivot&&/^Turret_head/i.test(o.name)?turretBuckets:barrelBuckets):buckets;
-            const key = o.material.name;
+            // (A flyer's guns stay part of its body: the whole craft kicks back when it fires.)
+            const rigged=RIG_PART.test(o.name)&&!flyer,target=rigged?(pivot&&/^Turret_head/i.test(o.name)?turretBuckets:barrelBuckets):buckets;
+            // Flyers: their small team lights join the team paint (one team-coloured draw per craft, not two).
+            const glowAsPaint = flyer && teamPaint && o.material.name.startsWith("TeamGlow");
+            const key = glowAsPaint ? teamPaint.name : o.material.name;
             if (!target.has(key))
-              target.set(key, { material: o.material, geometries: [] });
+              target.set(key, { material: glowAsPaint ? teamPaint : o.material, geometries: [] });
             const geometry = o.geometry.clone().applyMatrix4(o.matrixWorld);
             if (rigged && pivot) geometry.translate(-pivot.x, 0, -pivot.z);
             target.get(key).geometries.push(geometry);
@@ -534,7 +579,8 @@ export class WorldView {
             }
             turret.add(barrel);template.add(turret);
           }else template.add(barrel);
-          bakeFinishes(template);
+          bakeFinishes(template, { compact: flyer });
+          shareRotorGeometry(legs);
           // Only Team/TeamGlow materials vary by faction. Share the other finishes
           // so identical armour, tyres and suits can join one batch across armies.
           const materials = new Map();
@@ -836,6 +882,12 @@ export class WorldView {
       y: ((1 - p.y) / 2) * this.height,
     };
   }
+  // The world height to aim at for an entity on screen: a flyer's drawn altitude (plus half its
+  // body), otherwise `fallback`. Used by picking, drag boxes and the HUD's screen positions.
+  liftOf(e, fallback = 1) {
+    const air = e?.flying && this.objects.get(e.id)?.userData.air;
+    return air ? (air.y ?? this.terrain.heightAt(e.x, e.z) + air.fly) + air.top * 0.4 : fallback;
+  }
   pick(clientX, clientY, sim, minRadius = 14) {
     const rect = this.renderer.domElement.getBoundingClientRect(),
       x = clientX - rect.left,
@@ -858,7 +910,7 @@ export class WorldView {
       const p = this.project(
         e.x,
         e.z,
-        e.kind === "building" ? 1.8 : e.kind === "resource" ? 1 : 0.9,
+        e.flying ? this.liftOf(e) : e.kind === "building" ? 1.8 : e.kind === "resource" ? 1 : 0.9,
       );
       const d = Math.hypot(p.x - x, p.y - y),
         radius = Math.max(
@@ -936,6 +988,7 @@ export class WorldView {
     contactShadow.visible = this.lowPower;
     root.add(contactShadow);
     root.userData.contactShadow = contactShadow;
+    if (e.flying) this.prepareFlyer(e, root, model, contactShadow);
     root.userData.model = model;
     root.userData.hover = !!model.userData.hover;
     root.userData.hoverClock = e.id * FEEL.hoverPhaseStep;
@@ -996,10 +1049,58 @@ export class WorldView {
     root.add(bar);
     root.userData.bar = bar;
     bar.position.y *= root.userData.readabilityScale;
+    // A flyer's bar rides above it: its fly height plus its own height (set again as it flies).
+    if (root.userData.air) root.userData.air.barY = bar.position.y = root.userData.air.top * root.userData.readabilityScale + 0.7;
     cacheTransforms(root);
     this.scene.add(root);
     this.objects.set(e.id, root);
     return root;
+  }
+  // Flyers (0.18, sim/air.js): the model rides at its fly height (balance.json `fly`) above the
+  // highest ground near it; rotors spin and the balloon's flame flickers per instance (their
+  // pivots are separate nodes, see MOVING_PART); a soft blob on the ground shows where it is.
+  // Every flyer's blob shares one geometry and material, so all of them are one instanced draw.
+  prepareFlyer(e, root, model, blob) {
+    const air = { fly: D[e.type].fly || 3.5, y: null, spins: [], flames: [], clock: (e.id * 0.37) % 6.28, top: 1.5, barY: 0 };
+    model.rotation.order = "YXZ"; // heading, then a pitch about the craft's own axis
+    model.traverse((o) => {
+      if (o.name.startsWith("spin_")) air.spins.push({ node: o, base: o.quaternion.clone(), axis: /^spin_prop/.test(o.name) ? AXIS_Z : AXIS_Y, rate: /^spin_prop/.test(o.name) ? 34 : 26 });
+      else if (o.name.startsWith("flicker_")) air.flames.push({ node: o, base: o.scale.y });
+    });
+    this.flyerTops ||= new Map();
+    let top = this.flyerTops.get(e.type);
+    if (top === undefined) this.flyerTops.set(e.type, (top = new THREE.Box3().setFromObject(model).max.y - root.position.y));
+    air.top = top;
+    if (!this.airShadow) {
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 64;
+      const ctx = canvas.getContext("2d"), g = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
+      g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(0.6, "rgba(255,255,255,0.8)"); g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 64, 64);
+      const map = new THREE.CanvasTexture(canvas);
+      this.airShadow = {
+        geometry: new THREE.CircleGeometry(1, 20),
+        material: new THREE.MeshBasicMaterial({ color: 0x050c08, map, transparent: true, opacity: 0.58, depthWrite: false, polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 2 }),
+      };
+    }
+    blob.geometry = this.airShadow.geometry;
+    blob.material = this.airShadow.material;
+    blob.scale.setScalar(e.radius * 1.5);
+    blob.visible = true;
+    root.userData.air = air;
+  }
+  // Per frame: altitude (eased over plateau rims), rotor spin, flame flicker. Returns the lift
+  // above the root (which stays on the ground with the blob shadow).
+  stepFlyer(u, x, z, ground, dt, lively) {
+    const a = u.air, t = this.terrain;
+    let high = ground;
+    if (t.plateaus.length) for (const [dx, dz] of FLY_SAMPLES) high = Math.max(high, t.heightAt(x + dx, z + dz));
+    const want = high + a.fly;
+    a.y = a.y === null ? want : a.y + (want - a.y) * Math.min(1, dt * 2.5);
+    if (lively && dt > 0) a.clock = (a.clock + dt) % 600;
+    for (const s of a.spins) s.node.quaternion.copy(s.base).multiply(SPIN.setFromAxisAngle(s.axis, lively ? (a.clock * s.rate) % (Math.PI * 2) : 0.6));
+    for (const f of a.flames) f.node.scale.y = f.base * (lively ? 0.82 + 0.22 * Math.sin(a.clock * 17) + 0.1 * Math.sin(a.clock * 31 + 1.3) : 1);
+    return a.y - ground;
   }
   createResource(e) {
     const template = this.environmentAssets?.getObjectByName(`asset_crystal_${e.type}`);
@@ -1124,7 +1225,7 @@ export class WorldView {
     this.objects.delete(event.seed);
     for (const part of [o.userData.ring, o.userData.bar, o.userData.contactShadow]) part.visible = false;
     if (this.dying.length >= FEEL.wreckCap) this.disposeEntity(this.dying.shift().object);
-    const kind = event.building ? 'building' : event.heavy ? 'vehicle' : 'infantry';
+    const kind = event.building ? 'building' : o.userData.air ? 'air' : event.heavy ? 'vehicle' : 'infantry';
     const model = o.userData.model;
     if (o.userData.flashLit) this.setFlashTint(o.userData, false);
     if (o.userData.emblem) o.userData.emblem.visible = false;
@@ -1140,8 +1241,8 @@ export class WorldView {
         else part.userData.tint = WRECK_TINT;
       });
     }
-    this.dying.push({ baseY: o.position.y, object: o, kind, team: event.team, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1),
-      life: { building: 2.8, vehicle: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, infantry: 1.6 }[kind], baseAngle: model.rotation.y, direction: event.direction ?? model.rotation.y });
+    this.dying.push({ baseY: o.position.y, object: o, kind, team: event.team, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1), lift: model.position?.y ?? 0,
+      life: { building: 2.8, vehicle: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, air: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, infantry: 1.6 }[kind], baseAngle: model.rotation.y, direction: event.direction ?? model.rotation.y });
   }
   // Hit flash (combat-feedback.js stepFlash): every model part shares one tint array that the
   // batches copy into instanceColor, so a flash costs no material, batch or draw call. Off
@@ -1176,6 +1277,14 @@ export class WorldView {
         o.position.set(d.x + Math.sin(t * 61) * shake, d.baseY - heavy((t - 0.35) / 2.35) * 5.6, d.z + Math.cos(t * 53) * shake);
         m.rotation.z = d.tilt * heavy((t - 0.4) / 2.2) * 0.26;
         m.rotation.x = d.tilt * heavy((t - 0.4) / 2.2) * 0.11;
+      } else if (d.kind === 'air') {
+        // A shot-down flyer drops from its altitude, turning and rolling, then settles as a wreck.
+        const fall = clamp01(t / 0.9);
+        m.position.y = d.lift * (1 - fall * fall);
+        m.rotation.y = d.baseAngle + (motion ? d.tilt * ease(t / 0.9) * 1.6 : 0);
+        m.rotation.z = d.tilt * ease(t / 0.9) * 0.45;
+        m.rotation.x = 0.2 * ease(t / 0.9);
+        o.position.y = d.baseY - ease((t - (d.life - 0.9)) / 0.9) * 1.8;
       } else if (d.kind === 'vehicle') {
         const hop = motion ? Math.sin(Math.min(1, t / 0.45) * Math.PI) * 0.55 : 0;
         o.position.y = d.baseY + hop - ease((t - (d.life - 0.9)) / 0.9) * 1.8;
@@ -1302,6 +1411,14 @@ export class WorldView {
         if (!u.pressed) { u.pressed = true; this.scatter?.flatten(e.x, e.z, e.radius + 0.5); }
       }
       if (u.hover && lively && !this.lowPower && this.settings.combatMotion !== false) { u.hoverClock += dt * FEEL.hoverRate; lift += Math.sin(u.hoverClock) * FEEL.hoverAmplitude; }
+      if (u.air) {
+        // Flyers: up at their altitude, nose down in forward flight; ring and bar ride with them.
+        const air = this.stepFlyer(u, o.position.x, o.position.z, o.position.y, dt, lively);
+        lift += air;
+        m.rotation.x = Math.min(1, u.gait) * 0.14;
+        u.ring.position.y = air + 0.12;
+        u.bar.position.y = u.air.barY + air;
+      }
       m.position.set(back ? -Math.sin(m.rotation.y) * back : 0, lift, back ? -Math.cos(m.rotation.y) * back : 0);
       m.scale.set(1 + squash * 0.5, (e.complete ? 1 : 0.15 + e.progress * 0.85) + squash, 1 + squash * 0.5);
       m.scale.multiplyScalar(u.readabilityScale);

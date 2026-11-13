@@ -3,10 +3,11 @@ import { $ } from "./dom.js";
 import { AUTOSAVE_SECONDS } from "../savegame.js";
 import { pointLabel } from "../mission-ui.js";
 import { setMusicMood } from "../music.js";
+import { airModelsFor } from "../model-roster.js";
 
 export function setupFrame(S, A) {
   const Z = S.screen;
-  let uiClock = 0;
+  let uiClock = 0, airFor = null;
   let timePrevious = performance.now();
   let renderAlpha = 1;
   let frameCount = 0;
@@ -160,6 +161,8 @@ export function setupFrame(S, A) {
     }
     uiClock -= dt;
     if (uiClock <= 0) {
+      // Flyers come minutes into a match: their models load in the background once it has started (0.18).
+      if (Z.started && airFor !== S.sim) { airFor = S.sim; S.view.preloadModels?.(airModelsFor(S.sim)); }
       if (S.hover && !S.sim.get(S.hover.id)) { S.hover = null; $("hover-label").hidden = true; }
       A.updateUI();
       A.minimap();

@@ -15,6 +15,10 @@ export const HIDDEN_HINT = "Units deep on a plateau can't be seen from below. En
 // Wading the ford (sim/traits.js inFord): slower, and abilities wait until the far bank.
 export const FORD_TEXT = `In the ford: ${percent(TERRAIN.ford_speed)}% speed, no abilities`;
 export const FORD_SHORT = "In the ford";
+// Flyers (sim/air.js): the class line on their card.
+export const AIR_TEXT = "Air: flies over water, walls and cliffs";
+export const AIR_SHORT = "Air";
+export const AIR_HINT = "Only Rangers, Anti-tank soldiers, other units that hit air, and towers with Flak can shoot it.";
 // Barrage or Burn line aimed at a deep plateau top nobody on the caster's side can see.
 export const SIGHT_TEXT = "Can't see up there";
 export const CROSSING_TEXT = {
@@ -25,12 +29,13 @@ export const CROSSING_TEXT = {
 // A unit, or a building that shoots (a tower), standing on a plateau top: it gets the high-ground
 // bonuses against anything below (src/sim/height.js).
 export function onHighGround(terrain, e) {
-  if (!terrain?.plateaus?.length || !e || !(e.kind === "unit" || (e.kind === "building" && e.damage > 0))) return false;
+  if (!terrain?.plateaus?.length || !e || e.flying || !(e.kind === "unit" || (e.kind === "building" && e.damage > 0))) return false;
   return terrain.level(e.x, e.z) === 1;
 }
 
 // Plateaus where a hostile unit or building that `team` can see now stands, as a Set of plateau
-// indices. Only what the team already sees counts, so the mark below never leaks fog.
+// indices. Only what the team already sees counts, so the mark below never leaks fog. An enemy
+// flyer over a plateau counts like one standing on it: it opens the top to its side (sim/vision.js).
 export function heldPlateaus(sim, team = 0) {
   const held = new Set(), t = sim.terrain;
   if (!t?.plateaus?.length) return held;
@@ -49,7 +54,7 @@ export function heldPlateaus(sim, team = 0) {
 // asking for many units in one frame.
 export function hiddenFromBelow(sim, e, team = 0, held = null) {
   const t = sim?.terrain;
-  if (!t?.plateaus?.length || !e || e.hp <= 0 || !(e.kind === "unit" || (e.kind === "building" && e.damage > 0))) return false;
+  if (!t?.plateaus?.length || !e || e.hp <= 0 || e.flying || !(e.kind === "unit" || (e.kind === "building" && e.damage > 0))) return false;
   const [x, z] = t.cellAt(e.x, e.z), i = z * t.grid + x;
   if (!t.cellDeep[i]) return false;
   return !(held || heldPlateaus(sim, team)).has(t.cellPlateau[i]);
@@ -65,7 +70,8 @@ export function selectionGround(sim, entities) {
     const held = heldPlateaus(sim, 0);
     hidden = entities.every((u) => hiddenFromBelow(sim, u, 0, held));
   }
-  return { high, ford, hidden };
+  // A selection of flyers only: their card names the class instead (`air` is set only then).
+  return entities.length > 0 && entities.every((u) => u.flying) ? { high, ford, hidden, air: true } : { high, ford, hidden };
 }
 
 // One minimap tick per ramp: across the ramp, 1.5 m out from the rim (world metres).

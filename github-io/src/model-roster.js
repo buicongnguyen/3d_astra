@@ -30,3 +30,11 @@ export function modelsForMatch(match = {}, factions = balance.factions || {}) {
   for (const entity of match.entities || []) if (entity.kind !== 'wall' && balance.definitions[entity.type]?.role !== 'Research') types.add(entity.type);
   return [...types];
 }
+// Flyers (0.18) a match can train later: the Kite for every side and each faction's own flyer, outside
+// story missions unless rules.air. They are trained minutes in, so the match starts without them and
+// they load in the background (WorldView.preloadModels); one already on the field is in modelsForMatch.
+export function airModelsFor(match = {}, factions = balance.factions || {}) {
+  if (match.missionDef && !match.missionDef.rules?.air) return [];
+  const ids = Object.values(match.factions || {});
+  return [...new Set(ids.flatMap((id) => factions[id] ? ['kite', ...Object.values(factions[id].extra || {}).flat()] : []))];
+}

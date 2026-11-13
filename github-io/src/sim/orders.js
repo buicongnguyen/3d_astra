@@ -1,5 +1,6 @@
 import { DEFINITIONS as D, hyp, clamp } from "../data.js";
 import { TOWERS_PER_SUPPORT } from "./constants.js";
+import { AIR } from "../factions.js";
 
 // Orders, production queues and construction: the actions a team can take. Mixed into Simulation (see simulation.js).
 export const orders = {
@@ -26,7 +27,7 @@ export const orders = {
     )
       return;
     ids = [...new Set(ids)];
-    let index = 0;
+    let index = 0, refused = false;
     const size = Math.ceil(Math.sqrt(ids.length));
     for (const id of ids) {
       const e = this.get(id);
@@ -63,6 +64,13 @@ export const orders = {
       if (order.type === 'support' && !this.supportValid(e,target)) continue;
       if (order.type === 'attack' && e.support) {
         this.message(`${e.name} cannot attack. Use Support on a friendly target.`,e.team);
+        continue;
+      }
+      // Air (sim/air.js): an unarmed Kite never attacks, and only units that hit air take a flyer
+      // as their target (so ground troops never chase what they cannot shoot). Said once per order.
+      if (order.type === 'attack' && (!(e.damage > 0) || (target.flying && !this.canHit(e, target)))) {
+        if (!refused) this.message(!(e.damage > 0) ? `${e.name} is unarmed and cannot attack.` : `${e.name} cannot hit flyers. Use Rangers, Anti-tank soldiers or other units that hit air.`, e.team);
+        refused = true;
         continue;
       }
       const o = { ...order };
@@ -112,6 +120,10 @@ export const orders = {
     if (b.levelJob) return fail('Finish or cancel the building upgrade before training.');
     if (b.level < (d.required_level || 1)) return fail(`Upgrade ${b.name} to level ${d.required_level} to train ${d.name}.`);
     if (b.queue.length >= 5) return fail("Production queue is full.");
+    // Air (sim/air.js): a few flyers per side, counting those in production.
+    if (d.flying && this.airCount(b.team) >= AIR.cap) return fail(`Air limit reached: ${AIR.cap} flyers at once.`);
+    if (type === "flak" && (this.players[b.team].flak || this.own(b.team).some((e) => e.queue.some((q) => q.type === "flak"))))
+      return fail("Flak guns are already researched or queued.");
     if (
       type === "upgrade" &&
       (this.players[b.team].upgrade ||
@@ -189,6 +201,7 @@ export const orders = {
         (e) =>
           e.hp > 0 &&
           e.kind === "unit" &&
+          !e.flying &&
           e.team !== team &&
           hyp(x - e.x, z - e.z) < d.radius + e.radius + 0.3,
       )

@@ -409,8 +409,9 @@ export class Effects {
     const dx = tx - e.x, dz = tz - e.z, dist = Math.hypot(dx, dz) || 1;
     const nx = dx / dist, nz = dz / dist, reach = Math.min(style.reach, dist * 0.45);
     const fx = e.x + nx * reach, fz = e.z + nz * reach;
-    const from = { x: fx, y: style.height + ground(fx, fz), z: fz, lifted: true };
-    const land = { x: tx, y: e.type === "support" || e.weapon === "tower" ? 1 : 0.95, z: tz };
+    // Flyers fire and are hit at their altitude (shot events carry sAir / tAir, sim/combat.js).
+    const from = { x: fx, y: (e.sAir ? e.sAir + 0.4 : style.height) + ground(fx, fz), z: fz, lifted: true };
+    const land = { x: tx, y: (e.type === "support" || e.weapon === "tower" ? 1 : 0.95) + (e.tAir || 0), z: tz };
     const to = { ...land, y: land.y + ground(tx, tz), lifted: true };
     return { style, nx, nz, from, to, land };
   }
@@ -458,7 +459,7 @@ export class Effects {
           life: 0.9 + Math.random() * 0.4, s0: 0.45, s1: 1.7, cell: CELL.puff, c0: [0.6, 0.58, 0.55, 0.5], c1: [0.55, 0.55, 0.55, 0],
           anchor, spin: 0.8 });
       // A big gun's blast kicks up the ground under the muzzle.
-      if (cannon && e.weapon !== "tower") this.dust({ x: from.x, y: 0.25, z: from.z }, 1, anchor, 0.8, 0.8);
+      if (cannon && e.weapon !== "tower" && !e.sAir) this.dust({ x: from.x, y: 0.25, z: from.z }, 1, anchor, 0.8, 0.8);
     }
     // Projectile: a streak (and shell/rocket glow) flying to the target; reduced motion
     // shows a brief static tracer along the whole path instead.
@@ -479,7 +480,7 @@ export class Effects {
       this.hit(land, power, anchor);
     }
     // High ground: a shot fired down lands with a small gold flare, one fired up with a dull puff.
-    const slope = shotSlope(this.view.terrain, e.x, e.z, e.tx, e.tz);
+    const slope = e.sAir || e.tAir ? 0 : shotSlope(this.view.terrain, e.x, e.z, e.tx, e.tz);
     if (slope) this.timeline.push({ at: this.time + (m ? travel : 0), run: () => slope > 0
       ? this.particle(this.glow, { ...to, cell: CELL.flare, s0: 1.2, s1: 0.35, life: 0.24, c0: [1, 0.86, 0.4, 0.95], c1: [1, 0.7, 0.2, 0], anchor })
       : this.particle(this.smoke, { ...to, vy: m ? 0.4 : 0, s0: 0.35, s1: 0.9, life: 0.45, cell: CELL.puff, c0: [0.5, 0.5, 0.48, 0.4], c1: [0.5, 0.5, 0.5, 0], anchor }) });

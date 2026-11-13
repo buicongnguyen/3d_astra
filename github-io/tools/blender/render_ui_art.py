@@ -6,7 +6,7 @@ The default out_dir is src/art, where Vite fingerprints the files it bundles.
 
 Outputs (WebP, sRGB):
   keyart.webp / keyart-960.webp  golden-hour outpost scene for the start screen
-  portraits.webp                 4x7 atlas of 192 px unit and building portraits, team paint white
+  portraits.webp                 4x8 atlas of 192 px unit and building portraits, team paint white
   portrait-mask.webp             same atlas; alpha marks visible team paint so the page can tint
                                  portraits with the player's chosen army colour
   emblem.webp                    512 px Frontier Command emblem on a transparent background
@@ -27,7 +27,8 @@ MODELS = ROOT / 'public' / 'models'
 # Atlas order is part of the page contract (see src/portraits.js).
 PORTRAITS = ['worker', 'vanguard', 'ranger', 'breaker', 'medic', 'engineer', 'tank', 'antitank',
              'hq', 'relay', 'barracks', 'foundry', 'tower',
-             'scrapper', 'scorcher', 'salvageyard', 'rider', 'wagon', 'waystation', 'drone', 'walker', 'pylon', 'shade', 'watcher', 'veilrelay']
+             'scrapper', 'scorcher', 'salvageyard', 'rider', 'wagon', 'waystation', 'drone', 'walker', 'pylon', 'shade', 'watcher', 'veilrelay',
+             'kite', 'hawk', 'balloon', 'glider']
 CELL, COLS = 192, 4
 ROWS = math.ceil(len(PORTRAITS) / COLS)
 

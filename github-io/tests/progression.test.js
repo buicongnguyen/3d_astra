@@ -8,8 +8,9 @@ const rich = s => Object.assign(s.players[0],{alloy:5000,energy:5000});
 const step = (s,n) => { for(let i=0;i<n*20;i++)s.tick(.05); };
 const message = s => s.events.filter(e=>e.type==='message').at(-1)?.text;
 
-test('sixteen units and nine buildings have complete models, shields and descriptions',()=>{
-  assert.equal(Object.values(D).filter(d=>d.kind==='unit').length,16);
+test('twenty units (four of them flyers) and nine buildings have complete models, shields and descriptions',()=>{
+  assert.equal(Object.values(D).filter(d=>d.kind==='unit').length,20);
+  assert.equal(Object.values(D).filter(d=>d.flying).length,4);
   assert.equal(Object.values(D).filter(d=>d.kind==='building').length,9);
   for(const [type,d] of Object.entries(D).filter(([,d])=>d.kind)) {
     assert.ok(d.description && (d.shield > 0 || type === 'scrapper'));
