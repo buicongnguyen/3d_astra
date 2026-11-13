@@ -3,6 +3,7 @@
 // Vietnamese story catalog (src/locales/story-vi.json) complete. Run it to list the strings:
 //   node tools/story-strings.mjs
 import { MISSIONS } from "../src/story/missions.js";
+import { CHRONICLES } from "../src/story/chronicles.js";
 import { FACTIONS, CAST } from "../src/story/world.js";
 import { ACTS } from "../src/campaign.js";
 import { ENDINGS } from "../src/story/choices.js";
@@ -21,7 +22,9 @@ export function storyStrings() {
   for (const { act, title } of ACTS) add(title, `act ${act}`);
   for (const f of Object.values(FACTIONS)) for (const key of ["name", "short", "character", "goal"]) add(f[key], `faction ${f.id}.${key}`);
   for (const c of Object.values(CAST)) for (const key of ["name", "role", "personality"]) add(c[key], `cast ${c.id}.${key}`);
-  for (const m of MISSIONS) {
+  // Faction Chronicles (0.20): each chronicle's title, summary and form of address, then its missions.
+  for (const c of CHRONICLES) for (const key of ["title", "summary", "address"]) add(c[key], `chronicle ${c.id}.${key}`);
+  for (const m of [...MISSIONS, ...CHRONICLES.flatMap((c) => c.missions)]) {
     const at = (part) => `${m.id} ${part}`;
     add(m.title, at("title"));
     add(m.briefing?.place, at("place"));

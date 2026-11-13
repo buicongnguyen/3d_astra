@@ -53,7 +53,8 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 | `app/debug-hooks.js` | `window.__frontier`, the opt-in hook for browser tests (`?test`) |
 | `app/choices.js`, `choices.css` | Commander decision card (the `decision` screen: holds the match, keeps the music) and the epilogue cards |
 | `app/scenes.js`, `scenes.css`, `story/scenes.js` | Staged story scenes (0.19b): the `scene` screen (holds the match, keeps the music), letterbox, eased camera to explored places, lines in the dialogue box, Skip; data and beat format in `story/scenes.js` |
-| `campaign-map-ui.js`, `campaign-map.css`, `story/campaign-map.js` | The campaign map in the start screen: act bands, relay nodes, decision marks, endings seen, chronicles slot |
+| `campaign-map-ui.js`, `campaign-map.css`, `story/campaign-map.js` | The campaign map in the start screen: act bands, relay nodes, decision marks, endings seen, the chronicle cards |
+| `story/chronicles.js`, `chronicles-ui.js`, `chronicles.css` | Faction Chronicles (0.20): four three-mission campaigns played as another faction; the map cards, the list section and the chronicle headers |
 | `view.js` | Rendering, models, effects, fog, camera |
 | `scatter.js`, `map-edge.js`, `ground-paint.js`, `plateau-relief.js`, `fog-aware.js`, `visual-style.json` | Map look: palettes, lighting, dressing; plateau rock faces, lips and road ramps merged into the ground mesh |
 | `faction-colors.js` | Faction colours for mission enemies |

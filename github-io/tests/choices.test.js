@@ -49,6 +49,8 @@ test('the three decisions follow the story rules', () => {
     if (!value || typeof value !== 'object') return;
     if (value.if) {
       if (value.if.ending !== undefined) assert.ok(ENDING_IDS.includes(value.if.ending), `${where}: ending ${value.if.ending}`);
+      // A finished Faction Chronicle (0.20, tests/chronicles.test.js).
+      else if (value.if.chronicle !== undefined) assert.ok(['ashfall', 'sunward', 'wardens', 'veil'].includes(value.if.chronicle), `${where}: chronicle ${value.if.chronicle}`);
       else assert.ok(DECISIONS[value.if.flag]?.options.some((o) => o.id === value.if.is), `${where}: ${JSON.stringify(value.if)}`);
     }
     for (const v of Object.values(value)) walk(v, where);

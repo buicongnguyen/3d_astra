@@ -40,6 +40,6 @@ export const MAP_TEXT = {
   endings: "Endings",
   unseen: "Not reached yet",
   chronicles: "Faction Chronicles",
-  chroniclesNote: "Coming soon: the same war, told by each faction.",
+  chroniclesNote: "The same war, told by each faction. They open after Act 1.",
   decisions: "Decisions",
 };

@@ -43,6 +43,7 @@
     "test:campaign": "node tests/campaign.mjs",
     "test:choices": "node tests/choices.mjs",
     "test:story": "node tests/story.mjs",
+    "test:chronicles": "node tests/chronicles.mjs",
     "test:missions": "node tests/missions.mjs",
     "test:tactics-ui": "node tests/tactics-ui.mjs",
     "test:abilities": "node tests/abilities.mjs",

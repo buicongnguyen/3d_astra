@@ -1,0 +1,85 @@
+/* Faction Chronicles (0.20, chronicles-ui.js): four cards in the campaign map's footer and the list
+   section in the setup column. Each card wears its faction's colour (--chron) and glow. Text 11 px or
+   more, taps 44 px or more, no sideways scroll; the hover lift stops under :root.motion-off. */
+.cmap-chronicles.chron-cards {
+  display: grid;
+  gap: 4px;
+  flex: 1 1 420px;
+  min-width: 0;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+}
+.chron-row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.cmap .chron-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 2px 8px;
+  min-width: 0;
+  min-height: 52px;
+  margin: 0;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--chron) 55%, transparent);
+  border-radius: var(--r-s, 8px);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--chron) 22%, #0a1f28), rgba(8, 24, 32, 0.92) 70%);
+  color: var(--text-1, #e9f2f1);
+  text-align: left;
+  font: inherit;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.cmap .chron-card:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--chron); }
+.cmap .chron-card.picked { border-color: var(--chron); box-shadow: 0 0 0 2px var(--chron), 0 0 14px color-mix(in srgb, var(--chron-glow) 35%, transparent); }
+.cmap .chron-card.locked { opacity: 1; cursor: default; background: rgba(8, 24, 32, 0.9); border-style: dashed; border-color: var(--line-2, rgba(168, 214, 212, 0.3)); }
+.cmap .chron-card.locked .chron-face { filter: grayscale(0.85) brightness(0.7); }
+.chron-face { position: relative; display: grid; place-items: center; grid-row: span 2; }
+.chron-face .cast-portrait.small { --size: 32px; box-shadow: 0 0 0 2px var(--chron); }
+.chron-glyph { position: absolute; right: -6px; bottom: -6px; width: 16px; height: 16px; padding: 1px; border-radius: 50%; background: #071319; color: var(--chron); }
+.chron-words { display: grid; min-width: 0; gap: 1px; }
+/* Titles wrap rather than cut: Vietnamese titles run longer. */
+.chron-words strong { font: 700 12px/1.2 var(--font-ui); color: #fff; overflow-wrap: anywhere; }
+.chron-words small { font: 600 11px/1.2 var(--font-ui); color: var(--chron); overflow-wrap: anywhere; }
+.chron-lock { display: inline-flex; align-items: center; gap: 4px; font: 600 11px/1.25 var(--font-ui); color: var(--text-3, #9bb3b3); }
+.cmap .chron-card .chron-lock { grid-column: 1 / -1; white-space: normal; }
+.chron-lock svg { flex: none; width: 12px; height: 12px; }
+.chron-pips { display: inline-flex; gap: 4px; align-items: center; }
+.chron-card .chron-pips { grid-column: 2; }
+.chron-pips i { width: 9px; height: 9px; border: 2px solid color-mix(in srgb, var(--chron) 70%, transparent); border-radius: 50%; }
+.chron-pips i.on { border-color: #fff; background: var(--chron); box-shadow: 0 0 6px var(--chron-glow); }
+.chron-card.done .chron-words strong::after { content: " ✓"; color: var(--chron); }
+
+/* The setup column: the chronicles under the acts, and a chosen chronicle's missions. */
+/* Headings like the acts' (mission-ui.css .act-title), with their own class so the act list stays the acts. */
+.chron-title { display: flex; align-items: baseline; gap: 10px; margin: 0 0 8px; font: 800 16px/1.2 var(--font-display); color: #fff; }
+.chron-title span { font: 700 12px/1.2 var(--font-ui); letter-spacing: 0.14em; color: var(--chron, var(--gold-2)); }
+.chron-title strong { font: inherit; }
+.chron-note { margin: 0 0 6px; font: 500 12px/1.35 var(--font-ui); color: var(--text-3, #9bb3b3); }
+.chron-list .chron-entry { border-left: 3px solid var(--chron); }
+.chron-list .chron-entry .chron-face { grid-row: auto; margin-right: 4px; }
+.chron-list .chron-entry .chron-face .cast-portrait.small { --size: 30px; }
+.chron-list .chron-entry small { color: var(--text-2, #c6d6d5); }
+.chron-list .chron-entry.locked small .chron-lock { color: var(--text-3, #9bb3b3); }
+.chron-missions { border-left: 3px solid var(--chron); padding-left: 10px; }
+.chron-back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; margin: 0 0 8px; padding: 0 14px; font: 700 12px/1 var(--font-ui); }
+.chron-back svg { width: 14px; height: 14px; transform: rotate(180deg); }
+.chron-lead { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font: 500 12px/1.35 var(--font-ui); color: var(--text-2, #c6d6d5); }
+.chron-lead .cast-portrait.small { --size: 32px; flex: none; }
+
+:root.motion-off .cmap .chron-card { transition: none; }
+:root.motion-off .cmap .chron-card:hover:not(:disabled) { transform: none; }
+@media (prefers-reduced-motion: reduce) { .cmap .chron-card { transition: none; } .cmap .chron-card:hover:not(:disabled) { transform: none; } }
+
+/* Phones: the cards keep the portrait, emblem and pips (the list below names each chronicle and
+   what opens it); the row stays one line beside the endings. */
+.compact-ui .cmap-chronicles.chron-cards { flex: 1 1 200px; margin-left: 0; }
+.compact-ui .cmap-chronicles.chron-cards > .cmap-label { display: none; }
+.compact-ui .chron-row { gap: 4px; }
+.compact-ui .cmap .chron-card { grid-template-columns: 1fr; justify-items: center; gap: 3px; min-height: 48px; padding: 4px 2px; text-align: center; }
+.compact-ui .cmap .chron-card .chron-words { display: none; }
+.compact-ui .cmap .chron-card .chron-face { grid-row: auto; }
+.compact-ui .cmap .chron-card .chron-face .cast-portrait.small { --size: 26px; }
+.compact-ui .cmap .chron-card .chron-pips { grid-column: auto; gap: 3px; }
+.compact-ui .chron-pips i { width: 7px; height: 7px; border-width: 1.5px; }
+.compact-ui .chron-glyph { width: 14px; height: 14px; right: -5px; bottom: -4px; }

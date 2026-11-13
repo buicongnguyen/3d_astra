@@ -11,6 +11,7 @@
 //            the options marked default. --progress reads a campaign progress object instead
 //            (its `decisions` settle the earlier missions; see resolveMission in src/story/choices.js).
 //   --timeout wall-clock seconds before a run is stopped (240; the finale may need more)
+//   --chronicle <id|all>  plays Faction Chronicle missions instead (tools/chronicle-check.mjs)
 // Exits 1 when a target is missed. One line per mission and run:
 //   result, game time, required objectives (d done, a active, f failed, lower case = optional),
 //   first enemy wave, player units lost, medal.
@@ -142,6 +143,8 @@ function run(index, kind) {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (flag("--child")) process.send(run(+value("--child"), value("--kind")));
+  // Faction Chronicles (0.20): --chronicle <id|all> plays those missions with their own targets.
+  else if (value("--chronicle")) fork(fileURLToPath(new URL("./chronicle-check.mjs", import.meta.url)), args).on("exit", (code) => process.exit(code ?? 1));
   else {
     const only = value("--only"), started = Date.now();
     const todo = MISSIONS.map((m, i) => i).filter((i) => !only || MISSIONS[i].id.startsWith(only));

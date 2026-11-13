@@ -1,7 +1,7 @@
 // The campaign map (0.19a): the frontier drawn as three act bands climbing to the Keystone, with
 // a relay node per mission that lights up in its medal colour when cleared, dimmed nodes for
-// locked missions, the decisions taken as small marks on their mission, the endings seen and a
-// reserved slot for the Faction Chronicles (0.20). Inline SVG ground plus positioned HTML, so
+// locked missions, the decisions taken as small marks on their mission, the endings seen and the
+// four Faction Chronicle cards (0.20, chronicles-ui.js). Inline SVG ground plus positioned HTML, so
 // it stays crisp at any size and the words translate like the rest of the page.
 //
 // The mission list in the setup column (app/briefing.js) stays the keyboard and screen-reader
@@ -11,6 +11,7 @@ import "./campaign-map.css";
 import { MISSIONS, ACTS, isCleared, isUnlocked, bestMedal, nextMission } from "./campaign.js";
 import { MAP_NODES, LANDS, ACT_BANDS, MAP_TEXT } from "./story/campaign-map.js";
 import { DECISIONS, ENDINGS, ENDING_IDS, optionOf } from "./story/choices.js";
+import { chronicleCardsHTML } from "./chronicles-ui.js";
 
 const esc = (text) => String(text ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
@@ -20,7 +21,9 @@ export function missionChoices(progress, missionId) {
     .map((d) => ({ id: d.id, option: optionOf(d.id, progress.decisions[d.id]) })).filter((c) => c.option);
 }
 
-export function campaignMapHTML({ progress, pick = 0 }) {
+// `campaign`: "main" or the Faction Chronicle chosen (0.20); a chronicle's card is marked and no relay is picked.
+export function campaignMapHTML({ progress, pick = 0, campaign = "main" }) {
+  if (campaign !== "main") pick = -1;
   const next = nextMission(progress);
   const nodes = MISSIONS.map((m, i) => ({ m, i, at: MAP_NODES[m.id] || { x: 50, y: 50 }, open: isUnlocked(progress, i), done: isCleared(progress, i), medal: bestMedal(progress, i) }));
   const lit = nodes.filter((n) => n.done).length;
@@ -55,7 +58,7 @@ export function campaignMapHTML({ progress, pick = 0 }) {
     <div class="cmap-foot">
       <div class="cmap-endings"><span class="cmap-label">${esc(MAP_TEXT.endings)}</span>${endings}</div>
       ${legend}
-      <div class="cmap-chronicles"><strong>${esc(MAP_TEXT.chronicles)}</strong><small>${esc(MAP_TEXT.chroniclesNote)}</small></div>
+      ${chronicleCardsHTML({ progress, campaign })}
     </div>
   </div>`;
 }

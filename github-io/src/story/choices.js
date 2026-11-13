@@ -57,6 +57,9 @@ export const ENDINGS = Object.freeze({
 export const ENDING_IDS = Object.keys(ENDINGS);
 export const endingFor = (progress = null) => (mercyCount(progress?.decisions) >= 2 ? "open-frontier" : "meridian-line");
 
+// A Faction Chronicle is finished once its last mission is won (src/campaign.js recordChronicleClear).
+export const chronicleDone = (progress, id) => progress?.chronicles?.[id]?.done === true;
+
 // An `if` against the match's own answers (sim.flags). No `if` always passes.
 export const flagMatches = (cond, flags) => !cond || (typeof cond.flag === "string" && !!flags && Object.hasOwn(flags, cond.flag) && flags[cond.flag] === cond.is);
 
@@ -68,8 +71,10 @@ export const flagMatches = (cond, flags) => !cond || (typeof cond.flag === "stri
 export function resolveMission(def, progress = null) {
   if (!def) return def;
   const own = new Set(Object.keys(def.decisions || {}));
-  const settled = (cond) => !!cond && (cond.ending !== undefined || (typeof cond.flag === "string" && !own.has(cond.flag)));
-  const passes = (cond) => (cond.ending !== undefined ? endingFor(progress) === cond.ending : answerFor(cond.flag, progress?.decisions) === cond.is);
+  // `if: { chronicle }` (0.20): a Faction Chronicle the player has finished (progress.chronicles).
+  const settled = (cond) => !!cond && (cond.ending !== undefined || cond.chronicle !== undefined || (typeof cond.flag === "string" && !own.has(cond.flag)));
+  const passes = (cond) => (cond.chronicle !== undefined ? chronicleDone(progress, cond.chronicle)
+    : cond.ending !== undefined ? endingFor(progress) === cond.ending : answerFor(cond.flag, progress?.decisions) === cond.is);
   const strip = (entry) => { const { if: _, ...rest } = entry; return rest; };
   // One list: the same array when nothing in it is settled here.
   const list = (items, inner = null) => {
