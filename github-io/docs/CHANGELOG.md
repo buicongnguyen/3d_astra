@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.17.0: Frontier Defence and Choices (round 3 plan, releases 0.17 and 0.19a)
+
+- **Frontier Defence, a new mode** (a fourth card on the start screen):
+  - Enemy columns march along a road; you crew build pads beside it with your own army's units: a Ranger nest, a Breaker mortar, an Anti-tank post and a Watcher post.
+  - Each tower has three tiers with bronze, steel and gold trims.
+  - Kills pay alloy and leaks cost lives. Call waves early for a bonus. Stars come from lives kept.
+  - Two levels:
+    - **Gorge Road:** the road climbs past plateau rims. Pads deep on a plateau are hidden from below; rim pads are closer but exposed.
+    - **Twin Bridges:** a river with two bridges and a slow ford.
+  - Three difficulties, an Overview zoom, and progress saved per level.
+  - A bot checks that every level is winnable and that no single tower type earns three stars.
+  - A 120-enemy wave costs 92 draws on a phone.
+- **Choices and two endings:**
+  - Three Commander decisions: m03 (the alloy), m05 (the pact) and m10 (the Veil).
+  - Each answer has a small, honest consequence later.
+  - Two or more merciful answers lead to "The Open Frontier"; otherwise to "The Meridian Line".
+  - The finale's objective, closing line and debrief follow the ending, then five epilogue cards (Vale, Sol, Hale, Maren, ECHO).
+  - The choice card holds the battle but keeps the music, and comes back after Continue.
+- **Campaign map:** the frontier as a map with three acts, relays that light up with your medal, decision marks, endings seen, and a slot for the Faction Chronicles.
+- **Progress fixes:** campaign progress keeps every field. A mission opens when it or the one before is cleared, so adding missions never locks a cleared one. Continue uses the mission as it was saved.
+- **Music:** Defence plays the between-waves track while no wave is on the road.
+- **Short phones:** the four mode cards sit in one row, so the setup stays above the pinned Start button.
+- **Validation:** 498 unit tests; all browser suites, including the new `test:defence` and `test:choices`; `check:defence`; the mission checker on both decision branches.
+
 ## 0.16.1: recorded music
 
 - Five original instrumental tracks, made locally with ACE-Step 1.5 (MIT; see `public/music/LICENCE.txt`):

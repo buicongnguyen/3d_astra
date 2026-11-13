@@ -53,7 +53,8 @@ const AUDIT = ({ touch, scope, fixed }) => {
     if (scrolls) { /* reachable by scrolling its own panel */ }
     else if (r.left < -1 || r.top < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1) out.outside.push(`${id} ${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.right)},${Math.round(r.bottom)}`);
     else if (!e.closest('.settings-panel, .modal, .mission-briefing, .field-guide, #campaign-setup, .briefing-setup, .briefing') && !hit(e, r)) out.outside.push(`${id} covered`);
-    if (e.scrollWidth > e.clientWidth + 2 && getComputedStyle(e).overflow === 'visible' && !e.classList.contains('command-tile')) out.spill.push(`${id} ${e.scrollWidth}>${e.clientWidth}`);
+    // Campaign map nodes are 44 px tap targets whose title chip hangs below them by design.
+    if (e.scrollWidth > e.clientWidth + 2 && getComputedStyle(e).overflow === 'visible' && !e.classList.contains('command-tile') && !e.classList.contains('cmap-node')) out.spill.push(`${id} ${e.scrollWidth}>${e.clientWidth}`);
   }
   for (const s of fixed || []) for (const e of document.querySelectorAll(s)) {
     if (!visible(e)) continue;
