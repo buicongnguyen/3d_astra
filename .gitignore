@@ -8,3 +8,7 @@
 *.log
 .DS_Store
 __pycache__/
+# Temporary files for this project stay inside it: .tmp/ (scratch scripts, probes, logs).
+.tmp/
+music-lab/_work/
+music-lab/listen/audio/

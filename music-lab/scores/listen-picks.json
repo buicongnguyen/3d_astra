@@ -1,0 +1,62 @@
+{
+ "title-1": {
+  "key": "title-B:1308",
+  "cue": "title"
+ },
+ "title-2": {
+  "key": "title-B:1306",
+  "cue": "title"
+ },
+ "title-3": {
+  "key": "title-A:1308",
+  "cue": "title"
+ },
+ "campaign-1": {
+  "key": "campaign-s1:1324",
+  "cue": "campaign"
+ },
+ "campaign-2": {
+  "key": "campaign-C:1328",
+  "cue": "campaign"
+ },
+ "campaign-3": {
+  "key": "campaign-s2:1321",
+  "cue": "campaign"
+ },
+ "defence-1": {
+  "key": "defence-B:1348",
+  "cue": "defence"
+ },
+ "defence-2": {
+  "key": "defence-B:1344",
+  "cue": "defence"
+ },
+ "defence-3": {
+  "key": "defence-A:1345",
+  "cue": "defence"
+ },
+ "victory-1": {
+  "key": "victory:1361",
+  "cue": "victory"
+ },
+ "victory-2": {
+  "key": "victory:1366",
+  "cue": "victory"
+ },
+ "victory-3": {
+  "key": "victory-B:1361",
+  "cue": "victory"
+ },
+ "defeat-1": {
+  "key": "defeat:1384",
+  "cue": "defeat"
+ },
+ "defeat-2": {
+  "key": "defeat:1383",
+  "cue": "defeat"
+ },
+ "defeat-3": {
+  "key": "defeat:1386",
+  "cue": "defeat"
+ }
+}

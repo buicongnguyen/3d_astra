@@ -15,7 +15,7 @@ Plan: [PLAN_ROUND3_REFINED_2026-11-13.md](PLAN_ROUND3_REFINED_2026-11-13.md), bu
 | 0.21 Defence complete | 0.19.0 | Done, except: twin rivers (the river is fixed at z = 0, so Long Crossing uses the standard river) |
 
 **Open for the owner:**
-- Listen to the music: the listen page in 3D_claudeopus55 is `experiments/music-frontier-1113/listen/`.
+- Listen to the music: open `music-lab/listen/index.html` at the repo root (moved from 3D_claudeopus55 on 2026-11-14; see `music-lab/README.md`).
 - Read the new story lines in `docs/aaa/review/story-lines.md` (0.19a, 0.19b, 0.18.3 and Chronicles sections).
 - Refine the air models (`docs/aaa/review/air-units-sheet.png`).
 - Play-test Defence pacing (Endless may be generous early), m06b's length (the bot takes 8.5 min) and the faction balance (Wardens and Meridian are above the 35–65% band; Veil is below).

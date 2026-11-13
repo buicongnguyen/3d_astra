@@ -1,0 +1,210 @@
+[
+ {
+  "id": "title-A",
+  "cue": "title",
+  "arm": "A brass lead",
+  "shift": 2.0,
+  "bpm": 104,
+  "key": "D major",
+  "duration": 110,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Bridge]\n\n[Main theme - full]\n\n[Outro]",
+  "seeds": [
+   1301,
+   1302,
+   1303,
+   1304,
+   1305,
+   1306,
+   1307,
+   1308
+  ],
+  "caption": "heroic adventure orchestral game theme, instrumental, warm brass melody with soft swells, plucked acoustic guitar, low strings, frame drums and low taiko with a soft kick on every beat, hopeful and brave, light and bright, a little tense, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "title-B",
+  "cue": "title",
+  "arm": "B monochord lead",
+  "shift": 2.0,
+  "bpm": 104,
+  "key": "D major",
+  "duration": 110,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Bridge]\n\n[Main theme - full]\n\n[Outro]",
+  "seeds": [
+   1301,
+   1302,
+   1303,
+   1304,
+   1305,
+   1306,
+   1307,
+   1308,
+   1309,
+   1310,
+   1311,
+   1312
+  ],
+  "caption": "heroic adventure game theme, instrumental, soft bending monochord lead melody, plucked acoustic guitar, low strings, warm brass swells, frame drums and low taiko with a soft kick on every beat, hopeful and brave, light and warm, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "campaign-s2",
+  "cue": "campaign",
+  "arm": "shift 2",
+  "shift": 2.0,
+  "bpm": 88,
+  "key": "G major",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme]\n\n[Outro]",
+  "seeds": [
+   1321,
+   1322,
+   1323,
+   1324,
+   1325,
+   1326,
+   1327,
+   1328
+  ],
+  "caption": "calm adventure map room music, instrumental, plucked acoustic guitar melody, soft warm pads, light hand percussion on every beat, gentle upright bass, curious and hopeful, thoughtful, gentle, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "campaign-s1",
+  "cue": "campaign",
+  "arm": "shift 1",
+  "shift": 1.0,
+  "bpm": 88,
+  "key": "G major",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme]\n\n[Outro]",
+  "seeds": [
+   1321,
+   1322,
+   1323,
+   1324,
+   1325,
+   1326,
+   1327,
+   1328
+  ],
+  "caption": "calm adventure map room music, instrumental, plucked acoustic guitar melody, soft warm pads, light hand percussion on every beat, gentle upright bass, curious and hopeful, thoughtful, gentle, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "defence-A",
+  "cue": "defence",
+  "arm": "A strings + guitar",
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "A minor",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Break - lighter]\n\n[Main theme]\n\n[Outro]",
+  "seeds": [
+   1341,
+   1342,
+   1343,
+   1344,
+   1345,
+   1346,
+   1347,
+   1348
+  ],
+  "caption": "steady alert strategy game music, instrumental, low strings ostinato, light frame drum pulse on every beat, plucked acoustic guitar, soft warm brass pads, alert and focused, a little tense but hopeful, room to breathe, not a full battle, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "defence-B",
+  "cue": "defence",
+  "arm": "B strings + marimba",
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "A minor",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Break - lighter]\n\n[Main theme]\n\n[Outro]",
+  "seeds": [
+   1341,
+   1342,
+   1343,
+   1344,
+   1345,
+   1346,
+   1347,
+   1348
+  ],
+  "caption": "steady alert strategy game music, instrumental, low strings ostinato, light hand percussion and soft low taiko pulse on every beat, soft marimba, warm pads, watchful and focused, a little tense but hopeful, sparse with room to breathe, not a full battle, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "victory",
+  "cue": "victory",
+  "arm": "sting",
+  "shift": 2.0,
+  "bpm": 100,
+  "key": "D major",
+  "duration": 24,
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "seeds": [
+   1361,
+   1362,
+   1363,
+   1364,
+   1365,
+   1366
+  ],
+  "caption": "short triumphant victory fanfare, instrumental, bright brass fanfare, timpani, strings, cymbal swell, bright resolving final chord, hopeful and proud, clean warm mix, no vocals"
+ },
+ {
+  "id": "defeat",
+  "cue": "defeat",
+  "arm": "sting",
+  "shift": 2.0,
+  "bpm": 72,
+  "key": "D minor",
+  "duration": 24,
+  "lyrics": "[Intro]\n\n[Theme - falling]\n\n[Outro - soft final chord]",
+  "seeds": [
+   1381,
+   1382,
+   1383,
+   1384,
+   1385,
+   1386
+  ],
+  "caption": "short gentle game over music, instrumental, low strings slowly falling melody, soft warm horn, soft piano, quiet and reflective, gentle not sad, ends on a soft warm held chord, clean warm mix, no vocals"
+ },
+ {
+  "id": "campaign-C",
+  "cue": "campaign",
+  "arm": "C clear shaker pulse",
+  "shift": 2.0,
+  "bpm": 88,
+  "key": "G major",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme]\n\n[Outro]",
+  "seeds": [
+   1321,
+   1322,
+   1323,
+   1324,
+   1325,
+   1326,
+   1327,
+   1328
+  ],
+  "caption": "calm adventure map room music, instrumental, plucked acoustic guitar melody, soft warm pads, gentle upright bass, soft shaker and light hand drum keeping a clear steady beat, curious and hopeful, thoughtful, gentle, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "victory-B",
+  "cue": "victory",
+  "arm": "B long held chord",
+  "shift": 2.0,
+  "bpm": 100,
+  "key": "D major",
+  "duration": 24,
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "seeds": [
+   1361,
+   1362,
+   1363,
+   1364,
+   1365,
+   1366
+  ],
+  "caption": "short triumphant victory fanfare, instrumental, bright brass fanfare, timpani, strings, cymbal swell, ends on a long held bright major chord, hopeful and proud, clean warm mix, no vocals"
+ }
+]

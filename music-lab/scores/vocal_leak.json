@@ -1,0 +1,66 @@
+{
+ "title-B:1308": {
+  "vocal_stem_db": -41.3,
+  "vocal_stem_worst_1s_db": -37.9
+ },
+ "title-B:1306": {
+  "vocal_stem_db": -27.1,
+  "vocal_stem_worst_1s_db": -9.7
+ },
+ "title-A:1308": {
+  "vocal_stem_db": -42.8,
+  "vocal_stem_worst_1s_db": -33.3
+ },
+ "campaign-s1:1324": {
+  "vocal_stem_db": -42.3,
+  "vocal_stem_worst_1s_db": -32.1
+ },
+ "campaign-C:1328": {
+  "vocal_stem_db": -48.9,
+  "vocal_stem_worst_1s_db": -39.9
+ },
+ "campaign-s2:1321": {
+  "vocal_stem_db": -41.4,
+  "vocal_stem_worst_1s_db": -33.0
+ },
+ "campaign-s1:1326": {
+  "vocal_stem_db": -43.7,
+  "vocal_stem_worst_1s_db": -35.4
+ },
+ "defence-B:1348": {
+  "vocal_stem_db": -39.8,
+  "vocal_stem_worst_1s_db": -31.2
+ },
+ "defence-B:1344": {
+  "vocal_stem_db": -35.0,
+  "vocal_stem_worst_1s_db": -23.1
+ },
+ "defence-A:1345": {
+  "vocal_stem_db": -40.7,
+  "vocal_stem_worst_1s_db": -33.4
+ },
+ "victory:1361": {
+  "vocal_stem_db": -43.4,
+  "vocal_stem_worst_1s_db": -30.4
+ },
+ "victory:1366": {
+  "vocal_stem_db": -41.7,
+  "vocal_stem_worst_1s_db": -30.8
+ },
+ "victory-B:1361": {
+  "vocal_stem_db": -42.2,
+  "vocal_stem_worst_1s_db": -38.3
+ },
+ "defeat:1384": {
+  "vocal_stem_db": -38.1,
+  "vocal_stem_worst_1s_db": -29.5
+ },
+ "defeat:1383": {
+  "vocal_stem_db": -35.9,
+  "vocal_stem_worst_1s_db": -19.0
+ },
+ "defeat:1386": {
+  "vocal_stem_db": -46.7,
+  "vocal_stem_worst_1s_db": -40.2
+ }
+}
