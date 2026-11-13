@@ -119,6 +119,7 @@ await suite("offline", async () => {
     // The waiting worker takes over once no game page is open. A closed page can stay a client for a
     // moment (seconds on a slow runner); a game page opened in that moment joins the old worker and the
     // hand-over never happens. So wait from a page outside the game's scope, then reopen the game.
+    // ("no waiting worker" means the hand-over happened only because a waiting one was seen above.)
     await page.close();
     const next = await context.newPage();
     await next.goto(`${origin}/outside`);

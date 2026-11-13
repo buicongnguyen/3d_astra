@@ -2,10 +2,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { readMatrix } from "./ci-local.mjs";
+import { readMatrix } from "./lib/ci-matrix.mjs";
 
 const scripts = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).scripts;
-const groups = readMatrix(readFileSync(new URL("../../.github/workflows/pages.yml", import.meta.url), "utf8"));
+const groups = readMatrix();
 // Suites CI does not run, on purpose: webkit needs `npx playwright install webkit` (see docs/TESTING.md).
 const NOT_IN_CI = new Set(["webkit", "ci-local"]);
 
