@@ -21,6 +21,8 @@ async function noSideScroll(page, where) {
   assert.ok(scroll <= width + 1, `${where}: page scrolls sideways (${scroll} > ${width})`);
 }
 async function size(locator) {
+  // A slow runner can measure while the menu re-renders; wait for the element to be drawn first.
+  await locator.waitFor({ state: "visible", timeout: TIMEOUT.step }).catch(() => {});
   const box = await locator.boundingBox();
   assert.ok(box, `visible: ${await locator.evaluate((el) => el.outerHTML.slice(0, 120)).catch(() => "?")}`);
   return box;

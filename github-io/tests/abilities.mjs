@@ -166,13 +166,15 @@ await suite("abilities", async () => {
     // ---- Motion off: Eco sets the class live; a pulse then runs no animation at all.
     await frontier(() => document.getElementById("quality").click());
     await until(() => document.documentElement.classList.contains("motion-off"));
-    await frontier((id) => { const s = window.__frontier.sim, e = s.get(id); e.abilityAt = s.time + 3; window.__frontier.select([id]); }, rangerId);
+    // The clock is held so a slow runner cannot use up the 3 s cooldown before the tile is checked.
+    await frontier((id) => { const f = window.__frontier, s = f.sim, e = s.get(id); f.hold = true; e.abilityAt = s.time + 3; f.select([id]); }, rangerId);
     await dock("actions");
     await until(() => document.querySelector('[data-ability="focus"]')?.classList.contains("cooling"));
     await frontier(() => window.__frontier.step(4));
     await until(() => document.querySelector('[data-ability="focus"]')?.classList.contains("ready-pulse"));
     assert.deepEqual(await running(), [], `${viewport}: no CSS animation runs under motion-off`);
     assert.equal((await tile("focus")).ready, true, "the steady glow stays");
+    await frontier(() => { window.__frontier.hold = false; });
     await frontier(() => document.getElementById("quality").click());
     await until(() => !document.documentElement.classList.contains("motion-off"));
 

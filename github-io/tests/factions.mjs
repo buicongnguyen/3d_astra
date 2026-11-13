@@ -142,6 +142,8 @@ await suite("factions", async () => {
     assert.equal(await page.evaluate(() => window.__frontier.settings.playerFaction), faction, "the choice is saved in settings");
     await tap("#start");
     await page.waitForFunction(() => window.__frontier.started, null, { timeout: TIMEOUT.step });
+    // The core's emblem is attached when the core is first drawn, a frame or two after the start.
+    await page.waitForFunction(() => { const f = window.__frontier, hq = f.sim.own(0).find((e) => e.type === "hq"); return !!f.view.objects.get(hq?.id)?.userData.emblem; }, null, { timeout: TIMEOUT.step }).catch(() => {});
     const state = await page.evaluate(() => {
       const f = window.__frontier, s = f.sim, hq = s.own(0).find((e) => e.type === "hq");
       return { look: f.view.mission?.factions?.[0], emblem: !!f.view.objects.get(hq.id)?.userData.emblem, units: s.own(0).filter((e) => e.kind === "unit").map((e) => e.type), buildable: s.buildable(0) };

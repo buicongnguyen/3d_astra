@@ -22,6 +22,8 @@ const mime = { ".m4a": "audio/mp4", ".html": "text/html", ".js": "text/javascrip
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, "http://localhost");
+    // A blank page outside the game's scope, to watch the worker from without being one of its clients.
+    if (url.pathname === "/outside") return res.writeHead(200, { "Content-Type": "text/html" }).end("<!doctype html><title>outside</title>");
     if (!url.pathname.startsWith(prefix)) return res.writeHead(404).end();
     const file = path.resolve(root, decodeURIComponent(url.pathname.slice(prefix.length)) || "index.html");
     if (!file.startsWith(root)) return res.writeHead(403).end();
@@ -114,10 +116,15 @@ await suite("offline", async () => {
     assert.equal(await page.evaluate(() => !document.querySelector("#start").disabled), true, "the open page is untouched");
 
     // Reopen: the new worker activates and the old shell cache is removed; models are kept (same hash).
+    // The waiting worker takes over once no game page is open. A closed page can stay a client for a
+    // moment (seconds on a slow runner); a game page opened in that moment joins the old worker and the
+    // hand-over never happens. So wait from a page outside the game's scope, then reopen the game.
     await page.close();
     const next = await context.newPage();
+    await next.goto(`${origin}/outside`);
+    await poll(next, async (scope) => { const r = await navigator.serviceWorker.getRegistration(scope); return !!r && !r.waiting && r.active?.state === "activated"; }, `${origin}${prefix}`, TIMEOUT.models);
     await next.goto(home);
-    await poll(next, async () => !(await caches.keys()).some((key) => key.startsWith("fc-shell-") && key !== "fc-shell-testbuild2"));
+    await poll(next, async () => !(await caches.keys()).some((key) => key.startsWith("fc-shell-") && key !== "fc-shell-testbuild2"), undefined, TIMEOUT.models);
     const after = await cacheKeys(next);
     assert.ok(after.includes("fc-shell-testbuild2") && after.some((key) => key.startsWith("fc-models-")), `after update ${after}`);
     assert.ok(after.includes("fc-music"), `the new worker keeps fc-music: ${after}`);

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {translate,addMessages} from '../src/i18n.js';
 import {MISSIONS} from '../src/story/missions.js';
-import {launchBrowser,openPage,testUrl,suite} from './lib/harness.mjs';
+import {launchBrowser,openPage,testUrl,suite,TIMEOUT} from './lib/harness.mjs';
 fs.mkdirSync('test-results', {recursive:true});
 const browser=await launchBrowser();
 await suite('language',async()=>{
@@ -125,17 +125,21 @@ await suite('language',async()=>{
   // In the match: heading, objectives and the first spoken line.
   await press('#mb-next');
   await page.waitForFunction(()=>window.__frontier.started);
+  // Freeze the match clock: on a slow runner the first line could come and go while the objectives
+  // are photographed. Time then moves only by step(), a quarter second per poll until each check holds.
+  await page.evaluate(()=>{window.__frontier.hold=true;});
+  const untilStepping=(fn,arg)=>page.waitForFunction(([src,a])=>{const ok=(0,eval)(src)(a);if(!ok)window.__frontier.step(.25);return ok;},[fn.toString(),arg],{polling:250,timeout:TIMEOUT.models});
   const objectivesOpen=()=>page.evaluate(()=>document.documentElement.classList.contains('objectives-open'));
   const showObjectives=async open=>{if(touch&&await objectivesOpen()!==open)await press('#mission-toggle');};
   const objectives=()=>page.locator('#objectives-mission .objective-text').allTextContents();
   const shown=()=>page.evaluate(()=>window.__frontier.sim.missionStatus().map(o=>o.text));
-  await page.waitForFunction(()=>document.querySelectorAll('#objectives-mission li').length>0);
+  await untilStepping(()=>document.querySelectorAll('#objectives-mission li').length>0);
   await showObjectives(true);
   assert.deepEqual(await objectives(),(await shown()).map(vi));
   await fits('#mission-objectives','objectives');
   await page.screenshot({path:'test-results/language-story-'+name+'-objectives.png'});
   await showObjectives(false);
-  await page.waitForFunction(line=>!document.querySelector('#dialogue').hidden&&document.querySelector('#dialogue-text').textContent===line,vi(firstSay.text));
+  await untilStepping(line=>!document.querySelector('#dialogue').hidden&&document.querySelector('#dialogue-text').textContent===line,vi(firstSay.text));
   assert.equal(await text('#dialogue-name'),'Mira Vale');
   await fits('#dialogue','dialogue');
   assert.ok(await page.evaluate(()=>{const r=document.querySelector('#dialogue-card').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight;}),name+': the dialogue box is on screen');

@@ -54,7 +54,17 @@ Service worker: `DIST_DIR=<build folder> npm run test:offline` (default dist/). 
 `npm run check:missions` (about 90 s) plays all twelve missions through the command layer. Each must stay alive for a passive player, not be won by a generic bot too easily, and be won by the objective bot within its time targets. Run it after any change to `src/story/missions.js` or to rules that affect balance.
 
 ## CI
-`.github/workflows/pages.yml` pins Ubuntu 24.04, runs the unit tests, builds, runs the browser suites in groups (commands, settings, feedback, layout, maps, construction, visuals, story) and deploys `dist/` on success. A run takes 15 to 30 minutes; a new push cancels the run before it.
+`.github/workflows/pages.yml` pins Ubuntu 24.04, runs the unit tests, builds, runs the browser suites in groups (22 groups; `tests/ci-matrix.test.js` fails when a browser suite in package.json is in none of them) and deploys `dist/` on success. A run takes 15 to 30 minutes; a new push cancels the run before it. Nothing deploys while any group is red.
+
+### Run the CI matrix before pushing: `npm run test:ci-local`
+GitHub's runners have no GPU and slow cores: a match draws at a few frames a second, so real-time clocks (wave countdowns, scenes, the match clock) run on while a test is still checking. On a desktop with a graphics card those tests pass, then fail in CI; in November 2026 that cost five red runs in a row. `tests/ci-local.mjs` builds (and stops if the build fails), serves the build on port 4231 and runs every group from pages.yml in 4 lanes, as slowly as CI: `tests/lib/ci-like.mjs` (a `node --import` preload) gives every suite software rendering and slows each page's CPU 20x, including the suites that launch Chrome themselves. About 45 minutes for the whole matrix.
+
+```sh
+npm run test:ci-local                     # every group, CI-like
+npm run test:ci-local -- defence story    # some groups (names from pages.yml)
+npm run test:ci-local -- --fast           # full speed, real GPU
+```
+Logs go to `test-results/ci-local/<group>--<suite>.log`. `CI_LOCAL_PORT`, `CI_LOCAL_LANES` and `SLOW_CPU` change the defaults. It is calibrated on suite times (layout-f: 133 s a viewport here, 110 s in CI), so it catches tests that race a clock over seconds; a race that needs under 4 frames a second (the frame step is capped at 0.25 s) can still pass here. Run `--fast` too: a check read once right after the start can be too early on a fast machine (the factions emblem is attached a frame or two later), so wait for it with `waitForFunction`. First full run (2026-11-13): offline, language, defence, feel and abilities failed CI-like and were fixed; factions failed at full speed only. Writing tests that hold up: freeze the match clock with `window.__frontier.hold = true` and move it with `step(seconds)`; skip scenes (`skipScene()`) before waiting for what follows them; measure related boxes in one `page.evaluate`; reset a countdown before calling a wave instead of racing it.
 
 ## What is not tested
 Real phones, real audio output and sound taste. Touch tests use browser emulation.
