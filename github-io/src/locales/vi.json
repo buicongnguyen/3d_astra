@@ -48,6 +48,8 @@
     "Mark the nearest enemy in range: it takes 25% more damage from every source for 8 seconds.": "Đánh dấu kẻ địch gần nhất trong tầm: nó chịu thêm 25% sát thương từ mọi nguồn trong 8 giây.",
     "Enemy faction": "Phe địch",
     "Enemy faction: each has two units, one building and a way of fighting of its own": "Phe địch: mỗi phe có hai đơn vị, một công trình và một lối đánh riêng",
+    "Your faction": "Phe của bạn",
+    "Your faction: the army you command, with its own units, building and way of fighting": "Phe của bạn: đội quân bạn chỉ huy, với đơn vị, công trình và lối đánh riêng",
     "Mirror": "Đối xứng",
     "Mixed": "Hỗn hợp",
     "Shades are hidden until they strike. Towers and Command cores reveal them.": "Bóng ma ẩn mình cho đến khi ra đòn. Tháp pháo và Sở chỉ huy làm chúng lộ diện.",
@@ -861,6 +863,8 @@
     ["^Deals ([\\d.]+)× damage to workers\\.$", "Gây {1}× sát thương lên công nhân."],
 
     ["^Finish within (\\d+) seconds$", "Hoàn thành trong {1} giây"],
+    ["^(Ashfall|Sunward|Wardens|Veil) command is online\\. Assign Harvesters to the amber alloy deposits\\.$", "Bộ chỉ huy {1} đã sẵn sàng. Cho Thợ mỏ khai thác tinh thể hợp kim màu vàng."],
+    ["^Enemy command has been eliminated\\. (Ashfall|Sunward|Wardens|Veil) command holds the valley\\.$", "Đã phá hủy bộ chỉ huy địch. Bộ chỉ huy {1} làm chủ thung lũng."],
     ["^(.+) counters your (.+)\\. Pull them back and bring (.+)\\.$", "{1} khắc chế {2} của bạn. Hãy rút {2} về và dùng {3}."],
     ["^(.+) counters your (.+)\\. Pull them back\\.$", "{1} khắc chế {2} của bạn. Hãy rút {2} về."],
     ["^Your (.+) counters (.+)\\. Let it lead the fight\\.$", "{1} của bạn khắc chế {2}. Hãy để {1} dẫn đầu trận đánh."],

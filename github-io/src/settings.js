@@ -10,11 +10,15 @@ export const PRESETS = Object.freeze({
   rose: "#e88fbd",
   ivory: "#ebe7cd",
 });
+// The keys of PLAYER_FACTIONS in factions.js (kept here so settings load without the rules data).
+export const PLAYER_FACTION_IDS = Object.freeze(["meridian", "ashfall", "sunward", "wardens", "veil"]);
 export function defaults(coarse = false) {
   return {
     version: 1,
     language: "en",
     campaignDifficulty: "standard",
+    // Skirmish "Your faction" (factions.js PLAYER_FACTIONS); remembered between visits.
+    playerFaction: "meridian",
     playerColor: "mint",
     enemyColor: "coral",
     quality: coarse ? "eco" : "high",
@@ -38,6 +42,7 @@ export function normalize(value, coarse = false) {
   if (!value || value.version !== 1) return d;
   if (["story", "standard", "veteran"].includes(value.campaignDifficulty)) d.campaignDifficulty = value.campaignDifficulty;
   if (["en", "vi"].includes(value.language)) d.language = value.language;
+  if (PLAYER_FACTION_IDS.includes(value.playerFaction)) d.playerFaction = value.playerFaction;
   for (const key of ["playerColor", "enemyColor"])
     if (Object.hasOwn(PRESETS, value[key])) d[key] = value[key];
   if (d.playerColor === d.enemyColor)

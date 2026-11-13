@@ -63,7 +63,7 @@ import { setupFrame } from "./app/frame.js";
 import { setupUiExtras } from "./app/ui-extras.js";
 import { setupDebugHooks } from "./app/debug-hooks.js";
 import { CORE_MODEL_TYPES, modelsForMatch } from "./model-roster.js";
-import { skirmishFactions, matchLook } from "./factions.js";
+import { skirmishSides, matchLook } from "./factions.js";
 import { prefetchModels, releaseModelBytes } from "./app/loading.js";
 import "./loading.css";
 import { registerOffline } from "./app/offline.js";
@@ -75,7 +75,8 @@ const A = {};
 
 // Every match, preview and restart is built from the current setup (a story mission included).
 const createSim = () => {
-  const sim = new Simulation({ factions: S.mission ? null : skirmishFactions(S.enemyFaction, S.enemyCount, S.mapId), map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish" });
+  // Only a skirmish lets the player choose sides: Training (and the campaign) always command Meridian.
+  const sim = new Simulation({ factions: S.mission || S.playMode !== "skirmish" ? null : skirmishSides(S.playerFaction, S.enemyFaction, S.enemyCount, S.mapId), map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish" });
   S.look = matchLook(S.mission, sim);
   return sim;
 };
@@ -187,7 +188,7 @@ const BIND = ["preferences", "hud", "input-pointer", "sound", "frame", "modals",
   "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "debug-hooks"];
 const binds = Object.fromEntries(SETUP.map(([name, setup]) => [name, setup(S, A)]));
 // The start screen shows the battle chosen there, so the first simulation is built from it.
-({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction } = A.battleSetup());
+({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction, playerFaction: S.playerFaction } = A.battleSetup());
 S.sim = createSim();
 for (const name of BIND) binds[name]();
 boot();

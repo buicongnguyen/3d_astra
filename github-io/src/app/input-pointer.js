@@ -304,7 +304,8 @@ export function setupInputPointer(S, A) {
     const high = onHighGround(S.sim.terrain, e) ? ` · ${HIGH_GROUND_TEXT}` : "";
     if (!(e.team > 0)) return `${e.name}${high}`;
     const id = S.sim.missionDef?.factions?.[e.team] || S.sim.factions?.[e.team];
-    const faction = id && id !== "meridian" ? FACTIONS[id]?.short : null;
+    // A Meridian enemy is named too once the player commands another faction.
+    const faction = id && (id !== "meridian" || (S.sim.factions?.[0] || "meridian") !== "meridian") ? FACTIONS[id]?.short : null;
     return `${e.name}${faction ? ` · ${faction}` : ""} · ENEMY${high}`;
   }
   // The ground itself: only river crossings have something to say.

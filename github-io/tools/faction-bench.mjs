@@ -1,6 +1,7 @@
 // Faction balance bench. Deterministic: the simulation has no random numbers.
 //   node tools/faction-bench.mjs                      round robin, AI against AI, every pair in both seats
 //   node tools/faction-bench.mjs --enemy ashfall      the test bot (two builds) against one faction's AI
+//                                --player veil        ...with the test bot commanding another faction
 // Options: --maps classic,riverlands,dunes  --speeds normal,fast  --cap 1800 (seconds)  --json out.json
 import fs from 'node:fs';
 import { Simulation } from '../src/simulation.js';
@@ -12,12 +13,13 @@ const strength = (s, team) => s.own(team).reduce((n, e) => n + (e.kind === 'unit
 const rows = [];
 if (args.includes('--enemy')) {
   // Package 2.3: the bot's standard build against a build with more Rangers and towers.
-  const enemy = arg('--enemy', 'ashfall');
+  // --player wardens: the test bot commands that faction (skirmish "Your faction"); default Meridian.
+  const enemy = arg('--enemy', 'ashfall'), player = arg('--player', 'meridian');
   for (const build of [{ name: 'standard', options: {} }, { name: 'rangers+towers', options: { towers: 4, rangerShare: 4 } }])
     for (const speed of speeds) for (const map of maps) for (const attackAt of [12, 16, 20, 24]) {
-      const s = new Simulation({ map, aiSpeed: speed, factions: { 1: enemy } }), bot = new PlayBot(s, { attackAt, ...build.options });
+      const s = new Simulation({ map, aiSpeed: speed, factions: { 0: player, 1: enemy } }), bot = new PlayBot(s, { attackAt, ...build.options });
       while (s.time < CAP && !s.result) { bot.step(); s.tick(TICK); for (const e of s.events) bot.see(e); s.events.length = 0; }
-      const row = { enemy, build: build.name, speed, map, attackAt, result: s.result || 'timeout', seconds: Math.round(s.time) };
+      const row = { player, enemy, build: build.name, speed, map, attackAt, result: s.result || 'timeout', seconds: Math.round(s.time) };
       rows.push(row); console.log(JSON.stringify(row));
     }
   for (const build of ['standard', 'rangers+towers']) for (const speed of speeds) {

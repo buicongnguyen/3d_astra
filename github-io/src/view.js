@@ -965,9 +965,10 @@ export class WorldView {
     root.userData.gait=0;root.userData.stride=(e.id*0.7)%6.28;
     root.userData.pop=0;root.userData.built=e.complete!==false;
     root.userData.team = e.team;
-    // Story missions: a faction emblem floats over each building (Meridian for the player's own).
+    // Story missions and faction skirmishes: a faction emblem floats over each building (the player's
+    // own faction for team 0: Meridian in the story, the skirmish choice otherwise).
     if (e.kind === "building" && this.mission?.factions) {
-      const faction = e.team === 0 ? "meridian" : factionOf(this.mission, e.team)?.id;
+      const faction = factionOf(this.mission, e.team)?.id || (e.team === 0 ? "meridian" : undefined);
       if (hasEmblem(faction)) {
         let top = this.buildingTops.get(e.type);
         if (top === undefined) this.buildingTops.set(e.type, (top = new THREE.Box3().setFromObject(model).max.y));

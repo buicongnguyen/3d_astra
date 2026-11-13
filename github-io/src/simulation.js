@@ -1,6 +1,6 @@
 import { DEFINITIONS as D, ROCKS, MAX_POP, distance, hyp, clamp } from "./data.js";
 import { NEUTRAL, CORE_GRACE, ROUTES_PER_TICK, MIDFIELD_DEPOSITS } from "./sim/constants.js";
-import { factionRules, normalizedFactions } from "./factions.js";
+import { factionRules, normalizedFactions, openingLine } from "./factions.js";
 import { traits } from "./sim/traits.js";
 import { height } from "./sim/height.js";
 import { difficultyId, difficultySpeed } from "./difficulty.js";
@@ -138,9 +138,8 @@ export class Simulation {
     this.skirmishPoints = {};
     if (this.capturePointsOn) this.initSkirmishPoints();
     if (mission) this.initMission(mission);
-    this.message(
-      "Meridian is online. Assign Harvesters to the amber alloy deposits.",
-    );
+    // Names the player's own faction (Meridian keeps its original line).
+    this.message(openingLine(this.factions[0]));
   }
   // Campaign handicap against allied AIs: extra supplies and a Sentinel tower facing the map centre.
   reinforce({ alloy = 0, energy = 0, tower = false }) {
