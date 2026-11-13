@@ -46,7 +46,8 @@
 
 .cmap-act {
   position: absolute;
-  left: 10px;
+  /* Clear of the connector that climbs the left column between the acts. */
+  left: calc(12% + 26px);
   z-index: 1;
   display: flex;
   gap: 6px;
@@ -122,6 +123,9 @@
   width: max-content;
   max-width: 20cqw;
   transform: translateX(-50%);
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(6, 20, 28, 0.72);
   font: 600 12px/1.25 var(--font-ui);
   color: var(--text-2);
   text-align: center;
@@ -165,18 +169,34 @@
 /* List rows: a decision taken shows as a small chip beside the map name. */
 .stage-choice { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; font: 600 11px/1.2 var(--font-ui); color: var(--text-2); }
 
-/* Phones, portrait: the map gets its own height above the copy and the column scrolls. */
-.compact-ui #briefing.campaign-view .briefing-hero { height: auto; }
-.compact-ui #briefing.campaign-view #campaign-map { flex: 0 0 auto; height: clamp(360px, 104vw, 560px); }
-.compact-ui .cmap { padding: 12px 14px 0; }
-.compact-ui #briefing.campaign-view .briefing-copy { padding: 10px 16px 6px; }
+/* Phones: the map fills the hero at its usual height, so the mode cards and Start stay on the
+   first screen; the copy keeps only the mission title (the briefing overlay tells the rest). */
+.compact-ui #briefing.campaign-view .briefing-hero { height: clamp(300px, 46vh, 440px); }
+.compact-ui #briefing.campaign-view #campaign-map { flex: 1 1 auto; min-height: 0; }
+.compact-ui .cmap { gap: 6px; padding: 10px 14px 0; }
+.compact-ui #briefing.campaign-view .briefing-copy { padding: 6px 16px 8px; }
+.compact-ui #briefing.campaign-view .briefing-copy .eyebrow,
+.compact-ui #briefing.campaign-view .briefing-copy p,
+.compact-ui #briefing.campaign-view .briefing-facts { display: none; }
+.compact-ui #briefing.campaign-view .briefing-copy h2 { margin: 0; font-size: 20px; }
+.compact-ui .cmap-head .eyebrow { display: none; }
+.compact-ui .cmap-head strong { font-size: 15px; }
+.compact-ui .cmap-board { min-height: 150px; }
+.compact-ui .cmap-chronicles small { display: none; }
+.compact-ui .cmap-chronicles { padding: 4px 10px; }
+/* Short phones: the board alone (the list names the acts; the endings show on taller screens). */
+@media (max-height: 700px) and (orientation: portrait) {
+  .compact-ui #briefing.campaign-view .briefing-hero { height: clamp(220px, 40vh, 300px); }
+  .compact-ui .cmap-head, .compact-ui .cmap-foot { display: none; }
+  .compact-ui .cmap-board { min-height: 0; }
+}
 /* Phones: act names stand up along the left edge, clear of the first column of relays (the list
    below names the acts); the footer packs endings as rings (a seen one keeps its name), the
    decision legend and the chronicles slot. */
 .compact-ui .cmap-act { left: 2px; writing-mode: vertical-rl; transform: rotate(180deg); }
 .compact-ui .cmap-act > span { display: none; }
 .compact-ui .cmap-foot { gap: 6px 10px; }
-.compact-ui .cmap-legend .cmap-label { display: none; }
+.compact-ui .cmap-legend { display: none; }
 .compact-ui .cmap-endings { flex-wrap: nowrap; gap: 6px; }
 .compact-ui .cmap-ending { padding: 0 10px; }
 .compact-ui .cmap-ending.unseen { justify-content: center; width: 44px; padding: 0; }
@@ -188,18 +208,11 @@
   .compact-ui #briefing.campaign-view #campaign-map { height: auto; flex: 1 1 auto; }
   .compact-ui #briefing.campaign-view .briefing-hero { height: auto; min-height: 0; }
   .compact-ui #briefing.campaign-view .briefing-copy { padding: 4px 14px 8px; }
-  .compact-ui #briefing.campaign-view .briefing-copy .eyebrow,
-  .compact-ui #briefing.campaign-view .briefing-copy p,
-  .compact-ui #briefing.campaign-view .briefing-facts { display: none; }
-  .compact-ui #briefing.campaign-view .briefing-copy h2 { margin: 0; font-size: 18px; }
+  .compact-ui #briefing.campaign-view .briefing-copy h2 { font-size: 18px; }
   .compact-ui .cmap { gap: 4px; padding: 8px 12px 0; }
-  .compact-ui .cmap-head .eyebrow { display: none; }
   .compact-ui .cmap-head strong { font-size: 14px; }
-  .compact-ui .cmap-board { min-height: 150px; }
   /* One row under the map. */
   .compact-ui .cmap-foot { flex-wrap: nowrap; gap: 6px; }
   .compact-ui .cmap-foot .cmap-label { display: none; }
-  .compact-ui .cmap-chronicles small { display: none; }
-  .compact-ui .cmap-chronicles { padding: 4px 10px; }
   .compact-ui .cmap-legend { display: none; }
 }
