@@ -23,6 +23,9 @@ export function setupDebugHooks(S, A) {
       get paused() {
         return Z.paused;
       },
+      // Freeze the match clock (rendering goes on); tests then advance time only with step().
+      get hold() { return !!S.testHold; },
+      set hold(on) { S.testHold = !!on; },
       step: (seconds) => {
         for (let i = 0; i < seconds / 0.05; i++){S.tutorial?.update(S.sim,[...S.selected]);S.matchStats.before(S.sim);S.sim.tick(0.05);S.matchStats.after(S.sim);S.tutorial?.update(S.sim,[...S.selected]);}
         A.updateUI();

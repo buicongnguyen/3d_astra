@@ -295,6 +295,9 @@ await suite("defence", async () => {
     await page.waitForFunction(() => window.__frontier.started && window.__frontier.sim.missionDef?.id === "d-bridges" && document.querySelector("#defence-bar:not([hidden])"), null, { timeout: 60000 });
     const bridge = await page.evaluate(() => {
       const f = window.__frontier, s = f.sim, canvas = f.view.renderer.domElement, r = canvas.getBoundingClientRect();
+      // The match clock stands still until the bridge has blown (time moves with step() only): on a slow
+      // runner the column would otherwise walk over the bridge before the charge goes off.
+      f.hold = true;
       s.players[0].alloy = 500;
       // A column on the west road, still north of the river.
       const e = s.spawn(s.typeFor(1, "vanguard"), 1, -21, -22, true, true);
@@ -317,6 +320,7 @@ await suite("defence", async () => {
     await page.evaluate(() => window.__frontier.step(2.2));
     await page.waitForFunction(() => window.__frontier.sim.crossings[-22].state === "blown" && !window.__frontier.view.environment.bridges.get(-22).visible, null, { timeout: TIMEOUT.step });
     assert.equal(await page.evaluate((id) => window.__frontier.sim.get(id)?.orders[0].route, bridge.id), "ford", `${viewport}: the column turned to the ford`);
+    await page.evaluate(() => { window.__frontier.hold = false; });
     // Bridge builders on the west road: they stop at the bank and the pontoon goes up.
     await page.evaluate(() => {
       const f = window.__frontier, s = f.sim;

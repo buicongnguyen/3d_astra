@@ -155,11 +155,15 @@ await suite("story: scenes, the 15-mission campaign map, the defence missions an
       // Crew a few pads, call the first waves and let them walk: a mid-wave photograph.
       await page.evaluate(() => {
         const s = window.__frontier.sim, def = s.missionDef.defence;
+        // Time moves with step() only until the photograph (a slow runner would let the wave run on).
+        window.__frontier.hold = true;
         s.players[0].alloy = 2000;
         def.pads.slice(0, 7).forEach((p, i) => s.command({ team: 0, type: "padBuild", pad: p.id, crew: def.crews[i % def.crews.length] }));
         s.command({ team: 0, type: "waveCall" });
         window.__frontier.step(8);
       });
+      // Step on (the clock is held) until the column is on the road: up to 30 s of match time.
+      await page.evaluate(() => { const f = window.__frontier, on = () => f.sim.entities.some((e) => e.team === 1 && e.kind === "unit" && e.hp > 0); for (let i = 0; i < 60 && !on(); i++) f.step(0.5); });
       await page.waitForFunction(() => window.__frontier.sim.entities.some((e) => e.team === 1 && e.kind === "unit" && e.hp > 0), null, { timeout: TIMEOUT.step });
       await page.evaluate(() => { const f = window.__frontier, d = f.sim.missionDef.defence; f.view.focusOn(d.camera.x, d.camera.z); });
       await page.waitForTimeout(500);
@@ -168,7 +172,9 @@ await suite("story: scenes, the 15-mission campaign map, the defence missions an
       assert.equal(fit.sideways, false, `${viewport} ${id}: sideways scroll`);
       assert.deepEqual((await audit(page, ".map-heading")).small, [], `${viewport} ${id}: heading text`);
       await shot(page, `story-${id}-${viewport}`);
+      await page.evaluate(() => { window.__frontier.hold = false; });
       // The wave's story beat reached the dialogue box.
+      await page.waitForFunction(() => window.__frontier.mission.queue.log.some((l) => l.who === "hale"), null, { timeout: TIMEOUT.step }).catch(() => {});
       assert.ok(await page.evaluate(() => window.__frontier.mission.queue.log.some((l) => l.who === "hale")), "Hale speaks as the first wave starts");
     }
     assert.deepEqual(errors, [], `${viewport} defence missions: page errors`);

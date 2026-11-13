@@ -86,7 +86,9 @@ export function setupFrame(S, A) {
     A.refreshHover();
     // A story mission waiting for a Commander decision (also after loading a save) shows its card.
     if (Z.started && !Z.paused && !S.sim.result && S.sim.mission?.pending) A.openDecision();
-    const running = Z.started && !Z.paused && !S.sim.result;
+    // S.testHold (browser tests only, window.__frontier.hold): draw but do not advance the match, so a
+    // test moves time with step() alone and a slow machine cannot run the clock on between its checks.
+    const running = Z.started && !Z.paused && !S.sim.result && !S.testHold;
     if (running) {
       S.accumulator += dt;
       while (S.accumulator >= 0.05) {
