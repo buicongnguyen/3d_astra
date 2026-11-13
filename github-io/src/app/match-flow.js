@@ -10,6 +10,7 @@ import { clearSave, writeSave, readSave } from "../savegame.js";
 import { icon } from "../icons.js";
 import { setMusicMood } from "../music.js";
 import { skirmishResultHTML } from "../results-ui.js";
+import { defenceLevel } from "../defence/levels.js";
 
 export function setupMatchFlow(S, A) {
   const Z = S.screen;
@@ -27,6 +28,7 @@ export function setupMatchFlow(S, A) {
       $("modal-content").innerHTML = `<h2 id="modal-title">${S.tutorial.done?"Training complete!":"Training ended"}</h2><p>You practiced selection, economy, construction, production, attacking and withdrawal. Campaign introduces an active opponent.</p><button class="primary" data-training-campaign>Campaign menu</button><button class="secondary" data-restart>Replay training</button><button class="secondary" data-new-game>Choose a game</button>`;$("modal").querySelector(".primary").focus();return;
     }
     if (S.activeStage !== null) return showDebrief(win);
+    if (S.sim.defence) return A.defenceResult();
     $("modal").classList.add("result-wide");
     $("modal-content").innerHTML = skirmishResultHTML({ result: S.sim.result, seconds: S.sim.time, stats: S.matchStats.stats, emblem: emblemUrl, arrow: icon("arrow"), faction: playerFactionOf(S.sim) });
     $("modal").querySelector(".primary").focus();
@@ -126,12 +128,13 @@ export function setupMatchFlow(S, A) {
     if (play !== false || resume) A.syncAutocast();
     if (!resume) startEconomy();
     if(play !== false && S.playMode === "training") beginTutorial();
+    if (S.sim.defence) A.defenceBegin(resume);
   }
 
   function autosave() {
     if (!Z.started || S.sim.result || S.playMode === "training" || S.tutorial) return false;
     S.saveClock = 0;
-    return writeSave({ mode: S.playMode, missionId: S.activeStage !== null ? MISSIONS[S.activeStage].id : null, sim: S.sim });
+    return writeSave({ mode: S.playMode, missionId: S.activeStage !== null ? MISSIONS[S.activeStage].id : S.sim.defence ? S.sim.missionDef.id : null, sim: S.sim });
   }
 
   // Campaign: Start opens the mission briefing; the match begins from its "Begin mission".
@@ -171,7 +174,7 @@ export function setupMatchFlow(S, A) {
     A.syncAutocast();
     startEconomy();
     // A story mission opens with its own first line instead of the general hint.
-    if (S.playMode !== "campaign") A.notice(
+    if (S.playMode !== "campaign" && S.playMode !== "defence") A.notice(
       S.playMode !== "training"
         ? "Your Harvesters are mining. Train more at the Command core, then build a Barracks."
         : S.touchInput
@@ -179,6 +182,7 @@ export function setupMatchFlow(S, A) {
           : "Select Harvesters, then right-click amber crystals to start your economy.",
     );
     if(S.playMode === "training") beginTutorial();
+    if (S.sim.defence) A.defenceBegin();
     A.tone(780, 0.15);
   }
 
@@ -194,8 +198,9 @@ export function setupMatchFlow(S, A) {
 
     // Continue: restore the saved match and come back paused on the pause menu.
     $("continue").onclick = async () => {
-      const save = readSave(), index = save?.missionId ? missionIndex(save.missionId) : -1;
-      const loaded = save && (save.mode !== "campaign" || index >= 0) ? Simulation.load(save.text) : null;
+      const save = readSave(), index = save?.missionId && save.mode === "campaign" ? missionIndex(save.missionId) : -1;
+      const level = save?.mode === "defence" ? defenceLevel(save.missionId) : null;
+      const loaded = save && (save.mode === "defence" ? !!level : save.mode !== "campaign" || index >= 0) ? Simulation.load(save.text) : null;
       if (!loaded) {
         clearSave();
         A.renderContinue();
@@ -208,7 +213,9 @@ export function setupMatchFlow(S, A) {
       S.playMode = save.mode;
       S.sim = loaded;
       S.mapId = S.sim.terrain.id; S.enemyCount = S.sim.enemyCount; S.aiSpeed = S.sim.aiSpeed; S.alliance = S.sim.coalition ? "coalition" : "ffa";
-      S.mission = index >= 0 ? MISSIONS[index] : null;
+      S.mission = index >= 0 ? MISSIONS[index] : level;
+      // A loaded defence match keeps the level it was saved with (its options carry the definition).
+      if (level) { S.mission = S.sim.missionDef; S.defencePick = Math.max(0, A.defenceIndex?.(level.id) ?? 0); }
       S.bonus = S.mission?.bonus || null;
       S.enemyFaction = S.mission ? "mirror" : enemyFactionOf(S.sim);
       S.playerFaction = S.mission ? "meridian" : playerFactionOf(S.sim);

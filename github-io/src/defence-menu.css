@@ -1,0 +1,19 @@
+/* Frontier Defence on the start screen: a fourth mode card and the level list with stars.
+   The match interface has its own stylesheet (defence-ui.css), loaded on first use. */
+.mode-switch { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mode-switch button { min-height: 56px; }
+
+.defence-levels em { display: flex; align-items: center; gap: 6px; }
+.defence-levels .stars { display: inline-flex; gap: 2px; font: 700 16px/1 var(--font-ui); letter-spacing: 0; }
+.defence-levels .stars i { font-style: normal; color: rgba(168, 214, 212, 0.28); }
+.defence-levels .stars i.on { color: var(--gold-2); text-shadow: 0 0 6px rgba(255, 199, 94, 0.45); }
+.defence-levels .veteran-mark {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  border: 1px solid var(--gold-line);
+  border-radius: 6px;
+  font: 800 12px/1 var(--font-ui);
+  color: var(--gold-2);
+}

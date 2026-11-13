@@ -1,0 +1,38 @@
+{
+  "gorge": {
+    "name": "Gorge Road",
+    "size": 96,
+    "river": false,
+    "offset": 0,
+    "defence": true,
+    "look": "highlands",
+    "biome": "highland",
+    "sites": [],
+    "flank": [13,14],
+    "plateaus": [
+      {"shape":"disc","x":-6.9,"z":-39.9,"r":10,"ramps":[]},
+      {"shape":"disc","x":-16.2,"z":-9.1,"r":9.5,"ramps":[]},
+      {"shape":"disc","x":13.1,"z":1.7,"r":10,"ramps":[]},
+      {"shape":"disc","x":2.9,"z":33,"r":10,"ramps":[]},
+      {"shape":"disc","x":25.1,"z":37.5,"r":7.5,"ramps":[{"angle":-120,"width":8}]}
+    ],
+    "routes": {
+      "main": [[-25.6,-38.3],[-18.6,-26.2],[-3.2,-23.6],[3.8,-11.4],[-5.4,6.6],[1.1,17.9],[15.1,20.1],[19.1,27.1],[24.1,35.7]]
+    }
+  },
+  "bridges": {
+    "name": "Twin Bridges",
+    "size": 96,
+    "river": true,
+    "offset": 0,
+    "defence": true,
+    "look": "riverlands",
+    "sites": [],
+    "flank": [13,14],
+    "routes": {
+      "west": [[-18,-45],[-8,-32],[-22,-15],[-22,9],[4,24],[8,33],[12,42]],
+      "ford": [[-18,-45],[-8,-32],[0,-15],[0,10],[4,24],[8,33],[12,42]],
+      "east": [[-18,-45],[-8,-32],[22,-15],[22,9],[4,24],[8,33],[12,42]]
+    }
+  }
+}

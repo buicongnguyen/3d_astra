@@ -2,7 +2,7 @@
 // and every move between screens goes through one of the transition methods below, so the
 // rules live in one place instead of being spread over `started`, `paused` and modal flags.
 //
-//   menu        The start screen. Its three views (Training, Skirmish, Campaign list) are the
+//   menu        The start screen. Its four views (Training, Skirmish, Campaign list, Defence) are the
 //               play mode on the app state; the campaign mission briefing is the overlay that
 //               mission-ui.js draws over this screen.
 //   playing     A match is running.
@@ -39,11 +39,12 @@ export const isLegal = (from, to) => !!LEGAL[from]?.includes(to);
 // Campaign) is its state, and the campaign mission briefing is a fourth state that only opens
 // from Campaign. Any mode may follow any other; the briefing returns to Campaign (Back) or ends
 // by starting the match. Moves outside this table are recorded in `violations` like screen moves.
-export const MODES = ["training", "skirmish", "campaign"];
+export const MODES = ["training", "skirmish", "campaign", "defence"];
 export const MENU_LEGAL = {
   training: MODES,
   skirmish: MODES,
   campaign: [...MODES, "briefing"],
+  defence: MODES,
   briefing: ["briefing", "campaign"],
 };
 export const isLegalMenuMove = (from, to) => !!MENU_LEGAL[from]?.includes(to);

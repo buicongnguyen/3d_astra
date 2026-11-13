@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { ROCKS } from "./data.js";
-import { themeFor } from "./visual-style.js";
+import { themeFor, lookOf } from "./visual-style.js";
 import { fogAware } from "./fog-aware.js";
 
 // Map dressing: grass, flowers, pebbles, rocks, shrubs, small trees, Builder ruins and each
@@ -61,9 +61,11 @@ const CAMP_RADIUS = 15;
 
 // Pure and seeded: the same map always gets the same dressing. `budget` thins it on Eco.
 export function planScatter(terrain, budget = 1) {
-  const recipe = DRESSING[terrain.id] || DRESSING.classic, r = rng(hashId(terrain.id) ^ 0x5ca77e2), half = terrain.half;
+  const recipe = DRESSING[lookOf(terrain.id)] || DRESSING.classic, r = rng(hashId(terrain.id) ^ 0x5ca77e2), half = terrain.half;
   const area = (terrain.size / 96) ** 2, camps = campSites(terrain), props = [];
-  const nearWall = (x, z, pad) => ROCKS.some(([wx, wz, wr]) => Math.hypot(x - wx, z - wz) < wr + pad);
+  // Defence maps have no boulder walls (sim: terrain.defence).
+  const walls = terrain.defence ? [] : ROCKS;
+  const nearWall = (x, z, pad) => walls.some(([wx, wz, wr]) => Math.hypot(x - wx, z - wz) < wr + pad);
   const nearCamp = (x, z) => camps.some(([cx, cz]) => Math.hypot(x - cx, z - cz) < CAMP_RADIUS);
   const add = (kind, x, z, s) => props.push({ kind, x, z, s: Math.min(MAX_SCALE, s), a: r() * 6.2832, tone: r(), seed: (r() * 4294967296) >>> 0 });
   for (const [kind, count, on] of recipe.list) {
@@ -89,7 +91,7 @@ export function planScatter(terrain, budget = 1) {
     add(kind, x, z, s);
   }
   // Fallen Builder stones lean against the old walls, where no unit can stand anyway.
-  if (recipe.ruins) ROCKS.forEach(([wx, wz, wr], i) => {
+  if (recipe.ruins) walls.forEach(([wx, wz, wr], i) => {
     for (let k = 0; k < 2; k++) {
       const a = r() * 6.2832, d = wr + 0.5 + r() * 0.3, x = wx + Math.cos(a) * d, z = wz + Math.sin(a) * d, s = 0.8 + r() * 0.4;
       if (Math.abs(x) > half - 1.2 || Math.abs(z) > half - 1.2 || !LAND.includes(terrain.at(x, z)) || (i + k) % 3 === 2 || nearWall(x, z, 0.46) || nearCamp(x, z)) continue;

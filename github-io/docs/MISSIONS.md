@@ -112,3 +112,21 @@ A mission's faction colours remain cosmetic until `rules.rosters: true`. With th
 ## Height and walls on maps (0.13.0)
 
 `maps.json` may give a map `plateaus` (`{ shape: "disc", x, z, r, ramps: [{ angle, width }] }` or `{ shape: "box", x, z, w, d, ramps: [{ side: "north"|"south"|"east"|"west", at, width }] }`, with `mirror: true` for the point-mirrored copy) and `walls` (`{ x, z, length, axis: "h"|"v", mirror }`). Mission regions and spawns must not sit on a cliff band or a ramp: `tests/missions-data.test.js` checks every one with `nav.canStand`.
+
+## Frontier Defence levels (0.17)
+
+A Defence level (`src/defence/levels.js`, rules in `src/sim/defence.js`) is a mission-shaped definition with `rules: { ai: false, mode: "defence", rosters: true }`, `factions: { 1: … }`, `objectives: [{ id, type: "waves", count, text }]`, `win`, `medals: { gold: { lives }, silver: { lives } }` (3, 2 and 1 stars) and `check: { story, standard, veteran }` (the stars `npm run check:defence` requires of its bot), plus a `defence` block:
+
+| Field | Meaning |
+|---|---|
+| `lives`, `alloy` | Lives, and starting alloy (a number or one per difficulty). There is no energy and no supply. |
+| `firstWave`, `gap` | Seconds before wave 1, and between a beaten wave and the next. `waveCall` starts the next one now and pays 2 alloy per second left. |
+| `routes`, `exit` | Named polylines of `{ x, z }` from the spawn to the exit circle `{ x, z, r }`; the map's `routes` in `src/defence/maps.json` paint the road. |
+| `lane`, `pace` | Lane width (each unit walks its own offset) and the share of field speed the waves march at. |
+| `count`, `hp` | Per-difficulty wave-size and hull factors (they replace `balance.json.difficulty.wave` for this level). |
+| `pads` | `{ id, x, z, high? }`: `high` is `"rim"` (3.5–5 m inside a plateau: seen from the road, +2 m reach) or `"deep"` (hidden from below). `tests/defence-data.test.js` checks pads against the terrain. |
+| `crews` | Crew ids from `src/defence/garrisons.json` (`ranger`, `breaker`, `antitank`, `watcher`); slots resolve through the player's roster. |
+| `waves` | `{ groups: [{ units: { slot: n }, route, every, delay, hp? }], bonus }`: slots resolve through the enemy roster; types take turns within a group. |
+| `camera` | `{ x, z, zoom, maxZoom }`: the start view and the Overview zoom. |
+
+Defence maps (`src/defence/maps.json`, `defence: true`) have no bases, deposits or boulder walls and are not offered in Skirmish; `look` borrows a skirmish map's palette, dressing, life and music. A kill pays a tenth of the unit's cost; a unit reaching the exit costs a life (two for supply 3 or more). Commands: `padBuild { pad, crew }`, `padUpgrade { building }`, `padSell { building }` (60% back), `waveCall`. Progress: `localStorage['frontier-defence-v1']`.

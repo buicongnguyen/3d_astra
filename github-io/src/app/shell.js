@@ -58,6 +58,7 @@ export function renderShell() {
           <button data-mode="training" aria-pressed="false">${icon("flag")}<span>Training</span><small>Start here</small></button>
           <button data-mode="skirmish" aria-pressed="true">${icon("crosshair")}<span>Skirmish</span><small>Custom battle</small></button>
           <button data-mode="campaign" aria-pressed="false">${icon("logo")}<span>Campaign</span><small>${MISSIONS.length} missions</small></button>
+          <button data-mode="defence" aria-pressed="false">${icon("tower")}<span>Defence</span><small>Hold the road</small></button>
         </div>
         <div class="briefing-tools" id="skirmish-setup">
           <label class="field field-wide"><span>Battlefield</span><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select></label>
@@ -68,6 +69,7 @@ export function renderShell() {
           <label class="field"><span>AI teams</span><select id="alliance" aria-label="AI teams" disabled>${Object.entries(ALLIANCES).map(([id, label]) => `<option value="${id}">${label}</option>`).join("")}</select></label>
         </div>
         <div id="campaign-setup" hidden></div>
+        <div id="defence-setup" hidden></div>
         <div id="training-setup" hidden><ol class="lesson-list" aria-label="Training lessons">${TRAINING_STEPS.map(step => `<li>${step.title}</li>`).join("")}</ol></div>
         <button id="fullscreen" class="secondary fullscreen-launch" data-fullscreen aria-pressed="false">${icon("expand")}<span>Full screen</span></button>
         <div id="campaign-difficulty" hidden><div class="difficulty-buttons" role="group" aria-label="Campaign difficulty"><button data-difficulty="story" aria-pressed="false">Story</button><button data-difficulty="standard" aria-pressed="true">Standard</button><button data-difficulty="veteran" aria-pressed="false">Veteran</button></div><p id="difficulty-description"></p></div>

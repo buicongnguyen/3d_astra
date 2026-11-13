@@ -45,6 +45,7 @@ export const missions = {
     if (rules.unlock) this.unlockUnits(0, rules.unlock);
     for (const step of def.setup || []) this.missionSetup(step);
     this.players[0].alloy += difficultyRules(this).alloy;
+    if (def.defence) this.initDefence(def.defence);
     this.nav.rebuild(this.entities);
     this.updateVision();
   },
@@ -186,6 +187,7 @@ export const missions = {
       s.have = this.own(0).filter((e) => e.type === o.building && e.complete).length;
       done = s.have >= o.count;
     } else if (o.type === "reach") done = this.own(0).some((e) => fighter(e) && inside(e, o.region));
+    else if (o.type === "waves") s.have = this.defence?.cleared ?? 0; // done by defenceResult()
     if (done) this.setObjective(o.id, "done");
   },
   missionCondition(when) {
@@ -232,6 +234,7 @@ export const missions = {
   },
   // Victory, defeat or null, called from settle() with which teams still stand.
   missionResult(alive) {
+    if (this.defence) return this.defenceResult();
     const m = this.mission, def = this.missionDef;
     const lose = def.lose || (m.rules.playerBase ? [{ type: "coreLost" }] : [{ type: "armyLost" }]);
     // Losing every Command core always ends a mission that gave the player a base.

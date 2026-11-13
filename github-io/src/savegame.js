@@ -23,7 +23,7 @@ export function clearSave(store = storage()) {
 export function readSave(store = storage()) {
   try {
     const save = JSON.parse(store?.getItem(SAVE_KEY) || "null");
-    if (!save || typeof save.text !== "string" || !["skirmish", "campaign"].includes(save.mode)) return null;
+    if (!save || typeof save.text !== "string" || !["skirmish", "campaign", "defence"].includes(save.mode)) return null;
     const data = JSON.parse(save.text);
     const time = data?.state?.time, map = data?.options?.map;
     if (!Number.isFinite(time) || typeof map !== "string") return null;

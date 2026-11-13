@@ -1,6 +1,9 @@
 import { HALF, ROCKS, hyp } from "./data.js";
 import MAP_CONFIG from './maps.json' with { type: 'json' };
 import balance from './balance.json' with { type: 'json' };
+// Frontier Defence maps (src/defence/maps.json) are built like the others but never offered in Skirmish.
+import DEFENCE_MAPS from './defence/maps.json' with { type: 'json' };
+const ALL_MAPS = { ...MAP_CONFIG, ...DEFENCE_MAPS };
 // Height rules (Stage 3): plateau_height, high_range, high_damage, low_damage, hidden_depth, high_vision.
 export const TERRAIN = balance.terrain;
 export const MAPS = Object.fromEntries(Object.entries(MAP_CONFIG).map(([id,m])=>[id,`${m.name} · ${m.size}×${m.size}`]));
@@ -37,8 +40,8 @@ function overlaps(x, z, r, b) {
 }
 export class Terrain {
   constructor(id = "classic") {
-    this.id = Object.hasOwn(MAPS, id) ? id : "classic";
-    Object.assign(this, MAP_CONFIG[this.id]);
+    this.id = Object.hasOwn(ALL_MAPS, id) ? id : "classic";
+    Object.assign(this, ALL_MAPS[this.id]);
     this.half = this.size/2; this.grid = this.size/2;
     this.buildHeights();
     this.water = this.river ? waterRects.map((r,i)=>({...r,left:i===0 ? -this.half:r.left,right:i===3 ? this.half:r.right})) : [];
@@ -49,6 +52,8 @@ export class Terrain {
     // Cliff faces read as stone and ramps as road (ground paint, scenery, Sunward's road bonus).
     if (this.plateaus.length) { if (this.onRamp(x, z)) return "road"; if (this.cliff(x, z)) return "stone"; }
     if (this.id === "classic") return "dirt";
+    // Defence maps: the enemy road is painted, and none of the skirmish roads or boulders are there.
+    if (this.defence && !(this.river && Math.abs(z) < 5)) return this.onRoute(x, z) ? "road" : this.ground(x, z);
     if (this.river && Math.abs(z) < 3)
       return CROSSINGS.find((c) => Math.abs(x - c.x) < c.half)?.type ?? "water";
     if (this.river && Math.abs(z) < 5)
@@ -56,6 +61,9 @@ export class Terrain {
     if (ROCKS.some(([rx, rz, r]) => hyp(x - rx, z - rz) < r + 1))
       return "stone";
     if (Math.min(Math.abs(x + 22), Math.abs(x - 22)) < 2.3 || this.diagonalRoad(x, z) || this.fordTrack(x, z)) return "road";
+    return this.ground(x, z);
+  }
+  ground(x, z) {
     const n =
       Math.sin(x * 0.13) * Math.cos(z * 0.17) + Math.sin((x + z) * 0.09);
     if (this.biome === "desert") return n < -0.8 ? "dirt" : "sand";
@@ -65,6 +73,16 @@ export class Terrain {
     if (this.biome === "woodland") return n > 1.2 && !bank ? "dirt" : "grass";
     if (this.biome === "highland") return n > 0.4 ? "stone" : n < -0.8 ? "grass" : "dirt";
     return n > 0.65 ? "sand" : n < -0.4 && !bank ? "dirt" : "grass";
+  }
+  // Within the 5 m wide road of a defence route (maps "routes", polylines of [x, z]).
+  onRoute(x, z, half = 2.5) {
+    for (const pts of Object.values(this.routes || {}))
+      for (let i = 1; i < pts.length; i++) {
+        const [ax, az] = pts[i - 1], dx = pts[i][0] - ax, dz = pts[i][1] - az, l2 = dx * dx + dz * dz;
+        const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2));
+        if (hyp(x - ax - t * dx, z - az - t * dz) < half) return true;
+      }
+    return false;
   }
   // The diagonal road. It runs at a shallow angle to the river, so on river maps it stops where it
   // meets the bridge roads (|z| 6.5) instead of reaching the bank along 15 m of water; the ford

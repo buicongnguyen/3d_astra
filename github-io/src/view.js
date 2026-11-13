@@ -798,7 +798,8 @@ export class WorldView {
     this.pan(right.x * dx + up.x * dy, right.z * dx + up.z * dy);
   }
   zoomBy(delta) {
-    this.zoom = clamp(this.zoom + delta, 22, 88);
+    // A match may allow a wider view (Frontier Defence's Overview sets maxZoom; reset clears it).
+    this.zoom = clamp(this.zoom + delta, 22, this.maxZoom || 88);
     this.updateCamera();
   }
   focusOn(x, z) {
@@ -966,8 +967,9 @@ export class WorldView {
     root.userData.pop=0;root.userData.built=e.complete!==false;
     root.userData.team = e.team;
     // Story missions and faction skirmishes: a faction emblem floats over each building (the player's
-    // own faction for team 0: Meridian in the story, the skirmish choice otherwise).
-    if (e.kind === "building" && this.mission?.factions) {
+    // own faction for team 0: Meridian in the story, the skirmish choice otherwise). Crewed Defence
+    // towers carry none (one sprite draw each).
+    if (e.kind === "building" && this.mission?.factions && !e.crew) {
       const faction = factionOf(this.mission, e.team)?.id || (e.team === 0 ? "meridian" : undefined);
       if (hasEmblem(faction)) {
         let top = this.buildingTops.get(e.type);
@@ -1230,6 +1232,8 @@ export class WorldView {
     // Interpolate only from a snapshot taken exactly one tick before the current state;
     // ticks run outside the frame loop (test stepping) leave the snapshot stale.
     const interpolate = alpha < 1 && Math.abs(sim.time - 0.05 - this.previousTime) < 1e-6;
+    // Each vitals bar is a draw: in Frontier Defence only the 12 weakest enemies show theirs.
+    const bars = sim.defence ? weakest(sim, 12) : null;
     for (const e of sim.entities) {
       // A unit whose model is still downloading (or failed offline) is drawn once it arrives.
       if (!this.objects.has(e.id) && e.kind !== "wall" && !this.teamTemplates.has(`${e.type}-${e.team}`)) continue;
@@ -1261,6 +1265,9 @@ export class WorldView {
         const step=this.activity.combat.motion&&!this.reducedMotion.matches?3*dt:Math.PI;
         u.turret.rotation.y+=Math.max(-step,Math.min(step,diff));
       }
+      // Frontier Defence: a crewed tower carries its crew (dressEntity, app/defence-ui.js), facing its target.
+      if (e.crew && u.dressed !== e.tier) this.dressEntity?.(o, e);
+      if (u.crew) u.crew.rotation.y = e.angle;
       if(o.userData.barrel){
         const rig=o.userData.barrel;
         if(u.turret){
@@ -1308,7 +1315,7 @@ export class WorldView {
       updateRing(u.ring, selected.has(e.id), hover?.id === e.id, sim.time, dt, this.unitsPerPixel);
       const bar = u.bar;
       bar.visible =
-        selected.has(e.id) || hover?.id === e.id || e.hp < e.maxHp || e.shield < e.maxShield;
+        selected.has(e.id) || hover?.id === e.id || ((e.hp < e.maxHp || e.shield < e.maxShield) && (!bars || e.team === 0 || bars.has(e.id)));
       if (bar.visible) {
         bar.quaternion.copy(this.camera.quaternion);
         bar.scale.set(bar.userData.base * this.barScale, bar.userData.base * this.barScale * this.barTall, 1);
@@ -1452,7 +1459,15 @@ export class WorldView {
       this.defaultZoom === ECO_ZOOM ? 21 : 19,
     );
     this.zoom = this.defaultZoom;
+    this.maxZoom = null;
     this.updateCamera();
     this.fogClock = 0;
   }
+}
+// The ids of the n enemy units with the lowest share of health left (damaged ones only).
+function weakest(sim, n) {
+  const hurt = [];
+  for (const e of sim.entities) if (e.team > 0 && e.kind === "unit" && e.hp > 0 && (e.hp < e.maxHp || e.shield < e.maxShield)) hurt.push(e);
+  if (hurt.length > n) hurt.sort((a, b) => (a.hp + a.shield) / (a.maxHp + a.maxShield) - (b.hp + b.shield) / (b.maxHp + b.maxShield) || a.id - b.id);
+  return new Set(hurt.slice(0, n).map((e) => e.id));
 }

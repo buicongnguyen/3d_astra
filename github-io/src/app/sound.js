@@ -89,7 +89,7 @@ export function setupSound(S, A) {
   // The screen the music follows (musicPlan in audio-logic.js): the start screen's mode, a campaign
   // briefing, the match, or its result. A Defence level exposes `sim.defence.phase` ("calm" between waves).
   const menuView = () => (Z.briefing ? "briefing" : S.playMode);
-  const musicNow = () => musicScreen({ started: Z.started, result: S.sim?.result, menuView: menuView(), defenceCalm: S.sim?.defence?.phase === "calm" });
+  const musicNow = () => musicScreen({ started: Z.started, result: S.sim?.result, menuView: menuView(), defenceCalm: !!S.sim?.defence && !S.sim.defence.active });
 
   // The first gesture anywhere on the start screen unlocks audio, so the title music starts before
   // Start is pressed. Mouse presses and keys grant the browser's permission on the way down, touch on

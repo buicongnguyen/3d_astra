@@ -78,7 +78,9 @@ export const FACTION_MOTIF = {
   veil: { degrees: [0, 1, 6, 3], beats: [1.5, 0.5, 1, 1] },
   wardens: { degrees: [0, 4, 0, 5], beats: [2, 1, 1, 2] },
 };
-export const flavourFor = (map) => MAP_FLAVOUR[map] || MAP_FLAVOUR.classic;
+// Frontier Defence maps play the score of the map they borrow their look from (src/defence/maps.json "look").
+const BORROWED = { gorge: "highlands", bridges: "riverlands" };
+export const flavourFor = (map) => MAP_FLAVOUR[BORROWED[map] || map] || MAP_FLAVOUR.classic;
 export const MOOD_TEMPO = { calm: 92, tense: 92, battle: 92, victory: 104, defeat: 54 };
 // The field moods (calm, tense, battle) share the map's tempo; the stings keep their own.
 export const FIELD_MOODS = ["calm", "tense", "battle"];

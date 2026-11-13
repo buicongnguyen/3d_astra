@@ -49,6 +49,8 @@ export const vision = {
           }
       }
     }
+    // Frontier Defence: the player sees the whole valley (the waves' own sight rules still apply).
+    if (this.defence) { this.visible[0].fill(1); this.explored[0].fill(1); }
     // Allied AIs pool what they see.
     if (this.coalition)
       for (let i = 0; i < this.visible[1].length; i++) {

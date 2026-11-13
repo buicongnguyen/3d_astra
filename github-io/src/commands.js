@@ -35,6 +35,11 @@ const COMMANDS = {
   // Lets the player's units use their abilities on their own, as the computer's do.
   autocast: { allowed: () => true, run: (sim, c) => ((sim.players[c.team].autocast = !!c.on), true) },
   harvest: { allowed: () => true, run: (sim, c) => (sim.assignHarvesters(c.team), true) },
+  // Frontier Defence (sim/defence.js): crew a pad, raise or sell a garrison, send the next wave early.
+  padBuild: { allowed: (sim, c) => !!sim.defence && typeof c.pad === "string" && typeof c.crew === "string", run: (sim, c) => sim.padBuild(c.team, c.pad, c.crew) },
+  padUpgrade: { allowed: (sim, c) => !!sim.defence && ownBuilding(sim, c.team, c.building) && !!sim.get(c.building).crew, run: (sim, c) => sim.padUpgrade(c.team, c.building) },
+  padSell: { allowed: (sim, c) => !!sim.defence && ownBuilding(sim, c.team, c.building) && !!sim.get(c.building).crew, run: (sim, c) => sim.padSell(c.team, c.building) },
+  waveCall: { allowed: (sim) => !!sim.defence, run: (sim, c) => sim.waveCall(c.team) },
 };
 
 export const commands = {

@@ -15,7 +15,7 @@ function initialMode(query, progress) {
   if (query.has("test") && !query.has("firstrun")) return "skirmish";
   try {
     const last = localStorage.getItem(MODE_KEY);
-    if (["training", "skirmish", "campaign"].includes(last)) return last;
+    if (["training", "skirmish", "campaign", "defence"].includes(last)) return last;
     if (localStorage.getItem("frontier-training-complete") || Object.keys(progress.cleared || {}).length) return "skirmish";
   } catch {
     /* Storage is optional. */
@@ -49,6 +49,9 @@ export function createState() {
     tutorialShown: -1,
     campaign,
     stagePick: nextMission(campaign),
+    // Frontier Defence: the level picked on the start screen and the pad tapped in a match (app/defence-entry.js).
+    defencePick: 0,
+    defencePad: null,
     activeStage: null,
     // The match and its view (sim is created by createSim in main.js, view by boot).
     sim: null,

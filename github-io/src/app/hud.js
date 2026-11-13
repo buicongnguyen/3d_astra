@@ -285,6 +285,8 @@ export function setupHud(S, A) {
       S.view.preview.material.color.setHex(error ? 0xef7660 : 0x92ebc5);
     }
     A.constructionUI.update({sim: S.sim, selected:es, mode: S.mode, type:S.buildType, point:S.buildPoint, blockedType:S.blockedBuildType, failure:S.buildFailure, started: Z.started, paused: Z.paused, touch:S.touchInput});
+    // Frontier Defence takes over the command card with its pad and tower sheets (app/defence-entry.js).
+    A.defenceHud?.(es);
   }
 
   // Training panel guards (the lesson card opens while the player is still tapping the battlefield).

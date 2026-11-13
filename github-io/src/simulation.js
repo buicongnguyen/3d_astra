@@ -21,6 +21,7 @@ import { missions } from "./sim/missions.js";
 import { tactics } from "./sim/tactics.js";
 import { points } from "./sim/points.js";
 import { expansion } from "./sim/expand.js";
+import { defence } from "./sim/defence.js";
 
 export { NEUTRAL } from "./sim/constants.js";
 // The match state and its fixed 20 Hz step. Behaviour lives in the systems under sim/, mixed
@@ -72,7 +73,10 @@ export class Simulation {
     this.visible = this.players.map(() => new Uint8Array(this.terrain.grid * this.terrain.grid));
     this.explored = this.players.map(() => new Uint8Array(this.terrain.grid * this.terrain.grid));
     const startingDeposits = new Set();
-    for (let team = 0; team < 2; team++) {
+    // A Frontier Defence map has no bases, deposits or boulder walls: the waves walk fixed routes (sim/defence.js).
+    const field = !this.terrain.defence;
+    if (!field) this.nav.wallsSpawned = true;
+    for (let team = 0; field && team < 2; team++) {
       const side = team === 0 ? 1 : -1;
       this.spawn("hq", team, -25 * side, 24 * side);
       this.spawn("barracks", team, -16 * side, 25 * side);
@@ -100,7 +104,7 @@ export class Simulation {
         this.resource("energy",(x+2)*side,(z+5)*side,2250);
       }
     }
-    for (let team = 2; team < this.players.length; team++) {
+    for (let team = 2; field && team < this.players.length; team++) {
       // Reflect the starting camp into the two unused quadrants.
       const sx = team === 2 ? -1 : 1, sz = -sx;
       for (const e of this.own(0)) this.spawn(this.slotOf(e.type), team, e.x * sx, e.z * sz);
@@ -115,7 +119,7 @@ export class Simulation {
       ![...startingDeposits].some(other => distance(other, r) < other.radius + r.radius + 1)
     ));
     // More contested deposits in the middle lanes of every map, mirrored for fairness.
-    for (const side of [1, -1]) {
+    for (const side of field ? [1, -1] : []) {
       for (const [type, x, z, amount] of MIDFIELD_DEPOSITS) {
         // Extra rival bases (two or three enemies) take precedence over a midfield deposit.
         if (this.entities.some((e) => e.kind === "building" && hyp(e.x - x * side, e.z - z * side) < e.radius + 6)) continue;
@@ -123,8 +127,8 @@ export class Simulation {
       }
     }
     // Concrete walls stand where the boulders were (see spawnWall).
-    for (const [x, z, r] of ROCKS) this.spawnWall(x, z, r);
-    this.spawnStraightWalls();
+    for (const [x, z, r] of field ? ROCKS : []) this.spawnWall(x, z, r);
+    if (field) this.spawnStraightWalls();
     // Initial deployment locations are public; later cores require scouting.
     this.knownCores = this.players.map((_, team) => new Map(this.entities
       .filter(e => e.type === "hq" && this.hostile(team, e.team))
@@ -297,6 +301,7 @@ export class Simulation {
     this.stepAI(dt);
     this.stepMission(dt);
     this.stepSkirmishPoints(dt);
+    if (this.defence) this.stepDefence(dt);
     this.settle();
   }
   // One entity's turn: timers, then its building, support or order behaviour.
@@ -373,12 +378,15 @@ export class Simulation {
         }
       }
     } else if (o.type === "move" && this.move(e, o, dt, 1.2)) this.finish(e);
+    else if (o.type === "route") this.stepRoute(e, o, dt);
   }
   // Eliminations and the match result, then dead entities leave the list.
   settle() {
     // A finished core keeps a team in the match. A core still under construction buys it
     // CORE_GRACE seconds to finish one, so a hidden foundation cannot stall the ending.
     const alive = this.players.map((p, team) => {
+      // Frontier Defence has no cores: lives and waves decide (sim/defence.js defenceResult).
+      if (this.defence) return true;
       // A mission can field the player without a base: the squad is the side.
       if (team === 0 && this.mission && !this.mission.rules.playerBase) return this.own(0).some((e) => e.kind === "unit");
       const cores = this.own(team).filter((e) => e.type === "hq");
@@ -417,5 +425,5 @@ export class Simulation {
   }
 }
 
-Object.assign(Simulation.prototype, factionRules, traits, height, points, expansion, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot);
+Object.assign(Simulation.prototype, factionRules, traits, height, points, expansion, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot, defence);
 Simulation.load = (saved) => restore(Simulation, saved);

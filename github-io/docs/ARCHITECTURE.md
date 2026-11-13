@@ -18,6 +18,7 @@ Three.js r185 and Vite. The game is a static site; there is no server.
 | `sim/ai-attack.js` | Field command for the AI (0.15.0): gather at a rally point, launch on seen odds, retreat losing waves, target priority, seeded second group, faction personas |
 | `sim/tactics.js` | Veterancy, stances, unit abilities |
 | `sim/missions.js` | Mission engine (format in [MISSIONS.md](MISSIONS.md)) |
+| `sim/defence.js` | Frontier Defence (0.17): route order, wave queue, pads and crewed towers, lives; state only in a defence match |
 
 Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `progression.js` (building levels, shields), `navigation.js` (A*, obstacle buckets), `coalitionPlan`.
 

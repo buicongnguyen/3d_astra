@@ -79,7 +79,7 @@ export function setupFrame(S, A) {
       S.sim.terrain.river && Math.abs(S.view.focus.z) < 14,
     );
     A.syncAudio(elapsed);
-    S.audio?.update(elapsed, { sim: S.sim, settings: S.settings, started: Z.started, paused: Z.paused, hidden: document.hidden, mapId: S.mapId, screen: A.musicScreen(), inBattle: S.sim.defence?.phase === "wave" });
+    S.audio?.update(elapsed, { sim: S.sim, settings: S.settings, started: Z.started, paused: Z.paused, hidden: document.hidden, mapId: S.mapId, screen: A.musicScreen(), inBattle: !!S.sim.defence?.active });
     A.refreshHover();
     const running = Z.started && !Z.paused && !S.sim.result;
     if (running) {

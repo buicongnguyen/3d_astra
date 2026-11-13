@@ -62,6 +62,7 @@ import { setupMatchFlow } from "./app/match-flow.js";
 import { setupFrame } from "./app/frame.js";
 import { setupUiExtras } from "./app/ui-extras.js";
 import { setupDebugHooks } from "./app/debug-hooks.js";
+import { setupDefenceEntry } from "./app/defence-entry.js";
 import { CORE_MODEL_TYPES, modelsForMatch } from "./model-roster.js";
 import { skirmishSides, matchLook } from "./factions.js";
 import { prefetchModels, releaseModelBytes } from "./app/loading.js";
@@ -183,9 +184,10 @@ const SETUP = [
   ["orders", setupOrders], ["abilities", setupAbilities], ["command-card", setupCommandCard], ["minimap", setupMinimap],
   ["input-pointer", setupInputPointer], ["input-keyboard", setupInputKeyboard], ["modals", setupModals],
   ["briefing", setupBriefing], ["match-flow", setupMatchFlow], ["frame", setupFrame], ["ui-extras", setupUiExtras], ["debug-hooks", setupDebugHooks],
+  ["defence", setupDefenceEntry],
 ];
 const BIND = ["preferences", "hud", "input-pointer", "sound", "frame", "modals", "briefing", "match-flow", "selection",
-  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "debug-hooks"];
+  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "debug-hooks", "defence"];
 const binds = Object.fromEntries(SETUP.map(([name, setup]) => [name, setup(S, A)]));
 // The start screen shows the battle chosen there, so the first simulation is built from it.
 ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction, playerFaction: S.playerFaction } = A.battleSetup());
