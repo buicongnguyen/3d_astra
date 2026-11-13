@@ -137,6 +137,23 @@ export function paintGround(ctx, terrain, size, random) {
   }
 }
 
+// The kill zone at a ramp (16.2): attackers must climb here under the guns on top, so the lower
+// slope and its foot carry faint red-orange diagonal stripes across the whole ramp, faded at both
+// ends. Drawn in the ramp's frame (u across, v downhill, metres), painted once: no extra draw.
+export const KILL_ZONE = { from: 0.2, to: 4.4, colour: [214, 72, 40], alpha: 0.48, pitch: 1.3, width: 0.5 };
+function paintKillZone(ctx, half) {
+  const { from, to, colour: [r, g, b], alpha, pitch, width } = KILL_ZONE, w = half - 0.3, depth = to - from;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(-w, from, w * 2, depth); ctx.clip();
+  const fade = ctx.createLinearGradient(0, from, 0, to);
+  for (const [at, a] of [[0, 0], [0.28, alpha], [0.72, alpha], [1, 0]]) fade.addColorStop(at, `rgba(${r},${g},${b},${a})`);
+  ctx.strokeStyle = fade; ctx.lineWidth = width; ctx.lineCap = "butt";
+  ctx.beginPath();
+  for (let u = -w - depth; u < w; u += pitch) { ctx.moveTo(u, from); ctx.lineTo(u + depth, to); }
+  ctx.stroke();
+  ctx.restore();
+}
+
 // Plateaus (Stage 3) in the ground texture, under the rock relief of plateau-relief.js: a
 // lighter top, a bright lip, a white ring the rock face takes its vertex colours over, a soft
 // shadow at the cliff foot (long on the side away from the sun) and each ramp as a road strip
@@ -203,6 +220,7 @@ export function paintPlateaus(ctx, terrain, size) {
       for (const [at, a] of [[0, 0], [0.12, 1], [0.86, 1], [1, 0]]) fill.addColorStop(at, tint(road, a));
       ctx.fillStyle = fill;
       ctx.fillRect(-w, -3.6, w * 2, 7.5);
+      paintKillZone(ctx, r.half);
       ctx.lineWidth = 0.3; ctx.strokeStyle = tint(deep, 0.3);
       for (const side of [-1, 1]) { ctx.beginPath(); ctx.moveTo(side * w, -3.2); ctx.lineTo(side * w, 3.5); ctx.stroke(); }
       ctx.strokeStyle = line; ctx.lineWidth = 0.26; ctx.lineCap = "round";

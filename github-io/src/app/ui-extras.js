@@ -3,7 +3,7 @@
 import { $ } from "./dom.js";
 import { DEFINITIONS as D } from "../data.js";
 import { icon } from "../icons.js";
-import { HIGH_GROUND_HINT, onHighGround } from "../terrain-labels.js";
+import { HIDDEN_HINT, HIGH_GROUND_HINT, heldPlateaus, hiddenFromBelow, onHighGround } from "../terrain-labels.js";
 import "../ui-extras.css";
 
 export const HINT_SECONDS = 9;
@@ -119,6 +119,18 @@ export function setupUiExtras(S, A) {
     seen.add("high");
     showHint(HIGH_GROUND_HINT);
   }
+  // The first time one of the player's units is hidden from below (deep on a plateau no visible
+  // enemy holds), once per match. It waits its turn behind the high-ground hint.
+  function hiddenHint() {
+    if (!hintEl || seen.has("hidden") || !S.sim.terrain.plateaus.length || !hintEl.hidden || performance.now() < nextHintAt) return;
+    if (!Z.started || Z.paused || Z.modalType || S.sim.result || S.tutorial) return;
+    const mine = S.sim.own(0).filter((u) => u.kind === "unit" && u.hp > 0 && onHighGround(S.sim.terrain, u));
+    if (!mine.length) return;
+    const held = heldPlateaus(S.sim, 0);
+    if (!mine.some((u) => hiddenFromBelow(S.sim, u, 0, held))) return;
+    seen.add("hidden");
+    showHint(HIDDEN_HINT);
+  }
 
   function updateIdleButtons() {
     if (!idleButtons) return;
@@ -149,7 +161,7 @@ export function setupUiExtras(S, A) {
     return BEAT_SLOWDOWN;
   }
 
-  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); fightHints(); highGroundHint(); } });
+  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); fightHints(); highGroundHint(); hiddenHint(); } });
 
   return function bind() {
     makeHint();

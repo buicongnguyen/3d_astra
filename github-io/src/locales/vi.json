@@ -849,6 +849,12 @@
     "High ground: +2 m range, +20% damage, +3 m sight": "Điểm cao: +2 m tầm bắn, +20% sát thương, +3 m tầm nhìn",
     "High ground: +2 m range, +20% damage": "Điểm cao: +2 m tầm bắn, +20% sát thương",
     "High ground: your units here shoot farther, hit harder and see farther.": "Điểm cao: quân của bạn ở đây bắn xa hơn, đánh mạnh hơn và nhìn xa hơn.",
+    "Hidden from below": "Khuất tầm nhìn từ bên dưới",
+    "Units deep on a plateau can't be seen from below. Enemies must climb the ramp to fight them.": "Đơn vị ở sâu trên cao nguyên không bị nhìn thấy từ bên dưới. Địch phải leo dốc lên mới đánh được chúng.",
+    "In the ford: -40% speed, no abilities": "Đang lội bãi cạn: -40% tốc độ, không dùng kỹ năng",
+    "In the ford": "Đang lội bãi cạn",
+    "Can't see up there": "Không thấy được trên đó",
+    "Can't see up there: send a unit up the ramp first": "Không thấy được trên đó: hãy đưa một đơn vị lên dốc trước",
     "Plateaus are raised rock reached by ramps. A unit or tower on top gets +2 m range, +20% damage and +3 m sight against targets below; shooting up at it does 15% less damage. A gold ▲ marks units on high ground, and units deep on a plateau stay hidden from below until you climb it.": "Cao nguyên là khối đá nhô cao, lên bằng dốc. Đơn vị hoặc tháp ở trên được +2 m tầm bắn, +20% sát thương và +3 m tầm nhìn với mục tiêu bên dưới; bắn ngược lên thì giảm 15% sát thương. Dấu ▲ vàng đánh dấu đơn vị ở điểm cao, và đơn vị ở sâu trên cao nguyên bị che khuất với bên dưới cho tới khi bạn leo lên."
   },
   "patterns": [

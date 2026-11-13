@@ -9,6 +9,15 @@ export const vision = {
     const [x, z] = this.nav.cellAt(e.x, e.z);
     return e.team === team || !!this.visible[team][z * this.terrain.grid + x];
   },
+  // A ground point on a deep plateau cell (TERRAIN.hidden_depth inside the rim) that `team` does
+  // not see now. Barrage and Burn line refuse such points (sim/tactics.js); maps without
+  // plateaus never have one.
+  hiddenTop(point, team = 0) {
+    const t = this.terrain;
+    if (!t.plateaus.length) return false;
+    const [x, z] = t.cellAt(point.x, point.z), i = z * t.grid + x;
+    return !!t.cellDeep[i] && !this.visible[team][i];
+  },
   isExplored(e, team = 0) {
     const [x, z] = this.nav.cellAt(e.x, e.z);
     return !!this.explored[team][z * this.terrain.grid + x];

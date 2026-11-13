@@ -1,6 +1,7 @@
 // Abilities, stances, Barrage aiming and auto-cast.
 import { $ } from "./dom.js";
 import { abilityGroups, takesStance, STANCE_INFO, aimState } from "../tactics-ui.js";
+import { FORD_TEXT, SIGHT_TEXT } from "../terrain-labels.js";
 
 export function setupAbilities(S, A) {
   const Z = S.screen;
@@ -9,7 +10,7 @@ export function setupAbilities(S, A) {
     if (!Z.started || Z.paused || S.sim.result) return;
     const group = abilityGroups(S.sim, A.selectedEntities(), 99).find((g) => g.id === id);
     if (!group) return;
-    if (!group.ready) { A.notice(`${group.name} is recharging.`); return; }
+    if (!group.ready) { A.notice(group.ford ? FORD_TEXT : `${group.name} is recharging.`); return; }
     if (group.aimed) { enterAim(); return; }
     A.clearMode();
     if (S.sim.command({ team: 0, type: "ability", ids: group.ids })) A.tone(700, 0.1);
@@ -55,7 +56,8 @@ export function setupAbilities(S, A) {
     const aim = refreshAim(point);
     if (!aim) { A.notice("Barrage is recharging."); A.updateUI(); return; }
     if (!aim.ok) {
-      $("mode-banner").textContent = "BARRAGE · Out of range: choose a spot inside the ring";
+      // A deep plateau top out of sight (sim/vision.js hiddenTop) is refused like a spot out of range.
+      $("mode-banner").textContent = aim.sight ? `BARRAGE · ${SIGHT_TEXT}: send a unit up the ramp first` : "BARRAGE · Out of range: choose a spot inside the ring";
       A.tone(260, 0.12);
       return;
     }
