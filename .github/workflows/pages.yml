@@ -78,7 +78,7 @@ jobs:
             scripts: layout-f
             layoutOnly: portrait,landscape,landscape-vi,portrait-vi
           - name: ui-extras
-            scripts: ui-extras messages
+            scripts: ui-extras messages abilities
           - name: visuals
             scripts: visual-combat feel model-loading portraits factions terrain
     defaults:

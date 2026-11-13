@@ -72,6 +72,10 @@ export function saveSettings(value, storage) {
     return false;
   }
 }
+// `:root.motion-off` (app/preferences.js): decorative motion stops with Eco graphics, with combat
+// motion off or when the system asks for reduced motion. Later effects rely on the same class.
+export const motionOffFor = (settings, reducedMotion = false) =>
+  !!reducedMotion || settings?.quality === "eco" || settings?.combatMotion === false;
 export const palette = (settings) => {
   const chosen = [PRESETS[settings.playerColor], PRESETS[settings.enemyColor]];
   return [...chosen, ...["blue", "gold", "violet", "orange"].map(key => PRESETS[key]).filter(color => !chosen.includes(color))].slice(0, 4);

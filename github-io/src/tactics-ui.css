@@ -143,6 +143,20 @@
 }
 #unit-list button[data-rank="2"]::before { height: 10px; }
 #unit-list button[data-rank="3"]::before { height: 15px; }
+/* Ready abilities (tactics-card.js): a steady glow, and three short pulses when the cooldown ends.
+   Inset shadows so the panel never clips them; box-shadow only, so nothing moves or reflows.
+   Under :root.motion-off the pulse stops (style.css) and the glow stays. */
+.ability-tile.is-ready {
+  border-color: color-mix(in srgb, var(--team-friendly, #92ebc5) 70%, #4b6a5b);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--team-friendly, #92ebc5) 35%, transparent), inset 0 0 10px color-mix(in srgb, var(--team-friendly, #92ebc5) 22%, transparent);
+}
+.ability-tile.is-ready.active { border-color: var(--team-friendly, #92ebc5); }
+.ability-tile.ready-pulse { animation: ability-ready 0.7s ease-out 3; }
+@keyframes ability-ready {
+  0% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--team-friendly, #92ebc5) 35%, transparent), inset 0 0 10px color-mix(in srgb, var(--team-friendly, #92ebc5) 22%, transparent); }
+  35% { box-shadow: inset 0 0 0 2px var(--team-friendly, #92ebc5), inset 0 0 22px color-mix(in srgb, var(--team-friendly, #92ebc5) 60%, transparent); }
+  100% { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--team-friendly, #92ebc5) 35%, transparent), inset 0 0 10px color-mix(in srgb, var(--team-friendly, #92ebc5) 22%, transparent); }
+}
 /* A recharging tile stays readable: the sweep and the amber seconds say it is not ready. */
 .ability-tile:disabled { opacity: 1; filter: none; }
 .ability-tile:disabled > .ability-status { opacity: 1; }

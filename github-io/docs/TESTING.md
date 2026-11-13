@@ -19,6 +19,7 @@ Notes
 - Suites that are sensitive to machine load (patrol, mobile-controls, webkit) can flake locally; run them again before suspecting the code.
 - The webkit suite needs `npx playwright install webkit`.
 - `ui-extras` (idle units, minimap drag and pings, fight hints, core beat, notch insets, training-card tap guard) writes screenshots to `SHOTS` (default `test-results`); `EXTRAS_ONLY=idle,minimap,...` runs part of it.
+- `abilities` (harness, 1440x900, 390x844, 844x390; item 16.3): ready tiles pulse and glow, nothing while recharging, a cooldown ending pulses again; the first-time ability hint shows once per ability across matches; the Barrage ring at the pointer (blast radius, red out of reach), the impact ring and the incoming whistle for own and seen enemy Barrages; `:root.motion-off` follows Eco and reduced motion live, and no CSS animation runs under it. First-time ability hints are off under `?test` unless the URL has `?abilityhints`. Rules: `abilities.test.js`.
 - `messages` (harness, desktop, 390x844, 844x390, 320x568): a hint and an alert at once, the alert not covered (elementFromPoint), a routine notice waiting the alert's full time, phone hints outside the middle third and gone after about 4 s, an alert during targeting and with a dialogue line. Its rules are unit-tested in `message-queue.test.js`.
 
 ## Writing a suite (tests/lib/harness.mjs)

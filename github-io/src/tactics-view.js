@@ -46,19 +46,23 @@ void main() {
     float dash = step(0.5, fract(turn * 6.0 + time * 0.22)) * band(r, 0.95, 0.028, aa);
     alpha = band(r, 0.8, 0.05, aa) * pulse + exp(-pow((r - 0.8) / 0.14, 2.0)) * 0.42 + dash * 0.85;
   } else if (style < 1.5) {
-    // Barrage warning: the edge, a fill that deepens and a ring closing on the centre as the shell falls.
+    // Barrage on its way (own and seen enemy shells, so players can dodge): the blast edge, a fill
+    // that deepens and a bright ring with a soft halo closing on the centre until the shells land.
     float inside = 1.0 - smoothstep(0.96 - aa, 0.96, r);
     float cross = (1.0 - smoothstep(0.02, 0.02 + aa, min(abs(vP.x), abs(vP.y)))) * step(r, 0.2);
-    alpha = band(r, 0.96, 0.03, aa) + inside * (0.1 + 0.2 * v) + band(r, mix(0.96, 0.06, v), 0.022, aa) * 0.9 * inside + cross * 0.8;
+    float closing = mix(0.96, 0.06, v);
+    alpha = band(r, 0.96, 0.035, aa) + inside * (0.12 + 0.22 * v) + (band(r, closing, 0.03, aa) + exp(-pow((r - closing) / 0.07, 2.0)) * 0.35) * inside + cross * 0.8;
   } else if (style < 2.5) {
     // Reach of a Breaker: a thin dashed line of constant world width.
     float w = 0.06 / max(vSize, 0.001);
     alpha = band(r, 1.0 - w * 2.0, w, aa) * (0.3 + 0.7 * step(0.4, fract(turn * 44.0))) * 0.8;
   } else if (style < 3.5) {
-    // Target circle while aiming.
+    // Target circle while aiming, the real blast radius: a bold edge with a glow inside it, an even
+    // fill and a centre cross. Out of reach (v = 0, drawn red) the fill is hatched as well.
     float inside = 1.0 - smoothstep(0.95 - aa, 0.95, r);
     float cross = (1.0 - smoothstep(0.025, 0.025 + aa, min(abs(vP.x), abs(vP.y)))) * step(r, 0.28);
-    alpha = band(r, 0.95, 0.035, aa) + inside * 0.17 + cross;
+    float hatch = (1.0 - step(0.5, v)) * step(0.5, fract((vP.x + vP.y) * 3.5)) * 0.14;
+    alpha = band(r, 0.95, 0.045, aa) + inside * (0.2 + hatch + exp(-pow((r - 0.88) / 0.08, 2.0)) * 0.3) + cross;
   } else if (style < 10.5) {
     // Rank chevrons: v of them side by side, gold on a dark outline.
     float best = 9.0, aaP = fwidth(vP.y) * 1.5;

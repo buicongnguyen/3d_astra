@@ -1012,3 +1012,11 @@ button kbd {
     transition: none !important;
   }
 }
+/* Motion off (app/preferences.js: Eco graphics, combat motion off or reduced motion): every CSS
+   animation stops, the decorative ones included (ready pulse, critical roster cards, dialogue
+   arrival, objective flash). Steady states (the ready glow) stay. */
+:root.motion-off *,
+:root.motion-off *::before,
+:root.motion-off *::after {
+  animation: none !important;
+}

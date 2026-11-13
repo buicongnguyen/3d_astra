@@ -35,7 +35,7 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 | `app/shell.js`, `app/dom.js` | The static page markup; the `$(id)` helper |
 | `app/hud.js` | Layout (compact, touch, desktop console), notices, top bar and selection / command panel refresh (`updateUI`), training panel, objectives toggle, mission UI |
 | `message-queue.js` | Priority for the notice line: `A.alert` (under attack, attack incoming, point lost, raid warning) stays its full time, a routine `A.notice` waits behind it, the same alert again refreshes. Counter hints are a second slot that never covers it (`ui-extras.css`; phones: thin line, 4 s) |
-| `app/preferences.js` | `applyPreferences`, the settings dialog, language row, quality and sound buttons |
+| `app/preferences.js` | `applyPreferences`, the settings dialog, language row, quality and sound buttons; `:root.motion-off` (Eco, combat motion off or reduced motion, `motionOffFor` in settings.js), which stops every CSS animation, and `motionOff()` for JS effects |
 | `app/sound.js` | Audio context, UI tones, the audio clock that sleeps while paused or hidden |
 | `app/selection.js` | Selection, control groups, select-all-of-a-type |
 | `app/orders.js` | Targeting modes, building placement, the order a click or tap sends (`commandAt`) |
@@ -52,7 +52,8 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 | `view.js` | Rendering, models, effects, fog, camera |
 | `scatter.js`, `map-edge.js`, `ground-paint.js`, `plateau-relief.js`, `fog-aware.js`, `visual-style.json` | Map look: palettes, lighting, dressing; plateau rock faces, lips and road ramps merged into the ground mesh |
 | `faction-colors.js` | Faction colours for mission enemies |
-| `tactics-ui.js`, `tactics-card.js`, `tactics-view.js` | Ability tiles, stances, Barrage aiming, rank marks |
+| `tactics-ui.js`, `tactics-card.js`, `tactics-view.js` | Ability tiles (ready pulse and glow), stances, Barrage aiming and impact rings, rank marks |
+| `ability-hints.js` | First-time hint per ability (shown by `app/ui-extras.js` in the fight-hint slot, remembered in localStorage) |
 | `mission-ui.js`, `mission-text.js`, `capture-view.js`, `campaign.js`, `savegame.js` | Campaign interface, progress, autosave |
 | `story/world.js`, `story/missions.js` | Factions, cast, mission data |
 | `i18n.js`, `locales/` | Text catalogue (keyed by the English string); the Vietnamese and story catalogues are separate chunks loaded when Vietnamese is shown |

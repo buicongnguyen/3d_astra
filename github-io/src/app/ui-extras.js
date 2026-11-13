@@ -4,6 +4,8 @@ import { $ } from "./dom.js";
 import { DEFINITIONS as D } from "../data.js";
 import { icon } from "../icons.js";
 import { HIGH_GROUND_HINT, onHighGround } from "../terrain-labels.js";
+import { ABILITY_HINT_AFTER, abilityHintText, loadSeenAbilities, nextAbilityHint, rememberAbility } from "../ability-hints.js";
+import { ABILITY_KEYS, abilityGroups } from "../tactics-ui.js";
 import "../ui-extras.css";
 
 export const HINT_SECONDS = 9;
@@ -120,6 +122,21 @@ export function setupUiExtras(S, A) {
     showHint(HIGH_GROUND_HINT);
   }
 
+  // The first time one of the player's units has an ability ready: what it is, what it does and how
+  // to use it. Once per ability, remembered across matches (ability-hints.js). Browser suites (?test)
+  // leave it off unless the URL has ?abilityhints, so their own hints keep the slot.
+  let seenAbilities = null;
+  const abilityHintsOn = () => !S.query?.has("test") || S.query.has("abilityhints");
+  function abilityHint() {
+    if (!hintEl || !hintEl.hidden || performance.now() < nextHintAt || !abilityHintsOn()) return;
+    if (!Z.started || Z.paused || Z.modalType || S.sim.result || S.tutorial || S.playMode === "training" || S.sim.time < ABILITY_HINT_AFTER) return;
+    seenAbilities ??= loadSeenAbilities();
+    const unit = nextAbilityHint(S.sim, seenAbilities, 0);
+    if (!unit) return;
+    rememberAbility(seenAbilities, unit.ability.id);
+    showHint(abilityHintText(unit, { groups: abilityGroups(S.sim, A.selectedEntities(), ABILITY_KEYS.length), touch: S.touchInput }));
+  }
+
   function updateIdleButtons() {
     if (!idleButtons) return;
     const counts = idleCounts();
@@ -149,7 +166,7 @@ export function setupUiExtras(S, A) {
     return BEAT_SLOWDOWN;
   }
 
-  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); fightHints(); highGroundHint(); } });
+  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); fightHints(); highGroundHint(); abilityHint(); } });
 
   return function bind() {
     makeHint();

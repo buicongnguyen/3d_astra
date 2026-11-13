@@ -41,6 +41,7 @@
     "test:campaign": "node tests/campaign.mjs",
     "test:missions": "node tests/missions.mjs",
     "test:tactics-ui": "node tests/tactics-ui.mjs",
+    "test:abilities": "node tests/abilities.mjs",
     "test:tutorial": "node tests/tutorial.mjs",
     "test:ui-quality": "node tests/ui-quality.mjs",
     "test:layout-f": "node tests/layout-f.mjs",

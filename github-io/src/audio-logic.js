@@ -207,6 +207,14 @@ export const HIT = {
   rocket: { name: "hit:rocket", delay: 0.24 }, rail: { name: "hit:small", delay: 0.24 }, tower: { name: "hit:small", delay: 0.26 },
 };
 export const hitFor = (voice) => HIT[voice] || null;
+// A Barrage (ability event with a target and a shell delay): the incoming whistle (`incoming:shell`,
+// INCOMING_SECONDS long) starts so that it ends when the shells land. null for anything else.
+export const INCOMING_SECONDS = 0.8;
+export function incomingFor(event) {
+  if (event?.type !== "ability" || event.ability !== "barrage" || !Number.isFinite(event.tx) || !Number.isFinite(event.tz)) return null;
+  const delay = Number.isFinite(event.delay) ? event.delay : 1.5;
+  return { name: "incoming:shell", delay: Math.max(0, delay - INCOMING_SECONDS) };
+}
 const HEAVY_VOICES = new Set(["tank", "walker", "artillery", "rocket", "rail", "tower", "flame"]);
 
 // Sound name, priority, rate gap and voice group for a simulation event. null = silent event.

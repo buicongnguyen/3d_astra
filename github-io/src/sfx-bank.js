@@ -62,6 +62,15 @@ export const BANK = {
   "hit:rocket": { level: 0.6, drive: 1.8, layers: blast(0.65) },
   "hit:shell": { level: 0.7, drive: 2, room: ROOM.slap, layers: blast(0.85) },
   "hit:artillery": { level: 0.82, drive: 2, room: ROOM.field, layers: [...blast(1.1), thump(55, 28, 0.4, 0.01, 0.6)] },
+  // A Barrage shell coming in (sfx.js plays it where it will land, ending as it hits): a whistle that
+  // rises then falls over 0.8 s (a falling glide with one slow half-cycle of vibrato on top: 1.3 kHz
+  // up to about 1.7 kHz, then down to 800 Hz), a faint octave above, and band-passed air rush,
+  // all swelling as the shell gets closer.
+  "incoming:shell": { level: 0.42, layers: [
+    { k: "tone", w: "sine", f0: 1300, f1: 800, glide: 0.8, vib: [0.625, 0.6], a: 0.55, d: 0.6, dur: 0.8, g: 1 },
+    { k: "tone", w: "sine", f0: 2600, f1: 1600, glide: 0.8, vib: [0.625, 0.6], a: 0.55, d: 0.6, dur: 0.8, g: 0.16 },
+    { k: "noise", f: "bp", f0: 2400, f1: 1300, glide: 0.8, q: 3, a: 0.5, d: 0.6, dur: 0.8, g: 0.4 },
+  ] },
   // Losses: a soldier down is a thud and a rattle of gear; vehicles, buildings and the core explode.
   "boom:small": { level: 0.38, layers: [body("lp", 700, 200, 0.06, 0, 1, 0.8), thump(120, 60, 0.06, 0, 0.9), debris(6, 0.03, 0.3, [1500, 4500], 5, 0.35, [0.003, 0.012])] },
   "boom:heavy": { level: 0.88, drive: 2, room: ROOM.field, layers: [...blast(1.2), ...blast(0.4, 0.38, 0.5), debris(36, 0.1, 1.1, [1500, 6500], 7, 0.35)] },
