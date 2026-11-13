@@ -2,6 +2,15 @@
    The match interface has its own stylesheet (defence-ui.css), loaded on first use. */
 .mode-switch { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .mode-switch button { min-height: 56px; }
+/* Short phone screens: the four modes in one row of plain labels, so the setup controls above the
+   pinned Start button keep their place (a second row pushed them under it). */
+@media (max-height: 700px) {
+  .compact-ui .mode-switch { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .compact-ui .mode-switch button { min-height: 44px; padding: 6px 2px; justify-items: center; text-align: center; }
+  .compact-ui .mode-switch button > .icon,
+  .compact-ui .mode-switch button > small { display: none; }
+  .compact-ui .mode-switch button > span { font-size: 13px; }
+}
 
 .defence-levels em { display: flex; align-items: center; gap: 6px; }
 .defence-levels .stars { display: inline-flex; gap: 2px; font: 700 16px/1 var(--font-ui); letter-spacing: 0; }
