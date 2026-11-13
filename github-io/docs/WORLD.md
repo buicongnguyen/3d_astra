@@ -134,6 +134,18 @@ Note (tuning pass, 2026-11-10): every mission AI now opens Relaxed and some step
 11. Speed: building while marching, under a clock.
 12. Everything: defend, then a decisive push with heavy units.
 
+## Decisions and endings (0.19a)
+
+The Commander still never speaks, but three times gives an order that the story remembers (data: `decisions` in `src/story/missions.js`; rules: `src/story/choices.js`):
+
+| Mission | Who asks | Merciful order | Firm order (default) |
+|---|---|---|---|
+| 3, at the north siphon | Okoro | Return the alloy to Ashfall's scavengers | Keep the alloy for the expedition |
+| 5, on the north road | Sol | Offer Sunward a share of the forest relay | Drive the Caravan off the forest road |
+| 10, at the dampers | Maren | Let the Survey crews stand down | Break the dampers now |
+
+Two or more merciful orders lead to **The Open Frontier**: the Keystone is shared and the four camps sign a truce. Fewer lead to **The Meridian Line**: Meridian holds the Keystone and the frontier alone. Neither is good or bad. The finale's last objective and closing lines follow the ending, and five epilogue cards (Vale, Sol, Hale, Maren, ECHO) close it. Every line is listed for review in `docs/aaa/review/story-lines.md`.
+
 ## Writing rules
 
 - Lines are under 140 characters. One idea per line. No filler, no jokes about the game itself.

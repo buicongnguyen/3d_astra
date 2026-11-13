@@ -247,6 +247,17 @@ test('the choice card, epilogue and campaign map words have Vietnamese', () => {
   assert.equal(translate("COMMANDER'S DECISION", 'vi'), 'QUYẾT ĐỊNH CỦA CHỈ HUY');
 });
 
+test('the decision screen holds the match but keeps the music, and the frame loop stops on the asking tick', async () => {
+  const { clientFile } = await import('./lib/client-source.js');
+  const { LEGAL, SCREENS } = await import('../src/app/screens.js');
+  assert.ok(SCREENS.includes('decision') && LEGAL.playing.includes('decision') && LEGAL.decision.includes('playing'));
+  assert.match(clientFile('sound.js'), /modalType !== "decision"/, 'the audio clock keeps running under the card');
+  const frame = clientFile('frame.js');
+  assert.match(frame, /paused: paused && modalType !== "decision"/, 'the music scheduler is not told the match is paused');
+  assert.match(frame, /if \(sim\.mission\?\.pending\) \{ accumulator = 0; break; \}/, 'no tick runs past the question');
+  assert.match(frame, /sim\.mission\?\.pending\) openDecision\(\)/, 'a pending decision (also after Continue) opens the card');
+});
+
 test('flagMatches only passes a recorded answer', () => {
   assert.equal(flagMatches(undefined, null), true);
   assert.equal(flagMatches({ flag: 'a', is: 'x' }, undefined), false);

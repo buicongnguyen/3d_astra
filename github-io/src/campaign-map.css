@@ -167,10 +167,21 @@
 
 /* Phones, portrait: the map gets its own height above the copy and the column scrolls. */
 .compact-ui #briefing.campaign-view .briefing-hero { height: auto; }
-.compact-ui #briefing.campaign-view #campaign-map { flex: 0 0 auto; height: clamp(340px, 96vw, 560px); }
+.compact-ui #briefing.campaign-view #campaign-map { flex: 0 0 auto; height: clamp(360px, 104vw, 560px); }
 .compact-ui .cmap { padding: 12px 14px 0; }
 .compact-ui #briefing.campaign-view .briefing-copy { padding: 10px 16px 6px; }
-.compact-ui .cmap-chronicles { margin-left: 0; }
+/* Phones: act names stand up along the left edge, clear of the first column of relays (the list
+   below names the acts); the footer packs endings as rings (a seen one keeps its name), the
+   decision legend and the chronicles slot. */
+.compact-ui .cmap-act { left: 2px; writing-mode: vertical-rl; transform: rotate(180deg); }
+.compact-ui .cmap-act > span { display: none; }
+.compact-ui .cmap-foot { gap: 6px 10px; }
+.compact-ui .cmap-legend .cmap-label { display: none; }
+.compact-ui .cmap-endings { flex-wrap: nowrap; gap: 6px; }
+.compact-ui .cmap-ending { padding: 0 10px; }
+.compact-ui .cmap-ending.unseen { justify-content: center; width: 44px; padding: 0; }
+.compact-ui .cmap-ending.unseen > span { display: none; }
+.compact-ui .cmap-chronicles { margin-left: auto; }
 
 /* Short landscape phones: the map fills the hero; the copy keeps only its title. */
 @media (orientation: landscape) and (max-height: 520px) {
@@ -185,16 +196,9 @@
   .compact-ui .cmap-head .eyebrow { display: none; }
   .compact-ui .cmap-head strong { font-size: 14px; }
   .compact-ui .cmap-board { min-height: 150px; }
-  /* Act names stand up along the left edge, clear of the first column of relays. */
-  .compact-ui .cmap-act { left: 2px; writing-mode: vertical-rl; transform: rotate(180deg); }
-  .compact-ui .cmap-act > span { display: none; }
-  /* One row under the map: endings as rings (a seen one keeps its name), then the chronicles slot. */
+  /* One row under the map. */
   .compact-ui .cmap-foot { flex-wrap: nowrap; gap: 6px; }
   .compact-ui .cmap-foot .cmap-label { display: none; }
-  .compact-ui .cmap-endings { flex-wrap: nowrap; gap: 6px; }
-  .compact-ui .cmap-ending { padding: 0 10px; }
-  .compact-ui .cmap-ending.unseen { justify-content: center; width: 44px; padding: 0; }
-  .compact-ui .cmap-ending.unseen > span { display: none; }
   .compact-ui .cmap-chronicles small { display: none; }
   .compact-ui .cmap-chronicles { padding: 4px 10px; }
   .compact-ui .cmap-legend { display: none; }
