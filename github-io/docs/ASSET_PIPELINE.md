@@ -84,7 +84,7 @@ Then run `npm test`, which includes `tests/assets.test.js`, and the browser suit
 blender --background --factory-startup --python tools/blender/render_ui_art.py -- src/art
 ```
 
-Arguments after the output folder (`keyart`, `portraits`, `emblem`) render only those parts. The portrait atlas is paired with a mask render in which team paint is white and everything else is held out. The page multiplies the player's army colour through that mask, so one atlas serves every colour choice. The atlas is 4 columns by 7 rows (768 by 1344 pixels), with the twelve approved faction portraits appended after the original thirteen. Portrait order is part of the page contract (`PORTRAIT_ORDER` in `src/portraits.js`). Buttons and labels are never baked into images. See [UI_REDESIGN.md](UI_REDESIGN.md).
+Arguments after the output folder (`keyart`, `portraits`, `emblem`) render only those parts. The portrait atlas is paired with a mask render in which team paint is white and everything else is held out. The page multiplies the player's army colour through that mask, so one atlas serves every colour choice. The atlas is 4 columns by 8 rows (768 by 1536 pixels): the original thirteen, the twelve approved faction portraits, then the four flyers of 0.18 (`kite`, `hawk`, `balloon`, `glider`; manifest entries marked `air: true`, written by `generate_air.py -- --manifest`). Portrait order is part of the page contract (`PORTRAIT_ORDER` in `src/portraits.js`). Buttons and labels are never baked into images. See [UI_REDESIGN.md](UI_REDESIGN.md).
 
 ## Known limits
 

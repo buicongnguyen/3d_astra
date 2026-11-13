@@ -200,6 +200,38 @@
       "budget": 4000,
       "review": "approved by owner 2026-11-11",
       "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "kite",
+      "file": "kite.glb",
+      "triangles": 904,
+      "air": true,
+      "budget": 1500,
+      "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips"
+    },
+    {
+      "name": "hawk",
+      "file": "hawk.glb",
+      "triangles": 1408,
+      "air": true,
+      "budget": 1500,
+      "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips"
+    },
+    {
+      "name": "balloon",
+      "file": "balloon.glb",
+      "triangles": 1308,
+      "air": true,
+      "budget": 1500,
+      "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips"
+    },
+    {
+      "name": "glider",
+      "file": "glider.glb",
+      "triangles": 1080,
+      "air": true,
+      "budget": 1500,
+      "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips"
     }
   ]
 }

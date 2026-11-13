@@ -84,8 +84,25 @@ test('portrait generation preserves legacy cells and appends every approved fact
   assert.deepEqual(order.slice(0, 13), ['worker','vanguard','ranger','breaker','medic','engineer','tank','antitank','hq','relay','barracks','foundry','tower']);
   const blender = JSON.parse(read('tools/blender/render_ui_art.py').match(/PORTRAITS = (\[[\s\S]*?\])/)[1].replaceAll("'", '"'));
   assert.deepEqual(blender, order);
-  const assets = JSON.parse(read('public/models/manifest.json')).assets.filter(a => a.faction);
-  assert.equal(new Set(order).size, 25);
-  assert.deepEqual(new Set(order.slice(13)), new Set(assets.map(a => a.name)));
+  const manifest = JSON.parse(read('public/models/manifest.json')).assets, assets = manifest.filter(a => a.faction);
+  assert.equal(new Set(order).size, 29);
+  assert.deepEqual(new Set(order.slice(13, 25)), new Set(assets.map(a => a.name)));
   for (const asset of assets) assert.equal(asset.review, 'approved by owner 2026-11-11');
+  // 0.18: the four flyers are appended after the faction cells (manifest entries marked air, no faction).
+  assert.deepEqual(order.slice(25), ['kite', 'hawk', 'balloon', 'glider']);
+  assert.deepEqual(manifest.filter(a => a.air).map(a => a.name), order.slice(25));
+});
+
+test('flyer models keep the air contract: hover bob, spin or flicker pivots, a triangle budget', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../public/models/manifest.json', import.meta.url), 'utf8')).assets;
+  const pivots = { kite: ['spin_rotor_L', 'spin_rotor_R'], hawk: ['spin_fan_L', 'spin_fan_R'], balloon: ['flicker_flame'], glider: ['spin_prop'] };
+  for (const [type, names] of Object.entries(pivots)) {
+    const json = gltf(type), nodes = runtimeNames(json), asset = manifest.find(a => a.name === type);
+    assert.ok(balance.definitions[type].flying, type);
+    assert.ok(nodes.includes('hover'), `${type}: hover`);
+    for (const name of names) assert.ok(nodes.includes(name), `${type}: ${name}`);
+    const triangles = json.meshes.reduce((n, m) => n + m.primitives.reduce((k, p) => k + (p.indices === undefined ? json.accessors[p.attributes.POSITION].count : json.accessors[p.indices].count) / 3, 0), 0);
+    assert.equal(triangles, asset.triangles, type);
+    assert.ok(triangles <= asset.budget, type);
+  }
 });

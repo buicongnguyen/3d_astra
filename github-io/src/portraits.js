@@ -4,7 +4,8 @@ import { castPortrait, hasCast } from "./cast-portraits.js";
 // Cell order of src/art/portraits.webp and portrait-mask.webp (tools/blender/render_ui_art.py).
 export const PORTRAIT_ORDER = ["worker", "vanguard", "ranger", "breaker", "medic", "engineer", "tank", "antitank",
   "hq", "relay", "barracks", "foundry", "tower",
-  "scrapper", "scorcher", "salvageyard", "rider", "wagon", "waystation", "drone", "walker", "pylon", "shade", "watcher", "veilrelay"];
+  "scrapper", "scorcher", "salvageyard", "rider", "wagon", "waystation", "drone", "walker", "pylon", "shade", "watcher", "veilrelay",
+  "kite", "hawk", "balloon", "glider"];
 
 // A rendered Blender portrait. Team paint is white in the atlas; the mask layer tints it with
 // the side's army colour (friendly by default), so portraits follow the player's palette.
