@@ -33,7 +33,8 @@ export class SettingsUI {
       )
         this.close(true);
       if (button.dataset.do === "reset") {
-        this.draft = defaults(matchMedia("(pointer:coarse)").matches);
+        // The skirmish faction is a battle choice, not a setting this dialog shows: it survives a reset.
+        this.draft = { ...defaults(matchMedia("(pointer:coarse)").matches), playerFaction: this.draft.playerFaction };
         this.paint();
       }
       if (button.dataset.do === "contrast") {

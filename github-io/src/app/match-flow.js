@@ -3,7 +3,7 @@ import emblemUrl from "../art/emblem.webp";
 import { $ } from "./dom.js";
 import { MISSIONS, recordClear, saveProgress, bestTime, missionIndex } from "../campaign.js";
 import { MODE_KEY } from "./state.js";
-import { enemyFactionOf, matchLook } from "../factions.js";
+import { enemyFactionOf, playerFactionOf, matchLook } from "../factions.js";
 import { Simulation } from "../simulation.js";
 import { Tutorial } from "../tutorial.js";
 import { clearSave, writeSave, readSave } from "../savegame.js";
@@ -28,7 +28,7 @@ export function setupMatchFlow(S, A) {
     }
     if (S.activeStage !== null) return showDebrief(win);
     $("modal").classList.add("result-wide");
-    $("modal-content").innerHTML = skirmishResultHTML({ result: S.sim.result, seconds: S.sim.time, stats: S.matchStats.stats, emblem: emblemUrl, arrow: icon("arrow") });
+    $("modal-content").innerHTML = skirmishResultHTML({ result: S.sim.result, seconds: S.sim.time, stats: S.matchStats.stats, emblem: emblemUrl, arrow: icon("arrow"), faction: playerFactionOf(S.sim) });
     $("modal").querySelector(".primary").focus();
   }
 
@@ -211,8 +211,9 @@ export function setupMatchFlow(S, A) {
       S.mission = index >= 0 ? MISSIONS[index] : null;
       S.bonus = S.mission?.bonus || null;
       S.enemyFaction = S.mission ? "mirror" : enemyFactionOf(S.sim);
+      S.playerFaction = S.mission ? "meridian" : playerFactionOf(S.sim);
       S.look = matchLook(S.mission, S.sim);
-      if (!S.mission) $("enemy-faction").value = S.enemyFaction;
+      if (!S.mission) { $("enemy-faction").value = S.enemyFaction; $("player-faction").value = S.playerFaction; }
       if (index >= 0) S.stagePick = index;
       const resumed = await restart(false, true);
       if (resumed === false) return;

@@ -37,7 +37,8 @@ export function createState() {
     enemyCount: 1,
     aiSpeed: "normal",
     alliance: "ffa",
-    // Skirmish "Enemy faction" and what the colours and emblems follow (factions.js matchLook).
+    // Skirmish "Your faction" and "Enemy faction", and what the colours and emblems follow (factions.js matchLook).
+    playerFaction: settings.playerFaction,
     enemyFaction: "mirror",
     look: null,
     bonus: null,

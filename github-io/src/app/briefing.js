@@ -12,14 +12,17 @@ import { teamColors } from "../faction-colors.js";
 
 export function setupBriefing(S, A) {
   const Z = S.screen;
+  // The faction chosen last time (the first battle is built from the setup, see main.js).
+  $("player-faction").value = S.settings.playerFaction;
   // Briefing: Skirmish picks the map, rivals, AI speed and alliance; Campaign plays the
   // stages in order. The battle behind the briefing always previews the current choice.
   function battleSetup() {
-    if(S.playMode === "training") return {map:"classic",enemyCount:1,aiSpeed:"relaxed",alliance:"ffa",bonus:null,mission:null,faction:"mirror"};
+    // Training and the campaign always command Meridian; only a skirmish uses "Your faction".
+    if(S.playMode === "training") return {map:"classic",enemyCount:1,aiSpeed:"relaxed",alliance:"ffa",bonus:null,mission:null,faction:"mirror",playerFaction:"meridian"};
     const m = MISSIONS[S.stagePick];
     return S.playMode === "campaign"
-      ? { map: m.map, enemyCount: m.enemies, aiSpeed: m.speed, alliance: m.alliance, bonus: m.bonus || null, mission: m, faction: "mirror" }
-      : { map: $("scenario").value, enemyCount: Number($("enemy-count").value), aiSpeed: $("ai-speed").value, alliance: $("alliance").value, bonus: null, mission: null, faction: $("enemy-faction").value };
+      ? { map: m.map, enemyCount: m.enemies, aiSpeed: m.speed, alliance: m.alliance, bonus: m.bonus || null, mission: m, faction: "mirror", playerFaction: "meridian" }
+      : { map: $("scenario").value, enemyCount: Number($("enemy-count").value), aiSpeed: $("ai-speed").value, alliance: $("alliance").value, bonus: null, mission: null, faction: $("enemy-faction").value, playerFaction: $("player-faction").value };
   }
 
   function describeRivals({ enemyCount: count, aiSpeed: speed, alliance: side }) {
@@ -94,10 +97,10 @@ export function setupBriefing(S, A) {
   function previewBattle() {
     if (Z.started) return;
     const setup = battleSetup();
-    const same = (!setup.mission || S.sim.difficulty === S.settings.campaignDifficulty) && setup.map === S.mapId && setup.enemyCount === S.enemyCount && setup.aiSpeed === S.aiSpeed && setup.alliance === S.alliance && setup.faction === S.enemyFaction && setup.bonus === S.bonus && setup.mission === S.mission;
+    const same = (!setup.mission || S.sim.difficulty === S.settings.campaignDifficulty) && setup.map === S.mapId && setup.enemyCount === S.enemyCount && setup.aiSpeed === S.aiSpeed && setup.alliance === S.alliance && setup.faction === S.enemyFaction && setup.playerFaction === S.playerFaction && setup.bonus === S.bonus && setup.mission === S.mission;
     if (!same) {
       const terrain = setup.map !== S.mapId || setup.enemyCount !== S.enemyCount;
-      ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction } = setup);
+      ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction, playerFaction: S.playerFaction } = setup);
       S.sim = A.createSim();
       S.view?.reset();
       A.ensureMatchModels();
@@ -127,6 +130,12 @@ export function setupBriefing(S, A) {
       previewBattle();
     };
     for (const id of ["scenario", "enemy-count", "ai-speed", "alliance", "enemy-faction"]) $(id).onchange = previewBattle;
+    // "Your faction" is remembered between visits (settings.playerFaction).
+    $("player-faction").onchange = () => {
+      S.settings.playerFaction = $("player-faction").value;
+      saveSettings(S.settings);
+      previewBattle();
+    };
 
     $("briefing").querySelector(".mode-switch").addEventListener("click", (event) => {
       const button = event.target.closest("[data-mode]");

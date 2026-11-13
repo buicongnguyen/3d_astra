@@ -20,7 +20,17 @@ await suite("factions", async () => {
     const size = page.viewportSize();
     assert.ok(box && box.x >= 0 && box.x + box.width <= size.width + 0.5, `${viewport}: faction choice inside the screen`);
     if (mobile) assert.ok(box.height >= 44, `${viewport}: faction choice is ${box.height}px tall`);
-    assert.deepEqual(await page.locator("#enemy-faction option").evaluateAll((o) => o.map((x) => x.value)), ["mirror", "ashfall", "sunward", "wardens", "veil", "mixed"]);
+    assert.deepEqual(await page.locator("#enemy-faction option").evaluateAll((o) => o.map((x) => x.value)), ["mirror", "meridian", "ashfall", "sunward", "wardens", "veil", "mixed"]);
+    // "Your faction" sits beside it, on the screen and tall enough to tap; Meridian by default.
+    // (Centred: on a phone the sticky Start button would otherwise cover the row.)
+    await page.evaluate(() => document.querySelector("#player-faction").scrollIntoView({ block: "center" }));
+    const own = await page.locator("#player-faction").boundingBox();
+    assert.ok(own && own.x >= 0 && own.x + own.width <= size.width + 0.5, `${viewport}: your faction inside the screen`);
+    if (mobile) assert.ok(own.height >= 44, `${viewport}: your faction is ${own.height}px tall`);
+    assert.deepEqual(await page.locator("#player-faction option").evaluateAll((o) => o.map((x) => x.value)), ["meridian", "ashfall", "sunward", "wardens", "veil"]);
+    assert.equal(await page.inputValue("#player-faction"), "meridian");
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${viewport}: no sideways scroll on the setup`);
+    await shot(page, `factions-picker-${viewport}`);
 
     await page.selectOption("#enemy-faction", "ashfall");
     await page.waitForFunction(() => window.__frontier.modelsReady && window.__frontier.sim.factions[1] === "ashfall", null, { timeout: TIMEOUT.models });
@@ -115,4 +125,70 @@ await suite("factions", async () => {
   assert.equal(await page.evaluate((id) => window.__frontier.sim.isVisible(window.__frontier.sim.get(id)), cloak.id), true, "a Shade that struck is seen");
   await shot(page, "factions-veil-desktop");
   assert.deepEqual(errors, []);
+  await page.close();
+
+  // Choose your army: the player commands Wardens or Veil. Mirror rivals share the faction, the
+  // base, build menu (with the faction's own building) and barracks are that faction's, the
+  // emblem over the player's buildings is theirs, and the choice is remembered after a reload.
+  const WANT = { wardens: { building: "pylon", ranger: "drone", missing: "medic" }, veil: { building: "veilrelay", ranger: "ranger", missing: "vanguard" } };
+  for (const [faction, viewport] of [["wardens", "desktop"], ["wardens", "portrait"], ["veil", "desktop"], ["veil", "landscape"]]) {
+    const { page, goto, ready, tap, errors, badResponses, mobile } = await openPage(browser, viewport);
+    const size = page.viewportSize(), want = WANT[faction];
+    await goto();
+    await ready();
+    await tap('[data-mode="skirmish"]');
+    await page.selectOption("#player-faction", faction);
+    await page.waitForFunction((id) => window.__frontier.modelsReady && window.__frontier.sim.factions[0] === id && window.__frontier.sim.factions[1] === id, faction, { timeout: TIMEOUT.models });
+    assert.equal(await page.evaluate(() => window.__frontier.settings.playerFaction), faction, "the choice is saved in settings");
+    await tap("#start");
+    await page.waitForFunction(() => window.__frontier.started, null, { timeout: TIMEOUT.step });
+    const state = await page.evaluate(() => {
+      const f = window.__frontier, s = f.sim, hq = s.own(0).find((e) => e.type === "hq");
+      return { look: f.view.mission?.factions?.[0], emblem: !!f.view.objects.get(hq.id)?.userData.emblem, units: s.own(0).filter((e) => e.kind === "unit").map((e) => e.type), buildable: s.buildable(0) };
+    });
+    assert.equal(state.look, faction, `${viewport}: colours and emblems follow the player's faction`);
+    assert.equal(state.emblem, true, `${viewport}: an emblem over the player's core`);
+    assert.ok(!state.units.includes(want.missing) && state.buildable.includes(want.building), `${faction}: own roster and building (${state.units}; ${state.buildable})`);
+    // The build menu: the faction's building is the sixth tile, with no letter key, and every tile fits.
+    await page.evaluate(() => { const f = window.__frontier; f.select([f.sim.own(0).find((e) => e.type === "worker").id]); });
+    if (mobile) await tap('#dock-tabs [data-dock="actions"]');
+    await page.waitForSelector(`#commands [data-action="${want.building}"]`, { state: "attached", timeout: TIMEOUT.step });
+    if (mobile) {
+      // On a phone the Actions dock scrolls inside its fixed height; the sixth tile is still a full-size tap target.
+      await page.locator(`#commands [data-action="${want.building}"]`).scrollIntoViewIfNeeded();
+      const box = await page.locator(`#commands [data-action="${want.building}"]`).boundingBox();
+      assert.ok(box && box.height >= 44 && box.x >= 0 && box.x + box.width <= size.width + 0.5, `${viewport}: ${want.building} tile ${JSON.stringify(box)}`);
+    } else {
+      // Desktop: the six tiles stay inside the command panel.
+      const [panel, tile] = await Promise.all([page.locator(".command-panel").boundingBox(), page.locator(`#commands [data-action="${want.building}"]`).boundingBox()]);
+      assert.ok(tile.y >= panel.y && tile.y + tile.height <= panel.y + panel.height + 0.5 && tile.x + tile.width <= panel.x + panel.width + 0.5, `${viewport}: ${want.building} tile inside the panel`);
+    }
+    await page.waitForTimeout(200);
+    await shot(page, `factions-player-${faction}-${viewport}-build`);
+    const tiles = await page.evaluate(() => [...document.querySelectorAll("#commands .command-tile")].map((t) => ({ action: t.dataset.action, key: t.dataset.hotkey || null, text: t.textContent })));
+    assert.equal(tiles.length, 6, `${viewport}: six build tiles`);
+    assert.equal(tiles[5].action, want.building);
+    assert.equal(tiles[5].key, null, "no letter for the sixth tile");
+    assert.ok(tiles.every((t) => !/undefined/.test(t.text)), JSON.stringify(tiles));
+    // Barracks: the faction's units, nothing borrowed.
+    await page.evaluate(() => { const f = window.__frontier; f.select([f.sim.own(0).find((e) => e.type === "barracks").id]); });
+    await page.waitForFunction((type) => !!document.querySelector(`#commands [data-action="${type}"]`), want.ranger, { timeout: TIMEOUT.step });
+    assert.equal(await page.locator(`#commands [data-action="${want.missing}"]`).count(), 0, `${faction} barracks has no ${want.missing}`);
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${viewport}: no sideways scroll`);
+    await page.evaluate(() => { const f = window.__frontier; f.select(f.sim.own(0).filter((e) => e.kind === "unit" && e.type !== "worker").map((e) => e.id)); });
+    await page.waitForTimeout(300);
+    await shot(page, `factions-player-${faction}-${viewport}`);
+    // Reload: the start screen offers the faction chosen last time.
+    await goto();
+    await ready();
+    await tap('[data-mode="skirmish"]');
+    assert.equal(await page.inputValue("#player-faction"), faction, "remembered after a reload");
+    assert.equal(await page.evaluate(() => window.__frontier.sim.factions[0]), faction, "the preview uses it");
+    // Training always commands Meridian.
+    await tap('[data-mode="training"]');
+    await page.waitForFunction(() => window.__frontier.sim.factions[0] === "meridian", null, { timeout: TIMEOUT.step });
+    assert.deepEqual(errors, [], `${faction} ${viewport}: page errors`);
+    assert.deepEqual(badResponses, [], `${faction} ${viewport}: failed requests`);
+    await page.close();
+  }
 }, { browser });

@@ -75,11 +75,14 @@ export class PlayBot {
       if (b.level < hq.level && p.alloy > 400 && !b.queue.length) { s.command({ team, type: "upgrade", building: b.id }); continue; }
       if (b.queue.length >= 2) continue;
       const army = s.own(team).filter((e) => e.kind === "unit" && e.type !== "worker");
-      const count = (type) => army.filter((e) => e.type === type).length;
+      // The wish list names roster slots; each faction fills a slot with its own unit (a Wardens
+      // Barracks trains Drones for "ranger" and has no Medic), so slots map through typeFor.
+      const unitFor = (slot) => s.typeFor(team, slot);
+      const count = (slot) => army.filter((e) => e.type === unitFor(slot)).length;
       const wish = b.type === "foundry"
         ? [b.level >= 3 && count("tank") <= count("breaker") ? "tank" : "breaker", b.level >= 2 && count("engineer") < 1 ? "engineer" : null, "breaker"]
         : [b.level >= 2 && count("medic") < 2 && army.length > 6 ? "medic" : null, count("ranger") <= count("vanguard") * this.rangerShare ? "ranger" : "vanguard", "vanguard"];
-      const unit = wish.find((type) => type && b.level >= (D[type].required_level || 1) && can(type));
+      const unit = wish.map((slot) => slot && unitFor(slot)).find((type) => type && b.trains?.includes(type) && b.level >= (D[type].required_level || 1) && can(type));
       if (unit) s.command({ team, type: "train", building: b.id, unit });
     }
     const fighters = s.own(team).filter((e) => e.kind === "unit" && e.damage > 0 && e.type !== "worker");

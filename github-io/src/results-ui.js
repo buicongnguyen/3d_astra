@@ -1,4 +1,5 @@
 // Shared pieces of the results screens (skirmish result and mission debrief).
+import { victoryLine } from "./factions.js";
 const pad = (n) => String(n).padStart(2, "0");
 export const formatClock = (seconds) => `${Math.floor(seconds / 60)}:${pad(Math.floor(seconds % 60))}`;
 const whole = (n) => String(Math.round(n || 0));
@@ -23,12 +24,12 @@ export function matchStatTiles(stats, { extra = [], structures = true } = {}) {
 }
 
 // Skirmish result: outcome banner, the stat grid and the three buttons.
-export function skirmishResultHTML({ result, seconds, stats, emblem, arrow, sub }) {
+export function skirmishResultHTML({ result, seconds, stats, emblem, arrow, sub, faction = "meridian" }) {
   const win = result === "victory", draw = result === "draw";
   const kind = win ? "won" : draw ? "draw" : "lost";
   const eyebrow = draw ? "Operation concluded" : win ? "Operation successful" : "Operation failed";
   const title = win ? "The frontier is yours." : draw ? "Mutual destruction." : "Your outpost has fallen.";
-  const text = win ? "Enemy command has been eliminated. Meridian holds the valley." : draw ? "All Command cores were destroyed." : "An enemy destroyed your Command core. Regroup and try a different approach.";
+  const text = win ? victoryLine(faction) : draw ? "All Command cores were destroyed." : "An enemy destroyed your Command core. Regroup and try a different approach.";
   return `<div class="result-card ${kind}" data-result="${result}">
     <div class="result-banner"><div class="result-emblem ${win ? "" : "loss"}"><img src="${emblem}" alt="" width="92" height="92"></div>
       <div class="result-headline"><span class="eyebrow">${eyebrow}</span><h2 id="modal-title">${title}</h2><p>${text}</p></div></div>
