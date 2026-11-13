@@ -1,4 +1,5 @@
 import balance from './balance.json' with {type:'json'};
+import GARRISONS from './defence/garrisons.json' with {type:'json'};
 // Boot stays fixed as factions grow: only a match asks for additional models.
 export const CORE_MODEL_TYPES = Object.freeze(['hq','relay','barracks','foundry','tower','worker','vanguard','ranger','breaker','tank','antitank','medic','engineer']);
 export function modelsForMatch(match = {}, factions = balance.factions || {}) {
@@ -19,6 +20,9 @@ export function modelsForMatch(match = {}, factions = balance.factions || {}) {
     for (const v of Array.isArray(o) ? o : Object.values(o)) scan(v);
   };
   if (def) { scan(def.setup); scan(def.triggers); }
+  // Frontier Defence: every wave group and every crew the pads can take (sim/defence.js).
+  for (const w of def?.defence?.waves || []) for (const g of w.groups) for (const type of Object.keys(g.units)) named.add(type);
+  for (const crew of def?.defence?.crews || []) { const g = GARRISONS.crews[crew]; if (g) named.add(g.type || g.slot); }
   for (const type of named) {
     if (balance.definitions[type]?.kind) types.add(type);
     for (const id of ids) { const swapped = factions[id]?.swap?.[type]; if (swapped) types.add(swapped); }
