@@ -1,7 +1,7 @@
 import { MIX, SOUND_TESTS } from "../audio-mix.js";
 // Browser audio context, UI tones and the audio clock (sleeps while paused or hidden).
 import { Ambience, audioPower } from "../ambience.js";
-import { spatialMix } from "../audio-logic.js";
+import { musicScreen, spatialMix } from "../audio-logic.js";
 
 export function setupSound(S, A) {
   const Z = S.screen;
@@ -86,8 +86,27 @@ export function setupSound(S, A) {
     audioPower(S.audioContext, quiet);
   }
 
-  Object.assign(A, { tone, unlockAudio, syncAudio, playSoundTest });
+  // The screen the music follows (musicPlan in audio-logic.js): the start screen's mode, a campaign
+  // briefing, the match, or its result. A Defence level exposes `sim.defence.phase` ("calm" between waves).
+  const menuView = () => (Z.briefing ? "briefing" : S.playMode);
+  const musicNow = () => musicScreen({ started: Z.started, result: S.sim?.result, menuView: menuView(), defenceCalm: S.sim?.defence?.phase === "calm" });
+
+  // The first gesture anywhere on the start screen unlocks audio, so the title music starts before
+  // Start is pressed. Mouse presses and keys grant the browser's permission on the way down, touch on
+  // the way up. The listeners go once the context runs (or a match has begun).
+  const firstGesture = (event) => {
+    if (S.audioContext?.state === "running" || Z.started) {
+      for (const type of ["pointerdown", "pointerup", "keydown"]) window.removeEventListener(type, firstGesture, true);
+      return;
+    }
+    if (event.type === "pointerdown" && event.pointerType !== "mouse") return;
+    if (event.type === "keydown" && event.key === "Escape") return;
+    unlockAudio();
+  };
+
+  Object.assign(A, { tone, unlockAudio, syncAudio, playSoundTest, musicScreen: musicNow });
   return function bind() {
     document.addEventListener("visibilitychange", () => syncAudio());
+    for (const type of ["pointerdown", "pointerup", "keydown"]) window.addEventListener(type, firstGesture, { capture: true, passive: true });
   };
 }

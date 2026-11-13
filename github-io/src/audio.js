@@ -3,9 +3,10 @@
 // main.js calls create() after the first user gesture, then event()/update() as the match runs.
 // The decisions (caps, rate limits, ducking, intensity -> layers, distance gain) are pure functions in
 // audio-logic.js with their numbers in audio-mix.js; this file only feeds them and applies the result.
-import { CombatIntensity, CombatMix, ContactWatch, LoudDuck, RadioGate, busLevels, closeness, combatFloor, crossfade, dbToGain, engineMix, explosionSize, intensityWeight, pickMood, radioKind, screenMix, soundFor, spatialMix } from "./audio-logic.js";
+import { CombatIntensity, CombatMix, ContactWatch, LoudDuck, RadioGate, busLevels, closeness, combatFloor, crossfade, dbToGain, engineMix, explosionSize, intensityWeight, musicPlan, musicPrefetch, musicScreen, pickMood, radioKind, screenMix, soundFor, spatialMix } from "./audio-logic.js";
 import { MIX } from "./audio-mix.js";
 import { Music, createAudioBus, musicMood } from "./music.js";
+import { RecordedMusic } from "./music-recorded.js";
 import { Sfx } from "./sfx.js";
 
 const COMBAT_SOUNDS = new Set(["shot", "impact", "death", "strike"]);
@@ -15,7 +16,14 @@ export class AudioDirector {
   constructor(context, { project = null, selected = null } = {}) {
     this.context = context;
     this.bus = createAudioBus(context);
-    this.music = new Music(context, this.bus.music);
+    // The adaptive score and the recorded tracks share the music bus; the score has its own gain so
+    // the two crossfade (musicPlan in audio-logic.js decides which one plays).
+    this.scoreGain = context.createGain();
+    this.scoreGain.gain.value = 0;
+    this.scoreGain.connect(this.bus.music);
+    this.music = new Music(context, this.scoreGain);
+    this.recorded = new RecordedMusic(context, this.bus.music);
+    this.plan = { cue: null, adaptive: true }; this.scoreOn = null; this.scoreUntil = 0; this.prefetchClock = 3;
     this.sfx = new Sfx(context, this.bus.sfx, { project: project ? (x, z) => project(x, z) : null });
     this.sfx.onPlay = (name, gain, delay) => this.heard(name, gain, delay);
     this.selected = selected;
@@ -70,8 +78,27 @@ export class AudioDirector {
     if (played) this.radios++;
     return played;
   }
+  // Recorded music or the adaptive score (musicPlan). `screen` comes from musicScreen(); the score
+  // fades out over the crossfade while a recorded cue fades in, and back. Returns whether the
+  // score should be scheduling (it keeps going until its fade-out ends).
+  updatePlan(dt, { screen, setting, inBattle, hidden }) {
+    const now = this.context.currentTime, plan = musicPlan({ screen, setting, loaded: (cue) => this.recorded.can(cue), inBattle });
+    this.plan = plan;
+    if (setting !== "recorded") this.recorded.release();
+    // Muted or music at zero: no recorded cue (nothing is fetched); it starts again when audible.
+    else this.recorded.play(this.levels.music > 0 ? plan.cue : null);
+    if (plan.adaptive !== this.scoreOn) {
+      const g = this.scoreGain.gain, fade = this.scoreOn == null ? 0.05 : MIX.recorded.crossfade;
+      g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(plan.adaptive ? 1 : 0, now + fade);
+      this.scoreOn = plan.adaptive; this.scoreUntil = now + fade;
+    }
+    // The next likely cue is fetched while idle, a couple of seconds after things settle.
+    if (setting === "recorded" && !hidden && (this.prefetchClock -= dt) <= 0) { this.prefetchClock = 2; this.recorded.prefetch(musicPrefetch(screen, setting)); }
+    return plan.adaptive || now < this.scoreUntil;
+  }
   // Called every frame; the scans are throttled (enemies once a second, engines four times).
-  update(dt, { sim, settings, started, paused, hidden, mapId }) {
+  // `screen` is the music screen (musicScreen in audio-logic.js); without it a started match counts as "match".
+  update(dt, { sim, settings, started, paused, hidden, mapId, screen = null, inBattle = false }) {
     const now = this.context.currentTime;
     this.combatGain = this.combatMix.gain(now);
     this.duckDb = this.loud.db(now);
@@ -92,8 +119,10 @@ export class AudioDirector {
     const mission = started ? musicMood() : "calm";
     const mood = pickMood({ result: sim.result, now: sim.time, lastCombatAt: this.lastCombatAt, incomingAt: this.incomingAt,
       enemyDistance: started ? this.enemyDistance : Infinity, missionMood: mission });
-    // Scheduling runs only while audible: not muted, not hidden, not paused (a finished match keeps its sting).
-    const on = this.levels.music > 0 && !hidden && !(started && paused && !sim.result);
+    const score = this.updatePlan(dt, { screen: screen || musicScreen({ started, result: sim.result }), setting: settings?.music || "recorded", inBattle, hidden });
+    // Scheduling runs only while audible: not muted, not hidden, not paused (a finished match keeps its sting),
+    // and while the score is wanted or still fading out under a recorded cue.
+    const on = score && this.levels.music > 0 && !hidden && !(started && paused && !sim.result);
     this.music.setMood(started || sim.result ? mood : "calm");
     this.music.setCombat(live ? crossfade(this.intensity.level(now), combatFloor(mood, mission)).combat : 0);
     this.music.setActive(on);

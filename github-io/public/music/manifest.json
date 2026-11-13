@@ -1,0 +1,4 @@
+{
+  "note": "Recorded music (src/music-recorded.js). Each track: { file, loopStart, loopEnd, bpm, lufs, bytes }, keys title, campaign, defence, victory, defeat. A cue that is not listed, or whose file fails, falls back to the adaptive score. Files here are never precached (tools/sw.template.js caches them in fc-music on first play).",
+  "tracks": {}
+}

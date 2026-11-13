@@ -4,7 +4,8 @@
 import { gzipSync } from "node:zlib";
 import { launchBrowser } from "../tests/lib/harness.mjs";
 
-const kindOf = (url) => (/\.glb(\?|$)/.test(url) ? "models" : /\.(js|mjs)(\?|$)/.test(url) ? "script" : /\.css(\?|$)/.test(url) ? "style" : /\.(webp|png|jpg|svg|ico)(\?|$)/.test(url) ? "images" : /\.(woff2?|ttf)(\?|$)/.test(url) ? "fonts" : "other");
+// "music" (recorded tracks, public/music/) must stay absent: they load after the first tap, never on a first visit.
+const kindOf = (url) => (/\.glb(\?|$)/.test(url) ? "models" : /\/music\/|\.(m4a|mp3|ogg|opus|wav|aac|flac)(\?|$)/.test(url) ? "music" : /\.(js|mjs)(\?|$)/.test(url) ? "script" : /\.css(\?|$)/.test(url) ? "style" : /\.(webp|png|jpg|svg|ico)(\?|$)/.test(url) ? "images" : /\.(woff2?|ttf)(\?|$)/.test(url) ? "fonts" : "other");
 const browser = await launchBrowser();
 try {
   for (const url of process.argv.slice(2)) {
@@ -25,6 +26,7 @@ try {
     const seconds = (Date.now() - started) / 1000;
     await Promise.all(pending);
     const total = Object.values(sizes).reduce((t, s) => ({ files: t.files + s.files, raw: t.raw + s.raw, gzip: t.gzip + s.gzip }), { files: 0, raw: 0, gzip: 0 });
+    sizes.music ||= { files: 0, raw: 0, gzip: 0 };
     console.log(JSON.stringify({ url, seconds: +seconds.toFixed(1), total, ...sizes }));
     await context.close();
   }

@@ -28,5 +28,9 @@ export const MIX = {identicalVoices:3,windowSeconds:.08,combatWindow:1,combatThr
   radio: { gap: 1.5, sameKind: 4, contact: 20, quiet: 30, level: 0.9 },
   // Engine hum of selected / moving own vehicles: bus level at full and the loop's rate range.
   engine: { level: 0.12, idle: 0.35, unselected: 0.3, rate: [0.85, 1.1] },
+  // Recorded music (music-recorded.js): crossfade seconds between cues and to/from the adaptive score,
+  // the loudness every track is trimmed to (from its manifest `lufs`, at most `maxTrimDb` either way),
+  // and `level`, which offsets the music bus make-up gain the synthesised score needs.
+  recorded: { crossfade: 1.2, stingFade: 0.05, targetLufs: -16, maxTrimDb: 9, level: 0.6 },
 };
 export const SOUND_TESTS = {trained:'Unit ready',research:'Research done','boom:building':'Building lost',objective:'Objective done','objective-failed':'Objective failed',win:'Mission won',lose:'Mission lost'};

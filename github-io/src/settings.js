@@ -22,6 +22,9 @@ export function defaults(coarse = false) {
     musicVolume: 0.6,
     sfxVolume: 0.8,
     muted: false,
+    // Music: recorded tracks on menus and briefings plus the adaptive score in matches ("recorded"),
+    // the adaptive score only ("adaptive", downloads no music), or none ("off").
+    music: "recorded",
     waterMotion: true,
     combatMotion: true,
     // Screen shake on the biggest blasts (a Command core falling, a Barrage landing). Off = steady camera.
@@ -43,6 +46,8 @@ export function normalize(value, coarse = false) {
   if (d.playerColor === d.enemyColor)
     d.enemyColor = d.playerColor === "coral" ? "mint" : "coral";
   if (["eco", "high"].includes(value.quality)) d.quality = value.quality;
+  // Saves from before the Music setting have no `music` key and get the default.
+  if (["recorded", "adaptive", "off"].includes(value.music)) d.music = value.music;
   if (Number.isFinite(value.masterVolume))
     d.masterVolume = Math.max(0, Math.min(1, value.masterVolume));
   for (const key of ["musicVolume", "sfxVolume"])

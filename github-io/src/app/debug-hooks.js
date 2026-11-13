@@ -44,6 +44,8 @@ export function setupDebugHooks(S, A) {
       get mode() { return S.mode; },
       get musicMood() { return musicMood(); },
       get audio() { return S.audio; },
+      // Recorded music (music-recorded.js): state() lists the cue, fetches and decoded buffers.
+      get music() { return S.audio?.recorded; },
       save: A.autosave,
     };
   }
