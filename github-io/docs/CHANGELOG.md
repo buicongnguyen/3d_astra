@@ -97,7 +97,7 @@ The rest of the round 3 plan (docs/aaa/PLAN_ROUND3_REFINED_2026-11-13.md: releas
   - victory and defeat stings.
 - 1.44 MB in total, AAC 64 kbps, -16 LUFS. Loops are cut to whole bars and loop sample-exactly.
 - Nothing downloads until the first tap; each track is cached on first play.
-- The takes were chosen by measurement (loop seam, beat steadiness, no voice-like sound). The blind listen page with the other shortlisted takes is in the 3D_claudeopus55 repo, `experiments/music-frontier-1113/listen/`; any track can be swapped.
+- The takes were chosen by measurement (loop seam, beat steadiness, no voice-like sound). The blind listen page with the other shortlisted takes is `music-lab/listen/` at the repo root (first kept in the 3D_claudeopus55 repo, moved here on 2026-11-14); any track can be swapped.
 
 ## 0.16.0: Hold the Line (round 3 plan, docs/aaa/PLAN_ROUND3_REFINED_2026-11-13.md)
 

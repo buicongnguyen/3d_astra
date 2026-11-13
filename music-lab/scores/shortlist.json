@@ -1,0 +1,72 @@
+{
+ "title": [
+  {
+   "key": "title-B:1308",
+   "note": "Best loop by the numbers: 24 bars at 104 bpm, repetition 0.96 and seam match 0.98, steady beat grid, no quiet gaps, no voice-like sound (Demucs vocal stem -41 dB)."
+  },
+  {
+   "key": "title-B:1306",
+   "note": "24 bars at 104 bpm, repetition 0.94 / seam 0.93, steady grid - but Demucs flags one voice-like second inside the loop (-10 dB vocal stem; maybe a hum or the bending lead) and the AAC needed extra peak control. Check that moment."
+  },
+  {
+   "key": "title-A:1308",
+   "note": "24 bars, repetition 0.91 / seam 0.86 (repeats less exactly than the others); tempo reads 103 not 104 bpm. Listen for whether the seam shows."
+  }
+ ],
+ "campaign": [
+  {
+   "key": "campaign-s1:1324",
+   "note": "16 bars at 88 bpm, repetition 0.97 / seam 0.98, beat tracker agrees with 88-89 bpm, no gaps."
+  },
+  {
+   "key": "campaign-C:1328",
+   "note": "16 bars at 88 bpm, repetition 0.96 / seam 0.97, cleanest voice check of all (Demucs vocal stem -49 dB)."
+  },
+  {
+   "key": "campaign-s2:1321",
+   "note": "16 bars, repetition 0.97 / seam 0.95, but the tracker hears a triplet pulse (117.6 = 4/3 x 88: a lilting feel?) and the seam is about 2.5x rougher in level than the music around it. Listen at the seam."
+  }
+ ],
+ "defence": [
+  {
+   "key": "defence-B:1348",
+   "note": "Longest loop: 24 bars at 96 bpm (60 s, least repetitive in play), repetition 0.99 / seam 0.99; the level step at the wrap is a bit above the music around it (about 1.5x)."
+  },
+  {
+   "key": "defence-B:1344",
+   "note": "16 bars at 96 bpm (40 s), very clean seam (waveform match 0.99); one faint voice-like moment (-23 dB in Demucs)."
+  },
+  {
+   "key": "defence-A:1345",
+   "note": "16 bars at 96 bpm, repetition 0.98 / seam 0.99, waveform match 0.99 at the seam."
+  }
+ ],
+ "victory": [
+  {
+   "key": "victory:1361",
+   "note": "Lands on the home chord most clearly (D major triad 0.73 of the last 1.5 s, tonic on top); the final chord rings and decays (-9 dB vs the phrase)."
+  },
+  {
+   "key": "victory:1366",
+   "note": "Equally clear landing (0.73) and a fuller held end (-5 dB), but a slightly harsher top (2-6 kHz share 0.033 vs 0.02-0.03)."
+  },
+  {
+   "key": "victory-B:1361",
+   "note": "Holds the end best (-3 dB) but the last chord is less clearly the home triad (0.38)."
+  }
+ ],
+ "defeat": [
+  {
+   "key": "defeat:1384",
+   "note": "Lands on the D minor home chord (0.62, tonic on top) and holds it; 5.8 s."
+  },
+  {
+   "key": "defeat:1383",
+   "note": "Clear landing (0.54) but the end fades early (-9 dB) and Demucs flags a faint voice-like moment (-19 dB) - check for a hum."
+  },
+  {
+   "key": "defeat:1386",
+   "note": "Longest (7.9 s), cleanest voice check; landing 0.53 but the top note is not the tonic (may sound open/unresolved - gentler, or less final)."
+  }
+ ]
+}

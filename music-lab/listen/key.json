@@ -1,0 +1,107 @@
+{
+ "TA": {
+  "take": "title-B:1306",
+  "cue": "title",
+  "arm": "B monochord lead",
+  "seed": 1306,
+  "shift": 2.0
+ },
+ "TB": {
+  "take": "title-A:1308",
+  "cue": "title",
+  "arm": "A brass lead",
+  "seed": 1308,
+  "shift": 2.0
+ },
+ "TC": {
+  "take": "title-B:1308",
+  "cue": "title",
+  "arm": "B monochord lead",
+  "seed": 1308,
+  "shift": 2.0
+ },
+ "CA": {
+  "take": "campaign-C:1328",
+  "cue": "campaign",
+  "arm": "C clear shaker pulse",
+  "seed": 1328,
+  "shift": 2.0
+ },
+ "CB": {
+  "take": "campaign-s1:1324",
+  "cue": "campaign",
+  "arm": "shift 1",
+  "seed": 1324,
+  "shift": 1.0
+ },
+ "CC": {
+  "take": "campaign-s2:1321",
+  "cue": "campaign",
+  "arm": "shift 2",
+  "seed": 1321,
+  "shift": 2.0
+ },
+ "DA": {
+  "take": "defence-B:1344",
+  "cue": "defence",
+  "arm": "B strings + marimba",
+  "seed": 1344,
+  "shift": 2.0
+ },
+ "DB": {
+  "take": "defence-B:1348",
+  "cue": "defence",
+  "arm": "B strings + marimba",
+  "seed": 1348,
+  "shift": 2.0
+ },
+ "DC": {
+  "take": "defence-A:1345",
+  "cue": "defence",
+  "arm": "A strings + guitar",
+  "seed": 1345,
+  "shift": 2.0
+ },
+ "VA": {
+  "take": "victory:1366",
+  "cue": "victory",
+  "arm": "sting",
+  "seed": 1366,
+  "shift": 2.0
+ },
+ "VB": {
+  "take": "victory:1361",
+  "cue": "victory",
+  "arm": "sting",
+  "seed": 1361,
+  "shift": 2.0
+ },
+ "VC": {
+  "take": "victory-B:1361",
+  "cue": "victory",
+  "arm": "B long held chord",
+  "seed": 1361,
+  "shift": 2.0
+ },
+ "FA": {
+  "take": "defeat:1383",
+  "cue": "defeat",
+  "arm": "sting",
+  "seed": 1383,
+  "shift": 2.0
+ },
+ "FB": {
+  "take": "defeat:1386",
+  "cue": "defeat",
+  "arm": "sting",
+  "seed": 1386,
+  "shift": 2.0
+ },
+ "FC": {
+  "take": "defeat:1384",
+  "cue": "defeat",
+  "arm": "sting",
+  "seed": 1384,
+  "shift": 2.0
+ }
+}
