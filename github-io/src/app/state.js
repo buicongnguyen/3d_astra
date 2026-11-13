@@ -48,6 +48,8 @@ export function createState() {
     tutorial: null,
     tutorialShown: -1,
     campaign,
+    // The campaign the list and the picks belong to: "main" or a Faction Chronicle id (0.20).
+    campaignId: "main",
     stagePick: nextMission(campaign),
     // Frontier Defence: the level picked on the start screen and the pad tapped in a match (app/defence-entry.js).
     defencePick: 0,

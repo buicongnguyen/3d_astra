@@ -84,11 +84,12 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
     closeBriefing(true);
     done?.();
   }
-  function openBriefing(mission, index, { onBegin, onBack, difficulty = "standard" } = {}) {
+  // `label`: the number line for another campaign (a Faction Chronicle: "CHRONICLE · 2/3").
+  function openBriefing(mission, index, { onBegin, onBack, difficulty = "standard", label = null } = {}) {
     briefReturn = document.activeElement;
     brief = { mission, step: 0, onBegin, onBack };
     q("mb-place").textContent = mission.briefing.place || "";
-    q("mb-number").textContent = `MISSION ${two(index + 1)}`;
+    q("mb-number").textContent = label || `MISSION ${two(index + 1)}`;
     q("mb-name").textContent = mission.title;
     q("mb-portrait").dataset.who = "";
     q("mb-intel").innerHTML = (mission.briefing.intel || []).map((text) => `<li>${esc(text)}</li>`).join("");
@@ -327,7 +328,8 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
 
   // ---------------------------------------------------------------- Debrief
   // `epilogue`: the ending reached when the finale is won; its button opens the epilogue cards.
-  function debriefHTML({ mission, index, total, sim, win, best, hasNext, stats, epilogue = null }) {
+  // `label` and `complete`: a Faction Chronicle's number line and closing note (0.20).
+  function debriefHTML({ mission, index, total, sim, win, best, hasNext, stats, epilogue = null, label = null, complete = "Every mission cleared. The campaign is complete." }) {
     const status = sim.missionStatus() || [], medal = win ? sim.mission.medal || "bronze" : null;
     // Lines may depend on a decision taken in this mission (earlier ones were settled before it began).
     const lines = ((win ? mission.debrief?.win : mission.debrief?.lose) || []).filter((line) => flagMatches(line.if, sim.flags));
@@ -338,16 +340,19 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
       ? `<button class="primary" data-next-mission><span>Next mission</span>${icon("arrow")}</button><button class="secondary" data-restart>Retry</button><button class="secondary" data-new-game>Campaign</button>`
       : win && epilogue
         ? `<button class="primary" data-epilogue="${esc(epilogue)}"><span>Epilogue</span>${icon("arrow")}</button><button class="secondary" data-restart>Retry</button><button class="secondary" data-new-game>Campaign</button>`
-        : `<button class="primary" data-restart><span>Retry</span>${icon("arrow")}</button><button class="secondary" data-new-game>Campaign</button>`;
+        // A Faction Chronicle's last win goes back to the campaign screen (it has no epilogue of its own).
+        : win && label
+          ? `<button class="primary" data-new-game><span>Campaign</span>${icon("arrow")}</button><button class="secondary" data-restart>Retry</button>`
+          : `<button class="primary" data-restart><span>Retry</span>${icon("arrow")}</button><button class="secondary" data-new-game>Campaign</button>`;
     const seconds = sim.mission.clock ?? sim.time;
     return `<div class="debrief ${win ? "won" : "lost"}" data-result="${win ? "victory" : "defeat"}"${medal ? ` data-medal="${medal}"` : ""}>
-      <span class="eyebrow">MISSION ${two(index + 1)} · ${win ? "COMPLETE" : "FAILED"}</span>
+      <span class="eyebrow">${label || `MISSION ${two(index + 1)}`} · ${win ? "COMPLETE" : "FAILED"}</span>
       <div class="debrief-head">${win ? medalBadge(medal) : `<span class="debrief-loss">${icon("close")}</span>`}<div><h2 id="modal-title">${esc(mission.title)}</h2><p class="debrief-result"><strong>${win ? "Victory" : "Defeat"}</strong>${medal ? `<span>${MEDAL_NAMES[medal]}</span>` : ""}</p></div></div>
       <p class="debrief-difficulty">${DIFFICULTY_LABELS[sim.difficulty || "standard"]}</p>
       <div class="result-grid">${matchStatTiles(stats, { structures: false, extra: [statTile(clock(seconds), "Mission time", "time"), statTile(best != null ? clock(best) : "—", "Best time")] })}</div>
       <h3>Objectives</h3><ol class="debrief-objectives">${objectives}</ol>
       ${talk ? `<div class="debrief-lines">${talk}</div>` : ""}
-      ${win && !hasNext && index === total - 1 ? "<p class=\"debrief-end\">Every mission cleared. The campaign is complete.</p>" : ""}
+      ${win && !hasNext && index === total - 1 ? `<p class="debrief-end">${esc(complete)}</p>` : ""}
       <div class="debrief-actions">${buttons}</div>
     </div>`;
   }

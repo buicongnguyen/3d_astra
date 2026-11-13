@@ -933,6 +933,10 @@
     "The battle waits for your order.": "Trận đánh đang chờ lệnh của bạn.",
     "Epilogue": "Lời kết",
     "Campaign map": "Bản đồ chiến dịch",
+    "Chronicle": "Biên niên",
+    "Main campaign": "Chiến dịch chính",
+    "Chronicle missions": "Nhiệm vụ biên niên",
+    "Chronicle complete. Its lead now speaks at the end of the main campaign.": "Biên niên đã hoàn thành. Giờ người dẫn dắt của nó sẽ lên tiếng ở cuối chiến dịch chính.",
     "Close": "Đóng",
     "Merciful": "Khoan dung",
     "Firm": "Cứng rắn",
@@ -1360,6 +1364,14 @@
     [
       "^(\\d+) / (\\d+) relays lit$",
       "{1} / {2} trạm đã sáng"
+    ],
+    [
+      "^Clear (.+) to unlock$",
+      "Hoàn thành {1} để mở khóa"
+    ],
+    [
+      "^(\\d+) of (\\d+) cleared$",
+      "{1} trên {2} đã hoàn thành"
     ],
     [
       "^(\\d+) more in Comms log$",

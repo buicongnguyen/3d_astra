@@ -136,10 +136,11 @@ test("client: the picker is wired to the setup, settings, saves, emblem and Trai
   // Training and the campaign always command Meridian.
   const setup = functionBody(briefing, "battleSetup");
   assert.match(setup, /training[\s\S]*playerFaction:"meridian"/);
-  assert.match(setup, /mission: m, faction: "mirror", playerFaction: "meridian"/);
+  // The main campaign's missions name no team 0 faction, so they command Meridian; a Faction Chronicle (0.20) commands its own.
+  assert.match(setup, /mission: m, faction: "mirror", playerFaction: \(m\.rules\?\.rosters && m\.factions\?\.\[0\]\) \|\| "meridian"/);
   assert.match(setup, /playerFaction: \$\("player-faction"\)\.value/);
   assert.match(briefing, /settings\.playerFaction = \$\("player-faction"\)\.value;\s*saveSettings/);
-  assert.match(flow, /playerFaction = mission \? "meridian" : playerFactionOf\(sim\)/);
+  assert.match(flow, /playerFaction = playerFactionOf\(sim\)/);
   assert.match(clientFile("main.js", { plain: false }), /S\.mission \|\| S\.playMode !== "skirmish" \? null : skirmishSides\(S\.playerFaction/);
   assert.match(readFileSync(new URL("../src/view.js", import.meta.url), "utf8"), /factionOf\(this\.mission, e\.team\)\?\.id \|\| \(e\.team === 0 \? "meridian"/);
 });

@@ -1,7 +1,7 @@
 // Starting, restarting, saving, continuing and finishing a match.
 import emblemUrl from "../art/emblem.webp";
 import { $ } from "./dom.js";
-import { MISSIONS, recordClear, recordDecisions, recordEnding, endingFor, resolveMission, saveProgress, bestTime, missionById } from "../campaign.js";
+import { recordDecisions, recordEnding, endingFor, resolveMission, saveProgress, missionById, missionsOf, recordIn, bestIn } from "../campaign.js";
 import { MODE_KEY } from "./state.js";
 import { enemyFactionOf, playerFactionOf, matchLook } from "../factions.js";
 import { Simulation } from "../simulation.js";
@@ -37,18 +37,22 @@ export function setupMatchFlow(S, A) {
   // Mission debrief: result, medal, time, objectives and the closing lines. A win records the
   // best time and medal, the Commander's decisions in this mission (a loss records nothing) and,
   // after the finale, the ending reached; then it opens the next mission or the epilogue.
+  // A Faction Chronicle (0.20) records into progress.chronicles; its last win finishes it, which
+  // adds its lead's line to the finale.
   function showDebrief(win) {
-    const n = S.activeStage, m = S.sim.missionDef || MISSIONS[n], last = n === MISSIONS.length - 1;
+    const c = S.campaignId, list = missionsOf(c), main = c === "main";
+    const n = S.activeStage, m = S.sim.missionDef || list[n], last = n === list.length - 1;
     let ending = null;
     if (win) {
-      S.campaign = recordClear(S.campaign, n, S.sim.mission?.clock ?? S.sim.time, S.sim.mission?.medal || "bronze", S.sim.difficulty);
-      S.campaign = recordDecisions(S.campaign, S.sim.flags);
-      if (last) { ending = endingFor(S.campaign); S.campaign = recordEnding(S.campaign, ending); }
+      S.campaign = recordIn(S.campaign, c, n, S.sim.mission?.clock ?? S.sim.time, S.sim.mission?.medal || "bronze", S.sim.difficulty);
+      if (main) S.campaign = recordDecisions(S.campaign, S.sim.flags);
+      if (main && last) { ending = endingFor(S.campaign); S.campaign = recordEnding(S.campaign, ending); }
       saveProgress(S.campaign);
       S.stagePick = last ? n : n + 1;
     }
     $("modal").classList.add("debrief-wide");
-    $("modal-content").innerHTML = A.missionUI.debriefHTML({ mission: m, index: n, total: MISSIONS.length, sim: S.sim, win, best: bestTime(S.campaign, n), hasNext: win && !last, stats: S.matchStats.stats, epilogue: ending });
+    $("modal-content").innerHTML = A.missionUI.debriefHTML({ mission: m, index: n, total: list.length, sim: S.sim, win, best: bestIn(S.campaign, c, n)?.time ?? null, hasNext: win && !last, stats: S.matchStats.stats, epilogue: ending,
+      ...(main ? {} : { label: `CHRONICLE · ${n + 1}/${list.length}`, complete: "Chronicle complete. Its lead now speaks at the end of the main campaign." }) });
     document.querySelector("#modal .modal").scrollTop = 0;
     $("modal").querySelector(".primary").focus({ preventScroll: true });
   }
@@ -138,14 +142,15 @@ export function setupMatchFlow(S, A) {
   function autosave() {
     if (!Z.started || S.sim.result || S.playMode === "training" || S.tutorial) return false;
     S.saveClock = 0;
-    return writeSave({ mode: S.playMode, missionId: S.activeStage !== null ? S.sim.missionDef?.id ?? MISSIONS[S.activeStage].id : S.sim.defence ? S.sim.missionDef.id : null, sim: S.sim });
+    return writeSave({ mode: S.playMode, missionId: S.activeStage !== null ? S.sim.missionDef?.id ?? missionsOf(S.campaignId)[S.activeStage].id : S.sim.defence ? S.sim.missionDef.id : null, sim: S.sim });
   }
 
   // Campaign: Start opens the mission briefing; the match begins from its "Begin mission".
   // The briefing reads the mission as this campaign plays it (earlier decisions settled).
   function openMissionBriefing() {
     Z.openBriefing();
-    A.missionUI.openBriefing(resolveMission(MISSIONS[S.stagePick], S.campaign), S.stagePick, { difficulty: S.settings.campaignDifficulty, onBegin: () => { Z.closeBriefing(); beginMatch(); }, onBack: () => Z.closeBriefing() });
+    const label = S.campaignId === "main" ? null : `CHRONICLE · ${S.stagePick + 1}/${missionsOf(S.campaignId).length}`;
+    A.missionUI.openBriefing(resolveMission(missionsOf(S.campaignId)[S.stagePick], S.campaign), S.stagePick, { label, difficulty: S.settings.campaignDifficulty, onBegin: () => { Z.closeBriefing(); beginMatch(); }, onBack: () => Z.closeBriefing() });
   }
 
   function beginMatch() {
@@ -205,7 +210,8 @@ export function setupMatchFlow(S, A) {
     // decision card when the save was taken while one was open. A story mission continues with
     // the mission data saved in the match (not today's), so it plays and replays exactly.
     $("continue").onclick = async () => {
-      const save = readSave(), index = save?.missionId && save.mode === "campaign" ? missionById(save.missionId)?.index ?? -1 : -1;
+      // A campaign save names its mission by id, in the main campaign or a Faction Chronicle (0.20).
+      const save = readSave(), found = save?.missionId && save.mode === "campaign" ? missionById(save.missionId) : null, index = found?.index ?? -1;
       const level = save?.mode === "defence" ? defenceLevel(save.missionId) : null;
       const loaded = save && (save.mode === "defence" ? !!level : save.mode !== "campaign" || index >= 0) ? Simulation.load(save.text) : null;
       if (!loaded) {
@@ -220,15 +226,16 @@ export function setupMatchFlow(S, A) {
       S.playMode = save.mode;
       S.sim = loaded;
       S.mapId = S.sim.terrain.id; S.enemyCount = S.sim.enemyCount; S.aiSpeed = S.sim.aiSpeed; S.alliance = S.sim.coalition ? "coalition" : "ffa";
-      S.mission = index >= 0 ? S.sim.missionDef || MISSIONS[index] : level;
+      S.mission = index >= 0 ? S.sim.missionDef || found.mission : level;
       // A loaded defence match keeps the level it was saved with (its options carry the definition).
       if (level) { S.mission = S.sim.missionDef; S.defencePick = Math.max(0, A.defenceIndex?.(level.id) ?? 0); }
       S.bonus = S.mission?.bonus || null;
       S.enemyFaction = S.mission ? "mirror" : enemyFactionOf(S.sim);
-      S.playerFaction = S.mission ? "meridian" : playerFactionOf(S.sim);
+      // A story mission's army is its factions[0] (a Faction Chronicle) or Meridian; a skirmish's is the saved choice.
+      S.playerFaction = playerFactionOf(S.sim);
       S.look = matchLook(S.mission, S.sim);
       if (!S.mission) { $("enemy-faction").value = S.enemyFaction; $("player-faction").value = S.playerFaction; }
-      if (index >= 0) S.stagePick = index;
+      if (index >= 0) { S.campaignId = found.campaign; S.stagePick = index; }
       const resumed = await restart(false, true);
       if (resumed === false) return;
       S.activeStage = index >= 0 ? index : null;

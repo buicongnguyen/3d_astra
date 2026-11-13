@@ -37,6 +37,8 @@ export function setupDebugHooks(S, A) {
       // Story missions and saves.
       mission: A.missionUI,
       get campaign() { return S.campaign; },
+      // Faction Chronicles (0.20): which campaign the list shows ("main" or a chronicle id), the pick and the mission playing.
+      get chronicle() { return { campaign: S.campaignId, pick: S.stagePick, active: S.activeStage }; },
       get cameraPan() { return S.cameraPan; },
       get pings() { return S.pings; },
       get endBeat() { return S.endBeat; },
