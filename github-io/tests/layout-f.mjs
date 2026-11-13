@@ -197,6 +197,9 @@ try {
       if (share < 0.55) problems.push(`${name}: free battlefield ${share.toFixed(2)} in a mission`);
     }
     await frontier(() => { const s = window.__frontier.sim, m = s.missionDef; for (const id of m.win) s.setObjective(id, 'done'); });
+    // Mission 1's win can stage a story scene first (0.19b); skip it as a player would, so a slow runner
+    // does not wait out the whole scene before the debrief.
+    await page.waitForFunction(() => { const f = window.__frontier; if (f.scene?.()?.open) f.skipScene(); return !!document.querySelector('.debrief') && getComputedStyle(document.querySelector('.debrief')).display !== 'none'; }, null, { timeout: 60000, polling: 250 }).catch(() => {});
     await page.locator('.debrief').waitFor({ state: 'visible' });
     const debrief = await page.evaluate(() => ({
       medal: !!document.querySelector('.debrief-head .medal-badge'),
