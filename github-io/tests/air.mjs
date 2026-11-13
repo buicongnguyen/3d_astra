@@ -1,4 +1,4 @@
-// 0.18 "Wings": flyers in the browser. A Meridian Kite trained at a level 2 Barracks flies straight
+// 0.18 "Wings": flyers in the browser. A Meridian Kite trained at a level 2 Command core flies straight
 // over the river, draws its ground shadow and spinning rotors at altitude, is selected where it is
 // drawn and its card says Air; a Hawk strafes ground troops and Rangers shoot it down; the Flak
 // research tile at the Command core; the field guide entry. No sideways scroll, text >= 11 px, taps
@@ -31,13 +31,13 @@ await suite("air", async () => {
     await page.waitForFunction(() => window.__frontier.started && window.__frontier.modelsReady && window.__frontier.view.models.has("kite"), null, { timeout: TIMEOUT.models });
     const dock = async (tab) => { if (mobile) { await tap(`#dock-tabs [data-dock="${tab}"]`); await page.waitForTimeout(120); } };
 
-    // 1. Train a Kite at a level 2 Barracks through its tile.
-    const barracks = await page.evaluate(() => {
+    // 1. Train a Kite at a level 2 Command core (the airfield: Harvester, Flak, Kite, own flyer) through its tile.
+    const core = await page.evaluate(() => {
       const f = window.__frontier, s = f.sim;
       s.aiEnabled = false;
       Object.assign(s.players[0], { alloy: 5000, energy: 5000 });
-      const b = s.own(0).find((e) => e.type === "barracks");
-      b.level = 2;
+      const b = s.own(0).find((e) => e.type === "hq");
+      b.level = 2; b.queue = [];
       f.select([b.id]);
       f.step(0.1);
       return b.id;
@@ -56,7 +56,8 @@ await suite("air", async () => {
       const k = s.own(0).find((e) => e.type === "kite");
       if (!k) throw new Error("Kite not trained");
       return { id: k.id, x: k.x, z: k.z };
-    }, barracks);
+    }, core);
+    assert.deepEqual(await page.locator("#commands [data-action]").evaluateAll((t) => t.map((b) => b.dataset.action)), ["worker", "flak", "kite", "hawk"], `${viewport}: the core's four tiles`);
 
     // 2. Straight over the river (z = 0) to the far bank; a ground unit could not stand where it passes.
     const flight = await page.evaluate((k) => {
@@ -187,7 +188,7 @@ await suite("air", async () => {
     await page.waitForFunction(() => window.__frontier.modelsReady, null, { timeout: TIMEOUT.models });
     await tap("#start");
     await page.waitForFunction(() => window.__frontier.started, null, { timeout: TIMEOUT.step });
-    await page.evaluate(() => window.__frontier.loadModels(["kite", "hawk", "balloon", "glider"]));
+    await page.evaluate(() => window.__frontier.view.preloadModels(["kite", "hawk", "balloon", "glider"]));
     await page.waitForFunction(() => ["kite", "hawk", "balloon", "glider"].every((t) => window.__frontier.view.models.has(t)), null, { timeout: TIMEOUT.models });
     for (const type of ["kite", "hawk", "balloon", "glider"]) {
       await page.evaluate((type) => {

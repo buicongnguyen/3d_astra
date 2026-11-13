@@ -21,7 +21,6 @@ test('before the choice the Foundry shows one Research slot; locked items name t
     'research:Research:ready:Pick 1 of 2',
     'engineer:Engineer:locked:Needs L2',
     'tank:Battle tank:locked:Needs L3',
-    'hawk:Hawk gunship:locked:Needs L3',
   ]);
   assert.deepEqual(view(s, b, true), ['upgrade:Damage +10%:ready', 'plating:Armor +12%:ready', 'back:Back:ready']);
 });
@@ -49,8 +48,8 @@ test('the slot moves forward: researching with progress, tier II (locked until F
   r = researchState(s, 0);
   assert.deepEqual([r.state, r.branch], ['done', 'weapons']);
   assert.equal(view(s, b, false)[1], 'upgrade2:Damage +19%:done:Active');
-  // The slot never adds a tile: four units (breaker, engineer, tank, the Meridian Hawk) and the one research slot.
-  assert.equal(view(s, b, false).length, 5);
+  // Four tiles at most: the slot never adds a fifth tile (phones show four).
+  assert.equal(view(s, b, false).length, 4);
 });
 
 test('Flak is a one-off Command core research: locked below L2, then researching, then done', () => {
@@ -58,7 +57,8 @@ test('Flak is a one-off Command core research: locked below L2, then researching
   s.players[0].alloy = s.players[0].energy = 5000;
   const hq = s.own(0).find((e) => e.type === 'hq');
   const tile = () => productionTiles(s, hq).tiles.map((t) => `${t.action}:${t.label}:${t.state}${t.sub ? ':' + t.sub : ''}`);
-  assert.deepEqual(tile(), ['worker:Harvester:ready', 'flak:Flak guns:locked:Needs L2']);
+  // The core is the airfield (0.18): four tiles, as many as a phone shows.
+  assert.deepEqual(tile(), ['worker:Harvester:ready', 'flak:Flak guns:locked:Needs L2', 'kite:Kite scout:locked:Needs L2', 'hawk:Hawk gunship:locked:Needs L3']);
   assert.equal(s.enqueue(hq.id, 'flak'), false);
   hq.level = 2;
   assert.equal(tile()[1], 'flak:Flak guns:ready');

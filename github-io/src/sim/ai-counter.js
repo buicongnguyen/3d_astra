@@ -39,27 +39,31 @@ export const aiCounter = {
     }
     return mix;
   },
-  // Air for the computer (0.18, sim/air.js), skirmish only (story rosters have no flyers):
+  // Air for the computer (0.18, sim/air.js), skirmish only (story rosters have no flyers). Flyers are
+  // trained at the Command core (it trains Harvesters first):
   //   answer   enemy flyers seen: Rangers (or the faction's swap, every one of them hits air) from the Barracks
   //   flak     after AIR.flak_after flyers seen, the Command core researches Flak (towers shoot flyers)
-  //   spotter  one Kite scout from a level 2 Barracks once the Foundry stands; it flies ahead of each attack
-  //   flyer    the faction's own flyer from the Foundry, at most AIR.ai_cap at a time, from the upgrade time on
-  aiAirChoice(team, b, army, choice, pace) {
-    if (!this.airAllowed()) return choice;
+  //   spotter  one Kite scout once the Foundry stands, replaced at most every 90 s; it flies ahead of each attack
+  //   flyer    the faction's own flyer, at most AIR.ai_cap at a time, from the upgrade time on (the Barracks saves for it)
+  // The flyer the core should train next, or null.
+  aiAirChoice(team, hq, army, pace) {
+    if (!this.airAllowed() || !hq?.complete || hq.levelJob) return null;
     const count = (pick) => army.filter(pick).length + this.own(team).reduce((n, e) => n + (e.queue || []).filter((q) => pick(D[q.type])).length, 0);
-    // A lost Kite is replaced at most every 90 s (aiKiteAt, created on first use).
-    if (b.type === "barracks" && b.level >= 2 && this.time > pace.foundryAt && this.own(team).some((e) => e.type === "foundry" && e.complete) &&
-      !count((e) => e.type === "kite") && this.time >= (this.aiKiteAt?.[team] ?? 0)) {
-      (this.aiKiteAt ||= {})[team] = this.time + 90;
-      return "kite";
+    const room = (type) => { const pop = this.population(team); return this.airCount(team) < AIR.cap && pop.used + pop.reserved + D[type].pop <= pop.cap; };
+    if (hq.level >= (D.kite.required_level || 1) && hq.trains?.includes("kite") && this.time > pace.foundryAt && this.own(team).some((e) => e.type === "foundry" && e.complete) &&
+      !count((e) => e.type === "kite") && this.time >= (this.aiKiteAt?.[team] ?? 0) && room("kite")) return "kite";
+    if (this.time > pace.upgradeAt) {
+      const own = (this.factionFor(team).extra?.hq || []).find((type) => hq.trains?.includes(type));
+      if (own && hq.level >= (D[own].required_level || 1) && count((e) => e.flying && e.damage > 0) < AIR.ai_cap && room(own)) return own;
     }
-    if (b.type === "foundry" && this.time > pace.upgradeAt) {
-      const own = (this.factionFor(team).extra?.foundry || []).find((type) => b.trains?.includes(type));
-      const pop = this.population(team);
-      if (own && b.level >= (D[own].required_level || 1) && count((e) => e.flying && e.damage > 0) < AIR.ai_cap && this.airCount(team) < AIR.cap &&
-        pop.used + pop.reserved + D[own].pop <= pop.cap) return own;
-    }
-    return choice;
+    return null;
+  },
+  // Trains that flyer when the core is free and the team has it to spare (its price plus 100 alloy and 50
+  // energy, so upgrades are not starved). A Kite's replacement waits 90 s (aiKiteAt, created on first use).
+  aiAirTrain(team, hq, army, pace, afford) {
+    const type = hq && !hq.queue.length ? this.aiAirChoice(team, hq, army, pace) : null;
+    if (!type || !afford([D[type].cost[0] + 100, D[type].cost[1] + 50]) || !this.enqueue(hq.id, type)) return;
+    if (type === "kite") (this.aiKiteAt ||= {})[team] = this.time + 90;
   },
   aiFlak(team, hq) {
     const pl = this.players[team];

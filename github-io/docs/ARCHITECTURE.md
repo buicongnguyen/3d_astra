@@ -18,6 +18,7 @@ Three.js r185 and Vite. The game is a static site; there is no server.
 | `sim/ai-attack.js` | Field command for the AI (0.15.0): gather at a rally point, launch on seen odds, retreat losing waves, target priority, seeded second group, faction personas |
 | `sim/tactics.js` | Veterancy, stances, unit abilities |
 | `sim/missions.js` | Mission engine (format in [MISSIONS.md](MISSIONS.md)) |
+| `sim/air.js` | Air (0.18): `canHit` (only `hits_air` units, and towers after Flak, target flyers), straight flight inside the map, the air cap count, `airSeenBy` (hostile teams whose sight reaches a flyer). The hooks sit in movement, combat, height, vision, orders, points and the AI; all of them run only for flyers |
 
 Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `progression.js` (building levels, shields), `navigation.js` (A*, obstacle buckets), `coalitionPlan`.
 

@@ -119,14 +119,18 @@ export function bakedMaterial(reflective) {
   bakedShared.set(reflective, m);
   return m;
 }
-export function bakeFinishes(root) {
+// `compact` (flyers, 0.18): small craft seen from far above, so each rigid group bakes into ONE mesh,
+// glass included and metal and paint together (the reflective material if any part reflects).
+export function bakeFinishes(root, { compact = false } = {}) {
   const groups = new Map();
   root.traverse((o) => {
     const m = o.material;
-    if (!o.isMesh || Array.isArray(m) || !m.isMeshStandardMaterial || KEEP_FINISH.test(m.name) || m.map || m.transparent || m.emissive?.getHex()) return;
-    const key = `${o.parent.uuid}|${reflects(m)}`;
+    if (!o.isMesh || Array.isArray(m) || !m.isMeshStandardMaterial || (compact ? /^(Team|Lamp|Energy|Flame)/ : KEEP_FINISH).test(m.name) || m.map || (m.transparent && !compact) || (m.emissive?.getHex() && !(compact && m.name.startsWith("Glass")))) return;
+    const key = compact ? o.parent.uuid : `${o.parent.uuid}|${reflects(m)}`;
     if (!groups.has(key)) groups.set(key, { parent: o.parent, reflective: reflects(m), meshes: [] });
-    groups.get(key).meshes.push(o);
+    const group = groups.get(key);
+    group.reflective ||= reflects(m);
+    group.meshes.push(o);
   });
   for (const { parent, reflective, meshes } of groups.values()) {
     if (meshes.length < 2) continue;
@@ -483,6 +487,16 @@ export class WorldView {
     this.modelQueue = operation;
     return operation.finally(() => { this.modelsReady = this.hasModels(this.requiredModels); });
   }
+  // Models a match may need later (its flyers, model-roster.js airModelsFor): parsed in the background
+  // after whatever is queued, without touching requiredModels or modelsReady, so the frame never waits.
+  // An entity whose model has not arrived yet is simply drawn once it has (see update()).
+  preloadModels(types) {
+    const missing = types.filter((type) => /^[a-z][a-z0-9_-]*$/.test(type) && !this.models.has(type));
+    if (!missing.length) return Promise.resolve();
+    const operation = this.modelQueue.catch(() => {}).then(() => this.prepareModels(missing));
+    this.modelQueue = operation;
+    return operation.catch(() => {});
+  }
   async prepareModels(types, onProgress) {
     const loader = new GLTFLoader(), total = types.length + 1;
     let loaded = types.filter((type) => this.models.has(type)).length + (this.environmentAssets ? 1 : 0);
@@ -512,6 +526,9 @@ export class WorldView {
             turretBuckets = new Map(), // vehicles: Turret_head* parts turn about Turret_pivot
             legs = [];
           template.userData.hover = !!gltf.scene.getObjectByName("hover");
+          const flyer = !!D[type]?.flying;
+          let teamPaint = null;
+          if (flyer) gltf.scene.traverse((o) => { if (o.isMesh && o.material.name.startsWith("Team") && !o.material.name.startsWith("TeamGlow")) teamPaint ||= o.material; });
           let pivot = null;
           gltf.scene.traverse((o) => { if (o.name.startsWith("Turret_pivot")) pivot = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld); });
           gltf.scene.traverse((o) => {
@@ -531,10 +548,13 @@ export class WorldView {
             }
             // Keep the existing named Blender cannon pieces articulated while
             // still merging the barrel's materials into a compact rig.
-            const rigged=RIG_PART.test(o.name),target=rigged?(pivot&&/^Turret_head/i.test(o.name)?turretBuckets:barrelBuckets):buckets;
-            const key = o.material.name;
+            // (A flyer's guns stay part of its body: the whole craft kicks back when it fires.)
+            const rigged=RIG_PART.test(o.name)&&!flyer,target=rigged?(pivot&&/^Turret_head/i.test(o.name)?turretBuckets:barrelBuckets):buckets;
+            // Flyers: their small team lights join the team paint (one team-coloured draw per craft, not two).
+            const glowAsPaint = flyer && teamPaint && o.material.name.startsWith("TeamGlow");
+            const key = glowAsPaint ? teamPaint.name : o.material.name;
             if (!target.has(key))
-              target.set(key, { material: o.material, geometries: [] });
+              target.set(key, { material: glowAsPaint ? teamPaint : o.material, geometries: [] });
             const geometry = o.geometry.clone().applyMatrix4(o.matrixWorld);
             if (rigged && pivot) geometry.translate(-pivot.x, 0, -pivot.z);
             target.get(key).geometries.push(geometry);
@@ -559,7 +579,7 @@ export class WorldView {
             }
             turret.add(barrel);template.add(turret);
           }else template.add(barrel);
-          bakeFinishes(template);
+          bakeFinishes(template, { compact: flyer });
           shareRotorGeometry(legs);
           // Only Team/TeamGlow materials vary by faction. Share the other finishes
           // so identical armour, tyres and suits can join one batch across armies.

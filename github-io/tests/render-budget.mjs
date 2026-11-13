@@ -21,13 +21,14 @@ const scenarios = [
   // The same phone battle with three rivals, first on the mirror roster and then one faction each (package 2.6).
   {name:'three-rivals-eco', map:'riverlands', enemies:3, teams:4, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
   {name:'three-factions-eco', map:'riverlands', enemies:3, teams:4, faction:'mixed', mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
-  // 0.18: the phone battle with the air cap in play, 4 flyers per side (Kites, Hawks and Ember balloons):
-  // flyers add their parts, rotors and one blob-shadow draw, and must stay within 10% of battle-eco's budget.
-  {name:'air-battle-eco', map:'riverlands', enemies:1, faction:'ashfall', mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60,
-    air:[['kite',0],['kite',0],['hawk',0],['hawk',0],['kite',1],['kite',1],['balloon',1],['balloon',1]]},
+  // 0.18: battle-eco with the air cap in play, 4 flyers per side (2 Kites and 2 Hawks each). Flyers add a
+  // body, a team paint and a rotor batch per type and one blob-shadow draw for all: at most 10% over
+  // battle-eco's 107 draws (2026-11-13).
+  {name:'air-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60,
+    air:[['kite',0],['kite',0],['hawk',0],['hawk',0],['kite',1],['kite',1],['hawk',1],['hawk',1]]},
 ];
 const results = [];
-const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'air-battle-eco':132};
+const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'air-battle-eco':118};
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -46,6 +47,8 @@ try {
     await page.selectOption('#enemy-count', String(scenario.enemies));
     if (scenario.faction) await page.selectOption('#enemy-faction', scenario.faction);
     await page.waitForFunction(() => window.__frontier.modelsReady, null, {timeout:90000});
+    // Flyer models load in the background in play (WorldView.preloadModels); here, before the frozen scene.
+    if (scenario.air) await page.evaluate(types => window.__frontier.view.preloadModels(types), [...new Set(scenario.air.map(([type]) => type))]);
     await page.evaluate(scenario => {
       window.__freezeFrames = true;
       const f = window.__frontier;

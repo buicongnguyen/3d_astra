@@ -33,26 +33,49 @@ test('flyers are four units of class air; every faction keeps at least two unit 
   assert.ok(!roster('wardens').some((t) => ['hawk', 'balloon', 'glider'].includes(t)));
 });
 
-test('own flyers join the faction\'s Foundry; the Barracks trains Kites at level 2', () => {
+test('the Command core is the airfield: Flak, the Kite at level 2 and the faction\'s own flyer; four tiles at most', () => {
   const s = new Simulation({ ai: false, factions: { 0: 'ashfall', 1: 'sunward' } });
-  const a = s.spawn('foundry', 0, -20, 30), b = s.spawn('foundry', 1, 20, -30);
-  assert.ok(a.trains.includes('balloon') && !a.trains.includes('hawk') && !a.trains.includes('glider'));
-  assert.ok(b.trains.includes('glider') && !b.trains.includes('balloon'));
-  const barracks = s.own(0).find((e) => e.type === 'barracks');
-  assert.equal(barracks.trains.at(-1), 'kite');
+  const core = (team) => s.own(team).find((e) => e.type === 'hq');
+  assert.deepEqual(core(0).trains, ['worker', 'flak', 'kite', 'balloon']);
+  assert.deepEqual(core(1).trains, ['worker', 'flak', 'kite', 'glider']);
   s.players[0].alloy = s.players[0].energy = 5000;
-  assert.equal(s.enqueue(barracks.id, 'kite'), false);
+  assert.equal(s.enqueue(core(0).id, 'kite'), false);
   assert.match(lastMessage(s), /level 2/);
+  core(0).level = 2;
+  assert.ok(s.enqueue(core(0).id, 'kite'));
+  // Barracks and Foundry keep their four tiles (a phone shows four).
+  for (const faction of Object.keys(FACTION_RULES)) {
+    const f = new Simulation({ ai: false, factions: { 0: faction } });
+    for (const type of ['hq', 'barracks', 'foundry']) {
+      const b = f.own(0).find((e) => e.type === type) || f.spawn(type, 0, -20, 30);
+      assert.ok(b.trains.filter((t) => !['upgrade2', 'plating', 'plating2'].includes(t)).length <= 4, `${faction} ${type}: ${b.trains}`);
+    }
+  }
   // The default Meridian lists stay the definitions' own (saves keep slimming them).
   const m = new Simulation({ ai: false });
+  assert.equal(m.own(0).find((e) => e.type === 'hq').trains, D.hq.trains);
   assert.equal(m.own(0).find((e) => e.type === 'barracks').trains, D.barracks.trains);
   assert.equal(m.spawn('foundry', 0, -20, 30).trains, D.foundry.trains);
   // Story missions keep their rosters unless rules.air is set.
   const story = new Simulation({ ai: false, mission: { id: 'x', rules: {}, objectives: [], setup: [], win: [], triggers: [] } });
-  assert.ok(!story.own(0).find((e) => e.type === 'barracks').trains.includes('kite'));
+  assert.deepEqual(story.own(0).find((e) => e.type === 'hq').trains, ['worker']);
   assert.ok(!story.unitRoster(0).includes('kite'));
   const sky = new Simulation({ ai: false, mission: { id: 'y', rules: { air: true }, objectives: [], setup: [], win: [], triggers: [] } });
-  assert.ok(sky.own(0).find((e) => e.type === 'barracks').trains.includes('kite'));
+  assert.equal(sky.own(0).find((e) => e.type === 'hq').trains, D.hq.trains);
+  // A story unlock of another side's flyer joins the core.
+  story.unlockUnits(0, ['balloon']);
+  assert.ok(story.own(0).find((e) => e.type === 'hq').trains.includes('balloon'));
+});
+
+test('flyer models load after the match starts; story missions need none unless rules.air', async () => {
+  const { modelsForMatch, airModelsFor } = await import('../src/model-roster.js');
+  const s = new Simulation({ ai: false, factions: { 0: 'meridian', 1: 'ashfall' } });
+  assert.ok(!modelsForMatch(s).some((t) => D[t]?.flying), 'the start waits for no flyer');
+  assert.deepEqual(airModelsFor(s).sort(), ['balloon', 'hawk', 'kite']);
+  assert.deepEqual(airModelsFor(new Simulation({ ai: false, mission: { id: 'x', rules: {}, objectives: [], setup: [], win: [], triggers: [] } })), []);
+  // A flyer already on the field (a loaded save, a mission spawn) is required up front.
+  put(s, 'hawk', 0, 0, 30);
+  assert.ok(modelsForMatch(s).includes('hawk'));
 });
 
 test('a flyer flies straight over the river, walls and a plateau, inside the map', () => {
@@ -188,18 +211,19 @@ test('the army below sees and shoots an enemy flyer over a hidden plateau cell (
 test('air cap: four flyers per side, counting the queue; flyers cost supply', () => {
   const s = quiet();
   s.players[0].alloy = s.players[0].energy = 20000;
-  const barracks = s.own(0).find((e) => e.type === 'barracks');
-  barracks.level = 2;
-  for (const e of s.own(0)) if (e.type === 'hq') e.supply = 60;
+  const core = s.own(0).find((e) => e.type === 'hq');
+  core.level = 3;
+  core.supply = 60;
   put(s, 'kite', 0, -20, 30);
-  for (let i = 0; i < 3; i++) assert.ok(s.enqueue(barracks.id, 'kite'), `kite ${i + 2}`);
+  for (let i = 0; i < 2; i++) assert.ok(s.enqueue(core.id, 'kite'), `kite ${i + 2}`);
+  assert.ok(s.enqueue(core.id, 'hawk'));
   assert.equal(s.airCount(0), 4);
   const pop = s.population(0);
-  assert.equal(pop.reserved, 3 * D.kite.pop);
-  assert.equal(s.enqueue(barracks.id, 'kite'), false);
+  assert.equal(pop.reserved, 2 * D.kite.pop + D.hawk.pop);
+  assert.equal(s.enqueue(core.id, 'kite'), false);
   assert.match(lastMessage(s), /Air limit reached: 4 flyers/);
-  s.cancelQueue(barracks.id, 0);
-  assert.ok(s.enqueue(barracks.id, 'kite'));
+  s.cancelQueue(core.id, 0);
+  assert.ok(s.enqueue(core.id, 'kite'));
 });
 
 test('flyers never take a capture point', () => {
@@ -248,16 +272,21 @@ test('the computer answers flyers: Flak after two seen, units that hit air, and 
   // Barracks training answers air with a unit that hits air.
   const barracks = s.own(1).find((e) => e.type === 'barracks');
   assert.ok(D[s.typeFor(1, s.counterChoice(1, barracks, s.own(1).filter((e) => e.kind === 'unit' && e.type !== 'worker'), 'vanguard'))].hits_air);
-  // With a Foundry up and a level 2 Barracks it keeps one Kite.
-  const f = s.spawn('foundry', 1, hq.x + 8, hq.z - 8);
-  barracks.level = 2;
+  // With a Foundry up, the core keeps one Kite.
+  s.spawn('foundry', 1, hq.x + 8, hq.z - 8);
+  hq.queue = [];
   s.time = Math.max(s.time, s.paceFor(1).foundryAt + 1);
-  assert.equal(s.aiAirChoice(1, barracks, [], 'ranger', s.paceFor(1)), 'kite');
-  // Its own flyer from the Foundry (Meridian: the Hawk at level 3), capped.
-  f.level = 3; s.time = Math.max(s.time, s.paceFor(1).upgradeAt + 1);
-  assert.equal(s.aiAirChoice(1, f, [], 'breaker', s.paceFor(1)), 'hawk');
-  const two = [{ flying: true, damage: 5 }, { flying: true, damage: 5 }];
-  assert.equal(s.aiAirChoice(1, f, two, 'breaker', s.paceFor(1)), 'breaker');
+  assert.equal(s.aiAirChoice(1, hq, [], s.paceFor(1)), 'kite');
+  // Then its own flyer (Meridian: the Hawk, at a level 3 core), at most two.
+  const kite = [{ type: 'kite', flying: true, damage: 0 }];
+  assert.equal(s.aiAirChoice(1, hq, kite, s.paceFor(1)), null, 'a level 2 core has no Hawk yet');
+  hq.level = 3; s.time = Math.max(s.time, s.paceFor(1).upgradeAt + 1);
+  assert.equal(s.aiAirChoice(1, hq, kite, s.paceFor(1)), 'hawk');
+  const two = [...kite, { flying: true, damage: 5 }, { flying: true, damage: 5 }];
+  assert.equal(s.aiAirChoice(1, hq, two, s.paceFor(1)), null);
+  // Story missions: never.
+  const story = new Simulation({ ai: true, mission: { id: 'x', rules: {}, objectives: [], setup: [], win: [], triggers: [] } });
+  assert.equal(story.aiAirChoice(1, story.own(1).find((e) => e.type === 'hq'), [], story.paceFor(1)), null);
 });
 
 test('flyers are drawn at altitude: shots to and from them say so, and the Kite detects cloaks', () => {
