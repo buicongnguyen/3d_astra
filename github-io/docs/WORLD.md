@@ -146,6 +146,19 @@ The Commander still never speaks, but three times gives an order that the story 
 
 Two or more merciful orders lead to **The Open Frontier**: the Keystone is shared and the four camps sign a truce. Fewer lead to **The Meridian Line**: Meridian holds the Keystone and the frontier alone. Neither is good or bad. The finale's last objective and closing lines follow the ending, and five epilogue cards (Vale, Sol, Hale, Maren, ECHO) close it. Every line is listed for review in `docs/aaa/review/story-lines.md`.
 
+## Faction Chronicles (0.20)
+
+Four short campaigns tell the same war from the other camps (data: `src/story/chronicles.js`; format in [MISSIONS.md](MISSIONS.md)). They open after mission 4. In a chronicle the player commands that faction, and its people never say "Commander":
+
+| Chronicle | Lead | The player is | Its three missions |
+|---|---|---|---|
+| Ashfall: *Salvage Rights* | Hale | his Foreman | Cold Berths (day 3: raider camps strip the wrecks), Lights Out (day 4: mission 1's relay from Hale's side), The Scrapyard Gorge (day 44: holding the berth cores against Meridian columns) |
+| Sunward: *The Long Road* | Sol | her Wagon-master | Dry Wells (day 11: Ashfall pumps on the oases), Three-Way Dunes (mission 4 from Sol's side, the truce), The Verdant Road (day 22: the Pact's north road; Okoro's "one circuit" starts Sol's doubt) |
+| Wardens: *ECHO's Key* | ECHO | Warden-prime | Standing Orders (day 18: ECHO, still asleep, keeps the Keystone quiet), A Grey Coat (day 40: Hale holds the key; "obey, but count"), Hold the River (day 52: the river against Meridian while the crystals fade) |
+| Veil: *The Quiet Survey* | Maren | her Surveyor | Night Count (night 9: Ashfall beacons on the plateau), One Circuit (day 22: the forest relay's records), Inside the Dampers (mission 10 from inside; the Crown lights with no storm) |
+
+A finished chronicle adds one line by its lead to the finale's closing lines. Enemies who speak in a chronicle (Vale and Okoro for Meridian, Hale, Sol) keep their own voices; Meridian's people still call their own leader "Commander".
+
 ## Writing rules
 
 - Lines are under 140 characters. One idea per line. No filler, no jokes about the game itself.
