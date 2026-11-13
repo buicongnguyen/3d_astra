@@ -43,6 +43,17 @@ export const SCENES = {
       { say: { who: "vale", text: "Both columns are turning toward the centre oasis, Commander. Together." } },
     ],
   },
+  // Wings over Copper (0.18.3): the first Ember balloon drifts over the copper works.
+  "first-balloon": {
+    letterbox: true,
+    beats: [
+      { camera: { at: "refinery", zoom: 1.15, seconds: 2.2 } },
+      { fx: { flash: "alarm" } },
+      { say: { who: "okoro", text: "There, over the rim! A balloon with a fire under it, drifting straight at the refinery." } },
+      { say: { who: "vale", text: "Ember balloons. Our towers cannot aim that high. Rangers and Anti-tank soldiers can." } },
+      { say: { who: "vale", text: "Research Flak at the Command core, and every tower will shoot at the sky." } },
+    ],
+  },
   // Mission 8: the vault door opens and ECHO tells the truth.
   "echo-wakes": {
     letterbox: true,

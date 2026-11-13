@@ -527,8 +527,99 @@ export const MISSIONS = [
     design: "Delivery quota in about 11 minutes against one AI that plays Relaxed for 4 minutes and Normal after. Intended: go to 14-16 Harvesters fast, defend them with towers and an army that goes out to meet raiders, and expand to the north-west seam (capture point pays 3 alloy a second). The quota comes in two steps (3000 alloy, then 8000 alloy and 2600 energy in total) so the story beat lands at the first: crystals grow near a live relay. Scripted raids of 6 units hit the seam (at the first step) and the home yard (10:00). The 20-minute storm limit is generous; gold needs a clean economy. Since 0.19b two Veil scouts (Watchers, a setup garrison) watch the basin from the north-west rim, out of every road: Okoro spots them at 3:20 and Vale names them if the player goes close (the Veil appears before mission 10). The plan asked for a fight at a ford here, but the Copper Basin has no river (and mission 7 shares the map), so the ford is not used.",
   },
 
-  // TODO(0.18 air merge): "Wings over Copper" (id "m06b-wings-over-copper", reserved in
-  // src/story/defence-missions.js), the first air raid, goes here once the air units are merged.
+  // The first air raid (0.18.3 / 0.19b.3): Hale's Ember balloons over the copper works. `rules.air`
+  // lets the player train Kites and Hawks and research Flak at the Command core.
+  {
+    id: "m06b-wings-over-copper",
+    act: 2,
+    title: "Wings over Copper",
+    map: "basin",
+    enemies: 1, speed: "relaxed", alliance: "ffa",
+    factions: { 1: "ashfall" },
+    rules: { ai: "home", playerBase: true, enemyBase: true, rosters: true, air: true },
+    briefing: {
+      place: "Copper Basin, day 32",
+      lines: [
+        { who: "vale", text: "The Basin relay is awake, and Okoro has built a refinery beside the new crystal growth." },
+        { who: "okoro", text: "Last night I saw lights drifting over the east rim. Slow, warm lights. They were not stars, Commander." },
+        { who: "vale", text: "Hale cannot break our towers on the ground. If he comes through the air, we need guns that point up." },
+      ],
+      intel: [
+        "Ember balloons fly over walls and towers and bomb buildings. The Copper refinery must not fall.",
+        "Only Rangers, Anti-tank soldiers and Hawk gunships can shoot flyers. Towers can after Flak.",
+        "Research Flak at a level 2 Command core. A level 3 core builds Hawk gunships.",
+        "Guard the refinery through three raids, then burn the balloon yard on the east rim.",
+      ],
+    },
+    regions: {
+      refinery: { x: -24, z: 22, r: 6 },
+      skyWatch: { x: -24, z: 22, r: 24 },
+      yard: { x: 48, z: 6, r: 8 },
+    },
+    setup: [
+      // Beside the Basin relay's new crystal, in the relay yard of missions 6 and 7.
+      { spawn: "relay", team: 0, at: "refinery", tag: "refinery", name: "Copper refinery", hp: 2000, hpByDifficulty: { story: 2400 } },
+      { spawn: "tower", team: 0, at: { x: -17, z: 18 } },
+      { spawn: "worker", team: 0, at: { x: -30, z: 16 }, count: 2 },
+      // The balloon yard on the east rim, with its guard.
+      { spawn: "salvageyard", team: 1, at: "yard", tag: "balloonYard", name: "Balloon yard", hp: 3000 },
+      { spawn: "tower", team: 1, at: { x: 42, z: 12 } },
+      { spawn: "tower", team: 1, at: { x: 47, z: -2 } },
+      { spawn: "vanguard", team: 1, at: { x: 42, z: 6 }, count: 4 },
+      { spawn: "ranger", team: 1, at: { x: 44, z: 0 }, count: 3 },
+      { spawn: "antitank", team: 1, at: { x: 52, z: 10 }, count: 1 },
+      { resources: { alloy: 600, energy: 250 } },
+    ],
+    objectives: [
+      { id: "raids", text: "Guard the Copper refinery through three air raids", type: "survive", seconds: 480 },
+      { id: "yard", text: "Destroy the balloon yard on the east rim", type: "destroyTag", tag: "balloonYard", hidden: true },
+      { id: "fast", text: "Finish in under 13 minutes", type: "timeUnder", seconds: 780, optional: true },
+    ],
+    win: ["raids", "yard"],
+    lose: [{ type: "coreLost" }, { type: "tagLost", tag: "refinery" }, { type: "time", seconds: 1200 }],
+    triggers: [
+      { when: { time: 5 }, do: [{ say: { who: "vale", text: "Rangers to the refinery, Commander. Whatever is coming will come for the copper." } }, { ping: "refinery" }] },
+      { when: { time: 50 }, do: [{ say: { who: "okoro", text: "The lights are rising over the east rim again. Big and slow, and coming this way." } }, { ping: "yard" }] },
+      { when: { time: 100 }, do: [
+        { say: { who: "hale", text: "Meridian camp. Your refinery feeds a relay that starves my fleet. My balloons will close it tonight." } },
+        { music: "tense" },
+        { wave: { team: 1, units: { balloon: 2 }, from: "yard", target: "refinery" } },
+      ] },
+      // The first balloon over the copper works: a short staged scene (src/story/scenes.js).
+      { when: { enter: "skyWatch", team: 1 }, do: [{ scene: "first-balloon" }] },
+      { when: { time: 170 }, do: [{ say: { who: "okoro", text: "Our Foundry crew drew a gunship from the Ashfall wrecks. A level 3 core can build Hawks for us." } }] },
+      { when: { time: 240 }, do: [
+        { say: { who: "okoro", text: "Kites in front! Spotters. They count your guns for the balloons behind them." } },
+        { wave: { team: 1, units: { kite: 2, balloon: 2 }, from: "yard", target: "refinery" } },
+        { wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "enemyBase", target: "refinery" } },
+      ] },
+      { when: { tagHpBelow: { tag: "refinery", percent: 50 } }, do: [{ say: { who: "okoro", text: "The refinery is burning! Shoot the balloons down first, Commander. I can mend the rest." } }, { ping: "refinery" }] },
+      { when: { time: 390 }, do: [
+        // Mission 3's alloy: Hale remembers it, but the third raid still comes.
+        { if: { flag: "m03-alloy", is: "keep" }, say: { who: "hale", text: "You kept our alloy on the Ashen Line. I am collecting it tonight, Commander, from the air." } },
+        { if: { flag: "m03-alloy", is: "return" }, say: { who: "hale", text: "You returned our alloy once. I aim at the refinery, not at your people. That is all I can offer." } },
+        { music: "battle" },
+        { wave: { team: 1, units: { balloon: 3, kite: 1 }, from: "yard", target: "refinery" } },
+        { wave: { team: 1, units: { vanguard: 5, antitank: 1 }, from: "enemyBase", target: "refinery" } },
+      ] },
+      { when: { objective: "raids", is: "done" }, do: [
+        { reveal: "yard" }, { ping: "yard" },
+        { say: { who: "vale", text: "Three raids beaten. The balloons rise from a yard on the east rim. Burn it before Hale builds more." } },
+        { wave: { team: 1, units: { balloon: 1 }, from: "yard", target: "playerBase" } },
+      ] },
+      { when: { tagHpBelow: { tag: "balloonYard", percent: 50 } }, do: [{ say: { who: "hale", text: "My yard is burning. Noted, Commander. Two weeks of work, gone in one evening." } }] },
+      { when: { objective: "yard", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "The yard is down! No more balloons tonight. And look, the cloth is Sunward silk." } }] },
+    ],
+    debrief: {
+      win: [
+        { who: "vale", text: "The yard is ash and the sky over the basin is ours. Hale has learned that we look up now." },
+        { who: "okoro", text: "Sunward silk, Ashfall burners. One balloon, two camps. The Pact is closer than we thought." },
+      ],
+      lose: [{ who: "vale", text: "The refinery burned, and the copper with it. We rebuild, and next time we watch the sky first." }],
+    },
+    medals: { gold: { seconds: 540 }, silver: { seconds: 720 } },
+    design: "The first air raid, 9 to 12 minutes against one Ashfall AI that stays home (rules.ai \"home\": the script sends every raid). rules.air: the Command core offers Kite, Hawk and Flak. The player starts with the usual camp, 600 alloy, the Copper refinery in the relay yard 19 m from the core (2000 HP, 2400 on Story; it must not fall), a tower beside it and two more Harvesters. Three raids come from the balloon yard on the east rim: 2 Ember balloons at 1:40, 2 Kites and 2 balloons with 6 ground troops at 4:00, and 3 balloons and a Kite with 6 ground troops at 6:30. The first flyer over the copper works plays the scene first-balloon. Intended: Rangers (and Anti-tank soldiers at a level 2 Barracks) beside the refinery, the core to level 2 and Flak so the towers join in, Hawks optional at level 3. After 8 minutes the yard is revealed (3000 HP, two towers, 4 Scrappers, 3 Rangers and an Anti-tank soldier, 45 m from the Ashfall core) and one more balloon goes for the camp. The objective bot wins at about 8:30 on every difficulty (it has a large army by then); medals follow it. Mission 3's alloy changes one Hale line. The client shows an anti-air hint when the first flyer appears and the player has nothing that hits air.",
+  },
 
   {
     id: "m07-copper-siege",

@@ -209,4 +209,51 @@ await suite("air", async () => {
     assert.deepEqual(errors, [], `${viewport}: page errors`);
     await page.close();
   }
+
+  // 8. Air waves in Frontier Defence (0.18.3): Gorge Road's ninth wave brings Kites and Ember balloons
+  // up the road. With only Breaker crews the anti-air hint names the crews that hit air; Ranger and
+  // Anti-tank crews then shoot the flyers. A mid-wave photograph with flyers on the road.
+  for (const viewport of ["desktop", "portrait"]) {
+    const { page, goto, ready, tap, errors } = await openPage(browser, viewport);
+    await goto();
+    await ready();
+    await tap('[data-mode="defence"]');
+    await page.waitForSelector("#defence-setup .defence-levels");
+    await tap('[data-level-id="d-gorge"]');
+    await page.waitForFunction(() => window.__frontier.modelsReady && !document.querySelector("#start").disabled, null, { timeout: TIMEOUT.models });
+    await tap("#start");
+    await page.waitForFunction(() => window.__frontier.started && window.__frontier.sim.defence && document.querySelector("#defence-bar:not([hidden])"), null, { timeout: TIMEOUT.models });
+    const staged = await page.evaluate(() => {
+      const f = window.__frontier, s = f.sim, def = s.missionDef.defence;
+      s.players[0].alloy = 9000;
+      for (const p of def.pads.slice(0, 3)) s.command({ team: 0, type: "padBuild", pad: p.id, crew: "breaker" });
+      s.defence.queue.length = 0;
+      s.defence.wave = 8;
+      s.startWave();
+      for (let i = 0; i < 120 && !s.entities.some((e) => e.team === 1 && e.flying && e.hp > 0 && s.isVisible(e, 0)); i++) f.step(0.5);
+      return { air: s.missionDef.rules.air, flyers: s.entities.filter((e) => e.team === 1 && e.flying && e.hp > 0).map((e) => e.type) };
+    });
+    assert.equal(staged.air, true);
+    assert.ok(staged.flyers.includes("kite"), `${viewport}: Kites on the road ${staged.flyers}`);
+    await page.waitForFunction(() => { const h = document.querySelector("#fight-hint"); return h && !h.hidden && /Flyers on the road/.test(h.textContent); }, null, { timeout: TIMEOUT.step });
+    assert.match(await page.locator("#fight-hint .fh-text").textContent(), /Breaker crews cannot hit them/);
+    assert.ok(parseFloat(await page.locator("#fight-hint .fh-text").evaluate((el) => getComputedStyle(el).fontSize)) >= 11, "hint text 11 px or more");
+    const fight = await page.evaluate(() => {
+      const f = window.__frontier, s = f.sim, def = s.missionDef.defence;
+      def.pads.filter((p) => !s.towerOn(p.id)).slice(0, 6).forEach((p, i) => s.command({ team: 0, type: "padBuild", pad: p.id, crew: i % 2 ? "antitank" : "ranger" }));
+      for (let i = 0; i < 40 && !s.entities.some((e) => e.team === 1 && e.type === "balloon" && e.hp > 0); i++) f.step(0.5);
+      const flyer = s.entities.find((e) => e.team === 1 && e.type === "balloon" && e.hp > 0) || s.entities.find((e) => e.team === 1 && e.flying && e.hp > 0);
+      if (flyer) f.view.focusOn(flyer.x, flyer.z);
+      f.select([]);
+      return { hitsAir: s.entities.filter((e) => e.team === 0 && e.crew && e.hits_air).map((e) => e.crew), breakers: s.entities.filter((e) => e.team === 0 && e.crew === "breaker" && e.hits_air).length, flyers: s.entities.filter((e) => e.team === 1 && e.flying && e.hp > 0).length };
+    });
+    assert.ok(fight.hitsAir.includes("ranger") && fight.hitsAir.includes("antitank"), JSON.stringify(fight));
+    assert.equal(fight.breakers, 0, "Breaker crews never hit air");
+    assert.ok(fight.flyers >= 1, `${viewport}: flyers mid-wave`);
+    await page.waitForTimeout(700);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false, `${viewport}: no sideways scroll`);
+    await shot(page, `air-defence-gorge-flyers-${viewport}`);
+    assert.deepEqual(errors, [], `${viewport} Gorge Road flyers: page errors`);
+    await page.close();
+  }
 }, { browser });

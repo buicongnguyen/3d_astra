@@ -200,6 +200,9 @@ export const defence = {
       if (b.mark) s.beacon = { taken: b.mark.taken, seconds: b.mark.seconds };
       if (b.burn && s.burn) s.burn = { ...s.burn, dps: s.burn.dps * (b.burn.dps ?? 1), radius: s.burn.radius + (b.burn.radius ?? 0), seconds: s.burn.seconds * (b.burn.seconds ?? 1) };
     }
+    // Air waves (0.18.3): in a level with rules.air, a crew whose unit hits air (Ranger, Anti-tank,
+    // Watcher; never Breaker) makes the tower hit flyers too (sim/air.js canHit; towers do ×AIR.flak_bonus).
+    if (d.hits_air && this.airAllowed()) s.hits_air = true;
     return s;
   },
   padById(id) {
@@ -405,7 +408,8 @@ export const defence = {
     const dx = target.x - e.x, dz = target.z - e.z, d = hyp(dx, dz);
     if (d < 0.05) { e.moving = false; return; }
     const step = Math.min(d, this.moveSpeed(e) * (def.pace ?? 1) * dt), next = { x: e.x + (dx / d) * step, z: e.z + (dz / d) * step };
-    if (e.speed > 0 && this.nav.canTraverse(e, next, e.radius)) {
+    // Flyers (0.18.3) fly the same lane straight from corner to corner, over any ground.
+    if (e.speed > 0 && (e.flying || this.nav.canTraverse(e, next, e.radius))) {
       e.x = next.x;
       e.z = next.z;
       // A unit firing keeps facing its target (turrets and the shot read the angle).

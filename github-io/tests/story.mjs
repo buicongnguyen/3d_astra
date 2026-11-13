@@ -1,7 +1,8 @@
 // 0.19b "Story you see" in the browser: a staged scene (letterbox, held match, music kept, camera
-// back where it was, Skip by key and by tap, motion-off cut), the campaign map with its 14 relays at
-// the three viewports, and the two campaign missions under the Defence rules started from the
-// campaign. Text 11 px or more, taps 44 px or more and no sideways scroll everywhere.
+// back where it was, Skip by key and by tap, motion-off cut), the campaign map with its 15 relays at
+// the three viewports, the two campaign missions under the Defence rules started from the
+// campaign, and Wings over Copper (0.18.3): started from the campaign, the Flak tile at the core,
+// the first balloon raid and its scene. Text 11 px or more, taps 44 px or more and no sideways scroll everywhere.
 // Screenshots go to test-results/story-*.
 import assert from "node:assert/strict";
 import { launchBrowser, openPage, shot, suite, TIMEOUT } from "./lib/harness.mjs";
@@ -32,7 +33,7 @@ const clean = (r, where) => {
 };
 
 const browser = await launchBrowser();
-await suite("story: scenes, the 14-mission campaign map and the defence missions", async () => {
+await suite("story: scenes, the 15-mission campaign map, the defence missions and the first air raid", async () => {
   for (const viewport of ["desktop", "portrait", "landscape"]) {
     const { page, goto, ready, tap, errors, mobile } = await openPage(browser, viewport);
     const load = async (progress) => { await goto(); await page.evaluate(([k, v]) => { localStorage.clear(); if (v) localStorage.setItem(k, JSON.stringify(v)); }, [KEY, progress]); await page.reload(); await ready(); };
@@ -45,7 +46,7 @@ await suite("story: scenes, the 14-mission campaign map and the defence missions
       await page.waitForFunction(() => window.__frontier.started && document.querySelector("#modal").hidden, null, { timeout: TIMEOUT.models });
     };
 
-    // 1. The campaign map shows every mission as a relay: 14 nodes in three acts, two square Defence relays.
+    // 1. The campaign map shows every mission as a relay: 15 nodes in three acts, two square Defence relays.
     await load(cleared(at("m07b-hold-the-valley")));
     await campaign();
     const map = await page.evaluate(() => {
@@ -55,13 +56,13 @@ await suite("story: scenes, the 14-mission campaign map and the defence missions
       for (let i = 0; i < centres.length; i++) for (let j = i + 1; j < centres.length; j++) closest = Math.min(closest, Math.hypot(centres[i].x - centres[j].x, centres[i].y - centres[j].y));
       return { count: nodes.length, ids: nodes.map((n) => n.dataset.mapMission), defence: [...document.querySelectorAll(".cmap-node.defence")].map((n) => n.dataset.mapMission), inside: centres.every((c) => c.inside), closest, lit: document.querySelector(".cmap").dataset.lit, next: document.querySelector(".cmap-node.next")?.dataset.mapMission, count2: document.querySelector(".cmap-count").textContent };
     });
-    assert.equal(map.count, 14, `${viewport}: 14 relays`);
+    assert.equal(map.count, 15, `${viewport}: 15 relays`);
     assert.deepEqual(map.ids, ids);
     assert.deepEqual(map.defence, ["m02b-hold-the-river", "m07b-hold-the-valley"]);
     assert.ok(map.inside, `${viewport}: every relay on the board`);
     assert.ok(map.closest >= 44, `${viewport}: relays ${Math.round(map.closest)} px apart`);
     assert.equal(map.next, "m07b-hold-the-valley");
-    assert.match(map.count2, /\/ 14 relays lit/);
+    assert.match(map.count2, /\/ 15 relays lit/);
     clean(await audit(page, "#campaign-map"), `${viewport} campaign map`);
     await shot(page, `story-map-${viewport}`);
 
@@ -200,6 +201,60 @@ await suite("story: scenes, the 14-mission campaign map and the defence missions
       await shot(page, `story-${id.slice(0, 3)}-${region}-desktop`);
     }
     assert.deepEqual(errors, [], "review shots: page errors");
+    await page.close();
+  }
+
+  // 5. Wings over Copper (0.18.3) starts from the campaign: the core offers Flak (and Kite and Hawk),
+  // the first balloon raid crosses the basin and its scene plays when it reaches the copper works.
+  for (const viewport of ["desktop", "portrait"]) {
+    const { page, goto, ready, tap, errors, mobile } = await openPage(browser, viewport);
+    const id = "m06b-wings-over-copper";
+    await goto();
+    await page.evaluate(([k, v]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); }, [KEY, cleared(at(id))]);
+    await page.reload(); await ready();
+    await tap('[data-mode="campaign"]');
+    assert.equal(await page.locator(`[data-mission="${id}"]`).getAttribute("aria-current"), "true", `${id} is next`);
+    await tap("#start");
+    await page.locator("#mission-briefing").waitFor({ state: "visible" });
+    await tap("#mb-skip"); await tap("#mb-next");
+    await page.waitForFunction(() => window.__frontier.started && document.querySelector("#modal").hidden, null, { timeout: TIMEOUT.models });
+    assert.match(await page.locator(".map-heading h1").textContent(), new RegExp(`Mission ${at(id) + 1} · Wings over Copper`));
+    // The Command core's tiles: Harvester, Flak, Kite, Hawk.
+    await page.evaluate(() => { const f = window.__frontier, hq = f.sim.own(0).find((e) => e.type === "hq"); f.select([hq.id]); f.step(0.05); });
+    if (mobile) { await tap('#dock-tabs [data-dock="actions"]'); await page.waitForTimeout(120); }
+    const flak = page.locator('#commands [data-action="flak"]');
+    await flak.waitFor({ state: "visible", timeout: TIMEOUT.step });
+    assert.match(await flak.textContent(), /Flak guns/);
+    assert.deepEqual(await page.locator("#commands [data-action]").evaluateAll((t) => t.map((b) => b.dataset.action)), ["worker", "flak", "kite", "hawk"]);
+    if (mobile) assert.ok((await flak.boundingBox()).height >= 44, "Flak tile 44 px");
+    // Fast-forward to the first raid; the scene starts on its own once a flyer reaches the copper works.
+    await page.evaluate(() => {
+      const f = window.__frontier, s = f.sim, sky = s.missionDef.regions.skyWatch;
+      f.select([]);
+      s.explored[0].fill(1);
+      for (let i = 0; i < 400 && !s.entities.some((e) => e.team === 1 && e.flying && Math.hypot(e.x - sky.x, e.z - sky.z) < sky.r + 6); i++) f.step(0.5);
+    });
+    await page.waitForFunction(() => window.__frontier.scene().open, null, { timeout: TIMEOUT.step });
+    assert.equal(await page.evaluate(() => window.__frontier.scene().id), "first-balloon");
+    const first = sceneLines(SCENES["first-balloon"])[0];
+    await page.waitForFunction((text) => document.querySelector("#dialogue-text")?.textContent === text, first.text, { timeout: TIMEOUT.step });
+    await page.waitForTimeout(400);
+    clean(await audit(page, "#scene"), `${viewport} first-balloon scene`);
+    await shot(page, `story-m06b-scene-${viewport}`);
+    if (mobile) await tap("#scene-skip"); else await page.keyboard.press("Escape");
+    await page.waitForFunction(() => !window.__frontier.scene().open);
+    // The raid over the refinery: balloons in the air above the copper works.
+    const raid = await page.evaluate(() => {
+      const f = window.__frontier, s = f.sim, r = s.missionDef.regions.refinery;
+      f.step(4);
+      f.view.focusOn(r.x + 6, r.z - 4);
+      return { balloons: s.entities.filter((e) => e.team === 1 && e.type === "balloon" && e.hp > 0).length, refinery: s.tagged("refinery").length, log: f.mission.queue.log.map((l) => l.text) };
+    });
+    assert.ok(raid.balloons >= 1 && raid.refinery === 1, JSON.stringify(raid));
+    for (const line of sceneLines(SCENES["first-balloon"])) assert.ok(raid.log.includes(line.text), `the Comms log keeps "${line.text}"`);
+    await page.waitForTimeout(600);
+    await shot(page, `story-m06b-raid-${viewport}`);
+    assert.deepEqual(errors, [], `${viewport} Wings over Copper: page errors`);
     await page.close();
   }
 }, { browser });

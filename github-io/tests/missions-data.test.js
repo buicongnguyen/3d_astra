@@ -37,7 +37,7 @@ const STORY_IDS = ["m01-first-light", "m02-first-contact", "m03-the-ashen-line",
   "m07-copper-siege", "m08-the-quiet-vault", "m09-a-debt-in-the-dunes", "m10-obsidian-storm", "m11-cut-the-draw", "m12-frontiers-end"];
 test("mission ids are unique, stable and in order, and the basic fields are sound", () => {
   assert.deepEqual(MISSIONS.map((m) => m.id), ["m01-first-light", "m02-first-contact", "m02b-hold-the-river", "m03-the-ashen-line", "m04-three-way-dunes", "m05-the-verdant-pact",
-    "m06-copper-harvest", "m07-copper-siege", "m07b-hold-the-valley", "m08-the-quiet-vault", "m09-a-debt-in-the-dunes", "m10-obsidian-storm", "m11-cut-the-draw", "m12-frontiers-end"]);
+    "m06-copper-harvest", "m06b-wings-over-copper", "m07-copper-siege", "m07b-hold-the-valley", "m08-the-quiet-vault", "m09-a-debt-in-the-dunes", "m10-obsidian-storm", "m11-cut-the-draw", "m12-frontiers-end"]);
   assert.deepEqual(MISSIONS.map((m) => m.id).filter((id) => STORY_IDS.includes(id)), STORY_IDS, "the story missions keep their order");
   assert.equal(new Set(MISSIONS.map((m) => m.id)).size, MISSIONS.length);
   MISSIONS.forEach((m, i) => {

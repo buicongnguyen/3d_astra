@@ -6,6 +6,7 @@ import { icon } from "../icons.js";
 import { HIDDEN_HINT, HIGH_GROUND_HINT, heldPlateaus, hiddenFromBelow, onHighGround } from "../terrain-labels.js";
 import { ABILITY_HINT_AFTER, abilityHintText, loadSeenAbilities, nextAbilityHint, rememberAbility } from "../ability-hints.js";
 import { ABILITY_KEYS, abilityGroups } from "../tactics-ui.js";
+import { airHintText } from "../air-hint.js";
 import "../ui-extras.css";
 
 export const HINT_SECONDS = 9;
@@ -134,6 +135,17 @@ export function setupUiExtras(S, A) {
     showHint(HIDDEN_HINT);
   }
 
+  // The first enemy flyer the player can see while nothing of theirs can hit it (no unit that hits
+  // air, no Flak; in Defence no crew that hits air): what can. Once per match (airHintText).
+  function airHint() {
+    if (!hintEl || seen.has("air") || !hintEl.hidden || performance.now() < nextHintAt) return;
+    if (!Z.started || Z.paused || Z.modalType || S.sim.result || S.tutorial || S.playMode === "training") return;
+    const text = airHintText(S.sim);
+    if (!text) return;
+    seen.add("air");
+    showHint(text);
+  }
+
   // The first time one of the player's units has an ability ready: what it is, what it does and how
   // to use it. Once per ability, remembered across matches (ability-hints.js). Browser suites (?test)
   // leave it off unless the URL has ?abilityhints, so their own hints keep the slot.
@@ -178,7 +190,7 @@ export function setupUiExtras(S, A) {
     return BEAT_SLOWDOWN;
   }
 
-  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); fightHints(); highGroundHint(); hiddenHint(); abilityHint(); } });
+  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); airHint(); fightHints(); highGroundHint(); hiddenHint(); abilityHint(); } });
 
   return function bind() {
     makeHint();
