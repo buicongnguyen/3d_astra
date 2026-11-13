@@ -1102,6 +1102,11 @@ export const MISSIONS = [
         { if: { ending: "open-frontier" }, who: "vale", text: "First beam is going up to the Ashfall fleet now, Director. Your sleepers will wake to a living world." },
         { if: { ending: "open-frontier" }, who: "hale", text: "Forty thousand. All of them. I did not think to count on strangers. I will not forget it." },
         { if: { ending: "open-frontier" }, who: "sol", text: "Every camp at one table. Bring your own cup, Commander. The Caravan brings the water." },
+        // Faction Chronicles (0.20): one line by its lead for each chronicle the player finished (src/story/chronicles.js).
+        { if: { chronicle: "ashfall" }, who: "hale", text: "My foremen held the gorge for this fleet. Tonight I write each of their names on the first waking list." },
+        { if: { chronicle: "sunward" }, who: "sol", text: "My Wagon-master has opened the long road from the dunes to the Keystone. The water wagons arrive at dawn." },
+        { if: { chronicle: "wardens" }, who: "echo", text: "Warden-prime has stood the river guardians down. They are counting crystals with me now." },
+        { if: { chronicle: "veil" }, who: "maren", text: "My Surveyor recorded the Crown waking without a storm. Every Veil camp will read that record tonight." },
       ],
       lose: [{ who: "vale", text: "The Keystone is drained. Hale's fleet has one year, and this world has none. I am sorry, Commander." }],
     },
