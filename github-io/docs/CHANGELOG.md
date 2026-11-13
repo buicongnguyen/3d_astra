@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.18.0: Wings (air units)
+
+- **Four flyers**, made with the project's own Blender kit:
+  - **Kite scout:** every faction; unarmed; sees up cliffs and spots cloaked units within 8 m.
+  - **Hawk gunship:** Meridian.
+  - **Ember balloon:** Ashfall, a splash bomber.
+  - **Swift glider:** Sunward, a fast raider.
+- **How they fly:** they ignore water, walls and cliffs. Rotors spin, the balloon's burner flickers, and a soft shadow on the ground shows where they are.
+- **The Command core is the airfield:** Kite at L2, the faction flyer at L2/L3, and Flak guns. This keeps phones at four tiles per building.
+- **Who can hit them:** only anti-air weapons can (Ranger, Rider, Sentinel drone, Anti-tank, Watcher, Hawk); every faction has at least two. Towers hit flyers after Flak research (×1.5). Splash, Barrage and burning ground skip flyers.
+- **Spotting:** a flyer over a plateau opens it to its side. Enemies below still see a flyer hovering over a plateau.
+- **Limits:** at most 4 flyers per side, queue included. Flyers can't capture rings.
+- **The AI:** counts the flyers it sees, answers with anti-air, researches Flak after seeing two, sends a Kite ahead of its attacks, and builds its own flyer from spare resources.
+- **Campaign:** story missions keep their rosters, so there are no flyers in the campaign yet.
+- **Speed:** a phone battle with 4 flyers per side costs 116 draws (battle-eco 107); flyer models load in the background once a match starts.
+- **Balance:** round robin Meridian 69, Ashfall 40, Sunward 38, Wardens 71, Veil 33%. This is within noise of 0.17; the faction balance pass is still open.
+- **Validation:** 515 unit tests; all browser suites, including the new `test:air`; the mission checker on all 12 missions.
+
 ## 0.17.0: Frontier Defence and Choices (round 3 plan, releases 0.17 and 0.19a)
 
 - **Frontier Defence, a new mode** (a fourth card on the start screen):
