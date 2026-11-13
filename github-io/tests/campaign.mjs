@@ -1,6 +1,7 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {MISSIONS} from '../src/story/missions.js';
 fs.mkdirSync('test-results', {recursive: true});
 const browser = await chromium.launch({headless: true, executablePath: process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : undefined, args: ['--enable-unsafe-swiftshader']});
 const url = (process.env.TEST_URL || 'http://127.0.0.1:4180/') + '?test=1';
@@ -24,6 +25,9 @@ const finish = async (page, win) => {
     if (win && s.mission) { for (const id of s.missionDef.win) s.setObjective(id, 'done'); return; }
     for (const e of s.entities) if (win ? e.team > 0 : e.team === 0) e.hp = 0;
   }, win);
+  // A winning tick may play a story scene first (0.19b): skip it to reach the result.
+  await page.waitForFunction(() => window.__frontier.scene().open || !document.querySelector('#modal').hidden, null, {timeout: 15000});
+  await page.evaluate(() => window.__frontier.skipScene());
   await page.locator('#modal-title').waitFor({state: 'visible', timeout: 15000});
 };
 try {
@@ -48,12 +52,12 @@ try {
   await page.locator('#pause').click(); await page.locator('[data-new-game]').click();
   await page.locator('#briefing').waitFor({state: 'visible'});
 
-  // Campaign: twelve story missions; mission 1 open, the rest locked.
+  // Campaign: every story mission listed (14 since 0.19b); mission 1 open, the rest locked.
   await page.locator('[data-mode="campaign"]').click();
   assert.equal(await page.locator('#skirmish-setup').isHidden(), true);
   const stages = page.locator('[data-stage]');
-  assert.equal(await stages.count(), 12);
-  assert.deepEqual(await stages.evaluateAll(bs => bs.map(b => b.disabled)), [false, ...Array(11).fill(true)]);
+  assert.equal(await stages.count(), MISSIONS.length);
+  assert.deepEqual(await stages.evaluateAll(bs => bs.map(b => b.disabled)), [false, ...Array(MISSIONS.length - 1).fill(true)]);
   assert.equal(await page.locator('#start').innerText(), 'Start mission 1');
   let m = await def(page);
   assert.match(await heading(page), new RegExp(`Mission 1 · ${m.title}`));
@@ -90,24 +94,27 @@ try {
   const ids = await page.evaluate(() => window.__frontier.campaign && [...document.querySelectorAll('[data-mission]')].map(b => b.dataset.mission));
   await page.evaluate(ids => {
     localStorage.setItem('frontier-campaign-v1', JSON.stringify({cleared: {'first-contact': 300, 'ashen-line': 400, 'three-way-dunes': 500}}));
-    localStorage.setItem('frontier-campaign-v2', JSON.stringify({cleared: Object.fromEntries(ids.slice(0, 4).map((id, i) => [id, {time: 300 + i * 100, medal: 'silver'}]))}));
+    // Everything before the escort mission (The Verdant Pact) is cleared.
+    const escort = ids.indexOf('m05-the-verdant-pact');
+    localStorage.setItem('frontier-campaign-v2', JSON.stringify({cleared: Object.fromEntries(ids.slice(0, escort).map((id, i) => [id, {time: 300 + i * 100, medal: 'silver'}]))}));
   }, ids);
+  const escort = ids.indexOf('m05-the-verdant-pact');
   await page.reload(); await ready(page);
   await page.locator('[data-mode="campaign"]').click();
-  assert.deepEqual(await stages.evaluateAll(bs => bs.map(b => b.disabled)), [false, false, false, false, false, ...Array(7).fill(true)]);
+  assert.deepEqual(await stages.evaluateAll(bs => bs.map(b => b.disabled)), [...Array(escort + 1).fill(false), ...Array(ids.length - escort - 1).fill(true)]);
   assert.match(await page.locator('[data-stage="0"]').innerText(), /5:00/);
-  assert.equal(await page.locator('[data-stage="4"]').getAttribute('aria-current'), 'true', 'the next open mission is selected');
+  assert.equal(await page.locator(`[data-stage="${escort}"]`).getAttribute('aria-current'), 'true', 'the next open mission is selected');
   await begin(page);
   m = await def(page);
   b = await battle(page);
   assert.deepEqual([b.map, b.enemies, b.speed, b.coalition], [m.map, m.enemies, m.speed, m.alliance === 'coalition']);
   if (m.bonus?.tower) assert.ok(b.towers >= 1, 'the mission bonus builds a Sentinel tower');
-  // Mission 5 is an escort: its destination (the forest relay) is marked on the map.
+  // The Verdant Pact is an escort: its destination (the forest relay) is marked on the map.
   await page.waitForFunction(() => window.__frontier.view.destinations?.markers.size === 1, null, {timeout: 10000});
   await page.evaluate(() => { const v = window.__frontier.view, [d] = v.destinations.markers.values(); v.focusOn(d.position.x, d.position.z + 6); });
   await page.waitForTimeout(400);
   await page.screenshot({path: 'test-results/campaign-escort-destination.png'});
-  assert.match(await heading(page), new RegExp(`Mission 5 · ${m.title}`));
+  assert.match(await heading(page), new RegExp(`Mission ${escort + 1} · ${m.title}`));
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('frontier-campaign-v1')).cleared['first-contact']), 300, 'v1 data is untouched');
   assert.deepEqual(errors, []);
   await page.close();

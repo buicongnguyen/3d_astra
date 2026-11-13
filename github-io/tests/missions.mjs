@@ -1,6 +1,10 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { MISSIONS } from '../src/story/missions.js';
+
+// The no-base mission's place in the campaign (missions were inserted in 0.19b; ids are stable).
+const VAULT = MISSIONS.findIndex(m => m.id === 'm08-the-quiet-vault');
 
 // Story missions end to end on desktop, phone portrait and phone landscape: the campaign list,
 // the briefing overlay, in-match dialogue and Comms log, live objectives, capture rings, camera
@@ -47,11 +51,11 @@ try {
     await page.goto(`${base}?test=1`);
     await ready();
 
-    // ---- Campaign screen: three acts, twelve missions, only the first open.
+    // ---- Campaign screen: three acts, every mission listed, only the first open.
     await press('[data-mode="campaign"]');
     const cards = page.locator('#campaign-setup [data-stage]');
-    assert.equal(await cards.count(), 12, `${name}: twelve missions`);
-    assert.deepEqual(await cards.evaluateAll(bs => bs.map(b => b.disabled)), [false, ...Array(11).fill(true)], `${name}: only mission 1 is open`);
+    assert.equal(await cards.count(), MISSIONS.length, `${name}: ${MISSIONS.length} missions`);
+    assert.deepEqual(await cards.evaluateAll(bs => bs.map(b => b.disabled)), [false, ...Array(MISSIONS.length - 1).fill(true)], `${name}: only mission 1 is open`);
     assert.deepEqual(await page.locator('.act-title strong').allInnerTexts(), ['Landfall', 'The Pact', 'The Keystone']);
     assert.match(await cards.first().innerText(), /^1\s+\S.+\s+\S.+$/, 'a card shows number, title and map');
     assert.equal(await page.locator('#start').innerText(), 'Start mission 1');
@@ -255,6 +259,10 @@ try {
     await shot('objectives');
     await openObjectives(false);
     await frontier(win => { const s = window.__frontier.sim; for (const id of win) s.setObjective(id, 'done'); }, mission.win);
+    // The winning hold plays the relay scene first (0.19b); Skip goes straight to the debrief.
+    await page.waitForFunction(() => window.__frontier.scene().open);
+    assert.equal(await page.locator('.debrief').count(), 0, 'the scene plays before the debrief');
+    await press('#scene-skip');
     await page.locator('.debrief').waitFor({ state: 'visible' });
     assert.equal(await page.locator('.debrief').getAttribute('data-result'), 'victory');
     assert.equal(await page.locator('.debrief').getAttribute('data-medal'), 'gold', 'a fast win earns gold');
@@ -287,7 +295,7 @@ try {
     assert.equal(await page.locator('#mb-name').innerText(), 'First Contact');
     assert.equal(await frontier(() => window.__frontier.started), false);
     await press('#mb-back');
-    assert.deepEqual(await cards.evaluateAll(bs => bs.map(b => b.disabled)), [false, false, ...Array(10).fill(true)], `${name}: mission 2 is unlocked`);
+    assert.deepEqual(await cards.evaluateAll(bs => bs.map(b => b.disabled)), [false, false, ...Array(MISSIONS.length - 2).fill(true)], `${name}: mission 2 is unlocked`);
     assert.equal(await page.locator('[data-stage="1"]').getAttribute('aria-current'), 'true');
     assert.equal(await page.locator('[data-stage="0"] em').getAttribute('data-medal'), 'gold');
     assert.equal(await page.locator('[data-stage="0"] em svg.medal-badge').count(), 1, 'the card shows the best medal');
@@ -295,16 +303,15 @@ try {
     assert.equal(await page.locator('#start').innerText(), 'Start mission 2');
 
     // ---- A mission without a base (m08) starts on the squad.
-    await page.evaluate(() => {
-      const ids = ['m01-first-light', 'm02-first-contact', 'm03-the-ashen-line', 'm04-three-way-dunes', 'm05-the-verdant-pact', 'm06-copper-harvest', 'm07-copper-siege'];
+    await page.evaluate(ids => {
       localStorage.setItem('frontier-campaign-v2', JSON.stringify({ cleared: Object.fromEntries(ids.map((id, i) => [id, { time: 500 + i, medal: ['bronze', 'silver', 'gold'][i % 3] }])) }));
-    });
+    }, MISSIONS.slice(0, VAULT).map(m => m.id));
     await page.reload();
     await ready();
     await press('[data-mode="campaign"]');
-    assert.equal(await page.locator('[data-stage="7"]').getAttribute('aria-current'), 'true', 'the next open mission is picked');
-    assert.equal(await page.locator('[data-stage="7"]').getAttribute('data-mission'), 'm08-the-quiet-vault');
-    assert.equal(await page.locator('#campaign-setup svg.medal-badge').count(), 7);
+    assert.equal(await page.locator(`[data-stage="${VAULT}"]`).getAttribute('aria-current'), 'true', 'the next open mission is picked');
+    assert.equal(await page.locator(`[data-stage="${VAULT}"]`).getAttribute('data-mission'), 'm08-the-quiet-vault');
+    assert.equal(await page.locator('#campaign-setup svg.medal-badge').count(), VAULT);
     await noSideScroll('campaign with medals');
     await press('#start');
     await press('#mb-skip');
@@ -345,7 +352,7 @@ try {
     assert.equal(restored.hash, saved.hash, `${name}: the restored match has the same hash`);
     assert.deepEqual([restored.paused, restored.started, restored.mission, restored.core], [true, true, 'm08-the-quiet-vault', false]);
     assert.ok(restored.objectives > 0);
-    assert.match(await page.locator('.map-heading h1').innerText(), /Mission 8 · The Quiet Vault/);
+    assert.match(await page.locator('.map-heading h1').innerText(), new RegExp(`Mission ${VAULT + 1} · The Quiet Vault`));
     await page.waitForTimeout(300);
     assert.equal(await frontier(() => window.__frontier.sim.hash()), saved.hash, 'it stays paused');
     await press('[data-resume]');
@@ -355,11 +362,11 @@ try {
     // ---- Losing shows the lose lines and offers Retry, not Next.
     await frontier(() => { const s = window.__frontier.sim; for (const e of s.entities) if (e.team === 0) e.hp = 0; });
     await page.locator('.debrief.lost').waitFor({ state: 'visible' });
-    assert.match(await page.locator('.debrief .eyebrow').innerText(), /MISSION 08 · FAILED/);
+    assert.match(await page.locator('.debrief .eyebrow').innerText(), new RegExp(`MISSION ${String(VAULT + 1).padStart(2, '0')} · FAILED`));
     assert.deepEqual(await page.locator('.debrief-actions button').allInnerTexts().then(t => t.map(s => s.trim())), ['Retry', 'Campaign']);
     assert.ok(await page.locator('.debrief-line').count() >= 1);
     assert.equal(await page.evaluate(() => localStorage.getItem('frontier-save-v1')), null, 'the lost match deletes its save');
-    assert.equal(await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('frontier-campaign-v2')).cleared).length), 7, 'a defeat records nothing');
+    assert.equal(await page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('frontier-campaign-v2')).cleared).length), VAULT, 'a defeat records nothing');
     assert.deepEqual(await smallText('#modal'), [], `${name} defeat text`);
     assert.deepEqual(await badControls('#modal button'), [], `${name} defeat controls`);
     await shot('defeat');

@@ -4,6 +4,7 @@ import {Simulation} from '../src/simulation.js';
 import {AI_SPEEDS} from '../src/ai-plan.js';
 import {MISSIONS, ACTS, loadProgress, saveProgress, isUnlocked, isCleared, recordClear, nextMission, bestTime, bestMedal} from '../src/campaign.js';
 import {MAPS} from '../src/terrain.js';
+import DEFENCE_MAPS from '../src/defence/maps.json' with {type: 'json'};
 const step = (s, n) => { for (let i = 0; i < n * 20; i++) s.tick(.05); };
 const messages = s => s.events.filter(e => e.type === 'message').map(e => e.text);
 const core = (s, team) => s.own(team).find(e => e.type === 'hq');
@@ -104,23 +105,24 @@ test('allies reinforce a coalition base under attack', () => {
   assert.ok(helpers.length < s.own(2).filter(e => e.kind === 'unit' && e.type !== 'worker').length, 'half stays home');
 });
 
-test('campaign: twelve story missions in three acts on real maps, unlocked in order', () => {
-  assert.equal(MISSIONS.length, 12);
+test('campaign: the story missions in three acts on real maps, unlocked in order', () => {
+  // 12 story missions and, since 0.19b, two under the Defence rules (on a Defence map).
+  assert.ok(MISSIONS.length >= 14, `${MISSIONS.length} missions`);
   assert.deepEqual(ACTS.map(a => a.act), [1, 2, 3]);
   for (const m of MISSIONS) {
-    assert.ok(MAPS[m.map], m.map); assert.ok(AI_SPEEDS[m.speed]);
+    assert.ok(m.defence ? DEFENCE_MAPS[m.map]?.defence : MAPS[m.map], m.map); assert.ok(AI_SPEEDS[m.speed]);
     assert.ok(ACTS.some(a => a.act === m.act), `${m.id} belongs to an act`);
   }
-  assert.equal(new Set(MISSIONS.map(m => m.id)).size, 12, 'mission ids are unique');
+  assert.equal(new Set(MISSIONS.map(m => m.id)).size, MISSIONS.length, 'mission ids are unique');
   let p = {cleared: {}};
-  assert.deepEqual(MISSIONS.map((_, i) => isUnlocked(p, i)), [true, ...Array(11).fill(false)]);
+  assert.deepEqual(MISSIONS.map((_, i) => isUnlocked(p, i)), [true, ...Array(MISSIONS.length - 1).fill(false)]);
   p = recordClear(p, 0, 300, 'silver'); p = recordClear(p, 0, 420, 'gold'); p = recordClear(p, 0, 500, 'bronze');
   assert.deepEqual(p.cleared[MISSIONS[0].id], {time: 300, medal: 'gold', difficulty: 'standard'}, 'best time and best medal are kept separately');
   assert.equal(bestTime(p, 0), 300); assert.equal(bestMedal(p, 0), 'gold'); assert.equal(bestTime(p, 1), null);
   assert.equal(isUnlocked(p, 1), true); assert.equal(isUnlocked(p, 2), false);
   assert.equal(nextMission(p), 1);
   assert.equal(isUnlocked(recordClear({cleared: {}}, 0, 0), 1), true, 'an instant clear still counts');
-  assert.equal(isCleared(p, -1), false); assert.equal(isUnlocked(p, 12), false);
+  assert.equal(isCleared(p, -1), false); assert.equal(isUnlocked(p, MISSIONS.length), false);
   let all = {cleared: {}};
   for (let i = 0; i < MISSIONS.length; i++) all = recordClear(all, i, 100 + i);
   assert.equal(nextMission(all), MISSIONS.length - 1, 'a finished campaign rests on the last mission');

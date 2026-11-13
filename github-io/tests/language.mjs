@@ -98,7 +98,7 @@ await suite('language',async()=>{
   // The story catalog is a separate download: the list turns Vietnamese when it arrives.
   await page.waitForFunction(title=>document.querySelector('.act-title strong')?.textContent===title,vi('Landfall'));
   assert.deepEqual(await page.locator('.act-title strong').allInnerTexts(),['Landfall','The Pact','The Keystone'].map(vi));
-  assert.deepEqual(await page.locator('#campaign-setup [data-stage] strong').allInnerTexts(),MISSIONS.map(m=>vi(m.title)),name+': twelve Vietnamese mission titles');
+  assert.deepEqual(await page.locator('#campaign-setup [data-stage] strong').allInnerTexts(),MISSIONS.map(m=>vi(m.title)),name+': every mission title in Vietnamese');
   for(const m of MISSIONS)assert.notEqual(vi(m.title),m.title,m.id);
   assert.equal(await text('#briefing-title'),'Nhiệm vụ 1 · '+vi(m1.title));
   assert.equal(await text('#briefing-text'),vi(m1.briefing.lines[0].text));

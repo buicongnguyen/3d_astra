@@ -8,11 +8,14 @@ import { MISSIONS } from "../src/story/missions.js";
 import { CAST } from "../src/story/world.js";
 import { AI_SPEEDS } from "../src/ai-plan.js";
 import balance from "../src/balance.json" with { type: "json" };
-import maps from "../src/maps.json" with { type: "json" };
+import skirmishMaps from "../src/maps.json" with { type: "json" };
+import DEFENCE_MAPS from "../src/defence/maps.json" with { type: "json" };
 
 const D = balance.definitions;
 const NAMED = ["playerBase", "enemyBase"];
-const OBJECTIVES = ["destroyCores", "destroyTag", "hold", "survive", "escort", "collect", "build", "reach", "timeUnder"];
+const OBJECTIVES = ["destroyCores", "destroyTag", "hold", "survive", "escort", "collect", "build", "reach", "timeUnder", "waves"];
+// A mission under the Defence rules (0.19b) plays on a Defence map; every other one on a skirmish map.
+const maps = { ...skirmishMaps, ...DEFENCE_MAPS };
 const actions = (m) => (m.triggers || []).flatMap((t) => t.do || []);
 const spawns = (m) => [...(m.setup || []), ...actions(m)].filter((a) => a.spawn);
 const waves = (m) => actions(m).filter((a) => a.wave).map((a) => a.wave);
@@ -28,17 +31,27 @@ const blank = new Map();
 const mapOf = (m, key = m.map + m.enemies + JSON.stringify(m.rules || {})) => blank.get(key) ||
   blank.set(key, new Simulation({ map: m.map, enemyCount: m.enemies, ai: false, mission: { id: "blank", rules: m.rules, objectives: [], win: [] } })).get(key);
 
-test("mission ids are unique and the basic fields are sound", () => {
-  assert.equal(MISSIONS.length, 12);
+// Ids are stable (progress, saves and checker targets are keyed by them): the twelve story missions
+// keep their numbers, and a mission inserted later takes its predecessor's number with a letter.
+const STORY_IDS = ["m01-first-light", "m02-first-contact", "m03-the-ashen-line", "m04-three-way-dunes", "m05-the-verdant-pact", "m06-copper-harvest",
+  "m07-copper-siege", "m08-the-quiet-vault", "m09-a-debt-in-the-dunes", "m10-obsidian-storm", "m11-cut-the-draw", "m12-frontiers-end"];
+test("mission ids are unique, stable and in order, and the basic fields are sound", () => {
+  assert.deepEqual(MISSIONS.map((m) => m.id), ["m01-first-light", "m02-first-contact", "m02b-hold-the-river", "m03-the-ashen-line", "m04-three-way-dunes", "m05-the-verdant-pact",
+    "m06-copper-harvest", "m07-copper-siege", "m07b-hold-the-valley", "m08-the-quiet-vault", "m09-a-debt-in-the-dunes", "m10-obsidian-storm", "m11-cut-the-draw", "m12-frontiers-end"]);
+  assert.deepEqual(MISSIONS.map((m) => m.id).filter((id) => STORY_IDS.includes(id)), STORY_IDS, "the story missions keep their order");
   assert.equal(new Set(MISSIONS.map((m) => m.id)).size, MISSIONS.length);
   MISSIONS.forEach((m, i) => {
-    assert.match(m.id, new RegExp(`^m${String(i + 1).padStart(2, "0")}-[a-z-]+$`), m.id);
-    assert.ok(maps[m.map], `${m.id}: map ${m.map}`);
+    assert.match(m.id, /^m\d{2}[a-z]?-[a-z-]+$/, m.id);
+    // Numbers never go down along the campaign, so the list reads in story order.
+    if (i) assert.ok(m.id.slice(0, 4) >= MISSIONS[i - 1].id.slice(0, 4), `${m.id} after ${MISSIONS[i - 1].id}`);
+    assert.ok(maps[m.map] && !!maps[m.map].defence === !!m.defence, `${m.id}: map ${m.map}`);
     assert.ok(Object.hasOwn(AI_SPEEDS, m.speed), `${m.id}: speed ${m.speed}`);
     assert.ok([1, 2, 3].includes(m.enemies) && ["ffa", "coalition"].includes(m.alliance) && [1, 2, 3].includes(m.act), m.id);
     assert.ok(m.title && m.briefing.place && m.briefing.lines.length && m.briefing.intel.length && m.debrief.win.length && m.debrief.lose.length, m.id);
     for (const a of actions(m)) if (a.aiSpeed) assert.ok(Object.hasOwn(AI_SPEEDS, a.aiSpeed), `${m.id}: aiSpeed ${a.aiSpeed}`);
-    if (m.medals?.gold && m.medals?.silver) assert.ok(m.medals.gold.seconds < m.medals.silver.seconds, `${m.id}: gold must be faster than silver`);
+    if (m.medals?.gold?.seconds && m.medals?.silver?.seconds) assert.ok(m.medals.gold.seconds < m.medals.silver.seconds, `${m.id}: gold must be faster than silver`);
+    // Medals by lives left (Defence rules): gold needs more lives than silver, within the lives given.
+    if (m.defence) assert.ok(m.medals.gold.lives > m.medals.silver.lives && m.medals.gold.lives <= m.defence.lives, `${m.id}: medals by lives`);
     const limit = (m.lose || []).find((l) => l.type === "time");
     if (limit && m.medals?.silver) assert.ok(m.medals.silver.seconds <= limit.seconds, `${m.id}: silver after the time limit`);
   });
@@ -86,7 +99,7 @@ test("objectives, regions, tags and types all resolve", () => {
       if (o.hidden) assert.ok(actions(m).some((a) => a.reveal === o.id || a.complete === o.id), `${m.id}: nothing reveals ${o.id}`);
     }
     for (const l of m.lose || []) {
-      assert.ok(["coreLost", "tagLost", "time", "armyLost"].includes(l.type), `${m.id}: lose ${l.type}`);
+      assert.ok(["coreLost", "tagLost", "time", "armyLost", ...(m.defence ? ["lives"] : [])].includes(l.type), `${m.id}: lose ${l.type}`);
       if (l.type === "tagLost") tag(l.tag, "lose");
       if (l.type === "time") assert.ok(l.seconds > 0, m.id);
     }
@@ -113,6 +126,8 @@ test("objectives, regions, tags and types all resolve", () => {
       if (w.count) type(w.count.type, null, "trigger");
       if (w.pointOwned) assert.ok(points.has(w.pointOwned.point), `${m.id}: trigger on point ${w.pointOwned.point}`);
       if (w.event) assert.ok(["incoming", "built", "levelup"].includes(w.event), `${m.id}: trigger on event ${w.event}`);
+      // Story beats between Defence waves (0.19b): only in a Defence mission, within its waves.
+      for (const key of ["wave", "waveStart"]) if (w[key] !== undefined) assert.ok(m.defence && w[key] >= 1 && w[key] <= m.defence.waves.length, `${m.id}: trigger on ${key} ${w[key]}`);
       for (const a of t.do) {
         for (const key of ["reveal", "complete", "fail"]) if (a[key]) assert.ok(ids.has(a[key]), `${m.id}: ${key} ${a[key]}`);
         for (const key of ["camera", "ping"]) if (a[key]) place(a[key], key);
