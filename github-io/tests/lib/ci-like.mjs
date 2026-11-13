@@ -14,7 +14,11 @@ const rate = Number(process.env.SLOW_CPU || 0);
 const software = !!process.env.SOFTWARE_RENDER;
 const SOFTWARE_ARGS = ["--use-angle=swiftshader", "--use-gl=angle", "--enable-unsafe-swiftshader"];
 
+const throttled = new WeakSet();
+// Once per page: a page from newPage also fires the context's "page" event.
 async function throttle(page) {
+  if (throttled.has(page)) return;
+  throttled.add(page);
   try {
     const session = await page.context().newCDPSession(page);
     await session.send("Emulation.setCPUThrottlingRate", { rate });

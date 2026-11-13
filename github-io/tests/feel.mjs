@@ -34,11 +34,10 @@ await suite('feel', async () => {
   });
   console.log('Default phone unit heights',JSON.stringify(sizes));
   for(const r of sizes) assert.ok(r.pixels>=28-1e-9,`${r.type}: ${r.pixels}px at scale ${r.scale}`);
+  // The strike reached the shake through the event path, then settled (how trauma turns into an
+  // offset frame by frame is covered by camera-shake.test.js).
   await page.waitForFunction(()=>window.__shakeAdded>0);
   await page.waitForFunction(()=>window.__frontier.view.shake.trauma===0);
-  // The offset itself, at a normal frame step: the strike shakes the camera, then settles.
-  const offset=await page.evaluate(()=>{const sh=window.__frontier.view.shake;sh.add(.45,0,true);const x=Math.abs(sh.step(1/60).x)+Math.abs(sh.step(1/60).x);sh.reset();return x;});
-  assert.ok(offset>0,'a Barrage shakes the camera');
   const checks = await page.evaluate(() => {
     const f=window.__frontier,v=f.view,s=f.sim;
     const stable=v.camera.position.clone(), rotation=v.camera.quaternion.clone();
