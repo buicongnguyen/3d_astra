@@ -1,6 +1,7 @@
 // Release 0.19b "Story you see": staged scenes (src/story/scenes.js, app/scenes.js), the two
 // campaign missions under the Defence rules (src/story/defence-missions.js), the campaign that
-// grew from 12 to 14 missions (progress, map layout, checker routing) and the scene line queue.
+// grew from 12 to 15 missions (progress, map layout, checker routing; Wings over Copper since 0.18.3)
+// and the scene line queue.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -51,7 +52,7 @@ test("scene data: known beats, cast speakers, short lines with Vietnamese, under
 test("every scene is played by a mission, and its camera targets are places on that mission's map", () => {
   assert.deepEqual([...new Set(uses.map((u) => u.id))].sort(), Object.keys(SCENES).sort(), "each scene has a mission and each scene action a scene");
   // The six big moments: missions 1, 4, 8, 10, 11 and the finale (one scene per ending).
-  assert.deepEqual([...new Set(uses.map((u) => u.m.id))], ["m01-first-light", "m04-three-way-dunes", "m08-the-quiet-vault", "m10-obsidian-storm", "m11-cut-the-draw", "m12-frontiers-end"]);
+  assert.deepEqual([...new Set(uses.map((u) => u.m.id))], ["m01-first-light", "m04-three-way-dunes", "m06b-wings-over-copper", "m08-the-quiet-vault", "m10-obsidian-storm", "m11-cut-the-draw", "m12-frontiers-end"]);
   const finale = uses.filter((u) => u.m.id === "m12-frontiers-end");
   assert.deepEqual(finale.map((u) => u.if?.ending).sort(), [...ENDING_IDS].sort(), "the finale's scene branches by ending");
   for (const ending of ENDING_IDS) {
@@ -123,15 +124,17 @@ const routeDist = (p, routes) => Math.min(...Object.values(routes).flatMap((pts)
 const make = (m, difficulty = "standard") => new Simulation({ map: m.map, enemyCount: 1, ai: false, mission: m, difficulty });
 
 test("the defence missions sit in the campaign with stable ids, on Defence maps, with 6 to 8 waves", () => {
-  assert.equal(MISSIONS.length, 14);
+  assert.equal(MISSIONS.length, 15);
   assert.equal(MISSIONS.indexOf(HOLD_THE_RIVER), MISSIONS.findIndex((m) => m.id === "m02-first-contact") + 1, "Hold the River follows First Contact");
   assert.equal(MISSIONS.indexOf(HOLD_THE_VALLEY), MISSIONS.findIndex((m) => m.id === "m07-copper-siege") + 1, "Hold the Valley follows Copper Siege");
   assert.deepEqual(DEFENCE_MISSIONS.map((m) => [m.id, m.act]), [["m02b-hold-the-river", 1], ["m07b-hold-the-valley", 2]]);
-  for (const id of RESERVED_IDS) assert.ok(!MISSIONS.some((m) => m.id === id), `${id} stays reserved for the air merge`);
+  assert.deepEqual(RESERVED_IDS, [], "Wings over Copper took the last reserved id");
+  assert.equal(MISSIONS.findIndex((m) => m.id === "m06b-wings-over-copper"), MISSIONS.findIndex((m) => m.id === "m06-copper-harvest") + 1, "Wings over Copper follows Copper Harvest");
   for (const m of DEFENCE_MISSIONS) {
     const d = m.defence;
     assert.ok(DEFENCE_MAPS[m.map]?.defence, m.id);
-    assert.deepEqual(m.rules, { ai: false, mode: "defence", rosters: true });
+    // Air from Wings over Copper on (0.18.3): Hold the Valley has a Kite and balloons, Hold the River none.
+    assert.deepEqual(m.rules, { ai: false, mode: "defence", rosters: true, ...(m.act === 2 ? { air: true } : {}) });
     assert.ok(d.waves.length >= 6 && d.waves.length <= 8, `${m.id}: ${d.waves.length} waves`);
     assert.equal(m.objectives[0].type, "waves");
     assert.equal(m.objectives[0].count, d.waves.length);
@@ -217,14 +220,15 @@ test("a defence mission wins by its waves and earns its medal by lives; the chec
 
 // ------------------------------------------------------------------ Campaign progress and map
 test("progress keyed by id: a finished twelve-mission campaign keeps everything open, the new missions too", () => {
-  const STORY = MISSIONS.filter((m) => !m.defence);
+  // The twelve story missions keep plain numbered ids; inserted missions carry a letter (m02b, m06b, m07b).
+  const STORY = MISSIONS.filter((m) => /^m\d{2}-/.test(m.id));
   assert.equal(STORY.length, 12);
   const all12 = { cleared: Object.fromEntries(STORY.map((m, k) => [m.id, { time: 300 + k, medal: "gold", difficulty: "standard" }])) };
   const store = { getItem: () => JSON.stringify(all12) };
   const loaded = loadProgress(store);
   assert.deepEqual(loaded.cleared, all12.cleared, "the stored clears load unchanged");
   assert.deepEqual(MISSIONS.map((_, i) => isUnlocked(loaded, i)), MISSIONS.map(() => true), "every mission is open");
-  assert.deepEqual(MISSIONS.map((m, i) => isCleared(loaded, i)), MISSIONS.map((m) => !m.defence), "the new ones wait to be played");
+  assert.deepEqual(MISSIONS.map((m, i) => isCleared(loaded, i)), MISSIONS.map((m) => STORY.includes(m)), "the new ones wait to be played");
   assert.equal(MISSIONS[nextMission(loaded)].id, "m02b-hold-the-river", "the first new mission is next");
   // Halfway: clears up to mission 3 (before the new mission existed) keep missions 3 and 4 open.
   const half = { cleared: Object.fromEntries(["m01-first-light", "m02-first-contact", "m03-the-ashen-line"].map((id) => [id, { time: 400, medal: "bronze" }])) };

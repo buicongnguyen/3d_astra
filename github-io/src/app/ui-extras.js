@@ -6,6 +6,7 @@ import { icon } from "../icons.js";
 import { HIDDEN_HINT, HIGH_GROUND_HINT, heldPlateaus, hiddenFromBelow, onHighGround } from "../terrain-labels.js";
 import { ABILITY_HINT_AFTER, abilityHintText, loadSeenAbilities, nextAbilityHint, rememberAbility } from "../ability-hints.js";
 import { ABILITY_KEYS, abilityGroups } from "../tactics-ui.js";
+import { airHintText } from "../air-hint.js";
 import "../ui-extras.css";
 
 export const HINT_SECONDS = 9;
@@ -38,18 +39,6 @@ export function counterHint(enemyType, ownTypes, availableTypes = Object.keys(D)
   }
   const strong = ownTypes.find((t) => strongAgainst(t, enemyType));
   return strong ? `Your ${D[strong].name} counters ${e.name}. Let it lead the fight.` : null;
-}
-
-// The anti-air hint (0.18.3), or null: an enemy flyer is in sight and nothing of the player's can
-// shoot it. Pure (the simulation is passed in), so node:test covers it.
-export const AIR_HINT_UNITS = "Flyers overhead! Towers cannot hit them yet. Train Rangers or Anti-tank soldiers, or research Flak at the Command core.";
-export const AIR_HINT_CREWS = "Flyers on the road! Breaker crews cannot hit them. Ranger and Anti-tank crews can.";
-export const AIR_HINT_CREWS_WATCHER = "Flyers on the road! Breaker crews cannot hit them. Ranger, Anti-tank and Watcher crews can.";
-export function airHintText(sim, team = 0) {
-  if (!sim.entities.some((e) => e.flying && e.hp > 0 && sim.hostile(team, e.team) && sim.isVisible(e, team))) return null;
-  if (sim.players[team]?.flak || sim.entities.some((e) => e.team === team && e.hp > 0 && e.hits_air)) return null;
-  if (sim.defence) return sim.defenceDef()?.crews?.includes("watcher") ? AIR_HINT_CREWS_WATCHER : AIR_HINT_CREWS;
-  return AIR_HINT_UNITS;
 }
 
 export function setupUiExtras(S, A) {
