@@ -89,7 +89,9 @@ await suite("abilities", async () => {
     await dock("actions");
     await until(() => document.querySelectorAll("#commands .ability-tile").length === 2);
     for (const id of ["focus", "barrage"]) assert.deepEqual(await tile(id), { pulse: true, ready: true, cooling: false, disabled: false }, `${viewport}: ${id} pulses when ready`);
-    assert.ok((await running("#commands .ability-tile")).some((a) => a.startsWith("ability-ready")), `${viewport}: the pulse animates with motion on`);
+    // The pulse lasts about 2 s, which a slow CI runner can outlast before this line runs: check the
+    // animation is attached to the pulsing tile (it is "none" under motion-off), not that it still runs.
+    assert.ok(await frontier(() => [...document.querySelectorAll("#commands .ability-tile.ready-pulse")].some((b) => getComputedStyle(b).animationName.startsWith("ability-ready"))), `${viewport}: the pulse animates with motion on`);
     await shot(page, `abilities-${viewport}-pulse`);
     assert.deepEqual(await smallText("#commands"), [], `${viewport} card text`);
     if (mobile) assert.ok(await frontier(() => [...document.querySelectorAll("#commands .ability-tile")].every((b) => { const r = b.getBoundingClientRect(); return r.width >= 44 && r.height >= 44; })), `${viewport}: tiles are 44 px`);
