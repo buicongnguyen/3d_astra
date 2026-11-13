@@ -99,7 +99,8 @@ export const HOLD_THE_VALLEY = {
   map: "gorge",
   enemies: 1, speed: "normal", alliance: "ffa",
   factions: { 1: "ashfall" },
-  rules: { ai: false, mode: "defence", rosters: true },
+  // Air since Wings over Copper (0.18.3): a Kite in wave 6 and Ember balloons in wave 8; Ranger and Anti-tank crews hit them.
+  rules: { ai: false, mode: "defence", rosters: true, air: true },
   briefing: {
     place: "Gorge Road, below the highlands, day 36",
     lines: [
@@ -141,9 +142,9 @@ export const HOLD_THE_VALLEY = {
       { groups: [group({ vanguard: 12 }, "main", 0.55), group({ ranger: 4 }, "main", 1, 4)], bonus: 35 },
       { groups: [group({ ranger: 6 }, "main", 0.9), group({ breaker: 2 }, "main", 1.5, 6)], bonus: 40 },
       { groups: [group({ vanguard: 16 }, "main", 0.45)], bonus: 45 },
-      { groups: [group({ vanguard: 8 }), group({ breaker: 4, ranger: 4 }, "main", 1.2, 5)], bonus: 50 },
+      { groups: [group({ vanguard: 8 }), group({ breaker: 4, ranger: 4 }, "main", 1.2, 5), group({ kite: 1 }, "main", 1, 8)], bonus: 50 },
       { groups: [group({ tank: 4 }, "main", 2.5, 0, 1.5), group({ vanguard: 8 }, "main", 0.5, 4)], bonus: 55 },
-      { groups: [group({ vanguard: 18 }, "main", 0.45), group({ tank: 4, breaker: 2 }, "main", 2.2, 6, 1.5), group({ ranger: 6 }, "main", 0.8, 10)], bonus: 0 },
+      { groups: [group({ vanguard: 18 }, "main", 0.45), group({ tank: 4, breaker: 2 }, "main", 2.2, 6, 1.5), group({ ranger: 6 }, "main", 0.8, 10), group({ balloon: 2 }, "main", 4, 12)], bonus: 0 },
     ],
     camera: { x: -1, z: 0, zoom: 70, maxZoom: 96 },
   },
@@ -156,9 +157,11 @@ export const HOLD_THE_VALLEY = {
     { when: { wave: 2 }, do: [{ say: { who: "okoro", text: "First reading! The lines bend south and west, toward the ash plains." } }] },
     { when: { wave: 4 }, do: [{ say: { who: "okoro", text: "Second reading. They cross under the old Ashfall camp. Something is buried there, Commander." } }] },
     { when: { waveStart: 5 }, do: [{ say: { who: "vale", text: "A long Scrapper column on the road. Breaker crews where the road bends, please." } }] },
+    { when: { waveStart: 6 }, do: [{ say: { who: "vale", text: "A Kite over the gorge. Ranger and Anti-tank crews can shoot it down. Breaker crews cannot." } }] },
     { when: { wave: 6 }, do: [{ say: { who: "okoro", text: "Third reading. It is a Builder vault, and the Lattice keeps a key inside it." } }] },
     { when: { waveStart: 7 }, do: [{ say: { who: "hale", text: "I have counted your towers, Commander. I am sending a tank for each of them." } }, { music: "battle" }] },
     { when: { waveStart: 8 }, do: [{ say: { who: "vale", text: "Last column. Everything Hale has left on this road. Hold the top, Commander." } }] },
+    { when: { waveStart: 8 }, do: [{ say: { who: "okoro", text: "Balloons behind the column, the same as over the basin! Keep a Ranger crew near the top." } }] },
   ],
   debrief: {
     win: [
@@ -172,9 +175,7 @@ export const HOLD_THE_VALLEY = {
   design: "Frontier Defence rules on Gorge Road in Act 2, about 7 minutes: no base, 20 lives, Ranger, Breaker and Anti-tank crews on 18 pads, four of them rim pads (seen from the road, more reach) and four deep pads (hidden from below). Eight Ashfall waves climb one road to the relay plateau, from 6 Scrappers to a last column of 18 Scrappers, 3 Battle tanks and 6 Rangers. Intended: crew the low road first, then rim pads at the bends, Breakers for the Scrapper columns (waves 3, 5, 8) and Anti-tank crews on the upper road before the tanks (waves 7, 8). Story beats: Okoro's three readings find the Builder vault, which sets up mission 8.",
 };
 
-// The third new mission of the plan, "Wings over Copper" (the first air raid, Act 2), is added once
-// the air units (release 0.18) are merged: it needs flyers, `hits_air` and the air rules. Its slot
-// in MISSIONS (src/story/missions.js) is marked with a TODO, and its id is reserved here so that
-// nothing else takes it. Campaign progress is keyed by id, so inserting it later locks nothing a
-// player has already cleared (a mission opens when it or the one before it is cleared).
-export const RESERVED_IDS = ["m06b-wings-over-copper"];
+// The third new mission of the plan, "Wings over Copper" (`m06b-wings-over-copper`, the first air
+// raid, Act 2), was reserved here until the air units (release 0.18) merged; it now sits in
+// MISSIONS (src/story/missions.js) after Copper Harvest. No id is reserved any more.
+export const RESERVED_IDS = [];

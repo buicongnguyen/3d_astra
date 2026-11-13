@@ -7,15 +7,17 @@ import { MISSIONS } from "./missions.js";
 
 const round1 = (v) => Math.round(v * 10) / 10;
 // Each act's missions spread evenly across its band (12% to 86%), zigzagging a little up and down.
+// An act of six (Act 2 since Wings over Copper) widens to 11% to 89% so neighbours stay 15% apart.
 export function mapLayout(missions) {
   const out = {};
   for (const act of [1, 2, 3]) {
     const list = missions.filter((m) => m.act === act), band = ACT_BANDS[act], n = list.length;
     // Clear of the act title at the band's top edge.
     const mid = (band.top + band.bottom) / 2 + 3;
+    const span = Math.min(78, Math.max(74, (n - 1) * 15.6)), left = span > 74 ? 50 - span / 2 : 12;
     list.forEach((m, i) => {
       const k = n === 1 ? 0.5 : i / (n - 1), east = act !== 2;
-      out[m.id] = { x: round1(12 + (east ? k : 1 - k) * 74), y: round1(mid + (i % 2 ? 4 : -4)) };
+      out[m.id] = { x: round1(left + (east ? k : 1 - k) * span), y: round1(mid + (i % 2 ? 4 : -4)) };
     });
   }
   return out;

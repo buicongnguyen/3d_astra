@@ -40,6 +40,18 @@ export function counterHint(enemyType, ownTypes, availableTypes = Object.keys(D)
   return strong ? `Your ${D[strong].name} counters ${e.name}. Let it lead the fight.` : null;
 }
 
+// The anti-air hint (0.18.3), or null: an enemy flyer is in sight and nothing of the player's can
+// shoot it. Pure (the simulation is passed in), so node:test covers it.
+export const AIR_HINT_UNITS = "Flyers overhead! Towers cannot hit them yet. Train Rangers or Anti-tank soldiers, or research Flak at the Command core.";
+export const AIR_HINT_CREWS = "Flyers on the road! Breaker crews cannot hit them. Ranger and Anti-tank crews can.";
+export const AIR_HINT_CREWS_WATCHER = "Flyers on the road! Breaker crews cannot hit them. Ranger, Anti-tank and Watcher crews can.";
+export function airHintText(sim, team = 0) {
+  if (!sim.entities.some((e) => e.flying && e.hp > 0 && sim.hostile(team, e.team) && sim.isVisible(e, team))) return null;
+  if (sim.players[team]?.flak || sim.entities.some((e) => e.team === team && e.hp > 0 && e.hits_air)) return null;
+  if (sim.defence) return sim.defenceDef()?.crews?.includes("watcher") ? AIR_HINT_CREWS_WATCHER : AIR_HINT_CREWS;
+  return AIR_HINT_UNITS;
+}
+
 export function setupUiExtras(S, A) {
   const Z = S.screen;
   const cursor = { worker: -1, army: -1 };
@@ -134,6 +146,17 @@ export function setupUiExtras(S, A) {
     showHint(HIDDEN_HINT);
   }
 
+  // The first enemy flyer the player can see while nothing of theirs can hit it (no unit that hits
+  // air, no Flak; in Defence no crew that hits air): what can. Once per match (airHintText).
+  function airHint() {
+    if (!hintEl || seen.has("air") || !hintEl.hidden || performance.now() < nextHintAt) return;
+    if (!Z.started || Z.paused || Z.modalType || S.sim.result || S.tutorial || S.playMode === "training") return;
+    const text = airHintText(S.sim);
+    if (!text) return;
+    seen.add("air");
+    showHint(text);
+  }
+
   // The first time one of the player's units has an ability ready: what it is, what it does and how
   // to use it. Once per ability, remembered across matches (ability-hints.js). Browser suites (?test)
   // leave it off unless the URL has ?abilityhints, so their own hints keep the slot.
@@ -178,7 +201,7 @@ export function setupUiExtras(S, A) {
     return BEAT_SLOWDOWN;
   }
 
-  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); fightHints(); highGroundHint(); hiddenHint(); abilityHint(); } });
+  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); airHint(); fightHints(); highGroundHint(); hiddenHint(); abilityHint(); } });
 
   return function bind() {
     makeHint();
