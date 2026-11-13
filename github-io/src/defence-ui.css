@@ -204,3 +204,10 @@
   font-variant-numeric: tabular-nums;
 }
 .compact-ui .defence-score-big { min-width: 54px; height: 54px; font-size: 28px; }
+/* The bar holds the commander button since 0.21: the idle-army shortcut (the commander is picked
+   from the bar) gives way to it, and the narrowest phones drop the word "Wave". */
+:root.in-defence #idle-army { display: none !important; }
+@media (max-width: 360px) {
+  .compact-ui #defence-bar { gap: 3px; }
+  .compact-ui #defence-bar .wave > span:first-of-type { display: none; }
+}

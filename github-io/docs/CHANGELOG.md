@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.21.0: Defence complete (round 3 plan, items 21.1–21.4)
+
+- **Two more crews:** the Tank emplacement (heavy single shots, slow, strong against machines) and the Scorcher flame trap (short range, sets the road on fire; best against swarms on foot).
+- **Tier-3 branches:** a gold tower picks one of two upgrades, shown on its tile: Ranger Marksman or Suppressor (slows), Mortar Cluster or Guided, Anti-tank Heavy or Rapid, Watcher Beacon (marked targets take 25% more) or Far-eye, Tank Breacher or Shrapnel, Flame trap Inferno or Firewall.
+- **A commander on the field:** a gold-trimmed tank you send down the road with a tap. It holds and blocks the column, calls Barrage and Reinforce (three Vanguards hold the road for 20 s), and comes back 20 s after it falls.
+- **Six levels:** Switchback Pass (Wardens), Fordwood (Ashfall with Warden machines, one bridge and the ford), Amber Canyon (Veil shades: Watcher posts matter) and Long Crossing (Veil with hired Sunward riders) join Gorge Road and Twin Bridges; each opens with a star on the one before.
+- **Bridges:** on river levels, tap a bridge to blow it (3 s fuse). The columns turn to another crossing; the ford and the last open way across can't be blown. Bridge builders stop at the bank and raise a pontoon in 20 s unless you bring them down.
+- **Endless and Daily:** any open level, waves forever from a seed; the score is waves held and your best is kept. The Daily seed is the same for everyone that day.
+- **Perks:** stars buy Quartermaster (first tower −20%), Reserves (+2 lives) and Fast guns (faster Barrage). Defence levels only, never the campaign.
+- Checks: the bot reaches its stars on all six levels at three difficulties, Endless holds 15+ waves, the wave scene stays at 109 draws on the phone (limit 120).
+
 ## 0.16.1: recorded music
 
 - Five original instrumental tracks, made locally with ACE-Step 1.5 (MIT; see `public/music/LICENCE.txt`):

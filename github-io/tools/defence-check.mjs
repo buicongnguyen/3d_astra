@@ -38,7 +38,7 @@ for (const level of levels) {
 }
 if (process.argv.includes("--json")) console.log(JSON.stringify(rows, null, 2));
 else for (const r of rows) console.log(r.difficulty === "endless"
-  ? `${r.level.padEnd(14)} endless  held ${r.held}${r.held >= ENDLESS_CAP ? "+ (cap)" : ""} waves (${r.result})`
+  ? `${r.level.padEnd(14)} endless  held ${r.held >= ENDLESS_CAP ? `${r.held}+ waves (stopped at the cap)` : `${r.held} waves (lost)`}`
   : `${r.level.padEnd(14)} ${r.difficulty.padEnd(8)} target ${r.target}★ | bot ${r.bot} | passive ${r.passive} | greedy ${r.greedy}${r.demolish ? ` | demolish ${r.demolish}` : ""}`);
 if (failures.length) { console.log(`\nFAIL\n${failures.join("\n")}`); process.exitCode = 1; }
 else console.log("\nPASS");

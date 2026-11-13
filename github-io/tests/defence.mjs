@@ -135,7 +135,7 @@ await suite("defence", async () => {
     assert.equal(await page.locator("#defence-perks-toggle b").textContent(), "2");
     assert.ok(await page.locator('[data-buy-perk="gunnery"]').isDisabled() && await page.locator('[data-buy-perk="reserves"]').isDisabled());
     assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem("frontier-defence-v1")).perks), ["quartermaster"]);
-    await page.locator("#defence-perks").scrollIntoViewIfNeeded();
+    await page.evaluate(() => document.querySelector('#defence-perks [data-perk="gunnery"]').scrollIntoView({ block: "center" }));
     await shot(page, `defence-perks-${viewport}`);
     await noSideScroll(page, `${viewport} perks`);
     assert.deepEqual(await tinyText(page, "#defence-perks"), [], `${viewport}: perks text under 12 px`);
@@ -176,6 +176,8 @@ await suite("defence", async () => {
     assert.ok(await page.evaluate(() => document.documentElement.classList.contains("in-defence")));
     for (const id of ["#defence-call", "#defence-overview", "#defence-hero"]) { const b = await size(page.locator(id)); assert.ok(b.height >= 44 && b.width >= 44, `${viewport}: ${id} ${b.width}x${b.height}`); }
     assert.deepEqual(await tinyText(page, "#defence-bar"), [], `${viewport}: defence bar text under 12 px`);
+    // Nothing floats over the bar's buttons (the idle-army shortcut gives way to the commander button).
+    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#defence-bar > button:not([hidden])")].filter((el) => { const b = el.getBoundingClientRect(); return !el.contains(document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2)); }).map((el) => el.id)), [], `${viewport}: covered bar buttons`);
     assert.deepEqual(await page.evaluate(() => window.__frontier.sim.missionDef.defence.perks), ["quartermaster"], "perks ride on a Defence menu level");
 
     // Tap a pad: six crew tiles; pick Rangers (a fifth off: the Quartermaster): a crewed tower stands on it.

@@ -81,7 +81,7 @@ export function setupDefenceEntry(S, A) {
     const l = level(), foe = FACTIONS[l.factions[1]];
     const rows = DEFENCE_LEVELS.map((d, i) => {
       const open = levelOpen(progress, i), stars = starsOf(progress, d.id), best = progress.levels[d.id], score = variant === "levels" ? 0 : bestScore(progress, variant, d.id, day);
-      const mark = !open ? icon("lock") : variant === "levels" ? `${starRow(stars)}${best?.difficulty === "veteran" ? '<span class="veteran-mark" title="Veteran clear" aria-label="Veteran clear">V</span>' : ""}` : `<span class="defence-best"><span>Best</span> <b translate="no">${score}</b></span>`;
+      const mark = !open ? icon("lock") : variant === "levels" ? `${starRow(stars)}${best?.difficulty === "veteran" ? '<span class="veteran-mark" title="Veteran clear" aria-label="Veteran clear">V</span>' : ""}` : `<span class="defence-best"><span>Best</span> <i translate="no">${score}</i></span>`;
       return `<li><button data-level="${i}" data-level-id="${d.id}"${i === S.defencePick ? ' aria-current="true"' : ""}${open ? "" : " disabled"}><b>${i + 1}</b><span><strong>${d.title}</strong><small>${FACTIONS[d.factions[1]]?.short || ""} · <span>${d.defence.waves.length} waves</span></small></span><em>${mark}</em></button></li>`;
     }).join("");
     $("defence-setup").innerHTML = `<div class="defence-variants" role="group" aria-label="Defence mode">${VARIANTS.map((v) => `<button type="button" data-defence-variant="${v.id}" aria-pressed="${v.id === variant}"><strong>${v.label}</strong><small>${v.id === "daily" ? `<span translate="no">${dayLabel(day)}</span>` : v.note}</small></button>`).join("")}</div>
