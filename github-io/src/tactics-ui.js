@@ -55,6 +55,16 @@ export function abilityStatus(group) {
   return group.count > 1 ? `Ready ${group.ready}/${group.count}` : "Ready";
 }
 
+// Ready pulse (tactics-card.js): whether an ability tile starts its short pulse now. `was` is the
+// tile's last state ("ready", "cooling", or undefined for a tile just built), `ready` its state now,
+// `last` when this ability last pulsed (ms). A cooldown ending always pulses; a new tile that is
+// already ready pulses unless the same ability pulsed within `quietMs`; recharging never pulses.
+export const PULSE_QUIET_MS = 30000;
+export function shouldPulse(was, ready, now, last = -Infinity, quietMs = PULSE_QUIET_MS) {
+  if (!ready || was === "ready") return false;
+  return was === "cooling" || now - last >= quietMs;
+}
+
 // The stance shared by the selection, "mixed" when they differ, null when nobody takes one.
 export function stanceState(entities) {
   let state = null;

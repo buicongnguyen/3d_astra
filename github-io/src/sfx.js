@@ -9,7 +9,7 @@ import { MIX } from "./audio-mix.js";
 // Every play gets a small random pitch/level variation (own seeded generator, never the simulation's),
 // a stereo pan and a distance gain from its screen position, and must pass the voice budget (global
 // cap, per-group caps, priority, per-sound rate limit). Nothing is created while effects are off.
-import { VoiceBudget, audible, dbToGain, hitFor, mulberry32, nearPriority, screenMix, shouldCull, soundFor } from "./audio-logic.js";
+import { VoiceBudget, audible, dbToGain, hitFor, incomingFor, mulberry32, nearPriority, screenMix, shouldCull, soundFor } from "./audio-logic.js";
 import { BANK, ENGINE, radioSpec } from "./sfx-bank.js";
 import { SYNTH_RATE, renderEngine, renderSound, specLength } from "./audio-synth.js";
 
@@ -114,6 +114,13 @@ export class Sfx {
         const rate = sound.group === "weapon" ? FACTION_TUNE[sim.factions?.[event.team]] || 1 : 1;
         if (this.play(sound.name, { pan: mix.pan, gain: mix.gain, priority: nearPriority(sound.priority, mix.gain), gap: sound.gap, group: sound.group, rate })) heard = mix.gain;
       }
+    }
+    // A Barrage on its way: the incoming whistle where the shells will land, timed to end as they hit.
+    // The player's own always; an enemy's only when that ground is in sight (fog rule).
+    const incoming = incomingFor(event);
+    if (incoming && (event.team === 0 || isVisible({ x: event.tx, z: event.tz }))) {
+      const mix = this.mixAt(event.tx, event.tz);
+      if (this.play(incoming.name, { pan: mix.pan, gain: mix.gain, priority: nearPriority(6, mix.gain), gap: 0.15, group: "moment", delay: incoming.delay })) heard = Math.max(heard, mix.gain);
     }
     const hit = event.type === "shot" ? hitFor(sound.name.slice(5)) : null;
     if (hit && Number.isFinite(event.tx) && Number.isFinite(event.tz) && (event.team === 0 || isVisible({ x: event.tx, z: event.tz }))) {

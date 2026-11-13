@@ -864,6 +864,10 @@
     ["^(.+) counters your (.+)\\. Pull them back and bring (.+)\\.$", "{1} khắc chế {2} của bạn. Hãy rút {2} về và dùng {3}."],
     ["^(.+) counters your (.+)\\. Pull them back\\.$", "{1} khắc chế {2} của bạn. Hãy rút {2} về."],
     ["^Your (.+) counters (.+)\\. Let it lead the fight\\.$", "{1} của bạn khắc chế {2}. Hãy để {1} dẫn đầu trận đánh."],
+    ["^(.+) is ready on your (.+)\\. Select it and press ([A-Z]): (.+)$", "{1} của {2} đã sẵn sàng. Chọn {2} rồi nhấn {3}: {4}"],
+    ["^(.+) is ready on your (.+)\\. Select it and tap its tile: (.+)$", "{1} của {2} đã sẵn sàng. Chọn {2} rồi chạm vào ô kỹ năng: {3}"],
+    ["^(.+) is ready\\. Press ([A-Z]): (.+)$", "{1} đã sẵn sàng. Nhấn {2}: {3}"],
+    ["^(.+) is ready\\. Tap its tile: (.+)$", "{1} đã sẵn sàng. Chạm vào ô kỹ năng: {2}"],
     [
       "^PLACE (.+)$",
       "ĐẶT {1}"

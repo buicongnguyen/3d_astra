@@ -3,8 +3,12 @@ import { $ } from "./dom.js";
 import { SettingsUI } from "../settings-ui.js";
 import { icon } from "../icons.js";
 import { localizeDOM, loadLocale, loadStory } from "../i18n.js";
-import { palette, saveSettings } from "../settings.js";
+import { motionOffFor, palette, saveSettings } from "../settings.js";
 import { teamColors } from "../faction-colors.js";
+
+// True while `:root.motion-off` is set (Eco graphics, combat motion off, or reduced motion): JS
+// effects check it the way CSS animations obey the class.
+export const motionOff = () => typeof document !== "undefined" && document.documentElement.classList.contains("motion-off");
 
 export function setupPreferences(S, A) {
   const Z = S.screen;
@@ -19,8 +23,16 @@ export function setupPreferences(S, A) {
 
   const languageRow = document.createElement('label');
 
+  // `:root.motion-off`: decorative CSS animation stops (style.css); updated live on every settings
+  // change and when the system's reduced-motion preference changes.
+  const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  function syncMotion() {
+    document.documentElement.classList.toggle("motion-off", motionOffFor(S.settings, reducedMotion.matches));
+  }
+
   function applyPreferences(value) {
     S.settings = value;
+    syncMotion();
     localization.apply(S.settings.language);
     syncStoryLanguage();
     $('language').value = S.settings.language;
@@ -68,9 +80,11 @@ export function setupPreferences(S, A) {
     },
   });
 
-  Object.assign(A, { settingsUI, localization, applyPreferences });
+  Object.assign(A, { settingsUI, localization, applyPreferences, motionOff });
   return function bind() {
     syncStoryLanguage();
+    syncMotion();
+    reducedMotion.addEventListener("change", syncMotion);
 
     languageRow.className = 'language-choice menu-only';
 

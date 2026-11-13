@@ -1,6 +1,6 @@
 import "./tactics-ui.css";
 import { icon } from "./icons.js";
-import { ABILITY_ICONS, ABILITY_KEYS, STANCES, STANCE_INFO, abilityGroups, abilityStatus, stanceState, stancesInUse, takesStance } from "./tactics-ui.js";
+import { ABILITY_ICONS, ABILITY_KEYS, STANCES, STANCE_INFO, abilityGroups, abilityStatus, shouldPulse, stanceState, stancesInUse, takesStance } from "./tactics-ui.js";
 
 // Command-card controls for fighting units: one tile per distinct ability (name, glyph,
 // cooldown sweep and seconds) and a three-way stance switch. The markup is rebuilt only when
@@ -27,8 +27,13 @@ export function tacticsCardHTML(sim, entities, { compact = false, side = false, 
 // The source text is remembered on the node: in Vietnamese the visible text differs from it.
 const setText = (node, text) => { if (node && node.dataset.src !== text) { node.dataset.src = text; node.textContent = text; } };
 
+// Ready abilities announce themselves: a tile pulses a few times (CSS `.ready-pulse`, three cycles)
+// when its cooldown ends, then keeps a steady glow (`.is-ready`); the rule is shouldPulse in
+// tactics-ui.js. When each ability last pulsed, so reselecting the same army does not keep flashing.
+const pulsedAt = new Map();
+
 // `aiming` is the id of the ability being aimed (its tile stays lit), or null.
-export function updateTacticsCard(root, sim, entities, { compact = false, side = false, blocked = false, aiming = null } = {}) {
+export function updateTacticsCard(root, sim, entities, { compact = false, side = false, blocked = false, aiming = null, now = performance.now() } = {}) {
   const tiles = root.querySelectorAll("[data-ability]");
   if (tiles.length) {
     const groups = abilityGroups(sim, entities, abilityLimit(compact, side));
@@ -37,6 +42,15 @@ export function updateTacticsCard(root, sim, entities, { compact = false, side =
       tile.disabled = blocked || !g || !g.ready;
       tile.classList.toggle("cooling", !!g && !g.ready);
       tile.classList.toggle("active", aiming === tile.dataset.ability);
+      const ready = !!g && g.ready > 0, state = ready ? "ready" : "cooling";
+      if (tile.dataset.readyState !== state) {
+        if (shouldPulse(tile.dataset.readyState, ready, now, pulsedAt.get(tile.dataset.ability))) {
+          pulsedAt.set(tile.dataset.ability, now);
+          tile.classList.add("ready-pulse");
+        } else if (!ready) tile.classList.remove("ready-pulse");
+        tile.classList.toggle("is-ready", ready);
+        tile.dataset.readyState = state;
+      }
       if (!g) continue;
       const sweep = g.fraction.toFixed(3);
       if (tile.dataset.cd !== sweep) { tile.dataset.cd = sweep; tile.style.setProperty("--cd", sweep); }
