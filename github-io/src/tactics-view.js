@@ -129,9 +129,10 @@ export class TacticsView {
   }
   put(x, y, z, size, tint, alpha, style, value) {
     if (this.count >= CAPACITY) return;
-    const i = this.count++, P = this.place.array, T = this.tint.array, K = this.kind.array, p = i * 4, k = i * 2;
-    if (P[p] !== x || P[p + 1] !== y || P[p + 2] !== z || P[p + 3] !== size || T[p] !== tint[0] || T[p + 1] !== tint[1] || T[p + 2] !== tint[2] ||
-      T[p + 3] !== alpha || K[k] !== style || K[k + 1] !== value) {
+    const i = this.count++, P = this.place.array, T = this.tint.array, K = this.kind.array, p = i * 4, k = i * 2, f = Math.fround;
+    // Compared at the buffer's float precision: a double that float32 cannot hold must not look changed every frame.
+    if (P[p] !== f(x) || P[p + 1] !== f(y) || P[p + 2] !== f(z) || P[p + 3] !== f(size) || T[p] !== f(tint[0]) || T[p + 1] !== f(tint[1]) || T[p + 2] !== f(tint[2]) ||
+      T[p + 3] !== f(alpha) || K[k] !== f(style) || K[k + 1] !== f(value)) {
       P[p] = x; P[p + 1] = y; P[p + 2] = z; P[p + 3] = size;
       T[p] = tint[0]; T[p + 1] = tint[1]; T[p + 2] = tint[2]; T[p + 3] = alpha;
       K[k] = style; K[k + 1] = value;

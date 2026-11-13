@@ -21,9 +21,13 @@ const scenarios = [
   // The same phone battle with three rivals, first on the mirror roster and then one faction each (package 2.6).
   {name:'three-rivals-eco', map:'riverlands', enemies:3, teams:4, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
   {name:'three-factions-eco', map:'riverlands', enemies:3, teams:4, faction:'mixed', mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
+  // Frontier Defence (0.17) on the phone: 120 Ashfall units along Gorge Road, half of them damaged,
+  // and ten crewed towers at mixed tiers, at the level's own zoom.
+  // Twice battle-eco's army, a quarter of it tanks and Scorchers: the triangle line is raised to match.
+  {name:'defence-wave-eco', defence:'d-gorge', mobile:true, zoom:70, focus:[-1,0], reveal:true, wave:120, towers:10, triangles:600000},
 ];
 const results = [];
-const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185};
+const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120};
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -38,10 +42,19 @@ try {
     });
     await page.goto((process.env.TEST_URL || 'http://127.0.0.1:4193/') + '?test=1');
     await page.waitForFunction(() => window.__frontier?.view.modelsReady, null, {timeout:90000});
-    await page.selectOption('#scenario', scenario.map);
-    await page.selectOption('#enemy-count', String(scenario.enemies));
-    if (scenario.faction) await page.selectOption('#enemy-faction', scenario.faction);
-    await page.waitForFunction(() => window.__frontier.modelsReady, null, {timeout:90000});
+    if (scenario.defence) {
+      await page.locator('[data-mode="defence"]').click();
+      await page.locator(`[data-level-id="${scenario.defence}"]`).click();
+    } else {
+      await page.selectOption('#scenario', scenario.map);
+      await page.selectOption('#enemy-count', String(scenario.enemies));
+      if (scenario.faction) await page.selectOption('#enemy-faction', scenario.faction);
+    }
+    await page.waitForFunction(() => window.__frontier.modelsReady && !document.querySelector('#start').disabled, null, {timeout:90000});
+    if (scenario.defence) {
+      await page.locator('#start').click();
+      await page.waitForFunction(() => window.__frontier.started && window.__frontier.sim.defence && document.querySelector('#defence-bar'), null, {timeout:30000});
+    }
     await page.evaluate(scenario => {
       window.__freezeFrames = true;
       const f = window.__frontier;
@@ -50,6 +63,25 @@ try {
       const s = f.sim, v = f.view;
       s.aiEnabled = false;
       if (scenario.reveal) { s.visible[0].fill(1); s.explored[0].fill(1); }
+      if (scenario.wave) {
+        // Towers on the first pads at tiers 1-3, then the wave spread along the road, every other unit hurt.
+        const def = s.missionDef.defence, pts = def.routes.main, kinds = ['vanguard','ranger','breaker','tank'];
+        s.players[0].alloy = 1e5;
+        def.pads.slice(0, scenario.towers).forEach((p, i) => {
+          s.command({team:0, type:'padBuild', pad:p.id, crew:def.crews[i % 3]});
+          for (let k = 0; k < i % 3; k++) s.command({team:0, type:'padUpgrade', building:s.towerOn(p.id).id});
+        });
+        const legs = pts.slice(1).map((b, i) => Math.hypot(b.x - pts[i].x, b.z - pts[i].z)), total = legs.reduce((a, b) => a + b, 0);
+        for (let i = 0; i < scenario.wave; i++) {
+          let d = (i + 0.5) / scenario.wave * total * 0.97, k = 0;
+          while (d > legs[k]) d -= legs[k++];
+          const a = pts[k], b = pts[k + 1], t = d / legs[k], side = ((i * 0.618) % 1 - 0.5) * 2.4;
+          const nx = -(b.z - a.z) / legs[k], nz = (b.x - a.x) / legs[k];
+          const e = s.spawn(s.typeFor(1, kinds[i % kinds.length]), 1, a.x + (b.x - a.x) * t + nx * side, a.z + (b.z - a.z) * t + nz * side, true, true);
+          e.angle = Math.atan2(b.x - a.x, b.z - a.z);
+          if (i % 2) e.hp = e.maxHp * 0.5;
+        }
+      }
       if (scenario.army) {
         const kinds = ['ranger','vanguard','tank','breaker','antitank'];
         for (let i = 0; i < scenario.army; i++) {
@@ -217,9 +249,19 @@ try {
     }
     if (record < 0) {
       assert.ok(summary.calls.p95 <= limits[scenario.name], `${scenario.name} draw budget: ${JSON.stringify(summary)}`);
-      assert.ok(summary.triangles.p95 < (scenario.mobile ? 315000 : 450000), 'instancing must not inflate triangle submission');
+      assert.ok(summary.triangles.p95 < (scenario.triangles || (scenario.mobile ? 315000 : 450000)), 'instancing must not inflate triangle submission');
       assert.ok(summary.compose.p95 < 450 && summary.multiplyMatrices.p95 < 500, 'stationary poses must not rebuild the entire scene');
       assert.equal(summary.bufferUploads.p95, 0, 'unchanged instances and empty effects must not resend GPU buffers');
+    }
+    if (scenario.defence) {
+      // The wave really is on the field, and only the 12 weakest enemies carry a vitals bar.
+      const field = await page.evaluate(() => { const f = window.__frontier, v = f.view; return {units:f.sim.entities.filter(e => e.team === 1).length, bars:[...v.objects.values()].filter(o => o.userData.bar?.visible && o.userData.team === 1).length, crews:[...v.objects.values()].filter(o => o.userData.crew).length}; });
+      console.log('defence field', JSON.stringify(field));
+      assert.equal(field.units, scenario.wave);
+      assert.ok(field.bars <= 12, `defence: ${field.bars} enemy vitals bars`);
+      assert.equal(field.crews, scenario.towers);
+    }
+    if (record < 0 && !scenario.defence) {
       const state = await page.evaluate(() => {
         const f = window.__frontier, v = f.view, s = f.sim;
         const materialMap = team => { const m = new Map(); v.teamTemplates.get(`tank-${team}`).traverse(o => { if (o.isMesh) m.set(o.material.name, o.material); }); return m; };
