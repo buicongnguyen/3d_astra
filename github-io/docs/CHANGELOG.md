@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.16.1: recorded music
+
+- Five original instrumental tracks, made locally with ACE-Step 1.5 (MIT; see `public/music/LICENCE.txt`):
+  - title theme (104 bpm, soft bending monochord lead, 55 s loop);
+  - campaign and briefing (88 bpm, 44 s loop);
+  - Defence between waves (96 bpm, low taiko and marimba, 60 s loop);
+  - victory and defeat stings.
+- 1.44 MB in total, AAC 64 kbps, -16 LUFS. Loops are cut to whole bars and loop sample-exactly.
+- Nothing downloads until the first tap; each track is cached on first play.
+- The takes were chosen by measurement (loop seam, beat steadiness, no voice-like sound). The blind listen page with the other shortlisted takes is in the 3D_claudeopus55 repo, `experiments/music-frontier-1113/listen/`; any track can be swapped.
+
 ## 0.16.0: Hold the Line (round 3 plan, docs/aaa/PLAN_ROUND3_REFINED_2026-11-13.md)
 
 - **Choose your army in Skirmish:**

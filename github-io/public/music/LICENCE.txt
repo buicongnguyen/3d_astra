@@ -1,0 +1,102 @@
+Frontier Command game music (final/*.m4a)
+=========================================
+
+What these files are
+--------------------
+Five original instrumental cues for the browser RTS "Frontier Command": title
+(loop), campaign (loop), defence (loop), victory (sting), defeat (sting).
+Generated locally on 2026-11-13 on the owner's RTX 4080 SUPER with ACE-Step 1.5
+(turbo DiT "acestep-v15-turbo" + 5 Hz LM "acestep-5Hz-lm-1.7B", code commit
+ca1e85fe9430179831e6bc6be790c332190a3866 of https://github.com/ACE-Step/ACE-Step-1.5),
+text-to-music only, chain-of-thought rewriting off (captions used as written).
+Then cut to whole bars (loops) or to the final 5-8 s phrase (stings),
+loop-crossfaded, loudness-mastered (-16 LUFS integrated, true peak <= -1.5 dBTP
+on the decoded AAC) and encoded to AAC 64 kbps by this batch's own scripts
+(experiments/music-frontier-1113/tools). Loop points are in manifest.json.
+No vocals (instrumental mode). No prompt names an artist, a song, an album or
+a real person; no reference audio was used; nothing was sampled or downloaded
+apart from the model weights.
+
+Licence basis (as checked for the studio songs on 2026-10-21, same model and code)
+---------------------------------------------------------------------------------
+1. Model card, https://huggingface.co/ACE-Step/Ace-Step1.5
+   (the main bundle used here: turbo DiT, 1.7B LM, VAE and the Qwen3-Embedding-0.6B
+   text encoder, the latter Apache-2.0) - licence metadata: "mit".
+   Exact wording on the card: "You can strictly use the generated music for
+   commercial purposes."
+   The card describes the training data as "a massive, legally compliant
+   dataset" (licensed tracks, royalty-free/public-domain music and synthetic
+   MIDI-to-audio data).
+2. Code repository, https://github.com/ACE-Step/ACE-Step-1.5 - LICENSE file
+   (MIT), reproduced below.
+3. Responsible-use notes from the project, which we follow: verify the
+   originality of generated works, disclose AI involvement, do not use it to
+   reproduce copyrighted works or misrepresent AI music as human-made.
+   Disclosure: this music is AI-generated (ACE-Step 1.5).
+
+Note: this is the project's licence check, not legal advice. Under many
+jurisdictions purely machine-generated audio may not attract copyright at
+all; the MIT terms and the model card's commercial statement are what the
+project relies on.
+
+Settings per file (seed / caption / sections)
+---------------------------------------------
+title.m4a
+  seed 1308, shift 2.0, requested 104 bpm, key D major, 110 s take, 8 steps, instrumental=True
+  sections: [Intro] [Main theme] [Bridge] [Main theme - full] [Outro]
+  caption: heroic adventure game theme, instrumental, soft bending monochord lead melody, plucked
+    acoustic guitar, low strings, warm brass swells, frame drums and low taiko with a soft kick on
+    every beat, hopeful and brave, light and warm, builds to a fuller second half, steady tempo,
+    steady pulse that never drops out, clean warm mix, no vocals
+
+campaign.m4a
+  seed 1324, shift 1.0, requested 88 bpm, key G major, 100 s take, 8 steps, instrumental=True
+  sections: [Intro] [Main theme] [Interlude] [Main theme] [Outro]
+  caption: calm adventure map room music, instrumental, plucked acoustic guitar melody, soft warm
+    pads, light hand percussion on every beat, gentle upright bass, curious and hopeful, thoughtful,
+    gentle, steady tempo, steady pulse that never drops out, clean warm mix, no vocals
+
+defence.m4a
+  seed 1348, shift 2.0, requested 96 bpm, key A minor, 100 s take, 8 steps, instrumental=True
+  sections: [Intro] [Main theme] [Break - lighter] [Main theme] [Outro]
+  caption: steady alert strategy game music, instrumental, low strings ostinato, light hand
+    percussion and soft low taiko pulse on every beat, soft marimba, warm pads, watchful and
+    focused, a little tense but hopeful, sparse with room to breathe, not a full battle, steady
+    tempo, steady pulse that never drops out, clean warm mix, no vocals
+
+victory.m4a
+  seed 1361, shift 2.0, requested 100 bpm, key D major, 24 s take, 8 steps, instrumental=True
+  sections: [Intro] [Fanfare] [Outro - final chord]
+  caption: short triumphant victory fanfare, instrumental, bright brass fanfare, timpani, strings,
+    cymbal swell, bright resolving final chord, hopeful and proud, clean warm mix, no vocals
+
+defeat.m4a
+  seed 1384, shift 2.0, requested 72 bpm, key D minor, 24 s take, 8 steps, instrumental=True
+  sections: [Intro] [Theme - falling] [Outro - soft final chord]
+  caption: short gentle game over music, instrumental, low strings slowly falling melody, soft warm
+    horn, soft piano, quiet and reflective, gentle not sad, ends on a soft warm held chord, clean
+    warm mix, no vocals
+
+MIT License (ACE-Step 1.5, verbatim)
+------------------------------------
+MIT License
+
+Copyright (c) 2026 ACEStep
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
