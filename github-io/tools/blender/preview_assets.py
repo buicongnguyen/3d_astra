@@ -22,9 +22,15 @@ def srgb_to_linear(c):
     return c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4
 
 
-def paint_team(mat):
+def hex_linear(color):
+    color = color.lstrip('#')
+    return tuple(srgb_to_linear(int(color[i:i+2], 16) / 255) for i in (0, 2, 4)) + (1,)
+
+
+def paint_team(mat, team=None):
     if not mat.use_nodes:
         return
+    TEAM = team or globals()['TEAM']
     for n in mat.node_tree.nodes:
         if n.type == 'BSDF_PRINCIPLED':
             base = n.inputs['Base Color']
@@ -43,7 +49,11 @@ def main():
     global TEAM
     raw = sys.argv[sys.argv.index('--') + 1:]
     greyscale = '--greyscale' in raw
+    global HERO_DISTANCE
+    HERO_DISTANCE = 1.0
     for flag in raw:
+        if flag.startswith('--hero-distance='):
+            HERO_DISTANCE = float(flag.split('=', 1)[1])
         if flag.startswith('--team='):
             color = flag.split('=',1)[1].lstrip('#')
             TEAM = tuple(srgb_to_linear(int(color[i:i+2],16)/255) for i in (0,2,4)) + (1,)
@@ -79,11 +89,22 @@ def main():
     x = 0.0
     placed = []
     items = []
+    colors = {}
     for name in names:
+        # "kite@3.5" shows a flyer raised 3.5 m above the ground (its fly height in the view);
+        # "balloon:ef7660" paints that model's team parts in its own faction colour.
+        name, _, color = name.partition(':')
+        name, _, lift = name.partition('@')
+        colors[name] = hex_linear(color) if color else None
         before = set(bpy.data.objects)
         bpy.ops.import_scene.gltf(filepath=str(MODELS / f'{name}.glb') if not name.endswith('.glb') else name)
         new = [o for o in bpy.data.objects if o not in before]
         roots = [o for o in new if o.parent is None]
+        # Core units carry baked clips on MotionRoot; their keys would undo the layout shift.
+        for o in new:
+            o.animation_data_clear()
+        for r in roots:
+            r.location.z += float(lift or 0)
         if Path(name).stem == 'environment':  # one scenery asset per asset_* root
             items += [(r.name, [r], [r] + list(r.children_recursive)) for r in roots]
         else:
@@ -103,7 +124,7 @@ def main():
             if o.type == 'MESH':
                 for slot in o.material_slots:
                     if slot.material and slot.material.name.startswith('Team'):
-                        paint_team(slot.material)
+                        paint_team(slot.material, colors.get(name))
     span = x - 0.9
     for _, roots, _ in items:
         for root in roots:
@@ -141,7 +162,7 @@ def main():
         cam.lens = 55
         direction = Vector((0.55, -1.0, 0.5)).normalized()
         target = Vector((0, 0, height * 0.42))
-        co.location = target + direction * max(span * 1.25, height * 2.6)
+        co.location = target + direction * max(span * 1.25, height * 2.6) * HERO_DISTANCE
     co.rotation_euler = (target - co.location).to_track_quat('-Z', 'Y').to_euler()
     cam.clip_end = 500
     label_material = bpy.data.materials.new('Review labels')

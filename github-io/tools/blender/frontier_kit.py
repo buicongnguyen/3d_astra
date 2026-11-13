@@ -74,8 +74,13 @@ MATERIALS = {
     # tone-maps to white under ACES and loses the amber/cyan identity).
     'CrystalAlloy': ('#f28a1c', 0.1, 0.24, 0.3),
     'CrystalEnergy': ('#2fb0f0', 0.1, 0.2, 0.42),
+    # Air units (generate_air.py): a burner flame that keeps its own colour on every team.
+    'Flame': ('#ff8a2a', 0.0, 0.4, 3.0),
 }
-GLOWING = {'TeamGlow', 'Alloy', 'Energy', 'Lamp', 'CrystalAlloy', 'CrystalEnergy'}
+GLOWING = {'TeamGlow', 'Alloy', 'Energy', 'Lamp', 'CrystalAlloy', 'CrystalEnergy', 'Flame'}
+# Pivots whose children move at runtime (rotors, propellers, burner flames). Like the aim rig,
+# their meshes must not bake shadows onto the body they turn over.
+MOVING = re.compile(r'^(spin_|flicker_)', re.I)
 
 
 def material(name):
@@ -341,7 +346,9 @@ class Asset:
     """Named parts (one Shape per part/material/parent) that finish into exportable objects."""
 
     def __init__(self, name, parent_collection, ao_distance=0.9, ao_strength=0.9, grime_height=0.5, ao_samples=40,
-                 lattice=0.0):
+                 lattice=0.0, ground=True):
+        """ground=False is for flyers: no ground-plane occlusion and no ground grime, because
+        the model is drawn above the terrain even though it is authored at z = 0."""
         self.name = name
         self.collection = bpy.data.collections.new(f'frontier_{name}')
         parent_collection.children.link(self.collection)
@@ -354,6 +361,7 @@ class Asset:
         self.grime_height = grime_height
         self.ao_samples = ao_samples
         self.lattice = lattice
+        self.ground = ground
 
     def pivot(self, name, loc):
         o = bpy.data.objects.new(name, None)
@@ -416,12 +424,14 @@ class Asset:
                 polys += [tuple(base + i for i in p.vertices) for p in ob.data.polygons]
             return BVHTree.FromPolygons(verts, polys, epsilon=0.0)
         # Aim/recoil rig parts move at runtime, so they must not bake shadows onto the body.
+        def moving(ob):
+            return bool(RIG.match(ob.name) or (ob.parent and MOVING.match(ob.parent.name)))
         full = bvh(meshes)
-        static = bvh([m for m in meshes if not RIG.match(m[0].name)])
+        static = bvh([m for m in meshes if not moving(m[0])])
         dirs = _hemisphere(self.ao_samples)
         dist = self.ao_distance
         for ob, mw, mat in meshes:
-            tree = full if RIG.match(ob.name) else static
+            tree = full if moving(ob) else static
             me = ob.data
             normals = [Vector(n.vector) for n in me.vertex_normals]
             wear = me.attributes.get('wear')
@@ -446,7 +456,7 @@ class Asset:
                     # visible faces, so buried samples must not darken it.
                     if loc is not None and hit_normal.dot(ray) > 0:
                         loc = None
-                    if loc is None and ray.z < -1e-4 and origin.z >= -1e-3:
+                    if self.ground and loc is None and ray.z < -1e-4 and origin.z >= -1e-3:
                         t = -origin.z / ray.z
                         loc = t < dist or None
                     if loc is not None:
@@ -454,10 +464,10 @@ class Asset:
                 ao = 1 - hit / len(dirs)
                 k = 1 - self.ao_strength * (1 - ao)
                 edge = 1 + 0.24 * w
-                grime = 0.8 + 0.2 * smoothstep(0.0, self.grime_height, p.z)
+                grime = 0.8 + 0.2 * smoothstep(0.0, self.grime_height, p.z) if self.ground else 1.0
                 mott = 1 + 0.035 * noise.noise(p * 1.3) + 0.02 * noise.noise(p * 5.1)
                 g = max(0.0, min(1.0, BASE_TONE * k * edge * grime * mott))
-                dust = 1 - 0.05 * (1 - smoothstep(0.0, self.grime_height, p.z))
+                dust = 1 - 0.05 * (1 - smoothstep(0.0, self.grime_height, p.z)) if self.ground else 1.0
                 colors += [g, g * (0.995 * dust + 0.005), g * (0.985 * dust), 1.0]
             attr = me.color_attributes.new('Col', 'BYTE_COLOR', 'POINT')
             attr.data.foreach_set('color', colors)

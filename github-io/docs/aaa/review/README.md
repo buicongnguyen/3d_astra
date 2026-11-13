@@ -40,3 +40,21 @@ blender --background --factory-startup --python tools/blender/preview_factions.p
 ```
 
 Source library: assets/source/frontier-factions.blend. Export metadata: public/models/manifest.json. Validation: tests/assets.test.js. Portrait regeneration and roster activation follow owner approval.
+
+# Air unit sheets (0.18 "Wings", item 18.2)
+
+[Colour](air-units-sheet.png) · [Greyscale](air-units-sheet-greyscale.png) · [Portraits](air-portraits.png) (192 px, team paint white as in the atlas; kite, hawk, balloon, glider)
+
+Sheet rows: scale lineup beside the Battle tank and Ranger, on the ground and raised 3.5 m; each flyer from the game camera; each flyer in a close 3/4 view. The flyers are painted in their faction's colours (Kite and Hawk in Meridian mint, Balloon in Ashfall coral, Glider in Sunward gold). They are not yet in the manifest, the rosters or the portrait atlas.
+
+| Model | Built by | Triangles | Budget | Moving parts |
+|---|---|---:|---:|---|
+| kite | everyone | 904 | 1500 | `spin_rotor_L`, `spin_rotor_R` (vertical axis) |
+| hawk | meridian | 1408 | 1500 | `spin_fan_L`, `spin_fan_R` (vertical axis); `Barrel_guns`/`Muzzle_guns` recoil |
+| balloon | ashfall | 1308 | 1500 | `flicker_flame` (scale on the vertical axis) |
+| glider | sunward | 1080 | 1500 | `spin_prop` (fore-aft axis); `Barrel_nose` recoil |
+
+```
+blender --background --factory-startup --python tools/blender/generate_air.py
+blender --background --factory-startup --python tools/blender/preview_air.py
+```
