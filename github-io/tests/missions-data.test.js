@@ -63,7 +63,9 @@ test("objectives, regions, tags and types all resolve", () => {
     const points = new Set((m.setup || []).filter((s) => s.capturePoint).map((s) => s.capturePoint));
     const tags = new Set(spawns(m).map((s) => s.tag).filter(Boolean));
     const tag = (name, what) => assert.ok(tags.has(name), `${m.id}: ${what} names tag ${name}, which nothing carries`);
-    assert.equal(ids.size, m.objectives.length, `${m.id}: objective ids repeat`);
+    // Variants of one objective share its id, each under its own `if` (decisions, endings: 0.19a).
+    assert.equal(new Set(m.objectives.map((o) => o.id + JSON.stringify(o.if ?? null))).size, m.objectives.length, `${m.id}: objective ids repeat`);
+    for (const o of m.objectives.filter((x) => !x.if)) assert.equal(m.objectives.filter((x) => x.id === o.id).length, 1, `${m.id}: ${o.id} repeats without an if`);
     assert.ok(m.win.length > 0, m.id);
     for (const id of m.win) {
       assert.ok(ids.has(id), `${m.id}: win names ${id}`);
@@ -141,7 +143,7 @@ test("every mission constructs, runs 200 ticks and survives a save", () => {
   for (const m of MISSIONS) {
     const s = new Simulation({ map: m.map, enemyCount: m.enemies, aiSpeed: m.speed, alliance: m.alliance, mission: m });
     assert.equal(s.mission.id, m.id);
-    assert.equal(Object.keys(s.mission.objectives).length, m.objectives.length);
+    assert.equal(Object.keys(s.mission.objectives).length, s.missionDef.objectives.length);
     // Tagged things the objectives need are on the field from the first tick, unless a trigger brings them.
     for (const sp of (m.setup || []).filter((x) => x.spawn && x.tag)) assert.ok(s.tagged(sp.tag).length > 0, `${m.id}: nothing carries tag ${sp.tag}`);
     for (let i = 0; i < 200; i++) { s.tick(0.05); s.events.length = 0; }

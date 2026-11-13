@@ -5,6 +5,8 @@
 import { MISSIONS } from "../src/story/missions.js";
 import { FACTIONS, CAST } from "../src/story/world.js";
 import { ACTS } from "../src/campaign.js";
+import { ENDINGS } from "../src/story/choices.js";
+import { MAP_TEXT } from "../src/story/campaign-map.js";
 import { pointLabel } from "../src/mission-text.js";
 
 // Returns [{ text, where }] without duplicates, in reading order.
@@ -37,7 +39,20 @@ export function storyStrings() {
     }
     for (const o of m.objectives || []) for (const point of o.points || []) add(pointLabel(m, point), at(`point ${point}`));
     for (const [name, region] of Object.entries(m.regions || {})) if (region.label) add(region.label, at(`region ${name}`));
+    // Commander decisions (0.19a): the choice card's prompt and both orders with their consequence.
+    for (const [id, d] of Object.entries(m.decisions || {})) {
+      add(d.prompt, at(`decision ${id} prompt`));
+      for (const o of d.options) { add(o.label, at(`decision ${id}.${o.id} label`)); add(o.effect, at(`decision ${id}.${o.id} effect`)); }
+    }
   }
+  // The two endings: title, summary and the epilogue cards.
+  for (const e of Object.values(ENDINGS)) {
+    add(e.title, `ending ${e.id} title`);
+    add(e.summary, `ending ${e.id} summary`);
+    for (const card of e.cards) for (const line of card.lines) add(line, `ending ${e.id} ${card.who}`);
+  }
+  // The campaign map's own words.
+  for (const [key, text] of Object.entries(MAP_TEXT)) add(text, `campaign map ${key}`);
   return out;
 }
 

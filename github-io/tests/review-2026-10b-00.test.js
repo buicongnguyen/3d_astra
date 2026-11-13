@@ -20,7 +20,7 @@ test("previewBattle clears hover when replacing sim", () => {
 });
 test("newGame rebuilds a clean sim", () => {
   assert.match(from(matchFlow, "function newGame()", "tutorial = null"), /sim = createSim\(\)/);
-  assert.ok(clientFile("main.js", { plain: false }).includes("const sim = new Simulation({ factions: S.mission || S.playMode !== \"skirmish\" ? null : skirmishSides(S.playerFaction, S.enemyFaction, S.enemyCount, S.mapId), map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === \"skirmish\" });"));
+  assert.ok(clientFile("main.js", { plain: false }).includes("const sim = new Simulation({ factions: S.mission || S.playMode !== \"skirmish\" ? null : skirmishSides(S.playerFaction, S.enemyFaction, S.enemyCount, S.mapId), map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission ? resolveMission(S.mission, S.campaign) : null, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === \"skirmish\" });"));
 });
 test("Space does not swallow modal buttons", () => {
   assert.match(from(clientFile("input-keyboard.js"), "if(key===' '&&!e.ctrlKey)", "e.preventDefault()"), /#modal button/);

@@ -63,6 +63,8 @@ import { setupFrame } from "./app/frame.js";
 import { setupUiExtras } from "./app/ui-extras.js";
 import { setupDebugHooks } from "./app/debug-hooks.js";
 import { setupDefenceEntry } from "./app/defence-entry.js";
+import { setupChoices } from "./app/choices.js";
+import { resolveMission } from "./campaign.js";
 import { CORE_MODEL_TYPES, modelsForMatch } from "./model-roster.js";
 import { skirmishSides, matchLook } from "./factions.js";
 import { prefetchModels, releaseModelBytes } from "./app/loading.js";
@@ -75,9 +77,11 @@ const S = createState();
 const A = {};
 
 // Every match, preview and restart is built from the current setup (a story mission included).
+// A story mission plays as this player's campaign has it: earlier decisions and the ending are
+// settled from the progress record (resolveMission, src/story/choices.js) before it starts.
 const createSim = () => {
   // Only a skirmish lets the player choose sides: Training (and the campaign) always command Meridian.
-  const sim = new Simulation({ factions: S.mission || S.playMode !== "skirmish" ? null : skirmishSides(S.playerFaction, S.enemyFaction, S.enemyCount, S.mapId), map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish" });
+  const sim = new Simulation({ factions: S.mission || S.playMode !== "skirmish" ? null : skirmishSides(S.playerFaction, S.enemyFaction, S.enemyCount, S.mapId), map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission ? resolveMission(S.mission, S.campaign) : null, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish" });
   S.look = matchLook(S.mission, sim);
   return sim;
 };
@@ -183,11 +187,11 @@ const SETUP = [
   ["hud", setupHud], ["preferences", setupPreferences], ["sound", setupSound], ["selection", setupSelection],
   ["orders", setupOrders], ["abilities", setupAbilities], ["command-card", setupCommandCard], ["minimap", setupMinimap],
   ["input-pointer", setupInputPointer], ["input-keyboard", setupInputKeyboard], ["modals", setupModals],
-  ["briefing", setupBriefing], ["match-flow", setupMatchFlow], ["frame", setupFrame], ["ui-extras", setupUiExtras], ["debug-hooks", setupDebugHooks],
+  ["briefing", setupBriefing], ["match-flow", setupMatchFlow], ["frame", setupFrame], ["ui-extras", setupUiExtras], ["choices", setupChoices], ["debug-hooks", setupDebugHooks],
   ["defence", setupDefenceEntry],
 ];
 const BIND = ["preferences", "hud", "input-pointer", "sound", "frame", "modals", "briefing", "match-flow", "selection",
-  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "debug-hooks", "defence"];
+  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "choices", "debug-hooks", "defence"];
 const binds = Object.fromEntries(SETUP.map(([name, setup]) => [name, setup(S, A)]));
 // The start screen shows the battle chosen there, so the first simulation is built from it.
 ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction, playerFaction: S.playerFaction } = A.battleSetup());

@@ -114,7 +114,8 @@ export function setupModals(S, A) {
   }
 
   function togglePause() {
-    if (!Z.started || S.sim.result || Z.modalType === "graphics") return;
+    // A decision card already holds the match and closes only with an order (app/choices.js).
+    if (!Z.started || S.sim.result || Z.modalType === "graphics" || Z.modalType === "decision") return;
     if (Z.paused) {
       helpOverPause = false;
       closeModal();
@@ -142,7 +143,7 @@ export function setupModals(S, A) {
   }
 
   function showHelp() {
-    if (S.sim.result || Z.modalType === "graphics") return;
+    if (S.sim.result || Z.modalType === "graphics" || Z.modalType === "decision") return;
     if (Z.modalType === "help") { closeModal(); return; }
     helpOverPause = Z.modalType === "pause";
     S.touchControls?.reset();
@@ -225,6 +226,11 @@ export function setupModals(S, A) {
       if (event.target.closest("[data-restart]")) A.restart();
       if (event.target.closest("[data-new-game]")) A.newGame();
       if (event.target.closest("[data-next-mission]")) A.nextMissionNow();
+      // Commander decisions and the finale's epilogue (app/choices.js).
+      const order = event.target.closest("[data-decide]");
+      if (order && Z.modalType === "decision") A.decide(order.dataset.decide);
+      const epilogue = event.target.closest("[data-epilogue]");
+      if (epilogue) A.showEpilogue(epilogue.dataset.epilogue, { toMap: true });
       if(event.target.closest("[data-training-campaign]")){S.playMode="campaign";A.newGame();}
     };
   };

@@ -47,6 +47,10 @@ export function setupDebugHooks(S, A) {
       // Recorded music (music-recorded.js): state() lists the cue, fetches and decoded buffers.
       get music() { return S.audio?.recorded; },
       save: A.autosave,
+      // Commander decisions and endings (app/choices.js): the card's state and an epilogue by ending id.
+      decision: () => ({ open: Z.modalType === "decision", pending: S.sim.mission?.pending || null, flags: S.sim.flags || null }),
+      epilogue: (id, options) => A.showEpilogue(id, options),
+      renderCampaign: () => A.renderBriefing(),
     };
   }
 

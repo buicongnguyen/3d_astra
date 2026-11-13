@@ -50,6 +50,8 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 | `app/match-flow.js` | Start, restart, new game, autosave and Continue, result and debrief |
 | `app/frame.js` | The frame loop (simulation steps, event dispatch, camera pan, governor sampling) and alerts |
 | `app/debug-hooks.js` | `window.__frontier`, the opt-in hook for browser tests (`?test`) |
+| `app/choices.js`, `choices.css` | Commander decision card (the `decision` screen: holds the match, keeps the music) and the epilogue cards |
+| `campaign-map-ui.js`, `campaign-map.css`, `story/campaign-map.js` | The campaign map in the start screen: act bands, relay nodes, decision marks, endings seen, chronicles slot |
 | `view.js` | Rendering, models, effects, fog, camera |
 | `scatter.js`, `map-edge.js`, `ground-paint.js`, `plateau-relief.js`, `fog-aware.js`, `visual-style.json` | Map look: palettes, lighting, dressing; plateau rock faces, lips and road ramps merged into the ground mesh |
 | `faction-colors.js` | Faction colours for mission enemies |
@@ -57,6 +59,7 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 | `ability-hints.js` | First-time hint per ability (shown by `app/ui-extras.js` in the fight-hint slot, remembered in localStorage) |
 | `mission-ui.js`, `mission-text.js`, `capture-view.js`, `campaign.js`, `savegame.js` | Campaign interface, progress, autosave |
 | `story/world.js`, `story/missions.js` | Factions, cast, mission data |
+| `story/choices.js` | Decisions, `resolveMission` (settles earlier answers and the ending before a match), `endingFor`, the epilogue text |
 | `i18n.js`, `locales/` | Text catalogue (keyed by the English string); the Vietnamese and story catalogues are separate chunks loaded when Vietnamese is shown |
 | `app/loading.js`, `app/offline.js`, `tools/sw.template.js` | Staged model download with progress; service worker registration; the worker (published as `sw.js`) |
 | `governor.js`, `entity-batches.js`, `ambient-life.js` | Frame-time governor, instanced batches, ambient life |

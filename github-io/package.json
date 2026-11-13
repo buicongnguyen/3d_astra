@@ -40,6 +40,7 @@
     "test:boundary-fx": "node tests/boundary-fx.mjs",
     "test:repair-rally": "node tests/repair-rally.mjs",
     "test:campaign": "node tests/campaign.mjs",
+    "test:choices": "node tests/choices.mjs",
     "test:missions": "node tests/missions.mjs",
     "test:tactics-ui": "node tests/tactics-ui.mjs",
     "test:abilities": "node tests/abilities.mjs",

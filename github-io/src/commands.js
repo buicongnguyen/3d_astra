@@ -40,6 +40,8 @@ const COMMANDS = {
   padUpgrade: { allowed: (sim, c) => !!sim.defence && ownBuilding(sim, c.team, c.building) && !!sim.get(c.building).crew, run: (sim, c) => sim.padUpgrade(c.team, c.building) },
   padSell: { allowed: (sim, c) => !!sim.defence && ownBuilding(sim, c.team, c.building) && !!sim.get(c.building).crew, run: (sim, c) => sim.padSell(c.team, c.building) },
   waveCall: { allowed: (sim) => !!sim.defence, run: (sim, c) => sim.waveCall(c.team) },
+  // The Commander's answer to the decision a story mission is waiting for (sim/missions.js).
+  decide: { allowed: (sim, c) => c.team === 0 && sim.canDecide?.(c.id, c.option), run: (sim, c) => sim.decide(c.id, c.option) },
 };
 
 export const commands = {

@@ -78,11 +78,37 @@ Status: format agreed 2026-11-10; engine and campaign in progress.
 
 **Trigger conditions (`when`)**: `time` (seconds), `enter` (region + team), `objective` + `is` (`done`/`failed`), `event` (a simulation event type: `incoming`, `built`, `levelup`), `tagHpBelow`, `tagDead` (tag), `count` (`{ team, type, atLeast }`), `pointOwned` (`{ point, team }`). Triggers fire once unless `repeat: seconds` is given.
 
-**Actions (`do`)**: `say` (`who`, `text`), `wave` (`team`, `units`, `from` region or `"enemyBase"`, `target` region or `"playerBase"`), `spawn` (as in setup), `reveal` (objective id), `complete`/`fail` (objective id), `give` (`{ alloy, energy }` to the player), `camera` (region; a short pan the player can cancel), `ping` (region), `aiSpeed` (new speed), `music` (`calm`/`tense`/`battle`).
+**Actions (`do`)**: `decide` (a decision id, see below), `say` (`who`, `text`), `wave` (`team`, `units`, `from` region or `"enemyBase"`, `target` region or `"playerBase"`), `spawn` (as in setup), `reveal` (objective id), `complete`/`fail` (objective id), `give` (`{ alloy, energy }` to the player), `camera` (region; a short pan the player can cancel), `ping` (region), `aiSpeed` (new speed), `music` (`calm`/`tense`/`battle`).
 
 **Capture points** are neutral markers. A team owns one while it has a combat unit within the region and no enemy combat unit is there for 5 seconds; ownership stays until another team takes it. `gives` adds resources per second to the owner.
 
 **Speakers (`who`)** are ids from `src/story/world.js` (`CAST`). Text is English; every story string (titles, briefings, intel, objectives, lines, unit names, capture point labels) also needs a Vietnamese entry in `src/locales/story-vi.json`, keyed by the English text; `tests/story-vi.test.js` fails until it has one, with the same numbers and names (`node tools/story-strings.mjs` lists the strings). Give each `capturePoint` a `label`: it is the name in the capture toasts. Keep lines under 140 characters so they fit a phone.
+
+## Decisions and `if` (0.19a)
+
+A mission may ask the Commander one decision. It is declared on the mission and asked by an action:
+
+```js
+decisions: {
+  "m03-alloy": {
+    who: "okoro",                                  // the speaker on the choice card (CAST id)
+    prompt: "One sentence, under 140 characters.",
+    options: [                                     // two orders, written as orders, never as dialogue
+      { id: "return", label: "Return the alloy to Ashfall's scavengers", effect: "One line: what it costs or brings.", mercy: true },
+      { id: "keep", label: "Keep the alloy for the expedition", effect: "+300 alloy now.", mercy: false, default: true },
+    ],
+  },
+},
+triggers: [ { when: { enter: "siphonNorth", team: 0 }, do: [ { say: {...} }, { decide: "m03-alloy" },
+  { if: { flag: "m03-alloy", is: "return" }, say: {...} }, { if: { flag: "m03-alloy", is: "keep" }, give: { alloy: 300 } } ] } ],
+```
+
+- `{ decide: id }` stores `mission.pending = { id, trigger, at }` and emits a `decision` event. Only that trigger waits; every other trigger keeps running. The client shows the choice card and holds the match (the `decision` screen keeps its music); headless players answer at once (`answerDecision` in `tools/playbot.mjs`).
+- The answer is the command `{ team: 0, type: "decide", id, option }` (accepted only while that decision is pending and the option exists). It sets `sim.flags[id] = option` and runs the rest of the trigger, so it is logged and replays. `sim.flags` and `mission.pending` exist only once used: other matches save and hash exactly as before. A save taken while the card is open shows it again on Continue.
+- `if: { flag, is }` may sit on a setup entry, an objective, a trigger, an action, a briefing line or a debrief line. A flag from the mission's own `decisions` is tested in the match; a flag from an earlier mission, and `if: { ending: "open-frontier" | "meridian-line" }`, are settled before the match by `resolveMission(def, progress)` (`src/story/choices.js`): entries that fail are dropped, the rest lose their `if`, a missing answer uses the option marked `default`. The trimmed mission is what the match saves and replays. Variants of one objective share its id, each under its own `if`.
+- Every option is merciful or firm. Two or more merciful answers lead to the ending "The Open Frontier", fewer to "The Meridian Line" (`endingFor`). Keep consequences small: a line, an objective text, one wave of two or three units more or less. Check both branches: `npm run check:missions -- --only m07 --decide mercy` and `--decide firm` (or `--progress file.json` for any campaign record).
+
+**Campaign progress** (`frontier-campaign-v2`, `src/campaign.js`): `cleared` as before, plus `decisions` (`{ [id]: option }`, written on a mission win; a loss writes nothing; replaying a mission replaces its answer), `endingsSeen` (written when the finale is won) and `chronicles` (reserved for 0.20). Every field is kept on load and on every record, older progress loads unchanged, and a mission opens when it is cleared itself or the one before it is (by mission id). `missionById(id)` returns `{ campaign, index, mission }`. The mission checker's targets are keyed by mission id (`MISSION_TARGETS` in `tools/mission-check.mjs`).
 
 ## Rules for authors
 
