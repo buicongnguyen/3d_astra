@@ -6,7 +6,7 @@ import { resolveMission, flagMatches } from "../story/choices.js";
 // Simulation; this system applies its setup, tracks capture points and objectives, fires
 // triggers and decides victory and defeat. Everything it keeps is in `this.mission`, so a
 // mission is saved, loaded and replayed like any other match. The interface learns what
-// happened only through events: say, objective, point, camera, ping, music, decision, missionEnd.
+// happened only through events: say, objective, point, camera, ping, music, decision, scene, missionEnd.
 //
 // Decisions (0.19a): a `{ decide: id }` action holds the rest of its trigger in
 // `mission.pending` and emits a `decision` event; the player's `decide` command (commands.js)
@@ -216,6 +216,9 @@ export const missions = {
     if (when.tagDead) return (m.fired["seen:" + when.tagDead] ||= this.tagged(when.tagDead).length > 0) && !this.tagged(when.tagDead).length;
     if (when.count) return this.own(when.count.team ?? 0).filter((e) => e.type === this.typeFor(when.count.team ?? 0,when.count.type) && e.complete !== false).length >= when.count.atLeast;
     if (when.pointOwned) return m.points[when.pointOwned.point]?.owner === (when.pointOwned.team ?? 0);
+    // Defence rules in a story mission (0.19b): after wave n is beaten, or once wave n has started.
+    if (when.wave !== undefined) return (this.defence?.cleared ?? 0) >= when.wave;
+    if (when.waveStart !== undefined) return (this.defence?.wave ?? 0) >= when.waveStart;
     return false;
   },
   stepTrigger(trigger, index) {
@@ -279,6 +282,9 @@ export const missions = {
     else if (a.camera || a.ping) { const p = this.missionPlace(a.camera || a.ping); this.events.push({ type: a.camera ? "camera" : "ping", x: p.x, z: p.z }); }
     else if (a.aiSpeed) this.setAiSpeed(difficultySpeed(a.aiSpeed, this.difficulty));
     else if (a.music) this.events.push({ type: "music", mood: a.music });
+    // A staged scene (src/story/scenes.js, 0.19b): only an event. The client holds the match while
+    // it plays, so nothing here depends on it and saves and replays are unaffected.
+    else if (a.scene) this.events.push({ type: "scene", id: a.scene });
     else if (a.unlock) { if (this.unlockUnits(0, a.unlock)) for (const type of a.unlock) this.message(`${D[type].name} can now be trained.`); }
   },
   // Victory, defeat or null, called from settle() with which teams still stand.

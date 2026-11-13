@@ -56,6 +56,8 @@ jobs:
             scripts: improvements campaign offline
           - name: story
             scripts: missions tactics-ui audio choices
+          - name: scenes
+            scripts: story
           - name: music
             scripts: music
           - name: languages

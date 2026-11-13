@@ -4,6 +4,7 @@ import { AUTOSAVE_SECONDS } from "../savegame.js";
 import { pointLabel } from "../mission-ui.js";
 import { setMusicMood } from "../music.js";
 import { airModelsFor } from "../model-roster.js";
+import { MUSIC_HOLDS } from "./screens.js";
 
 export function setupFrame(S, A) {
   const Z = S.screen;
@@ -80,8 +81,8 @@ export function setupFrame(S, A) {
       S.sim.terrain.river && Math.abs(S.view.focus.z) < 14,
     );
     A.syncAudio(elapsed);
-    // The decision card holds the match but its music plays on (screens.js "decision").
-    S.audio?.update(elapsed, { sim: S.sim, settings: S.settings, started: Z.started, paused: Z.paused && Z.modalType !== "decision", hidden: document.hidden, mapId: S.mapId, screen: A.musicScreen(), inBattle: !!S.sim.defence?.active });
+    // The decision card and a story scene hold the match but the music plays on (screens.js MUSIC_HOLDS).
+    S.audio?.update(elapsed, { sim: S.sim, settings: S.settings, started: Z.started, paused: (S.audioPaused = Z.paused && !MUSIC_HOLDS.includes(Z.modalType)), hidden: document.hidden, mapId: S.mapId, screen: A.musicScreen(), inBattle: !!S.sim.defence?.active });
     A.refreshHover();
     // A story mission waiting for a Commander decision (also after loading a save) shows its card.
     if (Z.started && !Z.paused && !S.sim.result && S.sim.mission?.pending) A.openDecision();
@@ -92,17 +93,24 @@ export function setupFrame(S, A) {
         S.view.beforeTick(S.sim);
         S.tutorial?.update(S.sim,[...S.selected]);
         S.matchStats.before(S.sim);
+        const heard = S.sim.events.length;
         S.sim.tick(0.05);
         S.matchStats.after(S.sim);
         S.tutorial?.update(S.sim,[...S.selected]);
         S.accumulator -= 0.05;
         // A decision stops the clock on the tick that asked it; the card opens next frame.
         if (S.sim.mission?.pending) { S.accumulator = 0; break; }
+        // So does a story scene (app/scenes.js): it starts on the tick that called it.
+        if (S.sim.events.length > heard && S.sim.events.some((e, i) => i >= heard && e.type === "scene")) { S.accumulator = 0; break; }
       }
-      if (S.sim.result) { if (!A.beginBeat()) A.showResult(); }
+      // A scene holds the match while it plays; one called by the winning tick plays before the debrief.
+      const scene = S.sim.events.find((e) => e.type === "scene");
+      if (scene) A.playScene?.(scene.id);
+      if (S.sim.result) { if (A.sceneActive?.()) A.afterScene(() => { if (!A.beginBeat()) A.showResult(); }); else if (!A.beginBeat()) A.showResult(); }
       else if ((S.saveClock += dt) >= AUTOSAVE_SECONDS) A.autosave();
     }
     A.missionUI.tick(running ? dt : 0);
+    A.sceneTick?.(dt);
     if (!Z.modalType) {
       const speed = dt * S.view.zoom * 0.65;
       let dx =
@@ -136,7 +144,8 @@ export function setupFrame(S, A) {
       else if (event.type === "incoming") { if (event.team === 0) incomingAlert(event); }
       // Story mission cues (sim/missions.js).
       // A line spoken on the tick that ended the match goes straight to the Comms log.
-      else if (event.type === "say") { if (Z.started) { A.missionUI.say(event.who, event.text); if (S.sim.result) A.missionUI.endMatch(); } }
+      // Lines from the tick that started a scene wait until it is over (app/scenes.js).
+      else if (event.type === "say") { if (Z.started) { if (A.sceneActive?.()) A.sceneLater(event); else { A.missionUI.say(event.who, event.text); if (S.sim.result) A.missionUI.endMatch(); } } }
       else if (event.type === "objective") { A.missionUI.objectiveEvent(event, S.sim); if (event.state === "revealed") A.notice("New objective"); }
       else if (event.type === "point") pointAlert(event);
       else if (event.type === "camera") startCameraPan(event.x, event.z);
@@ -144,6 +153,7 @@ export function setupFrame(S, A) {
       else if (event.type === "music") setMusicMood(event.mood);
       else if (event.type === "missionEnd") { /* The debrief opens from sim.result (showResult). */ }
       else if (event.type === "decision" || event.type === "decided") { /* The card follows sim.mission.pending (above). */ }
+      else if (event.type === "scene") { /* Started above, before the events are read. */ }
       else if (event.type === "promote") { if (event.team === 0 && Z.started) promoted(event); S.view.event(event, S.sim); }
       else S.view.event(event, S.sim);
     }

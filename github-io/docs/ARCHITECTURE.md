@@ -52,6 +52,7 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 | `app/frame.js` | The frame loop (simulation steps, event dispatch, camera pan, governor sampling) and alerts |
 | `app/debug-hooks.js` | `window.__frontier`, the opt-in hook for browser tests (`?test`) |
 | `app/choices.js`, `choices.css` | Commander decision card (the `decision` screen: holds the match, keeps the music) and the epilogue cards |
+| `app/scenes.js`, `scenes.css`, `story/scenes.js` | Staged story scenes (0.19b): the `scene` screen (holds the match, keeps the music), letterbox, eased camera to explored places, lines in the dialogue box, Skip; data and beat format in `story/scenes.js` |
 | `campaign-map-ui.js`, `campaign-map.css`, `story/campaign-map.js` | The campaign map in the start screen: act bands, relay nodes, decision marks, endings seen, chronicles slot |
 | `view.js` | Rendering, models, effects, fog, camera |
 | `scatter.js`, `map-edge.js`, `ground-paint.js`, `plateau-relief.js`, `fog-aware.js`, `visual-style.json` | Map look: palettes, lighting, dressing; plateau rock faces, lips and road ramps merged into the ground mesh |
@@ -59,7 +60,7 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 | `tactics-ui.js`, `tactics-card.js`, `tactics-view.js` | Ability tiles (ready pulse and glow), stances, Barrage aiming and impact rings, rank marks |
 | `ability-hints.js` | First-time hint per ability (shown by `app/ui-extras.js` in the fight-hint slot, remembered in localStorage) |
 | `mission-ui.js`, `mission-text.js`, `capture-view.js`, `campaign.js`, `savegame.js` | Campaign interface, progress, autosave |
-| `story/world.js`, `story/missions.js` | Factions, cast, mission data |
+| `story/world.js`, `story/missions.js`, `story/defence-missions.js` | Factions, cast, mission data (the two campaign missions under the Defence rules live in `defence-missions.js`) |
 | `story/choices.js` | Decisions, `resolveMission` (settles earlier answers and the ending before a match), `endingFor`, the epilogue text |
 | `i18n.js`, `locales/` | Text catalogue (keyed by the English string); the Vietnamese and story catalogues are separate chunks loaded when Vietnamese is shown |
 | `app/loading.js`, `app/offline.js`, `tools/sw.template.js` | Staged model download with progress; service worker registration; the worker (published as `sw.js`) |

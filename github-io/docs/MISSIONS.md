@@ -76,9 +76,9 @@ Status: format agreed 2026-11-10; engine and campaign in progress.
 
 **Lose conditions:** `coreLost` (all player cores gone; default when `rules.playerBase` is true), `tagLost` (`tag`), `time` (`seconds`), `armyLost` (no player units left; for no-base missions).
 
-**Trigger conditions (`when`)**: `time` (seconds), `enter` (region + team), `objective` + `is` (`done`/`failed`), `event` (a simulation event type: `incoming`, `built`, `levelup`), `tagHpBelow`, `tagDead` (tag), `count` (`{ team, type, atLeast }`), `pointOwned` (`{ point, team }`). Triggers fire once unless `repeat: seconds` is given.
+**Trigger conditions (`when`)**: `time` (seconds), `enter` (region + team), `objective` + `is` (`done`/`failed`), `event` (a simulation event type: `incoming`, `built`, `levelup`), `tagHpBelow`, `tagDead` (tag), `count` (`{ team, type, atLeast }`), `pointOwned` (`{ point, team }`), and in a mission under the Defence rules `wave` (wave n beaten) and `waveStart` (wave n started). Triggers fire once unless `repeat: seconds` is given.
 
-**Actions (`do`)**: `decide` (a decision id, see below), `say` (`who`, `text`), `wave` (`team`, `units`, `from` region or `"enemyBase"`, `target` region or `"playerBase"`), `spawn` (as in setup), `reveal` (objective id), `complete`/`fail` (objective id), `give` (`{ alloy, energy }` to the player), `camera` (region; a short pan the player can cancel), `ping` (region), `aiSpeed` (new speed), `music` (`calm`/`tense`/`battle`).
+**Actions (`do`)**: `decide` (a decision id, see below), `say` (`who`, `text`), `wave` (`team`, `units`, `from` region or `"enemyBase"`, `target` region or `"playerBase"`), `spawn` (as in setup), `reveal` (objective id), `complete`/`fail` (objective id), `give` (`{ alloy, energy }` to the player), `camera` (region; a short pan the player can cancel), `ping` (region), `aiSpeed` (new speed), `music` (`calm`/`tense`/`battle`), `scene` (a staged scene id, see below).
 
 **Capture points** are neutral markers. A team owns one while it has a combat unit within the region and no enemy combat unit is there for 5 seconds; ownership stays until another team takes it. `gives` adds resources per second to the owner.
 
@@ -109,6 +109,38 @@ triggers: [ { when: { enter: "siphonNorth", team: 0 }, do: [ { say: {...} }, { d
 - Every option is merciful or firm. Two or more merciful answers lead to the ending "The Open Frontier", fewer to "The Meridian Line" (`endingFor`). Keep consequences small: a line, an objective text, one wave of two or three units more or less. Check both branches: `npm run check:missions -- --only m07 --decide mercy` and `--decide firm` (or `--progress file.json` for any campaign record).
 
 **Campaign progress** (`frontier-campaign-v2`, `src/campaign.js`): `cleared` as before, plus `decisions` (`{ [id]: option }`, written on a mission win; a loss writes nothing; replaying a mission replaces its answer), `endingsSeen` (written when the finale is won) and `chronicles` (reserved for 0.20). Every field is kept on load and on every record, older progress loads unchanged, and a mission opens when it is cleared itself or the one before it is (by mission id). `missionById(id)` returns `{ campaign, index, mission }`. The mission checker's targets are keyed by mission id (`MISSION_TARGETS` in `tools/mission-check.mjs`).
+
+## Staged scenes (0.19b)
+
+A scene is a short sequence (5 to 20 s) the client plays while the match is held: letterbox bars, eased camera moves, lines in the dialogue box with portraits and small screen glows. Data: `SCENES` in `src/story/scenes.js`; client: `src/app/scenes.js` (the `scene` screen in `src/app/screens.js`, which holds the match but keeps the music, like the decision card).
+
+```js
+"relay-wakes": { letterbox: true, beats: [
+  { camera: { at: "oldRelay", zoom: 0.8, seconds: 2.4 } },   // a region of the mission (or { x, z }); zoom is a factor of the standard view
+  { fx: { flash: "relay" } },                                // "relay" (teal), "dark" (lights out) or "alarm" (warm)
+  { say: { who: "okoro", text: "It is answering..." } },     // held for its reading time
+  { wait: 0.5 },
+] }
+```
+
+- The action `{ scene: id }` only emits a `scene` event. The frame loop stops on that tick and plays it; lines said on the same tick wait until it ends; a scene on the winning tick plays before the debrief. Nothing in the simulation waits for a scene, so saves and replays are as without it, and a save taken during a scene continues after it (the scene does not play again).
+- Camera beats go only to places the player has explored (an unexplored one is skipped, so a scene never scouts); under `:root.motion-off` the camera cuts. At the end the camera returns to where the player had it.
+- Skip (44 px, top right), Escape, Space or Enter end a scene; its remaining lines go to the Comms log. A scene plays once per match.
+- Move the lines of the moment into the scene (word for word if they existed) rather than saying them twice. Every scene line needs a Vietnamese entry (`tools/story-strings.mjs` walks scenes too).
+- The six big moments: mission 1 (`relay-wakes`, the hold done), mission 4 (`the-truce`, at 5:00), mission 8 (`echo-wakes`, the vault open), mission 10 (`crown-lights`, the Crown tuned), mission 11 (`draw-cut`, the last conduit) and the finale (`keystone-open` / `keystone-held`, chosen by `if: { ending }`).
+
+## Defence rules in the campaign (0.19b)
+
+A campaign mission may carry a `defence` block (the format of the Frontier Defence levels below) and is then played under the Defence rules: no base, lives, pads and crews, waves on fixed roads. Its `rules` are `{ ai: false, mode: "defence", rosters: true }`, its objective `{ id, type: "waves", count }`, its lose condition `{ type: "lives" }`, its `medals` go by lives (`{ gold: { lives }, silver: { lives } }`) and `check: { story, standard, veteran }` is the stars `npm run check:missions` requires of the DefenceBot (which also checks that a player who crews nothing loses; one-crew players are reported, not required). Story beats between the waves use the `wave` / `waveStart` conditions. The two missions live in `src/story/defence-missions.js`; their roads come from `src/defence/maps.json`, so they always match the painted route.
+
+| # | id | Map | Enemy | Waves | Story |
+|---|---|---|---|---|---|
+| 3 | `m02b-hold-the-river` | Twin Bridges | Ashfall | 7 | Hale comes back for the river crossings while Okoro tunes the river relay |
+| 9 | `m07b-hold-the-valley` | Gorge Road | Ashfall | 8 | Okoro's survey on the relay plateau finds where the lines meet: a Builder vault (sets up The Quiet Vault) |
+
+The campaign has 14 missions since 0.19b. Ids are stable; an inserted mission takes the id of the one before it with a letter (`m02b-…`). A player who cleared all twelve keeps everything open and finds the new ones next (a mission opens when it or the one before it is cleared). The campaign map lays out its nodes from the list (`mapLayout` in `src/story/campaign-map.js`); missions under the Defence rules have square relays. The third new mission of the plan, *Wings over Copper* (the first air raid, id `m06b-wings-over-copper`, reserved), is added after the air units merge: a TODO marks its slot in `src/story/missions.js`.
+
+**Reworked in 0.19b.** Mission 2 is a bridge assault: Ashfall holds a bridgehead at the far end of the west bridge (two towers whose 13 m reach covers the far half of the span, 9 guards in the gap between the rocks), the ford is slow and stops abilities, and the core falls after the bridgehead. Mission 9 is a high-ground hold: after the link-up, take the dune plateau and hold it for 3 minutes while Hale's Warden drones climb its ramps (the core is optional). Mission 6 shows two Veil scouts on the basin rim. The plan's ford fight for mission 6 is not possible on the Copper Basin, which has no river.
 
 ## Rules for authors
 

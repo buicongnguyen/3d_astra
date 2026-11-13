@@ -7,6 +7,7 @@ import { FACTIONS, CAST } from "../src/story/world.js";
 import { ACTS } from "../src/campaign.js";
 import { ENDINGS } from "../src/story/choices.js";
 import { MAP_TEXT } from "../src/story/campaign-map.js";
+import { SCENES, sceneLines } from "../src/story/scenes.js";
 import { pointLabel } from "../src/mission-text.js";
 
 // Returns [{ text, where }] without duplicates, in reading order.
@@ -29,6 +30,8 @@ export function storyStrings() {
     for (const o of m.objectives || []) add(o.text, at(`objective ${o.id}`));
     for (const trigger of m.triggers || []) for (const action of trigger.do || []) {
       if (action.say) add(action.say.text, at(`say ${action.say.who}`));
+      // A staged scene (0.19b) speaks its lines in the dialogue box, in the mission's place.
+      if (action.scene) for (const line of sceneLines(SCENES[action.scene])) add(line.text, at(`scene ${action.scene} ${line.who}`));
       // A unit spawned later by a trigger can carry a display name too.
       if (action.spawn && action.name) add(action.name, at("unit name"));
     }
@@ -51,6 +54,8 @@ export function storyStrings() {
     add(e.summary, `ending ${e.id} summary`);
     for (const card of e.cards) for (const line of card.lines) add(line, `ending ${e.id} ${card.who}`);
   }
+  // Scenes no mission plays yet still need their words.
+  for (const [id, scene] of Object.entries(SCENES)) for (const line of sceneLines(scene)) add(line.text, `scene ${id} ${line.who}`);
   // The campaign map's own words.
   for (const [key, text] of Object.entries(MAP_TEXT)) add(text, `campaign map ${key}`);
   return out;

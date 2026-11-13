@@ -222,7 +222,8 @@ test('progress: older records load with their clears; every field is kept; unloc
   assert.equal(isUnlocked(gap, 6), true, 'the one after a clear');
   assert.equal(isUnlocked(gap, 4), false);
   assert.equal(isUnlocked(gap, 12), false);
-  assert.deepEqual(missionById('m07-copper-siege'), { campaign: 'main', index: 6, mission: MISSIONS[6] });
+  const siege = MISSIONS.findIndex((m) => m.id === 'm07-copper-siege');
+  assert.deepEqual(missionById('m07-copper-siege'), { campaign: 'main', index: siege, mission: MISSIONS[siege] });
   assert.equal(missionById('m99-nowhere'), null);
 });
 
@@ -249,11 +250,13 @@ test('the choice card, epilogue and campaign map words have Vietnamese', () => {
 
 test('the decision screen holds the match but keeps the music, and the frame loop stops on the asking tick', async () => {
   const { clientFile } = await import('./lib/client-source.js');
-  const { LEGAL, SCREENS } = await import('../src/app/screens.js');
+  const { LEGAL, SCREENS, MUSIC_HOLDS } = await import('../src/app/screens.js');
   assert.ok(SCREENS.includes('decision') && LEGAL.playing.includes('decision') && LEGAL.decision.includes('playing'));
-  assert.match(clientFile('sound.js'), /modalType !== "decision"/, 'the audio clock keeps running under the card');
+  // 0.19b: the decision card and a story scene share the rule (screens.js MUSIC_HOLDS).
+  assert.ok(MUSIC_HOLDS.includes('decision'));
+  assert.match(clientFile('sound.js'), /!MUSIC_HOLDS\.includes\(modalType\)/, 'the audio clock keeps running under the card');
   const frame = clientFile('frame.js');
-  assert.match(frame, /paused: paused && modalType !== "decision"/, 'the music scheduler is not told the match is paused');
+  assert.match(frame, /paused: \(audioPaused = paused && !MUSIC_HOLDS\.includes\(modalType\)\)/, 'the music scheduler is not told the match is paused');
   assert.match(frame, /if \(sim\.mission\?\.pending\) \{ accumulator = 0; break; \}/, 'no tick runs past the question');
   assert.match(frame, /sim\.mission\?\.pending\) openDecision\(\)/, 'a pending decision (also after Continue) opens the card');
 });

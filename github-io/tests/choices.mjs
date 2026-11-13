@@ -11,6 +11,7 @@ const ids = MISSIONS.map((m) => m.id);
 const MEDALS = ["gold", "silver", "bronze"];
 const progressWith = (count, extra = {}) => ({ cleared: Object.fromEntries(ids.slice(0, count).map((id, i) => [id, { time: 300 + i * 30, medal: MEDALS[i % 3], difficulty: "standard" }])), ...extra });
 const MERCY = { "m03-alloy": "return", "m05-pact": "share", "m10-veil": "spare" };
+const ASHEN = ids.indexOf("m03-the-ashen-line"), LAST = ids.length - 1;
 
 // Visible text under `scope` smaller than 11 px, visible buttons smaller than 44 px or outside the
 // viewport, and whether the page scrolls sideways.
@@ -39,11 +40,11 @@ await suite("choices: campaign map, choice card and epilogue", async () => {
     const campaign = async () => { await tap('[data-mode="campaign"]'); await page.locator("#campaign-map .cmap").waitFor({ state: "visible" }); };
     const load = async (progress, extra = "") => { await goto(extra); await page.evaluate(([k, v]) => { localStorage.clear(); if (v) localStorage.setItem(k, JSON.stringify(v)); }, [KEY, progress]); await page.reload(); await ready(); };
 
-    // 1. A fresh campaign: one open relay, eleven locked, nothing lit, no ending, the chronicles slot.
+    // 1. A fresh campaign: one open relay, the rest locked, nothing lit, no ending, the chronicles slot.
     await load(null);
     await campaign();
     const fresh = await page.evaluate(() => ({ nodes: [...document.querySelectorAll(".cmap-node")].map((n) => n.disabled), lit: document.querySelector(".cmap").dataset.lit, seen: document.querySelectorAll(".cmap-ending.seen").length, chronicles: !!document.querySelector(".cmap-chronicles"), art: getComputedStyle(document.querySelector(".briefing-art")).display }));
-    assert.deepEqual(fresh.nodes, [false, ...Array(11).fill(true)]);
+    assert.deepEqual(fresh.nodes, [false, ...Array(LAST).fill(true)]);
     assert.deepEqual([fresh.lit, fresh.seen, fresh.chronicles, fresh.art], ["0", 0, true, "none"]);
     clean(await audit(page, "#campaign-map"), `${viewport} fresh map`);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
@@ -57,7 +58,7 @@ await suite("choices: campaign map, choice card and epilogue", async () => {
     assert.deepEqual(mid.medals, ["medal-gold", "medal-silver", "medal-bronze", "medal-gold", "medal-silver"]);
     assert.deepEqual(mid.marks, ["mercy", "firm"], "the decisions sit on missions 3 and 5");
     assert.equal(mid.chips, 2, "the list shows them too");
-    assert.equal(mid.next, "5", "mission 6 is next");
+    assert.equal(mid.next, "5", "the sixth relay (The Verdant Pact) is next");
     await tap('.cmap-node[data-map-stage="2"]');
     assert.equal(await page.locator('[data-stage="2"]').getAttribute("aria-current"), "true", "a relay node picks its mission");
     assert.match(await page.locator(".map-heading h1").innerText(), /Mission 3/);
@@ -65,9 +66,9 @@ await suite("choices: campaign map, choice card and epilogue", async () => {
     await shot(page, `choices-map-mid-${viewport}`);
 
     // 3. Complete, with one ending seen: its mark replays the epilogue.
-    await load(progressWith(12, { decisions: MERCY, endingsSeen: ["open-frontier"] }));
+    await load(progressWith(ids.length, { decisions: MERCY, endingsSeen: ["open-frontier"] }));
     await campaign();
-    assert.deepEqual(await page.evaluate(() => [document.querySelector(".cmap").dataset.lit, [...document.querySelectorAll(".cmap-ending.seen")].map((b) => b.dataset.ending), document.querySelectorAll(".cmap-ending.unseen").length]), ["12", ["open-frontier"], 1]);
+    assert.deepEqual(await page.evaluate(() => [document.querySelector(".cmap").dataset.lit, [...document.querySelectorAll(".cmap-ending.seen")].map((b) => b.dataset.ending), document.querySelectorAll(".cmap-ending.unseen").length]), [String(ids.length), ["open-frontier"], 1]);
     clean(await audit(page, "#campaign-map"), `${viewport} complete map`);
     await shot(page, `choices-map-complete-${viewport}`);
     await tap(".cmap-ending.seen");
@@ -90,9 +91,9 @@ await suite("choices: campaign map, choice card and epilogue", async () => {
 
     // 4. The choice card in mission 3: the match holds, the orders are 44 px and keyboard-ready, a
     // save taken meanwhile brings the card back on Continue, and the answer is logged.
-    await load(progressWith(2));
+    await load(progressWith(ASHEN));
     await campaign();
-    await tap('[data-stage="2"]');
+    await tap(`[data-stage="${ASHEN}"]`);
     await tap("#start");
     await page.locator("#mission-briefing").waitFor({ state: "visible" });
     await tap("#mb-skip"); await tap("#mb-next");
@@ -147,10 +148,10 @@ await suite("choices: campaign map, choice card and epilogue", async () => {
   // 5. The finale won with two or more merciful answers: debrief, epilogue, back to the map with the ending marked.
   const { page, goto, ready, tap, errors } = await openPage(browser, "desktop");
   await goto();
-  await page.evaluate(([k, v]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); }, [KEY, progressWith(11, { decisions: MERCY })]);
+  await page.evaluate(([k, v]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); }, [KEY, progressWith(LAST, { decisions: MERCY })]);
   await page.reload(); await ready();
   await tap('[data-mode="campaign"]');
-  assert.equal(await page.locator('[data-stage="11"]').getAttribute("aria-current"), "true");
+  assert.equal(await page.locator(`[data-stage="${LAST}"]`).getAttribute("aria-current"), "true");
   await tap("#start");
   await page.locator("#mission-briefing").waitFor({ state: "visible" });
   await tap("#mb-skip");
@@ -158,6 +159,10 @@ await suite("choices: campaign map, choice card and epilogue", async () => {
   await tap("#mb-next");
   await page.waitForFunction(() => window.__frontier.started && document.querySelector("#modal").hidden, null, { timeout: TIMEOUT.models });
   await page.evaluate(() => { const s = window.__frontier.sim; for (const id of s.missionDef.win) s.setObjective(id, "done"); });
+  // The ending beat plays first (0.19b): the open-frontier scene, then the debrief.
+  await page.waitForFunction(() => window.__frontier.scene().open, null, { timeout: TIMEOUT.step });
+  assert.equal((await page.evaluate(() => window.__frontier.scene())).id, "keystone-open", "the finale's scene follows the ending");
+  await page.evaluate(() => window.__frontier.skipScene());
   await page.locator("[data-epilogue]").waitFor({ state: "visible", timeout: TIMEOUT.step });
   assert.equal(await page.locator("[data-epilogue]").getAttribute("data-epilogue"), "open-frontier");
   assert.match(await page.locator("#modal-content").innerText(), /Every camp at one table/);

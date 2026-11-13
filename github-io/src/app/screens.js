@@ -14,20 +14,25 @@
 //   guide       Field guide (unit and building stats).
 //   settings    Settings dialog, opened over any other screen and returning to it.
 //   decision    A Commander decision card (0.19a): it holds the match until an order is
-//               chosen, and is the one held screen that keeps the music playing.
+//               chosen, and is one of the two held screens that keep the music playing.
+//   scene       A staged story scene (0.19b, app/scenes.js): letterbox, camera and lines while the
+//               match is held; the music plays on. It ends by itself or when skipped.
 //
 // The data is deliberately the same three fields the app always had (`started`, `paused`,
 // `modalType`) so behaviour is identical; `screen` is derived from them.
 
-export const SCREENS = ["menu", "playing", "held", "pause", "help", "result", "graphics", "fullscreen", "guide", "settings", "decision"];
-const MODALS = ["pause", "help", "result", "graphics", "fullscreen", "guide", "decision"];
+export const SCREENS = ["menu", "playing", "held", "pause", "help", "result", "graphics", "fullscreen", "guide", "settings", "decision", "scene"];
+const MODALS = ["pause", "help", "result", "graphics", "fullscreen", "guide", "decision", "scene"];
+// Held screens whose music keeps playing (app/frame.js passes them to the audio as not paused).
+export const MUSIC_HOLDS = ["decision", "scene"];
 
 // Which screen may follow which. `settings` returns to wherever it was opened from.
 export const LEGAL = {
   menu: ["menu", "playing", "fullscreen", "guide", "graphics", "settings"],
-  playing: ["playing", "menu", "pause", "help", "result", "graphics", "fullscreen", "guide", "settings", "decision"],
-  held: ["held", "menu", "playing", "pause", "help", "result", "graphics", "fullscreen", "guide", "settings", "decision"],
+  playing: ["playing", "menu", "pause", "help", "result", "graphics", "fullscreen", "guide", "settings", "decision", "scene"],
+  held: ["held", "menu", "playing", "pause", "help", "result", "graphics", "fullscreen", "guide", "settings", "decision", "scene"],
   decision: ["decision", "playing", "held", "menu", "result", "graphics", "settings"],
+  scene: ["scene", "playing", "held", "menu", "result", "graphics", "pause", "settings"],
   pause: ["pause", "menu", "playing", "help", "result", "graphics", "fullscreen", "guide", "settings"],
   help: ["help", "pause", "menu", "playing", "graphics", "fullscreen", "guide", "settings"],
   result: ["result", "menu", "playing", "held", "settings"],

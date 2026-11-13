@@ -42,6 +42,7 @@
     "test:repair-rally": "node tests/repair-rally.mjs",
     "test:campaign": "node tests/campaign.mjs",
     "test:choices": "node tests/choices.mjs",
+    "test:story": "node tests/story.mjs",
     "test:missions": "node tests/missions.mjs",
     "test:tactics-ui": "node tests/tactics-ui.mjs",
     "test:abilities": "node tests/abilities.mjs",

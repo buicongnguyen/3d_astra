@@ -11,6 +11,7 @@ import { campaignMapHTML, missionChoices } from "../campaign-map-ui.js";
 import { readSave } from "../savegame.js";
 import { teamColors } from "../faction-colors.js";
 import { DEFENCE_LEVELS, defenceLevel } from "../defence/levels.js";
+import DEFENCE_MAPS from "../defence/maps.json" with { type: "json" };
 
 export function setupBriefing(S, A) {
   const Z = S.screen;
@@ -34,11 +35,13 @@ export function setupBriefing(S, A) {
     return count === 1 ? `1 AI · ${pace}` : `${count} AIs · ${side === "coalition" ? "allied against you" : "free-for-all"} · ${pace}`;
   }
 
-  const mapName = (id) => (MAPS[id] || String(id)).split(" · ")[0];
+  // A campaign mission under the Defence rules (0.19b) names its Defence map.
+  const mapName = (id) => (MAPS[id] || DEFENCE_MAPS[id]?.name || String(id)).split(" · ")[0];
 
   function updateHeading() {
     const stage = Z.started ? S.activeStage : S.playMode === "campaign" ? S.stagePick : null;
-    if (A.defenceHeading?.()) return;
+    // A campaign mission under the Defence rules (0.19b) keeps the campaign heading.
+    if (stage === null && A.defenceHeading?.()) return;
     document.querySelector(".map-heading p").innerHTML = `${mapName(S.mapId).toUpperCase()} <span>·</span> SECTOR 07`;
     document.querySelector(".map-heading h1").innerHTML = stage === null
       ? `${mapName(S.mapId)}<span>.</span>` : `Mission ${stage + 1} · ${MISSIONS[stage].title}<span>.</span>`;
@@ -92,6 +95,9 @@ export function setupBriefing(S, A) {
     // Alliances need at least two AIs.
     $("alliance").disabled = Number($("enemy-count").value) < 2;
     $("briefing-rivals").textContent = S.playMode === "training" ? "Practice field · no AI attacks" : describeRivals(setup);
+    // A campaign mission under the Defence rules (0.19b): lives and waves instead of AI speed (one text node each, so each translates).
+    const held = inCampaign && MISSIONS[S.stagePick].defence;
+    if (held) $("briefing-rivals").replaceChildren(...[`${held.lives} lives`, `${held.waves.length} waves`].flatMap((text, i) => [...(i ? [" · "] : []), Object.assign(document.createElement("span"), { textContent: text })]));
     if (inCampaign) {
       const m = MISSIONS[S.stagePick];
       $("briefing-title").textContent = `Mission ${S.stagePick + 1} · ${m.title}`;

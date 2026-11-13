@@ -33,10 +33,21 @@ export const LOG_LIMIT = 20, BACKLOG_LIMIT = 4;
 export class DialogueQueue {
   constructor() { this.reset(); }
   reset() { this.current = null; this.waiting = []; this.log = []; this.left = 0; this.skipped = 0; }
-  push(who, text) {
-    const line = { who, text };
+  record(line) {
     this.log.push(line);
     if (this.log.length > LOG_LIMIT) this.log.splice(0, this.log.length - LOG_LIMIT);
+    return line;
+  }
+  // A scene's line (app/scenes.js) shows at once. A play line it replaces waits first in line; an
+  // earlier scene line does not come back. `show: false` only writes the log (a skipped scene).
+  interrupt(who, text, { show = true } = {}) {
+    const line = this.record({ who, text, scene: true });
+    if (!show) return false;
+    if (this.current && !this.current.scene) this.waiting.unshift(this.current);
+    return this.show(line);
+  }
+  push(who, text) {
+    const line = this.record({ who, text });
     if (!this.current) return this.show(line);
     this.waiting.push(line);
     if (this.waiting.length > BACKLOG_LIMIT) this.skipped += this.waiting.splice(0, this.waiting.length - BACKLOG_LIMIT).length;

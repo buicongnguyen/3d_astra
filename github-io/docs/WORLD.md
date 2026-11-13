@@ -90,6 +90,8 @@ Full entries, with portrait briefs for the artist and two sample lines each, are
 
 Twelve missions in three acts. The seven original stages are the spine, with the same maps, names and difficulty (missions 2, 3, 4, 5, 7, 10 and 12); five new missions sit between them.
 
+Since 0.19b two more missions are played under the Frontier Defence rules: **Hold the River** (`m02b-hold-the-river`, Act 1 after First Contact: Hale comes back for the river crossings while Okoro tunes the river relay) and **Hold the Valley** (`m07b-hold-the-valley`, Act 2 after Copper Siege: Okoro's survey on Gorge Road finds the Builder vault). The tables below keep the twelve story missions; in the game they are numbered in campaign order (14 in all). Six moments are staged as scenes (missions 1, 4, 8, 10, 11 and the finale, by ending). Mission 2 is now a bridge assault on a bridgehead at the west bridge; mission 9 is a hold of the dune plateau, where Hale's Warden drones first appear; two Veil scouts watch the basin in mission 6.
+
 ### Act 1: Landfall
 
 Note (tuning pass, 2026-11-10): every mission AI now opens Relaxed and some step up to Normal by script; several goals and times changed. `src/story/missions.js` (each mission's `design` field) is the source of truth where it differs from the tables below.
