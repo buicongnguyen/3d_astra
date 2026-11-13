@@ -41,5 +41,11 @@
 /* A unit on a plateau top: the activity line names the high-ground bonuses in gold. */
 /* 11 px (the readability floor) so the whole line fits the card on phones and the desktop dock. */
 :root .selection-panel .selection-activity.high-ground { color:#f2c75c; text-transform:none; font-size:11px; letter-spacing:0; container-type:inline-size; }
+/* Wading the ford: slower and no abilities, in the water's pale blue (short form on narrow cards). */
+:root .selection-panel .selection-activity.in-ford { color:#9fd8e6; text-transform:none; font-size:11px; letter-spacing:0; container-type:inline-size; }
+/* Deep on a plateau: the eye-slash line below the high-ground line. It sits where an enemy card
+   shows its faction line (2 + 15 + 6 px), which player cards never show, so the card height holds. */
+.selection-hidden { grid-column:2 / -1; min-width:0; display:flex; align-items:center; gap:4px; height:15px; margin:2px 0 0; font-size:11px; line-height:15px; color:#cfe0f2; white-space:nowrap; overflow:hidden; }
+.selection-hidden .icon { flex:0 0 auto; width:13px; height:13px; }
 .selection-activity .hg-short { display:none; }
 @container (max-width: 272px) { .selection-activity .hg-long { display:none; } .selection-activity .hg-short { display:inline; } }

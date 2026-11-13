@@ -1,7 +1,7 @@
 {
   "difficulty": {"story":{"wave":0.7,"damage":0.8,"alloy":150,"time":1.25},"standard":{"wave":1,"damage":1,"alloy":0,"time":1},"veteran":{"wave":1.35,"damage":1.1,"alloy":0,"time":1}},
   "factions": {"meridian":{"swap":{},"building":null,"trait":null,"ai":null},"ashfall":{"swap":{"vanguard":"scrapper","breaker":"scorcher"},"building":"salvageyard","trait":"salvage","ai":"rush"},"sunward":{"swap":{"ranger":"rider","medic":"wagon"},"building":"waystation","trait":"roads","ai":"raider"},"wardens":{"exclude":["medic","engineer"],"swap":{"ranger":"drone","tank":"walker"},"building":"pylon","trait":"selfrepair","ai":"turtle"},"veil":{"swap":{"vanguard":"shade","antitank":"watcher"},"building":"veilrelay","trait":"farsight","ai":"evasive"}},
-  "terrain": {"plateau_height":2.4,"high_range":2,"high_damage":1.2,"low_damage":0.85,"hidden_depth":5,"high_vision":3,"wall_piece":1},
+  "terrain": {"plateau_height":2.4,"high_range":2,"high_damage":1.2,"low_damage":0.85,"hidden_depth":5,"high_vision":3,"wall_piece":1,"ford_speed":0.6},
   "traits": {"salvage":{"radius":14,"share":0.25},"roads":{"speed":1.15,"surfaces":["road","sand"]},"selfrepair":{"delay":6,"rate":0.015},"farsight":{"vision":3,"damage":1,"cloak_delay":3,"reveal_unit":4,"reveal_building":9}},
   "ai_personalities": {"rush":{"scale":{"firstWave":0.7,"waveGap":0.85,"foundryAt":1.3},"add":{"minWave":3},"building":"early","army_scale":1.5},"raider":{"raid":2},"turtle":{"scale":{"firstWave":1.3},"add":{"minWave":4,"towers":1},"building":"each"},"evasive":{"scale":{"waveGap":0.8},"add":{"minWave":0},"retreat":2.2}},
   "definitions": {

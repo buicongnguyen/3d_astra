@@ -1,11 +1,14 @@
 import balance from '../balance.json' with {type:'json'};
 import { DEFINITIONS as D, distance } from '../data.js';
+import { CROSSINGS, TERRAIN } from '../terrain.js';
 
 // Faction traits and building auras. Numbers live in balance.json under `traits` and on each
 // building's `aura`. Every hook is switched by the team's faction, so an all-Meridian match
 // runs none of this and keeps its state hash.
 export const TRAITS = balance.traits;
 const ROAD = new Set(TRAITS.roads.surfaces);
+// The ford (src/terrain.js CROSSINGS) and the river water's half-width (Terrain water rects).
+const FORD = CROSSINGS.find((c) => c.type === 'ford'), FORD_WATER = 3;
 // Auras and cloaks are refreshed four times a second, like vision.
 const EVERY = 5;
 
@@ -94,9 +97,15 @@ export const traits = {
   traitSpawn(e) {
     TRAIT_HANDLERS[this.factionFor(e.team).trait]?.spawn?.(this, e);
   },
-  // Sunward units are quicker on roads and sand.
+  // Sunward units are quicker on roads and sand. Everyone wades the ford slowly.
   moveSpeed(e) {
-    return this.factionFor(e.team).trait === 'roads' && ROAD.has(this.terrain.at(e.x, e.z)) ? e.speed * TRAITS.roads.speed : e.speed;
+    const speed = this.factionFor(e.team).trait === 'roads' && ROAD.has(this.terrain.at(e.x, e.z)) ? e.speed * TRAITS.roads.speed : e.speed;
+    return this.inFord(e) ? speed * TERRAIN.ford_speed : speed;
+  },
+  // In the ford's water (river maps: |z| < 3 inside the middle crossing). A plain numeric test,
+  // cheap enough for every move step; flyers (a later `flying` flag) pass over it.
+  inFord(e) {
+    return !!this.terrain.river && !e.flying && Math.abs(e.z) < FORD_WATER && Math.abs(e.x - FORD.x) < FORD.half;
   },
   damageDealt(team) {
     return this.factionFor(team).trait === 'farsight' ? TRAITS.farsight.damage : 1;

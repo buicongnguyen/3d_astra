@@ -57,8 +57,9 @@ export const tactics = {
     }
     return true;
   },
+  // Not while wading the ford (sim/traits.js inFord).
   abilityReady(e) {
-    return !!e?.ability && e.hp > 0 && e.kind === "unit" && this.time >= (e.abilityAt || 0);
+    return !!e?.ability && e.hp > 0 && e.kind === "unit" && this.time >= (e.abilityAt || 0) && !this.inFord(e);
   },
   // Uses the unit's ability if it is ready. `point` is needed by aimed abilities (Barrage).
   // Returns true when it was used.
@@ -71,10 +72,11 @@ export const tactics = {
       for (const key of ["speed", "interval", "range"]) if (change[key] !== undefined) { undo[key] = e[key]; e[key] = change[key]; }
       e.buff = { id: a.id, until: this.time + a.duration, undo, guard: change.guard, damage: change.damage, mech: change.mech };
     } else if (a.id === "barrage") {
-      if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.z) || distance(e, point) > a.range) return false;
+      // Shells and flames need sight of a deep plateau top (sim/vision.js hiddenTop); elsewhere fog does not stop them.
+      if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.z) || distance(e, point) > a.range || this.hiddenTop(point, e.team)) return false;
       (this.strikes ||= []).push({ at: this.time + a.delay, x: point.x, z: point.z, team: e.team, by: e.id, damage: a.damage, radius: a.radius });
     } else if (a.id === "burnline") {
-      if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.z) || distance(e, point) > a.range) return false;
+      if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.z) || distance(e, point) > a.range || this.hiddenTop(point, e.team)) return false;
       (this.zones ||= []).push({ x: point.x, z: point.z, radius: a.radius, until: this.time + a.duration, dps: a.dps, team: e.team, by: e.id });
       if (this.zones.length > MAX_ZONES) this.zones.shift();
     } else if (a.id === "mark") {

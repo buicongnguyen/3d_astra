@@ -44,6 +44,8 @@ const paths = {
   rapid: '<path d="M3 7h11l3 5-3 5H3M7 7l3 5-3 5M19 8l2 4-2 4"/>',
   barrage: '<circle cx="12" cy="15" r="6"/><path d="M12 2v9m-3-3 3 3 3-3M12 13v4m-2-2h4"/>',
   hold: '<path d="M12 3v18M7 8l5-5 5 5M5 14a7 7 0 0 0 14 0M3 14h4m10 0h4"/>',
+  // Eye with a slash: hidden from below (selection card, tactics-view mark).
+  hidden: '<path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.6"/><path d="M4 20 20 4"/>',
 };
 export function icon(name, cls = "") {
   return `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.logo}</svg>`;

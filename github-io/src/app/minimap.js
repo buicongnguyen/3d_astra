@@ -4,6 +4,7 @@ import { surfaceColors } from "../ground-paint.js";
 import { teamColors } from "../faction-colors.js";
 import { missionDestinations } from "../capture-view.js";
 import { CROSSINGS } from "../terrain.js";
+import { rampTicks } from "../terrain-labels.js";
 
 const OWN_PING_SECONDS = 2.5;
 
@@ -90,6 +91,19 @@ export function setupMinimap(S, A) {
           ctx.setLineDash([]);
         }
       }
+    // Ramps are the kill zones of a plateau (attackers climb under fire): a red-orange tick across
+    // each one, on a dark edge, drawn over fog like the crossings.
+    if (S.sim.terrain.plateaus.length) {
+      const ticks = (minimapBase.ramps ||= rampTicks(S.sim.terrain));
+      ctx.lineCap = "round";
+      for (const [style, width] of [["rgba(20,16,14,.85)", Math.max(3.5, w / 46)], ["rgba(240,104,58,.98)", Math.max(2, w / 80)]]) {
+        ctx.strokeStyle = style; ctx.lineWidth = width;
+        ctx.beginPath();
+        for (const t of ticks) { ctx.moveTo(px(t.x0), pz(t.z0)); ctx.lineTo(px(t.x1), pz(t.z1)); }
+        ctx.stroke();
+      }
+      ctx.lineCap = "butt";
+    }
     // Capture points: a ring in the owner's colour (grey while neutral) and the taker's progress.
     for (const p of Object.values(S.sim.mission?.points || S.sim.skirmishPoints || {})) {
       const cx = px(p.x), cy = pz(p.z), radius = Math.max(4.5, (p.r / MAP_SIZE) * w), owned = p.owner !== null && p.owner !== undefined;

@@ -3,7 +3,7 @@
 import { $ } from "./dom.js";
 import { DEFINITIONS as D } from "../data.js";
 import { icon } from "../icons.js";
-import { HIGH_GROUND_HINT, onHighGround } from "../terrain-labels.js";
+import { HIDDEN_HINT, HIGH_GROUND_HINT, heldPlateaus, hiddenFromBelow, onHighGround } from "../terrain-labels.js";
 import { ABILITY_HINT_AFTER, abilityHintText, loadSeenAbilities, nextAbilityHint, rememberAbility } from "../ability-hints.js";
 import { ABILITY_KEYS, abilityGroups } from "../tactics-ui.js";
 import "../ui-extras.css";
@@ -121,6 +121,18 @@ export function setupUiExtras(S, A) {
     seen.add("high");
     showHint(HIGH_GROUND_HINT);
   }
+  // The first time one of the player's units is hidden from below (deep on a plateau no visible
+  // enemy holds), once per match. It waits its turn behind the high-ground hint.
+  function hiddenHint() {
+    if (!hintEl || seen.has("hidden") || !S.sim.terrain.plateaus.length || !hintEl.hidden || performance.now() < nextHintAt) return;
+    if (!Z.started || Z.paused || Z.modalType || S.sim.result || S.tutorial) return;
+    const mine = S.sim.own(0).filter((u) => u.kind === "unit" && u.hp > 0 && onHighGround(S.sim.terrain, u));
+    if (!mine.length) return;
+    const held = heldPlateaus(S.sim, 0);
+    if (!mine.some((u) => hiddenFromBelow(S.sim, u, 0, held))) return;
+    seen.add("hidden");
+    showHint(HIDDEN_HINT);
+  }
 
   // The first time one of the player's units has an ability ready: what it is, what it does and how
   // to use it. Once per ability, remembered across matches (ability-hints.js). Browser suites (?test)
@@ -166,7 +178,7 @@ export function setupUiExtras(S, A) {
     return BEAT_SLOWDOWN;
   }
 
-  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); fightHints(); highGroundHint(); abilityHint(); } });
+  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); fightHints(); highGroundHint(); hiddenHint(); abilityHint(); } });
 
   return function bind() {
     makeHint();

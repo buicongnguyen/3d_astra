@@ -1,4 +1,5 @@
 import { RANK_BONUS, STANCES } from "./sim/tactics.js";
+import { FORD_SHORT } from "./terrain-labels.js";
 
 // Interface logic for veterancy, stances and unit abilities (rules: sim/tactics.js).
 // Pure functions over simulation state: no DOM, no rendering, so node:test covers them.
@@ -34,11 +35,13 @@ export function abilityGroups(sim, entities, max = ABILITY_KEYS.length) {
     const a = e.ability;
     let g = groups.get(a.id);
     if (!g) groups.set(a.id, (g = { id: a.id, name: a.name, description: a.description, aimed: AIMED.has(a.id), cooldown: a.cooldown,
-      range: a.range ?? 0, radius: a.radius ?? 0, ids: [], count: 0, ready: 0, wait: Infinity }));
+      range: a.range ?? 0, radius: a.radius ?? 0, ids: [], count: 0, ready: 0, ford: 0, wait: Infinity }));
     g.ids.push(e.id);
     g.count++;
     const wait = Math.max(0, (e.abilityAt || 0) - sim.time);
-    if (wait <= 0) g.ready++;
+    // Charged but wading the ford (sim/traits.js inFord): not ready until it reaches the bank.
+    if (wait <= 0 && sim.inFord?.(e)) g.ford++;
+    else if (wait <= 0) g.ready++;
     g.wait = Math.min(g.wait, wait);
   }
   const order = (g) => { const i = ABILITY_ORDER.indexOf(g.id); return i < 0 ? ABILITY_ORDER.length : i; };
@@ -46,11 +49,12 @@ export function abilityGroups(sim, entities, max = ABILITY_KEYS.length) {
     .sort((a, b) => b.count - a.count || order(a) - order(b))
     .slice(0, Math.max(0, max))
     .sort((a, b) => order(a) - order(b))
-    .map((g) => ({ ...g, fraction: g.ready || !(g.cooldown > 0) ? 0 : Math.min(1, g.wait / g.cooldown) }));
+    .map((g) => ({ ...g, fraction: g.ready || g.ford || !(g.cooldown > 0) ? 0 : Math.min(1, g.wait / g.cooldown) }));
 }
 
-// What the tile says under the ability name: "Ready", "Ready 2/3" or the seconds left.
+// What the tile says under the ability name: "Ready", "Ready 2/3", "In the ford" or the seconds left.
 export function abilityStatus(group) {
+  if (!group.ready && group.ford) return FORD_SHORT;
   if (!group.ready) return `${Math.max(1, Math.ceil(group.wait))}s`;
   return group.count > 1 ? `Ready ${group.ready}/${group.count}` : "Ready";
 }
@@ -79,13 +83,17 @@ export function stanceState(entities) {
 export const stancesInUse = (entities) => new Set(entities.filter(takesStance).map((e) => (STANCES.includes(e.stance) ? e.stance : "guard")));
 
 // Aiming an aimed ability (Barrage): the ready units, the ones that reach `point`, and the
-// circle to draw. `ok` is false without a point or when no ready unit reaches it.
+// circle to draw. `ok` is false without a point or when no ready unit reaches it, and on a deep
+// plateau top the player can't see (sim/vision.js hiddenTop); `sight` is true then.
 export function aimState(sim, entities, point, id = "barrage") {
-  const sources = entities.filter((e) => hasAbility(e) && e.ability.id === id && sim.time >= (e.abilityAt || 0));
+  const sources = entities.filter((e) => hasAbility(e) && e.ability.id === id && sim.time >= (e.abilityAt || 0) && !sim.inFord?.(e));
   const a = sources[0]?.ability;
   const valid = !!point && Number.isFinite(point.x) && Number.isFinite(point.z);
-  const casters = valid ? sources.filter((e) => Math.hypot(e.x - point.x, e.z - point.z) <= e.ability.range) : [];
-  return { id, sources, casters: casters.map((e) => e.id), range: a?.range ?? 0, radius: a?.radius ?? 0, ok: casters.length > 0 };
+  const reach = valid ? sources.filter((e) => Math.hypot(e.x - point.x, e.z - point.z) <= e.ability.range) : [];
+  // Out of reach reads as out of reach; only a spot in reach can be refused for sight.
+  const sight = reach.length > 0 && !!sim.hiddenTop?.(point, reach[0].team);
+  const casters = sight ? [] : reach;
+  return { id, sources, casters: casters.map((e) => e.id), range: a?.range ?? 0, radius: a?.radius ?? 0, ok: casters.length > 0, sight };
 }
 
 export const clampRank = (rank) => Math.max(0, Math.min(3, Math.floor(rank || 0)));

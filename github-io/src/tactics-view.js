@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { DEFINITIONS as D } from "./data.js";
 import { TERRAIN } from "./terrain.js";
-import { onHighGround } from "./terrain-labels.js";
+import { heldPlateaus, hiddenFromBelow, onHighGround } from "./terrain-labels.js";
 
 // 3D marks for veterancy, abilities and Barrage aiming: rank chevrons over ranked units, a
 // tinted ground ring under a unit while its ability lasts, the warning circle where a Barrage
@@ -12,12 +12,14 @@ import { onHighGround } from "./terrain-labels.js";
 // marks need the unit drawn, an enemy shell's circle needs the ground in sight.
 
 const CAPACITY = 192;
-const BUFF = 0, WARNING = 1, REACH = 2, AIM = 3, CHEVRONS = 10, HIGH = 11;
-export const MARK = { BUFF, WARNING, REACH, AIM, CHEVRONS, HIGH };
+const BUFF = 0, WARNING = 1, REACH = 2, AIM = 3, CHEVRONS = 10, HIGH = 11, HIDDEN = 12;
+export const MARK = { BUFF, WARNING, REACH, AIM, CHEVRONS, HIGH, HIDDEN };
 // Raw display colours (the shader writes them unconverted, like the selection rings).
 const BUFF_TINT = { shieldwall: [0.42, 0.8, 1], focus: [1, 0.8, 0.3], overdrive: [1, 0.5, 0.2], lockon: [0.84, 0.56, 1] };
 const GOLD = [1, 0.83, 0.38], IN_REACH = [0.6, 0.95, 0.78], OUT_OF_REACH = [0.96, 0.36, 0.28], REACH_TINT = [0.9, 0.95, 0.88];
 const BAR_HEIGHT = 2.55, CHEVRON_RISE = 0.36, CHEVRON_SIZE = 0.75, HIGH_SIZE = 0.42, HIGH_REACH = [1, 0.83, 0.38], BASE_REACH = [0.9, 0.95, 0.88];
+// Hidden from below: a pale eye-slash just left of the ▲ (terrain-labels.js hiddenFromBelow).
+const HIDDEN_SIZE = 0.46, HIDDEN_GAP = 0.86, HIDDEN_TINT = [0.82, 0.9, 1];
 
 const VERTEX = `
 attribute vec4 iPlace; attribute vec4 iTint; attribute vec2 iKind;
@@ -74,6 +76,18 @@ void main() {
     float gold = 1.0 - smoothstep(0.0, aaP, best), edge = 1.0 - smoothstep(0.07, 0.07 + aaP, best);
     col = mix(vec3(0.04, 0.06, 0.055), col, gold);
     alpha = max(gold, edge * 0.88);
+  } else if (style > 11.5) {
+    // Hidden from below: an eye (almond outline and pupil) crossed by a slash, on a dark outline.
+    vec2 p = vP;
+    float almond = max(length(p - vec2(0.0, -0.55)) - 0.95, length(p - vec2(0.0, 0.55)) - 0.95);
+    float eye = min(abs(almond) - 0.1, length(p) - 0.22);
+    vec2 a = vec2(-0.74, -0.66), ba = vec2(1.48, 1.32), pa = p - a;
+    float slash = length(pa - ba * clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0)) - 0.09;
+    // The eye is cut back around the slash (a 0.11 gap) so the slash reads as crossing it.
+    float d = min(max(eye, 0.11 - slash), slash), aaE = fwidth(d) * 1.5;
+    float ink = 1.0 - smoothstep(0.0, aaE, d), edge = 1.0 - smoothstep(0.13, 0.13 + aaE, d);
+    col = mix(vec3(0.04, 0.06, 0.055), col, ink);
+    alpha = max(ink, edge * 0.88);
   } else {
     // High ground: a gold triangle pointing up on a dark outline, beside the vitals bar.
     vec2 q = vec2(abs(vP.x) - 0.62, vP.y + 0.62 / 1.7320508);
@@ -170,7 +184,7 @@ export class TacticsView {
     const entities = sim.entities, m = view.camera.matrixWorld.elements, terrain = sim.terrain, plateaus = terrain?.plateaus?.length > 0;
     // High ground: the ▲ sits left of where the vitals bar is drawn (half its width plus a gap).
     const side = -(2.3 * 0.62 * (view.barScale || 1) / 2 + 0.34);
-    let rings = 0;
+    let rings = 0, held = null;
     for (let i = 0; i < entities.length; i++) {
       const e = entities[i];
       const high = plateaus && e.hp > 0 && onHighGround(terrain, e);
@@ -180,6 +194,12 @@ export class TacticsView {
       if (high) {
         const lift = o.position.y + (e.kind === "unit" ? BAR_HEIGHT * (o.userData.readabilityScale || 1) : 4.9);
         this.put(o.position.x + m[0] * side, lift + m[1] * side, o.position.z + m[2] * side, HIGH_SIZE, GOLD, 1, HIGH, 0);
+        // The player's own units deep on a plateau no visible enemy holds: the eye-slash beside the ▲.
+        // The plateaus held by visible enemies are found once a frame, only when someone is up there.
+        if (e.team === 0 && hiddenFromBelow(sim, e, 0, (held ||= heldPlateaus(sim, 0)))) {
+          const at = side - HIDDEN_GAP * (view.barScale || 1);
+          this.put(o.position.x + m[0] * at, lift + m[1] * at, o.position.z + m[2] * at, HIDDEN_SIZE, HIDDEN_TINT, 1, HIDDEN, 0);
+        }
         // A selected unit on high ground shows its reach: the extra metres in gold, the level-ground range dashed.
         if (selected?.has(e.id) && e.team === 0 && e.range > 0 && e.damage > 0 && rings < 8) {
           rings++;
