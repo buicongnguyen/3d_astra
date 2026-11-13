@@ -114,8 +114,9 @@ export function setupModals(S, A) {
   }
 
   function togglePause() {
-    // A decision card already holds the match and closes only with an order (app/choices.js).
-    if (!Z.started || S.sim.result || Z.modalType === "graphics" || Z.modalType === "decision") return;
+    // A decision card already holds the match and closes only with an order (app/choices.js); a
+    // story scene ends by itself or with Skip (app/scenes.js).
+    if (!Z.started || S.sim.result || Z.modalType === "graphics" || Z.modalType === "decision" || Z.modalType === "scene") return;
     if (Z.paused) {
       helpOverPause = false;
       closeModal();
@@ -143,7 +144,7 @@ export function setupModals(S, A) {
   }
 
   function showHelp() {
-    if (S.sim.result || Z.modalType === "graphics" || Z.modalType === "decision") return;
+    if (S.sim.result || Z.modalType === "graphics" || Z.modalType === "decision" || Z.modalType === "scene") return;
     if (Z.modalType === "help") { closeModal(); return; }
     helpOverPause = Z.modalType === "pause";
     S.touchControls?.reset();

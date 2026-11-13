@@ -1,0 +1,72 @@
+/* Staged story scenes (app/scenes.js, 0.19b). Letterbox bars move by transform only; the HUD steps
+   aside; the dialogue box sits just above the lower bar; Skip is 44 px at the top right. Under
+   :root.motion-off nothing slides or glows (the bars simply appear). Text 11 px or more. */
+.scene-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  pointer-events: auto;
+}
+.scene-veil[hidden] { display: none; }
+.scene-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 9%;
+  background: #02080c;
+  box-shadow: 0 0 24px rgba(0, 0, 0, 0.55);
+  transform: scaleY(0);
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.scene-bar.top { top: 0; transform-origin: 50% 0; }
+.scene-bar.bottom { bottom: 0; transform-origin: 50% 100%; }
+.scene-veil.on .scene-bar { transform: scaleY(1); }
+:root.motion-off .scene-bar { transition: none; transform: scaleY(1); }
+
+.scene-flash { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.scene-flash.relay { background: radial-gradient(60% 60% at 50% 50%, rgba(120, 235, 214, 0.32), transparent 70%); animation: scene-flash 1.4s ease-out; }
+.scene-flash.dark { background: radial-gradient(70% 70% at 50% 50%, transparent 30%, rgba(0, 6, 12, 0.6)); animation: scene-flash 1.6s ease-in-out; }
+.scene-flash.alarm { background: radial-gradient(70% 70% at 50% 50%, transparent 35%, rgba(239, 118, 96, 0.3)); animation: scene-flash 1.2s ease-out; }
+@keyframes scene-flash { 0% { opacity: 0; } 25% { opacity: 1; } 100% { opacity: 0; } }
+
+.scene-skip {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: rgba(6, 20, 28, 0.82);
+  font: 700 13px/1.2 var(--font-ui);
+  color: var(--text-1);
+  cursor: pointer;
+}
+.scene-skip:hover { border-color: var(--gold-2); color: #fff; }
+.scene-skip:focus-visible { outline: 3px solid var(--gold-2); outline-offset: 2px; }
+.scene-skip kbd {
+  padding: 2px 6px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r-s, 4px);
+  font: 700 11px/1.2 var(--font-ui);
+  color: var(--text-3);
+}
+.compact-ui .scene-skip kbd { display: none; }
+
+/* The HUD steps aside while a scene plays: only the battlefield, the dialogue box and the scene stay. */
+.scene-open #stage > :not(#world):not(#dialogue):not(#scene),
+.scene-open #world > :not(canvas) { visibility: hidden; }
+/* The dialogue box rides above the lower bar, over the letterbox. */
+.scene-open .dialogue { z-index: 31; }
+:root.scene-open:not(.compact-ui) .dialogue { top: auto; bottom: calc(9% + 14px); left: 50%; width: min(560px, calc(100% - 40px)); transform: translateX(-50%); }
+.scene-open.compact-ui .dialogue { top: auto; bottom: calc(9% + 10px); }
+.scene-open #dialogue-text { font-size: 15px; }
+.scene-open.compact-ui #dialogue-text { font-size: 14px; }
+/* The scene times its own lines: no dismiss button on the box while it plays. */
+.scene-open #dialogue-close { display: none; }

@@ -50,6 +50,11 @@ export function setupDebugHooks(S, A) {
       // Commander decisions and endings (app/choices.js): the card's state and an epilogue by ending id.
       decision: () => ({ open: Z.modalType === "decision", pending: S.sim.mission?.pending || null, flags: S.sim.flags || null }),
       epilogue: (id, options) => A.showEpilogue(id, options),
+      // Story scenes (app/scenes.js): fire one in-page, its state, skip it; and whether the audio is told the match is paused.
+      playScene: (id) => A.playScene(id),
+      scene: () => A.sceneState(),
+      skipScene: () => A.skipScene(),
+      get audioPaused() { return S.audioPaused ?? null; },
       renderCampaign: () => A.renderBriefing(),
     };
   }

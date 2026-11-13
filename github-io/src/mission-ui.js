@@ -222,6 +222,13 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
     renderLog();
     if (shown) { renderLine(); tone(660, 0.05); } else renderMore();
   }
+  // A scene's line (app/scenes.js): on the box at once, or only into the Comms log when skipped.
+  function sceneLine(who, text, show = true) {
+    const shown = queue.interrupt(who, text, { show });
+    logDirty = true;
+    renderLog();
+    if (shown) renderLine(); else renderMore();
+  }
   // Called every frame with the play time that passed (0 while paused): no page work unless
   // the line changes.
   function tick(dt) {
@@ -354,7 +361,7 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
 
   return {
     openBriefing, closeBriefing, get briefingOpen() { return !!brief; }, get briefingStep() { return brief?.step ?? -1; },
-    say, tick, dismiss, renderObjectives, objectiveEvent, resetMatch, endMatch, debriefHTML,
+    say, sceneLine, tick, dismiss, renderObjectives, objectiveEvent, resetMatch, endMatch, debriefHTML,
     get queue() { return queue; },
   };
 }
