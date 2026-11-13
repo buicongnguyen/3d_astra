@@ -251,10 +251,21 @@ await suite("defence", async () => {
     await shot(page, `defence-commander-barrage-${viewport}`);
 
     // Call wave: the first wave comes now, for a bonus.
-    await page.evaluate(() => { window.__frontier.sim.players[0].alloy = 0; window.__frontier.select([]); });
+    // On a slow runner the 30 s countdown can run out during the steps above (the commander walk alone
+    // steps 14 s) and wave 1 then starts by itself: give the countdown time again and count from the
+    // wave in play, so the call is always early and pays its bonus.
+    const before = await page.evaluate(() => {
+      const f = window.__frontier, s = f.sim, d = s.defence;
+      s.players[0].alloy = 0; f.select([]);
+      // Back to "before wave 1" if it started by itself: no column on the road, the countdown running.
+      if (d.wave > 0) { d.wave = 0; d.active = false; d.queue.length = 0; for (const e of s.entities) if (e.team === 1 && e.kind === "unit") e.hp = 0; }
+      d.nextAt = s.time + 25;
+      return d.wave;
+    });
+    await page.evaluate(() => window.__frontier.step(0.05)); // the cleared column leaves the field
     await page.waitForFunction(() => !document.querySelector("#defence-call").disabled);
     await tap("#defence-call");
-    await page.waitForFunction(() => window.__frontier.sim.defence.wave === 1 && window.__frontier.sim.players[0].alloy > 0, null, { timeout: TIMEOUT.step });
+    await page.waitForFunction((n) => window.__frontier.sim.defence.wave === n + 1 && window.__frontier.sim.players[0].alloy > 0, before, { timeout: TIMEOUT.step });
 
     // Mid-wave on Gorge Road with towers of all three tiers.
     await stageWave(page, 13);
