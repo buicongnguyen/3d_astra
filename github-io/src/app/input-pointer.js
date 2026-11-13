@@ -96,6 +96,7 @@ export function setupInputPointer(S, A) {
       if (A.commandAt(point, ["support","context","attack","attackmove","repair","rally"].includes(S.mode) ? target : null, S.queueOrders, S.mode) !== false) A.clearMode();
       return;
     }
+    if (A.defenceTap?.(x, y)) return;
     if (S.boxSelection) {
       if (target?.team === 0) A.setSelection([...S.selected, target.id]);
       return;
@@ -249,6 +250,7 @@ export function setupInputPointer(S, A) {
         if (A.commandAt(point, ["support","context","attack","attackmove","repair","rally"].includes(S.mode) ? S.view.pick(e.clientX,e.clientY,S.sim) : null, e.shiftKey||S.queueOrders, S.mode) !== false) A.clearMode();
         return;
       }
+      if (Math.hypot(e.clientX - old.x, e.clientY - old.y) <= 6 && A.defenceTap?.(e.clientX, e.clientY)) return;
       const next = e.shiftKey ? new Set(S.selected) : new Set();
       if (Math.hypot(e.clientX - old.x, e.clientY - old.y) > 6) {
         const rect = canvas.getBoundingClientRect();

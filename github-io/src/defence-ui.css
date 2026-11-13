@@ -1,0 +1,176 @@
+/* Frontier Defence match interface (app/defence-ui.js), loaded on first use.
+   House rules: var(--font-ui), labels 12 px or larger, taps 44 px or larger, no sideways scroll,
+   phone docks keep their fixed heights. Every animation is transform/opacity only and stops
+   under :root.motion-off (and prefers-reduced-motion). */
+:root {
+  --tier-1: #c98a52; /* bronze */
+  --tier-2: #b4cadb; /* steel */
+  --tier-3: #ffc75e; /* gold */
+}
+
+/* What a defence match does not use: energy and supply, the RTS selection helpers, objectives list. */
+:root.in-defence .resource.energy,
+:root.in-defence .resource.population,
+:root.in-defence #mission-toggle,
+:root.in-defence #mission-objectives,
+:root.in-defence .sector-status,
+:root.in-defence .touch-controls button:not(#zoom-in):not(#zoom-out),
+:root.in-defence .order-buttons button:not(#field-guide) { display: none !important; }
+
+/* Lives, wave and countdown chips, Call wave and Overview: one row over the battlefield. */
+#defence-bar {
+  position: absolute;
+  z-index: 6;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100% - 16px);
+  padding: 4px;
+  border: 1px solid var(--line-2, rgba(168, 214, 212, 0.24));
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(10, 27, 36, 0.92), rgba(6, 18, 25, 0.88));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  font: 650 13px/1 var(--font-ui);
+  color: var(--text-1, #f1f6f3);
+  white-space: nowrap;
+}
+#defence-bar[hidden] { display: none; }
+/* Desktop: the notice line owns the top middle, so the bar sits top right (where the uplink status was). */
+:root:not(.compact-ui) #defence-bar { left: auto; right: 16px; top: 12px; transform: none; }
+#defence-bar .dchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+}
+#defence-bar .dchip .icon { width: 18px; height: 18px; color: var(--mint, #92ebc5); }
+#defence-bar .dchip b { font: 800 15px/1 var(--font-ui); font-variant-numeric: tabular-nums; }
+#defence-bar .dchip small { font: 600 13px/1 var(--font-ui); color: var(--text-3, #97aeab); font-variant-numeric: tabular-nums; }
+#defence-bar .lives.low { background: rgba(239, 118, 96, 0.22); }
+#defence-bar .lives.low .icon, #defence-bar .lives.low b { color: #ff9a85; }
+#defence-bar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--gold-line, rgba(255, 199, 94, 0.45));
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 199, 94, 0.22), rgba(255, 199, 94, 0.06));
+  color: var(--text-1, #f1f6f3);
+  font: 700 13px/1 var(--font-ui);
+}
+#defence-bar button .icon { width: 18px; height: 18px; }
+#defence-bar button small { font: 700 12px/1 var(--font-ui); color: var(--gold-2, #ffc75e); }
+#defence-bar button:disabled { opacity: 0.45; }
+#defence-overview { padding: 0 !important; border-color: var(--line-2, rgba(168, 214, 212, 0.24)) !important; background: rgba(255, 255, 255, 0.06) !important; }
+#defence-overview[aria-pressed="true"] { border-color: var(--gold-2, #ffc75e) !important; color: var(--gold-2, #ffc75e); }
+/* Phones: under the notch and above the notice line; the bar never grows wider than the screen. */
+.compact-ui #defence-bar { top: 6px; gap: 4px; padding: 3px; font-size: 12px; }
+.compact-ui #defence-bar .dchip { padding: 0 8px; min-height: 34px; }
+/* Portrait phones: the zoom buttons hold the top left corner. */
+@media (orientation: portrait) {
+  .compact-ui #defence-bar { left: auto; right: 6px; transform: none; }
+}
+@media (max-width: 420px) {
+  .compact-ui #defence-bar button { padding: 0 9px; }
+  .compact-ui #defence-bar #defence-call > span { display: none; }
+}
+
+/* Crew tiles, the tower sheet and their tier trims. */
+#commands .command-tile.defence-crew,
+#commands .command-tile.defence-info,
+#commands .command-tile.defence-upgrade,
+#commands .command-tile.defence-sell { position: relative; overflow: visible; }
+#commands .command-tile[data-tier] { border: 2px solid var(--tier-1); }
+#commands .command-tile[data-tier="2"] { border-color: var(--tier-2); }
+#commands .command-tile[data-tier="3"] { border-color: var(--tier-3); }
+#commands[data-tier] { outline: 2px solid var(--tier-1); outline-offset: 3px; border-radius: 6px; }
+#commands[data-tier="2"] { outline-color: var(--tier-2); }
+#commands[data-tier="3"] { outline-color: var(--tier-3); }
+#commands .command-tile.defence-crew .portrait,
+#commands .command-tile.defence-info .portrait { border-radius: 6px; }
+#commands .defence-sell { border-color: rgba(239, 118, 96, 0.45); }
+#commands .defence-hint { grid-column: 1 / -1; }
+/* Tier 3: a slow heat glow. The shadow is static; only its opacity moves. */
+#commands .command-tile[data-tier="3"]::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  box-shadow: 0 0 14px 3px rgba(255, 150, 50, 0.55), inset 0 0 8px rgba(255, 199, 94, 0.35);
+  opacity: 0.35;
+  pointer-events: none;
+  animation: defence-heat 2.6s ease-in-out infinite alternate;
+}
+@keyframes defence-heat { to { opacity: 0.95; } }
+
+/* Ember burst: six sparks rising from a tile, removed on animationend (app/defence-ui.js burst). */
+.ember-burst { position: absolute; inset: 0; pointer-events: none; }
+.ember-burst .ember {
+  --dx: 0px;
+  --dy: -34px;
+  position: absolute;
+  left: 50%;
+  bottom: 30%;
+  width: 6px;
+  height: 6px;
+  margin-left: -3px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff3b8 0 30%, #ff9a3c 60%, rgba(255, 90, 30, 0) 100%);
+  opacity: 0;
+  animation: defence-ember 0.85s ease-out forwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+.ember-burst .ember:nth-child(1) { --dx: -22px; --dy: -30px; }
+.ember-burst .ember:nth-child(2) { --dx: -12px; --dy: -42px; }
+.ember-burst .ember:nth-child(3) { --dx: -3px; --dy: -36px; }
+.ember-burst .ember:nth-child(4) { --dx: 6px; --dy: -46px; }
+.ember-burst .ember:nth-child(5) { --dx: 15px; --dy: -34px; }
+.ember-burst .ember:nth-child(6) { --dx: 24px; --dy: -40px; }
+@keyframes defence-ember {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.6); }
+  20% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.25); }
+}
+
+/* The picked pad or the state of the defence, in the selection panel. */
+.defence-panel p b { font-variant-numeric: tabular-nums; }
+.defence-panel[data-high="rim"] > .icon { color: #ffa25a; }
+.defence-panel[data-high="deep"] > .icon { color: #8aa4ff; }
+
+/* Result: stars, the numbers and the next steps (built on the mission debrief layout). */
+.defence-result .debrief-head { align-items: center; }
+.defence-stars { display: inline-flex; gap: 4px; }
+.defence-stars i {
+  font: 800 38px/1 var(--font-ui);
+  font-style: normal;
+  color: rgba(168, 214, 212, 0.25);
+}
+.defence-stars i.on {
+  color: var(--gold-2, #ffc75e);
+  text-shadow: 0 0 12px rgba(255, 199, 94, 0.55);
+  animation: defence-star 0.45s ease-out both;
+  animation-delay: calc(var(--i, 1) * 140ms);
+}
+@keyframes defence-star { from { opacity: 0; transform: scale(1.6); } to { opacity: 1; transform: scale(1); } }
+.defence-result .debrief-result span { margin-left: 8px; font: 600 13px/1.2 var(--font-ui); color: var(--text-3, #97aeab); }
+.compact-ui .defence-stars i { font-size: 30px; }
+
+/* Motion off: no embers, no heat pulse, no star pop. */
+:root.motion-off .ember-burst { display: none; }
+:root.motion-off #commands .command-tile[data-tier="3"]::after { animation: none; opacity: 0.7; }
+:root.motion-off .defence-stars i.on { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .ember-burst { display: none; }
+  #commands .command-tile[data-tier="3"]::after { animation: none; opacity: 0.7; }
+  .defence-stars i.on { animation: none; }
+}

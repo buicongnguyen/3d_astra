@@ -9,6 +9,7 @@ import { icon } from "../icons.js";
 import { medalBadge, clock as missionClock } from "../mission-ui.js";
 import { readSave } from "../savegame.js";
 import { teamColors } from "../faction-colors.js";
+import { DEFENCE_LEVELS, defenceLevel } from "../defence/levels.js";
 
 export function setupBriefing(S, A) {
   const Z = S.screen;
@@ -16,6 +17,8 @@ export function setupBriefing(S, A) {
   // stages in order. The battle behind the briefing always previews the current choice.
   function battleSetup() {
     if(S.playMode === "training") return {map:"classic",enemyCount:1,aiSpeed:"relaxed",alliance:"ffa",bonus:null,mission:null,faction:"mirror"};
+    // Frontier Defence: the level is a mission-shaped definition (src/defence/levels.js).
+    if (S.playMode === "defence") { const l = DEFENCE_LEVELS[S.defencePick] || DEFENCE_LEVELS[0]; return { map: l.map, enemyCount: l.enemies, aiSpeed: l.speed, alliance: l.alliance, bonus: null, mission: l, faction: "mirror" }; }
     const m = MISSIONS[S.stagePick];
     return S.playMode === "campaign"
       ? { map: m.map, enemyCount: m.enemies, aiSpeed: m.speed, alliance: m.alliance, bonus: m.bonus || null, mission: m, faction: "mirror" }
@@ -31,6 +34,7 @@ export function setupBriefing(S, A) {
 
   function updateHeading() {
     const stage = Z.started ? S.activeStage : S.playMode === "campaign" ? S.stagePick : null;
+    if (A.defenceHeading?.()) return;
     document.querySelector(".map-heading p").innerHTML = `${mapName(S.mapId).toUpperCase()} <span>·</span> SECTOR 07`;
     document.querySelector(".map-heading h1").innerHTML = stage === null
       ? `${mapName(S.mapId)}<span>.</span>` : `Mission ${stage + 1} · ${MISSIONS[stage].title}<span>.</span>`;
@@ -41,10 +45,10 @@ export function setupBriefing(S, A) {
   // The Continue button appears while a saved match exists (savegame.js).
   function renderContinue() {
     const save = Z.started ? null : readSave(), button = $("continue");
-    const known = save && (save.mode !== "campaign" || missionIndex(save.missionId) >= 0);
+    const known = save && (save.mode === "defence" ? !!defenceLevel(save.missionId) : save.mode !== "campaign" || missionIndex(save.missionId) >= 0);
     button.hidden = !known;
     if (!known) return;
-    const title = save.mode === "campaign" ? MISSIONS[missionIndex(save.missionId)].title : mapName(save.map);
+    const title = save.mode === "campaign" ? MISSIONS[missionIndex(save.missionId)].title : save.mode === "defence" ? defenceLevel(save.missionId).title : mapName(save.map);
     const html = `${icon("play")}<span class="continue-text"><strong>Continue</strong><small><span>${title}</span> · <span translate="no">${A.formatTime(save.time)}</span></small></span>`;
     if (button.dataset.html !== html) { button.dataset.html = html; button.innerHTML = html; }
   }
@@ -67,7 +71,8 @@ export function setupBriefing(S, A) {
     for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String(b.dataset.mode === S.playMode));
     $("skirmish-setup").hidden = S.playMode !== "skirmish";
     $("campaign-setup").hidden = !inCampaign;
-    $("campaign-difficulty").hidden = !inCampaign;
+    $("campaign-difficulty").hidden = !inCampaign && S.playMode !== "defence";
+    $("defence-setup").hidden = S.playMode !== "defence";
     for (const button of document.querySelectorAll('[data-difficulty]')) button.setAttribute('aria-pressed', String(button.dataset.difficulty === S.settings.campaignDifficulty));
     $("difficulty-description").textContent = DIFFICULTY_DESCRIPTIONS[S.settings.campaignDifficulty];
     $("training-setup").hidden = S.playMode !== "training";
@@ -89,6 +94,7 @@ export function setupBriefing(S, A) {
     }
     if(S.playMode === "training"){ $("briefing-title").textContent="Commander training"; $("briefing-text").textContent="Learn selection, movement, harvesting, construction, production, attack and withdrawal in eight guided steps. Training supplies replenish. Leave or replay whenever you like."; }
     if (!$("start").disabled && !S.loadFailed) $("start").textContent = S.playMode === "training" ? "Start training" : inCampaign ? `Start mission ${S.stagePick + 1}` : "Start";
+    if (S.playMode === "defence") A.renderDefenceMenu?.();
   }
 
   function previewBattle() {
@@ -134,6 +140,13 @@ export function setupBriefing(S, A) {
       S.playMode = button.dataset.mode;
       previewBattle();
     });
+
+    $("defence-setup").onclick = (event) => {
+      const button = event.target.closest("[data-level]");
+      if (!button || button.disabled || Z.started) return;
+      S.defencePick = Number(button.dataset.level);
+      previewBattle();
+    };
 
     $("campaign-setup").onclick = (event) => {
       const button = event.target.closest("[data-stage]");
