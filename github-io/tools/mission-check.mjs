@@ -14,6 +14,11 @@
 // Exits 1 when a target is missed. One line per mission and run:
 //   result, game time, required objectives (d done, a active, f failed, lower case = optional),
 //   first enemy wave, player units lost, medal.
+// Missions with a `defence` block (Hold the River, Hold the Valley: 0.19b) play under the Frontier
+// Defence rules with the DefenceBot (tools/defence-bot.mjs, as tools/defence-check.mjs does):
+//   objective  the DefenceBot must win with at least the mission's `check[difficulty]` stars
+//   passive    a player who crews nothing must lose
+//   generic    one crew type only, each in turn (reported, not a target: a story mission may be kind)
 import { fork } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { cpus } from "node:os";
@@ -22,6 +27,7 @@ import { Simulation } from "../src/simulation.js";
 import { MISSIONS } from "../src/story/missions.js";
 import { DECISIONS, resolveMission } from "../src/story/choices.js";
 import { PlayBot, ObjectiveBot, answerDecision } from "./playbot.mjs";
+import { playDefence } from "./defence-bot.mjs";
 
 const args = process.argv.slice(2), flag = (name) => args.includes(name), value = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : null);
 const DIFFICULTY = value('--difficulty') || 'standard';
@@ -64,10 +70,21 @@ export const targets = index => {
   return t;
 };
 
+// A Defence-rules mission: the DefenceBot (objective), nobody (passive) or one crew type (generic).
+function playDefenceMission(mission, kind) {
+  const target = mission.check?.[DIFFICULTY] ?? 1;
+  const runs = kind === "generic" ? mission.defence.crews.map((crew) => ({ crew, ...playDefence(mission, { difficulty: DIFFICULTY, policy: "greedy", crew }) }))
+    : [playDefence(mission, { difficulty: DIFFICULTY, policy: kind === "passive" ? "passive" : "bot" })];
+  const r = runs[0];
+  return { kind, result: r.result, time: r.seconds, objectives: r.result === "victory" ? "D" : r.result === "defeat" ? "F" : "A", wave: r.wave, lost: 20 - r.lives, medal: r.medal, flags: null,
+    defence: { target, stars: r.stars, lives: r.lives, towers: r.towers, greedy: kind === "generic" ? runs.map((g) => `${g.crew}:${g.stars}★${g.lives}♥`).join(" ") : null } };
+}
+
 export function play(mission, kind, { cap = CAP, log = false, progress = PROGRESS, decide = DECIDE } = {}) {
   const index = MISSIONS.indexOf(mission);
   // Earlier missions' answers (and the ending) as the campaign progress has them.
   mission = resolveMission(mission, progress);
+  if (mission.defence) return playDefenceMission(mission, kind);
   // Trial switch: ROSTERS=1 plays every mission on faction rosters, ROSTERS=0 on the base roster, whatever the mission says.
   if (process.env.ROSTERS) mission = { ...mission, rules: { ...mission.rules, rosters: process.env.ROSTERS === "1" } };
   const s = new Simulation({ difficulty: DIFFICULTY, map: mission.map, enemyCount: mission.enemies, aiSpeed: mission.speed, alliance: mission.alliance, playerBonus: mission.bonus || null, mission });
@@ -102,6 +119,11 @@ export function play(mission, kind, { cap = CAP, log = false, progress = PROGRES
 // The targets a run misses, as text.
 export function misses(index, run) {
   const t = targets(index), out = [];
+  if (run.defence) {
+    if (run.kind.startsWith("objective") && (run.result !== "victory" || run.defence.stars < run.defence.target)) out.push(`defence bot: ${run.result} with ${run.defence.stars}★ (must win with ${run.defence.target}★)`);
+    if (run.kind === "passive" && run.result !== "defeat") out.push(`a player who crews nothing: ${run.result} (must lose)`);
+    return out;
+  }
   if (run.result === "victory" && run.time < t.earliest && !(run.kind === "objective" && t.objectiveAnyTime)) out.push(`won in ${run.time} s (nothing may be won before ${t.earliest} s)`);
   if (run.kind === "passive" && run.result === "defeat" && run.time < t.passive) out.push(`passive player defeated at ${run.time} s (limit ${t.passive} s)`);
   if (run.kind === "generic" && run.result === "defeat" && run.time < t.generic) out.push(`generic bot defeated at ${run.time} s (limit ${t.generic} s)`);
@@ -150,7 +172,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       if (r.text) process.stdout.write(r.text);
       const bad = misses(index, r);
       failed += bad.length;
-      console.log(mission.id.padEnd(24), r.kind.padEnd(11), r.result.padEnd(8), String(r.time).padStart(5) + " s", " obj", r.objectives.padEnd(5), " wave", String(r.wave ?? "-").padStart(4), " lost", String(r.lost).padStart(3), r.medal ? " " + r.medal : "", r.flags ? " " + JSON.stringify(r.flags) : "", bad.length ? "  MISS: " + bad.join("; ") : "");
+      const extra = r.defence ? ` ${r.defence.stars}★ ${r.defence.lives}♥ ${r.defence.greedy || r.defence.towers}` : "";
+      console.log(mission.id.padEnd(24), r.kind.padEnd(11), r.result.padEnd(8), String(r.time).padStart(5) + " s", " obj", r.objectives.padEnd(5), " wave", String(r.wave ?? "-").padStart(4), " lost", String(r.lost).padStart(3), r.medal ? " " + r.medal : "", extra, r.flags ? " " + JSON.stringify(r.flags) : "", bad.length ? "  MISS: " + bad.join("; ") : "");
     }
     console.log(`${failed ? failed + " target(s) missed" : "All targets met"} (${Math.round((Date.now() - started) / 1000)} s)`);
     process.exit(failed ? 1 : 0);

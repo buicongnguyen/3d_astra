@@ -41,7 +41,8 @@ export function campaignMapHTML({ progress, pick = 0 }) {
   const node = (n) => {
     const state = n.done ? `done medal-${n.medal}` : n.open ? "open" : "locked";
     const marks = missionChoices(progress, n.m.id).map((c) => `<i class="cmap-choice ${c.option.mercy ? "mercy" : "firm"}" title="${esc(c.option.label)}"></i>`).join("");
-    const extra = `${n.i === pick ? " picked" : ""}${n.i === next && !n.done ? " next" : ""}${n.i === nodes.length - 1 ? " keystone" : ""}`;
+    // A mission played under the Defence rules (0.19b) has a square relay.
+    const extra = `${n.i === pick ? " picked" : ""}${n.i === next && !n.done ? " next" : ""}${n.i === nodes.length - 1 ? " keystone" : ""}${n.m.defence ? " defence" : ""}`;
     return `<button class="cmap-node ${state}${extra}" data-map-stage="${n.i}" data-map-mission="${esc(n.m.id)}" style="left:${n.at.x}%;top:${n.at.y}%" tabindex="-1" aria-hidden="true"${n.open ? "" : " disabled"} title="${n.i + 1} · ${esc(n.m.title)}"><b>${n.i + 1}</b>${marks}<span class="cmap-title">${esc(n.m.title)}</span></button>`;
   };
   const endings = ENDING_IDS.map((id) => (seen.has(id)
