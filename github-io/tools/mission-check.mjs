@@ -3,36 +3,59 @@
 //   generic    PlayBot (builds, defends, marches on a core at 16 fighters); must last 8 minutes
 //   objective  ObjectiveBot (reads the mission's objectives); must win inside the time window
 // Usage: node tools/mission-check.mjs [--only m05] [--bots passive,generic,objective] [--full] [--jobs 8] [--log] [--attack-at 16] [--rush] [--spread]
+//                                     [--decide default|mercy|firm] [--progress file.json] [--timeout 240]
 //   --only   missions whose id starts with the text      --full  generic bot plays to the cap too
 //   --log    print objective, point and wave events of the objective bot's run
+//   --decide how the bot answers Commander decisions (0.19a), and the answers it assumes for
+//            earlier missions: "mercy" or "firm" for every decision, "default" (the default) for
+//            the options marked default. --progress reads a campaign progress object instead
+//            (its `decisions` settle the earlier missions; see resolveMission in src/story/choices.js).
+//   --timeout wall-clock seconds before a run is stopped (240; the finale may need more)
 // Exits 1 when a target is missed. One line per mission and run:
 //   result, game time, required objectives (d done, a active, f failed, lower case = optional),
 //   first enemy wave, player units lost, medal.
 import { fork } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { cpus } from "node:os";
 import { fileURLToPath } from "node:url";
 import { Simulation } from "../src/simulation.js";
 import { MISSIONS } from "../src/story/missions.js";
-import { PlayBot, ObjectiveBot } from "./playbot.mjs";
+import { DECISIONS, resolveMission } from "../src/story/choices.js";
+import { PlayBot, ObjectiveBot, answerDecision } from "./playbot.mjs";
 
 const args = process.argv.slice(2), flag = (name) => args.includes(name), value = (name) => (args.includes(name) ? args[args.indexOf(name) + 1] : null);
 const DIFFICULTY = value('--difficulty') || 'standard';
 if (!['story','standard','veteran'].includes(DIFFICULTY)) throw new Error('Unknown difficulty');
+const DECIDE = value("--decide") || "default";
+if (!["default", "mercy", "firm"].includes(DECIDE)) throw new Error("--decide must be default, mercy or firm");
+// The campaign progress the missions are settled with: every decision answered the --decide way.
+const PROGRESS = value("--progress") ? JSON.parse(readFileSync(value("--progress"), "utf8"))
+  : DECIDE === "default" ? null : { decisions: Object.fromEntries(Object.entries(DECISIONS).map(([id, d]) => [id, d.options.find((o) => !!o.mercy === (DECIDE === "mercy")).id])) };
+const TIMEOUT = 1000 * +(value("--timeout") || 240);
 const TICK = 0.05, CAP = DIFFICULTY === 'veteran' ? 30 * 60 : 21 * 60;
 // The generic bot marches on the first enemy core once it has 16 fighters. Against two or three
 // enemy camps that march only loses the army and then the camp to the next offensive (even at
 // the Relaxed pace), so there it stays home for the 8 minutes the target asks for and marches after.
 // "--rush" lets it march at 16 everywhere.
 const ATTACK_AT = +(value("--attack-at") || 16), TURTLE = !flag("--rush");
-// Targets (seconds of game time).
-const standardTargets = (index) => ({
-  passive: index < 4 ? 300 : 210,          // not defeated before this
+// Targets (seconds of game time), keyed by mission id so inserted missions never shift them.
+const BASE_TARGETS = {
+  passive: 210,                             // not defeated before this
   generic: 480,                             // not defeated before this
-  // Mission 1: holds last one minute since 0.12.1 (owner request), so it can end after two minutes.
+  win: [420, 1200],                         // the objective bot wins inside this window
+  earliest: 300,                            // nobody wins before this
+};
+const MISSION_TARGETS = {
+  // Act 1 is gentler: a passive player lasts five minutes.
+  // Mission 1: holds last one minute since 0.12.1 (owner request), so it can end after two minutes,
+  // and its objective bot may win as early as it likes.
+  "m01-first-light": { passive: 300, win: [120, 540], earliest: 120, objectiveAnyTime: true },
   // Mission 2: on the Ashfall roster after three tuning passes the bot wins from about 6:30.
-  win: index === 0 ? [120, 540] : index === 1 ? [360, 1200] : [420, 1200], // the objective bot wins inside this window
-  earliest: index === 0 ? 120 : 300,          // nobody wins before this
-});
+  "m02-first-contact": { passive: 300, win: [360, 1200] },
+  "m03-the-ashen-line": { passive: 300 },
+  "m04-three-way-dunes": { passive: 300 },
+};
+const standardTargets = (index) => ({ ...BASE_TARGETS, ...MISSION_TARGETS[MISSIONS[index]?.id] });
 
 export const targets = index => {
   const t = standardTargets(index);
@@ -41,11 +64,14 @@ export const targets = index => {
   return t;
 };
 
-export function play(mission, kind, { cap = CAP, log = false } = {}) {
+export function play(mission, kind, { cap = CAP, log = false, progress = PROGRESS, decide = DECIDE } = {}) {
+  const index = MISSIONS.indexOf(mission);
+  // Earlier missions' answers (and the ending) as the campaign progress has them.
+  mission = resolveMission(mission, progress);
   // Trial switch: ROSTERS=1 plays every mission on faction rosters, ROSTERS=0 on the base roster, whatever the mission says.
   if (process.env.ROSTERS) mission = { ...mission, rules: { ...mission.rules, rosters: process.env.ROSTERS === "1" } };
   const s = new Simulation({ difficulty: DIFFICULTY, map: mission.map, enemyCount: mission.enemies, aiSpeed: mission.speed, alliance: mission.alliance, playerBonus: mission.bonus || null, mission });
-  const bot = kind.startsWith("objective") ? new ObjectiveBot(s, mission, { marchDelta: +kind.slice(9) || 0 }) : kind === "generic" ? new PlayBot(s, { attackAt: ATTACK_AT, attackAfter: TURTLE && mission.enemies > 1 ? targets(MISSIONS.indexOf(mission)).generic : 0 }) : null;
+  const bot = kind.startsWith("objective") ? new ObjectiveBot(s, s.missionDef, { marchDelta: +kind.slice(9) || 0, decide }) : kind === "generic" ? new PlayBot(s, { attackAt: ATTACK_AT, attackAfter: TURTLE && mission.enemies > 1 ? targets(index).generic : 0 }) : null;
   let wave = null, lost = 0, units = new Set();
   for (let i = 0; i < cap / TICK && !s.result; i++) {
     if (bot) bot.step(); else if (i % 40 === 0) s.command({ team: 0, type: "harvest" });
@@ -53,6 +79,8 @@ export function play(mission, kind, { cap = CAP, log = false } = {}) {
     for (const e of s.events) {
       if (e.type === "incoming" && e.team === 0) wave ??= Math.round(s.time);
       bot?.see?.(e);
+      // The passive and generic players answer a decision too, or its trigger waits for ever.
+      if (e.type === "decision" && !(bot instanceof ObjectiveBot)) answerDecision(s, e.id, decide);
       if (log && (["objective", "point", "missionEnd"].includes(e.type) || (e.type === "incoming" && e.team === 0))) console.log("   ", String(Math.round(s.time)).padStart(4), JSON.stringify(e));
     }
     s.events.length = 0;
@@ -68,13 +96,13 @@ export function play(mission, kind, { cap = CAP, log = false } = {}) {
   }
   const state = s.mission.objectives;
   const objectives = mission.objectives.map((o) => { const c = state[o.id].state[0]; return mission.win.includes(o.id) ? c.toUpperCase() : c; }).join("");
-  return { kind, result: s.result || "running", time: Math.round(s.time), objectives, wave, lost, medal: s.mission.medal };
+  return { kind, result: s.result || "running", time: Math.round(s.time), objectives, wave, lost, medal: s.mission.medal, flags: s.flags || null };
 }
 
 // The targets a run misses, as text.
 export function misses(index, run) {
   const t = targets(index), out = [];
-  if (run.result === "victory" && run.time < t.earliest && !(run.kind === "objective" && index === 0)) out.push(`won in ${run.time} s (nothing may be won before ${t.earliest} s)`);
+  if (run.result === "victory" && run.time < t.earliest && !(run.kind === "objective" && t.objectiveAnyTime)) out.push(`won in ${run.time} s (nothing may be won before ${t.earliest} s)`);
   if (run.kind === "passive" && run.result === "defeat" && run.time < t.passive) out.push(`passive player defeated at ${run.time} s (limit ${t.passive} s)`);
   if (run.kind === "generic" && run.result === "defeat" && run.time < t.generic) out.push(`generic bot defeated at ${run.time} s (limit ${t.generic} s)`);
   if (run.kind.startsWith("objective") && (run.result !== "victory" || run.time < t.win[0] || run.time > t.win[1])) out.push(`objective bot: ${run.result} at ${run.time} s (must win in ${t.win[0]}-${t.win[1]} s)`);
@@ -100,7 +128,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const queue = todo.flatMap((index) => kinds.map((kind) => ({ index, kind }))).sort((a, b) => b.kind.startsWith("objective") - a.kind.startsWith("objective") || b.index - a.index);
     const results = new Map();
     const jobs = Math.max(1, Math.min(+(value("--jobs") || 8), cpus().length - 1, queue.length));
-    // Each run plays in its own process, a few at a time; a stuck one is stopped after 4 minutes.
+    if (PROGRESS || DECIDE !== "default") console.log(`Decisions: ${DECIDE}${PROGRESS ? " · progress " + JSON.stringify(PROGRESS.decisions || {}) : ""}`);
+    // Each run plays in its own process, a few at a time; a stuck one is stopped after --timeout (4 minutes).
     await Promise.all(Array.from({ length: jobs }, async () => {
       while (queue.length) {
         const { index, kind } = queue.shift();
@@ -108,7 +137,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
           const child = fork(fileURLToPath(import.meta.url), ["--child", String(index), "--kind", kind, ...args.filter((a) => a !== "--spread")], { stdio: ["ignore", "pipe", "inherit", "ipc"] });
           let text = "";
           child.stdout.on("data", (d) => (text += d));
-          const timer = setTimeout(() => child.kill(), 240000);
+          const timer = setTimeout(() => child.kill(), TIMEOUT);
           child.on("message", (m) => results.set(index + kind, { ...m, text }));
           child.on("exit", () => { clearTimeout(timer); done(); });
         });
@@ -121,7 +150,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       if (r.text) process.stdout.write(r.text);
       const bad = misses(index, r);
       failed += bad.length;
-      console.log(mission.id.padEnd(24), r.kind.padEnd(11), r.result.padEnd(8), String(r.time).padStart(5) + " s", " obj", r.objectives.padEnd(5), " wave", String(r.wave ?? "-").padStart(4), " lost", String(r.lost).padStart(3), r.medal ? " " + r.medal : "", bad.length ? "  MISS: " + bad.join("; ") : "");
+      console.log(mission.id.padEnd(24), r.kind.padEnd(11), r.result.padEnd(8), String(r.time).padStart(5) + " s", " obj", r.objectives.padEnd(5), " wave", String(r.wave ?? "-").padStart(4), " lost", String(r.lost).padStart(3), r.medal ? " " + r.medal : "", r.flags ? " " + JSON.stringify(r.flags) : "", bad.length ? "  MISS: " + bad.join("; ") : "");
     }
     console.log(`${failed ? failed + " target(s) missed" : "All targets met"} (${Math.round((Date.now() - started) / 1000)} s)`);
     process.exit(failed ? 1 : 0);

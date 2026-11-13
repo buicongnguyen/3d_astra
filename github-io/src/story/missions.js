@@ -227,11 +227,26 @@ export const MISSIONS = [
         { say: { who: "hale", text: "Forty thousand sleepers ride above us. Their lights fail first. Leave my siphons alone." } },
         { music: "battle" },
         { wave: { team: 1, units: { vanguard: 4, ranger: 3 }, from: "enemyBase", target: "siphonNorth" } },
+        { decide: "m03-alloy" },
+        { if: { flag: "m03-alloy", is: "return" }, say: { who: "hale", text: "Received, Commander. Forty thousand people will sleep warmer tonight. I will note the courtesy." } },
+        { if: { flag: "m03-alloy", is: "keep" }, give: { alloy: 300 } },
+        { if: { flag: "m03-alloy", is: "keep" }, say: { who: "vale", text: "Three hundred alloy, loaded. Hale will count that loss, Commander. So will his sleepers." } },
       ] },
       { when: { tagHpBelow: { tag: "siphon", percent: 50 } }, do: [{ say: { who: "vale", text: "Half his siphon line is down. He will throw everything at you now. Stay together." } }] },
       { when: { time: 660 }, do: [{ say: { who: "vale", text: "Eleven minutes. His next wave will have Scorchers in it. Finish the siphons." } }] },
       { when: { objective: "siphons", is: "done" }, do: [{ music: "calm" }, { say: { who: "hale", text: "You have just made a cold night colder for people who never harmed you." } }] },
     ],
+    // The first Commander decision (0.19a). Its answer changes Hale's 7:00 wave in mission 7.
+    decisions: {
+      "m03-alloy": {
+        who: "okoro",
+        prompt: "Commander, this siphon sits on a store of alloy, packed and labelled for the sleeper fleet. What do we do with it?",
+        options: [
+          { id: "return", label: "Return the alloy to Ashfall's scavengers", effect: "Nothing for us now. Hale will remember it.", mercy: true },
+          { id: "keep", label: "Keep the alloy for the expedition", effect: "+300 alloy now. Ashfall goes without.", mercy: false, default: true },
+        ],
+      },
+    },
     debrief: {
       win: [
         { who: "vale", text: "The Ashen Line is broken. But I checked his claim, Commander. The sleeper fleet is real." },
@@ -383,12 +398,28 @@ export const MISSIONS = [
       { when: { tagHpBelow: { tag: "convoy", percent: 50 } }, do: [{ say: { who: "okoro", text: "Crawler hull at half! A Medic would be very welcome right now, Commander." } }] },
       { when: { enter: "northRoad", team: 0 }, do: [
         { say: { who: "sol", text: "The forest road is Caravan ground, Commander. The Pact says I must stop you. So I will." } },
-        { music: "battle" },
-        { wave: { team: 2, units: { vanguard: 4, ranger: 2 }, from: "eastFord", target: "northRoad" } },
+        { decide: "m05-pact" },
+        { if: { flag: "m05-pact", is: "drive" }, music: "battle" },
+        { if: { flag: "m05-pact", is: "drive" }, wave: { team: 2, units: { vanguard: 4, ranger: 2 }, from: "eastFord", target: "northRoad" } },
+        { if: { flag: "m05-pact", is: "drive" }, give: { alloy: 200 } },
+        { if: { flag: "m05-pact", is: "drive" }, say: { who: "vale", text: "Then the road is ours by force. The Caravan's relay stores are ours too: two hundred alloy." } },
+        { if: { flag: "m05-pact", is: "share" }, say: { who: "sol", text: "A fair offer, and I remember fair offers. Two riders for the Pact's sake. The rest go home." } },
+        { if: { flag: "m05-pact", is: "share" }, wave: { team: 2, units: { vanguard: 2 }, from: "eastFord", target: "northRoad" } },
       ] },
       { when: { enter: "relaySite", team: 0 }, do: [{ say: { who: "vale", text: "Relay site in view. Clear the Sunward guards before the crawler rolls in." } }] },
       { when: { objective: "escort", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Core is in. Oh. Commander, the relays are not separate machines. It is one circuit." } }] },
     ],
+    // The second Commander decision (0.19a). Its answer changes Sol's link-up in mission 9.
+    decisions: {
+      "m05-pact": {
+        who: "sol",
+        prompt: "Give me a reason not to fight, Commander. Will Meridian share the forest relay's light with the Caravan?",
+        options: [
+          { id: "share", label: "Offer Sunward a share of the forest relay", effect: "Sol holds most of her riders back. The relay's power is shared.", mercy: true },
+          { id: "drive", label: "Drive the Caravan off the forest road", effect: "A full fight now. The relay stores pay +200 alloy.", mercy: false, default: true },
+        ],
+      },
+    },
     debrief: {
       win: [
         { who: "okoro", text: "One circuit, the whole world wide. When one relay wakes, it borrows from its neighbours." },
@@ -529,8 +560,11 @@ export const MISSIONS = [
       { when: { time: 420 }, do: [
         { say: { who: "okoro", text: "The circuit map is drawing! Every relay shares one line. Vale, send it to everyone. Now!" } },
         { say: { who: "vale", text: "All camps, this is Meridian. Nobody stole your power. Look at the map we are sending." } },
-        { say: { who: "hale", text: "I have seen it. It changes nothing. I need the power tonight, not the truth." } },
-        { wave: { team: 1, units: { vanguard: 4, antitank: 2, breaker: 1 }, from: "westPass", target: "playerBase" } },
+        // Mission 3's alloy: returned, Hale sends this wave without its Breaker.
+        { if: { flag: "m03-alloy", is: "keep" }, say: { who: "hale", text: "I have seen it. It changes nothing. I need the power tonight, not the truth." } },
+        { if: { flag: "m03-alloy", is: "keep" }, wave: { team: 1, units: { vanguard: 4, antitank: 2, breaker: 1 }, from: "westPass", target: "playerBase" } },
+        { if: { flag: "m03-alloy", is: "return" }, say: { who: "hale", text: "I have seen it. You returned our alloy on the Ashen Line, so I send fewer guns tonight. Not none." } },
+        { if: { flag: "m03-alloy", is: "return" }, wave: { team: 1, units: { vanguard: 4, antitank: 2 }, from: "westPass", target: "playerBase" } },
       ] },
       { when: { tagHpBelow: { tag: "basinRelay", percent: 50 } }, do: [{ say: { who: "okoro", text: "The relay is cracking! Engineers on it, please, before the tuning breaks!" } }, { ping: "relayYard" }] },
       { when: { time: 540 }, do: [
@@ -721,7 +755,10 @@ export const MISSIONS = [
       { when: { time: 540 }, do: [{ wave: { team: 1, units: { tank: 2, vanguard: 3, ranger: 2 }, from: "wardenRise", target: "playerBase" } }] },
       { when: { time: 470 }, repeat: 150, do: [{ wave: { team: 1, units: { vanguard: 4, ranger: 2, breaker: 1 }, from: "duneRidge", target: "solCamp" } }] },
       { when: { objective: "link", is: "done" }, do: [
-        { say: { who: "sol", text: "You came. You warned me and I did not listen. The Caravan pays its debts. We ride with you." } },
+        // Mission 5's pact: a shared forest relay brings two more Riders to the link-up.
+        { if: { flag: "m05-pact", is: "drive" }, say: { who: "sol", text: "You came. You warned me and I did not listen. The Caravan pays its debts. We ride with you." } },
+        { if: { flag: "m05-pact", is: "share" }, say: { who: "sol", text: "You came. You shared the forest light when you did not have to. The Caravan pays its debts twice." } },
+        { if: { flag: "m05-pact", is: "share" }, spawn: "rider", team: 0, at: "solCamp", count: 2, tag: "sunward" },
         { spawn: "vanguard", team: 0, at: "solCamp", count: 4, tag: "sunward" },
         { spawn: "rider", team: 0, at: "solCamp", count: 3, tag: "sunward" },
         { spawn: "breaker", team: 0, at: "solCamp", count: 1, tag: "sunward" },
@@ -821,6 +858,10 @@ export const MISSIONS = [
       { when: { tagHpBelow: { tag: "damper", percent: 50 } }, do: [
         { say: { who: "echo", text: "Archivist, that storm came because one relay woke alone. In tune, the Lattice makes no storms." } },
         { say: { who: "maren", text: "A machine would say so. I buried forty friends on this plateau. I cannot risk more." } },
+        { decide: "m10-veil" },
+        { if: { flag: "m10-veil", is: "spare" }, say: { who: "maren", text: "Thank you. My crews are walking out now. I will remember who opened the door." } },
+        { if: { flag: "m10-veil", is: "break" }, give: { energy: 150 } },
+        { if: { flag: "m10-veil", is: "break" }, say: { who: "maren", text: "Then I cannot stop you. I can only ask the sky to stay clear." } },
       ] },
       { when: { time: 420 }, do: [
         { say: { who: "sol", text: "Riders on the south road, Commander! Late, dusty and ready. Put us where it is worst." } },
@@ -834,12 +875,24 @@ export const MISSIONS = [
         { say: { who: "hale", text: "All commands: the plateau centre. They must not finish." } },
         { wave: { team: 1, units: { vanguard: 3, ranger: 1 }, from: "enemyBase", target: "crown" } },
         { wave: { team: 2, units: { tank: 1, vanguard: 2 }, from: "enemyBase", target: "crown" } },
-        { wave: { team: 3, units: { ranger: 2, breaker: 1 }, from: "enemyBase", target: "crown" } },
+        // The Survey crews that were let go do not come back for the Crown.
+        { if: { flag: "m10-veil", is: "break" }, wave: { team: 3, units: { ranger: 2, breaker: 1 }, from: "enemyBase", target: "crown" } },
       ] },
       { when: { pointOwned: { point: "crown", team: 0 } }, do: [{ say: { who: "echo", text: "Tuning. Sixty relays are answering. Sixty-one. Hold the circle." } }] },
       { when: { time: 900 }, do: [{ say: { who: "vale", text: "Fifteen minutes. Their siege corps has heavy machines now. Anti-tank soldiers to the front." } }] },
       { when: { objective: "crown", is: "done" }, do: [{ music: "calm" }, { say: { who: "maren", text: "The Crown is lit and the sky is clear. No storm. In thirty years I never once saw that." } }] },
     ],
+    // The third Commander decision (0.19a). Its answer changes Maren's words in the finale.
+    decisions: {
+      "m10-veil": {
+        who: "maren",
+        prompt: "My crews are still inside the dampers, Commander. Will you let them walk out before you break the rest?",
+        options: [
+          { id: "spare", label: "Let the Survey crews stand down", effect: "The Veil sends no troops to the Crown.", mercy: true },
+          { id: "break", label: "Break the dampers now", effect: "+150 energy from the damper stores. The Veil fights on.", mercy: false, default: true },
+        ],
+      },
+    },
     debrief: {
       win: [
         { who: "echo", text: "The Crown is in tune. The Keystone will now open for two keys: his, and yours." },
@@ -995,7 +1048,9 @@ export const MISSIONS = [
     ],
     objectives: [
       { id: "stand", text: "Survive the joint offensives (10:00)", type: "survive", seconds: 600 },
-      { id: "engine", text: "Destroy the Keystone draw engine", type: "destroyTag", tag: "engine" },
+      // The last objective follows the ending the Commander's decisions lead to (src/story/choices.js).
+      { if: { ending: "meridian-line" }, id: "engine", text: "Destroy the Keystone draw engine", type: "destroyTag", tag: "engine" },
+      { if: { ending: "open-frontier" }, id: "engine", text: "Destroy the draw engine and open the Keystone to every camp", type: "destroyTag", tag: "engine" },
       { id: "cores", text: "Destroy all three enemy Command cores", type: "destroyCores", optional: true },
       { id: "fast", text: "Finish in under 20 minutes", type: "timeUnder", seconds: 1200, optional: true },
     ],
@@ -1021,7 +1076,9 @@ export const MISSIONS = [
       ] },
       { when: { time: 780 }, do: [{ wave: { team: 2, units: { vanguard: 4, ranger: 3, breaker: 2, antitank: 1, tank: 2 }, from: "enemyBase", target: "playerBase" } }] },
       { when: { tagHpBelow: { tag: "engine", percent: 50 } }, do: [
-        { say: { who: "maren", text: "I watched the Crown light without a storm. All Veil commands: stand down. I was wrong." } },
+        // Mission 10's dampers: crews that were let go bring Maren over with a debt in mind.
+        { if: { flag: "m10-veil", is: "break" }, say: { who: "maren", text: "I watched the Crown light without a storm. All Veil commands: stand down. I was wrong." } },
+        { if: { flag: "m10-veil", is: "spare" }, say: { who: "maren", text: "You let my crews walk out of the dampers. Now I walk out of this war. All Veil commands: stand down." } },
         { say: { who: "echo", text: "Thank you, Archivist. I have unlocked your old camp records. Your friends are named in them." } },
         { aiSpeed: "relaxed" },
         { spawn: "ranger", team: 0, at: "westBank", count: 4, tag: "veilFriends" },
@@ -1030,13 +1087,20 @@ export const MISSIONS = [
       { when: { time: 900 }, do: [{ say: { who: "echo", text: "Ten minutes of Lattice left. I can hear the far relays going quiet, one by one." } }] },
       { when: { time: 1260 }, do: [{ say: { who: "vale", text: "Four minutes, Commander. Forget the camps. Everything on the engine!" } }, { ping: "keystone" }] },
       { when: { objective: "cores", is: "done" }, do: [{ say: { who: "sol", text: "Every camp broken! You are thorough, Commander. I am glad we are friends now." } }] },
-      { when: { objective: "engine", is: "done" }, do: [{ music: "calm" }, { say: { who: "echo", text: "The engine is silent. Tuning the Keystone. One hundred and eight relays are answering." } }] },
+      { when: { objective: "engine", is: "done" }, do: [
+        { music: "calm" },
+        { if: { ending: "meridian-line" }, say: { who: "echo", text: "The engine is silent. Tuning the Keystone. One hundred and eight relays are answering." } },
+        { if: { ending: "open-frontier" }, say: { who: "echo", text: "The engine is silent. Tuning the Keystone for every camp. One hundred and eight relays are answering." } },
+      ] },
     ],
     debrief: {
       win: [
         { who: "echo", text: "The Lattice is awake and in tune. There is power for every camp, and the crystal will grow again." },
-        { who: "vale", text: "First beam is going up to the Ashfall fleet now, Director. Your sleepers will wake to a living world." },
-        { who: "hale", text: "Forty thousand. All of them. I did not think to count on strangers. I will not forget it." },
+        { if: { ending: "meridian-line" }, who: "vale", text: "Meridian holds the Keystone now. The first beam goes up to the Ashfall fleet tonight, on our schedule." },
+        { if: { ending: "meridian-line" }, who: "hale", text: "Forty thousand, fed by a camp that is not mine. I am grateful, Commander. I am also watching." },
+        { if: { ending: "open-frontier" }, who: "vale", text: "First beam is going up to the Ashfall fleet now, Director. Your sleepers will wake to a living world." },
+        { if: { ending: "open-frontier" }, who: "hale", text: "Forty thousand. All of them. I did not think to count on strangers. I will not forget it." },
+        { if: { ending: "open-frontier" }, who: "sol", text: "Every camp at one table. Bring your own cup, Commander. The Caravan brings the water." },
       ],
       lose: [{ who: "vale", text: "The Keystone is drained. Hale's fleet has one year, and this world has none. I am sorry, Commander." }],
     },

@@ -102,6 +102,14 @@ export class PlayBot {
   }
 }
 
+// Answers a Commander decision (0.19a) the way a headless player would: "mercy" or "firm" picks
+// that kind of option, anything else the option marked default.
+export function answerDecision(sim, id, want = "default") {
+  const d = sim.missionDef?.decisions?.[id];
+  if (!d) return false;
+  const option = (want === "mercy" || want === "firm" ? d.options.find((o) => !!o.mercy === (want === "mercy")) : null) || d.options.find((o) => o.default) || d.options[0];
+  return sim.command({ team: 0, type: "decide", id, option: option.id });
+}
 const gap = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 const centre = (list) => ({ x: list.reduce((n, e) => n + e.x, 0) / list.length, z: list.reduce((n, e) => n + e.z, 0) / list.length });
 
@@ -121,6 +129,7 @@ export class ObjectiveBot extends PlayBot {
     super(sim, { workers: 12, towers: 4, ...options, attackAt: Infinity });
     const rules = sim.mission.rules;
     this.def = def;
+    this.choice = options.decide || "default";
     this.base = rules.playerBase;
     // Fighters gathered before the army leaves home, and the size of a group of reinforcements.
     // A player reads the briefing and sees the guards, so a guarded field calls for a larger force.
@@ -140,6 +149,12 @@ export class ObjectiveBot extends PlayBot {
     const posts = sim.own(this.team).filter((e) => e.kind === "building" && this.wards.has(e.tag) && (!hq || gap(e, hq) >= 40));
     // A Walker lent by the story is far slower than a marching army: like most players, the bot leaves it guarding the camp.
     this.guards = new Set(sim.own(this.team).filter((e) => e.kind === "unit" && (e.type === "walker" || posts.some((b) => gap(e, b) < 20))).map((e) => e.id));
+  }
+  // A Commander decision (0.19a) holds the rest of its trigger until answered, so the bot answers
+  // at once: options.decide "mercy" or "firm" picks that kind of option, anything else the default.
+  see(event) {
+    super.see(event);
+    if (event.type === "decision") answerDecision(this.sim, event.id, this.choice);
   }
   order(units, order, key) {
     const ids = units.filter((e) => !e.orders.length || this.sent.get(e.id) !== key).map((e) => e.id);

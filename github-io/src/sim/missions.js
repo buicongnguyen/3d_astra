@@ -1,11 +1,17 @@
 import { difficultyRules, difficultySpeed, objectiveText } from "../difficulty.js";
 import { DEFINITIONS as D, distance } from "../data.js";
+import { resolveMission, flagMatches } from "../story/choices.js";
 
 // Campaign missions (format: docs/MISSIONS.md). A mission is plain data given to the
 // Simulation; this system applies its setup, tracks capture points and objectives, fires
 // triggers and decides victory and defeat. Everything it keeps is in `this.mission`, so a
 // mission is saved, loaded and replayed like any other match. The interface learns what
-// happened only through events: say, objective, point, camera, ping, music, missionEnd.
+// happened only through events: say, objective, point, camera, ping, music, decision, missionEnd.
+//
+// Decisions (0.19a): a `{ decide: id }` action holds the rest of its trigger in
+// `mission.pending` and emits a `decision` event; the player's `decide` command (commands.js)
+// stores the answer in `this.flags` and runs the held actions. Both fields exist only once a
+// mission uses them, so other matches save and hash exactly as before.
 
 // Seconds a team must stand unopposed on a capture point to take it.
 const CAPTURE_SECONDS = 5;
@@ -19,6 +25,9 @@ const fighter = (e) => e.kind === "unit" && e.type !== "worker" && e.damage > 0 
 export const waveCount = (count, scale, d) => Math.max(1, (d?.pop || 1) >= 3 ? Math.round(count * scale) : Math.ceil(count * scale));
 export const missions = {
   initMission(def) {
+    // Answers from earlier missions are settled by the caller (campaign progress); a mission given
+    // without them plays every default. An already settled mission comes back unchanged.
+    def = resolveMission(def);
     this.missionDef = def;
     const rules = { ai: true, playerBase: true, enemyBase: true, ...def.rules };
     this.mission = {
@@ -43,7 +52,7 @@ export const missions = {
     }
     this.entities = this.entities.filter((e) => e.hp > 0);
     if (rules.unlock) this.unlockUnits(0, rules.unlock);
-    for (const step of def.setup || []) this.missionSetup(step);
+    for (const step of def.setup || []) if (this.flagIs(step.if)) this.missionSetup(step);
     this.players[0].alloy += difficultyRules(this).alloy;
     this.nav.rebuild(this.entities);
     this.updateVision();
@@ -118,9 +127,13 @@ export const missions = {
     if (m.due <= 1e-9) {
       m.due += CHECK;
       this.stepPoints(CHECK);
-      for (const o of def.objectives) this.stepObjective(o, m.objectives[o.id], CHECK);
+      for (const o of def.objectives) if (this.flagIs(o.if)) this.stepObjective(o, m.objectives[o.id], CHECK);
     }
     for (let i = 0; i < (def.triggers || []).length; i++) this.stepTrigger(def.triggers[i], i);
+  },
+  // An `if` on one of this mission's own decisions (answers in this.flags); none always passes.
+  flagIs(cond) {
+    return flagMatches(cond, this.flags);
   },
   // Skirmish capture points (see sim/points.js): the same ring mechanics, a small steady income.
   stepSkirmishPoints(dt) {
@@ -203,9 +216,42 @@ export const missions = {
   stepTrigger(trigger, index) {
     const m = this.mission, last = m.fired[index];
     if (last !== undefined && !(trigger.repeat && m.clock - last >= trigger.repeat)) return;
+    if (!this.flagIs(trigger.if)) return;
+    // One decision at a time: a trigger that asks one waits while another is open.
+    if (m.pending && trigger.do?.some((a) => a.decide !== undefined)) return;
     if (!this.missionCondition(trigger.when)) return;
     m.fired[index] = m.clock;
-    for (const action of trigger.do || []) this.missionAction(action);
+    this.runActions(trigger.do || [], 0, index);
+  },
+  // Runs a trigger's actions from `from`, skipping those whose `if` fails. A decision stops the
+  // run: the rest waits in mission.pending until the player answers (decide below).
+  runActions(actions, from, trigger) {
+    for (let i = from; i < actions.length; i++) {
+      const a = actions[i];
+      if (!this.flagIs(a.if)) continue;
+      if (a.decide !== undefined) { if (this.askDecision(a.decide, trigger, i + 1)) return; continue; }
+      this.missionAction(a);
+    }
+  },
+  askDecision(id, trigger, at) {
+    const d = this.missionDef.decisions?.[id];
+    if (!d || (this.flags && Object.hasOwn(this.flags, id))) return false;
+    this.mission.pending = { id, trigger, at };
+    this.events.push({ type: "decision", id, who: d.who });
+    return true;
+  },
+  // The decision the match waits for, and whether `option` answers it (commands.js checks this).
+  canDecide(id, option) {
+    const p = this.mission?.pending;
+    return !!p && p.id === id && !!this.missionDef.decisions?.[id]?.options.some((o) => o.id === option);
+  },
+  decide(id, option) {
+    const p = this.mission.pending;
+    delete this.mission.pending;
+    (this.flags ||= {})[id] = option;
+    this.events.push({ type: "decided", id, option });
+    this.runActions(this.missionDef.triggers[p.trigger].do || [], p.at, p.trigger);
+    return true;
   },
   missionAction(a) {
     if (a.say) this.events.push({ type: "say", who: a.say.who, text: a.say.text });
@@ -243,7 +289,7 @@ export const missions = {
     const won = !lost && def.win.every((id) => m.objectives[id]?.state === "done");
     if (!lost && !won) return null;
     if (won) {
-      for (const o of def.objectives) if (o.type === "timeUnder") this.setObjective(o.id, m.clock < o.seconds * difficultyRules(this).time ? "done" : "failed");
+      for (const o of def.objectives) if (o.type === "timeUnder" && this.flagIs(o.if)) this.setObjective(o.id, m.clock < o.seconds * difficultyRules(this).time ? "done" : "failed");
       const medals = def.medals || {};
       m.medal = medals.gold && m.clock <= medals.gold.seconds * difficultyRules(this).time ? "gold" : medals.silver && m.clock <= medals.silver.seconds * difficultyRules(this).time ? "silver" : "bronze";
     }
@@ -253,7 +299,7 @@ export const missions = {
   // What the interface shows: the visible objectives with their progress.
   missionStatus() {
     if (!this.mission) return null;
-    return this.missionDef.objectives.filter((o) => !this.mission.objectives[o.id].hidden).map((o) => {
+    return this.missionDef.objectives.filter((o) => !this.mission.objectives[o.id].hidden && this.flagIs(o.if)).map((o) => {
       const s = this.mission.objectives[o.id];
       return { id: o.id, text: objectiveText(o, this.difficulty), type: o.type, optional: !!o.optional, state: s.state, have: s.have, held: s.held, need: o.need ?? o.count ?? 1, seconds: (o.seconds ?? 0) * (o.type === "timeUnder" ? difficultyRules(this).time : 1) };
     });

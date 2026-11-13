@@ -35,6 +35,8 @@ const COMMANDS = {
   // Lets the player's units use their abilities on their own, as the computer's do.
   autocast: { allowed: () => true, run: (sim, c) => ((sim.players[c.team].autocast = !!c.on), true) },
   harvest: { allowed: () => true, run: (sim, c) => (sim.assignHarvesters(c.team), true) },
+  // The Commander's answer to the decision a story mission is waiting for (sim/missions.js).
+  decide: { allowed: (sim, c) => c.team === 0 && sim.canDecide?.(c.id, c.option), run: (sim, c) => sim.decide(c.id, c.option) },
 };
 
 export const commands = {
