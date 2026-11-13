@@ -83,6 +83,8 @@ jobs:
             scripts: ui-extras messages abilities
           - name: visuals
             scripts: visual-combat feel model-loading portraits factions terrain
+          - name: air
+            scripts: air
     defaults:
       run:
         working-directory: github-io

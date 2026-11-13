@@ -10,7 +10,7 @@ import { MIX } from "./audio-mix.js";
 // a stereo pan and a distance gain from its screen position, and must pass the voice budget (global
 // cap, per-group caps, priority, per-sound rate limit). Nothing is created while effects are off.
 import { VoiceBudget, audible, dbToGain, hitFor, incomingFor, mulberry32, nearPriority, screenMix, shouldCull, soundFor } from "./audio-logic.js";
-import { BANK, ENGINE, radioSpec } from "./sfx-bank.js";
+import { AIR_HUM, BANK, ENGINE, radioSpec } from "./sfx-bank.js";
 import { SYNTH_RATE, renderEngine, renderSound, specLength } from "./audio-synth.js";
 
 const R = {
@@ -66,6 +66,7 @@ export class Sfx {
     this.buffers = new Map(); this.rendered = 0;
     this.onPlay = null; // (name, gain, delay) for every effect heard; the director uses it for the music
     this.engineVoice = null;
+    this.airVoice = null;
     const n = context.sampleRate, buffer = context.createBuffer(1, n, context.sampleRate), data = buffer.getChannelData(0), r = mulberry32(99);
     for (let i = 0; i < n; i++) data[i] = r() * 2 - 1;
     this.noise = buffer;
@@ -179,25 +180,33 @@ export class Sfx {
   // Engine hum: one looping voice for the player's vehicles. Called a few times a second; level 0
   // fades it out and, after two quiet seconds, stops the loop so it costs nothing.
   engine(level, rate = 1, faction = "meridian") {
-    const ctx = this.context, now = ctx.currentTime, e = this.engineVoice;
+    this.loop("engineVoice", `engine:${faction}`, ENGINE[faction] || ENGINE.meridian, level, rate, MIX.engine.level);
+  }
+  // Flyers (0.18): one quiet loop for the player's flyers, rotor hum, burner whoosh or prop buzz.
+  airHum(level, rate = 1, kind = "rotor") {
+    this.loop("airVoice", `air:${kind}`, AIR_HUM[kind] || AIR_HUM.rotor, level, rate, MIX.air.level);
+  }
+  // A persistent looped voice in `slot`, faded to `level` × `base`; a new key crossfades to its buffer.
+  loop(slot, key, spec, level, rate, base) {
+    const ctx = this.context, now = ctx.currentTime, e = this[slot];
     if (!this.enabled || !(level > 0.001)) {
       if (!e) return;
       e.gain.gain.setTargetAtTime(0, now, 0.3);
       e.quietSince ??= now;
-      if (now - e.quietSince > 2) { try { e.src.stop(); } catch { /* stopped */ } this.engineVoice = null; }
+      if (now - e.quietSince > 2) { try { e.src.stop(); } catch { /* stopped */ } this[slot] = null; }
       return;
     }
-    if (!e || e.faction !== faction) {
+    if (!e || e.key !== key) {
       if (e) { try { e.src.stop(now + 0.3); } catch { /* stopped */ } e.gain.gain.setTargetAtTime(0, now, 0.1); }
       const src = ctx.createBufferSource(), gain = ctx.createGain();
-      src.buffer = this.buffer(`engine:${faction}`, ENGINE[faction] || ENGINE.meridian, 0, true); src.loop = true;
+      src.buffer = this.buffer(key, spec, 0, true); src.loop = true;
       gain.gain.value = 0; src.connect(gain); gain.connect(this.out); src.start(now, this.rnd() * 0.9);
       src.onended = () => { src.disconnect(); gain.disconnect(); };
-      this.engineVoice = { src, gain, faction, quietSince: null };
+      this[slot] = { src, gain, key, quietSince: null };
     }
-    const v = this.engineVoice;
+    const v = this[slot];
     v.quietSince = null;
-    v.gain.gain.setTargetAtTime(level * MIX.engine.level, now, 0.35);
+    v.gain.gain.setTargetAtTime(level * base, now, 0.35);
     v.src.playbackRate.setTargetAtTime(rate, now, 0.5);
   }
   layer([kind, a, f0, f1, secs, vol, delay = 0, q = 1], now, pitch, level, dest) {

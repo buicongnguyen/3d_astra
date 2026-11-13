@@ -64,7 +64,7 @@ export function setupInputPointer(S, A) {
       .own(0)
       .filter((e) => {
         if (e.kind !== "unit") return false;
-        const point = S.view.project(e.x, e.z, 1),
+        const point = S.view.project(e.x, e.z, S.view.liftOf(e)),
           x = point.x + rect.left,
           y = point.y + rect.top;
         return (
@@ -253,7 +253,7 @@ export function setupInputPointer(S, A) {
       if (Math.hypot(e.clientX - old.x, e.clientY - old.y) > 6) {
         const rect = canvas.getBoundingClientRect();
         for (const u of S.sim.own(0).filter((u) => u.kind === "unit")) {
-          const p = S.view.project(u.x, u.z, 1);
+          const p = S.view.project(u.x, u.z, S.view.liftOf(u));
           const x = p.x + rect.left,
             y = p.y + rect.top;
           if (

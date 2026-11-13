@@ -21,9 +21,13 @@ const scenarios = [
   // The same phone battle with three rivals, first on the mirror roster and then one faction each (package 2.6).
   {name:'three-rivals-eco', map:'riverlands', enemies:3, teams:4, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
   {name:'three-factions-eco', map:'riverlands', enemies:3, teams:4, faction:'mixed', mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
+  // 0.18: the phone battle with the air cap in play, 4 flyers per side (Kites, Hawks and Ember balloons):
+  // flyers add their parts, rotors and one blob-shadow draw, and must stay within 10% of battle-eco's budget.
+  {name:'air-battle-eco', map:'riverlands', enemies:1, faction:'ashfall', mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60,
+    air:[['kite',0],['kite',0],['hawk',0],['hawk',0],['kite',1],['kite',1],['balloon',1],['balloon',1]]},
 ];
 const results = [];
-const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185};
+const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'air-battle-eco':132};
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -57,6 +61,8 @@ try {
           s.spawn(kinds[row % kinds.length], team, -8 + row % 6 * 2, (team ? -1 : 1) * (6 + Math.floor(row / 6) * 2));
         }
       }
+      for (const [i, [type, team]] of (scenario.air || []).entries())
+        s.spawn(type, team, -6 + (i % 4) * 3, (team ? -1 : 1) * 3, true, true);
       v.life.uniforms.uTime.value = 0;
       v.focusOn(...scenario.focus); v.zoom = scenario.zoom; v.updateCamera(); v.resize();
       window.__renderOnce = () => v.update(s, 0, f.selected, null);
