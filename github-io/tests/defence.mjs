@@ -4,7 +4,7 @@
 // Next level, no embers under motion-off, no sideways scroll and no page errors.
 // Screenshots: test-results/defence-*.png.
 import assert from "node:assert/strict";
-import { launchBrowser, openPage, suite, shot } from "./lib/harness.mjs";
+import { launchBrowser, openPage, suite, shot, TIMEOUT } from "./lib/harness.mjs";
 
 const browser = await launchBrowser();
 const VIEWPORTS = (process.env.DEFENCE_VIEWPORTS || "desktop,portrait,landscape").split(",");
@@ -99,11 +99,11 @@ await suite("defence", async () => {
     const pad = await freePad(page);
     assert.ok(pad, `${viewport}: a free pad on screen`);
     await tapAt(page, mobile, pad.x, pad.y);
-    await page.waitForFunction(() => document.querySelectorAll("#commands [data-defence-crew]").length === 4, null, { timeout: 5000 });
+    await page.waitForFunction(() => document.querySelectorAll("#commands [data-defence-crew]").length === 4, null, { timeout: TIMEOUT.step });
     for (const b of await page.locator("#commands [data-defence-crew]").all()) { const box = await size(b); assert.ok(box.height >= 44 && box.width >= 44, `${viewport}: crew tile ${box.width}x${box.height}`); }
     await shot(page, `defence-pad-${viewport}`);
     await tap('#commands [data-defence-crew="ranger"]');
-    await page.waitForFunction((id) => window.__frontier.sim.towerOn(id)?.crew === "ranger", pad.id, { timeout: 5000 });
+    await page.waitForFunction((id) => window.__frontier.sim.towerOn(id)?.crew === "ranger", pad.id, { timeout: TIMEOUT.step });
     await page.waitForSelector('#commands[data-tier="1"] [data-defence-act="upgrade"]');
 
     // Upgrade twice: steel, then gold with the heat glow.
@@ -114,7 +114,7 @@ await suite("defence", async () => {
     assert.equal(await page.evaluate((id) => window.__frontier.sim.towerOn(id).tier, pad.id), 3);
     assert.ok(await page.evaluate(() => getComputedStyle(document.querySelector('#commands .defence-info[data-tier="3"]'), "::after").content !== "none"), "tier 3 heat glow");
     // The crew stands on the tower, adopted into the batches (no draws of its own).
-    await page.waitForFunction((id) => { const f = window.__frontier, o = f.view.objects.get(f.sim.towerOn(id).id); return !!o?.userData.crew && o.userData.dressed === 3; }, pad.id, { timeout: 5000 });
+    await page.waitForFunction((id) => { const f = window.__frontier, o = f.view.objects.get(f.sim.towerOn(id).id); return !!o?.userData.crew && o.userData.dressed === 3; }, pad.id, { timeout: TIMEOUT.step });
     await shot(page, `defence-tower-${viewport}`);
 
     // Motion off: an upgrade becoming affordable throws no embers.
@@ -132,7 +132,7 @@ await suite("defence", async () => {
     await page.evaluate(() => { window.__frontier.sim.players[0].alloy = 0; window.__frontier.select([]); });
     await page.waitForFunction(() => !document.querySelector("#defence-call").disabled);
     await tap("#defence-call");
-    await page.waitForFunction(() => window.__frontier.sim.defence.wave === 1 && window.__frontier.sim.players[0].alloy > 0, null, { timeout: 5000 });
+    await page.waitForFunction(() => window.__frontier.sim.defence.wave === 1 && window.__frontier.sim.players[0].alloy > 0, null, { timeout: TIMEOUT.step });
 
     // Mid-wave on Gorge Road with towers of all three tiers.
     await stageWave(page, 13);
