@@ -4,10 +4,13 @@ export const CORE_MODEL_TYPES = Object.freeze(['hq','relay','barracks','foundry'
 export function modelsForMatch(match = {}, factions = balance.factions || {}) {
   const types = new Set(CORE_MODEL_TYPES);
   const ids = Object.values(match.factions || (match.missionDef?.rules?.rosters ? match.missionDef.factions : {}) || {});
+  // Flyers (0.18): the Kite for every side and each faction's own flyer, outside story missions unless rules.air.
+  const air = !match.missionDef || !!match.missionDef.rules?.air;
   for (const id of ids) {
     const faction = factions[id];
     for (const type of Object.values(faction?.swap || {})) types.add(type);
     if (faction?.building) types.add(faction.building);
+    if (air && faction) for (const type of ['kite', ...Object.values(faction.extra || {}).flat()]) types.add(type);
   }
   // Everything the mission script can put on the field later: spawns, waves and unlocks, resolved for each roster in play.
   const def = match.missionDef, named = new Set(def?.rules?.unlock || []);

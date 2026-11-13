@@ -21,6 +21,7 @@ import { missions } from "./sim/missions.js";
 import { tactics } from "./sim/tactics.js";
 import { points } from "./sim/points.js";
 import { expansion } from "./sim/expand.js";
+import { air } from "./sim/air.js";
 
 export { NEUTRAL } from "./sim/constants.js";
 // The match state and its fixed 20 Hz step. Behaviour lives in the systems under sim/, mixed
@@ -417,5 +418,5 @@ export class Simulation {
   }
 }
 
-Object.assign(Simulation.prototype, factionRules, traits, height, points, expansion, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot);
+Object.assign(Simulation.prototype, factionRules, traits, height, points, expansion, air, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot);
 Simulation.load = (saved) => restore(Simulation, saved);

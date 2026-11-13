@@ -858,6 +858,27 @@
     "High ground: your units here shoot farther, hit harder and see farther.": "Điểm cao: quân của bạn ở đây bắn xa hơn, đánh mạnh hơn và nhìn xa hơn.",
     "Hidden from below": "Khuất tầm nhìn từ bên dưới",
     "Units deep on a plateau can't be seen from below. Enemies must climb the ramp to fight them.": "Đơn vị ở sâu trên cao nguyên không bị nhìn thấy từ bên dưới. Địch phải leo dốc lên mới đánh được chúng.",
+    "Kite scout": "Diều trinh sát",
+    "Air spotter": "Trinh sát trên không",
+    "Unarmed flyer that sees 18 m and over cliffs: over a plateau it opens the top to your whole side. Reveals hidden units within 8 m. Only Rangers, Anti-tank soldiers and other units that hit air can shoot it. Requires level 2 Barracks.": "Máy bay không vũ trang, nhìn xa 18 m và nhìn qua vách đá: bay trên một cao nguyên là mở đỉnh cho cả phe bạn. Lộ diện đơn vị ẩn trong 8 m. Chỉ Xạ thủ, Chống tăng và các đơn vị bắn được mục tiêu bay mới bắn được nó. Cần Doanh trại cấp 2.",
+    "Hawk gunship": "Pháo hạm Hawk",
+    "Air gunship": "Pháo hạm trên không",
+    "Meridian. Twin-fan gunship that strafes infantry: 13 damage every 0.7 s at 8 m, a third to enemies within 1.5 m, 1.5× to close assault troops, and it shoots flyers too. Flies over water, walls and cliffs. Rangers and Anti-tank rockets bring it down. Requires level 3 Foundry.": "Meridian. Pháo hạm hai quạt quét bộ binh: 13 sát thương mỗi 0,7 giây ở tầm 8 m, một phần ba lên địch trong 1,5 m, 1,5× lên quân cận chiến, và cũng bắn được mục tiêu bay. Bay qua nước, tường và vách đá. Xạ thủ và rốc-két Chống tăng hạ được nó. Cần Nhà máy cấp 3.",
+    "Ember balloon": "Khinh khí cầu Than hồng",
+    "Air bomber": "Oanh tạc trên không",
+    "Ashfall. Slow hot-air bomber: 38 damage every 2.8 s on the ground below, half to enemies within 3 m, 1.5× to buildings. It cannot hit flyers. Rangers and Anti-tank rockets bring it down. Requires level 2 Foundry.": "Ashfall. Khinh khí cầu ném bom chậm: 38 sát thương mỗi 2,8 giây xuống mặt đất bên dưới, một nửa lên địch trong 3 m, 1,5× lên công trình. Không bắn được mục tiêu bay. Xạ thủ và rốc-két Chống tăng hạ được nó. Cần Nhà máy cấp 2.",
+    "Swift glider": "Tàu lượn Swift",
+    "Air raider": "Đột kích trên không",
+    "Sunward. The fastest thing on the field: 12 damage every 0.9 s at 6 m, double to Harvesters. It cannot hit flyers. Rangers and Anti-tank rockets bring it down. Requires level 2 Foundry.": "Sunward. Nhanh nhất chiến trường: 12 sát thương mỗi 0,9 giây ở tầm 6 m, gấp đôi lên Thợ mỏ. Không bắn được mục tiêu bay. Xạ thủ và rốc-két Chống tăng hạ được nó. Cần Nhà máy cấp 2.",
+    "Flak guns": "Pháo phòng không",
+    "Command core research, once per match: Sentinel towers can shoot flyers and deal 1.5× damage to them. Needs a level 2 Command core. Costs 125 alloy and 75 energy.": "Nghiên cứu ở Sở chỉ huy, một lần mỗi trận: Tháp pháo bắn được mục tiêu bay và gây 1,5× sát thương lên chúng. Cần Sở chỉ huy cấp 2. Tốn 125 hợp kim và 75 năng lượng.",
+    "Flak guns fitted. Sentinel towers now shoot flyers.": "Đã lắp pháo phòng không. Tháp pháo giờ bắn được mục tiêu bay.",
+    "Flak guns are already researched or queued.": "Pháo phòng không đã được nghiên cứu hoặc đang chờ.",
+    "Air: flies over water, walls and cliffs": "Trên không: bay qua nước, tường và vách đá",
+    "Air": "Trên không",
+    "Only Rangers, Anti-tank soldiers, other units that hit air, and towers with Flak can shoot it.": "Chỉ Xạ thủ, Chống tăng, các đơn vị bắn được mục tiêu bay và tháp pháo có Pháo phòng không mới bắn được nó.",
+    "Flyer: it flies straight over water, walls and cliffs, and passes over ground units. Only Rangers, Anti-tank soldiers and other units that hit air can shoot it; Sentinel towers can after the Flak research at the Command core (×1.5 damage to flyers). Splash, Barrage and burning ground never reach it. It sees plateau tops from low ground and opens a plateau it flies over to your whole side. It cannot take capture points. Each side fields at most 4 flyers, counting those in production.": "Mục tiêu bay: bay thẳng qua nước, tường và vách đá, và bay ngang trên đầu quân mặt đất. Chỉ Xạ thủ, Chống tăng và các đơn vị bắn được mục tiêu bay mới bắn được nó; Tháp pháo bắn được sau khi Sở chỉ huy nghiên cứu Pháo phòng không (×1,5 sát thương lên mục tiêu bay). Nổ lan, Pháo kích và đất cháy không chạm tới nó. Nó nhìn thấy đỉnh cao nguyên từ dưới thấp và mở cao nguyên nó bay qua cho cả phe bạn. Nó không chiếm được điểm. Mỗi phe có tối đa 4 mục tiêu bay, tính cả số đang sản xuất.",
+    "Hits air: it can shoot flyers.": "Bắn được mục tiêu bay.",
     "In the ford: -40% speed, no abilities": "Đang lội bãi cạn: -40% tốc độ, không dùng kỹ năng",
     "In the ford": "Đang lội bãi cạn",
     "Can't see up there": "Không thấy được trên đó",
@@ -1326,6 +1347,18 @@
     [
       "^\\+(\\d+)% damage and health$",
       "+{1}% sát thương và máu"
+    ],
+    [
+      "^Air limit reached: (\\d+) flyers at once\\.$",
+      "Đã đạt giới hạn trên không: tối đa {1} mục tiêu bay cùng lúc."
+    ],
+    [
+      "^(.+) is unarmed and cannot attack\\.$",
+      "{1} không có vũ khí, không thể tấn công."
+    ],
+    [
+      "^(.+) cannot hit flyers\\. Use Rangers, Anti-tank soldiers or other units that hit air\\.$",
+      "{1} không bắn được mục tiêu bay. Hãy dùng Xạ thủ, Chống tăng hoặc đơn vị khác bắn được mục tiêu bay."
     ]
   ]
 }

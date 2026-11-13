@@ -1,5 +1,6 @@
 import { distance, hyp } from "../data.js";
 import { LEASH } from "./constants.js";
+import { AIR } from "../factions.js";
 
 // Target choice, guarding, firing and damage delivery. Mixed into Simulation (see simulation.js).
 export const combat = {
@@ -15,8 +16,10 @@ export const combat = {
         dz = t.z - e.z;
       if (lim < 0 || dx * dx + dz * dz > lim * lim) continue;
       if (!this.hostile(e.team, t.team) || !this.isVisible(t, e.team)) continue;
+      // Flyers: only for shooters that hit air (sim/air.js); nothing screens a shot to or from the air.
+      if (t.flying && !this.canHit(e, t)) continue;
       const d = distance(e, t) - t.radius;
-      if (d <= bestD + 0.00001 && (!clearShot || this.nav.clearLine(e, t, t.id))) {
+      if (d <= bestD + 0.00001 && (!clearShot || e.flying || t.flying || this.nav.clearLine(e, t, t.id))) {
         best = t;
         bestD = d;
       }
@@ -34,10 +37,11 @@ export const combat = {
         dz = t.z - e.z;
       if (dx * dx + dz * dz > lim * lim) continue;
       if (!this.hostile(e.team, t.team) || !this.isVisible(t, e.team)) continue;
+      if (t.flying && !this.canHit(e, t)) continue;
       const d = distance(e, t) - t.radius;
       if (d > e.range + this.heightRange(e, t) + 0.00001) continue;
       const rank = t.kind !== "unit" ? 2 : t.type === "worker" ? 1 : 0;
-      if ((rank < bestRank || (rank === bestRank && d < bestD)) && this.nav.clearLine(e, t, t.id)) {
+      if ((rank < bestRank || (rank === bestRank && d < bestD)) && (t.flying || this.nav.clearLine(e, t, t.id))) {
         best = t;
         bestRank = rank;
         bestD = d;
@@ -49,7 +53,7 @@ export const combat = {
   attacker(e) {
     if (this.time - (e.hitAt ?? -9) > 4) return null;
     const t = this.get(e.hitBy);
-    return t && t.hp > 0 && this.hostile(e.team, t.team) ? t : null;
+    return t && t.hp > 0 && this.hostile(e.team, t.team) && (!t.flying || this.canHit(e, t)) ? t : null;
   },
   // An idle fighter guards the spot it was left on. It answers whoever shot it and chases
   // enemies it can see, but only within a leash of that spot, and then walks back.
@@ -82,6 +86,7 @@ export const combat = {
           (e.counter && e.counter === t.class ? e.counter_bonus || 1.6 : 1) *
           (t.mechanical ? (e.mechanical_bonus || 1) * (e.buff?.mech || 1) : 1) *
           (t.kind === "building" ? e.building_bonus || 1 : 1) *
+          (t.flying && e.kind === "building" ? AIR.flak_bonus : 1) *
           this.heightDamage(e, t),
         e.team,
         e.id,
@@ -95,12 +100,16 @@ export const combat = {
       }
     }
     apply(target);
-    // Area weapons (balance.json splash_radius / splash_damage share) also hit nearby enemies.
-    if (e.splash_radius)
+    // Area weapons (balance.json splash_radius / splash_damage share) also hit nearby enemies on the
+    // ground (a blast never reaches a flyer; a shot at a flyer bursts in the air and splashes nobody).
+    if (e.splash_radius && !target.flying)
       for (const t of this.entities)
-        if (t.id !== target.id && this.hostile(e.team, t.team) && distance(t, target) - (t.kind === "unit" ? 0 : t.radius) < e.splash_radius)
+        if (t.id !== target.id && !t.flying && this.hostile(e.team, t.team) && distance(t, target) - (t.kind === "unit" ? 0 : t.radius) < e.splash_radius)
           apply(t, e.splash_damage);
     this.events.push({
+      // Flyers fire and are hit at altitude (fx.js aim): the fly height of either end.
+      ...(e.flying ? { sAir: e.fly } : null),
+      ...(target.flying ? { tAir: target.fly } : null),
       type: "shot",
       weapon: e.shot || e.type,
       source: e.id,
@@ -121,13 +130,14 @@ export const combat = {
       !Number.isFinite(t.hp) ||
       t.hp <= 0 ||
       !this.attackable(e.team, t) ||
-      !this.isVisible(t, e.team)
+      !this.isVisible(t, e.team) ||
+      (t.flying && !this.canHit(e, t))
     )
       return false;
     // Siege weapons reach further against buildings and walls than against units.
     const range = (t.kind !== "unit" && e.siege_range ? e.siege_range : e.range) + this.heightRange(e, t);
     const inRange = distance(e, t) <= range + t.radius + 0.00001;
-    if (inRange && this.nav.clearLine(e, t, t.id)) {
+    if (inRange && (e.flying || t.flying || this.nav.clearLine(e, t, t.id))) {
       e.attacking = true;
       e.angle = Math.atan2(t.x - e.x, t.z - e.z);
       e.moving = false;

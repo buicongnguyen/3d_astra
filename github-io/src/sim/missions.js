@@ -42,6 +42,8 @@ export const missions = {
       this.aiEnabled = false;
     }
     this.entities = this.entities.filter((e) => e.hp > 0);
+    // The starting camp was trained-for before the mission was known: drop flyers unless rules.air (factions.js).
+    for (const b of this.entities) if (D[b.type]?.trains) b.trains = this.resolvedTrains(b.team, D[b.type].trains);
     if (rules.unlock) this.unlockUnits(0, rules.unlock);
     for (const step of def.setup || []) this.missionSetup(step);
     this.players[0].alloy += difficultyRules(this).alloy;
@@ -138,7 +140,8 @@ export const missions = {
   stepPoints(dt, points = this.mission.points) {
     for (const [name, p] of Object.entries(points)) {
       const present = new Set();
-      for (const e of this.entities) if (fighter(e) && distance(e, p) <= p.r) present.add(e.team);
+      // Flyers never take or contest a ring (sim/air.js).
+      for (const e of this.entities) if (fighter(e) && !e.flying && distance(e, p) <= p.r) present.add(e.team);
       // Allied AIs count as one side: they never contest each other's points.
       const sides = [...present].filter((team, i, all) => !all.slice(0, i).some((other) => !this.hostile(team, other)));
       const taker = sides.length === 1 && sides[0] !== p.owner && (p.owner === null || this.hostile(sides[0], p.owner)) ? sides[0] : null;

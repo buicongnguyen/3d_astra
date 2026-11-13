@@ -56,6 +56,15 @@ const label = (type) => {
   return D[type].name;
 };
 
+// The Flak tile: ready (or locked below a level 2 core), researching with progress, or done.
+export function flakTile(sim, b, lock = "") {
+  const tile = { type: "flak", action: "flak", label: D.flak.name, research: true };
+  if (sim.players[b.team].flak) return Object.assign(tile, { state: "done", sub: "Active" });
+  const q = queued(sim, b.team, "flak");
+  if (q) return Object.assign(tile, { state: "busy", progress: q.progress, sub: q.index > 0 ? "Waiting in queue" : `Researching ${Math.round(q.progress * 100)}%` });
+  return Object.assign(tile, { state: lock ? "locked" : "ready", sub: lock || null });
+}
+
 // The tiles for one selected building of the player. `choosing` is true while the research choice is open.
 export function productionTiles(sim, b, { choosing = false } = {}) {
   const tiles = [];
@@ -89,6 +98,8 @@ export function productionTiles(sim, b, { choosing = false } = {}) {
       tiles.push(tile);
       continue;
     }
+    // Flak (Command core, 0.18): a one-off research of its own, outside the Foundry's branch slot.
+    if (type === "flak") { tiles.push(flakTile(sim, b, levelLock(type))); continue; }
     const lock = b.team === 0 ? levelLock(type) : "";
     tiles.push({ type, action: type, label: D[type].name, state: lock ? "locked" : "ready", sub: lock || null });
   }

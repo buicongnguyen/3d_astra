@@ -52,6 +52,8 @@ export const movement = {
     }
     // A braced Walker stands where it is; the order waits, it is not counted as stuck.
     if (e.speed <= 0) { e.moving = false; return false; }
+    // Flyers go straight over water, walls and cliffs (sim/air.js).
+    if (e.flying) return this.flyStep(e, goal, dt, tolerance);
     if (e.escape) {
       // A short straight hop out of a tight spot, ignoring the footprint it is leaving.
       const dx = e.escape.x - e.x, dz = e.escape.z - e.z, d = hyp(dx, dz);
@@ -188,6 +190,14 @@ export const movement = {
         const nx = d > 0.001 ? dx / d : 1,
           nz = d > 0.001 ? dz / d : 0,
           push = Math.min((min - d) * 0.5, dt * 2);
+        // Flyers pass over ground units and nudge only each other, with no ground to test.
+        if (a.flying || b.flying) {
+          if (!a.flying !== !b.flying) continue;
+          const limit = this.terrain.half - 1;
+          a.x = Math.max(-limit, Math.min(limit, a.x + nx * push * 0.5)); a.z = Math.max(-limit, Math.min(limit, a.z + nz * push * 0.5));
+          b.x = Math.max(-limit, Math.min(limit, b.x - nx * push * 0.5)); b.z = Math.max(-limit, Math.min(limit, b.z - nz * push * 0.5));
+          continue;
+        }
         if (this.nav.canStand(a.x + nx * push, a.z + nz * push, a.radius)) {
           a.x += nx * push;
           a.z += nz * push;

@@ -1,5 +1,6 @@
 import { DEFINITIONS as D, distance } from "../data.js";
 import { HURT } from "./ai-counter.js";
+import { AIR } from "../factions.js";
 
 // How the computer commands its army in the field (0.15.0). Mixed into Simulation through `ai`.
 //   gather   the wave meets at a rally point outside its base and marches only when its strength
@@ -92,9 +93,11 @@ export const aiAttack = {
   },
   // Visible enemy fighters and towers close to any unit of the group, weighted by their health.
   aiLocalThreat(team, members) {
-    let sum = 0;
+    let sum = 0, antiAir = null;
     for (const t of this.entities) {
       if (t.hp <= 0 || !t.damage || t.type === "worker" || (t.kind === "building" && !t.complete) || (t.kind !== "unit" && t.kind !== "building")) continue;
+      // A flyer the group cannot hit is not weighed against it (sim/air.js).
+      if (t.flying && !(antiAir ??= members.some((e) => e.hits_air))) continue;
       if (!this.hostile(team, t.team) || !this.isVisible(t, team)) continue;
       if (members.some((e) => distance(e, t) - (t.radius || 0) < NEAR)) sum += worth(t.type) * health(t);
     }
@@ -155,7 +158,14 @@ export const aiAttack = {
   // Sends a group: through `via` first when given, then attack-moving on `target`. A group sent to a
   // search point (no core known) turns on the first core it finds. Returns its number.
   aiLaunch(team, units, target, via, search = target.team === undefined) {
+    // An unarmed flyer (the Kite scout) goes ahead as a spotter: to a point AIR.spotter_lead short of the target.
+    const spotters = units.filter((e) => e.flying && !(e.damage > 0));
+    if (spotters.length) units = units.filter((e) => !spotters.includes(e));
     const war = this.aiWarFor(team), n = ++this.aiWar.n, ids = units.map((e) => e.id);
+    if (spotters.length) {
+      const from = centre(spotters), d = distance(from, target) || 1, lead = Math.min(d, AIR.spotter_lead);
+      this.issue(spotters.map((e) => e.id), { type: "move", x: target.x - ((target.x - from.x) / d) * lead, z: target.z - ((target.z - from.z) / d) * lead, aiw: n });
+    }
     if (via) {
       this.issue(ids, { type: "move", x: via.x, z: via.z, aiw: n });
       this.issue(ids, { type: "attackmove", x: target.x, z: target.z, aiw: n }, true);
@@ -240,6 +250,7 @@ export const aiAttack = {
         if (t.hp <= 0 || t.kind === "wall" || t.kind === "resource") continue;
         const reach = (t.kind !== "unit" && e.siege_range ? e.siege_range : e.range) + 1.5 + (t.radius || 0), dx = t.x - e.x, dz = t.z - e.z;
         if (dx * dx + dz * dz > reach * reach || !this.hostile(team, t.team) || !this.isVisible(t, team)) continue;
+        if (t.flying && !this.canHit(e, t)) continue;
         const s = this.aiPriority(e, t);
         if (t === cur) curS = s;
         if (s > bestS || (s === bestS && best && t.id < best.id)) { best = t; bestS = s; }

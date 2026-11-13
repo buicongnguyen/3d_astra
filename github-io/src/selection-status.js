@@ -4,7 +4,7 @@ import {buildingActivity} from './activity.js';
 import {icon} from './icons.js';
 import {portrait, hasPortrait} from './portraits.js';
 import {rankBadge} from './tactics-ui.js';
-import {FORD_SHORT, FORD_TEXT, HIDDEN_HINT, HIDDEN_TEXT, HIGH_GROUND_SHORT, HIGH_GROUND_TEXT, selectionGround} from './terrain-labels.js';
+import {AIR_HINT, AIR_SHORT, AIR_TEXT, FORD_SHORT, FORD_TEXT, HIDDEN_HINT, HIDDEN_TEXT, HIGH_GROUND_SHORT, HIGH_GROUND_TEXT, selectionGround} from './terrain-labels.js';
 
 const number = value => value >= 10000 ? `${(value / 1000).toFixed(value < 100000 ? 1 : 0)}k` : `${Math.ceil(value)}`;
 const ratio = (value, max) => max > 0 ? Math.max(0, Math.min(1, value / max)).toFixed(3) : 0;
@@ -26,8 +26,11 @@ export function selectionStatus(sim, entities) {
   const side = entities.every(u=>u.team===0) ? 'friendly' : 'hostile';
   // On a plateau top the activity line says what high ground gives (the status moves to its tooltip).
   // Wading the ford, the line says it is slower and has no abilities (terrain-labels.js selectionGround).
-  const {high, ford, hidden} = selectionGround(sim, entities);
-  const activity = high
+  const {high, ford, hidden, air} = selectionGround(sim, entities);
+  // Flyers: the line names their class, Air (the status moves to its tooltip).
+  const activity = air
+    ? `<div class="selection-activity in-air" title="${AIR_HINT}${status ? ` · ${status}` : ''}"><span class="hg-long">${AIR_TEXT}</span><span class="hg-short">${AIR_SHORT}</span></div>`
+    : high
     ? `<div class="selection-activity high-ground" title="${HIGH_GROUND_TEXT}${status ? ` · ${status}` : ''}"><span aria-hidden="true">▲ </span><span class="hg-long">${HIGH_GROUND_TEXT}</span><span class="hg-short">${HIGH_GROUND_SHORT}</span></div>`
     : ford
       ? `<div class="selection-activity in-ford" title="${FORD_TEXT}${status ? ` · ${status}` : ''}"><span class="hg-long">${FORD_TEXT}</span><span class="hg-short">${FORD_SHORT}</span></div>`

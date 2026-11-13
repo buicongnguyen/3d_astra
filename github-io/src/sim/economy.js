@@ -173,7 +173,14 @@ export const economy = {
       d = D[q.type];
     q.elapsed += dt*(1+0.2*(b.level-1));
     if (q.elapsed < d.time) return;
-    if (["upgrade", "plating", "upgrade2", "plating2"].includes(q.type)) this.events.push({type:"research",team:b.team,x:b.x,z:b.z});
+    if (["upgrade", "plating", "upgrade2", "plating2", "flak"].includes(q.type)) this.events.push({type:"research",team:b.team,x:b.x,z:b.z});
+    // Flak (sim/air.js): towers shoot flyers. Stored only once researched.
+    if (q.type === "flak") {
+      this.players[b.team].flak = true;
+      b.queue.shift();
+      this.message("Flak guns fitted. Sentinel towers now shoot flyers.", b.team);
+      return;
+    }
     if (q.type === "upgrade") {
       this.players[b.team].upgrade = true;
       b.queue.shift();

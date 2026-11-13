@@ -1,4 +1,5 @@
 import { DEFINITIONS as D, distance } from "../data.js";
+import { AIR } from "../factions.js";
 
 // How the computer opponent reads the battlefield and spends a surplus (0.9.1). Mixed into Simulation.
 // Everything here uses vision only: the AI remembers enemies it has actually seen (id -> type) and
@@ -27,21 +28,44 @@ export const aiCounter = {
     }
     return seen;
   },
-  // Counts of what the AI believes the enemy fields: { mech, infantry, towers, total }.
+  // Counts of what the AI believes the enemy fields: { mech, infantry, air, towers, total }. Flyers count as air only.
   seenMix(team) {
-    const mix = { mech: 0, infantry: 0, towers: 0, total: 0 };
+    const mix = { mech: 0, infantry: 0, air: 0, towers: 0, total: 0 };
     for (const type of (this.intel[team] || new Map()).values()) {
       const d = D[type];
       if (d.kind === "building") { if (type === "tower") mix.towers++; continue; }
       mix.total++;
-      if (d.mechanical) mix.mech++; else mix.infantry++;
+      if (d.flying) mix.air++; else if (d.mechanical) mix.mech++; else mix.infantry++;
     }
     return mix;
+  },
+  // Air for the computer (0.18, sim/air.js), skirmish only (story rosters have no flyers):
+  //   answer   enemy flyers seen: Rangers (or the faction's swap, every one of them hits air) from the Barracks
+  //   flak     after AIR.flak_after flyers seen, the Command core researches Flak (towers shoot flyers)
+  //   spotter  one Kite scout from a level 2 Barracks once the Foundry stands; it flies ahead of each attack
+  //   flyer    the faction's own flyer from the Foundry, at most AIR.ai_cap at a time, from the upgrade time on
+  aiAirChoice(team, b, army, choice, pace) {
+    if (!this.airAllowed()) return choice;
+    const count = (pick) => army.filter(pick).length + this.own(team).reduce((n, e) => n + (e.queue || []).filter((q) => pick(D[q.type])).length, 0);
+    if (b.type === "barracks" && b.level >= 2 && this.time > pace.foundryAt && this.own(team).some((e) => e.type === "foundry" && e.complete) &&
+      !count((e) => e.type === "kite")) return "kite";
+    if (b.type === "foundry" && this.time > pace.upgradeAt) {
+      const own = (this.factionFor(team).extra?.foundry || []).find((type) => b.trains?.includes(type));
+      if (own && b.level >= (D[own].required_level || 1) && count((e) => e.flying && e.damage > 0) < AIR.ai_cap && this.airCount(team) < AIR.cap) return own;
+    }
+    return choice;
+  },
+  aiFlak(team, hq) {
+    const pl = this.players[team];
+    if (pl.flak || !hq?.complete || hq.level < (D.flak.required_level || 1) || hq.queue.length || hq.levelJob || !hq.trains?.includes("flak") || this.seenMix(team).air < AIR.flak_after) return;
+    if (this.canPay(team, D.flak.cost)) this.enqueue(hq.id, "flak");
   },
   // Adjusts the unit a building was about to train to the enemy mix. `choice` is the default pick.
   counterChoice(team, b, army, choice) {
     if (!this.pace.counter) return choice;
     const mix = this.seenMix(team);
+    // Flyers seen: units that hit air, two for each flyer (the Ranger slot hits air on every roster).
+    if (b.type === "barracks" && mix.air && army.filter((e) => e.hits_air).length < mix.air * 2 + 2) return "ranger";
     if (mix.total < MIN_SEEN && mix.towers < 2) return choice;
     const have = (type) => army.filter((e) => this.slotOf(e.type) === type).length;
     if (b.type === "barracks") {

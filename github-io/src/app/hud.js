@@ -10,7 +10,7 @@ import { selectionStatus } from "../selection-status.js";
 import { tacticalUnits, clampRank } from "../tactics-ui.js";
 import { tacticsCardHTML, updateTacticsCard } from "../tactics-card.js";
 import { createMessageQueue, ROUTINE, ALERT } from "../message-queue.js";
-import { productionTiles, researchState } from "../research-tiles.js";
+import { productionTiles, researchState, flakTile } from "../research-tiles.js";
 
 export function setupHud(S, A) {
   const Z = S.screen;
@@ -171,7 +171,7 @@ export function setupHud(S, A) {
     document.documentElement.classList.toggle('no-units', !es.some(u => u.kind === 'unit'));
     document.documentElement.classList.toggle('many-orders', [...document.querySelectorAll('.order-buttons button')].filter(b => !b.hidden).length > 5);
     $("command-context").title = `Command core technology ${S.sim.techLevel()} / 3`;
-    const signature = `${es.map((e) => e.id).join(",")}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}`;
+    const signature = `${es.map((e) => e.id).join(",")}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${p.flak}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2" || q.type === "flak")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}`;
     if (S.lastSelectionKey !== signature) {
       S.lastSelectionKey = signature;
       $("unit-list").innerHTML =
@@ -245,7 +245,10 @@ export function setupHud(S, A) {
     // A research in progress counts up on its tile.
     const busy = $("commands").querySelector('[data-state="busy"]');
     if (busy) {
-      const r = researchState(S.sim, 0), small = busy.querySelector("small");
+      // Flak (Command core) counts up on its own; the Foundry branch below.
+      const flak = busy.dataset.action === "flak" && e ? flakTile(S.sim, e) : null, small = busy.querySelector("small");
+      const r = flak ? { ...flak, waiting: flak.sub === "Waiting in queue" } : researchState(S.sim, 0);
+      if (r.type !== busy.dataset.action) r.state = null;
       if (r.state === "busy") {
         busy.style.setProperty("--p", r.progress.toFixed(3));
         const text = r.waiting ? "Waiting in queue" : `Researching ${Math.round(r.progress * 100)}%`;

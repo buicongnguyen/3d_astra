@@ -8,13 +8,14 @@ export const height = {
   },
   // Firing down from a plateau hits harder, firing up hits softer.
   heightDamage(e, t) {
-    if (!this.terrain.plateaus.length) return 1;
+    // Flyers are above every plateau: neither end gains or loses from the ground (sim/air.js).
+    if (!this.terrain.plateaus.length || e.flying || t.flying) return 1;
     const a = this.levelOf(e), b = this.levelOf(t);
     return a > b ? TERRAIN.high_damage : a < b ? TERRAIN.low_damage : 1;
   },
   // Extra reach for a shooter (unit or tower) on a plateau against a target below.
   heightRange(e, t) {
-    return this.terrain.plateaus.length && this.levelOf(e) > this.levelOf(t) ? TERRAIN.high_range : 0;
+    return this.terrain.plateaus.length && !e.flying && !t.flying && this.levelOf(e) > this.levelOf(t) ? TERRAIN.high_range : 0;
   },
   // Straight concrete walls from the map data: one breakable 2 m piece per step along the line.
   spawnStraightWalls() {
