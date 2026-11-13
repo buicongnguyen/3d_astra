@@ -1,8 +1,11 @@
 import STYLE from './visual-style.json' with {type:'json'};
-export const themeFor = id => Object.hasOwn(STYLE.themes,id)?STYLE.themes[id]:STYLE.themes.classic;
+import DEFENCE_MAPS from './defence/maps.json' with {type:'json'};
+// A Frontier Defence map borrows the look (palette, light, dressing, life, music) of a skirmish map.
+export const lookOf = id => DEFENCE_MAPS[id]?.look || id;
+export const themeFor = id => (id = lookOf(id), Object.hasOwn(STYLE.themes,id)?STYLE.themes[id]:STYLE.themes.classic);
 // Light strengths, exposure and the time of day each map is set at (numbers, kept apart from
 // the colour table so every theme value stays a colour).
-export const lightFor = id => Object.hasOwn(STYLE.light,id)?STYLE.light[id]:STYLE.light.classic;
+export const lightFor = id => (id = lookOf(id), Object.hasOwn(STYLE.light,id)?STYLE.light[id]:STYLE.light.classic);
 // The surfaces units stand on; team colours must stay readable against each of them.
 export const GROUND_KEYS = ['dirt','grass','sand','road','stone'];
 export const weaponStyle =e => {const key=e.type==='support'?'support':e.weapon;return Object.hasOwn(STYLE.weapons,key)?STYLE.weapons[key]:STYLE.weapons.rifle;};

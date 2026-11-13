@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { lookOf } from "./visual-style.js";
 
 // Small living details per battlefield: birds with ground shadows, butterflies, dragonflies,
 // fish and drifting motes (ash, dust, pollen, fireflies, embers). Every family is one
@@ -58,7 +59,7 @@ const hex = (value) => new THREE.Color().setHex(parseInt(value.slice(1), 16), TH
 
 // Pure, seeded placement: the same map always gets the same cast, and tests can check bounds.
 export function planLife(terrain, budget = 1) {
-  const recipe = LIFE[terrain.id] || {}, r = rng(hashId(terrain.id)), half = terrain.half;
+  const recipe = LIFE[lookOf(terrain.id)] || {}, r = rng(hashId(terrain.id)), half = terrain.half;
   const scale = (n) => Math.max(0, Math.round(n * (terrain.size / 96) ** 2 * budget));
   const plan = { birds: [], fish: [], butterflies: [], dragonflies: [], motes: [], look: recipe.birds?.look || (recipe.geese ? "goose" : null), moteLook: recipe.motes?.look || null };
   const land = (x, z) => !["water", "ford", "bridge", "stone"].includes(terrain.at(x, z)) && !(terrain.level?.(x, z));

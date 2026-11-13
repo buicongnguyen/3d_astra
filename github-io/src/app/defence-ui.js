@@ -128,7 +128,7 @@ export function createDefenceUI(S, A) {
     bar.setAttribute("aria-label", "Defence status");
     bar.innerHTML = `<span class="dchip lives" title="Lives: each enemy through costs one, a heavy machine two">${icon("shield")}<b id="defence-lives" translate="no">20</b></span>
       <span class="dchip wave" title="Wave"><span>Wave</span> <b id="defence-wave" translate="no">0/10</b><small id="defence-count" translate="no"></small></span>
-      <button id="defence-call" type="button" title="Call the next wave now for bonus alloy">${icon("play")}<span>Call wave</span><small id="defence-bonus" translate="no"></small></button>
+      <button id="defence-call" type="button" title="Call the next wave now for bonus alloy" aria-label="Call wave">${icon("play")}<span>Call wave</span><small id="defence-bonus" translate="no"></small></button>
       <button id="defence-overview" type="button" aria-pressed="false" title="Overview: see the whole valley" aria-label="Overview">${icon("expand")}</button>`;
     $("stage").append(bar);
     $("defence-call").onclick = () => {
@@ -264,6 +264,8 @@ export function createDefenceUI(S, A) {
       A.tone(740, 0.14);
       const t = S.sim.towerOn(pad);
       if (t) A.setSelection([t.id]);
+      // Phones: stay on the card with the new tower's Upgrade and Sell.
+      if (root.classList.contains("compact-ui")) A.dockTab("actions");
     }
     A.updateUI();
   }
@@ -326,6 +328,8 @@ export function createDefenceUI(S, A) {
     if (Z.started) announce();
     sheet(es);
     info(es);
+    // A picked pad counts as a selection for the docks (landscape phones hide an empty dock).
+    if (S.defencePad && !es.length) document.querySelector(".selection-panel").classList.add("has-entity");
     paintPads();
     rangeRing(es);
   }
@@ -384,7 +388,10 @@ export function createDefenceUI(S, A) {
     S.defencePick = Number(next.dataset.defenceNext);
     S.playMode = "defence";
     await A.newGame();
-    $("start").click();
+    // The next level may need models of another faction: start once the briefing is ready again.
+    const started = performance.now();
+    while (($("start").disabled || !S.view.modelsReady) && performance.now() - started < 90000) await new Promise((resolve) => setTimeout(resolve, 100));
+    if (!Z.started && S.playMode === "defence") $("start").click();
   });
 
   return { begin, hud, idle, tap, result, setOverview, get pads() { return pads; } };

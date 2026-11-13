@@ -51,6 +51,7 @@
     "test:render-budget": "node tests/render-budget.mjs",
     "test:audio": "node tests/audio.mjs",
     "test:offline": "node tests/offline.mjs",
+    "test:defence": "node tests/defence.mjs",
     "render:audio": "node tools/render-audio.mjs"
   },
   "dependencies": {

@@ -76,9 +76,10 @@
 /* Phones: under the notch and above the notice line; the bar never grows wider than the screen. */
 .compact-ui #defence-bar { top: 6px; gap: 4px; padding: 3px; font-size: 12px; }
 .compact-ui #defence-bar .dchip { padding: 0 8px; min-height: 34px; }
-/* Portrait phones: the zoom buttons hold the top left corner. */
+/* Portrait phones: the zoom buttons hold the top row, so the bar sits at the foot of the battlefield,
+   just above the dock (where the build confirmation sits in the other modes), under the thumb. */
 @media (orientation: portrait) {
-  .compact-ui #defence-bar { left: auto; right: 6px; transform: none; }
+  .compact-ui #defence-bar { top: auto; bottom: calc(var(--dock-height) + var(--tabs-height) + var(--safe-bottom) + 8px); }
 }
 @media (max-width: 420px) {
   .compact-ui #defence-bar button { padding: 0 9px; }
