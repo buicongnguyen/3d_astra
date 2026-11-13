@@ -143,8 +143,9 @@ export class Simulation {
     this.skirmishPoints = {};
     if (this.capturePointsOn) this.initSkirmishPoints();
     if (mission) this.initMission(mission);
-    // Names the player's own faction (Meridian keeps its original line).
-    this.message(openingLine(this.factions[0]));
+    // Names the player's own faction (Meridian keeps its original line). Missions, Defence levels and
+    // chronicles open with their own first line (some have no base or Harvesters at all).
+    if (!mission) this.message(openingLine(this.factions[0]));
   }
   // Campaign handicap against allied AIs: extra supplies and a Sentinel tower facing the map centre.
   reinforce({ alloy = 0, energy = 0, tower = false }) {
