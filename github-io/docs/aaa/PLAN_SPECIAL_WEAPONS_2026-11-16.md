@@ -172,3 +172,13 @@ the lead merges and reviews. Easy packages go to Sonnet 5.5, UI and Blender to O
 
 Jammers that turn missiles around, random misses, flares on every unit, a second ability per unit,
 nuclear-scale "super weapons" that end a match in one use.
+
+**Bunkers and barricades: decided against (owner, 2026-11-16).** They risk abnormal behaviour.
+What the code check found: nothing lets a unit enter a building (Defence "crews" are tower labels,
+not soldiers inside); every obstacle blocks shots both ways (`nav.clearLine`), so cover that units
+fire over would need a new rule in the most shared combat path; the computer player skips walls as
+targets and would not break through a player-built line. Do not propose them again without a new
+owner decision.
+
+**Surrender and prisoners:** campaign only (owner, 2026-11-16); not planned yet, and not part of
+this plan.
