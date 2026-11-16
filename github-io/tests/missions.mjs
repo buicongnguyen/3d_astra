@@ -174,13 +174,18 @@ try {
     await press('#dialogue-close');
     assert.equal(await page.locator('#dialogue').isHidden(), true, 'the last line dismisses to nothing');
     // A backlog during a fight: four lines wait, the rest are in the Comms log; nothing is lost.
+    // The clock is held and the count is relative: on a slow runner another timed mission line can
+    // arrive before the log is counted.
+    // (Counted from the queue's own log: the Comms list is only drawn once it is opened.)
+    const saidBefore = await frontier(() => { window.__frontier.hold = true; return window.__frontier.mission.queue.log.length; });
     await frontier(() => { for (let i = 1; i <= 8; i++) window.__frontier.mission.say(i % 2 ? 'hale' : 'vale', `Backlog line number ${i} for the log.`); });
     assert.match(await page.locator('#dialogue-more').innerText(), /7 more in Comms log/);
     assert.equal(await frontier(() => window.__frontier.mission.queue.waiting.length), 4);
     await openObjectives(true);
     await press('#comms-toggle');
-    assert.equal(await page.locator('#comms-log li').count(), 10, 'every line said so far is in the log');
+    assert.equal(await page.locator('#comms-log li').count(), saidBefore + 8, 'every line said so far is in the log');
     assert.match(await page.locator('#comms-log li').last().innerText(), /Backlog line number 8/);
+    await frontier(() => { window.__frontier.hold = false; });
     assert.deepEqual(await smallText('#comms-log'), [], `${name} comms text`);
     await frontier(() => { for (let i = 0; i < 20; i++) window.__frontier.mission.say('echo', `Count ${i}.`); });
     assert.equal(await page.locator('#comms-log li').count(), 20, 'the log keeps the last twenty lines');

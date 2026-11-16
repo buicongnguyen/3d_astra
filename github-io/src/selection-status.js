@@ -4,7 +4,7 @@ import {buildingActivity} from './activity.js';
 import {icon} from './icons.js';
 import {portrait, hasPortrait} from './portraits.js';
 import {rankBadge} from './tactics-ui.js';
-import {AIR_HINT, AIR_SHORT, AIR_TEXT, FORD_SHORT, FORD_TEXT, HIDDEN_HINT, HIDDEN_TEXT, HIGH_GROUND_SHORT, HIGH_GROUND_TEXT, selectionGround} from './terrain-labels.js';
+import {AIR_HINT, AIR_SHORT, AIR_TEXT, ANTI_AIR_OFF, ANTI_AIR_OFF_HINT, ANTI_AIR_ON, ANTI_AIR_ON_HINT, FORD_SHORT, FORD_TEXT, HIDDEN_HINT, HIDDEN_TEXT, HIGH_GROUND_SHORT, HIGH_GROUND_TEXT, selectionGround} from './terrain-labels.js';
 
 const number = value => value >= 10000 ? `${(value / 1000).toFixed(value < 100000 ? 1 : 0)}k` : `${Math.ceil(value)}`;
 const ratio = (value, max) => max > 0 ? Math.max(0, Math.min(1, value / max)).toFixed(3) : 0;
@@ -38,6 +38,13 @@ export function selectionStatus(sim, entities) {
   // The player's own units deep on a plateau get a second line, in the room an enemy card gives
   // its faction line (player cards have none), so the card never grows past an enemy's.
   const hiddenLine = hidden ? `<div class="selection-hidden" title="${HIDDEN_HINT}">${icon('hidden')}<span>${HIDDEN_TEXT}</span></div>` : '';
+  // The player's own Sentinel tower says whether it can shoot flyers (the Anti-air guns research at
+  // the Command core, sim/air.js), in the same second line: towers ignore flyers until then, and
+  // nothing on the tower said so. Only in matches with air; Defence towers have crews instead.
+  const tower = !group && !hidden && e.type === 'tower' && e.team === 0 && e.complete && !e.crew && sim.airAllowed?.();
+  const airLine = !tower ? '' : sim.players[0].flak
+    ? `<div class="selection-hidden anti-air" title="${ANTI_AIR_ON_HINT}">${icon('tower')}<span>${ANTI_AIR_ON}</span></div>`
+    : `<div class="selection-hidden anti-air" title="${ANTI_AIR_OFF_HINT}">${icon('tower')}<span>${ANTI_AIR_OFF}</span></div>`;
   return `<div class="entity-details"><div class="selection-heading"><span class="sel-portrait ${side}" aria-hidden="true">${!group && hasPortrait(e.type) ? portrait(e.type, side) : icon(group ? 'people' : e.icon || e.type)}</span><h3 title="${group ? name : e.description}">${name}</h3>${e.kind==='building'&&!group?`<span class="selection-level">L${e.level}</span>`:''}${!group&&e.kind==='unit'?rankBadge(e.rank):''}</div>
     ${!group && e.team > 0 ? `<p class="selection-faction">${FACTIONS[sim.missionDef?.factions?.[e.team] || sim.factions?.[e.team]]?.name || ""}</p>` : ""}
     <dl class="unit-metrics" aria-label="Selected object stats">
@@ -45,5 +52,5 @@ export function selectionStatus(sim, entities) {
     ${metric('Shield',`${number(shield)}/${number(maxShield)}`,`Shield ${Math.ceil(shield)} of ${maxShield}`,['sh',ratio(shield,maxShield)])}
     ${metric(group?'ATK*':'ATK',attack,group?'Attack of first selected unit. Open Info & stats for unit details.':'Attack damage per hit')}
     ${e.support&&!group?metric('Restore',`${e.support}/s`,'Health restored per second'):''}</dl>
-    ${activity}${hiddenLine}</div>`;
+    ${activity}${hiddenLine}${airLine}</div>`;
 }

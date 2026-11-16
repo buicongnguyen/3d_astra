@@ -123,7 +123,7 @@ export const orders = {
     // Air (sim/air.js): a few flyers per side, counting those in production.
     if (d.flying && this.airCount(b.team) >= AIR.cap) return fail(`Air limit reached: ${AIR.cap} flyers at once.`);
     if (type === "flak" && (this.players[b.team].flak || this.own(b.team).some((e) => e.queue.some((q) => q.type === "flak"))))
-      return fail("Flak guns are already researched or queued.");
+      return fail("Anti-air guns are already researched or queued.");
     if (
       type === "upgrade" &&
       (this.players[b.team].upgrade ||

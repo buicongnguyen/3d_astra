@@ -528,7 +528,7 @@ export const MISSIONS = [
   },
 
   // The first air raid (0.18.3 / 0.19b.3): Hale's Ember balloons over the copper works. `rules.air`
-  // lets the player train Kites and Hawks and research Flak at the Command core.
+  // lets the player train Kites and Hawks and research Anti-air guns at the Command core.
   {
     id: "m06b-wings-over-copper",
     act: 2,
@@ -546,8 +546,8 @@ export const MISSIONS = [
       ],
       intel: [
         "Ember balloons fly over walls and towers and bomb buildings. The Copper refinery must not fall.",
-        "Only Rangers, Anti-tank soldiers and Hawk gunships can shoot flyers. Towers can after Flak.",
-        "Research Flak at a level 2 Command core. A level 3 core builds Hawk gunships.",
+        "Only Rangers, Anti-tank soldiers and Hawk gunships can shoot flyers. Towers can after Anti-air guns.",
+        "Research Anti-air guns at a level 2 Command core. A level 3 core builds Hawk gunships.",
         "Guard the refinery through three raids, then burn the balloon yard on the east rim.",
       ],
     },

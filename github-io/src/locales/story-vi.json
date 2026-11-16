@@ -719,8 +719,8 @@
     "Last night I saw lights drifting over the east rim. Slow, warm lights. They were not stars, Commander.": "Đêm qua tôi thấy những đốm sáng trôi qua vành phía đông. Chậm và ấm. Đó không phải là sao đâu, thưa Chỉ huy.",
     "Hale cannot break our towers on the ground. If he comes through the air, we need guns that point up.": "Hale không phá nổi tháp của ta trên mặt đất. Nếu ông ta đến bằng đường không, ta cần súng chĩa lên trời.",
     "Ember balloons fly over walls and towers and bomb buildings. The Copper refinery must not fall.": "Khinh khí cầu Than hồng bay qua tường và tháp rồi ném bom xuống công trình. Không được để mất Nhà máy lọc đồng.",
-    "Only Rangers, Anti-tank soldiers and Hawk gunships can shoot flyers. Towers can after Flak.": "Chỉ Xạ thủ, lính Chống tăng và Pháo hạm Hawk bắn được mục tiêu bay. Tháp pháo bắn được sau khi có Pháo phòng không.",
-    "Research Flak at a level 2 Command core. A level 3 core builds Hawk gunships.": "Nghiên cứu Pháo phòng không tại Sở chỉ huy cấp 2. Sở chỉ huy cấp 3 chế tạo được Pháo hạm Hawk.",
+    "Only Rangers, Anti-tank soldiers and Hawk gunships can shoot flyers. Towers can after Anti-air guns.": "Chỉ Xạ thủ, lính Chống tăng và Pháo hạm Hawk bắn được mục tiêu bay. Tháp pháo bắn được sau khi có Pháo phòng không.",
+    "Research Anti-air guns at a level 2 Command core. A level 3 core builds Hawk gunships.": "Nghiên cứu Pháo phòng không tại Sở chỉ huy cấp 2. Sở chỉ huy cấp 3 chế tạo được Pháo hạm Hawk.",
     "Guard the refinery through three raids, then burn the balloon yard on the east rim.": "Bảo vệ nhà máy lọc qua ba đợt không kích, rồi đốt bãi khinh khí cầu ở vành phía đông.",
     "Guard the Copper refinery through three air raids": "Bảo vệ Nhà máy lọc đồng qua ba đợt không kích",
     "Destroy the balloon yard on the east rim": "Phá hủy bãi khinh khí cầu ở vành phía đông",
@@ -742,7 +742,7 @@
     "The refinery burned, and the copper with it. We rebuild, and next time we watch the sky first.": "Nhà máy lọc đã cháy, và cả số đồng theo nó. Ta sẽ xây lại, và lần sau ta canh bầu trời trước.",
     "There, over the rim! A balloon with a fire under it, drifting straight at the refinery.": "Kia, trên vành lòng chảo! Một khinh khí cầu có lửa bên dưới, đang trôi thẳng về phía nhà máy lọc.",
     "Ember balloons. Our towers cannot aim that high. Rangers and Anti-tank soldiers can.": "Khinh khí cầu Than hồng. Tháp của ta không ngắm cao được như vậy. Xạ thủ và lính Chống tăng thì được.",
-    "Research Flak at the Command core, and every tower will shoot at the sky.": "Nghiên cứu Pháo phòng không ở Sở chỉ huy, rồi mọi tháp pháo sẽ bắn lên trời.",
+    "Research Anti-air guns at the Command core, and every tower will shoot at the sky.": "Nghiên cứu Pháo phòng không ở Sở chỉ huy, rồi mọi tháp pháo sẽ bắn lên trời.",
     "A Kite over the gorge. Ranger and Anti-tank crews can shoot it down. Breaker crews cannot.": "Một Diều trinh sát trên hẻm núi. Tháp Xạ thủ và tháp Chống tăng bắn hạ được nó. Tháp Pháo binh thì không.",
     "Balloons behind the column, the same as over the basin! Keep a Ranger crew near the top.": "Khinh khí cầu sau đoàn quân, giống như ở lòng chảo! Giữ một tháp Xạ thủ gần đỉnh."
   }

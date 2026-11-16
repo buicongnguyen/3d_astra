@@ -51,7 +51,7 @@ export const SCENES = {
       { fx: { flash: "alarm" } },
       { say: { who: "okoro", text: "There, over the rim! A balloon with a fire under it, drifting straight at the refinery." } },
       { say: { who: "vale", text: "Ember balloons. Our towers cannot aim that high. Rangers and Anti-tank soldiers can." } },
-      { say: { who: "vale", text: "Research Flak at the Command core, and every tower will shoot at the sky." } },
+      { say: { who: "vale", text: "Research Anti-air guns at the Command core, and every tower will shoot at the sky." } },
     ],
   },
   // Mission 8: the vault door opens and ECHO tells the truth.

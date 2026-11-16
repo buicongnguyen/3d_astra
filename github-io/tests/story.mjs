@@ -230,7 +230,7 @@ await suite("story: scenes, the 15-mission campaign map, the defence missions an
     if (mobile) { await tap('#dock-tabs [data-dock="actions"]'); await page.waitForTimeout(120); }
     const flak = page.locator('#commands [data-action="flak"]');
     await flak.waitFor({ state: "visible", timeout: TIMEOUT.step });
-    assert.match(await flak.textContent(), /Flak guns/);
+    assert.match(await flak.textContent(), /Anti-air guns/);
     assert.deepEqual(await page.locator("#commands [data-action]").evaluateAll((t) => t.map((b) => b.dataset.action)), ["worker", "flak", "kite", "hawk"]);
     if (mobile) assert.ok((await flak.boundingBox()).height >= 44, "Flak tile 44 px");
     // Fast-forward to the first raid; the scene starts on its own once a flyer reaches the copper works.
