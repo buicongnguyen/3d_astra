@@ -18,7 +18,14 @@ export const FORD_SHORT = "In the ford";
 // Flyers (sim/air.js): the class line on their card.
 export const AIR_TEXT = "Air: flies over water, walls and cliffs";
 export const AIR_SHORT = "Air";
-export const AIR_HINT = "Only Rangers, Anti-tank soldiers, other units that hit air, and towers with Flak can shoot it.";
+export const AIR_HINT = "Only Rangers, Anti-tank soldiers, other units that hit air, and towers with Anti-air guns can shoot it.";
+// A Sentinel tower's card: can it shoot flyers? (the Anti-air guns research, id `flak`)
+// Short enough for the phone landscape card (about 35 characters), and it says where to go:
+// phones show no tooltip.
+export const ANTI_AIR_OFF = "No anti-air guns: see Command core";
+export const ANTI_AIR_OFF_HINT = "Research Anti-air guns at a level 2 Command core: every Sentinel tower then shoots flyers.";
+export const ANTI_AIR_ON = "Anti-air guns: shoots flyers";
+export const ANTI_AIR_ON_HINT = "Anti-air guns fitted: this tower shoots flyers and deals 1.5× damage to them.";
 // Barrage or Burn line aimed at a deep plateau top nobody on the caster's side can see.
 export const SIGHT_TEXT = "Can't see up there";
 export const CROSSING_TEXT = {

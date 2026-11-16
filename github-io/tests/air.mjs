@@ -143,7 +143,7 @@ await suite("air", async () => {
     await dock("actions");
     const flak = page.locator('#commands [data-action="flak"]');
     await flak.waitFor({ state: "visible", timeout: TIMEOUT.step });
-    assert.match(await flak.textContent(), /Flak guns/);
+    assert.match(await flak.textContent(), /Anti-air guns/);
     const flakBox = await flak.boundingBox();
     if (mobile) assert.ok(flakBox.height >= 44, `${viewport}: Flak tile ${flakBox.height}px`);
     await flak[mobile ? "tap" : "click"]();
@@ -154,6 +154,27 @@ await suite("air", async () => {
     assert.deepEqual(report.tiny, [], `${viewport}: small taps in the tiles`);
     assert.equal(report.wide, false, `${viewport}: no sideways scroll`);
     await shot(page, `air-flak-${viewport}`);
+
+    // 6b. The player's own tower says whether it can shoot flyers: not yet, then after the research.
+    await page.evaluate(() => {
+      const f = window.__frontier, s = f.sim, hq = s.own(0).find((e) => e.type === "hq");
+      const tower = s.own(0).find((e) => e.type === "tower" && e.complete) || s.spawn("tower", 0, hq.x + 9, hq.z + 6);
+      f.view.focusOn(tower.x, tower.z);
+      f.select([tower.id]);
+      f.step(0.05);
+    });
+    await dock("selection");
+    const antiAir = page.locator("#selection-info .anti-air");
+    await antiAir.waitFor({ state: "visible", timeout: TIMEOUT.step });
+    assert.match(await antiAir.textContent(), /No anti-air guns: see Command core/, `${viewport}: a tower without the research`);
+    assert.ok(await antiAir.locator("span").evaluate((el) => el.scrollWidth <= el.parentElement.clientWidth), `${viewport}: the line is not cut off`);
+    await shot(page, `air-tower-noantiair-${viewport}`);
+    await page.evaluate(() => { const f = window.__frontier; f.sim.players[0].flak = true; f.step(0.05); });
+    await page.waitForFunction(() => /Anti-air guns: shoots flyers/.test(document.querySelector("#selection-info .anti-air")?.textContent || ""), null, { timeout: TIMEOUT.step });
+    report = await audit(page, "#selection-info", mobile);
+    assert.deepEqual(report.small, [], `${viewport}: small text on the tower card`);
+    assert.equal(report.wide, false, `${viewport}: no sideways scroll with the tower card`);
+    await shot(page, `air-tower-antiair-${viewport}`);
 
     // 7. The field guide for each flyer: portrait cell, name and the air paragraph.
     await page.evaluate((id) => window.__frontier.select([id]), fight.hawk);

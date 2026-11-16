@@ -2,7 +2,7 @@
 // shoot it (no unit that hits air and no Flak; in Defence, no crew that hits air) says what can.
 // app/ui-extras.js shows it once per match in the fight-hint slot. Pure: the simulation is passed
 // in, so node:test covers it. Every text has an entry in src/locales/vi.json.
-export const AIR_HINT_UNITS = "Flyers overhead! Towers cannot hit them yet. Train Rangers or Anti-tank soldiers, or research Flak at the Command core.";
+export const AIR_HINT_UNITS = "Flyers overhead! Towers cannot hit them yet. Train Rangers or Anti-tank soldiers, or research Anti-air guns at the Command core.";
 export const AIR_HINT_CREWS = "Flyers on the road! Breaker crews cannot hit them. Ranger and Anti-tank crews can.";
 export const AIR_HINT_CREWS_WATCHER = "Flyers on the road! Breaker crews cannot hit them. Ranger, Anti-tank and Watcher crews can.";
 

@@ -178,7 +178,7 @@ export const economy = {
     if (q.type === "flak") {
       this.players[b.team].flak = true;
       b.queue.shift();
-      this.message("Flak guns fitted. Sentinel towers now shoot flyers.", b.team);
+      this.message("Anti-air guns fitted. Sentinel towers now shoot flyers.", b.team);
       return;
     }
     if (q.type === "upgrade") {

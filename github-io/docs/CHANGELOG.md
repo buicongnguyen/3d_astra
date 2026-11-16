@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.19.1: Anti-air guns you can find
+
+Towers could always shoot flyers after a Command core research, but it was called "Flak guns" and nothing on a tower mentioned it, so towers looked unable to hit air at all.
+
+- **"Flak guns" is now "Anti-air guns"** everywhere the player reads it: the Command core tile, its messages, the flyers hint, the field guide, unit cards and the Wings over Copper lines. Rules, cost (125 alloy, 75 energy, level 2 core) and saves are unchanged; the internal id stays `flak`.
+- **Your Sentinel tower's card says whether it can shoot flyers:** "No anti-air guns: see Command core" until the research is done, then "Anti-air guns: shoots flyers". Only in matches with air; Defence towers (crews) are unchanged.
+- Vietnamese already said "Pháo phòng không"; the new lines are translated.
+- `tests/air.mjs` checks both lines at the three viewports and that the text is not cut off.
+
 ## 0.19.0: Story you see, Faction Chronicles, Defence complete (round 3 plan finished)
 
 The rest of the round 3 plan (docs/aaa/PLAN_ROUND3_REFINED_2026-11-13.md: releases 0.19b, 0.20 and 0.21, plus item 18.3). 0.17.0 and 0.18.0 never reached the site, because CI stopped on slow-runner test timing; this release carries them too.
