@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build a Browser RTS"
+  short_description: "Deterministic RTS for the web, the Frontier Command way"
+  default_prompt: "Use $build-browser-rts to plan and build this strategy game: simulation first, commands, bots, then the client, tests at three viewports and deploy."
