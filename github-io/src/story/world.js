@@ -85,7 +85,7 @@ export const CAST = {
     faction: "meridian",
     personality: "Calm, exact and kind underneath; she counts people before she counts crystals.",
     speech: "Short complete sentences. States the fact, then the order. Dry warmth, never shouts.",
-    portrait: "Bust, three-quarter view. Woman in her forties, dark skin, silver-streaked hair tied back. Teal field coat with a mint collar and a small ring-and-line pin, headset on one ear, data slate held against her chest. Steady half-smile, eyes on the viewer.",
+    portrait: "Bust, three-quarter view. East Asian woman in her early forties, black hair with silver streaks, tied back. Teal field coat with a mint collar and a small ring-and-line pin, headset on one ear, data slate held against her chest. Steady half-smile, eyes on the viewer.",
     samples: [
       "Relay online. Now march your squad to the river.",
       "We came to switch the lights on, Commander. Not to take them from anyone.",
