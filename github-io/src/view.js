@@ -645,11 +645,15 @@ export class WorldView {
     this.terrainRoot = new THREE.Group();
     this.scene.add(this.terrainRoot);
     const canvas = document.createElement("canvas");
-    canvas.width = canvas.height = 1024;
+    // PCs on High get a 2048 ground (crisper borders and detail up close); Eco and touch devices
+    // keep 1024 (4x less texture memory and paint time).
+    const groundSize = this.lowPower || matchMedia("(pointer: coarse)").matches ? 1024 : 2048;
+    canvas.width = canvas.height = groundSize;
     const ctx = canvas.getContext("2d");
     // Surfaces, accent patches and painted detail (ground-paint.js); seeded, so identical each build.
     // Plateaus add a lighter top, a bright lip, foot shadows and road ramps (paintPlateaus).
-    paintGround(ctx, this.terrain, 1024, random);
+    paintGround(ctx, this.terrain, groundSize, random);
+    this.groundCanvas = canvas; // the minimap draws its terrain from this (app/minimap.js)
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = this.lowPower ? 1 : 4;

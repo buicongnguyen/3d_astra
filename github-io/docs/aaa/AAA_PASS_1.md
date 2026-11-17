@@ -59,6 +59,22 @@ HUD:
 - A unit roster wider than its row fades at the right edge until scrolled to its end, instead of
   ending in a half portrait.
 
+## Pass 4 (2026-11-18, toward 8/10; re-evaluated in real AI-vs-AI play on the live build)
+- Phone messages: the counter hint has a short phone form ("Vanguard beats Ranger: use Breaker",
+  `counterHint(..., short)`), and phone notices are as wide as their text, so "Under attack!" is
+  a small pill instead of a full-width bar. PC keeps the full sentences.
+- PC dock, nothing selected: the idle buttons sit side by side (they wrapped and ran off the
+  screen in real play; pass 1 wrongly called this a test artefact).
+- The no-selection hint says "Your Command core is down" once the core is gone (it kept saying
+  "Your expedition is ready").
+- Minimap: drawn from the battlefield's own painted ground (`view.groundCanvas`), with soft fog
+  edges, instead of one flat block per 2 m cell.
+- Ground on PCs (High quality, fine pointer): 2048 texture; detail sizes scale with the texture
+  (`k` in ground-paint.js). Phones and Eco stay 1024 and paint exactly as before.
+
+Open: bigger battles (supply, AI wave size, fight camera) change balance and the pinned match
+fingerprint: options go to the owner first.
+
 ## Later (proposed)
 1. **Ground, second step:** a 2048 texture on PCs (keep 1024 on phones), measured with
    `render-budget` for load time and memory.

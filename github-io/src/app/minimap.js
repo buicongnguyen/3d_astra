@@ -21,7 +21,10 @@ export function setupMinimap(S, A) {
       px = (x) => ((x + HALF) / MAP_SIZE) * w,
       pz = (z) => ((z + HALF) / MAP_SIZE) * h;
     // Terrain and road depend only on the map: paint them once per terrain into an offscreen canvas.
-    if (minimapBase?.terrain !== S.sim.terrain || minimapBase.canvas.width !== w || minimapBase.canvas.height !== h) {
+    // Best source: the battlefield's own painted ground (view.groundCanvas), scaled down smoothly, so
+    // the minimap shows the same patches, banks and ramps instead of one flat block per cell.
+    const ground = S.view?.terrain === S.sim.terrain ? S.view.groundCanvas : null;
+    if (minimapBase?.terrain !== S.sim.terrain || minimapBase.ground !== ground || minimapBase.canvas.width !== w || minimapBase.canvas.height !== h) {
       const canvas = document.createElement("canvas");
       canvas.width = w;
       canvas.height = h;
@@ -30,7 +33,11 @@ export function setupMinimap(S, A) {
       const surfaces = surfaceColors(S.sim.terrain.id);
       b.fillStyle = surfaces.dirt;
       b.fillRect(0, 0, w, h);
-      if (S.sim.terrain.id !== "classic")
+      if (ground) {
+        b.imageSmoothingEnabled = true;
+        b.imageSmoothingQuality = "high";
+        b.drawImage(ground, 0, 0, w, h);
+      } else if (S.sim.terrain.id !== "classic")
         for (let z = 0; z < GRID; z++)
           for (let x = 0; x < GRID; x++) {
             b.fillStyle =
@@ -43,7 +50,7 @@ export function setupMinimap(S, A) {
       b.moveTo(px(-25), pz(24));
       b.lineTo(px(25), pz(-24));
       if (S.sim.terrain.id === "classic") b.stroke();
-      minimapBase = { terrain: S.sim.terrain, canvas };
+      minimapBase = { terrain: S.sim.terrain, ground, canvas };
     }
     ctx.drawImage(minimapBase.canvas, 0, 0);
     for (const wall of S.sim.entities) {
@@ -68,9 +75,9 @@ export function setupMinimap(S, A) {
       else { fogPx[o] = 17; fogPx[o + 1] = 31; fogPx[o + 2] = 32; fogPx[o + 3] = 255; }
     }
     minimapFog.fctx.putImageData(minimapFog.image, 0, 0);
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(minimapFog.canvas, 0, 0, w, h);
+    // Smoothed: fog edges are soft gradients, not square cells.
     ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(minimapFog.canvas, 0, 0, w, h);
     // River crossings stay marked under fog (they are part of the map): a bridge is a pale deck
     // with dark rails, the ford a row of pale stepping dots between two short posts.
     if (S.sim.terrain.river)

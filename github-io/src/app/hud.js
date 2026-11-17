@@ -184,7 +184,8 @@ export function setupHud(S, A) {
     document.documentElement.classList.toggle('many-orders', orderCount > 5);
     document.documentElement.classList.toggle('wide-orders', orderCount > 6);
     $("command-context").title = `Command core technology ${S.sim.techLevel()} / 3`;
-    const signature = `${es.map((e) => e.id).join(",")}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${p.flak}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2" || q.type === "flak")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}`;
+    const hasCore = S.sim.own(0).some((b) => b.type === "hq");
+    const signature = `${hasCore}/${es.map((e) => e.id).join(",")}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${p.flak}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2" || q.type === "flak")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}`;
     if (S.lastSelectionKey !== signature) {
       S.lastSelectionKey = signature;
       $("unit-list").innerHTML =
@@ -239,7 +240,7 @@ export function setupHud(S, A) {
             return `<button class="command-tile${t.research ? " research-tile" : ""}${t.partial ? " partial" : ""} state-${t.state}" data-action="${t.action}" data-state="${t.state}"${key ? ` data-hotkey="${key}"` : ""}${t.state === "busy" ? ` style="--p:${(t.progress || 0).toFixed(3)}"` : ""} aria-label="${t.label}${priced}" title="${key ? `${key} · ` : ""}${d.name} · ${d.description}${lockNote}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${hasPortrait(t.type) ? portrait(t.type) : icon(d.icon || t.type)}<span>${t.label}</span>${sub}</button>`;
           })
           .join("") || tactics || (structure ? `<p class="structure-hint">${e.description}</p>` : e?.kind==='building' ? '' :
-        `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : "Your expedition is ready"}</strong><p>${e ? (S.touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : "Select the Command core to train Harvesters, or the Barracks to grow your army."}</p></div>`);
+        `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : hasCore ? "Your expedition is ready" : "Your Command core is down"}</strong><p>${e ? (S.touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : hasCore ? "Select the Command core to train Harvesters, or the Barracks to grow your army." : "Gather your remaining forces and hold on."}</p></div>`);
       $("upgrade-actions").innerHTML = e?.kind === 'building' && es.length === 1 ?
         `<button data-level title="U · Upgrade building">${e.level < 3 ? `<span class="up-name">Upgrade to L${e.level+1}</span><span class="up-cost"><span class="sep"> · </span>${S.sim.levelCost(e).join('/')}</span> <kbd>U</kbd>` : '<span class="up-name">Maximum level 3</span>'}</button>` : '';
       $("command-hint").textContent =

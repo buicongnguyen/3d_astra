@@ -37,6 +37,9 @@
   border: 1px solid #c9a24a; color: #f1e6c4; font-size: 13px; line-height: 1.35; pointer-events: none; }
 :root.dialogue-open:not(.compact-ui) #fight-hint { top: calc(104px + var(--dialogue-h, 64px)); }
 #fight-hint[hidden] { display: none !important; }
+/* Phones: a notice is as wide as its text (a short alert such as "Under attack!" is a small pill,
+   not a full-width bar over the battlefield); long ones still wrap inside the screen. */
+.compact-ui:not(.in-briefing) #notice { width: max-content; max-width: calc(100% - 24px); padding: 7px 14px; }
 #fight-hint .fh-close { pointer-events: auto; flex: none; width: 44px; height: 44px; font-size: 22px; line-height: 1; border-radius: 8px;
   background: transparent; color: inherit; border: 0; }
 /* Phones: a thin line of at most two lines that leaves by itself after 4 s (PHONE_HINT_SECONDS), so it has

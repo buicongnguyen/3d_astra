@@ -27,17 +27,20 @@ export function strongAgainst(a, b) {
 }
 
 // The hint text for an enemy type, or null when nothing the player has is involved.
-export function counterHint(enemyType, ownTypes, availableTypes = Object.keys(D)) {
+// `short`: the phone form, one line over the battlefield ("Vanguard beats Ranger: use Breaker").
+export function counterHint(enemyType, ownTypes, availableTypes = Object.keys(D), short = false) {
   const e = D[enemyType];
   if (!e) return null;
   const weak = ownTypes.find((t) => strongAgainst(enemyType, t));
   if (weak) {
     const answer = availableTypes.find((t) => D[t].kind === "unit" && t !== "worker" && strongAgainst(t, enemyType));
+    if (short) return answer ? `${e.name} beats ${D[weak].name}: use ${D[answer].name}` : `${e.name} beats ${D[weak].name}: pull back`;
     return answer
       ? `${e.name} counters your ${D[weak].name}. Pull them back and bring ${D[answer].name}.`
       : `${e.name} counters your ${D[weak].name}. Pull them back.`;
   }
   const strong = ownTypes.find((t) => strongAgainst(t, enemyType));
+  if (short) return strong ? `Your ${D[strong].name} beats ${e.name}` : null;
   return strong ? `Your ${D[strong].name} counters ${e.name}. Let it lead the fight.` : null;
 }
 
@@ -100,7 +103,7 @@ export function setupUiExtras(S, A) {
       if (!p || p.x < 0 || p.y < 0 || p.x > rect.width || p.y > rect.height) continue;
       const near = army.filter((u) => Math.hypot(u.x - e.x, u.z - e.z) < 18);
       if (!near.length) continue;
-      const text = counterHint(e.type, [...new Set(near.map((u) => u.type))], S.sim.unitRoster(0));
+      const text = counterHint(e.type, [...new Set(near.map((u) => u.type))], S.sim.unitRoster(0), document.documentElement.classList.contains("compact-ui"));
       seen.add(e.type);
       if (text) { showHint(text); return; }
     }

@@ -31,7 +31,8 @@ export function paintGround(ctx, terrain, size, random) {
   const bare = terrain.plateaus?.length ? Object.assign(Object.create(terrain), { plateaus: [] }) : terrain;
   const surface = (x, z) => (bare !== terrain && terrain.onRamp(x, z) ? bare.at(x, z) : terrain.at(x, z));
   // One colour cell per ~1.2 m: borders stay crisp after the upscale (was 2 m, which smeared).
-  const cells = size / 2, small = document.createElement("canvas");
+  const k = size / 1024; // detail below is drawn in 1024-texture pixels, scaled to the texture
+  const cells = Math.min(512, size / 2), small = document.createElement("canvas");
   small.width = small.height = cells;
   const sctx = small.getContext("2d"), image = sctx.createImageData(cells, cells), data = image.data, accent = table.accent;
   for (let y = 0; y < cells; y++)
@@ -68,15 +69,15 @@ export function paintGround(ctx, terrain, size, random) {
   const soft = document.createElement("canvas");
   soft.width = soft.height = size;
   soft.getContext("2d").drawImage(ctx.canvas, 0, 0);
-  ctx.filter = "blur(1.5px)";
+  ctx.filter = `blur(${1.5 * k}px)`;
   ctx.drawImage(soft, 0, 0);
   ctx.filter = "none";
   const scale = size / terrain.size, world = (p) => p / scale - terrain.half;
   const tint = ([r, g, b], a) => `rgba(${r | 0},${g | 0},${b | 0},${a})`;
   const light = rgb(themeFor(terrain.id).sun), dark = rgb(themeFor(terrain.id).cliffDeep);
   // Fine grain everywhere.
-  for (let i = 0; i < 9000; i++) {
-    const x = random() * size, y = random() * size, radius = 1 + random() * 5;
+  for (let i = 0; i < 9000 * k * k; i++) {
+    const x = random() * size, y = random() * size, radius = (1 + random() * 5) * k;
     ctx.fillStyle = random() > 0.5 ? tint(light, random() * 0.07) : tint(dark, random() * 0.08);
     ctx.beginPath();
     ctx.arc(x, y, radius, 0, Math.PI * 2);
@@ -85,32 +86,32 @@ export function paintGround(ctx, terrain, size, random) {
   // Surface detail, drawn where that surface is.
   ctx.lineCap = "round";
   const leaf = rgb(themeFor(terrain.id).leafAlt), shade = rgb(themeFor(terrain.id).leaf);
-  for (let i = 0; i < 11000; i++) {
+  for (let i = 0; i < 11000 * k * k; i++) {
     const x = random() * size, y = random() * size, pick = random(), turn = random(), type = surface(world(x), world(y));
     if (type === "grass") {
       ctx.strokeStyle = pick > 0.45 ? tint(leaf, 0.2 + pick * 0.16) : tint(shade.map((v) => v * 0.6), 0.22);
-      ctx.lineWidth = 1.6;
+      ctx.lineWidth = 1.6 * k;
       ctx.beginPath();
       ctx.moveTo(x, y);
-      ctx.lineTo(x + (turn - 0.5) * 5, y - 4 - pick * 5);
+      ctx.lineTo(x + (turn - 0.5) * 5 * k, y - (4 + pick * 5) * k);
       ctx.stroke();
     } else if (type === "sand" && i % 4 === 0) {
       // Wind ripples, all leaning the same way.
       ctx.strokeStyle = pick > 0.5 ? tint(light, 0.1) : tint(dark, 0.08);
-      ctx.lineWidth = 1.5;
-      const length = 14 + pick * 26, angle = 0.45 + (turn - 0.5) * 0.3;
+      ctx.lineWidth = 1.5 * k;
+      const length = (14 + pick * 26) * k, angle = 0.45 + (turn - 0.5) * 0.3;
       ctx.beginPath();
       ctx.moveTo(x, y);
-      ctx.quadraticCurveTo(x + Math.cos(angle) * length * 0.5 + 3, y + Math.sin(angle) * length * 0.5 - 3, x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+      ctx.quadraticCurveTo(x + Math.cos(angle) * length * 0.5 + 3 * k, y + Math.sin(angle) * length * 0.5 - 3 * k, x + Math.cos(angle) * length, y + Math.sin(angle) * length);
       ctx.stroke();
     } else if ((type === "dirt" || type === "stone") && i % 3 === 0) {
       // Pebbles and clods: a dark contact shadow with a lit top, so bare ground reads as
       // gravelly earth instead of smeared paint (the old zigzag cracks blurred into streaks).
-      const r = 1.1 + pick * 2.2, ox = (turn - 0.5) * 0.8;
+      const r = (1.1 + pick * 2.2) * k, ox = (turn - 0.5) * 0.8 * k;
       ctx.fillStyle = tint(dark, 0.26);
-      ctx.beginPath(); ctx.ellipse(x + 0.6, y + 0.7, r * 1.15, r * 0.8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x + 0.6 * k, y + 0.7 * k, r * 1.15, r * 0.8, 0, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = tint(light, 0.1 + turn * 0.12);
-      ctx.beginPath(); ctx.ellipse(x + ox, y - 0.4, r * 0.85, r * 0.6, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(x + ox, y - 0.4 * k, r * 0.85, r * 0.6, 0, 0, Math.PI * 2); ctx.fill();
     }
   }
   paintPlateaus(ctx, terrain, size);
@@ -126,12 +127,12 @@ export function paintGround(ctx, terrain, size, random) {
       ctx.fillRect(0, Math.min(edge, edge + side * 1.6 * scale), size, 1.6 * scale);
       ctx.strokeStyle = tint(foam, 0.8);
       ctx.lineWidth = Math.max(1.5, scale * 0.16);
-      for (let x = 0; x < size; x += 18) {
+      for (let x = 0; x < size; x += 18 * k) {
         if (random() < 0.25) continue;
         const y = edge + side * (1 + random() * 3);
         ctx.beginPath();
         ctx.moveTo(x, y);
-        ctx.quadraticCurveTo(x + 7, y + side * (1 + random() * 3), x + 12 + random() * 5, y);
+        ctx.quadraticCurveTo(x + 7 * k, y + side * (1 + random() * 3), x + (12 + random() * 5) * k, y);
         ctx.stroke();
       }
     }
