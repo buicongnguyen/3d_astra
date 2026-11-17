@@ -784,32 +784,59 @@ export class WorldView {
   resize() {
     const width = Math.max(1, this.container.clientWidth),
       height = Math.max(1, this.container.clientHeight);
-    if (width === this.width && height === this.height) return;
+    // Portrait phones run the canvas on under the floating dock (CSS --view-cover, px). The camera
+    // frames the uncovered part exactly as before (same scale, focus in its middle); the covered
+    // strip just shows more map, so opening or closing a panel never resizes or jumps the view.
+    // The same for a strip along the top (--view-cover-top: the floating phone tool row).
+    const style = getComputedStyle(this.container), px = (name) => Math.max(0, parseFloat(style.getPropertyValue(name)) || 0);
+    let cover = px("--view-cover"), coverTop = px("--view-cover-top");
+    if (cover + coverTop > height * 0.6) cover = coverTop = 0; // a squashed window: plain framing
+    if (width === this.width && height === this.height && cover === this.cover && coverTop === this.coverTop) return;
     this.width = width;
     this.height = height;
+    this.cover = cover;
+    this.coverTop = coverTop;
+    this.frameHeight = height - cover - coverTop;
     this.renderer.setSize(width, height);
     this.updateCamera();
   }
+  // While a dock panel is open over the bottom strip, that strip is not drawn at all (render() sets
+  // the viewport to the part above it), so phones pay nothing for map nobody can see. The HUD
+  // calls this with false when the panel closes; the strip is then drawn as extra map.
+  setCoverOpen(open) {
+    open = open !== false;
+    if (open === (this.coverOpen !== false)) return;
+    this.coverOpen = open;
+    this.updateCamera();
+  }
+  // The part of the canvas that shows the map right now, in client pixels (minimap outline).
+  visibleRect() {
+    const r = this.renderer.domElement.getBoundingClientRect();
+    return { left: r.left, right: r.right, top: r.top + (this.coverTop || 0), bottom: r.top + (this.drawHeight || this.height) };
+  }
   updateCamera() {
-    const aspect = this.width / this.height;
+    const frame = this.frameHeight || this.height, aspect = this.width / frame, perPixel = this.zoom / frame;
+    const shown = this.coverOpen === false ? this.cover || 0 : 0;
+    this.drawHeight = this.height - (this.cover || 0) + shown;
     this.camera.left = (-this.zoom * aspect) / 2;
     this.camera.right = (this.zoom * aspect) / 2;
-    this.camera.top = this.zoom / 2;
-    this.camera.bottom = -this.zoom / 2;
+    this.camera.top = this.zoom / 2 + (this.coverTop || 0) * perPixel;
+    this.camera.bottom = -this.zoom / 2 - shown * perPixel;
     this.camera.position.copy(this.focus).add(CAMERA_OFFSET);
     this.camera.lookAt(this.focus);
     this.camera.updateProjectionMatrix();
     this.camera.updateMatrixWorld();
     // Vitals bars and selection rings keep a readable size on small screens: a unit's bar
     // is never under about 30 px wide (a phone shows as little as 11 px per world unit).
-    const pixels = this.height / this.zoom, grow = clamp(30 / (1.43 * pixels), 1, 1.9);
+    const pixels = frame / this.zoom, grow = clamp(30 / (1.43 * pixels), 1, 1.9);
     this.barScale = grow;
     this.barTall = 1 + 0.35 * Math.min(1, (grow - 1) * 2);
     this.unitsPerPixel = 1 / pixels;
     // Shadow frustum: cover the farthest visible ground corner (the tilted view reaches about
     // VIEW_DEPTH x zoom deep), then snap its centre to whole shadow texels in light space so
     // shadow edges do not shimmer while the camera pans.
-    const half = Math.min(130, this.zoom * Math.hypot(aspect / 2, VIEW_DEPTH) + 6),
+    // (The strip under a phone's dock reaches nearer the camera: grow the depth to match.)
+    const half = Math.min(130, this.zoom * Math.hypot(aspect / 2, VIEW_DEPTH * (this.height / frame)) + 6),
       shadow = this.sun.shadow.camera;
     if (shadow.right !== half) {
       Object.assign(shadow, { left: -half, right: half, top: half, bottom: -half });
@@ -857,7 +884,7 @@ export class WorldView {
     this.raycaster.setFromCamera(
       new THREE.Vector2(
         ((clientX - rect.left) / rect.width) * 2 - 1,
-        (-(clientY - rect.top) / rect.height) * 2 + 1,
+        (-(clientY - rect.top) / (this.drawHeight || rect.height)) * 2 + 1,
       ),
       this.camera,
     );
@@ -879,7 +906,7 @@ export class WorldView {
     const p = new THREE.Vector3(x, y, z).project(this.camera);
     return {
       x: ((p.x + 1) / 2) * this.width,
-      y: ((1 - p.y) / 2) * this.height,
+      y: ((1 - p.y) / 2) * (this.drawHeight || this.height),
     };
   }
   // The world height to aim at for an entity on screen: a flyer's drawn altitude (plus half its
@@ -915,7 +942,7 @@ export class WorldView {
       const d = Math.hypot(p.x - x, p.y - y),
         radius = Math.max(
           minRadius,
-          ((e.radius + 0.6) * this.height) / this.zoom,
+          (e.radius + 0.6) / this.unitsPerPixel,
         );
       if (d < radius && d / radius < score) {
         best = e;
@@ -1009,7 +1036,8 @@ export class WorldView {
           min = Math.min(min,projected); max = Math.max(max,projected);
         }
       });
-      const height = (max-min) * this.renderer.domElement.getBoundingClientRect().height / this.defaultZoom;
+      // The framed height (a phone's canvas also runs under the tool row and the dock).
+      const height = (max-min) * (this.frameHeight || this.renderer.domElement.getBoundingClientRect().height) / this.defaultZoom;
       root.userData.readabilityScale = Math.min(FEEL.maxModelScale, Math.max(1, FEEL.minPixels / Math.max(height, Number.EPSILON)));
     }
     root.userData.barrel=model.getObjectByName('BarrelRig');
@@ -1324,7 +1352,7 @@ export class WorldView {
     this.environment?.update(sim, dt);
     if (this.life) {
       this.life.quiet = this.reducedMotion.matches;
-      this.life.update(dt, this.camera, this.renderer.domElement.height);
+      this.life.update(dt, this.camera, (this.drawHeight || this.height) * this.renderer.getPixelRatio());
     }
     // Cosmetic clocks stop with the game (dt 0), with reduced motion and when the governor
     // holds everything still. Lamps and crystals breathe; grass leans with the wind.
@@ -1516,6 +1544,9 @@ export class WorldView {
       this.camera.rotateZ(this.shake.offset.roll);
       this.camera.updateMatrixWorld();
     }
+    // Draw only the part not under an open dock panel (setCoverOpen); setSize() resets the viewport.
+    const drawn = this.drawHeight || this.height;
+    this.renderer.setViewport(0, this.height - drawn, this.width, drawn);
     try { this.renderer.render(this.scene, this.camera); }
     finally {
       if (shaking) {

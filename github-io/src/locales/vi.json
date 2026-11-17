@@ -324,6 +324,7 @@
     "Info & stats": "Thông tin",
     "Selected object stats": "Chỉ số đối tượng đã chọn",
     "Attack of first selected unit. Open Info & stats for unit details.": "Sức tấn công của đơn vị đầu tiên được chọn. Mở Thông tin để xem chi tiết đơn vị.",
+    "Lowest and highest attack in the selection. Open Info & stats for unit details.": "Sức tấn công thấp nhất và cao nhất trong nhóm đã chọn. Mở Thông tin để xem chi tiết đơn vị.",
     "Move": "Di chuyển",
     "Attack": "Tấn công",
     "Attack-move": "Tiến đánh",

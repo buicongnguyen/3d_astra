@@ -3,7 +3,9 @@
 ## Unreleased: AAA pass 1 (plan: docs/aaa/AAA_PASS_1.md)
 
 - **Sharper ground:** the ground texture is painted at about 1.2 m per colour cell instead of 2 m, with half the blur, so grass and dirt borders stay crisp. Bare dirt and stone get small pebbles and clods (shadow plus lit top) instead of zigzag cracks that blurred into smears. Paint only: rules, saves and the match fingerprint are unchanged.
-- **Phones, nothing selected:** the Selection tab no longer shows greyed-out orders with the idle row running over them. It shows only "Awaiting your command"; the floating idle buttons already jump to idle Harvesters and army.
+- **Phones, nothing selected:** the Selection tab no longer shows greyed-out orders with the idle row running over them; the floating idle buttons already jump to idle Harvesters and army.
+- **More map on portrait phones:** with nothing selected, the Selection panel shrinks to one slim bar ("Awaiting your command" and Info & stats) and the map fills the screen down to it (about 70% of a 390x844 screen, was 53%). With a panel open the view is framed exactly as before, and the hidden strip under the panel is not drawn, so it costs nothing. The view never resizes when you switch tabs.
+- **Tidier phone battle HUD:** the top tool row's seven buttons share the width equally; six orders sit as two rows of three; a group's attack shows its range ("ATK 4–13") instead of "ATK*" for the first unit only; a long unit roster fades at the edge to show it scrolls.
 
 ## 0.19.1: Anti-air guns you can find
 

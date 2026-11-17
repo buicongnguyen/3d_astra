@@ -207,7 +207,7 @@ export function setupMinimap(S, A) {
     }
     ctx.strokeStyle = "rgba(218,239,219,.7)";
     ctx.lineWidth = 1;
-    const rect = S.view.renderer.domElement.getBoundingClientRect();
+    const rect = S.view.visibleRect(); // the map actually shown (not under a phone's dock)
     ctx.beginPath();
     for (const [i, [x, y]] of [
       [rect.left, rect.top],

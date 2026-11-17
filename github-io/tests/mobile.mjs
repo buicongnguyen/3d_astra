@@ -321,9 +321,11 @@ try {
   });
   await tap("#box-select");
   rect = await page.locator("#world canvas:not(.activity-overlay)").boundingBox();
+  // Portrait phones run the canvas under the tool row and the dock: drag across the framed part.
+  const cover = await read(() => ({ top: window.__frontier.view.coverTop || 0, bottom: window.__frontier.view.cover || 0 }));
   await gesture([
-    [{ id: 1, x: rect.x + 8, y: rect.y + 55 }],
-    [{ id: 1, x: rect.x + rect.width - 8, y: rect.y + rect.height - 10 }],
+    [{ id: 1, x: rect.x + 8, y: rect.y + cover.top + 55 }],
+    [{ id: 1, x: rect.x + rect.width - 8, y: rect.y + rect.height - cover.bottom - 10 }],
   ]);
   assert.ok(
     (await read(() => window.__frontier.selected.size)) > 1,

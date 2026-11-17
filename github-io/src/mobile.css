@@ -471,6 +471,9 @@ button {
 }
 .compact-ui.many-orders .order-buttons {
   grid-auto-flow: row;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.compact-ui.many-orders.wide-orders .order-buttons {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .compact-ui .order-buttons kbd {
