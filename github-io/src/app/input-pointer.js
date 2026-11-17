@@ -140,8 +140,8 @@ export function setupInputPointer(S, A) {
       rectangle: drawTouchBox,
       panZoom: (dx, dy, ratio) => {
         S.view.screenPan(
-          (-dx * S.view.zoom) / S.view.height,
-          (dy * S.view.zoom) / S.view.height,
+          (-dx * S.view.unitsPerPixel),
+          (dy * S.view.unitsPerPixel),
         );
         if (ratio !== 1) S.view.zoomBy(S.view.zoom * (ratio - 1));
       },
@@ -180,8 +180,8 @@ export function setupInputPointer(S, A) {
       S.hoverStale = true;
       if (S.drag?.button === 1) {
         S.view.screenPan(
-          (-(e.clientX - S.drag.lastX) * S.view.zoom) / S.view.height,
-          ((e.clientY - S.drag.lastY) * S.view.zoom) / S.view.height,
+          (-(e.clientX - S.drag.lastX) * S.view.unitsPerPixel),
+          ((e.clientY - S.drag.lastY) * S.view.unitsPerPixel),
         );
         S.drag.lastX = e.clientX;
         S.drag.lastY = e.clientY;

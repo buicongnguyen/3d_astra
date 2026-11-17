@@ -14,7 +14,9 @@ export function selectionStatus(sim, entities) {
   const e = entities[0], group = entities.length > 1;
   const hp = entities.reduce((n,u)=>n+u.hp,0), maxHp = entities.reduce((n,u)=>n+u.maxHp,0);
   const shield = entities.reduce((n,u)=>n+u.shield,0), maxShield = entities.reduce((n,u)=>n+u.maxShield,0);
-  const attack = Number(sim.attackValue(e).toFixed(1));
+  // A group shows the lowest and highest attack in it ("4–12"), one number when they agree.
+  const attacks = entities.map(u => Number(sim.attackValue(u).toFixed(1))), atkLow = Math.min(...attacks), atkHigh = Math.max(...attacks);
+  const attack = atkLow === atkHigh ? atkLow : `${atkLow}–${atkHigh}`;
   let status = e.carry ? `Cargo ${e.carry}/10 ${e.carryType}` : entities.some(u=>u.attacking) ? 'Attacking' : e.orders[0]?.type || (e.kind === 'building' ? 'Operational' : 'Standing by');
   if (!e.complete) status = buildingActivity(sim,e)?.label==='Needs Harvester'?'Needs Harvester':'';
   else if (e.levelJob) status = '';
@@ -50,7 +52,7 @@ export function selectionStatus(sim, entities) {
     <dl class="unit-metrics" aria-label="Selected object stats">
     ${metric('HP',`${number(hp)}/${number(maxHp)}`,`Health ${Math.ceil(hp)} of ${maxHp}`,['hp',ratio(hp,maxHp)])}
     ${metric('Shield',`${number(shield)}/${number(maxShield)}`,`Shield ${Math.ceil(shield)} of ${maxShield}`,['sh',ratio(shield,maxShield)])}
-    ${metric(group?'ATK*':'ATK',attack,group?'Attack of first selected unit. Open Info & stats for unit details.':'Attack damage per hit')}
+    ${metric('ATK',attack,group?'Lowest and highest attack in the selection. Open Info & stats for unit details.':'Attack damage per hit')}
     ${e.support&&!group?metric('Restore',`${e.support}/s`,'Health restored per second'):''}</dl>
     ${activity}${hiddenLine}${airLine}</div>`;
 }

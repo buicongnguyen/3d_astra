@@ -16,6 +16,15 @@
 .idle-row button[disabled] { opacity: 0.5; }
 .idle-row kbd { font-size: 11px; opacity: 0.8; }
 .idle-row b { font-size: 13px; }
+/* Phones with nothing selected: the orders have nothing to act on (they were greyed out and the idle
+   row ran over them), and the floating idle buttons (#idle-chips) already do the idle row's job.
+   Info & stats (the field guide) stays: it is the phone's way into the guide. */
+.compact-ui .selection-panel:not(.has-entity) .order-buttons > :not(#field-guide),
+.compact-ui .selection-empty .idle-row { display: none; }
+#unit-list.more-right {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 40px), transparent);
+}
 .selection-empty { flex-wrap: wrap; }
 .selection-empty > div { min-width: 0; }
 

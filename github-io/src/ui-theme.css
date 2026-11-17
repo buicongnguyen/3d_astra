@@ -457,7 +457,13 @@ input:focus-visible {
   }
   .compact-ui:not(.in-briefing) #mission-toggle .icon { width: 19px; height: 19px; }
   .compact-ui:not(.in-briefing) .touch-controls { top: 2px; }
-  .compact-ui:not(.in-briefing) #world { top: 48px; }
+  /* One even row: labelled and icon buttons share the width equally (icons were narrower). */
+  .compact-ui:not(.in-briefing) .touch-controls button,
+  .compact-ui:not(.in-briefing) .touch-controls #clear-selection,
+  .compact-ui:not(.in-briefing) .touch-controls #zoom-in,
+  .compact-ui:not(.in-briefing) .touch-controls #zoom-out { flex: 1 1 0; min-width: 40px; } /* 40: all seven fit a 320 px phone (mobile.css) */
+  /* The tool row floats over the map; the camera frames below it (--view-cover-top, view.js). */
+  .compact-ui:not(.in-briefing) #world { top: 0; --view-cover-top: 48px; }
   .compact-ui:not(.in-briefing).objectives-open #mission-objectives { top: 4px; left: 8px; right: auto; }
 }
 
@@ -469,9 +475,27 @@ input:focus-visible {
 .compact-ui #notice { font-size: 12px; padding: 7px 10px; }
 .compact-ui .selection-panel.has-entity .selection-heading h3 { font-size: 14px; }
 /* Switching Selection / Actions used to change the dock height, which resized the 3D view and
-   flickered. The view now always reserves the tallest dock; a taller panel simply overlaps. */
+   flickered. The view now runs on under the dock to the tabs and never resizes: the camera frames
+   the part above the tallest dock (--view-cover, read by view.js resize()) at the same scale as
+   before, so the strip under the dock is extra map, seen whenever the dock panel is closed. */
 @media (max-aspect-ratio: 1.35) {
-  .compact-ui:not(.in-briefing) #world { bottom: calc(202px + var(--tabs-height) + var(--safe-bottom)); }
+  .compact-ui:not(.in-briefing) #world { bottom: calc(var(--tabs-height) + var(--safe-bottom)); --view-cover: 202px; }
+  /* The idle buttons stay just above the dock, where the view used to end. */
+  .compact-ui:not(.in-briefing) #idle-chips { bottom: calc(var(--view-cover) + 8px); }
+  /* Selection tab with nothing selected: one slim bar on the tabs (title + Info & stats), and the
+     map shows through above it. */
+  .compact-ui:not(.in-briefing)[data-dock="selection"] .selection-panel:not(.has-entity) {
+    position: absolute; left: 0; right: 0; bottom: 0; height: auto; min-height: 56px;
+    flex-direction: row; align-items: center; gap: 10px; padding: 6px 6px 6px 12px;
+  }
+  .compact-ui:not(.in-briefing) .selection-panel:not(.has-entity) > .panel-label,
+  .compact-ui:not(.in-briefing) .selection-panel:not(.has-entity) .selection-empty p { display: none; }
+  .compact-ui:not(.in-briefing) .selection-panel:not(.has-entity) #selection-info { flex: 1 1 auto; min-width: 0; padding: 0; }
+  .compact-ui:not(.in-briefing) .selection-panel:not(.has-entity) .selection-empty { flex-wrap: nowrap; align-items: center; gap: 10px; margin: 0; padding: 0; }
+  .compact-ui:not(.in-briefing) .selection-panel:not(.has-entity) .selection-empty > .icon { width: 22px; height: 22px; flex: 0 0 22px; }
+  .compact-ui:not(.in-briefing) .selection-panel:not(.has-entity) .selection-empty h3 { margin: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .compact-ui:not(.in-briefing) .selection-panel:not(.has-entity) .order-buttons { display: flex; flex: 0 0 auto; margin: 0; padding: 0; border: 0; }
+  .compact-ui:not(.in-briefing) .selection-panel:not(.has-entity) #field-guide { min-height: 44px; padding: 0 14px; }
 }
 @media (max-aspect-ratio: 1.35) {
   .compact-ui:not(.in-briefing) { --dock-height: 202px; }

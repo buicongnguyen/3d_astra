@@ -317,7 +317,7 @@ try {
         // A restarted match begins with Harvesters at work, which can draw part kinds the staged scene
         // never showed; a leak would be growth from one restart to the next.
         return {shared,teamSeparate,enemyUnchanged,teamRecolored,pickable,remembered,unexploredHidden,depletedHidden,
-          noGrowth:v.batches.batches.size === firstRestart && firstRestart - allocations <= 4, growth:[allocations,firstRestart,v.batches.batches.size]};
+          noGrowth:v.batches.batches.size === firstRestart && firstRestart - allocations <= 6, /* 6: a phone restart shows the map under its closed dock too */ growth:[allocations,firstRestart,v.batches.batches.size]};
       });
       console.log('batches before/after restarts', state.growth); delete state.growth;
       for (const [name,passed] of Object.entries(state)) assert.equal(passed, true, `${scenario.name}: ${name}`);

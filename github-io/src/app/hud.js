@@ -103,6 +103,14 @@ export function setupHud(S, A) {
   }
 
   let lastInfoHtml = null;
+  // A unit roster wider than its row fades out at the right edge (more to scroll) instead of
+  // ending in a portrait cut in half; the fade goes once the row is scrolled to its end.
+  function rosterFade() {
+    const list = $("unit-list");
+    if (!list) return;
+    if (!list.dataset.fadeBound) { list.dataset.fadeBound = "1"; list.addEventListener("scroll", rosterFade, { passive: true }); }
+    list.classList.toggle("more-right", list.scrollLeft + list.clientWidth < list.scrollWidth - 2);
+  }
 
   function updateUI() {
     renderTutorial();
@@ -140,6 +148,8 @@ export function setupHud(S, A) {
       e = es[0];
     document.querySelector('.selection-panel').classList.toggle('has-entity',!!e);
     document.querySelector('.selection-panel').classList.toggle('has-roster',es.length>1);
+    // Portrait phones: the strip under the dock is drawn only while the slim empty bar is up.
+    S.view?.setCoverOpen?.(!(document.documentElement.dataset.dock === "selection" && !e));
     $("selection-count").textContent =
       es.length > 1
         ? `${es.length} SELECTED`
@@ -169,7 +179,10 @@ export function setupHud(S, A) {
     $("rally-order").hidden = !es.some(u => u.kind === 'building' && u.team === 0 && u.complete && u.trains?.length);
     // Desktop hides unit-only orders while only buildings are selected.
     document.documentElement.classList.toggle('no-units', !es.some(u => u.kind === 'unit'));
-    document.documentElement.classList.toggle('many-orders', [...document.querySelectorAll('.order-buttons button')].filter(b => !b.hidden).length > 5);
+    // Two rows of orders on phones: 6 sit as 3 + 3 (was 4 + 2), 7 or 8 as four columns.
+    const orderCount = [...document.querySelectorAll('.order-buttons button')].filter(b => !b.hidden).length;
+    document.documentElement.classList.toggle('many-orders', orderCount > 5);
+    document.documentElement.classList.toggle('wide-orders', orderCount > 6);
     $("command-context").title = `Command core technology ${S.sim.techLevel()} / 3`;
     const signature = `${es.map((e) => e.id).join(",")}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${p.flak}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2" || q.type === "flak")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}`;
     if (S.lastSelectionKey !== signature) {
@@ -185,6 +198,7 @@ export function setupHud(S, A) {
               .join("") +
             (es.length > 18 ? `<span>+${es.length - 18}</span>` : "")
           : "";
+      requestAnimationFrame(rosterFade);
       // Production tiles with their state (research-tiles.js): research is one slot that moves forward
       // (pick a branch, research it, tier II, done); locked tiles name the building level they need.
       const production = e && es.length === 1 && e.kind === "building" ? productionTiles(S.sim, e, { choosing: S.researchOpen }) : null;
