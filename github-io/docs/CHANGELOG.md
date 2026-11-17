@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased: AAA pass 1 (plan: docs/aaa/AAA_PASS_1.md)
+
+- **Sharper ground:** the ground texture is painted at about 1.2 m per colour cell instead of 2 m, with half the blur, so grass and dirt borders stay crisp. Bare dirt and stone get small pebbles and clods (shadow plus lit top) instead of zigzag cracks that blurred into smears. Paint only: rules, saves and the match fingerprint are unchanged.
+- **Phones, nothing selected:** the Selection tab no longer shows greyed-out orders with the idle row running over them. It shows only "Awaiting your command"; the floating idle buttons already jump to idle Harvesters and army.
+
 ## 0.19.1: Anti-air guns you can find
 
 Towers could always shoot flyers after a Command core research, but it was called "Flak guns" and nothing on a tower mentioned it, so towers looked unable to hit air at all.

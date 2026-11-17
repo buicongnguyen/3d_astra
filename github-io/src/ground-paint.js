@@ -30,7 +30,8 @@ export function paintGround(ctx, terrain, size, random) {
   // paintPlateaus() draws the road itself as a strip, so the ramp no longer reads as a blob.
   const bare = terrain.plateaus?.length ? Object.assign(Object.create(terrain), { plateaus: [] }) : terrain;
   const surface = (x, z) => (bare !== terrain && terrain.onRamp(x, z) ? bare.at(x, z) : terrain.at(x, z));
-  const cells = size / 4, small = document.createElement("canvas");
+  // One colour cell per ~1.2 m: borders stay crisp after the upscale (was 2 m, which smeared).
+  const cells = size / 2, small = document.createElement("canvas");
   small.width = small.height = cells;
   const sctx = small.getContext("2d"), image = sctx.createImageData(cells, cells), data = image.data, accent = table.accent;
   for (let y = 0; y < cells; y++)
@@ -67,7 +68,7 @@ export function paintGround(ctx, terrain, size, random) {
   const soft = document.createElement("canvas");
   soft.width = soft.height = size;
   soft.getContext("2d").drawImage(ctx.canvas, 0, 0);
-  ctx.filter = "blur(3px)";
+  ctx.filter = "blur(1.5px)";
   ctx.drawImage(soft, 0, 0);
   ctx.filter = "none";
   const scale = size / terrain.size, world = (p) => p / scale - terrain.half;
@@ -102,14 +103,14 @@ export function paintGround(ctx, terrain, size, random) {
       ctx.moveTo(x, y);
       ctx.quadraticCurveTo(x + Math.cos(angle) * length * 0.5 + 3, y + Math.sin(angle) * length * 0.5 - 3, x + Math.cos(angle) * length, y + Math.sin(angle) * length);
       ctx.stroke();
-    } else if ((type === "dirt" || type === "stone") && i % 5 === 0) {
-      ctx.strokeStyle = tint(dark, 0.14);
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x + (turn - 0.5) * 12, y + (pick - 0.5) * 12);
-      ctx.lineTo(x + (pick - 0.5) * 16, y + (turn - 0.5) * 16);
-      ctx.stroke();
+    } else if ((type === "dirt" || type === "stone") && i % 3 === 0) {
+      // Pebbles and clods: a dark contact shadow with a lit top, so bare ground reads as
+      // gravelly earth instead of smeared paint (the old zigzag cracks blurred into streaks).
+      const r = 1.1 + pick * 2.2, ox = (turn - 0.5) * 0.8;
+      ctx.fillStyle = tint(dark, 0.26);
+      ctx.beginPath(); ctx.ellipse(x + 0.6, y + 0.7, r * 1.15, r * 0.8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = tint(light, 0.1 + turn * 0.12);
+      ctx.beginPath(); ctx.ellipse(x + ox, y - 0.4, r * 0.85, r * 0.6, 0, 0, Math.PI * 2); ctx.fill();
     }
   }
   paintPlateaus(ctx, terrain, size);
