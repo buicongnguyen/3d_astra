@@ -35,10 +35,13 @@ const scenarios = [
   // 0.21: a river level with the west bridge blown and a pontoon over the east crossing, the wave
   // spread over all three roads. River scenery (water, reeds, fish, dragonflies) costs more than the
   // valley: Twin Bridges measured 141 draws with both bridges standing at 0.17; its line is 135.
+  // Bosses (docs/aaa/BOSSES.md): battle-eco with the Iron Vanguard among the enemy army, an attack marked
+  // on the ground. The boss is one draw per rigid part (seven) plus its mark and bar: 116 draws on 2026-11-18 (battle-eco 107).
+  {name:'boss-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, boss:true},
   {name:'defence-river-eco', defence:'d-bridges', mobile:true, zoom:78, focus:[0,0], reveal:true, wave:120, towers:10, triangles:600000, crossings:{'-22':'blown', '22':'pontoon'}},
 ];
 const results = [];
-const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135};
+const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'boss-battle-eco':120};
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -68,6 +71,7 @@ try {
     }
     // Flyer models load in the background in play (WorldView.preloadModels); here, before the frozen scene.
     if (scenario.air) await page.evaluate(types => window.__frontier.view.preloadModels(types), [...new Set(scenario.air.map(([type]) => type))]);
+    if (scenario.boss) await page.evaluate(() => window.__frontier.view.preloadModels(['ironvanguard']));
     await page.evaluate(scenario => {
       window.__freezeFrames = true;
       const f = window.__frontier;
@@ -110,6 +114,12 @@ try {
           const teams = scenario.teams || 2, team = i % teams, row = Math.floor(i / teams);
           s.spawn(kinds[row % kinds.length], team, -8 + row % 6 * 2, (team ? -1 : 1) * (6 + Math.floor(row / 6) * 2));
         }
+      }
+      if (scenario.boss) {
+        // Awake and in its warning, its 4.5 m mark on the player's front rank (sim/bosses.js state, set directly).
+        const b = s.spawn('ironvanguard', 1, -3, -12, true, true);
+        b.bs = {phase:'warning', stage:1, cycle:0, post:{x:b.x, z:b.z}, zone:1, until:s.time + 3};
+        s.dangerZones = [{id:1, boss:b.id, team:1, attack:'four-gun-burst', shape:'circle', x:-3, z:6, radius:4.5, angle:0, from:s.time - 1, at:s.time + 2, until:s.time + 3}];
       }
       for (const [i, [type, team]] of (scenario.air || []).entries())
         s.spawn(type, team, -6 + (i % 4) * 3, (team ? -1 : 1) * 3, true, true);

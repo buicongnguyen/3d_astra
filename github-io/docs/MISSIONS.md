@@ -76,7 +76,9 @@ Status: format agreed 2026-11-10; engine and campaign in progress.
 
 **Lose conditions:** `coreLost` (all player cores gone; default when `rules.playerBase` is true), `tagLost` (`tag`), `time` (`seconds`), `armyLost` (no player units left; for no-base missions).
 
-**Trigger conditions (`when`)**: `time` (seconds), `enter` (region + team), `objective` + `is` (`done`/`failed`), `event` (a simulation event type: `incoming`, `built`, `levelup`), `tagHpBelow`, `tagDead` (tag), `count` (`{ team, type, atLeast }`), `pointOwned` (`{ point, team }`), and in a mission under the Defence rules `wave` (wave n beaten) and `waveStart` (wave n started). Triggers fire once unless `repeat: seconds` is given.
+**Trigger conditions (`when`)**: `time` (seconds), `enter` (region + team), `objective` + `is` (`done`/`failed`), `event` (a simulation event type: `incoming`, `built`, `levelup`, and `bossWake` in a mission with a boss), `tagHpBelow`, `tagDead` (tag), `count` (`{ team, type, atLeast }`), `pointOwned` (`{ point, team }`), `bossStage` (2 or 3: the boss has fallen to 2/3 or 1/3 of its health), and in a mission under the Defence rules `wave` (wave n beaten) and `waveStart` (wave n started). Triggers fire once unless `repeat: seconds` is given.
+
+**Bosses** (docs/aaa/BOSSES.md): spawn one like any unit (`{ spawn: "ironvanguard", team: 1, at, tag, exact: true, hpByDifficulty }`); a second boss is refused while one lives. Its objective is `destroyTag`, its entrance a scene on `{ event: "bossWake" }`, its stage lines `{ bossStage: n }`, its fall `tagDead`. Mission 3 is the first: the Iron Vanguard guards the north siphon.
 
 **Actions (`do`)**: `decide` (a decision id, see below), `say` (`who`, `text`), `wave` (`team`, `units`, `from` region or `"enemyBase"`, `target` region or `"playerBase"`), `spawn` (as in setup), `reveal` (objective id), `complete`/`fail` (objective id), `give` (`{ alloy, energy }` to the player), `camera` (region; a short pan the player can cancel), `ping` (region), `aiSpeed` (new speed), `music` (`calm`/`tense`/`battle`), `scene` (a staged scene id, see below).
 

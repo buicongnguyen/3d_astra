@@ -1,0 +1,245 @@
+import * as THREE from "three";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+import { adoptBatchedParts } from "./entity-batches.js";
+import { FEEL } from "./camera-shake.js";
+import { BOSSES } from "./sim/bosses.js";
+
+// Bosses on the battlefield (rules: src/sim/bosses.js, docs/aaa/BOSSES.md): the model with its moving
+// parts, the danger-zone marks on the ground, gun glow and recoil, the core lit only while exposed,
+// stage shake and a long fall. Draw cost: one draw per rigid part (seven, the core an eighth while it
+// is lit) and one per marked zone; everything goes through the entity batches like any unit.
+
+// Group nodes of a ported boss model (tools/port-boss-model.mjs) and what the runtime calls them.
+// leg_* swing with the walk (view.js); TurretRig turns toward the target like a vehicle turret.
+const PARTS = [["LeftLeg", "leg_L", null], ["RightLeg", "leg_R", null], ["Turret", "TurretRig", null], ["ArmL", "BossArmL", "Turret"], ["ArmR", "BossArmR", "Turret"], ["LightGun", "BossGun", "Turret"]];
+const reflects = (m) => m.metalness >= 0.5 || m.roughness <= 0.25;
+
+// One template per team: each rigid part's painted pieces become a single mesh whose vertices carry
+// their colour (team colour for `Team`) and finish, drawn with the shared baked material; the core
+// stays its own glowing mesh.
+export function bossTemplates(scene, { colors, glows, bakedMaterial }) {
+  scene.updateMatrixWorld(true);
+  const nodes = new Map(PARTS.map(([name]) => [name, scene.getObjectByName(name)]));
+  const owners = new Map(); // three node -> part name
+  for (const [name, node] of nodes) if (node) owners.set(node, name);
+  const pieces = []; // { part, mesh, matrix }
+  scene.traverse((o) => {
+    if (!o.isMesh) return;
+    let p = o.parent;
+    while (p && !owners.has(p)) p = p.parent;
+    const part = p ? owners.get(p) : null, base = p ? p.matrixWorld : new THREE.Matrix4();
+    pieces.push({ part, mesh: o, matrix: base.clone().invert().multiply(o.matrixWorld) });
+  });
+  return colors.map((teamHex, index) => {
+    const template = new THREE.Group();
+    template.name = "BossModel";
+    const groups = new Map([[null, template]]);
+    for (const [name, rename, parent] of PARTS) {
+      const node = nodes.get(name);
+      if (!node) continue;
+      const g = new THREE.Group();
+      g.name = rename;
+      const above = parent ? nodes.get(parent).matrixWorld : new THREE.Matrix4();
+      above.clone().invert().multiply(node.matrixWorld).decompose(g.position, g.quaternion, g.scale);
+      (groups.get(parent) || template).add(g);
+      groups.set(name, g);
+    }
+    const team = new THREE.Color(teamHex), glow = new THREE.Color(glows[index] ?? 0xff9a3c);
+    for (const [part, group] of groups) {
+      const mine = pieces.filter((p) => p.part === part);
+      const painted = mine.filter((p) => !p.mesh.material.name.startsWith("BossCore"));
+      if (painted.length) {
+        const geometries = painted.map(({ mesh, matrix }) => {
+          const g = (mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone()).applyMatrix4(matrix), m = mesh.material;
+          const n = g.getAttribute("position").count, shade = g.getAttribute("color"), color = m.name.startsWith("Team") ? team : m.color;
+          const rgb = new Float32Array(n * 3), finish = new Float32Array(n * 2);
+          for (let i = 0; i < n; i++) {
+            const k = shade ? shade.getX(i) : 1;
+            rgb[i * 3] = color.r * k; rgb[i * 3 + 1] = color.g * k; rgb[i * 3 + 2] = color.b * k;
+            finish[i * 2] = m.roughness; finish[i * 2 + 1] = m.metalness;
+          }
+          for (const name of Object.keys(g.attributes)) if (name !== "position" && name !== "normal") g.deleteAttribute(name);
+          g.setAttribute("color", new THREE.BufferAttribute(rgb, 3));
+          g.setAttribute("finish", new THREE.BufferAttribute(finish, 2));
+          return g;
+        });
+        const merged = mergeGeometries(geometries, false);
+        geometries.forEach((g) => g.dispose());
+        const mesh = new THREE.Mesh(merged, bakedMaterial(painted.some((p) => reflects(p.mesh.material))));
+        mesh.name = "baked";
+        mesh.castShadow = mesh.receiveShadow = true;
+        group.add(mesh);
+      }
+      for (const { mesh: source, matrix } of mine.filter((p) => p.mesh.material.name.startsWith("BossCore"))) {
+        // A little larger than modelled, so the lit core reads at RTS distance.
+        const geometry = source.geometry.clone().applyMatrix4(matrix);
+        geometry.computeBoundingBox();
+        const middle = geometry.boundingBox.getCenter(new THREE.Vector3());
+        geometry.translate(-middle.x, -middle.y, -middle.z).scale(1.5, 1.5, 1.5).translate(middle.x, middle.y, middle.z + 0.03);
+        const core = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ name: "BossCore", color: glow, emissive: glow, emissiveIntensity: 2.2, roughness: 0.3 }));
+        core.name = "BossCore";
+        core.visible = false;
+        group.add(core);
+      }
+    }
+    adoptBatchedParts(template);
+    return template;
+  });
+}
+
+// The ground mark of a danger zone: a filled shape with a bright edge that sweeps from the middle
+// outward as the warning runs down, then flashes while the rounds land. One draw each.
+const ZONE_VERTEX = `varying vec2 vLocal; uniform vec4 uBox; void main() { vLocal = mix(uBox.xy, uBox.zw, uv); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`;
+const ZONE_FRAGMENT = `
+varying vec2 vLocal;
+uniform int uShape; uniform float uRadius, uLength, uHalf, uWidth, uProgress, uFire, uTime, uEdge;
+uniform vec3 uColor, uHot;
+void main() {
+  float d, fill;
+  if (uShape == 0) { d = length(vLocal) - uRadius; fill = length(vLocal) / uRadius; }
+  else {
+    float u = vLocal.y, v = abs(vLocal.x), w = uShape == 1 ? max(u, 0.0) * uHalf : uWidth;
+    d = max(max(-u, u - uLength), v - w);
+    fill = u / uLength;
+  }
+  if (d > uEdge) discard;
+  float edge = 1.0 - smoothstep(0.0, uEdge, abs(d));
+  float inside = step(d, 0.0);
+  float swept = inside * step(fill, uProgress);
+  float pulse = 0.5 + 0.5 * sin(uTime * 9.0);
+  float stripes = 0.5 + 0.5 * sin((vLocal.x + vLocal.y) * 3.2 - uTime * 4.0);
+  vec3 color = mix(uColor, uHot, uFire);
+  float alpha = max(edge * (0.75 + 0.25 * pulse), inside * (0.16 + 0.1 * stripes) + swept * 0.22) + uFire * inside * 0.35;
+  gl_FragColor = vec4(color, min(0.92, alpha));
+}`;
+const SHAPES = { circle: 0, cone: 1, line: 2 };
+
+export class BossView {
+  constructor(view) {
+    this.view = view;
+    this.marks = new Map(); // zone id -> mesh
+    this.chargeClock = 0;
+  }
+  // Called from WorldView.createEntity for a boss: its parts, a vitals bar above its head.
+  dress(root, e) {
+    const model = root.userData.model, find = (name) => model.getObjectByName(name);
+    let core = null;
+    model.traverse((o) => { if (o.name === "BossCore") core = o; });
+    root.userData.boss = { armL: find("BossArmL"), armR: find("BossArmR"), gun: find("BossGun"), core, recoil: [0, 0, 0, 0], raise: 0, glow: 0, id: e.id };
+    for (const arm of [root.userData.boss.armL, root.userData.boss.armR]) if (arm) arm.userData.base = arm.position.clone();
+    root.userData.bar.position.y = 6.4;
+    root.userData.bar.userData.base *= 1.6;
+  }
+  event(event, sim) {
+    const view = this.view;
+    if (event.type === "shot" && event.boss != null) {
+      const u = view.objects.get(event.boss)?.userData.boss;
+      if (u) u.recoil[event.muzzle] = 0.16;
+    } else if (event.type === "bossStage" && sim.isVisible(event)) {
+      view.shake.add(FEEL.buildingTrauma, Math.hypot(event.x - view.focus.x, event.z - view.focus.z), view.shakeEnabled());
+      view.fx.explosion({ x: event.x, y: 3, z: event.z }, 0.9, { x: event.x, z: event.z, team: event.team }, false);
+    } else if (event.type === "bossDefeated") {
+      const d = view.dying.find((x) => x.object.userData.boss?.id === event.id);
+      if (d) { d.kind = "boss"; d.life = 3.6; }
+      if (sim.isVisible(event)) {
+        view.fx.bossDeath(event);
+        view.shake.add(FEEL.coreTrauma, Math.hypot(event.x - view.focus.x, event.z - view.focus.z), view.shakeEnabled());
+        if (view.feelEnabled() && view.onScreen(event)) view.hitStop = FEEL.stopSeconds;
+      }
+    }
+  }
+  // A fallen boss kneels, pitches forward and sinks (view.js updateDying, kind "boss").
+  fall(d, t, motion) {
+    const m = d.object.userData.model, ease = (x) => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };
+    const shake = motion ? Math.max(0, 1 - t / 1.4) * 0.12 : 0;
+    d.object.position.set(d.x + Math.sin(t * 57) * shake, d.baseY - ease((t - 0.9) / 1.6) * 1.2 - ease((t - (d.life - 0.9)) / 0.9) * 2.4, d.z + Math.cos(t * 49) * shake);
+    m.rotation.x = ease((t - 0.5) / 1.4) * 0.55;
+    m.rotation.z = d.tilt * ease((t - 0.5) / 1.6) * 0.12;
+  }
+  update(sim, dt) {
+    const view = this.view, motion = view.activity.combat.motion;
+    this.chargeClock -= dt;
+    const charge = this.chargeClock <= 0 && dt > 0;
+    if (charge) this.chargeClock = 0.06;
+    for (const e of sim.entities) {
+      if (!e.boss) continue;
+      const o = view.objects.get(e.id), u = o?.userData.boss;
+      if (!u || !o.visible) continue;
+      const phase = e.bs?.phase || "dormant", aiming = phase === "warning" || phase === "attacking";
+      // Guns come up while they aim and fire, and drop when the core opens.
+      u.raise += ((aiming ? 1 : phase === "exposed" ? -0.6 : 0) - u.raise) * Math.min(1, dt * 6);
+      for (const [arm, side] of [[u.armL, 0], [u.armR, 2]]) {
+        if (!arm) continue;
+        const kick = Math.max(u.recoil[side], u.recoil[side + 1]);
+        arm.rotation.x = -0.22 * u.raise;
+        arm.position.copy(arm.userData.base);
+        if (motion && kick > 0) arm.position.z -= Math.sin((kick / 0.16) * Math.PI) * 0.22;
+      }
+      for (let i = 0; i < 4; i++) u.recoil[i] = Math.max(0, u.recoil[i] - dt);
+      // The core: dark while armoured, a bright pulse while exposed.
+      const open = phase === "exposed";
+      u.glow += ((open ? 1 : 0) - u.glow) * Math.min(1, dt * 8);
+      if (u.core) {
+        u.core.visible = u.glow > 0.05;
+        u.core.material.emissiveIntensity = 0.6 + u.glow * (2.2 + (motion ? Math.sin(view.lifeClock * 9) * 0.6 : 0));
+      }
+      // The open core also flares from any side, so it reads even when the chest faces away.
+      if (open && charge && motion && BOSSES[e.boss]?.core) {
+        const [cx, cy, cz] = BOSSES[e.boss].core, c = Math.cos(e.angle), s = Math.sin(e.angle);
+        view.fx.charge({ x: e.x + cx * c + cz * s, y: view.terrain.heightAt(e.x, e.z) + cy, z: e.z - cx * s + cz * c }, 1.6, { x: e.x, z: e.z, team: e.team }, true);
+      }
+      // While it aims, the four gun mouths glow brighter as the warning runs out.
+      if (phase === "warning" && charge && motion) {
+        const zone = sim.dangerZones?.find((z) => z.id === e.bs.zone), k = zone ? Math.min(1, (sim.time - zone.from) / Math.max(0.1, zone.at - zone.from)) : 0;
+        const spec = BOSSES[e.boss], c = Math.cos(e.angle), s = Math.sin(e.angle), ground = view.terrain.heightAt(e.x, e.z);
+        for (const m of spec?.muzzles || []) view.fx.charge({ x: e.x + m[0] * c + m[2] * s, y: ground + m[1], z: e.z - m[0] * s + m[2] * c }, 0.35 + k * 0.6, { x: e.x, z: e.z, team: e.team });
+      }
+    }
+    this.updateMarks(sim, dt);
+  }
+  updateMarks(sim, dt) {
+    const zones = sim.dangerZones || [], seen = new Set();
+    // An edge at least ~3 px wide at any zoom, so the mark reads on a phone.
+    const edge = Math.max(0.28, 3 * (this.view.unitsPerPixel || 0.05));
+    for (const z of zones) {
+      if (!sim.isVisible(z) && !sim.isVisible({ x: z.x, z: z.z })) continue;
+      seen.add(z.id);
+      let mark = this.marks.get(z.id);
+      if (!mark) this.marks.set(z.id, (mark = this.createMark(z)));
+      const u = mark.material.uniforms;
+      u.uProgress.value = Math.min(1, Math.max(0, (sim.time - z.from) / Math.max(0.05, z.at - z.from)));
+      u.uFire.value = sim.time >= z.at - 1e-6 ? 1 : 0;
+      u.uTime.value = (u.uTime.value + dt) % 600;
+      u.uEdge.value = edge;
+    }
+    for (const [id, mark] of this.marks) if (!seen.has(id)) { this.view.scene.remove(mark); mark.geometry.dispose(); mark.material.dispose(); this.marks.delete(id); }
+  }
+  createMark(z) {
+    const pad = 1.5, circle = z.shape === "circle";
+    // The mark's local box: x across, y along the heading (circles: centred on the zone).
+    const half = circle ? z.radius + pad : z.shape === "cone" ? z.length * Math.tan(z.half) + pad : z.width / 2 + pad;
+    const box = circle ? [-half, -half, half, half] : [-half, -pad, half, z.length + pad];
+    const geometry = new THREE.PlaneGeometry(box[2] - box[0], box[3] - box[1]);
+    geometry.translate((box[0] + box[2]) / 2, (box[1] + box[3]) / 2, 0);
+    const material = new THREE.ShaderMaterial({
+      vertexShader: ZONE_VERTEX, fragmentShader: ZONE_FRAGMENT, transparent: true, depthWrite: false,
+      uniforms: { uBox: { value: new THREE.Vector4(...box) }, uShape: { value: SHAPES[z.shape] ?? 0 }, uRadius: { value: z.radius || 0 }, uLength: { value: z.length || 1 },
+        uHalf: { value: z.half ? Math.tan(z.half) : 0 }, uWidth: { value: (z.width || 0) / 2 }, uProgress: { value: 0 }, uFire: { value: 0 }, uTime: { value: 0 }, uEdge: { value: 0.3 },
+        uColor: { value: new THREE.Color(0xff4a2e) }, uHot: { value: new THREE.Color(0xffd36a) } },
+    });
+    const mark = new THREE.Mesh(geometry, material);
+    mark.name = "boss-zone";
+    mark.renderOrder = 3;
+    // Lying on the ground, local +y along the zone's heading (sim angle: atan2(dx, dz)).
+    mark.rotation.order = "YXZ";
+    mark.rotation.set(-Math.PI / 2, z.angle + Math.PI, 0);
+    if (circle) mark.rotation.y = 0;
+    mark.position.set(z.x, this.view.terrain.heightAt(z.x, z.z) + 0.09, z.z);
+    this.view.scene.add(mark);
+    return mark;
+  }
+  reset() {
+    for (const mark of this.marks.values()) { this.view.scene.remove(mark); mark.geometry.dispose(); mark.material.dispose(); }
+    this.marks.clear();
+  }
+}

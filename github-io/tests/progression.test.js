@@ -9,7 +9,8 @@ const step = (s,n) => { for(let i=0;i<n*20;i++)s.tick(.05); };
 const message = s => s.events.filter(e=>e.type==='message').at(-1)?.text;
 
 test('twenty units (four of them flyers) and nine buildings have complete models, shields and descriptions',()=>{
-  assert.equal(Object.values(D).filter(d=>d.kind==='unit').length,20);
+  // Bosses (balance.json `bosses`, sim/bosses.js) are units too, but no building trains them.
+  assert.equal(Object.values(D).filter(d=>d.kind==='unit'&&!d.boss).length,20);
   assert.equal(Object.values(D).filter(d=>d.flying).length,4);
   assert.equal(Object.values(D).filter(d=>d.kind==='building').length,9);
   for(const [type,d] of Object.entries(D).filter(([,d])=>d.kind)) {

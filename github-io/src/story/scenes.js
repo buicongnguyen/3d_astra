@@ -43,6 +43,17 @@ export const SCENES = {
       { say: { who: "vale", text: "Both columns are turning toward the centre oasis, Commander. Together." } },
     ],
   },
+  // Mission 3 (bosses, docs/aaa/BOSSES.md): the Iron Vanguard powers up in Hale's salvage yard.
+  "iron-vanguard": {
+    letterbox: true,
+    beats: [
+      { camera: { at: "vanguardYard", zoom: 0.8, seconds: 2.2 } },
+      { fx: { flash: "alarm" } },
+      { say: { who: "okoro", text: "That is no Ashfall print, Commander. It is an old Builder war machine, and they woke it up." } },
+      { say: { who: "hale", text: "The Iron Vanguard. Nine weeks to pull it out of a trench. It guards my siphons now." } },
+      { say: { who: "vale", text: "It marks the ground before each burst. Stay out of the red. Hit it when its core opens." } },
+    ],
+  },
   // Wings over Copper (0.18.3): the first Ember balloon drifts over the copper works.
   "first-balloon": {
     letterbox: true,

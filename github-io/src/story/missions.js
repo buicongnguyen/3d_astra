@@ -196,9 +196,12 @@ export const MISSIONS = [
         { who: "vale", text: "Hale holds the ash plains and attacks by the clock. You can set your watch by him." },
         { who: "okoro", text: "He has planted three siphons on the Lattice. They pull far more power than one camp needs." },
         { who: "vale", text: "Break the siphons and his line here fails. His Command core can wait." },
+        { who: "okoro", text: "And something big waits in his salvage yard by the north siphon. Four guns, two legs, older than any of us." },
       ],
       intel: [
-        "Three Ashfall siphons: west, north and east. Each has a Sentinel tower beside it.",
+        "Three Ashfall siphons: west, north and east. Towers guard the west and east ones; the Iron Vanguard guards the north.",
+        "The Iron Vanguard guards the north siphon. Before each burst the ground turns red: units on Guard or Aggressive step out by themselves.",
+        "After every burst its core opens for a few seconds and it takes far more damage. Keep shooting.",
         "Ashfall attacks on a schedule. Count the gap and strike just after a wave breaks.",
         "Towers outrange infantry. Bring Breakers, or go around.",
       ],
@@ -208,6 +211,7 @@ export const MISSIONS = [
       siphonNorth: { x: 0, z: -40, r: 7 },
       siphonEast: { x: 40, z: 0, r: 7 },
       midline: { x: 0, z: 0, r: 9 },
+      vanguardYard: { x: -4, z: -30, r: 8 },
     },
     setup: [
       { spawn: "relay", team: 1, at: "siphonWest", tag: "siphon", name: "Ashfall siphon", hp: 6000 },
@@ -227,16 +231,19 @@ export const MISSIONS = [
       { spawn: "ranger", team: 0, at: { x: -19, z: 20 }, count: 3 },
       { spawn: "vanguard", team: 0, at: { x: -20, z: 13 }, count: 3 },
       { spawn: "tower", team: 1, at: { x: -38, z: -25 }, hp: 2000 },
-      { spawn: "tower", team: 1, at: { x: -6, z: -38 }, hp: 2000 },
       { spawn: "tower", team: 1, at: { x: 40, z: 7 }, hp: 2000 },
+      // The boss (docs/aaa/BOSSES.md) is the north siphon's guard (it replaced that siphon's tower): powered
+      // down in the salvage yard until it is hurt or troops come within 14 m.
+      { spawn: "ironvanguard", team: 1, at: "vanguardYard", tag: "ironVanguard", exact: true, hpByDifficulty: { story: 30000, veteran: 32000 } },
     ],
     objectives: [
       { id: "siphons", text: "Destroy the three Ashfall siphons", type: "destroyTag", tag: "siphon" },
+      { id: "vanguard", text: "Destroy the Iron Vanguard", type: "destroyTag", tag: "ironVanguard" },
       { id: "towers", text: "Build two Sentinel towers", type: "build", building: "tower", count: 2, optional: true },
       { id: "core", text: "Destroy the Ashfall Command core", type: "destroyCores", optional: true },
-      { id: "fast", text: "Finish in under 14 minutes", type: "timeUnder", seconds: 840, optional: true },
+      { id: "fast", text: "Finish in under 16 minutes", type: "timeUnder", seconds: 960, optional: true },
     ],
-    win: ["siphons"],
+    win: ["siphons", "vanguard"],
     lose: [{ type: "coreLost" }],
     triggers: [
       { when: { time: 5 }, do: [{ say: { who: "vale", text: "No river here, Commander. The walls north of camp are your only cover. Use them." } }] },
@@ -255,6 +262,14 @@ export const MISSIONS = [
       ] },
       { when: { tagHpBelow: { tag: "siphon", percent: 50 } }, do: [{ say: { who: "vale", text: "Half his siphon line is down. He will throw everything at you now. Stay together." } }] },
       { when: { time: 660 }, do: [{ say: { who: "vale", text: "Eleven minutes. His next wave will have Scorchers in it. Finish the siphons." } }] },
+      // The Iron Vanguard: its entrance when it wakes, a line at each health stage and when it falls.
+      { when: { event: "bossWake" }, do: [{ scene: "iron-vanguard" }, { music: "battle" }] },
+      { when: { bossStage: 2 }, do: [{ say: { who: "okoro", text: "Its armour is cracking! It fires sooner now, but the red on the ground still gives you the same time." } }] },
+      { when: { bossStage: 3 }, do: [{ say: { who: "hale", text: "One third of its plating left. I had hoped that machine would last the season, Commander." } }] },
+      { when: { tagDead: "ironVanguard" }, do: [
+        { say: { who: "okoro", text: "It is down! Poor old thing. When this is over I would like to see how it was put together." } },
+        { say: { who: "hale", text: "Nine weeks of repairs, gone in minutes. I will add it to the account." } },
+      ] },
       { when: { objective: "siphons", is: "done" }, do: [{ music: "calm" }, { say: { who: "hale", text: "You have just made a cold night colder for people who never harmed you." } }] },
     ],
     // The first Commander decision (0.19a). Its answer changes Hale's 7:00 wave in mission 7.
@@ -272,11 +287,12 @@ export const MISSIONS = [
       win: [
         { who: "vale", text: "The Ashen Line is broken. But I checked his claim, Commander. The sleeper fleet is real." },
         { who: "okoro", text: "So he is not greedy. He is desperate. That is harder to argue with." },
+        { who: "okoro", text: "I pulled the Iron Vanguard's core from the wreck. Builder work, Commander. Ashfall only painted it." },
       ],
       lose: [{ who: "vale", text: "He kept to his schedule and we did not keep to ours. Regroup at the river." }],
     },
-    medals: { gold: { seconds: 480 }, silver: { seconds: 660 } },
-    design: "About 8 minutes against one Relaxed AI (first wave near 3:30, then every 90 seconds). The player starts with two towers and a wall guard of 3 Rangers and 3 Vanguards. Each siphon (6000 HP) has a hardened tower and 4-5 guards; Hale's camp has two hardened towers and 8 guards. Intended: break the first wave at the walls, then take the west and east siphons and finish with the north one beside the enemy camp. Twist: entering the north siphon reveals that Hale feeds a fleet in orbit and calls a 7-unit counter-attack. The enemy core is optional: destroying it removes Ashfall but its tagged siphons stay standing, so the siphons must still be destroyed.",
+    medals: { gold: { seconds: 720 }, silver: { seconds: 1000 } },
+    design: "About 10 minutes against one Relaxed AI (first wave near 3:30, then every 90 seconds). The player starts with two towers and a wall guard of 3 Rangers and 3 Vanguards. The west and east siphons (6000 HP) each have a hardened tower and 4 guards; the north one has 5 guards and the Iron Vanguard (docs/aaa/BOSSES.md), a salvaged Builder war machine powered down in the yard 11 m from it (40000 HP, 30000 on Story, 32000 on Veteran: a 2-3 minute fight for the army the objective bot has there, 24-27 units). It wakes when troops come within 14 m or hit it, plays its entrance scene, and fights within 12 m of its yard: a marked four-gun burst at the biggest group every ~13 s (units on Guard or Aggressive step out), a light gun, a 4-second open core after each burst. Hale's camp has two hardened towers and 8 guards. Intended: break the first wave at the walls, take the west and east siphons, then the north one and the Iron Vanguard together. Twist: entering the north siphon reveals that Hale feeds a fleet in orbit and calls a 7-unit counter-attack. The enemy core is optional: destroying it removes Ashfall but its tagged siphons and the boss stay standing, so they must still be destroyed.",
   },
 
   {

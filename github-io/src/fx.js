@@ -765,6 +765,22 @@ export class Effects {
       p.fadeIn = 0.2; p.spin = 0.35; p.hold = building ? 0.3 : 0;
     }
   }
+  // -- bosses (src/boss-view.js): guns glowing while they aim, and a long, heavy fall.
+  charge(at, size, anchor, gold = false) {
+    this.particle(this.glow, { ...at, lifted: true, cell: CELL.flare, s0: size, s1: size * 0.4, life: 0.14, c0: gold ? [1, 0.86, 0.45, 0.95] : [1, 0.62, 0.25, 0.9], c1: [1, gold ? 0.55 : 0.3, 0.08, 0], anchor });
+  }
+  bossDeath(e) {
+    const anchor = { x: e.x, z: e.z, team: e.team }, m = this.motion;
+    this.explosion({ x: e.x, y: 2.2, z: e.z }, 2.3, anchor, true);
+    for (const [delay, dx, dz, y, k] of [[0.25, 1.2, 0.4, 3.1, 1.1], [0.5, -1.1, -0.6, 2.3, 1.2], [0.8, 0.3, 1.2, 3.6, 1], [1.15, -0.4, -1.3, 1.4, 1.3], [1.55, 0, 0, 2.4, 1.9]])
+      this.timeline.push({ at: this.time + delay, run: () => {
+        const at = { x: e.x + dx, y, z: e.z + dz };
+        this.explosion(at, k, anchor, true);
+        this.addDebris(at, 6, anchor, 1.2 * k, 2);
+      } });
+    if (m) this.timeline.push({ at: this.time + 1.55, run: () => this.shockwave({ x: e.x, y: 0.3, z: e.z }, 20, anchor) });
+    this.decal(anchor, 11, 24, anchor);
+  }
   smoulder(d, dt) {
     d.puff = (d.puff ?? Math.random()) + dt * 1.6 * this.budget * this.governed;
     const m = this.motion;

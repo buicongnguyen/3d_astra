@@ -76,6 +76,8 @@ export const progression = {
     if (by !== null) { t.hitBy = by; t.hitAt = this.time; }
     if (this.mission && t.team === 0 && team !== 0) damage *= difficultyRules(this).damage;
     if (t.buff?.guard) damage *= t.buff.guard;
+    // A boss is armoured except while its core is open (sim/bosses.js).
+    if (t.boss) damage *= this.bossTaken(t);
     // A Watcher's Mark: more damage from every source while it lasts. A new Mark replaces the old one.
     if (t.markedUntil > this.time) damage *= t.markTaken;
     if (t.kind === 'unit' && t.type !== 'worker' && this.players[t.team]?.plating) damage *= this.players[t.team].plating2 ? 0.88 * 0.92 : 0.88;
@@ -94,6 +96,8 @@ export const progression = {
       this.traitDeath(t,team);
       this.events.push({type:'death',x:t.x,z:t.z,team:t.team,building:t.kind === 'building' || t.kind === 'wall',heavy:!!t.mechanical,core:t.type==='hq',seed:t.id,direction:by !== null && this.get(by) ? Math.atan2(t.x-this.get(by).x,t.z-this.get(by).z) : t.angle});
       if (t.kind === 'building' || t.kind === 'wall') this.nav.rebuild(this.entities);
+      // A boss's marks go with it; its own event follows the death (sim/bosses.js).
+      if (t.boss) this.bossDown(t);
     }
   },
   // Harvesters repair at full rate; ordinary infantry (not vehicles, not Medics or Engineers, which

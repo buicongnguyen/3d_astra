@@ -198,6 +198,13 @@ export const movement = {
           b.x = Math.max(-limit, Math.min(limit, b.x - nx * push * 0.5)); b.z = Math.max(-limit, Math.min(limit, b.z - nz * push * 0.5));
           continue;
         }
+        // A boss is not shoved about: the unit beside it takes the whole push.
+        if (a.boss || b.boss) {
+          if (a.boss && b.boss) continue;
+          const u = a.boss ? b : a, sign = a.boss ? -1 : 1, all = Math.min(min - d, dt * 4);
+          if (this.nav.canStand(u.x + sign * nx * all, u.z + sign * nz * all, u.radius)) { u.x += sign * nx * all; u.z += sign * nz * all; }
+          continue;
+        }
         if (this.nav.canStand(a.x + nx * push, a.z + nz * push, a.radius)) {
           a.x += nx * push;
           a.z += nz * push;

@@ -23,6 +23,7 @@ import { points } from "./sim/points.js";
 import { expansion } from "./sim/expand.js";
 import { defence } from "./sim/defence.js";
 import { air } from "./sim/air.js";
+import { bosses } from "./sim/bosses.js";
 
 export { NEUTRAL } from "./sim/constants.js";
 // The match state and its fixed 20 Hz step. Behaviour lives in the systems under sim/, mixed
@@ -296,6 +297,8 @@ export class Simulation {
       this.updateVision();
       this.visionClock = 0.25;
     }
+    // Boss danger zones (sim/bosses.js): units standing in one step out before anyone acts.
+    if (this.dangerZones) this.stepDangerZones();
     for (const e of this.entities) if (e.hp > 0) this.stepEntity(e, dt);
     this.separate(dt);
     this.stepTactics(dt);
@@ -314,6 +317,9 @@ export class Simulation {
     e.moving = false;
     e.attacking = false;
     e.working = false;
+    // Stepping out of a boss's danger zone comes before any order; a boss runs its own cycle (sim/bosses.js).
+    if (e.evade && this.stepEvade(e, dt)) return;
+    if (e.boss) { this.stepBoss(e, dt); return; }
     if (e.kind === "building") {
       this.updateLevel(e,dt);
       this.updateProduction(e, dt);
@@ -427,5 +433,5 @@ export class Simulation {
   }
 }
 
-Object.assign(Simulation.prototype, factionRules, traits, height, points, expansion, air, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot, defence);
+Object.assign(Simulation.prototype, factionRules, traits, height, points, expansion, air, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot, defence, bosses);
 Simulation.load = (saved) => restore(Simulation, saved);

@@ -11,6 +11,8 @@ import { tacticalUnits, clampRank } from "../tactics-ui.js";
 import { tacticsCardHTML, updateTacticsCard } from "../tactics-card.js";
 import { createMessageQueue, ROUTINE, ALERT } from "../message-queue.js";
 import { productionTiles, researchState, flakTile } from "../research-tiles.js";
+import { updateBossBar } from "../boss-ui.js";
+import "../boss-ui.css";
 
 export function setupHud(S, A) {
   const Z = S.screen;
@@ -115,6 +117,7 @@ export function setupHud(S, A) {
   function updateUI() {
     renderTutorial();
     missionUI.renderObjectives(S.sim);
+    updateBossBar(S.sim, Z.started);
     const p = S.sim.players[0],
       pop = S.sim.population(0);
     $("alloy").textContent = Math.floor(p.alloy).toLocaleString();

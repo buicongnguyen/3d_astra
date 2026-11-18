@@ -110,7 +110,8 @@ export const combat = {
           apply(t, e.splash_damage);
     this.events.push({
       // Flyers fire and are hit at altitude (fx.js aim): the fly height of either end.
-      ...(e.flying ? { sAir: e.fly } : null),
+      // A boss's light gun fires from high on its shoulder (balance.json gun_height).
+      ...(e.flying ? { sAir: e.fly } : e.gun_height ? { sAir: e.gun_height - 0.4 } : null),
       ...(target.flying ? { tAir: target.fly } : null),
       type: "shot",
       weapon: e.shot || e.type,

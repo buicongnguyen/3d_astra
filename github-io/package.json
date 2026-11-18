@@ -60,6 +60,7 @@
     "test:music": "node tests/music.mjs",
     "test:offline": "node tests/offline.mjs",
     "test:defence": "node tests/defence.mjs",
+    "test:boss": "node tests/boss.mjs",
     "render:audio": "node tools/render-audio.mjs"
   },
   "dependencies": {
