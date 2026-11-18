@@ -125,7 +125,10 @@ test("objectives, regions, tags and types all resolve", () => {
       if (w.tagDead) tag(w.tagDead, "trigger");
       if (w.count) type(w.count.type, null, "trigger");
       if (w.pointOwned) assert.ok(points.has(w.pointOwned.point), `${m.id}: trigger on point ${w.pointOwned.point}`);
-      if (w.event) assert.ok(["incoming", "built", "levelup"].includes(w.event), `${m.id}: trigger on event ${w.event}`);
+      if (w.event) assert.ok(["incoming", "built", "levelup", "bossWake"].includes(w.event), `${m.id}: trigger on event ${w.event}`);
+      // Boss beats (sim/bosses.js) only in a mission that fields a boss; stages are 2 (two thirds) and 3 (one third).
+      if (w.event === "bossWake" || w.bossStage !== undefined) assert.ok(spawns(m).some((x) => D[x.spawn]?.boss), `${m.id}: a boss trigger without a boss`);
+      if (w.bossStage !== undefined) assert.ok([2, 3].includes(w.bossStage), `${m.id}: bossStage ${w.bossStage}`);
       // Story beats between Defence waves (0.19b): only in a Defence mission, within its waves.
       for (const key of ["wave", "waveStart"]) if (w[key] !== undefined) assert.ok(m.defence && w[key] >= 1 && w[key] <= m.defence.waves.length, `${m.id}: trigger on ${key} ${w[key]}`);
       for (const a of t.do) {

@@ -51,8 +51,9 @@ test("scene data: known beats, cast speakers, short lines with Vietnamese, under
 
 test("every scene is played by a mission, and its camera targets are places on that mission's map", () => {
   assert.deepEqual([...new Set(uses.map((u) => u.id))].sort(), Object.keys(SCENES).sort(), "each scene has a mission and each scene action a scene");
-  // The six big moments: missions 1, 4, 8, 10, 11 and the finale (one scene per ending).
-  assert.deepEqual([...new Set(uses.map((u) => u.m.id))], ["m01-first-light", "m04-three-way-dunes", "m06b-wings-over-copper", "m08-the-quiet-vault", "m10-obsidian-storm", "m11-cut-the-draw", "m12-frontiers-end"]);
+  // The six big moments: missions 1, 4, 8, 10, 11 and the finale (one scene per ending), plus the
+  // first balloon (Wings over Copper) and the Iron Vanguard's entrance in mission 3 (docs/aaa/BOSSES.md).
+  assert.deepEqual([...new Set(uses.map((u) => u.m.id))], ["m01-first-light", "m03-the-ashen-line", "m04-three-way-dunes", "m06b-wings-over-copper", "m08-the-quiet-vault", "m10-obsidian-storm", "m11-cut-the-draw", "m12-frontiers-end"]);
   const finale = uses.filter((u) => u.m.id === "m12-frontiers-end");
   assert.deepEqual(finale.map((u) => u.if?.ending).sort(), [...ENDING_IDS].sort(), "the finale's scene branches by ending");
   for (const ending of ENDING_IDS) {

@@ -1,0 +1,47 @@
+/* The boss bar (boss-ui.js). It sits in #world, takes no taps and never covers the dock, the idle
+   buttons, the notice line or the mission dialogue. Text 11 px or more; nothing moves under
+   :root.motion-off. */
+#boss-bar {
+  position: absolute; z-index: 7; pointer-events: none;
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 6px 10px 7px; border-radius: 10px;
+  background: rgba(16, 12, 12, 0.88); border: 1px solid #8a4b3c; color: #f6e3da;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  --boss-hp: 1; --boss-shield: 0;
+}
+#boss-bar[hidden] { display: none !important; }
+#boss-bar .boss-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; min-width: 0; }
+#boss-bar .boss-name { font: 800 14px/1.15 var(--font-display, sans-serif); letter-spacing: 0.04em; color: #ffd2bf; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+#boss-bar .boss-state { flex: none; font: 800 12px/1.15 var(--font-ui, sans-serif); letter-spacing: 0.08em; color: #b9c6c8; white-space: nowrap; }
+#boss-bar .boss-track { position: relative; height: 10px; border-radius: 5px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+#boss-bar .boss-fill { position: absolute; inset: 0 auto 0 0; width: calc(var(--boss-hp) * 100%); background: linear-gradient(90deg, #d94a2f, #ff8a4a); transition: width 0.25s ease-out; }
+#boss-bar .boss-shield { position: absolute; left: 0; bottom: 0; height: 3px; width: calc(var(--boss-shield) * 100%); background: #8fd8ff; opacity: 0.85; }
+#boss-bar .boss-notch { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: rgba(16, 12, 12, 0.9); }
+/* What it is doing: grey while armoured, red while an attack is marked or firing, gold while the core is open. */
+#boss-bar[data-phase="warning"], #boss-bar[data-phase="attacking"] { border-color: #ff5a3c; }
+#boss-bar[data-phase="warning"] .boss-state, #boss-bar[data-phase="attacking"] .boss-state { color: #ff8f78; }
+#boss-bar[data-phase="exposed"] { border-color: #ffc95a; }
+#boss-bar[data-phase="exposed"] .boss-state { color: #ffd36a; }
+#boss-bar[data-phase="exposed"] .boss-fill { background: linear-gradient(90deg, #ffb13b, #ffe08a); }
+@keyframes boss-alert { 50% { box-shadow: 0 0 0 2px rgba(255, 90, 60, 0.55), 0 6px 18px rgba(0, 0, 0, 0.35); } }
+@keyframes boss-open { 50% { box-shadow: 0 0 0 2px rgba(255, 201, 90, 0.6), 0 6px 18px rgba(0, 0, 0, 0.35); } }
+#boss-bar[data-phase="warning"] { animation: boss-alert 0.6s ease-in-out infinite; }
+#boss-bar[data-phase="exposed"] { animation: boss-open 0.8s ease-in-out infinite; }
+:root.motion-off #boss-bar, :root.motion-off #boss-bar .boss-fill { animation: none; transition: none; }
+@media (prefers-reduced-motion: reduce) { #boss-bar, #boss-bar .boss-fill { animation: none; transition: none; } }
+
+/* Desktop: centred above the central console. */
+:root:not(.compact-ui) #boss-bar { left: 50%; transform: translateX(-50%); bottom: calc(var(--console-card-height, 172px) + 18px); width: min(460px, calc(100% - 560px)); min-width: 300px; }
+/* Phones, portrait: just above the dock, left of the idle buttons (right 8 px, 52 px wide). */
+@media (max-aspect-ratio: 1.35) {
+  .compact-ui #boss-bar { left: 8px; right: 68px; bottom: calc(var(--view-cover, 202px) + 8px); }
+}
+/* Phones, landscape: the top row of the battlefield, against the side dock, clear of the Objectives chip and the idle buttons. */
+@media (min-aspect-ratio: 1.35) {
+  .compact-ui #boss-bar { top: 6px; left: var(--boss-left, auto); min-width: 214px; right: calc(var(--side-width, 236px) + var(--edge-right, 0px) + 8px); padding: 4px 8px 5px; gap: 3px; }
+  .compact-ui #boss-bar .boss-head { gap: 6px; }
+  .compact-ui #boss-bar .boss-name { font-size: 12px; letter-spacing: 0.02em; }
+  .compact-ui #boss-bar .boss-state { font-size: 11px; letter-spacing: 0.03em; }
+  .compact-ui #boss-bar .boss-track { height: 8px; }
+}
+.in-briefing #boss-bar { display: none !important; }

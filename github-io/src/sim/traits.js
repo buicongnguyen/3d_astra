@@ -49,8 +49,9 @@ export const TRAIT_HANDLERS = {
       const { delay, rate } = TRAITS.selfrepair, aura = sim.ticks % EVERY ? null : D.pylon.aura;
       for (const e of sim.entities) {
         if (e.team !== team || e.hp <= 0) continue;
+        // A boss never mends itself: its health bar is the fight (sim/bosses.js).
         if (e.kind === 'unit') {
-          if (e.hp < e.maxHp && sim.time - Math.max(e.hitAt ?? -99, e.shotAt ?? -99) >= delay) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * rate * dt);
+          if (e.hp < e.maxHp && !e.boss && sim.time - Math.max(e.hitAt ?? -99, e.shotAt ?? -99) >= delay) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * rate * dt);
         } else if (aura && e.kind === 'building') {
           const base = (D[e.type].shield || 0) + 25 * (e.level - 1), on = nearOwn(sim, team, e, ['pylon'], aura.radius);
           const want = on ? base * aura.shield : base;

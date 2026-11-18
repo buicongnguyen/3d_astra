@@ -22,6 +22,7 @@ import { teamColors, teamGlows, factionOf } from "./faction-colors.js";
 import { createEmblem, hasEmblem, recolorEmblems } from "./emblems.js";
 import { isHarvesting } from "./activity.js";
 import { EntityBatches, adoptBatchedParts, SOURCE_LAYER } from "./entity-batches.js";
+import { BossView, bossTemplates } from "./boss-view.js";
 import { cacheTransforms } from "./transform-cache.js";
 import { AmbientLife } from "./ambient-life.js";
 import { defaults } from "./settings.js";
@@ -224,6 +225,7 @@ export class WorldView {
     this.activity = new ActivityView(this);
     this.fx = new Effects(this);
     this.tactics = new TacticsView(this);
+    this.bosses = new BossView(this);
     this.dying = [];
     this.flashBatch = []; // hit flashes started by this tick's impacts (see event)
     this.flashBatchTime = -1;
@@ -529,6 +531,12 @@ export class WorldView {
         .map(async (type) => {
           const gltf = await fetchModel(type);
           gltf.scene.updateMatrixWorld(true);
+          // Bosses (boss-view.js) keep their own rigid parts: legs, torso, arms, light gun and core.
+          if (D[type]?.boss) {
+            bossTemplates(gltf.scene, { colors: this.colors, glows: this.glows, bakedMaterial }).forEach((variant, team) => this.teamTemplates.set(`${type}-${team}`, variant));
+            this.models.set(type, true);
+            return;
+          }
           // Merge stationary pieces by material, preserving the two articulated leg pivots.
           const template = new THREE.Group(),
             buckets = new Map(),
@@ -1128,6 +1136,7 @@ export class WorldView {
     root.add(bar);
     root.userData.bar = bar;
     bar.position.y *= root.userData.readabilityScale;
+    if (e.boss) this.bosses.dress(root, e);
     // A flyer's bar rides above it: its fly height plus its own height (set again as it flies).
     if (root.userData.air) root.userData.air.barY = bar.position.y = root.userData.air.top * root.userData.readabilityScale + 0.7;
     cacheTransforms(root);
@@ -1253,6 +1262,7 @@ export class WorldView {
     return Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1 && Math.abs(p.z) <= 1;
   }
   event(event, sim) {
+    this.bosses.event(event, sim);
     const enabled = this.feelEnabled();
     if (Number.isFinite(event.x) && Number.isFinite(event.z) && sim.isVisible(event)) {
       const trauma = event.type === 'strike' ? FEEL.barrageTrauma : event.type === 'death' ? (event.core ? FEEL.coreTrauma : event.building ? FEEL.buildingTrauma : 0) : 0;
@@ -1365,6 +1375,8 @@ export class WorldView {
         m.rotation.z = d.tilt * ease(t / 0.9) * 0.45;
         m.rotation.x = 0.2 * ease(t / 0.9);
         o.position.y = d.baseY - ease((t - (d.life - 0.9)) / 0.9) * 1.8;
+      } else if (d.kind === 'boss') {
+        this.bosses.fall(d, t, motion);
       } else if (d.kind === 'vehicle') {
         const hop = motion ? Math.sin(Math.min(1, t / 0.45) * Math.PI) * 0.55 : 0;
         o.position.y = d.baseY + hop - ease((t - (d.life - 0.9)) / 0.9) * 1.8;
@@ -1565,6 +1577,7 @@ export class WorldView {
         this.effects.splice(i, 1);
       }
     }
+    this.bosses.update(sim, dt);
     this.updateDying(sim, dt);
     this.fx.update(sim, dt);
     this.tactics.update(sim, dt, selected);
@@ -1629,6 +1642,7 @@ export class WorldView {
     if (this.life && this.life.aliveCount < this.life.groups.reduce((n, g) => n + g.rows.length, 0)) this.createLife();
     this.activity.reset();
     this.tactics.reset();
+    this.bosses.reset();
     this.environment?.reset();
     this.scatter?.restore();
     for (const o of this.objects.values()) this.disposeEntity(o);

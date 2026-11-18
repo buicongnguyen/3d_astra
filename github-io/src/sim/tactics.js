@@ -34,7 +34,7 @@ export const tactics = {
   // Called when `victim` dies to a hit from entity `by`. Only fighting units earn ranks.
   creditKill(by, victim) {
     const e = by === null ? null : this.get(by);
-    if (!e || e.kind !== "unit" || e.type === "worker" || !e.damage || victim.kind === "wall") return;
+    if (!e || e.kind !== "unit" || e.boss || e.type === "worker" || !e.damage || victim.kind === "wall") return;
     e.xp = (e.xp || 0) + (victim.kind === "building" ? 2 : victim.pop || 1);
     while ((e.rank || 0) < RANK_XP.length && e.xp >= RANK_XP[e.rank || 0]) {
       e.rank = (e.rank || 0) + 1;

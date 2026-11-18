@@ -39,7 +39,7 @@ export function createFieldGuide(onOpen,onClose,getSim = () => null) {
   const dialog = document.createElement('dialog');
   dialog.className = 'field-guide';
   dialog.setAttribute('aria-labelledby','guide-title');
-  dialog.innerHTML = `<header><h2 id="guide-title">Field guide · units and buildings</h2><label for="guide-entry">Unit or building</label><select id="guide-entry">${Object.keys(D).filter(k => D[k].kind).map(k => `<option value="${k}">${D[k].name}</option>`).join('')}</select></header><article id="guide-detail"></article><footer><button id="guide-close">Close field guide</button></footer>`;
+  dialog.innerHTML = `<header><h2 id="guide-title">Field guide · units and buildings</h2><label for="guide-entry">Unit or building</label><select id="guide-entry">${Object.keys(D).filter(k => D[k].kind && !D[k].boss).map(k => `<option value="${k}">${D[k].name}</option>`).join('')}</select></header><article id="guide-detail"></article><footer><button id="guide-close">Close field guide</button></footer>`;
   document.body.append(dialog);
   let team = 0;
   const pick = dialog.querySelector('select');
@@ -47,5 +47,5 @@ export function createFieldGuide(onOpen,onClose,getSim = () => null) {
   pick.onchange = render;
   dialog.querySelector('button').onclick = () => dialog.close();
   dialog.addEventListener('close',onClose);
-  return (type,side = 0) => { if (dialog.open) return; team = side; pick.value = D[type]?.kind ? type : 'hq'; render(); onOpen(); dialog.showModal(); };
+  return (type,side = 0) => { if (dialog.open) return; team = side; pick.value = D[type]?.kind && !D[type].boss ? type : 'hq'; /* bosses are not trained: no entry (docs/aaa/BOSSES.md) */ render(); onOpen(); dialog.showModal(); };
 }

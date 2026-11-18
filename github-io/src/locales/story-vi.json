@@ -83,7 +83,6 @@
     "Hale holds the ash plains and attacks by the clock. You can set your watch by him.": "Hale giữ đồng tro và tấn công đúng giờ như đồng hồ. Có thể nhìn ông ta mà chỉnh đồng hồ.",
     "He has planted three siphons on the Lattice. They pull far more power than one camp needs.": "Ông ta cắm ba trạm hút lên Mạng Lưới. Chúng rút nhiều năng lượng hơn hẳn mức một trại cần.",
     "Break the siphons and his line here fails. His Command core can wait.": "Phá các trạm hút là phòng tuyến của ông ta ở đây sụp. Sở chỉ huy của ông ta cứ để sau.",
-    "Three Ashfall siphons: west, north and east. Each has a Sentinel tower beside it.": "Ba trạm hút của Ashfall: tây, bắc và đông. Cạnh mỗi trạm có một Tháp pháo.",
     "Ashfall attacks on a schedule. Count the gap and strike just after a wave breaks.": "Ashfall tấn công theo lịch. Hãy đếm quãng nghỉ và đánh ngay sau khi một đợt vừa tan.",
     "Towers outrange infantry. Bring Breakers, or go around.": "Tháp pháo bắn xa hơn bộ binh. Hãy mang Pháo binh theo, hoặc đi vòng.",
     "Destroy the three Ashfall siphons": "Phá ba trạm hút của Ashfall",
@@ -743,6 +742,19 @@
     "Ember balloons. Our towers cannot aim that high. Rangers and Anti-tank soldiers can.": "Khinh khí cầu Than hồng. Tháp của ta không ngắm cao được như vậy. Xạ thủ và lính Chống tăng thì được.",
     "Research Anti-air guns at the Command core, and every tower will shoot at the sky.": "Nghiên cứu Pháo phòng không ở Sở chỉ huy, rồi mọi tháp pháo sẽ bắn lên trời.",
     "A Kite over the gorge. Ranger and Anti-tank crews can shoot it down. Breaker crews cannot.": "Một Diều trinh sát trên hẻm núi. Tháp Xạ thủ và tháp Chống tăng bắn hạ được nó. Tháp Pháo binh thì không.",
-    "Balloons behind the column, the same as over the basin! Keep a Ranger crew near the top.": "Khinh khí cầu sau đoàn quân, giống như ở lòng chảo! Giữ một tháp Xạ thủ gần đỉnh."
+    "Balloons behind the column, the same as over the basin! Keep a Ranger crew near the top.": "Khinh khí cầu sau đoàn quân, giống như ở lòng chảo! Giữ một tháp Xạ thủ gần đỉnh.",
+    "And something big waits in his salvage yard by the north siphon. Four guns, two legs, older than any of us.": "Còn một thứ to lớn đang chờ trong bãi thu hồi cạnh trạm hút phía bắc. Bốn khẩu pháo, hai chân, già hơn bất kỳ ai trong chúng ta.",
+    "The Iron Vanguard guards the north siphon. Before each burst the ground turns red: units on Guard or Aggressive step out by themselves.": "Tiên Phong Thép canh trạm hút phía bắc. Trước mỗi loạt đạn, mặt đất chuyển đỏ: đơn vị ở thế Phòng thủ hoặc Truy kích sẽ tự bước ra.",
+    "After every burst its core opens for a few seconds and it takes far more damage. Keep shooting.": "Sau mỗi loạt đạn, lõi của nó mở ra vài giây và nó chịu sát thương nặng hơn nhiều. Cứ bắn tiếp.",
+    "Destroy the Iron Vanguard": "Phá hủy Tiên Phong Thép",
+    "That is no Ashfall print, Commander. It is an old Builder war machine, and they woke it up.": "Đó không phải máy Ashfall in ra đâu, thưa Chỉ huy. Đó là một cỗ máy chiến tranh cũ của người Kiến Tạo, và họ đã đánh thức nó.",
+    "The Iron Vanguard. Nine weeks to pull it out of a trench. It guards my siphons now.": "Tiên Phong Thép. Mất chín tuần mới kéo được nó lên khỏi chiến hào. Giờ nó canh các trạm hút của tôi.",
+    "It marks the ground before each burst. Stay out of the red. Hit it when its core opens.": "Nó đánh dấu mặt đất trước mỗi loạt đạn. Tránh xa vùng đỏ. Đánh mạnh khi lõi của nó mở ra.",
+    "Its armour is cracking! It fires sooner now, but the red on the ground still gives you the same time.": "Giáp của nó đang nứt! Giờ nó bắn sớm hơn, nhưng vùng đỏ trên mặt đất vẫn cho ta đúng chừng ấy thời gian.",
+    "One third of its plating left. I had hoped that machine would last the season, Commander.": "Chỉ còn một phần ba lớp giáp. Tôi đã mong cỗ máy đó trụ được hết mùa, thưa Chỉ huy.",
+    "It is down! Poor old thing. When this is over I would like to see how it was put together.": "Nó gục rồi! Tội nghiệp cỗ máy già. Xong chuyện này tôi muốn xem người ta lắp ráp nó thế nào.",
+    "Nine weeks of repairs, gone in minutes. I will add it to the account.": "Chín tuần sửa chữa, mất sạch trong vài phút. Tôi sẽ ghi nó vào sổ nợ.",
+    "I pulled the Iron Vanguard's core from the wreck. Builder work, Commander. Ashfall only painted it.": "Tôi đã gỡ lõi của Tiên Phong Thép khỏi xác máy. Đồ của người Kiến Tạo đấy, thưa Chỉ huy. Ashfall chỉ sơn lại thôi.",
+    "Three Ashfall siphons: west, north and east. Towers guard the west and east ones; the Iron Vanguard guards the north.": "Ba trạm hút của Ashfall: phía tây, phía bắc và phía đông. Tháp pháo canh trạm phía tây và phía đông; Tiên Phong Thép canh trạm phía bắc."
   }
 }

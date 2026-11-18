@@ -6,7 +6,8 @@ import { resolveMission, flagMatches } from "../story/choices.js";
 // Simulation; this system applies its setup, tracks capture points and objectives, fires
 // triggers and decides victory and defeat. Everything it keeps is in `this.mission`, so a
 // mission is saved, loaded and replayed like any other match. The interface learns what
-// happened only through events: say, objective, point, camera, ping, music, decision, scene, missionEnd.
+// happened only through events: say, objective, point, camera, ping, music, decision, scene, missionEnd
+// (and the boss events of sim/bosses.js).
 //
 // Decisions (0.19a): a `{ decide: id }` action holds the rest of its trigger in
 // `mission.pending` and emits a `decision` event; the player's `decide` command (commands.js)
@@ -87,6 +88,8 @@ export const missions = {
     hp = hpByDifficulty?.[this.difficulty] ?? hp;
     const d = D[spawn];
     if (!d || !this.players[team]) return [];
+    // One boss at a time (docs/aaa/BOSSES.md): a second one waits until the first has fallen.
+    if (d.boss) { if (this.livingBoss()) return []; count = 1; }
     const place = this.missionPlace(at, team), made = [];
     for (let i = 0; i < count; i++) {
       // A single building stands exactly on its place; everything else takes the nearest free spot.
@@ -223,6 +226,8 @@ export const missions = {
     if (when.tagDead) return (m.fired["seen:" + when.tagDead] ||= this.tagged(when.tagDead).length > 0) && !this.tagged(when.tagDead).length;
     if (when.count) return this.own(when.count.team ?? 0).filter((e) => e.type === this.typeFor(when.count.team ?? 0,when.count.type) && e.complete !== false).length >= when.count.atLeast;
     if (when.pointOwned) return m.points[when.pointOwned.point]?.owner === (when.pointOwned.team ?? 0);
+    // A boss (sim/bosses.js) has reached a health stage: 2 at two thirds of its health, 3 at one third.
+    if (when.bossStage !== undefined) return this.entities.some((e) => e.boss && e.hp > 0 && (e.bs?.stage ?? 1) >= when.bossStage);
     // Defence rules in a story mission (0.19b): after wave n is beaten, or once wave n has started.
     if (when.wave !== undefined) return (this.defence?.cleared ?? 0) >= when.wave;
     if (when.waveStart !== undefined) return (this.defence?.wave ?? 0) >= when.waveStart;

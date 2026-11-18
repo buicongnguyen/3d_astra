@@ -92,6 +92,8 @@ jobs:
             scripts: air
           - name: chronicles
             scripts: chronicles
+          - name: bosses
+            scripts: boss
     defaults:
       run:
         working-directory: github-io

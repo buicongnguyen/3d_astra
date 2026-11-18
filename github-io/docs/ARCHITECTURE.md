@@ -20,6 +20,7 @@ Three.js r185 and Vite. The game is a static site; there is no server.
 | `sim/missions.js` | Mission engine (format in [MISSIONS.md](MISSIONS.md)) |
 | `sim/defence.js` | Frontier Defence (0.17, 0.21): route order, wave queue, pads and crewed towers with tier-3 branches, lives, the commander, bridge demolition and pontoons (`sim.crossings` → derived `terrain.water`, re-applied by `snapshot.restore`), mixed and endless waves; state only in a defence match |
 | `sim/air.js` | Air (0.18): `canHit` (only `hits_air` units, and towers after Flak, target flyers), straight flight inside the map, the air cap count, `airSeenBy` (hostile teams whose sight reaches a flyer). The hooks sit in movement, combat, height, vision, orders, points and the AI; all of them run only for flyers |
+| `sim/bosses.js` | Bosses (docs/aaa/BOSSES.md): the data-driven cycle (dormant, tracking, warning, attacking, exposed), danger zones (`sim.dangerZones`: circle, cone, line) and auto-evade for units not on Hold, damage taken by phase, health stages; state only once a boss acts. Client: `boss-view.js` (model parts, marks, core), `boss-ui.js` (the bar) |
 
 Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `progression.js` (building levels, shields), `navigation.js` (A*, obstacle buckets), `coalitionPlan`.
 

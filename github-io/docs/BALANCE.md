@@ -405,3 +405,15 @@ the skirmish hash `d071360b`, are unchanged (`tests/wings.test.js` pins the othe
 - **Wings over Copper** (objective bot, seconds): Story 507, Standard 508, Veteran 508, all gold; passive
   and generic targets met. The bot builds a large army while the AI stays home, so it is fast; a person
   should take 9 to 12 minutes (8 minutes of raids, then the yard).
+
+## Bosses: the Iron Vanguard in mission 3
+
+Sizing and rules: [aaa/BOSSES.md](aaa/BOSSES.md). The Iron Vanguard has 40,000 health (Story 30,000, Veteran 32,000), for a fight of 114 to 136 s against the 24 to 27 units the objective bot brings.
+
+| `npm run check:missions`, m03, objective bot | Before | After |
+|---|---|---|
+| Story | 428 s gold | 522 s gold |
+| Standard | 501 s silver | 602 s gold |
+| Veteran | 589 s silver | 632 s gold |
+
+`--spread`: every run wins except Standard `objective-3` (a 3-unit-smaller marching army), which times out after meeting the boss early. Every other mission is unchanged.
