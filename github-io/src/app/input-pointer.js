@@ -236,7 +236,11 @@ export function setupInputPointer(S, A) {
       $("selection-box").style.display = "none";
       if (canvas.hasPointerCapture(e.pointerId))
         canvas.releasePointerCapture(e.pointerId);
-      if (old.button !== 0 || e.button!==0 || Z.paused || !Z.started || S.sim.result || document.elementFromPoint(e.clientX,e.clientY)!==canvas) return;
+      if (old.button !== 0 || e.button!==0 || Z.paused || !Z.started || S.sim.result) return;
+      const dragged = Math.hypot(e.clientX - old.x, e.clientY - old.y) > 6;
+      // A click must land on the map itself; a drag box may end over the dock or the minimap
+      // (players often release there) and still selects what it covers.
+      if ((!dragged || S.mode) && document.elementFromPoint(e.clientX,e.clientY)!==canvas) return;
       const point = S.view.point(e.clientX, e.clientY);
       if (S.mode === "build" && point) {
         A.confirmBuild(S.sim.findPlacement(S.buildType, 0, point.x, point.z) || point);
@@ -250,9 +254,9 @@ export function setupInputPointer(S, A) {
         if (A.commandAt(point, ["support","context","attack","attackmove","repair","rally"].includes(S.mode) ? S.view.pick(e.clientX,e.clientY,S.sim) : null, e.shiftKey||S.queueOrders, S.mode) !== false) A.clearMode();
         return;
       }
-      if (Math.hypot(e.clientX - old.x, e.clientY - old.y) <= 6 && A.defenceTap?.(e.clientX, e.clientY)) return;
+      if (!dragged && A.defenceTap?.(e.clientX, e.clientY)) return;
       const next = e.shiftKey ? new Set(S.selected) : new Set();
-      if (Math.hypot(e.clientX - old.x, e.clientY - old.y) > 6) {
+      if (dragged) {
         const rect = canvas.getBoundingClientRect();
         for (const u of S.sim.own(0).filter((u) => u.kind === "unit")) {
           const p = S.view.project(u.x, u.z, S.view.liftOf(u));

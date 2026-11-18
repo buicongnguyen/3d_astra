@@ -933,15 +933,24 @@ export class WorldView {
     const rect = this.renderer.domElement.getBoundingClientRect(),
       x = clientX - rect.left,
       y = clientY - rect.top;
-    this.raycaster.setFromCamera(new THREE.Vector2(x/rect.width*2-1,-y/rect.height*2+1),this.camera);
+    // The drawn part of the canvas (portrait phones leave the strip under an open dock undrawn,
+    // setCoverOpen): normalised the same way as point() and project(), or rays miss the models.
+    this.raycaster.setFromCamera(new THREE.Vector2(x/rect.width*2-1,-y/(this.drawHeight || rect.height)*2+1),this.camera);
     const candidates = sim.entities.filter(e => e.hp > 0 && sim.isVisible(e) && this.objects.has(e.id));
     const meshes = candidates.map(e => this.objects.get(e.id).userData.model);
     const hits = this.raycaster.intersectObjects(meshes,true);
-    if (hits.length) {
-      let node = hits[0].object;
+    // A unit under the pointer wins over a building the same ray also crosses (a Harvester parked
+    // at a Refinery, infantry in front of a Factory), as in most RTS games.
+    let building = null;
+    for (const hit of hits) {
+      let node = hit.object;
       while (node && !meshes.includes(node)) node = node.parent;
-      if (node) return candidates[meshes.indexOf(node)];
+      if (!node) continue;
+      const e = candidates[meshes.indexOf(node)];
+      if (e.kind === "unit") return e;
+      building ||= e;
     }
+    if (building) return building;
     let best = null,
       score = Infinity;
     for (const e of [...sim.entities, ...sim.resources]) {

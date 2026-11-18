@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased: selection fixes
+- A drag box that ends over the dock, the minimap or another panel now selects what it covers (it selected nothing). Clicks still have to land on the map.
+- Portrait phones with a panel open: taps aimed at the full canvas height while the map is drawn above the dock, so a tap could pick the wrong thing (often a building). Picking now uses the drawn height, like the drag box and the minimap.
+- A unit under the pointer wins over a building behind it (a Harvester at a Refinery).
+- New browser suite `tests/selection.mjs` (`npm run test:selection`).
+
 ## Unreleased – gameplay and offline fixes
 
 - Destroying the launch yard early in Wings over Copper counts when the objective appears, including when resuming an older save. Two campaign briefings now give the correct one-minute hold time.
