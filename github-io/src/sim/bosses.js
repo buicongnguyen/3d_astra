@@ -23,6 +23,10 @@ export const BOSSES = balance.bosses || {};
 // The warning rule: a unit reacts in REACT seconds and walks out at ESCAPE_SPEED (the slowest
 // common unit, a Battle tank); EVADE_MARGIN is how far outside the edge it stops.
 export const REACT = 1, ESCAPE_SPEED = 2.5, EVADE_MARGIN = 0.5;
+// Units not on Hold step out by themselves, but only AUTO_REACT seconds after the mark appears:
+// fast infantry still escapes, slow tanks near the centre get clipped, so moving them yourself
+// is rewarded without being required (owner OK, 2026-11-19).
+export const AUTO_REACT = 1.5;
 // The boss looks for its target four times a second.
 const RETARGET = 5;
 const DEG = Math.PI / 180;
@@ -252,7 +256,7 @@ export const bosses = {
       if (u.hp <= 0 || u.kind !== "unit" || u.flying || u.boss) continue;
       let zone = null;
       if (u.stance !== "hold" && u.complete !== false)
-        for (const z of zones) if (this.hostile(z.team, u.team) && inZone(z, u, u.radius + EVADE_MARGIN)) { zone = z; break; }
+        for (const z of zones) if (this.hostile(z.team, u.team) && this.time >= z.from + AUTO_REACT - 1e-9 && inZone(z, u, u.radius + EVADE_MARGIN)) { zone = z; break; }
       if (!zone) { if (u.evade) this.endEvade(u); continue; }
       if (u.evade?.zone === zone.id) continue;
       this.startEvade(u, zone, 0);

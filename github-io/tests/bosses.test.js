@@ -6,7 +6,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { Simulation } from "../src/simulation.js";
 import { DEFINITIONS as D } from "../src/data.js";
-import { BOSSES, warningSeconds, escapeDistance, inZone, zoneExits, REACT, ESCAPE_SPEED } from "../src/sim/bosses.js";
+import { BOSSES, warningSeconds, escapeDistance, inZone, zoneExits, REACT, ESCAPE_SPEED, AUTO_REACT } from "../src/sim/bosses.js";
 import { bossStatus, BOSS_STATES } from "../src/boss-ui.js";
 import { MISSIONS } from "../src/story/missions.js";
 import { SCENES } from "../src/story/scenes.js";
@@ -113,7 +113,8 @@ test("warnings never deal damage; the rounds hit units on Hold inside the zone a
   assert.equal(outside.hp + outside.shield, D.ranger.hp + D.ranger.shield, "a unit outside the zone is untouched by it");
 });
 
-test("auto-evade: units on Guard and Aggressive step out of the zone before the first round; Hold stays", () => {
+test("auto-evade: Guard and Aggressive infantry step out after AUTO_REACT and escape; Hold stays; a slow unit at the centre is clipped", () => {
+  assert.ok(AUTO_REACT > 0 && AUTO_REACT < warningSeconds(SPEC.attacks[0]), "the units react inside the warning");
   const take = (stance) => {
     const { s, boss } = field();
     boss.damage = 0; // the light gun off: only the burst counts
@@ -122,20 +123,24 @@ test("auto-evade: units on Guard and Aggressive step out of the zone before the 
     until(s, () => boss.bs?.phase === "warning", 20);
     const zone = s.dangerZones[0];
     assert.ok(units.some((u) => inZone(zone, u)), `${stance}: the group is marked`);
+    until(s, () => s.time >= zone.from + AUTO_REACT - 0.1, 3);
+    const early = units.filter((u) => u.evade).length;
     until(s, () => boss.bs?.phase === "attacking", 5);
     const inside = units.filter((u) => inZone(zone, u)).length;
     until(s, () => boss.bs?.phase === "exposed", 5);
-    return { inside, lost: full - units.reduce((n, u) => n + u.hp + u.shield, 0), units };
+    return { early, inside, lost: full - units.reduce((n, u) => n + u.hp + u.shield, 0), units };
   };
   for (const stance of ["guard", "aggressive"]) {
     const r = take(stance);
+    assert.equal(r.early, 0, `${stance}: nobody moves before AUTO_REACT`);
     assert.equal(r.inside, 0, `${stance}: nobody left in the zone when it fires`);
     assert.equal(r.lost, 0, `${stance}: the burst hits nobody`);
     assert.ok(r.units.every((u) => !u.evade), `${stance}: back to their orders afterwards`);
   }
   const hold = take("hold");
   assert.ok(hold.inside >= 4 && hold.lost > 0, "Hold: they stay and take the burst");
-  // The slowest ground unit (a Walker, 1.9 m/s), alone and so in the middle of the mark, still gets out in time.
+  // The slowest ground unit (a Walker, 1.9 m/s), alone and so in the middle of the mark, starts
+  // too late to clear it: it is clipped, so moving slow units yourself pays.
   const { s, boss } = field();
   boss.damage = 0;
   const walker = s.spawn("walker", 0, 0, 2, true, true);
@@ -143,7 +148,8 @@ test("auto-evade: units on Guard and Aggressive step out of the zone before the 
   assert.ok(inZone(s.dangerZones[0], walker) && Math.hypot(walker.x - s.dangerZones[0].x, walker.z - s.dangerZones[0].z) < 0.5, "the mark is on the Walker");
   const hp = walker.hp + walker.shield;
   until(s, () => boss.bs?.phase === "exposed", 6);
-  assert.equal(walker.hp + walker.shield, hp, "out before the first round");
+  const lost = hp - (walker.hp + walker.shield);
+  assert.ok(lost > 0 && walker.hp > 0, `a slow unit at the centre is clipped, not killed (lost ${lost})`);
 });
 
 test("damage taken: armoured outside the exposed window, more while the core is open", () => {
@@ -268,7 +274,7 @@ test("mission 3: the Iron Vanguard guards the north siphon, must be destroyed, a
   assert.ok(said.some((t) => t.startsWith("Its armour is cracking")), "the stage 2 line");
   for (const d of ["story", "veteran"]) {
     const t = new Simulation({ map: m.map, enemyCount: 1, mission: m, aiSpeed: m.speed, playerBonus: m.bonus, difficulty: d });
-    assert.equal(t.tagged("ironVanguard")[0].maxHp, spawn.hpByDifficulty[d], `${d}: HP sized to the army`);
+    assert.equal(t.tagged("ironVanguard")[0].maxHp, spawn.hpByDifficulty[d] ?? D.ironvanguard.hp, `${d}: HP sized to the army`);
   }
   assert.equal(balance.bosses["iron-vanguard"].attacks[0].zone.shape, "circle");
 });

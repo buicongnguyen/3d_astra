@@ -88,7 +88,7 @@ test("Wings over Copper resolves with and without earlier decisions: only Hale's
 // Mission 3 changed on purpose with the Iron Vanguard boss (docs/aaa/BOSSES.md): spawn, objective, scene and lines.
 test("the original missions resolve to their recorded checksums on all decision paths", () => {
   const BEFORE = {
-    "m01-first-light": "d21a5cc5", "m02-first-contact": "18aa4673", "m02b-hold-the-river": "9845060f", "m03-the-ashen-line": "d287bd95",
+    "m01-first-light": "d21a5cc5", "m02-first-contact": "18aa4673", "m02b-hold-the-river": "9845060f", "m03-the-ashen-line": "088cf8e2",
     "m04-three-way-dunes": "fcb1de84", "m05-the-verdant-pact": "0b2a52ee", "m06-copper-harvest": "95b936e7", "m07-copper-siege": "093c6020",
     "m08-the-quiet-vault": "03ed22ef", "m09-a-debt-in-the-dunes": "d95fc122", "m10-obsidian-storm": "a696d28a", "m11-cut-the-draw": "5e2127e3", "m12-frontiers-end": "bc7f1bbe",
   };

@@ -234,7 +234,7 @@ export const MISSIONS = [
       { spawn: "tower", team: 1, at: { x: 40, z: 7 }, hp: 2000 },
       // The boss (docs/aaa/BOSSES.md) is the north siphon's guard (it replaced that siphon's tower): powered
       // down in the salvage yard until it is hurt or troops come within 14 m.
-      { spawn: "ironvanguard", team: 1, at: "vanguardYard", tag: "ironVanguard", exact: true, hpByDifficulty: { story: 30000, veteran: 32000 } },
+      { spawn: "ironvanguard", team: 1, at: "vanguardYard", tag: "ironVanguard", exact: true, hpByDifficulty: { story: 26000 } },
     ],
     objectives: [
       { id: "siphons", text: "Destroy the three Ashfall siphons", type: "destroyTag", tag: "siphon" },
@@ -292,7 +292,7 @@ export const MISSIONS = [
       lose: [{ who: "vale", text: "He kept to his schedule and we did not keep to ours. Regroup at the river." }],
     },
     medals: { gold: { seconds: 720 }, silver: { seconds: 1000 } },
-    design: "About 10 minutes against one Relaxed AI (first wave near 3:30, then every 90 seconds). The player starts with two towers and a wall guard of 3 Rangers and 3 Vanguards. The west and east siphons (6000 HP) each have a hardened tower and 4 guards; the north one has 5 guards and the Iron Vanguard (docs/aaa/BOSSES.md), a salvaged Builder war machine powered down in the yard 11 m from it (40000 HP, 30000 on Story, 32000 on Veteran: a 2-3 minute fight for the army the objective bot has there, 24-27 units). It wakes when troops come within 14 m or hit it, plays its entrance scene, and fights within 12 m of its yard: a marked four-gun burst at the biggest group every ~13 s (units on Guard or Aggressive step out), a light gun, a 4-second open core after each burst. Hale's camp has two hardened towers and 8 guards. Intended: break the first wave at the walls, take the west and east siphons, then the north one and the Iron Vanguard together. Twist: entering the north siphon reveals that Hale feeds a fleet in orbit and calls a 7-unit counter-attack. The enemy core is optional: destroying it removes Ashfall but its tagged siphons and the boss stay standing, so they must still be destroyed.",
+    design: "About 10 minutes against one Relaxed AI (first wave near 3:30, then every 90 seconds). The player starts with two towers and a wall guard of 3 Rangers and 3 Vanguards. The west and east siphons (6000 HP) each have a hardened tower and 4 guards; the north one has 5 guards and the Iron Vanguard (docs/aaa/BOSSES.md), a salvaged Builder war machine powered down in the yard 11 m from it (32000 HP, 26000 on Story: about a 2 minute fight for the army the objective bot has there, 24-27 units). It wakes when troops come within 14 m or hit it, plays its entrance scene, and fights within 12 m of its yard: a marked four-gun burst at the biggest group every ~13 s (units on Guard or Aggressive step out 1.5 s into the 3 s warning), a light gun, a 4-second open core after each burst. Hale's camp has two hardened towers and 8 guards. Intended: break the first wave at the walls, take the west and east siphons, then the north one and the Iron Vanguard together. Twist: entering the north siphon reveals that Hale feeds a fleet in orbit and calls a 7-unit counter-attack. The enemy core is optional: destroying it removes Ashfall but its tagged siphons and the boss stay standing, so they must still be destroyed.",
   },
 
   {

@@ -15,7 +15,7 @@ A boss is one big enemy machine with a readable attack rhythm: it marks the grou
 ## The owner's rules and how the system keeps them
 
 1. **Micro is a bonus, not a requirement.** No single attack takes more than about 30% of a typical unit's health. `tests/bosses.test.js` checks the worst case for every boss: a whole attack on one Ranger (95 HP) standing in the middle of the zone, on the hardest difficulty. Iron Vanguard: 25.6 damage on Standard, 28.2 on Veteran and 12.8 on Story (27%, 30% and 13%). One light-gun shot does 10 (11%). The objective bot wins mission 3 on every difficulty without any special handling of the boss.
-2. **Auto-evade.** Danger zones are part of the simulation (`sim.dangerZones`). Before units act each tick (`stepDangerZones`), every ground unit of a hostile team inside a zone gets a spot just outside it (`zoneExits`, nearest standable spot with a straight path). It walks straight there and does nothing else meanwhile (`stepEvade`), then returns to its orders. A unit on guard keeps the new spot as its post. Units on **Hold** stay where they are. Guard (the default) and Aggressive units step out. Flyers are not hit by ground zones. Evading is deterministic, saved and replayed.
+2. **Auto-evade.** Danger zones are part of the simulation (`sim.dangerZones`). Before units act each tick (`stepDangerZones`), every ground unit of a hostile team inside a zone gets a spot just outside it (`zoneExits`, nearest standable spot with a straight path). It walks straight there and does nothing else meanwhile (`stepEvade`), then returns to its orders. A unit on guard keeps the new spot as its post. Units on **Hold** stay where they are. Guard (the default) and Aggressive units step out, but only `AUTO_REACT` (1.5 s) into the 3 s warning (owner OK, 2026-11-19): infantry still escape, a slow unit near the centre (Tank, Walker) is clipped, so moving slow units yourself pays without being required. Flyers are not hit by ground zones. Evading is deterministic, saved and replayed.
 3. **Warnings last as long as the walk out.** Warning = max(`attack.warning`, 1 s + (escape distance + 0.5 m) / 2.5 m/s). The escape distance is the circle's radius, the half-width of a cone at its far end, or half a line's width. Difficulty never changes it; it changes damage (`bosses.<id>.damage`, Story 0.5) and cadence (`cadence`, a factor on the pause).
 4. **Slow rhythm, one boss at a time.** Each cycle is the pause, then the warning, the rounds and the exposed window: about 11 to 16 s for every stage and difficulty (tested). `missionSpawn` refuses a second boss while one lives.
 5. **Exposed core is automatic.** After every attack the boss takes `taken.exposed` damage for `exposed` seconds (×1.75 for 4 s). At all other times it takes `taken.armored` (×0.65). The bar reads CORE EXPOSED and the core lights up. Units that are already firing gain from it without new orders.
@@ -90,7 +90,7 @@ In a mission, spawn the boss like any unit: `{ spawn: "<type>", team, at, tag, e
 
 | | |
 |---|---|
-| Health | 40,000 (Story 30,000, Veteran 32,000), shield 300 (regenerates after 6 s), radius 2.2 m, speed 1.7 m/s |
+| Health | 32,000 (Story 26,000; owner OK 2026-11-19, was 40,000), shield 300 (regenerates after 6 s), radius 2.2 m, speed 1.7 m/s |
 | Four-gun burst | circle 4.5 m at the biggest group within 18 m; 3.0 s warning; 8 rounds over 1.05 s, 3.2 each (25.6 for a unit that stays; Story 12.8, Veteran 28.2); buildings ×3 |
 | Light gun | 10 every 1.0 s at 14 m (Story 5, Veteran 11), during tracking and the warning |
 | Rhythm | pause 6 / 4.5 / 3 s by stage, then 3 s warning, 1.05 s burst and 4 s exposed: a burst every 14.1 / 12.6 / 11.1 s on Standard (Story ×1.3 pause, 15.9–11.9 s; Veteran ×0.85, 13.2–10.6 s) |
@@ -147,7 +147,7 @@ Mission numbers above follow the owner's list. In the game the campaign is now 1
 
 ## Open questions for the owner
 
-- **Should auto-evade be partial?** On Guard (the default) the four-gun burst never hits anyone, so the boss's threat is lost firing time and the light gun. Possible middle grounds: units react after a short delay, or only idle units step out.
-- **Is 40,000 health right for real players?** It was sized on the bot's army. A smaller human army takes longer.
+- ~~Should auto-evade be partial?~~ Decided 2026-11-19: units react 1.5 s into the warning.
+- ~~Is 40,000 health right?~~ Decided 2026-11-19: 32,000 on Standard and Veteran, 26,000 on Story; tune from real play. The `--spread` run with a 3-smaller army still times out on Standard (it never takes the west and east siphons either); accepted.
 - **Standard with a 3-unit-smaller army** (`--spread`) now times out. Is that acceptable, or should the boss be easier to meet early?
 - **The north siphon lost its tower** to make room for the boss. Keep it that way?
