@@ -98,7 +98,7 @@ await suite("choices: campaign map, choice card and epilogue", async () => {
     await page.locator("#mission-briefing").waitFor({ state: "visible" });
     await tap("#mb-skip"); await tap("#mb-next");
     await page.waitForFunction(() => window.__frontier.started && document.querySelector("#modal").hidden, null, { timeout: TIMEOUT.models });
-    await page.evaluate(() => { const s = window.__frontier.sim, u = s.own(0).find((e) => e.kind === "unit" && e.type !== "worker"); u.x = 0; u.z = -36; });
+    await page.evaluate(() => { const s = window.__frontier.sim, u = s.own(0).find((e) => e.kind === "unit" && e.type !== "worker"); u.x = 5; u.z = -43; }); // inside siphonNorth (r 7), outside the Iron Vanguard's 14 m wake range: its entrance scene would play first
     await page.locator("#modal .decision-card").waitFor({ state: "visible", timeout: TIMEOUT.step });
     const card = await page.evaluate(() => window.__frontier.decision());
     assert.deepEqual([card.open, card.pending?.id, card.flags], [true, "m03-alloy", null]);
