@@ -69,7 +69,7 @@ jobs:
           - name: maps
             scripts: stages corners new-game boundary-fx
           - name: commands
-            scripts: auto-combat harvesters hotkeys pc-controls
+            scripts: auto-combat harvesters hotkeys pc-controls selection
           - name: construction
             scripts: mobile-construction patrol repair-rally
           - name: feedback
