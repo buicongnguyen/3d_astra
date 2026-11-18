@@ -158,6 +158,8 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
   await tap('[data-mode="campaign"]');
   await tap('.chron-card[data-chronicle="ashfall"]');
   assert.equal(await page.evaluate(() => document.querySelector("#operation-label").textContent), "CHRONICLE · Ashfall · 3/3");
+  const finale = chron("ashfall").missions[2].defence;
+  assert.equal(await page.locator("#briefing-rivals").textContent(), `${finale.lives} lives · ${finale.waves.length} waves`);
   await tap("#start");
   await page.locator("#mission-briefing").waitFor({ state: "visible" });
   assert.equal(await page.locator("#mb-number").innerText(), "CHRONICLE · 3/3");

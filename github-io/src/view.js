@@ -478,18 +478,22 @@ export class WorldView {
     if (typeof types === 'function') { onProgress = types; types = CORE_MODEL_TYPES; }
     return this.ensureModels(types, onProgress);
   }
+  setModelRequirements(types) {
+    this.requiredModels = [...new Set(types.filter(type => type !== 'environment'))];
+    this.modelsReady = this.hasModels();
+    return this.modelsReady;
+  }
   ensureModels(types, onProgress) {
-    const required = [...new Set(types.filter(type => type !== 'environment'))];
-    if (required.some(type => !/^[a-z][a-z0-9_-]*$/.test(type))) return Promise.reject(new Error('Invalid model type'));
-    this.requiredModels = required;
-    this.modelsReady = this.hasModels(required);
+    if (types.some(type => !/^[a-z][a-z0-9_-]*$/.test(type))) return Promise.reject(new Error('Invalid model type'));
+    this.setModelRequirements(types);
+    const required = this.requiredModels;
     const operation = this.modelQueue.catch(() => {}).then(() => this.prepareModels(required, onProgress));
     this.modelQueue = operation;
     return operation.finally(() => { this.modelsReady = this.hasModels(this.requiredModels); });
   }
   // Models a match may need later (its flyers, model-roster.js airModelsFor): parsed in the background
   // after whatever is queued, without touching requiredModels or modelsReady, so the frame never waits.
-  // An entity whose model has not arrived yet is simply drawn once it has (see update()).
+  // A flyer uses a small shared airframe until its full model arrives.
   preloadModels(types) {
     const missing = types.filter((type) => /^[a-z][a-z0-9_-]*$/.test(type) && !this.models.has(type));
     if (!missing.length) return Promise.resolve();
@@ -498,16 +502,22 @@ export class WorldView {
     return operation.catch(() => {});
   }
   async prepareModels(types, onProgress) {
-    const loader = new GLTFLoader(), total = types.length + 1;
+    const total = types.length + 1;
     let loaded = types.filter((type) => this.models.has(type)).length + (this.environmentAssets ? 1 : 0);
     onProgress?.(loaded, total);
     const fetchModel = async (name) => {
+      const url = `${import.meta.env.BASE_URL}models/${name}.glb`;
+      const loader = new GLTFLoader();
       for (let attempt = 0; ; attempt++) {
         try {
-          const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/${name}.glb`);
+          const gltf = await loader.loadAsync(url);
           onProgress?.(++loaded, total);
           return gltf;
         } catch (error) {
+          // FileLoader caches successful HTTP bodies before GLTFLoader can validate them.
+          // Drop the failed bytes and ask both the worker and HTTP cache for a fresh copy.
+          THREE.Cache.remove(`file:${url}`);
+          loader.setRequestHeader({ "Cache-Control": "no-cache" });
           if (attempt >= 2) throw error;
           await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)));
         }
@@ -1004,9 +1014,37 @@ export class WorldView {
     adoptBatchedParts(model);
     return model;
   }
+  // Aircraft can take off before the optional GLB arrives, including during offline play.
+  // A swept wing and canopy share the same altitude, picking and selection logic as its replacement.
+  fallbackFlyer(team) {
+    const key = `fallback-flyer-${team}`;
+    if (!this.teamTemplates.has(key)) {
+      const wing = new THREE.Shape();
+      wing.moveTo(0, 1.65);
+      wing.lineTo(-1.45, -0.9);
+      wing.lineTo(0, -0.48);
+      wing.lineTo(1.45, -0.9);
+      wing.closePath();
+      const geometry = new THREE.ExtrudeGeometry(wing, { depth: 0.22, bevelEnabled: false });
+      geometry.rotateX(Math.PI / 2);
+      const paint = mat(this.colors[team]);
+      paint.name = "Team";
+      const template = new THREE.Group();
+      template.name = "FallbackFlyer";
+      template.add(new THREE.Mesh(geometry, paint));
+      const canopy = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), mat(0x283b46));
+      canopy.scale.set(0.24, 0.2, 0.57);
+      canopy.position.z = 0.27;
+      template.add(canopy);
+      adoptBatchedParts(template);
+      this.teamTemplates.set(key, template);
+    }
+    return this.teamTemplates.get(key);
+  }
   createEntity(e) {
-    const root = new THREE.Group(),
-      model = e.kind === "wall" ? this.createWallModel(e) : this.teamTemplates.get(`${e.type}-${e.team}`).clone(true);
+    const root = new THREE.Group();
+    const template = this.teamTemplates.get(`${e.type}-${e.team}`);
+    const model = e.kind === "wall" ? this.createWallModel(e) : (template || this.fallbackFlyer(e.team)).clone(true);
     root.add(model);
     // Shared per radius, so every blob shadow joins one batch.
     let shadowGeometry = this.contactShadowGeometries.get(e.radius);
@@ -1100,8 +1138,9 @@ export class WorldView {
       else if (o.name.startsWith("flicker_")) air.flames.push({ node: o, base: o.scale.y });
     });
     this.flyerTops ||= new Map();
-    let top = this.flyerTops.get(e.type);
-    if (top === undefined) this.flyerTops.set(e.type, (top = new THREE.Box3().setFromObject(model).max.y - root.position.y));
+    const topKey = model.name === "FallbackFlyer" ? model.name : e.type;
+    let top = this.flyerTops.get(topKey);
+    if (top === undefined) this.flyerTops.set(topKey, (top = new THREE.Box3().setFromObject(model).max.y - root.position.y));
     air.top = top;
     if (!this.airShadow) {
       const canvas = document.createElement("canvas");
@@ -1376,10 +1415,16 @@ export class WorldView {
     // Each vitals bar is a draw: in Frontier Defence only the 12 weakest enemies show theirs.
     const bars = sim.defence ? weakest(sim, 12) : null;
     for (const e of sim.entities) {
-      // A unit whose model is still downloading (or failed offline) is drawn once it arrives.
-      if (!this.objects.has(e.id) && e.kind !== "wall" && !this.teamTemplates.has(`${e.type}-${e.team}`)) continue;
+      let o = this.objects.get(e.id);
+      if (e.flying && o?.userData.model.name === "FallbackFlyer" && this.models.has(e.type)) {
+        this.disposeEntity(o);
+        o = null;
+      }
+      if (!o) {
+        if (!e.flying && e.kind !== "wall" && !this.teamTemplates.has(`${e.type}-${e.team}`)) continue;
+        o = this.createEntity(e);
+      }
       alive.add(e.id);
-      const o = this.objects.get(e.id) || this.createEntity(e);
       const u=o.userData;
       u.recoil=Math.max(0,u.recoil-dt);u.kick=Math.max(0,u.kick-dt);
       if (u.flashWait >= 0 || u.flashLeft > 0 || u.flashLit) this.stepHitFlash(u, e, dt);

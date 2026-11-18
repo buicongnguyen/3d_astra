@@ -3,14 +3,18 @@
 // page asks with ?sw, so tests see the same network behaviour as before.
 import { areModelsLoaded, modelPlan } from "./loading.js";
 
-export function registerOffline(A, query = new URLSearchParams(location.search)) {
+export function registerOffline(A, query, matchTypes) {
   if (!("serviceWorker" in navigator) || !import.meta.env.PROD) return;
   if (query.has("test") && !query.has("sw")) return;
   const hadController = !!navigator.serviceWorker.controller;
   addEventListener("load", () => {
     navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).then((registration) => {
-      // When the worker is active, hand it the model list so every model is cached for offline play.
-      const warm = () => navigator.serviceWorker.ready.then((ready) => ready.active?.postMessage({ type: "models", urls: modelPlan().map((item) => new URL(item.url, location.href).href) }));
+      // Warm the selected match after the menu is ready, including a remembered faction.
+      const warm = async () => {
+        const { active } = await navigator.serviceWorker.ready;
+        const urls = modelPlan(matchTypes()).map(item => new URL(item.url, location.href).href);
+        active?.postMessage({ type: "models", urls });
+      };
       if (areModelsLoaded()) warm(); else addEventListener("fc-models-loaded", warm, { once: true });
       registration.addEventListener("updatefound", () => {
         const worker = registration.installing;

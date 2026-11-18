@@ -159,11 +159,17 @@ export const economy = {
     for (let r = b.radius + 2.5; r <= b.radius + 16 && free.length < 8; r += 1.5)
       for (let i = 0; i < 28; i++) {
         const angle = (i / 28) * Math.PI * 2 + r * 0.7, c = { x: b.x + Math.cos(angle) * r, z: b.z + Math.sin(angle) * r };
-        if (this.nav.canStand(c.x, c.z, d.radius) &&
-          !this.entities.some((e) => e.hp > 0 && e.kind === "unit" && distance(c, e) < e.radius + d.radius + 0.2)) {
-          free.push(c);
-          if (free.length >= 8) break;
-        }
+        // An airfield needs clear airspace. A ground unit needs walkable ground.
+        if (d.flying) {
+          const limit = this.terrain.half - Math.max(1, d.radius + 0.1);
+          if (Math.abs(c.x) > limit || Math.abs(c.z) > limit) continue;
+        } else if (!this.nav.canStand(c.x, c.z, d.radius)) continue;
+        const occupied = this.entities.some(e => e.hp > 0 && e.kind === "unit" &&
+          Boolean(e.flying) === Boolean(d.flying) && distance(c, e) < e.radius + d.radius + 0.2);
+        if (occupied) continue;
+        if (d.flying) return c;
+        free.push(c);
+        if (free.length >= 8) break;
       }
     return free.find((c) => this.nav.path(c, goal, d.radius).length) || free[0] || null;
   },

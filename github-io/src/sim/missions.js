@@ -80,9 +80,10 @@ export const missions = {
     }
     return { x: place.x, z: place.z };
   },
-  missionSpawn({ spawn, team = 0, at, count = 1, tag, name, hp, hpByDifficulty, speed, complete = true, exact = false }) {
+  missionSpawn({ spawn, team = 0, at, count = 1, countByDifficulty, tag, name, hp, hpByDifficulty, speed, complete = true, exact = false }) {
     // exact: the script names this very type (a Breaker battery stays Breakers on an Ashfall roster).
     if (!exact) spawn = this.typeFor(team,spawn);
+    count = countByDifficulty?.[this.difficulty] ?? count;
     hp = hpByDifficulty?.[this.difficulty] ?? hp;
     const d = D[spawn];
     if (!d || !this.players[team]) return [];
@@ -96,6 +97,12 @@ export const missions = {
       if (hp) e.hp = e.maxHp = hp;
       if (speed) e.speed = speed;
       made.push(e);
+    }
+    // A player can destroy a target before its objective is revealed or checked.
+    if (tag && made.length) {
+      for (const objective of this.missionDef.objectives) {
+        if (objective.type === "destroyTag" && objective.tag === tag) this.mission.objectives[objective.id].seen = true;
+      }
     }
     return made;
   },

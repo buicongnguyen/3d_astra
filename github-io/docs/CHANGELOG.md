@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased – gameplay and offline fixes
+
+- Destroying the launch yard early in Wings over Copper counts when the objective appears, including when resuming an older save. Two campaign briefings now give the correct one-minute hold time.
+- Hold the River has lighter waves on Story in the main campaign and on Standard in the Wardens Chronicle. On Veteran, Lights Out and Three-Way Dunes give the player reinforcements at the start, and the survey masts in A Grey Coat take less damage to destroy.
+- Aircraft keep their position when a building goes up beneath them, and ground obstructions no longer block takeoff. If a flyer’s model is unavailable offline, it appears as a selectable team-coloured airframe. Reconnecting restores the animated model and keeps the selection.
+- Switching skirmish factions during a download restores the Start button as soon as the chosen roster is ready. Returning players can use their selected faction offline after its models have loaded online. The loader can recover from a damaged model download.
+- The installed game opens through a temporary server outage, after reading the build prompt, and on hosts that vary asset responses by Origin. Campaign mission buttons keep keyboard focus when downloads finish. Vietnamese loads in development, and Chronicle Defence briefings show the selected faction’s mission.
+- Damaged visibility grids are detected when loading a match. The start screen now opens without loading the sound engine. Its 11 KB of compressed JavaScript can load on first interaction.
+- In the 390 × 844 Eco air-battle benchmark, eight aircraft among 82 units used 116 draw calls and 291,782 triangles. The median CPU render time was 6 ms in Chrome on a desktop RTX 4080 SUPER.
+
 ## Unreleased: AAA pass 4 (plan: docs/aaa/AAA_PASS_1.md)
 
 - **Shorter phone messages:** counter tips are one line on phones ("Vanguard beats Ranger: use Breaker"), and alerts such as "Under attack!" are small pills instead of full-width bars, so they cover less of the battlefield. PCs keep the full sentences.

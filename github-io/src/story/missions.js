@@ -296,7 +296,7 @@ export const MISSIONS = [
       ],
       intel: [
         "Sunward rides fast Riders and heals with Supply wagons. Guard your Harvesters before each attack.",
-        "Hold any two of the three oasis relays for 3 minutes in a row.",
+        "Hold any two of the three oasis relays for one minute in a row.",
         "Ashfall and Sunward are enemies of each other too. A point they fight over is weakly held.",
         "An owned oasis pays alloy every second.",
       ],
@@ -946,7 +946,7 @@ export const MISSIONS = [
       intel: [
         "The Wardens send shielded drones and slow Walkers that outrange your tanks.",
         "Veil Shades stay hidden until they strike. Keep towers near anything you value.",
-        "Destroy the three Veil dampers: west, south and centre. Then hold the Crown relay for 3 minutes.",
+        "Destroy the three Veil dampers: west, south and centre. Then hold the Crown relay for 1 minute.",
         "Three allied commanders: an assault force, a raider and a siege corps. Expect attacks from every side.",
         "You do not have to destroy any Command core today.",
       ],
@@ -1039,7 +1039,7 @@ export const MISSIONS = [
       lose: [{ who: "vale", text: "Three armies were too many today. Sol is covering our retreat down the south road." }],
     },
     medals: { gold: { seconds: 810 }, silver: { seconds: 1140 } },
-    design: "About 13 minutes against three Relaxed allied AIs (Normal from 14:00); no core has to die. The player starts with 900 alloy, four towers and 6 Sunward units. Each damper has 6000 HP, a tower and guards (5 at the west and south ones, 9 at the centre). Intended: break the first joint attack near 4:00 at home, kill the west and south dampers between attacks, take Sol's 6 reinforcements at 7:00 and push the centre damper, then hold the Crown for 3 minutes with half the force while the rest keeps the camp alive. When the dampers fall, three waves (10 units in all, one from each enemy) converge on the Crown. Twist: Maren explains why the Veil keeps the relays dark and ECHO answers her; her last line after the win shows she has seen the proof.",
+    design: "About 13 minutes against three Relaxed allied AIs (Normal from 14:00); no core has to die. The player starts with 900 alloy, four towers and 6 Sunward units. Each damper has 6000 HP, a tower and guards (5 at the west and south ones, 9 at the centre). Intended: break the first joint attack near 4:00 at home, kill the west and south dampers between attacks, take Sol's 6 reinforcements at 7:00 and push the centre damper, then hold the Crown for 1 minute with half the force while the rest keeps the camp alive. When the dampers fall, three waves (10 units in all, one from each enemy) converge on the Crown. Twist: Maren explains why the Veil keeps the relays dark and ECHO answers her; her last line after the win shows she has seen the proof.",
   },
 
   {

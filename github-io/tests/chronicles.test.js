@@ -29,7 +29,7 @@ const LOSES = ["coreLost", "tagLost", "time", "armyLost", "lives"];
 const actions = (m) => (m.triggers || []).flatMap((t) => t.do || []);
 const spawns = (m) => [...(m.setup || []), ...actions(m)].filter((a) => a.spawn);
 const lines = (m) => [...m.briefing.lines.map((l) => ["briefing", l]), ...actions(m).filter((a) => a.say).map((a) => ["trigger", a.say]), ...m.debrief.win.map((l) => ["win", l]), ...m.debrief.lose.map((l) => ["lose", l])];
-const make = (m) => new Simulation({ map: m.map, enemyCount: m.enemies, aiSpeed: m.speed, alliance: m.alliance, playerBonus: m.bonus || null, mission: m, difficulty: "standard" });
+const make = (m, difficulty = "standard") => new Simulation({ map: m.map, enemyCount: m.enemies, aiSpeed: m.speed, alliance: m.alliance, playerBonus: m.bonus || null, mission: m, difficulty });
 const memory = (value) => { const store = new Map(value === undefined ? [] : [["frontier-campaign-v2", JSON.stringify(value)]]); return { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) }; };
 const clearMain = (count) => MISSIONS.slice(0, count).reduce((p, _, i) => recordClear(p, i, 300 + i), { cleared: {} });
 
@@ -143,6 +143,22 @@ test("field missions: positions stand on their maps; each constructs, runs, surv
     const copy = Simulation.load(s.serialize());
     assert.equal(copy.hash(), s.hash(), `${m.id}: the loaded save differs`);
     assert.equal(copy.factions[0], m.chronicle, `${m.id}: a loaded save keeps the roster`);
+  }
+});
+
+test("Chronicle starting squads and mast health follow the selected difficulty", () => {
+  for (const difficulty of ["story", "standard", "veteran"]) {
+    const veteran = difficulty === "veteran";
+    for (const [id, type, expected] of [
+      ["ca2-lights-out", "ranger", veteran ? 8 : 5],
+      ["cs2-three-way-dunes", "rider", veteran ? 7 : 5],
+    ]) {
+      const sim = make(ALL.find(m => m.id === id), difficulty);
+      assert.equal(sim.own(0).filter(e => e.type === type).length, expected, id + " " + difficulty);
+    }
+    const greyCoat = make(ALL.find(m => m.id === "cw2-a-grey-coat"), difficulty);
+    const hp = veteran ? 6500 : 7000;
+    assert.deepEqual(greyCoat.tagged("mast").map(e => e.hp), [hp, hp]);
   }
 });
 

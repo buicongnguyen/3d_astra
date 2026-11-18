@@ -44,7 +44,7 @@ export const HOLD_THE_RIVER = {
     lane: 2.4,
     pace: 0.75,
     count: { story: 0.8, standard: 1, veteran: 1.2 },
-    hp: { story: 0.85, standard: 1, veteran: 1.05 },
+    hp: { story: 0.75, standard: 1, veteran: 1.05 },
     routes: routes("bridges"),
     exit: exitOf("bridges"),
     pads: [

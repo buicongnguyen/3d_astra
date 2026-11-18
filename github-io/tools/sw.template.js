@@ -82,18 +82,20 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin || !url.href.startsWith(scope)) return;
   if (request.mode === "navigate") {
-    event.respondWith(
-      (async () => {
-        try {
-          const fresh = await fetch(request);
-          if (fresh.ok) (await caches.open(SHELL_CACHE)).put(abs("./"), fresh.clone());
-          return fresh;
-        } catch {
-          const cache = await caches.open(SHELL_CACHE);
-          return (await cache.match(abs("./"))) || (await cache.match(abs("index.html"))) || Response.error();
-        }
-      })(),
-    );
+    // Only game entry points can use the installed shell. Keep its HTML paired
+    // with this worker's precached bundles until the next version activates.
+    const entry = new URL(url);
+    entry.search = "";
+    if (entry.href !== scope && entry.href !== abs("index.html")) return;
+    event.respondWith((async () => {
+      let fresh;
+      try {
+        fresh = await fetch(request);
+        if (fresh.status < 500) return fresh;
+      } catch { /* Disconnected. */ }
+      const cache = await caches.open(SHELL_CACHE);
+      return (await cache.match(abs("./"))) || fresh || Response.error();
+    })());
     return;
   }
   const path = url.href.slice(scope.length);
@@ -101,10 +103,13 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       (async () => {
         const cache = await caches.open(MODEL_CACHE);
-        const hit = await cache.match(request);
-        if (hit) return hit;
-        const response = await fetch(request);
-        if (response.ok) cache.put(request, response.clone());
+        const retry = request.headers.get("Cache-Control") === "no-cache";
+        if (!retry) {
+          const hit = await cache.match(request);
+          if (hit) return hit;
+        }
+        const response = await fetch(request, retry ? { cache: "reload" } : {});
+        if (response.status === 200) event.waitUntil(cache.put(request, response.clone()));
         return response;
       })(),
     );
@@ -151,7 +156,9 @@ self.addEventListener("fetch", (event) => {
   }
   if (PRECACHE.includes(path)) {
     event.respondWith(
-      caches.open(SHELL_CACHE).then(async (cache) => (await cache.match(request)) || fetch(request)),
+      // A module request can include Origin even though the install-time request did not.
+      // These same-origin public build files have one representation per precached URL.
+      caches.open(SHELL_CACHE).then(async (cache) => (await cache.match(request, { ignoreVary: true })) || fetch(request)),
     );
   }
 });

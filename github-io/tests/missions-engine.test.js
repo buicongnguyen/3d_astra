@@ -64,6 +64,26 @@ test('survive, collect, build, reach and destroyTag objectives complete on their
   assert.equal(s.result, 'victory'); assert.equal(state('quick'), 'done');
 });
 
+test('early destruction counts after reveal, including when continuing an older save', () => {
+  const s = make({ ...base,
+    setup: [{ spawn: 'relay', team: 1, at: 'east', tag: 'yard' }],
+    objectives: [{ id: 'yard', type: 'destroyTag', tag: 'yard', hidden: true },
+      { id: 'guards', type: 'destroyTag', tag: 'guard', optional: true }],
+    triggers: [{ when: { time: 3 }, do: [{ reveal: 'yard' }] }], win: ['yard'] });
+  s.tagged('yard')[0].hp = 0;
+  run(s, 1);
+  assert.equal(s.mission.objectives.yard.hidden, true);
+  assert.equal(s.mission.objectives.guards.state, 'active', 'a target that never spawned does not count');
+  const saved = JSON.parse(s.serialize());
+  delete saved.state.mission.objectives.yard.seen; // hidden target from an older release
+  const resumed = Simulation.load(JSON.stringify(saved));
+  for (const match of [s, resumed]) {
+    const events = run(match, 4);
+    assert.equal(match.result, 'victory');
+    assert.deepEqual(types(events, 'objective').filter(e => e.id === 'yard').map(e => e.state), ['revealed', 'done']);
+  }
+});
+
 test('triggers: time, zone entry, attack warnings, a hurt convoy; waves march; repeats repeat', () => {
   const s = make({ ...base, setup: [{ spawn: 'worker', team: 0, at: { x: -10, z: 0 }, tag: 'convoy', hp: 300 }],
     objectives: [{ id: 'live', text: '', type: 'survive', seconds: 500 }], win: ['live'],

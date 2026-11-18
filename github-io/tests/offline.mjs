@@ -3,6 +3,7 @@
 // GitHub Pages project path) from a temp folder so the test can publish a "new version".
 // DIST_DIR is the build to test (default dist/).
 import assert from "node:assert/strict";
+import { defaults, STORAGE_KEY } from "../src/settings.js";
 import { createServer } from "node:http";
 import { cpSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from "node:fs";
 import { readFile } from "node:fs/promises";
@@ -19,16 +20,18 @@ cpSync(path.join(root,'models/ranger.glb'),path.join(root,'models/faction-cache-
 cpSync(path.resolve("tests/fixtures/music"), path.join(root, "music"), { recursive: true });
 const prefix = "/3d_astra/";
 const mime = { ".m4a": "audio/mp4", ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".glb": "model/gltf-binary", ".json": "application/json", ".svg": "image/svg+xml", ".webp": "image/webp", ".webmanifest": "application/manifest+json" };
+let gameUnavailable = false;
 const server = createServer(async (req, res) => {
   try {
     const url = new URL(req.url, "http://localhost");
     // A blank page outside the game's scope, to watch the worker from without being one of its clients.
     if (url.pathname === "/outside") return res.writeHead(200, { "Content-Type": "text/html" }).end("<!doctype html><title>outside</title>");
+    if (gameUnavailable && url.pathname === prefix) return res.writeHead(503).end("Temporary outage");
     if (!url.pathname.startsWith(prefix)) return res.writeHead(404).end();
     const file = path.resolve(root, decodeURIComponent(url.pathname.slice(prefix.length)) || "index.html");
     if (!file.startsWith(root)) return res.writeHead(403).end();
     const data = await readFile(url.pathname.endsWith("/") ? path.join(root, "index.html") : file);
-    res.writeHead(200, { "Content-Type": mime[path.extname(file)] || (url.pathname.endsWith("/") ? "text/html" : "application/octet-stream"), "Cache-Control": "no-cache" });
+    res.writeHead(200, { "Content-Type": mime[path.extname(file)] || (url.pathname.endsWith("/") ? "text/html" : "application/octet-stream"), "Cache-Control": "no-cache", "Vary": "Origin" });
     res.end(data);
   } catch {
     res.writeHead(404).end();
@@ -51,6 +54,10 @@ async function poll(page, predicate, arg, timeout = TIMEOUT.step) {
 
 await suite("offline", async () => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+  await context.addInitScript(({ key, settings }) => {
+    localStorage.setItem("frontier-command.mode", "skirmish");
+    localStorage.setItem(key, JSON.stringify(settings));
+  }, { key: STORAGE_KEY, settings: { ...defaults(true), playerFaction: "ashfall" } });
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -59,10 +66,15 @@ await suite("offline", async () => {
     // First visit: the game loads, the worker installs and takes control, models land in the model cache.
     await page.goto(home);
     await page.waitForFunction(() => !document.querySelector("#start")?.disabled, null, { timeout: TIMEOUT.models });
+    assert.equal(await page.inputValue("#player-faction"), "ashfall", "the returning player previews the saved roster");
     await page.waitForFunction(() => navigator.serviceWorker.controller, null, { timeout: TIMEOUT.step });
     await poll(page, async () => {
       const name = (await caches.keys()).find((key) => key.startsWith("fc-models-"));
-      return !!name && (await (await caches.open(name)).keys()).filter((r) => r.url.endsWith(".glb")).length >= 13;
+      if (!name) return false;
+      const cache = await caches.open(name);
+      const urls = new Set((await cache.keys()).map(r => r.url.split("/").pop().replace(/\.glb$/, "")));
+      return ["environment", "hq", "scrapper", "scorcher", "salvageyard"].every(type =>
+        urls.has(type)) && urls.size >= 17;
     }, null, TIMEOUT.models);
     const first = await cacheKeys(page);
     assert.ok(first.some((key) => key.startsWith("fc-shell-")) && first.some((key) => key.startsWith("fc-models-")), `caches ${first}`);
@@ -94,6 +106,32 @@ await suite("offline", async () => {
       const cache=await caches.open((await caches.keys()).find(k=>k.startsWith('fc-models-')));
       return !!(await cache.match(url));
     },extra);
+    // Reading the build prompt must leave the cached game entry point intact.
+    const promptPage = await context.newPage();
+    await promptPage.goto(new URL('prompt/index.html', home).href);
+    assert.match(await promptPage.title(), /Build prompt/);
+    await promptPage.close();
+    gameUnavailable = true;
+    try {
+      await page.reload();
+      await page.waitForSelector("#start:not(:disabled)", { timeout: TIMEOUT.models });
+    } finally {
+      gameUnavailable = false;
+    }
+    // Simulate a previously cached 200 error page. A parser retry must replace it
+    // so the repaired model is available on the next offline visit.
+    await page.evaluate(async url => {
+      const name = (await caches.keys()).find(key => key.startsWith("fc-models-"));
+      await (await caches.open(name)).put(url, new Response("<html>Temporary error</html>"));
+    }, extra);
+    const repairedBytes = await page.evaluate(async url =>
+      (await (await fetch(url, { headers: { "Cache-Control": "no-cache" } })).arrayBuffer()).byteLength, extra);
+    assert.equal(repairedBytes, lateBytes, "model retry bypasses stale worker cache");
+    await poll(page, async url => {
+      const name = (await caches.keys()).find(key => key.startsWith("fc-models-"));
+      const hit = await (await caches.open(name)).match(url);
+      return hit && (await hit.blob()).size > 100;
+    }, extra);
     // Offline reload: the start screen comes from the cache and, with the models cached, is ready to play.
     await context.setOffline(true);
     assert.equal(await page.evaluate(async url => (await (await fetch(url)).arrayBuffer()).byteLength,extra),lateBytes,'a late faction model is served offline after one fetch');
@@ -104,6 +142,9 @@ await suite("offline", async () => {
     await page.waitForFunction(() => !document.querySelector("#start").disabled, null, { timeout: TIMEOUT.models });
     assert.match(await page.title(), /Frontier Command/);
     await shot(page, "offline-start");
+    await page.tap("#start");
+    await page.waitForFunction(() => document.querySelector("#briefing").hidden &&
+      document.querySelector("#clock").textContent !== "00:00", null, { timeout: TIMEOUT.step });
     await context.setOffline(false);
 
     // A new build: same page stays on the old worker; the new caches wait until the game is reopened.

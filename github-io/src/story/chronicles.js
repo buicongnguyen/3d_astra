@@ -135,7 +135,7 @@ export const CHRONICLES = [
         setup: [
           { capturePoint: "riverRelay", label: "River relay", gives: { energy: 1 } },
           { spawn: "tower", team: 0, at: { x: -6, z: 15 } },
-          { spawn: "ranger", team: 0, at: { x: -19, z: 20 }, count: 3 },
+          { spawn: "ranger", team: 0, at: { x: -19, z: 20 }, count: 3, countByDifficulty: { veteran: 6 } },
           { spawn: "vanguard", team: 0, at: { x: -20, z: 13 }, count: 4 },
           { spawn: "tower", team: 1, at: { x: -6, z: -16 }, tag: "post", name: "Meridian guard tower", hp: 2400 },
           { spawn: "tower", team: 1, at: { x: 10, z: -16 }, tag: "post", name: "Meridian guard tower", hp: 2400 },
@@ -387,7 +387,7 @@ export const CHRONICLES = [
           { spawn: "ranger", team: 1, at: { x: -13, z: -30 }, count: 2 },
           { spawn: "vanguard", team: 2, at: { x: 27, z: 18 }, count: 3 },
           { spawn: "ranger", team: 2, at: { x: 28, z: 13 }, count: 2 },
-          { spawn: "ranger", team: 0, at: { x: -24, z: 26 }, count: 3 },
+          { spawn: "ranger", team: 0, at: { x: -24, z: 26 }, count: 3, countByDifficulty: { veteran: 5 } },
         ],
         objectives: [
           { id: "hold", text: "Hold two oasis relays for 1 minute", type: "hold", points: ["oasisNorth", "oasisCentre", "oasisEast"], need: 2, seconds: 60 },
@@ -628,8 +628,8 @@ export const CHRONICLES = [
           wardenRise: { x: -44, z: 46, r: 6 },
         },
         setup: [
-          { spawn: "relay", team: 1, at: "mastSouth", tag: "mast", name: "Meridian survey mast", hp: 7000 },
-          { spawn: "relay", team: 1, at: "mastMid", tag: "mast", name: "Meridian survey mast", hp: 7000 },
+          { spawn: "relay", team: 1, at: "mastSouth", tag: "mast", name: "Meridian survey mast", hp: 7000, hpByDifficulty: { veteran: 6500 } },
+          { spawn: "relay", team: 1, at: "mastMid", tag: "mast", name: "Meridian survey mast", hp: 7000, hpByDifficulty: { veteran: 6500 } },
           { spawn: "vanguard", team: 1, at: { x: 4, z: 52 }, count: 5 },
           { spawn: "ranger", team: 1, at: { x: -5, z: 60 }, count: 3 },
           { spawn: "tower", team: 1, at: { x: 5, z: 55 } },
@@ -706,7 +706,7 @@ export const CHRONICLES = [
           lane: 2.4,
           pace: 0.75,
           count: { story: 0.8, standard: 1, veteran: 1.15 },
-          hp: { story: 0.65, standard: 0.72, veteran: 0.8 },
+          hp: { story: 0.65, standard: 0.67, veteran: 0.8 },
           routes: route("bridges"),
           exit: exitOf("bridges"),
           pads: [

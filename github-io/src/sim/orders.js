@@ -247,11 +247,10 @@ export const orders = {
       this.message("The Harvester cannot reach that site.", w.team);
       return null;
     }
-    // Never trap units inside a new footprint: own units standing there step out to its edge
-    // (enemy units already refuse the placement).
+    // Ground units step clear of the new footprint. Aircraft can remain overhead.
     const moved = [];
     for (const e of this.entities) {
-      if (e.hp <= 0 || e.kind !== "unit") continue;
+      if (e.hp <= 0 || e.kind !== "unit" || e.flying) continue;
       const dx = e.x - x, dz = e.z - z, d = hyp(dx, dz), clear = D[type].radius + e.radius + 0.35;
       if (d >= clear) continue;
       const a = d > 1e-3 ? Math.atan2(dz, dx) : e.id;

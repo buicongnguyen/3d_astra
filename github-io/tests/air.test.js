@@ -73,9 +73,10 @@ test('flyer models load after the match starts; story missions need none unless 
   assert.ok(!modelsForMatch(s).some((t) => D[t]?.flying), 'the start waits for no flyer');
   assert.deepEqual(airModelsFor(s).sort(), ['balloon', 'hawk', 'kite']);
   assert.deepEqual(airModelsFor(new Simulation({ ai: false, mission: { id: 'x', rules: {}, objectives: [], setup: [], win: [], triggers: [] } })), []);
-  // A flyer already on the field (a loaded save, a mission spawn) is required up front.
-  put(s, 'hawk', 0, 0, 30);
-  assert.ok(modelsForMatch(s).includes('hawk'));
+  // A saved out-of-roster flyer can resume offline and its model can stream on reconnect.
+  put(s, 'glider', 0, 0, 30);
+  assert.ok(!modelsForMatch(s).includes('glider'));
+  assert.ok(airModelsFor(s).includes('glider'));
 });
 
 test('a flyer flies straight over the river, walls and a plateau, inside the map', () => {
@@ -309,4 +310,42 @@ test('flyers are drawn at altitude: shots to and from them say so, and the Kite 
   run(s, 1);
   assert.equal(s.isVisible(shade, 0), false);
   assert.ok(TERRAIN.plateau_height < D.kite.fly + 3);
+});
+
+test('placing a building clears ground units without displacing aircraft overhead', () => {
+  const s = new Simulation({ ai: false });
+  const hq = s.own(0).find(e => e.type === 'hq');
+  const worker = s.own(0).find(e => e.type === 'worker');
+  const site = s.findPlacement('relay', 0, hq.x + 8, hq.z);
+  assert.ok(site);
+  const flyers = [s.spawn('kite', 1, site.x, site.z), s.spawn('hawk', 0, site.x, site.z)];
+  const guard = s.spawn('ranger', 0, site.x, site.z);
+  assert.ok(s.command({ type: 'build', team: 0, worker: worker.id, building: 'relay', ...site }));
+  for (const flyer of flyers) assert.deepEqual({ x: flyer.x, z: flyer.z }, site);
+  assert.notDeepEqual({ x: guard.x, z: guard.z }, site, 'ground guard clears the foundation');
+});
+
+test('production uses separate ground and air exits, including when the airfield is surrounded', () => {
+  const s = new Simulation({ ai: false });
+  const core = s.own(0).find(e => e.type === 'hq');
+  const exit = s.exitPoint(core, D.worker);
+  assert.ok(exit);
+  s.spawn('kite', 0, exit.x, exit.z);
+  assert.deepEqual(s.exitPoint(core, D.worker), exit, 'an aircraft cannot block a ground exit');
+  s.spawn('worker', 0, exit.x, exit.z);
+  assert.notDeepEqual(s.exitPoint(core, D.worker), exit, 'ground occupancy still matters');
+
+  // Fill every ground exit around the core. A completed aircraft needs only free airspace.
+  for (let x = -18; x <= 18; x += 3)
+    for (let z = -18; z <= 18; z += 3) s.spawnWall(core.x + x, core.z + z, 2.5);
+  s.nav.rebuild(s.entities);
+  assert.equal(s.exitPoint(core, D.worker), null);
+  core.level = 2;
+  s.players[0].alloy = s.players[0].energy = 1000;
+  assert.ok(s.enqueue(core.id, 'kite'));
+  s.updateProduction(core, D.kite.time);
+  const kites = s.own(0).filter(e => e.type === 'kite');
+  assert.equal(core.queue.length, 0);
+  assert.equal(kites.length, 2);
+  assert.ok(Math.hypot(kites[0].x - kites[1].x, kites[0].z - kites[1].z) >= 2 * D.kite.radius + 0.2);
 });

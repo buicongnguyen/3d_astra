@@ -11,7 +11,7 @@ Plan: [PLAN_ROUND3_REFINED_2026-11-13.md](PLAN_ROUND3_REFINED_2026-11-13.md), bu
 | 0.18 Wings (air) | 0.18.0 (reached the site with 0.19.0) | Done; the Command core is the airfield (phones keep four tiles per building) |
 | 0.19a Choices (decisions, endings, map) | 0.17.0 | Done |
 | 0.19b Story you see (scenes, reworks, new missions) | 0.19.0 | Done, except: m06's ford idea dropped (Copper Basin has no river); voice tones skipped (optional) |
-| 0.20 Chronicles | 0.19.0 | Done; 3 Veteran misses for the objective bot (ca2, cs2, cw2) |
+| 0.20 Chronicles | 0.19.0 | Done. All 12 Chronicles pass both bot checks on all three difficulties. |
 | 0.21 Defence complete | 0.19.0 | Done, except: twin rivers (the river is fixed at z = 0, so Long Crossing uses the standard river) |
 
 **Open for the owner:**

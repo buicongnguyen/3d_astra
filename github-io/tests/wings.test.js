@@ -84,11 +84,12 @@ test("Wings over Copper resolves with and without earlier decisions: only Hale's
   }
 });
 
-test("missions this release did not touch resolve exactly as before (checksums from 0.19b)", () => {
+// Recorded in 0.19b, with the Story hull adjustment for Hold the River and corrected hold times in M04 and M10.
+test("the original missions resolve to their recorded checksums on all decision paths", () => {
   const BEFORE = {
-    "m01-first-light": "d21a5cc5", "m02-first-contact": "18aa4673", "m02b-hold-the-river": "30f25426", "m03-the-ashen-line": "0c65fe52",
-    "m04-three-way-dunes": "f8e5a686", "m05-the-verdant-pact": "0b2a52ee", "m06-copper-harvest": "95b936e7", "m07-copper-siege": "093c6020",
-    "m08-the-quiet-vault": "03ed22ef", "m09-a-debt-in-the-dunes": "d95fc122", "m10-obsidian-storm": "0a7773a0", "m11-cut-the-draw": "5e2127e3", "m12-frontiers-end": "bc7f1bbe",
+    "m01-first-light": "d21a5cc5", "m02-first-contact": "18aa4673", "m02b-hold-the-river": "9845060f", "m03-the-ashen-line": "0c65fe52",
+    "m04-three-way-dunes": "fcb1de84", "m05-the-verdant-pact": "0b2a52ee", "m06-copper-harvest": "95b936e7", "m07-copper-siege": "093c6020",
+    "m08-the-quiet-vault": "03ed22ef", "m09-a-debt-in-the-dunes": "d95fc122", "m10-obsidian-storm": "a696d28a", "m11-cut-the-draw": "5e2127e3", "m12-frontiers-end": "bc7f1bbe",
   };
   for (const [id, sum] of Object.entries(BEFORE)) {
     const m = MISSIONS.find((x) => x.id === id);

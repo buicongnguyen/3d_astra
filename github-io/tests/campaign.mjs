@@ -61,6 +61,12 @@ try {
   // The mission's own models (a faction building) may still be loading on a slow runner.
   await ready(page);
   assert.equal(await page.locator('#start').innerText(), 'Start mission 1');
+  assert.ok(await page.evaluate(() => {
+    const current = document.querySelector('#campaign-setup [aria-current="true"]');
+    current.focus({preventScroll: true});
+    window.__frontier.renderCampaign();
+    return document.activeElement === current;
+  }), 'a briefing refresh preserves keyboard focus on the current mission');
   let m = await def(page);
   assert.match(await heading(page), new RegExp(`Mission 1 · ${m.title}`));
   b = await battle(page);
@@ -127,15 +133,20 @@ try {
     const phoneErrors = []; phone.on('pageerror', e => phoneErrors.push(e.message));
     await phone.goto(url); await ready(phone);
     await phone.locator('[data-mode="campaign"]').tap();
-    const rows = await phone.locator('[data-stage]').evaluateAll(bs => bs.map(b => { const r = b.getBoundingClientRect(); return {h: r.height, w: r.width, left: r.left, right: r.right}; }));
-    assert.ok(rows.every(r => r.h >= 44 && r.left >= 0 && r.right <= viewport.width), JSON.stringify(rows));
+    const stageRows = phone.locator('#campaign-setup [data-stage]');
+    // Both mode panels stay mounted. Wait for the touch-triggered mode change before measuring.
+    await stageRows.first().waitFor({state: 'visible'});
+    const rows = await stageRows.evaluateAll(bs => bs.map(b => { const r = b.getBoundingClientRect(); return {h: r.height, w: r.width, left: r.left, right: r.right}; }));
+    assert.equal(rows.length, MISSIONS.length);
+    assert.ok(rows.every(r => r.h >= 44 && r.left >= 0 && r.right <= viewport.width), `${viewport.width}x${viewport.height}: ${JSON.stringify(rows)}`);
     assert.ok(await phone.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'no horizontal overflow');
+    await phone.screenshot({path: `test-results/campaign-${viewport.width}x${viewport.height}.png`});
+    await phone.locator('[data-mode="skirmish"]').tap();
+    await phone.locator('#skirmish-setup').waitFor({state: 'visible'});
     for (const id of ['#ai-speed', '#alliance', '#enemy-count']) {
-      await phone.locator('[data-mode="skirmish"]').tap();
       const r = await phone.locator(id).boundingBox();
       assert.ok(r.height >= 44 && r.x >= 0 && r.x + r.width <= viewport.width, `${id} fits ${viewport.width}x${viewport.height}`);
     }
-    await phone.screenshot({path: `test-results/campaign-${viewport.width}x${viewport.height}.png`});
     assert.deepEqual(phoneErrors, []);
     await phone.close();
   }

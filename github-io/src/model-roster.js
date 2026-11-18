@@ -1,8 +1,8 @@
 import balance from './balance.json' with {type:'json'};
 import GARRISONS from './defence/garrisons.json' with {type:'json'};
-// Boot stays fixed as factions grow: only a match asks for additional models.
+// Every preview and match uses the core set, plus models for the factions taking part.
 export const CORE_MODEL_TYPES = Object.freeze(['hq','relay','barracks','foundry','tower','worker','vanguard','ranger','breaker','tank','antitank','medic','engineer']);
-export function modelsForMatch(match = {}, factions = balance.factions || {}) {
+function declaredModels(match, factions) {
   const types = new Set(CORE_MODEL_TYPES);
   const ids = Object.values(match.factions || (match.missionDef?.rules?.rosters ? match.missionDef.factions : {}) || {});
   for (const id of ids) {
@@ -33,11 +33,17 @@ export function modelsForMatch(match = {}, factions = balance.factions || {}) {
   for (const entity of match.entities || []) if (entity.kind !== 'wall' && balance.definitions[entity.type]?.role !== 'Research') types.add(entity.type);
   return [...types];
 }
-// Flyers (0.18) a match can train later: the Kite for every side and each faction's own flyer, outside
-// story missions unless rules.air. They are trained minutes in, so the match starts without them and
-// they load in the background (WorldView.preloadModels); one already on the field is in modelsForMatch.
+// A saved or scripted flyer has a built-in airframe until its full model arrives.
+export function modelsForMatch(match = {}, factions = balance.factions || {}) {
+  return declaredModels(match, factions).filter(type => !balance.definitions[type]?.flying);
+}
+// Stream scripted and saved flyers plus any that the active rosters can train.
 export function airModelsFor(match = {}, factions = balance.factions || {}) {
-  if (match.missionDef && !match.missionDef.rules?.air) return [];
-  const ids = Object.values(match.factions || {});
-  return [...new Set(ids.flatMap((id) => factions[id] ? ['kite', ...Object.values(factions[id].extra || {}).flat()] : []))];
+  const flyers = declaredModels(match, factions).filter(type => balance.definitions[type]?.flying);
+  if (!match.missionDef || match.missionDef.rules?.air) {
+    for (const id of Object.values(match.factions || {})) {
+      if (factions[id]) flyers.push('kite', ...Object.values(factions[id].extra || {}).flat());
+    }
+  }
+  return [...new Set(flyers)];
 }

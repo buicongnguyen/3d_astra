@@ -10,14 +10,15 @@ const FIRST = ["environment", "hq", "worker"];
 
 // The files WorldView.loadModels asks for, in the order to fetch them.
 export function modelPlan(types = CORE_MODEL_TYPES) {
-  const names = [...new Set([...FIRST, ...types, "environment"])];
+  const names = [...new Set([...FIRST, ...types])];
   return names.map((name) => ({ name, label: name === "environment" ? "terrain" : DEFINITIONS[name]?.name || name, url: `${import.meta.env.BASE_URL}models/${name}.glb` }));
 }
 
 // Fetches every model with a small number of parallel streams and reports stage and percent.
 // Never throws: a file that fails here is simply downloaded (and retried) by loadModels.
-export async function prefetchModels(onProgress, { concurrency = 6, types = CORE_MODEL_TYPES } = {}) {
-  const plan = modelPlan(types);
+export async function prefetchModels(onProgress, { concurrency = 6, types = CORE_MODEL_TYPES, isPrepared = () => false, signal } = {}) {
+  const plan = modelPlan(types).filter(item => !isPrepared(item.name));
+  if (!plan.length) return;
   Cache.enabled = true;
   const sizes = new Map(), got = new Map();
   let stage = plan[0].label;
@@ -29,11 +30,11 @@ export async function prefetchModels(onProgress, { concurrency = 6, types = CORE
   report();
   let next = 0;
   async function worker() {
-    while (next < plan.length) {
+    while (!signal?.aborted && next < plan.length) {
       const item = plan[next++];
       stage = item.label;
       try {
-        const response = await fetch(item.url);
+        const response = await fetch(item.url, { signal });
         if (!response.ok) continue;
         const length = Number(response.headers.get("content-length")) || 0;
         if (length) sizes.set(item.name, length);

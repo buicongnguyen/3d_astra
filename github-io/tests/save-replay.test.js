@@ -81,3 +81,22 @@ test('a save from another version or a damaged save is refused, not half-loaded'
   assert.equal(Simulation.load('{"broken'), null);
   assert.equal(Simulation.load('null'), null);
 });
+
+test('Continue can discard structurally incomplete saves and restore decoded grids from parsed JSON', () => {
+  const sim = new Simulation({ ai: false });
+  const data = JSON.parse(sim.serialize());
+  const restored = Simulation.load(data);
+  run(sim, 1); run(restored, 1);
+  assert.equal(restored.hash(), sim.hash(), 'both simulations can use restored maps and grids');
+  for (const damage of [
+    save => { delete save.state.entities; },
+    save => { delete save.nav; },
+    save => { delete save.state.entities[0].orders; },
+    save => { save.state.visible[0].$bits.d = ''; },
+    save => { save.state.players.pop(); },
+  ]) {
+    const broken = structuredClone(data);
+    damage(broken);
+    assert.equal(Simulation.load(JSON.stringify(broken)), null);
+  }
+});

@@ -6,6 +6,14 @@ import { launchBrowser, openPage, suite, shot, TIMEOUT } from "./lib/harness.mjs
 
 const browser = await launchBrowser();
 await suite("factions", async () => {
+  // A new player's campaign list opens on the core models. Its Ashfall opponent can load later.
+  const first = await openPage(browser, "portrait");
+  await first.goto("firstrun");
+  await first.ready();
+  assert.equal(await first.page.locator('[data-mode="campaign"]').getAttribute("aria-pressed"), "true");
+  assert.equal(await first.page.evaluate(() => window.__frontier.view.models.has("scrapper")), false);
+  await first.page.close();
+
   for (const viewport of ["desktop", "portrait", "landscape"]) {
     const { page, goto, ready, tap, errors, badResponses, mobile } = await openPage(browser, viewport);
     const fetched = [];
@@ -186,6 +194,10 @@ await suite("factions", async () => {
     await tap('[data-mode="skirmish"]');
     assert.equal(await page.inputValue("#player-faction"), faction, "remembered after a reload");
     assert.equal(await page.evaluate(() => window.__frontier.sim.factions[0]), faction, "the preview uses it");
+    assert.ok(await page.evaluate(() => {
+      const f = window.__frontier;
+      return f.sim.own(0).every(e => f.view.models.has(e.type));
+    }), "every starting unit in the remembered roster has its model");
     // Training always commands Meridian.
     await tap('[data-mode="training"]');
     await page.waitForFunction(() => window.__frontier.sim.factions[0] === "meridian", null, { timeout: TIMEOUT.step });

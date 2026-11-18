@@ -18,7 +18,10 @@ const packBits = (cells) => {
   return { n: cells.length, d: btoa(text) };
 };
 const unpackBits = ({ n, d }) => {
-  const text = atob(d), cells = new Uint8Array(n);
+  const text = atob(d);
+  if (!Number.isSafeInteger(n) || n < 0 || text.length !== Math.ceil(n / 8))
+    throw new Error("Incomplete visibility grid");
+  const cells = new Uint8Array(n);
   for (let i = 0; i < n; i++) cells[i] = (text.charCodeAt(i >> 3) >> (i & 7)) & 1;
   return cells;
 };
@@ -67,21 +70,48 @@ export const snapshot = {
   },
 };
 
-// Rebuilds a simulation from serialize() output. Returns null for a save this version cannot read.
+// These collections exist in every version-1 save. A partial save can parse as JSON but
+// still be unusable on the first tick (for example, a fog grid that lost its last row).
+function hasMatchState(sim, state) {
+  const teams = sim.players.length;
+  const cells = sim.terrain.grid ** 2;
+  const perTeam = (list, check) => Array.isArray(list) && list.length === teams && list.every(check);
+  const grid = value => value instanceof Uint8Array && value.length === cells;
+  return Array.isArray(state.entities) && state.entities.every(e =>
+    e && (Object.hasOwn(D, e.type) || e.type === "wall") &&
+    Number.isInteger(e.id) && Number.isFinite(e.x) && Number.isFinite(e.z) &&
+    Array.isArray(e.orders) && Array.isArray(e.queue) && Array.isArray(e.path)) &&
+    Array.isArray(state.resources) &&
+    perTeam(state.players, p => p && Number.isFinite(p.alloy) && Number.isFinite(p.energy)) &&
+    perTeam(state.visible, grid) && perTeam(state.explored, grid);
+}
+
+// Rebuilds a simulation from serialize() output or its parsed JSON. The caller can
+// discard an unreadable slot and return to the menu without installing a broken match.
 export function restore(Simulation, saved) {
-  let data;
-  try { data = typeof saved === "string" ? JSON.parse(saved, decode) : saved; } catch { return null; }
-  if (data?.version !== SAVE_VERSION || !data.state || !data.options) return null;
-  const sim = new Simulation(data.options);
-  Object.assign(sim, data.state);
-  sim.entities = data.state.entities.map((e) => ({ ...D[e.type], ...e }));
-  sim.events = [];
-  sim.pace = aiPace(sim.aiSpeed, !!sim.mission);
-  sim.nav.wallsSpawned = data.nav.wallsSpawned;
-  // Frontier Defence: blown bridges and pontoons live in the derived terrain; put them back
-  // before the grid is built, or a loaded match walks over a blown bridge.
-  sim.applyCrossings?.(false);
-  sim.nav.rebuild(sim.entities);
-  sim.nav.revision = data.nav.revision;
-  return sim;
+  try {
+    const text = typeof saved === "string" ? saved : JSON.stringify(saved, encode);
+    const data = JSON.parse(text, decode);
+    if (data?.version !== SAVE_VERSION || !data.state || !data.options || !Number.isInteger(data.nav?.revision)) return null;
+    const sim = new Simulation(data.options);
+    if (!hasMatchState(sim, data.state)) return null;
+    const initialObjectives = sim.mission?.objectives;
+    Object.assign(sim, data.state);
+    // Older campaign saves only recorded targets once their objectives became visible.
+    // The reconstructed setup tells us which targets existed even if they have since died.
+    for (const [id, initial] of Object.entries(initialObjectives || {})) {
+      if (initial.seen && sim.mission?.objectives[id]) sim.mission.objectives[id].seen = true;
+    }
+    sim.entities = data.state.entities.map(e => ({ ...D[e.type], ...e }));
+    sim.events = [];
+    sim.pace = aiPace(sim.aiSpeed, !!sim.mission);
+    sim.nav.wallsSpawned = data.nav.wallsSpawned;
+    // Restore crossings before rebuilding walkable terrain.
+    sim.applyCrossings?.(false);
+    sim.nav.rebuild(sim.entities);
+    sim.nav.revision = data.nav.revision;
+    return sim;
+  } catch {
+    return null;
+  }
 }

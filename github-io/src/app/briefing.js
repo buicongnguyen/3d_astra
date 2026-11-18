@@ -78,15 +78,17 @@ export function setupBriefing(S, A) {
       return `<li><button data-stage="${i}" data-mission="${m.id}"${i === S.stagePick ? ' aria-current="true"' : ""}${open ? "" : " disabled"}${open ? "" : ' title="Clear the previous mission to unlock"'}><b>${i + 1}</b><span><strong>${m.title}</strong><small>${mapName(m.map)}${choices}</small></span><em${done ? ` data-medal="${medal}"` : ""}>${state}</em></button></li>`;
     };
     // The main campaign's acts with the Faction Chronicles under them, or the chosen chronicle's missions.
-    $("campaign-setup").innerHTML = c === "main"
+    const list = c === "main"
       ? ACTS.map(({ act, title }) =>
         `<section class="act" aria-labelledby="act-${act}"><h3 class="act-title" id="act-${act}"><span>ACT ${act}</span> <strong>${title}</strong></h3><ol class="stage-list" aria-label="Campaign missions">${MISSIONS.map((m, i) => (m.act === act ? card(m, i) : "")).join("")}</ol></section>`).join("") + chronicleListHTML({ progress: S.campaign, campaign: c })
       : chronicleMissionsHTML({ progress: S.campaign, campaign: c, card });
+    // Finishing a model download refreshes the briefing; keep focus on an unchanged mission list.
+    if (listShown !== list) { listShown = list; $("campaign-setup").innerHTML = list; }
     // The campaign map in the hero (campaign-map-ui.js); redrawn only when what it shows changed.
     const map = campaignMapHTML({ progress: S.campaign, pick: S.stagePick, campaign: c });
     if (mapShown !== map) { mapShown = map; $("campaign-map").innerHTML = map; }
   }
-  let mapShown = "";
+  let listShown = "", mapShown = "";
 
   function renderBriefing() {
     const setup = battleSetup(), inCampaign = S.playMode === "campaign";
@@ -109,7 +111,7 @@ export function setupBriefing(S, A) {
     $("alliance").disabled = Number($("enemy-count").value) < 2;
     $("briefing-rivals").textContent = S.playMode === "training" ? "Practice field · no AI attacks" : describeRivals(setup);
     // A campaign mission under the Defence rules (0.19b): lives and waves instead of AI speed (one text node each, so each translates).
-    const held = inCampaign && MISSIONS[S.stagePick].defence;
+    const held = inCampaign && picked.defence;
     if (held) $("briefing-rivals").replaceChildren(...[`${held.lives} lives`, `${held.waves.length} waves`].flatMap((text, i) => [...(i ? [" · "] : []), Object.assign(document.createElement("span"), { textContent: text })]));
     if (inCampaign) {
       const m = picked;

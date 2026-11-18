@@ -194,6 +194,7 @@ export function setupFrame(S, A) {
 
   Object.assign(A, { focusHome, syncPointOwners, frame });
   return function bind() {
+    window.addEventListener("online", () => { airFor = null; });
     for (const type of ["pointerdown", "wheel", "keydown"])
       window.addEventListener(type, (event) => {
         if (S.cameraPan && (type === "keydown" || (event.target instanceof Element && event.target.closest("#world, #minimap, #home, .touch-controls")))) S.cameraPan = null;

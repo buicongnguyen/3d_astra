@@ -1,10 +1,6 @@
 // Frontier Command client: the composition root. It builds the page and the shared state,
 // lets each module under app/ register what it offers (setup), connects them (bind) and boots.
-// Imports below keep their original order on purpose: it fixes the order of the stylesheets.
-import "./tutorial.js";
-import "./governor.js";
-import "./match-stats.js";
-import "./results-ui.js";
+// Declare the shared stylesheet cascade in order, independently of module initialization.
 import "./tutorial.css";
 import "./style.css";
 import "./mobile.css";
@@ -12,37 +8,20 @@ import "./settings.css";
 import "./start-screen.css";
 import "./desktop-dock.css";
 import "./hud-readability.css";
-import "./settings.js";
-import "./settings-ui.js";
-import "./i18n.js";
+import "./portraits.css";
 import "./language.css";
-import "./terrain.js";
-import "./ground-paint.js";
-import "./faction-colors.js";
-import "./ambience.js";
-import "./field-guide.js";
-import { Simulation } from "./simulation.js";
-import { WorldView } from "./view.js";
-import "./data.js";
-import "./icons.js";
-import "./touch-controls.js";
-import "./fullscreen.js";
-import "./hotkeys.js";
-import "./construction-ui.js";
-import "./production-ui.js";
-import "./selection-status.js";
-import "./tactics-ui.js";
-import "./tactics-card.js";
-import "./ai-plan.js";
-import "./campaign.js";
-import "./mission-ui.js";
-import "./savegame.js";
-import "./music.js";
-import "./audio.js";
-import "./audio-logic.js";
-import "./portraits.js";
+import "./progression.css";
+import "./hotkeys.css";
+import "./construction-ui.css";
+import "./production-ui.css";
+import "./selection-status.css";
+import "./tactics-ui.css";
+import "./mission-ui.css";
 import "./ui-theme.css";
 import "./landscape-hud.css";
+
+import { Simulation } from "./simulation.js";
+import { WorldView } from "./view.js";
 import { $ } from "./app/dom.js";
 import { renderShell } from "./app/shell.js";
 import { createState } from "./app/state.js";
@@ -87,33 +66,48 @@ const createSim = () => {
   return sim;
 };
 
-let bootReady = false, loadGeneration = 0;
-async function loadAssets(types = modelsForMatch(S.sim)) {
-  const generation = ++loadGeneration;
-  S.loadFailed = false;
-  $("start").disabled = true;
+let bootReady = false, activeLoad = null;
+function clearLoadIndicator() {
   const start = $("start");
+  start.disabled = false;
+  start.removeAttribute("aria-busy");
+  start.style.removeProperty("--load");
+  if (S.loadFailed) $("status-text").textContent = "ALL SYSTEMS READY";
+  S.loadFailed = false;
+}
+async function loadAssets(types = modelsForMatch(S.sim)) {
+  activeLoad?.abort();
+  const request = new AbortController();
+  activeLoad = request;
+  S.view.setModelRequirements(types);
+  const start = $("start");
+  start.disabled = true;
   start.setAttribute("aria-busy", "true");
   try {
     // Staged download first (terrain, headquarters, harvester, then the rest), then the parse.
     await prefetchModels(({ stage, percent }) => {
-      if (generation !== loadGeneration) return;
+      if (request.signal.aborted) return;
       start.textContent = `Loading ${stage}… ${percent}%`;
       start.style.setProperty("--load", `${percent}%`);
-    }, {types});
-    if (generation !== loadGeneration) return false;
+    }, {
+      types, signal: request.signal,
+      isPrepared: type => type === "environment" ? !!S.view.environmentAssets : S.view.models.has(type),
+    });
+    if (request.signal.aborted) return false;
     await S.view.loadModels(types);
-    if (generation !== loadGeneration) return false;
+    if (request.signal.aborted) return false;
+    activeLoad = null;
     releaseModelBytes();
+    clearLoadIndicator();
+  } catch (error) {
+    if (request.signal.aborted) return false;
+    activeLoad = null;
     start.removeAttribute("aria-busy");
     start.style.removeProperty("--load");
-  } catch (error) {
-    if (generation !== loadGeneration) return false;
-    start.removeAttribute("aria-busy");
     console.error(error);
     S.loadFailed = true;
-    $("start").disabled = false;
-    $("start").textContent = "Retry";
+    start.disabled = false;
+    start.textContent = "Retry";
     $("status-text").textContent = "DOWNLOAD FAILED";
     A.notice("Some game files did not download. Check your connection, then press Retry.");
     if (bootReady) {
@@ -125,7 +119,7 @@ async function loadAssets(types = modelsForMatch(S.sim)) {
     return false;
   }
   if (!bootReady) { bootReady = true; ready(); }
-  else { $("start").disabled = false; A.renderBriefing(); A.updateUI(); }
+  else { A.renderBriefing(); A.updateUI(); }
   return true;
 }
 
@@ -139,7 +133,9 @@ function boot() {
     initFailed(error);
     return;
   }
-  loadAssets(CORE_MODEL_TYPES);
+  // A fresh campaign opens on the mission list. Its opponent can load when the match starts.
+  // A skirmish previews the player's remembered faction on the opening screen.
+  loadAssets(S.playMode === "campaign" ? CORE_MODEL_TYPES : modelsForMatch(S.sim));
 }
 
 function initFailed(error) {
@@ -174,8 +170,16 @@ function ready() {
 
 Object.assign(A, { createSim, loadAssets, ensureMatchModels: (onReady) => {
   const types = modelsForMatch(S.sim);
-  if (S.view.hasModels(types)) { S.view.modelsReady = true; return null; }
-  S.view.modelsReady = false;
+  if (S.view.setModelRequirements(types)) {
+    // Returning to a cached roster must also dismiss any abandoned download or Retry state.
+    if (bootReady && (activeLoad || S.loadFailed)) {
+      activeLoad?.abort();
+      activeLoad = null;
+      clearLoadIndicator();
+      A.renderBriefing();
+    }
+    return null;
+  }
   return loadAssets(types).then(ok => ok ? onReady?.() : false);
 } });
 
@@ -199,4 +203,4 @@ const binds = Object.fromEntries(SETUP.map(([name, setup]) => [name, setup(S, A)
 S.sim = createSim();
 for (const name of BIND) binds[name]();
 boot();
-registerOffline(A, S.query);
+registerOffline(A, S.query, () => modelsForMatch(S.sim));

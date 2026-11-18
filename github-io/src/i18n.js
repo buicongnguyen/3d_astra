@@ -14,7 +14,7 @@ function install(catalog) {
   cache.clear();
 }
 export function loadLocale() {
-  locale ??= import('./locales/vi.json', {with: {type: 'json'}}).then(module => { install(module.default); return true; });
+  locale ??= import('./locales/vi.js').then(module => { install(module.default); return true; });
   locale.catch(() => { locale = null; });
   return locale;
 }
@@ -39,7 +39,7 @@ export function addMessages(catalog) {
 }
 let story = null;
 export function loadStory() {
-  story ??= import('./locales/story-vi.json', {with: {type: 'json'}}).then(module => { addMessages(module.default); return true; });
+  story ??= import('./locales/story-vi.js').then(module => { addMessages(module.default); return true; });
   // A failed download may be retried on the next language change.
   story.catch(() => { story = null; });
   return story;
