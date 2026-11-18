@@ -4,6 +4,9 @@
 //            upgrades its best-covering tower, takes tier-3 branches, parks the commander on
 //            the road where the most towers cover it, shells the densest group with Barrage and
 //            drops Reinforce on a column at the commander; calls a wave early when the road is clear;
+//            (0.24) from the fifth wave raises a branched tower's rank once the spreading and the
+//            tiers are done, and gives each armour squad Rank 2 and then a branch (Assault when
+//            machines or carriers come, Bulwark otherwise);
 //   passive  builds nothing and leaves the commander where it stands (must lose);
 //   greedy   one crew type only (`crew`), always the best free pad, then upgrades, no commander
 //            orders (must not reach 3 stars).
@@ -121,6 +124,21 @@ export class DefenceBot {
     }
     return best;
   }
+  // Rank 2 for every squad from the fifth wave, a branch from the seventh, with alloy to spare.
+  upgradeArmour(alloy) {
+    const s = this.sim, d = s.defence;
+    if (!s.armourRules() || d.wave < 5) return false;
+    for (const { squad } of s.armourSquads()) {
+      const next = s.armourNextUpgrade(squad);
+      if (!next) continue;
+      if (next.kind === "rank") { if (alloy >= next.cost) return s.command({ team: 0, type: "armourUpgrade", squad }); continue; }
+      if (d.wave < 7) continue;
+      const machines = this.nextWave().filter((u) => D[u.type].mechanical).reduce((a, u) => a + u.count, 0);
+      const branch = machines >= 3 ? "assault" : "bulwark";
+      if (alloy >= next.costs[branch]) return s.command({ team: 0, type: "armourUpgrade", squad, branch });
+    }
+    return false;
+  }
   routeWeights() {
     const s = this.sim, d = s.defence, w = {}, total = s.waveTotal();
     for (let i = d.wave; i < Math.min(total, d.wave + 10); i++)
@@ -171,8 +189,13 @@ export class DefenceBot {
     const alloy = s.players[0].alloy;
     const towers = s.entities.filter((e) => e.team === 0 && e.crew && e.hp > 0);
     const crew = this.chooseCrew(towers), cost = s.buildCost(crew);
+    // A pad whose tower was shot down stays empty until the wave on it is beaten (0.24): a fresh
+    // tier-1 crew there would only be shot down again.
+    const standing = new Map(towers.map((t) => [t.id, t.pad]));
+    for (const [id, pad] of this.standing || []) if (!standing.has(id)) (this.lost ||= new Map()).set(pad, d.cleared);
+    this.standing = standing;
     // Free pads, the level's and the empty ones left in build zones, and (0.23) the open zone spots.
-    const free = [...this.def.pads, ...(d.zonePads || [])].filter((p) => !s.towerOn(p.id));
+    const free = [...this.def.pads, ...(d.zonePads || [])].filter((p) => !s.towerOn(p.id) && this.lost?.get(p.id) !== d.cleared);
     const weight = this.routeWeights();
     const ranked = [...free.map((p) => ({ p, score: this.coverage(p, crew, 1, weight) })), ...this.zoneSpots().map((p) => ({ p, score: this.zoneCoverage(p, crew, weight) }))].sort((a, b) => b.score - a.score);
     // A zone spot the rules would refuse now (units on it, a sealed gap) gives way to the next one.
@@ -194,9 +217,15 @@ export class DefenceBot {
       if (top) {
         const branch = BRANCH[top.crew]?.[mech && top.crew === "ranger" ? 1 : 0] || Object.keys(GARRISONS.crews[top.crew].branches)[0];
         if (s.players[0].alloy >= s.branchCost(top.crew, branch)) s.command({ team: 0, type: "padBranch", building: top.id, branch });
+      } else if (d.wave >= 5 && (!up || d.wave >= 7)) {
+        // Ranks (0.24): the branched tower covering the most road, lowest rank first.
+        const next = towers.filter((t) => t.branch && s.rankOf(t.crew, t.branch, t.branchRank || 0))
+          .map((t) => ({ t, score: this.coverage(s.padById(t.pad), t.crew, 3) / (1 + (t.branchRank || 0)) })).sort((a, b) => b.score - a.score)[0];
+        const r = next && s.rankOf(next.t.crew, next.t.branch, next.t.branchRank || 0);
+        if (r && s.players[0].alloy >= r.cost) s.command({ team: 0, type: "padRank", building: next.t.id });
       }
     }
-    if (this.policy === "bot") { this.lead(towers); this.moveArmour(towers); }
+    if (this.policy === "bot") { this.upgradeArmour(s.players[0].alloy); this.lead(towers); this.moveArmour(towers); }
     const status = s.defenceStatus();
     // Early call: the last wave beaten without a leak, nothing on the road, no money lying around.
     if (d.wave !== this.waveSeen) { this.waveSeen = d.wave; this.leakedAtStart = d.leaked; }
@@ -270,7 +299,7 @@ export function playDefence(level, { difficulty = "standard", policy = "bot", cr
   return {
     result: sim.result || "timeout", lives: sim.defence.lives, medal, stars: { gold: 3, silver: 2, bronze: 1 }[medal] || 0,
     seconds: Math.round(sim.time), wave: sim.defence.wave, held: sim.defence.cleared,
-    towers: sim.entities.filter((e) => e.crew && e.hp > 0).map((e) => `${e.crew[0]}${e.tier}${e.branch ? e.branch[0] : ""}`).join(""),
+    towers: sim.entities.filter((e) => e.crew && e.hp > 0).map((e) => `${e.crew[0]}${e.tier}${e.branch ? e.branch[0] : ""}${e.branchRank || ""}`).join(""),
     bounty: sim.defence.bounty, sim,
   };
 }

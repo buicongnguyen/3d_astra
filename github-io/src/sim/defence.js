@@ -112,7 +112,8 @@ export function endlessWave(def, n) {
   const rnd = seeded((def.endless.seed >>> 0) ^ Math.imul(n + 1, 0x9e3779b1)), units = palette(def), routes = Object.keys(def.routes);
   const budget = 6 + n * 2.4 + Math.pow(n, 1.45) * 0.25;
   const groups = Math.min(4, 1 + Math.floor(n / 3));
-  const hp = n < 10 ? 1 : Math.round((1 + (n - 9) * 0.06) * 100) / 100;
+  // Health grows from the tenth wave (0.24: by garrisons.json endless.hp a wave, 0.06 before).
+  const hp = n < 10 ? 1 : Math.round((1 + (n - 9) * (GARRISONS.endless?.hp ?? 0.06)) * 100) / 100;
   const out = [];
   let delay = 0;
   for (let k = 0; k < groups; k++) {
@@ -190,9 +191,14 @@ export const defence = {
   branchCost(crew, branch) {
     return GARRISONS.crews[crew]?.branches?.[branch]?.cost ?? null;
   },
-  // Tower figures for a crew at a tier (and its tier-3 branch), from the crew's own unit
-  // (balance.json) and garrisons.json.
-  garrisonStats(crew, tier, team = TEAM, branch = null) {
+  // The next rank of a branch (0.24): its entry in garrisons.json (cost and effects), or null at the top.
+  rankOf(crew, branch, rank) {
+    return GARRISONS.crews[crew]?.branches?.[branch]?.ranks?.[rank] ?? null;
+  },
+  // Tower figures for a crew at a tier (and its tier-3 branch, and that branch's ranks), from the
+  // crew's own unit (balance.json) and garrisons.json. 0.24: front-line crews carry their own hp
+  // factor (crews[crew].hp).
+  garrisonStats(crew, tier, team = TEAM, branch = null, rank = 0) {
     const g = GARRISONS.crews[crew], type = this.crewType(crew, team), d = D[type], t = GARRISONS.tiers[tier - 1];
     const s = {
       name: g.name,
@@ -200,7 +206,7 @@ export const defence = {
       interval: d.interval * (g.interval ?? 1) * t.interval,
       range: d.range + g.range + t.range,
       shot: d.shot || type,
-      maxHp: Math.round(D.tower.hp * (GARRISONS.hp ?? 1) * t.hp),
+      maxHp: Math.round(D.tower.hp * (GARRISONS.hp ?? 1) * t.hp * (g.hp ?? 1)),
       maxShield: D.tower.shield,
       level: tier,
     };
@@ -224,6 +230,30 @@ export const defence = {
       if (b.slow) s.slow = { factor: b.slow.factor, seconds: b.slow.seconds };
       if (b.mark) s.beacon = { taken: b.mark.taken, seconds: b.mark.seconds };
       if (b.burn && s.burn) s.burn = { ...s.burn, dps: s.burn.dps * (b.burn.dps ?? 1), radius: s.burn.radius + (b.burn.radius ?? 0), seconds: s.burn.seconds * (b.burn.seconds ?? 1) };
+      // Branch ranks (0.24), in order, each on top of the last: the same keys as a branch, plus
+      // hp (multiplies), splash_add (metres of blast), pierce (share of a target's shield the shot
+      // passes), burst (shots fired close together), slow_radius / mark_radius (the effect spreads
+      // to enemies that near the target) and burn.every (multiplies).
+      let hp = 1;
+      for (let i = 0; i < rank; i++) {
+        const r = b.ranks?.[i];
+        if (!r) break;
+        hp *= r.hp ?? 1;
+        s.damage *= r.damage ?? 1;
+        s.interval *= r.interval ?? 1;
+        s.range += r.range ?? 0;
+        if (r.mech) s.mechanical_bonus = (s.mechanical_bonus || 1) * r.mech;
+        if (r.reveal) s.reveal = (s.reveal || 0) + r.reveal;
+        if (s.splash_radius) { s.splash_radius = s.splash_radius * (r.splash ?? 1) + (r.splash_add ?? 0); if (r.splash_damage) s.splash_damage = r.splash_damage; }
+        if (r.pierce) s.pierce = r.pierce;
+        if (r.burst) s.burst = { shots: r.burst.shots, gap: r.burst.gap };
+        if (r.slow) s.slow = { factor: r.slow.factor, seconds: r.slow.seconds };
+        if (r.slow_radius) s.slow_radius = r.slow_radius;
+        if (r.mark) s.beacon = { taken: r.mark.taken, seconds: r.mark.seconds };
+        if (r.mark_radius) s.mark_radius = r.mark_radius;
+        if (r.burn && s.burn) s.burn = { ...s.burn, dps: s.burn.dps * (r.burn.dps ?? 1), radius: s.burn.radius + (r.burn.radius ?? 0), seconds: s.burn.seconds * (r.burn.seconds ?? 1), every: s.burn.every * (r.burn.every ?? 1) };
+      }
+      if (rank) { s.maxHp = Math.round(s.maxHp * hp); s.branchRank = rank; }
     }
     // Air waves (0.18.3): in a level with rules.air, a crew whose unit hits air (Ranger, Anti-tank,
     // Watcher; never Breaker) makes the tower hit flyers too (sim/air.js canHit; towers do ×AIR.flak_bonus).
@@ -337,7 +367,7 @@ export const defence = {
     return true;
   },
   setGarrison(e, tier) {
-    const before = e.maxHp, s = this.garrisonStats(e.crew, tier, e.team, e.branch || null);
+    const before = e.maxHp, s = this.garrisonStats(e.crew, tier, e.team, e.branch || null, e.branchRank || 0);
     Object.assign(e, s);
     e.tier = tier;
     e.hp = Math.min(e.maxHp, e.hp + Math.max(0, e.maxHp - before));
@@ -365,6 +395,18 @@ export const defence = {
     this.events.push({ type: "levelup", x: e.x, z: e.z, team: e.team, radius: e.radius, level: 3, seed: e.id, garrison: true, branch });
     return true;
   },
+  // A branched tower takes its next rank (0.24): up to the branch's ranks, each once, in order.
+  padRank(team, id) {
+    const e = this.get(id), r = e?.branch ? this.rankOf(e.crew, e.branch, e.branchRank || 0) : null;
+    if (!this.defence || this.result || !e || e.team !== team || !e.crew || !r) return false;
+    if (this.players[team].alloy < r.cost) { this.message(`Need ${Math.ceil(r.cost - this.players[team].alloy)} more alloy.`, team); return false; }
+    this.players[team].alloy -= r.cost;
+    e.spent += r.cost;
+    e.branchRank = (e.branchRank || 0) + 1;
+    this.setGarrison(e, 3);
+    this.events.push({ type: "levelup", x: e.x, z: e.z, team: e.team, radius: e.radius, level: 3, seed: e.id, garrison: true, branch: e.branch, rank: e.branchRank });
+    return true;
+  },
   padSell(team, id) {
     const e = this.get(id);
     if (!this.defence || this.result || !e || e.team !== team || !e.crew) return false;
@@ -382,11 +424,44 @@ export const defence = {
   garrisonHit(e, t) {
     if (t.kind === "unit" && e.slow) { t.slowUntil = this.time + e.slow.seconds; t.slowBy = e.slow.factor; }
     if (t.kind === "unit" && e.beacon) { t.markedUntil = this.time + e.beacon.seconds; t.markTaken = e.beacon.taken; }
+    // Ranks (0.24): the slow or the mark also falls on the enemies near the target.
+    if (t.kind === "unit" && (e.slow_radius || e.mark_radius))
+      for (const u of this.entities) {
+        if (u === t || u.hp <= 0 || u.kind !== "unit" || u.flying || !this.hostile(e.team, u.team)) continue;
+        const d = hyp(u.x - t.x, u.z - t.z);
+        if (e.slow_radius && d <= e.slow_radius) { u.slowUntil = this.time + e.slow.seconds; u.slowBy = e.slow.factor; }
+        if (e.mark_radius && e.beacon && d <= e.mark_radius) { u.markedUntil = this.time + e.beacon.seconds; u.markTaken = e.beacon.taken; }
+      }
     if (e.burn && this.time >= (e.burnAt ?? 0) - 1e-9) {
       e.burnAt = this.time + e.burn.every;
       (this.zones ||= []).push({ x: t.x, z: t.z, radius: e.burn.radius, until: this.time + e.burn.seconds, dps: e.burn.dps, team: e.team, by: e.id });
       if (this.zones.length > MAX_ZONES) this.zones.shift();
       this.events.push({ type: "ability", ability: "burnline", id: e.id, team: e.team, x: e.x, z: e.z, tx: t.x, tz: t.z, radius: e.burn.radius, duration: e.burn.seconds });
+    }
+  },
+  // A shot of a piercing rank (0.24): that share of the target's shield is set aside while the
+  // shot lands, so it goes through to the hull; what was set aside comes back after.
+  garrisonPierce(e, t, land) {
+    const kept = t.shield > 0 ? t.shield * e.pierce : 0;
+    t.shield -= kept;
+    land();
+    t.shield += kept;
+  },
+  // A burst rank (0.24): the shots of a burst come `gap` seconds apart, then the full reload.
+  garrisonBurst(e) {
+    e.burstShot = (e.burstShot || 0) + 1;
+    if (e.burstShot < e.burst.shots) e.cooldown = e.burst.gap;
+    else e.burstShot = 0;
+  },
+  // Field repair (0.24, garrisons.json repair): a garrison not hit for `delay` seconds mends
+  // `rate` of its health a second, between waves and during them; an armour squad of Rank 2
+  // mends at its own rate (`mend`). Only Defence matches run this (stepDefence).
+  fieldRepair(dt) {
+    const r = GARRISONS.repair;
+    for (const e of this.entities) {
+      if (e.team !== TEAM || e.hp <= 0 || e.hp >= e.maxHp || !(e.crew || e.mend)) continue;
+      if (this.time - (e.hitAt ?? -Infinity) < r.delay - 1e-9) continue;
+      e.hp = Math.min(e.maxHp, e.hp + e.maxHp * (e.crew ? r.rate : e.mend) * dt);
     }
   },
   // Sends the next wave now. The time left on the countdown pays a small bonus.
@@ -600,6 +675,7 @@ export const defence = {
     if (d.queue.length) this.spawnQueued();
     if (this.crossings) this.stepCrossings(dt);
     if (d.hero) this.stepCommander();
+    if (GARRISONS.repair) this.fieldRepair(dt);
     // Carriers at their stop let their passengers out (after the spawns, in entity order).
     for (const e of this.entities) if (e.cargo && e.unloadAt !== undefined && e.hp > 0 && this.time >= e.unloadAt - 1e-9) this.dropCargo(e);
     const exit = def.exit;
@@ -824,7 +900,8 @@ export const defence = {
     if (this.players[team].alloy < a.cost) return `Need ${Math.ceil(a.cost - this.players[team].alloy)} more alloy.`;
     return "";
   },
-  spawnArmour(type, x, z, squad, angle) {
+  // A squad tank; a refit one (`like`, a tank of the squad) comes with the squad's upgrades.
+  spawnArmour(type, x, z, squad, angle, like = null) {
     const a = this.armourRules(), e = this.spawn(type, TEAM, x, z, true, true);
     e.squad = squad;
     e.leash = a.leash;
@@ -832,7 +909,57 @@ export const defence = {
     if (a.damage !== 1) e.damage *= a.damage;
     e.angle = angle;
     e.post = { x, z };
+    if (like?.squadRank) this.armourBoost(e, this.armourGains(1, null), this.armourGains(like.squadRank, like.squadBranch || null), like.squadRank, like.squadBranch || null);
     return e;
+  },
+  // ---------------------------------------------------------------- Armour upgrades (0.24)
+  // GARRISONS.armour.rank2 then one of armour.branches (Assault or Bulwark), bought for a squad
+  // from its sheet (`armourUpgrade`), kept on its tanks (`squadRank`, `squadBranch`, created on
+  // the first upgrade) and given to the tanks a refit brings. hp, damage and mech multiply,
+  // interval multiplies, leash adds; `repair` is the share of health a tank mends a second once
+  // it has not been hit for GARRISONS.repair.delay seconds (`mend`).
+  armourGains(rank, branch) {
+    const a = GARRISONS.armour, g = { hp: 1, damage: 1, interval: 1, mech: 1, leash: 0, repair: 0 };
+    for (const u of [rank >= 2 ? a.rank2 : null, branch ? a.branches?.[branch] : null]) {
+      if (!u) continue;
+      g.hp *= u.hp ?? 1; g.damage *= u.damage ?? 1; g.interval *= u.interval ?? 1; g.mech *= u.mech ?? 1; g.leash += u.leash ?? 0;
+      if (u.repair) g.repair = u.repair;
+    }
+    return g;
+  },
+  // One tank from the gains `from` to `to`: health grows by what the upgrade adds.
+  armourBoost(e, from, to, rank, branch) {
+    const max = Math.round((e.maxHp / from.hp) * to.hp);
+    e.hp = Math.min(max, e.hp + Math.max(0, max - e.maxHp));
+    e.maxHp = max;
+    e.damage = (e.damage / from.damage) * to.damage;
+    e.interval = (e.interval / from.interval) * to.interval;
+    if (to.mech !== from.mech) e.mechanical_bonus = ((e.mechanical_bonus || 1) / from.mech) * to.mech;
+    e.leash += to.leash - from.leash;
+    if (to.repair) e.mend = to.repair;
+    e.squadRank = rank;
+    if (branch) e.squadBranch = branch;
+  },
+  // What the squad's next upgrade is: { kind: "rank" | "branch", cost } or null when it has both.
+  armourNextUpgrade(squad) {
+    const lead = this.armourUnits(squad)[0], a = GARRISONS.armour;
+    if (!lead || !a.rank2) return null;
+    if ((lead.squadRank || 1) < 2) return { kind: "rank", cost: a.rank2.cost };
+    if (!lead.squadBranch && a.branches) return { kind: "branch", costs: Object.fromEntries(Object.entries(a.branches).map(([id, b]) => [id, b.cost])) };
+    return null;
+  },
+  // Rank 2 (no branch given), then one branch, once.
+  armourUpgrade(team, squad, branch = null) {
+    const units = this.armourUnits(squad), a = GARRISONS.armour, next = this.armourNextUpgrade(squad);
+    if (!this.defence || this.result || team !== TEAM || !this.armourRules() || !units.length || !next) return false;
+    if (next.kind === "rank" ? branch : !a.branches?.[branch]) return false;
+    const cost = next.kind === "rank" ? next.cost : a.branches[branch].cost;
+    if (this.players[team].alloy < cost) { this.message(`Need ${Math.ceil(cost - this.players[team].alloy)} more alloy.`, team); return false; }
+    this.players[team].alloy -= cost;
+    const lead = units[0], rank = next.kind === "rank" ? 2 : lead.squadRank, from = this.armourGains(lead.squadRank || 1, lead.squadBranch || null), to = this.armourGains(rank, branch);
+    for (const e of units) this.armourBoost(e, from, to, rank, branch);
+    this.events.push({ type: "armourUpgrade", squad, rank, ...(branch ? { branch } : {}), ids: units.map((e) => e.id), team, x: lead.x, z: lead.z });
+    return true;
   },
   armourBuy(team) {
     const why = this.armourWhy(team);
@@ -884,7 +1011,7 @@ export const defence = {
       if (missing <= 0) continue;
       const spots = this.ringSpots(lead.x, lead.z, lead.radius + 0.1, missing, lead.radius * 2 + 0.6);
       for (const p of spots) {
-        const e = this.spawnArmour(lead.type, p.x, p.z, squad, lead.angle);
+        const e = this.spawnArmour(lead.type, p.x, p.z, squad, lead.angle, lead);
         if (lead.road) { e.stance = "hold"; e.blocker = true; e.road = true; }
       }
       this.events.push({ type: "armourRefit", squad, team: TEAM, x: lead.x, z: lead.z });

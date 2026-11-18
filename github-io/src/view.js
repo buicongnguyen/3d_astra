@@ -1685,8 +1685,9 @@ export class WorldView {
     this.fogClock = 0;
   }
 }
-// What a Frontier Defence entity is dressed as: the commander, or a garrison's tier (and branch).
-export const dressKey = (e) => (e.hero ? "hero" : e.branch ? `${e.tier}${e.branch}` : e.tier);
+// What a Frontier Defence entity is dressed as: the commander, or a garrison's tier (and branch,
+// and since 0.24 its rank; app/defence-ui.js dress() writes the same key).
+export const dressKey = (e) => (e.hero ? "hero" : e.branch ? `${e.tier}${e.branch}${e.branchRank || ""}` : e.tier);
 // The ids of the n enemy units with the lowest share of health left (damaged ones only).
 function weakest(sim, n) {
   const hurt = [];

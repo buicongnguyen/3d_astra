@@ -394,7 +394,8 @@ export const DEFENCE_LEVELS = [
       lane: 2.4,
       pace: 0.8,
       count: { story: 0.85, standard: 1.3, veteran: 1.6 },
-      hp: { story: 0.8, standard: 0.95, veteran: 1 },
+      // Story 0.85 since 0.24 (sturdier towers): a Breaker-only defence still falls here.
+      hp: { story: 0.85, standard: 0.95, veteran: 1 },
       routes: route("crossroads"),
       // The road names the wave intel shows (others show the bridge and ford names).
       roads: { west: "West road", midwest: "North road, west fork", mideast: "North road, east fork", east: "East road" },

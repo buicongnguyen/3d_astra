@@ -50,6 +50,9 @@ const COMMANDS = {
   armourBuy: { allowed: (sim) => !!sim.defence && !!sim.armourRules(), run: (sim, c) => sim.armourBuy(c.team) },
   armourMove: { allowed: (sim, c) => !!sim.defence && Number.isInteger(c.squad) && Number.isFinite(c.x) && Number.isFinite(c.z), run: (sim, c) => sim.armourMove(c.team, c.squad, c.x, c.z) },
   armourMode: { allowed: (sim, c) => !!sim.defence && Number.isInteger(c.squad) && typeof c.mode === "string", run: (sim, c) => sim.armourMode(c.team, c.squad, c.mode) },
+  // 0.24: a branched tower's next rank, and a squad's Rank 2 then its branch (Assault or Bulwark).
+  padRank: { allowed: (sim, c) => !!sim.defence && ownBuilding(sim, c.team, c.building) && !!sim.get(c.building).crew, run: (sim, c) => sim.padRank(c.team, c.building) },
+  armourUpgrade: { allowed: (sim, c) => !!sim.defence && Number.isInteger(c.squad) && (c.branch === undefined || typeof c.branch === "string"), run: (sim, c) => sim.armourUpgrade(c.team, c.squad, c.branch ?? null) },
   // The Commander's answer to the decision a story mission is waiting for (sim/missions.js).
   decide: { allowed: (sim, c) => c.team === 0 && sim.canDecide?.(c.id, c.option), run: (sim, c) => sim.decide(c.id, c.option) },
 };

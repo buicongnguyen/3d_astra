@@ -47,6 +47,8 @@ Today about **7.5/10** overall. The AAA target is "AAA polish at a small scope" 
 | C11 | **Armour squads:** two tanks bought at the depot, sent between roads with a tap; Guard with a 9 m leash or Hold the road; refitted after each wave; works with no control at all. **Done 2026-11-19** (same package) | a mobile reserve, rewards control without needing it | M |
 | C12 | **A larger multi-route level:** Three Roads, 128 m, three entries and four forking roads, zones, armour, carriers on several roads. **Done 2026-11-19** (same package) | moving the armour between roads matters | M |
 
+| C13 | **More upgrade levels and sturdier towers** (the owner: "add more levels to upgrade the army"; "our weapons have low health, can be shot down?"): two ranks after each tower branch (each with an effect: pierce, bursts, spreading slows and marks, wider blasts, hotter fires, armour), armour squad Rank 2 then Assault or Bulwark, front-line crew health, steeper tiers, field repair after 6 s unhit. **Done 2026-11-19** (package "Ranks, armour upgrades and tower repair"; docs/MISSIONS.md) | a late alloy sink, fewer pointless losses | M |
+
 Package "Wave intel and carriers" (2026-11-18) also fixed: an early Call no longer loses the previous wave's clear bonus and repair; flyers pass over the commander and Reinforce blockers; one "incoming" warning per spawn point.
 
 ## Recommended order

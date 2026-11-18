@@ -20,6 +20,8 @@ import "../defence-ui.css";
 
 // Tier trims multiply the tower's paint (never a material swap: the batches stay as they are).
 export const TIER_TINT = { 1: [1.08, 0.94, 0.8], 2: [0.92, 0.99, 1.1], 3: [1.25, 1.1, 0.62] };
+// Branch ranks (0.24): the gold trim, brighter per rank.
+export const RANK_TINT = { 1: [1.34, 1.18, 0.7], 2: [1.45, 1.3, 0.86] };
 export const TIER_NAMES = { 1: "bronze", 2: "steel", 3: "gold" };
 // The commander's gold trim, on every part of its model.
 export const HERO_TINT = [1.9, 1.38, 0.34];
@@ -51,6 +53,27 @@ const BRANCH_TEXT = {
   shrapnel: "Shells burst on everyone close to the target.",
   inferno: "The road burns much hotter.",
   firewall: "Wider fires that burn longer.",
+};
+// What each branch rank adds (0.24), in a line: [rank 1, rank 2].
+const RANK_TEXT = {
+  marksman: ["Harder shots that pass half of a shield.", "Shots pass every shield and bite into armour; 1 m more reach."],
+  suppressor: ["A stronger, longer slow.", "The slow also falls on everyone near the target; more damage."],
+  cluster: ["Wider bursts.", "Wider still, and the blast hits the crowd almost as hard as the target."],
+  guided: ["2 m more reach; marks the target: it takes 15% more damage.", "2 m more reach, more damage, a stronger and longer mark."],
+  heavy: ["Rockets that hit machines harder.", "Harder still against machines, and more damage."],
+  rapid: ["Fires in bursts of two.", "Bursts of three, a little more damage."],
+  beacon: ["A stronger mark (35%) that lasts longer.", "The mark spreads to everyone near the target; more damage."],
+  fareye: ["Sees 6 m further, 1 m more reach.", "Harder shots that pass half of a shield; 1 m more reach."],
+  breacher: ["Thicker armour, harder against machines.", "Thicker armour again, more damage."],
+  shrapnel: ["Bursts reach 1 m further; thicker armour.", "Bursts hit harder; thicker armour."],
+  inferno: ["The road burns hotter; thicker armour.", "Hotter fires that last longer; thicker armour."],
+  firewall: ["Fires 1 m wider; thicker armour.", "Fires that last longer, laid more often; thicker armour."],
+};
+// Armour squad upgrades (0.24): Rank 2, then one branch.
+const ARMOUR_TEXT = {
+  rank2: "Rank 2: thicker armour, a little more damage, and the tanks mend between fights.",
+  assault: "Assault: harder, faster guns, strong against machines and carriers; chases further.",
+  bulwark: "Bulwark: much thicker armour and faster mending: holds the road far longer.",
 };
 const PAD_NOTE = {
   ground: "Ground pad",
@@ -203,11 +226,11 @@ export function createDefenceUI(S, A, deps) {
       u.crew = crew;
       if (u.barrel) u.barrel.visible = false;
     }
-    const tint = TIER_TINT[e.tier] || TIER_TINT[1];
+    const tint = (e.branchRank && RANK_TINT[e.branchRank]) || TIER_TINT[e.tier] || TIER_TINT[1];
     u.model.traverse((part) => { if (part.isMesh) part.userData.tint = tint; });
     // The hit flash restores what it found; it must find the new trim.
     if (u.flashParts) { u.flashBase = u.flashParts.map(() => tint); if (u.flashLit) for (const part of u.flashParts) part.userData.tint = u.flashTint; }
-    u.dressed = e.branch ? `${e.tier}${e.branch}` : e.tier;
+    u.dressed = e.branch ? `${e.tier}${e.branch}${e.branchRank || ""}` : e.tier;
   };
 
   // ---------------------------------------------------------------- Bridges, pontoons, fuses
@@ -478,13 +501,18 @@ export function createDefenceUI(S, A, deps) {
     const units = S.sim.armourUnits(squad), mode = S.sim.armourModeOf(squad), a = S.sim.armourRules(), lead = units[0];
     $("command-label").textContent = "ARMOUR SQUAD";
     $("command-context").textContent = mode === "road" ? "HOLDING THE ROAD" : "ON GUARD";
-    const hp = units.reduce((n, e) => n + e.hp, 0);
-    $("commands").innerHTML = `<i hidden data-defence-sheet data-key="a:${squad}:${mode}:${units.length}"></i>
+    const hp = units.reduce((n, e) => n + e.hp, 0), up = S.sim.armourNextUpgrade(squad), A2 = GARRISONS.armour;
+    // 0.24: Rank 2, then the two branches; once both are taken, the branch the squad has.
+    const upTile = (id, i, ic, label, cost) => `<button class="command-tile defence-armour-up" data-defence-armour="${id}" data-cost="${cost}" data-hotkey="${key(i)}" aria-label="${label}, ${cost} alloy" title="${key(i)} · ${ARMOUR_TEXT[id]} · ${cost} alloy">${kbd(key(i))}${icon(ic)}<span>${label}</span><small><b class="alloy-text" translate="no">${cost}</b></small></button>`;
+    const ups = up?.kind === "rank" ? upTile("rank2", 4, "rapid", A2.rank2.name, up.cost)
+      : up?.kind === "branch" ? Object.entries(A2.branches).map(([id, b], i) => upTile(id, 4 + i, id === "assault" ? "attack" : "shield", b.name, b.cost)).join("")
+      : lead.squadBranch ? `<button class="command-tile defence-armour-up" data-defence-armour="done" data-hotkey="${key(4)}" disabled title="${key(4)} · ${ARMOUR_TEXT[lead.squadBranch]}">${kbd(key(4))}${icon(lead.squadBranch === "assault" ? "attack" : "shield")}<span>${A2.branches[lead.squadBranch].name}</span><small>${icon("check")}</small></button>` : "";
+    $("commands").innerHTML = `<i hidden data-defence-sheet data-key="a:${squad}:${mode}:${units.length}:${lead.squadRank || 1}${lead.squadBranch || ""}"></i>
       <button class="command-tile defence-armour-mode" data-defence-armour="guard" data-hotkey="${key(0)}" aria-pressed="${mode === "guard"}" title="${key(0)} · Guard: holds its spot, fires at anything in range, chases a little and comes back">${kbd(key(0))}${icon("shield")}<span>Guard</span><small>${mode === "guard" ? icon("check") : ""}</small></button>
       <button class="command-tile defence-armour-mode" data-defence-armour="road" data-hotkey="${key(1)}" aria-pressed="${mode === "road"}" title="${key(1)} · Hold the road: stands fast and blocks the column, like the commander">${kbd(key(1))}${icon("hold")}<span>Hold road</span><small>${mode === "road" ? icon("check") : ""}</small></button>
       <button class="command-tile defence-armour-buy" data-defence-armour="buy" data-hotkey="${key(2)}" aria-label="New squad, ${a.cost} alloy" title="${key(2)} · New squad: ${a.size} tanks at the depot · ${a.cost} alloy">${kbd(key(2))}${icon("tank")}<span>New squad</span><small><b class="alloy-text" translate="no">${a.cost}</b></small></button>
-      <button class="command-tile defence-info" data-defence-armour="focus" data-hotkey="${key(3)}" title="${key(3)} · ${a.name}">${kbd(key(3))}${hasPortrait(lead.type) ? portrait(lead.type) : icon("tank")}<span>Squad</span><small><b translate="no" data-armour-hp>${Math.round(hp)}</b></small></button>`;
-    $("command-hint").textContent = "Tap the map or a road to send the squad. On Guard it comes back to its spot after a chase.";
+      <button class="command-tile defence-info" data-defence-armour="focus" data-hotkey="${key(3)}" title="${key(3)} · ${a.name}">${kbd(key(3))}${hasPortrait(lead.type) ? portrait(lead.type) : icon("tank")}<span>Squad</span><small><b translate="no" data-armour-hp>${Math.round(hp)}</b></small></button>${ups}`;
+    $("command-hint").textContent = up?.kind === "branch" ? "Rank 2: pick one branch for this squad. It cannot be changed." : "Tap the map or a road to send the squad. On Guard it comes back to its spot after a chase.";
   }
   function depotSheet() {
     const a = S.sim.armourRules();
@@ -499,17 +527,20 @@ export function createDefenceUI(S, A, deps) {
     const g = GARRISONS.crews[t.crew], type = S.sim.crewType(t.crew), top = t.tier >= 3, choose = top && !t.branch && g.branches;
     const next = top ? null : S.sim.garrisonStats(t.crew, t.tier + 1), cost = top ? 0 : g.cost[t.tier], refund = Math.floor(t.spent * GARRISONS.sell);
     const branchName = t.branch ? g.branches[t.branch].name : "";
+    // 0.24: a branched tower's ranks.
+    const rank = t.branchRank || 0, ranks = t.branch ? g.branches[t.branch].ranks?.length || 0 : 0, nextRank = t.branch ? S.sim.rankOf(t.crew, t.branch, rank) : null;
     $("command-label").textContent = "GARRISON";
-    $("command-context").textContent = choose ? "CHOOSE ONE" : `TIER ${t.tier} / 3`;
-    const info = `<button class="command-tile defence-info" data-defence-act="focus" data-tier="${t.tier}"${t.branch ? ` data-branch="${t.branch}"` : ""} data-hotkey="${key(0)}" title="${key(0)} · ${g.name} · tier ${t.tier}${branchName ? ` · ${branchName}` : ""} · ${Math.round(t.range)} m">${kbd(key(0))}${hasPortrait(type) ? portrait(type) : icon("tower")}<span>${CREW_LABEL[t.crew]}</span><small>${branchName ? `<b>${branchName}</b>` : `<span>Tier</span> <b translate="no">${t.tier}</b>`}</small></button>`;
+    $("command-context").textContent = choose ? "CHOOSE ONE" : ranks ? `RANK ${rank} / ${ranks}` : `TIER ${t.tier} / 3`;
+    const info = `<button class="command-tile defence-info" data-defence-act="focus" data-tier="${t.tier}"${t.branch ? ` data-branch="${t.branch}"` : ""} data-hotkey="${key(0)}" title="${key(0)} · ${g.name} · tier ${t.tier}${branchName ? ` · ${branchName}` : ""} · ${Math.round(t.range)} m">${kbd(key(0))}${hasPortrait(type) ? portrait(type) : icon("tower")}<span>${CREW_LABEL[t.crew]}</span><small>${branchName ? `<b>${branchName}</b>${rank ? `<i class="defence-rank-pips" data-rank="${rank}">${"<i></i>".repeat(rank)}</i>` : ""}` : `<span>Tier</span> <b translate="no">${t.tier}</b>`}</small></button>`;
     // Tier 3 without a branch: the two branches side by side, gold like the tier they crown.
-    const middle = choose
+    const rankTile = `<button class="command-tile defence-rank" data-defence-act="rank" data-tier="3" data-rank="${rank}" data-hotkey="${key(1)}" ${nextRank ? "" : "disabled"} aria-label="${nextRank ? `Rank ${rank + 1}, ${nextRank.cost} alloy` : "Top rank"}" title="${key(1)} · ${nextRank ? `Rank ${rank + 1}: ${RANK_TEXT[t.branch]?.[rank] || ""} · ${nextRank.cost} alloy` : "Top rank"}">${kbd(key(1))}${icon("rapid")}<span>${nextRank ? "Rank up" : "Top rank"}</span><small>${nextRank ? `<b class="alloy-text" translate="no">${nextRank.cost}</b>` : icon("check")}</small></button>`;
+    const middle = ranks ? rankTile : choose
       ? Object.entries(g.branches).map(([id, b], i) => `<button class="command-tile defence-branch" data-defence-branch="${id}" data-tier="3" data-hotkey="${key(i + 1)}" aria-label="${b.name}, ${b.cost} alloy" title="${key(i + 1)} · ${b.name}: ${BRANCH_TEXT[id]} · ${b.cost} alloy">${kbd(key(i + 1))}${icon(i ? "crosshair" : "bolt")}<span>${b.name}</span><small><b class="alloy-text" translate="no">${b.cost}</b></small></button>`).join("")
       : `<button class="command-tile defence-upgrade" data-defence-act="upgrade" data-tier="${top ? 3 : t.tier + 1}" data-hotkey="${key(1)}" ${top ? "disabled" : ""} aria-label="${top ? "Top tier" : `Upgrade to tier ${t.tier + 1}, ${cost} alloy`}" title="${key(1)} · ${top ? "Top tier" : `Tier ${t.tier + 1}: ${Math.round(next.damage)} damage, ${Math.round(next.range)} m · ${cost} alloy`}">${kbd(key(1))}${icon("bolt")}<span>${top ? "Top tier" : "Upgrade"}</span><small>${top ? icon("check") : `<b class="alloy-text" translate="no">${cost}</b>`}</small></button>`;
     const sellKey = key(choose ? 3 : 2);
-    $("commands").innerHTML = `<i hidden data-defence-sheet data-key="t:${t.id}:${t.tier}:${t.branch || ""}"></i>${info}${middle}
+    $("commands").innerHTML = `<i hidden data-defence-sheet data-key="t:${t.id}:${t.tier}:${t.branch || ""}:${rank}"></i>${info}${middle}
       <button class="command-tile defence-sell" data-defence-act="sell" data-hotkey="${sellKey}" aria-label="Sell for ${refund} alloy" title="${sellKey} · Sell: ${refund} alloy back">${kbd(sellKey)}${icon("close")}<span>Sell</span><small><b class="alloy-text" translate="no">+${refund}</b></small></button>`;
-    $("command-hint").textContent = choose ? "Gold tier: pick one branch for this tower. It cannot be changed." : t.branch ? `${g.name} · ${branchName}. ${BRANCH_TEXT[t.branch]}` : `${g.name}. ${CREW_ROLE[t.crew]}`;
+    $("command-hint").textContent = choose ? "Gold tier: pick one branch for this tower. It cannot be changed." : t.branch ? `${g.name} · ${branchName}. ${nextRank ? `Next rank: ${RANK_TEXT[t.branch]?.[rank] || ""}` : BRANCH_TEXT[t.branch]}` : `${g.name}. ${CREW_ROLE[t.crew]}`;
   }
   function heroSheet(hero) {
     const c = GARRISONS.commander;
@@ -558,7 +589,8 @@ export function createDefenceUI(S, A, deps) {
     const bridge = !tower && !hero && !pad ? S.defenceBridge : null;
     // 0.23: a spot in a build zone, an armour squad, the armour depot.
     const spot = !es.length && !pad && bridge === null ? S.defenceSpot : null, depot = !es.length && !pad && !spot && bridge === null && S.defenceDepot && !!S.sim.armourRules();
-    const k = tower ? `t:${tower.id}:${tower.tier}:${tower.branch || ""}` : hero ? `h:${hero.id}:${aim || ""}` : squad ? `a:${squad}:${S.sim.armourModeOf(squad)}:${es.length}` : pad ? `p:${pad.id}` : bridge !== null ? `b:${bridge}:${S.sim.crossingState(bridge)}` : spot ? `z:${spot.zone}:${spot.x}:${spot.z}` : depot ? "d" : "none";
+    const lead = squad ? S.sim.armourUnits(squad)[0] : null;
+    const k = tower ? `t:${tower.id}:${tower.tier}:${tower.branch || ""}:${tower.branchRank || 0}` : hero ? `h:${hero.id}:${aim || ""}` : squad ? `a:${squad}:${S.sim.armourModeOf(squad)}:${es.length}:${lead?.squadRank || 1}${lead?.squadBranch || ""}` : pad ? `p:${pad.id}` : bridge !== null ? `b:${bridge}:${S.sim.crossingState(bridge)}` : spot ? `z:${spot.zone}:${spot.x}:${spot.z}` : depot ? "d" : "none";
     const marker = $("commands").querySelector("[data-defence-sheet]");
     if (marker?.dataset.key !== k) {
       $("commands").classList.remove("tactics-card");
@@ -576,6 +608,14 @@ export function createDefenceUI(S, A, deps) {
     for (const b of $("commands").querySelectorAll("[data-defence-armour=\"guard\"], [data-defence-armour=\"road\"], [data-defence-armour=\"focus\"]")) b.disabled = blocked;
     if (squad) { const hp = $("commands").querySelector("[data-armour-hp]"), text = String(Math.round(es.reduce((n, e) => n + e.hp, 0))); if (hp && hp.textContent !== text) hp.textContent = text; }
     for (const b of $("commands").querySelectorAll("[data-defence-branch]")) b.disabled = blocked || alloy < S.sim.branchCost(tower.crew, b.dataset.defenceBranch);
+    for (const b of $("commands").querySelectorAll(".defence-armour-up[data-cost]")) b.disabled = blocked || alloy < Number(b.dataset.cost);
+    const rankUp = $("commands").querySelector('[data-defence-act="rank"]');
+    if (rankUp && tower) {
+      const r = tower.branch ? S.sim.rankOf(tower.crew, tower.branch, tower.branchRank || 0) : null, can = !!r && alloy >= r.cost;
+      rankUp.disabled = blocked || !can;
+      if (can && !affordable && !blocked) burst(rankUp);
+      affordable = can;
+    }
     const up = $("commands").querySelector('[data-defence-act="upgrade"]');
     if (up && tower) {
       const can = tower.tier < 3 && alloy >= GARRISONS.crews[tower.crew].cost[tower.tier];
@@ -642,6 +682,7 @@ export function createDefenceUI(S, A, deps) {
     const t = A.selectedEntities()[0];
     if (!t?.crew) return;
     if (action === "upgrade" && S.sim.command({ team: 0, type: "padUpgrade", building: t.id })) { burstTier = t.tier; A.tone(880, 0.14); }
+    if (action === "rank" && S.sim.command({ team: 0, type: "padRank", building: t.id })) { burstTier = 3; A.tone(1046, 0.16); }
     if (action === "sell" && S.sim.command({ team: 0, type: "padSell", building: t.id })) { S.defencePad = t.pad; A.setSelection([]); A.tone(330, 0.12); }
     if (action === "focus") S.view.focusOn(t.x, t.z);
     A.updateUI();
@@ -686,6 +727,8 @@ export function createDefenceUI(S, A, deps) {
         // Phones: stay on the card with the squad's Guard and Hold the road.
         if (root.classList.contains("compact-ui")) A.dockTab("actions");
       }
+    } else if (squad && (id === "rank2" || id === "assault" || id === "bulwark")) {
+      if (S.sim.command({ team: 0, type: "armourUpgrade", squad, ...(id === "rank2" ? {} : { branch: id }) })) A.tone(id === "rank2" ? 760 : 880, 0.14);
     } else if (squad && (id === "guard" || id === "road")) {
       if (S.sim.command({ team: 0, type: "armourMode", squad, mode: id })) A.tone(id === "road" ? 420 : 520, 0.1);
     } else if (squad && id === "focus") { const u = S.sim.armourUnits(squad)[0]; if (u) S.view.focusOn(u.x, u.z); }

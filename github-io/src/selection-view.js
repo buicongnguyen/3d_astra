@@ -66,10 +66,11 @@ export function updateRing(ring, selected, hovered, time, dt, unitsPerPixel = 0)
 }
 
 // Vitals: framed plate, team tab, segmented health (green / amber / red) with a pale damage
-// ghost, shield bar and, on buildings, three level pips. One mesh per entity.
+// ghost, shield bar and, on buildings, three level pips (and, left of them, the ranks of a
+// Frontier Defence branch, 0.24, in pale gold). One mesh per entity.
 const BAR = `
 uniform float flash;
-uniform float hp, ghost, shield, hasShield, segments, level, building;
+uniform float hp, ghost, shield, hasShield, segments, level, building, rank;
 uniform vec3 team; uniform vec2 size;
 varying vec2 vUv;
 float rect(vec2 p, vec2 a, vec2 b) {
@@ -108,6 +109,13 @@ void main() {
       float pip = rect(p, vec2(x, top + pad + 0.04), vec2(x + 0.2, top + pad + 0.13));
       col = mix(col, float(i) < level ? vec4(0.93, 0.78, 0.43, 1.0) : vec4(0.2, 0.26, 0.25, 0.9), pip);
     }
+  if (building > 0.5 && rank > 0.5)
+    for (int i = 0; i < 2; i++) {
+      if (float(i) >= rank) break;
+      float x = size.x - pad - float(4 + i) * 0.26 - 0.06;
+      float pip = rect(p, vec2(x, top + pad + 0.02), vec2(x + 0.2, top + pad + 0.15));
+      col = mix(col, vec4(1.0, 0.95, 0.72, 1.0), pip);
+    }
   if (col.a < 0.01) discard;
   col.rgb = mix(col.rgb, vec3(1.0), flash);
   gl_FragColor = col;
@@ -119,7 +127,7 @@ export function createBar(e, hex) {
   const material = new THREE.ShaderMaterial({
     uniforms: {
       flash: { value: 0 }, hp: { value: 1 }, ghost: { value: 1 }, shield: { value: 1 }, hasShield: { value: e.maxShield > 0 ? 1 : 0 },
-      segments: { value: Math.max(2, Math.min(40, Math.round(e.maxHp / 50))) }, level: { value: e.level || 1 },
+      segments: { value: Math.max(2, Math.min(40, Math.round(e.maxHp / 50))) }, level: { value: e.level || 1 }, rank: { value: e.branchRank || 0 },
       building: { value: building ? 1 : 0 }, team: { value: raw(hex) }, size: { value: size },
     },
     vertexShader: PLAIN, fragmentShader: BAR, transparent: true, depthTest: false, depthWrite: false,
@@ -145,6 +153,7 @@ export function updateBar(bar, e, dt) {
   u.ghost.value = s.ghost;
   u.shield.value = e.maxShield > 0 ? Math.max(0, e.shield / e.maxShield) : 0;
   u.level.value = e.level || 1;
+  u.rank.value = e.branchRank || 0;
   u.segments.value = Math.max(2, Math.min(40, Math.round(e.maxHp / 50)));
 }
 

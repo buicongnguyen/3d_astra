@@ -100,7 +100,9 @@ export const combat = {
         this.events.push({ type: "reveal", ambush: true, x: e.x, z: e.z, team: e.team, victim: target.team });
       }
     }
-    apply(target);
+    // A Frontier Defence piercing rank passes part of the target's shield (sim/defence.js).
+    if (e.pierce) this.garrisonPierce(e, target, () => apply(target));
+    else apply(target);
     // Frontier Defence garrisons: branch and crew effects on the target (sim/defence.js).
     if (e.crew) this.garrisonHit(e, target);
     // Area weapons (balance.json splash_radius / splash_damage share) also hit nearby enemies on the
@@ -126,6 +128,8 @@ export const combat = {
       heavy: ["breaker", "tank", "antitank"].includes(e.shot || e.type),
     });
     e.cooldown = e.interval;
+    // A Frontier Defence burst rank fires its shots close together (sim/defence.js).
+    if (e.burst) this.garrisonBurst(e);
   },
   fight(e, t, dt, chase = true) {
     if (

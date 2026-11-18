@@ -2,8 +2,9 @@
 // 128 m level): the marked build zones drawn as one mesh, a tap in a zone opening the crew sheet
 // and building a tower on the grid spot, a spot by the road refused, the Armour chip (44 px) opening
 // the depot, a squad bought and sent along a road by a tap, Hold the road, the chip cycling between
-// two squads, a mid-wave field, the bar inside the screen, no text under 12 px, no sideways scroll,
-// no page errors. Screenshots: test-results/defence-zones-*.png.
+// two squads, (0.24) a branch rank and a squad's Rank 2 and Bulwark bought by taps, a mid-wave
+// field, the bar inside the screen, no text under 12 px, no sideways scroll, no page errors.
+// Screenshots: test-results/defence-zones-*.png.
 import assert from "node:assert/strict";
 import { launchBrowser, openPage, suite, shot, TIMEOUT } from "./lib/harness.mjs";
 
@@ -117,6 +118,18 @@ await suite("defence-zones", async () => {
     assert.ok(await page.evaluate(() => window.__frontier.sim.commandLog.some((c) => c.type === "zoneBuild")), "through the command log");
     await page.waitForSelector('#commands[data-tier="1"] [data-defence-act="upgrade"]');
     await shot(page, `defence-zones-tower-${viewport}`);
+    // 0.24: the tower to gold with a branch, then a rank bought from its sheet: the Rank up tile
+    // (44 px), the rank pips after the branch name, the command in the log.
+    await page.evaluate(() => { const s = window.__frontier.sim, t = s.towerOn(s.defence.zonePads[0].id); s.command({ team: 0, type: "padUpgrade", building: t.id }); s.command({ team: 0, type: "padUpgrade", building: t.id }); s.command({ team: 0, type: "padBranch", building: t.id, branch: "marksman" }); });
+    await page.waitForSelector('#commands [data-defence-act="rank"]:not(:disabled)', { timeout: TIMEOUT.step });
+    assert.match(await page.locator("#command-context").textContent(), /RANK 0 \/ 2/);
+    await bigEnough(page.locator('#commands [data-defence-act="rank"]'), `${viewport} rank tile`);
+    await tap('#commands [data-defence-act="rank"]');
+    await page.waitForFunction(() => { const s = window.__frontier.sim; return s.towerOn(s.defence.zonePads[0].id)?.branchRank === 1 && document.querySelectorAll("#commands .defence-rank-pips > i").length === 1; }, null, { timeout: TIMEOUT.step });
+    assert.ok(await page.evaluate(() => window.__frontier.sim.commandLog.some((c) => c.type === "padRank")), "the rank went through the command log");
+    assert.match(await page.locator("#command-context").textContent(), /RANK 1 \/ 2/);
+    assert.deepEqual(await tinyText(page, "#commands"), [], `${viewport}: rank sheet text under 12 px`);
+    await shot(page, `defence-zones-rank-${viewport}`);
 
     // A spot by the road: the sheet opens with every crew off and says why.
     await page.evaluate(() => window.__frontier.select([]));
@@ -154,6 +167,15 @@ await suite("defence-zones", async () => {
     await page.waitForFunction(() => window.__frontier.sim.armourUnits(1).every((e) => e.blocker) && document.querySelector('#commands [data-defence-armour="road"][aria-pressed="true"]'), null, { timeout: TIMEOUT.step });
     await page.waitForTimeout(250);
     await shot(page, `defence-zones-sent-${viewport}`);
+    // 0.24: Rank 2 for the squad from its sheet, then one branch (Bulwark); 44 px, no small text.
+    await tap('#commands [data-defence-armour="rank2"]');
+    await page.waitForFunction(() => window.__frontier.sim.armourUnits(1).every((e) => e.squadRank === 2) && document.querySelector('#commands [data-defence-armour="bulwark"]:not(:disabled)'), null, { timeout: TIMEOUT.step });
+    await bigEnough(page.locator("#commands [data-defence-armour]"), `${viewport} armour upgrade tile`);
+    assert.deepEqual(await tinyText(page, "#commands"), [], `${viewport}: armour upgrade text under 12 px`);
+    await shot(page, `defence-zones-armour-rank-${viewport}`);
+    await tap('#commands [data-defence-armour="bulwark"]');
+    await page.waitForFunction(() => window.__frontier.sim.armourUnits(1).every((e) => e.squadBranch === "bulwark") && document.querySelector('#commands [data-defence-armour="done"]'), null, { timeout: TIMEOUT.step });
+    assert.deepEqual(await page.evaluate(() => window.__frontier.sim.commandLog.filter((c) => c.type === "armourUpgrade").map((c) => c.branch || "rank")), ["rank", "bulwark"]);
 
     // A second squad; the chip then picks one squad after the other.
     await tap('#commands [data-defence-armour="buy"]');

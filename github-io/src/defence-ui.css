@@ -314,3 +314,11 @@
 :root.motion-off .defence-float { animation-name: defence-float-still; }
 @media (prefers-reduced-motion: reduce) { .defence-float { animation-name: defence-float-still; } }
 :root:not(.compact-ui) #defence-intel { pointer-events: auto; }
+/* 0.24: branch ranks (pale-gold pips after the branch name, a brighter rim on the Rank up tile)
+   and the armour squad's Rank 2 and branch tiles. */
+#commands .command-tile.defence-rank,
+#commands .command-tile.defence-armour-up { position: relative; overflow: visible; }
+#commands .command-tile.defence-rank { border-color: #ffe9a8; }
+#commands .command-tile.defence-armour-up { border: 2px solid rgba(255, 199, 94, 0.55); }
+#commands .defence-rank-pips { display: inline-flex; gap: 3px; margin-left: 4px; vertical-align: middle; }
+#commands .defence-rank-pips > i { width: 7px; height: 7px; transform: rotate(45deg); background: #ffe9a8; box-shadow: 0 0 4px rgba(255, 210, 120, 0.8); }

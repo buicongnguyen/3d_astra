@@ -1,44 +1,58 @@
 {
-  "about": "Frontier Defence garrison towers: a Sentinel tower with one of the army's own units as its crew. Stats come from that unit (balance.json) scaled here; tiers are instant. mech scales damage against machines (armour), on top of the unit's own mechanical bonus. At tier 3 a tower can take one of two branches (0.21): damage, interval, mech and splash multiply; range and reveal add; splash_damage replaces the share; slow, mark and burn are on-hit effects. The commander, the perks and demolition (0.21) are tuned here too.",
+  "about": "Frontier Defence garrison towers: a Sentinel tower with one of the army's own units as its crew. Stats come from that unit (balance.json) scaled here; tiers are instant. mech scales damage against machines (armour), on top of the unit's own mechanical bonus. At tier 3 a tower can take one of two branches (0.21): damage, interval, mech and splash multiply; range and reveal add; splash_damage replaces the share; slow, mark and burn are on-hit effects. The commander, the perks and demolition (0.21) are tuned here too. 0.24: each branch has two ranks (ranks: cost and effects; hp multiplies, splash_add adds blast metres, pierce is the share of a shield a shot passes, burst fires shots gap seconds apart, slow_radius and mark_radius spread the effect); a crew may carry its own hp factor (the front line); repair: a garrison not hit for delay seconds mends rate of its health a second; armour.rank2 and armour.branches are the squad upgrades; endless.hp is the Endless hull growth a wave from wave 10.",
   "sell": 0.6,
   "bounty": 0.1,
+  "repair": { "delay": 6, "rate": 0.04 },
+  "endless": { "hp": 0.1 },
   "hp": 1.5,
   "tiers": [
     { "damage": 1, "range": 0, "hp": 1, "interval": 1 },
-    { "damage": 1.45, "range": 1, "hp": 1.25, "interval": 0.95 },
-    { "damage": 2.0, "range": 2, "hp": 1.5, "interval": 0.9 }
+    { "damage": 1.45, "range": 1, "hp": 1.35, "interval": 0.95 },
+    { "damage": 2.0, "range": 2, "hp": 1.75, "interval": 0.9 }
   ],
   "crews": {
     "ranger": { "name": "Ranger nest", "slot": "ranger", "cost": [70, 65, 110], "damage": 1.9, "range": 3, "interval": 1, "mech": 0.3,
       "branches": {
-        "marksman": { "name": "Marksman", "cost": 150, "damage": 2.1, "interval": 1.5, "range": 2 },
-        "suppressor": { "name": "Suppressor", "cost": 130, "damage": 0.9, "slow": { "factor": 0.55, "seconds": 1.6 } }
+        "marksman": { "name": "Marksman", "cost": 150, "damage": 2.1, "interval": 1.5, "range": 2,
+          "ranks": [{ "cost": 140, "damage": 1.15, "pierce": 0.5, "hp": 1.1 }, { "cost": 190, "damage": 1.1, "pierce": 1, "mech": 2, "range": 1, "hp": 1.1 }] },
+        "suppressor": { "name": "Suppressor", "cost": 130, "damage": 0.9, "slow": { "factor": 0.55, "seconds": 1.6 },
+          "ranks": [{ "cost": 120, "slow": { "factor": 0.45, "seconds": 2.2 }, "hp": 1.1 }, { "cost": 170, "slow": { "factor": 0.4, "seconds": 2.6 }, "slow_radius": 2.5, "damage": 1.2, "hp": 1.1 }] }
       } },
-    "breaker": { "name": "Breaker mortar", "slot": "breaker", "cost": [110, 85, 140], "damage": 1.6, "range": 4, "interval": 1.1, "splash": 1.25, "mech": 0.4,
+    "breaker": { "name": "Breaker mortar", "slot": "breaker", "hp": 1.2, "cost": [110, 85, 140], "damage": 1.6, "range": 4, "interval": 1.1, "splash": 1.25, "mech": 0.4,
       "branches": {
-        "cluster": { "name": "Cluster", "cost": 170, "splash": 1.6, "splash_damage": 0.6 },
-        "guided": { "name": "Guided", "cost": 160, "range": 5, "damage": 1.15 }
+        "cluster": { "name": "Cluster", "cost": 170, "splash": 1.6, "splash_damage": 0.6,
+          "ranks": [{ "cost": 150, "splash": 1.2, "hp": 1.1 }, { "cost": 200, "splash": 1.15, "splash_damage": 0.8, "damage": 1.1, "hp": 1.1 }] },
+        "guided": { "name": "Guided", "cost": 160, "range": 5, "damage": 1.15,
+          "ranks": [{ "cost": 140, "range": 2, "mark": { "taken": 1.15, "seconds": 3 }, "hp": 1.1 }, { "cost": 190, "range": 2, "damage": 1.15, "mark": { "taken": 1.25, "seconds": 4 }, "hp": 1.1 }] }
       } },
     "antitank": { "name": "Anti-tank post", "slot": "antitank", "cost": [90, 75, 120], "damage": 2.0, "range": 3, "interval": 1,
       "branches": {
-        "heavy": { "name": "Heavy", "cost": 160, "damage": 1.9, "interval": 1.35 },
-        "rapid": { "name": "Rapid", "cost": 150, "interval": 0.55, "damage": 0.9 }
+        "heavy": { "name": "Heavy", "cost": 160, "damage": 1.9, "interval": 1.35,
+          "ranks": [{ "cost": 140, "mech": 1.3, "hp": 1.1 }, { "cost": 190, "mech": 1.3, "damage": 1.1, "hp": 1.15 }] },
+        "rapid": { "name": "Rapid", "cost": 150, "interval": 0.55, "damage": 0.9,
+          "ranks": [{ "cost": 140, "burst": { "shots": 2, "gap": 0.15 }, "interval": 1.6, "hp": 1.1 }, { "cost": 190, "burst": { "shots": 3, "gap": 0.15 }, "interval": 1.5, "damage": 1.1, "hp": 1.1 }] }
       } },
     "watcher": { "name": "Watcher post", "type": "watcher", "cost": [80, 65, 110], "damage": 1.9, "range": 3, "interval": 1, "reveal": 16, "mech": 0.8,
       "branches": {
-        "beacon": { "name": "Beacon", "cost": 130, "mark": { "taken": 1.25, "seconds": 4 } },
-        "fareye": { "name": "Far-eye", "cost": 120, "reveal": 12, "range": 3 }
+        "beacon": { "name": "Beacon", "cost": 130, "mark": { "taken": 1.25, "seconds": 4 },
+          "ranks": [{ "cost": 120, "mark": { "taken": 1.35, "seconds": 5 }, "hp": 1.1 }, { "cost": 170, "mark_radius": 3, "damage": 1.2, "hp": 1.1 }] },
+        "fareye": { "name": "Far-eye", "cost": 120, "reveal": 12, "range": 3,
+          "ranks": [{ "cost": 110, "reveal": 6, "range": 1, "hp": 1.1 }, { "cost": 160, "damage": 1.3, "pierce": 0.5, "range": 1, "hp": 1.1 }] }
       } },
-    "tank": { "name": "Tank emplacement", "slot": "tank", "cost": [150, 110, 170], "damage": 1.6, "range": 1, "interval": 1.3, "splash": 0, "mech": 1.8, "counter": false,
+    "tank": { "name": "Tank emplacement", "slot": "tank", "hp": 1.5, "cost": [150, 110, 170], "damage": 1.6, "range": 1, "interval": 1.3, "splash": 0, "mech": 1.8, "counter": false,
       "branches": {
-        "breacher": { "name": "Breacher", "cost": 180, "damage": 1.5, "mech": 1.4 },
-        "shrapnel": { "name": "Shrapnel", "cost": 170, "splash_radius": 3, "splash_damage": 0.5 }
+        "breacher": { "name": "Breacher", "cost": 180, "damage": 1.5, "mech": 1.4,
+          "ranks": [{ "cost": 150, "mech": 1.2, "hp": 1.25 }, { "cost": 200, "damage": 1.15, "mech": 1.1, "hp": 1.25 }] },
+        "shrapnel": { "name": "Shrapnel", "cost": 170, "splash_radius": 3, "splash_damage": 0.5,
+          "ranks": [{ "cost": 150, "splash_add": 1, "hp": 1.2 }, { "cost": 200, "splash_damage": 0.7, "damage": 1.1, "hp": 1.2 }] }
       } },
-    "scorcher": { "name": "Scorcher flame trap", "type": "scorcher", "cost": [100, 80, 130], "damage": 0.75, "range": 1, "interval": 1, "mech": 0.4,
+    "scorcher": { "name": "Scorcher flame trap", "type": "scorcher", "hp": 1.5, "cost": [100, 80, 130], "damage": 0.7, "range": 1, "interval": 1, "mech": 0.4,
       "burn": { "dps": 8, "radius": 2.5, "seconds": 3, "every": 1.5 },
       "branches": {
-        "inferno": { "name": "Inferno", "cost": 150, "burn": { "dps": 1.8 } },
-        "firewall": { "name": "Firewall", "cost": 140, "burn": { "radius": 1.5, "seconds": 1.6 } }
+        "inferno": { "name": "Inferno", "cost": 150, "burn": { "dps": 1.8 },
+          "ranks": [{ "cost": 140, "burn": { "dps": 1.3 }, "hp": 1.2 }, { "cost": 180, "burn": { "dps": 1.25, "seconds": 1.3 }, "hp": 1.2 }] },
+        "firewall": { "name": "Firewall", "cost": 140, "burn": { "radius": 1.5, "seconds": 1.6 },
+          "ranks": [{ "cost": 130, "burn": { "radius": 1 }, "hp": 1.2 }, { "cost": 170, "burn": { "seconds": 1.3, "every": 0.7 }, "hp": 1.2 }] }
       } }
   },
   "commander": {
@@ -46,7 +60,12 @@
     "barrage": { "cooldown": 40, "range": 20, "delay": 1.5, "radius": 4.5, "damage": 110 },
     "reinforce": { "cooldown": 35, "range": 20, "count": 3, "slot": "vanguard", "seconds": 20 }
   },
-  "armour": { "name": "Armour squad", "slot": "tank", "size": 2, "cost": 240, "cap": 2, "leash": 9, "hp": 1, "damage": 1 },
+  "armour": { "name": "Armour squad", "slot": "tank", "size": 2, "cost": 240, "cap": 2, "leash": 9, "hp": 1, "damage": 1,
+    "rank2": { "name": "Rank 2", "cost": 160, "hp": 1.35, "damage": 1.1, "repair": 0.03 },
+    "branches": {
+      "assault": { "name": "Assault", "cost": 200, "damage": 1.35, "interval": 0.8, "mech": 1.3, "leash": 4 },
+      "bulwark": { "name": "Bulwark", "cost": 200, "hp": 1.7, "repair": 0.05 }
+    } },
   "perks": {
     "quartermaster": { "name": "Quartermaster", "stars": 3, "first": 0.8 },
     "reserves": { "name": "Reserves", "stars": 4, "lives": 2 },
