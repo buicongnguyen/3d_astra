@@ -24,9 +24,14 @@ export function setupFrame(S, A) {
   // and a counter hint sits apart (app/hud.js, message-queue.js). The same alert again only refreshes.
   // The rules' raid warning (ai.js, ai-plan.js) is an alert too.
   const RAID_WARNING = /^Scouts report enemy raiders/;
-  function incomingAlert(event) {
-    A.alert("Enemy attack incoming!");
+  // A Defence wave from several spawn points warns once per point (sim/defence.js startWave):
+  // one ping each, but one alert and one tone for the whole batch.
+  let incomingBatch = null;
+  function incomingAlert(event, batch) {
     if (Number.isFinite(event.x) && Number.isFinite(event.z)) S.pings.push({ x: event.x, z: event.z, at: S.sim.time });
+    if (incomingBatch === batch) return;
+    incomingBatch = batch;
+    A.alert("Enemy attack incoming!");
     A.tone(300, 0.3);
   }
 
@@ -143,7 +148,9 @@ export function setupFrame(S, A) {
       if (event.type === "impact" && event.team === 0 && Z.started) underAttack(event);
       if (Z.started) S.audio?.event(event, S.sim);
       if (event.type === "message") (RAID_WARNING.test(event.text) ? A.alert : A.notice)(event.text);
-      else if (event.type === "incoming") { if (event.team === 0) incomingAlert(event); }
+      else if (event.type === "incoming") { if (event.team === 0) incomingAlert(event, events); }
+      // Frontier Defence troop carriers (0.22): the drop and the "+N" of a carrier lost with its squad.
+      else if (event.type === "drop" || event.type === "carrierDown") { if (Z.started) A.defenceEvent?.(event); }
       // Story mission cues (sim/missions.js).
       // A line spoken on the tick that ended the match goes straight to the Comms log.
       // Lines from the tick that started a scene wait until it is over (app/scenes.js).

@@ -6,8 +6,9 @@
 // Wave groups name roster slots (vanguard, ranger, breaker, tank, antitank, medic) or any unit
 // type: on a faction roster (rules.rosters) a slot becomes that faction's unit, so Ashfall's
 // vanguard is a Scrapper. A group with `faction` uses that faction's roster instead (a mixed
-// wave); `tag: "bridger"` makes its units build a pontoon over a blown bridge. Counts scale with
-// the difficulty like campaign waves (balance.json difficulty.wave).
+// wave); `tag: "bridger"` makes its units build a pontoon over a blown bridge; a `carrier` group
+// (0.22, `carriers` below) brings a squad (`carry`) and drops it at route point `dropLeg`. Counts
+// scale with the difficulty like campaign waves (balance.json difficulty.wave), passengers too.
 import MAPS from "./maps.json" with { type: "json" };
 
 const route = (map) => Object.fromEntries(Object.entries(MAPS[map].routes).map(([id, pts]) => [id, pts.map(([x, z]) => ({ x, z }))]));
@@ -17,6 +18,9 @@ const group = (units, route = "main", every = 0.7, delay = 0, hp, extra) => ({ u
 const allied = (faction, units, route, every, delay, hp) => group(units, route, every, delay, hp, { faction });
 // Bridge builders: they stop at a blown crossing on their route and put a pontoon over it.
 const bridgers = (units, route, every, delay, hp) => group(units, route, every, delay, hp, { tag: "bridger" });
+// Troop carriers (0.22): each carries `carry` (slots, as `units`) and drops it at route point
+// `dropLeg`, then drives on empty. A carrier group is { units: { carrier: n }, carry, dropLeg }.
+const carriers = (carry, route, dropLeg, delay = 0, n = 1, hp) => group({ carrier: n }, route, 3, delay, hp, { carry, dropLeg });
 // Every crew the pads can take since 0.21.
 const CREWS = ["ranger", "breaker", "antitank", "watcher", "tank", "scorcher"];
 // River levels: which crossing each route uses (x of src/terrain.js CROSSINGS), for demolition and rerouting.
@@ -351,7 +355,8 @@ export const DEFENCE_LEVELS = [
         { groups: [group({ tank: 4 }, "ford", 2.5, 0, 1.2), allied("sunward", { ranger: 6 }, "west", 0.7, 3)], bonus: 60 },
         { groups: [group({ vanguard: 12 }, "east", 0.5), group({ antitank: 3 }, "ford", 1.2, 3)], bonus: 65 },
         { groups: [allied("sunward", { tank: 4, medic: 1 }, "west", 2.2, 0, 1.2), bridgers({ vanguard: 6 }, "east", 0.6, 2), group({ vanguard: 6 }, "ford", 0.5, 5)], bonus: 70 },
-        { groups: [group({ vanguard: 16 }, "east", 0.45), allied("sunward", { ranger: 8 }, "west", 0.7, 3), group({ medic: 2 }, "ford", 1, 4)], bonus: 75 },
+        // 0.22: a troop carrier wades the ford and drops six shades on the near bank (route point 3).
+        { groups: [group({ vanguard: 16 }, "east", 0.45), allied("sunward", { ranger: 8 }, "west", 0.7, 3), group({ medic: 2 }, "ford", 1, 4), carriers({ vanguard: 6 }, "ford", 3, 6)], bonus: 75 },
         { groups: [group({ tank: 6 }, "ford", 2.2, 0, 1.2), allied("sunward", { ranger: 6, medic: 2 }, "east", 0.7, 3), group({ breaker: 3 }, "west", 1.8, 5)], bonus: 80 },
         { groups: [group({ vanguard: 20 }, "ford", 0.4), allied("sunward", { ranger: 10 }, "west", 0.6, 3), bridgers({ tank: 6 }, "east", 2.2, 5, 1.2)], bonus: 0 },
       ],

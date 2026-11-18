@@ -22,7 +22,9 @@ function declaredModels(match, factions) {
   if (def) { scan(def.setup); scan(def.triggers); }
   // Frontier Defence: every wave group and every crew the pads can take (sim/defence.js).
   // A group of a mixed wave names its own faction: its slots resolve through that roster (0.21).
-  for (const w of def?.defence?.waves || []) for (const g of w.groups) for (const type of Object.keys(g.units)) { named.add(type); const swapped = factions[g.faction]?.swap?.[type]; if (swapped) types.add(swapped); }
+  // A carrier group's passengers (`carry`, 0.22) likewise; Endless brings carriers every fifth wave.
+  for (const w of def?.defence?.waves || []) for (const g of w.groups) for (const type of [...Object.keys(g.units), ...Object.keys(g.carry || {})]) { named.add(type); const swapped = factions[g.faction]?.swap?.[type]; if (swapped) types.add(swapped); }
+  if (def?.defence?.endless) named.add('carrier');
   for (const crew of def?.defence?.crews || []) { const g = GARRISONS.crews[crew]; if (g) named.add(g.type || g.slot); }
   // The commander and the Vanguards it calls in (0.21).
   if (def?.defence?.commander) { named.add(GARRISONS.commander.slot); named.add(GARRISONS.commander.reinforce.slot); }

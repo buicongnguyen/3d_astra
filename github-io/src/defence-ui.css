@@ -211,3 +211,98 @@
   .compact-ui #defence-bar { gap: 3px; }
   .compact-ui #defence-bar .wave > span:first-of-type { display: none; }
 }
+
+/* 0.22 wave intel: the next wave's units (portraits with counts, a carrier with its passengers
+   in brackets) and roads, beside the bar while the wave can still be called. Information only:
+   no taps; labels 12 px or larger. Desktop: under the bar, top right. Landscape phones: under
+   the bar, between the zoom buttons and the selection card. Portrait phones: just above the bar. */
+#defence-intel {
+  position: absolute;
+  z-index: 6;
+  top: 74px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  max-width: min(560px, calc(100% - 32px));
+  padding: 4px 8px;
+  border: 1px solid var(--line-2, rgba(168, 214, 212, 0.24));
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(10, 27, 36, 0.9), rgba(6, 18, 25, 0.86));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  font: 650 12px/1 var(--font-ui);
+  color: var(--text-1, #f1f6f3);
+  white-space: nowrap;
+  pointer-events: none;
+}
+#defence-intel[hidden] { display: none; }
+#defence-intel .intel-head { color: var(--text-3, #97aeab); font-weight: 700; letter-spacing: 0.02em; }
+#defence-intel .intel-head b { color: var(--gold-2, #ffc75e); font: 800 14px/1 var(--font-ui); font-variant-numeric: tabular-nums; }
+/* Two lines: what comes (the head and the units), then the roads it takes. */
+#defence-intel .intel-line, #defence-intel .intel-routes { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 4px 6px; }
+#defence-intel .intel-head { margin-right: 2px; }
+#defence-intel .intel-unit {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 32px;
+  padding: 0 6px 0 2px;
+  border-radius: 8px;
+  background: rgba(239, 118, 96, 0.12);
+}
+#defence-intel .intel-unit .portrait-art { --size: 28px; border-radius: 6px; }
+#defence-intel .intel-unit > .icon { width: 24px; height: 24px; margin: 0 2px; color: #ff9a85; }
+#defence-intel .intel-unit b { font: 800 13px/1 var(--font-ui); font-variant-numeric: tabular-nums; }
+#defence-intel .intel-unit small { font: 700 12px/1 var(--font-ui); color: var(--gold-2, #ffc75e); font-variant-numeric: tabular-nums; }
+#defence-intel .intel-unit.carrier { background: rgba(255, 199, 94, 0.16); box-shadow: inset 0 0 0 1px rgba(255, 199, 94, 0.45); }
+#defence-intel .intel-route {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 7px;
+  border: 1px solid var(--line-2, rgba(168, 214, 212, 0.24));
+  border-radius: 999px;
+  color: var(--mint, #92ebc5);
+  font: 700 12px/1 var(--font-ui);
+}
+/* Phones: centred under (landscape) or over (portrait) the bar; max-content so the centring does
+   not halve the width the strip may take. */
+.compact-ui #defence-intel { top: 64px; right: auto; left: 50%; transform: translateX(-50%); width: max-content; align-items: center; max-width: calc(100% - 260px); padding: 3px 6px; }
+.compact-ui #defence-intel .intel-line, .compact-ui #defence-intel .intel-routes { justify-content: center; }
+@media (orientation: portrait) {
+  .compact-ui #defence-intel {
+    top: auto;
+    bottom: calc(var(--dock-height) + var(--tabs-height) + var(--safe-bottom) + 8px + 58px);
+    max-width: calc(100% - 16px);
+  }
+}
+
+/* "+N" alloy over a carrier lost with its squad: rises and fades (only fades under motion-off). */
+.defence-float {
+  position: absolute;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(10, 27, 36, 0.86);
+  border: 1px solid var(--gold-line, rgba(255, 199, 94, 0.55));
+  color: var(--gold-2, #ffc75e);
+  font: 800 16px/1 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  animation: defence-float 1.6s ease-out forwards;
+}
+.defence-float .icon { width: 16px; height: 16px; }
+@keyframes defence-float {
+  0% { opacity: 0; transform: translate(-50%, -30%) scale(0.8); }
+  15% { opacity: 1; transform: translate(-50%, -60%) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -260%) scale(1); }
+}
+@keyframes defence-float-still { 0%, 70% { opacity: 1; } 100% { opacity: 0; } }
+:root.motion-off .defence-float { animation-name: defence-float-still; }
+@media (prefers-reduced-motion: reduce) { .defence-float { animation-name: defence-float-still; } }
+:root:not(.compact-ui) #defence-intel { pointer-events: auto; }

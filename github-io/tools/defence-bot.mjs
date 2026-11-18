@@ -56,7 +56,7 @@ export class DefenceBot {
   routeWeights() {
     const s = this.sim, d = s.defence, w = {}, total = s.waveTotal();
     for (let i = d.wave; i < Math.min(total, d.wave + 10); i++)
-      for (const g of s.defenceWave(i).groups) w[g.route] = (w[g.route] || 0) + Object.values(g.units).reduce((a, b) => a + b, 0) / (1 + (i - d.wave) * 0.3);
+      for (const g of s.defenceWave(i).groups) w[g.route] = (w[g.route] || 0) + [...Object.values(g.units), ...Object.values(g.carry || {})].reduce((a, b) => a + b, 0) / (1 + (i - d.wave) * 0.3);
     const top = Math.max(1, ...Object.values(w));
     // A route over a blown crossing carries nobody (its groups turn to the others).
     for (const id of Object.keys(this.samples)) w[id] = s.crossingClosed(s.crossingOf(id)) ? 0 : 0.25 + (w[id] || 0) / top;
@@ -66,9 +66,15 @@ export class DefenceBot {
   nextWave() {
     const s = this.sim, d = s.defence, wave = s.defenceWave(Math.min(d.wave, s.waveTotal() - 1)), scale = s.defenceWaveScale();
     const units = [];
-    for (const g of wave.groups) for (const [slot, n] of Object.entries(g.units)) {
-      const type = s.waveType(g, slot);
-      units.push({ type, count: waveCount(n, scale, D[type]) });
+    for (const g of wave.groups) {
+      let carriers = 0;
+      for (const [slot, n] of Object.entries(g.units)) {
+        const type = s.waveType(g, slot), count = waveCount(n, scale, D[type]);
+        units.push({ type, count });
+        if (D[type].carrier) carriers += count;
+      }
+      // A carrier's passengers count as part of the wave (0.22).
+      if (carriers) for (const [slot, n] of Object.entries(g.carry || {})) { const type = s.waveType(g, slot); units.push({ type, count: waveCount(n, scale, D[type]) * carriers }); }
     }
     return units;
   }

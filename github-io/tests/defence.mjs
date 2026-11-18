@@ -1,7 +1,7 @@
 // Frontier Defence in the browser (0.17, completed in 0.21) at 1440x900, 390x844 and 844x390:
 // the fourth mode button (44 px), six levels with stars and locks, the perks sheet, the Endless
 // and Daily entries (and a Daily match to its score), tapping a pad to crew it, upgrading to the
-// tier trims, a tier-3 branch choice, the commander moved and casting Barrage, Call wave, a
+// tier trims, a tier-3 branch choice, the commander moved and casting Barrage, the wave intel strip (0.22), Call wave, a
 // mid-wave field, the result screen with stars and Next level, a bridge blown with its fuse, the
 // reroute and a pontoon going up, no embers under motion-off, no sideways scroll, no page errors.
 // At 1440x900 and 390x844 every level is also shown mid-wave.
@@ -266,6 +266,22 @@ await suite("defence", async () => {
     });
     await page.evaluate(() => window.__frontier.step(0.05)); // the cleared column leaves the field
     await page.waitForFunction(() => !document.querySelector("#defence-call").disabled);
+    // 0.22 wave intel: before the call, the next wave's units with counts, on screen, clear of the bar,
+    // no text under 12 px.
+    await page.waitForSelector("#defence-intel:not([hidden]) .intel-unit", { timeout: TIMEOUT.step });
+    const intel = await page.evaluate(() => {
+      const el = document.querySelector("#defence-intel"), b = el.getBoundingClientRect(), bar = document.querySelector("#defence-bar").getBoundingClientRect();
+      const p = window.__frontier.sim.wavePreview();
+      return { wave: el.querySelector(".intel-head b").textContent, units: [...el.querySelectorAll(".intel-unit")].map((u) => [u.dataset.type, u.querySelector("b").textContent]),
+        want: p.units.map((u) => [u.type, `×${u.count}`]), inside: b.left >= 0 && b.top >= 0 && b.right <= innerWidth && b.bottom <= innerHeight,
+        overlap: !(b.right <= bar.left || b.left >= bar.right || b.bottom <= bar.top || b.top >= bar.bottom) };
+    });
+    assert.equal(intel.wave, String(before + 1), `${viewport}: intel names the next wave`);
+    assert.deepEqual(intel.units, intel.want, `${viewport}: intel units and counts`);
+    assert.ok(intel.inside, `${viewport}: intel on screen`);
+    assert.equal(intel.overlap, false, `${viewport}: intel clear of the bar`);
+    assert.deepEqual(await tinyText(page, "#defence-intel"), [], `${viewport}: intel text under 12 px`);
+    await shot(page, `defence-intel-${viewport}`);
     await tap("#defence-call");
     await page.waitForFunction((n) => window.__frontier.sim.defence.wave === n + 1 && window.__frontier.sim.players[0].alloy > 0, before, { timeout: TIMEOUT.step });
 

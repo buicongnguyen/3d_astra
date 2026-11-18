@@ -34,7 +34,7 @@ Today about **7.5/10** overall. The AAA target is "AAA polish at a small scope" 
 ## C. Frontier Defence ideas ("a little more")
 | # | Idea | Effect | Size |
 |---|---|---|---|
-| C1 | **Wave preview:** the next wave's unit icons and counts before you press Call | planning, the core of good tower defence | S |
+| C1 | **Wave preview:** the next wave's unit icons and counts before you press Call. **Done 2026-11-18** (package "Wave intel and carriers": units with counts, carriers with passengers, the roads it takes; `sim.wavePreview()`, the intel strip in app/defence-ui.js) | planning, the core of good tower defence | S |
 | C2 | **Boss and elite waves:** wave 5 and 10 bring an elite (a heavy walker with a shield, a commander tank that buffs nearby units); a boss health bar | memorable peaks | M |
 | C3 | **Enemy traits:** shielded units (only Anti-tank pierces), fast runners, units that rush the commander, splitters | every crew matters | M |
 | C4 | **One rule per level** (makes levels play differently): Gorge night (short sight, Watchers matter), Twin Bridges (bridges can be blown), Canyon sandstorm (range -1), Long Crossing (two exits at once) | variety | M |
@@ -42,6 +42,9 @@ Today about **7.5/10** overall. The AAA target is "AAA polish at a small scope" 
 | C6 | **Tower targeting choice:** first / strongest / air | depth with one button | S |
 | C7 | **Commander skill tree** that grows across levels (extra barrage, faster respawn) | progress between levels | M |
 | C8 | **Endless leaderboard** with a daily seed (local best) | reasons to return | S |
+| C9 | **Troop carriers:** an armoured truck that drops a squad mid-road; kill it first and the squad dies with it. **Done 2026-11-18** (same package; Long Crossing wave 8 and Endless only; docs/MISSIONS.md "Troop carriers") | a target to prioritise, a surprise on the near bank | M |
+
+Package "Wave intel and carriers" (2026-11-18) also fixed: an early Call no longer loses the previous wave's clear bonus and repair; flyers pass over the commander and Reinforce blockers; one "incoming" warning per spawn point.
 
 ## Recommended order
 1. **Quick wins (1 session):** A2 battle camera, C1 wave preview, C5 stars, C6 targeting, B5 more scenes. No balance changes.
