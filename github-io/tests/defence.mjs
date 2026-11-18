@@ -1,5 +1,5 @@
 // Frontier Defence in the browser (0.17, completed in 0.21) at 1440x900, 390x844 and 844x390:
-// the fourth mode button (44 px), six levels with stars and locks, the perks sheet, the Endless
+// the fourth mode button (44 px), seven levels with stars and locks, the perks sheet, the Endless
 // and Daily entries (and a Daily match to its score), tapping a pad to crew it, upgrading to the
 // tier trims, a tier-3 branch choice, the commander moved and casting Barrage, the wave intel strip (0.22), Call wave, a
 // mid-wave field, the result screen with stars and Next level, a bridge blown with its fuse, the
@@ -112,13 +112,13 @@ await suite("defence", async () => {
     await shot(page, `defence-title-${viewport}`);
     await noSideScroll(page, `${viewport} title`);
 
-    // Six levels with stars; the third opens with a star on the second, the rest stay locked.
+    // Seven levels (Three Roads since 0.23, tests/defence-zones.mjs) with stars; the third opens with a star on the second, the rest stay locked.
     await tap('[data-mode="defence"]');
     await page.waitForSelector("#defence-setup .defence-levels");
-    assert.equal(await page.locator("#defence-setup [data-level]").count(), 6);
+    assert.equal(await page.locator("#defence-setup [data-level]").count(), 7);
     assert.equal(await page.locator('[data-level-id="d-gorge"] .stars i.on').count(), 3);
     assert.equal(await page.locator('[data-level-id="d-bridges"] .stars i.on').count(), 2);
-    assert.deepEqual(await page.locator("#defence-setup [data-level]").evaluateAll((bs) => bs.map((b) => b.disabled)), [false, false, false, true, true, true]);
+    assert.deepEqual(await page.locator("#defence-setup [data-level]").evaluateAll((bs) => bs.map((b) => b.disabled)), [false, false, false, true, true, true, true]);
     assert.equal(await page.locator('[data-level-id="d-fordwood"] .icon').count(), 1, "a lock on a closed level");
     for (const b of await page.locator("#defence-setup [data-level]").all()) assert.ok((await size(b)).height >= 44);
     assert.match(await page.locator("#start").textContent(), /Start defence/);

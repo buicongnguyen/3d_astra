@@ -45,9 +45,14 @@ const scenarios = [
   // carriers, 139 with them (2026-11-18). Each batch composes its own matrix once a frame, hence the
   // compose line a little above the default.
   {name:'defence-carrier-eco', defence:'d-longcrossing', mobile:true, zoom:78, focus:[0,0], reveal:true, wave:120, towers:10, triangles:600000, compose:460, carrierEvery:20, unlockAfter:'d-canyon'},
-];
+  // 0.23: Three Roads, the 128 m valley, at its own zoom on the phone: the 120-unit wave spread over its
+  // four roads (carriers among it), ten pad towers, four more in the build zones (their open cells are
+  // one merged mesh) and both armour squads. 106 draws and 478 matrix composes on 2026-11-19 (no water,
+  // so fewer draws than the river levels; four more towers and tanks, so a few more composes).
+  {name:'defence-big-eco', defence:'d-crossroads', mobile:true, zoom:92, focus:[0,0], reveal:true, wave:120, towers:10, zoneTowers:4, armour:2, triangles:600000, compose:500, carrierEvery:20, unlockAfter:'d-longcrossing'},
+].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
-const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120};
+const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -96,6 +101,17 @@ try {
           s.command({team:0, type:'padBuild', pad:p.id, crew:def.crews[i % def.crews.length]});
           for (let k = 0; k < i % 3; k++) s.command({team:0, type:'padUpgrade', building:s.towerOn(p.id).id});
         });
+        // Zone towers on open cells of the build zones, spread out, and the armour squads by the roads (0.23).
+        for (let made = 0, z = -s.terrain.half + 1; made < (scenario.zoneTowers || 0) && z < s.terrain.half; z += 6)
+          for (let x = -s.terrain.half + 1; made < scenario.zoneTowers && x < s.terrain.half; x += 6) {
+            const zone = s.zoneAt(x, z);
+            if (zone && s.command({team:0, type:'zoneBuild', zone:zone.id, x, z, crew:def.crews[made % def.crews.length]})) made++;
+          }
+        for (let k = 0; k < (scenario.armour || 0); k++) {
+          s.command({team:0, type:'armourBuy'});
+          const pts = routes[k % routes.length], at = pts[Math.floor(pts.length / 2)];
+          s.armourUnits(k + 1).forEach((e, i) => { e.x = at.x + 3.5 + i * 2.4; e.z = at.z; e.post = {x:e.x, z:e.z}; });
+        }
         if (scenario.crossings) {
           s.crossings = Object.fromEntries(Object.entries(scenario.crossings).map(([x, state]) => [x, {state, at:0, progress:0}]));
           s.applyCrossings();
@@ -303,7 +319,7 @@ try {
       console.log('defence field', JSON.stringify(field));
       assert.equal(field.units, scenario.wave);
       assert.ok(field.bars <= 12, `defence: ${field.bars} enemy vitals bars`);
-      assert.equal(field.crews, scenario.towers);
+      assert.equal(field.crews, scenario.towers + (scenario.zoneTowers || 0));
       assert.ok(field.commander, 'the commander is drawn in gold');
       if (scenario.crossings) { assert.equal(field.pontoons, 1, 'one pontoon'); assert.equal(field.bridgesShown, 0, 'the blown bridge is hidden (and the pontoon replaces the other)'); }
     }

@@ -43,6 +43,9 @@ Today about **7.5/10** overall. The AAA target is "AAA polish at a small scope" 
 | C7 | **Commander skill tree** that grows across levels (extra barrage, faster respawn) | progress between levels | M |
 | C8 | **Endless leaderboard** with a daily seed (local best) | reasons to return | S |
 | C9 | **Troop carriers:** an armoured truck that drops a squad mid-road; kill it first and the squad dies with it. **Done 2026-11-18** (same package; Long Crossing wave 8 and Endless only; docs/MISSIONS.md "Troop carriers") | a target to prioritise, a surprise on the near bank | M |
+| C10 | **Build zones:** marked fields where a crew stands anywhere on the 2 m grid, clear of the roads (the owner: "people think differently and want to optimise placement"). **Done 2026-11-19** (package "Build zones, armour and Three Roads"; `zoneBuild`, docs/MISSIONS.md "Build zones and armour") | placement choice | M |
+| C11 | **Armour squads:** two tanks bought at the depot, sent between roads with a tap; Guard with a 9 m leash or Hold the road; refitted after each wave; works with no control at all. **Done 2026-11-19** (same package) | a mobile reserve, rewards control without needing it | M |
+| C12 | **A larger multi-route level:** Three Roads, 128 m, three entries and four forking roads, zones, armour, carriers on several roads. **Done 2026-11-19** (same package) | moving the armour between roads matters | M |
 
 Package "Wave intel and carriers" (2026-11-18) also fixed: an early Call no longer loses the previous wave's clear bonus and repair; flyers pass over the commander and Reinforce blockers; one "incoming" warning per spawn point.
 

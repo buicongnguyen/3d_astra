@@ -87,7 +87,7 @@ jobs:
           - name: visuals
             scripts: visual-combat feel model-loading portraits factions terrain
           - name: defence
-            scripts: defence
+            scripts: defence defence-zones
           - name: air
             scripts: air
           - name: chronicles

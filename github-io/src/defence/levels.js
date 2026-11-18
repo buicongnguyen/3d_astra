@@ -368,6 +368,74 @@ export const DEFENCE_LEVELS = [
     medals: { gold: { lives: 18 }, silver: { lives: 10 } },
     check: { story: 3, standard: 2, veteran: 1 },
   },
+  {
+    // 0.23: the first 128 m valley. Three entries, four roads: the north road forks round the
+    // basin and every road meets the others before the exit. Build zones (`zones`) take a crew
+    // anywhere inside them, and armour squads (`armour`) are bought at the commander's post and
+    // sent from road to road.
+    id: "d-crossroads",
+    title: "Three Roads",
+    map: "crossroads",
+    enemies: 1,
+    speed: "normal",
+    alliance: "ffa",
+    rules: { ai: false, mode: "defence", rosters: true },
+    factions: { 1: "ashfall" },
+    briefing: {
+      place: "Three Roads Basin, below the southern relays",
+      text: "Ashfall columns and Warden machines come down three roads at once, and the north road forks round the basin. Build where you like inside the marked fields and move your armour to the road that needs it.",
+      tip: "Tap the Armour chip to pick a squad, then tap a road to send it. On Guard it comes back to its spot after a chase.",
+    },
+    defence: {
+      lives: 20,
+      alloy: { story: 560, standard: 500, veteran: 480 },
+      firstWave: 35,
+      gap: 18,
+      lane: 2.4,
+      pace: 0.8,
+      count: { story: 0.85, standard: 1.3, veteran: 1.6 },
+      hp: { story: 0.8, standard: 0.95, veteran: 1 },
+      routes: route("crossroads"),
+      // The road names the wave intel shows (others show the bridge and ford names).
+      roads: { west: "West road", midwest: "North road, west fork", mideast: "North road, east fork", east: "East road" },
+      exit: exitOf("crossroads"),
+      pads: [
+        { id: "c1", x: -3, z: -47 }, { id: "c2", x: 9, z: -45 }, { id: "m1", x: 2, z: -31 },
+        { id: "w1", x: -41, z: -35 }, { id: "w2", x: -29, z: -17 }, { id: "w3", x: -41, z: 5 }, { id: "w4", x: -21, z: 11 },
+        { id: "e1", x: 41, z: -35 }, { id: "e2", x: 45, z: -11 }, { id: "e3", x: 41, z: 5 }, { id: "e4", x: 21, z: 11 },
+        { id: "s1", x: -19, z: 35 }, { id: "s2", x: -7, z: 47 }, { id: "s3", x: 7, z: 47 }, { id: "s4", x: 19, z: 35 },
+      ],
+      // Build zones (0.23): a crew anywhere inside, on the 2 m grid, clear of the roads.
+      zones: [
+        { id: "basin", x: 0, z: 4, w: 32, d: 44, max: 6 },
+        { id: "westfield", x: -51, z: 0, w: 18, d: 40, max: 3 },
+        { id: "eastfield", x: 51, z: 0, w: 18, d: 40, max: 3 },
+        { id: "southfield", x: 28, z: 47, w: 24, d: 20, max: 3 },
+      ],
+      // Armour squads (0.23): two tanks each, bought at the commander's post, two in the field.
+      armour: { cap: 2 },
+      crews: CREWS,
+      commander: { x: -20, z: 52 },
+      waves: [
+        { groups: [group({ vanguard: 6 }, "west"), group({ vanguard: 6 }, "east", 0.7, 4)], bonus: 40 },
+        { groups: [group({ vanguard: 8 }, "midwest", 0.6), group({ ranger: 4 }, "mideast", 0.9, 3)], bonus: 45 },
+        { groups: [group({ vanguard: 10 }, "west", 0.55), carriers({ vanguard: 5 }, "east", 3, 4)], bonus: 50 },
+        { groups: [allied("wardens", { ranger: 6 }, "midwest", 0.8), group({ vanguard: 10 }, "mideast", 0.5, 3)], bonus: 55 },
+        { groups: [group({ tank: 2 }, "west", 3, 0, 1.2), group({ vanguard: 12 }, "east", 0.5, 2), carriers({ vanguard: 5 }, "midwest", 3, 6)], bonus: 60 },
+        { groups: [group({ breaker: 3 }, "mideast", 1.6), group({ vanguard: 14 }, "west", 0.45, 2), allied("wardens", { ranger: 5 }, "east", 0.8, 5)], bonus: 65 },
+        { groups: [carriers({ vanguard: 6 }, "west", 4, 0, 2), group({ ranger: 6 }, "east", 0.7, 2), group({ tank: 3 }, "midwest", 2.5, 5, 1.2)], bonus: 70 },
+        { groups: [group({ vanguard: 16 }, "midwest", 0.45), group({ vanguard: 16 }, "mideast", 0.45, 2), allied("wardens", { tank: 2 }, "west", 3, 4, 1.2)], bonus: 75 },
+        { groups: [group({ tank: 4 }, "east", 2.5, 0, 1.2), group({ breaker: 3 }, "west", 1.6, 3), carriers({ vanguard: 6 }, "midwest", 4, 5, 2), allied("wardens", { ranger: 8 }, "mideast", 0.7, 4)], bonus: 80 },
+        { groups: [group({ vanguard: 20 }, "west", 0.4), group({ vanguard: 20 }, "east", 0.4, 2), allied("wardens", { tank: 3 }, "midwest", 2.5, 4, 1.2), carriers({ vanguard: 6 }, "mideast", 4, 6, 2), group({ tank: 4 }, "west", 2.5, 8, 1.2)], bonus: 0 },
+      ],
+      camera: { x: 0, z: 0, zoom: 92, maxZoom: 124 },
+    },
+    objectives: [{ id: "hold", type: "waves", count: 10, text: "Hold the three roads for 10 waves" }],
+    win: ["hold"],
+    lose: [{ type: "lives" }],
+    medals: { gold: { lives: 18 }, silver: { lives: 10 } },
+    check: { story: 3, standard: 2, veteran: 1 },
+  },
 ];
 
 export const defenceLevel = (id) => DEFENCE_LEVELS.find((level) => level.id === id) || null;

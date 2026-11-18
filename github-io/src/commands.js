@@ -45,6 +45,11 @@ const COMMANDS = {
   heroMove: { allowed: (sim, c) => !!sim.defence?.hero && Number.isFinite(c.x) && Number.isFinite(c.z), run: (sim, c) => sim.heroMove(c.team, c.x, c.z) },
   heroCast: { allowed: (sim, c) => !!sim.defence?.hero && typeof c.ability === "string" && Number.isFinite(c.x) && Number.isFinite(c.z), run: (sim, c) => sim.heroCast(c.team, c.ability, c.x, c.z) },
   demolish: { allowed: (sim, c) => !!sim.defence && Number.isFinite(c.crossing), run: (sim, c) => sim.demolish(c.team, c.crossing) },
+  // 0.23: a crew anywhere in a build zone, and the armour squads (buy, send, Guard or Hold the road).
+  zoneBuild: { allowed: (sim, c) => !!sim.defence && typeof c.zone === "string" && typeof c.crew === "string" && Number.isFinite(c.x) && Number.isFinite(c.z), run: (sim, c) => sim.zoneBuild(c.team, c.zone, c.x, c.z, c.crew) },
+  armourBuy: { allowed: (sim) => !!sim.defence && !!sim.armourRules(), run: (sim, c) => sim.armourBuy(c.team) },
+  armourMove: { allowed: (sim, c) => !!sim.defence && Number.isInteger(c.squad) && Number.isFinite(c.x) && Number.isFinite(c.z), run: (sim, c) => sim.armourMove(c.team, c.squad, c.x, c.z) },
+  armourMode: { allowed: (sim, c) => !!sim.defence && Number.isInteger(c.squad) && typeof c.mode === "string", run: (sim, c) => sim.armourMode(c.team, c.squad, c.mode) },
   // The Commander's answer to the decision a story mission is waiting for (sim/missions.js).
   decide: { allowed: (sim, c) => c.team === 0 && sim.canDecide?.(c.id, c.option), run: (sim, c) => sim.decide(c.id, c.option) },
 };

@@ -60,7 +60,8 @@ export const combat = {
   holdPost(e, dt) {
     if (e.stance === "hold") return;
     e.post ??= { x: e.x, z: e.z };
-    const leash = e.stance === "aggressive" ? Infinity : e.vision + LEASH;
+    // Frontier Defence armour squads (0.23) carry a shorter leash of their own.
+    const leash = e.stance === "aggressive" ? Infinity : e.leash ?? e.vision + LEASH;
     let t = this.attacker(e) || this.enemy(e, e.vision);
     if (t && (distance(e.post, t) - t.radius > leash || (e.postSkip?.id === t.id && this.time < e.postSkip.until))) t = null;
     if (t && e.stalled > 3) {

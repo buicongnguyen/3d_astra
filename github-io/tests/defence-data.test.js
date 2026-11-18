@@ -30,7 +30,8 @@ test("levels are well formed and defence maps stay out of Skirmish", () => {
     assert.equal(level.rules.ai, false);
     assert.equal(d.waves.length, 10);
     assert.ok(d.lives > 0 && d.firstWave > 0 && d.gap > 0);
-    assert.ok(d.camera.zoom <= d.camera.maxZoom && d.camera.maxZoom <= 96);
+    // The overview reaches the whole valley: 96 on a 96 m map, more on a larger one (0.23).
+    assert.ok(d.camera.zoom <= d.camera.maxZoom && d.camera.maxZoom <= 96 * (DEFENCE_MAPS[level.map].size / 96), `${level.id}: zoom`);
     assert.ok(level.medals.gold.lives > level.medals.silver.lives);
     for (const crew of d.crews) assert.ok(GARRISONS.crews[crew], `${level.id}: crew ${crew}`);
     for (const w of d.waves) for (const g of w.groups) {

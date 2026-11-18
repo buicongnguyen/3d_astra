@@ -253,10 +253,12 @@ test("a save taken mid-ride or mid-drop loads to the same state and plays on ide
   assert.ok(a.entities.some((e) => e.type === "shade"), "the shades are out");
 });
 
-test("carriers appear only in Long Crossing's wave 8 and in Endless; their models load", () => {
+test("carriers appear only in Long Crossing's wave 8, Three Roads (0.23) and Endless; their models load", () => {
+  // Three Roads, the multi-route level of 0.23, brings carriers on several waves and roads.
+  const ROADS = new Set([2, 4, 6, 8, 9]);
   for (const l of DEFENCE_LEVELS) l.defence.waves.forEach((w, i) => {
     const has = w.groups.some((g) => g.units.carrier);
-    assert.equal(has, l.id === "d-longcrossing" && i === 7, `${l.id} wave ${i + 1}`);
+    assert.equal(has, (l.id === "d-longcrossing" && i === 7) || (l.id === "d-crossroads" && ROADS.has(i)), `${l.id} wave ${i + 1}`);
   });
   const g = LONG.defence.waves[7].groups.find((x) => x.units.carrier);
   assert.deepEqual([g.units, g.carry, g.dropLeg, g.route], [{ carrier: 1 }, { vanguard: 6 }, 3, "ford"]);

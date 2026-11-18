@@ -61,6 +61,11 @@ const PAD_NOTE = {
 const ROUTE_LABEL = { main: "Road", west: "West bridge", ford: "Ford", east: "East bridge" };
 const FLOAT_SECONDS = 1.6; // the "+N" over a carrier lost with its squad
 const PICK_RADIUS = 26; // px: the nearest pad within this distance of a tap is picked
+// Build zones (0.23): the flat paint of their open cells, and the pads a zone without `max` keeps room for.
+const ZONE_COLOR = 0xa8f0c0, ZONE_PADS = 6;
+// ms after a battlefield tap during which a click at the same spot on the command card is its ghost.
+const GHOST_MS = 600;
+const ZONE_NAME = { basin: "Basin field", westfield: "West field", eastfield: "East field", southfield: "South field" };
 const BRIDGE_RADIUS = 44; // px: a tap this close to a bridge's middle picks it
 // Pontoon planks: one merged mesh per pontoon, grown from the north bank while it is built.
 const PONTOON_LENGTH = 9;
@@ -76,26 +81,62 @@ export function createDefenceUI(S, A, deps) {
   S.defenceBridge ??= null;
 
   // ---------------------------------------------------------------- Pads
+  // Every pad of the match: the level's, then those built in its zones (0.23).
+  const allPads = () => [...S.sim.missionDef.defence.pads, ...(S.sim.defence?.zonePads || [])];
   function buildPads() {
     const def = S.sim.missionDef.defence, view = S.view;
     if (pads?.def === def && pads.view === view && pads.terrain === view.terrain) return;
     disposePads();
     const geometry = new THREE.CylinderGeometry(2.05, 2.25, 0.2, 6).translate(0, 0.1, 0);
     const material = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.86, metalness: 0.08, name: "DefencePad" });
-    const mesh = new THREE.InstancedMesh(geometry, material, def.pads.length);
+    // Room for the zone pads too: one instanced mesh whatever is built.
+    const room = (def.zones || []).reduce((n, z) => n + (z.max ?? ZONE_PADS), 0);
+    const mesh = new THREE.InstancedMesh(geometry, material, def.pads.length + room);
     mesh.name = "defence-pads";
     mesh.receiveShadow = true;
     mesh.castShadow = false;
-    const m = new THREE.Matrix4();
-    def.pads.forEach((p, i) => {
-      m.makeRotationY(Math.PI / 6).setPosition(p.x, view.terrain.heightAt(p.x, p.z) + 0.02, p.z);
+    view.scene.add(mesh);
+    pads = { def, view, terrain: view.terrain, mesh, key: "", layout: "", zones: def.zones?.length ? zonePaint(def, view) : null };
+    placePads();
+  }
+  // Pad positions, again whenever a zone pad comes or goes.
+  function placePads() {
+    const list = allPads(), layout = list.map((p) => p.id).join(",");
+    if (pads.layout === layout) return;
+    pads.layout = layout;
+    pads.key = "";
+    const m = new THREE.Matrix4(), mesh = pads.mesh;
+    list.slice(0, mesh.instanceMatrix.count).forEach((p, i) => {
+      m.makeRotationY(Math.PI / 6).setPosition(p.x, pads.terrain.heightAt(p.x, p.z) + 0.02, p.z);
       mesh.setMatrixAt(i, m);
       mesh.setColorAt(i, color.setRGB(...PAD_COLOR[p.high || "ground"]));
     });
+    mesh.count = Math.min(list.length, mesh.instanceMatrix.count);
     mesh.instanceMatrix.needsUpdate = true;
     mesh.instanceColor.needsUpdate = true;
+  }
+  // Build zones (0.23): every open cell of every zone as one flat quad, all merged into one mesh
+  // with one flat translucent material (one draw), laid just over the ground paint.
+  function zonePaint(def, view) {
+    const sim = S.sim, t = view.terrain, positions = [], index = [], s = 0.86;
+    for (let z = -t.half + 1; z < t.half; z += 2)
+      for (let x = -t.half + 1; x < t.half; x += 2) {
+        if (!sim.zoneAt(x, z) || sim.zoneGround(x, z)) continue;
+        const y = t.heightAt(x, z) + 0.05, n = positions.length / 3;
+        positions.push(x - s, y, z - s, x + s, y, z - s, x + s, y, z + s, x - s, y, z + s);
+        index.push(n, n + 2, n + 1, n, n + 3, n + 2);
+      }
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    geometry.setIndex(index);
+    const material = new THREE.MeshBasicMaterial({ color: ZONE_COLOR, transparent: true, opacity: 0.2, depthWrite: false, name: "DefenceZone" });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = "defence-zones";
+    mesh.renderOrder = 1;
+    mesh.matrixAutoUpdate = false;
+    mesh.updateMatrix();
     view.scene.add(mesh);
-    pads = { def, view, terrain: view.terrain, mesh, key: "" };
+    return mesh;
   }
   function disposePads() {
     disposeCrossings();
@@ -104,20 +145,22 @@ export function createDefenceUI(S, A, deps) {
     pads.mesh.geometry.dispose();
     pads.mesh.material.dispose();
     pads.mesh.dispose();
+    if (pads.zones) { pads.zones.removeFromParent(); pads.zones.geometry.dispose(); pads.zones.material.dispose(); }
     pads = null;
   }
   function paintPads() {
     if (!pads) return;
-    const tiers = pads.def.pads.map((p) => S.sim.towerOn(p.id)?.tier || 0), key = `${S.defencePad}:${tiers.join("")}`;
+    placePads();
+    const list = allPads().slice(0, pads.mesh.count), tiers = list.map((p) => S.sim.towerOn(p.id)?.tier || 0), key = `${S.defencePad}:${tiers.join("")}`;
     if (pads.key === key) return;
     pads.key = key;
-    pads.def.pads.forEach((p, i) => pads.mesh.setColorAt(i, color.setRGB(...(p.id === S.defencePad ? PAD_COLOR.picked : tiers[i] ? TIER_PAD[tiers[i]] : PAD_COLOR[p.high || "ground"]))));
+    list.forEach((p, i) => pads.mesh.setColorAt(i, color.setRGB(...(p.id === S.defencePad ? PAD_COLOR.picked : tiers[i] ? TIER_PAD[tiers[i]] : PAD_COLOR[p.high || "ground"]))));
     pads.mesh.instanceColor.needsUpdate = true;
   }
   function nearestPad(x, y) {
     const rect = S.view.renderer.domElement.getBoundingClientRect();
     let best = null, bestD = PICK_RADIUS;
-    for (const p of S.sim.missionDef.defence.pads) {
+    for (const p of allPads()) {
       const s = S.view.project(p.x, p.z, S.view.terrain.heightAt(p.x, p.z) + 0.2);
       const d = Math.hypot(s.x + rect.left - x, s.y + rect.top - y);
       if (d <= bestD) { best = p; bestD = d; }
@@ -248,6 +291,7 @@ export function createDefenceUI(S, A, deps) {
     bar.innerHTML = `<span class="dchip lives" title="Lives: each enemy through costs one, a heavy machine two">${icon("shield")}<b id="defence-lives" translate="no">20</b></span>
       <span class="dchip wave" title="Wave"><span>Wave</span> <b id="defence-wave" translate="no">0/10</b><small id="defence-count" translate="no"></small></span>
       <button id="defence-hero" type="button" title="The commander: tap to pick, then tap the road to send it" aria-label="Field commander" hidden>${icon("flag")}<small id="defence-hero-state" translate="no"></small></button>
+      <button id="defence-armour" type="button" title="Armour: tap to pick the next squad, or to buy one at the depot" aria-label="Armour squads" hidden>${icon("tank")}<small id="defence-armour-state" translate="no"></small></button>
       <button id="defence-call" type="button" title="Call the next wave now for bonus alloy" aria-label="Call wave">${icon("play")}<span>Call wave</span><small id="defence-bonus" translate="no"></small></button>
       <button id="defence-overview" type="button" aria-pressed="false" title="Overview: see the whole valley" aria-label="Overview">${icon("expand")}</button>`;
     $("stage").append(bar);
@@ -265,7 +309,26 @@ export function createDefenceUI(S, A, deps) {
       S.view.focusOn(hero.x, hero.z);
       picked();
     };
+    // Armour (0.23): each tap picks the next squad in the field (no tapping on small models), or
+    // opens the depot when none is out.
+    $("defence-armour").onclick = () => {
+      if (!Z.started || Z.paused || S.sim.result || !S.sim.armourRules()) return;
+      const squads = S.sim.armourSquads(), now = selectedSquad(A.selectedEntities());
+      S.defencePad = null;
+      S.defenceBridge = null;
+      S.defenceSpot = null;
+      if (!squads.length) { S.defenceDepot = true; A.setSelection([]); picked(); return; }
+      const at = squads.findIndex((q) => q.squad === now), next = squads[(at + 1) % squads.length];
+      S.defenceDepot = false;
+      A.setSelection(next.units.map((e) => e.id));
+      S.view.focusOn(next.units[0].x, next.units[0].z);
+      picked();
+    };
     return bar;
+  }
+  // The squad number when the selection is one armour squad (some or all of its tanks), else null.
+  function selectedSquad(es) {
+    return es.length && es.every((e) => e.squad && e.team === 0 && e.squad === es[0].squad) ? es[0].squad : null;
   }
   function setOverview(on) {
     const cam = S.sim.missionDef.defence.camera;
@@ -295,6 +358,16 @@ export function createDefenceUI(S, A, deps) {
       heroButton.classList.toggle("ready", alive && S.sim.commanderCooldown("barrage") === 0);
       set("defence-hero-state", alive ? "" : `${back}s`);
     }
+    // Armour (0.23): squads in the field of the cap; "ready" when one more can be bought.
+    const rules = S.sim.armourRules(), armour = $("defence-armour");
+    armour.hidden = !rules;
+    if (rules) {
+      const n = S.sim.armourSquads().length;
+      armour.disabled = !Z.started || Z.paused || !!S.sim.result;
+      armour.classList.toggle("ready", !S.sim.armourWhy(0));
+      armour.setAttribute("aria-pressed", String(!!selectedSquad(A.selectedEntities()) || !!S.defenceDepot));
+      set("defence-armour-state", `${n}/${rules.cap}`);
+    }
   }
   function set(id, text) { const el = $(id); if (el && el.textContent !== text) el.textContent = text; }
 
@@ -322,7 +395,7 @@ export function createDefenceUI(S, A, deps) {
     if (!p) { el.innerHTML = ""; return; }
     const many = Object.keys(S.sim.missionDef.defence.routes).length > 1;
     const unit = (u) => `<span class="intel-unit${u.carry ? " carrier" : ""}" data-type="${u.type}" title="${D[u.type]?.name || u.type}">${hasPortrait(u.type) ? portrait(u.type, "hostile") : icon(D[u.type]?.icon || "tank")}<b translate="no">×${u.count}</b>${u.carry ? `<small translate="no">(${u.carry})</small>` : ""}</span>`;
-    el.innerHTML = `<span class="intel-line"><span class="intel-head"><span>Next wave</span> <b translate="no">${p.wave}</b></span>${p.units.map(unit).join("")}</span>${many ? `<span class="intel-routes">${p.routes.map((r) => `<span class="intel-route" data-route="${r}">${ROUTE_LABEL[r] || r}</span>`).join("")}</span>` : ""}`;
+    el.innerHTML = `<span class="intel-line"><span class="intel-head"><span>Next wave</span> <b translate="no">${p.wave}</b></span>${p.units.map(unit).join("")}</span>${many ? `<span class="intel-routes">${p.routes.map((r) => `<span class="intel-route" data-route="${r}">${S.sim.missionDef.defence.roads?.[r] || ROUTE_LABEL[r] || r}</span>`).join("")}</span>` : ""}`;
   }
 
   // ---------------------------------------------------------------- Carrier moments (0.22)
@@ -330,6 +403,9 @@ export function createDefenceUI(S, A, deps) {
   // (a DOM chip, transform/opacity only, still under motion-off; the blast is the rules' strike).
   function event(e) {
     if (e.type === "drop") { if (S.sim.time - (dropAt ?? -Infinity) > 6) { dropAt = S.sim.time; A.alert("A carrier is dropping troops!"); } return; }
+    // Armour (0.23): a squad bought is picked at once, so the next tap sends it.
+    if (e.type === "armourBuy") { A.notice("Armour squad ready. Tap the map to send it."); return; }
+    if (e.type === "armourRefit") { if (S.sim.time - (refitAt ?? -Infinity) > 2) { refitAt = S.sim.time; A.notice("Armour refitted to full strength."); } return; }
     if (e.type !== "carrierDown") return;
     A.notice("Carrier destroyed with its squad aboard!");
     if (!S.sim.isVisible(e)) return;
@@ -345,7 +421,7 @@ export function createDefenceUI(S, A, deps) {
     $("stage").append(chip);
     setTimeout(() => chip.remove(), FLOAT_SECONDS * 1000);
   }
-  let dropAt = null;
+  let dropAt = null, refitAt = null, lastTap = null;
 
   // Notices from what changed since the last look (the rules only emit events the frame loop drains).
   function announce() {
@@ -382,9 +458,42 @@ export function createDefenceUI(S, A, deps) {
   function padSheet(pad) {
     const def = S.sim.missionDef.defence;
     $("command-label").textContent = "BUILD PAD";
-    $("command-context").textContent = pad.high === "rim" ? "RIM" : pad.high === "deep" ? "DEEP" : "GROUND";
+    $("command-context").textContent = pad.zone ? "ZONE" : pad.high === "rim" ? "RIM" : pad.high === "deep" ? "DEEP" : "GROUND";
     $("commands").innerHTML = `<i hidden data-defence-sheet data-key="p:${pad.id}"></i>${def.crews.map((c, i) => crewTile(c, i)).join("")}`;
     $("command-hint").textContent = PAD_NOTE[pad.high || "ground"];
+  }
+  // A spot in a build zone (0.23): the same crews; the tiles stay off while the spot is refused.
+  function zoneSheet(spot) {
+    const def = S.sim.missionDef.defence;
+    $("command-label").textContent = "BUILD ZONE";
+    $("command-context").textContent = (ZONE_NAME[spot.zone] || "Build zone").toUpperCase();
+    $("commands").innerHTML = `<i hidden data-defence-sheet data-key="z:${spot.zone}:${spot.x}:${spot.z}"></i>${def.crews.map((c, i) => crewTile(c, i)).join("")}`;
+    $("command-hint").textContent = "";
+  }
+  function zoneWhy(spot) {
+    return S.sim.zoneCheck(0, spot.zone, spot.x, spot.z).why || "";
+  }
+  // Armour (0.23): Guard and Hold the road, a new squad, and the squad itself (focus).
+  function armourSheet(squad) {
+    const units = S.sim.armourUnits(squad), mode = S.sim.armourModeOf(squad), a = S.sim.armourRules(), lead = units[0];
+    $("command-label").textContent = "ARMOUR SQUAD";
+    $("command-context").textContent = mode === "road" ? "HOLDING THE ROAD" : "ON GUARD";
+    const hp = units.reduce((n, e) => n + e.hp, 0);
+    $("commands").innerHTML = `<i hidden data-defence-sheet data-key="a:${squad}:${mode}:${units.length}"></i>
+      <button class="command-tile defence-armour-mode" data-defence-armour="guard" data-hotkey="${key(0)}" aria-pressed="${mode === "guard"}" title="${key(0)} · Guard: holds its spot, fires at anything in range, chases a little and comes back">${kbd(key(0))}${icon("shield")}<span>Guard</span><small>${mode === "guard" ? icon("check") : ""}</small></button>
+      <button class="command-tile defence-armour-mode" data-defence-armour="road" data-hotkey="${key(1)}" aria-pressed="${mode === "road"}" title="${key(1)} · Hold the road: stands fast and blocks the column, like the commander">${kbd(key(1))}${icon("hold")}<span>Hold road</span><small>${mode === "road" ? icon("check") : ""}</small></button>
+      <button class="command-tile defence-armour-buy" data-defence-armour="buy" data-hotkey="${key(2)}" aria-label="New squad, ${a.cost} alloy" title="${key(2)} · New squad: ${a.size} tanks at the depot · ${a.cost} alloy">${kbd(key(2))}${icon("tank")}<span>New squad</span><small><b class="alloy-text" translate="no">${a.cost}</b></small></button>
+      <button class="command-tile defence-info" data-defence-armour="focus" data-hotkey="${key(3)}" title="${key(3)} · ${a.name}">${kbd(key(3))}${hasPortrait(lead.type) ? portrait(lead.type) : icon("tank")}<span>Squad</span><small><b translate="no" data-armour-hp>${Math.round(hp)}</b></small></button>`;
+    $("command-hint").textContent = "Tap the map or a road to send the squad. On Guard it comes back to its spot after a chase.";
+  }
+  function depotSheet() {
+    const a = S.sim.armourRules();
+    $("command-label").textContent = "ARMOUR DEPOT";
+    $("command-context").textContent = `${S.sim.armourSquads().length} / ${a.cap}`;
+    $("commands").innerHTML = `<i hidden data-defence-sheet data-key="d"></i>
+      <button class="command-tile defence-armour-buy" data-defence-armour="buy" data-hotkey="${key(0)}" aria-label="New squad, ${a.cost} alloy" title="${key(0)} · New squad: ${a.size} tanks at the depot · ${a.cost} alloy">${kbd(key(0))}${icon("tank")}<span>New squad</span><small><b class="alloy-text" translate="no">${a.cost}</b></small></button>
+      <div class="tactical-hint defence-hint">${icon("info")}<p>Two tanks that go where you send them. They guard that spot on their own, and are refitted after every wave.</p></div>`;
+    $("command-hint").textContent = "";
   }
   function towerSheet(t) {
     const g = GARRISONS.crews[t.crew], type = S.sim.crewType(t.crew), top = t.tier >= 3, choose = top && !t.branch && g.branches;
@@ -434,30 +543,38 @@ export function createDefenceUI(S, A, deps) {
   function emptySheet() {
     $("command-label").textContent = "DEFENCE";
     $("command-context").textContent = "PADS";
-    $("commands").innerHTML = `<i hidden data-defence-sheet data-key="none"></i><div class="tactical-hint defence-hint">${icon("tower")}<strong>Crew the pads</strong><p>Tap a pad beside the road, then pick a crew. Tap a tower to upgrade or sell it.</p></div>`;
+    const zones = !!S.sim.missionDef.defence.zones?.length;
+    $("commands").innerHTML = `<i hidden data-defence-sheet data-key="none"></i><div class="tactical-hint defence-hint">${icon("tower")}<strong>Crew the pads</strong><p>${zones ? "Tap a pad, or anywhere in a marked field, then pick a crew. Tap a tower to upgrade or sell it." : "Tap a pad beside the road, then pick a crew. Tap a tower to upgrade or sell it."}</p></div>`;
     $("command-hint").textContent = "";
   }
   function sheet(es) {
-    const tower = es.length === 1 && es[0].crew && es[0].team === 0 ? es[0] : null, hero = es.length === 1 && es[0].hero ? es[0] : null;
+    const tower = es.length === 1 && es[0].crew && es[0].team === 0 ? es[0] : null, hero = es.length === 1 && es[0].hero ? es[0] : null, squad = selectedSquad(es);
     if (tower) S.defencePad = tower.pad;
     // Anything else picked, or the picked pad's tower deselected: no pad.
     else if (es.length || (S.defencePad && S.sim.towerOn(S.defencePad))) S.defencePad = null;
-    if (es.length) S.defenceBridge = null;
+    if (es.length) { S.defenceBridge = null; S.defenceSpot = null; S.defenceDepot = false; }
     if (!hero && aim) setAim(null);
     const pad = !tower && !hero && S.defencePad ? S.sim.padById(S.defencePad) : null;
     const bridge = !tower && !hero && !pad ? S.defenceBridge : null;
-    const k = tower ? `t:${tower.id}:${tower.tier}:${tower.branch || ""}` : hero ? `h:${hero.id}:${aim || ""}` : pad ? `p:${pad.id}` : bridge !== null ? `b:${bridge}:${S.sim.crossingState(bridge)}` : "none";
+    // 0.23: a spot in a build zone, an armour squad, the armour depot.
+    const spot = !es.length && !pad && bridge === null ? S.defenceSpot : null, depot = !es.length && !pad && !spot && bridge === null && S.defenceDepot && !!S.sim.armourRules();
+    const k = tower ? `t:${tower.id}:${tower.tier}:${tower.branch || ""}` : hero ? `h:${hero.id}:${aim || ""}` : squad ? `a:${squad}:${S.sim.armourModeOf(squad)}:${es.length}` : pad ? `p:${pad.id}` : bridge !== null ? `b:${bridge}:${S.sim.crossingState(bridge)}` : spot ? `z:${spot.zone}:${spot.x}:${spot.z}` : depot ? "d" : "none";
     const marker = $("commands").querySelector("[data-defence-sheet]");
     if (marker?.dataset.key !== k) {
       $("commands").classList.remove("tactics-card");
-      if (tower) towerSheet(tower); else if (hero) heroSheet(hero); else if (pad) padSheet(pad); else if (bridge !== null) bridgeSheet(bridge); else emptySheet();
+      if (tower) towerSheet(tower); else if (hero) heroSheet(hero); else if (squad) armourSheet(squad); else if (pad) padSheet(pad); else if (bridge !== null) bridgeSheet(bridge); else if (spot) zoneSheet(spot); else if (depot) depotSheet(); else emptySheet();
       if (tower && burstTier && burstTier === tower.tier) { burst($("commands").querySelector(".defence-info")); burstTier = 0; }
       affordable = false;
     }
     $("upgrade-actions").innerHTML = "";
     if (tower) $("commands").dataset.tier = String(tower.tier); else delete $("commands").dataset.tier;
     const alloy = S.sim.players[0].alloy, blocked = !Z.started || Z.paused || !!S.sim.result;
-    for (const b of $("commands").querySelectorAll("[data-defence-crew]")) b.disabled = blocked || alloy < S.sim.buildCost(b.dataset.defenceCrew);
+    const refused = spot ? zoneWhy(spot) : "";
+    for (const b of $("commands").querySelectorAll("[data-defence-crew]")) b.disabled = blocked || !!refused || alloy < S.sim.buildCost(b.dataset.defenceCrew);
+    if (spot) { const text = refused || "Zone spot: a crew can stand here. The road stays clear."; if ($("command-hint").textContent !== text) $("command-hint").textContent = text; }
+    for (const b of $("commands").querySelectorAll("[data-defence-armour=\"buy\"]")) b.disabled = blocked || !!S.sim.armourWhy(0);
+    for (const b of $("commands").querySelectorAll("[data-defence-armour=\"guard\"], [data-defence-armour=\"road\"], [data-defence-armour=\"focus\"]")) b.disabled = blocked;
+    if (squad) { const hp = $("commands").querySelector("[data-armour-hp]"), text = String(Math.round(es.reduce((n, e) => n + e.hp, 0))); if (hp && hp.textContent !== text) hp.textContent = text; }
     for (const b of $("commands").querySelectorAll("[data-defence-branch]")) b.disabled = blocked || alloy < S.sim.branchCost(tower.crew, b.dataset.defenceBranch);
     const up = $("commands").querySelector('[data-defence-act="upgrade"]');
     if (up && tower) {
@@ -543,21 +660,45 @@ export function createDefenceUI(S, A, deps) {
     A.updateUI();
   }
   function build(crew) {
-    if (!Z.started || Z.paused || S.sim.result || !S.defencePad) return;
-    const pad = S.defencePad;
-    if (S.sim.command({ team: 0, type: "padBuild", pad, crew })) {
+    if (!Z.started || Z.paused || S.sim.result || (!S.defencePad && !S.defenceSpot)) return;
+    // A zone spot (0.23) makes its own pad: the newest one.
+    const spot = !S.defencePad ? S.defenceSpot : null, pad = S.defencePad;
+    if (S.sim.command(spot ? { team: 0, type: "zoneBuild", zone: spot.zone, x: spot.x, z: spot.z, crew } : { team: 0, type: "padBuild", pad, crew })) {
       A.tone(740, 0.14);
-      const t = S.sim.towerOn(pad);
+      const t = spot ? S.sim.towerOn(S.sim.defence.zonePads.at(-1).id) : S.sim.towerOn(pad);
+      S.defenceSpot = null;
       if (t) A.setSelection([t.id]);
       // Phones: stay on the card with the new tower's Upgrade and Sell.
       if (root.classList.contains("compact-ui")) A.dockTab("actions");
     }
     A.updateUI();
   }
+  // Armour (0.23): Guard / Hold the road for the picked squad, a new squad, or the camera on it.
+  function armourAct(id) {
+    if (!Z.started || Z.paused || S.sim.result) return;
+    const squad = selectedSquad(A.selectedEntities());
+    if (id === "buy") {
+      if (S.sim.command({ team: 0, type: "armourBuy" })) {
+        A.tone(700, 0.14);
+        const made = S.sim.armourSquads().at(-1);
+        S.defenceDepot = false;
+        if (made) A.setSelection(made.units.map((e) => e.id));
+        // Phones: stay on the card with the squad's Guard and Hold the road.
+        if (root.classList.contains("compact-ui")) A.dockTab("actions");
+      }
+    } else if (squad && (id === "guard" || id === "road")) {
+      if (S.sim.command({ team: 0, type: "armourMode", squad, mode: id })) A.tone(id === "road" ? 420 : 520, 0.1);
+    } else if (squad && id === "focus") { const u = S.sim.armourUnits(squad)[0]; if (u) S.view.focusOn(u.x, u.z); }
+    A.updateUI();
+  }
   $("commands").addEventListener("click", (event) => {
     if (!S.sim?.defence) return;
-    const crew = event.target.closest("[data-defence-crew]"), action = event.target.closest("[data-defence-act]"), pick = event.target.closest("[data-defence-branch]"), hero = event.target.closest("[data-defence-hero]");
-    if (crew && !crew.disabled) build(crew.dataset.defenceCrew);
+    // A phone's click that follows the tap which opened this sheet lands where the finger was: on
+    // a landscape phone that can be a tile of the sheet just shown. Taken for what it is, a ghost.
+    if (lastTap && performance.now() - lastTap.at < GHOST_MS && Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) < 12) return;
+    const crew = event.target.closest("[data-defence-crew]"), action = event.target.closest("[data-defence-act]"), pick = event.target.closest("[data-defence-branch]"), hero = event.target.closest("[data-defence-hero]"), armour = event.target.closest("[data-defence-armour]");
+    if (armour && !armour.disabled) armourAct(armour.dataset.defenceArmour);
+    else if (crew && !crew.disabled) build(crew.dataset.defenceCrew);
     else if (pick && !pick.disabled) branch(pick.dataset.defenceBranch);
     else if (hero && !hero.disabled) heroAct(hero.dataset.defenceHero);
     else if (action && !action.disabled) act(action.dataset.defenceAct, action);
@@ -568,15 +709,22 @@ export function createDefenceUI(S, A, deps) {
   function info(es) {
     if (es.length) { infoKey = ""; return; }
     const st = S.sim.defenceStatus(), pad = S.defencePad ? S.sim.padById(S.defencePad) : null, bridge = !pad ? S.defenceBridge : null;
-    const k = pad ? `pad:${pad.id}` : bridge !== null ? `bridge:${bridge}` : `none:${st.wave}:${st.lives}`;
+    const spot = !pad && bridge === null ? S.defenceSpot : null, depot = !pad && !spot && bridge === null && S.defenceDepot;
+    const k = pad ? `pad:${pad.id}` : bridge !== null ? `bridge:${bridge}` : spot ? `spot:${spot.zone}` : depot ? "depot" : `none:${st.wave}:${st.lives}`;
     if (k === infoKey && $("selection-info").querySelector(".defence-panel")) return;
     infoKey = k;
     const foe = FACTIONS[S.sim.missionDef.factions?.[1]];
+    if (spot || depot) {
+      $("selection-info").innerHTML = spot
+        ? `<div class="selection-empty defence-panel" data-zone="${spot.zone}">${icon("tower")}<div><h3>${ZONE_NAME[spot.zone] || "Build zone"}</h3><p>A crew can stand anywhere on the marked field, clear of the road.</p><p>Pick a crew in Actions.</p></div></div>`
+        : `<div class="selection-empty defence-panel" data-depot>${icon("tank")}<div><h3>Armour depot</h3><p>Buy a squad of tanks in Actions, then tap the map to send it.</p></div></div>`;
+      return;
+    }
     $("selection-info").innerHTML = pad
       ? `<div class="selection-empty defence-panel" data-pad="${pad.id}" data-high="${pad.high || "ground"}">${icon("tower")}<div><h3>${pad.high === "rim" ? "Rim pad" : pad.high === "deep" ? "Deep pad" : "Ground pad"}</h3><p>${PAD_NOTE[pad.high || "ground"]}</p><p>Pick a crew in Actions.</p></div></div>`
       : bridge !== null
         ? `<div class="selection-empty defence-panel" data-bridge="${bridge}">${icon("barrage")}<div><h3>${bridge < 0 ? "West bridge" : "East bridge"}</h3><p>Blow it in Actions: the waves on this road turn to another crossing.</p></div></div>`
-        : `<div class="selection-empty defence-panel">${icon("shield")}<div><h3>${S.sim.missionDef.title}</h3><p>${foe ? `<span>${foe.name}</span> · ` : ""}<span>Wave</span> <b translate="no">${st.endless ? st.wave : `${st.wave}/${st.waves}`}</b> · <b translate="no">${st.lives}</b> <span>lives</span></p><p>Tap a pad beside the road to crew a tower.</p></div></div>`;
+        : `<div class="selection-empty defence-panel">${icon("shield")}<div><h3>${S.sim.missionDef.title}</h3><p>${foe ? `<span>${foe.name}</span> · ` : ""}<span>Wave</span> <b translate="no">${st.endless ? st.wave : `${st.wave}/${st.waves}`}</b> · <b translate="no">${st.lives}</b> <span>lives</span></p><p>${S.sim.missionDef.defence.zones?.length ? "Tap a pad or a marked field to crew a tower." : "Tap a pad beside the road to crew a tower."}</p></div></div>`;
   }
 
   // Range of the picked tower (or of a Ranger nest on the picked pad), on the existing preview disc.
@@ -592,7 +740,7 @@ export function createDefenceUI(S, A, deps) {
     ring = null;
   }
   function rangeRing(es) {
-    const t = es.length === 1 && es[0].crew ? es[0] : null, pad = !t && S.defencePad ? S.sim.padById(S.defencePad) : null, at = t || pad;
+    const t = es.length === 1 && es[0].crew ? es[0] : null, pad = !t && S.defencePad ? S.sim.padById(S.defencePad) : null, spot = !t && !pad && !es.length ? S.defenceSpot : null, at = t || pad || spot;
     const preview = S.view.preview;
     if (!at || S.mode) { hideRing(); return; }
     ring ||= { opacity: preview.material.opacity, color: preview.material.color.getHex() };
@@ -600,7 +748,8 @@ export function createDefenceUI(S, A, deps) {
     preview.visible = true;
     preview.position.set(at.x, S.view.terrain.heightAt(at.x, at.z) + 0.12, at.z);
     preview.scale.set(reach, 1, reach);
-    preview.material.color.setHex(0x92ebc5);
+    // A zone spot the rules refuse shows its ring in red (0.23).
+    preview.material.color.setHex(spot && zoneWhy(spot) ? 0xef7660 : 0x92ebc5);
     preview.material.opacity = 0.14;
   }
 
@@ -613,6 +762,8 @@ export function createDefenceUI(S, A, deps) {
     seen = null;
     S.defencePad = null;
     S.defenceBridge = null;
+    S.defenceSpot = null;
+    S.defenceDepot = false;
     setAim(null);
     if (cross) cross.key = "";
     const cam = S.sim.missionDef.defence.camera;
@@ -621,7 +772,7 @@ export function createDefenceUI(S, A, deps) {
     S.view.focusOn(cam.x, cam.z);
     // The skirmish opening line ("assign Harvesters") does not apply here.
     S.sim.events = S.sim.events.filter((e) => e.type !== "message");
-    if (!resume && Z.started) A.notice("Tap a pad beside the road, then pick a crew.");
+    if (!resume && Z.started) A.notice(S.sim.missionDef.defence.zones?.length ? "Tap a pad or a marked field, then pick a crew." : "Tap a pad beside the road, then pick a crew.");
     A.updateUI();
   }
   function hud(es) {
@@ -634,7 +785,7 @@ export function createDefenceUI(S, A, deps) {
     sheet(es);
     info(es);
     // A picked pad or bridge counts as a selection for the docks (landscape phones hide an empty dock).
-    if ((S.defencePad || S.defenceBridge !== null) && !es.length) document.querySelector(".selection-panel").classList.add("has-entity");
+    if ((S.defencePad || S.defenceBridge !== null || S.defenceSpot || S.defenceDepot) && !es.length) document.querySelector(".selection-panel").classList.add("has-entity");
     paintPads();
     rangeRing(es);
     syncCrossings();
@@ -650,6 +801,7 @@ export function createDefenceUI(S, A, deps) {
   }
   function tap(x, y) {
     if (!Z.started || Z.paused || S.sim.result || S.mode) return false;
+    lastTap = { x, y, at: performance.now() };
     const point = S.view.point(x, y), hero = S.sim.commander();
     // An aimed commander ability takes the tap.
     if (aim && hero) {
@@ -660,11 +812,15 @@ export function createDefenceUI(S, A, deps) {
     }
     const target = S.view.pick(x, y, S.sim, 24);
     if (target?.team === 0 && target.crew) { S.defencePad = target.pad; S.defenceBridge = null; A.setSelection([target.id]); return picked(); }
-    if (target?.hero) { S.defencePad = null; S.defenceBridge = null; A.setSelection([target.id]); return picked(); }
+    if (target?.hero) { S.defencePad = null; S.defenceBridge = null; S.defenceSpot = null; A.setSelection([target.id]); return picked(); }
+    // A tank of an armour squad (0.23) picks the whole squad.
+    if (target?.team === 0 && target.squad) { S.defencePad = null; S.defenceBridge = null; S.defenceSpot = null; A.setSelection(S.sim.armourUnits(target.squad).map((e) => e.id)); return picked(); }
     const pad = nearestPad(x, y);
     if (pad) {
       S.defencePad = pad.id;
       S.defenceBridge = null;
+      S.defenceSpot = null;
+      S.defenceDepot = false;
       const t = S.sim.towerOn(pad.id);
       A.setSelection(t ? [t.id] : []);
       return picked();
@@ -673,8 +829,18 @@ export function createDefenceUI(S, A, deps) {
     if (bridge !== null) {
       S.defencePad = null;
       S.defenceBridge = bridge;
+      S.defenceSpot = null;
+      S.defenceDepot = false;
       A.setSelection([]);
       return picked();
+    }
+    // An armour squad picked: a tap on the map sends it there (it guards that spot).
+    const squad = selectedSquad(A.selectedEntities());
+    if (squad && point && !(target?.team > 0)) {
+      if (S.sim.command({ team: 0, type: "armourMove", squad, x: point.x, z: point.z })) A.tone(560, 0.08);
+      else A.notice("The squad cannot go there.");
+      A.updateUI();
+      return true;
     }
     // The commander picked: a tap on open ground sends it there.
     if (hero && S.selected.has(hero.id) && point && !(target?.team > 0)) {
@@ -683,8 +849,21 @@ export function createDefenceUI(S, A, deps) {
       A.updateUI();
       return true;
     }
+    // A spot in a build zone (0.23), snapped to the grid; the sheet says if a crew may stand there.
+    const zone = point && !(target?.team > 0) ? S.sim.zoneAt(point.x, point.z) : null;
+    if (zone) {
+      const p = S.sim.zoneSnap(point.x, point.z);
+      S.defencePad = null;
+      S.defenceBridge = null;
+      S.defenceDepot = false;
+      S.defenceSpot = { zone: zone.id, x: p.x, z: p.z };
+      A.setSelection([]);
+      return picked();
+    }
     S.defencePad = null;
     S.defenceBridge = null;
+    S.defenceSpot = null;
+    S.defenceDepot = false;
     if (target?.team > 0) return false; // the usual label for an enemy
     A.setSelection([]);
     A.updateUI();

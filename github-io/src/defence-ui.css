@@ -182,6 +182,14 @@
 #defence-hero[hidden] { display: none; }
 #defence-hero.ready { border-color: var(--gold-2, #ffc75e) !important; color: var(--gold-2, #ffc75e); }
 #defence-hero small:empty { display: none; }
+/* 0.23: the Armour chip (squads in the field of the cap; gold when one more can be bought), picked
+   while a squad or the depot is, and the armour tiles. */
+#defence-armour { padding: 0 9px !important; border-color: var(--line-2, rgba(168, 214, 212, 0.24)) !important; background: rgba(255, 255, 255, 0.06) !important; }
+#defence-armour[hidden] { display: none; }
+#defence-armour.ready { border-color: var(--gold-2, #ffc75e) !important; }
+#defence-armour[aria-pressed="true"] { border-color: var(--mint, #92ebc5) !important; box-shadow: inset 0 0 0 2px var(--mint, #92ebc5); }
+#defence-armour small { color: var(--text-2, #cfe0dc) !important; font-variant-numeric: tabular-nums; }
+#commands .command-tile.defence-armour-mode[aria-pressed="true"] { border-color: var(--mint, #92ebc5); box-shadow: inset 0 0 0 2px var(--mint, #92ebc5); }
 #commands .command-tile.defence-branch,
 #commands .command-tile.defence-ability,
 #commands .command-tile.defence-demolish { position: relative; overflow: visible; }

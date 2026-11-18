@@ -38,6 +38,15 @@ const BLOCKERS = new WeakMap();
 // one out to the empty carrier driving on. A carrier waiting this long for room drops the rest
 // where it stands.
 const UNLOAD = 0.6, DEPART = 1, UNLOAD_MAX = 5;
+// Build zones (0.23): metres a zone tower keeps from a road's centre line (half a lane, the widest
+// wave body and the tower itself, with room to spare: the fixed pads keep the same) and from any
+// other pad or tower.
+const ZONE_CLEAR = 4.5, ZONE_GAP = 5;
+// Distance from (x, z) to the segment a-b.
+function segmentDistance(x, z, a, b) {
+  const dx = b.x - a.x, dz = b.z - a.z, t = Math.max(0, Math.min(1, ((x - a.x) * dx + (z - a.z) * dz) / (dx * dx + dz * dz || 1)));
+  return hyp(x - a.x - t * dx, z - a.z - t * dz);
+}
 
 // Where a unit walks on a route: its own lane, offset sideways from the centre line. At a corner
 // the offset follows the bisector, so lanes do not cross.
@@ -221,8 +230,9 @@ export const defence = {
     if (d.hits_air && this.airAllowed()) s.hits_air = true;
     return s;
   },
+  // A level's fixed pads, then the pads made in its build zones (0.23, `defence.zonePads`).
   padById(id) {
-    return this.defenceDef()?.pads.find((p) => p.id === id) || null;
+    return this.defenceDef()?.pads.find((p) => p.id === id) || this.defence?.zonePads?.find((p) => p.id === id) || null;
   },
   towerOn(padId) {
     return this.entities.find((e) => e.pad === padId && e.hp > 0) || null;
@@ -233,17 +243,97 @@ export const defence = {
     if (this.towerOn(padId)) return false;
     const cost = this.buildCost(crew);
     if (this.players[team].alloy < cost) { this.message(`Need ${Math.ceil(cost - this.players[team].alloy)} more alloy.`, team); return false; }
+    this.crewTower(team, pad, crew, cost);
+    return true;
+  },
+  // A garrison on a pad, paid for (padBuild and zoneBuild).
+  crewTower(team, pad, crew, cost) {
     this.players[team].alloy -= cost;
     if (this.hasPerk("quartermaster")) this.defence.firstBuilt = true;
     const e = this.spawn("tower", team, pad.x, pad.z, true, true);
-    e.pad = padId;
+    e.pad = pad.id;
     e.crew = crew;
     e.tier = 1;
     e.spent = cost;
     this.setGarrison(e, 1);
     e.hp = e.maxHp;
     this.nav.rebuild(this.entities);
-    this.events.push({ type: "padBuild", id: e.id, pad: padId, crew, team, x: e.x, z: e.z });
+    this.events.push({ type: "padBuild", id: e.id, pad: pad.id, crew, team, x: e.x, z: e.z, ...(pad.zone ? { zone: pad.zone } : {}) });
+    return e;
+  },
+  // ---------------------------------------------------------------- Build zones (0.23)
+  // `defence.zones`: areas ({id, x, z, w, d} rectangles or {id, poly: [[x, z], ...]}) where a
+  // crew may stand anywhere, on the 2 m navigation grid. A spot must keep clear of every road
+  // (ZONE_CLEAR from a route's centre line, as the fixed pads do), the spawn spots and the exit,
+  // and ZONE_GAP from every pad and tower. A build makes a pad of its own (`defence.zonePads`,
+  // created on the first one), so Upgrade, branches and Sell work as on a fixed pad; selling
+  // frees the spot. `max` caps the towers one zone takes.
+  zoneById(id) {
+    return this.defenceDef()?.zones?.find((z) => z.id === id) || null;
+  },
+  // The 2 m grid cell centre a spot snaps to.
+  zoneSnap(x, z) {
+    return this.terrain.worldAt(...this.terrain.cellAt(x, z));
+  },
+  inZone(zone, x, z) {
+    if (zone.poly) {
+      let inside = false;
+      for (let i = 0, j = zone.poly.length - 1; i < zone.poly.length; j = i++) {
+        const [xi, zi] = zone.poly[i], [xj, zj] = zone.poly[j];
+        if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+      }
+      return inside;
+    }
+    return Math.abs(x - zone.x) <= zone.w / 2 && Math.abs(z - zone.z) <= zone.d / 2;
+  },
+  // The zone a snapped spot falls in, or null.
+  zoneAt(x, z) {
+    const p = this.zoneSnap(x, z);
+    return this.defenceDef()?.zones?.find((zone) => this.inZone(zone, p.x, p.z)) || null;
+  },
+  // Why a crew may not stand at this snapped spot for terrain and roads alone (never changes in a
+  // match, so the interface paints the open cells from it): "" when it may.
+  zoneGround(x, z) {
+    const def = this.defenceDef(), t = this.terrain, r = D.tower.radius;
+    if (!t.canStand(x, z, r) || (t.plateaus.length && (t.cliff(x, z, r + 0.5) || t.onRamp(x, z, r + 1))) || (t.river && Math.abs(z) < 6)) return "Not on open ground.";
+    if (Math.abs(x) > t.half - r - 2 || Math.abs(z) > t.half - r - 2) return "Too close to the edge of the map.";
+    const clear = def.zoneClear ?? ZONE_CLEAR;
+    for (const pts of Object.values(def.routes)) {
+      if (hyp(pts[0].x - x, pts[0].z - z) < SPAWN_CLEAR) return "Too close to where the enemy comes in.";
+      for (let i = 1; i < pts.length; i++) if (segmentDistance(x, z, pts[i - 1], pts[i]) < clear) return "Too close to the road: the column must pass.";
+    }
+    if (hyp(def.exit.x - x, def.exit.z - z) < def.exit.r + 4) return "Too close to the exit.";
+    return "";
+  },
+  // The full check for a crew in a zone at (x, z) (snapped): { x, z, zone } or { why }.
+  zoneCheck(team, zoneId, x, z) {
+    const zone = this.zoneById(zoneId);
+    if (!this.defence || team !== TEAM || !zone || !Number.isFinite(x) || !Number.isFinite(z)) return { why: "Not a build zone." };
+    const p = this.zoneSnap(x, z);
+    if (!this.inZone(zone, p.x, p.z)) return { why: "Outside the build zone." };
+    const ground = this.zoneGround(p.x, p.z);
+    if (ground) return { why: ground };
+    const gap = ZONE_GAP;
+    if (this.defenceDef().pads.some((q) => hyp(q.x - p.x, q.z - p.z) < gap) || (this.defence.zonePads || []).some((q) => hyp(q.x - p.x, q.z - p.z) < gap) ||
+      this.entities.some((e) => e.hp > 0 && e.kind === "building" && hyp(e.x - p.x, e.z - p.z) < gap))
+      return { why: "Too close to another tower or pad." };
+    if (zone.max && (this.defence.zonePads || []).filter((q) => q.zone === zoneId).length >= zone.max) return { why: `This zone holds ${zone.max} towers.` };
+    if (this.entities.some((e) => e.hp > 0 && e.kind === "unit" && !e.flying && hyp(e.x - p.x, e.z - p.z) < D.tower.radius + e.radius + 0.3)) return { why: "Units are standing there." };
+    if (this.nav.wouldSeal(p.x, p.z, D.tower.radius)) return { why: "That would wall in the ground behind it." };
+    return { x: p.x, z: p.z, zone: zoneId };
+  },
+  zoneBuild(team, zoneId, x, z, crew) {
+    const def = this.defenceDef();
+    if (!this.defence || this.result || team !== TEAM || !def.zones || !def.crews.includes(crew) || !GARRISONS.crews[crew]) return false;
+    const spot = this.zoneCheck(team, zoneId, x, z);
+    if (spot.why) { this.message(spot.why, team); return false; }
+    const cost = this.buildCost(crew);
+    if (this.players[team].alloy < cost) { this.message(`Need ${Math.ceil(cost - this.players[team].alloy)} more alloy.`, team); return false; }
+    const d = this.defence, n = (d.zoneNext ??= 1);
+    d.zoneNext++;
+    const pad = { id: `${zoneId}-${n}`, x: spot.x, z: spot.z, zone: zoneId };
+    (d.zonePads ||= []).push(pad);
+    this.crewTower(team, pad, crew, cost);
     return true;
   },
   setGarrison(e, tier) {
@@ -281,6 +371,9 @@ export const defence = {
     const refund = Math.floor(e.spent * GARRISONS.sell);
     this.players[team].alloy += refund;
     e.hp = 0;
+    // A zone tower's pad goes with it: the spot is free again.
+    const zp = this.defence.zonePads, at = zp ? zp.findIndex((p) => p.id === e.pad) : -1;
+    if (at >= 0) zp.splice(at, 1);
     this.nav.rebuild(this.entities);
     this.events.push({ type: "padSell", id: e.id, pad: e.pad, team, refund, x: e.x, z: e.z });
     return true;
@@ -378,6 +471,7 @@ export const defence = {
     d.cleared++;
     if (wave?.bonus) this.players[TEAM].alloy += wave.bonus;
     for (const t of this.entities) if (t.team === TEAM && t.crew && t.hp > 0) { t.hp = t.maxHp; t.shield = t.maxShield; }
+    if (d.armourNext) this.refitArmour();
     this.events.push({ type: "waveCleared", wave: n, bonus: wave?.bonus || 0, team: TEAM });
   },
   // What the next wave brings, for the preview before it is called: per group its route and
@@ -432,7 +526,10 @@ export const defence = {
   blockersNow() {
     let c = BLOCKERS.get(this);
     if (!c || c.tick !== this.ticks || c.entities !== this.entities) {
-      c = { tick: this.ticks, entities: this.entities, list: this.entities.filter((e) => e.blocker && e.hp > 0) };
+      // An armour squad holding the road (0.23) never holds a column at its spawn spot (a move by
+      // an ordinary order can take it there).
+      const near = (e) => Object.values(this.defenceDef().routes).some((pts) => hyp(pts[0].x - e.x, pts[0].z - e.z) < SPAWN_CLEAR);
+      c = { tick: this.ticks, entities: this.entities, list: this.entities.filter((e) => e.blocker && e.hp > 0 && !(e.squad && near(e))) };
       BLOCKERS.set(this, c);
     }
     return c.list;
@@ -696,6 +793,102 @@ export const defence = {
       return true;
     }
     return false;
+  },
+  // ---------------------------------------------------------------- Armour squads (0.23)
+  // `defence.armour` ({ cap?, cost?, depot?: {x, z} }, over GARRISONS.armour): squads of `size`
+  // tanks of the player's roster, bought at the depot (the commander's post unless the level names
+  // one), up to `cap` in the field. A squad unit carries `squad` (its number) and `leash`: on Guard
+  // it holds where it was sent, fires at whatever comes in range, chases only within the leash of
+  // that spot and walks back (combat.js holdPost); on "Hold the road" it stands fast and blocks a
+  // column like the commander. Moves go through `armourMove` (or any ordinary move order). A squad
+  // that ends a wave with a tank left is refitted to full strength; a squad wiped out frees its slot.
+  // State: `defence.armourNext` (the next squad number), created on the first purchase.
+  armourRules() {
+    const a = this.defenceDef()?.armour;
+    return a ? { ...GARRISONS.armour, ...a } : null;
+  },
+  // The player's squads in the field: [{ squad, units }] by squad number.
+  armourSquads() {
+    const out = new Map();
+    for (const e of this.entities) if (e.squad && e.team === TEAM && e.hp > 0) { if (!out.has(e.squad)) out.set(e.squad, []); out.get(e.squad).push(e); }
+    return [...out].sort((a, b) => a[0] - b[0]).map(([squad, units]) => ({ squad, units }));
+  },
+  armourUnits(squad) {
+    return this.entities.filter((e) => e.squad === squad && e.team === TEAM && e.hp > 0);
+  },
+  // Why a squad cannot be bought now ("" when it can).
+  armourWhy(team = TEAM) {
+    const a = this.armourRules();
+    if (!this.defence || this.result || team !== TEAM || !a) return "No armour depot here.";
+    if (this.armourSquads().length >= a.cap) return `All ${a.cap} armour squads are in the field.`;
+    if (this.players[team].alloy < a.cost) return `Need ${Math.ceil(a.cost - this.players[team].alloy)} more alloy.`;
+    return "";
+  },
+  spawnArmour(type, x, z, squad, angle) {
+    const a = this.armourRules(), e = this.spawn(type, TEAM, x, z, true, true);
+    e.squad = squad;
+    e.leash = a.leash;
+    if (a.hp !== 1) e.hp = e.maxHp = Math.round(e.maxHp * a.hp);
+    if (a.damage !== 1) e.damage *= a.damage;
+    e.angle = angle;
+    e.post = { x, z };
+    return e;
+  },
+  armourBuy(team) {
+    const why = this.armourWhy(team);
+    if (why) { if (this.armourRules()) this.message(why, team); return false; }
+    const a = this.armourRules(), def = this.defenceDef(), at = a.depot || def.commander || def.exit, type = this.typeFor(team, a.slot), r = D[type].radius || 1;
+    const spots = this.ringSpots(at.x, at.z, r + 0.1, a.size, r * 2 + 0.6);
+    if (!spots.length) { this.message("The depot is crowded: move the squads off it first.", team); return false; }
+    this.players[team].alloy -= a.cost;
+    const d = this.defence, squad = (d.armourNext ??= 1);
+    d.armourNext++;
+    const angle = Math.atan2(-(def.exit.x - at.x), -(def.exit.z - at.z));
+    const ids = spots.map((p) => this.spawnArmour(type, p.x, p.z, squad, angle).id);
+    this.events.push({ type: "armourBuy", squad, ids, team, x: at.x, z: at.z });
+    return true;
+  },
+  // A squad sent to a spot: never onto a spawn spot (a squad holding the road there would hold
+  // every column for ever), anywhere else it can stand.
+  armourMove(team, squad, x, z) {
+    const units = this.armourUnits(squad);
+    if (!this.defence || this.result || team !== TEAM || !units.length || !Number.isFinite(x) || !Number.isFinite(z)) return false;
+    if (!this.nav.canStand(x, z, units[0].radius)) return false;
+    if (Object.values(this.defenceDef().routes).some((pts) => hyp(pts[0].x - x, pts[0].z - z) < SPAWN_CLEAR)) return false;
+    this.issue(units.map((e) => e.id), { type: "move", x, z });
+    this.events.push({ type: "armourMove", squad, ids: units.map((e) => e.id), team, x, z });
+    return true;
+  },
+  // "guard" (the default) or "road": hold fast and block the column.
+  armourMode(team, squad, mode) {
+    const units = this.armourUnits(squad);
+    if (!this.defence || this.result || team !== TEAM || !units.length || !["guard", "road"].includes(mode)) return false;
+    for (const e of units) {
+      if (mode === "road") { e.stance = "hold"; e.blocker = true; e.road = true; }
+      else { delete e.stance; delete e.blocker; delete e.road; }
+    }
+    this.events.push({ type: "armourMode", squad, mode, team });
+    return true;
+  },
+  armourModeOf(squad) {
+    return this.armourUnits(squad)[0]?.road ? "road" : "guard";
+  },
+  // Wave beaten: every squad still in the field is mended and brought back to full strength
+  // beside its first tank.
+  refitArmour() {
+    const a = this.armourRules();
+    if (!a) return;
+    for (const { squad, units } of this.armourSquads()) {
+      for (const e of units) { e.hp = e.maxHp; e.shield = e.maxShield; }
+      const lead = units[0], missing = a.size - units.length;
+      if (missing <= 0) continue;
+      const spots = this.ringSpots(lead.x, lead.z, lead.radius + 0.1, missing, lead.radius * 2 + 0.6);
+      for (const p of spots) {
+        const e = this.spawnArmour(lead.type, p.x, p.z, squad, lead.angle);
+        if (lead.road) { e.stance = "hold"; e.blocker = true; e.road = true; }
+      }
+      this.events.push({ type: "armourRefit", squad, team: TEAM, x: lead.x, z: lead.z });
+    }
   },
   // ---------------------------------------------------------------- Crossings (0.21)
   // `this.crossings` = { [x]: { state: "fuse" | "blown" | "pontoon", at, progress } }, created on

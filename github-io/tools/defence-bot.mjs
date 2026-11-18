@@ -41,10 +41,9 @@ export class DefenceBot {
     }
   }
   // Road metres a crew on this pad would cover, on the routes the coming waves use most.
-  coverage(pad, crew, tier = 1) {
+  coverage(pad, crew, tier = 1, weight = this.routeWeights()) {
     const s = this.sim, stats = s.garrisonStats(crew, tier), high = s.terrain.level(pad.x, pad.z) === 1;
     const reach = stats.range + (high ? 2 : 0) + 0.6;
-    const weight = this.routeWeights();
     let score = 0;
     for (const [id, pts] of Object.entries(this.samples)) {
       if (!weight[id]) continue;
@@ -52,6 +51,75 @@ export class DefenceBot {
     }
     // Firing down hits harder; a deep pad is not shot back from the road.
     return score * (high ? 1.2 : 1) * (pad.high === "deep" ? 1.1 : 1);
+  }
+  // ---------------------------------------------------------------- Build zones (0.23)
+  // The open spots of the level's build zones, every other grid cell (terrain and roads only:
+  // fixed for the match), then those still free now, with their coverage (kept for the wave and crew).
+  zoneSpots() {
+    const s = this.sim, zones = this.def.zones;
+    if (!zones?.length) return [];
+    if (!this.zoneCells) {
+      this.zoneCells = [];
+      for (const zone of zones)
+        for (let z = -s.terrain.half + 1; z < s.terrain.half; z += 4)
+          for (let x = -s.terrain.half + 1; x < s.terrain.half; x += 4)
+            if (s.inZone(zone, x, z) && !s.zoneGround(x, z)) this.zoneCells.push({ x, z, zone: zone.id });
+    }
+    const d = s.defence, pads = [...this.def.pads, ...(d.zonePads || [])];
+    const towers = s.entities.filter((e) => e.hp > 0 && e.kind === "building");
+    const full = new Set(zones.filter((z) => z.max && (d.zonePads || []).filter((p) => p.zone === z.id).length >= z.max).map((z) => z.id));
+    return this.zoneCells.filter((c) => !full.has(c.zone) && !pads.some((p) => Math.hypot(p.x - c.x, p.z - c.z) < 5) && !towers.some((t) => Math.hypot(t.x - c.x, t.z - c.z) < 5));
+  }
+  // Towers the zones can still take.
+  zoneRoom() {
+    const d = this.sim.defence;
+    return (this.def.zones || []).reduce((n, z) => n + Math.max(0, (z.max ?? 6) - (d.zonePads || []).filter((p) => p.zone === z.id).length), 0);
+  }
+  // A zone spot's coverage, cached for the wave and crew (the road weights change once a wave).
+  zoneCoverage(p, crew, weight) {
+    const key = `${this.sim.defence.wave}|${crew}|${p.x},${p.z}`;
+    this.zoneCache ??= new Map();
+    if (this.zoneCacheWave !== this.sim.defence.wave) { this.zoneCache.clear(); this.zoneCacheWave = this.sim.defence.wave; }
+    if (!this.zoneCache.has(key)) this.zoneCache.set(key, this.coverage(p, crew, 1, weight));
+    return this.zoneCache.get(key);
+  }
+  // ---------------------------------------------------------------- Armour (0.23)
+  // One squad once four towers stand, the cap from the fourth wave.
+  buyArmour(towers, alloy) {
+    const s = this.sim, a = s.armourRules();
+    if (!a) return false;
+    const want = Math.min(a.cap, s.defence.wave >= 4 ? 2 : towers.length >= 4 ? 1 : 0);
+    if (s.armourSquads().length >= want) return false;
+    if (alloy >= a.cost && !s.armourWhy(0)) s.command({ team: 0, type: "armourBuy" });
+    // Saving up for it: no towers or upgrades meanwhile.
+    return true;
+  }
+  // Every few seconds each squad goes to the road the wave on the field (or the next one) loads
+  // most, the busiest first: beside the road, where the towers already reach most of it.
+  moveArmour(towers) {
+    const s = this.sim, squads = s.armourSquads?.() || [];
+    if (!squads.length || (this.armourClock ?? 0) > 0) return;
+    this.armourClock = 6;
+    const d = s.defence, wave = s.defenceWave(Math.min(s.waveTotal() - 1, Math.max(0, d.active ? d.wave - 1 : d.wave)));
+    const load = {};
+    for (const g of wave.groups) load[g.route] = (load[g.route] || 0) + [...Object.values(g.units), ...Object.values(g.carry || {})].reduce((a, b) => a + b, 0);
+    const order = Object.keys(load).sort((a, b) => load[b] - load[a] || (a < b ? -1 : 1));
+    squads.forEach(({ squad, units }, i) => {
+      const route = order[i % order.length], post = route && this.armourPost(route, towers, units[0].radius);
+      if (post && Math.hypot(post.x - units[0].x, post.z - units[0].z) > 4) s.command({ team: 0, type: "armourMove", squad, x: post.x, z: post.z });
+    });
+  }
+  armourPost(route, towers, r) {
+    const s = this.sim, pts = this.samples[route], from = Math.floor(pts.length * 0.3), to = Math.floor(pts.length * 0.7);
+    let best = null, bestScore = -1;
+    for (let i = from; i < to; i += 3) {
+      const p = pts[i], q = pts[Math.min(pts.length - 1, i + 1)], dx = q.x - p.x, dz = q.z - p.z, l = Math.hypot(dx, dz) || 1;
+      const spot = { x: p.x - (dz / l) * 3.5, z: p.z + (dx / l) * 3.5 };
+      let n = 0;
+      for (const t of towers) if (Math.hypot(t.x - p.x, t.z - p.z) <= t.range + 1) n += t.tier;
+      if (n > bestScore && s.nav.canStand(spot.x, spot.z, r + 0.2)) { bestScore = n; best = spot; }
+    }
+    return best;
   }
   routeWeights() {
     const s = this.sim, d = s.defence, w = {}, total = s.waveTotal();
@@ -103,14 +171,21 @@ export class DefenceBot {
     const alloy = s.players[0].alloy;
     const towers = s.entities.filter((e) => e.team === 0 && e.crew && e.hp > 0);
     const crew = this.chooseCrew(towers), cost = s.buildCost(crew);
-    const free = this.def.pads.filter((p) => !s.towerOn(p.id));
-    const best = free.map((p) => ({ p, score: this.coverage(p, crew) })).sort((a, b) => b.score - a.score)[0];
+    // Free pads, the level's and the empty ones left in build zones, and (0.23) the open zone spots.
+    const free = [...this.def.pads, ...(d.zonePads || [])].filter((p) => !s.towerOn(p.id));
+    const weight = this.routeWeights();
+    const ranked = [...free.map((p) => ({ p, score: this.coverage(p, crew, 1, weight) })), ...this.zoneSpots().map((p) => ({ p, score: this.zoneCoverage(p, crew, weight) }))].sort((a, b) => b.score - a.score);
+    // A zone spot the rules would refuse now (units on it, a sealed gap) gives way to the next one.
+    while (ranked.length > 1 && ranked[0].p.zone && !ranked[0].p.id && s.zoneCheck(0, ranked[0].p.zone, ranked[0].p.x, ranked[0].p.z).why) ranked.shift();
+    const best = ranked[0];
     // Upgrade candidate: the tower covering the most road, scored by what the next tier adds.
     const up = towers.filter((t) => t.tier < 3).map((t) => ({ t, score: this.coverage(s.padById(t.pad), t.crew, t.tier + 1) * (1 + t.tier * 0.15) })).sort((a, b) => b.score - a.score)[0];
     const upCost = up ? s.crewCost(up.t.crew, up.t.tier + 1) : Infinity;
     // Spread first (more towers as the waves grow), then raise the best-covering tower.
-    const wanted = Math.min(this.def.pads.length, 3 + d.wave);
-    if (best && (towers.length < wanted || !up)) { if (alloy >= cost) s.command({ team: 0, type: "padBuild", pad: best.p.id, crew }); }
+    const wanted = Math.min(this.def.pads.length + this.zoneRoom(), 3 + d.wave);
+    // Armour (0.23): a squad once the first towers stand, a second from the fourth wave.
+    if (this.policy === "bot" && this.buyArmour(towers, alloy, cost)) return;
+    if (best && (towers.length < wanted || !up)) { if (alloy >= cost) s.command(best.p.zone && !best.p.id ? { team: 0, type: "zoneBuild", zone: best.p.zone, x: best.p.x, z: best.p.z, crew } : { team: 0, type: "padBuild", pad: best.p.id, crew }); }
     else if (up && alloy >= upCost) s.command({ team: 0, type: "padUpgrade", building: up.t.id });
     // A gold tower takes its branch once the spreading is done.
     if (this.policy === "bot" && towers.length >= wanted) {
@@ -121,7 +196,7 @@ export class DefenceBot {
         if (s.players[0].alloy >= s.branchCost(top.crew, branch)) s.command({ team: 0, type: "padBranch", building: top.id, branch });
       }
     }
-    if (this.policy === "bot") this.lead(towers);
+    if (this.policy === "bot") { this.lead(towers); this.moveArmour(towers); }
     const status = s.defenceStatus();
     // Early call: the last wave beaten without a leak, nothing on the road, no money lying around.
     if (d.wave !== this.waveSeen) { this.waveSeen = d.wave; this.leakedAtStart = d.leaked; }
@@ -181,6 +256,7 @@ export class DefenceBot {
   step(dt) {
     this.clock -= dt;
     this.postClock -= dt;
+    if (this.armourClock !== undefined) this.armourClock -= dt;
     if (this.clock <= 0) { this.clock = THINK; this.think(); }
   }
 }
