@@ -1088,7 +1088,15 @@
     "Replay the epilogue": "Xem lại lời kết",
     "Can't see up there": "Không thấy được trên đó",
     "Can't see up there: send a unit up the ramp first": "Không thấy được trên đó: hãy đưa một đơn vị lên dốc trước",
-    "Plateaus are raised rock reached by ramps. A unit or tower on top gets +2 m range, +20% damage and +3 m sight against targets below; shooting up at it does 15% less damage. A gold ▲ marks units on high ground, and units deep on a plateau stay hidden from below until you climb it.": "Cao nguyên là khối đá nhô cao, lên bằng dốc. Đơn vị hoặc tháp ở trên được +2 m tầm bắn, +20% sát thương và +3 m tầm nhìn với mục tiêu bên dưới; bắn ngược lên thì giảm 15% sát thương. Dấu ▲ vàng đánh dấu đơn vị ở điểm cao, và đơn vị ở sâu trên cao nguyên bị che khuất với bên dưới cho tới khi bạn leo lên."
+    "Plateaus are raised rock reached by ramps. A unit or tower on top gets +2 m range, +20% damage and +3 m sight against targets below; shooting up at it does 15% less damage. A gold ▲ marks units on high ground, and units deep on a plateau stay hidden from below until you climb it.": "Cao nguyên là khối đá nhô cao, lên bằng dốc. Đơn vị hoặc tháp ở trên được +2 m tầm bắn, +20% sát thương và +3 m tầm nhìn với mục tiêu bên dưới; bắn ngược lên thì giảm 15% sát thương. Dấu ▲ vàng đánh dấu đơn vị ở điểm cao, và đơn vị ở sâu trên cao nguyên bị che khuất với bên dưới cho tới khi bạn leo lên.",
+    "Troop carrier": "Xe chở quân",
+    "Wave transport": "Vận tải đợt tấn công",
+    "Frontier Defence only. An armoured truck that carries a squad down the road and drops it near your line, then drives on empty. Destroy it first and the squad dies with it. Anti-tank crews break it fastest; it costs 2 lives if it gets through.": "Chỉ có trong Phòng thủ biên cương. Xe tải bọc thép chở một tiểu đội xuống đường và thả họ gần phòng tuyến của bạn, rồi chạy tiếp khi đã trống. Phá nó trước thì cả tiểu đội chết theo. Kíp Chống tăng hạ nó nhanh nhất; lọt qua sẽ mất 2 mạng.",
+    "Next wave": "Đợt tới",
+    "Road": "Đường",
+    "Ford": "Bãi cạn",
+    "A carrier is dropping troops!": "Một xe chở quân đang thả lính!",
+    "Carrier destroyed with its squad aboard!": "Đã phá xe chở quân cùng cả tiểu đội trên xe!"
   },
   "patterns": [
     ["^Defence · (.+)$", "Phòng thủ · {1}"],

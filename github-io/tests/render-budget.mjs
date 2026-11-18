@@ -36,9 +36,15 @@ const scenarios = [
   // spread over all three roads. River scenery (water, reeds, fish, dragonflies) costs more than the
   // valley: Twin Bridges measured 141 draws with both bridges standing at 0.17; its line is 135.
   {name:'defence-river-eco', defence:'d-bridges', mobile:true, zoom:78, focus:[0,0], reveal:true, wave:120, towers:10, triangles:600000, crossings:{'-22':'blown', '22':'pontoon'}},
+  // 0.22: Long Crossing's wave with troop carriers: every 20th of the 120 units is a carrier (six, in
+  // place of six tanks). The carrier's five materials add five batches however many carriers there
+  // are (its radius matches the tank's, so it shares the tanks' blob-shadow batch): 134 draws without
+  // carriers, 139 with them (2026-11-18). Each batch composes its own matrix once a frame, hence the
+  // compose line a little above the default.
+  {name:'defence-carrier-eco', defence:'d-longcrossing', mobile:true, zoom:78, focus:[0,0], reveal:true, wave:120, towers:10, triangles:600000, compose:460, carrierEvery:20, unlockAfter:'d-canyon'},
 ];
 const results = [];
-const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135};
+const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142};
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -46,6 +52,8 @@ try {
     const errors = [];
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    // A later Defence level opens with a star on the one before it (src/defence/progress.js levelOpen).
+    if (scenario.unlockAfter) await page.addInitScript(id => { try { localStorage.setItem('frontier-defence-v1', JSON.stringify({levels:{[id]:{stars:1, lives:5, difficulty:'standard'}}})); } catch {} }, scenario.unlockAfter);
     await page.addInitScript(() => {
       const nativeRAF = window.requestAnimationFrame.bind(window);
       window.__nativeRAF = nativeRAF;
@@ -94,7 +102,8 @@ try {
           while (d > legs[k]) d -= legs[k++];
           const a = pts[k], b = pts[k + 1], t = d / legs[k], side = ((i * 0.618) % 1 - 0.5) * 2.4;
           const nx = -(b.z - a.z) / legs[k], nz = (b.x - a.x) / legs[k];
-          const e = s.spawn(s.typeFor(1, kinds[i % kinds.length]), 1, a.x + (b.x - a.x) * t + nx * side, a.z + (b.z - a.z) * t + nz * side, true, true);
+          const kind = scenario.carrierEvery && i % scenario.carrierEvery === scenario.carrierEvery - 1 ? 'carrier' : kinds[i % kinds.length];
+          const e = s.spawn(s.typeFor(1, kind), 1, a.x + (b.x - a.x) * t + nx * side, a.z + (b.z - a.z) * t + nz * side, true, true);
           e.angle = Math.atan2(b.x - a.x, b.z - a.z);
           if (i % 2) e.hp = e.maxHp * 0.5;
         }
@@ -274,7 +283,7 @@ try {
     if (record < 0) {
       assert.ok(summary.calls.p95 <= limits[scenario.name], `${scenario.name} draw budget: ${JSON.stringify(summary)}`);
       assert.ok(summary.triangles.p95 < (scenario.triangles || (scenario.mobile ? 315000 : 450000)), 'instancing must not inflate triangle submission');
-      assert.ok(summary.compose.p95 < 450 && summary.multiplyMatrices.p95 < 500, 'stationary poses must not rebuild the entire scene');
+      assert.ok(summary.compose.p95 < (scenario.compose || 450) && summary.multiplyMatrices.p95 < 500, 'stationary poses must not rebuild the entire scene');
       assert.equal(summary.bufferUploads.p95, 0, 'unchanged instances and empty effects must not resend GPU buffers');
     }
     if (scenario.defence) {

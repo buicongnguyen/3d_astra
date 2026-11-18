@@ -7,6 +7,9 @@
 //    bridge) in the command card; lives, wave and countdown chips, Commander, Call wave and
 //    Overview on the battlefield;
 //  - blown bridges hidden, pontoons (one merged mesh each) and the fuse light;
+//  - the wave intel strip beside the bar (0.22): the next wave's units with counts (a carrier with
+//    its passengers) and its roads, while it can still be called; the "+N" of a carrier lost with
+//    its squad aboard;
 //  - the result screen with stars (or waves held, in Endless and the Daily seed), and progress.
 // The rules are in src/sim/defence.js; this module only reads the match and sends commands.
 // Everything it needs from the always-loaded app arrives as `deps` (app/defence-entry.js): a
@@ -54,6 +57,9 @@ const PAD_NOTE = {
   rim: "Rim pad: 2 m more reach and harder hits, but the road can see it.",
   deep: "Deep pad: hidden from the road, but further from it.",
 };
+// Wave intel (0.22): the road a wave group walks, by route id (other ids show as they are).
+const ROUTE_LABEL = { main: "Road", west: "West bridge", ford: "Ford", east: "East bridge" };
+const FLOAT_SECONDS = 1.6; // the "+N" over a carrier lost with its squad
 const PICK_RADIUS = 26; // px: the nearest pad within this distance of a tap is picked
 const BRIDGE_RADIUS = 44; // px: a tap this close to a bridge's middle picks it
 // Pontoon planks: one merged mesh per pontoon, grown from the north bank while it is built.
@@ -62,7 +68,7 @@ const PONTOON_LENGTH = 9;
 export function createDefenceUI(S, A, deps) {
   const { $, GARRISONS, starsFor, D, hasPortrait, portrait, icon, ACTION_KEYS, DEFENCE_LEVELS, loadDefence, recordDefence, saveDefence, statTile, formatClock, DIFFICULTY_LABELS, FACTIONS, CROSSINGS, recordScore, bestScore, dayKey } = deps;
   const Z = S.screen, root = document.documentElement;
-  let pads = null, bar = null, seen = null, overview = false, leakAt = -Infinity, affordable = false, burstTier = 0, aim = null;
+  let pads = null, bar = null, intel = null, intelKey = "", seen = null, overview = false, leakAt = -Infinity, affordable = false, burstTier = 0, aim = null;
   const color = new THREE.Color();
   const key = (i) => ACTION_KEYS[i] || "";
   const kbd = (k) => (k ? `<kbd class="action-key">${k}</kbd>` : "");
@@ -278,6 +284,7 @@ export function createDefenceUI(S, A, deps) {
     const call = $("defence-call"), bonus = st.canCall ? Math.ceil((st.countdown ?? S.sim.missionDef.defence.gap ?? 16) * 2) : 0;
     call.disabled = !st.canCall || !Z.started || Z.paused;
     set("defence-bonus", st.canCall ? `+${bonus}` : "");
+    updateIntel(st);
     bar.querySelector(".lives").classList.toggle("low", st.lives <= 5);
     // The commander: picked from the bar; while it is down, the seconds until it is back.
     const h = S.sim.defence.hero, heroButton = $("defence-hero");
@@ -290,6 +297,55 @@ export function createDefenceUI(S, A, deps) {
     }
   }
   function set(id, text) { const el = $(id); if (el && el.textContent !== text) el.textContent = text; }
+
+  // ---------------------------------------------------------------- Wave intel (0.22)
+  // What the next wave brings, shown while it can still be called (between waves, and once the
+  // wave on the field has all arrived): unit portraits with counts, a carrier with "(n)" aboard,
+  // and the roads it takes when the level has more than one. Rebuilt only when it changes.
+  function ensureIntel() {
+    if (intel?.isConnected) return intel;
+    intel = document.createElement("div");
+    intel.id = "defence-intel";
+    intel.setAttribute("role", "group");
+    intel.setAttribute("aria-label", "Next wave");
+    intel.hidden = true;
+    $("stage").append(intel);
+    intelKey = "";
+    return intel;
+  }
+  function updateIntel(st) {
+    const el = ensureIntel(), p = Z.started && st.canCall ? S.sim.wavePreview() : null;
+    const key = p ? `${p.wave}|${p.units.map((u) => `${u.type}:${u.count}:${u.carry || 0}`).join(",")}|${p.routes.join(",")}` : "";
+    if (key === intelKey) return;
+    intelKey = key;
+    el.hidden = !p;
+    if (!p) { el.innerHTML = ""; return; }
+    const many = Object.keys(S.sim.missionDef.defence.routes).length > 1;
+    const unit = (u) => `<span class="intel-unit${u.carry ? " carrier" : ""}" data-type="${u.type}" title="${D[u.type]?.name || u.type}">${hasPortrait(u.type) ? portrait(u.type, "hostile") : icon(D[u.type]?.icon || "tank")}<b translate="no">×${u.count}</b>${u.carry ? `<small translate="no">(${u.carry})</small>` : ""}</span>`;
+    el.innerHTML = `<span class="intel-line"><span class="intel-head"><span>Next wave</span> <b translate="no">${p.wave}</b></span>${p.units.map(unit).join("")}</span>${many ? `<span class="intel-routes">${p.routes.map((r) => `<span class="intel-route" data-route="${r}">${ROUTE_LABEL[r] || r}</span>`).join("")}</span>` : ""}`;
+  }
+
+  // ---------------------------------------------------------------- Carrier moments (0.22)
+  // A squad dropped: an alert. A carrier lost with its squad: "+N" alloy rising over the wreck
+  // (a DOM chip, transform/opacity only, still under motion-off; the blast is the rules' strike).
+  function event(e) {
+    if (e.type === "drop") { if (S.sim.time - (dropAt ?? -Infinity) > 6) { dropAt = S.sim.time; A.alert("A carrier is dropping troops!"); } return; }
+    if (e.type !== "carrierDown") return;
+    A.notice("Carrier destroyed with its squad aboard!");
+    if (!S.sim.isVisible(e)) return;
+    const stage = $("stage").getBoundingClientRect(), canvas = S.view.renderer.domElement.getBoundingClientRect();
+    const q = S.view.project(e.x, e.z, S.view.terrain.heightAt(e.x, e.z) + 2.4), x = q.x + canvas.left - stage.left, y = q.y + canvas.top - stage.top;
+    if (x < 0 || y < 0 || x > stage.width || y > stage.height) return;
+    const chip = document.createElement("span");
+    chip.className = "defence-float";
+    chip.setAttribute("aria-hidden", "true");
+    chip.innerHTML = `${icon("alloy")}<b translate="no">+${e.amount}</b>`;
+    chip.style.left = `${Math.round(x)}px`;
+    chip.style.top = `${Math.round(y)}px`;
+    $("stage").append(chip);
+    setTimeout(() => chip.remove(), FLOAT_SECONDS * 1000);
+  }
+  let dropAt = null;
 
   // Notices from what changed since the last look (the rules only emit events the frame loop drains).
   function announce() {
@@ -553,6 +609,7 @@ export function createDefenceUI(S, A, deps) {
     if (!S.sim?.defence) return;
     buildPads();
     ensureBar();
+    intelKey = "";
     seen = null;
     S.defencePad = null;
     S.defenceBridge = null;
@@ -588,6 +645,7 @@ export function createDefenceUI(S, A, deps) {
     disposePads();
     if (aim) setAim(null);
     if (bar) bar.hidden = true;
+    if (intel) { intel.hidden = true; intelKey = ""; }
     delete $("commands").dataset.tier;
   }
   function tap(x, y) {
@@ -691,5 +749,5 @@ export function createDefenceUI(S, A, deps) {
     if (!Z.started && S.playMode === "defence") $("start").click();
   });
 
-  return { begin, hud, idle, tap, result, setOverview, get pads() { return pads; }, get aim() { return aim; } };
+  return { begin, hud, idle, tap, result, setOverview, event, get pads() { return pads; }, get aim() { return aim; } };
 }

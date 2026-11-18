@@ -14,6 +14,8 @@ const paths = {
   crosshair:
     '<circle cx="12" cy="12" r="7"/><path d="M12 1v6m0 10v6M1 12h6m10 0h6"/><circle cx="12" cy="12" r="1"/>',
   tank: '<rect x="3" y="13" width="18" height="7" rx="3"/><path d="M7 13V8h8v5M15 9h7M7 17h1m3 0h1m3 0h1"/>',
+  // Troop carrier (Frontier Defence, 0.22): a covered truck, cab on the right.
+  carrier: '<path d="M2 16V7a1 1 0 0 1 1-1h10v10M13 10h4l4 4v2M2 16h1m6 0h6m5 0h1"/><circle cx="6" cy="17" r="2.2"/><circle cx="17.5" cy="17" r="2.2"/><path d="M5 9h5"/>',
   hq: '<path d="M3 21V8l9-5 9 5v13H3ZM8 21v-7h8v7M12 3V1M6 8h12"/>',
   relay:
     '<path d="M12 3v18M6 21h12M8 7a6 6 0 0 1 8 0M4 3a12 12 0 0 1 16 0"/><circle cx="12" cy="10" r="2"/>',

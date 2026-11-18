@@ -34,6 +34,10 @@ const SPAWN_CLEAR = 10;
 // The units that hold a wave up this tick (the commander and Reinforce Vanguards), per simulation.
 // Kept outside the simulation so it is never saved or hashed.
 const BLOCKERS = new WeakMap();
+// Troop carriers (0.22): seconds from the stop to the passengers stepping out, and from the last
+// one out to the empty carrier driving on. A carrier waiting this long for room drops the rest
+// where it stands.
+const UNLOAD = 0.6, DEPART = 1, UNLOAD_MAX = 5;
 
 // Where a unit walks on a route: its own lane, offset sideways from the centre line. At a corner
 // the offset follows the bisector, so lanes do not cross.
@@ -83,9 +87,11 @@ export function seedOf(text) {
   return h >>> 0;
 }
 // The units a level's designed waves use: endless waves draw from them (slot, faction and tag).
+// (Carriers are not drawn: endless waves add their own, below.)
 function palette(def) {
   const seen = new Map();
   for (const w of def.waves) for (const g of w.groups) for (const slot of Object.keys(g.units)) {
+    if (slot === "carrier") continue;
     const key = `${slot}|${g.faction || ""}`;
     if (!seen.has(key)) seen.set(key, { slot, faction: g.faction || null });
   }
@@ -110,6 +116,16 @@ export function endlessWave(def, n) {
     if (def.bridges && n % 4 === 3 && k === 0) g.tag = "bridger";
     out.push(g);
     delay += 2.5 + rnd() * 3;
+  }
+  // Every fifth wave from the fifth (0.22): troop carriers bring a squad of the level's own foot
+  // soldiers and drop it half-way down a road. Drawn after the groups, so they stay as they were.
+  const foot = units.filter((u) => !D[u.slot]?.flying && (D[u.slot]?.pop || 1) <= 2);
+  if (n % 5 === 4 && foot.length) {
+    const u = foot[Math.floor(rnd() * foot.length)], route = routes[Math.floor(rnd() * routes.length)];
+    const g = { units: { carrier: Math.min(3, 1 + Math.floor(n / 15)) }, carry: { [u.slot]: Math.min(8, 4 + Math.floor(n / 6)) }, dropLeg: Math.max(1, Math.floor((def.routes[route].length - 1) / 2)), route, every: 3, delay: Math.round(delay * 10) / 10 };
+    if (hp !== 1) g.hp = hp;
+    if (u.faction) g.faction = u.faction;
+    out.push(g);
   }
   return { groups: out, bonus: 30 + n * 4 };
 }
@@ -302,18 +318,35 @@ export const defence = {
   waveType(g, slot) {
     return g.faction ? BALANCE.factions[g.faction]?.swap?.[slot] || slot : this.typeFor(FOE, slot);
   },
+  // The units of wave group `g` as [type, count] pairs, scaled for the difficulty; a carrier
+  // group's passengers (`carry`) likewise. Shared by startWave and wavePreview.
+  waveUnits(g, units = g.units, scale = this.defenceWaveScale()) {
+    return Object.entries(units).map(([slot, n]) => { const type = this.waveType(g, slot); return [type, waveCount(n, scale, D[type])]; });
+  },
   startWave() {
     const d = this.defence, def = this.defenceDef(), wave = this.defenceWave(d.wave), scale = this.defenceWaveScale();
+    // A wave called while the last one is still on the road (waveCall): that one keeps its own
+    // tally, so its clear bonus and the tower repair still come when its last unit falls.
+    if (d.active) this.holdWave();
     d.wave++;
     d.active = true;
     d.nextAt = null;
-    let count = 0, from = null;
+    // One warning per spawn point the wave uses (several groups may share one), in group order.
+    const spawns = [];
     for (const g of wave.groups) {
       const pts = def.routes[g.route];
       if (!pts) continue;
-      from ||= pts[0];
+      let at = spawns.find((s) => hyp(s.x - pts[0].x, s.z - pts[0].z) < 1);
+      if (!at) spawns.push((at = { x: pts[0].x, z: pts[0].z, count: 0 }));
+      // Passengers ride in every carrier of the group, one squad each, in the order they board.
+      let cargo = null;
+      if (g.carry) {
+        cargo = [];
+        const ride = this.waveUnits(g, g.carry, scale);
+        for (let k = 0; ride.some(([, n]) => n > 0); k++) { const entry = ride[k % ride.length]; if (entry[1] > 0) { entry[1]--; cargo.push(entry[0]); } }
+      }
       // Types take turns, so a mixed group arrives mixed.
-      const left = Object.entries(g.units).map(([slot, n]) => [this.waveType(g, slot), waveCount(n, scale, D[this.waveType(g, slot)])]);
+      const left = this.waveUnits(g, g.units, scale);
       for (let k = 0, i = 0; left.some(([, n]) => n > 0); k++) {
         const entry = left[k % left.length];
         if (entry[1] <= 0) continue;
@@ -323,13 +356,48 @@ export const defence = {
         const hp = (g.hp ?? 1) * (typeof def.hp === "object" ? def.hp[this.difficulty] ?? 1 : def.hp ?? 1);
         if (hp !== 1) q.hp = hp;
         if (g.tag === "bridger") q.bridger = true;
+        if (cargo && D[entry[0]]?.carrier) { q.cargo = cargo.slice(); q.dropLeg = g.dropLeg ?? 1; at.count += cargo.length; }
         d.queue.push(q);
         i++;
-        count++;
+        at.count++;
       }
     }
     d.queue.sort((a, b) => a.at - b.at);
-    if (from) this.events.push({ type: "incoming", team: TEAM, x: from.x, z: from.z, count, wave: d.wave });
+    for (const s of spawns) this.events.push({ type: "incoming", team: TEAM, x: s.x, z: s.z, count: s.count, wave: d.wave, spawns: spawns.length });
+  },
+  // The wave on the field is held apart while the next one comes (see startWave): every enemy
+  // still standing is tagged with its wave number, which stepDefence counts down on its own.
+  holdWave() {
+    const d = this.defence;
+    for (const e of this.entities) if (e.team === FOE && e.kind === "unit" && e.hp > 0 && e.wave === undefined) e.wave = d.wave;
+    (d.open ||= []).push(d.wave);
+  },
+  // Wave n (1-based) beaten: its bonus, every tower patched up, one more wave held.
+  creditWave(n) {
+    const d = this.defence, wave = this.defenceWave(n - 1);
+    d.cleared++;
+    if (wave?.bonus) this.players[TEAM].alloy += wave.bonus;
+    for (const t of this.entities) if (t.team === TEAM && t.crew && t.hp > 0) { t.hp = t.maxHp; t.shield = t.maxShield; }
+    this.events.push({ type: "waveCleared", wave: n, bonus: wave?.bonus || 0, team: TEAM });
+  },
+  // What the next wave brings, for the preview before it is called: per group its route and
+  // units (counts as they will spawn on this difficulty), a carrier with its passengers.
+  wavePreview() {
+    const d = this.defence;
+    if (!d || d.wave >= this.waveTotal()) return null;
+    const def = this.defenceDef(), wave = this.defenceWave(d.wave), scale = this.defenceWaveScale(), units = new Map(), routes = [];
+    for (const g of wave.groups) {
+      if (!def.routes[g.route]) continue;
+      if (!routes.includes(g.route)) routes.push(g.route);
+      const ride = g.carry ? this.waveUnits(g, g.carry, scale).reduce((a, [, n]) => a + n, 0) : 0;
+      for (const [type, n] of this.waveUnits(g, g.units, scale)) {
+        const carrier = !!D[type]?.carrier && ride > 0, key = carrier ? `${type}|${ride}` : type;
+        const u = units.get(key) || { type, count: 0, ...(carrier ? { carry: ride, passengers: this.waveUnits(g, g.carry, scale).map(([t]) => t) } : {}) };
+        u.count += n;
+        units.set(key, u);
+      }
+    }
+    return { wave: d.wave + 1, units: [...units.values()], routes };
   },
   // A due spawn appears on its lane at the route's start, once that spot is clear.
   spawnQueued() {
@@ -349,6 +417,8 @@ export const defence = {
       const e = this.spawn(q.type, FOE, start.x, start.z, true, true);
       if (q.hp) e.hp = e.maxHp = Math.round(e.maxHp * q.hp);
       if (q.bridger) e.bridger = true;
+      // A troop carrier keeps its passengers on board (saved with it) until its drop leg.
+      if (q.cargo) { e.cargo = q.cargo.slice(); e.dropLeg = q.dropLeg; if (q.hp) e.cargoHp = q.hp; }
       const next = pts[1] || pts[0];
       e.angle = Math.atan2(next.x - e.x, next.z - e.z);
       // A route over a blown crossing is swapped for the nearest open one (bridge builders keep theirs).
@@ -395,7 +465,10 @@ export const defence = {
         if (distance(e, target) < 1.2) { e.moving = false; return; }
       }
     }
-    const blockers = this.blockersNow();
+    // A troop carrier stops at its drop leg and lets its passengers out, then drives on empty.
+    if ((e.cargo || e.departAt !== undefined) && this.stepCarrier(e, o, pts)) return;
+    // Ground blockers hold ground units only: flyers pass over them.
+    const blockers = e.flying ? [] : this.blockersNow();
     if (blockers.length) {
       const fx = target.x - e.x, fz = target.z - e.z;
       for (const b of blockers)
@@ -430,25 +503,35 @@ export const defence = {
     if (d.queue.length) this.spawnQueued();
     if (this.crossings) this.stepCrossings(dt);
     if (d.hero) this.stepCommander();
+    // Carriers at their stop let their passengers out (after the spawns, in entity order).
+    for (const e of this.entities) if (e.cargo && e.unloadAt !== undefined && e.hp > 0 && this.time >= e.unloadAt - 1e-9) this.dropCargo(e);
     const exit = def.exit;
-    let alive = 0;
+    // Enemies standing: of the newest wave, and of each earlier wave still held apart (d.open).
+    let alive = 0, held = null;
     for (const e of this.entities) {
       // Reinforce Vanguards leave when their time is up.
       if (e.team === TEAM && e.expires !== undefined && e.hp > 0 && this.time >= e.expires - 1e-9) { e.hp = 0; e.orders = []; continue; }
       if (e.team !== FOE || e.kind !== "unit") continue;
       if (e.hp <= 0) {
-        // Killed this tick (settle removes it next): one tenth of what it cost.
+        // Killed this tick (settle removes it next): one tenth of what it cost. A carrier that
+        // falls before its drop takes its passengers with it, and pays their bounty too.
         if (!e.paid && !e.leaked) {
           e.paid = true;
-          const cost = D[e.type].cost || [0, 0], bounty = Math.ceil((cost[0] + cost[1]) * GARRISONS.bounty);
+          const worth = (type) => { const cost = D[type]?.cost || [0, 0]; return Math.ceil((cost[0] + cost[1]) * GARRISONS.bounty); };
+          const lost = e.cargo?.length || 0, bounty = worth(e.type) + (lost ? e.cargo.reduce((a, type) => a + worth(type), 0) : 0);
           this.players[TEAM].alloy += bounty;
           d.bounty += bounty;
-          this.events.push({ type: "bounty", amount: bounty, x: e.x, z: e.z, team: TEAM });
+          this.events.push({ type: "bounty", amount: bounty, x: e.x, z: e.z, team: TEAM, ...(lost ? { carried: lost } : {}) });
+          if (lost) {
+            this.events.push({ type: "carrierDown", id: e.id, amount: bounty, carried: lost, x: e.x, z: e.z, team: TEAM });
+            this.events.push({ type: "strike", x: e.x, z: e.z, radius: 3, team: TEAM, victims: [] });
+            e.cargo = [];
+          }
         }
         continue;
       }
       if (hyp(e.x - exit.x, e.z - exit.z) <= exit.r) {
-        // Through the line: lives lost (two for heavy machines), and the unit leaves the field.
+        // Through the line: lives lost (two for heavy machines and carriers), and the unit leaves the field.
         const cost = (e.pop || 1) >= 3 ? 2 : 1;
         d.lives = Math.max(0, d.lives - cost);
         d.leaked += 1;
@@ -458,17 +541,77 @@ export const defence = {
         this.events.push({ type: "leak", lives: d.lives, cost, x: e.x, z: e.z, team: FOE });
         continue;
       }
-      alive++;
+      if (e.wave !== undefined && d.open) (held ||= new Map()).set(e.wave, (held.get(e.wave) || 0) + 1);
+      else alive++;
+    }
+    // An earlier wave whose last unit fell: its bonus and the repair, once, oldest first.
+    if (d.open) {
+      for (const n of d.open.slice()) if (!held?.get(n)) { d.open.splice(d.open.indexOf(n), 1); this.creditWave(n); }
+      if (!d.open.length) delete d.open;
     }
     if (d.active && !d.queue.length && !alive) {
       // Wave beaten: its bonus, every tower patched up, and the countdown to the next one.
       d.active = false;
-      d.cleared = d.wave;
-      const wave = this.defenceWave(d.wave - 1);
-      if (wave?.bonus) this.players[TEAM].alloy += wave.bonus;
-      for (const t of this.entities) if (t.team === TEAM && t.crew && t.hp > 0) { t.hp = t.maxHp; t.shield = t.maxShield; }
-      this.events.push({ type: "waveCleared", wave: d.wave, bonus: wave?.bonus || 0, team: TEAM });
+      this.creditWave(d.wave);
       if (d.wave < this.waveTotal()) d.nextAt = this.time + (def.gap ?? 16);
+    }
+  },
+  // Free spots for `count` units of radius r around (x, z): the middle, then rings of six every
+  // 1.5 m (Reinforce), or with `inner` only the rings, from that radius out (a carrier's drop).
+  ringSpots(x, z, r, count, inner = 0) {
+    const spots = [];
+    for (let k = inner ? 1 : 0; spots.length < count && k < (inner ? 25 : 24); k++) {
+      const ring = k ? (inner || 1.5) + Math.floor((k - 1) / 6) * 1.5 : 0, angle = k * (Math.PI / 3) + (inner ? Math.floor((k - 1) / 6) * (Math.PI / 6) : 0);
+      const p = { x: x + Math.cos(angle) * ring, z: z + Math.sin(angle) * ring };
+      if (this.nav.canStand(p.x, p.z, r) && !spots.some((q) => hyp(q.x - p.x, q.z - p.z) < r * 2)) spots.push(p);
+    }
+    return spots;
+  },
+  // ---------------------------------------------------------------- Troop carriers (0.22)
+  // A carrier (`carrier: true` in balance.json) holds `cargo`, the passengers' types in boarding
+  // order, until it reaches route point `dropLeg`. There it stops (`unloadAt`), the squad steps
+  // out around it on the road and walks on from the nearest leg, and the empty carrier waits
+  // (`departAt`) and drives on. Called from stepRoute; true while the carrier stands still.
+  stepCarrier(e, o, pts) {
+    e.moving = false;
+    if (!e.cargo) {
+      if (this.time < e.departAt - 1e-9) return true;
+      delete e.departAt;
+      return false;
+    }
+    if (e.unloadAt === undefined) {
+      if (o.leg <= Math.min(e.dropLeg ?? 1, pts.length - 2)) return false;
+      e.unloadAt = this.time + UNLOAD;
+      this.events.push({ type: "unload", id: e.id, x: e.x, z: e.z, count: e.cargo.length, team: FOE });
+    }
+    return true;
+  },
+  // The passengers out, in boarding order, on free spots around the carrier (stepDefence, after the
+  // spawns). Any that find no room wait aboard for the next tick; after UNLOAD_MAX they step out
+  // where the carrier stands.
+  dropCargo(e) {
+    const def = this.defenceDef(), o = e.orders[0], route = o?.type === "route" ? o.route : null, pts = route && def.routes[route];
+    const r = Math.max(...e.cargo.map((type) => D[type]?.radius || 0.7));
+    // The first ring clears the truck's long body (about twice its collision radius from the middle).
+    const spots = this.ringSpots(e.x, e.z, r, e.cargo.length, e.radius * 2 + r + 0.2);
+    if (this.time >= e.unloadAt + UNLOAD_MAX - 1e-9) while (spots.length < e.cargo.length) spots.push({ x: e.x, z: e.z });
+    const out = [];
+    for (const p of spots) {
+      const type = e.cargo.shift(), u = this.spawn(type, FOE, p.x, p.z, true, true);
+      if (e.cargoHp) u.hp = u.maxHp = Math.round(u.maxHp * e.cargoHp);
+      if (e.wave !== undefined) u.wave = e.wave;
+      u.angle = e.angle;
+      // From the nearest leg, never back past the carrier's own (the squad does not walk back to the stop).
+      if (pts) u.orders = [{ type: "route", route, leg: Math.max(nearestLeg(pts, u), o.leg) }];
+      out.push(u.id);
+    }
+    if (out.length) this.events.push({ type: "drop", id: e.id, ids: out, x: e.x, z: e.z, team: FOE });
+    if (!e.cargo.length) {
+      delete e.cargo;
+      delete e.cargoHp;
+      delete e.unloadAt;
+      delete e.dropLeg;
+      e.departAt = this.time + DEPART;
     }
   },
   // ---------------------------------------------------------------- Commander (0.21)
@@ -541,13 +684,7 @@ export const defence = {
       const a = c.reinforce, type = this.typeFor(team, a.slot), r = D[type].radius || 0.65;
       if (this.time < h.reinforceAt - 1e-9 || hyp(x - e.x, z - e.z) > a.range || !this.nav.canStand(x, z, r)) return false;
       if (Object.values(this.defenceDef().routes).some((pts) => hyp(pts[0].x - x, pts[0].z - z) < SPAWN_CLEAR)) return false;
-      const spots = [];
-      for (let k = 0; spots.length < a.count && k < 24; k++) {
-        const ring = k ? 1.5 + Math.floor((k - 1) / 6) * 1.5 : 0, angle = k * (Math.PI / 3);
-        const p = { x: x + Math.cos(angle) * ring, z: z + Math.sin(angle) * ring };
-        if (this.nav.canStand(p.x, p.z, r) && !spots.some((q) => hyp(q.x - p.x, q.z - p.z) < r * 2)) spots.push(p);
-      }
-      for (const p of spots) {
+      for (const p of this.ringSpots(x, z, r, a.count)) {
         const v = this.spawn(type, team, p.x, p.z, true, true);
         v.blocker = true;
         v.stance = "hold";
@@ -692,7 +829,7 @@ export const defence = {
     const d = this.defence, def = this.defenceDef(), m = this.mission;
     if (!d || !def) return null;
     const lost = d.lives <= 0;
-    const won = !lost && !def.endless && d.wave >= def.waves.length && !d.active && !d.queue.length;
+    const won = !lost && !def.endless && d.wave >= def.waves.length && !d.active && !d.queue.length && !d.open;
     if (!lost && !won) return null;
     if (won) {
       for (const o of this.missionDef.objectives) this.setObjective(o.id, "done");
@@ -708,7 +845,7 @@ export const defence = {
     if (!d || !def) return null;
     const total = this.waveTotal();
     return {
-      lives: d.lives, maxLives: this.defenceMaxLives(), wave: d.wave, waves: Number.isFinite(total) ? total : null, active: d.active, endless: !!def.endless,
+      lives: d.lives, maxLives: this.defenceMaxLives(), wave: d.wave, waves: Number.isFinite(total) ? total : null, active: d.active || !!d.open, endless: !!def.endless,
       countdown: d.nextAt !== null ? Math.max(0, d.nextAt - this.time) : null,
       canCall: !this.result && d.wave < total && !d.queue.length,
       enemies: this.entities.filter((e) => e.team === FOE && e.kind === "unit" && e.hp > 0).length,

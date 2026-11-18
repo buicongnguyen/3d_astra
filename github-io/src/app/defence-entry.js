@@ -127,6 +127,8 @@ export function setupDefenceEntry(S, A) {
       else ui?.idle();
     },
     defenceResult: () => load().then(() => ui.result()),
+    // Carrier moments from the frame loop (app/frame.js): only once the interface is loaded.
+    defenceEvent: (event) => (S.sim?.defence && ui ? ui.event(event) : undefined),
   });
   return function bind() {
     // The variant switch and the perks sheet (the level buttons are app/briefing.js's).

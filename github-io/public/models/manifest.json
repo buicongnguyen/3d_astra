@@ -232,6 +232,16 @@
       "air": true,
       "budget": 1500,
       "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips"
+    },
+    {
+      "name": "carrier",
+      "file": "carrier.glb",
+      "triangles": 3368,
+      "kind": "unit",
+      "defence": true,
+      "budget": 4500,
+      "source": "Kit rebuild after Tank_game_3D public/models/transport.glb (same owner)",
+      "animation": "Runtime articulated parts; no baked clips"
     }
   ]
 }
