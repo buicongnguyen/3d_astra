@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {Simulation} from '../src/simulation.js';
 import {DEFINITIONS as D} from '../src/data.js';
 import {FACTION_RULES} from '../src/factions.js';
-// The 60-second all-Meridian hash itself (d071360b) is pinned in tests/golden-play.test.js.
+// The 60-second all-Meridian hash itself is pinned in tests/golden-skirmish.test.js.
 test('an all-Meridian match saved after 60 seconds loads to the same state',()=>{
   const s=new Simulation({ai:false,factions:{0:'meridian',1:'meridian'}});
   for(let i=0;i<1200;i++)s.tick(.05);

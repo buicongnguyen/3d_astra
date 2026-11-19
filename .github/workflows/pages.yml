@@ -94,6 +94,10 @@ jobs:
             scripts: chronicles
           - name: bosses
             scripts: boss
+          # AAA round 2 (W0-A): every golden pin with GOLDEN_FULL=1 (300 s points, save and reload,
+          # Three Roads, Endless to wave 12), off the 10-minute build job. It needs no browser.
+          - name: golden-full
+            scripts: golden-full
     defaults:
       run:
         working-directory: github-io

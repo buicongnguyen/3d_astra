@@ -62,7 +62,9 @@
     "test:defence": "node tests/defence.mjs",
     "test:defence-zones": "node tests/defence-zones.mjs",
     "test:boss": "node tests/boss.mjs",
-    "render:audio": "node tools/render-audio.mjs"
+    "render:audio": "node tools/render-audio.mjs",
+    "test:golden-full": "node tests/golden-full.mjs",
+    "ci:build-job": "npm test && npm run check:defence && npm run build"
   },
   "dependencies": {
     "three": "0.185.1"

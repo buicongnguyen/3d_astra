@@ -78,7 +78,7 @@ test('straight walls are lines of breakable pieces, saved and restored', () => {
   assert.equal(copy.hash(), s.hash());
 });
 
-// Its recorded 60-second hash (d071360b) is pinned in tests/golden-play.test.js.
+// Its recorded 60-second hash is pinned in tests/golden-skirmish.test.js.
 test('the classic map has no plateaus', () => {
   assert.equal(new Terrain('classic').plateaus.length, 0);
 });
