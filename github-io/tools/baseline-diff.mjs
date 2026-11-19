@@ -8,13 +8,17 @@
 //   npm run baselines:diff -- --only defence,chronicles     these baselines only
 //   npm run baselines:diff -- --record [--only ...]         writes the current output as the baseline
 //   npm run baselines:diff -- --list                        the baselines and the command of each
-//   --jobs 3 (default) is passed to every tool; --timeout <s> to check:missions (default 240)
+//   --jobs 3 (default) is passed to every tool; --timeout <s> to check:missions and the Chronicles
+//                                               (default 600, not the tools' 240: see below)
 //   --dir <folder>                              compare with (or --record into) another folder
 //
 // A baseline file that does not exist yet is reported as "not recorded yet", not as a failure.
 // Exits 1 when a recorded baseline differs (or a tool fails to give JSON), 0 otherwise.
 // The tools stop a run after --timeout seconds of wall clock and record it as "did not finish":
 // on a busy machine that can differ from a quiet one, so record and compare on a quiet machine.
+// The cap here is 600 s (integrator, after Wave 0): the finale m12 needs 130 to 240 s of wall clock
+// on a quiet machine and did not finish within 240 s on the shared, fully loaded one, which made
+// missions-standard differ for no reason in play. With 600 s every recorded row is a played result.
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -23,7 +27,7 @@ import { dirname, join, resolve } from "node:path";
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 export const BASELINE_DIR = join(ROOT, "docs", "aaa", "results", "round2", "baseline");
 const args = process.argv.slice(2), flag = (name) => args.includes(name), value = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
-const JOBS = value("--jobs", "3"), TIMEOUT = value("--timeout", "240");
+const JOBS = value("--jobs", "3"), TIMEOUT = value("--timeout", "600");
 // --dir <folder>: another baseline folder (to try the tool without touching the recorded set).
 const DIR = value("--dir") ? resolve(value("--dir")) : BASELINE_DIR;
 
