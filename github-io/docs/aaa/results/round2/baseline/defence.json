@@ -1,0 +1,221 @@
+[
+ {
+  "level": "d-gorge",
+  "difficulty": "story",
+  "target": 3,
+  "bot": "victory 3★ 20♥ w10 r3r3r3r3b3r3s1b1a3s1t2b1s1",
+  "passive": "defeat w3",
+  "greedy": "ranger:1★2♥ breaker:0★0♥ antitank:2★13♥ tank:0★0♥ scorcher:0★0♥"
+ },
+ {
+  "level": "d-gorge",
+  "difficulty": "standard",
+  "target": 2,
+  "bot": "victory 3★ 20♥ w10 r3mr3r3b3s1r3b3s1a3b2t3s1b1",
+  "passive": "defeat w3",
+  "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥"
+ },
+ {
+  "level": "d-gorge",
+  "difficulty": "veteran",
+  "target": 1,
+  "bot": "victory 3★ 18♥ w10 r3sr3r3b3s3b3s3b3a3s1t3b3s3",
+  "passive": "defeat w2",
+  "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥"
+ },
+ {
+  "level": "d-gorge",
+  "difficulty": "endless",
+  "held": 40,
+  "result": "timeout"
+ },
+ {
+  "level": "d-bridges",
+  "difficulty": "story",
+  "target": 3,
+  "bot": "victory 3★ 20♥ w10 r3r3r3r3r3r3r2b1a3s1t1a3t1",
+  "passive": "defeat w4",
+  "greedy": "ranger:0★0♥ breaker:1★2♥ antitank:2★16♥ tank:0★0♥ scorcher:0★0♥",
+  "demolish": "victory 3★ 20♥ 22:blown"
+ },
+ {
+  "level": "d-bridges",
+  "difficulty": "standard",
+  "target": 2,
+  "bot": "victory 2★ 16♥ w10 r3r3r3r3r3r3r2b1a3s1t1a3t1",
+  "passive": "defeat w4",
+  "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:1★1♥ tank:0★0♥ scorcher:0★0♥",
+  "demolish": "victory 3★ 18♥ 22:blown"
+ },
+ {
+  "level": "d-bridges",
+  "difficulty": "veteran",
+  "target": 1,
+  "bot": "victory 2★ 10♥ w10 r3r3r3r3b1a3s1b2t3a3t1a3t1",
+  "passive": "defeat w3",
+  "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥",
+  "demolish": "victory 2★ 14♥ 22:blown"
+ },
+ {
+  "level": "d-bridges",
+  "difficulty": "endless",
+  "held": 27,
+  "result": "defeat"
+ },
+ {
+  "level": "d-switchback",
+  "difficulty": "story",
+  "target": 3,
+  "bot": "victory 3★ 20♥ w10 r3mr3r3a3b3t3s1a3s1t1a3t1a2",
+  "passive": "defeat w3",
+  "greedy": "ranger:2★16♥ breaker:1★7♥ antitank:1★9♥ tank:1★2♥ scorcher:0★0♥"
+ },
+ {
+  "level": "d-switchback",
+  "difficulty": "standard",
+  "target": 2,
+  "bot": "victory 3★ 20♥ w10 r3mr3r3a3t3a3t3b1a3t3a3t1a1",
+  "passive": "defeat w2",
+  "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥"
+ },
+ {
+  "level": "d-switchback",
+  "difficulty": "veteran",
+  "target": 1,
+  "bot": "victory 2★ 14♥ w10 b3s1a3b3t3s1a3b3b3a3t3t2a3",
+  "passive": "defeat w2",
+  "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥"
+ },
+ {
+  "level": "d-switchback",
+  "difficulty": "endless",
+  "held": 40,
+  "result": "timeout"
+ },
+ {
+  "level": "d-fordwood",
+  "difficulty": "story",
+  "target": 3,
+  "bot": "victory 3★ 20♥ w10 r3mr3r3r3a3b3s1b2t3s1b1s1b1",
+  "passive": "defeat w3",
+  "greedy": "ranger:2★11♥ breaker:2★16♥ antitank:2★14♥ tank:0★0♥ scorcher:2★11♥",
+  "demolish": "victory 3★ 20♥ 22:blown,-22:blown"
+ },
+ {
+  "level": "d-fordwood",
+  "difficulty": "standard",
+  "target": 2,
+  "bot": "victory 3★ 20♥ w10 b3b3s3a3b3s1b3t3s1b3s1b3s1",
+  "passive": "defeat w2",
+  "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥",
+  "demolish": "victory 3★ 20♥ 22:blown,-22:blown"
+ },
+ {
+  "level": "d-fordwood",
+  "difficulty": "veteran",
+  "target": 1,
+  "bot": "victory 3★ 20♥ w10 b3s3b3s3a3b3s2b3t3s3b3s1b3",
+  "passive": "defeat w2",
+  "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥",
+  "demolish": "victory 3★ 20♥ 22:blown,-22:pontoon"
+ },
+ {
+  "level": "d-fordwood",
+  "difficulty": "endless",
+  "held": 40,
+  "result": "timeout"
+ },
+ {
+  "level": "d-canyon",
+  "difficulty": "story",
+  "target": 3,
+  "bot": "victory 3★ 20♥ w10 w3r3r3r3w3b3s1b3w3s3b3s1w3",
+  "passive": "defeat w3",
+  "greedy": "ranger:1★8♥ breaker:2★16♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥"
+ },
+ {
+  "level": "d-canyon",
+  "difficulty": "standard",
+  "target": 2,
+  "bot": "victory 3★ 20♥ w10 w3r3r3b3w3s3b3s3w3b3s3b3w3s2",
+  "passive": "defeat w3",
+  "greedy": "ranger:0★0♥ breaker:1★9♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥"
+ },
+ {
+  "level": "d-canyon",
+  "difficulty": "veteran",
+  "target": 1,
+  "bot": "victory 3★ 20♥ w10 w3br3r3b3w3s3b3s3w3b3s3b3w3s3b3s2",
+  "passive": "defeat w2",
+  "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥"
+ },
+ {
+  "level": "d-canyon",
+  "difficulty": "endless",
+  "held": 40,
+  "result": "timeout"
+ },
+ {
+  "level": "d-longcrossing",
+  "difficulty": "story",
+  "target": 3,
+  "bot": "victory 3★ 20♥ w10 w3br3r3r3w3b3a3s3w3b3t3s3w3",
+  "passive": "defeat w3",
+  "greedy": "ranger:0★0♥ breaker:2★12♥ antitank:0★0♥ tank:0★0♥ scorcher:2★13♥",
+  "demolish": "victory 3★ 20♥ 22:pontoon"
+ },
+ {
+  "level": "d-longcrossing",
+  "difficulty": "standard",
+  "target": 2,
+  "bot": "victory 3★ 19♥ w10 w3br3r3b3w3s3a3b3w3s3t3b3w3s3b3s1",
+  "passive": "defeat w3",
+  "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥",
+  "demolish": "victory 3★ 20♥ 22:pontoon"
+ },
+ {
+  "level": "d-longcrossing",
+  "difficulty": "veteran",
+  "target": 1,
+  "bot": "victory 1★ 7♥ w10 w3br3mr3mb3cw3bs3a3b3w3s3t3a3w3b3s3b3",
+  "passive": "defeat w2",
+  "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥",
+  "demolish": "victory 3★ 20♥ 22:pontoon"
+ },
+ {
+  "level": "d-longcrossing",
+  "difficulty": "endless",
+  "held": 40,
+  "result": "timeout"
+ },
+ {
+  "level": "d-crossroads",
+  "difficulty": "story",
+  "target": 3,
+  "bot": "victory 3★ 18♥ w10 b3s1b3s1a3t3a3b2s1b1t3s1b1",
+  "passive": "defeat w2",
+  "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥"
+ },
+ {
+  "level": "d-crossroads",
+  "difficulty": "standard",
+  "target": 2,
+  "bot": "victory 2★ 15♥ w10 b3s3b3s3a3t3b3a3s3b3t3s1b3",
+  "passive": "defeat w2",
+  "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥"
+ },
+ {
+  "level": "d-crossroads",
+  "difficulty": "veteran",
+  "target": 1,
+  "bot": "victory 3★ 18♥ w10 b3s3b3s3a3t3b3a3s3b3t3s3b3s2",
+  "passive": "defeat w1",
+  "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:0★0♥ tank:0★0♥ scorcher:0★0♥"
+ },
+ {
+  "level": "d-crossroads",
+  "difficulty": "endless",
+  "held": 40,
+  "result": "timeout"
+ }
+]
