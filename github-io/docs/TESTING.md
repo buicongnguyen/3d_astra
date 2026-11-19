@@ -3,7 +3,7 @@
 ## Unit tests
 `npm test` runs `node:test` files in `tests/*.test.js`: rules, save and replay, missions, tactics, data checks, palettes, string catalogues. They need no browser and take a few seconds.
 
-Golden gameplay pins (K1): `tests/golden-play.test.js` records the state hash (`sim.hash()`) of whole matches played headless: the idle all-Meridian match (`d071360b`, 60 s, three ways of asking for it), the computer against itself (`aiPlayer`) on four maps at 60, 180 and 300 s, the DefenceBot (`playDefence`) on Gorge Road, Twin Bridges (blowing a bridge) and Three Roads on Standard (hash, result, stars, lives), and the ObjectiveBot for 120 s on missions 1, 3 (the Iron Vanguard) and 6b (air). A clean-up must leave every pin as it is. A change meant to alter play updates the pins it moves and lists old and new values in `docs/CHANGELOG.md`. The file takes about 15 s.
+Golden gameplay pins (K1): `tests/golden-skirmish.test.js`, `golden-defence.test.js` and `golden-story.test.js`; see "Golden pins and baselines" below.
 
 ## Browser suites
 Each is `npm run test:<name>` (`tests/<name>.mjs`, Playwright) and runs against a built game:
