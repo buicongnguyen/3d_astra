@@ -55,7 +55,10 @@ jobs:
           - name: settings
             scripts: improvements campaign offline
           - name: story
-            scripts: missions tactics-ui audio choices
+            scripts: missions tactics-ui
+          # Split from "story": the four suites together ran 27 to 30 minutes on the runner (the cap).
+          - name: story-audio
+            scripts: audio choices
           - name: scenes
             scripts: story
           - name: music
