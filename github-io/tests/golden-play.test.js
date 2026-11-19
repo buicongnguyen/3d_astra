@@ -59,9 +59,9 @@ test("AI against AI", async (t) => {
 
 // 3. The DefenceBot (tools/defence-bot.mjs) plays a level to its end on Standard.
 const DEFENCE = {
-  "d-gorge": { options: {}, end: { result: "victory", stars: 3, lives: 20, hash: "d05fdf96" } },
-  "d-bridges, demolishing a bridge": { level: "d-bridges", options: { demolish: true }, end: { result: "victory", stars: 3, lives: 18, hash: "b3595628" } },
-  "d-crossroads": { options: {}, end: { result: "victory", stars: 2, lives: 15, hash: "23c88f85" } },
+  "d-gorge": { options: {}, end: { result: "victory", stars: 3, lives: 20, hash: "3f391c5e" } },
+  "d-bridges, demolishing a bridge": { level: "d-bridges", options: { demolish: true }, end: { result: "victory", stars: 3, lives: 18, hash: "d3c0f7a1" } },
+  "d-crossroads": { options: {}, end: { result: "victory", stars: 2, lives: 15, hash: "c77144f6" } },
 };
 test("the DefenceBot on Standard", async (t) => {
   for (const [name, pin] of Object.entries(DEFENCE))

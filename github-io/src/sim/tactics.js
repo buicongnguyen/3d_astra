@@ -29,21 +29,33 @@ const TIMED = {
 };
 // Burning ground kept at once (sim.zones); the oldest goes first.
 const MAX_ZONES = 16;
+// Only fighting units earn ranks: not workers, bosses, buildings or walls.
+const earnsRanks = (e) => e.kind === "unit" && !e.boss && e.type !== "worker" && !!e.damage;
 
 export const tactics = {
-  // Called when `victim` dies to a hit from entity `by`. Only fighting units earn ranks.
+  // Called when `victim` dies to a hit from entity `by`.
   creditKill(by, victim) {
     const e = by === null ? null : this.get(by);
-    if (!e || e.kind !== "unit" || e.boss || e.type === "worker" || !e.damage || victim.kind === "wall") return;
+    if (!e || !earnsRanks(e) || victim.kind === "wall") return;
     e.xp = (e.xp || 0) + (victim.kind === "building" ? 2 : victim.pop || 1);
     while ((e.rank || 0) < RANK_XP.length && e.xp >= RANK_XP[e.rank || 0]) {
       e.rank = (e.rank || 0) + 1;
       const before = e.maxHp;
-      e.maxHp = Math.round(D[e.type].hp * (1 + RANK_BONUS * e.rank));
+      // Ranks build on the unit's own health before ranks (baseHp), not only its type's.
+      e.maxHp = Math.round((e.baseHp ?? D[e.type].hp) * (1 + RANK_BONUS * e.rank));
       // A promotion patches the unit up: the added health plus a quarter of the bar.
       e.hp = Math.min(e.maxHp, e.hp + (e.maxHp - before) + e.maxHp * 0.25);
       this.events.push({ type: "promote", id: e.id, rank: e.rank, x: e.x, z: e.z, team: e.team });
     }
+  },
+  // Record `hp` as the health a unit's ranks build on, wherever a unit gets health other than its
+  // type's (the Defence commander, armour squads and their upgrades, tougher waves and their
+  // passengers, a mission's own hp). Kept only when it differs from the type's and only on units
+  // that can earn ranks, so every other match saves and hashes exactly as before.
+  setBaseHp(e, hp = e.maxHp) {
+    if (!earnsRanks(e)) return;
+    if (hp !== D[e.type].hp) e.baseHp = hp;
+    else delete e.baseHp;
   },
   rankFactor(e) {
     return (1 + RANK_BONUS * (e.rank || 0)) * (e.buff?.damage || 1);

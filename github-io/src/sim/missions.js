@@ -97,7 +97,7 @@ export const missions = {
       const e = this.spawn(spawn, team, spot.x, spot.z, complete, exact);
       if (tag) e.tag = tag;
       if (name) e.name = name;
-      if (hp) e.hp = e.maxHp = hp;
+      if (hp) { e.hp = e.maxHp = hp; this.setBaseHp(e); }
       if (speed) e.speed = speed;
       made.push(e);
     }

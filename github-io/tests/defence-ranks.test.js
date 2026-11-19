@@ -7,6 +7,7 @@ import { Simulation } from "../src/simulation.js";
 import { DEFENCE_LEVELS } from "../src/defence/levels.js";
 import { GARRISONS } from "../src/sim/defence.js";
 import { DEFINITIONS as D } from "../src/data.js";
+import { RANK_BONUS } from "../src/sim/tactics.js";
 
 const GORGE = DEFENCE_LEVELS[0], ROADS = DEFENCE_LEVELS.find((l) => l.id === "d-crossroads");
 const make = (level = GORGE, difficulty = "standard") => new Simulation({ map: level.map, enemyCount: 1, ai: false, mission: level, difficulty });
@@ -273,4 +274,114 @@ test("new state appears only on first use; ranks and armour upgrades survive a s
     replay.tick(0.05);
   }
   assert.equal(replay.hash(), s.hash());
+});
+
+// ---------------------------------------------------------------- Promotions keep extra health (D1)
+// A promotion used to rebuild health from the type's own figure, dropping the commander's factor,
+// the armour upgrades and the tougher waves' factors. Ranks now build on `baseHp`, which a unit
+// carries only when its health is not its type's.
+// Kills of one-population units, enough for `ranks` more ranks.
+const promote = (s, e, ranks = 1) => {
+  const want = (e.rank || 0) + ranks;
+  while ((e.rank || 0) < want) s.creditKill(e.id, { kind: "unit", pop: 1 });
+};
+const ranked = (hp, rank) => Math.round(hp * (1 + RANK_BONUS * rank));
+
+test("a promotion keeps the commander's extra health, rank on rank, through a save", () => {
+  const s = make(), hero = s.commander(), base = Math.round(D[hero.type].hp * GARRISONS.commander.hp);
+  assert.equal(hero.maxHp, base);
+  assert.equal(hero.baseHp, base);
+  hero.hp = 500;
+  promote(s, hero);
+  assert.equal(hero.rank, 1);
+  assert.equal(hero.maxHp, ranked(base, 1));
+  // The patch-up is as before: the added health plus a quarter of the bar.
+  assert.equal(hero.hp, Math.min(hero.maxHp, 500 + (hero.maxHp - base) + hero.maxHp * 0.25));
+  promote(s, hero, 2);
+  assert.equal(hero.maxHp, ranked(base, 3));
+  const copy = Simulation.load(s.serialize());
+  assert.equal(copy.commander().baseHp, base);
+  assert.equal(copy.commander().maxHp, ranked(base, 3));
+  // A commander who falls comes back at rank 0 with the full factor.
+  hero.hp = 0;
+  run(s, GARRISONS.commander.respawn + 1);
+  const back = s.commander();
+  assert.ok(back && back.id !== hero.id && !back.rank);
+  assert.equal(back.maxHp, base);
+  assert.equal(back.baseHp, base);
+});
+
+test("an armour tank keeps its upgrades through a promotion, and a promotion before an upgrade keeps it too", () => {
+  const s = make(ROADS), a = GARRISONS.armour;
+  s.players[0].alloy = 5000;
+  s.command({ team: 0, type: "armourBuy" });
+  const [tank, other] = s.armourUnits(1), plain = Math.round(D[tank.type].hp * a.hp);
+  // A tank of the plain squad has its type's health: no baseHp.
+  assert.equal(tank.maxHp, plain);
+  assert.ok(!("baseHp" in tank));
+  // Other: promoted at once, then upgraded. Its next rank builds on the upgraded base.
+  promote(s, other);
+  assert.equal(other.maxHp, ranked(plain, 1));
+  s.command({ team: 0, type: "armourUpgrade", squad: 1 });
+  s.command({ team: 0, type: "armourUpgrade", squad: 1, branch: "bulwark" });
+  const bulwark = tank.maxHp;
+  assert.equal(bulwark, Math.round(Math.round(plain * a.rank2.hp) / a.rank2.hp * a.rank2.hp * a.branches.bulwark.hp));
+  assert.equal(tank.baseHp, bulwark);
+  promote(s, tank);
+  assert.equal(tank.maxHp, ranked(bulwark, 1), "Bulwark health kept");
+  assert.equal(other.baseHp, bulwark);
+  promote(s, other);
+  assert.equal(other.maxHp, ranked(bulwark, 2));
+});
+
+test("tougher wave units and carried squads keep their health factor through a promotion", () => {
+  const level = { ...GORGE, id: "d-test", defence: { ...GORGE.defence, firstWave: 1, gap: 3, waves: [{ groups: [{ units: { vanguard: 1 }, route: "main", hp: 1.5 }], bonus: 10 }] } };
+  const s = make(level);
+  run(s, 2);
+  // The level's own faction picks the type (an Ashfall Scrapper for the Vanguard slot).
+  const foe = s.entities.find((e) => e.team === 1 && e.kind === "unit");
+  const tough = Math.round(D[foe.type].hp * 1.5);
+  assert.equal(foe.maxHp, tough);
+  assert.equal(foe.baseHp, tough);
+  promote(s, foe);
+  assert.equal(foe.maxHp, ranked(tough, 1));
+  // A carrier's passengers step out with the carrier's factor.
+  const carrier = s.spawn("carrier", 1, 0, 0, true, true);
+  Object.assign(carrier, { cargo: ["vanguard", "vanguard"], cargoHp: 0.8, unloadAt: s.time - 10 });
+  s.dropCargo(carrier);
+  const weak = Math.round(D.vanguard.hp * 0.8);
+  for (const u of s.entities.filter((e) => e.team === 1 && e.type === "vanguard" && e.id > carrier.id)) {
+    assert.equal(u.baseHp, weak);
+    promote(s, u);
+    assert.equal(u.maxHp, ranked(weak, 1));
+  }
+});
+
+test("towers never take ranks: a kill leaves a tower's tier health alone", () => {
+  const s = make(), t = branched(s, "antitank", "heavy"), hp = t.maxHp;
+  assert.ok(hp > D.tower.hp);
+  s.creditKill(t.id, { kind: "unit", pop: 20 });
+  assert.equal(t.maxHp, hp);
+  assert.ok(!t.rank && !("baseHp" in t));
+});
+
+test("a plain unit promotes exactly as before and carries no baseHp", () => {
+  const s = new Simulation({ ai: false }), u = s.spawn("ranger", 0, 0, 30);
+  u.hp = 50;
+  for (let rank = 1; rank <= 3; rank++) {
+    const before = u.maxHp, hp = u.hp;
+    promote(s, u);
+    assert.equal(u.maxHp, ranked(D.ranger.hp, rank));
+    assert.equal(u.hp, Math.min(u.maxHp, hp + (u.maxHp - before) + u.maxHp * 0.25));
+  }
+  assert.ok(!("baseHp" in u));
+  // Nothing in an ordinary match carries it; on a Defence level of plain waves only the commander does.
+  const m = new Simulation({ ai: true, aiPlayer: true });
+  run(m, 120);
+  assert.ok(!m.entities.some((e) => "baseHp" in e));
+  const plainWaves = { ...GORGE, id: "d-test", defence: { ...GORGE.defence, waves: GORGE.defence.waves.map((w) => ({ ...w, groups: w.groups.map(({ hp, ...rest }) => rest) })) } };
+  const p = make(plainWaves);
+  run(p, 90);
+  assert.ok(p.entities.some((e) => e.team === 1 && e.kind === "unit"), "a wave on the road");
+  assert.deepEqual(p.entities.filter((e) => "baseHp" in e).map((e) => e.id), [p.commander().id]);
 });

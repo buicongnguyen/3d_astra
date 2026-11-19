@@ -584,7 +584,7 @@ export const defence = {
       }
       d.queue.shift();
       const e = this.spawn(q.type, FOE, start.x, start.z, true, true);
-      if (q.hp) e.hp = e.maxHp = Math.round(e.maxHp * q.hp);
+      if (q.hp) { e.hp = e.maxHp = Math.round(e.maxHp * q.hp); this.setBaseHp(e); }
       if (q.bridger) e.bridger = true;
       // A troop carrier keeps its passengers on board (saved with it) until its drop leg.
       if (q.cargo) { e.cargo = q.cargo.slice(); e.dropLeg = q.dropLeg; if (q.hp) e.cargoHp = q.hp; }
@@ -771,7 +771,7 @@ export const defence = {
     const out = [];
     for (const p of spots) {
       const type = e.cargo.shift(), u = this.spawn(type, FOE, p.x, p.z, true, true);
-      if (e.cargoHp) u.hp = u.maxHp = Math.round(u.maxHp * e.cargoHp);
+      if (e.cargoHp) { u.hp = u.maxHp = Math.round(u.maxHp * e.cargoHp); this.setBaseHp(u); }
       if (e.wave !== undefined) u.wave = e.wave;
       u.angle = e.angle;
       // From the nearest leg, never back past the carrier's own (the squad does not walk back to the stop).
@@ -797,6 +797,7 @@ export const defence = {
     e.blocker = true;
     e.name = c.name;
     e.hp = e.maxHp = Math.round(D[type].hp * c.hp);
+    this.setBaseHp(e);
     e.damage = D[type].damage * c.damage;
     e.interval = D[type].interval * c.interval;
     e.speed = c.speed;
@@ -905,7 +906,7 @@ export const defence = {
     const a = this.armourRules(), e = this.spawn(type, TEAM, x, z, true, true);
     e.squad = squad;
     e.leash = a.leash;
-    if (a.hp !== 1) e.hp = e.maxHp = Math.round(e.maxHp * a.hp);
+    if (a.hp !== 1) { e.hp = e.maxHp = Math.round(e.maxHp * a.hp); this.setBaseHp(e); }
     if (a.damage !== 1) e.damage *= a.damage;
     e.angle = angle;
     e.post = { x, z };
@@ -927,11 +928,13 @@ export const defence = {
     }
     return g;
   },
-  // One tank from the gains `from` to `to`: health grows by what the upgrade adds.
+  // One tank from the gains `from` to `to`: health grows by what the upgrade adds. Its health
+  // before ranks (baseHp) grows the same way, so a later promotion keeps the upgrade.
   armourBoost(e, from, to, rank, branch) {
     const max = Math.round((e.maxHp / from.hp) * to.hp);
     e.hp = Math.min(max, e.hp + Math.max(0, max - e.maxHp));
     e.maxHp = max;
+    if (to.hp !== from.hp) this.setBaseHp(e, Math.round(((e.baseHp ?? D[e.type].hp) / from.hp) * to.hp));
     e.damage = (e.damage / from.damage) * to.damage;
     e.interval = (e.interval / from.interval) * to.interval;
     if (to.mech !== from.mech) e.mechanical_bonus = ((e.mechanical_bonus || 1) / from.mech) * to.mech;
