@@ -929,12 +929,14 @@ export const defence = {
     return g;
   },
   // One tank from the gains `from` to `to`: health grows by what the upgrade adds. Its health
-  // before ranks (baseHp) grows the same way, so a later promotion keeps the upgrade.
+  // before ranks (baseHp) grows the same way, so a later promotion keeps the upgrade. A tank
+  // without baseHp (a plain squad tank, or one saved before baseHp existed) has its type's health
+  // times the squad's factor and the gains it already has.
   armourBoost(e, from, to, rank, branch) {
     const max = Math.round((e.maxHp / from.hp) * to.hp);
     e.hp = Math.min(max, e.hp + Math.max(0, max - e.maxHp));
     e.maxHp = max;
-    if (to.hp !== from.hp) this.setBaseHp(e, Math.round(((e.baseHp ?? D[e.type].hp) / from.hp) * to.hp));
+    if (to.hp !== from.hp) this.setBaseHp(e, Math.round(((e.baseHp ?? D[e.type].hp * (this.armourRules()?.hp ?? 1) * from.hp) / from.hp) * to.hp));
     e.damage = (e.damage / from.damage) * to.damage;
     e.interval = (e.interval / from.interval) * to.interval;
     if (to.mech !== from.mech) e.mechanical_bonus = ((e.mechanical_bonus || 1) / from.mech) * to.mech;

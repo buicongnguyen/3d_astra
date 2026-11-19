@@ -334,6 +334,23 @@ test("an armour tank keeps its upgrades through a promotion, and a promotion bef
   assert.equal(other.maxHp, ranked(bulwark, 2));
 });
 
+test("a Rank 2 squad from a save made before baseHp existed keeps Bulwark through its next promotion", () => {
+  const s = make(ROADS), a = GARRISONS.armour;
+  s.players[0].alloy = 5000;
+  s.command({ team: 0, type: "armourBuy" });
+  s.command({ team: 0, type: "armourUpgrade", squad: 1 });
+  // An older save: the same state without baseHp on the tanks.
+  const data = JSON.parse(s.serialize());
+  for (const e of data.state.entities) delete e.baseHp;
+  const old = Simulation.load(JSON.stringify(data)), [tank] = old.armourUnits(1);
+  assert.ok(!("baseHp" in tank) && tank.squadRank === 2);
+  old.command({ team: 0, type: "armourUpgrade", squad: 1, branch: "bulwark" });
+  const bulwark = Math.round(D[tank.type].hp * a.hp * a.rank2.hp * a.branches.bulwark.hp);
+  assert.equal(tank.baseHp, bulwark);
+  promote(old, tank);
+  assert.equal(tank.maxHp, ranked(bulwark, 1));
+});
+
 test("tougher wave units and carried squads keep their health factor through a promotion", () => {
   const level = { ...GORGE, id: "d-test", defence: { ...GORGE.defence, firstWave: 1, gap: 3, waves: [{ groups: [{ units: { vanguard: 1 }, route: "main", hp: 1.5 }], bonus: 10 }] } };
   const s = make(level);
