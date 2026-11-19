@@ -275,7 +275,9 @@ try {
         programs:v.renderer.info.programs.length, deposits:[...v.resourceObjects.values()].filter(o => o.visible).length,
         units:f.sim.entities.filter(e => e.kind === 'unit').length, quality:v.lowPower ? 'eco' : 'high',
         // Entities drawn as the stand-in airframe because their model was not loaded (must be none).
-        fallbacks:[...v.objects.values()].filter(o => o.userData.model?.name === 'FallbackFlyer').length};
+        fallbacks:[...v.objects.values()].filter(o => o.userData.model?.name === 'FallbackFlyer').length,
+        // Entities with no model at all: a ground type whose model was not loaded is skipped, not drawn (must be none).
+        unloaded:[...new Set(f.sim.entities.filter(e => !v.objects.has(e.id)).map(e => `${e.type}-${e.team}`))]};
     }));
     // Capture before optional moving-arm benchmarks advance environmental effects.
     for (const name of ['scene','control']) {
@@ -368,6 +370,7 @@ try {
       assert.ok(summary.compose.p95 < (scenario.compose || 450) && summary.multiplyMatrices.p95 < 500, 'stationary poses must not rebuild the entire scene');
       assert.equal(summary.bufferUploads.p95, 0, 'unchanged instances and empty effects must not resend GPU buffers');
       assert.equal(summary.fallbacks, 0, `${scenario.name}: every type on screen is loaded (none drawn as the stand-in airframe)`);
+      assert.deepEqual(summary.unloaded, [], `${scenario.name}: every type on screen is loaded (none left undrawn)`);
     }
     if (scenario.defence) {
       // The wave really is on the field, and only the 12 weakest enemies carry a vitals bar.
