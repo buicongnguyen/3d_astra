@@ -7,7 +7,9 @@
 // A Defence mission plays the DefenceBot instead (tools/defence-bot.mjs): it must reach
 // check[difficulty] stars, and an empty field must lose.
 // Usage: npm run check:missions -- --chronicle <id|all> [--only cs1] [--difficulty story|standard|veteran]
-//                                 [--bots passive,objective] [--jobs 2] [--timeout 240] [--log]
+//                                 [--bots passive,objective] [--jobs 2] [--timeout 240] [--log] [--json]
+// --json prints only a JSON array, one object per mission and run, with no wall-clock field (round 2
+// baseline chronicles.json, tools/baseline-diff.mjs).
 // One mission at a time by default (--jobs 1): the machine is shared. Exits 1 when a target is missed.
 import { fork } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -55,13 +57,13 @@ export function misses(m, r) {
 
 // Runs the chronicle missions named by --chronicle (and --only), each kind in its own process.
 export async function runChronicles() {
-  const only = value("--only"), started = Date.now();
+  const only = value("--only"), started = Date.now(), json = flag("--json");
   const todo = missionsOf(value("--chronicle")).filter((m) => !only || m.id.startsWith(only));
   if (!todo.length) { console.error(`No chronicle mission for --chronicle ${value("--chronicle")}${only ? " --only " + only : ""}`); return 2; }
   const kinds = (value("--bots") || "passive,objective").split(",");
   const queue = todo.flatMap((m) => kinds.map((kind) => ({ id: m.id, kind })));
   const results = new Map(), jobs = Math.max(1, Math.min(+(value("--jobs") || 1), queue.length));
-  console.log(`Chronicles · ${DIFFICULTY} · ${todo.length} mission(s)`);
+  if (!json) console.log(`Chronicles · ${DIFFICULTY} · ${todo.length} mission(s)`);
   await Promise.all(Array.from({ length: jobs }, async () => {
     while (queue.length) {
       const { id, kind } = queue.shift();
@@ -76,20 +78,25 @@ export async function runChronicles() {
     }
   }));
   let failed = 0;
+  const rows = [];
   for (const m of todo) for (const kind of kinds) {
     const r = results.get(m.id + kind);
-    if (!r) { console.log(m.id.padEnd(26), kind.padEnd(10), "did not finish (wall-clock cap)"); failed++; continue; }
-    if (r.text) process.stdout.write(r.text);
+    if (!r) { failed++; if (json) rows.push({ mission: m.id, kind, result: "did not finish" }); else console.log(m.id.padEnd(26), kind.padEnd(10), "did not finish (wall-clock cap)"); continue; }
     const bad = misses(m, r);
     failed += bad.length;
+    if (json) { const { text, ...row } = r; rows.push({ mission: m.id, ...row, misses: bad }); continue; }
+    if (r.text) process.stdout.write(r.text);
     const extra = m.defence ? ` ${r.stars}★ ${r.lives}♥ ${r.towers || ""}` : ` obj ${String(r.objectives).padEnd(5)} wave ${String(r.wave ?? "-").padStart(4)} lost ${String(r.lost).padStart(3)}`;
     console.log(m.id.padEnd(26), r.kind.padEnd(10), String(r.result).padEnd(8), String(r.time).padStart(5) + " s", extra, r.medal ? " " + r.medal : "", bad.length ? "  MISS: " + bad.join("; ") : "");
   }
-  console.log(`${failed ? failed + " target(s) missed" : "All targets met"} (${Math.round((Date.now() - started) / 1000)} s)`);
+  if (json) process.stdout.write(`${JSON.stringify(rows, null, 2)}\n`);
+  else console.log(`${failed ? failed + " target(s) missed" : "All targets met"} (${Math.round((Date.now() - started) / 1000)} s)`);
   return failed ? 1 : 0;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   if (flag("--child")) process.send(run(value("--child"), value("--kind")));
+  // --json: no process.exit, so a long array is not cut off in a pipe.
+  else if (flag("--json")) process.exitCode = await runChronicles();
   else process.exit(await runChronicles());
 }
