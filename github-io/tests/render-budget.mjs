@@ -12,7 +12,8 @@
 //            menu as a player does (so the level is built through defenceVariant)
 //   status:  { id, count, team?, seconds? }: the status applied to the first `count` units (needs the
 //            status core, sim.applyStatus)
-//   rules:   skirmish rules for the match (window.__frontier.rules, set before restart and cleared after)
+//   rules:   skirmish rules for the match (window.__frontier.rules, set before restart and cleared after;
+//            a first restart with them loads any models they make the match need)
 // Every type a scenario can put on screen (spawn, air, boss and the boss's drops) is loaded before
 // the frozen scene, so nothing draws as the fallback airframe.
 import { chromium } from 'playwright';
@@ -125,12 +126,22 @@ try {
     // the scenario puts on screen loads before the frozen scene.
     const types = screenTypes(scenario);
     if (types.length) await page.evaluate(types => window.__frontier.view.preloadModels(types), types);
+    // Rules can change the models a match needs (an Expanded roster). restart() then loads them and
+    // builds the match again later, after the rules were cleared: so restart once with the rules and
+    // wait for that load, and the restart below builds its match at once, with them.
+    if (scenario.rules) await page.evaluate(async rules => {
+      const f = window.__frontier;
+      f.rules = rules;
+      try { await f.restart(); } finally { f.rules = null; }
+    }, scenario.rules);
     await page.evaluate(({scenario, mark}) => {
       window.__freezeFrames = true;
       const f = window.__frontier;
       if (scenario.rules) f.rules = scenario.rules;
-      f.restart(); // deterministic initial simulation; no gameplay advances during profiling
+      const loading = f.restart(); // deterministic initial simulation; no gameplay advances during profiling
       if (scenario.rules) f.rules = null;
+      // A restart that still had models to load would replace this match later, mid-measurement.
+      if (loading) throw new Error(`render-budget: ${scenario.name}: restart() had to load models first`);
       f.select([]);
       const s = f.sim, v = f.view;
       s.aiEnabled = false;
