@@ -20,6 +20,10 @@ export function setupDebugHooks(S, A) {
       },
       select: A.setSelection,
       restart: A.restart,
+      // Skirmish rules for the next match built (createSim passes S.rules to the Simulation; round 2).
+      // Tests set them before restart() and clear them after (undefined or null).
+      get rules() { return S.rules; },
+      set rules(r) { S.rules = r || null; },
       get paused() {
         return Z.paused;
       },
