@@ -8,6 +8,7 @@ import * as THREE from "three";
 import { WorldView } from "../src/view.js";
 import { ViewPlugins, VIEW_PLUGINS, HOOKS } from "../src/view-plugins.js";
 import { Simulation } from "../src/simulation.js";
+import { BossView } from "../src/boss-view.js";
 
 // Two fixture plugins writing every call to one log.
 function fixtures(log, { scale = {}, frame = {} } = {}) {
@@ -137,4 +138,20 @@ test("a flyer's vitals bar rides a per-frame scale from the craft's own top, abo
   update();
   assert.equal(u.bar.position.y, u.air.barY + u.model.position.y);
   assert.equal(u.barRest, undefined);
+});
+
+test("a boss's vitals bar, which BossView places at its own height, rides a static scale too", () => {
+  class BossSize { scaleFor(e) { return e.boss ? 1.5 : undefined; } }
+  const bar = (plugins) => {
+    const { sim, view } = staged(plugins);
+    view.bosses = new BossView(view);
+    const boss = sim.spawn("ironvanguard", 1, -3, -12, true, true);
+    view.teamTemplates.set("ironvanguard-1", view.teamTemplates.get("ranger-0"));
+    const u = view.createEntity(boss).userData;
+    return { y: u.bar.position.y, rs: u.readabilityScale };
+  };
+  const plain = bar([]), big = bar([BossSize]);
+  assert.equal(plain.y, 6.4, "no plugin: the bar where BossView puts it");
+  assert.equal(big.rs, plain.rs * 1.5);
+  assert.equal(big.y, 6.4 * 1.5, "the bar sits on top of the scaled boss");
 });

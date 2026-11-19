@@ -1103,7 +1103,8 @@ export class WorldView {
       root.userData.readabilityScale = Math.min(FEEL.maxModelScale, Math.max(1, FEEL.minPixels / Math.max(height, Number.EPSILON)));
     }
     // View plugins' static scale, after the clamp (it may pass maxModelScale); exactly 1 without one.
-    root.userData.readabilityScale *= this.plugins.scaleFor(e);
+    const pluginScale = this.plugins.scaleFor(e);
+    root.userData.readabilityScale *= pluginScale;
     root.userData.barrel=model.getObjectByName('BarrelRig');
     root.userData.turret=model.getObjectByName('TurretRig');
     root.userData.recoil=0;
@@ -1142,6 +1143,8 @@ export class WorldView {
     root.userData.bar = bar;
     bar.position.y *= root.userData.readabilityScale;
     if (e.boss) this.bosses.dress(root, e);
+    // BossView.dress puts a boss's bar at its own height: a plugin's static scale lifts it too (x1 without one).
+    if (e.boss) bar.position.y *= pluginScale;
     // A flyer's bar rides above it: its fly height plus its own height (set again as it flies).
     if (root.userData.air) root.userData.air.barY = bar.position.y = root.userData.air.top * root.userData.readabilityScale + 0.7;
     this.plugins.dress(root, e);

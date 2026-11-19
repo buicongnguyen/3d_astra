@@ -26,15 +26,15 @@ All hooks are optional. Each one is called for every plugin that has it, in list
 | Hook | Called | Use it for |
 |---|---|---|
 | `dress(root, e)` | At the end of `createEntity`, after the ring and vitals bar are made and before the root's transforms are cached and it joins the scene | Extra parts on a new entity: a trim, a banner, a badge. Add children to `root` (or to `root.userData.model` to move with the model). |
-| `scaleFor(e)` | Once per new entity, after the readability clamp (`FEEL.maxModelScale`) and before the vitals bar is placed | A fixed size change: bosses ×1.5. The factor multiplies `root.userData.readabilityScale`, so it may pass the clamp, and the bar sits on top of the scaled model. |
+| `scaleFor(e)` | Once per new entity, after the readability clamp (`FEEL.maxModelScale`) and before the vitals bar is placed | A fixed size change: bosses ×1.5. The factor multiplies `root.userData.readabilityScale`, so it may pass the clamp, and the bar sits on top of the scaled model (a boss's bar too, which `BossView.dress` places at its own height). |
 | `frameScaleFor(e, u, view)` | Every frame, for each visible entity, with `u = root.userData` | A size that changes: units growing at strategic zoom. Applied together with `u.readabilityScale` to the model; the vitals bar rides with it. |
-| `event(ev, sim)` | For each simulation event, after `WorldView` has handled it | Reacting to shots, impacts, deaths, abilities: a flash, a ring, a sound cue. |
+| `event(ev, sim)` | For each event `WorldView.event` gets, after it has handled it. `src/app/frame.js` sends the interface's own events (`message`, `incoming`, `drop`, `carrierDown`, `say`, `objective`, `point`, `camera`, `ping`, `music`, `missionEnd`, `decision`, `decided`, `scene`) to the interface instead, so a plugin never sees those | Reacting to shots, impacts, deaths, abilities, boss stages: a flash, a ring, a sound cue. |
 | `update(sim, dt)` | Once a frame, after the effects and tactics views, before the frame is drawn | Animating what the plugin owns. `dt` is the cosmetic frame time (0 while paused, slowed during hit-stop). |
 | `reset()` | At the end of `WorldView.reset` (a new match) | Removing and disposing what the plugin added. |
 
 A scale hook returns a number, or `undefined` for "not mine" (counted as 1). The factors of several plugins multiply. With no plugin, or none that has the hook, the factor is exactly 1 and every frame is drawn as before (checked: render-budget p95 draws and a held-clock screenshot, `docs/aaa/results/round2/w0a.md`).
 
-The vitals bar follows `frameScaleFor`: a flyer's from the craft's own top (its fly height is already in the bar), anything else's from the bar's height at scale 1, which is read the first time a plugin scales that entity (`u.barRest`). The selection ring does not scale: it marks the footprint.
+The vitals bar follows `frameScaleFor`: a flyer's from the craft's own top (its fly height is already in the bar), anything else's from the bar's height at scale 1, which is read the first time a plugin scales that entity (`u.barRest`). The selection ring does not scale: it marks the footprint. Two things above a model do not follow a plugin's scale yet: a building's faction emblem (placed once from the unscaled model's top) and the high-ground mark of `src/tactics-view.js`, which reads only `u.readabilityScale` (so it follows `scaleFor` but not `frameScaleFor`). A package that scales those entities moves them in its own plugin or asks the file's owner.
 
 ## What a plugin may use
 

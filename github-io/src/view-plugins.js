@@ -8,7 +8,9 @@
 //                             (so it may pass FEEL.maxModelScale) and before the vitals bar is placed
 //   frameScaleFor(e, u, view) a factor each frame, applied with u.readabilityScale (visible entities
 //                             only; u is the root's userData); the vitals bar rides with it
-//   event(ev, sim)            each simulation event, after WorldView's own handling
+//   event(ev, sim)            each event WorldView.event gets, after its own handling (src/app/frame.js
+//                             sends the interface's events, such as message, say, objective, incoming
+//                             and drop, to the interface instead: they never reach a view plugin)
 //   update(sim, dt)           once a frame, after the effects and tactics views, before drawing
 //   reset()                   when the view is reset for a new match
 // A scale hook that returns undefined counts as 1. With no plugin (or none with a hook), nothing is
