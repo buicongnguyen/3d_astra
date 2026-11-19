@@ -40,7 +40,7 @@ Kept in `.tmp/before/` while working (deleted at hand-off; the numbers are here)
 
 | # | Criterion | Result | Met |
 |---|---|---|---|
-| 1 | `npm test` green; at least 609 + 25 tests; `grep -l d071360b tests/*.js` lists exactly one file | 673 tests (645 at the base, +28). 657 pass, 15 skipped (the long pins, which `test:golden-full` runs and passes), **1 fails: the exact-text assert "newGame rebuilds a clean sim" in `tests/review-2026-10b-00.test.js`**, which pins the old `createSim` line. W0-A owns the line but not that test (nobody owns it in Wave 0; W1-A in Wave 1), so per section 2.8 the replacement is in section 7 for the integrator. With it applied: 658 of 658 pass. `grep -l d071360b tests/*.js` → `tests/golden-skirmish.test.js` only | No, until the one-line test change is applied |
+| 1 | `npm test` green; at least 609 + 25 tests; `grep -l d071360b tests/*.js` lists exactly one file | 673 tests at hand-off, 674 after the review (645 at the base, +29). 657 pass (658 after the review), 15 skipped (the long pins, which `test:golden-full` runs and passes), **1 fails: the exact-text assert "newGame rebuilds a clean sim" in `tests/review-2026-10b-00.test.js`**, which pins the old `createSim` line. W0-A owns the line but not that test (nobody owns it in Wave 0; W1-A in Wave 1), so per section 2.8 the replacement is in section 7 for the integrator. With it applied: 658 of 658 pass (659 of 659 after the review). `grep -l d071360b tests/*.js` → `tests/golden-skirmish.test.js` only | No, until the one-line test change is applied |
 | 2 | The `npm test` part of the golden files in 30 s or less; `test:golden-full` in 3 minutes or less | Fast part (three files in parallel), interleaved with the old single file: 6.4 / 8.0 / 99.7 s against 14.2 / 13.8 / 211.0 s (the third pair hit a load spike on both sides); median 8.0 s against 14.2 s. `test:golden-full`: 54 of 54 in 124 s alone, 184 s inside the CI matrix run with a second lane busy | Yes (indicative; the integrator's quiet-machine run decides) |
 | 3 | Each tool reproduces byte-identically on its subset | `check:missions --json --only m01-first-light,m03-the-ashen-line,m06b-wings-over-copper --jobs 3` twice: identical, and every row equals the base text run above. `bench:factions --json --jobs 3` on the 10-match subset: JSON and printed output byte-identical to the base tool's one-process run. `check:defence --json` three times (base tool at the base, `baselines:diff --record`, `baselines:diff`): identical, 28 rows | Yes |
 | 4 | Render budget p95 identical in all 12 existing scenarios | Identical in all 12 (draws and every other p95 counter), old harness on the base build, new harness on the base build and new harness on the seam build; the asserting run passes all 12 with the new no-stand-in-airframe check | Yes |
@@ -174,3 +174,28 @@ capturePoints: !S.mission && S.playMode === \"skirmish\", ...(S.rules ? { rules:
 - **The bench test uses `--cap 30`** (10 matches of 30 s), so `npm test` stays fast; the full-length 10-match equality was checked by hand (criterion 3).
 - **Added beyond the brief:** the towers standing in the Defence pins, a save-and-reload check on all six AI setups (the brief names one), `--cap` and `--dir`/`--list` options, `SOFTWARE_RENDER=1` and the stand-in-airframe assert in the render harness.
 - The brief's line numbers in `view.js` (1100, 1138, 1523) matched the code at `4f951a6`.
+
+## 10. Adversarial review (after hand-off)
+
+The reviewer re-ran the checks on this branch, port 4232, on the same busy machine (timings are indicative):
+
+- `npm test`: 674 tests, 658 pass, 15 skipped (long pins), 1 fails: the declared source-text assert of section 7. The replacement in section 7 was checked: with it, that test passes. `grep -l d071360b tests/*.js` lists `tests/golden-skirmish.test.js` only; the 13 mission checksums pass.
+- Golden fast part against the old file, interleaved (three pairs): 12.3 / 25.0 / 13.0 s against 38.6 / 23.4 / 26.6 s; median 13.0 s (limit 30 s). `test:golden-full` 64 s inside the CI-local run.
+- The new non-golden test files on two cores (`start /affinity 0x3`), alone: `baseline-tools` 7.9 s, the others under 2 s.
+- `check:missions --json --only m01-first-light,m06b-wings-over-copper --jobs 3` twice: byte-identical, rows equal the base table in section 1. `baselines:diff --dir .tmp/bl --record --only defence` then a compare: 28 rows, identical.
+- Render budget, all 12 scenarios asserting: p95 draws exactly as in section 4, no stand-in airframe, no undrawn entity. SwiftShader `battle-eco` screenshot: sha256 `5909de42…` on the base build and on the reviewed build. `air-battle-eco` and `boss-battle-eco` flip between two images (about 400 pixels, at most 3 levels) from run to run on the base build as well; each reviewed-build image equals a base-build image exactly.
+- CI-local, `--fast --no-unit`, 2 lanes, groups interface, visuals, air, bosses and golden-full: 12 of 12 suites passed.
+
+Fixed in review (three commits, each with a check that fails without it):
+
+1. **A boss's vitals bar did not follow a plugin's static scale.** `BossView.dress` sets the boss bar to 6.4 after the plugin factor is applied, so the documented example (bosses ×1.5, W2-F's boss presence) left the bar inside the enlarged model. `createEntity` now multiplies the boss bar by the plugin factor after `BossView.dress` (exactly 1 without a plugin). New test in `tests/view-plugins.test.js` (673 → 674 tests).
+2. **The render-budget model check missed ground units.** A ground type without a loaded template is skipped by `WorldView.update`, not drawn as the stand-in airframe, so a `spawn` of an unloaded ground type measured too few draws and passed. The summary now has `unloaded` (types of entities without a view object), asserted empty; a scratch scenario spawning Walkers without the preload fails on it.
+3. **A `rules` scenario could be measured without its rules.** `restart()` rebuilds the match later when the ruled match needs models that are not loaded (`ensureMatchModels`), and the harness had cleared the rules by then. The harness now restarts once with the rules and awaits that load; the frozen set-up's restart then builds at once and throws if it ever has to load again. A scratch probe forcing one asynchronous load showed the old flow building the final match with `rules = null`.
+
+Docs: `VIEW_PLUGINS.md` and the `view-plugins.js` header now say the `event` hook sees only the events `WorldView.event` gets (`src/app/frame.js` sends `message`, `incoming`, `say`, `objective`, `drop` and the other interface events elsewhere), and that a building's faction emblem and the high-ground mark (`src/tactics-view.js`, reads `u.readabilityScale` only) do not follow a plugin's scale.
+
+Notes for later packages, not fixed (files W0-A does not own):
+
+- W1-A: `createSim`'s contract line passes `S.rules` to campaign missions too when it is set; "skirmish only" is W1-A's guard to add.
+- W1-D (`frameScaleFor` at strategic zoom): the high-ground mark above a unit stays at the unscaled bar height (`tactics-view.js:196`).
+- On a 2-vCPU CI runner `node --test` runs one file at a time (its default concurrency is the core count minus one), so the three golden files do not run in parallel there; the build-job timing on 2 cores stays the integrator's measurement.
