@@ -12,7 +12,7 @@
 - **Target preference:** a definition with `prefers` (a list of classes) ranks enemies by it, then by distance, then by entity order (`preferredEnemy`). No definition has it yet.
 - **Shot events** carry `unit` (the shooter's type: Rider, Drone, Hawk and Glider all fire the Ranger's shot) and, when a module tags a hit, `tags`. Events are not saved, so the state hash does not see them.
 - **`tools/perf-ab.mjs`:** interleaved A/B tick timing of two source trees (a `src` folder or a git ref) in one process, scenes `riverlands-x2-300` and `crossroads-wave-120`, median of 7 runs.
-- **Tests:** `tests/content-seams.test.js` (22) and `tests/effects.test.js` (11); `tests/progression.test.js` counts only the Classic roster (definitions without `roster: "expanded"`: 21 units, 9 buildings, 4 flyers, 1 Defence unit), so Expanded-only units never touch its counts, and allows a shield-less Ashfall workshop unit. 645 → 680 tests.
+- **Tests:** `tests/content-seams.test.js` (23) and `tests/effects.test.js` (11); `tests/progression.test.js` counts only the Classic roster (definitions without `roster: "expanded"`: 21 units, 9 buildings, 4 flyers, 1 Defence unit), so Expanded-only units never touch its counts, and allows a shield-less Ashfall workshop unit. 645 → 681 tests.
 
 ## Unreleased: Frontier Defence "Build zones, armour and Three Roads" (plan: docs/aaa/AAA_GAMEPLAY_STORY_DEFENCE.md, C10–C12)
 

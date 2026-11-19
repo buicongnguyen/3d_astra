@@ -44,7 +44,7 @@ tables now sit in `docs/BALANCE.md` ("D1: promotion keeps health factors").
 | 3 | Tick time on a 300 s riverlands ×2 run within +3% of the base (`perf-ab`, interleaved, median of 7) | Mean tick +0.4% (2.600 → 2.609 ms) and, in a second sample, -7.6% (0.489 → 0.452 ms): within the noise of a loaded machine; same final state on both trees. The integrator's quiet-machine re-run is the gate. | yes (indicative) |
 | 4 | Commit 2 (D1) items | Skipped by the integrator's note: D1 is merged. Its tables are in `docs/BALANCE.md`. | n/a |
 | 5 | Every `check:defence` target still met | PASS, output identical to the base | yes |
-| 6 | Test count +25 or more | 645 → 680 (+35): `content-seams` 22, `effects` 11, `progression` +2 | yes |
+| 6 | Test count +25 or more | 645 → 681 (+36): `content-seams` 23 (22 + 1 from the review), `effects` 11, `progression` +2 | yes |
 
 ### Before (base `4f951a6`) and after (`047bfc5`): identical
 
@@ -111,7 +111,7 @@ integrator's quiet-machine run: `node --expose-gc tools/perf-ab.mjs --a 4f951a6 
 
 | File | Tests | What |
 |---|---:|---|
-| `tests/content-seams.test.js` | 22 | Registry checks (unique ids and step orders, unknown fields, clashes), rules absent (byte-identical save) and present (round trip, `ruleOn` fallback), each hook H1 to H20 with fixture modules (spawn order, step order, damage factor and tags from the main target only, `unit` on every shot, taken and death order, the fight hook moving its own type and leaving a battle without it identical, autocast answers, tower aim, a registered command replaying from the log, mixin and command clashes), the timed buff (keys back, added key deleted, save mid-buff, D1 coexistence, instant abilities), AI rules, `preferredEnemy`, no-op hooks of every kind keeping the classic ×1 golden hash at 180 s, and the sim and entity keys after a 300 s AI match equal to the base (and no `fx`) |
+| `tests/content-seams.test.js` | 23 | Registry checks (unique ids and step orders, unknown fields, clashes), rules absent (byte-identical save) and present (round trip, `ruleOn` fallback), each hook H1 to H20 with fixture modules (spawn order, step order, damage factor and tags from the main target only, `unit` on every shot, taken and death order, the fight hook moving its own type and leaving a battle without it identical, autocast answers, tower aim, a registered command replaying from the log, mixin and command clashes), the timed buff (keys back, added key deleted, save mid-buff, D1 coexistence, instant abilities), AI rules, `preferredEnemy`, no-op hooks of every kind keeping the classic ×1 golden hash at 180 s, and the sim and entity keys after a 300 s AI match equal to the base (and no `fx`) |
 | `tests/effects.test.js` | 11 | Lazy state, lifetimes, never shortened, immunity, factor products in registration order, movement, reload, noFire on a tower (still aimed), noCast, taken, the sweep (back to a state hash equal to a match without statuses), a save mid-status reloading and playing on identically |
 | `tests/progression.test.js` | +2 | Classic-roster counts; a fixture `roster: "expanded"` set left out; the Ashfall shield rule; every definition still has a description and a model |
 
@@ -189,3 +189,41 @@ both subsections under it.
   in the Dunes (2,000) drops it to 562.5 at level 2 (checked headless with a 3,500 relay). The AI never
   levels a mission object (it skips tagged entities). Fixing it changes campaign play: owner decision.
 - Mission `hp` spawns (`sim/missions.js:100`) already call `setBaseHp` since D1.
+
+## Adversarial review (2026-11-19)
+
+Re-measured on the same shared machine (every timing indicative):
+
+- `npm test` green on the reviewed tree and after the fix below (681 tests).
+- Neutrality, base `4f951a6` against this branch, each tree's own code from one script: the idle match
+  (`d071360b`), the 6 skirmish setups at 60, 180 and 300 s with their end and their sim and entity key
+  sets, the classic save at 180 s reloaded to 300 s, a riverlands match with player autocast, the 3
+  DefenceBot runs (stars, lives, towers, hash), Endless on d-gorge to wave 12, m01, m03, m06b, m02b and
+  ca1: every value identical, and equal to the tables above.
+- `check:defence --json`: byte-identical between the two trees and to the integrator's
+  `check-defence-after-D1.json`; PASS.
+- `perf-ab riverlands-x2-300`, 7 ABBA runs: B/A mean -9.4% (A base, B branch) and, sides swapped,
+  -16.9% (A branch, B base); an A/A run of two copies of the base gave +13.9%. On this machine the noise
+  is about ±15%, so the +3% gate can only be settled by the integrator's quiet-machine run.
+  `crossroads-wave-120` against the git ref `4f951a6`: mean -7.8%, same final state `06e1a37a`.
+- Browser groups on 4233 (`ci-local --fast --no-unit`, 2 lanes): `commands`, `story`, `ui-extras`,
+  `defence`, `air`, `bosses`: 16 of 16 suites passed first time.
+- `render-budget` `battle-eco` on a build of the final tree (preview on 4233): p95 107 draws, 91 instanced,
+  0 shadow. Two of three runs passed; the first failed one of the restart-state checks under load
+  (the client is untouched and the sim plays identically, so this is the machine, not the package).
+
+Fixed in review (commit "Registered abilities: a recast reads the unit's own figures ..."):
+
+- `contentAbility` called `use()` before taking off a buff still running, so a recast inside the buff
+  (a cooldown shorter than the duration) built on the buffed figures: a `range + 3` buff gave `range + 6`.
+  The running buff now comes off first, as for the built-in timed abilities, and goes back on unchanged
+  when `use()` answers `false` or `{}`.
+- A timed buff with neither its own nor the ability data's `duration` got `until = NaN` and never
+  ended; it now throws. One new test covers both (it fails on the code before the fix).
+
+Left as notes (no shipped content reaches them):
+
+- The `ability` event carries the ability data's `duration`, not one `use()` returns
+  (`docs/CONTENT_SEAMS.md` says so).
+- A Defence burst rank's gap (`garrisonBurst`) overwrites the cooldown after H9, so a reload status does
+  not stretch the shots inside a burst, only the full reload after it.
