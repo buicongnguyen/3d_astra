@@ -24,6 +24,7 @@
     "breaker":{"height":1.44,"reach":1.9,"life":0.28,"kind":"cannon"},
     "tower":{"height":3.65,"reach":1.72,"life":0.26,"kind":"cannon"},
     "antitank":{"height":1.83,"reach":1.1,"life":0.24,"kind":"rocket"},
-    "support":{"height":1.34,"reach":0.82,"life":0.22,"kind":"support"}
+    "support":{"height":1.34,"reach":0.82,"life":0.22,"kind":"support"},
+    "stalker":{"height":1.4,"reach":2.5,"life":0.42,"kind":"rifle"}
   }
 }

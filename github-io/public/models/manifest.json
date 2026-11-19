@@ -251,6 +251,15 @@
       "budget": 3000,
       "source": "Tank_game_3D public/models/boss-quad-mech.glb (same owner), ported by tools/port-boss-model.mjs",
       "animation": "Runtime parts (src/boss-view.js): legs, torso, arms, light gun and core; no baked clips"
+    },
+    {
+      "name": "stalker",
+      "file": "stalker.glb",
+      "triangles": 2724,
+      "kind": "unit",
+      "budget": 3000,
+      "review": "pending owner review (round 2)",
+      "animation": "Runtime articulated parts; no baked clips"
     }
   ]
 }
