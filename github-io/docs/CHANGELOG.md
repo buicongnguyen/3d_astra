@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased: AAA round 2
+
+### W0-B: Sim seams and status core
+
+- **Nothing changes in play.** Every golden pin, `d071360b`, the 13 mission checksums and `check:defence --json` are identical (D1, the promotion fix, landed before this package; see the D1 entries below).
+- **Content seams (H1 to H20).** New units, statuses, abilities, tower rules, commands, fight behaviours and AI rules are plain modules in `src/sim/content/` (append-only list `src/sim/content/index.js`, dispatcher `src/sim/content.js`). The hot sim files call them through one guarded line each (spawn, step, damage factors, hit, taken, death, fight, autocast, tower aim, commands, AI rules); with no module of a kind, a seam multiplies by exactly 1 or does nothing. A typo'd field, a duplicate id or step order, a command or method that already exists, or an ability with a built-in id throws at import. Guide and worked example: `docs/CONTENT_SEAMS.md`.
+- **Status core** (`src/sim/effects.js`): timed statuses registered by modules (speed, reload and taken factors, noFire, noCast, an icon), with immunity after a status ends. State is created only by the first status (`e.fx`, `sim.fxOn`) and swept away once a second, so after the last status the state is what it would have been without it.
+- **Registered abilities** are a generic timed buff: every changed key is put back, a key the unit did not have is deleted, and health, shield and ranks are never saved or restored (a promotion during a buff keeps its health, D1). Or an instant effect.
+- **Skirmish rules option:** `new Simulation({ rules })` keeps `sim.rules` only when one is set; `sim.ruleOn(id)` reads it (else the mission's rules); saves carry it with their options.
+- **Target preference:** a definition with `prefers` (a list of classes) ranks enemies by it, then by distance, then by entity order (`preferredEnemy`). No definition has it yet.
+- **Shot events** carry `unit` (the shooter's type: Rider, Drone, Hawk and Glider all fire the Ranger's shot) and, when a module tags a hit, `tags`. Events are not saved, so the state hash does not see them.
+- **`tools/perf-ab.mjs`:** interleaved A/B tick timing of two source trees (a `src` folder or a git ref) in one process, scenes `riverlands-x2-300` and `crossroads-wave-120`, median of 7 runs.
+- **Tests:** `tests/content-seams.test.js` (22) and `tests/effects.test.js` (11); `tests/progression.test.js` counts only the Classic roster (definitions without `roster: "expanded"`: 21 units, 9 buildings, 4 flyers, 1 Defence unit), so Expanded-only units never touch its counts, and allows a shield-less Ashfall workshop unit. 645 → 680 tests.
+
 ## Unreleased: Frontier Defence "Build zones, armour and Three Roads" (plan: docs/aaa/AAA_GAMEPLAY_STORY_DEFENCE.md, C10–C12)
 
 - **Build zones (C10):** a level may mark fields (`defence.zones`) where a crew can stand anywhere, on the 2 m grid, besides its fixed pads. Tap a spot in a marked field, pick a crew: the tower gets a pad of its own, so Upgrade, branches and Sell work as on any pad (selling frees the spot). A spot is refused, with the reason on the card and a red ring, within 4.5 m of a road (the column must always pass), near a spawn spot or the exit, within 5 m of another pad or tower, under a unit, where it would wall in ground, or when the field is full. The open cells are painted as one flat mesh (one draw). Command `zoneBuild { zone, x, z, crew }`, saved and replayed like `padBuild`.

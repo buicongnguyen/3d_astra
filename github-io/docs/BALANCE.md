@@ -417,3 +417,58 @@ Sizing and rules: [aaa/BOSSES.md](aaa/BOSSES.md). The Iron Vanguard has 40,000 h
 | Veteran | 589 s silver | 632 s gold |
 
 `--spread`: every run wins except Standard `objective-3` (a 3-unit-smaller marching army), which times out after meeting the boss early. Every other mission is unchanged.
+
+## D1: promotion keeps health factors
+
+AAA round 2, D1 (commits `1da6220` and `98c0471`, on `feat/aaa-round2` before Wave 0). A rank used to
+rebuild a unit's health from its type alone, so the Defence commander (×1.8 of a Vanguard: 936) fell to
+562 at its first rank and a Bulwark armour tank (1,193) to 562. Ranks now build on the unit's own health
+before ranks, `baseHp` (`setBaseHp` in `src/sim/tactics.js`), kept only on units that can earn ranks
+and whose health differs from their type's. Each rank adds 8% of it: the commander goes 936 → 1,011 →
+1,086 → 1,161, a Bulwark tank 1,193 → 1,288. Skirmish, the campaign's base missions and the AI have no
+such unit, so their fingerprints did not move.
+
+The commander's health at the end of the DefenceBot's Standard runs (`playDefence`, measured
+2026-11-19 on the tree before D1, `8e2ff6b`, and after it):
+
+| Level | Before D1 | After D1 |
+|---|---|---|
+| Gorge Road | 562, rank 1 | 1,011, rank 1 |
+| Twin Bridges | 562, rank 1 | 1,086, rank 2 |
+| Switchback Pass | 645, rank 3 | 1,161, rank 3 |
+| Fordwood | 936, no rank | 1,011, rank 1 |
+| Amber Canyon | 645, rank 3 | 1,161, rank 3 |
+| Long Crossing | fallen at the end | fallen at the end |
+| Three Roads | 645, rank 3 | 1,161, rank 3 |
+
+`npm run check:defence -- --json` before and after D1: 17 of 28 rows identical, and every passive,
+single-crew (greedy) and Endless result unchanged. Three more rows keep their stars and lives with
+other towers (Fordwood Standard and Veteran, Amber Canyon Standard). The bot's stars and lives moved
+on 8 runs:
+
+| Level | Difficulty (target) | Before D1 | After D1 |
+|---|---|---|---|
+| Gorge Road | Veteran (1★) | 3★ 20♥ | 3★ 18♥ |
+| Twin Bridges | Standard (2★) | 2★ 14♥ | 2★ 16♥ |
+| Twin Bridges | Veteran (1★) | 2★ 13♥ | 2★ 10♥ |
+| Switchback Pass | Standard (2★) | 2★ 15♥ | 3★ 20♥ |
+| Switchback Pass | Veteran (1★) | 2★ 17♥ | 2★ 14♥ |
+| Amber Canyon | Veteran (1★) | 3★ 19♥ | 3★ 20♥ |
+| Long Crossing | Veteran (1★) | 3★ 20♥ | 1★ 7♥ |
+| Long Crossing, blowing the pontoon | Veteran (1★) | 2★ 15♥ | 3★ 20♥ |
+
+Every run still meets its target. A run plays exactly as before until the first promotion of a unit
+with extra health (on Long Crossing Veteran, the commander's first rank at 37 s); after that the bot's
+own choices differ, so one run's shift is not a measure of difficulty. Golden pins: the three
+DefenceBot hashes moved (Gorge Road d05fdf96 → 3f391c5e, Twin Bridges b3595628 → d3c0f7a1, Three Roads
+23c88f85 → c77144f6; stars and lives the same); the AI-against-AI and campaign pins did not.
+`check:missions` and the Chronicles give identical tables on all three difficulties. Enemy units with a
+wave health factor (×0.65 to ×1.5 in the campaign's Defence missions) now keep it when they rank, but
+none earns a rank in the bot's runs (same final hashes).
+
+Not fixed (reported in the round 2 plan, same bug class): building levels still rebuild health from
+the type (`progression.js` `updateLevel`), so a mission building spawned with its own `hp` loses it on
+a level-up. The AI never levels one (mission objects are tagged, and the AI skips tagged entities), but
+the player can level their own: the Basin relay in Copper Harvest (1,200) and Copper Siege (3,500), the
+Copper refinery in Wings over Copper (2,000) and the Caravan beacon in A Debt in the Dunes (2,000) would
+drop to a relay's 562.5 at level 2 (checked headless). A changed campaign rule needs the owner's OK.

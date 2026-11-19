@@ -401,7 +401,7 @@ test("with no-op hooks of every kind registered, an AI-against-AI match keeps it
   };
   withModules([noop], () => {
     const sim = new Simulation({ map: "classic", enemyCount: 1, aiSpeed: "normal", aiPlayer: true });
-    assert.equal(run(sim, 180), "39426dbc", "the classic x1 normal pin at 180 s (tests/golden-play.test.js)");
+    assert.equal(run(sim, 180), "39426dbc", "the golden pin of classic x1 normal at 180 s");
   });
 });
 
