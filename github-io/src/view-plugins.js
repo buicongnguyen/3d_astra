@@ -17,6 +17,7 @@
 // called and every frame is drawn exactly as before: the scale factors are exactly 1.
 //
 // Plugin modules are imported here, one line each, below this comment.
+import { ArmyReadabilityView } from "./army-readability-view.js";
 
 export const HOOKS = ["dress", "scaleFor", "frameScaleFor", "event", "update", "reset"];
 
@@ -46,4 +47,5 @@ export class ViewPlugins {
 // The registry (append-only): add your plugin class at the end, one entry per package, and never
 // edit or reorder the entries above yours.
 export const VIEW_PLUGINS = [
+  ArmyReadabilityView,
 ];
