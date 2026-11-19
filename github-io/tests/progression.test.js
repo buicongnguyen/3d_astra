@@ -8,14 +8,34 @@ const rich = s => Object.assign(s.players[0],{alloy:5000,energy:5000});
 const step = (s,n) => { for(let i=0;i<n*20;i++)s.tick(.05); };
 const message = s => s.events.filter(e=>e.type==='message').at(-1)?.text;
 
-test('twenty-one units (four of them flyers, one the Defence troop carrier) and nine buildings have complete models, shields and descriptions',()=>{
-  // Bosses (balance.json `bosses`, sim/bosses.js) are units too, but no building trains them.
-  assert.equal(Object.values(D).filter(d=>d.kind==='unit'&&!d.boss).length,21);
-  assert.deepEqual(Object.keys(D).filter(t=>D[t].defence),['carrier']);
-  assert.equal(Object.values(D).filter(d=>d.flying).length,4);
-  assert.equal(Object.values(D).filter(d=>d.kind==='building').length,9);
+// The Classic roster (AAA round 2): every definition without `roster: "expanded"`. Expanded-only units
+// and buildings (the faction workshops and their units) are new content behind a skirmish rule, so
+// adding one never changes these counts. Bosses (balance.json `bosses`, sim/bosses.js) are units too,
+// but no building trains them.
+const classicCounts=defs=>{
+  const c=Object.entries(defs).filter(([,d])=>d.roster!=='expanded');
+  return {units:c.filter(([,d])=>d.kind==='unit'&&!d.boss).length,defence:c.filter(([,d])=>d.defence).map(([t])=>t),flyers:c.filter(([,d])=>d.flying).length,buildings:c.filter(([,d])=>d.kind==='building').length};
+};
+const CLASSIC={units:21,defence:['carrier'],flyers:4,buildings:9};
+// Only a style goes without a shield: the Scrapper, and Ashfall's workshop units (the Rampart).
+const shielded=(type,d)=>d.shield > 0 || type === 'scrapper' || d.workshop === 'ashfall';
+test('the Classic roster: twenty-one units (four of them flyers, one the Defence troop carrier) and nine buildings',()=>{
+  assert.deepEqual(classicCounts(D),CLASSIC);
+});
+test('an Expanded-only definition is left out of the Classic counts; only Ashfall workshop units may skip the shield',()=>{
+  const fixture={...D,
+    fixturegun:{name:'Fixture gun',kind:'unit',class:'siege',shield:35,workshop:'meridian',roster:'expanded',description:'A test unit.'},
+    fixturewing:{name:'Fixture wing',kind:'unit',flying:true,shield:10,workshop:'veil',roster:'expanded',description:'A test flyer.'},
+    fixtureshop:{name:'Fixture workshop',kind:'building',shield:40,roster:'expanded',description:'A test building.'},
+  };
+  assert.deepEqual(classicCounts(fixture),CLASSIC);
+  assert.equal(classicCounts({...fixture,fixturegun:{...fixture.fixturegun,roster:undefined}}).units,22,'without the flag it would count');
+  assert.equal(shielded('fixtureram',{kind:'unit',shield:0,workshop:'ashfall'}),true);
+  assert.equal(shielded('fixturegun',{kind:'unit',shield:0,workshop:'meridian'}),false);
+});
+test('every unit and building, Classic or Expanded, has a description, a shield (or a style without one) and a model',()=>{
   for(const [type,d] of Object.entries(D).filter(([,d])=>d.kind)) {
-    assert.ok(d.description && (d.shield > 0 || type === 'scrapper'));
+    assert.ok(d.description && shielded(type,d),type);
     const buffer=fs.readFileSync(new URL(`../public/models/${type}.glb`,import.meta.url));
     assert.equal(buffer.toString('utf8',0,4),'glTF');
   }
