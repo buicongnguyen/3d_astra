@@ -15,10 +15,10 @@ const foes = (s) => s.entities.filter((e) => e.team === 1 && e.kind === "unit" &
 // A level with one short wave, for exact checks.
 const tiny = (units = { vanguard: 2 }, extra = {}) => ({ ...GORGE, id: "d-test", defence: { ...GORGE.defence, firstWave: 2, gap: 3, waves: [{ groups: [{ units, route: "main", every: 0.7 }], bonus: 10 }], ...extra } });
 
-test("an ordinary match keeps its hash; defence state exists only in defence", () => {
+// The ordinary match's hash itself is pinned in tests/golden-play.test.js.
+test("defence state exists only in defence", () => {
   const s = new Simulation({ ai: false, factions: { 0: "meridian", 1: "meridian" } });
   for (let i = 0; i < 1200; i++) s.tick(0.05);
-  assert.equal(s.hash(), "d071360b");
   assert.equal(s.defence, undefined);
   assert.ok(!s.serialize().includes('"defence"'));
 });

@@ -78,9 +78,7 @@ test('straight walls are lines of breakable pieces, saved and restored', () => {
   assert.equal(copy.hash(), s.hash());
 });
 
-test('maps without plateaus or walls keep their recorded hash', () => {
-  const s = new Simulation({ ai: false, factions: { 0: 'meridian', 1: 'meridian' } });
-  for (let i = 0; i < 1200; i++) s.tick(0.05);
-  assert.equal(s.hash(), 'd071360b');
+// Its recorded 60-second hash (d071360b) is pinned in tests/golden-play.test.js.
+test('the classic map has no plateaus', () => {
   assert.equal(new Terrain('classic').plateaus.length, 0);
 });

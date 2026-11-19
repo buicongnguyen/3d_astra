@@ -98,12 +98,6 @@ test("a loaded skirmish gives back both choices", () => {
   assert.equal(matchLook(null, new Simulation({ ai: false })), null);
 });
 
-test("the all-Meridian hash holds when team 0 is named Meridian explicitly", () => {
-  const s = new Simulation({ ai: false, factions: skirmishSides("meridian", "mirror", 1, "classic") });
-  for (let i = 0; i < 1200; i++) s.tick(0.05);
-  assert.equal(s.hash(), "d071360b");
-});
-
 test("the test bot trains each faction's own units through roster slots", () => {
   for (const faction of ["ashfall", "sunward", "wardens", "veil"]) {
     const s = new Simulation({ ai: false, map: "riverlands", factions: { 0: faction } }), bot = new PlayBot(s);

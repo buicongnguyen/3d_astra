@@ -158,12 +158,6 @@ test("a flyer flies the route, leaks for a life, and a crew that hits air shoots
   assert.ok(!events.some((e) => e.type === "leak"));
 });
 
-test("air waves leave an ordinary match alone: the all-Meridian hash is unchanged", () => {
-  const s = new Simulation({ ai: false, factions: { 0: "meridian", 1: "meridian" } });
-  for (let i = 0; i < 1200; i++) s.tick(0.05);
-  assert.equal(s.hash(), "d071360b");
-});
-
 test("the anti-air hint: only while an enemy flyer is in sight and nothing of the player's can hit it", () => {
   const s = new Simulation({ map: WINGS.map, enemyCount: 1, mission: WINGS });
   assert.equal(airHintText(s), null, "no flyer yet");

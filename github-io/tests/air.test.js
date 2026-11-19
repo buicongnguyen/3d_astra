@@ -253,10 +253,10 @@ test('a match saved mid-flight loads to the same state and keeps playing in step
   assert.ok(copy.get(k.id).flying && copy.get(k.id).airSeenBy !== undefined);
 });
 
-test('no flyer, no change: the all-Meridian hash is unchanged', () => {
+// The idle match's hash itself is pinned in tests/golden-play.test.js.
+test('no flyer, no change: an all-Meridian match makes no air state', () => {
   const s = new Simulation({ ai: false });
   run(s, 60);
-  assert.equal(s.hash(), 'd071360b');
   assert.equal(s.players[0].flak, undefined);
   assert.ok(!s.entities.some((e) => 'airSeenBy' in e));
 });

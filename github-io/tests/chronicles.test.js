@@ -260,9 +260,3 @@ test("finale: each finished chronicle adds its lead's line to mission 12; none l
   for (const m of MISSIONS.filter((x) => !JSON.stringify(x).includes('"if"'))) assert.equal(resolveMission(m, { chronicles: { veil: { done: true } } }), m);
   for (const m of ALL) assert.equal(resolveMission(m, null), m, `${m.id}: nothing to settle`);
 });
-
-test("the simulation hash of a plain skirmish is unchanged", () => {
-  const sim = new Simulation({ ai: false, factions: { 0: "meridian", 1: "meridian" } });
-  for (let i = 0; i < 1200; i++) sim.tick(0.05);
-  assert.equal(sim.hash(), "d071360b");
-});
