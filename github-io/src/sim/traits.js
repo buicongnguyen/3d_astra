@@ -104,6 +104,8 @@ export const traits = {
     let speed = this.factionFor(e.team).trait === 'roads' && ROAD.has(this.terrain.at(e.x, e.z)) ? e.speed * TRAITS.roads.speed : e.speed;
     // Frontier Defence: a Suppressor garrison's hits slow a unit for a moment (sim/defence.js).
     if (e.slowUntil > this.time) speed *= e.slowBy;
+    // H11: a status' speed factor (sim/effects.js), before the ford's.
+    if (e.fx) speed *= this.statusFactor(e, "speed");
     return this.inFord(e) ? speed * TERRAIN.ford_speed : speed;
   },
   // In the ford's water (river maps: |z| < 3 inside the middle crossing). A plain numeric test,

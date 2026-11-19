@@ -2,6 +2,7 @@ import { DEFINITIONS as D, MAX_POP, distance } from "../data.js";
 import { roleOf } from "../ai-plan.js";
 import { EXPAND_CREW } from "./expand.js";
 import { aiAttack } from "./ai-attack.js";
+import { AI_RULES } from "./content.js";
 
 // The computer opponent's build, production and attack decisions (coalition play is in ai-plan.js,
 // field command in ai-attack.js). Mixed into Simulation (see simulation.js).
@@ -132,6 +133,8 @@ export const ai = {
     }
     // Flyers come from the Command core, after the Barracks and Foundry had their turn (sim/ai-counter.js).
     this.aiAirTrain(team, hq, army, pace, afford);
+    // H19: content modules' AI rules, in order, after production (sim/content.js).
+    if (AI_RULES.length) this.contentAi(team, { own, army, workers, hq, pace, afford, role });
     // Flyers count as threats only while this side has something that hits them (sim/air.js).
     const antiAir = army.some((e) => e.hits_air) || (!!this.players[team].flak && own.some((e) => e.type === "tower" && e.complete));
     const threats = hq

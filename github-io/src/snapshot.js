@@ -7,6 +7,8 @@ import { aiPace } from "./ai-plan.js";
 // older saves are then refused instead of loading wrongly.
 export const SAVE_VERSION = 1;
 const DERIVED = new Set(["nav", "terrain", "pace", "events", "commandLog", "lookup", "lookupFor", "lookupSize", "missionDef", "tickEvents"]);
+// H18: skirmish rules are a match option: saved once, with the options, and handed back to the constructor on load.
+DERIVED.add("rules");
 
 const packBits = (cells) => {
   let text = "";
@@ -56,7 +58,7 @@ export const snapshot = {
     state.entities = this.entities.map(slim);
     return JSON.stringify({
       version: SAVE_VERSION,
-      options: { ...(Object.values(this.factions).some(id => id !== "meridian") ? {factions:this.factions} : {}), map: this.terrain.id, enemyCount: this.enemyCount, aiSpeed: this.aiSpeed, alliance: this.coalition ? "coalition" : "ffa", ai: this.aiEnabled, mission: this.missionDef || null, difficulty: this.difficulty, playerBonus: this.playerBonus || null, capturePoints: !!this.capturePointsOn, ...(this.aiPlayer ? {aiPlayer:true} : {}) },
+      options: { ...(Object.values(this.factions).some(id => id !== "meridian") ? {factions:this.factions} : {}), map: this.terrain.id, enemyCount: this.enemyCount, aiSpeed: this.aiSpeed, alliance: this.coalition ? "coalition" : "ffa", ai: this.aiEnabled, mission: this.missionDef || null, difficulty: this.difficulty, playerBonus: this.playerBonus || null, capturePoints: !!this.capturePointsOn, ...(this.aiPlayer ? {aiPlayer:true} : {}), ...(this.rules ? { rules: this.rules } : {}) },
       nav: { revision: this.nav.revision, wallsSpawned: this.nav.wallsSpawned },
       state,
     }, encode);

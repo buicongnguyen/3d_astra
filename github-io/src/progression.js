@@ -1,5 +1,6 @@
 import { difficultyRules } from "./difficulty.js";
 import { DEFINITIONS as D, distance } from './data.js';
+import { TAKEN, ON_DEATH } from './sim/content.js';
 
 // Harvester repair: slower than an Engineer (18 HP/s) and not free. A full repair costs a
 // quarter of the building's price, charged as health is restored. Two Harvesters at most
@@ -80,6 +81,9 @@ export const progression = {
     if (t.boss) damage *= this.bossTaken(t);
     // A Watcher's Mark: more damage from every source while it lasts. A new Mark replaces the old one.
     if (t.markedUntil > this.time) damage *= t.markTaken;
+    // H12: content modules' taken factors, then the statuses' (sim/content.js, sim/effects.js).
+    if (TAKEN.length) damage *= this.takenScale(t,team,by);
+    if (t.fx) damage *= this.statusFactor(t,'taken');
     if (t.kind === 'unit' && t.type !== 'worker' && this.players[t.team]?.plating) damage *= this.players[t.team].plating2 ? 0.88 * 0.92 : 0.88;
     if(t.trainingGuard) damage=Math.min(damage,Math.max(0,t.hp+t.shield-1));
     t.shieldDelay = t.shield_delay ?? 5;
@@ -94,6 +98,8 @@ export const progression = {
       if (t.kind !== 'wall') this.players[team].kills++;
       this.creditKill(by,t);
       this.traitDeath(t,team);
+      // H13: content modules' death hooks (sim/content.js).
+      if (ON_DEATH.length) this.contentDeath(t,team,by);
       this.events.push({type:'death',x:t.x,z:t.z,team:t.team,building:t.kind === 'building' || t.kind === 'wall',heavy:!!t.mechanical,core:t.type==='hq',seed:t.id,direction:by !== null && this.get(by) ? Math.atan2(t.x-this.get(by).x,t.z-this.get(by).z) : t.angle});
       if (t.kind === 'building' || t.kind === 'wall') this.nav.rebuild(this.entities);
       // A boss's marks go with it; its own event follows the death (sim/bosses.js).
