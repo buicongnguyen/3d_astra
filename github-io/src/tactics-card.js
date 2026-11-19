@@ -1,6 +1,6 @@
 import "./tactics-ui.css";
 import { icon } from "./icons.js";
-import { ABILITY_ICONS, ABILITY_KEYS, STANCES, STANCE_INFO, abilityGroups, abilityStatus, shouldPulse, stanceState, stancesInUse, takesStance } from "./tactics-ui.js";
+import { ABILITY_KEYS, STANCES, STANCE_INFO, abilityGroups, abilityStatus, shouldPulse, stanceState, stancesInUse, takesStance } from "./tactics-ui.js";
 
 // Command-card controls for fighting units: one tile per distinct ability (name, glyph,
 // cooldown sweep and seconds) and a three-way stance switch. The markup is rebuilt only when
@@ -13,7 +13,7 @@ export const abilityLimit = (compact, side = false) => (compact && !side ? 4 : A
 export function tacticsCardHTML(sim, entities, { compact = false, side = false, keys = true } = {}) {
   const tiles = abilityGroups(sim, entities, abilityLimit(compact, side)).map((g, i) => {
     const key = keys ? ABILITY_KEYS[i] : null;
-    return `<button class="ability-tile" data-ability="${g.id}"${key ? ` data-hotkey="${key}"` : ""} aria-label="${g.name}" title="${key ? `${key} · ` : ""}${g.name} · ${g.description}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${icon(ABILITY_ICONS[g.id] || "bolt")}<span class="ability-name">${g.name}</span><small class="ability-status"></small><i class="ability-sweep" aria-hidden="true"></i></button>`;
+    return `<button class="ability-tile" data-ability="${g.id}"${key ? ` data-hotkey="${key}"` : ""} aria-label="${g.name}" title="${key ? `${key} · ` : ""}${g.name} · ${g.description}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${icon(g.icon)}<span class="ability-name">${g.name}</span><small class="ability-status"></small><i class="ability-sweep" aria-hidden="true"></i></button>`;
   }).join("");
   const stance = entities.some(takesStance)
     ? `<div class="stance-control" role="group" aria-label="Stance">${STANCES.map((id) => {

@@ -2,7 +2,7 @@
 // hint names the ability, says what it does and how to use it (app/ui-extras.js shows it in the
 // fight-hint slot, which never covers alerts). Once per ability id, remembered across matches in
 // localStorage. Pure: storage and the simulation are passed in, so node:test covers it.
-import { ABILITY_KEYS, ABILITY_ORDER } from "./tactics-ui.js";
+import { ABILITY_KEYS, abilityOrder } from "./tactics-ui.js";
 
 export const ABILITY_HINTS_KEY = "frontier-command.ability-hints.v1";
 // No hint in the first seconds of a match: the briefing and the first orders come first.
@@ -29,15 +29,14 @@ export function rememberAbility(seen, id, storage) {
   }
 }
 
-const order = (id) => { const i = ABILITY_ORDER.indexOf(id); return i < 0 ? ABILITY_ORDER.length : i; };
-// The first unit of `team` (in the fixed ability display order) whose ability is ready and not yet
+// The first unit of `team` (in the fixed ability display order, tactics-ui.js abilityOrder) whose ability is ready and not yet
 // explained, or null.
 export function nextAbilityHint(sim, seen, team = 0) {
   let best = null;
   for (const e of sim.entities) {
     if (e.team !== team || e.kind !== "unit" || !(e.hp > 0) || !e.ability || seen.has(e.ability.id)) continue;
     if (sim.time < (e.abilityAt || 0)) continue;
-    if (!best || order(e.ability.id) < order(best.ability.id)) best = e;
+    if (!best || abilityOrder(e.ability) < abilityOrder(best.ability)) best = e;
   }
   return best;
 }

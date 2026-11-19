@@ -539,7 +539,7 @@ export class Effects {
   }
   ability(e) {
     const anchor = { x: e.x, z: e.z, team: e.team };
-    const tint = { shieldwall: [0.42, 0.8, 1], focus: [1, 0.8, 0.3], overdrive: [1, 0.5, 0.2], lockon: [0.84, 0.56, 1], triage: [0.5, 1, 0.72], fortify: [0.75, 0.9, 1], barrage: [1, 0.8, 0.45], rush: [1, 0.62, 0.3], dash: [1, 0.85, 0.4], brace: [0.55, 0.8, 1], mark: [0.8, 0.55, 1], burnline: [1, 0.5, 0.12] }[e.ability] || [1, 1, 1];
+    const tint = { shieldwall: [0.42, 0.8, 1], focus: [1, 0.8, 0.3], overdrive: [1, 0.5, 0.2], lockon: [0.84, 0.56, 1], triage: [0.5, 1, 0.72], fortify: [0.75, 0.9, 1], barrage: [1, 0.8, 0.45], rush: [1, 0.62, 0.3], dash: [1, 0.85, 0.4], brace: [0.55, 0.8, 1], mark: [0.8, 0.55, 1], burnline: [1, 0.5, 0.12] }[e.ability] || e.tint || [1, 1, 1];
     if (e.ability === 'triage' || e.ability === 'fortify') {
       // A pulse that opens to the ability's reach (the ring sits at 0.8 of the sprite's half width).
       this.decal({ x: e.x, z: e.z }, (e.radius || 6) * 2.5, 0.7, anchor, CELL.ring, [...tint, 0.85], this.glow, 1, { hold: 0, y: 0.1 });
