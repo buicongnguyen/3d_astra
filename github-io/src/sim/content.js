@@ -214,11 +214,18 @@ export const content = {
   //   {} (no change, guard, damage or mech): an instant ability (use() did the work).
   // Returns true when the ability was used (useAbility then sets the cooldown and the event).
   contentAbility(e, a, point) {
+    // As for the built-in timed abilities, use() reads the unit's own figures: a buff still running (a
+    // cooldown shorter than its duration) comes off first, and goes back on when this cast starts none.
+    const running = e.buff, buffed = running ? Object.fromEntries([...Object.keys(running.undo), ...(running.drop || [])].map((key) => [key, e[key]])) : null;
+    if (running) this.endBuff(e);
+    const putBack = () => { if (running) { Object.assign(e, buffed); e.buff = running; } };
     const r = ABILITIES[a.id].use(this, e, a, point);
-    if (!r) return false;
+    if (!r) { putBack(); return false; }
     const timed = r.change !== undefined || r.guard !== undefined || r.damage !== undefined || r.mech !== undefined;
-    if (!timed) return true;
-    this.endBuff(e);
+    if (!timed) { putBack(); return true; }
+    // Without a length the buff would never end (its `until` would be NaN).
+    const seconds = r.duration ?? a.duration;
+    if (!(Number.isFinite(seconds) && seconds > 0)) throw new Error(`Ability "${a.id}": a timed buff needs a duration of more than 0 s (the ability data's or use()'s)`);
     const undo = {}, drop = [];
     for (const [key, value] of Object.entries(r.change || {})) {
       if (BUFF_PROTECTED.has(key)) throw new Error(`Ability "${a.id}" may not change "${key}" (a timed buff never restores health, shield, ranks or timers)`);
@@ -226,7 +233,7 @@ export const content = {
       else undo[key] = e[key];
       e[key] = value;
     }
-    e.buff = { id: a.id, until: this.time + (r.duration ?? a.duration), undo, ...(drop.length ? { drop } : null), guard: r.guard, damage: r.damage, mech: r.mech };
+    e.buff = { id: a.id, until: this.time + seconds, undo, ...(drop.length ? { drop } : null), guard: r.guard, damage: r.damage, mech: r.mech };
     return true;
   },
   // H19, after the AI's production: every module AI rule in order.

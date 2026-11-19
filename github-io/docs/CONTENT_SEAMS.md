@@ -127,8 +127,15 @@ id that a module registers, `useAbility` calls `use(sim, e, a, point)`:
   `sim/content.js`; `hp`, `maxHp`, `baseHp`, `shield`, `rank`, ...): a promotion during the buff must
   keep its health. Changing one throws; use `guard` or a status' `taken` instead.
 - `{}` (none of the above): an **instant** ability; `use()` did the work.
+- `use()` always reads the unit's own figures: when the unit casts again while its buff still runs (a
+  cooldown shorter than the duration), that buff comes off first, as for the built-in timed abilities,
+  and goes back on unchanged when `use()` answers `false` or `{}`. A timed buff needs a duration of more
+  than 0 s (its own or the ability data's); without one `useAbility` throws instead of starting a buff
+  that never ends.
 
-Then the cooldown starts and the `ability` event is raised, as for every ability. Autocast: answer from
+Then the cooldown starts and the `ability` event is raised, as for every ability (the event's
+`duration` is the ability data's, not one `use()` returns: keep the two equal if the view should show
+the buff's real length). Autocast: answer from
 your module's `autocast` hook, or leave it to today's rule (cast while fighting or just hit).
 
 ## Rules

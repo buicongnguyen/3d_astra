@@ -340,6 +340,36 @@ test("H15 and D1: a buff never saves or restores health, so a promotion during i
   });
 });
 
+test("H15: a recast while the buff still runs builds on the unit's own figures; a refused one keeps the buff; no duration throws", () => {
+  let allow = true;
+  const QUICK = { id: "fixture-quick", abilities: {
+    steady: { use: (sim, e) => (allow ? { change: { range: e.range + 3, pierce: 1 } } : false) },
+    endless: { use: (sim, e) => ({ change: { range: e.range + 1 } }) },
+  } };
+  withModules([QUICK], () => {
+    // Cooldown 2 s, buff 8 s: the second cast comes while the first buff runs, as Focus's would.
+    const s = field(), r = s.spawn("ranger", 0, 0, 0), range = r.range;
+    r.ability = { id: "steady", duration: 8, cooldown: 2 };
+    s.useAbility(r);
+    run(s, 2.5);
+    s.useAbility(r);
+    assert.equal(r.range, range + 3, "not range + 6: the running buff came off before use() read the range");
+    run(s, 2.5);
+    allow = false;
+    const until = r.buff.until;
+    assert.equal(s.useAbility(r), false);
+    assert.deepEqual([r.range, r.pierce, r.buff.until], [range + 3, 1, until], "use() said no: the running buff stays as it was");
+    run(s, 8);
+    assert.equal(r.range, range);
+    assert.equal("pierce" in r, false);
+    const q = s.spawn("ranger", 0, 3, 0), qRange = q.range;
+    q.ability = { id: "endless", cooldown: 5 };
+    assert.throws(() => s.useAbility(q), /needs a duration/, "a buff without a length would never end");
+    assert.equal(q.range, qRange);
+    assert.equal(q.buff, undefined);
+  });
+});
+
 test("H15: an ability with no change is instant: cooldown and event, no buff; false means not now", () => {
   let fired = 0;
   withModules([{ id: "fixture-instant", abilities: { flare: { use: (sim, e, a, point) => (point ? (fired++, {}) : false) } } }], () => {
