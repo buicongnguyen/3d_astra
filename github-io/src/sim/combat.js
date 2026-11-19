@@ -1,10 +1,13 @@
 import { distance, hyp } from "../data.js";
 import { LEASH } from "./constants.js";
 import { AIR } from "../factions.js";
+import { HIT_SCALE, ON_HIT, FIGHT, SHOT_TAGS } from "./content.js";
 
 // Target choice, guarding, firing and damage delivery. Mixed into Simulation (see simulation.js).
 export const combat = {
   enemy(e, radius = e.vision, clearShot = false) {
+    // H5: a unit with a target preference (balance.json `prefers`) ranks its candidates first.
+    if (e.prefers) return this.preferredEnemy(e, radius, clearShot);
     let best = null,
       bestD = radius;
     for (const t of this.entities) {
@@ -26,9 +29,36 @@ export const combat = {
     }
     return best;
   },
+  // The same candidates as enemy() (in reach, hostile, seen, hittable, a clear shot when asked),
+  // ranked by the class's place in `e.prefers` (classes not listed come last), then by distance,
+  // then by entity order. Only units with `prefers` come here (H5).
+  preferredEnemy(e, radius = e.vision, clearShot = false) {
+    const prefers = e.prefers;
+    let best = null, bestRank = Infinity, bestD = Infinity;
+    for (const t of this.entities) {
+      if (t.hp <= 0) continue;
+      const lim = radius + t.radius + 0.00001,
+        dx = t.x - e.x,
+        dz = t.z - e.z;
+      if (lim < 0 || dx * dx + dz * dz > lim * lim) continue;
+      if (!this.hostile(e.team, t.team) || !this.isVisible(t, e.team)) continue;
+      if (t.flying && !this.canHit(e, t)) continue;
+      const d = distance(e, t) - t.radius;
+      if (d > radius + 0.00001) continue;
+      const place = prefers.indexOf(t.class), rank = place < 0 ? prefers.length : place;
+      if (rank > bestRank || (rank === bestRank && d >= bestD)) continue;
+      if (clearShot && !e.flying && !t.flying && !this.nav.clearLine(e, t, t.id)) continue;
+      best = t;
+      bestRank = rank;
+      bestD = d;
+    }
+    return best;
+  },
   // Static defenses shoot the nearest combat or support unit first, then Harvesters, and
   // buildings last, so a tower is never busy with a wall while troops destroy it.
   defenseTarget(e) {
+    // H6: a tower given an aim rule (a content module's towerAim) asks it first.
+    if (e.aim) { const t = this.aimedTarget(e); if (t !== undefined) return t; }
     let best = null, bestRank = 3, bestD = Infinity;
     for (const t of this.entities) {
       if (t.hp <= 0) continue;
@@ -79,6 +109,8 @@ export const combat = {
     else if (distance(e, e.post) > 1.5) this.move(e, e.post, dt, 1.2);
   },
   hit(e, target) {
+    // Tags start empty for every shot (sim/content.js SHOT_TAGS).
+    if (SHOT_TAGS.length) SHOT_TAGS.length = 0;
     // Counter and anti-vehicle multipliers depend on each victim, including splash victims.
     const apply = (t, scale = 1) =>
       this.applyDamage(
@@ -88,7 +120,9 @@ export const combat = {
           (t.mechanical ? (e.mechanical_bonus || 1) * (e.buff?.mech || 1) : 1) *
           (t.kind === "building" ? e.building_bonus || 1 : 1) *
           (t.flying && e.kind === "building" ? AIR.flak_bonus : 1) *
-          this.heightDamage(e, t),
+          this.heightDamage(e, t) *
+          // H7: content modules' damage factors, last (sim/content.js); the shot's own target may tag the shot.
+          (HIT_SCALE.length ? this.hitScale(e, t, t === target) : 1),
         e.team,
         e.id,
       );
@@ -103,6 +137,8 @@ export const combat = {
     // A Frontier Defence piercing rank passes part of the target's shield (sim/defence.js).
     if (e.pierce) this.garrisonPierce(e, target, () => apply(target));
     else apply(target);
+    // H8: content modules' hit hooks, after the direct hit (sim/content.js).
+    if (ON_HIT.length) this.contentHit(e, target);
     // Frontier Defence garrisons: branch and crew effects on the target (sim/defence.js).
     if (e.crew) this.garrisonHit(e, target);
     // Area weapons (balance.json splash_radius / splash_damage share) also hit nearby enemies on the
@@ -118,6 +154,10 @@ export const combat = {
       ...(target.flying ? { tAir: target.fly } : null),
       type: "shot",
       weapon: e.shot || e.type,
+      // H8: the shooter's own type always (Rider, Drone, Hawk and Glider share the ranger shot), and the
+      // content modules' tags ("pinned", "rear", ...) only when there are some. Events are not saved.
+      unit: e.type,
+      ...(SHOT_TAGS.length ? { tags: SHOT_TAGS.splice(0) } : null),
       source: e.id,
       target: target.id,
       x: e.x,
@@ -127,7 +167,8 @@ export const combat = {
       team: e.team,
       heavy: ["breaker", "tank", "antitank"].includes(e.shot || e.type),
     });
-    e.cooldown = e.interval;
+    // H9: a status' reload factor (sim/effects.js).
+    e.cooldown = e.interval * (e.fx ? this.statusFactor(e, "reload") : 1);
     // A Frontier Defence burst rank fires its shots close together (sim/defence.js).
     if (e.burst) this.garrisonBurst(e);
   },
@@ -142,6 +183,8 @@ export const combat = {
       (t.flying && !this.canHit(e, t))
     )
       return false;
+    // H20: a content module may move or handle the unit this tick instead (sim/content.js).
+    if (FIGHT.length && this.contentFight(e, t, dt)) return true;
     // Siege weapons reach further against buildings and walls than against units.
     const range = (t.kind !== "unit" && e.siege_range ? e.siege_range : e.range) + this.heightRange(e, t);
     const inRange = distance(e, t) <= range + t.radius + 0.00001;
@@ -149,7 +192,8 @@ export const combat = {
       e.attacking = true;
       e.angle = Math.atan2(t.x - e.x, t.z - e.z);
       e.moving = false;
-      if (e.cooldown <= 0) this.hit(e, t);
+      // H10: a status with noFire (sim/effects.js) keeps the weapon silent; the unit still faces its target.
+      if (e.cooldown <= 0 && !(e.fx && !this.canAct(e, "fire"))) this.hit(e, t);
     } else if (chase && e.kind === "unit") {
       if (this.noFiringPosition(e, t)) return false;
       if (!inRange) {

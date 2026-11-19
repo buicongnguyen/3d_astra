@@ -1,3 +1,5 @@
+import { mergeContentCommands } from "./sim/content.js";
+
 // The one door for player actions. The interface (and later a replay, a save or a network
 // peer) sends plain objects: { team, type, ...arguments }. Each command is checked against
 // the sender's team before it touches the match, and accepted commands are logged with the
@@ -56,6 +58,8 @@ const COMMANDS = {
   // The Commander's answer to the decision a story mission is waiting for (sim/missions.js).
   decide: { allowed: (sim, c) => c.team === 0 && sim.canDecide?.(c.id, c.option), run: (sim, c) => sim.decide(c.id, c.option) },
 };
+// H17: content modules' commands join the table, checked, logged and replayed like these (a name clash throws).
+mergeContentCommands(COMMANDS);
 
 export const commands = {
   command(c) {

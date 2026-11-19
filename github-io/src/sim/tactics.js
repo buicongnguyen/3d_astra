@@ -1,4 +1,5 @@
 import { DEFINITIONS as D, distance } from "../data.js";
+import { ABILITIES, AUTOCAST } from "./content.js";
 
 // Veterancy, stances and unit abilities. Mixed into Simulation (see simulation.js).
 
@@ -27,6 +28,8 @@ const TIMED = {
   // Walker: locked legs, longer reach.
   brace: (e, a) => ({ speed: 0, range: e.range + a.range }),
 };
+// Every ability id handled here; a content module's ability may not reuse one (sim/content.js).
+export const BUILT_IN_ABILITIES = [...Object.keys(TIMED), "barrage", "burnline", "mark", "triage", "fortify"];
 // Burning ground kept at once (sim.zones); the oldest goes first.
 const MAX_ZONES = 16;
 // Only fighting units earn ranks: not workers, bosses, buildings or walls.
@@ -71,14 +74,18 @@ export const tactics = {
   },
   // Not while wading the ford (sim/traits.js inFord).
   abilityReady(e) {
-    return !!e?.ability && e.hp > 0 && e.kind === "unit" && this.time >= (e.abilityAt || 0) && !this.inFord(e);
+    return !!e?.ability && e.hp > 0 && e.kind === "unit" && this.time >= (e.abilityAt || 0) && !this.inFord(e)
+      // H14: a status with noCast (sim/effects.js) holds the ability back.
+      && !(e.fx && !this.canAct(e, "cast"));
   },
   // Uses the unit's ability if it is ready. `point` is needed by aimed abilities (Barrage).
   // Returns true when it was used.
   useAbility(e, point = null) {
     if (!this.abilityReady(e)) return false;
     const a = e.ability;
-    if (TIMED[a.id]) {
+    // H15: a content module's ability first (sim/content.js: a generic timed buff or an instant effect).
+    if (ABILITIES[a.id]) { if (!this.contentAbility(e, a, point)) return false; }
+    else if (TIMED[a.id]) {
       this.endBuff(e);
       const change = TIMED[a.id](e, a), undo = {};
       for (const key of ["speed", "interval", "range"]) if (change[key] !== undefined) { undo[key] = e[key]; e[key] = change[key]; }
@@ -114,6 +121,8 @@ export const tactics = {
   endBuff(e) {
     if (!e.buff) return;
     Object.assign(e, e.buff.undo);
+    // A content ability's keys that the unit did not have before the cast go again (sim/content.js).
+    if (e.buff.drop) for (const key of e.buff.drop) delete e[key];
     e.buff = null;
   },
   // Player command: every selected unit whose ability is ready uses it.
@@ -149,6 +158,8 @@ export const tactics = {
     for (const e of this.entities) {
       if (!this.abilityReady(e) || !(e.team > 0 || this.aiPlayer ? this.aiEnabled : this.players[e.team]?.autocast)) continue;
       const a = e.ability;
+      // H16: content modules answer first: a point or true casts, false skips, undefined leaves it to the rules below.
+      if (AUTOCAST.length) { const ask = this.contentAutocast(e, a); if (ask !== undefined) { if (ask) this.useAbility(e, ask === true ? null : ask); continue; } }
       if (a.id === "triage" || a.id === "fortify") {
         // Worth it only when someone nearby is badly hurt.
         if (this.entities.some((t) => t.team === e.team && t.id !== e.id && t.hp > 0 && t.hp < t.maxHp * 0.6 && distance(e, t) <= a.radius)) this.useAbility(e);

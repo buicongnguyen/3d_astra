@@ -24,13 +24,18 @@ import { expansion } from "./sim/expand.js";
 import { defence } from "./sim/defence.js";
 import { air } from "./sim/air.js";
 import { bosses } from "./sim/bosses.js";
+import { content, installContentMixins, SPAWN, STEP } from "./sim/content.js";
+import { effects } from "./sim/effects.js";
+import { BUILT_IN_ABILITIES } from "./sim/tactics.js";
 
 export { NEUTRAL } from "./sim/constants.js";
 // The match state and its fixed 20 Hz step. Behaviour lives in the systems under sim/, mixed
 // in at the bottom of this file; this class holds setup, shared lookups and the step order.
 export class Simulation {
-  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null, mission = null, factions = null, difficulty = "standard", capturePoints = false, aiPlayer = false } = {}) {
+  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null, mission = null, factions = null, difficulty = "standard", capturePoints = false, aiPlayer = false, rules = null } = {}) {
     this.difficulty = difficultyId(difficulty);
+    // H2: skirmish rules (for example { roster: "expanded" }), kept only when one is set; read with ruleOn() (sim/content.js).
+    if (rules && Object.keys(rules).length) this.rules = { ...rules };
     if (mission) aiSpeed = difficultySpeed(aiSpeed, this.difficulty);
     this.aiEnabled = ai;
     this.entities = [];
@@ -215,6 +220,8 @@ export class Simulation {
     if (d.trains) e.trains = this.resolvedTrains(team,d.trains);
     this.traitSpawn(e);
     this.entities.push(e);
+    // H3: content modules' spawn hooks (sim/content.js).
+    if (SPAWN.length) this.contentSpawn(e);
     return e;
   }
   // Concrete walls: neutral obstacles that block movement and fire until enough shots bring
@@ -303,6 +310,8 @@ export class Simulation {
     this.separate(dt);
     this.stepTactics(dt);
     this.stepTraits(dt);
+    // H4: content modules' step hooks and the status sweep (sim/content.js, sim/effects.js).
+    if (STEP.length || this.fxOn) this.contentStep(dt);
     this.stepAI(dt);
     this.stepMission(dt);
     this.stepSkirmishPoints(dt);
@@ -434,4 +443,7 @@ export class Simulation {
 }
 
 Object.assign(Simulation.prototype, factionRules, traits, height, points, expansion, air, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot, defence, bosses);
+// H1: the content seams and the status core, then every content module's own methods (a name clash throws).
+Object.assign(Simulation.prototype, content, effects);
+installContentMixins(Simulation.prototype, { abilities: BUILT_IN_ABILITIES });
 Simulation.load = (saved) => restore(Simulation, saved);
