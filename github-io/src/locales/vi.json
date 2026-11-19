@@ -1185,7 +1185,14 @@
     "Top rank": "Hạng cao nhất",
     "Rank 2": "Hạng 2",
     "Assault": "Xung kích",
-    "Bulwark": "Thành lũy"
+    "Bulwark": "Thành lũy",
+    "Gunner team": "Tổ súng máy",
+    "Line holder": "Giữ tuyến",
+    "Meridian workshop. A two-soldier machine-gun team that holds a line. Its sweeping fire hits enemies within 1.8 m of the target for half damage and pins infantry: a pinned unit moves at half speed, reloads 50% slower and cannot use its ability for 3 seconds, then shrugs it off for 4. Deals 1.6× damage to close-assault units. Rangers, Riders, Drones and vehicles beat it. Trained at the Field workshop.": "Meridian, xưởng dã chiến. Tổ hai lính với súng máy giữ tuyến. Hỏa lực quét trúng địch trong 1,8 m quanh mục tiêu với nửa sát thương và ghìm bộ binh: quân bị ghìm đi chậm một nửa, nạp đạn chậm hơn 50% và không dùng được kỹ năng trong 3 giây, rồi miễn nhiễm 4 giây. Gây sát thương gấp 1,6 lần lên quân cận chiến. Xạ thủ, Kỵ binh, Máy bay canh gác và xe cơ giới thắng được nó. Huấn luyện tại Xưởng dã chiến.",
+    "Crossfire": "Hỏa lực chéo",
+    "Pin infantry twice as fast for 6 seconds.": "Ghìm bộ binh nhanh gấp đôi trong 6 giây.",
+    "Gunner team: its fire pins infantry rushes. Pinned units slow down and cannot use abilities. Rangers and vehicles beat it.": "Tổ súng máy: hỏa lực ghìm chân các đợt xông bộ binh. Quân bị ghìm đi chậm lại và không dùng được kỹ năng. Xạ thủ và xe cơ giới thắng được nó.",
+    "Pinned": "Bị ghìm"
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],

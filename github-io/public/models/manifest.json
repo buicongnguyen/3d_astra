@@ -251,6 +251,16 @@
       "budget": 3000,
       "source": "Tank_game_3D public/models/boss-quad-mech.glb (same owner), ported by tools/port-boss-model.mjs",
       "animation": "Runtime parts (src/boss-view.js): legs, torso, arms, light gun and core; no baked clips"
+    },
+    {
+      "name": "gunner",
+      "file": "gunner.glb",
+      "triangles": 3196,
+      "kind": "unit",
+      "budget": 3200,
+      "review": "pending owner review (round 2)",
+      "source": "tools/blender/generate_gunner.py (frontier_kit), original design",
+      "animation": "Runtime articulated parts: one shared leg pivot pair, a recoiling BarrelRig; no baked clips"
     }
   ]
 }
