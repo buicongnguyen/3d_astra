@@ -15,7 +15,7 @@ const foes = (s) => s.entities.filter((e) => e.team === 1 && e.kind === "unit" &
 // A level with one short wave, for exact checks.
 const tiny = (units = { vanguard: 2 }, extra = {}) => ({ ...GORGE, id: "d-test", defence: { ...GORGE.defence, firstWave: 2, gap: 3, waves: [{ groups: [{ units, route: "main", every: 0.7 }], bonus: 10 }], ...extra } });
 
-// The ordinary match's hash itself is pinned in tests/golden-play.test.js.
+// The ordinary match's hash itself is pinned in tests/golden-skirmish.test.js.
 test("defence state exists only in defence", () => {
   const s = new Simulation({ ai: false, factions: { 0: "meridian", 1: "meridian" } });
   for (let i = 0; i < 1200; i++) s.tick(0.05);

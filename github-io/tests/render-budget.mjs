@@ -1,5 +1,21 @@
 // Adapted from Claude's smooth-dense-scenes review: count actual WebGL draws,
 // including shadows, then compare the same frozen scene at fixed quality.
+// Run against a built game: TEST_URL=http://127.0.0.1:<port>/ (the default port 4193 is often taken);
+// RENDER_ONLY=<name>,<name> runs some scenarios; --record <label> writes test-results/render-<label>/
+// without asserting; SOFTWARE_RENDER=1 draws with SwiftShader (bit-stable screenshots for A/B checks).
+//
+// A scenario is data. Besides the map, camera and the inline set-ups below (army, wave, towers, air):
+//   spawn:   [{ type, team = 1, count = 1, near: [x, z] }]  units in a 2 m grid centred on `near`
+//   boss:    "<type>" (true = the Iron Vanguard): spawned awake in its warning, its first attack's mark
+//            on the ground in front of it
+//   variant: a Frontier Defence variant ("endless", "daily", later "heroic"), picked on the Defence
+//            menu as a player does (so the level is built through defenceVariant)
+//   status:  { id, count, team?, seconds? }: the status applied to the first `count` units (needs the
+//            status core, sim.applyStatus)
+//   rules:   skirmish rules for the match (window.__frontier.rules, set before restart and cleared after;
+//            a first restart with them loads any models they make the match need)
+// Every type a scenario can put on screen (spawn, air, boss and the boss's drops) is loaded before
+// the frozen scene, so nothing draws as the fallback airframe.
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -9,10 +25,30 @@ const label = record >= 0 ? process.argv[record + 1] : 'current';
 assert.match(label, /^[a-z0-9-]+$/);
 const output = `test-results/render-${label}`;
 fs.mkdirSync(output, {recursive:true});
+const software = !!process.env.SOFTWARE_RENDER;
 const browser = await chromium.launch({headless:true,
   executablePath:process.platform === 'win32' ? 'C:/Program Files/Google/Chrome/Application/chrome.exe' : undefined,
-  args:process.platform === 'win32' ? ['--use-angle=d3d11', '--enable-gpu'] : ['--enable-unsafe-swiftshader'],
+  args:software ? ['--use-angle=swiftshader', '--use-gl=angle', '--enable-unsafe-swiftshader'] : process.platform === 'win32' ? ['--use-angle=d3d11', '--enable-gpu'] : ['--enable-unsafe-swiftshader'],
 });
+const balance = JSON.parse(fs.readFileSync(new URL('../src/balance.json', import.meta.url), 'utf8'));
+const bossType = scenario => scenario.boss === true ? 'ironvanguard' : scenario.boss || null;
+// A boss's drops (units it releases as it is hurt), as a list of types, read from its definition or its boss entry.
+const dropsOf = type => {
+  const d = balance.definitions[type] || {}, spec = balance.bosses?.[d.boss] || {};
+  return [...(d.drops || []), ...(spec.drops || [])].map(x => typeof x === 'string' ? x : x?.type || x?.unit).filter(Boolean);
+};
+// Every type the scenario can put on screen that the match itself may not have loaded.
+const screenTypes = scenario => [...new Set([...(scenario.spawn || []).map(x => x.type), ...(scenario.air || []).map(([type]) => type),
+  ...(bossType(scenario) ? [bossType(scenario), ...dropsOf(bossType(scenario))] : [])])];
+// The boss's first attack as a ground mark: its id and zone (shape, radius and any other zone field).
+const bossMark = scenario => {
+  const type = bossType(scenario);
+  if (!type) return null;
+  const spec = balance.bosses?.[balance.definitions[type]?.boss], attack = spec?.attacks?.[0];
+  if (!attack) throw new Error(`render-budget: ${type} has no boss attack in balance.json`);
+  const {shape, radius, ...extra} = attack.zone;
+  return {type, attack:attack.id, shape, radius, extra};
+};
 const scenarios = [
   {name:'base-high', map:'riverlands', enemies:1, mobile:false, zoom:42, focus:[-20,19], reveal:false},
   {name:'river-overview-high', map:'riverlands', enemies:1, mobile:false, zoom:70, focus:[0,0], reveal:true},
@@ -53,6 +89,9 @@ const scenarios = [
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
+// Limits of scenarios added in AAA round 2: one new line per package right below this comment,
+// `Object.assign(limits, { "<name>": <n> });` (the line above stays as it is).
+Object.assign(limits, {});
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -71,6 +110,7 @@ try {
     await page.waitForFunction(() => window.__frontier?.view.modelsReady, null, {timeout:90000});
     if (scenario.defence) {
       await page.locator('[data-mode="defence"]').click();
+      if (scenario.variant) await page.locator(`[data-defence-variant="${scenario.variant}"]`).click();
       await page.locator(`[data-level-id="${scenario.defence}"]`).click();
     } else {
       await page.selectOption('#scenario', scenario.map);
@@ -82,13 +122,26 @@ try {
       await page.locator('#start').click();
       await page.waitForFunction(() => window.__frontier.started && window.__frontier.sim.defence && document.querySelector('#defence-bar'), null, {timeout:30000});
     }
-    // Flyer models load in the background in play (WorldView.preloadModels); here, before the frozen scene.
-    if (scenario.air) await page.evaluate(types => window.__frontier.view.preloadModels(types), [...new Set(scenario.air.map(([type]) => type))]);
-    if (scenario.boss) await page.evaluate(() => window.__frontier.view.preloadModels(['ironvanguard']));
-    await page.evaluate(scenario => {
+    // Flyer and boss models load in the background in play (WorldView.preloadModels); here, every type
+    // the scenario puts on screen loads before the frozen scene.
+    const types = screenTypes(scenario);
+    if (types.length) await page.evaluate(types => window.__frontier.view.preloadModels(types), types);
+    // Rules can change the models a match needs (an Expanded roster). restart() then loads them and
+    // builds the match again later, after the rules were cleared: so restart once with the rules and
+    // wait for that load, and the restart below builds its match at once, with them.
+    if (scenario.rules) await page.evaluate(async rules => {
+      const f = window.__frontier;
+      f.rules = rules;
+      try { await f.restart(); } finally { f.rules = null; }
+    }, scenario.rules);
+    await page.evaluate(({scenario, mark}) => {
       window.__freezeFrames = true;
       const f = window.__frontier;
-      f.restart(); // deterministic initial simulation; no gameplay advances during profiling
+      if (scenario.rules) f.rules = scenario.rules;
+      const loading = f.restart(); // deterministic initial simulation; no gameplay advances during profiling
+      if (scenario.rules) f.rules = null;
+      // A restart that still had models to load would replace this match later, mid-measurement.
+      if (loading) throw new Error(`render-budget: ${scenario.name}: restart() had to load models first`);
       f.select([]);
       const s = f.sim, v = f.view;
       s.aiEnabled = false;
@@ -140,14 +193,26 @@ try {
           s.spawn(kinds[row % kinds.length], team, -8 + row % 6 * 2, (team ? -1 : 1) * (6 + Math.floor(row / 6) * 2));
         }
       }
-      if (scenario.boss) {
-        // Awake and in its warning, its 4.5 m mark on the player's front rank (sim/bosses.js state, set directly).
-        const b = s.spawn('ironvanguard', 1, -3, -12, true, true);
+      if (mark) {
+        // Awake and in its warning, its first attack's mark on the player's front rank (sim/bosses.js
+        // state, set directly): the Iron Vanguard's 4.5 m four-gun burst.
+        const b = s.spawn(mark.type, 1, -3, -12, true, true);
         b.bs = {phase:'warning', stage:1, cycle:0, post:{x:b.x, z:b.z}, zone:1, until:s.time + 3};
-        s.dangerZones = [{id:1, boss:b.id, team:1, attack:'four-gun-burst', shape:'circle', x:-3, z:6, radius:4.5, angle:0, from:s.time - 1, at:s.time + 2, until:s.time + 3}];
+        s.dangerZones = [{id:1, boss:b.id, team:1, attack:mark.attack, shape:mark.shape, x:-3, z:6, radius:mark.radius, angle:0, from:s.time - 1, at:s.time + 2, until:s.time + 3, ...mark.extra}];
       }
       for (const [i, [type, team]] of (scenario.air || []).entries())
         s.spawn(type, team, -6 + (i % 4) * 3, (team ? -1 : 1) * 3, true, true);
+      // Data-driven units: a 2 m grid centred on `near`.
+      for (const {type, team = 1, count = 1, near = [0, 0]} of scenario.spawn || []) {
+        const cols = Math.ceil(Math.sqrt(count)), rows = Math.ceil(count / cols);
+        for (let i = 0; i < count; i++)
+          s.spawn(type, team, near[0] + (i % cols - (cols - 1) / 2) * 2, near[1] + (Math.floor(i / cols) - (rows - 1) / 2) * 2, true, true);
+      }
+      if (scenario.status) {
+        const {id, count, team, seconds = 1e6} = scenario.status;
+        if (typeof s.applyStatus !== 'function') throw new Error('render-budget: a status scenario needs the status core (sim.applyStatus)');
+        s.entities.filter(e => e.kind === 'unit' && (team === undefined || e.team === team)).slice(0, count).forEach(e => s.applyStatus(e, id, seconds));
+      }
       v.life.uniforms.uTime.value = 0;
       v.focusOn(...scenario.focus); v.zoom = scenario.zoom; v.updateCamera(); v.resize();
       window.__renderOnce = () => v.update(s, 0, f.selected, null);
@@ -192,7 +257,7 @@ try {
         try { return direct.call(this, camera, scene, geometry, material, ...rest); }
         finally { meter.phase = 'main'; }
       };
-    }, scenario);
+    }, {scenario, mark:bossMark(scenario)});
     if (scenario.mobile) {
       const cdp = await page.context().newCDPSession(page);
       await cdp.send('Emulation.setCPUThrottlingRate', {rate:4});
@@ -219,7 +284,11 @@ try {
       const f = window.__frontier, v = f.view;
       return {gpu:window.__renderMeter.gpu, geometries:v.renderer.info.memory.geometries,
         programs:v.renderer.info.programs.length, deposits:[...v.resourceObjects.values()].filter(o => o.visible).length,
-        units:f.sim.entities.filter(e => e.kind === 'unit').length, quality:v.lowPower ? 'eco' : 'high'};
+        units:f.sim.entities.filter(e => e.kind === 'unit').length, quality:v.lowPower ? 'eco' : 'high',
+        // Entities drawn as the stand-in airframe because their model was not loaded (must be none).
+        fallbacks:[...v.objects.values()].filter(o => o.userData.model?.name === 'FallbackFlyer').length,
+        // Entities with no model at all: a ground type whose model was not loaded is skipped, not drawn (must be none).
+        unloaded:[...new Set(f.sim.entities.filter(e => !v.objects.has(e.id)).map(e => `${e.type}-${e.team}`))]};
     }));
     // Capture before optional moving-arm benchmarks advance environmental effects.
     for (const name of ['scene','control']) {
@@ -311,6 +380,8 @@ try {
       assert.ok(summary.triangles.p95 < (scenario.triangles || (scenario.mobile ? 315000 : 450000)), 'instancing must not inflate triangle submission');
       assert.ok(summary.compose.p95 < (scenario.compose || 450) && summary.multiplyMatrices.p95 < 500, 'stationary poses must not rebuild the entire scene');
       assert.equal(summary.bufferUploads.p95, 0, 'unchanged instances and empty effects must not resend GPU buffers');
+      assert.equal(summary.fallbacks, 0, `${scenario.name}: every type on screen is loaded (none drawn as the stand-in airframe)`);
+      assert.deepEqual(summary.unloaded, [], `${scenario.name}: every type on screen is loaded (none left undrawn)`);
     }
     if (scenario.defence) {
       // The wave really is on the field, and only the 12 weakest enemies carry a vitals bar.

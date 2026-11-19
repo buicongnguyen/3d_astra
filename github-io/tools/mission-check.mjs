@@ -3,8 +3,12 @@
 //   generic    PlayBot (builds, defends, marches on a core at 16 fighters); must last 8 minutes
 //   objective  ObjectiveBot (reads the mission's objectives); must win inside the time window
 // Usage: node tools/mission-check.mjs [--only m05] [--bots passive,generic,objective] [--full] [--jobs 8] [--log] [--attack-at 16] [--rush] [--spread]
-//                                     [--decide default|mercy|firm] [--progress file.json] [--timeout 240]
-//   --only   missions whose id starts with the text      --full  generic bot plays to the cap too
+//                                     [--decide default|mercy|firm] [--progress file.json] [--timeout 240] [--json]
+//   --only   missions whose id starts with the text (a comma list: any of them)
+//   --full   generic bot plays to the cap too
+//   --json   prints only a JSON array, one object per mission and run, in mission and bot order, with
+//            no wall-clock field: the same missions give the same bytes (round 2 baselines,
+//            tools/baseline-diff.mjs). A run stopped by --timeout is a row with result "did not finish".
 //   --log    print objective, point and wave events of the objective bot's run
 //   --decide how the bot answers Commander decisions (0.19a), and the answers it assumes for
 //            earlier missions: "mercy" or "firm" for every decision, "default" (the default) for
@@ -146,14 +150,14 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // Faction Chronicles (0.20): --chronicle <id|all> plays those missions with their own targets.
   else if (value("--chronicle")) fork(fileURLToPath(new URL("./chronicle-check.mjs", import.meta.url)), args).on("exit", (code) => process.exit(code ?? 1));
   else {
-    const only = value("--only"), started = Date.now();
-    const todo = MISSIONS.map((m, i) => i).filter((i) => !only || MISSIONS[i].id.startsWith(only));
+    const only = value("--only")?.split(","), started = Date.now(), json = flag("--json");
+    const todo = MISSIONS.map((m, i) => i).filter((i) => !only || only.some((id) => MISSIONS[i].id.startsWith(id)));
     if (!todo.length) { console.error("No mission id starts with " + only); process.exit(2); }
     // Longest runs first, so the last worker is not left alone with the finale.
     const queue = todo.flatMap((index) => kinds.map((kind) => ({ index, kind }))).sort((a, b) => b.kind.startsWith("objective") - a.kind.startsWith("objective") || b.index - a.index);
     const results = new Map();
     const jobs = Math.max(1, Math.min(+(value("--jobs") || 8), cpus().length - 1, queue.length));
-    if (PROGRESS || DECIDE !== "default") console.log(`Decisions: ${DECIDE}${PROGRESS ? " · progress " + JSON.stringify(PROGRESS.decisions || {}) : ""}`);
+    if (!json && (PROGRESS || DECIDE !== "default")) console.log(`Decisions: ${DECIDE}${PROGRESS ? " · progress " + JSON.stringify(PROGRESS.decisions || {}) : ""}`);
     // Each run plays in its own process, a few at a time; a stuck one is stopped after --timeout (4 minutes).
     await Promise.all(Array.from({ length: jobs }, async () => {
       while (queue.length) {
@@ -169,16 +173,22 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
       }
     }));
     let failed = 0;
+    const rows = [];
     for (const index of todo) for (const kind of kinds) {
       const r = results.get(index + kind), mission = MISSIONS[index];
-      if (!r) { console.log(mission.id.padEnd(24), kind.padEnd(11), "did not finish"); failed++; continue; }
-      if (r.text) process.stdout.write(r.text);
+      if (!r) { failed++; if (json) rows.push({ mission: mission.id, kind, result: "did not finish" }); else console.log(mission.id.padEnd(24), kind.padEnd(11), "did not finish"); continue; }
       const bad = misses(index, r);
       failed += bad.length;
+      if (json) { const { text, ...row } = r; rows.push({ mission: mission.id, ...row, misses: bad }); continue; }
+      if (r.text) process.stdout.write(r.text);
       const extra = r.defence ? ` ${r.defence.stars}★ ${r.defence.lives}♥ ${r.defence.greedy || r.defence.towers}` : "";
       console.log(mission.id.padEnd(24), r.kind.padEnd(11), r.result.padEnd(8), String(r.time).padStart(5) + " s", " obj", r.objectives.padEnd(5), " wave", String(r.wave ?? "-").padStart(4), " lost", String(r.lost).padStart(3), r.medal ? " " + r.medal : "", extra, r.flags ? " " + JSON.stringify(r.flags) : "", bad.length ? "  MISS: " + bad.join("; ") : "");
     }
-    console.log(`${failed ? failed + " target(s) missed" : "All targets met"} (${Math.round((Date.now() - started) / 1000)} s)`);
-    process.exit(failed ? 1 : 0);
+    // JSON: no process.exit, so a long array is not cut off in a pipe (asynchronous on Linux).
+    if (json) { process.stdout.write(`${JSON.stringify(rows, null, 2)}\n`); process.exitCode = failed ? 1 : 0; }
+    else {
+      console.log(`${failed ? failed + " target(s) missed" : "All targets met"} (${Math.round((Date.now() - started) / 1000)} s)`);
+      process.exit(failed ? 1 : 0);
+    }
   }
 }

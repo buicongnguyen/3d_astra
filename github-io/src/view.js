@@ -26,6 +26,7 @@ import { BossView, bossTemplates } from "./boss-view.js";
 import { cacheTransforms } from "./transform-cache.js";
 import { AmbientLife } from "./ambient-life.js";
 import { defaults } from "./settings.js";
+import { ViewPlugins } from "./view-plugins.js";
 import {
   EnvironmentView,
   paintTerrain,
@@ -311,6 +312,8 @@ export class WorldView {
     this.reducedMotion.addEventListener("change", () =>
       this.environment?.configure(this.settings),
     );
+    // Round 2 view plugins (src/view-plugins.js, docs/VIEW_PLUGINS.md), built once with the view ready.
+    this.plugins = new ViewPlugins(this);
   }
   // Each map has its own time of day: a warm key light, a cool sky fill, a warm bounce from
   // the ground, and a deep fog-of-war colour from the same family as its horizon.
@@ -1099,6 +1102,9 @@ export class WorldView {
       const height = (max-min) * (this.frameHeight || this.renderer.domElement.getBoundingClientRect().height) / this.defaultZoom;
       root.userData.readabilityScale = Math.min(FEEL.maxModelScale, Math.max(1, FEEL.minPixels / Math.max(height, Number.EPSILON)));
     }
+    // View plugins' static scale, after the clamp (it may pass maxModelScale); exactly 1 without one.
+    const pluginScale = this.plugins.scaleFor(e);
+    root.userData.readabilityScale *= pluginScale;
     root.userData.barrel=model.getObjectByName('BarrelRig');
     root.userData.turret=model.getObjectByName('TurretRig');
     root.userData.recoil=0;
@@ -1137,12 +1143,23 @@ export class WorldView {
     root.userData.bar = bar;
     bar.position.y *= root.userData.readabilityScale;
     if (e.boss) this.bosses.dress(root, e);
+    // BossView.dress puts a boss's bar at its own height: a plugin's static scale lifts it too (x1 without one).
+    if (e.boss) bar.position.y *= pluginScale;
     // A flyer's bar rides above it: its fly height plus its own height (set again as it flies).
     if (root.userData.air) root.userData.air.barY = bar.position.y = root.userData.air.top * root.userData.readabilityScale + 0.7;
+    this.plugins.dress(root, e);
     cacheTransforms(root);
     this.scene.add(root);
     this.objects.set(e.id, root);
     return root;
+  }
+  // A view plugin's per-frame scale (frameScaleFor) lifts the vitals bar with the model: a flyer's from
+  // its own top (its fly height is already in the bar), anything else's from the bar's height at
+  // scale 1, read the first time a plugin scales it (u.barRest).
+  scaleBar(u, frame) {
+    if (u.air) { u.bar.position.y += u.air.top * u.readabilityScale * (frame - 1); return; }
+    u.barRest ??= u.bar.position.y;
+    u.bar.position.y = u.barRest * frame;
   }
   // Flyers (0.18, sim/air.js): the model rides at its fly height (balance.json `fly`) above the
   // highest ground near it; rotors spin and the balloon's flame flickers per instance (their
@@ -1305,6 +1322,7 @@ export class WorldView {
     if (event.type === 'strike') this.life?.disturb(event.x, event.z, event.radius || 4);
     if (event.type === 'death' || event.type === 'impact')
       this.life?.disturb(event.x, event.z, event.type === 'impact' ? 1.5 : event.building ? 6 : event.heavy ? 4 : 2.5);
+    this.plugins.event(event, sim);
   }
   // The destroyed entity's model stays for a short death animation instead of vanishing:
   // buildings shake and sink with a tilt, vehicles are thrown and settle as a wreck, infantry
@@ -1510,6 +1528,8 @@ export class WorldView {
         if (!u.pressed) { u.pressed = true; this.scatter?.flatten(e.x, e.z, e.radius + 0.5); }
       }
       if (u.hover && lively && !this.lowPower && this.settings.combatMotion !== false) { u.hoverClock += dt * FEEL.hoverRate; lift += Math.sin(u.hoverClock) * FEEL.hoverAmplitude; }
+      // View plugins' scale this frame (exactly 1 without one), applied with the readability scale.
+      const frame = this.plugins.frameScaleFor(e, u, this);
       if (u.air) {
         // Flyers: up at their altitude, nose down in forward flight; ring and bar ride with them.
         const air = this.stepFlyer(u, o.position.x, o.position.z, o.position.y, dt, lively);
@@ -1520,7 +1540,8 @@ export class WorldView {
       }
       m.position.set(back ? -Math.sin(m.rotation.y) * back : 0, lift, back ? -Math.cos(m.rotation.y) * back : 0);
       m.scale.set(1 + squash * 0.5, (e.complete ? 1 : 0.15 + e.progress * 0.85) + squash, 1 + squash * 0.5);
-      m.scale.multiplyScalar(u.readabilityScale);
+      m.scale.multiplyScalar(u.readabilityScale * frame);
+      if (frame !== 1 || u.barRest !== undefined) this.scaleBar(u, frame);
       m.rotation.z = isHarvesting(sim,e) && !this.reducedMotion.matches ? Math.sin(sim.time*7+e.id)*0.045 : 0;
       for (let i = 0; i < u.legs.length; i++) {
         const leg = u.legs[i];
@@ -1581,6 +1602,7 @@ export class WorldView {
     this.updateDying(sim, dt);
     this.fx.update(sim, dt);
     this.tactics.update(sim, dt, selected);
+    this.plugins.update(sim, dt);
     // Story missions: a ground ring at each capture point.
     if (sim.mission || sim.capturePointsOn || this.captureRings) {
       this.captureRings ||= new CaptureRings(this.scene);
@@ -1683,6 +1705,7 @@ export class WorldView {
     this.maxZoom = null;
     this.updateCamera();
     this.fogClock = 0;
+    this.plugins.reset();
   }
 }
 // What a Frontier Defence entity is dressed as: the commander, or a garrison's tier (and branch,
