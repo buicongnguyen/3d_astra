@@ -115,3 +115,13 @@ test('new weapon voices exist and are picked by unit', () => {
   assert.equal(weaponVoice('ranger', 'gunner'), 'mg'); assert.equal(weaponVoice('ranger', 'stalker'), 'laser'); assert.equal(weaponVoice('ranger', 'hawk'), 'pod');
   for (const n of ['shot:mg', 'shot:laser', 'shot:pod', 'shot:flame', 'impact:crit']) assert.ok(BANK[n], n);
 });
+
+test('a counter hit flares gold (a flare and a ring), a resisted hit only puffs grey', () => {
+  const fx = fxWith(seeded(9)), at = { x: 1, y: 1, z: 1 };
+  fx.counterHit(at, null, true);
+  const gold = fx.glow.items.filter((p) => p.cell === 5 && p.c0[0] === 1 && p.c0[2] < 0.6).length;
+  assert.ok(gold >= 1 && fx.glow.items.some((p) => p.cell === 2), 'gold flare and ring');
+  const fy = fxWith(seeded(9)); fy.counterHit(at, null, false);
+  assert.equal(fy.glow.items.filter((p) => p.cell === 5).length, 0);
+  assert.ok(fy.smoke.items.length >= 1);
+});
