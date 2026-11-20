@@ -157,6 +157,7 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
   function renderLine() {
     const line = queue.current;
     box.hidden = !line;
+    fold();
     root.classList.toggle("dialogue-open", !!line);
     if (!line) return;
     if (d("dialogue-portrait").dataset.who !== line.who) {
@@ -182,8 +183,18 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
     d("dialogue-more").textContent = text;
   }
   const dismiss = () => { if (queue.next()) renderLine(); };
-  // The whole card dismisses on a tap or click; it is small and never covers the controls.
-  d("dialogue-card").addEventListener("click", (event) => { event.stopPropagation(); dismiss(); });
+  // Desktop: the whole card dismisses on a tap or click. Phones: the line is a one-line chip that opens on a tap
+  // (the Dismiss button then clears it, a tap elsewhere on the card folds it back); a new line, a scene or the
+  // end of the match folds it again (mission-ui.css).
+  const compact = () => root.classList.contains("compact-ui");
+  const fold = () => box.classList.remove("expanded");
+  d("dialogue-card").addEventListener("click", (event) => {
+    event.stopPropagation();
+    if (!compact()) { dismiss(); return; }
+    if (!box.classList.contains("expanded")) box.classList.add("expanded");
+    else if (event.target.closest("#dialogue-close")) { fold(); dismiss(); }
+    else fold();
+  });
 
   // Objectives panel: the default three goals stay for skirmish; missions get their own list.
   const fallback = document.createElement("div");
