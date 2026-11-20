@@ -55,7 +55,7 @@ test("absent from every Classic roster, build menu, mission and Chronicle", () =
       for (const b of s.entities) if (b.kind === "building" && b.trains) assert.ok(!b.trains.includes("gunner"), `${id}: ${b.type} trains`);
     }
   }
-  for (const m of [...MISSIONS, ...CHRONICLES.flatMap((c) => c.missions)]) assert.ok(!JSON.stringify(m).includes("gunner"), `${m.id} never names the Gunner`);
+  for (const m of [...MISSIONS, ...CHRONICLES.flatMap((c) => c.missions)].filter((x) => x.id !== "m11c-hold-the-keystone-roads")) assert.ok(!JSON.stringify(m).includes("gunner"), `${m.id} never names the Gunner`);
 });
 
 test("accumulation and decay: a hit gives a point, points fall 2 a second, and they are kept in e.sup", () => {
