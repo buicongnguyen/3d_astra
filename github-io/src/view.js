@@ -7,7 +7,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Terrain } from "./terrain.js";
 import { ActivityView } from "./activity-view.js";
-import { mulberry32 } from "./audio-logic.js";
+import { mulberry32 } from "./rng.js";
 import { Effects } from "./fx.js";
 import { startFlash, stepFlash, HIT_FLASH } from "./combat-feedback.js";
 import { createRing, updateRing, createBar, updateBar, setTeamColor, createMarker, createRally, updateRally } from "./selection-view.js";
@@ -84,11 +84,9 @@ const ECO_ZOOM = 31;
 const LIGHT_Z = SUN_OFFSET.clone().normalize();
 const LIGHT_X = new THREE.Vector3(0, 1, 0).cross(LIGHT_Z).normalize();
 const LIGHT_Y = LIGHT_Z.clone().cross(LIGHT_X);
-let seed = 1482;
-function random() {
-  seed = (seed * 1664525 + 1013904223) >>> 0;
-  return seed / 4294967296;
-}
+// Cosmetic module generator: reseeded in createTerrain (shared mulberry32, src/rng.js).
+let cosmetic = mulberry32(1482);
+const random = () => cosmetic();
 function mesh(geometry, material, x = 0, y = 0, z = 0) {
   const m = new THREE.Mesh(geometry, material);
   m.position.set(x, y, z);
@@ -685,7 +683,7 @@ export class WorldView {
     this.applyReflections();
   }
   createTerrain() {
-    seed = 1482;
+    cosmetic = mulberry32(1482);
     this.terrainRoot = new THREE.Group();
     this.scene.add(this.terrainRoot);
     const canvas = document.createElement("canvas");

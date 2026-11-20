@@ -1,7 +1,7 @@
 // Helpers shared by the weapon kinds in this folder (AAA round 2, W2-E). A kind is
 //   { id, spawn(fx, ev, rng, a) }          draws one shot (motion on; the static version is src/fx.js's)
 // with `fx` the Effects (its pooled layers glow / smoke / decals), `ev` the shot event, `rng` the random
-// source (injected: Math.random until the per-match seeded generator replaces it) and `a` the aim:
+// source (injected: the per-match seeded generator) and `a` the aim:
 //   from, to      muzzle and aim point in the world (y includes the ground)     land   the ground point
 //   ux, uy, uz    unit direction muzzle -> aim        len   distance         sx, sz   unit sideways (horizontal)
 //   nx, nz        horizontal unit direction           travel   seconds a round flies      anchor   the fog anchor

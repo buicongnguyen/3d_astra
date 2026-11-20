@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { fnv1a, mulberry32 } from "./rng.js";
 import { ROCKS } from "./data.js";
 import { themeFor, lookOf } from "./visual-style.js";
 import { fogAware } from "./fog-aware.js";
@@ -41,16 +42,8 @@ export const DRESSING = {
     ["rock", 70, LAND], ["flower", 400, ["grass"]], ["ruinFloor", 8, ["stone", "dirt"]], ["ruinPillar", 8, ["stone", "dirt"]]] },
 };
 
-function rng(seed) {
-  let s = seed >>> 0;
-  return () => {
-    s = (s + 0x6d2b79f5) >>> 0;
-    let t = Math.imul(s ^ (s >>> 15), 1 | s);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-const hashId = (id) => [...id].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619), 2166136261);
+const rng = mulberry32;
+const hashId = fnv1a;
 
 // The four camp sites (starting bases stand in mirrored quadrants) stay clear of solid props.
 export function campSites(terrain) {

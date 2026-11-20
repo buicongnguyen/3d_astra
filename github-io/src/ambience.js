@@ -1,3 +1,4 @@
+import { mulberry32 } from "./rng.js";
 // Power state for the shared AudioContext: asleep while the match is paused or the page is
 // hidden. iOS reports "interrupted" after a call or app switch; resume() recovers it too.
 export function audioPower(context, quiet) {
@@ -20,8 +21,9 @@ export class Ambience {
       ),
       data = buffer.getChannelData(0);
     let last = 0;
+    const rnd = mulberry32(5);
     for (let i = 0; i < data.length; i++) {
-      last = (last + (Math.random() * 2 - 1) * 0.04) / 1.04;
+      last = (last + (rnd() * 2 - 1) * 0.04) / 1.04;
       data[i] = last;
     }
     this.source.buffer = buffer;
