@@ -167,10 +167,13 @@ try {
     assert.deepEqual(await badControls('#dialogue button'), [], `${name} dialogue controls`);
     await noSideScroll('dialogue');
     // The battlefield still takes input beside the box.
-    assert.ok(await page.evaluate(() => { const c = document.querySelector('#world canvas').getBoundingClientRect(), d = document.querySelector('#dialogue-card').getBoundingClientRect(); const hit = document.elementFromPoint(c.left + c.width / 2, Math.min(c.bottom - 30, d.bottom + 60)); return hit?.tagName === 'CANVAS'; }), `${name}: the box does not block the battlefield`);
+    assert.ok(await page.evaluate(() => { const c = document.querySelector('#world canvas').getBoundingClientRect(), d = document.querySelector('#dialogue-card').getBoundingClientRect(); const hit = document.elementFromPoint(c.left + c.width / 2, (d.top > c.top + c.height / 2 ? d.top - 40 : Math.min(c.bottom - 30, d.bottom + 60))); return hit?.tagName === 'CANVAS'; }), `${name}: the box does not block the battlefield`);
     await shot('dialogue');
+    // Phones (W1-D): the line is a one-line chip; a tap opens it, then Dismiss moves on.
     await press('#dialogue-card');
+    if (name !== 'desktop') await press('#dialogue-close');
     assert.match(await page.locator('#dialogue-text').innerText(), /Pick a Harvester/, 'dismissing shows the next line');
+    if (name !== 'desktop') await press('#dialogue-card');
     await press('#dialogue-close');
     assert.equal(await page.locator('#dialogue').isHidden(), true, 'the last line dismisses to nothing');
     // A backlog during a fight: four lines wait, the rest are in the Comms log; nothing is lost.
