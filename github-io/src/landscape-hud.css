@@ -277,6 +277,12 @@
   .compact-ui:not(.in-briefing) .selection-panel.has-entity .sel-portrait { align-self: center; }
 }
 
+/* 320 px phones: the four stats of the unit card ran 2 px past the card (Wave 1 integration). */
+@media (max-aspect-ratio: 1.35) and (max-width: 340px) {
+  .compact-ui:not(.in-briefing) .selection-panel.has-entity .unit-metrics { gap: 3px; }
+  .compact-ui:not(.in-briefing) .selection-panel.has-entity .unit-metrics > div { gap: 3px; }
+}
+
 @media (max-aspect-ratio: 1.35) {
   .compact-ui:not(.in-briefing) .selection-panel.has-entity #selection-info .portrait { width: 40px; height: 40px; }
   .compact-ui:not(.in-briefing) .selection-panel.has-entity { padding-bottom: 6px; }
