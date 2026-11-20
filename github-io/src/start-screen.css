@@ -166,7 +166,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: 750 15px/1.2 var(--font-display);
+  font: 750 15px/1.2 var(--font-tile);
   color: var(--text-1);
 }
 .mode-switch button > small {
@@ -247,7 +247,7 @@
   border-radius: 50%;
   border: 1px solid var(--line-2);
   background: var(--ink-1);
-  font: 800 14px var(--font-display);
+  font: 800 14px var(--font-tile);
   color: var(--text-1);
 }
 .stage-list button[aria-current="true"] b {
@@ -256,7 +256,7 @@
 }
 .stage-list strong {
   display: block;
-  font: 700 15px/1.25 var(--font-display);
+  font: 700 15px/1.25 var(--font-tile);
 }
 .stage-list small {
   display: block;

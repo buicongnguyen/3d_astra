@@ -1,0 +1,17 @@
+{
+  "_about": "Owner decision O7: the whole first-impression grade lives in this one table. strength scales every grade term (0 = off, 1 = as written, 1.5 = bolder). default applies to every theme; a theme may override single terms under themes. rim is the Fresnel edge light: strength per render tier and the exponent. fog replaces a theme's fog-of-war colour (applied by view.js applyTheme). The display font is --font-display in src/ui-theme.css.",
+  "strength": 1,
+  "default": {
+    "saturation": 1.12,
+    "shadowTint": [0.03, 0.012, -0.022],
+    "shadowRange": 0.5,
+    "contrast": 0.28
+  },
+  "themes": {},
+  "rim": {
+    "strength": { "high": 0.35, "eco": 0.25 },
+    "power": 2.6,
+    "color": "#ffd9a8"
+  },
+  "fog": { "classic": "#3a2a4a" }
+}
