@@ -10,6 +10,7 @@
 //            on the ground in front of it
 //   variant: a Frontier Defence variant ("endless", "daily", later "heroic"), picked on the Defence
 //            menu as a player does (so the level is built through defenceVariant)
+//   elite:   true (Defence `wave` scenarios) makes every third wave unit an elite, the six affixes in turn (W2-B)
 //   status:  { id, count, team?, seconds? }: the status applied to the first `count` units (needs the
 //            status core, sim.applyStatus)
 //   rules:   skirmish rules for the match (window.__frontier.rules, set before restart and cleared after;
@@ -97,6 +98,9 @@ const scenarios = [
   // AAA round 2 (W1-A): battle-eco under the Expanded roster, a Field workshop on each side (the first `rules` scenario).
   {name:'battle-expanded-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rules:{roster:'expanded'},
     spawn:[{type:'workshop', team:0, near:[-12,12]}, {type:'workshop', team:1, near:[-12,-12]}]},
+  // AAA round 2 (W2-B): d-longcrossing Heroic wave 6 look: elites (gold rings) and Stalkers among 120 wave units, 10 towers.
+  {name:'defence-heroic-eco', defence:'d-longcrossing', variant:'heroic', mobile:true, zoom:78, focus:[0,0], reveal:true, wave:50, towers:6, triangles:600000, compose:460, elite:true, unlockAfter:['d-canyon', 'd-longcrossing'],
+    spawn:[{type:'stalker', team:1, count:2, near:[-3,-14]}]},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
@@ -107,6 +111,7 @@ Object.assign(limits, { "gunner-battle-eco": 125 });
 Object.assign(limits, { "stalker-battle-eco": 125 });
 Object.assign(limits, { 'boss-sovereign-eco': 120, 'defence-boss-eco': 125 });
 Object.assign(limits, {'battle-expanded-eco':125}); // W1-A
+Object.assign(limits, {'defence-heroic-eco':125}); // W2-B
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -115,7 +120,7 @@ try {
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
     // A later Defence level opens with a star on the one before it (src/defence/progress.js levelOpen).
-    if (scenario.unlockAfter) await page.addInitScript(id => { try { localStorage.setItem('frontier-defence-v1', JSON.stringify({levels:{[id]:{stars:1, lives:5, difficulty:'standard'}}})); } catch {} }, scenario.unlockAfter);
+    if (scenario.unlockAfter) await page.addInitScript(ids => { try { localStorage.setItem('frontier-defence-v1', JSON.stringify({levels:Object.fromEntries([].concat(ids).map(id => [id, {stars:1, lives:5, difficulty:'standard'}]))})); } catch {} }, scenario.unlockAfter);
     await page.addInitScript(() => {
       const nativeRAF = window.requestAnimationFrame.bind(window);
       window.__nativeRAF = nativeRAF;
@@ -194,6 +199,8 @@ try {
           const e = s.spawn(s.typeFor(1, kind), 1, a.x + (b.x - a.x) * t + nx * side, a.z + (b.z - a.z) * t + nz * side, true, true);
           e.angle = Math.atan2(b.x - a.x, b.z - a.z);
           if (i % 2) e.hp = e.maxHp * 0.5;
+          // W2-B: `elite` makes every third wave unit an elite (the affixes in turn), for the gold rings.
+          if (scenario.elite && i % 3 === 0) s.applyElite(e, {elite:['plated','swift','splitter','volatile','banner','mender'][(i / 3 | 0) % 6], split:'vanguard'});
         }
         // The commander on the road in the middle of it all (left where it is if it is not there).
         const hero = s.commander?.(), mid = routes[0][Math.floor(routes[0].length / 2)];
@@ -403,7 +410,7 @@ try {
       const field = await page.evaluate(() => { const f = window.__frontier, v = f.view; return {units:f.sim.entities.filter(e => e.team === 1).length, bars:[...v.objects.values()].filter(o => o.userData.bar?.visible && o.userData.team === 1).length, crews:[...v.objects.values()].filter(o => o.userData.crew).length,
         commander:[...v.objects.values()].some(o => o.userData.dressed === 'hero'), pontoons:v.scene.children.filter(o => o.name === 'defence-pontoon' && o.visible).length, bridgesShown:[...(v.environment?.bridges?.values() || [])].filter(b => b.visible).length}; });
       console.log('defence field', JSON.stringify(field));
-      assert.equal(field.units, scenario.wave + (scenario.boss ? 1 : 0), 'the wave, plus the boss when the scenario spawns one');
+      assert.equal(field.units, scenario.wave + (scenario.boss ? 1 : 0) + (scenario.spawn || []).filter(x => (x.team ?? 1) === 1).reduce((a, x) => a + (x.count || 1), 0), 'the wave, plus the boss when the scenario spawns one');
       assert.ok(field.bars <= 12, `defence: ${field.bars} enemy vitals bars`);
       assert.equal(field.crews, scenario.towers + (scenario.zoneTowers || 0));
       assert.ok(field.commander, 'the commander is drawn in gold');

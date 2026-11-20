@@ -2,8 +2,8 @@ import * as THREE from "three";
 
 // Gold rings under elite units (AAA round 2, W2-B; docs/VIEW_PLUGINS.md). One InstancedMesh of flat rings,
 // 1 draw call while any elite is on screen, nothing built until the first one (a match with no elite never
-// creates it). A view plugin: it only reads the simulation (`e.elite`). The ring pulses gently (still under
-// motion-off) and its colour follows the affix: gold for all, with a warm tint per affix.
+// creates it). A view plugin: it only reads the simulation (`e.elite`). Its colour follows the affix: gold for all, with a warm tint
+// per affix. It uploads its buffers only when a ring moved (render-budget: no buffer traffic while still).
 const CAPACITY = 64;
 const TINT = { plated: 0xffd84a, swift: 0xfff07a, splitter: 0xffb04a, volatile: 0xff8a3a, banner: 0xffe066, mender: 0xb8ff8a };
 
@@ -11,6 +11,7 @@ export class EliteView {
   constructor(view) {
     this.view = view;
     this.mesh = null;
+    this.drawn = 0;
     this.dummy = new THREE.Object3D();
     this.color = new THREE.Color();
   }
@@ -30,23 +31,28 @@ export class EliteView {
   update(sim, dt) {
     if (!sim.defence?.elites) { if (this.mesh?.visible) { this.mesh.visible = false; this.mesh.count = 0; } return; }
     if (!this.mesh) this.build();
-    const objects = this.view.objects, motion = this.view.feelEnabled?.() !== false && !this.view.lowPower;
-    let n = 0;
+    const objects = this.view.objects;
+    let n = 0, dirty = false;
+    const A = this.mesh.instanceMatrix.array;
     for (const e of sim.entities) {
       if (!e.elite || !(e.hp > 0) || n >= CAPACITY) continue;
       const o = objects.get(e.id);
       if (!o || !o.visible) continue;
-      const r = (e.radius || 0.7) * 1.35 * (o.userData?.readabilityScale || 1) * (motion ? 1 + 0.06 * Math.sin(sim.time * 4 + e.id) : 1);
+      const r = (e.radius || 0.7) * 1.35 * (o.userData?.readabilityScale || 1) ;
       this.dummy.position.set(o.position.x, (o.position.y || 0) + 0.06, o.position.z);
       this.dummy.scale.set(r, 1, r);
       this.dummy.updateMatrix();
-      this.mesh.setMatrixAt(n, this.dummy.matrix);
-      this.mesh.setColorAt(n, this.color.setHex(TINT[e.elite] || 0xffd84a));
+      // Upload only what changed: a ring that stands still costs no buffer traffic.
+      const m = this.dummy.matrix.elements;
+      for (let k = 0; k < 16; k++) if (A[n * 16 + k] !== Math.fround(m[k])) { dirty = true; break; }
+      if (dirty || this.drawn <= n) { this.mesh.setMatrixAt(n, this.dummy.matrix); this.mesh.setColorAt(n, this.color.setHex(TINT[e.elite] || 0xffd84a)); }
       n++;
     }
+    if (n !== this.mesh.count) dirty = true;
+    this.drawn = n;
     this.mesh.count = n;
     this.mesh.visible = n > 0;
-    if (n) { this.mesh.instanceMatrix.needsUpdate = true; if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true; }
+    if (n && dirty) { this.mesh.instanceMatrix.needsUpdate = true; if (this.mesh.instanceColor) this.mesh.instanceColor.needsUpdate = true; }
   }
   reset() {
     if (!this.mesh) return;
