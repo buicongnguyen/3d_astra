@@ -6,7 +6,7 @@ Status: done (win-rate band reported for O2). Built and gated (rules.aiPlan fiel
 Probe: turtling PlayBot (Meridian) against Ashfall and Sunward AI, 3 maps x Normal/Fast, 900 s (11 of 12 rows read; one run per cell).
 | Criterion | Number | Met |
 |---|---|---|
-| Classic identical | npm test 810 pass 0 fail; perf-ab same hash 3f77c63b; baselines:diff see below | yes |
+| Classic identical | npm test 810 pass 0 fail; perf-ab same hash 3f77c63b; baselines:diff --full all 8 identical (missions x5, chronicles, defence, bench-classic) | yes |
 | Tank or Walker by 600 s | 10 of 11 (before 0 of 12); the miss is dunes Normal Sunward at 729 s | about (needs 10 of 12) |
 | Median unspent energy at 900 s | about 200 (rows 15 to 631; before 1,800 to 2,200). Lever: no Harvester to energy above 500 energy when alloy under 300 | yes |
 | 5+ combat types, Classic roster | 11 of 11 (6 in 6 of them) | yes |
