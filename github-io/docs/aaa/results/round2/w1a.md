@@ -7,7 +7,7 @@ Branch `r2/w1a-roster` (base tag `r2-wave-0`), port 4232. Machine shared and loa
 | Item | Before (base) | After |
 |---|---|---|
 | `npm test` | 710 tests, 695 pass, 15 skipped | **727 tests**, 711 pass, 0 fail, 16 skipped (+17; brief asked +12) |
-| `baselines:diff` (defence, missions-standard) | identical (recorded at base, `.tmp`) | see "Baselines" below |
+| `baselines:diff` (defence, missions-standard) | identical (recorded at base, `.tmp`) | identical (2 of 2) |
 | `battle-eco` p95 draws | 107 | 107 |
 | `battle-expanded-eco` (new, limit 125) | n/a | **114** (0 fallbacks, nothing unloaded) |
 | Golden pins | all hold | all hold (none re-recorded) |
@@ -40,4 +40,4 @@ Preview sheets: `w1a/workshop-game.png` (game angle beside Foundry and Barracks)
 - After W1-B and W1-C merge, `golden-w1a` is unaffected (Wardens only). Real Meridian/Veil units train via `workshopUnitsOf`; no edit needed.
 
 ## Baselines
-See the commit message / final report for the `baselines:diff` outcome.
+`npm run baselines:diff`: missions-standard identical, defence identical (both re-run after all W1-A changes).
