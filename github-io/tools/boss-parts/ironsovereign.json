@@ -1,0 +1,10 @@
+{
+  "name": "ironsovereign",
+  "scale": 1.7,
+  "palette": "sovereign",
+  "regroup": {
+    "LegsA": ["Leg0L", "Leg1R", "Leg2L"],
+    "LegsB": ["Leg0R", "Leg1L", "Leg2R"]
+  },
+  "nodes": {}
+}
