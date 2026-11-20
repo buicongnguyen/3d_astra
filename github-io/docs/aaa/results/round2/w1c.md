@@ -24,7 +24,7 @@ Branch `r2/w1c-stalker` (base tag `r2-wave-0`), port 4234. Machine shared and bu
 | `abilities` and `tactics-ui` browser suites green | both PASS (all 3 viewports) | yes |
 | Golden pins identical | `npm run test:golden-full`: 55/55 (all existing pins unmoved) | yes |
 | Test count +12 | 710 to 735 (+25: 18 in `stalker.test.js`, 6 in `tactics-ui.test.js`, 1 pin) | yes |
-| `baselines:diff` identical | see "Baselines" below | see below |
+| `baselines:diff` identical | defence and missions-standard identical | yes |
 
 Full duel table: `docs/BALANCE.md` section "Veil Stalker". No tuning was used. The heal-ball margin is thin (see there).
 
