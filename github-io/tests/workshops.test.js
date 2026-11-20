@@ -38,7 +38,7 @@ test("campaign missions keep their rosters and build menus", () => {
 test("Expanded: Meridian can build the Field workshop; units follow the faction", () => {
   const s = new Simulation({ ai: false, rules: EXP });
   assert.deepEqual(s.buildable(0).slice(-1), ["workshop"]);
-  assert.deepEqual(workshopUnitsOf("meridian"), ["fxmeridian"]);
+  assert.deepEqual(workshopUnitsOf("meridian"), ["gunner", "fxmeridian"]);
   assert.ok(s.unitRoster(0).includes("fxmeridian") && s.canTrain(0, "fxmeridian"));
   const w = new Simulation({ ai: false, factions: { 0: "wardens", 1: "wardens" }, rules: EXP });
   assert.ok(w.buildable(0).includes("pylon") && !w.buildable(0).includes("workshop"));
