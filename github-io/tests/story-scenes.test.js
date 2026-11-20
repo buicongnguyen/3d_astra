@@ -35,7 +35,7 @@ test("scene data: known beats, cast speakers, short lines with Vietnamese, under
     assert.ok(sceneLines(scene).length >= 1, `${id}: a line`);
     assert.ok(sceneSeconds(scene) >= 5 && sceneSeconds(scene) < 20, `${id}: ${sceneSeconds(scene).toFixed(1)} s`);
     for (const beat of scene.beats) {
-      const kinds = ["camera", "say", "fx", "wait"].filter((k) => beat[k] !== undefined);
+      const kinds = ["camera", "say", "fx", "wait", "title", "shake"].filter((k) => beat[k] !== undefined);
       assert.equal(kinds.length, 1, `${id}: one kind per beat ${JSON.stringify(beat)}`);
       assert.ok(beatSeconds(beat) >= 0 && beatSeconds(beat) <= 6, `${id}: beat length`);
       if (beat.camera) assert.ok(beat.camera.seconds > 0 && beat.camera.seconds <= 4 && beat.camera.zoom >= 0.5 && beat.camera.zoom <= 1.5, `${id}: camera`);

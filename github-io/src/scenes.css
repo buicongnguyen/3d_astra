@@ -70,3 +70,14 @@
 .scene-open.compact-ui #dialogue-text { font-size: 14px; }
 /* The scene times its own lines: no dismiss button on the box while it plays. */
 .scene-open #dialogue-close { display: none; }
+
+/* A title beat (story/scenes.js { title }): a boss name card between the bars. */
+.scene-title { position: absolute; left: 50%; top: 34%; transform: translateX(-50%); display: none; flex-direction: column; align-items: center; gap: 4px; padding: 10px 30px 12px; max-width: calc(100% - 32px); text-align: center; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(24, 8, 6, 0.85) 20%, rgba(24, 8, 6, 0.85) 80%, transparent); }
+.scene-title.on { display: flex; animation: scene-title 1.8s ease both; }
+.scene-title strong { font: 800 34px/1.1 var(--font-display, "Arial Narrow", Arial, sans-serif); letter-spacing: 0.14em; text-transform: uppercase; color: #ffd2bf; text-shadow: 0 2px 14px #000; }
+.scene-title span { font: 700 12px/1.2 var(--font-ui, sans-serif); letter-spacing: 0.2em; text-transform: uppercase; color: #ff8f78; }
+.compact-ui .scene-title strong { font-size: 22px; }
+@keyframes scene-title { 0% { opacity: 0; transform: translateX(-50%) scale(1.15); } 16% { opacity: 1; transform: translateX(-50%) scale(1); } 85% { opacity: 1; } 100% { opacity: 0; } }
+:root.motion-off .scene-title.on { animation: none; }
+@media (prefers-reduced-motion: reduce) { .scene-title.on { animation: none; } }

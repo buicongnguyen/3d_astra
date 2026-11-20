@@ -1257,7 +1257,8 @@
     "no": "không",
     "Box select": "Khoanh chọn",
     "Queue orders": "Xếp lệnh",
-    "More controls": "Thêm điều khiển"
+    "More controls": "Thêm điều khiển",
+    "destroyed": "bị tiêu diệt"
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],
@@ -1785,6 +1786,11 @@
       "Binh chủng Mở rộng: huấn luyện tại {1}, cấp {2}.",
       "^Speed ×(\\d)$",
       "Tốc độ ×{1}"
-    ]
+    ],
+    ["^ACT (I{1,3})$", "HỒI {1}"],
+    ["^DAY (\\d+)$", "NGÀY {1}"],
+    ["^NIGHT (\\d+)$", "ĐÊM {1}"],
+    ["^(.+) CHRONICLE$", "BIÊN NIÊN {1}"],
+    ["^FRONTIER DEFENCE$", "PHÒNG THỦ BIÊN CƯƠNG"]
   ]
 }

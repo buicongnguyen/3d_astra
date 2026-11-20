@@ -110,6 +110,8 @@ export class AudioDirector {
     this.scan -= dt;
     if (this.scan <= 0) {
       this.scan = 1;
+      // W2-F: while a boss is awake the combat layer never drops below full (the battle mood's mix).
+      this.bossAwake = live && sim.entities.some((e) => e.boss && e.hp > 0 && e.bs && e.bs.phase !== "dormant");
       const seen = live ? scanEnemies(sim) : { distance: Infinity, count: 0, team: null };
       this.enemyDistance = seen.distance;
       // Enemy contact: a radio call in the enemy faction's motif (first sighting, or after a quiet spell).
@@ -125,7 +127,7 @@ export class AudioDirector {
     // and while the score is wanted or still fading out under a recorded cue.
     const on = score && this.levels.music > 0 && !hidden && !(started && paused && !sim.result);
     this.music.setMood(started || sim.result ? mood : "calm");
-    this.music.setCombat(live ? crossfade(this.intensity.level(now), combatFloor(mood, mission)).combat : 0);
+    this.music.setCombat(live ? crossfade(this.intensity.level(now), Math.max(combatFloor(mood, mission), this.bossAwake ? 1 : 0)).combat : 0);
     this.music.setActive(on);
     this.engineScan -= dt;
     if (this.engineScan <= 0) { this.engineScan = 0.25; this.updateEngine(sim, live && !paused && !hidden); }

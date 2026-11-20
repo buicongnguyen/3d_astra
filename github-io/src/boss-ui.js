@@ -55,3 +55,23 @@ export function updateBossBar(sim, started = true) {
   bar.style.setProperty("--boss-hp", status.health.toFixed(4));
   bar.style.setProperty("--boss-shield", status.shield.toFixed(4));
 }
+
+// A name card over the battlefield (W2-F): the boss's entrance ("IRON VANGUARD") or its fall ("Iron Vanguard destroyed").
+// It takes no taps and fades after 2.4 s; one at a time.
+let card = null, cardTimer = 0;
+export function showBossCard(title, sub = "", kind = "wake") {
+  clearTimeout(cardTimer);
+  card?.remove();
+  card = document.createElement("div");
+  card.id = "boss-card";
+  card.dataset.kind = kind;
+  card.setAttribute("role", "status");
+  const strong = document.createElement("strong"), span = document.createElement("span");
+  strong.textContent = title;
+  span.textContent = sub;
+  card.append(strong);
+  if (sub) card.append(span);
+  (document.getElementById("world") || document.body).append(card);
+  cardTimer = setTimeout(() => { card?.remove(); card = null; }, 2400);
+  return card;
+}

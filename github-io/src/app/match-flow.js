@@ -1,4 +1,5 @@
 // Starting, restarting, saving, continuing and finishing a match.
+import { showTitleCard, hideTitleCard } from "./title-card.js";
 import emblemUrl from "../art/emblem.webp";
 import { $ } from "./dom.js";
 import { recordDecisions, recordEnding, endingFor, resolveMission, saveProgress, missionById, missionsOf, recordIn, bestIn } from "../campaign.js";
@@ -137,6 +138,9 @@ export function setupMatchFlow(S, A) {
     if (!resume) startEconomy();
     if(play !== false && S.playMode === "training") beginTutorial();
     if (S.sim.defence) A.defenceBegin(resume);
+    // Mission title card (W2-F): campaign, Chronicle and Defence matches, not a resumed save; browser suites (?test) opt in with ?titlecard.
+    hideTitleCard();
+    if (play !== false && !resume && S.sim.missionDef && S.playMode !== "training" && (!S.query?.has("test") || S.query.has("titlecard"))) showTitleCard(S.sim.missionDef);
   }
 
   function autosave() {

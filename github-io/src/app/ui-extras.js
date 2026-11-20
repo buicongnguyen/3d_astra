@@ -19,6 +19,7 @@ export const INTRO_SECONDS = 9;
 export const PHONE_INTRO_SECONDS = 6;
 export const BEAT_SECONDS = 1.5;
 export const BEAT_SLOWDOWN = 0.3;
+export const BOSS_BEAT_PAN = 0.7, BOSS_BEAT_HOLD = 1.2;
 
 const isIdleWorker = (u) => u.type === "worker" && !u.orders.length;
 const isIdleArmy = (u) => u.kind === "unit" && u.type !== "worker" && !u.orders.length;
@@ -202,9 +203,11 @@ export function setupUiExtras(S, A) {
   // Beat before the result: called by the frame loop when the match has just ended.
   function beginBeat() {
     if (S.tutorial || S.view?.reducedMotion?.matches) return false;
-    const core = S.sim.events.find((ev) => ev.type === "death" && ev.core);
+    // W2-F: a boss's fall that ends the match: focus on it, hold 1.2 s at x0.3, then the debrief.
+    const boss = S.sim.events.find((ev) => ev.type === "bossDefeated");
+    const core = boss || S.sim.events.find((ev) => ev.type === "death" && ev.core);
     if (!core) return false;
-    S.endBeat = { t: 0, x: core.x, z: core.z, fromX: S.view.focus.x, fromZ: S.view.focus.z };
+    S.endBeat = { t: 0, x: core.x, z: core.z, fromX: S.view.focus.x, fromZ: S.view.focus.z, ...(boss ? { length: BOSS_BEAT_PAN + BOSS_BEAT_HOLD } : null) };
     S.cameraPan = null;
     return true;
   }
@@ -215,7 +218,7 @@ export function setupUiExtras(S, A) {
     b.t += dt;
     const k = Math.min(1, b.t / 0.7), ease = k * k * (3 - 2 * k);
     S.view.focusOn(b.fromX + (b.x - b.fromX) * ease, b.fromZ + (b.z - b.fromZ) * ease);
-    if (b.t >= BEAT_SECONDS) { S.endBeat = null; A.showResult(); return 1; }
+    if (b.t >= (b.length ?? BEAT_SECONDS)) { S.endBeat = null; A.showResult(); return 1; }
     return BEAT_SLOWDOWN;
   }
 

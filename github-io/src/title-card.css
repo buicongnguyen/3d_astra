@@ -1,0 +1,20 @@
+/* Mission title card (app/title-card.js). Top third of the battlefield, centred; only the card takes taps.
+   Text 11 px or more. A scene (:root.scene-open) hides it. Reduced motion: a plain fade. */
+#title-card {
+  position: absolute; z-index: 9; left: 50%; top: 17%; transform: translateX(-50%);
+  max-width: min(560px, calc(100% - 32px)); padding: 12px 22px 14px; text-align: center;
+  display: flex; flex-direction: column; gap: 4px; pointer-events: auto; cursor: pointer;
+  background: linear-gradient(90deg, transparent, rgba(6, 18, 26, 0.82) 18%, rgba(6, 18, 26, 0.82) 82%, transparent);
+  color: #fff; animation: tc-in 2.6s ease both;
+}
+#title-card .tc-kicker { font: 800 12px/1.2 var(--font-ui, sans-serif); letter-spacing: 0.22em; color: var(--gold-2, #ffd36a); }
+#title-card .tc-title { font: 800 30px/1.1 var(--font-display, "Barlow Condensed", "Arial Narrow", Arial, sans-serif); letter-spacing: 0.03em; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.6); }
+#title-card .tc-place { font: 600 13px/1.3 var(--font-ui, sans-serif); letter-spacing: 0.06em; color: #cfe3e8; }
+.compact-ui #title-card { top: 14%; padding: 8px 16px 10px; }
+.compact-ui #title-card .tc-title { font-size: 22px; }
+@media (max-aspect-ratio: 1.35) { .compact-ui #title-card { top: 22%; } }
+@keyframes tc-in { 0% { opacity: 0; transform: translateX(-50%) translateY(-8px); } 14% { opacity: 1; transform: translateX(-50%); } 82% { opacity: 1; } 100% { opacity: 0; } }
+#title-card.calm { animation: tc-fade 2.6s ease both; }
+@keyframes tc-fade { 0% { opacity: 0; } 12% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+:root.scene-open #title-card, :root.in-briefing #title-card { display: none; }
+@media (prefers-reduced-motion: reduce) { #title-card { animation: tc-fade 2.6s ease both; } }
