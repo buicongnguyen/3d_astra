@@ -225,6 +225,7 @@ export function setupMatchFlow(S, A) {
       try { localStorage.setItem(MODE_KEY, save.mode); } catch { /* Storage is optional. */ }
       S.playMode = save.mode;
       S.sim = loaded;
+      S.rules = loaded.rules ? { ...loaded.rules } : null;
       S.mapId = S.sim.terrain.id; S.enemyCount = S.sim.enemyCount; S.aiSpeed = S.sim.aiSpeed; S.alliance = S.sim.coalition ? "coalition" : "ffa";
       S.mission = index >= 0 ? S.sim.missionDef || found.mission : level;
       // A loaded defence match keeps the level it was saved with (its options carry the definition).
