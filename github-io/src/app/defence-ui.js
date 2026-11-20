@@ -17,6 +17,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import "../defence-ui.css";
+import { TRAITS, waveTraits, traitsOf, counterCrews, waveTypes } from "../defence/traits.js";
 
 // Tier trims multiply the tower's paint (never a material swap: the batches stay as they are).
 export const TIER_TINT = { 1: [1.08, 0.94, 0.8], 2: [0.92, 0.99, 1.1], 3: [1.25, 1.1, 0.62] };
@@ -92,11 +93,22 @@ const ZONE_NAME = { basin: "Basin field", westfield: "West field", eastfield: "E
 const BRIDGE_RADIUS = 44; // px: a tap this close to a bridge's middle picks it
 // Pontoon planks: one merged mesh per pontoon, grown from the north bank while it is built.
 const PONTOON_LENGTH = 9;
+// W1-F: the view button's three states, the aim modes, the phone zoom and how long a manual pan holds the follow camera.
+const VIEWS = ["follow", "overview", "free"];
+const VIEW_ICON = { follow: "crosshair", overview: "expand", free: "move" };
+const VIEW_TITLE = { follow: "View: following the wave. Tap for the whole valley.", overview: "View: the whole valley. Tap to move the camera yourself.", free: "View: free camera. Tap to follow the wave." };
+const AIM_LABEL = { near: "Nearest", first: "First", strong: "Strongest", air: "Air" };
+const AIM_TEXT = { near: "Shoots the nearest enemy.", first: "Shoots the enemy closest to the exit.", strong: "Shoots the enemy with the most health.", air: "Shoots flyers first." };
+const PHONE_ZOOM = 55, FOLLOW_HOLD_MS = 6000, CARD_MS = 6000;
 
 export function createDefenceUI(S, A, deps) {
+  const { loadDefence: loadProgress, saveDefence: saveProgress } = deps;
+  // The same two helpers as defence/progress.js (hasSeen, recordSeen); importing that module here would split a shared chunk out of the main bundle (see the note above the deps).
+  const hasSeen = (p, type) => (p.seen || []).includes(type);
+  const recordSeen = (p, types) => { const fresh = types.filter((t) => D[t] && !hasSeen(p, t)); return fresh.length ? { ...p, seen: [...(p.seen || []), ...fresh] } : p; };
   const { $, GARRISONS, starsFor, D, hasPortrait, portrait, icon, ACTION_KEYS, DEFENCE_LEVELS, loadDefence, recordDefence, saveDefence, statTile, formatClock, DIFFICULTY_LABELS, FACTIONS, CROSSINGS, recordScore, bestScore, dayKey } = deps;
   const Z = S.screen, root = document.documentElement;
-  let pads = null, bar = null, intel = null, intelKey = "", seen = null, overview = false, leakAt = -Infinity, affordable = false, burstTier = 0, aim = null;
+  let viewMode = "free", saved = null, follow = { set: false, pauseUntil: 0, x: 0, z: 0, zoom: 0 }, cardQueue = [], cardEl = null, cardAt = 0, cardWave = -1, pads = null, bar = null, intel = null, intelKey = "", seen = null, overview = false, leakAt = -Infinity, affordable = false, burstTier = 0, aim = null;
   const color = new THREE.Color();
   const key = (i) => ACTION_KEYS[i] || "";
   const kbd = (k) => (k ? `<kbd class="action-key">${k}</kbd>` : "");
@@ -316,13 +328,20 @@ export function createDefenceUI(S, A, deps) {
       <button id="defence-hero" type="button" title="The commander: tap to pick, then tap the road to send it" aria-label="Field commander" hidden>${icon("flag")}<small id="defence-hero-state" translate="no"></small></button>
       <button id="defence-armour" type="button" title="Armour: tap to pick the next squad, or to buy one at the depot" aria-label="Armour squads" hidden>${icon("tank")}<small id="defence-armour-state" translate="no"></small></button>
       <button id="defence-call" type="button" title="Call the next wave now for bonus alloy" aria-label="Call wave">${icon("play")}<span>Call wave</span><small id="defence-bonus" translate="no"></small></button>
-      <button id="defence-overview" type="button" aria-pressed="false" title="Overview: see the whole valley" aria-label="Overview">${icon("expand")}</button>`;
+      <button id="defence-speed" type="button" aria-pressed="false" title="Fast-forward: tap to change the speed (Shift+Space)" aria-label="Game speed"><b id="defence-speed-label" translate="no">×1</b></button>
+      <button id="defence-overview" type="button" aria-pressed="false" data-view="free" title="View: free camera. Tap to follow the wave." aria-label="View">${icon("move")}</button>`;
     $("stage").append(bar);
     $("defence-call").onclick = () => {
       if (!Z.started || Z.paused || S.sim.result) return;
       if (S.sim.command({ team: 0, type: "waveCall" })) { A.tone(660, 0.12); A.updateUI(); }
     };
-    $("defence-overview").onclick = () => setOverview(!overview);
+    $("defence-speed").onclick = () => {
+      if (!Z.started || Z.paused || S.sim.result) return;
+      A.cycleSpeed();
+      A.tone(560, 0.06);
+      A.updateUI();
+    };
+    $("defence-overview").onclick = () => { setView(nextView()); A.notice(VIEW_NOTE[viewMode]); A.updateUI(); };
     $("defence-hero").onclick = () => {
       const hero = S.sim.commander();
       if (!hero || !Z.started || Z.paused) return;
@@ -361,16 +380,68 @@ export function createDefenceUI(S, A, deps) {
     if (on) S.view.focusOn(cam.x, cam.z); else S.view.updateCamera();
     $("defence-overview")?.setAttribute("aria-pressed", String(on));
   }
+  // The view button (W1-F): Follow -> Overview -> Free. A phone opens on Follow, a desktop on Free; a desktop skips Follow (its first tap is the Overview, as before).
+  const phone = () => root.classList.contains("compact-ui");
+  const VIEW_NOTE = { follow: "Following the wave.", overview: "Overview: the whole valley.", free: "Free camera." };
+  function nextView() {
+    const ring = phone() ? VIEWS : VIEWS.filter((v) => v !== "follow");
+    return ring[(ring.indexOf(viewMode) + 1) % ring.length];
+  }
+  function setView(mode) {
+    const cam = S.sim.missionDef.defence.camera, v = S.view;
+    if (mode === "overview") { if (viewMode !== "overview") saved = { zoom: v.zoom, x: v.focus.x, z: v.focus.z }; setOverview(true); }
+    else {
+      if (viewMode === "overview") { overview = false; v.zoom = saved?.zoom ?? cam.zoom; if (saved) v.focusOn(saved.x, saved.z); v.updateCamera(); $("defence-overview")?.setAttribute("aria-pressed", "false"); }
+      follow.pauseUntil = 0;
+    }
+    viewMode = mode;
+    paintView();
+  }
+  function paintView() {
+    const b = $("defence-overview");
+    if (!b || b.dataset.view === viewMode) return;
+    b.dataset.view = viewMode;
+    b.innerHTML = icon(VIEW_ICON[viewMode]);
+    b.title = VIEW_TITLE[viewMode];
+    b.setAttribute("aria-pressed", String(viewMode === "overview"));
+  }
+  // Follow camera (per frame, from the frame loop): the front of the wave, eased; a manual pan or zoom holds it for 6 s.
+  function frontOfWave() {
+    const foes = S.sim.entities.filter((e) => e.team === 1 && e.kind === "unit" && e.hp > 0 && S.sim.isVisible(e, 0)).map((e) => ({ e, left: S.sim.roadLeft(e) })).sort((a, b) => a.left - b.left).slice(0, 3);
+    if (foes.length) return { x: foes.reduce((n, f) => n + f.e.x, 0) / foes.length, z: foes.reduce((n, f) => n + f.e.z, 0) / foes.length };
+    return null;
+  }
+  function frame(dt) {
+    if (viewMode !== "follow" || !S.sim?.defence || !Z.started || Z.paused || S.sim.result || Z.modalType || !S.view) return;
+    const v = S.view, now = performance.now();
+    if (follow.set && (Math.abs(v.focus.x - follow.x) > 0.02 || Math.abs(v.focus.z - follow.z) > 0.02 || Math.abs(v.zoom - follow.zoom) > 0.01)) follow.pauseUntil = now + FOLLOW_HOLD_MS;
+    const target = now < follow.pauseUntil ? null : frontOfWave();
+    if (target) {
+      const k = 1 - Math.exp(-dt * 2.5);
+      v.focusOn(v.focus.x + (target.x - v.focus.x) * k, v.focus.z + (target.z - v.focus.z) * k);
+    }
+    Object.assign(follow, { x: v.focus.x, z: v.focus.z, zoom: v.zoom, set: true });
+  }
+  A.defenceFrame = frame;
   function updateBar() {
     const st = S.sim.defenceStatus();
     if (!st || !bar) return;
     set("defence-lives", String(st.lives));
     set("defence-wave", st.endless ? String(st.wave) : `${st.wave}/${st.waves}`);
-    set("defence-count", st.countdown !== null ? ` · ${formatClock(st.countdown)}` : st.active ? ` · ${st.enemies}` : "");
+    set("defence-count", st.countdown !== null ? formatClock(st.countdown) : st.active ? String(st.enemies) : "");
     const call = $("defence-call"), bonus = st.canCall ? Math.ceil((st.countdown ?? S.sim.missionDef.defence.gap ?? 16) * 2) : 0;
     call.disabled = !st.canCall || !Z.started || Z.paused;
     set("defence-bonus", st.canCall ? `+${bonus}` : "");
     updateIntel(st);
+    const sp = A.getSpeed?.() ?? 1, speed = $("defence-speed");
+    speed.disabled = !Z.started || Z.paused;
+    speed.setAttribute("aria-pressed", String(sp > 1));
+    set("defence-speed-label", `×${sp}`);
+    paintView();
+    // Bottom-band contract with W1-D: the bar's height plus its 8 px gap while it sits at the foot of a portrait phone.
+    const foot = phone() && matchMedia("(orientation: portrait)").matches && !bar.hidden;
+    if (foot) root.style.setProperty("--defence-bar-h", `${bar.offsetHeight + 8}px`); else root.style.removeProperty("--defence-bar-h");
+    updateCard();
     bar.querySelector(".lives").classList.toggle("low", st.lives <= 5);
     // The commander: picked from the bar; while it is down, the seconds until it is back.
     const h = S.sim.defence.hero, heroButton = $("defence-hero");
@@ -418,7 +489,43 @@ export function createDefenceUI(S, A, deps) {
     if (!p) { el.innerHTML = ""; return; }
     const many = Object.keys(S.sim.missionDef.defence.routes).length > 1;
     const unit = (u) => `<span class="intel-unit${u.carry ? " carrier" : ""}" data-type="${u.type}" title="${D[u.type]?.name || u.type}">${hasPortrait(u.type) ? portrait(u.type, "hostile") : icon(D[u.type]?.icon || "tank")}<b translate="no">×${u.count}</b>${u.carry ? `<small translate="no">(${u.carry})</small>` : ""}</span>`;
-    el.innerHTML = `<span class="intel-line"><span class="intel-head"><span>Next wave</span> <b translate="no">${p.wave}</b></span>${p.units.map(unit).join("")}</span>${many ? `<span class="intel-routes">${p.routes.map((r) => `<span class="intel-route" data-route="${r}">${S.sim.missionDef.defence.roads?.[r] || ROUTE_LABEL[r] || r}</span>`).join("")}</span>` : ""}`;
+    const chips = waveTraits(p.units, D).map((id) => { const t = TRAITS.find((x) => x.id === id); return `<span class="intel-chip" data-trait="${id}" title="${t.hint}">${t.label}</span>`; }).join("");
+    el.innerHTML = (chips ? `<span class="intel-traits">${chips}</span>` : "") + `<span class="intel-line"><span class="intel-head"><span>Next wave</span> <b translate="no">${p.wave}</b></span>${p.units.map(unit).join("")}</span>${many ? `<span class="intel-routes">${p.routes.map((r) => `<span class="intel-route" data-route="${r}">${S.sim.missionDef.defence.roads?.[r] || ROUTE_LABEL[r] || r}</span>`).join("")}</span>` : ""}`;
+  }
+
+  // ---------------------------------------------------------------- New-enemy card (W1-F)
+  // The first time an enemy type is in a wave the player has started: its traits and two crews that counter it.
+  // Shown once per type (progress.seen), one card at a time, closed by a tap or after 6 s; never over a modal.
+  // Off under ?test unless the URL has ?enemycards.
+  const cardsOn = () => !S.query?.has("test") || S.query.has("enemycards");
+  function queueCards() {
+    const d = S.sim.defence;
+    if (!cardsOn() || d.wave === cardWave || d.wave < 1) return;
+    cardWave = d.wave;
+    const progress = S.defenceProgress || loadProgress(), wave = S.sim.defenceWave(d.wave - 1);
+    if (!wave) return;
+    for (const u of waveTypes(wave.groups, (g, slot) => S.sim.waveType(g, slot))) if (!hasSeen(progress, u.type) && !cardQueue.some((c) => c.type === u.type)) cardQueue.push(u);
+  }
+  function closeCard() { cardEl?.remove(); cardEl = null; }
+  function updateCard() {
+    if (!S.sim?.defence) return;
+    queueCards();
+    if (Z.modalType || Z.paused || !Z.started || S.sim.result) { closeCard(); return; }
+    const now = performance.now();
+    if (cardEl && now - cardAt > CARD_MS) closeCard();
+    if (cardEl || !cardQueue.length) return;
+    const u = cardQueue.shift(), def = D[u.type];
+    if (!def) return;
+    S.defenceProgress = recordSeen(S.defenceProgress || loadProgress(), [u.type]);
+    saveProgress(S.defenceProgress);
+    const crews = counterCrews(u, D, S.sim.missionDef.defence.crews), ids = traitsOf(u, D);
+    cardEl = document.createElement("div");
+    cardEl.id = "defence-card";
+    cardEl.setAttribute("role", "status");
+    cardEl.innerHTML = `<span class="card-art">${hasPortrait(u.type) ? portrait(u.type, "hostile") : icon(def.icon || "tank")}</span><span class="card-body"><span class="card-eyebrow">New enemy</span><strong>${def.name}</strong><span class="card-chips">${ids.map((id) => { const t = TRAITS.find((x) => x.id === id); return `<span class="intel-chip" data-trait="${id}">${t.label}</span>`; }).join("")}</span><span class="card-counter"><span>Best crews</span> ${crews.map((c) => `<b data-crew="${c}">${CREW_LABEL[c]}</b>`).join("")}</span></span>`;
+    cardEl.onclick = closeCard;
+    $("stage").append(cardEl);
+    cardAt = now;
   }
 
   // ---------------------------------------------------------------- Carrier moments (0.22)
@@ -537,10 +644,28 @@ export function createDefenceUI(S, A, deps) {
     const middle = ranks ? rankTile : choose
       ? Object.entries(g.branches).map(([id, b], i) => `<button class="command-tile defence-branch" data-defence-branch="${id}" data-tier="3" data-hotkey="${key(i + 1)}" aria-label="${b.name}, ${b.cost} alloy" title="${key(i + 1)} · ${b.name}: ${BRANCH_TEXT[id]} · ${b.cost} alloy">${kbd(key(i + 1))}${icon(i ? "crosshair" : "bolt")}<span>${b.name}</span><small><b class="alloy-text" translate="no">${b.cost}</b></small></button>`).join("")
       : `<button class="command-tile defence-upgrade" data-defence-act="upgrade" data-tier="${top ? 3 : t.tier + 1}" data-hotkey="${key(1)}" ${top ? "disabled" : ""} aria-label="${top ? "Top tier" : `Upgrade to tier ${t.tier + 1}, ${cost} alloy`}" title="${key(1)} · ${top ? "Top tier" : `Tier ${t.tier + 1}: ${Math.round(next.damage)} damage, ${Math.round(next.range)} m · ${cost} alloy`}">${kbd(key(1))}${icon("bolt")}<span>${top ? "Top tier" : "Upgrade"}</span><small>${top ? icon("check") : `<b class="alloy-text" translate="no">${cost}</b>`}</small></button>`;
-    const sellKey = key(choose ? 3 : 2);
-    $("commands").innerHTML = `<i hidden data-defence-sheet data-key="t:${t.id}:${t.tier}:${t.branch || ""}:${rank}"></i>${info}${middle}
-      <button class="command-tile defence-sell" data-defence-act="sell" data-hotkey="${sellKey}" aria-label="Sell for ${refund} alloy" title="${sellKey} · Sell: ${refund} alloy back">${kbd(sellKey)}${icon("close")}<span>Sell</span><small><b class="alloy-text" translate="no">+${refund}</b></small></button>`;
+    const sellKey = key(choose ? 3 : 2), aimKey = key(choose ? 4 : 3), aimNow = t.aim || "near", tiles = choose ? 5 : 4;
+    const aimTile = `<button class="command-tile defence-aim" data-defence-aim="${nextAim(t)}" data-hotkey="${aimKey}" title="${aimKey} · Aim: ${AIM_TEXT[aimNow]} Tap to change." aria-label="Aim: ${AIM_LABEL[aimNow]}">${kbd(aimKey)}${icon("crosshair")}<span>Aim</span><small>${AIM_LABEL[aimNow]}</small></button>`;
+    $("commands").innerHTML = `<i hidden data-defence-sheet data-tiles="${tiles}" data-key="t:${t.id}:${t.tier}:${t.branch || ""}:${rank}:${t.aim || ""}"></i>${info}${middle}
+      <button class="command-tile defence-sell" data-defence-act="sell" data-hotkey="${sellKey}" aria-label="Sell for ${refund} alloy" title="${sellKey} · Sell: ${refund} alloy back">${kbd(sellKey)}${icon("close")}<span>Sell</span><small><b class="alloy-text" translate="no">+${refund}</b></small></button>${aimTile}${statsBlock(t, choose)}`;
     $("command-hint").textContent = choose ? "Gold tier: pick one branch for this tower. It cannot be changed." : t.branch ? `${g.name} · ${branchName}. ${nextRank ? `Next rank: ${RANK_TEXT[t.branch]?.[rank] || ""}` : BRANCH_TEXT[t.branch]}` : `${g.name}. ${CREW_ROLE[t.crew]}`;
+  }
+  // The next aim a tower cycles to: Nearest, First, Strongest, then Air for crews that hit air.
+  function nextAim(t) {
+    const ring = ["near", "first", "strong", ...(t.hits_air ? ["air"] : [])];
+    return ring[(ring.indexOf(t.aim || "near") + 1) % ring.length];
+  }
+  // Tower figures as text (no hover): dps, reach, the multiplier against armour, air, and what the next tier or rank adds.
+  function statsBlock(t, choose) {
+    const sim = S.sim, now = sim.garrisonStats(t.crew, t.tier, t.team, t.branch || null, t.branchRank || 0), dps = (s) => s.damage / s.interval;
+    const num = (n, d = 0) => `<b translate="no">${(Math.round(n * 10 ** d) / 10 ** d).toString()}</b>`;
+    const line1 = `${num(dps(now), 0)} <span>dps</span> · ${num(now.range, 0)} <span>m</span> · ×${num(now.mechanical_bonus || 1, 1)} <span>vs armour</span> · <span>Air</span>: <span>${now.hits_air ? "yes" : "no"}</span>`;
+    let next = null;
+    if (!t.branch && t.tier < 3) next = sim.garrisonStats(t.crew, t.tier + 1, t.team);
+    else if (t.branch && sim.rankOf(t.crew, t.branch, t.branchRank || 0)) next = sim.garrisonStats(t.crew, 3, t.team, t.branch, (t.branchRank || 0) + 1);
+    const sign = (n) => (n >= 0 ? "+" : "−");
+    const line2 = next && !choose ? `<p><span>Next</span>: ${sign(dps(next) - dps(now))}${num(Math.abs(dps(next) - dps(now)), 0)} <span>dps</span> · ${sign(next.range - now.range)}${num(Math.abs(next.range - now.range), 0)} <span>m</span> · ${sign(next.maxHp - now.maxHp)}${num(Math.abs(next.maxHp - now.maxHp), 0)} <span>HP</span></p>` : "";
+    return `<div class="defence-stats" data-defence-stats><p>${line1}</p>${line2}</div>`;
   }
   function heroSheet(hero) {
     const c = GARRISONS.commander;
@@ -590,7 +715,7 @@ export function createDefenceUI(S, A, deps) {
     // 0.23: a spot in a build zone, an armour squad, the armour depot.
     const spot = !es.length && !pad && bridge === null ? S.defenceSpot : null, depot = !es.length && !pad && !spot && bridge === null && S.defenceDepot && !!S.sim.armourRules();
     const lead = squad ? S.sim.armourUnits(squad)[0] : null;
-    const k = tower ? `t:${tower.id}:${tower.tier}:${tower.branch || ""}:${tower.branchRank || 0}` : hero ? `h:${hero.id}:${aim || ""}` : squad ? `a:${squad}:${S.sim.armourModeOf(squad)}:${es.length}:${lead?.squadRank || 1}${lead?.squadBranch || ""}` : pad ? `p:${pad.id}` : bridge !== null ? `b:${bridge}:${S.sim.crossingState(bridge)}` : spot ? `z:${spot.zone}:${spot.x}:${spot.z}` : depot ? "d" : "none";
+    const k = tower ? `t:${tower.id}:${tower.tier}:${tower.branch || ""}:${tower.branchRank || 0}:${tower.aim || ""}` : hero ? `h:${hero.id}:${aim || ""}` : squad ? `a:${squad}:${S.sim.armourModeOf(squad)}:${es.length}:${lead?.squadRank || 1}${lead?.squadBranch || ""}` : pad ? `p:${pad.id}` : bridge !== null ? `b:${bridge}:${S.sim.crossingState(bridge)}` : spot ? `z:${spot.zone}:${spot.x}:${spot.z}` : depot ? "d" : "none";
     const marker = $("commands").querySelector("[data-defence-sheet]");
     if (marker?.dataset.key !== k) {
       $("commands").classList.remove("tactics-card");
@@ -632,6 +757,7 @@ export function createDefenceUI(S, A, deps) {
     }
     const sell = $("commands").querySelector('[data-defence-act="sell"]');
     if (sell) sell.disabled = blocked;
+    for (const b of $("commands").querySelectorAll("[data-defence-aim]")) b.disabled = blocked;
     const focus = $("commands").querySelector('[data-defence-act="focus"]');
     if (focus) focus.disabled = blocked;
     if (hero) {
@@ -739,6 +865,13 @@ export function createDefenceUI(S, A, deps) {
     // A phone's click that follows the tap which opened this sheet lands where the finger was: on
     // a landscape phone that can be a tile of the sheet just shown. Taken for what it is, a ghost.
     if (lastTap && performance.now() - lastTap.at < GHOST_MS && Math.hypot(event.clientX - lastTap.x, event.clientY - lastTap.y) < 12) return;
+    const aimBtn = event.target.closest("[data-defence-aim]");
+    if (aimBtn && !aimBtn.disabled) {
+      const t = A.selectedEntities()[0];
+      if (Z.started && !Z.paused && !S.sim.result && t?.crew && S.sim.command({ team: 0, type: "padAim", building: t.id, aim: aimBtn.dataset.defenceAim })) A.tone(640, 0.06);
+      A.updateUI();
+      return;
+    }
     const crew = event.target.closest("[data-defence-crew]"), action = event.target.closest("[data-defence-act]"), pick = event.target.closest("[data-defence-branch]"), hero = event.target.closest("[data-defence-hero]"), armour = event.target.closest("[data-defence-armour]");
     if (armour && !armour.disabled) armourAct(armour.dataset.defenceArmour);
     else if (crew && !crew.disabled) build(crew.dataset.defenceCrew);
@@ -813,6 +946,17 @@ export function createDefenceUI(S, A, deps) {
     S.view.maxZoom = cam.maxZoom;
     setOverview(false);
     S.view.focusOn(cam.x, cam.z);
+    // W1-F: a phone opens at road zoom over the first spawn and follows the wave; a desktop keeps its free camera.
+    viewMode = "free"; saved = null; follow = { set: false, pauseUntil: 0, x: 0, z: 0, zoom: 0 };
+    cardQueue = []; cardWave = -1; closeCard();
+    if (phone()) {
+      const first = S.sim.defenceWave(0)?.groups?.[0], pt = first && S.sim.missionDef.defence.routes[first.route]?.[0];
+      S.view.zoom = Math.min(cam.zoom, PHONE_ZOOM);
+      if (pt) S.view.focusOn(pt.x, pt.z);
+      S.view.updateCamera();
+      viewMode = "follow";
+    }
+    paintView();
     // The skirmish opening line ("assign Harvesters") does not apply here.
     S.sim.events = S.sim.events.filter((e) => e.type !== "message");
     if (!resume && Z.started) A.notice(S.sim.missionDef.defence.zones?.length ? "Tap a pad or a marked field, then pick a crew." : "Tap a pad beside the road, then pick a crew.");
@@ -839,6 +983,8 @@ export function createDefenceUI(S, A, deps) {
     disposePads();
     if (aim) setAim(null);
     if (bar) bar.hidden = true;
+    root.style.removeProperty("--defence-bar-h");
+    closeCard();
     if (intel) { intel.hidden = true; intelKey = ""; }
     delete $("commands").dataset.tier;
   }

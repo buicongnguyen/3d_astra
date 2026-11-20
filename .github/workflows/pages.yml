@@ -109,6 +109,9 @@ jobs:
           # AAA round 2 (W1-A): the Expanded roster setting and the Field workshop.
           - name: r2-w1a
             scripts: workshops
+          # AAA round 2 (W1-F): the Defence command deck (fast-forward through the frame loop, tower aim, chips, card).
+          - name: r2-w1f
+            scripts: defence-deck
     defaults:
       run:
         working-directory: github-io

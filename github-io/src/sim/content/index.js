@@ -10,9 +10,12 @@ import { bossStatus } from "./boss-status.js";
 
 import { workshops } from "./workshops.js";
 
+import { towerAim } from "./tower-aim.js";
+
 export const CONTENT = [
   suppression,
   marksman,
   bossStatus,
   workshops,
+  towerAim,
 ];
