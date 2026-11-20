@@ -1,5 +1,6 @@
 import { DEFINITIONS as D, distance } from "../data.js";
 import { AIR } from "../factions.js";
+import { fieldPlan } from "../ai-plan.js";
 
 // How the computer opponent reads the battlefield and spends a surplus (0.9.1). Mixed into Simulation.
 // Everything here uses vision only: the AI remembers enemies it has actually seen (id -> type) and
@@ -88,10 +89,29 @@ export const aiCounter = {
     }
     // Foundry: shell towers and fighting infantry blobs with Breakers; vehicles are left to Anti-tank.
     if (b.type === "foundry") {
+      // Field command (W2-D, S1): the heavy slot stays unless towers or an infantry swarm call for Breakers, and Breakers only while they number fewer than Tanks + 2 (the first heavy unit comes before any Breaker).
+      if (fieldPlan(this, team)) {
+        const slots = (slot) => army.filter((e) => this.slotOf(e.type) === slot).length;
+        return (mix.towers >= 2 || (mix.total >= MIN_SEEN && mix.infantry / mix.total >= INFANTRY_SHARE)) && slots("tank") > 0 && slots("breaker") < slots("tank") + 2 ? "breaker" : choice;
+      }
       if (mix.towers >= 2 || (mix.total >= MIN_SEEN && mix.infantry / mix.total >= INFANTRY_SHARE)) return "breaker";
       if (mix.total >= MIN_SEEN && mix.mech / mix.total >= MECH_SHARE && choice === "tank") return "breaker";
     }
     return choice;
+  },
+  // Field command (W2-D, S1): alloy the Barracks leaves alone while energy is above 500: the Foundry's next level, then its heavy unit.
+  aiFieldHold(team, own, pace) {
+    const f = own.find((e) => e.type === "foundry" && e.complete), pl = this.players[team];
+    if (!f || f.levelJob || pl.energy <= 500) return 0;
+    if (f.level < Math.min(3, this.techLevel(team))) return this.time > pace.upgradeAt ? this.levelCost(f)[0] : 0;
+    const heavy = this.typeFor(team, "tank");
+    return f.level >= 3 && !f.queue.length && this.canTrain(team, heavy) && pl.energy >= D[heavy].cost[1] ? D[heavy].cost[0] : 0;
+  },
+  // True when a building should wait for `first`: it costs energy (50 or more), the team has that, the level and room are there, and only alloy (at most 200 short) is missing.
+  aiFieldWaits(team, b, first, pop, save) {
+    const d = D[first], pl = this.players[team];
+    if (!d || d.cost[1] < 50 || b.level < (d.required_level || 1) || pl.energy < d.cost[1] || pop.used + pop.reserved + d.pop > pop.cap) return false;
+    return d.cost[0] + save - pl.alloy <= 200;
   },
   // Rich bases build more instead of sitting on alloy: a third Barracks and extra towers.
   // Returns the building to add, or null. Used by updateAI's build choice.

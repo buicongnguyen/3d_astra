@@ -1,5 +1,6 @@
 import { DEFINITIONS as D, distance } from "../data.js";
 import { MINERS_PER_DEPOSIT } from "./constants.js";
+import { fieldPlan } from "../ai-plan.js";
 
 // Harvesting, construction work and unit production. Mixed into Simulation (see simulation.js).
 export const economy = {
@@ -232,10 +233,13 @@ export const economy = {
   // Sends a team's idle Harvesters to the nearest explored deposits, one in four to energy.
   assignHarvesters(team = 0) {
     const workers = this.own(team).filter((e) => e.type === "worker" && !e.tag);
+    // Field command (W2-D, S1): 1 in 6 to energy when energy is plentiful and alloy short (none above 800), 1 in 3 when energy runs dry.
+    let every = 4;
+    if (fieldPlan(this, team)) { const pl = this.players[team]; every = pl.energy > 400 && pl.alloy < 200 ? (pl.energy > 800 ? 0 : 6) : pl.energy < 100 ? 3 : 4; }
     for (let i = 0; i < workers.length; i++) {
       const w = workers[i];
       if (w.orders.length) continue;
-      const type = i % 4 === 0 ? "energy" : "alloy";
+      const type = every && i % every === 0 ? "energy" : "alloy";
       const deposit = this.resources
         .filter((r) => r.amount > 0 && r.type === type && this.isExplored(r, team))
         .sort((a, b) => distance(w, a) - distance(w, b))[0];

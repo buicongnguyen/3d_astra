@@ -92,3 +92,9 @@ export const coalitionPlan = {
     this.launched.clear();
   },
 };
+
+// Field command (AAA round 2, W2-D): the opt-in skirmish AI plan, `rules.aiPlan === "field"`. True for a
+// computer-controlled team (rivals, or team 0 when the computer plays it) of a skirmish; never in a
+// mission. Every Field command path asks this first, so Classic stays exactly as it was.
+export const FIELD_PLAN = 'field';
+export const fieldPlan = (sim, team) => !sim.mission && sim.ruleOn('aiPlan') === FIELD_PLAN && (team > 0 || !!sim.aiPlayer);
