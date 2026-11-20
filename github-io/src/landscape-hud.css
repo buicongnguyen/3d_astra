@@ -240,7 +240,7 @@
   .compact-ui:not(.in-briefing)[data-dock="selection"] .selection-panel:not(.has-entity) { display: none; }
   /* A unit (or units) selected: a short card; a roster row and a second row of orders add their own height.
      Buildings keep the full dock (queue and levels live there), as the Actions and Map tabs do. */
-  .compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity) { --dock-height: calc(var(--unit-dock) + var(--dock-roster, 0px) + var(--dock-orders, 0px)); --unit-dock: 126px; }
+  .compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity) { --dock-height: calc(var(--unit-dock) + var(--dock-roster, 0px) + var(--dock-orders, 0px)); --unit-dock: 106px; }
   .compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-roster) { --dock-roster: 52px; }
   .compact-ui.many-orders:not(.in-briefing):not(.no-units)[data-dock="selection"] { --dock-orders: 49px; }
 
@@ -261,10 +261,25 @@
   .compact-ui:not(.in-briefing) .selection-panel .order-buttons { grid-template-columns: repeat(auto-fit, minmax(44px, 1fr)); }
 }
 
-@media (max-aspect-ratio: 1.35) {
-  /* Side margins of the battlefield: 8 px (was 12), still clear of the screen edge. */
-  .compact-ui:not(.in-briefing) { --gesture-left: max(8px, env(safe-area-inset-left, 0px)); --gesture-right: max(8px, env(safe-area-inset-right, 0px)); }
-}
-
 /* An open sheet is above the idle buttons and the other chips. */
 .compact-ui .touch-controls:has(#touch-sheet:not([hidden])) { z-index: 36; }
+
+@media (max-aspect-ratio: 1.35) {
+  /* The unit card drops its status line ("Standing by"; it stays in the tooltip) to stay short. */
+  .compact-ui:not(.in-briefing) .selection-panel.has-entity .selection-activity:not(.high-ground):not(.in-ford):not(.in-air) { display: none; }
+}
+
+@media (max-aspect-ratio: 1.35) {
+  /* Unit card: the stats read "HP 95/95" on one line under the name, so the card is name, stats, orders. */
+  .compact-ui:not(.in-briefing) .selection-panel.has-entity .unit-metrics > div { display: flex; align-items: baseline; gap: 5px; padding-bottom: 5px; }
+  .compact-ui:not(.in-briefing) .selection-panel.has-entity #selection-info { min-height: 0; }
+  .compact-ui:not(.in-briefing) .selection-panel.has-entity .portrait,
+  .compact-ui:not(.in-briefing) .selection-panel.has-entity .sel-portrait { align-self: center; }
+}
+
+@media (max-aspect-ratio: 1.35) {
+  .compact-ui:not(.in-briefing) .selection-panel.has-entity #selection-info .portrait { width: 40px; height: 40px; }
+  .compact-ui:not(.in-briefing) .selection-panel.has-entity { padding-bottom: 6px; }
+  /* With something selected the idle buttons step aside (Army / Workers and the dock cover the same job). */
+  .compact-ui:not(.in-briefing):has(.selection-panel.has-entity) #idle-chips { display: none; }
+}
