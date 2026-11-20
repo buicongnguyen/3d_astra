@@ -472,3 +472,6 @@ a level-up. The AI never levels one (mission objects are tagged, and the AI skip
 the player can level their own: the Basin relay in Copper Harvest (1,200) and Copper Siege (3,500), the
 Copper refinery in Wings over Copper (2,000) and the Caravan beacon in A Debt in the Dunes (2,000) would
 drop to a relay's 562.5 at level 2 (checked headless). A changed campaign rule needs the owner's OK.
+
+## W1-A: Field workshop and the Expanded roster
+`workshop` (Meridian host, Expanded only): 700 HP, 40 shield, 150 alloy / 50 energy, 18 s, needs a Foundry, levels to 3 like any building. `workshops.hosts` maps each faction to its host (Meridian workshop, Ashfall Salvage yard, Sunward Waystation, Wardens Pylon, Veil relay); `max_tiles` 2 caps the units per host. AI data on a unit: `ai: { role, want: [{ if?, n }], max }` (`if` keys: seenInfantry share of at least 4 seen units, seenSupport, seenAntiarmor, seenTowers, after). No Classic number moved.
