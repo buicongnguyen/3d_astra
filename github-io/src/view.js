@@ -13,7 +13,7 @@ import { startFlash, stepFlash, HIT_FLASH } from "./combat-feedback.js";
 import { createRing, updateRing, createBar, updateBar, setTeamColor, createMarker, createRally, updateRally } from "./selection-view.js";
 import { CaptureRings, DestinationMarkers } from "./capture-view.js";
 import { TacticsView } from "./tactics-view.js";
-import {themeFor,lightFor,shotVisible,weaponStyle} from './visual-style.js';
+import {themeFor,lightFor,lookOf,shotVisible,weaponStyle} from './visual-style.js';
 import { Scatter } from "./scatter.js";
 import { createMapEdge } from "./map-edge.js";
 import { paintGround } from "./ground-paint.js";
@@ -28,6 +28,8 @@ import { cacheTransforms } from "./transform-cache.js";
 import { AmbientLife } from "./ambient-life.js";
 import { defaults } from "./settings.js";
 import { ViewPlugins } from "./view-plugins.js";
+import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, setRimTier } from "./look-grade.js";
+import { MissionLook } from "./mission-look-view.js";
 import {
   EnvironmentView,
   paintTerrain,
@@ -117,8 +119,9 @@ export function bakedMaterial(reflective) {
       .replace("#include <common>", "#include <common>\nvarying vec2 vFinish;")
       .replace("#include <roughnessmap_fragment>", "float roughnessFactor = vFinish.x;")
       .replace("#include <metalnessmap_fragment>", "float metalnessFactor = vFinish.y;");
+    rimShader(shader); // W2-C: the warm Fresnel rim (look-grade.js); Team parts get their own colour below
   };
-  m.customProgramCacheKey = () => "baked-finish";
+  m.customProgramCacheKey = () => `baked-finish|${gradeKey()}`;
   bakedShared.set(reflective, m);
   return m;
 }
@@ -187,8 +190,10 @@ export class WorldView {
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     // Khronos neutral tone mapping keeps the palette's saturated colours as painted;
-    // ACES pulled every map toward the same dusty grey.
-    this.renderer.toneMapping = THREE.NeutralToneMapping;
+    // ACES pulled every map toward the same dusty grey. W2-C: the custom mapping is Neutral plus the
+    // warm grade of look-grade.js (installed by applyTheme before anything compiles).
+    this.renderer.toneMapping = THREE.CustomToneMapping;
+    setRimTier(this.lowPower);
     this.renderer.toneMappingExposure = 1;
     container.appendChild(this.renderer.domElement);
     this.renderer.domElement.setAttribute(
@@ -315,6 +320,7 @@ export class WorldView {
     );
     // Round 2 view plugins (src/view-plugins.js, docs/VIEW_PLUGINS.md), built once with the view ready.
     this.plugins = new ViewPlugins(this);
+    this.mood = new MissionLook(this);
   }
   // Each map has its own time of day: a warm key light, a cool sky fill, a warm bounce from
   // the ground, and a deep fog-of-war colour from the same family as its horizon.
@@ -325,12 +331,25 @@ export class WorldView {
     this.ambientLight.intensity=light.ambient;
     this.sun.color.set(style.sun);this.sun.intensity=light.sun;
     this.renderer.toneMappingExposure=light.exposure;
-    this.fogUniforms.uFogColor.value.set(style.fog);
+    // W2-C: the grade (and a lighter fog-of-war colour for the Ashen map) come from look-grade.json.
+    const themeId=lookOf(this.terrain.id),fog=fogOverride(themeId)??style.fog;
+    if(installGrade(themeId))this.regrade();
+    this.fogUniforms.uFogColor.value.set(fog);
     this.fogUniforms.uFogHalf.value=this.terrain.half;
-    this.fogRGB=[1,3,5].map(i=>parseInt(style.fog.slice(i,i+2),16));
+    this.fogRGB=[1,3,5].map(i=>parseInt(fog.slice(i,i+2),16));
     this.tintFog();
+    // The map's own daylight, which a mission look (night, storm: mission-look-view.js) blends away from.
+    this.baseLight={sky:style.sky,fog,ambient:style.ambient,bounce:style.bounce,sun:style.sun,ambientI:light.ambient,sunI:light.sun,exposure:light.exposure};
+    this.mood?.themeChanged();
     if(this.wallParts){this.wallParts[0].material.color.set(style.wall);this.wallParts[1].material.color.set(style.glow);this.wallParts[1].material.emissive.set(style.glow);}
     this.applyAssetTheme();
+  }
+  // A changed grade makes every program compile again (the grade is part of its cache key).
+  regrade() {
+    this.scene?.traverse((o) => {
+      if (!o.isMesh) return;
+      for (const m of Array.isArray(o.material) ? o.material : [o.material]) m.needsUpdate = true;
+    });
   }
   // The fog image keeps one colour; each refresh then writes only how thick it is.
   tintFog() {
@@ -367,6 +386,7 @@ export class WorldView {
       template.traverse((o) => {
         if (!o.isMesh || !o.material.name.startsWith("Team")) return;
         o.material.color.setHex(this.colors[team]);
+        o.material.userData.rim?.setHex(this.colors[team]);
         if (o.material.name.startsWith("TeamGlow"))
           o.material.emissive.setHex(this.glows[team]);
       });
@@ -461,6 +481,7 @@ export class WorldView {
   }
   setQuality(level) {
     this.lowPower = level === "low";
+    setRimTier(this.lowPower);
     this.applyReflections();
     this.createLife();
     this.createScatter();
@@ -617,6 +638,7 @@ export class WorldView {
                 const m = name.startsWith("Baked") ? o.material : o.material.clone();
                 if (name.startsWith("Team")) {
                   m.color.setHex(this.colors[team]);
+                  addTeamRim(m, this.colors[team]); // W2-C: the team's own colour on the edge
                   if (name.startsWith("TeamGlow")) {
                     m.emissive.setHex(this.glows[team]);
                     m.emissiveIntensity = 0.8;
@@ -1433,6 +1455,7 @@ export class WorldView {
       this.hitStop = Math.max(0, this.hitStop-realDt);
     }
     this.environment?.update(sim, dt);
+    this.mood?.update(sim);
     if (this.life) {
       this.life.quiet = this.reducedMotion.matches;
       this.life.update(dt, this.camera, (this.drawHeight || this.height) * this.renderer.getPixelRatio());

@@ -4,6 +4,12 @@
 
 ### W2-D: Field command AI plan (opt-in)
 New Battle rule "AI plan: Classic / Field command" (`rules.aiPlan === "field"`, skirmish only). The computer keeps its heavy slot, sends fewer Harvesters to energy when it is rich, saves alloy for the Foundry and Tanks, defends every other core and held ring, fields one of each combat slot, casts abilities with intent (`ai-casts.js`) and places `ai.role` units (`field-command.js`). Classic is unchanged (pins, tick time identical).
+### W2-C: First impression and story light
+- Title: FRONTIER COMMAND wordmark and emblem over the key art, three large choice cards (Campaign, Skirmish, Defence) with Training as a slim row, pressed and hover states, the setup as a rising sheet on phones. Display font Baloo 2 ExtraBold (OFL, Latin and Vietnamese, 24 KB, `src/fonts/`) as `--font-display` for headings only; tiles keep the old stack as `--font-tile`.
+- Look: warm grade (one `CustomToneMapping` chunk) and a Fresnel team rim on every render tier, lighter Ashen fog; all numbers in `src/look-grade.json` (owner decision O7).
+- Story light: `src/mission-looks.js` (id-keyed table, no new fields on missions): night for m08 and cv1, storm with lightning for m10 and for m06 from 16:00; Eco gets the palette swap only. View only; checksums unchanged.
+- Tests: `look-grade`, `mission-looks` (8), browser suite `title`, scenario `night-battle-eco`; tool `tools/look-shots.mjs`.
+
 
 ### W0-A: Safety net, baseline tools and the view seam
 Nothing changes for the player: no rule, number or picture moved. This makes every later change provable.

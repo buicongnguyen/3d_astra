@@ -2,6 +2,7 @@
 import emblemUrl from "../art/emblem.webp";
 import keyartSmallUrl from "../art/keyart-960.webp";
 import keyartUrl from "../art/keyart.webp";
+import wordmarkSvg from "../art/wordmark.svg?raw";
 import { AI_SPEEDS, ALLIANCES } from "../ai-plan.js";
 import { MAPS } from "../terrain.js";
 import { MISSIONS } from "../campaign.js";
@@ -47,6 +48,7 @@ export function renderShell() {
       <div class="briefing-hero">
         <picture class="briefing-art" aria-hidden="true"><source media="(max-width: 720px)" srcset="${keyartSmallUrl}"><img src="${keyartUrl}" alt="" width="1600" height="900" decoding="async"></picture>
         <div id="campaign-map" hidden></div>
+        <div class="title-brand" translate="no"><img class="title-emblem" src="${emblemUrl}" alt="" width="72" height="72" decoding="async">${wordmarkSvg}</div>
         <div class="briefing-copy">
           <div class="eyebrow">EXPEDITION BRIEFING</div>
           <h2 id="briefing-title">A new frontier.<br> A foothold to defend.</h2>
@@ -60,10 +62,10 @@ export function renderShell() {
       <div class="briefing-setup">
         <button id="continue" class="secondary continue-launch" hidden></button>
         <div class="mode-switch" role="group" aria-label="Game mode">
-          <button data-mode="training" aria-pressed="false">${icon("flag")}<span>Training</span><small>Start here</small></button>
-          <button data-mode="skirmish" aria-pressed="true">${icon("crosshair")}<span>Skirmish</span><small>Custom battle</small></button>
           <button data-mode="campaign" aria-pressed="false">${icon("logo")}<span>Campaign</span><small>${MISSIONS.length} missions</small></button>
+          <button data-mode="skirmish" aria-pressed="true">${icon("crosshair")}<span>Skirmish</span><small>Custom battle</small></button>
           <button data-mode="defence" aria-pressed="false">${icon("tower")}<span>Defence</span><small>Hold the road</small></button>
+          <button data-mode="training" aria-pressed="false">${icon("flag")}<span>Training</span><small>Start here</small></button>
         </div>
         <div class="briefing-tools" id="skirmish-setup">
           <label class="field field-wide"><span>Battlefield</span><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select></label>
