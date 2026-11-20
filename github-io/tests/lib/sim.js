@@ -41,3 +41,23 @@ export function missionMatch(mission, { difficulty = "standard", progress = null
   const bot = new ObjectiveBot(sim, sim.missionDef, { decide });
   return { sim, bot, run: (seconds) => run(sim, seconds, { step: () => bot.step(), see: (e) => bot.see(e) }) };
 }
+
+// Plays `sim` on from where it is for `seconds` of game time, one 0.05 s tick at a time, and returns `seen`.
+// The unit tests' own small `run()` helpers were twenty copies of this loop with these differences, kept
+// as options so each file plays exactly as before:
+//   steps   how many ticks `seconds` means: "ceil" = every tick while i < seconds * 20 (the default),
+//           "round" = Math.round(seconds * 20), "div" = every tick while i < seconds / TICK
+//   stop    stop at the end of the match (default true)
+//   events  "keep" copies each event into `seen` and clears the queue (default), "clear" drops them,
+//           "leave" leaves the queue alone (a test that reads sim.events itself), "stamp" copies each
+//           with `at` = the game time after the tick
+export function advance(sim, seconds, { seen = [], steps = "ceil", stop = true, events = "keep" } = {}) {
+  const count = steps === "round" ? Math.round(seconds * 20) : steps === "div" ? Math.ceil(seconds / TICK) : Math.ceil(seconds * 20);
+  for (let i = 0; i < count && !(stop && sim.result); i++) {
+    sim.tick(TICK);
+    if (events === "keep") seen.push(...sim.events);
+    else if (events === "stamp") seen.push(...sim.events.map((e) => ({ ...e, at: sim.time })));
+    if (events !== "leave") sim.events.length = 0;
+  }
+  return seen;
+}

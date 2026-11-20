@@ -8,10 +8,11 @@ import { DEFENCE_LEVELS } from "../src/defence/levels.js";
 import { GARRISONS } from "../src/sim/defence.js";
 import { DEFINITIONS as D } from "../src/data.js";
 import { RANK_BONUS } from "../src/sim/tactics.js";
+import { advance } from "./lib/sim.js";
 
 const GORGE = DEFENCE_LEVELS[0], ROADS = DEFENCE_LEVELS.find((l) => l.id === "d-crossroads");
 const make = (level = GORGE, difficulty = "standard") => new Simulation({ map: level.map, enemyCount: 1, ai: false, mission: level, difficulty });
-const run = (s, seconds) => { for (let i = 0; i < Math.round(seconds * 20) && !s.result; i++) s.tick(0.05); };
+const run = (s, seconds) => { advance(s, seconds, { steps: "round", events: "leave" }); };
 // A gold tower with a branch on the level's first pad.
 function branched(s, crew, branch, pad = GORGE.defence.pads[0].id) {
   s.players[0].alloy = 10000;

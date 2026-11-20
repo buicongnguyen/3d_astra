@@ -12,6 +12,7 @@ import { HOLD_THE_RIVER, HOLD_THE_VALLEY } from "../src/story/defence-missions.j
 import { MAP_NODES } from "../src/story/campaign-map.js";
 import { DEFINITIONS as D } from "../src/data.js";
 import { AIR_HINT_UNITS, AIR_HINT_CREWS, AIR_HINT_CREWS_WATCHER, airHintText } from "../src/air-hint.js";
+import { advance } from "./lib/sim.js";
 
 const story = JSON.parse(readFileSync(new URL("../src/locales/story-vi.json", import.meta.url), "utf8")).messages;
 const main = JSON.parse(readFileSync(new URL("../src/locales/vi.json", import.meta.url), "utf8")).messages;
@@ -19,7 +20,7 @@ const mainKeys = new Set(Object.keys(main).map((k) => k.toLowerCase()));
 const WINGS = MISSIONS.find((m) => m.id === "m06b-wings-over-copper");
 const actions = (m) => (m.triggers || []).flatMap((t) => t.do || []);
 const waves = (m) => actions(m).filter((a) => a.wave).map((a) => a.wave);
-const run = (s, seconds, seen = []) => { for (let i = 0; i < seconds * 20 && !s.result; i++) { s.tick(0.05); seen.push(...s.events); s.events.length = 0; } return seen; };
+const run = (s, seconds, seen = []) => advance(s, seconds, { seen });
 const pick = (mercy) => ({ decisions: Object.fromEntries(Object.entries(DECISIONS).map(([id, d]) => [id, d.options.find((o) => !!o.mercy === mercy).id])) });
 const fnv = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; } return h.toString(16).padStart(8, "0"); };
 

@@ -7,10 +7,11 @@ import { DEFENCE_LEVELS } from "../src/defence/levels.js";
 import { GARRISONS, starsFor } from "../src/sim/defence.js";
 import { DEFINITIONS as D } from "../src/data.js";
 import { modelsForMatch } from "../src/model-roster.js";
+import { advance } from "./lib/sim.js";
 
 const [GORGE, BRIDGES] = DEFENCE_LEVELS;
 const make = (level = GORGE, difficulty = "standard") => new Simulation({ map: level.map, enemyCount: 1, ai: false, mission: level, difficulty });
-const run = (s, seconds) => { for (let i = 0; i < seconds * 20 && !s.result; i++) s.tick(0.05); };
+const run = (s, seconds) => { advance(s, seconds, { events: "leave" }); };
 const foes = (s) => s.entities.filter((e) => e.team === 1 && e.kind === "unit" && e.hp > 0);
 // A level with one short wave, for exact checks.
 const tiny = (units = { vanguard: 2 }, extra = {}) => ({ ...GORGE, id: "d-test", defence: { ...GORGE.defence, firstWave: 2, gap: 3, waves: [{ groups: [{ units, route: "main", every: 0.7 }], bonus: 10 }], ...extra } });

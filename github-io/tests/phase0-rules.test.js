@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Simulation } from '../src/simulation.js';
+import { advance } from "./lib/sim.js";
 
-const run = (s, seconds) => { for (let i = 0; i < seconds * 20; i++) s.tick(0.05); };
+const run = (s, seconds) => { advance(s, seconds, { stop: false, events: "leave" }); };
 const quiet = (s) => { for (const e of s.own(1)) if (e.kind === 'unit') e.hp = 0; s.tick(0.05); };
 
 test('an idle fighter answers a shooter that outranges it, then returns to its post', () => {

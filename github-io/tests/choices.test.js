@@ -11,10 +11,11 @@ import { loadProgress, saveProgress, recordClear, recordDecisions, recordEnding,
 import { storyStrings } from '../tools/story-strings.mjs';
 import { answerDecision } from '../tools/playbot.mjs';
 import { translate } from '../src/i18n.js';
+import { advance } from "./lib/sim.js";
 
 const byId = (id) => MISSIONS.find((m) => m.id === id);
 const memory = (text) => { const store = new Map(text === undefined ? [] : [['frontier-campaign-v2', text]]); return { store, getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) }; };
-const run = (s, seconds, seen = []) => { for (let i = 0; i < seconds * 20 && !s.result; i++) { s.tick(0.05); seen.push(...s.events); s.events.length = 0; } return seen; };
+const run = (s, seconds, seen = []) => advance(s, seconds, { seen });
 const ifs = (value) => JSON.stringify(value).includes('"if"');
 const mercy = Object.fromEntries(Object.values(DECISIONS).map((d) => [d.id, d.options.find((o) => o.mercy).id]));
 const firm = Object.fromEntries(Object.values(DECISIONS).map((d) => [d.id, d.options.find((o) => !o.mercy).id]));

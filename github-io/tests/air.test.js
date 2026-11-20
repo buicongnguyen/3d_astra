@@ -5,9 +5,10 @@ import { Simulation } from '../src/simulation.js';
 import { DEFINITIONS as D } from '../src/data.js';
 import { FACTION_RULES, AIR } from '../src/factions.js';
 import { TERRAIN } from '../src/terrain.js';
+import { advance } from "./lib/sim.js";
 
 const TICK = 0.05;
-const run = (s, seconds) => { for (let i = 0; i < seconds / TICK; i++) s.tick(TICK); };
+const run = (s, seconds) => { advance(s, seconds, { steps: "div", stop: false, events: "leave" }); };
 // A quiet match: the starting armies are parked in a far corner so nothing else fights.
 function quiet(options = {}) {
   const s = new Simulation({ ai: false, ...options });

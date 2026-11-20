@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Simulation } from '../src/simulation.js';
 import { SAVE_VERSION } from '../src/snapshot.js';
+import { advance } from "./lib/sim.js";
 
-const run = (s, seconds) => { for (let i = 0; i < seconds * 20; i++) { s.tick(0.05); s.events.length = 0; } };
+const run = (s, seconds) => { advance(s, seconds, { stop: false, events: "clear" }); };
 
 // A scripted player: the same commands at the same ticks every time.
 function play(s, seconds) {

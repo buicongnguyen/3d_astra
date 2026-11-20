@@ -11,6 +11,7 @@ import { bossStatus, BOSS_STATES } from "../src/boss-ui.js";
 import { MISSIONS } from "../src/story/missions.js";
 import { SCENES } from "../src/story/scenes.js";
 import balance from "../src/balance.json" with { type: "json" };
+import { advance } from "./lib/sim.js";
 
 const SPEC = BOSSES["iron-vanguard"], BURST = SPEC.attacks[0];
 // A flat test field: the boss at (0, -10) facing a player group 10 m south of it.
@@ -20,7 +21,7 @@ const field = (difficulty = "standard", extra = []) => {
   const s = new Simulation({ map: "classic", enemyCount: 1, mission, difficulty });
   return { s, boss: s.tagged("boss")[0] };
 };
-const run = (s, seconds, seen = []) => { for (let i = 0; i < Math.round(seconds * 20) && !s.result; i++) { s.tick(0.05); seen.push(...s.events.map((e) => ({ ...e, at: s.time }))); s.events.length = 0; } return seen; };
+const run = (s, seconds, seen = []) => advance(s, seconds, { seen, steps: "round", events: "stamp" });
 const until = (s, test, cap = 60, seen = []) => { for (let i = 0; i < cap * 20 && !test(); i++) { s.tick(0.05); seen.push(...s.events.map((e) => ({ ...e, at: s.time }))); s.events.length = 0; } assert.ok(test(), "condition reached"); return seen; };
 // A tight group of Rangers (they cannot hurt the boss much in a few seconds, and they stand still).
 const squad = (s, n = 6, stance = "guard", at = { x: 0, z: 2 }) => {
