@@ -76,6 +76,8 @@ await suite('language',async()=>{
   const {page,errors}=await openPage(browser,{...viewport,mobile:touch},{deviceScaleFactor:touch?2:1,timeout:20000});
   const press=async selector=>{const target=page.locator(selector).first();if(touch)await target.tap();else await target.click();await page.waitForTimeout(120);};
   const text=selector=>page.locator(selector).first().innerText();
+  // W1-D: on phones a dialogue line is a one-line chip (ellipsis by design); a tap opens the whole line.
+  const openChip=()=>page.evaluate(()=>{const b=document.querySelector('#dialogue');if(document.documentElement.classList.contains('compact-ui')&&!b.classList.contains('expanded'))document.querySelector('#dialogue-card').click();});
   // Visible text under 11 px, text cut off by its own box, or text outside the screen.
   const layout=scope=>page.evaluate(scope=>[...document.querySelectorAll(scope+' :is(p,span,strong,small,em,h1,h2,h3,label,li,b,button)')]
    .filter(e=>e.getClientRects().length&&[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())&&!e.closest('.brand,.visually-hidden'))
@@ -141,6 +143,7 @@ await suite('language',async()=>{
   await showObjectives(false);
   await untilStepping(line=>!document.querySelector('#dialogue').hidden&&document.querySelector('#dialogue-text').textContent===line,vi(firstSay.text));
   assert.equal(await text('#dialogue-name'),'Mira Vale');
+  await openChip();
   await fits('#dialogue','dialogue');
   assert.ok(await page.evaluate(()=>{const r=document.querySelector('#dialogue-card').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight;}),name+': the dialogue box is on screen');
   await page.screenshot({path:'test-results/language-story-'+name+'-dialogue.png'});
@@ -151,10 +154,11 @@ await suite('language',async()=>{
   await setLanguage('vi');
   assert.deepEqual(await objectives(),(await shown()).map(vi),name+': objectives turn Vietnamese again');
   await page.evaluate(line=>{
-   for(let i=0;i<8&&!document.querySelector('#dialogue').hidden;i++)document.querySelector('#dialogue-card').click();
+   for(let i=0;i<8&&!document.querySelector('#dialogue').hidden;i++){const compact=document.documentElement.classList.contains('compact-ui');if(compact){if(!document.querySelector('#dialogue').classList.contains('expanded'))document.querySelector('#dialogue-card').click();document.querySelector('#dialogue-close').click();}else document.querySelector('#dialogue-card').click();}
    window.__frontier.sim.events.push({type:'say',who:line.who,text:line.text});
   },laterSay);
   await page.waitForFunction(line=>!document.querySelector('#dialogue').hidden&&document.querySelector('#dialogue-text').textContent===line,vi(laterSay.text));
+  await openChip();
   await fits('#dialogue','later dialogue');
   await page.evaluate(()=>{window.__frontier.sim.events.push({type:'point',name:'oldRelay',owner:0,x:0,z:10});});
   await page.waitForFunction(toast=>document.querySelector('#notice').textContent.includes(toast),vi('Builder relay captured'));
