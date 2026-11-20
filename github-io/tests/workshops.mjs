@@ -36,11 +36,11 @@ await suite("workshops", async () => {
       s.spawn("foundry", 0, hq.x + 12, hq.z - 12);
       const site = s.findPlacement("workshop", 0, hq.x + 12, hq.z + 4, 10);
       const w = s.spawn("workshop", 0, site.x, site.z);
-      if (!w.trains) w.trains = ["ranger", "vanguard"]; // no real workshop unit merged yet: a stand-in card
       f.select([w.id]);
       return { id: w.id, trains: w.trains, buildable: s.buildable(0) };
     });
     assert.ok(info.buildable.includes("workshop"));
+    assert.deepEqual(info.trains, ["gunner"], "the Field workshop card trains the real Gunner (Wave 1 integration)");
     await page.waitForTimeout(400);
     const card = await page.evaluate(() => {
       const tiles = [...document.querySelectorAll("#commands .command-tile")].map((t) => { const r = t.getBoundingClientRect(); return { w: r.width, h: r.height }; });
@@ -48,6 +48,9 @@ await suite("workshops", async () => {
       return { tiles, dock: dockEl.getBoundingClientRect().height, label: document.querySelector("#command-label").textContent };
     });
     assert.equal(card.label, "PRODUCTION");
+    assert.equal(card.tiles.length >= 1, true, "the production card has the Gunner tile");
+    const queued = await page.evaluate((id) => { const s = window.__frontier.sim; const w = s.entities.find((e) => e.id === id); w.complete = true; return s.enqueue(id, "gunner") && w.queue.some((q) => q.type === "gunner"); }, info.id);
+    assert.ok(queued, "a Gunner can be queued at the Field workshop");
     for (const t of card.tiles) assert.ok(t.w >= 44 && t.h >= 44, `${viewport}: tile ${t.w}x${t.h}`);
     // The dock must not be taller than with a Barracks selected.
     const barracks = await page.evaluate(() => { const f = window.__frontier; f.select([f.sim.own(0).find((e) => e.type === "barracks").id]); return null; });
