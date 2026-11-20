@@ -1,4 +1,4 @@
-import { CELL, GRID, HALF, ROCKS, cellAt, worldAt, distance, hyp } from "./data.js";
+import { ROCKS, distance, hyp } from "./data.js";
 import { Terrain } from "./terrain.js";
 
 // Side of an obstacle bucket in metres (see near()).

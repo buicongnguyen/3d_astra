@@ -1,4 +1,4 @@
-import { HALF, ROCKS, hyp } from "./data.js";
+import { ROCKS, hyp } from "./data.js";
 import MAP_CONFIG from './maps.json' with { type: 'json' };
 import balance from './balance.json' with { type: 'json' };
 // Frontier Defence maps (src/defence/maps.json) are built like the others but never offered in Skirmish.

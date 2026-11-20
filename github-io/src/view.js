@@ -32,14 +32,10 @@ import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, setRimTier 
 import { MissionLook } from "./mission-look-view.js";
 import {
   EnvironmentView,
-  paintTerrain,
   optimizeEnvironment,
 } from "./environment-view.js";
 import {
   DEFINITIONS as D,
-  MAP_SIZE,
-  HALF,
-  GRID,
   ROCKS,
   clamp,
 } from "./data.js";

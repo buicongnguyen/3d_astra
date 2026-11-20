@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { CROSSINGS, SURFACES } from "./terrain.js";
+import { CROSSINGS } from "./terrain.js";
 import { ROCKS } from "./data.js";
 import { themeFor } from './visual-style.js';
 import { fogAware } from "./fog-aware.js";
@@ -28,16 +28,6 @@ export function optimizeEnvironment(assets) {
     }
   }
   for (const geometry of original) geometry.dispose();
-}
-export function paintTerrain(ctx, terrain, size) {
-  const colors={...SURFACES,...themeFor(terrain.id)};
-  for (let y = 0; y < size; y += 4)
-    for (let x = 0; x < size; x += 4) {
-      const wx = (x / size) * terrain.size - terrain.half,
-        wz = (y / size) * terrain.size - terrain.half;
-      ctx.fillStyle = colors[terrain.at(wx, wz)];
-      ctx.fillRect(x, y, 4, 4);
-    }
 }
 export class EnvironmentView {
   constructor(scene, terrain, assets, fog = null) {
