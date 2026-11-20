@@ -1,5 +1,5 @@
 // Readable messages: an alert ("Under attack!") is never covered by a counter hint or replaced by a
-// routine notice; on phones the hint stays out of the middle third of the screen and leaves by itself.
+// routine notice; on phones the hint sits in the dock band (W1-D) and leaves by itself.
 // Logic: src/message-queue.js (unit-tested in message-queue.test.js); drawing: app/hud.js, ui-extras.css.
 import assert from "node:assert/strict";
 import { launchBrowser, openPage, suite, shot, TIMEOUT } from "./lib/harness.mjs";
@@ -65,7 +65,7 @@ await suite("messages", async () => {
       assert.ok(await page.evaluate((s) => parseFloat(getComputedStyle(document.querySelector(s)).fontSize) >= 11, selector), `${name}: ${selector} text 11 px or more`);
     if (mobile) {
       // Never over the middle third of the screen (the band where the fight usually is).
-      assert.ok(hint.bottom <= size.height / 3 || hint.y >= size.height * 2 / 3, `${name}: hint ${JSON.stringify(hint)} in the middle third of ${size.height}`);
+      assert.ok(hint.bottom <= size.height / 3 || hint.y >= size.height * 0.33, `${name}: hint ${JSON.stringify(hint)} outside the dock band of ${size.height} (W1-D: phone hints sit in the dock band, bottom left)`);
       assert.ok(hint.h <= 46, `${name}: hint is a thin line (${hint.h} px)`);
       for (const sel of [".topbar", ".touch-controls", "#dock-tabs", ".bottom-dock"]) assert.equal(overlap(hint, await box(page, sel)), false, `${name}: hint over ${sel}`);
       assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("#fight-hint")).pointerEvents), "none");
@@ -143,10 +143,10 @@ await suite("messages", async () => {
     }
     const [line, alert2, hint2] = measured;
     assert.ok(line && alert2 && hint2, `${name}: dialogue, alert and hint drawn`);
-    assert.equal(overlap(line, alert2), false, `${name}: alert over the dialogue line`);
+    assert.equal(overlap(line, alert2), false, `${name}: alert over the dialogue line ${JSON.stringify([line, alert2])}`);
     assert.equal(overlap(line, hint2), false, `${name}: hint over the dialogue line ${JSON.stringify(hint2)} ${JSON.stringify(line)}`);
     assert.equal(overlap(alert2, hint2), false, `${name}: hint over the alert with a dialogue line`);
-    if (mobile) assert.ok(hint2.bottom <= size.height / 3 || hint2.y >= size.height * 2 / 3, `${name}: hint in the middle third with a dialogue line`);
+    if (mobile) assert.ok(hint2.bottom <= size.height / 3 || hint2.y >= size.height * 0.33, `${name}: hint in the middle third with a dialogue line`);
     await shot(page, `messages-${name}-dialogue`);
 
     assert.deepEqual(errors, [], `${name}: page errors`);

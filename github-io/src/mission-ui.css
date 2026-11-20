@@ -330,3 +330,9 @@
 .compact-ui:not(.scene-open) .dialogue:not(.expanded) #dialogue-more { flex: none; margin: 0; }
 .compact-ui:not(.scene-open) .dialogue:not(.expanded) #dialogue-close { display: none; }
 .compact-ui:not(.scene-open) .dialogue:not(.expanded) .cast-portrait { --size: 32px; }
+@media (max-aspect-ratio: 1.35) {
+  /* The dialogue chip is at the bottom now: toasts and the targeting prompt keep their top places. */
+  .compact-ui.dialogue-open:not(.in-briefing):not(.scene-open) #notice { top: 94px; }
+  .compact-ui.dialogue-open:not(.in-briefing):not(.scene-open) #mode-banner { top: 84px; }
+  .compact-ui.dialogue-open:not(.in-briefing):not(.construction-open):not(.scene-open) #stage:has(> #mode-banner:not([hidden])) > #notice { top: 148px; }
+}

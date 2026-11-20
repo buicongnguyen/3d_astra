@@ -37,7 +37,9 @@ try {
       await page.evaluate(type => { const f=window.__frontier; f.select([f.sim.own(0).find(e=>e.type===type).id]); },type);
       await tap('button[data-dock="selection"]');
       await inspect('.order-buttons button');
-      await tap('#field-guide'); await inspect('#guide-close'); await tap('#guide-close');
+      // Landscape keeps Info & stats in the "…" sheet (W1-D); portrait has it in the dock.
+      if (await page.locator('#field-guide').isVisible()) await tap('#field-guide'); else { await tap('#touch-more'); await tap('#touch-guide'); }
+      await inspect('#guide-close'); await tap('#guide-close');
       await tap('button[data-dock="actions"]');
       if(type!=='medic') await inspect('#commands button');
       if(['hq','barracks','foundry'].includes(type)) await inspect('#upgrade-actions button');

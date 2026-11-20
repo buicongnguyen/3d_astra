@@ -240,7 +240,7 @@
   .compact-ui:not(.in-briefing)[data-dock="selection"] .selection-panel:not(.has-entity) { display: none; }
   /* A unit (or units) selected: a short card; a roster row and a second row of orders add their own height.
      Buildings keep the full dock (queue and levels live there), as the Actions and Map tabs do. */
-  .compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity) { --dock-height: calc(var(--unit-dock) + var(--dock-roster, 0px) + var(--dock-orders, 0px)); --unit-dock: 106px; }
+  .compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity) { --dock-height: calc(var(--unit-dock) + var(--dock-roster, 0px) + var(--dock-orders, 0px)); --unit-dock: 113px; }
   .compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-roster) { --dock-roster: 52px; }
   .compact-ui.many-orders:not(.in-briefing):not(.no-units)[data-dock="selection"] { --dock-orders: 49px; }
 
@@ -282,4 +282,9 @@
   .compact-ui:not(.in-briefing) .selection-panel.has-entity { padding-bottom: 6px; }
   /* With something selected the idle buttons step aside (Army / Workers and the dock cover the same job). */
   .compact-ui:not(.in-briefing):has(.selection-panel.has-entity) #idle-chips { display: none; }
+}
+
+@media (max-aspect-ratio: 1.35) {
+  .compact-ui:not(.in-briefing) .selection-panel.has-entity #selection-info .sel-portrait { width: 42px; height: 42px; --size: 38px; }
+  .compact-ui:not(.in-briefing) .selection-panel.has-entity #selection-info .portrait-art { --size: 38px; }
 }
