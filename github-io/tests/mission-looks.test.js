@@ -7,7 +7,8 @@ const sim = (id, time = 0, extra = {}) => ({ missionDef: { id, ...extra }, time 
 test("every table id is a real mission or Chronicle, and no existing mission carries a look field", () => {
   const ids = new Set(MISSIONS.map((m) => m.id));
   for (const id of Object.keys(MISSION_LOOKS)) if (!id.startsWith("cv1")) assert.ok(ids.has(id), id);
-  assert.ok(MISSIONS.every((m) => !("look" in m)));
+  // only new content (W2-F m11c) carries its own look
+  assert.ok(MISSIONS.every((m) => !("look" in m) || m.id === "m11c-hold-the-keystone-roads"));
 });
 test("m08 and cv1 are night, m10 is storm, m06 turns to storm from 16:00", () => {
   assert.equal(missionLook(sim("m08-the-quiet-vault")).name, "night");
