@@ -265,3 +265,6 @@
   /* Side margins of the battlefield: 8 px (was 12), still clear of the screen edge. */
   .compact-ui:not(.in-briefing) { --gesture-left: max(8px, env(safe-area-inset-left, 0px)); --gesture-right: max(8px, env(safe-area-inset-right, 0px)); }
 }
+
+/* An open sheet is above the idle buttons and the other chips. */
+.compact-ui .touch-controls:has(#touch-sheet:not([hidden])) { z-index: 36; }

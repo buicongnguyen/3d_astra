@@ -65,6 +65,7 @@
     "render:audio": "node tools/render-audio.mjs",
     "baselines:diff": "node tools/baseline-diff.mjs",
     "test:golden-full": "node tests/golden-full.mjs",
+    "test:phones": "node tests/phones.mjs",
     "ci:build-job": "npm test && npm run check:defence && npm run build"
   },
   "dependencies": {

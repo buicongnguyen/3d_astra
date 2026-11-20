@@ -98,6 +98,9 @@ jobs:
           # Three Roads, Endless to wave 12), off the 10-minute build job. It needs no browser.
           - name: golden-full
             scripts: golden-full
+          # AAA round 2 (W1-D): phones first-class, the battlefield share on a phone.
+          - name: r2-w1d
+            scripts: phones
     defaults:
       run:
         working-directory: github-io
