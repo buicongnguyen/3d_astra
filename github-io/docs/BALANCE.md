@@ -472,3 +472,22 @@ a level-up. The AI never levels one (mission objects are tagged, and the AI skip
 the player can level their own: the Basin relay in Copper Harvest (1,200) and Copper Siege (3,500), the
 Copper refinery in Wings over Copper (2,000) and the Caravan beacon in A Debt in the Dunes (2,000) would
 drop to a relay's 562.5 at level 2 (checked headless). A changed campaign rule needs the owner's OK.
+
+## Veil Stalker (AAA round 2, W1-C)
+Workshop unit of the Veil, Expanded roster only (`roster: "expanded"`, `workshop: "veil"`, level 2): 85 HP and 25 shield, speed 3.9, vision 18 (+3 Veil), 95 damage every 4.5 s (21.1 dps) at 18 m, ×0.3 against vehicles, ×0.4 against buildings, class `ranged`, cost 150/60, pop 2, `cloak: true`, `prefers: ["support", "antiarmor", "ranged"]`. Steady aim (autocast when a preferred target is within range + 3 m): +3 m and full shield pierce for 8 s, cooldown 35 s. No tuning was needed; the combat fields are frozen after Wave 1.
+
+Equal-cost duels (`tests/lib/duel.mjs`: 5 offsets × both spawn sides = 10 battles; mean, battles won). Nothing casts in the harness (no autocast), so Steady aim is not in these numbers.
+
+| Stalkers (Veil) against | Budget | Mean | Won | Gate |
+|---|---|---:|---:|---|
+| Heal-ball, 6 Rangers + 2 Medics (1,175) | 1,175 | +0.199 | 7/10 | mean ≥ +0.15, ≥ 7 won: met; Medics down before 2 Rangers in 7/10 (≥ 6: met) |
+| Vanguard pack | 1,000 / 1,500 / 2,000 | -0.33 / -0.35 / -0.38 | 4, 4, 4 | ≤ -0.2: met |
+| Shade pack, Meridian seat | 1,000 / 1,500 / 2,000 | -0.37 / -0.38 / -0.38 | 4, 4, 4 | ≤ -0.2: met |
+| Shade pack, Veil mirror (both cloaked) | 1,000 | -0.86 | 0/10 | recorded |
+| Ranger pack | 1,000 / 1,500 / 2,000 | -0.02 / -0.05 / 0.00 | 4, 4, 5 | recorded |
+| Rider pack | 1,000 / 1,500 / 2,000 | -0.10 / -0.08 / -0.08 | 4, 4, 5 | recorded, not gated |
+| Scrapper pack | 1,000 / 2,000 | -0.38 / -0.70 | 4, 0 | recorded |
+| Breaker / Tank | 1,000 | -0.35 / -0.51 | 4, 2 | recorded |
+| Watcher / Anti-tank (Veil mirror / Meridian) | 1,000 | +0.66 / +0.69 | 10, 10 | recorded |
+
+A lone Stalker brings a level 1 Sentinel tower down in 82.1 s (19 shots of 38 against 700) from outside the tower's 13 m reach, taking no damage. The heal-ball margin is thin (mean +0.199 against +0.15, 7 won against 7): a later change to Ranger, Medic, cloak or detection moves it; the damage 85 to 100, HP 75 to 90 and range 17 to 18 tuning room of the brief is untouched.
