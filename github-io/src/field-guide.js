@@ -3,6 +3,9 @@ import { DEFINITIONS as D } from './data.js';
 import './progression.css';
 import { MAPS, TERRAIN } from './terrain.js';
 import { portrait } from './portraits.js';
+import balance from './balance.json' with { type: 'json' };
+
+const DRILL = balance.outrider_drill; // the Rider's page explains the Expanded-roster drill (src/sim/content/outrider.js)
 
 // Plateaus (Stage 3), from the live balance numbers (balance.json "terrain").
 export const HIGH_GROUND_GUIDE = `Plateaus are raised rock reached by ramps. A unit or tower on top gets +${TERRAIN.high_range} m range, +${Math.round((TERRAIN.high_damage - 1) * 100)}% damage and +${TERRAIN.high_vision} m sight against targets below; shooting up at it does ${Math.round((1 - TERRAIN.low_damage) * 100)}% less damage. A gold ▲ marks units on high ground, and units deep on a plateau stay hidden from below until you climb it.`;
@@ -25,6 +28,8 @@ export function entryHTML(type, sim = null, team = 0) {
     ${d.counter ? `<p>Deals ${d.counter_bonus || 1.6}× damage to ${CLASS_LABELS[d.counter]}.</p>` : ''}
     ${d.splash_radius ? `<p>Splash: enemies within ${d.splash_radius} m of the target take ${Math.round(d.splash_damage*100)}% damage.</p>` : ''}
     ${d.support ? `<p>Restores ${d.support} HP each second within range ${d.range}. Requires a clear line. No resource cost. Does not refill shields, heal itself, finish construction or revive casualties.</p><p>Use <strong>Support → friendly target</strong> to follow an ally. Idle helpers automatically assist injured allies in range.</p>` : ''}
+    ${d.facing ? `<h3>Facing armour</h3><p>Shots from the front do ${d.facing.front}× damage and shots from behind ${d.facing.rear}×; shots from the side do full damage. Flank it.</p>` : ''}
+    ${DRILL.types.includes(type) && sim?.ruleOn?.('roster') === 'expanded' ? `<h3>Expanded roster: Outrider drill</h3><p>When a melee or flame unit comes within ${DRILL.near} m, the Rider steps back ${DRILL.back} m and keeps shooting, at most once every ${DRILL.every} s. It never steps on Hold.</p>` : ''}
     ${d.flying ? AIR_GUIDE : ''}
     ${d.hits_air && !d.flying ? '<p>Hits air: it can shoot flyers.</p>' : ''}
     ${d.required_level && !d.workshop ? `<p>Requires level ${d.required_level} ${d.flying ? 'Command core' : ['medic','antitank'].includes(sim?.slotOf(type) || type) ? 'Barracks' : 'Foundry'}.</p>` : ''}
