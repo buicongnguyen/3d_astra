@@ -60,6 +60,13 @@ On a phone the battlefield is at least 70% of the screen with nothing selected (
 - **Unit intro cards:** the first time a unit type with `intro` is on screen its line shows once (`frontier-command.unit-intros.v1`).
 - Tests: `tests/phones.mjs` (CI entry `r2-w1d`), `army-readability.test.js`, `unit-intros.test.js`.
 
+### W2-B: Defence peaks, elites and Heroic challenges
+
+- **Elites.** A wave group may carry `mods: { elite: "<affix>" }` (new content only). Every elite has 1.6x health, 3x bounty and a gold ring (one instanced draw, `src/elite-view.js`); six affixes (balance.json `elites`): Plated, Swift, Splitter, Volatile, Banner, Mender (`src/sim/content/elites.js`). Designed levels and Endless are untouched.
+- **Heroic.** Clear a level to open its Heroic challenge (a fourth tab beside Levels, Endless, Daily, with a locked teaser): waves 5 to 10 of the level, the two largest groups elite, an all-elite finale, 5 lives, fixed alloy, no early-call bonus, +1 star (21 to 28), a Heroic badge on the result. Cloaked Stalker columns walk with the two Veil levels from wave 2. The empty `finale` slot is for round 3's bosses.
+- **Tools.** `npm run test:defence-heroic-check` (bot wins 7 of 7 with 2 or more lives left, a passive player loses by wave 3, single crews lose on 5 or more levels); `defence-heroic-eco` render scenario; `tests/defence-heroic.mjs` (3 viewports). The build job's `check:defence` is unchanged.
+- Model roster declares Splitter children and a Heroic finale boss's drops. Progress gets `heroic: { [levelId]: { won, lives } }`, written once something is recorded.
+
 ## Unreleased: Frontier Defence "Build zones, armour and Three Roads" (plan: docs/aaa/AAA_GAMEPLAY_STORY_DEFENCE.md, C10–C12)
 
 - **Build zones (C10):** a level may mark fields (`defence.zones`) where a crew can stand anywhere, on the 2 m grid, besides its fixed pads. Tap a spot in a marked field, pick a crew: the tower gets a pad of its own, so Upgrade, branches and Sell work as on any pad (selling frees the spot). A spot is refused, with the reason on the card and a red ring, within 4.5 m of a road (the column must always pass), near a spawn spot or the exit, within 5 m of another pad or tower, under a unit, where it would wall in ground, or when the field is full. The open cells are painted as one flat mesh (one draw). Command `zoneBuild { zone, x, z, crew }`, saved and replayed like `padBuild`.
