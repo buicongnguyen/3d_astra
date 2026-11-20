@@ -6,7 +6,7 @@
 // Tuned with `npm run check:missions` (tools/mission-check.mjs): `speed` is the pace the AI opens
 // with (an `aiSpeed` trigger raises it later), enemy units placed by `setup` are garrisons, and
 // medals follow the objective-aware bot's time (gold) and about 1.4 times that (silver).
-import { HOLD_THE_RIVER, HOLD_THE_VALLEY } from "./defence-missions.js";
+import { HOLD_THE_RIVER, HOLD_THE_VALLEY, HOLD_THE_ROADS } from "./defence-missions.js";
 
 export const MISSIONS = [
   // ───────────────────────── ACT 1: LANDFALL ─────────────────────────
@@ -1153,6 +1153,9 @@ export const MISSIONS = [
     medals: { gold: { seconds: 960 }, silver: { seconds: 1140 } },
     design: "A 20-minute race, expected about 15 minutes, against two allied AIs (Relaxed for 8 minutes, then Normal). The player starts with 900 alloy, the bonus tower and 6 Sunward units. Each conduit has 6000 HP and a tower; the middle one has 8 guards, the west one 3 (and after the first cut a Battle tank and 3 Rangers: bring Anti-tank soldiers), the north one 12 beside the Ashfall camp, which has its own 9 guards and 2 towers. Intended: break the first joint attack near 4:00 at home, cross between attacks, cut the middle conduit, then the west one, and use Sol's 6 reinforcements at 10:00 for the north one. When the west conduit falls, a 7-unit Warden wave with a Battle tank goes for the player's camp, so the home towers matter. Each conduit is its own objective so the list shows progress.",
   },
+
+  // Defence rules in story form, optional (AAA round 2, W2-F): the keystone roads, with the first Gunner teams.
+  HOLD_THE_ROADS,
 
   {
     id: "m12-frontiers-end",

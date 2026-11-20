@@ -59,9 +59,11 @@ export function saveProgress(progress, store = storage()) {
 const entry = (progress, index) => (index >= 0 && index < MISSIONS.length && Object.hasOwn(progress.cleared, MISSIONS[index].id) ? progress.cleared[MISSIONS[index].id] : null);
 // A stored time (even 0) means cleared.
 export const isCleared = (progress, index) => validTime(entry(progress, index)?.time);
-// Mission 1 is open; a mission opens when it is cleared itself or the one before it is. Keyed by
-// mission id, so a mission inserted later never locks one the player has already cleared.
-export const isUnlocked = (progress, index) => index === 0 || (index > 0 && index < MISSIONS.length && (isCleared(progress, index) || isCleared(progress, index - 1)));
+// Mission 1 is open; a mission opens when it is cleared itself or the nearest earlier mission that is not
+// optional is. Keyed by mission id, so a mission inserted later never locks one the player has already
+// cleared, and an optional mission (m11c, AAA round 2) opens after the mission before it and never locks the next.
+const gate = (index) => { let i = index - 1; while (i > 0 && MISSIONS[i].optional) i--; return i; };
+export const isUnlocked = (progress, index) => index === 0 || (index > 0 && index < MISSIONS.length && (isCleared(progress, index) || isCleared(progress, gate(index))));
 export const bestTime = (progress, index) => (isCleared(progress, index) ? entry(progress, index).time : null);
 export const bestMedal = (progress, index) => (isCleared(progress, index) ? entry(progress, index).medal : null);
 // Keeps the best (shortest) time and the best medal, each on its own. Every other field stays.
@@ -90,9 +92,10 @@ export function recordEnding(progress, ending) {
   const seen = progress.endingsSeen || [];
   return seen.includes(ending) ? progress : { ...progress, endingsSeen: [...seen, ending] };
 }
-// The first open mission that is not cleared yet; the last one when everything is.
+// The first open mission that is not cleared yet, never an optional one (the map offers those); the last
+// one when everything is.
 export const nextMission = (progress) => {
-  const open = MISSIONS.findIndex((_, i) => isUnlocked(progress, i) && !isCleared(progress, i));
+  const open = MISSIONS.findIndex((m, i) => !m.optional && isUnlocked(progress, i) && !isCleared(progress, i));
   return open < 0 ? MISSIONS.length - 1 : open;
 };
 export const missionIndex = (id) => MISSIONS.findIndex((m) => m.id === id);

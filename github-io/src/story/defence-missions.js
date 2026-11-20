@@ -175,6 +175,117 @@ export const HOLD_THE_VALLEY = {
   design: "Frontier Defence rules on Gorge Road in Act 2, about 7 minutes: no base, 20 lives, Ranger, Breaker and Anti-tank crews on 18 pads, four of them rim pads (seen from the road, more reach) and four deep pads (hidden from below). Eight Ashfall waves climb one road to the relay plateau, from 6 Scrappers to a last column of 18 Scrappers, 3 Battle tanks and 6 Rangers. Intended: crew the low road first, then rim pads at the bends, Breakers for the Scrapper columns (waves 3, 5, 8) and Anti-tank crews on the upper road before the tanks (waves 7, 8). Story beats: Okoro's three readings find the Builder vault, which sets up mission 8.",
 };
 
+// Hold the Keystone Roads (AAA round 2, W2-F): the optional third Defence mission of the campaign, in
+// Act 3 between Cut the Draw and Frontier's End. It is the story's first mission with build zones, armour
+// squads and the commander's post, on the Three Roads map of the Defence mode (same roads, pads and
+// zones), and the story debut of the Gunner: two squads lent by the Field workshop reach the keystone
+// before wave 4, outside the Expanded roster rule (a `spawn` action; the model roster declares them
+// from it). It carries `optional: true` (a mission opens when the nearest earlier non-optional
+// mission is cleared; it counts for medals, never for endings) and `look: "dusk"` (read by W2-C's
+// look table). The Rampart is not in this tree yet: round 3 adds an Ashfall Rampart column to wave 9
+// with a re-pinned checksum.
+const CROSSROADS_PADS = [
+  { id: "c1", x: -3, z: -47 }, { id: "c2", x: 9, z: -45 }, { id: "m1", x: 2, z: -31 },
+  { id: "w1", x: -41, z: -35 }, { id: "w2", x: -29, z: -17 }, { id: "w3", x: -41, z: 5 }, { id: "w4", x: -21, z: 11 },
+  { id: "e1", x: 41, z: -35 }, { id: "e2", x: 45, z: -11 }, { id: "e3", x: 41, z: 5 }, { id: "e4", x: 21, z: 11 },
+  { id: "s1", x: -19, z: 35 }, { id: "s2", x: -7, z: 47 }, { id: "s3", x: 7, z: 47 }, { id: "s4", x: 19, z: 35 },
+];
+// A group from another faction's roster, and troop carriers that drop their squad at route point `dropLeg`.
+const allied = (faction, units, route, every, delay, hp) => ({ ...group(units, route, every, delay, hp), faction });
+const carriers = (carry, route, dropLeg, delay = 0, n = 1, hp) => ({ ...group({ carrier: n }, route, 3, delay, hp), carry, dropLeg });
+
+export const HOLD_THE_ROADS = {
+  id: "m11c-hold-the-keystone-roads",
+  act: 3,
+  optional: true,
+  look: "dusk",
+  title: "Hold the Keystone Roads",
+  map: "crossroads",
+  enemies: 1, speed: "normal", alliance: "ffa",
+  factions: { 1: "ashfall" },
+  rules: { ai: false, mode: "defence", rosters: true },
+  briefing: {
+    place: "Three Roads Basin, below the southern relays, day 54",
+    lines: [
+      { who: "vale", text: "Hale's last columns come down the three roads to the keystone, and Warden machines walk with them." },
+      { who: "okoro", text: "Echo needs the southern relays quiet for ten waves. Nothing may cross the basin until it is tuned." },
+      { who: "vale", text: "You have a commander's post this time, Commander. Take the field, and keep your armour on the road that needs it." },
+    ],
+    intel: [
+      "Ashfall columns and Warden machines come down three roads at once; the north road forks round the basin.",
+      "Build crews anywhere inside the marked fields. Armour squads wait at the commander's post: tap one, then tap a road.",
+      "Heavy machines cost two lives. Anti-tank crews and armour stop them.",
+      "Meridian's Field workshop lends two Gunner teams before wave 4. They pin a crowd so your crews finish it.",
+    ],
+  },
+  defence: {
+    lives: 20,
+    alloy: { story: 420, standard: 330, veteran: 290 },
+    firstWave: 35,
+    gap: 18,
+    lane: 2.4,
+    pace: 0.8,
+    count: { story: 0.9, standard: 1.35, veteran: 1.5 },
+    hp: { story: 0.85, standard: 0.95, veteran: 1 },
+    routes: routes("crossroads"),
+    roads: { west: "West road", midwest: "North road, west fork", mideast: "North road, east fork", east: "East road" },
+    exit: exitOf("crossroads"),
+    pads: CROSSROADS_PADS,
+    zones: [
+      { id: "basin", x: 0, z: 4, w: 32, d: 44, max: 6 },
+      { id: "westfield", x: -51, z: 0, w: 18, d: 40, max: 3 },
+      { id: "eastfield", x: 51, z: 0, w: 18, d: 40, max: 3 },
+      { id: "southfield", x: 28, z: 47, w: 24, d: 20, max: 3 },
+    ],
+    armour: { cap: 2 },
+    crews: ["ranger", "breaker", "antitank", "watcher", "tank", "scorcher"],
+    commander: { x: -20, z: 52 },
+    waves: [
+      { groups: [group({ vanguard: 6 }, "west"), group({ vanguard: 6 }, "east", 0.7, 4)], bonus: 40 },
+      { groups: [group({ vanguard: 8 }, "midwest", 0.6), group({ ranger: 4 }, "mideast", 0.9, 3)], bonus: 45 },
+      { groups: [group({ vanguard: 10 }, "west", 0.55), carriers({ vanguard: 5 }, "east", 3, 4)], bonus: 50 },
+      { groups: [allied("wardens", { ranger: 6 }, "midwest", 0.8), group({ vanguard: 10 }, "mideast", 0.5, 3)], bonus: 55 },
+      { groups: [group({ tank: 2 }, "west", 3, 0, 1.2), group({ vanguard: 12 }, "east", 0.5, 2), carriers({ vanguard: 5 }, "midwest", 3, 6)], bonus: 60 },
+      { groups: [group({ breaker: 3 }, "mideast", 1.6), group({ vanguard: 14 }, "west", 0.45, 2), allied("wardens", { ranger: 5 }, "east", 0.8, 5)], bonus: 65 },
+      { groups: [carriers({ vanguard: 6 }, "west", 4, 0, 2), group({ ranger: 6 }, "east", 0.7, 2), group({ tank: 3 }, "midwest", 2.5, 5, 1.2)], bonus: 70 },
+      // Wave 8: the Wardens' Walkers lead the column.
+      { groups: [allied("wardens", { tank: 3 }, "midwest", 3, 0, 1.2), group({ vanguard: 16 }, "mideast", 0.45, 3), group({ vanguard: 12 }, "west", 0.5, 5)], bonus: 75 },
+      { groups: [group({ tank: 4 }, "east", 2.5, 0, 1.2), group({ breaker: 3 }, "west", 1.6, 3), carriers({ vanguard: 6 }, "midwest", 4, 5, 2), allied("wardens", { ranger: 8 }, "mideast", 0.7, 4)], bonus: 80 },
+      { groups: [group({ vanguard: 20 }, "west", 0.4), group({ vanguard: 20 }, "east", 0.4, 2), allied("wardens", { tank: 2 }, "midwest", 2.5, 4, 1.2), carriers({ vanguard: 6 }, "mideast", 4, 6, 2), group({ tank: 4 }, "west", 2.5, 8, 1.2)], bonus: 0 },
+    ],
+    camera: { x: 0, z: 0, zoom: 92, maxZoom: 124 },
+  },
+  objectives: [{ id: "hold", type: "waves", count: 10, text: "Hold the keystone roads for 10 waves" }],
+  win: ["hold"],
+  lose: [{ type: "lives" }],
+  triggers: [
+    { when: { time: 4 }, do: [{ say: { who: "vale", text: "Pads and fields on all three roads, Commander. Crew the basin first, and send armour where the line is thin." } }] },
+    { when: { time: 16 }, do: [{ say: { who: "okoro", text: "Echo counts the quiet in waves. Ten of them, and the southern relays are tuned for good." } }] },
+    { when: { waveStart: 1 }, do: [{ say: { who: "hale", text: "Meridian. Every road to the keystone is mine until my fleet is fed. Stand aside." } }, { music: "tense" }] },
+    { when: { wave: 2 }, do: [{ say: { who: "okoro", text: "Two waves down and the relays hum. Keep the roads shut, Commander." } }] },
+    { when: { waveStart: 4 }, do: [
+      { say: { who: "vale", text: "Two Gunner teams from the Field workshop, Commander. Put them where the Scrappers bunch up." } },
+      { spawn: "gunner", team: 0, at: { x: 0, z: 36 }, count: 2, exact: true },
+    ] },
+    { when: { waveStart: 4 }, do: [{ say: { who: "sol", text: "Warden Rangers on the north road. Gunners pin them in the open, and your crews do the rest." } }] },
+    { when: { wave: 5 }, do: [{ say: { who: "okoro", text: "Halfway. A Gunner holds a whole column in place while it is shot. Nobody enjoys being pinned." } }] },
+    { when: { waveStart: 8 }, do: [{ say: { who: "hale", text: "Walkers from the Wardens' yards lead this column. Bought, not borrowed. See how you like them." } }, { music: "battle" }] },
+    { when: { waveStart: 8 }, do: [{ say: { who: "vale", text: "Walkers outrange a Battle tank. Anti-tank crews, and flank them with armour." } }] },
+    { when: { wave: 8 }, do: [{ say: { who: "echo", text: "Eight in tune. The Lattice is tired, but it is listening. Two more." } }] },
+    { when: { waveStart: 10 }, do: [{ say: { who: "vale", text: "Last wave, and everything Hale has left. Hold the basin, Commander." } }] },
+  ],
+  debrief: {
+    win: [
+      { who: "echo", text: "Ten waves, and the southern relays are in tune. The way to the keystone is open." },
+      { who: "vale", text: "Hale has pulled back to the Expanse. One road left, Commander, and it is the last." },
+    ],
+    lose: [{ who: "vale", text: "They crossed the basin. Echo kept half of the tuning. We regroup and hold the roads again." }],
+  },
+  medals: { gold: { lives: 18 }, silver: { lives: 10 } },
+  check: { story: 3, standard: 2, veteran: 1 },
+  design: "An optional Act 3 mission under the Frontier Defence rules on Three Roads Basin, about 14 minutes: build zones, an armour cap of 2 and the commander's post (the first in the story), 20 lives, ten waves of Ashfall and Warden columns on four roads (the north road forks round the basin), troop carriers from wave 3 and a Walker-led column in wave 8. Before wave 4 two Gunner teams are lent from Meridian's Field workshop (the Gunner's story debut, outside the Expanded roster rule; they stand on Guard at the south of the basin). Intended: crews in the basin and the fields, armour on the road that needs it, the Gunners where the roads join. The mission is optional: it opens when Cut the Draw is cleared, never locks Frontier's End and counts for medals, not for endings.",
+};
+
 // The third new mission of the plan, "Wings over Copper" (`m06b-wings-over-copper`, the first air
 // raid, Act 2), was reserved here until the air units (release 0.18) merged; it now sits in
 // MISSIONS (src/story/missions.js) after Copper Harvest. No id is reserved any more.

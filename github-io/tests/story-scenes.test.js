@@ -125,7 +125,7 @@ const routeDist = (p, routes) => Math.min(...Object.values(routes).flatMap((pts)
 const make = (m, difficulty = "standard") => new Simulation({ map: m.map, enemyCount: 1, ai: false, mission: m, difficulty });
 
 test("the defence missions sit in the campaign with stable ids, on Defence maps, with 6 to 8 waves", () => {
-  assert.equal(MISSIONS.length, 15);
+  assert.equal(MISSIONS.length, 16, "fifteen plus the optional Hold the Keystone Roads (m11c)");
   assert.equal(MISSIONS.indexOf(HOLD_THE_RIVER), MISSIONS.findIndex((m) => m.id === "m02-first-contact") + 1, "Hold the River follows First Contact");
   assert.equal(MISSIONS.indexOf(HOLD_THE_VALLEY), MISSIONS.findIndex((m) => m.id === "m07-copper-siege") + 1, "Hold the Valley follows Copper Siege");
   assert.deepEqual(DEFENCE_MISSIONS.map((m) => [m.id, m.act]), [["m02b-hold-the-river", 1], ["m07b-hold-the-valley", 2]]);
