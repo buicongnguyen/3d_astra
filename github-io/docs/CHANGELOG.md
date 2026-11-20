@@ -588,3 +588,7 @@ Factions
 ## 0.1.0
 
 Everything up to 2 November 2026. See the dated review documents for the history.
+
+### Wave 1 integration
+- Wave 1 merged (W1-A to W1-F): Expanded roster with the Gunner and the Stalker, the Iron Sovereign, the Defence command deck and phones first-class. Classic play is unchanged: every baseline, golden pin and the Classic bench are identical.
+- Integrator fixes: the Field guide hides Expanded-only entries in Classic, Continue restores the rules, Gunner/Stalker ability tile orders are unique, the boss bar clears the phone dialogue chip, the 320 px unit card and the Hidden-from-below card fit, and the suites follow the new phone UI. New pin `tests/golden-expanded.test.js`; new baseline `bench-expanded.json`; the CI `interface` and `ui-extras` groups are split.
