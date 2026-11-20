@@ -12,10 +12,17 @@ import { workshops } from "./workshops.js";
 
 import { towerAim } from "./tower-aim.js";
 
+import { facing } from "./facing.js";
+import { rampart } from "./rampart.js";
+import { outrider } from "./outrider.js";
+
 export const CONTENT = [
   suppression,
   marksman,
   bossStatus,
   workshops,
   towerAim,
+  facing,
+  rampart,
+  outrider,
 ];

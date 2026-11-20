@@ -289,6 +289,16 @@
       "budget": 4000,
       "review": "pending owner review (round 2)",
       "animation": "Runtime articulated parts; no baked clips"
+    },
+    {
+      "name": "rampart",
+      "file": "rampart.glb",
+      "triangles": 5848,
+      "kind": "unit",
+      "budget": 6300,
+      "review": "pending owner review (round 2)",
+      "source": "tools/blender/generate_rampart.py (frontier_kit), original design",
+      "animation": "Runtime articulated parts: TurretRig and a recoiling BarrelRig; no baked clips"
     }
   ]
 }

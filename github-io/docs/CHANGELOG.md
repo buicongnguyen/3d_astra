@@ -60,6 +60,13 @@ On a phone the battlefield is at least 70% of the screen with nothing selected (
 - **Unit intro cards:** the first time a unit type with `intro` is on screen its line shows once (`frontier-command.unit-intros.v1`).
 - Tests: `tests/phones.mjs` (CI entry `r2-w1d`), `army-readability.test.js`, `unit-intros.test.js`.
 
+### W2-A: Rampart ram tank, facing armour and the Outrider drill
+Expanded roster only; Classic play, the campaign and every pin are unchanged.
+- **Rampart** (Ashfall Salvage yard, level 1, 200 alloy / 70 energy, 22 s): 650 HP, no shield, 34 damage every 1.3 s at 4 m, double to buildings and walls (`wall_bonus`). Welded plough tank in Ashfall rust orange with a Team-striped blade, ram gun and exhaust stacks (5,848 triangles). **Ram** (autocast when an enemy building or 3 or more enemies are within 10 m): double speed for 2.5 s and 80 extra damage on the first contact, once per cast.
+- **Facing armour** (`src/sim/content/facing.js`, any unit with `facing: { front, rear }`): shots from within 57 degrees of the nose do x0.6, shots from behind x1.5, from the side x1; direct hits and splash; shots carry the `front` or `rear` tag. A Rampart hit only from behind dies 2.5x faster than from the front.
+- **Outrider drill** (Sunward Riders, Expanded): a Rider steps back 3.6 m (at most 0.6 s, one step per 2 s) when a melee or flame unit comes within 4 m, then keeps shooting. Not on Hold, never onto unstandable ground (35 degree fallbacks). Numbers in balance.json `outrider_drill`.
+- Field guide pages for the Rampart (facing rule) and the Rider (drill); Vietnamese for all strings. Tests +38 (816 to 854). Details: docs/aaa/results/round2/w2a.md.
+
 ## Unreleased: Frontier Defence "Build zones, armour and Three Roads" (plan: docs/aaa/AAA_GAMEPLAY_STORY_DEFENCE.md, C10–C12)
 
 - **Build zones (C10):** a level may mark fields (`defence.zones`) where a crew can stand anywhere, on the 2 m grid, besides its fixed pads. Tap a spot in a marked field, pick a crew: the tower gets a pad of its own, so Upgrade, branches and Sell work as on any pad (selling frees the spot). A spot is refused, with the reason on the card and a red ring, within 4.5 m of a road (the column must always pass), near a spawn spot or the exit, within 5 m of another pad or tower, under a unit, where it would wall in ground, or when the field is full. The open cells are painted as one flat mesh (one draw). Command `zoneBuild { zone, x, z, crew }`, saved and replayed like `padBuild`.
