@@ -240,7 +240,9 @@
   .compact-ui:not(.in-briefing)[data-dock="selection"] .selection-panel:not(.has-entity) { display: none; }
   /* A unit (or units) selected: a short card; a roster row and a second row of orders add their own height.
      Buildings keep the full dock (queue and levels live there), as the Actions and Map tabs do. */
-  .compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity) { --dock-height: calc(var(--unit-dock) + var(--dock-roster, 0px) + var(--dock-orders, 0px)); --unit-dock: 113px; }
+  .compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity) { --dock-height: calc(var(--unit-dock) + var(--dock-roster, 0px) + var(--dock-orders, 0px) + var(--dock-line, 0px)); --unit-dock: 113px; }
+  /* A status line under the stats (Hidden from below, the anti-air line: 15 px + 2 px, 22 px with the gap above the orders) makes the card that much taller (Wave 1 integration). */
+  .compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity .selection-hidden) { --dock-line: 22px; }
   .compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-roster) { --dock-roster: 52px; }
   .compact-ui.many-orders:not(.in-briefing):not(.no-units)[data-dock="selection"] { --dock-orders: 49px; }
 
