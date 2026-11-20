@@ -472,3 +472,8 @@ a level-up. The AI never levels one (mission objects are tagged, and the AI skip
 the player can level their own: the Basin relay in Copper Harvest (1,200) and Copper Siege (3,500), the
 Copper refinery in Wings over Copper (2,000) and the Caravan beacon in A Debt in the Dunes (2,000) would
 drop to a relay's 562.5 at level 2 (checked headless). A changed campaign rule needs the owner's OK.
+
+## Iron Sovereign (W1-E)
+
+Definition `ironsovereign`: 12,000 HP, 300 shield, speed 1.2, light gun 10 per 1 s at 14 m, `leak_lives` 10. Attacks: Stomp (5 m circle on the best tower within 14 m, 30 to units, x5 to buildings, stun 4 s) and Three-shell spread (3 circles of 3.5 m, 7.5 m apart, 3 rounds of 10). At most 33 damage to a unit from one attack on Veteran (cap 36 = 30% of a Ranger's 120). Drops 4 Drones at 2/3 and 1/3.
+Measured (Standard, field, no towers): 12 Rangers + 4 Breakers kill it in 109 s with 3 of 16 left; 6 Rangers + 2 Breakers without drops: 167 s, 3 of 8 left; with the 4 + 4 Drones the 8 all die (acceptance not met, see docs/aaa/results/round2/w1e.md). Break share: 0.08 never broke an attack on d-crossroads with 10 towers (towers deal about 250 in a 3 s warning); 0.015 breaks 3 of 14 (21%), so 0.015 ships.

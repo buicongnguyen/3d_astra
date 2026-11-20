@@ -86,12 +86,16 @@ const scenarios = [
   // one merged mesh) and both armour squads. 106 draws and 478 matrix composes on 2026-11-19 (no water,
   // so fewer draws than the river levels; four more towers and tanks, so a few more composes).
   {name:'defence-big-eco', defence:'d-crossroads', mobile:true, zoom:92, focus:[0,0], reveal:true, wave:120, towers:10, zoneTowers:4, armour:2, triangles:600000, compose:500, carrierEvery:20, unlockAfter:'d-longcrossing'},
+  // W1-E: the Iron Sovereign (a six-legged boss, two tripod draws) with 60 units; and on Gorge Road with a wave.
+  {name:'boss-sovereign-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, boss:'ironsovereign'},
+  {name:'defence-boss-eco', defence:'d-gorge', mobile:true, zoom:70, focus:[-1,0], reveal:true, wave:60, towers:10, triangles:600000, boss:'ironsovereign'},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
 // Limits of scenarios added in AAA round 2: one new line per package right below this comment,
 // `Object.assign(limits, { "<name>": <n> });` (the line above stays as it is).
 Object.assign(limits, {});
+Object.assign(limits, { 'boss-sovereign-eco': 120, 'defence-boss-eco': 125 });
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
