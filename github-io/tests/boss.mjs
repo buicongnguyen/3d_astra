@@ -145,6 +145,7 @@ await suite("boss: the Iron Vanguard in mission 3", async () => {
       assert.ok(await page.evaluate(() => window.__frontier.mission.queue.log.some((l) => l.text.startsWith("It is down!"))), "the boss's last line is in the Comms log");
       assert.equal(await page.locator(".debrief").getAttribute("data-result"), "victory");
       assert.ok((await page.locator(".debrief").innerText()).includes("Iron Vanguard"), "the debrief names the boss");
+      await page.locator("#boss-bar").waitFor({ state: "hidden", timeout: TIMEOUT.step }).catch(() => {}); // the HUD refresh is throttled: wait for it
       assert.equal(await page.locator("#boss-bar").isVisible(), false, "the bar goes with the boss");
       await shot(page, `boss-debrief-${viewport}`);
     }
