@@ -1302,7 +1302,8 @@
     "All": "Tất cả",
     "REAR": "SAU LƯNG",
     "PINNED": "BỊ GHIM",
-    "PIERCE": "XUYÊN GIÁP"
+    "PIERCE": "XUYÊN GIÁP",
+    "destroyed": "bị tiêu diệt"
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],
@@ -1827,17 +1828,24 @@
     ],
     [
       "^Expanded roster: trained at the (.+), level (\\d+)\\.$",
-      "Binh chủng Mở rộng: huấn luyện tại {1}, cấp {2}.",
+      "Binh chủng Mở rộng: huấn luyện tại {1}, cấp {2}."
+    ],
+    [
       "^Speed ×(\\d)$",
       "Tốc độ ×{1}"
     ],
     [
-      "^When a melee or flame unit comes within (d+) m, the Rider steps back (d+) m and keeps shooting, at most once every (d+(?:.d+)?) s. It never steps on Hold.$",
+      "^When a melee or flame unit comes within (\\d+) m, the Rider steps back (\\d+) m and keeps shooting, at most once every (\\d+(?:\\.\\d+)?) s. It never steps on Hold.$",
       "Khi đơn vị cận chiến hoặc phun lửa áp sát trong {1} m, Kỵ binh lùi {2} m và tiếp tục bắn, tối đa một lần mỗi {3} giây. Nó không lùi khi đang Giữ vị trí."
     ],
     [
-      "^Shots from the front do (d+(?:.d+)?)× damage and shots from behind (d+(?:.d+)?)×; shots from the side do full damage. Flank it.$",
+      "^Shots from the front do (\\d+(?:\\.\\d+)?)× damage and shots from behind (\\d+(?:\\.\\d+)?)×; shots from the side do full damage. Flank it.$",
       "Đạn bắn từ phía trước gây {1} lần sát thương, từ phía sau {2} lần; đạn từ bên hông gây sát thương đầy đủ. Hãy đánh vòng sườn."
-    ]
+    ],
+    ["^ACT (I{1,3})$", "HỒI {1}"],
+    ["^DAY (\\d+)$", "NGÀY {1}"],
+    ["^NIGHT (\\d+)$", "ĐÊM {1}"],
+    ["^(.+) CHRONICLE$", "BIÊN NIÊN {1}"],
+    ["^FRONTIER DEFENCE$", "PHÒNG THỦ BIÊN CƯƠNG"]
   ]
 }

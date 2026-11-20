@@ -298,3 +298,12 @@ A Heroic variant is **new content** built by `defenceVariant(level, { variant: "
 - **Elite rules.** `e.elite` (affix), `e.bounty_x` (3), lazy `defence.elites` count; Splitter children use `spawnOnRoute`; Banner never stacks. A wave preview names elite groups (`elite` field) and the wave strip shows an affix chip.
 - **Finale slot.** `spec.finale` (null) is a wave group joined to the last wave: round 3 adds a boss with data only.
 - **Checks.** `npm run test:defence-heroic-check`; `tests/golden-w2b.test.js`.
+## m11c Hold the Keystone Roads
+
+An optional Act 3 mission (`m11c-hold-the-keystone-roads`, `HOLD_THE_ROADS` in `src/story/defence-missions.js`), shaped like m02b and m07b, between m11 and m12. It runs under the Frontier Defence rules on Three Roads Basin with the d-crossroads pads, build zones (`zones`), an armour cap of 2 and the commander's post, 20 lives and 10 waves: Ashfall columns and Warden groups (`faction: "wardens"`), troop carriers from wave 3, a Walker-led column in wave 8. Medals go by lives (gold 18, silver 10); `check` is 3, 2 and 1 stars (Story, Standard, Veteran).
+
+- **Lent Gunners.** The `waveStart: 4` trigger has Vale speak and spawns `{ spawn: "gunner", team: 0, count: 2, exact: true, at: { x: 0, z: 36 } }` through the mission `spawn` action. They are ordinary units on Guard, the player may move them, and the model roster declares the Gunner from the mission scan. They are in the tuning (alloy 420/330/290 and wave counts 0.9/1.35/1.5 for Story, Standard, Veteran were tuned with them present).
+- **Optional.** `optional: true`. `isUnlocked` (src/campaign.js) opens a mission when it is cleared or the nearest earlier non-optional mission is; `nextMission` never picks an optional one. An optional mission counts for medals and the relay count, never for endings.
+- **`look: "dusk"`** is read by the look table of W2-C. New content may carry any field; no existing mission or level was changed (the 13 checksums are unchanged, m11c's is in `tests/wings.test.js`).
+- **Title cards** for every id: `src/story/mission-intros.js` (`MISSION_INTROS`, `titleCardFor`).
+- The Rampart (W2-A) is not in m11c: round 3 adds an Ashfall Rampart column to wave 9 with a re-pinned checksum.

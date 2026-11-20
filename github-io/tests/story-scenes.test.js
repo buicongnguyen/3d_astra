@@ -35,7 +35,7 @@ test("scene data: known beats, cast speakers, short lines with Vietnamese, under
     assert.ok(sceneLines(scene).length >= 1, `${id}: a line`);
     assert.ok(sceneSeconds(scene) >= 5 && sceneSeconds(scene) < 20, `${id}: ${sceneSeconds(scene).toFixed(1)} s`);
     for (const beat of scene.beats) {
-      const kinds = ["camera", "say", "fx", "wait"].filter((k) => beat[k] !== undefined);
+      const kinds = ["camera", "say", "fx", "wait", "title", "shake"].filter((k) => beat[k] !== undefined);
       assert.equal(kinds.length, 1, `${id}: one kind per beat ${JSON.stringify(beat)}`);
       assert.ok(beatSeconds(beat) >= 0 && beatSeconds(beat) <= 6, `${id}: beat length`);
       if (beat.camera) assert.ok(beat.camera.seconds > 0 && beat.camera.seconds <= 4 && beat.camera.zoom >= 0.5 && beat.camera.zoom <= 1.5, `${id}: camera`);
@@ -125,7 +125,7 @@ const routeDist = (p, routes) => Math.min(...Object.values(routes).flatMap((pts)
 const make = (m, difficulty = "standard") => new Simulation({ map: m.map, enemyCount: 1, ai: false, mission: m, difficulty });
 
 test("the defence missions sit in the campaign with stable ids, on Defence maps, with 6 to 8 waves", () => {
-  assert.equal(MISSIONS.length, 15);
+  assert.equal(MISSIONS.length, 16, "fifteen plus the optional Hold the Keystone Roads (m11c)");
   assert.equal(MISSIONS.indexOf(HOLD_THE_RIVER), MISSIONS.findIndex((m) => m.id === "m02-first-contact") + 1, "Hold the River follows First Contact");
   assert.equal(MISSIONS.indexOf(HOLD_THE_VALLEY), MISSIONS.findIndex((m) => m.id === "m07-copper-siege") + 1, "Hold the Valley follows Copper Siege");
   assert.deepEqual(DEFENCE_MISSIONS.map((m) => [m.id, m.act]), [["m02b-hold-the-river", 1], ["m07b-hold-the-valley", 2]]);

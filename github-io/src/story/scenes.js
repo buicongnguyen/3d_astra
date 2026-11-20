@@ -14,8 +14,11 @@
 //   { say: { who, text } }             a line in the dialogue box (CAST id), held for its reading time
 //   { fx: { flash } }                  a screen glow: "relay" (teal), "dark" (lights out), "alarm" (warm)
 //   { wait: seconds }                  a pause
+//   { title: { text, sub } }           a name card inside the scene (a boss's entrance), held 1.8 s
+//   { shake: amount }                  camera trauma 0 to 1 (a heavy footfall, a blast), 0.3 s
 // Writing rules: docs/WORLD.md; every line also goes to src/locales/story-vi.json and
 // docs/aaa/review/story-lines.md.
+export const TITLE_BEAT_SECONDS = 1.8;
 export const FLASHES = ["relay", "dark", "alarm"];
 
 export const SCENES = {
@@ -49,6 +52,8 @@ export const SCENES = {
     beats: [
       { camera: { at: "vanguardYard", zoom: 0.8, seconds: 2.2 } },
       { fx: { flash: "alarm" } },
+      { shake: 0.5 },
+      { title: { text: "Iron Vanguard", sub: "Salvaged war machine" } },
       { say: { who: "okoro", text: "That is no Ashfall print, Commander. It is an old Builder war machine, and they woke it up." } },
       { say: { who: "hale", text: "The Iron Vanguard. Nine weeks to pull it out of a trench. It guards my siphons now." } },
       { say: { who: "vale", text: "It marks the ground before each burst. Stay out of the red. Hit it when its core opens." } },
@@ -129,7 +134,9 @@ export const sceneLineSeconds = (text) => Math.min(5.5, Math.max(2.6, 1.6 + Stri
 export const beatSeconds = (beat) => (beat.camera ? beat.camera.seconds ?? 2
   : beat.say ? sceneLineSeconds(beat.say.text)
     : beat.wait !== undefined ? beat.wait
-      : beat.fx ? 0.3 : 0);
+      : beat.title ? TITLE_BEAT_SECONDS
+        : beat.shake !== undefined ? 0.3
+          : beat.fx ? 0.3 : 0);
 export const sceneSeconds = (scene) => (scene?.beats || []).reduce((sum, beat) => sum + beatSeconds(beat), 0);
 // Every line of a scene, in order (the Comms log keeps them when the scene is skipped).
 export const sceneLines = (scene) => (scene?.beats || []).filter((b) => b.say).map((b) => b.say);

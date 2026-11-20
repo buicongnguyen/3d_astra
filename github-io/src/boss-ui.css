@@ -46,3 +46,16 @@
   .compact-ui #boss-bar .boss-track { height: 8px; }
 }
 .in-briefing #boss-bar { display: none !important; }
+
+/* The boss name card (showBossCard): top third, no taps, a plain fade under reduced motion. */
+#boss-card { position: absolute; z-index: 8; left: 50%; top: 24%; transform: translateX(-50%); max-width: calc(100% - 32px); padding: 8px 26px 10px; pointer-events: none; text-align: center; display: flex; flex-direction: column; gap: 2px;
+  background: linear-gradient(90deg, transparent, rgba(24, 8, 6, 0.85) 20%, rgba(24, 8, 6, 0.85) 80%, transparent); animation: boss-card 2.4s ease both; }
+#boss-card strong { font: 800 28px/1.1 var(--font-display, "Arial Narrow", Arial, sans-serif); letter-spacing: 0.12em; text-transform: uppercase; color: #ffd2bf; text-shadow: 0 2px 12px #000; }
+#boss-card span { font: 700 12px/1.2 var(--font-ui, sans-serif); letter-spacing: 0.18em; text-transform: uppercase; color: #ff8f78; }
+#boss-card[data-kind="fall"] strong { color: #ffe08a; }
+.compact-ui #boss-card { top: 20%; } .compact-ui #boss-card strong { font-size: 20px; }
+@keyframes boss-card { 0% { opacity: 0; transform: translateX(-50%) scale(1.12); } 14% { opacity: 1; transform: translateX(-50%) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
+:root.motion-off #boss-card { animation: boss-fade 2.4s ease both; }
+@keyframes boss-fade { 0% { opacity: 0; } 12% { opacity: 1; } 80% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { #boss-card { animation: boss-fade 2.4s ease both; } }
+:root.scene-open #boss-card { display: none; }

@@ -73,7 +73,8 @@
     "test:gunner": "node tests/gunner.mjs",
     "test:workshops": "node tests/workshops.mjs",
     "test:title": "node tests/title.mjs",
-    "test:phones": "node tests/phones.mjs"
+    "test:phones": "node tests/phones.mjs",
+    "test:showtime": "node tests/showtime.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

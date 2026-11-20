@@ -11,7 +11,7 @@
 // for a scene, so saving, loading and replays are exactly as without it.
 import "../scenes.css";
 import { $ } from "./dom.js";
-import { SCENES, FLASHES, sceneLineSeconds } from "../story/scenes.js";
+import { SCENES, FLASHES, TITLE_BEAT_SECONDS, sceneLineSeconds } from "../story/scenes.js";
 import { motionOff } from "./preferences.js";
 
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -25,9 +25,9 @@ export function setupScenes(S, A) {
   veil.hidden = true;
   veil.setAttribute("role", "region");
   veil.setAttribute("aria-label", "Story scene");
-  veil.innerHTML = `<div class="scene-bar top" aria-hidden="true"></div><div class="scene-bar bottom" aria-hidden="true"></div><div class="scene-flash" aria-hidden="true"></div><button id="scene-skip" class="scene-skip" type="button" aria-keyshortcuts="Escape Space"><span>Skip scene</span><kbd aria-hidden="true">Esc</kbd></button>`;
+  veil.innerHTML = `<div class="scene-bar top" aria-hidden="true"></div><div class="scene-bar bottom" aria-hidden="true"></div><div class="scene-flash" aria-hidden="true"></div><div class="scene-title" aria-hidden="true"><strong></strong><span></span></div><button id="scene-skip" class="scene-skip" type="button" aria-keyshortcuts="Escape Space"><span>Skip scene</span><kbd aria-hidden="true">Esc</kbd></button>`;
   $("stage").append(veil);
-  const flash = veil.querySelector(".scene-flash");
+  const flash = veil.querySelector(".scene-flash"), titleBox = veil.querySelector(".scene-title");
 
   // play: { id, scene, i, t, length, from, cam, later, then, back }
   let play = null;
@@ -64,6 +64,8 @@ export function setupScenes(S, A) {
     // The bars slide in on the next frame (no transition under motion-off).
     requestAnimationFrame(() => { if (play?.id === id) veil.classList.add("on"); });
     veil.querySelector("#scene-skip").focus({ preventScroll: true });
+    // The line of play steps aside when a scene starts (the scene speaks in its place).
+    A.missionUI.dismiss?.();
     next();
     return true;
   }
@@ -87,6 +89,14 @@ export function setupScenes(S, A) {
         return;
       }
       play.cam = null;
+      if (beat.title) {
+        titleBox.querySelector("strong").textContent = beat.title.text;
+        titleBox.querySelector("span").textContent = beat.title.sub || "";
+        titleBox.classList.remove("on"); void titleBox.offsetWidth; titleBox.classList.add("on");
+        play.length = TITLE_BEAT_SECONDS;
+        return;
+      }
+      if (beat.shake !== undefined) { S.view.shake?.add(beat.shake, 0, S.view.shakeEnabled?.() ?? false); play.length = 0.3; return; }
       if (beat.say) { A.missionUI.sceneLine(beat.say.who, beat.say.text); play.length = sceneLineSeconds(beat.say.text); return; }
       if (beat.fx) {
         if (FLASHES.includes(beat.fx.flash) && !motionOff()) { flash.className = "scene-flash"; void flash.offsetWidth; flash.className = `scene-flash ${beat.fx.flash}`; }
@@ -124,6 +134,7 @@ export function setupScenes(S, A) {
     veil.classList.remove("on");
     veil.hidden = true;
     flash.className = "scene-flash";
+    titleBox.classList.remove("on");
     delete veil.dataset.scene;
     root.classList.remove("scene-open");
     for (const node of behind()) if (node) node.inert = false;
