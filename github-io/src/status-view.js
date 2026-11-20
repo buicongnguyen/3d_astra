@@ -149,7 +149,9 @@ export class StatusView {
   }
 
   put(x, y, z, size, cell, alpha) {
-    const i = this.count++, P = this.place.array, C = this.cell.array;
+    const i = this.count++, P = this.place.array, C = this.cell.array, f = Math.fround;
+    if (P[i * 4] === f(x) && P[i * 4 + 1] === f(y) && P[i * 4 + 2] === f(z) && P[i * 4 + 3] === f(size) && C[i * 2] === cell && C[i * 2 + 1] === alpha) return;
+    this.dirty = true;
     P[i * 4] = x; P[i * 4 + 1] = y; P[i * 4 + 2] = z; P[i * 4 + 3] = size;
     C[i * 2] = cell; C[i * 2 + 1] = alpha;
   }
@@ -165,7 +167,9 @@ export class StatusView {
     const size = ICON_PX * (view.unitsPerPixel || 0.1);
     if (!this.mesh && !this.anyIcon(entities, time)) { this.hide(); return; }
     if (!this.mesh) this.build();
+    const before = this.count;
     this.count = 0;
+    this.dirty = false;
     for (let i = 0; i < entities.length && this.count < CAPACITY; i++) {
       const e = entities[i], fx = e.fx;
       if (!fx || !(e.hp > 0)) continue;
@@ -208,7 +212,8 @@ export class StatusView {
     if (this.frame % 30 === 0) for (const [key, seen] of this.born) if (seen[1] !== this.frame) this.born.delete(key);
     this.mesh.geometry.instanceCount = this.count;
     this.mesh.visible = this.count > 0;
-    if (this.count) for (const a of [this.place, this.cell]) { a.clearUpdateRanges(); a.addUpdateRange(0, this.count * a.itemSize); a.needsUpdate = true; }
+    if (this.count !== before) this.dirty = true;
+    if (this.count && this.dirty) for (const a of [this.place, this.cell]) { a.clearUpdateRanges(); a.addUpdateRange(0, this.count * a.itemSize); a.needsUpdate = true; }
   }
 
   // True when some entity shows an icon (so the atlas and mesh are worth building).

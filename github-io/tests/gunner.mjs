@@ -49,7 +49,7 @@ await suite("gunner", async () => {
     // 2. The pin icon: a pinned unit adds exactly one draw call, and none without a status.
     const icon = await page.evaluate(() => {
       const f = window.__frontier, s = f.sim, v = f.view;
-      const target = s.spawn("scrapper", 1, 6, 0);
+      const target = s.spawn("ranger", 1, 6, 0);
       v.update(s, 0, new Set(), null);
       const plugin = v.plugins.list.find((p) => "born" in p && "kicks" in p);
       const draws = () => { v.update(s, 0.016, new Set(), null); return v.renderer.info.render.calls; };
@@ -80,7 +80,7 @@ await suite("gunner", async () => {
       s.tick(0.05);
       s.players[0].autocast = true;
       const guns = Array.from({ length: 6 }, (_, i) => s.spawn("gunner", 0, -5 + (i % 3) * 2.2, -6 - Math.floor(i / 3) * 2.2));
-      const rush = Array.from({ length: 10 }, (_, i) => s.spawn("scrapper", 1, -6 + (i % 5) * 1.9, 9 + Math.floor(i / 5) * 1.9));
+      const rush = Array.from({ length: 10 }, (_, i) => s.spawn("vanguard", 1, -6 + (i % 5) * 1.9, 9 + Math.floor(i / 5) * 1.9));
       s.issue(rush.map((u) => u.id), { type: "attackmove", x: 0, z: -8 });
       v.focusOn(0, 0); v.zoom = v.defaultZoom * 0.55; v.updateCamera();
       f.select(guns.map((g) => g.id));

@@ -472,3 +472,20 @@ a level-up. The AI never levels one (mission objects are tagged, and the AI skip
 the player can level their own: the Basin relay in Copper Harvest (1,200) and Copper Siege (3,500), the
 Copper refinery in Wings over Copper (2,000) and the Caravan beacon in A Debt in the Dunes (2,000) would
 drop to a relay's 562.5 at level 2 (checked headless). A changed campaign rule needs the owner's OK.
+
+## Gunner team (AAA round 2, W1-B)
+
+Expanded roster only (`roster: "expanded"`, `workshop: "meridian"`). 125 HP, 35 shield, speed 3.6, 4 damage every 0.25 s, range 11, class `siege`, `counter: "melee"` x1.6, 1.8 m sweep at 50%, x0.25 against machines, x0.5 against buildings, cost 125/40, pop 2, 16 s. Suppression: 1 point per hit to the target and hostile infantry within 2 m, decay 2 a second, Pinned at 6 points for 3 s, immune 4 s. Crossfire: points x2 for 6 s, 35 s recharge.
+
+Equal-cost duels (`tests/lib/duel.mjs`: 5 offsets from both spawn sides; mean of 10 and battles won by the Gunners; first side minus second):
+
+| Opponent | 1,000 | 1,500 (gate) | 2,000 |
+|---|---:|---:|---:|
+| Scrapper | +0.01 (4/10) | **+0.57 (10/10)** | +0.84 (10/10) |
+| Vanguard | +0.07 (6/10) | **+0.51 (10/10)** | +0.65 (10/10) |
+| Shade | +0.01 (4/10) | **+0.52 (10/10)** | +0.63 (10/10) |
+| Ranger | -0.52 (0/10) | **-0.54 (0/10)** | -0.49 (0/10) |
+| Breaker | -0.85 (0/10) | **-0.89 (0/10)** | -0.88 (0/10) |
+| Tank | -0.90 (0/10) | **-0.92 (0/10)** | -0.94 (0/10) |
+
+Gates at 1,500: Scrapper, Vanguard, Shade mean +0.3 or more and 7 of 10 won; Ranger -0.25 or lower; Breaker and Tank -0.5 or lower (all met, and asserted in `tests/gunner.test.js`). Recorded, not gated: against 25 Scrappers at 1,500 the first Scrapper touches the line after about 2.4 s against Gunners and 2.2 s against Rangers, half of them after 3.7 to 4.2 s against 3.2 to 3.6 s (Pinned slows the rush); the Gunners kill all 25, Rangers leave 22 to 23 alive. Under steady fire (3 Gunners, 60 s) the target is pinned at most 3/7 of the time and never more than 3 s at once.
