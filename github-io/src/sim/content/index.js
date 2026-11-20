@@ -8,8 +8,11 @@ import { suppression } from "./suppression.js";
 import { marksman } from "./marksman.js";
 import { bossStatus } from "./boss-status.js";
 
+import { workshops } from "./workshops.js";
+
 export const CONTENT = [
   suppression,
   marksman,
   bossStatus,
+  workshops,
 ];

@@ -6,6 +6,7 @@ import { createMatchStats } from "../match-stats.js";
 import { loadSettings } from "../settings.js";
 import { loadProgress, nextMission } from "../campaign.js";
 import { createScreens } from "./screens.js";
+import { loadRules } from "./rules-store.js";
 
 export const MODE_KEY = "frontier-command.mode";
 
@@ -39,6 +40,9 @@ export function createState() {
     alliance: "ffa",
     // Skirmish "Your faction" and "Enemy faction", and what the colours and emblems follow (factions.js matchLook).
     playerFaction: settings.playerFaction,
+    // Skirmish battle rules (app/rule-options.js): only the choices that differ from their default, else null.
+    // Remembered between visits (app/rules-store.js); createSim passes them to a skirmish only.
+    rules: loadRules(),
     enemyFaction: "mirror",
     look: null,
     bonus: null,

@@ -1201,7 +1201,17 @@
     "For 8 seconds: 3 m more range, and shots pass through shields.": "Trong 8 giây: thêm 3 m tầm bắn, đạn xuyên qua mọi lớp khiên.",
     "Iron Sovereign": "Quân Vương Thép",
     "Siege fortress": "Pháo đài công thành",
-    "A six-legged Builder siege fortress. It stomps the strongest tower in reach and stuns it, then fires a three-shell spread: the ground turns red first, so move out. Enough damage during a warning breaks the attack and opens its core. It drops Sentinel drones as its armour cracks, and a leak costs 10 lives.": "Pháo đài công thành sáu chân của người Kiến Tạo. Nó giẫm nát tháp mạnh nhất trong tầm và làm tháp tê liệt, rồi bắn ba quả đạn tỏa: mặt đất chuyển đỏ trước, hãy rời khỏi đó. Đủ sát thương trong lúc cảnh báo sẽ phá đòn và mở lõi của nó. Nó thả máy bay canh gác khi giáp nứt, và để nó lọt qua mất 10 mạng."
+    "A six-legged Builder siege fortress. It stomps the strongest tower in reach and stuns it, then fires a three-shell spread: the ground turns red first, so move out. Enough damage during a warning breaks the attack and opens its core. It drops Sentinel drones as its armour cracks, and a leak costs 10 lives.": "Pháo đài công thành sáu chân của người Kiến Tạo. Nó giẫm nát tháp mạnh nhất trong tầm và làm tháp tê liệt, rồi bắn ba quả đạn tỏa: mặt đất chuyển đỏ trước, hãy rời khỏi đó. Đủ sát thương trong lúc cảnh báo sẽ phá đòn và mở lõi của nó. Nó thả máy bay canh gác khi giáp nứt, và để nó lọt qua mất 10 mạng.",
+    "Field workshop": "Xưởng dã chiến",
+    "Meridian signature units": "Đơn vị đặc trưng Meridian",
+    "Expanded roster. The Meridian Expedition's field workshop trains its signature units. It needs a completed Foundry. Upgrade it to unlock the stronger units.": "Binh chủng Mở rộng. Xưởng dã chiến của Đoàn viễn chinh Meridian huấn luyện các đơn vị đặc trưng. Cần có Nhà máy đã hoàn thành. Nâng cấp để mở các đơn vị mạnh hơn.",
+    "Battle rules": "Luật trận đấu",
+    "Roster": "Binh chủng",
+    "Classic": "Cổ điển",
+    "Expanded": "Mở rộng",
+    "New": "Mới",
+    "Expanded gives every faction a workshop for new signature units.": "Mở rộng cho mỗi phe một xưởng huấn luyện các đơn vị đặc trưng mới.",
+    "Expanded roster": "Binh chủng Mở rộng"
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],
@@ -1723,6 +1733,10 @@
     [
       "^(.+) cannot hit flyers\\. Use Rangers, Anti-tank soldiers or other units that hit air\\.$",
       "{1} không bắn được mục tiêu bay. Hãy dùng Xạ thủ, Chống tăng hoặc đơn vị khác bắn được mục tiêu bay."
+    ],
+    [
+      "^Expanded roster: trained at the (.+), level (\\d+)\\.$",
+      "Binh chủng Mở rộng: huấn luyện tại {1}, cấp {2}."
     ]
   ]
 }

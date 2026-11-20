@@ -5,6 +5,7 @@ import { icon } from "../icons.js";
 import { localizeDOM, loadLocale, loadStory } from "../i18n.js";
 import { motionOffFor, palette, saveSettings } from "../settings.js";
 import { teamColors } from "../faction-colors.js";
+import { saveRules } from "./rules-store.js";
 
 // True while `:root.motion-off` is set (Eco graphics, combat motion off, or reduced motion): JS
 // effects check it the way CSS animations obey the class.
@@ -80,7 +81,10 @@ export function setupPreferences(S, A) {
     },
   });
 
-  Object.assign(A, { settingsUI, localization, applyPreferences, motionOff });
+  // The skirmish battle rules chosen on the setup screen (S.rules, app/rule-options.js) are remembered
+  // between visits in their own key; the settings record keeps a fixed set of keys.
+  const rememberRules = () => saveRules(S.rules);
+  Object.assign(A, { settingsUI, localization, applyPreferences, motionOff, rememberRules });
   return function bind() {
     syncStoryLanguage();
     syncMotion();

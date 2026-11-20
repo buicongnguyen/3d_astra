@@ -38,6 +38,11 @@ Nothing changes for the player: no rule, number or picture moved. This makes eve
 - New boss: the Iron Sovereign (10,000 HP, six legs, ported from Tank_game_3D `boss-walker.glb`). Round 3 puts it in a Heroic finale; this round it exists in the sandbox, tests and render scenarios.
 - `tools/port-boss-model.mjs` takes a parts map (`--parts`) and a palette; `ironvanguard.glb` is byte-identical.
 
+### W1-A: Roster setting and faction workshops
+- Skirmish setup gains a "Battle rules" row with "Roster: Classic / Expanded" (default Classic, remembered; skirmish only). Expanded makes every faction building a workshop host for signature units (`workshop: "<faction>"` definitions, at most 2 per host); Meridian gets a new Field workshop (150/50, needs a Foundry, `workshop.glb`, 3,640 triangles, 5 materials).
+- The Expanded AI builds the Field workshop, raises each host to its units' highest `required_level` (never above the core) and trains units from their `ai.want` data. Classic play, campaign and Chronicles are unchanged (all golden pins and baselines identical).
+- New: `src/sim/content/workshops.js`, `src/app/rule-options.js` (append-only rule registry), `src/app/rules-store.js`, `balance.json` `workshops` and `workshop`, field guide and model roster follow the `workshop` field, `tests/workshops.test.js`, `tests/workshops.mjs`, `tests/golden-w1a.test.js`, render scenario `battle-expanded-eco`.
+
 ## Unreleased: Frontier Defence "Build zones, armour and Three Roads" (plan: docs/aaa/AAA_GAMEPLAY_STORY_DEFENCE.md, C10–C12)
 
 - **Build zones (C10):** a level may mark fields (`defence.zones`) where a crew can stand anywhere, on the 2 m grid, besides its fixed pads. Tap a spot in a marked field, pick a crew: the tower gets a pad of its own, so Upgrade, branches and Sell work as on any pad (selling frees the spot). A spot is refused, with the reason on the card and a red ring, within 4.5 m of a road (the column must always pass), near a spawn spot or the exit, within 5 m of another pad or tower, under a unit, where it would wall in ground, or when the field is full. The open cells are painted as one flat mesh (one draw). Command `zoneBuild { zone, x, z, crew }`, saved and replayed like `padBuild`.

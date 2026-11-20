@@ -106,6 +106,9 @@ jobs:
             scripts: gunner
           - name: r2-w1e
             scripts: sovereign
+          # AAA round 2 (W1-A): the Expanded roster setting and the Field workshop.
+          - name: r2-w1a
+            scripts: workshops
     defaults:
       run:
         working-directory: github-io

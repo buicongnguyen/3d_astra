@@ -19,6 +19,7 @@ import "./tactics-ui.css";
 import "./mission-ui.css";
 import "./ui-theme.css";
 import "./landscape-hud.css";
+import "./rule-options.css";
 
 import { Simulation } from "./simulation.js";
 import { WorldView } from "./view.js";
@@ -61,7 +62,7 @@ const A = {};
 // settled from the progress record (resolveMission, src/story/choices.js) before it starts.
 const createSim = () => {
   // Only a skirmish lets the player choose sides: Training (and the campaign) always command Meridian.
-  const sim = new Simulation({ factions: S.mission || S.playMode !== "skirmish" ? null : skirmishSides(S.playerFaction, S.enemyFaction, S.enemyCount, S.mapId), map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission ? resolveMission(S.mission, S.campaign) : null, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish", ...(S.rules ? { rules: S.rules } : {}) });
+  const sim = new Simulation({ factions: S.mission || S.playMode !== "skirmish" ? null : skirmishSides(S.playerFaction, S.enemyFaction, S.enemyCount, S.mapId), map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission ? resolveMission(S.mission, S.campaign) : null, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish", ...(!S.mission && S.playMode === "skirmish" && S.rules ? { rules: S.rules } : {}) });
   S.look = matchLook(S.mission, sim);
   return sim;
 };

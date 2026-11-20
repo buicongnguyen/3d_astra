@@ -13,6 +13,22 @@ export const extraUnits = (faction) => Object.values(faction?.extra || {}).flat(
 const TRAINS_OF = new Map(Object.entries(D).filter(([,d]) => d.trains).map(([type,d]) => [d.trains,type]));
 // Where each faction-only unit is trained (a story unlock of a Balloon goes to the Foundry).
 const EXTRA_HOME = Object.fromEntries(Object.values(FACTION_RULES).flatMap(f => Object.entries(f.extra||{}).flatMap(([building,types]) => types.map(type => [type,building]))));
+// Expanded roster (AAA round 2, W1-A; balance.json "workshops"): every faction building is a host that
+// trains its faction's workshop units (definitions with `workshop: "<faction>"` and `roster: "expanded"`);
+// Meridian gets a building for it, the Field workshop. Only a match with the skirmish rule
+// `roster: "expanded"` uses any of it (the sim reads sim.ruleOn("roster"), src/sim/content.js).
+export const WORKSHOPS = balance.workshops;
+export const EXPANDED = 'expanded';
+// The host building of each faction, and the faction of each host.
+export const HOST_OF = Object.freeze({...WORKSHOPS.hosts});
+export const HOST_FACTION = Object.freeze(Object.fromEntries(Object.entries(HOST_OF).map(([faction,host]) => [host,faction])));
+// A faction's workshop units, in definition order, at most `max_tiles` (the host's production card stays small).
+// Read from the live definitions on every call, so a test can add a fixture unit.
+export function workshopUnitsOf(faction) {
+  const units=[];
+  for(const type in D) if(D[type].kind==='unit'&&D[type].workshop===faction&&units.length<WORKSHOPS.max_tiles) units.push(type);
+  return units;
+}
 export function normalizedFactions(explicit,mission,count) {
   const source={...(mission?.rules?.rosters ? mission.factions : {}),...explicit};
   return Object.fromEntries(Array.from({length:count+1},(_,team)=>[team,Object.hasOwn(FACTION_RULES,source[team])?source[team]:'meridian']));
@@ -53,9 +69,13 @@ export const factionRules = {
   factionFor(team) { return FACTION_RULES[this.factions[team]] || FACTION_RULES.meridian; },
   typeFor(team,slot) { return this.factionFor(team).swap[slot] || slot; },
   slotOf(type) { return SLOT_BY_TYPE[type] || type; },
-  unitRoster(team) { return [...BASE_UNIT_SLOTS.filter(slot=>!this.factionFor(team).exclude?.includes(slot)).map(slot=>this.typeFor(team,slot)),...(this.airAllowed() ? [...AIR_SLOTS,...extraUnits(this.factionFor(team))] : []),...(this.unlocks?.[team]||[])]; },
+  unitRoster(team) { return [...BASE_UNIT_SLOTS.filter(slot=>!this.factionFor(team).exclude?.includes(slot)).map(slot=>this.typeFor(team,slot)),...(this.airAllowed() ? [...AIR_SLOTS,...extraUnits(this.factionFor(team))] : []),...(this.unlocks?.[team]||[]),...this.workshopRoster(team)]; },
+  // The workshop units this team can train: none unless the match plays the Expanded roster.
+  workshopRoster(team) { return this.ruleOn('roster')===EXPANDED ? workshopUnitsOf(this.factionId(team)) : []; },
+  // The faction id of a team (an unknown id plays Meridian, as factionFor does).
+  factionId(team) { return Object.hasOwn(FACTION_RULES,this.factions[team]) ? this.factions[team] : 'meridian'; },
   airAllowed() { return !this.missionDef || !!this.missionDef.rules?.air; },
-  buildable(team=0) { const extra=this.factionFor(team).building;return extra?[...BUILDINGS,extra]:BUILDINGS; },
+  buildable(team=0) { const extra=this.factionFor(team).building;if(this.ruleOn('roster')===EXPANDED&&!extra) return [...BUILDINGS,HOST_OF.meridian];return extra?[...BUILDINGS,extra]:BUILDINGS; },
   // A mission lends a team units from another roster (rules.unlock, or the `unlock` action). Saved with the match.
   unlockUnits(team,types) {
     const add=(types||[]).filter(type=>D[type]?.kind==='unit'&&!this.unitRoster(team).includes(type));
