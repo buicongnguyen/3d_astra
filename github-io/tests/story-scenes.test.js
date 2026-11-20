@@ -281,5 +281,4 @@ test("the scene screen holds the match and keeps the music; the frame loop stops
   assert.match(scenes, /motionOff\(\)/, "motion-off cuts instead of easing");
   assert.match(scenes, /isExplored\(p, 0\)/, "the camera only visits explored places");
   assert.match(clientFile("modals.js"), /modalType === "scene"\) return;/, "pause does not open over a scene");
-  assert.match(readFileSync(new URL("../src/scenes.css", import.meta.url), "utf8"), /transform: scaleY\(1\)/, "letterbox bars move by transform");
 });

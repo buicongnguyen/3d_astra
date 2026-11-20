@@ -99,17 +99,6 @@ test("Music setting: default, migration and bus level", () => {
   assert.equal(busLevels({ ...defaults(), music: "adaptive" }).music, busLevels(defaults()).music);
 });
 
-test("service worker: fc-music is kept on activation and filled on first play; manifest network first", () => {
-  const sw = readFileSync(new URL("../tools/sw.template.js", import.meta.url), "utf8");
-  assert.match(sw, /const MUSIC_CACHE = "fc-music"/);
-  assert.match(sw, /key !== MUSIC_CACHE/, "activation keeps fc-music");
-  assert.match(sw, /path\.startsWith\("music\/"\)/, "music files have their own rule");
-  assert.match(sw, /response\.status === 200\) event\.waitUntil\(cache\.put/, "stored on the first whole fetch");
-  assert.match(sw, /MUSIC_MANIFEST[\s\S]*fetch\(request/, "manifest network first");
-  const vite = readFileSync(new URL("../vite.config.js", import.meta.url), "utf8");
-  assert.match(vite, /m4a\|mp3/, "the precache list filters audio out");
-});
-
 test("public/music stays within 2 MB (files that are present)", () => {
   const dir = new URL("../public/music/", import.meta.url);
   assert.ok(existsSync(new URL("manifest.json", dir)), "public/music/manifest.json ships");

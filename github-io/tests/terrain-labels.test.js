@@ -3,7 +3,7 @@
 // win real fights (tools/high-ground-bench.mjs).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { MISSIONS } from '../src/story/missions.js';
 import { Terrain, TERRAIN, CROSSINGS } from '../src/terrain.js';
 import { Simulation } from '../src/simulation.js';
 import { HIGH_GROUND_TEXT, HIGH_GROUND_HINT, CROSSING_TEXT, onHighGround, crossingAt, shotSlope } from '../src/terrain-labels.js';
@@ -68,7 +68,7 @@ test('high ground wins an even fight that level ground leaves close', () => {
 });
 
 test('campaign lines name the middle crossing a ford and the outer ones bridges', () => {
-  const source = readFileSync(new URL('../src/story/missions.js', import.meta.url), 'utf8');
+  const source = JSON.stringify(MISSIONS); // every campaign line, briefing, trigger and debrief as the game loads it
   for (const wrong of [/centre bridge/i, /middle bridge/i, /bridge in the middle/i, /(east|west) ford/i, /three fords/i, /two crossings/i])
     assert.doesNotMatch(source, wrong);
 });
