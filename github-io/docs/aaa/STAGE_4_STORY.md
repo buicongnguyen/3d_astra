@@ -1,5 +1,7 @@
 # Stage 4: story delivery
 
+> **Status: shipped, and superseded where it differs.** Stage 4 was built as releases 0.19a (decisions, endings, campaign map) and 0.19b (staged scenes, reworked and new missions) and extended by Faction Chronicles (0.20) and, in AAA round 2, mission title cards and boss presence. What shipped is described in [../CHANGELOG.md](../CHANGELOG.md), [../WORLD.md](../WORLD.md) and [../MISSIONS.md](../MISSIONS.md); the campaign now has 16 missions, not twelve. Read this file for the reasons behind the design, not as the current spec.
+
 Read [README.md](README.md) and `docs/WORLD.md` first. Goal: the story that exists on paper is staged, heard and shaped by the player. The writing (premise, cast, arcs, twelve missions) stays; this stage changes how it is told. Can start after stage 1. Release as 0.17.0 (scenes, voice), 0.18.0 (decisions, veterans), 0.19.0 (campaign map, endings).
 
 **Today:** the mission engine (`src/sim/missions.js`) emits `say`, `objective`, `point`, `camera`, `ping`, `music` and `missionEnd` events; `src/mission-ui.js` shows the briefing overlay, dialogue lines with a rendered portrait, the Comms log and the debrief. Progress is `{ cleared: { [missionId]: { time, medal } } }` in `src/campaign.js`. The Commander never speaks and never chooses.

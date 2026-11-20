@@ -1,5 +1,21 @@
 # AAA implementation progress
 
+**Status (2026-11-20): closed as a log; the live status is [../ROADMAP.md](../ROADMAP.md).** The sections below are the record of what each round shipped and what it left open. Lines that say "not started" (for example Stages 3 to 6 in the 2026-11-12 entries) were true on that date; ROADMAP.md has the current state.
+
+## AAA round 2 (Claude, 2026-11-19 to 2026-11-20): Waves 0 to 2 merged, clean-up wave in progress
+
+Plan: [AAA_ROUND2_PLAN.md](AAA_ROUND2_PLAN.md), evaluation: [AAA_ROUND2_EVALUATION.md](AAA_ROUND2_EVALUATION.md), results: `results/round2/` (one file per package, `wave-0.md` to `wave-2.md`, `review-packet.md`). Built by agents in worktrees, merged by an integrator, tagged `r2-wave-0`, `r2-wave-1`, `r2-wave-2`. Nothing is pushed or deployed. The CHANGELOG entry is labelled 0.25.0 (owner decision O17).
+
+**Carried forward** (owner decisions and open issues from `results/round2/wave-2.md`, all still open):
+- O1 / O2: the default Roster and the Field command plan stay Classic: Ashfall is at 37.5% in the Expanded bench (target 40%) and the PlayBot wins 86% against Field command (band 35 to 75%).
+- Night outland terrain beyond the map edge is not tinted by the look (a W2-C follow-up).
+- Short captures (Heroic finale with Stalkers, the Outrider drill, m11c's Gunners) and the Rampart in the weapon contact sheet are missing from the review packet.
+- `weaponStyle` calls in `view.js` still take no faction.
+- Phone Defence unit size (27.7 px portrait, 20.3 px landscape) is unchanged.
+- Not run: the slow (20x) ci-local matrix, `test:webkit`, runner timings.
+- `ui-theme.css` lines about 482 to 501 (superseded W1-D rules) were not removed.
+- For the next round: the Rampart joins m11c wave 9 with a re-pinned checksum (`results/round2/w2f.md`); the Defence `seeded` copy switches to `src/rng.js` after CW-B's equality test has run on the merged tree (plan, CW-A).
+
 ## Round 3 (Claude, 2026-11-13, 0.16.0–0.19.0): plan finished
 
 Plan: [PLAN_ROUND3_REFINED_2026-11-13.md](PLAN_ROUND3_REFINED_2026-11-13.md), built by agents in separate worktrees, merged and checked by Claude.

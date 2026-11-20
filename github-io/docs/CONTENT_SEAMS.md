@@ -14,7 +14,7 @@ add content.
 ## The rules
 
 Every match must stay exactly as it is unless the new content (or a new skirmish rule) is in it. The
-golden pins (`tests/golden-*.test.js`), `d071360b` and the 13 mission checksums prove it.
+golden pins (`tests/golden-*.test.js`), `d071360b` and the 14 mission checksums (pinned in `tests/wings.test.js`; `m11c`, `8b3c253d`, is the newest) prove it.
 
 1. **No state until your content runs.** A new field on a new unit definition is free (entities are
    saved as differences from their definition). A field you put on the Simulation or on an existing

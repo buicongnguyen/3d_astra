@@ -7,14 +7,15 @@ Start here. Current documents are listed first; older plans and reviews are kept
 | Document | What it is |
 |---|---|
 | [VISION.md](VISION.md) | What the game is, who it is for, the quality bar |
-| [ROADMAP.md](ROADMAP.md) | Where the rebuild stands and what comes next |
+| [ROADMAP.md](ROADMAP.md) | One status table: every plan, what is done, what is open |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | How the code is organised and the rules that keep it correct |
-| [TESTING.md](TESTING.md) | Unit tests, browser suites, the mission bot, how CI runs them |
-| [CHANGELOG.md](CHANGELOG.md) | What changed in each version |
+| [CONTENT_SEAMS.md](CONTENT_SEAMS.md), [VIEW_PLUGINS.md](VIEW_PLUGINS.md) | How new units, statuses, abilities and visual features are added without editing the hot files |
+| [TESTING.md](TESTING.md) | Unit tests, browser suites, golden pins and baselines, the mission bot, the CI groups |
+| [CHANGELOG.md](CHANGELOG.md) | What changed in each version (the next release is labelled 0.25.0) |
 | [REVIEW_AND_REBUILD_PLAN_2026-11.md](REVIEW_AND_REBUILD_PLAN_2026-11.md) | The review that started the rebuild, the phases, the owner's decisions |
 | [AAA_PLAN_2026-11.md](AAA_PLAN_2026-11.md) | Evaluation at 0.9.4 and the six-stage plan to reach the AAA bar; decisions waiting for the owner |
-| [aaa/](aaa/README.md) | The same plan as work packages for an implementing agent: rules, one file per stage, tests and acceptance for each package |
-| [WORLD.md](WORLD.md) | Story bible: factions, cast, the twelve missions |
+| [aaa/](aaa/README.md) | The same plan as work packages for an implementing agent: rules, one file per stage, tests and acceptance for each package; AAA round 2 ([plan](aaa/AAA_ROUND2_PLAN.md), [results](aaa/results/round2/)) and the progress log |
+| [WORLD.md](WORLD.md) | Story bible: factions, cast, the sixteen campaign missions |
 | [MISSIONS.md](MISSIONS.md) | Mission script format |
 | [CAMPAIGN_AND_AI.md](CAMPAIGN_AND_AI.md) | The computer opponent and its speed settings |
 | [BALANCE.md](BALANCE.md), [HEAVY_WEAPONS.md](HEAVY_WEAPONS.md) | Numbers |

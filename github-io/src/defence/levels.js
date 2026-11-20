@@ -457,3 +457,9 @@ export function defenceVariant(level, { variant = "levels", seed = 0, perks = []
     medals: {},
   };
 }
+
+// Names of the build zones, by level id and zone id (a separate export, never a field of the level:
+// serialize() writes the whole mission definition, so a new field would move every pinned hash).
+export const ZONE_NAMES = {
+  "d-crossroads": { basin: "Basin field", westfield: "West field", eastfield: "East field", southfield: "South field" },
+};

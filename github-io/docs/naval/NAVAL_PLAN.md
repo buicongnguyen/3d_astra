@@ -12,7 +12,7 @@ islands to claim them, ships fight ships, ships shell the coast, and the shore f
   exists only on new sea maps, which get their own fingerprints.
 - Phones remain a first-class target: draw budgets (`tests/render-budget.mjs`), 11 px text and
   44 px taps.
-- New UI strings go into `src/locales/vi.json`, kept identical with the Godot twin.
+- New UI strings go into `src/locales/vi.json`. The Godot twin is a frozen snapshot of 1 October 2026: it gets nothing new, and its `vi.json` is no longer kept in step.
 
 ## What the game has today
 | Area | Today | Needed |

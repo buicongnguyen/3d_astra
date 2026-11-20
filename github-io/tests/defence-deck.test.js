@@ -229,7 +229,7 @@ test("D4: the tower sheet text reads garrisonStats (dps, reach, armour multiplie
   const a = s.garrisonStats("ranger", 1), b = s.garrisonStats("ranger", 2);
   assert.ok(a.damage / a.interval > 0 && b.damage / b.interval >= a.damage / a.interval);
   assert.ok(Number.isFinite(b.range - a.range) && b.maxHp > a.maxHp);
-  const src = readFileSync(new URL("../src/app/defence-ui.js", import.meta.url), "utf8");
+  const src = readFileSync(new URL("../src/app/defence/sheets.js", import.meta.url), "utf8");
   assert.match(src, /function statsBlock/);
   assert.match(src, /data-defence-aim/);
 });
