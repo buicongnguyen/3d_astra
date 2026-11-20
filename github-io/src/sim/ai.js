@@ -126,6 +126,12 @@ export const ai = {
         if (b.type === 'foundry' && b.level >= 3 && army.filter(e => this.slotOf(e.type) === 'tank').length <= army.filter(e => this.slotOf(e.type) === 'breaker').length + (role === 'siege' ? 2 : 0)) choice = 'tank';
         if (b.type === 'barracks' && b.level >= 2 && army.filter(e => this.slotOf(e.type) === 'antitank').length < 3) choice = 'antitank';
         choice = this.counterChoice(team, b, army, choice);
+        // Field command: one of each combat slot the building trains (an Anti-tank team at the Barracks, a Tank at a level 3 Foundry) before more of the same.
+        if (fieldOn) {
+          const has = (slot) => army.some(e => this.slotOf(e.type) === slot) || own.some(e => (e.queue || []).some(q => this.slotOf(q.type) === slot));
+          if (b.type === 'barracks' && b.level >= 2 && !has('antitank')) choice = 'antitank';
+          else if (b.type === 'foundry' && b.level >= 3 && !has('tank')) choice = 'tank';
+        }
         const support = b.type === 'foundry' ? 'engineer' : 'medic';
         // Field command: a level 3 Foundry trains its heavy unit first and takes an Engineer only once one stands.
         const needs = fieldOn && b.type === 'foundry' && b.level >= 3 ? (army.some(e => this.slotOf(e.type) === 'tank') ? 1 : 0) : 2;
