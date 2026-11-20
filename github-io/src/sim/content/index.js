@@ -12,10 +12,13 @@ import { workshops } from "./workshops.js";
 
 import { towerAim } from "./tower-aim.js";
 
+import { elites } from "./elites.js";
+
 export const CONTENT = [
   suppression,
   marksman,
   bossStatus,
   workshops,
   towerAim,
+  elites,
 ];

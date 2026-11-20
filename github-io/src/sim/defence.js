@@ -469,7 +469,7 @@ export const defence = {
     const d = this.defence, def = this.defenceDef();
     if (!d || this.result || team !== TEAM || d.wave >= this.waveTotal() || d.queue.length) return false;
     const left = d.nextAt !== null ? Math.max(0, d.nextAt - this.time) : def.gap ?? 16;
-    const bonus = Math.ceil(left * 2);
+    const bonus = def.noCallBonus ? 0 : Math.ceil(left * 2);
     this.players[TEAM].alloy += bonus;
     d.called += bonus;
     this.startWave();
@@ -524,6 +524,8 @@ export const defence = {
         const hp = (g.hp ?? 1) * (typeof def.hp === "object" ? def.hp[this.difficulty] ?? 1 : def.hp ?? 1);
         if (hp !== 1) q.hp = hp;
         if (g.tag === "bridger") q.bridger = true;
+        // Elite affixes (AAA round 2, W2-B, sim/content/elites.js): every `every`-th spawn of a group with `mods`.
+        if (g.mods?.elite && !g.carry && i % (g.mods.every || 1) === 0) q.mods = { elite: g.mods.elite, ...(g.mods.elite === "splitter" ? { split: this.waveType(g, "vanguard") } : {}) };
         if (cargo && D[entry[0]]?.carrier) { q.cargo = cargo.slice(); q.dropLeg = g.dropLeg ?? 1; at.count += cargo.length; }
         d.queue.push(q);
         i++;
@@ -559,7 +561,15 @@ export const defence = {
       if (!def.routes[g.route]) continue;
       if (!routes.includes(g.route)) routes.push(g.route);
       const ride = g.carry ? this.waveUnits(g, g.carry, scale).reduce((a, [, n]) => a + n, 0) : 0;
+      // An elite group (mods): its elite units get their own entry, `elite` the affix (the intel chips read it).
+      const marks = g.mods?.elite ? this.eliteMarks(g, scale) : null;
       for (const [type, n] of this.waveUnits(g, g.units, scale)) {
+        if (marks) {
+          const m = marks.get(type) || 0;
+          if (m) { const key = `${type}|${g.mods.elite}`, u = units.get(key) || { type, count: 0, elite: g.mods.elite }; u.count += m; units.set(key, u); }
+          if (n - m > 0) { const u = units.get(type) || { type, count: 0 }; u.count += n - m; units.set(type, u); }
+          continue;
+        }
         const carrier = !!D[type]?.carrier && ride > 0, key = carrier ? `${type}|${ride}` : type;
         const u = units.get(key) || { type, count: 0, ...(carrier ? { carry: ride, passengers: this.waveUnits(g, g.carry, scale).map(([t]) => t) } : {}) };
         u.count += n;
@@ -567,6 +577,18 @@ export const defence = {
       }
     }
     return { wave: d.wave + 1, units: [...units.values()], routes };
+  },
+  // How many of each type of group `g` become elites: the turn order of startWave, counted.
+  eliteMarks(g, scale) {
+    const left = this.waveUnits(g, g.units, scale), marks = new Map(), every = g.mods.every || 1;
+    for (let k = 0, i = 0; left.some(([, n]) => n > 0); k++) {
+      const entry = left[k % left.length];
+      if (entry[1] <= 0) continue;
+      entry[1]--;
+      if (!g.carry && i % every === 0) marks.set(entry[0], (marks.get(entry[0]) || 0) + 1);
+      i++;
+    }
+    return marks;
   },
   // A due spawn appears on its lane at the route's start, once that spot is clear.
   spawnQueued() {
@@ -586,6 +608,7 @@ export const defence = {
       const e = this.spawn(q.type, FOE, start.x, start.z, true, true);
       if (q.hp) { e.hp = e.maxHp = Math.round(e.maxHp * q.hp); this.setBaseHp(e); }
       if (q.bridger) e.bridger = true;
+      if (q.mods) this.applyElite(e, q.mods);
       // A troop carrier keeps its passengers on board (saved with it) until its drop leg.
       if (q.cargo) { e.cargo = q.cargo.slice(); e.dropLeg = q.dropLeg; if (q.hp) e.cargoHp = q.hp; }
       const next = pts[1] || pts[0];
@@ -701,7 +724,7 @@ export const defence = {
         if (!e.paid && !e.leaked) {
           e.paid = true;
           const worth = (type) => { const cost = D[type]?.cost || [0, 0]; return Math.ceil((cost[0] + cost[1]) * GARRISONS.bounty); };
-          const lost = e.cargo?.length || 0, bounty = worth(e.type) + (lost ? e.cargo.reduce((a, type) => a + worth(type), 0) : 0);
+          const lost = e.cargo?.length || 0, bounty = worth(e.type) * (e.bounty_x ?? 1) + (lost ? e.cargo.reduce((a, type) => a + worth(type), 0) : 0);
           this.players[TEAM].alloy += bounty;
           d.bounty += bounty;
           this.events.push({ type: "bounty", amount: bounty, x: e.x, z: e.z, team: TEAM, ...(lost ? { carried: lost } : {}) });
