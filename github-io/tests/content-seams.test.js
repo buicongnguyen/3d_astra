@@ -275,7 +275,7 @@ test("module checks: unknown fields, duplicate ids, built-in ability ids and bad
   assert.throws(() => setContentModules([{ id: "x", statuses: { slow: { sped: 0.5 } } }]), /unknown field "sped"/);
   assert.throws(() => setContentModules([{ id: "x", statuses: { a: {} } }, { id: "y", statuses: { a: {} } }]), /registered twice/);
   assert.throws(() => setContentModules([{ id: "x", aiRules: [{ id: "r", run() {} }, { id: "r", run() {} }] }]), /listed twice/);
-  assert.equal(Object.keys(STATUSES).length + Object.keys(ABILITIES).length, 0);
+  assert.equal(Object.keys(STATUSES).length + Object.keys(ABILITIES).length, CONTENT.reduce((n, m) => n + Object.keys(m.statuses || {}).length + Object.keys(m.abilities || {}).length, 0));
 });
 
 // A Steady-aim-like buff: longer range (a key every unit has) and pierce (a key a Ranger lacks).
