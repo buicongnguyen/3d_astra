@@ -127,10 +127,10 @@
   "mission": "m04-three-way-dunes",
   "kind": "objective",
   "result": "victory",
-  "time": 319,
+  "time": 425,
   "objectives": "Dad",
   "wave": 252,
-  "lost": 12,
+  "lost": 25,
   "medal": "gold",
   "flags": null,
   "misses": []
@@ -151,10 +151,10 @@
   "mission": "m05-the-verdant-pact",
   "kind": "objective",
   "result": "victory",
-  "time": 503,
+  "time": 507,
   "objectives": "Dad",
   "wave": 235,
-  "lost": 6,
+  "lost": 7,
   "medal": "gold",
   "flags": {
    "m05-pact": "drive"
@@ -311,10 +311,10 @@
   "mission": "m09-a-debt-in-the-dunes",
   "kind": "objective",
   "result": "victory",
-  "time": 437,
+  "time": 440,
   "objectives": "DDadd",
   "wave": 150,
-  "lost": 26,
+  "lost": 25,
   "medal": "gold",
   "flags": null,
   "misses": []
@@ -335,10 +335,10 @@
   "mission": "m10-obsidian-storm",
   "kind": "objective",
   "result": "victory",
-  "time": 461,
+  "time": 544,
   "objectives": "DDad",
   "wave": 235,
-  "lost": 21,
+  "lost": 44,
   "medal": "gold",
   "flags": {
    "m10-veil": "break"

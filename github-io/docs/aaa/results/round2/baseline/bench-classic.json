@@ -366,7 +366,7 @@
   "seat1": "ashfall",
   "result": "victory",
   "winner": "meridian",
-  "seconds": 258
+  "seconds": 257
  },
  {
   "speed": "normal",
@@ -375,7 +375,7 @@
   "seat1": "sunward",
   "result": "victory",
   "winner": "meridian",
-  "seconds": 381
+  "seconds": 287
  },
  {
   "speed": "normal",
@@ -384,7 +384,7 @@
   "seat1": "wardens",
   "result": "defeat",
   "winner": "wardens",
-  "seconds": 264
+  "seconds": 240
  },
  {
   "speed": "normal",
@@ -393,7 +393,7 @@
   "seat1": "veil",
   "result": "victory",
   "winner": "meridian",
-  "seconds": 247
+  "seconds": 193
  },
  {
   "speed": "normal",
@@ -402,16 +402,16 @@
   "seat1": "meridian",
   "result": "defeat",
   "winner": "meridian",
-  "seconds": 226
+  "seconds": 212
  },
  {
   "speed": "normal",
   "map": "dunes",
   "seat0": "ashfall",
   "seat1": "sunward",
-  "result": "victory",
-  "winner": "ashfall",
-  "seconds": 481
+  "result": "defeat",
+  "winner": "sunward",
+  "seconds": 553
  },
  {
   "speed": "normal",
@@ -420,7 +420,7 @@
   "seat1": "wardens",
   "result": "victory",
   "winner": "ashfall",
-  "seconds": 1666
+  "seconds": 257
  },
  {
   "speed": "normal",
@@ -429,52 +429,52 @@
   "seat1": "veil",
   "result": "victory",
   "winner": "ashfall",
-  "seconds": 294
+  "seconds": 840
  },
  {
   "speed": "normal",
   "map": "dunes",
   "seat0": "sunward",
+  "seat1": "meridian",
+  "result": "victory",
+  "winner": "sunward",
+  "seconds": 788
+ },
+ {
+  "speed": "normal",
+  "map": "dunes",
+  "seat0": "sunward",
+  "seat1": "ashfall",
+  "result": "victory",
+  "winner": "sunward",
+  "seconds": 656
+ },
+ {
+  "speed": "normal",
+  "map": "dunes",
+  "seat0": "sunward",
+  "seat1": "wardens",
+  "result": "defeat",
+  "winner": "wardens",
+  "seconds": 287
+ },
+ {
+  "speed": "normal",
+  "map": "dunes",
+  "seat0": "sunward",
+  "seat1": "veil",
+  "result": "victory",
+  "winner": "sunward",
+  "seconds": 318
+ },
+ {
+  "speed": "normal",
+  "map": "dunes",
+  "seat0": "wardens",
   "seat1": "meridian",
   "result": "defeat",
   "winner": "meridian",
-  "seconds": 508
- },
- {
-  "speed": "normal",
-  "map": "dunes",
-  "seat0": "sunward",
-  "seat1": "ashfall",
-  "result": "victory",
-  "winner": "sunward",
-  "seconds": 196
- },
- {
-  "speed": "normal",
-  "map": "dunes",
-  "seat0": "sunward",
-  "seat1": "wardens",
-  "result": "defeat",
-  "winner": "wardens",
-  "seconds": 314
- },
- {
-  "speed": "normal",
-  "map": "dunes",
-  "seat0": "sunward",
-  "seat1": "veil",
-  "result": "victory",
-  "winner": "sunward",
-  "seconds": 261
- },
- {
-  "speed": "normal",
-  "map": "dunes",
-  "seat0": "wardens",
-  "seat1": "meridian",
-  "result": "victory",
-  "winner": "wardens",
-  "seconds": 273
+  "seconds": 503
  },
  {
   "speed": "normal",
@@ -483,7 +483,7 @@
   "seat1": "ashfall",
   "result": "victory",
   "winner": "wardens",
-  "seconds": 439
+  "seconds": 965
  },
  {
   "speed": "normal",
@@ -492,7 +492,7 @@
   "seat1": "sunward",
   "result": "victory",
   "winner": "wardens",
-  "seconds": 326
+  "seconds": 240
  },
  {
   "speed": "normal",
@@ -501,7 +501,7 @@
   "seat1": "veil",
   "result": "victory",
   "winner": "wardens",
-  "seconds": 344
+  "seconds": 269
  },
  {
   "speed": "normal",
@@ -510,7 +510,7 @@
   "seat1": "meridian",
   "result": "defeat",
   "winner": "meridian",
-  "seconds": 223
+  "seconds": 225
  },
  {
   "speed": "normal",
@@ -519,16 +519,16 @@
   "seat1": "ashfall",
   "result": "defeat",
   "winner": "ashfall",
-  "seconds": 270
+  "seconds": 229
  },
  {
   "speed": "normal",
   "map": "dunes",
   "seat0": "veil",
   "seat1": "sunward",
-  "result": "timeout",
+  "result": "defeat",
   "winner": "sunward",
-  "seconds": 1800
+  "seconds": 211
  },
  {
   "speed": "normal",
@@ -537,7 +537,7 @@
   "seat1": "wardens",
   "result": "defeat",
   "winner": "wardens",
-  "seconds": 306
+  "seconds": 297
  },
  {
   "speed": "fast",
@@ -906,25 +906,25 @@
   "seat1": "ashfall",
   "result": "victory",
   "winner": "meridian",
-  "seconds": 205
+  "seconds": 286
  },
  {
   "speed": "fast",
   "map": "dunes",
   "seat0": "meridian",
   "seat1": "sunward",
-  "result": "defeat",
+  "result": "timeout",
   "winner": "sunward",
-  "seconds": 251
+  "seconds": 1800
  },
  {
   "speed": "fast",
   "map": "dunes",
   "seat0": "meridian",
   "seat1": "wardens",
-  "result": "victory",
-  "winner": "meridian",
-  "seconds": 244
+  "result": "defeat",
+  "winner": "wardens",
+  "seconds": 392
  },
  {
   "speed": "fast",
@@ -933,7 +933,7 @@
   "seat1": "veil",
   "result": "victory",
   "winner": "meridian",
-  "seconds": 817
+  "seconds": 407
  },
  {
   "speed": "fast",
@@ -949,72 +949,72 @@
   "map": "dunes",
   "seat0": "ashfall",
   "seat1": "sunward",
-  "result": "defeat",
-  "winner": "sunward",
-  "seconds": 869
- },
- {
-  "speed": "fast",
-  "map": "dunes",
-  "seat0": "ashfall",
-  "seat1": "wardens",
-  "result": "defeat",
-  "winner": "wardens",
-  "seconds": 232
- },
- {
-  "speed": "fast",
-  "map": "dunes",
-  "seat0": "ashfall",
-  "seat1": "veil",
   "result": "victory",
   "winner": "ashfall",
-  "seconds": 478
+  "seconds": 637
  },
  {
   "speed": "fast",
   "map": "dunes",
-  "seat0": "sunward",
-  "seat1": "meridian",
-  "result": "defeat",
-  "winner": "meridian",
-  "seconds": 570
- },
- {
-  "speed": "fast",
-  "map": "dunes",
-  "seat0": "sunward",
-  "seat1": "ashfall",
-  "result": "victory",
-  "winner": "sunward",
-  "seconds": 404
- },
- {
-  "speed": "fast",
-  "map": "dunes",
-  "seat0": "sunward",
+  "seat0": "ashfall",
   "seat1": "wardens",
   "result": "defeat",
   "winner": "wardens",
-  "seconds": 327
+  "seconds": 222
  },
  {
   "speed": "fast",
   "map": "dunes",
-  "seat0": "sunward",
+  "seat0": "ashfall",
   "seat1": "veil",
   "result": "defeat",
   "winner": "veil",
-  "seconds": 517
+  "seconds": 492
+ },
+ {
+  "speed": "fast",
+  "map": "dunes",
+  "seat0": "sunward",
+  "seat1": "meridian",
+  "result": "victory",
+  "winner": "sunward",
+  "seconds": 1469
+ },
+ {
+  "speed": "fast",
+  "map": "dunes",
+  "seat0": "sunward",
+  "seat1": "ashfall",
+  "result": "victory",
+  "winner": "sunward",
+  "seconds": 310
+ },
+ {
+  "speed": "fast",
+  "map": "dunes",
+  "seat0": "sunward",
+  "seat1": "wardens",
+  "result": "defeat",
+  "winner": "wardens",
+  "seconds": 213
+ },
+ {
+  "speed": "fast",
+  "map": "dunes",
+  "seat0": "sunward",
+  "seat1": "veil",
+  "result": "victory",
+  "winner": "sunward",
+  "seconds": 994
  },
  {
   "speed": "fast",
   "map": "dunes",
   "seat0": "wardens",
   "seat1": "meridian",
-  "result": "timeout",
+  "result": "defeat",
   "winner": "meridian",
-  "seconds": 1800
+  "seconds": 234
  },
  {
   "speed": "fast",
@@ -1023,16 +1023,16 @@
   "seat1": "ashfall",
   "result": "victory",
   "winner": "wardens",
-  "seconds": 628
+  "seconds": 241
  },
  {
   "speed": "fast",
   "map": "dunes",
   "seat0": "wardens",
   "seat1": "sunward",
-  "result": "defeat",
+  "result": "timeout",
   "winner": "sunward",
-  "seconds": 1156
+  "seconds": 1800
  },
  {
   "speed": "fast",
@@ -1041,7 +1041,7 @@
   "seat1": "veil",
   "result": "victory",
   "winner": "wardens",
-  "seconds": 251
+  "seconds": 328
  },
  {
   "speed": "fast",
@@ -1050,25 +1050,25 @@
   "seat1": "meridian",
   "result": "defeat",
   "winner": "meridian",
-  "seconds": 196
+  "seconds": 207
  },
  {
   "speed": "fast",
   "map": "dunes",
   "seat0": "veil",
   "seat1": "ashfall",
-  "result": "defeat",
-  "winner": "ashfall",
-  "seconds": 343
+  "result": "victory",
+  "winner": "veil",
+  "seconds": 552
  },
  {
   "speed": "fast",
   "map": "dunes",
   "seat0": "veil",
   "seat1": "sunward",
-  "result": "timeout",
+  "result": "defeat",
   "winner": "sunward",
-  "seconds": 1800
+  "seconds": 222
  },
  {
   "speed": "fast",
@@ -1077,6 +1077,6 @@
   "seat1": "wardens",
   "result": "defeat",
   "winner": "wardens",
-  "seconds": 205
+  "seconds": 238
  }
 ]

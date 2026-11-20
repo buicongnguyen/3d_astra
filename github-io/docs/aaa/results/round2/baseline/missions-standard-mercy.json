@@ -187,7 +187,7 @@
   "time": 485,
   "objectives": "Aaa",
   "wave": 300,
-  "lost": 0,
+  "lost": 7,
   "medal": null,
   "flags": null,
   "misses": []
@@ -196,10 +196,10 @@
   "mission": "m04-three-way-dunes",
   "kind": "objective",
   "result": "victory",
-  "time": 434,
+  "time": 443,
   "objectives": "Dad",
   "wave": 292,
-  "lost": 19,
+  "lost": 20,
   "medal": "gold",
   "flags": null,
   "misses": []
@@ -235,7 +235,7 @@
   "time": 506,
   "objectives": "Dad",
   "wave": 235,
-  "lost": 11,
+  "lost": 10,
   "medal": "gold",
   "flags": {
    "m05-pact": "share"
@@ -462,7 +462,7 @@
   "time": 485,
   "objectives": "AAaaa",
   "wave": 150,
-  "lost": 53,
+  "lost": 47,
   "medal": null,
   "flags": null,
   "misses": []
@@ -471,10 +471,10 @@
   "mission": "m09-a-debt-in-the-dunes",
   "kind": "objective",
   "result": "victory",
-  "time": 511,
+  "time": 431,
   "objectives": "DDadd",
   "wave": 150,
-  "lost": 41,
+  "lost": 21,
   "medal": "gold",
   "flags": null,
   "misses": []
@@ -498,7 +498,7 @@
   "time": 485,
   "objectives": "AAaa",
   "wave": 235,
-  "lost": 22,
+  "lost": 23,
   "medal": null,
   "flags": null,
   "misses": []
@@ -507,10 +507,10 @@
   "mission": "m10-obsidian-storm",
   "kind": "objective",
   "result": "victory",
-  "time": 479,
+  "time": 548,
   "objectives": "DDad",
   "wave": 235,
-  "lost": 28,
+  "lost": 33,
   "medal": "gold",
   "flags": {
    "m10-veil": "spare"

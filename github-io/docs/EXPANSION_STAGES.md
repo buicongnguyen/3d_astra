@@ -12,6 +12,8 @@ The browser edition now has **seven maps** and a **1–3 AI enemies** selector i
 | Verdant Crossing | 160×160 | Grass-dominated river valley, two bridges and a ford; three additional mirrored mining sites per side |
 | Obsidian Highlands | 192×192 | Broad stone and dirt ground; four additional mirrored mining sites per side |
 
+Plateaus (0.25.0): Amber Dunes has one mirrored disc plateau of radius 11.5 m, Verdant Crossing a mirrored box of 25 x 17 m and Obsidian Highlands a mirrored disc of radius 15 m, each with two 7 m ramps. They were 35-45% smaller (8 m, 18 x 12 m, 11 m): too small to hold more than one small building, so a tower plus a Supply relay now fit on top (see docs/aaa/STAGE_3_BATTLEFIELD.md, Package 3.4).
+
 Stone ground is a surface treatment, not an impassable cliff. All three maps use the existing traversable terrain rules and fixed rock obstacles. Extra opponents occupy the unused map quadrants and receive the same starting units, wallet and four nearby deposits. Shared expansions overlapping those extra bases or their starting deposits are omitted. This update applies to the Three.js edition; the separate Godot repository has not received these maps yet.
 
 See [the internet multiplayer plan](INTERNET_MULTIPLAYER_PLAN.md) for future online play. Networking remains unimplemented.

@@ -68,6 +68,7 @@ Use height and cover to make real choke points on `highlands`, `dunes` and `wood
 
 - For each map write the intent in `docs/EXPANSION_STAGES.md`: where the plateaus, ramps and cover are and what choice they force (for example, "the central plateau overlooks both natural expansions; two ramps, one facing each base").
 - Rules for placement: bases and expansion `sites` stay on level 0 with 10 m clear; every plateau has at least two ramps unless it is a deliberate dead-end tower spot; nothing blocks the `flank` routes; mission regions in `src/story/missions.js` that fall inside a cliff ring or on a ramp must be moved (write a node script that checks every region and spawn with `s.nav.canStand`).
+- Plateau sizes (enlarged for 0.25.0 so a Sentinel tower and a Supply relay fit on one top, with the 2 m cliff band and the 1 m placement margin): dunes disc r 11.5 (was 8), woodlands box 25 x 17 centred at x -17.5 (was 18 x 12 at -14), highlands disc r 15 (was 11). Ramp width stays 7; the ramp points are computed from the edge, so they follow. Check a new size with the clearance script idea above: bases, sites, deposits, walls and mission positions keep their margin and every mission region and spawn passes `canStand`.
 - After each map: `npm run check:missions` for the missions on it, the skirmish bench, and the stuck-unit soak.
 
 **Done when** a unit test shows the same two armies give opposite results depending on which holds the plateau, and a bot match on each reworked map completes without stuck units.
