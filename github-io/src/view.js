@@ -7,6 +7,7 @@ import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Terrain } from "./terrain.js";
 import { ActivityView } from "./activity-view.js";
+import { mulberry32 } from "./audio-logic.js";
 import { Effects } from "./fx.js";
 import { startFlash, stepFlash, HIT_FLASH } from "./combat-feedback.js";
 import { createRing, updateRing, createBar, updateBar, setTeamColor, createMarker, createRally, updateRally } from "./selection-view.js";
@@ -1661,6 +1662,7 @@ export class WorldView {
     }
   }
   reset() {
+    this.fx.rng = mulberry32(1482); // cosmetic effects only: a fixed per-match generator (no Math.random in the sim)
     if (this.life && this.life.aliveCount < this.life.groups.reduce((n, g) => n + g.rows.length, 0)) this.createLife();
     this.activity.reset();
     this.tactics.reset();
