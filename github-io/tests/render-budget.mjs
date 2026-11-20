@@ -97,6 +97,9 @@ const scenarios = [
   // AAA round 2 (W1-A): battle-eco under the Expanded roster, a Field workshop on each side (the first `rules` scenario).
   {name:'battle-expanded-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rules:{roster:'expanded'},
     spawn:[{type:'workshop', team:0, near:[-12,12]}, {type:'workshop', team:1, near:[-12,-12]}]},
+  // W2-A: Gunners, Stalkers and Ramparts together under Expanded, army 60.
+  {name:'battle-expanded-full-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rules:{roster:'expanded'}, triangles:400000,
+    spawn:[{type:'gunner', team:0, count:6, near:[-3,4]}, {type:'stalker', team:0, count:4, near:[-3,14]}, {type:'rampart', team:0, count:4, near:[-8,10]}, {type:'rampart', team:1, count:4, near:[-8,-12]}, {type:'stalker', team:1, count:4, near:[-3,-14]}]},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
@@ -107,6 +110,7 @@ Object.assign(limits, { "gunner-battle-eco": 125 });
 Object.assign(limits, { "stalker-battle-eco": 125 });
 Object.assign(limits, { 'boss-sovereign-eco': 120, 'defence-boss-eco': 125 });
 Object.assign(limits, {'battle-expanded-eco':125}); // W1-A
+Object.assign(limits, {'battle-expanded-full-eco':150}); // W2-A
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
