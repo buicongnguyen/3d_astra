@@ -47,7 +47,8 @@ try {
     assert.equal(result.active, true);
     assert.equal(result.replacement, true);
     assert.deepEqual(result.failures, []);
-    await page.locator('#field-guide').click();
+    // W1-D: on phones Info & stats lives in the touch row's more-sheet.
+    if (await page.locator('#field-guide').isVisible()) await page.locator('#field-guide').click(); else { await page.locator('#touch-more').click(); await page.locator('#touch-guide').click(); }
     await page.locator('#guide-entry').selectOption('worker');
     assert.match(await page.locator('#guide-detail').textContent(), /Queued orders take priority/);
     assert.deepEqual(errors, []);

@@ -53,7 +53,7 @@ try {
     await click('#attack-target-order'); await click('#stop-order');
     assert.ok(await page.locator('#mode-banner').isHidden());
     await select([ids.worker, ids.ranger, ids.tank, ids.medic]);
-    const buttons = await page.locator('.order-buttons button').evaluateAll(es => es.filter(e => !e.hidden).map(e => {
+    const buttons = await page.locator('.order-buttons button').evaluateAll(es => es.filter(e => !e.hidden && e.getClientRects().length).map(e => {
       const r = e.getBoundingClientRect(); return {name: e.id, width: r.width, height: r.height, fits: r.x >= 0 && r.y >= 0 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1, hit: e.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2))};
     }));
     for (const b of buttons) { assert.ok(b.fits && b.hit, JSON.stringify(b)); if (mobile) assert.ok(b.width >= 44 && b.height >= 44, JSON.stringify(b)); }

@@ -32,6 +32,8 @@ await suite("sovereign: the Iron Sovereign on a Defence road, phone", async () =
     const small = [...bar.querySelectorAll("*")].filter((e) => [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())).map((e) => parseFloat(getComputedStyle(e).fontSize)).filter((s) => s < 11);
     return { bottom: r.bottom, text: bar.textContent, small, inside: r.left >= 0 && r.right <= innerWidth, sideways: document.documentElement.scrollWidth > innerWidth };
   });
+  // Merged with W1-F the real Defence bar already sets --defence-bar-h: start from 0 so the test measures the stacking itself.
+  await page.evaluate(() => document.documentElement.style.setProperty("--defence-bar-h", "0px"));
   const before = await measure();
   assert.match(before.text, /Iron Sovereign/);
   assert.deepEqual(before.small, [], "bar text 11 px or more");
