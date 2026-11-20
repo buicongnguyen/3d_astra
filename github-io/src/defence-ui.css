@@ -376,7 +376,13 @@
   .compact-ui #defence-bar #defence-armour { padding: 0 6px !important; }
   .compact-ui #defence-bar #defence-speed, .compact-ui #defence-bar #defence-hero { padding: 0 4px !important; }
   .compact-ui #defence-intel { bottom: calc(var(--dock-height) + var(--tabs-height) + var(--safe-bottom) + var(--defence-bar-h, 60px)); }
-  #defence-card { top: 52px; }
+  #defence-card { top: 232px; }
 }
 #defence-bar .wave small:not(:empty)::before { content: " · "; white-space: pre; }
 @media (orientation: portrait) { .compact-ui #defence-bar .wave small::before { content: none !important; } }
+/* Away from the notice line and the wave strip: top left on desktop and landscape phones, lower down in portrait. */
+@media not (orientation: portrait) {
+  #defence-card { top: 104px; left: 16px; transform: none; animation: defence-card-fade 0.3s ease-out both; }
+  .compact-ui #defence-card { top: 104px; left: 12px; }
+}
+@keyframes defence-card-fade { from { opacity: 0; } to { opacity: 1; } }

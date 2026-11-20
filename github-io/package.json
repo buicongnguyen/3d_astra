@@ -61,6 +61,7 @@
     "test:offline": "node tests/offline.mjs",
     "test:defence": "node tests/defence.mjs",
     "test:defence-zones": "node tests/defence-zones.mjs",
+    "test:defence-deck": "node tests/defence-deck.mjs",
     "test:boss": "node tests/boss.mjs",
     "render:audio": "node tools/render-audio.mjs",
     "baselines:diff": "node tools/baseline-diff.mjs",
