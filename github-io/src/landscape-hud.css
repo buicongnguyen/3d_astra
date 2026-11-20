@@ -240,7 +240,7 @@
   .compact-ui:not(.in-briefing)[data-dock="selection"] .selection-panel:not(.has-entity) { display: none; }
   /* A unit (or units) selected: a short card; a roster row and a second row of orders add their own height.
      Buildings keep the full dock (queue and levels live there), as the Actions and Map tabs do. */
-  .compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity) { --dock-height: calc(var(--unit-dock) + var(--dock-roster, 0px) + var(--dock-orders, 0px)); --unit-dock: 128px; }
+  .compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity) { --dock-height: calc(var(--unit-dock) + var(--dock-roster, 0px) + var(--dock-orders, 0px)); --unit-dock: 126px; }
   .compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-roster) { --dock-roster: 52px; }
   .compact-ui.many-orders:not(.in-briefing):not(.no-units)[data-dock="selection"] { --dock-orders: 49px; }
 
@@ -252,4 +252,16 @@
   .compact-ui:not(.in-briefing) #fight-hint { top: auto; bottom: var(--band); left: 8px; transform: none; max-width: calc(100% - 78px); }
   .compact-ui.dialogue-open:not(.in-briefing):not(.scene-open) #fight-hint { bottom: calc(var(--band) + var(--dialogue-h, 44px) + 6px); }
   .compact-ui:not(.in-briefing) #mode-banner:not([hidden]) ~ #fight-hint { visibility: visible; }
+}
+
+@media (min-aspect-ratio: 1.35) {
+  /* Info & stats lives in the "…" sheet here (Defence keeps it in the dock); the other orders fit one row. */
+  :root:not(.in-defence) .compact-ui:not(.in-briefing) .order-buttons #field-guide,
+  .compact-ui:not(.in-defence):not(.in-briefing) .order-buttons #field-guide { display: none; }
+  .compact-ui:not(.in-briefing) .selection-panel .order-buttons { grid-template-columns: repeat(auto-fit, minmax(44px, 1fr)); }
+}
+
+@media (max-aspect-ratio: 1.35) {
+  /* Side margins of the battlefield: 8 px (was 12), still clear of the screen edge. */
+  .compact-ui:not(.in-briefing) { --gesture-left: max(8px, env(safe-area-inset-left, 0px)); --gesture-right: max(8px, env(safe-area-inset-right, 0px)); }
 }
