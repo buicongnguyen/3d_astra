@@ -8,6 +8,8 @@
 // keys, then e.fx once it is empty, then sim.fxOn once no entity carries e.fx.
 // Mixed into Simulation (see simulation.js).
 import { STATUSES, STATUS_IDS } from "./content.js";
+import { hyp } from "../data.js";
+import { MAX_ZONES } from "./defence/common.js";
 
 // Sweep every 20 ticks (one second at the 20 Hz step), counted on sim.ticks so it needs no clock.
 const SWEEP_TICKS = 20;
@@ -77,3 +79,43 @@ export const effects = {
     if (!any) delete this.fxOn;
   },
 };
+
+// On-hit effects that any entity carrying the field can use (AAA round 2, CW-A; M1, code move only).
+// They are the bodies of the Defence garrison helpers and write the same entity fields (slowUntil,
+// slowBy, markedUntil, markTaken, burnAt) and the same zone and event, so no hash moves. The mixin
+// (sim/defence/towers.js) keeps garrisonHit, garrisonPierce and garrisonBurst as thin wrappers
+// because combat.js calls them by those names.
+// Slow, mark (also around the target: slow_radius, mark_radius) and burning ground: `sim` is the
+// Simulation, `e` the shooter, `t` the target.
+export function applyHitEffects(sim, e, t) {
+  if (t.kind === "unit" && e.slow) { t.slowUntil = sim.time + e.slow.seconds; t.slowBy = e.slow.factor; }
+  if (t.kind === "unit" && e.beacon) { t.markedUntil = sim.time + e.beacon.seconds; t.markTaken = e.beacon.taken; }
+  // Ranks (0.24): the slow or the mark also falls on the enemies near the target.
+  if (t.kind === "unit" && (e.slow_radius || e.mark_radius))
+    for (const u of sim.entities) {
+      if (u === t || u.hp <= 0 || u.kind !== "unit" || u.flying || !sim.hostile(e.team, u.team)) continue;
+      const d = hyp(u.x - t.x, u.z - t.z);
+      if (e.slow_radius && d <= e.slow_radius) { u.slowUntil = sim.time + e.slow.seconds; u.slowBy = e.slow.factor; }
+      if (e.mark_radius && e.beacon && d <= e.mark_radius) { u.markedUntil = sim.time + e.beacon.seconds; u.markTaken = e.beacon.taken; }
+    }
+  if (e.burn && sim.time >= (e.burnAt ?? 0) - 1e-9) {
+    e.burnAt = sim.time + e.burn.every;
+    (sim.zones ||= []).push({ x: t.x, z: t.z, radius: e.burn.radius, until: sim.time + e.burn.seconds, dps: e.burn.dps, team: e.team, by: e.id });
+    if (sim.zones.length > MAX_ZONES) sim.zones.shift();
+    sim.events.push({ type: "ability", ability: "burnline", id: e.id, team: e.team, x: e.x, z: e.z, tx: t.x, tz: t.z, radius: e.burn.radius, duration: e.burn.seconds });
+  }
+}
+// A shot of a piercing rank: that share of the target's shield is set aside while the shot lands
+// (`land()`), so it goes through to the hull; what was set aside comes back after.
+export function pierceShield(e, t, land) {
+  const kept = t.shield > 0 ? t.shield * e.pierce : 0;
+  t.shield -= kept;
+  land();
+  t.shield += kept;
+}
+// A burst rank: the shots of a burst come `gap` seconds apart, then the full reload.
+export function burstStep(e) {
+  e.burstShot = (e.burstShot || 0) + 1;
+  if (e.burstShot < e.burst.shots) e.cooldown = e.burst.gap;
+  else e.burstShot = 0;
+}

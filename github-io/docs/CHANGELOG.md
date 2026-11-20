@@ -2,6 +2,12 @@
 
 ## Unreleased: AAA round 2
 
+### CW-A: Defence split (code move only)
+- `src/sim/defence.js` is now a re-export shim over `src/sim/defence/{index,common,towers,waves,route,commander,armour,crossings}.js`: the 83 methods are unchanged and `index.js` builds the mixin in the original key order; every named export (`GARRISONS`, `seeded`, `seedOf`, `endlessWave`, `starsFor`) is kept.
+- The garrison on-hit helpers moved to `src/sim/effects.js` (`applyHitEffects`, `pierceShield`, `burstStep`, same entity fields); `garrisonHit`, `garrisonPierce` and `garrisonBurst` stay as thin wrappers.
+- `endlessWave` and its palette are memoised in module WeakMaps keyed by the level definition (off the sim, never hashed).
+- Tests: `tests/mixins.test.js` (no method name in two mixins, the Defence key order, exports, wrappers, memo). No play changed: every golden pin, `d071360b`, the 14 checksums and `check:defence --json` are identical.
+
 ### W2-D: Field command AI plan (opt-in)
 New Battle rule "AI plan: Classic / Field command" (`rules.aiPlan === "field"`, skirmish only). The computer keeps its heavy slot, sends fewer Harvesters to energy when it is rich, saves alloy for the Foundry and Tanks, defends every other core and held ring, fields one of each combat slot, casts abilities with intent (`ai-casts.js`) and places `ai.role` units (`field-command.js`). Classic is unchanged (pins, tick time identical).
 ### W2-C: First impression and story light
