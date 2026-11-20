@@ -98,6 +98,8 @@ jobs:
           # Three Roads, Endless to wave 12), off the 10-minute build job. It needs no browser.
           - name: golden-full
             scripts: golden-full
+          - name: r2-w1e
+            scripts: sovereign
     defaults:
       run:
         working-directory: github-io

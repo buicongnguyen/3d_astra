@@ -62,6 +62,7 @@
     "test:defence": "node tests/defence.mjs",
     "test:defence-zones": "node tests/defence-zones.mjs",
     "test:boss": "node tests/boss.mjs",
+    "test:sovereign": "node tests/sovereign.mjs",
     "render:audio": "node tools/render-audio.mjs",
     "baselines:diff": "node tools/baseline-diff.mjs",
     "test:golden-full": "node tests/golden-full.mjs",

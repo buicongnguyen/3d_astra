@@ -25,7 +25,7 @@ Nothing changes for the player: no rule, number or picture moved. This makes eve
 ### W1-E: Boss engine II and the Iron Sovereign
 - The boss engine can mark several zones at once (`count`, `spread`), aim at the best tower (`target: "building"`), stun buildings (`stun`, status `stunned`), step sideways between attacks (`strafe`), release units at health stages (`drops`), let damage during a warning break the attack (`break`) and walk a Defence road (route mode). The Iron Vanguard and mission 3 are unchanged.
 - Defence: `leak_lives` sets what a leak costs, `spawnOnRoute` puts a unit on a road, and a boss group spawns exactly its count.
-- New boss: the Iron Sovereign (12,000 HP, six legs, ported from Tank_game_3D `boss-walker.glb`). Round 3 puts it in a Heroic finale; this round it exists in the sandbox, tests and render scenarios.
+- New boss: the Iron Sovereign (10,000 HP, six legs, ported from Tank_game_3D `boss-walker.glb`). Round 3 puts it in a Heroic finale; this round it exists in the sandbox, tests and render scenarios.
 - `tools/port-boss-model.mjs` takes a parts map (`--parts`) and a palette; `ironvanguard.glb` is byte-identical.
 
 ## Unreleased: Frontier Defence "Build zones, armour and Three Roads" (plan: docs/aaa/AAA_GAMEPLAY_STORY_DEFENCE.md, C10–C12)
