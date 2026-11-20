@@ -17,7 +17,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import "../defence-ui.css";
-import { TRAITS, waveTraits, traitsOf, counterCrews, waveTypes } from "../defence/traits.js";
+import { TRAITS, ELITE_TRAITS, waveAffixes, waveTraits, traitsOf, counterCrews, waveTypes } from "../defence/traits.js";
 
 // Tier trims multiply the tower's paint (never a material swap: the batches stay as they are).
 export const TIER_TINT = { 1: [1.08, 0.94, 0.8], 2: [0.92, 0.99, 1.1], 3: [1.25, 1.1, 0.62] };
@@ -489,7 +489,7 @@ export function createDefenceUI(S, A, deps) {
     if (!p) { el.innerHTML = ""; return; }
     const many = Object.keys(S.sim.missionDef.defence.routes).length > 1;
     const unit = (u) => `<span class="intel-unit${u.carry ? " carrier" : ""}${u.elite ? " elite" : ""}" data-type="${u.type}"${u.elite ? ` data-elite="${u.elite}"` : ""} title="${D[u.type]?.name || u.type}">${hasPortrait(u.type) ? portrait(u.type, "hostile") : icon(D[u.type]?.icon || "tank")}<b translate="no">×${u.count}</b>${u.carry ? `<small translate="no">(${u.carry})</small>` : ""}</span>`;
-    const chips = waveTraits(p.units, D).map((id) => { const t = TRAITS.find((x) => x.id === id); return `<span class="intel-chip" data-trait="${id}" title="${t.hint}">${t.label}</span>`; }).join("");
+    const chips = waveTraits(p.units, D).map((id) => { const t = TRAITS.find((x) => x.id === id); return `<span class="intel-chip" data-trait="${id}" title="${t.hint}">${t.label}</span>`; }).join("") + waveAffixes(p.units).map((id) => { const t = ELITE_TRAITS.find((x) => x.id === id); return `<span class="intel-chip affix" data-trait="${id}" title="${t.hint}">${t.label}</span>`; }).join("");
     el.innerHTML = (chips ? `<span class="intel-traits">${chips}</span>` : "") + `<span class="intel-line"><span class="intel-head"><span>Next wave</span> <b translate="no">${p.wave}</b></span>${p.units.map(unit).join("")}</span>${many ? `<span class="intel-routes">${p.routes.map((r) => `<span class="intel-route" data-route="${r}">${S.sim.missionDef.defence.roads?.[r] || ROUTE_LABEL[r] || r}</span>`).join("")}</span>` : ""}`;
   }
 

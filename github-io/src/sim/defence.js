@@ -709,6 +709,8 @@ export const defence = {
     if (this.crossings) this.stepCrossings(dt);
     if (d.hero) this.stepCommander();
     if (GARRISONS.repair) this.fieldRepair(dt);
+    // Elites (W2-B, sim/content/elites.js): only once one has spawned.
+    if (d.elites) this.stepElites();
     // Carriers at their stop let their passengers out (after the spawns, in entity order).
     for (const e of this.entities) if (e.cargo && e.unloadAt !== undefined && e.hp > 0 && this.time >= e.unloadAt - 1e-9) this.dropCargo(e);
     const exit = def.exit;

@@ -35,7 +35,6 @@ function banners(sim) {
 
 export const elites = {
   id: "elites",
-  order: 40,
   mixin: {
     // Turns a freshly spawned wave unit into an elite. `mods` = { elite, split? } from the queued spawn.
     applyElite(e, mods) {
@@ -56,6 +55,32 @@ export const elites = {
       else if (mods.elite === "mender") e.mendAt = this.time + a.every;
       this.defence.elites = (this.defence.elites || 0) + 1;
       return true;
+    },
+    // Once a tick from stepDefence, only while an elite has spawned: a Splitter's children step onto its
+    // road (after the tick's deaths), and a Mender heals.
+    stepElites() {
+      const d = this.defence;
+      if (d.splits?.length) {
+        const a = ELITES.affixes.splitter, list = d.splits;
+        delete d.splits;
+        for (const s of list) {
+          for (let k = 0; k < a.count; k++) {
+            const side = k - (a.count - 1) / 2;
+            const kid = this.spawnOnRoute(s.type, FOE, s.route, s.leg, { x: s.x + side * a.spread * 2, z: s.z + side * a.spread });
+            if (s.wave !== undefined) kid.wave = s.wave;
+          }
+        }
+      }
+      const a = ELITES.affixes.mender;
+      for (const m of this.entities) {
+        if (m.elite !== "mender" || m.hp <= 0 || this.time < m.mendAt - 1e-9) continue;
+        m.mendAt = this.time + a.every;
+        for (const o of this.entities) {
+          if (o === m || o.team !== FOE || o.kind !== "unit" || o.hp <= 0 || o.hp >= o.maxHp || dist(o, m) > a.radius) continue;
+          o.hp = Math.min(o.maxHp, o.hp + a.heal);
+          this.events.push({ type: "support", weapon: "medic", x: m.x, z: m.z, tx: o.x, tz: o.z, team: m.team });
+        }
+      }
     },
   },
   // Banner: the factor on everything an ally of a banner takes.
@@ -78,32 +103,6 @@ export const elites = {
       const o = t.orders?.[0];
       if (o?.type !== "route") return;
       (sim.defence.splits ||= []).push({ type: t.split, route: o.route, leg: o.leg, x: t.x, z: t.z, wave: t.wave });
-    }
-  },
-  // After the tick's deaths: a Splitter's children step onto its road, a Mender heals.
-  step(sim) {
-    const d = sim.defence;
-    if (!d?.elites) return;
-    if (d.splits?.length) {
-      const a = ELITES.affixes.splitter, list = d.splits;
-      delete d.splits;
-      for (const s of list) {
-        for (let k = 0; k < a.count; k++) {
-          const side = k - (a.count - 1) / 2;
-          const kid = sim.spawnOnRoute(s.type, FOE, s.route, s.leg, { x: s.x + side * a.spread * 2, z: s.z + side * a.spread });
-          if (s.wave !== undefined) kid.wave = s.wave;
-        }
-      }
-    }
-    const a = ELITES.affixes.mender;
-    for (const m of sim.entities) {
-      if (m.elite !== "mender" || m.hp <= 0 || sim.time < m.mendAt - 1e-9) continue;
-      m.mendAt = sim.time + a.every;
-      for (const o of sim.entities) {
-        if (o === m || o.team !== FOE || o.kind !== "unit" || o.hp <= 0 || o.hp >= o.maxHp || dist(o, m) > a.radius) continue;
-        o.hp = Math.min(o.maxHp, o.hp + a.heal);
-        sim.events.push({ type: "support", weapon: "medic", x: m.x, z: m.z, tx: o.x, tz: o.z, team: m.team });
-      }
     }
   },
 };

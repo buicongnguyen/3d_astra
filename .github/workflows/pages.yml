@@ -121,6 +121,9 @@ jobs:
           # AAA round 2 (W1-D): phones first-class, the battlefield share on a phone.
           - name: r2-w1d
             scripts: phones
+          # AAA round 2 (W2-B): Heroic challenges (tab, teaser, badge) and the Heroic bot check, off the build job.
+          - name: r2-w2b
+            scripts: defence-heroic defence-heroic-check
     defaults:
       run:
         working-directory: github-io
