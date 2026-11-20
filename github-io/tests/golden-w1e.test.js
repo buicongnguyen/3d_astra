@@ -15,4 +15,4 @@ test("golden: field sandbox, 6 Rangers and 2 Breakers against the Sovereign", ()
 test("golden: route sandbox, the Sovereign on d-crossroads against 10 towers", () => {
   pin("w1e-route", hashes(routeFight().s), PIN.route);
 });
-const PIN = { field: ["0ef96323", "c63586b5"], route: ["6763244f", "5b2478d4"] };
+const PIN = { field: ["bfb067cb", "14a73a77"], route: ["536dae92", "7758a44d"] };

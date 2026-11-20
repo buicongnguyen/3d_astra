@@ -58,6 +58,6 @@ test("drops walk the boss's road (spawnOnRoute)", () => {
   boss.hp = boss.maxHp * 0.6;
   s.tick(0.05);
   const drones = s.entities.filter((e) => e.type === "drone" && e.team === 1);
-  assert.equal(drones.length, 4);
+  assert.equal(drones.length, 2);
   assert.ok(drones.every((d) => d.orders[0]?.type === "route" && d.orders[0].route === boss.orders[0].route));
 });

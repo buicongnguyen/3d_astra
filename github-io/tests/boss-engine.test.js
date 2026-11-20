@@ -17,9 +17,9 @@ const run = (s, seconds, seen = []) => { for (let i = 0; i < Math.round(seconds 
 const until = (s, test, cap = 60, seen = []) => { for (let i = 0; i < cap * 20 && !test(); i++) { s.tick(0.05); seen.push(...s.events.map((e) => ({ ...e, at: s.time }))); s.events.length = 0; } assert.ok(test(), "condition reached"); return seen; };
 const holders = (s, n, at = { x: 0, z: 2 }) => Array.from({ length: n }, (_, i) => { const u = s.spawn("ranger", 0, at.x - 1.2 + (i % 3) * 1.2, at.z + Math.floor(i / 3) * 1.2); u.damage = 0; u.stance = "hold"; return u; });
 
-test("the Sovereign's data: 12,000 HP and 300 shield, leak 10 lives, Defence tuned, caps and zones", () => {
+test("the Sovereign's data: 10,000 HP and 300 shield, leak 10 lives, Defence tuned, caps and zones", () => {
   const d = D.ironsovereign;
-  assert.equal(d.hp, 12000); assert.equal(d.shield, 300); assert.equal(d.leak_lives, 10); assert.equal(d.defence_tuned, true);
+  assert.equal(d.hp, 10000); assert.equal(d.shield, 300); assert.equal(d.leak_lives, 10); assert.equal(d.defence_tuned, true);
   assert.equal(d.boss, "iron-sovereign");
   assert.equal(STOMP.count, undefined); assert.equal(SPREAD.count, 3);
   assert.ok(SPREAD.spread >= 2 * SPREAD.zone.radius + 0.5, "zones never overlap");
@@ -87,14 +87,14 @@ test("break the attack: damage of the share cancels it and opens the core for 6 
   assert.notEqual(no.phase, "exposed");
 });
 
-test("drops: 4 Drones at 2/3 and 1/3 of its health, once each", () => {
+test("drops: 2 Drones at 2/3 and 1/3 of its health, once each", () => {
   const { s, boss } = field();
   holders(s, 3, { x: 0, z: 4 });
   boss.bs = { phase: "tracking", stage: 1, cycle: 0, post: { x: boss.x, z: boss.z }, next: 1e9 };
   const count = () => s.entities.filter((e) => e.type === "drone" && e.team === 1).length;
-  boss.hp = boss.maxHp * 0.66; run(s, 0.1); assert.equal(count(), 4);
-  run(s, 1); assert.equal(count(), 4, "once");
-  boss.hp = boss.maxHp * 0.33; run(s, 0.1); assert.equal(count(), 8);
+  boss.hp = boss.maxHp * 0.66; run(s, 0.1); assert.equal(count(), 2);
+  run(s, 1); assert.equal(count(), 2, "once");
+  boss.hp = boss.maxHp * 0.33; run(s, 0.1); assert.equal(count(), 4);
 });
 
 test("a save mid-warning of a spread reloads to the same hash and plays on in step", () => {
