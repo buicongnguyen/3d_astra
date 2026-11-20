@@ -90,6 +90,12 @@ export function setupMatchFlow(S, A) {
     if (S.playMode !== "training" && (!S.query.has("test") || S.query.has("autoharvest"))) S.sim.command({ team: 0, type: "harvest" });
   }
 
+  // The title card of a mission, Chronicle mission or Defence level as it begins (a tutorial and a skirmish have none).
+  function openTitleCard() {
+    hideTitleCard();
+    if (S.sim.missionDef && S.playMode !== "training" && (!S.query?.has("test") || S.query.has("titlecard"))) showTitleCard(S.sim.missionDef);
+  }
+
   // restart() starts the current setup again; restart(false) only resets the interface around
   // the simulation that is already there (the briefing preview, or a saved match with resume).
   function restart(play = true, resume = false) {
@@ -139,8 +145,7 @@ export function setupMatchFlow(S, A) {
     if(play !== false && S.playMode === "training") beginTutorial();
     if (S.sim.defence) A.defenceBegin(resume);
     // Mission title card (W2-F): campaign, Chronicle and Defence matches, not a resumed save; browser suites (?test) opt in with ?titlecard.
-    hideTitleCard();
-    if (play !== false && !resume && S.sim.missionDef && S.playMode !== "training" && (!S.query?.has("test") || S.query.has("titlecard"))) showTitleCard(S.sim.missionDef);
+    if (play !== false && !resume) openTitleCard();
   }
 
   function autosave() {
@@ -198,6 +203,7 @@ export function setupMatchFlow(S, A) {
     if(S.playMode === "training") beginTutorial();
     if (S.sim.defence) A.defenceBegin();
     A.tone(780, 0.15);
+    openTitleCard();
   }
 
   function beginTutorial(){

@@ -121,6 +121,9 @@ jobs:
           # AAA round 2 (W1-D): phones first-class, the battlefield share on a phone.
           - name: r2-w1d
             scripts: phones
+          # AAA round 2 (W2-F): title cards, boss presence, the Keystone Roads node.
+          - name: r2-w2f
+            scripts: showtime
     defaults:
       run:
         working-directory: github-io

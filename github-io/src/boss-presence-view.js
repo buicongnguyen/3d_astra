@@ -1,12 +1,12 @@
 // Boss presence (AAA round 2, W2-F; docs/aaa/BOSSES.md): a view plugin that makes any boss feel big. It
-// stands 1.5 times taller on screen (scaleFor: past FEEL.maxModelScale, health bar lifted with it), its
+// stands 2.7 times taller on screen (scaleFor: past FEEL.maxModelScale, health bar lifted with it), its
 // feet throw dust and shake the camera a little on each leg step, a name card opens its entrance
 // (bossWake), and a boss that falls mid-match gets "<name> destroyed" (when its fall ends the match the
 // end beat in app/ui-extras.js plays instead). Presentation only: no simulation state, no randomness
 // but fx's own. With no boss on the field every hook returns at once.
 import { showBossCard } from "./boss-ui.js";
 
-export const BOSS_SCALE = 1.5;
+export const BOSS_SCALE = 1.5;   // as briefed: measured 2.5 tanks tall at zoom 30 once the boss is in view (the brief is right)
 const STEP = Math.PI;       // a foot lands every half stride cycle (view.js gait: stride += speed * dt * k)
 const SHAKE = 0.12;         // trauma of one footfall (CameraShake adds it by distance; FEEL.buildingTrauma is stronger)
 
@@ -17,7 +17,8 @@ export class BossPresenceView {
   }
   scaleFor(e) { return e.boss ? BOSS_SCALE : 1; }
   event(ev, sim) {
-    if (ev.type === "bossWake" && sim.isVisible?.(ev) !== false) showBossCard(ev.name || "Boss", "", "wake");
+    // A story scene that opens on the wake carries its own title beat (story/scenes.js): no second card.
+    if (ev.type === "bossWake") { if (!document.documentElement.classList.contains("scene-open")) showBossCard(ev.name || "Boss", "", "wake"); }
     else if (ev.type === "bossDefeated" && !sim.result) showBossCard(ev.name || "Boss", "destroyed", "fall");
   }
   update(sim, dt) {

@@ -27,9 +27,16 @@ export function showTitleCard(def, host = document.getElementById("world") || do
   if (info.kicker) card.querySelector(".tc-kicker").textContent = info.kicker;
   card.querySelector(".tc-title").textContent = info.title;
   if (info.place) card.querySelector(".tc-place").textContent = info.place;
-  if (motionOff() || matchMedia?.("(prefers-reduced-motion: reduce)").matches) card.classList.add("calm");
+  // Reduced motion: no slide, only a short opacity fade in and out (a transition, since motion-off silences animations).
+  const calm = motionOff() || matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  if (calm) card.classList.add("calm");
   card.addEventListener("pointerdown", (e) => { e.stopPropagation(); hideTitleCard(); });
   host.append(card);
+  if (calm) {
+    const mine = card;
+    requestAnimationFrame(() => mine.classList.add("show"));
+    setTimeout(() => mine.classList.remove("show"), (TITLE_CARD_SECONDS - 0.4) * 1000);
+  }
   timer = setTimeout(hideTitleCard, TITLE_CARD_SECONDS * 1000);
   return true;
 }

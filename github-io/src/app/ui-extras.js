@@ -115,7 +115,10 @@ export function setupUiExtras(S, A) {
   }
 
   // The first ambush by a hidden unit explains the cloak, once per match.
+  // W2-F: the last boss that fell (in this match, with its game time), so a fall one tick before the result still gets the end beat.
+  let bossFell = null;
   function factionEvent(event) {
+    if (event.type === "bossDefeated") bossFell = { sim: S.sim, time: S.sim.time, x: event.x, z: event.z };
     if (event.type !== "reveal" || !event.ambush || event.victim !== 0 || seen.has("cloak") || !hintEl) return;
     if (!Z.started || S.tutorial || S.sim.result) return;
     seen.add("cloak");
@@ -204,7 +207,7 @@ export function setupUiExtras(S, A) {
   function beginBeat() {
     if (S.tutorial || S.view?.reducedMotion?.matches) return false;
     // W2-F: a boss's fall that ends the match: focus on it, hold 1.2 s at x0.3, then the debrief.
-    const boss = S.sim.events.find((ev) => ev.type === "bossDefeated");
+    const boss = S.sim.events.find((ev) => ev.type === "bossDefeated") || (bossFell?.sim === S.sim && S.sim.time - bossFell.time <= 3 ? bossFell : null);
     const core = boss || S.sim.events.find((ev) => ev.type === "death" && ev.core);
     if (!core) return false;
     S.endBeat = { t: 0, x: core.x, z: core.z, fromX: S.view.focus.x, fromZ: S.view.focus.z, ...(boss ? { length: BOSS_BEAT_PAN + BOSS_BEAT_HOLD } : null) };
