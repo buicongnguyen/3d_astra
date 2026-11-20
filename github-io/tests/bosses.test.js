@@ -40,8 +40,8 @@ test("boss data: every boss has a unit, known zone shapes, warnings at least the
     assert.ok(d.description && d.shield > 0 && !d.trains, id);
     assert.ok(spec.pause.length === (spec.stages?.length ?? 0) + 1, `${id}: a pause per stage`);
     assert.ok(spec.pause.every((p, i) => i === 0 || p < spec.pause[i - 1]), `${id}: later stages attack sooner`);
-    for (const p of spec.pause) for (const k of Object.values(spec.cadence)) {
-      const cycle = p * k + warningSeconds(spec.attacks[0]) + spec.attacks[0].over + spec.exposed;
+    for (const p of spec.pause) for (const k of Object.values(spec.cadence)) for (const a of spec.attacks) {
+      const cycle = p * k + warningSeconds(a) + a.over + spec.exposed;
       assert.ok(cycle >= 9.5 && cycle <= 16, `${id}: one big attack every ~10-15 s (${cycle.toFixed(1)} s)`);
     }
     assert.ok(spec.taken.armored < 1 && spec.taken.exposed > 1 && spec.exposed >= 2, `${id}: an armoured boss with an open core`);
@@ -49,9 +49,11 @@ test("boss data: every boss has a unit, known zone shapes, warnings at least the
     for (const a of spec.attacks) {
       assert.ok(["circle", "cone", "line"].includes(a.zone.shape), `${id}: ${a.zone.shape}`);
       assert.ok(warningSeconds(a) >= REACT + escapeDistance(a.zone) / ESCAPE_SPEED - 1e-9, `${id}: warning`);
-      // The 30% rule: a whole attack on one Ranger, standing in the middle, on the hardest difficulty.
+      // The 30% rule: a whole attack on one Ranger (health + shield, 120), on the hardest difficulty. The
+      // zones of one attack never overlap, so a unit is in one of them.
+      assert.ok(a.count === undefined || a.count < 2 || (a.spread ?? 0) >= 2 * a.zone.radius + 0.5, `${id} ${a.id}: zones apart`);
       const worst = a.damage * a.rounds * Math.max(...Object.values(spec.damage));
-      assert.ok(worst <= D.ranger.hp * 0.3 + 1e-9, `${id} ${a.id}: ${worst} of ${D.ranger.hp}`);
+      assert.ok(worst <= (D.ranger.hp + D.ranger.shield) * 0.3 + 1e-9, `${id} ${a.id}: ${worst} of ${D.ranger.hp + D.ranger.shield}`);
     }
     assert.ok(d.damage * Math.max(...Object.values(spec.damage)) <= D.ranger.hp * 0.3, `${id}: light gun`);
   }

@@ -1,6 +1,6 @@
 {
   "name": "ironsovereign",
-  "scale": 1.7,
+  "scale": 1.9,
   "palette": "sovereign",
   "regroup": {
     "LegsA": ["Leg0L", "Leg1R", "Leg2L"],

@@ -1185,7 +1185,10 @@
     "Top rank": "Hạng cao nhất",
     "Rank 2": "Hạng 2",
     "Assault": "Xung kích",
-    "Bulwark": "Thành lũy"
+    "Bulwark": "Thành lũy",
+    "Iron Sovereign": "Quân Vương Thép",
+    "Siege fortress": "Pháo đài công thành",
+    "A six-legged Builder siege fortress. It stomps the strongest tower in reach and stuns it, then fires a three-shell spread: the ground turns red first, so move out. Enough damage during a warning breaks the attack and opens its core. It drops Sentinel drones as its armour cracks, and a leak costs 10 lives.": "Pháo đài công thành sáu chân của người Kiến Tạo. Nó giẫm nát tháp mạnh nhất trong tầm và làm tháp tê liệt, rồi bắn ba quả đạn tỏa: mặt đất chuyển đỏ trước, hãy rời khỏi đó. Đủ sát thương trong lúc cảnh báo sẽ phá đòn và mở lõi của nó. Nó thả máy bay canh gác khi giáp nứt, và để nó lọt qua mất 10 mạng."
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],

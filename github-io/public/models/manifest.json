@@ -251,6 +251,16 @@
       "budget": 3000,
       "source": "Tank_game_3D public/models/boss-quad-mech.glb (same owner), ported by tools/port-boss-model.mjs",
       "animation": "Runtime parts (src/boss-view.js): legs, torso, arms, light gun and core; no baked clips"
+    },
+    {
+      "name": "ironsovereign",
+      "file": "ironsovereign.glb",
+      "triangles": 1904,
+      "boss": "iron-sovereign",
+      "budget": 2800,
+      "review": "pending owner review (round 2)",
+      "source": "Tank_game_3D public/models/boss-walker.glb (same owner), ported by tools/port-boss-model.mjs --parts tools/boss-parts/ironsovereign.json",
+      "animation": "Runtime parts (src/boss-view.js BOSS_PARTS): two tripods of legs, turret, cannon, light gun and core; no baked clips"
     }
   ]
 }

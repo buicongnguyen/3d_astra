@@ -11,7 +11,12 @@ import { BOSSES } from "./sim/bosses.js";
 
 // Group nodes of a ported boss model (tools/port-boss-model.mjs) and what the runtime calls them.
 // leg_* swing with the walk (view.js); TurretRig turns toward the target like a vehicle turret.
-const PARTS = [["LeftLeg", "leg_L", null], ["RightLeg", "leg_R", null], ["Turret", "TurretRig", null], ["ArmL", "BossArmL", "Turret"], ["ArmR", "BossArmR", "Turret"], ["LightGun", "BossGun", "Turret"]];
+// Parts tables per ported boss (BOSS_PARTS): [node in the GLB, runtime name, parent part]. The table is
+// picked by a node only that model has, so a later boss is one more entry (docs/aaa/BOSSES.md).
+// The Sovereign's six legs are two rigid tripods (LegsA, LegsB: one draw each) that step in turn.
+const SOVEREIGN_PARTS = [["LegsA", "BossLegA", null], ["LegsB", "BossLegB", null], ["Turret", "TurretRig", null], ["Cannon", "BossCannon", "Turret"], ["LightGun", "BossGun", "Turret"]];
+export const BOSS_PARTS = [{ marker: "LegsA", parts: SOVEREIGN_PARTS }];
+const PARTS_VANGUARD = [["LeftLeg", "leg_L", null], ["RightLeg", "leg_R", null], ["Turret", "TurretRig", null], ["ArmL", "BossArmL", "Turret"], ["ArmR", "BossArmR", "Turret"], ["LightGun", "BossGun", "Turret"]];
 const reflects = (m) => m.metalness >= 0.5 || m.roughness <= 0.25;
 
 // One template per team: each rigid part's painted pieces become a single mesh whose vertices carry
@@ -19,6 +24,7 @@ const reflects = (m) => m.metalness >= 0.5 || m.roughness <= 0.25;
 // stays its own glowing mesh.
 export function bossTemplates(scene, { colors, glows, bakedMaterial }) {
   scene.updateMatrixWorld(true);
+  const PARTS = BOSS_PARTS.find((t) => scene.getObjectByName(t.marker))?.parts || PARTS_VANGUARD;
   const nodes = new Map(PARTS.map(([name]) => [name, scene.getObjectByName(name)]));
   const owners = new Map(); // three node -> part name
   for (const [name, node] of nodes) if (node) owners.set(node, name);
@@ -125,8 +131,8 @@ export class BossView {
     const model = root.userData.model, find = (name) => model.getObjectByName(name);
     let core = null;
     model.traverse((o) => { if (o.name === "BossCore") core = o; });
-    root.userData.boss = { armL: find("BossArmL"), armR: find("BossArmR"), gun: find("BossGun"), core, recoil: [0, 0, 0, 0], raise: 0, glow: 0, id: e.id };
-    for (const arm of [root.userData.boss.armL, root.userData.boss.armR]) if (arm) arm.userData.base = arm.position.clone();
+    root.userData.boss = { armL: find("BossArmL"), armR: find("BossArmR"), gun: find("BossGun"), cannon: find("BossCannon"), legA: find("BossLegA"), legB: find("BossLegB"), core, recoil: [0, 0, 0, 0], raise: 0, glow: 0, id: e.id };
+    for (const arm of [root.userData.boss.armL, root.userData.boss.armR, root.userData.boss.cannon, root.userData.boss.legA, root.userData.boss.legB]) if (arm) arm.userData.base = arm.position.clone();
     root.userData.bar.position.y = 6.4;
     root.userData.bar.userData.base *= 1.6;
   }
@@ -174,6 +180,21 @@ export class BossView {
         arm.rotation.x = -0.22 * u.raise;
         arm.position.copy(arm.userData.base);
         if (motion && kick > 0) arm.position.z -= Math.sin((kick / 0.16) * Math.PI) * 0.22;
+      }
+      // The Sovereign: the cannon kicks back per shell; two tripods of legs step in turn (a lift and a
+      // sweep along the heading), their stride following the ground covered (the main loop's gait).
+      if (u.cannon) {
+        u.cannon.position.copy(u.cannon.userData.base);
+        const kick = u.recoil[0];
+        if (motion && kick > 0) u.cannon.position.z -= Math.sin((kick / 0.16) * Math.PI) * 0.5;
+      }
+      if (u.legA) {
+        const g = o.userData.gait || 0, ph = o.userData.stride || 0;
+        for (const [leg, k] of [[u.legA, 0], [u.legB, Math.PI]]) {
+          const c = Math.cos(ph * 0.55 + k);
+          leg.position.copy(leg.userData.base);
+          if (motion) { leg.position.z += Math.sin(ph * 0.55 + k) * 0.5 * g; leg.position.y += Math.max(0, c) * 0.35 * g; }
+        }
       }
       for (let i = 0; i < 4; i++) u.recoil[i] = Math.max(0, u.recoil[i] - dt);
       // The core: dark while armoured, a bright pulse while exposed.
