@@ -2,6 +2,13 @@
 
 ## Unreleased: AAA round 2
 
+### W2-C: First impression and story light
+- Title: FRONTIER COMMAND wordmark and emblem over the key art, three large choice cards (Campaign, Skirmish, Defence) with Training as a slim row, pressed and hover states, the setup as a rising sheet on phones. Display font Baloo 2 ExtraBold (OFL, Latin and Vietnamese, 24 KB, `src/fonts/`) as `--font-display` for headings only; tiles keep the old stack as `--font-tile`.
+- Look: warm grade (one `CustomToneMapping` chunk) and a Fresnel team rim on every render tier, lighter Ashen fog; all numbers in `src/look-grade.json` (owner decision O7).
+- Story light: `src/mission-looks.js` (id-keyed table, no new fields on missions): night for m08 and cv1, storm with lightning for m10 and for m06 from 16:00; Eco gets the palette swap only. View only; checksums unchanged.
+- Tests: `look-grade`, `mission-looks` (8), browser suite `title`, scenario `night-battle-eco`; tool `tools/look-shots.mjs`.
+
+
 ### W0-A: Safety net, baseline tools and the view seam
 Nothing changes for the player: no rule, number or picture moved. This makes every later change provable.
 - **Golden pins split and extended (K1).** `tests/golden-play.test.js` is now `tests/golden-skirmish.test.js`, `golden-defence.test.js` and `golden-story.test.js`, run in parallel; all 33 earlier values are kept. New pins, recorded at the base before any change: two skirmish setups as the skirmish screen makes them (riverlands ×3 Sunward against mixed rivals, dunes Ashfall against Veil), a save at 180 s that reloads to the same 300 s hash on all six AI setups, the towers left standing in the DefenceBot runs, Endless on Gorge Road to wave 12, Hold the River (DefenceBot, 120 s) and the Ashfall Chronicle's Cold Berths (120 s). The 300 s points, save and reload, Three Roads and Endless run only in `npm run test:golden-full` (new CI matrix entry `golden-full`); `npm test` keeps the fast ones. `d071360b` is now checked in one file only.

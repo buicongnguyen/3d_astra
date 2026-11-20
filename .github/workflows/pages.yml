@@ -121,6 +121,9 @@ jobs:
           # AAA round 2 (W1-D): phones first-class, the battlefield share on a phone.
           - name: r2-w1d
             scripts: phones
+          # AAA round 2 (W2-C): the title screen (wordmark, display font, taps, text sizes).
+          - name: r2-w2c
+            scripts: title
     defaults:
       run:
         working-directory: github-io

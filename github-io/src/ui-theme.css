@@ -671,7 +671,7 @@ input:focus-visible {
   .compact-ui #briefing .mode-switch button > .icon { display: block; width: 22px; height: 22px; }
   .compact-ui #briefing .mode-switch button > small { display: block; font-size: 11px; }
   .compact-ui #briefing .mode-switch button > span { font-size: 16px; }
-  .compact-ui #briefing .mode-switch [data-mode="training"] { min-height: 44px; padding: 4px 12px; }
+  .compact-ui #briefing .mode-switch [data-mode="training"] { min-height: 46px; padding: 4px 12px; }
   .compact-ui #briefing .mode-switch [data-mode="training"] > .icon { display: block; width: 18px; height: 18px; }
   .compact-ui #briefing .mode-switch [data-mode="training"] > small { display: block; }
 }

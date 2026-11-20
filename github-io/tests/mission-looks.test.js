@@ -1,0 +1,32 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { MISSIONS } from "../src/story/missions.js";
+import { MISSION_LOOKS, LOOKS, missionLook, flashAt } from "../src/mission-looks.js";
+
+const sim = (id, time = 0, extra = {}) => ({ missionDef: { id, ...extra }, time });
+test("every table id is a real mission or Chronicle, and no existing mission carries a look field", () => {
+  const ids = new Set(MISSIONS.map((m) => m.id));
+  for (const id of Object.keys(MISSION_LOOKS)) if (!id.startsWith("cv1")) assert.ok(ids.has(id), id);
+  assert.ok(MISSIONS.every((m) => !("look" in m)));
+});
+test("m08 and cv1 are night, m10 is storm, m06 turns to storm from 16:00", () => {
+  assert.equal(missionLook(sim("m08-the-quiet-vault")).name, "night");
+  assert.equal(missionLook(sim("cv1-night-count")).name, "night");
+  assert.equal(missionLook(sim("m10-obsidian-storm")).name, "storm");
+  assert.equal(missionLook(sim("m06-copper-harvest", 100)).k, 0);
+  assert.equal(missionLook(sim("m06-copper-harvest", 1000)).k, 1);
+  assert.equal(missionLook(sim("m01-first-light")), null);
+});
+test("new content may carry its own look; the table wins for existing ids", () => {
+  assert.equal(missionLook(sim("new", 0, { look: "dusk" })).name, "dusk");
+  assert.equal(missionLook(sim("m08-the-quiet-vault", 0, { look: "dusk" })).name, "night");
+  assert.equal(missionLook({ missionDef: null, rules: { look: "night" }, time: 0 }).name, "night");
+});
+test("night sky is very dark blue and lightning is deterministic", () => {
+  const n = parseInt(LOOKS.night.sky.slice(1), 16), [r, g, b] = [n >> 16, (n >> 8) & 255, n & 255];
+  assert.ok(0.2126 * r + 0.7152 * g + 0.0722 * b < 20 && b > r && b > g);
+  const hits = Array.from({ length: 600 }, (_, i) => flashAt(i / 2, LOOKS.storm.flash));
+  assert.deepEqual(hits, Array.from({ length: 600 }, (_, i) => flashAt(i / 2, LOOKS.storm.flash)));
+  assert.ok(hits.some((v) => v > 0.5));
+  assert.equal(flashAt(5, null), 0);
+});

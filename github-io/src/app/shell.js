@@ -48,7 +48,7 @@ export function renderShell() {
       <div class="briefing-hero">
         <picture class="briefing-art" aria-hidden="true"><source media="(max-width: 720px)" srcset="${keyartSmallUrl}"><img src="${keyartUrl}" alt="" width="1600" height="900" decoding="async"></picture>
         <div id="campaign-map" hidden></div>
-        <div class="title-brand" translate="no" role="img" aria-label="Frontier Command"><img class="title-emblem" src="${emblemUrl}" alt="" width="72" height="72" decoding="async">${wordmarkSvg}</div>
+        <div class="title-brand" translate="no"><img class="title-emblem" src="${emblemUrl}" alt="" width="72" height="72" decoding="async">${wordmarkSvg}</div>
         <div class="briefing-copy">
           <div class="eyebrow">EXPEDITION BRIEFING</div>
           <h2 id="briefing-title">A new frontier.<br> A foothold to defend.</h2>
