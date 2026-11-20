@@ -5,7 +5,7 @@
 // imported on first use so the first download grows little.
 import "../defence-menu.css";
 import { $ } from "./dom.js";
-import { DEFENCE_LEVELS, defenceVariant } from "../defence/levels.js";
+import { DEFENCE_LEVELS, ZONE_NAMES, defenceVariant } from "../defence/levels.js";
 import { hasHeroic, HEROIC_LIVES, HEROIC_WAVES } from "../defence/heroic.js";
 import { loadDefence, saveDefence, recordDefence, recordHeroic, heroicOpen, heroicWon, starsOf, levelOpen, PERKS, ownedPerks, starsFree, canBuyPerk, buyPerk, bestScore, recordScore, dayKey, dailySeed, endlessSeed } from "../defence/progress.js";
 import { icon } from "../icons.js";
@@ -19,7 +19,7 @@ import { statTile, formatClock } from "../results-ui.js";
 import { CROSSINGS } from "../terrain.js";
 
 // What the lazy match interface uses from the main bundle (see app/defence-ui.js).
-const DEPS = { recordHeroic, $, GARRISONS, starsFor, D, hasPortrait, portrait, icon, ACTION_KEYS, DEFENCE_LEVELS, loadDefence, recordDefence, saveDefence, statTile, formatClock, DIFFICULTY_LABELS, FACTIONS, CROSSINGS, recordScore, bestScore, dayKey };
+const DEPS = { recordHeroic, $, GARRISONS, starsFor, D, hasPortrait, portrait, icon, ACTION_KEYS, DEFENCE_LEVELS, loadDefence, recordDefence, saveDefence, statTile, formatClock, DIFFICULTY_LABELS, FACTIONS, CROSSINGS, recordScore, bestScore, dayKey, ZONE_NAMES };
 
 export const DEFENCE_DIFFICULTY = {
   story: "Smaller waves and more alloy to start.",
