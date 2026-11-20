@@ -25,6 +25,7 @@
     "tower":{"height":3.65,"reach":1.72,"life":0.26,"kind":"cannon"},
     "antitank":{"height":1.83,"reach":1.1,"life":0.24,"kind":"rocket"},
     "support":{"height":1.34,"reach":0.82,"life":0.22,"kind":"support"},
-    "gunner":{"height":1.2,"reach":1.3,"life":0.09,"kind":"rifle"}
+    "gunner":{"height":1.2,"reach":1.3,"life":0.09,"kind":"rifle"},
+    "stalker":{"height":1.4,"reach":2.5,"life":0.42,"kind":"rifle"}
   }
 }

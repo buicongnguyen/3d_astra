@@ -89,6 +89,8 @@ const scenarios = [
   // AAA round 2 (W1-B): battle-eco with 8 Gunners among the 52 other units and 12 enemy units Pinned (status icons on).
   {name:'gunner-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:52,
     spawn:[{type:'gunner', team:0, count:8, near:[-3,4]}], status:{id:'pinned', count:12, team:1}},
+  // AAA round 2, W1-C: battle-eco with 8 Veil Stalkers on the enemy side and 4 on the player's (one more batch for the new model).
+  {name:'stalker-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, triangles:340000, spawn:[{type:'stalker', team:1, count:8, near:[-3,-14]}, {type:'stalker', team:0, count:4, near:[-3,14]}]},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
@@ -96,6 +98,7 @@ const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240
 // `Object.assign(limits, { "<name>": <n> });` (the line above stays as it is).
 Object.assign(limits, {});
 Object.assign(limits, { "gunner-battle-eco": 125 });
+Object.assign(limits, { "stalker-battle-eco": 125 });
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},

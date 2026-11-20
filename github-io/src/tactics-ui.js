@@ -13,6 +13,19 @@ export const ABILITY_ORDER = ["shieldwall", "focus", "barrage", "lockon", "overd
 export const ABILITY_ICONS = { shieldwall: "shield", focus: "rapid", barrage: "barrage", lockon: "crosshair", overdrive: "bolt", triage: "medic", fortify: "engineer", rush: "bolt", dash: "bolt", burnline: "barrage", brace: "hold", mark: "crosshair" };
 // Abilities that need a point on the ground.
 export const AIMED = new Set(["barrage"]);
+// Ability data (balance.json `ability`) may carry its own `icon`, `aimed`, card `order` and `tint`, so a
+// new unit's ability needs no edit to the tables above or to the view tables (AAA round 2, W1-C). The
+// tables stay as the defaults: today's 12 abilities keep their icons, order and tints exactly, and an
+// ability that has neither data nor a table entry draws the bolt, last on the card, not aimed.
+export const abilityIcon = (a) => a.icon ?? ABILITY_ICONS[a.id] ?? "bolt";
+export const abilityAimed = (a) => a.aimed ?? AIMED.has(a.id);
+export function abilityOrder(a) {
+  if (Number.isFinite(a.order)) return a.order;
+  const i = ABILITY_ORDER.indexOf(a.id);
+  return i < 0 ? ABILITY_ORDER.length : i;
+}
+// The ability's colour for rings and flashes, as [r, g, b] from 0 to 1, or null when it names none.
+export const abilityTint = (a) => (Array.isArray(a.tint) && a.tint.length >= 3 && a.tint.slice(0, 3).every(Number.isFinite) ? a.tint.slice(0, 3) : null);
 export const STANCE_INFO = {
   guard: { label: "Guard", key: "[", icon: "shield", title: "Guard: answer threats nearby, then return to the post" },
   hold: { label: "Hold", key: "]", icon: "hold", title: "Hold position: fire from the spot, never chase" },
@@ -34,7 +47,7 @@ export function abilityGroups(sim, entities, max = ABILITY_KEYS.length) {
     if (!hasAbility(e)) continue;
     const a = e.ability;
     let g = groups.get(a.id);
-    if (!g) groups.set(a.id, (g = { id: a.id, name: a.name, description: a.description, aimed: AIMED.has(a.id), cooldown: a.cooldown,
+    if (!g) groups.set(a.id, (g = { id: a.id, name: a.name, description: a.description, aimed: abilityAimed(a), icon: abilityIcon(a), order: abilityOrder(a), cooldown: a.cooldown,
       range: a.range ?? 0, radius: a.radius ?? 0, ids: [], count: 0, ready: 0, ford: 0, wait: Infinity }));
     g.ids.push(e.id);
     g.count++;
@@ -44,11 +57,12 @@ export function abilityGroups(sim, entities, max = ABILITY_KEYS.length) {
     else if (wait <= 0) g.ready++;
     g.wait = Math.min(g.wait, wait);
   }
-  const order = (g) => { const i = ABILITY_ORDER.indexOf(g.id); return i < 0 ? ABILITY_ORDER.length : i; };
+  // Two abilities with the same order (data may not give one) keep a fixed place: by id.
+  const byOrder = (a, b) => a.order - b.order || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
   return [...groups.values()]
-    .sort((a, b) => b.count - a.count || order(a) - order(b))
+    .sort((a, b) => b.count - a.count || byOrder(a, b))
     .slice(0, Math.max(0, max))
-    .sort((a, b) => order(a) - order(b))
+    .sort(byOrder)
     .map((g) => ({ ...g, fraction: g.ready || g.ford || !(g.cooldown > 0) ? 0 : Math.min(1, g.wait / g.cooldown) }));
 }
 

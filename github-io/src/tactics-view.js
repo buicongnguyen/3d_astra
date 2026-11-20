@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { DEFINITIONS as D } from "./data.js";
 import { TERRAIN } from "./terrain.js";
 import { heldPlateaus, hiddenFromBelow, onHighGround } from "./terrain-labels.js";
+import { abilityTint } from "./tactics-ui.js";
 
 // 3D marks for veterancy, abilities and Barrage aiming: rank chevrons over ranked units, a
 // tinted ground ring under a unit while its ability lasts, the warning circle where a Barrage
@@ -102,6 +103,13 @@ void main() {
   if (alpha < 0.01) discard;
   gl_FragColor = vec4(col, min(1.0, alpha));
 }`;
+
+// The ability event for the flash: an ability with a `tint` in its data and no table colour in fx.js
+// (a new unit's) carries that tint, read from the casting unit. Built-in abilities pass unchanged.
+function abilityFlash(event, sim) {
+  const a = sim.get(event.id)?.ability, tint = a && a.id === event.ability ? abilityTint(a) : null;
+  return tint ? { ...event, tint } : event;
+}
 
 export class TacticsView {
   constructor(view) {
@@ -211,7 +219,8 @@ export class TacticsView {
       }
       if (e.buff) {
         const fade = Math.max(0, Math.min(1, (e.buff.until - sim.time) / 0.4));
-        this.put(o.position.x, o.position.y + 0.1, o.position.z, e.radius + 0.8, BUFF_TINT[e.buff.id] || GOLD, Math.round(fade * 20) / 20, BUFF, 0);
+        // The ring's colour: the table for today's abilities, else the casting unit's own ability data (`tint`).
+        this.put(o.position.x, o.position.y + 0.1, o.position.z, e.radius + 0.8, BUFF_TINT[e.buff.id] || (e.ability?.id === e.buff.id && abilityTint(e.ability)) || GOLD, Math.round(fade * 20) / 20, BUFF, 0);
       }
       if (e.rank > 0 && e.kind === "unit")
         this.put(o.position.x + m[4] * CHEVRON_RISE, o.position.y + BAR_HEIGHT + m[5] * CHEVRON_RISE, o.position.z + m[6] * CHEVRON_RISE, CHEVRON_SIZE, GOLD, 1, CHEVRONS, Math.min(3, e.rank));
@@ -241,7 +250,7 @@ export class TacticsView {
   event(event, sim) {
     const fx = this.view.fx;
     if (event.type === "promote") { if (sim.isVisible(event)) fx.promote(event); }
-    else if (event.type === "ability") { if (sim.isVisible(event)) fx.ability(event); }
+    else if (event.type === "ability") { if (sim.isVisible(event)) fx.ability(abilityFlash(event, sim)); }
     else if (event.type === "strike") { if (sim.isVisible(event)) fx.strike(event); }
     else if (event.type === "reveal" || event.type === "salvage") { if (sim.isVisible(event)) fx.factionMark(event); }
   }

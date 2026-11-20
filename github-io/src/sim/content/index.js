@@ -6,6 +6,9 @@
 // the sim files are still loading); inside its hooks it may use anything.
 import { suppression } from "./suppression.js";
 
+import { marksman } from "./marksman.js";
+
 export const CONTENT = [
   suppression,
+  marksman,
 ];

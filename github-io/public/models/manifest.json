@@ -261,6 +261,15 @@
       "review": "pending owner review (round 2)",
       "source": "tools/blender/generate_gunner.py (frontier_kit), original design",
       "animation": "Runtime articulated parts: one shared leg pivot pair, a recoiling BarrelRig; no baked clips"
+    },
+    {
+      "name": "stalker",
+      "file": "stalker.glb",
+      "triangles": 2724,
+      "kind": "unit",
+      "budget": 3000,
+      "review": "pending owner review (round 2)",
+      "animation": "Runtime articulated parts; no baked clips"
     }
   ]
 }
