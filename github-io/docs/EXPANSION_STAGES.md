@@ -22,7 +22,7 @@ See [the internet multiplayer plan](INTERNET_MULTIPLAYER_PLAN.md) for future onl
 - Four freely selectable skirmish stages: Ashen Frontier and Meridian Riverlands (96×96), Copper Basin (128×128), Frontier Expanse (160×160). These are separate matches, not a persistent campaign.
 - Copper Basin has two extra mining sites per side; Frontier Expanse has three. Each new site has two alloy deposits and one energy deposit. Locations mirror across the map to give both armies equal access.
 - Larger stages move starting bases farther apart. Navigation, fog, terrain, minimap coordinates, camera bounds, construction and AI expansion use each map's dimensions. Mobile graphics settings and the 100 supply limit remain available.
-- Tank price remains 275 alloy / 125 energy, with 4 supply. HP reduced from 520 to 460; shield remains 100, cannon 48 every 2.2 seconds. Anti-tank rockets remain 20 against infantry/buildings, but now deal 80 against vehicles.
+- Battle tank today (`src/balance.json`): 275 alloy / 125 energy, 3 supply, 520 HP, 100 shield, cannon 48 every 2.2 seconds with 40% splash within 2 m. Anti-tank rockets deal 20 against infantry and buildings and 120 against vehicles (a 6x bonus). (This release first lowered the tank to 460 HP and gave rockets 80 against vehicles; later balance passes moved both to these values.)
 
 ## Balance evidence
 

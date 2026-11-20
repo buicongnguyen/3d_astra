@@ -1,8 +1,8 @@
 # Frontier Command — browser edition
 
-Documentation index: [docs/README.md](docs/README.md). Twelve-mission campaign, skirmish against four AI speeds, veterancy, stances and unit abilities.
+Documentation index: [docs/README.md](docs/README.md). Sixteen-mission campaign with four faction Chronicles, skirmish against four AI speeds (Classic or Expanded roster), Frontier Defence (seven levels, Endless, Daily, Heroic), bosses, veterancy, stances and unit abilities.
 
-An original single-player 3D RTS: establish an economy, build an outpost, produce an army, and destroy the opposing Command core. Built with Three.js, Vite, and thirteen original Blender-generated unit and structure models plus Blender scenery.
+An original single-player 3D RTS: establish an economy, build an outpost, produce an army, and destroy the opposing Command core. Built with Three.js, Vite, and original Blender-generated unit, structure and scenery models (the inventory is `public/models/manifest.json`).
 
 The [progression update](docs/archive/PROGRESSION_PLAN.md) matched the [Godot edition](https://buicongnguyen.github.io/3d_astra_godot/), a frozen snapshot of 1 October 2026 that no longer receives new features: eight unit types, rechargeable shields, building information and three upgrade levels. Select any entity and open **Info & stats** in Selection. Upgrade your Command core to L2, then Barracks L2 for Medics or Foundry L2 for Engineers. Use **Support → friendly target** to heal infantry or repair buildings, Breakers and Battle tanks. Barracks L2 also unlocks Anti-tank soldiers; Foundry L3 unlocks Battle tanks. See [heavy weapon stats](docs/HEAVY_WEAPONS.md).
 
@@ -20,7 +20,7 @@ Combat renders in 3D: muzzle flashes, tracers, shells, rocket trails, sparks, ex
 
 Soldiers and tanks can **Patrol (P)** between two points and engage enemies along the route. Harvesters have an explicit **Attack (N)** command. See [Patrol and Harvester Attack](docs/archive/PATROL_AND_ATTACK.md) for mouse, touch and order-queue behavior.
 
-The briefing has two modes. **Campaign** is seven stages, from one relaxed rival to three allied AIs, unlocked in order with best times saved in your browser. **Skirmish** lets you choose from **seven maps**, **1–3 AI enemies**, an **AI speed** (Relaxed, Normal, Fast or Relentless) and **AI teams**: free-for-all, or *united against you*. United AIs share vision, raid your Harvesters, reinforce each other and launch joint offensives from several sides. See [campaign, AI speed and allied AIs](docs/CAMPAIGN_AND_AI.md). Win by destroying all enemy Command cores. The new maps are Amber Dunes, Verdant Crossing and Obsidian Highlands; see [map details](docs/EXPANSION_STAGES.md). Online multiplayer is planned for later in [INTERNET_MULTIPLAYER_PLAN.md](docs/INTERNET_MULTIPLAYER_PLAN.md).
+The briefing has several modes. **Campaign** is sixteen story missions in three acts (plus four faction Chronicles of three missions each), unlocked in order with best times saved in your browser. **Defence** is Frontier Defence: seven levels, Endless, the Daily seed and Heroic challenges. In **Skirmish** you can also choose the Roster (Classic, or Expanded with three more units) and the AI plan (Classic or Field command). **Skirmish** lets you choose from **seven maps**, **1–3 AI enemies**, an **AI speed** (Relaxed, Normal, Fast or Relentless) and **AI teams**: free-for-all, or *united against you*. United AIs share vision, raid your Harvesters, reinforce each other and launch joint offensives from several sides. See [campaign, AI speed and allied AIs](docs/CAMPAIGN_AND_AI.md). Win by destroying all enemy Command cores. The new maps are Amber Dunes, Verdant Crossing and Obsidian Highlands; see [map details](docs/EXPANSION_STAGES.md). Online multiplayer is planned for later in [INTERNET_MULTIPLAYER_PLAN.md](docs/INTERNET_MULTIPLAYER_PLAN.md).
 
 Requires Node.js 22.12+ (or a compatible newer release).
 
@@ -151,7 +151,10 @@ The `.tools/` directory is ignored and is not uploaded to GitHub.
 | `src/navigation.js` | Grid A*, building clearance, line-of-fire checks |
 | `src/simulation.js`, `src/sim/*.js` | The rules, split into systems (vision, orders, movement, combat, economy, AI, tactics, missions); see docs/ARCHITECTURE.md |
 | `src/commands.js`, `src/snapshot.js` | Command layer for every action; save, load, state hash |
-| `src/view.js` | Three.js rendering, Blender model loading, effects, fog, camera |
+| `src/view.js`, `src/view-plugins.js` | Three.js rendering, Blender model loading, effects, fog, camera; visual features register as view plugins (docs/VIEW_PLUGINS.md) |
+| `src/sim/content/*.js` | Content modules: new units, statuses, abilities and tower rules (docs/CONTENT_SEAMS.md) |
+| `src/app/defence-entry.js`, `src/app/defence-ui.js`, `src/app/defence/*` | Frontier Defence: the level list, and the match interface loaded on first use, split into pads and crossings, bar, command-card sheets, input and result |
+| `src/defence/*` | Defence levels, garrisons, traits, Heroic and progress data |
 | `src/main.js` | Browser input, selection, command UI, minimap, match flow |
 | `src/touch-controls.js` | Pointer capture, tap/pan/pinch/box gesture lifecycle and cancellation |
 | `src/style.css`, `src/mobile.css` | Desktop and compact portrait/landscape interfaces |
@@ -184,4 +187,4 @@ Browser tests use installed Chrome on Windows, or Playwright Chromium elsewhere 
 See `docs/archive/VERIFICATION.md` for recorded results and prototype limitations, and `docs/archive/CODE_REVIEW.md` for the logic/code review and fixes. Automated touch tests use browser emulation; physical iOS and Android devices have not been verified.
 
 
-The [resource and stage expansion](docs/EXPANSION_STAGES.md) adds 25% more deposit reserves, Copper Basin (128×128), and Frontier Expanse (160×160). Choose a battlefield before Deploy. Build a Command core near remote deposits to shorten delivery trips. Tanks have 460 HP / 100 shield and a 12 m cannon with splash; anti-tank rockets deal 120 damage to vehicles.
+The [resource and stage expansion](docs/EXPANSION_STAGES.md) adds 25% more deposit reserves, Copper Basin (128×128), and Frontier Expanse (160×160). Choose a battlefield before Deploy. Build a Command core near remote deposits to shorten delivery trips. Tanks have 520 HP / 100 shield and a 12 m cannon with splash; anti-tank rockets deal 120 damage to vehicles.

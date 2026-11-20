@@ -2,7 +2,7 @@
 
 Frontier Command is an original single-player real-time strategy game for the browser. It must be good on a phone and on a PC, and it must stay smooth on both.
 
-**The game.** You lead the Meridian expedition across a frontier of seven maps: build a small economy, raise an army, and win twelve story missions in three acts, or play free skirmishes against a computer opponent at four speeds. Fights are decided by positioning, abilities, stances and veterancy, not by clicking faster.
+**The game.** You lead the Meridian expedition across a frontier of seven maps: build a small economy, raise an army, and win sixteen story missions in three acts (plus four faction Chronicles of three missions each), play free skirmishes against one to three computer opponents at four speeds (with an opt-in Expanded roster and Field command AI plan), or hold the road in Frontier Defence: seven levels with Endless, a Daily seed and Heroic challenges. Fights are decided by positioning, abilities, stances and veterancy, not by clicking faster.
 
 **The bar.** A polished console-game feel: vivid warm colour, readable silhouettes, living worlds, a story with reasons behind every mission, clear and comfortable interface at every screen size.
 

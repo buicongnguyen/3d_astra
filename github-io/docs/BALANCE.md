@@ -408,7 +408,7 @@ the skirmish hash `d071360b`, are unchanged (`tests/wings.test.js` pins the othe
 
 ## Bosses: the Iron Vanguard in mission 3
 
-Sizing and rules: [aaa/BOSSES.md](aaa/BOSSES.md). The Iron Vanguard has 40,000 health (Story 30,000, Veteran 32,000), for a fight of 114 to 136 s against the 24 to 27 units the objective bot brings.
+Sizing and rules: [aaa/BOSSES.md](aaa/BOSSES.md). The Iron Vanguard has 32,000 health on Standard and Veteran and 26,000 on Story (`hpByDifficulty` in mission 3; the 40,000 first drafted was cut on 2026-11-19). The objective bot brings 24 to 27 units; its mission 3 times are in the table below.
 
 | `npm run check:missions`, m03, objective bot | Before | After |
 |---|---|---|

@@ -11,7 +11,7 @@ This is the label proposed for the next release. `package.json` still says 0.19.
 - **Frontier Defence.** A command deck (fast-forward, tower aim, trait chips, new-enemy card, tower stats), elites and Heroic challenges, and the optional mission m11c "Hold the Keystone Roads" (16 campaign missions).
 - **Phones first-class.** At least 70% of the screen is battlefield with nothing selected (60% with a unit selected).
 - **Look and feel.** New title, warm colour grade and team rim light, night and storm missions, sixteen weapon looks, counter-hit flares, mission title cards and boss presence.
-- **Tests.** `npm test` runs 935 tests (909 pass, 26 long pins skip and run in `npm run test:golden-full`); the round began at 645.
+- **Tests.** `npm test` runs 940 tests (914 pass, 26 long pins skip and run in `npm run test:golden-full`); the round began at 645.
 
 ### Safety net, seams and tools (no change for the player)
 

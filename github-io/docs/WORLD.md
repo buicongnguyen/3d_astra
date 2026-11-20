@@ -1,6 +1,6 @@
 # World: the story bible
 
-This is the reference for the Frontier Command campaign: the world, the factions, the cast and the twelve missions. Data lives in `src/story/world.js` (factions, cast) and `src/story/missions.js` (mission scripts in the format of [MISSIONS.md](MISSIONS.md)). If this page and the data disagree, the data is right and this page needs an update.
+This is the reference for the Frontier Command campaign: the world, the factions, the cast and the sixteen campaign missions (twelve of them the original spine, four since). Data lives in `src/story/world.js` (factions, cast) and `src/story/missions.js` (mission scripts in the format of [MISSIONS.md](MISSIONS.md)). If this page and the data disagree, the data is right and this page needs an update.
 
 Tone: warm, clear and hopeful. Nobody in this story is evil; everybody is short of something. Suitable for all ages. No real-world nations, religions or politics.
 
@@ -88,7 +88,7 @@ Full entries, with portrait briefs for the artist and two sample lines each, are
 
 ## The campaign
 
-Twelve missions in three acts. The seven original stages are the spine, with the same maps, names and difficulty (missions 2, 3, 4, 5, 7, 10 and 12); five new missions sit between them.
+Sixteen missions in three acts (`src/story/missions.js`). The twelve numbered ones are the spine: the seven original stages keep their maps, names and difficulty (missions 2, 3, 4, 5, 7, 10 and 12) and five new missions sit between them. Four lettered missions were inserted later: `m02b` Hold the River, `m06b` Wings over Copper, `m07b` Hold the Valley and, in AAA round 2, the optional `m11c` Hold the Keystone Roads (Act 3, between Cut the Draw and Frontier's End; it never locks the finale or changes an ending). Four Faction Chronicles of three missions each are played separately (`src/story/chronicles.js`).
 
 Since 0.19b two more missions are played under the Frontier Defence rules: **Hold the River** (`m02b-hold-the-river`, Act 1 after First Contact: Hale comes back for the river crossings while Okoro tunes the river relay) and **Hold the Valley** (`m07b-hold-the-valley`, Act 2 after Copper Siege: Okoro's survey on Gorge Road finds the Builder vault). Since 0.18.3 **Wings over Copper** (`m06b-wings-over-copper`, Act 2 after Copper Harvest, day 32) is the first air raid: Hale cannot break Meridian's towers on the ground, so his Ember balloons go for Okoro's new copper refinery; the balloons turn out to be Sunward silk on Ashfall burners, the first sign of how close the Pact is (it sets up Copper Siege). The tables below keep the twelve story missions; in the game they are numbered in campaign order (15 in all). Six moments are staged as scenes (missions 1, 4, 8, 10, 11 and the finale, by ending), plus the first balloon over the copper works. Mission 2 is now a bridge assault on a bridgehead at the west bridge; mission 9 is a hold of the dune plateau, where Hale's Warden drones first appear; two Veil scouts watch the basin in mission 6.
 
