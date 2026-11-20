@@ -26,7 +26,11 @@ try {
   await page.goto(base+'?test=1'); await page.waitForFunction(() => window.__frontier?.view.modelsReady);
   for (const viewport of [{width:320,height:568},{width:667,height:375},{width:390,height:844}]) {
     await page.setViewportSize(viewport); await page.waitForTimeout(200);
-    await inspect('#start, #briefing-settings, #language, #scenario, #enemy-count');
+    await inspect('#start, #briefing-settings, #language, #scenario');
+    // The setup scrolls under the sticky Start bar (W2-D's AI plan row pushed the enemy count below it on small phones): scroll it into view first.
+    await page.locator('#enemy-count').evaluate((e) => e.scrollIntoView({ block: 'center' })); await page.waitForTimeout(150);
+    await inspect('#enemy-count');
+    await page.locator('#enemy-count').evaluate((e) => e.scrollIntoView({ block: 'start' }));
   }
   await tap('#start');
   await page.evaluate(() => { const s=window.__frontier.sim; s.aiEnabled=false; Object.assign(s.players[0],{alloy:5000,energy:5000}); s.spawn('medic',0,-15,15); s.spawn('foundry',0,-9,34); });

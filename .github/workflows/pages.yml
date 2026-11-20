@@ -94,7 +94,10 @@ jobs:
           - name: ui-extras-messages
             scripts: messages
           - name: visuals
-            scripts: visual-combat feel model-loading portraits factions terrain
+            scripts: visual-combat feel model-loading portraits
+          # Split from "visuals" (Wave 2 integration): all six suites ran ~82 s locally, ~19 min estimated on the runner (limit 20).
+          - name: visuals-world
+            scripts: factions terrain
           - name: defence
             scripts: defence defence-zones
           - name: air
