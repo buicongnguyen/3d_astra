@@ -5,6 +5,14 @@ import { pointLabel } from "../mission-ui.js";
 import { setMusicMood } from "../music.js";
 import { airModelsFor } from "../model-roster.js";
 import { MUSIC_HOLDS } from "./screens.js";
+import { FastForward, MAX_TICKS_PER_FRAME } from "../governor.js";
+
+// Fast-forward (Frontier Defence, AAA round 2 W1-F): module-local, not in app/state.js. The speed is
+// 1, 2 or 3 and only feeds the clock that drives the fixed 0.05 s ticks, so a match played at any
+// speed replays tick for tick. FastForward (governor.js) holds the rules and is tested without a DOM.
+const fastForward = new FastForward();
+export const getSpeed = () => fastForward.speed;
+export const setSpeed = (speed) => fastForward.set(speed);
 
 export function setupFrame(S, A) {
   const Z = S.screen;
@@ -94,8 +102,11 @@ export function setupFrame(S, A) {
     // S.testHold (browser tests only, window.__frontier.hold): draw but do not advance the match, so a
     // test moves time with step() alone and a slow machine cannot run the clock on between its checks.
     const running = Z.started && !Z.paused && !S.sim.result && !S.testHold;
+    // D2: the clock's pace, 1 in everything but a Defence match; a scene or a decision puts it back to 1.
+    const pace = fastForward.pace({ sim: S.sim, started: Z.started, defence: !!S.sim.defence, forced: MUSIC_HOLDS.includes(Z.modalType) || !!A.sceneActive?.() || !!S.sim.mission?.pending });
     if (running) {
-      S.accumulator += dt;
+      S.accumulator += dt * pace;
+      let ticks = 0;
       while (S.accumulator >= 0.05) {
         S.view.beforeTick(S.sim);
         S.tutorial?.update(S.sim,[...S.selected]);
@@ -109,6 +120,8 @@ export function setupFrame(S, A) {
         if (S.sim.mission?.pending) { S.accumulator = 0; break; }
         // So does a story scene (app/scenes.js): it starts on the tick that called it.
         if (S.sim.events.length > heard && S.sim.events.some((e, i) => i >= heard && e.type === "scene")) { S.accumulator = 0; break; }
+        // Fast-forward: at most MAX_TICKS_PER_FRAME ticks a frame; what a slow frame cannot run is dropped, not owed.
+        if (pace > 1 && ++ticks >= MAX_TICKS_PER_FRAME) { S.accumulator = Math.min(S.accumulator, 0.05); break; }
       }
       // A scene holds the match while it plays; one called by the winning tick plays before the debrief.
       const scene = S.sim.events.find((e) => e.type === "scene");
@@ -190,6 +203,10 @@ export function setupFrame(S, A) {
     }
     if (S.governed)
       S.governor.sample(elapsed, performance.now() - now, Z.started && !Z.paused && !S.sim.result && !Z.modalType && !document.hidden);
+    // D2: a touch device that cannot keep up at a fast pace drops back to ×1 and says so.
+    if (pace > 1 && S.governed && fastForward.sample(elapsed, performance.now() - now, { touch: S.touchInput, playing: running && !Z.modalType && !document.hidden }))
+      A.notice("Fast-forward off: this device could not keep up.");
+    A.defenceFrame?.(dt);
     frameCount++;
     frameTime += elapsed;
     if (frameTime >= 1) {
@@ -199,7 +216,14 @@ export function setupFrame(S, A) {
     }
   }
 
-  Object.assign(A, { focusHome, syncPointOwners, frame });
+  // The speed control (the Defence bar, Shift+Space and the help list): the next speed, ×3 on a fine pointer only.
+  function cycleSpeed() {
+    if (!S.sim?.defence || !Z.started) return fastForward.speed;
+    const speed = fastForward.cycle(!S.touchInput);
+    A.notice(`Speed ×${speed}`);
+    return speed;
+  }
+  Object.assign(A, { focusHome, syncPointOwners, frame, cycleSpeed, getSpeed });
   return function bind() {
     window.addEventListener("online", () => { airFor = null; });
     for (const type of ["pointerdown", "wheel", "keydown"])

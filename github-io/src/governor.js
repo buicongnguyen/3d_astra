@@ -96,3 +96,65 @@ export class Governor {
     this.onChange?.(LEVELS[level], level);
   }
 }
+
+// Fast-forward for Frontier Defence (AAA round 2, W1-F, idea D2). The frame loop (app/frame.js) feeds
+// the match clock `dt * pace`, where the pace is 1, 2 or 3; the simulation still steps at a fixed
+// 0.05 s, so a replayed command log reaches the same state tick for tick. This class holds the speed
+// and the rules around it, free of the DOM, so they can be tested without a browser:
+//   - ×3 is for a fine pointer (a PC); a phone cycles ×1 and ×2;
+//   - a match that starts (a new simulation), a screen that is not a Defence match, a story scene
+//     and a decision card all put the speed back to ×1;
+//   - on a touch device whose frames stay over the governor's budget for two seconds in a row the
+//     speed drops to ×1 (the caller shows a toast).
+export const FAST_SPEEDS = [1, 2, 3];
+// Ticks one frame may run at a fast pace: a slow frame never spirals into more and more catch-up.
+export const MAX_TICKS_PER_FRAME = 6;
+export class FastForward {
+  constructor({ downAfter = 2 } = {}) {
+    this.speed = 1;
+    this.sim = null;
+    this.downAfter = downAfter;
+    this.clear();
+  }
+  clear() {
+    this.intervals = [];
+    this.work = [];
+    this.clock = 0;
+    this.slow = 0;
+  }
+  set(speed) {
+    this.speed = speed;
+    this.clear();
+    return speed;
+  }
+  // ×1 → ×2 → ×3 (fine pointers only) → ×1.
+  cycle(fine = true) {
+    const next = FAST_SPEEDS[(FAST_SPEEDS.indexOf(this.speed) + 1) % FAST_SPEEDS.length];
+    return this.set(next === 3 && !fine ? 1 : next);
+  }
+  // The pace for this frame. `forced`: a story scene or a decision is up (they hold the match and put
+  // the speed back to ×1 for good, so the match carries on at normal speed after them).
+  pace({ sim, started, defence, forced = false }) {
+    if (sim !== this.sim) { this.sim = sim; this.set(1); }
+    if (!started || !defence || forced) { if (this.speed !== 1) this.set(1); return 1; }
+    return this.speed;
+  }
+  // One frame of play at a fast pace: `interval` seconds since the last frame, `work` main-thread
+  // milliseconds. Returns true on the frame that drops the speed to ×1 because a touch device cannot keep up.
+  sample(interval, work, { touch = false, playing = true } = {}) {
+    if (this.speed === 1 || !touch || !playing || interval > 0.25) { if (this.intervals.length) this.clear(); return false; }
+    this.intervals.push(interval * 1000);
+    this.work.push(work);
+    this.clock += interval;
+    if (this.clock < 1) return false;
+    const intervals = this.intervals.sort((a, b) => a - b), work1 = this.work.sort((a, b) => a - b);
+    const typical = median(intervals), busy = median(work1);
+    const slow = typical > 37 || (typical > 24 && busy > 8);
+    this.intervals = [];
+    this.work = [];
+    this.clock = 0;
+    this.slow = slow ? this.slow + 1 : 0;
+    if (this.slow >= this.downAfter) { this.set(1); return true; }
+    return false;
+  }
+}

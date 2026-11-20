@@ -4,6 +4,7 @@
 //   perks: [perkId],                         (0.21: bought with stars, see GARRISONS.perks)
 //   endless: { [levelId]: bestWavesHeld },   (0.21)
 //   daily: { [YYYY-MM-DD]: { [levelId]: bestWavesHeld } }   (0.21, the last DAILY_KEEP days)
+//   seen: [unitType],                        (AAA round 2 W1-F: enemy types whose new-enemy card was shown)
 // }
 // The best stars and the best lives are kept, each on its own, with the hardest difficulty cleared.
 // The 0.21 keys are written only once they hold something, so older progress reads the same.
@@ -11,6 +12,7 @@ import { DIFFICULTIES, difficultyId } from "../difficulty.js";
 import { DEFENCE_LEVELS } from "./levels.js";
 import GARRISONS from "./garrisons.json" with { type: "json" };
 import { seedOf } from "../sim/defence.js";
+import { DEFINITIONS as D } from "../data.js";
 
 export const DEFENCE_KEY = "frontier-defence-v1";
 export const PERKS = GARRISONS.perks;
@@ -23,9 +25,9 @@ const scores = (o) => {
   if (o && typeof o === "object") for (const [id, v] of Object.entries(o)) if (DEFENCE_LEVELS.some((l) => l.id === id) && whole(v, 9999)) out[id] = v;
   return out;
 };
-// Leaves out the 0.21 keys while they are empty.
-function shaped(levels, perks = [], endless = {}, daily = {}) {
-  return { levels, ...(perks.length ? { perks } : {}), ...(Object.keys(endless).length ? { endless } : {}), ...(Object.keys(daily).length ? { daily } : {}) };
+// Leaves out the 0.21 keys (and `seen`) while they are empty.
+function shaped(levels, perks = [], endless = {}, daily = {}, seen = []) {
+  return { levels, ...(perks.length ? { perks } : {}), ...(Object.keys(endless).length ? { endless } : {}), ...(Object.keys(daily).length ? { daily } : {}), ...(seen.length ? { seen } : {}) };
 }
 
 export function loadDefence(store = storage()) {
@@ -41,7 +43,9 @@ export function loadDefence(store = storage()) {
     const daily = {};
     if (raw.daily && typeof raw.daily === "object")
       for (const date of Object.keys(raw.daily).filter((d) => DATE.test(d)).sort().slice(-DAILY_KEEP)) { const s = scores(raw.daily[date]); if (Object.keys(s).length) daily[date] = s; }
-    return shaped(out, perks, scores(raw.endless), daily);
+    // Only real unit types are kept: a hand-edited record cannot bring in a name the game does not know.
+    const seen = Array.isArray(raw.seen) ? [...new Set(raw.seen.filter((t) => typeof t === "string" && Object.hasOwn(D, t)))] : [];
+    return shaped(out, perks, scores(raw.endless), daily, seen);
   } catch {
     return { levels: {} };
   }
@@ -93,4 +97,13 @@ export function recordScore(progress, variant, levelId, score, day = dayKey()) {
     return { ...progress, daily };
   }
   return { ...progress, endless: { ...(progress.endless || {}), [levelId]: score } };
+}
+
+// ---------------------------------------------------------------- New-enemy cards (AAA round 2, W1-F)
+// The enemy types a player has met in a Defence wave: their card was shown once. The key is written only
+// once something is recorded, so progress that never saw a card reads and saves exactly as before.
+export const hasSeen = (progress, type) => (progress.seen || []).includes(type);
+export function recordSeen(progress, types) {
+  const fresh = [...new Set(types)].filter((t) => Object.hasOwn(D, t) && !hasSeen(progress, t));
+  return fresh.length ? { ...progress, seen: [...(progress.seen || []), ...fresh] } : progress;
 }
