@@ -4,6 +4,12 @@ import { readFileSync } from 'node:fs';
 import { Simulation } from '../src/simulation.js';
 import { translate } from '../src/i18n.js';
 import { defaults, normalize } from '../src/settings.js';
+import { abilityIcon, abilityAimed, abilityOrder, abilityTint, AIMED } from '../src/tactics-ui.js';
+import { nextAbilityHint } from '../src/ability-hints.js';
+import * as THREE from 'three';
+import { TacticsView } from '../src/tactics-view.js';
+import { Effects } from '../src/fx.js';
+import { DEFINITIONS as D } from '../src/data.js';
 import { ABILITY_KEYS, ABILITY_ICONS, ABILITY_ORDER, STANCE_INFO, STANCES, abilityGroups, abilityStatus, aimState, stanceState, stancesInUse,
   tacticalUnits, takesStance, rankBadge, rankTitle, rankBonus, clampRank, autocastDefault } from '../src/tactics-ui.js';
 
@@ -138,4 +144,86 @@ test('every new tactics string has a Vietnamese entry', () => {
   }
   assert.equal(translate('Ready 2/3', 'vi'), 'Sẵn sàng 2/3');
   assert.equal(translate('12s', 'vi'), '12s');
+});
+
+// ---- Ability UI from data (AAA round 2, W1-C)
+const TODAY = { shieldwall: ['shield', 0], focus: ['rapid', 1], barrage: ['barrage', 2], lockon: ['crosshair', 3], overdrive: ['bolt', 4], triage: ['medic', 5], fortify: ['engineer', 6], rush: ['bolt', 7], dash: ['bolt', 8], burnline: ['barrage', 9], brace: ['hold', 10], mark: ['crosshair', 11] };
+
+test('data seam: the 12 built-in abilities keep their exact icon, order and aimed flag', () => {
+  assert.deepEqual(ABILITY_ORDER, Object.keys(TODAY));
+  assert.deepEqual([...AIMED], ['barrage']);
+  const seen = new Set();
+  for (const d of Object.values(D)) {
+    const a = d.ability;
+    if (!a || !TODAY[a.id]) continue;
+    seen.add(a.id);
+    assert.deepEqual([abilityIcon(a), abilityOrder(a), abilityAimed(a)], [TODAY[a.id][0], TODAY[a.id][1], a.id === 'barrage'], a.id);
+    assert.equal(abilityTint(a), null, `${a.id} keeps its table colours`);
+  }
+  assert.equal(seen.size, 12);
+});
+
+test('data seam: a fixture ability brings its icon, aimed flag, order and tint; a bare unknown one falls back', () => {
+  const s = field();
+  const a = s.spawn('ranger', 0, 0, 0), b = s.spawn('vanguard', 0, 2, 0), c = s.spawn('breaker', 0, 4, 0), d = s.spawn('tank', 0, 6, 0);
+  a.ability = { id: 'fixture', name: 'Fixture', description: 'x', cooldown: 10, duration: 5, icon: 'hidden', aimed: true, order: 2.5, tint: [0.1, 0.2, 0.3] };
+  b.ability = { id: 'bare', name: 'Bare', description: 'x', cooldown: 10, duration: 5 };
+  const groups = abilityGroups(s, [a, b, c, d], 9);
+  assert.deepEqual(groups.map((g) => g.id), ['barrage', 'fixture', 'overdrive', 'bare']);
+  const fixture = groups[1], bare = groups[3];
+  assert.deepEqual([fixture.icon, fixture.aimed, fixture.order], ['hidden', true, 2.5]);
+  assert.deepEqual([bare.icon, bare.aimed, bare.order], ['bolt', false, ABILITY_ORDER.length]);
+  assert.deepEqual(abilityTint(a.ability), [0.1, 0.2, 0.3]);
+  assert.equal(abilityTint({ tint: [1, 'x', 0] }), null);
+});
+
+test('data seam: equal orders keep a fixed place by id, whatever the selection order', () => {
+  const s = field();
+  const mk = (id) => { const u = s.spawn('ranger', 0, 0, 0); u.ability = { id, name: id, description: '', cooldown: 1, duration: 1, order: 20 }; return u; };
+  const x = mk('zeta'), y = mk('alpha');
+  assert.deepEqual(abilityGroups(s, [x, y], 9).map((g) => g.id), ['alpha', 'zeta']);
+  assert.deepEqual(abilityGroups(s, [y, x], 9).map((g) => g.id), ['alpha', 'zeta']);
+});
+
+test('data seam: the first-time hint follows the data order', () => {
+  const s = field();
+  const v = s.spawn('vanguard', 0, 0, 0), r = s.spawn('ranger', 0, 2, 0);
+  r.ability = { ...r.ability, id: 'first', name: 'First', order: -1 };
+  assert.equal(nextAbilityHint(s, new Set())?.id, r.id);
+  assert.ok(v);
+});
+
+test('data seam: every unit ability resolves to a drawable icon', () => {
+  const logo = (name) => name; // an unknown name draws the logo: compare against it through the data
+  for (const [type, d] of Object.entries(D)) if (d.ability) assert.ok(typeof abilityIcon(d.ability) === 'string' && logo(abilityIcon(d.ability)) !== 'logo', type);
+});
+
+test('data seam: the buff ring and the cast flash take the data tint only where the tables have none', () => {
+  globalThis.document ??= { createElement: () => ({ getContext: () => ({ createImageData: (w, h) => ({ data: new Uint8ClampedArray(w * h * 4) }), putImageData() {} }), width: 0, height: 0 }) };
+  const s = field();
+  const st = s.spawn('stalker', 0, 0, 0), ranger = s.spawn('ranger', 0, 4, 0);
+  s.useAbility(st); s.useAbility(ranger);
+  const objects = new Map([st, ranger].map((e) => [e.id, { visible: true, position: { x: e.x, y: 0, z: e.z }, userData: {} }]));
+  const camera = new THREE.OrthographicCamera(); camera.updateMatrixWorld(true);
+  const flashes = [];
+  const view = { scene: new THREE.Scene(), camera, colors: [0x3fa7ff], objects, activity: { combat: { motion: true } }, motionLevel: 2, fx: { ability: (e) => flashes.push(e) } };
+  const tv = new TacticsView(view);
+  tv.update(s, 0.05);
+  const rings = tv.snapshot().filter((m) => m.style === 0);
+  const near3 = (c, w) => c.every((v, i) => Math.abs(v - w[i]) < 1e-5);
+  assert.ok(rings.some((m) => near3(m.color, [0.84, 0.56, 1])), 'Steady aim ring is violet from its data');
+  assert.ok(rings.some((m) => near3(m.color, [1, 0.8, 0.3])), 'Rapid fire keeps its table colour');
+  s.events.length = 0; s.events.push({ type: 'ability', ability: 'steadyaim', id: st.id, team: 0, x: st.x, z: st.z });
+  s.events.push({ type: 'ability', ability: 'focus', id: ranger.id, team: 0, x: ranger.x, z: ranger.z });
+  s.visible[0].fill(1);
+  for (const ev of s.events) tv.event(ev, s);
+  assert.deepEqual(flashes[0].tint, [0.84, 0.56, 1]);
+  assert.equal(flashes[1].tint, undefined, 'a built-in ability passes unchanged');
+  // The flash falls back to that tint in fx.js and still has the table colour for built-ins.
+  const seen = [];
+  const stub = { decal: (...a) => seen.push(a[5]), particle() {}, count: (n) => n, motion: true, glow: {} };
+  Effects.prototype.ability.call(stub, { ability: 'steadyaim', tint: [0.84, 0.56, 1], x: 0, z: 0, team: 0 });
+  Effects.prototype.ability.call(stub, { ability: 'focus', x: 0, z: 0, team: 0 });
+  assert.deepEqual(seen[0].slice(0, 3), [0.84, 0.56, 1]);
+  assert.deepEqual(seen[1].slice(0, 3), [1, 0.8, 0.3]);
 });
