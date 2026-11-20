@@ -66,6 +66,8 @@
     "test:sovereign": "node tests/sovereign.mjs",
     "render:audio": "node tools/render-audio.mjs",
     "baselines:diff": "node tools/baseline-diff.mjs",
+    "test:defence-heroic-check": "node tests/defence-heroic-check.mjs",
+    "test:defence-heroic": "node tests/defence-heroic.mjs",
     "test:golden-full": "node tests/golden-full.mjs",
     "ci:build-job": "npm test && npm run check:defence && npm run build",
     "test:gunner": "node tests/gunner.mjs",

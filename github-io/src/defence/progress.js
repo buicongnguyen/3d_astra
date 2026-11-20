@@ -5,11 +5,13 @@
 //   endless: { [levelId]: bestWavesHeld },   (0.21)
 //   daily: { [YYYY-MM-DD]: { [levelId]: bestWavesHeld } }   (0.21, the last DAILY_KEEP days)
 //   seen: [unitType],                        (AAA round 2 W1-F: enemy types whose new-enemy card was shown)
+//   heroic: { [levelId]: { won, lives } },   (AAA round 2 W2-B: Heroic wins, +1 star each; written once something is recorded)
 // }
 // The best stars and the best lives are kept, each on its own, with the hardest difficulty cleared.
 // The 0.21 keys are written only once they hold something, so older progress reads the same.
 import { DIFFICULTIES, difficultyId } from "../difficulty.js";
 import { DEFENCE_LEVELS } from "./levels.js";
+import { hasHeroic } from "./heroic.js";
 import GARRISONS from "./garrisons.json" with { type: "json" };
 import { seedOf } from "../sim/defence.js";
 import { DEFINITIONS as D } from "../data.js";
@@ -26,8 +28,8 @@ const scores = (o) => {
   return out;
 };
 // Leaves out the 0.21 keys (and `seen`) while they are empty.
-function shaped(levels, perks = [], endless = {}, daily = {}, seen = []) {
-  return { levels, ...(perks.length ? { perks } : {}), ...(Object.keys(endless).length ? { endless } : {}), ...(Object.keys(daily).length ? { daily } : {}), ...(seen.length ? { seen } : {}) };
+function shaped(levels, perks = [], endless = {}, daily = {}, seen = [], heroic = {}) {
+  return { levels, ...(perks.length ? { perks } : {}), ...(Object.keys(endless).length ? { endless } : {}), ...(Object.keys(daily).length ? { daily } : {}), ...(seen.length ? { seen } : {}), ...(Object.keys(heroic).length ? { heroic } : {}) };
 }
 
 export function loadDefence(store = storage()) {
@@ -45,7 +47,10 @@ export function loadDefence(store = storage()) {
       for (const date of Object.keys(raw.daily).filter((d) => DATE.test(d)).sort().slice(-DAILY_KEEP)) { const s = scores(raw.daily[date]); if (Object.keys(s).length) daily[date] = s; }
     // Only real unit types are kept: a hand-edited record cannot bring in a name the game does not know.
     const seen = Array.isArray(raw.seen) ? [...new Set(raw.seen.filter((t) => typeof t === "string" && Object.hasOwn(D, t)))] : [];
-    return shaped(out, perks, scores(raw.endless), daily, seen);
+    const heroic = {};
+    if (raw.heroic && typeof raw.heroic === "object")
+      for (const [id, v] of Object.entries(raw.heroic)) if (hasHeroic(id) && v?.won === true && whole(v.lives, 99) !== null) heroic[id] = { won: true, lives: v.lives };
+    return shaped(out, perks, scores(raw.endless), daily, seen, heroic);
   } catch {
     return { levels: {} };
   }
@@ -64,7 +69,15 @@ export const starsOf = (progress, id) => progress.levels[id]?.stars || 0;
 // The first OPEN_FROM_START levels are open; each later one opens once the one before it has a star.
 export const OPEN_FROM_START = 2;
 export const levelOpen = (progress, index) => index >= 0 && index < DEFENCE_LEVELS.length && (index < OPEN_FROM_START || starsOf(progress, DEFENCE_LEVELS[index - 1].id) > 0);
-export const totalStars = (progress) => DEFENCE_LEVELS.reduce((n, l) => n + starsOf(progress, l.id), 0);
+// Heroic (W2-B): opens after the first clear of that level; each win is worth one more star.
+export const heroicOpen = (progress, id) => hasHeroic(id) && starsOf(progress, id) > 0;
+export const heroicWon = (progress, id) => !!progress.heroic?.[id]?.won;
+export const totalStars = (progress) => DEFENCE_LEVELS.reduce((n, l) => n + starsOf(progress, l.id) + (heroicWon(progress, l.id) ? 1 : 0), 0);
+export function recordHeroic(progress, id, { lives }) {
+  if (!hasHeroic(id)) return progress;
+  const old = progress.heroic?.[id];
+  return { ...progress, heroic: { ...(progress.heroic || {}), [id]: { won: true, lives: Math.max(old?.lives || 0, lives) } } };
+}
 
 // ---------------------------------------------------------------- Perks (0.21)
 // Stars buy small permanent perks; a perk is bought once and spends its stars for good. They apply

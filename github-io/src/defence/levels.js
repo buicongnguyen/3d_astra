@@ -10,6 +10,7 @@
 // (0.22, `carriers` below) brings a squad (`carry`) and drops it at route point `dropLeg`. Counts
 // scale with the difficulty like campaign waves (balance.json difficulty.wave), passengers too.
 import MAPS from "./maps.json" with { type: "json" };
+import { heroicLevel, hasHeroic } from "./heroic.js";
 
 const route = (map) => Object.fromEntries(Object.entries(MAPS[map].routes).map(([id, pts]) => [id, pts.map(([x, z]) => ({ x, z }))]));
 const exitOf = (map, r = 4) => { const pts = Object.values(MAPS[map].routes)[0], [x, z] = pts.at(-1); return { x, z, r }; };
@@ -445,6 +446,8 @@ export const defenceLevel = (id) => DEFENCE_LEVELS.find((level) => level.id === 
 // continues on the right map, and `variant` tells the result screen which best score to keep.
 export function defenceVariant(level, { variant = "levels", seed = 0, perks = [] } = {}) {
   const extra = perks.length ? { perks: [...perks] } : {};
+  // Heroic (AAA round 2, W2-B): new content built from the designed level, in src/defence/heroic.js.
+  if (variant === "heroic" && hasHeroic(level.id)) return heroicLevel(level, extra);
   if (variant === "levels") return Object.keys(extra).length ? { ...level, defence: { ...level.defence, ...extra } } : level;
   return {
     ...level,

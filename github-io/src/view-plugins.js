@@ -19,6 +19,7 @@
 // Plugin modules are imported here, one line each, below this comment.
 import { StatusView } from "./status-view.js";
 import { ArmyReadabilityView } from "./army-readability-view.js";
+import { EliteView } from "./elite-view.js";
 
 export const HOOKS = ["dress", "scaleFor", "frameScaleFor", "event", "update", "reset"];
 
@@ -50,4 +51,5 @@ export class ViewPlugins {
 export const VIEW_PLUGINS = [
   StatusView,
   ArmyReadabilityView,
+  EliteView,
 ];

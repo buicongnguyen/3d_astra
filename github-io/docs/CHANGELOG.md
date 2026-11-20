@@ -69,6 +69,12 @@ Expanded roster only; Classic play, the campaign and every pin are unchanged.
 - **Facing armour** (`src/sim/content/facing.js`, any unit with `facing: { front, rear }`): shots from within 57 degrees of the nose do x0.6, shots from behind x1.5, from the side x1; direct hits and splash; shots carry the `front` or `rear` tag. A Rampart hit only from behind dies 2.5x faster than from the front.
 - **Outrider drill** (Sunward Riders, Expanded): a Rider steps back 3.6 m (at most 0.6 s, one step per 2 s) when a melee or flame unit comes within 4 m, then keeps shooting. Not on Hold, never onto unstandable ground (35 degree fallbacks). Numbers in balance.json `outrider_drill`.
 - Field guide pages for the Rampart (facing rule) and the Rider (drill); Vietnamese for all strings. Tests +38 (816 to 854). Details: docs/aaa/results/round2/w2a.md.
+### W2-B: Defence peaks, elites and Heroic challenges
+
+- **Elites.** A wave group may carry `mods: { elite: "<affix>" }` (new content only). Every elite has 1.6x health, 3x bounty and a gold ring (one instanced draw, `src/elite-view.js`); six affixes (balance.json `elites`): Plated, Swift, Splitter, Volatile, Banner, Mender (`src/sim/content/elites.js`). Designed levels and Endless are untouched.
+- **Heroic.** Clear a level to open its Heroic challenge (a fourth tab beside Levels, Endless, Daily, with a locked teaser): waves 5 to 10 of the level, the two largest groups elite, an all-elite finale, 5 lives, fixed alloy, no early-call bonus, +1 star (21 to 28), a Heroic badge on the result. Cloaked Stalker columns walk with the two Veil levels from wave 2. The empty `finale` slot is for round 3's bosses.
+- **Tools.** `npm run test:defence-heroic-check` (bot wins 7 of 7 with 2 or more lives left, a passive player loses by wave 3, single crews lose on 5 or more levels); `defence-heroic-eco` render scenario; `tests/defence-heroic.mjs` (3 viewports). The build job's `check:defence` is unchanged.
+- Model roster declares Splitter children and a Heroic finale boss's drops. Progress gets `heroic: { [levelId]: { won, lives } }`, written once something is recorded.
 
 ## Unreleased: Frontier Defence "Build zones, armour and Three Roads" (plan: docs/aaa/AAA_GAMEPLAY_STORY_DEFENCE.md, C10–C12)
 

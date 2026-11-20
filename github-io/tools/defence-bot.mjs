@@ -33,6 +33,9 @@ export class DefenceBot {
     this.postClock = 0;
     const def = sim.missionDef.defence;
     this.def = def;
+    // A Heroic variant (AAA round 2, W2-B) opens at wave 5 of its designed level: the bot's growth
+    // thresholds (towers wanted, armour, ranks) count from there. 0 on every designed level.
+    this.offset = def.heroic ? def.heroic.from - 1 : 0;
     this.samples = {};
     for (const [id, pts] of Object.entries(def.routes)) {
       const out = [];
@@ -91,7 +94,7 @@ export class DefenceBot {
   buyArmour(towers, alloy) {
     const s = this.sim, a = s.armourRules();
     if (!a) return false;
-    const want = Math.min(a.cap, s.defence.wave >= 4 ? 2 : towers.length >= 4 ? 1 : 0);
+    const want = Math.min(a.cap, s.defence.wave + this.offset >= 4 ? 2 : towers.length >= 4 ? 1 : 0);
     if (s.armourSquads().length >= want) return false;
     if (alloy >= a.cost && !s.armourWhy(0)) s.command({ team: 0, type: "armourBuy" });
     // Saving up for it: no towers or upgrades meanwhile.
@@ -127,12 +130,12 @@ export class DefenceBot {
   // Rank 2 for every squad from the fifth wave, a branch from the seventh, with alloy to spare.
   upgradeArmour(alloy) {
     const s = this.sim, d = s.defence;
-    if (!s.armourRules() || d.wave < 5) return false;
+    if (!s.armourRules() || d.wave + this.offset < 5) return false;
     for (const { squad } of s.armourSquads()) {
       const next = s.armourNextUpgrade(squad);
       if (!next) continue;
       if (next.kind === "rank") { if (alloy >= next.cost) return s.command({ team: 0, type: "armourUpgrade", squad }); continue; }
-      if (d.wave < 7) continue;
+      if (d.wave + this.offset < 7) continue;
       const machines = this.nextWave().filter((u) => D[u.type].mechanical).reduce((a, u) => a + u.count, 0);
       const branch = machines >= 3 ? "assault" : "bulwark";
       if (alloy >= next.costs[branch]) return s.command({ team: 0, type: "armourUpgrade", squad, branch });
@@ -205,7 +208,7 @@ export class DefenceBot {
     const up = towers.filter((t) => t.tier < 3).map((t) => ({ t, score: this.coverage(s.padById(t.pad), t.crew, t.tier + 1) * (1 + t.tier * 0.15) })).sort((a, b) => b.score - a.score)[0];
     const upCost = up ? s.crewCost(up.t.crew, up.t.tier + 1) : Infinity;
     // Spread first (more towers as the waves grow), then raise the best-covering tower.
-    const wanted = Math.min(this.def.pads.length + this.zoneRoom(), 3 + d.wave);
+    const wanted = Math.min(this.def.pads.length + this.zoneRoom(), 3 + d.wave + this.offset);
     // Armour (0.23): a squad once the first towers stand, a second from the fourth wave.
     if (this.policy === "bot" && this.buyArmour(towers, alloy, cost)) return;
     if (best && (towers.length < wanted || !up)) { if (alloy >= cost) s.command(best.p.zone && !best.p.id ? { team: 0, type: "zoneBuild", zone: best.p.zone, x: best.p.x, z: best.p.z, crew } : { team: 0, type: "padBuild", pad: best.p.id, crew }); }
@@ -217,7 +220,7 @@ export class DefenceBot {
       if (top) {
         const branch = BRANCH[top.crew]?.[mech && top.crew === "ranger" ? 1 : 0] || Object.keys(GARRISONS.crews[top.crew].branches)[0];
         if (s.players[0].alloy >= s.branchCost(top.crew, branch)) s.command({ team: 0, type: "padBranch", building: top.id, branch });
-      } else if (d.wave >= 5 && (!up || d.wave >= 7)) {
+      } else if (d.wave + this.offset >= 5 && (!up || d.wave + this.offset >= 7)) {
         // Ranks (0.24): the branched tower covering the most road, lowest rank first.
         const next = towers.filter((t) => t.branch && s.rankOf(t.crew, t.branch, t.branchRank || 0))
           .map((t) => ({ t, score: this.coverage(s.padById(t.pad), t.crew, 3) / (1 + (t.branchRank || 0)) })).sort((a, b) => b.score - a.score)[0];

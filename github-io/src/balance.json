@@ -525,5 +525,6 @@
     ]
   ],
   "workshops": {"hosts":{"meridian":"workshop","ashfall":"salvageyard","sunward":"waystation","wardens":"pylon","veil":"veilrelay"},"max_tiles":2},
-  "outrider_drill": {"faction":"sunward","types":["rider"],"near":4,"back":3.6,"every":2,"threat_range":5}
+  "outrider_drill": {"faction":"sunward","types":["rider"],"near":4,"back":3.6,"every":2,"threat_range":5},
+  "elites": {"hp":1.6,"bounty":3,"affixes":{"plated":{"shield":2.5,"fallback":0.3,"delay":2},"swift":{"speed":1.35,"hp":0.8},"splitter":{"count":2,"spread":0.9},"volatile":{"damage":40,"radius":2.5},"banner":{"radius":7,"taken":0.8},"mender":{"radius":7,"heal":40,"every":6}}}
 }

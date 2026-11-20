@@ -30,7 +30,7 @@
 /* 0.21: Levels / Endless / Daily, the best score on a level row, and the perks sheet. */
 .defence-variants {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
   margin: 0 0 8px;
 }
@@ -101,3 +101,12 @@
 .defence-perks li button .icon { width: 16px; height: 16px; }
 .defence-perks li button:disabled { opacity: 0.5; }
 .defence-perks li.owned button { opacity: 1; border-color: var(--mint, #92ebc5); color: var(--mint, #92ebc5); background: rgba(146, 235, 197, 0.08); }
+
+/* AAA round 2, W2-B: the Heroic tab, its level marks and the locked Start button. */
+.defence-variants button { min-width: 0; }
+.defence-variants button small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.defence-variants button[data-defence-variant="heroic"] strong { color: var(--gold-2); }
+.defence-levels .heroic-mark { display: inline-grid; place-items: center; min-width: 24px; height: 24px; border: 1px solid var(--gold-line); border-radius: 8px; color: var(--gold-2); font: 800 14px/1 var(--font-ui); }
+.defence-levels .heroic-mark .icon { width: 14px; height: 14px; }
+.defence-levels .heroic-mark.won { background: linear-gradient(180deg, #ffd45e, #f39a2a); color: #3a2200; border-color: #ffe39a; box-shadow: 0 0 8px rgba(255, 199, 94, 0.5); }
+#start[aria-disabled="true"] { opacity: 0.55; filter: saturate(0.6); }

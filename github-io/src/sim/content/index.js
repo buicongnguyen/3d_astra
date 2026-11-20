@@ -17,6 +17,7 @@ import { rampart } from "./rampart.js";
 import { outrider } from "./outrider.js";
 import { aiCasts } from "./ai-casts.js";
 import { fieldCommand } from "./field-command.js";
+import { elites } from "./elites.js";
 
 export const CONTENT = [
   suppression,
@@ -29,4 +30,5 @@ export const CONTENT = [
   outrider,
   aiCasts,
   fieldCommand,
+  elites,
 ];
