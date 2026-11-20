@@ -403,14 +403,16 @@ try {
       const field = await page.evaluate(() => { const f = window.__frontier, v = f.view; return {units:f.sim.entities.filter(e => e.team === 1).length, bars:[...v.objects.values()].filter(o => o.userData.bar?.visible && o.userData.team === 1).length, crews:[...v.objects.values()].filter(o => o.userData.crew).length,
         commander:[...v.objects.values()].some(o => o.userData.dressed === 'hero'), pontoons:v.scene.children.filter(o => o.name === 'defence-pontoon' && o.visible).length, bridgesShown:[...(v.environment?.bridges?.values() || [])].filter(b => b.visible).length}; });
       console.log('defence field', JSON.stringify(field));
-      assert.equal(field.units, scenario.wave);
+      assert.equal(field.units, scenario.wave + (scenario.boss ? 1 : 0), 'the wave, plus the boss when the scenario spawns one');
       assert.ok(field.bars <= 12, `defence: ${field.bars} enemy vitals bars`);
       assert.equal(field.crews, scenario.towers + (scenario.zoneTowers || 0));
       assert.ok(field.commander, 'the commander is drawn in gold');
       if (scenario.crossings) { assert.equal(field.pontoons, 1, 'one pontoon'); assert.equal(field.bridgesShown, 0, 'the blown bridge is hidden (and the pontoon replaces the other)'); }
     }
     if (record < 0 && !scenario.defence) {
-      const state = await page.evaluate(() => {
+      // A scenario that spawns a new unit type (W1-B Gunner, W1-C Stalker, W1-A workshop) may add that type's own part batches on a restart: 4 more.
+      const allow = 6 + ((scenario.spawn || []).some(sp => ['gunner','stalker','workshop'].includes(sp.type)) ? 4 : 0);
+      const state = await page.evaluate((allow) => {
         const f = window.__frontier, v = f.view, s = f.sim;
         const materialMap = team => { const m = new Map(); v.teamTemplates.get(`tank-${team}`).traverse(o => { if (o.isMesh) m.set(o.material.name, o.material); }); return m; };
         const player = materialMap(0), enemy = materialMap(1);
@@ -438,8 +440,8 @@ try {
         // A restarted match begins with Harvesters at work, which can draw part kinds the staged scene
         // never showed; a leak would be growth from one restart to the next.
         return {shared,teamSeparate,enemyUnchanged,teamRecolored,pickable,remembered,unexploredHidden,depletedHidden,
-          noGrowth:v.batches.batches.size === firstRestart && firstRestart - allocations <= 6, /* 6: a phone restart shows the map under its closed dock too */ growth:[allocations,firstRestart,v.batches.batches.size]};
-      });
+          noGrowth:v.batches.batches.size === firstRestart && firstRestart - allocations <= allow, /* 6: a phone restart shows the map under its closed dock too */ growth:[allocations,firstRestart,v.batches.batches.size]};
+      }, allow);
       console.log('batches before/after restarts', state.growth); delete state.growth;
       for (const [name,passed] of Object.entries(state)) assert.equal(passed, true, `${scenario.name}: ${name}`);
     }
