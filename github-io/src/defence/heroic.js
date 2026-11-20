@@ -20,13 +20,13 @@ export const HEROIC_AFFIX_NAMES = { plated: "Plated", swift: "Swift", splitter: 
 // One spec per level. `stalkers: [w2, w3, w4, w5, w6]` are the group sizes at Standard scale: a size of
 // 1 spawns 2 Stalkers and 2 spawns 3 (units of pop 2 round up at the Standard 1.3 scale).
 export const HEROIC = {
-  "d-gorge": { affixes: ["plated", "swift"], alloy: 400, every: [1, 1, 1, 1, 1, 1], stalkers: null, finale: null },
-  "d-bridges": { affixes: ["swift", "volatile"], alloy: 400, every: [1, 1, 1, 1, 1, 1], stalkers: null, finale: null },
-  "d-switchback": { affixes: ["banner", "mender"], alloy: 400, every: [1, 1, 1, 1, 1, 1], stalkers: null, finale: null },
-  "d-fordwood": { affixes: ["splitter", "swift"], alloy: 400, every: [1, 1, 1, 1, 1, 1], stalkers: null, finale: null },
-  "d-canyon": { affixes: ["plated", "banner"], alloy: 400, every: [1, 1, 1, 1, 1, 1], stalkers: [1, 1, 1, 2, 2], finale: null },
-  "d-longcrossing": { affixes: ["volatile", "splitter"], alloy: 400, every: [1, 1, 1, 1, 1, 1], stalkers: [1, 1, 1, 2, 2], finale: null },
-  "d-crossroads": { affixes: ["mender", "plated", "banner"], alloy: 400, every: [1, 1, 1, 1, 1, 1], stalkers: null, finale: null },
+  "d-gorge": { affixes: ["plated","swift"], alloy: 4400, every: [1, 1, 1, 1, 1, 1], everyOf: { plated: 3, swift: 3 }, stalkers: null, finale: null },
+  "d-bridges": { affixes: ["swift","volatile"], alloy: 2600, every: [1, 1, 1, 1, 1, 1], everyOf: { swift: 2, volatile: 3 }, stalkers: null, finale: null },
+  "d-switchback": { affixes: ["banner","mender"], alloy: 400, every: [1, 1, 1, 1, 1, 1], everyOf: {}, stalkers: null, finale: null },
+  "d-fordwood": { affixes: ["splitter","swift"], alloy: 2600, every: [1, 1, 1, 1, 1, 1], everyOf: { splitter: 6, volatile: 3, plated: 2, swift: 2 }, stalkers: null, finale: null },
+  "d-canyon": { affixes: ["plated","banner"], alloy: 2600, every: [1, 1, 1, 1, 1, 1], everyOf: { splitter: 6, volatile: 3, plated: 2, swift: 2 }, stalkers: [1, 1, 1, 2, 2], finale: null },
+  "d-longcrossing": { affixes: ["volatile","splitter"], alloy: 2600, every: [1, 1, 1, 1, 1, 1], everyOf: { splitter: 6, volatile: 3, plated: 2, swift: 2 }, stalkers: [1, 1, 1, 2, 2], finale: null },
+  "d-crossroads": { affixes: ["mender","plated","banner"], alloy: 2600, every: [1, 1, 1, 1, 1, 1], everyOf: { splitter: 6, volatile: 3, plated: 2, swift: 2 }, stalkers: null, finale: null },
 };
 
 export const hasHeroic = (id) => Object.hasOwn(HEROIC, id);

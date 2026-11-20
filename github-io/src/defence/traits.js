@@ -20,6 +20,13 @@ export const TRAITS = [
   { id: "shield", label: "Heavy shield", hint: "100 or more shield: weak shots are soaked up before the hull is hurt.", test: (entry, D) => (D[entry.type]?.shield || 0) >= 100 },
   { id: "elite", label: "Elite", hint: "A gold elite: much tougher, and worth more alloy.", test: (entry) => !!entry.elite },
   { id: "boss", label: "Boss", hint: "A boss: a huge hull and area attacks. Bring everything.", test: (entry, D) => !!D[entry.type]?.boss },
+  // Elite affixes (AAA round 2, W2-B), appended: a chip per affix, from entry.elite.
+  { id: "plated", label: "Plated", hint: "Elite: shield x2.5 that comes back 2 s after a hit. Pierce ranks and Anti-tank answer it.", test: (entry) => entry.elite === "plated" },
+  { id: "swift", label: "Swift", hint: "Elite: 35% faster but frail. A Suppressor's slow answers it.", test: (entry) => entry.elite === "swift" },
+  { id: "splitter", label: "Splitter", hint: "Elite: two more walk on from where it falls. Cluster splash answers it.", test: (entry) => entry.elite === "splitter" },
+  { id: "volatile", label: "Volatile", hint: "Elite: explodes when it dies, hurting towers within 2.5 m. Range and Rim pads answer it.", test: (entry) => entry.elite === "volatile" },
+  { id: "banner", label: "Banner", hint: "Elite: allies within 7 m take 20% less damage. Kill it first with a Marksman.", test: (entry) => entry.elite === "banner" },
+  { id: "mender", label: "Mender", hint: "Elite: heals allies within 7 m every 6 s. A Barrage answers it.", test: (entry) => entry.elite === "mender" },
 ];
 
 // The crews (garrisons.json ids) that answer a trait, best first, and what to bring against a plain
@@ -33,6 +40,12 @@ export const COUNTERS = {
   shield: ["antitank", "tank"],
   elite: ["antitank", "ranger"],
   boss: ["antitank", "tank"],
+  plated: ["antitank", "ranger"],
+  swift: ["ranger", "breaker"],
+  splitter: ["breaker", "scorcher"],
+  volatile: ["ranger", "antitank"],
+  banner: ["ranger", "antitank"],
+  mender: ["breaker", "tank"],
 };
 // A unit with none of the traits above: the swarm answers by its combat class.
 export const CLASS_COUNTERS = { melee: ["breaker", "scorcher"], ranged: ["breaker", "ranger"], siege: ["ranger", "tank"], antiarmor: ["ranger", "breaker"] };

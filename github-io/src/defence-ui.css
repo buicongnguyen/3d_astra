@@ -386,3 +386,10 @@
   .compact-ui #defence-card { top: 104px; left: 12px; }
 }
 @keyframes defence-card-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* AAA round 2, W2-B: elite units on the wave strip and the Heroic result badge. */
+.intel-unit.elite { box-shadow: 0 0 0 2px #ffd45e, 0 0 10px rgba(255, 199, 94, 0.55); border-radius: 10px; }
+.intel-chip[data-trait="plated"], .intel-chip[data-trait="swift"], .intel-chip[data-trait="splitter"], .intel-chip[data-trait="volatile"], .intel-chip[data-trait="banner"], .intel-chip[data-trait="mender"] { border-color: #ffd45e; color: #ffe39a; }
+.defence-result.heroic .heroic-badge { display: grid; place-items: center; gap: 2px; min-width: 88px; padding: 10px 12px; border-radius: 16px; background: linear-gradient(180deg, #ffd45e, #f39a2a); color: #3a2200; font: 800 36px/1 var(--font-ui); box-shadow: 0 0 18px rgba(255, 199, 94, 0.55), inset 0 -4px 0 rgba(120, 60, 0, 0.35); }
+.defence-result.heroic .heroic-badge b { font: 800 14px/1 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; }
+.defence-result.heroic.lost .heroic-badge { background: linear-gradient(180deg, #6b7a86, #46535d); color: #e8eef2; box-shadow: none; }

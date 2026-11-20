@@ -6,7 +6,8 @@
 import "../defence-menu.css";
 import { $ } from "./dom.js";
 import { DEFENCE_LEVELS, defenceVariant } from "../defence/levels.js";
-import { loadDefence, saveDefence, recordDefence, starsOf, levelOpen, PERKS, ownedPerks, starsFree, canBuyPerk, buyPerk, bestScore, recordScore, dayKey, dailySeed, endlessSeed } from "../defence/progress.js";
+import { hasHeroic, HEROIC_LIVES, HEROIC_WAVES } from "../defence/heroic.js";
+import { loadDefence, saveDefence, recordDefence, recordHeroic, heroicOpen, heroicWon, starsOf, levelOpen, PERKS, ownedPerks, starsFree, canBuyPerk, buyPerk, bestScore, recordScore, dayKey, dailySeed, endlessSeed } from "../defence/progress.js";
 import { icon } from "../icons.js";
 import { FACTIONS } from "../story/world.js";
 import { DIFFICULTY_LABELS } from "../difficulty.js";
@@ -18,7 +19,7 @@ import { statTile, formatClock } from "../results-ui.js";
 import { CROSSINGS } from "../terrain.js";
 
 // What the lazy match interface uses from the main bundle (see app/defence-ui.js).
-const DEPS = { $, GARRISONS, starsFor, D, hasPortrait, portrait, icon, ACTION_KEYS, DEFENCE_LEVELS, loadDefence, recordDefence, saveDefence, statTile, formatClock, DIFFICULTY_LABELS, FACTIONS, CROSSINGS, recordScore, bestScore, dayKey };
+const DEPS = { recordHeroic, $, GARRISONS, starsFor, D, hasPortrait, portrait, icon, ACTION_KEYS, DEFENCE_LEVELS, loadDefence, recordDefence, saveDefence, statTile, formatClock, DIFFICULTY_LABELS, FACTIONS, CROSSINGS, recordScore, bestScore, dayKey };
 
 export const DEFENCE_DIFFICULTY = {
   story: "Smaller waves and more alloy to start.",
@@ -30,7 +31,10 @@ const VARIANTS = [
   { id: "levels", label: "Levels", note: "Ten waves, stars" },
   { id: "endless", label: "Endless", note: "Waves forever" },
   { id: "daily", label: "Daily", note: "Today's seed" },
+  { id: "heroic", label: "Heroic", note: "Elite waves" },
 ];
+// What a locked Heroic shows (the finale is teased, not named: round 3 puts a boss there).
+export const HEROIC_TEASER = "Clear this level once to open its Heroic challenge: six hard waves, gold elites with affixes, and an all-elite finale. +1 star.";
 export const PERK_TEXT = {
   quartermaster: "Your first tower on each level costs 20% less.",
   reserves: "Every level starts with 2 more lives.",
@@ -56,7 +60,9 @@ export function setupDefenceEntry(S, A) {
   // The definition a Defence menu match is built from: the level, its variant and the perks owned.
   // Kept while nothing changes, so the briefing preview is not rebuilt for nothing.
   function defenceMission(l) {
-    const perks = ownedPerks(S.defenceProgress || loadDefence()), variant = S.defenceVariant, seed = variant === "levels" ? 0 : seedFor(l);
+    const progress = S.defenceProgress || loadDefence(), perks = ownedPerks(progress);
+    // A locked or missing Heroic plays the designed level (the Start button is held back by the menu).
+    const variant = S.defenceVariant === "heroic" && !heroicOpen(progress, l.id) ? "levels" : S.defenceVariant, seed = variant === "levels" || variant === "heroic" ? 0 : seedFor(l);
     const key = `${l.id}|${variant}|${seed}|${perks.join(",")}`;
     if (made?.key !== key) made = { key, def: defenceVariant(l, { variant, seed, perks }) };
     return made.def;
@@ -78,26 +84,29 @@ export function setupDefenceEntry(S, A) {
     const progress = S.defenceProgress = loadDefence(), variant = S.defenceVariant, day = dayKey();
     // Endless and the Daily seed run on any level that is open; a locked pick falls back to the first.
     if (!levelOpen(progress, S.defencePick ?? 0)) S.defencePick = 0;
-    const l = level(), foe = FACTIONS[l.factions[1]];
+    const l = level(), foe = FACTIONS[l.factions[1]], locked = variant === "heroic" && !heroicOpen(progress, l.id);
     const rows = DEFENCE_LEVELS.map((d, i) => {
-      const open = levelOpen(progress, i), stars = starsOf(progress, d.id), best = progress.levels[d.id], score = variant === "levels" ? 0 : bestScore(progress, variant, d.id, day);
-      const mark = !open ? icon("lock") : variant === "levels" ? `${starRow(stars)}${best?.difficulty === "veteran" ? '<span class="veteran-mark" title="Veteran clear" aria-label="Veteran clear">V</span>' : ""}` : `<span class="defence-best"><span>Best</span> <i translate="no">${score}</i></span>`;
-      return `<li><button data-level="${i}" data-level-id="${d.id}"${i === S.defencePick ? ' aria-current="true"' : ""}${open ? "" : " disabled"}><b>${i + 1}</b><span><strong>${d.title}</strong><small>${FACTIONS[d.factions[1]]?.short || ""} · <span>${d.defence.waves.length} waves</span></small></span><em>${mark}</em></button></li>`;
+      const open = levelOpen(progress, i), stars = starsOf(progress, d.id), best = progress.levels[d.id], score = variant === "levels" || variant === "heroic" ? 0 : bestScore(progress, variant, d.id, day);
+      const hOpen = heroicOpen(progress, d.id), hWon = heroicWon(progress, d.id);
+      const mark = !open ? icon("lock") : variant === "heroic" ? `<span class="heroic-mark${hWon ? " won" : ""}" role="img" aria-label="${hWon ? "Heroic cleared" : hOpen ? "Heroic open" : "Heroic locked"}">${hWon ? "★" : hOpen ? icon("bolt") : icon("lock")}</span>` : variant === "levels" ? `${starRow(stars)}${best?.difficulty === "veteran" ? '<span class="veteran-mark" title="Veteran clear" aria-label="Veteran clear">V</span>' : ""}` : `<span class="defence-best"><span>Best</span> <i translate="no">${score}</i></span>`;
+      return `<li><button data-level="${i}" data-level-id="${d.id}"${i === S.defencePick ? ' aria-current="true"' : ""}${open ? "" : " disabled"}><b>${i + 1}</b><span><strong>${d.title}</strong><small>${FACTIONS[d.factions[1]]?.short || ""} · <span>${variant === "heroic" && hasHeroic(d.id) ? HEROIC_WAVES : d.defence.waves.length} waves</span></small></span><em>${mark}</em></button></li>`;
     }).join("");
     $("defence-setup").innerHTML = `<div class="defence-variants" role="group" aria-label="Defence mode">${VARIANTS.map((v) => `<button type="button" data-defence-variant="${v.id}" aria-pressed="${v.id === variant}"><strong>${v.label}</strong><small>${v.id === "daily" ? `<span translate="no">${dayLabel(day)}</span>` : v.note}</small></button>`).join("")}</div>
       <ol class="stage-list defence-levels" aria-label="Defence levels">${rows}</ol>
       <button type="button" id="defence-perks-toggle" class="defence-perks-toggle" aria-expanded="${perksOpen}" aria-controls="defence-perks">${icon("bolt")}<span>Perks</span><small><b translate="no">${starsFree(progress)}</b> <span>stars to spend</span></small></button>
       ${perksSheet(progress)}`;
-    const best = variant === "levels" ? 0 : bestScore(progress, variant, l.id, day);
-    $("briefing-title").textContent = variant === "levels" ? `Defence · ${l.title}` : `${variant === "daily" ? "Daily" : "Endless"} · ${l.title}`;
-    $("briefing-text").textContent = variant === "levels" ? l.briefing.text : variant === "daily"
+    const best = variant === "levels" || variant === "heroic" ? 0 : bestScore(progress, variant, l.id, day);
+    $("briefing-title").textContent = variant === "levels" ? `Defence · ${l.title}` : `${variant === "daily" ? "Daily" : variant === "heroic" ? "Heroic" : "Endless"} · ${l.title}`;
+    $("briefing-text").textContent = variant === "levels" ? l.briefing.text : variant === "heroic" ? (locked ? HEROIC_TEASER : defenceMission(l).briefing.text) : variant === "daily"
       ? "Today's waves, the same for every commander, from a seed of the date. They never stop: hold as many as you can."
       : "The waves never stop and grow with every one you hold. Your score is the number of waves held.";
-    $("briefing-goal").textContent = variant === "levels" ? l.objectives[0].text : best ? `Best: ${best} waves held` : "Hold as many waves as you can";
-    const lives = l.defence.lives + (ownedPerks(progress).includes("reserves") ? PERKS.reserves.lives : 0);
+    $("briefing-goal").textContent = variant === "heroic" ? (locked ? "Locked: clear the level first" : `Hold the Heroic ${HEROIC_WAVES} waves`) : variant === "levels" ? l.objectives[0].text : best ? `Best: ${best} waves held` : "Hold as many waves as you can";
+    const lives = (variant === "heroic" ? HEROIC_LIVES : l.defence.lives) + (ownedPerks(progress).includes("reserves") ? PERKS.reserves.lives : 0);
     $("briefing-rivals").textContent = foe ? `${foe.name} · ${lives} lives` : `${lives} lives`;
     $("difficulty-description").textContent = DEFENCE_DIFFICULTY[S.settings.campaignDifficulty] || "";
-    if (!$("start").disabled && !S.loadFailed) $("start").textContent = variant === "endless" ? "Start endless" : variant === "daily" ? "Start daily" : "Start defence";
+    if (!$("start").disabled && !S.loadFailed) $("start").textContent = variant === "endless" ? "Start endless" : variant === "daily" ? "Start daily" : variant === "heroic" ? (locked ? "Locked" : "Start Heroic") : "Start defence";
+    // A locked Heroic cannot be started: the variant stays visible for its teaser.
+    if (variant === "heroic" && !S.loadFailed) $("start").setAttribute("aria-disabled", String(locked)); else $("start").removeAttribute("aria-disabled");
   }
 
   // The battlefield heading while a defence level is picked or played.
@@ -107,7 +116,7 @@ export function setupDefenceEntry(S, A) {
     const variant = S.sim?.defence ? l.variant || "levels" : S.defenceVariant;
     document.querySelector(".map-heading p").innerHTML = `${l.title.toUpperCase()} <span>·</span> ${DIFFICULTY_LABELS[S.sim?.difficulty || S.settings.campaignDifficulty].toUpperCase()}`;
     document.querySelector(".map-heading h1").innerHTML = `${l.title}<span>.</span>`;
-    $("operation-label").textContent = variant === "endless" ? "DEFENCE · ENDLESS" : variant === "daily" ? "DEFENCE · DAILY SEED" : `DEFENCE · LEVEL ${String(i + 1).padStart(2, "0")} / ${String(DEFENCE_LEVELS.length).padStart(2, "0")}`;
+    $("operation-label").textContent = variant === "heroic" ? "DEFENCE · HEROIC" : variant === "endless" ? "DEFENCE · ENDLESS" : variant === "daily" ? "DEFENCE · DAILY SEED" : `DEFENCE · LEVEL ${String(i + 1).padStart(2, "0")} / ${String(DEFENCE_LEVELS.length).padStart(2, "0")}`;
     return true;
   }
 
@@ -132,6 +141,8 @@ export function setupDefenceEntry(S, A) {
   });
   return function bind() {
     // The variant switch and the perks sheet (the level buttons are app/briefing.js's).
+    // A locked Heroic cannot start (renderDefenceMenu sets aria-disabled on Start): stop the click before match-flow sees it.
+    $("start").addEventListener("click", (event) => { if ($("start").getAttribute("aria-disabled") === "true") { event.stopImmediatePropagation(); event.preventDefault(); } }, true);
     $("defence-setup").addEventListener("click", (event) => {
       if (Z.started) return;
       const v = event.target.closest("[data-defence-variant]"), toggle = event.target.closest("#defence-perks-toggle"), buy = event.target.closest("[data-buy-perk]");

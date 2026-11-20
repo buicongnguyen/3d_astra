@@ -4,10 +4,17 @@
 //   kept under 3 stars by a greedy player who builds one crew type only;
 // on river levels with demolition the bot that also blows a bridge must still reach its target;
 // and Endless (standard, the level's own seed) must be held for at least ENDLESS_MIN waves.
-// Usage: node tools/defence-check.mjs [--level d-gorge] [--difficulty standard] [--no-endless] [--json]
+// Heroic rows (AAA round 2, W2-B), only with --heroic (script test:defence-heroic-check; the build job runs without it):
+// the bot wins each Heroic variant on Standard with at least HEROIC_LIVES_LEFT lives left, a passive player loses by
+// wave 3, and a greedy single-crew player loses on at least HEROIC_GREEDY_LOSE levels (a level counts when most of
+// its crews lose).
+// Usage: node tools/defence-check.mjs [--level d-gorge] [--difficulty standard] [--no-endless] [--json] [--heroic]
 import { DEFENCE_LEVELS, defenceVariant } from "../src/defence/levels.js";
 import { seedOf } from "../src/sim/defence.js";
 import { playDefence } from "./defence-bot.mjs";
+import { hasHeroic } from "../src/defence/heroic.js";
+
+const HEROIC_LIVES_LEFT = 2, HEROIC_GREEDY_LOSE = 5;
 
 // Endless runs stop here (they are scored, not won); the bot must hold at least ENDLESS_MIN.
 const ENDLESS_CAP = 40, ENDLESS_MIN = 15;
@@ -15,7 +22,21 @@ const arg = (name) => { const i = process.argv.indexOf(`--${name}`); return i > 
 const levels = DEFENCE_LEVELS.filter((l) => !arg("level") || l.id === arg("level"));
 const difficulties = arg("difficulty") ? [arg("difficulty")] : ["story", "standard", "veteran"];
 const rows = [], failures = [];
+const heroicOnly = process.argv.includes("--heroic");
+let greedyLost = 0, heroicLevels = 0;
 for (const level of levels) {
+  if (heroicOnly) {
+    if (!hasHeroic(level.id)) continue;
+    const h = defenceVariant(level, { variant: "heroic" });
+    const bot = playDefence(h, {}), passive = playDefence(h, { policy: "passive" });
+    const greedy = h.defence.crews.filter((c) => c !== "watcher").map((crew) => ({ crew, ...playDefence(h, { policy: "greedy", crew }) }));
+    heroicLevels++;
+    if (greedy.filter((g) => g.result !== "victory").length * 2 > greedy.length) greedyLost++;
+    rows.push({ level: level.id, difficulty: "heroic", bot: `${bot.result} ${bot.lives}♥ w${bot.wave}`, passive: `${passive.result} w${passive.wave}`, greedy: greedy.map((g) => `${g.crew}:${g.result[0]}${g.lives}♥`).join(" ") });
+    if (bot.result !== "victory" || bot.lives < HEROIC_LIVES_LEFT) failures.push(`${level.id} heroic: bot ${bot.result} with ${bot.lives} lives left (< ${HEROIC_LIVES_LEFT})`);
+    if (passive.result !== "defeat" || passive.wave > 3) failures.push(`${level.id} heroic: passive player ${passive.result} at wave ${passive.wave}`);
+    continue;
+  }
   for (const difficulty of difficulties) {
     const target = level.check[difficulty];
     const bot = playDefence(level, { difficulty });
@@ -36,8 +57,9 @@ for (const level of levels) {
     if (endless.held < ENDLESS_MIN) failures.push(`${level.id} endless: held ${endless.held} < ${ENDLESS_MIN}`);
   }
 }
+if (heroicOnly && greedyLost < Math.min(HEROIC_GREEDY_LOSE, heroicLevels)) failures.push(`heroic: single-crew play loses on ${greedyLost} levels (< ${HEROIC_GREEDY_LOSE})`);
 if (process.argv.includes("--json")) console.log(JSON.stringify(rows, null, 2));
-else for (const r of rows) console.log(r.difficulty === "endless"
+else for (const r of rows) console.log(r.difficulty === "heroic" ? `${r.level.padEnd(14)} heroic   bot ${r.bot} | passive ${r.passive} | greedy ${r.greedy}` : r.difficulty === "endless"
   ? `${r.level.padEnd(14)} endless  held ${r.held >= ENDLESS_CAP ? `${r.held}+ waves (stopped at the cap)` : `${r.held} waves (lost)`}`
   : `${r.level.padEnd(14)} ${r.difficulty.padEnd(8)} target ${r.target}★ | bot ${r.bot} | passive ${r.passive} | greedy ${r.greedy}${r.demolish ? ` | demolish ${r.demolish}` : ""}`);
 if (failures.length) { console.log(`\nFAIL\n${failures.join("\n")}`); process.exitCode = 1; }

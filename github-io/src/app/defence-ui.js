@@ -106,7 +106,7 @@ export function createDefenceUI(S, A, deps) {
   // The same two helpers as defence/progress.js (hasSeen, recordSeen); importing that module here would split a shared chunk out of the main bundle (see the note above the deps).
   const hasSeen = (p, type) => (p.seen || []).includes(type);
   const recordSeen = (p, types) => { const fresh = types.filter((t) => D[t] && !hasSeen(p, t)); return fresh.length ? { ...p, seen: [...(p.seen || []), ...fresh] } : p; };
-  const { $, GARRISONS, starsFor, D, hasPortrait, portrait, icon, ACTION_KEYS, DEFENCE_LEVELS, loadDefence, recordDefence, saveDefence, statTile, formatClock, DIFFICULTY_LABELS, FACTIONS, CROSSINGS, recordScore, bestScore, dayKey } = deps;
+  const { recordHeroic, $, GARRISONS, starsFor, D, hasPortrait, portrait, icon, ACTION_KEYS, DEFENCE_LEVELS, loadDefence, recordDefence, saveDefence, statTile, formatClock, DIFFICULTY_LABELS, FACTIONS, CROSSINGS, recordScore, bestScore, dayKey } = deps;
   const Z = S.screen, root = document.documentElement;
   let viewMode = "free", saved = null, follow = { set: false, pauseUntil: 0, x: 0, z: 0, zoom: 0 }, cardQueue = [], cardEl = null, cardAt = 0, cardWave = -1, pads = null, bar = null, intel = null, intelKey = "", seen = null, overview = false, leakAt = -Infinity, affordable = false, burstTier = 0, aim = null;
   const color = new THREE.Color();
@@ -482,13 +482,13 @@ export function createDefenceUI(S, A, deps) {
   }
   function updateIntel(st) {
     const el = ensureIntel(), p = Z.started && st.canCall ? S.sim.wavePreview() : null;
-    const key = p ? `${p.wave}|${p.units.map((u) => `${u.type}:${u.count}:${u.carry || 0}`).join(",")}|${p.routes.join(",")}` : "";
+    const key = p ? `${p.wave}|${p.units.map((u) => `${u.type}:${u.count}:${u.carry || 0}:${u.elite || ""}`).join(",")}|${p.routes.join(",")}` : "";
     if (key === intelKey) return;
     intelKey = key;
     el.hidden = !p;
     if (!p) { el.innerHTML = ""; return; }
     const many = Object.keys(S.sim.missionDef.defence.routes).length > 1;
-    const unit = (u) => `<span class="intel-unit${u.carry ? " carrier" : ""}" data-type="${u.type}" title="${D[u.type]?.name || u.type}">${hasPortrait(u.type) ? portrait(u.type, "hostile") : icon(D[u.type]?.icon || "tank")}<b translate="no">×${u.count}</b>${u.carry ? `<small translate="no">(${u.carry})</small>` : ""}</span>`;
+    const unit = (u) => `<span class="intel-unit${u.carry ? " carrier" : ""}${u.elite ? " elite" : ""}" data-type="${u.type}"${u.elite ? ` data-elite="${u.elite}"` : ""} title="${D[u.type]?.name || u.type}">${hasPortrait(u.type) ? portrait(u.type, "hostile") : icon(D[u.type]?.icon || "tank")}<b translate="no">×${u.count}</b>${u.carry ? `<small translate="no">(${u.carry})</small>` : ""}</span>`;
     const chips = waveTraits(p.units, D).map((id) => { const t = TRAITS.find((x) => x.id === id); return `<span class="intel-chip" data-trait="${id}" title="${t.hint}">${t.label}</span>`; }).join("");
     el.innerHTML = (chips ? `<span class="intel-traits">${chips}</span>` : "") + `<span class="intel-line"><span class="intel-head"><span>Next wave</span> <b translate="no">${p.wave}</b></span>${p.units.map(unit).join("")}</span>${many ? `<span class="intel-routes">${p.routes.map((r) => `<span class="intel-route" data-route="${r}">${S.sim.missionDef.defence.roads?.[r] || ROUTE_LABEL[r] || r}</span>`).join("")}</span>` : ""}`;
   }
@@ -1068,6 +1068,7 @@ export function createDefenceUI(S, A, deps) {
   // ---------------------------------------------------------------- Result
   function result() {
     const sim = S.sim, def = sim.missionDef, d = sim.defence, win = sim.result === "victory";
+    if (def.variant === "heroic") return heroicResult();
     if (def.variant) return scoreResult();
     const stars = win ? starsFor(sim.mission.medal) : 0, index = DEFENCE_LEVELS.findIndex((l) => l.id === def.id);
     if (win) { S.defenceProgress = recordDefence(loadDefence(), def.id, { stars, lives: d.lives, difficulty: sim.difficulty }); saveDefence(S.defenceProgress); }
@@ -1081,6 +1082,23 @@ export function createDefenceUI(S, A, deps) {
       <p class="debrief-difficulty">${DIFFICULTY_LABELS[sim.difficulty || "standard"]}</p>
       <div class="result-grid">${statTile(`${d.lives}`, "Lives left", d.lives ? "" : "loss")}${statTile(`${d.cleared}/${def.defence.waves.length}`, "Waves held")}${statTile(String(Math.round(killed)), "Enemies defeated")}${statTile(String(d.bounty), "Bounty alloy", "alloy")}${statTile(formatClock(sim.time), "Time", "time")}</div>
       <div class="debrief-actions">${next >= 0 ? `<button class="primary" data-defence-next="${next}"><span>Next level</span>${icon("arrow")}</button><button class="secondary" data-restart>Retry</button>` : `<button class="primary" data-restart><span>Retry</span>${icon("arrow")}</button>`}<button class="secondary" data-new-game>Levels</button></div>
+    </div>`;
+    document.querySelector("#modal .modal").scrollTop = 0;
+    $("modal").querySelector(".primary")?.focus({ preventScroll: true });
+  }
+  // Heroic (W2-B): a win records the challenge (+1 star) and shows the Heroic badge.
+  function heroicResult() {
+    const sim = S.sim, def = sim.missionDef, d = sim.defence, win = sim.result === "victory", index = DEFENCE_LEVELS.findIndex((l) => l.id === def.id);
+    const before = !!loadDefence().heroic?.[def.id]?.won;
+    if (win) { S.defenceProgress = recordHeroic(loadDefence(), def.id, { lives: d.lives }); saveDefence(S.defenceProgress); }
+    const killed = S.matchStats?.stats?.killed ?? 0;
+    $("modal").classList.add("debrief-wide");
+    $("modal-content").innerHTML = `<div class="debrief defence-result heroic ${win ? "won" : "lost"}" data-result="${win ? "victory" : "defeat"}" data-variant="heroic" data-stars="${win ? 1 : 0}">
+      <span class="eyebrow">DEFENCE · HEROIC · LEVEL ${String(index + 1).padStart(2, "0")} · ${win ? "HELD" : "BROKEN"}</span>
+      <div class="debrief-head"><span class="heroic-badge" role="img" aria-label="Heroic">${win ? "★" : "✕"}<b>Heroic</b></span><div><h2 id="modal-title">${def.title}</h2><p class="debrief-result"><strong>${win ? "Victory" : "Defeat"}</strong><span>${win ? (before ? "Heroic cleared again" : "Heroic cleared: +1 star") : "The elites broke the line"}</span></p></div></div>
+      <p class="debrief-difficulty">${DIFFICULTY_LABELS[sim.difficulty || "standard"]}</p>
+      <div class="result-grid">${statTile(`${d.lives}`, "Lives left", d.lives ? "" : "loss")}${statTile(`${d.cleared}/${def.defence.waves.length}`, "Waves held")}${statTile(String(Math.round(killed)), "Enemies defeated")}${statTile(String(d.bounty), "Bounty alloy", "alloy")}${statTile(formatClock(sim.time), "Time", "time")}</div>
+      <div class="debrief-actions"><button class="primary" data-restart><span>${win ? "Play again" : "Retry"}</span>${icon("arrow")}</button><button class="secondary" data-new-game>Levels</button></div>
     </div>`;
     document.querySelector("#modal .modal").scrollTop = 0;
     $("modal").querySelector(".primary")?.focus({ preventScroll: true });
