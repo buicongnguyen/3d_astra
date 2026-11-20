@@ -235,7 +235,7 @@ export const economy = {
     const workers = this.own(team).filter((e) => e.type === "worker" && !e.tag);
     // Field command (W2-D, S1): 1 in 6 to energy when energy is plentiful and alloy short (none above 800), 1 in 3 when energy runs dry.
     let every = 4;
-    if (fieldPlan(this, team)) { const pl = this.players[team]; every = pl.energy > 400 && pl.alloy < 200 ? (pl.energy > 800 ? 0 : 6) : pl.energy < 100 ? 3 : 4; }
+    if (fieldPlan(this, team)) { const pl = this.players[team]; every = pl.energy > 400 && pl.alloy < 300 ? (pl.energy > 500 ? 0 : 6) : pl.energy < 100 ? 3 : 4; }
     for (let i = 0; i < workers.length; i++) {
       const w = workers[i];
       if (w.orders.length) continue;
