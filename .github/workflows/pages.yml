@@ -112,6 +112,9 @@ jobs:
           # AAA round 2 (W1-F): the Defence command deck (fast-forward through the frame loop, tower aim, chips, card).
           - name: r2-w1f
             scripts: defence-deck
+          # AAA round 2 (W1-D): phones first-class, the battlefield share on a phone.
+          - name: r2-w1d
+            scripts: phones
     defaults:
       run:
         working-directory: github-io

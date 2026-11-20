@@ -7,12 +7,16 @@ import { HIDDEN_HINT, HIGH_GROUND_HINT, heldPlateaus, hiddenFromBelow, onHighGro
 import { ABILITY_HINT_AFTER, abilityHintText, loadSeenAbilities, nextAbilityHint, rememberAbility } from "../ability-hints.js";
 import { ABILITY_KEYS, abilityGroups } from "../tactics-ui.js";
 import { airHintText } from "../air-hint.js";
+import { loadSeenIntros, nextUnitIntro, rememberIntro } from "../unit-intros.js";
 import "../ui-extras.css";
 
 export const HINT_SECONDS = 9;
 // Phones: the hint is a thin line under the top bar (portrait) or above the notice line (landscape)
 // and leaves sooner, so it never sits on the battle for long (ui-extras.css).
 export const PHONE_HINT_SECONDS = 4;
+// A unit intro card teaches a rule, so it stays a little longer (unit-intros.js).
+export const INTRO_SECONDS = 9;
+export const PHONE_INTRO_SECONDS = 6;
 export const BEAT_SECONDS = 1.5;
 export const BEAT_SLOWDOWN = 0.3;
 
@@ -80,12 +84,12 @@ export function setupUiExtras(S, A) {
     $("stage").append(hintEl);
   }
   function hideHint() { if (hintEl) hintEl.hidden = true; clearTimeout(hintTimer); }
-  function showHint(text) {
+  function showHint(text, seconds = [HINT_SECONDS, PHONE_HINT_SECONDS]) {
     hintEl.querySelector(".fh-text").textContent = text;
     hintEl.hidden = false;
     clearTimeout(hintTimer);
     const compact = document.documentElement.classList.contains("compact-ui");
-    hintTimer = setTimeout(hideHint, (compact ? PHONE_HINT_SECONDS : HINT_SECONDS) * 1000);
+    hintTimer = setTimeout(hideHint, seconds[compact ? 1 : 0] * 1000);
     nextHintAt = performance.now() + 12000;
   }
 
@@ -164,6 +168,28 @@ export function setupUiExtras(S, A) {
     showHint(abilityHintText(unit, { groups: abilityGroups(S.sim, A.selectedEntities(), ABILITY_KEYS.length), touch: S.touchInput }));
   }
 
+  // The first time a unit type with a special rule (D[type].intro) is on screen, own or enemy: its one
+  // line, once per type, remembered across matches (unit-intros.js). It waits behind every other hint
+  // (it is the last of the tick), never shows in Training, a tutorial, Frontier Defence (its own
+  // new-enemy card) or while a dialogue, scene or decision holds the screen, and browser suites (?test)
+  // leave it off unless the URL has ?unitintros, so their own hints keep the slot.
+  let seenIntros = null;
+  const unitIntrosOn = () => !S.query?.has("test") || S.query.has("unitintros");
+  function unitIntroHint() {
+    if (!hintEl || !hintEl.hidden || performance.now() < nextHintAt || !unitIntrosOn()) return;
+    if (!Z.started || Z.paused || Z.modalType || S.sim.result || S.sim.defence || S.tutorial || S.playMode === "training") return;
+    if (document.documentElement.classList.contains("dialogue-open") || S.endBeat) return;
+    seenIntros ??= loadSeenIntros();
+    const rect = S.view.renderer.domElement.getBoundingClientRect();
+    const intro = nextUnitIntro(S.sim, seenIntros, D, (e) => {
+      const p = S.view.project(e.x, e.z, 0.5);
+      return !!p && p.x >= 0 && p.y >= 0 && p.x <= rect.width && p.y <= rect.height;
+    });
+    if (!intro) return;
+    rememberIntro(seenIntros, intro.type);
+    showHint(intro.text, [INTRO_SECONDS, PHONE_INTRO_SECONDS]);
+  }
+
   function updateIdleButtons() {
     if (!idleButtons) return;
     const counts = idleCounts();
@@ -193,7 +219,7 @@ export function setupUiExtras(S, A) {
     return BEAT_SLOWDOWN;
   }
 
-  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); airHint(); fightHints(); highGroundHint(); hiddenHint(); abilityHint(); } });
+  Object.assign(A, { factionEvent, cycleIdle, idleCounts, resetHints() { seen = new Set(); nextHintAt = 0; hideHint(); A.clearMessages?.(); }, beginBeat, stepBeat, uiExtrasTick() { updateIdleButtons(); airHint(); fightHints(); highGroundHint(); hiddenHint(); abilityHint(); unitIntroHint(); } });
 
   return function bind() {
     makeHint();

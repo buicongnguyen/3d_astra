@@ -1254,7 +1254,10 @@
     "m": "m",
     "vs armour": "so với giáp",
     "yes": "có",
-    "no": "không"
+    "no": "không",
+    "Box select": "Khoanh chọn",
+    "Queue orders": "Xếp lệnh",
+    "More controls": "Thêm điều khiển"
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],

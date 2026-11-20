@@ -60,3 +60,36 @@ await suite('feel', async () => {
   for(const [key,value] of Object.entries(checks)) assert.equal(value,true,key);
   assert.deepEqual(errors,[]);
 }, {browser});
+
+// W1-D (P3): the 28 px rule on a landscape phone too, and units grow at strategic zoom (Three Roads, zoom 92).
+const browser2 = await launchBrowser();
+await suite('feel-landscape-and-zoom', async () => {
+  const {page,goto,ready,tap,errors} = await openPage(browser2,'landscape');
+  await page.addInitScript(() => { try { localStorage.setItem('frontier-defence-v1', JSON.stringify({levels:{'d-longcrossing':{stars:1,lives:5,difficulty:'standard'}}})); } catch {} });
+  await goto(); await ready(); await tap('#start');
+  const measure = () => page.evaluate(() => {
+    const f=window.__frontier,s=f.sim,v=f.view;
+    s.aiEnabled=false; s.visible[0].fill(1); s.explored[0].fill(1);
+    const out=[];
+    for (const type of ['worker','ranger','vanguard','tank','breaker','antitank','medic','engineer']) {
+      const e=s.spawn(type,0,0,0); v.update(s,0,new Set(),null);
+      const m=v.objects.get(e.id).userData.model; m.updateMatrixWorld(true);
+      let min=Infinity,max=-Infinity;
+      m.traverse(o => { if(!o.isMesh) return; o.geometry.computeBoundingBox(); const b=o.geometry.boundingBox;
+        for(const x of [b.min.x,b.max.x]) for(const y of [b.min.y,b.max.y]) for(const z of [b.min.z,b.max.z]) { const q=o.position.clone().set(x,y,z).applyMatrix4(o.matrixWorld).project(v.camera); min=Math.min(min,q.y); max=Math.max(max,q.y); } });
+      out.push({type,pixels:(max-min)*(v.drawHeight||v.height)/2});
+    }
+    return out;
+  });
+  await page.evaluate(() => { const v=window.__frontier.view; v.focusOn(0,0); v.zoom=v.defaultZoom; v.updateCamera(); });
+  const base = await measure();
+  console.log('Landscape default unit heights',JSON.stringify(base.map(r=>[r.type,+r.pixels.toFixed(1)])));
+  // The projected silhouette of the smallest units is under 28 px here too only because the rule is measured on the framed height; require a real floor.
+  for (const r of base) assert.ok(r.pixels>=28-1e-9,`${r.type}: ${r.pixels}px on a landscape phone`);
+  await page.evaluate(() => { const v=window.__frontier.view; v.zoom=92; v.updateCamera(); });
+  const far = await measure();
+  console.log('Landscape unit heights at zoom 92',JSON.stringify(far.map(r=>[r.type,+r.pixels.toFixed(1)])));
+  const tank = far.find(r=>r.type==='tank').pixels;
+  assert.ok(tank>=14,`a tank at zoom 92 is ${tank}px`);
+  assert.deepEqual(errors,[]);
+}, {browser:browser2});

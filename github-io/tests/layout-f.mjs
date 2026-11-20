@@ -123,7 +123,7 @@ try {
     if (landscapePhone) {
       const share = await page.evaluate(FREE_SHARE);
       console.log(`${name}: free battlefield ${share.toFixed(3)} with nothing selected`);
-      if (share < 0.6) problems.push(`${name}: free battlefield ${share.toFixed(2)} with nothing selected`);
+      if (share < 0.65) problems.push(`${name}: free battlefield ${share.toFixed(2)} with nothing selected`);
     }
     await select(['worker']);
     await dockTab('selection');

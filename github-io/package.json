@@ -69,7 +69,8 @@
     "test:golden-full": "node tests/golden-full.mjs",
     "ci:build-job": "npm test && npm run check:defence && npm run build",
     "test:gunner": "node tests/gunner.mjs",
-    "test:workshops": "node tests/workshops.mjs"
+    "test:workshops": "node tests/workshops.mjs",
+    "test:phones": "node tests/phones.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

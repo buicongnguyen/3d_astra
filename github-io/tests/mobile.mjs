@@ -42,6 +42,8 @@ const screenshot = (name) =>
   });
 const read = (fn) => page.evaluate(fn);
 const tap = (selector) => page.locator(selector).tap();
+// Box select, Queue orders, Clear selection and Info & stats live in the "…" sheet (W1-D).
+const tapMore = async (selector) => { await tap("#touch-more"); await tap(selector); };
 const worldPoint = (x, z, y = 0) =>
   page.evaluate(
     ({ x, z, y }) => {
@@ -81,8 +83,8 @@ const layout = async (label) => {
     const controls = [
       "#select-workers",
       "#select-army",
-      "#box-select",
-      "#queue-orders",
+      "#select-army",
+      "#touch-more",
       "#pause",
       "#help",
       "#dock-tabs",
@@ -297,7 +299,7 @@ try {
     "Cancelled gestures do not issue orders",
   );
 
-  await tap("#queue-orders");
+  await tapMore("#queue-orders");
   await tap("#move-order");
   await tapPoint({ x: cx, y: cy });
   await tap("#move-order");
@@ -308,7 +310,7 @@ try {
     ),
     "Queue toggle appends commands",
   );
-  await tap("#queue-orders");
+  await tapMore("#queue-orders");
   await tap("#stop-order");
   await tap("#attack-order");
   await tap("#cancel-mode");
@@ -319,7 +321,7 @@ try {
     window.__frontier.view.zoom = 38;
     window.__frontier.view.resize();
   });
-  await tap("#box-select");
+  await tapMore("#box-select");
   rect = await page.locator("#world canvas:not(.activity-overlay)").boundingBox();
   // Portrait phones run the canvas under the tool row and the dock: drag across the framed part.
   const cover = await read(() => ({ top: window.__frontier.view.coverTop || 0, bottom: window.__frontier.view.cover || 0 }));
@@ -335,9 +337,11 @@ try {
     await page.locator("#box-select").getAttribute("aria-pressed"),
     "false",
   );
-  await tap("#quality");
+  // The Eco/High badge is not drawn on touch devices (W1-D); its click handler still toggles.
+  assert.equal(await read(() => getComputedStyle(document.querySelector("#quality")).display), "none");
+  await read(() => document.querySelector("#quality").click());
   await page.waitForFunction(() => !window.__frontier.view.lowPower);
-  await tap("#quality");
+  await read(() => document.querySelector("#quality").click());
   await page.waitForFunction(() => window.__frontier.view.lowPower);
   await tap("#pause");
   assert.equal(await read(() => window.__frontier.paused), true);

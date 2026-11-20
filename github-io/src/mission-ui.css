@@ -311,3 +311,28 @@
   .debrief-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .debrief-actions .primary { grid-column: auto; min-height: 48px; }
 }
+
+/* Phones (W1-D): the dialogue is a one-line chip at the bottom left, in the dock band (--band, landscape-hud.css),
+   that opens on a tap. A scene keeps the full box (scenes.css). */
+@media (max-aspect-ratio: 1.35) {
+  .compact-ui:not(.scene-open):not(.in-briefing) .dialogue { top: auto; right: auto; left: 8px; bottom: var(--band); width: auto; max-width: calc(100% - 78px); }
+  .compact-ui:not(.scene-open) .dialogue.expanded { right: 8px; max-width: none; }
+}
+@media (min-aspect-ratio: 1.35) {
+  .compact-ui:not(.scene-open):not(.in-briefing) .dialogue { top: auto; right: auto; left: calc(var(--edge-left) + var(--mini-w) + 8px); bottom: calc(var(--safe-bottom) + 58px); width: auto; max-width: calc(100% - var(--mini-w) - var(--side-width) - 48px); }
+  .compact-ui:not(.scene-open) .dialogue.expanded { max-width: calc(100% - var(--mini-w) - var(--side-width) - 24px); }
+  .compact-ui.dialogue-open:not(.in-briefing):not(.scene-open) #fight-hint { bottom: calc(var(--safe-bottom) + 58px + var(--dialogue-h, 44px) + 6px); }
+}
+.compact-ui:not(.scene-open) .dialogue:not(.expanded) .dialogue-card { min-height: 44px; padding: 0 12px 0 6px; border-radius: 22px; gap: 8px; }
+.compact-ui:not(.scene-open) .dialogue:not(.expanded) .dialogue-words { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.compact-ui:not(.scene-open) .dialogue:not(.expanded) #dialogue-name { flex: none; font-size: 12px; }
+.compact-ui:not(.scene-open) .dialogue:not(.expanded) #dialogue-text { flex: 1 1 auto; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+.compact-ui:not(.scene-open) .dialogue:not(.expanded) #dialogue-more { flex: none; margin: 0; }
+.compact-ui:not(.scene-open) .dialogue:not(.expanded) #dialogue-close { display: none; }
+.compact-ui:not(.scene-open) .dialogue:not(.expanded) .cast-portrait { --size: 32px; }
+@media (max-aspect-ratio: 1.35) {
+  /* The dialogue chip is at the bottom now: toasts and the targeting prompt keep their top places. */
+  .compact-ui.dialogue-open:not(.in-briefing):not(.scene-open) #notice { top: 94px; }
+  .compact-ui.dialogue-open:not(.in-briefing):not(.scene-open) #mode-banner { top: 84px; }
+  .compact-ui.dialogue-open:not(.in-briefing):not(.construction-open):not(.scene-open) #stage:has(> #mode-banner:not([hidden])) > #notice { top: 148px; }
+}

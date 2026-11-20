@@ -45,7 +45,13 @@ export function setupHud(S, A) {
     }
   }
 
+  function setTouchSheet(open) {
+    $("touch-sheet").hidden = !open;
+    $("touch-more").setAttribute("aria-expanded", String(open));
+  }
+
   function setLayout() {
+    setTouchSheet(false);
     document.documentElement.classList.toggle(
       "compact-ui",
       compactMedia.matches || S.touchInput,
@@ -104,6 +110,24 @@ export function setupHud(S, A) {
       .padStart(2, "0")}`;
   }
 
+  // Portrait phones run the canvas on under the dock to the tab strip (view.js, --view-cover). The part under
+  // an open dock is not drawn at all, which is only right while the dock covers the whole of it; the dock now
+  // grows to what it shows (nothing selected: the tab strip alone, one unit: a short card; mobile.css and
+  // landscape-hud.css set --dock-height per state), so the strip is drawn whenever the dock is shorter than
+  // the cover. Read from the dock's real height, and only when what decides it changes.
+  let coverKey = "";
+  function coverFollowsDock(es) {
+    const view = S.view;
+    if (!view?.setCoverOpen) return;
+    const root = document.documentElement;
+    const key = `${root.dataset.dock}/${es.length ? (es.some((u) => u.kind === "unit") ? (es.length > 1 ? "units" : "unit") : "building") : "none"}/${root.classList.contains("many-orders")}/${root.classList.contains("compact-ui")}/${innerWidth}x${innerHeight}`;
+    if (key === coverKey) return;
+    coverKey = key;
+    if (!(view.cover > 0)) { view.setCoverOpen(true); return; }
+    const dock = document.querySelector(".bottom-dock");
+    view.setCoverOpen(dock.offsetHeight >= view.cover - 0.5);
+  }
+
   let lastInfoHtml = null;
   // A unit roster wider than its row fades out at the right edge (more to scroll) instead of
   // ending in a portrait cut in half; the fade goes once the row is scrolled to its end.
@@ -151,8 +175,6 @@ export function setupHud(S, A) {
       e = es[0];
     document.querySelector('.selection-panel').classList.toggle('has-entity',!!e);
     document.querySelector('.selection-panel').classList.toggle('has-roster',es.length>1);
-    // Portrait phones: the strip under the dock is drawn only while the slim empty bar is up.
-    S.view?.setCoverOpen?.(!(document.documentElement.dataset.dock === "selection" && !e));
     $("selection-count").textContent =
       es.length > 1
         ? `${es.length} SELECTED`
@@ -186,6 +208,7 @@ export function setupHud(S, A) {
     const orderCount = [...document.querySelectorAll('.order-buttons button')].filter(b => !b.hidden).length;
     document.documentElement.classList.toggle('many-orders', orderCount > 5);
     document.documentElement.classList.toggle('wide-orders', orderCount > 6);
+    coverFollowsDock(es);
     $("command-context").title = `Command core technology ${S.sim.techLevel()} / 3`;
     const hasCore = S.sim.own(0).some((b) => b.type === "hq");
     const signature = `${hasCore}/${es.map((e) => e.id).join(",")}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${p.flak}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2" || q.type === "flak")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}`;
@@ -379,6 +402,19 @@ export function setupHud(S, A) {
     setLayout();
 
     $("mission-toggle").onclick = () => setObjectivesOpen(!document.documentElement.classList.contains('objectives-open'));
+
+    // The phone touch row is Army, Workers and "…"; the "…" sheet holds Box select, Queue orders, Clear selection
+    // and Info & stats. Those buttons keep their ids and handlers (they only moved into the sheet); a choice
+    // closes the sheet, and so does a tap anywhere else, Escape or a new match.
+    $("touch-more").onclick = () => setTouchSheet($("touch-sheet").hidden);
+    $("touch-sheet").addEventListener("click", (event) => { if (event.target.closest("button")) setTouchSheet(false); });
+    $("touch-guide").onclick = () => { const e = A.selectedEntities()[0]; A.showGuide(e?.type, e?.team); };
+    document.addEventListener("pointerdown", (event) => {
+      if (!$("touch-sheet").hidden && !(event.target instanceof Element && event.target.closest("#touch-sheet, #touch-more"))) setTouchSheet(false);
+    }, true);
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !$("touch-sheet").hidden) { setTouchSheet(false); event.stopPropagation(); $("touch-more").focus({ preventScroll: true }); }
+    }, true);
 
     document.addEventListener('pointerdown', event => {
       if (document.documentElement.classList.contains('objectives-open') &&
