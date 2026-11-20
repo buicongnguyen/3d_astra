@@ -10,6 +10,16 @@ function declaredModels(match, factions) {
     for (const type of Object.values(faction?.swap || {})) types.add(type);
     if (faction?.building) types.add(faction.building);
   }
+  // Expanded roster (AAA round 2, W1-A): the host building and the workshop units of every faction in play,
+  // read from the `workshop` field (balance.json "workshops"), so a new workshop unit needs no edit here.
+  // A match that names no faction plays Meridian.
+  if (match.rules?.roster === 'expanded' || match.missionDef?.rules?.roster === 'expanded') {
+    for (const id of ids.length ? ids : ['meridian']) {
+      const host = balance.workshops?.hosts?.[id];
+      if (host) types.add(host);
+      for (const [type, d] of Object.entries(balance.definitions)) if (d.kind === 'unit' && d.workshop === id) types.add(type);
+    }
+  }
   // Everything the mission script can put on the field later: spawns, waves and unlocks, resolved for each roster in play.
   const def = match.missionDef, named = new Set(def?.rules?.unlock || []);
   const scan = (o) => {

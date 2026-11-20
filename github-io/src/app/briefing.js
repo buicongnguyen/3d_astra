@@ -13,6 +13,8 @@ import { campaignMapHTML, missionChoices } from "../campaign-map-ui.js";
 import { readSave } from "../savegame.js";
 import { teamColors } from "../faction-colors.js";
 import { DEFENCE_LEVELS, defenceLevel } from "../defence/levels.js";
+import { RULE_OPTIONS } from "./rule-options.js";
+import { ruleValue, withRule, rulesKey, activeRules } from "./rules-store.js";
 
 export function setupBriefing(S, A) {
   const Z = S.screen;
@@ -98,6 +100,7 @@ export function setupBriefing(S, A) {
       : inCampaign ? (picked.objectives.find((o) => !o.hidden && !o.optional) || picked.objectives[0]).text : "Eliminate enemy command";
     for (const b of document.querySelectorAll("[data-mode]")) b.setAttribute("aria-pressed", String(b.dataset.mode === S.playMode));
     $("skirmish-setup").hidden = S.playMode !== "skirmish";
+    syncRules();
     $("campaign-setup").hidden = !inCampaign;
     $("campaign-difficulty").hidden = !inCampaign && S.playMode !== "defence";
     $("defence-setup").hidden = S.playMode !== "defence";
@@ -131,11 +134,27 @@ export function setupBriefing(S, A) {
     if (S.playMode === "defence") A.renderDefenceMenu?.();
   }
 
+  // The rules a match built from the setup now would get: the chosen ones for a skirmish, none otherwise (as createSim in main.js).
+  const skirmishRules = () => (S.playMode === "skirmish" && !S.mission ? S.rules : null);
+
+  // The "Battle rules" row of the skirmish setup (app/rule-options.js): a segmented control per rule,
+  // drawn into #skirmish-setup when the page binds (the markup in app/shell.js stays as it is).
+  function rulesHTML() {
+    const row = (o) => `<div class="rule-row" data-rule="${o.id}"><span class="rule-name">${o.label}${o.badge ? `<i class="rule-badge">${o.badge}</i>` : ""}</span><div class="rule-buttons" role="group" aria-label="${o.label}">${o.values.map((v) => `<button type="button" data-rule-value="${v.id}" aria-pressed="false">${v.label}</button>`).join("")}</div><small class="rule-help">${o.help}</small></div>`;
+    return `<div class="rule-rows" id="battle-rules" role="group" aria-labelledby="battle-rules-title"><span class="rule-title" id="battle-rules-title">Battle rules</span>${RULE_OPTIONS.map(row).join("")}</div>`;
+  }
+  function syncRules() {
+    for (const row of document.querySelectorAll("#battle-rules .rule-row"))
+      for (const button of row.querySelectorAll("[data-rule-value]")) button.setAttribute("aria-pressed", String(button.dataset.ruleValue === ruleValue(S.rules, row.dataset.rule)));
+  }
+
   function previewBattle() {
     if (Z.started) return;
     const setup = battleSetup();
     const same = (!setup.mission || S.sim.difficulty === S.settings.campaignDifficulty) && setup.map === S.mapId && setup.enemyCount === S.enemyCount && setup.aiSpeed === S.aiSpeed && setup.alliance === S.alliance && setup.faction === S.enemyFaction && setup.playerFaction === S.playerFaction && setup.bonus === S.bonus && setup.mission === S.mission;
-    if (!same) {
+    // The battle rules (app/rule-options.js) belong to a skirmish only: the preview shows the chosen ones.
+    const sameRules = rulesKey(S.sim.rules) === rulesKey(skirmishRules());
+    if (!same || !sameRules) {
       const terrain = setup.map !== S.mapId || setup.enemyCount !== S.enemyCount;
       ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction, playerFaction: S.playerFaction } = setup);
       S.sim = A.createSim();
@@ -177,6 +196,17 @@ export function setupBriefing(S, A) {
       previewBattle();
     };
     for (const id of ["scenario", "enemy-count", "ai-speed", "alliance", "enemy-faction"]) $(id).onchange = previewBattle;
+    // Battle rules: choosing one is remembered and rebuilds the preview (it is part of the match).
+    $("skirmish-setup").insertAdjacentHTML("beforeend", rulesHTML());
+    $("battle-rules").onclick = (event) => {
+      const button = event.target.closest("[data-rule-value]");
+      if (!button || Z.started) return;
+      S.rules = withRule(S.rules, button.closest("[data-rule]").dataset.rule, button.dataset.ruleValue);
+      A.rememberRules?.();
+      previewBattle();
+    };
+    // Continue restores the rules the saved match was played with (match-flow.js builds the match, this runs first).
+    $("continue").addEventListener("click", () => { const save = readSave(); if (save?.mode === "skirmish") { try { S.rules = activeRules(JSON.parse(save.text).options?.rules); } catch { /* A broken save is dealt with by match-flow.js. */ } } });
     // "Your faction" is remembered between visits (settings.playerFaction).
     $("player-faction").onchange = () => {
       S.settings.playerFaction = $("player-faction").value;

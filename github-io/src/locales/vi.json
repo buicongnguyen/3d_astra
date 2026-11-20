@@ -1185,7 +1185,17 @@
     "Top rank": "Hạng cao nhất",
     "Rank 2": "Hạng 2",
     "Assault": "Xung kích",
-    "Bulwark": "Thành lũy"
+    "Bulwark": "Thành lũy",
+    "Field workshop": "Xưởng dã chiến",
+    "Meridian signature units": "Đơn vị đặc trưng Meridian",
+    "Expanded roster. The Meridian Expedition's field workshop trains its signature units. It needs a completed Foundry. Upgrade it to unlock the stronger units.": "Binh chủng Mở rộng. Xưởng dã chiến của Đoàn viễn chinh Meridian huấn luyện các đơn vị đặc trưng. Cần có Nhà máy đã hoàn thành. Nâng cấp để mở các đơn vị mạnh hơn.",
+    "Battle rules": "Luật trận đấu",
+    "Roster": "Binh chủng",
+    "Classic": "Cổ điển",
+    "Expanded": "Mở rộng",
+    "New": "Mới",
+    "Expanded gives every faction a workshop for new signature units.": "Mở rộng cho mỗi phe một xưởng huấn luyện các đơn vị đặc trưng mới.",
+    "Expanded roster": "Binh chủng Mở rộng"
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],
@@ -1707,6 +1717,10 @@
     [
       "^(.+) cannot hit flyers\\. Use Rangers, Anti-tank soldiers or other units that hit air\\.$",
       "{1} không bắn được mục tiêu bay. Hãy dùng Xạ thủ, Chống tăng hoặc đơn vị khác bắn được mục tiêu bay."
+    ],
+    [
+      "^Expanded roster: trained at the (.+), level (\\d+)\\.$",
+      "Binh chủng Mở rộng: huấn luyện tại {1}, cấp {2}."
     ]
   ]
 }

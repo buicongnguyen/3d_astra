@@ -5,5 +5,8 @@
 // A module must not use other sim exports at import time (src/sim/content.js reads this list while
 // the sim files are still loading); inside its hooks it may use anything.
 
+import { workshops } from "./workshops.js";
+
 export const CONTENT = [
+  workshops,
 ];

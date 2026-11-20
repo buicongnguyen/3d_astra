@@ -1,4 +1,4 @@
-import { AIR, CLASS_LABELS } from './factions.js';
+import { AIR, CLASS_LABELS, HOST_FACTION, HOST_OF, workshopUnitsOf } from './factions.js';
 import { DEFINITIONS as D } from './data.js';
 import './progression.css';
 import { MAPS, TERRAIN } from './terrain.js';
@@ -27,7 +27,9 @@ export function entryHTML(type, sim = null, team = 0) {
     ${d.support ? `<p>Restores ${d.support} HP each second within range ${d.range}. Requires a clear line. No resource cost. Does not refill shields, heal itself, finish construction or revive casualties.</p><p>Use <strong>Support → friendly target</strong> to follow an ally. Idle helpers automatically assist injured allies in range.</p>` : ''}
     ${d.flying ? AIR_GUIDE : ''}
     ${d.hits_air && !d.flying ? '<p>Hits air: it can shoot flyers.</p>' : ''}
-    ${d.required_level ? `<p>Requires level ${d.required_level} ${d.flying ? 'Command core' : ['medic','antitank'].includes(sim?.slotOf(type) || type) ? 'Barracks' : 'Foundry'}.</p>` : ''}
+    ${d.required_level && !d.workshop ? `<p>Requires level ${d.required_level} ${d.flying ? 'Command core' : ['medic','antitank'].includes(sim?.slotOf(type) || type) ? 'Barracks' : 'Foundry'}.</p>` : ''}
+    ${d.workshop && D[HOST_OF[d.workshop]] ? `<p>Expanded roster: trained at the ${D[HOST_OF[d.workshop]].name}, level ${d.required_level || 1}.</p>` : ''}
+    ${d.kind === 'building' && workshopUnitsOf(HOST_FACTION[type]).length ? `<h3>Expanded roster</h3><ul>${workshopUnitsOf(HOST_FACTION[type]).map(k => `<li>${D[k].name}${D[k].required_level ? ` · level ${D[k].required_level}` : ''}: ${D[k].cost[0]} alloy / ${D[k].cost[1]} energy</li>`).join('')}</ul>` : ''}
     ${d.kind === 'building' ? `<h3>Building functions</h3><ul>${(d.trains || []).map(k => `<li>${D[k].name}${D[k].required_level ? ` · level ${D[k].required_level}` : ''}: ${D[k].cost[0]} alloy / ${D[k].cost[1]} energy</li>`).join('')}${d.supply ? `<li>Provides ${d.supply} supply at level 1.</li>` : ''}${type === 'tower' ? '<li>Automatically attacks visible enemies.</li>' : ''}</ul>
     <h3>Building upgrades</h3><p>L2: +25% base HP, +25 shield, 1.2× production rate.<br>L3: +50% base HP, +50 shield, 1.4× production rate, total.</p><p>Towers gain 50% / 100% base attack and 1 / 2 m range; Relays gain 5 / 10 supply. Supply is capped at 100.</p>
     <p>Command core: L2 costs 200/100; L3 costs 350/175 alloy/energy.<br>Sentinel tower: L2 costs 75/25; L3 costs 150/50.<br>Other buildings: L2 costs 100/50; L3 costs 200/100.<br>Upgrade time: 20s / 30s.</p><p>Other buildings require a completed Command core at the next level. Finish or cancel production first. Cancel an upgrade for a full refund; destruction gives no refund.</p>` : ''}
