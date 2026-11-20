@@ -2,6 +2,9 @@
 
 ## Unreleased: AAA round 2
 
+### W2-D: Field command AI plan (opt-in)
+New Battle rule "AI plan: Classic / Field command" (`rules.aiPlan === "field"`, skirmish only). The computer keeps its heavy slot, sends fewer Harvesters to energy when it is rich, saves alloy for the Foundry and Tanks, defends every other core and held ring, fields one of each combat slot, casts abilities with intent (`ai-casts.js`) and places `ai.role` units (`field-command.js`). Classic is unchanged (pins, tick time identical).
+
 ### W0-A: Safety net, baseline tools and the view seam
 Nothing changes for the player: no rule, number or picture moved. This makes every later change provable.
 - **Golden pins split and extended (K1).** `tests/golden-play.test.js` is now `tests/golden-skirmish.test.js`, `golden-defence.test.js` and `golden-story.test.js`, run in parallel; all 33 earlier values are kept. New pins, recorded at the base before any change: two skirmish setups as the skirmish screen makes them (riverlands ×3 Sunward against mixed rivals, dunes Ashfall against Veil), a save at 180 s that reloads to the same 300 s hash on all six AI setups, the towers left standing in the DefenceBot runs, Endless on Gorge Road to wave 12, Hold the River (DefenceBot, 120 s) and the Ashfall Chronicle's Cold Berths (120 s). The 300 s points, save and reload, Three Roads and Endless run only in `npm run test:golden-full` (new CI matrix entry `golden-full`); `npm test` keeps the fast ones. `d071360b` is now checked in one file only.

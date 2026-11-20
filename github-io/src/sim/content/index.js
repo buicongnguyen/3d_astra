@@ -15,6 +15,8 @@ import { towerAim } from "./tower-aim.js";
 import { facing } from "./facing.js";
 import { rampart } from "./rampart.js";
 import { outrider } from "./outrider.js";
+import { aiCasts } from "./ai-casts.js";
+import { fieldCommand } from "./field-command.js";
 
 export const CONTENT = [
   suppression,
@@ -25,4 +27,6 @@ export const CONTENT = [
   facing,
   rampart,
   outrider,
+  aiCasts,
+  fieldCommand,
 ];

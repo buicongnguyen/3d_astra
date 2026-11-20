@@ -1,5 +1,5 @@
 import { DEFINITIONS as D, MAX_POP, distance } from "../data.js";
-import { roleOf } from "../ai-plan.js";
+import { roleOf, fieldPlan } from "../ai-plan.js";
 import { EXPAND_CREW } from "./expand.js";
 import { aiAttack } from "./ai-attack.js";
 import { AI_RULES } from "./content.js";
@@ -99,6 +99,8 @@ export const ai = {
     const foundryIdle = own.some((e) => e.type === "foundry" && e.complete && !e.levelJob && !e.queue.length);
     // (Flyers are not saved for: the core trains them from spare resources, see aiAirTrain below.)
     const hold = foundryIdle && vehicles * 4 < army.length && this.players[team].energy >= D.breaker.cost[1] ? D.breaker.cost[0] : 0;
+    // Field command (W2-D, S1): with energy piling up, the Barracks holds alloy for the Foundry's next level or its heavy unit (Tank, Walker).
+    const fieldOn = fieldPlan(this, team), fieldHold = fieldOn ? this.aiFieldHold(team, own, pace) : 0;
     for (const b of own.filter((e) => e.complete && ["barracks", "foundry"].includes(e.type))) {
       if (b.levelJob) continue;
       const branch = this.researchBranch(team, role);
@@ -112,6 +114,8 @@ export const ai = {
         if (!b.queue.length) this.upgradeBuilding(b.id,team);
         continue;
       }
+      // Field command: with energy above 500 the Foundry waits for its next level (the Barracks is saving for it) instead of training a Breaker.
+      if (fieldHold && b.type === "foundry" && b.level < Math.min(3, this.techLevel(team)) && this.time > pace.upgradeAt) continue;
       // Army size follows the speed's curve; a base under attack may always train.
       // In skirmish, alloy piling up beyond the cap is spent anyway: a rich base that sits idle looks broken.
       const cap = pace.army && (this.mission || this.players[team].alloy < 600) ? pace.army[0] + pace.army[1] * (this.time / 60) : Infinity;
@@ -122,12 +126,22 @@ export const ai = {
         if (b.type === 'foundry' && b.level >= 3 && army.filter(e => this.slotOf(e.type) === 'tank').length <= army.filter(e => this.slotOf(e.type) === 'breaker').length + (role === 'siege' ? 2 : 0)) choice = 'tank';
         if (b.type === 'barracks' && b.level >= 2 && army.filter(e => this.slotOf(e.type) === 'antitank').length < 3) choice = 'antitank';
         choice = this.counterChoice(team, b, army, choice);
+        // Field command: one of each combat slot the building trains (an Anti-tank team at the Barracks, a Tank at a level 3 Foundry) before more of the same.
+        if (fieldOn) {
+          const has = (slot) => army.some(e => this.slotOf(e.type) === slot) || own.some(e => (e.queue || []).some(q => this.slotOf(q.type) === slot));
+          if (b.type === 'barracks' && b.level >= 2 && !has('antitank')) choice = 'antitank';
+          else if (b.type === 'foundry' && b.level >= 3 && !has('tank')) choice = 'tank';
+        }
         const support = b.type === 'foundry' ? 'engineer' : 'medic';
-        if (b.level >= 2 && army.filter(e => this.slotOf(e.type) === support).length < 2) choice = support;
+        // Field command: a level 3 Foundry trains its heavy unit first and takes an Engineer only once one stands.
+        const needs = fieldOn && b.type === 'foundry' && b.level >= 3 ? (army.some(e => this.slotOf(e.type) === 'tank') ? 1 : 0) : 2;
+        if (b.level >= 2 && army.filter(e => this.slotOf(e.type) === support).length < needs) choice = support;
         const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : ['breaker'])].map(slot => this.typeFor(team,slot)))].filter(type => this.canTrain(team,type));
         const pop = this.population(team);
-        const save = b.type === 'barracks' ? hold : 0;
+        const save = b.type === 'barracks' ? Math.max(hold, fieldHold) : 0;
         const affordable = choices.find(type => b.level >= (D[type].required_level || 1) && afford([D[type].cost[0] + save, D[type].cost[1]]) && pop.used+pop.reserved+D[type].pop <= pop.cap);
+        // Field command: an energy-costly first pick that only lacks alloy is saved for, not replaced by the cheapest unit.
+        if (fieldOn && affordable !== choices[0] && this.aiFieldWaits(team, b, choices[0], pop, save)) continue;
         if (affordable) this.enqueue(b.id,affordable);
       }
     }
@@ -170,6 +184,8 @@ export const ai = {
         if (ground) this.issue(answer.filter((e) => !e.hits_air).map((e) => e.id), { type: "attack", target: ground.id });
       }
     }
+    // Field command (W2-D, S2): the other cores and held rings are defended too.
+    if (fieldOn && hq) this.aiGuardSites(team, own, army, hq, pace);
     // A mission that sends its own waves lets the computer build up and defend at home only.
     if (this.aiHome) return;
     if (!cmd && persona?.retreat && hq && this.aiFallBack(team, hq, army, pace, persona.retreat)) return;

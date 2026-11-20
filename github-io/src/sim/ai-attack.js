@@ -155,6 +155,31 @@ export const aiAttack = {
     const go = ready.filter((e) => !(e.orders[0]?.type === "attackmove" && !e.orders[0].aiw && distance(e.orders[0], threat) < 8));
     if (go.length) this.issue(go.map((e) => e.id), { type: "attackmove", x: threat.x, z: threat.z });
   },
+  // Field command (W2-D, S2): every complete core other than the main one, and every ring this side or an ally holds,
+  // keeps its own threat list; the nearest free units (home or point duty, not in an attack) answer each one.
+  aiGuardSites(team, own, army, hq, pace) {
+    const sites = [], rings = this.skirmishPoints || {};
+    for (const c of own) if (c.type === "hq" && c.complete && c !== hq) sites.push({ x: c.x, z: c.z, near: 25, far: pace.defendRadius ?? 25 });
+    for (const name of Object.keys(rings).sort()) {
+      const ring = rings[name];
+      if (ring.owner === team || (ring.owner !== null && ring.owner !== undefined && !this.hostile(team, ring.owner))) sites.push({ x: ring.x, z: ring.z, near: ring.r + 4, far: ring.r + 10 });
+    }
+    if (!sites.length) return;
+    const antiAir = army.some((e) => e.hits_air) || (!!this.players[team].flak && own.some((e) => e.type === "tower" && e.complete));
+    const taken = new Set();
+    for (const s of sites) {
+      const threats = this.entities.filter((e) => e.hp > 0 && this.hostile(team, e.team) && (e.kind === "unit" || e.kind === "building") && (!e.flying || antiAir) && this.isVisible(e, team) &&
+        distance(s, e) < (e.kind === "building" ? s.near : s.far)).sort((a, b) => distance(s, a) - distance(s, b) || a.id - b.id);
+      if (!threats.length) continue;
+      const power = threats.reduce((n, e) => n + (e.kind === "building" ? (e.damage ? 4 : 1) : e.type === "worker" ? 0.5 : e.pop || 1), 0);
+      const need = Math.max(2, Math.min(8, Math.ceil(power * 1.5))), lead = threats[0];
+      const free = army.filter((e) => e.damage > 0 && !e.retreating && !taken.has(e.id) && !e.orders.some((o) => o.aiw) && (!lead.flying || e.hits_air) &&
+        (!e.orders.length || (e.orders[0].type === "attackmove" && !e.orders[0].aiw))).sort((a, b) => distance(a, s) - distance(b, s) || a.id - b.id).slice(0, need);
+      for (const e of free) taken.add(e.id);
+      const go = free.filter((e) => !(e.orders[0]?.type === "attackmove" && distance(e.orders[0], lead) < 8));
+      if (go.length) this.issue(go.map((e) => e.id), { type: "attackmove", x: lead.x, z: lead.z });
+    }
+  },
   // Sends a group: through `via` first when given, then attack-moving on `target`. A group sent to a
   // search point (no core known) turns on the first core it finds. Returns its number.
   aiLaunch(team, units, target, via, search = target.team === undefined) {
