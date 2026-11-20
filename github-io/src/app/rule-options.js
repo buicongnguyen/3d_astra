@@ -19,4 +19,12 @@ export const RULE_OPTIONS = [
     default: "classic",
     badge: "New",
   },
+  {
+    id: "aiPlan",
+    label: "AI plan",
+    help: "Field command fields tanks and flyers and defends every core.",
+    values: [{ id: "classic", label: "Classic" }, { id: "field", label: "Field command" }],
+    default: "classic",
+    badge: "New",
+  },
 ];

@@ -12,10 +12,15 @@ import { workshops } from "./workshops.js";
 
 import { towerAim } from "./tower-aim.js";
 
+import { aiCasts } from "./ai-casts.js";
+import { fieldCommand } from "./field-command.js";
+
 export const CONTENT = [
   suppression,
   marksman,
   bossStatus,
   workshops,
   towerAim,
+  aiCasts,
+  fieldCommand,
 ];
