@@ -9,10 +9,11 @@ import { GARRISONS } from "../src/sim/defence.js";
 import { DEFINITIONS as D } from "../src/data.js";
 import DEFENCE_MAPS from "../src/defence/maps.json" with { type: "json" };
 import { DefenceBot } from "../tools/defence-bot.mjs";
+import { advance } from "./lib/sim.js";
 
 const ROADS = DEFENCE_LEVELS.find((l) => l.id === "d-crossroads"), GORGE = DEFENCE_LEVELS[0];
 const make = (level = ROADS, difficulty = "standard") => new Simulation({ map: level.map, enemyCount: 1, ai: false, mission: level, difficulty });
-const run = (s, seconds) => { for (let i = 0; i < seconds * 20 && !s.result; i++) s.tick(0.05); };
+const run = (s, seconds) => { advance(s, seconds, { events: "leave" }); };
 const segDist = (p, a, b) => {
   const dx = b.x - a.x, dz = b.z - a.z, t = Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.z - a.z) * dz) / (dx * dx + dz * dz)));
   return Math.hypot(p.x - a.x - t * dx, p.z - a.z - t * dz);

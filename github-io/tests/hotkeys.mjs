@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {launchBrowser,openPage,testUrl,suite,TIMEOUT} from './lib/harness.mjs';
+import {checkClientWiring} from './lib/client-wiring.mjs';
 const browser=await launchBrowser();
 const {page,errors}=await openPage(browser,{width:1280,height:800});
 const selected=()=>page.evaluate(()=>[...window.__frontier.selected]);
@@ -102,5 +103,6 @@ await suite('hotkeys',async()=>{
     assert.ok(fits,`control groups fit ${viewport.width}x${viewport.height}`);
     await page.locator('#modal [data-resume]').click();
   }
-  console.log('PC shortcuts: selection, groups, every build/train tile, repeat guard, orders, rally, modal/input guards and command buttons passed.');
+  await checkClientWiring(page,errors);
+  console.log('PC shortcuts: selection, groups, every build/train tile, repeat guard, orders, rally, modal/input guards and command buttons and client wiring (Start recentres, empty group recall, selection panel writes, restart) passed.');
 },{browser});

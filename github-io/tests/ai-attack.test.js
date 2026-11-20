@@ -5,9 +5,10 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Simulation } from '../src/simulation.js';
 import { worth } from '../src/sim/ai-attack.js';
+import { advance } from "./lib/sim.js";
 
 const TICK = 0.05;
-const run = (s, seconds) => { for (let i = 0; i < Math.round(seconds / TICK); i++) { s.tick(TICK); s.events.length = 0; } };
+const run = (s, seconds) => { advance(s, seconds, { steps: "round", stop: false, events: "clear" }); };
 const lerp = (a, b, t) => ({ x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t });
 
 // The rival (team 1) with only the fighters given, standing at its rally point, and no money, so it trains nothing.

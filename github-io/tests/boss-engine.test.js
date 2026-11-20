@@ -5,6 +5,7 @@ import assert from "node:assert/strict";
 import { Simulation } from "../src/simulation.js";
 import { DEFINITIONS as D } from "../src/data.js";
 import { BOSSES, warningSeconds, inZone } from "../src/sim/bosses.js";
+import { advance } from "./lib/sim.js";
 
 const SPEC = BOSSES["iron-sovereign"], STOMP = SPEC.attacks[0], SPREAD = SPEC.attacks[1];
 const field = (difficulty = "standard") => {
@@ -13,7 +14,7 @@ const field = (difficulty = "standard") => {
   const s = new Simulation({ map: "classic", enemyCount: 1, mission, difficulty });
   return { s, boss: s.tagged("boss")[0] };
 };
-const run = (s, seconds, seen = []) => { for (let i = 0; i < Math.round(seconds * 20) && !s.result; i++) { s.tick(0.05); seen.push(...s.events.map((e) => ({ ...e, at: s.time }))); s.events.length = 0; } return seen; };
+const run = (s, seconds, seen = []) => advance(s, seconds, { seen, steps: "round", events: "stamp" });
 const until = (s, test, cap = 60, seen = []) => { for (let i = 0; i < cap * 20 && !test(); i++) { s.tick(0.05); seen.push(...s.events.map((e) => ({ ...e, at: s.time }))); s.events.length = 0; } assert.ok(test(), "condition reached"); return seen; };
 const holders = (s, n, at = { x: 0, z: 2 }) => Array.from({ length: n }, (_, i) => { const u = s.spawn("ranger", 0, at.x - 1.2 + (i % 3) * 1.2, at.z + Math.floor(i / 3) * 1.2); u.damage = 0; u.stance = "hold"; return u; });
 

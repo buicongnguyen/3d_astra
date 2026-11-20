@@ -8,9 +8,10 @@ import { Simulation } from "../src/simulation.js";
 import { DEFINITIONS as D } from "../src/data.js";
 import { CONTENT } from "../src/sim/content/index.js";
 import { setContentModules, contentModules, SPAWN, HIT_SCALE, ON_HIT, TAKEN, ON_DEATH, STEP, FIGHT, AUTOCAST, TOWER_AIM, AI_RULES, STATUSES, ABILITIES, BUFF_PROTECTED } from "../src/sim/content.js";
+import { advance } from "./lib/sim.js";
 
 const TICK = 0.05;
-const run = (s, seconds) => { const end = s.ticks + Math.round(seconds / TICK); while (s.ticks < end && !s.result) { s.tick(TICK); s.events.length = 0; } return s.hash(); };
+const run = (s, seconds) => { advance(s, seconds, { steps: "round", events: "clear" }); return s.hash(); };
 // Runs `fn` with `modules` registered, then restores the previous list even when `fn` throws.
 function withModules(modules, fn) {
   const restore = setContentModules(modules);

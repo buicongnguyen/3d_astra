@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { Simulation } from '../src/simulation.js';
 import { DEFINITIONS as D } from '../src/data.js';
 import { RANK_XP, RANK_BONUS } from '../src/sim/tactics.js';
+import { advance } from "./lib/sim.js";
 
-const run = (s, seconds, seen = []) => { for (let i = 0; i < seconds * 20; i++) { s.tick(0.05); seen.push(...s.events); s.events.length = 0; } return seen; };
+const run = (s, seconds, seen = []) => advance(s, seconds, { seen, stop: false });
 // An empty field: no rival units to interfere, everything visible.
 function field(options = {}) {
   const s = new Simulation({ ai: false, ...options });

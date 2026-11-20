@@ -9,10 +9,11 @@ import { GARRISONS, endlessWave, seedOf } from "../src/sim/defence.js";
 import { DEFINITIONS as D } from "../src/data.js";
 import { modelsForMatch } from "../src/model-roster.js";
 import { loadDefence, saveDefence, buyPerk, canBuyPerk, starsFree, recordScore, bestScore, dailySeed, dayKey, endlessSeed, recordDefence, DEFENCE_KEY } from "../src/defence/progress.js";
+import { advance } from "./lib/sim.js";
 
 const GORGE = defenceLevel("d-gorge"), BRIDGES = defenceLevel("d-bridges"), FORDWOOD = defenceLevel("d-fordwood"), LONG = defenceLevel("d-longcrossing");
 const make = (level = GORGE, difficulty = "standard") => new Simulation({ map: level.map, enemyCount: 1, ai: false, mission: level, difficulty });
-const run = (s, seconds) => { for (let i = 0; i < Math.round(seconds * 20) && !s.result; i++) s.tick(0.05); };
+const run = (s, seconds) => { advance(s, seconds, { steps: "round", events: "leave" }); };
 const foes = (s) => s.entities.filter((e) => e.team === 1 && e.kind === "unit" && e.hp > 0);
 const rich = (s) => { s.players[0].alloy = 1e5; return s; };
 // One short wave on a chosen route, for exact checks.

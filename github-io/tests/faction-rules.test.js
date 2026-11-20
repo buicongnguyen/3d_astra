@@ -5,10 +5,11 @@ import { Simulation } from '../src/simulation.js';
 import { DEFINITIONS as D } from '../src/data.js';
 import { FACTION_RULES } from '../src/factions.js';
 import balance from '../src/balance.json' with { type: 'json' };
+import { advance } from "./lib/sim.js";
 
 const TICK = 0.05;
 const sim = (faction, options = {}) => new Simulation({ ai: false, factions: { 1: faction }, ...options });
-const run = (s, seconds) => { for (let i = 0; i < Math.round(seconds / TICK); i++) s.tick(TICK); };
+const run = (s, seconds) => { advance(s, seconds, { steps: "round", stop: false, events: "leave" }); };
 // Far from both bases, so nothing else interferes.
 const FIELD = { x: 0, z: 30 };
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) < eps;

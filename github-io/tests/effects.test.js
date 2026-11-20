@@ -7,9 +7,10 @@ import { Simulation } from "../src/simulation.js";
 import { DEFINITIONS as D } from "../src/data.js";
 import { setContentModules, STATUSES } from "../src/sim/content.js";
 import { statusInfo } from "../src/sim/effects.js";
+import { advance } from "./lib/sim.js";
 
 const TICK = 0.05;
-const run = (s, seconds) => { const end = s.ticks + Math.round(seconds / TICK); while (s.ticks < end && !s.result) { s.tick(TICK); s.events.length = 0; } return s.hash(); };
+const run = (s, seconds) => { advance(s, seconds, { steps: "round", events: "clear" }); return s.hash(); };
 const FIXTURE = { id: "fixture-statuses", statuses: {
   pinned: { speed: 0.5, reload: 1.5, noCast: true, icon: "pin" },
   stunned: { noFire: true, icon: "stun" },

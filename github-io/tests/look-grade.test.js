@@ -2,7 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import GRADE from "../src/look-grade.json" with { type: "json" };
-import { gradeFor, gradeChunk, fogOverride } from "../src/look-grade.js";
+import { gradeFor, gradeChunk, fogOverride, addTeamRim } from "../src/look-grade.js";
+import { bakedMaterial } from "../src/view.js";
+import { MeshStandardMaterial } from "three";
 
 test("the grade is one table: strength scales every term, themes may override", () => {
   assert.equal(gradeFor("classic").saturation, 1.12);
@@ -23,10 +25,6 @@ test("the Ashen fog is lighter than before and the rim is on in Eco and High", (
   assert.match(view, /rimShader\(shader\)/);
   assert.match(view, /addTeamRim\(m, /);
 });
-test("fonts: Baloo 2 has Latin and Vietnamese files under src/fonts, imported from CSS, no system-ui", () => {
+test("fonts: Baloo 2 has Latin and Vietnamese files under src/fonts (the CSS side is in css-layout.test.js)", () => {
   assert.ok(readdirSync(new URL("../src/fonts/", import.meta.url)).filter((f) => f.endsWith(".woff2")).length === 2);
-  const css = readFileSync(new URL("../src/ui-theme.css", import.meta.url), "utf8");
-  assert.match(css, /url\("\.\/fonts\/baloo-2-vietnamese-800-normal\.woff2"\)/);
-  assert.match(css, /--font-display: "Baloo 2"/);
-  assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ""), /system-ui/);
 });

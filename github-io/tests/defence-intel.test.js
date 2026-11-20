@@ -8,10 +8,11 @@ import { DEFENCE_LEVELS, defenceLevel, defenceVariant } from "../src/defence/lev
 import { GARRISONS, endlessWave } from "../src/sim/defence.js";
 import { DEFINITIONS as D } from "../src/data.js";
 import { modelsForMatch } from "../src/model-roster.js";
+import { advance } from "./lib/sim.js";
 
 const GORGE = defenceLevel("d-gorge"), LONG = defenceLevel("d-longcrossing");
 const make = (level = GORGE, difficulty = "standard") => new Simulation({ map: level.map, enemyCount: 1, ai: false, mission: level, difficulty });
-const run = (s, seconds) => { for (let i = 0; i < Math.round(seconds * 20) && !s.result; i++) s.tick(0.05); };
+const run = (s, seconds) => { advance(s, seconds, { steps: "round", events: "leave" }); };
 const foes = (s) => s.entities.filter((e) => e.team === 1 && e.kind === "unit" && e.hp > 0);
 const kill = (s, list) => { for (const e of list) s.applyDamage(e, 1e6, 0, null); };
 const worth = (type) => Math.ceil((D[type].cost[0] + D[type].cost[1]) * GARRISONS.bounty);

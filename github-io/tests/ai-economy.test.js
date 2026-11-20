@@ -2,8 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Simulation } from '../src/simulation.js';
 import { MISSIONS } from '../src/story/missions.js';
+import { advance } from "./lib/sim.js";
 
-const run = (s, seconds) => { for (let i = 0; i < seconds * 20; i++) { s.tick(0.05); s.events.length = 0; } };
+const run = (s, seconds) => { advance(s, seconds, { stop: false, events: "clear" }); };
 const stats = (s, team) => {
   const own = s.own(team);
   return { workers: own.filter((e) => e.type === 'worker').length, army: own.filter((e) => e.kind === 'unit' && e.type !== 'worker').length, buildings: own.filter((e) => e.kind === 'building').length };

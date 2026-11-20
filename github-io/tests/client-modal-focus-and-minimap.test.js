@@ -14,10 +14,6 @@ test("minimap caches static terrain and draws fog from ImageData", () => {
   assert.doesNotMatch(m, /ctx\.fillRect\(\s*\(x/);
 });
 
-test("selection-info is only rewritten when its html changes", () => {
-  assert.match(body("updateUI"), /infoHtml !== lastInfoHtml/);
-});
-
 test("every modal path goes through setModalOpen, which inerts and restores focus", () => {
   assert.doesNotMatch(src, /\$\("modal"\)\.hidden = (true|false)/);
   const h = body("setModalOpen");

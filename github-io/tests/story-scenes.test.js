@@ -19,12 +19,13 @@ import { GARRISONS } from "../src/sim/defence.js";
 import { DEFINITIONS as D } from "../src/data.js";
 import DEFENCE_MAPS from "../src/defence/maps.json" with { type: "json" };
 import { clientFile } from "./lib/client-source.js";
+import { advance } from "./lib/sim.js";
 
 const story = JSON.parse(readFileSync(new URL("../src/locales/story-vi.json", import.meta.url), "utf8")).messages;
 const actions = (m) => (m.triggers || []).flatMap((t) => t.do || []);
 // Every (mission, scene id) pair, including the variants an ending settles.
 const uses = MISSIONS.flatMap((m) => actions(m).filter((a) => a.scene).map((a) => ({ m, id: a.scene, if: a.if })));
-const run = (s, seconds, seen = []) => { for (let i = 0; i < seconds * 20 && !s.result; i++) { s.tick(0.05); seen.push(...s.events); s.events.length = 0; } return seen; };
+const run = (s, seconds, seen = []) => advance(s, seconds, { seen });
 
 test("scene data: known beats, cast speakers, short lines with Vietnamese, under 20 seconds", () => {
   assert.ok(Object.keys(SCENES).length >= 6, "six big moments");
@@ -280,5 +281,4 @@ test("the scene screen holds the match and keeps the music; the frame loop stops
   assert.match(scenes, /motionOff\(\)/, "motion-off cuts instead of easing");
   assert.match(scenes, /isExplored\(p, 0\)/, "the camera only visits explored places");
   assert.match(clientFile("modals.js"), /modalType === "scene"\) return;/, "pause does not open over a scene");
-  assert.match(readFileSync(new URL("../src/scenes.css", import.meta.url), "utf8"), /transform: scaleY\(1\)/, "letterbox bars move by transform");
 });

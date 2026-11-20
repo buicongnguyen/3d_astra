@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Simulation } from '../src/simulation.js';
+import { advance } from "./lib/sim.js";
 
 const base = { id: 't', map: 'classic', objectives: [], win: [], regions: { mid: { x: 0, z: 0, r: 7 }, east: { x: 14, z: 0, r: 6 } } };
 const make = (mission, options = {}) => new Simulation({ map: mission.map, ai: false, ...options, mission });
-const run = (s, seconds, seen = []) => { for (let i = 0; i < seconds * 20 && !s.result; i++) { s.tick(0.05); seen.push(...s.events); s.events.length = 0; } return seen; };
+const run = (s, seconds, seen = []) => advance(s, seconds, { seen });
 const types = (events, type) => events.filter((e) => e.type === type);
 
 test('hold: owning enough capture points for long enough wins, and an enemy can take one back', () => {
