@@ -13,9 +13,9 @@ import { shotSlope } from "./terrain-labels.js";
 // is requested. Particle and debris records are pooled: the per-frame emitters (fire, smoke,
 // trails) and the update loop allocate nothing once the pools are warm.
 
-const CELLS = ["glow", "puff", "ring", "streak", "scorch", "flare"];
-const CELL = Object.fromEntries(CELLS.map((name, i) => [name, i]));
-const BILLBOARD = 0, STRETCH = 1, GROUND = 2;
+import { CELLS, CELL, BILLBOARD, STRETCH, GROUND } from "./fx-kinds/cells.js";
+import { LOOKS, MOMENTS, shimmer } from "./fx-kinds/index.js";
+import { crit, resisted } from "./fx-kinds/counter.js";
 
 // Procedural sprite atlas: one 128 px cell per shape, white with alpha.
 function atlas() {
@@ -206,6 +206,8 @@ const ROOF = { hq: 5.2, barracks: 3.8, foundry: 4.4, relay: 3.6, tower: 3.8 };
 export class Effects {
   constructor(view) {
     this.view = view;
+    // The random source of the weapon kinds (src/fx-kinds): Math.random until a per-match seeded generator is injected.
+    this.rng = Math.random;
     this.texture = atlas();
     this.workTimers = new Map(); // per-Harvester countdown to its next spark
     this.workCursor = 0; // where the work-effect scan resumes, for fairness between busy Harvesters
@@ -398,7 +400,7 @@ export class Effects {
   // style.life seconds to fly, so the aim leads a moving target by its last-tick velocity;
   // otherwise shells land where the target was and look like misses.
   aim(e, sim) {
-    const style = weaponStyle(e), t = this.view.terrain, ground = (x, z) => (t?.plateaus?.length ? t.heightAt(x, z) : 0);
+    const style = weaponStyle(e, sim?.factions?.[e.team]), t = this.view.terrain, ground = (x, z) => (t?.plateaus?.length ? t.heightAt(x, z) : 0);
     let tx = e.tx, tz = e.tz;
     const target = e.target != null ? sim?.get?.(e.target) : null, before = target && this.view.previous?.get(target.id);
     if (target && before && e.type !== "support") {
@@ -425,7 +427,7 @@ export class Effects {
       this.particle(this.glow, { ...from, cell: CELL.flare, s0: flash, s1: flash * 1.2, life: heavy ? 0.11 : 0.06, c0: WARM.flash, c1: [1, 0.55, 0.15, 0], anchor });
     }
     if (sim.isVisible({ x: e.tx, z: e.tz })) {
-      const anchor = { x: e.tx, z: e.tz }, power = hitPower(e.weapon, style.kind);
+      const anchor = { x: e.tx, z: e.tz }, power = style.hit ?? hitPower(e.weapon, style.kind);
       this.timeline.push({ at: this.time + style.life, run: () => this.hit(land, power, anchor) });
     }
   }
@@ -444,7 +446,16 @@ export class Effects {
         gravity: -1.5 }, [0.4, 1], 0.8);
       return;
     }
-    const cannon = kind === "cannon", rocket = kind === "rocket", power = hitPower(e.weapon, kind);
+    const power = style.hit ?? hitPower(e.weapon, kind);
+    // A weapon with its own look (src/fx-kinds): the kind draws the muzzle, the rounds and the landing.
+    const look = m && style.look ? LOOKS[style.look] : null;
+    if (look) {
+      const ux = dir.x / len, uy = dir.y / len, uz = dir.z / len, h = Math.hypot(ux, uz) || 1;
+      look.spawn(this, e, this.rng, { from, to, land, ux, uy, uz, len, sx: -uz / h, sz: ux / h, nx, nz, travel, anchor, power, style, color: style.color });
+      this.slope(e, to, anchor, m, travel);
+      return;
+    }
+    const cannon = kind === "cannon", rocket = kind === "rocket";
     // Muzzle: star flare, hot glow and (for heavy weapons) a smoke puff drifting forward.
     const flash = cannon ? (e.weapon === "tank" ? 1.9 : 1.4) : rocket ? 1 : 0.7;
     this.particle(this.glow, { ...from, cell: CELL.flare, s0: flash, s1: flash * 1.2, life: cannon ? 0.11 : 0.06, c0: WARM.flash,
@@ -464,7 +475,7 @@ export class Effects {
     // Projectile: a streak (and shell/rocket glow) flying to the target; reduced motion
     // shows a brief static tracer along the whole path instead.
     const width = cannon ? 0.34 : rocket ? 0.2 : 0.15, tail = cannon ? 2.4 : rocket ? 1.3 : 2;
-    const color = cannon ? [1, 0.78, 0.4, 1] : rocket ? [1, 0.85, 0.6, 1] : [1, 0.9, 0.6, 1];
+    const color = style.color ?? (cannon ? [1, 0.78, 0.4, 1] : rocket ? [1, 0.85, 0.6, 1] : [1, 0.9, 0.6, 1]);
     if (m) {
       const v = { vx: dir.x / travel, vy: dir.y / travel, vz: dir.z / travel };
       this.particle(this.glow, { ...from, ...v, mode: STRETCH, ax: dir.x / len, ay: dir.y / len, az: dir.z / len,
@@ -485,6 +496,15 @@ export class Effects {
       ? this.particle(this.glow, { ...to, cell: CELL.flare, s0: 1.2, s1: 0.35, life: 0.24, c0: [1, 0.86, 0.4, 0.95], c1: [1, 0.7, 0.2, 0], anchor })
       : this.particle(this.smoke, { ...to, vy: m ? 0.4 : 0, s0: 0.35, s1: 0.9, life: 0.45, cell: CELL.puff, c0: [0.5, 0.5, 0.48, 0.4], c1: [0.5, 0.5, 0.5, 0], anchor }) });
   }
+  // High ground for the shots drawn by a weapon kind (the same flare or puff as above).
+  slope(e, to, anchor, m, travel) {
+    const slope = e.sAir || e.tAir ? 0 : shotSlope(this.view.terrain, e.x, e.z, e.tx, e.tz);
+    if (slope) this.timeline.push({ at: this.time + travel, run: () => slope > 0
+      ? this.particle(this.glow, { ...to, cell: CELL.flare, s0: 1.2, s1: 0.35, life: 0.24, c0: [1, 0.86, 0.4, 0.95], c1: [1, 0.7, 0.2, 0], anchor })
+      : this.particle(this.smoke, { ...to, vy: m ? 0.4 : 0, s0: 0.35, s1: 0.9, life: 0.45, cell: CELL.puff, c0: [0.5, 0.5, 0.48, 0.4], c1: [0.5, 0.5, 0.5, 0], anchor }) });
+  }
+  // Counter-hit feedback (src/counter-hit-view.js): a gold flare on an effective hit, a grey puff on a resisted one.
+  counterHit(at, anchor, effective) { (effective ? crit : resisted)(this, this.rng, at, anchor); }
   // -- celebration effects: a unit arriving, a building finishing, an upgrade, a cargo drop-off.
   // A handful of pooled particles each (halved in Eco, still when combat motion is off), team coloured.
   tint(team) {
@@ -540,6 +560,8 @@ export class Effects {
   ability(e) {
     const anchor = { x: e.x, z: e.z, team: e.team };
     const tint = { shieldwall: [0.42, 0.8, 1], focus: [1, 0.8, 0.3], overdrive: [1, 0.5, 0.2], lockon: [0.84, 0.56, 1], triage: [0.5, 1, 0.72], fortify: [0.75, 0.9, 1], barrage: [1, 0.8, 0.45], rush: [1, 0.62, 0.3], dash: [1, 0.85, 0.4], brace: [0.55, 0.8, 1], mark: [0.8, 0.55, 1], burnline: [1, 0.5, 0.12] }[e.ability] || e.tint || [1, 1, 1];
+    // Ability moments (src/fx-kinds/moments.js): a wake, a shockwave, an exhaust, a glint, on top of the flash below.
+    if (this.motion && Object.hasOwn(MOMENTS, e.ability)) MOMENTS[e.ability](this, e, this.rng, tint, anchor);
     if (e.ability === 'triage' || e.ability === 'fortify') {
       // A pulse that opens to the ability's reach (the ring sits at 0.8 of the sprite's half width).
       this.decal({ x: e.x, z: e.z }, (e.radius || 6) * 2.5, 0.7, anchor, CELL.ring, [...tint, 0.85], this.glow, 1, { hold: 0, y: 0.1 });
@@ -579,6 +601,7 @@ export class Effects {
     const anchor = { x: e.x, z: e.z, team: e.team }, tint = e.type === 'salvage' ? [1, 0.7, 0.3] : [0.8, 0.55, 1];
     this.decal({ x: e.x, z: e.z }, 2.8, 0.5, anchor, CELL.ring, [...tint, 0.9], this.glow, 0.5, { hold: 0, y: 0.1 });
     this.glint({ x: e.x, y: 0.9, z: e.z }, [...tint, 1], [...tint, 0], anchor, e.type === 'salvage' ? 6 : 4, 0.7);
+    if (e.type !== 'salvage' && this.motion) shimmer(this, e, this.rng, tint, anchor); // the decloak shimmer
   }
   strike(e) {
     // A Barrage shell landing: one heavy blast and a shockwave out to the damage radius.
@@ -800,6 +823,7 @@ export class Effects {
       if (this.timeline[i].at <= this.time) this.timeline.splice(i, 1)[0].run();
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i];
+      if (p.wait > 0) { p.wait -= dt; continue; } // a rocket of a salvo that has not left yet (src/fx-kinds/pods.js)
       p.age += dt;
       const t = Math.min(1, p.age / p.travel);
       if (p.rocket && dt > 0) {

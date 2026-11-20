@@ -1257,7 +1257,13 @@
     "no": "không",
     "Box select": "Khoanh chọn",
     "Queue orders": "Xếp lệnh",
-    "More controls": "Thêm điều khiển"
+    "More controls": "Thêm điều khiển",
+    "Damage numbers": "Số sát thương",
+    "Bosses & Defence": "Trùm & Phòng thủ",
+    "All": "Tất cả",
+    "REAR": "SAU LƯNG",
+    "PINNED": "BỊ GHIM",
+    "PIERCE": "XUYÊN GIÁP"
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],
