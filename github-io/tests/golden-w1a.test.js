@@ -15,7 +15,7 @@ D.fxwarden1 = { ...D.drone, name: "Fixture one", workshop: "wardens", roster: "e
 D.fxwarden3 = { ...D.drone, name: "Fixture three", workshop: "wardens", roster: "expanded", required_level: 3, cost: [140, 50], ai: { role: "back", want: [{ n: 1 }], max: 1 } };
 
 const match = () => new Simulation({ map: "dunes", enemyCount: 1, aiSpeed: "normal", factions: skirmishSides("wardens", "mirror", 1, "dunes"), capturePoints: true, aiPlayer: true, rules: { roster: "expanded" } });
-const PINS = { 60: "b7a68cbf", 180: "834aaa89", 600: "a7acb772", 800: "a48e3b9c" };
+const PINS = { 60: "b7a68cbf", 180: "4b5a50ae", 600: "69b78cbe", 800: "69b78cbe" };
 
 test("Expanded Wardens against Wardens, 60 and 180 s", () => {
   const sim = match();

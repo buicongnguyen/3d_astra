@@ -76,7 +76,7 @@ test('no abilities in the ford: not ready, not cast, and the tile says why', () 
 });
 
 test('Barrage needs sight of a deep plateau top: refused in fog, allowed with a friend up there', () => {
-  const s = field('dunes'), p = s.terrain.plateaus[0], centre = { x: p.x, z: p.z };
+  const s = field('dunes'), p = s.terrain.plateaus[0], centre = { x: p.x, z: p.z + p.r - 8 }; // the old plateau centre's depth: plateaus were enlarged, so the test aims 8 m inside the rim
   const breaker = s.spawn('breaker', 0, p.x, p.z + p.r + 3);
   s.updateVision();
   assert.equal(onHighGround(s.terrain, breaker), false);
@@ -106,7 +106,7 @@ test('Burn line follows the same sight rule', () => {
   // Burn line's 7 m can't reach a deep cell from the cliff foot; a longer reach puts the rule to the test.
   scorcher.ability = { ...scorcher.ability, range: 12 };
   s.updateVision();
-  const deep = { x: p.x, z: p.z + 1 };
+  const deep = { x: p.x, z: p.z + p.r - 7 }; // 7 m inside the rim (plateaus enlarged)
   assert.equal(s.hiddenTop(deep, 0), true);
   assert.equal(s.useAbility(scorcher, deep), false);
   s.spawn('ranger', 0, p.x - p.r + 2, p.z);

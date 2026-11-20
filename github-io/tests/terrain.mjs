@@ -110,8 +110,8 @@ await suite("terrain", async () => {
         f.select([b.id]);
         f.step(0.05);
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-        const v = f.view, r = v.renderer.domElement.getBoundingClientRect(), c = v.project(q.x, q.z, t.heightAt(q.x, q.z));
-        return { x: r.left + c.x, y: r.top + c.y, hidden: s.hiddenTop({ x: q.x, z: q.z }, 0) };
+        const v = f.view, r = v.renderer.domElement.getBoundingClientRect(), dz = q.z + q.r - 8, c = v.project(q.x, dz, t.heightAt(q.x, dz)); // a deep point 8 m inside the rim (the old centre depth): plateaus were enlarged, so the centre is out of Barrage reach from the foot
+        return { x: r.left + c.x, y: r.top + c.y, hidden: s.hiddenTop({ x: q.x, z: dz }, 0) };
       }, setup);
       assert.ok(aim.hidden, "the far plateau top is out of sight");
       await page.click('[data-ability="barrage"]');

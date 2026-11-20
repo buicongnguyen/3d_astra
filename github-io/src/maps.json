@@ -90,7 +90,7 @@
         "shape": "disc",
         "x": -22,
         "z": 4,
-        "r": 8,
+        "r": 11.5,
         "mirror": true,
         "ramps": [
           {
@@ -141,10 +141,10 @@
     "plateaus": [
       {
         "shape": "box",
-        "x": -14,
+        "x": -17.5,
         "z": -58,
-        "w": 18,
-        "d": 12,
+        "w": 25,
+        "d": 17,
         "mirror": true,
         "ramps": [
           {
@@ -203,7 +203,7 @@
         "shape": "disc",
         "x": 40,
         "z": -14,
-        "r": 11,
+        "r": 15,
         "mirror": true,
         "ramps": [
           {

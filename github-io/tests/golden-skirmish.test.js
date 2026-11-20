@@ -31,11 +31,11 @@ test("the idle all-Meridian match after 60 s", async (t) => {
 // capture points on): one faction per rival on three rivals, and a two-faction duel.
 const AI = {
   "classic x1 normal": { options: { map: "classic", enemyCount: 1, aiSpeed: "normal" }, at: { 60: "fef65c4f", 180: "39426dbc", 300: "6d992886" }, end: "defeat 231" },
-  "highlands x2 relentless coalition": { options: { map: "highlands", enemyCount: 2, aiSpeed: "relentless", alliance: "coalition" }, at: { 60: "807ca1eb", 180: "5450ac4a", 300: "45ab65f9" }, end: "defeat 181" },
+  "highlands x2 relentless coalition": { options: { map: "highlands", enemyCount: 2, aiSpeed: "relentless", alliance: "coalition" }, at: { 60: "807ca1eb", 180: "6bada781", 300: "6bada781" }, end: "defeat 167" },
   "riverlands x2 fast": { options: { map: "riverlands", enemyCount: 2, aiSpeed: "fast" }, at: { 60: "30be65e6", 180: "d16fd4cd", 300: "3f77c63b" }, end: "running 300" },
   "basin x3 fast": { options: { map: "basin", enemyCount: 3, aiSpeed: "fast" }, at: { 60: "853fdf6c", 180: "8422f5d9", 300: "db45b921" }, end: "defeat 246" },
   "riverlands x3 normal, Sunward against mixed rivals": { options: { map: "riverlands", enemyCount: 3, aiSpeed: "normal", factions: skirmishSides("sunward", "mixed", 3, "riverlands"), capturePoints: true }, at: { 60: "56c0461d", 180: "387ab7ee", 300: "42be5155" }, end: "running 300" },
-  "dunes x1 normal, Ashfall against Veil": { options: { map: "dunes", enemyCount: 1, aiSpeed: "normal", factions: skirmishSides("ashfall", "veil", 1, "dunes"), capturePoints: true }, at: { 60: "28775897", 180: "7fa3ba8f", 300: "4841198e" }, end: "running 300" },
+  "dunes x1 normal, Ashfall against Veil": { options: { map: "dunes", enemyCount: 1, aiSpeed: "normal", factions: skirmishSides("ashfall", "veil", 1, "dunes"), capturePoints: true }, at: { 60: "af9fa074", 180: "baac3a09", 300: "82f0f29c" }, end: "running 300" },
 };
 const SHORT = [60, 180], LATE = 300;
 const ending = (sim) => `${sim.result || "running"} ${Math.round(sim.time)}`;

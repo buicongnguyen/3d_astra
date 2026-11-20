@@ -39,7 +39,7 @@ test("Field command changes play", () => {
 
 test("a Field command rival fields a Tank or Walker by 600 s against a turtling bot", () => {
   const rows = [];
-  for (const [map, f] of [["classic", "meridian"], ["dunes", "wardens"]]) {
+  for (const [map, f] of [["classic", "meridian"], ["expanse", "wardens"]]) { // expanse (was dunes): plateaus were enlarged, which moved that match; this check needs a flat second map
     const s = new Simulation({ map, aiSpeed: "fast", factions: { 0: "meridian", 1: f }, capturePoints: true, ...field });
     const bot = new PlayBot(s, { towers: 4, rangerShare: 4 });
     let heavy = false;

@@ -196,7 +196,7 @@ test('a flyer looks over a deep plateau top from low ground and opens it to its 
 
 test('the army below sees and shoots an enemy flyer over a hidden plateau cell (airSeenBy)', () => {
   const s = quiet({ map: 'dunes' }), t = s.terrain, p = t.plateaus[0];
-  const k = put(s, 'hawk', 1, p.x, p.z + 1), r = put(s, 'ranger', 0, p.x, p.z + p.r + 1.5);
+  const k = put(s, 'hawk', 1, p.x, p.z + p.r - 7), r = put(s, 'ranger', 0, p.x, p.z + p.r + 1.5);
   k.damage = 0;
   s.updateVision();
   const [cx, cz] = t.cellAt(k.x, k.z);

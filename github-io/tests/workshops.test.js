@@ -91,7 +91,7 @@ test("AI: fixture units are trained in a 900 s Expanded match", () => {
 });
 
 test("AI host levelling: the host is raised, never above the core", () => {
-  const s = wardens(EXP);
+  const s = wardens(EXP, { map: "basin" }); // basin: the dunes duel now ends at 446 s, before the pylon can be raised (plateaus enlarged)
   let raised = false;
   const core = [1, 1, 1];
   while (s.time < 1200 && !s.result) {
