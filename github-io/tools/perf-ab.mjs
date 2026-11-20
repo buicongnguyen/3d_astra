@@ -100,10 +100,15 @@ function stats(times) {
   return { ticks: times.length, total, mean: total / times.length, p50: pct(s, 0.5), p95: pct(s, 0.95), p99: pct(s, 0.99), max: s[s.length - 1] };
 }
 
+// No --scene: every scene in turn (npm run perf:tick).
 async function main() {
-  const scene = SCENES[value("scene")];
+  const names = value("scene") ? [value("scene")] : Object.keys(SCENES);
+  for (const name of names) await runScene(name);
+}
+async function runScene(name) {
+  const scene = SCENES[name];
   if (!value("a") || !value("b") || !scene) {
-    console.error(`Usage: node tools/perf-ab.mjs --a <tree> --b <tree> --scene <${Object.keys(SCENES).join("|")}> [--runs 7] [--warmup 1] [--json]`);
+    console.error(`Usage: node tools/perf-ab.mjs --a <tree> --b <tree> [--scene <${Object.keys(SCENES).join("|")}>] [--runs 7] [--warmup 1] [--json]`);
     process.exit(2);
   }
   const runs = Math.max(1, +value("runs", 7)), warmup = Math.max(0, +value("warmup", 1));
@@ -126,7 +131,7 @@ async function main() {
     ...Object.fromEntries(["mean", "p50", "p95", "p99", "max", "total"].map((key) => [key, median(side.runs.map((r) => r[key]))])),
   }]));
   const delta = Object.fromEntries(["mean", "p50", "p95", "p99", "max"].map((key) => [key, (summary.B[key] / summary.A[key] - 1) * 100]));
-  const result = { scene: value("scene"), about: scene.about, runs, warmup, gc: !!globalThis.gc, A: summary.A, B: summary.B, deltaPercent: delta, sameHash: summary.A.hash === summary.B.hash };
+  const result = { scene: name, about: scene.about, runs, warmup, gc: !!globalThis.gc, A: summary.A, B: summary.B, deltaPercent: delta, sameHash: summary.A.hash === summary.B.hash };
   if (args.includes("--json")) { console.log(JSON.stringify(result, null, 2)); return; }
   const ms = (x) => x.toFixed(3).padStart(8);
   console.log(`${result.scene}: ${scene.about}. ${runs} interleaved runs per side (ABBA, ${warmup} warm-up each), median of the runs, ms per tick${result.gc ? ", GC before each run" : ""}.`);

@@ -2,6 +2,11 @@
 
 ## Unreleased: AAA round 2
 
+### CW-C: Spatial grid and fast paths
+- Nothing changes in play: every golden pin, `d071360b`, the 8 baselines and `check:defence --json` are identical.
+- `src/sim/grid.js`: a per-tick 8 m grid (module WeakMap, off the hashed state) feeds `enemy`, `preferredEnemy`, `defenseTarget`, splash and `separate()`, visiting candidates in entity order. Defence skips team 0's sight loop; `cellAt`, `canStand`, `canTraverse`, `clearLine` and the visibility reads no longer allocate.
+- Tick p95 on the AI-against-AI scenes about 26 to 30% lower and the Defence scene 27 to 42% lower (interleaved A/B on a loaded machine). `npm run perf:tick` runs `tools/perf-ab.mjs` (new scene, max column) against `r2-wave-2`. Tests: `spatial-grid` (6). Results: `docs/aaa/results/round2/cwc.md`.
+
 ### W2-D: Field command AI plan (opt-in)
 New Battle rule "AI plan: Classic / Field command" (`rules.aiPlan === "field"`, skirmish only). The computer keeps its heavy slot, sends fewer Harvesters to energy when it is rich, saves alloy for the Foundry and Tanks, defends every other core and held ring, fields one of each combat slot, casts abilities with intent (`ai-casts.js`) and places `ai.role` units (`field-command.js`). Classic is unchanged (pins, tick time identical).
 ### W2-C: First impression and story light
