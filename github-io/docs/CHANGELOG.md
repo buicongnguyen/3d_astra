@@ -7,6 +7,11 @@
 - The garrison on-hit helpers moved to `src/sim/effects.js` (`applyHitEffects`, `pierceShield`, `burstStep`, same entity fields); `garrisonHit`, `garrisonPierce` and `garrisonBurst` stay as thin wrappers.
 - `endlessWave` and its palette are memoised in module WeakMaps keyed by the level definition (off the sim, never hashed).
 - Tests: `tests/mixins.test.js` (no method name in two mixins, the Defence key order, exports, wrappers, memo). No play changed: every golden pin, `d071360b`, the 14 checksums and `check:defence --json` are identical.
+### CW-B: Shared rng and seeded cosmetic randomness
+
+- New `src/rng.js` (`mulberry32`, `fnv1a`): the one copy used by the scatter, ambient life, audio, effects and the state hash. `audio-logic.js` still re-exports `mulberry32` and `hashString`; `src/sim/defence.js` keeps its own `seeded` and `seedOf` (equal output, pinned by `tests/rng.test.js`).
+- No `Math.random` is left in `fx.js`, `fx-kinds/*`, `view.js`, `scatter.js`, `ambient-life.js` or `ambience.js`: particle rotation draws from the per-match `fx.rng`, the view module generator is a reseeded mulberry32, the ambience noise bed uses a fixed seed. Held-clock renders are now repeatable.
+- Simulation untouched: every golden pin, `d071360b` and the Defence check are identical.
 
 ### W2-D: Field command AI plan (opt-in)
 New Battle rule "AI plan: Classic / Field command" (`rules.aiPlan === "field"`, skirmish only). The computer keeps its heavy slot, sends fewer Harvesters to energy when it is rich, saves alloy for the Foundry and Tanks, defends every other core and held ring, fields one of each combat slot, casts abilities with intent (`ai-casts.js`) and places `ai.role` units (`field-command.js`). Classic is unchanged (pins, tick time identical).

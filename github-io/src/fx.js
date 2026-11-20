@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { mulberry32 } from "./rng.js";
 import { themeFor, weaponStyle, shotVisible } from "./visual-style.js";
 import { damagedEntities, damageState, BURNING, hitPower, scorchPlan, SCORCH } from "./combat-feedback.js";
 import { isHarvesting, harvestTarget } from "./activity.js";
@@ -96,9 +97,9 @@ function uploadPrefix(attribute, count) {
 }
 
 // Every field a particle record carries, set in one order so pooled records keep one shape.
-function resetParticle(p) {
+function resetParticle(p, rng) {
   p.x = 0; p.y = 0; p.z = 0; p.vx = 0; p.vy = 0; p.vz = 0; p.age = 0; p.life = 1; p.s0 = 1; p.s1 = 1;
-  p.rot = Math.random() * 6.28; p.spin = 0; p.c0 = WARM.flash; p.c1 = WARM.ember; p.mode = BILLBOARD;
+  p.rot = rng() * 6.28; p.spin = 0; p.c0 = WARM.flash; p.c1 = WARM.ember; p.mode = BILLBOARD;
   p.ax = 0; p.ay = 1; p.az = 0; p.length = 0; p.cell = CELL.glow; p.drag = 0; p.gravity = 0; p.floor = -10;
   p.hold = 0; p.fadeIn = 0; p.anchor = null; p.lifted = false; p.delay = 0; p.hitScorch = false;
   return p;
@@ -141,9 +142,9 @@ class Layer {
     quad.dispose();
   }
   // A live record reset to defaults; at the cap the oldest one is recycled.
-  spawn() {
+  spawn(rng) {
     if (this.items.length >= Math.max(1, Math.round(this.capacity * this.share()))) this.free.push(this.items.shift());
-    const p = resetParticle(this.free.pop() || {});
+    const p = resetParticle(this.free.pop() || {}, rng);
     this.items.push(p);
     return p;
   }
@@ -206,8 +207,8 @@ const ROOF = { hq: 5.2, barracks: 3.8, foundry: 4.4, relay: 3.6, tower: 3.8 };
 export class Effects {
   constructor(view) {
     this.view = view;
-    // The random source of the weapon kinds (src/fx-kinds): Math.random until a per-match seeded generator is injected.
-    this.rng = Math.random;
+    // The random source of the weapon kinds (src/fx-kinds): a seeded generator (the view reseeds it in reset()).
+    this.rng = mulberry32(1482);
     this.texture = atlas();
     this.workTimers = new Map(); // per-Harvester countdown to its next spark
     this.workCursor = 0; // where the work-effect scan resumes, for fairness between busy Harvesters
@@ -262,7 +263,7 @@ export class Effects {
   }
   // -- particle helpers
   particle(layer, o) {
-    const p = Object.assign(layer.spawn(), o);
+    const p = Object.assign(layer.spawn(this.rng), o);
     p.age = -(o.delay || 0);
     // On maps with plateaus every effect is lifted to the ground under it.
     const t = this.view.terrain;
@@ -272,7 +273,7 @@ export class Effects {
   // The allocation-free path for per-frame emitters: a pooled record at (x, y above ground, z);
   // the caller sets the rest. `lifted` means y already includes the ground.
   emit(layer, x, y, z, anchor, lifted = false) {
-    const p = layer.spawn();
+    const p = layer.spawn(this.rng);
     p.x = x; p.y = lifted ? y : y + this.ground(x, z); p.z = z; p.anchor = anchor;
     return p;
   }

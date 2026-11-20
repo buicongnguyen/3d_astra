@@ -11,7 +11,7 @@
 // Post: sum -> normalise -> soft clip (`drive`, adds harmonics so booms carry on small speakers) ->
 // telephone band (`band`, radio) -> short outdoor room (`room`, feedback combs) -> DC block ->
 // normalise to `level` (peak) -> fade out. Randomness comes from the seed (cosmetic, never the sim's).
-import { mulberry32 } from "./audio-logic.js";
+import { mulberry32 } from "./rng.js";
 
 export const SYNTH_RATE = 24000;
 const TAU = Math.PI * 2;

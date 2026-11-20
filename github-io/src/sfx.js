@@ -10,7 +10,8 @@ import { MIX } from "./audio-mix.js";
 // a stereo pan and a distance gain from its screen position, and must pass the voice budget (global
 // cap, per-group caps, priority, per-sound rate limit). Nothing is created while effects are off.
 import { counterKind } from "./combat-feedback.js";
-import { VoiceBudget, audible, dbToGain, hitFor, incomingFor, mulberry32, nearPriority, screenMix, shouldCull, soundFor } from "./audio-logic.js";
+import { VoiceBudget, audible, dbToGain, hitFor, incomingFor, nearPriority, screenMix, shouldCull, soundFor } from "./audio-logic.js";
+import { mulberry32 } from "./rng.js";
 import { AIR_HUM, BANK, ENGINE, radioSpec } from "./sfx-bank.js";
 import { SYNTH_RATE, renderEngine, renderSound, specLength } from "./audio-synth.js";
 

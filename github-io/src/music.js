@@ -8,7 +8,8 @@
 // level follows combat intensity (setCombat, from the director), so music swells into a fight and
 // fades back after it. Victory and defeat are stings that replace both. A short reverb made from a
 // generated impulse gives the score a room.
-import { FIELD_MOODS, MISSION_MOODS, MOODS, baseMood, composeBar, flavourFor, midiToHz, mulberry32, tempoFor } from "./audio-logic.js";
+import { FIELD_MOODS, MISSION_MOODS, MOODS, baseMood, composeBar, flavourFor, midiToHz, tempoFor } from "./audio-logic.js";
+import { mulberry32 } from "./rng.js";
 import { MIX } from "./audio-mix.js";
 
 // Mood a mission asked for (the `music` action). main.js merges it with the live match state.

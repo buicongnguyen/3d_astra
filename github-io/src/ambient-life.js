@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { fnv1a, mulberry32 } from "./rng.js";
 import { lookOf } from "./visual-style.js";
 
 // Small living details per battlefield: birds with ground shadows, butterflies, dragonflies,
@@ -44,16 +45,8 @@ const MOTES = {
 const BUTTERFLY_COLORS = ["#ff9a2e", "#ffd43b", "#f7f3e3", "#6ec6ff", "#ff6fb5", "#ff7a3d"];
 const DRAGONFLY_COLORS = ["#2fd1c6", "#3b8cff", "#7be04f"];
 
-function rng(seed) {
-  let s = seed >>> 0;
-  return () => {
-    s = (s + 0x6d2b79f5) >>> 0;
-    let t = Math.imul(s ^ (s >>> 15), 1 | s);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-const hashId = (id) => [...id].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619), 2166136261);
+const rng = mulberry32;
+const hashId = fnv1a;
 const between = (r, [a, b]) => a + (b - a) * r();
 const hex = (value) => new THREE.Color().setHex(parseInt(value.slice(1), 16), THREE.LinearSRGBColorSpace);
 
