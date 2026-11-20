@@ -32,6 +32,12 @@ Nothing changes for the player: no rule, number or picture moved. This makes eve
 - **Ability UI from data.** An ability's `icon`, `aimed`, `order` and `tint` in balance.json drive the command-card tile, the hint order, the buff ring and the cast flash, so new units need no edit to UI tables. Today's 12 abilities keep their exact icons, order and colours.
 - Art: `stalker.glb` (Blender kit, 2,724 triangles, 7 materials, violet cloak, green lens), `weapons.stalker` look, Vietnamese strings. Tests: 710 to 735. Results: `docs/aaa/results/round2/w1c.md`.
 
+### W1-E: Boss engine II and the Iron Sovereign
+- The boss engine can mark several zones at once (`count`, `spread`), aim at the best tower (`target: "building"`), stun buildings (`stun`, status `stunned`), step sideways between attacks (`strafe`), release units at health stages (`drops`), let damage during a warning break the attack (`break`) and walk a Defence road (route mode). The Iron Vanguard and mission 3 are unchanged.
+- Defence: `leak_lives` sets what a leak costs, `spawnOnRoute` puts a unit on a road, and a boss group spawns exactly its count.
+- New boss: the Iron Sovereign (10,000 HP, six legs, ported from Tank_game_3D `boss-walker.glb`). Round 3 puts it in a Heroic finale; this round it exists in the sandbox, tests and render scenarios.
+- `tools/port-boss-model.mjs` takes a parts map (`--parts`) and a palette; `ironvanguard.glb` is byte-identical.
+
 ## Unreleased: Frontier Defence "Build zones, armour and Three Roads" (plan: docs/aaa/AAA_GAMEPLAY_STORY_DEFENCE.md, C10–C12)
 
 - **Build zones (C10):** a level may mark fields (`defence.zones`) where a crew can stand anywhere, on the 2 m grid, besides its fixed pads. Tap a spot in a marked field, pick a crew: the tower gets a pad of its own, so Upgrade, branches and Sell work as on any pad (selling frees the spot). A spot is refused, with the reason on the card and a red ring, within 4.5 m of a road (the column must always pass), near a spawn spot or the exit, within 5 m of another pad or tower, under a unit, where it would wall in ground, or when the field is full. The open cells are painted as one flat mesh (one draw). Command `zoneBuild { zone, x, z, crew }`, saved and replayed like `padBuild`.

@@ -91,6 +91,9 @@ const scenarios = [
     spawn:[{type:'gunner', team:0, count:8, near:[-3,4]}], status:{id:'pinned', count:12, team:1}},
   // AAA round 2, W1-C: battle-eco with 8 Veil Stalkers on the enemy side and 4 on the player's (one more batch for the new model).
   {name:'stalker-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, triangles:340000, spawn:[{type:'stalker', team:1, count:8, near:[-3,-14]}, {type:'stalker', team:0, count:4, near:[-3,14]}]},
+  // W1-E: the Iron Sovereign (a six-legged boss, two tripod draws) with 60 units; and on Gorge Road with a wave.
+  {name:'boss-sovereign-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, boss:'ironsovereign'},
+  {name:'defence-boss-eco', defence:'d-gorge', mobile:true, zoom:70, focus:[-1,0], reveal:true, wave:60, towers:10, triangles:600000, boss:'ironsovereign'},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
@@ -99,6 +102,7 @@ const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240
 Object.assign(limits, {});
 Object.assign(limits, { "gunner-battle-eco": 125 });
 Object.assign(limits, { "stalker-battle-eco": 125 });
+Object.assign(limits, { 'boss-sovereign-eco': 120, 'defence-boss-eco': 125 });
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},

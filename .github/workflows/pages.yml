@@ -104,6 +104,8 @@ jobs:
           # AAA round 2 (W1-B): the Gunner team on the phone (tall enough, the pin icon draws).
           - name: r2-w1b
             scripts: gunner
+          - name: r2-w1e
+            scripts: sovereign
     defaults:
       run:
         working-directory: github-io

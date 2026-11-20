@@ -1198,7 +1198,10 @@
     "Veil. A hidden sniper: 95 damage every 4.5 s from 18 m, but only 0.3× to vehicles and 0.4× to buildings. Shoots Medics, Anti-tank soldiers and Rangers first. Hides again 3 seconds after each shot. Kites within 8 m, towers and Command cores within 9 m, and anything within 4 m reveal it. Fragile up close.": "Veil. Tay bắn tỉa tàng hình: 95 sát thương mỗi 4,5 giây từ xa 18 m, nhưng chỉ bằng 0,3 lần lên xe và 0,4 lần lên công trình. Ưu tiên bắn Quân y, Chống tăng và Xạ thủ. Ẩn mình trở lại 3 giây sau mỗi phát bắn. Diều trinh sát trong 8 m, Tháp pháo và Sở chỉ huy trong 9 m, cùng mọi đơn vị trong 4 m sẽ làm nó lộ diện. Yếu khi bị áp sát.",
     "Stalker: a hidden sniper that shoots healers and anti-tank teams first. Kites, towers and anything within 4 m reveal it.": "Xạ thủ bắn tỉa: tay súng ẩn mình, ưu tiên hạ quân y và đội chống tăng. Diều trinh sát, tháp pháo và mọi đơn vị trong 4 m sẽ làm nó lộ diện.",
     "Steady aim": "Ngắm chắc",
-    "For 8 seconds: 3 m more range, and shots pass through shields.": "Trong 8 giây: thêm 3 m tầm bắn, đạn xuyên qua mọi lớp khiên."
+    "For 8 seconds: 3 m more range, and shots pass through shields.": "Trong 8 giây: thêm 3 m tầm bắn, đạn xuyên qua mọi lớp khiên.",
+    "Iron Sovereign": "Quân Vương Thép",
+    "Siege fortress": "Pháo đài công thành",
+    "A six-legged Builder siege fortress. It stomps the strongest tower in reach and stuns it, then fires a three-shell spread: the ground turns red first, so move out. Enough damage during a warning breaks the attack and opens its core. It drops Sentinel drones as its armour cracks, and a leak costs 10 lives.": "Pháo đài công thành sáu chân của người Kiến Tạo. Nó giẫm nát tháp mạnh nhất trong tầm và làm tháp tê liệt, rồi bắn ba quả đạn tỏa: mặt đất chuyển đỏ trước, hãy rời khỏi đó. Đủ sát thương trong lúc cảnh báo sẽ phá đòn và mở lõi của nó. Nó thả máy bay canh gác khi giáp nứt, và để nó lọt qua mất 10 mạng."
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],

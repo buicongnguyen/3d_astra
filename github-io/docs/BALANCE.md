@@ -507,3 +507,6 @@ Equal-cost duels (`tests/lib/duel.mjs`: 5 offsets × both spawn sides = 10 battl
 | Watcher / Anti-tank (Veil mirror / Meridian) | 1,000 | +0.66 / +0.69 | 10, 10 | recorded |
 
 A lone Stalker brings a level 1 Sentinel tower down in 82.1 s (19 shots of 38 against 700) from outside the tower's 13 m reach, taking no damage. The heal-ball margin is thin (mean +0.199 against +0.15, 7 won against 7): a later change to Ranger, Medic, cloak or detection moves it; the damage 85 to 100, HP 75 to 90 and range 17 to 18 tuning room of the brief is untouched.
+## Iron Sovereign (W1-E)
+
+Definition `ironsovereign`: 10,000 HP, 300 shield, speed 1.2, light gun 10 per 1 s at 14 m, `leak_lives` 10. Attacks: Stomp (5 m circle on the best tower within 14 m, 30 to units, x5 to buildings, stun 4 s) and Three-shell spread (3 circles of 3.5 m, 7.5 m apart, 3 rounds of 10); at most 33 to a unit per attack on Veteran (cap 36). Drops 2 Drones at 2/3 and 1/3. Break share 0.0165. Measured (Standard): 6 Rangers + 2 Breakers kill it in 134 s with 4 of 8 left; 12 + 4 in 53 s with 12 of 16 left; on d-crossroads with 10 towers 9 of 29 attacks break (31%). See docs/aaa/results/round2/w1e.md.

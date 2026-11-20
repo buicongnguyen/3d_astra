@@ -489,7 +489,7 @@ export const defence = {
   // The units of wave group `g` as [type, count] pairs, scaled for the difficulty; a carrier
   // group's passengers (`carry`) likewise. Shared by startWave and wavePreview.
   waveUnits(g, units = g.units, scale = this.defenceWaveScale()) {
-    return Object.entries(units).map(([slot, n]) => { const type = this.waveType(g, slot); return [type, waveCount(n, scale, D[type])]; });
+    return Object.entries(units).map(([slot, n]) => { const type = this.waveType(g, slot); return [type, D[type]?.boss ? n : waveCount(n, scale, D[type])]; });
   },
   startWave() {
     const d = this.defence, def = this.defenceDef(), wave = this.defenceWave(d.wave), scale = this.defenceWaveScale();
@@ -596,6 +596,16 @@ export const defence = {
       spawned = true;
     }
     return spawned;
+  },
+  // A unit that appears at `at` ({ x, z }) and walks route `routeId` from leg `leg` (the index of the
+  // end point of the segment it is on), as any column does. A boss's drops use it (sim/bosses.js).
+  spawnOnRoute(type, team, routeId, leg, at) {
+    const pts = this.defenceDef()?.routes[routeId];
+    if (!pts) throw new Error(`spawnOnRoute: no route "${routeId}"`);
+    const e = this.spawn(type, team, at.x, at.z, true, true), next = pts[Math.min(leg, pts.length - 1)];
+    e.angle = Math.atan2(next.x - e.x, next.z - e.z);
+    e.orders = [{ type: "route", route: routeId, leg }];
+    return e;
   },
   // The commander and Reinforce Vanguards standing in the way this tick (see BLOCKERS).
   blockersNow() {
@@ -705,7 +715,7 @@ export const defence = {
       }
       if (hyp(e.x - exit.x, e.z - exit.z) <= exit.r) {
         // Through the line: lives lost (two for heavy machines and carriers), and the unit leaves the field.
-        const cost = (e.pop || 1) >= 3 ? 2 : 1;
+        const cost = e.leak_lives ?? ((e.pop || 1) >= 3 ? 2 : 1);
         d.lives = Math.max(0, d.lives - cost);
         d.leaked += 1;
         e.leaked = true;

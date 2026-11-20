@@ -1,6 +1,7 @@
 import balance from "../balance.json" with { type: "json" };
-import { distance, hyp } from "../data.js";
+import { DEFINITIONS as D, distance, hyp } from "../data.js";
 import { difficultyRules } from "../difficulty.js";
+import GARRISONS from "../defence/garrisons.json" with { type: "json" };
 
 // Bosses (docs/aaa/BOSSES.md). A boss is an ordinary unit whose definition names an entry of
 // balance.json `bosses` (`boss: "iron-vanguard"`); that entry is the whole behaviour, so a later
@@ -18,7 +19,16 @@ import { difficultyRules } from "../difficulty.js";
 // in one, unless they are on Hold, step out by themselves (stepDangerZones, stepEvade).
 //
 // Events for the client: bossWake, bossWarn (with the zone), bossAttack, shot (one per round,
-// `boss` set), bossExposed, bossArmored, bossStage, bossDefeated.
+// `boss` set), bossExposed, bossArmored, bossStage, bossDefeated; boss engine II adds bossStomp,
+// bossBroken and bossDrop.
+//
+// Boss engine II (AAA round 2, W1-E), every part optional data, so the Iron Vanguard plays exactly as
+// before: `attacks[].count` and `spread` (N zones at once, each with its own warning), `target:
+// "building"` (the best tower in reach), `stun` (buildings in the zone go silent), `strafe` (a
+// sideways step between attacks), `break` (damage during a warning cancels the attack and opens the
+// core), `drops` (units released at health stages) and route mode (a boss whose first order is a
+// Defence route wakes at once, ignores its leash, walks the road with stepRoute and stops to attack).
+// Everything new lives on `e.bs` and is created only when its data asks for it.
 export const BOSSES = balance.bosses || {};
 // The warning rule: a unit reacts in REACT seconds and walks out at ESCAPE_SPEED (the slowest
 // common unit, a Battle tank); EVADE_MARGIN is how far outside the edge it stops.
@@ -41,6 +51,10 @@ export function escapeDistance(zone) {
 }
 // Seconds between the mark and the first round: never shorter than the walk out.
 export const warningSeconds = (attack) => Math.max(attack.warning || 0, REACT + (escapeDistance(attack.zone) + EVADE_MARGIN) / ESCAPE_SPEED);
+
+// What a building is worth when a boss picks "the most expensive": a Defence tower's crew at its tier,
+// plus the definition's own cost.
+const worth = (t) => (t.crew ? GARRISONS.crews[t.crew]?.cost?.[(t.tier || 1) - 1] ?? 0 : 0) + (D[t.type]?.cost?.[0] || 0) + (D[t.type]?.cost?.[1] || 0);
 
 // A point in a cone or line zone's own frame: u along its heading from its origin, v across it.
 function local(zone, p) {
@@ -96,14 +110,21 @@ export const bosses = {
   bossZone(e) {
     return this.dangerZones?.find((z) => z.id === e.bs?.zone) || null;
   },
+  // Every zone of the boss's current attack, the aimed one first (a spread has several).
+  bossZones(e) {
+    return this.dangerZones?.filter((z) => z.boss === e.id) || [];
+  },
   stepBoss(e, dt) {
     const spec = BOSSES[e.boss];
     if (!spec) return;
     const bs = (e.bs ??= { phase: "dormant", stage: 1, cycle: 0, post: { x: e.x, z: e.z } });
     const stage = 1 + (spec.stages || []).filter((f) => e.hp <= e.maxHp * f).length;
     if (stage > bs.stage) { bs.stage = stage; this.bossEvent(e, "bossStage", { stage }); }
+    if (spec.drops) this.bossDrops(e, spec, bs);
+    // Route mode: a boss sent down a Defence road wakes at once and walks it (bossMarch).
+    const route = e.orders[0]?.type === "route" ? e.orders[0] : null;
     if (bs.phase === "dormant") {
-      if (!this.bossWakes(e, spec)) return;
+      if (!route && !this.bossWakes(e, spec)) return;
       bs.phase = "tracking";
       bs.next = this.time + (spec.first ?? 3);
       this.bossEvent(e, "bossWake");
@@ -113,17 +134,23 @@ export const bosses = {
     if (bs.phase === "tracking") {
       if (bs.aim === undefined || this.ticks % RETARGET === 0) bs.aim = this.bossAim(e, spec, attack);
       const aim = bs.aim;
-      this.bossMove(e, spec, attack, aim, dt);
-      this.bossGun(e, dt);
+      if (route) this.bossMarch(e, attack, aim, route, dt);
+      else {
+        this.bossMove(e, spec, attack, aim, dt);
+        this.bossGun(e, dt);
+      }
       if (this.time >= bs.next - 1e-9 && aim && hyp(aim.x - e.x, aim.z - e.z) <= attack.range) this.bossWarn(e, attack, aim);
       return;
     }
     const zone = this.bossZone(e);
     // The light gun keeps firing while the big guns aim (the warning), never while they fire.
     if (bs.phase === "warning") this.bossGun(e, dt);
+    // Break the attack: enough damage during the warning cancels it and opens the core (a reward).
+    if (bs.phase === "warning" && bs.mark !== undefined) this.bossBreak(e, spec, bs);
     e.attacking = true;
     if (zone) e.angle = zone.shape === "circle" ? Math.atan2(zone.x - e.x, zone.z - e.z) : zone.angle;
     if (bs.phase === "warning" && this.time >= bs.until - 1e-9) {
+      delete bs.mark;
       bs.phase = "attacking";
       bs.round = 0;
       bs.from = this.time;
@@ -131,7 +158,7 @@ export const bosses = {
     }
     if (bs.phase === "attacking") {
       const gap = attack.over / attack.rounds;
-      while (bs.round < attack.rounds && this.time >= bs.from + bs.round * gap - 1e-9) this.bossRound(e, spec, attack, zone, bs.round++);
+      while (bs.round < attack.rounds && this.time >= bs.from + bs.round * gap - 1e-9) this.bossRound(e, spec, attack, this.bossZones(e), bs.round++);
       if (bs.round < attack.rounds) return;
       this.clearZones(e.id);
       bs.zone = null;
@@ -144,6 +171,7 @@ export const bosses = {
       bs.cycle++;
       bs.next = this.time + this.bossPause(spec, bs.stage);
       delete bs.aim;
+      if (spec.strafe && !route) this.bossStrafe(e, spec, bs);
       this.bossEvent(e, "bossArmored");
     }
   },
@@ -165,6 +193,10 @@ export const bosses = {
   // zone radius of a unit; ties go to the nearer group): the middle of that group. With no units
   // in reach, the nearest enemy building.
   bossAim(e, spec, attack) {
+    if (attack.target === "building") {
+      const tower = this.bossBuildingAim(e, attack);
+      if (tower) return tower;
+    }
     const r = attack.cluster ?? attack.zone.radius ?? 4, units = [];
     for (const t of this.entities)
       if (t.hp > 0 && t.kind === "unit" && !t.flying && this.hostile(e.team, t.team) && distance(e, t) <= spec.aggro && this.isVisible(t, e.team)) units.push(t);
@@ -191,9 +223,15 @@ export const bosses = {
   // Walks to within reach of its target, never further than `leash` from where it stood at the
   // start; with nothing to fight it walks back.
   bossMove(e, spec, attack, aim, dt) {
-    const post = e.bs.post;
+    const post = e.bs.post, side = e.bs.strafe;
     let goal = null;
-    if (aim) {
+    // A sideways step between attacks (spec.strafe): done on arrival, or when the next pause is over.
+    if (side) {
+      if (distance(e, side) <= 1.5 || this.time >= e.bs.next) delete e.bs.strafe;
+      else goal = side;
+    }
+    if (goal) { /* strafing */ }
+    else if (aim) {
       const d = hyp(aim.x - e.x, aim.z - e.z), want = Math.max(4, Math.min(attack.range, e.range) - 2);
       if (d > want) goal = { x: aim.x + ((e.x - aim.x) / d) * want, z: aim.z + ((e.z - aim.z) / d) * want };
     } else if (distance(e, post) > 3) goal = post;
@@ -202,42 +240,127 @@ export const bosses = {
     if (off > spec.leash) goal = { x: post.x + ((goal.x - post.x) / off) * spec.leash, z: post.z + ((goal.z - post.z) / off) * spec.leash };
     if (distance(e, goal) > 1.5) this.move(e, goal, dt, 1.5);
   },
-  // Marks the zone of the next attack on the target and starts the warning.
+  // Marks the zone of the next attack on the target and starts the warning. An attack with `count`
+  // zones marks them all at once: the aimed one, then one `spread` metres to each side across the
+  // line from the boss, every one with the same warning (at least the walk out, warningSeconds).
   bossWarn(e, attack, aim) {
-    const z = attack.zone, angle = Math.atan2(aim.x - e.x, aim.z - e.z), bs = e.bs;
-    const zone = { id: e.id * 1000 + (bs.cycle % 1000), boss: e.id, team: e.team, attack: attack.id, shape: z.shape, angle, from: this.time, at: this.time + warningSeconds(attack) };
-    if (z.shape === "circle") Object.assign(zone, { x: aim.x, z: aim.z, radius: z.radius });
-    else Object.assign(zone, { x: e.x, z: e.z, length: z.length, ...(z.shape === "cone" ? { half: (z.half ?? 15) * DEG } : { width: z.width }) });
-    zone.until = zone.at + attack.over;
-    (this.dangerZones ||= []).push(zone);
+    const z = attack.zone, angle = Math.atan2(aim.x - e.x, aim.z - e.z), bs = e.bs, count = attack.count ?? 1;
+    const zones = [], across = { x: Math.cos(angle), z: -Math.sin(angle) };
+    for (let k = 0; k < count; k++) {
+      // Zone ids: the first keeps the single-zone id; later ones add k * 1e7 (unique, never reused by a cycle).
+      const zone = { id: e.id * 1000 + (bs.cycle % 1000) + k * 1e7, boss: e.id, team: e.team, attack: attack.id, shape: z.shape, angle, from: this.time, at: this.time + warningSeconds(attack) };
+      // 0, +1, -1, +2, -2 ...: the aimed zone in the middle of the spread.
+      const off = k ? Math.ceil(k / 2) * (k % 2 ? 1 : -1) * (attack.spread ?? 0) : 0;
+      if (z.shape === "circle") Object.assign(zone, { x: aim.x + across.x * off, z: aim.z + across.z * off, radius: z.radius });
+      else Object.assign(zone, { x: e.x, z: e.z, length: z.length, ...(z.shape === "cone" ? { half: (z.half ?? 15) * DEG } : { width: z.width }) });
+      zone.until = zone.at + attack.over;
+      zones.push(zone);
+    }
+    (this.dangerZones ||= []).push(...zones);
+    const zone = zones[0];
     bs.zone = zone.id;
     bs.phase = "warning";
     bs.until = zone.at;
+    // Break the attack (spec.break): the health to beat during this warning.
+    if (BOSSES[e.boss]?.break) bs.mark = e.hp + e.shield;
     e.angle = angle;
     e.attacking = true;
-    this.bossEvent(e, "bossWarn", { zone: { ...zone }, seconds: zone.at - zone.from, attack: attack.id });
+    this.bossEvent(e, "bossWarn", { zone: { ...zone }, seconds: zone.at - zone.from, attack: attack.id, ...(count > 1 ? { zones: zones.map((q) => ({ ...q })) } : null) });
   },
-  // One round: everything hostile in the zone is hit (units by their centre, buildings by their
-  // footprint); flyers are over it. The shot event draws a shell from one of the guns.
-  bossRound(e, spec, attack, zone, k) {
-    if (!zone) return;
+  // One round: everything hostile in a zone is hit (units by their centre, buildings by their
+  // footprint); flyers are over it. The shot event draws a shell from one of the guns, one per zone.
+  // A stunning attack (`stun`) also silences every building it hits.
+  bossRound(e, spec, attack, zones, k) {
+    for (let zi = 0; zi < zones.length; zi++) {
+      const zone = zones[zi], stunned = [];
+      for (const t of this.entities) {
+        if (t.hp <= 0 || t.flying || !this.hostile(e.team, t.team)) continue;
+        const building = t.kind === "building";
+        if ((t.kind !== "unit" && !building) || !inZone(zone, t, building ? t.radius : 0)) continue;
+        this.applyDamage(t, attack.damage * (building ? attack.building ?? 1 : 1) * this.bossScale(spec, t), e.team, e.id);
+        if (building && attack.stun && t.hp > 0 && this.applyStatus(t, "stunned", attack.stun.seconds)) stunned.push(t.id);
+      }
+      if (attack.stun) this.bossEvent(e, "bossStomp", { zone: { ...zone }, ids: stunned, seconds: attack.stun.seconds });
+      const n = k * zones.length + zi, m = spec.muzzles?.[n % spec.muzzles.length] || [0, 2, 1], c = Math.cos(e.angle), s = Math.sin(e.angle);
+      let tx = zone.x, tz = zone.z;
+      if (zone.shape === "circle") {
+        // A fixed spiral of landing spots across the circle.
+        const a = k * 2.39996 + zone.angle, r = zone.radius * 0.85 * Math.sqrt((k + 0.5) / attack.rounds);
+        tx += Math.cos(a) * r; tz += Math.sin(a) * r;
+      } else {
+        const u = (zone.length * (k + 1)) / (attack.rounds + 1), v = (k % 2 ? 1 : -1) * Math.min(1.2, halfWidth(zone, u) * 0.5);
+        tx += u * Math.sin(zone.angle) + v * Math.cos(zone.angle); tz += u * Math.cos(zone.angle) - v * Math.sin(zone.angle);
+      }
+      this.events.push({ type: "shot", weapon: attack.weapon || "tank", source: e.id, target: null, x: e.x + m[0] * c + m[2] * s, z: e.z - m[0] * s + m[2] * c, tx, tz, team: e.team, heavy: true, sAir: m[1] - 0.4, boss: e.id, muzzle: n % 4 });
+    }
+  },
+  // target: "building": the highest-tier tower within the attack's range, then the most expensive,
+  // then the nearest (entity order breaks the rest). Undefined when none is in reach: the caller
+  // falls back to the biggest unit group.
+  bossBuildingAim(e, attack) {
+    let best = null, tier = -1, cost = -1, near = Infinity;
     for (const t of this.entities) {
-      if (t.hp <= 0 || t.flying || !this.hostile(e.team, t.team)) continue;
-      const building = t.kind === "building";
-      if ((t.kind !== "unit" && !building) || !inZone(zone, t, building ? t.radius : 0)) continue;
-      this.applyDamage(t, attack.damage * (building ? attack.building ?? 1 : 1) * this.bossScale(spec, t), e.team, e.id);
+      if (t.hp <= 0 || t.kind !== "building" || !this.hostile(e.team, t.team) || !this.isVisible(t, e.team)) continue;
+      const d = distance(e, t);
+      if (d > attack.range) continue;
+      const rank = t.tier ?? 0, w = worth(t);
+      if (rank > tier || (rank === tier && (w > cost || (w === cost && d < near)))) { best = t; tier = rank; cost = w; near = d; }
     }
-    const m = spec.muzzles?.[k % spec.muzzles.length] || [0, 2, 1], c = Math.cos(e.angle), s = Math.sin(e.angle);
-    let tx = zone.x, tz = zone.z;
-    if (zone.shape === "circle") {
-      // A fixed spiral of landing spots across the circle.
-      const a = k * 2.39996 + zone.angle, r = zone.radius * 0.85 * Math.sqrt((k + 0.5) / attack.rounds);
-      tx += Math.cos(a) * r; tz += Math.sin(a) * r;
-    } else {
-      const u = (zone.length * (k + 1)) / (attack.rounds + 1), v = (k % 2 ? 1 : -1) * Math.min(1.2, halfWidth(zone, u) * 0.5);
-      tx += u * Math.sin(zone.angle) + v * Math.cos(zone.angle); tz += u * Math.cos(zone.angle) - v * Math.sin(zone.angle);
+    return best ? { x: best.x, z: best.z, count: 0, building: best.id } : null;
+  },
+  // Route mode, tracking: the boss stops while a target is within reach of its next attack (it waits
+  // for its pause there, light gun firing) and walks its road otherwise. stepRoute also fires the
+  // light gun on the move and lets a blocker hold it, like any column.
+  bossMarch(e, attack, aim, o, dt) {
+    if (aim && hyp(aim.x - e.x, aim.z - e.z) <= attack.range) {
+      e.moving = false;
+      this.bossGun(e, dt);
+    } else this.stepRoute(e, o, dt);
+  },
+  // Health stages release units beside the boss (spec.drops: [{ at, type, n }], `at` a share of its
+  // maximum health). In Defence they walk the boss's own road (spawnOnRoute); elsewhere they go
+  // for what the boss is aiming at. The count of drops made is e.bs.drop, created with the first.
+  bossDrops(e, spec, bs) {
+    while ((bs.drop ?? 0) < spec.drops.length && e.hp <= e.maxHp * spec.drops[bs.drop ?? 0].at + 1e-9) {
+      const d = spec.drops[(bs.drop = (bs.drop ?? 0) + 1) - 1], r = D[d.type]?.radius || 0.7, o = e.orders[0];
+      const spots = this.ringSpots(e.x, e.z, r, d.n, e.radius + r + 0.6);
+      while (spots.length < d.n) spots.push({ x: e.x, z: e.z });
+      const ids = [];
+      for (const p of spots.slice(0, d.n)) {
+        let u;
+        if (this.defence && o?.type === "route") {
+          u = this.spawnOnRoute(d.type, e.team, o.route, o.leg, p);
+          if (e.wave !== undefined) u.wave = e.wave;
+        } else {
+          u = this.spawn(d.type, e.team, p.x, p.z, true, true);
+          if (bs.aim) u.orders = [{ type: "attackmove", x: bs.aim.x, z: bs.aim.z }];
+        }
+        ids.push(u.id);
+      }
+      this.bossEvent(e, "bossDrop", { unit: d.type, ids });
     }
-    this.events.push({ type: "shot", weapon: attack.weapon || "tank", source: e.id, target: null, x: e.x + m[0] * c + m[2] * s, z: e.z - m[0] * s + m[2] * c, tx, tz, team: e.team, heavy: true, sAir: m[1] - 0.4, boss: e.id, muzzle: k % 4 });
+  },
+  // Break the attack: during a warning, health lost of at least share x (max health + max shield)
+  // cancels the attack and opens the core for `seconds` (the reward is the exposed window).
+  bossBreak(e, spec, bs) {
+    const need = spec.break.share * (e.maxHp + e.maxShield);
+    if (bs.mark - (e.hp + e.shield) < need - 1e-9) return;
+    this.clearZones(e.id);
+    bs.zone = null;
+    delete bs.mark;
+    bs.phase = "exposed";
+    bs.until = this.time + (spec.break.seconds ?? 6);
+    this.bossEvent(e, "bossBroken", { seconds: bs.until - this.time });
+    this.bossEvent(e, "bossExposed", { seconds: bs.until - this.time });
+  },
+  // A sideways step between attacks (spec.strafe.distance metres, alternating sides): the first side
+  // whose spot is standable and reachable; none when both are blocked.
+  bossStrafe(e, spec, bs) {
+    const d = spec.strafe.distance, across = { x: Math.cos(e.angle), z: -Math.sin(e.angle) }, side = bs.cycle % 2 ? 1 : -1;
+    for (const s of [side, -side]) {
+      const p = { x: e.x + across.x * d * s, z: e.z + across.z * d * s };
+      if (this.nav.canStand(p.x, p.z, e.radius) && this.nav.canTraverse(e, p, e.radius)) { bs.strafe = p; return; }
+    }
   },
   clearZones(bossId) {
     if (this.dangerZones) this.dangerZones = this.dangerZones.filter((z) => z.boss !== bossId);
@@ -267,6 +390,8 @@ export const bosses = {
     for (let i = from; i < exits.length; i++) {
       const p = exits[i];
       if (!this.nav.canStand(p.x, p.z, u.radius) || !this.nav.canTraverse(u, p, u.radius)) continue;
+      // A spread has several zones: never step out of one into the next.
+      if (this.dangerZones.length > 1 && this.dangerZones.some((o) => o.id !== zone.id && this.hostile(o.team, u.team) && inZone(o, p, u.radius + EVADE_MARGIN))) continue;
       u.evade = { zone: zone.id, x: p.x, z: p.z, n: i };
       // A unit standing guard keeps its new spot as its post; one with orders picks them up after.
       if (!u.orders.length && u.post) u.post = { x: p.x, z: p.z };

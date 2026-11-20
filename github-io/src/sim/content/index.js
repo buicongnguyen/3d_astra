@@ -5,10 +5,11 @@
 // A module must not use other sim exports at import time (src/sim/content.js reads this list while
 // the sim files are still loading); inside its hooks it may use anything.
 import { suppression } from "./suppression.js";
-
 import { marksman } from "./marksman.js";
+import { bossStatus } from "./boss-status.js";
 
 export const CONTENT = [
   suppression,
   marksman,
+  bossStatus,
 ];
