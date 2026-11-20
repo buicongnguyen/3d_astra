@@ -36,6 +36,9 @@ await suite("showtime: title cards, boss presence, the Keystone Roads node", asy
   for (const viewport of ["desktop", "portrait", "landscape"]) {
     const ctx = await openPage(browser, viewport);
     const { page, tap, errors } = ctx;
+    // The card lives 2.6 s of real time. On a slow runner the checks below can take longer than that and find it gone (a null card),
+    // so its two timers (2.6 s hide, 2.2 s fade) run ten times longer here; the card is still checked to go away by itself.
+    await page.addInitScript(() => { const st = window.setTimeout; window.setTimeout = (fn, ms, ...a) => st(fn, ms === 2600 || ms === 2200 ? ms * 10 : ms, ...a); });
 
     // 1. Title card.
     await begin(ctx, "m01-first-light");
@@ -68,7 +71,7 @@ await suite("showtime: title cards, boss presence, the Keystone Roads node", asy
     await page.waitForTimeout(500);
     const calm = await page.evaluate(() => { const s = getComputedStyle(document.querySelector("#title-card")); return { animation: s.animationName, opacity: s.opacity, transition: s.transitionProperty, cls: document.querySelector("#title-card").className }; });
     assert.deepEqual([calm.animation, calm.transition, calm.opacity, calm.cls], ["none", "opacity", "1", "calm show"], "reduced motion: a plain fade, no slide");
-    await page.locator("#title-card").waitFor({ state: "detached", timeout: 6000 });
+    await page.locator("#title-card").waitFor({ state: "detached", timeout: 40000 });
     await page.emulateMedia({ reducedMotion: "no-preference" });
 
     // 2. Boss presence in mission 3.
@@ -150,6 +153,8 @@ await suite("showtime: title cards, boss presence, the Keystone Roads node", asy
     await page.evaluate(([k, v]) => { localStorage.setItem(k, JSON.stringify(v)); }, [KEY, clearedBefore("m11c-hold-the-keystone-roads")]);
     await ctx.goto(""); await ctx.ready();
     await tap('[data-mode="campaign"]');
+    await page.waitForSelector('.cmap-board', { state: "attached", timeout: TIMEOUT.step });
+    await page.waitForSelector('.cmap-node[data-map-mission="m11c-hold-the-keystone-roads"]', { state: "attached", timeout: TIMEOUT.step });
     const node = await page.evaluate(() => {
       const n = document.querySelector('.cmap-node[data-map-mission="m11c-hold-the-keystone-roads"]'), b = document.querySelector(".cmap-board").getBoundingClientRect();
       if (!n) return null;

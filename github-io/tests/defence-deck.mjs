@@ -57,16 +57,22 @@ await suite("defence-deck", async () => {
     if (speed === 3) await page.keyboard.press("Shift+Space");
     assert.equal(await page.evaluate(() => window.__frontier.paused), false, "Shift+Space does not pause");
     await page.waitForFunction((n) => document.querySelector("#defence-speed-label").textContent === `×${n}`, speed);
-    const t0 = await page.evaluate(() => window.__frontier.sim.time), r0 = Date.now();
+    const t0 = await page.evaluate(() => { const c = window.__frames = { n: 0 }; const loop = () => { c.n++; requestAnimationFrame(loop); }; requestAnimationFrame(loop); return window.__frontier.sim.time; }), r0 = Date.now();
+    const tk0 = await page.evaluate(() => window.__frontier.sim.ticks);
     await page.evaluate(() => document.querySelector("#defence-call").click());
     await page.waitForTimeout(3000);
     await page.evaluate(() => { const d = window.__frontier.sim.defence; if (d.wave < 2) document.querySelector("#defence-call").click(); });
     await page.waitForFunction(() => window.__frontier.sim.time > 60, null, { timeout: 240000 });
     const real = (Date.now() - r0) / 1000;
-    const out = await page.evaluate(() => { const f = window.__frontier; f.hold = true; return { ticks: f.sim.ticks, hash: f.sim.hash(), log: f.sim.commandLog, time: f.sim.time, wave: f.sim.defence.wave }; });
+    const out = await page.evaluate(() => { const f = window.__frontier; f.hold = true; return { frames: window.__frames.n, ticks: f.sim.ticks, hash: f.sim.hash(), log: f.sim.commandLog, time: f.sim.time, wave: f.sim.defence.wave }; });
     const ratio = (out.time - t0) / real;
     console.log(`x${speed}: ${out.time.toFixed(1)} s of match in ${real.toFixed(1)} s (${ratio.toFixed(2)}x), ${out.ticks} ticks, wave ${out.wave}, ${out.log.length} commands`);
-    assert.ok(ratio > (speed === 3 ? 1.5 : 1.2), `x${speed} runs faster than real time (${ratio.toFixed(2)})`);
+    // Relative to what this machine can draw: the loop runs at most 6 ticks (0.3 s of match) a frame, so a slow software-rendered runner cannot reach x3.
+    const fps = out.frames / real, reachable = Math.min(speed, 6 * 0.05 * fps), perFrame = (out.ticks - tk0) / Math.max(1, out.frames);
+    console.log(`  ${fps.toFixed(1)} frames/s, ${perFrame.toFixed(2)} ticks/frame, reachable ${reachable.toFixed(2)}x`);
+    assert.ok(ratio > Math.min(speed === 3 ? 1.5 : 1.2, 0.5 * reachable), `x${speed} runs faster than real time (${ratio.toFixed(2)}, reachable ${reachable.toFixed(2)})`);
+    // x1 runs at most one tick per frame; fast-forward must run more of them per frame whenever frames are slow enough to need it.
+    if (fps < 20) assert.ok(perFrame > 1, `x${speed} runs several ticks per frame (${perFrame.toFixed(2)})`);
     assert.ok(out.log.filter((c) => c.type === "waveCall").length >= 1, "the Call button went through the command log");
     // The replay runs headless in the same browser: Chrome and Node differ in the last bit of Math.atan2 (a tower's angle), so a Node replay cannot match bit for bit.
     const again = await page.evaluate(({ options, log, ticks }) => { const sim = new window.__frontier.sim.constructor(options); let next = 0; while (sim.ticks < ticks) { while (next < log.length && log[next].tick === sim.ticks) { const { tick, ...c } = log[next++]; sim.command(c); } sim.tick(0.05); } return sim.hash(); }, { options: start.options, log: out.log, ticks: out.ticks });

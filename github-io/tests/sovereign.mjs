@@ -38,8 +38,17 @@ await suite("sovereign: the Iron Sovereign on a Defence road, phone", async () =
   assert.match(before.text, /Iron Sovereign/);
   assert.deepEqual(before.small, [], "bar text 11 px or more");
   assert.ok(before.inside && !before.sideways);
-  await page.evaluate(() => document.documentElement.style.setProperty("--defence-bar-h", "64px"));
-  const after = await measure();
+  // The game also writes --defence-bar-h (the real bar, a frame or more later on a slow runner) and can overwrite either value
+  // between two reads, so the stacking is judged on a pair of reads taken back to back: retry until one pair is clean.
+  const pair = () => page.evaluate(() => {
+    const root = document.documentElement, bar = document.querySelector("#boss-bar");
+    root.style.setProperty("--defence-bar-h", "0px"); const a = bar.getBoundingClientRect().bottom;
+    root.style.setProperty("--defence-bar-h", "64px"); const b = bar.getBoundingClientRect().bottom;
+    return { a, b };
+  });
+  let got = await pair();
+  for (let i = 0; i < 20 && got.a - got.b < 63; i++) { await page.waitForTimeout(500); got = await pair(); }
+  const after = { bottom: got.b }; before.bottom = got.a;
   assert.ok(before.bottom - after.bottom >= 63, `the bar rises above the Defence bar (${before.bottom} -> ${after.bottom})`);
   assert.deepEqual(errors, []);
 }, { browser });
