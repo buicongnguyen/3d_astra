@@ -1185,7 +1185,10 @@
     "Top rank": "Hạng cao nhất",
     "Rank 2": "Hạng 2",
     "Assault": "Xung kích",
-    "Bulwark": "Thành lũy"
+    "Bulwark": "Thành lũy",
+    "Box select": "Khoanh chọn",
+    "Queue orders": "Xếp lệnh",
+    "More controls": "Thêm điều khiển"
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],
