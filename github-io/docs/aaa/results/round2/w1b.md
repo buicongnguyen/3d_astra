@@ -43,3 +43,6 @@ Scrapper approach (recorded): first Scrapper reaches the line at about 2.4 s aga
 - Models are marked "pending owner review (round 2)". Preview sheets and phone screenshots are in `docs/aaa/results/round2/w1b/`.
 - Stray empty folder `C:\.tmp` was created by a Blender preview run with a relative path; it is empty and could not be deleted (protected path). Safe to remove.
 - Ability tile uses the generic bolt icon until W1-C reads `ability.icon`.
+
+## baselines:diff
+`npm run baselines:diff`: missions-standard identical (147 s), defence identical (124 s).
