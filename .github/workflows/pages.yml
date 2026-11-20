@@ -66,7 +66,10 @@ jobs:
           - name: languages
             scripts: language
           - name: interface
-            scripts: ui-quality ambient-life render-budget
+            scripts: ui-quality ambient-life
+          # Split from "interface" (Wave 1 integration): render-budget is its own group; the pair ran ~94 s locally, ~22 min estimated on the runner.
+          - name: interface-budget
+            scripts: render-budget
           - name: progression
             scripts: progression
           - name: maps
@@ -86,7 +89,10 @@ jobs:
             scripts: layout-f
             layoutOnly: portrait,landscape,landscape-vi,portrait-vi
           - name: ui-extras
-            scripts: ui-extras messages abilities
+            scripts: ui-extras abilities
+          # Split from "ui-extras" (Wave 1 integration): the three suites ran ~119 s locally, ~28 min estimated on the runner.
+          - name: ui-extras-messages
+            scripts: messages
           - name: visuals
             scripts: visual-combat feel model-loading portraits factions terrain
           - name: defence
