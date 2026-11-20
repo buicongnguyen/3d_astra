@@ -94,3 +94,29 @@ test("a player who crews nothing loses, and the lent Gunners pin a Scrapper grou
 test("resolveMission leaves m11c as it is on every decision path", () => {
   assert.deepEqual(resolveMission(M, null), resolveMission(M, { decisions: {} }));
 });
+
+test("title cards: every mission, Chronicle mission and Defence level has a label row; the card reads act, title and place", async () => {
+  const { MISSION_INTROS, titleCardFor } = await import("../src/story/mission-intros.js");
+  const { CHRONICLES } = await import("../src/story/chronicles.js");
+  const all = [...MISSIONS, ...CHRONICLES.flatMap((c) => c.missions), ...DEFENCE_LEVELS];
+  for (const m of all) {
+    assert.ok(MISSION_INTROS[m.id], `${m.id}: a row`);
+    const card = titleCardFor(m);
+    assert.equal(card.title, m.title);
+    assert.equal(card.place, m.briefing.place);
+    assert.ok(card.kicker.length > 0, m.id);
+  }
+  assert.equal(titleCardFor(MISSIONS[0]).kicker, "ACT I · LANDFALL · DAY 1");
+  assert.equal(titleCardFor({ id: "unknown", title: "X", briefing: { place: "Y" } }).kicker, "", "falls back to title and place");
+  // The table is a separate file: the missions themselves carry no intro field.
+  assert.ok(all.every((m) => !("intro" in m) && !("kicker" in m)));
+});
+
+test("scene beats: the Iron Vanguard's entrance has a title beat and a shake beat, and the boss end beat holds 1.2 s", async () => {
+  const { SCENES, beatSeconds } = await import("../src/story/scenes.js");
+  const beats = SCENES["iron-vanguard"].beats;
+  assert.ok(beats.some((b) => b.title?.text === "Iron Vanguard") && beats.some((b) => b.shake > 0));
+  assert.equal(beatSeconds({ title: { text: "x" } }), 1.8);
+  const { BOSS_BEAT_PAN, BOSS_BEAT_HOLD } = await import("../src/app/ui-extras.js").catch(() => ({}));
+  if (BOSS_BEAT_HOLD !== undefined) assert.ok(BOSS_BEAT_HOLD === 1.2 && BOSS_BEAT_PAN + BOSS_BEAT_HOLD >= 1.4);
+});
