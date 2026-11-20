@@ -11,8 +11,6 @@
 .field-guide dd { margin: 0; }
 .field-guide ul,.field-guide ol { padding-left: 22px; }
 .field-guide article p { margin: 12px 0; }
-.progression-stats { color: #96dcef; font-size: 12px; line-height: 1.5; }
-.entity-purpose { font-size: 11px; color: #bbcec7; margin-top: 4px; }
 .upgrade-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .upgrade-actions button { min-height: 40px; background: #22434b; border: 1px solid #557876; color: #e1ebe2; border-radius: 7px; padding: 6px 12px; }
 .order-buttons { flex-wrap: wrap; }

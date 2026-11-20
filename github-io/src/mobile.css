@@ -151,9 +151,6 @@ button {
 :root:not(.compact-ui) .objective small {
   margin-top: 3px;
 }
-:root:not(.compact-ui) .mission-footer {
-  padding: 8px 0;
-}
 #mode-controls {
   position: absolute;
   top: 132px;
@@ -448,12 +445,6 @@ button {
 .compact-ui .entity-details .eyebrow {
   font-size: 8px;
 }
-.compact-ui .entity-stats {
-  font-size: 9px;
-}
-.compact-ui .entity-stats > span:last-child {
-  font-size: 8px;
-}
 .compact-ui .order-buttons {
   display: grid;
   grid-auto-flow: column;
@@ -665,8 +656,5 @@ button {
   }
   .compact-ui .resource {
     padding: 0 5px;
-  }
-  .compact-ui .entity-stats {
-    font-size: 8px;
   }
 }

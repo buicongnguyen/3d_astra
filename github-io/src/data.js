@@ -4,7 +4,6 @@ export const HALF = MAP_SIZE / 2;
 export const CELL = 2;
 export const GRID = MAP_SIZE / CELL;
 export const MAX_POP = 100;
-export const TEAMS = ["Meridian Expedition", "Crimson Collective"];
 export const DEFINITIONS = balance.definitions;
 export const BUILDINGS = ["relay", "barracks", "foundry", "tower", "hq"];
 // Symmetric collision terrain: central chokepoints and two open flanks.

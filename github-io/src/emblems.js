@@ -80,11 +80,3 @@ export function createEmblem(faction, team, color, size) {
 export function recolorEmblems(colors) {
   for (const m of materials.values()) m.color.setHex(colors[m.userData.team] ?? 0xffffff);
 }
-
-// Drop the shared textures and materials (a test or a full renderer teardown).
-export function disposeEmblems() {
-  for (const t of textures.values()) t.dispose();
-  for (const m of materials.values()) m.dispose();
-  textures.clear();
-  materials.clear();
-}

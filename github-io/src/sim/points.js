@@ -5,8 +5,8 @@ import { distance } from "../data.js";
 // with { capturePoints: true } have them: never Training, never a story mission.
 // Layout, from maps.json: the crossroads at the map centre plus a pair of ridges on the line
 // that bisects the two home camps, mirrored through the centre so both sides stand equally far.
-export const POINT_RADIUS = 5;
-export const POINT_INCOME = { alloy: 0.25, energy: 0.1 };
+const POINT_RADIUS = 5;
+const POINT_INCOME = { alloy: 0.25, energy: 0.1 };
 // A ridge too close to an extra rival camp (two or three enemies) is left out.
 const CAMP_CLEARANCE = 17;
 

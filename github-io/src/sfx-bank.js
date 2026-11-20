@@ -83,7 +83,6 @@ export const BANK = {
   "boom:building": { level: 0.95, drive: 2, room: ROOM.field, layers: [...blast(1.6), { k: "noise", f: "lp", f0: 500, f1: 90, glide: 1.6, q: 0.7, at: 0.15, a: 0.25, d: 0.8, dur: 2.6, g: 1.2 }, debris(60, 0.2, 1.8, [600, 3500], 3, 0.45, [0.006, 0.04])] },
   "boom:core": { level: 1, drive: 2.2, room: ROOM.field, len: 4, layers: [...blast(1.8), ...blast(0.7, 0.45, 0.7), ...blast(0.9, 1.05, 0.6), { k: "noise", f: "lp", f0: 450, f1: 70, glide: 2.4, q: 0.7, at: 0.2, a: 0.3, d: 1.1, dur: 3.6, g: 1 }, debris(80, 0.3, 2.4, [500, 3500], 3, 0.45, [0.006, 0.05])] },
 };
-export const BANK_NAMES = Object.keys(BANK);
 
 // ---------------------------------------------------------------- radio replies
 // Squelch open (noise burst) + a short tone motif (the faction's FACTION_MOTIF) + squelch close, all

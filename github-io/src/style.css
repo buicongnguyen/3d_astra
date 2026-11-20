@@ -316,20 +316,6 @@ button kbd {
 .objective.complete > span:last-child {
   color: var(--mint);
 }
-.mission-footer {
-  border-top: 1px solid var(--line);
-  font:
-    8px Consolas,
-    monospace;
-  letter-spacing: 1.5px;
-  padding: 13px 0;
-  color: #94b89d;
-}
-.mission-footer .icon {
-  width: 13px;
-  height: 13px;
-  margin-right: 5px;
-}
 .sector-status {
   position: absolute;
   right: 30px;
@@ -554,32 +540,6 @@ button kbd {
   margin: 5px 0 10px;
   letter-spacing: -0.3px;
 }
-.health-track {
-  height: 3px;
-  background: #344638;
-  border-radius: 1px;
-  max-width: 280px;
-}
-.health-track i {
-  display: block;
-  height: 100%;
-  background: #b1d896;
-}
-.entity-stats {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  max-width: 280px;
-  margin-top: 7px;
-  font:
-    8px Consolas,
-    monospace;
-  color: #93a287;
-}
-.entity-stats > span:last-child {
-  color: #bbc7ae;
-  font-size: 7px;
-}
 .selection-empty {
   display: flex;
   align-items: center;
@@ -665,13 +625,6 @@ button kbd {
 #queue:not(:empty) {
   margin: 0 0 10px;
 }
-#queue .queue-label {
-  font:
-    8px Consolas,
-    monospace;
-  color: #8ca082;
-  margin-right: 3px;
-}
 #queue button {
   position: relative;
   display: flex;
@@ -702,9 +655,6 @@ button kbd {
   left: 0;
   height: 2px;
   background: #a1d78c;
-}
-.cancel-build {
-  font-size: 10px !important;
 }
 .command-panel {
   padding: 0 14px 11px;

@@ -1,4 +1,4 @@
-import { DEFINITIONS as D, MAX_POP, distance } from "../data.js";
+import { DEFINITIONS as D, MAX_POP, distance, hyp } from "../data.js";
 import { roleOf, fieldPlan } from "../ai-plan.js";
 import { EXPAND_CREW } from "./expand.js";
 import { aiAttack } from "./ai-attack.js";
@@ -13,7 +13,15 @@ export const ai = {
     const own = this.own(team).filter((e) => !e.tag),
       workers = own.filter((e) => e.type === "worker"),
       army = own.filter((e) => e.kind === "unit" && e.type !== "worker" && !e.garrison);
-    if (!own.some(e => e.type === "hq")) return;
+    // One pass over own: structures by type (complete or not), reused by every check below this think.
+    const kinds = { hq: 0, barracks: 0, foundry: 0, tower: 0, doneFoundry: 0, unfinished: 0 }, sites = [];
+    for (const e of own) {
+      if (e.kind !== "building") continue;
+      if (e.type in kinds) kinds[e.type]++;
+      if (e.type === "foundry" && e.complete) kinds.doneFoundry++;
+      if (!e.complete) { kinds.unfinished++; sites.push(e); }
+    }
+    if (!kinds.hq) return;
     this.updateKnownCores(team);
     // The field commander (ai-attack.js) or null for the original AI.
     const cmd = this.aiCommandFor(team);
@@ -34,7 +42,7 @@ export const ai = {
     }
     // Resume construction whose builder died or gave up on its route. Otherwise one
     // abandoned site blocks every later AI structure, including supply relays.
-    for (const site of own.filter((e) => e.kind === "building" && !e.complete)) {
+    for (const site of sites) {
       if (workers.some((w) => w.orders.some((o) => o.type === "build" && o.target === site.id)))
         continue;
       // Retries count reassignments that made no progress: builders killed mid-way on a
@@ -61,16 +69,16 @@ export const ai = {
     const reserve = (hqDue ? this.levelCost(hq)[0] : 0) + (expanding ? D.hq.cost[0] : 0);
     const afford = (cost) => this.canPay(team, [cost[0] + reserve, cost[1]]);
     const pop = this.population(team);
-    const want = !own.some((e) => e.type === "barracks")
+    const want = !kinds.barracks
       ? "barracks"
       : pop.cap - pop.used - pop.reserved < (pace.counter && this.players[team].alloy >= 400 ? 10 : 5) && pop.cap < MAX_POP
         ? "relay"
-        : !own.some((e) => e.type === "foundry") && this.time > pace.foundryAt * (role === "siege" ? 0.6 : 1)
+        : !kinds.foundry && this.time > pace.foundryAt * (role === "siege" ? 0.6 : 1)
           ? "foundry"
-          : pace.secondBarracks && this.time > pace.secondBarracks && own.filter((e) => e.type === "barracks").length < 2
+          : pace.secondBarracks && this.time > pace.secondBarracks && kinds.barracks < 2
             ? "barracks"
-            : this.time > pace.towerAt && own.some((e) => e.type === "foundry" && e.complete) &&
-                own.filter((e) => e.type === "tower").length < pace.towers + (role === "siege" ? 1 : 0)
+            : this.time > pace.towerAt && kinds.doneFoundry &&
+                kinds.tower < pace.towers + (role === "siege" ? 1 : 0)
               ? "tower"
               : this.factionBuilding(team, own, persona, extra) || this.surplusBuilding(team, own, role);
     if (
@@ -81,12 +89,15 @@ export const ai = {
     ) {
       // Towers go on the side facing the map centre; other buildings anywhere around the core.
       const facing = want === "tower" && hq ? Math.atan2(-hq.z, -hq.x) : 0;
+      // Candidate sites that touch a standing structure fail placement() whatever else is true: skip them before its full scan.
+      const near = this.entities.filter((e) => e.hp > 0 && e.kind === "building"), rad = D[want].radius;
       const turns = want === "tower" ? [0, 1, -1, 2, -2, 3, -3] : [...Array(12).keys()];
       outer: for (const r of want === "tower" ? [11, 14, 17] : [10, 17, 23])
         for (const i of turns) {
           const angle = want === "tower" ? facing + i * 0.35 : (i / 12) * Math.PI * 2;
           const x = (hq?.x ?? 25) + Math.cos(angle) * r,
             z = (hq?.z ?? -24) + Math.sin(angle) * r;
+          if (near.some((e) => hyp(x - e.x, z - e.z) < rad + e.radius + 1.25)) continue;
           if (!this.placement(want, team, x, z)) {
             if (this.build(workers[0].id, want, x, z)) break outer;
           }

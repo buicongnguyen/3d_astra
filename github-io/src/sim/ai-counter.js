@@ -10,7 +10,8 @@ const MAX_SEEN = 400;
 // Share of the seen army that must be of one kind before the AI reacts to it.
 const MECH_SHARE = 0.4, INFANTRY_SHARE = 0.6, MIN_SEEN = 4;
 // Units below this share of health retreat to a Medic until healed past RECOVER.
-export const HURT = 0.35, RECOVER = 0.7;
+export const HURT = 0.35;
+const RECOVER = 0.7;
 
 export const aiCounter = {
   // Adds every hostile fighter, tower or core this team can see right now to its memory, and drops ones

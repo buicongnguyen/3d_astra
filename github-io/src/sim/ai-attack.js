@@ -31,7 +31,7 @@ const MISSION_FIELD = { story: null, standard: { ...FIELD.normal, probe: 0, alli
 // Faction personalities (balance.json ai_personalities names) bend the same rules:
 // Ashfall rushes in at lower odds and holds on longer; the Wardens wait for clear odds and give
 // ground early; Veil breaks off at even odds and likes a flank; Sunward sends raiders at Harvesters.
-export const FIELD_PERSONA = {
+const FIELD_PERSONA = {
   default: { odds: 1, wait: 1, retreat: 1, split: 0.35, to: "flank" },
   rush: { odds: 0.8, wait: 0.5, retreat: 1.15, split: 0.25, to: "flank" },
   raider: { odds: 1, wait: 1, retreat: 1, split: 0.6, to: "harvesters" },
