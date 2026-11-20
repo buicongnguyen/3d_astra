@@ -13,11 +13,11 @@ await suite("workshops", async () => {
     await ready();
     const rows = await page.evaluate(() => {
       const row = document.querySelector("#battle-rules");
-      const buttons = [...row.querySelectorAll("button")].map((b) => { const r = b.getBoundingClientRect(); return { h: r.height, w: r.width, text: b.textContent }; });
+      const buttons = [...row.querySelectorAll("button")].map((b) => { const r = b.getBoundingClientRect(); return { h: r.height, w: r.width, text: b.textContent, rule: b.closest(".rule-row")?.dataset.rule }; });
       const small = [...row.querySelectorAll("*")].filter((e) => e.childElementCount === 0 && e.textContent.trim() && parseFloat(getComputedStyle(e).fontSize) < 11).map((e) => e.textContent);
       return { buttons, small, scrollX: document.documentElement.scrollWidth > window.innerWidth };
     });
-    assert.deepEqual(rows.buttons.map((b) => b.text), ["Classic", "Expanded"]);
+    assert.deepEqual(rows.buttons.filter((b) => b.rule === "roster").map((b) => b.text), ["Classic", "Expanded"]); // W2-D adds the AI plan row
     for (const b of rows.buttons) assert.ok(b.h >= 44 && b.w >= 44, `${viewport}: tap ${b.h}x${b.w}`);
     assert.deepEqual(rows.small, [], `${viewport}: text under 11 px`);
     assert.equal(rows.scrollX, false, `${viewport}: no sideways scroll`);
