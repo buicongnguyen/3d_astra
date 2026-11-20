@@ -36,4 +36,4 @@ Margins are thin: portrait "nothing selected" is 70.1%. A dialogue chip, hint or
 `mobile.mjs`, `mobile-controls.mjs` (sheet), `messages.mjs` (hint in the dock band, bound 0.33 of height), `layout-f.mjs` (free share 0.65), `feel.mjs` (landscape + zoom 92). Not mine and untested here: `boss.mjs`, `hotkeys.mjs`, `missions.mjs`, `tactics-ui.mjs`, `webkit.mjs` reference `.touch-controls`/`#select-workers`; run them at integration.
 
 ## Not run
-`npm run baselines:diff` was started late (view-only change; it cannot move sim baselines). Full `test:ci-local`, Defence share (integrator, after W1-F), m02b stacking check.
+`baselines:diff` (fast set): identical. Full `test:ci-local`, Defence share (integrator, after W1-F) and the m02b stacking check are left to the integrator.
