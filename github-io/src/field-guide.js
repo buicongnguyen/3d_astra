@@ -37,11 +37,14 @@ export function entryHTML(type, sim = null, team = 0) {
     <h3>Three technology stages</h3><ol><li>Establish an economy and mixed army.</li><li>Upgrade your core and production to L2; unlock Medics, Engineers and Anti-tank soldiers.</li><li>Reach L3 to unlock Battle tanks at the Foundry, with stronger defenses and faster production, then defeat enemy cores.</li></ol><p>These stages occur within any of the ${Object.keys(MAPS).length} skirmish maps; they are not separate campaign missions. Select 1-3 AI enemies in the briefing. Multiple enemies fight free-for-all. A faction loses all remaining forces and production when its last Command core is destroyed.</p>`;
 }
 
+// Expanded-only definitions (roster: "expanded") are listed only while the Roster rule is Expanded (AAA round 2, integration).
+const guideOptions = (expanded) => Object.keys(D).filter(k => D[k].kind && !D[k].boss && (expanded || D[k].roster !== "expanded")).map(k => `<option value="${k}">${D[k].name}</option>`).join("");
+
 export function createFieldGuide(onOpen,onClose,getSim = () => null) {
   const dialog = document.createElement('dialog');
   dialog.className = 'field-guide';
   dialog.setAttribute('aria-labelledby','guide-title');
-  dialog.innerHTML = `<header><h2 id="guide-title">Field guide · units and buildings</h2><label for="guide-entry">Unit or building</label><select id="guide-entry">${Object.keys(D).filter(k => D[k].kind && !D[k].boss).map(k => `<option value="${k}">${D[k].name}</option>`).join('')}</select></header><article id="guide-detail"></article><footer><button id="guide-close">Close field guide</button></footer>`;
+  dialog.innerHTML = `<header><h2 id="guide-title">Field guide · units and buildings</h2><label for="guide-entry">Unit or building</label><select id="guide-entry">${guideOptions(false)}</select></header><article id="guide-detail"></article><footer><button id="guide-close">Close field guide</button></footer>`;
   document.body.append(dialog);
   let team = 0;
   const pick = dialog.querySelector('select');
@@ -49,5 +52,5 @@ export function createFieldGuide(onOpen,onClose,getSim = () => null) {
   pick.onchange = render;
   dialog.querySelector('button').onclick = () => dialog.close();
   dialog.addEventListener('close',onClose);
-  return (type,side = 0) => { if (dialog.open) return; team = side; pick.value = D[type]?.kind && !D[type].boss ? type : 'hq'; /* bosses are not trained: no entry (docs/aaa/BOSSES.md) */ render(); onOpen(); dialog.showModal(); };
+  return (type,side = 0) => { if (dialog.open) return; team = side; pick.innerHTML = guideOptions(getSim()?.ruleOn?.("roster") === "expanded"); pick.value = D[type]?.kind && !D[type].boss ? type : 'hq'; /* bosses are not trained: no entry (docs/aaa/BOSSES.md) */ render(); onOpen(); dialog.showModal(); };
 }
