@@ -30,11 +30,15 @@ export function renderShell() {
     <div id="mode-banner" hidden></div>
     <div id="mode-controls" hidden><button id="confirm-build" hidden disabled>Build here</button><button id="cancel-mode">Cancel</button></div>
     <nav class="touch-controls" aria-label="Touch battlefield controls">
-      <button id="select-workers" title="Select all Harvesters">${icon("worker")}<span>Workers</span></button>
       <button id="select-army" title="Select all combat units">${icon("people")}<span>Army</span></button>
-      <button id="box-select" aria-pressed="false">${icon("expand")}<span>Box</span></button>
-      <button id="queue-orders" aria-pressed="false">${icon("flag")}<span>Queue</span></button>
-      <button id="clear-selection" aria-label="Clear selection">${icon("close")}</button>
+      <button id="select-workers" title="Select all Harvesters">${icon("worker")}<span>Workers</span></button>
+      <button id="touch-more" class="touch-more" type="button" aria-label="More controls" title="More controls" aria-haspopup="true" aria-expanded="false" aria-controls="touch-sheet"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2.2" fill="currentColor"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><circle cx="19" cy="12" r="2.2" fill="currentColor"/></svg></button>
+      <div id="touch-sheet" class="touch-sheet" role="group" aria-label="More controls" hidden>
+        <button id="box-select" aria-pressed="false">${icon("expand")}<span>Box select</span></button>
+        <button id="queue-orders" aria-pressed="false">${icon("flag")}<span>Queue orders</span></button>
+        <button id="clear-selection" aria-label="Clear selection">${icon("close")}<span>Clear selection</span></button>
+        <button id="touch-guide" type="button">${icon("info")}<span>Info & stats</span></button>
+      </div>
       <button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button>
     </nav>
     <div id="selection-box"></div>
