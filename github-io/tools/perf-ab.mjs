@@ -31,6 +31,15 @@ export const SCENES = {
       return sim.hash();
     },
   },
+  "riverlands-x3-300": {
+    about: "AI against AI, riverlands, 3 rivals, Fast, 300 s (the busiest skirmish)",
+    async play(tree) {
+      const { Simulation } = await import(tree.module("src/simulation.js"));
+      const sim = new Simulation({ map: "riverlands", enemyCount: 3, aiSpeed: "fast", aiPlayer: true });
+      for (let i = 0; i < 6000 && !sim.result; i++) { sim.tick(0.05); sim.events.length = 0; }
+      return sim.hash();
+    },
+  },
   "crossroads-wave-120": {
     about: "Three Roads (d-crossroads), Standard, the DefenceBot, the first 120 s",
     async play(tree) {
@@ -88,7 +97,7 @@ const median = (xs) => { const s = [...xs].sort((a, b) => a - b), m = s.length >
 const pct = (sorted, p) => sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))];
 function stats(times) {
   const s = [...times].sort((a, b) => a - b), total = times.reduce((n, x) => n + x, 0);
-  return { ticks: times.length, total, mean: total / times.length, p50: pct(s, 0.5), p95: pct(s, 0.95), p99: pct(s, 0.99) };
+  return { ticks: times.length, total, mean: total / times.length, p50: pct(s, 0.5), p95: pct(s, 0.95), p99: pct(s, 0.99), max: s[s.length - 1] };
 }
 
 async function main() {
@@ -114,16 +123,16 @@ async function main() {
   for (let i = 0; i < runs; i++) for (const k of i % 2 ? ["B", "A"] : ["A", "B"]) await once(sides[k], true);
   const summary = Object.fromEntries(Object.entries(sides).map(([k, side]) => [k, {
     tree: side.label, hash: [...side.hashes].join(" "), ticks: side.runs[0].ticks,
-    ...Object.fromEntries(["mean", "p50", "p95", "p99", "total"].map((key) => [key, median(side.runs.map((r) => r[key]))])),
+    ...Object.fromEntries(["mean", "p50", "p95", "p99", "max", "total"].map((key) => [key, median(side.runs.map((r) => r[key]))])),
   }]));
-  const delta = Object.fromEntries(["mean", "p50", "p95", "p99"].map((key) => [key, (summary.B[key] / summary.A[key] - 1) * 100]));
+  const delta = Object.fromEntries(["mean", "p50", "p95", "p99", "max"].map((key) => [key, (summary.B[key] / summary.A[key] - 1) * 100]));
   const result = { scene: value("scene"), about: scene.about, runs, warmup, gc: !!globalThis.gc, A: summary.A, B: summary.B, deltaPercent: delta, sameHash: summary.A.hash === summary.B.hash };
   if (args.includes("--json")) { console.log(JSON.stringify(result, null, 2)); return; }
   const ms = (x) => x.toFixed(3).padStart(8);
   console.log(`${result.scene}: ${scene.about}. ${runs} interleaved runs per side (ABBA, ${warmup} warm-up each), median of the runs, ms per tick${result.gc ? ", GC before each run" : ""}.`);
-  console.log(`      ${"mean".padStart(8)} ${"p50".padStart(8)} ${"p95".padStart(8)} ${"p99".padStart(8)}  ticks  run ms  tree`);
-  for (const k of ["A", "B"]) { const s = summary[k]; console.log(`  ${k}   ${ms(s.mean)} ${ms(s.p50)} ${ms(s.p95)} ${ms(s.p99)}  ${String(s.ticks).padStart(5)} ${s.total.toFixed(0).padStart(7)}  ${s.tree}`); }
-  console.log(`  B/A ${["mean", "p50", "p95", "p99"].map((key) => `${delta[key] >= 0 ? "+" : ""}${delta[key].toFixed(1)}%`.padStart(8)).join(" ")}`);
+  console.log(`      ${"mean".padStart(8)} ${"p50".padStart(8)} ${"p95".padStart(8)} ${"p99".padStart(8)} ${"max".padStart(8)}  ticks  run ms  tree`);
+  for (const k of ["A", "B"]) { const s = summary[k]; console.log(`  ${k}   ${ms(s.mean)} ${ms(s.p50)} ${ms(s.p95)} ${ms(s.p99)} ${ms(s.max)}  ${String(s.ticks).padStart(5)} ${s.total.toFixed(0).padStart(7)}  ${s.tree}`); }
+  console.log(`  B/A ${["mean", "p50", "p95", "p99", "max"].map((key) => `${delta[key] >= 0 ? "+" : ""}${delta[key].toFixed(1)}%`.padStart(8)).join(" ")}`);
   console.log(result.sameHash ? `  Same final state on both sides (${summary.A.hash}).` : `  Final states differ: A ${summary.A.hash}, B ${summary.B.hash} (the trees do not play this scene alike).`);
   console.log("  Indicative on a shared machine; the integrator's quiet-machine re-run is the gate.");
 }

@@ -1,4 +1,4 @@
-import { distance } from "../data.js";
+import { hyp } from "../data.js";
 import { TERRAIN } from "../terrain.js";
 
 // What each team can see and remembers. Mixed into Simulation (see simulation.js).
@@ -8,8 +8,7 @@ export const vision = {
     if (e.cloaked && e.team !== team && !((e.seenBy >> team) & 1)) return false;
     // A flyer is seen by any hostile team whose sight reaches it, even over a hidden plateau cell (sim/air.js).
     if (e.flying && (e.airSeenBy >> team) & 1 && e.team !== team) return true;
-    const [x, z] = this.nav.cellAt(e.x, e.z);
-    return e.team === team || !!this.visible[team][z * this.terrain.grid + x];
+    return e.team === team || !!this.visible[team][this.terrain.cellIndex(e.x, e.z)];
   },
   // A ground point on a deep plateau cell (TERRAIN.hidden_depth inside the rim) that `team` does
   // not see now. Barrage and Burn line refuse such points (sim/tactics.js); maps without
@@ -17,16 +16,17 @@ export const vision = {
   hiddenTop(point, team = 0) {
     const t = this.terrain;
     if (!t.plateaus.length) return false;
-    const [x, z] = t.cellAt(point.x, point.z), i = z * t.grid + x;
+    const i = t.cellIndex(point.x, point.z);
     return !!t.cellDeep[i] && !this.visible[team][i];
   },
   isExplored(e, team = 0) {
-    const [x, z] = this.nav.cellAt(e.x, e.z);
-    return !!this.explored[team][z * this.terrain.grid + x];
+    return !!this.explored[team][this.terrain.cellIndex(e.x, e.z)];
   },
   updateVision() {
     const t = this.terrain, high = t.plateaus.length > 0;
     for (let team = 0; team < this.players.length; team++) {
+      // Frontier Defence: team 0 sees the whole valley (the fill(1) below), so its sight loop is skipped.
+      if (team === 0 && this.defence) continue;
       this.visible[team].fill(0);
       // Plateaus where this team has a unit: their tops are open to it from below too.
       const up = high ? new Set(this.own(team).filter((e) => e.kind === "unit").map((e) => t.plateauAt(e.x, e.z))) : null;
@@ -45,7 +45,8 @@ export const vision = {
             const i = z * this.terrain.grid + x;
             // From below, a plateau top is hidden beyond its rim unless a friendly unit stands on it.
             if (low && t.cellDeep[i] && !up.has(t.cellPlateau[i])) continue;
-            if (distance(e, this.nav.worldAt(x, z)) <= sight)
+            const wx = x * 2 - t.half + 1, wz = z * 2 - t.half + 1;
+            if (hyp(e.x - wx, e.z - wz) <= sight)
               this.visible[team][z * this.terrain.grid + x] = this.explored[team][
                 z * this.terrain.grid + x
               ] = 1;
