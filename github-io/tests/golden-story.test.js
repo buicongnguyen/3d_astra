@@ -26,7 +26,9 @@ test(`the ObjectiveBot for ${SECONDS} s`, async (t) => {
 
 // Hold the River (mission 2b) is played under the Frontier Defence rules: the DefenceBot calls and
 // fights its first waves.
-const DEFENCE = { "m02b-hold-the-river": { wave: 4, lives: 20, hash: "4c430aeb" } };
+const DEFENCE = { "m02b-hold-the-river": { wave: 4, lives: 20, hash: "4c430aeb" },
+  // W2-F m11c Hold the Keystone Roads (new mission; same run as golden-w2f.test.js): added by the Wave 2 integrator.
+  "m11c-hold-the-keystone-roads": { wave: 2, lives: 20, hash: "a929add0" } };
 test(`the DefenceBot on a story mission for ${SECONDS} s`, async (t) => {
   for (const [id, end] of Object.entries(DEFENCE))
     await t.test(id, () => {
