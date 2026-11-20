@@ -34,7 +34,8 @@
 :root:not(.compact-ui) #boss-bar { left: 50%; transform: translateX(-50%); bottom: calc(var(--console-card-height, 172px) + 18px); width: min(460px, calc(100% - 560px)); min-width: 300px; }
 /* Phones, portrait: just above the dock, left of the idle buttons (right 8 px, 52 px wide). */
 @media (max-aspect-ratio: 1.35) {
-  .compact-ui #boss-bar { left: 8px; right: 68px; bottom: calc(var(--view-cover, 202px) + var(--defence-bar-h, 0px) + 8px); }
+  /* Wave 1 integration: above the dock band (W1-D's --band) and the one-line dialogue chip (44 px + 6 px) that sits in it. */
+  .compact-ui #boss-bar { left: 8px; right: 68px; bottom: calc(var(--band, calc(var(--view-cover, 202px) + var(--defence-bar-h, 0px) + 8px)) + 58px); }
 }
 /* Phones, landscape: the top row of the battlefield, against the side dock, clear of the Objectives chip and the idle buttons. */
 @media (min-aspect-ratio: 1.35) {
