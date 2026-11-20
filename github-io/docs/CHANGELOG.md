@@ -22,6 +22,15 @@ Nothing changes for the player: no rule, number or picture moved. This makes eve
 - **`tools/perf-ab.mjs`:** interleaved A/B tick timing of two source trees (a `src` folder or a git ref) in one process, scenes `riverlands-x2-300` and `crossroads-wave-120`, median of 7 runs.
 - **Tests:** `tests/content-seams.test.js` (23) and `tests/effects.test.js` (11); `tests/progression.test.js` counts only the Classic roster (definitions without `roster: "expanded"`: 21 units, 9 buildings, 4 flyers, 1 Defence unit), so Expanded-only units never touch its counts, and allows a shield-less Ashfall workshop unit. 645 → 681 tests.
 
+### W1-D: Phones first-class
+On a phone the battlefield is at least 70% of the screen with nothing selected (was 59% portrait, 67% landscape) and at least 60% with a unit selected (was 48% and 53%).
+- **Touch row:** Army, Workers and a "..." sheet (Box select, Queue orders, Clear selection, Info & stats). +/- are hidden (pinch zooms); all seven ids stay in the DOM.
+- **Dock:** portrait collapses to the tab strip when nothing is selected and shows a short unit card (about 113 px) for one unit; landscape keeps its side dock with the orders in one row.
+- **Dialogue** is a one-line chip at the bottom left that opens on a tap; hints (and the new unit intro cards) sit in the dock band. The Eco/High badge is not drawn on touch devices.
+- **Armies at strategic zoom (P3):** units grow from 1.0 at zoom 40 to 1.6 at zoom 90 (view plugin `ArmyReadabilityView`).
+- **Unit intro cards:** the first time a unit type with `intro` is on screen its line shows once (`frontier-command.unit-intros.v1`).
+- Tests: `tests/phones.mjs` (CI entry `r2-w1d`), `army-readability.test.js`, `unit-intros.test.js`.
+
 ## Unreleased: Frontier Defence "Build zones, armour and Three Roads" (plan: docs/aaa/AAA_GAMEPLAY_STORY_DEFENCE.md, C10–C12)
 
 - **Build zones (C10):** a level may mark fields (`defence.zones`) where a crew can stand anywhere, on the 2 m grid, besides its fixed pads. Tap a spot in a marked field, pick a crew: the tower gets a pad of its own, so Upgrade, branches and Sell work as on any pad (selling frees the spot). A spot is refused, with the reason on the card and a red ring, within 4.5 m of a road (the column must always pass), near a spawn spot or the exit, within 5 m of another pad or tower, under a unit, where it would wall in ground, or when the field is full. The open cells are painted as one flat mesh (one draw). Command `zoneBuild { zone, x, z, crew }`, saved and replayed like `padBuild`.
