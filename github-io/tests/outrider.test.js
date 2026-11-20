@@ -27,14 +27,14 @@ function pair(foe, gap, options, rider = {}) {
 }
 
 test("data: the drill numbers and the Rider's one ability", () => {
-  assert.deepEqual(DRILL, { faction: "sunward", types: ["rider"], near: 4, back: 3, every: 1.5, threat_range: 5 });
+  assert.deepEqual(DRILL, { faction: "sunward", types: ["rider"], near: 4, back: 3.6, every: 2, threat_range: 5 });
 });
 
-test("steps 3 m straight away from a Scrapper at 4 m, then fights on", () => {
+test("steps 3.6 m straight away from a Scrapper at 4 m, then fights on", () => {
   const { s, r, f } = pair("scrapper", 3, { rules: EXP });
   const z0 = r.z;
   tick(s, 40);
-  assert.ok(r.z - z0 > 2.5, `stepped back ${r.z - z0} m`);
+  assert.ok(r.z - z0 > 3, `stepped back ${r.z - z0} m`);
   assert.ok(r.drill && !r.drill.to, "the step ended");
   assert.ok(Math.abs(r.x) < 0.01, "straight away");
   tick(s, 20);
@@ -64,7 +64,7 @@ test("not on Hold", () => {
   assert.equal(r.z, 30);
 });
 
-test("at most one step per 1.5 s", () => {
+test("at most one step per 2 s (the cadence in the data)", () => {
   const { s, r } = pair("scrapper", 3, { rules: EXP });
   const starts = [];
   let last = null;
@@ -75,7 +75,7 @@ test("at most one step per 1.5 s", () => {
     for (const u of s.entities) if (u.team === 1 && u.kind === "unit" && u.hp > 0) { u.x = r.x; u.z = r.z - 3; u.cooldown = 9; }
   }
   assert.ok(starts.length >= 3, `${starts.length} steps`);
-  for (let i = 1; i < starts.length; i++) assert.ok(starts[i] - starts[i - 1] >= 1.5 - 1e-9, `${starts[i] - starts[i - 1]}`);
+  for (let i = 1; i < starts.length; i++) assert.ok(starts[i] - starts[i - 1] >= DRILL.every - 1e-9, `${starts[i] - starts[i - 1]}`);
 });
 
 test("a step lasts at most 0.6 s", () => {

@@ -41,6 +41,6 @@ test("Outrider drill, Sunward Riders against Scrappers under Expanded: hashes at
   s.issue(scrappers.map((u) => u.id), { type: "attackmove", x: -30, z: -14 });
   const at30 = run(s, 30), at60 = run(s, 60);
   assert.ok(s.entities.some((e) => e.drill) || riders.every((u) => u.hp <= 0), "the drill ran");
-  pin("w2a drill 30 s", at30, "d28058bb");
-  pin("w2a drill 60 s", at60, "8d09b14c");
+  pin("w2a drill 30 s", at30, "da962f95");
+  pin("w2a drill 60 s", at60, "8210b34a");
 });

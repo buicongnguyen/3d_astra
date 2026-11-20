@@ -17,7 +17,7 @@ test("the three real workshop units sit at their hosts with the declared levels"
     assert.equal(D[type].workshop, faction);
     assert.equal(D[type].roster, "expanded");
   }
-  assert.deepEqual([D.gunner.required_level, D.stalker.required_level, D.rampart.required_level], [1, 2, 3]);
+  assert.deepEqual([D.gunner.required_level, D.stalker.required_level, D.rampart.required_level], [1, 2, 1]);
 });
 
 test("each trains at its host from its level under Expanded, never under Classic", () => {

@@ -41,12 +41,12 @@ test("definition: an Ashfall workshop ram tank, shield-less, Expanded roster onl
   const d = D.rampart;
   assert.equal(d.class, "armor");
   assert.equal(d.mechanical, true);
-  assert.deepEqual([d.hp, d.shield, d.speed, d.damage, d.interval, d.range, d.pop, d.time], [650, 0, 3, 34, 1.3, 4, 4, 28]);
-  assert.deepEqual(d.cost, [250, 90]);
+  assert.deepEqual([d.hp, d.shield, d.speed, d.damage, d.interval, d.range, d.pop, d.time], [650, 0, 3, 34, 1.3, 4, 4, 22]);
+  assert.deepEqual(d.cost, [200, 70]);
   assert.deepEqual([d.building_bonus, d.wall_bonus], [2, 2]);
   assert.deepEqual(d.facing, { front: 0.6, rear: 1.5 });
-  assert.deepEqual([d.workshop, d.roster, d.required_level, d.shot], ["ashfall", "expanded", 3, "tank"]);
-  assert.deepEqual(d.ai, { role: "front", want: [{ if: { seenTowers: 1 }, n: 2 }, { if: { after: 480 }, n: 1 }], max: 2 });
+  assert.deepEqual([d.workshop, d.roster, d.required_level, d.shot], ["ashfall", "expanded", 1, "tank"]);
+  assert.deepEqual(d.ai, { role: "front", want: [{ if: { seenTowers: 1 }, n: 2 }, { if: { after: 150 }, n: 1 }], max: 2 });
   assert.ok(d.intro.startsWith("Rampart:"));
   assert.equal(d.ability.id, "ram", "one ability, and it is the only one");
   assert.deepEqual([d.ability.cooldown, d.ability.duration, d.ability.speed, d.ability.contact, d.ability.icon], [30, 2.5, 2, 80, "bolt"]);
