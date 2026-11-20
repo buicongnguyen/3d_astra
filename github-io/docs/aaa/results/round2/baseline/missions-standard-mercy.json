@@ -554,6 +554,63 @@
   "misses": []
  },
  {
+  "mission": "m11c-hold-the-keystone-roads",
+  "kind": "passive",
+  "result": "defeat",
+  "time": 126,
+  "objectives": "F",
+  "wave": 2,
+  "lost": 20,
+  "medal": null,
+  "flags": null,
+  "defence": {
+   "target": 2,
+   "stars": 0,
+   "lives": 0,
+   "towers": "",
+   "greedy": null
+  },
+  "misses": []
+ },
+ {
+  "mission": "m11c-hold-the-keystone-roads",
+  "kind": "generic",
+  "result": "defeat",
+  "time": 193,
+  "objectives": "F",
+  "wave": 3,
+  "lost": 20,
+  "medal": null,
+  "flags": null,
+  "defence": {
+   "target": 2,
+   "stars": 0,
+   "lives": 0,
+   "towers": "r3r1r1r1r1",
+   "greedy": "ranger:0★0♥ breaker:0★0♥ antitank:0★0♥ watcher:0★0♥ tank:0★0♥ scorcher:0★0♥"
+  },
+  "misses": []
+ },
+ {
+  "mission": "m11c-hold-the-keystone-roads",
+  "kind": "objective",
+  "result": "victory",
+  "time": 571,
+  "objectives": "D",
+  "wave": 10,
+  "lost": 2,
+  "medal": "gold",
+  "flags": null,
+  "defence": {
+   "target": 2,
+   "stars": 3,
+   "lives": 18,
+   "towers": "b3s3b3s3a3b3t3a3s3b3t3s3b3",
+   "greedy": null
+  },
+  "misses": []
+ },
+ {
   "mission": "m12-frontiers-end",
   "kind": "passive",
   "result": "running",

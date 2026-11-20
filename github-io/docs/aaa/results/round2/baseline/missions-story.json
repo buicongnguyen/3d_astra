@@ -370,6 +370,44 @@
   "misses": []
  },
  {
+  "mission": "m11c-hold-the-keystone-roads",
+  "kind": "passive",
+  "result": "defeat",
+  "time": 127,
+  "objectives": "F",
+  "wave": 2,
+  "lost": 20,
+  "medal": null,
+  "flags": null,
+  "defence": {
+   "target": 3,
+   "stars": 0,
+   "lives": 0,
+   "towers": "",
+   "greedy": null
+  },
+  "misses": []
+ },
+ {
+  "mission": "m11c-hold-the-keystone-roads",
+  "kind": "objective",
+  "result": "victory",
+  "time": 531,
+  "objectives": "D",
+  "wave": 10,
+  "lost": 0,
+  "medal": "gold",
+  "flags": null,
+  "defence": {
+   "target": 3,
+   "stars": 3,
+   "lives": 20,
+   "towers": "b3s1b3s1a3t3a3b2s1b3t3s1b1",
+   "greedy": null
+  },
+  "misses": []
+ },
+ {
   "mission": "m12-frontiers-end",
   "kind": "passive",
   "result": "running",
