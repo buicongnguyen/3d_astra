@@ -322,3 +322,61 @@
 #commands .command-tile.defence-armour-up { border: 2px solid rgba(255, 199, 94, 0.55); }
 #commands .defence-rank-pips { display: inline-flex; gap: 3px; margin-left: 4px; vertical-align: middle; }
 #commands .defence-rank-pips > i { width: 7px; height: 7px; transform: rotate(45deg); background: #ffe9a8; box-shadow: 0 0 4px rgba(255, 210, 120, 0.8); }
+
+/* ---- AAA round 2, W1-F: speed and view buttons, trait chips, the new-enemy card, tower stats and Aim. ---- */
+#defence-speed { padding: 0 8px !important; border-color: var(--line-2, rgba(168, 214, 212, 0.24)) !important; background: rgba(255, 255, 255, 0.06) !important; }
+#defence-speed b { font: 800 15px/1 var(--font-ui); font-variant-numeric: tabular-nums; }
+#defence-speed[aria-pressed="true"] { border-color: var(--gold-2, #ffc75e) !important; color: var(--gold-2, #ffc75e); background: rgba(255, 199, 94, 0.2) !important; }
+/* Trait chips (12 px) on the wave strip and the card; vivid, one hue each. */
+.intel-chip { display: inline-flex; align-items: center; min-height: 20px; padding: 0 7px; border-radius: 999px; font: 700 12px/1 var(--font-ui); color: #10202a; background: #b4cadb; }
+.intel-chip[data-trait="armoured"] { background: #b4cadb; }
+.intel-chip[data-trait="flying"] { background: #7fd4ff; }
+.intel-chip[data-trait="cloaked"] { background: #c9a6ff; }
+.intel-chip[data-trait="healer"] { background: #8be8a4; }
+.intel-chip[data-trait="carrier"] { background: #ffc75e; }
+.intel-chip[data-trait="shield"] { background: #6fe3e0; }
+.intel-chip[data-trait="elite"] { background: #ffd84a; box-shadow: 0 0 6px rgba(255, 216, 74, 0.7); }
+.intel-chip[data-trait="boss"] { background: #ff8a70; }
+#defence-intel .intel-traits { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+.compact-ui #defence-intel .intel-traits { justify-content: center; }
+/* The new-enemy card: top middle of the battlefield, tap to close. */
+#defence-card {
+  position: absolute; z-index: 7; top: 64px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; align-items: center;
+  width: max-content; max-width: calc(100% - 16px); padding: 8px 12px; border: 2px solid var(--gold-2, #ffc75e); border-radius: 14px;
+  background: linear-gradient(180deg, rgba(40, 22, 14, 0.96), rgba(18, 12, 10, 0.94)); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); color: var(--text-1, #f1f6f3); font: 650 13px/1.2 var(--font-ui);
+  animation: defence-card-in 0.3s ease-out both; cursor: pointer;
+}
+#defence-card .card-art .portrait-art { --size: 48px; border-radius: 8px; }
+#defence-card .card-art > .icon { width: 40px; height: 40px; color: #ff9a85; }
+#defence-card .card-body { display: flex; flex-direction: column; gap: 4px; }
+#defence-card .card-eyebrow { color: var(--gold-2, #ffc75e); font: 800 12px/1 var(--font-ui); letter-spacing: 0.06em; text-transform: uppercase; }
+#defence-card strong { font: 800 16px/1.1 var(--font-ui); }
+#defence-card .card-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+#defence-card .card-counter { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; color: var(--text-2, #cfe0dc); }
+#defence-card .card-counter b { padding: 2px 8px; border-radius: 8px; background: rgba(146, 235, 197, 0.18); color: var(--mint, #92ebc5); font: 700 12px/1.2 var(--font-ui); }
+@keyframes defence-card-in { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+:root.motion-off #defence-card { animation: none; }
+/* Tower sheet: the Aim tile and the stats text, the last grid children. */
+#commands .command-tile.defence-aim { position: relative; overflow: visible; }
+#commands .defence-stats { grid-column: 1 / -1; padding: 2px 4px; color: var(--text-2, #cfe0dc); }
+#commands .defence-stats p { margin: 0; font: 600 12px/1.25 var(--font-ui); }
+#commands .defence-stats p + p { color: var(--mint, #92ebc5); }
+#commands .defence-stats b { color: var(--text-1, #f1f6f3); font-weight: 800; }
+.compact-ui #commands:has(> [data-tiles]) { padding-top: 4px; }
+.compact-ui #commands:has(> [data-tiles="5"]) .defence-stats { grid-column: span 1; }
+:root:not(.compact-ui) #commands:has(> [data-tiles="4"]) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+:root:not(.compact-ui) #commands:has(> [data-tiles="5"]) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+:root:not(.compact-ui) #commands:has(> [data-tiles="5"]) .command-tile > span { font-size: 12px; }
+/* Phones, portrait: the lives and wave chips stack so seven controls fit in 358 px; the bar's bottom gap is --defence-bar-h. */
+@media (orientation: portrait) {
+  .compact-ui #defence-bar .dchip { padding: 0 6px; }
+  .compact-ui #defence-bar .wave { flex-direction: column; justify-content: center; gap: 2px; min-width: 44px; }
+  .compact-ui #defence-bar .wave > span:first-child { display: none; }
+  .compact-ui #defence-bar .wave small { font-size: 12px; line-height: 12px; }
+  .compact-ui #defence-bar #defence-armour { padding: 0 6px !important; }
+  .compact-ui #defence-bar #defence-speed, .compact-ui #defence-bar #defence-hero { padding: 0 4px !important; }
+  .compact-ui #defence-intel { bottom: calc(var(--dock-height) + var(--tabs-height) + var(--safe-bottom) + var(--defence-bar-h, 60px)); }
+  #defence-card { top: 52px; }
+}
+#defence-bar .wave small:not(:empty)::before { content: " · "; white-space: pre; }
+@media (orientation: portrait) { .compact-ui #defence-bar .wave small::before { content: none !important; } }
