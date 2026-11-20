@@ -46,7 +46,9 @@ export class Terrain {
     this.buildHeights();
     this.water = this.river ? waterRects.map((r,i)=>({...r,left:i===0 ? -this.half:r.left,right:i===3 ? this.half:r.right})) : [];
   }
-  cellAt(x,z) { return [x,z].map(v=>Math.max(0,Math.min(this.grid-1,Math.floor((v+this.half)/2)))); }
+  cellAt(x,z) { const g = this.grid - 1, h = this.half; return [Math.max(0,Math.min(g,Math.floor((x+h)/2))), Math.max(0,Math.min(g,Math.floor((z+h)/2)))]; }
+  // The row-major index of the cell holding (x, z): cellAt without the array (hot paths: visibility, fog).
+  cellIndex(x,z) { const g = this.grid - 1, h = this.half; return Math.max(0,Math.min(g,Math.floor((z+h)/2))) * this.grid + Math.max(0,Math.min(g,Math.floor((x+h)/2))); }
   worldAt(x,z) { return {x:x*2-this.half+1,z:z*2-this.half+1}; }
   at(x, z) {
     // Cliff faces read as stone and ramps as road (ground paint, scenery, Sunward's road bonus).
@@ -105,11 +107,16 @@ export class Terrain {
       r >= 0 &&
       Math.abs(x) < this.half - r &&
       Math.abs(z) < this.half - r &&
-      !this.water.some((b) => overlaps(x, z, r, b))
+      !this.inWater(x, z, r)
     );
   }
+  inWater(x, z, r) {
+    const water = this.water;
+    for (let i = 0; i < water.length; i++) if (overlaps(x, z, r, water[i])) return true;
+    return false;
+  }
   canTraverse(a, b, r = 0.55) {
-    if (![a.x, a.z, b.x, b.z, r].every(Number.isFinite) || r < 0) return false;
+    if (!(Number.isFinite(a.x) && Number.isFinite(a.z) && Number.isFinite(b.x) && Number.isFinite(b.z) && Number.isFinite(r)) || r < 0) return false;
     if (!this.canStand(a.x, a.z, r) || !this.canStand(b.x, b.z, r))
       return false;
     if (!this.water.length && !this.plateaus.length) return true;

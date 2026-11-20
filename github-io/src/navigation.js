@@ -298,34 +298,41 @@ export class Navigation {
     const dx = b.x - a.x,
       dz = b.z - a.z,
       length2 = dx * dx + dz * dz;
-    return !this.near(a.x, a.z, b.x, b.z, 0.2).some((o) => {
+    const list = this.near(a.x, a.z, b.x, b.z, 0.2);
+    for (let i = 0; i < list.length; i++) {
+      const o = list[i];
       if (
         (ignored !== undefined && o.id === ignored) ||
         distance(a, o) < o.radius + 0.2
       )
-        return false;
+        continue;
       const t = Math.max(
         0,
         Math.min(1, ((o.x - a.x) * dx + (o.z - a.z) * dz) / (length2 || 1)),
       );
-      return hyp(a.x + t * dx - o.x, a.z + t * dz - o.z) < o.radius;
-    });
+      if (hyp(a.x + t * dx - o.x, a.z + t * dz - o.z) < o.radius) return false;
+    }
+    return true;
   }
   canStand(x, z, radius = 0.55) {
-    return (
-      Number.isFinite(x) &&
+    if (
+      !(Number.isFinite(x) &&
       Number.isFinite(z) &&
       Math.abs(x) < this.terrain.half - radius &&
       Math.abs(z) < this.terrain.half - radius &&
-      this.terrain.canStand(x, z, radius) &&
-      !this.near(x, z, x, z, radius).some(
-        (o) => hyp(x - o.x, z - o.z) < o.radius + radius,
-      )
-    );
+      this.terrain.canStand(x, z, radius))
+    )
+      return false;
+    const list = this.near(x, z, x, z, radius);
+    for (let i = 0; i < list.length; i++) {
+      const o = list[i];
+      if (hyp(x - o.x, z - o.z) < o.radius + radius) return false;
+    }
+    return true;
   }
   canTraverse(a, b, radius = 0.55) {
     if (
-      ![a.x, a.z, b.x, b.z].every(Number.isFinite) ||
+      !(Number.isFinite(a.x) && Number.isFinite(a.z) && Number.isFinite(b.x) && Number.isFinite(b.z)) ||
       Math.abs(b.x) >= this.terrain.half - radius ||
       Math.abs(b.z) >= this.terrain.half - radius
     )
@@ -334,16 +341,20 @@ export class Navigation {
     const dx = b.x - a.x,
       dz = b.z - a.z,
       length2 = dx * dx + dz * dz;
-    return !this.near(a.x, a.z, b.x, b.z, radius).some((o) => {
-      const clearance = o.radius + radius;
+    const list = this.near(a.x, a.z, b.x, b.z, radius);
+    for (let i = 0; i < list.length; i++) {
+      const o = list[i], clearance = o.radius + radius;
       // Allow a unit displaced into a footprint to move outward, never further in.
-      if (distance(a, o) < clearance)
-        return (a.x - o.x) * dx + (a.z - o.z) * dz < 0;
+      if (distance(a, o) < clearance) {
+        if ((a.x - o.x) * dx + (a.z - o.z) * dz < 0) return false;
+        continue;
+      }
       const t = Math.max(
         0,
         Math.min(1, ((o.x - a.x) * dx + (o.z - a.z) * dz) / (length2 || 1)),
       );
-      return hyp(a.x + t * dx - o.x, a.z + t * dz - o.z) < clearance;
-    });
+      if (hyp(a.x + t * dx - o.x, a.z + t * dz - o.z) < clearance) return false;
+    }
+    return true;
   }
 }

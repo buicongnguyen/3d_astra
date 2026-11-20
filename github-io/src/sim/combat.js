@@ -2,6 +2,7 @@ import { distance, hyp } from "../data.js";
 import { LEASH } from "./constants.js";
 import { AIR } from "../factions.js";
 import { HIT_SCALE, ON_HIT, FIGHT, SHOT_TAGS } from "./content.js";
+import { near, IDS } from "./grid.js";
 
 // Target choice, guarding, firing and damage delivery. Mixed into Simulation (see simulation.js).
 export const combat = {
@@ -10,7 +11,10 @@ export const combat = {
     if (e.prefers) return this.preferredEnemy(e, radius, clearShot);
     let best = null,
       bestD = radius;
-    for (const t of this.entities) {
+    // Candidates come from the 8 m grid in entity order (sim/grid.js); the tests below are the exact ones.
+    const list = this.entities, n = near(this, e.x, e.z, radius), ids = IDS, count = n < 0 ? list.length : n;
+    for (let k = 0; k < count; k++) {
+      const t = n < 0 ? list[k] : list[ids[k]];
       if (t.hp <= 0) continue;
       // Cheap squared-distance prune first: it rejects nearly every candidate before the
       // costlier hostile/fog checks, with the same bound as the exact test below.
@@ -35,7 +39,9 @@ export const combat = {
   preferredEnemy(e, radius = e.vision, clearShot = false) {
     const prefers = e.prefers;
     let best = null, bestRank = Infinity, bestD = Infinity;
-    for (const t of this.entities) {
+    const list = this.entities, n = near(this, e.x, e.z, radius), ids = IDS, count = n < 0 ? list.length : n;
+    for (let k = 0; k < count; k++) {
+      const t = n < 0 ? list[k] : list[ids[k]];
       if (t.hp <= 0) continue;
       const lim = radius + t.radius + 0.00001,
         dx = t.x - e.x,
@@ -60,7 +66,9 @@ export const combat = {
     // H6: a tower given an aim rule (a content module's towerAim) asks it first.
     if (e.aim) { const t = this.aimedTarget(e); if (t !== undefined) return t; }
     let best = null, bestRank = 3, bestD = Infinity;
-    for (const t of this.entities) {
+    const list = this.entities, n = near(this, e.x, e.z, e.range + 2), ids = IDS, count = n < 0 ? list.length : n;
+    for (let k = 0; k < count; k++) {
+      const t = list[n < 0 ? k : ids[k]];
       if (t.hp <= 0) continue;
       const lim = e.range + (this.terrain.plateaus.length ? 2 : 0) + t.radius + 0.00001,
         dx = t.x - e.x,
@@ -143,10 +151,14 @@ export const combat = {
     if (e.crew) this.garrisonHit(e, target);
     // Area weapons (balance.json splash_radius / splash_damage share) also hit nearby enemies on the
     // ground (a blast never reaches a flyer; a shot at a flyer bursts in the air and splashes nobody).
-    if (e.splash_radius && !target.flying)
-      for (const t of this.entities)
+    if (e.splash_radius && !target.flying) {
+      const list = this.entities, n = near(this, target.x, target.z, e.splash_radius), ids = IDS;
+      for (let k = 0; k < (n < 0 ? list.length : n); k++) {
+        const t = list[n < 0 ? k : ids[k]];
         if (t.id !== target.id && !t.flying && this.hostile(e.team, t.team) && distance(t, target) - (t.kind === "unit" ? 0 : t.radius) < e.splash_radius)
           apply(t, e.splash_damage);
+      }
+    }
     this.events.push({
       // Flyers fire and are hit at altitude (fx.js aim): the fly height of either end.
       // A boss's light gun fires from high on its shoulder (balance.json gun_height).

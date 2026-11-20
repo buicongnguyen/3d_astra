@@ -12,6 +12,10 @@
 - New `src/rng.js` (`mulberry32`, `fnv1a`): the one copy used by the scatter, ambient life, audio, effects and the state hash. `audio-logic.js` still re-exports `mulberry32` and `hashString`; `src/sim/defence.js` keeps its own `seeded` and `seedOf` (equal output, pinned by `tests/rng.test.js`).
 - No `Math.random` is left in `fx.js`, `fx-kinds/*`, `view.js`, `scatter.js`, `ambient-life.js` or `ambience.js`: particle rotation draws from the per-match `fx.rng`, the view module generator is a reseeded mulberry32, the ambience noise bed uses a fixed seed. Held-clock renders are now repeatable.
 - Simulation untouched: every golden pin, `d071360b` and the Defence check are identical.
+### CW-C: Spatial grid and fast paths
+- Nothing changes in play: every golden pin, `d071360b`, the 8 baselines and `check:defence --json` are identical.
+- `src/sim/grid.js`: a per-tick 8 m grid (module WeakMap, off the hashed state) feeds `enemy`, `preferredEnemy`, `defenseTarget`, splash and `separate()`, visiting candidates in entity order. Defence skips team 0's sight loop; `cellAt`, `canStand`, `canTraverse`, `clearLine` and the visibility reads no longer allocate.
+- Tick p95 on the AI-against-AI scenes about 26 to 30% lower and the Defence scene 27 to 42% lower (interleaved A/B on a loaded machine). `npm run perf:tick` runs `tools/perf-ab.mjs` (new scene, max column) against `r2-wave-2`. Tests: `spatial-grid` (6). Results: `docs/aaa/results/round2/cwc.md`.
 
 ### W2-D: Field command AI plan (opt-in)
 New Battle rule "AI plan: Classic / Field command" (`rules.aiPlan === "field"`, skirmish only). The computer keeps its heavy slot, sends fewer Harvesters to energy when it is rich, saves alloy for the Foundry and Tanks, defends every other core and held ring, fields one of each combat slot, casts abilities with intent (`ai-casts.js`) and places `ai.role` units (`field-command.js`). Classic is unchanged (pins, tick time identical).

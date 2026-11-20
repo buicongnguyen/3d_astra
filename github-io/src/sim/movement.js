@@ -1,5 +1,9 @@
 import { distance, hyp } from "../data.js";
 import { SQUEEZE } from "./constants.js";
+import { unitGrid } from "./grid.js";
+
+// Fewer ground-and-air units than this are paired all against all (the grid costs more than it saves).
+const SEPARATE_GRID_MIN = 40;
 
 // Getting a unit from A to B: routes, stuck handling and separation. Mixed into Simulation (see simulation.js).
 export const movement = {
@@ -176,43 +180,62 @@ export const movement = {
   // Units that overlap push each other apart, as far as the ground allows.
   separate(dt) {
     const units = this.entities.filter((e) => e.hp > 0 && e.kind === "unit");
-    for (let i = 0; i < units.length; i++)
-      for (let j = i + 1; j < units.length; j++) {
-        const a = units[i],
-          b = units[j],
-          dx = a.x - b.x,
-          dz = a.z - b.z,
-          min = (a.radius + b.radius) * 0.9;
-        // Cheap reject for the vast majority of pairs, with a margin so the exact test below decides ties.
-        if (dx * dx + dz * dz > min * min * 1.001 + 1e-9) continue;
-        const d = hyp(dx, dz);
-        if (d >= min) continue;
-        const nx = d > 0.001 ? dx / d : 1,
-          nz = d > 0.001 ? dz / d : 0,
-          push = Math.min((min - d) * 0.5, dt * 2);
-        // Flyers pass over ground units and nudge only each other, with no ground to test.
-        if (a.flying || b.flying) {
-          if (!a.flying !== !b.flying) continue;
-          const limit = this.terrain.half - 1;
-          a.x = Math.max(-limit, Math.min(limit, a.x + nx * push * 0.5)); a.z = Math.max(-limit, Math.min(limit, a.z + nz * push * 0.5));
-          b.x = Math.max(-limit, Math.min(limit, b.x - nx * push * 0.5)); b.z = Math.max(-limit, Math.min(limit, b.z - nz * push * 0.5));
-          continue;
-        }
-        // A boss is not shoved about: the unit beside it takes the whole push.
-        if (a.boss || b.boss) {
-          if (a.boss && b.boss) continue;
-          const u = a.boss ? b : a, sign = a.boss ? -1 : 1, all = Math.min(min - d, dt * 4);
-          if (this.nav.canStand(u.x + sign * nx * all, u.z + sign * nz * all, u.radius)) { u.x += sign * nx * all; u.z += sign * nz * all; }
-          continue;
-        }
-        if (this.nav.canStand(a.x + nx * push, a.z + nz * push, a.radius)) {
-          a.x += nx * push;
-          a.z += nz * push;
-        }
-        if (this.nav.canStand(b.x - nx * push, b.z - nz * push, b.radius)) {
-          b.x -= nx * push;
-          b.z -= nz * push;
-        }
-      }
+    if (units.length < SEPARATE_GRID_MIN) {
+      for (let i = 0; i < units.length; i++)
+        for (let j = i + 1; j < units.length; j++) this.separatePair(units[i], units[j], dt);
+      return;
+    }
+    // The same pairs in the same order (i ascending, then j ascending), but only those whose build-time
+    // positions are close enough to overlap, given how far the pushes so far have moved anyone (sim/grid.js).
+    const grid = unitGrid(this, units), xs = grid.xs, zs = grid.zs, out = new Int32Array(units.length);
+    let drift = 0;
+    for (let i = 0; i < units.length; i++) {
+      const a = units[i], n = grid.gather(a.x, a.z, grid.maxRadius * 1.81 + drift + 0.001, out, i);
+      if (n < 0) { for (let j = i + 1; j < units.length; j++) drift = this.separateTracked(a, units[j], dt, i, j, xs, zs, drift); continue; }
+      for (let k = 0; k < n; k++) drift = this.separateTracked(a, units[out[k]], dt, i, out[k], xs, zs, drift);
+    }
+  },
+  // One pair, then the farthest any unit has been pushed from its build-time spot.
+  separateTracked(a, b, dt, i, j, xs, zs, drift) {
+    const ax = a.x, az = a.z, bx = b.x, bz = b.z;
+    this.separatePair(a, b, dt);
+    if (a.x !== ax || a.z !== az) { const d = hyp(a.x - xs[i], a.z - zs[i]); if (d > drift) drift = d; }
+    if (b.x !== bx || b.z !== bz) { const d = hyp(b.x - xs[j], b.z - zs[j]); if (d > drift) drift = d; }
+    return drift;
+  },
+  separatePair(a, b, dt) {
+    const dx = a.x - b.x,
+      dz = a.z - b.z,
+      min = (a.radius + b.radius) * 0.9;
+    // Cheap reject for the vast majority of pairs, with a margin so the exact test below decides ties.
+    if (dx * dx + dz * dz > min * min * 1.001 + 1e-9) return;
+    const d = hyp(dx, dz);
+    if (d >= min) return;
+    const nx = d > 0.001 ? dx / d : 1,
+      nz = d > 0.001 ? dz / d : 0,
+      push = Math.min((min - d) * 0.5, dt * 2);
+    // Flyers pass over ground units and nudge only each other, with no ground to test.
+    if (a.flying || b.flying) {
+      if (!a.flying !== !b.flying) return;
+      const limit = this.terrain.half - 1;
+      a.x = Math.max(-limit, Math.min(limit, a.x + nx * push * 0.5)); a.z = Math.max(-limit, Math.min(limit, a.z + nz * push * 0.5));
+      b.x = Math.max(-limit, Math.min(limit, b.x - nx * push * 0.5)); b.z = Math.max(-limit, Math.min(limit, b.z - nz * push * 0.5));
+      return;
+    }
+    // A boss is not shoved about: the unit beside it takes the whole push.
+    if (a.boss || b.boss) {
+      if (a.boss && b.boss) return;
+      const u = a.boss ? b : a, sign = a.boss ? -1 : 1, all = Math.min(min - d, dt * 4);
+      if (this.nav.canStand(u.x + sign * nx * all, u.z + sign * nz * all, u.radius)) { u.x += sign * nx * all; u.z += sign * nz * all; }
+      return;
+    }
+    if (this.nav.canStand(a.x + nx * push, a.z + nz * push, a.radius)) {
+      a.x += nx * push;
+      a.z += nz * push;
+    }
+    if (this.nav.canStand(b.x - nx * push, b.z - nz * push, b.radius)) {
+      b.x -= nx * push;
+      b.z -= nz * push;
+    }
   },
 };
