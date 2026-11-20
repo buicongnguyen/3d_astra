@@ -101,6 +101,9 @@ jobs:
           # Three Roads, Endless to wave 12), off the 10-minute build job. It needs no browser.
           - name: golden-full
             scripts: golden-full
+          # AAA round 2 (W1-B): the Gunner team on the phone (tall enough, the pin icon draws).
+          - name: r2-w1b
+            scripts: gunner
     defaults:
       run:
         working-directory: github-io
