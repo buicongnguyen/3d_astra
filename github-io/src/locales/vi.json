@@ -1296,7 +1296,13 @@
     "Elite: two more walk on from where it falls. Cluster splash answers it.": "Tinh anh: khi gục, hai lính nữa tiếp tục đi từ chỗ đó. Đạn chùm đối phó được.",
     "Elite: explodes when it dies, hurting towers within 2.5 m. Range and Rim pads answer it.": "Tinh anh: nổ khi chết, gây hại tháp trong 2,5 m. Tầm xa và bệ rìa đối phó được.",
     "Elite: allies within 7 m take 20% less damage. Kill it first with a Marksman.": "Tinh anh: đồng đội trong 7 m nhận ít hơn 20% sát thương. Hạ nó trước bằng Thiện xạ.",
-    "Elite: heals allies within 7 m every 6 s. A Barrage answers it.": "Tinh anh: cứ 6 giây chữa 40 máu cho đồng đội trong 7 m. Pháo kích đối phó được."
+    "Elite: heals allies within 7 m every 6 s. A Barrage answers it.": "Tinh anh: cứ 6 giây chữa 40 máu cho đồng đội trong 7 m. Pháo kích đối phó được.",
+    "Damage numbers": "Số sát thương",
+    "Bosses & Defence": "Trùm & Phòng thủ",
+    "All": "Tất cả",
+    "REAR": "SAU LƯNG",
+    "PINNED": "BỊ GHIM",
+    "PIERCE": "XUYÊN GIÁP"
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],

@@ -18,14 +18,31 @@
     "woodlands": {"sun":2.7,"ambient":1.5,"exposure":1.0,"time":"green noon"},
     "highlands": {"sun":2.7,"ambient":1.6,"exposure":1.05,"time":"twilight"}
   },
+  "tints": {"veil":[0.55,1,0.7,1],"ashfall":[1,0.5,0.18,1],"wardens":[0.5,0.78,1,1],"sunward":[0.95,0.8,0.55,1]},
   "weapons": {
-    "rifle":{"height":1.42,"reach":1.25,"life":0.14,"kind":"rifle"},
-    "tank":{"height":1.7,"reach":2.85,"life":0.32,"kind":"cannon"},
-    "breaker":{"height":1.44,"reach":1.9,"life":0.28,"kind":"cannon"},
-    "tower":{"height":3.65,"reach":1.72,"life":0.26,"kind":"cannon"},
-    "antitank":{"height":1.83,"reach":1.1,"life":0.24,"kind":"rocket"},
+    "rifle":{"height":1.42,"reach":1.25,"life":0.14,"kind":"rifle","color":[1,0.9,0.6,1],"tinted":true},
+    "tank":{"height":1.7,"reach":2.85,"life":0.32,"kind":"cannon","color":[1,0.78,0.4,1],"tinted":true},
+    "breaker":{"height":1.44,"reach":1.9,"life":0.28,"kind":"cannon","color":[1,0.78,0.4,1],"tinted":true},
+    "tower":{"height":3.65,"reach":1.72,"life":0.26,"kind":"cannon","color":[1,0.78,0.4,1],"tinted":true},
+    "antitank":{"height":1.83,"reach":1.1,"life":0.24,"kind":"rocket","color":[1,0.85,0.6,1],"tinted":true},
     "support":{"height":1.34,"reach":0.82,"life":0.22,"kind":"support"},
-    "gunner":{"height":1.2,"reach":1.3,"life":0.09,"kind":"rifle"},
-    "stalker":{"height":1.4,"reach":2.5,"life":0.42,"kind":"rifle"}
+    "gunner":{"height":1.2,"reach":1.3,"life":0.09,"kind":"rifle","look":"stream","color":[1,0.9,0.55,1],"tinted":true},
+    "stalker":{"height":1.4,"reach":2.5,"life":0.42,"kind":"rifle","look":"beam","color":[0.84,0.56,1,0.95],"beamLife":0.45,"beamWidth":0.12,"ring":0.9},
+    "ranger":{"height":1.42,"reach":1.25,"life":0.14,"kind":"rifle","color":[1,0.9,0.6,1],"tinted":true},
+    "worker":{"height":1.1,"reach":0.9,"life":0.14,"kind":"rifle","color":[1,0.9,0.6,1]},
+    "vanguard":{"height":1.4,"reach":1.2,"life":0.12,"kind":"rifle","look":"burst","color":[1,0.92,0.62,1],"tinted":true},
+    "scrapper":{"height":1.2,"reach":1,"life":0.1,"kind":"rifle","look":"pellets","color":[1,0.82,0.45,1]},
+    "scorcher":{"height":1.3,"reach":1.6,"life":0.18,"kind":"rifle","look":"flame","color":[1,0.72,0.24,1],"hit":0},
+    "shade":{"height":1.4,"reach":1.1,"life":0.06,"kind":"rifle","look":"beam","color":[0.86,0.76,1,0.95],"beamLife":0.12,"beamWidth":0.2,"ring":1.5},
+    "drone":{"height":1.5,"reach":1,"life":0.1,"kind":"rifle","look":"twin-pulse","color":[0.45,0.78,1,1]},
+    "hawk":{"height":1.2,"reach":1.2,"life":0.3,"kind":"rocket","look":"pods","color":[1,0.85,0.6,1],"hit":0.55},
+    "glider":{"height":1.2,"reach":0.3,"life":0.45,"kind":"rifle","look":"bomb","color":[0.9,0.85,0.7,1],"hit":0.85},
+    "rider":{"height":1.5,"reach":1.2,"life":0.09,"kind":"rifle","look":"twin-tracer","color":[1,0.95,0.65,1],"tinted":true},
+    "walker":{"height":2.3,"reach":2.85,"life":0.32,"kind":"cannon","look":"twin-heavy","color":[1,0.78,0.4,1],"hit":1},
+    "watcher":{"height":1.83,"reach":1.1,"life":0.1,"kind":"rocket","look":"rail","color":[0.45,1,0.62,1],"hit":0.5},
+    "balloon":{"height":1.2,"reach":0.3,"life":0.6,"kind":"rifle","look":"firebomb","color":[1,0.6,0.2,1],"hit":1},
+    "ironvanguard":{"height":3.4,"reach":2.6,"life":0.12,"kind":"rifle","look":"hose","color":[1,0.55,0.15,1],"hit":0.35},
+    "ironsovereign":{"height":3.6,"reach":2.8,"life":0.12,"kind":"rifle","look":"hose","color":[0.7,0.95,1,1],"hit":0.35},
+    "rampart":{"height":1.5,"reach":2.2,"life":0.22,"kind":"cannon","look":"plough","color":[1,0.7,0.3,1],"hit":0.9}
   }
 }

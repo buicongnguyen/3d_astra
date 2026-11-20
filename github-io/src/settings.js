@@ -33,6 +33,8 @@ export function defaults(coarse = false) {
     combatMotion: true,
     // Screen shake on the biggest blasts (a Command core falling, a Barrage landing). Off = steady camera.
     screenShake: true,
+    // Floating damage numbers (AAA round 2, W2-E): "focus" = bosses and Frontier Defence, "all", or "off".
+    damageNumbers: "focus",
     ambient: true,
     detail: true,
     showFps: false,
@@ -51,6 +53,7 @@ export function normalize(value, coarse = false) {
   if (d.playerColor === d.enemyColor)
     d.enemyColor = d.playerColor === "coral" ? "mint" : "coral";
   if (["eco", "high"].includes(value.quality)) d.quality = value.quality;
+  if (["focus", "all", "off"].includes(value.damageNumbers)) d.damageNumbers = value.damageNumbers;
   // Saves from before the Music setting have no `music` key and get the default.
   if (["recorded", "adaptive", "off"].includes(value.music)) d.music = value.music;
   if (Number.isFinite(value.masterVolume))

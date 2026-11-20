@@ -99,3 +99,99 @@ export class CombatPainter {
   constructor(view) { this.view = view; }
   get motion() { return this.view.settings.combatMotion !== false && !this.view.reducedMotion.matches; }
 }
+
+// ---------------------------------------------------------------- counter hits (AAA round 2, W2-E)
+// A hit is effective when the shooter's `counter` is the target's class, or the shooter has a mechanical bonus
+// and the target is mechanical (the rules of sim/combat.js `hit`, read-only); it is resisted when the target
+// counters the shooter's class, or when infantry fire hits a machine they have no bonus against. `src` and
+// `target` are entities (or definitions). 1 = effective, -1 = resisted, 0 = neither.
+export function counterKind(src, target) {
+  if (!src || !target) return 0;
+  if ((src.counter && src.counter === target.class) || (target.mechanical && src.mechanical_bonus > 1)) return 1;
+  if (target.counter && target.counter === src.class) return -1;
+  if (target.mechanical && src.kind === 'unit' && (src.class === 'ranged' || src.class === 'melee')) return -1;
+  return 0;
+}
+
+// ---------------------------------------------------------------- damage numbers and tag labels
+// Floating numbers come from the per-frame change of every entity's hp + shield (so splash, burn, strikes and
+// boss zones count; an increase is a heal and shows nothing). The loss of one target is summed for
+// NUMBERS.window seconds and shown as one number (Tank_game_3D hit-feedback.ts does the same). Slots are
+// preallocated: nothing is allocated per frame once an entity is known. A view plugin draws them
+// (src/counter-hit-view.js); this class is plain data and runs headless.
+export const NUMBERS = { window: .14, life: .9, rise: 1.5, cap: 24, tagLife: 1.1, min: .05, prune: 60 };
+export const TAG_TEXT = { rear: 'REAR', pinned: 'PINNED', pierce: 'PIERCE' };
+// "Bosses & Defence" (the default) numbers only a boss or any hit in a Frontier Defence match; "all" numbers everything seen.
+export const NUMBER_MODES = ['focus', 'all', 'off'];
+export class DamageNumbers {
+  constructor(cap = NUMBERS.cap) {
+    this.slots = Array.from({ length: cap }, () => ({ on: false, text: '', x: 0, y: 0, z: 0, age: 0, life: 1, kind: 0 }));
+    this.watch = new Map(); // entity id -> { total, seen, sum, since, x, y, z, enemy, big }
+    this.pending = [];
+    this.tagged = new Map(); // target id -> time of its last tag label
+    this.stamp = 0;
+    this.live = 0;
+  }
+  reset() {
+    this.watch.clear(); this.pending.length = 0; this.tagged.clear();
+    for (const s of this.slots) s.on = false;
+    this.stamp = 0; this.live = 0;
+  }
+  // The slot to fill: a free one, else the one that has been showing longest.
+  take() {
+    let pick = this.slots[0];
+    for (const s of this.slots) { if (!s.on) { pick = s; break; } if (s.age > pick.age) pick = s; }
+    if (!pick.on) this.live++;
+    pick.on = true; pick.age = 0;
+    return pick;
+  }
+  // kind: 0 damage to an enemy, 1 damage to the player's side, 2 big damage (boss or heavy), 3 tag label.
+  emit(text, x, y, z, kind, life = NUMBERS.life) {
+    const s = this.take();
+    s.text = text; s.x = x; s.y = y; s.z = z; s.kind = kind; s.life = life;
+    return s;
+  }
+  // One frame. `now` is the simulation clock. `visible(e)` says whether the player sees the entity.
+  observe(sim, now, mode, visible) {
+    if (mode === 'off') { if (this.watch.size) this.reset(); return; }
+    const focus = mode !== 'all' && !sim.defence, stamp = ++this.stamp;
+    for (const e of sim.entities) {
+      if (focus && !e.boss) continue;
+      if (!Number.isFinite(e.hp)) continue;
+      const total = Math.max(0, e.hp) + (e.shield || 0);
+      let r = this.watch.get(e.id);
+      if (!r) { this.watch.set(e.id, { total, seen: stamp, sum: 0, since: 0, x: e.x, y: 0, z: e.z, enemy: e.team !== 0, big: !!e.boss }); continue; }
+      r.seen = stamp;
+      const d = r.total - total;
+      r.total = total;
+      if (d <= NUMBERS.min || !visible(e)) continue;
+      if (!(r.sum > 0)) { r.since = now; this.pending.push(r); }
+      r.sum += d; r.x = e.x; r.z = e.z; r.enemy = e.team !== 0; r.big = !!e.boss;
+      r.y = (e.kind === 'unit' ? (e.flying ? (e.fly || 3) + 1.6 : 2.3) : (e.radius || 2) + 2.4);
+    }
+    for (let i = this.pending.length - 1; i >= 0; i--) {
+      const r = this.pending[i];
+      if (now - r.since < NUMBERS.window && r.seen === stamp) continue;
+      this.emit(String(Math.round(r.sum)), r.x, r.y, r.z, r.big || r.sum >= 60 ? 2 : r.enemy ? 0 : 1);
+      r.sum = 0;
+      this.pending[i] = this.pending[this.pending.length - 1]; this.pending.pop();
+    }
+    if (stamp % NUMBERS.prune === 0) for (const [id, r] of this.watch) if (r.seen < stamp - 1 && !(r.sum > 0)) this.watch.delete(id);
+  }
+  // A tag label ("REAR", "PINNED", "PIERCE") over a shot's target, at most one per target per 0.5 s.
+  tag(ev, now, text) {
+    const last = this.tagged.get(ev.target);
+    if (last !== undefined && now - last < .5) return null;
+    if (this.tagged.size > 200) this.tagged.clear();
+    this.tagged.set(ev.target, now);
+    return this.emit(text, ev.tx, 3.1, ev.tz, 3, NUMBERS.tagLife);
+  }
+  step(dt) {
+    if (!this.live) return;
+    for (const s of this.slots) {
+      if (!s.on) continue;
+      s.age += dt;
+      if (s.age >= s.life) { s.on = false; this.live--; }
+    }
+  }
+}

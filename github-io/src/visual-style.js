@@ -8,7 +8,20 @@ export const themeFor = id => (id = lookOf(id), Object.hasOwn(STYLE.themes,id)?S
 export const lightFor = id => (id = lookOf(id), Object.hasOwn(STYLE.light,id)?STYLE.light[id]:STYLE.light.classic);
 // The surfaces units stand on; team colours must stay readable against each of them.
 export const GROUND_KEYS = ['dirt','grass','sand','road','stone'];
-export const weaponStyle =e => {const key=e.type==='support'?'support':e.weapon;return Object.hasOwn(STYLE.weapons,key)?STYLE.weapons[key]:STYLE.weapons.rifle;};
+// The look of a shot (AAA round 2, W2-E). The shooter's own type comes first (shot events carry `unit`:
+// Rider, Drone, Hawk and Glider all fire the "ranger" shot, so the weapon alone cannot tell them apart),
+// then the shot's weapon, then the rifle. A style marked `tinted` is a weapon several factions share: given
+// the shooter's faction, its tracer colour becomes that faction's (STYLE.tints, Meridian keeps the warm default).
+// The same signature as before: callers that pass no faction get the plain style (life, kind and reach never change).
+const own=key=>key!=null&&Object.hasOwn(STYLE.weapons,key)?STYLE.weapons[key]:null;
+const TINTED=new WeakMap();
+export const weaponStyle=(e,faction)=>{
+  const base=e.type==='support'?STYLE.weapons.support:own(e.unit)??own(e.weapon)??STYLE.weapons.rifle;
+  const tint=faction&&base.tinted?STYLE.tints[faction]:null;
+  if(!tint)return base;
+  let byFaction=TINTED.get(base);if(!byFaction)TINTED.set(base,byFaction={});
+  return byFaction[faction]??(byFaction[faction]={...base,color:tint});
+};
 
 // Conservative visibility: a visible target must not expose an unseen shooter or
 // reveal a route through fog. Rechecked each frame while a trail is alive.

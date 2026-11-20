@@ -20,6 +20,7 @@
 import { StatusView } from "./status-view.js";
 import { ArmyReadabilityView } from "./army-readability-view.js";
 import { EliteView } from "./elite-view.js";
+import { CounterHitView } from "./counter-hit-view.js";
 
 export const HOOKS = ["dress", "scaleFor", "frameScaleFor", "event", "update", "reset"];
 
@@ -52,4 +53,5 @@ export const VIEW_PLUGINS = [
   StatusView,
   ArmyReadabilityView,
   EliteView,
+  CounterHitView,
 ];
