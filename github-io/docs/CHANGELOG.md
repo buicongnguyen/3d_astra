@@ -11,6 +11,9 @@ New Battle rule "AI plan: Classic / Field command" (`rules.aiPlan === "field"`, 
 - Tests: `look-grade`, `mission-looks` (8), browser suite `title`, scenario `night-battle-eco`; tool `tools/look-shots.mjs`.
 
 
+### CW-E: Source-text tests converted
+- Tests only. `tests/lib/sim.js` `advance()` replaces 21 local `run()` copies; the 32 `review-*` files are named by feature; new behavioural tests `service-worker` (the built worker runs in a sandbox), `css-layout` (parsed rules), `docs-facts` (README numbers from a running match), `suite-hygiene` (syntax-tree check of the stages suite); client wiring checks added to the `hotkeys` browser suite. 935 to 938 tests, same wall time. See `docs/aaa/results/round2/cwe.md`.
+
 ### W0-A: Safety net, baseline tools and the view seam
 Nothing changes for the player: no rule, number or picture moved. This makes every later change provable.
 - **Golden pins split and extended (K1).** `tests/golden-play.test.js` is now `tests/golden-skirmish.test.js`, `golden-defence.test.js` and `golden-story.test.js`, run in parallel; all 33 earlier values are kept. New pins, recorded at the base before any change: two skirmish setups as the skirmish screen makes them (riverlands ×3 Sunward against mixed rivals, dunes Ashfall against Veil), a save at 180 s that reloads to the same 300 s hash on all six AI setups, the towers left standing in the DefenceBot runs, Endless on Gorge Road to wave 12, Hold the River (DefenceBot, 120 s) and the Ashfall Chronicle's Cold Berths (120 s). The 300 s points, save and reload, Three Roads and Endless run only in `npm run test:golden-full` (new CI matrix entry `golden-full`); `npm test` keeps the fast ones. `d071360b` is now checked in one file only.

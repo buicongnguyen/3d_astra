@@ -1,6 +1,6 @@
 // The browser suites are plain scripts, so nothing but their own assertions says they check anything.
 // This parses them (rolldown's parser) and looks for the assertions in the syntax tree, where a call
-// swallowed by a trailing // comment is simply not there (K11; replaces review-2026-10-05).
+// swallowed by a trailing // comment is simply not there (K11; replaces review-2026-10-05, removed).
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
