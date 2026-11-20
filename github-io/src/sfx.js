@@ -9,6 +9,7 @@ import { MIX } from "./audio-mix.js";
 // Every play gets a small random pitch/level variation (own seeded generator, never the simulation's),
 // a stereo pan and a distance gain from its screen position, and must pass the voice budget (global
 // cap, per-group caps, priority, per-sound rate limit). Nothing is created while effects are off.
+import { counterKind } from "./combat-feedback.js";
 import { VoiceBudget, audible, dbToGain, hitFor, incomingFor, mulberry32, nearPriority, screenMix, shouldCull, soundFor } from "./audio-logic.js";
 import { AIR_HUM, BANK, ENGINE, radioSpec } from "./sfx-bank.js";
 import { SYNTH_RATE, renderEngine, renderSound, specLength } from "./audio-synth.js";
@@ -127,6 +128,11 @@ export class Sfx {
     if (hit && Number.isFinite(event.tx) && Number.isFinite(event.tz) && (event.team === 0 || isVisible({ x: event.tx, z: event.tz }))) {
       const mix = this.mixAt(event.tx, event.tz);
       if (this.play(hit.name, { pan: mix.pan, gain: mix.gain, priority: nearPriority(4, mix.gain), gap: 0.06, group: "explosion", delay: hit.delay })) heard = Math.max(heard, mix.gain);
+    }
+    // A counter hit: a crisp "crit" layer where the round lands (the player's own or what the player sees).
+    if (event.type === "shot" && event.target != null && Number.isFinite(event.tx) && (event.team === 0 || isVisible({ x: event.tx, z: event.tz })) && counterKind(sim.get?.(event.source), sim.get?.(event.target)) > 0) {
+      const mix = this.mixAt(event.tx, event.tz);
+      this.play("impact:crit", { pan: mix.pan, gain: mix.gain, priority: nearPriority(2, mix.gain), gap: 0.12, group: "impact", delay: 0.05 });
     }
     return heard;
   }

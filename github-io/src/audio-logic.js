@@ -196,9 +196,9 @@ export class VoiceBudget {
 export const WEAPON_VOICE = {
   ranger: "rifle", rider: "rifle", drone: "drone", vanguard: "smg", scrapper: "scrap", shade: "silenced",
   tank: "tank", walker: "walker", breaker: "artillery", scorcher: "flame", antitank: "rocket", watcher: "rail",
-  tower: "tower", medic: "support", wagon: "support", engineer: "engineer", worker: "worker", repair: "worker",
+  gunner: "mg", stalker: "laser", hawk: "pod", tower: "tower", medic: "support", wagon: "support", engineer: "engineer", worker: "worker", repair: "worker",
 };
-const REFINED = new Set(["drone", "walker", "watcher"]);
+const REFINED = new Set(["drone", "walker", "watcher", "gunner", "stalker", "hawk"]);
 export function weaponVoice(weapon, sourceType) {
   if (REFINED.has(sourceType) && weapon !== "repair") return WEAPON_VOICE[sourceType];
   return WEAPON_VOICE[weapon] || "smg";
@@ -218,7 +218,7 @@ export function incomingFor(event) {
   const delay = Number.isFinite(event.delay) ? event.delay : 1.5;
   return { name: "incoming:shell", delay: Math.max(0, delay - INCOMING_SECONDS) };
 }
-const HEAVY_VOICES = new Set(["tank", "walker", "artillery", "rocket", "rail", "tower", "flame"]);
+const HEAVY_VOICES = new Set(["tank", "walker", "artillery", "rocket", "rail", "tower", "flame", "laser", "pod"]);
 
 // Sound name, priority, rate gap and voice group for a simulation event. null = silent event.
 // `sourceType` is the shooter's unit type when known (refines the weapon voice).
