@@ -109,9 +109,12 @@ if (want('idle')) for (const [name, w, h, mobile] of VIEWS) {
     await page.waitForFunction(() => { const own = window.__frontier.sim.own(0); return document.querySelector('#idle-army b').textContent.trim() === String(own.filter(u => u.kind === 'unit' && u.type !== 'worker' && !u.orders.length).length); }, null, { timeout: 5000 });
     await page.locator('#idle-army').tap();
     const first = await page.evaluate(() => [...window.__frontier.selected]);
+    // W1-D: the idle buttons hide while a unit is selected (portrait): clear the selection between taps.
+    await page.evaluate(() => window.__frontier.select([]));
     await page.locator('#idle-army').tap();
     const second = await page.evaluate(() => [...window.__frontier.selected]);
     assert.equal(first.length, 1); assert.notDeepEqual(first, second, `${name}: the button moves on to the next idle unit`);
+    await page.evaluate(() => window.__frontier.select([]));
     await page.locator('#idle-worker').tap();
     assert.equal(await page.evaluate(() => window.__frontier.sim.get([...window.__frontier.selected][0]).type), 'worker');
     await page.screenshot({ path: `${shots}/ui-idle-${name}.png` });
