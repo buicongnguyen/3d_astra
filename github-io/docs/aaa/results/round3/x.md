@@ -12,7 +12,7 @@ Every shot maps to one class (`src/fx-kinds/weapon-class.js` `weaponClass(event,
 | Class | Weapons | What you see |
 |---|---|---|
 | `tracer` | Ranger, Harvester, Gunner, Vanguard, Scrapper, Rider, Drone pulses, Iron Vanguard / Sovereign hoses | Still fast and snappy. Thinner rifle tracers with a small white-hot head, a small muzzle flash, and a dust puff on every ground hit (every other one on Eco). |
-| `shell` | Tank, Tower, Walker (twin), Rampart (fat round) | A glowing finned shell on a slight arc with a short smoke trail; the muzzle flash, recoil and smoke puff as before. The impact: a flash, the fireball, sparks, a bright ring and a dark scorch ring. |
+| `shell` | Tank, Tower, Walker (twin), Rampart (fat round) | A big, bright glowing finned shell (1.55 m, a white-hot halo) on a slightly higher arc (6.5% of the range, at most 1 m) with a long, thick dark smoke trail. A 1.45× muzzle flash and a heavier recoil puff (5 puffs, not 3). The impact: a big star flash, the fireball, a ring of ten sparks thrown out flat, a wide bright ring and a 4.2 m dark scorch ring. See "Shell pass" below. |
 | `lob` | Breaker | A high lob (22% of the range, at most 3.2 m) with a darker trail, over a red warning ring at the landing spot; a bigger ring, dust and scorch ring on landing. |
 | `lob` (Barrage) | Breaker's Barrage ability | The strike mark is now red. In its last 0.85 s a big glowing shell drops out of the sky onto the mark with a smoke trail. It is drawn from `sim.strikes` (read only), so it touches down on the tick the strike resolves. |
 | `flak` | A ground cannon (Tower) at a flyer | A fast round and three black-and-orange flak bursts around the flyer: the first exactly at the hit, two more a beat later. No ground scorch. |
@@ -25,6 +25,22 @@ Every shot maps to one class (`src/fx-kinds/weapon-class.js` `weaponClass(event,
 | shot down | any flyer | It bursts where it flies (a flash, black puffs, fire and chips), not on the ground under it. The wreck (the unit's own model) spins about one full turn as it falls, trailing smoke and fire licks, and crashes in dust, a small fireball and a scorch; then it smoulders like a vehicle wreck. Engine glow and contrails were already R3-W's air life. |
 
 Any round meeting a flyer (`hit()` above 2.2 m) now bursts in the air instead of leaving dust and a scorch on the ground under it.
+
+## Shell pass (owner-approved, 2026-11-22)
+
+The owner asked for more dramatic shells "if cheap". Every change comes from the existing ordnance mesh and pools: still +1 draw in `weapons-mix-eco`, and no flight time changed.
+
+| | Before the pass | After the pass |
+|---|---|---|
+| Shell body | 1.1 m, colour ×2.3 | 1.55 m, colour ×3 (brighter), white-hot halo 1.7 m (was 1.0) |
+| Arc | 4% of the range, at most 0.6 m | 6.5%, at most 1 m |
+| Trail | a puff every 0.03 s, 0.5 s life, pale grey, up to 0.8 m | a puff every 0.022 s, 0.8 s life, dark grey (reads on pale sand and water), up to 1.2 m |
+| Muzzle | the cannon flash; 3 recoil puffs up to 1.7 m | the flash 1.45× bigger (Walker and Rampart 2.1 m); 5 puffs up to 2.4 m |
+| Impact | the hit, a 2.8 m ring, a 3 m scorch ring | the hit, a 5.2 m star flash, ten sparks thrown out flat, a 4.4 m ring, a 4.2 m scorch ring |
+
+- **Eco:** the trail stays shorter (0.6× life, 1.6× gap) and the sparks are halved.
+- **Reduced motion / combat motion off:** a soft warm flare instead of the star, and no sparks.
+- **Sheets:** `x/shell-desktop.jpg` and `x/shell-phone.jpg` were re-rendered after this pass.
 
 ## Timing: impacts land when the damage shows
 
@@ -111,7 +127,7 @@ The probe scripts were scratch files in `.tmp/` and have been deleted.
 
 - **Class ids are R3-U's.** Import from `src/fx-kinds/weapon-class.js`: `WEAPON_CLASSES`, and `weaponClass(event, style?)`. It is pure, with no three.js import; `style` defaults to `weaponStyle(event)`.
 - **Mapping differences against R3-U's `weaponClass`,** checked for every armed unit, at ground and at a flyer:
-  - **Shade:** R3-X says `beam`, R3-U says `tracer`. Its look is a short beam (`look: "beam"`, life 0.06 s). Suggest that R3-U maps Shade's voice to `beam`, or the integrator picks one.
+  - **Shade:** R3-X says `beam`, R3-U says `tracer`. Its look is a short beam (`look: "beam"`, life 0.06 s), and it stays `beam` visually (coordinator, 2026-11-22). **Integrator: set Shade's entry in R3-U's `VOICE_CLASS` to `beam`** when merging, so its sound and look name the same class.
   - Everything else agrees: Drone `tracer`, Anti-tank `missile`, Breaker `lob` even at a flyer, Tower at a flyer `flak`, Hawk `strafe` / `missile`, Glider and Balloon `bomb`, support `heal`.
 - **Events and times a sound can key on.** All are view times after the shot event.
 

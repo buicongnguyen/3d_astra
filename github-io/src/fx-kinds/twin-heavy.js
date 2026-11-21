@@ -10,7 +10,7 @@ export default {
   spawn(fx, ev, rng, a) {
     for (let i = 0; i < 2; i++) {
       const side = (i ? 1 : -1) * 0.38, delay = i ? 0 : BEAT, at = { x: a.from.x + a.sx * side, y: a.from.y, z: a.from.z + a.sz * side };
-      flare(fx, at, 1.5, undefined, 0.1, a.anchor, delay);
+      flare(fx, at, 2.1, fx.motion ? undefined : [1, 0.8, 0.5, 0.45], 0.1, a.anchor, delay);
       fx.particle(fx.glow, { lifted: true, x: at.x, y: at.y, z: at.z, s0: 2.1, s1: 2.5, life: 0.13, c0: [1, 0.72, 0.35, 0.7], c1: [1, 0.4, 0.1, 0], anchor: a.anchor, delay, rot: rng() * 6.28 });
       smokePuff(fx, rng, at, a.ux * 1.5, a.uz * 1.5, a.anchor, 1.6, undefined, 0.9, delay);
       // The first barrel waits a beat and flies a beat faster: both land at `travel`.

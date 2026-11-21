@@ -44,7 +44,7 @@ export function weaponClass(ev, style = weaponStyle(ev)) {
 // Timings and sizes of the classes (seconds and metres). Eco quality keeps the shapes but shortens the trails
 // (`ecoTrail`) and the pools' `count()` halves every burst.
 export const CLASS_LOOK = Object.freeze({
-  shell: { arc: 0.04, arcMax: 0.6, body: 1.1, trailGap: 0.03, trailLife: 0.5, halo: 1 },
+  shell: { arc: 0.065, arcMax: 1, body: 1.55, trailGap: 0.022, trailLife: 0.8, halo: 1.7 },
   lob: { arc: 0.22, arcMax: 3.2, body: 1.35, trailGap: 0.03, trailLife: 0.7, halo: 0.9 },
   flak: { arc: 0, arcMax: 0, body: 0.6, trailGap: 0, trailLife: 0, halo: 0.6, bursts: 3, spread: 1.4 },
   missile: { body: 0.55, weave: 0.55, trailGap: 0.022, trailLife: 0.55 },

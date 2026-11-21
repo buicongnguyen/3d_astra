@@ -526,19 +526,21 @@ export class Effects {
       this.slope(e, to, anchor, m, travel);
       return;
     }
-    const cannon = kind === "cannon", rocket = kind === "rocket";
+    const cannon = kind === "cannon", rocket = kind === "rocket", cls = weaponClass(e, style);
+    // R3-X: a shell (tank-class cannon) fires with a bigger flash and a heavier recoil puff (owner: "more dramatic, if cheap").
+    const shell = cls === "shell";
     // Muzzle: star flare, hot glow and (for heavy weapons) a smoke puff drifting forward.
-    const flash = cannon ? (e.weapon === "tank" ? 1.9 : 1.4) : rocket ? 1 : 0.7;
+    const flash = (cannon ? (e.weapon === "tank" ? 1.9 : 1.4) : rocket ? 1 : 0.7) * (shell ? 1.45 : 1);
     this.particle(this.glow, { ...from, cell: CELL.flare, s0: flash, s1: flash * 1.2, life: cannon ? 0.11 : 0.06, c0: m ? WARM.flash : [1, 0.8, 0.5, 0.45],
       c1: [1, 0.55, 0.15, 0], anchor });
     this.particle(this.glow, { ...from, s0: flash * 1.5, s1: flash * 1.8, life: cannon ? 0.14 : 0.08, c0: [1, 0.72, 0.35, 0.7],
       c1: [1, 0.4, 0.1, 0], anchor });
     if ((cannon || rocket) && m) {
       const back = rocket ? -1 : 1;
-      for (let i = 0; i < this.count(3); i++)
+      for (let i = 0; i < this.count(shell ? 5 : 3); i++)
         this.particle(this.smoke, { lifted: true, x: from.x - (rocket ? nx * 1.4 : 0), y: from.y, z: from.z - (rocket ? nz * 1.4 : 0),
           vx: nx * back * (1.5 + i * 0.6), vy: 0.5 + this.rng() * 0.4, vz: nz * back * (1.5 + i * 0.6), drag: 2.2,
-          life: 0.9 + this.rng() * 0.4, s0: 0.45, s1: 1.7, cell: CELL.puff, c0: [0.6, 0.58, 0.55, 0.5], c1: [0.55, 0.55, 0.55, 0],
+          life: (shell ? 1.2 : 0.9) + this.rng() * 0.4, s0: shell ? 0.6 : 0.45, s1: shell ? 2.4 : 1.7, cell: CELL.puff, c0: [0.6, 0.58, 0.55, 0.5], c1: [0.55, 0.55, 0.55, 0],
           anchor, spin: 0.8 });
       // A big gun's blast kicks up the ground under the muzzle.
       if (cannon && e.weapon !== "tower" && !e.sAir) this.dust({ x: from.x, y: 0.25, z: from.z }, 1, anchor, 0.8, 0.8);
@@ -547,7 +549,6 @@ export class Effects {
     // shows a brief static tracer along the whole path instead.
     const width = cannon ? 0.34 : rocket ? 0.2 : 0.11, tail = cannon ? 2.4 : rocket ? 1.3 : 2;
     const color = style.color ?? (cannon ? [1, 0.78, 0.4, 1] : rocket ? [1, 0.85, 0.6, 1] : [1, 0.9, 0.6, 1]);
-    const cls = weaponClass(e, style);
     if (m && (cls === "shell" || cls === "lob" || cls === "flak")) {
       // R3-X: a glowing round in flight (the ordnance mesh), a short smoke trail and a slight arc (a high lob for
       // artillery, a red warning ring where it will land; a fast round and flak bursts at a flyer).

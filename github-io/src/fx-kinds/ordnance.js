@@ -11,12 +11,12 @@ import { CLASS_LOOK } from "./weapon-class.js";
 
 // Per-instance colours of the bodies (above 1 glows) and the trail / halo / burst palettes (shared arrays).
 export const BODY = Object.freeze({
-  shell: [2.3, 1.55, 0.8], lob: [1.9, 1.25, 0.7], flak: [2.4, 1.7, 0.9], missile: [1.8, 1.75, 1.6],
+  shell: [3, 2.1, 1.1], lob: [1.9, 1.25, 0.7], flak: [2.4, 1.7, 0.9], missile: [1.8, 1.75, 1.6],
   bomb: [0.34, 0.32, 0.31], firebomb: [2.4, 1.05, 0.3], barrage: [2.1, 1.3, 0.7],
 });
 const PAL = {
   halo: [1, 0.72, 0.32, 0.95], haloHot: [1, 0.86, 0.55, 1], haloMissile: [1, 0.9, 0.7, 1],
-  shellSmoke: [0.66, 0.64, 0.6, 0.68], shellSmokeEnd: [0.7, 0.7, 0.7, 0],
+  shellSmoke: [0.42, 0.4, 0.38, 0.72], shellSmokeEnd: [0.55, 0.54, 0.53, 0],
   lobSmoke: [0.5, 0.48, 0.46, 0.55], lobSmokeEnd: [0.55, 0.55, 0.55, 0],
   ribbon: [0.95, 0.94, 0.9, 0.7], ribbonEnd: [0.8, 0.8, 0.8, 0],
   ember: [1, 0.7, 0.3, 1], emberEnd: [1, 0.3, 0.05, 0],
@@ -55,7 +55,7 @@ export function launch(fx, cls, a, ev, o = null) {
   r.arc = Math.min(look.arcMax ?? 0, len * (look.arc ?? 0));
   r.body = o?.body ?? look.body ?? 1;
   r.color = o?.color || BODY[cls] || BODY.shell;
-  r.haloSize = look.halo ?? 0; r.haloColor = cls === "missile" ? PAL.haloMissile : PAL.halo;
+  r.haloSize = look.halo ?? 0; r.haloColor = cls === "missile" ? PAL.haloMissile : cls === "shell" ? PAL.haloHot : PAL.halo;
   r.power = a.power; r.anchor = a.anchor; r.air = !!ev?.tAir; r.team = ev?.team ?? 0;
   r.sx = a.sx ?? 0; r.sz = a.sz ?? 0;
   r.roll = fx.rng() * 6.28; r.spin = cls === "missile" ? 9 : cls === "bomb" ? 1.5 : 4;
@@ -144,7 +144,8 @@ function trail(fx, r, dt, eco, ux, uy, uz, length) {
       q.mode = STRETCH; q.ax = ux; q.ay = uy; q.az = uz; q.length = 0.55; q.c0 = PAL.ribbon; q.c1 = PAL.ribbonEnd;
     } else {
       const lob = cls === "lob";
-      q.vy = 0.25; q.drag = 1.2; q.life = (look.trailLife + fx.rng() * 0.15) * lifeK; q.s0 = lob ? 0.3 : 0.22; q.s1 = lob ? 1.05 : 0.8;
+      // A shell's trail is long and thick (owner 2026-11-22); Eco keeps it shorter through lifeK and the wider gap.
+      q.vy = 0.25; q.drag = 1.2; q.life = (look.trailLife + fx.rng() * 0.15) * lifeK; q.s0 = lob ? 0.3 : 0.3; q.s1 = lob ? 1.05 : 1.2;
       q.cell = CELL.puff; q.c0 = lob ? PAL.lobSmoke : PAL.shellSmoke; q.c1 = lob ? PAL.lobSmokeEnd : PAL.shellSmokeEnd; q.spin = 0.6;
     }
   }
@@ -185,6 +186,20 @@ export function airBurst(fx, at, anchor, power = 1) {
   }
 }
 
+// A shell's extra impact (R3-X, owner 2026-11-22): a big star flash (soft and warm with reduced motion) and a ring of
+// sparks thrown out flat around the hit, from the glow pool.
+const RING_SPARKS = 10;
+function shellImpact(fx, at, anchor) {
+  const calm = !fx.motion, y = at.y + fx.ground(at.x, at.z) + 0.4;
+  sprite(fx, fx.glow, at.x, y, at.z, anchor, CELL.flare, 5.2, 6.2, 0.13, calm ? PAL.calm : PAL.flash, calm ? PAL.calmEnd : PAL.flashEnd);
+  if (calm) return;
+  for (let i = 0, n = fx.count(RING_SPARKS); i < n; i++) {
+    const a = (i / n) * 6.28 + fx.rng() * 0.4, v = 6 + fx.rng() * 3, vx = Math.cos(a) * v, vz = Math.sin(a) * v, vy = 1 + fx.rng() * 1.5, l = Math.hypot(vx, vy, vz);
+    const p = sprite(fx, fx.glow, at.x, y, at.z, anchor, CELL.streak, 0.09, 0.04, 0.3 + fx.rng() * 0.15, PAL.spark, PAL.sparkEnd);
+    p.vx = vx; p.vy = vy; p.vz = vz; p.gravity = 12; p.drag = 1.8; p.mode = STRETCH; p.ax = vx / l; p.ay = vy / l; p.az = vz / l; p.length = 0.55; p.floor = 0.05;
+  }
+}
+
 // A dark scorch ring opening on the ground around a heavy impact (normal blended, in the decal pool).
 function scorchRing(fx, x, z, size, anchor) {
   const p = fx.emit(fx.decals, x, 0.06, z, anchor);
@@ -209,8 +224,9 @@ export function landRound(fx, r, ux, uz) {
       // shell, artillery: the heavy hit, a bright ring and a scorch ring; in the air (a shell at a flyer) a burst instead.
       if (r.air) { airBurst(fx, r.to, anchor, 0.7); return; }
       fx.hit(at, r.power, anchor);
-      if (fx.motion) sprite(fx, fx.glow, at.x, at.y + 0.3, at.z, anchor, CELL.ring, 0.5, r.cls === "lob" ? 4.2 : 2.8, 0.2, PAL.ring, PAL.ringEnd);
-      scorchRing(fx, at.x, at.z, r.cls === "lob" ? 4.4 : 3, anchor);
+      if (fx.motion) sprite(fx, fx.glow, at.x, at.y + 0.3, at.z, anchor, CELL.ring, 0.5, r.cls === "lob" ? 4.2 : 4.4, 0.24, PAL.ring, PAL.ringEnd);
+      if (r.cls === "shell") shellImpact(fx, at, anchor);
+      scorchRing(fx, at.x, at.z, r.cls === "lob" ? 4.4 : 4.2, anchor);
       if (r.cls === "lob") fx.dust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.3, 1.3);
     }
   }
