@@ -1,0 +1,137 @@
+{
+ "m08-night": {
+  "look": {
+   "avg": [
+    5.5,
+    13.8,
+    45
+   ],
+   "avgLum": 5.6,
+   "rMinusB": -39.5,
+   "top": [
+    6.8,
+    14.4,
+    45.3
+   ],
+   "topLum": 5.9,
+   "purpleShare": 0.001,
+   "calls": 229
+  },
+  "dayCalls": 227,
+  "state": {
+   "name": "night",
+   "k": 1,
+   "flash": 0
+  },
+  "sky": "030818",
+  "errors": []
+ },
+ "m06-0030": {
+  "look": {
+   "avg": [
+    75.9,
+    74,
+    46.4
+   ],
+   "avgLum": 28.4,
+   "rMinusB": 29.5,
+   "top": [
+    57.1,
+    69.3,
+    48.4
+   ],
+   "topLum": 25.6,
+   "purpleShare": 0,
+   "calls": 123
+  },
+  "dayCalls": 121,
+  "state": {
+   "name": "storm",
+   "k": 0.4833333333333333,
+   "flash": 0
+  },
+  "sky": "2b1b29",
+  "errors": []
+ },
+ "m06-0300": {
+  "look": {
+   "avg": [
+    50,
+    54,
+    39
+   ],
+   "avgLum": 20.4,
+   "rMinusB": 11,
+   "top": [
+    30.1,
+    41.4,
+    36.9
+   ],
+   "topLum": 15.2,
+   "purpleShare": 0.007,
+   "calls": 123
+  },
+  "dayCalls": 121,
+  "state": {
+   "name": "storm",
+   "k": 0.75,
+   "flash": 0
+  },
+  "sky": "1f1925",
+  "errors": []
+ },
+ "m10-0030": {
+  "look": {
+   "avg": [
+    30.7,
+    35.1,
+    32.6
+   ],
+   "avgLum": 13.3,
+   "rMinusB": -1.9,
+   "top": [
+    24.1,
+    27.9,
+    32.8
+   ],
+   "topLum": 10.8,
+   "purpleShare": 0.001,
+   "calls": 151
+  },
+  "dayCalls": 149,
+  "state": {
+   "name": "storm",
+   "k": 1,
+   "flash": 0
+  },
+  "sky": "0d1620",
+  "errors": []
+ },
+ "cv1-night": {
+  "look": {
+   "avg": [
+    7.6,
+    31.9,
+    54.9
+   ],
+   "avgLum": 11.1,
+   "rMinusB": -47.3,
+   "top": [
+    9.1,
+    31.7,
+    60.8
+   ],
+   "topLum": 11.4,
+   "purpleShare": 0,
+   "calls": 158
+  },
+  "dayCalls": 156,
+  "state": {
+   "name": "night",
+   "k": 1,
+   "flash": 0
+  },
+  "sky": "030818",
+  "errors": []
+ }
+}
