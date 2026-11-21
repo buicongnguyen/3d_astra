@@ -162,7 +162,7 @@ Object.assign(limits, {'boss-sovereign2-eco':125}); // R3-H
 Object.assign(limits, {'battle-200':260}); // R3-C
 Object.assign(limits, {'air-battle':135}); // R3-W: 125 draws on 2026-11-21 (123 before: +1 rocket bodies, +1 air life)
 Object.assign(limits, {'building-life-eco':110}); // R3-L
-Object.assign(limits, {'twinrivers-high':240}); // R3 map variety: large-map-high's line (235 draws on 2026-11-22)
+Object.assign(limits, {'twinrivers-high':240}); // R3 map variety: large-map-high's line (235 draws on 2026-11-22); 207 once its four bridges were instanced (Wave 3 integration)
 Object.assign(limits, {'wide-battle-eco':152, 'groups-battle-eco':111, 'combined-defence-eco':97}); // R3-K: the same scene on the base build + 4 (148, 107, 93 draws on 2026-11-21)
 Object.assign(limits, {'weapons-mix-eco':131}); // R3-X: 128 draws on 2026-11-22 (127 on the base build with the same shots: +1 ordnance bodies) + 3
 try {

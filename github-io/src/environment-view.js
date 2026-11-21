@@ -134,7 +134,10 @@ export class EnvironmentView {
       target.add(o);
       return o;
     };
-    for (const river of terrain.rivers)
+    // Maps with several rivers (R3 map variety) draw their bridges as one instanced batch per bridge mesh
+    // (below): four bridges as clones cost about 8 draws each with their shadows.
+    const instancedBridges = terrain.rivers.length > 1;
+    for (const river of instancedBridges ? [] : terrain.rivers)
       for (const c of river.crossings.filter((c) => c.type === "bridge")) {
         const bridge = add("bridge", c.x, river.z);
         // Frontier Defence finds a bridge by its x (old river maps only, one river).
@@ -147,7 +150,7 @@ export class EnvironmentView {
     };
     for (const river of terrain.rivers) for (const c of river.fords) this.fordMarks(c, theme, river.z);
     // Batch repeated meshes by source primitive: decoration adds a fixed number of draw calls.
-    const instances = (name, transforms) => {
+    const instances = (name, transforms, target = this.decor) => {
       const source = assets.getObjectByName("asset_" + name);
       if (!source) return;
       source.updateMatrixWorld(true);
@@ -167,9 +170,19 @@ export class EnvironmentView {
             new THREE.Matrix4().multiplyMatrices(matrix, m.matrixWorld),
           ),
         );
-        this.decor.add(batch);
+        target.add(batch);
       });
     };
+    // Bridges are always shown (not decoration), so their batches go on the root.
+    // Each instance is placed exactly like add()'s clone: the source's own rotation at (x, 0, z), scale 1.
+    const bridgeSource = instancedBridges && assets.getObjectByName("asset_bridge");
+    if (bridgeSource) {
+      bridgeSource.updateMatrixWorld(true);
+      const unplace = bridgeSource.matrixWorld.clone().invert(), one = new THREE.Vector3(1, 1, 1);
+      const placed = terrain.rivers.flatMap((river) => river.crossings.filter((c) => c.type === "bridge")
+        .map((c) => new THREE.Matrix4().compose(new THREE.Vector3(c.x, 0, river.z), bridgeSource.quaternion, one).multiply(unplace)));
+      instances("bridge", placed, this.root);
+    }
     const transforms = { bush: [], reed: [], crate: [] },
       dummy = new THREE.Object3D();
     // Decoration stays well inside the playable edge; nothing is placed on or beyond it.
