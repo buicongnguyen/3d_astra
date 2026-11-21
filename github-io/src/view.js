@@ -30,6 +30,7 @@ import { defaults } from "./settings.js";
 import { ViewPlugins } from "./view-plugins.js";
 import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, setRimTier } from "./look-grade.js";
 import { MissionLook } from "./mission-look-view.js";
+import { airMotion } from "./air-motion.js";
 import {
   EnvironmentView,
   optimizeEnvironment,
@@ -1552,7 +1553,9 @@ export class WorldView {
         // Flyers: up at their altitude, nose down in forward flight; ring and bar ride with them.
         const air = this.stepFlyer(u, o.position.x, o.position.z, o.position.y, dt, lively);
         lift += air;
-        m.rotation.x = Math.min(1, u.gait) * 0.14;
+        // R3-W (air-motion.js): bank into turns and lift the nose on a climb, on top of the forward-flight nose-down.
+        airMotion(u.air, e.type, m.rotation.y, u.air.y ?? 0, dt, lively && this.settings.combatMotion !== false);
+        m.rotation.x = Math.min(1, u.gait) * 0.14 + u.air.pitch;
         u.ring.position.y = air + 0.12;
         u.bar.position.y = u.air.barY + air;
       }
@@ -1560,7 +1563,7 @@ export class WorldView {
       m.scale.set(1 + squash * 0.5, (e.complete ? 1 : 0.15 + e.progress * 0.85) + squash, 1 + squash * 0.5);
       m.scale.multiplyScalar(u.readabilityScale * frame);
       if (frame !== 1 || u.barRest !== undefined) this.scaleBar(u, frame);
-      m.rotation.z = isHarvesting(sim,e) && !this.reducedMotion.matches ? Math.sin(sim.time*7+e.id)*0.045 : 0;
+      m.rotation.z = u.air ? u.air.bank : isHarvesting(sim,e) && !this.reducedMotion.matches ? Math.sin(sim.time*7+e.id)*0.045 : 0;
       for (let i = 0; i < u.legs.length; i++) {
         const leg = u.legs[i];
         leg.node.quaternion.copy(leg.base);
