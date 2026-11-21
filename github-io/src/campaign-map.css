@@ -1,14 +1,19 @@
-/* Campaign map (campaign-map-ui.js). It takes the key art's place in the start screen's hero while
-   Campaign is chosen: map above, mission copy below. Text 11 px or more, nodes 44 px, no sideways
-   scroll; the "next" pulse stops under :root.motion-off (style.css) and reduced motion. */
+/* Campaign map (campaign-map-ui.js). It takes the key art's place in the start screen's hero while Campaign is
+   chosen. The painted frontier (src/art/campaign/) is the hero: an aspect-locked board carries the painting and
+   its overlay together (route SVG, act plates, relay pins, name plates), so the README anchors stay exact at any
+   size. Desktop: the mission list and Start keep the left command column (as on the title screen); the map is
+   large in the centre with the decisions legend in its header, endings and chronicles under it and the
+   briefing as a glass panel at the foot. Phones: the map across the top (portrait: the wide painting, full
+   bleed; landscape: the strip panorama beside the setup column). Text 11 px or more (12 px on desktop), pins
+   44 px, no sideways scroll; the beacon pulse stops under :root.motion-off and reduced motion. */
 #briefing.campaign-view .briefing-art,
 #briefing.campaign-view .briefing-hero::after { display: none; }
 #briefing.campaign-view .briefing-hero {
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(120% 80% at 70% 0%, rgba(29, 67, 84, 0.6), transparent 60%),
-    linear-gradient(180deg, #071822, var(--ink-0));
+    radial-gradient(120% 80% at 70% 0%, rgba(20, 52, 96, 0.55), transparent 60%),
+    linear-gradient(180deg, #06122a, #030a1a);
 }
 #campaign-map { display: flex; flex: 1 1 auto; min-height: 0; }
 #briefing.campaign-view .briefing-copy { position: relative; padding: 12px 32px 22px; }
@@ -16,52 +21,100 @@
 #briefing.campaign-view .briefing-copy h2 { margin: 4px 0 6px; font-size: clamp(24px, 2.4vw, 32px); }
 #briefing.campaign-view .briefing-copy p { margin-bottom: 10px; font-size: 15px; }
 
-.cmap { display: flex; flex-direction: column; gap: 8px; width: 100%; min-width: 0; min-height: 0; padding: 18px 22px 0; }
-.cmap-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
-.cmap-head .eyebrow { font: 700 12px/1.2 var(--font-ui); letter-spacing: 0.16em; color: var(--gold-2); }
-.cmap-head strong { font: 800 18px/1.2 var(--font-display); color: #fff; }
-.cmap-count { margin-left: auto; font: 700 12px/1.2 var(--font-ui); font-variant-numeric: tabular-nums; color: var(--mint, #92ebc5); }
+.cmap { position: relative; display: flex; flex-direction: column; gap: 10px; width: 100%; min-width: 0; min-height: 0; padding: 16px 20px 0; }
+.cmap-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; min-height: 24px; }
+.cmap-head .eyebrow { font: 700 12px/1.2 var(--font-ui); letter-spacing: 0.16em; color: var(--holo-1, #7fe8ff); }
+.cmap-head strong { font: 800 19px/1.2 var(--font-display); color: #fff; text-shadow: 0 0 18px rgba(127, 232, 255, 0.25); }
+.cmap-count {
+  margin-left: auto;
+  padding: 3px 10px;
+  border: 1px solid rgba(146, 235, 197, 0.4);
+  border-radius: 999px;
+  background: rgba(4, 22, 30, 0.72);
+  font: 700 12px/1.2 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  color: var(--mint, #92ebc5);
+  white-space: nowrap;
+}
+.cmap-head .cmap-legend { margin-left: auto; }
+.cmap-head .cmap-legend + .cmap-count { margin-left: 4px; }
 
+/* ---------- The board: painting + overlay, aspect-locked ---------- */
+/* The frame takes the room the column leaves; the board is the largest 16:9 (or strip) box inside it. */
+.cmap-frame { --art: 1.7778; position: relative; display: flex; flex: 1 1 auto; align-items: center; justify-content: center; min-height: 150px; container-type: size; }
 .cmap-board {
   position: relative;
-  flex: 1 1 auto;
-  min-height: 210px;
+  flex: none;
+  /* Up to 12% wider than the painting when the room is wide: the layer then trims a few rows top and bottom
+     instead of leaving dark bands at the sides. */
+  width: min(100cqw, 100cqh * var(--art) * 1.12);
+  height: min(100cqh, min(100cqw, 100cqh * var(--art) * 1.12) / var(--art));
   overflow: hidden;
-  border: 1px solid var(--line-1);
-  border-radius: var(--r-m);
-  background: #0a1f28;
-  container-type: inline-size;
+  border: 1px solid rgba(127, 232, 255, 0.34);
+  border-radius: 10px;
+  background: #06142c;
+  box-shadow: 0 0 0 1px rgba(2, 8, 20, 0.9), 0 14px 40px rgba(0, 0, 0, 0.55), 0 0 30px rgba(57, 198, 232, 0.12);
+  container-type: size;
+  container-name: cmap;
 }
-.cmap-ground { position: absolute; inset: 0; width: 100%; height: 100%; }
-.cmap-band.band-1 { fill: rgba(47, 143, 154, 0.08); }
-.cmap-band.band-2 { fill: rgba(178, 106, 60, 0.07); }
-.cmap-band.band-3 { fill: rgba(138, 165, 156, 0.08); }
-.cmap-rule { stroke: rgba(168, 214, 212, 0.16); stroke-width: 1; stroke-dasharray: 4 6; }
-.cmap-land { opacity: 0.9; }
-.cmap-river { fill: none; stroke: rgba(79, 190, 210, 0.35); stroke-width: 6; stroke-linecap: round; }
-.cmap-route { stroke-width: 3; stroke-linecap: round; }
-.cmap-route.lit { stroke: var(--mint, #92ebc5); }
-.cmap-route.dim { stroke: rgba(168, 214, 212, 0.28); stroke-dasharray: 3 6; }
-.cmap-keystone { fill: rgba(255, 199, 94, 0.18); }
+/* The painting's own box, covering the board like object-fit: cover; the relays (percent anchors) and the route
+   live in it, so they stay on their landmarks whatever the board's shape. */
+.cmap-layer {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100cqw, 100cqh * var(--art));
+  height: max(100cqh, 100cqw / var(--art));
+  transform: translate(-50%, -50%);
+}
+.cmap-art, .cmap-art img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+.cmap-art img { object-fit: cover; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+/* A soft holo edge and a darker top-left corner behind the act title (the painting's calm area). */
+.cmap-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(42% 22% at 0% 0%, rgba(3, 10, 26, 0.6), transparent 100%);
+  box-shadow: inset 0 0 0 1px rgba(200, 245, 255, 0.08), inset 0 0 34px rgba(3, 10, 26, 0.55);
+}
+.cmap-route-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.cmap-route-svg.for-strip { display: none; }
+.cmap-route-svg path { fill: none; stroke-linecap: round; }
+/* The route: a dark underlay with a glow, then the dash on top. */
+.cmap-glow { stroke-width: 7; stroke: rgba(2, 8, 20, 0.55); }
+.cmap-glow.walked { stroke: rgba(120, 70, 10, 0.55); filter: drop-shadow(0 0 4px rgba(255, 190, 90, 0.75)); }
+.cmap-glow.ahead { stroke: rgba(6, 40, 60, 0.6); filter: drop-shadow(0 0 4px rgba(127, 232, 255, 0.8)); }
+.cmap-route { stroke-width: 3; stroke-dasharray: 9 7; }
+.cmap-route.walked { stroke: #ffd77a; stroke-dasharray: none; }
+.cmap-route.ahead { stroke: #9ff1ff; }
+.cmap-route.dim { stroke: rgba(215, 240, 248, 0.72); stroke-width: 2; stroke-dasharray: 4 7; }
 
+/* Act plates: small glass tags at the left edge of each act's band (Act 3 in the calm top-left corner). */
 .cmap-act {
   position: absolute;
-  /* Clear of the connector that climbs the left column between the acts. */
-  left: calc(12% + 26px);
+  left: 1.2%;
   z-index: 1;
   display: flex;
   gap: 6px;
   align-items: baseline;
-  max-width: calc(100% - 20px);
-  font: 700 12px/1.2 var(--font-ui);
-  color: var(--text-2);
+  padding: 3px 9px 3px 7px;
+  border: 1px solid rgba(255, 199, 94, 0.34);
+  border-left: 2px solid var(--gold-2);
+  border-radius: 4px;
+  background: linear-gradient(90deg, rgba(4, 12, 28, 0.88), rgba(4, 12, 28, 0.66));
+  font: 700 13px/1.2 var(--font-display);
+  color: #fff;
   pointer-events: none;
   white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
 }
-.cmap-act b { font-size: 11px; letter-spacing: 0.14em; color: var(--gold-2); }
+.cmap-act b { font: 800 12px/1.2 var(--font-ui); letter-spacing: 0.16em; color: var(--gold-2); }
 
+/* ---------- Relay pins ---------- */
 .cmap .cmap-node {
   position: absolute;
+  left: var(--wx);
+  top: var(--wy);
   z-index: 2;
   display: grid;
   place-items: center;
@@ -74,149 +127,256 @@
   border: 0;
   border-radius: 50%;
   background: none;
+  box-shadow: none;
   transform: translate(-50%, -50%);
 }
 .cmap .cmap-node:disabled { opacity: 1; cursor: default; }
+.cmap .cmap-node:hover, .cmap .cmap-node:active { background: none; transform: translate(-50%, -50%); }
+/* The pin's ground shadow, so it stands on the landmark. */
+.cmap-node::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 1px;
+  width: 30px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.6), transparent);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
 .cmap-node b {
+  position: relative;
+  z-index: 1;
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  border: 2px solid var(--line-2);
+  width: 32px;
+  height: 32px;
+  border: 2px solid rgba(160, 205, 220, 0.55);
   border-radius: 50%;
-  background: var(--ink-1);
+  background: radial-gradient(circle at 50% 35%, rgba(24, 52, 84, 0.95), rgba(4, 12, 28, 0.95));
   font: 800 14px/1 var(--font-display);
-  color: var(--text-1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  color: #a9c2d0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
-.cmap-node.locked b { border-style: dashed; background: rgba(10, 27, 36, 0.85); color: var(--text-3); opacity: 0.6; }
-.cmap-node.open b { border-color: var(--mint, #92ebc5); color: #fff; }
-.cmap-node.done b { border-color: rgba(255, 255, 255, 0.8); color: #24160a; box-shadow: 0 0 14px var(--glow, rgba(255, 199, 94, 0.5)); }
-.cmap-node.medal-gold b { --glow: rgba(255, 199, 94, 0.7); background: radial-gradient(circle at 35% 30%, #fff1b8, #ffc75e 55%, #b96d12); }
-.cmap-node.medal-silver b { --glow: rgba(207, 217, 223, 0.6); background: radial-gradient(circle at 35% 30%, #ffffff, #cfd9df 55%, #7d8c96); }
-.cmap-node.medal-bronze b { --glow: rgba(227, 154, 92, 0.6); background: radial-gradient(circle at 35% 30%, #ffd9b0, #e39a5c 55%, #8a4a1c); }
-.cmap-node.keystone b { width: 38px; height: 38px; }
+/* Locked: a dim glass disc, but with a light dashed rim and a soft halo so it still reads on the dark terrain. */
+.cmap-node.locked b { border-style: dashed; border-color: rgba(200, 232, 242, 0.78); background: rgba(4, 12, 28, 0.86); color: #c4d6df; box-shadow: 0 0 0 2px rgba(3, 10, 24, 0.55), 0 0 10px rgba(160, 220, 240, 0.28), 0 2px 8px rgba(0, 0, 0, 0.6); }
+.cmap-node.open b { border-color: var(--holo-1, #7fe8ff); color: #fff; box-shadow: 0 0 12px rgba(127, 232, 255, 0.55), inset 0 0 8px rgba(127, 232, 255, 0.3); }
+.cmap-node.done b { border-color: #fff4cf; color: #2a1606; box-shadow: 0 0 0 2px rgba(255, 199, 94, 0.55), 0 0 16px var(--glow, rgba(255, 199, 94, 0.6)), 0 2px 6px rgba(0, 0, 0, 0.5); }
+.cmap-node.medal-gold b { --glow: rgba(255, 199, 94, 0.8); background: radial-gradient(circle at 35% 30%, #fff4c4, #ffc75e 55%, #b96d12); }
+.cmap-node.medal-silver b { --glow: rgba(207, 217, 223, 0.7); background: radial-gradient(circle at 35% 30%, #ffffff, #cfd9df 55%, #7d8c96); }
+.cmap-node.medal-bronze b { --glow: rgba(227, 154, 92, 0.75); background: radial-gradient(circle at 35% 30%, #ffd9b0, #e39a5c 55%, #8a4a1c); }
+.cmap-node.keystone b { width: 36px; height: 36px; }
 /* A mission played under the Defence rules (0.19b): a square relay. */
-.cmap-node.defence b { border-radius: 9px; }
-.cmap-node.picked b { outline: 3px solid var(--gold-2); outline-offset: 3px; }
-.cmap-node.next b { animation: cmap-pulse 1.8s ease-in-out infinite; }
-@keyframes cmap-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(146, 235, 197, 0.55); }
-  50% { box-shadow: 0 0 0 9px rgba(146, 235, 197, 0); }
+.cmap-node.defence b { border-radius: 6px; }
+/* The next mission: a cyan beacon whose ring breathes outwards (transform and opacity only). */
+.cmap-node.next b { border-color: #c8f7ff; background: radial-gradient(circle at 50% 35%, #2ec6e6, #0a5e86 70%); color: #fff; box-shadow: 0 0 0 3px rgba(127, 232, 255, 0.35), 0 0 20px rgba(127, 232, 255, 0.85); }
+.cmap-node.next::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 2px solid rgba(127, 232, 255, 0.8);
+  border-radius: 50%;
+  animation: cmap-beacon 2.2s ease-out infinite;
+  pointer-events: none;
 }
-@media (prefers-reduced-motion: reduce) { .cmap-node.next b { animation: none; } }
+.cmap-node.next.defence::before { border-radius: 12px; }
+@keyframes cmap-beacon {
+  0% { transform: scale(0.8); opacity: 0.9; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+:root.motion-off .cmap-node.next::before { animation: none; transform: scale(1.25); opacity: 0.6; }
+@media (prefers-reduced-motion: reduce) { .cmap-node.next::before { animation: none; transform: scale(1.25); opacity: 0.6; } }
+/* The picked mission: a larger pin in a gold ring with a warm halo, the same gold as its list row and Start; its
+   pin and plate draw over the neighbours. */
+.cmap .cmap-node.picked, .cmap .cmap-node.next { z-index: 6; }
+.cmap-node.picked b { width: 38px; height: 38px; font-size: 16px; outline: 3px solid var(--gold-2); outline-offset: 3px; box-shadow: 0 0 0 7px rgba(255, 199, 94, 0.18), 0 0 26px rgba(255, 190, 90, 0.75), 0 2px 8px rgba(0, 0, 0, 0.6); }
+.cmap-node.picked.next b { box-shadow: 0 0 0 7px rgba(255, 199, 94, 0.18), 0 0 26px rgba(255, 190, 90, 0.7), 0 0 14px rgba(127, 232, 255, 0.9); }
+.cmap-node.picked::before { border-color: rgba(255, 214, 130, 0.9); }
 .cmap-node:hover:not(:disabled) b { border-color: var(--gold-2); }
 
 .cmap-choice {
   display: inline-block;
   width: 14px;
   height: 14px;
-  border: 2px solid var(--ink-0);
+  border: 2px solid #030a1a;
   vertical-align: -2px;
 }
 .cmap-choice.mercy { border-radius: 50%; background: var(--mint, #92ebc5); }
 .cmap-choice.firm { border-radius: 3px; background: var(--gold-2); transform: rotate(45deg); }
-.cmap-node .cmap-choice { position: absolute; top: 0; right: 0; }
+.cmap-node .cmap-choice { position: absolute; z-index: 2; top: 0; right: 0; }
 
+/* Name plates: small glass tags beside the pin, on the side the anchor table picks (lw-a above, lw-b below). */
 .cmap-title {
   position: absolute;
-  top: 100%;
+  z-index: 3;
   left: 50%;
   width: max-content;
-  max-width: 17cqw;
-  transform: translateX(-50%);
-  padding: 1px 6px;
-  border-radius: 6px;
-  background: rgba(6, 20, 28, 0.72);
+  max-width: min(190px, 24cqw);
+  padding: 2px 8px;
+  border: 1px solid rgba(127, 232, 255, 0.3);
+  border-radius: 4px;
+  background: linear-gradient(180deg, rgba(6, 18, 38, 0.9), rgba(3, 10, 24, 0.86));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   font: 600 12px/1.25 var(--font-ui);
-  color: var(--text-2);
+  color: #dcecf4;
   text-align: center;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+  /* Longer names (Vietnamese) take a second line rather than being cut. */
+  white-space: normal;
+  text-wrap: balance;
+  transform: translateX(-50%);
   pointer-events: none;
 }
-.cmap-node.picked .cmap-title { color: #fff; }
-.cmap-node.locked .cmap-title { color: var(--text-3); }
-@container (max-width: 560px) { .cmap-title { display: none; } }
+.cmap-node.lw-b .cmap-title { top: calc(100% - 3px); }
+.cmap-node.lw-a .cmap-title { bottom: calc(100% + 1px); }
+/* Act 1's plates all hang below the river row, so they keep within the 18.5% between relays (two lines if longer). */
+.cmap-node.a1 .cmap-title { max-width: min(170px, 17cqw); }
+/* Relays near the board's sides align their plate to the pin's outer edge, so it never leaves the board. */
+.cmap-node.edge-l .cmap-title { left: 0; transform: none; }
+.cmap-node.edge-r .cmap-title { left: auto; right: 0; transform: none; }
+.cmap-node.lw-r .cmap-title { left: calc(100% - 4px); top: 50%; transform: translateY(-50%); }
+.cmap-node.done .cmap-title { border-color: rgba(255, 199, 94, 0.42); color: var(--gold-1); }
+.cmap-node.locked .cmap-title { background: rgba(3, 10, 24, 0.78); color: #a8bfcc; }
+.cmap-node.next .cmap-title { border-color: rgba(127, 232, 255, 0.7); color: #fff; box-shadow: 0 0 12px rgba(127, 232, 255, 0.35), 0 2px 8px rgba(0, 0, 0, 0.5); }
+.cmap-node.picked .cmap-title { z-index: 4; border-color: var(--gold-2); background: linear-gradient(180deg, rgba(60, 36, 8, 0.94), rgba(20, 12, 4, 0.92)); color: #fff; font-weight: 700; }
+/* Smaller boards: the picked and next missions keep their plates; the list names the rest. */
+@container cmap (max-width: 700px) {
+  .cmap-node:not(.picked, .next) .cmap-title { display: none; }
+  .cmap-node .cmap-title, .cmap-node.a1 .cmap-title { max-width: 40cqw; font-size: 11px; padding: 1px 6px; }
+  /* Smaller pins (the tap stays 44 px), so the painting still shows between them; locked ones smallest. */
+  .cmap-node b { width: 27px; height: 27px; border-width: 2px; font-size: 12px; }
+  .cmap-node.locked b { width: 23px; height: 23px; font-size: 11px; }
+  .cmap-node.keystone b { width: 29px; height: 29px; }
+  .cmap-node.picked b { width: 32px; height: 32px; font-size: 14px; outline-width: 2px; outline-offset: 2px; }
+  .cmap-node.defence b { border-radius: 5px; }
+  .cmap-node::after { width: 22px; height: 7px; bottom: 5px; }
+  .cmap-node .cmap-choice, .cmap-node .cmap-ahead { width: 11px; height: 11px; top: 3px; right: 3px; }
+  /* Here the rows sit close: Act 1's plate looks up into the open ground over the river, Acts 2 and 3 look
+     down, so the one or two plates shown never cover the act above. */
+  .cmap .cmap-node.a1 .cmap-title { top: auto; bottom: calc(100% - 3px); }
+  .cmap .cmap-node.a2 .cmap-title, .cmap .cmap-node.a3 .cmap-title { top: calc(100% - 3px); bottom: auto; }
+  .cmap .cmap-node.lw-r .cmap-title { left: 0; transform: none; }
+  .cmap-act { padding: 2px 6px; }
+  .cmap-act > span { display: none; }
+  .cmap-act b { font-size: 11px; }
+}
 
+/* ---------- Footer: endings and Faction Chronicles ---------- */
 .cmap-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; padding-bottom: 2px; }
-.cmap-label { font: 700 11px/1.2 var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-3); }
+.cmap-label { font: 700 11px/1.2 var(--font-ui); letter-spacing: 0.12em; text-transform: uppercase; color: #9fb6c4; }
 .cmap-endings, .cmap-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .cmap-legend > span:not(.cmap-label) { display: inline-flex; align-items: center; gap: 6px; font: 600 12px/1.2 var(--font-ui); color: var(--text-2); }
 .cmap-ending {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   min-height: 44px;
   padding: 0 12px;
   border: 1px solid var(--line-1);
-  border-radius: 999px;
+  border-radius: 8px;
   font: 600 12px/1.2 var(--font-ui);
   color: var(--text-3);
 }
-.cmap-ending i { width: 10px; height: 10px; border: 2px solid currentColor; border-radius: 50%; }
-.cmap .cmap-ending.seen { border-color: var(--gold-line); background: rgba(255, 199, 94, 0.1); color: var(--gold-1); }
-.cmap .cmap-ending.seen.open-frontier { border-color: rgba(146, 235, 197, 0.6); background: rgba(146, 235, 197, 0.1); color: var(--mint, #92ebc5); }
-.cmap-ending.seen i { background: currentColor; }
-.cmap-chronicles {
-  display: grid;
-  gap: 2px;
-  margin-left: auto;
-  padding: 6px 12px;
-  border: 1px dashed var(--line-2);
-  border-radius: var(--r-s);
-}
-.cmap-chronicles strong { font: 700 12px/1.2 var(--font-ui); color: var(--text-2); }
-.cmap-chronicles small { font: 500 11px/1.3 var(--font-ui); color: var(--text-3); }
+.cmap-ending i { flex: none; width: 10px; height: 10px; border: 2px solid currentColor; border-radius: 50%; }
+.cmap .cmap-ending.seen { border-color: var(--gold-line); background: linear-gradient(90deg, rgba(255, 199, 94, 0.16), rgba(255, 199, 94, 0.04)); color: var(--gold-1); }
+.cmap .cmap-ending.seen.open-frontier { border-color: rgba(146, 235, 197, 0.6); background: linear-gradient(90deg, rgba(146, 235, 197, 0.16), rgba(146, 235, 197, 0.04)); color: var(--mint, #92ebc5); }
+.cmap-ending.seen i { background: currentColor; box-shadow: 0 0 8px currentColor; }
 
 /* List rows: a decision taken shows as a small chip beside the map name. */
 .stage-choice { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; font: 600 11px/1.2 var(--font-ui); color: var(--text-2); }
 
-/* Phones: the map fills the hero at its usual height, so the mode cards and Start stay on the
-   first screen; the copy keeps only the mission title (the briefing overlay tells the rest). */
-.compact-ui #briefing.campaign-view .briefing-hero { height: clamp(300px, 46vh, 440px); }
-.compact-ui #briefing.campaign-view #campaign-map { flex: 1 1 auto; min-height: 0; }
-.compact-ui .cmap { gap: 6px; padding: 10px 14px 0; }
-.compact-ui #briefing.campaign-view .briefing-copy { padding: 6px 16px 8px; }
-.compact-ui #briefing.campaign-view .briefing-copy .eyebrow,
-.compact-ui #briefing.campaign-view .briefing-copy p,
-.compact-ui #briefing.campaign-view .briefing-facts { display: none; }
+/* ---------- Desktop: map large in the centre, briefing as a glass panel at the foot ---------- */
+:root:not(.compact-ui) #briefing.campaign-view .briefing-hero .briefing-copy {
+  --holo-corner: 12px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) fit-content(52%);
+  grid-template-areas: "eye facts" "title facts" "text facts";
+  align-items: start;
+  column-gap: 22px;
+  max-width: none;
+  margin: 12px 20px 18px;
+  padding: 14px 18px 12px;
+  border: 1px solid var(--holo-line, rgba(127, 232, 255, 0.28));
+  border-radius: 8px;
+  background: var(--holo-brackets), linear-gradient(180deg, rgba(12, 34, 66, 0.82), rgba(4, 12, 28, 0.94));
+  box-shadow: 0 0 24px rgba(57, 198, 232, 0.12), inset 0 1px 0 rgba(200, 245, 255, 0.1);
+}
+:root:not(.compact-ui) #briefing.campaign-view .briefing-hero .briefing-copy > .eyebrow { grid-area: eye; }
+:root:not(.compact-ui) #briefing.campaign-view .briefing-hero .briefing-copy > h2 { grid-area: title; margin: 2px 0 4px; font-size: clamp(22px, 1.9vw, 30px); }
+:root:not(.compact-ui) #briefing.campaign-view .briefing-hero .briefing-copy > p { grid-area: text; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; font-size: 14px; line-height: 1.45; }
+:root:not(.compact-ui) #briefing.campaign-view .briefing-hero .briefing-facts { grid-area: facts; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 10px; align-self: center; margin: 0; }
+:root:not(.compact-ui) #briefing.campaign-view .briefing-hero .briefing-facts .briefing-rule { min-width: 0; margin: 0; }
+/* The footer, one row: the two endings, then the four chronicle cards. */
+:root:not(.compact-ui) #campaign-map .cmap-foot { display: grid; grid-template-columns: minmax(330px, 1fr) minmax(0, 2fr); align-items: start; gap: 6px 14px; }
+:root:not(.compact-ui) #campaign-map .cmap-endings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 6px; }
+:root:not(.compact-ui) #campaign-map .cmap-endings > .cmap-label { grid-column: 1 / -1; margin: 0 0 1px; }
+:root:not(.compact-ui) #campaign-map .cmap-ending { min-width: 0; padding: 4px 10px; }
+:root:not(.compact-ui) #campaign-map .cmap-ending-name,
+:root:not(.compact-ui) #campaign-map .cmap-hint { white-space: normal; }
+:root:not(.compact-ui) #campaign-map .cmap-chronicles.chron-cards { flex: none; margin-left: 0; gap: 6px; }
+:root:not(.compact-ui) #campaign-map .chron-row { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+:root:not(.compact-ui) #campaign-map .chron-card { min-height: 46px; padding: 5px 8px; column-gap: 6px; }
+:root:not(.compact-ui) #campaign-map .chron-face .cast-portrait.small { --size: 28px; }
+:root:not(.compact-ui) #campaign-map .chron-words strong,
+:root:not(.compact-ui) #campaign-map .chron-words small { overflow-wrap: normal; word-break: normal; }
+/* Short desktop windows (down to 720 px): the board gives way first, then the briefing paragraph. */
+@media (max-height: 820px) {
+  :root:not(.compact-ui) #briefing.campaign-view .briefing-hero .briefing-copy { margin-top: 8px; margin-bottom: 12px; padding-top: 10px; padding-bottom: 10px; }
+  :root:not(.compact-ui) #briefing.campaign-view .briefing-hero .briefing-copy > p { display: none; }
+}
+
+/* ---------- Touch screens and narrow windows: the board's height follows its width ---------- */
+.compact-ui .cmap-frame { flex: none; display: block; min-height: 0; container-type: normal; }
+.compact-ui .cmap-board { width: 100%; height: auto; aspect-ratio: 2560 / 1440; }
+.compact-ui #briefing.campaign-view .briefing-hero { height: auto; min-height: 0; }
+.compact-ui #briefing.campaign-view #campaign-map { flex: 0 0 auto; }
+.compact-ui .cmap { gap: 8px; padding: 12px 16px 0; }
+.compact-ui #briefing.campaign-view .briefing-copy { padding: 6px 16px 10px; }
 .compact-ui #briefing.campaign-view .briefing-copy h2 { margin: 0; font-size: 20px; }
 .compact-ui .cmap-head .eyebrow { display: none; }
 .compact-ui .cmap-head strong { font-size: 15px; }
-.compact-ui .cmap-board { min-height: 150px; }
 .compact-ui .cmap-chronicles small { display: none; }
 .compact-ui .cmap-chronicles { padding: 4px 10px; }
-/* Short phones: the board alone (the list names the acts; the endings show on taller screens). */
-@media (max-height: 700px) and (orientation: portrait) {
-  .compact-ui #briefing.campaign-view .briefing-hero { height: clamp(220px, 40vh, 300px); }
-  .compact-ui .cmap-head, .compact-ui .cmap-foot { display: none; }
-  .compact-ui .cmap-board { min-height: 0; }
-}
-/* Phones: act names stand up along the left edge, clear of the first column of relays (the list
-   below names the acts); the footer packs endings as rings (a seen one keeps its name), the
-   decision legend and the chronicles slot. */
-.compact-ui .cmap-act { left: 2px; writing-mode: vertical-rl; transform: rotate(180deg); }
-.compact-ui .cmap-act > span { display: none; }
-.compact-ui .cmap-foot { gap: 6px 10px; }
 .compact-ui .cmap-legend { display: none; }
+.compact-ui .cmap-foot { gap: 6px 10px; }
 .compact-ui .cmap-endings { flex-wrap: nowrap; gap: 6px; }
 .compact-ui .cmap-ending { padding: 0 10px; }
-.compact-ui .cmap-ending.unseen { justify-content: center; width: 44px; padding: 0; }
-.compact-ui .cmap-ending.unseen > span { display: none; }
-.compact-ui .cmap-chronicles { margin-left: auto; }
 
-/* Short landscape phones: the map fills the hero; the copy keeps only its title. */
+/* ---------- Landscape phones: the strip panorama beside the setup column ---------- */
 @media (orientation: landscape) and (max-height: 520px) {
-  .compact-ui #briefing.campaign-view #campaign-map { height: auto; flex: 1 1 auto; }
-  .compact-ui #briefing.campaign-view .briefing-hero { height: auto; min-height: 0; }
-  .compact-ui #briefing.campaign-view .briefing-copy { padding: 4px 14px 8px; }
-  .compact-ui #briefing.campaign-view .briefing-copy h2 { font-size: 18px; }
-  .compact-ui .cmap { gap: 4px; padding: 8px 12px 0; }
-  .compact-ui .cmap-head strong { font-size: 14px; }
-  /* One row under the map. */
-  .compact-ui .cmap-foot { flex-wrap: nowrap; gap: 6px; }
-  .compact-ui .cmap-foot .cmap-label { display: none; }
-  .compact-ui .cmap-legend { display: none; }
+  .cmap-frame { --art: 2.8444; }
+  .cmap-board { aspect-ratio: 2560 / 900; }
+  .cmap .cmap-node { left: var(--sx); top: var(--sy); }
+  .cmap-route-svg.for-wide { display: none; }
+  .cmap-route-svg.for-strip { display: block; }
+  .cmap-node.ls-b .cmap-title { top: calc(100% - 3px); bottom: auto; }
+  .cmap-node.ls-a .cmap-title { top: auto; bottom: calc(100% - 3px); }
+  .cmap-node.ls-a .cmap-title, .cmap-node.ls-b .cmap-title { left: 50%; transform: translateX(-50%); }
+  .cmap-node.edge-l .cmap-title { left: 0; transform: none; }
+  .cmap-node.edge-r .cmap-title { left: auto; right: 0; transform: none; }
+  /* A narrower setup column gives the panorama 520 px; the board takes the height the screen leaves, up to 10%
+     over the strip's own shape (the painting's layer then crops a few pixels at the sides), so neighbouring
+     relays stay 44 px apart. */
+  .compact-ui #briefing.campaign-view { grid-template-columns: clamp(300px, 37vw, 330px) minmax(0, 1fr); }
+  .compact-ui #briefing.campaign-view .briefing-hero { height: 100%; min-height: 0; overflow: hidden auto; }
+  .compact-ui #briefing.campaign-view #campaign-map { flex: 1 1 auto; }
+  .compact-ui .cmap-frame { flex: none; container-type: inline-size; }
+  .compact-ui .cmap { gap: 5px; padding: 6px 4px 6px; }
+  .compact-ui .cmap-board { aspect-ratio: auto; height: clamp(100cqw / 2.8444, 100dvh - 196px, 100cqw / 2.8444 * 1.1); border-radius: 6px; }
+  .compact-ui #briefing.campaign-view .briefing-copy { display: none; }
+}
+
+/* ---------- Phones (portrait up to 720 px wide, landscape up to 520 px tall) ---------- */
+@media (max-width: 720px), (orientation: landscape) and (max-height: 520px) {
+  /* The count rides on the board's top-right corner; the heading words step aside for the map. */
+  :root.compact-ui #campaign-map .cmap-head { position: absolute; z-index: 5; top: 10px; right: 8px; min-height: 0; pointer-events: none; }
+  :root.compact-ui #campaign-map .cmap-head strong { display: none; }
+  :root.compact-ui #campaign-map .cmap-count { padding: 2px 8px; font-size: 11px; background: rgba(3, 10, 24, 0.82); }
+  /* Act plates stand up along the board's left edge, clear of the first column of relays. */
+  :root.compact-ui #campaign-map .cmap-act { left: 0; padding: 5px 2px 5px 3px; border-width: 1px 1px 1px 0; border-radius: 0 4px 4px 0; border-left: 0; writing-mode: vertical-rl; transform: rotate(180deg); }
+  :root.compact-ui #campaign-map .cmap-act.act-3 { top: 6% !important; }
+  :root.compact-ui #campaign-map .cmap-act.act-2 { top: 35% !important; }
+  :root.compact-ui #campaign-map .cmap-act.act-1 { top: 66% !important; }
 }
 
 /* ---------- R3-G: decision marks, ending hints, chronicles, phone layout ---------- */
@@ -231,36 +391,20 @@
   transform: rotate(45deg);
   vertical-align: -2px;
 }
-.cmap-node .cmap-ahead { position: absolute; top: 1px; right: 1px; box-shadow: 0 0 8px rgba(255, 199, 94, 0.55); }
+.cmap-node .cmap-ahead { position: absolute; z-index: 2; top: 1px; right: 1px; box-shadow: 0 0 8px rgba(255, 199, 94, 0.55); }
 .cmap-node .cmap-choice ~ .cmap-ahead { top: auto; bottom: 1px; }
 /* Endings: the name, then what leads there; the short name is for phones. */
 .cmap-ending-words { display: grid; gap: 1px; min-width: 0; text-align: left; }
 .cmap-ending-name, .cmap-ending-short { font: 700 12px/1.2 var(--font-ui); color: inherit; white-space: nowrap; }
 .cmap-ending-short { display: none; }
-.cmap-hint { font: 600 11px/1.2 var(--font-ui); color: var(--text-3); white-space: nowrap; }
+.cmap-hint { font: 600 11px/1.2 var(--font-ui); color: #9fb6c4; white-space: nowrap; }
 .cmap .cmap-ending { min-height: 44px; padding: 4px 12px; }
-.cmap .cmap-ending.unseen { color: var(--text-2); border-style: dashed; }
+.cmap .cmap-ending.unseen { color: var(--text-2); border-style: dashed; background: rgba(3, 10, 24, 0.5); }
 .cmap .cmap-ending.unseen i { opacity: 0.7; }
 .cmap .cmap-ending.seen .cmap-hint { color: inherit; opacity: 0.8; }
 /* (Tablets: cover.css shows an unseen ending's words inline; they stay two lines here.) */
 :root #campaign-map .cmap-ending > .cmap-ending-words { display: grid; }
 .cmap-legend .cmap-mercy { font: 700 12px/1.2 var(--font-ui); font-variant-numeric: tabular-nums; color: var(--mint, #92ebc5); }
-
-/* Desktop: two footer rows. The endings, their hints and the decision legend on one line; the four chronicle
-   cards below at the footer's full width, so their words no longer break inside a name. */
-:root:not(.compact-ui) #campaign-map .cmap-foot { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 8px; }
-:root:not(.compact-ui) #campaign-map .cmap-endings { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 6px 10px; }
-:root:not(.compact-ui) #campaign-map .cmap-endings > .cmap-label { margin: 0 4px 0 0; }
-:root:not(.compact-ui) #campaign-map .cmap-legend { margin-left: auto; gap: 4px 12px; }
-:root:not(.compact-ui) #campaign-map .cmap-chronicles.chron-cards { flex: none; margin-left: 0; }
-:root:not(.compact-ui) #campaign-map .chron-words strong,
-:root:not(.compact-ui) #campaign-map .chron-words small { overflow-wrap: normal; word-break: normal; }
-/* Short desktop windows (down to 720 px) keep the chronicles above the fold: the board and the copy give way. */
-@media (max-height: 820px) {
-  :root:not(.compact-ui) #briefing.campaign-view .cmap-board { min-height: 150px; }
-  :root:not(.compact-ui) #briefing.campaign-view .briefing-copy { padding-top: 6px; padding-bottom: 12px; }
-  :root:not(.compact-ui) #briefing.campaign-view .briefing-copy p { display: none; }
-}
 
 /* Phones (portrait up to 720 px wide, landscape up to 520 px tall): endings and chronicles keep short labels,
    the ending's short name over its hint and the chronicle's faction under its portrait. */
@@ -273,7 +417,7 @@
   :root.compact-ui #campaign-map .cmap-ending-name { display: none; }
   :root.compact-ui #campaign-map .cmap-ending-short { display: block; overflow: hidden; text-overflow: ellipsis; }
   :root.compact-ui #campaign-map .cmap-hint { overflow: hidden; text-overflow: ellipsis; }
-  :root.compact-ui #campaign-map .cmap-chronicles.chron-cards { flex: 1 1 100%; margin-left: 0; }
+  :root.compact-ui #campaign-map .cmap-chronicles.chron-cards { flex: 1 1 100%; margin-left: 0; padding: 0; }
   :root.compact-ui #campaign-map .chron-row { gap: 4px; }
   :root.compact-ui #campaign-map .chron-card { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; justify-items: start; align-items: center; gap: 1px 6px; min-height: 44px; padding: 4px 6px; text-align: left; }
   :root.compact-ui #campaign-map .chron-card .chron-face { grid-row: 1 / span 2; }
@@ -285,19 +429,23 @@
   :root.compact-ui #campaign-map .chron-card .chron-face .cast-portrait.small { --size: 24px; }
 }
 
-/* Phones in portrait: a shorter campaign hero, the flavour strip and mode sub-lines step aside, slimmer
-   mission rows, so three missions show above Start (one before). Every control keeps its place. The narrow
+/* Phones in portrait: the wide painting full bleed across the top, the flavour strip and mode sub-lines step
+   aside, slimmer mission rows, so missions show above Start. Every control keeps its place. The narrow
    chronicle cards use a smaller portrait so the faction name reads whole beside it. */
 @media (max-width: 720px) and (orientation: portrait) {
-  :root.compact-ui #briefing.campaign-view .briefing-hero { height: auto; min-height: 0; }
-  :root.compact-ui #briefing.campaign-view #campaign-map { flex: 0 0 auto; }
-  :root.compact-ui #briefing.campaign-view .cmap-board { flex: 0 0 auto; height: clamp(206px, 25vh, 240px); min-height: 0; }
-  :root.compact-ui #briefing.campaign-view .briefing-copy { padding: 2px 16px 4px; }
-  :root.compact-ui #briefing.campaign-view .briefing-copy h2 { font-size: 18px; }
+  :root.compact-ui #briefing.campaign-view .cmap { gap: 6px; padding: 0 12px; }
+  :root.compact-ui #briefing.campaign-view .cmap-frame { margin: 0 -12px; }
+  :root.compact-ui #briefing.campaign-view .cmap-board { border-width: 0 0 1px; border-radius: 0; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); }
+  :root.compact-ui #campaign-map .cmap-head { top: 5px; right: 6px; }
+  /* The mission's name is on its map plate and on Start (the briefing overlay tells the rest), as in landscape. */
+  :root.compact-ui #briefing.campaign-view .briefing-copy { display: none; }
   :root.compact-ui #briefing.campaign-view .setup-head { display: none; }
-  :root.compact-ui #briefing.campaign-view .mode-switch button:not([data-mode="training"]) { min-height: 50px; grid-template-columns: auto auto; grid-template-rows: auto; align-content: center; column-gap: 6px; padding: 4px; }
-  :root.compact-ui #briefing.campaign-view .mode-switch button > .icon { grid-row: 1; width: 18px; height: 18px; }
-  :root.compact-ui #briefing.campaign-view .mode-switch button > span { grid-row: 1; }
+  /* The four modes share one row (Training too), icon over name. */
+  :root.compact-ui #briefing.campaign-view .mode-switch { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button,
+  :root.compact-ui #briefing.campaign-view .mode-switch button[data-mode="training"] { grid-column: auto; display: grid; grid-template-columns: auto; grid-template-rows: auto auto; justify-content: center; justify-items: center; align-content: center; row-gap: 2px; min-height: 50px; padding: 4px 2px; text-align: center; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button > .icon { display: block; grid-row: 1; width: 18px; height: 18px; margin: 0 auto; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button > span { grid-row: 2; font-size: 12px; line-height: 1.15; }
   :root.compact-ui #briefing.campaign-view .mode-switch button > small { display: none; }
   :root.compact-ui #briefing.campaign-view .stage-list button { min-height: 48px; padding: 4px 10px; gap: 10px; }
   :root.compact-ui #briefing.campaign-view .stage-list { gap: 5px; }
@@ -307,13 +455,13 @@
   :root.compact-ui #campaign-map .chron-card { gap: 1px 4px; padding: 3px 4px; }
   :root.compact-ui #campaign-map .chron-card .chron-face .cast-portrait.small { --size: 22px; }
   :root.compact-ui #campaign-map .chron-card .chron-glyph { width: 12px; height: 12px; right: -4px; bottom: -4px; }
-  :root.compact-ui #briefing.campaign-view .cmap { gap: 5px; }
 }
 /* Landscape phones: the modes keep their icons (above the name, still 46 px), the flavour strip steps aside,
    and the rows are slimmer; the map's footer is two rows, endings then chronicles. */
 @media (orientation: landscape) and (max-height: 520px) {
   :root.compact-ui #briefing.campaign-view .setup-head { display: none; }
-  :root.compact-ui #briefing.campaign-view .mode-switch button { grid-template-columns: auto; grid-template-rows: auto auto; row-gap: 2px; align-content: center; min-height: 46px; padding: 3px 4px; }
+  :root.compact-ui #briefing.campaign-view .mode-switch { gap: 5px; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button { grid-template-columns: auto; grid-template-rows: auto auto; row-gap: 2px; align-content: center; min-height: 46px; padding: 3px 2px; }
   :root.compact-ui #briefing.campaign-view .mode-switch button > .icon { display: block; grid-row: 1; width: 16px; height: 16px; margin: 0 auto; }
   :root.compact-ui #briefing.campaign-view .mode-switch button > span { grid-row: 2; font-size: 12px; line-height: 1.15; }
   :root.compact-ui #briefing.campaign-view .stage-list button { min-height: 48px; padding: 4px 10px; gap: 10px; }
@@ -322,7 +470,41 @@
   :root.compact-ui #briefing.campaign-view .stage-list small { font-size: 11px; line-height: 1.3; }
   :root.compact-ui #campaign-map .cmap-foot { gap: 4px; }
   :root.compact-ui #campaign-map .cmap-foot .cmap-label { display: none; }
-  /* The board keeps relays 44 px apart: the mission's name gives its line (Start names the mission and the
-     list marks it; the briefing overlay tells the rest). */
   :root.compact-ui #briefing.campaign-view .briefing-copy { display: none; }
+}
+/* Tablets in portrait: the map at full width, then the endings and the chronicles in one row, then the briefing. */
+@media (min-width: 721px) and (orientation: portrait) {
+  :root.compact-ui #briefing.campaign-view .briefing-hero { height: auto; }
+  :root.compact-ui #briefing.campaign-view .setup-head { display: none; }
+  :root.compact-ui #campaign-map .cmap-foot { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr); align-items: start; gap: 6px 12px; }
+  :root.compact-ui #campaign-map .cmap-endings { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  :root.compact-ui #campaign-map .cmap-endings > .cmap-label { display: none; }
+  :root.compact-ui #campaign-map .cmap-chronicles.chron-cards > .cmap-label { display: none; }
+  :root.compact-ui #campaign-map .cmap-chronicles.chron-cards { padding: 0; }
+  :root.compact-ui #campaign-map .chron-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* The briefing as the desktop's glass panel: words on the left, rivals and objective on the right. */
+  :root.compact-ui #briefing.campaign-view .briefing-hero .briefing-copy { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); grid-template-areas: "eye facts" "title facts" "text facts"; align-items: start; column-gap: 16px; margin: 10px 16px 12px; padding: 12px 14px; border: 1px solid var(--holo-line, rgba(127, 232, 255, 0.28)); border-radius: 8px; background: var(--holo-brackets), linear-gradient(180deg, rgba(12, 34, 66, 0.82), rgba(4, 12, 28, 0.94)); }
+  :root.compact-ui #briefing.campaign-view .briefing-copy > .eyebrow { grid-area: eye; }
+  :root.compact-ui #briefing.campaign-view .briefing-copy > h2 { grid-area: title; margin: 2px 0 4px; font-size: 22px; }
+  :root.compact-ui #briefing.campaign-view .briefing-copy > p { grid-area: text; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 0; font-size: 14px; }
+  :root.compact-ui #briefing.campaign-view .briefing-hero .briefing-facts { grid-area: facts; display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; align-self: center; margin: 0; }
+  /* The four modes in one compact row (Training too), icon beside the name. */
+  :root.compact-ui #briefing.campaign-view .mode-switch { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button,
+  :root.compact-ui #briefing.campaign-view .mode-switch button[data-mode="training"] { grid-column: auto; display: grid; grid-template-columns: auto auto; grid-template-rows: auto; justify-content: center; align-items: center; column-gap: 8px; min-height: 54px; padding: 4px 8px; text-align: center; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button > .icon { display: block; grid-row: 1; width: 20px; height: 20px; margin: 0; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button > span { grid-row: 1; font-size: 15px; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button > small { display: none; }
+}
+/* Short phones in portrait (320x568 and the like): the board alone under the top bar, so missions still show
+   above Start (the list carries the chronicles; the endings show on taller screens, as since R3-G). Narrow
+   phones put each mode's icon above its name, so "Campaign" reads whole. */
+@media (max-width: 720px) and (orientation: portrait) and (max-height: 700px) {
+  :root.compact-ui #campaign-map .cmap-foot { display: none; }
+  /* The sheet's rounded top rides a little over the hero: keep it off Act 1's relays. */
+  :root.compact-ui #briefing.campaign-view .cmap { padding-bottom: 16px; }
+}
+@media (max-width: 360px) and (orientation: portrait) {
+  /* The count would sit on the Act 3 relays here; the lit pins tell the same. */
+  :root.compact-ui #campaign-map .cmap-head { display: none; }
 }
