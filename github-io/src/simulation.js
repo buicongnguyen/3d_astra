@@ -1,5 +1,5 @@
 import { DEFINITIONS as D, ROCKS, MAX_POP, distance, hyp, clamp } from "./data.js";
-import { NEUTRAL, CORE_GRACE, ROUTES_PER_TICK, MIDFIELD_DEPOSITS } from "./sim/constants.js";
+import { NEUTRAL, CORE_GRACE, ROUTES_PER_TICK, MIDFIELD_DEPOSITS, WILD_TEAM } from "./sim/constants.js";
 import { factionRules, normalizedFactions, openingLine } from "./factions.js";
 import { traits } from "./sim/traits.js";
 import { height } from "./sim/height.js";
@@ -148,6 +148,8 @@ export class Simulation {
     this.capturePointsOn = capturePoints && !mission;
     this.skirmishPoints = {};
     if (this.capturePointsOn) this.initSkirmishPoints();
+    // Round 4 Wild frontier (sim/content/wild-frontier.js): only a skirmish with the rule, on a Wild land.
+    if (this.rules?.wild && !mission && field) this.initWild();
     if (mission) this.initMission(mission);
     // Names the player's own faction (Meridian keeps its original line). Missions, Defence levels and
     // chronicles open with their own first line (some have no base or Harvesters at all).
@@ -295,8 +297,9 @@ export class Simulation {
     this.aiSpeed = speed;
     this.pace = aiPace(speed, !!this.mission);
   }
+  // Wild creatures (WILD_TEAM, round 4) are fair game for every side but never pick a side's units through this test.
   hostile(a, b) {
-    return a !== b && a >= 0 && b >= 0 && !(this.coalition && a > 0 && b > 0);
+    return a !== b && a >= 0 && (b >= 0 ? !(this.coalition && a > 0 && b > 0) : b === WILD_TEAM);
   }
   tick(dt) {
     if (this.result || !Number.isFinite(dt) || dt <= 0) return;

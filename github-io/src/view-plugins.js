@@ -28,6 +28,7 @@ import { AirLifeView } from "./air-life-view.js";
 import { BuildingDecalsView } from "./building-decals-view.js";
 import { ThreatArrows } from "./threat-arrows.js";
 import { DeathLooks } from "./combat-feedback.js";
+import { WildView } from "./wild-view.js";
 
 export const HOOKS = ["dress", "scaleFor", "frameScaleFor", "event", "update", "reset"];
 
@@ -68,4 +69,5 @@ export const VIEW_PLUGINS = [
   BuildingDecalsView,
   ThreatArrows, // R3-K: off-screen threat arrows (DOM, no draw)
   DeathLooks, // R3-K: three death looks by damage type (effect pools, no draw)
+  WildView, // R4-P1: Weather Spire, nest ring, sandstorm and Ambush ripples (only in a Wild frontier match)
 ];

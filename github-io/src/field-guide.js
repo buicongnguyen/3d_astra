@@ -6,6 +6,10 @@ import { portrait } from './portraits.js';
 import balance from './balance.json' with { type: 'json' };
 
 const DRILL = balance.outrider_drill; // the Rider's page explains the Expanded-roster drill (src/sim/content/outrider.js)
+const WILD = balance.wild_frontier; // the Wild frontier creatures' pages (round 4, src/sim/content/wild-frontier.js)
+
+// Wild frontier (AAA round 4, P1), from the live balance numbers: the Spire and the nest, on every creature page.
+export const WILD_GUIDE = `<h3>Wild frontier</h3><p>A Battle rule for Amber Dunes. Hold the Weather Spire near the centre to call a Sandstorm with the one Sandstorm button: after a ${WILD.spire.warn} s warning that every side sees, enemies inside fire 30% slower and see only ${WILD.sandstorm.sight} m for ${WILD.sandstorm.duration} s, and your units inside are hidden from them. It recharges in ${WILD.spire.cooldown} s; a new holder waits ${WILD.spire.arm} s.</p><p>Clear the ${WILD.nest.guards} Wyrmlings at the nest, then keep only your units in it for ${WILD.nest.tame} s to tame a Dune Wyrm (at most ${WILD.nest.cap} per side). The nest regrows its guards ${WILD.nest.regrow} s later. Relaxed rivals never use the Spire or the nest; Normal rivals only late in a match.</p>`;
 
 // Plateaus (Stage 3), from the live balance numbers (balance.json "terrain").
 export const HIGH_GROUND_GUIDE = `Plateaus are raised rock reached by ramps. A unit or tower on top gets +${TERRAIN.high_range} m range, +${Math.round((TERRAIN.high_damage - 1) * 100)}% damage and +${TERRAIN.high_vision} m sight against targets below; shooting up at it does ${Math.round((1 - TERRAIN.low_damage) * 100)}% less damage. A gold ▲ marks units on high ground, and units deep on a plateau stay hidden from below until you climb it.`;
@@ -30,6 +34,7 @@ export function entryHTML(type, sim = null, team = 0) {
     ${d.support ? `<p>Restores ${d.support} HP each second within range ${d.range}. Requires a clear line. No resource cost. Does not refill shields, heal itself, finish construction or revive casualties.</p><p>Use <strong>Support → friendly target</strong> to follow an ally. Idle helpers automatically assist injured allies in range.</p>` : ''}
     ${d.facing ? `<h3>Facing armour</h3><p>Shots from the front do ${d.facing.front}× damage and shots from behind ${d.facing.rear}×; shots from the side do full damage. Flank it.</p>` : ''}
     ${DRILL.types.includes(type) && sim?.ruleOn?.('roster') === 'expanded' ? `<h3>Expanded roster: Outrider drill</h3><p>When a melee or flame unit comes within ${DRILL.near} m, the Rider steps back ${DRILL.back} m and keeps shooting, at most once every ${DRILL.every} s. It never steps on Hold.</p>` : ''}
+    ${d.creature ? WILD_GUIDE : ''}
     ${d.flying ? AIR_GUIDE : ''}
     ${d.hits_air && !d.flying ? '<p>Hits air: it can shoot flyers.</p>' : ''}
     ${d.required_level && !d.workshop ? `<p>Requires level ${d.required_level} ${d.flying ? 'Command core' : ['medic','antitank'].includes(sim?.slotOf(type) || type) ? 'Barracks' : 'Foundry'}.</p>` : ''}

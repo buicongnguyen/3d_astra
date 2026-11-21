@@ -1,0 +1,50 @@
+/* Wild frontier, P1 (AAA round 4): the one-tap Weather button (app/wild-ui.js). Always visible in a Wild
+   match: text 11 px or more, a 44 px or larger target, no system-ui in the font stack. */
+#weather-power {
+  position: fixed;
+  z-index: 24;
+  right: 14px;
+  bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 132px;
+  min-height: 48px;
+  padding: 6px 12px 6px 8px;
+  border: 2px solid rgba(230, 178, 106, 0.65);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(58, 36, 20, 0.92), rgba(34, 22, 14, 0.92));
+  color: #ffe9c7;
+  font: 600 13px/1.1 var(--font-ui, Inter, "Segoe UI", Arial, sans-serif);
+  letter-spacing: 0.02em;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  touch-action: manipulation;
+}
+#weather-power[hidden] { display: none; }
+#weather-power .wp-icon {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 50%;
+  background: rgba(230, 178, 106, 0.18);
+}
+#weather-power .wp-icon svg { width: 22px; height: 22px; fill: none; stroke: #f3c27a; stroke-width: 2; stroke-linecap: round; }
+#weather-power .wp-text { display: flex; flex-direction: column; gap: 2px; }
+#weather-power .wp-label { font: 700 15px/1 var(--font-display, "Baloo 2", Arial, sans-serif); text-transform: uppercase; }
+#weather-power .wp-sub { font-size: 12px; font-weight: 600; color: #f3c27a; }
+#weather-power.held { border-color: rgba(255, 196, 110, 0.85); }
+#weather-power.ready {
+  border-color: #ffc35c;
+  background: linear-gradient(180deg, #b86a22, #7a3f12);
+  color: #fff6e6;
+  animation: wp-glow 1.6s ease-in-out infinite;
+}
+#weather-power.ready .wp-sub { color: #fff1d2; }
+#weather-power.ready .wp-icon { background: rgba(255, 236, 200, 0.25); }
+#weather-power[aria-pressed="true"] { outline: 3px solid #ffe2a8; outline-offset: 2px; }
+@keyframes wp-glow { 50% { box-shadow: 0 0 0 4px rgba(255, 195, 92, 0.35), 0 6px 18px rgba(0, 0, 0, 0.35); } }
+@media (prefers-reduced-motion: reduce) { #weather-power.ready { animation: none; } }

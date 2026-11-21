@@ -24,10 +24,12 @@ export const points = {
   // The computer opponent keeps a small squad on each of the nearest points: it walks there
   // to take the ring and stays to defend it. Cost-neutral: the squad is ordinary army units.
   aiPoints(team, hq, army, pace) {
-    const rings = this.skirmishPoints, names = Object.keys(rings || {});
+    // A Weather Spire (round 4, `wild` ring) has its own crew rules (sim/content/wild-frontier.js).
+    const rings = this.skirmishPoints, names = Object.keys(rings || {}).filter((name) => !rings[name].wild);
     if (!names.length || !hq || this.time < 45) return;
     const size = this.aiSpeed === "relaxed" ? 2 : 3, squads = this.aiSpeed === "relaxed" ? 1 : 2;
-    for (const e of army) if (e.pointDuty && !rings[e.pointDuty]) e.pointDuty = null;
+    // Duty units of a ring that is gone go back to the army (a Wild nest party keeps its duty: it is not a ring).
+    for (const e of army) if (e.pointDuty && !rings[e.pointDuty] && e.pointDuty !== "nest") e.pointDuty = null;
     const nearest = names.sort((a, b) => distance(hq, rings[a]) - distance(hq, rings[b]) || (a < b ? -1 : 1)).slice(0, squads);
     // Never strip the core: keep a home guard of at least minWave units off duty.
     // Flyers cannot take a ring (sim/air.js), so they never go on point duty.

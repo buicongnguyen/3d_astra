@@ -52,6 +52,8 @@ import { prefetchModels, releaseModelBytes } from "./app/loading.js";
 import "./loading.css";
 import { registerOffline } from "./app/offline.js";
 import { setupCover } from "./app/cover.js";
+import { setupWildUi } from "./app/wild-ui.js";
+import { rulesForMap } from "./app/rules-store.js";
 
 renderShell();
 // S is the shared state; A is what each module offers the others (functions and widgets).
@@ -65,7 +67,7 @@ setupCover(A, S);
 // settled from the progress record (resolveMission, src/story/choices.js) before it starts.
 const createSim = () => {
   // Only a skirmish lets the player choose sides: Training (and the campaign) always command Meridian.
-  const sim = new Simulation({ factions: S.mission || S.playMode !== "skirmish" ? null : skirmishSides(S.playerFaction, S.enemyFaction, S.enemyCount, S.mapId), map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission ? resolveMission(S.mission, S.campaign) : null, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish", ...(!S.mission && S.playMode === "skirmish" && S.rules ? { rules: S.rules } : {}) });
+  const sim = new Simulation({ factions: S.mission || S.playMode !== "skirmish" ? null : skirmishSides(S.playerFaction, S.enemyFaction, S.enemyCount, S.mapId), map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission ? resolveMission(S.mission, S.campaign) : null, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish", ...(!S.mission && S.playMode === "skirmish" && rulesForMap(S.rules, S.mapId) ? { rules: rulesForMap(S.rules, S.mapId) } : {}) });
   S.look = matchLook(S.mission, sim);
   return sim;
 };
@@ -200,6 +202,7 @@ const SETUP = [
   ["input-pointer", setupInputPointer], ["input-keyboard", setupInputKeyboard], ["modals", setupModals],
   ["briefing", setupBriefing], ["match-flow", setupMatchFlow], ["frame", setupFrame], ["ui-extras", setupUiExtras], ["choices", setupChoices], ["scenes", setupScenes], ["debug-hooks", setupDebugHooks],
   ["defence", setupDefenceEntry],
+  ["wild", setupWildUi],
 ];
 const BIND = ["preferences", "hud", "input-pointer", "sound", "frame", "modals", "briefing", "match-flow", "selection",
   "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "choices", "scenes", "debug-hooks", "defence"];

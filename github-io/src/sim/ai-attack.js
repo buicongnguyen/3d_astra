@@ -187,7 +187,8 @@ export const aiAttack = {
   aiJoinFight(team, army) {
     const foes = [];
     for (const t of this.entities)
-      if (t.hp > 0 && t.kind === "unit" && t.damage > 0 && this.hostile(team, t.team) && this.isVisible(t, team)) foes.push(t);
+      // Wild nest guards (team < 0, round 4) are not a fight to join.
+      if (t.hp > 0 && t.kind === "unit" && t.damage > 0 && t.team >= 0 && this.hostile(team, t.team) && this.isVisible(t, team)) foes.push(t);
     if (!foes.length) return;
     const groups = new Map(), join = balance.ai_mix.join;
     for (const e of army) {

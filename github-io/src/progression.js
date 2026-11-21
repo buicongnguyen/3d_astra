@@ -95,7 +95,7 @@ export const progression = {
       t.nextHitEffect = this.time + 0.2;
     }
     if (t.hp <= 0) {
-      if (t.kind !== 'wall') this.players[team].kills++;
+      if (t.kind !== 'wall' && team >= 0) this.players[team].kills++;
       this.creditKill(by,t);
       this.traitDeath(t,team);
       // H13: content modules' death hooks (sim/content.js).

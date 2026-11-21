@@ -339,6 +339,24 @@
       "review": "pending owner review (round 3)",
       "source": "Tank_game_3D public/models/boss-walker.glb (same owner), ported by tools/port-boss-model.mjs --parts tools/boss-parts/ironsovereign2.json (the Iron Sovereign's port under its own root name; re-port it whenever the Sovereign's palette changes)",
       "animation": "Runtime parts (src/boss-view.js BOSS_PARTS): two tripods of legs, turret, cannon, light gun and core; no baked clips; the relay shield and the phase-2 core glow are drawn at runtime"
+    },
+    {
+      "name": "wyrm",
+      "file": "wyrm.glb",
+      "triangles": 3124,
+      "kind": "unit",
+      "budget": 3200,
+      "review": "pending owner review (round 4)",
+      "animation": "Runtime articulated parts (foreleg pivots); no baked clips"
+    },
+    {
+      "name": "wyrmling",
+      "file": "wyrmling.glb",
+      "triangles": 2442,
+      "kind": "unit",
+      "budget": 2600,
+      "review": "pending owner review (round 4)",
+      "animation": "Runtime articulated parts (foreleg pivots); no baked clips"
     }
   ]
 }

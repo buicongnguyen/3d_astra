@@ -135,6 +135,12 @@ const scenarios = [
   {name:'wide-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:88, focus:[-3,0], reveal:true, army:60, triangles:380000}, // the whole map in view: 351,390 triangles on the base build
   {name:'groups-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, groups:3},
   {name:'combined-defence-eco', defence:'d-crossroads', mobile:true, zoom:92, focus:[0,0], reveal:true, wave:120, towers:10, zoneTowers:4, armour:2, combined:true, triangles:600000, compose:500, carrierEvery:20, unlockAfter:'d-longcrossing'},
+  // AAA round 4 (R4-P1 Wild frontier): battle-eco's 60 units on Amber Dunes framed on the Weather Spire (the day twin),
+  // then the same scene with the rule on, the Spire held, a Sandstorm raging over the enemy rank and a tamed Dune Wyrm
+  // in the player's rank (wild-storm-eco: the same without the Wyrm). The Wild pieces may add at most 4 draws to the twin.
+  {name:'dunes-battle-eco', map:'dunes', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
+  {name:'wild-storm-eco', map:'dunes', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rules:{wild:'on'}, wild:[-3,-8]},
+  {name:'wild-battle-eco', map:'dunes', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rules:{wild:'on'}, wild:[-3,-8], spawn:[{type:'wyrm', team:0, count:1, near:[-6,10]}]},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
@@ -154,6 +160,7 @@ Object.assign(limits, {'battle-200':260}); // R3-C
 Object.assign(limits, {'air-battle':135}); // R3-W: 125 draws on 2026-11-21 (123 before: +1 rocket bodies, +1 air life)
 Object.assign(limits, {'building-life-eco':110}); // R3-L
 Object.assign(limits, {'wide-battle-eco':152, 'groups-battle-eco':111, 'combined-defence-eco':97}); // R3-K: the same scene on the base build + 4 (148, 107, 93 draws on 2026-11-21)
+Object.assign(limits, {'dunes-battle-eco':95, 'wild-storm-eco':95, 'wild-battle-eco':101}); // R4-P1 (2026-11-21: 91, 94, 100 draws): the Spire and a raging storm at most 4 over the twin; a tamed Wyrm adds its model's five material batches plus its leg batch
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -282,6 +289,8 @@ try {
         v.controlGroups = new Map(Array.from({length:scenario.groups}, (_, k) => [String(k + 1), mine.slice(k * 8, k * 8 + 8)]));
       }
       if (scenario.combined) for (const e of s.entities) if (e.squad && e.team === 0) e.combined = true;
+      // R4-P1 `wild: [x, z]`: the player holds the Weather Spire and a Sandstorm rages at (x, z) (sim state, set directly).
+      if (scenario.wild) { s.skirmishPoints.spire.owner = 0; s.wild.storms.push({team:0, x:scenario.wild[0], z:scenario.wild[1], r:10, at:s.time - 2, until:s.time + 12, started:true}); }
       // Data-driven units: a 2 m grid centred on `near`.
       for (const {type, team = 1, count = 1, near = [0, 0]} of scenario.spawn || []) {
         const cols = Math.ceil(Math.sqrt(count)), rows = Math.ceil(count / cols);

@@ -62,6 +62,8 @@ export const vision = {
         for (let team = 1; team < this.players.length; team++) { seen |= this.visible[team][i]; known |= this.explored[team][i]; }
         for (let team = 1; team < this.players.length; team++) { this.visible[team][i] = seen; this.explored[team][i] = known; }
       }
+    // Round 4: a sandstorm hides its ground from the holder's enemies (sim/content/wild-frontier.js).
+    if (this.wild) this.wildVision();
     this.updateAirSight();
   },
   updateKnownCores(team) {

@@ -19,6 +19,7 @@ import { aiCasts } from "./ai-casts.js";
 import { fieldCommand } from "./field-command.js";
 import { elites } from "./elites.js";
 import { barracksVeterans } from "./barracks-veterans.js";
+import { wildFrontier } from "./wild-frontier.js";
 
 export const CONTENT = [
   suppression,
@@ -33,4 +34,5 @@ export const CONTENT = [
   fieldCommand,
   elites,
   barracksVeterans,
+  wildFrontier,
 ];
