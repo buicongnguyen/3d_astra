@@ -26,7 +26,8 @@ export const LOOKS = {
   // The owner's night bar: a very dark blue sky, black-blue water, cool moonlight, brighter glows.
   night: {
     sky: "#030818", fog: "#02061a", ambient: "#3a66c0", bounce: "#0a1428", sun: "#8fb4ff",
-    ambientI: 0.7, sunI: 0.42, exposure: 1.1, water: "#223b78", waterGlow: 0.5, glow: 1.9,
+    // ambientI 0.85 (was 0.7, R3-D): owner note at the Wave 1 merge, the night ground read too dark.
+    ambientI: 0.85, sunI: 0.42, exposure: 1.1, water: "#223b78", waterGlow: 0.5, glow: 1.9,
     // AAA round 3 (R3-D): the moon and stars over the void, the map edge and void in black-blue, a cool
     // moonlit rim, and the night grade (look-grade.json `looks.night`).
     moon: true, stars: true, edge: { low: "#01030b", high: "#1c2f62" }, rim: "#8fb0ff",
