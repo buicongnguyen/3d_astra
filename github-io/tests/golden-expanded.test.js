@@ -14,7 +14,7 @@ import { run } from "./lib/sim.js";
 import { LONG, RECORD, pin } from "./lib/golden.mjs";
 
 const match = (faction, aiSpeed) => new Simulation({ map: "dunes", enemyCount: 1, aiSpeed, factions: skirmishSides(faction, "mirror", 1, "dunes"), capturePoints: true, aiPlayer: true, rules: { roster: "expanded" } });
-const PINS = { meridian: { 300: "51312236", 600: "ff066aef" }, veil: { 300: "94bdc14d", 500: "5f895c63" } };
+const PINS = { meridian: { 300: "6036d277", 600: "5ec489b1" }, veil: { 300: "af50d623", 500: "4f437973" } };
 const count = (sim, type) => sim.entities.filter((e) => e.type === type).length;
 
 test("Expanded Meridian against Meridian on Dunes: the Field workshop and Gunners, 300 and 600 s", LONG, () => {

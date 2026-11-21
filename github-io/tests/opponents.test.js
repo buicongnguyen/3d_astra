@@ -33,6 +33,9 @@ test('all seven maps support one to three independent enemies with accessible st
 
 test('each AI gathers, trains and launches its own wave without spending player funds', () => {
   const s = new Simulation({map:'highlands',enemyCount:3});
+  // The idle player's core is held up, so the match runs the whole bounded 5 minutes: with south exits
+  // (R3-L) team 1's first wave hits team 2, which then launches its own at 189 s, after the core fell (185 s).
+  const core = s.own(0).find(e => e.type === 'hq'); core.maxHp = core.hp = 1e9;
   const deposits = s.resources.reduce((sum,r) => sum+r.amount, 0);
   const first = [...s.waveAt];
   // A wave waits for a minimum army, so run until every team has launched one (bounded at 5 minutes).

@@ -18,7 +18,7 @@ const find = (id) => [...MISSIONS, ...CHRONICLES.flatMap((c) => c.missions)].fin
 
 // The ObjectiveBot: the first mission, the Iron Vanguard boss (mission 3), the air mission (6b) and
 // the Ashfall Chronicle's first mission (its faction roster).
-const OBJECTIVE = { "m01-first-light": "a740365c", "m03-the-ashen-line": "9d9693b6", "m06b-wings-over-copper": "223ff814", "ca1-cold-berths": "ab4e3941" };
+const OBJECTIVE = { "m01-first-light": "03e8cb2b", "m03-the-ashen-line": "59c479c0", "m06b-wings-over-copper": "56d5c731", "ca1-cold-berths": "c9716b32" };
 test(`the ObjectiveBot for ${SECONDS} s`, async (t) => {
   for (const [id, hash] of Object.entries(OBJECTIVE))
     await t.test(id, () => pin(id, missionMatch(find(id)).run(SECONDS), hash));
