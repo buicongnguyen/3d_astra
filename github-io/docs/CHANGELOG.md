@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased: AAA round 3
+
+### R3-C: Army depth (Barracks level 3, Combined squads, army size)
+
+Plan: docs/aaa/AAA_ROUND3_PLAN.md, R3-C. Results: docs/aaa/results/round3/c.md.
+
+- **Veteran intake (Expanded roster).** Fighting recruits from a Barracks you raised to level 3 arrive at rank 1: +8% damage and health and the gold chevron, as if they had their first kills. Medics arrive as they are. No research (owner decision O4). The computer's Barracks do not get it, so every Expanded pin and bench stays as it was (see the results file).
+- **Combined armour squads (Frontier Defence).** After its Assault or Bulwark branch a squad can buy "Combined" for 320 alloy: it adds the other branch (Assault's guns and Bulwark's armour and mending) and holds within the default 9 m leash (O3). A refit keeps it; the tanks carry `combined` for the gold trim (R3-K). The Defence bot never buys it, so Defence balance and `check:defence` are unchanged.
+- **Army size (skirmish Battle rules).** "Army size: 100 / 150 / 200", default 100 (no rule key, so every match without it is unchanged). 200 is offered on the desktop only; a touch device shows 100 and 150 (O2). Both the player and the AI stop at the chosen cap; the AI builds relays up to it.
+- **Tests.** `tests/army-depth.test.js` (9), `tests/golden-r3c.test.js` (5 pins, one long), browser suite `npm run test:army-depth` (CI entry `r3-c`), render-budget scenario `battle-200` (desktop, 200 units, limit 260 draws).
+
 ## 0.25.0: AAA round 2 (release label for the deploy; owner decision O17)
 
 This is the label proposed for the next release. `package.json` still says 0.19.1, nothing is deployed, and the owner decides the number at deploy. It gathers everything of AAA round 2 (plan: docs/aaa/AAA_ROUND2_PLAN.md, results: docs/aaa/results/round2/). The Defence and campaign sections under "Unreleased" further down (0.22 to 0.24 labels) were built before this round and are not part of it.
