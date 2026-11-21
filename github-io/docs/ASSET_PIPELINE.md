@@ -122,6 +122,15 @@ The loader retains a `hover` marker as template metadata; only a marked unit rec
 - **Placement:** `src/app/cover-layers.js` carries the source's table (x, y, width per frame, back to front, motion amplitudes). `src/app/cover.js` fetches the layers only after the game's models are in, places them exactly over the flat cover and cross-fades.
 - **Budgets:** one flat cover at first paint (≤ 350 KB each); layers ≤ 1.7 MB in total, lazy; checked by `tests/cover-ui.test.js`.
 
+## Campaign map art (AAA round 3, map pass)
+
+`src/art/campaign/` holds the painted campaign map: `campaign-map-wide.webp` (2560×1440; desktop, tablets and phones in portrait) and `campaign-map-strip.webp` (2560×900; the panorama for landscape phones).
+
+- **Provenance:** original artwork made for this game with OpenAI's built-in image generation (Codex/OpenAI ImageGen), commissioned by the owner on 21 November 2026. Terrain painting and a faint survey grid only: no third-party art, logos or lettering; mission names, medals, the route and act titles are live HTML/SVG. Source folder: `3d_astra/codex-campaign-map/` (README with the 17 mission anchors and numbered alignment proofs, which are not shipped). Licence: owned by the project like the rest of its original art.
+- **Changes here:** none; both files are byte-identical to the source (592,264 and 491,376 bytes; checked by `tests/campaign-map-art.test.js`).
+- **Placement:** the README anchors are the table `MAP_ANCHORS` in `src/story/campaign-map.js` (keyed by mission id, with the name-plate side); `src/campaign-map-ui.js` puts the painting, the route SVG and the relays in one layer that covers the board, so they scale together.
+- **Loading:** one `<picture>` inside the campaign map, so nothing is fetched until Campaign opens, and only the painting the layout shows.
+
 ## Round 3 models and portraits (R3-J)
 
 - **Portrait atlas:** 4 columns by 10 rows (768 by 1920 pixels), 37 cells. This replaces the 4 × 8 figure under "Interface art". After the 29 cells listed there come `carrier`, `ironvanguard`, `gunner`, `stalker`, `ironsovereign`, `workshop`, `rampart` and the reserved `ironsovereign2`. The reserved cell reuses the Sovereign model (`SAME_MODEL` in `render_ui_art.py`).

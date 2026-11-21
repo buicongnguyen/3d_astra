@@ -91,18 +91,25 @@ export function setupBriefing(S, A) {
     if (mapShown !== map) { mapShown = map; $("campaign-map").innerHTML = map; }
   }
   let listShown = "", mapShown = "";
-  // Phones (R3-G seam): the list shows its first rows, so scroll the picked mission into view inside the setup
-  // column (only that column; the page itself never moves). Nothing on tablets and desktop.
-  const phoneMenu = matchMedia("(max-width: 720px), (orientation: landscape) and (max-height: 520px)");
+  // R3-G seam, map pass: the list shows its first rows, so scroll the picked mission into view inside the setup
+  // column (only that column; the page itself, or a box that also holds the map, never moves).
   function revealPick() {
-    const row = phoneMenu.matches && document.querySelector('#campaign-setup [aria-current="true"]');
+    const row = document.querySelector('#campaign-setup [aria-current="true"]');
     if (!row || !row.offsetParent) return;
     let box = row.parentElement;
     while (box && !(box.scrollHeight > box.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(box).overflowY))) box = box.parentElement;
-    if (!box || box === document.body || box === document.documentElement) return;
-    const r = row.getBoundingClientRect(), b = box.getBoundingClientRect();
+    // Never a box that holds the campaign map too (portrait phones scroll the whole start screen): the map stays in view.
+    if (!box || box === document.body || box === document.documentElement || box.contains(document.getElementById("campaign-map"))) return;
+    const r = row.getBoundingClientRect(), b = box.getBoundingClientRect(), start = document.getElementById("start");
+    // Start is pinned at the column's foot: the row has to clear it (and its fade), not just the column's edge.
+    const bottom = box.contains(start) ? Math.min(b.bottom, start.getBoundingClientRect().top - 24) : b.bottom;
     if (r.top < b.top) box.scrollTop -= b.top - r.top + 8;
-    else if (r.bottom > b.bottom) box.scrollTop += r.bottom - b.bottom + 8;
+    // Scrolling down: start the column at the picked mission's act heading when that keeps the row in view,
+    // so the column never stops halfway through the mode cards.
+    else if (r.bottom > bottom) {
+      const act = row.closest(".act"), want = r.bottom - bottom + 8;
+      box.scrollTop += Math.max(want, act ? act.getBoundingClientRect().top - b.top - 4 : 0);
+    }
   }
 
   function renderBriefing() {
