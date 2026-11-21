@@ -115,6 +115,10 @@ test("motion off or reduced motion holds every animation still; night looks stre
   view.motionLevel = 2; view.reducedMotion.matches = true;
   plugin.update(sim, 0.1);
   assert.equal(plugin.uniforms.uTime.value, t);
+  view.reducedMotion.matches = false; view.settings = { combatMotion: false };
+  plugin.update(sim, 0.1);
+  assert.equal(plugin.uniforms.uTime.value, t, "combat motion off (Settings) holds it too");
+  view.settings = {};
   assert.equal(nightOf(null), 0);
   assert.equal(nightOf({ name: "night", k: 1 }), 1);
   assert.ok(nightOf({ name: "dusk", k: 1 }) < nightOf({ name: "storm", k: 1 }));

@@ -383,7 +383,9 @@ export class BuildingDecalsView {
     if (!view?.scene || !sim?.entities) return;
     if (!sim.entities.some((e) => e.kind === "building")) { if (this.mesh) this.mesh.visible = false; return; }
     if (!this.mesh) this.build();
-    const lively = (view.motionLevel ?? 2) > 0 && !view.reducedMotion?.matches;
+    // Still with reduced motion, combat motion off (Settings) or the governor's motion level 0; Eco keeps the
+    // lights moving like the map's own lamps (view.js lifeClock).
+    const lively = (view.motionLevel ?? 2) > 0 && !view.reducedMotion?.matches && view.settings?.combatMotion !== false;
     if (lively && dt > 0) this.clock = (this.clock + Math.min(0.05, dt)) % 3600;
     this.uniforms.uTime.value = this.clock;
     this.uniforms.uStill.value = lively ? 0 : 1;
