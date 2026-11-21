@@ -23,6 +23,17 @@
   - Triangle counts stay within budget. The Drone and the bosses are unchanged (R3-J).
 - Every changed model is flagged "pending owner review (round 3)" in `public/models/manifest.json`. See `docs/aaa/results/round3/f.md`.
 
+### R3-W: Wings and rockets (owner request)
+
+- **A rocket you can see.** The Anti-tank rocket is now a finned body with an orange-white tail flame. It flies a slight arc in 0.45 s (was a 0.24 s streak), rolling as it goes, and leaves a short smoke ribbon. The hit sound waits for it.
+  - On a tank or other machine it lands with a white-hot flash, sparks thrown back off the plate, metal chips and a ring. On infantry or a building it makes a smaller burst.
+  - A shot that kills keeps the old quick flight, so it lands before the wreck falls. The Hawk's pod rockets get a small body too.
+  - All rockets in flight are one draw, and none while no rocket flies. Damage timing is unchanged (view only).
+- **More flyers with a stronger core.** Your air limit is 4 flyers at a level 1 Command core, 6 at level 2 and 8 at level 3 (`balance.json` `air.cap_by_level`). Computer opponents keep 4 unless they play the Field plan in a skirmish. The flyer tiles show the limit, and the "Air limit reached" message names the current number.
+- **Flyers come alive.** They bank into turns, lift the nose on a climb, and the balloon sways. Rotors and the glider's propeller show a blur disc. Red and green wing lights blink, a white tail strobe flashes, and engines and the burner glow, much brighter at night. Fast flyers draw thin wing-tip contrails. The ground shadow shrinks as a flyer rides higher.
+  - All of this is one more draw. With combat motion off or reduced motion, the lights stay steady and nothing trails.
+- **Flyer models.** The Kite has warm edging on its sail and a longer tail. The Hawk has a twin tail and a dorsal intake. The Balloon has a crown vent and team streamers. The Glider has team winglets and a sun disc. No new materials, all within budget, flagged "pending owner review (round 3)". See `docs/aaa/results/round3/w.md`.
+
 ## 0.25.0: AAA round 2 (release label for the deploy; owner decision O17)
 
 This is the label proposed for the next release. `package.json` still says 0.19.1, nothing is deployed, and the owner decides the number at deploy. It gathers everything of AAA round 2 (plan: docs/aaa/AAA_ROUND2_PLAN.md, results: docs/aaa/results/round2/). The Defence and campaign sections under "Unreleased" further down (0.22 to 0.24 labels) were built before this round and are not part of it.
