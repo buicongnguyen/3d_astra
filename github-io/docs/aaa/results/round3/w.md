@@ -58,7 +58,7 @@ Measured with `tests/render-budget.mjs` on an RTX 4080 SUPER (D3D11), phone Eco 
 - **Changed tests:**
   - `tests/air.test.js`: the cap test now covers 4 / 6 / 8. Its old body set a level 3 core and expected 4.
   - `tests/weapon-looks.test.js`: the Effects root has 5 children (the rocket-body mesh) instead of 4.
-- `baselines:diff -- --full`: see the line at the end.
+- **`baselines:diff -- --full`:** all 8 baselines identical. These are missions story, standard, veteran, mercy and firm, plus chronicles, defence and bench-classic. Bench-classic was re-run alone because the first full run hit my 900 s timeout.
 
 ## Render budget: a known issue that is not from this package
 
