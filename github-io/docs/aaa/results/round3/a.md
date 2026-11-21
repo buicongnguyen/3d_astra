@@ -99,7 +99,7 @@ Setup: 3 maps × 4 attack-at, cap 2400 s. Figures are the bot's win rate.
 | `golden-round2` "arena 300" (GOLDEN_FULL) | 4cce2935 | e4913c66 | same (Expanded + Field, 4 factions) |
 | `tests/field-command.test.js` | — | not edited | still green. The Fast tech delay was softened to ×1.3 so that "Tank or Walker by 600 s" holds (Meridian Classic 449 s, Wardens Expanse 470 s). |
 
-Unchanged: every other golden pin, `d071360b`, and the mission checksums. `npm test`: 961 → 970 tests (+9), 944 pass, 26 skipped, 0 fail. `baselines:diff --full`: see the last section.
+Unchanged: every other golden pin, `d071360b`, and the mission checksums. `npm test`: 961 → 970 tests (+9), 944 pass, 26 skipped, 0 fail. `baselines:diff --full`: all 8 identical.
 
 ## Tests added (+9 in npm test)
 `tests/ai-census.test.js`:
@@ -123,4 +123,4 @@ Long check: `tools/ai-census-check.mjs`, through the wrapper `tests/ai-census-ch
 5. The bench target is met at Normal, Fast and Relentless. Relaxed stays at 100% by design (Classic pace there).
 
 ## baselines:diff --full
-See the final line below (filled at hand-off).
+All 8 baselines identical: missions story, standard, veteran, standard-mercy and standard-firm, chronicles, defence, bench-classic.
