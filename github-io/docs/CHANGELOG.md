@@ -94,6 +94,7 @@ Everything below applies only under the skirmish rule `aiPlan: "field"` (`fieldP
 - Loading screen: a planet in a progress ring over the painted cover, with the byte-true percent and the part being fetched; for later roster loads Start becomes a progress bar.
 - Nothing is tidied away (owner rule): every control of the title menu, skirmish setup and Settings on r3-base is still shown and one click away (checked at five viewports).
 - Soft hover and confirm blips on the menu cards (the in-code UI tone; mute and volume apply).
+- Integration polish: landscape phones show every battle setting and Start on the first screen (one four-column grid); settings tabs share the header row in landscape; portrait and tablet heroes are shorter so more fields clear Start, with the squad centred under the logo; denser glass under the left column; settings rows, Defence sub-tabs and battle rules in the holo style; Defence notes and chronicle lock lines no longer cut or wrap over three lines; the hidden battlefield redraws at 2 Hz behind the start screen on desktop too.
 
 ## 0.25.0: AAA round 2 (release label for the deploy; owner decision O17)
 

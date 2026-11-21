@@ -83,3 +83,23 @@
 .compact-ui .cmap .chron-card .chron-pips { grid-column: auto; gap: 3px; }
 .compact-ui .chron-pips i { width: 7px; height: 7px; border-width: 1.5px; }
 .compact-ui .chron-glyph { width: 14px; height: 14px; right: -5px; bottom: -4px; }
+
+/* R3-M seam (desktop and wide windows): the cards were wrapping "Clear Three-Way Dunes to unlock" over three or
+   four lines in a column beside the portrait. The words join the card's grid, so the lock line runs the full
+   card width under the portrait, and the endings stack so the four cards get the footer's width. */
+:root:not(.compact-ui) .cmap-foot { flex-wrap: nowrap; align-items: stretch; }
+:root:not(.compact-ui) .cmap-endings { flex-direction: column; flex-wrap: nowrap; align-items: stretch; justify-content: center; flex: 0 0 auto; }
+:root:not(.compact-ui) .cmap-endings > .cmap-label { margin-bottom: 2px; }
+:root:not(.compact-ui) .cmap .chron-card {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto auto auto;
+  align-content: center;
+  gap: 2px 8px;
+  padding: 6px 10px;
+}
+:root:not(.compact-ui) .cmap .chron-card .chron-words { display: contents; }
+:root:not(.compact-ui) .cmap .chron-card .chron-face { grid-column: 1; grid-row: 1 / span 2; }
+:root:not(.compact-ui) .cmap .chron-card .chron-words strong { grid-column: 2 / -1; grid-row: 1; line-height: 1.15; }
+:root:not(.compact-ui) .cmap .chron-card .chron-words > small[translate] { grid-column: 2; grid-row: 2; }
+:root:not(.compact-ui) .cmap .chron-card .chron-pips { grid-column: 3; grid-row: 2; justify-self: end; }
+:root:not(.compact-ui) .cmap .chron-card .chron-lock { grid-column: 1 / -1; grid-row: 3; margin-top: 2px; line-height: 1.2; }

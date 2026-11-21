@@ -532,3 +532,244 @@
 /* Warm accents through the menu: gold numbers on mission rows, a warm glow under hovered cards. */
 #briefing .stage-list b { border-color: rgba(255, 199, 94, 0.55); color: var(--gold-1); box-shadow: 0 0 10px rgba(255, 170, 60, 0.2); }
 #briefing .mode-switch button:hover:not([aria-pressed="true"]):not(:disabled) { box-shadow: inset 0 -14px 24px -14px rgba(255, 170, 60, 0.45), 0 0 18px rgba(57, 198, 232, 0.3), 0 8px 20px rgba(0, 0, 0, 0.35); }
+
+/* ======================= Integration polish (AAA round 3, R3-M on feat/aaa-round3) =======================
+   Owner rule kept: nothing is grouped behind a sub-menu, drawer, "More" or chips; every control stays one tap.
+   Only layout, size, spacing and hierarchy change here. */
+
+/* Readability: the glass under the briefing and the setup is denser, so the art no longer shows through the
+   text (desktop, HD and tablet); the blur keeps the colour of the cover behind it. */
+#briefing .briefing-setup,
+:root:not(.compact-ui) #briefing:not(.campaign-view) .briefing-copy {
+  background: var(--holo-brackets), linear-gradient(180deg, rgba(10, 28, 58, 0.9), rgba(3, 10, 24, 0.95));
+}
+:root:not(.compact-ui) #briefing .briefing-setup { --start-backing: #04101f; }
+#briefing .briefing-setup .setup-head { text-shadow: 0 0 10px rgba(57, 198, 232, 0.45); }
+
+/* Defence sub-tabs in the holo style (their notes wrap to two lines: defence-menu.css). */
+#briefing .defence-variants button {
+  border-color: rgba(127, 232, 255, 0.22);
+  border-radius: 6px;
+  background: linear-gradient(165deg, rgba(30, 86, 124, 0.42), rgba(6, 16, 36, 0.8));
+}
+#briefing .defence-variants button:hover:not(:disabled) { border-color: var(--holo-line-strong); }
+#briefing .defence-variants button small { color: #a9c9d6; }
+#briefing .defence-variants button[aria-pressed="true"] {
+  border-color: rgba(255, 199, 94, 0.75);
+  background: linear-gradient(165deg, rgba(255, 190, 90, 0.32), rgba(70, 36, 10, 0.6));
+  box-shadow: 0 0 16px rgba(255, 170, 60, 0.25);
+}
+#briefing .defence-variants button[aria-pressed="true"] small { color: var(--gold-1); }
+
+/* ---------- Landscape phones: Start and every battle setting on the first screen ----------
+   The setup takes the larger left part as one grid: the four modes in a row, then the fields in four columns
+   (the skirmish form joins the grid), then AI teams, Full screen and Start on one row. The art and a smaller
+   logo keep the right part. Longer lists (campaign, Defence, training) scroll inside the column with Start
+   pinned, as before. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .compact-ui #briefing:not(.campaign-view) { grid-template-columns: clamp(480px, 64vw, 620px) minmax(0, 1fr); }
+  .compact-ui #briefing .briefing-setup {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-content: start;
+    gap: 6px 10px;
+    padding-top: 8px;
+    padding-bottom: 10px;
+    background: var(--holo-brackets), linear-gradient(180deg, rgba(8, 24, 52, 0.94), rgba(3, 10, 24, 0.97));
+  }
+  .compact-ui #briefing .briefing-setup > * { grid-column: 1 / -1; min-width: 0; }
+  /* The flavour strip gives its line to the form here (it is aria-hidden decoration, not a control). */
+  .compact-ui #briefing:not(.campaign-view) .setup-head { display: none; }
+  /* The modes: one row of four, icon and name. */
+  .compact-ui #briefing .mode-switch { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .compact-ui #briefing .mode-switch button,
+  .compact-ui #briefing .mode-switch [data-mode="training"] {
+    grid-column: auto;
+    grid-template-columns: auto auto;
+    justify-content: center;
+    justify-items: center;
+    align-items: center;
+    column-gap: 6px;
+    min-height: 46px; /* 44 px even mid-press (the press scales the card to 98.5%) */
+    padding: 4px 6px;
+    text-align: center;
+  }
+  .compact-ui #briefing .mode-switch button > .icon,
+  .compact-ui #briefing .mode-switch [data-mode="training"] > .icon { display: block; grid-row: 1; width: 18px; height: 18px; margin: 0; }
+  .compact-ui #briefing .mode-switch button > span,
+  .compact-ui #briefing .mode-switch [data-mode="training"] > span { grid-row: 1; font-size: 14px; }
+  .compact-ui #briefing .mode-switch button > small { display: none; }
+  /* The skirmish form joins the column's grid: Battlefield wide, then Rivals and AI speed; the two factions;
+     AI teams beside Full screen and Start. */
+  .compact-ui #briefing #skirmish-setup:not([hidden]) { display: contents; }
+  .compact-ui #briefing #skirmish-setup > .field { grid-column: span 1; gap: 3px; }
+  .compact-ui #briefing #skirmish-setup select { padding-left: 10px; }
+  .compact-ui #briefing #skirmish-setup > .field-wide,
+  .compact-ui #briefing #skirmish-setup > .field:has(#player-faction),
+  .compact-ui #briefing #skirmish-setup > .field:has(#enemy-faction),
+  .compact-ui #briefing #skirmish-setup > .field:has(#alliance) { grid-column: span 2; }
+  .compact-ui #briefing .field > span { font-size: 11px; letter-spacing: 0.12em; }
+  /* AI teams and Full screen share a row; the battle rules follow, and Start stays pinned at the column's foot
+     (grid order: the rules and Start move after Full screen). */
+  .compact-ui #briefing #fullscreen { grid-column: 1 / -1; align-self: end; min-height: 44px; }
+  .compact-ui #briefing .briefing-setup:has(#skirmish-setup:not([hidden])) #fullscreen { grid-column: span 2; }
+  .compact-ui #briefing .rule-rows { order: 1; grid-column: 1 / -1; gap: 8px; padding: 8px 10px 10px; }
+  .compact-ui #briefing .rule-row { grid-template-columns: minmax(96px, 0.8fr) minmax(0, 2fr); align-items: center; column-gap: 10px; row-gap: 2px; }
+  .compact-ui #briefing .rule-row .rule-help { grid-column: 1 / -1; font-size: 11px; }
+  .compact-ui #briefing .rule-name { font-size: 14px; flex-wrap: wrap; gap: 4px 6px; }
+  .compact-ui #briefing #start {
+    --start-backing: #050f24;
+    order: 2;
+    grid-column: 1 / -1;
+    min-height: 48px;
+    margin-top: 4px;
+    font-size: 17px;
+  }
+  .compact-ui #briefing #start:not(:disabled) { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -3px 0 rgba(120, 58, 0, 0.3), 0 0 22px rgba(255, 170, 60, 0.4), 0 0 0 10px var(--start-backing); }
+  .compact-ui #briefing #start:disabled { box-shadow: 0 0 0 10px var(--start-backing); }
+  /* Campaign: Full screen beside the difficulty. */
+  .compact-ui #briefing .briefing-setup:has(#campaign-difficulty:not([hidden])) #fullscreen { grid-column: span 1; align-self: start; }
+  .compact-ui #briefing #campaign-difficulty:not([hidden]) { grid-column: span 3; }
+  .compact-ui #briefing #campaign-difficulty #difficulty-description { margin: 4px 0 0; font-size: 11px; }
+  /* A smaller logo over the art. */
+  .compact-ui #briefing .title-brand { top: 8px; gap: 2px; }
+  .compact-ui #briefing .title-brand .wordmark { width: clamp(170px, 26vw, 250px); }
+  .compact-ui #briefing .title-emblem { width: 34px; }
+  /* Campaign keeps the wide map: the column stays narrow and the modes drop their icons. */
+  .compact-ui #briefing.campaign-view .mode-switch { gap: 6px; }
+  .compact-ui #briefing.campaign-view .mode-switch button > .icon { display: none; }
+  .compact-ui #briefing.campaign-view .mode-switch button > span { font-size: 13px; }
+}
+
+/* ---------- Phones and tablets in portrait: a tighter heading, so more of the art shows ---------- */
+@media (max-width: 900px) and (orientation: portrait) {
+  .compact-ui #briefing:not(.campaign-view) .briefing-copy { padding-top: 8px; padding-bottom: 12px; }
+  .compact-ui #briefing:not(.campaign-view) .briefing-copy h2 { font-size: clamp(20px, 5.4vw, 30px); text-wrap: balance; }
+}
+
+/* ---------- Settings content: the holo look through the tab body ---------- */
+.settings-panel nav { background: rgba(3, 10, 26, 0.72); }
+.settings-panel nav button { color: #a9c9d6; }
+.settings-panel nav button:hover:not([aria-selected="true"]) { color: #fff; background: rgba(57, 198, 232, 0.1); }
+.settings-panel nav button[aria-selected="true"] { background: linear-gradient(180deg, rgba(255, 190, 90, 0.34), rgba(120, 64, 16, 0.4)); color: #fff; }
+.settings-close { border-color: var(--holo-line); background: rgba(6, 20, 44, 0.8); }
+.settings-close:hover { border-color: var(--holo-line-strong); background: rgba(14, 40, 74, 0.9); }
+.settings-body .setting-row {
+  min-height: 56px;
+  margin: 0 0 6px;
+  padding: 6px 8px 6px 14px;
+  border: 1px solid rgba(127, 232, 255, 0.14);
+  border-left: 2px solid rgba(127, 232, 255, 0.55);
+  border-radius: 6px;
+  background: linear-gradient(90deg, rgba(14, 40, 74, 0.62), rgba(5, 14, 32, 0.5));
+}
+.settings-body .setting-row:hover { border-color: rgba(127, 232, 255, 0.32); border-left-color: var(--holo-1); }
+.settings-body .setting-row select { border-color: rgba(127, 232, 255, 0.28); background-color: rgba(3, 12, 30, 0.8); }
+.settings-body .setting-row input[type="checkbox"] { background: #030b1c; box-shadow: inset 0 0 0 1px rgba(127, 232, 255, 0.4); }
+.settings-body .setting-row input[type="checkbox"]::after { background: #8fb3c4; }
+.settings-body .setting-row input[type="checkbox"]:checked { background-image: linear-gradient(180deg, var(--gold-2), var(--gold-3)); box-shadow: 0 0 12px rgba(255, 170, 60, 0.45); }
+.settings-body .setting-row input[type="checkbox"]:checked::after { background: #fff; }
+.settings-body .settings-note { margin: 2px 2px 12px; color: #9db8c8; }
+.settings-panel legend { color: var(--gold-2); }
+.settings-body .swatches button { border-color: rgba(127, 232, 255, 0.24); background: rgba(6, 18, 40, 0.7); }
+.settings-body .sound-tests button { border-color: rgba(127, 232, 255, 0.26); background: linear-gradient(165deg, rgba(30, 86, 124, 0.42), rgba(6, 16, 36, 0.76)); }
+.settings-panel > footer { border-top: 1px solid rgba(127, 232, 255, 0.18); background: linear-gradient(180deg, rgba(4, 14, 34, 0.6), rgba(2, 8, 22, 0.85)); }
+.settings-panel > footer button:not(.primary) { border: 1px solid rgba(127, 232, 255, 0.26); background: linear-gradient(165deg, rgba(30, 86, 124, 0.42), rgba(6, 16, 36, 0.76)); color: var(--text-1); }
+.settings-version { color: #8fa9bb; }
+
+/* Battle rules (R3-C's rows) in the holo panel style. */
+#briefing .rule-rows { border-color: rgba(127, 232, 255, 0.2); border-radius: 6px; background: linear-gradient(180deg, rgba(10, 30, 60, 0.66), rgba(3, 10, 24, 0.8)); }
+#briefing .rule-title { color: var(--gold-2); letter-spacing: 0.14em; }
+#briefing .rule-buttons button { border-color: rgba(127, 232, 255, 0.24); border-radius: 6px; background: linear-gradient(165deg, rgba(30, 86, 124, 0.42), rgba(6, 16, 36, 0.78)); color: #cfe6ef; }
+#briefing .rule-buttons button:hover:not([aria-pressed="true"]) { border-color: var(--holo-line-strong); }
+#briefing .rule-buttons button[aria-pressed="true"] { border-color: rgba(255, 199, 94, 0.75); background: linear-gradient(165deg, rgba(255, 190, 90, 0.34), rgba(70, 36, 10, 0.6)); box-shadow: 0 0 14px rgba(255, 170, 60, 0.25); color: #fff; }
+#briefing .rule-help { color: #9db8c8; }
+
+/* Settings on landscape phones: heading, tabs, language and close share one top row (the header's parts join
+   the panel's grid), so the tab body gets the height back. Every control stays where one tap reaches it. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .settings-panel { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-rows: auto minmax(0, 1fr) auto auto; column-gap: 12px; }
+  .settings-panel > header { display: contents; }
+  .settings-panel > header::after { content: none; }
+  .settings-panel .settings-heading { grid-area: auto; grid-column: 1; grid-row: 1; align-self: center; padding: 8px 0 8px max(16px, env(safe-area-inset-left, 0px)); }
+  .settings-panel .settings-heading h2 { margin-top: 2px; font-size: 20px; }
+  .settings-panel > nav { grid-column: 2; grid-row: 1; align-self: center; margin: 8px 0; }
+  .settings-panel > header .language-choice { grid-area: auto; grid-column: 3; grid-row: 1; align-self: center; }
+  .settings-panel > header .language-choice select { width: auto; min-width: 132px; }
+  .settings-panel .settings-close { grid-area: auto; grid-column: 4; grid-row: 1; align-self: center; margin-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .settings-panel .settings-body { grid-column: 1 / -1; grid-row: 2; padding-top: 10px; border-top: 1px solid rgba(127, 232, 255, 0.18); box-shadow: inset 0 1px 0 rgba(255, 199, 94, 0.12); }
+  .settings-panel #palette-warning { grid-column: 1 / 3; grid-row: 3; }
+  .settings-panel .settings-version { grid-column: 3 / -1; grid-row: 3; }
+  .settings-panel > footer { grid-column: 1 / -1; grid-row: 4; padding-top: 8px; padding-bottom: 10px; }
+}
+
+/* ---------- Review round 2 ---------- */
+/* Desktop and HD: the Defence ways to play in two rows of two, so each note stays on one line. */
+:root:not(.compact-ui) #briefing .defence-variants { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+:root:not(.compact-ui) #briefing .defence-variants button { grid-template-columns: auto minmax(0, 1fr); justify-items: start; align-items: baseline; column-gap: 8px; min-height: 44px; padding: 6px 12px; text-align: left; }
+/* AI teams takes the full row instead of leaving half a row empty. */
+#briefing #skirmish-setup > .field:has(#alliance) { grid-column: 1 / -1; }
+/* A soft fade above the pinned Start, so a list row scrolling under it reads as "more below", not as cut. */
+:root:not(.compact-ui) #briefing #start:not(:disabled) { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), inset 0 -3px 0 rgba(120, 58, 0, 0.3), 0 0 26px rgba(255, 170, 60, 0.45), 0 0 0 24px var(--start-backing), 0 -30px 18px 6px var(--start-backing); }
+/* Tablets in portrait: a shorter hero, so the faction row sits above Start; chronicle cards keep their words. */
+@media (min-width: 721px) and (orientation: portrait) {
+  .compact-ui #briefing:not(.campaign-view) .briefing-hero { height: clamp(300px, 38vh, 440px); }
+}
+@media (min-width: 700px) and (orientation: portrait) {
+  .compact-ui .cmap .chron-card { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto auto auto; justify-items: stretch; gap: 2px 8px; padding: 6px 10px; text-align: left; }
+  .compact-ui .cmap .chron-card .chron-words { display: contents; }
+  .compact-ui .cmap .chron-card .chron-face { grid-column: 1; grid-row: 1 / span 2; }
+  .compact-ui .cmap .chron-card .chron-words strong { grid-column: 2 / -1; grid-row: 1; line-height: 1.15; }
+  .compact-ui .cmap .chron-card .chron-words > small[translate] { display: block; grid-column: 2; grid-row: 2; }
+  .compact-ui .cmap .chron-card .chron-pips { grid-column: 3; grid-row: 2; justify-self: end; }
+  .compact-ui .cmap .chron-card .chron-lock { display: inline-flex; grid-column: 1 / -1; grid-row: 3; }
+  .compact-ui .cmap-ending.unseen { width: auto; padding: 0 12px; }
+  .compact-ui .cmap-ending.unseen > span { display: inline; }
+}
+/* Phones in portrait: a shorter hero and slimmer mode cards, so Rivals and AI speed show above Start. */
+@media (max-width: 720px) and (orientation: portrait) {
+  .compact-ui #briefing:not(.campaign-view) .briefing-hero { height: clamp(240px, 34vh, 400px); }
+  /* The flavour strip gives its line to the form (aria-hidden decoration, not a control). */
+  .compact-ui #briefing:not(.campaign-view) .setup-head { display: none; }
+  /* Defence ways to play: two rows of two, so no note wraps to three lines. */
+  .compact-ui #briefing .defence-variants { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .compact-ui #briefing .mode-switch button { min-height: 64px; padding: 6px 4px; }
+  .compact-ui #briefing .mode-switch button > .icon { width: 20px; height: 20px; margin-bottom: 0; }
+}
+/* Landscape phones, campaign: the mode row keeps 44 px taps. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .compact-ui #briefing.campaign-view .mode-switch button { min-height: 46px; }
+}
+/* Settings: room under the last row, clear of the footer. */
+.settings-panel .settings-body { padding-bottom: 16px; }
+/* Tablets: the chronicle cards take their own full row under the endings, and the campaign hero is taller,
+   so the map keeps its height. */
+@media (min-width: 700px) and (orientation: portrait) {
+  .compact-ui .cmap-foot { flex-wrap: wrap; }
+  .compact-ui .cmap-chronicles.chron-cards { flex: 1 1 100%; margin-left: 0; }
+  .compact-ui .cmap .chron-card .chron-words strong { overflow-wrap: normal; }
+}
+@media (min-width: 700px) and (orientation: portrait) {
+  .compact-ui #briefing.campaign-view .briefing-hero { height: clamp(440px, 56vh, 640px); }
+}
+/* A locked select (AI teams) reads as locked, not broken. */
+#briefing .briefing-setup select:disabled { opacity: 1; color: #a9bfcc; border-color: rgba(127, 232, 255, 0.16); }
+/* Phones in portrait: a slimmer logo and no eyebrow over the art, so the squad stands clear in the shorter hero. */
+@media (max-width: 720px) and (orientation: portrait) {
+  .compact-ui #briefing .title-brand { top: 10px; gap: 2px; }
+  .compact-ui #briefing .title-emblem { width: 34px; }
+  .compact-ui #briefing .title-brand .wordmark { width: min(230px, 62vw); }
+  .compact-ui #briefing:not(.campaign-view) .briefing-copy .eyebrow { display: none; }
+}
+/* Round 4: tighter spacing so more of the form clears the pinned Start. */
+@media (min-width: 721px) and (orientation: portrait) {
+  .compact-ui #briefing .mode-switch button:not([data-mode="training"]) { min-height: 72px; }
+  .compact-ui #briefing .briefing-tools { gap: 8px 12px; }
+  .compact-ui #briefing .briefing-setup { gap: 10px; }
+}
+@media (max-width: 720px) and (orientation: portrait) {
+  .compact-ui #briefing .briefing-setup select { padding-left: 10px; font-size: 14px; }
+}
+:root:not(.compact-ui) #briefing:not(.campaign-view) .briefing-copy { padding: 12px 18px 12px; }
+:root:not(.compact-ui) #briefing .mode-switch button:not([data-mode="training"]) { min-height: 80px; }
+:root:not(.compact-ui) #briefing .briefing-setup { gap: 12px; }

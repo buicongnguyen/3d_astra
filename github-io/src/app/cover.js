@@ -146,10 +146,22 @@ export function setupCover(A = {}, S = {}) {
       img.style.width = `${w * s}px`; img.style.height = `${h * s}px`;
     };
     setBox(nimg, (fw - nw) / 2, (fh - nh) / 2, nw, nh);
+    const lift = squadLift(), squadBox = layerBox(LAYERS.find((l) => l[6] === "squad"), shape);
     for (const l of LAYERS) {
       const [x, y, w, h] = layerBox(l, shape);
-      setBox(images.get(l[0]), x, y - (l[6] === "squad" || l[6] === "flash" ? squadLift() : 0), w, h);
+      if ((l[6] === "squad" || l[6] === "flash") && lift > 0) setBox(images.get(l[0]), ...liftedBox([x, y, w, h], squadBox, lift, fw));
+      else setBox(images.get(l[0]), x, y, w, h);
     }
+  }
+  // The lifted squad (portrait) also steps toward the centre and grows a little, so the whole assembly stands in
+  // the sky above the sheet instead of leaning off the right edge. The flash keeps its place on the Ranger.
+  function liftedBox([x, y, w, h], [sx, sy, sw, sh], lift, fw) {
+    const k = 1.1, cx = sx + sw / 2, by = sy + sh;
+    const dx = fw * 0.54 - cx;
+    // Never over the logo: a short hero (tablets) lifts the squad only until its head clears the title.
+    const brand = briefing.querySelector(".title-brand")?.getBoundingClientRect();
+    if (brand?.height) lift = Math.max(0, Math.min(lift, by - sh * k - (brand.bottom - frame.box.top - frame.oy) / frame.s));
+    return [cx + dx + (x - cx) * k, by - lift + (y - by) * k, w * k, h * k];
   }
   // Phones and tablets in portrait: the setup sheet covers the lower half, where the flat cover keeps its
   // squad, so the animated assembly lifts the squad (and the Ranger's flash) to stand at the foot of the

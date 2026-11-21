@@ -184,11 +184,11 @@ export function setupFrame(S, A) {
     // 20 Hz simulation steps so movement stays smooth on high-refresh displays. The blend
     // is kept while paused so pausing and resuming never snap units back and forth.
     if (running && !S.sim.result) renderAlpha = S.accumulator / 0.05;
-    // The phone start screen is opaque: redraw the hidden battlefield twice a second, enough to keep
-    // models and shaders warm for Start without spending battery on frames nobody sees.
+    // The start screen is opaque on every frame shape (the painted cover, R3-M): redraw the hidden battlefield
+    // twice a second, enough to keep models and shaders warm for Start without spending GPU on frames nobody sees.
     const root = document.documentElement;
     coveredRedraw -= elapsed;
-    if (Z.started || !root.classList.contains("compact-ui") || !root.classList.contains("in-briefing") || coveredRedraw <= 0) {
+    if (Z.started || !root.classList.contains("in-briefing") || coveredRedraw <= 0) {
       if (S.view.modelsReady) S.view.update(S.sim, Z.started && !Z.paused ? dt * beatScale : 0, S.selected, S.hover, renderAlpha);
       coveredRedraw = 0.5;
     }

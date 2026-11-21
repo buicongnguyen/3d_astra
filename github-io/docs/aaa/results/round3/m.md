@@ -117,3 +117,49 @@ Each round used a new subagent that saw only the before and after screenshots. T
   - `docs/CHANGELOG.md`: R3-M subsection.
   - `docs/ASSET_PIPELINE.md`: new section.
 - The old `src/art/keyart.webp` and `keyart-960.webp` are no longer imported. They are left in place because `render_ui_art.py` (R3-F's area) still writes them.
+
+## Integration on feat/aaa-round3 (after r3-wave-1)
+
+Merged `r3/m-cover-ui` (dd82653) into `feat/aaa-round3` at fd2f215. Conflicts were all unions: `docs/CHANGELOG.md`, `docs/ASSET_PIPELINE.md`, `src/locales/vi.json`, `package.json` scripts and the `pages.yml` matrix (the `r3-m` entry joins r3-d/e/b/c/a). R3-M touched none of `app/selection.js`, `mobile.css` or `landscape-hud.css`, so R3-B's phone group strip stays removed (owner decision 83848d4) and none of its strings came back.
+
+### Seam requests, applied
+
+1. **Covered redraw on desktop too** (`src/app/frame.js`): the start screen is opaque on every frame shape, so the hidden battlefield is redrawn twice a second whenever `in-briefing` is set (the `compact-ui` condition is gone). Models and shaders stay warm for Start; nothing visible changes.
+2. **Defence sub-tabs** (`defence-menu.css`): notes wrap to two lines at most instead of cutting ("Ten waves, s…"); desktop and portrait phones show the four ways to play as two rows of two, so every note fits one line.
+3. **Chronicle cards** (`chronicles.css`): on desktop the card's words join its grid, so the lock line runs the full card width (two lines, was three or four); the endings stack so the four cards get the footer's width. Tablets in portrait get the same labelled cards on their own row, with a taller campaign hero so the map keeps its height.
+4. **`#title-actions`** is in place for R3-Q (hidden, styled; unchanged).
+
+### Polish (integration rounds; `src/cover.css`, `src/app/cover.js`)
+
+- **Landscape phones.** The setup column is wider (64vw) and is one four-column grid. The four modes sit in one row. Below them are Battlefield, Rivals and AI speed, then both factions, then AI teams with Full screen, and Start. Every battle setting and Start are on the first screen; before, only Battlefield showed above Start. The battle rules follow under the pinned Start (scroll). The logo is smaller.
+- **Settings in landscape.** The heading, tabs, language and close share one top row, which gives the tab body its height back.
+- **Portrait phones.** The hero is shorter, with a slimmer logo and no eyebrow over the art. The lifted squad steps toward the centre, grows 10%, and never rises over the logo. The flavour strip gives its line to the form, the mode cards are slimmer, and Rivals, AI speed and both factions now show above Start.
+- **Tablet.** The hero is shorter and the cards and gaps tighter, so all six selects show above Start.
+- **Readability.** The left column glass is denser (0.9–0.95), so the art no longer shows through the text. A soft fade sits above the pinned Start on desktop. A locked AI teams select reads as locked.
+- **Holo theme carried through.** The settings rows are glass strips with a teal edge, holo switches and selects, holo tabs, close button and footer buttons. The Defence sub-tabs and R3-C's battle-rule rows use the same tiles (teal, gold when chosen).
+- **Owner rules.** No control was grouped or moved behind anything; `tests/cover-ui.mjs` still checks every r3-base control at five viewports.
+
+### Fresh-reviewer scores (integration)
+
+Each round used a new reviewer subagent that saw only the before (merge commit) and after screenshots. Screens: title, Defence, campaign and settings. Shots: `m/integrated-before-*` and `m/integrated-after-*`.
+
+| Round | Desktop | HD | Tablet | Portrait | Landscape |
+|---|---|---|---|---|---|
+| Before (merged R3-M) | 7–7.5 | 7–7.5 | 6.5–7 | 5–6.5 | 4–6 |
+| 1 | 7.5 | 7.5 | 7 | 6 | 7.5 |
+| 2 | 8 | 8 | 8 | 7 | 6.5 (campaign cards regressed, fixed in 3) |
+| 3 | 7.5 | 8 | 7.5 | 7 | 7.5 |
+| 4 (final) | **8** | **8** | **8** | 7 | 7 |
+
+The four-correction limit was reached. **Portrait and landscape phones stay at 7.** The final reviewer's open points:
+
+- **Portrait campaign:** the map, endings and chronicles leave one mission row above Start, and the endings and chronicles show without labels. This is the compact campaign map's own layout (`campaign-map.css`), not the cover.
+- **Landscape campaign:** the mode tabs drop their icons to fit the narrow column beside the map (they are 44 px tall). Endings and chronicles show without labels.
+- **Desktop:** the AI teams label peeks under Start's fade. The battle rules are below the fold in the scrolling column, as on r3-base.
+- **Tablet:** the hero art is tight under the headline.
+
+### Tests (integration, preview build on port 4238)
+
+- `npm test`: 1027 tests, 1000 pass, 0 fail, 27 skipped.
+- Browser suites, green: cover-ui (all five viewports, including the nothing-hidden check against `r3-base-menu-controls.json`), ui-quality, title, campaign difficulty, choices, phones, mobile, language, army-depth, defence-onboarding and squad-orders. One fix came from ui-quality: the landscape mode buttons were raised from 44 to 46 px, because the press animation scales a card to 98.5%.
+- `test:golden-full` was not run, because no sim, balance, mission or pin file changed. `frame.js` changes only how often the hidden menu backdrop is drawn.
