@@ -33,5 +33,6 @@ test("m11c Hold the Keystone Roads, DefenceBot, 120 s", () => {
   const r = playDefence(resolveMission(HOLD_THE_ROADS, null), { difficulty: "standard", limit: 120 });
   pin("round2 m11c 120", { wave: r.wave, lives: r.lives, hash: r.sim.hash() }, { wave: 2, lives: 20, hash: "a929add0" });
 });
-// R3-A (AAA round 3) moved it: the Field command census and economy (old "4cce2935").
-const ARENA_300 = "e4913c66";
+// R3-A (AAA round 3) moved it: the Field command census and economy (old "4cce2935", R3-A "e4913c66").
+// Difficulty guard (Wave 1b, owner 2026-11-21): census from 300 s and no field economy, so 300 s is back to r3-base.
+const ARENA_300 = "4cce2935";

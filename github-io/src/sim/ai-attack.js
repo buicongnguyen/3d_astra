@@ -204,18 +204,6 @@ export const aiAttack = {
     }
     for (const [t, ids] of groups) this.issue(ids, { type: "attackmove", x: t.x, z: t.z });
   },
-  // Field command (R3-A): true while visible enemy fighters worth `ai_mix.danger.pop` supply or more stand within
-  // `ai_mix.join` metres of this side's army or `ai_mix.danger.radius` of its core.
-  aiDanger(team, army, hq) {
-    const { pop, radius } = balance.ai_mix.danger, join = balance.ai_mix.join;
-    let sum = 0;
-    for (const t of this.entities) {
-      if (t.hp <= 0 || t.kind !== "unit" || !(t.damage > 0) || !this.hostile(team, t.team) || !this.isVisible(t, team)) continue;
-      if ((hq && distance(hq, t) < radius) || army.some((e) => distance(e, t) < join)) sum += t.pop || 1;
-      if (sum >= pop) return true;
-    }
-    return false;
-  },
   // Sends a group: through `via` first when given, then attack-moving on `target`. A group sent to a
   // search point (no core known) turns on the first core it finds. Returns its number.
   aiLaunch(team, units, target, via, search = target.team === undefined) {

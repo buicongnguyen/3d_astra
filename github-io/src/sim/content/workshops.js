@@ -83,8 +83,8 @@ function workshopAi(sim, team, ctx) {
   const top = Math.max(...units.map((type) => D[type].required_level || 1));
   const mix = seen(sim, team);
   const alive = (type) => own.filter((e) => e.type === type && e.hp > 0).length + own.reduce((n, e) => n + (e.queue || []).filter((q) => q.type === type).length, 0);
-  // Field command (R3-A census): at least one workshop unit stands per host once it can be afforded.
-  const floor = fieldPlan(sim, team) && !units.some((type) => alive(type) > 0) ? 1 : 0;
+  // Field command (R3-A census): at least one workshop unit stands per host once it can be afforded (not at Relaxed: difficulty guard).
+  const floor = fieldPlan(sim, team) && sim.aiSpeed !== "relaxed" && !units.some((type) => alive(type) > 0) ? 1 : 0;
   for (const b of own.filter((e) => e.type === host && e.complete)) {
     if (b.levelJob) continue;
     if (!b.queue.length && b.level < Math.min(top, sim.techLevel(team)) && sim.time > pace.upgradeAt && afford(sim.levelCost(b))) {

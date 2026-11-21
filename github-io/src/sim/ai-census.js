@@ -42,6 +42,10 @@ const BARRACKS = { front: "vanguard", ranged: "ranger", antiarmor: "antitank", s
 const FOUNDRY = { heavy: "breaker", support: "engineer" };
 
 export const aiCensus = {
+  // True once the census, join-fight and Kite scouting may run: from MIX.from seconds of match time (difficulty
+  // guard, owner 2026-11-21: the opening plays as on r3-base, so the Field AI gains variety, not strength). Never at
+  // Relaxed, the easy speed, which plays exactly as on r3-base (no workshop floor or stall breaker there either).
+  aiCensusOn() { return this.aiSpeed !== "relaxed" && this.time >= (MIX.from ?? 0); },
   // The team's census: counts per role (alive plus queued), the anti-air count, the total, and the
   // target shares after the counter rules. `army` is updateAI's list (units, no Harvesters).
   aiCensusOf(team, own, army) {

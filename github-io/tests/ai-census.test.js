@@ -1,18 +1,18 @@
 // Field command army census (AAA round 3, R3-A): sim/ai-census.js, the workshop floor, the S7 stall breaker,
-// Kite scouting and the field economy. The long matrix (5 factions at 600 s, Highlands 5 pairings) is
+// Kite scouting and join-fight (the field economy was removed by the difficulty guard, 2026-11-21). The long matrix (5 factions at 600 s, Highlands 5 pairings) is
 // tools/ai-census-check.mjs (CI matrix entry r3-a).
 import test from "node:test";
 import assert from "node:assert/strict";
 import { Simulation } from "../src/simulation.js";
 import { DEFINITIONS as D } from "../src/data.js";
 import { censusRole, MIX, ROLES } from "../src/sim/ai-census.js";
-import { AI_SPEEDS, FIELD_PACE, fieldPace } from "../src/ai-plan.js";
 import { censusRow } from "../tools/ai-census-check.mjs";
 
 const field = (opts = {}) => new Simulation({ map: "classic", aiSpeed: "normal", capturePoints: true, rules: { aiPlan: "field", roster: "expanded" }, ...opts });
 
-test("census: Field Expanded Ashfall on Dunes fields 4+ unit types and a workshop unit by 300 s", () => {
-  const r = censusRow("ashfall", { secs: 300, map: "dunes", speed: "normal" });
+// The census starts at ai_mix.from (300 s, difficulty guard), so the workshop unit comes by 480 s (was 300 s).
+test("census: Field Expanded Ashfall on Dunes fields 4+ unit types and a workshop unit by 480 s", () => {
+  const r = censusRow("ashfall", { secs: 480, map: "dunes", speed: "normal" });
   assert.ok(r.types >= 4, `types ${r.types} ${JSON.stringify(r.fielded)}`);
   assert.ok(r.workshop >= 1, `workshop ${r.workshop} ${JSON.stringify(r.fielded)}`);
 });
@@ -72,13 +72,11 @@ test("Classic, Expanded alone and missions never consult the census", () => {
     assert.equal(calls.n, 0);
     const s = field();
     for (let i = 0; i < 10 * 20; i++) { s.tick(0.05); s.events.length = 0; }
+    assert.equal(calls.n, 0, "not in the opening (difficulty guard: ai_mix.from)");
+    s.time = MIX.from;
+    for (let i = 0; i < 10 * 20; i++) { s.tick(0.05); s.events.length = 0; }
     assert.ok(calls.n > 0, "Field command does");
   } finally { proto.aiCensusOf = orig; }
-  // The field economy applies only to the Field plan's speeds and leaves Relaxed alone.
-  assert.equal(fieldPace("relaxed", AI_SPEEDS.relaxed), AI_SPEEDS.relaxed);
-  const p = fieldPace("normal", { ...AI_SPEEDS.normal, ...AI_SPEEDS.normal.skirmish });
-  assert.equal(p.workers, AI_SPEEDS.normal.workers + FIELD_PACE.normal.add.workers);
-  assert.deepEqual(p.techAt, AI_SPEEDS.normal.techAt.map((n) => n * FIELD_PACE.normal.scale.techAt));
 });
 
 test("S7: after four minutes without contact the free army attack-moves on the nearest enemy building seen", () => {

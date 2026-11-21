@@ -1,5 +1,5 @@
 import { DEFINITIONS as D, MAX_POP, distance, hyp } from "../data.js";
-import { roleOf, fieldPlan, fieldPace } from "../ai-plan.js";
+import { roleOf, fieldPlan } from "../ai-plan.js";
 import { EXPAND_CREW } from "./expand.js";
 import { aiAttack } from "./ai-attack.js";
 import { AI_RULES } from "./content.js";
@@ -31,8 +31,7 @@ export const ai = {
     this.assignHarvesters(team);
     const hq = own.find((e) => e.type === "hq" && e.complete) || own.find(e => e.type === "hq");
     this.aiRetreat(team, army, hq);
-    // Field command (R3-A): a larger crew and later tech (ai-plan.js FIELD_PACE).
-    const pace = fieldPlan(this, team) ? fieldPace(this.aiSpeed, this.paceFor(team), this.time) : this.paceFor(team), role = roleOf(this, team), persona = this.personality(team), extra = this.factionFor(team).building;
+    const pace = this.paceFor(team), role = roleOf(this, team), persona = this.personality(team), extra = this.factionFor(team).building;
     // A second core brings more Harvesters, trained at the core with the fewest nearby.
     const cores = own.filter((e) => e.type === "hq" && e.complete);
     const crewCap = pace.workers + EXPAND_CREW * Math.max(0, cores.length - 1);
@@ -115,8 +114,9 @@ export const ai = {
     const hold = foundryIdle && vehicles * 4 < army.length && this.players[team].energy >= D.breaker.cost[1] ? D.breaker.cost[0] : 0;
     // Field command (W2-D, S1): with energy piling up, the Barracks holds alloy for the Foundry's next level or its heavy unit (Tank, Walker).
     const fieldOn = fieldPlan(this, team), fieldHold = fieldOn ? this.aiFieldHold(team, own, pace) : 0;
-    // Field command (R3-A): the army census (sim/ai-census.js) steers each pick toward the biggest shortfall of the faction's mix.
-    const census = fieldOn ? this.aiCensusOf(team, own, army) : null, censusSave = census ? this.aiCensusSave(team, own, census) : 0;
+    // Field command (R3-A): the army census (sim/ai-census.js) steers each pick toward the biggest shortfall of the faction's mix,
+    // from ai_mix.from seconds on (difficulty guard, owner 2026-11-21: the opening plays as before, so the census adds variety, not strength).
+    const census = fieldOn && this.aiCensusOn() ? this.aiCensusOf(team, own, army) : null, censusSave = census ? this.aiCensusSave(team, own, census) : 0;
     for (const b of own.filter((e) => e.complete && ["barracks", "foundry"].includes(e.type))) {
       if (b.levelJob) continue;
       const branch = this.researchBranch(team, role);
@@ -203,17 +203,17 @@ export const ai = {
     }
     // Field command (W2-D, S2): the other cores and held rings are defended too.
     if (fieldOn && hq) this.aiGuardSites(team, own, army, hq, pace);
-    // Field command (R3-A): free fighters near a fight join it instead of watching it from 15 m away.
-    if (fieldOn) this.aiJoinFight(team, army);
+    // Field command (R3-A): free fighters near a fight join it instead of watching it from 15 m away (from ai_mix.from
+    // seconds, never at Relaxed: difficulty guard; it keeps long Highlands matches from stalling).
+    if (fieldOn && this.aiCensusOn()) this.aiJoinFight(team, army);
     // A mission that sends its own waves lets the computer build up and defend at home only.
     if (this.aiHome) return;
     if (!cmd && persona?.retreat && hq && this.aiFallBack(team, hq, army, pace, persona.retreat)) return;
-    // Field command (R3-A): with an enemy army in sight of this side's units, nobody is sent off to a ring mid-fight.
-    if (!incursion && !(fieldOn && this.aiDanger(team, army, hq))) this.aiPoints(team, hq, army, pace);
+    if (!incursion) this.aiPoints(team, hq, army, pace);
     const wave = army.filter((e) => !engaged(e) && !e.pointDuty && !e.retreating);
     if (cmd && hq) this.aiWatch(team, hq, army, cmd);
-    // Field command (R3-A): an idle Kite scouts, and a side that has seen no fight for four minutes goes looking for one (S7).
-    if (fieldOn && hq && !incursion) { this.aiScout(team, army); this.aiBreakStall(team, own, hq, wave); }
+    // Field command (R3-A): an idle Kite scouts (from ai_mix.from seconds, as the census), and a side that has seen no fight for four minutes goes looking for one (S7).
+    if (fieldOn && hq && !incursion && this.aiSpeed !== "relaxed") { if (this.aiCensusOn()) this.aiScout(team, army); this.aiBreakStall(team, own, hq, wave); }
     if (this.coalition) {
       this.coalitionOrders(team, { hq, army, wave, incursion });
       return;
