@@ -9,6 +9,7 @@
 //           ../3d_astra-zones/github-io/src, or a git ref (r2-wave-0, HEAD~1, a commit id): its
 //           github-io/src and github-io/tools are extracted once into .tmp/perf-ab/<commit>/.
 //   --scene riverlands-x2-300   AI against AI on riverlands, 2 rivals, Fast, 300 s (aiPlayer)
+//           riverlands-x2-field-300  the same with rules { roster: "expanded", aiPlan: "field" } (R3-A)
 //           crossroads-wave-120  Three Roads on Standard played by the DefenceBot, the first 120 s
 // Run node with --expose-gc to collect garbage before every run (fewer GC pauses inside a run).
 import fs from "node:fs";
@@ -36,6 +37,16 @@ export const SCENES = {
     async play(tree) {
       const { Simulation } = await import(tree.module("src/simulation.js"));
       const sim = new Simulation({ map: "riverlands", enemyCount: 3, aiSpeed: "fast", aiPlayer: true });
+      for (let i = 0; i < 6000 && !sim.result; i++) { sim.tick(0.05); sim.events.length = 0; }
+      return sim.hash();
+    },
+  },
+  // AAA round 3 (R3-A seam): the same match with the opt-in Field command plan and the Expanded roster.
+  "riverlands-x2-field-300": {
+    about: "AI against AI, riverlands, 2 rivals, Fast, 300 s, Field command + Expanded roster",
+    async play(tree) {
+      const { Simulation } = await import(tree.module("src/simulation.js"));
+      const sim = new Simulation({ map: "riverlands", enemyCount: 2, aiSpeed: "fast", aiPlayer: true, rules: { roster: "expanded", aiPlan: "field" } });
       for (let i = 0; i < 6000 && !sim.result; i++) { sim.tick(0.05); sim.events.length = 0; }
       return sim.hash();
     },
