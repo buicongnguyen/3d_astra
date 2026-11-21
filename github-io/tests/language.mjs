@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import {translate,addMessages} from '../src/i18n.js';
 import {MISSIONS} from '../src/story/missions.js';
 import {launchBrowser,openPage,testUrl,suite,TIMEOUT} from './lib/harness.mjs';
+import {koreanChecks} from './language-ko.mjs';
 fs.mkdirSync('test-results', {recursive:true});
 const browser=await launchBrowser();
 await suite('language',async()=>{
@@ -166,4 +167,6 @@ await suite('language',async()=>{
   assert.deepEqual(errors,[]);console.log('Vietnamese campaign story passed: '+name);
   await page.close();
  }
+ // ---- Korean (한국어): picker, saved choice, Hangul font and the main screens (tests/language-ko.mjs).
+ await koreanChecks(browser);
 },{browser});

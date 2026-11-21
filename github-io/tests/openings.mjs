@@ -28,7 +28,7 @@ const mapLayout = (page) => page.evaluate(() => {
     rows, small, taps,
     ahead: [...document.querySelectorAll(".cmap-node .cmap-ahead")].map((i) => i.closest(".cmap-node").dataset.mapMission),
     marks: [...document.querySelectorAll(".cmap-node .cmap-choice")].map((i) => (i.classList.contains("mercy") ? "mercy" : "firm")),
-    hints: text(".cmap-hint"), endings: text(".cmap-ending-name, .cmap-ending-short"), chronicles: text(".chron-card .chron-words > small[translate]"),
+    hints: text(".cmap-hint"), endings: text(".cmap-ending-name, .cmap-ending-short"), chronicles: text(".chron-card .chron-words > small.chron-side"),
     icons: [...document.querySelectorAll(".mode-switch button > .icon")].filter(shown).length,
     chronBottom: chron ? chron.bottom : null, sideways: document.documentElement.scrollWidth > innerWidth + 1,
   };

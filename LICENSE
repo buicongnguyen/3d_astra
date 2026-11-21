@@ -1,0 +1,26 @@
+Frontier Command
+Copyright (c) 2026 Bui Cong Nguyen, Solluxlabs.com. All rights reserved.
+The game licence is made by Bui Cong Nguyen, Solluxlabs.com.
+
+This repository and the game it builds -- source code, 3D models, model
+generator scripts, artwork, portraits, maps, music arrangements, story text,
+characters, names, user interface and documentation -- are the property of
+the copyright holder.
+
+No licence is granted. You may play the official published game. You may not
+copy, modify, redistribute, re-host, sell, publish or create derivative works
+from any part of this repository or the published game, in whole or in part,
+without prior written permission from the copyright holder.
+
+Viewing this repository on GitHub does not grant any right beyond those
+provided by GitHub's Terms of Service.
+
+Third-party components keep their own licences:
+- Baloo 2 font: SIL Open Font License 1.1 (licence text shipped with the font).
+- Noto Sans KR font (Korean): SIL Open Font License 1.1.
+- Open-source libraries listed in github-io/package.json (for example
+  three.js, MIT) under their respective licences.
+- Music: see github-io/public/music/LICENCE.txt.
+
+For permission requests, contact the copyright holder at Solluxlabs.com or through the GitHub
+account that owns this repository.

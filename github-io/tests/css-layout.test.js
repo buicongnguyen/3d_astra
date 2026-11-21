@@ -66,3 +66,16 @@ test("fonts: Baloo 2 is declared from the bundled Latin and Vietnamese files, an
   assert.ok(decls(css, ":root")["--font-display"].startsWith('"Baloo 2"'));
   css.walkDecls((d) => assert.doesNotMatch(d.value, /system-ui/, `${d.prop} must not use system-ui`));
 });
+
+test("fonts: Korean uses the bundled Hangul subset only while lang is ko, and no Korean stack uses system-ui", () => {
+  const css = sheet("language.css");
+  const faces = [];
+  css.walkAtRules("font-face", (rule) => { const d = {}; rule.walkDecls((x) => (d[x.prop] = x.value)); faces.push(d); });
+  assert.equal(faces.length, 1);
+  assert.match(faces[0].src, /noto-sans-kr-subset\.woff2/);
+  assert.match(faces[0]["unicode-range"], /U\+AC00-D7A3/);
+  assert.doesNotMatch(faces[0]["unicode-range"], /U\+0000|U\+00/, "Hangul only: Latin keeps the game's faces");
+  const ko = decls(css, ':root[lang="ko"]');
+  for (const v of ["--font-ui", "--font-tile", "--font-display"]) assert.match(ko[v], /"Frontier KR"/, v);
+  css.walkDecls((d) => assert.doesNotMatch(d.value, /system-ui/, `${d.prop} must not use system-ui`));
+});

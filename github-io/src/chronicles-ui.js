@@ -38,7 +38,7 @@ export function chronicleCardsHTML({ progress, campaign = "main" }) {
     const lock = state === "locked" ? `<small class="chron-lock">${icon("lock")}<span>${esc(lockedText(c))}</span></small>` : "";
     return `<button class="chron-card ${state}${campaign === c.id ? " picked" : ""}" data-chronicle="${c.id}" style="${style(c)}" tabindex="-1" aria-hidden="true"${state === "locked" ? " disabled" : ""} title="${esc(state === "locked" ? lockedText(c) : c.title)}">
       <span class="chron-face">${castPortrait(c.lead, "small")}${glyph(c.faction)}</span>
-      <span class="chron-words"><strong>${esc(c.title)}</strong><small translate="no">${esc(sideName(c.faction))}</small>${lock}</span>${pips(n, total)}</button>`;
+      <span class="chron-words"><strong>${esc(c.title)}</strong><small class="chron-side">${esc(sideName(c.faction))}</small>${lock}</span>${pips(n, total)}</button>`;
   };
   return `<div class="cmap-chronicles chron-cards" data-campaign="${esc(campaign)}"><span class="cmap-label">${esc(MAP_TEXT.chronicles)}</span><div class="chron-row">${CHRONICLES.map(card).join("")}</div></div>`;
 }
@@ -47,7 +47,7 @@ export function chronicleCardsHTML({ progress, campaign = "main" }) {
 export function chronicleListHTML({ progress, campaign = "main" }) {
   const row = (c) => {
     const state = stateOf(progress, c), n = chronicleCount(progress, c.id), total = c.missions.length;
-    const sub = state === "locked" ? `<span class="chron-lock">${esc(lockedText(c))}</span>` : `<span translate="no">${esc(sideName(c.faction))}</span> · <span translate="no">${esc(castName(c.lead))}</span>`;
+    const sub = state === "locked" ? `<span class="chron-lock">${esc(lockedText(c))}</span>` : `<span>${esc(sideName(c.faction))}</span> · <span>${esc(castName(c.lead))}</span>`;
     return `<li><button class="chron-entry ${state}" data-chronicle="${c.id}" style="${style(c)}"${campaign === c.id ? ' aria-current="true"' : ""}${state === "locked" ? ` disabled title="${esc(lockedText(c))}"` : ""}><span class="chron-face">${castPortrait(c.lead, "small")}${glyph(c.faction)}</span><span><strong>${esc(c.title)}</strong><small>${sub}</small></span><em>${state === "locked" ? icon("lock") : pips(n, total)}</em></button></li>`;
   };
   return `<section class="act chron-section" aria-labelledby="act-chronicles"><h3 class="chron-title" id="act-chronicles"><strong>${esc(MAP_TEXT.chronicles)}</strong></h3><p class="chron-note">${esc(MAP_TEXT.chroniclesNote)}</p><ol class="stage-list chron-list" aria-label="${esc(MAP_TEXT.chronicles)}">${CHRONICLES.map(row).join("")}</ol></section>`;

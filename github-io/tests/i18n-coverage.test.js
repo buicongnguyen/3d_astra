@@ -20,6 +20,8 @@ const files = [];
 
 // Text that is the same in both languages on purpose: names, key labels, units, symbols.
 const KEEP = new Set([
+  // Legal notice stays in English in every language (owner, 2026-11-21).
+  '© 2026 Bui Cong Nguyen, Solluxlabs.com · All rights reserved',
   // Shader source edited in view.js (bakeFinishes), not text on screen.
   '", "#include',
   'FRONTIER', 'COMMAND', 'FPS', '— FPS', 'HQ', 'AI', 'Eco', 'High', 'Q', 'E', 'R', 'T', 'Y', 'WASD', 'Esc', 'Tab', 'Shift', 'Ctrl', 'Ctrl + 1–9 / 1–9', 'Space / Esc', 'Frontier Command home',
@@ -39,13 +41,13 @@ function strings(source) {
   return found;
 }
 
-test('every English string the UI source renders has a Vietnamese entry', () => {
+for (const [lang, name] of [['vi', 'Vietnamese'], ['ko', 'Korean']]) test(`every English string the UI source renders has a ${name} entry`, () => {
   const missing = [];
   for (const file of files) {
     const source = readFileSync(file, 'utf8');
     for (const text of strings(source)) {
-      if (translate(text, 'vi') === text) missing.push(`${file.pathname.split('/src/')[1]}: ${text}`);
+      if (translate(text, lang) === text) missing.push(`${file.pathname.split('/src/')[1]}: ${text}`);
     }
   }
-  assert.deepEqual(missing, [], `Add these to src/locales/vi.json (or KEEP in this test if they stay English):\n${missing.join('\n')}`);
+  assert.deepEqual(missing, [], `Add these to src/locales/${lang}.json (or KEEP in this test if they stay English):\n${missing.join('\n')}`);
 });

@@ -13,12 +13,15 @@ function serviceWorker() {
       // Audio never enters the precache: recorded music lives in public/music/ and is cached on first
       // play (fc-music in sw.template.js); this filter only guards against a track imported by mistake.
       const files = Object.keys(bundle).filter((name) => !name.endsWith(".md") && !name.endsWith(".map") && !/\.(m4a|mp3|ogg|opus|wav|aac|flac|webm)$/i.test(name));
-      const precache = ["./", "manifest.webmanifest", "favicon.svg", ...files];
+      // Korean files (the UI and story catalogs and the Hangul font) are fetched only by players who pick
+      // Korean, so they are not precached either: the worker keeps each one on its first fetch (LAZY).
+      const lazy = files.filter((name) => /(^|\/)(ko|story-ko)-[\w-]+\.js$|noto-sans-kr-subset[\w-]*\.woff2$/.test(name));
+      const precache = ["./", "manifest.webmanifest", "favicon.svg", ...files.filter((name) => !lazy.includes(name))];
       const models = readdirSync(new URL("./public/models/", import.meta.url)).filter((name) => name.endsWith(".glb")).sort();
       const modelHash = hash(models.map((name) => name + readFileSync(new URL("./public/models/" + name, import.meta.url)).length + hash(readFileSync(new URL("./public/models/" + name, import.meta.url)))).join());
       const build = hash(files.sort().join());
       const source = readFileSync(new URL("./tools/sw.template.js", import.meta.url), "utf8")
-        .replace("__BUILD__", build).replace("__MODELS__", modelHash).replace("__PRECACHE__", JSON.stringify([...new Set(precache)]));
+        .replace("__BUILD__", build).replace("__MODELS__", modelHash).replace("__PRECACHE__", JSON.stringify([...new Set(precache)])).replace("__LAZY__", JSON.stringify(lazy));
       this.emitFile({ type: "asset", fileName: "sw.js", source });
     },
   };

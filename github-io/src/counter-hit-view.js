@@ -79,7 +79,7 @@ export class CounterHitView {
       const x = (p.x * 0.5 + 0.5) * view.width, y = (-p.y * 0.5 + 0.5) * view.height;
       if (x < -40 || x > view.width + 40 || y < -20 || y > view.height + 20) continue;
       const tag = s.kind === 3;
-      c.font = `800 ${tag ? 12 : s.kind === 2 ? 17 : 13}px Arial, Helvetica, sans-serif`;
+      c.font = `800 ${tag ? 12 : s.kind === 2 ? 17 : 13}px Arial, Helvetica, "Frontier KR", sans-serif`;
       c.globalAlpha = k < 0.7 ? 1 : (1 - k) / 0.3;
       c.strokeStyle = "rgba(24,10,6,0.85)";
       c.fillStyle = tag ? "#ffd24a" : s.kind === 1 ? "#ff7a6a" : s.kind === 2 ? "#fff1c2" : "#ffffff";

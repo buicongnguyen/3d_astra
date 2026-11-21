@@ -25,6 +25,7 @@ test("the Ashen fog is lighter than before and the rim is on in Eco and High", (
   assert.match(view, /rimShader\(shader\)/);
   assert.match(view, /addTeamRim\(m, /);
 });
-test("fonts: Baloo 2 has Latin and Vietnamese files under src/fonts (the CSS side is in css-layout.test.js)", () => {
-  assert.ok(readdirSync(new URL("../src/fonts/", import.meta.url)).filter((f) => f.endsWith(".woff2")).length === 2);
+test("fonts: Baloo 2 has Latin and Vietnamese files, plus the Korean subset, under src/fonts (the CSS side is in css-layout.test.js)", () => {
+  assert.deepEqual(readdirSync(new URL("../src/fonts/", import.meta.url)).filter((f) => f.endsWith(".woff2")).sort(),
+    ["baloo-2-latin-800-normal.woff2", "baloo-2-vietnamese-800-normal.woff2", "noto-sans-kr-subset.woff2"]);
 });

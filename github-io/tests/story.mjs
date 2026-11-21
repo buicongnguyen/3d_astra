@@ -46,7 +46,7 @@ await suite("story: scenes, the 15-mission campaign map, the defence missions an
       await page.waitForFunction(() => window.__frontier.started && document.querySelector("#modal").hidden, null, { timeout: TIMEOUT.models });
     };
 
-    // 1. The campaign map shows every mission as a relay: 17 nodes in three acts (R3-H added m11d), three square Defence relays.
+    // 1. The campaign map shows every mission as a relay: one node per mission (17 since R3-H) in three acts, three square Defence relays.
     await load(cleared(at("m07b-hold-the-valley")));
     await campaign();
     const map = await page.evaluate(() => {
@@ -56,13 +56,13 @@ await suite("story: scenes, the 15-mission campaign map, the defence missions an
       for (let i = 0; i < centres.length; i++) for (let j = i + 1; j < centres.length; j++) closest = Math.min(closest, Math.hypot(centres[i].x - centres[j].x, centres[i].y - centres[j].y));
       return { count: nodes.length, ids: nodes.map((n) => n.dataset.mapMission), defence: [...document.querySelectorAll(".cmap-node.defence")].map((n) => n.dataset.mapMission), inside: centres.every((c) => c.inside), closest, lit: document.querySelector(".cmap").dataset.lit, next: document.querySelector(".cmap-node.next")?.dataset.mapMission, count2: document.querySelector(".cmap-count").textContent };
     });
-    assert.equal(map.count, 17, `${viewport}: 17 relays`); // R3-H: The Sovereign Walks (m11d)
+    assert.equal(map.count, ids.length, `${viewport}: ${ids.length} relays`);
     assert.deepEqual(map.ids, ids);
     assert.deepEqual(map.defence, ["m02b-hold-the-river", "m07b-hold-the-valley", "m11c-hold-the-keystone-roads"]);
     assert.ok(map.inside, `${viewport}: every relay on the board`);
     assert.ok(map.closest >= 44, `${viewport}: relays ${Math.round(map.closest)} px apart`);
     assert.equal(map.next, "m07b-hold-the-valley");
-    assert.match(map.count2, /\/ 17 relays lit/);
+    assert.match(map.count2, new RegExp(`/ ${ids.length} relays lit`));
     clean(await audit(page, "#campaign-map"), `${viewport} campaign map`);
     await shot(page, `story-map-${viewport}`);
 
