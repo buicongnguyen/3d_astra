@@ -53,13 +53,7 @@ export function setupHud(S, A) {
     }
   }
 
-  function setTouchSheet(open) {
-    $("touch-sheet").hidden = !open;
-    $("touch-more").setAttribute("aria-expanded", String(open));
-  }
-
   function setLayout() {
-    setTouchSheet(false);
     document.documentElement.classList.toggle(
       "compact-ui",
       compactMedia.matches || S.touchInput,
@@ -411,18 +405,9 @@ export function setupHud(S, A) {
 
     $("mission-toggle").onclick = () => setObjectivesOpen(!document.documentElement.classList.contains('objectives-open'));
 
-    // The phone touch row is Army, Workers and "…"; the "…" sheet holds Box select, Queue orders, Clear selection
-    // and Info & stats. Those buttons keep their ids and handlers (they only moved into the sheet); a choice
-    // closes the sheet, and so does a tap anywhere else, Escape or a new match.
-    $("touch-more").onclick = () => setTouchSheet($("touch-sheet").hidden);
-    $("touch-sheet").addEventListener("click", (event) => { if (event.target.closest("button")) setTouchSheet(false); });
+    // The phone touch row (owner, 2026-11-21): Army, Workers, Box select, Queue orders, Clear selection and
+    // Info & stats, each one tap in one row under the top bar; no "…" sheet.
     $("touch-guide").onclick = () => { const e = A.selectedEntities()[0]; A.showGuide(e?.type, e?.team); };
-    document.addEventListener("pointerdown", (event) => {
-      if (!$("touch-sheet").hidden && !(event.target instanceof Element && event.target.closest("#touch-sheet, #touch-more"))) setTouchSheet(false);
-    }, true);
-    window.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && !$("touch-sheet").hidden) { setTouchSheet(false); event.stopPropagation(); $("touch-more").focus({ preventScroll: true }); }
-    }, true);
 
     document.addEventListener('pointerdown', event => {
       if (document.documentElement.classList.contains('objectives-open') &&

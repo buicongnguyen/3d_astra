@@ -1,10 +1,12 @@
 /* Phone landscape HUD (Phase F). Loaded after ui-theme.css.
    The battlefield is full-bleed under the stage; everything else is a slim overlay:
      top      a 44 px strip: logo, resources, clock, sound, help, pause
-     left     a one-column button rail (Army, Workers and "…", W1-D), the Objectives chip
-              beside it, and the minimap in the bottom-left corner
+     left     one row of six touch buttons under the strip (Army, Workers, Box, Queue, Clear, Info; owner,
+              2026-11-21: one tap each, no "…" sheet), the Objectives chip after it, and the minimap in the
+              bottom-left corner
      right    one 208 px dock sized to its content (selection or command card), tabs below it
-   Free battlefield: at least 70 % of the screen with nothing selected and 60 % with a unit selected
+   Free battlefield: at least 67 % of the screen with nothing selected and 57.5 % with a unit selected (owner,
+   2026-11-21: the touch row in view costs about 2 %)
    (tests/phones.mjs, an elementFromPoint grid; tests/layout-f.mjs measures the HUD boxes). All edges
    respect the notch through env(safe-area-inset-*). */
 @media (min-aspect-ratio: 1.35) {
@@ -37,26 +39,27 @@
   /* Full-bleed battlefield. Left, right and bottom keep the gesture margins. */
   .compact-ui:not(.in-briefing) #world { inset: 0 var(--gesture-right) var(--safe-bottom) var(--gesture-left); }
 
-  /* Left rail (W1-D): Army, Workers and "…" in one column. Box select, Queue orders, Clear selection and
-     Info & stats open from "…" (a sheet to its right); +/- are hidden (pinch zooms), their ids stay in the DOM. */
+  /* Touch row (owner, 2026-11-21): six equal buttons in one row under the strip, each one tap; +/- are hidden
+     (pinch zooms), their ids stay in the DOM. --row-width is the row's width, for the chips after it. */
+  .compact-ui:not(.in-briefing) { --row-width: calc(6 * var(--rail-width) + 5 * 4px); }
   .compact-ui:not(.in-briefing) .touch-controls {
     top: 6px;
     left: var(--edge-left);
     right: auto;
-    width: var(--rail-width);
+    width: var(--row-width);
     display: flex;
-    flex-direction: column;
-    gap: 5px;
+    flex-direction: row;
+    gap: 4px;
     overflow: visible;
+    touch-action: auto;
   }
-  .compact-ui:not(.in-briefing) .touch-controls > button { flex: none; width: 100%; min-width: 0; height: var(--hit); font-size: var(--text-min); line-height: 1.1; border-radius: 10px; padding: 2px; }
-  .compact-ui:not(.in-briefing) .touch-controls #touch-sheet { top: 0; left: calc(100% + 8px); }
+  .compact-ui:not(.in-briefing) .touch-controls > button { flex: 1 1 0; width: auto; min-width: 0; height: var(--hit); font-size: var(--text-min); line-height: 1.1; border-radius: 10px; padding: 2px; }
 
   /* Objectives: a 44 px icon chip beside the rail (the flag, as in portrait); the list opens below it on demand. */
   .compact-ui:not(.in-briefing) #mission-toggle {
     position: absolute;
     top: 6px;
-    left: calc(var(--edge-left) + var(--rail-width) + 8px);
+    left: calc(var(--edge-left) + var(--row-width) + 8px);
     right: auto;
     width: 44px;
     min-width: 44px;
@@ -68,9 +71,9 @@
   .compact-ui:not(.in-briefing) #mission-toggle .icon { width: 19px; height: 19px; }
   .compact-ui:not(.in-briefing).objectives-open #mission-objectives {
     top: 54px;
-    left: calc(var(--edge-left) + var(--rail-width) + 8px);
+    left: calc(var(--edge-left) + var(--row-width) + 8px);
     right: auto;
-    width: min(284px, calc(100% - var(--rail-width) - var(--side-width) - 60px));
+    width: min(284px, calc(100% - var(--row-width) - var(--side-width) - 60px));
     max-height: calc(100% - 66px);
   }
 
@@ -150,7 +153,7 @@
   }
   .compact-ui:not(.in-briefing) .dialogue {
     top: 54px;
-    left: calc(var(--edge-left) + var(--rail-width) + 8px);
+    left: var(--edge-left);
     right: calc(var(--side-width) + var(--edge-right) + 8px);
   }
   .compact-ui.dialogue-open:not(.in-briefing) #notice { top: auto; }
@@ -185,55 +188,14 @@
       the Defence bar when it stands there: bottom = --band, the plan's bottom-band contract.
    4. The Eco/High badge is not drawn on touch devices (Settings has the choice). */
 .touch-ui #quality { display: none; }
-.compact-ui .touch-controls .touch-sheet[hidden] { display: none; }
 .compact-ui:not(.in-briefing) .touch-controls #zoom-in,
 .compact-ui:not(.in-briefing) .touch-controls #zoom-out { display: none; }
-.compact-ui .touch-controls > .touch-more .icon { width: 22px; height: 22px; }
-/* A mode left on (Box select, Queue orders) shows on the "…" button, whose sheet is closed. */
-.compact-ui .touch-controls:has(#box-select[aria-pressed="true"], #queue-orders[aria-pressed="true"]) > .touch-more { border-color: var(--gold-line) !important; background: linear-gradient(180deg, rgba(255, 199, 94, 0.3), rgba(255, 199, 94, 0.12)) !important; color: #fff !important; }
-.compact-ui:not(.in-briefing) .touch-controls .touch-sheet {
-  position: absolute;
-  z-index: 40;
-  top: calc(100% + 6px);
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: 216px;
-  max-width: calc(100vw - 24px);
-  padding: 6px;
-  border: 1px solid var(--line-2);
-  border-radius: 14px;
-  background: rgba(8, 23, 31, 0.97);
-  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
-}
-.compact-ui:not(.in-briefing) #touch-sheet > button {
-  display: flex;
-  flex: none;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  width: 100%;
-  min-width: 0;
-  height: 44px;
-  padding: 0 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  line-height: 1.1;
-  text-align: left;
-}
-.compact-ui:not(.in-briefing) #touch-sheet > button .icon { flex: none; width: 18px; height: 18px; }
-.compact-ui:not(.in-briefing) #touch-sheet > button > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* In portrait the tool-row rule (ui-theme.css, `.touch-controls #clear-selection { flex: 1 1 0 }`) also hits the
-   sheet's "Clear selection" row and shrank it to 20 px in the column: keep the sheet row at its 44 px. */
-.compact-ui:not(.in-briefing) #touch-sheet > #clear-selection { flex: none; }
 
 @media (max-aspect-ratio: 1.35) {
-  /* Touch row: three buttons at the top left, under the header. The sheet opens below them. */
-  .compact-ui:not(.in-briefing) .touch-controls { left: 8px; right: auto; width: auto; gap: 6px; overflow: visible; touch-action: auto; }
-  .compact-ui:not(.in-briefing) .touch-controls > button { flex: 0 0 auto; width: 62px; min-width: 44px; height: 44px; }
-  .compact-ui:not(.in-briefing) .touch-controls > .touch-more { width: 44px; }
+  /* Touch row (owner, 2026-11-21): six equal buttons across the top of the battlefield, under the header. */
+  .compact-ui:not(.in-briefing) .touch-controls { left: 8px; right: 8px; width: auto; gap: 4px; overflow: visible; touch-action: auto; }
+  .compact-ui:not(.in-briefing) .touch-controls > button { flex: 1 1 0; width: auto; min-width: 0; height: 44px; padding: 2px 1px; font-size: 11px; }
+  .compact-ui:not(.in-briefing) .touch-controls > button > span { white-space: nowrap; }
 
   /* The band above the tab strip. --dock-height is the live height of the dock (see below). */
   .compact-ui:not(.in-briefing) { --band: calc(var(--dock-height) + var(--tabs-height) + var(--safe-bottom) + var(--defence-bar-h, 0px) + 8px); }
@@ -266,8 +228,6 @@
   .compact-ui:not(.in-briefing) .selection-panel .order-buttons { grid-template-columns: repeat(auto-fit, minmax(44px, 1fr)); }
 }
 
-/* An open sheet is above the idle buttons and the other chips. */
-.compact-ui .touch-controls:has(#touch-sheet:not([hidden])) { z-index: 36; }
 
 @media (max-aspect-ratio: 1.35) {
   /* The unit card drops its status line ("Standing by"; it stays in the tooltip) to stay short. */
@@ -335,3 +295,6 @@
   .compact-ui.in-defence:not(.in-briefing) #commands .command-tile > span { font-size: 12px; }
   .compact-ui.in-defence:not(.in-briefing) #dock-tabs button { font-size: 11px; }
 }
+
+/* The touch row (owner, 2026-11-21): Clear selection is one of the six equal buttons (mobile.css kept it a 44 px icon). */
+.compact-ui:not(.in-briefing) .touch-controls > #clear-selection { flex: 1 1 0; min-width: 0; }

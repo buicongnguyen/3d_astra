@@ -42,8 +42,8 @@ const screenshot = (name) =>
   });
 const read = (fn) => page.evaluate(fn);
 const tap = (selector) => page.locator(selector).tap();
-// Box select, Queue orders, Clear selection and Info & stats live in the "…" sheet (W1-D).
-const tapMore = async (selector) => { await tap("#touch-more"); await tap(selector); };
+// Box select, Queue orders, Clear selection and Info & stats are one tap in the touch row (owner, 2026-11-21).
+const tapMore = (selector) => tap(selector);
 const worldPoint = (x, z, y = 0) =>
   page.evaluate(
     ({ x, z, y }) => {
@@ -84,7 +84,8 @@ const layout = async (label) => {
       "#select-workers",
       "#select-army",
       "#select-army",
-      "#touch-more",
+      "#box-select",
+      "#touch-guide",
       "#pause",
       "#help",
       "#dock-tabs",

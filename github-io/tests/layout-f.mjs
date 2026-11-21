@@ -123,7 +123,8 @@ try {
     if (landscapePhone) {
       const share = await page.evaluate(FREE_SHARE);
       console.log(`${name}: free battlefield ${share.toFixed(3)} with nothing selected`);
-      if (share < 0.65) problems.push(`${name}: free battlefield ${share.toFixed(2)} with nothing selected`);
+      // Owner (2026-11-21): the six touch buttons stay in view in one row (no "…" sheet): 0.636 measured, floor 0.63 (was 0.65).
+      if (share < 0.63) problems.push(`${name}: free battlefield ${share.toFixed(2)} with nothing selected`);
     }
     await select(['worker']);
     await dockTab('selection');

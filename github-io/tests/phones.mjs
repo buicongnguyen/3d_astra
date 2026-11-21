@@ -4,7 +4,10 @@ import { launchBrowser, openPage, suite, shot } from './lib/harness.mjs';
 // Phones first-class (W1-D): the battlefield share by an elementFromPoint grid (20 x 40 points) at 390x844 and
 // 844x390, in a skirmish and in a campaign mission, with nothing selected and with one unit selected; each of
 // the seven touch-row ids still works; the chip and the hint sit above --defence-bar-h; no sideways scroll.
-const MIN_NONE = 0.70, MIN_ONE = 0.60;
+// Owner (2026-11-21): the six touch buttons sit in one visible row under the top bar (one tap each), which takes
+// about 2 % of the screen the "…" sheet used to hide (portrait 70.1 -> 67.9 %, landscape 71.4 -> 69.1 % with nothing
+// selected; 60.8 / 60.5 -> 58.5 / 58.3 % with a unit). The floors follow, so a further loss still fails.
+const MIN_NONE = 0.67, MIN_ONE = 0.575;
 const browser = await launchBrowser();
 const SHARE = () => {
   const portrait = innerWidth < innerHeight, cols = portrait ? 20 : 40, rows = portrait ? 40 : 20, canvas = document.querySelector('#world canvas:not(.activity-overlay)');
@@ -42,18 +45,23 @@ await suite('phones', async () => {
     assert.ok(one >= MIN_ONE, `${viewport} ${mode}: ${one} with a unit selected`);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'no sideways scroll');
     if (mode === 'skirmish') {
-      // All seven ids exist with their type; the visible three work by tap, the rest by the sheet or by script.
+      // All seven ids exist with their type; the six of the touch row work by one tap each (owner, 2026-11-21:
+      // one row under the top bar, no "…" sheet), +/- by script.
       for (const id of ['select-workers', 'select-army', 'box-select', 'queue-orders', 'clear-selection', 'zoom-in', 'zoom-out']) assert.equal(await page.evaluate((id) => document.getElementById(id)?.tagName, id), 'BUTTON', id);
       assert.equal(await page.evaluate(() => ['zoom-in', 'zoom-out'].map((id) => getComputedStyle(document.getElementById(id)).display)).then((v) => v.join()), 'none,none');
       await tap('#select-army'); assert.ok(await page.evaluate(() => window.__frontier.selected.size > 0), 'Army selects');
       await tap('#select-workers'); assert.ok(await page.evaluate(() => [...window.__frontier.selected].every((id) => window.__frontier.sim.get(id).type === 'worker')), 'Workers selects');
-      await tap('#touch-more'); assert.equal(await page.locator('#touch-sheet').isVisible(), true);
-      await tap('#box-select'); assert.equal(await page.locator('#box-select').getAttribute('aria-pressed'), 'true'); assert.equal(await page.locator('#touch-sheet').isVisible(), false, 'a choice closes the sheet');
-      await tap('#touch-more'); await tap('#box-select'); assert.equal(await page.locator('#box-select').getAttribute('aria-pressed'), 'false');
-      await tap('#touch-more'); await tap('#queue-orders'); assert.equal(await page.locator('#queue-orders').getAttribute('aria-pressed'), 'true');
-      await tap('#touch-more'); await tap('#queue-orders'); assert.equal(await page.locator('#queue-orders').getAttribute('aria-pressed'), 'false');
-      await tap('#touch-more'); await tap('#clear-selection'); assert.equal(await page.evaluate(() => window.__frontier.selected.size), 0, 'Clear selection');
-      await tap('#touch-more'); await tap('#touch-guide'); assert.equal(await page.locator('#guide-close').isVisible(), true, 'Info & stats opens the guide'); await tap('#guide-close');
+      assert.equal(await page.evaluate(() => !!document.getElementById('touch-more') || !!document.getElementById('touch-sheet')), false, 'no "…" button or sheet');
+      const row = await page.evaluate(() => ['select-army', 'select-workers', 'box-select', 'queue-orders', 'clear-selection', 'touch-guide'].map((id) => { const e = document.getElementById(id), r = e.getBoundingClientRect(), s = e.querySelector('span'); return { id, top: Math.round(r.top), w: Math.round(r.width), h: r.height, font: parseFloat(getComputedStyle(e).fontSize), cut: s ? s.scrollWidth > s.clientWidth + 1 : false, label: s?.textContent.length ?? 0 }; }));
+      assert.ok(Math.max(...row.map((b) => b.top)) - Math.min(...row.map((b) => b.top)) <= 2, `one row: ${JSON.stringify(row)}`); // a just-tapped button sits 1 px lower (:active)
+      assert.ok(Math.max(...row.map((b) => b.w)) - Math.min(...row.map((b) => b.w)) <= 2, `equal widths: ${JSON.stringify(row)}`);
+      assert.ok(row.every((b) => b.h >= 43.5 && b.font >= 11 && !b.cut && b.label <= 10), `44 px, 11 px, labels fit: ${JSON.stringify(row)}`);
+      await tap('#box-select'); assert.equal(await page.locator('#box-select').getAttribute('aria-pressed'), 'true');
+      await tap('#box-select'); assert.equal(await page.locator('#box-select').getAttribute('aria-pressed'), 'false');
+      await tap('#queue-orders'); assert.equal(await page.locator('#queue-orders').getAttribute('aria-pressed'), 'true');
+      await tap('#queue-orders'); assert.equal(await page.locator('#queue-orders').getAttribute('aria-pressed'), 'false');
+      await tap('#clear-selection'); assert.equal(await page.evaluate(() => window.__frontier.selected.size), 0, 'Clear selection');
+      await tap('#touch-guide'); assert.equal(await page.locator('#guide-close').isVisible(), true, 'Info & stats opens the guide'); await tap('#guide-close');
       // zoom ids still work by script (pinch is the player's way)
       await page.waitForFunction(() => !document.getElementById('zoom-out').disabled);
       const before = await page.evaluate(() => { const a = window.__frontier.view.zoom; document.getElementById('zoom-in').click(); document.getElementById('zoom-out').click(); document.getElementById('zoom-out').click(); return a; });

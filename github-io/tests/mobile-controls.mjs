@@ -41,8 +41,8 @@ try {
       await page.evaluate(type => { const f=window.__frontier; f.select([f.sim.own(0).find(e=>e.type===type).id]); },type);
       await tap('button[data-dock="selection"]');
       await inspect('.order-buttons button');
-      // Landscape keeps Info & stats in the "…" sheet (W1-D); portrait has it in the dock.
-      if (await page.locator('#field-guide').isVisible()) await tap('#field-guide'); else { await tap('#touch-more'); await tap('#touch-guide'); }
+      // Landscape has Info & stats in the touch row (owner, 2026-11-21); portrait has it in the dock too.
+      if (await page.locator('#field-guide').isVisible()) await tap('#field-guide'); else await tap('#touch-guide');
       await inspect('#guide-close'); await tap('#guide-close');
       await tap('button[data-dock="actions"]');
       if(type!=='medic') await inspect('#commands button');
