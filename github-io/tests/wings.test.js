@@ -89,9 +89,10 @@ test("Wings over Copper resolves with and without earlier decisions: only Hale's
 // Mission 3 changed on purpose with the Iron Vanguard boss (docs/aaa/BOSSES.md): spawn, objective, scene and lines.
 test("the original missions resolve to their recorded checksums on all decision paths", () => {
   const BEFORE = {
-    "m01-first-light": "d21a5cc5", "m02-first-contact": "18aa4673", "m02b-hold-the-river": "9845060f", "m03-the-ashen-line": "088cf8e2",
-    "m04-three-way-dunes": "fcb1de84", "m05-the-verdant-pact": "0b2a52ee", "m06-copper-harvest": "95b936e7", "m07-copper-siege": "093c6020",
-    "m08-the-quiet-vault": "03ed22ef", "m09-a-debt-in-the-dunes": "590328c3", "m10-obsidian-storm": "a063d27e", "m11-cut-the-draw": "5e2127e3", "m12-frontiers-end": "bc7f1bbe",
+    "m01-first-light": "704a79da", "m02-first-contact": "bd4705a7", "m02b-hold-the-river": "9845060f", "m03-the-ashen-line": "74d794d9",
+    "m04-three-way-dunes": "37f5e2f5", "m05-the-verdant-pact": "7fb6c6de", "m06-copper-harvest": "3fc2796d", "m07-copper-siege": "5150bb0e",
+    "m08-the-quiet-vault": "03ed22ef", "m09-a-debt-in-the-dunes": "3f6f6e86", "m10-obsidian-storm": "981e1315", "m11-cut-the-draw": "81571e1d", "m12-frontiers-end": "ecf29c01",
+    // AAA round 3 (R3-I, campaign pacing): first-contact probes in 10 base missions, m03 (towers objective, gold 750 s) and m04 retuned after the south exits.
     // AAA round 2 (W2-F): the new optional mission, recorded when it was added.
     "m11c-hold-the-keystone-roads": "8b3c253d",
   };

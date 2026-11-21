@@ -86,11 +86,11 @@
     "Ashfall attacks on a schedule. Count the gap and strike just after a wave breaks.": "Ashfall tấn công theo lịch. Hãy đếm quãng nghỉ và đánh ngay sau khi một đợt vừa tan.",
     "Towers outrange infantry. Bring Breakers, or go around.": "Tháp pháo bắn xa hơn bộ binh. Hãy mang Pháo binh theo, hoặc đi vòng.",
     "Destroy the three Ashfall siphons": "Phá ba trạm hút của Ashfall",
-    "Build two Sentinel towers": "Xây hai Tháp pháo",
+    "Have four Sentinel towers standing": "Có bốn Tháp pháo đứng vững",
     "Finish in under 14 minutes": "Hoàn thành trong vòng 14 phút",
     "No river here, Commander. The walls north of camp are your only cover. Use them.": "Ở đây không có sông, thưa Chỉ huy. Mấy bức tường phía bắc trại là chỗ che chắn duy nhất. Hãy tận dụng.",
     "Right on schedule. Hold at the walls, then follow them home while they are weak.": "Đúng lịch. Giữ ở các bức tường, rồi bám theo chúng về tận trại khi chúng còn yếu.",
-    "Two towers up. Now the camp can look after itself while you go hunting.": "Hai tháp đã dựng xong. Giờ trại tự lo được, Chỉ huy cứ đi săn.",
+    "Four towers up. Now the camp can look after itself while you go hunting.": "Bốn tháp đã dựng xong. Giờ trại tự lo được, Chỉ huy cứ đi săn.",
     "That siphon is huge. It could run ten camps. Where is all the power going?": "Trạm hút này khổng lồ. Nó đủ nuôi mười trại. Chừng ấy năng lượng đi đâu hết vậy?",
     "Commander, the beam from this one points straight up. He is feeding something in orbit.": "Chỉ huy ơi, chùm tia của trạm này chĩa thẳng lên trời. Ông ta đang nuôi thứ gì đó trên quỹ đạo.",
     "Forty thousand sleepers ride above us. Their lights fail first. Leave my siphons alone.": "Bốn mươi nghìn người ngủ đông đang bay phía trên chúng ta. Đèn của họ tắt trước tiên. Đừng đụng vào các trạm hút của tôi.",
@@ -815,6 +815,16 @@
     "Hale has nothing that big left to send. One road left, Commander, and it ends at the Keystone.": "Hale không còn thứ gì lớn như thế để gửi đến nữa. Chỉ còn một con đường, thưa Chỉ huy, và nó dẫn tới Then Chốt.",
     "It walked through the camp. We pull back to the river and try again before it turns.": "Nó đã đi xuyên qua trại. Ta lui về sông và thử lại trước khi nó quay đầu.",
     "Okoro's Kite": "Diều trinh sát của Okoro",
-    "My Kite is over the north road. Whatever comes down it, we will see it first.": "Diều trinh sát của tôi đang bay trên con đường phía bắc. Thứ gì đi xuống đó, ta sẽ thấy trước."
+    "My Kite is over the north road. Whatever comes down it, we will see it first.": "Diều trinh sát của tôi đang bay trên con đường phía bắc. Thứ gì đi xuống đó, ta sẽ thấy trước.",
+    "Movement on the road! One Ashfall scout, only looking. Your Vanguards can send it home.": "Có động trên đường! Một trinh sát Ashfall, chỉ đến nhìn thôi. Tiên phong của bạn có thể đuổi nó về.",
+    "Two Ashfall scouts are testing our bank. The towers will greet them; keep building.": "Hai trinh sát Ashfall đang dò bờ sông của ta. Tháp pháo sẽ tiếp chúng; cứ tiếp tục xây.",
+    "One Ashfall scout on the dunes. It is looking at us, not the oases. Your guard can send it home.": "Một trinh sát Ashfall trên cồn cát. Nó dò trại ta, không phải các ốc đảo. Đội gác của bạn có thể đuổi nó về.",
+    "A Pact scout in the trees, Commander. It came to look at the crawler. Show it the guns instead.": "Một trinh sát của Hiệp ước trong rừng, Chỉ huy. Nó đến để nhìn chiếc xe. Hãy cho nó thấy súng thay vào đó.",
+    "Ashfall scouts on the basin road, two of them. Let the guard meet them before they reach the Harvesters.": "Hai trinh sát Ashfall trên đường lòng chảo. Để đội gác đón chúng trước khi chúng tới chỗ Thợ mỏ.",
+    "Two Pact scouts on the road, checking our towers before the siege. Let the towers answer.": "Hai trinh sát Hiệp ước trên đường, dò tháp của ta trước cuộc vây hãm. Để tháp pháo trả lời.",
+    "Ashfall scouts on the sand, two of them, looking for our camp. Let the guard see them off.": "Hai trinh sát Ashfall trên cát, đang tìm trại của ta. Để đội gác tiễn chúng đi.",
+    "Warden sentries are probing the storm line, two of them. The towers will see to it.": "Hai lính gác Wardens đang dò tuyến bão. Tháp pháo sẽ lo việc đó.",
+    "Ashfall scouts on the expanse, two of them. Hale wants to know how many we brought.": "Hai trinh sát Ashfall trên vùng rộng mở. Hale muốn biết ta mang theo bao nhiêu quân.",
+    "Their scouts come first. Two Scrappers on the road. Let the towers take them; the armies come later.": "Trinh sát của chúng đến trước. Hai Lính phế liệu trên đường. Để tháp pháo hạ chúng; các đạo quân sẽ tới sau."
   }
 }

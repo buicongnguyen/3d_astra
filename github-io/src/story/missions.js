@@ -76,6 +76,8 @@ export const MISSIONS = [
         { music: "calm" },
         { say: { who: "okoro", text: "The relay is steady. Strange, though. Why would our light put out theirs?" } },
       ] },
+      // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
+      { when: { time: 70 }, do: [{ say: { who: "okoro", text: "Movement on the road! One Ashfall scout, only looking. Your Vanguards can send it home." } }, { wave: { team: 1, units: { vanguard: 1 }, from: { x: 17, z: -17 }, target: { x: -16, z: 16 }, probe: true } }] },
     ],
     debrief: {
       win: [
@@ -167,6 +169,8 @@ export const MISSIONS = [
       { when: { pointOwned: { point: "oldRelay", team: 1 } }, do: [{ say: { who: "vale", text: "Ashfall holds the middle relay. Its energy is feeding their Foundry now." } }] },
       { when: { time: 720 }, do: [{ say: { who: "vale", text: "Twelve minutes, Commander. Every minute they stand, they build more." } }] },
       { when: { objective: "core", is: "done" }, do: [{ music: "calm" }, { say: { who: "hale", text: "Keep the river. I have other camps, and less time than you think." } }] },
+      // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Two Ashfall scouts are testing our bank. The towers will greet them; keep building." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 17, z: -17 }, target: { x: -14, z: 12 }, probe: true } }] },
     ],
     debrief: {
       win: [
@@ -226,8 +230,8 @@ export const MISSIONS = [
       { spawn: "ranger", team: 1, at: { x: 42, z: -6 }, count: 1 },
       { spawn: "tower", team: 1, at: { x: 17, z: -17 }, hp: 3500 },
       { spawn: "tower", team: 1, at: { x: 24, z: -14 }, hp: 3500 },
-      { spawn: "vanguard", team: 1, at: { x: 20, z: -15 }, count: 5 },
-      { spawn: "ranger", team: 1, at: { x: 22, z: -19 }, count: 3 },
+      { spawn: "vanguard", team: 1, at: { x: 20, z: -15 }, count: 3 },
+      { spawn: "ranger", team: 1, at: { x: 22, z: -19 }, count: 2 },
       { spawn: "tower", team: 0, at: { x: -14, z: 16 } },
       { spawn: "ranger", team: 0, at: { x: -19, z: 20 }, count: 3 },
       { spawn: "vanguard", team: 0, at: { x: -20, z: 13 }, count: 3 },
@@ -240,7 +244,7 @@ export const MISSIONS = [
     objectives: [
       { id: "siphons", text: "Destroy the three Ashfall siphons", type: "destroyTag", tag: "siphon" },
       { id: "vanguard", text: "Destroy the Iron Vanguard", type: "destroyTag", tag: "ironVanguard" },
-      { id: "towers", text: "Build two Sentinel towers", type: "build", building: "tower", count: 2, optional: true },
+      { id: "towers", text: "Have four Sentinel towers standing", type: "build", building: "tower", count: 4, optional: true },
       { id: "core", text: "Destroy the Ashfall Command core", type: "destroyCores", optional: true },
       { id: "fast", text: "Finish in under 16 minutes", type: "timeUnder", seconds: 960, optional: true },
     ],
@@ -249,13 +253,13 @@ export const MISSIONS = [
     triggers: [
       { when: { time: 5 }, do: [{ say: { who: "vale", text: "No river here, Commander. The walls north of camp are your only cover. Use them." } }] },
       { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Right on schedule. Hold at the walls, then follow them home while they are weak." } }] },
-      { when: { objective: "towers", is: "done" }, do: [{ say: { who: "okoro", text: "Two towers up. Now the camp can look after itself while you go hunting." } }] },
+      { when: { objective: "towers", is: "done" }, do: [{ say: { who: "okoro", text: "Four towers up. Now the camp can look after itself while you go hunting." } }] },
       { when: { enter: "siphonWest", team: 0 }, do: [{ say: { who: "okoro", text: "That siphon is huge. It could run ten camps. Where is all the power going?" } }] },
       { when: { enter: "siphonNorth", team: 0 }, do: [
         { say: { who: "okoro", text: "Commander, the beam from this one points straight up. He is feeding something in orbit." } },
         { say: { who: "hale", text: "Forty thousand sleepers ride above us. Their lights fail first. Leave my siphons alone." } },
         { music: "battle" },
-        { wave: { team: 1, units: { vanguard: 4, ranger: 3 }, from: "enemyBase", target: "siphonNorth" } },
+        { wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "siphonNorth" } },
         { decide: "m03-alloy" },
         { if: { flag: "m03-alloy", is: "return" }, say: { who: "hale", text: "Received, Commander. Forty thousand people will sleep warmer tonight. I will note the courtesy." } },
         { if: { flag: "m03-alloy", is: "keep" }, give: { alloy: 300 } },
@@ -292,8 +296,9 @@ export const MISSIONS = [
       ],
       lose: [{ who: "vale", text: "He kept to his schedule and we did not keep to ours. Regroup at the river." }],
     },
-    medals: { gold: { seconds: 720 }, silver: { seconds: 1000 } },
-    design: "About 10 minutes against one Relaxed AI (first wave near 3:30, then every 90 seconds). The player starts with two towers and a wall guard of 3 Rangers and 3 Vanguards. The west and east siphons (6000 HP) each have a hardened tower and 4 guards; the north one has 5 guards and the Iron Vanguard (docs/aaa/BOSSES.md), a salvaged Builder war machine powered down in the yard 11 m from it (32000 HP, 26000 on Story: about a 2 minute fight for the army the objective bot has there, 24-27 units). It wakes when troops come within 14 m or hit it, plays its entrance scene, and fights within 12 m of its yard: a marked four-gun burst at the biggest group every ~13 s (units on Guard or Aggressive step out 1.5 s into the 3 s warning), a light gun, a 4-second open core after each burst. Hale's camp has two hardened towers and 8 guards. Intended: break the first wave at the walls, take the west and east siphons, then the north one and the Iron Vanguard together. Twist: entering the north siphon reveals that Hale feeds a fleet in orbit and calls a 7-unit counter-attack. The enemy core is optional: destroying it removes Ashfall but its tagged siphons and the boss stay standing, so they must still be destroyed.",
+    // R3-I (round 3): gold 720 -> 750 s; after the south exits the objective bot wins at about 12:15 on Standard and Veteran.
+    medals: { gold: { seconds: 750 }, silver: { seconds: 1000 } },
+    design: "About 10 minutes against one Relaxed AI (first wave near 3:30, then every 90 seconds). The player starts with two towers and a wall guard of 3 Rangers and 3 Vanguards. The west and east siphons (6000 HP) each have a hardened tower and 4 guards; the north one has 5 guards and the Iron Vanguard (docs/aaa/BOSSES.md), a salvaged Builder war machine powered down in the yard 11 m from it (32000 HP, 26000 on Story: about a 2 minute fight for the army the objective bot has there, 24-27 units). It wakes when troops come within 14 m or hit it, plays its entrance scene, and fights within 12 m of its yard: a marked four-gun burst at the biggest group every ~13 s (units on Guard or Aggressive step out 1.5 s into the 3 s warning), a light gun, a 4-second open core after each burst. Hale's camp has two hardened towers and 5 guards (8 before round 3, R3-I: after the south exits the objective bot lost to them). Intended: break the first wave at the walls, take the west and east siphons, then the north one and the Iron Vanguard together. Twist: entering the north siphon reveals that Hale feeds a fleet in orbit and calls a 5-unit counter-attack (7 before round 3). Round 3 pacing: the towers objective asks for four towers standing (the camp starts with two, so it costs two towers); no probe here (the starting guard chased one out of the towers' cover and a passive player lost 7 units to the first wave), and gold is 12:30 (12:00 before). The enemy core is optional: destroying it removes Ashfall but its tagged siphons and the boss stay standing, so they must still be destroyed.",
   },
 
   {
@@ -343,7 +348,7 @@ export const MISSIONS = [
       { when: { time: 6 }, do: [{ say: { who: "vale", text: "The centre oasis is closest. Take it first, then choose north or east." } }, { ping: "oasisCentre" }] },
       { when: { pointOwned: { point: "oasisCentre", team: 0 } }, do: [
         { say: { who: "sol", text: "Nothing personal, Commander. My gardens need that light as much as yours." } },
-        { wave: { team: 2, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "oasisCentre" } },
+        { wave: { team: 2, units: { vanguard: 2, ranger: 2 }, from: "enemyBase", target: "oasisCentre" } },
       ] },
       { when: { pointOwned: { point: "oasisNorth", team: 0 } }, do: [
         { say: { who: "hale", text: "The north oasis feeds my last siphon. Remove them." } },
@@ -356,10 +361,12 @@ export const MISSIONS = [
         { scene: "the-truce" },
         { music: "battle" },
         { wave: { team: 1, units: { vanguard: 3, breaker: 1 }, from: "enemyBase", target: "oasisCentre" } },
-        { wave: { team: 2, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "oasisCentre" } },
+        { wave: { team: 2, units: { vanguard: 2, ranger: 2 }, from: "enemyBase", target: "oasisCentre" } },
       ] },
       { when: { time: 960 }, do: [{ say: { who: "vale", text: "Four minutes of daylight left. Two oases, one minute in a row. Now, Commander." } }] },
       { when: { objective: "hold", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Tuned! Both oases are steady. I wish I knew why the others keep going dim." } }] },
+      // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "One Ashfall scout on the dunes. It is looking at us, not the oases. Your guard can send it home." } }, { wave: { team: 1, units: { vanguard: 1 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
     ],
     debrief: {
       win: [
@@ -369,7 +376,7 @@ export const MISSIONS = [
       lose: [{ who: "vale", text: "The dunes stay dark and the others are united against us. We need a new plan." }],
     },
     medals: { gold: { seconds: 630 }, silver: { seconds: 870 } },
-    design: "Hold-two-of-three in about 10 minutes. Two Relaxed AIs fight each other as well as the player; Ashfall guards the north oasis and Sunward the east one with 5 units each, and the centre is open. Intended: take the centre and one more oasis, split the army between them and send half home when the camp is attacked. Each first capture calls a 5-6 unit scripted attack from the faction that cares about that oasis. Twist at 5:00: Hale and Sol agree a truce on the radio and attack the centre together (9 units), which sets up the Pact. A 20-minute limit keeps the player from turtling.",
+    design: "Hold-two-of-three in about 10 minutes. Two Relaxed AIs fight each other as well as the player; Ashfall guards the north oasis and Sunward the east one with 5 units each, and the centre is open. Intended: take the centre and one more oasis, split the army between them and send half home when the camp is attacked. Each first capture calls a 4-6 unit scripted attack from the faction that cares about that oasis (Sunward's 4, 5 before round 3). Round 3 pacing: one Ashfall scout probes the camp at 1:10. Twist at 5:00: Hale and Sol agree a truce on the radio and attack the centre together (8 units, 9 before round 3; R3-I: after the south exits the Veteran objective bot lost), which sets up the Pact. A 20-minute limit keeps the player from turtling.",
   },
 
   // ───────────────────────── ACT 2: THE PACT ─────────────────────────
@@ -446,6 +453,8 @@ export const MISSIONS = [
       ] },
       { when: { enter: "relaySite", team: 0 }, do: [{ say: { who: "vale", text: "Relay site in view. Clear the Sunward guards before the crawler rolls in." } }] },
       { when: { objective: "escort", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Core is in. Oh. Commander, the relays are not separate machines. It is one circuit." } }] },
+      // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "A Pact scout in the trees, Commander. It came to look at the crawler. Show it the guns instead." } }, { wave: { team: 1, units: { vanguard: 1 }, from: { x: -6, z: 6 }, target: { x: -40, z: 40 }, probe: true } }] },
     ],
     // The second Commander decision (0.19a). Its answer changes Sol's words at the link-up in mission 9.
     decisions: {
@@ -532,6 +541,8 @@ export const MISSIONS = [
       ] },
       { when: { time: 960 }, do: [{ say: { who: "vale", text: "Four minutes to the storm. Every Harvester on the nearest deposit, Commander." } }, { music: "battle" }] },
       { when: { objective: "full", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Quota banked! The Basin relay is awake, and the crystal fields are already thicker." } }] },
+      // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Ashfall scouts on the basin road, two of them. Let the guard meet them before they reach the Harvesters." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
     ],
     debrief: {
       win: [
@@ -711,6 +722,8 @@ export const MISSIONS = [
       ] },
       { when: { time: 600 }, do: [{ say: { who: "vale", text: "One minute, Commander. Everything you have, around the relay." } }] },
       { when: { objective: "survive", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Tuning complete! The relay held. You held, Commander." } }] },
+      // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Two Pact scouts on the road, checking our towers before the siege. Let the towers answer." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
     ],
     debrief: {
       win: [
@@ -932,6 +945,8 @@ export const MISSIONS = [
       ] },
       { when: { objective: "ridge", is: "done" }, do: [{ music: "calm" }, { say: { who: "sol", text: "The dunes are quiet. First time in a month. Where do we go next, Commander?" } }] },
       { when: { objective: "core", is: "done" }, do: [{ say: { who: "vale", text: "Their camp is down as well. Hale will have to find his fuel somewhere else." } }] },
+      // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Ashfall scouts on the sand, two of them, looking for our camp. Let the guard see them off." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
     ],
     debrief: {
       win: [
@@ -1036,6 +1051,8 @@ export const MISSIONS = [
       { when: { time: 900 }, do: [{ say: { who: "vale", text: "Fifteen minutes. Their siege corps has heavy machines now. Anti-tank soldiers to the front." } }] },
       // The Crown lights with no storm (scene: src/story/scenes.js), before the debrief.
       { when: { objective: "crown", is: "done" }, do: [{ music: "calm" }, { scene: "crown-lights" }] },
+      // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Warden sentries are probing the storm line, two of them. The towers will see to it." } }, { wave: { team: 2, units: { vanguard: 2 }, from: { x: -18, z: 18 }, target: { x: -52, z: 52 }, probe: true } }] },
     ],
     // The third Commander decision (0.19a). Its answer changes Maren's words in the finale.
     decisions: {
@@ -1143,6 +1160,8 @@ export const MISSIONS = [
       { when: { time: 960 }, do: [{ say: { who: "echo", text: "Four minutes. The oldest crystals are turning to dust. Please hurry, Commander." } }, { music: "battle" }] },
       // The draw stops (scene: src/story/scenes.js), before the debrief.
       { when: { tagDead: "conduitNorth" }, do: [{ music: "calm" }, { scene: "draw-cut" }] },
+      // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Ashfall scouts on the expanse, two of them. Hale wants to know how many we brought." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: -6, z: 6 }, target: { x: -40, z: 40 }, probe: true } }] },
     ],
     debrief: {
       win: [
@@ -1253,6 +1272,8 @@ export const MISSIONS = [
         { if: { ending: "meridian-line" }, scene: "keystone-held" },
         { if: { ending: "open-frontier" }, scene: "keystone-open" },
       ] },
+      // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
+      { when: { time: 60 }, do: [{ say: { who: "vale", text: "Their scouts come first. Two Scrappers on the road. Let the towers take them; the armies come later." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: -6, z: 6 }, target: { x: -40, z: 40 }, probe: true } }] },
     ],
     debrief: {
       win: [

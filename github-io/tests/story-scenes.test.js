@@ -106,7 +106,8 @@ test("a scene action only emits an event: the simulation never waits, saves duri
 test("missions that only gained scenes play exactly as before: the scene replaced their lines, nothing else", () => {
   const OLD = { // The non-line actions of each scene trigger before 0.19b.
     "m01-first-light": [["objective", "hold"], [{ music: "calm" }]],
-    "m04-three-way-dunes": [["time", 300], [{ music: "battle" }, { wave: { team: 1, units: { vanguard: 3, breaker: 1 }, from: "enemyBase", target: "oasisCentre" } }, { wave: { team: 2, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "oasisCentre" } }]],
+    // R3-I (round 3): the Sunward half of the truce wave is one Vanguard lighter (the Veteran objective bot lost after the south exits).
+    "m04-three-way-dunes": [["time", 300], [{ music: "battle" }, { wave: { team: 1, units: { vanguard: 3, breaker: 1 }, from: "enemyBase", target: "oasisCentre" } }, { wave: { team: 2, units: { vanguard: 2, ranger: 2 }, from: "enemyBase", target: "oasisCentre" } }]],
     "m10-obsidian-storm": [["objective", "crown"], [{ music: "calm" }]],
     "m11-cut-the-draw": [["tagDead", "conduitNorth"], [{ music: "calm" }]],
   };
