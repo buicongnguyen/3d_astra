@@ -74,7 +74,7 @@ try{
    await page.evaluate(()=>{const f=window.__frontier;f.select([f.sim.own(0).find(e=>e.type==='barracks').id]);});
    if(mobile)await page.locator('button[data-dock="selection"]').tap();
    await page.locator('#field-guide').click();
-   assert.match(await page.locator('.field-guide article').innerText(),/7 skirmish maps/);
+   assert.match(await page.locator('.field-guide article').innerText(),new RegExp(Object.keys(JSON.parse(fs.readFileSync(new URL('../src/maps.json',import.meta.url),'utf8'))).length+' skirmish maps')); // 13 since R3 map variety
    assert.match(await page.locator('.field-guide article').innerText(),/last Command core is destroyed/);
    await page.locator('#guide-close').click();
    await page.evaluate(()=>{const f=window.__frontier,hq=f.sim.own(0).find(e=>e.type==='hq');hq.level=2;f.select([hq.id]);f.step(.05);});

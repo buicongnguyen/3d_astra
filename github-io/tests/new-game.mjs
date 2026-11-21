@@ -1,12 +1,14 @@
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+const MAP_COUNT=Object.keys(JSON.parse(fs.readFileSync(new URL('../src/maps.json',import.meta.url),'utf8'))).length; // 13 since R3 map variety
 const browser=await chromium.launch({headless:true,executablePath:process.platform==='win32'?'C:/Program Files/Google/Chrome/Application/chrome.exe':undefined,args:['--enable-unsafe-swiftshader']});
 try{
  for(const viewport of [{width:1280,height:800},{width:320,height:568},{width:390,height:844},{width:844,height:390}]){
   const page=await browser.newPage({viewport,isMobile:viewport.width<1000,hasTouch:viewport.width<1000}),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto((process.env.TEST_URL||'http://127.0.0.1:4180/')+'?test=1');
   await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});
-  assert.equal(await page.locator('#scenario option').count(),7);
+  assert.equal(await page.locator('#scenario option').count(),MAP_COUNT);
   await page.locator('#start').click();await page.locator('#pause').click();await page.locator('[data-new-game]').click();
   assert.equal(await page.evaluate(()=>window.__frontier.started),false);assert.equal(await page.evaluate(()=>window.__frontier.paused),true);
   await page.locator('#scenario').selectOption('highlands');await page.locator('#enemy-count').selectOption('3');await page.locator('#start').click();

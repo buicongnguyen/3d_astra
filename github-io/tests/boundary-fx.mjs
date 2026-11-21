@@ -11,7 +11,7 @@ try{
   await page.goto((process.env.TEST_URL||'http://127.0.0.1:4180/')+'?test=1');
   await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});
   const maps=await page.evaluate(()=>[...document.querySelectorAll('#scenario option')].map(o=>o.value));
-  assert.equal(maps.length,7);
+  assert.equal(maps.length,Object.keys(JSON.parse(fs.readFileSync(new URL('../src/maps.json',import.meta.url),'utf8'))).length); // every map in src/maps.json (13 since R3 map variety)
   // Nothing may be drawn beyond the playable edge: meshes and every instance of batches.
   // The one exception since the 2026-11 look pass is the backdrop (src/map-edge.js): the cliff
   // skirt and the land or sea below it, which replace the empty colour beyond the edge. It
