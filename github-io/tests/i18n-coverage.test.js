@@ -20,6 +20,8 @@ const files = [];
 
 // Text that is the same in both languages on purpose: names, key labels, units, symbols.
 const KEEP = new Set([
+  // Legal notice stays in English in every language (owner, 2026-11-21).
+  '© 2026 Bui Cong Nguyen, Solluxlabs.com · All rights reserved',
   // Shader source edited in view.js (bakeFinishes), not text on screen.
   '", "#include',
   'FRONTIER', 'COMMAND', 'FPS', '— FPS', 'HQ', 'AI', 'Eco', 'High', 'Q', 'E', 'R', 'T', 'Y', 'WASD', 'Esc', 'Tab', 'Shift', 'Ctrl', 'Ctrl + 1–9 / 1–9', 'Space / Esc', 'Frontier Command home',

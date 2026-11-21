@@ -31,3 +31,7 @@ npm run dev
 Open the local address printed by Vite. `npm run build` creates the static site in `github-io/dist/`. No server, API keys, accounts, or external asset services are needed by the deployed game.
 
 See the browser project's README for controls, assets, tests, and deployment.
+
+## Copyright
+
+© 2026 Bui Cong Nguyen, Solluxlabs.com. All rights reserved. The game licence is made by Bui Cong Nguyen, Solluxlabs.com. No licence is granted to copy, modify, re-host or redistribute this game or any part of this repository. See [`LICENSE`](LICENSE).

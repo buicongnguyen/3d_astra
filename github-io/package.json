@@ -2,6 +2,7 @@
   "name": "frontier-command",
   "version": "0.19.1",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
