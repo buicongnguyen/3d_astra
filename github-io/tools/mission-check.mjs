@@ -65,6 +65,9 @@ const MISSION_TARGETS = {
   "m02-first-contact": { passive: 300, win: [360, 1200] },
   "m03-the-ashen-line": { passive: 300 },
   "m04-three-way-dunes": { passive: 300 },
+  // Mission 9 (R3-I, round 3): since the south exits (R3-L) the bot reaches Sol's camp about 20 s sooner, and the
+  // win is the 3-minute plateau hold after that, so it lands near 6:45, not 7:10. Earlier, not harder.
+  "m09-a-debt-in-the-dunes": { win: [390, 1200] },
 };
 const standardTargets = (index) => ({ ...BASE_TARGETS, ...MISSION_TARGETS[MISSIONS[index]?.id] });
 

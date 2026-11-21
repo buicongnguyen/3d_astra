@@ -221,7 +221,8 @@ export const missions = {
     if (when.time !== undefined) return m.clock >= when.time;
     if (when.enter) { const p = this.missionPlace(when.enter); return this.own(when.team ?? 0).some((e) => e.kind === "unit" && distance(e, p) <= p.r); }
     if (when.objective) return m.objectives[when.objective]?.state === (when.is || "done");
-    if (when.event) return this.events.slice(this.tickEvents).some((e) => e.type === when.event && (when.event !== "incoming" || e.team === 0));
+    // A scripted probe (R3-I: a small first contact, wave.probe) is not "the first attack": "incoming" waits for a real wave.
+    if (when.event) return this.events.slice(this.tickEvents).some((e) => e.type === when.event && (when.event !== "incoming" || (e.team === 0 && !e.probe)));
     if (when.tagHpBelow) { const g = this.tagged(when.tagHpBelow.tag); return g.length > 0 && g.some((e) => e.hp / e.maxHp < when.tagHpBelow.percent / 100); }
     if (when.tagDead) return (m.fired["seen:" + when.tagDead] ||= this.tagged(when.tagDead).length > 0) && !this.tagged(when.tagDead).length;
     if (when.count) return this.own(when.count.team ?? 0).filter((e) => e.type === this.typeFor(when.count.team ?? 0,when.count.type) && e.complete !== false).length >= when.count.atLeast;
@@ -281,10 +282,11 @@ export const missions = {
       const from = this.missionPlace(a.wave.from ?? "enemyBase", team), target = this.missionPlace(a.wave.target ?? "playerBase", team);
       const ids = [];
       for (const [type, count] of Object.entries(a.wave.units))
-        for (const e of this.missionSpawn({ spawn: type, team, at: from, count: waveCount(count, difficultyRules(this).wave, D[this.typeFor(team, type)]) })) ids.push(e.id);
+        // A probe (R3-I) is the same few scouts on every difficulty; a real wave scales.
+        for (const e of this.missionSpawn({ spawn: type, team, at: from, count: a.wave.probe ? count : waveCount(count, difficultyRules(this).wave, D[this.typeFor(team, type)]) })) ids.push(e.id);
       if (ids.length) {
         this.issue(ids, { type: "attackmove", x: target.x, z: target.z });
-        this.events.push({ type: "incoming", team: 0, x: from.x, z: from.z, count: ids.length });
+        this.events.push({ type: "incoming", team: 0, x: from.x, z: from.z, count: ids.length, ...(a.wave.probe ? { probe: true } : {}) });
       }
     } else if (a.spawn) this.missionSpawn(a);
     else if (a.reveal) { const o = this.mission.objectives[a.reveal]; if (o?.hidden) { o.hidden = false; this.events.push({ type: "objective", id: a.reveal, state: "revealed" }); } }
