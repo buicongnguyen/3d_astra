@@ -160,6 +160,18 @@ Everything below applies only under the skirmish rule `aiPlan: "field"` (`fieldP
 - **Missions restored after the south exits** (owner: keep the exits). Every mission the objective bot won on r3-base is won again on Story, Standard and Veteran and with both decision paths, with no medal lower than on r3-base: m03 (not won on Standard) now has 5 guards in Hale's camp (8), a 5-unit counter-attack at the north siphon (7) and gold at 12:30 (12:00); m04 (lost on Veteran) has 4-unit Sunward waves for the centre and in the truce (5); m12 (lost on Standard) is won again with its probe. m09's objective bot now wins about 25 s sooner than on r3-base (6:45), so its check window starts at 6:30.
 - **Fast against two rivals: not eased (partial).** The owner-approved Fast-only easing was tried in nine forms (a later first joint offensive by 30, 45 or 60 s, no first raid, both, a lighter first raid and offensive, a smaller army cap, AI rally behind the core, and as a diagnosis a player rally in front of the core); none moved the 6-map Fast 1v2 cells beyond noise, and the delay measured worse on a second sample, so no AI change ships. Numbers and the owner options are in `docs/aaa/results/round3/i.md`.
 
+### R3-R: Commander rank and unlocks
+- **XP from every match.** 25 for playing, 75 for a win (finishing Training counts), +25 for a Veteran win, a mission medal (bronze 20, silver 35, gold 50), 20 per Defence star, 5 per wave held in Endless and the Daily seed (up to 50 waves), 1 per 2 kills (up to 25); at most 400 a match. A Standard skirmish win is the first rank up.
+- **Twenty ranks**, Recruit to Frontier Marshal (100 XP for rank 2, 10,450 for rank 20). Each rank from 2 unlocks one item:
+  - **paint schemes** for your units: Sand, Arctic, Ember, Jungle, Night and Gold (a tint on every part of your own units; enemies and buildings keep their colours);
+  - **emblems**: Spearhead, Wings, Star, Crown, Phoenix (the Meridian ring from the start);
+  - **title banners**: Vanguard, Pathfinder, Iron Marshal, Frontier Legend, Hero of the Meridian (Field Commander from the start);
+  - **Daily orders**: Iron line (lose 5 units or fewer), Swift (win within 12 minutes), Lean (build 6 structures or fewer), Hunter (40 kills or more). Pledge one, and the first win that meets it each day pays +60 XP.
+- **Rank chip on the title**: emblem, rank, name, title banner and the XP bar, in the setup panel.
+- **Commander rank rows in the Skirmish setup**: Paint, Emblem, Title banner and Daily order, each item its own button (one tap), plus the next locked item with the rank that opens it.
+- **Rank toast on every results screen** (Skirmish, missions, Defence, Training): the XP gained, the rank bar, and on a rank up "Rank up!" with what it unlocked.
+- Purely cosmetic: no pick is a battle rule or reaches the simulation, so every pin, checksum and baseline is unchanged. The paint is an instanceColor tint (no material, batch or draw call); the default Factory paint sets nothing. The rank is kept in this browser (`frontier-command.rank.v1`); blocked storage keeps it for the visit.
+
 ## 0.25.0: AAA round 2 (release label for the deploy; owner decision O17)
 
 This is the label proposed for the next release. `package.json` still says 0.19.1, nothing is deployed, and the owner decides the number at deploy. It gathers everything of AAA round 2 (plan: docs/aaa/AAA_ROUND2_PLAN.md, results: docs/aaa/results/round2/). The Defence and campaign sections under "Unreleased" further down (0.22 to 0.24 labels) were built before this round and are not part of it.

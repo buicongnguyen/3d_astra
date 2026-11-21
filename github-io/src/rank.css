@@ -1,0 +1,157 @@
+/* Commander rank (AAA round 3, R3-R): the title rank chip, the "Commander" unlock pickers in the skirmish
+   setup and the rank toast on the results. Colours and geometry follow the Codex UI kit (codex-ui-kit/tokens.md):
+   glass #102638 → #091723, lines #416479, cyan #83DEEB, gold #FFD17B / #FFDF9C, text #F1F6F3 / #BCCED9,
+   6 px button chamfers. Text 11 px or larger, taps 44 px or larger, only the game font stacks. */
+:root {
+  --rank-glass: linear-gradient(180deg, rgba(16, 38, 56, 0.94), rgba(9, 23, 35, 0.96));
+  --rank-line: #416479;
+  --rank-cyan: #83deeb;
+  --rank-gold: #ffd17b;
+  --rank-gold-edge: #ffdf9c;
+  --rank-text: #f1f6f3;
+  --rank-text-2: #bcced9;
+  --rank-track: #294351;
+  --rank-chamfer: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+
+/* ---- Title chip: emblem, rank and name, title banner, XP bar. A status line, not a control. ---- */
+.rank-chip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) minmax(92px, 0.8fr);
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--rank-line);
+  clip-path: var(--rank-chamfer);
+  background: var(--rank-glass);
+  color: var(--rank-text);
+  font-family: var(--font-ui);
+}
+.rank-emblem {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(131, 222, 235, 0.55);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, rgba(131, 222, 235, 0.28), rgba(9, 23, 35, 0.9) 70%);
+  color: var(--rank-cyan);
+}
+.rank-glyph { width: 22px; height: 22px; display: block; }
+.rank-text { display: grid; gap: 1px; min-width: 0; }
+.rank-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; min-width: 0; }
+.rank-number { font: 800 11px/1.3 var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; color: var(--rank-gold); }
+:lang(ko) .rank-number, :lang(vi) .rank-number { letter-spacing: 0; }
+.rank-name { font: 800 15px/1.2 var(--font-display); color: var(--rank-text); overflow-wrap: anywhere; }
+.rank-banner-name { font: 700 11px/1.3 var(--font-ui); color: var(--rank-text-2); overflow-wrap: anywhere; }
+.rank-xp { display: grid; gap: 3px; min-width: 0; }
+.rank-bar { display: block; height: 6px; border-radius: 999px; background: var(--rank-track); overflow: hidden; }
+.rank-bar > i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--rank-cyan), var(--rank-gold)); }
+.rank-xp-text { font: 700 11px/1.3 var(--font-ui); color: var(--rank-text-2); text-align: right; font-variant-numeric: tabular-nums; }
+/* Title banners: the chip's edge and the banner line take the banner's colour. */
+.rank-chip[data-banner="vanguard"] { border-color: #c47463; }
+.rank-chip[data-banner="vanguard"] .rank-banner-name { color: #ffb29b; }
+.rank-chip[data-banner="pathfinder"] { border-color: #5fae8f; }
+.rank-chip[data-banner="pathfinder"] .rank-banner-name { color: #92ebc5; }
+.rank-chip[data-banner="iron"] { border-color: #7894a2; background: linear-gradient(180deg, rgba(40, 54, 66, 0.95), rgba(14, 22, 30, 0.96)); }
+.rank-chip[data-banner="iron"] .rank-banner-name { color: #dfe8ee; }
+.rank-chip[data-banner="legend"] { border-color: #efb75c; }
+.rank-chip[data-banner="legend"] .rank-banner-name { color: var(--rank-gold); }
+.rank-chip[data-banner="meridian"] { border-color: var(--rank-gold-edge); background: linear-gradient(180deg, rgba(74, 52, 16, 0.94), rgba(16, 24, 34, 0.96)); }
+.rank-chip[data-banner="meridian"] .rank-banner-name { color: var(--rank-gold-edge); }
+.rank-chip[data-banner="meridian"] .rank-emblem { color: var(--rank-gold); border-color: var(--rank-gold-edge); }
+
+/* ---- Skirmish setup: the Commander pickers (the rows reuse the Battle rules look, src/rule-options.css). ---- */
+.rank-unlocks .rank-buttons { flex-wrap: wrap; }
+.rank-unlocks .rank-buttons button {
+  flex: 1 1 84px;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px 6px;
+  min-height: 44px;
+  padding: 4px 8px;
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.rank-unlocks .rank-kind-banner button { flex-basis: 132px; }
+/* Locked (the kit's disabled look): a solid surface and a readable label, never faded out. */
+#rank-unlocks .rank-buttons button:disabled {
+  opacity: 1;
+  border-style: dashed;
+  border-color: #344551;
+  background: #15212b;
+  color: #abbcc8;
+  cursor: not-allowed;
+}
+.rank-item-label { min-width: 0; }
+.rank-lock { flex-basis: 100%; font: 700 11px/1.2 var(--font-ui); color: #abbcc8; }
+.rank-swatch {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgba(241, 246, 243, 0.7);
+  border-radius: 50%;
+  background: var(--swatch);
+  box-shadow: 0 0 6px var(--swatch);
+}
+.rank-unlocks .rank-buttons .rank-glyph { width: 18px; height: 18px; color: var(--rank-cyan); }
+.rank-unlocks .rank-buttons button[aria-pressed="true"] .rank-glyph { color: var(--rank-gold); }
+.rank-unlocks .rank-buttons button:disabled .rank-glyph,
+.rank-unlocks .rank-buttons button:disabled .rank-swatch { opacity: 0.45; box-shadow: none; }
+
+/* ---- Results: the rank toast (above the result actions). ---- */
+.rank-toast {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--rank-line);
+  clip-path: var(--rank-chamfer);
+  background: var(--rank-glass);
+  color: var(--rank-text);
+  font-family: var(--font-ui);
+  text-align: left;
+  animation: rank-toast-in 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.rank-toast.rank-up { border-color: var(--rank-gold-edge); background: linear-gradient(180deg, rgba(74, 52, 16, 0.9), rgba(12, 24, 36, 0.96)); }
+.rank-toast.rank-up .rank-emblem { color: var(--rank-gold); border-color: var(--rank-gold-edge); box-shadow: 0 0 14px rgba(255, 209, 123, 0.4); }
+.rank-toast-body { display: grid; gap: 4px; min-width: 0; }
+.rank-toast-title { font: 800 17px/1.2 var(--font-display); color: var(--rank-cyan); }
+.rank-toast.rank-up .rank-toast-title { color: var(--rank-gold); }
+.rank-gain { font: 800 13px/1.2 var(--font-ui); color: #92ebc5; }
+.rank-toast .rank-xp-text { text-align: left; }
+.rank-pledge { font: 700 12px/1.3 var(--font-ui); color: #92ebc5; }
+.rank-unlocked { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.rank-unlocked-head { font: 800 13px/1.3 var(--font-ui); color: var(--rank-gold-edge); }
+.rank-unlocked ul { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.rank-unlock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1px solid rgba(255, 223, 156, 0.6);
+  border-radius: 4px;
+  background: rgba(40, 27, 9, 0.6);
+  font: 700 13px/1.3 var(--font-ui);
+  color: var(--rank-text);
+}
+.rank-unlock .rank-glyph { width: 16px; height: 16px; color: var(--rank-gold); }
+.rank-hint { font: 600 12px/1.3 var(--font-ui); color: var(--rank-text-2); }
+@keyframes rank-toast-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) { .rank-toast { animation: none; } }
+/* Compact results on short landscape phones: one tighter block. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .rank-toast { margin: 6px 0; padding: 6px 10px; gap: 8px; }
+  .rank-toast .rank-emblem { width: 30px; height: 30px; }
+  .rank-toast-title { font-size: 15px; }
+}

@@ -28,6 +28,7 @@ import { AirLifeView } from "./air-life-view.js";
 import { BuildingDecalsView } from "./building-decals-view.js";
 import { ThreatArrows } from "./threat-arrows.js";
 import { DeathLooks } from "./combat-feedback.js";
+import { RankPaintView } from "./profile-rank.js";
 
 export const HOOKS = ["dress", "scaleFor", "frameScaleFor", "event", "update", "reset"];
 
@@ -68,4 +69,5 @@ export const VIEW_PLUGINS = [
   BuildingDecalsView,
   ThreatArrows, // R3-K: off-screen threat arrows (DOM, no draw)
   DeathLooks, // R3-K: three death looks by damage type (effect pools, no draw)
+  RankPaintView, // R3-R: the picked paint scheme on the player's units (instanceColor tint, no draw)
 ];
