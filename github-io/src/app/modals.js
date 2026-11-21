@@ -101,7 +101,9 @@ export function setupModals(S, A) {
         button.setAttribute('aria-disabled', String(pending));
         button.setAttribute('aria-pressed', String(active));
         button.title = label;
-        button.innerHTML = `${icon(active ? 'collapse' : 'expand')}<span>${label}</span>`;
+        // The top bar's one-tap button (owner) stays icon-only; its name moves to aria-label.
+        if (button.classList.contains('icon-button')) { button.setAttribute('aria-label', label); button.innerHTML = icon(active ? 'collapse' : 'expand'); }
+        else button.innerHTML = `${icon(active ? 'collapse' : 'expand')}<span>${label}</span>`;
       }
     },
   });
@@ -190,6 +192,11 @@ export function setupModals(S, A) {
     });
 
     $("fullscreen").onclick = (event) => toggleFullscreenFrom(event.currentTarget);
+    // Top bar (owner, one tap in play): hidden where full screen cannot exist (an installed web app, or a
+    // browser without the API such as iPhone Safari), where it would only open the help card.
+    const top = $("fullscreen-top");
+    top.onclick = (event) => toggleFullscreenFrom(event.currentTarget);
+    top.hidden = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true || !(document.fullscreenEnabled || document.webkitFullscreenEnabled);
 
     fullscreen.refresh();
 

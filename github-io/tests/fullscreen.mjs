@@ -39,7 +39,35 @@ try {
     assert.equal(await page.evaluate(() => window.__frontier.paused), true, 'changing display mode must not resume a paused battle');
     await page.locator('[data-resume]').click();
     await page.waitForFunction(() => !window.__frontier.paused);
+    // Owner (one tap): the top bar's Full screen button in play, icon-only, toggling both ways.
+    const top = page.locator('#fullscreen-top');
+    assert.equal(await top.isVisible(), true, 'top-bar Full screen shows in play');
+    await top.click();
+    await page.waitForFunction(() => document.fullscreenElement === document.documentElement);
+    await page.waitForFunction(() => document.querySelector('#fullscreen-top').getAttribute('aria-pressed') === 'true');
+    assert.equal(await top.getAttribute('aria-label'), 'Exit full screen');
+    assert.equal(await top.innerText(), '', 'the top-bar button stays icon-only');
+    await top.click();
+    await page.waitForFunction(() => !document.fullscreenElement && document.querySelector('#fullscreen-top').getAttribute('aria-pressed') === 'false');
+    assert.equal(await page.evaluate(() => window.__frontier.paused), false, 'the top-bar toggle does not pause');
     await page.close();
+    // Phones where the API exists: the button fits the compact top bar (one row, 44 px, no overflow).
+    for (const size of [{width:390,height:844}, {width:844,height:390}, {width:320,height:568}]) {
+      const phone = await browser.newPage({viewport:size, isMobile:true, hasTouch:true});
+      phone.on('pageerror', error => errors.push(error.message));
+      await phone.goto(url);
+      await phone.waitForFunction(() => window.__frontier);
+      await phone.locator('#start').tap();
+      await phone.locator('#fullscreen-top').waitFor({state:'visible'});
+      const fit = await phone.evaluate(() => {
+        const bar = document.querySelector('.topbar'), b = document.querySelector('#fullscreen-top').getBoundingClientRect();
+        const tops = [...document.querySelectorAll('.top-actions > button')].filter((x) => x.offsetParent).map((x) => Math.round(x.getBoundingClientRect().top));
+        return { over: bar.scrollWidth - bar.clientWidth, page: document.documentElement.scrollWidth - innerWidth, w: b.width, h: b.height, right: b.right, rows: new Set(tops).size };
+      });
+      assert.ok(fit.over <= 0 && fit.page <= 0 && fit.right <= size.width, `${size.width}x${size.height}: top bar overflows ${JSON.stringify(fit)}`);
+      assert.ok(fit.w >= 40 && fit.h >= 44 && fit.rows === 1, `${size.width}x${size.height}: top-bar button ${JSON.stringify(fit)}`);
+      await phone.close();
+    }
   }
   const page = await browser.newPage({viewport:{width:390, height:844}, isMobile:true, hasTouch:true});
   page.on('pageerror', error => errors.push(error.message));
@@ -50,6 +78,7 @@ try {
   });
   await page.goto(url);
   await page.waitForFunction(() => window.__frontier);
+  assert.equal(await page.evaluate(() => document.querySelector('#fullscreen-top').hidden), true, 'no top-bar Full screen where the API is missing');
   await page.locator('#fullscreen').tap();
   await page.locator('#modal').waitFor({state:'visible'});
   await page.keyboard.press('Escape');
