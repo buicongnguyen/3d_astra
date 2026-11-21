@@ -64,12 +64,14 @@ test('each fx kind draws the same particles twice with the same seeded rng', () 
     assert.ok(out[0].length > 40, id);
   }
 });
+// R3-W: the fifth child is the rocket-body InstancedMesh (src/fx-kinds/rocket-body.js), one fixed draw for every
+// rocket in flight (and none while no rocket flies); the kinds still add nothing.
 test('the kinds use only the existing pools (no new mesh, so no new draw)', () => {
   const fx = fxWith(seeded(5)), before = fx.root.children.length;
   for (const k of Object.values(LOOKS)) k.spawn(fx, { x: 0, z: 0, weapon: 'tank' }, fx.rng, aim());
   for (const m of Object.values(MOMENTS)) m(fx, { x: 0, z: 0, radius: 3 }, fx.rng, [1, 1, 1], null);
   assert.equal(fx.root.children.length, before);
-  assert.equal(before, 4);
+  assert.equal(before, 5);
 });
 test('counter hits: counter class, mechanical bonus, resisted', () => {
   const D = balance.definitions;

@@ -17,6 +17,9 @@ import { shotSlope } from "./terrain-labels.js";
 import { CELLS, CELL, BILLBOARD, STRETCH, GROUND } from "./fx-kinds/cells.js";
 import { LOOKS, MOMENTS, shimmer } from "./fx-kinds/index.js";
 import { crit, resisted } from "./fx-kinds/counter.js";
+import { RocketBodies } from "./fx-kinds/rocket-body.js";
+import { ROCKET } from "./fx-kinds/rocket.js";
+import { LOOKS as MOOD_LOOKS } from "./mission-looks.js";
 
 // Procedural sprite atlas: one 128 px cell per shape, white with alpha.
 function atlas() {
@@ -102,6 +105,7 @@ function resetParticle(p, rng) {
   p.rot = rng() * 6.28; p.spin = 0; p.c0 = WARM.flash; p.c1 = WARM.ember; p.mode = BILLBOARD;
   p.ax = 0; p.ay = 1; p.az = 0; p.length = 0; p.cell = CELL.glow; p.drag = 0; p.gravity = 0; p.floor = -10;
   p.hold = 0; p.fadeIn = 0; p.anchor = null; p.lifted = false; p.delay = 0; p.hitScorch = false;
+  p.owner = 0; // the token of a rocket that moves this record each frame (its flame halo); 0 when the record is reused
   return p;
 }
 
@@ -200,6 +204,8 @@ const PAL = {
   wreckSmoke: [0.12, 0.11, 0.11, 0.5], wreckSmokeEnd: [0.28, 0.27, 0.27, 0],
   trail: [0.82, 0.8, 0.77, 0.5], trailEnd: [0.7, 0.7, 0.7, 0],
   chunkTrail: [0.22, 0.2, 0.19, 0.5], chunkTrailEnd: [0.35, 0.34, 0.33, 0],
+  // The Anti-tank rocket (R3-W): a pale smoke ribbon and the hot halo around its tail flame.
+  ribbon: [0.93, 0.91, 0.86, 0.85], ribbonEnd: [0.78, 0.77, 0.75, 0], halo: [1, 0.7, 0.3, 1],
 };
 // Roof height of each building type (measured on the models), where its smoke and fire start.
 const ROOF = { hq: 5.2, barracks: 3.8, foundry: 4.4, relay: 3.6, tower: 3.8 };
@@ -231,13 +237,16 @@ export class Effects {
     this.debrisFree = [];
     this.debrisDrawn = 0;
     this.projectiles = [];
+    // Every rocket body in flight: one instanced draw, hidden while none flies (src/fx-kinds/rocket-body.js).
+    this.rockets = new RocketBodies(48);
+    this.rocketTokens = 0;
     this.timeline = [];
     this.emitters = new Map();
     this.burning = []; // damaged entities drawn this frame (smoke and fire), refilled in place
     this.emitShare = 1; // their shared emission budget (see update)
     this.time = 0;
     this.root = new THREE.Group();
-    this.root.add(this.decals.mesh, this.smoke.mesh, this.glow.mesh, this.debrisMesh);
+    this.root.add(this.decals.mesh, this.smoke.mesh, this.glow.mesh, this.debrisMesh, this.rockets.mesh);
     view.scene.add(this.root);
     this.dummy = new THREE.Object3D();
     // Per-frame fog checks are cached per anchor in a map reused every frame.
@@ -395,6 +404,33 @@ export class Effects {
     // Hot ground: an orange glow that cools in about a second, then the scorch.
     this.decal(at, 2.2 * s, 1.2, anchor, CELL.glow, [1, 0.45, 0.1, 0.85], this.glow, 1.7 * s, { hold: 0.15, y: 0.08 });
     this.scorch(at, 2.6 * s, anchor);
+  }
+  // An Anti-tank rocket landing (src/fx-kinds/rocket.js), shaped by its target. On armour: a white-hot star,
+  // the usual heavy hit, a fan of sparks thrown back off the plate, a few metal chips and a ring. On infantry or a
+  // building (20 damage): a smaller burst. (ux, uz) is the rocket's heading, so the sparks fly back at the shooter's side.
+  rocketImpact(p, ux = 0, uz = 0) {
+    const at = p.land || p.to, anchor = p.anchor, top = { x: at.x, y: at.y + 0.2, z: at.z };
+    if (p.impact !== "armour") {
+      this.particle(this.glow, { ...top, cell: CELL.flare, s0: 1.6, s1: 2, life: 0.1, c0: WARM.flash, c1: [1, 0.6, 0.2, 0], anchor });
+      this.hit(at, 0.45, anchor);
+      return;
+    }
+    this.particle(this.glow, { ...top, cell: CELL.flare, s0: 4.6, s1: 5.4, life: 0.14, c0: [1, 1, 0.94, 1], c1: [1, 0.7, 0.3, 0], anchor });
+    this.hit(at, 0.8, anchor);
+    if (!this.motion) return;
+    for (let i = 0, n = this.count(9); i < n; i++) {
+      const spread = (this.rng() - 0.5) * 2.2, v = 5 + this.rng() * 6, c = Math.cos(spread), s = Math.sin(spread);
+      const vx = (-ux * c + uz * s) * v, vz = (-uz * c - ux * s) * v, vy = (1.5 + this.rng() * 3), l = Math.hypot(vx, vy, vz) || 1;
+      this.particle(this.glow, { ...top, vx, vy, vz, gravity: 14, drag: 1.4, life: 0.3 + this.rng() * 0.25, mode: STRETCH,
+        ax: vx / l, ay: vy / l, az: vz / l, length: 0.5, s0: 0.08, s1: 0.04, cell: CELL.streak, c0: [1, 0.95, 0.75, 1], c1: WARM.sparkEnd, floor: 0.05, anchor });
+    }
+    this.addDebris(at, 3, anchor, 0.7, 1);
+    this.particle(this.glow, { ...top, cell: CELL.ring, s0: 0.6, s1: 3.2, life: 0.22, c0: [1, 0.85, 0.55, 0.8], c1: [1, 0.6, 0.2, 0], anchor });
+  }
+  // How brightly the rocket bodies are lit: the mission look's sun strength (night 0.42, storm 0.5), softened.
+  rocketLight() {
+    const state = this.view.mood?.state, def = state?.name ? MOOD_LOOKS[state.name] : null;
+    return def ? 1 + (Math.max(0.55, 0.35 + def.sunI) - 1) * (state.k ?? 1) : 1;
   }
   // -- events
   // Muzzle and aim point of a shot, in world height (plateaus included). Rounds take
@@ -822,25 +858,61 @@ export class Effects {
     const visible = this.visible;
     for (let i = this.timeline.length - 1; i >= 0; i--)
       if (this.timeline[i].at <= this.time) this.timeline.splice(i, 1)[0].run();
+    // Rocket bodies are lit like the scene: dimmer under a night or storm look, never black.
+    this.rockets.begin(this.time, this.rocketLight());
+    // Never smaller than about 24 CSS pixels nose to flame tip, so a rocket reads at phone zoom too.
+    const bodyScale = Math.min(1.8, Math.max(1, 24 * (this.view.unitsPerPixel || 0) / 1.86));
     for (let i = this.projectiles.length - 1; i >= 0; i--) {
       const p = this.projectiles[i];
       if (p.wait > 0) { p.wait -= dt; continue; } // a rocket of a salvo that has not left yet (src/fx-kinds/pods.js)
       p.age += dt;
-      const t = Math.min(1, p.age / p.travel);
+      const t = Math.min(1, p.age / p.travel), lift = p.arc ? p.arc * 4 * t * (1 - t) : 0;
+      const x = p.from.x + (p.to.x - p.from.x) * t, y = p.from.y + (p.to.y - p.from.y) * t + lift, z = p.from.z + (p.to.z - p.from.z) * t;
+      // The heading along the arc (its derivative), for the body, its flame halo and its ribbon.
+      let ux = 0, uy = 0, uz = 0;
+      if (p.body) {
+        ux = p.to.x - p.from.x; uy = p.to.y - p.from.y + (p.arc || 0) * 4 * (1 - 2 * t); uz = p.to.z - p.from.z;
+        const l = Math.hypot(ux, uy, uz) || 1; ux /= l; uy /= l; uz /= l;
+      }
+      const tail = p.body ? 0.62 * p.body * bodyScale : 0;
+      if (p.body && !p.step) p.step = Math.hypot(p.to.x - p.from.x, p.to.y - p.from.y, p.to.z - p.from.z) / p.travel * ROCKET.trailGap;
       if (p.rocket && dt > 0) {
         p.trail += dt;
-        while (p.trail > 0.025) {
-          p.trail -= 0.025;
-          const q = this.emit(this.smoke, p.from.x + (p.to.x - p.from.x) * t, p.from.y + (p.to.y - p.from.y) * t, p.from.z + (p.to.z - p.from.z) * t, p.anchor, true);
-          q.vy = 0.3; q.drag = 1; q.life = 0.7 + this.rng() * 0.3; q.s0 = 0.25; q.s1 = 1; q.cell = CELL.puff;
-          q.c0 = PAL.trail; q.c1 = PAL.trailEnd; q.spin = 0.6;
+        const gap = p.body ? ROCKET.trailGap : 0.025;
+        while (p.trail > gap) {
+          p.trail -= gap;
+          const q = this.emit(this.smoke, x - ux * tail, y - uy * tail, z - uz * tail, p.anchor, true);
+          if (p.body) {
+            // A short ribbon: soft segments laid along the flight path that widen a little and fade in half a second.
+            q.vy = 0.25; q.drag = 1.4; q.life = 0.42 + this.rng() * 0.14; q.s0 = 0.2 * p.body; q.s1 = 0.62 * p.body; q.cell = CELL.glow;
+            q.mode = STRETCH; q.ax = ux; q.ay = uy; q.az = uz; q.length = p.step * 2.2; q.c0 = PAL.ribbon; q.c1 = PAL.ribbonEnd;
+          } else {
+            q.vy = 0.3; q.drag = 1; q.life = 0.7 + this.rng() * 0.3; q.s0 = 0.25; q.s1 = 1; q.cell = CELL.puff;
+            q.c0 = PAL.trail; q.c1 = PAL.trailEnd; q.spin = 0.6;
+          }
         }
+      }
+      if (p.body && t < 1) {
+        p.roll += ROCKET.spin * dt;
+        // The flame halo: one pooled glow sprite per rocket, moved to the nozzle every frame.
+        let h = p.halo;
+        if (!h || h.owner !== p.token) {
+          h = p.halo = this.particle(this.glow, { lifted: true, x, y, z, s0: 1.15 * p.body, s1: 1.15 * p.body, life: p.travel + 1, c0: PAL.halo, c1: PAL.halo, anchor: p.anchor });
+          h.owner = p.token = p.token || ++this.rocketTokens;
+        }
+        h.x = x - ux * tail * 1.25; h.y = y - uy * tail * 1.25; h.z = z - uz * tail * 1.25;
+        if (visible(p.anchor)) this.rockets.add(x, y, z, ux, uy, uz, p.roll, p.body * bodyScale, p.color);
       }
       if (t >= 1) {
         this.projectiles.splice(i, 1);
-        if (visible(p.anchor)) this.hit(p.land || p.to, p.power ?? (p.cannon || p.rocket ? 1 : 0), p.anchor);
+        if (p.halo && p.halo.owner === p.token) { p.halo.age = p.halo.life; p.halo.owner = 0; }
+        if (visible(p.anchor)) {
+          if (p.impact) this.rocketImpact(p, ux, uz);
+          else this.hit(p.land || p.to, p.power ?? (p.cannon || p.rocket ? 1 : 0), p.anchor);
+        }
       }
     }
+    this.rockets.end();
     // Smoke on damaged buildings, fire on critical ones and on machines; fog-aware and capped
     // like the HUD's fire list.
     // Many damaged buildings share one smoke budget (about 220 live puffs at High) so they
@@ -917,6 +989,7 @@ export class Effects {
     for (const layer of [this.decals, this.smoke, this.glow]) layer.clear();
     for (const d of this.debris) this.debrisFree.push(d);
     this.debris.length = this.projectiles.length = this.timeline.length = 0;
+    this.rockets.begin(this.time, 1); this.rockets.end();
     this.emitters.clear();
     this.workTimers.clear();
     this.workCursor = 0;
@@ -929,6 +1002,7 @@ export class Effects {
     for (const layer of [this.decals, this.smoke, this.glow]) layer.dispose();
     this.debrisMesh.geometry.dispose();
     this.debrisMesh.material.dispose();
+    this.rockets.dispose();
     this.texture.dispose();
   }
 }

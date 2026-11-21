@@ -1,4 +1,5 @@
-// Hawk: two pod rockets one after the other, each with a smoke trail (the pool's rocket projectile) and a small blast.
+// Hawk: two pod rockets one after the other, each a small finned body (src/fx-kinds/rocket-body.js) with a smoke
+// trail (the pool's rocket projectile) and a small blast.
 import { CELL, STRETCH } from "./cells.js";
 import { flare, smokePuff } from "./common.js";
 
@@ -15,7 +16,8 @@ export default {
       fx.particle(fx.glow, { ...f, ...v, mode: STRETCH, ax: dx / len, ay: dy / len, az: dz / len, length: Math.min(1.3, len), s0: 0.16, s1: 0.16, life: travel, cell: CELL.streak,
         c0: c, c1: [c[0], c[1], c[2], 0.8], anchor, delay, rot: rng() * 6.28 });
       fx.particle(fx.glow, { ...f, ...v, s0: 0.45, s1: 0.45, life: travel, c0: [1, 0.85, 0.5, 1], c1: [1, 0.7, 0.4, 1], anchor, delay, rot: rng() * 6.28 });
-      fx.projectiles.push({ from: f, to: t, land: { x: t.x, y: 0.95, z: t.z }, travel, age: 0, wait: delay, rocket: true, cannon: false, power: a.power, anchor, trail: 0, weapon: ev.weapon });
+      fx.projectiles.push({ from: f, to: t, land: { x: t.x, y: 0.95, z: t.z }, travel, age: 0, wait: delay, rocket: true, cannon: false, power: a.power, anchor, trail: 0, weapon: ev.weapon,
+        body: 0.6, arc: 0, roll: rng() * 6.28, halo: null, step: 0, token: 0, color: c }); // a small visible pod rocket (R3-W)
     }
   },
 };
