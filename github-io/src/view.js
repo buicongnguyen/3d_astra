@@ -1367,7 +1367,9 @@ export class WorldView {
         else part.userData.tint = WRECK_TINT;
       });
     }
-    this.dying.push({ baseY: o.position.y, object: o, kind, team: event.team, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1), lift: model.position?.y ?? 0,
+    // R3-K: `look` (combat-feedback.js DEATH_LOOK) is settled by the DeathLooks plugin once the frame's
+    // killing shot is known (0 until then); `id` lets it find the shot.
+    this.dying.push({ id: event.seed, look: 0, baseY: o.position.y, object: o, kind, team: event.team, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1), lift: model.position?.y ?? 0,
       life: { building: 2.8, vehicle: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, air: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, infantry: 1.6 }[kind], baseAngle: model.rotation.y, direction: event.direction ?? model.rotation.y });
   }
   // Hit flash (combat-feedback.js stepFlash): every model part shares one tint array that the
@@ -1414,10 +1416,29 @@ export class WorldView {
       } else if (d.kind === 'boss') {
         this.bosses.fall(d, t, motion);
       } else if (d.kind === 'vehicle') {
-        const hop = motion ? Math.sin(Math.min(1, t / 0.45) * Math.PI) * 0.55 : 0;
-        o.position.y = d.baseY + hop - ease((t - (d.life - 0.9)) / 0.9) * 1.8;
-        m.rotation.z = d.tilt * ease(t / 0.45) * 0.18;
-        m.rotation.x = -ease(t / 0.45) * 0.1;
+        // R3-K death looks: a blast throws the wreck higher, rolls it further and turns it; a seared
+        // wreck does not hop, it shudders and settles lower. Motion off: the same final poses, no throw.
+        const blast = d.look === 2, seared = d.look === 3;
+        const hop = motion && !seared ? Math.sin(Math.min(1, t / (blast ? 0.6 : 0.45)) * Math.PI) * (blast ? 1.05 : 0.55) : 0;
+        const shudder = motion && seared ? Math.sin(t * 57) * Math.max(0, 1 - t / 0.5) * 0.06 : 0;
+        o.position.y = d.baseY + hop - ease((t - (d.life - 0.9)) / 0.9) * 1.8 - (seared ? ease(t / 0.8) * 0.18 : 0);
+        if (seared) o.position.x = d.x + shudder;
+        m.rotation.z = d.tilt * ease(t / (blast ? 0.6 : 0.45)) * (blast ? 0.42 : seared ? 0.08 : 0.18);
+        m.rotation.x = -ease(t / 0.45) * (blast ? 0.22 : 0.1);
+        if (blast && motion) m.rotation.y = d.baseAngle + d.tilt * ease(t / 0.6) * 0.5;
+      } else if (d.look === 2 && motion) {
+        // R3-K: thrown back along the shot, landing flat (d.direction points from the killer to the unit).
+        const k = ease(t / 0.55), hop = Math.sin(Math.min(1, t / 0.55) * Math.PI) * 0.6;
+        m.rotation.y = d.direction;
+        m.rotation.x = -ease(t / 0.45) * 1.55;
+        m.rotation.z = d.tilt * k * 0.35;
+        o.position.set(d.x + Math.sin(d.direction) * k * 1.4, d.baseY + hop - ease((t - 0.9) / 0.7) * 1.2, d.z + Math.cos(d.direction) * k * 1.4);
+      } else if (d.look === 3) {
+        // R3-K: seared where it stands, a stiff shudder then a crumple onto its knees and down.
+        const shake = motion ? Math.sin(t * 63) * Math.max(0, 1 - t / 0.35) * 0.08 : 0;
+        m.rotation.y = d.direction + shake;
+        m.rotation.x = -ease((t - 0.25) / 0.7) * 1.3;
+        o.position.y = d.baseY - ease(t / 0.9) * 0.25 - ease((t - 0.9) / 0.7) * 1.0;
       } else {
         m.rotation.y = d.direction;
         m.rotation.x = -ease(t / FEEL.fallSeconds) * 1.45;

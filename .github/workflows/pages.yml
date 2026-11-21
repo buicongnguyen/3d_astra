@@ -157,6 +157,9 @@ jobs:
           # AAA round 3 (R3-H): The Sovereign Walks (relay shield, phase 2 surge and rail sweep) at three viewports.
           - name: r3-h
             scripts: sovereign-walks
+          # AAA round 3 (R3-K): battle readability (wide-zoom type icons, group badges, threat arrows, death looks, Combined gold trim).
+          - name: r3-k
+            scripts: readability
     defaults:
       run:
         working-directory: github-io

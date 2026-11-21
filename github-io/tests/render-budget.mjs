@@ -129,6 +129,12 @@ const scenarios = [
   // adds two draws (the bubble and one instanced draw for every tether), none without relays.
   {name:'boss-sovereign2-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, boss:'ironsovereign2',
     spawn:[{type:'relay', team:1, near:[-14,-12]}, {type:'relay', team:1, near:[8,-14]}]},
+  // AAA round 3 (R3-K): battle readability. battle-eco at the widest phone zoom (88), where every unit carries a type
+  // icon (the status atlas: one draw); battle-eco at its own zoom with three Ctrl+number groups (badges, the same draw);
+  // and Three Roads with both armour squads bought Combined (one gold-trim draw, stars in the atlas draw).
+  {name:'wide-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:88, focus:[-3,0], reveal:true, army:60, triangles:380000}, // the whole map in view: 351,390 triangles on the base build
+  {name:'groups-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, groups:3},
+  {name:'combined-defence-eco', defence:'d-crossroads', mobile:true, zoom:92, focus:[0,0], reveal:true, wave:120, towers:10, zoneTowers:4, armour:2, combined:true, triangles:600000, compose:500, carrierEvery:20, unlockAfter:'d-longcrossing'},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
@@ -147,6 +153,7 @@ Object.assign(limits, {'boss-sovereign2-eco':125}); // R3-H
 Object.assign(limits, {'battle-200':260}); // R3-C
 Object.assign(limits, {'air-battle':135}); // R3-W: 125 draws on 2026-11-21 (123 before: +1 rocket bodies, +1 air life)
 Object.assign(limits, {'building-life-eco':110}); // R3-L
+Object.assign(limits, {'wide-battle-eco':152, 'groups-battle-eco':111, 'combined-defence-eco':97}); // R3-K: the same scene on the base build + 4 (148, 107, 93 draws on 2026-11-21)
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -268,6 +275,13 @@ try {
         }
         v.fx.update(s, 0.2);
       }
+      // R3-K `groups: n`: the player's units in n Ctrl+number groups of 8 (badges at close zoom); `combined`: every
+      // armour squad tank bought Combined (gold trim and star). View only.
+      if (scenario.groups) {
+        const mine = s.entities.filter(e => e.kind === 'unit' && e.team === 0).map(e => e.id);
+        v.controlGroups = new Map(Array.from({length:scenario.groups}, (_, k) => [String(k + 1), mine.slice(k * 8, k * 8 + 8)]));
+      }
+      if (scenario.combined) for (const e of s.entities) if (e.squad && e.team === 0) e.combined = true;
       // Data-driven units: a 2 m grid centred on `near`.
       for (const {type, team = 1, count = 1, near = [0, 0]} of scenario.spawn || []) {
         const cols = Math.ceil(Math.sqrt(count)), rows = Math.ceil(count / cols);

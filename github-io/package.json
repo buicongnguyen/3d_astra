@@ -84,7 +84,8 @@
     "check:difficulty": "node tools/difficulty-check.mjs --jobs 3",
     "test:cover-ui": "node tests/cover-ui.mjs",
     "test:openings": "node tests/openings.mjs",
-    "test:sovereign-walks": "node tests/sovereign-walks.mjs"
+    "test:sovereign-walks": "node tests/sovereign-walks.mjs",
+    "test:readability": "node tests/readability.mjs"
   },
   "dependencies": {
     "three": "0.185.1"
