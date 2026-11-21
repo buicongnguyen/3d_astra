@@ -55,6 +55,20 @@ const PALETTES = {
     [/AuxiliarySteel$/, "Steel", "#c9bfae", 0.9, 0.32, null],
     [/Core$/, "BossCore", "#ffc65a", 0.0, 0.3, "#ff9a30"],
   ],
+  // R3-J (round 3 warm kit): the Sovereign as a royal brass fortress. The dark oxblood hull read as one
+  // red block with the coral (hostile) team struts; brass keeps it warm and vivid and sets the team
+  // colour apart on any side. The gold fittings turn crimson, the feet and gun bores take the kit's warm
+  // umber (were near-black violet), the steel is the kit's warm steel and the core runs white-hot so it
+  // stands off the brass. Each material keeps its metal / roughness class (src/view.js reflects()), so
+  // the baked groups and draws are unchanged.
+  sovereign3: [
+    [/(Tracks|Bore)$/, "Undercarriage", "#54463c", 0.4, 0.6, null],
+    [/Armor$/, "Armor", "#e6a838", 0.4, 0.5, null],
+    [/BossTrim$/, "Team", "#c9d6cf", 0.25, 0.42, null],
+    [/AuxiliaryTrim$/, "Crimson", "#d8402c", 0.7, 0.3, null],
+    [/AuxiliarySteel$/, "Steel", "#d8cdb8", 0.9, 0.32, null],
+    [/Core$/, "BossCore", "#fff1c4", 0.0, 0.3, "#ffc45a"],
+  ],
 };
 const PALETTE = PALETTES[flag("--palette") ?? map.palette ?? "ashfall"];
 if (!PALETTE) throw new Error(`unknown palette ${flag("--palette") ?? map.palette}`);

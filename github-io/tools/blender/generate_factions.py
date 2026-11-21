@@ -132,6 +132,10 @@ def salvageyard(a):
   cyl(a,'Stack_rims','Steel',.19,.12,(x,1.45,.2+hgt),seg=12)
  for x in [-2.05,2.2]:
   for k in [-1,1]:spike(a,'Gantry_spikes','Steel',(x,.6+k*.12,3.72),rot=(k*.35,0,0),r=.08,h=.42)
+ # R3-J: an operator cab on the right gantry post, its lit window toward the yard (Window* glows at night).
+ box(a,'Operator_cab',a.armor,(.75,.7,.62),(1.7,.15,2.6),bevel=.05)
+ box(a,'Cab_windows','Window',(.6,.05,.3),(1.7,-.21,2.66),bevel=.01)
+ box(a,'Cab_windows','Window',(.05,.5,.3),(2.08,.15,2.66),bevel=.01)
 def rider(a):
  # Pedalled two-wheel outrider: low awning, visible rider and pannier tanks.
  for y in [-.95,.95]:
@@ -189,19 +193,36 @@ def waystation(a):
   cyl(a,'Round_tanks','Medical',.55,1.45,(x,.6,1),seg=20)
   a.part('Tank_bands','Steel').torus(.56,.045,loc=(x,.6,.8),seg=16,ring=6)
  box(a,'Counter',a.armor,(2.3,.8,.85),(0,-.9,.65),bevel=.07)
+ # R3-J: the counter's lit hatches (Window* glows at night).
+ for x in [-.75,0,.75]:box(a,'Counter_windows','Window',(.5,.05,.3),(x,-1.31,.72),bevel=.01)
  for x in [-.8,0,.8]:box(a,'Supply_crates','Team',(.6,.55,.4),(x,-.8,1.24))
  for x in [-2,2]:cyl(a,'Wheel_sign','Team',.43,.1,(x,-1.7,.7),rot=(R,0,0),seg=20)
 def eye(a,loc,r=.22):
  cyl(a,'Eye_rim','Steel',r*1.4,.12,loc,rot=(R,0,0),seg=20)
  cyl(a,'Single_eye','TeamGlow',r,.14,(loc[0],loc[1]-.05,loc[2]),rot=(R,0,0),seg=20)
 def drone(a):
+ # R3-J (round 3): the Sentinel drone in the Wardens look. Before it was a team-coloured ball with a
+ # gunmetal thruster; now an ice-white shell (ArmorWardens) with the Wardens marks the walker and pylon
+ # carry: a team crest fin, a team brow band and two little tower shields beside the twin emitters.
+ # Same four materials (no new draw), same hover pivot, emitters still named Barrel* (aim/recoil rig).
  a.pivot('hover',(0,0,0))
- a.part('Smooth_shell','Team').sphere(.65,loc=(0,0,1.35),seg=20,rings=12)
- a.part('Orbital_ring','Steel').torus(.95,.105,loc=(0,0,1.28),seg=28,ring=8)
- cyl(a,'Lower_thruster',a.armor,.32,.35,(0,0,.78),seg=20)
- cyl(a,'Thruster_light','TeamGlow',.23,.08,(0,0,.58),seg=16)
- eye(a,(0,-.61,1.42),.21)
- for sign in [-1,1]:box(a,'Barrel_emitters','Steel',(.16,.6,.14),(sign*.5,-.46,1.13))
+ a.part('Smooth_shell',a.armor).sphere((.64,.6,.56),loc=(0,0,1.36),seg=22,rings=14)
+ a.part('Brow_band','Team').torus(.6,.06,loc=(0,0,1.5),rot=(.12,0,0),seg=24,ring=6)
+ a.part('Crest','Team').prism([(.45,1.72),(.05,2.38),(-.38,2.3),(-.6,1.84),(-.1,2.02)],.12,loc=(0,0,0),axis='X',bevel=.03,seg=1)
+ a.part('Halo','Steel').torus(.9,.07,loc=(0,.02,1.22),rot=(.08,0,0),seg=28,ring=6)
+ for i in range(3):
+  ang=math.pi/2+i*math.tau/3;c,sn=math.cos(ang),math.sin(ang)
+  beam(a,'Halo_struts','Steel',(c*.5,sn*.5,1.24),(c*.86,sn*.86,1.23),.05)
+ cyl(a,'Lower_thruster',a.armor,.34,.24,(0,0,.86),seg=20)
+ a.part('Thruster_cone','Steel').cyl(.27,.24,loc=(0,0,.66),seg=16,r2=.18,bevel=.01,bseg=1)
+ cyl(a,'Thruster_light','TeamGlow',.2,.06,(0,0,.52),seg=16)
+ eye(a,(0,-.58,1.4),.2)
+ for sign in [-1,1]:
+  beam(a,'Shield_arms','Steel',(sign*.5,0,1.24),(sign*.82,-.12,1.18),.08)
+  box(a,'Tower_shields',a.armor,(.13,.62,.78),(sign*.9,-.14,1.24),rot=(0,sign*.12,0),bevel=.05)
+  box(a,'Shield_stripes','Team',(.15,.14,.66),(sign*.92,-.3,1.24),rot=(0,sign*.12,0),bevel=.03)
+  box(a,'Barrel_emitters','Steel',(.14,.62,.13),(sign*.62,-.56,1.06))
+  sail(a,'Tail_fins','Team',[(.4,1.0),(.62,.8),(.62,1.12)],(sign*.22,0,0),depth=.05)
 def walker(a):
  legs(a,.65,1.8,True)
  box(a,'Hip_bridge','Steel',(1.65,.65,.35),(0,0,1.85),bevel=.1)
@@ -230,6 +251,10 @@ def pylon(a):
   box(a,'Tower_shields',a.armor,(.9,.16,1.5),(c*1.45,sn*1.45,.95),rot=(0,0,ang+R),bevel=.05)
   box(a,'Shield_stripes','Team',(.18,.18,1.3),(c*1.5,sn*1.5,.95),rot=(0,0,ang+R),bevel=.03)
  a.part('Crest','Team').prism([(.45,3.85),(0,4.6),(-.45,3.85)],.14,loc=(0,0,0),axis='X',bevel=.03,seg=1)
+ # R3-J: lit control slits round the spine (Window* glows at night).
+ for i in range(4):
+  ang=math.pi/4+i*math.pi/2;c,sn=math.cos(ang),math.sin(ang)
+  box(a,'Spine_windows','Window',(.07,.16,.42),(c*.31,sn*.31,2.55),rot=(0,0,ang),bevel=.01)
 def veilrelay(a):
  base(a,3.6,3.6)
  a.part('Narrow_housing','Team').prism([(-.85,0),(-.5,2.3),(0,2.7),(.5,2.3),(.85,0)],1.1,loc=(0,0,.25),axis='Y',seg=1)

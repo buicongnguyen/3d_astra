@@ -6,7 +6,7 @@ The default out_dir is src/art, where Vite fingerprints the files it bundles.
 
 Outputs (WebP, sRGB):
   keyart.webp / keyart-960.webp  golden-hour outpost scene for the start screen
-  portraits.webp                 4x8 atlas of 192 px unit and building portraits, team paint white
+  portraits.webp                 4x10 atlas of 192 px unit and building portraits, team paint white
   portrait-mask.webp             same atlas; alpha marks visible team paint so the page can tint
                                  portraits with the player's chosen army colour
   emblem.webp                    512 px Frontier Command emblem on a transparent background
@@ -28,7 +28,10 @@ MODELS = ROOT / 'public' / 'models'
 PORTRAITS = ['worker', 'vanguard', 'ranger', 'breaker', 'medic', 'engineer', 'tank', 'antitank',
              'hq', 'relay', 'barracks', 'foundry', 'tower',
              'scrapper', 'scorcher', 'salvageyard', 'rider', 'wagon', 'waystation', 'drone', 'walker', 'pylon', 'shade', 'watcher', 'veilrelay',
-             'kite', 'hawk', 'balloon', 'glider']
+             'kite', 'hawk', 'balloon', 'glider',
+             'carrier', 'ironvanguard', 'gunner', 'stalker', 'ironsovereign', 'workshop', 'rampart', 'ironsovereign2']
+# R3-J: a cell that reuses another model's render (R3-H's second Sovereign shares the Sovereign model).
+SAME_MODEL = {'ironsovereign2': 'ironsovereign'}
 CELL, COLS = 192, 4
 ROWS = math.ceil(len(PORTRAITS) / COLS)
 
@@ -373,7 +376,7 @@ def portraits(out):
                 reset()
                 setup(CELL * 2, CELL * 2, True, samples=64)
                 world(lin('#6f8796'), 0.45)
-                roots, objects = import_glb(name)
+                roots, objects = import_glb(SAME_MODEL.get(name, name))
                 paint_team(objects, PAINT, mask=is_mask)
                 pivot = place(roots, objects, (0, 0, 0), 0)
                 lo, hi = bounds(objects)

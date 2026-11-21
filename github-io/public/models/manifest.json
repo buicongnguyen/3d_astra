@@ -152,7 +152,7 @@
     {
       "name": "waystation",
       "file": "waystation.glb",
-      "triangles": 2104,
+      "triangles": 2148,
       "faction": "sunward",
       "kind": "building",
       "budget": 4000,
@@ -163,11 +163,12 @@
     {
       "name": "drone",
       "file": "drone.glb",
-      "triangles": 1568,
+      "triangles": 2516,
       "faction": "wardens",
       "kind": "unit",
       "budget": 4500,
-      "review": "approved by owner 2026-11-11",
+      "review": "pending owner review (round 3)",
+      "approved": "owner 2026-11-11 (round-2 shape)",
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
@@ -184,7 +185,7 @@
     {
       "name": "pylon",
       "file": "pylon.glb",
-      "triangles": 2800,
+      "triangles": 2976,
       "faction": "wardens",
       "kind": "building",
       "budget": 4000,
@@ -306,14 +307,14 @@
       "triangles": 1904,
       "boss": "iron-sovereign",
       "budget": 2800,
-      "review": "pending owner review (round 2)",
+      "review": "pending owner review (round 3)",
       "source": "Tank_game_3D public/models/boss-walker.glb (same owner), ported by tools/port-boss-model.mjs --parts tools/boss-parts/ironsovereign.json",
       "animation": "Runtime parts (src/boss-view.js BOSS_PARTS): two tripods of legs, turret, cannon, light gun and core; no baked clips"
     },
     {
       "name": "workshop",
       "file": "workshop.glb",
-      "triangles": 3736,
+      "triangles": 3912,
       "kind": "building",
       "budget": 4000,
       "review": "pending owner review (round 3)",

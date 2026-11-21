@@ -70,6 +70,9 @@ def workshop(a):
         box(a, 'Wall_footing', 'Hazard', (.05, 2.4, .12), (sign * 1.96, .85, Z0 + .1), bevel=.01)
         for y in (-.1, .6, 1.3):
             box(a, 'Wall_seams', 'Armor', (.05, .05, 1.8), (sign * 1.97, y, Z0 + 1.05), bevel=0)
+        # R3-J: lit side windows between the seams (Window* glows at night, R3-D).
+        for y in (.25, .95):
+            box(a, 'Windows', 'Window', (.05, .42, .32), (sign * 1.975, y, Z0 + 1.62), bevel=.01)
     box(a, 'Bay_floor', 'Armor', (2.0, 2.2, .04), (0, .85, Z0 + .02), bevel=0)
     box(a, 'Lintel', 'Team', (2.2, .44, .5), (0, -.4, Z0 + 1.85), bevel=.05)
     for sign in (-1, 1):

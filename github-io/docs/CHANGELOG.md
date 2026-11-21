@@ -112,6 +112,13 @@ Everything below applies only under the skirmish rule `aiPlan: "field"` (`fieldP
 - Model `ironsovereign2.glb`: the Iron Sovereign's port under its own name (pending owner review, round 3).
 - Tests: `tests/sovereign-walks.test.js` (6), `tests/golden-r3h.test.js` (4 pins, one long), browser suite `npm run test:sovereign-walks` (CI matrix `r3-h`), render-budget scenario `boss-sovereign2-eco`.
 
+### R3-J: Models and portraits (art 2)
+- **Sentinel drone, Wardens look:** the team-coloured ball becomes an ice-white shell with the Wardens marks of the Walker and Pylon: a team crest fin, a team brow band, and two small tower shields with team stripes beside the twin emitters, over a steel halo and a lit thruster. Same four materials (no new draw), 2,516 triangles (budget 4,500).
+- **Iron Sovereign, warm palette:** re-ported with the boss tool (`sovereign3` palette in `tools/port-boss-model.mjs`): a brass hull instead of the dark oxblood, so the team-coloured struts stand out on any side, crimson fittings, warm umber feet and bores, warm steel and a white-hot core. Same geometry, parts and bake classes (hull luminance about ×2.8 in the review render).
+- **Lit windows** on the four buildings that had no light: the Shield pylon (control slits round the spine), the Salvage yard (an operator cab on the gantry), the Waystation (counter hatches) and the Field workshop (side windows). They use the `Window` material, so night and storm looks make them glow.
+- **Portraits for every unit and building:** the atlas is re-rendered from the round-3 models and grows from 29 to 37 cells (4 × 10): the Carrier, Iron Vanguard, Gunner, Stalker, Iron Sovereign, Field workshop and Rampart now show their portrait in the HUD, command tiles and Defence intel instead of an icon, and one cell is reserved for the second Sovereign.
+- All changed models are flagged "pending owner review (round 3)". Before/after sheets: `docs/aaa/results/round3/j.md`.
+
 ## 0.25.0: AAA round 2 (release label for the deploy; owner decision O17)
 
 This is the label proposed for the next release. `package.json` still says 0.19.1, nothing is deployed, and the owner decides the number at deploy. It gathers everything of AAA round 2 (plan: docs/aaa/AAA_ROUND2_PLAN.md, results: docs/aaa/results/round2/). The Defence and campaign sections under "Unreleased" further down (0.22 to 0.24 labels) were built before this round and are not part of it.
