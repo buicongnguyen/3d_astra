@@ -106,6 +106,10 @@ const scenarios = [
     spawn:[{type:'stalker', team:1, count:2, near:[-3,-14]}]},
   // W2-C: battle-eco under the night look (palette swap only on Eco: no new light, no new mesh).
   {name:'night-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rules:{look:'night'}},
+  // AAA round 3 (R3-C): Army size 200 is desktop-only, so its battle is measured on the desktop at High:
+  // 200 units (100 a side, the five battle-eco kinds) under the pop 200 rule, framed like base-high.
+  // 248 draws (135 main, 113 shadow), 1.79 M triangles (shadows included), 433 composes on 2026-11-21.
+  {name:'battle-200', map:'riverlands', enemies:1, mobile:false, zoom:42, focus:[-3,4], reveal:true, army:200, rules:{pop:'200'}, triangles:1900000, compose:460},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
@@ -119,6 +123,7 @@ Object.assign(limits, {'battle-expanded-eco':125}); // W1-A
 Object.assign(limits, {'battle-expanded-full-eco':150}); // W2-A
 Object.assign(limits, {'defence-heroic-eco':125}); // W2-B
 Object.assign(limits, {'night-battle-eco':120}); // W2-C
+Object.assign(limits, {'battle-200':260}); // R3-C
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
