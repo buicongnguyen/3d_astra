@@ -1248,7 +1248,18 @@
     "Keep a few units at home, or build a Tower beside the Command core.": "Để lại vài đơn vị ở nhà, hoặc xây một Tháp pháo cạnh Sở chỉ huy.",
     "Research weapons and plating at the Foundry: upgrades win even fights.": "Nghiên cứu vũ khí và giáp tại Nhà máy: nâng cấp giúp thắng những trận cân sức.",
     "Clear": "Bỏ chọn",
-    "Info": "Thông tin"
+    "Info": "Thông tin",
+    "Quick battle": "Trận nhanh",
+    "Ready base · 1 rival": "Căn cứ sẵn · 1 đối thủ",
+    "Enemy roster": "Đội hình địch",
+    "Scout Runner": "Trinh sát chạy",
+    "Bonus alloy": "Hợp kim thưởng",
+    "Catch the Scout Runner before it reaches the end of the road.": "Bắt Trinh sát chạy trước khi nó tới cuối đường.",
+    "Quick battle: your outpost is ready. Enemy scouts are on their way.": "Trận nhanh: tiền đồn của bạn đã sẵn sàng. Trinh sát địch đang tới.",
+    "Enemy scouts sighted! Meet them at your tower.": "Phát hiện trinh sát địch! Đón chúng ở tháp pháo của bạn.",
+    "A Scout Runner is on the road! Catch it for bonus alloy.": "Trinh sát chạy đang trên đường! Bắt nó để nhận hợp kim thưởng.",
+    "Scout Runner caught: bonus alloy!": "Đã bắt Trinh sát chạy: hợp kim thưởng!",
+    "The Scout Runner got away. No lives lost.": "Trinh sát chạy đã thoát. Không mất mạng nào."
   },
   "patterns": [
     ["^(\\d{1,2}) Jan$", "{1} thg 1"],

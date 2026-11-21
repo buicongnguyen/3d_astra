@@ -122,7 +122,8 @@ await suite("cover-ui", async () => {
     assert.deepEqual(state.live, true, `${name}: live layer on`);
     assert.ok(state.lit > 20, `${name}: the live layer draws (${state.lit})`);
     assert.equal(state.clash, 0, `${name}: planet labels clear of logo, panel and heading`);
-    assert.deepEqual([state.logo, state.slot, state.fixed, state.squad], [true, true, "fixed", true], name);
+    // R3-Q fills the #title-actions slot with the one-tap Quick battle, so it shows.
+    assert.deepEqual([state.logo, state.slot, state.fixed, state.squad], [true, false, "fixed", true], name);
 
     // 11 px text, 44 px taps, no sideways scroll, for the cover and its labels.
     const small = await page.evaluate(() => [...document.querySelectorAll("#briefing :is(p,span,strong,small,h2,label,button,b), .cover-label *")]

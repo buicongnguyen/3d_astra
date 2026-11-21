@@ -163,6 +163,9 @@ jobs:
           # AAA round 3 (R3-V): the victory ceremony (slow motion, MVP swing, stamp, confetti, count-up), "So close" and a tip, in Skirmish, a mission and Defence.
           - name: r3-v
             scripts: ceremony
+          # AAA round 3 (R3-Q): first-minute hooks (one-tap Quick battle, First watch roster and Scout Runner), and the bot check (wins, first combat by 45 / 60 s).
+          - name: r3-q
+            scripts: quick-battle quick-battle-check
     defaults:
       run:
         working-directory: github-io

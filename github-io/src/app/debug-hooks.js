@@ -76,6 +76,8 @@ export function setupDebugHooks(S, A) {
       get ceremony() { return A.ceremony?.info() ?? null; },
       onMatchEnd: (fn) => A.onMatchEnd?.(fn),
       mvp: () => S.matchStats.mvp?.() ?? null,
+      // R3-Q: whether the match being played (or the next one built) is a Quick battle.
+      get quick() { return !!S.quick; },
     };
   }
 
