@@ -102,3 +102,13 @@ Arguments after the output folder (`keyart`, `portraits`, `emblem`) render only 
 `preview_factions.py` renders all eight approval sheets through preview_assets.py. The latter accepts --team=RRGGBB and --greyscale, and fits the full projected geometry at the game camera angle. See [aaa/review/README.md](aaa/review/README.md).
 
 The loader retains a `hover` marker as template metadata; only a marked unit receives the optional cosmetic bob. Base models keep their existing shadow behavior; new faction units use no shadow pass, and new buildings may cast shadows.
+
+## Round 3 warm kit (R3-F)
+
+- **Armour:** `Armor` is a glossy warm sand (roughness 0.25, low metal). Keep any new armour-like paint in the same bake class, so `src/view.js reflects()` holds: metalness ≥ 0.5 or roughness ≤ 0.25. That way no model gains a baked mesh, and so no draw.
+- **Dark:** keep it for tracks, boots and joints (`Undercarriage`).
+- **Role paints for the shared infantry:** `ArmorMedic`, `ArmorWorker`, `Cross`, `Cape`, `Safety`.
+- **Faction paints (`a.armor` in `generate_factions.py`):** `ArmorAshfall`, `ArmorSunward`, `ArmorWardens`, `ArmorVeil`. They keep a faction's identity when the player picks another team colour. Team paint goes on bands, fins, shields and crests.
+- **Lit windows:** use the emissive `Window` material. Night looks match the `Window*` name.
+- **Partial rebuild:** `generate_factions.py -- <names>` rebuilds only those faction models. The Drone is skipped unless it is named.
+- **Review sheets and luminance:** run `docs/aaa/results/round3/f/render/run.mjs` (see `docs/aaa/results/round3/f.md`).

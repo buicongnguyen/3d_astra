@@ -6,80 +6,93 @@
     {
       "name": "worker",
       "file": "worker.glb",
-      "triangles": 3116,
-      "animation": "Runtime articulated parts; no baked clips"
+      "triangles": 2996,
+      "animation": "Runtime articulated parts; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "vanguard",
       "file": "vanguard.glb",
       "triangles": 2872,
-      "animation": "Runtime articulated parts; no baked clips"
+      "animation": "Runtime articulated parts; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "ranger",
       "file": "ranger.glb",
-      "triangles": 2996,
-      "animation": "Runtime articulated parts; no baked clips"
+      "triangles": 3076,
+      "animation": "Runtime articulated parts; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "breaker",
       "file": "breaker.glb",
       "triangles": 4520,
-      "animation": "Runtime articulated parts; no baked clips"
+      "animation": "Runtime articulated parts; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "medic",
       "file": "medic.glb",
-      "triangles": 2820,
-      "animation": "Runtime articulated parts; no baked clips"
+      "triangles": 2928,
+      "animation": "Runtime articulated parts; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "engineer",
       "file": "engineer.glb",
-      "triangles": 2772,
-      "animation": "Runtime articulated parts; no baked clips"
+      "triangles": 2940,
+      "animation": "Runtime articulated parts; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "tank",
       "file": "tank.glb",
       "triangles": 6264,
-      "animation": "Runtime articulated parts; no baked clips"
+      "animation": "Runtime articulated parts; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "antitank",
       "file": "antitank.glb",
       "triangles": 3192,
-      "animation": "Runtime articulated parts; no baked clips"
+      "animation": "Runtime articulated parts; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "hq",
       "file": "hq.glb",
       "triangles": 4720,
-      "animation": "Runtime articulated parts; no baked clips"
+      "animation": "Runtime articulated parts; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "barracks",
       "file": "barracks.glb",
       "triangles": 2816,
-      "animation": "Runtime articulated parts; no baked clips"
+      "animation": "Runtime articulated parts; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "foundry",
       "file": "foundry.glb",
       "triangles": 3952,
-      "animation": "Runtime articulated parts; no baked clips"
+      "animation": "Runtime articulated parts; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "relay",
       "file": "relay.glb",
       "triangles": 2776,
-      "animation": "Runtime articulated parts; no baked clips"
+      "animation": "Runtime articulated parts; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "tower",
       "file": "tower.glb",
       "triangles": 2080,
-      "animation": "Runtime articulated parts; no baked clips"
+      "animation": "Runtime articulated parts; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "scrapper",
@@ -88,57 +101,63 @@
       "faction": "ashfall",
       "kind": "unit",
       "budget": 3200,
-      "review": "approved by owner 2026-11-11",
+      "review": "pending owner review (round 3)",
+      "approved": "owner 2026-11-11 (round-2 shape)",
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "scorcher",
       "file": "scorcher.glb",
-      "triangles": 1928,
+      "triangles": 2336,
       "faction": "ashfall",
       "kind": "unit",
       "budget": 4500,
-      "review": "approved by owner 2026-11-11",
+      "review": "pending owner review (round 3)",
+      "approved": "owner 2026-11-11 (round-2 shape)",
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "salvageyard",
       "file": "salvageyard.glb",
-      "triangles": 2132,
+      "triangles": 2140,
       "faction": "ashfall",
       "kind": "building",
       "budget": 4000,
-      "review": "approved by owner 2026-11-11",
+      "review": "pending owner review (round 3)",
+      "approved": "owner 2026-11-11 (round-2 shape)",
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "rider",
       "file": "rider.glb",
-      "triangles": 2388,
+      "triangles": 2496,
       "faction": "sunward",
       "kind": "unit",
       "budget": 4500,
-      "review": "approved by owner 2026-11-11",
+      "review": "pending owner review (round 3)",
+      "approved": "owner 2026-11-11 (round-2 shape)",
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "wagon",
       "file": "wagon.glb",
-      "triangles": 1984,
+      "triangles": 2224,
       "faction": "sunward",
       "kind": "unit",
       "budget": 4500,
-      "review": "approved by owner 2026-11-11",
+      "review": "pending owner review (round 3)",
+      "approved": "owner 2026-11-11 (round-2 shape)",
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "waystation",
       "file": "waystation.glb",
-      "triangles": 2112,
+      "triangles": 2104,
       "faction": "sunward",
       "kind": "building",
       "budget": 4000,
-      "review": "approved by owner 2026-11-11",
+      "review": "pending owner review (round 3)",
+      "approved": "owner 2026-11-11 (round-2 shape)",
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
@@ -154,51 +173,56 @@
     {
       "name": "walker",
       "file": "walker.glb",
-      "triangles": 2836,
+      "triangles": 3268,
       "faction": "wardens",
       "kind": "unit",
       "budget": 6300,
-      "review": "approved by owner 2026-11-11",
+      "review": "pending owner review (round 3)",
+      "approved": "owner 2026-11-11 (round-2 shape)",
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "pylon",
       "file": "pylon.glb",
-      "triangles": 2416,
+      "triangles": 2800,
       "faction": "wardens",
       "kind": "building",
       "budget": 4000,
-      "review": "approved by owner 2026-11-11",
+      "review": "pending owner review (round 3)",
+      "approved": "owner 2026-11-11 (round-2 shape)",
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "shade",
       "file": "shade.glb",
-      "triangles": 2804,
+      "triangles": 2844,
       "faction": "veil",
       "kind": "unit",
       "budget": 3200,
-      "review": "approved by owner 2026-11-11",
+      "review": "pending owner review (round 3)",
+      "approved": "owner 2026-11-11 (round-2 shape)",
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "watcher",
       "file": "watcher.glb",
-      "triangles": 2856,
+      "triangles": 2836,
       "faction": "veil",
       "kind": "unit",
       "budget": 3200,
-      "review": "approved by owner 2026-11-11",
+      "review": "pending owner review (round 3)",
+      "approved": "owner 2026-11-11 (round-2 shape)",
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
       "name": "veilrelay",
       "file": "veilrelay.glb",
-      "triangles": 2180,
+      "triangles": 2248,
       "faction": "veil",
       "kind": "building",
       "budget": 4000,
-      "review": "approved by owner 2026-11-11",
+      "review": "pending owner review (round 3)",
+      "approved": "owner 2026-11-11 (round-2 shape)",
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
@@ -207,7 +231,8 @@
       "triangles": 904,
       "air": true,
       "budget": 1500,
-      "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips"
+      "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "hawk",
@@ -215,7 +240,8 @@
       "triangles": 1408,
       "air": true,
       "budget": 1500,
-      "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips"
+      "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "balloon",
@@ -223,7 +249,8 @@
       "triangles": 1308,
       "air": true,
       "budget": 1500,
-      "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips"
+      "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "glider",
@@ -231,7 +258,8 @@
       "triangles": 1080,
       "air": true,
       "budget": 1500,
-      "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips"
+      "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "carrier",
@@ -241,7 +269,8 @@
       "defence": true,
       "budget": 4500,
       "source": "Kit rebuild after Tank_game_3D public/models/transport.glb (same owner)",
-      "animation": "Runtime articulated parts; no baked clips"
+      "animation": "Runtime articulated parts; no baked clips",
+      "review": "pending owner review (round 3)"
     },
     {
       "name": "ironvanguard",
@@ -255,10 +284,10 @@
     {
       "name": "gunner",
       "file": "gunner.glb",
-      "triangles": 3196,
+      "triangles": 3192,
       "kind": "unit",
       "budget": 3200,
-      "review": "pending owner review (round 2)",
+      "review": "pending owner review (round 3)",
       "source": "tools/blender/generate_gunner.py (frontier_kit), original design",
       "animation": "Runtime articulated parts: one shared leg pivot pair, a recoiling BarrelRig; no baked clips"
     },
@@ -268,7 +297,7 @@
       "triangles": 2724,
       "kind": "unit",
       "budget": 3000,
-      "review": "pending owner review (round 2)",
+      "review": "pending owner review (round 3)",
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
@@ -284,10 +313,10 @@
     {
       "name": "workshop",
       "file": "workshop.glb",
-      "triangles": 3640,
+      "triangles": 3736,
       "kind": "building",
       "budget": 4000,
-      "review": "pending owner review (round 2)",
+      "review": "pending owner review (round 3)",
       "animation": "Runtime articulated parts; no baked clips"
     },
     {
@@ -296,7 +325,7 @@
       "triangles": 5848,
       "kind": "unit",
       "budget": 6300,
-      "review": "pending owner review (round 2)",
+      "review": "pending owner review (round 3)",
       "source": "tools/blender/generate_rampart.py (frontier_kit), original design",
       "animation": "Runtime articulated parts: TurretRig and a recoiling BarrelRig; no baked clips"
     }

@@ -102,7 +102,7 @@ def soldier(a, fig, role):
         hands = {-1: (-.36, -.34, 1.02), 1: (.12, -.52, 1.15)}
         elbows = {-1: (-.4, -.08, 1.22), 1: (.34, -.22, 1.32)}
     for s in (-1, 1):
-        fig.box('Pad', 'Team', (.3, .34, .2), (s * .36, 0, 1.64), rot=(0, s * .35, 0), bevel=.08)
+        fig.box('Pad', 'Team', (.36, .4, .22), (s * .38, 0, 1.66), rot=(0, s * .35, 0), bevel=.08)
         shoulder = (s * .33, .0, 1.58)
         fig.limb('Sleeve', 'Fatigue', shoulder, elbows[s], .17, .18, bevel=.04)
         fig.limb('Forearm', 'Fatigue', elbows[s], hands[s], .15, .15, bevel=.035, taper=(.85, .85))
@@ -116,6 +116,9 @@ def soldier(a, fig, role):
         # The loader carries a spare ammunition can on his left hip and a cap-lamp on the helmet.
         fig.box('Can', 'Hazard', (.2, .12, .26), (-.36, -.28, .98), bevel=.03)
         fig.box('Can_strap', 'Undercarriage', (.22, .13, .05), (-.36, -.28, 1.04), bevel=.01)
+        # R3-F Meridian accent: a whip antenna on the loader's pack (the Team shoulder plates are the other).
+        fig.cyl('Antenna', 'Steel', .025, 1.1, (.14, .3, 2.1), seg=5, bevel=0)
+        fig.box('Antenna_tip', 'TeamGlow', (.06, .06, .06), (.14, .3, 2.67), bevel=0)
 
 
 def gun(a, x):
@@ -143,7 +146,7 @@ def gun(a, x):
     # Brass belt from the ammunition box (right of the gun) up into the feed tray.
     a.part('Belt', 'Hazard').tube([(x + .55, -.46, .36), (x + .5, -.44, .62), (x + .34, -.4, 1.0), (x + .2, -.36, 1.22)], .035, seg=6)
     a.part('Ammo_box', 'Hazard').box((.34, .24, .3), loc=(x + .55, -.46, .19), bevel=.04, seg=1)
-    a.part('Ammo_lid', 'Undercarriage').box((.36, .26, .05), loc=(x + .55, -.46, .36), bevel=.02, seg=1)
+    a.part('Ammo_lid', 'Undercarriage').box((.36, .26, .05), loc=(x + .55, -.46, .36), bevel=0)
 
 
 def gunner_team(a):
@@ -177,7 +180,7 @@ def build(manifest=False):
         data = json.loads(path.read_text(encoding='utf-8'))
         data['assets'] = [e for e in data['assets'] if e['name'] != 'gunner'] + [
             {'name': 'gunner', 'file': 'gunner.glb', 'triangles': a.triangles(), 'kind': 'unit', 'budget': BUDGET,
-             'review': 'pending owner review (round 2)',
+             'review': 'pending owner review (round 3)',
              'source': 'tools/blender/generate_gunner.py (frontier_kit), original design',
              'animation': 'Runtime articulated parts: one shared leg pivot pair, a recoiling BarrelRig; no baked clips'}]
         path.write_bytes((json.dumps(data, indent=2) + '\n').encode('utf-8'))  # LF on Windows too

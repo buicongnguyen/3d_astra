@@ -87,7 +87,8 @@ test('portrait generation preserves legacy cells and appends every approved fact
   const manifest = JSON.parse(read('public/models/manifest.json')).assets, assets = manifest.filter(a => a.faction);
   assert.equal(new Set(order).size, 29);
   assert.deepEqual(new Set(order.slice(13, 25)), new Set(assets.map(a => a.name)));
-  for (const asset of assets) assert.equal(asset.review, 'approved by owner 2026-11-11');
+  // R3-F (round 3) reworked the approved faction models; they wait for the owner again.
+  for (const asset of assets) assert.ok(['approved by owner 2026-11-11', 'pending owner review (round 3)'].includes(asset.review), asset.name);
   // 0.18: the four flyers are appended after the faction cells (manifest entries marked air, no faction).
   assert.deepEqual(order.slice(25), ['kite', 'hawk', 'balloon', 'glider']);
   assert.deepEqual(manifest.filter(a => a.air).map(a => a.name), order.slice(25));
@@ -105,4 +106,55 @@ test('flyer models keep the air contract: hover bob, spin or flicker pivots, a t
     assert.equal(triangles, asset.triangles, type);
     assert.ok(triangles <= asset.budget, type);
   }
+});
+
+// R3-F (AAA round 3, warm kit): glTF material helpers. Blender re-imports add ".002"-style suffixes.
+const materialsOf = name => gltf(name).materials.map(m => ({ name: m.name.replace(/\.\d+$/, ''), m }));
+const lum = ([r, g, b]) => 0.2126 * r + 0.7152 * g + 0.0722 * b; // baseColorFactor is linear
+
+test('R3-F warm kit: armour paints are light, warm and glossy; dark is kept for tracks and joints', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../public/models/manifest.json', import.meta.url), 'utf8')).assets;
+  // Every kit model except the Drone (R3-J) and the ported bosses.
+  const kitModels = manifest.filter(a => !a.boss && a.name !== 'drone').map(a => a.name);
+  assert.ok(kitModels.length >= 33, kitModels.length);
+  for (const name of kitModels) {
+    for (const { name: mat, m } of materialsOf(name)) {
+      const pbr = m.pbrMetallicRoughness || {}, color = pbr.baseColorFactor || [1, 1, 1, 1];
+      if (/^Armor/.test(mat)) {
+        // The round-2 gunmetal was linear luminance 0.11; the shared sand is 0.56, the darkest faction paints (Ashfall
+        // rust, Veil mauve) about 0.19.
+        assert.ok(lum(color) >= 0.17, `${name}: ${mat} too dark (${lum(color).toFixed(3)})`);
+        assert.ok(color[0] >= color[2], `${name}: ${mat} should be warm (red >= blue)`);
+        // Same bake class as before (src/view.js reflects()): no model gains a draw.
+        assert.ok((pbr.metallicFactor ?? 1) >= 0.5 || (pbr.roughnessFactor ?? 1) <= 0.25, `${name}: ${mat} bake class`);
+      }
+      if (mat === 'Undercarriage') assert.ok(lum(color) >= 0.04 && lum(color) < 0.15, `${name}: Undercarriage stays dark but not black`);
+    }
+  }
+  // The four look-alike shared infantry now carry a role paint each (24 px thumbnail test in docs/aaa/results/round3/f.md).
+  const roles = { medic: ['ArmorMedic', 'Cross'], worker: ['ArmorWorker', 'Hazard'], engineer: ['Safety'], ranger: ['Cape'] };
+  for (const [type, need] of Object.entries(roles)) {
+    const names = materialsOf(type).map(x => x.name);
+    for (const mat of need) assert.ok(names.includes(mat), `${type}: ${mat}`);
+  }
+  assert.ok(!materialsOf('engineer').some(x => x.name === 'Hazard'), 'engineer no longer shares the worker yellow');
+});
+
+test('R3-F faction paints, Window* glow contract on buildings, and no model gains a material', () => {
+  const paint = { ashfall: 'ArmorAshfall', sunward: 'ArmorSunward', wardens: 'ArmorWardens', veil: 'ArmorVeil' };
+  const manifest = JSON.parse(readFileSync(new URL('../public/models/manifest.json', import.meta.url), 'utf8')).assets;
+  for (const asset of manifest.filter(a => a.faction && a.name !== 'drone'))
+    assert.ok(materialsOf(asset.name).some(x => x.name === paint[asset.faction]), `${asset.name}: ${paint[asset.faction]}`);
+  // Name contract with R3-D: lit windows are materials named Window*, emissive.
+  for (const name of ['hq', 'barracks', 'foundry', 'veilrelay']) {
+    const win = materialsOf(name).find(x => x.name.startsWith('Window'));
+    assert.ok(win && Math.max(...(win.m.emissiveFactor || [0])) > 0, `${name}: emissive Window* material`);
+  }
+  // Material counts after R3-F (round 2 in brackets where it changed). The wagon took the cream canvas and
+  // the red cross (4 -> 6), still fewer than the medic it replaces (8).
+  const limit = { worker: 8, vanguard: 6, ranger: 7, medic: 8, engineer: 9, antitank: 8, breaker: 7, tank: 7, hq: 9, barracks: 9, foundry: 10, relay: 8, tower: 8,
+    scrapper: 7, scorcher: 5, salvageyard: 7, rider: 5, wagon: 6, waystation: 6, walker: 5, pylon: 5, shade: 7, watcher: 7, veilrelay: 6,
+    gunner: 7, stalker: 7, workshop: 5, rampart: 7, carrier: 5, kite: 7, hawk: 6, balloon: 8, glider: 9 };
+  for (const [name, n] of Object.entries(limit)) assert.ok(gltf(name).materials.length <= n, `${name}: ${gltf(name).materials.length} materials > ${n}`);
+  for (const asset of manifest.filter(a => a.name in limit)) assert.equal(asset.review, 'pending owner review (round 3)', asset.name);
 });

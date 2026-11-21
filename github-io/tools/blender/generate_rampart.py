@@ -163,7 +163,7 @@ def build(manifest=False):
         data = json.loads(path.read_text(encoding='utf-8'))
         data['assets'] = [e for e in data['assets'] if e['name'] != 'rampart'] + [
             {'name': 'rampart', 'file': 'rampart.glb', 'triangles': a.triangles(), 'kind': 'unit', 'budget': BUDGET,
-             'review': 'pending owner review (round 2)',
+             'review': 'pending owner review (round 3)',
              'source': 'tools/blender/generate_rampart.py (frontier_kit), original design',
              'animation': 'Runtime articulated parts: TurretRig and a recoiling BarrelRig; no baked clips'}]
         path.write_bytes((json.dumps(data, indent=2) + '\n').encode('utf-8'))  # LF on Windows too

@@ -161,7 +161,7 @@ def build(manifest=False, parts=False):
         data = json.loads(path.read_text(encoding='utf-8'))
         data['assets'] = [e for e in data['assets'] if e['name'] != 'stalker'] + [
             {'name': 'stalker', 'file': 'stalker.glb', 'triangles': a.triangles(), 'kind': 'unit', 'budget': BUDGET,
-             'review': 'pending owner review (round 2)', 'animation': 'Runtime articulated parts; no baked clips'}]
+             'review': 'pending owner review (round 3)', 'animation': 'Runtime articulated parts; no baked clips'}]
         path.write_bytes((json.dumps(data, indent=2) + '\n').encode('utf-8'))  # LF on Windows too
 
 
