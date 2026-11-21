@@ -124,6 +124,11 @@ const scenarios = [
   // decals and gate details are one instanced draw (no shadow pass).
   {name:'building-life-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-17,14], reveal:true,
     spawn:[{type:'barracks', team:0, near:[-13.2,19.3]}, {type:'relay', team:0, near:[-15,10]}, {type:'tower', team:0, near:[-20,27]}]},
+  // AAA round 3 (R3-H): the walking Iron Sovereign (ironsovereign2, the Sovereign's model under its own name) in
+  // its warning over battle-eco's 60 units, with two Ashfall relays in the frame. Its relay shield, when one is up,
+  // adds two draws (the bubble and one instanced draw for every tether), none without relays.
+  {name:'boss-sovereign2-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, boss:'ironsovereign2',
+    spawn:[{type:'relay', team:1, near:[-14,-12]}, {type:'relay', team:1, near:[8,-14]}]},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
@@ -138,6 +143,7 @@ Object.assign(limits, {'battle-expanded-full-eco':150}); // W2-A
 Object.assign(limits, {'defence-heroic-eco':125}); // W2-B
 Object.assign(limits, {'night-battle-eco':120}); // W2-C
 Object.assign(limits, {'night-base-high':166, 'storm-base-high':166, 'storm-battle-eco':126}); // R3-D: day + 6
+Object.assign(limits, {'boss-sovereign2-eco':125}); // R3-H
 Object.assign(limits, {'battle-200':260}); // R3-C
 Object.assign(limits, {'air-battle':135}); // R3-W: 125 draws on 2026-11-21 (123 before: +1 rocket bodies, +1 air life)
 Object.assign(limits, {'building-life-eco':110}); // R3-L

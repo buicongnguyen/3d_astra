@@ -120,11 +120,27 @@ void main() {
 }`;
 const SHAPES = { circle: 0, cone: 1, line: 2 };
 
+// Boss engine III (R3-H): the relay shield. A bubble round the boss with a bright rim (fresnel) and one
+// tether from each standing relay to it, all in warm Ashfall amber. Two draws while it is shielded, none
+// otherwise; the meshes are made the first time a shielded boss is seen.
+const SHIELD_VERTEX = `varying vec3 vN; varying vec3 vV; void main() { vec4 p = modelViewMatrix * vec4(position, 1.0); vN = normalize(normalMatrix * normal); vV = normalize(-p.xyz); gl_Position = projectionMatrix * p; }`;
+const SHIELD_FRAGMENT = `
+varying vec3 vN; varying vec3 vV;
+uniform vec3 uColor; uniform float uTime, uHit, uFade;
+void main() {
+  float rim = pow(1.0 - abs(dot(normalize(vN), normalize(vV))), 2.2);
+  float bands = 0.5 + 0.5 * sin(vN.y * 14.0 - uTime * 3.0);
+  float a = (0.07 + rim * 0.75 + bands * rim * 0.25 + uHit * 0.35) * uFade;
+  gl_FragColor = vec4(uColor * (1.0 + uHit), min(0.85, a));
+}`;
+const SHIELD_COLOR = 0xffb347, TETHERS = 6;
+
 export class BossView {
   constructor(view) {
     this.view = view;
     this.marks = new Map(); // zone id -> mesh
     this.chargeClock = 0;
+    this.shield = null; // { bubble, tethers, fade, hit }, made on first use
   }
   // Called from WorldView.createEntity for a boss: its parts, a vitals bar above its head.
   dress(root, e) {
@@ -144,6 +160,13 @@ export class BossView {
     } else if (event.type === "bossStage" && sim.isVisible(event)) {
       view.shake.add(FEEL.buildingTrauma, Math.hypot(event.x - view.focus.x, event.z - view.focus.z), view.shakeEnabled());
       view.fx.explosion({ x: event.x, y: 3, z: event.z }, 0.9, { x: event.x, z: event.z, team: event.team }, false);
+    } else if (event.type === "bossSurge" && sim.isVisible(event)) {
+      // Phase 2: a blast at its feet, a heavy shake and the core flaring for the whole surge.
+      view.shake.add(FEEL.coreTrauma, Math.hypot(event.x - view.focus.x, event.z - view.focus.z), view.shakeEnabled());
+      view.fx.explosion({ x: event.x, y: 1.2, z: event.z }, 1.5, { x: event.x, z: event.z, team: event.team }, false);
+      view.fx.shockwave({ x: event.x, y: 0.1, z: event.z }, 16, { x: event.x, z: event.z, team: event.team });
+      const u = view.objects.get(event.id)?.userData.boss;
+      if (u) u.glow = 1;
     } else if (event.type === "bossDefeated") {
       const d = view.dying.find((x) => x.object.userData.boss?.id === event.id);
       if (d) { d.kind = "boss"; d.life = 3.6; }
@@ -198,14 +221,15 @@ export class BossView {
       }
       for (let i = 0; i < 4; i++) u.recoil[i] = Math.max(0, u.recoil[i] - dt);
       // The core: dark while armoured, a bright pulse while exposed.
-      const open = phase === "exposed";
-      u.glow += ((open ? 1 : 0) - u.glow) * Math.min(1, dt * 8);
+      // A boss in a later phase (R3-H) runs hot: the core stays faintly lit, and blazes while it surges.
+      const open = phase === "exposed" || phase === "surge", ember = e.bs?.set ? 0.3 : 0;
+      u.glow += ((open ? 1 : ember) - u.glow) * Math.min(1, dt * 8);
       if (u.core) {
         u.core.visible = u.glow > 0.05;
         u.core.material.emissiveIntensity = 0.6 + u.glow * (2.2 + (motion ? Math.sin(view.lifeClock * 9) * 0.6 : 0));
       }
       // The open core also flares from any side, so it reads even when the chest faces away.
-      if (open && charge && motion && BOSSES[e.boss]?.core) {
+      if ((open || (ember && charge && Math.sin(view.lifeClock * 3) > 0.6)) && charge && motion && BOSSES[e.boss]?.core) {
         const [cx, cy, cz] = BOSSES[e.boss].core, c = Math.cos(e.angle), s = Math.sin(e.angle);
         view.fx.charge({ x: e.x + cx * c + cz * s, y: view.terrain.heightAt(e.x, e.z) + cy, z: e.z - cx * s + cz * c }, 1.6, { x: e.x, z: e.z, team: e.team }, true);
       }
@@ -217,6 +241,68 @@ export class BossView {
       }
     }
     this.updateMarks(sim, dt);
+    this.updateShield(sim, dt);
+  }
+  // The relay shield of a warded boss (spec.ward): the bubble follows the boss, a tether runs from
+  // each standing relay of its team to its chest, and the bubble flickers when the boss is hit.
+  updateShield(sim, dt) {
+    const view = this.view;
+    let boss = null;
+    for (const e of sim.entities) if (e.boss && e.hp > 0 && BOSSES[e.boss]?.ward) { boss = e; break; }
+    const o = boss && view.objects.get(boss.id), on = !!(o?.visible && boss.bs?.warded > 0);
+    if (!on && !this.shield) return;
+    const s = (this.shield ||= this.createShield());
+    s.fade += ((on ? 1 : 0) - s.fade) * Math.min(1, dt * (on ? 4 : 2.5));
+    const shown = s.fade > 0.02 && !!o;
+    s.bubble.visible = shown;
+    s.tethers.visible = shown && on;
+    if (!shown) return;
+    const u = s.bubble.material.uniforms, ground = view.terrain.heightAt(boss.x, boss.z);
+    // The bubble's size: the drawn model's footprint and height, measured once per boss.
+    if (s.for !== boss.id) {
+      const box = new THREE.Box3().setFromObject(o), size = box.getSize(new THREE.Vector3());
+      s.for = boss.id;
+      s.size = { r: Math.max(size.x, size.z, boss.radius * 2) * 0.58, h: Math.max(size.y, 3) };
+    }
+    if (boss.hp + boss.shield < (s.last ?? Infinity) - 1) s.hit = 1;
+    s.last = boss.hp + boss.shield;
+    s.hit = Math.max(0, s.hit - dt * 4);
+    u.uTime.value = (u.uTime.value + dt) % 600;
+    u.uHit.value = view.activity.combat.motion ? s.hit : 0;
+    u.uFade.value = s.fade;
+    const r = s.size.r, h = s.size.h * 0.75;
+    s.bubble.position.set(boss.x, ground + h * 0.35, boss.z);
+    s.bubble.scale.set(r, h, r);
+    // Tethers: a thin column stretched from the relay's top to the boss's chest.
+    const chest = new THREE.Vector3(boss.x, ground + h * 0.7, boss.z), m = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
+    let n = 0;
+    for (const w of sim.entities) {
+      if (n >= TETHERS || w.hp <= 0 || w.tag !== BOSSES[boss.boss].ward.tag || w.team !== boss.team || w.kind !== "building" || !sim.isVisible(w)) continue;
+      const from = new THREE.Vector3(w.x, view.terrain.heightAt(w.x, w.z) + 3.2, w.z), d = chest.clone().sub(from), len = d.length();
+      q.setFromUnitVectors(up, d.normalize());
+      m.compose(from.clone().addScaledVector(d, len / 2), q, new THREE.Vector3(1, len, 1));
+      s.tethers.setMatrixAt(n++, m);
+    }
+    s.tethers.count = n;
+    s.tethers.instanceMatrix.needsUpdate = true;
+    s.tethers.material.opacity = (0.45 + 0.25 * Math.sin(view.lifeClock * 6)) * s.fade;
+  }
+  createShield() {
+    const bubble = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 18), new THREE.ShaderMaterial({
+      vertexShader: SHIELD_VERTEX, fragmentShader: SHIELD_FRAGMENT, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+      uniforms: { uColor: { value: new THREE.Color(SHIELD_COLOR) }, uTime: { value: 0 }, uHit: { value: 0 }, uFade: { value: 0 } },
+    }));
+    bubble.name = "boss-shield";
+    bubble.renderOrder = 4;
+    const tethers = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.09, 0.14, 1, 6, 1, true),
+      new THREE.MeshBasicMaterial({ color: SHIELD_COLOR, transparent: true, opacity: 0.6, depthWrite: false, blending: THREE.AdditiveBlending }), TETHERS);
+    tethers.name = "boss-tethers";
+    tethers.frustumCulled = false;
+    tethers.count = 0;
+    tethers.renderOrder = 4;
+    bubble.visible = tethers.visible = false;
+    this.view.scene.add(bubble, tethers);
+    return { bubble, tethers, fade: 0, hit: 0, last: undefined };
   }
   updateMarks(sim, dt) {
     const zones = sim.dangerZones || [], seen = new Set();
@@ -262,5 +348,9 @@ export class BossView {
   reset() {
     for (const mark of this.marks.values()) { this.view.scene.remove(mark); mark.geometry.dispose(); mark.material.dispose(); }
     this.marks.clear();
+    if (this.shield) {
+      for (const mesh of [this.shield.bubble, this.shield.tethers]) { this.view.scene.remove(mesh); mesh.geometry.dispose(); mesh.material.dispose(); }
+      this.shield = null;
+    }
   }
 }

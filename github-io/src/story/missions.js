@@ -7,6 +7,7 @@
 // with (an `aiSpeed` trigger raises it later), enemy units placed by `setup` are garrisons, and
 // medals follow the objective-aware bot's time (gold) and about 1.4 times that (silver).
 import { HOLD_THE_RIVER, HOLD_THE_VALLEY, HOLD_THE_ROADS } from "./defence-missions.js";
+import { SOVEREIGN_WALKS } from "./sovereign-mission.js";
 
 export const MISSIONS = [
   // ───────────────────────── ACT 1: LANDFALL ─────────────────────────
@@ -1156,6 +1157,7 @@ export const MISSIONS = [
 
   // Defence rules in story form, optional (AAA round 2, W2-F): the keystone roads, with the first Gunner teams.
   HOLD_THE_ROADS,
+  SOVEREIGN_WALKS,
 
   {
     id: "m12-frontiers-end",

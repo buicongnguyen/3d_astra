@@ -1226,7 +1226,13 @@
     "Contested": "Đang tranh chấp",
     "Under siege": "Bị vây hãm",
     "Enemy held": "Địch chiếm giữ",
-    "Scouted": "Đã trinh sát"
+    "Scouted": "Đã trinh sát",
+    "OVERDRIVE": "QUÁ TẢI",
+    "RELAY SHIELD": "KHIÊN TRẠM",
+    "Phase 2: overdrive": "Giai đoạn 2: quá tải",
+    "It walks on Meridian's line": "Nó tiến về tuyến của Meridian",
+    "Walking siege fortress": "Pháo đài công thành biết đi",
+    "The Iron Sovereign, refitted to walk. It marches on your Command core and stops to fight whatever stands in its way. Ashfall relays shield it: while one stands it takes a fraction of the damage, so break them first. At half health it plants itself, sheds two Sentinel drones and switches to a rail sweep and a five-shell barrage; the ground still turns red first.": "Quân Vương Thép, được tân trang để biết đi. Nó tiến về Sở chỉ huy của bạn và dừng lại đánh bất cứ thứ gì cản đường. Các trạm Ashfall che khiên cho nó: chừng nào còn một trạm, nó chỉ chịu một phần nhỏ sát thương, nên hãy phá các trạm trước. Khi còn một nửa máu, nó đứng vững tại chỗ, thả hai máy bay canh gác và chuyển sang quét ray và loạt năm đạn pháo; mặt đất vẫn đỏ lên trước."
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],

@@ -43,6 +43,7 @@
     "balloon":{"height":1.2,"reach":0.3,"life":0.6,"kind":"rifle","look":"firebomb","color":[1,0.6,0.2,1],"hit":1},
     "ironvanguard":{"height":3.4,"reach":2.6,"life":0.12,"kind":"rifle","look":"hose","color":[1,0.55,0.15,1],"hit":0.35},
     "ironsovereign":{"height":3.6,"reach":2.8,"life":0.12,"kind":"rifle","look":"hose","color":[0.7,0.95,1,1],"hit":0.35},
-    "rampart":{"height":1.5,"reach":2.2,"life":0.22,"kind":"cannon","look":"plough","color":[1,0.7,0.3,1],"hit":0.9}
+    "rampart":{"height":1.5,"reach":2.2,"life":0.22,"kind":"cannon","look":"plough","color":[1,0.7,0.3,1],"hit":0.9},
+    "ironsovereign2":{"height":3.6,"reach":2.8,"life":0.12,"kind":"rifle","look":"hose","color":[0.7,0.95,1,1],"hit":0.35}
   }
 }

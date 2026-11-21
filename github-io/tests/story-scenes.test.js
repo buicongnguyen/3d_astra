@@ -54,7 +54,7 @@ test("every scene is played by a mission, and its camera targets are places on t
   assert.deepEqual([...new Set(uses.map((u) => u.id))].sort(), Object.keys(SCENES).sort(), "each scene has a mission and each scene action a scene");
   // The six big moments: missions 1, 4, 8, 10, 11 and the finale (one scene per ending), plus the
   // first balloon (Wings over Copper) and the Iron Vanguard's entrance in mission 3 (docs/aaa/BOSSES.md).
-  assert.deepEqual([...new Set(uses.map((u) => u.m.id))], ["m01-first-light", "m03-the-ashen-line", "m04-three-way-dunes", "m06b-wings-over-copper", "m08-the-quiet-vault", "m10-obsidian-storm", "m11-cut-the-draw", "m12-frontiers-end"]);
+  assert.deepEqual([...new Set(uses.map((u) => u.m.id))], ["m01-first-light", "m03-the-ashen-line", "m04-three-way-dunes", "m06b-wings-over-copper", "m08-the-quiet-vault", "m10-obsidian-storm", "m11-cut-the-draw", "m11d-the-sovereign-walks", "m12-frontiers-end"]);
   const finale = uses.filter((u) => u.m.id === "m12-frontiers-end");
   assert.deepEqual(finale.map((u) => u.if?.ending).sort(), [...ENDING_IDS].sort(), "the finale's scene branches by ending");
   for (const ending of ENDING_IDS) {
@@ -126,7 +126,7 @@ const routeDist = (p, routes) => Math.min(...Object.values(routes).flatMap((pts)
 const make = (m, difficulty = "standard") => new Simulation({ map: m.map, enemyCount: 1, ai: false, mission: m, difficulty });
 
 test("the defence missions sit in the campaign with stable ids, on Defence maps, with 6 to 8 waves", () => {
-  assert.equal(MISSIONS.length, 16, "fifteen plus the optional Hold the Keystone Roads (m11c)");
+  assert.equal(MISSIONS.length, 17, "fifteen plus the optional Hold the Keystone Roads (m11c) and The Sovereign Walks (m11d, R3-H)");
   assert.equal(MISSIONS.indexOf(HOLD_THE_RIVER), MISSIONS.findIndex((m) => m.id === "m02-first-contact") + 1, "Hold the River follows First Contact");
   assert.equal(MISSIONS.indexOf(HOLD_THE_VALLEY), MISSIONS.findIndex((m) => m.id === "m07-copper-siege") + 1, "Hold the Valley follows Copper Siege");
   assert.deepEqual(DEFENCE_MISSIONS.map((m) => [m.id, m.act]), [["m02b-hold-the-river", 1], ["m07b-hold-the-valley", 2]]);

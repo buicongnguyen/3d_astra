@@ -20,6 +20,8 @@ export class BossPresenceView {
     // A story scene that opens on the wake carries its own title beat (story/scenes.js): no second card.
     if (ev.type === "bossWake") { if (!document.documentElement.classList.contains("scene-open")) showBossCard(ev.name || "Boss", "", "wake"); }
     else if (ev.type === "bossDefeated" && !sim.result) showBossCard(ev.name || "Boss", "destroyed", "fall");
+    // A phase change (boss engine III, R3-H): the name card again, with what changed.
+    else if (ev.type === "bossSurge") showBossCard(ev.name || "Boss", "Phase 2: overdrive", "phase");
   }
   update(sim, dt) {
     if (!(dt > 0)) return;

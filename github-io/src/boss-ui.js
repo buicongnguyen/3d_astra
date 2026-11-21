@@ -5,14 +5,18 @@
 // the idle buttons. It never takes taps. Text is 11 px or more (boss-ui.css, loaded by app/hud.js).
 import { BOSSES } from "./sim/bosses.js";
 
-export const BOSS_STATES = { tracking: "ARMORED", warning: "ATTACK INBOUND", attacking: "ATTACK INBOUND", exposed: "CORE EXPOSED" };
+// "surge" is a phase change (boss engine III, R3-H): the boss stands still while its new attacks come online.
+export const BOSS_STATES = { tracking: "ARMORED", warning: "ATTACK INBOUND", attacking: "ATTACK INBOUND", exposed: "CORE EXPOSED", surge: "OVERDRIVE" };
+// A boss shielded by relays (spec.ward) says so while it is armoured, so the player knows to break them.
+export const SHIELDED_STATE = "RELAY SHIELD";
 
 // What the bar shows, or null: the awake boss on the field (one at a time).
 export function bossStatus(sim) {
   const e = sim?.entities?.find((x) => x.boss && x.hp > 0 && BOSS_STATES[x.bs?.phase]);
   if (!e) return null;
   const spec = BOSSES[e.boss] || {};
-  return { id: e.id, name: e.name, phase: e.bs.phase, state: BOSS_STATES[e.bs.phase], stage: e.bs.stage || 1, health: Math.max(0, e.hp / e.maxHp), shield: e.maxShield ? e.shield / e.maxShield : 0, stages: spec.stages || [] };
+  const warded = spec.ward ? e.bs.warded || 0 : 0;
+  return { id: e.id, name: e.name, phase: e.bs.phase, state: warded && e.bs.phase === "tracking" ? SHIELDED_STATE : BOSS_STATES[e.bs.phase], warded, stage: e.bs.stage || 1, health: Math.max(0, e.hp / e.maxHp), shield: e.maxShield ? e.shield / e.maxShield : 0, stages: spec.stages || [] };
 }
 
 let bar = null;
@@ -39,10 +43,12 @@ export function updateBossBar(sim, started = true) {
     track.querySelectorAll(".boss-notch").forEach((n) => n.remove());
     for (const f of status.stages) { const n = document.createElement("i"); n.className = "boss-notch"; n.style.left = `${(f * 100).toFixed(2)}%`; track.append(n); }
   }
-  if (bar.dataset.phase !== status.phase) {
+  if (bar.dataset.phase !== status.phase || bar.dataset.state !== status.state) {
     bar.dataset.phase = status.phase;
+    bar.dataset.state = status.state;
     bar.querySelector(".boss-state").textContent = status.state;
   }
+  bar.dataset.warded = status.warded;
   bar.dataset.stage = status.stage;
   // Phone landscape: the bar shares the top row with the idle buttons, whose width follows their
   // counts, so it starts just right of the last one shown (boss-ui.css --boss-left).

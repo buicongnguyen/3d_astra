@@ -29,6 +29,15 @@ import GARRISONS from "../defence/garrisons.json" with { type: "json" };
 // core), `drops` (units released at health stages) and route mode (a boss whose first order is a
 // Defence route wakes at once, ignores its leash, walks the road with stepRoute and stops to attack).
 // Everything new lives on `e.bs` and is created only when its data asks for it.
+//
+// Boss engine III (AAA round 3, R3-H), again optional data, so the Iron Vanguard and the Iron Sovereign
+// play exactly as before: `phases` (keyed by a health stage: on reaching it the boss cancels its attack,
+// stands still for `surge` seconds (phase "surge", event bossSurge) and then uses that phase's own
+// `attacks`, starting with the first), `ward: { tag, taken }` (while any building of its own team with
+// that tag stands, every hit on it is multiplied by `taken`; e.bs.warded counts them) and `march:
+// { stop }` (a field boss that wakes at once and walks on the nearest hostile Command core, at its own
+// speed, along a road found once at the wake (e.bs.road, e.bs.leg); it walks only while nothing is in
+// its sights, its post going with it, and stops `stop` m short of the core).
 export const BOSSES = balance.bosses || {};
 // The warning rule: a unit reacts in REACT seconds and walks out at ESCAPE_SPEED (the slowest
 // common unit, a Battle tank); EVADE_MARGIN is how far outside the edge it stops.
@@ -92,7 +101,14 @@ export const bosses = {
   // Damage a boss takes: more while its core is open.
   bossTaken(e) {
     const spec = BOSSES[e.boss];
-    return !spec ? 1 : e.bs?.phase === "exposed" ? spec.taken.exposed : spec.taken.armored;
+    if (!spec) return 1;
+    const taken = e.bs?.phase === "exposed" ? spec.taken.exposed : spec.taken.armored;
+    // Boss engine III: relays of its own team shield it (spec.ward).
+    return spec.ward && e.bs?.warded ? taken * spec.ward.taken : taken;
+  },
+  // The attacks in use: the current phase's own (spec.phases, from its surge on), else the boss's.
+  bossAttacks(spec, bs) {
+    return (bs.set && spec.phases?.[bs.set]?.attacks) || spec.attacks;
   },
   // A boss's own difficulty table is the final factor against the player (Story = half), so the
   // general mission factor applyDamage adds for team 0 is divided out here.
@@ -119,18 +135,35 @@ export const bosses = {
     if (!spec) return;
     const bs = (e.bs ??= { phase: "dormant", stage: 1, cycle: 0, post: { x: e.x, z: e.z } });
     const stage = 1 + (spec.stages || []).filter((f) => e.hp <= e.maxHp * f).length;
-    if (stage > bs.stage) { bs.stage = stage; this.bossEvent(e, "bossStage", { stage }); }
+    if (stage > bs.stage) {
+      bs.stage = stage;
+      this.bossEvent(e, "bossStage", { stage });
+      if (spec.phases?.[stage] && bs.phase !== "dormant") this.bossSurge(e, spec, bs, stage);
+    }
+    if (spec.ward) bs.warded = this.entities.filter((t) => t.tag === spec.ward.tag && t.hp > 0 && t.team === e.team && t.kind === "building").length;
     if (spec.drops) this.bossDrops(e, spec, bs);
     // Route mode: a boss sent down a Defence road wakes at once and walks it (bossMarch).
     const route = e.orders[0]?.type === "route" ? e.orders[0] : null;
     if (bs.phase === "dormant") {
-      if (!route && !this.bossWakes(e, spec)) return;
+      if (!route && !spec.march && !this.bossWakes(e, spec)) return;
       bs.phase = "tracking";
       bs.next = this.time + (spec.first ?? 3);
+      if (spec.march && !route) this.bossRoad(e, spec, bs);
       this.bossEvent(e, "bossWake");
       return;
     }
-    const attack = spec.attacks[bs.cycle % spec.attacks.length];
+    // A phase change (spec.phases): the boss plants itself, then tracks again with the new attacks.
+    if (bs.phase === "surge") {
+      e.attacking = false;
+      e.moving = false;
+      if (this.time < bs.until - 1e-9) return;
+      bs.phase = "tracking";
+      bs.next = this.time + this.bossPause(spec, bs.stage);
+      delete bs.aim;
+      this.bossEvent(e, "bossArmored");
+      return;
+    }
+    const attacks = this.bossAttacks(spec, bs), attack = attacks[bs.cycle % attacks.length];
     if (bs.phase === "tracking") {
       if (bs.aim === undefined || this.ticks % RETARGET === 0) bs.aim = this.bossAim(e, spec, attack);
       const aim = bs.aim;
@@ -235,6 +268,8 @@ export const bosses = {
       const d = hyp(aim.x - e.x, aim.z - e.z), want = Math.max(4, Math.min(attack.range, e.range) - 2);
       if (d > want) goal = { x: aim.x + ((e.x - aim.x) / d) * want, z: aim.z + ((e.z - aim.z) / d) * want };
     } else if (distance(e, post) > 3) goal = post;
+    // March (spec.march): with nothing in its sights and the boss at its post, it walks on, post and all.
+    else if (e.bs.road) { this.bossWalk(e, dt); return; }
     if (!goal) return;
     const off = hyp(goal.x - post.x, goal.z - post.z);
     if (off > spec.leash) goal = { x: post.x + ((goal.x - post.x) / off) * spec.leash, z: post.z + ((goal.z - post.z) / off) * spec.leash };
@@ -361,6 +396,53 @@ export const bosses = {
       const p = { x: e.x + across.x * d * s, z: e.z + across.z * d * s };
       if (this.nav.canStand(p.x, p.z, e.radius) && this.nav.canTraverse(e, p, e.radius)) { bs.strafe = p; return; }
     }
+  },
+  // Boss engine III, march: the road to the nearest hostile Command core, found once when it wakes
+  // (rounded to centimetres, so a save reads back the same), ending `stop` metres short of the core.
+  bossRoad(e, spec, bs) {
+    let core = null, near = Infinity;
+    for (const t of this.entities) {
+      if (t.hp <= 0 || t.type !== "hq" || !this.hostile(e.team, t.team)) continue;
+      const d = distance(e, t);
+      if (d < near) { core = t; near = d; }
+    }
+    if (!core) return;
+    // A camp packed with buildings may leave no lane as wide as the boss into the core's own cell: the
+    // road is then found for an ordinary unit (it ends short of the camp anyway).
+    const stop = spec.march.stop ?? 12, road = [];
+    let path = this.nav.path(e, core, e.radius);
+    if (!path.length) path = this.nav.path(e, core);
+    for (const p of path) {
+      if (hyp(p.x - core.x, p.z - core.z) < stop) break;
+      road.push([Math.round(p.x * 100) / 100, Math.round(p.z * 100) / 100]);
+    }
+    if (road.length) { bs.road = road; bs.leg = 0; }
+  },
+  // One step of the march: toward the next point of the road; its post comes with it.
+  bossWalk(e, dt) {
+    const bs = e.bs;
+    while (bs.leg < bs.road.length && hyp(bs.road[bs.leg][0] - e.x, bs.road[bs.leg][1] - e.z) <= 1.5) bs.leg++;
+    // A point it cannot get past (a building put down on the road since) is skipped.
+    if (bs.leg < bs.road.length && e.stalled > 3) { bs.leg++; e.stalled = 0; }
+    if (bs.leg >= bs.road.length) { e.moving = false; return; }
+    const [x, z] = bs.road[bs.leg];
+    this.move(e, { x, z }, dt, 1);
+    bs.post = { x: e.x, z: e.z };
+  },
+  // Boss engine III, a phase change: the attack in hand is dropped and the boss stands for `surge` s.
+  bossSurge(e, spec, bs, stage) {
+    const phase = spec.phases[stage];
+    this.clearZones(e.id);
+    bs.zone = null;
+    delete bs.mark;
+    delete bs.strafe;
+    delete bs.aim;
+    bs.phase = "surge";
+    bs.set = stage;
+    bs.cycle = 0;
+    bs.until = this.time + (phase.surge ?? 3);
+    e.attacking = false;
+    this.bossEvent(e, "bossSurge", { stage, seconds: phase.surge ?? 3 });
   },
   clearZones(bossId) {
     if (this.dangerZones) this.dangerZones = this.dangerZones.filter((z) => z.boss !== bossId);
