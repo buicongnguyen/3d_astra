@@ -332,3 +332,19 @@
   .compact-ui.in-defence:not(.in-briefing) #commands .command-tile > span { font-size: 12px; }
   .compact-ui.in-defence:not(.in-briefing) #dock-tabs button { font-size: 11px; }
 }
+
+/* R3-B group strip (mobile.css has the chips): the top of the "…" sheet, above Box select and the rest,
+   with a rule under it. Many saved groups scroll inside it rather than push the sheet off the screen. */
+.compact-ui:not(.in-briefing) #touch-sheet > .group-strip {
+  max-height: calc(100vh - 220px);
+  min-height: 44px;
+  overflow-y: auto;
+  padding-bottom: 6px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid var(--line-2);
+}
+.compact-ui:not(.in-briefing) #touch-sheet > .group-strip:empty { display: none; }
+/* In the sheet the touch-row button rules (a column, an equal share of the row) must not reach the chips:
+   a saved group reads "1 [icon] 5" on one line; only the three smart chips share their row. */
+.compact-ui:not(.in-briefing) #touch-sheet > .group-strip button { flex: none; flex-direction: row; min-width: 44px; height: 44px; }
+.compact-ui:not(.in-briefing) #touch-sheet > .group-strip button.smart { flex: 1 1 0; flex-direction: column; min-width: 58px; }

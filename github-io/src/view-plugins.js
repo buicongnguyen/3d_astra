@@ -23,6 +23,7 @@ import { EliteView } from "./elite-view.js";
 import { CounterHitView } from "./counter-hit-view.js";
 import { BossPresenceView } from "./boss-presence-view.js";
 import { DefenceReadabilityView } from "./defence-readability-view.js";
+import { FollowTetherView } from "./follow-tether-view.js";
 
 export const HOOKS = ["dress", "scaleFor", "frameScaleFor", "event", "update", "reset"];
 
@@ -58,4 +59,5 @@ export const VIEW_PLUGINS = [
   CounterHitView,
   BossPresenceView,
   DefenceReadabilityView,
+  FollowTetherView,
 ];

@@ -40,6 +40,8 @@ export function defaults(coarse = false) {
     showFps: false,
     // Units use their abilities on their own: on where there is no keyboard for the ability keys.
     autocast: !!coarse,
+    // R3-B: a move of two or more units keeps the fighters' pace, support units behind (app/orders.js).
+    groupPace: true,
   };
 }
 export function normalize(value, coarse = false) {
@@ -62,6 +64,7 @@ export function normalize(value, coarse = false) {
     if (Number.isFinite(value[key])) d[key] = Math.max(0, Math.min(1, value[key]));
   for (const key of ["muted", "waterMotion", "combatMotion", "screenShake", "ambient", "detail", "showFps", "autocast"])
     if (typeof value[key] === "boolean") d[key] = value[key];
+  if (typeof value.groupPace === "boolean") d.groupPace = value.groupPace;
   return d;
 }
 export function loadSettings(coarse = false, storage) {

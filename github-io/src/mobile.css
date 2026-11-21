@@ -658,3 +658,52 @@ button {
     padding: 0 5px;
   }
 }
+
+/* R3-B: control groups on phones. The strip moves to the top of the "…" sheet (app/selection.js
+   renderGroupStrip): the smart chips (All army, Fighters, Support), "+ Group" to save the selection, then
+   the saved groups (tap to recall, hold 500 ms to save over one). Closed, the sheet costs the battlefield
+   nothing, and the fixed dock heights never grow. Its place in the sheet is in landscape-hud.css. */
+.compact-ui .group-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.compact-ui .group-strip:empty,
+.compact-ui.in-briefing .group-strip { display: none; }
+.compact-ui .group-strip button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 10px;
+  border: 1px solid #60856955;
+  border-radius: 10px;
+  background: #1a3029f0;
+  color: #e3f1e8;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+.compact-ui .group-strip button.active {
+  border-color: var(--team-friendly, #92ebc5);
+  background: color-mix(in srgb, var(--team-friendly, #92ebc5) 30%, #142320);
+  color: #fff;
+}
+/* The smart chips read like the touch row: icon over an 11 px label, three to a row. */
+.compact-ui .group-strip button.smart { flex: 1 1 0; flex-direction: column; gap: 2px; min-width: 58px; padding: 2px 4px; font-size: 11px; line-height: 1.1; }
+.compact-ui .group-strip button.save { border-style: dashed; color: var(--team-friendly, #92ebc5); }
+.compact-ui .group-strip kbd {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 12px;
+  color: var(--team-friendly, #92ebc5);
+}
+.compact-ui .group-strip .icon { width: 16px; height: 16px; flex: none; }

@@ -1,6 +1,7 @@
 import balance from '../balance.json' with {type:'json'};
 import { DEFINITIONS as D, distance } from '../data.js';
 import { CROSSINGS, TERRAIN } from '../terrain.js';
+import { groupSpeed } from './formation.js';
 
 // Faction traits and building auras. Numbers live in balance.json under `traits` and on each
 // building's `aura`. Every hook is switched by the team's faction, so an all-Meridian match
@@ -101,7 +102,9 @@ export const traits = {
   },
   // Sunward units are quicker on roads and sand. Everyone wades the ford slowly.
   moveSpeed(e) {
-    let speed = this.factionFor(e.team).trait === 'roads' && ROAD.has(this.terrain.at(e.x, e.z)) ? e.speed * TRAITS.roads.speed : e.speed;
+    // R3-B: a unit on a group-paced order walks at the group's pace (sim/formation.js); any other unit at its own.
+    const own = e.orders?.[0]?.squad === undefined ? e.speed : groupSpeed(this, e, e.orders[0]);
+    let speed = this.factionFor(e.team).trait === 'roads' && ROAD.has(this.terrain.at(e.x, e.z)) ? own * TRAITS.roads.speed : own;
     // Frontier Defence: a Suppressor garrison's hits slow a unit for a moment (sim/defence.js).
     if (e.slowUntil > this.time) speed *= e.slowBy;
     // H11: a status' speed factor (sim/effects.js), before the ford's.

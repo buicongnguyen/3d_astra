@@ -18,6 +18,8 @@ export function selectionStatus(sim, entities) {
   const attacks = entities.map(u => Number(sim.attackValue(u).toFixed(1))), atkLow = Math.min(...attacks), atkHigh = Math.max(...attacks);
   const attack = atkLow === atkHigh ? atkLow : `${atkLow}–${atkHigh}`;
   let status = e.carry ? `Cargo ${e.carry}/10 ${e.carryType}` : entities.some(u=>u.attacking) ? 'Attacking' : e.orders[0]?.type || (e.kind === 'building' ? 'Operational' : 'Standing by');
+  // R3-B: a Medic or Engineer on a Support order names the unit it follows (the tether shows the line).
+  if (!group && e.orders[0]?.type === 'support' && sim.get(e.orders[0].target)) status = `Following ${sim.get(e.orders[0].target).name}`;
   if (!e.complete) status = buildingActivity(sim,e)?.label==='Needs Harvester'?'Needs Harvester':'';
   else if (e.levelJob) status = '';
   else if (!group && e.queue.length) {

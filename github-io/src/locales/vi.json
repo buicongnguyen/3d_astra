@@ -1209,7 +1209,14 @@
     "All three stars. Next: clear it on Veteran.": "Đủ ba sao. Tiếp theo: vượt qua ở mức Kỳ cựu.",
     "Take one tower to gold tier 3: it hits far harder and opens a branch.": "Nâng một tháp lên bậc vàng 3: đánh mạnh hơn nhiều và mở một nhánh.",
     "Crew a rim pad: 2 m more reach and harder hits.": "Đặt đội lên bệ mép: tầm xa hơn 2 m và đánh mạnh hơn.",
-    "Call a wave early only once your towers are upgraded.": "Chỉ gọi đợt sớm khi các tháp đã được nâng cấp."
+    "Call a wave early only once your towers are upgraded.": "Chỉ gọi đợt sớm khi các tháp đã được nâng cấp.",
+    "All army": "Toàn quân",
+    "Fighters": "Lính chiến",
+    "Select every army unit": "Chọn mọi đơn vị quân",
+    "Select every fighter": "Chọn mọi lính chiến",
+    "Select Medics, Engineers and flyers": "Chọn Quân y, Công binh và máy bay",
+    "Group pace": "Nhịp đội hình",
+    "A group you move keeps together at its fighters' pace, with Medics and Engineers walking behind them. Off: every unit walks at its own speed.": "Nhóm quân bạn điều đi giữ đội hình theo tốc độ của lính chiến, Quân y và Công binh đi phía sau. Tắt: mỗi đơn vị đi theo tốc độ riêng."
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],
@@ -1755,6 +1762,9 @@
     ["^FRONTIER DEFENCE$", "PHÒNG THỦ BIÊN CƯƠNG"],
     ["^Hold all (\\d+) waves\\.$", "Giữ vững cả {1} đợt."],
     ["^Finish with (\\d+) lives or more \\(you kept (\\d+)\\)\\.$", "Kết thúc với {1} mạng trở lên (bạn còn {2})."],
-    ["^Wave (\\d+) cost the most lives:$", "Đợt {1} làm mất nhiều mạng nhất:"]
+    ["^Wave (\\d+) cost the most lives:$", "Đợt {1} làm mất nhiều mạng nhất:"],
+    ["^\\+ Group (\\d)$", "+ Nhóm {1}"],
+    ["^Save the selection as group (\\d) \\(hold a group to save over it\\)$", "Lưu lựa chọn thành nhóm {1} (giữ một nhóm để lưu đè)"],
+    ["^Following (.+)$", "Đi theo {1}"]
   ]
 }

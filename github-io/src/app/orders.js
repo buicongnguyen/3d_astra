@@ -2,6 +2,10 @@
 import { $ } from "./dom.js";
 import { DEFINITIONS as D } from "../data.js";
 
+// R3-B: the high-ground hint (numbers from balance.json terrain: high_range 2, high_damage 1.2).
+export const HIGH_GROUND_HINT = "High ground: +2 m range, +20% damage";
+const HIGH_GROUND_KEY = "frontier-command.hint.high-ground";
+
 export function setupOrders(S, A) {
   const Z = S.screen;
   // The order button for the pending targeting mode stays lit, as on an RTS command card.
@@ -221,6 +225,7 @@ export function setupOrders(S, A) {
     if (b) {
       clearMode();
       A.setSelection([b.id]);
+      highGroundHint(b);
       if (S.audio) S.audio.sfx.play("construct"); else A.tone(330, 0.15);
       S.audio?.order("build", S.sim);
     } else {
@@ -229,9 +234,20 @@ export function setupOrders(S, A) {
     }
   }
 
+  // R3-B: the first building the player places on a plateau says what high ground gives (once per browser).
+  function highGroundHint(b) {
+    if (!S.sim.terrain.plateaus?.length || !(S.sim.levelOf(b) > 0)) return;
+    try { if (localStorage.getItem(HIGH_GROUND_KEY)) return; localStorage.setItem(HIGH_GROUND_KEY, "1"); } catch { if (S.highGroundHinted) return; }
+    S.highGroundHinted = true;
+    A.notice(HIGH_GROUND_HINT);
+  }
+
   // Harvesters start mining on their own, except in Training, which teaches the order.
   // Every player action goes through sim.command (see commands.js).
   function sendOrder(ids, order, append = false) {
+    // R3-B group pace: a move or attack-move of two or more units keeps together, fighters in front and
+    // support units behind (sim/formation.js). The only place the flag is set; Settings > Army turns it off.
+    if (S.settings?.groupPace !== false && ids.length > 1 && (order.type === "move" || order.type === "attackmove")) order = { ...order, pace: "group" };
     const sent = S.sim.command({ team: 0, type: "order", ids, order, append });
     if (sent !== false && ids.length) S.audio?.order(order.type, S.sim); // radio reply (rate-limited in audio-logic.js)
     return sent;

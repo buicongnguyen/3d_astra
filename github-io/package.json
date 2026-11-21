@@ -77,7 +77,8 @@
     "test:phones": "node tests/phones.mjs",
     "test:showtime": "node tests/showtime.mjs",
     "test:night-storm": "node tests/night-storm.mjs",
-    "test:defence-onboarding": "node tests/defence-onboarding.mjs"
+    "test:defence-onboarding": "node tests/defence-onboarding.mjs",
+    "test:squad-orders": "node tests/squad-orders.mjs"
   },
   "dependencies": {
     "three": "0.185.1"
