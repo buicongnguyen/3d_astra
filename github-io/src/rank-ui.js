@@ -142,6 +142,8 @@ export function setupRank(S, A) {
       toast.innerHTML = toastHTML(record, profile);
       const actions = root.querySelector(".result-actions, .debrief-actions");
       if (actions) actions.before(toast); else root.append(toast);
+      // R3-U: a short promotion chime on a rank up, after the victory stinger.
+      if (record.rankUp) setTimeout(() => { if (root.isConnected) S.audio?.sfx?.play?.("promote"); }, 1600);
     }
     render();
   }

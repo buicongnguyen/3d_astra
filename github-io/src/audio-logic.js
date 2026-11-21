@@ -475,7 +475,7 @@ export function engineMix(vehicles) {
 // (`sourceType`, else the event's `unit`) and whether the target flies (`tAir`).
 export const WEAPON_CLASSES = ["tracer", "shell", "lob", "flak", "beam", "flamer", "heal", "missile", "bomb", "strafe"];
 const VOICE_CLASS = {
-  rifle: "tracer", smg: "tracer", mg: "tracer", silenced: "tracer", scrap: "tracer", drone: "tracer", worker: "tracer",
+  rifle: "tracer", smg: "tracer", mg: "tracer", silenced: "beam", scrap: "tracer", drone: "tracer", worker: "tracer",
   tank: "shell", walker: "shell", tower: "shell", artillery: "lob", flame: "flamer", rocket: "missile", pod: "missile",
   rail: "beam", laser: "beam", support: "heal", engineer: "heal",
 };
