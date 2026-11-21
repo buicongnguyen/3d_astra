@@ -154,6 +154,9 @@ jobs:
           # AAA round 3 (R3-G): mission openings, the campaign map (decision marks, ending hints, phone layout), jumpBoss.
           - name: r3-g
             scripts: openings
+          # AAA round 3 (R3-H): The Sovereign Walks (relay shield, phase 2 surge and rail sweep) at three viewports.
+          - name: r3-h
+            scripts: sovereign-walks
     defaults:
       run:
         working-directory: github-io

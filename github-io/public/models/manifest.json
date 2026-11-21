@@ -328,6 +328,16 @@
       "review": "pending owner review (round 3)",
       "source": "tools/blender/generate_rampart.py (frontier_kit), original design",
       "animation": "Runtime articulated parts: TurretRig and a recoiling BarrelRig; no baked clips"
+    },
+    {
+      "name": "ironsovereign2",
+      "file": "ironsovereign2.glb",
+      "triangles": 1904,
+      "boss": "iron-sovereign-2",
+      "budget": 2800,
+      "review": "pending owner review (round 3)",
+      "source": "Tank_game_3D public/models/boss-walker.glb (same owner), ported by tools/port-boss-model.mjs --parts tools/boss-parts/ironsovereign2.json (the Iron Sovereign's port under its own root name; re-port it whenever the Sovereign's palette changes)",
+      "animation": "Runtime parts (src/boss-view.js BOSS_PARTS): two tripods of legs, turret, cannon, light gun and core; no baked clips; the relay shield and the phase-2 core glow are drawn at runtime"
     }
   ]
 }

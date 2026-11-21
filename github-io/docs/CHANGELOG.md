@@ -103,6 +103,15 @@ Everything below applies only under the skirmish rule `aiPlan: "field"` (`fieldP
 - Phones: the campaign screen shows three missions above Start (one before in portrait, two in landscape); endings keep short labels with their hint and chronicle cards keep the faction name; the landscape mode tabs keep their icons. Every control keeps its one-tap place.
 - Dev hook `__frontier.jumpBoss(id)`: straight to a boss fight ("iron-vanguard" or a unit type), the map revealed and the army in front of it.
 
+### R3-H: Boss phase 2 and "The Sovereign Walks"
+- New optional Act 3 mission **The Sovereign Walks** (`m11d-the-sovereign-walks`, after Hold the Keystone Roads; opens when Cut the Draw is cleared, counts for medals, never for endings). On the Frontier Expanse at 5:00 the Iron Sovereign, refitted to walk, comes out of the north and marches on your Command core, stopping to fight whatever it sees. Three Ashfall relays wake with it and shield it: break them, then the machine. Okoro speaks the briefing; his Kite shows the Sovereign's entrance.
+- The Sovereign's **relay shield**: an amber bubble and one tether from each standing relay; while any relay stands it takes 0.15x damage, and its bar reads RELAY SHIELD.
+- **Phase 2** at half health: it plants itself for 4 s (OVERDRIVE on the bar, a "Phase 2: overdrive" name card, a blast, a heavy shake, the core blazing), sheds two Sentinel drones, the music rises, Okoro, Vale and Hale speak, and it switches to new attacks: a 24 m **rail sweep** (a line marked on the ground) and a **five-shell barrage**. Warnings still last as long as the walk out, and no attack takes more than 30% of a Ranger: spectacle, not a damage spike. In phase 2 the core keeps a hot glow.
+- Gentle by design (owner rule): the Ashfall AI there never attacks on its own, one small probe and one escort come by script, two forward towers and ten units start on your line, and there is no time limit. The objective bot wins on Story, Standard and Veteran, all gold, and never lets the Sovereign reach the camp.
+- Boss engine III (`src/sim/bosses.js`, optional data, used only by the new boss `ironsovereign2`): `phases` (new attacks from a health stage, with a surge), `ward` (relays that shield) and `march` (a field boss that walks on the enemy core). The Iron Vanguard and the Iron Sovereign play exactly as before (their pins hold).
+- Model `ironsovereign2.glb`: the Iron Sovereign's port under its own name (pending owner review, round 3).
+- Tests: `tests/sovereign-walks.test.js` (6), `tests/golden-r3h.test.js` (4 pins, one long), browser suite `npm run test:sovereign-walks` (CI matrix `r3-h`), render-budget scenario `boss-sovereign2-eco`.
+
 ## 0.25.0: AAA round 2 (release label for the deploy; owner decision O17)
 
 This is the label proposed for the next release. `package.json` still says 0.19.1, nothing is deployed, and the owner decides the number at deploy. It gathers everything of AAA round 2 (plan: docs/aaa/AAA_ROUND2_PLAN.md, results: docs/aaa/results/round2/). The Defence and campaign sections under "Unreleased" further down (0.22 to 0.24 labels) were built before this round and are not part of it.
