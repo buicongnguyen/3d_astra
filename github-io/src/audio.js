@@ -9,6 +9,8 @@ import { Music, createAudioBus, musicMood } from "./music.js";
 import { RecordedMusic } from "./music-recorded.js";
 import { Sfx } from "./sfx.js";
 import { airHumFor } from "./sfx-bank.js";
+import { BarkGate, LowHpWatch, ThunderWatch, barkKind, barkType, coreHealth } from "./audio-logic.js";
+import { WEATHER } from "./mission-looks.js";
 
 const COMBAT_SOUNDS = new Set(["shot", "impact", "death", "strike"]);
 
@@ -37,6 +39,9 @@ export class AudioDirector {
     this.loud = new LoudDuck(); this.duckDb = 0;
     this.radioGate = new RadioGate(); this.contact = new ContactWatch(); this.radios = 0;
     this.musicTarget = -1;
+    // R3-U: unit barks (rate-limited, muted in quiet mode), the low-HP heartbeat and thunder.
+    this.barkGate = new BarkGate(); this.barks = 0; this.quiet = false;
+    this.lowHpWatch = new LowHpWatch(); this.coreRatio = null; this.thunderWatch = new ThunderWatch();
     this.sfx.warm();
   }
   // Settings -> bus levels. Muted or zero level also stops the scheduler (checked in update()).
@@ -44,6 +49,7 @@ export class AudioDirector {
     this.levels = busLevels(settings);
     this.bus.sfx.gain.setTargetAtTime(this.levels.sfx, this.context.currentTime, 0.05);
     this.sfx.enabled = this.levels.sfx > 0;
+    this.quiet = !!settings.quietMode;
     if (!this.sfx.enabled) { this.sfx.engine(0); this.sfx.airHum?.(0); }
     this.applyMusicGain();
   }
@@ -61,6 +67,17 @@ export class AudioDirector {
     if (w > 0) this.intensity.add(now, w * (0.25 + 0.75 * closeness(gain)));
     const size = explosionSize(name);
     if (size) this.loud.hit(now, size, gain, delay);
+    // R3-U: a stinger dips the score under it.
+    if (name.startsWith("sting:")) this.music.duckFor(1.6);
+  }
+  // R3-U: a unit voice chirp for the selection ("select") or an order (orders.js type): one voice
+  // for the most numerous unit type, at most BARK.max a second, silent in quiet mode.
+  bark(kind, entities) {
+    const unit = barkType(entities);
+    if (!kind || !unit || !this.sfx.enabled || !this.barkGate.allow(this.context.currentTime, this.quiet)) return false;
+    const played = this.sfx.bark(kind, unit);
+    if (played) this.barks++;
+    return played;
   }
   event(event, sim) {
     if (event.type === "incoming" && event.team === 0) this.incomingAt = sim.time;
@@ -73,6 +90,8 @@ export class AudioDirector {
   }
   // A radio reply to a player order (orders.js): rate-limited, in the player's faction motif.
   order(type, sim) {
+    const ids = this.selected?.();
+    if (ids && sim?.get) this.bark(barkKind(type), [...ids].map((id) => sim.get(id)).filter((e) => e?.team === 0));
     const kind = radioKind(type);
     if (!kind || !this.sfx.enabled || !this.radioGate.allow(kind, this.context.currentTime)) return false;
     const played = this.sfx.radio(kind, sim?.factions?.[0] || "meridian");
@@ -114,6 +133,7 @@ export class AudioDirector {
       this.bossAwake = live && sim.entities.some((e) => e.boss && e.hp > 0 && e.bs && e.bs.phase !== "dormant");
       const seen = live ? scanEnemies(sim) : { distance: Infinity, count: 0, team: null };
       this.enemyDistance = seen.distance;
+      this.coreRatio = live ? coreHealth(sim, 0) : null;
       // Enemy contact: a radio call in the enemy faction's motif (first sighting, or after a quiet spell).
       if (live && !paused && this.contact.update(sim.time, seen.count) && this.sfx.enabled && this.radioGate.allow("contact", now)) {
         if (this.sfx.radio("contact", sim.factions?.[seen.team] || "meridian")) this.radios++;
@@ -129,6 +149,12 @@ export class AudioDirector {
     this.music.setMood(started || sim.result ? mood : "calm");
     this.music.setCombat(live ? crossfade(this.intensity.level(now), Math.max(combatFloor(mood, mission), this.bossAwake ? 1 : 0)).combat : 0);
     this.music.setActive(on);
+    // R3-U: the low-HP heartbeat while the core is low and being hit; thunder after a lightning flash
+    // (the view's WEATHER, mission-looks.js) when the ambience is on.
+    if (live && !paused && !hidden && this.sfx.enabled) {
+      if (this.lowHpWatch.update(sim.time, this.coreRatio)) this.sfx.lowHp();
+      if (this.thunderWatch.update(WEATHER.flash, WEATHER.storm) && settings?.ambient !== false) this.sfx.thunder(Math.min(1, 0.5 + WEATHER.storm));
+    }
     this.engineScan -= dt;
     if (this.engineScan <= 0) { this.engineScan = 0.25; this.updateEngine(sim, live && !paused && !hidden); }
     return mood;
@@ -161,6 +187,7 @@ export class AudioDirector {
   reset() {
     this.combatMix.times.length = 0; this.lastCombatAt = -Infinity; this.incomingAt = -Infinity; this.enemyDistance = Infinity; this.scan = 0;
     this.intensity.reset(); this.loud.ducks.length = 0; this.contact.reset(); this.music.setCombat(0); this.sfx.engine(0); this.sfx.airHum?.(0);
+    this.lowHpWatch.reset(); this.coreRatio = null;
   }
 }
 

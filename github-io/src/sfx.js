@@ -10,7 +10,7 @@ import { MIX } from "./audio-mix.js";
 // a stereo pan and a distance gain from its screen position, and must pass the voice budget (global
 // cap, per-group caps, priority, per-sound rate limit). Nothing is created while effects are off.
 import { counterKind } from "./combat-feedback.js";
-import { VoiceBudget, audible, dbToGain, hitFor, incomingFor, nearPriority, screenMix, shouldCull, soundFor } from "./audio-logic.js";
+import { BARK, THUNDER, VoiceBudget, audible, barkVoice, dbToGain, hitFor, impactLayer, incomingFor, landingFor, nearPriority, screenMix, shouldCull, soundFor, stingerFor } from "./audio-logic.js";
 import { mulberry32 } from "./rng.js";
 import { AIR_HUM, BANK, ENGINE, radioSpec } from "./sfx-bank.js";
 import { SYNTH_RATE, renderEngine, renderSound, specLength } from "./audio-synth.js";
@@ -49,12 +49,28 @@ const R = {
 };
 // Priority, rate limit and group for the effects that are not simulation events.
 const EXTRA = { construct: [4, 0.15, "ui"], tap: [8, 0.03, "ui"], select: [7, 0.05, "ui"], error: [8, 0.1, "ui"], objective: [8, 0.2, "moment"], "objective-failed": [8, 0.2, "moment"], win: [10, 1, "moment"], lose: [10, 1, "moment"], blip: [7, 0.07, "ui"] };
+// R3-U: bank sounds played directly (not from a sim event): priority, rate limit and group.
+const BANK_EXTRA = { "sting:victory": [10, 1, "moment"], "sting:boss": [9, 0.8, "moment"], "sting:surge": [9, 1, "moment"], "warn:lowhp": [8, 1, "moment"], thunder: [5, 0.6, "moment"] };
+// R3-U: a unit voice chirp ("bark") as a live recipe: two or three formant blips in the type's voice
+// (audio-logic.js barkVoice). select = a rising "huh?", order = a falling "roger", attack = three sharp ones.
+export const BARK_KINDS = ["select", "order", "attack"];
+export function barkRecipe(voice, kind = "select") {
+  const steps = kind === "attack" ? [[1.3, 1.2, 0.045], [1.3, 1.2, 0.045], [1.45, 1.1, 0.07]] : kind === "order" ? [[1.2, 1, 0.07], [1.1, 1.15, 0.08]] : [[1, 1.22, 0.07], [1.22, 1.3, 0.06]];
+  const out = [];
+  let t = 0;
+  for (const [a, b, d] of steps) {
+    out.push(["o", voice.wave, voice.hz * a, voice.hz * b, d, voice.wave === "sine" ? 0.42 : 0.3, t]);
+    out.push(["n", "bandpass", voice.formant * a, voice.formant * b, d, 0.14, t, 4]);
+    t += d + 0.025;
+  }
+  return out;
+}
 const duration = (recipe) => recipe.reduce((m, l) => Math.max(m, l[4] + l[6]), 0);
 export const SFX_NAMES = [...Object.keys(R), ...Object.keys(BANK)];
 export const recipeFor = (name) => R[name] || BANK[name];
 export const hasSound = (name) => Object.hasOwn(R, name) || Object.hasOwn(BANK, name);
 // The big, rare explosions keep one rendering (pitch jitter varies them); everything else has two.
-export const variantsFor = (name) => (name.startsWith("boom:") && name !== "boom:small" ? 1 : 2);
+export const variantsFor = (name) => ((name.startsWith("boom:") && name !== "boom:small") || name.startsWith("sting:") || name === "thunder" ? 1 : 2);
 // The voice group of a bank sound played directly (sound tests, the voice-cap check).
 export const groupOf = (name) => (name.startsWith("shot:") ? "weapon" : name.startsWith("impact:") ? "impact" : name.startsWith("hit:") || name.startsWith("boom:") ? "explosion" : "moment");
 // A faction's weapons sound a little different (playback rate of the shared voices).
@@ -135,19 +151,49 @@ export class Sfx {
       const mix = this.mixAt(event.tx, event.tz);
       this.play("impact:crit", { pan: mix.pan, gain: mix.gain, priority: nearPriority(2, mix.gain), gap: 0.12, group: "impact", delay: 0.05 });
     }
+    // R3-U: where the round lands (the player's own, or ground the player sees): a falling whistle
+    // before a lob or a bomb, the class's own landing (bomb, fire bomb, flak burst) and the size layer
+    // of the impact (small, medium, heavy) over the target's material sound.
+    if (event.type === "shot" && Number.isFinite(event.tx) && Number.isFinite(event.tz) && (event.team === 0 || isVisible({ x: event.tx, z: event.tz }))) {
+      const mix = this.mixAt(event.tx, event.tz), land = landingFor(event, sourceType), layer = impactLayer(event, sourceType);
+      if (land?.incoming) this.play(land.incoming.name, { pan: mix.pan, gain: mix.gain, priority: nearPriority(4, mix.gain), gap: 0.12, group: "moment", delay: land.incoming.delay });
+      if (land?.hit && this.play(land.hit.name, { pan: mix.pan, gain: mix.gain, priority: nearPriority(4, mix.gain), gap: 0.06, group: "explosion", delay: land.hit.delay })) heard = Math.max(heard, mix.gain);
+      if (layer && !shouldCull("impact", mix.gain, layer.size === "heavy")) this.play(layer.name, { pan: mix.pan, gain: mix.gain, priority: nearPriority(layer.size === "heavy" ? 3 : layer.size === "medium" ? 2 : 1, mix.gain), gap: layer.size === "small" ? 0.06 : 0.09, group: "impact", delay: layer.delay });
+    }
+    // R3-U: a stinger over the big turns (a boss stage falls).
+    const sting = stingerFor(event);
+    if (sting && audible(event, isVisible, 0)) this.play(sting, { priority: 9, gap: 0.8, group: "moment" });
     return heard;
   }
+  // R3-U: a unit voice chirp for `kind` (select | order | attack) in the voice of `unit` (an entity:
+  // type, class, position). Rate limit and quiet mode are the caller's (BarkGate in audio-logic.js).
+  bark(kind, unit) {
+    if (!this.enabled || !unit) return false;
+    const voice = barkVoice(unit.type, unit.class), mix = this.mixAt(unit.x, unit.z);
+    return this.playRecipe(`bark:${unit.type}`, barkRecipe(voice, kind), { pan: mix.pan, gain: BARK.level, priority: 7, gap: 0, group: "voice", jitter: BARK.pitchJitter });
+  }
+  // R3-U: the low-HP heartbeat and the thunder crack (a moment after the flash), in the player's ear.
+  lowHp() { return this.play("warn:lowhp"); }
+  thunder(level = 1) { return this.play("thunder", { gain: THUNDER.level * level, delay: THUNDER.delay }); }
   play(name, { pan = 0, gain = 1, priority, gap, group, delay = 0, rate = 1 } = {}) {
     if (!this.enabled) return false;
-    if (Object.hasOwn(BANK, name)) return this.playBank(name, BANK[name], { pan, gain, priority: priority ?? 3, gap: gap ?? 0, group: group ?? groupOf(name), delay, rate });
-    const recipe = R[name], ctx = this.context;
+    if (Object.hasOwn(BANK, name)) {
+      const extra = BANK_EXTRA[name];
+      return this.playBank(name, BANK[name], { pan, gain, priority: priority ?? extra?.[0] ?? 3, gap: gap ?? extra?.[1] ?? 0, group: group ?? extra?.[2] ?? groupOf(name), delay, rate });
+    }
+    const recipe = R[name];
     if (!recipe) return false;
     const extra = EXTRA[name];
     priority ??= extra?.[0] ?? 3; gap ??= extra?.[1] ?? 0; group ??= extra?.[2] ?? (name.startsWith("shot:") ? "weapon" : "moment");
+    return this.playRecipe(name, recipe, { pan, gain, priority, gap, group, delay });
+  }
+  // A live recipe (oscillators and noise) through the voice budget; `jitter` = the pitch variation.
+  playRecipe(name, recipe, { pan = 0, gain = 1, priority = 3, gap = 0, group = "moment", delay = 0, jitter = MIX.pitchVariation } = {}) {
+    const ctx = this.context;
     const now = ctx.currentTime, got = this.budget.tryAcquire(name, priority, now, duration(recipe) + 0.05, gap, group);
     if (!got) { this.dropped++; return false; }
     got.stolen?.stop?.();
-    const pitch = 1 + (this.rnd() * 2 - 1) * MIX.pitchVariation, level = gain * (0.9 + this.rnd() * 0.2);
+    const pitch = 1 + (this.rnd() * 2 - 1) * jitter, level = gain * (0.9 + this.rnd() * 0.2);
     let dest = this.out, panner = null;
     if (pan && ctx.createStereoPanner) { panner = ctx.createStereoPanner(); panner.pan.value = Math.max(-1, Math.min(1, pan)); panner.connect(this.out); dest = panner; }
     for (const layer of recipe) this.layer(layer, now + delay, pitch, level * 0.5, dest);

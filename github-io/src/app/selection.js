@@ -22,6 +22,7 @@ export function setupSelection(S, A) {
       );
     }
     A.tone(650);
+    S.audio?.bark?.("select", selectedEntities()); // R3-U: a unit voice chirp (rate-limited, quiet mode mutes it)
   }
 
   let lastGroup = { key: '', time: 0 };

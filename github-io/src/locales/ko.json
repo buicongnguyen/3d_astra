@@ -1242,7 +1242,8 @@
     "Keep a few units at home, or build a Tower beside the Command core.": "기지에 유닛 몇을 남겨 두거나 사령부 옆에 타워를 건설하세요.",
     "Research weapons and plating at the Foundry: upgrades win even fights.": "공장에서 무기와 장갑을 연구하세요. 업그레이드가 대등한 싸움을 승리로 이끕니다.",
     "Clear": "해제",
-    "Info": "정보"
+    "Info": "정보",
+    "Quiet mode: no unit voices": "조용한 모드: 유닛 음성 끄기"
   },
   "patterns": [
     [

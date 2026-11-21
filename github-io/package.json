@@ -87,7 +87,8 @@
     "test:openings": "node tests/openings.mjs",
     "test:sovereign-walks": "node tests/sovereign-walks.mjs",
     "test:readability": "node tests/readability.mjs",
-    "test:ceremony": "node tests/ceremony.mjs"
+    "test:ceremony": "node tests/ceremony.mjs",
+    "test:audio-juice": "node tests/audio-juice.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

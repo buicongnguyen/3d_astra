@@ -3,7 +3,8 @@
 export const MIX = {identicalVoices:3,windowSeconds:.08,combatWindow:1,combatThreshold:6,duckDb:-4,pitchVariation:.04,auditionSeconds:2,
   // Voices sounding at once: all effects together, and per group (a big fight fills "weapon" first).
   maxVoices: 24,
-  groupCaps: { weapon: 12, impact: 4, explosion: 8, radio: 1, ui: 4, moment: 6 },
+  // R3-U: "voice" = unit barks (one chirp at a time); impacts 4 -> 6 for the size layers (impact:small/medium/heavy).
+  groupCaps: { weapon: 12, impact: 6, explosion: 8, radio: 1, ui: 4, moment: 6, voice: 1 },
   // Effect bank playback: overall level of rendered effects and the per-play jitter (cosmetic RNG).
   bankLevel: 0.55, gainJitterDb: 1,
   // Off-screen small sounds (shots, impacts) quieter than this distance gain are not played at all.

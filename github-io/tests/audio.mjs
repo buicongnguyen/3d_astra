@@ -66,7 +66,7 @@ try {
   });
   assert.equal(fog.fogVisible, false, 'the corner is fogged');
   assert.equal(fog.fogged, 0, 'a fogged enemy shot (and its landing) makes no sound');
-  assert.equal(fog.near, 2, 'a visible enemy tank shot is heard, and the shell landing');
+  assert.equal(fog.near, 3, 'a visible enemy tank shot is heard, the shell landing and its heavy impact layer (R3-U)');
   assert.ok(fog.own >= 1, 'our own shot is heard');
 
   // Voice budget: a burst of explosions never exceeds the explosion group's cap or the total.

@@ -42,6 +42,8 @@ export function defaults(coarse = false) {
     autocast: !!coarse,
     // R3-B: a move of two or more units keeps the fighters' pace, support units behind (app/orders.js).
     groupPace: true,
+    // R3-U: quiet mode mutes the unit voice chirps (barks) on select and order; all other sound stays.
+    quietMode: false,
   };
 }
 export function normalize(value, coarse = false) {
@@ -65,6 +67,7 @@ export function normalize(value, coarse = false) {
   for (const key of ["muted", "waterMotion", "combatMotion", "screenShake", "ambient", "detail", "showFps", "autocast"])
     if (typeof value[key] === "boolean") d[key] = value[key];
   if (typeof value.groupPace === "boolean") d.groupPace = value.groupPace;
+  if (typeof value.quietMode === "boolean") d.quietMode = value.quietMode;
   return d;
 }
 export function loadSettings(coarse = false, storage) {

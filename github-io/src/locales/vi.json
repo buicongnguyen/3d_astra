@@ -1248,7 +1248,8 @@
     "Keep a few units at home, or build a Tower beside the Command core.": "Để lại vài đơn vị ở nhà, hoặc xây một Tháp pháo cạnh Sở chỉ huy.",
     "Research weapons and plating at the Foundry: upgrades win even fights.": "Nghiên cứu vũ khí và giáp tại Nhà máy: nâng cấp giúp thắng những trận cân sức.",
     "Clear": "Bỏ chọn",
-    "Info": "Thông tin"
+    "Info": "Thông tin",
+    "Quiet mode: no unit voices": "Chế độ yên tĩnh: tắt tiếng đơn vị"
   },
   "patterns": [
     ["^(\\d{1,2}) Jan$", "{1} thg 1"],
