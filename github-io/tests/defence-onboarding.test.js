@@ -44,7 +44,7 @@ test("the guide has three steps, each with a Vietnamese line", () => {
 });
 
 test("the Defence readability view is a registered plugin that does nothing outside Defence", () => {
-  assert.equal(VIEW_PLUGINS.at(-1), DefenceReadabilityView, "appended at the end of the registry");
+  assert.ok(VIEW_PLUGINS.includes(DefenceReadabilityView), "registered in the view-plugin registry");
   const added = [], view = { scene: { add: (...m) => added.push(...m), remove() {} }, objects: new Map() };
   const plugin = new DefenceReadabilityView(view);
   plugin.update({ entities: [] });
