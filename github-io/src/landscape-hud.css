@@ -225,6 +225,9 @@
 }
 .compact-ui:not(.in-briefing) #touch-sheet > button .icon { flex: none; width: 18px; height: 18px; }
 .compact-ui:not(.in-briefing) #touch-sheet > button > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* In portrait the tool-row rule (ui-theme.css, `.touch-controls #clear-selection { flex: 1 1 0 }`) also hits the
+   sheet's "Clear selection" row and shrank it to 20 px in the column: keep the sheet row at its 44 px. */
+.compact-ui:not(.in-briefing) #touch-sheet > #clear-selection { flex: none; }
 
 @media (max-aspect-ratio: 1.35) {
   /* Touch row: three buttons at the top left, under the header. The sheet opens below them. */
