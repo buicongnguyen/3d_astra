@@ -145,6 +145,9 @@ jobs:
           # AAA round 3 (R3-C): the Army size row (200 desktop-only) and the Combined armour step.
           - name: r3-c
             scripts: army-depth
+          # AAA round 3 (R3-A): the Field command census (5 factions at 600 s) and the Highlands stall check. No browser.
+          - name: r3-a
+            scripts: ai-census-check
     defaults:
       run:
         working-directory: github-io
