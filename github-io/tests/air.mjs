@@ -180,8 +180,8 @@ await suite("air", async () => {
     await page.evaluate((id) => window.__frontier.select([id]), fight.hawk);
     await page.evaluate(() => window.__frontier.step(0.05));
     await dock("selection");
-    // W1-D: on phones Info & stats lives in the touch row's more-sheet.
-    if (await page.locator("#field-guide").first().isVisible()) await tap("#field-guide"); else { await tap("#touch-more"); await tap("#touch-guide"); }
+    // On phones Info & stats is also in the touch row (owner, 2026-11-21: one tap, no sheet).
+    if (await page.locator("#field-guide").first().isVisible()) await tap("#field-guide"); else await tap("#touch-guide");
     await page.locator("dialog.field-guide[open]").waitFor({ timeout: TIMEOUT.step });
     for (const type of ["kite", "hawk", "balloon", "glider"]) {
       await page.selectOption("#guide-entry", type);

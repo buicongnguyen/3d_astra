@@ -80,14 +80,12 @@ await suite('squad-orders', async () => {
 
     if (mobile) {
       // 4. Owner decision (2026-11-21, Wave 1 merge): no group-control buttons on phones. The group strip
-      // stays hidden on the compact UI as before round 3, outside the "…" sheet, and the fixed dock keeps
-      // its height.
+      // stays hidden on the compact UI as before round 3 (the touch row has no group buttons either), and the
+      // fixed dock keeps its height.
       await page.evaluate((ids) => window.__frontier.select([...ids.tanks, ids.medic, ids.engineer]), ids);
-      await tap('#touch-more');
       await page.waitForTimeout(300);
-      const strip = await page.evaluate(() => { const s = document.getElementById('group-strip'); return { inSheet: !!s.closest('#touch-sheet'), shown: s.getBoundingClientRect().height > 0, chips: s.querySelectorAll('[data-smart], [data-save-group]').length }; });
+      const strip = await page.evaluate(() => { const s = document.getElementById('group-strip'); return { inSheet: !!s.closest('.touch-controls'), shown: s.getBoundingClientRect().height > 0, chips: s.querySelectorAll('[data-smart], [data-save-group]').length }; });
       assert.deepEqual(strip, { inSheet: false, shown: false, chips: 0 }, 'no group strip on phones');
-      await tap('#touch-more');
       await page.waitForTimeout(300);
       const after = await dock();
       console.log(`squad-orders ${viewport}: dock ${dockBefore} px before, ${after} px after`);
