@@ -103,6 +103,7 @@ export function createBar(c) {
     return null;
   }
   function frame(dt) {
+    c.guideFrame?.();
     if (ui.viewMode !== "follow" || !S.sim?.defence || !Z.started || Z.paused || S.sim.result || Z.modalType || !S.view) return;
     const v = S.view, now = performance.now();
     if (ui.follow.set && (Math.abs(v.focus.x - ui.follow.x) > 0.02 || Math.abs(v.focus.z - ui.follow.z) > 0.02 || Math.abs(v.zoom - ui.follow.zoom) > 0.01)) ui.follow.pauseUntil = now + FOLLOW_HOLD_MS;
@@ -254,6 +255,8 @@ export function createBar(c) {
     }
     if (d.wave > ui.seen.wave && d.wave === total) A.alert("Final wave!");
     if (d.lives < ui.seen.lives && S.sim.time - ui.leakAt > 4) { ui.leakAt = S.sim.time; A.alert("The enemy broke through!"); }
+    // R3-E: lives lost per wave, for the result's next-star hint.
+    if (d.lives < ui.seen.lives) (ui.leaks ||= {})[d.wave] = (ui.leaks[d.wave] || 0) + ui.seen.lives - d.lives;
     for (const [x, now] of Object.entries(crossings)) {
       const was = ui.seen.crossings[x];
       if (now === was) continue;

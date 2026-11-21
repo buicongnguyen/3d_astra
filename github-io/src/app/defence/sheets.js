@@ -128,8 +128,10 @@ export function createSheets(c) {
   function emptySheet() {
     $("command-label").textContent = "DEFENCE";
     $("command-context").textContent = "PADS";
-    const zones = !!S.sim.missionDef.defence.zones?.length;
-    $("commands").innerHTML = `<i hidden data-defence-sheet data-key="none"></i><div class="tactical-hint defence-hint">${icon("tower")}<strong>Crew the pads</strong><p>${zones ? "Tap a pad, or anywhere in a marked field, then pick a crew. Tap a tower to upgrade or sell it." : "Tap a pad beside the road, then pick a crew. Tap a tower to upgrade or sell it."}</p></div>`;
+    const zones = !!S.sim.missionDef.defence.zones?.length, guided = !!c.guideActive?.();
+    // R3-E: the guided first build takes over the hint while it runs.
+    $("commands").innerHTML = guided ? `<i hidden data-defence-sheet data-key="none:g"></i><div class="tactical-hint defence-hint" data-guide-hint>${icon("tower")}<strong>Your first tower</strong><p>Tap the glowing pad beside the road, then pick a crew.</p></div>`
+      : `<i hidden data-defence-sheet data-key="none"></i><div class="tactical-hint defence-hint">${icon("tower")}<strong>Crew the pads</strong><p>${zones ? "Tap a pad, or anywhere in a marked field, then pick a crew. Tap a tower to upgrade or sell it." : "Tap a pad beside the road, then pick a crew. Tap a tower to upgrade or sell it."}</p></div>`;
     $("command-hint").textContent = "";
   }
   function sheet(es) {
@@ -144,7 +146,7 @@ export function createSheets(c) {
     // 0.23: a spot in a build zone, an armour squad, the armour depot.
     const spot = !es.length && !pad && bridge === null ? S.defenceSpot : null, depot = !es.length && !pad && !spot && bridge === null && S.defenceDepot && !!S.sim.armourRules();
     const lead = squad ? S.sim.armourUnits(squad)[0] : null;
-    const k = tower ? `t:${tower.id}:${tower.tier}:${tower.branch || ""}:${tower.branchRank || 0}:${tower.aim || ""}` : hero ? `h:${hero.id}:${ui.aim || ""}` : squad ? `a:${squad}:${S.sim.armourModeOf(squad)}:${es.length}:${lead?.squadRank || 1}${lead?.squadBranch || ""}` : pad ? `p:${pad.id}` : bridge !== null ? `b:${bridge}:${S.sim.crossingState(bridge)}` : spot ? `z:${spot.zone}:${spot.x}:${spot.z}` : depot ? "d" : "none";
+    const k = tower ? `t:${tower.id}:${tower.tier}:${tower.branch || ""}:${tower.branchRank || 0}:${tower.aim || ""}` : hero ? `h:${hero.id}:${ui.aim || ""}` : squad ? `a:${squad}:${S.sim.armourModeOf(squad)}:${es.length}:${lead?.squadRank || 1}${lead?.squadBranch || ""}` : pad ? `p:${pad.id}` : bridge !== null ? `b:${bridge}:${S.sim.crossingState(bridge)}` : spot ? `z:${spot.zone}:${spot.x}:${spot.z}` : depot ? "d" : c.guideActive?.() ? "none:g" : "none";
     const marker = $("commands").querySelector("[data-defence-sheet]");
     if (marker?.dataset.key !== k) {
       $("commands").classList.remove("tactics-card");

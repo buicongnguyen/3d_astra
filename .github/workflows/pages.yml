@@ -136,6 +136,9 @@ jobs:
           # AAA round 3 (R3-D): the night (dark blue, moon and stars) and storm (rain, no flash with motion off) looks.
           - name: r3-d
             scripts: night-storm
+          # AAA round 3 (R3-E): Defence onboarding (guided first build, badges, discs, narrow landscape dock, next-star hint).
+          - name: r3-e
+            scripts: defence-onboarding
     defaults:
       run:
         working-directory: github-io

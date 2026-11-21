@@ -8,6 +8,7 @@ import { $ } from "./dom.js";
 import { DEFENCE_LEVELS, ZONE_NAMES, defenceVariant } from "../defence/levels.js";
 import { hasHeroic, HEROIC_LIVES, HEROIC_WAVES } from "../defence/heroic.js";
 import { loadDefence, saveDefence, recordDefence, recordHeroic, heroicOpen, heroicWon, starsOf, levelOpen, PERKS, ownedPerks, starsFree, canBuyPerk, buyPerk, bestScore, recordScore, dayKey, dailySeed, endlessSeed } from "../defence/progress.js";
+import { guideWanted, recordGuided } from "../defence/progress.js";
 import { icon } from "../icons.js";
 import { FACTIONS } from "../story/world.js";
 import { DIFFICULTY_LABELS } from "../difficulty.js";
@@ -20,6 +21,8 @@ import { CROSSINGS } from "../terrain.js";
 
 // What the lazy match interface uses from the main bundle (see app/defence-ui.js).
 const DEPS = { recordHeroic, $, GARRISONS, starsFor, D, hasPortrait, portrait, icon, ACTION_KEYS, DEFENCE_LEVELS, loadDefence, recordDefence, saveDefence, statTile, formatClock, DIFFICULTY_LABELS, FACTIONS, CROSSINGS, recordScore, bestScore, dayKey, ZONE_NAMES };
+// AAA round 3, R3-E: the guided first build and the next-star hint.
+Object.assign(DEPS, { guideWanted, recordGuided, hasHeroic });
 
 export const DEFENCE_DIFFICULTY = {
   story: "Smaller waves and more alloy to start.",

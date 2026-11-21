@@ -24,6 +24,8 @@ import { createBar } from "./defence/bar.js";
 import { createSheets } from "./defence/sheets.js";
 import { createInput } from "./defence/input.js";
 import { createResult } from "./defence/result.js";
+import { createGuide } from "./defence/guide.js";
+import { createDock } from "./defence/dock.js";
 
 export { TIER_TINT, RANK_TINT, HERO_TINT } from "./defence/constants.js";
 
@@ -47,7 +49,10 @@ export function createDefenceUI(S, A, deps) {
   createSheets(c);
   createInput(c);
   createResult(c);
+  createGuide(c);
+  createDock(c);
   const { buildPads, ensureBar, setAim, setOverview, paintView, closeCard, updateBar, announce, sheet, info, paintPads, rangeRing, syncCrossings, hideRing, disposePads, tap, result, event, phone } = c;
+  const { guideStart, guideStop, guideFrame, setDockMin } = c;
 
   // ---------------------------------------------------------------- Lifecycle
   function begin(resume = false) {
@@ -76,10 +81,14 @@ export function createDefenceUI(S, A, deps) {
       S.view.updateCamera();
       ui.viewMode = "follow";
     }
+    ui.leaks = {};
+    setDockMin(false);
+    // R3-E: a profile with no Defence win gets the guided first build (it moves the camera to its pad).
+    const guided = guideStart();
     paintView();
     // The skirmish opening line ("assign Harvesters") does not apply here.
     S.sim.events = S.sim.events.filter((e) => e.type !== "message");
-    if (!resume && Z.started) A.notice(S.sim.missionDef.defence.zones?.length ? "Tap a pad or a marked field, then pick a crew." : "Tap a pad beside the road, then pick a crew.");
+    if (!resume && Z.started && !guided) A.notice(S.sim.missionDef.defence.zones?.length ? "Tap a pad or a marked field, then pick a crew." : "Tap a pad beside the road, then pick a crew.");
     A.updateUI();
   }
   function hud(es) {
@@ -96,6 +105,7 @@ export function createDefenceUI(S, A, deps) {
     paintPads();
     rangeRing(es);
     syncCrossings();
+    guideFrame();
   }
   // Not a defence match (any more): take the pads, crossings and the bar away.
   function idle() {
@@ -107,6 +117,8 @@ export function createDefenceUI(S, A, deps) {
     closeCard();
     if (ui.intel) { ui.intel.hidden = true; ui.intelKey = ""; }
     delete $("commands").dataset.tier;
+    if (ui.guide) guideStop();
+    root.classList.remove("defence-dock-min");
   }
 
   return { begin, hud, idle, tap, result, setOverview, event, get pads() { return ui.pads; }, get aim() { return ui.aim; } };
