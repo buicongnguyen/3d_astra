@@ -50,6 +50,8 @@ export function createRing(radius, hex) {
 
 // Advance a ring: selected rings lock on over 0.2 s; hover shows a dim ring without dashes.
 export function updateRing(ring, selected, hovered, time, dt, unitsPerPixel = 0) {
+  // R3-B: view plugins (the follow tether) read who is selected from the ring.
+  ring.userData.selected = !!selected;
   const on = selected || hovered;
   const target = on ? 1 : 0;
   ring.userData.appear = dt > 0 ? Math.min(1, Math.max(0, ring.userData.appear + Math.sign(target - ring.userData.appear) * dt * 5)) : target;

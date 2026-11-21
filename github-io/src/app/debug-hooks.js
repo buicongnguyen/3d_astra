@@ -65,6 +65,9 @@ export function setupDebugHooks(S, A) {
       skipScene: () => A.skipScene(),
       get audioPaused() { return S.audioPaused ?? null; },
       renderCampaign: () => A.renderBriefing(),
+      // R3-B: the order a click or tap gives at a world point, through the same path as the player's
+      // (app/orders.js commandAt, which adds the group-pace flag).
+      commandAt: (x, z, targetId = null, forced = null) => A.commandAt({ x, z }, targetId == null ? null : S.sim.get(targetId), false, forced),
     };
   }
 

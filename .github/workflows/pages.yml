@@ -133,6 +133,9 @@ jobs:
           # AAA round 2 (W2-F): title cards, boss presence, the Keystone Roads node.
           - name: r2-w2f
             scripts: showtime
+          # AAA round 3 (R3-B): squad orders (group pace, follow tether, phone group strip).
+          - name: r3-b
+            scripts: squad-orders
     defaults:
       run:
         working-directory: github-io

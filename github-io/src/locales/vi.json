@@ -1190,7 +1190,14 @@
     "REAR": "SAU LƯNG",
     "PINNED": "BỊ GHIM",
     "PIERCE": "XUYÊN GIÁP",
-    "destroyed": "bị tiêu diệt"
+    "destroyed": "bị tiêu diệt",
+    "All army": "Toàn quân",
+    "Fighters": "Lính chiến",
+    "Select every army unit": "Chọn mọi đơn vị quân",
+    "Select every fighter": "Chọn mọi lính chiến",
+    "Select Medics, Engineers and flyers": "Chọn Quân y, Công binh và máy bay",
+    "Group pace": "Nhịp đội hình",
+    "A group you move keeps together at its fighters' pace, with Medics and Engineers walking behind them. Off: every unit walks at its own speed.": "Nhóm quân bạn điều đi giữ đội hình theo tốc độ của lính chiến, Quân y và Công binh đi phía sau. Tắt: mỗi đơn vị đi theo tốc độ riêng."
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],
@@ -1733,6 +1740,9 @@
     ["^DAY (\\d+)$", "NGÀY {1}"],
     ["^NIGHT (\\d+)$", "ĐÊM {1}"],
     ["^(.+) CHRONICLE$", "BIÊN NIÊN {1}"],
-    ["^FRONTIER DEFENCE$", "PHÒNG THỦ BIÊN CƯƠNG"]
+    ["^FRONTIER DEFENCE$", "PHÒNG THỦ BIÊN CƯƠNG"],
+    ["^\\+ Group (\\d)$", "+ Nhóm {1}"],
+    ["^Save the selection as group (\\d) \\(hold a group to save over it\\)$", "Lưu lựa chọn thành nhóm {1} (giữ một nhóm để lưu đè)"],
+    ["^Following (.+)$", "Đi theo {1}"]
   ]
 }

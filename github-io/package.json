@@ -75,7 +75,8 @@
     "test:workshops": "node tests/workshops.mjs",
     "test:title": "node tests/title.mjs",
     "test:phones": "node tests/phones.mjs",
-    "test:showtime": "node tests/showtime.mjs"
+    "test:showtime": "node tests/showtime.mjs",
+    "test:squad-orders": "node tests/squad-orders.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

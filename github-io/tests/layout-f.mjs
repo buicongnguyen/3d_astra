@@ -48,7 +48,7 @@ const AUDIT = ({ touch, scope, fixed }) => {
     const r = e.getBoundingClientRect();
     if (r.width <= 1 || r.height <= 1) continue;
     const id = e.id || e.dataset.mode || e.dataset.tab || e.dataset.dock || e.className.toString().split(' ')[0] || e.textContent.trim().slice(0, 16);
-    if (touch && (r.height < 43.5 || r.width < 43.5) && !e.closest('.group-strip')) out.targets.push(`${id} ${Math.round(r.width)}x${Math.round(r.height)}`);
+    if (touch && (r.height < 43.5 || r.width < 43.5)) out.targets.push(`${id} ${Math.round(r.width)}x${Math.round(r.height)}`);
     const scrolls = (() => { for (let p = e.parentElement; p && p !== document.body; p = p.parentElement) { const o = getComputedStyle(p).overflowY; if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight + 1) return true; } return false; })();
     if (scrolls) { /* reachable by scrolling its own panel */ }
     else if (r.left < -1 || r.top < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1) out.outside.push(`${id} ${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.right)},${Math.round(r.bottom)}`);
