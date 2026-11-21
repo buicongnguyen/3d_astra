@@ -105,6 +105,10 @@ def kite(a):
     beam(a, 'Spars', 'Steel', (0, -.94, 1.04), (0, .82, 1.04), .045)
     beam(a, 'Mast', 'Steel', (0, -.1, .86), (0, -.1, .98), .07)
     box(a, 'Sail_stripe', 'Hazard', (.12, .5, .02), (0, .4, 1.04), bevel=0)
+    # R3-W: warm Hazard edging on the two leading edges, so the diamond reads from above at a glance.
+    for s in (-1, 1):
+        ang = math.atan2(.85, .82)
+        box(a, 'Sail_edge', 'Hazard', (1.12, .09, .025), (s * .41, -.48, 1.045), rot=(0, 0, s * ang), bevel=0)
     # Spotter eye: lens barrel, dark glass and a glowing pupil on the pod's nose.
     cyl(a, 'Lens_barrel', 'Steel', .2, .2, (0, -.44, .62), rot=FORWARD, seg=12)
     cyl(a, 'Lens_glass', 'Glass', .15, .06, (0, -.56, .62), rot=FORWARD, seg=12, bevel=.01)
@@ -118,8 +122,8 @@ def kite(a):
         rotor(a, p, 2, .74, .1)
         box(a, 'Tip_lights', 'TeamGlow', (.08, .08, .04), (x, -.05, .96), bevel=0)
     # Kite tail with two bows, and light landing skids.
-    a.part('Tail_line', 'Undercarriage').tube([(0, .5, .62), (0, .85, .5), (0, 1.15, .42), (0, 1.45, .4)], .02, seg=5)
-    for y, z in ((.95, .47), (1.38, .4)):
+    a.part('Tail_line', 'Undercarriage').tube([(0, .5, .62), (0, .85, .5), (0, 1.15, .42), (0, 1.45, .4), (0, 1.85, .44)], .02, seg=5)
+    for y, z in ((.95, .47), (1.38, .4), (1.8, .44)):
         a.part('Tail_bows', 'Team').prism([(-.18, -.06), (.18, .06), (.18, -.06), (-.18, .06)], .03, loc=(0, y, z),
                                           axis='Z', bevel=0)
     for s in (-1, 1):
@@ -144,6 +148,10 @@ def hawk(a):
     box(a, 'Tail_boom', 'Armor', (.34, 1.25, .28), (0, 1.75, 1.02), bevel=.04, taper=(.75, 1))
     a.part('Tail_fin', 'Team').prism([(2.0, 1.05), (2.45, 1.05), (2.55, 1.7), (2.3, 1.72)], .09, bevel=.02, seg=1)
     box(a, 'Stabiliser', 'Steel', (1.2, .3, .06), (0, 2.25, 1.05), bevel=.015, taper=(.85, 1))
+    # R3-W: team end plates on the stabiliser and a dorsal intake: a twin-tail gunship silhouette.
+    for s in (-1, 1):
+        box(a, 'Tail_plates', 'Team', (.05, .34, .36), (s * .6, 2.27, 1.16), bevel=0)
+    box(a, 'Intake', 'Armor', (.36, .42, .18), (0, -.2, 1.42), bevel=0, taper=(.8, .7))
     box(a, 'Tail_light', 'TeamGlow', (.06, .1, .08), (0, 2.5, 1.62), bevel=0)
     # Stub wings carry the fans; duct rings are team paint so the pair reads from above.
     box(a, 'Stub_wings', 'Armor', (2.4, .55, .13), (0, -.05, .98), bevel=.035, taper=(1, .85))
@@ -184,6 +192,12 @@ def balloon(a):
     for az, el, mat, size, spin in patches:
         patch(a, 'Patches', mat, centre, radii, az, el, size, spin)
     a.part('Envelope_band', 'Steel').torus(1.16, .045, loc=(0, 0, 2.62), seg=16, ring=3)
+    # R3-W: a crown vent cap and four team streamers hanging from the band (a festival-bomber silhouette).
+    cyl(a, 'Vent_cap', 'Steel', .34, .14, (0, 0, 4.2), seg=10, r2=.22, bevel=0)
+    for k in range(4):
+        ang = k * R90 + .4
+        c, sn = math.cos(ang), math.sin(ang)
+        box(a, 'Streamers', 'Team', (.05, .16, .7), (c * 1.19, sn * 1.19, 2.2), rot=(0, 0, ang), bevel=0, taper=(1, .3))
     cyl(a, 'Skirt', 'Armor', .36, .32, (0, 0, 1.66), seg=12, r2=.6, bevel=.01)
     # Rigging lines from the skirt to the gondola corners.
     for sx in (-1, 1):
@@ -204,6 +218,7 @@ def balloon(a):
     box(a, 'Side_plates', 'Steel', (.06, .44, .28), (.53, .12, .64), rot=(0, .08, -.08), bevel=.012)
     cyl(a, 'Exhaust_stack', 'Undercarriage', .065, .8, (.36, .3, 1.24), rot=(.12, .1, 0), seg=8, bevel=0)
     cyl(a, 'Stack_cap', 'Steel', .1, .07, (.4, .35, 1.65), rot=(.12, .1, 0), seg=8, bevel=0)
+    a.part('Pennant', 'Hazard').prism([(0, 0), (.42, .1), (0, .22)], .02, loc=(.42, .36, 1.5), rot=(R90, 0, .5), axis='Z', bevel=0, seg=1)
     cyl(a, 'Fuel_drum', 'Hazard', .14, .34, (-.24, .2, 1.15), seg=10, bevel=.01)
     box(a, 'Lamp_front', 'TeamGlow', (.2, .04, .07), (0, -.47, .84), bevel=0)
     # Bomb rack under the gondola.
@@ -228,6 +243,10 @@ def glider(a):
         box(a, 'Wing_stripes', 'Medical', (.1, .4, .03), (s * 1.18, .2, wing_z + .03 + .08), rot=(0, -s * .07, -s * .65),
             bevel=0)
     beam(a, 'Keel', 'Steel', (0, -.95, wing_z + .05), (0, .55, wing_z + .05), .06)
+    # R3-W: upturned team winglets and a Sunward sun disc on the sail: a raider, not a kite.
+    for s in (-1, 1):
+        box(a, 'Winglets', 'Team', (.05, .36, .34), (s * 1.93, .66, wing_z + .3), rot=(0, s * .25, 0), bevel=0, taper=(1, .6))
+    cyl(a, 'Sun_disc', 'Hazard', .3, .025, (0, -.05, wing_z + .06), seg=12, bevel=0)
     # A-frame mast from the trike to the wing hang point.
     for sx in (-1, 1):
         beam(a, 'A_frame', 'Steel', (sx * .42, -.42, 1.0), (0, -.1, wing_z - .02), .045)
@@ -324,10 +343,13 @@ def build_all(names=None, export=True, manifest=False, keep=False):
     if export and manifest:
         path = OUT / 'manifest.json'
         data = json.loads(path.read_text(encoding='utf-8'))
-        data['assets'] = [e for e in data['assets'] if e['name'] not in report] + [
-            {'name': n, 'file': f'{n}.glb', 'triangles': r['triangles'], 'air': True, 'budget': BUDGET,
-             'animation': 'Runtime spin_*/flicker_* pivots and hover bob; no baked clips'} for n, r in report.items()]
-        path.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
+        # In place (the portrait atlas order follows the manifest), flagged for the owner (round 3, R3-W).
+        fresh = {n: {'name': n, 'file': f'{n}.glb', 'triangles': r['triangles'], 'air': True, 'budget': BUDGET,
+                     'animation': 'Runtime spin_*/flicker_* pivots and hover bob; no baked clips',
+                     'review': 'pending owner review (round 3)'} for n, r in report.items()}
+        data['assets'] = [fresh.pop(e['name'], e) for e in data['assets']] + list(fresh.values())
+        with open(path, 'w', encoding='utf-8', newline='\n') as f:
+            f.write(json.dumps(data, indent=2) + '\n')
     print('AIR_REPORT', json.dumps(report), flush=True)
     return report
 
