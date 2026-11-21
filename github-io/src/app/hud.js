@@ -12,6 +12,7 @@ import { tacticsCardHTML, updateTacticsCard } from "../tactics-card.js";
 import { createMessageQueue, ROUTINE, ALERT } from "../message-queue.js";
 import { productionTiles, researchState, flakTile } from "../research-tiles.js";
 import { updateBossBar } from "../boss-ui.js";
+import { veteranNote } from "../sim/content/barracks-veterans.js";
 import "../boss-ui.css";
 
 export function setupHud(S, A) {
@@ -271,7 +272,7 @@ export function setupHud(S, A) {
         `<button data-level title="U · Upgrade building">${e.level < 3 ? `<span class="up-name">Upgrade to L${e.level+1}</span><span class="up-cost"><span class="sep"> · </span>${S.sim.levelCost(e).join('/')}</span> <kbd>U</kbd>` : '<span class="up-name">Maximum level 3</span>'}</button>` : '';
       $("command-hint").textContent =
         e?.kind === "building"
-          ? ''
+          ? veteranNote(S.sim, e)
           : es.some((u) => u.type === "worker")
             ? "Select a structure, then place it on clear terrain."
             : S.touchInput ? "Enable Queue to chain orders. Use Army or Box to select a group." : "Hold Shift to queue orders. Ctrl + 1–9 saves a group.";
