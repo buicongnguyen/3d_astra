@@ -101,9 +101,7 @@ test("title cards: every mission, Chronicle mission and Defence level has a labe
   const { MISSION_INTROS, titleCardFor } = await import("../src/story/mission-intros.js");
   const { CHRONICLES } = await import("../src/story/chronicles.js");
   const all = [...MISSIONS, ...CHRONICLES.flatMap((c) => c.missions), ...DEFENCE_LEVELS];
-  // R3-H's m11d row is a seam request to R3-G (mission-intros.js): drop PENDING once it has landed.
-  const PENDING = MISSION_INTROS["m11d-the-sovereign-walks"] ? [] : ["m11d-the-sovereign-walks"];
-  for (const m of all.filter((x) => !PENDING.includes(x.id))) {
+  for (const m of all) {
     assert.ok(MISSION_INTROS[m.id], `${m.id}: a row`);
     const card = titleCardFor(m);
     assert.equal(card.title, m.title);

@@ -130,6 +130,8 @@ async function loadAssets(types = modelsForMatch(S.sim)) {
 function boot() {
   try {
     S.view = new WorldView($("world"), { terrain: S.sim.terrain, settings: S.settings, mission: S.look });
+    // R3-K: the group badges read the Ctrl+number groups (mutated in place, never replaced).
+    S.view.controlGroups = S.groups;
     S.view.onContextLost = A.graphicsLost;
     S.view.onContextRestored = A.graphicsRestored;
     $("quality").textContent = S.view.lowPower ? "Eco" : "High";

@@ -22,6 +22,7 @@ export const MISSION_INTROS = {
   "m10-obsidian-storm": { kicker: "ACT III", day: "DAY 47" },
   "m11-cut-the-draw": { kicker: "ACT III", day: "DAY 52" },
   "m11c-hold-the-keystone-roads": { kicker: "ACT III", day: "DAY 54" },
+  "m11d-the-sovereign-walks": { kicker: "ACT III", day: "DAY 54" },
   "m12-frontiers-end": { kicker: "ACT III", day: "DAY 55" },
   "ca1-cold-berths": { kicker: "ASHFALL CHRONICLE", day: "DAY 3" },
   "ca2-lights-out": { kicker: "ASHFALL CHRONICLE", day: "DAY 4" },

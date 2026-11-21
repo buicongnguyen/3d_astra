@@ -85,12 +85,25 @@ export function setupBriefing(S, A) {
         `<section class="act" aria-labelledby="act-${act}"><h3 class="act-title" id="act-${act}"><span>ACT ${act}</span> <strong>${title}</strong></h3><ol class="stage-list" aria-label="Campaign missions">${MISSIONS.map((m, i) => (m.act === act ? card(m, i) : "")).join("")}</ol></section>`).join("") + chronicleListHTML({ progress: S.campaign, campaign: c })
       : chronicleMissionsHTML({ progress: S.campaign, campaign: c, card });
     // Finishing a model download refreshes the briefing; keep focus on an unchanged mission list.
-    if (listShown !== list) { listShown = list; $("campaign-setup").innerHTML = list; }
+    if (listShown !== list) { listShown = list; $("campaign-setup").innerHTML = list; requestAnimationFrame(revealPick); }
     // The campaign map in the hero (campaign-map-ui.js); redrawn only when what it shows changed.
     const map = campaignMapHTML({ progress: S.campaign, pick: S.stagePick, campaign: c });
     if (mapShown !== map) { mapShown = map; $("campaign-map").innerHTML = map; }
   }
   let listShown = "", mapShown = "";
+  // Phones (R3-G seam): the list shows its first rows, so scroll the picked mission into view inside the setup
+  // column (only that column; the page itself never moves). Nothing on tablets and desktop.
+  const phoneMenu = matchMedia("(max-width: 720px), (orientation: landscape) and (max-height: 520px)");
+  function revealPick() {
+    const row = phoneMenu.matches && document.querySelector('#campaign-setup [aria-current="true"]');
+    if (!row || !row.offsetParent) return;
+    let box = row.parentElement;
+    while (box && !(box.scrollHeight > box.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(box).overflowY))) box = box.parentElement;
+    if (!box || box === document.body || box === document.documentElement) return;
+    const r = row.getBoundingClientRect(), b = box.getBoundingClientRect();
+    if (r.top < b.top) box.scrollTop -= b.top - r.top + 8;
+    else if (r.bottom > b.bottom) box.scrollTop += r.bottom - b.bottom + 8;
+  }
 
   function renderBriefing() {
     const setup = battleSetup(), inCampaign = S.playMode === "campaign";
@@ -222,6 +235,7 @@ export function setupBriefing(S, A) {
       if (!button || Z.started) return;
       S.playMode = button.dataset.mode;
       previewBattle();
+      if (S.playMode === "campaign") requestAnimationFrame(revealPick);
     });
 
     $("defence-setup").onclick = (event) => {
