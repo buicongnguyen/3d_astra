@@ -1307,7 +1307,8 @@
     "Pick it in the Skirmish setup.": "Chọn nó trong phần thiết lập Giao tranh.",
     "Your units' colour scheme. Looks only: it never changes a battle.": "Bảng màu cho đơn vị của bạn. Chỉ để trang trí: không bao giờ thay đổi trận đánh.",
     "Shown on your rank and your results.": "Hiện trên cấp bậc và kết quả của bạn.",
-    "The title under your rank.": "Danh hiệu dưới cấp bậc của bạn."
+    "The title under your rank.": "Danh hiệu dưới cấp bậc của bạn.",
+    "Quiet mode: no unit voices": "Chế độ yên tĩnh: tắt tiếng đơn vị"
   },
   "patterns": [
     ["^(\\d{1,2}) Jan$", "{1} thg 1"],

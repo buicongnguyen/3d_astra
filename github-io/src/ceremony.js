@@ -106,6 +106,8 @@ export function createCeremony(S, A) {
 
   // ---------------------------------------------------------------- On the results screen
   function sting() {
+    // R3-U: the rendered victory stinger (sfx-bank.js sting:victory) once the audio engine runs; the tones below are the fallback.
+    if (S.audio?.sfx) { S.audio.sfx.play("sting:victory"); return; }
     const tone = A.tone;
     if (typeof tone !== "function") return;
     tone(660, 0.07);

@@ -82,6 +82,69 @@ export const BANK = {
   "boom:strike": { level: 0.86, drive: 2, room: ROOM.field, layers: [...blast(1.2), debris(20, 0.15, 0.9, [600, 2500], 2, 0.3)] },
   "boom:building": { level: 0.95, drive: 2, room: ROOM.field, layers: [...blast(1.6), { k: "noise", f: "lp", f0: 500, f1: 90, glide: 1.6, q: 0.7, at: 0.15, a: 0.25, d: 0.8, dur: 2.6, g: 1.2 }, debris(60, 0.2, 1.8, [600, 3500], 3, 0.45, [0.006, 0.04])] },
   "boom:core": { level: 1, drive: 2.2, room: ROOM.field, len: 4, layers: [...blast(1.8), ...blast(0.7, 0.45, 0.7), ...blast(0.9, 1.05, 0.6), { k: "noise", f: "lp", f0: 450, f1: 70, glide: 2.4, q: 0.7, at: 0.2, a: 0.3, d: 1.1, dur: 3.6, g: 1 }, debris(80, 0.3, 2.4, [500, 3500], 3, 0.45, [0.006, 0.05])] },
+
+  // ---------------------------------------------------------------- R3-U: audio juice
+  // Weapon classes that had no voice of their own (audio-logic.js weaponClass / classShot): sight and
+  // sound match the R3-X looks. Flak: a Sentinel tower at a flyer, a double thud then the air burst
+  // where the round meets it.
+  "shot:flak": { level: 0.58, drive: 2, room: ROOM.slap, layers: burst(2, 0.09, [crack(3600, 0, 1, 0.008), body("bp", 1500, 600, 0.04, 0, 0.9, 0.8), thump(160, 80, 0.04, 0, 0.7)]) },
+  "hit:flak": { level: 0.5, room: ROOM.slap, layers: [crack(4200, 0, 1, 0.006), body("bp", 2600, 900, 0.05, 0, 0.9, 0.9), thump(120, 70, 0.06, 0, 0.5), debris(14, 0.01, 0.35, [2500, 6500], 5, 0.45, [0.002, 0.008])] },
+  // A ground-to-air missile: the launch crack and a whoosh that climbs.
+  "shot:sam": { level: 0.55, drive: 1.5, room: ROOM.slap, layers: [crack(3200, 0, 0.7, 0.006), thump(260, 120, 0.03, 0, 0.5), { k: "noise", f: "bp", f0: 600, f1: 3200, glide: 0.4, q: 1.8, at: 0.01, a: 0.04, d: 0.18, dur: 0.6, g: 1.2 }] },
+  // A gunship's strafing run: a fast cannon stream with a rotor-wash hiss under it.
+  "shot:strafe": { level: 0.5, drive: 2, room: ROOM.slap, layers: [...burst(5, 0.045, rifle(2800, 0.85)), { k: "noise", f: "bp", f0: 900, f1: 1400, glide: 0.25, q: 1.2, a: 0.02, d: 0.1, dur: 0.3, g: 0.3 }] },
+  // A bomb let go (Swift glider, Ember balloon): a latch clunk; the whistle and the blast follow.
+  "shot:bomb": { level: 0.3, layers: [{ k: "tone", w: "square", f0: 300, f1: 240, glide: 0.03, a: 0.001, d: 0.015, dur: 0.06, g: 0.5 }, body("bp", 2000, 1600, 0.02, 0, 0.8, 3), body("lp", 600, 300, 0.05, 0.02, 0.4)] },
+  "incoming:bomb": { level: 0.36, layers: [
+    { k: "tone", w: "sine", f0: 2200, f1: 900, glide: 0.42, a: 0.25, d: 0.3, dur: 0.42, g: 1 },
+    { k: "noise", f: "bp", f0: 3000, f1: 1500, glide: 0.42, q: 3, a: 0.25, d: 0.3, dur: 0.42, g: 0.35 },
+  ] },
+  // An artillery lob coming down: a short falling whistle, ending as the shell lands (hit:artillery).
+  "incoming:lob": { level: 0.3, layers: [
+    { k: "tone", w: "sine", f0: 1600, f1: 1000, glide: 0.26, a: 0.12, d: 0.2, dur: 0.26, g: 1 },
+    { k: "noise", f: "bp", f0: 2200, f1: 1400, glide: 0.26, q: 3, a: 0.12, d: 0.2, dur: 0.26, g: 0.3 },
+  ] },
+  "hit:bomb": { level: 0.72, drive: 2, room: ROOM.slap, layers: blast(0.9) },
+  // A fire bomb: a smaller blast and the roar of the fire catching.
+  "hit:firebomb": { level: 0.7, drive: 1.8, room: ROOM.slap, layers: [...blast(0.7), { k: "noise", f: "lp", f0: 400, f1: 1600, glide: 0.3, q: 0.9, at: 0.05, a: 0.08, d: 0.3, dur: 0.9, g: 0.8 }, debris(14, 0.08, 0.6, [2500, 6000], 2, 0.25, [0.002, 0.008])] },
+  // The heal beam: a soft rising shimmer (medic, supply wagon).
+  "shot:heal": { level: 0.22, layers: [{ k: "tone", w: "sine", f0: 660, f1: 990, glide: 0.2, a: 0.02, d: 0.12, dur: 0.35, g: 0.6 }, { k: "tone", w: "sine", f0: 1320, f1: 1980, glide: 0.2, at: 0.03, a: 0.02, d: 0.1, dur: 0.3, g: 0.25 }, { k: "noise", f: "hp", f0: 6000, a: 0.03, d: 0.08, dur: 0.3, g: 0.1 }] },
+  // Layered impacts by size (audio-logic.js impactLayer): laid over the target's material sound.
+  "impact:small": { level: 0.2, layers: [crack(5000, 0, 1, 0.003), body("hp", 3000, 2000, 0.01, 0, 0.6, 0.8), debris(3, 0.005, 0.05, [2500, 6000], 6, 0.3, [0.002, 0.006])] },
+  "impact:medium": { level: 0.34, layers: [body("bp", 1200, 400, 0.04, 0, 1, 0.8), thump(110, 60, 0.06, 0, 0.8), debris(8, 0.01, 0.2, [1200, 4500], 4, 0.35)] },
+  "impact:heavy": { level: 0.5, room: ROOM.slap, layers: [thump(70, 35, 0.14, 0, 1.2), body("lp", 900, 120, 0.12, 0, 1, 0.7), debris(18, 0.03, 0.5, [700, 3500], 3, 0.4)] },
+  // Stingers (audio-logic.js STINGERS): short brass-and-drum hits over the score.
+  // A boss stage falls: a low minor chord stab, a timpani hit and a cymbal.
+  "sting:boss": { level: 0.7, drive: 1.6, room: ROOM.field, layers: [
+    { k: "tone", w: "saw", f0: 110, a: 0.01, d: 0.5, dur: 1.4, g: 0.45 }, { k: "tone", w: "saw", f0: 130.8, a: 0.01, d: 0.5, dur: 1.4, g: 0.4 },
+    { k: "tone", w: "tri", f0: 164.8, a: 0.01, d: 0.5, dur: 1.4, g: 0.4 }, { k: "tone", w: "sine", f0: 55, a: 0.005, d: 0.6, dur: 1.5, g: 0.6 },
+    thump(66, 52, 0.4, 0, 1), { k: "noise", f: "hp", f0: 5000, f1: 3500, glide: 1, q: 0.7, a: 0.004, d: 0.6, dur: 1.6, g: 0.35 },
+  ] },
+  // A boss surges into phase 2: an overdrive whine climbing into a tritone stab.
+  "sting:surge": { level: 0.75, drive: 1.8, room: ROOM.field, layers: [
+    { k: "tone", w: "saw", f0: 80, f1: 320, glide: 0.9, a: 0.6, d: 0.3, dur: 0.95, g: 0.4 },
+    { k: "noise", f: "bp", f0: 400, f1: 3000, glide: 0.9, q: 1.4, a: 0.6, d: 0.3, dur: 0.95, g: 0.5 },
+    thump(70, 40, 0.4, 0.9, 1.1), { k: "tone", w: "saw", f0: 146.8, at: 0.9, a: 0.01, d: 0.45, dur: 1.2, g: 0.45 },
+    { k: "tone", w: "saw", f0: 207.7, at: 0.9, a: 0.01, d: 0.45, dur: 1.2, g: 0.4 }, { k: "noise", f: "hp", f0: 4500, at: 0.9, a: 0.004, d: 0.5, dur: 1.3, g: 0.3 },
+  ] },
+  // Victory (the results stamp): a rising major fanfare into a held chord, timpani and a cymbal swell.
+  "sting:victory": { level: 0.7, drive: 1.4, room: ROOM.field, layers: [
+    { k: "tone", w: "tri", f0: 523.3, a: 0.005, d: 0.12, dur: 0.14, g: 0.5 }, { k: "tone", w: "tri", f0: 659.3, at: 0.11, a: 0.005, d: 0.12, dur: 0.14, g: 0.5 },
+    { k: "tone", w: "tri", f0: 784, at: 0.22, a: 0.005, d: 0.12, dur: 0.14, g: 0.5 },
+    { k: "tone", w: "saw", f0: 261.6, at: 0.33, a: 0.02, d: 0.7, dur: 1.7, g: 0.3 }, { k: "tone", w: "tri", f0: 523.3, at: 0.33, a: 0.02, d: 0.7, dur: 1.7, g: 0.4 },
+    { k: "tone", w: "tri", f0: 659.3, at: 0.33, a: 0.02, d: 0.7, dur: 1.7, g: 0.35 }, { k: "tone", w: "tri", f0: 784, at: 0.33, a: 0.02, d: 0.7, dur: 1.7, g: 0.35 },
+    { k: "tone", w: "sine", f0: 1046.5, at: 0.33, a: 0.02, d: 0.6, dur: 1.6, g: 0.2 },
+    thump(98, 80, 0.3, 0, 0.6), thump(98, 80, 0.3, 0.22, 0.6), thump(65, 52, 0.5, 0.33, 1),
+    { k: "noise", f: "hp", f0: 4000, at: 0.2, a: 0.15, d: 0.6, dur: 1.7, g: 0.3 },
+  ] },
+  // The low-HP warning: a soft heartbeat (two low thumps) with a faint high tick.
+  "warn:lowhp": { level: 0.5, layers: [thump(70, 45, 0.07, 0, 1), thump(64, 42, 0.08, 0.2, 0.8), { k: "tone", w: "sine", f0: 880, a: 0.005, d: 0.06, dur: 0.25, g: 0.12 }] },
+  // Thunder (a lightning strike the view draws): a crack, a tearing body and a long rolling rumble.
+  "thunder": { level: 0.8, drive: 1.5, room: ROOM.field, layers: [
+    crack(2500, 0, 1, 0.02), body("lp", 2000, 150, 0.4, 0, 1, 0.7),
+    { k: "noise", f: "lp", f0: 300, f1: 60, glide: 2.5, q: 0.7, at: 0.1, a: 0.3, d: 1.2, dur: 3.2, g: 1 },
+    debris(30, 0.05, 1.2, [300, 1500], 2, 0.3, [0.01, 0.06]),
+  ] },
 };
 
 // ---------------------------------------------------------------- radio replies

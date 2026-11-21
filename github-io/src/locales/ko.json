@@ -1301,7 +1301,8 @@
     "Pick it in the Skirmish setup.": "교전 설정에서 고를 수 있습니다.",
     "Your units' colour scheme. Looks only: it never changes a battle.": "아군 유닛의 도색입니다. 외형만 바뀌며 전투에는 영향이 없습니다.",
     "Shown on your rank and your results.": "계급 표시와 결과 화면에 나타납니다.",
-    "The title under your rank.": "계급 아래에 표시되는 칭호입니다."
+    "The title under your rank.": "계급 아래에 표시되는 칭호입니다.",
+    "Quiet mode: no unit voices": "조용한 모드: 유닛 음성 끄기"
   },
   "patterns": [
     [
