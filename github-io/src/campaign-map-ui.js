@@ -9,7 +9,7 @@
 // technology. The endings seen are real buttons: they replay that epilogue.
 import "./campaign-map.css";
 import { MISSIONS, ACTS, isCleared, isUnlocked, bestMedal, nextMission } from "./campaign.js";
-import { MAP_NODES, LANDS, ACT_BANDS, MAP_TEXT } from "./story/campaign-map.js";
+import { MAP_NODES, LANDS, ACT_BANDS, MAP_TEXT, ENDING_HINTS } from "./story/campaign-map.js";
 import { DECISIONS, ENDINGS, ENDING_IDS, optionOf } from "./story/choices.js";
 import { chronicleCardsHTML } from "./chronicles-ui.js";
 
@@ -20,6 +20,11 @@ export function missionChoices(progress, missionId) {
   return Object.values(DECISIONS).filter((d) => d.mission === missionId && typeof progress?.decisions?.[d.id] === "string")
     .map((d) => ({ id: d.id, option: optionOf(d.id, progress.decisions[d.id]) })).filter((c) => c.option);
 }
+
+// R3-G: the decisions a mission asks that the progress holds no answer for yet (a "decision ahead" mark).
+export const decisionsAhead = (progress, missionId) => Object.values(DECISIONS).filter((d) => d.mission === missionId && typeof progress?.decisions?.[d.id] !== "string").map((d) => d.id);
+// Merciful answers actually given so far (the ending counts defaults too; the hint counts only choices made).
+export const mercyGiven = (progress) => Object.keys(DECISIONS).filter((id) => typeof progress?.decisions?.[id] === "string" && optionOf(id, progress.decisions[id])?.mercy).length;
 
 // `campaign`: "main" or the Faction Chronicle chosen (0.20); a chronicle's card is marked and no relay is picked.
 export function campaignMapHTML({ progress, pick = 0, campaign = "main" }) {
@@ -43,21 +48,25 @@ export function campaignMapHTML({ progress, pick = 0, campaign = "main" }) {
   const acts = ACTS.map(({ act, title }) => `<span class="cmap-act" style="top:${ACT_BANDS[act].top + 1.5}%"><b>ACT ${act}</b> <span>${esc(title)}</span></span>`).join("");
   const node = (n) => {
     const state = n.done ? `done medal-${n.medal}` : n.open ? "open" : "locked";
-    const marks = missionChoices(progress, n.m.id).map((c) => `<i class="cmap-choice ${c.option.mercy ? "mercy" : "firm"}" title="${esc(c.option.label)}"></i>`).join("");
+    const marks = missionChoices(progress, n.m.id).map((c) => `<i class="cmap-choice ${c.option.mercy ? "mercy" : "firm"}" title="${esc(c.option.label)}"></i>`).join("")
+      + (decisionsAhead(progress, n.m.id).length ? `<i class="cmap-ahead" title="${esc(MAP_TEXT.decisionAhead)}"></i>` : "");
     // A mission played under the Defence rules (0.19b) has a square relay.
     const extra = `${n.i === pick ? " picked" : ""}${n.i === next && !n.done ? " next" : ""}${n.i === nodes.length - 1 ? " keystone" : ""}${n.m.defence ? " defence" : ""}`;
     return `<button class="cmap-node ${state}${extra}" data-map-stage="${n.i}" data-map-mission="${esc(n.m.id)}" style="left:${n.at.x}%;top:${n.at.y}%" tabindex="-1" aria-hidden="true"${n.open ? "" : " disabled"} title="${n.i + 1} · ${esc(n.m.title)}"><b>${n.i + 1}</b>${marks}<span class="cmap-title">${esc(n.m.title)}</span></button>`;
   };
+  // Each ending names what leads there (R3-G): a seen one is a button that replays its epilogue.
+  const words = (id) => `<span class="cmap-ending-words"><b class="cmap-ending-name">${esc(ENDINGS[id].title)}</b><b class="cmap-ending-short">${esc(ENDING_HINTS[id]?.short || ENDINGS[id].title)}</b><small class="cmap-hint">${esc(ENDING_HINTS[id]?.hint || "")}</small></span>`;
   const endings = ENDING_IDS.map((id) => (seen.has(id)
-    ? `<button class="cmap-ending seen ${id}" data-ending="${id}" title="Replay the epilogue"><i aria-hidden="true"></i><span>${esc(ENDINGS[id].title)}</span></button>`
-    : `<span class="cmap-ending unseen" title="${esc(MAP_TEXT.unseen)}"><i aria-hidden="true"></i><span>${esc(MAP_TEXT.unseen)}</span></span>`)).join("");
-  const legend = anyChoice ? `<span class="cmap-legend"><span class="cmap-label">${esc(MAP_TEXT.decisions)}</span><span><i class="cmap-choice mercy" aria-hidden="true"></i>Merciful</span><span><i class="cmap-choice firm" aria-hidden="true"></i>Firm</span></span>` : "";
+    ? `<button class="cmap-ending seen ${id}" data-ending="${id}" title="Replay the epilogue"><i aria-hidden="true"></i>${words(id)}</button>`
+    : `<span class="cmap-ending unseen ${id}" title="${esc(MAP_TEXT.unseen)}"><i aria-hidden="true"></i>${words(id)}</span>`)).join("");
+  const given = mercyGiven(progress), asked = Object.keys(DECISIONS).length;
+  const anyAhead = nodes.some((n) => decisionsAhead(progress, n.m.id).length);
+  const legend = anyChoice || anyAhead ? `<span class="cmap-legend"><span class="cmap-label">${esc(MAP_TEXT.decisions)}</span>${anyChoice ? `<span><i class="cmap-choice mercy" aria-hidden="true"></i>Merciful</span><span><i class="cmap-choice firm" aria-hidden="true"></i>Firm</span>` : ""}<span><i class="cmap-ahead" aria-hidden="true"></i>Ahead</span><span class="cmap-mercy">${given} / ${asked} merciful</span></span>` : "";
   return `<div class="cmap" role="group" aria-label="Campaign map" data-lit="${lit}">
     <div class="cmap-head"><span class="eyebrow">CAMPAIGN MAP</span><strong>${esc(MAP_TEXT.heading)}</strong><span class="cmap-count">${lit} / ${MISSIONS.length} relays lit</span></div>
     <div class="cmap-board"><svg class="cmap-ground" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true" focusable="false">${ground}</svg>${acts}${nodes.map(node).join("")}</div>
     <div class="cmap-foot">
-      <div class="cmap-endings"><span class="cmap-label">${esc(MAP_TEXT.endings)}</span>${endings}</div>
-      ${legend}
+      <div class="cmap-endings"><span class="cmap-label">${esc(MAP_TEXT.endings)}</span>${endings}${legend}</div>
       ${chronicleCardsHTML({ progress, campaign })}
     </div>
   </div>`;

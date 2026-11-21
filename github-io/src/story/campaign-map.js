@@ -45,4 +45,15 @@ export const MAP_TEXT = {
   chronicles: "Faction Chronicles",
   chroniclesNote: "The same war, told by each faction. They open after Act 1.",
   decisions: "Decisions",
+  // R3-G: a relay that holds a decision not taken yet, and what each ending asks of the decisions.
+  decisionAhead: "A decision waits here",
+  hintOpen: "2+ merciful choices",
+  hintMeridian: "0-1 merciful choices",
+  shortOpen: "Open Frontier",
+  shortMeridian: "Meridian Line",
+};
+// Each ending's hint and short name (phones), in MAP_TEXT so the story catalogue translates them.
+export const ENDING_HINTS = {
+  "open-frontier": { hint: MAP_TEXT.hintOpen, short: MAP_TEXT.shortOpen },
+  "meridian-line": { hint: MAP_TEXT.hintMeridian, short: MAP_TEXT.shortMeridian },
 };
