@@ -49,7 +49,9 @@ export async function openPage(browser, viewport = "desktop", { deviceScaleFacto
   return {
     page, mobile, errors, badResponses,
     tap: (selector) => page.locator(selector).first()[mobile ? "tap" : "click"](),
-    goto: (extra = "", options) => page.goto(testUrl(extra), options),
+    // The page load gets the models' wait: under ci-like CPU slowing on a loaded machine the "load" event
+    // took over Playwright's default 30 s (Wave 1 merge, round 3).
+    goto: (extra = "", options) => page.goto(testUrl(extra), { timeout: TIMEOUT.models, ...options }),
     // The start screen is ready: every model parsed and Start enabled.
     ready: (timeout = TIMEOUT.models) => page.waitForFunction(() => window.__frontier?.view.modelsReady && !document.querySelector("#start").disabled, null, { timeout }),
   };

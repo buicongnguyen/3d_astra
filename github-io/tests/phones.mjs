@@ -24,6 +24,12 @@ await suite('phones', async () => {
     await page.waitForFunction(() => window.__frontier.started);
     await page.evaluate(() => { window.__frontier.sim.aiEnabled = false; window.__frontier.select([]); });
     await page.waitForFunction(() => !document.querySelector('#notice').classList.contains('show'), null, { timeout: 15000 }).catch(() => {});
+    // A campaign's opening radio line (m01 at 0:03 of play time) is a transient box over the map: on a slow
+    // runner it opened between the two samples. Let it close, then hold the clock so no new line opens.
+    if (mode === 'campaign') {
+      await page.waitForFunction(() => !document.documentElement.classList.contains('dialogue-open') && window.__frontier.sim.time > 4, null, { timeout: 60000 }).catch(() => {});
+      await page.evaluate(() => { window.__frontier.hold = true; });
+    }
     await page.waitForTimeout(500);
     const none = await page.evaluate(SHARE);
     await shot(page, `phones-${viewport}-${mode}-none`);

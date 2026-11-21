@@ -16,7 +16,7 @@ const sideScroll = (page) => page.evaluate(() => document.scrollingElement.scrol
 
 await suite("army-depth", async () => {
   for (const viewport of ["desktop", "portrait", "landscape"]) {
-    const { page, errors, tap, goto, ready, mobile } = await openPage(browser, viewport);
+    const { page, errors, tap, goto, ready, mobile } = await openPage(browser, viewport, { timeout: TIMEOUT.models }); // a slow runner: the Defence level switch blocks a tap for over 30 s
     await page.addInitScript((ids) => { try { localStorage.setItem("frontier-defence-v1", JSON.stringify({ levels: Object.fromEntries(ids.map((id) => [id, { stars: 2, lives: 12, difficulty: "standard" }])) })); } catch {} }, OPENED);
     await goto();
     await ready();

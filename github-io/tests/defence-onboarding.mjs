@@ -32,7 +32,7 @@ async function startGorge(o) {
   await o.page.waitForFunction(() => window.__frontier.sim.missionDef?.id === "d-gorge");
   await o.ready();
   await o.tap("#start");
-  await o.page.waitForFunction(() => window.__frontier.started && document.querySelector("#defence-bar:not([hidden])"), null, { timeout: 60000 });
+  await o.page.waitForFunction(() => window.__frontier.started && document.querySelector("#defence-bar:not([hidden])"), null, { timeout: 180000 });
   await o.page.evaluate(() => { window.__frontier.hold = true; });
 }
 const tapAt = (o, x, y) => (o.mobile ? o.page.touchscreen.tap(x, y) : o.page.mouse.click(x, y));
@@ -45,7 +45,7 @@ const meshes = (page) => page.evaluate(() => {
 
 await suite("defence-onboarding", async () => {
   for (const viewport of VIEWPORTS) {
-    const o = await openPage(browser, viewport), { page, errors } = o;
+    const o = await openPage(browser, viewport, { timeout: TIMEOUT.models }), { page, errors } = o; // slow runner: a mode switch blocks a tap over 30 s
     // A fresh profile: no Defence progress at all.
     await page.addInitScript(() => { try { if (!sessionStorage.getItem("fresh")) { localStorage.removeItem("frontier-defence-v1"); sessionStorage.setItem("fresh", "1"); } } catch {} });
     await o.goto("guide");
@@ -150,7 +150,7 @@ await suite("defence-onboarding", async () => {
     await page.close();
 
     // ---- A second visit: the guide is done, so it does not show (same browser storage).
-    const again = await openPage(browser, viewport);
+    const again = await openPage(browser, viewport, { timeout: TIMEOUT.models });
     await again.page.addInitScript(() => { try { localStorage.setItem("frontier-defence-v1", JSON.stringify({ levels: {}, guided: true })); } catch {} });
     await again.goto("guide");
     await startGorge(again);
