@@ -121,7 +121,7 @@ export const orders = {
     if (b.level < (d.required_level || 1)) return fail(`Upgrade ${b.name} to level ${d.required_level} to train ${d.name}.`);
     if (b.queue.length >= 5) return fail("Production queue is full.");
     // Air (sim/air.js): a few flyers per side, counting those in production.
-    if (d.flying && this.airCount(b.team) >= AIR.cap) return fail(`Air limit reached: ${AIR.cap} flyers at once.`);
+    if (d.flying && this.airCount(b.team) >= this.airCap(b.team)) return fail(`Air limit reached: ${this.airCap(b.team)} flyers at once.`);
     if (type === "flak" && (this.players[b.team].flak || this.own(b.team).some((e) => e.queue.some((q) => q.type === "flak"))))
       return fail("Anti-air guns are already researched or queued.");
     if (

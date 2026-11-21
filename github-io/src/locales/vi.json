@@ -1733,6 +1733,9 @@
     ["^DAY (\\d+)$", "NGÀY {1}"],
     ["^NIGHT (\\d+)$", "ĐÊM {1}"],
     ["^(.+) CHRONICLE$", "BIÊN NIÊN {1}"],
-    ["^FRONTIER DEFENCE$", "PHÒNG THỦ BIÊN CƯƠNG"]
+    ["^FRONTIER DEFENCE$", "PHÒNG THỦ BIÊN CƯƠNG"],
+    ["^Air limit: (\\d+) of (\\d+) flyers; (\\d+) with a level (\\d+) Command core$", "Giới hạn trên không: {1} trên {2} mục tiêu bay; {3} khi Sở chỉ huy cấp {4}"],
+    ["^Air limit: (\\d+) of (\\d+) flyers$", "Giới hạn trên không: {1} trên {2} mục tiêu bay"],
+    ["^Each side fields at most (\\d+) flyers at a level 1 Command core, (\\d+) at level 2 and (\\d+) at level 3, counting those in production\\.$", "Mỗi bên có tối đa {1} mục tiêu bay khi Sở chỉ huy cấp 1, {2} khi cấp 2 và {3} khi cấp 3, tính cả số đang sản xuất."]
   ]
 }

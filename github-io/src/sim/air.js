@@ -1,5 +1,6 @@
 import { DEFINITIONS as D, distance, hyp } from "../data.js";
 import { AIR } from "../factions.js";
+import { fieldPlan } from "../ai-plan.js";
 
 // Air rules (0.18 "Wings"). A flyer is a unit whose definition says `flying: true`
 // (balance.json; Kite scout, Hawk gunship, Ember balloon, Swift glider):
@@ -9,7 +10,9 @@ import { AIR } from "../factions.js";
 //              (×AIR.flak_bonus); line of fire, high-ground and splash rules skip it (sim/combat.js)
 //   vision     it sees plateau tops from low ground and opens a plateau it flies over to its side;
 //              enemies below see it whenever it is within their sight (`airSeenBy`, sim/vision.js)
-//   limits     AIR.cap flyers per team, alive plus queued; flyers never take capture points
+//   limits     flyers per team, alive plus queued (airCap): AIR.cap_by_level by the best Command core level for
+//              the player (4 / 6 / 8), AIR.cap for a computer team unless it plays the Field plan; flyers never
+//              take capture points
 // Everything here runs only for flyers, so a match without them keeps its state and hash.
 export const air = {
   // Can `e` (a unit or a tower) shoot `t`?
@@ -27,6 +30,24 @@ export const air = {
     e.moving = true;
     e.stalled = 0;
     return false;
+  },
+  // How many flyers `team` may field (alive plus queued), by its best Command core level (AAA round 3, R3-W):
+  // AIR.cap_by_level [4, 6, 8]. A computer team keeps the flat AIR.cap (4) unless it plays the Field plan in a
+  // skirmish (ai-plan.js fieldPlan), so the Classic AI, every mission and every pin play exactly as before.
+  airCap(team) {
+    const steps = AIR.cap_by_level;
+    if (!steps || ((team > 0 || this.aiPlayer) && !fieldPlan(this, team))) return AIR.cap;
+    let level = 0;
+    for (const e of this.entities) if (e.team === team && e.type === "hq" && e.complete && e.hp > 0 && e.level > level) level = e.level;
+    return steps[Math.max(0, Math.min(steps.length, level || 1) - 1)] ?? AIR.cap;
+  },
+  // The Field plan's own armed-flyer limit (AIR.ai_cap 2 for everyone else): AIR.ai_cap_by_level by core level.
+  // Read by sim/ai-counter.js once the seam is merged (R3-W seam request W1); until then the AI keeps AIR.ai_cap.
+  aiAirCap(team) {
+    const steps = AIR.ai_cap_by_level;
+    if (!steps || !fieldPlan(this, team)) return AIR.ai_cap;
+    const cap = this.airCap(team), i = Math.max(0, AIR.cap_by_level.indexOf(cap));
+    return steps[Math.min(i, steps.length - 1)] ?? AIR.ai_cap;
   },
   // Flyers of `team` alive and in its production queues.
   airCount(team) {
