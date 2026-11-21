@@ -408,6 +408,30 @@
   "misses": []
  },
  {
+  "mission": "m11d-the-sovereign-walks",
+  "kind": "passive",
+  "result": "running",
+  "time": 215,
+  "objectives": "AAaa",
+  "wave": 100,
+  "lost": 0,
+  "medal": null,
+  "flags": null,
+  "misses": []
+ },
+ {
+  "mission": "m11d-the-sovereign-walks",
+  "kind": "objective",
+  "result": "victory",
+  "time": 410,
+  "objectives": "DDdd",
+  "wave": 100,
+  "lost": 0,
+  "medal": "gold",
+  "flags": null,
+  "misses": []
+ },
+ {
   "mission": "m12-frontiers-end",
   "kind": "passive",
   "result": "running",
