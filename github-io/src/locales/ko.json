@@ -1302,7 +1302,18 @@
     "Your units' colour scheme. Looks only: it never changes a battle.": "아군 유닛의 도색입니다. 외형만 바뀌며 전투에는 영향이 없습니다.",
     "Shown on your rank and your results.": "계급 표시와 결과 화면에 나타납니다.",
     "The title under your rank.": "계급 아래에 표시되는 칭호입니다.",
-    "Quiet mode: no unit voices": "조용한 모드: 유닛 음성 끄기"
+    "Quiet mode: no unit voices": "조용한 모드: 유닛 음성 끄기",
+    "Quick battle": "빠른 전투",
+    "Ready base · 1 rival": "준비된 기지 · 적 1명",
+    "Enemy roster": "적 편성",
+    "Scout Runner": "정찰 주자",
+    "Bonus alloy": "보너스 합금",
+    "Catch the Scout Runner before it reaches the end of the road.": "정찰 주자가 길 끝에 닿기 전에 잡으세요.",
+    "Quick battle: your outpost is ready. Enemy scouts are on their way.": "빠른 전투: 전초기지가 준비되었습니다. 적 정찰병이 다가오고 있습니다.",
+    "Enemy scouts sighted! Meet them at your tower.": "적 정찰병 발견! 타워에서 맞서세요.",
+    "A Scout Runner is on the road! Catch it for bonus alloy.": "정찰 주자가 길에 나타났습니다! 잡으면 보너스 합금을 받습니다.",
+    "Scout Runner caught: bonus alloy!": "정찰 주자 포획: 보너스 합금!",
+    "The Scout Runner got away. No lives lost.": "정찰 주자가 달아났습니다. 잃은 생명은 없습니다."
   },
   "patterns": [
     [

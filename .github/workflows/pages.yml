@@ -169,6 +169,9 @@ jobs:
           # AAA round 3 (R3-U): audio juice (unit barks rate-limited, quiet mode, weapon-class sounds, impact size layers, stingers).
           - name: r3-u
             scripts: audio-juice
+          # AAA round 3 (R3-Q): first-minute hooks (one-tap Quick battle, First watch roster and Scout Runner), and the bot check (wins, first combat by 45 / 60 s).
+          - name: r3-q
+            scripts: quick-battle quick-battle-check
     defaults:
       run:
         working-directory: github-io

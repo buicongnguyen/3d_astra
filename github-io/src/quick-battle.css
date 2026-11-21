@@ -1,0 +1,136 @@
+/* First-minute hooks (AAA round 3, R3-Q): the title's one-tap "Quick battle" and the First watch
+   enemy roster strip. Codex UI kit tokens: holo cyan #83DEEB / #97F4FF, glass #102638 to #091723,
+   lines #416479, text #F1F6F3 / #BCCED9; gold stays Start's alone (one primary action). */
+
+/* ---------- Quick battle: a holo hero tile in R3-M's #title-actions slot ---------- */
+#briefing .quick-battle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 14px 6px 10px;
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid rgba(131, 222, 235, 0.62);
+  border-radius: 6px;
+  background: linear-gradient(100deg, rgba(39, 98, 93, 0.92), rgba(16, 38, 56, 0.94) 58%, rgba(9, 23, 35, 0.94));
+  box-shadow: inset 0 1px 0 rgba(200, 245, 255, 0.22), inset 3px 0 0 #83deeb, 0 0 18px rgba(57, 198, 232, 0.28);
+  color: #f1f6f3;
+  text-align: left;
+  cursor: pointer;
+}
+#briefing .quick-battle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgba(190, 245, 255, 0.22) 50%, transparent 70%);
+  transform: translateX(-130%);
+  transition: transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+#briefing .quick-battle:hover:not(:disabled) { filter: brightness(1.16); }
+#briefing .quick-battle:hover:not(:disabled)::before,
+#briefing .quick-battle:focus-visible::before { transform: translateX(130%); }
+#briefing .quick-battle:active:not(:disabled) { transform: translateY(2px); filter: brightness(0.92); }
+#briefing .quick-battle:focus-visible { outline: 2px solid #97f4ff; outline-offset: 2px; }
+#briefing .quick-battle:disabled { border-color: #344551; background: #15212b; box-shadow: none; color: #abbcc8; cursor: default; }
+#briefing .quick-battle > .icon {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+  border-radius: 50%;
+  background: rgba(131, 222, 235, 0.16);
+  color: #97f4ff;
+  filter: drop-shadow(0 0 6px rgba(131, 222, 235, 0.75));
+}
+#briefing .quick-battle:disabled > .icon { color: #abbcc8; filter: none; }
+#briefing .quick-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#briefing .quick-text strong { font: 800 17px/1.1 var(--font-display); letter-spacing: 0.02em; overflow-wrap: anywhere; }
+#briefing .quick-text small { font: 700 12px/15px var(--font-ui); color: #bcced9; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { #briefing .quick-battle::before { transition: none; } }
+:root.motion-off #briefing .quick-battle::before { transition: none; }
+
+/* Phones: one slim row (44 px and up), the caption beside the name. */
+.compact-ui #briefing .quick-battle { min-height: 46px; padding: 4px 10px 4px 6px; gap: 8px; }
+.compact-ui #briefing .quick-battle > .icon { width: 26px; height: 26px; padding: 4px; }
+.compact-ui #briefing .quick-text { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 0 8px; }
+.compact-ui #briefing .quick-text strong { font-size: 15px; }
+.compact-ui #briefing .quick-text small { font-size: 11px; }
+
+/* ---------- First watch: the enemy roster before wave 1 (taps pass through to the field) ---------- */
+#roster-preview {
+  position: absolute;
+  z-index: 6;
+  top: 74px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: min(420px, calc(100% - 32px));
+  padding: 8px 10px;
+  border: 1px solid #416479;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(16, 38, 56, 0.96), rgba(9, 23, 35, 0.96));
+  box-shadow: 0 12px 36px rgba(2, 7, 19, 0.55);
+  color: #f1f6f3;
+  pointer-events: none;
+}
+#roster-preview[hidden] { display: none; }
+#roster-preview .roster-head { display: flex; align-items: center; gap: 6px; color: #83deeb; font: 800 12px/15px var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; }
+#roster-preview .roster-head .icon { width: 16px; height: 16px; }
+#roster-preview .roster-list { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 0; padding: 0; list-style: none; }
+#roster-preview .roster-unit { display: inline-flex; align-items: center; gap: 5px; min-height: 34px; padding: 2px 8px 2px 2px; border-radius: 6px; background: rgba(239, 118, 96, 0.14); }
+#roster-preview .roster-unit .portrait-art { --size: 30px; border-radius: 5px; }
+#roster-preview .roster-unit > .icon { width: 24px; height: 24px; margin: 0 3px; color: #ffab91; }
+#roster-preview .roster-text { display: flex; flex-direction: column; gap: 1px; }
+#roster-preview .roster-text strong { font: 700 12px/14px var(--font-ui); }
+#roster-preview .roster-text small { font: 700 11px/13px var(--font-ui); color: #bcced9; }
+#roster-preview .roster-text small b { color: #ffd17b; font-variant-numeric: tabular-nums; }
+#roster-preview .roster-runner { background: rgba(255, 209, 123, 0.18); box-shadow: inset 0 0 0 1px rgba(255, 223, 156, 0.7); }
+#roster-preview .roster-runner .roster-text small { color: #ffd17b; }
+#roster-preview .roster-tip { font: 400 12px/16px var(--font-ui); color: #bcced9; }
+#roster-preview .roster-bolt { display: none; }
+/* Phones: portraits with their wave number only (the names and the tip are the desktop's), so the
+   strip stays one or two short rows clear of the bar, the wave intel and the guide's hint. */
+.compact-ui #roster-preview { gap: 4px; padding: 6px 8px; }
+.compact-ui #roster-preview .roster-tip,
+.compact-ui #roster-preview .roster-text strong,
+.compact-ui #roster-preview .roster-text small > span,
+.compact-ui #roster-preview .roster-runner .roster-text { display: none; }
+.compact-ui #roster-preview .roster-list { gap: 4px; }
+.compact-ui #roster-preview .roster-unit { min-height: 30px; gap: 3px; padding: 2px 6px 2px 2px; }
+.compact-ui #roster-preview .roster-unit .portrait-art { --size: 26px; }
+.compact-ui #roster-preview .roster-text small b { font-size: 13px; }
+.compact-ui #roster-preview .roster-bolt { display: inline-flex; color: #ffd17b; }
+.compact-ui #roster-preview .roster-bolt .icon { width: 16px; height: 16px; }
+/* Portrait: centred under the resource bar. Landscape: the left of the field, beside the wave intel. */
+@media (orientation: portrait) {
+  .compact-ui #roster-preview { top: 8px; left: 50%; transform: translateX(-50%); width: max-content; max-width: calc(100% - 24px); }
+  .compact-ui #roster-preview .roster-list { justify-content: center; }
+}
+@media (orientation: landscape) {
+  .compact-ui #roster-preview { top: 64px; left: 12px; max-width: min(300px, calc(50% - 100px)); }
+}
+
+/* Landscape phones (R3-M's one-screen grid): Quick battle sits beside Start in the pinned launch row, so
+   AI teams and Full screen keep their row above it and every setting still shows on the first screen. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .compact-ui #briefing:not(.campaign-view) .title-actions:not([hidden]) {
+    order: 2;
+    grid-column: span 1;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    align-self: end;
+    margin-top: 4px;
+  }
+  .compact-ui #briefing:not(.campaign-view) .briefing-setup:has(.title-actions:not([hidden])) #start { grid-column: span 3; }
+  .compact-ui #briefing:not(.campaign-view) .quick-battle { min-height: 48px; padding: 4px 8px 4px 6px; box-shadow: inset 0 1px 0 rgba(200, 245, 255, 0.22), inset 3px 0 0 #83deeb, 0 0 0 10px #050f24; }
+  .compact-ui #briefing:not(.campaign-view) .quick-battle > .icon { width: 24px; height: 24px; padding: 3px; }
+  .compact-ui #briefing:not(.campaign-view) .quick-text small { display: none; }
+  .compact-ui #briefing:not(.campaign-view) .quick-text strong { font-size: 14px; line-height: 1.1; }
+}

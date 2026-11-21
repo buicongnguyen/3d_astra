@@ -1308,7 +1308,18 @@
     "Your units' colour scheme. Looks only: it never changes a battle.": "Bảng màu cho đơn vị của bạn. Chỉ để trang trí: không bao giờ thay đổi trận đánh.",
     "Shown on your rank and your results.": "Hiện trên cấp bậc và kết quả của bạn.",
     "The title under your rank.": "Danh hiệu dưới cấp bậc của bạn.",
-    "Quiet mode: no unit voices": "Chế độ yên tĩnh: tắt tiếng đơn vị"
+    "Quiet mode: no unit voices": "Chế độ yên tĩnh: tắt tiếng đơn vị",
+    "Quick battle": "Trận nhanh",
+    "Ready base · 1 rival": "Căn cứ sẵn · 1 đối thủ",
+    "Enemy roster": "Đội hình địch",
+    "Scout Runner": "Trinh sát chạy",
+    "Bonus alloy": "Hợp kim thưởng",
+    "Catch the Scout Runner before it reaches the end of the road.": "Bắt Trinh sát chạy trước khi nó tới cuối đường.",
+    "Quick battle: your outpost is ready. Enemy scouts are on their way.": "Trận nhanh: tiền đồn của bạn đã sẵn sàng. Trinh sát địch đang tới.",
+    "Enemy scouts sighted! Meet them at your tower.": "Phát hiện trinh sát địch! Đón chúng ở tháp pháo của bạn.",
+    "A Scout Runner is on the road! Catch it for bonus alloy.": "Trinh sát chạy đang trên đường! Bắt nó để nhận hợp kim thưởng.",
+    "Scout Runner caught: bonus alloy!": "Đã bắt Trinh sát chạy: hợp kim thưởng!",
+    "The Scout Runner got away. No lives lost.": "Trinh sát chạy đã thoát. Không mất mạng nào."
   },
   "patterns": [
     ["^(\\d{1,2}) Jan$", "{1} thg 1"],
