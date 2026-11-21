@@ -194,7 +194,7 @@ export function weaponVoice(weapon, sourceType) {
 // at the target: name and delay per weapon voice. Light rounds only have the target's impact sound.
 export const HIT = {
   tank: { name: "hit:shell", delay: 0.32 }, walker: { name: "hit:shell", delay: 0.32 }, artillery: { name: "hit:artillery", delay: 0.28 },
-  rocket: { name: "hit:rocket", delay: 0.24 }, rail: { name: "hit:small", delay: 0.24 }, tower: { name: "hit:small", delay: 0.26 },
+  rocket: { name: "hit:rocket", delay: 0.45 }, rail: { name: "hit:small", delay: 0.24 }, tower: { name: "hit:small", delay: 0.26 },
 };
 export const hitFor = (voice) => HIT[voice] || null;
 // A Barrage (ability event with a target and a shell delay): the incoming whistle (`incoming:shell`,

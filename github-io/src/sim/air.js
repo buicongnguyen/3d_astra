@@ -9,7 +9,9 @@ import { AIR } from "../factions.js";
 //              (×AIR.flak_bonus); line of fire, high-ground and splash rules skip it (sim/combat.js)
 //   vision     it sees plateau tops from low ground and opens a plateau it flies over to its side;
 //              enemies below see it whenever it is within their sight (`airSeenBy`, sim/vision.js)
-//   limits     AIR.cap flyers per team, alive plus queued; flyers never take capture points
+//   limits     flyers per team, alive plus queued (airCap): AIR.cap_by_level by the best Command core level for
+//              the player (4 / 6 / 8), AIR.cap for every computer team (owner, 2026-11-21: the computer's air
+//              limit is unchanged); flyers never take capture points
 // Everything here runs only for flyers, so a match without them keeps its state and hash.
 export const air = {
   // Can `e` (a unit or a tower) shoot `t`?
@@ -27,6 +29,17 @@ export const air = {
     e.moving = true;
     e.stalled = 0;
     return false;
+  },
+  // How many flyers `team` may field (alive plus queued), by its best Command core level (AAA round 3, R3-W):
+  // AIR.cap_by_level [4, 6, 8]. Every computer team (team > 0, or team 0 under aiPlayer) keeps the flat AIR.cap (4)
+  // and the AI's armed-flyer limit stays AIR.ai_cap (2): owner decision 2026-11-21, so the Classic AI, the Field
+  // plan, every mission and every pin play exactly as before.
+  airCap(team) {
+    const steps = AIR.cap_by_level;
+    if (!steps || team > 0 || this.aiPlayer) return AIR.cap;
+    let level = 0;
+    for (const e of this.entities) if (e.team === team && e.type === "hq" && e.complete && e.hp > 0 && e.level > level) level = e.level;
+    return steps[Math.max(0, Math.min(steps.length, level || 1) - 1)] ?? AIR.cap;
   },
   // Flyers of `team` alive and in its production queues.
   airCount(team) {

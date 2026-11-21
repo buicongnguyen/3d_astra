@@ -210,20 +210,29 @@ test('the army below sees and shoots an enemy flyer over a hidden plateau cell (
   assert.equal(s.isVisible(k, 0), false);
 });
 
-test('air cap: four flyers per side, counting the queue; flyers cost supply', () => {
+test('air cap: four flyers per side at a level 1 core (more with core levels, R3-W), counting the queue; flyers cost supply', () => {
   const s = quiet();
   s.players[0].alloy = s.players[0].energy = 20000;
   const core = s.own(0).find((e) => e.type === 'hq');
-  core.level = 3;
+  core.level = 2;
   core.supply = 60;
+  assert.equal(s.airCap(0), 6, 'six flyers at a level 2 Command core');
+  core.level = 1;
+  assert.equal(s.airCap(0), 4, 'four at level 1');
+  core.level = 3;
   put(s, 'kite', 0, -20, 30);
   for (let i = 0; i < 2; i++) assert.ok(s.enqueue(core.id, 'kite'), `kite ${i + 2}`);
   assert.ok(s.enqueue(core.id, 'hawk'));
   assert.equal(s.airCount(0), 4);
   const pop = s.population(0);
   assert.equal(pop.reserved, 2 * D.kite.pop + D.hawk.pop);
+  // Level 3 allows eight: with four more in the air, four fit in the queue, and the ninth is refused.
+  core.queue.length = 0;
+  for (let i = 0; i < 3; i++) put(s, 'kite', 0, -22 - i * 2, 30);
+  assert.equal(s.airCount(0), 4);
+  for (let i = 0; i < 4; i++) assert.ok(s.enqueue(core.id, 'kite'), `flyer ${i + 5}`);
   assert.equal(s.enqueue(core.id, 'kite'), false);
-  assert.match(lastMessage(s), /Air limit reached: 4 flyers/);
+  assert.match(lastMessage(s), /Air limit reached: 8 flyers/);
   s.cancelQueue(core.id, 0);
   assert.ok(s.enqueue(core.id, 'kite'));
 });

@@ -16,6 +16,7 @@ import rail from "./rail.js";
 import hose from "./hose.js";
 import stream from "./stream.js";
 import plough from "./plough.js";
+import rocket from "./rocket.js";
 
-export const LOOKS = Object.freeze(Object.fromEntries([flame, beam, twinPulse, pellets, pods, bomb, firebomb, twinTracer, burst, twinHeavy, rail, hose, stream, plough].map((k) => [k.id, k])));
+export const LOOKS = Object.freeze(Object.fromEntries([flame, beam, twinPulse, pellets, pods, bomb, firebomb, twinTracer, burst, twinHeavy, rail, hose, stream, plough, rocket].map((k) => [k.id, k])));
 export { MOMENTS, shimmer } from "./moments.js";

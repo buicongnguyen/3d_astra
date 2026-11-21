@@ -24,7 +24,7 @@
     "tank":{"height":1.7,"reach":2.85,"life":0.32,"kind":"cannon","color":[1,0.78,0.4,1],"tinted":true},
     "breaker":{"height":1.44,"reach":1.9,"life":0.28,"kind":"cannon","color":[1,0.78,0.4,1],"tinted":true},
     "tower":{"height":3.65,"reach":1.72,"life":0.26,"kind":"cannon","color":[1,0.78,0.4,1],"tinted":true},
-    "antitank":{"height":1.83,"reach":1.1,"life":0.24,"kind":"rocket","color":[1,0.85,0.6,1],"tinted":true},
+    "antitank":{"height":1.83,"reach":1.1,"life":0.45,"kind":"rocket","look":"rocket","color":[1,0.85,0.6,1],"tinted":true},
     "support":{"height":1.34,"reach":0.82,"life":0.22,"kind":"support"},
     "gunner":{"height":1.2,"reach":1.3,"life":0.09,"kind":"rifle","look":"stream","color":[1,0.9,0.55,1],"tinted":true},
     "stalker":{"height":1.4,"reach":2.5,"life":0.42,"kind":"rifle","look":"beam","color":[0.84,0.56,1,0.95],"beamLife":0.45,"beamWidth":0.12,"ring":0.9},

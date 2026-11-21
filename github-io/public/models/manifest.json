@@ -228,7 +228,7 @@
     {
       "name": "kite",
       "file": "kite.glb",
-      "triangles": 904,
+      "triangles": 950,
       "air": true,
       "budget": 1500,
       "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips",
@@ -237,7 +237,7 @@
     {
       "name": "hawk",
       "file": "hawk.glb",
-      "triangles": 1408,
+      "triangles": 1444,
       "air": true,
       "budget": 1500,
       "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips",
@@ -246,7 +246,7 @@
     {
       "name": "balloon",
       "file": "balloon.glb",
-      "triangles": 1308,
+      "triangles": 1400,
       "air": true,
       "budget": 1500,
       "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips",
@@ -255,7 +255,7 @@
     {
       "name": "glider",
       "file": "glider.glb",
-      "triangles": 1080,
+      "triangles": 1148,
       "air": true,
       "budget": 1500,
       "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips",

@@ -1765,6 +1765,9 @@
     ["^Hold all (\\d+) waves\\.$", "Giữ vững cả {1} đợt."],
     ["^Finish with (\\d+) lives or more \\(you kept (\\d+)\\)\\.$", "Kết thúc với {1} mạng trở lên (bạn còn {2})."],
     ["^Wave (\\d+) cost the most lives:$", "Đợt {1} làm mất nhiều mạng nhất:"],
-    ["^Following (.+)$", "Đi theo {1}"]
+    ["^Following (.+)$", "Đi theo {1}"],
+    ["^Air limit: (\\d+) of (\\d+) flyers; (\\d+) with a level (\\d+) Command core$", "Giới hạn trên không: {1} trên {2} mục tiêu bay; {3} khi Sở chỉ huy cấp {4}"],
+    ["^Air limit: (\\d+) of (\\d+) flyers$", "Giới hạn trên không: {1} trên {2} mục tiêu bay"],
+    ["^You field at most (\\d+) flyers at a level 1 Command core, (\\d+) at level 2 and (\\d+) at level 3, counting those in production; computer opponents field at most (\\d+)\\.$", "Bạn có tối đa {1} mục tiêu bay khi Sở chỉ huy cấp 1, {2} khi cấp 2 và {3} khi cấp 3, tính cả số đang sản xuất; đối thủ máy có tối đa {4}."]
   ]
 }

@@ -24,6 +24,7 @@ import { CounterHitView } from "./counter-hit-view.js";
 import { BossPresenceView } from "./boss-presence-view.js";
 import { DefenceReadabilityView } from "./defence-readability-view.js";
 import { FollowTetherView } from "./follow-tether-view.js";
+import { AirLifeView } from "./air-life-view.js";
 
 export const HOOKS = ["dress", "scaleFor", "frameScaleFor", "event", "update", "reset"];
 
@@ -60,4 +61,5 @@ export const VIEW_PLUGINS = [
   BossPresenceView,
   DefenceReadabilityView,
   FollowTetherView,
+  AirLifeView, // R3-W: rotor blur, nav lights, engine glow, contrails (one draw)
 ];

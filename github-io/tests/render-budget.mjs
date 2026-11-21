@@ -115,6 +115,11 @@ const scenarios = [
   // 200 units (100 a side, the five battle-eco kinds) under the pop 200 rule, framed like base-high.
   // 248 draws (135 main, 113 shadow), 1.79 M triangles (shadows included), 433 composes on 2026-11-21.
   {name:'battle-200', map:'riverlands', enemies:1, mobile:false, zoom:42, focus:[-3,4], reveal:true, army:200, rules:{pop:'200'}, triangles:1900000, compose:460},
+  // AAA round 3 (R3-W): battle-eco with the round-3 air cap in play, 8 flyers per side (all four types), and six
+  // Anti-tank rockets in flight. Rocket bodies are one instanced draw and the air life (rotor blur, nav lights, engine
+  // glow) another; contrails and the ribbon use the effect pools.
+  {name:'air-battle', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rockets:6,
+    air:[['kite',0],['hawk',0],['balloon',0],['glider',0],['kite',0],['hawk',0],['balloon',0],['glider',0],['kite',1],['hawk',1],['balloon',1],['glider',1],['kite',1],['hawk',1],['balloon',1],['glider',1]]},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
@@ -130,6 +135,7 @@ Object.assign(limits, {'defence-heroic-eco':125}); // W2-B
 Object.assign(limits, {'night-battle-eco':120}); // W2-C
 Object.assign(limits, {'night-base-high':166, 'storm-base-high':166, 'storm-battle-eco':126}); // R3-D: day + 6
 Object.assign(limits, {'battle-200':260}); // R3-C
+Object.assign(limits, {'air-battle':135}); // R3-W: 125 draws on 2026-11-21 (123 before: +1 rocket bodies, +1 air life)
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -242,6 +248,15 @@ try {
       }
       for (const [i, [type, team]] of (scenario.air || []).entries())
         s.spawn(type, team, -6 + (i % 4) * 3, (team ? -1 : 1) * 3, true, true);
+      // R3-W `rockets: n`: n Anti-tank rockets in flight, fired from the player's front rank at the enemy's (view only).
+      if (scenario.rockets) {
+        const at = s.entities.filter(e => e.type === 'antitank' && e.team === 0), foe = s.entities.filter(e => e.kind === 'unit' && e.team === 1 && e.mechanical);
+        for (let i = 0; i < scenario.rockets && at.length && foe.length; i++) {
+          const a = at[i % at.length], t = foe[i % foe.length];
+          v.fx.shot({type:'shot', weapon:'antitank', unit:'antitank', source:a.id, target:t.id, x:a.x, z:a.z, tx:t.x, tz:t.z, team:0, heavy:true}, s);
+        }
+        v.fx.update(s, 0.2);
+      }
       // Data-driven units: a 2 m grid centred on `near`.
       for (const {type, team = 1, count = 1, near = [0, 0]} of scenario.spawn || []) {
         const cols = Math.ceil(Math.sqrt(count)), rows = Math.ceil(count / cols);
