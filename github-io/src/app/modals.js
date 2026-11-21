@@ -103,6 +103,9 @@ export function setupModals(S, A) {
         button.title = label;
         // The top bar's one-tap button (owner) stays icon-only; its name moves to aria-label.
         if (button.classList.contains('icon-button')) { button.setAttribute('aria-label', label); button.innerHTML = icon(active ? 'collapse' : 'expand'); }
+        // The menu card: the shown label is aria-hidden and screen readers read the visually-hidden copy,
+        // which stays when the narrow landscape Campaign card shows the icon only (cover.css).
+        else if (button.id === 'fullscreen') button.innerHTML = `${icon(active ? 'collapse' : 'expand')}<span class="fs-text" aria-hidden="true">${label}</span><span class="visually-hidden">${label}</span>`;
         else button.innerHTML = `${icon(active ? 'collapse' : 'expand')}<span>${label}</span>`;
       }
     },

@@ -78,7 +78,7 @@ export function renderShell() {
         <div id="campaign-setup" hidden></div>
         <div id="defence-setup" hidden></div>
         <div id="training-setup" hidden><ol class="lesson-list" aria-label="Training lessons">${TRAINING_STEPS.map(step => `<li>${step.title}</li>`).join("")}</ol></div>
-        <button id="fullscreen" class="secondary fullscreen-launch" data-fullscreen aria-pressed="false">${icon("expand")}<span>Full screen</span></button>
+        <button id="fullscreen" class="secondary fullscreen-launch" data-fullscreen aria-pressed="false">${icon("expand")}<span class="fs-text" aria-hidden="true">Full screen</span><span class="visually-hidden">Full screen</span></button>
         <div id="campaign-difficulty" hidden><div class="difficulty-buttons" role="group" aria-label="Campaign difficulty"><button data-difficulty="story" aria-pressed="false">Story</button><button data-difficulty="standard" aria-pressed="true">Standard</button><button data-difficulty="veteran" aria-pressed="false">Veteran</button></div><p id="difficulty-description"></p></div>
         <button id="start" class="primary" disabled>Preparing expedition…</button>
       </div>

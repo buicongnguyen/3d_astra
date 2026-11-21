@@ -631,7 +631,8 @@
   /* Integration (Wave 2 final): since the map pass this card is about 60 px wide here, too narrow for "Full screen"
      beside its icon. It shows the icon only; the label stays for screen readers (visually hidden) and as the title. */
   .compact-ui #briefing .briefing-setup:has(#campaign-difficulty:not([hidden])) #fullscreen { padding-left: 8px; padding-right: 8px; min-width: 0; }
-  .compact-ui #briefing .briefing-setup:has(#campaign-difficulty:not([hidden])) #fullscreen > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  /* Wave 3: the shown label is dropped here; the button's .visually-hidden copy keeps the name for screen readers. */
+  .compact-ui #briefing .briefing-setup:has(#campaign-difficulty:not([hidden])) #fullscreen > .fs-text { display: none; }
   .compact-ui #briefing #campaign-difficulty:not([hidden]) { grid-column: span 3; }
   .compact-ui #briefing #campaign-difficulty #difficulty-description { margin: 4px 0 0; font-size: 11px; }
   /* A smaller logo over the art. */
