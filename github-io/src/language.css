@@ -28,3 +28,27 @@
 /* Hangul is not split at any letter: keep words whole and break only between them. Uppercase and wide
    tracking (English banners) do nothing for Hangul and only spread it out. */
 :root[lang="ko"] body { word-break: keep-all; overflow-wrap: anywhere; }
+
+/* The older HUD bits set in Consolas (style.css, mobile.css, desktop-dock.css) fell back to the system's Hangul
+   font: in Korean they name Frontier KR after Consolas (digits and Latin keep Consolas). Each rule keeps its
+   selector's own weight (:where adds none), so the later, more specific UI-font rules still win where they apply. */
+:where(:root[lang="ko"]) kbd,
+:where(:root[lang="ko"]) .resource strong,
+:where(:root[lang="ko"]) #clock,
+:where(:root[lang="ko"]) .eyebrow,
+:where(:root[lang="ko"]) .map-heading p,
+:where(:root[lang="ko"]) .panel-label,
+:where(:root[lang="ko"]) .objective-num,
+:where(:root[lang="ko"]) .sector-status > span:last-child,
+:where(:root[lang="ko"]) #mode-banner,
+:where(:root[lang="ko"]) #hover-label,
+:where(:root[lang="ko"]) .map-legend,
+:where(:root[lang="ko"]) .portrait span,
+:where(:root[lang="ko"]) #queue button span,
+:where(:root[lang="ko"]) .command-tile > small,
+:where(:root[lang="ko"]) .statusbar,
+:where(:root[lang="ko"]) .quality-button,
+:root:where([lang="ko"]):not(.compact-ui) .top-actions #fps,
+:root:where([lang="ko"]):not(.compact-ui) .command-panel .order-buttons kbd,
+:root:where([lang="ko"]):not(.compact-ui) .command-panel .upgrade-actions .up-cost,
+:root:where([lang="ko"]):not(.compact-ui) .command-panel .upgrade-actions kbd { font-family: Consolas, "Frontier KR", monospace; }
