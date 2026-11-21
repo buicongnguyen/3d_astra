@@ -1,4 +1,6 @@
 // Presentation only: critical damage never adds damage-over-time or obstacles.
+import { weaponStyle } from './visual-style.js';
+import { CELL } from './fx-kinds/cells.js';
 
 // Damage states drawn by the 3D effects (src/fx.js): completed buildings smoke below half
 // health and burn (fire and smoke) below a quarter; machines burn below 35%. Infantry and
@@ -193,5 +195,111 @@ export class DamageNumbers {
       s.age += dt;
       if (s.age >= s.life) { s.on = false; this.live--; }
     }
+  }
+}
+
+// ---------------------------------------------------------------- death looks (AAA round 3, R3-K)
+// Three ways a unit dies, by what killed it, so a fight reads at a glance:
+//   BALLISTIC  rifles, bursts, pellets, melee: the fall or wreck hop as before, plus a dust kick;
+//   BLAST      shells, rockets, bombs, barrages and splash: thrown back along the shot, a fire flash and
+//              chunks (a vehicle flips higher and turns, a secondary fireball);
+//   SEARED     beams, rails, pulses and flame: a flash in the weapon's own colour, rising embers and ash,
+//              the body charred dark where it stands.
+// A view plugin (docs/VIEW_PLUGINS.md) remembers each target's last shot. The killing shot's event comes
+// after the death event in the same frame (sim/combat.js pushes the shot after the damage), so the look
+// is settled in update(), once every event of the frame is in; WorldView.beginDeath leaves `look` at 0
+// for that. Every effect comes from the existing pools in src/fx.js: no new mesh, no new draw call.
+export const DEATH_LOOK = { ballistic: 1, blast: 2, seared: 3 };
+export const DEATH_CHAR = [0.24, 0.2, 0.18]; // a seared body: charred, a little warmer than the wreck tint
+const SEARING = new Set(['beam', 'rail', 'twin-pulse', 'flame', 'hose']);
+const BLASTING = new Set(['bomb', 'firebomb', 'plough', 'pods', 'rocket', 'twin-heavy']);
+const STRIKE_STYLE = { kind: 'cannon', look: 'strike', color: [1, 0.7, 0.3, 1] };
+// The look a shot of this style gives the unit it kills.
+export function deathLookOf(style) {
+  if (!style) return DEATH_LOOK.ballistic;
+  if (SEARING.has(style.look)) return DEATH_LOOK.seared;
+  if (style.kind === 'cannon' || style.kind === 'rocket' || BLASTING.has(style.look)) return DEATH_LOOK.blast;
+  return DEATH_LOOK.ballistic;
+}
+// Seconds a remembered shot still names the killer; zones (splash, barrages) only count in their own frame.
+const REMEMBER = 4, ZONE_SLOTS = 8, SPLASH = 3;
+
+export class DeathLooks {
+  constructor(view) {
+    this.view = view;
+    this.last = new Map(); // target id -> { style, at } (records reused through `free`)
+    this.free = [];
+    this.zones = Array.from({ length: ZONE_SLOTS }, () => ({ x: 0, z: 0, r: 0, style: null, at: -1 }));
+    this.zoneNext = 0;
+    this.frame = 0;
+    this.counts = [0, 0, 0, 0]; // looks resolved this match, by code (tests and probes)
+  }
+  event(ev, sim) {
+    if (ev.type === 'shot' && ev.target != null) {
+      const style = weaponStyle(ev);
+      let r = this.last.get(ev.target);
+      if (!r) this.last.set(ev.target, (r = this.free.pop() || { style: null, at: 0 }));
+      r.style = style; r.at = sim.time;
+      if (Number.isFinite(ev.tx) && deathLookOf(style) === DEATH_LOOK.blast && (ev.heavy || style.kind === 'cannon')) this.zone(ev.tx, ev.tz, SPLASH, style, sim.time);
+    } else if (ev.type === 'strike' && Number.isFinite(ev.x)) this.zone(ev.x, ev.z, (ev.radius || 4) + 0.5, STRIKE_STYLE, sim.time);
+  }
+  zone(x, z, r, style, at) {
+    const s = this.zones[this.zoneNext];
+    this.zoneNext = (this.zoneNext + 1) % ZONE_SLOTS;
+    s.x = x; s.z = z; s.r = r; s.style = style; s.at = at;
+  }
+  // The style that killed entity `id` lying at (x, z) at time `now`: a splash or barrage of this frame,
+  // else the last shot at it, else none (ballistic).
+  killer(id, x, z, now) {
+    const r = this.last.get(id);
+    if (r && r.at >= now - 1e-6) return r.style; // the killing shot itself, this frame
+    for (const s of this.zones) if (s.at >= now - 1e-6 && (s.x - x) ** 2 + (s.z - z) ** 2 <= s.r * s.r) return s.style;
+    return r && now - r.at <= REMEMBER ? r.style : null;
+  }
+  update(sim, dt) {
+    const dying = this.view.dying;
+    if (dying?.length) for (let i = 0; i < dying.length; i++) {
+      const d = dying[i];
+      if (d.look !== 0) continue;
+      const style = this.killer(d.id, d.x, d.z, sim.time);
+      d.look = deathLookOf(style);
+      if (d.kind !== 'infantry' && d.kind !== 'vehicle') { d.look = DEATH_LOOK.ballistic; continue; } // buildings, flyers, bosses keep their own falls
+      this.counts[d.look]++;
+      const r = this.last.get(d.id);
+      if (r) { this.last.delete(d.id); r.style = null; this.free.push(r); }
+      if (d.look === DEATH_LOOK.seared && d.kind === 'infantry') this.char(d.object);
+      if (d.object.visible !== false) this.effects(d, style);
+    }
+    if (++this.frame % 120 === 0) for (const [id, r] of this.last) if (sim.time - r.at > REMEMBER) { this.last.delete(id); r.style = null; this.free.push(r); }
+  }
+  // A seared soldier goes dark at once (per-instance tint: same batches, no draw).
+  char(o) {
+    const u = o.userData;
+    o.userData.model?.traverse?.((part) => { if (part.isMesh) part.userData.tint = DEATH_CHAR; });
+    if (u.flashParts) u.flashBase = u.flashParts.map(() => DEATH_CHAR);
+  }
+  effects(d, style) {
+    const fx = this.view.fx;
+    if (!fx?.particle) return;
+    const anchor = { x: d.x, z: d.z, team: d.team }, heavy = d.kind === 'vehicle';
+    if (d.look === DEATH_LOOK.blast) {
+      fx.particle(fx.glow, { x: d.x, y: heavy ? 1.2 : 0.9, z: d.z, s0: heavy ? 2.6 : 1.6, s1: heavy ? 3.6 : 2.4, life: 0.18, c0: [1, 0.86, 0.5, 0.95], c1: [1, 0.4, 0.1, 0], anchor });
+      fx.addDebris({ x: d.x, y: 0.9, z: d.z }, heavy ? 6 : 3, anchor, heavy ? 1.1 : 0.7, heavy ? 2 : 0);
+      fx.dust({ x: d.x, y: 0.3, z: d.z }, heavy ? 4 : 2, anchor, heavy ? 1.2 : 0.8);
+      if (heavy) fx.explosion({ x: d.x, y: 1.3, z: d.z }, 0.7, anchor, false);
+    } else if (d.look === DEATH_LOOK.seared) {
+      const c = style?.color || [1, 0.6, 0.25, 1], m = fx.motion;
+      fx.particle(fx.glow, { x: d.x, y: 1, z: d.z, s0: heavy ? 2.4 : 1.5, s1: heavy ? 3.4 : 2.4, life: 0.32, c0: [c[0], c[1], c[2], 0.95], c1: [c[0], c[1], c[2], 0], anchor });
+      fx.burst(fx.glow, fx.count(heavy ? 10 : 7), { x: d.x, y: 0.8, z: d.z }, { life: 1.1, s0: 0.22, s1: 0.06, drag: 1.4, gravity: m ? -1.6 : 0,
+        c0: [1, 0.86, 0.5, 1], c1: [c[0], c[1], c[2], 0], anchor }, [0.4, 1.4], 1.2);
+      fx.burst(fx.smoke, fx.count(heavy ? 5 : 3), { x: d.x, y: 0.9, z: d.z }, { life: m ? 1.8 : 0.9, s0: 0.5, s1: 1.8, drag: 1.2, gravity: m ? -0.8 : 0,
+        cell: CELL.puff, c0: [0.12, 0.11, 0.11, 0.7], c1: [0.3, 0.29, 0.28, 0], anchor, fadeIn: 0.1 }, [0.2, 0.7], 1.5);
+    } else if (!heavy) fx.dust({ x: d.x, y: 0.2, z: d.z }, 2, anchor, 0.7, 0.8);
+  }
+  reset() {
+    for (const r of this.last.values()) { r.style = null; this.free.push(r); }
+    this.last.clear();
+    for (const s of this.zones) { s.at = -1; s.style = null; }
+    this.counts.fill(0);
   }
 }

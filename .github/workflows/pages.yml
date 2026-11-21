@@ -151,6 +151,9 @@ jobs:
           # AAA round 3 (R3-M): the title cover (loading screen, key art per frame, live layer, labels, calm mode).
           - name: r3-m
             scripts: cover-ui title
+          # AAA round 3 (R3-K): battle readability (wide-zoom type icons, group badges, threat arrows, death looks, Combined gold trim).
+          - name: r3-k
+            scripts: readability
     defaults:
       run:
         working-directory: github-io
