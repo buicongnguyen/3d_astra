@@ -208,6 +208,9 @@ export class AirLifeView {
     const n = this.count, g = this.mesh.geometry;
     this.mesh.visible = n > 0;
     if (!n && !g.instanceCount) return;
+    // A still frame (paused, or the render budget's frozen scene) moves nothing: keep the buffers already sent.
+    if (!(dt > 0) && n === g.instanceCount && this.sent) return;
+    this.sent = true;
     g.instanceCount = n;
     for (const a of this.attrList) {
       a.clearUpdateRanges(); a.addUpdateRange(0, Math.max(1, n) * a.itemSize); a.needsUpdate = true;

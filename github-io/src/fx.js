@@ -131,6 +131,8 @@ class Layer {
     this.color = attr("iColor", 4);
     this.axis = attr("iAxis", 4);
     this.size = attr("iSize", 3);
+    this.attrs = [this.pos, this.color, this.axis, this.size];
+    this.sent = false;
     g.instanceCount = 1;
     this.material = new THREE.ShaderMaterial({
       uniforms: { map: { value: texture }, cells: { value: CELLS.length } },
@@ -185,8 +187,11 @@ class Layer {
       if (!previous) return;
       S[0] = 0; C[3] = 0; drawn = 1;
     }
+    // A still frame (dt 0: paused, or a frozen benchmark scene) moves and fades nothing: keep what was sent (R3-W).
+    if (!(dt > 0) && drawn === previous && this.sent) return;
+    this.sent = true;
     this.mesh.geometry.instanceCount = drawn;
-    for (const a of [this.pos, this.color, this.axis, this.size]) uploadPrefix(a, drawn);
+    for (const a of this.attrs) uploadPrefix(a, drawn);
   }
   clear() { for (const p of this.items) this.free.push(p); this.items.length = 0; }
   dispose() { this.mesh.geometry.dispose(); this.material.dispose(); }
@@ -912,7 +917,7 @@ export class Effects {
         }
       }
     }
-    this.rockets.end();
+    this.rockets.end(dt > 0);
     // Smoke on damaged buildings, fire on critical ones and on machines; fog-aware and capped
     // like the HUD's fire list.
     // Many damaged buildings share one smoke budget (about 220 live puffs at High) so they

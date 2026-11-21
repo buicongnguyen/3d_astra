@@ -99,10 +99,12 @@ export class RocketBodies {
     this.mesh.setColorAt(this.drawn, color ? C.setRGB(color[0], color[1], color[2]) : C.setRGB(1, 1, 1));
     this.drawn++;
   }
-  end() {
+  // `moved` false (a still frame: dt 0) keeps the buffers already sent when the count is unchanged.
+  end(moved = true) {
     const n = this.drawn, mesh = this.mesh;
     mesh.visible = n > 0;
     if (!n && !mesh.count) return;
+    if (!moved && n === mesh.count) return;
     mesh.count = n;
     if (n) {
       mesh.instanceMatrix.clearUpdateRanges(); mesh.instanceMatrix.addUpdateRange(0, n * 16); mesh.instanceMatrix.needsUpdate = true;
