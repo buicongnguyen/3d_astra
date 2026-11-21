@@ -35,6 +35,8 @@ export class TouchControls {
   }
   down(e) {
     if (!this.touch(e) || !this.callbacks.enabled()) return;
+    // A touch that starts in a gesture margin (screen edges kept for the system's swipes) is not ours.
+    if (this.callbacks.inEdge?.(e)) return;
     e.preventDefault();
     this.callbacks.activate();
     this.canvas.setPointerCapture(e.pointerId);

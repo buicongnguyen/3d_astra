@@ -50,6 +50,9 @@ import { CORE_MODEL_TYPES, modelsForMatch } from "./model-roster.js";
 import { skirmishSides, matchLook } from "./factions.js";
 import { prefetchModels, releaseModelBytes } from "./app/loading.js";
 import "./loading.css";
+// Phone battle HUD tidy pass (round 3): loaded last, scoped to phones in a match.
+import "./ui-kit.css";
+import "./phone-hud.css";
 import { registerOffline } from "./app/offline.js";
 import { setupCover } from "./app/cover.js";
 

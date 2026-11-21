@@ -152,7 +152,8 @@ try {
     }
 
     // ---- Pause and the controls guide.
-    await press('.brand');
+    // Phones show no logo in a match (round 3 HUD pass: it only repeated Pause); Pause opens the same menu.
+    await press(touch ? '#pause' : '.brand');
     await check('8-pause', '#modal', ['.modal']);
     await press('#modal [data-resume]');
     await press('#help');
@@ -181,7 +182,7 @@ try {
       await page.waitForTimeout(300);
     }
     // ---- Campaign mission: briefing overlay, HUD, debrief.
-    await press('.brand'); await press('#modal [data-new-game]');
+    await press(touch ? '#pause' : '.brand'); await press('#modal [data-new-game]');
     await page.waitForTimeout(300);
     await press('[data-mode="campaign"]');
     await press('#start');

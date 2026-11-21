@@ -831,9 +831,16 @@ export class WorldView {
     // frames the uncovered part exactly as before (same scale, focus in its middle); the covered
     // strip just shows more map, so opening or closing a panel never resizes or jumps the view.
     // The same for a strip along the top (--view-cover-top: the floating phone tool row).
-    const style = getComputedStyle(this.container), px = (name) => Math.max(0, parseFloat(style.getPropertyValue(name)) || 0);
+    // The covers may be calc() expressions (phone-hud.css): a hidden probe resolves them to pixels.
+    if (!this.coverProbe) {
+      this.coverProbe = document.createElement("i");
+      this.coverProbe.setAttribute("aria-hidden", "true");
+      this.coverProbe.style.cssText = "position:absolute;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding:var(--view-cover-top, 0px) 0 var(--view-cover, 0px)";
+      this.container.append(this.coverProbe);
+    }
+    const probe = getComputedStyle(this.coverProbe), px = (name) => Math.max(0, parseFloat(name === "--view-cover" ? probe.paddingBottom : probe.paddingTop) || 0);
     let cover = px("--view-cover"), coverTop = px("--view-cover-top");
-    if (cover + coverTop > height * 0.6) cover = coverTop = 0; // a squashed window: plain framing
+    if (cover + coverTop > height * 0.7) cover = coverTop = 0; // a squashed window: plain framing (0.7: phones now run the canvas under the top bar and the tabs too, 355 of 568 px on a 320 px phone)
     if (width === this.width && height === this.height && cover === this.cover && coverTop === this.coverTop) return;
     this.width = width;
     this.height = height;

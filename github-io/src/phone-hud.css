@@ -1,0 +1,323 @@
+/* Phone battle HUD, tidy pass (AAA round 3, owner 2026-11-21: "a clear area for the scene").
+   Loaded last; every rule is scoped to a phone in a match (:root.compact-ui:not(.in-briefing)), so the desktop
+   HUD and the start screen are untouched. Results and the before/after table: docs/aaa/results/round3/hud.md.
+     1. The battlefield is full-bleed: #world fills the screen behind every bar. The gesture margins (12 px at the
+        sides, the home-bar strip at the bottom) stay, but in the input (touch-controls.js ignores touches that
+        start there) rather than as a dark frame. The camera frames the part between the bars (--view-cover-top,
+        --view-cover; view.js).
+     2. The top bar is two glass pills over the map instead of a full-width slab: resources and clock on the
+        left, Full screen / Sound / Help / Pause on the right. The logo is not shown in a match: mid-match it only
+        opened the pause menu, the same as Pause beside it. The ALLOY / ENERGY / POPULATION captions go (the icons
+        and tooltips say the same).
+        Portrait: one 44 px row (was 86 px): resources and the clock as a 2 x 2 block.
+        Landscape from 840 px wide: the six touch buttons sit in the top row between the pills; narrower
+        landscape phones keep them in the second row.
+     3. Portrait: Objectives (the flag) moves from the top bar into the tab row at the bottom; its list opens
+        above the tabs.
+     4. Portrait: six unit orders sit in one row (was 3 + 3) from 340 px wide; the dock is one row shorter.
+        Defence: a tower on the Selection tab gets the short unit card (was the 202 px building dock, empty
+        under Info & stats).
+     5. One spacing scale (4 / 8 px), one radius (10 px), one glass, for the top pills, the touch row, the tabs,
+        the Objectives and idle chips. Rows of buttons let taps through their gaps.
+   Owner rules kept: every action is still one tap (nothing moved behind a menu), 44 px taps, 11 px text, no
+   sideways scroll, docks only shrink, safe areas respected. */
+
+:root.compact-ui:not(.in-briefing) {
+  /* The kit's tokens (ui-kit.css): HUD ink, fine line, 3 px command gutter, 8 px edge. */
+  --hud-glass: var(--kit-hud-ink);
+  --hud-glass-strong: var(--kit-hud-ink);
+  --hud-line: var(--kit-line);
+  --hud-radius: 0px;
+  --hud-gap: var(--kit-gutter);
+  --hud-pad: var(--kit-s4);
+  --hud-top: env(safe-area-inset-top, 0px);
+  --hud-left: max(8px, env(safe-area-inset-left, 0px));
+  --hud-right: max(8px, env(safe-area-inset-right, 0px));
+}
+
+/* ---- 1. Full-bleed battlefield ---- */
+:root.compact-ui:not(.in-briefing) #world { position: fixed; inset: 0; }
+
+/* ---- 2. Top bar: glass pills, the map shows between them ---- */
+:root.compact-ui:not(.in-briefing) .topbar {
+  background: none;
+  border: 0;
+  box-shadow: none;
+  pointer-events: none;
+}
+:root.compact-ui:not(.in-briefing) .topbar .brand { display: none; }
+:root.compact-ui:not(.in-briefing) .topbar :is(.icon-button, .resource-bar, .top-actions) { pointer-events: auto; }
+:root.compact-ui:not(.in-briefing) .topbar .resource small { display: none; }
+:root.compact-ui:not(.in-briefing) .topbar .resource > .icon { width: 16px; height: 16px; flex: 0 0 16px; }
+:root.compact-ui:not(.in-briefing) .topbar .resource strong { font-size: 15px; line-height: 1; white-space: nowrap; }
+:root.compact-ui:not(.in-briefing) .topbar .resource strong em { font-size: 11px; }
+:root.compact-ui:not(.in-briefing) .topbar .icon-button { width: 44px; height: 44px; border-radius: var(--hud-radius); }
+:root.compact-ui:not(.in-briefing) .topbar #clock { font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---- 5. The kit look: chamfered dark-glass faces with a thin edge (ui-kit.css) ---- */
+:root.compact-ui:not(.in-briefing) :is(.touch-controls, #dock-tabs) { pointer-events: none; background: none; }
+:root.compact-ui:not(.in-briefing) :is(.touch-controls, #dock-tabs) > button { pointer-events: auto; }
+:root.compact-ui:not(.in-briefing) :is(.touch-controls > button, #dock-tabs > button, #mission-toggle, #idle-chips .idle-button) {
+  border: 1px solid transparent;
+  border-radius: 0;
+  border-image: var(--kit-frame-button);
+  clip-path: var(--kit-cut-button);
+  background: var(--kit-hud-ink);
+  color: var(--kit-text);
+  box-shadow: none;
+}
+:root.compact-ui:not(.in-briefing) .touch-controls > button { font: var(--kit-type-caption); }
+:root.compact-ui:not(.in-briefing) .touch-controls > button .icon { color: var(--kit-cyan); }
+:root.compact-ui:not(.in-briefing) :is(.touch-controls > button, #dock-tabs > button, #mission-toggle):active:not(:disabled) { background: var(--kit-pressed); }
+/* Selected: the cyan edge and a 2 px rail along the bottom. */
+:root.compact-ui:not(.in-briefing) :is(.touch-controls > button[aria-pressed="true"], #dock-tabs > button[aria-pressed="true"], #mission-toggle[aria-expanded="true"]) {
+  border-image: var(--kit-frame-button-active);
+  background: linear-gradient(0deg, var(--kit-cyan) 0 var(--kit-rail), transparent var(--kit-rail)), var(--kit-pressed) !important; /* beats ui-theme's !important gold */
+  color: var(--kit-text);
+}
+:root.compact-ui:not(.in-briefing) #idle-chips { gap: var(--hud-gap); }
+:root.compact-ui:not(.in-briefing) #idle-chips .idle-button { min-width: 52px; min-height: 44px; }
+:root.compact-ui:not(.in-briefing) #idle-chips .idle-button .icon { color: var(--kit-cyan); }
+
+/* Dock panels: the panel frame (8 px chamfer) on the kit's panel gradient. */
+:root.compact-ui:not(.in-briefing) .bottom-dock .panel:not(.minimap-panel) {
+  border: 1px solid transparent;
+  border-radius: 0;
+  border-image: var(--kit-frame-panel);
+  clip-path: var(--kit-cut-panel);
+  background: var(--kit-panel);
+  box-shadow: none;
+}
+:root.compact-ui:not(.in-briefing) .selection-panel .order-buttons button {
+  border-radius: 0;
+  clip-path: var(--kit-cut-button);
+  border: 1px solid transparent;
+  border-image: var(--kit-frame-button);
+  background: var(--kit-control);
+}
+/* Minimap: the same panel frame. */
+:root.compact-ui:not(.in-briefing) .bottom-dock .minimap-panel { border: 1px solid transparent; border-radius: 0; border-image: var(--kit-frame-panel); clip-path: var(--kit-cut-panel); background: var(--kit-hud-ink); }
+
+/* Radio line chip: the toast frame, a cyan rail. */
+:root.compact-ui:not(.in-briefing) #dialogue-card {
+  border-radius: 0;
+  border: 1px solid transparent;
+  border-image: var(--kit-frame-toast);
+  clip-path: var(--kit-cut-button);
+  background: linear-gradient(90deg, var(--kit-cyan) 0 var(--kit-warning-rail), transparent var(--kit-warning-rail)), var(--kit-hud-ink);
+  box-shadow: none;
+}
+
+/* Defence bar (lives, wave, call, speed): a kit panel; its buttons keep their gold (the primary action). */
+:root.compact-ui:not(.in-briefing) #defence-bar {
+  border: 1px solid transparent;
+  border-radius: 0;
+  border-image: var(--kit-frame-panel);
+  clip-path: var(--kit-cut-panel);
+  background: var(--kit-hud-ink);
+  box-shadow: none;
+}
+:root.compact-ui:not(.in-briefing) #defence-bar :is(button, .dchip) { border-radius: 0; clip-path: var(--kit-cut-button); }
+
+/* Toast: a coloured rail on the left (success green, alert warning), dark ink, the toast frame. */
+:root.compact-ui:not(.in-briefing) #notice {
+  border: 1px solid transparent;
+  border-radius: 0;
+  border-image: var(--kit-frame-toast);
+  clip-path: var(--kit-cut-button);
+  background: linear-gradient(90deg, var(--kit-success) 0 var(--kit-warning-rail), transparent var(--kit-warning-rail)), var(--kit-hud-ink);
+  color: var(--kit-text);
+  box-shadow: none;
+}
+:root.compact-ui:not(.in-briefing) #notice:is(.alert, .warning, .danger) { background: linear-gradient(90deg, var(--kit-warning) 0 var(--kit-warning-rail), transparent var(--kit-warning-rail)), var(--kit-hud-ink); }
+
+/* ================= Portrait ================= */
+@media (max-aspect-ratio: 1.35) {
+  :root.compact-ui:not(.in-briefing) { --header-height: 45px; }
+  /* The camera frames the map between the top bar + touch row and the tallest dock + tabs. */
+  :root.compact-ui:not(.in-briefing) #world {
+    --view-cover-top: calc(var(--header-height) + var(--hud-top) + 48px);
+    --view-cover: calc(202px + var(--tabs-height) + var(--safe-bottom));
+  }
+
+  /* One 44 px row: [alloy pop / energy clock] ........ [full screen][sound][help][pause]. */
+  :root.compact-ui:not(.in-briefing) .topbar {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) repeat(4, auto);
+    grid-template-rows: 22px 22px;
+    gap: 0;
+    align-items: center;
+    height: calc(var(--header-height) + var(--hud-top));
+    padding: var(--hud-top) var(--hud-right) 1px var(--hud-left);
+  }
+  :root.compact-ui:not(.in-briefing) .topbar :is(.resource-bar, .top-actions) { display: contents; }
+  /* The two pills are the bar's own ::before / ::after, laid on the grid under the cells they back. */
+  :root.compact-ui:not(.in-briefing) .topbar::before,
+  :root.compact-ui:not(.in-briefing) .topbar::after {
+    content: "";
+    align-self: stretch;
+    border: 1px solid transparent;
+    border-image: var(--kit-frame-panel);
+    clip-path: var(--kit-cut-panel);
+    background: var(--kit-hud-ink);
+    pointer-events: auto;
+    z-index: -1;
+  }
+  :root.compact-ui:not(.in-briefing) .topbar::before { grid-area: 1 / 1 / 3 / 3; }
+  :root.compact-ui:not(.in-briefing) .topbar::after { grid-area: 1 / 4 / 3 / 8; }
+  :root.compact-ui:not(.in-briefing) .topbar { isolation: isolate; }
+  :root.compact-ui:not(.in-briefing) .topbar .resource {
+    height: 22px;
+    min-width: max-content; /* a long number widens its column instead of running into the next */
+    padding: 0 8px 0 10px;
+    gap: 5px;
+    border: 0;
+    flex: none;
+    pointer-events: none;
+  }
+  :root.compact-ui:not(.in-briefing) .topbar .resource.alloy { grid-area: 1 / 1; align-self: end; }
+  :root.compact-ui:not(.in-briefing) .topbar .resource.energy { grid-area: 2 / 1; align-self: start; }
+  :root.compact-ui:not(.in-briefing) .topbar .resource.population { grid-area: 1 / 2; align-self: end; padding-left: 4px; }
+  :root.compact-ui:not(.in-briefing) .topbar #clock { grid-area: 2 / 2; align-self: start; height: 22px; line-height: 22px; margin: 0; padding: 0 10px 0 4px; color: var(--text-2, #c9d8d4); }
+  :root.compact-ui:not(.in-briefing) .topbar #fullscreen-top { grid-area: 1 / 4 / 3 / 5; }
+  :root.compact-ui:not(.in-briefing) .topbar #audio { grid-area: 1 / 5 / 3 / 6; }
+  :root.compact-ui:not(.in-briefing) .topbar #help { grid-area: 1 / 6 / 3 / 7; }
+  :root.compact-ui:not(.in-briefing) .topbar #pause { grid-area: 1 / 7 / 3 / 8; }
+  :root.compact-ui:not(.in-briefing) .topbar .icon-button { border: 0; background: none; }
+  :root.compact-ui:not(.in-briefing) .topbar .resource > .icon { color: var(--kit-cyan); }
+
+  /* Touch row right under the bar; the gaps between buttons are map. */
+  :root.compact-ui:not(.in-briefing) .touch-controls { top: 1px; left: var(--hud-left); right: var(--hud-right); gap: var(--hud-gap); }
+
+  /* ---- 3. Objectives: the flag ends the tab row; its list opens above the tabs ---- */
+  :root.compact-ui:not(.in-briefing) #dock-tabs { left: var(--hud-left); right: calc(var(--hud-right) + 44px + var(--hud-gap)); gap: var(--hud-gap); }
+  :root.compact-ui:not(.in-briefing) #mission-toggle {
+    position: absolute;
+    top: auto;
+    left: auto;
+    right: var(--hud-right);
+    bottom: var(--safe-bottom);
+  }
+  :root.compact-ui:not(.in-briefing).objectives-open #mission-objectives {
+    top: auto;
+    left: auto;
+    right: var(--hud-right);
+    bottom: calc(var(--tabs-height) + var(--safe-bottom) + var(--hud-pad));
+    width: min(320px, calc(100% - 2 * var(--hud-left)));
+    max-height: calc(100% - var(--tabs-height) - var(--safe-bottom) - 60px);
+    overflow-y: auto;
+    z-index: 31;
+  }
+  /* Targeting prompt right under the touch row. */
+  :root.compact-ui:not(.in-briefing) #mode-banner { top: 52px; }
+
+  /* Idle buttons: the world now runs to the bottom of the screen, so they add the tab strip themselves. */
+  :root.compact-ui:not(.in-briefing) #idle-chips {
+    right: var(--hud-right);
+    bottom: calc(var(--dock-height) + var(--tabs-height) + var(--safe-bottom) + var(--hud-pad));
+  }
+  :root.compact-ui.in-defence:not(.in-briefing) #idle-chips { bottom: calc(var(--dock-height) + var(--tabs-height) + var(--safe-bottom) + var(--defence-bar-h, 0px) + var(--hud-pad)); }
+
+  /* ---- 4. Docks: one row of six orders; a Defence tower gets the short card ---- */
+  :root.compact-ui:not(.in-briefing) .bottom-dock { left: var(--hud-left); right: var(--hud-right); }
+  :root.compact-ui.in-defence.no-units:not(.in-briefing)[data-dock="selection"]:has(.selection-panel.has-entity) { --dock-height: 113px; }
+  :root.compact-ui.in-defence.no-units:not(.in-briefing)[data-dock="selection"] .selection-panel.has-entity #queue:empty { display: none; }
+  :root.compact-ui.in-defence.no-units:not(.in-briefing)[data-dock="selection"]:has(.selection-panel.has-entity #queue:not(:empty)) { --dock-height: 157px; }
+  /* Defence shows Alloy only: the clock sits under it. */
+  :root.compact-ui.in-defence:not(.in-briefing) .topbar #clock { grid-area: 2 / 1; padding-left: 10px; }
+  :root.compact-ui.in-defence:not(.in-briefing) .topbar::before { grid-area: 1 / 1 / 3 / 2; }
+}
+@media (max-aspect-ratio: 1.35) and (min-width: 340px) {
+  :root.compact-ui.many-orders:not(.wide-orders):not(.in-briefing) .selection-panel .order-buttons {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: var(--hud-gap);
+  }
+  :root.compact-ui.many-orders:not(.wide-orders):not(.in-briefing) .selection-panel .order-buttons button { padding: 2px; font-size: 11px; line-height: 1.15; }
+  :root.compact-ui.many-orders:not(.wide-orders):not(.in-briefing):not(.no-units)[data-dock="selection"] { --dock-orders: 0px; }
+}
+/* The population icon is back from 360 px (selection-status.css hid it on every phone). */
+@media (max-aspect-ratio: 1.35) and (min-width: 360px) {
+  :root.compact-ui:not(.in-briefing) .topbar .resource.population > .icon { display: block; }
+}
+@media (min-aspect-ratio: 1.35) {
+  :root.compact-ui:not(.in-briefing) .topbar .resource.population > .icon { display: block; }
+}
+/* 320 px: the tab labels lose their icons so three tabs and the flag fit. The 2 x 2 block tightens (13 px
+   numbers, 6 px edges) and the population drops its "+15" queued part, so a five-digit alloy and "85 / 100"
+   still fit beside the four 44 px buttons. */
+@media (max-aspect-ratio: 1.35) and (max-width: 359px) {
+  :root.compact-ui:not(.in-briefing) { --hud-left: max(6px, env(safe-area-inset-left, 0px)); --hud-right: max(6px, env(safe-area-inset-right, 0px)); }
+  :root.compact-ui:not(.in-briefing) #dock-tabs .icon { display: none; }
+  :root.compact-ui:not(.in-briefing) .topbar .resource { padding: 0 4px 0 8px; gap: 3px; }
+  :root.compact-ui:not(.in-briefing) .topbar .resource.population { padding-left: 2px; }
+  :root.compact-ui:not(.in-briefing) .topbar .resource > .icon { width: 13px; height: 13px; flex-basis: 13px; }
+  :root.compact-ui:not(.in-briefing) .topbar .resource strong { font-size: 13px; }
+  :root.compact-ui:not(.in-briefing) .topbar #population .reserved { display: none; }
+  :root.compact-ui:not(.in-briefing) .topbar #clock { padding: 0 6px 0 2px; }
+}
+
+/* ================= Landscape ================= */
+@media (min-aspect-ratio: 1.35) {
+  /* The bar is a band of pills; the map runs under it, so the camera frames below it. */
+  :root.compact-ui:not(.in-briefing) #world { --view-cover-top: calc(var(--header-height) + var(--hud-top)); --view-cover: 0px; }
+  :root.compact-ui:not(.in-briefing) .topbar { gap: var(--hud-pad); padding-top: var(--hud-top); align-items: flex-start; }
+  :root.compact-ui:not(.in-briefing) .topbar .resource-bar {
+    flex: 0 0 auto;
+    width: auto;
+    height: 44px;
+    justify-content: flex-start;
+    border: 1px solid transparent;
+    border-image: var(--kit-frame-panel);
+    clip-path: var(--kit-cut-panel);
+    background: var(--kit-hud-ink);
+  }
+  :root.compact-ui:not(.in-briefing) .topbar .resource { flex: 0 0 auto; min-width: 0; padding: 0 12px; gap: 6px; border-right: 1px solid var(--hud-line); }
+  :root.compact-ui:not(.in-briefing) .topbar .resource:last-child { border-right: 0; }
+  :root.compact-ui:not(.in-briefing) .topbar .top-actions {
+    margin-left: auto;
+    height: 44px;
+    gap: 0;
+    padding-left: 10px;
+    border: 1px solid transparent;
+    border-image: var(--kit-frame-panel);
+    clip-path: var(--kit-cut-panel);
+    background: var(--kit-hud-ink);
+  }
+  :root.compact-ui:not(.in-briefing) .topbar .top-actions .icon-button { border: 0; background: none; }
+  :root.compact-ui:not(.in-briefing) .topbar #clock { margin-right: 2px; }
+
+  /* Toasts at the bottom sit between the minimap and the dock, centred there (at 667 px they ran over the
+     minimap). */
+  :root.compact-ui:not(.in-briefing) #notice {
+    left: calc(var(--edge-left) + var(--mini-w) + var(--hud-pad));
+    right: calc(var(--side-width) + var(--edge-right) + var(--hud-pad));
+    width: fit-content;
+    max-width: none;
+    margin-inline: auto;
+    transform: none;
+  }
+  /* Idle buttons: the world now starts at the top of the screen. */
+  :root.compact-ui:not(.in-briefing) #idle-chips { top: calc(var(--header-height) + var(--hud-top) + 6px); left: calc(var(--edge-left) + var(--row-width) + 60px); }
+
+  /* The unit card drops "Standing by" (it stays in the tooltip), as in portrait. Five orders sit 3 + 2, not
+     4 + 1 (Info & stats, hidden here by CSS, is the sixth button without [hidden]). */
+  :root.compact-ui:not(.in-briefing) .selection-panel.has-entity .selection-activity:not(.high-ground):not(.in-ford):not(.in-air) { display: none; }
+  :root.compact-ui:not(.in-briefing):not(.in-defence) .selection-panel .order-buttons:has(> button:nth-child(6 of :not([hidden]))):not(:has(> button:nth-child(7 of :not([hidden])))) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Landscape from 840 px wide: the touch row joins the top band, centred between the pills; the flag and the
+   idle buttons take the top-left corner under the bar. */
+@media (min-aspect-ratio: 1.35) and (min-width: 840px) {
+  :root.compact-ui:not(.in-briefing) { --row-width: min(360px, calc(100vw - 2 * 242px)); }
+  :root.compact-ui:not(.in-briefing) .touch-controls {
+    position: fixed;
+    top: var(--hud-top);
+    left: calc(50% - var(--row-width) / 2);
+    width: var(--row-width);
+    z-index: 6;
+  }
+  :root.compact-ui:not(.in-briefing) #mission-toggle { left: var(--edge-left); }
+  :root.compact-ui:not(.in-briefing).objectives-open #mission-objectives { left: var(--edge-left); width: min(284px, calc(100% - var(--side-width) - 40px)); }
+  :root.compact-ui:not(.in-briefing) #idle-chips { left: calc(var(--edge-left) + 44px + var(--hud-pad)); }
+}
