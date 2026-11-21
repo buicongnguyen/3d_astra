@@ -65,7 +65,8 @@
     "branches": {
       "assault": { "name": "Assault", "cost": 200, "damage": 1.35, "interval": 0.8, "mech": 1.3, "leash": 4 },
       "bulwark": { "name": "Bulwark", "cost": 200, "hp": 1.7, "repair": 0.05 }
-    } },
+    },
+    "combined": { "name": "Combined", "cost": 320 } },
   "perks": {
     "quartermaster": { "name": "Quartermaster", "stars": 3, "first": 0.8 },
     "reserves": { "name": "Reserves", "stars": 4, "lives": 2 },

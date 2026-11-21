@@ -267,7 +267,13 @@ export class Simulation {
       if (e.complete) cap += e.supply || 0;
       for (const q of e.queue) reserved += D[q.type].pop || 0;
     }
-    return { used, reserved, cap: Math.min(MAX_POP, cap) };
+    return { used, reserved, cap: Math.min(this.maxPop(), cap) };
+  }
+  // The army-size cap (AAA round 3, R3-C): MAX_POP, or the skirmish rule `pop` ("150", "200").
+  // The default 100 stores no rule key, so every match without the rule plays as before.
+  maxPop() {
+    const pop = this.rules?.pop;
+    return pop === "150" || pop === "200" ? Number(pop) : MAX_POP;
   }
   canPay(team, cost) {
     const p = this.players[team];

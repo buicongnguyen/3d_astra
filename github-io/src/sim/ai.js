@@ -71,7 +71,7 @@ export const ai = {
     const pop = this.population(team);
     const want = !kinds.barracks
       ? "barracks"
-      : pop.cap - pop.used - pop.reserved < (pace.counter && this.players[team].alloy >= 400 ? 10 : 5) && pop.cap < MAX_POP
+      : pop.cap - pop.used - pop.reserved < (pace.counter && this.players[team].alloy >= 400 ? 10 : 5) && pop.cap < this.maxPop()
         ? "relay"
         : !kinds.foundry && this.time > pace.foundryAt * (role === "siege" ? 0.6 : 1)
           ? "foundry"
