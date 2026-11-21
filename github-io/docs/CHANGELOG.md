@@ -127,6 +127,15 @@ Everything below applies only under the skirmish rule `aiPlan: "field"` (`fieldP
 - **Three death looks.** Shells, rockets, bombs and barrages throw the body back along the shot (vehicles hop higher, roll and turn, with a secondary fireball); beams, rails, pulses and flame sear it (a flash in the weapon's colour, embers and ash, the soldier charred where it stands, a wreck that shudders and settles); rifles and blades drop it as before, with a dust kick. Every effect comes from the existing pools.
 - **Cost:** +1 draw at the widest zoom (148 to 149 in `wide-battle-eco`, 217 to 218 in `large-map-high`), +1 with group badges (107 to 108 in `groups-battle-eco`), +2 for Combined squads (the gold trim and the star's atlas: 93 to 95 in `combined-defence-eco`), 0 in every other scenario; no shadow draw; no buffer upload on a still frame. View only: every pin, checksum and baseline is unchanged.
 
+### R3-V: Victory ceremony and MVP card (all modes)
+- **Win ceremony.** The last kill plays in slow motion for 1.2 s (when the core beat has not already slowed it), then the camera swings to your MVP with a gold "MVP" tag over the unit. The results open with a stamp landing (the Skirmish emblem, the mission medal or the Defence stars) and a three-note sting, a confetti burst in your team colour, and the stats counting up.
+- **MVP card** on every win (Skirmish, missions and Chronicles, Defence, and the Endless / Daily score): the unit that did the most damage plus healing, with its portrait, name, damage, healing and kills. Towers show the unit that crews them. A quiet objective win names your most seasoned unit ("Held the line").
+- **"So close."** on a loss, with how close it was (the enemy core's health, the objectives done, or the waves held) and one concrete tip read from your match (economy, army size, trades, base losses or upgrades). Defence keeps its own next-star tip.
+- **Results in the holo theme:** glass panel with corner brackets and a sensor line, gold for a win, coral for a loss, holo tiles. Every action is still one tap on the card; text stays at 11 px or more and buttons at 44 px; the docks do not change.
+- Motion off (reduced motion or "Animate combat effects" off) skips the slow motion, swing, confetti and count-up; the stamp lands at once. Eco quality alone keeps the ceremony.
+- Presentation only: the match is over before any of it plays, and the MVP is counted from the ticks in the client (match-stats.js), so pins, checksums and saves are unchanged.
+- For later packages: `onMatchEnd(fn)` in `src/ceremony.js` (also `A.onMatchEnd`) hears every finished match with its mode, result, stats, MVP, medal, stars, score and difficulty.
+
 ## 0.25.0: AAA round 2 (release label for the deploy; owner decision O17)
 
 This is the label proposed for the next release. `package.json` still says 0.19.1, nothing is deployed, and the owner decides the number at deploy. It gathers everything of AAA round 2 (plan: docs/aaa/AAA_ROUND2_PLAN.md, results: docs/aaa/results/round2/). The Defence and campaign sections under "Unreleased" further down (0.22 to 0.24 labels) were built before this round and are not part of it.

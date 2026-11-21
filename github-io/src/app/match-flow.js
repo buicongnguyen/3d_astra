@@ -12,10 +12,30 @@ import { icon } from "../icons.js";
 import { setMusicMood } from "../music.js";
 import { skirmishResultHTML } from "../results-ui.js";
 import { defenceLevel } from "../defence/levels.js";
+import { createCeremony, emitMatchEnd, onMatchEnd, fallbackMvp, lossTip, closeness } from "../ceremony.js";
 
 export function setupMatchFlow(S, A) {
   const Z = S.screen;
+  // R3-V: the victory ceremony (ceremony.js). A win plays its slow motion and camera swing before the
+  // results open (once per match); every results screen is then dressed (MVP card, stamp, confetti,
+  // count-up, or "So close" and a tip) and the onMatchEnd listeners hear about it.
+  const ceremony = createCeremony(S, A);
+  let beatRan = false, ceremonyFor = null;
+  // The MVP with where it stands now (a live unit moves on during the beat).
+  function currentMvp() {
+    const mvp = S.matchStats.mvp?.() || fallbackMvp(S.sim);
+    const live = mvp && S.sim.entities.find((e) => e.id === mvp.id && e.hp > 0);
+    return mvp && live ? { ...mvp, x: live.x, z: live.z } : mvp;
+  }
   function showResult() {
+    if (S.sim.result === "victory" && !S.tutorial && ceremonyFor !== S.sim && ceremony.animated) {
+      ceremonyFor = S.sim;
+      const mvp = currentMvp();
+      if (ceremony.begin({ slow: beatRan ? null : S.matchStats.lastKill, mvp, done: openResult })) return;
+    }
+    openResult();
+  }
+  function openResult() {
     Z.open("result");
     A.clearMode();
     A.setModalOpen(true);
@@ -26,13 +46,38 @@ export function setupMatchFlow(S, A) {
     A.missionUI.endMatch();
     if(S.tutorial){
       if(S.tutorial.done){try{localStorage.setItem("frontier-training-complete","1");}catch{}}
-      $("modal-content").innerHTML = `<h2 id="modal-title">${S.tutorial.done?"Training complete!":"Training ended"}</h2><p>You practiced selection, economy, construction, production, attacking and withdrawal. Campaign introduces an active opponent.</p><button class="primary" data-training-campaign>Campaign menu</button><button class="secondary" data-restart>Replay training</button><button class="secondary" data-new-game>Choose a game</button>`;$("modal").querySelector(".primary").focus();return;
+      $("modal-content").innerHTML = `<h2 id="modal-title">${S.tutorial.done?"Training complete!":"Training ended"}</h2><p>You practiced selection, economy, construction, production, attacking and withdrawal. Campaign introduces an active opponent.</p><button class="primary" data-training-campaign>Campaign menu</button><button class="secondary" data-restart>Replay training</button><button class="secondary" data-new-game>Choose a game</button>`;$("modal").querySelector(".primary").focus();announce("training");return;
     }
-    if (S.activeStage !== null) return showDebrief(win);
-    if (S.sim.defence) return A.defenceResult();
+    if (S.activeStage !== null) { showDebrief(win); dress("campaign"); return; }
+    // The Defence screens load lazily (app/defence-entry.js): dress the result once it is on the page.
+    if (S.sim.defence) { const sim = S.sim; Promise.resolve(A.defenceResult()).then(() => { if (S.sim === sim && Z.modalType === "result") dress("defence"); }); return; }
     $("modal").classList.add("result-wide");
     $("modal-content").innerHTML = skirmishResultHTML({ result: S.sim.result, seconds: S.sim.time, stats: S.matchStats.stats, emblem: emblemUrl, arrow: icon("arrow"), faction: playerFactionOf(S.sim) });
     $("modal").querySelector(".primary").focus();
+    dress("skirmish");
+  }
+
+  // R3-V: the results screen on the page gets its MVP card or loss tip, stamp, confetti and count-up.
+  // Endless and the Daily seed (a score, never a defeat to mourn) are dressed like a win, without the swing.
+  function dress(mode) {
+    const sim = S.sim, variant = sim.defence ? sim.missionDef?.variant || null : null, score = variant === "endless" || variant === "daily";
+    const result = score ? "victory" : sim.result, win = result === "victory";
+    const seconds = sim.mission?.clock ?? sim.time;
+    const mvp = win ? currentMvp() : null;
+    const added = ceremony.present($("modal-content"), { result, mode, mvp, tip: !win && mode !== "defence" ? lossTip(S.matchStats.stats, { seconds }) : null, near: win ? null : closeness(sim) });
+    announce(mode, { mvp, added, variant, seconds });
+  }
+  // onMatchEnd (ceremony.js): one summary per finished match, after its results screen is on the page.
+  function announce(mode, { mvp = null, added = null, variant = null, seconds = S.sim.time } = {}) {
+    const sim = S.sim, root = $("modal-content");
+    const stars = Number(root.querySelector("[data-stars]")?.dataset.stars ?? NaN);
+    emitMatchEnd({
+      mode, result: sim.result, win: sim.result === "victory", seconds, stats: S.matchStats.stats, mvp,
+      medal: mode === "campaign" && sim.result === "victory" ? sim.mission?.medal || "bronze" : null,
+      stars: Number.isFinite(stars) ? stars : null, score: variant === "endless" || variant === "daily" ? sim.defence?.cleared ?? 0 : null,
+      variant, difficulty: sim.difficulty || "standard", missionId: sim.missionDef?.id ?? null, campaignId: mode === "campaign" ? S.campaignId : null,
+      tutorialDone: mode === "training" ? !!S.tutorial?.done : null, ceremony: added, root,
+    });
   }
 
   // Mission debrief: result, medal, time, objectives and the closing lines. A win records the
@@ -103,6 +148,7 @@ export function setupMatchFlow(S, A) {
     const models = A.ensureMatchModels(() => restart(play, resume));
     if (models) return models;
     S.matchStats.reset();
+    ceremony.cancel(); beatRan = false;
     S.touchControls?.reset();
     S.pings.length = 0;
     S.endBeat = null;
@@ -167,6 +213,7 @@ export function setupMatchFlow(S, A) {
     const models = A.ensureMatchModels(() => beginMatch());
     if (models) return models;
     try { localStorage.setItem(MODE_KEY, S.playMode); } catch { /* Storage is optional. */ }
+    ceremony.cancel(); beatRan = false;
     S.pings.length = 0;
     S.endBeat = null;
     A.resetHints?.();
@@ -210,8 +257,13 @@ export function setupMatchFlow(S, A) {
     S.tutorial = new Tutorial(S.sim); S.tutorialShown = -1; A.setSelection([]); A.renderTutorial();
   }
 
-  Object.assign(A, { newGame, autosave, restart, nextMissionNow, showResult });
+  Object.assign(A, { newGame, autosave, restart, nextMissionNow, showResult, onMatchEnd, ceremony });
   return function bind() {
+    // R3-V: every setup has run, so app/ui-extras.js's beat is on A. Remember whether the core beat slowed
+    // the last kill already, and let the ceremony scale the view's time while it plays.
+    const beginBeat = A.beginBeat, stepBeat = A.stepBeat;
+    if (beginBeat) A.beginBeat = () => (beatRan = !!beginBeat());
+    if (stepBeat) A.stepBeat = (dt) => { const scale = stepBeat(dt); return ceremony.active ? ceremony.step(dt) : scale; };
     document.addEventListener("visibilitychange", () => { if (document.hidden) autosave(); });
 
     window.addEventListener("pagehide", () => autosave());

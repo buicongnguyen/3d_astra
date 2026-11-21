@@ -72,6 +72,10 @@ export function setupDebugHooks(S, A) {
       // opening played on demand (scene() then reports { opening: { mission, frames, t, seconds, from, to } }).
       jumpBoss: (id) => A.jumpBoss(id),
       playOpening: () => A.playOpening(),
+      // R3-V: the victory ceremony's state (phase, stamps landed, screens dressed) and the match-end listener list.
+      get ceremony() { return A.ceremony?.info() ?? null; },
+      onMatchEnd: (fn) => A.onMatchEnd?.(fn),
+      mvp: () => S.matchStats.mvp?.() ?? null,
     };
   }
 
