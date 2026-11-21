@@ -1142,7 +1142,6 @@
     "no": "아니요",
     "Box select": "범위 선택",
     "Queue orders": "명령 예약",
-    "More controls": "추가 조작",
     "Rampart": "램파트",
     "Ram tank": "충각 전차",
     "Ashfall. A welded plough tank that leads a Scrapper swarm head-on: 650 HP and no shield, 34 damage every 1.3 s at 4 m, double to buildings and walls. Shots from the front do 0.6× damage, shots from behind 1.5×, from the side normal: flank it. Ram: charge at double speed for 2.5 seconds, and the first contact deals 80 extra damage. Trained at the Salvage yard.": "애시폴. 스크래퍼 무리를 이끌고 정면 돌파하는 용접 쟁기 전차: 체력 650, 보호막 없음, 사거리 4m에서 1.3초마다 피해 34, 건물과 벽에 두 배. 정면 사격은 0.6× 피해, 후면 사격은 1.5×, 측면은 보통입니다. 측면을 노리세요. 충각: 2.5초 동안 두 배 속도로 돌진하며 첫 충돌 시 추가 피해 80. 고철 야적장에서 생산합니다.",
@@ -1241,7 +1240,9 @@
     "Keep the Command core and a Barracks producing all match.": "경기 내내 사령부와 병영의 생산을 멈추지 마세요.",
     "Gather the army before you attack and fight together, not one by one.": "공격 전에 군대를 모아 하나씩이 아니라 함께 싸우세요.",
     "Keep a few units at home, or build a Tower beside the Command core.": "기지에 유닛 몇을 남겨 두거나 사령부 옆에 타워를 건설하세요.",
-    "Research weapons and plating at the Foundry: upgrades win even fights.": "공장에서 무기와 장갑을 연구하세요. 업그레이드가 대등한 싸움을 승리로 이끕니다."
+    "Research weapons and plating at the Foundry: upgrades win even fights.": "공장에서 무기와 장갑을 연구하세요. 업그레이드가 대등한 싸움을 승리로 이끕니다.",
+    "Clear": "해제",
+    "Info": "정보"
   },
   "patterns": [
     [

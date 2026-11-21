@@ -58,7 +58,7 @@ def main(source):
     out = FONTS / "noto-sans-kr-subset.woff2"
     font.flavor = "woff2"
     font.save(out)
-    (FONTS / "noto-sans-kr-chars.txt").write_text(chars + "\n", encoding="utf8")
+    (FONTS / "noto-sans-kr-chars.txt").write_text(chars + "\n", encoding="utf8", newline="\n")
     print(f"{len(chars)} characters, {out.stat().st_size} bytes -> {out}")
 
 
