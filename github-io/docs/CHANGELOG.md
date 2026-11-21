@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased: AAA round 3
+
+### R3-E: Defence onboarding and readability
+- **Guided first build.** On a profile with no Defence win, three coach steps point at the real elements: a ring on the glowing pad (the ground or rim pad nearest the road; the camera opens on it), then on a crew tile (or the Actions tab on a phone), then on Call wave. Each step follows the match, so stepping back shows too. Skippable; stored as `guided: true` in `frontier-defence-v1` (`src/defence/progress.js`, written only once done), so it shows once. The empty card's "Crew the pads" hint becomes the guide's while it runs. Off under `?test` unless the URL has `?guide`. New `src/app/defence/guide.js`.
+- **Crew badges.** A small plate over every crewed tower: the crew's glyph and its tier pips (bronze 1, steel 2, gold 3; a gold double rim and white pips for branch ranks), 30 px on screen at any zoom. One InstancedMesh of camera-facing quads on one canvas atlas: 1 draw.
+- **Contrast discs.** A dark disc with a team-coloured rim (cyan for yours, red for the waves) under every Defence unit, so units read on orange ground. One InstancedMesh, 1 draw; matrices are written straight into the buffer only when a unit moved (no compose, no upload while still). Both live in the new view plugin `src/defence-readability-view.js` (registered last), which builds nothing outside a Defence match.
+- **Landscape dock.** In Defence on a landscape phone the Selection / Actions panel is 184 px (21.8% of an 844 px view, was 236 px = 28%) and a 44 px button on top of it collapses it to that one button; a new pick opens it again (`src/app/defence/dock.js`, the Defence block at the end of `src/landscape-hud.css`).
+- **Next star.** A level's result names one concrete next-star hint: the lives needed for the next star (or all the waves on a loss), then one tip from the match: the wave that cost the most lives with the crews that counter its toughest unit, else a gold tier, a rim pad or the call-early rule. Three stars point at Heroic, then Veteran.
+- Pins, baselines and `check:defence` unchanged (interface only). Render budget: `defence-wave-eco` 109 to 111 draws, `defence-big-eco` 91 to 93. Tests: `tests/defence-onboarding.test.js` (+5) and the browser suite `tests/defence-onboarding.mjs` (CI matrix `r3-e`).
+
 ## 0.25.0: AAA round 2 (release label for the deploy; owner decision O17)
 
 This is the label proposed for the next release. `package.json` still says 0.19.1, nothing is deployed, and the owner decides the number at deploy. It gathers everything of AAA round 2 (plan: docs/aaa/AAA_ROUND2_PLAN.md, results: docs/aaa/results/round2/). The Defence and campaign sections under "Unreleased" further down (0.22 to 0.24 labels) were built before this round and are not part of it.
