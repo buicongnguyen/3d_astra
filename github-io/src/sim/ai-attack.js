@@ -1,6 +1,7 @@
 import { DEFINITIONS as D, distance } from "../data.js";
 import { HURT } from "./ai-counter.js";
 import { AIR } from "../factions.js";
+import balance from "../balance.json" with { type: "json" };
 
 // How the computer commands its army in the field (0.15.0). Mixed into Simulation through `ai`.
 //   gather   the wave meets at a rally point outside its base and marches only when its strength
@@ -179,6 +180,41 @@ export const aiAttack = {
       const go = free.filter((e) => !(e.orders[0]?.type === "attackmove" && distance(e.orders[0], lead) < 8));
       if (go.length) this.issue(go.map((e) => e.id), { type: "attackmove", x: lead.x, z: lead.z });
     }
+  },
+  // Field command (R3-A): no fight is lost piece by piece. A free fighter (idle, or walking to a rally,
+  // a ring or home; not in an attack, not retreating) with a visible enemy fighter within `ai_mix.join` metres
+  // attack-moves on it, so the units standing near a fight all take part. Grouped by target.
+  aiJoinFight(team, army) {
+    const foes = [];
+    for (const t of this.entities)
+      if (t.hp > 0 && t.kind === "unit" && t.damage > 0 && this.hostile(team, t.team) && this.isVisible(t, team)) foes.push(t);
+    if (!foes.length) return;
+    const groups = new Map(), join = balance.ai_mix.join;
+    for (const e of army) {
+      if (!(e.damage > 0) || e.retreating || (e.flying && !e.hits_air)) continue;
+      const o = e.orders[0];
+      if (o && (o.type !== "move" || o.aiw)) continue;
+      let best = null, bd = join * join;
+      for (const t of foes) {
+        if (t.flying && !e.hits_air) continue;
+        const dx = t.x - e.x, dz = t.z - e.z, d = dx * dx + dz * dz;
+        if (d < bd || (d === bd && best && t.id < best.id)) { best = t; bd = d; }
+      }
+      if (best) (groups.get(best) || groups.set(best, []).get(best)).push(e.id);
+    }
+    for (const [t, ids] of groups) this.issue(ids, { type: "attackmove", x: t.x, z: t.z });
+  },
+  // Field command (R3-A): true while visible enemy fighters worth `ai_mix.danger.pop` supply or more stand within
+  // `ai_mix.join` metres of this side's army or `ai_mix.danger.radius` of its core.
+  aiDanger(team, army, hq) {
+    const { pop, radius } = balance.ai_mix.danger, join = balance.ai_mix.join;
+    let sum = 0;
+    for (const t of this.entities) {
+      if (t.hp <= 0 || t.kind !== "unit" || !(t.damage > 0) || !this.hostile(team, t.team) || !this.isVisible(t, team)) continue;
+      if ((hq && distance(hq, t) < radius) || army.some((e) => distance(e, t) < join)) sum += t.pop || 1;
+      if (sum >= pop) return true;
+    }
+    return false;
   },
   // Sends a group: through `via` first when given, then attack-moving on `target`. A group sent to a
   // search point (no core known) turns on the first core it finds. Returns its number.

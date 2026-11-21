@@ -98,3 +98,22 @@ export const coalitionPlan = {
 // mission. Every Field command path asks this first, so Classic stays exactly as it was.
 export const FIELD_PLAN = 'field';
 export const fieldPlan = (sim, team) => !sim.mission && sim.ruleOn('aiPlan') === FIELD_PLAN && (team > 0 || !!sim.aiPlayer);
+
+// Field command economy (AAA round 3, R3-A): a Field command AI grows a larger crew and takes its Foundry and
+// core levels later, so its army keeps up with a player who spends on troops (the census, sim/ai-census.js,
+// then decides what that army is made of). Applied on top of the faction's own pace (personality scales).
+// `add` adds to a number (from `after` seconds of match time, so the first minutes' army is not thinned against
+// a rush), `scale` multiplies a number or each entry of a list. Relaxed keeps its pace.
+export const FIELD_PACE = {
+  normal: { after: 90, add: { workers: 3 }, scale: { foundryAt: 1.6, techAt: 1.5 } },
+  fast: { after: 60, add: { workers: 2 }, scale: { foundryAt: 1.5, techAt: 1.3 } },
+  relentless: { after: 80, add: { workers: 1 }, scale: { foundryAt: 1.5, techAt: 1.3 } },
+};
+export function fieldPace(speed, pace, time = Infinity) {
+  const f = FIELD_PACE[speed];
+  if (!f) return pace;
+  const out = { ...pace };
+  if (time >= f.after) for (const [key, more] of Object.entries(f.add)) if (Number.isFinite(out[key])) out[key] += more;
+  for (const [key, factor] of Object.entries(f.scale)) out[key] = Array.isArray(out[key]) ? out[key].map((n) => n * factor) : Number.isFinite(out[key]) ? out[key] * factor : out[key];
+  return out;
+}

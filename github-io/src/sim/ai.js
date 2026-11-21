@@ -1,13 +1,15 @@
 import { DEFINITIONS as D, MAX_POP, distance, hyp } from "../data.js";
-import { roleOf, fieldPlan } from "../ai-plan.js";
+import { roleOf, fieldPlan, fieldPace } from "../ai-plan.js";
 import { EXPAND_CREW } from "./expand.js";
 import { aiAttack } from "./ai-attack.js";
 import { AI_RULES } from "./content.js";
+import { aiCensus, censusRole } from "./ai-census.js";
 
 // The computer opponent's build, production and attack decisions (coalition play is in ai-plan.js,
 // field command in ai-attack.js). Mixed into Simulation (see simulation.js).
 export const ai = {
   ...aiAttack,
+  ...aiCensus,
   updateAI(team = 1) {
     // Tagged entities belong to the mission script (an objective, an escort): the AI never uses them.
     const own = this.own(team).filter((e) => !e.tag),
@@ -29,7 +31,8 @@ export const ai = {
     this.assignHarvesters(team);
     const hq = own.find((e) => e.type === "hq" && e.complete) || own.find(e => e.type === "hq");
     this.aiRetreat(team, army, hq);
-    const pace = this.paceFor(team), role = roleOf(this, team), persona = this.personality(team), extra = this.factionFor(team).building;
+    // Field command (R3-A): a larger crew and later tech (ai-plan.js FIELD_PACE).
+    const pace = fieldPlan(this, team) ? fieldPace(this.aiSpeed, this.paceFor(team), this.time) : this.paceFor(team), role = roleOf(this, team), persona = this.personality(team), extra = this.factionFor(team).building;
     // A second core brings more Harvesters, trained at the core with the fewest nearby.
     const cores = own.filter((e) => e.type === "hq" && e.complete);
     const crewCap = pace.workers + EXPAND_CREW * Math.max(0, cores.length - 1);
@@ -112,6 +115,8 @@ export const ai = {
     const hold = foundryIdle && vehicles * 4 < army.length && this.players[team].energy >= D.breaker.cost[1] ? D.breaker.cost[0] : 0;
     // Field command (W2-D, S1): with energy piling up, the Barracks holds alloy for the Foundry's next level or its heavy unit (Tank, Walker).
     const fieldOn = fieldPlan(this, team), fieldHold = fieldOn ? this.aiFieldHold(team, own, pace) : 0;
+    // Field command (R3-A): the army census (sim/ai-census.js) steers each pick toward the biggest shortfall of the faction's mix.
+    const census = fieldOn ? this.aiCensusOf(team, own, army) : null, censusSave = census ? this.aiCensusSave(team, own, census) : 0;
     for (const b of own.filter((e) => e.complete && ["barracks", "foundry"].includes(e.type))) {
       if (b.levelJob) continue;
       const branch = this.researchBranch(team, role);
@@ -147,13 +152,14 @@ export const ai = {
         // Field command: a level 3 Foundry trains its heavy unit first and takes an Engineer only once one stands.
         const needs = fieldOn && b.type === 'foundry' && b.level >= 3 ? (army.some(e => this.slotOf(e.type) === 'tank') ? 1 : 0) : 2;
         if (b.level >= 2 && army.filter(e => this.slotOf(e.type) === support).length < needs) choice = support;
+        if (census) choice = this.aiCensusPick(team, b, census, choice);
         const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : ['breaker'])].map(slot => this.typeFor(team,slot)))].filter(type => this.canTrain(team,type));
         const pop = this.population(team);
-        const save = b.type === 'barracks' ? Math.max(hold, fieldHold) : 0;
+        const save = b.type === 'barracks' ? Math.max(hold, fieldHold, censusSave) : 0;
         const affordable = choices.find(type => b.level >= (D[type].required_level || 1) && afford([D[type].cost[0] + save, D[type].cost[1]]) && pop.used+pop.reserved+D[type].pop <= pop.cap);
         // Field command: an energy-costly first pick that only lacks alloy is saved for, not replaced by the cheapest unit.
         if (fieldOn && affordable !== choices[0] && this.aiFieldWaits(team, b, choices[0], pop, save)) continue;
-        if (affordable) this.enqueue(b.id,affordable);
+        if (affordable && this.enqueue(b.id,affordable) && census && censusRole(affordable)) { census.counts[censusRole(affordable)]++; census.total++; if (D[affordable].hits_air) census.antiAir++; }
       }
     }
     // Flyers come from the Command core, after the Barracks and Foundry had their turn (sim/ai-counter.js).
@@ -197,12 +203,17 @@ export const ai = {
     }
     // Field command (W2-D, S2): the other cores and held rings are defended too.
     if (fieldOn && hq) this.aiGuardSites(team, own, army, hq, pace);
+    // Field command (R3-A): free fighters near a fight join it instead of watching it from 15 m away.
+    if (fieldOn) this.aiJoinFight(team, army);
     // A mission that sends its own waves lets the computer build up and defend at home only.
     if (this.aiHome) return;
     if (!cmd && persona?.retreat && hq && this.aiFallBack(team, hq, army, pace, persona.retreat)) return;
-    if (!incursion) this.aiPoints(team, hq, army, pace);
+    // Field command (R3-A): with an enemy army in sight of this side's units, nobody is sent off to a ring mid-fight.
+    if (!incursion && !(fieldOn && this.aiDanger(team, army, hq))) this.aiPoints(team, hq, army, pace);
     const wave = army.filter((e) => !engaged(e) && !e.pointDuty && !e.retreating);
     if (cmd && hq) this.aiWatch(team, hq, army, cmd);
+    // Field command (R3-A): an idle Kite scouts, and a side that has seen no fight for four minutes goes looking for one (S7).
+    if (fieldOn && hq && !incursion) { this.aiScout(team, army); this.aiBreakStall(team, own, hq, wave); }
     if (this.coalition) {
       this.coalitionOrders(team, { hq, army, wave, incursion });
       return;

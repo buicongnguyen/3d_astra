@@ -526,5 +526,6 @@
   ],
   "workshops": {"hosts":{"meridian":"workshop","ashfall":"salvageyard","sunward":"waystation","wardens":"pylon","veil":"veilrelay"},"max_tiles":2},
   "outrider_drill": {"faction":"sunward","types":["rider"],"near":4,"back":3.6,"every":2,"threat_range":5},
-  "elites": {"hp":1.6,"bounty":3,"affixes":{"plated":{"shield":2.5,"fallback":0.3,"delay":2},"swift":{"speed":1.35,"hp":0.8},"splitter":{"count":2,"spread":0.9},"volatile":{"damage":40,"radius":2.5},"banner":{"radius":7,"taken":0.8},"mender":{"radius":7,"heal":40,"every":6}}}
+  "elites": {"hp":1.6,"bounty":3,"affixes":{"plated":{"shield":2.5,"fallback":0.3,"delay":2},"swift":{"speed":1.35,"hp":0.8},"splitter":{"count":2,"spread":0.9},"volatile":{"damage":40,"radius":2.5},"banner":{"radius":7,"taken":0.8},"mender":{"radius":7,"heal":40,"every":6}}},
+  "ai_mix": {"default":{"front":0.25,"ranged":0.3,"heavy":0.15,"antiarmor":0.1,"support":0.1,"workshop":0.1},"meridian":{},"ashfall":{"front":0.35,"ranged":0.2},"sunward":{"front":0.2,"ranged":0.35},"wardens":{"heavy":0.25,"antiarmor":0.15,"support":0,"workshop":0.05},"veil":{"heavy":0.1,"antiarmor":0.15},"counter":{"min_seen":4,"mech_share":0.4,"antiarmor_vs_mech":0.3,"infantry_share":0.6,"ranged_vs_infantry":0.4,"towers":2,"heavy_vs_towers":0.25,"air_per_flyer":2,"air_base":2},"stall":{"after":240,"from":480,"min_units":8},"join":18,"danger":{"pop":4,"radius":40}}
 }

@@ -16,6 +16,7 @@
 //             `role` is read by W2-D's placement, not here.
 import { DEFINITIONS as D } from "../../data.js";
 import { EXPANDED, HOST_FACTION, HOST_OF, workshopUnitsOf } from "../../factions.js";
+import { fieldPlan } from "../../ai-plan.js";
 
 // Enemy units the AI must have seen before a share of them means anything (as ai-counter.js MIN_SEEN).
 const MIN_SEEN = 4;
@@ -82,6 +83,8 @@ function workshopAi(sim, team, ctx) {
   const top = Math.max(...units.map((type) => D[type].required_level || 1));
   const mix = seen(sim, team);
   const alive = (type) => own.filter((e) => e.type === type && e.hp > 0).length + own.reduce((n, e) => n + (e.queue || []).filter((q) => q.type === type).length, 0);
+  // Field command (R3-A census): at least one workshop unit stands per host once it can be afforded.
+  const floor = fieldPlan(sim, team) && !units.some((type) => alive(type) > 0) ? 1 : 0;
   for (const b of own.filter((e) => e.type === host && e.complete)) {
     if (b.levelJob) continue;
     if (!b.queue.length && b.level < Math.min(top, sim.techLevel(team)) && sim.time > pace.upgradeAt && afford(sim.levelCost(b))) {
@@ -91,7 +94,7 @@ function workshopAi(sim, team, ctx) {
     if (b.queue.length >= 2) continue;
     for (const type of units) {
       const d = D[type], ai = d.ai;
-      if (!ai || !b.trains?.includes(type) || b.level < (d.required_level || 1) || alive(type) >= wantedCount(ai, sim, mix)) continue;
+      if (!ai || !b.trains?.includes(type) || b.level < (d.required_level || 1) || alive(type) >= Math.max(floor, wantedCount(ai, sim, mix))) continue;
       const pop = sim.population(team);
       if (pop.used + pop.reserved + d.pop > pop.cap || !afford(d.cost)) continue;
       if (sim.enqueue(b.id, type)) break;
