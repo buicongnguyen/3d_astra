@@ -102,3 +102,12 @@ Arguments after the output folder (`keyart`, `portraits`, `emblem`) render only 
 `preview_factions.py` renders all eight approval sheets through preview_assets.py. The latter accepts --team=RRGGBB and --greyscale, and fits the full projected geometry at the game camera angle. See [aaa/review/README.md](aaa/review/README.md).
 
 The loader retains a `hover` marker as template metadata; only a marked unit receives the optional cosmetic bob. Base models keep their existing shadow behavior; new faction units use no shadow pass, and new buildings may cast shadows.
+
+## Title cover art (AAA round 3, R3-M)
+
+`src/art/cover/` holds the painted title cover: three flat covers (`keyart-desktop.webp` 2560×1440, `keyart-landscape.webp` 1688×780, `keyart-portrait.webp` 1170×2532) and the transparent parallax layers that rebuild them (`layer-*.webp`: stars, two nebulae, two suns, four worlds, four aircraft, the storm horizon, the foreground squad and the Ranger's muzzle flash).
+
+- **Provenance:** original key art made for this game with OpenAI's built-in image generation (Codex), 21 November 2026, following the Round 3 unit sheets (Meridian tank, Vanguard, Ranger, Medic). No third-party art, logos or lettering; every word on the cover is live HTML. Source folder: `3d_astra/codex-cover-art/` (README with the layer table). Licence: owned by the project like the rest of its original art.
+- **Changes here:** `layer-foreground-squad.webp` was resized to 1280×853 and re-encoded (WebP quality 72, alpha quality 75): 572,364 → 289,986 bytes. Every other file is byte-identical to the source.
+- **Placement:** `src/app/cover-layers.js` carries the source's table (x, y, width per frame, back to front, motion amplitudes). `src/app/cover.js` fetches the layers only after the game's models are in, places them exactly over the flat cover and cross-fades.
+- **Budgets:** one flat cover at first paint (≤ 350 KB each); layers ≤ 1.7 MB in total, lazy; checked by `tests/cover-ui.test.js`.

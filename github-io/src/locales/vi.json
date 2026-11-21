@@ -1190,7 +1190,15 @@
     "REAR": "SAU LƯNG",
     "PINNED": "BỊ GHIM",
     "PIERCE": "XUYÊN GIÁP",
-    "destroyed": "bị tiêu diệt"
+    "destroyed": "bị tiêu diệt",
+    "War for the Meridian Frontier": "Cuộc chiến vì Biên cương Meridian",
+    "Command uplink": "Kênh chỉ huy",
+    "Sector 07": "Khu vực 07",
+    "Frostline Reach": "Vùng Băng Giá",
+    "Contested": "Đang tranh chấp",
+    "Under siege": "Bị vây hãm",
+    "Enemy held": "Địch chiếm giữ",
+    "Scouted": "Đã trinh sát"
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],

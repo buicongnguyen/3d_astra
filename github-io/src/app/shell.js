@@ -1,7 +1,8 @@
 // The static page: top bar, battlefield overlays, start screen, dock and dialog shell.
 import emblemUrl from "../art/emblem.webp";
-import keyartSmallUrl from "../art/keyart-960.webp";
-import keyartUrl from "../art/keyart.webp";
+// Title cover (R3-M): painted key art, one flat cover per frame shape; <picture> fetches only the one that
+// matches. The parallax layers come later (app/cover.js).
+import { COVERS } from "./cover-layers.js";
 import wordmarkSvg from "../art/wordmark.svg?raw";
 import { AI_SPEEDS, ALLIANCES } from "../ai-plan.js";
 import { MAPS } from "../terrain.js";
@@ -46,9 +47,9 @@ export function renderShell() {
     <div id="hover-label" hidden></div>
     <section id="briefing" class="briefing" aria-labelledby="briefing-title">
       <div class="briefing-hero">
-        <picture class="briefing-art" aria-hidden="true"><source media="(max-width: 720px)" srcset="${keyartSmallUrl}"><img src="${keyartUrl}" alt="" width="1600" height="900" decoding="async"></picture>
+        <picture class="briefing-art" aria-hidden="true"><source media="(orientation: portrait) and (max-width: 900px)" srcset="${COVERS.portrait}" width="1170" height="2532"><source media="(orientation: landscape) and (max-height: 520px)" srcset="${COVERS.landscape}" width="1688" height="780"><img src="${COVERS.desktop}" alt="" width="2560" height="1440" decoding="async" fetchpriority="high"></picture>
         <div id="campaign-map" hidden></div>
-        <div class="title-brand" translate="no"><img class="title-emblem" src="${emblemUrl}" alt="" width="72" height="72" decoding="async">${wordmarkSvg}</div>
+        <div class="title-brand"><img class="title-emblem" src="${emblemUrl}" alt="" width="72" height="72" decoding="async"><div class="title-words"><span translate="no">${wordmarkSvg}</span><span class="title-sub">War for the Meridian Frontier</span></div></div>
         <div class="briefing-copy">
           <div class="eyebrow">EXPEDITION BRIEFING</div>
           <h2 id="briefing-title">A new frontier.<br> A foothold to defend.</h2>
@@ -60,6 +61,8 @@ export function renderShell() {
         </div>
       </div>
       <div class="briefing-setup">
+        <div class="setup-head" aria-hidden="true"><span><i class="live-dot"></i> Command uplink</span><span>Sector 07</span></div>
+        <div id="title-actions" class="title-actions" hidden></div>
         <button id="continue" class="secondary continue-launch" hidden></button>
         <div class="mode-switch" role="group" aria-label="Game mode">
           <button data-mode="campaign" aria-pressed="false">${icon("logo")}<span>Campaign</span><small>${MISSIONS.length} missions</small></button>

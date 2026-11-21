@@ -685,3 +685,46 @@ input:focus-visible {
   .compact-ui #briefing .mode-switch button > .icon { width: 18px; height: 18px; }
   .compact-ui #briefing .mode-switch button > span { font-size: 15px; }
 }
+
+/* ---------- Holo theme tokens (AAA round 3, R3-M): the title cover, setup, campaign frame, settings, loading ----------
+   Deep space blue (never purple), holo teal edges, warm gold for the chosen card and the one primary action.
+   Rules that use them live in src/cover.css. */
+:root {
+  --space-0: #020713;
+  --space-1: #050f26;
+  --space-2: #0a1d3f;
+  --holo-1: #7fe8ff;
+  --holo-2: #39c6e8;
+  --holo-ink: #04101f;
+  --holo-line: rgba(127, 232, 255, 0.28);
+  --holo-line-strong: rgba(127, 232, 255, 0.62);
+  --holo-glass: linear-gradient(180deg, rgba(12, 34, 66, 0.62), rgba(4, 12, 28, 0.86));
+  --holo-glass-solid: linear-gradient(180deg, rgba(10, 28, 56, 0.97), rgba(4, 11, 26, 0.98));
+  --holo-glow: 0 0 0 1px rgba(0, 0, 0, 0.35), 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 36px rgba(57, 198, 232, 0.14), inset 0 1px 0 rgba(200, 245, 255, 0.14);
+  --holo-blur: blur(16px) saturate(1.3);
+  --holo-corner: 18px;
+  --holo-c: rgba(127, 232, 255, 0.9);
+  --space-bg:
+    radial-gradient(70% 55% at 78% 22%, rgba(17, 113, 138, 0.28), transparent 70%),
+    radial-gradient(50% 40% at 20% 92%, rgba(201, 138, 60, 0.1), transparent 70%),
+    radial-gradient(90% 70% at 50% 40%, var(--space-2), var(--space-1) 55%, var(--space-0));
+}
+/* Corner brackets as background layers: put var(--holo-brackets) before an element's own background. Declared
+   again on each element that draws them, so that element's own --holo-c (teal, or gold when chosen) colours them. */
+:root,
+#briefing .briefing-setup,
+#briefing .mode-switch button,
+#briefing .briefing-rule,
+#briefing.campaign-view .briefing-hero,
+.settings-panel,
+.cover-loading .cover-load-orb {
+  --holo-brackets:
+    linear-gradient(var(--holo-c), var(--holo-c)) left top / var(--holo-corner) 2px no-repeat,
+    linear-gradient(var(--holo-c), var(--holo-c)) left top / 2px var(--holo-corner) no-repeat,
+    linear-gradient(var(--holo-c), var(--holo-c)) right top / var(--holo-corner) 2px no-repeat,
+    linear-gradient(var(--holo-c), var(--holo-c)) right top / 2px var(--holo-corner) no-repeat,
+    linear-gradient(var(--holo-c), var(--holo-c)) left bottom / var(--holo-corner) 2px no-repeat,
+    linear-gradient(var(--holo-c), var(--holo-c)) left bottom / 2px var(--holo-corner) no-repeat,
+    linear-gradient(var(--holo-c), var(--holo-c)) right bottom / var(--holo-corner) 2px no-repeat,
+    linear-gradient(var(--holo-c), var(--holo-c)) right bottom / 2px var(--holo-corner) no-repeat;
+}

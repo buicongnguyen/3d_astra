@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased: AAA round 3
+
+### R3-M: cover and menus, a war across several worlds
+- New title cover: painted key art made for this game (src/art/cover/, provenance in docs/ASSET_PIPELINE.md): a squad of the game's units (tank, Ranger, Vanguard, Medic) on a crystal ridge under a binary sun, with a ringed river world, a dune world, a volcanic world and a storm world, aircraft crossing and a lightning horizon. First paint is one flat cover for the frame shape (desktop 345 KB, landscape 253 KB, portrait 313 KB); the page fetches only that one.
+- Live cover: once the game's models are in, 15 parallax layers (1.6 MB, lazy) rebuild the cover and cross-fade in; pointer parallax on desktop, a slow drift on touch, aircraft drifting, the Ranger firing every few seconds, twinkling stars, plus one Canvas 2D layer for ship streaks, battle flashes on the worlds and lightning on the storm world and the horizon, and a faint sensor sweep. 30 fps on touch; nothing runs in a match, a hidden tab or with the menu closed. Reduced motion, or "Animate combat effects" off, keeps the flat cover and never fetches the layers. On phones in portrait the squad is lifted to stand above the setup sheet.
+- Planet labels (name and front status) that step aside for the logo, the briefing text, the panel and each other.
+- New logo treatment: chrome-gold FRONTIER, holo-teal COMMAND, a halo and a light sweep, with the line "War for the Meridian Frontier".
+- Holo menus: the briefing card and the setup sit in a left column (the cover keeps its squad on the right and its title area at the top centre); the setup is a glass panel with glowing edges and corner brackets ("Command uplink · Sector 07"); the mode cards glow teal and turn gold when chosen, with a sheen on hover and a press; the gold Start has a light sweep. The same theme tokens (ui-theme.css, "Holo theme") frame the campaign map, Settings and the loading screen. A hidden slot (#title-actions) waits for the one-tap Quick battle (R3-Q).
+- Loading screen: a planet in a progress ring over the painted cover, with the byte-true percent and the part being fetched; for later roster loads Start becomes a progress bar.
+- Nothing is tidied away (owner rule): every control of the title menu, skirmish setup and Settings on r3-base is still shown and one click away (checked at five viewports).
+- Soft hover and confirm blips on the menu cards (the in-code UI tone; mute and volume apply).
+
 ## 0.25.0: AAA round 2 (release label for the deploy; owner decision O17)
 
 This is the label proposed for the next release. `package.json` still says 0.19.1, nothing is deployed, and the owner decides the number at deploy. It gathers everything of AAA round 2 (plan: docs/aaa/AAA_ROUND2_PLAN.md, results: docs/aaa/results/round2/). The Defence and campaign sections under "Unreleased" further down (0.22 to 0.24 labels) were built before this round and are not part of it.
