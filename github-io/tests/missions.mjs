@@ -21,7 +21,8 @@ const devices = [
   ['portrait', { width: 390, height: 844 }, true],
   ['landscape', { width: 844, height: 390 }, true],
 ];
-const TIMEOUT = 20000;
+// A CI-like slow runner (tests/ci-local.mjs, SLOW_CPU) blocks a page load or a tap for over 20 s.
+const TIMEOUT = Number(process.env.SLOW_CPU) > 1 ? 60000 : 20000;
 try {
   for (const [name, viewport, touch] of devices) {
     const context = await browser.newContext({ viewport, isMobile: touch, hasTouch: touch, deviceScaleFactor: touch ? 2 : 1 });
