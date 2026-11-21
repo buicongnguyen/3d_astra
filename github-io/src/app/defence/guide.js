@@ -40,6 +40,7 @@ export function createGuide(c) {
   function guideStop() {
     ui.guide?.el.remove();
     ui.guide = null;
+    S.defenceGuideHold = false;
     for (const t of document.querySelectorAll(".guide-target")) t.classList.remove("guide-target");
   }
   function guideFinish(skipped = false) {
@@ -79,6 +80,9 @@ export function createGuide(c) {
     if (!S.sim?.defence || S.sim.result) { guideStop(); return; }
     const step = stepNow();
     if (step === 0) { guideFinish(false); return; }
+    // Steps 1 and 2 (pick a pad, pick a crew) hold the match clock (app/frame.js), so the 30 s first-wave
+    // countdown waits for a new player. A wave already called (Call wave during step 1) never holds.
+    S.defenceGuideHold = step < 3 && S.sim.defence.wave === 0 && !S.sim.defence.active;
     const hide = !Z.started || Z.paused || !!Z.modalType;
     g.el.hidden = hide;
     if (hide) return;

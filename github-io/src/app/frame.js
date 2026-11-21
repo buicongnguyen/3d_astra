@@ -101,7 +101,8 @@ export function setupFrame(S, A) {
     if (Z.started && !Z.paused && !S.sim.result && S.sim.mission?.pending) A.openDecision();
     // S.testHold (browser tests only, window.__frontier.hold): draw but do not advance the match, so a
     // test moves time with step() alone and a slow machine cannot run the clock on between its checks.
-    const running = Z.started && !Z.paused && !S.sim.result && !S.testHold;
+    // S.defenceGuideHold (app/defence/guide.js): the Defence first-build guide's steps 1 and 2 wait on the clock too.
+    const running = Z.started && !Z.paused && !S.sim.result && !S.testHold && !S.defenceGuideHold;
     // D2: the clock's pace, 1 in everything but a Defence match; a scene or a decision puts it back to 1.
     const pace = fastForward.pace({ sim: S.sim, started: Z.started, defence: !!S.sim.defence, forced: MUSIC_HOLDS.includes(Z.modalType) || !!A.sceneActive?.() || !!S.sim.mission?.pending });
     if (running) {
