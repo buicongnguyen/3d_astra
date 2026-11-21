@@ -7,6 +7,7 @@
 //                                   name changes only when a model file changes
 //   pages        network first, cached copy only when offline, so a new release is seen on the
 //                next online load and the HTML is never stale forever
+//   language     the Korean catalogs and font (LAZY): not precached, kept in the shell cache on first fetch
 //   music cache  fc-music           recorded tracks (public/music/*.m4a), never precached: each is
 //                                   stored on its first successful play and served cache-first
 //                                   (the page versions the URL with ?v=<bytes>). manifest.json is
@@ -17,6 +18,8 @@
 const BUILD = "__BUILD__";
 const MODELS = "__MODELS__";
 const PRECACHE = __PRECACHE__;
+// Build files only some players need (the Korean catalogs and font): kept in the shell cache on first fetch.
+const LAZY = __LAZY__;
 const SHELL_CACHE = `fc-shell-${BUILD}`;
 const MODEL_CACHE = `fc-models-${MODELS}`;
 const MUSIC_CACHE = "fc-music";
@@ -148,6 +151,19 @@ self.addEventListener("fetch", (event) => {
         if (hit) return hit;
         const response = await fetch(request);
         // Only a whole file (200) is stored: a range reply (206) cannot be replayed.
+        if (response.status === 200) event.waitUntil(cache.put(request, response.clone()));
+        return response;
+      })(),
+    );
+    return;
+  }
+  if (LAZY.includes(path)) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(SHELL_CACHE);
+        const hit = await cache.match(request, { ignoreVary: true });
+        if (hit) return hit;
+        const response = await fetch(request);
         if (response.status === 200) event.waitUntil(cache.put(request, response.clone()));
         return response;
       })(),

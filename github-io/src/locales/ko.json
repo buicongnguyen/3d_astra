@@ -1,0 +1,2064 @@
+{
+  "messages": {
+    "Scrapper": "스크래퍼",
+    "Swarm assault": "물량 돌격",
+    "Ashfall. Cheap and fast, with no shield: they come in numbers. Strong against Rangers; splash weapons and towers thin them out.": "애시폴. 싸고 빠르지만 보호막이 없어 떼로 몰려옵니다. 레인저에게 강하며, 범위 공격 무기와 타워로 수를 줄일 수 있습니다.",
+    "Scorcher": "스코처",
+    "Flame vehicle": "화염 차량",
+    "Ashfall. Short-range flame vehicle: 9 damage every 0.3 s at 5 m, 60% to enemies within 2.5 m, double to buildings. Strong against packed infantry; outranged by Rangers, towers and tanks.": "애시폴. 단거리 화염 차량: 5m 거리에서 0.3초마다 피해 9, 2.5m 안의 적에게 60%, 건물에는 두 배. 밀집한 보병에게 강하지만 레인저, 타워, 전차보다 사거리가 짧습니다.",
+    "Salvage yard": "고철 야적장",
+    "Iron Vanguard": "강철 선봉",
+    "Salvaged war machine": "재활용 전쟁 기계",
+    "An old Builder war machine that Ashfall dragged out of a trench and refitted. Before its four-gun burst the ground turns red: move out. After each burst its core opens and it takes far more damage.": "애시폴이 참호에서 끌어내 개조한 건설자의 옛 전쟁 기계입니다. 네 포신 일제 사격 전에 땅이 붉게 변하면 벗어나세요. 사격이 끝날 때마다 코어가 열려 훨씬 큰 피해를 받습니다.",
+    "ARMORED": "장갑",
+    "ATTACK INBOUND": "공격 임박",
+    "CORE EXPOSED": "코어 노출",
+    "Ashfall economy": "애시폴 경제",
+    "Ashfall. Vehicles and buildings of any side destroyed within 14 m of a Salvage yard or an Ashfall Command core pay Ashfall a quarter of their alloy cost.": "애시폴. 고철 야적장이나 애시폴 사령부 14m 안에서 파괴된 모든 진영의 차량과 건물은 합금 비용의 사분의 일을 애시폴에게 줍니다.",
+    "Rider": "라이더",
+    "Fast skirmisher": "고속 견제병",
+    "Sunward. The fastest fighter on the field, with a shorter reach than a Ranger. Deals 2× damage to siege units. Raids Harvesters, then leaves.": "선워드. 전장에서 가장 빠른 전투원이지만 사거리는 레인저보다 짧습니다. 공성 유닛에게 2× 피해를 줍니다. 채굴기를 습격한 뒤 빠집니다.",
+    "Supply wagon": "보급 마차",
+    "Mobile support": "이동 지원",
+    "Sunward. Heals infantry and repairs vehicles within 6 m, 6 HP each second, and adds 4 supply while it lives. Cannot attack.": "선워드. 6m 안의 보병을 치료하고 차량을 수리하며(초당 체력 6), 살아 있는 동안 보급을 4 늘립니다. 공격할 수 없습니다.",
+    "Waystation": "중간 기지",
+    "Sunward support": "선워드 지원",
+    "Sunward. Friendly shields within 10 m recharge three times faster.": "선워드. 10m 안의 아군 보호막이 세 배 빠르게 충전됩니다.",
+    "Sentinel drone": "센티널 드론",
+    "Shielded skirmisher": "보호막 견제병",
+    "Wardens. A hovering machine with as much shield as hull, and the shield returns after 3 seconds instead of 5. Deals 2.2× damage to siege units. Anti-tank rockets and steady fire bring it down.": "워든. 선체만큼 두꺼운 보호막을 지닌 부유 기계로, 보호막이 5초가 아닌 3초 뒤에 돌아옵니다. 공성 유닛에게 2.2× 피해를 줍니다. 대전차 로켓과 꾸준한 사격으로 격추하세요.",
+    "Walker": "워커",
+    "Heavy siege walker": "대형 공성 워커",
+    "Wardens. Slow, very tough, and it outranges a Battle tank: 60 damage every 2.6 s at 13 m, half to enemies within 2.5 m. Anti-tank soldiers and flanking are the answer.": "워든. 느리고 매우 튼튼하며 전차보다 사거리가 깁니다: 13m 거리에서 2.6초마다 피해 60, 2.5m 안의 적에게 절반. 대전차병과 측면 공격으로 대응하세요.",
+    "Shield pylon": "보호막 파일런",
+    "Wardens defense": "워든 방어",
+    "Wardens. Other Wardens buildings within 10 m have 50% more shield and recharge it 50% faster. Destroy the pylon first.": "워든. 10m 안의 다른 워든 건물은 보호막이 50% 늘고 50% 더 빨리 충전됩니다. 파일런부터 파괴하세요.",
+    "Shade": "셰이드",
+    "Cloaked assault": "은폐 돌격",
+    "Veil. Hidden while it has not attacked for 3 seconds. Units within 4 m, and Sentinel towers and Command cores within 9 m, reveal it. Strong against Rangers.": "장막. 3초 동안 공격하지 않으면 숨습니다. 4m 안의 유닛과 9m 안의 센티널 타워, 사령부가 탐지합니다. 레인저에게 강합니다.",
+    "Watcher": "감시자",
+    "Long-range spotter": "장거리 관측병",
+    "Veil. Sees 22 m and shoots 13 m: 14 damage every 1.4 s, 3× to vehicles. Fragile up close.": "장막. 시야 22m, 사거리 13m: 1.4초마다 피해 14, 차량에 3×. 근접하면 취약합니다.",
+    "Veil relay": "장막 중계소",
+    "Veil concealment": "장막 은폐",
+    "Veil. Veil units within 9 m are hidden while they have not attacked for 3 seconds. It also reveals hidden enemies within 9 m.": "장막. 9m 안의 장막 유닛은 3초 동안 공격하지 않으면 숨습니다. 9m 안의 숨은 적도 드러냅니다.",
+    "Rush": "돌격",
+    "Run 40% faster for 5 seconds.": "5초 동안 40% 더 빠르게 달립니다.",
+    "Burn line": "화염선",
+    "Set an area up to 7 m away on fire for 6 seconds: 8 damage per second to enemy units within 3 m.": "최대 7m 떨어진 지역을 6초 동안 불태웁니다: 3m 안의 적 유닛에게 초당 피해 8.",
+    "Dash": "질주",
+    "Double speed for 3 seconds.": "3초 동안 속도가 두 배가 됩니다.",
+    "Brace": "버티기",
+    "Lock the legs for 8 seconds: cannot move, 3 m more range.": "8초 동안 다리 고정: 이동 불가, 사거리 3m 증가.",
+    "Mark": "표식",
+    "Mark the nearest enemy in range: it takes 25% more damage from every source for 8 seconds.": "사거리 안의 가장 가까운 적에게 표식: 8초 동안 모든 공격에서 25% 더 큰 피해를 받습니다.",
+    "Enemy faction": "적 진영",
+    "Enemy faction: each has two units, one building and a way of fighting of its own": "적 진영: 각 진영마다 고유한 유닛 둘, 건물 하나, 전투 방식이 있습니다",
+    "Your faction": "아군 진영",
+    "Your faction: the army you command, with its own units, building and way of fighting": "아군 진영: 사령관이 지휘하는 군대로, 고유한 유닛, 건물, 전투 방식이 있습니다",
+    "Mirror": "대칭",
+    "Mixed": "혼합",
+    "Shades are hidden until they strike. Towers and Command cores reveal them.": "셰이드는 공격하기 전까지 숨어 있습니다. 타워와 사령부가 탐지합니다.",
+    "The Wardens": "워든",
+    "workers": "일꾼",
+    "melee infantry": "근접 보병",
+    "ranged infantry": "원거리 보병",
+    "siege units": "공성 유닛",
+    "armored units": "기갑 유닛",
+    "antiarmor infantry": "대전차 보병",
+    "support units": "지원 유닛",
+    "Meridian Expedition": "메리디언 원정대",
+    "Ashfall Combine": "애시폴 연합",
+    "Sunward Caravan": "선워드 대상단",
+    "Veil Survey": "장막 탐사단",
+    "Sound test": "사운드 테스트",
+    "Unit ready": "유닛 준비 완료",
+    "Research done": "연구 완료",
+    "Building lost": "건물 손실",
+    "Objective done": "목표 완료",
+    "Objective failed": "목표 실패",
+    "Mission won": "임무 성공",
+    "Mission lost": "임무 실패",
+    "Story": "스토리",
+    "Standard": "표준",
+    "Veteran": "베테랑",
+    "Campaign difficulty": "캠페인 난이도",
+    "Veteran clear": "베테랑 클리어",
+    "Smaller waves, gentler enemies and more starting alloy.": "웨이브가 작고 적이 약하며 시작 합금이 더 많습니다.",
+    "The original campaign balance.": "원래의 캠페인 밸런스입니다.",
+    "Larger waves, stronger enemies and faster AI.": "웨이브가 크고 적이 강하며 AI가 더 빠릅니다.",
+    "Select / box select": "선택 / 범위 선택",
+    "Left-click / drag": "좌클릭 / 드래그",
+    "Add to selection / queue order": "선택 추가 / 명령 예약",
+    "Shift + click": "Shift + 클릭",
+    "Move, gather, build, attack": "이동, 채굴, 건설, 공격",
+    "Right-click target": "대상 우클릭",
+    "Pan camera": "카메라 이동",
+    "WASD / arrows / middle drag": "WASD / 방향키 / 휠 드래그",
+    "Mouse wheel": "마우스 휠",
+    "Assign / recall group": "부대 지정 / 호출",
+    "A new version is ready. It starts the next time you open the game.": "새 버전이 준비되었습니다. 다음에 게임을 열 때 적용됩니다.",
+    "Under attack!": "공격받고 있습니다!",
+    "Dismiss hint": "힌트 닫기",
+    "Idle Harvesters": "유휴 채굴기",
+    "Idle army": "유휴 병력",
+    "Next idle Harvester": "다음 유휴 채굴기",
+    "Next idle army unit": "다음 유휴 병력",
+    "F1 · Next idle Harvester": "F1 · 다음 유휴 채굴기",
+    ", · Next idle army unit": ", · 다음 유휴 병력",
+    "No idle Harvesters.": "유휴 채굴기가 없습니다.",
+    "No idle army units.": "유휴 병력이 없습니다.",
+    "Full screen": "전체 화면",
+    "Back": "뒤로",
+    "Exit full screen": "전체 화면 종료",
+    "This browser could not enter full screen.": "이 브라우저에서는 전체 화면으로 전환할 수 없습니다.",
+    "Could not leave full screen. Use your browser’s exit control or press Esc on a keyboard.": "전체 화면을 종료하지 못했습니다. 브라우저의 종료 버튼을 쓰거나 키보드의 Esc를 누르세요.",
+    "You are already playing in a home-screen web app without the browser bars.": "이미 브라우저 막대 없이 홈 화면 웹 앱으로 플레이 중입니다.",
+    "On iPhone, open this game in Safari, tap Share → Add to Home Screen, then enable Open as Web App if shown. Launch the game from that new icon.": "아이폰에서는 사파리로 게임을 열고 공유 → 홈 화면에 추가를 누른 뒤, 웹 앱으로 열기가 보이면 켜세요. 새로 생긴 아이콘으로 게임을 실행하세요.",
+    "iPhone app-switching gestures still work. Start camera drags away from the screen edges.": "아이폰의 앱 전환 제스처는 그대로 작동합니다. 카메라 드래그는 화면 가장자리에서 떨어진 곳에서 시작하세요.",
+    "Language": "언어",
+    "Start": "시작",
+    "Start training": "훈련 시작",
+    "Settings": "설정",
+    "Settings · army, graphics & sound": "설정 · 군대, 그래픽, 사운드",
+    "Apply settings": "적용",
+    "Cancel": "취소",
+    "Defaults": "기본값",
+    "Close settings": "설정 닫기",
+    "Settings tabs": "설정 탭",
+    "Commander preferences": "사령관 환경설정",
+    "Make it yours.": "나만의 방식으로.",
+    "Your army": "아군",
+    "Enemy army": "적군",
+    "Army": "군대",
+    "Graphics": "그래픽",
+    "Audio": "오디오",
+    "● YOUR FORCE": "● 아군 병력",
+    "◆ ENEMY FORCE": "◆ 적 병력",
+    "Paint preview · neutral armor stays unchanged. Team symbols remain distinct.": "도색 미리보기 · 중립 장갑 색은 그대로입니다. 팀 표식은 계속 구분됩니다.",
+    "High contrast · Gold / Violet": "고대비 · 금색 / 보라",
+    "Choose different colors for your army and the enemy.": "아군과 적군에 서로 다른 색을 고르세요.",
+    "Preferences are saved on this browser when you apply.": "적용하면 설정이 이 브라우저에 저장됩니다.",
+    "Settings applied for this session. Browser storage is unavailable.": "이번 세션에만 설정이 적용되었습니다. 브라우저 저장소를 쓸 수 없습니다.",
+    "Graphics quality": "그래픽 품질",
+    "Eco": "절약",
+    "High": "높음",
+    "Decorative vegetation": "장식용 초목",
+    "Animate water": "물 애니메이션",
+    "Animate combat effects": "전투 효과 애니메이션",
+    "Screen shake": "화면 흔들림",
+    "Eco limits pixel density and shadow cost. Bridges, water and terrain obstacles remain visible at every setting. Reduced motion is respected.": "절약 모드는 픽셀 밀도와 그림자 부담을 줄입니다. 다리, 물, 지형 장애물은 모든 설정에서 보입니다. 동작 줄이기 설정을 따릅니다.",
+    "Mute all sound": "모든 소리 끄기",
+    "Master volume": "전체 음량",
+    "Music volume": "음악 음량",
+    "Music": "음악",
+    "Recorded + adaptive": "녹음 + 적응형",
+    "Adaptive only": "적응형만",
+    "Off": "끔",
+    "Recorded music plays on menus and briefings and downloads on first play. The adaptive score follows every battle.": "녹음 음악은 메뉴와 브리핑에서 재생되며 처음 재생할 때 내려받습니다. 적응형 음악은 모든 전투의 흐름을 따라갑니다.",
+    "Effects volume": "효과음 음량",
+    "River and wind ambience": "강물·바람 환경음",
+    "Ambience is quietest away from water. Sound pauses with the match.": "환경음은 물에서 멀어질수록 작아집니다. 경기가 멈추면 소리도 멈춥니다.",
+    "Mint": "민트",
+    "Coral": "코랄",
+    "Blue": "파랑",
+    "Cyan": "청록",
+    "Gold": "금색",
+    "Orange": "주황",
+    "Violet": "보라",
+    "Rose": "장미",
+    "Ivory": "상아",
+    "Your": "아군",
+    "Enemy": "적",
+    "Resources": "자원",
+    "Alloy": "합금",
+    "Energy": "에너지",
+    "Population": "인구",
+    "Crew": "인구",
+    "Resource": "자원",
+    "Alloy — harvested from amber deposits": "합금 — 호박색 광맥에서 채굴",
+    "Energy — harvested from blue deposits": "에너지 — 푸른 광맥에서 채굴",
+    "Used + queued population / capacity": "사용 + 대기 인구 / 최대",
+    "Mute sound": "소리 끄기",
+    "Enable sound": "소리 켜기",
+    "Toggle graphics quality": "그래픽 품질 전환",
+    "Pause": "일시정지",
+    "Pause game": "게임 일시정지",
+    "Resume": "재개",
+    "Resume operation": "작전 재개",
+    "New game / choose map": "새 게임 / 맵 선택",
+    "Restart this map": "이 맵 다시 시작",
+    "Tactical pause": "전술 일시정지",
+    "Hold your position.": "위치를 사수하세요.",
+    "The battlefield is paused. Take a moment to plan your next move.": "전장이 일시정지되었습니다. 잠시 다음 수를 계획하세요.",
+    "Expedition briefing": "원정 브리핑",
+    "A new frontier.": "새로운 개척지.",
+    "A foothold to defend.": "지켜야 할 거점.",
+    "Build your outpost. Harvest the valley. Lead your expedition against rival commanders.": "전초기지를 세우고, 계곡에서 자원을 채굴하고, 원정대를 이끌어 적 지휘관들과 맞서세요.",
+    "Your rivals are allied: they share scouting, raid your Harvesters and attack together.": "적들이 동맹을 맺었습니다: 정찰 정보를 공유하고, 채굴기를 습격하며, 함께 공격합니다.",
+    "Every faction fights for itself.": "모든 진영이 각자 싸웁니다.",
+    "Rivals": "상대 진영",
+    "Objective": "목표",
+    "Eliminate enemy command": "적 사령부 섬멸",
+    "Preparing expedition…": "원정 준비 중…",
+    "Skirmish": "교전",
+    "Campaign": "캠페인",
+    "Training": "훈련",
+    "Battlefield": "전장",
+    "Game mode": "게임 모드",
+    "Number of AI enemies": "AI 적 수",
+    "AI speed": "AI 속도",
+    "AI speed: how fast rivals build, tech up and attack": "AI 속도: 상대가 건설하고, 기술을 올리고, 공격하는 속도",
+    "AI teams": "AI 팀",
+    "Relaxed": "느긋함",
+    "Normal": "보통",
+    "Fast": "빠름",
+    "Relentless": "맹공",
+    "Free-for-all": "개인전",
+    "United against you": "연합 공격",
+    "allied against you": "연합하여 공격",
+    "Operation 01 / Skirmish": "작전 01 / 교전",
+    "Outpost Meridian": "메리디언 전초기지",
+    "The Ashen Frontier": "잿빛 변경",
+    "Sector 07": "구역 07",
+    "Meridian Riverlands": "메리디언 강 지대",
+    "Ashen Frontier": "잿빛 변경",
+    "Copper Basin": "구리 분지",
+    "Frontier Expanse": "변경 대평원",
+    "Amber Dunes": "호박빛 사구",
+    "Obsidian Highlands": "흑요석 고원",
+    "First Contact": "첫 접촉",
+    "The Ashen Line": "잿빛 방어선",
+    "Three-Way Dunes": "삼파전 사구",
+    "The Verdant Pact": "초록 협약",
+    "Copper Siege": "구리 포위전",
+    "Obsidian Storm": "흑요석 폭풍",
+    "Frontier's End": "변경의 끝",
+    "Three allied commanders: an assault force, a raider and a siege corps. Expect attacks from every side.": "동맹을 맺은 지휘관 셋: 돌격대, 습격대, 공성 부대입니다. 사방에서 오는 공격에 대비하세요.",
+    "Objectives": "목표",
+    "Mission objectives": "임무 목표",
+    "Establish your economy": "경제 구축",
+    "Assign Harvesters to resources": "채굴기를 자원에 배치",
+    "Mobilize a strike force": "타격대 편성",
+    "Field 8 combat units": "전투 유닛 8기 배치",
+    "Break their command": "적 지휘부 격파",
+    "Destroy all enemy Command cores": "적 사령부 모두 파괴",
+    "Tactical uplink": "전술 통신망",
+    "Standby": "대기",
+    "Connected": "연결됨",
+    "Selection": "선택",
+    "Actions": "행동",
+    "Map": "지도",
+    "Command panels": "지휘 패널",
+    "Sector overview": "구역 개요",
+    "Focus base": "기지 보기",
+    "You": "나",
+    "Command center": "지휘 센터",
+    "Expedition command": "원정대 지휘부",
+    "Selection details": "선택 정보",
+    "Ready": "준비됨",
+    "Unit": "유닛",
+    "Structure": "건물",
+    "Construction": "건설",
+    "Production": "생산",
+    "Field orders": "야전 명령",
+    "Tactical": "전술",
+    "Awaiting your command": "명령 대기 중",
+    "Click a unit or drag to select your expedition.": "유닛을 클릭하거나 드래그해 원정대를 선택하세요.",
+    "Select a unit or structure to issue commands.": "명령을 내리려면 유닛이나 건물을 선택하세요.",
+    "Control the battlefield": "전장을 장악하세요",
+    "Your expedition is ready": "원정대 준비 완료",
+    "Right-click to move or engage.": "우클릭으로 이동하거나 교전하세요.",
+    "Attack-move to advance and fight.": "공격 이동으로 전진하며 싸우세요.",
+    "Select the Command core to train Harvesters, or the Barracks to grow your army.": "사령부를 선택해 채굴기를 생산하거나, 병영을 선택해 병력을 늘리세요.",
+    "Your Command core is down": "사령부가 파괴되었습니다",
+    "Gather your remaining forces and hold on.": "남은 병력을 모아 버티세요.",
+    "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield.": "선택을 열어 이동, 공격 이동, 지원 명령을 고른 뒤 전장의 대상을 탭하세요.",
+    "Select a structure, then place it on clear terrain.": "건물을 고른 뒤 빈 지형에 배치하세요.",
+    "Hold Shift to queue orders. Ctrl + 1–9 saves a group.": "Shift를 누른 채 명령을 예약하세요. Ctrl + 1–9로 부대를 저장합니다.",
+    "Enable Queue to chain orders. Use Army or Box to select a group.": "예약을 켜면 명령을 이어서 내릴 수 있습니다. 군대나 범위로 부대를 선택하세요.",
+    "Touch battlefield controls": "터치 전장 조작",
+    "Workers": "일꾼",
+    "Box": "범위",
+    "Queue": "예약",
+    "Clear selection": "선택 해제",
+    "Select all Harvesters": "모든 채굴기 선택",
+    "Select all combat units": "모든 전투 유닛 선택",
+    "Select army": "군대 선택",
+    "Zoom in": "확대",
+    "Zoom out": "축소",
+    "Home": "기지",
+    "Keys": "키",
+    "Controls": "조작",
+    "? Controls": "? 조작",
+    "Show controls": "조작법 보기",
+    "Info & stats": "정보·능력치",
+    "Selected object stats": "선택 대상 능력치",
+    "Lowest and highest attack in the selection. Open Info & stats for unit details.": "선택한 유닛의 최저·최고 공격력입니다. 유닛 상세는 정보·능력치에서 확인하세요.",
+    "Move": "이동",
+    "Attack": "공격",
+    "Attack-move": "공격 이동",
+    "Attackmove": "공격 이동",
+    "Patrol": "정찰",
+    "Stop": "정지",
+    "Support": "지원",
+    "Support: heal / repair": "지원: 치료 / 수리",
+    "Repair": "수리",
+    "Rally": "집결",
+    "Gather": "채굴",
+    "Deliver": "반납",
+    "Build": "건설",
+    "Build here": "여기에 건설",
+    "Construction status": "건설 현황",
+    "Choose location": "위치 선택",
+    "Back to buildings": "건물 목록으로",
+    "HP": "체력",
+    "Shield": "보호막",
+    "ATK": "공격력",
+    "Restore": "회복",
+    "Health restored per second": "초당 체력 회복량",
+    "Attack damage per hit": "타격당 공격 피해",
+    "Standing by": "대기 중",
+    "Operational": "가동 중",
+    "Attacking": "공격 중",
+    "Harvesting": "채굴 중",
+    "Returning cargo": "반납 중",
+    "To deposit": "자원지로",
+    "Waiting": "대기",
+    "Cargo": "적재량",
+    "Needs Harvester": "채굴기 필요",
+    "Building": "건설 중",
+    "Builder travelling": "작업자 이동 중",
+    "Awaiting supply": "보급 대기",
+    "Exit blocked": "출구 막힘",
+    "Shield wall": "방패벽",
+    "Rapid fire": "속사",
+    "Barrage": "포격",
+    "Overdrive": "오버드라이브",
+    "Lock-on": "락온",
+    "Triage pulse": "응급 파동",
+    "Field repair": "야전 수리",
+    "Brace for 6 seconds: take half damage, move 30% slower.": "6초간 버티기: 받는 피해 절반, 이동 속도 30% 감소.",
+    "Fire 40% faster for 6 seconds.": "6초간 공격 속도 40% 증가.",
+    "Shell a marked area up to 14 m away after 1.5 seconds: 90 damage within 4 m, half to buildings.": "최대 14m 거리의 지정 구역을 1.5초 후 포격: 반경 4m 안에 90 피해, 건물에는 절반.",
+    "For 6 seconds: 50% faster and 25% more damage.": "6초간: 속도 50% 증가, 피해 25% 증가.",
+    "For 8 seconds: 3 m more range and 50% more damage to vehicles.": "8초간: 사거리 3m 증가, 차량 대상 피해 50% 증가.",
+    "Instantly heal infantry within 6 m by 40.": "6m 안의 보병을 즉시 40 치료합니다.",
+    "Instantly repair vehicles and buildings within 6 m by 80.": "6m 안의 차량과 건물을 즉시 80 수리합니다.",
+    "Build another Supply relay to support more Sentinel towers.": "센티널 타워를 더 지으려면 보급 중계소를 하나 더 건설하세요.",
+    "Harvester": "채굴기",
+    "Vanguard": "선봉대",
+    "Ranger": "레인저",
+    "Breaker": "브레이커",
+    "Medic": "의무병",
+    "Engineer": "공병",
+    "Battle tank": "전차",
+    "Anti-tank soldier": "대전차병",
+    "Anti-tank": "대전차",
+    "Command core": "사령부",
+    "Core": "사령부",
+    "Supply relay": "보급 중계소",
+    "Barracks": "병영",
+    "Foundry": "공장",
+    "Sentinel tower": "센티널 타워",
+    "Ranger nest": "레인저 둥지",
+    "Breaker mortar": "브레이커 박격포",
+    "Anti-tank post": "대전차 초소",
+    "Watcher post": "감시 초소",
+    "Gorge Road": "협곡 도로",
+    "Twin Bridges": "쌍둥이 다리",
+    "Gorge Road, below the Keystone relays": "협곡 도로, 키스톤 중계소 아래",
+    "Ashfall columns climb the gorge to the relay plateau. Crew the pads along the road and hold them for ten waves.": "애시폴 행렬이 협곡을 올라 중계소 고원으로 향합니다. 도로변 포대 자리에 병력을 배치하고 웨이브 열 번을 버티세요.",
+    "Rim pads see far but can be shot. Deep pads stay hidden from the road.": "가장자리 자리는 멀리 보지만 공격받을 수 있습니다. 깊은 자리는 도로에서 보이지 않습니다.",
+    "Twin Bridges, the Meridian river": "쌍둥이 다리, 메리디언 강",
+    "Sunward caravans cross by both bridges and the ford. Watch all three roads and hold for ten waves.": "선워드 대상단이 두 다리와 여울로 건너옵니다. 세 길을 모두 지키며 웨이브 열 번을 버티세요.",
+    "Wagons mend the units around them: bring them down first.": "마차는 주변 유닛을 수리합니다: 먼저 쓰러뜨리세요.",
+    "Hold the road for 10 waves": "10 웨이브 동안 도로 사수",
+    "Hold the crossings for 10 waves": "10 웨이브 동안 도하 지점 사수",
+    "Defence": "방어전",
+    "Hold the road": "도로 사수",
+    "Defence levels": "방어전 레벨",
+    "Start defence": "방어전 시작",
+    "Smaller waves and more alloy to start.": "웨이브가 작고 시작 합금이 많습니다.",
+    "The waves as designed.": "설계된 그대로의 웨이브.",
+    "Larger waves and tougher crews.": "웨이브가 크고 적이 더 강합니다.",
+    "Defence status": "방어 현황",
+    "Lives: each enemy through costs one, a heavy machine two": "생명: 통과한 적마다 하나, 중기계는 둘씩 감소",
+    "Wave": "웨이브",
+    "Call wave": "웨이브 호출",
+    "Call the next wave now for bonus alloy": "다음 웨이브를 지금 불러 보너스 합금 획득",
+    "Overview": "전체 보기",
+    "Rangers": "레인저",
+    "Mortar": "박격포",
+    "Single target, long reach. Strong against siege machines.": "단일 대상, 긴 사거리. 공성 기계에 강합니다.",
+    "Shells burst on groups. Best against swarms on foot.": "포탄이 무리 위에서 터집니다. 몰려오는 보병에 가장 효과적입니다.",
+    "Rockets that pierce armour. Best against tanks and other machines.": "장갑을 관통하는 로켓. 전차와 기계에 가장 효과적입니다.",
+    "Long sight. Reveals hidden units further than any other tower.": "넓은 시야. 다른 어떤 타워보다 멀리 숨은 유닛을 드러냅니다.",
+    "Ground pad": "지상 자리",
+    "Rim pad": "가장자리 자리",
+    "Deep pad": "깊은 자리",
+    "Rim pad: 2 m more reach and harder hits, but the road can see it.": "가장자리 자리: 사거리 2m 증가, 더 강한 공격. 하지만 도로에서 보입니다.",
+    "Deep pad: hidden from the road, but further from it.": "깊은 자리: 도로에서 보이지 않지만 도로와 더 멉니다.",
+    "Build pad": "포대 자리",
+    "Rim": "가장자리",
+    "Deep": "깊은 곳",
+    "Ground": "지상",
+    "Garrison": "주둔지",
+    "Pads": "포대 자리",
+    "Upgrade": "업그레이드",
+    "Top tier": "최고 단계",
+    "Sell": "판매",
+    "Tier": "단계",
+    "Crew the pads": "포대 배치",
+    "Tap a pad beside the road, then pick a crew. Tap a tower to upgrade or sell it.": "도로변 포대 자리를 누른 뒤 병력을 고르세요. 타워를 누르면 업그레이드하거나 판매할 수 있습니다.",
+    "Pick a crew in Actions.": "행동 메뉴에서 병력을 고르세요.",
+    "Tap a pad beside the road to crew a tower.": "도로변 포대 자리를 눌러 타워를 배치하세요.",
+    "Tap a pad beside the road, then pick a crew.": "도로변 포대 자리를 누른 뒤 병력을 고르세요.",
+    "Wave held. Your towers are patched up.": "웨이브 방어 성공. 타워가 수리되었습니다.",
+    "Final wave!": "마지막 웨이브!",
+    "The enemy broke through!": "적이 돌파했습니다!",
+    "lives": "생명",
+    "Not one through": "완벽 방어",
+    "The line held": "방어선 사수",
+    "Barely held": "간신히 사수",
+    "The road is lost": "도로 함락",
+    "Lives left": "남은 생명",
+    "Waves held": "막아낸 웨이브",
+    "Bounty alloy": "보상 합금",
+    "Next level": "다음 레벨",
+    "Levels": "레벨",
+    "Tank emplacement": "전차 포좌",
+    "Scorcher flame trap": "스코처 화염 함정",
+    "Marksman": "명사수",
+    "Suppressor": "제압형",
+    "Cluster": "집속탄",
+    "Guided": "유도탄",
+    "Heavy": "중화기",
+    "Rapid": "속사",
+    "Beacon": "신호기",
+    "Far-eye": "천리안",
+    "Breacher": "관통",
+    "Shrapnel": "파편탄",
+    "Inferno": "업화",
+    "Firewall": "화염벽",
+    "Quartermaster": "병참관",
+    "Reserves": "예비대",
+    "Fast guns": "빠른 포격",
+    "Field commander": "야전 사령관",
+    "Switchback Pass": "굽이 고개",
+    "Switchback Pass, the high road to the relays": "굽이 고개, 중계소로 가는 높은 길",
+    "Warden machines grind up the pass, bend after bend between two plateaus. Every turn passes the same guns twice: use it.": "워든 기계들이 두 고원 사이 고개를 굽이굽이 올라옵니다. 굽이마다 같은 포대 앞을 두 번 지나니, 이를 활용하세요.",
+    "Walkers outrange most towers. Anti-tank posts and tank emplacements bring them down.": "워커는 대부분의 타워보다 사거리가 깁니다. 대전차 초소와 전차 포좌로 쓰러뜨리세요.",
+    "Hold the pass for 10 waves": "10 웨이브 동안 고개 사수",
+    "Fordwood": "여울숲",
+    "Fordwood, where the east bridge fell": "여울숲, 동쪽 다리가 무너진 곳",
+    "Ashfall and the Wardens march together: swarms through the ford, machines over the last bridge. Blow it if you must; their builders will bring pontoons.": "애시폴과 워든이 함께 진군합니다: 무리는 여울로, 기계는 마지막 다리로. 필요하면 다리를 폭파하세요. 적 가교병이 부교를 가져올 겁니다.",
+    "Tap a bridge to blow it. Bridge builders stop at the bank: bring them down before the pontoon is done.": "다리를 눌러 폭파하세요. 가교병은 강둑에서 멈춥니다: 부교가 완성되기 전에 쓰러뜨리세요.",
+    "Hold the river for 10 waves": "10 웨이브 동안 강 사수",
+    "Amber Canyon": "호박빛 협곡",
+    "Amber Canyon, the dry road south": "호박빛 협곡, 남쪽의 메마른 길",
+    "Veil shades walk the canyon floor unseen until they strike. Light the road with Watcher posts and hold for ten waves.": "장막의 셰이드는 공격하기 전까지 보이지 않은 채 협곡 바닥을 걷습니다. 감시 초소로 도로를 밝히고 웨이브 열 번을 버티세요.",
+    "Only towers that see a shade can shoot it. A Watcher post reveals far more than the others.": "셰이드를 볼 수 있는 타워만 공격할 수 있습니다. 감시 초소는 다른 타워보다 훨씬 멀리 드러냅니다.",
+    "Hold the canyon for 10 waves": "10 웨이브 동안 협곡 사수",
+    "Long Crossing": "긴 나루",
+    "Long Crossing, on the frontier expanse": "긴 나루, 변경의 대평원",
+    "The Veil has hired Sunward riders. Shades and caravans come over all three crossings at once. Hold for ten waves.": "장막이 선워드 라이더를 고용했습니다. 셰이드와 대상단이 세 도하 지점으로 동시에 건너옵니다. 웨이브 열 번을 버티세요.",
+    "Blowing a bridge turns its column toward the others: make them walk into your guns.": "다리를 폭파하면 그 행렬이 다른 길로 돌아갑니다: 적을 포화 속으로 몰아넣으세요.",
+    "Hold the crossing for 10 waves": "10 웨이브 동안 나루 사수",
+    "Hold as many waves as you can": "최대한 많은 웨이브를 버티세요",
+    "The ford cannot be blown.": "여울은 폭파할 수 없습니다.",
+    "That is the last way across: it must stay open.": "마지막 남은 도하로입니다: 열어 두어야 합니다.",
+    "Endless": "무한",
+    "Daily": "일일",
+    "Ten waves, stars": "웨이브 열 번, 별",
+    "Waves forever": "끝없는 웨이브",
+    "Today's seed": "오늘의 시드",
+    "Defence mode": "방어전 모드",
+    "Perks": "특전",
+    "stars to spend": "별 보유",
+    "Stars to spend": "보유 별",
+    "Stars buy small permanent perks. They apply to Defence levels only, never the campaign.": "별로 작은 영구 특전을 살 수 있습니다. 방어전 레벨에만 적용되며 캠페인에는 적용되지 않습니다.",
+    "Owned": "보유",
+    "Your first tower on each level costs 20% less.": "레벨마다 첫 타워 비용이 20% 저렴합니다.",
+    "Every level starts with 2 more lives.": "모든 레벨을 생명 2개를 더 가지고 시작합니다.",
+    "The commander's Barrage recharges 25% faster.": "사령관의 포격이 25% 더 빨리 재충전됩니다.",
+    "Best": "최고 기록",
+    "Start endless": "무한 모드 시작",
+    "Start daily": "일일 도전 시작",
+    "Today's waves, the same for every commander, from a seed of the date. They never stop: hold as many as you can.": "오늘의 웨이브는 날짜 시드로 만들어져 모든 사령관에게 똑같습니다. 끝없이 이어지니 최대한 많이 버티세요.",
+    "The waves never stop and grow with every one you hold. Your score is the number of waves held.": "웨이브는 끝없이 이어지며 막아낼 때마다 강해집니다. 점수는 막아낸 웨이브 수입니다.",
+    "DEFENCE · ENDLESS": "방어전 · 무한",
+    "DEFENCE · DAILY SEED": "방어전 · 일일 시드",
+    "The commander: tap to pick, then tap the road to send it": "사령관: 눌러서 선택한 뒤 도로를 눌러 보내세요",
+    "On the field": "전장에 있음",
+    "Tap the road": "도로를 누르세요",
+    "Reinforce": "증원",
+    "Tap a spot inside the ring to shell it.": "원 안의 지점을 눌러 포격하세요.",
+    "Tap the road inside the ring to drop three Vanguards.": "원 안의 도로를 눌러 선봉대 셋을 투입하세요.",
+    "Tap the road to send the commander. It holds there and blocks the column.": "도로를 눌러 사령관을 보내세요. 그 자리를 지키며 적 행렬을 막습니다.",
+    "Bridge": "다리",
+    "Standing": "건재",
+    "Fuse lit": "점화됨",
+    "Down": "붕괴",
+    "Pontoon": "부교",
+    "Charge lit": "폭약 점화",
+    "Blown": "폭파됨",
+    "Blow pontoon": "부교 폭파",
+    "Blow bridge": "다리 폭파",
+    "West bridge": "서쪽 다리",
+    "East bridge": "동쪽 다리",
+    "Blow it in Actions: the waves on this road turn to another crossing.": "행동 메뉴에서 폭파하세요: 이 길의 웨이브가 다른 도하 지점으로 돌아갑니다.",
+    "Down. The columns take another crossing; bridge builders will try a pontoon.": "붕괴됨. 적 행렬이 다른 도하 지점으로 갑니다. 가교병이 부교를 놓으려 할 겁니다.",
+    "A pontoon: units wade it slowly, like the ford. It can be blown too.": "부교: 여울처럼 유닛이 느리게 건넙니다. 이것도 폭파할 수 있습니다.",
+    "Blowing it takes 3 s. The waves on this road turn to another crossing.": "폭파에 3초 걸립니다. 이 길의 웨이브가 다른 도하 지점으로 돌아갑니다.",
+    "Gold tier: pick one branch for this tower. It cannot be changed.": "금 단계: 이 타워의 분기를 하나 고르세요. 변경할 수 없습니다.",
+    "Much harder single shots, a little slower, 2 m more reach.": "훨씬 강한 단발 사격, 약간 느림, 사거리 2m 증가.",
+    "Every hit slows the target for a moment.": "명중할 때마다 대상을 잠시 둔화시킵니다.",
+    "Wider bursts that hit the crowd harder.": "폭발 범위가 넓어져 무리에게 더 큰 피해를 줍니다.",
+    "5 m more reach and a little more damage.": "사거리 5m 증가, 피해 약간 증가.",
+    "Far heavier rockets, a little slower.": "훨씬 강력한 로켓, 약간 느림.",
+    "Fires almost twice as fast.": "거의 두 배 빠르게 발사합니다.",
+    "Marks every target it hits: it takes 25% more damage.": "명중한 대상에 표식: 받는 피해 25% 증가.",
+    "Reveals hidden units much further, 3 m more reach.": "숨은 유닛을 훨씬 멀리 드러냄, 사거리 3m 증가.",
+    "Heavier shells, even stronger against machines.": "더 무거운 포탄, 기계에 더욱 강함.",
+    "Shells burst on everyone close to the target.": "포탄이 대상 주변의 모두에게 터집니다.",
+    "The road burns much hotter.": "도로가 훨씬 뜨겁게 불탑니다.",
+    "Wider fires that burn longer.": "더 넓고 오래 타는 불길.",
+    "Tank post": "전차 포좌",
+    "Flame trap": "화염 함정",
+    "Heavy single shots, slow to reload. Strong against machines.": "강력한 단발 사격, 느린 재장전. 기계에 강합니다.",
+    "Short range. Sets the road on fire: best against swarms on foot.": "짧은 사거리. 도로에 불을 붙입니다: 몰려오는 보병에 가장 효과적입니다.",
+    "Charge set: the bridge blows in 3 seconds.": "폭약 설치: 3초 후 다리가 폭파됩니다.",
+    "Bridge down. The columns turn to another crossing.": "다리 붕괴. 적 행렬이 다른 도하 지점으로 돌아갑니다.",
+    "Bridge builders at the river!": "가교병이 강에 도착했습니다!",
+    "A pontoon is across the river!": "부교가 강을 가로질렀습니다!",
+    "The commander is down: back in 20 seconds.": "사령관 쓰러짐: 20초 후 복귀합니다.",
+    "The commander is back on the field.": "사령관이 전장에 복귀했습니다.",
+    "Out of reach: tap inside the ring.": "범위 밖: 원 안을 누르세요.",
+    "The commander cannot go there.": "사령관이 갈 수 없는 곳입니다.",
+    "Try again": "다시 시도",
+    "New best!": "신기록!",
+    "1 wave held": "1 웨이브 방어",
+    "Tower": "타워",
+    "Overcharged weapons": "과충전 무기",
+    "Weapons II": "무기 II",
+    "Plating II": "장갑 II",
+    "Overcharged weapons II": "과충전 무기 II",
+    "Reinforced plating II": "강화 장갑 II",
+    "Overcharged weapons II online. Combat damage is now 19% above base.": "과충전 무기 II 가동. 전투 피해가 기본보다 19% 높아졌습니다.",
+    "Reinforced plating II fitted. Combat units take 19% less damage.": "강화 장갑 II 장착. 전투 유닛이 받는 피해가 19% 감소합니다.",
+    "Overcharged weapons must be researched first.": "과충전 무기를 먼저 연구해야 합니다.",
+    "Reinforced plating must be researched first.": "강화 장갑을 먼저 연구해야 합니다.",
+    "Overcharged weapons II is already researched or queued.": "과충전 무기 II는 이미 연구했거나 대기 중입니다.",
+    "Reinforced plating II is already researched or queued.": "강화 장갑 II는 이미 연구했거나 대기 중입니다.",
+    "Second weapons tier, needs Overcharged weapons and a level 2 Foundry: a further +8% damage for all combat units. Costs 250 alloy and 180 energy.": "두 번째 무기 단계. 과충전 무기와 2레벨 공장 필요: 모든 전투 유닛 피해 +8% 추가. 비용: 합금 250, 에너지 180.",
+    "Second plating tier, needs Reinforced plating and a level 2 Foundry: combat units take a further 8% less damage. Costs 200 alloy and 250 energy.": "두 번째 장갑 단계. 강화 장갑과 2레벨 공장 필요: 전투 유닛이 받는 피해 8% 추가 감소. 비용: 합금 200, 에너지 250.",
+    "Plating": "장갑",
+    "Choose one": "하나 선택",
+    "CHOOSE ONE": "하나를 고르세요",
+    "Damage +10%": "피해 +10%",
+    "Damage +8%": "피해 +8%",
+    "Damage +19%": "피해 +19%",
+    "Armor +12%": "장갑 +12%",
+    "Armor +8%": "장갑 +8%",
+    "Armor +19%": "장갑 +19%",
+    "Damage +10% ✓": "피해 +10% ✓",
+    "Armor +12% ✓": "장갑 +12% ✓",
+    "Pick 1 of 2": "2개 중 1개 선택",
+    "Active": "활성",
+    "Waiting in queue": "대기열에서 대기 중",
+    "PICK ONE FOR THIS MATCH": "이번 경기에 적용할 하나를 고르세요",
+    "Research: pick one of two upgrades for this match": "연구: 이번 경기에 적용할 업그레이드 둘 중 하나를 고르세요",
+    "Research · pick Damage +10% or Armor +12% for this match; the other branch then stays locked": "연구 · 이번 경기에 피해 +10% 또는 장갑 +12% 선택. 나머지 분기는 잠깁니다",
+    " Choosing it locks the other branch for this match.": " 선택하면 이번 경기에서 다른 분기가 잠깁니다.",
+    "Reinforced plating": "강화 장갑",
+    "Reinforced plating fitted. Combat units take 12% less damage.": "강화 장갑 장착. 전투 유닛이 받는 피해가 12% 감소합니다.",
+    "Reinforced plating is locked: Overcharged weapons were chosen.": "강화 장갑 잠김: 과충전 무기를 선택했습니다.",
+    "Overcharged weapons are locked: Reinforced plating was chosen.": "과충전 무기 잠김: 강화 장갑을 선택했습니다.",
+    "Reinforced plating is already researched or queued.": "강화 장갑은 이미 연구했거나 대기 중입니다.",
+    "Research branch, exclusive with Overcharged weapons: combat units take 12% less damage. Costs 100 alloy and 150 energy.": "연구 분기(과충전 무기와 택일): 전투 유닛이 받는 피해 12% 감소. 비용: 합금 100, 에너지 150.",
+    "Maximum level 3": "최대 레벨 3",
+    "Practice target": "연습용 표적",
+    "Economy": "경제",
+    "Close assault": "근접 공격",
+    "Ranged support": "원거리 지원",
+    "Heavy artillery": "중포",
+    "Headquarters": "본부",
+    "Infrastructure": "기반 시설",
+    "Infantry production": "보병 생산",
+    "Advanced production": "고급 생산",
+    "Static defense": "고정 방어",
+    "Research": "연구",
+    "Infantry healing": "보병 치료",
+    "Mechanical repair": "기계 수리",
+    "Heavy assault vehicle": "중돌격 차량",
+    "Vehicle counter": "대차량",
+    "Collects resources and constructs your outpost.": "자원을 채굴하고 기지를 건설합니다.",
+    "Fast armored fighter. Strong against Rangers; weak against Breakers and Battle tanks.": "빠른 장갑 전투병. 레인저에 강하고 브레이커와 전차에 약합니다.",
+    "Overcharged weapons online. Combat damage increased by 10%.": "과충전 무기 가동. 전투 피해가 10% 증가했습니다.",
+    "Long-range precision. Deals 2.6× damage to Breakers; weak against Vanguards.": "장거리 정밀 사격. 브레이커에게 2.6× 피해를 주며 선봉대에 약합니다.",
+    "Heavy artillery. Each shell also hits enemies within 3 m of the target for 40% damage. Strong against clustered infantry, especially Vanguards (1.5×). Shells buildings from 15 m, beyond a Sentinel tower's reach.": "중포. 포탄마다 대상 3m 안의 적에게도 40% 피해를 줍니다. 밀집한 보병, 특히 선봉대(1.5×)에 강합니다. 센티널 타워의 사거리 밖인 15m에서 건물을 포격합니다.",
+    "Receives resources and trains Harvesters; from level 2 it also trains flyers and researches Anti-air guns. Provides 15 supply. Upgrade this core to unlock matching levels for other buildings. Losing every Command core loses the match.": "자원을 받고 채굴기를 생산합니다. 2레벨부터 비행 유닛 생산과 대공포 연구도 가능합니다. 보급 15 제공. 사령부를 업그레이드하면 다른 건물의 같은 레벨이 열립니다. 사령부를 모두 잃으면 패배합니다.",
+    "Provides 10 supply, plus 5 per upgrade level (15 at L2, 20 at L3). Army capacity is capped at 100.": "보급 10 제공, 업그레이드 레벨마다 5 추가(L2에서 15, L3에서 20). 군대 규모 상한은 100입니다.",
+    "Trains Vanguards and Rangers. Level 2 unlocks Medics and Anti-tank soldiers. Required to construct a Foundry. Upgrades accelerate production.": "선봉대와 레인저를 훈련합니다. 2레벨에서 의무병과 대전차병이 해금됩니다. 공장 건설에 필요합니다. 업그레이드하면 생산이 빨라집니다.",
+    "Produces Breakers and researches +10% combat-unit damage. Level 2 unlocks Engineers; level 3 unlocks Battle tanks. Upgrades accelerate production.": "브레이커를 생산하고 전투 유닛 피해 +10%를 연구합니다. 2레벨에서 공병, 3레벨에서 전차가 해금됩니다. 업그레이드하면 생산이 빨라집니다.",
+    "Automatically attacks visible enemies within range, shooting combat units first, then Harvesters, then buildings. Each upgrade adds 50% of its base attack damage and 1 m of range. Each Command core and Supply relay supports two towers.": "사거리 안의 보이는 적을 자동 공격하며 전투 유닛, 채굴기, 건물 순으로 노립니다. 업그레이드마다 기본 공격 피해의 50%와 사거리 1m가 늘어납니다. 사령부와 보급 중계소 하나당 타워 두 개를 지원합니다.",
+    "Research branch, exclusive with Reinforced plating: +10% damage for all combat units. Costs 150 alloy and 100 energy.": "연구 분기(강화 장갑과 택일): 모든 전투 유닛 피해 +10%. 비용: 합금 150, 에너지 100.",
+    "Automatically heals nearby friendly infantry (including Harvesters and Engineers), excluding itself. Cannot attack. Use Support, then select an ally to follow and heal.": "주변 아군 보병(채굴기와 공병 포함)을 자동 치료하며 자신은 치료하지 못합니다. 공격할 수 없습니다. 지원을 누른 뒤 따라가며 치료할 아군을 선택하세요.",
+    "Automatically repairs nearby completed buildings, Breakers and Battle tanks. Cannot construct, gather, or attack. Use Support, then select a repair target.": "주변의 완성된 건물, 브레이커, 전차를 자동 수리합니다. 건설, 채굴, 공격은 할 수 없습니다. 지원을 누른 뒤 수리 대상을 선택하세요.",
+    "Durable tracked vehicle with a long-range cannon: 48 damage every 2.2s at 12 m. Each shell also hits enemies within 2 m of the target for 40% damage and hits Vanguards 1.5× harder. Vulnerable to anti-tank rockets; escort with infantry. Engineers repair its hull. Requires level 3 Foundry.": "장거리 포를 갖춘 튼튼한 궤도 차량: 12m 사거리에서 2.2초마다 48 피해. 포탄은 대상 2m 안의 적에게도 40% 피해를 주고 선봉대에게 1.5× 더 강합니다. 대전차 로켓에 취약하니 보병으로 호위하세요. 공병이 차체를 수리합니다. 3레벨 공장 필요.",
+    "Shoulder-fired rockets deal 120 damage to mechanical units (Battle tanks and Breakers), or 20 to infantry and buildings, every 2.4s, at the same 12 m range as a tank. No splash. Fragile against close assault; protect with Vanguards. Medics heal this soldier. Requires level 2 Barracks.": "견착식 로켓으로 2.4초마다 전차와 같은 12m 사거리에서 기계 유닛(전차, 브레이커)에 120, 보병과 건물에 20 피해를 줍니다. 범위 피해 없음. 근접 공격에 약하니 선봉대로 보호하세요. 의무병이 치료할 수 있습니다. 2레벨 병영 필요.",
+    "Invalid position.": "잘못된 위치입니다.",
+    "Invalid structure.": "잘못된 건물입니다.",
+    "Outside the buildable area.": "건설 가능 구역 밖입니다.",
+    "Explore this area before building.": "건설하기 전에 이 지역을 탐색하세요.",
+    "A concrete wall blocks this location.": "콘크리트 벽이 이 위치를 막고 있습니다.",
+    "ATTACK · Choose a visible enemy or a concrete wall": "공격 · 보이는 적이나 콘크리트 벽을 선택하세요",
+    "Concrete wall": "콘크리트 벽",
+    "Reinforced concrete. Blocks movement and fire; attack it to break through.": "철근 콘크리트. 이동과 사격을 막습니다. 공격해서 부수세요.",
+    "Too close to another structure.": "다른 건물과 너무 가깝습니다.",
+    "Keep resource deposits clear.": "자원 매장지를 막지 마세요.",
+    "That would wall in the ground behind it.": "뒤쪽 땅이 막혀 고립됩니다.",
+    "Units are standing in the construction footprint.": "건설 부지에 유닛이 서 있습니다.",
+    "Insufficient resources.": "자원이 부족합니다.",
+    "Production queue is full.": "생산 대기열이 가득 찼습니다.",
+    "Population limit reached. Build a Supply relay.": "인구 한도에 도달했습니다. 보급 중계소를 건설하세요.",
+    "Weapon upgrade is already researched or queued.": "무기 업그레이드가 이미 연구되었거나 대기 중입니다.",
+    "The Harvester cannot reach that site.": "채굴기가 그 위치에 갈 수 없습니다.",
+    "Select a Harvester to construct this building.": "이 건물을 지으려면 채굴기를 선택하세요.",
+    "Requirements met. Choose a location to continue.": "조건 충족. 위치를 선택해 계속하세요.",
+    "Tap clear ground to choose a site.": "빈 땅을 탭해 위치를 고르세요.",
+    "Click clear ground to build.": "빈 땅을 클릭해 건설하세요.",
+    "Tap Build here to start construction.": "'여기에 건설'을 탭해 건설을 시작하세요.",
+    "Click the site to start construction.": "위치를 클릭해 건설을 시작하세요.",
+    "Harvester needs a completed Command core to deliver cargo. Finish or build one, then order delivery.": "채굴기가 자원을 반납하려면 완성된 사령부가 필요합니다. 사령부를 완성하거나 새로 지은 뒤 반납을 명령하세요.",
+    "Your expedition has been eliminated.": "원정대가 전멸했습니다.",
+    "Your Harvesters are mining. Train more at the Command core, then build a Barracks.": "채굴기가 채굴 중입니다. 사령부에서 더 생산한 뒤 병영을 건설하세요.",
+    "Assign Harvesters to the amber alloy deposits.": "채굴기를 호박색 합금 광맥에 배치하세요.",
+    "Meridian is online. Assign Harvesters to the amber alloy deposits.": "메리디언 가동 완료. 채굴기를 호박색 합금 광맥에 배치하세요.",
+    "Commander training": "사령관 훈련",
+    "Complete eight guided lessons": "여덟 개의 안내 수업 완료",
+    "Practice field · no AI attacks": "연습장 · AI 공격 없음",
+    "Training supplies replenish · no AI attacks": "훈련 자원 자동 보충 · AI 공격 없음",
+    "Learn selection, movement, harvesting, construction, production, attack and withdrawal in eight guided steps. Training supplies replenish. Leave or replay whenever you like.": "선택, 이동, 채굴, 건설, 생산, 공격, 후퇴를 여덟 단계의 안내로 배웁니다. 훈련 자원은 자동으로 보충됩니다. 언제든 나가거나 다시 할 수 있습니다.",
+    "Focus target": "목표 보기",
+    "Leave training": "훈련 종료",
+    "Select a Harvester": "채굴기 선택",
+    "Left-click a Harvester near your Command core.": "사령부 근처의 채굴기를 왼쪽 클릭하세요.",
+    "Tap a Harvester near your Command core.": "사령부 근처의 채굴기를 탭하세요.",
+    "Move to the marker": "표식으로 이동",
+    "With a Harvester selected, right-click the yellow marker.": "채굴기를 선택한 상태에서 노란 표식을 오른쪽 클릭하세요.",
+    "Select a Harvester, choose Move, then tap the yellow marker.": "채굴기를 선택하고 이동을 고른 뒤 노란 표식을 탭하세요.",
+    "Gather 10 alloy": "합금 10 채굴",
+    "Select a Harvester and right-click amber crystals. Cargo returns automatically.": "채굴기를 선택하고 호박색 크리스탈을 오른쪽 클릭하세요. 자원은 자동으로 반납됩니다.",
+    "Select a Harvester, then tap amber crystals. Cargo returns automatically.": "채굴기를 선택한 뒤 호박색 크리스탈을 탭하세요. 자원은 자동으로 반납됩니다.",
+    "Build a Supply relay": "보급 중계소 건설",
+    "Select a Harvester, choose Supply relay, then click a clear site. Wait for completion.": "채굴기를 선택하고 보급 중계소를 고른 뒤 빈 땅을 클릭하세요. 완성될 때까지 기다리세요.",
+    "Select a Harvester, choose Supply relay, tap a clear site, then confirm placement.": "채굴기를 선택하고 보급 중계소를 고른 뒤 빈 땅을 탭하고 배치를 확정하세요.",
+    "Train a Ranger": "레인저 훈련",
+    "Select Barracks and click Ranger. Wait for the production queue to finish.": "병영을 선택하고 레인저를 클릭하세요. 생산 대기열이 끝날 때까지 기다리세요.",
+    "Tap Barracks, choose Ranger and wait for the production queue to finish.": "병영을 탭하고 레인저를 고른 뒤 생산 대기열이 끝날 때까지 기다리세요.",
+    "Attack the practice target": "연습 표적 공격",
+    "Select soldiers and right-click the marked target. Land a hit; it cannot fire back.": "병사를 선택하고 표시된 표적을 오른쪽 클릭하세요. 한 번 명중시키세요. 표적은 반격하지 않습니다.",
+    "Select soldiers, choose Attack, then tap the marked target. It cannot fire back.": "병사를 선택하고 공격을 고른 뒤 표시된 표적을 탭하세요. 표적은 반격하지 않습니다.",
+    "Withdraw with Move": "이동으로 후퇴",
+    "Select a soldier fighting the target. Press M, then click the yellow marker to withdraw.": "표적과 싸우는 병사를 선택하세요. M을 누른 뒤 노란 표식을 클릭해 후퇴하세요.",
+    "Select a soldier fighting the target. Choose Move and tap the yellow marker to withdraw.": "표적과 싸우는 병사를 선택하세요. 이동을 고르고 노란 표식을 탭해 후퇴하세요.",
+    "Finish the target": "표적 파괴",
+    "The target is weakened. Select your soldiers and right-click it to finish training.": "표적이 약해졌습니다. 병사를 선택하고 표적을 오른쪽 클릭해 훈련을 마치세요.",
+    "The target is weakened. Select soldiers, choose Attack and tap it to finish training.": "표적이 약해졌습니다. 병사를 선택하고 공격을 고른 뒤 표적을 탭해 훈련을 마치세요.",
+    "Field guide": "야전 교범",
+    "Field guide · units and buildings": "야전 교범 · 유닛과 건물",
+    "Unit or building": "유닛 또는 건물",
+    "Close field guide": "야전 교범 닫기",
+    "Base stats · level 1": "기본 능력치 · 레벨 1",
+    "HP / shield": "체력 / 보호막",
+    "Cost": "비용",
+    "Time": "시간",
+    "Supply / speed": "보급 / 속도",
+    "Building functions": "건물 기능",
+    "Building upgrades": "건물 업그레이드",
+    "Upgrades": "업그레이드",
+    "Three technology stages": "세 가지 기술 단계",
+    "Shields absorb damage before HP. They recharge at 4/s after five seconds without damage.": "보호막은 체력보다 먼저 피해를 흡수합니다. 오 초 동안 피해를 받지 않으면 초당 4씩 재충전됩니다.",
+    "Below 35% HP, completed buildings and vehicles show fire and smoke. Repairs clear it. This is a damage warning, not extra damage over time.": "체력이 35% 미만이면 완성된 건물과 차량에 불과 연기가 납니다. 수리하면 사라집니다. 이는 손상 경고일 뿐 지속 피해가 아닙니다.",
+    "Automatically attacks visible enemies.": "보이는 적을 자동으로 공격합니다.",
+    "Establish an economy and mixed army.": "경제와 혼성 군대를 갖추세요.",
+    "Upgrade your core and production to L2; unlock Medics, Engineers and Anti-tank soldiers.": "사령부와 생산 건물을 L2로 업그레이드해 의무병, 공병, 대전차병을 해금하세요.",
+    "Reach L3 to unlock Battle tanks at the Foundry, with stronger defenses and faster production, then defeat enemy cores.": "L3에 도달하면 공장에서 전차가 해금되고 방어와 생산이 강화됩니다. 그다음 적 사령부를 격파하세요.",
+    "Other buildings require a completed Command core at the next level. Finish or cancel production first. Cancel an upgrade for a full refund; destruction gives no refund.": "다른 건물은 다음 레벨의 완성된 사령부가 필요합니다. 먼저 생산을 끝내거나 취소하세요. 업그레이드를 취소하면 전액 환불되지만, 파괴되면 환불되지 않습니다.",
+    "Build menu": "건설 메뉴",
+    "Move / withdraw": "이동 / 후퇴",
+    "Patrol (soldiers / tanks)": "정찰 (병사 / 전차)",
+    "Attack chosen enemy": "지정한 적 공격",
+    "Gather / attack / assist": "채굴 / 공격 / 지원",
+    "Return cargo": "반납",
+    "Heal / repair": "치료 / 수리",
+    "Set rally point": "집결지 설정",
+    "Upgrade building": "건물 업그레이드",
+    "Cancel last job / site": "마지막 작업 / 부지 취소",
+    "Select Harvesters": "채굴기 선택",
+    "Select buildings": "건물 선택",
+    "Next Command core": "다음 사령부",
+    "Next Barracks": "다음 병영",
+    "Next Foundry": "다음 공장",
+    "Select same type": "같은 종류 선택",
+    "Select all units": "모든 유닛 선택",
+    "Focus selection": "선택 대상 보기",
+    "Toggle order queue": "명령 대기열 켜기/끄기",
+    "Unit / building info": "유닛 / 건물 정보",
+    "Pause / resume": "일시정지 / 재개",
+    "Control groups": "부대 지정",
+    "Commands": "명령",
+    "Mouse": "마우스",
+    "Click recalls · Ctrl-click saves · Shift-click adds": "클릭: 불러오기 · Ctrl-클릭: 저장 · Shift-클릭: 추가",
+    "Click to run · or press the key": "클릭해 실행 · 또는 키 입력",
+    "Ctrl + number saves · Shift + number adds · number recalls · press twice to focus. Saved groups appear as tabs above the selection panel.": "Ctrl + 숫자: 저장 · Shift + 숫자: 추가 · 숫자: 불러오기 · 두 번 누르면 화면 이동. 저장한 부대는 선택 패널 위에 탭으로 표시됩니다.",
+    "Left-click selects; drag selects a group. Ctrl-click or double-click selects the same unit type on screen. Shift adds or removes units. Right-click moves, attacks or assigns a worker job; Shift + right-click queues it. Right-click or Esc cancels pending targeting. The minimap accepts movement, targeting and production rally points. WASD, arrows and screen edges pan the camera.": "왼쪽 클릭으로 선택하고 드래그로 여러 유닛을 선택합니다. Ctrl-클릭이나 더블 클릭은 화면 안의 같은 종류 유닛을 선택합니다. Shift로 유닛을 추가하거나 뺍니다. 오른쪽 클릭으로 이동, 공격, 일꾼 작업 지정을 하고, Shift + 오른쪽 클릭은 명령을 대기열에 넣습니다. 오른쪽 클릭이나 Esc로 대상 지정을 취소합니다. 미니맵에서도 이동, 대상 지정, 생산 집결지 설정이 됩니다. WASD, 방향키, 화면 가장자리로 카메라를 움직입니다.",
+    "Commander's field guide": "사령관 야전 교범",
+    "Your command station.": "당신의 지휘소.",
+    "Return to the frontier": "전장으로 복귀",
+    "Select a unit / structure": "유닛 / 건물 선택",
+    "Tap it": "탭",
+    "Move / gather / attack": "이동 / 채굴 / 공격",
+    "Select, then tap target": "선택 후 대상 탭",
+    "Pan the battlefield": "전장 이동",
+    "Drag one finger": "한 손가락 드래그",
+    "Zoom / pan together": "확대 / 이동 함께",
+    "Pinch / two fingers": "핀치 / 두 손가락",
+    "Select multiple units": "여러 유닛 선택",
+    "Box, then drag": "범위 선택 후 드래그",
+    "Select your forces": "병력 선택",
+    "Workers / Army": "일꾼 / 군대",
+    "Queue multiple orders": "여러 명령 예약",
+    "Enable Queue": "대기열 켜기",
+    "Place a structure": "건물 배치",
+    "Tap location → Build here": "위치 탭 → 여기에 건설",
+    "Change HUD panel": "HUD 패널 전환",
+    "Selection / Actions / Map": "선택 / 행동 / 지도",
+    "Expedition systems initializing": "원정대 시스템 초기화 중",
+    "Victory": "승리",
+    "Defeat": "패배",
+    "Training complete": "훈련 완료",
+    "Play again": "다시 하기",
+    "queued": "대기 중",
+    "repaired": "수리됨",
+    "full refund": "전액 환불",
+    "75% refund": "75% 환불",
+    "Choose a valid structure.": "유효한 건물을 선택하세요.",
+    "Finish or cancel current production/upgrade first.": "먼저 현재 생산/업그레이드를 끝내거나 취소하세요.",
+    "This building is already at maximum level 3.": "이 건물은 이미 최대 레벨 3입니다.",
+    "Orders cleared.": "명령을 모두 취소했습니다.",
+    "Select Harvesters carrying resources.": "자원을 운반 중인 채굴기를 선택하세요.",
+    "Select a building to upgrade.": "업그레이드할 건물을 선택하세요.",
+    "No queued job to cancel.": "취소할 대기 작업이 없습니다.",
+    "Training supplies replenish.": "훈련 자원이 보충됩니다.",
+    "Training complete!": "훈련 완료!",
+    "Training ended": "훈련 종료",
+    "Campaign menu": "캠페인 메뉴",
+    "Replay training": "훈련 다시 하기",
+    "Choose a game": "게임 선택",
+    "Replay this map": "이 맵 다시 하기",
+    "Operation concluded": "작전 종료",
+    "Operation successful": "작전 성공",
+    "Operation failed": "작전 실패",
+    "Operation time": "작전 시간",
+    "Enemies defeated": "처치한 적",
+    "Units lost": "잃은 유닛",
+    "Structures destroyed": "파괴한 건물",
+    "Alloy gathered": "채굴한 합금",
+    "Energy gathered": "채굴한 에너지",
+    "Best time": "최고 기록",
+    "Cleared": "클리어",
+    "Concluded": "종료",
+    "Failed": "실패",
+    "The frontier is yours.": "변경 지대는 당신의 것입니다.",
+    "Mutual destruction.": "공멸.",
+    "Your outpost has fallen.": "전초기지가 함락되었습니다.",
+    "Enemy command has been eliminated. Meridian holds the valley.": "적 지휘부를 제거했습니다. 메리디언이 계곡을 장악했습니다.",
+    "All Command cores were destroyed.": "모든 사령부가 파괴되었습니다.",
+    "An enemy destroyed your Command core. Regroup and try a different approach.": "적이 사령부를 파괴했습니다. 전열을 정비하고 다른 전략을 시도하세요.",
+    "You practiced selection, economy, construction, production, attacking and withdrawal. Campaign introduces an active opponent.": "선택, 경제, 건설, 생산, 공격, 후퇴를 연습했습니다. 캠페인에서는 적극적으로 공격하는 상대가 등장합니다.",
+    "The battlefield is paused.": "전투가 일시정지되었습니다.",
+    "Tap Workers, then tap amber or blue deposits to gather. Tap a building to train units in Actions. Use Move or Attack-move in Selection, then tap a destination. To set a rally point, select a production building and tap ground. Eco graphics reduces rendering cost on phones.": "일꾼을 탭한 뒤 호박색 또는 파란색 광맥을 탭해 채굴하세요. 건물을 탭하면 행동 패널에서 유닛을 생산할 수 있습니다. 선택 패널에서 이동이나 공격 이동을 고른 뒤 목적지를 탭하세요. 집결지는 생산 건물을 선택하고 땅을 탭해 정합니다. 절약 그래픽은 휴대폰의 렌더링 부담을 줄입니다.",
+    "Context actions:": "상황별 명령:",
+    "activate the matching construction or production tile on the command card (bottom right).": "명령 카드(오른쪽 아래)의 해당 건설 또는 생산 타일을 실행합니다.",
+    "selects a Harvester and opens construction. Select a building with H/J/K before training.": "채굴기를 선택하고 건설 메뉴를 엽니다. 생산하기 전에 H/J/K로 건물을 선택하세요.",
+    "WASD pan": "WASD 이동",
+    "Scroll zoom": "휠 확대",
+    "Right-click command": "오른쪽 클릭 명령",
+    "Work progress; red strip cancels a job": "작업 진행도 · 빨간 띠로 작업 취소",
+    "Harvester needs a completed Command core to deliver cargo.": "채굴기가 자원을 반납하려면 완성된 사령부가 필요합니다.",
+    "Harvesters gather up to 10 resources, deliver them to a completed friendly Command core, then resume gathering. When a deposit runs out, they deliver any remaining cargo and switch to a reachable explored deposit of the same type within 30 world units. Queued orders take priority. If no replacement or completed core is available, a message explains what to do; carried resources are preserved.": "채굴기는 자원을 최대 10까지 모아 완성된 아군 사령부에 반납한 뒤 다시 채굴합니다. 광맥이 고갈되면 남은 자원을 반납하고, 30 거리 단위 안에서 갈 수 있고 탐사된 같은 종류의 광맥으로 옮겨 갑니다. 대기열의 명령이 우선합니다. 대체 광맥이나 완성된 사령부가 없으면 할 일을 알려 주는 메시지가 표시되며, 운반 중인 자원은 유지됩니다.",
+    "Automatically attacks visible enemies in weapon range with a clear line of fire when idle or using Attack-move. Move orders override combat so you can retreat or kite; units do not stop to fire until they arrive or receive another combat order. Attack-move pursues nearby enemies and resumes its route afterward. A direct attack order keeps its chosen target. A normal Move command cancels the current attack; queued Move commands wait their turn. Moving never resets the weapon cooldown.": "대기 중이거나 공격 이동 중일 때 사거리 안에서 사선이 확보된 보이는 적을 자동으로 공격합니다. 이동 명령은 전투보다 우선하므로 후퇴하거나 치고 빠질 수 있습니다. 유닛은 도착하거나 다른 전투 명령을 받기 전까지 멈춰서 사격하지 않습니다. 공격 이동은 근처의 적을 추격한 뒤 원래 경로로 돌아갑니다. 직접 공격 명령은 지정한 대상을 유지합니다. 일반 이동 명령은 현재 공격을 취소하고, 대기열의 이동 명령은 차례를 기다립니다. 이동해도 무기 재사용 대기시간은 초기화되지 않습니다.",
+    "L2: +25% base HP, +25 shield, 1.2× production rate.": "L2: 기본 체력 +25%, 보호막 +25, 생산 속도 1.2×.",
+    "L3: +50% base HP, +50 shield, 1.4× production rate, total.": "L3: 누적 기본 체력 +50%, 보호막 +50, 생산 속도 1.4×.",
+    "Towers gain 50% / 100% base attack and 1 / 2 m range; Relays gain 5 / 10 supply. Supply is capped at 100.": "타워는 기본 공격력 50% / 100%와 사거리 1 / 2 m가 증가하고, 중계소는 보급이 5 / 10 증가합니다. 보급 최대치는 100입니다.",
+    "Command core: L2 costs 200/100; L3 costs 350/175 alloy/energy.": "사령부: L2 비용 200/100, L3 비용 350/175 합금/에너지.",
+    "Other buildings: L2 costs 100/50; L3 costs 200/100.": "기타 건물: L2 비용 100/50, L3 비용 200/100.",
+    "Upgrade time: 20s / 30s.": "업그레이드 시간: 20초 / 30초.",
+    "Use": "사용:",
+    "Support → friendly target": "지원 → 아군 대상",
+    "to follow an ally. Idle helpers automatically assist injured allies in range.": "— 아군을 따라갑니다. 대기 중인 지원 유닛은 범위 안의 다친 아군을 자동으로 돕습니다.",
+    "Verdant Crossing": "초록 나루",
+    "Select soldiers or tanks to patrol.": "정찰할 병사나 전차를 선택하세요.",
+    "Select a Harvester or combat unit to attack.": "공격할 채굴기나 전투 유닛을 선택하세요.",
+    "Select a completed production building first.": "먼저 완성된 생산 건물을 선택하세요.",
+    "Select units first.": "먼저 유닛을 선택하세요.",
+    "Select a Harvester to construct a building.": "건물을 지으려면 채굴기를 선택하세요.",
+    "Click a destination": "목적지 클릭",
+    "Tap your destination": "목적지 탭",
+    "Esc to cancel": "Esc로 취소",
+    "Choose friendly infantry (Medic) or a building / vehicle (Engineer)": "아군 보병(의무병) 또는 건물 / 차량(공병)을 선택하세요",
+    "Context order": "상황별 명령",
+    "Choose a deposit, enemy, construction site or damaged building": "광맥, 적, 건설 부지 또는 손상된 건물을 선택하세요",
+    "Choose a damaged building": "손상된 건물을 선택하세요",
+    "Rally point": "집결지",
+    "Choose ground, or a deposit to send new Harvesters mining": "땅을 선택하거나, 광맥을 선택해 새 채굴기가 채굴하게 하세요",
+    "Choose the other end of a repeating route": "반복 경로의 반대쪽 끝을 선택하세요",
+    "Choose a visible enemy unit or building": "보이는 적 유닛이나 건물을 선택하세요",
+    "Click to build": "클릭해 건설",
+    "Tap a location, then Build here": "위치를 탭한 뒤 '여기에 건설'",
+    "Keep river banks and crossing approaches clear.": "강둑과 도하 지점 진입로에는 건설할 수 없습니다.",
+    "Finish or cancel the building upgrade before training.": "생산하기 전에 건물 업그레이드를 끝내거나 취소하세요.",
+    "Enemy reinforcements are moving to defend an allied base.": "적 증원군이 동맹 기지를 지원하러 이동 중입니다.",
+    "An enemy army is marching on your base.": "적 군대가 기지로 진군 중입니다.",
+    "Order cleared.": "명령을 취소했습니다.",
+    "Scouts report enemy raiders heading for your Harvesters.": "정찰병 보고: 적 습격대가 채굴기를 향하고 있습니다.",
+    "Repair a damaged building (or right-click it) · costs a quarter of its price for a full repair": "손상된 건물 수리(또는 오른쪽 클릭) · 완전 수리 비용은 건설 비용의 사분의 일",
+    "Patrol between two points": "두 지점 사이 정찰",
+    "Attack a chosen enemy": "지정한 적 공격",
+    "Rally point: new units gather here; on a deposit, new Harvesters start mining": "집결지: 새 유닛이 이곳에 모입니다. 광맥에 지정하면 새 채굴기가 채굴을 시작합니다",
+    "Select a Harvester and right-click amber or blue deposits to gather. Select a building to train units; select a Harvester to construct. Click a queued unit to cancel and refund it. Build Supply relays before reaching the population cap.": "채굴기를 선택하고 호박색 또는 파란색 광맥을 오른쪽 클릭해 채굴하세요. 건물을 선택하면 유닛을 생산하고, 채굴기를 선택하면 건설합니다. 대기 중인 유닛을 클릭하면 취소되고 환불됩니다. 인구 한도에 닿기 전에 보급 중계소를 건설하세요.",
+    "Language / Ngôn ngữ": "언어 / Language",
+    "Previous": "이전",
+    "Select your expedition": "원정대 선택",
+    "Start here": "여기서 시작",
+    "Custom battle": "사용자 지정 전투",
+    "Training lessons": "훈련 과정",
+    "Sentinel tower: L2 costs 75/25; L3 costs 150/50.": "센티널 타워: L2 비용 75/25, L3 비용 150/50.",
+    "Paused": "일시정지",
+    "Operation complete": "작전 완료",
+    "Choose your battlefield": "전장 선택",
+    "Operation active": "작전 진행 중",
+    "All systems ready": "모든 시스템 준비 완료",
+    "Initialization failed": "초기화 실패",
+    "Unable to initialize": "초기화할 수 없음",
+    "Select Harvesters to repair a building.": "건물을 수리하려면 채굴기를 선택하세요.",
+    "No matching units or buildings.": "해당하는 유닛이나 건물이 없습니다.",
+    "BUILD: Q Relay · E Barracks · R Foundry · T Tower · Y Core": "건설: Q 중계소 · E 병영 · R 공장 · T 타워 · Y 사령부",
+    "SUPPORT · Choose friendly infantry (Medic) or a building / vehicle (Engineer)": "지원 · 아군 보병(의무병) 또는 건물 / 차량(공병)을 선택하세요",
+    "Rally point on the deposit: new Harvesters start mining.": "광맥에 집결지 설정: 새 채굴기가 채굴을 시작합니다.",
+    "Rally point established.": "집결지를 설정했습니다.",
+    "Medic: select allied infantry. Engineer: select a completed building or vehicle.": "의무병: 아군 보병을 선택하세요. 공병: 완성된 건물이나 차량을 선택하세요.",
+    "Select a unit, or use the Workers and Army buttons.": "유닛을 선택하거나 일꾼 및 군대 버튼을 사용하세요.",
+    "Tap Workers, then tap amber crystals. Drag to pan; pinch to zoom.": "일꾼을 탭한 뒤 호박색 크리스탈을 탭하세요. 드래그로 화면 이동, 핀치로 확대/축소합니다.",
+    "Select Harvesters, then right-click amber crystals to start your economy.": "채굴기를 선택한 뒤 호박색 크리스탈을 오른쪽 클릭해 경제를 시작하세요.",
+    "Drag a box around your units. Tap Box again to return to panning.": "유닛 주위로 사각형을 드래그하세요. 범위 선택을 다시 탭하면 화면 이동으로 돌아갑니다.",
+    "Drag to pan the battlefield.": "드래그해 전장을 이동하세요.",
+    "New commands will be queued.": "새 명령은 대기열에 추가됩니다.",
+    "New commands replace existing orders.": "새 명령이 기존 명령을 대체합니다.",
+    "Eco graphics: reduced resolution and simple shadows.": "절약 그래픽: 해상도를 낮추고 그림자를 단순화합니다.",
+    "High graphics: detailed shadows and higher resolution.": "고품질 그래픽: 정밀한 그림자와 높은 해상도.",
+    "The 3D engine could not start. Enable hardware acceleration and reload in a browser with WebGL 2 support.": "3D 엔진을 시작할 수 없습니다. 하드웨어 가속을 켜고 WebGL 2를 지원하는 브라우저에서 새로고침하세요.",
+    "Check your connection and WebGL support, then reload. All game assets must be served from the built site.": "연결 상태와 WebGL 지원을 확인한 뒤 새로고침하세요. 모든 게임 파일은 빌드된 사이트에서 제공되어야 합니다.",
+    "1 AI": "AI 1",
+    "Minimap: click to pan; right-click to command": "미니맵: 클릭으로 이동, 오른쪽 클릭으로 명령",
+    "3D battlefield. Left-click selects; right-click commands.": "3D 전장. 왼쪽 클릭으로 선택, 오른쪽 클릭으로 명령.",
+    "Frontier Command — Outpost Meridian": "프론티어 커맨드 — 메리디언 전초기지",
+    "Command an expedition, harvest the frontier, and outmaneuver a rival force in this original 3D real-time strategy game.": "원정대를 지휘하고 변경 지대의 자원을 채굴하며 경쟁 세력을 압도하는 오리지널 3D 실시간 전략 게임.",
+    "Graphics were interrupted.": "그래픽이 중단되었습니다.",
+    "Restoring…": "복구 중…",
+    "Retry": "다시 시도",
+    "DOWNLOAD FAILED": "다운로드 실패",
+    "Some game files did not download. Check your connection, then press Retry.": "일부 게임 파일을 받지 못했습니다. 연결을 확인한 뒤 다시 시도를 누르세요.",
+    "Enemy attack incoming!": "적의 공격이 다가옵니다!",
+    "Show FPS": "FPS 표시",
+    "Version": "버전",
+    "Clear the previous mission to unlock": "이전 임무를 완료하면 해금",
+    "Campaign missions": "캠페인 임무",
+    "Continue": "계속",
+    "Skip": "건너뛰기",
+    "Skip scene": "장면 건너뛰기",
+    "Story scene": "스토리 장면",
+    "Next": "다음",
+    "Begin mission": "임무 시작",
+    "Intel": "정보",
+    "Optional": "선택",
+    "Dismiss message": "메시지 닫기",
+    "Comms log": "통신 기록",
+    "No messages yet.": "아직 메시지가 없습니다.",
+    "New objective": "새 목표",
+    "COMPLETE": "완료",
+    "FAILED": "실패",
+    "Gold medal": "금메달",
+    "Silver medal": "은메달",
+    "Bronze medal": "동메달",
+    "MISSION TIME": "임무 시간",
+    "BEST TIME": "최고 기록",
+    "Next mission": "다음 임무",
+    "Every mission cleared. The campaign is complete.": "모든 임무를 완료했습니다. 캠페인이 끝났습니다.",
+    "The saved match could not be loaded and was removed.": "저장된 게임을 불러올 수 없어 삭제했습니다.",
+    "Guard": "경계",
+    "Hold": "위치 사수",
+    "Aggressive": "추격",
+    "Stance": "태세",
+    "Stance: mixed": "태세: 혼합",
+    "Stance: Guard": "태세: 경계",
+    "Stance: Hold": "태세: 위치 사수",
+    "Stance: Hold position": "태세: 위치 사수",
+    "Stance: Aggressive": "태세: 추격",
+    "Guard: answer threats nearby, then return to the post": "경계: 근처의 위협에 대응한 뒤 원래 위치로 복귀",
+    "Hold position: fire from the spot, never chase": "위치 사수: 제자리에서 사격, 추격하지 않음",
+    "Aggressive: chase enemies freely": "추격: 적을 자유롭게 추격",
+    "Select soldiers or tanks to set a stance.": "태세를 정할 병사나 전차를 선택하세요.",
+    "No injured infantry in range.": "범위 안에 다친 보병이 없습니다.",
+    "No damaged vehicle or building in range.": "범위 안에 손상된 차량이나 건물이 없습니다.",
+    "Tap a target inside the ring": "원 안의 대상을 탭하세요",
+    "Click a target inside the ring": "원 안의 대상을 클릭하세요",
+    "Out of range: choose a spot inside the ring": "사거리 밖: 원 안의 지점을 선택하세요",
+    "Auto-cast abilities": "능력 자동 사용",
+    "Your units use their abilities on their own in a fight, as rival armies do.": "적군처럼 아군 유닛도 전투 중 스스로 능력을 사용합니다.",
+    "Off: you give the order from the command card.": "끄면 명령 카드에서 직접 명령합니다.",
+    "Abilities:": "능력:",
+    "use the ability tiles of the selected soldiers and vehicles; Barrage then asks for a target area.": "선택한 병사와 차량의 능력 타일을 사용합니다. 포격은 이어서 목표 지역을 지정합니다.",
+    "Use an ability / set a stance": "능력 사용 / 태세 설정",
+    "Select soldiers, then Actions": "병사 선택 후 행동",
+    "Ford: infantry and vehicles can cross": "여울: 보병과 차량 모두 건널 수 있음",
+    "Bridge: infantry and vehicles can cross": "다리: 보병과 차량 모두 건널 수 있음",
+    "High ground": "고지대",
+    "High ground: +2 m range, +20% damage, +3 m sight": "고지대: 사거리 +2 m, 피해 +20%, 시야 +3 m",
+    "High ground: +2 m range, +20% damage": "고지대: 사거리 +2 m, 피해 +20%",
+    "High ground: your units here shoot farther, hit harder and see farther.": "고지대: 이곳의 아군 유닛은 더 멀리 쏘고, 더 강하게 공격하며, 더 멀리 봅니다.",
+    "Hidden from below": "아래에서 보이지 않음",
+    "Units deep on a plateau can't be seen from below. Enemies must climb the ramp to fight them.": "고원 깊숙한 곳의 유닛은 아래에서 보이지 않습니다. 적이 싸우려면 경사로를 올라와야 합니다.",
+    "Kite scout": "카이트 정찰기",
+    "Air spotter": "공중 정찰기",
+    "Unarmed flyer that sees 18 m and over cliffs: over a plateau it opens the top to your whole side. Reveals hidden units within 8 m. Only Rangers, Anti-tank soldiers and other units that hit air can shoot it. Trained at a level 2 Command core.": "18m 거리까지, 절벽 너머까지 보는 비무장 비행 유닛입니다. 고원 위를 날면 아군 전체에게 고원 위가 드러납니다. 8m 안의 숨은 유닛을 드러냅니다. 레인저, 대전차병 등 공중을 공격할 수 있는 유닛만 격추할 수 있습니다. 레벨 2 사령부에서 생산합니다.",
+    "Hawk gunship": "호크 건십",
+    "Air gunship": "공중 건십",
+    "Meridian. Twin-fan gunship that strafes infantry: 13 damage every 0.7 s at 8 m, a third to enemies within 1.5 m, 1.5× to close assault troops, and it shoots flyers too. Flies over water, walls and cliffs. Rangers and Anti-tank rockets bring it down. Trained at a level 3 Command core.": "메리디언. 보병을 기총 소사하는 쌍발 팬 건십: 사거리 8m, 0.7초마다 피해 13, 1.5m 안의 적에게 삼분의 일, 근접 돌격 부대에게 1.5×, 비행 유닛도 공격합니다. 물, 벽, 절벽 위를 날아갑니다. 레인저와 대전차 로켓으로 격추할 수 있습니다. 레벨 3 사령부에서 생산합니다.",
+    "Ember balloon": "엠버 열기구",
+    "Air bomber": "공중 폭격기",
+    "Ashfall. Slow hot-air bomber: 38 damage every 2.8 s on the ground below, half to enemies within 3 m, 1.5× to buildings. It cannot hit flyers. Rangers and Anti-tank rockets bring it down. Trained at a level 2 Command core.": "애시폴. 느린 열기구 폭격기: 아래 지상에 2.8초마다 피해 38, 3m 안의 적에게 절반, 건물에 1.5×. 비행 유닛은 공격할 수 없습니다. 레인저와 대전차 로켓으로 격추할 수 있습니다. 레벨 2 사령부에서 생산합니다.",
+    "Swift glider": "스위프트 글라이더",
+    "Air raider": "공중 습격기",
+    "Sunward. The fastest thing on the field: 12 damage every 0.9 s at 6 m, double to Harvesters. It cannot hit flyers. Rangers and Anti-tank rockets bring it down. Trained at a level 2 Command core.": "선워드. 전장에서 가장 빠른 유닛: 사거리 6m, 0.9초마다 피해 12, 채굴기에게 두 배. 비행 유닛은 공격할 수 없습니다. 레인저와 대전차 로켓으로 격추할 수 있습니다. 레벨 2 사령부에서 생산합니다.",
+    "Anti-air guns": "대공포",
+    "Command core research, once per match: Sentinel towers can shoot flyers and deal 1.5× damage to them. Needs a level 2 Command core. Costs 125 alloy and 75 energy.": "사령부 연구, 경기당 한 번: 센티널 타워가 비행 유닛을 공격하고 1.5× 피해를 줍니다. 레벨 2 사령부 필요. 비용: 합금 125, 에너지 75.",
+    "Anti-air guns fitted. Sentinel towers now shoot flyers.": "대공포 장착 완료. 이제 센티널 타워가 비행 유닛을 공격합니다.",
+    "Anti-air guns are already researched or queued.": "대공포는 이미 연구했거나 대기열에 있습니다.",
+    "Air: flies over water, walls and cliffs": "공중: 물, 벽, 절벽 위를 비행",
+    "Air": "공중",
+    "Only Rangers, Anti-tank soldiers, other units that hit air, and towers with Anti-air guns can shoot it.": "레인저, 대전차병, 공중 공격 유닛, 대공포를 단 타워만 공격할 수 있습니다.",
+    "Hits air: it can shoot flyers.": "대공: 비행 유닛을 공격할 수 있습니다.",
+    "No anti-air guns: see Command core": "대공포 없음: 사령부 확인",
+    "Research Anti-air guns at a level 2 Command core: every Sentinel tower then shoots flyers.": "레벨 2 사령부에서 대공포를 연구하세요. 그러면 모든 센티널 타워가 비행 유닛을 공격합니다.",
+    "Anti-air guns: shoots flyers": "대공포: 비행 유닛 공격",
+    "Anti-air guns fitted: this tower shoots flyers and deals 1.5× damage to them.": "대공포 장착: 이 타워는 비행 유닛을 공격하고 1.5× 피해를 줍니다.",
+    "Flyers overhead! Towers cannot hit them yet. Train Rangers or Anti-tank soldiers, or research Anti-air guns at the Command core.": "머리 위에 비행 유닛! 타워는 아직 공격할 수 없습니다. 레인저나 대전차병을 생산하거나 사령부에서 대공포를 연구하세요.",
+    "Flyers on the road! Breaker crews cannot hit them. Ranger, Anti-tank and Watcher crews can.": "도로에 비행 유닛! 브레이커 대원은 공격할 수 없습니다. 레인저, 대전차, 감시자 대원은 공격할 수 있습니다.",
+    "Flyers on the road! Breaker crews cannot hit them. Ranger and Anti-tank crews can.": "도로에 비행 유닛! 브레이커 대원은 공격할 수 없습니다. 레인저와 대전차 대원은 공격할 수 있습니다.",
+    "In the ford: -40% speed, no abilities": "여울 안: 속도 -40%, 능력 사용 불가",
+    "In the ford": "여울 안",
+    "Commander's decision": "사령관의 결정",
+    "Your orders": "명령",
+    "The battle waits for your order.": "전투가 명령을 기다립니다.",
+    "Epilogue": "에필로그",
+    "Campaign map": "캠페인 지도",
+    "Chronicle": "연대기",
+    "Main campaign": "메인 캠페인",
+    "Chronicle missions": "연대기 임무",
+    "Chronicle complete. Its lead now speaks at the end of the main campaign.": "연대기 완료. 이제 그 주인공이 메인 캠페인 마지막에 등장해 이야기합니다.",
+    "Close": "닫기",
+    "Merciful": "자비",
+    "Firm": "단호",
+    "Replay the epilogue": "에필로그 다시 보기",
+    "Can't see up there": "위쪽이 보이지 않음",
+    "Can't see up there: send a unit up the ramp first": "위쪽이 보이지 않습니다. 먼저 유닛을 경사로 위로 보내세요",
+    "Plateaus are raised rock reached by ramps. A unit or tower on top gets +2 m range, +20% damage and +3 m sight against targets below; shooting up at it does 15% less damage. A gold ▲ marks units on high ground, and units deep on a plateau stay hidden from below until you climb it.": "고원은 경사로로 오르는 솟은 바위 지형입니다. 위에 있는 유닛이나 타워는 아래 목표에 대해 사거리 +2m, 피해 +20%, 시야 +3m를 얻고, 아래에서 위로 쏘면 피해가 15% 줄어듭니다. 금색 ▲는 고지대의 유닛을 표시하며, 고원 안쪽 깊이 있는 유닛은 직접 올라가기 전까지 아래에서 보이지 않습니다.",
+    "Troop carrier": "병력 수송차",
+    "Wave transport": "웨이브 수송",
+    "Frontier Defence only. An armoured truck that carries a squad down the road and drops it near your line, then drives on empty. Destroy it first and the squad dies with it. Anti-tank crews break it fastest; it costs 2 lives if it gets through.": "프런티어 방어전 전용. 분대를 태우고 도로를 내려와 아군 방어선 근처에 내려놓은 뒤 빈 채로 계속 달리는 장갑 트럭입니다. 먼저 파괴하면 분대도 함께 전멸합니다. 대전차 대원이 가장 빨리 부숩니다. 통과하면 생명 2를 잃습니다.",
+    "Next wave": "다음 웨이브",
+    "Road": "도로",
+    "Ford": "여울",
+    "A carrier is dropping troops!": "수송차가 병력을 내려놓고 있습니다!",
+    "Carrier destroyed with its squad aboard!": "수송차를 탑승 분대와 함께 파괴했습니다!",
+    "Armour: tap to pick the next squad, or to buy one at the depot": "기갑: 탭하여 다음 분대를 고르거나 기지에서 구매",
+    "Armour squads": "기갑 분대",
+    "Armour squad": "기갑 분대",
+    "Armour squad ready. Tap the map to send it.": "기갑 분대 준비 완료. 전장을 탭해 보내세요.",
+    "Armour refitted to full strength.": "기갑 분대가 완전히 재정비되었습니다.",
+    "Zone": "구역",
+    "Build zone": "건설 구역",
+    "Basin field": "분지 들판",
+    "West field": "서쪽 들판",
+    "East field": "동쪽 들판",
+    "South field": "남쪽 들판",
+    "Holding the road": "도로 저지 중",
+    "On guard": "경계 중",
+    "Guard: holds its spot, fires at anything in range, chases a little and comes back": "경계: 자리를 지키며 사거리 안의 적을 공격하고, 조금 추격한 뒤 돌아옵니다",
+    "Hold the road: stands fast and blocks the column, like the commander": "도로 저지: 사령관처럼 버티고 서서 적 행렬을 막습니다",
+    "Hold road": "도로 저지",
+    "New squad": "새 분대",
+    "Squad": "분대",
+    "Tap the map or a road to send the squad. On Guard it comes back to its spot after a chase.": "전장이나 도로를 탭해 분대를 보내세요. 경계 상태에서는 추격 후 제자리로 돌아옵니다.",
+    "Armour depot": "기갑 기지",
+    "Two tanks that go where you send them. They guard that spot on their own, and are refitted after every wave.": "지정한 곳으로 가는 전차 두 대입니다. 그 자리를 스스로 지키며, 웨이브가 끝날 때마다 재정비됩니다.",
+    "Tap a pad, or anywhere in a marked field, then pick a crew. Tap a tower to upgrade or sell it.": "포대 자리나 표시된 들판의 아무 곳을 탭한 뒤 대원을 고르세요. 타워를 탭하면 업그레이드하거나 판매할 수 있습니다.",
+    "Zone spot: a crew can stand here. The road stays clear.": "구역 자리: 대원을 배치할 수 있습니다. 도로는 막히지 않습니다.",
+    "The squad cannot go there.": "분대가 그곳으로 갈 수 없습니다.",
+    "A crew can stand anywhere on the marked field, clear of the road.": "대원은 표시된 들판 어디에나, 도로에서 떨어진 곳에 배치할 수 있습니다.",
+    "Buy a squad of tanks in Actions, then tap the map to send it.": "행동에서 전차 분대를 구매한 뒤 전장을 탭해 보내세요.",
+    "West road": "서쪽 도로",
+    "East road": "동쪽 도로",
+    "North road, west fork": "북쪽 도로, 서쪽 갈래",
+    "North road, east fork": "북쪽 도로, 동쪽 갈래",
+    "Not on open ground.": "빈 땅이 아닙니다.",
+    "Too close to the edge of the map.": "맵 가장자리에 너무 가깝습니다.",
+    "Too close to where the enemy comes in.": "적이 들어오는 곳에 너무 가깝습니다.",
+    "Too close to the road: the column must pass.": "도로에 너무 가깝습니다. 적 행렬이 지나갈 수 있어야 합니다.",
+    "Too close to the exit.": "출구에 너무 가깝습니다.",
+    "Not a build zone.": "건설 구역이 아닙니다.",
+    "Outside the build zone.": "건설 구역 밖입니다.",
+    "Too close to another tower or pad.": "다른 타워나 포대 자리에 너무 가깝습니다.",
+    "Units are standing there.": "그곳에 유닛이 서 있습니다.",
+    "No armour depot here.": "여기에는 기갑 기지가 없습니다.",
+    "The depot is crowded: move the squads off it first.": "기지가 붐빕니다. 먼저 분대를 밖으로 옮기세요.",
+    "Three Roads": "세 갈래 길",
+    "Three Roads Basin": "세 갈래 분지",
+    "Three Roads Basin, below the southern relays": "세 갈래 분지, 남쪽 중계소 아래",
+    "Ashfall columns and Warden machines come down three roads at once, and the north road forks round the basin. Build where you like inside the marked fields and move your armour to the road that needs it.": "애시폴 행렬과 워든 기계가 세 갈래 길로 한꺼번에 내려오고, 북쪽 도로는 분지를 돌아 두 갈래로 나뉩니다. 표시된 들판 안 원하는 곳에 건설하고, 기갑 분대를 필요한 도로로 옮기세요.",
+    "Tap the Armour chip to pick a squad, then tap a road to send it. On Guard it comes back to its spot after a chase.": "기갑 칩을 탭해 분대를 고른 뒤 도로를 탭해 보내세요. 경계 상태에서는 추격 후 제자리로 돌아옵니다.",
+    "Hold the three roads for 10 waves": "세 갈래 길을 10 웨이브 동안 사수",
+    "Build zones": "건설 구역",
+    "Tap a pad or a marked field to crew a tower.": "포대 자리나 표시된 들판을 탭해 타워에 대원을 배치하세요.",
+    "Tap a pad or a marked field, then pick a crew.": "포대 자리나 표시된 들판을 탭한 뒤 대원을 고르세요.",
+    "Harder shots that pass half of a shield.": "보호막을 절반 관통하는 더 강한 사격.",
+    "Shots pass every shield and bite into armour; 1 m more reach.": "사격이 모든 보호막을 관통해 장갑을 파고듭니다. 사거리 1m 증가.",
+    "A stronger, longer slow.": "더 강하고 오래가는 둔화.",
+    "The slow also falls on everyone near the target; more damage.": "둔화가 목표 주변 모두에게도 걸립니다. 피해 증가.",
+    "Wider bursts.": "더 넓은 폭발.",
+    "Wider still, and the blast hits the crowd almost as hard as the target.": "더욱 넓어지고, 폭발이 주변 적에게도 목표와 거의 같은 피해를 줍니다.",
+    "2 m more reach; marks the target: it takes 15% more damage.": "사거리 2m 증가. 목표에 표식: 받는 피해 15% 증가.",
+    "2 m more reach, more damage, a stronger and longer mark.": "사거리 2m 증가, 피해 증가, 더 강하고 오래가는 표식.",
+    "Rockets that hit machines harder.": "기계에 더 강한 로켓.",
+    "Harder still against machines, and more damage.": "기계에 더욱 강하고 피해도 증가.",
+    "Fires in bursts of two.": "두 발씩 연사.",
+    "Bursts of three, a little more damage.": "세 발씩 연사, 피해 약간 증가.",
+    "A stronger mark (35%) that lasts longer.": "더 오래가는 강한 표식(35%).",
+    "The mark spreads to everyone near the target; more damage.": "표식이 목표 주변 모두에게 퍼집니다. 피해 증가.",
+    "Sees 6 m further, 1 m more reach.": "시야 6m 증가, 사거리 1m 증가.",
+    "Harder shots that pass half of a shield; 1 m more reach.": "보호막을 절반 관통하는 더 강한 사격. 사거리 1m 증가.",
+    "Thicker armour, harder against machines.": "더 두꺼운 장갑, 기계에 더 강함.",
+    "Thicker armour again, more damage.": "장갑 추가 강화, 피해 증가.",
+    "Bursts reach 1 m further; thicker armour.": "폭발 범위 1m 증가. 더 두꺼운 장갑.",
+    "Bursts hit harder; thicker armour.": "폭발 피해 증가. 더 두꺼운 장갑.",
+    "The road burns hotter; thicker armour.": "도로가 더 뜨겁게 불탑니다. 더 두꺼운 장갑.",
+    "Hotter fires that last longer; thicker armour.": "더 뜨겁고 오래가는 불길. 더 두꺼운 장갑.",
+    "Fires 1 m wider; thicker armour.": "불길 범위 1m 증가. 더 두꺼운 장갑.",
+    "Fires that last longer, laid more often; thicker armour.": "더 오래가고 더 자주 뿌리는 불길. 더 두꺼운 장갑.",
+    "Rank 2: thicker armour, a little more damage, and the tanks mend between fights.": "2등급: 더 두꺼운 장갑, 피해 약간 증가, 전투 사이에 전차가 스스로 수리됩니다.",
+    "Assault: harder, faster guns, strong against machines and carriers; chases further.": "돌격형: 더 강하고 빠른 포, 기계와 수송차에 강함. 더 멀리 추격합니다.",
+    "Bulwark: much thicker armour and faster mending: holds the road far longer.": "방벽형: 훨씬 두꺼운 장갑과 빠른 자가 수리로 도로를 훨씬 오래 막습니다.",
+    "Rank 2: pick one branch for this squad. It cannot be changed.": "2등급: 이 분대의 분기를 하나 고르세요. 변경할 수 없습니다.",
+    "Rank up": "등급 상승",
+    "Top rank": "최고 등급",
+    "Rank 2": "2등급",
+    "Assault": "돌격형",
+    "Bulwark": "방벽형",
+    "Gunner team": "기관총조",
+    "Line holder": "전선 사수",
+    "Meridian workshop. A two-soldier machine-gun team that holds a line. Its sweeping fire hits enemies within 1.8 m of the target for half damage and pins infantry: a pinned unit moves at half speed, reloads 50% slower and cannot use its ability for 3 seconds, then shrugs it off for 4. Deals 1.6× damage to close-assault units. Rangers, Riders, Drones and vehicles beat it. Trained at the Field workshop.": "메리디언 작업장. 전선을 지키는 두 명이 한 조인 기관총조입니다. 쓸어 내는 사격이 목표 1.8m 안의 적에게 절반 피해를 주고 보병을 제압합니다. 제압된 유닛은 3초 동안 속도가 절반, 재장전이 50% 느려지고 능력을 쓸 수 없으며, 이후 4초 동안 면역됩니다. 근접 돌격 유닛에게 1.6× 피해. 레인저, 라이더, 드론, 차량에 약합니다. 야전 작업장에서 생산합니다.",
+    "Crossfire": "교차 사격",
+    "Pin infantry twice as fast for 6 seconds.": "6초 동안 보병을 두 배 빠르게 제압합니다.",
+    "Gunner team: its fire pins infantry rushes. Pinned units slow down and cannot use abilities. Rangers and vehicles beat it.": "기관총조: 사격으로 보병 돌격을 제압합니다. 제압된 유닛은 느려지고 능력을 쓸 수 없습니다. 레인저와 차량에 약합니다.",
+    "Pinned": "제압됨",
+    "Stalker": "스토커",
+    "Cloaked sniper": "은신 저격수",
+    "Veil. A hidden sniper: 95 damage every 4.5 s from 18 m, but only 0.3× to vehicles and 0.4× to buildings. Shoots Medics, Anti-tank soldiers and Rangers first. Hides again 3 seconds after each shot. Kites within 8 m, towers and Command cores within 9 m, and anything within 4 m reveal it. Fragile up close.": "장막. 숨은 저격수: 18m 거리에서 4.5초마다 피해 95, 단 차량에는 0.3×, 건물에는 0.4×. 의무병, 대전차병, 레인저를 먼저 노립니다. 사격 3초 후 다시 숨습니다. 8m 안의 카이트, 9m 안의 타워와 사령부, 4m 안의 모든 유닛이 정체를 드러냅니다. 근접하면 약합니다.",
+    "Stalker: a hidden sniper that shoots healers and anti-tank teams first. Kites, towers and anything within 4 m reveal it.": "스토커: 치료 유닛과 대전차조를 먼저 노리는 숨은 저격수. 카이트, 타워, 4m 안의 모든 유닛이 정체를 드러냅니다.",
+    "Steady aim": "정밀 조준",
+    "For 8 seconds: 3 m more range, and shots pass through shields.": "8초 동안: 사거리 3m 증가, 사격이 보호막을 관통합니다.",
+    "Iron Sovereign": "강철 소버린",
+    "Siege fortress": "공성 요새",
+    "A six-legged Builder siege fortress. It stomps the strongest tower in reach and stuns it, then fires a three-shell spread: the ground turns red first, so move out. Enough damage during a warning breaks the attack and opens its core. It drops Sentinel drones as its armour cracks, and a leak costs 10 lives.": "건설자의 여섯 다리 공성 요새. 닿는 곳에서 가장 강한 타워를 짓밟아 기절시킨 뒤 포탄 세 발을 흩뿌립니다. 먼저 땅이 붉게 변하니 피하세요. 경고 중에 충분한 피해를 주면 공격이 끊기고 핵이 드러납니다. 장갑이 깨질 때마다 센티널 드론을 떨어뜨리며, 통과하면 생명 10을 잃습니다.",
+    "Field workshop": "야전 작업장",
+    "Meridian signature units": "메리디언 고유 유닛",
+    "Expanded roster. The Meridian Expedition's field workshop trains its signature units. It needs a completed Foundry. Upgrade it to unlock the stronger units.": "확장 편성. 메리디언 원정대의 야전 작업장에서 고유 유닛을 생산합니다. 완성된 공장이 필요합니다. 업그레이드하면 더 강한 유닛이 열립니다.",
+    "Battle rules": "전투 규칙",
+    "Roster": "편성",
+    "Classic": "클래식",
+    "Expanded": "확장",
+    "New": "신규",
+    "Expanded gives every faction a workshop for new signature units.": "확장 편성에서는 모든 세력이 새 고유 유닛을 위한 작업장을 갖습니다.",
+    "AI plan": "AI 작전",
+    "Field command": "야전 지휘",
+    "Field command fields tanks and flyers and defends every core.": "야전 지휘 AI는 전차와 비행 유닛을 투입하고 모든 사령부를 방어합니다.",
+    "Expanded roster": "확장 편성",
+    "Fast-forward off: this device could not keep up.": "빨리 감기 꺼짐: 이 기기가 따라가지 못했습니다.",
+    "Fast-forward is for Frontier Defence.": "빨리 감기는 프런티어 방어전 전용입니다.",
+    "Fast-forward (Defence)": "빨리 감기 (방어전)",
+    "Fast-forward: tap to change the speed (Shift+Space)": "빨리 감기: 탭하여 속도 변경 (Shift+Space)",
+    "Game speed": "게임 속도",
+    "View": "시점",
+    "View: following the wave. Tap for the whole valley.": "시점: 웨이브 추적. 탭하면 계곡 전체를 봅니다.",
+    "View: the whole valley. Tap to move the camera yourself.": "시점: 계곡 전체. 탭하면 카메라를 직접 움직입니다.",
+    "View: free camera. Tap to follow the wave.": "시점: 자유 카메라. 탭하면 웨이브를 추적합니다.",
+    "Following the wave.": "웨이브 추적 중.",
+    "Overview: the whole valley.": "전체 보기: 계곡 전체.",
+    "Free camera.": "자유 카메라.",
+    "Armoured": "장갑",
+    "Flying": "비행",
+    "Cloaked": "은신",
+    "Healer": "치료",
+    "Carrier": "수송차",
+    "Heavy shield": "강화 보호막",
+    "Elite": "정예",
+    "Boss": "보스",
+    "A machine: it shrugs off small arms and shrapnel. Anti-tank and Tank posts hit it hardest.": "기계: 소화기와 파편을 거의 무시합니다. 대전차와 전차 초소가 가장 큰 피해를 줍니다.",
+    "Only crews that hit air can shoot it: Rangers, Anti-tank and Watchers.": "공중 공격 대원만 공격할 수 있습니다: 레인저, 대전차, 감시자.",
+    "Hidden until it is close or fires. A Watcher sees it from further away.": "가까이 오거나 사격하기 전까지 숨어 있습니다. 감시자는 더 멀리서 발견합니다.",
+    "Mends the units around it. Shoot it first or burst the whole group.": "주변 유닛을 치료합니다. 먼저 쏘거나 무리 전체를 폭발로 처리하세요.",
+    "A troop transport: it drops a squad at the end of its road. Destroy it for the squad's bounty.": "병력 수송차: 도로 끝에서 분대를 내려놓습니다. 파괴하면 분대 전체의 현상금을 얻습니다.",
+    "100 or more shield: weak shots are soaked up before the hull is hurt.": "보호막 100 이상: 약한 사격은 차체가 다치기 전에 흡수됩니다.",
+    "A gold elite: much tougher, and worth more alloy.": "금색 정예: 훨씬 단단하고 합금을 더 줍니다.",
+    "A boss: a huge hull and area attacks. Bring everything.": "보스: 거대한 차체와 광역 공격. 전력을 총동원하세요.",
+    "New enemy": "새로운 적",
+    "Best crews": "추천 대원",
+    "Nearest": "가장 가까운",
+    "First": "선두",
+    "Strongest": "가장 강한",
+    "Aim": "조준",
+    "Shoots the nearest enemy.": "가장 가까운 적을 공격합니다.",
+    "Shoots the enemy closest to the exit.": "출구에 가장 가까운 적을 공격합니다.",
+    "Shoots the enemy with the most health.": "체력이 가장 많은 적을 공격합니다.",
+    "Shoots flyers first.": "비행 유닛을 먼저 공격합니다.",
+    "dps": "초당 피해",
+    "m": "m",
+    "vs armour": "장갑 상대",
+    "yes": "예",
+    "no": "아니요",
+    "Box select": "범위 선택",
+    "Queue orders": "명령 예약",
+    "More controls": "추가 조작",
+    "Rampart": "램파트",
+    "Ram tank": "충각 전차",
+    "Ashfall. A welded plough tank that leads a Scrapper swarm head-on: 650 HP and no shield, 34 damage every 1.3 s at 4 m, double to buildings and walls. Shots from the front do 0.6× damage, shots from behind 1.5×, from the side normal: flank it. Ram: charge at double speed for 2.5 seconds, and the first contact deals 80 extra damage. Trained at the Salvage yard.": "애시폴. 스크래퍼 무리를 이끌고 정면 돌파하는 용접 쟁기 전차: 체력 650, 보호막 없음, 사거리 4m에서 1.3초마다 피해 34, 건물과 벽에 두 배. 정면 사격은 0.6× 피해, 후면 사격은 1.5×, 측면은 보통입니다. 측면을 노리세요. 충각: 2.5초 동안 두 배 속도로 돌진하며 첫 충돌 시 추가 피해 80. 고철 야적장에서 생산합니다.",
+    "Rampart: tough from the front, weak from behind. Hit it from the side or rear.": "램파트: 정면은 단단하고 후면은 약합니다. 측면이나 후면을 공격하세요.",
+    "Ram": "충각",
+    "Charge at double speed for 2.5 seconds; the first hit deals 80 extra damage.": "2.5초 동안 두 배 속도로 돌진합니다. 첫 타격 시 추가 피해 80.",
+    "Expanded roster: Outrider drill": "확장 편성: 기동 정찰 훈련",
+    "Facing armour": "방향별 장갑",
+    "Heroic": "영웅",
+    "Elite waves": "정예 웨이브",
+    "Start Heroic": "영웅 시작",
+    "Locked": "잠김",
+    "Locked: clear the level first": "잠김: 먼저 이 단계를 클리어하세요",
+    "Clear this level once to open its Heroic challenge: six hard waves, gold elites with affixes, and an all-elite finale. +1 star.": "이 단계를 한 번 클리어하면 영웅 도전이 열립니다: 어려운 웨이브 여섯 개, 특성을 지닌 금색 정예, 정예로만 이루어진 마지막 웨이브. 별 +1.",
+    "Heroic: six hard waves. Gold-ringed elites carry an affix, and the last wave is all elite. Five lives and a fixed stock of alloy.": "영웅: 어려운 웨이브 여섯 개. 금테 정예는 특성을 하나씩 지니며, 마지막 웨이브는 전원 정예입니다. 생명 다섯과 고정된 합금으로 싸웁니다.",
+    "Read the chip on the wave strip: each affix has a crew that answers it.": "웨이브 바의 칩을 확인하세요. 특성마다 맞서기 좋은 대원이 있습니다.",
+    "Hold the Heroic 6 waves": "영웅 웨이브 6개 사수",
+    "DEFENCE · HEROIC": "방어전 · 영웅",
+    "Heroic cleared": "영웅 클리어",
+    "Heroic open": "영웅 열림",
+    "Heroic locked": "영웅 잠김",
+    "Heroic cleared again": "영웅 재클리어",
+    "Heroic cleared: +1 star": "영웅 클리어: 별 +1",
+    "The elites broke the line": "정예가 방어선을 돌파했습니다",
+    "Plated": "중장갑",
+    "Swift": "신속",
+    "Splitter": "분열",
+    "Volatile": "폭발성",
+    "Banner": "깃발",
+    "Mender": "치유",
+    "Elite: shield x2.5 that comes back 2 s after a hit. Pierce ranks and Anti-tank answer it.": "정예: 보호막 x2.5, 피격 2초 후 회복. 관통 단계와 대전차로 대응하세요.",
+    "Elite: 35% faster but frail. A Suppressor's slow answers it.": "정예: 35% 빠르지만 허약함. 제압형의 둔화로 대응하세요.",
+    "Elite: two more walk on from where it falls. Cluster splash answers it.": "정예: 쓰러진 자리에서 두 기가 더 나옵니다. 집속탄 범위 피해로 대응하세요.",
+    "Elite: explodes when it dies, hurting towers within 2.5 m. Range and Rim pads answer it.": "정예: 죽을 때 폭발해 2.5m 안의 타워에 피해를 줍니다. 긴 사거리와 가장자리 자리로 대응하세요.",
+    "Elite: allies within 7 m take 20% less damage. Kill it first with a Marksman.": "정예: 7m 안의 아군이 받는 피해 20% 감소. 명사수로 먼저 처치하세요.",
+    "Elite: heals allies within 7 m every 6 s. A Barrage answers it.": "정예: 6초마다 7m 안의 아군을 치료합니다. 포격으로 대응하세요.",
+    "Damage numbers": "피해 수치",
+    "Bosses & Defence": "보스 & 방어전",
+    "All": "전체",
+    "REAR": "후면",
+    "PINNED": "제압됨",
+    "PIERCE": "관통",
+    "destroyed": "파괴됨",
+    "Skip guide": "안내 건너뛰기",
+    "Step": "단계",
+    "of 3": "/ 3",
+    "Tap the glowing pad beside the road.": "도로 옆의 빛나는 포대 자리를 탭하세요.",
+    "Pick a crew for it. Rangers are a good first tower.": "배치할 대원을 고르세요. 첫 타워로는 레인저가 좋습니다.",
+    "Call the wave when you are ready: calling early pays bonus alloy.": "준비되면 웨이브를 호출하세요. 일찍 호출하면 보너스 합금을 받습니다.",
+    "Guide skipped. Tap a pad beside the road, then pick a crew.": "안내를 건너뛰었습니다. 도로 옆 포대 자리를 탭한 뒤 대원을 고르세요.",
+    "Your first tower stands and the wave is coming. Hold the road!": "첫 타워가 섰고 웨이브가 다가옵니다. 도로를 사수하세요!",
+    "Your first tower": "첫 타워",
+    "Tap the glowing pad beside the road, then pick a crew.": "도로 옆의 빛나는 포대 자리를 탭한 뒤 대원을 고르세요.",
+    "Show the panel": "패널 표시",
+    "Hide the panel": "패널 숨기기",
+    "Next star": "다음 별",
+    "Counter it with": "대응 수단",
+    "All three stars. Next: the Heroic challenge, for one more star.": "별 세 개 모두 획득. 다음: 영웅 도전으로 별 하나 더.",
+    "All three stars. Next: clear it on Veteran.": "별 세 개 모두 획득. 다음: 베테랑 난이도로 클리어.",
+    "Take one tower to gold tier 3: it hits far harder and opens a branch.": "타워 하나를 금색 3단계로 올리세요. 훨씬 강해지고 분기가 열립니다.",
+    "Crew a rim pad: 2 m more reach and harder hits.": "가장자리 자리에 대원 배치: 사거리 2m 증가, 더 강한 공격.",
+    "Call a wave early only once your towers are upgraded.": "타워를 업그레이드한 뒤에만 웨이브를 일찍 호출하세요.",
+    "Group pace": "대열 속도",
+    "A group you move keeps together at its fighters' pace, with Medics and Engineers walking behind them. Off: every unit walks at its own speed.": "이동시킨 부대가 전투 유닛의 속도에 맞춰 함께 움직이고, 의무병과 공병은 뒤따릅니다. 끄면 모든 유닛이 각자 속도로 이동합니다.",
+    "Army size": "군대 규모",
+    "The supply cap for every side. 200 is for desktop only.": "모든 진영의 보급 한도. 200은 데스크톱 전용입니다.",
+    "Combined": "복합형",
+    "Combined: adds the other branch, so the squad has both; it holds within 9 m of its spot.": "복합형: 다른 분기도 추가해 분대가 둘 다 갖습니다. 제자리 9m 안에서 버팁니다.",
+    "Combined adds the other branch to this squad.": "복합형은 이 분대에 다른 분기를 추가합니다.",
+    "Recruits arrive as veterans": "신병이 베테랑으로 합류",
+    "Level 3: recruits arrive as veterans": "레벨 3: 신병이 베테랑으로 합류",
+    "War for the Meridian Frontier": "메리디언 변경 전쟁",
+    "Command uplink": "지휘 통신망",
+    "Frostline Reach": "서리선 지대",
+    "Contested": "교전 중",
+    "Under siege": "포위됨",
+    "Enemy held": "적 점령",
+    "Scouted": "정찰됨",
+    "Ahead": "예정",
+    "OVERDRIVE": "오버드라이브",
+    "RELAY SHIELD": "중계소 보호막",
+    "Phase 2: overdrive": "2단계: 오버드라이브",
+    "It walks on Meridian's line": "메리디언 방어선으로 진군 중",
+    "Walking siege fortress": "보행 공성 요새",
+    "The Iron Sovereign, refitted to walk. It marches on your Command core and stops to fight whatever stands in its way. Ashfall relays shield it: while one stands it takes a fraction of the damage, so break them first. At half health it plants itself, sheds two Sentinel drones and switches to a rail sweep and a five-shell barrage; the ground still turns red first.": "걸을 수 있도록 개조된 강철 소버린. 사령부를 향해 진군하며 길을 막는 것은 무엇이든 멈춰 서서 공격합니다. 애시폴 중계소가 보호막을 씌웁니다. 중계소가 하나라도 남아 있으면 피해를 일부만 받으니 먼저 파괴하세요. 체력이 절반이 되면 자리를 잡고 센티널 드론 두 기를 떨어뜨린 뒤 레일 소사와 포탄 다섯 발 포격으로 바꿉니다. 이때도 먼저 땅이 붉게 변합니다.",
+    "MVP": "MVP",
+    "damage": "피해",
+    "healing": "치료",
+    "kill": "처치",
+    "kills": "처치",
+    "Held the line": "방어선 사수",
+    "So close.": "아깝습니다.",
+    "Tip": "팁",
+    "The fight was close.": "접전이었습니다.",
+    "Train Harvesters early: eight or more keep the army coming.": "채굴기를 일찍 생산하세요. 여덟 대 이상이면 병력이 끊기지 않습니다.",
+    "Keep the Command core and a Barracks producing all match.": "경기 내내 사령부와 병영의 생산을 멈추지 마세요.",
+    "Gather the army before you attack and fight together, not one by one.": "공격 전에 군대를 모아 하나씩이 아니라 함께 싸우세요.",
+    "Keep a few units at home, or build a Tower beside the Command core.": "기지에 유닛 몇을 남겨 두거나 사령부 옆에 타워를 건설하세요.",
+    "Research weapons and plating at the Foundry: upgrades win even fights.": "공장에서 무기와 장갑을 연구하세요. 업그레이드가 대등한 싸움을 승리로 이끕니다."
+  },
+  "patterns": [
+    [
+      "^(\\d{1,2}) Jan$",
+      "1월 {1}일"
+    ],
+    [
+      "^(\\d{1,2}) Feb$",
+      "2월 {1}일"
+    ],
+    [
+      "^(\\d{1,2}) Mar$",
+      "3월 {1}일"
+    ],
+    [
+      "^(\\d{1,2}) Apr$",
+      "4월 {1}일"
+    ],
+    [
+      "^(\\d{1,2}) May$",
+      "5월 {1}일"
+    ],
+    [
+      "^(\\d{1,2}) Jun$",
+      "6월 {1}일"
+    ],
+    [
+      "^(\\d{1,2}) Jul$",
+      "7월 {1}일"
+    ],
+    [
+      "^(\\d{1,2}) Aug$",
+      "8월 {1}일"
+    ],
+    [
+      "^(\\d{1,2}) Sep$",
+      "9월 {1}일"
+    ],
+    [
+      "^(\\d{1,2}) Oct$",
+      "10월 {1}일"
+    ],
+    [
+      "^(\\d{1,2}) Nov$",
+      "11월 {1}일"
+    ],
+    [
+      "^(\\d{1,2}) Dec$",
+      "12월 {1}일"
+    ],
+    [
+      "^RANK (\\d+) / (\\d+)$",
+      "순위 {1} / {2}"
+    ],
+    [
+      "^Rank (\\d+), (\\d+ alloy)$",
+      "등급 {1}, {2}"
+    ],
+    [
+      "^Rank (\\d+): (.+)$",
+      "등급 {1}: {2}"
+    ],
+    [
+      "^Next rank: (.+)$",
+      "다음 등급: {1}"
+    ],
+    [
+      "^New squad: (\\d+) tanks at the depot$",
+      "새 분대: 차량 기지에 전차 {1}대"
+    ],
+    [
+      "^This zone holds (\\d+) towers\\.$",
+      "이 구역에는 타워를 최대 {1}개 세울 수 있습니다."
+    ],
+    [
+      "^All (\\d+) armour squads are in the field\\.$",
+      "기갑 분대 {1}개가 모두 출전했습니다."
+    ],
+    [
+      "^Defence · (.+)$",
+      "방어전 · {1}"
+    ],
+    [
+      "^Endless · (.+)$",
+      "무한 · {1}"
+    ],
+    [
+      "^Daily · (.+)$",
+      "일일 · {1}"
+    ],
+    [
+      "^Best: (\\d+) waves held$",
+      "최고 기록: 웨이브 {1}개 방어"
+    ],
+    [
+      "^Best: (\\d+)$",
+      "최고 기록: {1}"
+    ],
+    [
+      "^(\\d+) waves held$",
+      "웨이브 {1}개 방어"
+    ],
+    [
+      "^Buy (.+) for (\\d+) stars$",
+      "별 {2}개로 {1} 구매"
+    ],
+    [
+      "^(.+): owned$",
+      "{1}: 보유 중"
+    ],
+    [
+      "^The charge goes off in (\\d+) s\\. Anyone on the bridge is thrown to the bank\\.$",
+      "{1}초 후 폭약이 터집니다. 다리 위에 있으면 강둑으로 튕겨 나갑니다."
+    ],
+    [
+      "^Bridge builders at work: pontoon (\\d+)% done\\.$",
+      "다리 건설 중: 부교 {1}% 완료."
+    ],
+    [
+      "^Barrage: shell a spot within (\\d+) m, (\\d+) damage over ([\\d.]+) m$",
+      "포격: {1} m 안의 지점을 포격, {3} m 범위에 피해 {2}"
+    ],
+    [
+      "^Reinforce: three Vanguards hold the road for (\\d+) s$",
+      "증원: 선봉대 셋이 {1}초 동안 길을 지킵니다"
+    ],
+    [
+      "^(\\d+) lives$",
+      "생명 {1}"
+    ],
+    [
+      "^(\\d+) waves$",
+      "웨이브 {1}개"
+    ],
+    [
+      "^(\\d+) of 3 stars$",
+      "별 3개 중 {1}개"
+    ],
+    [
+      "^tier (\\d+)$",
+      "{1}단계"
+    ],
+    [
+      "^TIER (\\d+) / 3$",
+      "단계 {1} / 3"
+    ],
+    [
+      "^Upgrade to tier (\\d+), (\\d+ alloy)$",
+      "{1}단계로 업그레이드, {2}"
+    ],
+    [
+      "^Tier (\\d+): (\\d+) damage, (\\d+) m$",
+      "{1}단계: 피해 {2}, {3} m"
+    ],
+    [
+      "^Sell for (\\d+ alloy)$",
+      "판매: {1}"
+    ],
+    [
+      "^Sell: (\\d+) alloy back$",
+      "판매: 합금 {1} 환급"
+    ],
+    [
+      "^DEFENCE · LEVEL (\\d+) / (\\d+)$",
+      "방어전 · 레벨 {1} / {2}"
+    ],
+    [
+      "^DEFENCE · LEVEL (\\d+) · HELD$",
+      "방어전 · 레벨 {1} · 방어 성공"
+    ],
+    [
+      "^DEFENCE · LEVEL (\\d+) · BROKEN$",
+      "방어전 · 레벨 {1} · 방어 실패"
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to melee infantry\\.$",
+      "근접 보병에게 {1}× 피해를 줍니다."
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to ranged infantry\\.$",
+      "원거리 보병에게 {1}× 피해를 줍니다."
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to siege units\\.$",
+      "공성 유닛에게 {1}× 피해를 줍니다."
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to armored units\\.$",
+      "기갑 유닛에게 {1}× 피해를 줍니다."
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to antiarmor infantry\\.$",
+      "대전차 보병에게 {1}× 피해를 줍니다."
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to support units\\.$",
+      "지원 유닛에게 {1}× 피해를 줍니다."
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to workers\\.$",
+      "일꾼에게 {1}× 피해를 줍니다."
+    ],
+    [
+      "^Finish within (\\d+) seconds$",
+      "{1}초 안에 완료"
+    ],
+    [
+      "^(Ashfall|Sunward|Wardens|Veil) command is online\\. Assign Harvesters to the amber alloy deposits\\.$",
+      "{1} 사령부 가동. 채굴기를 호박색 합금 광맥에 배치하세요."
+    ],
+    [
+      "^Enemy command has been eliminated\\. (Ashfall|Sunward|Wardens|Veil) command holds the valley\\.$",
+      "적 사령부를 제거했습니다. {1} 사령부가 계곡을 장악했습니다."
+    ],
+    [
+      "^(.+) counters your (.+)\\. Pull them back and bring (.+)\\.$",
+      "{1}이(가) 아군 {2}에게 유리합니다. {2}을(를) 후퇴시키고 {3}을(를) 투입하세요."
+    ],
+    [
+      "^(.+) counters your (.+)\\. Pull them back\\.$",
+      "{1}이(가) 아군 {2}에게 유리합니다. {2}을(를) 후퇴시키세요."
+    ],
+    [
+      "^Your (.+) counters (.+)\\. Let it lead the fight\\.$",
+      "아군 {1}이(가) {2}에게 유리합니다. {1}이(가) 전투를 이끌게 하세요."
+    ],
+    [
+      "^Your (.+) beats (.+)$",
+      "아군 {1}이(가) {2}에게 유리"
+    ],
+    [
+      "^(.+) beats (.+): use (.+)$",
+      "{1}이(가) {2}에게 유리: {3} 투입"
+    ],
+    [
+      "^(.+) beats (.+): pull back$",
+      "{1}이(가) {2}에게 유리: 후퇴"
+    ],
+    [
+      "^(.+) is ready on your (.+)\\. Select it and press ([A-Z]): (.+)$",
+      "{2}의 {1} 준비 완료. {2}을(를) 선택하고 {3} 키: {4}"
+    ],
+    [
+      "^(.+) is ready on your (.+)\\. Select it and tap its tile: (.+)$",
+      "{2}의 {1} 준비 완료. {2}을(를) 선택하고 기술 타일을 누르세요: {3}"
+    ],
+    [
+      "^(.+) is ready\\. Press ([A-Z]): (.+)$",
+      "{1} 준비 완료. {2} 키: {3}"
+    ],
+    [
+      "^(.+) is ready\\. Tap its tile: (.+)$",
+      "{1} 준비 완료. 기술 타일을 누르세요: {2}"
+    ],
+    [
+      "^PLACE (.+)$",
+      "{1} 배치"
+    ],
+    [
+      "^Joint offensive: (\\d+) enemy armies are attacking you from different sides!$",
+      "합동 공세: 적 군대 {1}개가 공격 중!"
+    ],
+    [
+      "^Place (.+): (.+)$",
+      "{1} 배치: {2}"
+    ],
+    [
+      "^(.+) has reached level (\\d+)\\.$",
+      "{1}이(가) 레벨 {2}에 도달했습니다."
+    ],
+    [
+      "^Training (\\d+)\\s*/\\s*(\\d+)$",
+      "훈련 {1}/{2}"
+    ],
+    [
+      "^Build (.+) before building (.+)\\.$",
+      "{2}을(를) 건설하려면 먼저 {1}을(를) 건설해야 합니다."
+    ],
+    [
+      "^Finish building (.+) before building (.+)\\.$",
+      "{2}을(를) 건설하려면 먼저 {1}을(를) 완공하세요."
+    ],
+    [
+      "^([^.]+?) cleared\\.$",
+      "{1} 클리어."
+    ],
+    [
+      "^Next: Stage (\\d+) · (.+?), (\\d+ AIs?.*)\\.$",
+      "다음: 스테이지 {1} · {2}, {3}."
+    ],
+    [
+      "^Control group (\\d+) assigned\\.$",
+      "부대 {1} 지정됨."
+    ],
+    [
+      "^Control group (\\d+) extended\\.$",
+      "부대 {1}에 추가됨."
+    ],
+    [
+      "^(.+?) · (\\d+) remaining\\. Select Harvesters to gather\\.$",
+      "{1} · {2} 남음. 채굴기를 선택해 채굴하세요."
+    ],
+    [
+      "^Group (\\d+) · (\\d+) units? — click or press (\\d+) to recall, Ctrl-click to save, Shift-click to add$",
+      "부대 {1} · 유닛 {2} — 클릭 또는 {3} 키로 호출, Ctrl-클릭으로 저장, Shift-클릭으로 추가"
+    ],
+    [
+      "^(\\d+) AIs?$",
+      "AI {1}명"
+    ],
+    [
+      "^(\\d+) AIs? allied$",
+      "AI {1}명 연합"
+    ],
+    [
+      "^(\\d+) AIs? FFA$",
+      "AI {1}명 개인전"
+    ],
+    [
+      "^Next: (.+)$",
+      "다음: {1}"
+    ],
+    [
+      "^([\\d.]+) per hit · every ([\\d.]+)s · range ([\\d.]+)$",
+      "타격당 {1} · {2}초마다 · 사거리 {3}"
+    ],
+    [
+      "^([\\d.]+) · cannot attack$",
+      "{1} · 공격 불가"
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to mechanical units: ([\\d.]+) per hit before weapon research\\.$",
+      "기계 유닛에게 {1}× 피해: 무기 연구 전 타격당 {2}."
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to (.+?)s?\\.$",
+      "{2}에게 {1}× 피해를 줍니다."
+    ],
+    [
+      "^Splash: enemies within ([\\d.]+) m of the target take (\\d+)% damage\\.$",
+      "범위 피해: 대상 주변 {1} m 안의 적이 {2}% 피해를 받습니다."
+    ],
+    [
+      "^Restores (\\d+) HP each second within range ([\\d.]+)\\. Requires a clear line\\. No resource cost\\. Does not refill shields, heal itself, finish construction or revive casualties\\.$",
+      "사거리 {2} 안에서 매초 체력 {1} 회복. 시야가 트여 있어야 합니다. 자원 소모 없음. 보호막 충전, 자가 치료, 건설 완료, 사상자 부활은 불가합니다."
+    ],
+    [
+      "^These stages occur within any of the (\\d+) skirmish maps; they are not separate campaign missions\\. Select 1-3 AI enemies in the briefing\\. Multiple enemies fight free-for-all\\. A faction loses all remaining forces and production when its last Command core is destroyed\\.$",
+      "이 스테이지는 교전 지도 {1}개 중 어디서나 진행되며, 별도의 캠페인 임무가 아닙니다. 브리핑에서 AI 적을 1–3명 선택하세요. 적이 여럿이면 개인전으로 싸웁니다. 마지막 사령부가 파괴된 진영은 남은 병력과 생산을 모두 잃습니다."
+    ],
+    [
+      "^Start stage (\\d+)$",
+      "스테이지 {1} 시작"
+    ],
+    [
+      "^Stage (\\d+) · (.+)$",
+      "스테이지 {1} · {2}"
+    ],
+    [
+      "^CAMPAIGN · STAGE (\\d+) / (\\d+)$",
+      "캠페인 · 스테이지 {1} / {2}"
+    ],
+    [
+      "^(\\d+) AI enem(?:y|ies)$",
+      "AI 적 {1}명"
+    ],
+    [
+      "^(Relaxed|Normal|Fast|Relentless) AI$",
+      "AI 난이도 {1}"
+    ],
+    [
+      "^(Relaxed|Normal|Fast|Relentless) speed$",
+      "속도 {1}"
+    ],
+    [
+      "^Destroy enemy cores: (\\d+) rivals? remain(?:s)?$",
+      "적 사령부 파괴: 남은 적 {1}"
+    ],
+    [
+      "^(\\d+) (?:units selected|UNITS SELECTED|SELECTED)$",
+      "유닛 {1}개 선택됨"
+    ],
+    [
+      "^(\\d+) AVAILABLE$",
+      "{1}개 선택 가능"
+    ],
+    [
+      "^LEVEL (\\d+)$",
+      "레벨 {1}"
+    ],
+    [
+      "^(\\d+) stages$",
+      "스테이지 {1}개"
+    ],
+    [
+      "^Your (mint|coral|blue|cyan|gold|orange|violet|rose|ivory)$",
+      "아군: {1}"
+    ],
+    [
+      "^Enemy (mint|coral|blue|cyan|gold|orange|violet|rose|ivory)$",
+      "적군: {1}"
+    ],
+    [
+      "^Upgrade L(\\d+)$",
+      "L{1} 업그레이드"
+    ],
+    [
+      "^Upgrade to L(\\d+)$",
+      "레벨 {1} 업그레이드"
+    ],
+    [
+      "^Researching (\\d+)%$",
+      "연구 중 {1}%"
+    ],
+    [
+      "^Needs (.+) L(\\d+)$",
+      "{1} L{2} 필요"
+    ],
+    [
+      "^\\+(\\d+)% at (.+) L(\\d+)$",
+      "{2} L{3}에서 +{1}%"
+    ],
+    [
+      "^Needs L(\\d+)$",
+      "L{1} 필요"
+    ],
+    [
+      "^\\+(\\d+)% at L(\\d+)$",
+      "L{2}에서 +{1}%"
+    ],
+    [
+      "^Upgrade building to level (\\d+)$",
+      "건물 레벨 {1} 업그레이드"
+    ],
+    [
+      "^(.+) · L(\\d+)$",
+      "{1} · 레벨 {2}"
+    ],
+    [
+      "^Cargo (\\d+)/10 (alloy|energy)$",
+      "적재 {1}/10 {2}"
+    ],
+    [
+      "^Health (\\d+) of (\\d+)$",
+      "체력 {1} / {2}"
+    ],
+    [
+      "^Shield (\\d+) of (\\d+)$",
+      "보호막 {1} / {2}"
+    ],
+    [
+      "^Cost: (.+)$",
+      "비용: {1}"
+    ],
+    [
+      "^(\\d+) alloy$",
+      "합금 {1}"
+    ],
+    [
+      "^(\\d+) energy$",
+      "에너지 {1}"
+    ],
+    [
+      "^(\\d+ alloy) and (\\d+ energy)$",
+      "{1} 및 {2}"
+    ],
+    [
+      "^Need (.+) more to build (.+)\\. Assign Harvesters to deposits\\.$",
+      "{2}을(를) 건설하려면 {1}이(가) 더 필요합니다. 채굴기를 광맥에 배치하세요."
+    ],
+    [
+      "^Need (.+) more to train/research (.+)\\.$",
+      "{2}을(를) 생산/연구하려면 {1}이(가) 더 필요합니다."
+    ],
+    [
+      "^Need (.+) more to upgrade (.+)\\.$",
+      "{2}을(를) 업그레이드하려면 {1}이(가) 더 필요합니다."
+    ],
+    [
+      "^Need (.+) more to keep repairing (.+)\\.$",
+      "{2} 수리를 계속하려면 {1}이(가) 더 필요합니다."
+    ],
+    [
+      "^Need (.+) (?:more )?to build (.+)\\.$",
+      "{2}을(를) 건설하려면 {1}이(가) 더 필요합니다."
+    ],
+    [
+      "^Need (.+) more\\.?$",
+      "{1}이(가) 더 필요합니다."
+    ],
+    [
+      "^Requires a completed (.+)\\.$",
+      "완성된 {1}이(가) 필요합니다."
+    ],
+    [
+      "^Upgrade (.+) to level (\\d+) to train (.+)\\.$",
+      "{3}을(를) 훈련하려면 {1}을(를) 레벨 {2}(으)로 업그레이드하세요."
+    ],
+    [
+      "^Upgrade a Command core to level (\\d+) first\\.$",
+      "먼저 사령부를 레벨 {1}(으)로 업그레이드하세요."
+    ],
+    [
+      "^(.+) (queued|ready|repaired)\\.$",
+      "{1}: {2}"
+    ],
+    [
+      "^(.+) construction started\\.$",
+      "{1} 건설 시작."
+    ],
+    [
+      "^(.+) is operational\\.$",
+      "{1} 가동 시작."
+    ],
+    [
+      "^(.+) upgrading to level (\\d+)\\.$",
+      "{1} 레벨 {2}(으)로 업그레이드 중."
+    ],
+    [
+      "^(.+) reached level (\\d+)\\.$",
+      "{1} 레벨 {2} 도달."
+    ],
+    [
+      "^(.+) cannot attack\\. Use Support on a friendly target\\.$",
+      "{1}은(는) 공격할 수 없습니다. 아군 대상에게 지원을 사용하세요."
+    ],
+    [
+      "^(.+) cannot reach its destination\\. Order cleared\\.$",
+      "{1}이(가) 목적지에 도달할 수 없습니다. 명령 취소됨."
+    ],
+    [
+      "^(.+) has no clear line of fire on that target\\. Order cleared\\.$",
+      "{1}: 해당 대상에 대한 사선이 막혀 있습니다. 명령 취소됨."
+    ],
+    [
+      "^No reachable nearby (.+) deposit\\. Assign this Harvester to another deposit\\.$",
+      "근처에 도달 가능한 {1} 광맥이 없습니다. 이 채굴기를 다른 광맥에 배치하세요."
+    ],
+    [
+      "^Enemy (\\d+) eliminated: all Command cores destroyed\\.$",
+      "적 {1} 제거: 모든 사령부 파괴."
+    ],
+    [
+      "^Cancel ([^,]+), queue item (\\d+), (\\d+)%, (full refund|75% refund)(, )?(.*)$",
+      "{1} 취소, 대기열 {2}번, {3}%, {4}{5}{6}"
+    ],
+    [
+      "^Cancel ([^,]+), (\\d+)%, (full refund|75% refund)(, )?(.*)$",
+      "{1} 취소, {2}%, {3}{4}{5}"
+    ],
+    [
+      "^Cancel (.+) #(\\d+) · refund$",
+      "{1} #{2} 취소 · 환급"
+    ],
+    [
+      "^Requires level (\\d+) (.+)\\.$",
+      "{2} 레벨 {1} 필요."
+    ],
+    [
+      "^Provides (\\d+) supply at level 1\\.$",
+      "레벨 1에서 보급 {1} 제공."
+    ],
+    [
+      "^(.+): (\\d+) alloy / (\\d+) energy$",
+      "{1}: 합금 {2} / 에너지 {3}"
+    ],
+    [
+      "^(.+) · level (\\d+)$",
+      "{1} · 레벨 {2}"
+    ],
+    [
+      "^(.+) \\[([^\\]]+)\\]$",
+      "{1} [{2}]"
+    ],
+    [
+      "^Control group (\\d+)$",
+      "부대 {1}"
+    ],
+    [
+      "^Group (\\d+): click to recall, Ctrl-click to save the selection, Shift-click to add it$",
+      "부대 {1}: 클릭으로 호출, Ctrl-클릭으로 선택 저장, Shift-클릭으로 추가"
+    ],
+    [
+      "^ALLOY (\\d+)   ENERGY (\\d+)   CREW (\\d+) \\+ (\\d+) / (\\d+)$",
+      "합금 {1}   에너지 {2}   인구 {3} + {4} / {5}"
+    ],
+    [
+      "^Idle workers: (\\d+)$",
+      "유휴 일꾼: {1}"
+    ],
+    [
+      "^Command core technology (\\d+) / (\\d+)$",
+      "사령부 기술 {1} / {2}"
+    ],
+    [
+      "^(.+), (\\d+ alloy(?: and \\d+ energy)?)$",
+      "{1}, 비용 {2}"
+    ],
+    [
+      "^Tech (\\d+) / 3$",
+      "기술 {1} / 3"
+    ],
+    [
+      "^Training (\\d+) / (\\d+)(.*)$",
+      "훈련 {1} / {2}{3}"
+    ],
+    [
+      "^Loading (.+)… (\\d+)%$",
+      "{1} 불러오는 중… {2}%"
+    ],
+    [
+      "^Loading (\\d+) of (\\d+)…$",
+      "불러오는 중 {1}/{2}…"
+    ],
+    [
+      "^Start mission (\\d+)$",
+      "임무 {1} 시작"
+    ],
+    [
+      "^Mission (\\d+) · (.+)$",
+      "임무 {1} · {2}"
+    ],
+    [
+      "^CAMPAIGN · MISSION (\\d+) / (\\d+)$",
+      "캠페인 · 임무 {1} / {2}"
+    ],
+    [
+      "^MISSION (\\d+)$",
+      "임무 {1}"
+    ],
+    [
+      "^(\\d+) missions$",
+      "임무 {1}개"
+    ],
+    [
+      "^ACT (\\d+)$",
+      "제{1}막"
+    ],
+    [
+      "^(\\d+) / (\\d+) relays lit$",
+      "중계소 {1} / {2} 점등"
+    ],
+    [
+      "^Clear (.+) to unlock$",
+      "{1} 완료 시 해금"
+    ],
+    [
+      "^(\\d+) of (\\d+) cleared$",
+      "{2}개 중 {1}개 완료"
+    ],
+    [
+      "^(\\d+) more in Comms log$",
+      "통신 기록에 {1}개 더"
+    ],
+    [
+      "^(\\d+) more$",
+      "{1}개 더"
+    ],
+    [
+      "^(\\d+)/(\\d+) held$",
+      "{1}/{2} 확보"
+    ],
+    [
+      "^(\\d+)/(\\d+) arrived$",
+      "{1}/{2} 도착"
+    ],
+    [
+      "^(\\d+:\\d+) left$",
+      "{1} 남음"
+    ],
+    [
+      "^(\\d+) left$",
+      "{1} 남음"
+    ],
+    [
+      "^(.+) taken by the enemy$",
+      "{1}: 적에게 점령됨"
+    ],
+    [
+      "^(.+) captured$",
+      "{1} 점령"
+    ],
+    [
+      "^(.+) lost$",
+      "{1} 상실"
+    ],
+    [
+      "^Ready (\\d+)/(\\d+)$",
+      "준비 {1}/{2}"
+    ],
+    [
+      "^(.+) can now be trained\\.$",
+      "이제 {1}을(를) 훈련할 수 있습니다."
+    ],
+    [
+      "^(.+) is recharging\\.$",
+      "{1} 재충전 중."
+    ],
+    [
+      "^(.+) promoted to rank (\\d)$",
+      "{1}: 계급 {2}(으)로 진급"
+    ],
+    [
+      "^Rank (\\d)$",
+      "계급 {1}"
+    ],
+    [
+      "^\\+(\\d+)% damage and health$",
+      "피해 및 체력 +{1}%"
+    ],
+    [
+      "^Air limit reached: (\\d+) flyers at once\\.$",
+      "공중 유닛 한도 도달: 동시에 최대 {1}기."
+    ],
+    [
+      "^(.+) is unarmed and cannot attack\\.$",
+      "{1}은(는) 무장이 없어 공격할 수 없습니다."
+    ],
+    [
+      "^(.+) cannot hit flyers\\. Use Rangers, Anti-tank soldiers or other units that hit air\\.$",
+      "{1}은(는) 비행 유닛을 공격할 수 없습니다. 레인저, 대전차병 등 대공 공격이 가능한 유닛을 사용하세요."
+    ],
+    [
+      "^Expanded roster: trained at the (.+), level (\\d+)\\.$",
+      "확장 병력: {1} 레벨 {2}에서 훈련."
+    ],
+    [
+      "^Speed ×(\\d)$",
+      "속도 ×{1}"
+    ],
+    [
+      "^When a melee or flame unit comes within (\\d+) m, the Rider steps back (\\d+) m and keeps shooting, at most once every (\\d+(?:\\.\\d+)?) s. It never steps on Hold.$",
+      "근접 또는 화염 유닛이 {1} m 안으로 들어오면 라이더가 {2} m 물러나며 계속 사격합니다. 최대 {3}초에 한 번이며, 위치 사수 중에는 물러나지 않습니다."
+    ],
+    [
+      "^Shots from the front do (\\d+(?:\\.\\d+)?)× damage and shots from behind (\\d+(?:\\.\\d+)?)×; shots from the side do full damage. Flank it.$",
+      "정면 사격은 {1}×, 후방 사격은 {2}× 피해를 주고, 측면 사격은 온전한 피해를 줍니다. 측면을 노리세요."
+    ],
+    [
+      "^ACT (I{1,3})$",
+      "제{1}막"
+    ],
+    [
+      "^DAY (\\d+)$",
+      "{1}일차"
+    ],
+    [
+      "^NIGHT (\\d+)$",
+      "{1}일차 밤"
+    ],
+    [
+      "^(.+) CHRONICLE$",
+      "{1} 연대기"
+    ],
+    [
+      "^FRONTIER DEFENCE$",
+      "프런티어 방어전"
+    ],
+    [
+      "^Hold all (\\d+) waves\\.$",
+      "웨이브 {1}개를 모두 막아내세요."
+    ],
+    [
+      "^Finish with (\\d+) lives or more \\(you kept (\\d+)\\)\\.$",
+      "생명을 {1}개 이상 남기고 끝내세요 (남은 생명 {2})."
+    ],
+    [
+      "^Wave (\\d+) cost the most lives:$",
+      "웨이브 {1}에서 생명을 가장 많이 잃었습니다:"
+    ],
+    [
+      "^Following (.+)$",
+      "{1} 추적 중"
+    ],
+    [
+      "^Air limit: (\\d+) of (\\d+) flyers; (\\d+) with a level (\\d+) Command core$",
+      "공중 한도: 비행 유닛 {1} / {2}기, 레벨 {4} 사령부 시 {3}기"
+    ],
+    [
+      "^Air limit: (\\d+) of (\\d+) flyers$",
+      "공중 한도: 비행 유닛 {1} / {2}기"
+    ],
+    [
+      "^You field at most (\\d+) flyers at a level 1 Command core, (\\d+) at level 2 and (\\d+) at level 3, counting those in production; computer opponents field at most (\\d+)\\.$",
+      "비행 유닛은 생산 중인 것을 포함해 사령부 레벨 1에서 최대 {1}기, 레벨 2에서 {2}기, 레벨 3에서 {3}기까지 운용할 수 있습니다. 컴퓨터 상대는 최대 {4}기입니다."
+    ],
+    [
+      "^(\\d+) / (\\d+) merciful$",
+      "자비 {1} / {2}"
+    ],
+    [
+      "^You gathered (\\d+) resources in (\\d+) minutes?\\.$",
+      "{2}분 동안 자원 {1}개를 모았습니다."
+    ],
+    [
+      "^You trained (\\d+) units?\\.$",
+      "유닛 {1}기를 훈련했습니다."
+    ],
+    [
+      "^You lost (\\d+) units and defeated (\\d+)\\.$",
+      "유닛 {1}기를 잃고 {2}기를 격파했습니다."
+    ],
+    [
+      "^You lost (\\d+) buildings\\.$",
+      "건물 {1}채를 잃었습니다."
+    ],
+    [
+      "^You held (\\d+) of (\\d+) waves\\.$",
+      "웨이브 {2}개 중 {1}개를 막아냈습니다."
+    ],
+    [
+      "^You completed (\\d+) of (\\d+) objectives\\.$",
+      "목표 {2}개 중 {1}개를 완료했습니다."
+    ],
+    [
+      "^The enemy core was down to (\\d+)% health\\.$",
+      "적 사령부의 체력이 {1}%까지 떨어졌습니다."
+    ]
+  ]
+}

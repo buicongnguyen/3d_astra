@@ -2,6 +2,15 @@
 
 ## Unreleased: AAA round 3
 
+### Korean (한국어)
+- **A third language.** 한국어 joins English and Tiếng Việt in the language picker on the start screen and in Settings (one choice, applied at once, saved like the others). `<html lang="ko">`.
+- **Full coverage.** `src/locales/ko.json` has every message (1,242) and pattern (204) of `vi.json`; `src/locales/story-ko.json` has every story entry (826) plus 15 name-only entries (Korean writes names in Hangul). Both load lazily, like Vietnamese. A glossary for units, buildings, resources, factions and names is in `LOCALIZATION.md`.
+- **Hangul font.** "Frontier KR" = Noto Sans KR (OFL), variable 400–800, subset to the ~800 syllables the catalogs use: one 92 KB woff2 (`tools/subset-korean-font.py`). Named only in the `:root[lang="ko"]` font stacks with a Hangul-only `unicode-range`, so English and Vietnamese players never fetch it. The Korean files stay out of the service-worker precache and are cached on first use.
+- **Korean particles** (을/를, 이/가, 은/는, 와/과, (으)로) after filled-in names and numbers are resolved at run time (`koreanParticles` in `i18n.js`).
+- **Also:** the Daily seed date ("21 Nov") is now translated in Vietnamese and Korean; chronicle cards and Defence level rows no longer mark faction and cast names `translate="no"` (the card label is `.chron-side`).
+- **Size:** main JS +2.1 KB (+0.8 KB gzip), CSS +2.2 KB (+0.5 KB gzip); Korean-only downloads: ko 122 KB (43 KB gzip), story-ko 144 KB (52 KB gzip), font 92 KB.
+- **Checks:** `tests/i18n-ko.test.js`, i18n-coverage for vi and ko, `npm run test:language` extended with Korean screens at 1440x900, 390x844 and 844x390 (`tests/language-ko.mjs`). Results and screenshots: `docs/aaa/results/round3/ko.md`.
+
 ### R3-F: Warm kit and distinct silhouettes (art 1)
 - **Warm palette.** The near-black gunmetal armour that covered about 60% of every model is now a glossy warm sand. Tracks, boots and joints stay a warm dark umber, the infantry suit is a warm taupe, and foundations are warm concrete. Team paint is unchanged. On the 13 core models the armour got about 3.8 times brighter, and the share of near-black armour pixels fell from 57% to 24%.
 - **Shared infantry you can tell apart on a phone:**

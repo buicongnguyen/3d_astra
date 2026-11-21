@@ -1250,6 +1250,18 @@
     "Research weapons and plating at the Foundry: upgrades win even fights.": "Nghiên cứu vũ khí và giáp tại Nhà máy: nâng cấp giúp thắng những trận cân sức."
   },
   "patterns": [
+    ["^(\\d{1,2}) Jan$", "{1} thg 1"],
+    ["^(\\d{1,2}) Feb$", "{1} thg 2"],
+    ["^(\\d{1,2}) Mar$", "{1} thg 3"],
+    ["^(\\d{1,2}) Apr$", "{1} thg 4"],
+    ["^(\\d{1,2}) May$", "{1} thg 5"],
+    ["^(\\d{1,2}) Jun$", "{1} thg 6"],
+    ["^(\\d{1,2}) Jul$", "{1} thg 7"],
+    ["^(\\d{1,2}) Aug$", "{1} thg 8"],
+    ["^(\\d{1,2}) Sep$", "{1} thg 9"],
+    ["^(\\d{1,2}) Oct$", "{1} thg 10"],
+    ["^(\\d{1,2}) Nov$", "{1} thg 11"],
+    ["^(\\d{1,2}) Dec$", "{1} thg 12"],
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],
     ["^Rank (\\d+), (\\d+ alloy)$", "Hạng {1}, {2}"],
     ["^Rank (\\d+): (.+)$", "Hạng {1}: {2}"],

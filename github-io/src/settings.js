@@ -48,7 +48,7 @@ export function normalize(value, coarse = false) {
   const d = defaults(coarse);
   if (!value || value.version !== 1) return d;
   if (["story", "standard", "veteran"].includes(value.campaignDifficulty)) d.campaignDifficulty = value.campaignDifficulty;
-  if (["en", "vi"].includes(value.language)) d.language = value.language;
+  if (["en", "vi", "ko"].includes(value.language)) d.language = value.language;
   if (PLAYER_FACTION_IDS.includes(value.playerFaction)) d.playerFaction = value.playerFaction;
   for (const key of ["playerColor", "enemyColor"])
     if (Object.hasOwn(PRESETS, value[key])) d[key] = value[key];

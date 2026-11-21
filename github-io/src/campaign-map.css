@@ -280,7 +280,7 @@
   :root.compact-ui #campaign-map .chron-card .chron-words { display: grid; grid-column: 2; grid-row: 1; min-width: 0; }
   :root.compact-ui #campaign-map .chron-card .chron-words > strong,
   :root.compact-ui #campaign-map .chron-card .chron-words > .chron-lock { display: none; }
-  :root.compact-ui #campaign-map .chron-card .chron-words > small[translate] { display: block; overflow: hidden; font-size: 11px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
+  :root.compact-ui #campaign-map .chron-card .chron-words > small.chron-side { display: block; overflow: hidden; font-size: 11px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
   :root.compact-ui #campaign-map .chron-card .chron-pips { grid-column: 2; grid-row: 2; }
   :root.compact-ui #campaign-map .chron-card .chron-face .cast-portrait.small { --size: 24px; }
 }

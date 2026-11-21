@@ -100,3 +100,18 @@ test("the music manifest is network first, falls back to the cached copy, and a 
   const cached = await w.fire("fetch", { request: new Request(manifestUrl) });
   assert.equal(await cached.text(), body, "offline: the stored manifest");
 });
+
+test("the Korean catalogs and font are not precached; the worker keeps each one on its first fetch", async () => {
+  const names = ["index.html", "assets/app.js", "assets/vi-Ab12.js", "assets/ko-Cd_34.js", "assets/story-ko-Ef56.js", "assets/noto-sans-kr-subset-Gh78.woff2"];
+  const w = boot(builtWorker(names));
+  await w.fire("install", {});
+  const paths = w.added.map((u) => u.slice(SCOPE.length));
+  assert.ok(paths.includes("assets/vi-Ab12.js"), "Vietnamese stays precached");
+  for (const lazy of names.slice(3)) assert.ok(!paths.includes(lazy), lazy + " not precached");
+  const url = SCOPE + "assets/ko-Cd_34.js";
+  const first = await w.fire("fetch", { request: new Request(url) });
+  assert.equal(first.status, 200);
+  assert.equal(w.calls.filter((c) => c === url).length, 1);
+  await w.fire("fetch", { request: new Request(url) });
+  assert.equal(w.calls.filter((c) => c === url).length, 1, "the second fetch is served from the cache");
+});

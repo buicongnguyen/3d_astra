@@ -15,11 +15,12 @@ export function setupPreferences(S, A) {
   const Z = S.screen;
   const localization = localizeDOM(document.body, S.settings.language);
 
-  // Vietnamese story text arrives in its own file; the page is translated again once it is in.
-  // Story text is plain text nodes, so open briefings, objectives and the Comms log follow.
+  // A language's catalogs (UI and story) arrive in their own files; the page is translated again
+  // once they are in. Story text is plain text nodes, so open briefings, objectives and the Comms log follow.
   function syncStoryLanguage() {
-    if (S.settings.language !== 'vi') return;
-    Promise.all([loadLocale(), loadStory()]).then(() => { if (S.settings.language === 'vi') localization.apply('vi'); }, () => {});
+    const lang = S.settings.language;
+    if (lang === 'en') return;
+    Promise.all([loadLocale(lang), loadStory(lang)]).then(() => { if (S.settings.language === lang) localization.apply(lang); }, () => {});
   }
 
   const languageRow = document.createElement('label');
@@ -94,7 +95,7 @@ export function setupPreferences(S, A) {
 
     languageRow.title = 'Language / Ngôn ngữ';
 
-    languageRow.innerHTML = `${icon('globe')}<span class="visually-hidden" translate="no">Language / Ngôn ngữ</span><select id="language" aria-label="Language / Ngôn ngữ" translate="no"><option value="en">English</option><option value="vi">Tiếng Việt</option></select>`;
+    languageRow.innerHTML = `${icon('globe')}<span class="visually-hidden" translate="no">Language / Ngôn ngữ</span><select id="language" aria-label="Language / Ngôn ngữ" translate="no"><option value="en">English</option><option value="vi">Tiếng Việt</option><option value="ko" lang="ko">한국어</option></select>`;
 
     document.querySelector('.top-actions').prepend(languageRow);
 

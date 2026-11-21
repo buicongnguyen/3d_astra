@@ -39,13 +39,13 @@ function strings(source) {
   return found;
 }
 
-test('every English string the UI source renders has a Vietnamese entry', () => {
+for (const [lang, name] of [['vi', 'Vietnamese'], ['ko', 'Korean']]) test(`every English string the UI source renders has a ${name} entry`, () => {
   const missing = [];
   for (const file of files) {
     const source = readFileSync(file, 'utf8');
     for (const text of strings(source)) {
-      if (translate(text, 'vi') === text) missing.push(`${file.pathname.split('/src/')[1]}: ${text}`);
+      if (translate(text, lang) === text) missing.push(`${file.pathname.split('/src/')[1]}: ${text}`);
     }
   }
-  assert.deepEqual(missing, [], `Add these to src/locales/vi.json (or KEEP in this test if they stay English):\n${missing.join('\n')}`);
+  assert.deepEqual(missing, [], `Add these to src/locales/${lang}.json (or KEEP in this test if they stay English):\n${missing.join('\n')}`);
 });
