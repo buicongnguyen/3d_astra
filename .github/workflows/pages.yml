@@ -133,6 +133,9 @@ jobs:
           # AAA round 2 (W2-F): title cards, boss presence, the Keystone Roads node.
           - name: r2-w2f
             scripts: showtime
+          # AAA round 3 (R3-D): the night (dark blue, moon and stars) and storm (rain, no flash with motion off) looks.
+          - name: r3-d
+            scripts: night-storm
     defaults:
       run:
         working-directory: github-io

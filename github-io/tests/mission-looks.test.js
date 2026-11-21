@@ -10,11 +10,12 @@ test("every table id is a real mission or Chronicle, and no existing mission car
   // only new content (W2-F m11c) carries its own look
   assert.ok(MISSIONS.every((m) => !("look" in m) || m.id === "m11c-hold-the-keystone-roads"));
 });
-test("m08 and cv1 are night, m10 is storm, m06 turns to storm from 16:00", () => {
+test("m08 and cv1 are night, m10 is storm, m06 gathers a storm from the start (full at 16:00)", () => {
   assert.equal(missionLook(sim("m08-the-quiet-vault")).name, "night");
   assert.equal(missionLook(sim("cv1-night-count")).name, "night");
   assert.equal(missionLook(sim("m10-obsidian-storm")).name, "storm");
-  assert.equal(missionLook(sim("m06-copper-harvest", 100)).k, 0);
+  // R3-D: it was 0 until 16:00; now it builds over the first 90 s, then breaks in full at 16:00.
+  assert.ok(missionLook(sim("m06-copper-harvest", 100)).k >= 0.7);
   assert.equal(missionLook(sim("m06-copper-harvest", 1000)).k, 1);
   assert.equal(missionLook(sim("m01-first-light")), null);
 });
