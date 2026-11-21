@@ -4,15 +4,16 @@
 
 ### R3 map variety: six new Skirmish maps
 - **Six styles, like a real map pool** (all in the Skirmish battlefield picker with their size; a one-line idea as the option's tooltip; names and lines in Vietnamese and Korean):
-  - **Golden Heart** (128 m, copper basin look): a ring of four crags around a rich heart (four 5,000 alloy and four 3,000 energy deposits) with roads in from every camp; little else beyond home.
+  - **Golden Heart** (128 m, copper basin look): a ring of four crags around a rich heart (four 5,000 alloy and four 3,000 energy deposits, worth more than both camps' fields together) with roads in from every camp.
   - **Dry Reach** (160 m, dunes look): small deposits (1,300 to 2,000) spread wide, two mesas and scattered crags; expansions decide the long game.
-  - **Twin Rivers** (160 m, riverlands look): two rivers, each crossed by a bridge on each flank and a ford in the middle: three lanes, contested deposits in the strip between the rivers.
+  - **Twin Rivers** (160 m, riverlands look): two rivers, each crossed by a bridge on each flank and two fords inside: three lanes, contested deposits and the rings in the strip between the rivers; a cliff ridge from each river to the map edge splits the two camps of a bank.
   - **Ironback Ridge** (160 m, highlands look): a cliff ridge across the map with one pass in the middle and a flank path at each end, climbable ridge tops (four ramps a segment) and a ridge between the camps on each side.
-  - **Crown Mesa** (160 m, woodland look): a mesa 48 m across in the middle, four ramps (one facing each camp), its rich deposits and the centre ring on top; camps on the rim.
+  - **Crown Mesa** (160 m, woodland look): a mesa 48 m across in the middle, eight ramps (one facing each camp, one between each pair), its rich deposits and the centre ring on top; camps on the rim.
   - **Open Steppe** (128 m, expanse look): no water, no walls, closer camps, scattered crags and an X of roads through the centre: fast and aggressive.
 - **Natural ground only**: no concrete walls on the new maps (`rocks: []`); crags and ridges are plateaus (a plateau without ramps is a crag).
 - **Map engine, opt-in** (`maps.json`, documented in `docs/MISSIONS.md` "Map layouts"): `rivers` (any number of east-west rivers with their own bridges and fords: water, banks, building rules, ford slow-down and label, bridge models, ford marks, minimap ticks, channel, edge waterfalls, fish and reeds), `rocks`, `roads`, `deposits` with `symmetry: "quad"`, plateau `mirror: "quad"`, `look` (borrow a map's palette, light, dressing, life, grade and music), `dressing`, `blurb`. The seven older maps and the Defence maps build, render and play exactly as before (terrain and match fingerprints recorded before the change; ground texture, terrain, water and scatter geometry compared in the browser).
 - **Fair for 2 to 4 players**: every new map mirrors on both axes, so all four camps start the same; data tests check determinism, symmetry, equal start distances, deposits and rings on clear ground and a route for the widest ground unit from every camp to every deposit and ring, and both rivers' crossings.
+- **Not harder** (owner rule): on Relaxed and Normal, 1v1 and 1v2, the test bot wins at least as often on the new maps as on the older ones on average (table in the results; each map got a natural expansion near each camp, Twin Rivers its ridges, after the first measurements).
 - **Checks**: `tests/maps-variety.test.js` (12 tests), the older map tests now cover the new maps where they apply, render-budget scenario `twinrivers-high` (the heaviest new map: 235 draws against large-map-high's line of 240), bot-against-AI difficulty table in `docs/aaa/results/round3/maps.md` with screenshots in `docs/aaa/results/round3/maps/`.
 
 ### Phone battle HUD: a clear area for the scene (owner request, Codex UI kit look)
