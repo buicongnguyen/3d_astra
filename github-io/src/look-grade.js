@@ -15,9 +15,11 @@ const vec3 = (a) => `vec3(${a.map(num).join(", ")})`;
 
 // The grade terms of a theme, with look-grade.json's strength applied (the shadow tint and contrast scale
 // with it, the saturation lifts by that share of its excess over 1).
-export function gradeFor(themeId, table = GRADE) {
+// R3-D: `look` (a mission look name: night, storm) lays its own terms from `looks` over the theme's.
+export function gradeFor(themeId, table = GRADE, look = null) {
   const own = Object.hasOwn(table.themes || {}, themeId) ? table.themes[themeId] : {};
-  const g = { ...table.default, ...own }, s = table.strength ?? 1;
+  const mood = look && Object.hasOwn(table.looks || {}, look) ? table.looks[look] : {};
+  const g = { ...table.default, ...own, ...mood }, s = table.strength ?? 1;
   return {
     saturation: 1 + (g.saturation - 1) * s,
     shadowTint: g.shadowTint.map((v) => v * s),
@@ -43,8 +45,8 @@ export function gradeChunk(g) {
 let current = { key: "off" };
 // Installs the grade of a theme as the shared tone-mapping chunk. Returns true when it changed (the caller
 // then marks materials for recompiling). Safe to call before any material compiles.
-export function installGrade(themeId, table = GRADE) {
-  const g = gradeFor(themeId, table), chunk = gradeChunk(g), key = `grade:${chunk.length}:${[g.saturation, g.contrast, ...g.shadowTint, g.shadowRange].join(",")}`;
+export function installGrade(themeId, table = GRADE, look = null) {
+  const g = gradeFor(themeId, table, look), chunk = gradeChunk(g), key = `grade:${chunk.length}:${[g.saturation, g.contrast, ...g.shadowTint, g.shadowRange].join(",")}`;
   if (key === current.key) return false;
   if (!ORIGINAL.includes(STUB)) throw new Error("look-grade: three's tonemapping chunk changed; update look-grade.js");
   THREE.ShaderChunk.tonemapping_pars_fragment = ORIGINAL.replace(STUB, chunk);

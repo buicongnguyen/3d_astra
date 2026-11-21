@@ -106,6 +106,11 @@ const scenarios = [
     spawn:[{type:'stalker', team:1, count:2, near:[-3,-14]}]},
   // W2-C: battle-eco under the night look (palette swap only on Eco: no new light, no new mesh).
   {name:'night-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rules:{look:'night'}},
+  // AAA round 3 (R3-D): the night (moon, stars) and the storm (rain, cloud shade on High) over the day
+  // scenes base-high and battle-eco: at most 6 draws over the same map by day.
+  {name:'night-base-high', map:'riverlands', enemies:1, mobile:false, zoom:42, focus:[-20,19], reveal:false, rules:{look:'night'}},
+  {name:'storm-base-high', map:'riverlands', enemies:1, mobile:false, zoom:42, focus:[-20,19], reveal:false, rules:{look:'storm'}},
+  {name:'storm-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rules:{look:'storm'}},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
@@ -119,6 +124,7 @@ Object.assign(limits, {'battle-expanded-eco':125}); // W1-A
 Object.assign(limits, {'battle-expanded-full-eco':150}); // W2-A
 Object.assign(limits, {'defence-heroic-eco':125}); // W2-B
 Object.assign(limits, {'night-battle-eco':120}); // W2-C
+Object.assign(limits, {'night-base-high':166, 'storm-base-high':166, 'storm-battle-eco':126}); // R3-D: day + 6
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},

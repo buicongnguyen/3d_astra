@@ -23,6 +23,15 @@
   - Triangle counts stay within budget. The Drone and the bosses are unchanged (R3-J).
 - Every changed model is flagged "pending owner review (round 3)" in `public/models/manifest.json`. See `docs/aaa/results/round3/f.md`.
 
+### R3-D: Night and storm looks
+- **Night is very dark blue, not purple.** A per-look grade (`look-grade.json` `looks.night`: blue-black shadows, saturation 0.86) and a cooler moonlit ambient replace the warm shadow lift that turned red ground purple. The map edge and the void below it turn black-blue at night (`map-edge.js` `tintEdge`; it was the hard orange edge), and the warm rim light turns moonlit. m08 frame average red minus blue: +40.8 before, -39.5 after; luminance 5.6%.
+- **Moon and stars** (`src/night-sky.js`): a moon disc with a soft halo behind the battlefield (it shows over the void) and stars scattered over the void. One draw each.
+- **m06 storm from the start.** The look table (not the mission) builds the storm from 0.35 to 0.75 over the first 90 s and breaks it in full at 16:00, when Vale's surge storm is due. Storms get slanting rain (one draw, animated on the GPU), a drifting cloud shade on High (one draw) and distance fog closing in. Lightning stays on the deterministic `flashAt`.
+- **Glows:** team glows, energy and crystals were already boosted at night; lit windows and lamps now are too, through a name contract (emissive materials named `Window*` or `Lamp*`).
+- **Storm sound bed** (`ambience.js`): rain hiss, wind rumble and a thunder swell after each strike, built only on the first storm frame, silent when muted, with ambience off or paused.
+- Motion-off (reduced motion or the motion setting at 0) turns the lightning off and holds rain, stars and clouds still. Draws: +2 over the same map by day (+1 for a storm on Eco). View only: every pin and baseline is identical.
+- Tests: `tests/night-sky.test.js` (+6), browser suite `tests/night-storm.mjs` (CI group `r3-d`), render-budget `night-base-high`, `storm-base-high`, `storm-battle-eco`. Results: `docs/aaa/results/round3/d.md`.
+
 ## 0.25.0: AAA round 2 (release label for the deploy; owner decision O17)
 
 This is the label proposed for the next release. `package.json` still says 0.19.1, nothing is deployed, and the owner decides the number at deploy. It gathers everything of AAA round 2 (plan: docs/aaa/AAA_ROUND2_PLAN.md, results: docs/aaa/results/round2/). The Defence and campaign sections under "Unreleased" further down (0.22 to 0.24 labels) were built before this round and are not part of it.

@@ -64,3 +64,28 @@ export function createMapEdge(terrain) {
   mesh.frustumCulled = false;
   return mesh;
 }
+
+// R3-D: a mission look recolours the edge and void (night: black-blue, storm: blue-grey) by blending each
+// vertex toward `edge.low`..`edge.high` by its own brightness, so the strata and rings keep their shape but
+// lose the warm daylight colour. k = 0 restores the day colours. No new draw; one buffer upload per change.
+const linear = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
+export function edgeColor(rgb, lo, hi, k, out = [0, 0, 0]) {
+  const l = Math.min(1, Math.pow(Math.max(0, 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]), 0.8) * 1.6);
+  for (let i = 0; i < 3; i++) out[i] = rgb[i] + (lo[i] + (hi[i] - lo[i]) * l - rgb[i]) * k;
+  return out;
+}
+export function tintEdge(mesh, edge, k) {
+  const attribute = mesh?.geometry?.attributes.color;
+  if (!attribute) return;
+  const day = (mesh.userData.dayColors ??= attribute.array.slice()), out = attribute.array;
+  if (!edge || !(k > 0)) out.set(day);
+  else {
+    const lo = linear(edge.low), hi = linear(edge.high), rgb = [0, 0, 0], mixed = [0, 0, 0];
+    for (let i = 0; i < day.length; i += 3) {
+      rgb[0] = day[i]; rgb[1] = day[i + 1]; rgb[2] = day[i + 2];
+      edgeColor(rgb, lo, hi, k, mixed);
+      out[i] = mixed[0]; out[i + 1] = mixed[1]; out[i + 2] = mixed[2];
+    }
+  }
+  attribute.needsUpdate = true;
+}

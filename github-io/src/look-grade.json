@@ -13,5 +13,10 @@
     "power": 2.6,
     "color": "#ffd9a8"
   },
-  "fog": { "classic": "#3a2a4a" }
+  "fog": { "classic": "#3a2a4a" },
+  "looks": {
+    "_about": "R3-D: a mission look (src/mission-looks.js) overrides single grade terms while it is on: the night has blue-black shadows (no warm lift, so red ground never reads purple) and a little less saturation; the storm a cold grey-blue.",
+    "night": { "saturation": 0.86, "shadowTint": [-0.035, 0.006, 0.03], "contrast": 0.24 },
+    "storm": { "saturation": 0.94, "shadowTint": [-0.01, 0.0, 0.016] }
+  }
 }
