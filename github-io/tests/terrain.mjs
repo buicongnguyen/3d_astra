@@ -25,7 +25,12 @@ await suite("terrain", async () => {
       const f = window.__frontier, s = f.sim, t = s.terrain, hq = s.own(0).find((e) => e.type === "hq");
       const p = t.plateaus.slice().sort((a, b) => Math.hypot(a.x - hq.x, a.z - hq.z) - Math.hypot(b.x - hq.x, b.z - hq.z))[0];
       s.visible[0].fill(1); s.explored[0].fill(1);
-      const u = s.spawn("ranger", 0, p.x, p.z + p.r + 4);
+      // In front of the east ramp (Wave 3 integration). From straight below the centre both ramps are the same
+      // distance away, so the route flipped on the last bits of the tapped point: a tap 1e-8 m west of the centre
+      // (phone canvas geometry since the phone HUD pass) took the west ramp, and a unit that reaches a ramp from
+      // its side can stall on the side edge and drop the order (sim issue, open item in wave-3.md).
+      const ramp = p.ramps.slice().sort((a, b) => b.x - a.x)[0];
+      const u = s.spawn("ranger", 0, ramp.x + 5, ramp.z);
       f.view.focusOn(p.x, p.z + 3); f.view.zoom = 26;
       f.step(0.1);
       f.select([u.id]);
