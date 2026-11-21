@@ -120,9 +120,11 @@ try {
         assert.ok(Math.abs(await tileTop() - before) < 1, `${name} tiles stay put when a job starts`);
       }
     }
-    // Logo mid-match opens the pause menu rather than leaving the battle.
+    // Logo mid-match opens the pause menu rather than leaving the battle. Phones do not show the logo in a match
+    // (round 3 HUD pass: it only repeated Pause, which sits beside it), so there Pause itself is pressed.
     const url = page.url();
-    await press('.brand');
+    if (touch) assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.brand')).display), 'none', `${name} no logo in a phone match`);
+    await press(touch ? '#pause' : '.brand');
     assert.equal(await page.evaluate(() => [window.__frontier.paused, document.querySelector('#modal-title')?.textContent].join()), 'true,Hold your position.', `${name} logo pauses`);
     assert.equal(page.url(), url);
     await page.screenshot({ path: `test-results/ui-quality-${name}.png` });

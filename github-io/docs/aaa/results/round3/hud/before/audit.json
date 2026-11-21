@@ -1,0 +1,1218 @@
+{
+ "portrait390/skirmish": {
+  "early": 0.67875,
+  "none": {
+   "share": 0.67875,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 374x44",
+    "#dock-tabs 8,784 374x44"
+   ]
+  },
+  "one": {
+   "share": 0.585,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 374x44",
+    "section.selection-panel.panel 8,671 374x113",
+    "#dock-tabs 8,784 374x44"
+   ]
+  },
+  "mixed": {
+   "share": 0.4725,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 214,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 374x44",
+    "section.selection-panel.panel 8,570 374x214",
+    "#dock-tabs 8,784 374x44"
+   ]
+  },
+  "building": {
+   "share": 0.495,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 374x44",
+    "section.command-panel.panel 8,582 374x202",
+    "#dock-tabs 8,784 374x44"
+   ]
+  },
+  "errors": []
+ },
+ "portrait390/mission": {
+  "early": 0.67875,
+  "none": {
+   "share": 0.67875,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 374x44",
+    "#dock-tabs 8,784 374x44"
+   ]
+  },
+  "one": {
+   "share": 0.585,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 374x44",
+    "section.selection-panel.panel 8,671 374x113",
+    "#dock-tabs 8,784 374x44"
+   ]
+  },
+  "mixed": {
+   "share": 0.4725,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 214,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 374x44",
+    "section.selection-panel.panel 8,570 374x214",
+    "#dock-tabs 8,784 374x44"
+   ]
+  },
+  "building": {
+   "share": 0.495,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 374x44",
+    "section.command-panel.panel 8,582 374x202",
+    "#dock-tabs 8,784 374x44"
+   ]
+  },
+  "errors": []
+ },
+ "portrait390/defence": {
+  "early": 0.6825,
+  "none": {
+   "share": 0.6825,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 0,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "#dock-tabs 8,784 374x44",
+    "#defence-bar 33,724 324x52"
+   ]
+  },
+  "one": {
+   "share": 0.59,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 0,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.selection-panel.panel 8,671 374x113",
+    "#dock-tabs 8,784 374x44",
+    "#defence-bar 33,611 324x52"
+   ]
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.5,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 0,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.selection-panel.panel 8,582 374x202",
+    "#dock-tabs 8,784 374x44",
+    "#defence-bar 33,522 324x52"
+   ]
+  },
+  "errors": []
+ },
+ "portrait360/skirmish": {
+  "early": 0.65625,
+  "none": {
+   "share": 0.65625,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 344x44",
+    "#dock-tabs 8,720 344x44"
+   ]
+  },
+  "one": {
+   "share": 0.54,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 344x44",
+    "section.selection-panel.panel 8,607 344x113",
+    "#dock-tabs 8,720 344x44"
+   ]
+  },
+  "mixed": {
+   "share": 0.4275,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 214,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 344x44",
+    "section.selection-panel.panel 8,506 344x214",
+    "#dock-tabs 8,720 344x44"
+   ]
+  },
+  "building": {
+   "share": 0.45,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 344x44",
+    "section.command-panel.panel 8,518 344x202",
+    "#dock-tabs 8,720 344x44"
+   ]
+  },
+  "errors": []
+ },
+ "portrait360/mission": {
+  "early": 0.65625,
+  "none": {
+   "share": 0.65625,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 344x44",
+    "#dock-tabs 8,720 344x44"
+   ]
+  },
+  "one": {
+   "share": 0.54,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 344x44",
+    "section.selection-panel.panel 8,607 344x113",
+    "#dock-tabs 8,720 344x44"
+   ]
+  },
+  "mixed": {
+   "share": 0.4275,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 214,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 344x44",
+    "section.selection-panel.panel 8,506 344x214",
+    "#dock-tabs 8,720 344x44"
+   ]
+  },
+  "building": {
+   "share": 0.45,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 344x44",
+    "section.command-panel.panel 8,518 344x202",
+    "#dock-tabs 8,720 344x44"
+   ]
+  },
+  "errors": []
+ },
+ "portrait360/defence": {
+  "early": 0.6775,
+  "none": {
+   "share": 0.6775,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 0,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "#dock-tabs 8,720 344x44",
+    "#defence-bar 21,660 319x52"
+   ]
+  },
+  "one": {
+   "share": 0.54,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 0,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.selection-panel.panel 8,607 344x113",
+    "#dock-tabs 8,720 344x44",
+    "#defence-bar 21,547 319x52"
+   ]
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.4525,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 0,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.selection-panel.panel 8,518 344x202",
+    "#dock-tabs 8,720 344x44",
+    "#defence-bar 21,458 319x52"
+   ]
+  },
+  "errors": []
+ },
+ "landscape844/skirmish": {
+  "early": 0.69125,
+  "none": {
+   "share": 0.69125,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "#dock-tabs 600,330 236x44"
+   ]
+  },
+  "one": {
+   "share": 0.5825,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 143,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.selection-panel.panel 600,181 236x143",
+    "#dock-tabs 600,330 236x44"
+   ]
+  },
+  "mixed": {
+   "share": 0.515,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 236,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.selection-panel.panel 600,88 236x236",
+    "#dock-tabs 600,330 236x44"
+   ]
+  },
+  "building": {
+   "share": 0.55625,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 180,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.command-panel.panel 600,144 236x180",
+    "#dock-tabs 600,330 236x44"
+   ]
+  },
+  "errors": []
+ },
+ "landscape844/mission": {
+  "early": 0.69125,
+  "none": {
+   "share": 0.69125,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "#dock-tabs 600,330 236x44"
+   ]
+  },
+  "one": {
+   "share": 0.5825,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 143,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.selection-panel.panel 600,181 236x143",
+    "#dock-tabs 600,330 236x44"
+   ]
+  },
+  "mixed": {
+   "share": 0.515,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 236,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.selection-panel.panel 600,88 236x236",
+    "#dock-tabs 600,330 236x44"
+   ]
+  },
+  "building": {
+   "share": 0.59625,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 132,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.command-panel.panel 600,192 236x132",
+    "#dock-tabs 600,330 236x44"
+   ]
+  },
+  "errors": []
+ },
+ "landscape844/defence": {
+  "early": 0.70125,
+  "none": {
+   "share": 0.70125,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.minimap-panel.panel 8,280 118x94",
+    "#dock-tabs 652,330 184x44",
+    "#defence-bar 183,51 477x52"
+   ]
+  },
+  "one": {
+   "share": 0.61625,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 199,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "#defence-dock-toggle 792,125 44x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.selection-panel.panel 652,181 184x143",
+    "#dock-tabs 652,330 184x44",
+    "#defence-bar 183,51 477x52"
+   ]
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.5975,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 243,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "#defence-dock-toggle 792,81 44x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.selection-panel.panel 652,137 184x187",
+    "#dock-tabs 652,330 184x44",
+    "#defence-bar 183,51 477x52"
+   ]
+  },
+  "errors": []
+ },
+ "landscape740/skirmish": {
+  "early": 0.6725,
+  "none": {
+   "share": 0.6725,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "#dock-tabs 496,300 236x44"
+   ]
+  },
+  "one": {
+   "share": 0.5525,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 143,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.selection-panel.panel 496,151 236x143",
+    "#dock-tabs 496,300 236x44"
+   ]
+  },
+  "mixed": {
+   "share": 0.4825,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 236,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.selection-panel.panel 496,58 236x236",
+    "#dock-tabs 496,300 236x44"
+   ]
+  },
+  "building": {
+   "share": 0.5225,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 180,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.command-panel.panel 496,114 236x180",
+    "#dock-tabs 496,300 236x44"
+   ]
+  },
+  "errors": []
+ },
+ "landscape740/mission": {
+  "early": 0.6725,
+  "none": {
+   "share": 0.6725,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "#dock-tabs 496,300 236x44"
+   ]
+  },
+  "one": {
+   "share": 0.5525,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 143,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.selection-panel.panel 496,151 236x143",
+    "#dock-tabs 496,300 236x44"
+   ]
+  },
+  "mixed": {
+   "share": 0.4825,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 236,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.selection-panel.panel 496,58 236x236",
+    "#dock-tabs 496,300 236x44"
+   ]
+  },
+  "building": {
+   "share": 0.5675,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 132,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "nav.touch-controls 8,51 356x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.command-panel.panel 496,162 236x132",
+    "#dock-tabs 496,300 236x44"
+   ]
+  },
+  "errors": []
+ },
+ "landscape740/defence": {
+  "early": 0.6525,
+  "none": {
+   "share": 0.6525,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.minimap-panel.panel 8,250 118x94",
+    "#dock-tabs 569,300 163x44",
+    "#defence-bar 131,51 477x52"
+   ]
+  },
+  "one": {
+   "share": 0.565,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 199,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "#defence-dock-toggle 688,95 44x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.selection-panel.panel 569,151 163x143",
+    "#dock-tabs 569,300 163x44",
+    "#defence-bar 131,51 477x52"
+   ]
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.5475,
+   "small": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 243,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "#defence-dock-toggle 688,51 44x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.selection-panel.panel 569,107 163x187",
+    "#dock-tabs 569,300 163x44",
+    "#defence-bar 131,51 477x52"
+   ]
+  },
+  "errors": []
+ },
+ "small320/skirmish": {
+  "early": 0.5725,
+  "none": {
+   "share": 0.5725,
+   "small": [],
+   "taps": [
+    "#fullscreen-top 40x44",
+    "#audio 40x44",
+    "#help 40x44",
+    "#pause 40x44"
+   ],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 304x44",
+    "#dock-tabs 8,508 304x44"
+   ]
+  },
+  "one": {
+   "share": 0.4275,
+   "small": [],
+   "taps": [
+    "#fullscreen-top 40x44",
+    "#audio 40x44",
+    "#help 40x44",
+    "#pause 40x44"
+   ],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 304x44",
+    "section.selection-panel.panel 8,395 304x113",
+    "#dock-tabs 8,508 304x44"
+   ]
+  },
+  "mixed": {
+   "share": 0.27,
+   "small": [],
+   "taps": [
+    "#fullscreen-top 40x44",
+    "#audio 40x44",
+    "#help 40x44",
+    "#pause 40x44"
+   ],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 214,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 304x44",
+    "section.selection-panel.panel 8,294 304x214",
+    "#dock-tabs 8,508 304x44"
+   ]
+  },
+  "building": {
+   "share": 0.27,
+   "small": [],
+   "taps": [
+    "#fullscreen-top 40x44",
+    "#audio 40x44",
+    "#help 40x44",
+    "#pause 40x44"
+   ],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 304x44",
+    "section.command-panel.panel 8,306 304x202",
+    "#dock-tabs 8,508 304x44"
+   ]
+  },
+  "errors": []
+ },
+ "small320/mission": {
+  "early": 0.5725,
+  "none": {
+   "share": 0.5725,
+   "small": [],
+   "taps": [
+    "#fullscreen-top 40x44",
+    "#audio 40x44",
+    "#help 40x44",
+    "#pause 40x44"
+   ],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 304x44",
+    "#dock-tabs 8,508 304x44"
+   ]
+  },
+  "one": {
+   "share": 0.4275,
+   "small": [],
+   "taps": [
+    "#fullscreen-top 40x44",
+    "#audio 40x44",
+    "#help 40x44",
+    "#pause 40x44"
+   ],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 304x44",
+    "section.selection-panel.panel 8,395 304x113",
+    "#dock-tabs 8,508 304x44"
+   ]
+  },
+  "mixed": {
+   "share": 0.27,
+   "small": [],
+   "taps": [
+    "#fullscreen-top 40x44",
+    "#audio 40x44",
+    "#help 40x44",
+    "#pause 40x44"
+   ],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 214,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 304x44",
+    "section.selection-panel.panel 8,294 304x214",
+    "#dock-tabs 8,508 304x44"
+   ]
+  },
+  "building": {
+   "share": 0.27,
+   "small": [],
+   "taps": [
+    "#fullscreen-top 40x44",
+    "#audio 40x44",
+    "#help 40x44",
+    "#pause 40x44"
+   ],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 44,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 60,1 44x44",
+    "nav.touch-controls 8,88 304x44",
+    "section.command-panel.panel 8,306 304x202",
+    "#dock-tabs 8,508 304x44"
+   ]
+  },
+  "errors": []
+ },
+ "small320/defence": {
+  "early": 0.585,
+  "none": {
+   "share": 0.585,
+   "small": [],
+   "taps": [
+    "#fullscreen-top 40x44",
+    "#audio 40x44",
+    "#help 40x44",
+    "#pause 40x44"
+   ],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 0,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "#dock-tabs 8,508 304x44",
+    "#defence-bar 8,448 304x52"
+   ]
+  },
+  "one": {
+   "share": 0.4275,
+   "small": [],
+   "taps": [
+    "#fullscreen-top 40x44",
+    "#audio 40x44",
+    "#help 40x44",
+    "#pause 40x44"
+   ],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 0,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.selection-panel.panel 8,395 304x113",
+    "#dock-tabs 8,508 304x44",
+    "#defence-bar 8,335 304x52"
+   ]
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.2475,
+   "small": [],
+   "taps": [
+    "#fullscreen-top 40x44",
+    "#audio 40x44",
+    "#help 40x44",
+    "#pause 40x44"
+   ],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 86,
+    "touchRow": 0,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.selection-panel.panel 8,306 304x202",
+    "#dock-tabs 8,508 304x44",
+    "#defence-bar 8,246 304x52"
+   ]
+  },
+  "errors": []
+ }
+}

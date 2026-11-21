@@ -121,10 +121,26 @@ export function setupInputPointer(S, A) {
     else A.notice(groundLabel(point) || "Select a unit, or use the Workers and Army buttons.");
   }
 
+  let edgeProbe = null;
   function bindInput() {
     const canvas = S.view.renderer.domElement;
     S.touchControls = new TouchControls(canvas, {
       enabled: () => Z.started && !Z.paused && !S.sim.result,
+      // Phones draw the battlefield to the screen edges (phone-hud.css) but keep the gesture margins in the
+      // input: a touch starting within --gesture-left/right of a side or --safe-bottom of the bottom is left
+      // to the system (back swipe, home bar), as when the canvas stopped short of the edges.
+      inEdge: (e) => {
+        if (!document.documentElement.classList.contains("compact-ui")) return false;
+        // The margins are max()/env() expressions: a hidden probe resolves them to pixels.
+        if (!edgeProbe) {
+          edgeProbe = document.createElement("i");
+          edgeProbe.setAttribute("aria-hidden", "true");
+          edgeProbe.style.cssText = "position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding:0 var(--gesture-right, 0px) var(--safe-bottom, 0px) var(--gesture-left, 0px)";
+          document.body.append(edgeProbe);
+        }
+        const m = getComputedStyle(edgeProbe), px = (v) => parseFloat(v) || 0;
+        return e.clientX < px(m.paddingLeft) || e.clientX > innerWidth - px(m.paddingRight) || e.clientY > innerHeight - px(m.paddingBottom);
+      },
       boxMode: () => S.boxSelection && !S.mode,
       isTouch,
       activate: () => {

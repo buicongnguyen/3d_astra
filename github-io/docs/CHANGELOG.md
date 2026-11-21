@@ -15,6 +15,29 @@
 - **Fair for 2 to 4 players**: every new map mirrors on both axes, so all four camps start the same; data tests check determinism, symmetry, equal start distances, deposits and rings on clear ground and a route for the widest ground unit from every camp to every deposit and ring, and both rivers' crossings.
 - **Checks**: `tests/maps-variety.test.js` (12 tests), the older map tests now cover the new maps where they apply, render-budget scenario `twinrivers-high` (the heaviest new map: 235 draws against large-map-high's line of 240), bot-against-AI difficulty table in `docs/aaa/results/round3/maps.md` with screenshots in `docs/aaa/results/round3/maps/`.
 
+### Phone battle HUD: a clear area for the scene (owner request, Codex UI kit look)
+- **More battlefield on every phone.** The map now fills the whole screen behind the bars.
+  - The 12 px side margins and the bottom strip are still left to the phone's own swipes, but only for touches; they no longer show as a dark frame.
+  - Free battlefield with nothing selected: 67.9% → 84.6% at 390×844, 69.1% → 81.6% at 844×390, and 57.3% → 76.5% at 320×568.
+  - Every phone size, mode and selection gained at least 11 points. The table is in `docs/aaa/results/round3/hud.md`.
+- **Top bar.** It is now two dark-glass panels with the map between them, instead of a solid strip. The left panel holds the resources and the clock. The right panel holds Full screen, Sound, Help and Pause.
+  - In portrait the bar is one 44 px row instead of 86 px.
+  - The logo no longer shows in a match: there it only opened the pause menu, and Pause sits beside it.
+  - The ALLOY / ENERGY / POPULATION captions are gone; the icons and tooltips say the same.
+- **Touch row.** On landscape phones 840 px or wider, the six touch buttons sit in the top band. The Objectives flag and the idle buttons sit in the corner under it.
+- **Portrait.**
+  - The Objectives flag moved to the end of the tab row, and its list opens above the tabs.
+  - A group's six orders sit in one row (340 px or wider), so the card is one row shorter.
+  - In Defence, a selected tower gets the short card: 113 px instead of 202 px.
+- **Landscape.** The unit card drops the "Standing by" line, and five orders sit 3 + 2 instead of 4 + 1.
+- **UI kit look.** UI kit design: Codex/OpenAI, owner-commissioned.
+  - The kit's colours, spacing, corner cuts, frames and type scale are in `src/ui-kit.css`, ready for the menus and desktop later.
+  - On phones in a match, panels and buttons have dark glass, cut corners and a thin edge.
+  - A selected button gets a cyan line along its bottom, and toasts get a coloured bar on the left.
+  - Four tinted frame SVGs are copied into `src/art/ui/`.
+- **Unchanged.** Every action is still one tap, and nothing was moved into a menu. Text stays at least 11 px and taps at least 44 px, and no dock grew. The desktop HUD is the same.
+- **Measuring.** `tools/phone-hud-audit.mjs` measures five phone sizes × Skirmish / mission / Defence × four selections. The minimum free-battlefield shares in `tests/phones.mjs` rose from 67% and 57.5% to 78% and 68%.
+
 ### Korean (한국어)
 - **A third language.** 한국어 joins English and Tiếng Việt in the language picker on the start screen and in Settings (one choice, applied at once, saved like the others). `<html lang="ko">`.
 - **Full coverage.** `src/locales/ko.json` has every message (1,242) and pattern (204) of `vi.json`; `src/locales/story-ko.json` has every story entry (826) plus 15 name-only entries (Korean writes names in Hangul). Both load lazily, like Vietnamese. A glossary for units, buildings, resources, factions and names is in `LOCALIZATION.md`.
@@ -172,6 +195,39 @@ Everything below applies only under the skirmish rule `aiPlan: "field"` (`fieldP
 - **Mission 3's towers objective costs something.** "Build two Sentinel towers" was done at 0:00 (the camp starts with two). It is now "Have four Sentinel towers standing".
 - **Missions restored after the south exits** (owner: keep the exits). Every mission the objective bot won on r3-base is won again on Story, Standard and Veteran and with both decision paths, with no medal lower than on r3-base: m03 (not won on Standard) now has 5 guards in Hale's camp (8), a 5-unit counter-attack at the north siphon (7) and gold at 12:30 (12:00); m04 (lost on Veteran) has 4-unit Sunward waves for the centre and in the truce (5); m12 (lost on Standard) is won again with its probe. m09's objective bot now wins about 25 s sooner than on r3-base (6:45), so its check window starts at 6:30.
 - **Fast against two rivals: not eased (partial).** The owner-approved Fast-only easing was tried in nine forms (a later first joint offensive by 30, 45 or 60 s, no first raid, both, a lighter first raid and offensive, a smaller army cap, AI rally behind the core, and as a diagnosis a player rally in front of the core); none moved the 6-map Fast 1v2 cells beyond noise, and the delay measured worse on a second sample, so no AI change ships. Numbers and the owner options are in `docs/aaa/results/round3/i.md`.
+
+### R3-R: Commander rank and unlocks
+- **XP from every match.** 25 for playing, 75 for a win (finishing Training counts), +25 for a Veteran win, a mission medal (bronze 20, silver 35, gold 50), 20 per Defence star, 5 per wave held in Endless and the Daily seed (up to 50 waves), 1 per 2 kills (up to 25); at most 400 a match. A Standard skirmish win is the first rank up.
+- **Twenty ranks**, Recruit to Frontier Marshal (100 XP for rank 2, 10,450 for rank 20). Each rank from 2 unlocks one item:
+  - **paint schemes** for your units: Sand, Arctic, Ember, Jungle, Night and Gold (a tint on every part of your own units; enemies and buildings keep their colours);
+  - **emblems**: Spearhead, Wings, Star, Crown, Phoenix (the Meridian ring from the start);
+  - **title banners**: Vanguard, Pathfinder, Iron Marshal, Frontier Legend, Hero of the Meridian (Field Commander from the start);
+  - **Daily orders**: Iron line (lose 5 units or fewer), Swift (win within 12 minutes), Lean (build 6 structures or fewer), Hunter (40 kills or more). Pledge one, and the first win that meets it each day pays +60 XP.
+- **Rank chip on the title**: emblem, rank, name, title banner and the XP bar, in the setup panel.
+- **Commander rank rows in the Skirmish setup**: Paint, Emblem, Title banner and Daily order, each item its own button (one tap), plus the next locked item with the rank that opens it.
+- **Rank toast on every results screen** (Skirmish, missions, Defence, Training): the XP gained, the rank bar, and on a rank up "Rank up!" with what it unlocked.
+- Purely cosmetic: no pick is a battle rule or reaches the simulation, so every pin, checksum and baseline is unchanged. The paint is an instanceColor tint (no material, batch or draw call); the default Factory paint sets nothing. The rank is kept in this browser (`frontier-command.rank.v1`); blocked storage keeps it for the visit.
+
+### R3-U: Audio juice
+- **Sight and sound match.** Every shot belongs to one of ten weapon classes (`audio-logic.js` `weaponClass`, the same classes the weapon effects draw): rifle tracer, cannon shell, artillery lob, flak, beam/rail, flamer, heal beam, missile, falling bomb and strafing run. The classes that had no voice of their own get one: a Sentinel tower at a flyer fires a flak double-thud and bursts in the air, an Anti-tank team at a flyer launches a climbing missile, a Swift glider or Ember balloon lets go with a latch clunk, a whistle that ends on the landing and a blast (a fire bomb roars), a Hawk strafes ground troops with a cannon stream, and Medics and Supply wagons heal with a soft shimmer. An artillery lob now whistles down before it lands.
+- **Impacts by size.** Every round that lands on the ground adds a small, medium or heavy layer (a snap, a crunch, a thud with falling dirt) over the target's own impact sound, timed to the round's flight.
+- **Unit voices.** Selecting or ordering units plays a short synthesised chirp in that unit type's voice (infantry, armour, flyers and support each have their own; pitch varies a little every time), at most two a second. **Settings > Audio > "Quiet mode: no unit voices"** turns them off; everything else keeps sounding.
+- **Stingers.** A boss losing a health stage plays a low brass-and-timpani stab, a boss's phase-2 surge an overdrive whine into a tritone hit, and the results stamp a rising fanfare (replacing its three beeps). The score dips under each.
+- **Warnings and weather.** A soft heartbeat pulses while your Command core is under 35 % and still being hit (faster under 15 %). A lightning strike in a storm is followed by a thunder crack (with the ambience switch).
+- All sounds are synthesised in code (no downloads), rendered once and pooled, go through the voice budget (rate limits, priorities, distance attenuation, the fog rule), follow the Master/Effects volume and Mute, and start only after the first gesture. No pin moved.
+
+### R3-X: Weapon effects, ground and air (owner request: "slow and beautiful, but cheap")
+- **Ten weapon effect classes** (`src/fx-kinds/weapon-class.js`, the same ids as R3-U's sounds): the heavier the weapon, the slower and showier the round. Rifles and machine guns stay fast (thinner tracers with a white-hot head, a dust puff on every ground hit); tank-class cannons fire a big, bright glowing shell on a slight arc with a long, thick smoke trail, behind a stronger muzzle flash and recoil puff, then a big flash, a ring of sparks, a wide bright ring and a scorch ring; the Breaker lobs a high round over a red warning ring; a ground cannon at a flyer bursts black-and-orange flak around it; beams and rails charge at the muzzle, then snap out and fade from the muzzle forward; flamers gain a hot flame tongue and embers; the medic's heal is a soft green beam with sparkles rising off the patient.
+- **Air:** Hawk missiles corkscrew to a flyer on thin curling ribbons and meet it in a sharp air burst; at the ground the Hawk strafes (tracer strikes walking onto the target, each kicking a dust spurt); Glider and Balloon bombs are real finned bodies that fall faster and grow over a shadow dot, then blast (fire for the Balloon); a flyer shot down bursts where it flies, spins down trailing smoke and crashes in dust and fire. Any round meeting a flyer now bursts in the air (no scorch on the ground under it).
+- **Barrage:** the shell drops out of the sky onto its mark over its last 0.85 s, drawn from the simulation's own strike list so it lands on the strike's tick; the strike mark is red.
+- **Lands when the damage shows:** every round lands exactly at its flight time (visual-style.json `life`, unchanged), when the target's hit flash fires, and the target's health bar now holds until then too; a killing round lands within 0.24 s.
+- **Cost:** shells, lobs, flak, missiles and bombs are one pooled instanced mesh (52 triangles, no shadow, hidden when nothing flies): +1 draw only while one is in flight; everything else comes from the existing pools. Rounds are pooled records (no allocation per shot or per frame once warm). Eco shortens trails and halves bursts; reduced motion keeps static shapes and soft flares (no white flashes). Still frames re-send no debris buffers (a fix).
+- View only: no sim file changed; every pin is identical.
+
+### R3-Q: First-minute hooks
+- **Quick battle, one tap from the title.** A teal "Quick battle" tile sits above the mode cards (on landscape phones beside Start). One tap starts a fun, winnable 1v1 at once: Meridian Riverlands, one Relaxed rival (Ashfall, or Meridian when you command Ashfall), your own faction, no other battle rules. Your outpost is ready (a Sentinel tower facing the enemy, a Supply relay, two more Harvesters, +150 alloy), and three enemy scouts set off at about 0:32 so the first fight comes at about 0:40. The test bot wins all 60 bot matches (5 factions x 3 maps x 4 attack timings), first combat 37 to 39 s. "Play again" replays a Quick battle; "New game" returns to your own skirmish setup, which Quick battle never changes (`rules.quick` is added only while the match is built and is never stored or listed in Battle rules).
+- **First watch (Defence level 1 for new players).** A profile that has never won a Defence level plays Gorge Road through a new variant (`src/defence/first-watch.js`; the designed level is not edited): the match opens with the enemy roster as a strip (portraits and the wave each type first comes; on phones portraits and wave numbers) until the first wave sets off, and a **Scout Runner**, a fast unarmed scout, runs the road a little ahead of wave 1. Catch it for 84 bonus alloy; if it gets through it costs no lives. Stars count for Gorge Road as usual.
+- New sim content behind a rule or a new variant only: pins, mission checksums, baselines and `check:defence` are unchanged. New pins in `tests/golden-r3q.test.js`; checks in `tests/quick-battle.test.js`, `tests/quick-battle-check.mjs` (bot: wins and first combat) and `tests/quick-battle.mjs` (browser, three viewports; CI matrix `r3-q`). Strings in Vietnamese and Korean.
 
 ## 0.25.0: AAA round 2 (release label for the deploy; owner decision O17)
 

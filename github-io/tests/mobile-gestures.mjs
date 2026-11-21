@@ -30,7 +30,14 @@ try {
     touch:getComputedStyle(document.querySelector('#world canvas')).touchAction};
   });
   assert.ok(layout.tabs.bottom<=size.height-15,'bottom controls clear the gesture edge');
-  assert.ok(layout.canvas.left>=12&&layout.canvas.right<=size.width-12,'camera drags start inside side edges: '+JSON.stringify({size,layout}));
+  // Phones draw the battlefield to the screen edges (phone-hud.css, round 3 HUD pass); the 12 px side margins and
+  // the bottom strip stay gesture margins in the input: a touch that starts there is left to the system.
+  const edge=await page.evaluate(()=>{
+   const c=document.querySelector('#world canvas'),r=c.getBoundingClientRect(),y=r.top+r.height/2;
+   const down=(x,yy,id)=>{const e=new PointerEvent('pointerdown',{pointerType:'touch',pointerId:id,isPrimary:true,clientX:x,clientY:yy,bubbles:true,cancelable:true});c.dispatchEvent(e);c.dispatchEvent(new PointerEvent('pointercancel',{pointerType:'touch',pointerId:id,bubbles:true}));return e.defaultPrevented;};
+   return {left:down(4,y,71),right:down(innerWidth-4,y,72),bottom:down(r.left+r.width/2,innerHeight-4,73)};
+  });
+  assert.deepEqual(edge,{left:false,right:false,bottom:false},'camera drags start inside the gesture margins: '+JSON.stringify({size,layout}));
   // The Windows WebKit port lacks this CSS feature; real Safari gained it in 16.
   if(layout.overscrollSupported)assert.equal(layout.overscroll,'none');
   assert.equal(layout.touch,'none');

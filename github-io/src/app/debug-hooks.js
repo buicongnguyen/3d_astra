@@ -76,6 +76,11 @@ export function setupDebugHooks(S, A) {
       get ceremony() { return A.ceremony?.info() ?? null; },
       onMatchEnd: (fn) => A.onMatchEnd?.(fn),
       mvp: () => S.matchStats.mvp?.() ?? null,
+      // R3-R: the commander rank (xp, rank, picks, the last match's XP) and a pick through the same path as a tap.
+      rank: () => A.rankInfo?.() ?? null,
+      rankPick: (kind, id) => A.rankPick?.(kind, id),
+      // R3-Q: whether the match being played (or the next one built) is a Quick battle.
+      get quick() { return !!S.quick; },
     };
   }
 

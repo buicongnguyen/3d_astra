@@ -833,9 +833,16 @@ export class WorldView {
     // frames the uncovered part exactly as before (same scale, focus in its middle); the covered
     // strip just shows more map, so opening or closing a panel never resizes or jumps the view.
     // The same for a strip along the top (--view-cover-top: the floating phone tool row).
-    const style = getComputedStyle(this.container), px = (name) => Math.max(0, parseFloat(style.getPropertyValue(name)) || 0);
+    // The covers may be calc() expressions (phone-hud.css): a hidden probe resolves them to pixels.
+    if (!this.coverProbe) {
+      this.coverProbe = document.createElement("i");
+      this.coverProbe.setAttribute("aria-hidden", "true");
+      this.coverProbe.style.cssText = "position:absolute;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding:var(--view-cover-top, 0px) 0 var(--view-cover, 0px)";
+      this.container.append(this.coverProbe);
+    }
+    const probe = getComputedStyle(this.coverProbe), px = (name) => Math.max(0, parseFloat(name === "--view-cover" ? probe.paddingBottom : probe.paddingTop) || 0);
     let cover = px("--view-cover"), coverTop = px("--view-cover-top");
-    if (cover + coverTop > height * 0.6) cover = coverTop = 0; // a squashed window: plain framing
+    if (cover + coverTop > height * 0.7) cover = coverTop = 0; // a squashed window: plain framing (0.7: phones now run the canvas under the top bar and the tabs too, 355 of 568 px on a 320 px phone)
     if (width === this.width && height === this.height && cover === this.cover && coverTop === this.coverTop) return;
     this.width = width;
     this.height = height;
@@ -1411,7 +1418,8 @@ export class WorldView {
         // A shot-down flyer drops from its altitude, turning and rolling, then settles as a wreck.
         const fall = clamp01(t / 0.9);
         m.position.y = d.lift * (1 - fall * fall);
-        m.rotation.y = d.baseAngle + (motion ? d.tilt * ease(t / 0.9) * 1.6 : 0);
+        // R3-X: it spins down (about one full turn on the way) under the smoke trail drawn by src/fx.js airWrecks.
+        m.rotation.y = d.baseAngle + (motion ? d.tilt * (ease(t / 0.9) * 1.6 + Math.min(t, 0.9) * 6.5) : 0);
         m.rotation.z = d.tilt * ease(t / 0.9) * 0.45;
         m.rotation.x = 0.2 * ease(t / 0.9);
         o.position.y = d.baseY - ease((t - (d.life - 0.9)) / 0.9) * 1.8;
@@ -1601,9 +1609,12 @@ export class WorldView {
         bar.quaternion.copy(this.camera.quaternion);
         bar.scale.set(bar.userData.base * this.barScale, bar.userData.base * this.barScale * this.barTall, 1);
       }
-      updateBar(bar, e, dt);
-      u.flash = Math.max(0, (u.flash || 0)-realDt);
-      const flash = u.flash > 0 && this.settings.combatMotion !== false && !this.reducedMotion.matches;
+      // R3-X: while a drawn round is still flying at this unit (its hit flash waits, flashWait), the bar keeps the
+      // health it had, so the bar drops, flashes and the model flashes together when the round lands.
+      const inbound = u.flashWait > 0 && this.activity.combat.motion;
+      updateBar(bar, e, dt, inbound);
+      if (!inbound) u.flash = Math.max(0, (u.flash || 0)-realDt);
+      const flash = !inbound && u.flash > 0 && this.settings.combatMotion !== false && !this.reducedMotion.matches;
       u.ring.material.uniforms.flash.value = bar.material.uniforms.flash.value = flash ? 1 : 0;
       if (flash) { u.ring.visible = bar.visible = true; u.ring.material.uniforms.appear.value = 1; }
 

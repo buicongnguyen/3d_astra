@@ -131,6 +131,15 @@ The loader retains a `hover` marker as template metadata; only a marked unit rec
 - **Placement:** the README anchors are the table `MAP_ANCHORS` in `src/story/campaign-map.js` (keyed by mission id, with the name-plate side); `src/campaign-map-ui.js` puts the painting, the route SVG and the relays in one layer that covers the board, so they scale together.
 - **Loading:** one `<picture>` inside the campaign map, so nothing is fetched until Campaign opens, and only the painting the layout shows.
 
+## Command console UI kit (round 3 phone HUD pass)
+
+UI kit design: Codex/OpenAI, owner-commissioned.
+
+- **Source:** `3d_astra/codex-ui-kit/` (README, `tokens.md`, 29 SVG pieces, three mockups), delivered 21 November 2026, read-only.
+- **Copied here:** `src/art/ui/frame-button.svg`, `frame-button-active.svg`, `frame-panel.svg`, `frame-toast.svg` (211 bytes each). They are the kit's `frame-button` / `frame-panel` / `frame-toast` with `stroke="currentColor"` replaced by the kit's line colour `#416479` (the active copy uses cyan `#83DEEB`), because a standalone SVG border image cannot inherit a colour.
+- **Tokens:** `src/ui-kit.css` (colours, spacing, chamfers, frames, type) from `tokens.md`; the phone battle HUD applies them in `src/phone-hud.css`. Fonts stay the game's own stacks.
+- The kit's glyphs and the other pieces are not used yet; the game keeps its own icon set (`src/icons.js`).
+
 ## Round 3 models and portraits (R3-J)
 
 - **Portrait atlas:** 4 columns by 10 rows (768 by 1920 pixels), 37 cells. This replaces the 4 × 8 figure under "Interface art". After the 29 cells listed there come `carrier`, `ironvanguard`, `gunner`, `stalker`, `ironsovereign`, `workshop`, `rampart` and the reserved `ironsovereign2`. The reserved cell reuses the Sovereign model (`SAME_MODEL` in `render_ui_art.py`).

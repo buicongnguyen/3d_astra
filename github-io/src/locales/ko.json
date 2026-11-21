@@ -1254,7 +1254,78 @@
     "Keep a few units at home, or build a Tower beside the Command core.": "기지에 유닛 몇을 남겨 두거나 사령부 옆에 타워를 건설하세요.",
     "Research weapons and plating at the Foundry: upgrades win even fights.": "공장에서 무기와 장갑을 연구하세요. 업그레이드가 대등한 싸움을 승리로 이끕니다.",
     "Clear": "해제",
-    "Info": "정보"
+    "Info": "정보",
+    "Recruit": "훈련병",
+    "Private": "이등병",
+    "Lance Corporal": "일등병",
+    "Corporal": "상등병",
+    "Sergeant": "하사",
+    "Staff Sergeant": "중사",
+    "Warrant Officer": "준위",
+    "Ensign": "사관후보생",
+    "Second Lieutenant": "소위",
+    "Lieutenant": "중위",
+    "Captain": "대위",
+    "Major": "소령",
+    "Lieutenant Colonel": "중령",
+    "Colonel": "대령",
+    "Brigadier": "준장",
+    "Major General": "소장",
+    "Lieutenant General": "중장",
+    "General": "대장",
+    "Marshal": "원수",
+    "Frontier Marshal": "변경 원수",
+    "Factory": "기본 도색",
+    "Sand": "모래",
+    "Arctic": "극지",
+    "Ember": "잿불",
+    "Jungle": "정글",
+    "Night": "야간",
+    "Meridian ring": "메리디언 고리",
+    "Spearhead": "창끝",
+    "Wings": "날개",
+    "Star": "별",
+    "Crown": "왕관",
+    "Phoenix": "불사조",
+    "Field Commander": "야전 사령관",
+    "Pathfinder": "개척자",
+    "Iron Marshal": "강철 원수",
+    "Frontier Legend": "변경의 전설",
+    "Hero of the Meridian": "메리디언의 영웅",
+    "None": "없음",
+    "Iron line": "강철 전선",
+    "Lean": "절약",
+    "Hunter": "사냥꾼",
+    "No pledge.": "서약 없음.",
+    "Win losing 5 units or fewer.": "유닛 손실 5기 이하로 승리하세요.",
+    "Win within 12 minutes.": "12분 안에 승리하세요.",
+    "Win building 6 structures or fewer.": "건물을 6채 이하만 지어 승리하세요.",
+    "Win with 40 kills or more.": "적을 40기 이상 격파하고 승리하세요.",
+    "Paint": "도색",
+    "Emblem": "문장",
+    "Title banner": "칭호",
+    "Daily order": "일일 명령",
+    "Commander rank": "사령관 계급",
+    "Rank up!": "진급!",
+    "Commander XP": "사령관 경험치",
+    "Daily order met": "일일 명령 달성",
+    "Unlocked:": "해금:",
+    "Pick it in the Skirmish setup.": "교전 설정에서 고를 수 있습니다.",
+    "Your units' colour scheme. Looks only: it never changes a battle.": "아군 유닛의 도색입니다. 외형만 바뀌며 전투에는 영향이 없습니다.",
+    "Shown on your rank and your results.": "계급 표시와 결과 화면에 나타납니다.",
+    "The title under your rank.": "계급 아래에 표시되는 칭호입니다.",
+    "Quiet mode: no unit voices": "조용한 모드: 유닛 음성 끄기",
+    "Quick battle": "빠른 전투",
+    "Ready base · 1 rival": "준비된 기지 · 적 1명",
+    "Enemy roster": "적 편성",
+    "Scout Runner": "정찰 주자",
+    "Bonus alloy": "보너스 합금",
+    "Catch the Scout Runner before it reaches the end of the road.": "정찰 주자가 길 끝에 닿기 전에 잡으세요.",
+    "Quick battle: your outpost is ready. Enemy scouts are on their way.": "빠른 전투: 전초기지가 준비되었습니다. 적 정찰병이 다가오고 있습니다.",
+    "Enemy scouts sighted! Meet them at your tower.": "적 정찰병 발견! 타워에서 맞서세요.",
+    "A Scout Runner is on the road! Catch it for bonus alloy.": "정찰 주자가 길에 나타났습니다! 잡으면 보너스 합금을 받습니다.",
+    "Scout Runner caught: bonus alloy!": "정찰 주자 포획: 보너스 합금!",
+    "The Scout Runner got away. No lives lost.": "정찰 주자가 달아났습니다. 잃은 생명은 없습니다."
   },
   "patterns": [
     [
@@ -2072,6 +2143,30 @@
     [
       "^The enemy core was down to (\\d+)% health\\.$",
       "적 사령부의 체력이 {1}%까지 떨어졌습니다."
+    ],
+    [
+      "^Rank (\\d\\d)$",
+      "계급 {1}"
+    ],
+    [
+      "^(\\d+) / (\\d+) XP$",
+      "{1} / {2} 경험치"
+    ],
+    [
+      "^(\\d+) XP$",
+      "경험치 {1}"
+    ],
+    [
+      "^\\+(\\d+) XP$",
+      "+{1} 경험치"
+    ],
+    [
+      "^Unlocks at rank (\\d+)$",
+      "계급 {1}에서 해금"
+    ],
+    [
+      "^Pledge a Daily order for \\+(\\d+) XP on a win, once a day\\. It never changes a battle\\.$",
+      "일일 명령을 서약하면 승리할 때 하루 한 번 +{1} 경험치를 얻습니다. 전투에는 영향이 없습니다."
     ]
   ]
 }

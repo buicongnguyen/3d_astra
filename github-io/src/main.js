@@ -45,13 +45,18 @@ import { setupDebugHooks } from "./app/debug-hooks.js";
 import { setupDefenceEntry } from "./app/defence-entry.js";
 import { setupChoices } from "./app/choices.js";
 import { setupScenes } from "./app/scenes.js";
+import { setupRank } from "./rank-ui.js"; // R3-R: commander rank chip, unlock pickers, results toast
 import { resolveMission } from "./campaign.js";
 import { CORE_MODEL_TYPES, modelsForMatch } from "./model-roster.js";
 import { skirmishSides, matchLook } from "./factions.js";
 import { prefetchModels, releaseModelBytes } from "./app/loading.js";
 import "./loading.css";
+// Phone battle HUD tidy pass (round 3): loaded last, scoped to phones in a match.
+import "./ui-kit.css";
+import "./phone-hud.css";
 import { registerOffline } from "./app/offline.js";
 import { setupCover } from "./app/cover.js";
+import { setupQuickBattle } from "./quick-battle.js";
 
 renderShell();
 // S is the shared state; A is what each module offers the others (functions and widgets).
@@ -200,9 +205,12 @@ const SETUP = [
   ["input-pointer", setupInputPointer], ["input-keyboard", setupInputKeyboard], ["modals", setupModals],
   ["briefing", setupBriefing], ["match-flow", setupMatchFlow], ["frame", setupFrame], ["ui-extras", setupUiExtras], ["choices", setupChoices], ["scenes", setupScenes], ["debug-hooks", setupDebugHooks],
   ["defence", setupDefenceEntry],
+  ["rank", setupRank],
+  // R3-Q: Quick battle and First watch wrap createSim, newGame, defenceMission and defenceHud, so they come last.
+  ["quick-battle", setupQuickBattle],
 ];
 const BIND = ["preferences", "hud", "input-pointer", "sound", "frame", "modals", "briefing", "match-flow", "selection",
-  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "choices", "scenes", "debug-hooks", "defence"];
+  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "choices", "scenes", "debug-hooks", "defence", "rank", "quick-battle"];
 const binds = Object.fromEntries(SETUP.map(([name, setup]) => [name, setup(S, A)]));
 // The start screen shows the battle chosen there, so the first simulation is built from it.
 ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction, playerFaction: S.playerFaction } = A.battleSetup());

@@ -1,19 +1,44 @@
-// Shade (and the Stalker, longer and thinner): an instant beam from muzzle to target and a ring where it ends.
+// Shade (and the Stalker, longer and thinner): a beam from muzzle to target and a ring where it ends.
+// R3-X: a short charge glow gathers at the muzzle for the shot's flight time (visual-style.json `life`), then the
+// bright line snaps out to the target exactly when the hit lands (the target's hit flash waits that long), and
+// fades from the muzzle forward (beamLine). Everything from the glow pool, through the allocation-free emit path.
 import { CELL, STRETCH } from "./cells.js";
-import { flare, ring, glow, sparks, fade } from "./common.js";
+import { ring, glow, sparks, fade } from "./common.js";
+
+const HOT = [1, 1, 1, 1], HOT_DIM = [1, 1, 1, 0.4];
+export const BEAM_SEGMENTS = 5;
+
+// The charge: a glow that swells at the muzzle over `charge` seconds, a hot core inside it.
+export function chargeGlow(fx, rng, from, c0, charge, anchor, size = 1) {
+  const life = Math.max(0.04, charge);
+  const g = fx.emit(fx.glow, from.x, from.y, from.z, anchor, true);
+  g.s0 = 0.15 * size; g.s1 = 1.1 * size; g.life = life; g.c0 = fade(c0, 0.35); g.c1 = fade(c0, 0.95); g.rot = rng() * 6.28;
+  const core = fx.emit(fx.glow, from.x, from.y, from.z, anchor, true);
+  core.cell = CELL.flare; core.s0 = 0.1 * size; core.s1 = 0.7 * size; core.life = life; core.c0 = HOT_DIM; core.c1 = HOT; core.rot = rng() * 6.28;
+}
+
+// The line: BEAM_SEGMENTS stretched quads from the muzzle to the target, all lit at `delay`; the one at the muzzle
+// fades first and the one at the target last, so the beam drains away from the muzzle forward.
+export function beamLine(fx, rng, a, c0, width, life, delay) {
+  const { from, to, ux, uy, uz, len, anchor } = a, seg = len / BEAM_SEGMENTS, c1 = fade(c0);
+  for (let i = 0; i < BEAM_SEGMENTS; i++) {
+    const k = (i + 0.5) / BEAM_SEGMENTS, p = fx.emit(fx.glow, from.x + (to.x - from.x) * k, from.y + (to.y - from.y) * k, from.z + (to.z - from.z) * k, anchor, true);
+    p.mode = STRETCH; p.ax = ux; p.ay = uy; p.az = uz; p.length = seg * 1.04; p.cell = CELL.glow; p.s0 = width; p.s1 = width * 0.5;
+    p.life = life * (0.45 + 0.55 * (i + 1) / BEAM_SEGMENTS); p.hold = 0.25; p.c0 = c0; p.c1 = c1; p.age = -delay; p.rot = rng() * 6.28;
+  }
+}
 
 export default {
   id: "beam",
   spawn(fx, ev, rng, a) {
-    const { from, to, ux, uy, uz, len, anchor, style } = a;
-    const life = style.beamLife ?? 0.12, width = style.beamWidth ?? 0.2, c0 = a.color, hot = [1, 1, 1, 1];
-    flare(fx, from, 0.8, hot, 0.07, anchor);
-    // The beam: a hot white core over a coloured sheath (two stretched quads along the whole path).
-    for (const [w, col] of [[width * 0.45, hot], [width, c0]])
-      fx.particle(fx.glow, { lifted: true, x: (from.x + to.x) / 2, y: (from.y + to.y) / 2, z: (from.z + to.z) / 2, mode: STRETCH, ax: ux, ay: uy, az: uz,
-        length: len, s0: w, s1: w * 0.5, life, cell: CELL.glow, c0: col, c1: fade(col), anchor, rot: rng() * 6.28 });
-    ring(fx, to, 0.3, style.ring ?? 1.5, c0, 0.26, anchor, 0.02);
-    glow(fx, to, 0.9, [c0[0], c0[1], c0[2], 0.7], 0.14, anchor);
-    sparks(fx, rng, to, 3, anchor, 0.5, hot, fade(c0));
+    const { to, anchor, style, travel } = a;
+    const life = style.beamLife ?? 0.12, width = style.beamWidth ?? 0.2, c0 = a.color;
+    chargeGlow(fx, rng, a.from, c0, travel, anchor, 0.9);
+    // A hot white core over a coloured sheath.
+    beamLine(fx, rng, a, HOT, width * 0.45, life, travel);
+    beamLine(fx, rng, a, c0, width, life, travel);
+    ring(fx, to, 0.3, style.ring ?? 1.5, c0, 0.26, anchor, travel + 0.02);
+    glow(fx, to, 0.9, [c0[0], c0[1], c0[2], 0.7], 0.14, anchor, travel);
+    sparks(fx, rng, to, 3, anchor, 0.5, HOT, fade(c0), travel);
   },
 };

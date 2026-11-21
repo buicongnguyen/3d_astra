@@ -2,6 +2,7 @@ import { fnv1a as hashString, mulberry32 } from "./rng.js";
 import { MIX } from "./audio-mix.js";
 import DEFENCE_MAPS from "./defence/maps.json" with { type: "json" };
 import SKIRMISH_MAPS from "./maps.json" with { type: "json" };
+import VISUAL_STYLE from "./visual-style.json" with { type: "json" };
 // Pure audio logic: no Web Audio and no DOM, so it is unit-tested in Node (tests/audio.test.js).
 // The score and the sound effects are made in-house: this file holds the rules (which mood fits
 // the match, which notes a bar contains, how many voices may sound, which sounds the fog hides).
@@ -196,7 +197,7 @@ export function weaponVoice(weapon, sourceType) {
 // at the target: name and delay per weapon voice. Light rounds only have the target's impact sound.
 export const HIT = {
   tank: { name: "hit:shell", delay: 0.32 }, walker: { name: "hit:shell", delay: 0.32 }, artillery: { name: "hit:artillery", delay: 0.28 },
-  rocket: { name: "hit:rocket", delay: 0.45 }, rail: { name: "hit:small", delay: 0.24 }, tower: { name: "hit:small", delay: 0.26 },
+  rocket: { name: "hit:rocket", delay: 0.45 }, sam: { name: "hit:rocket", delay: 0.45 }, rail: { name: "hit:small", delay: 0.24 }, tower: { name: "hit:small", delay: 0.26 },
 };
 export const hitFor = (voice) => HIT[voice] || null;
 // A Barrage (ability event with a target and a shell delay): the incoming whistle (`incoming:shell`,
@@ -215,8 +216,16 @@ export function soundFor(event, sourceType = null) {
   switch (event.type) {
     case "shot": {
       const voice = weaponVoice(event.weapon || "vanguard", sourceType);
-      return { name: `shot:${voice}`, priority: HEAVY_VOICES.has(voice) ? 3 : 2, gap: voice === "flame" ? 0.22 : HEAVY_VOICES.has(voice) ? 0.08 : 0.05, group: "weapon", heavy: HEAVY_VOICES.has(voice) };
+      // R3-U: the weapon class (weaponClass below) swaps in its own voice where the class has one
+      // (flak burst, ground-to-air missile, bomb release, gunship strafing run).
+      const name = classShot(event, sourceType) || `shot:${voice}`;
+      const heavy = HEAVY_VOICES.has(voice) || name === "shot:flak";
+      return { name, priority: heavy ? 3 : 2, gap: voice === "flame" ? 0.22 : heavy ? 0.08 : 0.05, group: "weapon", heavy };
     }
+    // R3-U: heal beams and repair tools (progression.js "support" events), soft and rate-limited.
+    case "support": return { name: event.weapon === "repair" || event.weapon === "engineer" ? "shot:engineer" : "shot:heal", priority: 1, gap: 0.35, group: "weapon" };
+    // R3-U: the boss's phase-2 overdrive (sim/bosses.js bossSurge) has its own stinger.
+    case "bossSurge": return { name: "sting:surge", priority: 9, gap: 1, group: "moment" };
     case "impact": return { name: event.shield ? "impact:shield" : event.building ? "impact:building" : "impact:body", priority: 1, gap: 0.07, group: "impact" };
     case "death": return { name: event.core ? "boom:core" : event.building ? "boom:building" : event.heavy ? "boom:heavy" : "boom:small", priority: event.core ? 9 : event.building ? 7 : 5, gap: event.core ? 0 : 0.08, group: "explosion" };
     case "strike": return { name: "boom:strike", priority: 6, gap: 0.1, group: "explosion" };
@@ -227,6 +236,8 @@ export function soundFor(event, sourceType = null) {
     case "promote": return { name: "promote", priority: 7, gap: 0.3, group: "moment" };
     case "point": return { name: event.owner === 0 ? "capture" : "lost", priority: 8, gap: 0.3, group: "moment" };
     case "incoming": return { name: "alarm", priority: 8, gap: 2, group: "moment" };
+    // R3-Q: First watch's Scout Runner: a reward chime when it is caught, the "lost" tone when it escapes.
+    case "runner": return { name: event.phase === "caught" ? "capture" : "lost", priority: 7, gap: 0.5, group: "moment" };
     // Bosses (sim/bosses.js): the alarm when an attack is marked, a heavy blast at each health stage, the big one when it falls.
     case "bossWarn": return { name: "alarm", priority: 8, gap: 1, group: "moment" };
     case "bossStage": return { name: "boom:heavy", priority: 7, gap: 0.5, group: "explosion" };
@@ -245,7 +256,7 @@ export const explosionSize = (name) => EXPLOSION_SIZE[name] || null;
 // Weight a heard sound adds to combat intensity (before closeness to the camera).
 export function intensityWeight(name) {
   const w = MIX.intensityWeight;
-  if (name.startsWith("shot:")) return HEAVY_VOICES.has(name.slice(5)) ? w.heavyShot : name === "shot:support" || name === "shot:engineer" || name === "shot:worker" ? 0 : w.shot;
+  if (name.startsWith("shot:")) return HEAVY_VOICES.has(name.slice(5)) || name === "shot:flak" ? w.heavyShot : name === "shot:support" || name === "shot:engineer" || name === "shot:worker" || name === "shot:heal" ? 0 : w.shot;
   if (name.startsWith("impact:")) return w.impact;
   if (name.startsWith("hit:")) return w.hit;
   if (name === "boom:small") return w.death;
@@ -460,4 +471,149 @@ export function engineMix(vehicles) {
   const level = clamp01(sum);
   const share = weight > 0 ? moving / weight : 0;
   return { level, rate: o.rate[0] + (o.rate[1] - o.rate[0]) * share };
+}
+
+// ---------------------------------------------------------------- R3-U: audio juice
+// Weapon classes: the sound family a shot belongs to, the same ten classes the weapon effects draw
+// (R3-X), so what is seen and what is heard match. Pure: from the shot event's weapon, shooter type
+// (`sourceType`, else the event's `unit`) and whether the target flies (`tAir`).
+export const WEAPON_CLASSES = ["tracer", "shell", "lob", "flak", "beam", "flamer", "heal", "missile", "bomb", "strafe"];
+const VOICE_CLASS = {
+  rifle: "tracer", smg: "tracer", mg: "tracer", silenced: "beam", scrap: "tracer", drone: "tracer", worker: "tracer",
+  tank: "shell", walker: "shell", tower: "shell", artillery: "lob", flame: "flamer", rocket: "missile", pod: "missile",
+  rail: "beam", laser: "beam", support: "heal", engineer: "heal",
+};
+const BOMBERS = new Set(["glider", "balloon"]);
+export function weaponClass(event, sourceType = null) {
+  if (!event) return "tracer";
+  if (event.type === "support") return "heal";
+  const unit = sourceType || event.unit || null, voice = weaponVoice(event.weapon || "vanguard", unit);
+  if (BOMBERS.has(unit)) return "bomb";
+  const air = Number.isFinite(event.tAir);
+  if (air && (voice === "tower" || voice === "tank" || voice === "walker")) return "flak";
+  if (unit === "hawk" && !air) return "strafe";
+  return VOICE_CLASS[voice] || "tracer";
+}
+// A class's own firing voice where the shared unit voice would not match the look (flak burst, bomb
+// release, gunship strafing run, ground-to-air missile); the rest keep the unit voice (shot:rifle,
+// shot:tank, shot:artillery, shot:flame, shot:rail, ...).
+export const CLASS_SHOT = { flak: "shot:flak", bomb: "shot:bomb", strafe: "shot:strafe" };
+export function classShot(event, sourceType = null) {
+  const cls = weaponClass(event, sourceType);
+  if (cls === "missile" && Number.isFinite(event?.tAir) && !Number.isFinite(event?.sAir)) return "shot:sam";
+  return CLASS_SHOT[cls] || null;
+}
+
+// Flight time of a round (visual-style.json `life`, the effect's own flight), so landings sound when they are seen.
+export function flightTime(event, sourceType = null) {
+  const w = VISUAL_STYLE.weapons || {}, unit = sourceType || event?.unit;
+  return (unit && w[unit]?.life) || w[event?.weapon]?.life || 0.14;
+}
+// Layered impacts by size: every round that lands on the ground adds a size layer to the target's
+// material sound (impact:body / building / shield): small (bullets, strafing), medium (missiles,
+// beams, flame) or heavy (shells, lobs, bombs).
+export const IMPACT_SIZE = { tracer: "small", strafe: "small", beam: "medium", missile: "medium", flamer: "medium", shell: "heavy", lob: "heavy", bomb: "heavy" };
+export function impactLayer(event, sourceType = null) {
+  if (event?.type !== "shot" || !Number.isFinite(event.tx) || !Number.isFinite(event.tz) || Number.isFinite(event.tAir)) return null;
+  const size = IMPACT_SIZE[weaponClass(event, sourceType)];
+  return size ? { name: `impact:${size}`, size, delay: flightTime(event, sourceType) } : null;
+}
+// What a class adds where the round lands: a falling whistle before it (lob, bomb) and its own
+// landing (bomb blast, flak air burst). `incoming` starts so that it ends as the round lands.
+export function landingFor(event, sourceType = null) {
+  if (event?.type !== "shot" || !Number.isFinite(event.tx) || !Number.isFinite(event.tz)) return null;
+  const cls = weaponClass(event, sourceType), t = flightTime(event, sourceType);
+  if (cls === "lob") return { incoming: { name: "incoming:lob", delay: Math.max(0, t - LOB_WHISTLE) }, hit: null };
+  if (cls === "bomb") {
+    const fire = (sourceType || event.unit) === "balloon";
+    return { incoming: { name: "incoming:bomb", delay: Math.max(0, t - BOMB_WHISTLE) }, hit: { name: fire ? "hit:firebomb" : "hit:bomb", delay: t } };
+  }
+  if (cls === "flak") return { incoming: null, hit: { name: "hit:flak", delay: t } };
+  return null;
+}
+// Whistle lengths (sfx-bank.js incoming:lob / incoming:bomb), so each ends on its landing.
+export const LOB_WHISTLE = 0.26, BOMB_WHISTLE = 0.42;
+
+// Stingers: a short musical hit over the score for the big turns of a match.
+//   sting:boss    a boss's health stage falls (bossStage), over its heavy blast
+//   sting:surge   a boss enters phase 2 overdrive (bossSurge; soundFor plays it)
+//   sting:victory the results stamp lands (ceremony.js sting)
+export const STINGERS = ["sting:boss", "sting:surge", "sting:victory"];
+export const stingerFor = (event) => (event?.type === "bossStage" ? "sting:boss" : null);
+
+// Unit voice "barks": a synthesised chirp per unit type when the player selects or orders units.
+// Rate limit: at most `max` in any `window` seconds and none closer than `gap`; quiet mode mutes them.
+export const BARK = { max: 2, window: 1, gap: 0.25, pitchJitter: 0.1, level: 0.55 };
+export class BarkGate {
+  constructor(o = BARK) { this.o = o; this.times = []; }
+  allow(now, quiet = false) {
+    if (quiet) return false;
+    this.times = this.times.filter((t) => now - t < this.o.window);
+    if (this.times.length >= this.o.max || (this.times.length && now - this.times[this.times.length - 1] < this.o.gap)) return false;
+    this.times.push(now);
+    return true;
+  }
+}
+// Voice of a unit class: base pitch (Hz), oscillator and formant (band-pass Hz of the breath layer).
+export const BARK_VOICE = {
+  worker: { hz: 620, wave: "triangle", formant: 1500 }, melee: { hz: 520, wave: "square", formant: 1200 },
+  ranged: { hz: 700, wave: "triangle", formant: 1800 }, siege: { hz: 300, wave: "sawtooth", formant: 900 },
+  support: { hz: 880, wave: "sine", formant: 2400 }, armor: { hz: 190, wave: "sawtooth", formant: 650 },
+  antiarmor: { hz: 420, wave: "square", formant: 1100 }, air: { hz: 1040, wave: "sine", formant: 2800 },
+  transport: { hz: 240, wave: "sawtooth", formant: 700 },
+};
+// A type's voice: its class voice, nudged by the type's own name so two units of one class differ.
+export function barkVoice(type, unitClass) {
+  const v = BARK_VOICE[unitClass] || BARK_VOICE.ranged, n = (hashString(String(type || "")) % 9) - 4;
+  return { ...v, hz: Math.round(v.hz * (1 + n * 0.035)) };
+}
+// The unit that speaks for a selection: one of the most numerous unit type (first seen on a tie).
+export function barkType(entities) {
+  const count = new Map();
+  let best = null, most = 0;
+  for (const e of entities || []) {
+    if (!e || e.kind !== "unit") continue;
+    const n = (count.get(e.type) || 0) + 1;
+    count.set(e.type, n);
+    if (n > most) { most = n; best = e; }
+  }
+  return best;
+}
+// The bark kind of an order: "attack" for attacks, "order" for any other order that gets a reply.
+export const barkKind = (orderType) => { const k = radioKind(orderType); return k === "attack" ? "attack" : k ? "order" : null; };
+
+// Low-HP warning: a soft heartbeat while the player's Command core is low and still being hit.
+// `update(now, ratio)` gets the core's health share (null = no core) and says when to pulse.
+export const LOW_HP = { below: 0.35, critical: 0.15, every: 2.4, criticalEvery: 1.4, hold: 8 };
+export class LowHpWatch {
+  constructor(o = LOW_HP) { this.o = o; this.reset(); }
+  reset() { this.last = null; this.hitAt = -Infinity; this.pulseAt = -Infinity; }
+  update(now, ratio) {
+    if (!Number.isFinite(ratio)) { this.last = null; return false; }
+    if (this.last != null && ratio < this.last - 1e-6) this.hitAt = now;
+    this.last = ratio;
+    if (ratio >= this.o.below || ratio <= 0 || now - this.hitAt > this.o.hold) return false;
+    const every = ratio < this.o.critical ? this.o.criticalEvery : this.o.every;
+    if (now - this.pulseAt < every) return false;
+    this.pulseAt = now;
+    return true;
+  }
+}
+// Lowest health share of the player's Command cores (null without one).
+export function coreHealth(sim, team = 0) {
+  let low = null;
+  for (const e of sim?.entities || []) if (e.team === team && e.type === "hq" && e.hp > 0 && e.maxHp > 0) low = Math.min(low ?? 1, e.hp / e.maxHp);
+  return low;
+}
+
+// Thunder: the crack of a lightning strike the view draws (mission-looks.js WEATHER.flash rising
+// past `edge` during a storm), `delay` seconds after the flash. One per strike.
+export const THUNDER = { edge: 0.6, delay: 0.7, level: 0.7 };
+export class ThunderWatch {
+  constructor() { this.flash = 0; }
+  update(flash, storm) {
+    const strike = storm > 0 && flash > THUNDER.edge && this.flash <= THUNDER.edge;
+    this.flash = flash || 0;
+    return strike;
+  }
 }

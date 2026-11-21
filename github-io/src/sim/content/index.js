@@ -19,6 +19,8 @@ import { aiCasts } from "./ai-casts.js";
 import { fieldCommand } from "./field-command.js";
 import { elites } from "./elites.js";
 import { barracksVeterans } from "./barracks-veterans.js";
+import { quickBattle } from "./quick-battle.js";
+import { scoutRunner } from "./scout-runner.js";
 
 export const CONTENT = [
   suppression,
@@ -33,4 +35,6 @@ export const CONTENT = [
   fieldCommand,
   elites,
   barracksVeterans,
+  quickBattle,
+  scoutRunner,
 ];

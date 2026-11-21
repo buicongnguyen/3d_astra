@@ -144,8 +144,9 @@ export function createBar(e, hex) {
 }
 
 // Health ghost: after damage the lost span stays pale for 0.45 s, then drains away.
-export function updateBar(bar, e, dt) {
-  const u = bar.material.uniforms, s = bar.userData, hp = Math.max(0, e.hp / e.maxHp);
+// R3-X `inbound`: a round drawn in flight has not landed yet, so the bar keeps the health from before the hit.
+export function updateBar(bar, e, dt, inbound = false) {
+  const u = bar.material.uniforms, s = bar.userData, real = Math.max(0, e.hp / e.maxHp), hp = inbound && real < s.last ? s.last : real;
   if (hp < s.last) s.hold = 0.45;
   if (hp >= s.ghost) s.ghost = hp;
   else if (s.hold > 0) s.hold -= dt;
