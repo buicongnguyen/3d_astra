@@ -121,3 +121,13 @@ The loader retains a `hover` marker as template metadata; only a marked unit rec
 - **Changes here:** `layer-foreground-squad.webp` was resized to 1280×853 and re-encoded (WebP quality 72, alpha quality 75): 572,364 → 289,986 bytes. Every other file is byte-identical to the source.
 - **Placement:** `src/app/cover-layers.js` carries the source's table (x, y, width per frame, back to front, motion amplitudes). `src/app/cover.js` fetches the layers only after the game's models are in, places them exactly over the flat cover and cross-fades.
 - **Budgets:** one flat cover at first paint (≤ 350 KB each); layers ≤ 1.7 MB in total, lazy; checked by `tests/cover-ui.test.js`.
+
+## Round 3 models and portraits (R3-J)
+
+- **Portrait atlas:** 4 columns by 10 rows (768 by 1920 pixels), 37 cells. This replaces the 4 × 8 figure under "Interface art". After the 29 cells listed there come `carrier`, `ironvanguard`, `gunner`, `stalker`, `ironsovereign`, `workshop`, `rampart` and the reserved `ironsovereign2`. The reserved cell reuses the Sovereign model (`SAME_MODEL` in `render_ui_art.py`).
+  - When you add a unit or building type, append its name to `PORTRAIT_ORDER` (`src/portraits.js`) and `PORTRAITS` (`render_ui_art.py`), then re-render.
+  - When the row count changes, update the three sizes and positions in `src/portraits.css`.
+  - `tests/r3j-models-portraits.test.js` fails for any type without a cell.
+- **Drone:** `generate_factions.py -- drone` (Wardens paint `ArmorWardens`, four materials).
+- **Iron Sovereign:** `node tools/port-boss-model.mjs <Tank_game_3D>/public/models/boss-walker.glb public/models/ironsovereign.glb --parts tools/boss-parts/ironsovereign.json`. This uses palette `sovereign3`: a brass hull, crimson fittings, umber feet. The round-2 `sovereign` palette is kept, so the old port can still be reproduced.
+- **Night glow on every building:** every building has an emissive `Window*` or `Lamp*` material. The Relay and Tower keep their floodlight `Lamp`s. A `Window` costs one draw per building type on screen, plus one in the High shadow pass.

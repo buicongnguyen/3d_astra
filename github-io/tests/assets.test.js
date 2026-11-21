@@ -85,13 +85,14 @@ test('portrait generation preserves legacy cells and appends every approved fact
   const blender = JSON.parse(read('tools/blender/render_ui_art.py').match(/PORTRAITS = (\[[\s\S]*?\])/)[1].replaceAll("'", '"'));
   assert.deepEqual(blender, order);
   const manifest = JSON.parse(read('public/models/manifest.json')).assets, assets = manifest.filter(a => a.faction);
-  assert.equal(new Set(order).size, 29);
+  // R3-J (round 3): 29 cells before, then the 7 missing types and the reserved ironsovereign2 (37).
+  assert.equal(new Set(order).size, 37);
   assert.deepEqual(new Set(order.slice(13, 25)), new Set(assets.map(a => a.name)));
   // R3-F (round 3) reworked the approved faction models; they wait for the owner again.
   for (const asset of assets) assert.ok(['approved by owner 2026-11-11', 'pending owner review (round 3)'].includes(asset.review), asset.name);
   // 0.18: the four flyers are appended after the faction cells (manifest entries marked air, no faction).
-  assert.deepEqual(order.slice(25), ['kite', 'hawk', 'balloon', 'glider']);
-  assert.deepEqual(manifest.filter(a => a.air).map(a => a.name), order.slice(25));
+  assert.deepEqual(order.slice(25, 29), ['kite', 'hawk', 'balloon', 'glider']);
+  assert.deepEqual(manifest.filter(a => a.air).map(a => a.name), order.slice(25, 29));
 });
 
 test('flyer models keep the air contract: hover bob, spin or flicker pivots, a triangle budget', () => {
@@ -143,7 +144,8 @@ test('R3-F warm kit: armour paints are light, warm and glossy; dark is kept for 
 test('R3-F faction paints, Window* glow contract on buildings, and no model gains a material', () => {
   const paint = { ashfall: 'ArmorAshfall', sunward: 'ArmorSunward', wardens: 'ArmorWardens', veil: 'ArmorVeil' };
   const manifest = JSON.parse(readFileSync(new URL('../public/models/manifest.json', import.meta.url), 'utf8')).assets;
-  for (const asset of manifest.filter(a => a.faction && a.name !== 'drone'))
+  // R3-J rebuilt the Drone in the Wardens paint, so it is no longer an exception.
+  for (const asset of manifest.filter(a => a.faction))
     assert.ok(materialsOf(asset.name).some(x => x.name === paint[asset.faction]), `${asset.name}: ${paint[asset.faction]}`);
   // Name contract with R3-D: lit windows are materials named Window*, emissive.
   for (const name of ['hq', 'barracks', 'foundry', 'veilrelay']) {
@@ -153,8 +155,9 @@ test('R3-F faction paints, Window* glow contract on buildings, and no model gain
   // Material counts after R3-F (round 2 in brackets where it changed). The wagon took the cream canvas and
   // the red cross (4 -> 6), still fewer than the medic it replaces (8).
   const limit = { worker: 8, vanguard: 6, ranger: 7, medic: 8, engineer: 9, antitank: 8, breaker: 7, tank: 7, hq: 9, barracks: 9, foundry: 10, relay: 8, tower: 8,
-    scrapper: 7, scorcher: 5, salvageyard: 7, rider: 5, wagon: 6, waystation: 6, walker: 5, pylon: 5, shade: 7, watcher: 7, veilrelay: 6,
-    gunner: 7, stalker: 7, workshop: 5, rampart: 7, carrier: 5, kite: 7, hawk: 6, balloon: 8, glider: 9 };
+    // R3-J: salvageyard, waystation, pylon and workshop gained the lit Window (+1 each, still within the HQ's 9).
+    scrapper: 7, scorcher: 5, salvageyard: 8, rider: 5, wagon: 6, waystation: 7, walker: 5, pylon: 6, shade: 7, watcher: 7, veilrelay: 6,
+    gunner: 7, stalker: 7, workshop: 6, rampart: 7, carrier: 5, kite: 7, hawk: 6, balloon: 8, glider: 9 };
   for (const [name, n] of Object.entries(limit)) assert.ok(gltf(name).materials.length <= n, `${name}: ${gltf(name).materials.length} materials > ${n}`);
   for (const asset of manifest.filter(a => a.name in limit)) assert.equal(asset.review, 'pending owner review (round 3)', asset.name);
 });
