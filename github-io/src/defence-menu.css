@@ -104,8 +104,9 @@
 
 /* AAA round 2, W2-B: the Heroic tab, its level marks and the locked Start button. */
 .defence-variants button { min-width: 0; }
-/* R3-M seam: the notes wrap to a second line instead of cutting ("Ten waves, s..."); two lines at most. */
-.defence-variants button small { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; font-size: 11px; line-height: 1.2; white-space: normal; text-wrap: balance; overflow-wrap: break-word; }
+/* R3-M seam: the notes wrap to a second line instead of cutting ("Ten waves, s..."); two lines at most.
+   They keep 12 px (menu text on the Defence setup is 12 px or more, tests/defence.mjs). */
+.defence-variants button small { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; line-height: 1.2; white-space: normal; text-wrap: balance; overflow-wrap: break-word; }
 .defence-variants button[data-defence-variant="heroic"] strong { color: var(--gold-2); }
 .defence-levels .heroic-mark { display: inline-grid; place-items: center; min-width: 24px; height: 24px; border: 1px solid var(--gold-line); border-radius: 8px; color: var(--gold-2); font: 800 14px/1 var(--font-ui); }
 .defence-levels .heroic-mark .icon { width: 14px; height: 14px; }

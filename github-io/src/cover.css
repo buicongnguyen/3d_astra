@@ -736,6 +736,11 @@
   .compact-ui #briefing .mode-switch button { min-height: 64px; padding: 6px 4px; }
   .compact-ui #briefing .mode-switch button > .icon { width: 20px; height: 20px; margin-bottom: 0; }
 }
+/* Short phones in portrait (320×568 and the like): the hero's 240 px floor pushed Battlefield under the
+   pinned Start; a 200 px hero keeps Battlefield and Start both on the first screen. */
+@media (max-width: 720px) and (orientation: portrait) and (max-height: 600px) {
+  .compact-ui #briefing:not(.campaign-view) .briefing-hero { height: 200px; }
+}
 /* Landscape phones, campaign: the mode row keeps 44 px taps. */
 @media (orientation: landscape) and (max-height: 520px) {
   .compact-ui #briefing.campaign-view .mode-switch button { min-height: 46px; }

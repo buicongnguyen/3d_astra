@@ -347,8 +347,15 @@ export function setupCover(A = {}, S = {}) {
   // ---------- loading card: mirrors #start (aria-busy, --load, label) ----------
   const start = $("start"), pct = loading.querySelector(".cover-load-pct"), stage = loading.querySelector(".cover-load-stage");
   let booted = false;
+  // The loading screen shows the flat cover behind its ring. It takes the URL only once the <img> has finished
+  // loading: set while the image is still in flight (slow machines), the CSS background starts a second
+  // download of the same file. Once loaded, the background is served from the image already in memory.
+  function coverArt() {
+    if (art?.complete && art.naturalWidth && art.currentSrc && !loading.style.getPropertyValue("--cover-art")) loading.style.setProperty("--cover-art", `url("${art.currentSrc}")`);
+  }
+  art?.addEventListener("load", coverArt);
   function syncLoading() {
-    if (art?.currentSrc && !loading.style.getPropertyValue("--cover-art")) loading.style.setProperty("--cover-art", `url("${art.currentSrc}")`);
+    coverArt();
     const busy = start.getAttribute("aria-busy") === "true";
     // Once a load ends the card fades with its last numbers (100%), never back to 0%.
     if (!busy && booted) { loading.classList.remove("on"); return; }
