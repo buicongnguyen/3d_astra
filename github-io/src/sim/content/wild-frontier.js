@@ -2,7 +2,7 @@
 // A skirmish with the Battle rule `wild: "on"` on a Wild land (balance.json `wild_frontier.lands`; P1:
 // Amber Dunes only) gets two things to fight over:
 //
-//   * the Weather Spire, a capture ring near the centre (it is `sim.skirmishPoints.spire`, so the ring
+//   * the Weather Spire, a capture ring near the centre (`spireOf(sim)`: the crossroads ring, or a ring of its own, so the ring
 //     mechanics, the ring view and the minimap come for free). Its holder may call ONE weather power, the
 //     Sandstorm, on any spot: a 3 s warning that every side sees, then 18 s of storm. Inside it the
 //     holder's enemies reload 43% slower (fire 30% slower: status `sandblind`) and see only 4 m around
@@ -20,7 +20,7 @@
 //
 // State, created only by initWild() in a match with the rule (simulation.js constructor):
 //   sim.wild = { land, readyAt, owner, storms: [{ team, x, z, r, at, until }], nest|null, stats, ai? }
-//   sim.skirmishPoints.spire = { x, z, r, owner, taker, since, wild: "spire", gives? }
+//   the Spire ring: skirmishPoints.crossroads (capture points on) or .spire, with wild: "spire"; sim.wild.spire names it
 //   on guards: e.lair (home spot), e.wildTarget; on a Wyrm: e.burrow while it is under the sand
 // Every hook returns at its first line in every other match, so every pin stays as it was.
 import balance from "../../balance.json" with { type: "json" };
@@ -48,6 +48,8 @@ export function canTame(sim, team) {
   }
   return sim.entities.filter((e) => e.hp > 0 && e.team === team && e.type === land.creature).length < WILD.nest.cap;
 }
+// The Weather Spire's ring (the crossroads ring when capture points are on), or undefined.
+export const spireOf = (sim) => sim.skirmishPoints?.[sim.wild?.spire];
 // The storm active at `p` against `team` (a storm called by one of `team`'s enemies), or null.
 export function stormOn(sim, p, team) {
   for (const s of sim.wild?.storms || []) if (sim.time >= s.at && sim.time < s.until && sim.hostile(team, s.team) && hyp(p.x - s.x, p.z - s.z) <= s.r) return s;
@@ -55,7 +57,7 @@ export function stormOn(sim, p, team) {
 }
 // Spire state for the interface: { held, owner, ready, readyIn, arming } for `team`.
 export function spireState(sim, team = 0) {
-  const w = sim.wild, spire = sim.skirmishPoints?.spire;
+  const w = sim.wild, spire = spireOf(sim);
   if (!w || !spire) return null;
   const held = spire.owner === team, readyIn = Math.max(0, w.readyAt - sim.time);
   return { held, owner: spire.owner, ready: held && readyIn <= 0, readyIn, x: spire.x, z: spire.z, radius: WILD.sandstorm.radius };
@@ -86,6 +88,15 @@ function standNear(sim, x, z, r) {
 function spawnGuards(sim) {
   const land = wildLand(sim), nest = sim.wild.nest;
   nest.guards = [];
+  // Guards take ids from their own range (GUARD_IDS up), so every other entity keeps the id it has in the
+  // same match without the rule: ids break ties all over the sim, and shifting them alone reshuffles a
+  // knife-edge match (the wild bench showed it). The range's next id is saved with the match (wild.guardId).
+  const saved = sim.nextId;
+  sim.nextId = sim.wild.guardId ?? GUARD_IDS;
+  try { spawnGuardsNow(sim, land, nest); } finally { sim.wild.guardId = sim.nextId; sim.nextId = saved; }
+}
+const GUARD_IDS = 1e6;
+function spawnGuardsNow(sim, land, nest) {
   for (let i = 0; i < WILD.nest.guards; i++) {
     const a = (i / WILD.nest.guards) * Math.PI * 2 + 0.4;
     const spot = standNear(sim, nest.x + Math.cos(a) * 2.4, nest.z + Math.sin(a) * 2.4, D[land.guard].radius) || { x: nest.x, z: nest.z };
@@ -231,7 +242,7 @@ function stepStorms(sim) {
 
 // The Spire changing hands: count it, and arm the new holder's power.
 function stepSpire(sim) {
-  const w = sim.wild, spire = sim.skirmishPoints.spire;
+  const w = sim.wild, spire = spireOf(sim);
   if (!spire || spire.owner === w.owner) return;
   w.owner = spire.owner;
   w.stats.flips++;
@@ -251,7 +262,9 @@ function spareUnits(sim, army, hq) {
   return army.filter((e) => !e.pointDuty && !e.orders.length && e.damage > 0 && !e.flying && !e.burrow && distance(e, hq) < 40);
 }
 function aiSpire(sim, team, army, hq, pace, plan) {
-  const spire = sim.skirmishPoints.spire;
+  // With capture points the Spire is the crossroads ring, crewed by aiPoints as it always was (the opening stays as it is).
+  if (sim.wild.spire !== "spire") return;
+  const spire = spireOf(sim);
   if (!spire || sim.time < plan.spire) return;
   const crew = army.filter((e) => e.pointDuty === "spire");
   const held = spire.owner === team || (spire.owner !== null && !sim.hostile(team, spire.owner));
@@ -281,7 +294,7 @@ function aiNest(sim, team, army, hq, pace, plan) {
   sendDuty(sim, spare.sort((a, b) => b.hp - a.hp || a.id - b.id).slice(0, plan.party), "nest", nest);
 }
 function aiWeather(sim, team, plan) {
-  const w = sim.wild, spire = sim.skirmishPoints.spire, memo = (w.ai ||= {});
+  const w = sim.wild, spire = spireOf(sim), memo = (w.ai ||= {});
   if (!spire || spire.owner !== team || sim.time < w.readyAt || sim.time < plan.weather || sim.time < (memo[`cast${team}`] ?? -Infinity) + plan.gap) return;
   const r = WILD.sandstorm.radius * 0.9, foes = [];
   for (const t of sim.entities)
@@ -332,14 +345,16 @@ export const wildFrontier = {
       const land = wildLand(this);
       if (!land || this.rules?.wild !== "on") return;
       const [sx, sz] = land.spire, [nx, nz] = land.nest;
-      const spire = { x: sx, z: sz, r: WILD.spire.r, owner: null, taker: null, since: 0, wild: "spire" };
-      // With capture points on, the Spire stands on the crossroads ring and keeps its small income.
+      // With capture points on, the crossroads ring itself becomes the Spire: the same ring, income and computer crews as
+      // without the rule (so every side's opening is unchanged; the bench showed that moving the ring reshaped it), plus
+      // the power. Otherwise a ring of its own, `spire`, that aiPoints leaves to this module's plan.
       const cross = this.skirmishPoints.crossroads;
-      if (cross && hyp(cross.x - sx, cross.z - sz) < 1) { spire.gives = { ...cross.gives }; delete this.skirmishPoints.crossroads; }
-      this.skirmishPoints.spire = spire;
+      let key = "spire";
+      if (cross && hyp(cross.x - sx, cross.z - sz) < 1) { cross.wild = "spire"; cross.aiCrew = true; key = "crossroads"; }
+      else this.skirmishPoints.spire = { x: sx, z: sz, r: WILD.spire.r, owner: null, taker: null, since: 0, wild: "spire" };
       const teams = this.players.length;
       this.wild = {
-        land: this.terrain.id, readyAt: 0, owner: null, storms: [],
+        land: this.terrain.id, spire: key, readyAt: 0, owner: null, storms: [],
         // Three rivals: the nest's corner is the third rival's camp, so that match has no nest.
         nest: this.enemyCount < 3 ? { x: nx, z: nz, r: WILD.nest.r, state: "guarded", guards: [], taker: null, since: 0, regrowAt: 0 } : null,
         stats: { flips: 0, casts: Array(teams).fill(0), tamed: Array(teams).fill(0) },
@@ -348,7 +363,7 @@ export const wildFrontier = {
     },
     // The Spire holder's Sandstorm at (x, z). True when it was called.
     castWeather(team, x, z) {
-      const w = this.wild, spire = this.skirmishPoints?.spire;
+      const w = this.wild, spire = spireOf(this);
       if (!w || !spire || spire.owner !== team || this.time < w.readyAt || this.result) return false;
       const half = this.terrain.half;
       if (!(Math.abs(x) <= half && Math.abs(z) <= half)) return false;

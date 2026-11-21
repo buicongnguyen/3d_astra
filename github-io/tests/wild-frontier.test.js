@@ -14,7 +14,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { Simulation } from "../src/simulation.js";
 import { DEFINITIONS as D } from "../src/data.js";
-import { WILD, canTame, stormOn } from "../src/sim/content/wild-frontier.js";
+import { WILD, canTame, stormOn, spireOf } from "../src/sim/content/wild-frontier.js";
 import { WILD_TEAM } from "../src/sim/constants.js";
 import { run } from "./lib/sim.js";
 
@@ -29,8 +29,9 @@ test("opt-in: nothing without the rule or off Amber Dunes; the rule on Dunes bui
   const elsewhere = new Simulation({ map: "classic", ai: false, rules: { wild: "on" } });
   assert.equal(elsewhere.wild, undefined, "classic is not a Wild land");
   const s = wild({ capturePoints: true });
-  assert.ok(s.skirmishPoints.spire && !s.skirmishPoints.crossroads, "the Spire stands on the crossroads ring");
-  assert.deepEqual(s.skirmishPoints.spire.gives, off.skirmishPoints.crossroads.gives, "and keeps its income");
+  assert.ok(!s.skirmishPoints.spire && s.wild.spire === "crossroads" && spireOf(s) === s.skirmishPoints.crossroads, "the crossroads ring is the Spire");
+  assert.deepEqual(spireOf(s).gives, off.skirmishPoints.crossroads.gives, "and keeps its income");
+  assert.deepEqual(Object.keys(s.skirmishPoints), Object.keys(off.skirmishPoints), "the same rings as without the rule, so the computer crews them as before");
   assert.equal(wild().skirmishPoints.spire.gives, undefined, "no capture points: no income");
   const guards = s.entities.filter((e) => e.team === WILD_TEAM);
   assert.equal(guards.length, 3);

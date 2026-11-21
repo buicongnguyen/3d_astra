@@ -14,8 +14,8 @@ import { run, aiMatch } from "./lib/sim.js";
 import { LONG, RECORD, pin } from "./lib/golden.mjs";
 
 const PINS = {
-  fast: { 180: "aa973643", 420: "fa0c02df" },
-  sandbox: { 40: "9755662e" },
+  fast: { 180: "e4334481", 420: "e43c423a" },
+  sandbox: { 40: "3766323d" },
 };
 const RULES = { wild: "on" };
 

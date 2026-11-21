@@ -24,8 +24,9 @@ export const points = {
   // The computer opponent keeps a small squad on each of the nearest points: it walks there
   // to take the ring and stays to defend it. Cost-neutral: the squad is ordinary army units.
   aiPoints(team, hq, army, pace) {
-    // A Weather Spire (round 4, `wild` ring) has its own crew rules (sim/content/wild-frontier.js).
-    const rings = this.skirmishPoints, names = Object.keys(rings || {}).filter((name) => !rings[name].wild);
+    // A Weather Spire ring of its own (round 4, `wild`) has its own crew rules (sim/content/wild-frontier.js); the
+    // crossroads ring that is the Spire when capture points are on (`aiCrew`) is crewed as it always was.
+    const rings = this.skirmishPoints, names = Object.keys(rings || {}).filter((name) => !rings[name].wild || rings[name].aiCrew);
     if (!names.length || !hq || this.time < 45) return;
     const size = this.aiSpeed === "relaxed" ? 2 : 3, squads = this.aiSpeed === "relaxed" ? 1 : 2;
     // Duty units of a ring that is gone go back to the army (a Wild nest party keeps its duty: it is not a ring).

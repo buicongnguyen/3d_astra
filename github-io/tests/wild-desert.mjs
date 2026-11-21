@@ -39,7 +39,7 @@ await suite("wild-desert", async () => {
     await page.locator(`${row} [data-rule-value="on"]`).scrollIntoViewIfNeeded();
     await tap(`${row} [data-rule-value="on"]`);
     await page.waitForFunction(() => window.__frontier.sim.rules?.wild === "on" && !!window.__frontier.sim.wild);
-    const setup = await page.evaluate(() => { const s = window.__frontier.sim; return { spire: !!s.skirmishPoints.spire, guards: s.entities.filter((e) => e.team === -2).length }; });
+    const setup = await page.evaluate(() => { const s = window.__frontier.sim; return { spire: !!Object.values(s.skirmishPoints).find((p) => p.wild === "spire"), guards: s.entities.filter((e) => e.team === -2).length }; });
     assert.deepEqual(setup, { spire: true, guards: 3 });
     await page.locator(row).screenshot({ path: `${OUT}/wild-desert-rule-${viewport}.png` });
 
@@ -74,7 +74,7 @@ await suite("wild-desert", async () => {
     // Held and armed: one tap on the button, one on the map.
     await page.evaluate(() => {
       const f = window.__frontier, s = f.sim;
-      s.skirmishPoints.spire.owner = 0;
+      Object.values(s.skirmishPoints).find((p) => p.wild === "spire").owner = 0;
       f.step(0.5);
       s.wild.readyAt = s.time;
       f.step(0.05);

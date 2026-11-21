@@ -16,7 +16,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { WILD_TEAM } from "./sim/constants.js";
-import { WILD, wildLand } from "./sim/content/wild-frontier.js";
+import { WILD, wildLand, spireOf } from "./sim/content/wild-frontier.js";
 
 const SAND = 0xe6b26a, NEST = 0x8f3a14, WARN = 0xff8a3d, WILD_PAINT = 0xc98a4a;
 
@@ -134,7 +134,7 @@ export class WildView {
     return t?.plateaus?.length ? t.heightAt(x, z) : 0;
   }
   build(sim) {
-    const scene = this.view.scene, spire = sim.skirmishPoints.spire, nest = sim.wild.nest, objects = [];
+    const scene = this.view.scene, spire = spireOf(sim), nest = sim.wild.nest, objects = [];
     const stone = spireMesh();
     stone.position.set(spire.x, this.ground(spire.x, spire.z), spire.z);
     // The nest reads as a rust-red hollow in the sand with a bright rim (sand on sand would vanish).

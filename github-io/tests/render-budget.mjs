@@ -290,7 +290,7 @@ try {
       }
       if (scenario.combined) for (const e of s.entities) if (e.squad && e.team === 0) e.combined = true;
       // R4-P1 `wild: [x, z]`: the player holds the Weather Spire and a Sandstorm rages at (x, z) (sim state, set directly).
-      if (scenario.wild) { s.skirmishPoints.spire.owner = 0; s.wild.storms.push({team:0, x:scenario.wild[0], z:scenario.wild[1], r:10, at:s.time - 2, until:s.time + 12, started:true}); }
+      if (scenario.wild) { Object.values(s.skirmishPoints).find(p => p.wild === "spire").owner = 0; s.wild.storms.push({team:0, x:scenario.wild[0], z:scenario.wild[1], r:10, at:s.time - 2, until:s.time + 12, started:true}); }
       // Data-driven units: a 2 m grid centred on `near`.
       for (const {type, team = 1, count = 1, near = [0, 0]} of scenario.spawn || []) {
         const cols = Math.ceil(Math.sqrt(count)), rows = Math.ceil(count / cols);

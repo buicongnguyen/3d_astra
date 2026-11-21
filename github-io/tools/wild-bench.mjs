@@ -35,7 +35,7 @@ function wildPlayer(s) {
   let partyAt = -Infinity;
   return () => {
     if (!s.wild || s.ticks % 20 !== 3) return;
-    const spire = s.skirmishPoints.spire;
+    const spire = Object.values(s.skirmishPoints).find((p) => p.wild === "spire");
     if (spire?.owner === 0 && s.time >= s.wild.readyAt) {
       const foes = s.entities.filter((e) => e.hp > 0 && e.kind === "unit" && e.team > 0 && e.damage > 0 && e.type !== "worker" && !e.flying && s.isVisible(e, 0));
       let best = null, most = 0;
