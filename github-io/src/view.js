@@ -1727,6 +1727,10 @@ export class WorldView {
     this.objects.clear();
     for (const d of this.dying) this.disposeEntity(d.object);
     this.dying = [];
+    // Empty the entity batches too: until the new match's first update they would still draw the last
+    // frame's instances (the old map's buildings, for a frame or until its models load).
+    this.batches.begin();
+    this.batches.end();
     this.flashBatch.length = 0;
     this.flashBatchTime = -1;
     this.shake = new CameraShake();

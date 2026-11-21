@@ -124,8 +124,10 @@ export function buildPlateauRelief(terrain) {
       const tone = 0.9 + hash(pi, ci) * 0.2, bulge = hash(ci, pi + 31) * 0.1, sun = col.nx * SUN.x + col.nz * SUN.y;
       // Inward, a box's outline stays a square-cornered inset: side columns near a corner
       // gather on the inset corner instead of folding past it.
+      // A plateau that runs to the map edge (Twin Rivers' ridges) keeps its rock inside the edge.
+      const edge = (v) => Math.min(Math.max(v, -half), half);
       const at = (d) => {
-        if (d >= 0) return [col.x + col.nx * d, col.z + col.nz * d];
+        if (d >= 0) return [edge(col.x + col.nx * d), edge(col.z + col.nz * d)];
         const x = col.x + col.mx * d, z = col.z + col.mz * d;
         if (p.shape === "disc") return [x, z];
         return [Math.min(Math.max(x, p.x - p.w / 2 - d), p.x + p.w / 2 + d), Math.min(Math.max(z, p.z - p.d / 2 - d), p.z + p.d / 2 + d)];
