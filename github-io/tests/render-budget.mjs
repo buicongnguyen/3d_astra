@@ -135,6 +135,10 @@ const scenarios = [
   {name:'wide-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:88, focus:[-3,0], reveal:true, army:60, triangles:380000}, // the whole map in view: 351,390 triangles on the base build
   {name:'groups-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, groups:3},
   {name:'combined-defence-eco', defence:'d-crossroads', mobile:true, zoom:92, focus:[0,0], reveal:true, wave:120, towers:10, zoneTowers:4, armour:2, combined:true, triangles:600000, compose:500, carrierEvery:20, unlockAfter:'d-longcrossing'},
+  // AAA round 3 (R3-X): air-battle-eco with every weapon effect class in flight at once (see `weapons` below). Shells, lobs,
+  // flak, missiles and bombs are one instanced draw (the ordnance mesh); everything else uses the effect pools.
+  {name:'weapons-mix-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, weapons:true, rockets:1,
+    air:[['kite',0],['hawk',0],['balloon',0],['glider',0],['kite',1],['hawk',1],['balloon',1],['glider',1]]},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
@@ -154,6 +158,7 @@ Object.assign(limits, {'battle-200':260}); // R3-C
 Object.assign(limits, {'air-battle':135}); // R3-W: 125 draws on 2026-11-21 (123 before: +1 rocket bodies, +1 air life)
 Object.assign(limits, {'building-life-eco':110}); // R3-L
 Object.assign(limits, {'wide-battle-eco':152, 'groups-battle-eco':111, 'combined-defence-eco':97}); // R3-K: the same scene on the base build + 4 (148, 107, 93 draws on 2026-11-21)
+Object.assign(limits, {'weapons-mix-eco':131}); // R3-X: 128 draws on 2026-11-22 (127 on the base build with the same shots: +1 ordnance bodies) + 3
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -274,6 +279,31 @@ try {
           v.fx.shot({type:'shot', weapon:'antitank', unit:'antitank', source:a.id, target:t.id, x:a.x, z:a.z, tx:t.x, tz:t.z, team:0, heavy:true}, s);
         }
         v.fx.update(s, 0.2);
+      }
+      // R3-X `weapons: true`: one shot of every weapon effect class in flight at once (view only): tracers, an MG stream, a tank
+      // shell, an artillery lob, flak at a flyer, a beam, a rail, a flame, a heal, an Anti-tank rocket, Hawk strafing and
+      // missiles, a Glider bomb, a Balloon firebomb, a Barrage shell falling onto its mark, and a flyer shot down.
+      if (scenario.weapons) {
+        v.update(s, 0, f.selected, null); // the flyers' models exist before one is shot down
+        const ground = s.entities.filter(e => e.kind === 'unit' && !e.flying && e.hp > 0), air = s.entities.filter(e => e.kind === 'unit' && e.flying);
+        const mine = ground.filter(e => e.team === 0), foe = ground.filter(e => e.team === 1), myAir = air.filter(e => e.team === 0), foeAir = air.filter(e => e.team === 1);
+        const fire = (unit, weapon, a, t, extra = {}) => v.fx.shot({type:'shot', unit, weapon, source:a.id, target:t.id, x:a.x, z:a.z, tx:t.x, tz:t.z, team:a.team,
+          ...(a.flying ? {sAir:a.fly} : null), ...(t.flying ? {tAir:t.fly} : null), ...extra}, s);
+        const pick = (list, i) => list[i % list.length], flyer = type => myAir.find(e => e.type === type);
+        [['ranger','ranger'], ['gunner','ranger'], ['tank','tank'], ['breaker','breaker'], ['stalker','ranger'], ['watcher','antitank'], ['scorcher','scorcher'], ['antitank','antitank']]
+          .forEach(([unit, weapon], i) => fire(unit, weapon, pick(mine, i), pick(foe, i)));
+        v.fx.shot({type:'support', weapon:'medic', source:mine[1].id, target:mine[2].id, x:mine[1].x, z:mine[1].z, tx:mine[2].x, tz:mine[2].z, team:0}, s);
+        fire('tower', 'tower', pick(mine, 9), foeAir[0]);          // flak
+        fire('hawk', 'ranger', flyer('hawk'), pick(foe, 3));        // strafing
+        fire('hawk', 'ranger', flyer('hawk'), foeAir[1]);           // missiles
+        fire('glider', 'ranger', flyer('glider'), pick(foe, 4));    // a bomb
+        fire('balloon', 'breaker', flyer('balloon'), pick(foe, 5)); // a firebomb
+        (s.strikes ||= []).push({at:s.time + 0.62, x:-3, z:-8, team:0, by:mine[0].id, damage:90, radius:4});
+        // A flyer shot down: the sim forgets it, the view keeps its falling wreck.
+        const down = foeAir[foeAir.length - 1];
+        s.entities.splice(s.entities.indexOf(down), 1);
+        v.event({type:'death', x:down.x, z:down.z, team:down.team, building:false, heavy:true, core:false, seed:down.id, direction:0}, s);
+        v.fx.update(s, 0.12);
       }
       // R3-K `groups: n`: the player's units in n Ctrl+number groups of 8 (badges at close zoom); `combined`: every
       // armour squad tank bought Combined (gold trim and star). View only.

@@ -111,6 +111,7 @@ function abilityFlash(event, sim) {
   return tint ? { ...event, tint } : event;
 }
 
+const STRIKE_RED = [1, 0.22, 0.12, -2]; // R3-X
 export class TacticsView {
   constructor(view) {
     this.view = view;
@@ -188,7 +189,8 @@ export class TacticsView {
         // The player's own shells are always marked; an enemy's only on ground in sight.
         if (!sim.isVisible(s)) continue;
         const left = Math.max(0, Math.min(1, (s.at - sim.time) / this.delay));
-        this.put(s.x, 0.11, s.z, s.radius, this.teamTint(s.team), 1, WARNING, still ? 0.5 : Math.round((1 - left) * 40) / 40);
+        // R3-X: a Barrage mark is warning red whoever fires it (the owner's brief: "a red warning ring before landing").
+        this.put(s.x, 0.11, s.z, s.radius, STRIKE_RED, 1, WARNING, still ? 0.5 : Math.round((1 - left) * 40) / 40);
       }
     const entities = sim.entities, m = view.camera.matrixWorld.elements, terrain = sim.terrain, plateaus = terrain?.plateaus?.length > 0;
     // High ground: the ▲ sits left of where the vitals bar is drawn (half its width plus a gap).

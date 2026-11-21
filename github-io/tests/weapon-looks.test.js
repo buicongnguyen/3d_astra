@@ -71,7 +71,8 @@ test('the kinds use only the existing pools (no new mesh, so no new draw)', () =
   for (const k of Object.values(LOOKS)) k.spawn(fx, { x: 0, z: 0, weapon: 'tank' }, fx.rng, aim());
   for (const m of Object.values(MOMENTS)) m(fx, { x: 0, z: 0, radius: 3 }, fx.rng, [1, 1, 1], null);
   assert.equal(fx.root.children.length, before);
-  assert.equal(before, 5);
+  // R3-X: the sixth child is the ordnance-body InstancedMesh (src/fx-kinds/ordnance-body.js): shells, lobs, flak, missiles, bombs.
+  assert.equal(before, 6);
 });
 test('counter hits: counter class, mechanical bonus, resisted', () => {
   const D = balance.definitions;

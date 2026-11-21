@@ -1416,7 +1416,8 @@ export class WorldView {
         // A shot-down flyer drops from its altitude, turning and rolling, then settles as a wreck.
         const fall = clamp01(t / 0.9);
         m.position.y = d.lift * (1 - fall * fall);
-        m.rotation.y = d.baseAngle + (motion ? d.tilt * ease(t / 0.9) * 1.6 : 0);
+        // R3-X: it spins down (about one full turn on the way) under the smoke trail drawn by src/fx.js airWrecks.
+        m.rotation.y = d.baseAngle + (motion ? d.tilt * (ease(t / 0.9) * 1.6 + Math.min(t, 0.9) * 6.5) : 0);
         m.rotation.z = d.tilt * ease(t / 0.9) * 0.45;
         m.rotation.x = 0.2 * ease(t / 0.9);
         o.position.y = d.baseY - ease((t - (d.life - 0.9)) / 0.9) * 1.8;
@@ -1606,9 +1607,12 @@ export class WorldView {
         bar.quaternion.copy(this.camera.quaternion);
         bar.scale.set(bar.userData.base * this.barScale, bar.userData.base * this.barScale * this.barTall, 1);
       }
-      updateBar(bar, e, dt);
-      u.flash = Math.max(0, (u.flash || 0)-realDt);
-      const flash = u.flash > 0 && this.settings.combatMotion !== false && !this.reducedMotion.matches;
+      // R3-X: while a drawn round is still flying at this unit (its hit flash waits, flashWait), the bar keeps the
+      // health it had, so the bar drops, flashes and the model flashes together when the round lands.
+      const inbound = u.flashWait > 0 && this.activity.combat.motion;
+      updateBar(bar, e, dt, inbound);
+      if (!inbound) u.flash = Math.max(0, (u.flash || 0)-realDt);
+      const flash = !inbound && u.flash > 0 && this.settings.combatMotion !== false && !this.reducedMotion.matches;
       u.ring.material.uniforms.flash.value = bar.material.uniforms.flash.value = flash ? 1 : 0;
       if (flash) { u.ring.visible = bar.visible = true; u.ring.material.uniforms.appear.value = 1; }
 
