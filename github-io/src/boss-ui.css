@@ -39,7 +39,8 @@
 }
 /* Phones, landscape: the top row of the battlefield, against the side dock, clear of the Objectives chip and the idle buttons. */
 @media (min-aspect-ratio: 1.35) {
-  .compact-ui #boss-bar { top: 6px; left: var(--boss-left, auto); min-width: 214px; right: calc(var(--side-width, 236px) + var(--edge-right, 0px) + 8px); padding: 4px 8px 5px; gap: 3px; }
+  /* Wave 3: the phone HUD runs the battlefield under the top band (--view-cover-top), so the bar starts below it. */
+  .compact-ui #boss-bar { top: calc(var(--view-cover-top, 0px) + 6px); left: var(--boss-left, auto); min-width: 214px; right: calc(var(--side-width, 236px) + var(--edge-right, 0px) + 8px); padding: 4px 8px 5px; gap: 3px; }
   .compact-ui #boss-bar .boss-head { gap: 6px; }
   .compact-ui #boss-bar .boss-name { font-size: 12px; letter-spacing: 0.02em; }
   .compact-ui #boss-bar .boss-state { font-size: 11px; letter-spacing: 0.03em; }
