@@ -4,8 +4,8 @@ import {Simulation} from '../src/simulation.js';
 import maps from '../src/maps.json' with {type:'json'};
 import {defaults, palette, PRESETS} from '../src/settings.js';
 
-test('all seven maps support one to three independent enemies with accessible starts', () => {
-  assert.equal(Object.keys(maps).length, 7);
+test('every map supports one to three independent enemies with accessible starts', () => {
+  assert.equal(Object.keys(maps).length, 13);
   for (const map of Object.keys(maps)) for (const enemyCount of [1, 2, 3]) {
     const s = new Simulation({map, enemyCount, ai:false});
     assert.equal(s.players.length, enemyCount + 1);

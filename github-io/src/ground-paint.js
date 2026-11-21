@@ -117,9 +117,11 @@ export function paintGround(ctx, terrain, size, random) {
   paintPlateaus(ctx, terrain, size);
   if (terrain.river) {
     // Wet sand, then a broken foam line where the water meets each bank.
-    const foam = rgb(themeFor(terrain.id).foam), shallow = rgb(themeFor(terrain.id).shallow), mid = size / 2;
+    // Each river band in turn (maps.json "rivers"; the old river maps have one, at z = 0).
+    const foam = rgb(themeFor(terrain.id).foam), shallow = rgb(themeFor(terrain.id).shallow);
+    for (const river of terrain.rivers || [{ z: 0 }])
     for (const side of [-1, 1]) {
-      const edge = mid + side * 3 * scale;
+      const mid = size / 2 + river.z * scale, edge = mid + side * 3 * scale;
       const wet = ctx.createLinearGradient(0, edge, 0, edge + side * 1.6 * scale);
       wet.addColorStop(0, tint(shallow, 0.5));
       wet.addColorStop(1, tint(shallow, 0));

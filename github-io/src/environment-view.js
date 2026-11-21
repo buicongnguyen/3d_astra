@@ -58,37 +58,43 @@ export class EnvironmentView {
       metalness: 0,
       emissive: new THREE.Color(theme.water).multiplyScalar(0.16),
     });
-    // A real channel bed is cut into the ground; water stays below the banks.
-    this.water = new THREE.Mesh(
-      new THREE.PlaneGeometry(terrain.size, 6, terrain.size, 6),
-      waterMat,
-    );
+    // A real channel bed is cut into the ground; water stays below the banks. One plane per river
+    // (maps.json "rivers"; the old river maps have one, at z = 0), merged: one draw for all the water.
+    const deep = new THREE.Color(theme.water), shallow = new THREE.Color(theme.shallow), ford = new THREE.Color(theme.ford),
+      foam = new THREE.Color(theme.foam), gravel = new THREE.Color(theme.dust), c = new THREE.Color();
+    const planes = terrain.rivers.map((river) => {
+      const plane = new THREE.PlaneGeometry(terrain.size, 6, terrain.size, 6), positions = plane.attributes.position;
+      // Distance along the river to the nearest ford's middle, and that ford's half width.
+      const nearFord = (x) => { let best = null; for (const f of river.fords) if (!best || Math.abs(x - f.x) < Math.abs(x - best.x)) best = f; return best; };
+      for (let i = 0; i < positions.count; i++) {
+        const f = nearFord(positions.getX(i));
+        if (f && Math.abs(positions.getX(i) - f.x) <= f.half) positions.setZ(i, 0.12);
+      }
+      const colors = new Float32Array(positions.count * 3);
+      for (let i = 0; i < positions.count; i++) {
+        const f = nearFord(positions.getX(i)), bank = Math.abs(positions.getY(i)), x = f ? Math.abs(positions.getX(i) - f.x) : Infinity, half = f ? f.half : 5;
+        // The ford: a pale gravel bar under shallow water, edged across the river by white riffle
+        // lines where the deep channel spills over it, so the crossing reads from any zoom.
+        if (x <= half - 1) c.copy(ford).lerp(gravel, 0.82).lerp(foam, (positions.getX(i) + positions.getY(i)) % 2 ? 0.12 : 0.3).multiplyScalar(1.15);
+        else if (x <= half) c.copy(foam).multiplyScalar(1.3);
+        else if (bank > 2.5) c.copy(shallow).lerp(foam, 0.6);
+        else if (bank > 1.5) c.copy(shallow);
+        else c.copy(deep).lerp(shallow, bank > 0.5 ? 0.3 : 0);
+        c.toArray(colors, i * 3);
+      }
+      plane.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      // The plane lies in x/y before the mesh turns it flat: world z is -y.
+      if (river.z) plane.translate(0, -river.z, 0);
+      return plane;
+    });
+    const waterGeometry = planes.length === 1 ? planes[0] : mergeGeometries(planes, false);
+    if (planes.length > 1) for (const plane of planes) plane.dispose();
+    this.water = new THREE.Mesh(waterGeometry, waterMat);
     this.water.rotation.x = -Math.PI / 2;
     this.water.position.y = -0.09;
     this.water.receiveShadow = true;
     this.root.add(this.water);
-    const positions = this.water.geometry.attributes.position;
-    for (let i = 0; i < positions.count; i++)
-      if (Math.abs(positions.getX(i)) <= 5) positions.setZ(i, 0.12);
-    this.waterBase = positions.array.slice();
-    const colors = new Float32Array(positions.count * 3);
-    const deep = new THREE.Color(theme.water), shallow = new THREE.Color(theme.shallow), ford = new THREE.Color(theme.ford),
-      foam = new THREE.Color(theme.foam), gravel = new THREE.Color(theme.dust), c = new THREE.Color();
-    for (let i = 0; i < positions.count; i++) {
-      const bank = Math.abs(positions.getY(i)), x = Math.abs(positions.getX(i));
-      // The ford: a pale gravel bar under shallow water, edged across the river by white riffle
-      // lines where the deep channel spills over it, so the crossing reads from any zoom.
-      if (x <= 4) c.copy(ford).lerp(gravel, 0.82).lerp(foam, (positions.getX(i) + positions.getY(i)) % 2 ? 0.12 : 0.3).multiplyScalar(1.15);
-      else if (x <= 5) c.copy(foam).multiplyScalar(1.3);
-      else if (bank > 2.5) c.copy(shallow).lerp(foam, 0.6);
-      else if (bank > 1.5) c.copy(shallow);
-      else c.copy(deep).lerp(shallow, bank > 0.5 ? 0.3 : 0);
-      c.toArray(colors, i * 3);
-    }
-    this.water.geometry.setAttribute(
-      "color",
-      new THREE.BufferAttribute(colors, 3),
-    );
+    this.waterBase = waterGeometry.attributes.position.array.slice();
     waterMat.vertexColors = true;
     const normalCanvas = document.createElement("canvas");
     normalCanvas.width = 128;
@@ -128,16 +134,18 @@ export class EnvironmentView {
       target.add(o);
       return o;
     };
-    for (const c of CROSSINGS.filter((c) => c.type === "bridge")) {
-      const bridge = add("bridge", c.x, 0);
-      if (bridge) this.bridges.set(c.x, bridge);
-    }
+    for (const river of terrain.rivers)
+      for (const c of river.crossings.filter((c) => c.type === "bridge")) {
+        const bridge = add("bridge", c.x, river.z);
+        // Frontier Defence finds a bridge by its x (old river maps only, one river).
+        if (bridge && !this.bridges.has(c.x)) this.bridges.set(c.x, bridge);
+      }
     let seed = 773;
     const rand = () => {
       seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
       return seed / 4294967296;
     };
-    for (const c of CROSSINGS.filter((c) => c.type === "ford")) this.fordMarks(c, theme);
+    for (const river of terrain.rivers) for (const c of river.fords) this.fordMarks(c, theme, river.z);
     // Batch repeated meshes by source primitive: decoration adds a fixed number of draw calls.
     const instances = (name, transforms) => {
       const source = assets.getObjectByName("asset_" + name);
@@ -181,10 +189,11 @@ export class EnvironmentView {
       dummy.updateMatrix();
       transforms.bush.push(dummy.matrix.clone());
     }
+    for (const river of terrain.rivers)
     for (let i = 0; i < 60; i++) {
       const x = -44 + i * 1.48;
-      if (CROSSINGS.some((c) => Math.abs(x - c.x) < 6)) continue;
-      dummy.position.set(x, 0, (i % 2 ? 1 : -1) * (3.5 + rand()));
+      if (river.crossings.some((c) => Math.abs(x - c.x) < 6)) continue;
+      dummy.position.set(x, 0, river.z + (i % 2 ? 1 : -1) * (3.5 + rand()));
       dummy.scale.setScalar(0.6 + rand() * 0.5);
       dummy.updateMatrix();
       transforms.reed.push(dummy.matrix.clone());
@@ -228,7 +237,7 @@ export class EnvironmentView {
   // The ford's marks, one merged vertex-coloured mesh (one draw, no shadow pass): a line of
   // banded marker posts down each edge of the crossing, a cairn at each corner on the banks and
   // flat cobbles just breaking the surface between them. Always shown, like the bridges.
-  fordMarks(c, theme) {
+  fordMarks(c, theme, riverZ = 0) {
     const parts = [], color = new THREE.Color(), matrix = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
     let seed = 991;
     const rand = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
@@ -269,6 +278,7 @@ export class EnvironmentView {
     if (this.fog) fogAware(material, this.fog);
     const mesh = new THREE.Mesh(geometry, material);
     mesh.name = "ford-marks";
+    if (riverZ) mesh.position.z = riverZ;
     mesh.receiveShadow = true;
     this.root.add(mesh);
     this.owned.push(geometry, material);
@@ -290,7 +300,7 @@ export class EnvironmentView {
       return max||1;
     });
     const transforms=variants.map(()=>[]),dummy=new THREE.Object3D();
-    ROCKS.forEach(([x,z,r],i)=>{
+    (this.terrain.rocks||ROCKS).forEach(([x,z,r],i)=>{
       const v=i%variants.length,scale=r*.98/reach[v];
       dummy.position.set(x,0,z);dummy.rotation.set(0,i*2.1,0);dummy.scale.set(scale,scale*(.9+(i%3)*.12),scale);
       dummy.updateMatrix();transforms[v].push(dummy.matrix.clone());

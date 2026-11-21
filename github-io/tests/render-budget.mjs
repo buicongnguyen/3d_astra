@@ -135,6 +135,11 @@ const scenarios = [
   {name:'wide-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:88, focus:[-3,0], reveal:true, army:60, triangles:380000}, // the whole map in view: 351,390 triangles on the base build
   {name:'groups-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, groups:3},
   {name:'combined-defence-eco', defence:'d-crossroads', mobile:true, zoom:92, focus:[0,0], reveal:true, wave:120, towers:10, zoneTowers:4, armour:2, combined:true, triangles:600000, compose:500, carrierEvery:20, unlockAfter:'d-longcrossing'},
+  // R3 map variety: large-map-high on the heaviest new map, Twin Rivers (160 m, two rivers, four bridges, two fords),
+  // three rivals, fog lifted. Measured with the other 160 m maps on 2026-11-22 (large-map-high on Expanse: 218 draws):
+  // Twin Rivers 235 (each extra bridge is its own model, about 8 draws with its shadow), Crown Mesa 175, Ironback 174,
+  // Dry Reach 174. Its line is large-map-high's 240.
+  {name:'twinrivers-high', map:'twinrivers', enemies:3, mobile:false, zoom:105, focus:[0,0], reveal:true},
   // AAA round 3 (R3-X): air-battle-eco with every weapon effect class in flight at once (see `weapons` below). Shells, lobs,
   // flak, missiles and bombs are one instanced draw (the ordnance mesh); everything else uses the effect pools.
   {name:'weapons-mix-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, weapons:true, rockets:1,
@@ -157,6 +162,7 @@ Object.assign(limits, {'boss-sovereign2-eco':125}); // R3-H
 Object.assign(limits, {'battle-200':260}); // R3-C
 Object.assign(limits, {'air-battle':135}); // R3-W: 125 draws on 2026-11-21 (123 before: +1 rocket bodies, +1 air life)
 Object.assign(limits, {'building-life-eco':110}); // R3-L
+Object.assign(limits, {'twinrivers-high':240}); // R3 map variety: large-map-high's line (235 draws on 2026-11-22)
 Object.assign(limits, {'wide-battle-eco':152, 'groups-battle-eco':111, 'combined-defence-eco':97}); // R3-K: the same scene on the base build + 4 (148, 107, 93 draws on 2026-11-21)
 Object.assign(limits, {'weapons-mix-eco':131}); // R3-X: 128 draws on 2026-11-22 (127 on the base build with the same shots: +1 ordnance bodies) + 3
 try {

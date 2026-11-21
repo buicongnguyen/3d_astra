@@ -114,8 +114,13 @@ export const traits = {
   // In the ford's water (river maps: |z| < 3 inside the middle crossing). A plain numeric test,
   // cheap enough for every move step; flyers (a later `flying` flag) pass over it. A Defence
   // pontoon (terrain.pontoons, sim/defence.js) wades like the ford.
+  // A map with several rivers (maps.json "rivers") may have a ford on each.
   inFord(e) {
-    if (!this.terrain.river || e.flying || Math.abs(e.z) >= FORD_WATER) return false;
+    if (!this.terrain.river || e.flying) return false;
+    const river = this.terrain.riverNear(e.z, FORD_WATER);
+    if (!river) return false;
+    // The old river (CROSSINGS) keeps its one ford and the Defence pontoons.
+    if (river.crossings !== CROSSINGS) return river.fords.some((c) => Math.abs(e.x - c.x) < c.half);
     return Math.abs(e.x - FORD.x) < FORD.half || (!!this.terrain.pontoons && this.terrain.pontoons.some((x) => Math.abs(e.x - x) < FORD.half));
   },
   damageDealt(team) {

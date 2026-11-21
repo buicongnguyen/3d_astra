@@ -185,6 +185,24 @@ A mission's faction colours remain cosmetic until `rules.rosters: true`. With th
 
 `maps.json` may give a map `plateaus` (`{ shape: "disc", x, z, r, ramps: [{ angle, width }] }` or `{ shape: "box", x, z, w, d, ramps: [{ side: "north"|"south"|"east"|"west", at, width }] }`, with `mirror: true` for the point-mirrored copy) and `walls` (`{ x, z, length, axis: "h"|"v", mirror }`). Mission regions and spawns must not sit on a cliff band or a ramp: `tests/missions-data.test.js` checks every one with `nav.canStand`.
 
+## Map layouts (R3 map variety)
+
+Optional `maps.json` fields let a Skirmish map leave the standard layout. A map without them builds and plays exactly as before: `tests/maps-variety.test.js` pins the terrain and match fingerprints of the seven older maps and the Defence maps, recorded before these fields existed.
+
+| Field | Meaning | Default |
+|---|---|---|
+| `look` | Borrow an existing map's palette, light, dressing, ambient life, grade and music (as Defence maps do). | the map's own id |
+| `symmetry` | `"quad"` mirrors `roads` and `deposits` on both axes (fair to four camps); `"point"` only through the centre. | `"point"` |
+| `rivers` | `[{ z, crossings: [{ x, half, type: "bridge"\|"ford" }] }]`: east-west water bands 6 m wide, open water between the crossings. Each ford slows (`ford_speed`) and is labelled; each bridge gets the bridge model. | one river at z = 0 with `CROSSINGS` when `river` is true |
+| `rocks` | `[[x, z, r]]`, the concrete walls; `[]` for none. | `ROCKS` (data.js) |
+| `roads` | Polylines `[[x, z], ...]` painted 4.4 m wide (Sunward's road bonus), mirrored by `symmetry`; `[]` for none. A map with `roads` has none of the old roads. | the old bridge and diagonal roads |
+| `deposits` | `[[type, x, z, amount]]`: the field deposits, placed in every reflection of `symmetry`. Replaces the pair beyond each camp and `MIDFIELD_DEPOSITS`; `sites` still add theirs. | those two sets |
+| `dressing` | Multiplier on the look's scatter density, for a map with more open ground than its look's own map. | 1 |
+| `blurb` | One line about the map: the picker option's tooltip (translated). | none |
+| plateau `mirror: "quad"` | Adds both axis mirrors to the point-mirrored copy. A plateau on an axis lists its copies itself. A plateau without ramps is a natural rock crag. | |
+
+The six maps built on them (`docs/aaa/results/round3/maps.md`): Golden Heart, Dry Reach, Twin Rivers, Ironback Ridge, Crown Mesa and Open Steppe. Their data tests check determinism, four-way symmetry, equal start distances, deposits and rings on clear ground, and routes for the widest ground unit from every camp to every deposit and ring.
+
 ## Frontier Defence levels (0.17)
 
 A Defence level (`src/defence/levels.js`, rules in `src/sim/defence.js`) is a mission-shaped definition with `rules: { ai: false, mode: "defence", rosters: true }`, `factions: { 1: … }`, `objectives: [{ id, type: "waves", count, text }]`, `win`, `medals: { gold: { lives }, silver: { lives } }` (3, 2 and 1 stars) and `check: { story, standard, veteran }` (the stars `npm run check:defence` requires of its bot), plus a `defence` block:

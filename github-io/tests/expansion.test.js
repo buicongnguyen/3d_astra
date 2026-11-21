@@ -4,7 +4,8 @@ import {Simulation} from '../src/simulation.js';
 import {Terrain} from '../src/terrain.js';
 import maps from '../src/maps.json' with {type:'json'};
 test('seven stages have symmetric reachable reserves and correctly sized fog/navigation',()=>{
- for(const [id,m] of Object.entries(maps)){
+ // The seven maps on the standard camp and field deposits (the R3 maps set their own: tests/maps-variety.test.js).
+ for(const [id,m] of Object.entries(maps).filter(([,m])=>!m.home&&!m.deposits)){
   const s=new Simulation({ai:false,map:id});
   assert.equal(s.visible[0].length,(m.size/2)**2);
   assert.equal(s.resources.length,22+m.sites.length*6); // 12 base reserves + 10 midfield deposits

@@ -94,10 +94,11 @@ export function rampTicks(terrain) {
   return out;
 }
 
-// The crossing at a ground point (the water and its banks, |z| < 5), or null.
+// The crossing at a ground point (the water and its banks, within 5 m of a river's middle), or null.
 export function crossingAt(terrain, x, z) {
-  if (!terrain?.river || !Number.isFinite(x) || !Number.isFinite(z) || Math.abs(z) >= 5) return null;
-  return CROSSINGS.find((c) => Math.abs(x - c.x) < c.half) || null;
+  if (!terrain?.river || !Number.isFinite(x) || !Number.isFinite(z)) return null;
+  const river = terrain.riverNear ? terrain.riverNear(z, 5) : Math.abs(z) < 5 ? { crossings: CROSSINGS } : null;
+  return river?.crossings.find((c) => Math.abs(x - c.x) < c.half) || null;
 }
 
 // +1 for a shot fired down from a plateau, -1 for one fired up at it, 0 on level ground.

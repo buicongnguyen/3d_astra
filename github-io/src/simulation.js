@@ -1,4 +1,4 @@
-import { DEFINITIONS as D, ROCKS, MAX_POP, distance, hyp, clamp } from "./data.js";
+import { DEFINITIONS as D, MAX_POP, distance, hyp, clamp } from "./data.js";
 import { NEUTRAL, CORE_GRACE, ROUTES_PER_TICK, MIDFIELD_DEPOSITS } from "./sim/constants.js";
 import { factionRules, normalizedFactions, openingLine } from "./factions.js";
 import { traits } from "./sim/traits.js";
@@ -7,7 +7,7 @@ import { difficultyId, difficultySpeed } from "./difficulty.js";
 import { Navigation } from "./navigation.js";
 import { progression } from "./progression.js";
 import { AI_SPEEDS, aiPace, coalitionPlan } from "./ai-plan.js";
-import { Terrain } from "./terrain.js";
+import { Terrain, reflect } from "./terrain.js";
 import { commands } from "./commands.js";
 import { snapshot, restore } from "./snapshot.js";
 import { vision } from "./sim/vision.js";
@@ -82,6 +82,9 @@ export class Simulation {
     const startingDeposits = new Set();
     // A Frontier Defence map has no bases, deposits or boulder walls: the waves walk fixed routes (sim/defence.js).
     const field = !this.terrain.defence;
+    // Optional map field (R3 map variety, src/terrain.js): `deposits` replaces the field deposits (the pair
+    // beyond each camp and the midfield ones). Absent, nothing changes.
+    const T = this.terrain;
     if (!field) this.nav.wallsSpawned = true;
     for (let team = 0; field && team < 2; team++) {
       const side = team === 0 ? 1 : -1;
@@ -103,8 +106,10 @@ export class Simulation {
       const offset=this.terrain.offset;
       for (const e of this.own(team)) { e.x-=offset*side; e.z+=offset*side; }
       for (const r of this.resources.slice(-4)) { r.x-=offset*side; r.z+=offset*side; }
+      if (!T.deposits) {
       this.resource("alloy", -31 * side, -25 * side, 3000);
       this.resource("energy", -25 * side, -32 * side, 2250);
+      }
       for (const [x,z] of this.terrain.sites) {
         this.resource("alloy",x*side,z*side,3000);
         this.resource("alloy",(x+4)*side,z*side,3000);
@@ -125,8 +130,15 @@ export class Simulation {
       !this.entities.some(e => e.kind === "building" && distance(e, r) < e.radius + r.radius + 2) &&
       ![...startingDeposits].some(other => distance(other, r) < other.radius + r.radius + 1)
     ));
+    // A map's own field deposits, in every reflection of its symmetry; the same clearances as below.
+    if (field && T.deposits) for (const [type, x0, z0, amount] of T.deposits)
+      for (const [x, z] of reflect(x0, z0, T.symmetry)) {
+        if (this.entities.some((e) => e.kind === "building" && hyp(e.x - x, e.z - z) < e.radius + 6)) continue;
+        if ([...startingDeposits].some((other) => hyp(other.x - x, other.z - z) < other.radius + 2.7)) continue;
+        this.resource(type, x, z, amount);
+      }
     // More contested deposits in the middle lanes of every map, mirrored for fairness.
-    for (const side of field ? [1, -1] : []) {
+    for (const side of field && !T.deposits ? [1, -1] : []) {
       for (const [type, x, z, amount] of MIDFIELD_DEPOSITS) {
         // Extra rival bases (two or three enemies) take precedence over a midfield deposit.
         if (this.entities.some((e) => e.kind === "building" && hyp(e.x - x * side, e.z - z * side) < e.radius + 6)) continue;
@@ -134,7 +146,7 @@ export class Simulation {
       }
     }
     // Concrete walls stand where the boulders were (see spawnWall).
-    for (const [x, z, r] of field ? ROCKS : []) this.spawnWall(x, z, r);
+    for (const [x, z, r] of field ? T.rocks : []) this.spawnWall(x, z, r);
     if (field) this.spawnStraightWalls();
     // Initial deployment locations are public; later cores require scouting.
     this.knownCores = this.players.map((_, team) => new Map(this.entities
