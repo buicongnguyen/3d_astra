@@ -234,6 +234,8 @@ export function soundFor(event, sourceType = null) {
     case "promote": return { name: "promote", priority: 7, gap: 0.3, group: "moment" };
     case "point": return { name: event.owner === 0 ? "capture" : "lost", priority: 8, gap: 0.3, group: "moment" };
     case "incoming": return { name: "alarm", priority: 8, gap: 2, group: "moment" };
+    // R3-Q: First watch's Scout Runner: a reward chime when it is caught, the "lost" tone when it escapes.
+    case "runner": return { name: event.phase === "caught" ? "capture" : "lost", priority: 7, gap: 0.5, group: "moment" };
     // Bosses (sim/bosses.js): the alarm when an attack is marked, a heavy blast at each health stage, the big one when it falls.
     case "bossWarn": return { name: "alarm", priority: 8, gap: 1, group: "moment" };
     case "bossStage": return { name: "boom:heavy", priority: 7, gap: 0.5, group: "explosion" };
