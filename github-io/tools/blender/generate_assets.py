@@ -50,9 +50,14 @@ GRIPS = {
 def infantry(a, kind):
     heavy = kind == 'vanguard'
     b = 1.1 if heavy else 1.0
-    plate = 'Team' if heavy else 'Armor'
-    helmet = {'worker': 'Hazard', 'engineer': 'Hazard', 'medic': 'Medical'}.get(kind, 'Armor')
-    pack_mat = {'medic': 'Medical', 'engineer': 'Hazard'}.get(kind, 'Armor')
+    # R3-F role paints so the four look-alike infantry read apart on a phone: the medic is white with
+    # a red-cross pack, the worker bright yellow, the engineer wears an orange hard hat and a tool
+    # frame, the ranger a green hood and cape with a long rifle. Each paint replaces Armor in the same
+    # bake class (frontier_kit.MATERIALS), so no model gains a material or a draw.
+    am = {'medic': 'ArmorMedic', 'worker': 'ArmorWorker'}.get(kind, 'Armor')
+    plate = 'Team' if heavy else am
+    helmet = {'worker': 'Hazard', 'engineer': 'Safety', 'medic': 'ArmorMedic', 'ranger': 'Cape'}.get(kind, am)
+    pack_mat = {'medic': 'ArmorMedic', 'engineer': 'Safety'}.get(kind, am)
 
     # Legs swing from the hip pivots (runtime and baked clips rotate these empties).
     for s, side in SIDES:
@@ -60,7 +65,7 @@ def infantry(a, kind):
         a.part('Leg_suit', 'Suit', leg).box((.22 * b, .26, .52), loc=(0, .02, -.27), bevel=.07, seg=1, taper=(1.15, 1.05))
         a.part('Thigh_plate' if heavy else 'Shin', plate, leg).box(
             (.23 * b, .09, .32), loc=(0, -.14, -.2), rot=(-.08, 0, 0), bevel=.035, seg=1)
-        shin = a.part('Shin', 'Armor', leg)
+        shin = a.part('Shin', am, leg)
         shin.box((.26 * b, .3, .36), loc=(0, -.02, -.6), bevel=.06, seg=1, taper=(1.12, 1.1))
         shin.box((.18, .13, .15), loc=(0, -.16, -.43), bevel=.05, seg=1)
         boot = a.part('Boot', 'Undercarriage', leg)
@@ -72,7 +77,7 @@ def infantry(a, kind):
     suit.box((.4 * b, .28, .24), loc=(0, .01, 1.22), bevel=.08, seg=1)
     gear = a.part('Gear', 'Undercarriage')
     gear.box((.54 * b, .36, .08), loc=(0, 0, 1.1), bevel=.025, seg=1)
-    armor = a.part('Armor', 'Armor')
+    armor = a.part('Armor', am)
     for x in (-.19, .19):
         armor.box((.12, .09, .13), loc=(x * b, -.19, 1.03), bevel=.03, seg=1)
     armor.box((.28 * b, .12, .15), loc=(0, .19, 1.04), bevel=.03, seg=1)
@@ -100,7 +105,13 @@ def infantry(a, kind):
 
     helm = a.part('Helmet', helmet)
     helm.box((.38, .42, .34), loc=(0, 0, 2.0), bevel=.13, seg=2, taper=(.88, .9))
-    a.part('Helmet_crest', 'Team').box((.08, .3, .06), loc=(0, .02, 2.18), bevel=.025)
+    if kind == 'medic':
+        # A red cross on the white helmet's crown, readable from the game camera.
+        cross = a.part('Cross', 'Cross')
+        for sz in ((.09, .3, .04), (.3, .09, .04)):
+            cross.box(sz, loc=(0, .01, 2.18), bevel=.01, seg=1)
+    else:
+        a.part('Helmet_crest', 'Team').box((.08, .3, .06), loc=(0, .02, 2.18), bevel=.025)
     armor.box((.36, .08, .14), loc=(0, -.18, 1.89), rot=(-.2, 0, 0), bevel=.03, seg=1)   # jaw guard
     a.part('Visor', 'Alloy' if kind == 'engineer' else 'TeamGlow').box(
         (.32, .07, .12), loc=(0, -.2, 2.0), bevel=.03)
@@ -108,20 +119,30 @@ def infantry(a, kind):
     steel.box((.06, .14, .1), loc=(.2, .02, 1.98), bevel=.02, seg=1)
 
     pack = a.part('Pack', pack_mat)
-    pack.box((.5 * b, .24, .48), loc=(0, .31, 1.5), bevel=.07)
-    gear.grille(.34, .24, loc=(0, .44, 1.47), rot=(0, 0, math.pi), slats=4, depth=.05, thickness=.04)
+    if kind == 'medic':
+        pack.box((.62, .34, .6), loc=(0, .36, 1.52), bevel=.08)   # big white aid pack
+    else:
+        pack.box((.5 * b, .24, .48), loc=(0, .31, 1.5), bevel=.07)
+    if kind not in ('medic', 'ranger'):
+        gear.grille(.34, .24, loc=(0, .44, 1.47), rot=(0, 0, math.pi), slats=4, depth=.05, thickness=.04)
 
     if kind == 'ranger':
+        # Long marksman rifle (reaches 1.9 m ahead) with a big scope, and a green hooded field cape
+        # that flares back over the pack so it shows from the high game camera.
         rifle = a.part('Rifle', 'Armor')
         rifle.box((.14, .56, .22), loc=(.12, -.42, 1.38), bevel=.035)
         rifle.box((.12, .34, .17), loc=(.12, -.02, 1.34), bevel=.03, taper=(1, .8))
-        steel.cyl(.055, .5, loc=(.12, -.94, 1.42), rot=FORWARD, seg=10, bevel=.01, bseg=1)
-        steel.cyl(.05, .24, loc=(.12, -.44, 1.55), rot=FORWARD, seg=10, bevel=.01, bseg=1)
-        gear.cyl(.075, .12, loc=(.12, -1.2, 1.42), rot=FORWARD, seg=10, bevel=.015, bseg=1)
+        steel.cyl(.05, 1.15, loc=(.12, -1.26, 1.42), rot=FORWARD, seg=8, bevel=.01, bseg=1)
+        steel.cyl(.065, .5, loc=(.12, -.46, 1.6), rot=FORWARD, seg=10, bevel=.01, bseg=1)   # scope
+        gear.cyl(.07, .16, loc=(.12, -1.86, 1.42), rot=FORWARD, seg=8, bevel=.015, bseg=1)
         gear.box((.09, .13, .22), loc=(.12, -.5, 1.2), rot=(-.2, 0, 0), bevel=.02, seg=1)
-        a.part('Lens', 'Glass').box((.08, .02, .08), loc=(.12, -.565, 1.55), bevel=0)
-        glow.box((.06, .03, .06), loc=(.12, -1.27, 1.42), bevel=.01, seg=1)
-        steel.cyl(.015, .7, loc=(-.18, .38, 2.0), seg=6, bevel=0)
+        glow.box((.08, .03, .08), loc=(.12, -.73, 1.6), bevel=.01, seg=1)                  # scope lens
+        glow.box((.06, .03, .06), loc=(.12, -1.95, 1.42), bevel=.01, seg=1)
+        cape = a.part('Cape', 'Cape')
+        cape.prism([(-.38, 1.84), (.38, 1.84), (.58, .78), (.2, .66), (-.2, .66), (-.58, .78)], .07,
+                   loc=(0, .5, 0), rot=(-.2, 0, 0), axis='Y', bevel=.02, seg=1)
+        cape.box((.9, .46, .1), loc=(0, .12, 1.84), rot=(-.12, 0, 0), bevel=.04, seg=1)    # shoulder drape
+        cape.box((.46, .2, .3), loc=(0, .2, 2.08), rot=(.35, 0, 0), bevel=.08, seg=1)      # hood back
     elif heavy:
         shield = [(-.38, -.52), (-.38, .47), (0, .62), (.38, .47), (.38, -.42), (0, -.66)]
         team.prism(shield, .1, loc=(-.62, -.44, 1.2), rot=(0, 0, .28), axis='Y', bevel=.035)
@@ -132,10 +153,13 @@ def infantry(a, kind):
         glow.box((.035, .96, .045), loc=(.42, -.82, 1.11), bevel=.008, seg=1)
         gear.box((.14, .18, .14), loc=(.42, -.28, 1.22), bevel=.03, seg=1)
     elif kind == 'worker':
+        # Cargo frame on the back carrying a big amber crystal.
         cargo = a.part('Cargo', 'Alloy')
-        cargo.cyl(.17, .46, loc=(0, .43, 1.58), seg=12, bevel=.03)
-        for z in (1.36, 1.8):
-            steel.torus(.19, .03, loc=(0, .43, z), seg=12, ring=4)
+        cargo.cyl(.2, .5, loc=(0, .5, 1.62), seg=6, bevel=.02, bseg=1)
+        cargo.cyl(.2, .26, loc=(0, .5, 2.0), seg=6, r2=.03, bevel=0)
+        for s in (-1, 1):
+            steel.box((.05, .05, .9), loc=(s * .24, .5, 1.62), bevel=.012, seg=1)
+        steel.box((.54, .06, .06), loc=(0, .5, 1.3), bevel=.012, seg=1)
         armor.box((.2, .32, .2), loc=(.42, -.46, 1.27), bevel=.045)
         steel.cyl(.12, .46, loc=(.42, -.84, 1.27), rot=FORWARD, seg=12, r2=.02, bevel=0)
         for y in (-.68, -.8):
@@ -144,21 +168,33 @@ def infantry(a, kind):
         cargo.cyl(.05, .07, loc=(-.5, 0, 1.87), seg=8, bevel=.01, bseg=1)
     elif kind == 'medic':
         pack.box((.22, .14, .14), loc=(-.4, -.4, 1.2), bevel=.03, seg=1)
-        for sz in ((.1, .03, .32), (.32, .03, .1)):
-            glow.box(sz, loc=(0, .44, 1.52), bevel=.008, seg=1)
-        for sz in ((.06, .03, .2), (.2, .03, .06)):
-            glow.box(sz, loc=(.5, -.02, 1.84), rot=(0, .32, 0), bevel=.008, seg=1)
+        cross = a.part('Cross', 'Cross')
+        for sz in ((.14, .03, .42), (.42, .03, .14)):
+            cross.box(sz, loc=(0, .535, 1.52), bevel=.008, seg=1)       # back of the pack
+        for sz in ((.14, .3, .03), (.44, .1, .03)):
+            cross.box(sz, loc=(0, .36, 1.83), bevel=.008, seg=1)        # top of the pack
+        for s in (-1, 1):
+            for sz in ((.07, .03, .22), (.22, .03, .07)):
+                cross.box(sz, loc=(s * .5, -.02, 1.84), rot=(0, s * .32, 0), bevel=.008, seg=1)
         steel.cyl(.075, .38, loc=(.34, -.56, 1.34), rot=FORWARD, seg=10, bevel=.015, bseg=1)
         a.part('Emitter', 'Energy').cyl(.09, .1, loc=(.34, -.79, 1.34), rot=FORWARD, seg=12, bevel=.02, bseg=1)
     elif kind == 'engineer':
+        # Tool frame: an A-frame over the pack with a small crane jib and hook above the head.
+        frame = a.part('Tool_frame', 'Safety')
         for s in (-1, 1):
-            steel.cyl(.08, .42, loc=(s * .14, .47, 1.55), seg=10, bevel=.02, bseg=1)
+            steel.limb((s * .22, .48, 1.28), (s * .12, .5, 2.62), .07, .07, bevel=.015, seg=1)
+        frame.box((.4, .1, .1), loc=(0, .5, 2.62), bevel=.02, seg=1)
+        frame.limb((0, .5, 2.62), (0, -.25, 2.86), .1, .1, bevel=.02, seg=1)
+        steel.box((.025, .025, .34), loc=(0, -.25, 2.69), bevel=0)
+        frame.box((.12, .08, .08), loc=(0, -.25, 2.5), bevel=.02, seg=1)
+        for z in (1.72, 2.1):
+            steel.box((.36, .06, .06), loc=(0, .5, z), bevel=.012, seg=1)
         steel.cyl(.05, .5, loc=(.36, -.6, 1.3), rot=FORWARD, seg=8, bevel=0)
-        jaws = a.part('Jaws', 'Hazard')
+        jaws = a.part('Jaws', 'Safety')
         for s in (-1, 1):
             jaws.box((.08, .28, .17), loc=(.36 + s * .1, -.92, 1.3), bevel=.02, seg=1)
         a.part('Torch', 'Energy').cyl(.04, .09, loc=(.36, -1.07, 1.3), rot=FORWARD, seg=8, bevel=0)
-        helm.box((.46, .5, .04), loc=(0, -.02, 2.06), bevel=.015, seg=1)
+        helm.box((.6, .62, .04), loc=(0, -.04, 2.06), bevel=.015, seg=1)                    # hard-hat brim
     elif kind == 'antitank':
         tube = a.part('Launcher', 'Armor')
         tube.cyl(.16, 1.5, loc=(.42, -.28, 1.83), rot=FORWARD, seg=14, bevel=.03)
@@ -295,7 +331,7 @@ def hq(a):
     team = a.part('Team_panels', 'Team')
     team.prism(chamfered(4.5, 4.12, 1.05), .36, loc=(0, 0, 2.47), axis='Z', bevel=.05, taper=.94)
     hall.prism(chamfered(3.3, 3.1, .75), .95, loc=(0, .1, 3.1), axis='Z', bevel=.06, taper=.86)
-    a.part('Windows', 'Glass').prism(chamfered(3.1, 2.9, .7), .26, loc=(0, .1, 3.14), axis='Z',
+    a.part('Windows', 'Window').prism(chamfered(3.1, 2.9, .7), .26, loc=(0, .1, 3.14), axis='Z',
                                      bevel=.02, seg=1, taper=.97)
     team.prism(chamfered(2.9, 2.7, .62), .16, loc=(0, .1, 3.64), axis='Z', bevel=.04, taper=.94)
     steel = a.part('Steel', 'Steel')
@@ -376,7 +412,7 @@ def barracks(a):
     annex = a.part('Annex', 'Armor')
     annex.box((1.0, 2.4, 1.3), loc=(-2.05, .35, h + .65), bevel=.05)
     team.box((1.06, 2.46, .14), loc=(-2.05, .35, h + 1.36), bevel=.03, seg=1)
-    a.part('Windows', 'Glass').box((.05, 1.9, .28), loc=(-2.56, .35, h + .92), bevel=.01, seg=1)
+    a.part('Windows', 'Window').box((.05, 1.9, .28), loc=(-2.56, .35, h + .92), bevel=.01, seg=1)
     crates = a.part('Crates', 'Hazard')
     for (x, y, z, r) in ((2.1, -.8, 0, .1), (2.15, -.1, 0, -.15), (2.12, -.45, .5, .3)):
         crates.box((.5, .5, .48), loc=(x, y, h + .24 + z), rot=(0, 0, r), bevel=.03, seg=1)
@@ -390,7 +426,7 @@ def foundry(a):
     hall = a.part('Hall', 'Armor')
     hall.box((4.2, 3.6, 2.2), loc=(0, .25, h + 1.1), bevel=.08, taper=(.96, .96))
     team = a.part('Roof', 'Team')
-    glass = a.part('Skylights', 'Glass')
+    glass = a.part('Skylights', 'Window')  # lit skylights (Window* glows at night, R3-D)
     for i in range(3):
         y0 = -1.4 + i * 1.2
         team.prism([(y0, 0), (y0 + 1.2, 0), (y0 + 1.2, .08), (y0, .62)], 4.2, loc=(0, 0, h + 2.18), bevel=.03)
@@ -530,21 +566,23 @@ def build_all(kinds=None, export=True, layout=True):
         if export:
             a.export(OUT / f'{kind}.glb')
         manifest['assets'].append({'name': kind, 'file': f'{kind}.glb', 'triangles': tris,
-                                   'animation': 'Runtime articulated parts; no baked clips'})
+                                   'animation': 'Runtime articulated parts; no baked clips',
+                                   'review': 'pending owner review (round 3)'})
         if layout:
             a.offset((index % 5) * 9, (index // 5) * 9)
     if export and set(kinds) == set(UNITS + BUILDINGS):
         previous = OUT / 'manifest.json'
         if previous.exists():
             manifest['assets'] += [entry for entry in json.loads(previous.read_text(encoding='utf-8'))['assets'] if entry['name'] not in UNITS + BUILDINGS]
-        (OUT / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+        (OUT / 'manifest.json').write_bytes((json.dumps(manifest, indent=2) + '\n').encode('utf-8'))  # LF on Windows too
     return built, manifest
 
 
 if __name__ == '__main__':
     if '--factions' in sys.argv:
         import generate_factions
-        generate_factions.build_all()
+        # Round 3: the Drone is rebuilt by R3-J; pass `-- --factions drone` to include it.
+        generate_factions.build_all([n for n in generate_factions.CATALOG if n != 'drone' or 'drone' in sys.argv])
         sys.exit(0)
     for o in list(bpy.context.scene.objects):
         bpy.data.objects.remove(o)

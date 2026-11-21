@@ -13,6 +13,11 @@ from frontier_kit import Asset,chamfered
 ROOT=HERE.parents[1]
 OUT=ROOT/'public/models'
 R=math.pi/2
+# R3-F: each faction's own models trade the shared gunmetal for a faction paint (a.armor), so the
+# faction look survives any player colour, and gain one silhouette accent per faction: Ashfall exhausts
+# and spikes, Sunward sails and fins, Wardens tower shields and crests, Veil hoods and cloaks. The paints
+# share Armor's bake class (frontier_kit.MATERIALS), so no model gains a draw.
+FACTION_ARMOR={'ashfall':'ArmorAshfall','sunward':'ArmorSunward','wardens':'ArmorWardens','veil':'ArmorVeil'}
 CATALOG={
  'scrapper':('ashfall','unit',3200,2800),'scorcher':('ashfall','unit',4500,0),'salvageyard':('ashfall','building',4000,2100),
  'rider':('sunward','unit',4500,0),'wagon':('sunward','unit',4500,0),'waystation':('sunward','building',4000,2100),
@@ -25,6 +30,12 @@ def cyl(a,name,mat,r,depth,loc,rot=(0,0,0),seg=12,parent=None):
  return a.part(name,mat,parent).cyl(r,depth,loc=loc,rot=rot,seg=seg,bevel=.015,bseg=1)
 def beam(a,name,mat,start,end,width=.09):
  return a.part(name,mat).limb(start,end,width,width,bevel=.015,seg=1)
+def spike(a,name,mat,loc,rot=(0,0,0),r=.07,h=.32,seg=6):
+ # A cone pointing along local +Z (Ashfall spikes).
+ return a.part(name,mat).cyl(r,h,loc=loc,rot=rot,seg=seg,r2=.006,bevel=0)
+def sail(a,name,mat,points,loc,depth=.05):
+ # A flat canvas sheet in the local YZ plane (Sunward sails and fins); points are (y, z).
+ return a.part(name,mat).prism(points,depth,loc=loc,axis='X',bevel=.015,seg=1)
 def base(a,w=4,d=4):
  a.part('Platform','Concrete').prism(chamfered(w,d,.4),.18,loc=(0,0,.09),axis='Z',bevel=.025,seg=1)
  for x in [-w/2+.3,w/2-.3]:
@@ -32,22 +43,22 @@ def base(a,w=4,d=4):
 def legs(a,wide=.2,height=.94,robot=False):
  for sign,side in [(-1,'L'),(1,'R')]:
   p=a.pivot('leg_'+side,(sign*wide,0,height))
-  box(a,'Upper_leg','Armor' if robot else 'Suit',(.22,.25,height*.54),(0,0,-height*.27),parent=p)
+  box(a,'Upper_leg',a.armor if robot else 'Suit',(.22,.25,height*.54),(0,0,-height*.27),parent=p)
   cyl(a,'Knee','Steel',.12,.25,(0,0,-height*.55),rot=(0,R,0),seg=10,parent=p)
   box(a,'Shin','Team',(.23,.26,height*.4),(0,-.025,-height*.77),parent=p)
   box(a,'Boot','Undercarriage',(.29,.43,.15),(0,-.08,-height+.08),parent=p)
 def person(a,kind):
  legs(a)
- box(a,'Pelvis','Armor',(.6,.36,.22),(0,0,1.02))
+ box(a,'Pelvis',a.armor,(.6,.36,.22),(0,0,1.02))
  box(a,'Torso','Team',(.62,.4,.57),(0,0,1.44),bevel=.07)
  box(a,'Chest_harness','Steel',(.47,.06,.13),(0,-.23,1.42))
  cyl(a,'Neck','Undercarriage',.12,.14,(0,0,1.79))
- a.part('Helmet','Armor').sphere(.245,loc=(0,-.025,1.99),seg=12,rings=8)
+ a.part('Helmet',a.armor).sphere(.245,loc=(0,-.025,1.99),seg=12,rings=8)
  box(a,'Face','Glass',(.31,.08,.13),(0,-.245,2.01),bevel=.025)
  for sign in [-1,1]:
   cyl(a,'Shoulder_joint','Steel',.115,.18,(sign*.4,0,1.63),rot=(0,R,0),seg=10)
   a.part('Arms','Suit').limb((sign*.42,0,1.62),(sign*.48,-.24,1.25),.17,.2,bevel=.025,seg=1)
-  box(a,'Hands','Armor',(.19,.18,.2),(sign*.46,-.3,1.22))
+  box(a,'Hands',a.armor,(.19,.18,.2),(sign*.46,-.3,1.22))
  if kind=='scrapper':
   box(a,'Salvaged_pauldron','Team',(.5,.6,.37),(-.49,0,1.77),rot=(0,.2,-.2),bevel=.07)
   box(a,'Patch_plate','Hazard',(.3,.07,.31),(.14,-.25,1.5),rot=(0,0,.19))
@@ -56,16 +67,20 @@ def person(a,kind):
   box(a,'Stack_cap','Steel',(.2,.2,.07),(.34,.24,2.3))
   a.part('Salvage_cutter','Steel').prism([(-.17,-.3),(.18,-.3),(.25,.25),(-.23,.14)],.09,loc=(.48,-.4,1.19),axis='X',seg=1)
   for z in [1.27,1.48,1.69]:box(a,'Welded_straps','Steel',(.53,.05,.035),(0,-.26,z),bevel=.01)
+  for dx,dy in [(-.12,-.18),(-.2,.05),(-.1,.22)]:spike(a,'Spikes','Steel',(-.52+dx,dy,2.02),rot=(0,-.55,0),r=.075,h=.36)
+  cyl(a,'Exhaust','Undercarriage',.07,.7,(.12,.27,1.82),seg=8)
  else:
   # Veil hoods and split cloaks make a narrow, triangular silhouette.
   a.part('Hood','Team').prism([(-.32,0),(0,.58),(.32,0),(.24,-.2),(-.24,-.2)],.48,loc=(0,.04,2.01),axis='Y',seg=1)
   for sign in [-1,1]:
-   a.part('Split_cloak','Suit').prism([(sign*.05,1.68),(sign*.52,.45),(sign*.08,.65)],.11,loc=(0,.24,0),axis='Y',bevel=.02,seg=1)
+   a.part('Split_cloak',a.armor).prism([(sign*.05,1.68),(sign*.52,.45),(sign*.08,.65)],.11,loc=(0,.24,0),axis='Y',bevel=.02,seg=1)
+  a.part('Long_cloak',a.armor).prism([(-.36,1.78),(.36,1.78),(.6,.34),(0,.22),(-.6,.34)],.07,loc=(0,.34,0),rot=(-.12,0,0),axis='Y',bevel=.02,seg=1)
+  a.part('Hood_drape',a.armor).prism([(-.34,1.82),(.34,1.82),(.22,2.32),(0,2.62),(-.22,2.32)],.16,loc=(0,.2,0),axis='Y',bevel=.03,seg=1)
   cyl(a,'Mast','Steel',.035,.95,(.23,.2,2.15),seg=8)
   cyl(a,'Lens_disc','Team',.2,.09,(.23,.15,2.57),rot=(R,0,0),seg=16)
   cyl(a,'Lens','TeamGlow',.1,.1,(.23,.09,2.57),rot=(R,0,0),seg=12)
   if kind=='watcher':
-   box(a,'Barrel_receiver','Armor',(.25,.85,.22),(.37,-.4,1.38))
+   box(a,'Barrel_receiver',a.armor,(.25,.85,.22),(.37,-.4,1.38))
    cyl(a,'Barrel_long','Steel',.06,1.5,(.37,-1.14,1.42),rot=(R,0,0),seg=12)
    cyl(a,'Rangefinder','Team',.14,.3,(.37,-.5,1.67),rot=(R,0,0),seg=16)
   else:
@@ -82,7 +97,7 @@ def scorcher(a):
  box(a,'Chassis','Steel',(2.2,3,.3),(0,0,.62),bevel=.08)
  box(a,'Patch_hull','Team',(1.7,2.5,.65),(0,0,1.08),bevel=.08)
  for sign in [-1,1]:
-  for i in range(3):box(a,'Mismatched_plates','Armor' if i%2 else 'Hazard',(.1,.71,.57),(sign*.9,-.88+i*.82,1.14),rot=(0,sign*.13,i*.06))
+  for i in range(3):box(a,'Mismatched_plates',a.armor if i%2 else 'Hazard',(.1,.71,.57),(sign*.9,-.88+i*.82,1.14),rot=(0,sign*.13,i*.06))
   beam(a,'External_frame','Steel',(sign*.86,-1.4,.83),(sign*.86,1.4,1.53),.085)
  cyl(a,'Tall_stack','Undercarriage',.14,1.7,(.69,.85,1.95),seg=12)
  cyl(a,'Stack_rim','Steel',.2,.12,(.69,.85,2.8),seg=12)
@@ -90,8 +105,14 @@ def scorcher(a):
  box(a,'Turret_head','Team',(.8,.9,.46),(0,-.5,1.66),bevel=.08)
  a.pivot('Turret_pivot',(0,-.5,1.43))
  cyl(a,'Barrel_flame','Steel',.12,1.65,(0,-1.5,1.72),rot=(R,0,0),seg=12)
- cyl(a,'Muzzle_cage','Armor',.2,.22,(0,-2.3,1.72),rot=(R,0,0),seg=12)
+ cyl(a,'Muzzle_cage',a.armor,.2,.22,(0,-2.3,1.72),rot=(R,0,0),seg=12)
  for x in [-.22,.22]:beam(a,'Feed_pipe','Steel',(x,.4,1.5),(x,-.7,1.72),.06)
+ cyl(a,'Tall_stack','Undercarriage',.14,1.5,(-.69,.95,1.85),seg=12)
+ cyl(a,'Stack_rim','Steel',.2,.12,(-.69,.95,2.6),seg=12)
+ box(a,'Ram_bar',a.armor,(2.1,.22,.3),(0,-1.55,.8),bevel=.05)
+ for x in [-.8,-.4,0,.4,.8]:spike(a,'Ram_spikes','Steel',(x,-1.82,.8),rot=(R,0,0),r=.09,h=.42)
+ for sign in [-1,1]:
+  for y in [-.6,.5]:spike(a,'Plate_spikes','Steel',(sign*1.02,y,1.48),rot=(0,sign*.5,0),r=.07,h=.3)
 def salvageyard(a):
  base(a,4.6,4.1)
  for x in [-1.9,1.7]:
@@ -101,11 +122,16 @@ def salvageyard(a):
  beam(a,'Hook_cable','Undercarriage',(.8,-1.5,4),(.8,-1.5,1.6),.04)
  a.part('Hook','Steel').torus(.17,.045,loc=(.8,-1.5,1.49),rot=(R,0,0),seg=12,ring=6)
  for i in range(3):
-  box(a,'Salvage_bins','Armor',(1.1,1.2,.75),(-1.5+i*1.45,0,.62),bevel=.08)
+  box(a,'Salvage_bins',a.armor,(1.1,1.2,.75),(-1.5+i*1.45,0,.62),bevel=.08)
   box(a,'Patch_panels','Team',(1.15,.08,.5),(-1.5+i*1.45,-.65,.72),rot=(0,0,(-1)**i*.1))
   for j in range(2):box(a,'Reclaimed_beams','Steel',(.15,.8,.16),(-1.7+i*1.45+j*.3,0,1.1+j*.1),rot=(0,.2,.2*i))
  for z in [.5,1.1,1.7,2.3]:box(a,'Ladder_rungs','Hazard',(.6,.09,.09),(-1.9,.38,z))
- cyl(a,'Exhaust','Armor',.17,1.8,(-1.4,1.25,1.2),seg=12)
+ cyl(a,'Exhaust',a.armor,.17,1.8,(-1.4,1.25,1.2),seg=12)
+ for x,hgt in [(-.9,2.4),(-.4,2.0)]:
+  cyl(a,'Exhaust_stacks','Undercarriage',.14,hgt,(x,1.45,.2+hgt/2),seg=12)
+  cyl(a,'Stack_rims','Steel',.19,.12,(x,1.45,.2+hgt),seg=12)
+ for x in [-2.05,2.2]:
+  for k in [-1,1]:spike(a,'Gantry_spikes','Steel',(x,.6+k*.12,3.72),rot=(k*.35,0,0),r=.08,h=.42)
 def rider(a):
  # Pedalled two-wheel outrider: low awning, visible rider and pannier tanks.
  for y in [-.95,.95]:
@@ -118,15 +144,19 @@ def rider(a):
  box(a,'Seat','Suit',(.5,.5,.16),(0,.35,1.24))
  legs(a,.26,1.15)
  box(a,'Rider_torso','Team',(.6,.4,.6),(0,.2,1.73),bevel=.07)
- a.part('Helmet','Armor').sphere(.24,loc=(0,.12,2.18),seg=12,rings=8)
+ a.part('Helmet',a.armor).sphere(.24,loc=(0,.12,2.18),seg=12,rings=8)
  for x in [-.55,.55]:
   cyl(a,'Water_panniers','Steel',.2,.8,(x,.68,.98),rot=(R,0,0),seg=12)
-  beam(a,'Awning_posts','Steel',(x,.65,1.1),(x,.65,2.35),.04)
- box(a,'Low_awning','Team',(1.4,1.15,.12),(0,.55,2.4),rot=(.07,0,0),bevel=.04)
+ cyl(a,'Sail_mast','Steel',.045,2.1,(0,1.0,2.05),seg=8)
+ sail(a,'Sail',a.armor,[(1.0,1.25),(1.0,3.0),(.05,1.45)],(0,0,0))
+ sail(a,'Sail_stripe','Team',[(.96,1.3),(.96,2.9),(.82,2.6),(.82,1.36)],(-.035,0,0),depth=.03)
+ sail(a,'Pennant','Team',[(1.0,2.95),(1.0,3.25),(1.55,3.1)],(0,0,0),depth=.03)
+ sail(a,'Tail_fin',a.armor,[(1.15,.85),(1.6,1.45),(1.6,.85)],(0,0,0),depth=.06)
+ box(a,'Fairing','Team',(.5,.4,.36),(0,-.72,1.2),rot=(-.4,0,0),bevel=.06)
  for sign in [-1,1]:
   a.part('Rider_arms','Suit').limb((sign*.34,.13,1.95),(sign*.42,-.19,1.65),.16,.18,bevel=.025,seg=1)
   a.part('Rider_forearms','Team').limb((sign*.42,-.19,1.65),(sign*.4,-.58,1.46),.16,.18,bevel=.025,seg=1)
-  box(a,'Gloves','Armor',(.18,.2,.16),(sign*.4,-.58,1.46))
+  box(a,'Gloves',a.armor,(.18,.2,.16),(sign*.4,-.58,1.46))
  beam(a,'Handlebars','Steel',(-.48,-.6,1.44),(.48,-.6,1.44),.06)
  box(a,'Barrel_carbine','Steel',(.13,.95,.16),(.35,-.5,1.78))
 def wagon(a):
@@ -136,18 +166,29 @@ def wagon(a):
  for x in [-1,1]:
   for y in [-1.3,1.3]:beam(a,'Awning_stays','Steel',(x,y,1.4),(x,y,2.2),.06)
   cyl(a,'Water_tanks','Medical',.36,1.7,(x,0,1.72),rot=(R,0,0),seg=16)
- a.part('Awning','Team').prism([(-1.42,0),(-.75,.27),(0,.34),(.75,.27),(1.42,0)],3.7,loc=(0,0,2.3),axis='Y',bevel=.025,seg=1)
+ roof=[(-1.42,0),(-.75,.27),(0,.34),(.75,.27),(1.42,0)]
+ a.part('Awning',a.armor).prism(roof,3.7,loc=(0,0,2.3),axis='Y',bevel=.025,seg=1)
+ for y in [-1.55,1.55]:a.part('Awning_bands','Team').prism([(x*1.03,z*1.08+.01) for x,z in roof],.28,loc=(0,y,2.3),axis='Y',bevel=.015,seg=1)
+ for sz in [(.3,1.1,.04),(1.1,.3,.04)]:box(a,'Roof_cross','Cross',sz,(0,0,2.66),bevel=.01)
+ for y in [-.95,.95]:sail(a,'Roof_fins','Team',[(y-.35,2.6),(y+.35,2.6),(y+.25,3.25)],(0,0,0),depth=.06)
  for x in [-.6,.6]:box(a,'Medical_crates','Medical',(.65,.65,.5),(x,-1.35,1.75))
  box(a,'Rear_step','Steel',(1.6,.5,.13),(0,2,.45))
 def waystation(a):
  base(a,4.7,4)
  for x in [-1.85,1.85]:
   for y in [-1.45,1.45]:beam(a,'Canopy_stays','Steel',(x,y,.2),(x,y,1.9),.11)
- a.part('Broad_awning','Team').prism([(-2.3,0),(-1.2,.38),(0,.55),(1.2,.38),(2.3,0)],3.8,loc=(0,0,2),axis='Y',bevel=.025,seg=1)
+ roof=[(-2.3,0),(-1.2,.38),(0,.55),(1.2,.38),(2.3,0)]
+ a.part('Broad_awning',a.armor).prism(roof,3.8,loc=(0,0,2),axis='Y',bevel=.025,seg=1)
+ for y in [-1.75,1.75]:a.part('Awning_bands','Team').prism([(x*1.02,z*1.06+.01) for x,z in roof],.3,loc=(0,y,2),axis='Y',bevel=.015,seg=1)
+ for x in [-2.1,2.1]:
+  cyl(a,'Sail_masts','Steel',.06,2.6,(x,-1.6,1.4),seg=8)
+  a.part('Shade_sails',a.armor).prism([(-1.6,2.7),(-1.6,1.1),(-.2,2.5)],.05,loc=(x,0,0),axis='X',bevel=.015,seg=1)
+  a.part('Sail_edges','Team').prism([(-1.56,2.62),(-1.56,2.2),(-.5,2.48)],.03,loc=(x*1.015,0,0),axis='X',bevel=.01,seg=1)
+ for y in [-1.1,0,1.1]:sail(a,'Ridge_fins','Team',[(y-.3,2.5),(y+.3,2.5),(y+.2,3.05)],(0,0,0),depth=.06)
  for x in [-1.4,1.4]:
   cyl(a,'Round_tanks','Medical',.55,1.45,(x,.6,1),seg=20)
   a.part('Tank_bands','Steel').torus(.56,.045,loc=(x,.6,.8),seg=16,ring=6)
- box(a,'Counter','Armor',(2.3,.8,.85),(0,-.9,.65),bevel=.07)
+ box(a,'Counter',a.armor,(2.3,.8,.85),(0,-.9,.65),bevel=.07)
  for x in [-.8,0,.8]:box(a,'Supply_crates','Team',(.6,.55,.4),(x,-.8,1.24))
  for x in [-2,2]:cyl(a,'Wheel_sign','Team',.43,.1,(x,-1.7,.7),rot=(R,0,0),seg=20)
 def eye(a,loc,r=.22):
@@ -157,30 +198,38 @@ def drone(a):
  a.pivot('hover',(0,0,0))
  a.part('Smooth_shell','Team').sphere(.65,loc=(0,0,1.35),seg=20,rings=12)
  a.part('Orbital_ring','Steel').torus(.95,.105,loc=(0,0,1.28),seg=28,ring=8)
- cyl(a,'Lower_thruster','Armor',.32,.35,(0,0,.78),seg=20)
+ cyl(a,'Lower_thruster',a.armor,.32,.35,(0,0,.78),seg=20)
  cyl(a,'Thruster_light','TeamGlow',.23,.08,(0,0,.58),seg=16)
  eye(a,(0,-.61,1.42),.21)
  for sign in [-1,1]:box(a,'Barrel_emitters','Steel',(.16,.6,.14),(sign*.5,-.46,1.13))
 def walker(a):
  legs(a,.65,1.8,True)
  box(a,'Hip_bridge','Steel',(1.65,.65,.35),(0,0,1.85),bevel=.1)
- a.part('Smooth_carapace','Team').sphere(.98,loc=(0,0,2.75),seg=24,rings=16)
+ a.part('Smooth_carapace',a.armor).sphere(.98,loc=(0,0,2.75),seg=24,rings=16)
+ a.part('Crest','Team').prism([(.7,3.2),(.1,3.95),(-.5,3.85),(-.85,3.35),(-.2,3.62)],.16,loc=(0,0,0),axis='X',bevel=.03,seg=1)
+ a.part('Brow_band','Team').torus(.93,.07,loc=(0,0,3.05),seg=24,ring=6)
  a.part('Halo','Steel').torus(1.1,.11,loc=(0,.07,2.85),rot=(R,0,0),seg=28,ring=8)
  eye(a,(0,-.92,2.9),.34)
  for sign in [-1,1]:
-  cyl(a,'Shoulder_socket','Armor',.3,.35,(sign*1.02,0,2.73),rot=(0,R,0),seg=20)
+  cyl(a,'Shoulder_socket',a.armor,.3,.35,(sign*1.02,0,2.73),rot=(0,R,0),seg=20)
   box(a,'Turret_head_arm','Team',(.43,.7,.5),(sign*1.22,-.15,2.63),bevel=.08)
+  box(a,'Turret_head_arm','Team',(.14,1.0,1.55),(sign*1.52,-.25,2.75),bevel=.05)   # tower shield
   cyl(a,'Barrel_cannon','Steel',.13,1.7,(sign*1.22,-1.05,2.61),rot=(R,0,0),seg=16)
-  cyl(a,'Muzzle_ring','Armor',.21,.19,(sign*1.22,-1.91,2.61),rot=(R,0,0),seg=16)
+  cyl(a,'Muzzle_ring',a.armor,.21,.19,(sign*1.22,-1.91,2.61),rot=(R,0,0),seg=16)
  a.pivot('Turret_pivot',(0,0,2.5))
 def pylon(a):
  base(a,3.8,3.8)
  a.part('Smooth_base','Team').lathe([(0,.2),(1.25,.2),(1.1,.5),(.6,.85),(.45,1.1)],seg=20)
- cyl(a,'Spine','Armor',.32,3.3,(0,0,1.9),seg=20)
+ cyl(a,'Spine',a.armor,.32,3.3,(0,0,1.9),seg=20)
  for z,r in [(1.2,1),(2.1,.85),(3,.65)]:
   a.part('Orbit_rings','Team').torus(r,.14,loc=(0,0,z),seg=28,ring=8)
   for sign in [-1,1]:beam(a,'Ring_braces','Steel',(0,0,z-.4),(sign*r,0,z),.07)
  eye(a,(0,-.35,3.55),.25)
+ for i in range(4):
+  ang=math.pi/4+i*math.pi/2;c,sn=math.cos(ang),math.sin(ang)
+  box(a,'Tower_shields',a.armor,(.9,.16,1.5),(c*1.45,sn*1.45,.95),rot=(0,0,ang+R),bevel=.05)
+  box(a,'Shield_stripes','Team',(.18,.18,1.3),(c*1.5,sn*1.5,.95),rot=(0,0,ang+R),bevel=.03)
+ a.part('Crest','Team').prism([(.45,3.85),(0,4.6),(-.45,3.85)],.14,loc=(0,0,0),axis='X',bevel=.03,seg=1)
 def veilrelay(a):
  base(a,3.6,3.6)
  a.part('Narrow_housing','Team').prism([(-.85,0),(-.5,2.3),(0,2.7),(.5,2.3),(.85,0)],1.1,loc=(0,0,.25),axis='Y',seg=1)
@@ -189,17 +238,20 @@ def veilrelay(a):
   for z in [1.5,2.7,3.9]:
    cyl(a,'Lens_discs','Team',.34,.12,(sign*(1.25-z*.08),.24,z),rot=(R,0,0),seg=20)
    cyl(a,'Lens_lights','TeamGlow',.19,.14,(sign*(1.25-z*.08),.17,z),rot=(R,0,0),seg=16)
- beam(a,'Cross_mast','Armor',(-.8,.35,4.1),(.8,.35,4.1),.07)
- box(a,'Entrance','Glass',(.48,.07,.86),(0,-.59,.83))
- for x in [-1,1]:box(a,'Instrument_cases','Armor',(.6,.6,.5),(x,-.8,.45))
+ beam(a,'Cross_mast',a.armor,(-.8,.35,4.1),(.8,.35,4.1),.07)
+ box(a,'Entrance','Window',(.48,.07,.86),(0,-.59,.83))
+ a.part('Hood_canopy',a.armor).prism([(-1.0,2.2),(0,3.25),(1.0,2.2),(.7,2.05),(0,2.8),(-.7,2.05)],1.4,loc=(0,0,0),axis='Y',bevel=.03,seg=1)
+ for x in [-1,1]:box(a,'Instrument_cases',a.armor,(.6,.6,.5),(x,-.8,.45))
 BUILDERS={'scrapper':lambda a:person(a,'scrapper'),'shade':lambda a:person(a,'shade'),'watcher':lambda a:person(a,'watcher'),'scorcher':scorcher,'salvageyard':salvageyard,'rider':rider,'wagon':wagon,'waystation':waystation,'drone':drone,'walker':walker,'pylon':pylon,'veilrelay':veilrelay}
 def count(a):return sum(len(f.verts)-2 for shape in a.shapes.values() for f in shape.bm.faces)
-def build_all():
+def build_all(names=None):
  root=kit.workspace('FrontierFactions');kit.clear_workspace(root)
  OUT.mkdir(parents=True,exist_ok=True)
  entries=[]
  for name,(faction,kind,limit,minimum) in CATALOG.items():
+  if names and name not in names:continue
   a=Asset(name,root,ao_distance=.7 if minimum==2800 else 1,ao_samples=40)
+  a.armor=FACTION_ARMOR[faction]
   BUILDERS[name](a)
   # Functional fasteners and deck fixtures supply authored surface detail within budget.
   n=0
@@ -215,12 +267,16 @@ def build_all():
   triangles=count(a)
   if triangles>limit:raise RuntimeError(f'{name}: {triangles} triangles > {limit}')
   a.finish();a.export(OUT/f'{name}.glb')
-  entries.append(dict(name=name,file=name+'.glb',triangles=a.triangles(),faction=faction,kind=kind,budget=limit,review='approved by owner 2026-11-11',animation='Runtime articulated parts; no baked clips'))
+  entries.append(dict(name=name,file=name+'.glb',triangles=a.triangles(),faction=faction,kind=kind,budget=limit,review='pending owner review (round 3)',approved='owner 2026-11-11 (round-2 shape)',animation='Runtime articulated parts; no baked clips'))
   print('FACTION_ASSET',name,a.triangles(),flush=True)
  manifest=json.loads((OUT/'manifest.json').read_text(encoding='utf-8'))
- manifest['assets']=[e for e in manifest['assets'] if e['name'] not in CATALOG]+entries
- (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n',encoding='utf-8')
+ built={e['name']:e for e in entries}
+ manifest['assets']=[built.pop(e['name'],e) for e in manifest['assets']]+list(built.values())
+ (OUT/'manifest.json').write_bytes((json.dumps(manifest,indent=2)+'\n').encode('utf-8'))
  source=ROOT/'assets/source';source.mkdir(parents=True,exist_ok=True)
  bpy.ops.wm.save_as_mainfile(filepath=str(source/'frontier-factions.blend'))
  return entries
-if __name__=='__main__':build_all()
+if __name__=='__main__':
+ # -- <name> ... builds only those models. The default skips the Drone (owned by R3-J in round 3).
+ args=sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else []
+ build_all([n for n in args if n in CATALOG] or [n for n in CATALOG if n!='drone'])

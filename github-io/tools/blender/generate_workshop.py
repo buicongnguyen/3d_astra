@@ -97,6 +97,12 @@ def workshop(a):
     # beacon mast on the back corner
     cyl(a, 'Beacon_mast', 'Armor', .05, 1.15, (1.25, 1.75, Z0 + 2.1 + rise * .3 + .55), seg=8)
     a.part('Beacon', 'TeamGlow').sphere(.12, loc=(1.25, 1.75, Z0 + 2.1 + rise * .3 + 1.15), seg=10, rings=6)
+    # R3-F Meridian accent: a tall antenna array on the roof crown (reads from the game camera).
+    top = Z0 + 2.1 + rise
+    cyl(a, 'Antenna_mast', 'Armor', .055, 2.0, (.35, .9, top + 1.0), seg=8)
+    for z, w in ((top + 1.0, .9), (top + 1.5, .6)):
+        box(a, 'Antenna_bars', 'Armor', (w, .06, .06), (.35, .9, z), bevel=0)
+    box(a, 'Antenna_tip', 'TeamGlow', (.1, .1, .1), (.35, .9, top + 2.02), bevel=0)
 
     # --- crane: a gantry post outside the left wall, an amber jib reaching over the apron, a hanging crate
     px, py = -2.3, -1.15
@@ -149,7 +155,7 @@ def build(manifest=False):
         data = json.loads(path.read_text(encoding='utf-8'))
         data['assets'] = [e for e in data['assets'] if e['name'] != 'workshop'] + [
             {'name': 'workshop', 'file': 'workshop.glb', 'triangles': a.triangles(), 'kind': 'building', 'budget': BUDGET,
-             'review': 'pending owner review (round 2)',
+             'review': 'pending owner review (round 3)',
              'animation': 'Runtime articulated parts; no baked clips'}]
         path.write_bytes((json.dumps(data, indent=2) + '\n').encode('utf-8'))  # LF on Windows too
 

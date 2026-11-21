@@ -1,0 +1,1289 @@
+[
+ {
+  "name": "worker",
+  "group": "core",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.201,
+    "px": 3595,
+    "dark": 0.28
+   },
+   "body": {
+    "Y": 0.0911,
+    "px": 9911,
+    "dark": 0.633
+   },
+   "lit": {
+    "Y": 0.6589,
+    "px": 383,
+    "dark": 0
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.1998,
+    "px": 3537,
+    "dark": 0.283
+   },
+   "body": {
+    "Y": 0.3317,
+    "px": 9716,
+    "dark": 0.24
+   },
+   "lit": {
+    "Y": 0.6098,
+    "px": 904,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "vanguard",
+  "group": "core",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.1535,
+    "px": 7922,
+    "dark": 0.111
+   },
+   "body": {
+    "Y": 0.0711,
+    "px": 6874,
+    "dark": 0.654
+   },
+   "lit": {
+    "Y": 0.7298,
+    "px": 715,
+    "dark": 0
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.1535,
+    "px": 7922,
+    "dark": 0.111
+   },
+   "body": {
+    "Y": 0.3306,
+    "px": 6874,
+    "dark": 0.265
+   },
+   "lit": {
+    "Y": 0.7298,
+    "px": 715,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "ranger",
+  "group": "core",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.2452,
+    "px": 2525,
+    "dark": 0.211
+   },
+   "body": {
+    "Y": 0.0647,
+    "px": 8393,
+    "dark": 0.671
+   },
+   "lit": {
+    "Y": 0.6572,
+    "px": 316,
+    "dark": 0.117
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.2382,
+    "px": 1640,
+    "dark": 0.215
+   },
+   "body": {
+    "Y": 0.2362,
+    "px": 8898,
+    "dark": 0.403
+   },
+   "lit": {
+    "Y": 0.7409,
+    "px": 224,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "medic",
+  "group": "core",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.2143,
+    "px": 3706,
+    "dark": 0.273
+   },
+   "body": {
+    "Y": 0.0987,
+    "px": 9038,
+    "dark": 0.645
+   },
+   "lit": {
+    "Y": 0.7186,
+    "px": 610,
+    "dark": 0
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.2004,
+    "px": 3548,
+    "dark": 0.286
+   },
+   "body": {
+    "Y": 0.4892,
+    "px": 9878,
+    "dark": 0.25
+   },
+   "lit": {
+    "Y": 0.7152,
+    "px": 562,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "engineer",
+  "group": "core",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.2054,
+    "px": 3686,
+    "dark": 0.277
+   },
+   "body": {
+    "Y": 0.0867,
+    "px": 9724,
+    "dark": 0.637
+   },
+   "lit": {
+    "Y": 0.608,
+    "px": 292,
+    "dark": 0
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.1881,
+    "px": 2137,
+    "dark": 0.28
+   },
+   "body": {
+    "Y": 0.273,
+    "px": 6924,
+    "dark": 0.226
+   },
+   "lit": {
+    "Y": 0.6345,
+    "px": 97,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "antitank",
+  "group": "core",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.2694,
+    "px": 1973,
+    "dark": 0.166
+   },
+   "body": {
+    "Y": 0.0587,
+    "px": 12277,
+    "dark": 0.66
+   },
+   "lit": {
+    "Y": 0.5166,
+    "px": 631,
+    "dark": 0.233
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.2694,
+    "px": 1973,
+    "dark": 0.166
+   },
+   "body": {
+    "Y": 0.371,
+    "px": 12277,
+    "dark": 0.291
+   },
+   "lit": {
+    "Y": 0.5166,
+    "px": 631,
+    "dark": 0.233
+   }
+  }
+ },
+ {
+  "name": "breaker",
+  "group": "core",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.2983,
+    "px": 4107,
+    "dark": 0.067
+   },
+   "body": {
+    "Y": 0.121,
+    "px": 11554,
+    "dark": 0.39
+   },
+   "lit": {
+    "Y": 0.6887,
+    "px": 187,
+    "dark": 0.112
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.2983,
+    "px": 4107,
+    "dark": 0.067
+   },
+   "body": {
+    "Y": 0.4138,
+    "px": 11554,
+    "dark": 0.242
+   },
+   "lit": {
+    "Y": 0.6887,
+    "px": 187,
+    "dark": 0.112
+   }
+  }
+ },
+ {
+  "name": "tank",
+  "group": "core",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.2983,
+    "px": 3801,
+    "dark": 0.043
+   },
+   "body": {
+    "Y": 0.1294,
+    "px": 9376,
+    "dark": 0.308
+   },
+   "lit": {
+    "Y": 0.6397,
+    "px": 87,
+    "dark": 0.264
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.2983,
+    "px": 3801,
+    "dark": 0.043
+   },
+   "body": {
+    "Y": 0.4442,
+    "px": 9376,
+    "dark": 0.194
+   },
+   "lit": {
+    "Y": 0.6397,
+    "px": 87,
+    "dark": 0.264
+   }
+  }
+ },
+ {
+  "name": "hq",
+  "group": "core",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.3669,
+    "px": 3445,
+    "dark": 0
+   },
+   "body": {
+    "Y": 0.0863,
+    "px": 13838,
+    "dark": 0.597
+   },
+   "lit": {
+    "Y": 0.3013,
+    "px": 281,
+    "dark": 0.648
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.3669,
+    "px": 3445,
+    "dark": 0
+   },
+   "body": {
+    "Y": 0.3177,
+    "px": 13838,
+    "dark": 0.152
+   },
+   "lit": {
+    "Y": 0.752,
+    "px": 281,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "barracks",
+  "group": "core",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.2961,
+    "px": 3414,
+    "dark": 0.151
+   },
+   "body": {
+    "Y": 0.075,
+    "px": 17950,
+    "dark": 0.611
+   },
+   "lit": {
+    "Y": 0.5131,
+    "px": 644,
+    "dark": 0.38
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.2961,
+    "px": 3414,
+    "dark": 0.151
+   },
+   "body": {
+    "Y": 0.341,
+    "px": 17950,
+    "dark": 0.274
+   },
+   "lit": {
+    "Y": 0.7774,
+    "px": 644,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "foundry",
+  "group": "core",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.2215,
+    "px": 1766,
+    "dark": 0.229
+   },
+   "body": {
+    "Y": 0.0757,
+    "px": 17227,
+    "dark": 0.611
+   },
+   "lit": {
+    "Y": 0.0904,
+    "px": 2659,
+    "dark": 0.883
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.2215,
+    "px": 1766,
+    "dark": 0.229
+   },
+   "body": {
+    "Y": 0.1522,
+    "px": 17228,
+    "dark": 0.363
+   },
+   "lit": {
+    "Y": 0.6998,
+    "px": 2659,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "relay",
+  "group": "core",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.1851,
+    "px": 537,
+    "dark": 0.177
+   },
+   "body": {
+    "Y": 0.1074,
+    "px": 13812,
+    "dark": 0.422
+   },
+   "lit": {
+    "Y": 0.6887,
+    "px": 993,
+    "dark": 0
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.1851,
+    "px": 537,
+    "dark": 0.177
+   },
+   "body": {
+    "Y": 0.4042,
+    "px": 13812,
+    "dark": 0.132
+   },
+   "lit": {
+    "Y": 0.6887,
+    "px": 993,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "tower",
+  "group": "core",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.2762,
+    "px": 1997,
+    "dark": 0.023
+   },
+   "body": {
+    "Y": 0.0876,
+    "px": 20208,
+    "dark": 0.611
+   },
+   "lit": {
+    "Y": 0.3401,
+    "px": 150,
+    "dark": 0.62
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.2762,
+    "px": 1997,
+    "dark": 0.023
+   },
+   "body": {
+    "Y": 0.3213,
+    "px": 20208,
+    "dark": 0.126
+   },
+   "lit": {
+    "Y": 0.3401,
+    "px": 150,
+    "dark": 0.62
+   }
+  }
+ },
+ {
+  "name": "scrapper",
+  "group": "faction",
+  "colour": "ashfall",
+  "before": {
+   "team": {
+    "Y": 0.0752,
+    "px": 4015,
+    "dark": 0.55
+   },
+   "body": {
+    "Y": 0.073,
+    "px": 8373,
+    "dark": 0.617
+   },
+   "lit": {
+    "Y": 0.025,
+    "px": 272,
+    "dark": 0.974
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.0659,
+    "px": 3776,
+    "dark": 0.589
+   },
+   "body": {
+    "Y": 0.116,
+    "px": 8710,
+    "dark": 0.385
+   },
+   "lit": {
+    "Y": 0.0249,
+    "px": 272,
+    "dark": 0.974
+   }
+  }
+ },
+ {
+  "name": "scorcher",
+  "group": "faction",
+  "colour": "ashfall",
+  "before": {
+   "team": {
+    "Y": 0.0995,
+    "px": 5413,
+    "dark": 0.423
+   },
+   "body": {
+    "Y": 0.2083,
+    "px": 11723,
+    "dark": 0.363
+   },
+   "lit": {
+    "Y": null,
+    "px": 0,
+    "dark": null
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.0986,
+    "px": 5191,
+    "dark": 0.423
+   },
+   "body": {
+    "Y": 0.1794,
+    "px": 12011,
+    "dark": 0.294
+   },
+   "lit": {
+    "Y": null,
+    "px": 0,
+    "dark": null
+   }
+  }
+ },
+ {
+  "name": "salvageyard",
+  "group": "faction",
+  "colour": "ashfall",
+  "before": {
+   "team": {
+    "Y": 0.0589,
+    "px": 3118,
+    "dark": 0.77
+   },
+   "body": {
+    "Y": 0.1465,
+    "px": 12705,
+    "dark": 0.252
+   },
+   "lit": {
+    "Y": 0.4722,
+    "px": 50,
+    "dark": 0
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.0577,
+    "px": 3077,
+    "dark": 0.779
+   },
+   "body": {
+    "Y": 0.2158,
+    "px": 13982,
+    "dark": 0.184
+   },
+   "lit": {
+    "Y": 0.4722,
+    "px": 50,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "rider",
+  "group": "faction",
+  "colour": "sunward",
+  "before": {
+   "team": {
+    "Y": 0.2385,
+    "px": 7385,
+    "dark": 0.227
+   },
+   "body": {
+    "Y": 0.0643,
+    "px": 14037,
+    "dark": 0.751
+   },
+   "lit": {
+    "Y": null,
+    "px": 0,
+    "dark": null
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.1556,
+    "px": 3522,
+    "dark": 0.268
+   },
+   "body": {
+    "Y": 0.1972,
+    "px": 9727,
+    "dark": 0.531
+   },
+   "lit": {
+    "Y": null,
+    "px": 0,
+    "dark": null
+   }
+  }
+ },
+ {
+  "name": "wagon",
+  "group": "faction",
+  "colour": "sunward",
+  "before": {
+   "team": {
+    "Y": 0.2748,
+    "px": 14155,
+    "dark": 0.209
+   },
+   "body": {
+    "Y": 0.2225,
+    "px": 9558,
+    "dark": 0.296
+   },
+   "lit": {
+    "Y": null,
+    "px": 0,
+    "dark": null
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.1674,
+    "px": 6581,
+    "dark": 0.342
+   },
+   "body": {
+    "Y": 0.4601,
+    "px": 16855,
+    "dark": 0.161
+   },
+   "lit": {
+    "Y": null,
+    "px": 0,
+    "dark": null
+   }
+  }
+ },
+ {
+  "name": "waystation",
+  "group": "faction",
+  "colour": "sunward",
+  "before": {
+   "team": {
+    "Y": 0.2912,
+    "px": 12414,
+    "dark": 0.259
+   },
+   "body": {
+    "Y": 0.0845,
+    "px": 9416,
+    "dark": 0.434
+   },
+   "lit": {
+    "Y": 0.799,
+    "px": 51,
+    "dark": 0
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.1593,
+    "px": 4987,
+    "dark": 0.571
+   },
+   "body": {
+    "Y": 0.4727,
+    "px": 17075,
+    "dark": 0.088
+   },
+   "lit": {
+    "Y": 0.7991,
+    "px": 49,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "walker",
+  "group": "faction",
+  "colour": "wardens",
+  "before": {
+   "team": {
+    "Y": 0.1109,
+    "px": 7003,
+    "dark": 0.332
+   },
+   "body": {
+    "Y": 0.1671,
+    "px": 6794,
+    "dark": 0.365
+   },
+   "lit": {
+    "Y": 0.6372,
+    "px": 882,
+    "dark": 0
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.0843,
+    "px": 6323,
+    "dark": 0.297
+   },
+   "body": {
+    "Y": 0.5576,
+    "px": 11078,
+    "dark": 0.073
+   },
+   "lit": {
+    "Y": 0.6371,
+    "px": 883,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "pylon",
+  "group": "faction",
+  "colour": "wardens",
+  "before": {
+   "team": {
+    "Y": 0.1133,
+    "px": 7652,
+    "dark": 0.37
+   },
+   "body": {
+    "Y": 0.1368,
+    "px": 9076,
+    "dark": 0.271
+   },
+   "lit": {
+    "Y": 0.6329,
+    "px": 371,
+    "dark": 0
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.0887,
+    "px": 6438,
+    "dark": 0.439
+   },
+   "body": {
+    "Y": 0.3841,
+    "px": 11465,
+    "dark": 0.061
+   },
+   "lit": {
+    "Y": 0.6326,
+    "px": 356,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "shade",
+  "group": "faction",
+  "colour": "veil",
+  "before": {
+   "team": {
+    "Y": 0.0787,
+    "px": 4254,
+    "dark": 0.587
+   },
+   "body": {
+    "Y": 0.0599,
+    "px": 5189,
+    "dark": 0.726
+   },
+   "lit": {
+    "Y": 0.3149,
+    "px": 363,
+    "dark": 0.358
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.0735,
+    "px": 4086,
+    "dark": 0.619
+   },
+   "body": {
+    "Y": 0.1126,
+    "px": 7711,
+    "dark": 0.295
+   },
+   "lit": {
+    "Y": 0.3155,
+    "px": 373,
+    "dark": 0.354
+   }
+  }
+ },
+ {
+  "name": "watcher",
+  "group": "faction",
+  "colour": "veil",
+  "before": {
+   "team": {
+    "Y": 0.0771,
+    "px": 4448,
+    "dark": 0.594
+   },
+   "body": {
+    "Y": 0.0864,
+    "px": 5465,
+    "dark": 0.627
+   },
+   "lit": {
+    "Y": 0.2438,
+    "px": 335,
+    "dark": 0.528
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.0726,
+    "px": 4340,
+    "dark": 0.621
+   },
+   "body": {
+    "Y": 0.1377,
+    "px": 7751,
+    "dark": 0.244
+   },
+   "lit": {
+    "Y": 0.2432,
+    "px": 347,
+    "dark": 0.533
+   }
+  }
+ },
+ {
+  "name": "veilrelay",
+  "group": "faction",
+  "colour": "veil",
+  "before": {
+   "team": {
+    "Y": 0.0537,
+    "px": 8599,
+    "dark": 0.701
+   },
+   "body": {
+    "Y": 0.1392,
+    "px": 9778,
+    "dark": 0.257
+   },
+   "lit": {
+    "Y": 0.3372,
+    "px": 1576,
+    "dark": 0.327
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.033,
+    "px": 6366,
+    "dark": 0.819
+   },
+   "body": {
+    "Y": 0.2396,
+    "px": 13028,
+    "dark": 0.1
+   },
+   "lit": {
+    "Y": 0.5609,
+    "px": 1574,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "gunner",
+  "group": "other",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.2548,
+    "px": 2124,
+    "dark": 0.133
+   },
+   "body": {
+    "Y": 0.0744,
+    "px": 15322,
+    "dark": 0.549
+   },
+   "lit": {
+    "Y": 0.7481,
+    "px": 415,
+    "dark": 0
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.2674,
+    "px": 2179,
+    "dark": 0.133
+   },
+   "body": {
+    "Y": 0.2043,
+    "px": 11930,
+    "dark": 0.425
+   },
+   "lit": {
+    "Y": 0.7506,
+    "px": 339,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "workshop",
+  "group": "other",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.2414,
+    "px": 4996,
+    "dark": 0.336
+   },
+   "body": {
+    "Y": 0.0935,
+    "px": 16561,
+    "dark": 0.483
+   },
+   "lit": {
+    "Y": 0.7385,
+    "px": 261,
+    "dark": 0
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.2478,
+    "px": 5037,
+    "dark": 0.325
+   },
+   "body": {
+    "Y": 0.2762,
+    "px": 16556,
+    "dark": 0.086
+   },
+   "lit": {
+    "Y": 0.7395,
+    "px": 261,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "stalker",
+  "group": "other",
+  "colour": "veil",
+  "before": {
+   "team": {
+    "Y": 0.0691,
+    "px": 1034,
+    "dark": 0.659
+   },
+   "body": {
+    "Y": 0.0643,
+    "px": 13398,
+    "dark": 0.683
+   },
+   "lit": {
+    "Y": 0.8065,
+    "px": 188,
+    "dark": 0
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.0691,
+    "px": 1034,
+    "dark": 0.659
+   },
+   "body": {
+    "Y": 0.1404,
+    "px": 13398,
+    "dark": 0.513
+   },
+   "lit": {
+    "Y": 0.8065,
+    "px": 188,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "rampart",
+  "group": "other",
+  "colour": "ashfall",
+  "before": {
+   "team": {
+    "Y": 0.1417,
+    "px": 1398,
+    "dark": 0.159
+   },
+   "body": {
+    "Y": 0.1095,
+    "px": 12732,
+    "dark": 0.421
+   },
+   "lit": {
+    "Y": 0.3707,
+    "px": 65,
+    "dark": 0.2
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.1417,
+    "px": 1398,
+    "dark": 0.159
+   },
+   "body": {
+    "Y": 0.1124,
+    "px": 12732,
+    "dark": 0.412
+   },
+   "lit": {
+    "Y": 0.3707,
+    "px": 65,
+    "dark": 0.2
+   }
+  }
+ },
+ {
+  "name": "carrier",
+  "group": "other",
+  "colour": "ashfall",
+  "before": {
+   "team": {
+    "Y": 0.1272,
+    "px": 6910,
+    "dark": 0.248
+   },
+   "body": {
+    "Y": 0.0504,
+    "px": 9080,
+    "dark": 0.721
+   },
+   "lit": {
+    "Y": 0.0994,
+    "px": 1479,
+    "dark": 0.903
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.1272,
+    "px": 6910,
+    "dark": 0.248
+   },
+   "body": {
+    "Y": 0.3126,
+    "px": 9080,
+    "dark": 0.464
+   },
+   "lit": {
+    "Y": 0.0994,
+    "px": 1479,
+    "dark": 0.903
+   }
+  }
+ },
+ {
+  "name": "kite",
+  "group": "other",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.4253,
+    "px": 2685,
+    "dark": 0.035
+   },
+   "body": {
+    "Y": 0.1714,
+    "px": 4107,
+    "dark": 0.428
+   },
+   "lit": {
+    "Y": 0.2739,
+    "px": 443,
+    "dark": 0.6
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.4253,
+    "px": 2685,
+    "dark": 0.035
+   },
+   "body": {
+    "Y": 0.2823,
+    "px": 4107,
+    "dark": 0.16
+   },
+   "lit": {
+    "Y": 0.2739,
+    "px": 443,
+    "dark": 0.6
+   }
+  }
+ },
+ {
+  "name": "hawk",
+  "group": "other",
+  "colour": "meridian",
+  "before": {
+   "team": {
+    "Y": 0.3177,
+    "px": 6933,
+    "dark": 0.037
+   },
+   "body": {
+    "Y": 0.1685,
+    "px": 4250,
+    "dark": 0.334
+   },
+   "lit": {
+    "Y": 0.0846,
+    "px": 807,
+    "dark": 0.848
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.3177,
+    "px": 6933,
+    "dark": 0.037
+   },
+   "body": {
+    "Y": 0.4301,
+    "px": 4250,
+    "dark": 0.127
+   },
+   "lit": {
+    "Y": 0.0846,
+    "px": 807,
+    "dark": 0.848
+   }
+  }
+ },
+ {
+  "name": "balloon",
+  "group": "other",
+  "colour": "ashfall",
+  "before": {
+   "team": {
+    "Y": 0.1104,
+    "px": 11349,
+    "dark": 0.325
+   },
+   "body": {
+    "Y": 0.2132,
+    "px": 4362,
+    "dark": 0.411
+   },
+   "lit": {
+    "Y": 0.5251,
+    "px": 92,
+    "dark": 0
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.1104,
+    "px": 11349,
+    "dark": 0.325
+   },
+   "body": {
+    "Y": 0.3703,
+    "px": 4362,
+    "dark": 0.161
+   },
+   "lit": {
+    "Y": 0.5251,
+    "px": 92,
+    "dark": 0
+   }
+  }
+ },
+ {
+  "name": "glider",
+  "group": "other",
+  "colour": "sunward",
+  "before": {
+   "team": {
+    "Y": 0.2767,
+    "px": 2592,
+    "dark": 0.02
+   },
+   "body": {
+    "Y": 0.1501,
+    "px": 2814,
+    "dark": 0.384
+   },
+   "lit": {
+    "Y": 0.2914,
+    "px": 54,
+    "dark": 0.648
+   }
+  },
+  "after": {
+   "team": {
+    "Y": 0.2767,
+    "px": 2592,
+    "dark": 0.02
+   },
+   "body": {
+    "Y": 0.2411,
+    "px": 2814,
+    "dark": 0.257
+   },
+   "lit": {
+    "Y": 0.2914,
+    "px": 54,
+    "dark": 0.648
+   }
+  }
+ }
+]

@@ -1,5 +1,28 @@
 # Changelog
 
+## Unreleased: AAA round 3
+
+### R3-F: Warm kit and distinct silhouettes (art 1)
+- **Warm palette.** The near-black gunmetal armour that covered about 60% of every model is now a glossy warm sand. Tracks, boots and joints stay a warm dark umber, the infantry suit is a warm taupe, and foundations are warm concrete. Team paint is unchanged. On the 13 core models the armour got about 3.8 times brighter, and the share of near-black armour pixels fell from 57% to 24%.
+- **Shared infantry you can tell apart on a phone:**
+  - the Medic is white, with a red-cross pack and helmet;
+  - the Worker is bright yellow, with a crystal cargo frame;
+  - the Engineer wears an orange hard hat and carries an A-frame tool rig with a crane hook;
+  - the Ranger has a green hood and cape and a long scoped rifle.
+- **Faction identity that survives any player colour.**
+  - Each faction's own models wear a faction paint: Ashfall rust, Sunward canvas cream, Wardens ice white and Veil mauve.
+  - Each faction also gains one accent:
+    - Ashfall: spikes and exhausts;
+    - Sunward: sails and fins (the Rider's parasol is now a mast and sail);
+    - Wardens: tower shields and crests;
+    - Veil: hoods and long cloaks;
+    - Meridian: antennas and shoulder plates.
+- **Lit windows.** The windows on the HQ, Barracks, Foundry and Veil relay are a new warm emissive `Window` material. They follow the `Window*` name contract with R3-D's night looks.
+- **Cost.** No model gained a draw.
+  - The render-budget scenarios show 1–2 fewer draw calls: the Ranger's glass lens became a team light.
+  - Triangle counts stay within budget. The Drone and the bosses are unchanged (R3-J).
+- Every changed model is flagged "pending owner review (round 3)" in `public/models/manifest.json`. See `docs/aaa/results/round3/f.md`.
+
 ## 0.25.0: AAA round 2 (release label for the deploy; owner decision O17)
 
 This is the label proposed for the next release. `package.json` still says 0.19.1, nothing is deployed, and the owner decides the number at deploy. It gathers everything of AAA round 2 (plan: docs/aaa/AAA_ROUND2_PLAN.md, results: docs/aaa/results/round2/). The Defence and campaign sections under "Unreleased" further down (0.22 to 0.24 labels) were built before this round and are not part of it.

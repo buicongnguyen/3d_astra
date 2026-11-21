@@ -1,0 +1,175 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+<style>html,body{margin:0;background:#000}</style></head>
+<body><canvas id="c"></canvas>
+<script type="module">
+// R3-F review renderer. Same look as the round-2 art audit (docs/aaa/results/round2/art-audit/render/audit.html):
+// riverlands grade, warm rim, team rim, room reflections on metal or glossy parts. Adds:
+//   * a `base` folder per call, so the committed models and a saved "before" copy render side by side;
+//   * a class mask (team paint / lit parts / everything else) rendered from the same camera, and the
+//     mean luminance of each class measured on the beauty render;
+//   * tiny game-camera thumbnails (the 24 px readability test).
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { installGrade, rimShader, addTeamRim, setRimTier } from '/src/look-grade.js';
+
+installGrade('riverlands');
+setRimTier(false);
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.CustomToneMapping;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+const ENV = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+const loader = new GLTFLoader();
+const cache = new Map();
+const CAMERA_OFFSET = new THREE.Vector3(25, 51, 43);
+const SUN_OFFSET = new THREE.Vector3(-25, 55, 20);
+const load = (base, name) => {
+  const key = `${base}/${name}`;
+  if (!cache.has(key)) cache.set(key, loader.loadAsync(`${base}/${name}.glb`));
+  return cache.get(key);
+};
+const LIT = /^(TeamGlow|Glass|Lamp|Energy|Alloy|Window|Flame|Lens|BossCore|Crystal)/;
+const MASK = { team: new THREE.MeshBasicMaterial({ color: 0xff00ff }), lit: new THREE.MeshBasicMaterial({ color: 0x00ff00 }), body: new THREE.MeshBasicMaterial({ color: 0x000000 }) };
+function dress(root, team, glow, mask) {
+  const mats = new Map();
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    o.castShadow = true; o.receiveShadow = true;
+    const m = o.material;
+    if (mask) { o.material = m.name.startsWith('Team') && !m.name.startsWith('TeamGlow') ? MASK.team : LIT.test(m.name) ? MASK.lit : MASK.body; return; }
+    if (!mats.has(m)) {
+      const c = m.clone();
+      if (m.name.startsWith('Team')) {
+        c.color.set(team);
+        addTeamRim(c, team);
+        if (m.name.startsWith('TeamGlow')) { c.emissive.set(glow); c.emissiveIntensity = 0.8; }
+      } else if (!(m.emissive && m.emissive.getHex()) && !m.transparent) {
+        c.onBeforeCompile = (s) => rimShader(s);
+        c.customProgramCacheKey = () => 'rim-std';
+      }
+      if (c.isMeshStandardMaterial && (c.metalness >= 0.5 || c.roughness <= 0.25)) { c.envMap = ENV; c.envMapIntensity = 0.6; }
+      mats.set(m, c);
+    }
+    o.material = mats.get(m);
+  });
+  return root;
+}
+function lights(scene, center, radius) {
+  scene.add(new THREE.HemisphereLight(0xa9d4ff, 0x7a6a3a, 1.65));
+  const sun = new THREE.DirectionalLight(0xfff0d6, 2.7);
+  sun.position.copy(center).add(SUN_OFFSET); sun.target.position.copy(center);
+  scene.add(sun, sun.target);
+  sun.castShadow = true;
+  Object.assign(sun.shadow.camera, { left: -radius, right: radius, top: radius, bottom: -radius, near: 1, far: 200 });
+  sun.shadow.mapSize.set(2048, 2048);
+  sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.02;
+}
+async function instance({ base, name, color, glow, yaw = 0.6, mask = false }) {
+  const gltf = await load(base, name);
+  const root = dress(gltf.scene.clone(true), color, glow || color, mask);
+  root.rotation.y = yaw;
+  return root;
+}
+const toLinear = (c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+function pixels(url, w, h) {
+  return new Promise((ok) => {
+    const img = new Image();
+    img.onload = () => {
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      const g = cv.getContext('2d'); g.drawImage(img, 0, 0, w, h);
+      ok(g.getImageData(0, 0, w, h).data);
+    };
+    img.src = url;
+  });
+}
+// Close-up 3/4 view framed on the model; with `stats` also renders the class mask and measures it.
+window.closeTile = async ({ base, name, color, glow, yaw = 0.6, w = 300, h = 300, bg = '#efe3cf', ground = '#e2d1b6', elev = 0.42, stats = false }) => {
+  const shot = async (mask) => {
+    renderer.setPixelRatio(1); renderer.setSize(w, h, false);
+    const scene = new THREE.Scene(); scene.background = new THREE.Color(mask ? '#ffffff' : bg);
+    const root = await instance({ base, name, color, glow, yaw, mask });
+    scene.add(root);
+    const box = new THREE.Box3().setFromObject(root), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+    const rad = Math.max(size.x, size.y, size.z) * 0.62 + 0.2;
+    if (!mask) {
+      const plane = new THREE.Mesh(new THREE.CircleGeometry(rad * 2.2, 48), new THREE.MeshStandardMaterial({ color: ground, roughness: 1 }));
+      plane.rotation.x = -Math.PI / 2; plane.position.y = box.min.y - 0.002; plane.receiveShadow = true; scene.add(plane);
+      lights(scene, c, rad * 2.5);
+    }
+    const cam = new THREE.PerspectiveCamera(26, w / h, 0.05, 500);
+    const dist = rad / Math.tan(THREE.MathUtils.degToRad(13)) * 1.04;
+    cam.position.set(c.x, c.y + Math.sin(elev) * dist, c.z + Math.cos(elev) * dist);
+    cam.lookAt(c);
+    renderer.render(scene, cam);
+    return canvas.toDataURL('image/png');
+  };
+  const url = await shot(false);
+  if (!stats) return { url };
+  const maskUrl = await shot(true);
+  const [px, mk] = await Promise.all([pixels(url, w, h), pixels(maskUrl, w, h)]);
+  const acc = { team: [0, 0, 0], body: [0, 0, 0], lit: [0, 0, 0] }; // [sum Y, count, count with L* < 30]
+  for (let i = 0; i < px.length; i += 4) {
+    const r = mk[i], g = mk[i + 1], b = mk[i + 2];
+    const cls = r > 235 && g < 20 && b > 235 ? 'team' : r < 20 && g > 235 && b < 20 ? 'lit' : r < 20 && g < 20 && b < 20 ? 'body' : null;
+    if (!cls) continue; // background and anti-aliased edges
+    const Y = 0.2126 * toLinear(px[i] / 255) + 0.7152 * toLinear(px[i + 1] / 255) + 0.0722 * toLinear(px[i + 2] / 255);
+    const L = Y > 0.008856 ? 116 * Math.cbrt(Y) - 16 : 903.3 * Y;
+    acc[cls][0] += Y; acc[cls][1]++; if (L < 30) acc[cls][2]++;
+  }
+  const out = {};
+  for (const [k, [s, n, dark]] of Object.entries(acc)) out[k] = { Y: n ? +(s / n).toFixed(4) : null, px: n, dark: n ? +(dark / n).toFixed(3) : null };
+  return { url, maskUrl, stats: out };
+};
+// Game camera (orthographic, offset 25,51,43) framed on one model, rendered at a tiny pixel size.
+window.thumbTile = async ({ base, name, color, glow, yaw = 0.9, size = 24, ground = '#5a9442', pad = 1.08 }) => {
+  renderer.setPixelRatio(1); renderer.setSize(size, size, false);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(ground);
+  const root = await instance({ base, name, color, glow, yaw });
+  scene.add(root);
+  const box = new THREE.Box3().setFromObject(root), c = box.getCenter(new THREE.Vector3());
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: ground, roughness: 1 }));
+  plane.rotation.x = -Math.PI / 2; plane.receiveShadow = true; scene.add(plane);
+  lights(scene, c, 12);
+  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 240);
+  cam.position.copy(c).add(CAMERA_OFFSET); cam.lookAt(c); cam.updateMatrixWorld();
+  // Fit the projected bounding box.
+  const lo = new THREE.Vector2(Infinity, Infinity), hi = new THREE.Vector2(-Infinity, -Infinity);
+  for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) {
+    const p = new THREE.Vector3(x, y, z).applyMatrix4(cam.matrixWorldInverse);
+    lo.min(new THREE.Vector2(p.x, p.y)); hi.max(new THREE.Vector2(p.x, p.y));
+  }
+  const mid = lo.clone().add(hi).multiplyScalar(0.5), half = Math.max(hi.x - lo.x, hi.y - lo.y) / 2 * pad;
+  Object.assign(cam, { left: mid.x - half, right: mid.x + half, top: mid.y + half, bottom: mid.y - half }); cam.updateProjectionMatrix();
+  renderer.render(scene, cam);
+  return { url: canvas.toDataURL('image/png') };
+};
+// The phone at real game zoom (390x844, ratio 1.6, zoom 38) with a list of units.
+window.gameScene = async ({ items, w = 390, h = 844, dpr = 1.6, zoom = 38, ground = '#5a9442', sky = '#123f63' }) => {
+  renderer.setPixelRatio(dpr); renderer.setSize(w, h, false);
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(sky);
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(400, 400), new THREE.MeshStandardMaterial({ color: ground, roughness: 1 }));
+  plane.rotation.x = -Math.PI / 2; plane.receiveShadow = true; scene.add(plane);
+  lights(scene, new THREE.Vector3(), 60);
+  const aspect = w / h;
+  const cam = new THREE.OrthographicCamera(-zoom * aspect / 2, zoom * aspect / 2, zoom / 2, -zoom / 2, 0.1, 240);
+  cam.position.copy(CAMERA_OFFSET); cam.lookAt(0, 0, 0); cam.updateMatrixWorld();
+  const labels = [];
+  for (const it of items) {
+    const root = await instance(it);
+    const b0 = new THREE.Box3().setFromObject(root), hgt = (b0.max.y - b0.min.y) * h / zoom;
+    root.scale.multiplyScalar(Math.min(1.25, Math.max(1, 28 / Math.max(hgt, 1e-6))));
+    root.position.set(it.x, 0, it.z);
+    scene.add(root);
+    const lo = new THREE.Vector3(it.x, 0, it.z).project(cam);
+    labels.push({ name: it.label || it.name, x: (lo.x + 1) / 2 * w, y: (1 - lo.y) / 2 * h });
+  }
+  renderer.render(scene, cam);
+  return { url: canvas.toDataURL('image/png'), labels };
+};
+window.ready = true;
+</script></body></html>

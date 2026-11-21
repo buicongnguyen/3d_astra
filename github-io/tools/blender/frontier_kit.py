@@ -49,18 +49,38 @@ def smoothstep(e0, e1, x):
 
 # name: (sRGB base colour, metallic, roughness, emission strength)
 # Base colours are authored ~1/BASE_TONE brighter because COLOR_0 multiplies them.
+#
+# Round 3 (R3-F, "warm kit"): the armour that covered ~60% of every model was near-black gunmetal.
+# It is now a glossy warm sand paint (low metal, roughness 0.25). Roughness <= 0.25 keeps it in the
+# same "reflective" bake class as before (src/view.js reflects()), so every model keeps its draw
+# count; low metalness keeps the diffuse colour bright in Eco, which has no environment map. Dark is
+# kept for tracks, joints and boots only (Undercarriage, now a warm umber), and the infantry suit is
+# a warm taupe. Team paint is unchanged.
 MATERIALS = {
     'Team': ('#c9d6cf', 0.25, 0.42, 0.0),        # recoloured per faction at runtime
     'TeamGlow': ('#b8ffe4', 0.0, 0.3, 3.0),      # emissive recoloured per faction
-    'Armor': ('#59605f', 0.55, 0.46, 0.0),       # painted gunmetal plates
-    'Steel': ('#c4c8c4', 0.95, 0.28, 0.0),       # machined bare metal
-    'Undercarriage': ('#23282a', 0.35, 0.72, 0.0),
-    'Suit': ('#343a3a', 0.0, 0.82, 0.0),         # padded fabric under infantry armour
+    'Armor': ('#d6c6aa', 0.12, 0.25, 0.0),       # glossy warm sand plates (was #59605f gunmetal)
+    'Steel': ('#cfcac0', 0.95, 0.28, 0.0),       # machined bare metal, a touch warmer
+    'Undercarriage': ('#54463c', 0.35, 0.72, 0.0),  # warm umber tracks, boots and joints
+    'Suit': ('#8a7666', 0.0, 0.82, 0.0),         # warm taupe fabric under infantry armour
+    # Role paints for the shared infantry (same reflective bake class as Armor, so no extra draws).
+    'ArmorMedic': ('#f4f1ea', 0.08, 0.25, 0.0),  # medic: white
+    'ArmorWorker': ('#ffc928', 0.12, 0.25, 0.0),  # worker / harvester: bright yellow
+    'Cross': ('#e8352b', 0.0, 0.5, 0.0),         # medic red cross (baked, matte)
+    'Cape': ('#4f8f4a', 0.0, 0.8, 0.0),          # ranger field cape (baked, matte)
+    'Safety': ('#ff7a1f', 0.1, 0.45, 0.0),       # engineer orange hard hat and tool frame
+    # Faction secondaries: identity that survives a player's colour choice (faction models only).
+    'ArmorAshfall': ('#b8613a', 0.12, 0.25, 0.0),  # rust
+    'ArmorSunward': ('#f2ddae', 0.08, 0.25, 0.0),  # sun-bleached canvas cream
+    'ArmorWardens': ('#eef0ec', 0.1, 0.25, 0.0),   # ice white
+    'ArmorVeil': ('#9c6c8e', 0.1, 0.25, 0.0),      # dusk mauve
+    # Lit windows on buildings. Name contract with R3-D: materials named Window* glow at night.
+    'Window': ('#ffcf7a', 0.0, 0.3, 1.4),
     'Glass': ('#12303a', 0.2, 0.06, 0.35),
     'Alloy': ('#ff9b36', 0.1, 0.35, 2.4),        # amber cargo / hazard lights
     'Energy': ('#62c4ff', 0.05, 0.22, 2.8),
     'Lamp': ('#ffe7b8', 0.0, 0.3, 3.2),          # floodlights and windows
-    'Concrete': ('#8d8a7e', 0.0, 0.9, 0.0),
+    'Concrete': ('#b9aa90', 0.0, 0.9, 0.0),      # warm concrete (was #8d8a7e)
     'Hazard': ('#e2b64a', 0.15, 0.5, 0.0),
     'Medical': ('#e9ece6', 0.1, 0.4, 0.0),
     # Scenery. Obstacle boulders are recoloured per map at runtime; the neutral grey here is
@@ -77,7 +97,7 @@ MATERIALS = {
     # Air units (generate_air.py): a burner flame that keeps its own colour on every team.
     'Flame': ('#ff8a2a', 0.0, 0.4, 3.0),
 }
-GLOWING = {'TeamGlow', 'Alloy', 'Energy', 'Lamp', 'CrystalAlloy', 'CrystalEnergy', 'Flame'}
+GLOWING = {'TeamGlow', 'Alloy', 'Energy', 'Lamp', 'CrystalAlloy', 'CrystalEnergy', 'Flame', 'Window'}
 # Pivots whose children move at runtime (rotors, propellers, burner flames). Like the aim rig,
 # their meshes must not bake shadows onto the body they turn over.
 MOVING = re.compile(r'^(spin_|flicker_)', re.I)

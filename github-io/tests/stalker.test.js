@@ -285,7 +285,7 @@ test("the model keeps its contract and budget, and its muzzle is where weapons.s
   const manifest = JSON.parse(readFileSync(new URL("../public/models/manifest.json", import.meta.url), "utf8")).assets;
   const entry = manifest.find((a) => a.name === "stalker");
   assert.ok(entry, "a manifest entry");
-  assert.deepEqual([entry.file, entry.kind, entry.budget, entry.review], ["stalker.glb", "unit", 3000, "pending owner review (round 2)"]);
+  assert.deepEqual([entry.file, entry.kind, entry.budget, entry.review], ["stalker.glb", "unit", 3000, "pending owner review (round 3)"]); // R3-F re-painted it (warm kit)
   assert.equal(entry.faction, undefined, "no faction flag (the approved-faction count stays 12)");
   assert.equal(entry.air, undefined);
   const data = readFileSync(new URL("../public/models/stalker.glb", import.meta.url));
