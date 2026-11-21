@@ -165,6 +165,12 @@ Object.assign(limits, {'building-life-eco':110}); // R3-L
 Object.assign(limits, {'twinrivers-high':240}); // R3 map variety: large-map-high's line (235 draws on 2026-11-22); 207 once its four bridges were instanced (Wave 3 integration)
 Object.assign(limits, {'wide-battle-eco':152, 'groups-battle-eco':111, 'combined-defence-eco':97}); // R3-K: the same scene on the base build + 4 (148, 107, 93 draws on 2026-11-21)
 Object.assign(limits, {'weapons-mix-eco':131}); // R3-X: 128 draws on 2026-11-22 (127 on the base build with the same shots: +1 ordnance bodies) + 3
+// Phone battle HUD (Wave 3): the phone canvas now runs under the bars, so a mobile frame shows more map: +4 draws in most
+// mobile scenes, more with three rivals (base build -> HUD build, 2026-11-22: three-rivals-eco 146 -> 160, three-factions-eco
+// 182 -> 198, air-battle-eco 117 -> 121, battle-expanded-full-eco 149 -> 153, groups-battle-eco 108 -> 112; weapons-mix-eco 132
+// with every class). Lines that the HUD pushed over: measured + 3. Desktop scenes are unchanged.
+Object.assign(limits, {'three-rivals-eco':163, 'three-factions-eco':201, 'air-battle-eco':124, 'battle-expanded-full-eco':156, 'groups-battle-eco':115, 'weapons-mix-eco':135});
+for (const s of scenarios) if (s.name === 'three-rivals-eco') s.triangles = 330000; // 303,222 -> 324,494 triangles with the HUD's taller phone frame
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
