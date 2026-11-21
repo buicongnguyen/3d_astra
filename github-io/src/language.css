@@ -2,3 +2,29 @@
 :root[lang="vi"] .unit-metrics dt { white-space: nowrap; }
 :root[lang="vi"]:not(.compact-ui) .top-actions #quality { width: auto; max-width: 74px; padding: 0 5px; }
 :root[lang="vi"]:not(.compact-ui) .command-panel .tactical-hint p { line-height: 1.25; }
+
+/* Korean (한국어). None of the game's faces has Hangul, so Korean text uses "Frontier KR": Noto Sans KR
+   (OFL, src/fonts/NotoSansKR-OFL.txt), variable 400-800, cut by tools/subset-korean-font.py to the
+   syllables the Korean catalogs use (~90 KB). The family is named only in the stacks below, which apply
+   while <html lang="ko">, and its unicode-range is Hangul only: English and Vietnamese players never
+   fetch it, and Latin letters and digits keep the usual faces. No system-ui (Linux CI). */
+@font-face {
+  font-family: "Frontier KR";
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url("./fonts/noto-sans-kr-subset.woff2") format("woff2");
+  unicode-range: U+1100-11FF, U+3000-303F, U+3130-318F, U+AC00-D7A3;
+}
+:root[lang="ko"] {
+  --font-ui: Inter, "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, "Frontier KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --font-tile: "Segoe UI Variable Display", "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, "Frontier KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+  --font-display: "Baloo 2", "Segoe UI Variable Display", "Segoe UI", Inter, -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, "Frontier KR", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+}
+:root[lang="ko"] body { font-family: var(--font-ui); }
+/* Same room as Vietnamese for the graphics button and the unit stat labels. */
+:root[lang="ko"] .unit-metrics dt { white-space: nowrap; }
+:root[lang="ko"]:not(.compact-ui) .top-actions #quality { width: auto; max-width: 74px; padding: 0 5px; white-space: nowrap; }
+/* Hangul is not split at any letter: keep words whole and break only between them. Uppercase and wide
+   tracking (English banners) do nothing for Hangul and only spread it out. */
+:root[lang="ko"] body { word-break: keep-all; overflow-wrap: anywhere; }

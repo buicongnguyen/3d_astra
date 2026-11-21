@@ -33,7 +33,7 @@ function walk(dir, skipLocale) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
     const url = new URL(entry.name + (entry.isDirectory() ? '/' : ''), dir);
     if (entry.isDirectory()) walk(url, skipLocale);
-    else if (/\.(js|mjs|json|html)$/.test(entry.name) && !/locales\/vi\.(js|json)$/.test(url.pathname)) read(url);
+    else if (/\.(js|mjs|json|html)$/.test(entry.name) && !/locales\/(vi|ko)\.(js|json)$/.test(url.pathname)) read(url);
   }
 }
 walk(new URL('src/', GAME));

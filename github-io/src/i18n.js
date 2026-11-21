@@ -1,57 +1,82 @@
-export const LANGUAGES = Object.freeze({en: 'English', vi: 'Tiếng Việt'});
+export const LANGUAGES = Object.freeze({en: 'English', vi: 'Tiếng Việt', ko: '한국어'});
+// Every non-English language has the same two lazily loaded catalogs: the UI catalog
+// (src/locales/LANG.json) and the campaign story (src/locales/story-LANG.json).
+const LOADERS = {
+  vi: {main: () => import('./locales/vi.js'), story: () => import('./locales/story-vi.js')},
+  ko: {main: () => import('./locales/ko.js'), story: () => import('./locales/story-ko.js')},
+};
+const NAMES = {vi: 'Vietnamese', ko: 'Korean'};
 let language = 'en';
 const normalize = text => text.trim().replace(/\s+/g, ' ').toLowerCase();
-const messages = new Map();
-let patterns = [];
-const cache = new Map();
-// The Vietnamese catalog (src/locales/vi.json) is its own chunk: English players never download
-// it. Browsers fetch it when Vietnamese is first shown (loadLocale); Node (unit tests) loads it
-// up front so translate() stays synchronous everywhere.
-let locale = null;
-function install(catalog) {
-  for (const [key, value] of Object.entries(catalog.messages)) messages.set(normalize(key), value);
-  patterns = catalog.patterns.map(([source, target]) => [new RegExp(source, 'i'), target]);
-  cache.clear();
+const catalogs = Object.fromEntries(Object.keys(LOADERS).map(lang => [lang, {messages: new Map(), patterns: [], cache: new Map(), locale: null, story: null}]));
+// Each catalog is its own chunk: English players never download them. Browsers fetch one when
+// that language is first shown (loadLocale); Node (unit tests) loads them all up front so
+// translate() stays synchronous everywhere.
+function install(lang, catalog) {
+  const c = catalogs[lang];
+  for (const [key, value] of Object.entries(catalog.messages)) c.messages.set(normalize(key), value);
+  c.patterns = catalog.patterns.map(([source, target]) => [new RegExp(source, 'i'), target]);
+  c.cache.clear();
 }
-export function loadLocale() {
-  locale ??= import('./locales/vi.js').then(module => { install(module.default); return true; });
-  locale.catch(() => { locale = null; });
-  return locale;
+export function loadLocale(lang = language === 'en' ? 'vi' : language) {
+  const c = catalogs[lang];
+  if (!c) return Promise.resolve(false);
+  c.locale ??= LOADERS[lang].main().then(module => { install(lang, module.default); return true; });
+  c.locale.catch(() => { c.locale = null; });
+  return c.locale;
 }
-if (typeof document === 'undefined') await loadLocale();
+if (typeof document === 'undefined') for (const lang of Object.keys(LOADERS)) await loadLocale(lang);
 
 // Dev aid: untranslated English reaching the screen is listed once in the console. Only in
 // development builds (never production), or when a page opts in with ?i18nwarn.
 const warned = new Set();
-const warnEnabled = () => import.meta.env?.DEV === true || (typeof location !== 'undefined' && /[?&]i18nwarn/.test(location.search));
-function warnMissing(text) {
-  if (warned.has(text) || !/[a-z]{3}/i.test(text) || /^[w.-]+$/.test(text) && !/[A-Z]/.test(text.slice(1)) && !text.includes(' ')) return;
-  if (!warnEnabled() || !locale) return;
-  warned.add(text);
-  console.warn('[i18n] no Vietnamese entry for: ' + JSON.stringify(text));
+const warnEnabled = () => import.meta.env?.DEV === true || (typeof location !== 'undefined' && /[?&]i18nwarn/.test(location.search));
+function warnMissing(text, lang) {
+  if (warned.has(lang + text) || !/[a-z]{3}/i.test(text) || /^[w.-]+$/.test(text) && !/[A-Z]/.test(text.slice(1)) && !text.includes(' ')) return;
+  if (!warnEnabled() || !catalogs[lang]?.locale) return;
+  warned.add(lang + text);
+  console.warn(`[i18n] no ${NAMES[lang]} entry for: ` + JSON.stringify(text));
 }
-// The campaign story (src/locales/story-vi.json) is a separate catalog, fetched the first time
-// Vietnamese is shown, so English players never download it and the main catalog stays small.
-// Entries of the main catalog win; the translation cache is dropped because results may change.
-export function addMessages(catalog) {
-  for (const [key, value] of Object.entries(catalog?.messages || {})) if (!messages.has(normalize(key))) messages.set(normalize(key), value);
-  cache.clear();
+// The campaign story is a separate catalog per language, fetched the first time that language is
+// shown, so the main catalog stays small. Entries of the main catalog win; the translation
+// cache is dropped because results may change.
+export function addMessages(catalog, lang = 'vi') {
+  const c = catalogs[lang];
+  for (const [key, value] of Object.entries(catalog?.messages || {})) if (!c.messages.has(normalize(key))) c.messages.set(normalize(key), value);
+  c.cache.clear();
 }
-let story = null;
-export function loadStory() {
-  story ??= import('./locales/story-vi.js').then(module => { addMessages(module.default); return true; });
+export function loadStory(lang = language === 'en' ? 'vi' : language) {
+  const c = catalogs[lang];
+  if (!c) return Promise.resolve(false);
+  c.story ??= LOADERS[lang].story().then(module => { addMessages(module.default, lang); return true; });
   // A failed download may be retried on the next language change.
-  story.catch(() => { story = null; });
-  return story;
+  c.story.catch(() => { c.story = null; });
+  return c.story;
 }
 export const getLanguage = () => language;
 export function setLanguage(value) {
   language = Object.hasOwn(LANGUAGES, value) ? value : 'en';
 }
 
+// Korean particles depend on the sound before them: a pattern target writes "{1}을(를)" because the
+// word filled in is not known yet. Once it is, keep the form that fits the final syllable
+// (batchim): 을/를, 이/가, 은/는, 과/와, 으로/로 (ㄹ takes 로). Digits read as Sino-Korean numbers.
+const DIGIT_FINAL = [21, 8, 0, 16, 0, 0, 1, 8, 8, 0]; // 영 일 이 삼 사 오 육 칠 팔 구: final consonant index
+const PARTICLES = {'을(를)': ['을', '를'], '이(가)': ['이', '가'], '은(는)': ['은', '는'], '와(과)': ['과', '와'], '과(와)': ['과', '와']};
+export function koreanParticles(text) {
+  if (!text.includes('(')) return text;
+  return text.replace(/([가-힣\d])(을\(를\)|이\(가\)|은\(는\)|와\(과\)|과\(와\)|\(으\)로)/g, (_, ch, particle) => {
+    const final = /\d/.test(ch) ? DIGIT_FINAL[Number(ch)] : (ch.charCodeAt(0) - 0xAC00) % 28;
+    if (particle === '(으)로') return ch + (final && final !== 8 ? '으로' : '로');
+    return ch + PARTICLES[particle][final ? 0 : 1];
+  });
+}
+
 // Presentation only: entity IDs, order names, game rules and shortcuts stay in English.
 export function translate(text, locale = language, depth = 0) {
-  if (locale !== 'vi' || depth > 6 || !text || !/[a-z]/i.test(text)) return text;
+  const c = catalogs[locale];
+  if (!c || depth > 6 || !text || !/[a-z]/i.test(text)) return text;
+  const {messages, patterns, cache} = c;
   if (cache.has(text)) return cache.get(text);
   const source = text.trim(), exact = messages.get(normalize(source));
   let result = exact;
@@ -69,8 +94,9 @@ export function translate(text, locale = language, depth = 0) {
     // Split hierarchically: label/description joints first so whole parts hit the catalog, then ' / ' and sentences.
     let pieces = source.split(/(\n+| · | — )/);
     if (pieces.length < 2) pieces = source.split(/( \/ |(?<=[.!?])\s+(?=[A-Z]))/);
-    result = pieces.length > 1 ? pieces.map(part => translate(part, locale, depth + 1)).join('') : (warnMissing(source), source);
+    result = pieces.length > 1 ? pieces.map(part => translate(part, locale, depth + 1)).join('') : (warnMissing(source, locale), source);
   }
+  if (locale === 'ko' && depth === 0) result = koreanParticles(result);
   result = text.slice(0, text.indexOf(source)) + result + text.slice(text.indexOf(source) + source.length);
   if (cache.size >= 1024) cache.clear();
   cache.set(text, result);
@@ -122,7 +148,7 @@ export function localizeDOM(root, initialLanguage = 'en') {
     observe();
   });
   function observe() {
-    if (language === 'vi') observer.observe(root, {subtree:true, childList:true, characterData:true, attributes:true, attributeFilter:attributes});
+    if (language !== 'en') observer.observe(root, {subtree:true, childList:true, characterData:true, attributes:true, attributeFilter:attributes});
   }
   function apply(locale) {
     observer.disconnect();

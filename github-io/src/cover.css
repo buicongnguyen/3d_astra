@@ -720,7 +720,7 @@
   .compact-ui .cmap .chron-card .chron-words { display: contents; }
   .compact-ui .cmap .chron-card .chron-face { grid-column: 1; grid-row: 1 / span 2; }
   .compact-ui .cmap .chron-card .chron-words strong { grid-column: 2 / -1; grid-row: 1; line-height: 1.15; }
-  .compact-ui .cmap .chron-card .chron-words > small[translate] { display: block; grid-column: 2; grid-row: 2; }
+  .compact-ui .cmap .chron-card .chron-words > small.chron-side { display: block; grid-column: 2; grid-row: 2; }
   .compact-ui .cmap .chron-card .chron-pips { grid-column: 3; grid-row: 2; justify-self: end; }
   .compact-ui .cmap .chron-card .chron-lock { display: inline-flex; grid-column: 1 / -1; grid-row: 3; }
   .compact-ui .cmap-ending.unseen { width: auto; padding: 0 12px; }
