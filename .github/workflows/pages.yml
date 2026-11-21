@@ -148,6 +148,9 @@ jobs:
           # AAA round 3 (R3-A): the Field command census (5 factions at 600 s) and the Highlands stall check. No browser.
           - name: r3-a
             scripts: ai-census-check
+          # AAA round 3 (R3-M): the title cover (loading screen, key art per frame, live layer, labels, calm mode).
+          - name: r3-m
+            scripts: cover-ui title
     defaults:
       run:
         working-directory: github-io

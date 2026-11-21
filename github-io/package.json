@@ -81,7 +81,8 @@
     "test:squad-orders": "node tests/squad-orders.mjs",
     "test:army-depth": "node tests/army-depth.mjs",
     "test:ai-census-check": "node tests/ai-census-check.mjs",
-    "check:difficulty": "node tools/difficulty-check.mjs --jobs 3"
+    "check:difficulty": "node tools/difficulty-check.mjs --jobs 3",
+    "test:cover-ui": "node tests/cover-ui.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

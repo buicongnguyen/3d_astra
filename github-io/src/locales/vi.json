@@ -1218,7 +1218,15 @@
     "Combined: adds the other branch, so the squad has both; it holds within 9 m of its spot.": "Kết hợp: thêm nhánh còn lại để tiểu đội có cả hai; nó giữ vị trí trong phạm vi 9 m.",
     "Combined adds the other branch to this squad.": "Kết hợp thêm nhánh còn lại cho tiểu đội này.",
     "Recruits arrive as veterans": "Tân binh ra trận đã là cựu binh",
-    "Level 3: recruits arrive as veterans": "Cấp 3: tân binh ra trận đã là cựu binh"
+    "Level 3: recruits arrive as veterans": "Cấp 3: tân binh ra trận đã là cựu binh",
+    "War for the Meridian Frontier": "Cuộc chiến vì Biên cương Meridian",
+    "Command uplink": "Kênh chỉ huy",
+    "Sector 07": "Khu vực 07",
+    "Frostline Reach": "Vùng Băng Giá",
+    "Contested": "Đang tranh chấp",
+    "Under siege": "Bị vây hãm",
+    "Enemy held": "Địch chiếm giữ",
+    "Scouted": "Đã trinh sát"
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],

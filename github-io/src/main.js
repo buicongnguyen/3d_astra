@@ -51,11 +51,14 @@ import { skirmishSides, matchLook } from "./factions.js";
 import { prefetchModels, releaseModelBytes } from "./app/loading.js";
 import "./loading.css";
 import { registerOffline } from "./app/offline.js";
+import { setupCover } from "./app/cover.js";
 
 renderShell();
 // S is the shared state; A is what each module offers the others (functions and widgets).
 const S = createState();
 const A = {};
+// The title cover's live layers and loading card (R3-M); its blips use A.tone once sound is set up.
+setupCover(A, S);
 
 // Every match, preview and restart is built from the current setup (a story mission included).
 // A story mission plays as this player's campaign has it: earlier decisions and the ending are
