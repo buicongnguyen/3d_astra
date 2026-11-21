@@ -109,3 +109,44 @@ Suites run at full speed on 4238 against this build, all green:
 4. Fold `SOVEREIGN_SCENES` into `SCENES` during the clean-up wave if wanted.
 5. `vi.json` duplicates `"Next idle Harvester"` and `"Sector 07"` (same values, from before round 3).
 6. R3-I option (b), a default rally point in front of the camp, is not needed after the owner's decision.
+
+## After r3-wave-2: Korean, the painted campaign map, copyright (tags `r3-wave-2-ko`, `r3-wave-2-final`)
+
+| # | Branch (tip) | Merge commit | Conflicts | Resolution |
+|---|---|---|---|---|
+| 7 | `r3/ko-korean` (2be2253) | (merge before 5e95d87) | none | — |
+| 8 | `r3/map-campaign` (a33ea50) | 201c79c | `CHANGELOG.md`, `tests/story.mjs` | changelog union; `story.mjs` takes the branch's count from the mission list (`ids.length`) over the integrator's fixed 17, and its comment now says three Defence relays |
+| 9 | `r3/copyright` (60740de) | 6ef4261 | `src/settings-ui.js` (one long template line) | both edits kept, merged by position against the base: the Korean `<option value="ko">` and the copyright line |
+
+Fixes made after the Korean merge:
+- **5e95d87, Korean HUD font.** The Consolas HUD bits are the clock, resources, panel labels, kbd, the status bar, `#fps` and the upgrade costs. In Korean they now list "Frontier KR" right after Consolas, so Hangul no longer falls back to the system font.
+  - The language part sits inside `:where()`, so every rule keeps its selector's own specificity. Elements that a later, more specific rule sets to the UI font keep that font.
+  - This was checked on desktop and phone by reading the computed `font-family` of each element.
+  - No `system-ui` was added.
+- **No missing ko keys.** The Korean branch had already merged 9d0b706 and translated "Clear" and "Info". `tests/i18n-ko.test.js` is green after every merge.
+- **Map branch strings.** It adds no new strings.
+- **Copyright notice.** It stays in English in every language (`translate="no"`, KEEP entry in the coverage test).
+
+Tests on the final tree (6ef4261):
+- `npx vite build`: clean.
+- `npm test`: **1075 tests, 1047 pass, 28 skipped, 0 fail**.
+- Browser suites on 4238, all green: story, campaign, cover-ui, ui-quality, phones, language (English, Vietnamese and Korean screens), openings.
+
+### test:ci-local on the final tree
+
+**CI-like run (20× CPU, 2 lanes):** started on 6ef4261 and stopped after 4 suites.
+- Unit tests in the run: 1047 pass, 0 fail.
+- Other sessions held the machine at about 94 % CPU, and every suite timed out on page load or the first wait.
+
+**Full matrix at full speed (`--fast --no-unit`, 2 lanes, port 4238):** **69 of 71 suites passed.**
+
+The two failures were real layout issues. Each is fixed in one commit, and its suite now passes:
+
+| Suite | Failure | Cause | Fix |
+|---|---|---|---|
+| `layout-mobile/layout-f` | `landscape 2-campaign: spill: fullscreen 68>61` | after the map pass, the menu's Full screen card beside the difficulty buttons in landscape Campaign is about 60 px wide, too narrow for its label | that card shows its icon only. The label stays visually hidden for screen readers and as the title. No control moved or grouped. |
+| `r2-w2f/showtime` | the landscape title card covered the touch row, the Objectives chip and the idle buttons | the new one-row touch bar | the landscape title card now starts 60 px into the battlefield, below the bar |
+
+Re-run on 4238 after the fixes, all PASS: layout-f, showtime, cover-ui, campaign, fullscreen, openings. `npm test`: 1075 tests, 1047 pass, 0 fail.
+
+The 20× CI-like matrix could not finish on this shared machine. GitHub CI on push is the CI-like check for this tree.
