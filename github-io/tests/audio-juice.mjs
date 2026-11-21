@@ -35,14 +35,17 @@ await suite("audio-juice", async () => {
     // Barks: a burst of selections gives one chirp; a second of clicking at most two.
     const burst = await page.evaluate(async () => {
       const f = window.__frontier, a = f.audio, ids = f.sim.own(0).filter((e) => e.kind === "unit").map((e) => e.id);
-      const before = a.barks;
+      const before = a.barks, t0 = a.context.currentTime;
       for (let i = 0; i < 12; i++) f.select(ids);
-      const same = a.barks - before;
+      // The gate runs on the audio clock: on a slow CI machine twelve selections can take longer than its
+      // 0.25 s gap, and then a second chirp is right (still never more than two a second).
+      const same = a.barks - before, slow = a.context.currentTime - t0 >= 0.25;
       for (let i = 0; i < 15; i++) { f.select(ids); await new Promise((r) => setTimeout(r, 100)); }
-      return { same, units: ids.length, barks: window.__heard.filter((h) => h.name.startsWith("bark:")).map((h) => h.t) };
+      return { same, slow, units: ids.length, barks: window.__heard.filter((h) => h.name.startsWith("bark:")).map((h) => h.t) };
     });
     assert.ok(burst.units > 0, `${viewport}: the player has units`);
-    assert.equal(burst.same, 1, `${viewport}: twelve instant selections chirp once`);
+    if (burst.slow) assert.ok(burst.same >= 1 && burst.same <= 2, `${viewport}: twelve selections (slower than the gap) chirp once or twice`);
+    else assert.equal(burst.same, 1, `${viewport}: twelve instant selections chirp once`);
     for (const t of burst.barks) assert.ok(burst.barks.filter((u) => u >= t && u < t + 1).length <= 2, `${viewport}: at most two barks a second (${burst.barks.map((x) => x.toFixed(2))})`);
     assert.ok(burst.barks.length >= 2, `${viewport}: clicking for 1.5 s barks more than once`);
 
