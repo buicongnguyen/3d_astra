@@ -14,9 +14,13 @@ try{
   await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});await click('#start');
   if(mobile){
    assert.equal(await page.locator('#mission-objectives').isVisible(),false,'phone objectives start collapsed');
-   const toggle=await page.locator('#mission-toggle').boundingBox(),controls=await page.locator('.touch-controls').boundingBox();
-   // Phase F: in phone landscape the chip sits beside the button rail, otherwise above the toolbar.
-   assert.ok(toggle.height>=44&&(toggle.y+toggle.height<=controls.y||toggle.x>=controls.x+controls.width),'Objectives is above or beside the touch controls');
+   const toggle=await page.locator('#mission-toggle').boundingBox(),controls=await page.locator('.touch-controls').boundingBox(),tabs=await page.locator('#dock-tabs').boundingBox();
+   // Phase F: in phone landscape the chip sits beside the button rail. Round 3 HUD pass: in portrait it ends the
+   // tab row at the bottom, beside the Selection / Actions / Map tabs; on landscape phones from 840 px the touch row
+   // joins the top band and the chip takes the corner under it.
+   const besideTabs=Math.abs(toggle.y-tabs.y)<=1&&toggle.x>=tabs.x+tabs.width;
+   const underRow=viewport.width>=840&&viewport.width>viewport.height&&toggle.y>=controls.y+controls.height;
+   assert.ok(toggle.height>=44&&(toggle.y+toggle.height<=controls.y||toggle.x>=controls.x+controls.width||besideTabs||underRow),'Objectives is above, beside or under the touch controls, or ends the tab row');
    await click('#mission-toggle');
    assert.equal(await page.locator('#mission-toggle').getAttribute('aria-expanded'),'true');
    const mission=await page.locator('#mission-objectives').boundingBox();

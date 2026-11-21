@@ -1,0 +1,58 @@
+/* Command console UI kit: tokens (design: Codex/OpenAI, owner-commissioned, 2026-11-21; source
+   3d_astra/codex-ui-kit/tokens.md). One place for the kit's colours, geometry and frames, so later passes
+   (menus, modals, desktop) reuse them. Only custom properties live here; the phone battle HUD applies them in
+   phone-hud.css. Frames are the kit's 64 x 64 SVG borders, copied into src/art/ui/ with the stroke colour set
+   in the file (a standalone SVG border image cannot inherit currentColor): slice 9 panel, 7 button / toast.
+   Fonts stay the game's own stacks (--font-ui, --font-display); no system-ui. */
+:root {
+  /* Surfaces */
+  --kit-space: #020713;
+  --kit-ghost: #091522;
+  --kit-hud: #091724;
+  --kit-control: #0c202e;
+  --kit-panel: linear-gradient(180deg, #102638, #091723);
+  --kit-hud-ink: rgba(9, 23, 36, 0.96);   /* text sits on >= 96 % ink */
+  --kit-pressed: #193248;
+  --kit-disabled: #15212b;
+  --kit-disabled-edge: #344551;
+  --kit-disabled-text: #abbcc8;
+  /* Lines */
+  --kit-line: #416479;
+  --kit-line-ghost: #263f50;
+  --kit-track: #294351;
+  /* Text and accents */
+  --kit-text: #f1f6f3;
+  --kit-text-2: #bcced9;
+  --kit-cyan: #83deeb;
+  --kit-focus: #97f4ff;
+  --kit-gold: #ffd17b;
+  --kit-gold-edge: #ffdf9c;
+  --kit-gold-text: #281b09;
+  --kit-gold-pressed: #efb75c;
+  --kit-danger: #38212a;
+  --kit-danger-edge: #c47463;
+  --kit-danger-text: #ffb29b;
+  --kit-warning: #ffab91;
+  --kit-success: #92ebc5;
+  /* Geometry: spacing 2 4 6 8 12 16 24 32; chamfers cut the upper-left and lower-right corners. */
+  --kit-s1: 2px; --kit-s2: 4px; --kit-s3: 6px; --kit-s4: 8px; --kit-s5: 12px; --kit-s6: 16px; --kit-s7: 24px; --kit-s8: 32px;
+  --kit-gutter: 3px;
+  --kit-chamfer-button: 6px;
+  --kit-chamfer-panel: 8px;
+  --kit-chamfer-modal: 12px;
+  --kit-chip-radius: 4px;
+  --kit-rail: 2px;
+  --kit-warning-rail: 3px;
+  --kit-dialog-shadow: 0 12px 36px rgba(2, 7, 19, 0.55);
+  --kit-glow: 0 0 8px rgba(131, 222, 235, 0.2);
+  /* Clip paths for the chamfers, and the frames drawn on them */
+  --kit-cut-button: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  --kit-cut-panel: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  --kit-frame-button: url("./art/ui/frame-button.svg") 7 / 7px / 0 stretch;
+  --kit-frame-button-active: url("./art/ui/frame-button-active.svg") 7 / 7px / 0 stretch;
+  --kit-frame-panel: url("./art/ui/frame-panel.svg") 9 / 9px / 0 stretch;
+  --kit-frame-toast: url("./art/ui/frame-toast.svg") 7 / 7px / 0 stretch;
+  /* Type scale (size / line height) */
+  --kit-type-label: 700 13px/17px var(--font-ui);
+  --kit-type-caption: 700 11px/15px var(--font-ui);
+}
