@@ -130,5 +130,5 @@ test("Group pace setting: on by default, kept when off, and only the interface s
 test("high-ground hint states the balance numbers and has its Vietnamese", () => {
   assert.equal(HIGH_GROUND_HINT, `High ground: +${TERRAIN.high_range} m range, +${Math.round((TERRAIN.high_damage - 1) * 100)}% damage`);
   assert.notEqual(translate(HIGH_GROUND_HINT, "vi"), HIGH_GROUND_HINT);
-  for (const text of ["All army", "Fighters", "Group pace", "+ Group 2", "Following Battle tank"]) assert.notEqual(translate(text, "vi"), text, text);
+  for (const text of ["Group pace", "Following Battle tank"]) assert.notEqual(translate(text, "vi"), text, text);
 });

@@ -5,8 +5,7 @@ import { launchBrowser, openPage, suite, shot } from './lib/harness.mjs';
 // R3-B squad orders in the browser, at 1440x900, 390x844 and 844x390: a move of a mixed group through the
 // player's own order path carries the group pace (and not with the setting off), the Medic walks behind
 // the tanks, the follow tether and its pip show for a selected Engineer on a Support order, and on phones
-// the group strip (top of the "…" sheet) shows its smart chips at 44 px or more with 11 px text, a hold
-// saves a group, nothing scrolls sideways and the fixed dock does not grow. SHOTS=1 also writes the results screenshots.
+// no group strip shows (owner decision 2026-11-21) and the fixed dock does not grow. SHOTS=1 also writes the results screenshots.
 const RESULTS = 'docs/aaa/results/round3/b';
 const browser = await launchBrowser();
 await suite('squad-orders', async () => {
@@ -80,60 +79,19 @@ await suite('squad-orders', async () => {
     await page.waitForFunction(() => window.__frontier.view.scene.getObjectByName('FollowTether').visible === false, null, { timeout: 5000 });
 
     if (mobile) {
-      // 4. Phone group strip, at the top of the "…" sheet: smart chips, "+ Group", a hold that saves over a
-      // group; 44 px taps, 11 px text, inside the screen; the sheet closes after each choice.
-      const sheet = () => page.locator('#touch-sheet').isVisible();
-      const choose = async (selector) => { if (!(await sheet())) await tap('#touch-more'); await tap(selector); assert.equal(await sheet(), false, `${selector} closes the sheet`); };
+      // 4. Owner decision (2026-11-21, Wave 1 merge): no group-control buttons on phones. The group strip
+      // stays hidden on the compact UI as before round 3, outside the "…" sheet, and the fixed dock keeps
+      // its height.
       await page.evaluate((ids) => window.__frontier.select([...ids.tanks, ids.medic, ids.engineer]), ids);
       await tap('#touch-more');
-      await page.waitForSelector('#touch-sheet > #group-strip [data-smart="army"]', { timeout: 5000 });
-      await choose('#group-strip [data-save-group]');
-      await page.waitForSelector('#group-strip [data-group="1"]', { state: 'attached', timeout: 5000 });
-      await choose('#group-strip [data-smart="fighters"]');
-      const fighters = await page.evaluate(() => [...window.__frontier.selected].map((id) => window.__frontier.sim.get(id)));
-      assert.ok(ids.tanks.every((id) => fighters.some((e) => e.id === id)) && fighters.every((e) => !e.support && e.damage > 0 && !e.flying && e.type !== 'worker'), 'Fighters');
-      await choose('#group-strip [data-smart="support"]');
-      assert.deepEqual(await page.evaluate(() => [...window.__frontier.selected].sort((a, b) => a - b)), [ids.medic, ids.engineer].sort((a, b) => a - b), 'Support');
-      // Hold group 1 for 600 ms: it now holds the two support units; a tap recalls it.
-      await tap('#touch-more');
-      const chip = page.locator('#group-strip [data-group="1"]');
-      await chip.dispatchEvent('pointerdown');
-      await page.waitForTimeout(650);
-      await chip.dispatchEvent('pointerup');
-      await chip.dispatchEvent('click');
-      await page.waitForFunction(() => document.querySelector('#group-strip [data-group="1"] span')?.textContent === '2', null, { timeout: 5000 });
-      await choose('#group-strip [data-smart="army"]');
-      await choose('#group-strip [data-group="1"]');
-      assert.deepEqual(await page.evaluate(() => [...window.__frontier.selected].sort((a, b) => a - b)), [ids.medic, ids.engineer].sort((a, b) => a - b), 'held group recalls');
+      await page.waitForTimeout(300);
+      const strip = await page.evaluate(() => { const s = document.getElementById('group-strip'); return { inSheet: !!s.closest('#touch-sheet'), shown: s.getBoundingClientRect().height > 0, chips: s.querySelectorAll('[data-smart], [data-save-group]').length }; });
+      assert.deepEqual(strip, { inSheet: false, shown: false, chips: 0 }, 'no group strip on phones');
       await tap('#touch-more');
       await page.waitForTimeout(300);
-      const audit = await page.evaluate(() => {
-        const out = [];
-        for (const b of document.querySelectorAll('#group-strip button')) {
-          const r = b.getBoundingClientRect();
-          if (r.width < 43.5 || r.height < 43.5) out.push(`small ${b.textContent} ${r.width}x${r.height}`);
-          if (r.left < 0 || r.right > innerWidth || r.top < 0 || r.bottom > innerHeight) out.push(`outside ${b.textContent}`);
-          for (const t of b.querySelectorAll('span, kbd')) if (parseFloat(getComputedStyle(t).fontSize) < 11) out.push(`text ${t.textContent}`);
-          const h = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
-          if (!b.contains(h)) out.push(`covered ${b.textContent}`);
-        }
-        if (document.documentElement.scrollWidth > innerWidth + 1) out.push('page scrolls sideways');
-        return out;
-      });
-      assert.deepEqual(audit, []);
-      if (process.env.SHOTS) await page.screenshot({ path: `${RESULTS}/phone-chips-${viewport}.png` });
-      await tap('#touch-more');
-      // The same selection as at the start, now with a saved group: the dock has its height from before,
-      // and the same height with the strip taken out of the page.
-      await page.evaluate((ids) => window.__frontier.select([...ids.tanks, ids.medic, ids.engineer]), ids);
-      await page.waitForTimeout(300);
-      const withStrip = await dock();
-      await page.evaluate(() => { document.getElementById('group-strip').style.display = 'none'; });
-      const without = await dock();
-      await page.evaluate(() => { document.getElementById('group-strip').style.display = ''; });
-      console.log(`squad-orders ${viewport}: dock ${dockBefore} px before, ${withStrip} px with a saved group, ${without} px without the strip`);
-      assert.equal(withStrip, dockBefore, 'the fixed dock does not grow');
-      assert.equal(without, withStrip, 'the strip takes no dock height');
+      const after = await dock();
+      console.log(`squad-orders ${viewport}: dock ${dockBefore} px before, ${after} px after`);
+      assert.equal(after, dockBefore, 'the fixed dock does not grow');
     } else {
       // PC keeps the console tabs exactly as before: no smart chips.
       assert.equal(await page.locator('#group-strip [data-smart]').count(), 0);

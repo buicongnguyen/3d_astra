@@ -45,7 +45,7 @@
 - **Group pace.** Move or attack-move two or more units and they keep together: fighters walk in front (the toughest first), ranged units behind them, and Medics, Engineers and other support units about 3.5 m behind the fighters, all at the slowest fighter's speed. A unit that falls more than 12 m behind catches up at its own speed, and units in a fight move at their own speed. Support units standing ahead of the fighters step aside first so the tanks pass them. Settings > Army > Group pace (on by default) turns it off.
 - **Support units keep company.** When a group arrives, each Medic or Engineer follows the nearest fighter it can tend (a Support order), so it keeps healing or repairing.
 - **Follow tether.** A selected Medic or Engineer on a Support order shows a dashed team-colour line to the unit it follows, a heart or wrench over that unit, and "Following <name>" on its card.
-- **Control groups on phones.** The group strip now shows on phones, beside the touch buttons: All army, Fighters and Support chips, "+ Group" to save the selection, and the saved groups (tap to recall, hold half a second to save over one). Every chip is 44 px or more, and the dock keeps its height.
+- **Control groups on phones: not shipped.** Owner decision (2026-11-21): phones show no group-control buttons; the group strip stays hidden on the compact UI as before. The PC console tabs and the Ctrl/number hotkeys are unchanged.
 - **High-ground hint.** The first building you place on a plateau says "High ground: +2 m range, +20% damage".
 - No pin or baseline moved: the group-pace flag is sent only by the player's own orders, never by the AI, bots or tests.
 
