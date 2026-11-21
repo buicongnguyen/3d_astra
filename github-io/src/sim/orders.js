@@ -1,6 +1,7 @@
 import { DEFINITIONS as D, hyp, clamp } from "../data.js";
 import { TOWERS_PER_SUPPORT } from "./constants.js";
 import { AIR } from "../factions.js";
+import { formationSlots, squadRole, stepAside, TRAIL } from "./formation.js";
 
 // Orders, production queues and construction: the actions a team can take. Mixed into Simulation (see simulation.js).
 export const orders = {
@@ -29,6 +30,8 @@ export const orders = {
     ids = [...new Set(ids)];
     let index = 0, refused = false;
     const size = Math.ceil(Math.sqrt(ids.length));
+    // R3-B group pace (sim/formation.js): only a UI order with `pace: "group"` takes formation slots.
+    const squad = order.pace === "group" && ["move", "attackmove"].includes(order.type) && ids.length > 1 ? this.squadFormation(ids, order) : null;
     for (const id of ids) {
       const e = this.get(id);
       if (!e || e.kind !== "unit" || !e.complete) continue;
@@ -77,7 +80,8 @@ export const orders = {
       // Capture the return point when this order starts, after earlier queued moves.
       if (o.type === 'patrol') o.origin = null;
       if (o.type === "gather") o.resourceType = target.type;
-      if (["move", "attackmove", "patrol"].includes(o.type) && ids.length > 1) {
+      if (squad?.slots.has(e.id)) this.squadSlot(o, e, squad);
+      else if (["move", "attackmove", "patrol"].includes(o.type) && ids.length > 1) {
         o.x = clamp(o.x + ((index % size) - (size - 1) / 2) * 1.9, -this.terrain.half+3, this.terrain.half-3);
         o.z = clamp(
           o.z + (Math.floor(index / size) - (size - 1) / 2) * 1.9,
@@ -105,6 +109,9 @@ export const orders = {
         e.firing = null;
         e.attacking = false;
       }
+      // R3-B: a support unit ahead of the fighters, in their lane, steps aside first (sim/formation.js).
+      const aside = o.trail && !append ? stepAside(this, e, squad) : null;
+      if (aside) e.orders.push({ ...o, x: aside.x, z: aside.z, aside: true });
       if (o.type !== "stop" && e.orders.length < 32) e.orders.push(o);
     }
   },
@@ -292,10 +299,37 @@ export const orders = {
     return true;
   },
   finish(e) {
+    const done = e.orders[0];
     e.working = false;
     e.orders.shift();
     this.resetWorkerRoute(e);
     e.target = null;
     e.work = 0;
+    if (done?.squad && e.support && !e.orders.length) this.squadFollow(e, done);
+  },
+  // R3-B: the formation of a group-paced order, or null when fewer than two units can take it.
+  squadFormation(ids, order) {
+    const units = ids.map((id) => this.get(id)).filter((e) => e && e.kind === "unit" && e.complete && e.hp > 0);
+    return units.length > 1 ? formationSlots(this, units, order) : null;
+  },
+  // One unit's copy of a group-paced order: its slot, the group pace, the heading and the squad.
+  squadSlot(o, e, squad) {
+    const slot = squad.slots.get(e.id);
+    o.x = slot.x;
+    o.z = slot.z;
+    Object.assign(o, { squad: squad.squad, members: squad.members, cap: squad.cap, hx: squad.hx, hz: squad.hz });
+    if (squadRole(e) === "support") o.trail = TRAIL;
+  },
+  // A support unit that reached its slot follows the nearest fighter of its squad it can tend, so it
+  // keeps healing or repairing it (the `support` order, progression.js).
+  squadFollow(e, done) {
+    let best = null, bestD = Infinity;
+    for (const id of done.members) {
+      const t = this.get(id);
+      if (!t || squadRole(t) === "support" || !this.supportValid(e, t)) continue;
+      const d = hyp(t.x - e.x, t.z - e.z);
+      if (d < bestD) { best = t; bestD = d; }
+    }
+    if (best) e.orders.push({ type: "support", target: best.id });
   },
 };
