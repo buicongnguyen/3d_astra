@@ -744,6 +744,13 @@
    pinned Start; a 200 px hero keeps Battlefield and Start both on the first screen. */
 @media (max-width: 720px) and (orientation: portrait) and (max-height: 600px) {
   .compact-ui #briefing:not(.campaign-view) .briefing-hero { height: 200px; }
+  /* Wave 3: the rank chip (R3-R) and Quick battle (R3-Q) took 128 px above the modes. On these phones the hero
+     keeps the brand only (its flavour line hides; Campaign keeps its mission title) and the rank chip, which is
+     information, not an action, moves to the end of the setup, beside the Commander rank rows. Quick battle, the
+     modes, Battlefield and Start stay on the first screen. */
+  .compact-ui #briefing:not(.campaign-view) .briefing-hero { height: 150px; }
+  .compact-ui #briefing:not(.campaign-view) #briefing-title { display: none; }
+  .compact-ui #briefing:not(.campaign-view) .briefing-setup > .rank-chip { order: 3; }
 }
 /* Landscape phones, campaign: the mode row keeps 44 px taps. */
 @media (orientation: landscape) and (max-height: 520px) {
