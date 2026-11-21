@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased: AAA round 3
+
+### R3-A: Field command fields its army
+
+Everything below applies only under the skirmish rule `aiPlan: "field"` (`fieldPlan()`: a computer team, never a mission). Classic, missions and Defence are unchanged.
+- **Army census** (new `src/sim/ai-census.js`, data `balance.json` `ai_mix`): every think the AI counts its army by role (front, ranged, heavy, anti-armour, support, workshop, air) and the Barracks and Foundry train toward the biggest shortfall of the faction's target mix. The enemy census raises the targets: anti-armour against vehicles, ranged against an infantry swarm, heavy guns against towers, a floor of anti-air units against flyers. A Wardens Barracks no longer asks for the Medic it cannot train, so it fields Anti-tank teams.
+- **Workshops**: under the Expanded roster each host keeps at least one workshop unit (the Veil relay now trains a Stalker before 600 s), and the Barracks saves alloy for it.
+- **Fights**: free fighters within 18 m of a visible enemy fighter join the fight, and no squad is sent off to a capture ring while an enemy army is in sight.
+- **Economy** (`ai-plan.js` `FIELD_PACE`): a larger crew from the second minute, and later Foundry and core levels.
+- **S7 stall breaker**: from 8 minutes, after 4 minutes with no contact, the free army attack-moves on the nearest enemy building seen. **Scouting**: an idle Kite flies the `scoutDestination` search pattern.
+- New check `npm run test:ai-census-check` (`tools/ai-census-check.mjs`, CI matrix `r3-a`). Results: docs/aaa/results/round3/a.md.
+
 ## 0.25.0: AAA round 2 (release label for the deploy; owner decision O17)
 
 This is the label proposed for the next release. `package.json` still says 0.19.1, nothing is deployed, and the owner decides the number at deploy. It gathers everything of AAA round 2 (plan: docs/aaa/AAA_ROUND2_PLAN.md, results: docs/aaa/results/round2/). The Defence and campaign sections under "Unreleased" further down (0.22 to 0.24 labels) were built before this round and are not part of it.
