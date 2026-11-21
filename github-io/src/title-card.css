@@ -13,6 +13,8 @@
 .compact-ui #title-card { top: 14%; padding: 8px 16px 10px; }
 .compact-ui #title-card .tc-title { font-size: 22px; }
 @media (max-aspect-ratio: 1.35) { .compact-ui #title-card { top: 22%; } }
+/* Landscape phones: below the one-row touch bar (owner, 2026-11-21), its Objectives chip and the idle buttons (they end 50 px into the battlefield). */
+@media (min-aspect-ratio: 1.35) { .compact-ui:not(.in-briefing) #title-card { top: 60px; } }
 @keyframes tc-in { 0% { opacity: 0; transform: translateX(-50%) translateY(-8px); } 14% { opacity: 1; transform: translateX(-50%); } 82% { opacity: 1; } 100% { opacity: 0; } }
 :root #title-card.calm { animation: none !important; opacity: 0; transition: opacity 0.3s linear !important; }
 :root #title-card.calm.show { opacity: 1; }
