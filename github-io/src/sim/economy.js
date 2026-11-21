@@ -2,6 +2,14 @@ import { DEFINITIONS as D, distance } from "../data.js";
 import { MINERS_PER_DEPOSIT } from "./constants.js";
 import { fieldPlan } from "../ai-plan.js";
 
+// The directions a trained unit tries around its building (R3-L, exitPoint): 32 directions sorted by their
+// angle from south (+z, the side facing the default camera); of two equal angles east (+x, also toward the
+// camera) comes first. So: S, then SSE, SSW, ... SE, SW, ... E, W, ... NE, NW, ... N.
+export const EXIT_ORDER = Array.from({ length: 32 }, (_, k) => {
+  const step = k ? Math.ceil(k / 2) * (k % 2 ? 1 : -1) : 0, angle = (step * Math.PI * 2) / 32; // 0, +1, -1, +2, -2 ... +16
+  return Object.freeze({ x: Math.sin(angle), z: Math.cos(angle) });
+});
+
 // Harvesting, construction work and unit production. Mixed into Simulation (see simulation.js).
 export const economy = {
   resumeGathering(e, o) {
@@ -154,12 +162,15 @@ export const economy = {
   // ring by ring so a building boxed in by neighbours still releases its units (beyond the wall if it
   // must). Spots with a route to the rally point or the Command core are preferred, so a unit does
   // not appear in a sealed pocket.
+  // R3-L (owner decision 2026-11-21): each ring is tried from the side facing the default camera first,
+  // "south" (+z, toward the viewer: view.js CAMERA_OFFSET), then south-east and south-west, east and
+  // west, and north last (EXIT_ORDER, a fixed order: deterministic).
   exitPoint(b, d) {
     const hq = this.own(b.team).find((e) => e.type === "hq"), goal = b.rally || hq || b;
     const free = [];
     for (let r = b.radius + 2.5; r <= b.radius + 16 && free.length < 8; r += 1.5)
-      for (let i = 0; i < 28; i++) {
-        const angle = (i / 28) * Math.PI * 2 + r * 0.7, c = { x: b.x + Math.cos(angle) * r, z: b.z + Math.sin(angle) * r };
+      for (let i = 0; i < EXIT_ORDER.length; i++) {
+        const dir = EXIT_ORDER[i], c = { x: b.x + dir.x * r, z: b.z + dir.z * r };
         // An airfield needs clear airspace. A ground unit needs walkable ground.
         if (d.flying) {
           const limit = this.terrain.half - Math.max(1, d.radius + 0.1);

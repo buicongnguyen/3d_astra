@@ -120,6 +120,10 @@ const scenarios = [
   // glow) another; contrails and the ribbon use the effect pools.
   {name:'air-battle', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rockets:6,
     air:[['kite',0],['hawk',0],['balloon',0],['glider',0],['kite',0],['hawk',0],['balloon',0],['glider',0],['kite',1],['hawk',1],['balloon',1],['glider',1],['kite',1],['hawk',1],['balloon',1],['glider',1]]},
+  // AAA round 3 (R3-L): the player's base on the phone with a second Barracks, a Relay and a Tower: building
+  // decals and gate details are one instanced draw (no shadow pass).
+  {name:'building-life-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-17,14], reveal:true,
+    spawn:[{type:'barracks', team:0, near:[-13.2,19.3]}, {type:'relay', team:0, near:[-15,10]}, {type:'tower', team:0, near:[-20,27]}]},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
@@ -136,6 +140,7 @@ Object.assign(limits, {'night-battle-eco':120}); // W2-C
 Object.assign(limits, {'night-base-high':166, 'storm-base-high':166, 'storm-battle-eco':126}); // R3-D: day + 6
 Object.assign(limits, {'battle-200':260}); // R3-C
 Object.assign(limits, {'air-battle':135}); // R3-W: 125 draws on 2026-11-21 (123 before: +1 rocket bodies, +1 air life)
+Object.assign(limits, {'building-life-eco':110}); // R3-L
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},

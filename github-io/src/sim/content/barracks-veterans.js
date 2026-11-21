@@ -22,17 +22,15 @@
 import { DEFINITIONS as D } from "../../data.js";
 import { RANK_XP, RANK_BONUS } from "../tactics.js";
 import { combinedSquads } from "../defence/armour.js";
+import { EXIT_ORDER } from "../economy.js";
 
 export const VETERAN_LEVEL = 3;
 
 // True when (x, z) is one of the spots exitPoint() tries around building `b` (economy.js: the same
-// loop, the same float steps, so a match is exact).
+// loop, the same float steps, so a match is exact). Since R3-L the spots follow EXIT_ORDER (south first).
 export function onExitRing(b, x, z) {
   for (let r = b.radius + 2.5; r <= b.radius + 16; r += 1.5)
-    for (let i = 0; i < 28; i++) {
-      const angle = (i / 28) * Math.PI * 2 + r * 0.7;
-      if (b.x + Math.cos(angle) * r === x && b.z + Math.sin(angle) * r === z) return true;
-    }
+    for (const dir of EXIT_ORDER) if (b.x + dir.x * r === x && b.z + dir.z * r === z) return true;
   return false;
 }
 

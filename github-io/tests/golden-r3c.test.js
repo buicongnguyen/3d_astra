@@ -15,11 +15,14 @@ import { DEFENCE_LEVELS } from "../src/defence/levels.js";
 import { run, aiMatch } from "./lib/sim.js";
 import { LONG, RECORD, pin } from "./lib/golden.mjs";
 
+// Re-recorded in Wave 1b on the merged tree: south exits (owner) + difficulty guard (old veterans 60 "803cfa1c",
+// 90 "feecd5f4"; pop150 180 "04c72406"; pop200 60 "ffd27339", 150 "8fd584f3"). combined 120 did not move. The
+// veterans pins also follow the seam fix: onExitRing reads EXIT_ORDER, so recruits are veterans again.
 const PINS = {
-  veterans: { 60: "803cfa1c", 90: "feecd5f4" },
+  veterans: { 60: "6b3b906b", 90: "168d7c59" },
   combined: { 120: "3002bfed" },
-  pop150: { 180: "04c72406" },
-  pop200: { 60: "ffd27339", 150: "8fd584f3" },
+  pop150: { 180: "c59995f7" },
+  pop200: { 60: "0a796b75", 150: "43031352" },
 };
 
 // Plays `sim` tick by tick to `seconds`, sending each [tick, command] of `plan` (a function of the sim)
