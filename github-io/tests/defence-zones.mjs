@@ -44,7 +44,9 @@ async function zoneCell(page, open) {
         const why = s.zoneCheck(0, zone.id, x, z).why || "";
         if (open ? why : !/road/.test(why)) continue;
         const q = f.view.project(x, z, t.heightAt(x, z)), px = q.x + r.left, py = q.y + r.top;
-        if (px < r.left + 50 || px > r.right - 50 || py < r.top + 50 || py > r.bottom - 50 || document.elementFromPoint(px, py) !== canvas) continue;
+        // Clear of every control by 16 px too: a phone tap snaps to a button that close (touch adjustment),
+        // and on landscape phones the Defence bar's Armour chip now sits in the battlefield (Wave 3 phone HUD).
+        if (px < r.left + 50 || px > r.right - 50 || py < r.top + 50 || py > r.bottom - 50 || [[0, 0], [16, 0], [-16, 0], [0, 16], [0, -16]].some(([dx, dy]) => document.elementFromPoint(px + dx, py + dy) !== canvas)) continue;
         if (pads.some((o) => { const w = f.view.project(o.x, o.z, 0.2); return Math.hypot(w.x + r.left - px, w.y + r.top - py) < 40; })) continue;
         if (f.view.pick(px, py, s, 24)) continue;
         // The tap must land on this cell (the snap of the point under it).
