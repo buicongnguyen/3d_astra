@@ -4,7 +4,7 @@
 //   - text under 11 px, taps under 44 px, sideways scroll and HUD blocks that overlap each other;
 //   - the heights of the fixed bands (top bar, touch row, dock, dock tabs, Defence bar).
 // Usage (a server must be running, e.g. vite preview on 4232):
-//   TEST_URL=http://127.0.0.1:4232/ node tools/phone-hud-audit.mjs --out docs/aaa/results/round3/hud/before [--only portrait390]
+//   TEST_URL=http://127.0.0.1:4232/ node tools/phone-hud-audit.mjs --out docs/aaa/results/round3/hud/before [--only portrait390] [--modes skirmish] [--lang ko]
 // Writes <out>/<viewport>-<mode>-<selection>.jpg, <out>/<viewport>-<mode>-early.jpg (two seconds into play, with the
 // opening notices still up), <out>/<viewport>-mission-talk.jpg (the opening radio line) and <out>/audit.json.
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -14,6 +14,7 @@ const arg = (name, fallback) => { const i = process.argv.indexOf(name); return i
 const OUT = arg("--out", ".tmp/hud-audit");
 const ONLY = arg("--only", "");
 const MODES = (arg("--modes", "skirmish,mission,defence")).split(",");
+const LANG = arg("--lang", ""); // e.g. ko or vi: picked on the start screen before the match
 export const PHONES = {
   portrait390: { width: 390, height: 844, mobile: true },
   portrait360: { width: 360, height: 780, mobile: true },
@@ -46,6 +47,10 @@ const AUDIT = () => {
   // HUD blocks: positioned boxes that float over the scene, outermost only.
   const blocks = all.filter((e) => { const s = getComputedStyle(e); if (!/fixed|absolute/.test(s.position) && !e.matches(".bottom-dock > *, .command-deck > *")) return false; const r = e.getBoundingClientRect(); return r.width * r.height >= 300 && onScreen(r) && s.pointerEvents !== "none" || e.matches("#notice.show, #mode-banner, #dialogue-card, #fight-hint"); })
     .filter((e, _, list) => !list.some((o) => o !== e && o.contains(e)));
+  // Labels cut off inside their box (button labels, resource numbers, tabs).
+  const cut = all.filter((e) => e.matches("button span, button, .resource strong, #clock") && [...e.childNodes].some((n) => n.nodeType === 3 && n.data.trim()) && getComputedStyle(e).overflow !== "visible" && e.scrollWidth > e.clientWidth + 1)
+    .map((e) => `${name(e)} "${e.textContent.trim().slice(0, 18)}" ${e.scrollWidth}>${e.clientWidth}`);
+  const spill = all.filter((e) => e.matches(".resource strong")).filter((e) => { const r = e.getBoundingClientRect(), p = e.closest(".resource").getBoundingClientRect(); return r.right > p.right + 0.5 || r.left < p.left - 0.5; }).map((e) => `${name(e)} spills`);
   const overlaps = [];
   for (let i = 0; i < blocks.length; i++) for (let j = i + 1; j < blocks.length; j++) {
     const a = blocks[i].getBoundingClientRect(), b = blocks[j].getBoundingClientRect();
@@ -54,7 +59,7 @@ const AUDIT = () => {
   }
   const height = (s) => { const e = document.querySelector(s); return e && shown(e) ? Math.round(e.getBoundingClientRect().height) : 0; };
   return {
-    small: [...new Set(small)], taps: [...new Set(taps)], overlaps, sideScroll: document.documentElement.scrollWidth > innerWidth + 1,
+    small: [...new Set(small)], cut: [...cut, ...spill], taps: [...new Set(taps)], overlaps, sideScroll: document.documentElement.scrollWidth > innerWidth + 1,
     bands: { topbar: height(".topbar"), touchRow: height(".touch-controls"), dock: height(".bottom-dock"), tabs: height("#dock-tabs"), defenceBar: height("#defence-bar") },
     blocks: blocks.map((e) => { const r = e.getBoundingClientRect(); return `${name(e)} ${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)}`; }),
   };
@@ -87,6 +92,7 @@ try {
       const t = await openPage(browser, size);
       const { page } = t;
       await t.goto(); await t.ready();
+      if (LANG) { await page.selectOption("#language", LANG); await page.waitForFunction((l) => document.documentElement.lang === l, LANG, { timeout: 20000 }); }
       await startMatch(t, mode);
       await page.evaluate(() => { const f = window.__frontier; f.sim.aiEnabled = false; f.select([]); });
       await page.waitForTimeout(2000);
@@ -122,7 +128,7 @@ try {
       row.errors = t.errors;
       report[`${vp}/${mode}`] = row;
       const pct = (r) => r ? `${(r.share * 100).toFixed(1)}%` : "n/a";
-      console.log(`${vp.padEnd(13)} ${mode.padEnd(8)} early ${(early * 100).toFixed(1)}%  none ${pct(row.none)}  one ${pct(row.one)}  mixed ${pct(row.mixed)}  building ${pct(row.building)}  issues ${["none", "one", "mixed", "building"].map((s) => row[s] ? row[s].small.length + row[s].taps.length + row[s].overlaps.length + (row[s].sideScroll ? 1 : 0) : 0).join("/")}${t.errors.length ? `  ERRORS ${t.errors.length}` : ""}`);
+      console.log(`${vp.padEnd(13)} ${mode.padEnd(8)} early ${(early * 100).toFixed(1)}%  none ${pct(row.none)}  one ${pct(row.one)}  mixed ${pct(row.mixed)}  building ${pct(row.building)}  issues ${["none", "one", "mixed", "building"].map((s) => row[s] ? row[s].small.length + row[s].cut.length + row[s].taps.length + row[s].overlaps.length + (row[s].sideScroll ? 1 : 0) : 0).join("/")}${t.errors.length ? `  ERRORS ${t.errors.length}` : ""}`);
       await page.close();
     }
   }

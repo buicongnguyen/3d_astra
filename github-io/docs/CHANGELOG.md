@@ -2,6 +2,29 @@
 
 ## Unreleased: AAA round 3
 
+### Phone battle HUD: a clear area for the scene (owner request, Codex UI kit look)
+- **More battlefield on every phone.** The map now fills the whole screen behind the bars.
+  - The 12 px side margins and the bottom strip are still left to the phone's own swipes, but only for touches; they no longer show as a dark frame.
+  - Free battlefield with nothing selected: 67.9% → 84.6% at 390×844, 69.1% → 81.6% at 844×390, and 57.3% → 76.5% at 320×568.
+  - Every phone size, mode and selection gained at least 11 points. The table is in `docs/aaa/results/round3/hud.md`.
+- **Top bar.** It is now two dark-glass panels with the map between them, instead of a solid strip. The left panel holds the resources and the clock. The right panel holds Full screen, Sound, Help and Pause.
+  - In portrait the bar is one 44 px row instead of 86 px.
+  - The logo no longer shows in a match: there it only opened the pause menu, and Pause sits beside it.
+  - The ALLOY / ENERGY / POPULATION captions are gone; the icons and tooltips say the same.
+- **Touch row.** On landscape phones 840 px or wider, the six touch buttons sit in the top band. The Objectives flag and the idle buttons sit in the corner under it.
+- **Portrait.**
+  - The Objectives flag moved to the end of the tab row, and its list opens above the tabs.
+  - A group's six orders sit in one row (340 px or wider), so the card is one row shorter.
+  - In Defence, a selected tower gets the short card: 113 px instead of 202 px.
+- **Landscape.** The unit card drops the "Standing by" line, and five orders sit 3 + 2 instead of 4 + 1.
+- **UI kit look.** UI kit design: Codex/OpenAI, owner-commissioned.
+  - The kit's colours, spacing, corner cuts, frames and type scale are in `src/ui-kit.css`, ready for the menus and desktop later.
+  - On phones in a match, panels and buttons have dark glass, cut corners and a thin edge.
+  - A selected button gets a cyan line along its bottom, and toasts get a coloured bar on the left.
+  - Four tinted frame SVGs are copied into `src/art/ui/`.
+- **Unchanged.** Every action is still one tap, and nothing was moved into a menu. Text stays at least 11 px and taps at least 44 px, and no dock grew. The desktop HUD is the same.
+- **Measuring.** `tools/phone-hud-audit.mjs` measures five phone sizes × Skirmish / mission / Defence × four selections. The minimum free-battlefield shares in `tests/phones.mjs` rose from 67% and 57.5% to 78% and 68%.
+
 ### Korean (한국어)
 - **A third language.** 한국어 joins English and Tiếng Việt in the language picker on the start screen and in Settings (one choice, applied at once, saved like the others). `<html lang="ko">`.
 - **Full coverage.** `src/locales/ko.json` has every message (1,242) and pattern (204) of `vi.json`; `src/locales/story-ko.json` has every story entry (826) plus 15 name-only entries (Korean writes names in Hangul). Both load lazily, like Vietnamese. A glossary for units, buildings, resources, factions and names is in `LOCALIZATION.md`.

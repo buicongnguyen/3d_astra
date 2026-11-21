@@ -119,6 +119,17 @@
 }
 :root.compact-ui:not(.in-briefing) #defence-bar :is(button, .dchip) { border-radius: 0; clip-path: var(--kit-cut-button); }
 
+/* Defence: the next-wave chip and the dock's collapse button wear the same kit frame as the bar. */
+:root.compact-ui:not(.in-briefing) #defence-intel,
+:root.compact-ui:not(.in-briefing) #defence-dock-toggle {
+  border: 1px solid transparent;
+  border-radius: 0;
+  border-image: var(--kit-frame-button);
+  clip-path: var(--kit-cut-button);
+  background: var(--kit-hud-ink);
+  box-shadow: none;
+}
+
 /* Toast: a coloured rail on the left (success green, alert warning), dark ink, the toast frame. */
 :root.compact-ui:not(.in-briefing) #notice {
   border: 1px solid transparent;
@@ -235,6 +246,11 @@
   }
   :root.compact-ui.many-orders:not(.wide-orders):not(.in-briefing) .selection-panel .order-buttons button { padding: 2px; font-size: 11px; line-height: 1.15; }
   :root.compact-ui.many-orders:not(.wide-orders):not(.in-briefing):not(.no-units)[data-dock="selection"] { --dock-orders: 0px; }
+}
+/* Unit card stats keep a clear gap between HP, Shield and ATK on narrow phones ("140/140ATK" touched at 320). */
+@media (max-aspect-ratio: 1.35) {
+  :root.compact-ui:not(.in-briefing) .selection-panel.has-entity .unit-metrics { display: flex; justify-content: space-between; column-gap: 8px; }
+  :root.compact-ui:not(.in-briefing) .selection-panel.has-entity .unit-metrics > div { flex: 0 1 auto; min-width: 0; }
 }
 /* The population icon is back from 360 px (selection-status.css hid it on every phone). */
 @media (max-aspect-ratio: 1.35) and (min-width: 360px) {

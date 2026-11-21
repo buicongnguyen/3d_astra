@@ -1,0 +1,1123 @@
+{
+ "portrait390/skirmish": {
+  "early": 0.84625,
+  "none": {
+   "share": 0.84625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 338,784 44x44"
+   ]
+  },
+  "one": {
+   "share": 0.74,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 338,784 44x44",
+    "section.selection-panel.panel 8,671 374x113"
+   ]
+  },
+  "mixed": {
+   "share": 0.66625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 165,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 338,784 44x44",
+    "section.selection-panel.panel 8,619 374x165"
+   ]
+  },
+  "building": {
+   "share": 0.64,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 338,784 44x44",
+    "section.command-panel.panel 8,582 374x202"
+   ]
+  },
+  "errors": []
+ },
+ "portrait390/mission": {
+  "early": 0.84375,
+  "none": {
+   "share": 0.84375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 338,784 44x44"
+   ]
+  },
+  "one": {
+   "share": 0.7375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 338,784 44x44",
+    "section.selection-panel.panel 8,671 374x113"
+   ]
+  },
+  "mixed": {
+   "share": 0.66375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 165,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 338,784 44x44",
+    "section.selection-panel.panel 8,619 374x165"
+   ]
+  },
+  "building": {
+   "share": 0.6375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 338,784 44x44",
+    "section.command-panel.panel 8,582 374x202"
+   ]
+  },
+  "errors": []
+ },
+ "portrait390/defence": {
+  "early": 0.865,
+  "none": {
+   "share": 0.865,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "#defence-bar 33,724 324x52"
+   ]
+  },
+  "one": {
+   "share": 0.76,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.selection-panel.panel 8,671 374x113",
+    "#defence-bar 33,611 324x52"
+   ]
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.76,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.selection-panel.panel 8,671 374x113",
+    "#defence-bar 33,611 324x52"
+   ]
+  },
+  "errors": []
+ },
+ "portrait360/skirmish": {
+  "early": 0.825,
+  "none": {
+   "share": 0.825,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 308,720 44x44"
+   ]
+  },
+  "one": {
+   "share": 0.69375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 308,720 44x44",
+    "section.selection-panel.panel 8,607 344x113"
+   ]
+  },
+  "mixed": {
+   "share": 0.62,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 165,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 308,720 44x44",
+    "section.selection-panel.panel 8,555 344x165"
+   ]
+  },
+  "building": {
+   "share": 0.59375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 308,720 44x44",
+    "section.command-panel.panel 8,518 344x202"
+   ]
+  },
+  "errors": []
+ },
+ "portrait360/mission": {
+  "early": 0.8225,
+  "none": {
+   "share": 0.8225,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 308,720 44x44"
+   ]
+  },
+  "one": {
+   "share": 0.69125,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 308,720 44x44",
+    "section.selection-panel.panel 8,607 344x113"
+   ]
+  },
+  "mixed": {
+   "share": 0.6175,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 165,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 308,720 44x44",
+    "section.selection-panel.panel 8,555 344x165"
+   ]
+  },
+  "building": {
+   "share": 0.59125,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 308,720 44x44",
+    "section.command-panel.panel 8,518 344x202"
+   ]
+  },
+  "errors": []
+ },
+ "portrait360/defence": {
+  "early": 0.85875,
+  "none": {
+   "share": 0.85875,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "#defence-bar 21,660 319x52"
+   ]
+  },
+  "one": {
+   "share": 0.7075,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.selection-panel.panel 8,607 344x113",
+    "#defence-bar 21,547 319x52"
+   ]
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.7075,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.selection-panel.panel 8,607 344x113",
+    "#defence-bar 21,547 319x52"
+   ]
+  },
+  "errors": []
+ },
+ "landscape844/skirmish": {
+  "early": 0.81625,
+  "none": {
+   "share": 0.81625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 8,51 44x44",
+    "section.minimap-panel.panel 8,280 118x94"
+   ]
+  },
+  "one": {
+   "share": 0.71375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 125,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 8,51 44x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.selection-panel.panel 600,199 236x125"
+   ]
+  },
+  "mixed": {
+   "share": 0.63875,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 218,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 8,51 44x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.selection-panel.panel 600,106 236x218"
+   ]
+  },
+  "building": {
+   "share": 0.66875,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 180,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 8,51 44x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.command-panel.panel 600,144 236x180"
+   ]
+  },
+  "errors": []
+ },
+ "landscape844/mission": {
+  "early": 0.81625,
+  "none": {
+   "share": 0.81625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 8,51 44x44",
+    "section.minimap-panel.panel 8,280 118x94"
+   ]
+  },
+  "one": {
+   "share": 0.71375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 125,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 8,51 44x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.selection-panel.panel 600,199 236x125"
+   ]
+  },
+  "mixed": {
+   "share": 0.63875,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 218,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 8,51 44x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.selection-panel.panel 600,106 236x218"
+   ]
+  },
+  "building": {
+   "share": 0.7125,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 132,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 8,51 44x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.command-panel.panel 600,192 236x132"
+   ]
+  },
+  "errors": []
+ },
+ "landscape844/defence": {
+  "early": 0.84875,
+  "none": {
+   "share": 0.84875,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.minimap-panel.panel 8,280 118x94",
+    "#defence-bar 183,51 477x52"
+   ]
+  },
+  "one": {
+   "share": 0.765,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 181,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "#defence-dock-toggle 792,143 44x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.selection-panel.panel 652,199 184x125",
+    "#defence-bar 183,51 477x52"
+   ]
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.74375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 225,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "#defence-dock-toggle 792,99 44x44",
+    "section.minimap-panel.panel 8,280 118x94",
+    "section.selection-panel.panel 652,155 184x169",
+    "#defence-bar 183,51 477x52"
+   ]
+  },
+  "errors": []
+ },
+ "landscape740/skirmish": {
+  "early": 0.79625,
+  "none": {
+   "share": 0.79625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "section.minimap-panel.panel 8,250 118x94"
+   ]
+  },
+  "one": {
+   "share": 0.6825,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 125,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.selection-panel.panel 496,169 236x125"
+   ]
+  },
+  "mixed": {
+   "share": 0.60375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 218,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.selection-panel.panel 496,76 236x218"
+   ]
+  },
+  "building": {
+   "share": 0.63375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 180,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.command-panel.panel 496,114 236x180"
+   ]
+  },
+  "errors": []
+ },
+ "landscape740/mission": {
+  "early": 0.79625,
+  "none": {
+   "share": 0.79625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "section.minimap-panel.panel 8,250 118x94"
+   ]
+  },
+  "one": {
+   "share": 0.6825,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 125,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.selection-panel.panel 496,169 236x125"
+   ]
+  },
+  "mixed": {
+   "share": 0.60375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 218,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.selection-panel.panel 496,76 236x218"
+   ]
+  },
+  "building": {
+   "share": 0.6825,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 132,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 372,51 44x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.command-panel.panel 496,162 236x132"
+   ]
+  },
+  "errors": []
+ },
+ "landscape740/defence": {
+  "early": 0.79625,
+  "none": {
+   "share": 0.79625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.minimap-panel.panel 8,250 118x94",
+    "#defence-bar 131,51 477x52"
+   ]
+  },
+  "one": {
+   "share": 0.7075,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 181,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "#defence-dock-toggle 688,113 44x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.selection-panel.panel 569,169 163x125",
+    "#defence-bar 131,51 477x52"
+   ]
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.6875,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 225,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "#defence-dock-toggle 688,69 44x44",
+    "section.minimap-panel.panel 8,250 118x94",
+    "section.selection-panel.panel 569,125 163x169",
+    "#defence-bar 131,51 477x52"
+   ]
+  },
+  "errors": []
+ },
+ "small320/skirmish": {
+  "early": 0.765,
+  "none": {
+   "share": 0.765,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 270,508 44x44"
+   ]
+  },
+  "one": {
+   "share": 0.59625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 270,508 44x44",
+    "section.selection-panel.panel 6,395 308x113"
+   ]
+  },
+  "mixed": {
+   "share": 0.42125,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 214,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 270,508 44x44",
+    "section.selection-panel.panel 6,294 308x214"
+   ]
+  },
+  "building": {
+   "share": 0.44625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 270,508 44x44",
+    "section.command-panel.panel 6,306 308x202"
+   ]
+  },
+  "errors": []
+ },
+ "small320/mission": {
+  "early": 0.76125,
+  "none": {
+   "share": 0.76125,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 270,508 44x44"
+   ]
+  },
+  "one": {
+   "share": 0.5925,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 270,508 44x44",
+    "section.selection-panel.panel 6,395 308x113"
+   ]
+  },
+  "mixed": {
+   "share": 0.4175,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 214,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 270,508 44x44",
+    "section.selection-panel.panel 6,294 308x214"
+   ]
+  },
+  "building": {
+   "share": 0.4425,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 44,
+    "dock": 202,
+    "tabs": 44,
+    "defenceBar": 0
+   },
+   "blocks": [
+    "#mission-toggle 270,508 44x44",
+    "section.command-panel.panel 6,306 308x202"
+   ]
+  },
+  "errors": []
+ },
+ "small320/defence": {
+  "early": 0.8125,
+  "none": {
+   "share": 0.8125,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 0,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "#defence-bar 8,448 304x52"
+   ]
+  },
+  "one": {
+   "share": 0.61375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.selection-panel.panel 6,395 308x113",
+    "#defence-bar 8,335 304x52"
+   ]
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.61375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false,
+   "bands": {
+    "topbar": 45,
+    "touchRow": 0,
+    "dock": 113,
+    "tabs": 44,
+    "defenceBar": 52
+   },
+   "blocks": [
+    "section.selection-panel.panel 6,395 308x113",
+    "#defence-bar 8,335 304x52"
+   ]
+  },
+  "errors": []
+ }
+}
