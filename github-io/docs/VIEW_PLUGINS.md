@@ -75,3 +75,13 @@ export class BossPresenceView {
 
 - Node: `tests/view-plugins.test.js` shows how to run `WorldView`'s real `createEntity`, `update`, `event` and `reset` on a staged view object (three.js scene objects work headless) with a ranger from a real `Simulation`. Pass your plugin class to `new ViewPlugins(view, [YourPlugin])`.
 - Browser: a render-budget scenario that puts your entities on screen (`spawn`, `boss`, `variant`, `status`, `rules` fields; `tests/render-budget.mjs` header) with its own limit line, plus `battle-eco` to show nothing else moved.
+
+## Building decals (R3-L)
+
+`src/building-decals-view.js` (`BuildingDecalsView`) is a worked example of a cheap, lively plugin: one `InstancedMesh` of quads for every decal of every building, with the art from one canvas-drawn atlas (`src/building-decals-atlas.js`, 32 cells of 128 px).
+
+- **Placement.** Wall decals are data (`WALL`, per building type: cell, world face S/E/W, u, v, size, mode). They are placed once per type and facing by casting rays at the type's own model template, so they land on its real surface whichever way the model turns. Ground details sit in front of the south exit, at the terrain height.
+- **One draw for plain and glowing parts.** Premultiplied blending (`One, OneMinusSrcAlpha`): a plain decal writes its alpha, a glow writes alpha 0 and adds. `renderOrder` −1 keeps it under rings and blob shadows; the fog-of-war plane (2) covers the ground parts in fog.
+- **Animation without per-frame work.** Per-instance data `aData = (cell, mode, phase, value)` and one clock uniform. Modes: still, blink, progress, scroll, pulse, chase, track (fades over 20 s), rotate, night, blueprint, dust. The clock stops with the game, reduced motion and governor motion level 0.
+- **Updates.** The instance buffers are rewritten only when the signature of the drawn buildings changes (appear, finish, hide, die, colour); training writes a few floats; tracks and dust use fixed ring pools.
+

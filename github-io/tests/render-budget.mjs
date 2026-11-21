@@ -106,6 +106,10 @@ const scenarios = [
     spawn:[{type:'stalker', team:1, count:2, near:[-3,-14]}]},
   // W2-C: battle-eco under the night look (palette swap only on Eco: no new light, no new mesh).
   {name:'night-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rules:{look:'night'}},
+  // AAA round 3 (R3-L): the player's base on the phone with a second Barracks, a Relay and a Tower: building
+  // decals and gate details are one instanced draw (no shadow pass).
+  {name:'building-life-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-17,14], reveal:true,
+    spawn:[{type:'barracks', team:0, near:[-13.2,19.3]}, {type:'relay', team:0, near:[-15,10]}, {type:'tower', team:0, near:[-20,27]}]},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
@@ -119,6 +123,7 @@ Object.assign(limits, {'battle-expanded-eco':125}); // W1-A
 Object.assign(limits, {'battle-expanded-full-eco':150}); // W2-A
 Object.assign(limits, {'defence-heroic-eco':125}); // W2-B
 Object.assign(limits, {'night-battle-eco':120}); // W2-C
+Object.assign(limits, {'building-life-eco':110}); // R3-L
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
