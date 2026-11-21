@@ -68,6 +68,10 @@ export function setupDebugHooks(S, A) {
       // R3-B: the order a click or tap gives at a world point, through the same path as the player's
       // (app/orders.js commandAt, which adds the group-pace flag).
       commandAt: (x, z, targetId = null, forced = null) => A.commandAt({ x, z }, targetId == null ? null : S.sim.get(targetId), false, forced),
+      // R3-G: straight to a boss fight ("iron-vanguard", or a unit type; app/scenes.js), and a mission
+      // opening played on demand (scene() then reports { opening: { mission, frames, t, seconds, from, to } }).
+      jumpBoss: (id) => A.jumpBoss(id),
+      playOpening: () => A.playOpening(),
     };
   }
 

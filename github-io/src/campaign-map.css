@@ -218,3 +218,111 @@
   .compact-ui .cmap-foot .cmap-label { display: none; }
   .compact-ui .cmap-legend { display: none; }
 }
+
+/* ---------- R3-G: decision marks, ending hints, chronicles, phone layout ---------- */
+/* A relay that still holds a decision: a hollow gold diamond (an answered one shows its mercy or firm mark). */
+.cmap-ahead {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border: 2px solid var(--gold-2);
+  border-radius: 2px;
+  background: rgba(6, 20, 28, 0.9);
+  transform: rotate(45deg);
+  vertical-align: -2px;
+}
+.cmap-node .cmap-ahead { position: absolute; top: 1px; right: 1px; box-shadow: 0 0 8px rgba(255, 199, 94, 0.55); }
+.cmap-node .cmap-choice ~ .cmap-ahead { top: auto; bottom: 1px; }
+/* Endings: the name, then what leads there; the short name is for phones. */
+.cmap-ending-words { display: grid; gap: 1px; min-width: 0; text-align: left; }
+.cmap-ending-name, .cmap-ending-short { font: 700 12px/1.2 var(--font-ui); color: inherit; white-space: nowrap; }
+.cmap-ending-short { display: none; }
+.cmap-hint { font: 600 11px/1.2 var(--font-ui); color: var(--text-3); white-space: nowrap; }
+.cmap .cmap-ending { min-height: 44px; padding: 4px 12px; }
+.cmap .cmap-ending.unseen { color: var(--text-2); border-style: dashed; }
+.cmap .cmap-ending.unseen i { opacity: 0.7; }
+.cmap .cmap-ending.seen .cmap-hint { color: inherit; opacity: 0.8; }
+/* (Tablets: cover.css shows an unseen ending's words inline; they stay two lines here.) */
+:root #campaign-map .cmap-ending > .cmap-ending-words { display: grid; }
+.cmap-legend .cmap-mercy { font: 700 12px/1.2 var(--font-ui); font-variant-numeric: tabular-nums; color: var(--mint, #92ebc5); }
+
+/* Desktop: two footer rows. The endings, their hints and the decision legend on one line; the four chronicle
+   cards below at the footer's full width, so their words no longer break inside a name. */
+:root:not(.compact-ui) #campaign-map .cmap-foot { flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 8px; }
+:root:not(.compact-ui) #campaign-map .cmap-endings { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 6px 10px; }
+:root:not(.compact-ui) #campaign-map .cmap-endings > .cmap-label { margin: 0 4px 0 0; }
+:root:not(.compact-ui) #campaign-map .cmap-legend { margin-left: auto; gap: 4px 12px; }
+:root:not(.compact-ui) #campaign-map .cmap-chronicles.chron-cards { flex: none; margin-left: 0; }
+:root:not(.compact-ui) #campaign-map .chron-words strong,
+:root:not(.compact-ui) #campaign-map .chron-words small { overflow-wrap: normal; word-break: normal; }
+/* Short desktop windows (down to 720 px) keep the chronicles above the fold: the board and the copy give way. */
+@media (max-height: 820px) {
+  :root:not(.compact-ui) #briefing.campaign-view .cmap-board { min-height: 150px; }
+  :root:not(.compact-ui) #briefing.campaign-view .briefing-copy { padding-top: 6px; padding-bottom: 12px; }
+  :root:not(.compact-ui) #briefing.campaign-view .briefing-copy p { display: none; }
+}
+
+/* Phones (portrait up to 720 px wide, landscape up to 520 px tall): endings and chronicles keep short labels,
+   the ending's short name over its hint and the chronicle's faction under its portrait. */
+@media (max-width: 720px), (orientation: landscape) and (max-height: 520px) {
+  :root.compact-ui #campaign-map .cmap-foot { flex-wrap: wrap; gap: 6px; }
+  :root.compact-ui #campaign-map .cmap-endings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; flex: 1 1 100%; }
+  :root.compact-ui #campaign-map .cmap-endings > .cmap-label { display: none; }
+  :root.compact-ui #campaign-map .cmap-ending,
+  :root.compact-ui #campaign-map .cmap-ending.unseen { justify-content: flex-start; width: auto; min-width: 0; padding: 3px 10px; gap: 8px; }
+  :root.compact-ui #campaign-map .cmap-ending-name { display: none; }
+  :root.compact-ui #campaign-map .cmap-ending-short { display: block; overflow: hidden; text-overflow: ellipsis; }
+  :root.compact-ui #campaign-map .cmap-hint { overflow: hidden; text-overflow: ellipsis; }
+  :root.compact-ui #campaign-map .cmap-chronicles.chron-cards { flex: 1 1 100%; margin-left: 0; }
+  :root.compact-ui #campaign-map .chron-row { gap: 4px; }
+  :root.compact-ui #campaign-map .chron-card { grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; justify-items: start; align-items: center; gap: 1px 6px; min-height: 44px; padding: 4px 6px; text-align: left; }
+  :root.compact-ui #campaign-map .chron-card .chron-face { grid-row: 1 / span 2; }
+  :root.compact-ui #campaign-map .chron-card .chron-words { display: grid; grid-column: 2; grid-row: 1; min-width: 0; }
+  :root.compact-ui #campaign-map .chron-card .chron-words > strong,
+  :root.compact-ui #campaign-map .chron-card .chron-words > .chron-lock { display: none; }
+  :root.compact-ui #campaign-map .chron-card .chron-words > small[translate] { display: block; overflow: hidden; font-size: 11px; line-height: 1.2; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
+  :root.compact-ui #campaign-map .chron-card .chron-pips { grid-column: 2; grid-row: 2; }
+  :root.compact-ui #campaign-map .chron-card .chron-face .cast-portrait.small { --size: 24px; }
+}
+
+/* Phones in portrait: a shorter campaign hero, the flavour strip and mode sub-lines step aside, slimmer
+   mission rows, so three missions show above Start (one before). Every control keeps its place. The narrow
+   chronicle cards use a smaller portrait so the faction name reads whole beside it. */
+@media (max-width: 720px) and (orientation: portrait) {
+  :root.compact-ui #briefing.campaign-view .briefing-hero { height: auto; min-height: 0; }
+  :root.compact-ui #briefing.campaign-view #campaign-map { flex: 0 0 auto; }
+  :root.compact-ui #briefing.campaign-view .cmap-board { flex: 0 0 auto; height: clamp(206px, 25vh, 240px); min-height: 0; }
+  :root.compact-ui #briefing.campaign-view .briefing-copy { padding: 2px 16px 4px; }
+  :root.compact-ui #briefing.campaign-view .briefing-copy h2 { font-size: 18px; }
+  :root.compact-ui #briefing.campaign-view .setup-head { display: none; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button:not([data-mode="training"]) { min-height: 50px; grid-template-columns: auto auto; grid-template-rows: auto; align-content: center; column-gap: 6px; padding: 4px; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button > .icon { grid-row: 1; width: 18px; height: 18px; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button > span { grid-row: 1; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button > small { display: none; }
+  :root.compact-ui #briefing.campaign-view .stage-list button { min-height: 48px; padding: 4px 10px; gap: 10px; }
+  :root.compact-ui #briefing.campaign-view .stage-list { gap: 5px; }
+  :root.compact-ui #briefing.campaign-view .stage-list b { width: 30px; height: 30px; }
+  :root.compact-ui #briefing.campaign-view .stage-list strong { font-size: 14px; line-height: 1.2; }
+  :root.compact-ui #briefing.campaign-view .stage-list small { font-size: 11px; line-height: 1.3; }
+  :root.compact-ui #campaign-map .chron-card { gap: 1px 4px; padding: 3px 4px; }
+  :root.compact-ui #campaign-map .chron-card .chron-face .cast-portrait.small { --size: 22px; }
+  :root.compact-ui #campaign-map .chron-card .chron-glyph { width: 12px; height: 12px; right: -4px; bottom: -4px; }
+  :root.compact-ui #briefing.campaign-view .cmap { gap: 5px; }
+}
+/* Landscape phones: the modes keep their icons (above the name, still 46 px), the flavour strip steps aside,
+   and the rows are slimmer; the map's footer is two rows, endings then chronicles. */
+@media (orientation: landscape) and (max-height: 520px) {
+  :root.compact-ui #briefing.campaign-view .setup-head { display: none; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button { grid-template-columns: auto; grid-template-rows: auto auto; row-gap: 2px; align-content: center; min-height: 46px; padding: 3px 4px; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button > .icon { display: block; grid-row: 1; width: 16px; height: 16px; margin: 0 auto; }
+  :root.compact-ui #briefing.campaign-view .mode-switch button > span { grid-row: 2; font-size: 12px; line-height: 1.15; }
+  :root.compact-ui #briefing.campaign-view .stage-list button { min-height: 48px; padding: 4px 10px; gap: 10px; }
+  :root.compact-ui #briefing.campaign-view .stage-list b { width: 30px; height: 30px; }
+  :root.compact-ui #briefing.campaign-view .stage-list strong { font-size: 14px; line-height: 1.2; }
+  :root.compact-ui #briefing.campaign-view .stage-list small { font-size: 11px; line-height: 1.3; }
+  :root.compact-ui #campaign-map .cmap-foot { gap: 4px; }
+  :root.compact-ui #campaign-map .cmap-foot .cmap-label { display: none; }
+  /* The board keeps relays 44 px apart: the mission's name gives its line (Start names the mission and the
+     list marks it; the briefing overlay tells the rest). */
+  :root.compact-ui #briefing.campaign-view .briefing-copy { display: none; }
+}
