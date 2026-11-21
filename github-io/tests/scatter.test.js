@@ -5,6 +5,7 @@ import { createMapEdge, CLIFF } from '../src/map-edge.js';
 import { Terrain } from '../src/terrain.js';
 import { ROCKS } from '../src/data.js';
 import maps from '../src/maps.json' with { type: 'json' };
+import { lookOf } from '../src/visual-style.js';
 
 const ids = Object.keys(maps);
 const triangles = (terrain, props) => [...buildBlocks(terrain, props).values()].reduce((n, b) => n + b.mesher.vertices / 3, 0);
@@ -19,7 +20,7 @@ test('map dressing is seeded: the same map always gets the same props, without M
       assert.deepEqual(a, b, `${id}: identical plans`);
       const first = buildBlocks(terrain, a).values().next().value.mesher, second = buildBlocks(terrain, b).values().next().value.mesher;
       assert.deepEqual(first.p.slice(0, 600), second.p.slice(0, 600), `${id}: identical geometry`);
-      assert.ok(DRESSING[id], `${id}: has its own recipe`);
+      assert.ok(DRESSING[lookOf(id)], `${id}: has its own recipe (or its look's)`);
     }
   } finally { Math.random = random; }
 });
@@ -34,7 +35,7 @@ test('dressing stays inside the map, off water, roads and walls, and clear of th
       if (p.kind === 'lily') assert.equal(surface, 'water');
       else assert.ok(!['water', 'ford', 'bridge', 'road'].includes(surface), `${id}: ${p.kind} on ${surface}`);
       // Every wall keeps its own footprint clear; fallen stones lean just outside it.
-      for (const [x, z, r] of ROCKS) assert.ok(Math.hypot(p.x - x, p.z - z) >= r + 0.45, `${id}: ${p.kind} inside a wall`);
+      for (const [x, z, r] of terrain.rocks || ROCKS) assert.ok(Math.hypot(p.x - x, p.z - z) >= r + 0.45, `${id}: ${p.kind} inside a wall`);
       if (SOLID.has(p.kind) || p.kind === 'ruinFloor')
         for (const [x, z] of camps) assert.ok(Math.hypot(p.x - x, p.z - z) >= 15, `${id}: ${p.kind} stands in a camp`);
     }

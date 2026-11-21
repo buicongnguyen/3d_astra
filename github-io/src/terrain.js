@@ -7,6 +7,8 @@ const ALL_MAPS = { ...MAP_CONFIG, ...DEFENCE_MAPS };
 // Height rules (Stage 3): plateau_height, high_range, high_damage, low_damage, hidden_depth, high_vision.
 export const TERRAIN = balance.terrain;
 export const MAPS = Object.fromEntries(Object.entries(MAP_CONFIG).map(([id,m])=>[id,`${m.name} · ${m.size}×${m.size}`]));
+// The one-line idea of a map (maps.json "blurb", the R3 maps), shown as the picker option's tooltip.
+export const MAP_BLURBS = Object.fromEntries(Object.entries(MAP_CONFIG).filter(([,m])=>m.blurb).map(([id,m])=>[id,m.blurb]));
 export const CROSSINGS = [
   { x: -22, half: 5, type: "bridge" },
   { x: 0, half: 5, type: "ford" },
@@ -38,13 +40,50 @@ function overlaps(x, z, r, b) {
     r + 1e-6
   );
 }
+// The reflections of a two-sided layout (the point mirror) or a four-camp one (both axis mirrors too).
+export const REFLECTIONS = { point: [[1, 1], [-1, -1]], quad: [[1, 1], [-1, -1], [-1, 1], [1, -1]] };
+// Every reflection of [x, z] under a map's symmetry, each point once (a point on an axis is not doubled).
+export function reflect(x, z, symmetry = "point") {
+  const out = [];
+  for (const [sx, sz] of REFLECTIONS[symmetry] || REFLECTIONS.point) {
+    const p = [x * sx || 0, z * sz || 0];
+    if (!out.some(([a, b]) => a === p[0] && b === p[1])) out.push(p);
+  }
+  return out;
+}
 export class Terrain {
   constructor(id = "classic") {
     this.id = Object.hasOwn(ALL_MAPS, id) ? id : "classic";
     Object.assign(this, ALL_MAPS[this.id]);
     this.half = this.size/2; this.grid = this.size/2;
     this.buildHeights();
-    this.water = this.river ? waterRects.map((r,i)=>({...r,left:i===0 ? -this.half:r.left,right:i===3 ? this.half:r.right})) : [];
+    // Optional map fields (R3 map variety, docs/MISSIONS.md "Map layouts"). A map without them builds exactly as before.
+    //   rivers: [{ z, crossings: [{ x, half, type }] }]  east-west water bands 6 m wide (default: the one
+    //           river at z = 0 with CROSSINGS on a map whose `river` is true)
+    //   rocks: [[x, z, r]]  the concrete walls (default ROCKS)    roads: [[[x, z], ...]]  painted roads
+    //   symmetry: "point" | "quad"  how `roads` (and the simulation's `deposits`) are mirrored
+    const custom = Array.isArray(this.rivers);
+    this.rivers = custom ? this.rivers.map((r) => this.makeRiver(r.z, r.crossings)) : this.river ? [this.makeRiver(0, CROSSINGS)] : [];
+    if (custom) this.river = this.rivers.length > 0;
+    this.rocks = this.rocks || ROCKS;
+    this.roadLines = this.roads ? this.roads.flatMap((line) => REFLECTIONS[this.symmetry === "quad" ? "quad" : "point"].map(([sx, sz]) => line.map(([x, z]) => [x * sx, z * sz]))) : null;
+    this.water = custom
+      ? this.rivers.flatMap((r) => r.gaps.map(([left, right]) => ({ left, right, top: r.z - 3, bottom: r.z + 3 })))
+      : this.river ? waterRects.map((r,i)=>({...r,left:i===0 ? -this.half:r.left,right:i===3 ? this.half:r.right})) : [];
+  }
+  // A river band: its crossings (west to east), its fords and the open water between them.
+  makeRiver(z, crossings) {
+    const list = crossings === CROSSINGS ? CROSSINGS : crossings.map((c) => ({ ...c })).sort((a, b) => a.x - b.x), gaps = [];
+    let left = -this.half;
+    for (const c of list) { if (c.x - c.half > left) gaps.push([left, c.x - c.half]); left = c.x + c.half; }
+    if (left < this.half) gaps.push([left, this.half]);
+    return { z, crossings: list, fords: list.filter((c) => c.type === "ford"), gaps };
+  }
+  // The river whose band (|z - river z| < reach) holds z, or null. The old river maps have one, at z = 0.
+  riverNear(z, reach) {
+    const rivers = this.rivers;
+    for (let i = 0; i < rivers.length; i++) if (Math.abs(z - rivers[i].z) < reach) return rivers[i];
+    return null;
   }
   cellAt(x,z) { const g = this.grid - 1, h = this.half; return [Math.max(0,Math.min(g,Math.floor((x+h)/2))), Math.max(0,Math.min(g,Math.floor((z+h)/2)))]; }
   // The row-major index of the cell holding (x, z): cellAt without the array (hot paths: visibility, fog).
@@ -54,17 +93,20 @@ export class Terrain {
     // Cliff faces read as stone and ramps as road (ground paint, scenery, Sunward's road bonus).
     if (this.plateaus.length) { if (this.onRamp(x, z)) return "road"; if (this.cliff(x, z)) return "stone"; }
     if (this.id === "classic") return "dirt";
+    const river = this.river ? this.riverNear(z, 5) : null;
     // Defence maps: the enemy road is painted, and none of the skirmish roads or boulders are there.
-    if (this.defence && !(this.river && Math.abs(z) < 5)) return this.onRoute(x, z) ? "road" : this.ground(x, z);
-    if (this.river && Math.abs(z) < 3) {
+    if (this.defence && !river) return this.onRoute(x, z) ? "road" : this.ground(x, z);
+    if (river && Math.abs(z - river.z) < 3) {
       // Frontier Defence: a blown bridge is water, a pontoon wades like the ford (sim/defence.js applyCrossings).
-      const c = CROSSINGS.find((c) => Math.abs(x - c.x) < c.half);
+      const c = river.crossings.find((c) => Math.abs(x - c.x) < c.half);
       return !c || this.blown?.has(c.x) ? "water" : this.pontoons?.includes(c.x) ? "ford" : c.type;
     }
-    if (this.river && Math.abs(z) < 5)
-      return CROSSINGS.some((c) => Math.abs(x - c.x) < c.half) ? "road" : "mud";
-    if (ROCKS.some(([rx, rz, r]) => hyp(x - rx, z - rz) < r + 1))
+    if (river)
+      return river.crossings.some((c) => Math.abs(x - c.x) < c.half) ? "road" : "mud";
+    if (this.rocks.some(([rx, rz, r]) => hyp(x - rx, z - rz) < r + 1))
       return "stone";
+    // A map with its own roads ("roads") has none of the old ones.
+    if (this.roadLines) return this.onRoad(x, z) ? "road" : this.ground(x, z);
     if (Math.min(Math.abs(x + 22), Math.abs(x - 22)) < 2.3 || this.diagonalRoad(x, z) || this.fordTrack(x, z)) return "road";
     return this.ground(x, z);
   }
@@ -74,14 +116,14 @@ export class Terrain {
     if (this.biome === "desert") return n < -0.8 ? "dirt" : "sand";
     // No bare-earth patch touches a river bank away from a crossing: from the game camera a
     // brown strip at the water's edge reads as a way across.
-    const bank = this.river && Math.abs(z) < 8;
+    const bank = this.river && !!this.riverNear(z, 8);
     if (this.biome === "woodland") return n > 1.2 && !bank ? "dirt" : "grass";
     if (this.biome === "highland") return n > 0.4 ? "stone" : n < -0.8 ? "grass" : "dirt";
     return n > 0.65 ? "sand" : n < -0.4 && !bank ? "dirt" : "grass";
   }
   // Within the 5 m wide road of a defence route (maps "routes", polylines of [x, z]).
-  onRoute(x, z, half = 2.5) {
-    for (const pts of Object.values(this.routes || {}))
+  onRoute(x, z, half = 2.5, lines = Object.values(this.routes || {})) {
+    for (const pts of lines)
       for (let i = 1; i < pts.length; i++) {
         const [ax, az] = pts[i - 1], dx = pts[i][0] - ax, dz = pts[i][1] - az, l2 = dx * dx + dz * dz;
         const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / l2));
@@ -89,6 +131,8 @@ export class Terrain {
       }
     return false;
   }
+  // On one of the map's own roads (maps.json "roads"; 4.4 m wide, like the old bridge roads).
+  onRoad(x, z) { return this.onRoute(x, z, 2.2, this.roadLines); }
   // The diagonal road. It runs at a shallow angle to the river, so on river maps it stops where it
   // meets the bridge roads (|z| 6.5) instead of reaching the bank along 15 m of water; the ford
   // gets its own short track straight across the river instead.
@@ -140,9 +184,11 @@ export class Terrain {
       return "Keep cliffs and ramps clear.";
     // Banks end at |z| = 5. Bridge and ford approaches keep a wider clear band so a building
     // never blocks a crossing; elsewhere structures may stand close to the bank.
-    const approach = CROSSINGS.some((c) => Math.abs(x - c.x) < c.half + r + 1.5);
-    if (this.river && Math.abs(z) < (approach ? 7 : 5.5) + r)
-      return "Keep river banks and crossing approaches clear.";
+    for (const river of this.rivers) {
+      const approach = river.crossings.some((c) => Math.abs(x - c.x) < c.half + r + 1.5);
+      if (Math.abs(z - river.z) < (approach ? 7 : 5.5) + r)
+        return "Keep river banks and crossing approaches clear.";
+    }
     return "";
   }
   // ---- Height (Stage 3). Two levels: ground (0) and plateau (1, drawn HEIGHT m higher). A
@@ -165,9 +211,14 @@ export class Terrain {
       }
       return q;
     };
+    // "quad" (opt-in, R3 map variety) adds the two axis mirrors as well, for maps fair to four camps.
+    const FLIP_X = { east: "west", west: "east", north: "north", south: "south" }, FLIP_Z = { north: "south", south: "north", east: "east", west: "west" };
+    const flipX = (p) => ({ ...p, x: -p.x, ramps: (p.ramps || []).map((r) => (p.shape === "disc" ? { ...r, angle: 180 - r.angle } : { ...r, side: FLIP_X[r.side], at: r.side === "north" || r.side === "south" ? -(r.at || 0) : r.at })) });
+    const flipZ = (p) => ({ ...p, z: -p.z, ramps: (p.ramps || []).map((r) => (p.shape === "disc" ? { ...r, angle: -r.angle } : { ...r, side: FLIP_Z[r.side], at: r.side === "east" || r.side === "west" ? -(r.at || 0) : r.at })) });
     for (const p of raw) {
       list.push(make(p));
       if (p.mirror) list.push(make({ ...p, x: -p.x, z: -p.z, ramps: (p.ramps || []).map((r) => (p.shape === "disc" ? { ...r, angle: r.angle + 180 } : { ...r, side: FLIP[r.side], at: -(r.at || 0) })) }));
+      if (p.mirror === "quad") { list.push(make(flipX(p))); list.push(make(flipZ(p))); }
     }
     this.plateaus = list;
     this.walls = (this.walls || []).flatMap((w) => (w.mirror ? [w, { ...w, x: -w.x, z: -w.z }] : [w]));

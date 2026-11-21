@@ -5,7 +5,7 @@ import emblemUrl from "../art/emblem.webp";
 import { COVERS } from "./cover-layers.js";
 import wordmarkSvg from "../art/wordmark.svg?raw";
 import { AI_SPEEDS, ALLIANCES } from "../ai-plan.js";
-import { MAPS } from "../terrain.js";
+import { MAPS, MAP_BLURBS } from "../terrain.js";
 import { MISSIONS } from "../campaign.js";
 import { TRAINING_STEPS } from "../tutorial.js";
 import { icon } from "../icons.js";
@@ -68,7 +68,7 @@ export function renderShell() {
           <button data-mode="training" aria-pressed="false">${icon("flag")}<span>Training</span><small>Start here</small></button>
         </div>
         <div class="briefing-tools" id="skirmish-setup">
-          <label class="field field-wide"><span>Battlefield</span><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}">${MAPS[id]}</option>`).join("")}</select></label>
+          <label class="field field-wide"><span>Battlefield</span><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}"${MAP_BLURBS[id] ? ` title="${MAP_BLURBS[id]}"` : ""}>${MAPS[id]}</option>`).join("")}</select></label>
           <label class="field"><span>Rivals</span><select id="enemy-count" aria-label="Number of AI enemies"><option value="1">1 AI enemy</option><option value="2">2 AI enemies</option><option value="3">3 AI enemies</option></select></label>
           <label class="field"><span>AI speed</span><select id="ai-speed" aria-label="AI speed" title="AI speed: how fast rivals build, tech up and attack">${Object.entries(AI_SPEEDS).map(([id, p]) => `<option value="${id}"${id === "normal" ? " selected" : ""}>${p.label} AI</option>`).join("")}</select></label>
           <label class="field"><span>Your faction</span><select id="player-faction" aria-label="Your faction" title="Your faction: the army you command, with its own units, building and way of fighting">${Object.entries(PLAYER_FACTIONS).map(([id, label]) => `<option value="${id}">${label}</option>`).join("")}</select></label>

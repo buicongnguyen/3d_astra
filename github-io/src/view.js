@@ -710,8 +710,10 @@ export class WorldView {
       for (let i = 0; i < p.count; i++) {
         const x = p.getX(i),
           z = -p.getY(i);
-        if (Math.abs(z) < 4 && Math.abs(x) > 5)
-          p.setZ(i, Math.min(p.getZ(i), -0.5 * Math.min(1, 4 - Math.abs(z))));
+        // Each river band (maps.json "rivers"; one at z = 0 on the old maps), level across its fords.
+        const river = this.terrain.riverNear(z, 4);
+        if (river && !river.fords.some((c) => Math.abs(x - c.x) <= c.half))
+          p.setZ(i, Math.min(p.getZ(i), -0.5 * Math.min(1, 4 - Math.abs(z - river.z))));
       }
       groundGeometry.computeVertexNormals();
     }

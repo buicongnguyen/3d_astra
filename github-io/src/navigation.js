@@ -61,7 +61,7 @@ export class Navigation {
     // has spawned them, the boulder positions stand in.
     // Latched: once walls have been seen, destroyed ones must not bring the boulders back.
     if (entities.some((e) => e.kind === "wall")) this.wallsSpawned = true;
-    this.obstacles = this.wallsSpawned ? [] : ROCKS.map(([x, z, r]) => ({ x, z, radius: r }));
+    this.obstacles = this.wallsSpawned ? [] : (this.terrain.rocks || ROCKS).map(([x, z, r]) => ({ x, z, radius: r }));
     this.obstacles.push(
       ...entities.filter((e) => e.hp > 0 && (e.kind === "building" || e.kind === "wall")),
     );

@@ -76,9 +76,11 @@ export function planLife(terrain, budget = 1) {
       }
     }
   }
+  // Each river of the map (maps.json "rivers"; the one at z = 0 on the old river maps) takes its turn.
+  const riverZ = (i) => terrain.rivers?.length ? terrain.rivers[i % terrain.rivers.length].z : 0;
   if (recipe.fish && terrain.river) {
     for (let i = 0; i < scale(recipe.fish.count); i++)
-      plan.fish.push({ x: (r() * 2 - 1) * (half - 4), z: (r() * 2 - 1) * 2.1, size: 0.85 + r() * 0.45,
+      plan.fish.push({ x: (r() * 2 - 1) * (half - 4), z: riverZ(i) + (r() * 2 - 1) * 2.1, size: 0.85 + r() * 0.45,
         dir: r() < 0.5 ? -1 : 1, speed: 0.9 + r() * 1.3, phase: r() * 6.283, koi: r() < 0.22 ? 1 : 0 });
   }
   const scatter = (count, accept, attempts = 12) => {
@@ -91,13 +93,13 @@ export function planLife(terrain, budget = 1) {
     return out;
   };
   if (recipe.butterflies)
-    for (const [x, z] of scatter(scale(recipe.butterflies.count), (x, z) => land(x, z) && (!terrain.river || Math.abs(z) > 6)))
+    for (const [x, z] of scatter(scale(recipe.butterflies.count), (x, z) => land(x, z) && (!terrain.river || (terrain.rivers || [{ z: 0 }]).every((river) => Math.abs(z - river.z) > 6))))
       plan.butterflies.push({ x, y: 0.75, z, size: 0.95 + r() * 0.35, rx: 1.5 + r() * 2.5, rz: 1.5 + r() * 2.5,
         speed: 0.7 + r() * 0.6, phase: r() * 6.283, color: BUTTERFLY_COLORS[Math.floor(r() * BUTTERFLY_COLORS.length)] });
   if (recipe.dragonflies && terrain.river)
     for (let i = 0; i < scale(recipe.dragonflies.count); i++) {
       const side = r() < 0.5 ? -1 : 1;
-      plan.dragonflies.push({ x: (r() * 2 - 1) * (half - 8), y: 0.95, z: side * (3.6 + r() * 2.4), size: 1, rx: 1.6, rz: 0.7,
+      plan.dragonflies.push({ x: (r() * 2 - 1) * (half - 8), y: 0.95, z: riverZ(i) + side * (3.6 + r() * 2.4), size: 1, rx: 1.6, rz: 0.7,
         speed: 0.4 + r() * 0.25, phase: r() * 50, color: DRAGONFLY_COLORS[Math.floor(r() * DRAGONFLY_COLORS.length)] });
     }
   if (recipe.motes) {

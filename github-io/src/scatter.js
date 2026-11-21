@@ -57,12 +57,13 @@ export function planScatter(terrain, budget = 1) {
   const recipe = DRESSING[lookOf(terrain.id)] || DRESSING.classic, r = rng(hashId(terrain.id) ^ 0x5ca77e2), half = terrain.half;
   const area = (terrain.size / 96) ** 2, camps = campSites(terrain), props = [];
   // Defence maps have no boulder walls (sim: terrain.defence).
-  const walls = terrain.defence ? [] : ROCKS;
+  const walls = terrain.defence ? [] : terrain.rocks || ROCKS;
   const nearWall = (x, z, pad) => walls.some(([wx, wz, wr]) => Math.hypot(x - wx, z - wz) < wr + pad);
   const nearCamp = (x, z) => camps.some(([cx, cz]) => Math.hypot(x - cx, z - cz) < CAMP_RADIUS);
   const add = (kind, x, z, s) => props.push({ kind, x, z, s: Math.min(MAX_SCALE, s), a: r() * 6.2832, tone: r(), seed: (r() * 4294967296) >>> 0 });
   for (const [kind, count, on] of recipe.list) {
-    const solid = SOLID.has(kind), n = Math.round(count * area * (solid ? Math.min(1, budget + 0.15) : budget));
+    // maps.json "dressing" (R3 map variety): a lighter hand for a map with more open ground than its look's own map.
+    const solid = SOLID.has(kind), n = Math.round(count * area * (solid ? Math.min(1, budget + 0.15) : budget) * (terrain.dressing || 1));
     const reach = half - (kind === "ruinFloor" ? 3.2 : 1.2);
     for (let i = 0; i < n; i++) {
       const x = (r() * 2 - 1) * reach, z = (r() * 2 - 1) * reach, s = 0.75 + r() * 0.5;

@@ -1,7 +1,9 @@
 import STYLE from './visual-style.json' with {type:'json'};
 import DEFENCE_MAPS from './defence/maps.json' with {type:'json'};
-// A Frontier Defence map borrows the look (palette, light, dressing, life, music) of a skirmish map.
-export const lookOf = id => DEFENCE_MAPS[id]?.look || id;
+import SKIRMISH_MAPS from './maps.json' with {type:'json'};
+// A Frontier Defence map borrows the look (palette, light, dressing, life, music) of a skirmish map, and so
+// may a skirmish map (maps.json "look", R3 map variety: new layouts in an existing land's colours).
+export const lookOf = id => DEFENCE_MAPS[id]?.look || (Object.hasOwn(SKIRMISH_MAPS, id) && SKIRMISH_MAPS[id].look) || id;
 export const themeFor = id => (id = lookOf(id), Object.hasOwn(STYLE.themes,id)?STYLE.themes[id]:STYLE.themes.classic);
 // Light strengths, exposure and the time of day each map is set at (numbers, kept apart from
 // the colour table so every theme value stays a colour).

@@ -19,7 +19,11 @@ export function createMapEdge(terrain) {
   const cliff = color("cliff"), deep = color("cliffDeep"), near = color("outlandNear"), far = color("outland"), haze = color("sky"),
     water = color("water"), foam = color("foam"), lip = mix(color(terrain.id === "classic" ? "dirt" : terrain.biome === "desert" ? "sand" : terrain.biome === "highland" ? "stone" : "grass"), cliff, 0.35);
   // The river bed is cut 0.5 deep; the skirt's top edge follows it.
-  const top = (x, z) => terrain.river && Math.abs(z) < 4 && Math.abs(x) > 5 ? -0.5 * Math.min(1, 4 - Math.abs(z)) : 0;
+  // Each river band (maps.json "rivers"); the old river maps have one, at z = 0, with its ford at x = 0.
+  const top = (x, z) => {
+    const river = terrain.river ? terrain.riverNear(z, 4) : null;
+    return river && !river.fords.some((c) => Math.abs(x - c.x) <= c.half) ? -0.5 * Math.min(1, 4 - Math.abs(z - river.z)) : 0;
+  };
   let hash = 0x9e3779b1 ^ terrain.size;
   const jitter = () => { hash = Math.imul(hash ^ (hash >>> 15), 0x2c1b3c6d) + 0x297a2d39 >>> 0; return (hash & 1023) / 1023; };
   // Four walls in strata: a lip in the ground's colour, warm rock, then shade toward the base.
@@ -39,10 +43,10 @@ export function createMapEdge(terrain) {
     }
   }
   // The river leaves the map as a waterfall on the side the camera sees.
-  if (terrain.river) {
+  if (terrain.river) for (const river of terrain.rivers) {
     const x = half + 0.03, bright = mix(water, foam, 0.35), spray = mix(water, foam, 0.9);
-    for (const [z0, z1] of [[-3, -1], [-1, 1], [1, 3]]) {
-      const edge = (z) => Math.abs(z) === 3 ? spray : bright;
+    for (const [z0, z1] of [[-3, -1], [-1, 1], [1, 3]].map(([a, b]) => [river.z + a, river.z + b])) {
+      const edge = (z) => Math.abs(z - river.z) === 3 ? spray : bright;
       quad([x, -0.09, z0], [x, -0.09, z1], [x, -CLIFF * 0.55, z1], [x, -CLIFF * 0.55, z0], edge(z0), edge(z1), water, water);
       quad([x, -CLIFF * 0.55, z0], [x, -CLIFF * 0.55, z1], [x, -CLIFF + 0.02, z1], [x, -CLIFF + 0.02, z0], water, water, foam, foam);
     }

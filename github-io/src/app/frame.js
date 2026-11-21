@@ -91,7 +91,7 @@ export function setupFrame(S, A) {
     S.ambience?.update(
       S.settings,
       Z.started && !Z.paused && !S.sim.result,
-      S.sim.terrain.river && Math.abs(S.view.focus.z) < 14,
+      S.sim.terrain.river && !!S.sim.terrain.riverNear(S.view.focus.z, 14),
     );
     A.syncAudio(elapsed);
     // The decision card and a story scene hold the match but the music plays on (screens.js MUSIC_HOLDS).

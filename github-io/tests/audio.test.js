@@ -26,7 +26,8 @@ test("a mission mood is a floor that live combat can still raise", () => {
 });
 
 test("every map has a flavour; scales and motifs are well formed", () => {
-  for (const id of Object.keys(maps)) assert.ok(MAP_FLAVOUR[id], `flavour for ${id}`);
+  // A map drawn in another map's look (maps.json "look", R3 map variety) plays that map's score.
+  for (const id of Object.keys(maps)) assert.ok(MAP_FLAVOUR[maps[id].look || id], `flavour for ${id}`);
   assert.equal(Object.keys(MAP_FLAVOUR).length, 7);
   for (const f of Object.values(MAP_FLAVOUR)) {
     assert.ok(SCALES[f.scale]);

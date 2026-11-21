@@ -80,11 +80,13 @@ export function setupMinimap(S, A) {
     ctx.drawImage(minimapFog.canvas, 0, 0, w, h);
     // River crossings stay marked under fog (they are part of the map): a bridge is a pale deck
     // with dark rails, the ford a row of pale stepping dots between two short posts.
+    // Every river of the map (maps.json "rivers"; one at z = 0 on the old river maps).
     if (S.sim.terrain.river)
-      for (const c of CROSSINGS) {
+      for (const { z: rz, crossings } of S.sim.terrain.rivers || [{ z: 0, crossings: CROSSINGS }])
+      for (const c of crossings) {
         // Frontier Defence: a blown bridge is river again (sim/defence.js applyCrossings).
         if (S.sim.terrain.blown?.has(c.x)) continue;
-        const x0 = px(c.x - c.half + 1), x1 = px(c.x + c.half - 1), y0 = pz(-4), y1 = pz(4), dot = Math.max(1.4, w / 120);
+        const x0 = px(c.x - c.half + 1), x1 = px(c.x + c.half - 1), y0 = pz(rz - 4), y1 = pz(rz + 4), dot = Math.max(1.4, w / 120);
         ctx.lineWidth = Math.max(1.5, w / 110);
         if (c.type === "bridge") {
           ctx.fillStyle = "rgba(236,224,196,.92)";
@@ -93,7 +95,7 @@ export function setupMinimap(S, A) {
           ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); ctx.moveTo(x1, y0); ctx.lineTo(x1, y1); ctx.stroke();
         } else {
           ctx.fillStyle = "rgba(246,236,206,.95)";
-          for (const z of [-2.6, 0, 2.6]) for (const x of [-2, 2]) { ctx.beginPath(); ctx.arc(px(c.x + x), pz(z), dot, 0, Math.PI * 2); ctx.fill(); }
+          for (const z of [-2.6, 0, 2.6]) for (const x of [-2, 2]) { ctx.beginPath(); ctx.arc(px(c.x + x), pz(rz + z), dot, 0, Math.PI * 2); ctx.fill(); }
           ctx.strokeStyle = "rgba(246,236,206,.95)";
           ctx.setLineDash([2, 2]);
           ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); ctx.moveTo(x1, y0); ctx.lineTo(x1, y1); ctx.stroke();
