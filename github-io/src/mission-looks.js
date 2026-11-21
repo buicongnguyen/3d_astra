@@ -21,6 +21,7 @@
 //   fogNear, fogFar                  multipliers of the distance fog's near and far planes at k = 1
 //   edge                             the map edge and void (map-edge.js) recoloured { low, high } by brightness
 //   rim                              the warm rim light's colour at k = 1 (team rims keep the team's colour)
+//   skyGather                        optional exponent (< 1): sky and fog colour follow k ** skyGather (storm)
 // The grade (shadow tint, saturation) of a look sits in look-grade.json under `looks`.
 export const LOOKS = {
   // The owner's night bar: a very dark blue sky, black-blue water, cool moonlight, brighter glows.
@@ -39,6 +40,9 @@ export const LOOKS = {
     flash: { period: 11, first: 3, spread: 5 },
     // R3-D: slanting rain, drifting cloud shade (High only), distance fog closing in, a blue-grey map edge.
     rain: 1, clouds: 1, fogNear: 0.5, fogFar: 0.72, edge: { low: "#05090e", high: "#4d5d6c" }, rim: "#b9c8e0",
+    // Wave 1 merge: the sky and fog colour turn faster than the light (k ** 0.25), so a gathering storm over a
+    // dusk map (m06 at k 0.48) reads blue-grey, not the map's purple. k = 1 (m10) is unchanged.
+    skyGather: 0.25,
   },
   // A long red-gold evening for new content.
   dusk: {

@@ -81,7 +81,9 @@ export class MissionLook {
       this.grade = gradeLook;
       if (installGrade(lookOf(v.terrain.id), GRADE, gradeLook)) v.regrade?.();
     }
-    const sky = blend(scratch, b.sky, def ? def.sky : b.sky, k);
+    // A look with `skyGather` (< 1) turns its sky and fog colour faster than its light (k ** skyGather).
+    const ks = def?.skyGather ? k ** def.skyGather : k;
+    const sky = blend(scratch, b.sky, def ? def.sky : b.sky, ks);
     // Lightning: the sky and, on High, the lights flash toward a cold white.
     if (flash) sky.lerp(target.set("#cfdcff"), 0.55 * flash);
     v.scene.background.copy(sky);
@@ -98,7 +100,7 @@ export class MissionLook {
     v.sun.intensity = b.sunI * (1 + ((def ? def.sunI : 1) - 1) * k) * (1 + 1.6 * lift);
     v.renderer.toneMappingExposure = b.exposure * (1 + ((def ? def.exposure : 1) - 1) * k);
     // The fog of war is the same family as the sky. It is the one thing that re-tints per change of look.
-    const fog = blend(scratch, b.fog, def ? def.fog : b.fog, k);
+    const fog = blend(scratch, b.fog, def ? def.fog : b.fog, ks);
     v.fogUniforms.uFogColor.value.copy(fog);
     const hex = fog.getHexString();
     v.fogRGB = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16));
