@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased: AAA round 3
+
+### R3-B: Squad orders
+
+- **Group pace.** Move or attack-move two or more units and they keep together: fighters walk in front (the toughest first), ranged units behind them, and Medics, Engineers and other support units about 3.5 m behind the fighters, all at the slowest fighter's speed. A unit that falls more than 12 m behind catches up at its own speed, and units in a fight move at their own speed. Support units standing ahead of the fighters step aside first so the tanks pass them. Settings > Army > Group pace (on by default) turns it off.
+- **Support units keep company.** When a group arrives, each Medic or Engineer follows the nearest fighter it can tend (a Support order), so it keeps healing or repairing.
+- **Follow tether.** A selected Medic or Engineer on a Support order shows a dashed team-colour line to the unit it follows, a heart or wrench over that unit, and "Following <name>" on its card.
+- **Control groups on phones.** The group strip now shows on phones, beside the touch buttons: All army, Fighters and Support chips, "+ Group" to save the selection, and the saved groups (tap to recall, hold half a second to save over one). Every chip is 44 px or more, and the dock keeps its height.
+- **High-ground hint.** The first building you place on a plateau says "High ground: +2 m range, +20% damage".
+- No pin or baseline moved: the group-pace flag is sent only by the player's own orders, never by the AI, bots or tests.
+
 ## 0.25.0: AAA round 2 (release label for the deploy; owner decision O17)
 
 This is the label proposed for the next release. `package.json` still says 0.19.1, nothing is deployed, and the owner decides the number at deploy. It gathers everything of AAA round 2 (plan: docs/aaa/AAA_ROUND2_PLAN.md, results: docs/aaa/results/round2/). The Defence and campaign sections under "Unreleased" further down (0.22 to 0.24 labels) were built before this round and are not part of it.
