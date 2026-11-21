@@ -68,6 +68,10 @@ export function setupDebugHooks(S, A) {
       // R3-B: the order a click or tap gives at a world point, through the same path as the player's
       // (app/orders.js commandAt, which adds the group-pace flag).
       commandAt: (x, z, targetId = null, forced = null) => A.commandAt({ x, z }, targetId == null ? null : S.sim.get(targetId), false, forced),
+      // R3-V: the victory ceremony's state (phase, stamps landed, screens dressed) and the match-end listener list.
+      get ceremony() { return A.ceremony?.info() ?? null; },
+      onMatchEnd: (fn) => A.onMatchEnd?.(fn),
+      mvp: () => S.matchStats.mvp?.() ?? null,
     };
   }
 

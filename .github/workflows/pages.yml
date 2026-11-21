@@ -151,6 +151,9 @@ jobs:
           # AAA round 3 (R3-M): the title cover (loading screen, key art per frame, live layer, labels, calm mode).
           - name: r3-m
             scripts: cover-ui title
+          # AAA round 3 (R3-V): the victory ceremony (slow motion, MVP swing, stamp, confetti, count-up), "So close" and a tip, in Skirmish, a mission and Defence.
+          - name: r3-v
+            scripts: ceremony
     defaults:
       run:
         working-directory: github-io

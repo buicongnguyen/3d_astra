@@ -1226,7 +1226,21 @@
     "Contested": "Đang tranh chấp",
     "Under siege": "Bị vây hãm",
     "Enemy held": "Địch chiếm giữ",
-    "Scouted": "Đã trinh sát"
+    "Scouted": "Đã trinh sát",
+    "MVP": "MVP",
+    "damage": "sát thương",
+    "healing": "hồi máu",
+    "kill": "lần hạ gục",
+    "kills": "lần hạ gục",
+    "Held the line": "Giữ vững trận tuyến",
+    "So close.": "Suýt chút nữa thôi.",
+    "Tip": "Mẹo",
+    "The fight was close.": "Trận đấu rất sát sao.",
+    "Train Harvesters early: eight or more keep the army coming.": "Huấn luyện Thợ mỏ sớm: từ tám người trở lên giúp quân đội luôn được bổ sung.",
+    "Keep the Command core and a Barracks producing all match.": "Giữ Sở chỉ huy và một Doanh trại sản xuất liên tục cả trận.",
+    "Gather the army before you attack and fight together, not one by one.": "Tập hợp quân trước khi tấn công và đánh cùng nhau, đừng lẻ tẻ từng người.",
+    "Keep a few units at home, or build a Tower beside the Command core.": "Để lại vài đơn vị ở nhà, hoặc xây một Tháp pháo cạnh Sở chỉ huy.",
+    "Research weapons and plating at the Foundry: upgrades win even fights.": "Nghiên cứu vũ khí và giáp tại Nhà máy: nâng cấp giúp thắng những trận cân sức."
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],
@@ -1776,6 +1790,13 @@
     ["^Following (.+)$", "Đi theo {1}"],
     ["^Air limit: (\\d+) of (\\d+) flyers; (\\d+) with a level (\\d+) Command core$", "Giới hạn trên không: {1} trên {2} mục tiêu bay; {3} khi Sở chỉ huy cấp {4}"],
     ["^Air limit: (\\d+) of (\\d+) flyers$", "Giới hạn trên không: {1} trên {2} mục tiêu bay"],
-    ["^You field at most (\\d+) flyers at a level 1 Command core, (\\d+) at level 2 and (\\d+) at level 3, counting those in production; computer opponents field at most (\\d+)\\.$", "Bạn có tối đa {1} mục tiêu bay khi Sở chỉ huy cấp 1, {2} khi cấp 2 và {3} khi cấp 3, tính cả số đang sản xuất; đối thủ máy có tối đa {4}."]
+    ["^You field at most (\\d+) flyers at a level 1 Command core, (\\d+) at level 2 and (\\d+) at level 3, counting those in production; computer opponents field at most (\\d+)\\.$", "Bạn có tối đa {1} mục tiêu bay khi Sở chỉ huy cấp 1, {2} khi cấp 2 và {3} khi cấp 3, tính cả số đang sản xuất; đối thủ máy có tối đa {4}."],
+    ["^You gathered (\\d+) resources in (\\d+) minutes?\\.$", "Bạn thu được {1} tài nguyên trong {2} phút."],
+    ["^You trained (\\d+) units?\\.$", "Bạn đã huấn luyện {1} đơn vị."],
+    ["^You lost (\\d+) units and defeated (\\d+)\\.$", "Bạn mất {1} đơn vị và hạ được {2}."],
+    ["^You lost (\\d+) buildings\\.$", "Bạn mất {1} công trình."],
+    ["^You held (\\d+) of (\\d+) waves\\.$", "Bạn đã giữ được {1} trên {2} đợt."],
+    ["^You completed (\\d+) of (\\d+) objectives\\.$", "Bạn đã hoàn thành {1} trên {2} mục tiêu."],
+    ["^The enemy core was down to (\\d+)% health\\.$", "Sở chỉ huy địch chỉ còn {1}% máu."]
   ]
 }

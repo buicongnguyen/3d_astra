@@ -1,0 +1,211 @@
+/* R3-V: the results screens in the holo theme (tokens: the "Holo theme" block of ui-theme.css, rules like
+   src/cover.css), the MVP card, "So close" and its tip, the stamp, the confetti layer and the MVP tag.
+   Scoped to the results dialogs (#modal.result-wide: Skirmish; #modal.debrief-wide: a mission and Defence),
+   so no other dialog changes. Text stays at 11 px or more; buttons keep their 44 px. */
+
+#modal.result-wide .modal,
+#modal.debrief-wide .modal {
+  --tone: var(--gold-2);
+  --holo-corner: 20px;
+  --holo-c: rgba(255, 199, 94, 0.85);
+  --holo-brackets:
+    linear-gradient(var(--holo-c), var(--holo-c)) left top / var(--holo-corner) 2px no-repeat,
+    linear-gradient(var(--holo-c), var(--holo-c)) left top / 2px var(--holo-corner) no-repeat,
+    linear-gradient(var(--holo-c), var(--holo-c)) right top / var(--holo-corner) 2px no-repeat,
+    linear-gradient(var(--holo-c), var(--holo-c)) right top / 2px var(--holo-corner) no-repeat,
+    linear-gradient(var(--holo-c), var(--holo-c)) left bottom / var(--holo-corner) 2px no-repeat,
+    linear-gradient(var(--holo-c), var(--holo-c)) left bottom / 2px var(--holo-corner) no-repeat,
+    linear-gradient(var(--holo-c), var(--holo-c)) right bottom / var(--holo-corner) 2px no-repeat,
+    linear-gradient(var(--holo-c), var(--holo-c)) right bottom / 2px var(--holo-corner) no-repeat;
+  position: relative;
+  border: 1px solid var(--holo-line);
+  border-radius: 10px;
+  background:
+    var(--holo-brackets),
+    radial-gradient(120% 60% at 0% 0%, color-mix(in srgb, var(--tone) 16%, transparent), transparent 60%),
+    radial-gradient(80% 50% at 100% 100%, rgba(57, 198, 232, 0.12), transparent 70%),
+    var(--holo-glass-solid);
+  box-shadow: var(--holo-glow), 0 0 48px color-mix(in srgb, var(--tone) 12%, transparent);
+}
+#modal.result-wide .modal:has(.result-card.lost),
+#modal.debrief-wide .modal:has(.debrief.lost) { --tone: #ef7660; --holo-c: rgba(239, 118, 96, 0.8); }
+#modal.result-wide .modal:has(.result-card.draw) { --tone: var(--holo-1); --holo-c: rgba(127, 232, 255, 0.8); }
+#modal.debrief-wide .modal:has(.defence-score) { --tone: var(--holo-1); --holo-c: rgba(127, 232, 255, 0.85); }
+#modal.result-wide .modal::before,
+#modal.debrief-wide .modal::before {
+  /* A faint sensor sweep line under the header: the high-science look of the cover. */
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  border-radius: 10px 10px 0 0;
+  background: linear-gradient(90deg, transparent, var(--tone), var(--holo-1), transparent);
+  opacity: 0.8;
+  pointer-events: none;
+}
+.holo-result .eyebrow { color: var(--tone) !important; text-shadow: 0 0 12px color-mix(in srgb, var(--tone) 45%, transparent); }
+.holo-result h2 { text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35), 0 0 22px rgba(127, 232, 255, 0.18); }
+.result-card.holo-result .result-banner {
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--tone) 20%, transparent), transparent 72%),
+    repeating-linear-gradient(0deg, rgba(127, 232, 255, 0.04) 0 1px, transparent 1px 4px);
+  border-bottom-color: var(--holo-line);
+}
+.holo-result .result-grid .stat {
+  position: relative;
+  border-color: var(--holo-line);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(14, 40, 76, 0.66), rgba(4, 12, 28, 0.82));
+  box-shadow: inset 0 1px 0 rgba(200, 245, 255, 0.1);
+}
+.holo-result .result-grid .stat::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: -1px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--holo-1), transparent);
+  opacity: 0.7;
+}
+.holo-result .result-grid .stat strong { text-shadow: 0 0 14px rgba(127, 232, 255, 0.22); }
+.holo-result .result-grid .stat strong.counting { color: var(--holo-1); }
+.holo-result .debrief-difficulty { color: var(--holo-1); }
+.holo-result .result-actions .secondary,
+.holo-result .debrief-actions .secondary { border-color: var(--holo-line); background: rgba(8, 26, 52, 0.7); }
+
+/* ---------------------------------------------------------------- MVP card */
+.mvp-card {
+  --holo-c: rgba(255, 199, 94, 0.9);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 16px 0 0;
+  padding: 10px 14px 10px 10px;
+  border: 1px solid var(--gold-line);
+  border-radius: 10px;
+  background:
+    linear-gradient(90deg, rgba(255, 199, 94, 0.18), rgba(255, 199, 94, 0.02) 70%),
+    linear-gradient(180deg, rgba(14, 40, 76, 0.6), rgba(4, 12, 28, 0.8));
+  box-shadow: 0 0 22px rgba(255, 199, 94, 0.16), inset 0 1px 0 rgba(255, 233, 168, 0.18);
+}
+.mvp-portrait {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, rgba(127, 232, 255, 0.28), rgba(4, 16, 31, 0.95) 70%);
+  box-shadow: 0 0 0 2px var(--gold-2), 0 0 18px rgba(255, 199, 94, 0.5);
+}
+.mvp-portrait .portrait-art { --size: 56px; border-radius: 50%; }
+.mvp-text { display: grid; gap: 2px; min-width: 0; }
+.mvp-label {
+  justify-self: start;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  color: var(--gold-ink);
+  font: 800 11px/1.3 var(--font-ui);
+  letter-spacing: 0.16em;
+}
+.mvp-name { font: 800 21px/1.15 var(--font-display); color: #fff; overflow-wrap: anywhere; }
+.mvp-line { display: flex; flex-wrap: wrap; gap: 4px 12px; font: 600 13px/1.3 var(--font-ui); color: var(--text-2); }
+.mvp-fig b { font: 800 14px/1.2 var(--font-tile); color: var(--gold-1); font-variant-numeric: tabular-nums; }
+.mvp-fig.heal b { color: #9ff0c8; }
+
+/* ---------------------------------------------------------------- Loss: So close and the tip */
+.loss-tip {
+  display: grid;
+  gap: 4px;
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(239, 118, 96, 0.4);
+  border-left: 3px solid #ef7660;
+  border-radius: 8px;
+  background: linear-gradient(90deg, rgba(239, 118, 96, 0.14), rgba(4, 12, 28, 0.7) 70%);
+}
+.so-close { font: 800 22px/1.1 var(--font-display); color: #ffb2a3; }
+.loss-near { font: 600 14px/1.4 var(--font-ui); color: var(--text-1); }
+.loss-tip-line { display: block; font: 500 14px/1.45 var(--font-ui); color: var(--text-2); }
+.loss-tip-tag {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 1px 7px;
+  border-radius: 4px;
+  background: rgba(127, 232, 255, 0.16);
+  border: 1px solid var(--holo-line-strong);
+  color: var(--holo-1);
+  font: 800 11px/1.4 var(--font-ui);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.loss-fact { color: #fff; font-weight: 700; }
+
+/* ---------------------------------------------------------------- The stamp */
+.stamp-target { transform-origin: 50% 50%; transform-box: fill-box; }
+.ceremony-live .stamp-target { animation: ceremony-stamp 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.25) 0.25s both; }
+.stamp-target.stamped { filter: drop-shadow(0 0 16px rgba(255, 199, 94, 0.75)) drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45)); }
+.ceremony-live .stamp-target.stamped { animation: ceremony-stamp 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.25) 0.25s both, ceremony-thump 0.5s ease-out 0.67s; }
+@keyframes ceremony-stamp {
+  0% { opacity: 0; transform: scale(2.6) rotate(-16deg); }
+  70% { opacity: 1; transform: scale(0.9) rotate(-3deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes ceremony-thump {
+  0% { filter: brightness(1.8) drop-shadow(0 0 26px rgba(255, 233, 168, 0.95)); }
+  100% { filter: drop-shadow(0 0 16px rgba(255, 199, 94, 0.75)) drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45)); }
+}
+.ceremony-live .mvp-card { animation: ceremony-rise 0.5s ease-out 0.1s both; }
+.ceremony-live .loss-tip { animation: ceremony-rise 0.45s ease-out 0.15s both; }
+@keyframes ceremony-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* ---------------------------------------------------------------- Confetti and the MVP tag */
+.ceremony-confetti { position: fixed; inset: 0; z-index: 5; width: 100vw; height: 100vh; pointer-events: none; }
+.mvp-tag { position: fixed; left: 0; top: 0; z-index: 30; pointer-events: none; will-change: transform; }
+.mvp-tag span {
+  position: absolute;
+  left: 0;
+  bottom: 6px;
+  transform: translateX(-50%);
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, var(--gold-1), var(--gold-2));
+  color: var(--gold-ink);
+  font: 800 13px/1.2 var(--font-ui);
+  letter-spacing: 0.18em;
+  box-shadow: 0 0 18px rgba(255, 199, 94, 0.7);
+  animation: ceremony-rise 0.3s ease-out both;
+}
+.mvp-tag span::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  margin-left: -6px;
+  border: 6px solid transparent;
+  border-bottom: 0;
+  border-top-color: var(--gold-2);
+}
+
+/* ---------------------------------------------------------------- Short screens (landscape phones) */
+@media (max-height: 500px) {
+  .mvp-card { margin-top: 8px; padding: 4px 12px 4px 4px; gap: 10px; }
+  .mvp-portrait { width: 44px; height: 44px; }
+  .mvp-portrait .portrait-art { --size: 38px; }
+  .mvp-text { grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 8px; row-gap: 0; }
+  .mvp-name { font-size: 17px; }
+  .mvp-line { grid-column: 1 / -1; }
+  .loss-tip { margin-top: 10px; padding: 8px 12px; }
+  .so-close { font-size: 18px; }
+  .loss-tip-line { font-size: 13px; }
+}
+@media (max-width: 420px) {
+  .mvp-name { font-size: 18px; }
+  .mvp-line { font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ceremony-live .stamp-target, .ceremony-live .mvp-card, .ceremony-live .loss-tip { animation: none !important; }
+}
