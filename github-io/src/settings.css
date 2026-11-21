@@ -306,3 +306,6 @@
 .sound-tests { display:flex; flex-wrap:wrap; gap:8px; }
 .sound-tests h3 { flex-basis:100%; font-size:14px; }
 .sound-tests button { min-height:44px; min-width:44px; font-size:12px; }
+
+/* Copyright notice under the version (owner, 2026-11-21). */
+.settings-copyright { display: block; }
