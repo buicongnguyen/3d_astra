@@ -45,7 +45,8 @@ export const armour = {
     if (a.damage !== 1) e.damage *= a.damage;
     e.angle = angle;
     e.post = { x, z };
-    if (like?.squadRank) this.armourBoost(e, this.armourGains(1, null), this.armourGains(like.squadRank, like.squadBranch || null), like.squadRank, like.squadBranch || null);
+    if (like?.squadRank) this.armourBoost(e, this.armourGains(1, null), this.armourGains(like.squadRank, like.squadBranch || null, !!like.combined), like.squadRank, like.squadBranch || null);
+    if (like?.combined) e.combined = true;
     return e;
   },
   // ---------------------------------------------------------------- Armour upgrades (0.24)
@@ -54,13 +55,18 @@ export const armour = {
   // the first upgrade) and given to the tanks a refit brings. hp, damage and mech multiply,
   // interval multiplies, leash adds; `repair` is the share of health a tank mends a second once
   // it has not been hit for GARRISONS.repair.delay seconds (`mend`).
-  armourGains(rank, branch) {
+  // `combined` (AAA round 3, R3-C): the squad's branch plus the other one (GARRISONS.armour.combined),
+  // every branch's hp, damage, interval and mech, the best repair, and the leash set back to the
+  // squad's own (the owner's decision O3: a Combined squad holds within the default 9 m).
+  armourGains(rank, branch, combined = false) {
     const a = GARRISONS.armour, g = { hp: 1, damage: 1, interval: 1, mech: 1, leash: 0, repair: 0 };
-    for (const u of [rank >= 2 ? a.rank2 : null, branch ? a.branches?.[branch] : null]) {
+    const branches = combined && branch && a.branches ? Object.keys(a.branches).map((id) => a.branches[id]) : [branch ? a.branches?.[branch] : null];
+    for (const u of [rank >= 2 ? a.rank2 : null, ...branches]) {
       if (!u) continue;
       g.hp *= u.hp ?? 1; g.damage *= u.damage ?? 1; g.interval *= u.interval ?? 1; g.mech *= u.mech ?? 1; g.leash += u.leash ?? 0;
-      if (u.repair) g.repair = u.repair;
+      if (u.repair) g.repair = combined ? Math.max(g.repair, u.repair) : u.repair;
     }
+    if (combined && branch) g.leash = 0;
     return g;
   },
   // One tank from the gains `from` to `to`: health grows by what the upgrade adds. Its health
@@ -88,8 +94,9 @@ export const armour = {
     if (!lead.squadBranch && a.branches) return { kind: "branch", costs: Object.fromEntries(Object.entries(a.branches).map(([id, b]) => [id, b.cost])) };
     return null;
   },
-  // Rank 2 (no branch given), then one branch, once.
-  armourUpgrade(team, squad, branch = null) {
+  // Rank 2 (no branch given), then one branch, once; then Combined (`combined` true, no branch).
+  armourUpgrade(team, squad, branch = null, combined = false) {
+    if (combined) return this.armourCombine(team, squad);
     const units = this.armourUnits(squad), a = GARRISONS.armour, next = this.armourNextUpgrade(squad);
     if (!this.defence || this.result || team !== TEAM || !this.armourRules() || !units.length || !next) return false;
     if (next.kind === "rank" ? branch : !a.branches?.[branch]) return false;
@@ -156,5 +163,30 @@ export const armour = {
       }
       this.events.push({ type: "armourRefit", squad, team: TEAM, x: lead.x, z: lead.z });
     }
+  },
+};
+
+// The Combined squad step (AAA round 3, R3-C). Two Simulation methods outside the `armour` mixin above,
+// whose keys tests/mixins.test.js pins: src/sim/content/barracks-veterans.js (R3-C's content module)
+// adds them to the Simulation through its `mixin`.
+export const combinedSquads = {
+  // What the Combined step costs this squad now (GARRISONS.armour.combined.cost), or null: only after
+  // its branch, once. Kept apart from armourNextUpgrade, which tools/defence-bot.mjs reads, so the
+  // Defence bot never buys it and check:defence keeps its numbers.
+  armourCombinedCost(squad) {
+    const lead = this.armourUnits(squad)[0], c = GARRISONS.armour.combined;
+    return c && lead?.squadBranch && !lead.combined ? c.cost : null;
+  },
+  // The Combined step: the squad's tanks gain the other branch too. The lazy `combined` flag on each
+  // tank (kept by a refit) is what the view draws the gold trim from (R3-K).
+  armourCombine(team, squad) {
+    const units = this.armourUnits(squad), cost = this.armourCombinedCost(squad);
+    if (!this.defence || this.result || team !== TEAM || !this.armourRules() || !units.length || cost === null) return false;
+    if (this.players[team].alloy < cost) { this.message(`Need ${Math.ceil(cost - this.players[team].alloy)} more alloy.`, team); return false; }
+    this.players[team].alloy -= cost;
+    const lead = units[0], rank = lead.squadRank || 1, branch = lead.squadBranch, from = this.armourGains(rank, branch), to = this.armourGains(rank, branch, true);
+    for (const e of units) { this.armourBoost(e, from, to, rank, branch); e.combined = true; }
+    this.events.push({ type: "armourUpgrade", squad, rank, branch, combined: true, ids: units.map((e) => e.id), team, x: lead.x, z: lead.z });
+    return true;
   },
 };

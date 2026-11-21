@@ -74,6 +74,9 @@ export function createInput(c) {
       }
     } else if (squad && (id === "rank2" || id === "assault" || id === "bulwark")) {
       if (S.sim.command({ team: 0, type: "armourUpgrade", squad, ...(id === "rank2" ? {} : { branch: id }) })) A.tone(id === "rank2" ? 760 : 880, 0.14);
+    } else if (squad && id === "combined") {
+      // R3-C: the Combined step. The sheet's key does not name it, so the card is redrawn by hand.
+      if (S.sim.command({ team: 0, type: "armourUpgrade", squad, combined: true })) { A.tone(990, 0.16); $("commands").querySelector("[data-defence-sheet]")?.removeAttribute("data-key"); }
     } else if (squad && (id === "guard" || id === "road")) {
       if (S.sim.command({ team: 0, type: "armourMode", squad, mode: id })) A.tone(id === "road" ? 420 : 520, 0.1);
     } else if (squad && id === "focus") { const u = S.sim.armourUnits(squad)[0]; if (u) S.view.focusOn(u.x, u.z); }

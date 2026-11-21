@@ -1216,7 +1216,14 @@
     "Select every fighter": "Chọn mọi lính chiến",
     "Select Medics, Engineers and flyers": "Chọn Quân y, Công binh và máy bay",
     "Group pace": "Nhịp đội hình",
-    "A group you move keeps together at its fighters' pace, with Medics and Engineers walking behind them. Off: every unit walks at its own speed.": "Nhóm quân bạn điều đi giữ đội hình theo tốc độ của lính chiến, Quân y và Công binh đi phía sau. Tắt: mỗi đơn vị đi theo tốc độ riêng."
+    "A group you move keeps together at its fighters' pace, with Medics and Engineers walking behind them. Off: every unit walks at its own speed.": "Nhóm quân bạn điều đi giữ đội hình theo tốc độ của lính chiến, Quân y và Công binh đi phía sau. Tắt: mỗi đơn vị đi theo tốc độ riêng.",
+    "Army size": "Quy mô quân đội",
+    "The supply cap for every side. 200 is for desktop only.": "Giới hạn quân số cho mọi phe. Mức 200 chỉ dành cho máy tính.",
+    "Combined": "Kết hợp",
+    "Combined: adds the other branch, so the squad has both; it holds within 9 m of its spot.": "Kết hợp: thêm nhánh còn lại để tiểu đội có cả hai; nó giữ vị trí trong phạm vi 9 m.",
+    "Combined adds the other branch to this squad.": "Kết hợp thêm nhánh còn lại cho tiểu đội này.",
+    "Recruits arrive as veterans": "Tân binh ra trận đã là cựu binh",
+    "Level 3: recruits arrive as veterans": "Cấp 3: tân binh ra trận đã là cựu binh"
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],

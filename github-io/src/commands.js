@@ -17,7 +17,7 @@ const COMMANDS = {
   cancelTrain: { allowed: (sim, c) => ownBuilding(sim, c.team, c.building), run: (sim, c) => sim.cancelQueue(c.building, c.index) },
   build: { allowed: (sim, c) => ownUnit(sim, c.team, c.worker), run: (sim, c) => sim.build(c.worker, c.building, c.x, c.z) },
   cancelBuild: { allowed: (sim, c) => ownBuilding(sim, c.team, c.building), run: (sim, c) => sim.cancelBuilding(c.building) },
-  upgrade: { allowed: (sim, c) => ownBuilding(sim, c.team, c.building), run: (sim, c) => sim.upgradeBuilding(c.building, c.team) },
+  upgrade: { allowed: (sim, c) => ownBuilding(sim, c.team, c.building), run: (sim, c) => sim.upgradeBuilding(c.building, c.team) && (sim.veteranOrder(c.building), true) },
   cancelUpgrade: { allowed: (sim, c) => ownBuilding(sim, c.team, c.building), run: (sim, c) => sim.cancelLevel(c.building, c.team) },
   rally: {
     allowed: (sim, c) => Array.isArray(c.ids) && c.ids.length > 0 && c.ids.every((id) => ownBuilding(sim, c.team, id)),
@@ -54,7 +54,7 @@ const COMMANDS = {
   armourMode: { allowed: (sim, c) => !!sim.defence && Number.isInteger(c.squad) && typeof c.mode === "string", run: (sim, c) => sim.armourMode(c.team, c.squad, c.mode) },
   // 0.24: a branched tower's next rank, and a squad's Rank 2 then its branch (Assault or Bulwark).
   padRank: { allowed: (sim, c) => !!sim.defence && ownBuilding(sim, c.team, c.building) && !!sim.get(c.building).crew, run: (sim, c) => sim.padRank(c.team, c.building) },
-  armourUpgrade: { allowed: (sim, c) => !!sim.defence && Number.isInteger(c.squad) && (c.branch === undefined || typeof c.branch === "string"), run: (sim, c) => sim.armourUpgrade(c.team, c.squad, c.branch ?? null) },
+  armourUpgrade: { allowed: (sim, c) => !!sim.defence && Number.isInteger(c.squad) && (c.branch === undefined || typeof c.branch === "string") && (c.combined === undefined || c.combined === true), run: (sim, c) => sim.armourUpgrade(c.team, c.squad, c.branch ?? null, c.combined === true) },
   // The Commander's answer to the decision a story mission is waiting for (sim/missions.js).
   decide: { allowed: (sim, c) => c.team === 0 && sim.canDecide?.(c.id, c.option), run: (sim, c) => sim.decide(c.id, c.option) },
 };

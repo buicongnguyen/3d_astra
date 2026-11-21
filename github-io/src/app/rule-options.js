@@ -27,4 +27,14 @@ export const RULE_OPTIONS = [
     default: "classic",
     badge: "New",
   },
+  // Army size (AAA round 3, R3-C; owner decision O2): 100 stays the default (no rule key), 150 for
+  // any device, 200 for desktop only (`desktop: true` hides the button on touch devices, app/briefing.js).
+  {
+    id: "pop",
+    label: "Army size",
+    help: "The supply cap for every side. 200 is for desktop only.",
+    values: [{ id: "100", label: "100" }, { id: "150", label: "150" }, { id: "200", label: "200", desktop: true }],
+    default: "100",
+    badge: "New",
+  },
 ];

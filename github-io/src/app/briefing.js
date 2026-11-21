@@ -140,7 +140,7 @@ export function setupBriefing(S, A) {
   // The "Battle rules" row of the skirmish setup (app/rule-options.js): a segmented control per rule,
   // drawn into #skirmish-setup when the page binds (the markup in app/shell.js stays as it is).
   function rulesHTML() {
-    const row = (o) => `<div class="rule-row" data-rule="${o.id}"><span class="rule-name">${o.label}${o.badge ? `<i class="rule-badge">${o.badge}</i>` : ""}</span><div class="rule-buttons" role="group" aria-label="${o.label}">${o.values.map((v) => `<button type="button" data-rule-value="${v.id}" aria-pressed="false">${v.label}</button>`).join("")}</div><small class="rule-help">${o.help}</small></div>`;
+    const row = (o) => `<div class="rule-row" data-rule="${o.id}"><span class="rule-name">${o.label}${o.badge ? `<i class="rule-badge">${o.badge}</i>` : ""}</span><div class="rule-buttons" role="group" aria-label="${o.label}">${o.values.filter((v) => !(v.desktop && S.touchInput)).map((v) => `<button type="button" data-rule-value="${v.id}" aria-pressed="false"${v.desktop ? " data-desktop-only" : ""}>${v.label}</button>`).join("")}</div><small class="rule-help">${o.help}</small></div>`;
     return `<div class="rule-rows" id="battle-rules" role="group" aria-labelledby="battle-rules-title"><span class="rule-title" id="battle-rules-title">Battle rules</span>${RULE_OPTIONS.map(row).join("")}</div>`;
   }
   function syncRules() {
@@ -198,6 +198,9 @@ export function setupBriefing(S, A) {
     for (const id of ["scenario", "enemy-count", "ai-speed", "alliance", "enemy-faction"]) $(id).onchange = previewBattle;
     // Battle rules: choosing one is remembered and rebuilds the preview (it is part of the match).
     $("skirmish-setup").insertAdjacentHTML("beforeend", rulesHTML());
+    // A desktop-only choice (Army size 200, R3-C) remembered from a desktop visit falls back to the
+    // largest touch choice on a touch device, so the setup never shows a value with no button.
+    for (const o of RULE_OPTIONS) if (S.touchInput && o.values.find((v) => v.id === ruleValue(S.rules, o.id))?.desktop) { S.rules = withRule(S.rules, o.id, o.values.filter((v) => !v.desktop).at(-1).id); A.rememberRules?.(); }
     $("battle-rules").onclick = (event) => {
       const button = event.target.closest("[data-rule-value]");
       if (!button || Z.started) return;

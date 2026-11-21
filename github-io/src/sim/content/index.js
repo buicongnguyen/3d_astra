@@ -18,6 +18,7 @@ import { outrider } from "./outrider.js";
 import { aiCasts } from "./ai-casts.js";
 import { fieldCommand } from "./field-command.js";
 import { elites } from "./elites.js";
+import { barracksVeterans } from "./barracks-veterans.js";
 
 export const CONTENT = [
   suppression,
@@ -31,4 +32,5 @@ export const CONTENT = [
   aiCasts,
   fieldCommand,
   elites,
+  barracksVeterans,
 ];

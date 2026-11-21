@@ -142,6 +142,9 @@ jobs:
           # AAA round 3 (R3-B): squad orders (group pace, follow tether, phone group strip).
           - name: r3-b
             scripts: squad-orders
+          # AAA round 3 (R3-C): the Army size row (200 desktop-only) and the Combined armour step.
+          - name: r3-c
+            scripts: army-depth
     defaults:
       run:
         working-directory: github-io
