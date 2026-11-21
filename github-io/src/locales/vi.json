@@ -1190,7 +1190,26 @@
     "REAR": "SAU LƯNG",
     "PINNED": "BỊ GHIM",
     "PIERCE": "XUYÊN GIÁP",
-    "destroyed": "bị tiêu diệt"
+    "destroyed": "bị tiêu diệt",
+    "Skip guide": "Bỏ qua hướng dẫn",
+    "Step": "Bước",
+    "of 3": "trên 3",
+    "Tap the glowing pad beside the road.": "Chạm vào bệ đang sáng bên đường.",
+    "Pick a crew for it. Rangers are a good first tower.": "Chọn một đội cho bệ đó. Xạ thủ là tháp đầu tiên tốt.",
+    "Call the wave when you are ready: calling early pays bonus alloy.": "Gọi đợt khi bạn sẵn sàng: gọi sớm được thưởng thêm hợp kim.",
+    "Guide skipped. Tap a pad beside the road, then pick a crew.": "Đã bỏ qua hướng dẫn. Chạm vào một bệ bên đường, rồi chọn một đội.",
+    "Your first tower stands and the wave is coming. Hold the road!": "Tháp đầu tiên đã dựng và đợt địch đang đến. Giữ vững con đường!",
+    "Your first tower": "Tháp đầu tiên của bạn",
+    "Tap the glowing pad beside the road, then pick a crew.": "Chạm vào bệ đang sáng bên đường, rồi chọn một đội.",
+    "Show the panel": "Hiện bảng",
+    "Hide the panel": "Ẩn bảng",
+    "Next star": "Sao tiếp theo",
+    "Counter it with": "Khắc chế bằng",
+    "All three stars. Next: the Heroic challenge, for one more star.": "Đủ ba sao. Tiếp theo: thử thách Anh hùng, thêm một sao nữa.",
+    "All three stars. Next: clear it on Veteran.": "Đủ ba sao. Tiếp theo: vượt qua ở mức Kỳ cựu.",
+    "Take one tower to gold tier 3: it hits far harder and opens a branch.": "Nâng một tháp lên bậc vàng 3: đánh mạnh hơn nhiều và mở một nhánh.",
+    "Crew a rim pad: 2 m more reach and harder hits.": "Đặt đội lên bệ mép: tầm xa hơn 2 m và đánh mạnh hơn.",
+    "Call a wave early only once your towers are upgraded.": "Chỉ gọi đợt sớm khi các tháp đã được nâng cấp."
   },
   "patterns": [
     ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],
@@ -1733,6 +1752,9 @@
     ["^DAY (\\d+)$", "NGÀY {1}"],
     ["^NIGHT (\\d+)$", "ĐÊM {1}"],
     ["^(.+) CHRONICLE$", "BIÊN NIÊN {1}"],
-    ["^FRONTIER DEFENCE$", "PHÒNG THỦ BIÊN CƯƠNG"]
+    ["^FRONTIER DEFENCE$", "PHÒNG THỦ BIÊN CƯƠNG"],
+    ["^Hold all (\\d+) waves\\.$", "Giữ vững cả {1} đợt."],
+    ["^Finish with (\\d+) lives or more \\(you kept (\\d+)\\)\\.$", "Kết thúc với {1} mạng trở lên (bạn còn {2})."],
+    ["^Wave (\\d+) cost the most lives:$", "Đợt {1} làm mất nhiều mạng nhất:"]
   ]
 }

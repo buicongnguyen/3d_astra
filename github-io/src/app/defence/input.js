@@ -170,6 +170,8 @@ export function createInput(c) {
   }
   function picked() {
     A.tone(520, 0.06);
+    // R3-E: a new pick opens a collapsed landscape dock again.
+    c.setDockMin?.(false);
     if (root.classList.contains("compact-ui")) A.dockTab("actions");
     A.updateUI();
     return true;

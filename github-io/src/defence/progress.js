@@ -6,6 +6,7 @@
 //   daily: { [YYYY-MM-DD]: { [levelId]: bestWavesHeld } }   (0.21, the last DAILY_KEEP days)
 //   seen: [unitType],                        (AAA round 2 W1-F: enemy types whose new-enemy card was shown)
 //   heroic: { [levelId]: { won, lives } },   (AAA round 2 W2-B: Heroic wins, +1 star each; written once something is recorded)
+//   guided: true,                            (AAA round 3 R3-E: the guided first build was finished or skipped; written only then)
 // }
 // The best stars and the best lives are kept, each on its own, with the hardest difficulty cleared.
 // The 0.21 keys are written only once they hold something, so older progress reads the same.
@@ -28,8 +29,8 @@ const scores = (o) => {
   return out;
 };
 // Leaves out the 0.21 keys (and `seen`) while they are empty.
-function shaped(levels, perks = [], endless = {}, daily = {}, seen = [], heroic = {}) {
-  return { levels, ...(perks.length ? { perks } : {}), ...(Object.keys(endless).length ? { endless } : {}), ...(Object.keys(daily).length ? { daily } : {}), ...(seen.length ? { seen } : {}), ...(Object.keys(heroic).length ? { heroic } : {}) };
+function shaped(levels, perks = [], endless = {}, daily = {}, seen = [], heroic = {}, guided = false) {
+  return { levels, ...(perks.length ? { perks } : {}), ...(Object.keys(endless).length ? { endless } : {}), ...(Object.keys(daily).length ? { daily } : {}), ...(seen.length ? { seen } : {}), ...(Object.keys(heroic).length ? { heroic } : {}), ...(guided ? { guided: true } : {}) };
 }
 
 export function loadDefence(store = storage()) {
@@ -50,7 +51,7 @@ export function loadDefence(store = storage()) {
     const heroic = {};
     if (raw.heroic && typeof raw.heroic === "object")
       for (const [id, v] of Object.entries(raw.heroic)) if (hasHeroic(id) && v?.won === true && whole(v.lives, 99) !== null) heroic[id] = { won: true, lives: v.lives };
-    return shaped(out, perks, scores(raw.endless), daily, seen, heroic);
+    return shaped(out, perks, scores(raw.endless), daily, seen, heroic, raw.guided === true);
   } catch {
     return { levels: {} };
   }
@@ -120,3 +121,10 @@ export function recordSeen(progress, types) {
   const fresh = [...new Set(types)].filter((t) => Object.hasOwn(D, t) && !hasSeen(progress, t));
   return fresh.length ? { ...progress, seen: [...(progress.seen || []), ...fresh] } : progress;
 }
+
+// ---------------------------------------------------------------- Guided first build (AAA round 3, R3-E)
+// Three coach steps (tap the glowing pad, pick a crew, call the wave) on a profile with no Defence win.
+// Done once finished or skipped; `guided` is written only then, so older progress reads and saves the same.
+export const hasDefenceWin = (progress) => Object.keys(progress.levels || {}).length > 0;
+export const guideWanted = (progress) => !progress.guided && !hasDefenceWin(progress);
+export const recordGuided = (progress) => (progress.guided ? progress : { ...progress, guided: true });

@@ -3,6 +3,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { TIER_TINT, RANK_TINT, HERO_TINT, PAD_COLOR, TIER_PAD, PICK_RADIUS, ZONE_COLOR, ZONE_PADS, BRIDGE_RADIUS, PONTOON_LENGTH } from "./constants.js";
+import { GUIDE_PAD } from "./constants.js";
 
 export function createPadsView(c) {
   const { S, A, Z, root, ui, key, motionOff } = c;
@@ -81,10 +82,12 @@ export function createPadsView(c) {
   function paintPads() {
     if (!ui.pads) return;
     placePads();
-    const list = allPads().slice(0, ui.pads.mesh.count), tiers = list.map((p) => S.sim.towerOn(p.id)?.tier || 0), key = `${S.defencePad}:${tiers.join("")}`;
+    const glow = c.guidePad?.() ?? null;
+    const list = allPads().slice(0, ui.pads.mesh.count), tiers = list.map((p) => S.sim.towerOn(p.id)?.tier || 0), key = `${S.defencePad}:${tiers.join("")}:${glow}`;
     if (ui.pads.key === key) return;
     ui.pads.key = key;
-    list.forEach((p, i) => ui.pads.mesh.setColorAt(i, color.setRGB(...(p.id === S.defencePad ? PAD_COLOR.picked : tiers[i] ? TIER_PAD[tiers[i]] : PAD_COLOR[p.high || "ground"]))));
+    // R3-E: the guide's pad glows until it is picked.
+    list.forEach((p, i) => ui.pads.mesh.setColorAt(i, color.setRGB(...(p.id === S.defencePad ? PAD_COLOR.picked : tiers[i] ? TIER_PAD[tiers[i]] : p.id === glow ? GUIDE_PAD : PAD_COLOR[p.high || "ground"]))));
     ui.pads.mesh.instanceColor.needsUpdate = true;
   }
   function nearestPad(x, y) {

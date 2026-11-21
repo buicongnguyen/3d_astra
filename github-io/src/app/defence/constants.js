@@ -79,3 +79,10 @@ export const VIEW_TITLE = { follow: "View: following the wave. Tap for the whole
 export const AIM_LABEL = { near: "Nearest", first: "First", strong: "Strongest", air: "Air" };
 export const AIM_TEXT = { near: "Shoots the nearest enemy.", first: "Shoots the enemy closest to the exit.", strong: "Shoots the enemy with the most health.", air: "Shoots flyers first." };
 export const PHONE_ZOOM = 55, FOLLOW_HOLD_MS = 6000, CARD_MS = 6000;
+// AAA round 3, R3-E: the guided first build (app/defence/guide.js), its glowing pad, and the crew badges.
+export const GUIDE_STEPS = [
+  "Tap the glowing pad beside the road.",
+  "Pick a crew for it. Rangers are a good first tower.",
+  "Call the wave when you are ready: calling early pays bonus alloy.",
+];
+export const GUIDE_PAD = [0.55, 1.65, 1.2];

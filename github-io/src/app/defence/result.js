@@ -1,8 +1,43 @@
 // Frontier Defence, the result screen (stars, Heroic, Endless / Daily score) and "Next level".
+// R3-E: a level's result names one concrete next-star hint (nextStar).
+import { counterCrews, waveTypes } from "../../defence/traits.js";
+import { CREW_LABEL } from "./constants.js";
 
 export function createResult(c) {
   const { S, A, Z, root, ui } = c;
   const { recordHeroic, starsFor, icon, DEFENCE_LEVELS, loadDefence, recordDefence, saveDefence, statTile, formatClock, DIFFICULTY_LABELS, recordScore, bestScore, dayKey, $ } = c.deps;
+  const { D, hasHeroic } = c.deps;
+  // ---------------------------------------------------------------- Next star (R3-E)
+  // One line on what earns the next star, then one tip from this match: the wave that cost the most
+  // lives (bar.js counts them as they go) and the crews that counter its toughest unit; else the
+  // gold tier, or a rim pad. Three stars point at Heroic, then at Veteran.
+  function nextStar(win, stars) {
+    const sim = S.sim, def = sim.missionDef, d = sim.defence, medals = def.medals || {};
+    if (win && stars >= 3) {
+      if (hasHeroic?.(def.id)) return { kind: "heroic", goal: "All three stars. Next: the Heroic challenge, for one more star.", tip: "" };
+      return sim.difficulty === "veteran" ? null : { kind: "veteran", goal: "All three stars. Next: clear it on Veteran.", tip: "" };
+    }
+    const need = win ? (stars === 1 ? medals.silver?.lives : medals.gold?.lives) : null;
+    const goal = !win ? { text: `Hold all ${def.defence.waves.length} waves.`, kind: "hold" } : need ? { text: `Finish with ${need} lives or more (you kept ${d.lives}).`, kind: "lives" } : null;
+    if (!goal) return null;
+    const worst = Object.entries(ui.leaks || {}).sort((a, b) => b[1] - a[1] || a[0] - b[0])[0];
+    const wave = worst ? sim.defenceWave(Number(worst[0]) - 1) : null;
+    if (wave) {
+      const types = waveTypes(wave.groups, (g, slot) => sim.waveType(g, slot)), tough = types.map((t) => t.type).filter((t) => D[t]).sort((a, b) => (D[b].hp + (D[b].shield || 0)) - (D[a].hp + (D[a].shield || 0)))[0];
+      const crews = tough ? counterCrews({ type: tough }, D, def.defence.crews) : [];
+      if (tough && crews.length) return { kind: goal.kind, goal: goal.text, wave: Number(worst[0]), unit: D[tough].name, crews: crews.map((x) => CREW_LABEL[x] || x) };
+    }
+    const towers = sim.entities.filter((e) => e.crew && e.team === 0 && e.hp > 0);
+    if (!towers.some((t) => t.tier >= 3)) return { kind: goal.kind, goal: goal.text, tip: "Take one tower to gold tier 3: it hits far harder and opens a branch." };
+    if (def.defence.pads.some((p) => p.high === "rim") && !towers.some((t) => sim.padById(t.pad)?.high === "rim")) return { kind: goal.kind, goal: goal.text, tip: "Crew a rim pad: 2 m more reach and harder hits." };
+    return { kind: goal.kind, goal: goal.text, tip: "Call a wave early only once your towers are upgraded." };
+  }
+  function nextStarHtml(h) {
+    if (!h) return "";
+    const tip = h.wave ? `<span class="next-star-tip"><span>Wave ${h.wave} cost the most lives:</span> <b>${h.unit}</b>. <span>Counter it with</span> ${h.crews.map((x) => `<b>${x}</b>`).join(" ")}</span>` : h.tip ? `<span class="next-star-tip">${h.tip}</span>` : "";
+    return `<p class="defence-next-star" data-next-star="${h.kind}">${icon("info")}<span><strong>Next star</strong> <span>${h.goal}</span>${tip}</span></p>`;
+  }
+
   // ---------------------------------------------------------------- Result
   function result() {
     const sim = S.sim, def = sim.missionDef, d = sim.defence, win = sim.result === "victory";
@@ -19,6 +54,7 @@ export function createResult(c) {
       <div class="debrief-head"><span class="defence-stars" role="img" aria-label="${stars} of 3 stars">${row}</span><div><h2 id="modal-title">${def.title}</h2><p class="debrief-result"><strong>${win ? "Victory" : "Defeat"}</strong><span>${win ? (stars === 3 ? "Not one through" : stars === 2 ? "The line held" : "Barely held") : "The road is lost"}</span></p></div></div>
       <p class="debrief-difficulty">${DIFFICULTY_LABELS[sim.difficulty || "standard"]}</p>
       <div class="result-grid">${statTile(`${d.lives}`, "Lives left", d.lives ? "" : "loss")}${statTile(`${d.cleared}/${def.defence.waves.length}`, "Waves held")}${statTile(String(Math.round(killed)), "Enemies defeated")}${statTile(String(d.bounty), "Bounty alloy", "alloy")}${statTile(formatClock(sim.time), "Time", "time")}</div>
+      ${nextStarHtml(nextStar(win, stars))}
       <div class="debrief-actions">${next >= 0 ? `<button class="primary" data-defence-next="${next}"><span>Next level</span>${icon("arrow")}</button><button class="secondary" data-restart>Retry</button>` : `<button class="primary" data-restart><span>Retry</span>${icon("arrow")}</button>`}<button class="secondary" data-new-game>Levels</button></div>
     </div>`;
     document.querySelector("#modal .modal").scrollTop = 0;
@@ -72,5 +108,5 @@ export function createResult(c) {
     while (($("start").disabled || !S.view.modelsReady) && performance.now() - started < 90000) await new Promise((resolve) => setTimeout(resolve, 100));
     if (!Z.started && S.playMode === "defence") $("start").click();
   });
-  Object.assign(c, { result, heroicResult, scoreResult });
+  Object.assign(c, { result, heroicResult, scoreResult, nextStar });
 }

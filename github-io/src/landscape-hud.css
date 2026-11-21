@@ -296,3 +296,39 @@
   .compact-ui:not(.in-briefing) .selection-panel.has-entity #selection-info .sel-portrait { width: 42px; height: 42px; --size: 38px; }
   .compact-ui:not(.in-briefing) .selection-panel.has-entity #selection-info .portrait-art { --size: 38px; }
 }
+
+/* ===== Defence (AAA round 3, R3-E): a narrow dock that can collapse =====
+   In Frontier Defence the Selection / Actions panel and its tabs are 184 px wide (at most 22 % of an
+   844 px wide view; tests/defence-onboarding.mjs). A 44 px button on top of the panel collapses it to
+   that one button; a new pick on the battlefield opens it again (app/defence/dock.js). */
+@media (min-aspect-ratio: 1.35) {
+  .compact-ui.in-defence:not(.in-briefing) { --side-width: min(184px, 22vw); }
+  .compact-ui.in-defence:not(.in-briefing) #defence-dock-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    align-self: flex-end;
+    width: 44px;
+    height: 44px;
+    margin-bottom: 4px;
+    padding: 0;
+    border: 1px solid var(--line-2, rgba(168, 214, 212, 0.24));
+    border-radius: 10px;
+    background: rgba(8, 23, 31, 0.92);
+    color: var(--text-1, #f1f6f3);
+    pointer-events: auto;
+  }
+  .compact-ui.in-defence:not(.in-briefing) #defence-dock-toggle .icon { width: 20px; height: 20px; }
+  /* Nothing picked: no panel, so nothing to collapse. */
+  .compact-ui.in-defence:not(.defence-dock-min):not(.in-briefing):has(.selection-panel:not(.has-entity)) #defence-dock-toggle,
+  .compact-ui.in-defence:not(.defence-dock-min):not(.in-briefing)[data-dock="map"] #defence-dock-toggle { display: none; }
+  /* Collapsed: the button alone, in the corner. */
+  .compact-ui.in-defence.defence-dock-min:not(.in-briefing) .bottom-dock .panel:not(.minimap-panel),
+  .compact-ui.in-defence.defence-dock-min:not(.in-briefing) #dock-tabs { display: none; }
+  .compact-ui.in-defence.defence-dock-min:not(.in-briefing) .bottom-dock { bottom: var(--safe-bottom); width: 44px; }
+  .compact-ui.in-defence.defence-dock-min:not(.in-briefing) #defence-dock-toggle { margin-bottom: 0; border-color: var(--gold-line, rgba(255, 199, 94, 0.45)); }
+  /* Two tiles a row in 172 px: the labels stay on one line at 12 px. */
+  .compact-ui.in-defence:not(.in-briefing) #commands .command-tile > span { font-size: 12px; }
+  .compact-ui.in-defence:not(.in-briefing) #dock-tabs button { font-size: 11px; }
+}
