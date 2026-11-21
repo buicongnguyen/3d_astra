@@ -87,7 +87,7 @@
 .cmap-route { stroke-width: 3; stroke-dasharray: 9 7; }
 .cmap-route.walked { stroke: #ffd77a; stroke-dasharray: none; }
 .cmap-route.ahead { stroke: #9ff1ff; }
-.cmap-route.dim { stroke: rgba(205, 236, 245, 0.55); stroke-width: 2; stroke-dasharray: 4 7; }
+.cmap-route.dim { stroke: rgba(215, 240, 248, 0.72); stroke-width: 2; stroke-dasharray: 4 7; }
 
 /* Act plates: small glass tags at the left edge of each act's band (Act 3 in the calm top-left corner). */
 .cmap-act {
@@ -159,7 +159,8 @@
   color: #a9c2d0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
-.cmap-node.locked b { border-style: dashed; border-color: rgba(160, 205, 220, 0.5); background: rgba(4, 12, 28, 0.82); color: #9db4c2; }
+/* Locked: a dim glass disc, but with a light dashed rim and a soft halo so it still reads on the dark terrain. */
+.cmap-node.locked b { border-style: dashed; border-color: rgba(200, 232, 242, 0.78); background: rgba(4, 12, 28, 0.86); color: #c4d6df; box-shadow: 0 0 0 2px rgba(3, 10, 24, 0.55), 0 0 10px rgba(160, 220, 240, 0.28), 0 2px 8px rgba(0, 0, 0, 0.6); }
 .cmap-node.open b { border-color: var(--holo-1, #7fe8ff); color: #fff; box-shadow: 0 0 12px rgba(127, 232, 255, 0.55), inset 0 0 8px rgba(127, 232, 255, 0.3); }
 .cmap-node.done b { border-color: #fff4cf; color: #2a1606; box-shadow: 0 0 0 2px rgba(255, 199, 94, 0.55), 0 0 16px var(--glow, rgba(255, 199, 94, 0.6)), 0 2px 6px rgba(0, 0, 0, 0.5); }
 .cmap-node.medal-gold b { --glow: rgba(255, 199, 94, 0.8); background: radial-gradient(circle at 35% 30%, #fff4c4, #ffc75e 55%, #b96d12); }

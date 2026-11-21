@@ -108,7 +108,7 @@ export function setupBriefing(S, A) {
     // so the column never stops halfway through the mode cards.
     else if (r.bottom > bottom) {
       const act = row.closest(".act"), want = r.bottom - bottom + 8;
-      box.scrollTop += Math.max(want, act ? act.getBoundingClientRect().top - b.top - 4 : 0);
+      box.scrollTop += Math.max(want, act ? act.getBoundingClientRect().top - b.top - 12 : 0);
     }
   }
 
