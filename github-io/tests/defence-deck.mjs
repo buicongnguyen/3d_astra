@@ -190,6 +190,24 @@ await suite("defence-deck", async () => {
     assert.ok(m.h <= 56 && m.left >= 7.5 && m.right <= m.vw - 7.5, "bar inside the gutters: " + JSON.stringify(m));
     assert.ok(m.first >= m.left - 0.5 && m.last <= m.right + 0.5, "no control spills out of the bar: " + JSON.stringify(m));
     await shot(page, "defence-deck-threeroads-portrait");
+    // Exercise wider fallback glyphs too: a fraction of a pixel can put View outside the bar.
+    await page.addStyleTag({ content: '#defence-bar * { font-family: Verdana, "DejaVu Sans", sans-serif !important; }' });
+    for (const width of [390, 360, 320]) {
+      await page.setViewportSize({ width, height: width === 320 ? 568 : 844 });
+      const violations = await page.locator("#defence-bar").evaluate((bar) => {
+        const outer = bar.getBoundingClientRect(), wave = bar.querySelector(".wave");
+        const issues = [];
+        for (const el of [...bar.children, ...wave.children]) {
+          const r = el.getBoundingClientRect();
+          if (!r.width) continue;
+          const bounds = el.parentElement === wave ? wave.getBoundingClientRect() : outer;
+          if (r.left < bounds.left - 0.5 || r.right > bounds.right + 0.5) issues.push(el.id || el.textContent);
+          if (el.matches("button") && (r.width < 44 || r.height < 44)) issues.push(el.id + " touch target");
+        }
+        return issues;
+      });
+      assert.deepEqual(violations, [], `${width}: translated-value slots and actions stay inside the wave bar`);
+    }
     assert.deepEqual(errors, []);
     await page.close();
   }
