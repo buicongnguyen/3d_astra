@@ -72,28 +72,47 @@ await suite("ceremony", async () => {
     await startMatch(o);
     await page.waitForTimeout(400);
     const dockBefore = await docks(page);
+    // The core falls on one tick and the match is called on the next. At full speed those are two frames, so the
+    // frame loop has already handed the core's death to the view when the result comes, and the ceremony slows on
+    // the kill itself. A slow runner (5 frames a second, up to 5 ticks a frame) ran both ticks in one frame, so the
+    // core beat (ui-extras.js) took the kill and the ceremony had no "slow" phase to see. The clock is therefore
+    // held for the killing tick (step(), with the stats tracker around it as in play) and let go only once the
+    // death has left sim.events.
     const hero = await page.evaluate(() => {
       const f = window.__frontier, s = f.sim;
       const unit = s.own(0).find((e) => e.kind === "unit" && e.type !== "worker" && e.damage > 0) || s.own(0).find((e) => e.kind === "unit");
       const cores = s.entities.filter((e) => e.team !== 0 && e.type === "hq");
       const proto = Object.getPrototypeOf(s).tick;
-      // Fires once, inside the frame's own tick, so the tracker sees the hit as it would in play.
+      f.hold = true;
+      // Fires once, inside a tick with the tracker around it, so the tracker sees the hit as it would in play.
       s.tick = (dt) => { delete s.tick; proto.call(s, dt); for (const c of cores) s.applyDamage(c, 1e7, 0, unit.id); };
+      f.step(0.05);
       return { id: unit.id, name: unit.name };
     });
-    const phases = new Set();
-    let tagSeen = false;
+    await page.waitForFunction(() => !window.__frontier.sim.events.some((e) => e.type === "death" && e.core), null, { timeout: TIMEOUT.step });
+    // The phases are recorded in the page, every frame: a poll from here took longer than a phase on a slow runner.
+    // The tag counts once it has reached the middle of the screen (the swing ends centred on the MVP).
+    await page.evaluate(() => {
+      const seen = (window.__ceremonySeen = { phases: [], tag: false });
+      const look = () => {
+        const phase = window.__frontier.ceremony.phase;
+        if (phase && seen.phases.at(-1) !== phase) seen.phases.push(phase);
+        if (phase === "swing" && !seen.tag) { const r = document.querySelector(".mvp-tag span")?.getBoundingClientRect(); seen.tag = !!r && Math.abs(r.left + r.width / 2 - innerWidth / 2) < innerWidth * 0.2 && r.top > 0 && r.bottom < innerHeight; }
+        if (!document.querySelector(".result-card")) requestAnimationFrame(look);
+      };
+      requestAnimationFrame(look);
+      window.__frontier.hold = false;
+    });
+    let swingShot = false;
     const started = Date.now();
-    while (Date.now() - started < 20000 && !(await page.locator(".result-card").isVisible())) {
-      // The tag counts once it has reached the middle of the screen (the swing ends centred on the MVP).
-      const p = await page.evaluate(() => { const r = document.querySelector(".mvp-tag span")?.getBoundingClientRect(); return { phase: window.__frontier.ceremony.phase, tag: !!r && Math.abs(r.left + r.width / 2 - innerWidth / 2) < innerWidth * 0.2 && r.top > 0 && r.bottom < innerHeight }; });
-      if (p.phase) phases.add(p.phase);
-      if (p.phase === "swing" && p.tag && !tagSeen) { tagSeen = true; await shot(page, `ceremony-swing-${viewport}`); }
-      await page.waitForTimeout(40);
+    while (!swingShot && Date.now() - started < TIMEOUT.step && !(await page.locator(".result-card").isVisible())) {
+      if (await page.evaluate(() => window.__ceremonySeen.tag && window.__frontier.ceremony.phase === "swing")) { swingShot = true; await shot(page, `ceremony-swing-${viewport}`); }
+      else await page.waitForTimeout(40);
     }
     await page.locator(".result-card").waitFor({ state: "visible", timeout: TIMEOUT.step });
-    assert.ok(phases.has("slow") && phases.has("swing"), `${viewport}: slow motion then the camera swing play before the result (${[...phases]})`);
-    assert.ok(tagSeen, `${viewport}: the MVP tag shows over the unit during the swing`);
+    const seen = await page.evaluate(() => window.__ceremonySeen);
+    assert.deepEqual(seen.phases, ["slow", "swing"], `${viewport}: slow motion then the camera swing play before the result (${seen.phases})`);
+    assert.ok(seen.tag, `${viewport}: the MVP tag shows over the unit during the swing`);
     assert.equal(await page.locator(".result-card").getAttribute("data-result"), "victory");
     const card = await mvpCard(page, `${viewport} skirmish`);
     assert.equal(card.id, hero.id, `${viewport}: the unit that destroyed the core is the MVP`);
