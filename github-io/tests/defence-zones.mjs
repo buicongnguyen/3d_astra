@@ -43,7 +43,7 @@ async function zoneCell(page, open) {
         if (!zone) continue;
         const why = s.zoneCheck(0, zone.id, x, z).why || "";
         if (open ? why : !/road/.test(why)) continue;
-        const q = f.view.project(x, z, t.heightAt(x, z)), px = q.x + r.left, py = q.y + r.top;
+        const q = f.view.project(x, z, t.heightAt(x, z)), px = Math.round(q.x + r.left), py = Math.round(q.y + r.top);
         // Clear of every control by 16 px too: a phone tap snaps to a button that close (touch adjustment),
         // and on landscape phones the Defence bar's Armour chip now sits in the battlefield (Wave 3 phone HUD).
         if (px < r.left + 50 || px > r.right - 50 || py < r.top + 50 || py > r.bottom - 50 || [[0, 0], [16, 0], [-16, 0], [0, 16], [0, -16]].some(([dx, dy]) => document.elementFromPoint(px + dx, py + dy) !== canvas)) continue;
@@ -51,7 +51,7 @@ async function zoneCell(page, open) {
         if (f.view.pick(px, py, s, 24)) continue;
         // The tap must land on this cell (the snap of the point under it).
         const p = f.view.point(px, py), snap = p && s.zoneSnap(p.x, p.z);
-        if (!snap || snap.x !== x || snap.z !== z) continue;
+        if (!snap || snap.x !== x || snap.z !== z || s.zoneAt(p.x, p.z)?.id !== zone.id) continue;
         return { x: px, y: py, wx: x, wz: z, zone: zone.id };
       }
     return null;
@@ -134,13 +134,21 @@ await suite("defence-zones", async () => {
     await shot(page, `defence-zones-rank-${viewport}`);
 
     // A spot by the road: the sheet opens with every crew off and says why.
-    await page.evaluate(() => window.__frontier.select([]));
+    await page.evaluate(async () => {
+      const f = window.__frontier;
+      f.hold = true;
+      f.select([]);
+      // Let the dock resize the world canvas before projecting the next tap.
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
     const road = await zoneCell(page, false);
     if (road) {
       await tapAt(page, mobile, road.x, road.y);
       await page.waitForFunction(() => document.querySelectorAll("#commands [data-defence-crew]").length === 6 && document.querySelectorAll("#commands [data-defence-crew]:disabled").length === 6, null, { timeout: TIMEOUT.step });
       assert.match(await page.locator("#command-hint").textContent(), /road/);
     }
+
+    await page.evaluate(() => { window.__frontier.hold = false; });
 
     // Armour: the chip opens the depot; New squad: two tanks, picked, with the squad sheet.
     await page.evaluate(() => window.__frontier.select([]));
