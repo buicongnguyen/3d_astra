@@ -25,7 +25,7 @@ async function boot(w, h, mobile, { training = false, lang } = {}) {
   page.errors = [];
   if (process.env.THROTTLE) { const cdp = await page.context().newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: Number(process.env.THROTTLE) }); }
   page.on('pageerror', e => page.errors.push(e.message));
-  await page.goto(base + '?test=1');
+  await page.goto(base + '?test=1', { waitUntil: 'domcontentloaded', timeout: 90000 });
   await page.waitForFunction(() => window.__frontier && !document.querySelector('#start').disabled, null, { timeout: 90000 });
   const press = sel => mobile ? page.locator(sel).tap() : page.locator(sel).click();
   page.press = press;
