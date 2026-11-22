@@ -1135,7 +1135,9 @@ export class WorldView {
       });
       // The framed height (a phone's canvas also runs under the tool row and the dock).
       const height = (max-min) * (this.frameHeight || this.renderer.domElement.getBoundingClientRect().height) / this.defaultZoom;
-      root.userData.readabilityScale = Math.min(FEEL.maxModelScale, Math.max(1, FEEL.minPixels / Math.max(height, Number.EPSILON)));
+      const infantry = !e.mechanical && !e.flying;
+      const targetPixels = infantry ? 32 : FEEL.minPixels;
+      root.userData.readabilityScale = Math.min(infantry ? 1.4 : FEEL.maxModelScale, Math.max(1, targetPixels / Math.max(height, Number.EPSILON)));
     }
     // View plugins' static scale, after the clamp (it may pass maxModelScale); exactly 1 without one.
     const pluginScale = this.plugins.scaleFor(e);

@@ -94,7 +94,7 @@ def infantry(a, kind):
     glow.box((.14, .03, .04), loc=(0, -.25, 1.7), bevel=.01, seg=1)
     right_elbow, right_wrist, left_elbow, left_wrist = GRIPS[kind]
     for s, _ in SIDES:
-        team.box((.34 * b, .42, .24), loc=(s * .5 * b, 0, 1.72), rot=(0, s * .32, 0), bevel=.1)
+        team.box((.40 * b, .48, .25), loc=(s * .51 * b, 0, 1.72), rot=(0, s * .32, 0), bevel=.1)
         armor.box((.3 * b, .36, .1), loc=(s * .53 * b, 0, 1.57), rot=(0, s * .32, 0), bevel=.03, seg=1)
         shoulder = (s * .44 * b, .01, 1.6)
         elbow, wrist = (right_elbow, right_wrist) if s > 0 else (left_elbow, left_wrist)
@@ -104,14 +104,14 @@ def infantry(a, kind):
         gear.box((.13, .14, .13), loc=wrist, bevel=.04, seg=1)
 
     helm = a.part('Helmet', helmet)
-    helm.box((.38, .42, .34), loc=(0, 0, 2.0), bevel=.13, seg=2, taper=(.88, .9))
+    helm.box((.46, .49, .37), loc=(0, 0, 2.02), bevel=.13, seg=2, taper=(.88, .9))
     if kind == 'medic':
         # A red cross on the white helmet's crown, readable from the game camera.
         cross = a.part('Cross', 'Cross')
-        for sz in ((.09, .3, .04), (.3, .09, .04)):
-            cross.box(sz, loc=(0, .01, 2.18), bevel=.01, seg=1)
+        for sz in ((.105, .35, .04), (.35, .105, .04)):
+            cross.box(sz, loc=(0, .01, 2.22), bevel=.01, seg=1)
     else:
-        a.part('Helmet_crest', 'Team').box((.08, .3, .06), loc=(0, .02, 2.18), bevel=.025)
+        a.part('Helmet_crest', 'Team').box((.19, .34, .06), loc=(0, .02, 2.22), bevel=.025)
     armor.box((.36, .08, .14), loc=(0, -.18, 1.89), rot=(-.2, 0, 0), bevel=.03, seg=1)   # jaw guard
     a.part('Visor', 'Alloy' if kind == 'engineer' else 'TeamGlow').box(
         (.32, .07, .12), loc=(0, -.2, 2.0), bevel=.03)
@@ -120,7 +120,7 @@ def infantry(a, kind):
 
     pack = a.part('Pack', pack_mat)
     if kind == 'medic':
-        pack.box((.62, .34, .6), loc=(0, .36, 1.52), bevel=.08)   # big white aid pack
+        pack.box((.72, .42, .66), loc=(0, .37, 1.52), bevel=.08)   # big white aid pack
     else:
         pack.box((.5 * b, .24, .48), loc=(0, .31, 1.5), bevel=.07)
     if kind not in ('medic', 'ranger'):
@@ -132,7 +132,7 @@ def infantry(a, kind):
         rifle = a.part('Rifle', 'Armor')
         rifle.box((.14, .56, .22), loc=(.12, -.42, 1.38), bevel=.035)
         rifle.box((.12, .34, .17), loc=(.12, -.02, 1.34), bevel=.03, taper=(1, .8))
-        steel.cyl(.05, 1.15, loc=(.12, -1.26, 1.42), rot=FORWARD, seg=8, bevel=.01, bseg=1)
+        steel.cyl(.075, 1.15, loc=(.12, -1.26, 1.42), rot=FORWARD, seg=8, bevel=.01, bseg=1)
         steel.cyl(.065, .5, loc=(.12, -.46, 1.6), rot=FORWARD, seg=10, bevel=.01, bseg=1)   # scope
         gear.cyl(.07, .16, loc=(.12, -1.86, 1.42), rot=FORWARD, seg=8, bevel=.015, bseg=1)
         gear.box((.09, .13, .22), loc=(.12, -.5, 1.2), rot=(-.2, 0, 0), bevel=.02, seg=1)

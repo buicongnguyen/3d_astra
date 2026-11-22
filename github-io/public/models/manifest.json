@@ -8,21 +8,21 @@
       "file": "worker.glb",
       "triangles": 2996,
       "animation": "Runtime articulated parts; no baked clips",
-      "review": "pending owner review (round 3)"
+      "review": "pending owner review (round A)"
     },
     {
       "name": "vanguard",
       "file": "vanguard.glb",
       "triangles": 2872,
       "animation": "Runtime articulated parts; no baked clips",
-      "review": "pending owner review (round 3)"
+      "review": "pending owner review (round A)"
     },
     {
       "name": "ranger",
       "file": "ranger.glb",
       "triangles": 3076,
       "animation": "Runtime articulated parts; no baked clips",
-      "review": "pending owner review (round 3)"
+      "review": "pending owner review (round A)"
     },
     {
       "name": "breaker",
@@ -36,14 +36,14 @@
       "file": "medic.glb",
       "triangles": 2928,
       "animation": "Runtime articulated parts; no baked clips",
-      "review": "pending owner review (round 3)"
+      "review": "pending owner review (round A)"
     },
     {
       "name": "engineer",
       "file": "engineer.glb",
       "triangles": 2940,
       "animation": "Runtime articulated parts; no baked clips",
-      "review": "pending owner review (round 3)"
+      "review": "pending owner review (round A)"
     },
     {
       "name": "tank",
@@ -57,7 +57,7 @@
       "file": "antitank.glb",
       "triangles": 3192,
       "animation": "Runtime articulated parts; no baked clips",
-      "review": "pending owner review (round 3)"
+      "review": "pending owner review (round A)"
     },
     {
       "name": "hq",

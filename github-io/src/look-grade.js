@@ -83,7 +83,7 @@ export function rimShader(shader, color = null) {
     .replace("#include <common>", "#include <common>\nuniform float uRimStrength;\nuniform float uRimPower;\nuniform vec3 uRimColor;")
     .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
 	{ float rimF = pow( 1.0 - clamp( normalize( normal ).z, 0.0, 1.0 ), uRimPower );
-	totalEmissiveRadiance += uRimColor * ( rimF * uRimStrength ); }`);
+	totalEmissiveRadiance += uRimColor * ( rimF * uRimStrength * ${color ? "1.4" : "1.0"} ); }`);
 }
 export function addTeamRim(material, hex) {
   const color = new THREE.Color(hex), before = material.onBeforeCompile;

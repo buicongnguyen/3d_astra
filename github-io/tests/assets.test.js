@@ -159,5 +159,7 @@ test('R3-F faction paints, Window* glow contract on buildings, and no model gain
     scrapper: 7, scorcher: 5, salvageyard: 8, rider: 5, wagon: 6, waystation: 7, walker: 5, pylon: 6, shade: 7, watcher: 7, veilrelay: 6,
     gunner: 7, stalker: 7, workshop: 6, rampart: 7, carrier: 5, kite: 7, hawk: 6, balloon: 8, glider: 9 };
   for (const [name, n] of Object.entries(limit)) assert.ok(gltf(name).materials.length <= n, `${name}: ${gltf(name).materials.length} materials > ${n}`);
-  for (const asset of manifest.filter(a => a.name in limit)) assert.equal(asset.review, 'pending owner review (round 3)', asset.name);
+  const roundA = new Set(['worker', 'vanguard', 'ranger', 'medic', 'engineer', 'antitank']);
+  for (const asset of manifest.filter(a => a.name in limit))
+    assert.equal(asset.review, roundA.has(asset.name) ? 'pending owner review (round A)' : 'pending owner review (round 3)', asset.name);
 });

@@ -2,6 +2,10 @@
 
 ## Unreleased: Round A
 
+### A3 — Infantry silhouettes
+
+Six infantry models have wider helmet and shoulder silhouettes. Team paint has a stronger rim and the field guide and result cards share the rebuilt portrait atlas.
+
 ### A2 — Phone controls
 
 Portrait phones share the selected unit header with Map and Objectives.
