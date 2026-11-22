@@ -10,6 +10,13 @@ export class TouchControls {
     this.pointers = new Map();
     this.multi = false;
     this.gesture = null;
+    this.handledTouchTap = false;
+    // A tap may open a HUD button under the finger. Cancel the browser's
+    // compatibility click at its touch source before it can activate that button.
+    canvas.addEventListener("touchend", (e) => {
+      if (this.handledTouchTap) e.preventDefault();
+      this.handledTouchTap = false;
+    }, { passive: false });
     canvas.addEventListener("pointerdown", (e) => this.down(e));
     canvas.addEventListener("pointermove", (e) => this.move(e));
     canvas.addEventListener("pointerup", (e) => this.up(e));
@@ -34,6 +41,7 @@ export class TouchControls {
       : null;
   }
   down(e) {
+    if (e.pointerType === "touch") this.handledTouchTap = false;
     if (!this.touch(e) || !this.callbacks.enabled()) return;
     // A touch that starts in a gesture margin (screen edges kept for the system's swipes) is not ours.
     if (this.callbacks.inEdge?.(e)) return;
@@ -90,7 +98,10 @@ export class TouchControls {
       this.canvas.releasePointerCapture(e.pointerId);
     if (this.callbacks.enabled() && !this.multi) {
       if (p.moved && this.callbacks.boxMode()) this.callbacks.box(p);
-      else if (!p.moved) this.callbacks.tap(e.clientX, e.clientY);
+      else if (!p.moved) {
+        this.handledTouchTap = e.pointerType === "touch";
+        this.callbacks.tap(e.clientX, e.clientY);
+      }
     }
     this.callbacks.rectangle(null);
     this.gesture = this.snapshot();

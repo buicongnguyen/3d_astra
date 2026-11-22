@@ -42,7 +42,23 @@ try {
   if(layout.overscrollSupported)assert.equal(layout.overscroll,'none');
   assert.equal(layout.touch,'none');
   const p={x:layout.canvas.x+layout.canvas.width/2,y:layout.canvas.y+layout.canvas.height/2};
+  // A selection can move the HUD directly underneath the just-released finger.
+  await page.evaluate(({x,y})=>{
+   const canvas=document.querySelector('#world canvas');
+   canvas.addEventListener('pointerup',()=>{
+    const button=document.createElement('button');
+    button.id='tap-overlap-test';button.textContent='HUD';button.dataset.hits='0';
+    Object.assign(button.style,{position:'fixed',left:(x-22)+'px',top:(y-22)+'px',width:'44px',height:'44px',zIndex:'10000'});
+    button.onclick=()=>{button.dataset.hits=String(Number(button.dataset.hits)+1);};
+    document.body.append(button);
+   },{once:true});
+  },p);
   await page.touchscreen.tap(p.x,p.y);
+  const over=page.locator('#tap-overlap-test');
+  assert.equal(await over.getAttribute('data-hits'),'0','a newly opened HUD control does not inherit the battlefield tap');
+  await over.tap();
+  assert.equal(await over.getAttribute('data-hits'),'1','a deliberate tap still activates the HUD control');
+  await over.evaluate(button=>button.remove());
   assert.equal(page.url(),url,'battlefield taps never navigate');
   assert.equal(page.context().pages().length,1,'no popup/tab opened');
   for(const event of ['blur','pagehide']) {
