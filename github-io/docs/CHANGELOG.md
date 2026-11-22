@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased: Round A.2
+
+### Alloy expansions
+
+Five skirmish expansion sites now have a second alloy outcrop within reach of the same Command core. The additional deposits keep their own IDs so older command logs still address the same units.
+
+### A2.1 — Battlefield lighting
+
+The horizon now follows the map's sky palette. Warm directional lighting and brighter energy cores make bases easier to pick out across the battlefield.
+
+### A2.2 — Team markings
+
+Units and buildings carry a strip of team colour on the model so their allegiance is visible against sand and grass.
+
+### A2.3 — Combat effects
+
+Ranger rounds leave a short rifle streak and a small contact spark. Shell and rocket blasts use a shorter glow, and damaged buildings burn lower. Unit hits shed sparks, dust or debris according to the weapon. Thin heal and repair cues leave the receiving unit visible. Phone rendering shares effect batches and gives hits on selected units priority during heavy fighting.
+
+### A2.4 — Opening economy
+
+The portrait Skirmish camera frames the Command core and its staffed alloy deposit together. A tool glint shows mining and a cargo marker follows workers carrying a full load back to base.
+
+### A2.5 — Phone battle controls
+
+Portrait battle controls leave more of the field visible with a unit selected. The Cancel action stays tappable while story dialogue is open, and Defence controls fit narrower headers.
+
 ## Unreleased: Round A
 
 ### A7 — Large battles
