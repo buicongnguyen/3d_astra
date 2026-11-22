@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { addTeamBands } from "./team-bands.js";
 import { CORE_MODEL_TYPES } from "./model-roster.js";
 import { CameraShake, FEEL } from "./camera-shake.js";
 const WRECK_TINT = [0.2, 0.18, 0.16]; // burnt: paint and team colour multiplied down to soot
@@ -23,7 +24,7 @@ import { teamColors, teamGlows, factionOf } from "./faction-colors.js";
 import { createEmblem, hasEmblem, recolorEmblems } from "./emblems.js";
 import { isHarvesting } from "./activity.js";
 import { EntityBatches, adoptBatchedParts, SOURCE_LAYER } from "./entity-batches.js";
-import { BossView, bossTemplates } from "./boss-view.js";
+import { BossView, bossTemplates, recolorBossPaint } from "./boss-view.js";
 import { cacheTransforms } from "./transform-cache.js";
 import { AmbientLife } from "./ambient-life.js";
 import { defaults } from "./settings.js";
@@ -380,7 +381,9 @@ export class WorldView {
     for (const [key, template] of this.teamTemplates) {
       const team = Number(key.split("-").at(-1));
       template.traverse((o) => {
-        if (!o.isMesh || !o.material.name.startsWith("Team")) return;
+        if (!o.isMesh) return;
+        recolorBossPaint(o.geometry, this.colors[team]);
+        if (!o.material.name.startsWith("Team")) return;
         o.material.color.setHex(this.colors[team]);
         o.material.userData.rim?.setHex(this.colors[team]);
         if (o.material.name.startsWith("TeamGlow"))
@@ -552,6 +555,7 @@ export class WorldView {
         .map(async (type) => {
           const gltf = await fetchModel(type);
           gltf.scene.updateMatrixWorld(true);
+          addTeamBands(gltf.scene, type);
           // Bosses (boss-view.js) keep their own rigid parts: legs, torso, arms, light gun and core.
           if (D[type]?.boss) {
             bossTemplates(gltf.scene, { colors: this.colors, glows: this.glows, bakedMaterial }).forEach((variant, team) => this.teamTemplates.set(`${type}-${team}`, variant));
@@ -1087,6 +1091,14 @@ export class WorldView {
       geometry.rotateX(Math.PI / 2);
       const paint = mat(this.colors[team]);
       paint.name = "Team";
+      // The offline wing has no authored panels. Paint its centre stripe in
+      // local coordinates so it follows the airframe using the existing draw.
+      paint.onBeforeCompile = shader => {
+        shader.vertexShader = shader.vertexShader.replace("#include <common>", "#include <common>\nvarying float vWingStripe;")
+          .replace("#include <begin_vertex>", "#include <begin_vertex>\nvWingStripe = position.x + 0.15 * position.z;");
+        shader.fragmentShader = shader.fragmentShader.replace("#include <common>", "#include <common>\nvarying float vWingStripe;")
+          .replace("#include <color_fragment>", "#include <color_fragment>\ndiffuseColor.rgb *= mix(0.35, 1.0, smoothstep(0.16, 0.18, abs(vWingStripe)));");
+      };
       const template = new THREE.Group();
       template.name = "FallbackFlyer";
       template.add(new THREE.Mesh(geometry, paint));

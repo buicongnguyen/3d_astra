@@ -22,6 +22,17 @@ const reflects = (m) => m.metalness >= 0.5 || m.roughness <= 0.25;
 // One template per team: each rigid part's painted pieces become a single mesh whose vertices carry
 // their colour (team colour for `Team`) and finish, drawn with the shared baked material; the core
 // stays its own glowing mesh.
+export function recolorBossPaint(geometry, hex) {
+  const paint = geometry.userData.bossPaint;
+  if (!paint || paint.hex === hex) return;
+  const team = new THREE.Color(hex), colors = geometry.attributes.color;
+  for (const { start, shades } of paint.ranges) {
+    for (let i = 0; i < shades.length; i++) colors.setXYZ(start + i, team.r * shades[i], team.g * shades[i], team.b * shades[i]);
+  }
+  colors.needsUpdate = true;
+  paint.hex = hex;
+}
+
 export function bossTemplates(scene, { colors, glows, bakedMaterial }) {
   scene.updateMatrixWorld(true);
   const PARTS = BOSS_PARTS.find((t) => scene.getObjectByName(t.marker))?.parts || PARTS_VANGUARD;
@@ -55,9 +66,13 @@ export function bossTemplates(scene, { colors, glows, bakedMaterial }) {
       const mine = pieces.filter((p) => p.part === part);
       const painted = mine.filter((p) => !p.mesh.material.name.startsWith("BossCore"));
       if (painted.length) {
+        let offset = 0;
+        const ranges = [];
         const geometries = painted.map(({ mesh, matrix }) => {
           const g = (mesh.geometry.index ? mesh.geometry.toNonIndexed() : mesh.geometry.clone()).applyMatrix4(matrix), m = mesh.material;
           const n = g.getAttribute("position").count, shade = g.getAttribute("color"), color = m.name.startsWith("Team") ? team : m.color;
+          if (m.name.startsWith("Team")) ranges.push({ start: offset, shades: Float32Array.from({ length: n }, (_, i) => shade ? shade.getX(i) : 1) });
+          offset += n;
           const rgb = new Float32Array(n * 3), finish = new Float32Array(n * 2);
           for (let i = 0; i < n; i++) {
             const k = shade ? shade.getX(i) : 1;
@@ -70,6 +85,7 @@ export function bossTemplates(scene, { colors, glows, bakedMaterial }) {
           return g;
         });
         const merged = mergeGeometries(geometries, false);
+        if (ranges.length) merged.userData.bossPaint = { hex: teamHex, ranges };
         geometries.forEach((g) => g.dispose());
         const mesh = new THREE.Mesh(merged, bakedMaterial(painted.some((p) => reflects(p.mesh.material))));
         mesh.name = "baked";
