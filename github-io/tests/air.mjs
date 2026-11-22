@@ -218,7 +218,6 @@ await suite("air", async () => {
         f.select([e.id]);
         f.step(0.05);
       }, type);
-      if (mobile) { await tap('#dock-tabs [data-dock="selection"]'); }
       await page.waitForTimeout(500);
       await shot(page, `air-${type}-selected-${viewport}`);
     }
