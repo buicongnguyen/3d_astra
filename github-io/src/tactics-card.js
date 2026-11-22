@@ -18,7 +18,7 @@ export function tacticsCardHTML(sim, entities, { compact = false, side = false, 
   const stance = entities.some(takesStance)
     ? `<div class="stance-control" role="group" aria-label="Stance">${STANCES.map((id) => {
         const s = STANCE_INFO[id];
-        return `<button data-stance="${id}" aria-pressed="false" title="${s.title}${keys ? ` · ${s.key}` : ""}">${icon(s.icon)}<span>${s.label}</span>${keys ? `<kbd>${s.key}</kbd>` : ""}</button>`;
+        return `<button data-stance="${id}" aria-pressed="false" title="${s.title}${keys ? ` · ${s.key}` : ""}">${icon(s.icon)}<span>${compact && !side && id === "aggressive" ? "Chase" : s.label}</span>${keys ? `<kbd>${s.key}</kbd>` : ""}</button>`;
       }).join("")}</div>`
     : "";
   return tiles + stance;
@@ -54,7 +54,8 @@ export function updateTacticsCard(root, sim, entities, { compact = false, side =
       if (!g) continue;
       const sweep = g.fraction.toFixed(3);
       if (tile.dataset.cd !== sweep) { tile.dataset.cd = sweep; tile.style.setProperty("--cd", sweep); }
-      setText(tile.querySelector(".ability-status"), abilityStatus(g));
+      const narrowGroup = compact && !side && groups.length >= 4 && g?.count > 1 && g.ready > 0;
+      setText(tile.querySelector(".ability-status"), narrowGroup ? `${g.ready}/${g.count}` : abilityStatus(g));
     }
   }
   const control = root.querySelector(".stance-control");

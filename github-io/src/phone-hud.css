@@ -655,3 +655,9 @@
     width: min(300px, calc(100vw - 2 * var(--side-width))); height: min(250px, calc(100dvh - 80px));
   }
 }
+
+@media (orientation: portrait) {
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] #commands .ability-status {
+    align-self: center; padding-inline: 0; font-size: 11px; font-variant-numeric: tabular-nums;
+  }
+}
