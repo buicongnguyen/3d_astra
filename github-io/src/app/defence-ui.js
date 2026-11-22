@@ -59,6 +59,9 @@ export function createDefenceUI(S, A, deps) {
     if (!S.sim?.defence) return;
     buildPads();
     ensureBar();
+    const mapSize = $("defence-map-size");
+    mapSize.setAttribute("aria-expanded", "false");
+    mapSize.onclick = () => mapSize.setAttribute("aria-expanded", String(mapSize.getAttribute("aria-expanded") !== "true"));
     ui.intelKey = "";
     ui.seen = null;
     S.defencePad = null;

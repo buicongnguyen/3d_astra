@@ -138,7 +138,7 @@ try{
     if(type==='hq'){e.queue=[];e.level=3;e.hp=e.maxHp=3300;e.shield=e.maxShield=200;}
     f.select(type==='group'?s.own(0).filter(e=>e.kind==='unit').map(e=>e.id):[e.id]);
    },type);
-   if(mobile)await click('button[data-dock=selection]');
+   if(mobile)assert.equal(await page.locator('html').getAttribute('data-dock'),'selection');
    cells=await inspect();assert.ok(cells.every(c=>c.fits&&c.oneLine),`${type}: ${JSON.stringify(cells)}`);
   }
   if(viewport.width===1280){

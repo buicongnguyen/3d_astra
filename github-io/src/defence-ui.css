@@ -449,3 +449,40 @@
 .defence-next-star .next-star-tip { display: block; margin-top: 3px; color: var(--text-1, #f1f6f3); }
 .defence-next-star .next-star-tip b { color: var(--mint, #92ebc5); }
 .defence-next-star .next-star-tip b + b::before { content: "· "; color: var(--text-3, #97aeab); }
+
+/* Translate the label independently of the timer or enemy count. */
+#defence-bar .phone-wave-label { display: none; }
+:root.compact-ui #defence-bar .wave { display: grid; grid-template-columns: auto auto; gap: 1px 3px; align-content: center; padding-inline: 4px; }
+:root.compact-ui #defence-bar .wave > span:first-child,
+:root.compact-ui #defence-bar .phone-wave-label:not([hidden]) { display: inline; font: 700 12px/13px var(--font-ui); }
+:root.compact-ui #defence-bar .wave small::before { content: none; }
+:root.compact-ui #defence-bar #defence-call { flex-direction: column; gap: 1px; padding: 2px 4px; }
+:root.compact-ui #defence-bar #defence-call > span { display: block; font: 700 12px/13px var(--font-ui); }
+:root.compact-ui #defence-bar #defence-call > .icon { display: none; }
+
+:root.compact-ui #defence-bar :is(#defence-hero, #defence-armour, #defence-overview) {
+  flex-direction: column; gap: 0; min-width: 44px; padding-inline: 2px;
+}
+:root.compact-ui #defence-bar .bar-caption { display: block; font: 650 12px/13px var(--font-ui); }
+#defence-bar .bar-caption { display: none; }
+:root.compact-ui #defence-bar .wave { min-width: max-content; }
+@media (max-width: 359px) {
+  :root.compact-ui #defence-bar { gap: 1px; max-width: calc(100% - 6px); }
+  :root.compact-ui #defence-bar .lives { padding-inline: 2px; gap: 2px; }
+  :root.compact-ui #defence-bar button { flex-shrink: 0; }
+  :root.compact-ui #defence-bar:has(#defence-armour:not([hidden])) .lives { flex-direction: column; justify-content: center; }
+}
+
+:root.compact-ui #defence-bar .phone-wave-label:not([hidden]) { grid-column: 1 / -1; }
+:root.compact-ui #defence-bar #defence-count { grid-column: 1 / -1; text-align: center; }
+:root.compact-ui #defence-bar .wave { justify-content: center; }
+:root.compact-ui #defence-bar .wave small:not(:empty)::before { content: none; }
+:root.compact-ui #defence-bar .bar-caption { white-space: normal; text-align: center; }
+
+@media (max-width: 359px) {
+  :root.compact-ui #defence-bar { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(44px, 1fr); grid-template-columns: auto auto; width: calc(100% - var(--hud-left) - var(--hud-right)); }
+  :root.compact-ui #defence-bar[hidden] { display: none; }
+  :root.compact-ui #defence-bar .lives { flex-direction: column; justify-content: center; }
+  :root.compact-ui #defence-bar .wave { min-width: 0; }
+  :root.compact-ui #defence-bar .bar-caption, :root.compact-ui #defence-call > span { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+}

@@ -104,7 +104,12 @@ await suite("defence-onboarding", async () => {
     // ---- Landscape: the Actions panel is at most 22% of the view width and collapses to one button.
     if (viewport === "landscape") {
       await page.evaluate(() => { const f = window.__frontier, t = f.sim.towerOn(f.sim.missionDef.defence.pads[1].id); f.select([t.id]); });
-      await o.tap('#dock-tabs [data-dock="selection"]');
+      assert.equal(await page.locator("#dock-tabs").isVisible(), false, "Defence opens the selected tower directly");
+      const mini = page.locator(".minimap-panel");
+      const compactWidth = (await mini.boundingBox()).width;
+      await o.tap("#defence-map-size");
+      assert.ok((await mini.boundingBox()).width > compactWidth, "Defence minimap expands directly");
+      await o.tap("#defence-map-size");
       await page.waitForFunction(() => document.querySelector(".command-panel")?.offsetWidth > 0);
       const cover = await page.evaluate(() => {
         const W = innerWidth, boxes = [".command-panel", "#dock-tabs", "#defence-dock-toggle"].map((s) => document.querySelector(s).getBoundingClientRect()).filter((r) => r.width);
@@ -145,6 +150,16 @@ await suite("defence-onboarding", async () => {
     assert.deepEqual(await small(page, "#modal .debrief-actions button"), [], `${viewport}: result taps under 44 px`);
     await page.waitForTimeout(900);
     await shot(page, `defence-onboarding-result-${viewport}`);
+    if (viewport === "landscape") {
+      const scroll = page.locator(".defence-result .result-scroll");
+      const fits = await scroll.evaluate(body => {
+        const actions = body.nextElementSibling.getBoundingClientRect();
+        body.scrollTop = body.scrollHeight;
+        return body.lastElementChild.getBoundingClientRect().bottom <= actions.top + 1 &&
+          actions.bottom <= innerHeight && body.nextElementSibling.getBoundingClientRect().top === actions.top;
+      });
+      assert.ok(fits, "last result item scrolls clear of the pinned actions");
+    }
     await noSideScroll(page, `${viewport} result`);
     assert.deepEqual(errors, [], `${viewport}: page errors`);
     await page.close();
