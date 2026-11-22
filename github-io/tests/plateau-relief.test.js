@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {Terrain} from '../src/terrain.js';
-import {buildPlateauRelief, lowerCliffBand, fogLift} from '../src/plateau-relief.js';
+import {buildPlateauRelief, lowerCliffBand, fogLift, mergeFogColumns} from '../src/plateau-relief.js';
 
 // The plateau rock relief (2026-11-13, "height you can see") is merged into the ground mesh:
 // it must exist only on height maps, face the right way, leave the ramps open and hide every
@@ -53,4 +53,23 @@ for(const id of ['dunes','woodlands','highlands']) test(`${id}: rock relief face
   const q=t.plateaus[0];
   assert.ok(fogLift(t,q.x,q.z)>2.4);
   assert.equal(fogLift(t,q.x+(q.r||q.w)+12,q.z),0);
+});
+
+test('merged fog strips preserve heights and texture coordinates on both sides of each ridge',()=>{
+  const geometry = new THREE.PlaneGeometry(8, 4, 8, 4);
+  const positions = geometry.attributes.position;
+  for (let i = 0; i < positions.count; i++) {
+    const x = positions.getX(i), y = positions.getY(i);
+    positions.setZ(i, x >= -2 && x <= 1 ? 1 + Math.max(0, y) : 0);
+  }
+  const before = mesh(geometry.clone());
+  mergeFogColumns(geometry);
+  const after = mesh(geometry);
+  assert.ok(geometry.index.count < before.geometry.index.count);
+  const ray = new THREE.Raycaster();
+  for (let x = -3.9; x < 4; x += 0.3) for (let z = -1.9; z < 2; z += 0.3) {
+    ray.set(new THREE.Vector3(x, 10, z), new THREE.Vector3(0, -1, 0));
+    const a = ray.intersectObject(before)[0], b = ray.intersectObject(after)[0];
+    assert.ok(a && b && a.point.distanceTo(b.point) < 1e-6 && a.uv.distanceTo(b.uv) < 1e-6);
+  }
 });

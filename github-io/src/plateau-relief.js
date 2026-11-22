@@ -58,6 +58,34 @@ export function fogLift(terrain, x, z) {
   return h;
 }
 
+// Adjacent fog columns with equal height at every row have the same profile.
+// Keep both ends of each run. UVs stay linear across its width, including on slopes.
+export function mergeFogColumns(plane) {
+  const position = plane.attributes.position;
+  const columns = Math.floor(plane.parameters.widthSegments) + 1;
+  const rows = Math.floor(plane.parameters.heightSegments) + 1;
+  const keep = [0];
+  let previousEqual = false;
+  for (let x = 1; x < columns; x++) {
+    let equal = true;
+    for (let i = x; i < position.count; i += columns) {
+      if (position.getZ(i) !== position.getZ(i - 1)) { equal = false; break; }
+    }
+    if (x > 1 && !(previousEqual && equal)) keep.push(x - 1);
+    previousEqual = equal;
+  }
+  keep.push(columns - 1);
+  if (keep.length === columns) return;
+  const indices = [];
+  for (let y = 0; y < rows - 1; y++) {
+    for (let k = 1; k < keep.length; k++) {
+      const left = y * columns + keep[k - 1], right = y * columns + keep[k];
+      indices.push(left, left + columns, right, left + columns, right + columns, right);
+    }
+  }
+  plane.setIndex(indices);
+}
+
 // Ground vertices inside a cliff band (not on a ramp) drop to the low ground: the rock sheet
 // covers that band, and a ground triangle tilted across it then lies wholly under the sheet.
 export function lowerCliffBand(geometry, terrain) {

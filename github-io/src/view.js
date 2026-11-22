@@ -18,7 +18,7 @@ import {themeFor,lightFor,lookOf,shotVisible,weaponStyle} from './visual-style.j
 import { Scatter } from "./scatter.js";
 import { createMapEdge } from "./map-edge.js";
 import { paintGround } from "./ground-paint.js";
-import { buildPlateauRelief, lowerCliffBand, fogLift } from "./plateau-relief.js";
+import { buildPlateauRelief, lowerCliffBand, fogLift, mergeFogColumns } from "./plateau-relief.js";
 import { fogAware } from "./fog-aware.js";
 import { teamColors, teamGlows, factionOf } from "./faction-colors.js";
 import { createEmblem, hasEmblem, recolorEmblems } from "./emblems.js";
@@ -824,6 +824,7 @@ export class WorldView {
       // Over cliffs the fog rises to cover the rock relief (plateau-relief.js fogLift).
       const p = fogGeometry.attributes.position;
       for (let i = 0; i < p.count; i++) p.setZ(i, Math.max(this.terrain.heightAt(p.getX(i), -p.getY(i)), fogLift(this.terrain, p.getX(i), -p.getY(i))));
+      mergeFogColumns(fogGeometry);
     }
     this.fogMesh = new THREE.Mesh(fogGeometry, material);
     this.fogMesh.rotation.x = -Math.PI / 2;
