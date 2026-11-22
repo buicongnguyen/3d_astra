@@ -28,10 +28,14 @@ const boss = (page) => page.evaluate(() => { const b = window.__frontier.sim.tag
 
 // The fight hint (a counter tip that may pop up in this staged fight) is not what these shots are about.
 const quiet = (page) => page.evaluate(() => { const h = document.getElementById("fight-hint"); if (h) h.style.visibility = "hidden"; });
+// CI-like runs (tests/lib/ci-like.mjs: software GL, CPU slowed 20x, about 5 frames a second): Playwright's
+// 30 s default for taps and waits is too short there, and the scene and the view move on frame time.
+const SLOW = Number(process.env.SLOW_CPU || 0) > 1;
+const WAIT = SLOW ? TIMEOUT.models : TIMEOUT.step;
 const browser = await launchBrowser();
 await suite("sovereign-walks: The Sovereign Walks, relays and phase 2", async () => {
   for (const viewport of ["desktop", "portrait", "landscape"]) {
-    const { page, goto, ready, tap, errors } = await openPage(browser, viewport);
+    const { page, goto, ready, tap, errors } = await openPage(browser, viewport, { timeout: WAIT });
     await goto();
     await page.evaluate(([k, v]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); }, [KEY, progress]);
     await page.reload(); await ready();
@@ -54,11 +58,12 @@ await suite("sovereign-walks: The Sovereign Walks, relays and phase 2", async ()
       s.updateVision();
       f.hold = false;
     });
-    await page.waitForFunction(() => window.__frontier.scene().open, null, { timeout: TIMEOUT.step });
+    await page.waitForFunction(() => window.__frontier.scene().open, null, { timeout: WAIT });
     await page.evaluate(() => { window.__frontier.hold = true; });
     assert.equal(await page.evaluate(() => window.__frontier.scene().id), "sovereign-walks");
-    // The camera reaches its gate (explored here) and the name card is up.
-    await page.waitForTimeout(2800);
+    // The camera reaches its gate (explored here) and the name card is up: beat 3 is the title (the scene's own
+    // clock runs on frames, so a fixed wait saw the camera still on its way on a slow runner).
+    await page.waitForFunction(() => window.__frontier.scene().beat >= 3, null, { timeout: WAIT });
     await shot(page, `sovereign-walks-scene-${viewport}`);
     await page.evaluate(() => window.__frontier.skipScene());
     await page.waitForFunction(() => !window.__frontier.scene().open);
@@ -87,17 +92,24 @@ await suite("sovereign-walks: The Sovereign Walks, relays and phase 2", async ()
       s.own(0).filter((e) => e.kind === "unit" && e.type !== "worker").slice(-12).forEach((e, i) => { e.x = b.x - 4 + (i % 4) * 1.6; e.z = b.z + 9 + Math.floor(i / 4) * 1.6; e.orders = []; });
       s.updateVision();
       b.hp = b.maxHp * 0.49;
+      // The phase card (boss-ui.js) fades after 2.4 s of real time, shorter than a slow runner takes to reach the
+      // check below: every card shown from here on is recorded as it is added.
+      window.__bossCards = [];
+      new MutationObserver((list) => { for (const m of list) for (const n of m.addedNodes) if (n.id === "boss-card") window.__bossCards.push(n.dataset.kind); }).observe(document.body, { childList: true, subtree: true });
       f.hold = false;
     });
-    await page.waitForFunction(() => window.__frontier.sim.tagged("sovereign")[0]?.bs?.phase === "surge", null, { timeout: TIMEOUT.step });
+    // The clock is held on the frame that sees the surge (it lasts 3 s of match time: a slow runner's frames could
+    // run past it during a fixed wait); then the view catches up on frames alone.
+    await page.waitForFunction(() => { const f = window.__frontier; if (f.sim.tagged("sovereign")[0]?.bs?.phase !== "surge") return false; f.hold = true; return true; }, null, { timeout: WAIT });
     await page.evaluate(() => { const f = window.__frontier, b = f.sim.tagged("sovereign")[0]; f.view.focusOn(b.x - 2, b.z + 6); });
+    await page.waitForFunction(() => document.querySelector("#boss-bar .boss-state")?.textContent === "OVERDRIVE", null, { timeout: WAIT }).catch(() => {});
     await page.waitForTimeout(450);
-    await page.evaluate(() => { window.__frontier.hold = true; });
     await quiet(page);
     await shot(page, `sovereign-walks-surge-${viewport}`);
     const surge = await bar(page);
     assert.equal(surge.state, "OVERDRIVE");
-    assert.equal(await page.locator("#boss-card").getAttribute("data-kind"), "phase");
+    const cards = await page.evaluate(() => window.__bossCards);
+    assert.ok(cards.includes("phase"), `the phase card shows as it surges (${cards})`);
     assert.equal(await page.evaluate(() => { let lit = false; const f = window.__frontier, b = f.sim.tagged("sovereign")[0]; f.view.objects.get(b.id)?.traverse((c) => { if (c.name === "BossCore") lit = c.visible; }); return lit; }), true, "the core blazes");
     assert.equal(await page.evaluate(() => window.__frontier.view.bosses.shield?.tethers.visible ?? false), false, "no tethers without relays");
 
@@ -111,6 +123,8 @@ await suite("sovereign-walks: The Sovereign Walks, relays and phase 2", async ()
       return { phase: b.bs.phase, attack: z?.attack, shape: z?.shape };
     });
     assert.deepEqual([rail.phase, rail.attack, rail.shape], ["warning", "rail-sweep", "line"]);
+    // The view draws the mark on its next frame (the clock is held, so the warning stays).
+    await page.waitForFunction(() => window.__frontier.view.bosses.marks.size > 0, null, { timeout: WAIT }).catch(() => {});
     await page.waitForTimeout(350);
     await quiet(page);
     await shot(page, `sovereign-walks-phase2-${viewport}`);

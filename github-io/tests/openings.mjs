@@ -42,6 +42,13 @@ const beginMission = async ({ page, tap }, id) => {
   await tap("#mb-skip"); await tap("#mb-next");
   await page.waitForFunction(() => window.__frontier.started, null, { timeout: TIMEOUT.models });
 };
+// CI-like runs (tests/lib/ci-like.mjs: software GL, CPU slowed 20x) draw about 5 frames a second and the
+// opening's 5 s play out on frame time (dt capped at 0.25 s), so waiting for it to end gets longer there.
+const SLOW = Number(process.env.SLOW_CPU || 0) > 1;
+const PLAY_OUT = SLOW ? TIMEOUT.models : TIMEOUT.step;
+// An opening can only start while the match clock is at most 0.3 s (scenes.js maybeOpening): once the clock
+// is past that with none open, none will come. A held clock (an opening playing) ends the wait too.
+const noOpening = (page) => page.waitForFunction(() => window.__frontier.scene().open || window.__frontier.sim.time > 0.3, null, { timeout: PLAY_OUT }).then(() => page.evaluate(() => window.__frontier.scene().open));
 const camera = (page) => page.evaluate(() => ({ x: window.__frontier.view.focus.x, z: window.__frontier.view.focus.z, zoom: window.__frontier.view.zoom, time: window.__frontier.sim.time }));
 
 const browser = await launchBrowser();
@@ -73,7 +80,7 @@ await suite("openings: mission fly-ins, the campaign map, jumpBoss", async () =>
     // 2. The opening of mission 3.
     await beginMission(ctx, ID);
     await page.waitForFunction(() => window.__frontier.scene().opening, null, { timeout: TIMEOUT.step });
-    const open = await page.evaluate(() => ({ ...window.__frontier.scene(), title: document.querySelector(".opening-title").innerText, skip: document.querySelector("#scene-skip").getBoundingClientRect().height, card: !!document.querySelector("#title-card") }));
+    const open = await page.evaluate(() => ({ ...window.__frontier.scene(), title: document.querySelector(".opening-title").innerText, skip: document.querySelector("#scene-skip").getBoundingClientRect().height, card: !!document.querySelector("#title-card"), time: window.__frontier.sim.time }));
     assert.equal(open.opening.mission, ID);
     assert.equal(open.opening.frames, "camp");
     assert.ok(open.opening.seconds >= 4 && open.opening.seconds <= 6, `${open.opening.seconds} s`);
@@ -83,18 +90,34 @@ await suite("openings: mission fly-ins, the campaign map, jumpBoss", async () =>
     assert.equal(open.card, false, "the opening carries the title; no second card");
     await page.waitForTimeout(500);
     const during = await camera(page);
-    assert.equal(during.time, 0, "the match clock waits");
+    // The opening starts on the first frame of play: a slow runner's first frame may already have run a tick or
+    // two (0.05 s each) before it, which scenes.js allows (up to 0.3 s). From then on the clock must not move.
+    assert.ok(open.time <= 0.3, `the opening starts as the match begins (${open.time} s)`);
+    assert.equal(during.time, open.time, "the match clock waits");
     assert.ok(Math.hypot(during.x - open.opening.to.x, during.z - open.opening.to.z) > 15, "the camera starts on the landmark, away from home");
     await shot(page, `openings-m03-${viewport}`);
-    if (viewport === "desktop") await page.waitForFunction(() => !window.__frontier.scene().open, null, { timeout: TIMEOUT.step });
-    else { await page.touchscreen.tap(Math.round(page.viewportSize().width / 2), Math.round(page.viewportSize().height / 2)); await page.waitForFunction(() => !window.__frontier.scene().open, null, { timeout: 5000 }); }
+    if (viewport === "desktop") await page.waitForFunction(() => !window.__frontier.scene().open, null, { timeout: PLAY_OUT });
+    else {
+      // The tap must land on a running opening. On a slow runner the screenshot can outlast most of it: then the
+      // opening is played again from home (__frontier.playOpening, the same fly-in) so the tap still has 2 s or more
+      // of it to end (at least 8 frames, so it cannot run out by itself before the check below).
+      let before = await page.evaluate(() => window.__frontier.scene());
+      if (!before.open || before.opening.seconds - before.opening.t < 2) {
+        await page.waitForFunction(() => !window.__frontier.scene().open, null, { timeout: PLAY_OUT });
+        await page.evaluate(() => window.__frontier.playOpening());
+        before = await page.evaluate(() => window.__frontier.scene());
+      }
+      assert.equal(before.opening?.mission, ID, `${viewport}: an opening is running before the tap`);
+      await page.touchscreen.tap(Math.round(page.viewportSize().width / 2), Math.round(page.viewportSize().height / 2));
+      // The tap ends it on its pointerdown (scenes.js), not by playing out.
+      assert.equal(await page.evaluate(() => window.__frontier.scene().open), false, `${viewport}: a tap anywhere ends the opening`);
+    }
     const after = await camera(page);
     assert.deepEqual([after.x, after.z, after.zoom], [open.opening.to.x, open.opening.to.z, open.opening.to.zoom], `${viewport}: the camera lands where the match starts`);
     assert.equal(await page.evaluate(() => document.documentElement.classList.contains("scene-open")), false);
     // Once per mission: a restart plays straight away.
     await page.evaluate(() => window.__frontier.restart());
-    await page.waitForTimeout(400);
-    assert.equal((await page.evaluate(() => window.__frontier.scene())).open, false, "a restart has no second opening");
+    assert.equal(await noOpening(page), false, "a restart has no second opening");
 
     if (viewport === "desktop") {
       // Reduced motion: no fly-in (the title card alone tells the mission).
@@ -102,12 +125,13 @@ await suite("openings: mission fly-ins, the campaign map, jumpBoss", async () =>
       await tap("#pause"); await tap("[data-new-game]");
       await page.locator("#briefing").waitFor({ state: "visible", timeout: TIMEOUT.step });
       await beginMission(ctx, "m02-first-contact");
-      await page.waitForTimeout(600);
-      assert.equal((await page.evaluate(() => window.__frontier.scene())).open, false, "reduced motion: no opening");
+      assert.equal(await noOpening(page), false, "reduced motion: no opening");
       await page.emulateMedia({ reducedMotion: "no-preference" });
 
       // 3. jumpBoss: mission 3 again, the map revealed, the army in front of the Iron Vanguard.
-      const jump = await page.evaluate(() => window.__frontier.jumpBoss("iron-vanguard"));
+      // The clock is held from the jump to the checks: the army stands 12 m from the boss, so on a slow runner the
+      // match ran on to the boss waking and its entrance scene opened before the checks were read.
+      const jump = await page.evaluate(() => { window.__frontier.hold = true; return window.__frontier.jumpBoss("iron-vanguard"); });
       assert.equal(jump.mission, ID);
       assert.equal(jump.type, "ironvanguard");
       const near = await page.evaluate((j) => { const f = window.__frontier; return { cam: Math.hypot(f.view.focus.x - j.x, f.view.focus.z - j.z), army: f.sim.own(0).filter((e) => e.kind === "unit" && e.type !== "worker" && Math.hypot(e.x - j.x, e.z - j.z) < 20).length, scene: f.scene().open }; }, jump);
@@ -115,6 +139,7 @@ await suite("openings: mission fly-ins, the campaign map, jumpBoss", async () =>
       assert.ok(near.army > 0, "the army stands in front of it");
       assert.equal(near.scene, false, "no opening on a jump");
       assert.equal(await page.evaluate(() => window.__frontier.jumpBoss("no-such-boss")), null);
+      await page.evaluate(() => { window.__frontier.hold = false; });
       await page.waitForTimeout(400);
       await shot(page, "openings-jumpboss-desktop");
     }
