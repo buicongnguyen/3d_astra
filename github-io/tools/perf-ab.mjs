@@ -23,6 +23,22 @@ const args = process.argv.slice(2), value = (name, fallback = null) => (args.inc
 
 // Each scene drives one tree's own code (its Simulation, data and bots) and returns the final state hash.
 export const SCENES = {
+  "riverlands-army-300": {
+    about: "300 troops with mixed movement orders across the Riverlands bridges, 120 fixed ticks",
+    async play(tree) {
+      const { Simulation } = await import(tree.module("src/simulation.js"));
+      const sim = new Simulation({ map: "riverlands", ai: false });
+      const kinds = ["ranger", "tank", "vanguard", "breaker", "antitank"];
+      for (let i = 0; i < 300; i++) {
+        const team = i % 2, row = Math.floor(i / 2);
+        const x = -19 + row % 20 * 2, z = (team ? -1 : 1) * (9 + Math.floor(row / 20) * 2);
+        const unit = sim.spawn(kinds[row % kinds.length], team, x, z);
+        sim.issue([unit.id], { type: "move", x: -x, z: -z });
+      }
+      for (let i = 0; i < 120; i++) { sim.tick(0.05); sim.events.length = 0; }
+      return sim.hash();
+    },
+  },
   "riverlands-x2-300": {
     about: "AI against AI, riverlands, 2 rivals, Fast, 300 s",
     async play(tree) {

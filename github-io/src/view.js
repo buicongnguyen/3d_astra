@@ -10,7 +10,7 @@ import { ActivityView } from "./activity-view.js";
 import { mulberry32 } from "./rng.js";
 import { Effects } from "./fx.js";
 import { startFlash, stepFlash, HIT_FLASH } from "./combat-feedback.js";
-import { createRing, updateRing, createBar, updateBar, setTeamColor, createMarker, createRally, updateRally } from "./selection-view.js";
+import { SelectionBatches, createRing, updateRing, createBar, updateBar, setTeamColor, createMarker, createRally, updateRally } from "./selection-view.js";
 import { CaptureRings, DestinationMarkers } from "./capture-view.js";
 import { TacticsView } from "./tactics-view.js";
 import {themeFor,lightFor,lookOf,shotVisible,weaponStyle} from './visual-style.js';
@@ -98,14 +98,14 @@ function mesh(geometry, material, x = 0, y = 0, z = 0) {
 // the batches. Team paint (recoloured live), glows, glass, lamps, energy and textured or
 // see-through parts stay separate.
 const KEEP_FINISH = /^(Team|Glass|Lamp|Energy)/;
-// Two shared materials: parts that take image-based reflections (applyReflections: metal or very
-// glossy) and parts that do not. Their uniform roughness and metalness only steer that choice; the
-// shader reads the per-vertex values.
+// Shared materials for matte-only, reflective-only, and mixed rigid groups.
+// Roughness and metalness remain per vertex; mixed groups mask the environment lookup by finish.
 const bakedShared = new Map();
 const reflects = (m) => m.metalness >= 0.5 || m.roughness <= 0.25;
-export function bakedMaterial(reflective) {
-  if (bakedShared.has(reflective)) return bakedShared.get(reflective);
-  const m = new THREE.MeshStandardMaterial({ name: reflective ? "BakedReflect" : "Baked", vertexColors: true, roughness: 1, metalness: reflective ? 1 : 0 });
+export function bakedMaterial(reflective, mixed = false) {
+  const key = mixed ? "mixed" : reflective;
+  if (bakedShared.has(key)) return bakedShared.get(key);
+  const m = new THREE.MeshStandardMaterial({ name: mixed ? "BakedMixed" : reflective ? "BakedReflect" : "Baked", vertexColors: true, roughness: 1, metalness: reflective ? 1 : 0 });
   m.onBeforeCompile = (shader) => {
     shader.vertexShader = shader.vertexShader
       .replace("#include <common>", "#include <common>\nattribute vec2 finish;\nvarying vec2 vFinish;")
@@ -114,10 +114,14 @@ export function bakedMaterial(reflective) {
       .replace("#include <common>", "#include <common>\nvarying vec2 vFinish;")
       .replace("#include <roughnessmap_fragment>", "float roughnessFactor = vFinish.x;")
       .replace("#include <metalnessmap_fragment>", "float metalnessFactor = vFinish.y;");
+    // A single rigid group may have matte canvas next to polished metal. Keep
+    // the old per-finish reflection choice when their geometry shares a draw.
+    if (mixed) shader.fragmentShader = shader.fragmentShader.replace("#include <lights_fragment_maps>",
+      "if (vFinish.y >= 0.5 || vFinish.x <= 0.25) {\n#include <lights_fragment_maps>\n}");
     rimShader(shader); // W2-C: the warm Fresnel rim (look-grade.js); Team parts get their own colour below
   };
-  m.customProgramCacheKey = () => `baked-finish|${gradeKey()}`;
-  bakedShared.set(reflective, m);
+  m.customProgramCacheKey = () => `baked-finish|${key}|${gradeKey()}`;
+  bakedShared.set(key, m);
   return m;
 }
 // `compact` (flyers, 0.18): small craft seen from far above, so each rigid group bakes into ONE mesh,
@@ -127,7 +131,7 @@ export function bakeFinishes(root, { compact = false } = {}) {
   root.traverse((o) => {
     const m = o.material;
     if (!o.isMesh || Array.isArray(m) || !m.isMeshStandardMaterial || (compact ? /^(Team|Lamp|Energy|Flame)/ : KEEP_FINISH).test(m.name) || m.map || (m.transparent && !compact) || (m.emissive?.getHex() && !(compact && m.name.startsWith("Glass")))) return;
-    const key = compact ? o.parent.uuid : `${o.parent.uuid}|${reflects(m)}`;
+    const key = o.parent.uuid;
     if (!groups.has(key)) groups.set(key, { parent: o.parent, reflective: reflects(m), meshes: [] });
     const group = groups.get(key);
     group.reflective ||= reflects(m);
@@ -156,7 +160,7 @@ export function bakeFinishes(root, { compact = false } = {}) {
     parts.forEach((g) => g.dispose());
     if (!merged) continue;
     for (const o of meshes) parent.remove(o);
-    const mesh = new THREE.Mesh(merged, bakedMaterial(reflective));
+    const mesh = new THREE.Mesh(merged, bakedMaterial(reflective, !compact && reflective && meshes.some(o => !reflects(o.material))));
     mesh.name = "baked";
     parent.add(mesh);
   }
@@ -302,7 +306,6 @@ export class WorldView {
       polygonOffsetFactor: 1,
       polygonOffsetUnits: 2,
     });
-    this.contactShadowGeometries = new Map();
     this.resize();
     // The observer covers window resizes too; resize() itself ignores an unchanged size.
     this.resizeObserver = new ResizeObserver(() => this.resize());
@@ -825,6 +828,7 @@ export class WorldView {
     this.scene.add(this.fogMesh);
   }
   resize() {
+    this.canvasRect = null;
     const width = Math.max(1, this.container.clientWidth),
       height = Math.max(1, this.container.clientHeight);
     // Portrait phones run the canvas on under the floating dock (CSS --view-cover, px). The camera
@@ -870,7 +874,7 @@ export class WorldView {
   }
   // The part of the canvas that shows the map right now, in client pixels (minimap outline).
   visibleRect() {
-    const r = this.renderer.domElement.getBoundingClientRect();
+    const r = this.canvasRect ??= this.renderer.domElement.getBoundingClientRect();
     return { left: r.left, right: r.right, top: r.top + (this.coverTop || 0), bottom: r.top + (this.drawHeight || this.height) };
   }
   updateCamera() {
@@ -939,8 +943,7 @@ export class WorldView {
     this.focus.set(clamp(x, -this.terrain.half+6, this.terrain.half-6), 0, clamp(z, -this.terrain.half+6, this.terrain.half-6));
     this.updateCamera();
   }
-  point(clientX, clientY) {
-    const rect = this.renderer.domElement.getBoundingClientRect();
+  point(clientX, clientY, rect = this.renderer.domElement.getBoundingClientRect()) {
     this.raycaster.setFromCamera(
       new THREE.Vector2(
         ((clientX - rect.left) / rect.width) * 2 - 1,
@@ -1101,11 +1104,10 @@ export class WorldView {
     const template = this.teamTemplates.get(`${e.type}-${e.team}`);
     const model = e.kind === "wall" ? this.createWallModel(e) : (template || this.fallbackFlyer(e.team)).clone(true);
     root.add(model);
-    // Shared per radius, so every blob shadow joins one batch.
-    let shadowGeometry = this.contactShadowGeometries.get(e.radius);
-    if (!shadowGeometry)
-      this.contactShadowGeometries.set(e.radius, (shadowGeometry = new THREE.CircleGeometry(e.radius * 1.25, 20)));
-    const contactShadow = new THREE.Mesh(shadowGeometry, this.contactShadowMaterial);
+    // Unit disc, scaled per instance: all ground footprints share one draw.
+    this.contactShadowGeometry ??= new THREE.CircleGeometry(1, 20);
+    const contactShadow = new THREE.Mesh(this.contactShadowGeometry, this.contactShadowMaterial);
+    contactShadow.scale.setScalar(e.radius * 1.25);
     contactShadow.layers.set(SOURCE_LAYER);
     contactShadow.rotation.x = -Math.PI / 2;
     contactShadow.position.y = 0.07;
@@ -1169,8 +1171,7 @@ export class WorldView {
       if (o.name.startsWith("leg_"))
         root.userData.legs.push({ node: o, base: o.quaternion.clone() });
     });
-    // Selection ring and vitals bar (health, damage ghost, shield, level pips): one shader
-    // mesh each, see selection-view.js.
+    // Per-entity anchors feed the two shared selection batches.
     const side = e.team >= 0 ? this.colors[e.team] : 0xb8b2a4; // walls are neutral grey
     const ring = createRing(e.radius, side);
     root.add(ring);
@@ -1511,7 +1512,7 @@ export class WorldView {
     // Interpolate only from a snapshot taken exactly one tick before the current state;
     // ticks run outside the frame loop (test stepping) leave the snapshot stale.
     const interpolate = alpha < 1 && Math.abs(sim.time - 0.05 - this.previousTime) < 1e-6;
-    // Each vitals bar is a draw: in Frontier Defence only the 12 weakest enemies show theirs.
+    // Frontier Defence limits enemy vitals to the weakest twelve for readability.
     const bars = sim.defence ? weakest(sim, 12) : null;
     for (const e of sim.entities) {
       let o = this.objects.get(e.id);
@@ -1625,8 +1626,8 @@ export class WorldView {
       updateBar(bar, e, dt, inbound);
       if (!inbound) u.flash = Math.max(0, (u.flash || 0)-realDt);
       const flash = !inbound && u.flash > 0 && this.settings.combatMotion !== false && !this.reducedMotion.matches;
-      u.ring.material.uniforms.flash.value = bar.material.uniforms.flash.value = flash ? 1 : 0;
-      if (flash) { u.ring.visible = bar.visible = true; u.ring.material.uniforms.appear.value = 1; }
+      u.ring.userData.flash = bar.userData.flash = flash ? 1 : 0;
+      if (flash) { u.ring.visible = bar.visible = true; u.ring.userData.appear = 1; }
 
     }
     for (const [id, object] of this.objects)
@@ -1687,7 +1688,12 @@ export class WorldView {
     const shadows = this.renderer.shadowMap.enabled && this.sun.castShadow;
     if (shadows) this.sun.shadow.updateMatrices(this.sun);
     this.batches.begin(this.camera, shadows ? this.sun.shadow.getFrustum() : null);
-    for (const o of this.objects.values()) this.batches.collect(o);
+    this.selectionBatches ??= new SelectionBatches(this.scene);
+    for (const o of this.objects.values()) {
+      this.batches.collect(o);
+      this.selectionBatches.collect(o);
+    }
+    this.selectionBatches.finish();
     for (const d of this.dying) this.batches.collect(d.object);
     for (const o of this.resourceObjects.values()) this.batches.collect(o);
     this.batches.end();
@@ -1703,12 +1709,6 @@ export class WorldView {
   }
   disposeEntity(o) {
     this.scene.remove(o);
-    // Model geometry and materials belong to shared templates, and blob shadows share theirs;
-    // only dispose per-instance UI.
-    for (const m of [o.userData.ring, o.userData.bar]) {
-      m.geometry.dispose();
-      m.material.dispose();
-    }
   }
   reset() {
     this.fx.rng = mulberry32(1482); // cosmetic effects only: a fixed per-match generator (no Math.random in the sim)
@@ -1726,6 +1726,7 @@ export class WorldView {
     // frame's instances (the old map's buildings, for a frame or until its models load).
     this.batches.begin();
     this.batches.end();
+    this.selectionBatches?.finish();
     this.flashBatch.length = 0;
     this.flashBatchTime = -1;
     this.shake = new CameraShake();

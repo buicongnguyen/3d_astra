@@ -109,6 +109,11 @@ export class Governor {
 export const FAST_SPEEDS = [1, 2, 3];
 // Ticks one frame may run at a fast pace: a slow frame never spirals into more and more catch-up.
 export const MAX_TICKS_PER_FRAME = 6;
+
+// Predict the cost of one more fixed step from the work already done this frame.
+export function tickBudgetSpent(elapsedMs, ticks) {
+  return elapsedMs + elapsedMs / ticks > 20;
+}
 export class FastForward {
   constructor({ downAfter = 2 } = {}) {
     this.speed = 1;

@@ -114,21 +114,37 @@ export function setupHud(S, A) {
       .padStart(2, "0")}`;
   }
 
-  // Portrait phones run the canvas on under the dock and the tab strip (view.js, --view-cover). Only the part under
-  // opaque HUD is cut from the drawing (owner, 2026-11-22: crop): the open dock panel, or the tab strip when no panel
-  // is open, so the map still shows under the see-through top bar. The dock's height follows what it shows (a
-  // status line, a queue, the Defence states), so the line is measured on every UI tick (about 7 a second) and
-  // the view changes only when it moves.
+  const dock = document.querySelector(".bottom-dock"), tabs = $("dock-tabs");
+  let coverDirty = true, cachedCrop = 0, measuredRootClass = null;
+  const invalidateCover = () => {
+    coverDirty = true;
+    if (S.view) S.view.canvasRect = null;
+  };
+  const dockResize = new ResizeObserver(invalidateCover);
+  for (const element of [dock, tabs, $("stage")]) dockResize.observe(element);
+  const dockState = new MutationObserver(invalidateCover);
+  for (const element of [document.documentElement, dock, tabs])
+    dockState.observe(element, { attributes: true, attributeFilter: ["class", "hidden"] });
+  window.addEventListener("resize", invalidateCover);
+  window.addEventListener("scroll", invalidateCover, { passive: true, capture: true });
+
   function coverFollowsDock() {
     const view = S.view;
-    if (!view?.setCoverCrop || Z.modalType === "scene") return; // a story scene draws the whole frame (scenes.js)
+    if (!view?.setCoverCrop || Z.modalType === "scene") return;
     if (!(view.cover > 0)) { view.setCoverOpen(true); return; }
-    const canvas = view.renderer.domElement.getBoundingClientRect(), dock = document.querySelector(".bottom-dock").getBoundingClientRect();
-    const tabs = $("dock-tabs").getBoundingClientRect();
-    const top = Math.min(tabs.height ? tabs.top : canvas.bottom, dock.height > 1 ? dock.top : canvas.bottom);
-    const crop = Math.max(0, Math.round(canvas.bottom - top));
-    view.setCoverCrop(crop);
-    view.setCoverOpen(crop > 0);
+    // updateUI may have just toggled dock-actions, before MutationObserver runs.
+    const rootClass = document.documentElement.className;
+    if (coverDirty || measuredRootClass !== rootClass) {
+      measuredRootClass = rootClass;
+      const canvas = view.renderer.domElement.getBoundingClientRect();
+      view.canvasRect = canvas;
+      const panel = dock.getBoundingClientRect(), strip = tabs.getBoundingClientRect();
+      const top = Math.min(strip.height ? strip.top : canvas.bottom, panel.height > 1 ? panel.top : canvas.bottom);
+      cachedCrop = Math.max(0, Math.round(canvas.bottom - top));
+      coverDirty = false;
+    }
+    view.setCoverCrop(cachedCrop);
+    view.setCoverOpen(cachedCrop > 0);
   }
 
   let lastInfoHtml = null;

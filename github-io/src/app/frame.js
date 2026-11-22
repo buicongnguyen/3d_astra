@@ -5,7 +5,7 @@ import { pointLabel } from "../mission-ui.js";
 import { setMusicMood } from "../music.js";
 import { airModelsFor } from "../model-roster.js";
 import { MUSIC_HOLDS } from "./screens.js";
-import { FastForward, MAX_TICKS_PER_FRAME } from "../governor.js";
+import { FastForward, MAX_TICKS_PER_FRAME, tickBudgetSpent } from "../governor.js";
 
 // Fast-forward (Frontier Defence, AAA round 2 W1-F): module-local, not in app/state.js. The speed is
 // 1, 2 or 3 and only feeds the clock that drives the fixed 0.05 s ticks, so a match played at any
@@ -108,6 +108,7 @@ export function setupFrame(S, A) {
     if (running) {
       S.accumulator += dt * pace;
       let ticks = 0;
+      const tickStart = performance.now();
       while (S.accumulator >= 0.05) {
         S.view.beforeTick(S.sim);
         S.tutorial?.update(S.sim,[...S.selected]);
@@ -121,8 +122,16 @@ export function setupFrame(S, A) {
         if (S.sim.mission?.pending) { S.accumulator = 0; break; }
         // So does a story scene (app/scenes.js): it starts on the tick that called it.
         if (S.sim.events.length > heard && S.sim.events.some((e, i) => i >= heard && e.type === "scene")) { S.accumulator = 0; break; }
+        ticks++;
+        // Account for the next tick as well: two 14 ms ticks miss the 20 ms budget,
+        // even though the first one returned before the deadline.
+        const work = performance.now() - tickStart;
+        if (S.accumulator >= 0.05 && tickBudgetSpent(work, ticks)) {
+          S.accumulator %= 0.05;
+          break;
+        }
         // Fast-forward: at most MAX_TICKS_PER_FRAME ticks a frame; what a slow frame cannot run is dropped, not owed.
-        if (pace > 1 && ++ticks >= MAX_TICKS_PER_FRAME) { S.accumulator = Math.min(S.accumulator, 0.05); break; }
+        if (pace > 1 && ticks >= MAX_TICKS_PER_FRAME) { S.accumulator = Math.min(S.accumulator, 0.05); break; }
       }
       // A scene holds the match while it plays; one called by the winning tick plays before the debrief.
       const scene = S.sim.events.find((e) => e.type === "scene");

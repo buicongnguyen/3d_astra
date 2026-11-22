@@ -224,7 +224,7 @@ export function setupMinimap(S, A) {
       [rect.right, rect.bottom],
       [rect.left, rect.bottom],
     ].entries()) {
-      const p = S.view.point(x, y);
+      const p = S.view.point(x, y, S.view.canvasRect);
       if (p) {
         if (!i) ctx.moveTo(px(p.x), pz(p.z));
         else ctx.lineTo(px(p.x), pz(p.z));

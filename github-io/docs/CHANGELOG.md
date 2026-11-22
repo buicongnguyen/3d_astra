@@ -2,6 +2,10 @@
 
 ## Unreleased: Round A
 
+### A7 — Large battles
+
+Repeated blocked routes reuse navigation results until the battlefield changes. The frame loop budgets catch-up time, and health bars, selection rings and ground shadows share draw calls in crowded battles.
+
 ### A5 — First minute
 
 Fresh profiles can launch Training directly. Quick battle and Skirmish open with a skippable base fly-in and an economy objective.

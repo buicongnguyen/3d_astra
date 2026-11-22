@@ -1,0 +1,10 @@
+{
+  "initialUnits": 314,
+  "finalUnits": 314,
+  "staticDraws": 97,
+  "frameP95": 50.09999999999991,
+  "frameMedian": 16.799999999999727,
+  "frames": 54,
+  "simTime": 1.7000000000000008,
+  "quality": "eco"
+}

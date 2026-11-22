@@ -8,7 +8,7 @@ import { Simulation } from "../src/simulation.js";
 import { DEFINITIONS as D } from "../src/data.js";
 import { DEFENCE_LEVELS } from "../src/defence/levels.js";
 import { DEFENCE_KEY, loadDefence, saveDefence, hasSeen, recordSeen } from "../src/defence/progress.js";
-import { FastForward, MAX_TICKS_PER_FRAME } from "../src/governor.js";
+import { FastForward, MAX_TICKS_PER_FRAME, tickBudgetSpent } from "../src/governor.js";
 import { TRAITS, traitsOf, waveTraits, counterCrews, waveTypes } from "../src/defence/traits.js";
 import { AIMS, roadLeft } from "../src/sim/content/tower-aim.js";
 import { playDefence, DefenceBot } from "../tools/defence-bot.mjs";
@@ -162,7 +162,11 @@ test("D2: the governor drops a touch device to ×1 after two slow seconds, not a
 test("D2: a fast frame runs at most six ticks, and ×1 is untouched", () => {
   assert.equal(MAX_TICKS_PER_FRAME, 6);
   const frame = readFileSync(new URL("../src/app/frame.js", import.meta.url), "utf8");
-  assert.match(frame, /pace > 1 && \+\+ticks >= MAX_TICKS_PER_FRAME/);
+  assert.match(frame, /pace > 1 && ticks >= MAX_TICKS_PER_FRAME/);
+  assert.equal(tickBudgetSpent(2, 1), false);
+  assert.equal(tickBudgetSpent(14, 1), true);
+  assert.equal(tickBudgetSpent(16, 4), false);
+  assert.equal(tickBudgetSpent(21, 5), true);
   assert.match(frame, /S\.accumulator \+= dt \* pace/);
 });
 

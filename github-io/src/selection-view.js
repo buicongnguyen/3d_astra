@@ -9,8 +9,15 @@ const raw = (hex) => new THREE.Color().setHex(hex, THREE.LinearSRGBColorSpace);
 // Ground ring: bright core, soft halo, faint footprint disc and a slowly rotating dashed band
 // that appears only when selected. `appear` animates the lock-on (fade and scale in).
 const RING = `
-uniform float flash;
-uniform vec3 color; uniform float time, appear, strength, radius, selected, px;
+varying vec4 vShape, vState, vTint;
+#define flash vTint.a
+#define color vTint.rgb
+#define radius vShape.x
+#define appear vShape.y
+#define strength vShape.z
+#define selected vShape.w
+#define time vState.x
+#define px vState.y
 varying vec2 vUv;
 void main() {
   vec2 p = (vUv * 2.0 - 1.0) * (radius + 0.9);
@@ -30,14 +37,9 @@ void main() {
 }`;
 
 export function createRing(radius, hex) {
-  const size = 2 * (radius + 0.9);
-  const material = new THREE.ShaderMaterial({
-    uniforms: { flash: { value: 0 }, color: { value: raw(hex) }, time: { value: 0 }, appear: { value: 0 }, strength: { value: 1 },
-      radius: { value: radius }, selected: { value: 1 }, px: { value: 0 } },
-    vertexShader: PLAIN, fragmentShader: RING, transparent: true, depthWrite: false,
-    polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 2, // ties go to models
-  });
-  const ring = new THREE.Mesh(new THREE.PlaneGeometry(size, size), material);
+  const ring = new THREE.Object3D();
+  ring.userData.radius = radius;
+  ring.userData.color = raw(hex);
   ring.rotation.x = -Math.PI / 2;
   // Clear of the ground, the start pads (top 0.045) and building base plates (up to 0.080) and below unit feet (from 0.093):
   // a ring level with a plate z-fights and the footprint blinks.
@@ -58,22 +60,28 @@ export function updateRing(ring, selected, hovered, time, dt, unitsPerPixel = 0)
   if (!on) ring.userData.appear = 0;
   ring.visible = on;
   if (!on) return;
-  const u = ring.material.uniforms, t = ring.userData.appear;
-  u.appear.value = t;
-  u.px.value = unitsPerPixel;
-  u.time.value = time;
-  u.selected.value = selected ? 1 : 0;
-  u.strength.value = selected ? 1 : 0.5;
+  const u = ring.userData, t = u.appear;
+  u.px = unitsPerPixel;
+  u.time = time;
+  u.strength = selected ? 1 : 0.5;
   ring.scale.setScalar(1 + (1 - t) * 0.35);
 }
 
 // Vitals: framed plate, team tab, segmented health (green / amber / red) with a pale damage
 // ghost, shield bar and, on buildings, three level pips (and, left of them, the ranks of a
-// Frontier Defence branch, 0.24, in pale gold). One mesh per entity.
+// Frontier Defence branch, 0.24, in pale gold). One instance per visible plate.
 const BAR = `
-uniform float flash;
-uniform float hp, ghost, shield, hasShield, segments, level, building, rank;
-uniform vec3 team; uniform vec2 size;
+varying vec4 vShape, vState, vTint;
+#define hp vShape.x
+#define ghost vShape.y
+#define shield vShape.z
+#define segments vShape.w
+#define hasShield vState.x
+#define level vState.y
+#define building vState.z
+#define rank vState.w
+#define team vTint.rgb
+#define flash vTint.a
 varying vec2 vUv;
 float rect(vec2 p, vec2 a, vec2 b) {
   vec2 w = max(fwidth(p), vec2(1e-4));
@@ -81,6 +89,7 @@ float rect(vec2 p, vec2 a, vec2 b) {
   return s.x * s.y;
 }
 void main() {
+  vec2 size = vec2(building > 0.5 ? 3.6 : 2.3, building > 0.5 ? 0.62 : (hasShield > 0.5 ? 0.39 : 0.29));
   vec2 p = vUv * size;
   float pad = 0.05, tab = 0.12;
   float top = pad + (hasShield > 0.5 ? 0.29 : 0.19);
@@ -125,44 +134,138 @@ void main() {
 
 export function createBar(e, hex) {
   const building = e.kind === "building";
-  const size = new THREE.Vector2(building ? 3.6 : 2.3, building ? 0.62 : e.maxShield > 0 ? 0.39 : 0.29);
-  const material = new THREE.ShaderMaterial({
-    uniforms: {
-      flash: { value: 0 }, hp: { value: 1 }, ghost: { value: 1 }, shield: { value: 1 }, hasShield: { value: e.maxShield > 0 ? 1 : 0 },
-      segments: { value: Math.max(2, Math.min(40, Math.round(e.maxHp / 50))) }, level: { value: e.level || 1 }, rank: { value: e.branchRank || 0 },
-      building: { value: building ? 1 : 0 }, team: { value: raw(hex) }, size: { value: size },
-    },
-    vertexShader: PLAIN, fragmentShader: BAR, transparent: true, depthTest: false, depthWrite: false,
-  });
-  const bar = new THREE.Mesh(new THREE.PlaneGeometry(size.x, size.y), material);
+  const bar = new THREE.Object3D();
   bar.position.y = building ? 4.9 : 2.55;
   bar.scale.setScalar(building ? 0.58 : 0.62); // compact plates leave the battlefield visible
   bar.renderOrder = 10;
   bar.visible = false;
-  bar.userData = { ghost: 1, last: 1, hold: 0, base: building ? 0.58 : 0.62 };
+  bar.userData = { color: raw(hex), building, hasShield: e.maxShield > 0, ghost: 1, last: 1, hold: 0, base: building ? 0.58 : 0.62 };
   return bar;
 }
 
 // Health ghost: after damage the lost span stays pale for 0.45 s, then drains away.
 // R3-X `inbound`: a round drawn in flight has not landed yet, so the bar keeps the health from before the hit.
 export function updateBar(bar, e, dt, inbound = false) {
-  const u = bar.material.uniforms, s = bar.userData, real = Math.max(0, e.hp / e.maxHp), hp = inbound && real < s.last ? s.last : real;
+  const s = bar.userData, real = Math.max(0, e.hp / e.maxHp), hp = inbound && real < s.last ? s.last : real;
   if (hp < s.last) s.hold = 0.45;
   if (hp >= s.ghost) s.ghost = hp;
   else if (s.hold > 0) s.hold -= dt;
   else s.ghost = Math.max(hp, s.ghost - dt * 0.7);
   s.last = hp;
-  u.hp.value = hp;
-  u.ghost.value = s.ghost;
-  u.shield.value = e.maxShield > 0 ? Math.max(0, e.shield / e.maxShield) : 0;
-  u.level.value = e.level || 1;
-  u.rank.value = e.branchRank || 0;
-  u.segments.value = Math.max(2, Math.min(40, Math.round(e.maxHp / 50)));
+  s.shield = e.maxShield > 0 ? Math.max(0, e.shield / e.maxShield) : 0;
+  s.level = e.level || 1;
+  s.rank = e.branchRank || 0;
+  s.segments = Math.max(2, Math.min(40, Math.round(e.maxHp / 50)));
 }
 
 export function setTeamColor(object, hex) {
-  object.userData.ring.material.uniforms.color.value = raw(hex);
-  object.userData.bar.material.uniforms.team.value = raw(hex);
+  object.userData.ring.userData.color.setHex(hex, THREE.LinearSRGBColorSpace);
+  object.userData.bar.userData.color.setHex(hex, THREE.LinearSRGBColorSpace);
+}
+
+// Ground rings depth-test against the world. Vitals draw over it. Each kind
+// shares a single draw across all visible entities.
+function writeFour(attr, i, x, y, z, w) {
+  const a = attr.array, off = i * 4;
+  if (a[off] === Math.fround(x) && a[off + 1] === Math.fround(y) &&
+      a[off + 2] === Math.fround(z) && a[off + 3] === Math.fround(w)) return;
+  attr.setXYZW(i, x, y, z, w);
+  attr.overlayDirty = true;
+}
+class OverlayBatch {
+  constructor(scene, ring) {
+    this.scene = scene;
+    this.ring = ring;
+    this.used = 0;
+    this.capacity = 0;
+    const vertex = `
+      attribute vec4 iShape, iState, iTint;
+      varying vec4 vShape, vState, vTint;
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        vShape = iShape; vState = iState; vTint = iTint;
+        vec2 size = ${ring ? "vec2(2.0 * (iShape.x + 0.9))" : "vec2(iState.z > 0.5 ? 3.6 : 2.3, iState.z > 0.5 ? 0.62 : (iState.x > 0.5 ? 0.39 : 0.29))"};
+        gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position.xy * size, 0.0, 1.0);
+      }`;
+    this.material = new THREE.ShaderMaterial({ vertexShader: vertex, fragmentShader: ring ? RING : BAR,
+      transparent: true, depthWrite: false, depthTest: ring,
+      polygonOffset: ring, polygonOffsetFactor: 1, polygonOffsetUnits: 2 });
+  }
+  grow() {
+    this.capacity = Math.max(16, this.capacity * 2);
+    const geometry = new THREE.PlaneGeometry(1, 1);
+    const mesh = new THREE.InstancedMesh(geometry, this.material, this.capacity);
+    mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    for (const name of ["iShape", "iState", "iTint"]) {
+      const attr = new THREE.InstancedBufferAttribute(new Float32Array(this.capacity * 4), 4);
+      attr.setUsage(THREE.DynamicDrawUsage);
+      if (this.mesh) attr.array.set(this.mesh.geometry.attributes[name].array);
+      geometry.setAttribute(name, attr);
+    }
+    if (this.mesh) {
+      mesh.instanceMatrix.array.set(this.mesh.instanceMatrix.array);
+      this.mesh.removeFromParent();
+      this.mesh.geometry.dispose();
+      this.mesh.dispose();
+    }
+    mesh.name = this.ring ? "Selection rings" : "Vitals bars";
+    mesh.renderOrder = this.ring ? 3 : 10;
+    mesh.frustumCulled = false;
+    this.scene.add(mesh);
+    this.mesh = mesh;
+    this.uploads = [mesh.instanceMatrix, geometry.attributes.iShape, geometry.attributes.iState, geometry.attributes.iTint];
+  }
+  add(anchor) {
+    if (!anchor.visible) return;
+    if (this.used >= this.capacity) this.grow();
+    const i = this.used++, u = anchor.userData, attrs = this.mesh.geometry.attributes;
+    const matrix = this.mesh.instanceMatrix, expected = anchor.matrixWorld.elements;
+    for (let j = 0; j < 16; j++) {
+      if (matrix.array[i * 16 + j] === Math.fround(expected[j])) continue;
+      this.mesh.setMatrixAt(i, anchor.matrixWorld);
+      matrix.overlayDirty = true;
+      break;
+    }
+    writeFour(attrs.iTint, i, u.color.r, u.color.g, u.color.b, u.flash || 0);
+    if (this.ring) {
+      writeFour(attrs.iShape, i, u.radius, u.appear, u.strength ?? 1, u.selected ? 1 : 0);
+      writeFour(attrs.iState, i, u.time || 0, u.px || 0, 0, 0);
+    } else {
+      writeFour(attrs.iShape, i, u.last, u.ghost, u.shield, u.segments);
+      writeFour(attrs.iState, i, u.hasShield ? 1 : 0, u.level, u.building ? 1 : 0, u.rank);
+    }
+  }
+  finish() {
+    if (!this.mesh) return;
+    this.mesh.count = this.used;
+    this.mesh.visible = this.used > 0;
+    if (this.used) {
+      for (const attr of this.uploads) {
+        if (!attr.overlayDirty) continue;
+        attr.overlayDirty = false;
+        attr.clearUpdateRanges();
+        attr.addUpdateRange(0, this.used * attr.itemSize);
+        attr.needsUpdate = true;
+      }
+    }
+    this.used = 0;
+  }
+}
+export class SelectionBatches {
+  constructor(scene) {
+    this.rings = new OverlayBatch(scene, true);
+    this.bars = new OverlayBatch(scene, false);
+  }
+  collect(o) {
+    if (!o.visible) return;
+    this.rings.add(o.userData.ring);
+    this.bars.add(o.userData.bar);
+  }
+  finish() {
+    this.rings.finish();
+    this.bars.finish();
+  }
 }
 
 // Command marker: a lock-on ring that tightens onto the point, a centre ping and, for

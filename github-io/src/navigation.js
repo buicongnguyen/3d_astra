@@ -4,7 +4,7 @@ import { Terrain } from "./terrain.js";
 // Side of an obstacle bucket in metres (see near()).
 const BUCKET = 8;
 export class Navigation {
-  constructor(terrain = new Terrain()) {
+  constructor(terrain = new Terrain(), cachePaths = true) {
     this.terrain = terrain;
     this.grid = terrain.grid;
     this.blocked = new Uint8Array(this.grid * this.grid);
@@ -13,6 +13,9 @@ export class Navigation {
     this.looseBlocked = new Uint8Array(this.grid * this.grid);
     this.revision = 0;
     this.wallsSpawned = false;
+    this.cachePaths = cachePaths;
+    this.pathCaches = new Map();
+    this.loosePathCaches = new Map();
     this.obstacles = [];
     this.clearance = new Map();
     this.scratch = [];
@@ -57,6 +60,8 @@ export class Navigation {
   worldAt(x,z) { return this.terrain.worldAt(x,z); }
   rebuild(entities) {
     this.revision++;
+    this.pathCaches.clear();
+    this.loosePathCaches.clear();
     // Concrete walls (where the boulders were) block until destroyed. Before the simulation
     // has spawned them, the boulder positions stand in.
     // Latched: once walls have been seen, destroyed ones must not bring the boulders back.
@@ -120,8 +125,21 @@ export class Navigation {
     if (!start || !end) return [];
     const s = start[1] * this.grid + start[0],
       goal = end[1] * this.grid + end[0];
+    // Only cell-centre searches are cached. Final subcell movement and clearance
+    // stay exact. Edge direction matters when a body starts inside a footprint.
+    let cache;
+    const pair = s * this.blocked.length + goal;
+    const layers = loose ? this.loosePathCaches : this.pathCaches;
+    if (this.cachePaths) {
+      cache = layers.get(radius);
+      if (!cache) {
+        cache = { failed: new Set(), edges: new Uint8Array(this.blocked.length * 9) };
+        layers.set(radius, cache);
+      }
+      if (cache.failed.has(pair)) return [];
+    }
     // Search buffers are kept between calls; a route search runs many times a second.
-    const pool = (this.pool ??= { g: new Float32Array(this.grid * this.grid), parent: new Int32Array(this.grid * this.grid), closed: new Uint8Array(this.grid * this.grid) });
+    const pool = (this.pool ??= { ids: [], keys: [], g: new Float32Array(this.grid * this.grid), parent: new Int32Array(this.grid * this.grid), closed: new Uint8Array(this.grid * this.grid) });
     const g = pool.g.fill(Infinity),
       parent = pool.parent.fill(-1),
       closed = pool.closed.fill(0);
@@ -129,8 +147,8 @@ export class Navigation {
       hyp((id % this.grid) - end[0], Math.floor(id / this.grid) - end[1]);
     // Binary min-heap keyed by f = g + h. Improved nodes are pushed again and
     // stale entries are skipped once closed (lazy deletion).
-    const heapIds = [],
-      heapKeys = [];
+    const heapIds = pool.ids, heapKeys = pool.keys;
+    heapIds.length = heapKeys.length = 0;
     const push = (id, key) => {
       let i = heapIds.length;
       heapIds.push(id);
@@ -196,24 +214,19 @@ export class Navigation {
         z = Math.floor(current / this.grid);
       for (let dz = -1; dz <= 1; dz++)
         for (let dx = -1; dx <= 1; dx++) {
-          if ((!dx && !dz) || !this.free(x + dx, z + dz, radius, loose)) continue;
-          if (
-            dx &&
-            dz &&
-            (!this.free(x + dx, z, radius, loose) || !this.free(x, z + dz, radius, loose))
-          )
-            continue;
-          const next = (z + dz) * this.grid + x + dx;
+          if (!dx && !dz) continue;
+          const nx = x + dx, nz = z + dz, next = nz * this.grid + nx;
           if (closed[next]) continue;
-          // Cell centres can both be clear while the segment between them clips an obstacle.
-          if (
-            !this.canTraverse(
-              this.worldAt(x, z),
-              this.worldAt(x + dx, z + dz),
-              radius,
-            )
-          )
-            continue;
+          const edge = current * 9 + (dz + 1) * 3 + dx + 1;
+          let traversable = cache?.edges[edge];
+          if (!traversable) {
+            const free = this.free(nx, nz, radius, loose) &&
+              (!dx || !dz || (this.free(nx, z, radius, loose) && this.free(x, nz, radius, loose)));
+            // Clear cell centres can still have a segment that clips a footprint.
+            traversable = free && this.canTraverse(this.worldAt(x, z), this.worldAt(nx, nz), radius) ? 1 : 2;
+            if (cache) cache.edges[edge] = traversable;
+          }
+          if (traversable === 2) continue;
           const score = g[current] + (dx && dz ? Math.SQRT2 : 1);
           if (score < g[next]) {
             g[next] = score;
@@ -221,6 +234,11 @@ export class Navigation {
             push(next, score + heuristic(next));
           }
         }
+    }
+    if (cache) {
+      // Bound memory across a long match with many distinct unreachable orders.
+      if (cache.failed.size >= 4096) cache.failed.clear();
+      cache.failed.add(pair);
     }
     return [];
   }

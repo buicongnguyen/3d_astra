@@ -54,6 +54,9 @@ const scenarios = [
   {name:'base-high', map:'riverlands', enemies:1, mobile:false, zoom:42, focus:[-20,19], reveal:false},
   {name:'river-overview-high', map:'riverlands', enemies:1, mobile:false, zoom:70, focus:[0,0], reveal:true},
   {name:'large-map-high', map:'expanse', enemies:3, mobile:false, zoom:105, focus:[0,0], reveal:true},
+  // A7: dense army on a portrait phone, including the live health and selection overlays.
+  {name:'army-300-eco', map:'riverlands', enemies:1, mobile:true, zoom:42, focus:[0,0], reveal:true,
+    army:300, select:true, dense:true, triangles:1350000, compose:880},
   {name:'battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
   // The same phone battle with three rivals, first on the mirror roster and then one faction each (package 2.6).
   {name:'three-rivals-eco', map:'riverlands', enemies:3, teams:4, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
@@ -179,6 +182,8 @@ Object.assign(limits, {'three-rivals-eco':163, 'three-factions-eco':201, 'air-ba
 Object.assign(limits, {'three-rivals-eco':161, 'three-factions-eco':199, 'battle-dock-eco':172});
 // R3-FX: the weapon sprite sheets are two more instanced draws in every battle scene (measured: battle-eco 111 -> 113, air-battle-eco 121 -> 123, weapons-mix-eco 132 -> 134).
 for (const k of Object.keys(limits)) limits[k] += 2;
+// A7 phone measurements with the pooled overlays and shared rigid finish batches.
+Object.assign(limits, {'army-300-eco':105, 'battle-dock-eco':100, 'defence-heroic-eco':122, 'combined-defence-eco':94});
 for (const s of scenarios) if (s.name === 'three-rivals-eco') s.triangles = 330000; // 303,222 -> 324,494 triangles with the HUD's taller phone frame
 try {
   for (const scenario of scenarios) {
@@ -194,7 +199,7 @@ try {
       window.__nativeRAF = nativeRAF;
       window.requestAnimationFrame = cb => nativeRAF(time => { if (!window.__freezeFrames) cb(time); });
     });
-    await page.goto((process.env.TEST_URL || 'http://127.0.0.1:4193/') + '?test=1' + (process.env.RENDER_QUERY || ''));
+    await page.goto((process.env.TEST_URL || 'http://127.0.0.1:4193/') + '?test=1' + (process.env.RENDER_QUERY || ''), {waitUntil:'domcontentloaded', timeout:90000});
     await page.waitForFunction(() => window.__frontier?.view.modelsReady, null, {timeout:90000});
     if (scenario.defence) {
       await page.locator('[data-mode="defence"]').click();
@@ -282,7 +287,11 @@ try {
         const kinds = ['ranger','vanguard','tank','breaker','antitank'];
         for (let i = 0; i < scenario.army; i++) {
           const teams = scenario.teams || 2, team = i % teams, row = Math.floor(i / teams);
-          s.spawn(kinds[row % kinds.length], team, -8 + row % 6 * 2, (team ? -1 : 1) * (6 + Math.floor(row / 6) * 2));
+          const cols = scenario.dense ? 15 : 6;
+          const x = scenario.dense ? -12 + row % cols * 1.7 : -8 + row % cols * 2;
+          const z = (team ? -1 : 1) * (scenario.dense ? 4 + Math.floor(row / cols) * 1.35 : 6 + Math.floor(row / cols) * 2);
+          const unit = s.spawn(kinds[row % kinds.length], team, x, z);
+          if (scenario.dense) unit.hp *= 0.85;
         }
       }
       if (mark) {
