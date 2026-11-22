@@ -68,7 +68,12 @@ await suite("showtime: title cards, boss presence, the Keystone Roads node", asy
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.evaluate(() => window.__frontier.restart());
     await page.locator("#title-card").waitFor({ state: "attached", timeout: TIMEOUT.step });
-    await page.waitForTimeout(500);
+    // Restart schedules the fade on a new frame. Under CPU throttling it can
+    // start hundreds of milliseconds after the card enters the DOM.
+    await page.waitForFunction(() => {
+      const card = document.querySelector("#title-card.calm.show");
+      return card && getComputedStyle(card).opacity === "1";
+    }, null, { timeout: TIMEOUT.step });
     const calm = await page.evaluate(() => { const s = getComputedStyle(document.querySelector("#title-card")); return { animation: s.animationName, opacity: s.opacity, transition: s.transitionProperty, cls: document.querySelector("#title-card").className }; });
     assert.deepEqual([calm.animation, calm.transition, calm.opacity, calm.cls], ["none", "opacity", "1", "calm show"], "reduced motion: a plain fade, no slide");
     await page.locator("#title-card").waitFor({ state: "detached", timeout: 40000 });
