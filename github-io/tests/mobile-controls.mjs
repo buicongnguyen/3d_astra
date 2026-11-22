@@ -13,15 +13,27 @@ try {
   page.on('pageerror', e => errors.push(e.message));
   // Raw screen taps and hit tests deliberately avoid Playwright's automatic scrolling.
   const inspect = async selector => {
+    let buttons;
+    // A tile rebuilt or a panel still easing in under a slow runner is not covered for good: look again for a few seconds.
+    for (let attempt = 0; attempt < 25; attempt++) {
+      buttons = await measure(selector);
+      if (buttons.length && buttons.every(b => b.fits && b.visible)) break;
+      await page.waitForTimeout(200);
+    }
+    assert.ok(buttons.length, selector);
+    for (const b of buttons) { assert.ok(b.fits && b.visible, `${selector}: ${JSON.stringify(b)}`); assert.ok(b.h>=40, `${b.text} touch size`); }
+    return buttons;
+  };
+  const measure = async selector => {
     const buttons = await page.locator(selector).evaluateAll(elements => elements.filter(e => e.getClientRects().length).map(e => {
       // The phone context panel's action row scrolls sideways inside itself: each button is checked once in view.
       if (e.closest('#commands')) e.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       const r = e.getBoundingClientRect();
-      const visible = [[.1,.1],[.5,.5],[.9,.9]].every(([x,y]) => e.contains(document.elementFromPoint(r.x+r.width*x, r.y+r.height*y)));
-      return { text: e.textContent.trim(), x:r.x, y:r.y, w:r.width, h:r.height, visible, fits:r.x>=0 && r.y>=0 && r.right<=innerWidth+1 && r.bottom<=innerHeight+1 };
+      const hits = [[.1,.1],[.5,.5],[.9,.9]].map(([x,y]) => document.elementFromPoint(r.x+r.width*x, r.y+r.height*y));
+      const visible = hits.every(h => e.contains(h));
+      const cover = visible ? '' : hits.filter(h => !e.contains(h)).map(h => h ? `${h.tagName}#${h.id}.${h.className}` : 'none').join(' | ');
+      return { cover, text: e.textContent.trim(), x:r.x, y:r.y, w:r.width, h:r.height, visible, fits:r.x>=0 && r.y>=0 && r.right<=innerWidth+1 && r.bottom<=innerHeight+1 };
     }));
-    assert.ok(buttons.length, selector);
-    for (const b of buttons) { assert.ok(b.fits && b.visible, `${selector}: ${JSON.stringify(b)}`); assert.ok(b.h>=40, `${b.text} touch size`); }
     return buttons;
   };
   const tap = async selector => { const [b] = await inspect(selector); await page.touchscreen.tap(b.x+b.w/2,b.y+b.h/2); await page.waitForTimeout(150); };

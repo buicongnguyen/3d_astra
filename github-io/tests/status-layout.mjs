@@ -112,15 +112,18 @@ try{
    const unit=await page.locator('#commands [data-action]').first().getAttribute('data-action');
    await page.evaluate(({type,unit})=>{const f=window.__frontier,e=f.sim.own(0).find(e=>e.type===type);for(let i=0;i<5;i++)f.sim.enqueue(e.id,unit);f.step(0);},{type,unit});
    assert.deepEqual(await commandLayout(),layout,`${type} queue preserves commands`);
-   const buttons=await page.evaluate(()=>{
+   const measureButtons=()=>page.evaluate(()=>{
     // Phones (kit pass): one context panel; its action row scrolls sideways inside itself, so each tile is checked
     // once scrolled into the row, as a player would.
     const panel=document.querySelector(document.documentElement.classList.contains('compact-ui')?'.command-deck':'.command-panel').getBoundingClientRect();
     return [...document.querySelectorAll('#commands button,#upgrade-actions button,#production-status button')].filter(e=>e.getClientRects().length).map(e=>{
      e.scrollIntoView({block:'nearest',inline:'nearest'});
-     const r=e.getBoundingClientRect();return {text:e.textContent,fits:r.left>=panel.left&&r.right<=panel.right&&r.top>=panel.top&&r.bottom<=panel.bottom,visible:[[.1,.1],[.5,.5],[.9,.9]].every(([x,y])=>e.contains(document.elementFromPoint(r.x+r.width*x,r.y+r.height*y)))};
+     const r=e.getBoundingClientRect();return {text:e.textContent,fits:r.left>=panel.left&&r.right<=panel.right&&r.top>=panel.top&&r.bottom<=panel.bottom,visible:[[.1,.1],[.5,.5],[.9,.9]].every(([x,y])=>e.contains(document.elementFromPoint(r.x+r.width*x,r.y+r.height*y))),cover:[[.1,.1],[.5,.5],[.9,.9]].map(([x,y])=>document.elementFromPoint(r.x+r.width*x,r.y+r.height*y)).filter(h=>!e.contains(h)).map(h=>h?`${h.tagName}#${h.id}.${h.className}`:'none').join('|')};
     });
    });
+   // A panel still easing in or a row rebuilt under a slow runner is not covered for good: look again for a few seconds.
+   let buttons=await measureButtons();
+   for(let attempt=0;attempt<25&&!buttons.every(b=>b.fits&&b.visible);attempt++){await page.waitForTimeout(200);buttons=await measureButtons();}
    assert.ok(buttons.every(b=>b.fits&&b.visible),`${type}: ${JSON.stringify(buttons)}`);
    const labels=await page.locator('#commands button').evaluateAll(buttons=>buttons.map(b=>{
     const name=b.querySelector('span'),cost=b.querySelector('small');

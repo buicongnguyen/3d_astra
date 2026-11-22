@@ -89,11 +89,14 @@ await suite("defence-deck", async () => {
     // ---- Shift+Space and Space (desktop keyboard).
     if (!phone) {
       await page.keyboard.press("Shift+Space");
+      await page.waitForFunction(() => document.querySelector("#defence-speed-label").textContent === "×2", null, { timeout: 15000 });
       assert.equal(await page.evaluate(() => document.querySelector("#defence-speed-label").textContent), "×1".replace("1", "2"), "Shift+Space: x2");
       await page.keyboard.press("Space");
       assert.equal(await page.evaluate(() => window.__frontier.paused), true, "Space pauses");
       await page.keyboard.press("Space");
       await page.keyboard.press("Shift+Space"); await page.keyboard.press("Shift+Space");
+      // The label repaints on the next frame, seconds away on a slow runner: wait for it, then assert.
+      await page.waitForFunction(() => document.querySelector("#defence-speed-label").textContent === "×1", null, { timeout: 15000 });
       assert.equal(await page.evaluate(() => document.querySelector("#defence-speed-label").textContent), "×1");
     } else {
       // A phone: the toggle cycles x1 and x2 only.
