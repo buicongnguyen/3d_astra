@@ -144,7 +144,9 @@ try {
     await openObjectives(false);
 
     // ---- A `say` line appears in the dialogue box, clear of the controls, and can be dismissed.
-    await frontier(t => window.__frontier.step(t + 0.2), mission.say.time);
+    // The clock is held from here until the dialogue checks are done: on a slow runner the mission's next
+    // scripted line can arrive between the step and the reads below.
+    await frontier(t => { window.__frontier.hold = true; window.__frontier.step(t + 0.2); }, mission.say.time);
     await page.locator('#dialogue').waitFor({ state: 'visible' });
     assert.equal(await page.locator('#dialogue').getAttribute('aria-live'), 'polite');
     assert.ok((await page.locator('#dialogue-name').innerText()).length > 2);
@@ -177,6 +179,7 @@ try {
     if (name !== 'desktop') await press('#dialogue-card');
     await press('#dialogue-close');
     assert.equal(await page.locator('#dialogue').isHidden(), true, 'the last line dismisses to nothing');
+    await frontier(() => { window.__frontier.hold = false; });
     // A backlog during a fight: four lines wait, the rest are in the Comms log; nothing is lost.
     // The clock is held and the count is relative: on a slow runner another timed mission line can
     // arrive before the log is counted.

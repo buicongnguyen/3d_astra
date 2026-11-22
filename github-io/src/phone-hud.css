@@ -517,6 +517,8 @@
 :root.compact-ui:not(.in-briefing):not(.in-defence)[data-dock="selection"] .command-panel #commands > .ability-tile > .ability-name { display: none; }
 :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button > :is(small, .ability-status),
 :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .stance-control button > span { font: 700 12px/14px var(--font-ui); white-space: nowrap; }
+/* A tile's lines never paint outside the tile: a wider fallback font (Linux) made "175 / 75" spill over the neighbouring tile and cover it. */
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button { overflow: hidden; }
 :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .command-tile.state-locked small.tile-state::before { display: none; }
 /* A locked tile shows the lock glyph alone (its requirement is in the tooltip and the accessible name), so
    "Needs L2" never overflows a narrow tile. */

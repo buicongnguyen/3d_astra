@@ -125,11 +125,36 @@ try{
    let buttons=await measureButtons();
    for(let attempt=0;attempt<25&&!buttons.every(b=>b.fits&&b.visible);attempt++){await page.waitForTimeout(200);buttons=await measureButtons();}
    assert.ok(buttons.every(b=>b.fits&&b.visible),`${type}: ${JSON.stringify(buttons)}`);
-   const labels=await page.locator('#commands button').evaluateAll(buttons=>buttons.map(b=>{
+   const readLabels=()=>page.locator('#commands button').evaluateAll(buttons=>buttons.map(b=>{
     const name=b.querySelector('span'),cost=b.querySelector('small');
     return {name:name.textContent,locked:b.dataset.state==='locked'&&document.documentElement.classList.contains('compact-ui'),font:parseFloat(getComputedStyle(name).fontSize),costFont:parseFloat(getComputedStyle(cost).fontSize),fits:name.scrollWidth<=name.clientWidth&&cost.scrollWidth<=cost.clientWidth};
    }));
+   // As with the buttons above: a slow runner can read the tiles before the phone panel has settled.
+   const labelsOk=l=>l.every(l=>l.font>=13&&(l.costFont>=12||l.locked)&&l.fits);
+   let labels=await readLabels();
+   for(let attempt=0;attempt<25&&!labelsOk(labels);attempt++){await page.waitForTimeout(200);labels=await readLabels();}
    assert.ok(labels.every(l=>l.font>=13&&(l.costFont>=12||l.locked)&&l.fits) /* phones: a locked tile shows the lock glyph alone (kit pass) */,`Readable command labels: ${JSON.stringify(labels)}`);
+   // Text never spills onto a neighbour: each action tile clips its own contents, and the pixel just inside every
+   // tile's left and right edge still belongs to that tile (Linux fallback fonts are wider than this machine's; the
+   // cost line "175 / 75" once covered the next tile).
+   const spill=()=>page.evaluate(()=>{
+    const bs=[...document.querySelectorAll('#commands > button')].filter(b=>b.getClientRects().length);
+    return bs.flatMap(b=>{
+     const r=b.getBoundingClientRect(),bad=[];
+     if(document.documentElement.classList.contains('compact-ui')&&getComputedStyle(b).overflow==='visible')bad.push('not clipped');
+     for(const fx of [1.5,r.width-1.5]){
+      const x=r.x+fx,y=r.y+r.height/2;
+      if(x<0||x>=innerWidth||y<0||y>=innerHeight)continue;
+      const h=document.elementFromPoint(x,y);if(h&&!b.contains(h)&&h.closest('#commands'))bad.push('covered by '+h.tagName);
+     }
+     return bad.map(m=>({tile:b.textContent,m}));
+    });
+   });
+   assert.deepEqual(await spill(),[],`${type}: tile text stays inside its tile`);
+   await page.addStyleTag({content:'html *{font-family:Verdana,"DejaVu Sans","Arial Black",sans-serif !important;font-weight:800 !important}'}).then(h=>h.evaluate(e=>e.id='stress-font'));
+   await page.waitForTimeout(300);
+   assert.deepEqual(await spill(),[],`${type}: tile text stays inside its tile in a wide font`);
+   await page.evaluate(()=>document.getElementById('stress-font').remove());
    await page.screenshot({path:`test-results/status-${type}-actions-${viewport.width}x${viewport.height}.png`});
   }
   for(const type of ['worker','medic','engineer','tank','hq','group']){
