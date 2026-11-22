@@ -301,9 +301,10 @@ export class Effects {
     const t = this.view.terrain;
     return t?.plateaus?.length ? t.heightAt(x, z) : 0;
   }
-  allowFlash() {
-    if (!this.motion || this.time < this.nextFlash) return false;
-    this.nextFlash = this.time + 0.34;
+  allowFlash(now = performance.now()) {
+    // Real presentation time keeps the same limit during Defence fast-forward.
+    if (!this.motion || now < this.nextFlash) return false;
+    this.nextFlash = now + 340;
     return true;
   }
   // -- particle helpers

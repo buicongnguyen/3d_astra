@@ -72,3 +72,17 @@ test("sprite pool: records are reused, never allocated per effect, and the cap r
   assert.ok(s.batches.normal.items.length <= Math.round(20 * s.budget));
   assert.ok(s.stats.recycled > 0);
 });
+
+test('impact highlights share a real-time budget across a crowded battle', async () => {
+  const { Effects } = await import('../src/fx.js');
+  const view = { motion: true, nextFlash: -Infinity };
+  const flashes = [];
+  for (let ms = 0; ms < 2500; ms += 5) {
+    for (let shot = 0; shot < 10; shot++)
+      if (Effects.prototype.allowFlash.call(view, ms)) flashes.push(ms);
+  }
+  assert.ok(flashes.length >= 6);
+  for (const start of flashes) assert.ok(flashes.filter(ms => ms >= start && ms < start + 1000).length <= 3);
+  view.motion = false;
+  assert.equal(Effects.prototype.allowFlash.call(view, 3000), false);
+});
