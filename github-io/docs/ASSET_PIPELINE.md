@@ -150,10 +150,11 @@ UI kit design: Codex/OpenAI, owner-commissioned.
 - **Iron Sovereign:** `node tools/port-boss-model.mjs <Tank_game_3D>/public/models/boss-walker.glb public/models/ironsovereign.glb --parts tools/boss-parts/ironsovereign.json`. This uses palette `sovereign3`: a brass hull, crimson fittings, umber feet. The round-2 `sovereign` palette is kept, so the old port can still be reproduced.
 - **Night glow on every building:** every building has an emissive `Window*` or `Lamp*` material. The Relay and Tower keep their floodlight `Lamp`s. A `Window` costs one draw per building type on screen, plus one in the High shadow pass.
 
-## Weapon VFX sprite sheets (AAA round 3, R3-FX)
+## Weapon VFX sprite sheets (AAA round 3, R3-FX and R3-FX2)
 
 VFX sprite sheets: Codex/OpenAI, owner-commissioned.
+VFX2 heavy-read sheets (tracer-streak, beam-line strips and caps, heal-beam, missile-burst, fireball variants, flame-jet-bright, walker-stomp, projectile-heads): Codex/OpenAI, owner-commissioned.
 
-- Source: `3d_astra/codex-vfx/` (README: frame order, FPS, loops, attachment points, blend modes). Eleven 4x4 sheets, 512 px (desktop) and `-phone` 256 px.
-- Packed by `python tools/pack-fx-atlas.py <codex-vfx dir>` into ONE atlas per tier, lossless-alpha WebP: `public/fx/fx-atlas.webp` (1536x2048, 418 KB) and `public/fx/fx-atlas-phone.webp` (768x1024, 205 KB). Sheet order and the 3-wide grid are `SHEET_NAMES` / `GRID_COLS` in `src/fx-sprites-data.js`.
-- Runtime: `src/fx-sprites.js` (two pooled instanced batches, normal and additive: +2 draws), recipes in `src/fx-kinds/sprite-fx.js`. Loaded when a battle starts (`match-flow.js` restart), never on the title. The phone/Eco tier loads the 256 px atlas (3 MB of GPU memory; desktop 12.6 MB, no mipmaps). The service worker keeps `fx/*.webp` on first fetch. `?sprites=0` keeps the procedural effects.
+- Sources: `3d_astra/codex-vfx/` (flak, beam-impact, muzzle-flash, scorch-decals, smoke-trail) and `3d_astra/codex-vfx2/` (everything else); their READMEs give frame order, FPS, loops, attachment points and blend modes (VFX2 is normal alpha, additive only for the old muzzle and beam-impact).
+- Packed by `python tools/pack-fx-atlas.py <codex-vfx> <codex-vfx2>` into ONE atlas per tier (WebP, straight alpha): `public/fx/fx-atlas.webp` (2048x1984, 529 KB) and `public/fx/fx-atlas-phone.webp` (1024x992, 278 KB), plus `src/fx-atlas-layout.json` (frame rectangles, shared by both tiers; every sheet's name, columns and frame count).
+- Runtime: `src/fx-sprites.js` (two pooled instanced batches, normal and additive: +2 draws; per-instance rect, frame pair, stretch and strip repeat), recipes in `src/fx-kinds/sprite-fx.js`, data and frame maths in `src/fx-sprites-data.js`. Loaded when a battle starts (`match-flow.js` restart), never on the title. The phone/Eco tier loads the 256 px atlas (4.1 MB of GPU memory; desktop 16.3 MB, no mipmaps). The service worker keeps `fx/*.webp` on first fetch. `?sprites=0` keeps the procedural effects. Regenerate strips with `tools/fx-strips.mjs` and `tools/fx-strip-montage.py`.

@@ -6,31 +6,36 @@
 // +2 draws. The atlas loads when a battle starts (Effects is built then; never on the title) and the procedural effects of
 // src/fx.js stay the fallback until it has loaded (or if it never does). View only.
 import * as THREE from "three";
-import { SHEETS, GRID_COLS, GRID_ROWS, CELLS_PER_SIDE, frameAt, atlasFile, cellPixels, DECAL, POOL, SCORCH_FRAMES, CRATER_FRAMES } from "./fx-sprites-data.js";
+import { SHEETS, frameAt, atlasFile, atlasSize, DECAL, POOL, SCORCH_FRAMES, CRATER_FRAMES } from "./fx-sprites-data.js";
 
 const BILLBOARD = 0, GROUND = 1, ORIENTED = 2;
 export { BILLBOARD, GROUND, ORIENTED };
 
 const VERTEX = `
-attribute vec3 iPos; attribute vec4 iColor; attribute vec4 iCell; attribute vec3 iSize; attribute vec3 iAxis;
-uniform float inset;
+attribute vec3 iPos; attribute vec4 iColor; attribute vec4 iRect; attribute vec4 iFrame; attribute vec3 iSize; attribute vec3 iAxis; attribute vec4 iExtra;
+uniform vec2 texel;
 varying vec2 vA; varying vec2 vB; varying vec4 vColor; varying float vMix;
-vec2 cellUv(float sheet, float frame, vec2 q) {
-  float col = mod(sheet, ${GRID_COLS}.0) * ${CELLS_PER_SIDE}.0 + mod(frame, ${CELLS_PER_SIDE}.0);
-  float row = floor(sheet / ${GRID_COLS}.0) * ${CELLS_PER_SIDE}.0 + floor(frame / ${CELLS_PER_SIDE}.0);
-  vec2 l = mix(vec2(inset), vec2(1.0 - inset), q);
-  return vec2((col + l.x) / ${GRID_COLS * CELLS_PER_SIDE}.0, (${GRID_ROWS * CELLS_PER_SIDE - 1}.0 - row + l.y) / ${GRID_ROWS * CELLS_PER_SIDE}.0);
+// iRect: x, y, frame w, frame h of the sheet in the atlas (0..1, y from the top). iFrame: columns, frame a, frame b, mix.
+// iExtra: stretch x, stretch y (a beam is long and thin), repeats along x (a seamless strip), scroll.
+vec2 cellUv(float frame, vec2 q) {
+  float cols = iFrame.x;
+  vec2 o = iRect.xy + vec2(mod(frame, cols) * iRect.z, floor(frame / cols) * iRect.w);
+  vec2 l = vec2(mix(0.5 * texel.x, iRect.z - 0.5 * texel.x, q.x), mix(0.5 * texel.y, iRect.w - 0.5 * texel.y, 1.0 - q.y));
+  return vec2(o.x + l.x, 1.0 - (o.y + l.y));
 }
 void main() {
-  vColor = iColor; vMix = iCell.w;
-  vA = cellUv(iCell.x, iCell.y, uv); vB = cellUv(iCell.x, iCell.z, uv);
+  vColor = iColor; vMix = iFrame.w;
+  vec2 q = uv;
+  if (iExtra.z > 0.0) q.x = fract(uv.x * iExtra.z + iExtra.w); // a strip repeats along its length
+  vA = cellUv(iFrame.y, q); vB = cellUv(iFrame.z, q);
   vec3 right = vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]);
   vec3 up = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
   vec3 forward = vec3(viewMatrix[0][2], viewMatrix[1][2], viewMatrix[2][2]);
   float rot = iSize.y;
   if (iSize.z > 1.5) rot += atan(dot(iAxis, up), dot(iAxis, right)); // turned along a world direction, seen from the camera
   float c = cos(rot), s = sin(rot);
-  vec2 r = vec2(position.x * c - position.y * s, position.x * s + position.y * c) * iSize.x;
+  vec2 p = position.xy * iExtra.xy;
+  vec2 r = vec2(p.x * c - p.y * s, p.x * s + p.y * c) * iSize.x;
   vec3 world;
   // Camera-facing sprites are pulled toward the (orthographic) camera by about their own size, like the glow pool: a
   // blast centred in a hull draws in front of it instead of being clipped, without moving on screen.
@@ -51,20 +56,20 @@ void main() {
 
 // One record shape for every sprite (pooled).
 function newRecord() {
-  return { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, age: 0, life: 1, s0: 1, s1: 1, rot: 0, spin: 0, r: 1, g: 1, b: 1, a: 1, sheet: 0, start: 0, count: 1, fps: 12, loop: false,
-    mode: BILLBOARD, ax: 1, ay: 0, az: 0, anchor: null, decal: false, calm: false, fade: 0.05, drag: 0 };
+  return { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, age: 0, life: 1, s0: 1, s1: 1, rot: 0, spin: 0, r: 1, g: 1, b: 1, a: 1, def: null, start: 0, count: 1, fps: 12, loop: false,
+    mode: BILLBOARD, ax: 1, ay: 0, az: 0, anchor: null, decal: false, calm: false, fade: 0.05, drag: 0, sx: 1, sy: 1, tiles: 0, scroll: 0, scrollSpeed: 0, once: false };
 }
 
 class Batch {
-  constructor(capacity, blending, renderOrder, texture, inset) {
+  constructor(capacity, blending, renderOrder, texture, texel) {
     this.capacity = capacity;
     const quad = new THREE.PlaneGeometry(1, 1), g = new THREE.InstancedBufferGeometry();
     g.index = quad.index; g.setAttribute("position", quad.getAttribute("position")); g.setAttribute("uv", quad.getAttribute("uv"));
     const attr = (name, n) => { const a = new THREE.InstancedBufferAttribute(new Float32Array(capacity * n), n); a.setUsage(THREE.DynamicDrawUsage); g.setAttribute(name, a); return a; };
-    this.pos = attr("iPos", 3); this.color = attr("iColor", 4); this.cell = attr("iCell", 4); this.size = attr("iSize", 3); this.axis = attr("iAxis", 3);
-    this.attrs = [this.pos, this.color, this.cell, this.size, this.axis];
+    this.pos = attr("iPos", 3); this.color = attr("iColor", 4); this.rect = attr("iRect", 4); this.frame = attr("iFrame", 4); this.size = attr("iSize", 3); this.axis = attr("iAxis", 3); this.extra = attr("iExtra", 4);
+    this.attrs = [this.pos, this.color, this.rect, this.frame, this.size, this.axis, this.extra];
     g.instanceCount = 1;
-    this.material = new THREE.ShaderMaterial({ uniforms: { map: { value: texture }, inset: { value: inset } }, vertexShader: VERTEX, fragmentShader: FRAGMENT,
+    this.material = new THREE.ShaderMaterial({ uniforms: { map: { value: texture }, texel: { value: texel } }, vertexShader: VERTEX, fragmentShader: FRAGMENT,
       transparent: true, depthWrite: false, blending });
     this.mesh = new THREE.Mesh(g, this.material);
     this.mesh.frustumCulled = false; this.mesh.renderOrder = renderOrder;
@@ -108,16 +113,18 @@ export class FxSprites {
     const old = this.texture, texture = new THREE.Texture(img);
     texture.minFilter = texture.magFilter = THREE.LinearFilter; texture.generateMipmaps = false; texture.colorSpace = THREE.NoColorSpace; texture.needsUpdate = true;
     this.texture = texture;
-    const inset = 0.5 / cellPixels(phone);
+    const [aw, ah] = atlasSize(phone), texel = new THREE.Vector2(1 / aw, 1 / ah);
     if (!this.batches) {
-      this.batches = { normal: new Batch(POOL.normal, THREE.NormalBlending, 5.5, texture, inset), add: new Batch(POOL.add, THREE.AdditiveBlending, 7, texture, inset) };
+      this.batches = { normal: new Batch(POOL.normal, THREE.NormalBlending, 5.5, texture, texel), add: new Batch(POOL.add, THREE.AdditiveBlending, 7, texture, texel) };
       this.parent.add(this.batches.normal.mesh, this.batches.add.mesh);
-    } else for (const b of Object.values(this.batches)) { b.material.uniforms.map.value = texture; b.material.uniforms.inset.value = inset; }
+    } else for (const b of Object.values(this.batches)) { b.material.uniforms.map.value = texture; b.material.uniforms.texel.value = texel; }
     old?.dispose();
     this.ready = true;
     this.textureBytes = img.naturalWidth * img.naturalHeight * 4; // RGBA8, no mips (budget note)
   }
   batchOf(sheet) { return this.batches[SHEETS[sheet].blend === "add" ? "add" : "normal"]; }
+  // How many sprites of one batch live now (tests and probes).
+  count(sheet) { return this.batchOf(sheet).items.length; }
   // A new pooled sprite of `sheet` at the world point (x, y, z); the caller sets the rest. y is above the ground unless `lifted`.
   take(sheet, x, y, z, size, anchor, lifted = false) {
     const def = SHEETS[sheet], batch = this.batchOf(sheet);
@@ -126,8 +133,8 @@ export class FxSprites {
     if (!p) return null;
     batch.items.push(p);
     p.x = x; p.y = lifted ? y : y + this.fx.ground(x, z); p.z = z; p.vx = p.vy = p.vz = 0; p.age = 0; p.life = def.loop ? 1 : def.frames / Math.max(1, def.fps);
-    p.s0 = p.s1 = size; p.rot = 0; p.spin = 0; p.r = p.g = p.b = p.a = 1; p.sheet = def.index; p.start = 0; p.count = def.frames; p.fps = def.fps; p.loop = def.loop;
-    p.mode = BILLBOARD; p.ax = 1; p.ay = 0; p.az = 0; p.anchor = anchor; p.decal = false; p.calm = !this.fx.motion; p.fade = 0.06; p.drag = 0;
+    p.s0 = p.s1 = size; p.rot = 0; p.spin = 0; p.r = p.g = p.b = p.a = 1; p.def = def; p.start = 0; p.count = def.frames; p.fps = def.fps; p.loop = def.loop;
+    p.mode = BILLBOARD; p.ax = 1; p.ay = 0; p.az = 0; p.sx = p.sy = 1; p.tiles = 0; p.scroll = 0; p.scrollSpeed = 0; p.once = false; p.anchor = anchor; p.decal = false; p.calm = !this.fx.motion; p.fade = 0.06; p.drag = 0;
     if (p.calm) p.fps *= 0.6;
     this.stats.spawned++;
     return p;
@@ -167,11 +174,12 @@ export class FxSprites {
   update(dt, visible) {
     if (!this.batches) return;
     for (const key of ["normal", "add"]) {
-      const batch = this.batches[key], P = batch.pos.array, C = batch.color.array, E = batch.cell.array, S = batch.size.array, A = batch.axis.array, items = batch.items;
+      const batch = this.batches[key], P = batch.pos.array, C = batch.color.array, R = batch.rect.array, E = batch.frame.array, S = batch.size.array, A = batch.axis.array, X = batch.extra.array, items = batch.items;
       let keep = 0, drawn = 0;
       for (let i = 0; i < items.length; i++) {
         const p = items[i];
-        p.age += dt;
+        if (!p.once) p.age += dt;
+        else if (p.age > 0) { p.anchor = null; batch.free.push(p); continue; } // drawn once, the frame it was put
         if (p.age >= p.life) { p.anchor = null; batch.free.push(p); continue; }
         items[keep++] = p;
         if (p.age < 0) continue; // delayed start
@@ -187,9 +195,13 @@ export class FxSprites {
         // Out over the last `fade` of the life; loops ease in over the first moments.
         const out = Math.min(1, (p.life - p.age) / Math.max(0.05, p.life * p.fade)), inn = p.loop ? Math.min(1, p.age / 0.08) : 1;
         C[o * 4] = p.r; C[o * 4 + 1] = p.g; C[o * 4 + 2] = p.b; C[o * 4 + 3] = p.a * out * inn;
-        E[o * 4] = p.sheet; E[o * 4 + 1] = FRAME.a; E[o * 4 + 2] = FRAME.b; E[o * 4 + 3] = FRAME.mix;
+        const d = p.def;
+        R[o * 4] = d.x; R[o * 4 + 1] = d.y; R[o * 4 + 2] = d.fw; R[o * 4 + 3] = d.fh;
+        E[o * 4] = d.cols; E[o * 4 + 1] = FRAME.a; E[o * 4 + 2] = FRAME.b; E[o * 4 + 3] = FRAME.mix;
+        X[o * 4] = p.sx; X[o * 4 + 1] = p.sy; X[o * 4 + 2] = p.tiles; X[o * 4 + 3] = p.scroll + p.scrollSpeed * p.age;
         S[o * 3] = p.s0 + (p.s1 - p.s0) * (1 - (1 - t) * (1 - t)); S[o * 3 + 1] = p.rot; S[o * 3 + 2] = p.mode;
         A[o * 3] = p.ax; A[o * 3 + 1] = p.ay; A[o * 3 + 2] = p.az;
+        if (p.once) p.age = 1; // freed at the next update
         drawn++;
       }
       items.length = keep;

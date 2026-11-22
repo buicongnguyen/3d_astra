@@ -26,7 +26,7 @@ import { launch, stepRounds, stepStrikes, warnRing, flakBurst, airBurst } from "
 import { LOOKS as MOOD_LOOKS } from "./mission-looks.js";
 // R3-FX: the Codex weapon sprite sheets (two pooled instanced batches), played for impacts, muzzle flashes, trails, jets, heals and decals.
 import { FxSprites } from "./fx-sprites.js";
-import { spriteImpact, spriteMuzzle, spriteHeal, spriteTrailPuff, spritesReady } from "./fx-kinds/sprite-fx.js";
+import { spriteImpact, spriteMuzzle, spriteHeal, spriteHealBeam, spriteTracer, spriteSpark, spriteHead, spriteTrailPuff, spritesReady } from "./fx-kinds/sprite-fx.js";
 import { impactKind } from "./fx-sprites-data.js";
 
 // Procedural sprite atlas: one 128 px cell per shape, white with alpha.
@@ -418,7 +418,7 @@ export class Effects {
     const aloft = at.y > 2.2;
     if (!(power > 0)) {
       // R3-FX: a rifle round that lands throws the needle sparks of the beam-impact sheet, small (Eco: every other round).
-      if (!aloft && (!this.view.lowPower || this.rng() < 0.5)) spriteImpact(this, "beam", at, 1, anchor, 0, 0.5);
+      if (!aloft && (!this.view.lowPower || this.rng() < 0.5)) spriteSpark(this, at, anchor);
       this.particle(this.glow, { ...at, s0: 0.5, s1: 0.7, life: 0.07, c0: [1, 0.9, 0.6, 0.9], c1: [1, 0.5, 0.2, 0], anchor });
       this.sparks(at, 3, anchor, 0.45);
       // R3-X tracers: every rifle round that reaches the ground kicks a small dust puff (Eco: every other one).
@@ -535,6 +535,7 @@ export class Effects {
           c0: tint, c1: [...tint.slice(0, 3), 0], anchor, delay: i * 0.06, fadeIn: 0.08 });
       // R3-FX: the mint heal-sparkle sheet loops over the patient for as long as the beam lasts.
       spriteHeal(this, { x: land.x, y: land.y - 0.5, z: land.z }, tint, anchor, 0.9);
+      spriteHealBeam(this, from, to, dir.x / len, dir.y / len, dir.z / len, anchor, null, 0.8); // R3-FX2: the heal-beam strip along the connection
       return;
     }
     const power = style.hit ?? hitPower(e.weapon, kind);
@@ -566,7 +567,9 @@ export class Effects {
       if (cannon && e.weapon !== "tower" && !e.sAir) this.dust({ x: from.x, y: 0.25, z: from.z }, 1, anchor, 0.8, 0.8);
     }
     // R3-FX: a sprite muzzle flash, turned along the barrel (large for a Tank and the Breaker, medium for other cannons and rockets).
-    if (!cannon && !rocket && m && cls === "tracer") spriteMuzzle(this, from, dir.x / len, dir.y / len, dir.z / len, "small", anchor, 1.3);
+    // R3-FX2: a tracer round is the streak sheet flying to the target (warm, or cyan for a cyan tracer), with its muzzle spark.
+    const color0 = style.color ?? [1, 0.9, 0.6, 1];
+    if (!cannon && !rocket && m && cls === "tracer") spriteTracer(this, from, to, dir.x / len, dir.y / len, dir.z / len, travel, anchor, color0[2] > color0[0] + 0.15);
     if ((cannon || rocket) && m) spriteMuzzle(this, from, dir.x / len, dir.y / len, dir.z / len, e.weapon === "tank" || cls === "lob" ? "large" : "medium", anchor);
     // Projectile: a streak (and shell/rocket glow) flying to the target; reduced motion
     // shows a brief static tracer along the whole path instead.
@@ -716,7 +719,7 @@ export class Effects {
     // damage radius, a shower of debris and a wide crater scorch.
     const anchor = { x: e.x, z: e.z, team: e.team }, r = e.radius || 4, m = this.motion;
     // R3-FX: the artillery-blast sheet (sized to the damage radius) replaces the procedural fireball; the crater is a decal.
-    if (spriteImpact(this, "artillery", { x: e.x, y: 0.3, z: e.z }, 1.2, anchor, 0, Math.max(1, r / 4))) {
+    if (spriteImpact(this, "bomb", { x: e.x, y: 0.3, z: e.z }, 1, anchor, 0, Math.max(0.8, r / 5))) {
       this.sparks({ x: e.x, y: 1.2, z: e.z }, 10, anchor, 1.6);
       this.decal({ x: e.x, z: e.z }, r * 2.5, 0.5, anchor, CELL.ring, [1, 0.8, 0.5, 0.8], this.glow, r * 0.4, { hold: 0, y: 0.12 });
       this.dust({ x: e.x, y: 0.3, z: e.z }, 5, anchor, 1.6, 1.6);
@@ -1020,7 +1023,7 @@ export class Effects {
           h.owner = p.token = p.token || ++this.rocketTokens;
         }
         h.x = x - ux * tail * 1.25; h.y = y - uy * tail * 1.25; h.z = z - uz * tail * 1.25;
-        if (visible(p.anchor)) this.rockets.add(x, y, z, ux, uy, uz, p.roll, p.body * bodyScale, p.color);
+        if (visible(p.anchor)) { this.rockets.add(x, y, z, ux, uy, uz, p.roll, p.body * bodyScale, p.color); spriteHead(this, "rocket", x, y, z, ux, uy, uz, 1.9 * p.body * bodyScale); }
       }
       if (t >= 1) {
         this.projectiles.splice(i, 1);

@@ -1,12 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { SHEETS, SHEET_NAMES, GRID_COLS, frameAt, impactKind, impactSize, IMPACT_SHEET, CLASS_IMPACT, readable, DECAL, POOL, atlasFile, cellPixels, MUZZLE_ROW } from "../src/fx-sprites-data.js";
+import { SHEETS, SHEET_NAMES, LAYOUT, frameAt, impactKind, impactSize, IMPACT_SHEET, CLASS_IMPACT, readable, DECAL, POOL, atlasFile, cellPixels, MUZZLE_ROW } from "../src/fx-sprites-data.js";
 import { WEAPON_CLASSES } from "../src/fx-kinds/weapon-class.js";
 
-test("every sheet has a unique atlas slot in the packed grid, in the packer's order", () => {
-  assert.deepEqual(Object.keys(SHEETS), SHEET_NAMES);
-  assert.deepEqual(Object.values(SHEETS).map((s) => s.index), SHEET_NAMES.map((_, i) => i));
-  assert.ok(SHEET_NAMES.length <= GRID_COLS * 4);
+test("every sheet has a frame rectangle in the packed atlas and none overlap", () => {
+  assert.deepEqual(Object.keys(SHEETS).sort(), [...SHEET_NAMES].sort());
+  const boxes = Object.values(SHEETS).map((d) => ({ x: d.x, y: d.y, w: d.fw * d.cols, h: d.fh * Math.ceil(d.count / d.cols) }));
+  for (const b of boxes) assert.ok(b.x >= 0 && b.y >= 0 && b.x + b.w <= 1.0001 && b.y + b.h <= 1.0001);
+  for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+    const a = boxes[i], c = boxes[j];
+    assert.ok(a.x + a.w <= c.x + 1e-9 || c.x + c.w <= a.x + 1e-9 || a.y + a.h <= c.y + 1e-9 || c.y + c.h <= a.y + 1e-9, `${i} overlaps ${j}`);
+  }
+  assert.ok(LAYOUT.width * LAYOUT.height * 4 < 20e6, "the atlas stays under 20 MB of texture memory");
+  for (const n of ["beamCyan", "beamMagenta", "healBeam"]) assert.equal(SHEETS[n].pw / SHEETS[n].ph, 8, "strips are 8:1");
 });
 
 test("frame math: one-shots hold the last frame, loops wrap and cross-fade", () => {
@@ -34,12 +40,12 @@ test("every weapon class that has a sprite impact maps to an existing sheet", ()
   }
   assert.equal(impactKind("shell"), "shell"); assert.equal(impactKind("lob"), "artillery"); assert.equal(impactKind("missile"), "rocket");
   assert.equal(impactKind("bomb"), "bomb"); assert.equal(impactKind("flak"), "flak"); assert.equal(impactKind("tracer"), null);
-  assert.equal(SHEETS[IMPACT_SHEET.artillery].file, "artillery-blast"); assert.equal(SHEETS[IMPACT_SHEET.bomb].file, "air-bomb-blast");
+  assert.equal(IMPACT_SHEET.artillery, "artillery"); assert.equal(IMPACT_SHEET.firebomb, "bomb"); assert.equal(IMPACT_SHEET.missile, "missile");
 });
 
 test("blend modes follow the README: smoke, scorch and mixed blasts normal, bright effects additive", () => {
-  for (const n of ["tank", "rocket", "artillery", "flak", "bomb", "smoke", "scorch", "heal"]) assert.equal(SHEETS[n].blend, "normal", n);
-  for (const n of ["flame", "beam", "muzzle"]) assert.equal(SHEETS[n].blend, "add", n);
+  for (const n of ["tank", "rocket", "artillery", "flak", "bomb", "missile", "tracer", "flame", "heal", "smoke", "scorch", "stomp", "beamCyan", "heads"]) assert.equal(SHEETS[n].blend, "normal", n);
+  for (const n of ["beam", "muzzle"]) assert.equal(SHEETS[n].blend, "add", n);
   assert.equal(MUZZLE_ROW.large, 2);
 });
 

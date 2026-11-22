@@ -8,7 +8,7 @@
 // meets the ground on the tick the strike resolves.
 import { CELL, STRETCH, GROUND } from "./cells.js";
 import { CLASS_LOOK } from "./weapon-class.js";
-import { spriteImpact, spriteTrailPuff, spritesReady } from "./sprite-fx.js";
+import { spriteImpact, spriteTrailPuff, spriteHead, spritesReady } from "./sprite-fx.js";
 import { impactKind } from "../fx-sprites-data.js";
 
 // Per-instance colours of the bodies (above 1 glows) and the trail / halo / burst palettes (shared arrays).
@@ -37,7 +37,7 @@ export function takeRound(fx) {
   const r = fx.roundFree.pop() || { from: { x: 0, y: 0, z: 0 }, to: { x: 0, y: 0, z: 0 }, land: { x: 0, y: 0, z: 0 } };
   r.cls = ""; r.travel = 1; r.age = 0; r.wait = 0; r.arc = 0; r.weave = 0; r.phase = 0; r.sx = 0; r.sz = 0; r.drop = false; r.body = 1; r.grow = 0;
   r.color = BODY.shell; r.halo = null; r.haloSize = 0; r.haloColor = PAL.halo; r.token = 0; r.trail = 0; r.power = 0; r.anchor = null; r.air = false;
-  r.fire = false; r.roll = 0; r.spin = 0; r.team = 0;
+  r.fire = false; r.walker = false; r.roll = 0; r.spin = 0; r.team = 0;
   fx.rounds.push(r);
   return r;
 }
@@ -97,7 +97,7 @@ export function stepRounds(fx, dt, visible) {
     if (t < 1) {
       r.roll += r.spin * dt;
       const length = r.body * fx.bodyScale * (1 + r.grow * t);
-      if (seen) fx.ordnance.add(P.x, P.y, P.z, ux, uy, uz, r.roll, length, r.color);
+      if (seen) { fx.ordnance.add(P.x, P.y, P.z, ux, uy, uz, r.roll, length, r.color); if (r.cls === "shell" || r.cls === "lob" || r.cls === "missile") spriteHead(fx, r.cls === "missile" ? "missile" : "shell", P.x, P.y, P.z, ux, uy, uz, length * 1.7); } // R3-FX2: the projectile-heads art on the body
       if (r.haloSize > 0 || r.fire) {
         let h = r.halo;
         if (!h || h.owner !== r.token) {
@@ -184,7 +184,7 @@ export function flakBurst(fx, at, anchor, n = CLASS_LOOK.flak.bursts, spread = C
 export function airBurst(fx, at, anchor, power = 1) {
   const calm = !fx.motion;
   // R3-FX: the flak-burst sheet is the burst (a missile or shell meeting a flyer); the sparks below stay.
-  const sheet = spriteImpact(fx, "flak", { x: at.x, y: at.y - fx.ground(at.x, at.z), z: at.z }, power, anchor, 0, 0.85);
+  const sheet = spriteImpact(fx, "missile", { x: at.x, y: at.y - fx.ground(at.x, at.z), z: at.z }, power, anchor, 0, 1);
   if (!sheet) sprite(fx, fx.glow, at.x, at.y, at.z, anchor, CELL.flare, 2.4 * power, 3 * power, 0.1, calm ? PAL.calm : PAL.flash, calm ? PAL.calmEnd : PAL.flashEnd);
   if (!calm && !sheet) sprite(fx, fx.glow, at.x, at.y, at.z, anchor, CELL.ring, 0.4, 2.6 * power, 0.2, PAL.ring, PAL.ringEnd);
   if (!sheet) { const s = sprite(fx, fx.smoke, at.x, at.y, at.z, anchor, CELL.puff, 0.5, 1.5 * power, 0.9, PAL.flakBlack, PAL.flakBlackEnd, 0.03); s.drag = 1.5; s.vy = calm ? 0 : 0.3; }
@@ -238,7 +238,7 @@ export function landRound(fx, r, ux, uz) {
     default: {
       // shell, artillery: the heavy hit, a bright ring and a scorch ring; in the air (a shell at a flyer) a burst instead.
       if (r.air) { airBurst(fx, r.to, anchor, 0.7); return; }
-      fx.hit(at, r.power, anchor, impactKind(r.cls) || "shell");
+      fx.hit(at, r.power, anchor, r.walker ? "walker" : impactKind(r.cls) || "shell");
       // R3-FX: with the sheets loaded the blast, its shockwave and the scorch are the sprite and its decal (fx.hit); no extra flash or ring on top.
       if (spritesReady(fx)) { if (r.cls === "shell" && fx.motion) shellSparks(fx, at, anchor); if (r.cls === "lob") fx.dust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.3, 1.3); return; }
       if (fx.motion) sprite(fx, fx.glow, at.x, at.y + 0.3, at.z, anchor, CELL.ring, 0.5, r.cls === "lob" ? 4.2 : 4.4, 0.24, PAL.ring, PAL.ringEnd);
