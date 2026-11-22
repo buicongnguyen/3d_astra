@@ -63,7 +63,8 @@ await suite("rank", async () => {
     await page.evaluate(() => { const s = window.__frontier.sim; s.tick = () => { s.result = "victory"; delete s.tick; }; });
     await page.locator(".result-card").waitFor({ state: "visible", timeout: TIMEOUT.step });
     await page.locator("#modal .rank-toast").waitFor({ state: "visible", timeout: TIMEOUT.step });
-    const toast = await page.evaluate(() => { const t = document.querySelector("#modal .rank-toast"); return { up: t.dataset.rankUp, text: t.textContent.replace(/\s+/g, " ").trim(), before: !!t.nextElementSibling?.matches(".result-actions") }; });
+    await page.locator("#modal .rank-toast").scrollIntoViewIfNeeded();
+    const toast = await page.evaluate(() => { const t = document.querySelector("#modal .rank-toast"); return { up: t.dataset.rankUp, text: t.textContent.replace(/\s+/g, " ").trim(), before: t.getBoundingClientRect().bottom <= document.querySelector("#modal .result-actions").getBoundingClientRect().top + 1 }; });
     assert.equal(toast.up, "true", `${viewport}: the win is a rank up`);
     assert.match(toast.text, /Rank up!.*Rank 2.*Private.*Unlocked:.*Paint · Sand/, `${viewport}: "Rank up! Unlocked: Paint · Sand" (${toast.text})`);
     assert.ok(toast.before, `${viewport}: the toast sits above the result actions`);
@@ -75,7 +76,6 @@ await suite("rank", async () => {
     const fits = await page.evaluate(() => { const r = document.querySelector("#modal .modal").getBoundingClientRect(); return r.left >= -1 && r.right <= innerWidth + 1 && r.top >= -1 && r.bottom <= innerHeight + 1; });
     assert.ok(fits, `${viewport}: the results card still fits the screen`);
     await noSideScroll(page, `${viewport} results`);
-    await page.locator("#modal .rank-toast").scrollIntoViewIfNeeded();
     await page.waitForTimeout(500);
     await shot(page, `rank-toast-${viewport}`);
 
