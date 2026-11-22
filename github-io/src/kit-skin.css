@@ -558,3 +558,16 @@
 :root #defence-intel { border: 1px solid var(--kit-line-ghost); border-radius: var(--kit-chip-radius); background: var(--kit-ghost); box-shadow: none; color: var(--kit-text); }
 :root #defence-bar button:not(.primary):not(#defence-call) { --face: var(--kit-control); border: 1px solid transparent; border-image: url("./art/ui/frame-button.svg") 7 / 7px / 0 stretch; border-radius: 0;
   background: linear-gradient(135deg, transparent var(--kit-cut-d), var(--face) var(--kit-cut-d) calc(100% - var(--kit-cut-d)), transparent calc(100% - var(--kit-cut-d))) border-box; box-shadow: none; color: var(--kit-text); }
+/* Short landscape phones: Start and Quick battle share the pinned row, so their solid backings stay slim and never cover each other. */
+@media (orientation: landscape) and (max-height: 520px) {
+  :root.compact-ui #briefing:not(.campaign-view) #start,
+  :root.compact-ui #briefing:not(.campaign-view) #start:not(:disabled),
+  :root.compact-ui #briefing:not(.campaign-view) #start:disabled { box-shadow: 0 0 0 5px var(--start-backing); }
+  :root.compact-ui #briefing:not(.campaign-view) .quick-battle { box-shadow: inset 0 1px 0 rgba(200, 245, 255, 0.22), inset 3px 0 0 #83deeb; }
+}
+/* Results on short landscape phones and 320 px wide ones: the action buttons stay pinned at the foot of the card (as the campaign debrief's do), so they never fall below the fold. */
+@media (max-height: 520px), (max-width: 359px) {
+  :root .result-actions { position: sticky; bottom: calc(-1 * var(--mp, 20px)); z-index: 1; margin: 10px calc(-1 * var(--mp, 20px)) calc(-1 * var(--mp, 20px)); padding: 10px var(--mp, 20px) var(--mp, 20px); background: linear-gradient(180deg, rgba(9, 23, 35, 0), #091723 12px); }
+}
+/* Desktop menus, second pass: the "New" badge and the rank-lock note are 12 px as well. */
+:root:not(.compact-ui) #briefing :is(.rule-badge, .rank-lock, .cover-label small) { font-size: 12px; }

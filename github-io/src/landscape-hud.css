@@ -294,6 +294,15 @@
   /* Two tiles a row in 172 px: the labels stay on one line at 12 px. */
   .compact-ui.in-defence:not(.in-briefing) #commands .command-tile > span { font-size: 12px; }
   .compact-ui.in-defence:not(.in-briefing) #dock-tabs button { font-size: 11px; }
+  /* The commander's Barrage / Reinforce tiles and the Field commander tile do not fit one 170 px row: two tiles, then the commander full width. */
+  :root.compact-ui.in-defence:not(.in-briefing)[data-dock="selection"] .command-panel #commands:has(> .defence-ability) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    overflow: visible;
+  }
+  :root.compact-ui.in-defence:not(.in-briefing)[data-dock="selection"] .command-panel #commands > .defence-info { grid-column: 1 / -1; }
+  :root.compact-ui.in-defence:not(.in-briefing)[data-dock="selection"] .command-panel #commands:has(> .defence-ability) > button { height: auto; min-height: 56px; }
 }
 
 /* The touch row (owner, 2026-11-21): Clear selection is one of the six equal buttons (mobile.css kept it a 44 px icon). */
