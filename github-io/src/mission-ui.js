@@ -244,7 +244,7 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
   // Called every frame with the play time that passed (0 while paused): no page work unless
   // the line changes.
   function tick(dt) {
-    if (dt > 0 && queue.tick(dt)) renderLine();
+    if (dt > 0 && !box.classList.contains("expanded") && queue.tick(dt)) renderLine();
   }
 
   // ---------------------------------------------------------------- Objectives
