@@ -2,6 +2,10 @@
 
 ## Unreleased: Round A
 
+### A2 — Phone controls
+
+Portrait phones share the selected unit header with Map and Objectives.
+
 ### A1 — Combat readability
 
 Heavy impacts are larger, tracer trails last longer, and healing and repair have distinct symbols. The battle camera stays steady during strikes and building collapses.

@@ -612,8 +612,8 @@
   :root.compact-ui.in-defence .minimap-panel #minimap { width: 64px; height: 44px; margin: 0; }
   :root.compact-ui.in-defence .minimap-panel .map-legend { display: none; }
 }
-/* Reuse the right edge of the selected unit's header for navigation on the shortest portrait phone. */
-@media (max-width: 359px) and (orientation: portrait) {
+/* Keep navigation in the selected unit header on portrait phones. */
+@media (max-width: 540px) and (orientation: portrait) {
   :root.compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity) {
     --tabs-height: 0px;
     --unit-tools-bottom: calc(var(--safe-bottom) + var(--dock-height) - 46px);
@@ -623,7 +623,8 @@
     & .selection-panel .unit-metrics { column-gap: 4px; }
     & .selection-panel .unit-metrics > div { display: grid; justify-items: start; align-content: start; gap: 0; line-height: 12px; }
     & #dock-tabs { left: auto; right: calc(var(--hud-right) + 46px); bottom: var(--unit-tools-bottom); width: 44px; height: 44px; z-index: 7; }
-    & #dock-tabs [data-dock="selection"] { display: none; }
+    & #dock-tabs [data-dock="selection"], & #dock-tabs [data-dock="map"] .icon { display: none; }
+    & #dock-tabs [data-dock="map"] { width: 44px; padding-inline: 1px; justify-content: center; }
     & #mission-toggle { bottom: var(--unit-tools-bottom); z-index: 7; }
     & .bottom-dock .minimap-panel { bottom: var(--unit-tools-bottom); left: auto; right: var(--hud-right); }
     &.in-defence .selection-panel #selection-info { margin-right: 148px; }
