@@ -626,6 +626,7 @@
     & #dock-tabs [data-dock="selection"], & #dock-tabs [data-dock="map"] .icon { display: none; }
     & #dock-tabs [data-dock="map"] { width: 44px; padding-inline: 1px; justify-content: center; }
     & #mission-toggle { bottom: var(--unit-tools-bottom); z-index: 7; }
+    &.objectives-open #mission-objectives { bottom: calc(var(--unit-tools-bottom) + 48px); }
     & .bottom-dock .minimap-panel { bottom: var(--unit-tools-bottom); left: auto; right: var(--hud-right); }
     &.in-defence .selection-panel #selection-info { margin-right: 148px; }
   }

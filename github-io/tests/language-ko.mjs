@@ -92,7 +92,7 @@ export async function koreanChecks(browser) {
     await page.evaluate(() => { const f = window.__frontier, s = f.sim; f.hold = true; s.aiEnabled = false; Object.assign(s.players[0], { alloy: 5000, energy: 5000 }); });
     for (const type of ['hq', 'worker', 'barracks']) {
       await page.evaluate((type) => { const f = window.__frontier, s = f.sim, e = s.own(0).find((e) => e.type === type) || s.spawn(type, 0, -10, 20); f.select([e.id]); }, type);
-      if (touch) await press('button[data-dock="selection"]');
+      if (touch) assert.equal(await page.locator("html").getAttribute("data-dock"), "selection");
       await page.waitForTimeout(150);
       const tiles = await page.locator('#commands [data-action]').evaluateAll((nodes) => nodes.filter((e) => e.getClientRects().length).map((e) => {
         const parts = [...e.querySelectorAll(':scope > span, :scope > small')].filter((p) => p.getClientRects().length);
@@ -102,7 +102,7 @@ export async function koreanChecks(browser) {
       await fits(touch ? '.command-panel' : '.bottom-dock', `${type} HUD`, '#commands [data-action]');
       if (type === 'hq') await shot('hud');
     }
-    if (touch) await press('button[data-dock="selection"]');
+    if (touch) assert.equal(await page.locator("html").getAttribute("data-dock"), "selection");
     await fits('.resource-bar', 'resource bar');
 
     // Results: every enemy core falls on the next tick.

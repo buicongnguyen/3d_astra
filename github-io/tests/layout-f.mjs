@@ -96,7 +96,7 @@ try {
     };
     const ready = () => page.waitForFunction(() => window.__frontier?.view.modelsReady && !document.querySelector('#start').disabled, null, { timeout: 90000 });
     const frontier = (fn, arg) => page.evaluate(fn, arg);
-    const dockTab = async tab => { if (touch) await press(`button[data-dock="${tab}"]`); };
+    const dockTab = async tab => { if (touch && await page.locator("html").getAttribute("data-dock") !== tab) await press(`button[data-dock="${tab}"]`); };
     const select = ids => frontier(type => { const f = window.__frontier; f.select(f.sim.own(0).filter(e => type.includes(e.type)).slice(0, 4).map(e => e.id)); }, ids);
 
     await page.goto(`${base}?test=1&autoharvest`);
