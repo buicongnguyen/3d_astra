@@ -56,7 +56,12 @@ await suite('language',async()=>{
     assert.ok(labels.every(e=>e.fits),JSON.stringify({size,type,labels}));
    }
    await page.screenshot({path:'test-results/language-actions-'+size.width+'x'+size.height+'.png'});
-   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'no horizontal overflow');
+   const layout = await page.evaluate(() => ({
+     width: innerWidth, page: document.documentElement.scrollWidth,
+     outside: [...document.querySelectorAll('body *')].filter(e => e.getBoundingClientRect().right > innerWidth + 1)
+       .slice(0, 12).map(e => [e.id || String(e.className), Math.round(e.getBoundingClientRect().right)])
+   }));
+   assert.ok(layout.page <= layout.width, `no horizontal overflow: ${JSON.stringify(layout)}`);
   }
   await page.evaluate(()=>{const f=window.__frontier,s=f.sim;s.players[0].alloy=0;s.players[0].energy=0;f.select([s.own(0).find(e=>e.type==='worker').id]);});
   await click('[data-action="foundry"]');

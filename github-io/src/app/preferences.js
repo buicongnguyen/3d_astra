@@ -29,6 +29,7 @@ export function setupPreferences(S, A) {
   // change and when the system's reduced-motion preference changes.
   const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
   function syncMotion() {
+    document.documentElement.toggleAttribute("data-large-ui", S.settings.uiScale > 100);
     document.documentElement.style.setProperty("--interface-scale", String((S.settings.uiScale || 100) / 100));
     document.documentElement.classList.toggle("motion-off", motionOffFor(S.settings, reducedMotion.matches));
   }

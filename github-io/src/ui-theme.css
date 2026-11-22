@@ -746,3 +746,35 @@ input:focus-visible {
   max-width: min(100%, calc((100vw - 16px) / var(--interface-scale)));
   max-height: calc((100dvh - 16px) / var(--interface-scale));
 }
+
+#briefing .mode-switch button:focus-visible { outline-width: 3px; }
+
+@media (max-width: 600px), (max-height: 600px) {
+  /* Keep the dialog actions in the safe area. Scale the scrollable preferences
+     inside the sheet independently of the fixed language and action rows. */
+  .settings-backdrop .settings-panel {
+    zoom: 1; max-width: 100%; max-height: 100%;
+  }
+  .settings-panel .settings-body { zoom: var(--interface-scale); min-height: 0; }
+}
+@media (min-width: 901px) and (max-width: 1350px) {
+  :root:not(.compact-ui) .bottom-dock {
+    --console-map: calc(208px / var(--interface-scale));
+    --console-selection: calc(352px / var(--interface-scale));
+    --console-card: calc(408px / var(--interface-scale));
+    --console-deck: calc(var(--console-selection) + var(--console-card));
+  }
+  :root:not(.compact-ui) .topbar { padding-inline: 8px; }
+}
+
+:root:not(.compact-ui)[data-large-ui] #stage { height: calc(100dvh - var(--top-height) * var(--interface-scale)); }
+:root:not(.compact-ui)[data-large-ui] .order-label { font-size: 11px; }
+@media (orientation: portrait) and (max-width: 359px) {
+  :root.compact-ui[data-large-ui] #briefing:not(.campaign-view) .briefing-hero { height: 78px; }
+}
+@media (max-height: 520px), (max-width: 359px) {
+  :root.compact-ui[data-large-ui] #modal :is(.result-card, .debrief):has(.result-scroll) {
+    max-height: calc((100dvh - 80px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) / var(--interface-scale));
+  }
+  :root.compact-ui[data-large-ui] #briefing #campaign-difficulty:not([hidden]) { grid-column: 1 / -1; }
+}
