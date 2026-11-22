@@ -27,7 +27,6 @@ const PAL = {
   warn: [0.95, 0.1, 0.05, 0.85], warnEnd: [0.95, 0.15, 0.06, 0], warnHold: [0.9, 0.12, 0.06, 0.9], warnWash: [0.95, 0.14, 0.05, 0.42], warnHoldEnd: [0.9, 0.12, 0.06, 0],
   spark: [1, 0.92, 0.65, 1], sparkEnd: [1, 0.45, 0.12, 0],
 };
-export { PAL as ORDNANCE_PALETTE };
 
 const P = { x: 0, y: 0, z: 0 }, Q = { x: 0, y: 0, z: 0 }; // scratch points (module-level: no allocation per frame)
 

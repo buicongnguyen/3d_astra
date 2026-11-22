@@ -15,7 +15,6 @@
 // so on; one number per wave),  (the same per affix, the wider of the two wins) and `stalkers` (the Stalker counts, one per wave from wave 2). Nothing else
 // about the designed waves is touched.
 export const HEROIC_FROM = 4, HEROIC_WAVES = 6, HEROIC_LIVES = 5;
-export const HEROIC_AFFIX_NAMES = { plated: "Plated", swift: "Swift", splitter: "Splitter", volatile: "Volatile", banner: "Banner", mender: "Mender" };
 
 // One spec per level. `stalkers: [w2, w3, w4, w5, w6]` are the group sizes at Standard scale: a size of
 // 1 spawns 2 Stalkers and 2 spawns 3 (units of pop 2 round up at the Standard 1.3 scale).

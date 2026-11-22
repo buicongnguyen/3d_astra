@@ -18,7 +18,6 @@ import BALANCE from "../../balance.json" with { type: "json" };
 import { DEFINITIONS as D } from "../../data.js";
 
 export const ELITES = BALANCE.elites;
-export const AFFIXES = Object.keys(ELITES.affixes);
 const FOE = 1;
 const dist = (a, b) => Math.hypot(a.x - b.x, a.z - b.z);
 

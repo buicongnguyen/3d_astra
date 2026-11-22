@@ -63,8 +63,6 @@ export const ITEMS = {
 };
 export const KINDS = Object.keys(ITEMS);
 export const KIND_LABELS = { paint: "Paint", emblem: "Emblem", banner: "Title banner", pledge: "Daily order" };
-// The label an unlock is announced with ("Sand paint").
-export const UNLOCK_LABELS = { paint: "paint", emblem: "emblem", banner: "banner", pledge: "Daily order" };
 
 export const PLEDGE_XP = 60;
 const PLEDGE_MET = {

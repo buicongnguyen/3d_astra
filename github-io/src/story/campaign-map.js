@@ -57,16 +57,6 @@ export function mapNodes(missions, art = "wide") {
   }
   return out;
 }
-// Ground colours per map id (maps.json), from the region's look.
-export const LANDS = {
-  riverlands: "#2f8f9a",
-  classic: "#6f6a64",
-  dunes: "#c79a4c",
-  woodlands: "#4f8c4c",
-  basin: "#b26a3c",
-  highlands: "#54477a",
-  expanse: "#8aa59c",
-};
 // Bands, top to bottom: act 3, act 2, act 1 (percent of the board height).
 export const ACT_BANDS = { 3: { top: 0, bottom: 34 }, 2: { top: 34, bottom: 67 }, 1: { top: 67, bottom: 100 } };
 // One node per mission, in campaign order: on the wide painting, and on the phone panorama.
