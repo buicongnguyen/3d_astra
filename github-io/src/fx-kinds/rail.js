@@ -18,7 +18,6 @@ export default {
       beamLine(fx, rng, a, c, 0.2, 0.26, travel);
     }
     spriteBeamImpact(fx, { x: to.x, y: to.y - fx.ground(to.x, to.z), z: to.z }, c, anchor, travel); // R3-FX: the beam-impact sheet at the hit
-    ring(fx, to, 0.4, 2, c, 0.3, anchor, travel + 0.03);
     glow(fx, to, 1.2, [c[0], c[1], c[2], 0.75], 0.16, anchor, travel + 0.02);
     sparks(fx, rng, to, 4, anchor, 0.6, HOT, fade(c), travel);
   },

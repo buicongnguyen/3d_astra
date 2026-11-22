@@ -79,14 +79,14 @@ export class OrdnanceBodies {
   begin(light) { this.drawn = 0; this.material.uniforms.uLight.value = light; }
   // One round at (x, y, z), nose along (dx, dy, dz) (any length), rolled `roll` radians, `length` metres long,
   // coloured `color` (an [r, g, b] array; above 1 glows).
-  add(x, y, z, dx, dy, dz, roll, length, color) {
+  add(x, y, z, dx, dy, dz, roll, length, color, brightness = 1) {
     if (this.drawn >= this.capacity) return;
     const l = Math.hypot(dx, dy, dz) || 1;
     Q.setFromUnitVectors(UP, DIR.set(dx / l, dy / l, dz / l));
     Q.multiply(ROLL.setFromAxisAngle(UP, roll));
     M.compose(POS.set(x, y, z), Q, SCALE.setScalar(length));
     this.mesh.setMatrixAt(this.drawn, M);
-    this.mesh.setColorAt(this.drawn, C.setRGB(color[0], color[1], color[2]));
+    this.mesh.setColorAt(this.drawn, C.setRGB(color[0], color[1], color[2]).multiplyScalar(brightness));
     this.drawn++;
   }
   // `moved` false (a still frame: dt 0) keeps the buffers already sent when the count is unchanged.

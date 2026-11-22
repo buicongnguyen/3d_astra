@@ -1,8 +1,9 @@
+import { SHOT_SCALE } from "./cells.js";
 // The recipes that play the weapon VFX sprites (src/fx-sprites.js) for each weapon class (AAA round 3, R3-FX). Each one returns
 // true when it drew (the sprites have loaded) so the caller can skip the procedural fallback it replaces, and false when they
 // have not (or never will): the old effects then run as before. View only; sizes in metres, never smaller than `px` CSS pixels.
 import { ORIENTED } from "../fx-sprites.js";
-import { IMPACT_SHEET, IMPACT_EXTRA, impactSize, readable, SHEETS, MUZZLE_ROW, TRACER_FRAMES, HEAD_FRAME } from "../fx-sprites-data.js";
+import { IMPACT_SHEET, impactSize, readable, SHEETS, MUZZLE_ROW, TRACER_FRAMES, HEAD_FRAME } from "../fx-sprites-data.js";
 
 const IMPACT_PX = 54;      // an impact cell is never smaller than this on screen (a tank shell's blast reads at 24-64 px)
 const MIN_PX = { shell: 54, rocket: 54, artillery: 72, bomb: 80, firebomb: 70, missile: 46, flak: 44, beam: 40 };
@@ -32,11 +33,6 @@ export function spriteImpact(fx, kind, at, power, anchor, delay = 0, scale = 1) 
   else if (heavy) p.hotCore = true;
   else if (kind === "flak") p.rot = (fx.rng() - 0.5) * 0.6;
   p.life = p.count / Math.max(1, p.fps); // the shortened or stepped one-shot ends on its last frame
-  const extra = IMPACT_EXTRA[kind];
-  if (extra && bright) {
-    const q = sprites.take(extra[0], at.x, at.y + size * extra[1] * 0.2, at.z, size * extra[1], anchor, false);
-    if (q) { q.age = -delay; q.count = Math.max(1, q.count - 3); q.fade = 0.22; q.life = q.count / Math.max(1, q.fps); }
-  }
   return true;
 }
 
@@ -106,24 +102,24 @@ export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = fa
   const sprites = fx.sprites;
   if (!sprites?.ready || !fx.motion) return false;
   const len = Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z) || 1;
-  const size = Math.max(6, 100 * upp(fx)), sheet = SHEETS.tracer;
+  const size = Math.max(6, 100 * upp(fx)) * SHOT_SCALE, sheet = SHEETS.tracer;
   const p = sprites.take("tracer", from.x, from.y, from.z, size, anchor, true);
   if (!p) return false;
   const life = Math.max(0.06, travel);
   p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.vx = (to.x - from.x) / life; p.vy = (to.y - from.y) / life; p.vz = (to.z - from.z) / life;
-  p.start = cyan ? TRACER_FRAMES.cyan : TRACER_FRAMES.warm; p.count = 4; p.loop = true; p.fps = 20; p.life = life; p.age = -delay; p.fade = 0.08; p.sy = 1.6; // thickness: about 14 CSS px
+  p.start = cyan ? TRACER_FRAMES.cyan : TRACER_FRAMES.warm; p.count = 4; p.loop = true; p.fps = 20; p.life = life; p.age = -delay; p.fade = 0.08; p.sy = 1.6; p.a = SHOT_SCALE;
   // Two fainter copies follow a moment behind, so the dash leaves a short trail that is on screen for several frames.
   for (let k = 1; k <= 2; k++) {
     const t = sprites.take("tracer", from.x, from.y, from.z, size, anchor, true);
     if (!t) break;
     t.mode = ORIENTED; t.ax = ux; t.ay = uy; t.az = uz; t.vx = p.vx; t.vy = p.vy; t.vz = p.vz; t.start = p.start; t.count = 4; t.loop = true; t.fps = 20;
-    t.life = life; t.age = -delay - k * Math.max(0.035, (0.25 - life) / 2); t.fade = 0.2; t.sy = 1.6; t.a = k === 1 ? 0.6 : 0.35;
+    t.life = life; t.age = -delay - k * Math.max(0.035, (0.25 - life) / 2) * SHOT_SCALE; t.fade = 0.2; t.sy = 1.6; t.a = (k === 1 ? 0.6 : 0.35) * SHOT_SCALE;
   }
   // The muzzle spark sits at (0.23, 0.5) of its cell.
   if (!fx.allowFlash()) return true;
   const back = (0.5 - sheet.muzzleAt) * size;
   const m = sprites.take("tracer", from.x + ux * back, from.y + uy * back, from.z + uz * back, size * 0.8, anchor, true);
-  if (m) { m.mode = ORIENTED; m.ax = ux; m.ay = uy; m.az = uz; m.start = TRACER_FRAMES.muzzle; m.count = 4; m.age = -delay; }
+  if (m) { m.a = SHOT_SCALE; m.mode = ORIENTED; m.ax = ux; m.ay = uy; m.az = uz; m.start = TRACER_FRAMES.muzzle; m.count = 4; m.age = -delay; }
   return true;
 }
 
@@ -132,9 +128,9 @@ export function spriteSpark(fx, at, anchor, delay = 0, scale = 1) {
   const sprites = fx.sprites;
   if (!sprites?.ready) return false;
   if (!fx.allowFlash()) return true;
-  const p = sprites.take("tracer", at.x, at.y + 0.3, at.z, Math.max(4.4, 90 * upp(fx)) * scale, anchor, false);
+  const p = sprites.take("tracer", at.x, at.y + 0.3, at.z, Math.max(4.4, 90 * upp(fx)) * scale * SHOT_SCALE, anchor, false);
   if (!p) return false;
-  p.start = TRACER_FRAMES.hit; p.count = 4; p.age = -delay;
+  p.a = SHOT_SCALE; p.start = TRACER_FRAMES.hit; p.count = 4; p.age = -delay;
   return true;
 }
 
@@ -187,8 +183,8 @@ export function spriteStomp(fx, at, anchor, scale = 1) {
 export function spriteHead(fx, kind, x, y, z, ux, uy, uz, size) {
   const sprites = fx.sprites;
   if (!sprites?.ready) return false;
-  const p = sprites.take("heads", x, y, z, Math.max(size, 22 * upp(fx)), null, true);
+  const p = sprites.take("heads", x, y, z, Math.max(size, 22 * upp(fx)) * SHOT_SCALE, null, true);
   if (!p) return false;
-  p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.start = HEAD_FRAME[kind] ?? 0; p.count = 1; p.fps = 0; p.once = true; p.life = 1; p.fade = 0.0001; p.age = 0;
+  p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.a = SHOT_SCALE; p.start = HEAD_FRAME[kind] ?? 0; p.count = 1; p.fps = 0; p.once = true; p.life = 1; p.fade = 0.0001; p.age = 0;
   return true;
 }

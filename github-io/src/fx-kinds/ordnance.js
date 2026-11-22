@@ -6,7 +6,7 @@
 // visible impact coincide. A round that already killed its target lands sooner (CLASS_LOOK.quick).
 // The Barrage's falling shell is drawn from the simulation's own strike list (sim.strikes, read only), so it
 // meets the ground on the tick the strike resolves.
-import { CELL, STRETCH, GROUND } from "./cells.js";
+import { CELL, STRETCH, GROUND, SHOT_SCALE } from "./cells.js";
 import { CLASS_LOOK } from "./weapon-class.js";
 import { spriteImpact, spriteTrailPuff, spriteHead, spritesReady } from "./sprite-fx.js";
 import { impactKind } from "../fx-sprites-data.js";
@@ -24,7 +24,6 @@ const PAL = {
   ember: [1, 0.7, 0.3, 1], emberEnd: [1, 0.3, 0.05, 0],
   flakBlack: [0.07, 0.065, 0.06, 0.88], flakBlackEnd: [0.22, 0.21, 0.2, 0], flakFire: [1, 0.62, 0.2, 1], flakFireEnd: [1, 0.3, 0.05, 0],
   flash: [1, 0.97, 0.88, 1], flashEnd: [1, 0.6, 0.2, 0], calm: [1, 0.8, 0.5, 0.45], calmEnd: [1, 0.6, 0.3, 0],
-  ring: [1, 0.86, 0.55, 0.8], ringEnd: [1, 0.6, 0.2, 0], scorchRing: [0.05, 0.04, 0.035, 0.6], scorchRingEnd: [0.05, 0.04, 0.035, 0],
   shadow: [0.02, 0.02, 0.03, 0.12], shadowEnd: [0.02, 0.02, 0.03, 0.6],
   warn: [0.95, 0.1, 0.05, 0.85], warnEnd: [0.95, 0.15, 0.06, 0], warnHold: [0.9, 0.12, 0.06, 0.9], warnWash: [0.95, 0.14, 0.05, 0.42], warnHoldEnd: [0.9, 0.12, 0.06, 0],
   spark: [1, 0.92, 0.65, 1], sparkEnd: [1, 0.45, 0.12, 0],
@@ -97,12 +96,13 @@ export function stepRounds(fx, dt, visible) {
     if (t < 1) {
       r.roll += r.spin * dt;
       const length = r.body * fx.bodyScale * (1 + r.grow * t);
-      if (seen) { fx.ordnance.add(P.x, P.y, P.z, ux, uy, uz, r.roll, length, r.color); if (r.cls === "shell" || r.cls === "lob" || r.cls === "missile") spriteHead(fx, r.cls === "missile" ? "missile" : "shell", P.x, P.y, P.z, ux, uy, uz, length * 1.7); } // R3-FX2: the projectile-heads art on the body
+      if (seen) { fx.ordnance.add(P.x, P.y, P.z, ux, uy, uz, r.roll, r.cls === "bomb" ? length : length * SHOT_SCALE, r.color, r.cls === "bomb" ? 1 : SHOT_SCALE); if (r.cls === "shell" || r.cls === "lob" || r.cls === "missile") spriteHead(fx, r.cls === "missile" ? "missile" : "shell", P.x, P.y, P.z, ux, uy, uz, length * 1.7); } // R3-FX2: the projectile-heads art on the body
       if (r.haloSize > 0 || r.fire) {
         let h = r.halo;
         if (!h || h.owner !== r.token) {
           h = r.halo = fx.emit(fx.glow, P.x, P.y, P.z, r.anchor, true);
           h.life = r.travel + 1; h.s0 = h.s1 = r.fire ? 1.1 : r.haloSize;
+          if (r.cls !== "bomb") { h.s0 *= SHOT_SCALE; h.s1 *= SHOT_SCALE; h.opacity = SHOT_SCALE; }
           h.c0 = h.c1 = r.fire ? PAL.halo : r.haloColor;
           h.owner = r.token = ++fx.rocketTokens; // one token counter with the rockets: halo owners never collide
         }
@@ -186,7 +186,6 @@ export function airBurst(fx, at, anchor, power = 1) {
   // R3-FX: the flak-burst sheet is the burst (a missile or shell meeting a flyer); the sparks below stay.
   const sheet = spriteImpact(fx, "missile", { x: at.x, y: at.y - fx.ground(at.x, at.z), z: at.z }, power, anchor, 0, 1);
   if (!sheet) sprite(fx, fx.glow, at.x, at.y, at.z, anchor, CELL.flare, 2.4 * power, 3 * power, 0.1, calm ? PAL.calm : PAL.flash, calm ? PAL.calmEnd : PAL.flashEnd);
-  if (!calm && !sheet) sprite(fx, fx.glow, at.x, at.y, at.z, anchor, CELL.ring, 0.4, 2.6 * power, 0.2, PAL.ring, PAL.ringEnd);
   if (!sheet) { const s = sprite(fx, fx.smoke, at.x, at.y, at.z, anchor, CELL.puff, 0.5, 1.5 * power, 0.9, PAL.flakBlack, PAL.flakBlackEnd, 0.03); s.drag = 1.5; s.vy = calm ? 0 : 0.3; }
   if (calm) return;
   for (let i = 0, n = fx.count(6); i < n; i++) {
@@ -215,12 +214,6 @@ function shellSparks(fx, at, anchor) {
   }
 }
 
-// A dark scorch ring opening on the ground around a heavy impact (normal blended, in the decal pool).
-function scorchRing(fx, x, z, size, anchor) {
-  const p = fx.emit(fx.decals, x, 0.06, z, anchor);
-  p.mode = GROUND; p.cell = CELL.ring; p.s0 = size * 0.4; p.s1 = size; p.life = 2.4; p.hold = 0.35; p.c0 = PAL.scorchRing; p.c1 = PAL.scorchRingEnd; p.rot = fx.rng() * 6.28;
-}
-
 export function landRound(fx, r, ux, uz) {
   const at = r.air ? r.to : r.land, anchor = r.anchor;
   switch (r.cls) {
@@ -232,7 +225,7 @@ export function landRound(fx, r, ux, uz) {
         const p = sprite(fx, fx.glow, r.land.x, r.land.y + 0.4, r.land.z, anchor, CELL.glow, 0.9, 0.2, 0.5 + fx.rng() * 0.3, PAL.flakFire, PAL.flakFireEnd);
         p.vx = (fx.rng() - 0.5) * 3; p.vy = 1.2 + fx.rng() * 1.6; p.vz = (fx.rng() - 0.5) * 3; p.drag = 1.4;
       }
-      fx.dust({ x: r.land.x, y: 0.3, z: r.land.z }, 3, anchor, 1.2, 1.2);
+      fx.hitDust({ x: r.land.x, y: 0.3, z: r.land.z }, 3, anchor, 1.2, 1.2);
       return;
     }
     default: {
@@ -240,11 +233,9 @@ export function landRound(fx, r, ux, uz) {
       if (r.air) { airBurst(fx, r.to, anchor, 0.7); return; }
       fx.hit(at, r.power, anchor, r.walker ? "walker" : impactKind(r.cls) || "shell");
       // R3-FX: with the sheets loaded the blast, its shockwave and the scorch are the sprite and its decal (fx.hit); no extra flash or ring on top.
-      if (spritesReady(fx)) { if (r.cls === "shell" && fx.motion) shellSparks(fx, at, anchor); if (r.cls === "lob") fx.dust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.3, 1.3); return; }
-      if (fx.motion) sprite(fx, fx.glow, at.x, at.y + 0.3, at.z, anchor, CELL.ring, 0.5, r.cls === "lob" ? 4.2 : 4.4, 0.24, PAL.ring, PAL.ringEnd);
+      if (spritesReady(fx)) { if (r.cls === "shell" && fx.motion) shellSparks(fx, at, anchor); if (r.cls === "lob") fx.hitDust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.3, 1.3); return; }
       if (r.cls === "shell") shellImpact(fx, at, anchor);
-      scorchRing(fx, at.x, at.z, r.cls === "lob" ? 4.4 : 4.2, anchor);
-      if (r.cls === "lob") fx.dust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.3, 1.3);
+      if (r.cls === "lob") fx.hitDust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.3, 1.3);
     }
   }
 }
@@ -295,7 +286,7 @@ export function stepStrikes(fx, sim, dt) {
     const g = fx.ground(s.x, s.z), x = s.x - dx * k * 5, z = s.z - dz * k * 5, y = g + 0.8 + look.height * k * k;
     // Heading: forward and steeply down (the derivative of the fall).
     const ux = dx * 5, uy = -2 * look.height * k, uz = dz * 5;
-    fx.ordnance.add(x, y, z, ux, uy, uz, s.at * 7, look.body, BODY.barrage);
+    fx.ordnance.add(x, y, z, ux, uy, uz, s.at * 7, look.body * SHOT_SCALE, BODY.barrage, SHOT_SCALE);
     if (fx.motion && dt > 0) {
       st.trail += dt;
       const gap = 0.035 * (eco ? 1.6 : 1);
@@ -305,7 +296,7 @@ export function stepStrikes(fx, sim, dt) {
         q.vy = 0.2; q.drag = 1.2; q.life = 0.6 * (eco ? CLASS_LOOK.ecoTrail : 1); q.s0 = 0.35; q.s1 = 1.1; q.cell = CELL.puff;
         q.c0 = PAL.lobSmoke; q.c1 = PAL.lobSmokeEnd; q.spin = 0.5;
         const h = fx.emit(fx.glow, x, y + 0.3, z, st.anchor, true);
-        h.life = 0.06; h.s0 = 1.4; h.s1 = 1.2; h.c0 = PAL.haloHot; h.c1 = PAL.halo;
+        h.life = 0.06; h.opacity = SHOT_SCALE; h.s0 = 1.4 * SHOT_SCALE; h.s1 = 1.2 * SHOT_SCALE; h.c0 = PAL.haloHot; h.c1 = PAL.halo;
       }
     }
   }

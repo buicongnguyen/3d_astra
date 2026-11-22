@@ -66,7 +66,7 @@ uniform float uLight;
 varying vec3 vColor; varying float vHot; varying float vShade;
 void main() {
   vec3 lit = vColor * vShade * uLight;
-  gl_FragColor = vec4(mix(lit, vColor * 1.6, vHot), 1.0);
+  gl_FragColor = vec4(mix(lit, vColor * 0.4, vHot), 1.0);
 }`;
 
 const UP = new THREE.Vector3(0, 0, 1), DIR = new THREE.Vector3(), Q = new THREE.Quaternion(), ROLL = new THREE.Quaternion(), POS = new THREE.Vector3(), SCALE = new THREE.Vector3(), M = new THREE.Matrix4(), C = new THREE.Color();

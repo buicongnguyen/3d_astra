@@ -164,7 +164,6 @@ export class BossView {
       // Phase 2: a blast at its feet, a heavy shake and the core flaring for the whole surge.
       view.shake.add(FEEL.coreTrauma, Math.hypot(event.x - view.focus.x, event.z - view.focus.z), view.shakeEnabled());
       view.fx.explosion({ x: event.x, y: 1.2, z: event.z }, 1.5, { x: event.x, z: event.z, team: event.team }, false);
-      view.fx.shockwave({ x: event.x, y: 0.1, z: event.z }, 16, { x: event.x, z: event.z, team: event.team });
       const u = view.objects.get(event.id)?.userData.boss;
       if (u) u.glow = 1;
     } else if (event.type === "bossDefeated") {

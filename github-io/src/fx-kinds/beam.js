@@ -1,9 +1,9 @@
-// Shade (and the Stalker, longer and thinner): a beam from muzzle to target and a ring where it ends.
+// Shade (and the Stalker, longer and thinner): a beam from muzzle to target and a spark where it ends.
 // R3-X: a short charge glow gathers at the muzzle for the shot's flight time (visual-style.json `life`), then the
 // bright line snaps out to the target exactly when the hit lands (the target's hit flash waits that long), and
 // fades from the muzzle forward (beamLine). Everything from the glow pool, through the allocation-free emit path.
 import { CELL, STRETCH } from "./cells.js";
-import { ring, glow, sparks, fade } from "./common.js";
+import { glow, sparks, fade } from "./common.js";
 import { spriteBeamImpact, spriteBeamLine } from "./sprite-fx.js";
 
 const HOT = [1, 1, 1, 1], HOT_DIM = [1, 1, 1, 0.4];
@@ -43,7 +43,6 @@ export default {
     }
     // R3-FX: the beam-impact sheet (cyan-white flare and needle sparks) at the target, at the exact hit time.
     spriteBeamImpact(fx, { x: to.x, y: to.y - fx.ground(to.x, to.z), z: to.z }, c0, anchor, travel);
-    ring(fx, to, 0.3, style.ring ?? 1.5, c0, 0.26, anchor, travel + 0.02);
     glow(fx, to, 0.9, [c0[0], c0[1], c0[2], 0.7], 0.14, anchor, travel);
     sparks(fx, rng, to, 3, anchor, 0.5, HOT, fade(c0), travel);
   },
