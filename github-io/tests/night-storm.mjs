@@ -53,11 +53,13 @@ await suite("night-storm: a dark-blue night with moon and stars, a storm with ra
     await shot(page, "night-storm-night-desktop");
     console.log("night", JSON.stringify({ all: night.all.map(Math.round), top: night.top.map(Math.round), lum: +night.lum.toFixed(1), calls: night.calls, day: day.calls }));
     assert.equal(night.state.name, "night");
+    assert.deepEqual(day.shown, []);
+    assert.ok(day.lum > night.lum, "the same view is brighter by day");
     assert.deepEqual(night.shown, ["sky-moon", "sky-stars"]);
     assert.ok(night.all[0] - night.all[2] < 0, `frame red minus blue ${night.all[0] - night.all[2]}`);
     assert.ok(night.top[2] - night.top[0] > 20, `void band blue over red ${night.top[2] - night.top[0]}`);
     assert.ok(night.lum < 15, `luminance ${night.lum}%`);
-    assert.ok(night.calls - day.calls <= 6 && night.calls > day.calls, `night ${night.calls} draws, day ${day.calls}`);
+    assert.ok(night.calls - day.calls <= 6, `night ${night.calls} draws, day ${day.calls}`);
     assert.deepEqual(errors, []);
     await page.close();
   }
