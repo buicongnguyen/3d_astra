@@ -97,7 +97,7 @@ try {
       // One context panel (kit pass, owner 2026-11-22): the selection and its actions share the Selection tab.
       for (const type of ['hq', 'barracks', 'worker']) {
         await page.evaluate(type => { const f = window.__frontier; f.select([f.sim.own(0).find(e => e.type === type).id]); }, type);
-        await press('button[data-dock="selection"]');
+        assert.equal(await page.locator('html').getAttribute('data-dock'), 'selection', 'picking an entity opens its controls');
         // Orders, upgrades, queue jobs and the action row are fixed controls inside the panel; only the action row
         // and the roster may scroll (sideways, inside themselves).
         const dock = await page.evaluate(() => { const panel = document.querySelector('.command-deck'), p = panel.getBoundingClientRect();

@@ -584,3 +584,73 @@
 }
 /* Placing a building: only the construction card shows in the panel (the tiles come back after). */
 :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel.construction-open > :is(#commands, #upgrade-actions) { display: none; }
+
+/* Keep translated labels within the existing 44px action row. */
+@media (max-aspect-ratio: 1.35) {
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .stance-control button > span,
+  :root.compact-ui:not(.in-briefing):not(.in-defence)[data-dock="selection"] .command-panel #commands > .ability-tile > .ability-name {
+    display: block; max-width: 100%; white-space: normal; overflow-wrap: anywhere;
+    font: 700 11px/12px var(--font-ui); text-align: center;
+  }
+  :root.compact-ui:not(.in-briefing):not(.in-defence)[data-dock="selection"] .command-panel #commands > .ability-tile > .icon { display: none; }
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .stance-control button .icon { flex-basis: 14px; height: 14px; }
+}
+:root.compact-ui.in-defence:not(.in-briefing) #dock-tabs { display: none; }
+@media (min-aspect-ratio: 1.35) {
+  :root.compact-ui.in-defence:not(.in-briefing) .bottom-dock { bottom: calc(var(--safe-bottom) + 6px); }
+  :root.compact-ui.in-defence:not(.in-briefing)[data-dock="selection"] .command-panel #commands:has(> .defence-ability) > button { min-height: 44px; padding-block: 2px; }
+  :root.compact-ui.in-defence:not(.in-briefing) #commands :is(.defence-ability, .defence-info) > :is(.icon, .portrait-art) { display: none; }
+}
+/* Defence map and home remain directly accessible in portrait. */
+@media (max-aspect-ratio: 1.35) {
+  :root.compact-ui.in-defence:not(.in-briefing) .bottom-dock .minimap-panel {
+    display: flex; position: fixed; left: var(--hud-left); bottom: var(--safe-bottom);
+    width: 152px; height: 44px; padding: 0; align-items: stretch; z-index: 6; pointer-events: auto;
+  }
+  :root.compact-ui.in-defence .minimap-panel .panel-label { display: flex; padding: 0; margin: 0; font-size: 0; }
+  :root.compact-ui.in-defence .minimap-panel #home { width: 44px; height: 44px; }
+  :root.compact-ui.in-defence .minimap-panel #minimap { width: 64px; height: 44px; margin: 0; }
+  :root.compact-ui.in-defence .minimap-panel .map-legend { display: none; }
+}
+/* Reuse the right edge of the selected unit's header for navigation on the shortest portrait phone. */
+@media (max-width: 359px) and (orientation: portrait) {
+  :root.compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity) {
+    --tabs-height: 0px;
+    --unit-tools-bottom: calc(var(--safe-bottom) + var(--dock-height) - 46px);
+    & .selection-panel #selection-info { margin-right: 96px; }
+    & .selection-panel #selection-info .sel-portrait { display: none; }
+    & .selection-panel #selection-info .entity-details { grid-template-columns: 0 minmax(0, 1fr) auto; column-gap: 2px; }
+    & .selection-panel .unit-metrics { column-gap: 4px; }
+    & .selection-panel .unit-metrics > div { display: grid; justify-items: start; align-content: start; gap: 0; line-height: 12px; }
+    & #dock-tabs { left: auto; right: calc(var(--hud-right) + 46px); bottom: var(--unit-tools-bottom); width: 44px; height: 44px; z-index: 7; }
+    & #dock-tabs [data-dock="selection"] { display: none; }
+    & #mission-toggle { bottom: var(--unit-tools-bottom); z-index: 7; }
+    & .bottom-dock .minimap-panel { bottom: var(--unit-tools-bottom); left: auto; right: var(--hud-right); }
+    &.in-defence .selection-panel #selection-info { margin-right: 148px; }
+  }
+}
+
+@media (max-aspect-ratio: 1.35) {
+  :root.compact-ui.in-defence[data-dock="selection"] .command-panel #commands > button {
+    flex: 1 0 auto; min-width: 44px; width: max-content; padding-inline: 5px;
+  }
+  :root.compact-ui.in-defence[data-dock="selection"] .command-panel #commands > button > :is(.icon, .portrait-art, .portrait) { display: none; }
+}
+
+/* The minimap keeps pan, Home and enlarge when Defence replaces its tabs. */
+#defence-map-size { display: none; }
+:root.compact-ui.in-defence .minimap-panel #defence-map-size { display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; }
+@media (max-aspect-ratio: 1.35) {
+  :root.compact-ui.in-defence:not(.in-briefing) .bottom-dock .minimap-panel:has(#defence-map-size[aria-expanded="true"]) {
+    width: min(260px, calc(100% - var(--hud-left) - var(--hud-right)));
+    height: min(160px, 26dvh); left: var(--hud-left); right: auto;
+    bottom: calc(var(--safe-bottom) + var(--dock-height) + var(--tabs-height) + var(--defence-bar-h, 0px) + 8px);
+  }
+  :root.compact-ui.in-defence .minimap-panel:has(#defence-map-size[aria-expanded="true"]) #minimap { width: 100%; height: 100%; }
+  :root.compact-ui.in-defence .minimap-panel:has(#defence-map-size[aria-expanded="true"]) .panel-label { position: absolute; top: 0; right: 0; z-index: 1; }
+}
+@media (min-aspect-ratio: 1.35) {
+  :root.compact-ui.in-defence:not(.in-briefing) .bottom-dock .minimap-panel:has(#defence-map-size[aria-expanded="true"]) {
+    width: min(300px, calc(100vw - 2 * var(--side-width))); height: min(250px, calc(100dvh - 80px));
+  }
+}

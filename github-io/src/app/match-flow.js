@@ -66,6 +66,14 @@ export function setupMatchFlow(S, A) {
     const mvp = win ? currentMvp() : null;
     const added = ceremony.present($("modal-content"), { result, mode, mvp, tip: !win && mode !== "defence" ? lossTip(S.matchStats.stats, { seconds }) : null, near: win ? null : closeness(sim) });
     announce(mode, { mvp, added, variant, seconds });
+    // Rank and MVP panels are inserted before the footer by the result listeners.
+    const footer = $("modal-content").querySelector(".result-actions, .debrief-actions");
+    if (footer && document.documentElement.classList.contains("compact-ui")) {
+      const body = document.createElement("div");
+      body.className = "result-scroll";
+      while (footer.parentNode.firstChild !== footer) body.append(footer.parentNode.firstChild);
+      footer.before(body);
+    }
   }
   // onMatchEnd (ceremony.js): one summary per finished match, after its results screen is on the page.
   function announce(mode, { mvp = null, added = null, variant = null, seconds = S.sim.time } = {}) {

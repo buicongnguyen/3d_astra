@@ -20,12 +20,12 @@ export function createBar(c) {
     ui.bar.setAttribute("role", "group");
     ui.bar.setAttribute("aria-label", "Defence status");
     ui.bar.innerHTML = `<span class="dchip lives" title="Lives: each enemy through costs one, a heavy machine two">${icon("shield")}<b id="defence-lives" translate="no">20</b></span>
-      <span class="dchip wave" title="Wave"><span>Wave</span> <b id="defence-wave" translate="no">0/10</b><small id="defence-count" translate="no"></small></span>
-      <button id="defence-hero" type="button" title="The commander: tap to pick, then tap the road to send it" aria-label="Field commander" hidden>${icon("flag")}<small id="defence-hero-state" translate="no"></small></button>
-      <button id="defence-armour" type="button" title="Armour: tap to pick the next squad, or to buy one at the depot" aria-label="Armour squads" hidden>${icon("tank")}<small id="defence-armour-state" translate="no"></small></button>
+      <span class="dchip wave" title="Wave"><span>Wave</span> <b id="defence-wave" translate="no">0/10</b><span class="phone-wave-label" id="wave-next">Next wave</span><span class="phone-wave-label" id="wave-enemy" hidden>Enemies left</span><small id="defence-count" translate="no"></small></span>
+      <button id="defence-hero" type="button" title="The commander: tap to pick, then tap the road to send it" aria-label="Field commander" hidden>${icon("flag")}<span class="bar-caption">Hero</span><small id="defence-hero-state" translate="no"></small></button>
+      <button id="defence-armour" type="button" title="Armour: tap to pick the next squad, or to buy one at the depot" aria-label="Armour squads" hidden>${icon("tank")}<span class="bar-caption">Squad</span><small id="defence-armour-state" translate="no"></small></button>
       <button id="defence-call" type="button" title="Call the next wave now for bonus alloy" aria-label="Call wave">${icon("play")}<span>Call wave</span><small id="defence-bonus" translate="no"></small></button>
       <button id="defence-speed" type="button" aria-pressed="false" title="Fast-forward: tap to change the speed (Shift+Space)" aria-label="Game speed"><b id="defence-speed-label" translate="no">×1</b></button>
-      <button id="defence-overview" type="button" aria-pressed="false" data-view="free" title="View: free camera. Tap to follow the wave." aria-label="View">${icon("move")}</button>`;
+      <button id="defence-overview" type="button" aria-pressed="false" data-view="free" title="View: free camera. Tap to follow the wave." aria-label="View">${icon("move")}<span class="bar-caption">View</span></button>`;
     $("stage").append(ui.bar);
     $("defence-call").onclick = () => {
       if (!Z.started || Z.paused || S.sim.result) return;
@@ -92,7 +92,7 @@ export function createBar(c) {
     const b = $("defence-overview");
     if (!b || b.dataset.view === ui.viewMode) return;
     b.dataset.view = ui.viewMode;
-    b.innerHTML = icon(VIEW_ICON[ui.viewMode]);
+    b.innerHTML = icon(VIEW_ICON[ui.viewMode]) + '<span class="bar-caption">View</span>';
     b.title = VIEW_TITLE[ui.viewMode];
     b.setAttribute("aria-pressed", String(ui.viewMode === "overview"));
   }
@@ -120,6 +120,8 @@ export function createBar(c) {
     if (!st || !ui.bar) return;
     set("defence-lives", String(st.lives));
     set("defence-wave", st.endless ? String(st.wave) : `${st.wave}/${st.waves}`);
+    $("wave-next").hidden = st.countdown === null;
+    $("wave-enemy").hidden = st.countdown !== null || !st.active;
     set("defence-count", st.countdown !== null ? formatClock(st.countdown) : st.active ? String(st.enemies) : "");
     const call = $("defence-call"), bonus = st.canCall ? Math.ceil((st.countdown ?? S.sim.missionDef.defence.gap ?? 16) * 2) : 0;
     call.disabled = !st.canCall || !Z.started || Z.paused;

@@ -571,3 +571,23 @@
 }
 /* Desktop menus, second pass: the "New" badge and the rank-lock note are 12 px as well. */
 :root:not(.compact-ui) #briefing :is(.rule-badge, .rank-lock, .cover-label small) { font-size: 12px; }
+
+.result-scroll { display: contents; }
+@media (max-height: 520px), (max-width: 359px) {
+  :root.compact-ui #modal:is(.result-wide, .debrief-wide) .modal:has(.result-scroll) { overflow: hidden; }
+  :root.compact-ui #modal :is(.result-card, .debrief):has(> .result-scroll) {
+    display: flex; flex-direction: column;
+    max-height: calc(100dvh - 80px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  }
+  :root.compact-ui #modal .result-scroll { display: block; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 4px 2px 10px; }
+  :root.compact-ui #modal .result-scroll .result-banner { margin: 0; }
+  :root.compact-ui #modal .result-scroll + :is(.result-actions, .debrief-actions) {
+    position: static; flex: none; margin: 0; padding: 6px 0 0; background: var(--ink-1);
+  }
+  :root.compact-ui #briefing, :root.compact-ui #briefing .briefing-setup { scroll-padding-bottom: calc(60px + env(safe-area-inset-bottom)); }
+  :root.compact-ui #briefing:not(.campaign-view) #start { order: 4; }
+  :root.compact-ui #briefing:not(.campaign-view) .briefing-setup > .rank-chip { order: 1; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  :root.compact-ui #briefing:not(.campaign-view) .title-actions:not([hidden]) { order: 4; }
+}

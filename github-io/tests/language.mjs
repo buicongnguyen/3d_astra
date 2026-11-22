@@ -50,7 +50,7 @@ await suite('language',async()=>{
     await page.evaluate(type=>{
      const f=window.__frontier,s=f.sim,e=s.own(0).find(e=>e.type===type)||s.spawn(type,0,-10,20);f.select([e.id]);
     },type);
-    if(mobile)await click('button[data-dock="selection"]');
+    if(mobile)assert.equal(await page.locator('html').getAttribute('data-dock'),'selection');
     await page.waitForTimeout(80);
     const labels=await page.locator('#commands [data-action] > span').evaluateAll(nodes=>nodes.map(e=>({text:e.textContent,fits:e.scrollWidth<=e.clientWidth+1})));
     assert.ok(labels.every(e=>e.fits),JSON.stringify({size,type,labels}));
