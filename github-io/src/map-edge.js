@@ -59,6 +59,19 @@ export function createMapEdge(terrain) {
     for (const [a, b] of [[[-1, 1], [1, 1]], [[1, 1], [1, -1]], [[1, -1], [-1, -1]], [[-1, -1], [-1, 1]]])
       quad(corner(d0, ...a), corner(d0, ...b), corner(d1, ...b), corner(d1, ...a), c0, c0, c1, c1);
   }
+  // Beyond the playable lip, low foothills break up the flat outland. Each ridge tapers
+  // into the existing haze ring and shares the backdrop mesh and its night/storm tint.
+  for (const [axis, sign] of [["x", -1], ["x", 1], ["z", -1], ["z", 1]]) {
+    const span = half + 20, segments = 24;
+    const summit = (t) => -CLIFF + 2.8 + 1.5 * Math.cos(t * 0.14) + 1.1 * Math.sin(t * 0.21 + sign);
+    const pt = (t, depth, y) => axis === "x" ? [sign * (half + depth), y, t] : [t, y, sign * (half + depth)];
+    for (let i = 0; i < segments; i++) {
+      const a = span * (2 * i / segments - 1), b = span * (2 * (i + 1) / segments - 1);
+      const crest = mix(far, haze, 0.22 + 0.12 * Math.sin(a * 0.12));
+      quad(pt(a, 5, -CLIFF), pt(b, 5, -CLIFF), pt(b, 14, summit(b)), pt(a, 14, summit(a)), near, near, crest, crest);
+      quad(pt(a, 14, summit(a)), pt(b, 14, summit(b)), pt(b, 28, -CLIFF), pt(a, 28, -CLIFF), crest, crest, far, far);
+    }
+  }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(p), 3));
   geometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array(c), 3));

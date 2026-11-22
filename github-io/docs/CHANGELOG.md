@@ -2,6 +2,10 @@
 
 ## Unreleased: Round A
 
+### A4 — World edge
+
+Biome-coloured foothills extend past the playable cliff and follow night and storm lighting.
+
 ### A3 — Infantry silhouettes
 
 Six infantry models have wider helmet and shoulder silhouettes. Team paint has a stronger rim and the field guide and result cards share the rebuilt portrait atlas.
