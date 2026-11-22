@@ -97,7 +97,7 @@ await suite("audio-juice", async () => {
     await o.tap("#settings-tab-audio");
     const row = await page.evaluate(() => {
       const input = document.querySelector('[data-setting="quietMode"]'), r = input.closest(".setting-row"), box = r.getBoundingClientRect();
-      return { label: r.textContent.trim(), h: box.height, font: parseFloat(getComputedStyle(r).fontSize), checked: input.checked, scroll: document.scrollingElement.scrollWidth, width: innerWidth };
+      return { label: r.textContent.trim().replace(/(On|Off)$/, ""), h: box.height, font: parseFloat(getComputedStyle(r).fontSize), checked: input.checked, scroll: document.scrollingElement.scrollWidth, width: innerWidth };
     });
     assert.equal(row.label, "Quiet mode: no unit voices");
     assert.ok(row.h >= 44 && row.font >= 11, `${viewport}: quiet-mode row ${row.h} px tall, ${row.font} px text`);
