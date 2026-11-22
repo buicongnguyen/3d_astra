@@ -100,6 +100,7 @@ export function setupBriefing(S, A) {
     while (box && !(box.scrollHeight > box.clientHeight + 1 && /auto|scroll/.test(getComputedStyle(box).overflowY))) box = box.parentElement;
     // Never a box that holds the campaign map too (portrait phones scroll the whole start screen): the map stays in view.
     if (!box || box === document.body || box === document.documentElement || box.contains(document.getElementById("campaign-map"))) return;
+    if (document.documentElement.classList.contains("compact-ui") && box.querySelector(".mode-switch")) return;
     const r = row.getBoundingClientRect(), b = box.getBoundingClientRect(), start = document.getElementById("start");
     // Start is pinned at the column's foot: the row has to clear it (and its fade), not just the column's edge.
     const bottom = box.contains(start) ? Math.min(b.bottom, start.getBoundingClientRect().top - 24) : b.bottom;

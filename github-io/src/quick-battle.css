@@ -135,5 +135,14 @@
   .compact-ui #briefing:not(.campaign-view) .quick-text strong { font-size: 14px; line-height: 1.1; }
 }
 
-#title-actions:has(#start-training) { display: flex; flex-wrap: wrap; gap: 4px; }
+#title-actions:not([hidden]):has(#start-training) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.compact-ui #briefing.campaign-view .mode-switch { order: -3; }
+.compact-ui #briefing.campaign-view #title-actions { order: 1; }
 #title-actions #start-training { border-color: var(--kit-gold, #edc76f); }
+
+#title-actions:has(#start-training) button { width: 100%; min-width: 0; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .compact-ui #briefing:not(.campaign-view) #title-actions:has(#start-training),
+  .compact-ui #briefing:not(.campaign-view) .briefing-setup:has(#start-training) #start { grid-column: span 2; }
+  .compact-ui #title-actions:has(#start-training) .icon { display: none; }
+}
