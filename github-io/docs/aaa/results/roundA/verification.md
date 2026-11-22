@@ -18,4 +18,10 @@ The standard browser checks passed for combat visuals, air, feel, readability, a
 
 On both physical platforms the owner review is a mixed squad, one Attack-move and a retreat. Record readability, extra taps and stutter on Android Chrome and iPhone Safari. The labelled 24 px unit board and map captures are ready for the owner's visual review. The phone benchmarks used a desktop GPU and CPU throttling.
 
-The local CI-like run writes per-suite logs in `test-results/ci-local/`. Once the runner completes, its aggregate result appears in the matrix log. Earlier runs exposed an obsolete navigation step, short-screen button placement and a localization navigation timeout.
+## Software-rendered release checks
+
+The first 20× run passed 27 suites. Three failures led to corrections. Mobile controls passed all five sizes on the corrected 20× rerun. Language passed English, Vietnamese and Korean on its 20× rerun. The Defence-zone road-tap fixture now waits for the phone dock to resize before projecting its target. Its landscape case passed at 20×, then all three viewports passed together at 10×.
+
+After the owner approved 10× for the remaining checks, all eight suites in the single-lane run passed. They covered the complete 34-scenario render budget, Defence onboarding, cover UI, title, readability, audio feedback, Quick Battle and its deterministic check. The final release build used port 4243.
+
+The review branch starts from `bc72711` and includes the local effects and phone branches. The subsequently fetched main commit `f780b74` is outside this review branch.
