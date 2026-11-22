@@ -1,11 +1,12 @@
 // The recipes that play the weapon VFX sprites (src/fx-sprites.js) for each weapon class (AAA round 3, R3-FX). Each one returns
 // true when it drew (the sprites have loaded) so the caller can skip the procedural fallback it replaces, and false when they
 // have not (or never will): the old effects then run as before. View only; sizes in metres, never smaller than `px` CSS pixels.
+import { CELL, STRETCH } from "./cells.js";
 import { ORIENTED } from "../fx-sprites.js";
 import { IMPACT_SHEET, IMPACT_EXTRA, impactSize, readable, SHEETS, MUZZLE_ROW, TRACER_FRAMES, HEAD_FRAME } from "../fx-sprites-data.js";
 
 const IMPACT_PX = 54;      // an impact cell is never smaller than this on screen (a tank shell's blast reads at 24-64 px)
-const MIN_PX = { shell: 54, rocket: 54, artillery: 72, bomb: 80, firebomb: 70, missile: 46, flak: 44, beam: 40 };
+const MIN_PX = { shell: 54, rocket: 54, artillery: 72, bomb: 80, firebomb: 70, missile: 46, flak: 56, beam: 40 };
 
 // The four fireball sheets (VFX2) have their own palettes; only the firebomb is shaded (yellower) and flak greyed.
 const TINT = { firebomb: [1, 0.92, 0.6], flak: [0.8, 0.8, 0.85] };
@@ -111,6 +112,12 @@ export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = fa
   if (!p) return false;
   const life = Math.max(0.06, travel);
   p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.vx = (to.x - from.x) / life; p.vy = (to.y - from.y) / life; p.vz = (to.z - from.z) / life;
+  // A narrow amber/teal silhouette behind the additive streak survives pale terrain.
+  const stroke = Math.max(0.55, 9 * upp(fx));
+  const tracerColor = cyan ? [0.04, 0.31, 0.37, 0.8] : [0.48, 0.19, 0.045, 0.85];
+  fx.particle(fx.smoke, { ...from, lifted: true, vx: p.vx, vy: p.vy, vz: p.vz,
+    mode: STRETCH, ax: ux, ay: uy, az: uz, cell: CELL.streak, length: Math.min(len, size * 0.72),
+    s0: stroke, s1: stroke, c0: tracerColor, c1: tracerColor, life, delay, anchor });
   p.start = cyan ? TRACER_FRAMES.cyan : TRACER_FRAMES.warm; p.count = 4; p.loop = true; p.fps = 20; p.life = life; p.age = -delay; p.fade = 0.08; p.sy = 1.6; // thickness: about 14 CSS px
   // Two fainter copies follow a moment behind, so the dash leaves a short trail that is on screen for several frames.
   for (let k = 1; k <= 2; k++) {

@@ -185,3 +185,22 @@ test('a flyer shot down bursts in the air (no scorch under it), then trails smok
   assert.equal(wreck.crashed, true);
   assert.ok(fx.decals.items.length >= 1, 'the crash leaves a scorch');
 });
+
+test('a normal ground volley queues one pooled ring at arrival, including at phone zoom', () => {
+  for (const [unit, altitude, motion, expected] of [
+    ['ranger', 0, true, 1], ['vanguard', 0, true, 1],
+    ['ranger', 4, true, 0], ['ranger', 0, false, 0], ['medic', 0, true, 0],
+  ]) {
+    const fx = fxWith(true), sim = simWith();
+    fx.view.activity.combat.motion = motion;
+    fx.view.unitsPerPixel = 0.2;
+    const e = shot(unit, { type: unit === 'medic' ? 'support' : 'shot', x: 1, z: 3, tx: 8, tz: 5, team: 0, tAir: altitude });
+    fx.shot(e, sim);
+    const rings = fx.decals.items.filter(p => p.mode === 2 && p.cell === 2);
+    assert.equal(rings.length, expected, unit);
+    if (expected) {
+      assert.equal(rings[0].age, -weaponStyle(e).life);
+      assert.ok(rings[0].s1 >= 32 * fx.view.unitsPerPixel);
+    }
+  }
+});

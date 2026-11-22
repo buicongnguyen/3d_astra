@@ -558,6 +558,14 @@ export class Effects {
       if (!repair) spriteHealBeam(this, from, to, dir.x / len, dir.y / len, dir.z / len, anchor, null, 0.8); // R3-FX2: the heal-beam strip along the connection
       return;
     }
+    const cls = weaponClass(e, style);
+    if (m && !e.tAir && cls === "tracer") {
+      // One quiet pressure ring per volley, timed to the landing. Normal blending
+      // keeps its ochre edge visible on sand without another additive flash.
+      const diameter = Math.max(3.2, 32 * (this.view.unitsPerPixel || 0));
+      this.decal(land, diameter, 0.42, anchor, CELL.ring, [0.48, 0.33, 0.18, 0.76],
+        this.decals, diameter * 0.28, { delay: travel, hold: 0.18, y: 0.13 });
+    }
     const power = style.hit ?? hitPower(e.weapon, kind);
     // A weapon with its own look (src/fx-kinds): the kind draws the muzzle, the rounds and the landing.
     const look = m && style.look ? LOOKS[style.look] : null;
@@ -567,7 +575,7 @@ export class Effects {
       this.slope(e, to, anchor, m, travel);
       return;
     }
-    const cannon = kind === "cannon", rocket = kind === "rocket", cls = weaponClass(e, style);
+    const cannon = kind === "cannon", rocket = kind === "rocket";
     // R3-X: a shell (tank-class cannon) fires with a bigger flash and a heavier recoil puff (owner: "more dramatic, if cheap").
     const shell = cls === "shell";
     // Muzzle: star flare, hot glow and (for heavy weapons) a smoke puff drifting forward.

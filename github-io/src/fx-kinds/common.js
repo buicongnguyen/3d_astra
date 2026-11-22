@@ -30,9 +30,10 @@ export function tracer(fx, a, rng, { side = 0, delay = 0, width = 0.15, length =
   const j = jitter ? (rng() - 0.5) * 2 * jitter : 0, o = side + j;
   const fx0 = a.from.x + a.sx * o, fz0 = a.from.z + a.sz * o, tx = a.to.x + a.sx * o, tz = a.to.z + a.sz * o;
   const dx = tx - fx0, dy = a.to.y - a.from.y, dz = tz - fz0, len = Math.hypot(dx, dy, dz) || 1, life = Math.max(0.04, a.travel / speed);
+  const stroke = Math.max(width, 4 * (fx.view?.unitsPerPixel || 0));
   const col = c0 || a.color, end = c1 || fade(col, 0.8);
   const p = fx.particle(fx.glow, { lifted: true, x: fx0, y: a.from.y, z: fz0, vx: dx / life, vy: dy / life, vz: dz / life, mode: STRETCH,
-    ax: dx / len, ay: dy / len, az: dz / len, length: Math.min(length, len), s0: width, s1: width, life, cell: CELL.streak, c0: col, c1: end, anchor: a.anchor, delay, rot: rng() * 6.28 });
+    ax: dx / len, ay: dy / len, az: dz / len, length: Math.min(Math.max(length, 16 * (fx.view?.unitsPerPixel || 0)), len), s0: stroke, s1: stroke, life, cell: CELL.streak, c0: col, c1: end, anchor: a.anchor, delay, rot: rng() * 6.28 });
   if (head) fx.particle(fx.glow, { lifted: true, x: fx0, y: a.from.y, z: fz0, vx: dx / life, vy: dy / life, vz: dz / life, s0: head, s1: head, life, c0: col, c1: end, anchor: a.anchor, delay, rot: rng() * 6.28 });
   return p;
 }

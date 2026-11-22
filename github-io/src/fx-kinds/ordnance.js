@@ -170,11 +170,14 @@ function sprite(fx, layer, x, y, z, anchor, cell, s0, s1, life, c0, c1, delay = 
 export function flakBurst(fx, at, anchor, n = CLASS_LOOK.flak.bursts, spread = CLASS_LOOK.flak.spread, power = 1) {
   const calm = !fx.motion, sheets = spritesReady(fx);
   for (let i = 0, count = Math.max(1, Math.round(n * fx.budget)); i < count; i++) {
-    const a = fx.rng() * 6.28, d = i ? spread * (0.6 + fx.rng() * 0.5) : 0, delay = i * 0.08;
+    // Separate the soot silhouettes even at phone zoom.
+    const radius = Math.max(spread, 13 * (fx.view?.unitsPerPixel || 0));
+    const a = (i + fx.rng() * 0.4) * 6.28 / count, d = i ? radius : 0, delay = i * 0.08;
     const x = at.x + Math.cos(a) * d, y = at.y + (i ? (fx.rng() - 0.3) * spread : 0), z = at.z + Math.sin(a) * d;
     // R3-FX: the flak-burst sheet (a cluster of soot puffs with orange flashes): the first at the hit, the next ones a beat later and smaller.
     if (sheets && spriteImpact(fx, "flak", { x, y: y - fx.ground(x, z), z }, power, anchor, delay, i ? 0.7 : 1)) continue;
-    sprite(fx, fx.glow, x, y, z, anchor, CELL.flare, 2 * power, 2.6 * power, 0.14, calm ? PAL.calm : PAL.flakFire, calm ? PAL.calmEnd : PAL.flakFireEnd, delay);
+    const bright = !calm && fx.allowFlash();
+    sprite(fx, fx.glow, x, y, z, anchor, CELL.flare, 2 * power, 2.6 * power, 0.14, bright ? PAL.flakFire : PAL.calm, bright ? PAL.flakFireEnd : PAL.calmEnd, delay);
     const s = sprite(fx, fx.smoke, x, y, z, anchor, CELL.puff, 0.8 * power, 2.4 * power, 1.2 + fx.rng() * 0.4, PAL.flakBlack, PAL.flakBlackEnd, delay);
     s.drag = 1.5; s.vy = calm ? 0 : 0.35; s.spin = (fx.rng() - 0.5) * 1.2; s.fadeIn = 0.04;
   }
