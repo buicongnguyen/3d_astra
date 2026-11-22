@@ -568,3 +568,7 @@ Round 2's rules (`docs/aaa/AAA_ROUND2_PLAN.md` section 2) apply unless changed h
 | 20 | Phase 2 on a new boss entry, and the allied boss cut | R3-H |
 | 21 | Sovereign mission in its own file | R3-H |
 | 22 | Declared R3-I moves and scope | R3-I |
+
+## Status (2026-11-22, tag `r3-final`)
+
+Shipped on `feat/aaa-round3`, not pushed: wave 1 (A, B, C, D, E, F), wave 2 (G, H, I, J, K, V, plus L, W and M), wave 3 (R, U, Q, X), the phone HUD, six new Skirmish maps and the painted campaign map, Korean, the UI kit (with its final polish) and the copyright notice. CI robustness work (`r3/ci-robust`) is in with the kit. Deferred items are the ones in section 5 (O8). Open owner decisions: `docs/aaa/results/round3/review-packet.md`. Release notes: `docs/CHANGELOG.md` "0.26.0: AAA round 3" (proposed).

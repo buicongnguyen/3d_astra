@@ -29,6 +29,7 @@ Plan: [PLAN_ROUND3_REFINED_2026-11-13.md](PLAN_ROUND3_REFINED_2026-11-13.md), bu
 | 0.19b Story you see (scenes, reworks, new missions) | 0.19.0 | Done, except: m06's ford idea dropped (Copper Basin has no river); voice tones skipped (optional) |
 | 0.20 Chronicles | 0.19.0 | Done. All 12 Chronicles pass both bot checks on all three difficulties. |
 | 0.21 Defence complete | 0.19.0 | Done, except: twin rivers (the river is fixed at z = 0, so Long Crossing uses the standard river) |
+| AAA round 3 (0.26.0, proposed) | tag `r3-final` | Packages A to X, kit, Korean, maps, rank, Quick battle and copyright done on `feat/aaa-round3`; not pushed. Open decisions: `results/round3/review-packet.md` |
 
 **Open for the owner:**
 - Listen to the music: open `music-lab/listen/index.html` at the repo root (moved from 3D_claudeopus55 on 2026-11-14; see `music-lab/README.md`).

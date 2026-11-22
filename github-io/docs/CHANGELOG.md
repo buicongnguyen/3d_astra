@@ -1,6 +1,26 @@
 # Changelog
 
-## Unreleased: AAA round 3
+## 0.26.0: AAA round 3 (proposed release notes)
+
+Proposed, not released: nothing is pushed or deployed until the owner says "deploy". Every item below has its detail section further down ("Unreleased: AAA round 3") and a results file in `docs/aaa/results/round3/`.
+
+### What players get
+- **Command console look on every screen** (kit), one context panel on phones, and a phone battle HUD that leaves a clear area for the scene (about 15 to 20 points more of the screen shows the battlefield at 320 and 390 px).
+- **Three languages:** English, Tiếng Việt and 한국어 (full catalogs, Hangul font, particles). It needs a native Korean read.
+- **Fight:** Field command fields its army (A), squad orders (B), army depth with Barracks level 3, Combined squads and army sizes 100 / 150 / 200 (C), wings and rockets (W), weapon effects by class (X), battle readability (K), living buildings and south exits (L).
+- **Look and sound:** warm kit and distinct silhouettes (F), night and storm looks (D), models and portraits (J), audio juice (U), victory ceremony and MVP card in every mode (V).
+- **Story and campaign:** openings and a living campaign map (G), the painted campaign map, Boss phase 2 and "The Sovereign Walks" (H), campaign pacing (I).
+- **Frontier Defence:** onboarding and readability (E), Heroic finale.
+- **Menus and meta:** cover and menus across several worlds (M), Commander rank and unlocks with Daily orders (R), first-minute hooks: Quick battle, First watch, Scout Runner (Q).
+- **Maps:** six new Skirmish maps (Golden Heart, Dry Reach, Twin Rivers, Ironback Ridge, Crown Mesa, Open Steppe; 13 in all) and an opt-in map engine.
+- **Copyright:** all rights reserved, Bui Cong Nguyen, Solluxlabs.com.
+
+### Integration and clean-up
+- Kit polish (final pass): in landscape the Defence dock's Barrage / Reinforce / Field commander tiles no longer overlap (two tiles, then the commander full width); Start and Quick battle no longer cover each other on the landscape title; the result actions stay pinned at the foot of the card on short landscape and 320 px screens; desktop menu badges and the cover status label are 12 px.
+- Dead code: five exports nothing read were removed (heroic affix names, ordnance palette alias, unlock labels, elite affix list, campaign land colours). No behaviour change: every pin, golden and baseline is identical.
+- Owner decisions still open: `docs/aaa/results/round3/review-packet.md`.
+
+## Unreleased detail: AAA round 3
 
 ### Command console kit on every screen; one context panel on phones (owner request)
 - **Every screen in the kit's look.** This covers menus, campaign, Defence menu, Settings, pause, help, field guide, story cards, decisions, toasts, objectives, tooltips, command tiles, results, and the desktop and Defence HUDs.
