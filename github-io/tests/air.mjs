@@ -29,7 +29,6 @@ await suite("air", async () => {
     await page.waitForFunction(() => window.__frontier.modelsReady, null, { timeout: TIMEOUT.models });
     await tap("#start");
     await page.waitForFunction(() => window.__frontier.started && window.__frontier.modelsReady && window.__frontier.view.models.has("kite"), null, { timeout: TIMEOUT.models });
-    const dock = async (tab) => { if (mobile) { await tap(`#dock-tabs [data-dock="${tab}"]`); await page.waitForTimeout(120); } };
 
     // 1. Train a Kite at a level 2 Command core (the airfield: Harvester, Flak, Kite, own flyer) through its tile.
     const core = await page.evaluate(() => {
@@ -42,7 +41,6 @@ await suite("air", async () => {
       f.step(0.1);
       return b.id;
     });
-    await dock("selection");
     const tile = page.locator('#commands [data-action="kite"]');
     await tile.waitFor({ state: "visible", timeout: TIMEOUT.step });
     const tileBox = await tile.boundingBox();
@@ -87,7 +85,6 @@ await suite("air", async () => {
 
     // 4. Selected where it is drawn (a tap or click on the model at altitude); the card names its class.
     await page.evaluate(() => window.__frontier.select([]));
-    await dock("selection");
     const point = await page.evaluate((id) => {
       const f = window.__frontier, e = f.sim.get(id), p = f.view.project(e.x, e.z, f.view.liftOf(e)), r = f.view.renderer.domElement.getBoundingClientRect();
       return { x: r.left + p.x, y: r.top + p.y, ground: f.view.project(e.x, e.z, 0) };
@@ -140,7 +137,6 @@ await suite("air", async () => {
       f.select([hq.id]);
       f.step(0.1);
     });
-    await dock("selection");
     const flak = page.locator('#commands [data-action="flak"]');
     await flak.waitFor({ state: "visible", timeout: TIMEOUT.step });
     assert.match(await flak.textContent(), /Anti-air guns/);
@@ -163,7 +159,6 @@ await suite("air", async () => {
       f.select([tower.id]);
       f.step(0.05);
     });
-    await dock("selection");
     const antiAir = page.locator("#selection-info .anti-air");
     await antiAir.waitFor({ state: "visible", timeout: TIMEOUT.step });
     assert.match(await antiAir.textContent(), /No anti-air guns: see Command core/, `${viewport}: a tower without the research`);
@@ -179,7 +174,6 @@ await suite("air", async () => {
     // 7. The field guide for each flyer: portrait cell, name and the air paragraph.
     await page.evaluate((id) => window.__frontier.select([id]), fight.hawk);
     await page.evaluate(() => window.__frontier.step(0.05));
-    await dock("selection");
     // On phones Info & stats is also in the touch row (owner, 2026-11-21: one tap, no sheet).
     if (await page.locator("#field-guide").first().isVisible()) await tap("#field-guide"); else await tap("#touch-guide");
     await page.locator("dialog.field-guide[open]").waitFor({ timeout: TIMEOUT.step });
