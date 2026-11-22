@@ -76,13 +76,22 @@ export class ActivityView {
       if(e.type!=='worker')continue;
       const r=harvestTarget(sim,e), mining=isHarvesting(sim,e);
       if(selected.has(e.id) && r && sim.isVisible(r))targets.set(r.id,r);
-      if(mining){
-        const p=v.project(e.x,e.z,1.8),t=v.project(r.x,r.z,1.2);
-        // A short tool beam and gentle glint; keep a steady light for reduced motion.
-        const pulse=v.reducedMotion.matches?1:.65+.35*Math.sin(sim.time*7+e.id);
-        c.strokeStyle=r.type==='alloy'?'#ffce75':'#8ce7ff';c.globalAlpha=pulse;c.lineWidth=2;
-        c.beginPath();c.moveTo(p.x,p.y);c.lineTo(p.x+(t.x-p.x)*.65,p.y+(t.y-p.y)*.65);c.stroke();
-        c.fillStyle=c.strokeStyle;c.fillRect(p.x-2,p.y-2,4,4);c.globalAlpha=1;
+      if (mining) {
+        const p = v.project(e.x,e.z,1.8), t = v.project(r.x,r.z,1.2);
+        const steady = v.reducedMotion.matches || v.settings?.combatMotion === false || v.motionLevel === 0;
+        const phase = steady ? 0.65 : (sim.time * 0.9 + e.id * 0.31) % 1;
+        const tint = r.type === 'alloy' ? '#ffd178' : '#91ebff';
+        // Outline the actual tool-to-face span against both pale sand and grass.
+        c.beginPath(); c.moveTo(p.x,p.y); c.lineTo(t.x,t.y);
+        c.strokeStyle = '#253b40'; c.lineWidth = 3.5; c.stroke();
+        c.strokeStyle = tint; c.lineWidth = 1.75; c.stroke();
+        c.fillStyle = '#fff6d6';
+        c.beginPath(); c.arc(t.x+(p.x-t.x)*phase,t.y+(p.y-t.y)*phase,2,0,Math.PI*2); c.fill();
+      } else if (e.carry > 0 && e.orders[0]?.type === 'deliver') {
+        const p = v.project(e.x,e.z,2.5);
+        c.fillStyle = '#203238'; c.fillRect(p.x-4,p.y-2,8,4);
+        c.fillStyle = e.carryType === 'alloy' ? '#ffd178' : '#91ebff';
+        c.fillRect(p.x-3,p.y-1,6,2);
       }
       if(selected.has(e.id) && (r || e.carry>0)){
         const label=mining?'Harvesting':e.orders[0]?.type==='deliver'?'Returning cargo':r?(e.moving?'To deposit':'Waiting'):'Cargo';

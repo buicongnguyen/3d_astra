@@ -138,9 +138,18 @@ export function setupMatchFlow(S, A) {
     (S.playMode === "skirmish" ? $("scenario") : document.querySelector("[data-mode][aria-pressed=true]") || $("start"))?.focus();
   }
 
-  function startEconomy() {
+  function startEconomy(frameOpening = true) {
     // Browser suites (?test) measure a still economy; ?autoharvest gives them the real start.
-    if (S.playMode !== "training" && (!S.query.has("test") || S.query.has("autoharvest"))) S.sim.command({ team: 0, type: "harvest" });
+    if (S.playMode === "training" || (S.query.has("test") && !S.query.has("autoharvest"))) return;
+    S.sim.command({ team: 0, type: "harvest" });
+    // Frame the working mine and the core together on narrow Skirmish openings.
+    if (!frameOpening || S.playMode !== "skirmish" || S.view.width >= S.view.height) return;
+    const own = S.sim.own(0), core = own.find(e => e.type === "hq");
+    if (!core) return;
+    const deposit = own.filter(e => e.type === "worker" && e.orders[0]?.type === "gather")
+      .map(e => S.sim.get(e.orders[0].target)).filter(r => r?.type === "alloy")
+      .sort((a, b) => Math.hypot(a.x-core.x, a.z-core.z) - Math.hypot(b.x-core.x, b.z-core.z))[0];
+    if (deposit) S.view.focusOn((core.x + deposit.x) / 2, (core.z + deposit.z) / 2);
   }
 
   // The title card of a mission, Chronicle mission or Defence level as it begins (a tutorial and a skirmish have none).
@@ -205,7 +214,7 @@ export function setupMatchFlow(S, A) {
     $("status-text").textContent = "OPERATION ACTIVE";
     A.selectHome();
     if (play !== false || resume) A.syncAutocast();
-    if (!resume) startEconomy();
+    if (!resume) startEconomy(play !== false);
     if(play !== false && S.playMode === "training") beginTutorial();
     if (S.sim.defence) A.defenceBegin(resume);
     // Mission title card (W2-F): campaign, Chronicle and Defence matches, not a resumed save; browser suites (?test) opt in with ?titlecard.

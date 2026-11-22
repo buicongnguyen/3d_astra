@@ -19,10 +19,21 @@ try{
   assert.deepEqual(errors,[]);console.log(`Map menu, replay and result navigation passed ${viewport.width}x${viewport.height}`);await page.close();
  }
  // A real match (not Training) starts with every Harvester already sent to a deposit.
- const page=await browser.newPage({viewport:{width:1280,height:800}});
+ const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
  await page.goto((process.env.TEST_URL||'http://127.0.0.1:4180/')+'?test=1&autoharvest=1');
  await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});
  await page.locator('#start').click();
  assert.ok(await page.evaluate(()=>{const s=window.__frontier.sim,w=s.own(0).filter(e=>e.type==='worker');return w.length>=4&&w.every(e=>e.orders[0]?.type==='gather');}),'Harvesters start mining');
+ const opening = await page.evaluate(() => {
+   const {sim,view} = window.__frontier, own = sim.own(0);
+   const core = own.find(e => e.type === 'hq');
+   const deposits = own.filter(e => e.type === 'worker').map(e => sim.get(e.orders[0]?.target));
+   const inScene = e => {
+     const p = view.project(e.x,e.z,1);
+     return p.x > 12 && p.x < view.width-12 && p.y > 90 && p.y < view.height-44;
+   };
+   return inScene(core) && deposits.some(r => r?.type === 'alloy' && inScene(r));
+ });
+ assert.ok(opening,'both the Command core and a staffed alloy deposit fit in the portrait opening');
  console.log('Auto-harvest start passed');await page.close();
 }finally{await browser.close();}

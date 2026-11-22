@@ -149,7 +149,11 @@ void main() {
   if (m == ${MODE.blink}) k = uStill > 0.5 ? 1.0 : 0.2 + 0.8 * step(0.5, fract(t * 0.7 + phase));
   else if (m == ${MODE.progress}) k = vUv.x <= val ? 1.0 : 0.16;
   else if (m == ${MODE.pulse}) k = 0.35 + 1.4 * exp(-max(0.0, t - val) * 3.0);
-  else if (m == ${MODE.chase}) k = val <= 0.0 ? 0.18 : (uStill > 0.5 ? 0.8 : 0.25 + 1.2 * smoothstep(0.7, 1.0, fract(t * val - phase)));
+  else if (m == ${MODE.chase}) {
+    // Idle landing guides breathe slowly; units in production keep the quicker chase.
+    float idle = 0.52 + 0.25 * cos(6.283 * (t * 0.27 - phase));
+    k = uStill > 0.5 ? 0.72 : (val <= 0.0 ? idle : 0.25 + 1.2 * smoothstep(0.7, 1.0, fract(t * val - phase)));
+  }
   else if (m == ${MODE.track}) fade = clamp(1.0 - (t - val) / 20.0, 0.0, 1.0);
   else if (m == ${MODE.night}) k = 0.05 + 0.7 * uNight;
   else if (m == ${MODE.blueprint}) fade = val < 0.0 ? 1.0 : clamp(1.0 - (t - val) / 1.5, 0.0, 1.0);
@@ -370,7 +374,7 @@ export class BuildingDecalsView {
         for (let c = 0; c < 3; c++) this.ground(i++, e.x, front + 0.75 + c * 0.85, 0, 1, 1.15, 0.7, 0.06, team, CELL.chevron, MODE.still, 0, 0);
         for (const sideX of [-1, 1]) for (let l = 0; l < 4; l++) {
           rec.chase.push(i);
-          this.ground(i++, e.x + sideX * (half - 0.3), front + 0.45 + l * 0.75, 0, 1, 0.42, 0.42, 0.065, LIGHT.amber, CELL.runway + GLOW, MODE.chase, (3 - l) * 0.22, 0);
+          this.ground(i++, e.x + sideX * (half - 0.3), front + 0.45 + l * 0.75, 0, 1, 0.62, 0.62, 0.065, LIGHT.amber, CELL.runway + GLOW, MODE.chase, (3 - l) * 0.22, 0);
         }
       }
       const faction = TYPE_FACTION[e.type] || factionOf(view.mission, e.team)?.id || "meridian";
