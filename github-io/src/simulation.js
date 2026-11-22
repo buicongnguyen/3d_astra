@@ -131,11 +131,14 @@ export class Simulation {
       ![...startingDeposits].some(other => distance(other, r) < other.radius + r.radius + 1)
     ));
     // A map's own field deposits, in every reflection of its symmetry; the same clearances as below.
-    if (field && T.deposits) for (const [type, x0, z0, amount] of T.deposits)
+    if (field && T.deposits) for (const [type, x0, z0, amount, layout] of T.deposits)
       for (const [x, z] of reflect(x0, z0, T.symmetry)) {
         if (this.entities.some((e) => e.kind === "building" && hyp(e.x - x, e.z - z) < e.radius + 6)) continue;
         if ([...startingDeposits].some((other) => hyp(other.x - x, other.z - z) < other.radius + 2.7)) continue;
-        this.resource(type, x, z, amount);
+        // New static outcrops use negative IDs so adding ore leaves unit and original deposit IDs
+        // intact. Movement timing uses unit IDs. Existing saves carry their own deposit list.
+        const id = layout === "outcrop" ? -(this.resources.length + 1) : undefined;
+        this.resource(type, x, z, amount, id);
       }
     // More contested deposits in the middle lanes of every map, mirrored for fairness.
     for (const side of field && !T.deposits ? [1, -1] : []) {
@@ -182,9 +185,9 @@ export class Simulation {
         return;
       }
   }
-  resource(type, x, z, amount) {
+  resource(type, x, z, amount, id = this.nextId++) {
     this.resources.push({
-      id: this.nextId++,
+      id,
       type,
       x,
       z,

@@ -196,7 +196,7 @@ Optional `maps.json` fields let a Skirmish map leave the standard layout. A map 
 | `rivers` | `[{ z, crossings: [{ x, half, type: "bridge"\|"ford" }] }]`: east-west water bands 6 m wide, open water between the crossings. Each ford slows (`ford_speed`) and is labelled; each bridge gets the bridge model. | one river at z = 0 with `CROSSINGS` when `river` is true |
 | `rocks` | `[[x, z, r]]`, the concrete walls; `[]` for none. | `ROCKS` (data.js) |
 | `roads` | Polylines `[[x, z], ...]` painted 4.4 m wide (Sunward's road bonus), mirrored by `symmetry`; `[]` for none. A map with `roads` has none of the old roads. | the old bridge and diagonal roads |
-| `deposits` | `[[type, x, z, amount]]`: the field deposits, placed in every reflection of `symmetry`. Replaces the pair beyond each camp and `MIDFIELD_DEPOSITS`; `sites` still add theirs. | those two sets |
+| `deposits` | `[[type, x, z, amount]]`: the field deposits, placed in every reflection of `symmetry`. Add an optional fifth value `"outcrop"` for an additional patch that should preserve existing unit and deposit IDs. Replaces the pair beyond each camp and `MIDFIELD_DEPOSITS`; `sites` still add theirs. | those two sets |
 | `dressing` | Multiplier on the look's scatter density, for a map with more open ground than its look's own map. | 1 |
 | `blurb` | One line about the map: the picker option's tooltip (translated). | none |
 | plateau `mirror: "quad"` | Adds both axis mirrors to the point-mirrored copy. A plateau on an axis lists its copies itself. A plateau without ramps is a natural rock crag. | |
