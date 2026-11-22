@@ -10,7 +10,7 @@ await suite('language',async()=>{
  for(const mobile of [false,true]) {
   const {page,errors}=await openPage(browser,mobile?'portrait':{width:1280,height:800});
   const click=selector=>page.locator(selector)[mobile?'tap':'click']();
-  await page.goto(testUrl('','http://127.0.0.1:4191/'));
+  await page.goto(testUrl('','http://127.0.0.1:4191/'), {timeout: TIMEOUT.models});
   await page.waitForFunction(()=>window.__frontier?.view.modelsReady);
   await page.selectOption('#language','vi');
   await page.waitForFunction(()=>document.querySelector('#start').textContent==='Bắt đầu');
@@ -99,7 +99,7 @@ await suite('language',async()=>{
    await press('[data-do="apply"]');await press('[data-resume]');
    await page.waitForFunction(value=>document.documentElement.lang===value,value);
   };
-  await page.goto(testUrl('','http://127.0.0.1:4191/'));
+  await page.goto(testUrl('','http://127.0.0.1:4191/'), {timeout: TIMEOUT.models});
   await page.waitForFunction(()=>window.__frontier?.view.modelsReady&&!document.querySelector('#start').disabled,null,{timeout:90000});
   await page.selectOption('#language','vi');
   await press('[data-mode="campaign"]');
