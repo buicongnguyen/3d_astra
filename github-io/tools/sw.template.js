@@ -157,7 +157,8 @@ self.addEventListener("fetch", (event) => {
     );
     return;
   }
-  if (LAZY.includes(path)) {
+  // R3-FX: the weapon sprite atlases (fx/*.webp) are fetched when a battle starts and kept on first fetch, like the lazy catalogs.
+  if (LAZY.includes(path) || /^fx\/[\w-]+\.webp$/.test(path)) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(SHELL_CACHE);

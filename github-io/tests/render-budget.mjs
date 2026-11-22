@@ -166,7 +166,7 @@ Object.assign(limits, {'air-battle':135}); // R3-W: 125 draws on 2026-11-21 (123
 Object.assign(limits, {'building-life-eco':110}); // R3-L
 Object.assign(limits, {'twinrivers-high':240}); // R3 map variety: large-map-high's line (235 draws on 2026-11-22); 207 once its four bridges were instanced (Wave 3 integration)
 Object.assign(limits, {'wide-battle-eco':152, 'groups-battle-eco':111, 'combined-defence-eco':97}); // R3-K: the same scene on the base build + 4 (148, 107, 93 draws on 2026-11-21)
-Object.assign(limits, {'weapons-mix-eco':131}); // R3-X: 128 draws on 2026-11-22 (127 on the base build with the same shots: +1 ordnance bodies) + 3
+Object.assign(limits, {'weapons-mix-eco':131}); // R3-FX: the weapon sprite sheets add exactly 2 draws (one instanced batch per blend mode): weapons-mix-eco 132 -> 134, battle-eco 111 -> 113, limits still hold. R3-X: 128 draws on 2026-11-22 (127 on the base build with the same shots: +1 ordnance bodies) + 3
 // Phone battle HUD (Wave 3): the phone canvas now runs under the bars, so a mobile frame shows more map: +4 draws in most
 // mobile scenes, more with three rivals (base build -> HUD build, 2026-11-22: three-rivals-eco 146 -> 160, three-factions-eco
 // 182 -> 198, air-battle-eco 117 -> 121, battle-expanded-full-eco 149 -> 153, groups-battle-eco 108 -> 112; weapons-mix-eco 132
@@ -177,6 +177,8 @@ Object.assign(limits, {'three-rivals-eco':163, 'three-factions-eco':201, 'air-ba
 // extra draws come from, so the lines move little (2026-11-22, wave-3 build -> kit build: three-rivals-eco 160 -> 158,
 // three-factions-eco 198 -> 196, battle-eco 111 -> 111; battle-dock-eco 171 -> 169, with 221 of 844 px rows not shaded).
 Object.assign(limits, {'three-rivals-eco':161, 'three-factions-eco':199, 'battle-dock-eco':172});
+// R3-FX: the weapon sprite sheets are two more instanced draws in every battle scene (measured: battle-eco 111 -> 113, air-battle-eco 121 -> 123, weapons-mix-eco 132 -> 134).
+for (const k of Object.keys(limits)) limits[k] += 2;
 for (const s of scenarios) if (s.name === 'three-rivals-eco') s.triangles = 330000; // 303,222 -> 324,494 triangles with the HUD's taller phone frame
 try {
   for (const scenario of scenarios) {
@@ -192,7 +194,7 @@ try {
       window.__nativeRAF = nativeRAF;
       window.requestAnimationFrame = cb => nativeRAF(time => { if (!window.__freezeFrames) cb(time); });
     });
-    await page.goto((process.env.TEST_URL || 'http://127.0.0.1:4193/') + '?test=1');
+    await page.goto((process.env.TEST_URL || 'http://127.0.0.1:4193/') + '?test=1' + (process.env.RENDER_QUERY || ''));
     await page.waitForFunction(() => window.__frontier?.view.modelsReady, null, {timeout:90000});
     if (scenario.defence) {
       await page.locator('[data-mode="defence"]').click();
@@ -220,7 +222,7 @@ try {
       f.rules = rules;
       try { await f.restart(); } finally { f.rules = null; }
     }, scenario.rules);
-    await page.evaluate(({scenario, mark}) => {
+    await page.evaluate(async ({scenario, mark}) => {
       window.__freezeFrames = true;
       const f = window.__frontier;
       if (scenario.rules) f.rules = scenario.rules;
@@ -230,6 +232,8 @@ try {
       if (loading) throw new Error(`render-budget: ${scenario.name}: restart() had to load models first`);
       f.select([]);
       const s = f.sim, v = f.view;
+      // R3-FX: the weapon sprite sheets (two instanced draws) load when the battle starts; measure with them loaded, as played.
+      await v.fx.sprites.whenReady();
       s.aiEnabled = false;
       if (scenario.reveal) { s.visible[0].fill(1); s.explored[0].fill(1); }
       if (scenario.wave) {
@@ -510,7 +514,8 @@ try {
     if (record < 0) {
       assert.ok(summary.calls.p95 <= limits[scenario.name], `${scenario.name} draw budget: ${JSON.stringify(summary)}`);
       assert.ok(summary.triangles.p95 < (scenario.triangles || (scenario.mobile ? 315000 : 450000)), 'instancing must not inflate triangle submission');
-      assert.ok(summary.compose.p95 < (scenario.compose || 450) && summary.multiplyMatrices.p95 < 500, 'stationary poses must not rebuild the entire scene');
+      assert.ok(summary.compose.p95 < (scenario.compose || 450) + 2 && // R3-FX: +2 for the two sprite batch meshes
+         summary.multiplyMatrices.p95 < 500, 'stationary poses must not rebuild the entire scene');
       assert.equal(summary.bufferUploads.p95, 0, 'unchanged instances and empty effects must not resend GPU buffers');
       assert.equal(summary.fallbacks, 0, `${scenario.name}: every type on screen is loaded (none drawn as the stand-in airframe)`);
       assert.deepEqual(summary.unloaded, [], `${scenario.name}: every type on screen is loaded (none left undrawn)`);

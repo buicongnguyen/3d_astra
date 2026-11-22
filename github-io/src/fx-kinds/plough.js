@@ -2,12 +2,14 @@
 // R3-X: the round is a fat glowing shell on a slight arc with a short smoke trail (src/fx-kinds/ordnance.js).
 import { flare, smokePuff } from "./common.js";
 import { launch } from "./ordnance.js";
+import { spriteMuzzle } from "./sprite-fx.js";
 
 export default {
   id: "plough",
   spawn(fx, ev, rng, a) {
     const { from, anchor } = a;
     flare(fx, from, 2.1, undefined, 0.1, anchor);
+    spriteMuzzle(fx, from, a.ux, a.uy, a.uz, "large", anchor, 1.1); // R3-FX
     smokePuff(fx, rng, from, a.ux * 1.6, a.uz * 1.6, anchor, 2.4, undefined, 1.1);
     launch(fx, "shell", a, ev, { body: 1.25 });
     // The wake: dust thrown up behind the hull along the ground, a few puffs spread over a second.

@@ -168,6 +168,7 @@ export function setupMatchFlow(S, A) {
     A.syncPointOwners();
     S.tutorial = null;
     S.view.reset();
+    if (play !== false) S.view.fx?.sprites?.start(); // R3-FX: the weapon sprite sheets load when a battle starts, never on the title
     S.governor.reset();
     A.focusHome();
     S.selected.clear();

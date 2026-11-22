@@ -4,6 +4,7 @@
 // fades from the muzzle forward (beamLine). Everything from the glow pool, through the allocation-free emit path.
 import { CELL, STRETCH } from "./cells.js";
 import { ring, glow, sparks, fade } from "./common.js";
+import { spriteBeamImpact, spriteBeamLine } from "./sprite-fx.js";
 
 const HOT = [1, 1, 1, 1], HOT_DIM = [1, 1, 1, 0.4];
 export const BEAM_SEGMENTS = 5;
@@ -35,8 +36,13 @@ export default {
     const life = style.beamLife ?? 0.12, width = style.beamWidth ?? 0.2, c0 = a.color;
     chargeGlow(fx, rng, a.from, c0, travel, anchor, 0.9);
     // A hot white core over a coloured sheath.
-    beamLine(fx, rng, a, HOT, width * 0.45, life, travel);
-    beamLine(fx, rng, a, c0, width, life, travel);
+    // R3-FX2: the cyan beam-line strip tiled along the ray with a start cap and an end flare (the procedural line is the fallback).
+    if (!spriteBeamLine(fx, a.from, a.to, a.ux, a.uy, a.uz, "cyan", Math.max(width * 4, 1.1), Math.max(life, 0.28), anchor, travel)) {
+      beamLine(fx, rng, a, HOT, width * 0.45, life, travel);
+      beamLine(fx, rng, a, c0, width, life, travel);
+    }
+    // R3-FX: the beam-impact sheet (cyan-white flare and needle sparks) at the target, at the exact hit time.
+    spriteBeamImpact(fx, { x: to.x, y: to.y - fx.ground(to.x, to.z), z: to.z }, c0, anchor, travel);
     ring(fx, to, 0.3, style.ring ?? 1.5, c0, 0.26, anchor, travel + 0.02);
     glow(fx, to, 0.9, [c0[0], c0[1], c0[2], 0.7], 0.14, anchor, travel);
     sparks(fx, rng, to, 3, anchor, 0.5, HOT, fade(c0), travel);
