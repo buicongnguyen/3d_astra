@@ -1,4 +1,4 @@
-// Shade (and the Stalker, longer and thinner): a beam from muzzle to target and a ring where it ends.
+// Shade (and the Stalker, longer and thinner): a beam from muzzle to target and a spark where it ends.
 // R3-X: a short charge glow gathers at the muzzle for the shot's flight time (visual-style.json `life`), then the
 // bright line snaps out to the target exactly when the hit lands (the target's hit flash waits that long), and
 // fades from the muzzle forward (beamLine). Everything from the glow pool, through the allocation-free emit path.

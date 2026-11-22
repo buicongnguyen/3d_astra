@@ -40,8 +40,7 @@ test("every weapon class that has a sprite impact maps to an existing sheet", ()
   }
   assert.equal(impactKind("shell"), "shell"); assert.equal(impactKind("lob"), "artillery"); assert.equal(impactKind("missile"), "rocket");
   assert.equal(impactKind("bomb"), "bomb"); assert.equal(impactKind("flak"), "flak"); assert.equal(impactKind("tracer"), null);
-  assert.equal(IMPACT_SHEET.artillery, "artillery"); assert.equal(IMPACT_SHEET.firebomb, "rocket"); assert.equal(IMPACT_SHEET.missile, "flak");
-  for(const sheet of Object.values(IMPACT_SHEET)) assert.ok(!["tank","bomb","missile"].includes(sheet), "no baked impact rings");
+  assert.equal(IMPACT_SHEET.artillery, "artillery"); assert.equal(IMPACT_SHEET.firebomb, "artillery"); assert.equal(IMPACT_SHEET.missile, "flak");
 });
 
 test("blend modes follow the README: smoke, scorch and mixed blasts normal, bright effects additive", () => {
@@ -86,4 +85,25 @@ test('impact highlights share a real-time budget across a crowded battle', async
   for (const start of flashes) assert.ok(flashes.filter(ms => ms >= start && ms < start + 1000).length <= 3);
   view.motion = false;
   assert.equal(Effects.prototype.allowFlash.call(view, 3000), false);
+});
+
+
+test("tracer atlas uses one quarter of the live size and glow after the screen-space floor", async () => {
+  const { spriteTracer, spriteHead } = await import("../src/fx-kinds/sprite-fx.js");
+  for (const unitsPerPixel of [.02,.2]) {
+    const records=[];
+    const fx={motion:true,allowFlash:()=>true,view:{unitsPerPixel},sprites:{ready:true,take(sheet,x,y,z,size){
+      const p={sheet,size,a:1};records.push(p);return p;
+    }}};
+    spriteTracer(fx,{x:0,y:0,z:0},{x:12,y:0,z:0},1,0,0,.2,null);
+    const [streak]=records;
+    assert.equal(streak.size,Math.max(6,100*unitsPerPixel)/4);
+    assert.equal(streak.sy,1.6);
+    assert.equal(streak.a,1/4); assert.equal(records.length,2,"one moving round and one muzzle cue");
+    assert.equal(streak.vx*streak.life,12);
+    spriteHead(fx,'shell',0,0,0,1,0,0,1.5);
+    assert.equal(records.at(-1).size,Math.max(1.5,22*unitsPerPixel)/4);
+    assert.equal(records.at(-1).a,.25);
+  }
+  for(const name of Object.values(IMPACT_SHEET))assert.ok(!['tank','bomb','missile'].includes(name));
 });

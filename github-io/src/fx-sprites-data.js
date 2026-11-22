@@ -26,7 +26,8 @@ export const TRACER_FRAMES = Object.freeze({ warm: 0, cyan: 4, muzzle: 8, hit: 1
 export const HEAD_FRAME = Object.freeze({ shell: 0, rocket: 1, missile: 2 });
 
 // Which sheet a landing draws, by the weapon class (src/fx-kinds/weapon-class.js) of the round: the kinds src/fx.js hit() takes.
-export const IMPACT_SHEET = Object.freeze({ shell: "rocket", rocket: "rocket", artillery: "artillery", bomb: "artillery", firebomb: "rocket", missile: "flak", walker: "artillery", flak: "flak", beam: "beam" });
+export const IMPACT_SHEET = Object.freeze({ shell: "rocket", rocket: "rocket", artillery: "artillery", bomb: "rocket", firebomb: "artillery", missile: "flak", walker: "artillery", flak: "flak", beam: "beam" });
+// Landings use a single ring-free sheet.
 // The weapon class -> impact kind (classes with no sprite impact map to nothing).
 export const CLASS_IMPACT = Object.freeze({ shell: "shell", lob: "artillery", missile: "rocket", bomb: "bomb", flak: "flak", beam: "beam" });
 export function impactKind(cls) { return CLASS_IMPACT[cls] || null; }

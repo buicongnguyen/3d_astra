@@ -2,7 +2,7 @@
 // curling smoke ribbons, meeting it in a sharp air burst (src/fx-kinds/ordnance.js, the ordnance mesh: one draw
 // for every round in flight). At the ground: a strafing run, a burst of tracers whose strikes walk up to the
 // target, each kicking a dust spurt; the last lands on the target exactly when the hit does.
-import { CELL, STRETCH } from "./cells.js";
+import { CELL, STRETCH, SHOT_SCALE } from "./cells.js";
 import { flare, smokePuff } from "./common.js";
 import { launch } from "./ordnance.js";
 import { spriteSpark } from "./sprite-fx.js";
@@ -33,8 +33,8 @@ function strafe(fx, ev, rng, a) {
     const m = fx.emit(fx.glow, from.x, from.y, from.z, anchor, true);
     m.cell = CELL.flare; m.s0 = 0.55; m.s1 = 0.65; m.life = 0.05; m.c0 = TRACER; m.c1 = SPURT_END; m.age = -delay;
     const p = fx.emit(fx.glow, from.x, from.y, from.z, anchor, true);
-    p.vx = vx; p.vy = vy; p.vz = vz; p.mode = STRETCH; p.ax = vx / l; p.ay = vy / l; p.az = vz / l; p.length = Math.min(1.8, l * flight);
-    p.s0 = p.s1 = 0.11; p.life = flight; p.cell = CELL.streak; p.c0 = a.color || TRACER; p.c1 = TRACER_END; p.age = -delay; p.rot = rng() * 6.28;
+    p.vx = vx; p.vy = vy; p.vz = vz; p.mode = STRETCH; p.ax = vx / l; p.ay = vy / l; p.az = vz / l; p.length = Math.min(1.8, l * flight) * SHOT_SCALE;
+    p.opacity = SHOT_SCALE; p.s0 = p.s1 = 0.11 * SHOT_SCALE; p.life = flight; p.cell = CELL.streak; p.c0 = a.color || TRACER; p.c1 = TRACER_END; p.age = -delay; p.rot = rng() * 6.28;
     // The strike: a spark flick where it hits and a dust spurt off the ground (the last one under the target, at `travel`).
     // Delayed pooled sprites, no timer or closure per round.
     // R3-FX: the muzzle-flash sheet on each burst, and the needle sparks of the beam-impact sheet where each round strikes.
@@ -42,7 +42,7 @@ function strafe(fx, ev, rng, a) {
     const last = i === n - 1, s = fx.emit(fx.glow, tx, ty, tz, anchor, true);
     s.s0 = last ? 0.9 : 0.7; s.s1 = last ? 1.1 : 0.9; s.life = 0.08; s.c0 = SPURT_FLASH; s.c1 = SPURT_END; s.age = -(delay + flight);
     const d = fx.emit(fx.smoke, last ? land.x : tx, fx.ground(last ? land.x : tx, last ? land.z : tz) + 0.25, last ? land.z : tz, anchor, true);
-    d.cell = CELL.puff; d.vy = 1.6; d.drag = 2.4; d.life = 0.8; d.s0 = 0.35; d.s1 = 1.4; d.c0 = fx.dustColor(0.55); d.c1 = fx.dustColor(0); d.age = -(delay + flight); d.spin = 0.6;
+    d.cell = CELL.puff; d.vy = 1.6; d.drag = 2.4; d.life = 0.8; d.s0 = 0.35 * SHOT_SCALE; d.s1 = 1.4 * SHOT_SCALE; d.c0 = fx.dustColor(0.55); d.c1 = fx.dustColor(0); d.age = -(delay + flight); d.spin = 0.6;
   }
 }
 

@@ -6,7 +6,7 @@
 // visible impact coincide. A round that already killed its target lands sooner (CLASS_LOOK.quick).
 // The Barrage's falling shell is drawn from the simulation's own strike list (sim.strikes, read only), so it
 // meets the ground on the tick the strike resolves.
-import { CELL, STRETCH, GROUND } from "./cells.js";
+import { CELL, STRETCH, GROUND, SHOT_SCALE } from "./cells.js";
 import { CLASS_LOOK } from "./weapon-class.js";
 import { spriteImpact, spriteHead, spriteTrailPuff, spritesReady } from "./sprite-fx.js";
 import { impactKind } from "../fx-sprites-data.js";
@@ -24,7 +24,6 @@ const PAL = {
   ember: [1, 0.7, 0.3, 1], emberEnd: [1, 0.3, 0.05, 0],
   flakBlack: [0.07, 0.065, 0.06, 0.88], flakBlackEnd: [0.22, 0.21, 0.2, 0], flakFire: [1, 0.62, 0.2, 1], flakFireEnd: [1, 0.3, 0.05, 0],
   flash: [1, 0.97, 0.88, 1], flashEnd: [1, 0.6, 0.2, 0], calm: [1, 0.8, 0.5, 0.45], calmEnd: [1, 0.6, 0.3, 0],
-  ring: [1, 0.86, 0.55, 0.8], ringEnd: [1, 0.6, 0.2, 0], scorchRing: [0.05, 0.04, 0.035, 0.6], scorchRingEnd: [0.05, 0.04, 0.035, 0],
   shadow: [0.02, 0.02, 0.03, 0.12], shadowEnd: [0.02, 0.02, 0.03, 0.6],
   warn: [0.95, 0.1, 0.05, 0.85], warnEnd: [0.95, 0.15, 0.06, 0], warnHold: [0.9, 0.12, 0.06, 0.9], warnWash: [0.95, 0.14, 0.05, 0.42], warnHoldEnd: [0.9, 0.12, 0.06, 0],
   spark: [1, 0.92, 0.65, 1], sparkEnd: [1, 0.45, 0.12, 0],
@@ -97,12 +96,17 @@ export function stepRounds(fx, dt, visible) {
     if (t < 1) {
       r.roll += r.spin * dt;
       const length = r.body * fx.bodyScale * (1 + r.grow * t);
-      if (seen && !(fx.touchTier && spriteHead(fx, r.cls === "missile" ? "missile" : "shell", P.x,P.y,P.z, ux,uy,uz, length, r.anchor))) fx.ordnance.add(P.x, P.y, P.z, ux, uy, uz, r.roll, length, r.color);
+      if (seen) {
+        const scale = r.cls === "bomb" ? 1 : SHOT_SCALE;
+        const atlas = fx.touchTier && r.cls !== "bomb" && spriteHead(fx, r.cls === "missile" ? "missile" : "shell", P.x,P.y,P.z,ux,uy,uz,length*1.7,r.anchor);
+        if (!atlas) fx.ordnance.add(P.x,P.y,P.z,ux,uy,uz,r.roll,length*scale,r.color,scale);
+      }
       if (r.haloSize > 0 || r.fire) {
         let h = r.halo;
         if (!h || h.owner !== r.token) {
           h = r.halo = fx.emit(fx.glow, P.x, P.y, P.z, r.anchor, true);
           h.life = r.travel + 1; h.s0 = h.s1 = r.fire ? 1.1 : r.haloSize;
+          if (r.cls !== "bomb") { h.s0 *= SHOT_SCALE; h.s1 *= SHOT_SCALE; h.opacity = SHOT_SCALE; }
           h.c0 = h.c1 = r.fire ? PAL.halo : r.haloColor;
           h.owner = r.token = ++fx.rocketTokens; // one token counter with the rockets: halo owners never collide
         }
@@ -227,7 +231,7 @@ export function landRound(fx, r, ux, uz) {
         const p = sprite(fx, fx.glow, r.land.x, r.land.y + 0.4, r.land.z, anchor, CELL.glow, 0.9, 0.2, 0.5 + fx.rng() * 0.3, PAL.flakFire, PAL.flakFireEnd);
         p.vx = (fx.rng() - 0.5) * 3; p.vy = 1.2 + fx.rng() * 1.6; p.vz = (fx.rng() - 0.5) * 3; p.drag = 1.4;
       }
-      fx.dust({ x: r.land.x, y: 0.3, z: r.land.z }, 3, anchor, 1.2, 1.2);
+      fx.hitDust({ x: r.land.x, y: 0.3, z: r.land.z }, 3, anchor, 1.2, 1.2);
       return;
     }
     default: {
@@ -235,7 +239,7 @@ export function landRound(fx, r, ux, uz) {
       if (r.air) { airBurst(fx, r.to, anchor, 0.7); return; }
       fx.hit(at, r.power, anchor, r.walker ? "walker" : impactKind(r.cls) || "shell");
       if (r.cls === "shell" && fx.motion) shellSparks(fx, at, anchor);
-      if (r.cls === "lob") fx.dust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.3, 1.3);
+      if (r.cls === "lob") fx.hitDust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.3, 1.3);
     }
   }
 }
@@ -286,7 +290,7 @@ export function stepStrikes(fx, sim, dt) {
     const g = fx.ground(s.x, s.z), x = s.x - dx * k * 5, z = s.z - dz * k * 5, y = g + 0.8 + look.height * k * k;
     // Heading: forward and steeply down (the derivative of the fall).
     const ux = dx * 5, uy = -2 * look.height * k, uz = dz * 5;
-    fx.ordnance.add(x, y, z, ux, uy, uz, s.at * 7, look.body, BODY.barrage);
+    fx.ordnance.add(x, y, z, ux, uy, uz, s.at * 7, look.body * SHOT_SCALE, BODY.barrage, SHOT_SCALE);
     if (fx.motion && dt > 0) {
       st.trail += dt;
       const gap = 0.035 * (eco ? 1.6 : 1);
@@ -296,7 +300,7 @@ export function stepStrikes(fx, sim, dt) {
         q.vy = 0.2; q.drag = 1.2; q.life = 0.6 * (eco ? CLASS_LOOK.ecoTrail : 1); q.s0 = 0.35; q.s1 = 1.1; q.cell = CELL.puff;
         q.c0 = PAL.lobSmoke; q.c1 = PAL.lobSmokeEnd; q.spin = 0.5;
         const h = fx.emit(fx.glow, x, y + 0.3, z, st.anchor, true);
-        h.life = 0.06; h.s0 = 1.4; h.s1 = 1.2; h.c0 = PAL.haloHot; h.c1 = PAL.halo;
+        h.life = 0.06; h.opacity = SHOT_SCALE; h.s0 = 1.4 * SHOT_SCALE; h.s1 = 1.2 * SHOT_SCALE; h.c0 = PAL.haloHot; h.c1 = PAL.halo;
       }
     }
   }

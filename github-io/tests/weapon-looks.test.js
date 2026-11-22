@@ -123,7 +123,7 @@ test('a counter hit flares gold, a resisted hit only puffs grey', () => {
   const fx = fxWith(seeded(9)), at = { x: 1, y: 1, z: 1 };
   fx.counterHit(at, null, true);
   const gold = fx.glow.items.filter((p) => p.cell === 5 && p.c0[0] === 1 && p.c0[2] < 0.6).length;
-  assert.ok(gold >= 1 && !fx.glow.items.some((p) => p.cell === 2), 'gold flare without a ring');
+  assert.ok(gold >= 1 && !fx.glow.items.some((p) => p.cell === 2), 'gold flare without hit ring');
   const fy = fxWith(seeded(9)); fy.counterHit(at, null, false);
   assert.equal(fy.glow.items.filter((p) => p.cell === 5).length, 0);
   assert.ok(fy.smoke.items.length >= 1);
@@ -141,4 +141,23 @@ test('splash art follows live ground damage including crew upgrades and shared w
   assert.equal(groundSplashRadius({unit:'tower',source:1,tAir:1},live),0);
   tower.splash_damage=0;
   assert.equal(groundSplashRadius({unit:'tank',source:1},live),0);
+});
+
+test('live-quarter Vanguard tracers preserve travel and scale both axes and alpha', () => {
+  const fx=fxWith(seeded(7));
+  LOOKS.burst.spawn(fx, {unit:'vanguard'}, fx.rng, aim());
+  const rounds=fx.glow.items.filter(p=>p.mode===1 && p.opacity===.25);
+  assert.equal(rounds.length,3);
+  for (const p of rounds) {
+    assert.equal(p.s0,.12/4); assert.equal(p.s1,.12/4); assert.equal(p.length,1.6/4);
+    assert.ok(Math.abs(p.life*Math.hypot(p.vx,p.vy,p.vz)-Math.hypot(8,-.4,3)) < .01);
+  }
+});
+test('gun contact keeps a quarter-width dust puff and shield hits emit no ring', () => {
+  const fx=fxWith(seeded(7));
+  fx.hit({x:1,y:.9,z:1},0,null);
+  const dust=fx.smoke.items.filter(p=>p.cell===1);
+  assert.ok(dust.some(p=>Math.abs(p.s1 - 2.2*.45/4)<1e-9));
+  fx.impact({x:1,z:1,shield:true});
+  assert.ok(!fx.glow.items.some(p=>p.cell===2));
 });

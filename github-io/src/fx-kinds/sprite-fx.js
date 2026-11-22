@@ -1,3 +1,4 @@
+import { SHOT_SCALE } from "./cells.js";
 // The recipes that play the weapon VFX sprites (src/fx-sprites.js) for each weapon class (AAA round 3, R3-FX). Each one returns
 // true when it drew (the sprites have loaded) so the caller can skip the procedural fallback it replaces, and false when they
 // have not (or never will): the old effects then run as before. View only; sizes in metres, never smaller than `px` CSS pixels.
@@ -88,7 +89,27 @@ export function spriteBeamImpact(fx, at, c0, anchor, delay) {
   return true;
 }
 
-// Tracer contacts, energy beams, walker footfalls and projectile heads.
+// ---- VFX2 (heavy-read effects): tracers, beam lines, heal beam, stomp, projectile heads.
+
+// A streak flying muzzle -> aim (the tracer-streak sheet, warm or cyan, its four poses cycling), the muzzle spark at the muzzle and
+// the hit spark where it lands, exactly `travel` seconds later. The streak is about 12-16 screen px thick, whatever the zoom.
+export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = false, delay = 0) {
+  const sprites = fx.sprites;
+  if (!sprites?.ready || !fx.motion) return false;
+  const len = Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z) || 1;
+  const size = Math.max(6, 100 * upp(fx)) * SHOT_SCALE, sheet = SHEETS.tracer;
+  const p = sprites.take("tracer", from.x, from.y, from.z, size, anchor, true);
+  if (!p) return false;
+  const life = Math.max(0.06, travel);
+  p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.vx = (to.x - from.x) / life; p.vy = (to.y - from.y) / life; p.vz = (to.z - from.z) / life;
+  p.start = cyan ? TRACER_FRAMES.cyan : TRACER_FRAMES.warm; p.count = 4; p.loop = true; p.fps = 20; p.life = life; p.age = -delay; p.fade = 0.08; p.sy = 1.6; p.a = SHOT_SCALE;
+  // The muzzle spark sits at (0.23, 0.5) of its cell.
+  if (!fx.allowFlash()) return true;
+  const back = (0.5 - sheet.muzzleAt) * size;
+  const m = sprites.take("tracer", from.x + ux * back, from.y + uy * back, from.z + uz * back, size * 0.8, anchor, true);
+  if (m) { m.a = SHOT_SCALE; m.mode = ORIENTED; m.ax = ux; m.ay = uy; m.az = uz; m.start = TRACER_FRAMES.muzzle; m.count = 4; m.age = -delay; }
+  return true;
+}
 
 // The warm hit spark of a rifle round (the tracer sheet), centred on `at` (y above the ground).
 export function spriteSpark(fx, at, anchor, delay = 0, scale = 1) {
@@ -97,7 +118,7 @@ export function spriteSpark(fx, at, anchor, delay = 0, scale = 1) {
   if (!fx.allowFlash()) return true;
   const p = sprites.take("tracer", at.x, at.y + 0.3, at.z, Math.min(0.65 * scale, (anchor?.targetWidth || 1.3) * 0.5), anchor, false);
   if (!p) return false;
-  p.start = TRACER_FRAMES.hit; p.count = 4; p.age = -delay;
+  p.a = SHOT_SCALE; p.start = TRACER_FRAMES.hit; p.count = 4; p.age = -delay;
   return true;
 }
 
@@ -128,15 +149,12 @@ export function spriteStomp(fx, at, anchor, scale = 1) {
   return !!p;
 }
 
-
-// At touch resolution the static head replaces the 3D projectile in the running
-// atlas batch. It is returned to the pool on the next frame.
-export function spriteHead(fx, kind, x,y,z, ux,uy,uz, size, anchor) {
-  if (!fx.sprites?.ready) return false;
-  const p = fx.sprites.take("heads", x,y,z, size*1.45, anchor, true);
+// The head of a round in flight (shell, rocket or missile art, pointing along its heading), drawn this frame only.
+export function spriteHead(fx, kind, x, y, z, ux, uy, uz, size, anchor) {
+  const sprites = fx.sprites;
+  if (!sprites?.ready) return false;
+  const p = sprites.take("heads", x, y, z, Math.max(size, 22 * upp(fx)) * SHOT_SCALE, anchor, true);
   if (!p) return false;
-  p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz;
-  p.start = HEAD_FRAME[kind]; p.count = 1; p.fps = 0; p.once = true;
-  p.life = 1; p.fade = 0.001;
+  p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.a = SHOT_SCALE; p.start = HEAD_FRAME[kind] ?? 0; p.count = 1; p.fps = 0; p.once = true; p.life = 1; p.fade = 0.0001; p.age = 0;
   return true;
 }

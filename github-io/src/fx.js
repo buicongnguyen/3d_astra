@@ -14,7 +14,7 @@ import { shotSlope } from "./terrain-labels.js";
 // is requested. Particle and debris records are pooled: the per-frame emitters (fire, smoke,
 // trails) and the update loop allocate nothing once the pools are warm.
 
-import { CELLS, CELL, BILLBOARD, STRETCH, GROUND } from "./fx-kinds/cells.js";
+import { CELLS, CELL, BILLBOARD, STRETCH, GROUND, SHOT_SCALE } from "./fx-kinds/cells.js";
 import { LOOKS, MOMENTS, shimmer } from "./fx-kinds/index.js";
 import { crit, resisted } from "./fx-kinds/counter.js";
 import { RocketBodies } from "./fx-kinds/rocket-body.js";
@@ -26,7 +26,7 @@ import { launch, stepRounds, stepStrikes, warnRing, flakBurst, airBurst } from "
 import { LOOKS as MOOD_LOOKS } from "./mission-looks.js";
 // R3-FX: the Codex weapon sprite sheets (two pooled instanced batches), played for impacts, muzzle flashes, trails, jets, heals and decals.
 import { FxSprites } from "./fx-sprites.js";
-import { spriteHead, spriteImpact, spriteMuzzle, spriteSpark, spriteTrailPuff, spritesReady } from "./fx-kinds/sprite-fx.js";
+import { spriteTracer, spriteHead, spriteImpact, spriteMuzzle, spriteSpark, spriteTrailPuff, spritesReady } from "./fx-kinds/sprite-fx.js";
 import { impactKind } from "./fx-sprites-data.js";
 
 // Procedural sprite atlas: one 128 px cell per shape, white with alpha.
@@ -126,7 +126,7 @@ function resetParticle(p, rng) {
   p.x = 0; p.y = 0; p.z = 0; p.vx = 0; p.vy = 0; p.vz = 0; p.age = 0; p.life = 1; p.s0 = 1; p.s1 = 1;
   p.rot = rng() * 6.28; p.spin = 0; p.c0 = WARM.flash; p.c1 = WARM.ember; p.mode = BILLBOARD;
   p.ax = 0; p.ay = 1; p.az = 0; p.length = 0; p.cell = CELL.glow; p.drag = 0; p.gravity = 0; p.floor = -10;
-  p.hold = 0; p.fadeIn = 0; p.anchor = null; p.lifted = false; p.delay = 0; p.hitScorch = false;
+  p.opacity = 1; p.hold = 0; p.fadeIn = 0; p.anchor = null; p.lifted = false; p.delay = 0; p.hitScorch = false;
   p.priorityHit = false; p.owner = 0; // the token of a rocket that moves this record each frame (its flame halo); 0 when the record is reused
   return p;
 }
@@ -194,7 +194,7 @@ class Layer {
       const fade = p.fadeIn > 0 ? Math.min(1, p.age / p.fadeIn) : 1;
       P[drawn * 3] = p.x; P[drawn * 3 + 1] = p.y; P[drawn * 3 + 2] = p.z;
       for (let j = 0; j < 4; j++) C[drawn * 4 + j] = p.c0[j] + (p.c1[j] - p.c0[j]) * k;
-      C[drawn * 4 + 3] *= additive ? -fade : fade;
+      C[drawn * 4 + 3] *= p.opacity * (additive ? -fade : fade);
       const len = p.length ? p.length : 0;
       A[drawn * 4] = p.ax * len; A[drawn * 4 + 1] = p.ay * len; A[drawn * 4 + 2] = p.az * len; A[drawn * 4 + 3] = p.mode;
       S[drawn * 3] = p.s0 + (p.s1 - p.s0) * (1 - (1 - t) ** 2); S[drawn * 3 + 1] = p.rot; S[drawn * 3 + 2] = p.cell;
@@ -385,6 +385,9 @@ export class Effects {
     }
     return alpha > 0 ? this.dustCache.on : this.dustCache.off;
   }
+  hitDust(at, n, anchor, size = 1, life = 1.1) {
+    this.dust(at, n, anchor, size * SHOT_SCALE, life);
+  }
   dust(at, n, anchor, size = 1, life = 1.1) {
     const [r, g, b] = rgba(parseInt(themeFor(this.view.terrain.id).dust.slice(1), 16));
     this.burst(this.smoke, this.count(n), at, { life, s0: 0.6 * size, s1: 2.2 * size, drag: 2.5, cell: CELL.puff,
@@ -438,15 +441,6 @@ export class Effects {
     p.hitScorch = true;
     return p;
   }
-  shockwave(at, size, anchor) {
-    if (!this.motion) return;
-    // Uneven, separated clumps skim the ground as the blast displaces dust.
-    for (let i = 0, n = this.count(8); i < n; i++) {
-      const angle = (i + this.rng()*0.65) * Math.PI*2 / n, speed = size * (0.5 + this.rng()*0.25);
-      this.particle(this.smoke, { x: at.x, y: 0.2, z: at.z, vx: Math.cos(angle)*speed, vz: Math.sin(angle)*speed,
-        vy: 0.3, drag: 1.4, s0: 0.45, s1: 1.2, cell: CELL.puff, life: 0.5, c0: this.dustColor(0.55), c1: this.dustColor(0), anchor });
-    }
-  }
   explosion(at, scale, anchor, heavy = true) {
     const m = this.motion;
     this.particle(this.glow, { ...at, cell: CELL.flare, s0: 3.6 * scale, s1: 4.4 * scale, life: 0.16, c0: WARM.flash, c1: [1, 0.6, 0.2, 0], anchor });
@@ -460,7 +454,6 @@ export class Effects {
       cell: CELL.puff, c0: [0.2, 0.19, 0.18, 0.78], c1: [0.36, 0.35, 0.34, 0], fadeIn: 0.12, delay: 0.06, anchor, gravity: -0.6,
       spin: 0.4 }, [0.6 * scale, 1.6 * scale], 1.2);
     this.sparks(at, heavy ? 10 : 5, anchor, scale);
-    if (m) this.shockwave(at, 7 * scale, anchor);
     this.decal(at, 3.4 * scale, 12, anchor);
     if (heavy) this.addDebris(at, 7, anchor, scale, 2);
   }
@@ -470,21 +463,22 @@ export class Effects {
       c0: WARM.flash, c1: WARM.sparkEnd, anchor });
     if (!this.motion) return;
     this.sparks(at, 2, anchor, 0.32);
-    if (at.y < 2.2) this.dust({ ...at, y: 0.14 }, 1, anchor, 0.28, 0.26);
+    if (at.y < 2.2) this.hitDust({ ...at, y: 0.14 }, 1, anchor, 0.45, 0.26);
   }
   precisionShot(from, to, land, travel, anchor) {
     const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z;
     const len = Math.hypot(dx, dy, dz) || 1;
     const moving = this.motion, life = moving ? travel : 0.075;
-    const body = { ...from, lifted: true, mode: STRETCH, ax: dx/len, ay: dy/len, az: dz/len,
-      length: moving ? Math.min(1.15, len) : len, cell: CELL.glow, life, anchor };
-    if (moving) Object.assign(body, { vx: dx/life, vy: dy/life, vz: dz/life });
-    else Object.assign(body, { x: (from.x+to.x)/2, y: (from.y+to.y)/2, z: (from.z+to.z)/2 });
-    this.particle(this.glow, { ...from, cell: CELL.flare, s0: 0.7, s1: 0.24, life: 0.055,
-      c0: WARM.flash, c1: WARM.sparkEnd, anchor });
-    const width = 0.11;
-    this.particle(this.smoke, { ...body, s0: width*1.4, s1: width*1.4, c0: [0.38,0.19,0.08,0.9], c1: [0.38,0.19,0.08,0.75] });
-    this.particle(this.glow, { ...body, s0: width, s1: width, c0: WARM.flash, c1: [1,0.85,0.55,0.85] });
+    const rendered = moving && spriteTracer(this, from, to, dx/len,dy/len,dz/len, travel, anchor);
+    if (!rendered) {
+      const width = (moving ? 0.11 : 0.11 * 0.7) * SHOT_SCALE;
+      const body = { ...from, lifted: true, mode: STRETCH, ax: dx/len, ay: dy/len, az: dz/len,
+        length: (moving ? Math.min(2, len) : len) * SHOT_SCALE, cell: CELL.streak, life, anchor, opacity: SHOT_SCALE };
+      if (moving) Object.assign(body, { vx: dx/life, vy: dy/life, vz: dz/life });
+      else Object.assign(body, { x: (from.x+to.x)/2, y: (from.y+to.y)/2, z: (from.z+to.z)/2 });
+      this.particle(this.glow, { ...body, s0: width, s1: width, c0: WARM.flash, c1: [1,.85,.55,.8] });
+      this.particle(this.glow, { ...from, cell: CELL.flare, s0: .7, s1: .24, life: .045, c0: WARM.flash, c1: WARM.sparkEnd, anchor });
+    }
     this.timeline.push({ at: this.time + (moving ? travel : 0), run: () => this.contactHit(land, anchor) });
   }
   // A shell or rocket landing. Small arms (power 0) stay light: a spark and now and then a
@@ -503,14 +497,14 @@ export class Effects {
       this.particle(this.glow, { ...at, s0: 0.5, s1: 0.7, life: 0.07, c0: [1, 0.9, 0.6, 0.9], c1: [1, 0.5, 0.2, 0], anchor });
       this.sparks(at, 3, anchor, 0.45);
       // R3-X tracers: every rifle round that reaches the ground kicks a small dust puff (Eco: every other one).
-      if (!aloft && this.rng() < (this.view.lowPower ? 0.5 : 1)) this.dust({ x: at.x, y: 0.25, z: at.z }, 1, anchor, 0.45, 0.7);
+      if (!aloft && this.rng() < (this.view.lowPower ? 0.5 : 1)) this.hitDust({ x: at.x, y: 0.25, z: at.z }, 1, anchor, 0.45, 0.7);
       return;
     }
     if (aloft) { airBurst(this, { x: at.x, y: at.y + this.ground(at.x, at.z), z: at.z }, anchor, Math.min(1.2, 0.5 + power * 0.5)); return; }
     const s = Math.min(power, (anchor?.targetWidth ?? Infinity) * 2 / 4.6), m = this.motion, top = { x: at.x, y: at.y + 0.35, z: at.z };
     // Keep the blast within two target widths with or without sprites.
     if (spriteImpact(this, kind, at, power, anchor)) {
-      this.dust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.1 * s, 1.1);
+      this.hitDust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.1 * s, 1.1);
       this.sparks(top, 8, anchor, s);
       this.addDebris(at, Math.round(4 * s), anchor, 0.85 * s, s >= 1 ? 2 : 0);
       this.scorch(at, 2.6 * s, anchor, kind === "artillery" || kind === "bomb" || kind === "firebomb");
@@ -527,10 +521,9 @@ export class Effects {
     this.burst(this.smoke, this.count(4), { x: at.x, y: at.y + 0.7, z: at.z }, { life: m ? 2.1 : 0.9, s0: 1 * s, s1: 3.6 * s, drag: 1.4,
       cell: CELL.puff, c0: [0.19, 0.18, 0.17, 0.74], c1: [0.38, 0.37, 0.36, 0], fadeIn: 0.1, delay: 0.1, anchor, gravity: -0.8,
       spin: 0.4 }, [0.6 * s, 1.4 * s], 1.1);
-    this.dust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.1 * s, 1.1);
+    this.hitDust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.1 * s, 1.1);
     this.sparks(top, 8, anchor, s);
     this.addDebris(at, Math.round(4 * s), anchor, 0.85 * s, s >= 1 ? 2 : 0);
-
     // Hot ground: an orange glow that cools in about a second, then the scorch.
     this.decal(at, 2.2 * s, 0.96, anchor, CELL.glow, [1, 0.45, 0.1, 0.85], this.glow, 1.7 * s, { hold: 0.15, y: 0.08 });
     this.scorch(at, 2.6 * s, anchor);
@@ -664,20 +657,20 @@ export class Effects {
       launch(this, cls, a, e);
       if (cls === "lob") warnRing(this, land.x, land.z, 1.6, travel, anchor);
       if (cls === "flak") this.particle(this.glow, { ...from, vx: dir.x / travel, vy: dir.y / travel, vz: dir.z / travel, mode: STRETCH, ax: ux, ay: uy, az: uz,
-        length: Math.min(1.6, len), s0: 0.12, s1: 0.12, life: travel, cell: CELL.streak, c0: [1, 0.85, 0.5, 1], c1: [1, 0.7, 0.4, 0.6], anchor });
+        opacity: SHOT_SCALE, length: Math.min(1.6, len) * SHOT_SCALE, s0: 0.12 * SHOT_SCALE, s1: 0.12 * SHOT_SCALE, life: travel, cell: CELL.streak, c0: [1, 0.85, 0.5, 1], c1: [1, 0.7, 0.4, 0.6], anchor });
     } else if (m) {
       const v = { vx: dir.x / travel, vy: dir.y / travel, vz: dir.z / travel };
       this.particle(this.glow, { ...from, ...v, mode: STRETCH, ax: dir.x / len, ay: dir.y / len, az: dir.z / len,
-        length: Math.min(tail, len), s0: width, s1: width, life: travel, cell: CELL.streak, c0: color, c1: [...color.slice(0, 3), 0.8], anchor });
+        opacity: SHOT_SCALE, length: Math.min(tail, len) * SHOT_SCALE, s0: width * SHOT_SCALE, s1: width * SHOT_SCALE, life: travel, cell: CELL.streak, c0: color, c1: [...color.slice(0, 3), 0.8], anchor });
       if (cannon || rocket)
-        this.particle(this.glow, { ...from, ...v, s0: cannon ? 0.75 : 0.55, s1: cannon ? 0.75 : 0.55, life: travel, c0: [1, 0.85, 0.5, 1],
+        this.particle(this.glow, { ...from, ...v, opacity: SHOT_SCALE, s0: (cannon ? 0.75 : 0.55) * SHOT_SCALE, s1: (cannon ? 0.75 : 0.55) * SHOT_SCALE, life: travel, c0: [1, 0.85, 0.5, 1],
           c1: [1, 0.7, 0.4, 1], anchor });
       // R3-X tracer: a thin streak with a small white-hot head, so a rifle round reads as a bright dash, not a smear.
-      else this.particle(this.glow, { ...from, ...v, s0: 0.24, s1: 0.2, life: travel, c0: [1, 0.97, 0.85, 0.95], c1: [...color.slice(0, 3), 0.7], anchor });
+      else this.particle(this.glow, { ...from, ...v, opacity: SHOT_SCALE, s0: 0.24 * SHOT_SCALE, s1: 0.2 * SHOT_SCALE, life: travel, c0: [1, 0.97, 0.85, 0.95], c1: [...color.slice(0, 3), 0.7], anchor });
       this.projectiles.push({ from, to, land, travel, age: 0, rocket, cannon, power, anchor, trail: 0, weapon: e.weapon, kind: impactKind(cls) || (rocket ? "rocket" : "shell") });
     } else {
       this.particle(this.glow, { lifted: true, x: (from.x + to.x) / 2, y: (from.y + to.y) / 2, z: (from.z + to.z) / 2, mode: STRETCH,
-        ax: dir.x / len, ay: dir.y / len, az: dir.z / len, length: len, s0: width * 0.7, s1: width * 0.7, life: 0.1,
+        ax: dir.x / len, ay: dir.y / len, az: dir.z / len, opacity: SHOT_SCALE, length: len * SHOT_SCALE, s0: width * 0.7 * SHOT_SCALE, s1: width * 0.7 * SHOT_SCALE, life: 0.1,
         cell: CELL.glow, c0: [...color.slice(0, 3), 0.7], c1: [...color.slice(0, 3), 0], anchor });
       this.hit(land, power, anchor, impactKind(cls) || (rocket ? "rocket" : "shell"));
     }
@@ -685,14 +678,14 @@ export class Effects {
     const slope = e.sAir || e.tAir ? 0 : shotSlope(this.view.terrain, e.x, e.z, e.tx, e.tz);
     if (slope) this.timeline.push({ at: this.time + (m ? travel : 0), run: () => slope > 0
       ? this.particle(this.glow, { ...to, cell: CELL.flare, s0: 1.2, s1: 0.35, life: 0.24, c0: [1, 0.86, 0.4, 0.95], c1: [1, 0.7, 0.2, 0], anchor })
-      : this.particle(this.smoke, { ...to, vy: m ? 0.4 : 0, s0: 0.35, s1: 0.9, life: 0.45, cell: CELL.puff, c0: [0.5, 0.5, 0.48, 0.4], c1: [0.5, 0.5, 0.5, 0], anchor }) });
+      : this.particle(this.smoke, { ...to, vy: m ? 0.4 : 0, s0: 0.35 * SHOT_SCALE, s1: 0.9 * SHOT_SCALE, life: 0.45, cell: CELL.puff, c0: [0.5, 0.5, 0.48, 0.4], c1: [0.5, 0.5, 0.5, 0], anchor }) });
   }
   // High ground for the shots drawn by a weapon kind (the same flare or puff as above).
   slope(e, to, anchor, m, travel) {
     const slope = e.sAir || e.tAir ? 0 : shotSlope(this.view.terrain, e.x, e.z, e.tx, e.tz);
     if (slope) this.timeline.push({ at: this.time + travel, run: () => slope > 0
       ? this.particle(this.glow, { ...to, cell: CELL.flare, s0: 1.2, s1: 0.35, life: 0.24, c0: [1, 0.86, 0.4, 0.95], c1: [1, 0.7, 0.2, 0], anchor })
-      : this.particle(this.smoke, { ...to, vy: m ? 0.4 : 0, s0: 0.35, s1: 0.9, life: 0.45, cell: CELL.puff, c0: [0.5, 0.5, 0.48, 0.4], c1: [0.5, 0.5, 0.5, 0], anchor }) });
+      : this.particle(this.smoke, { ...to, vy: m ? 0.4 : 0, s0: 0.35 * SHOT_SCALE, s1: 0.9 * SHOT_SCALE, life: 0.45, cell: CELL.puff, c0: [0.5, 0.5, 0.48, 0.4], c1: [0.5, 0.5, 0.5, 0], anchor }) });
   }
   // Counter-hit feedback (src/counter-hit-view.js): a gold flare on an effective hit, a grey puff on a resisted one.
   counterHit(at, anchor, effective) { (effective ? crit : resisted)(this, this.rng, at, anchor); }
@@ -802,8 +795,7 @@ export class Effects {
     // R3-FX: the artillery-blast sheet (sized to the damage radius) replaces the procedural fireball; the crater is a decal.
     if (spriteImpact(this, "bomb", { x: e.x, y: 0.3, z: e.z }, 1, anchor, 0, Math.max(0.8, r / 5))) {
       this.sparks({ x: e.x, y: 1.2, z: e.z }, 10, anchor, 1.6);
-      this.shockwave(e, r * 2, anchor);
-      this.dust({ x: e.x, y: 0.3, z: e.z }, 5, anchor, 1.6, 1.6);
+      this.hitDust({ x: e.x, y: 0.3, z: e.z }, 5, anchor, 1.6, 1.6);
       this.addDebris({ x: e.x, y: 0.8, z: e.z }, 10, anchor, 1.45, 3);
       this.scorch({ x: e.x, z: e.z }, r * 1.1, anchor, true);
       return;
@@ -811,9 +803,8 @@ export class Effects {
     this.explosion({ x: e.x, y: 0.9, z: e.z }, 2.1, anchor, true);
     this.burst(this.smoke, this.count(8), { x: e.x, y: 1.4, z: e.z }, { life: m ? 1.5 : 0.8, s0: 1.8, s1: 4.6, drag: 1.2, cell: CELL.puff,
       c0: [1, 0.56, 0.16, 0.96], c1: [0.18, 0.15, 0.13, 0], anchor, gravity: m ? -4.5 : 0, spin: 0.6 }, [0.5, 1.6], 2.6);
-    this.shockwave(e, r * 2, anchor);
     this.decal({ x: e.x, z: e.z }, r * 0.9, 1.4, anchor, CELL.glow, [1, 0.42, 0.08, 0.9], this.glow, r * 0.7, { hold: 0.2, y: 0.08 });
-    this.dust({ x: e.x, y: 0.3, z: e.z }, 7, anchor, 1.6, 1.6);
+    this.hitDust({ x: e.x, y: 0.3, z: e.z }, 7, anchor, 1.6, 1.6);
     this.addDebris({ x: e.x, y: 0.8, z: e.z }, 10, anchor, 1.45, 3);
     this.decal({ x: e.x, z: e.z }, r * 1.35, 16, anchor, CELL.scorch, SCORCH_COLOR, this.decals, r * 1.35, { hold: 0.45 });
   }
@@ -880,7 +871,7 @@ export class Effects {
       this.particle(this.glow, { ...at, s0: 1.3, s1: 1.8, life: 0.14, c0: [0.5, 0.9, 1, 0.55], c1: [0.4, 0.8, 1, 0], anchor, delay: 0.05 });
     } else {
       this.sparks(at, 4, anchor, 0.7);
-      this.particle(this.smoke, { ...at, priorityHit: true, vy: this.motion ? 0.8 : 0, s0: 0.4, s1: 1.2, life: 0.6, cell: CELL.puff,
+      this.particle(this.smoke, { ...at, priorityHit: true, vy: this.motion ? 0.8 : 0, s0: 0.4 * SHOT_SCALE, s1: 1.2 * SHOT_SCALE, life: 0.6, cell: CELL.puff,
         c0: [0.35, 0.34, 0.32, 0.45], c1: [0.4, 0.4, 0.4, 0], anchor, delay: 0.05 });
     }
   }
@@ -951,7 +942,6 @@ export class Effects {
             vy: m ? 1 + this.rng() * 0.8 : 0.1, vx: m ? (this.rng() - 0.5) * 0.8 : 0, vz: m ? (this.rng() - 0.5) * 0.8 : 0, drag: 0.5,
             life: 3.6 + this.rng(), s0: 2.4, s1: 6.8, cell: CELL.puff, c0: [r0 * 0.9, g0 * 0.9, b0 * 0.9, 0.72], c1: [r0, g0, b0, 0],
             anchor, fadeIn: 0.3, spin: 0.2, delay: i * 0.08 });
-        if (m) this.shockwave({ x: e.x, y: 0.3, z: e.z }, 13, anchor);
       } });
       for (let i = 0; i < 12; i++)
         this.timeline.push({ at: this.time + 0.2 + i * 0.2, run: () => this.particle(this.smoke, { x: e.x + (this.rng() - 0.5) * 2.4,
@@ -1037,7 +1027,6 @@ export class Effects {
         this.explosion(at, k, anchor, true);
         this.addDebris(at, 6, anchor, 1.2 * k, 2);
       } });
-    if (m) this.timeline.push({ at: this.time + 1.55, run: () => this.shockwave({ x: e.x, y: 0.3, z: e.z }, 20, anchor) });
     this.decal(anchor, 11, 24, anchor);
   }
   smoulder(d, dt) {
@@ -1138,11 +1127,11 @@ export class Effects {
         // The flame halo: one pooled glow sprite per rocket, moved to the nozzle every frame.
         let h = p.halo;
         if (!h || h.owner !== p.token) {
-          h = p.halo = this.particle(this.glow, { lifted: true, x, y, z, s0: 1.15 * p.body, s1: 1.15 * p.body, life: p.travel + 1, c0: PAL.halo, c1: PAL.halo, anchor: p.anchor });
+          h = p.halo = this.particle(this.glow, { lifted: true, x, y, z, opacity: SHOT_SCALE, s0: 1.15 * p.body * SHOT_SCALE, s1: 1.15 * p.body * SHOT_SCALE, life: p.travel + 1, c0: PAL.halo, c1: PAL.halo, anchor: p.anchor });
           h.owner = p.token = p.token || ++this.rocketTokens;
         }
         h.x = x - ux * tail * 1.25; h.y = y - uy * tail * 1.25; h.z = z - uz * tail * 1.25;
-        if (visible(p.anchor) && !(this.touchTier && spriteHead(this, "rocket", x,y,z, ux,uy,uz, p.body * bodyScale, p.anchor))) this.rockets.add(x, y, z, ux, uy, uz, p.roll, p.body * bodyScale, p.color);
+        if (visible(p.anchor) && !(this.touchTier && spriteHead(this, "rocket", x,y,z, ux,uy,uz, 1.9 * p.body * bodyScale, p.anchor))) this.rockets.add(x, y, z, ux, uy, uz, p.roll, p.body * bodyScale * SHOT_SCALE, p.color);
       }
       if (t >= 1) {
         this.projectiles.splice(i, 1);

@@ -1,4 +1,4 @@
-// Counter-hit feedback (AAA round 2, W2-E): an effective hit flares gold (a star flare, a ring and gold sparks),
+// Counter-hit feedback (AAA round 2, W2-E): an effective hit flares gold (a star flare and gold sparks),
 // a resisted hit puffs dull grey. Pooled particles only; random numbers from `rng`.
 import { CELL } from "./cells.js";
 import { flare, sparks } from "./common.js";
@@ -9,7 +9,7 @@ export function crit(fx, rng, at, anchor) {
   sparks(fx, rng, at, 6, anchor, 0.9, GOLD, GOLD_END);
 }
 export function resisted(fx, rng, at, anchor) {
-  fx.particle(fx.smoke, { lifted: true, x: at.x, y: at.y, z: at.z, vy: fx.motion ? 0.7 : 0, drag: 1.2, life: 0.5, s0: 0.35, s1: 1.1, cell: CELL.puff, c0: [0.52, 0.52, 0.5, 0.55], c1: [0.55, 0.55, 0.55, 0],
+  fx.particle(fx.smoke, { lifted: true, x: at.x, y: at.y, z: at.z, vy: fx.motion ? 0.7 : 0, drag: 1.2, life: 0.5, s0: 0.0875, s1: 0.275, cell: CELL.puff, c0: [0.52, 0.52, 0.5, 0.55], c1: [0.55, 0.55, 0.55, 0],
     anchor, spin: (rng() - 0.5), rot: rng() * 6.28 });
   sparks(fx, rng, at, 2, anchor, 0.35, [0.78, 0.78, 0.76, 0.9], [0.6, 0.6, 0.6, 0]);
 }
