@@ -1,4 +1,4 @@
-import { PRESETS, palette } from "./settings.js";
+import { PRESETS, TEAM_PALETTES, palette } from "./settings.js";
 import { FACTIONS } from "./story/world.js";
 
 // Team colours for the match on screen. A skirmish uses the player's two chosen colours and
@@ -10,7 +10,7 @@ export const factionOf = (mission, team) => FACTIONS[mission?.factions?.[team]] 
 
 export function teamColors(settings, mission = null) {
   const base = palette(settings);
-  if (!mission?.factions) return base;
+  if (Object.hasOwn(TEAM_PALETTES, settings.teamPalette) || !mission?.factions) return base;
   const out = [base[0], null, null, null], used = new Set([base[0]]);
   for (let team = 1; team < out.length; team++) {
     const wanted = PRESETS[factionOf(mission, team)?.color];
@@ -30,5 +30,6 @@ export function teamColors(settings, mission = null) {
 // read as cold machines and Ashfall as embers even if a colour had to change), else the
 // team colour.
 export function teamGlows(settings, mission = null) {
+  if (Object.hasOwn(TEAM_PALETTES, settings.teamPalette)) return palette(settings);
   return teamColors(settings, mission).map((color, team) => (team > 0 && factionOf(mission, team)?.glow) || color);
 }

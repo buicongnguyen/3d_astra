@@ -1,5 +1,10 @@
 {
   "messages": {
+    "Protanopia": "적색약",
+    "Deuteranopia": "녹색약",
+    "Tritanopia": "청색약",
+    "Team palette": "팀 색상",
+    "Interface size": "화면 표시 크기",
     "Scrapper": "스크래퍼",
     "Swarm assault": "물량 돌격",
     "Ashfall. Cheap and fast, with no shield: they come in numbers. Strong against Rangers; splash weapons and towers thin them out.": "애시폴. 싸고 빠르지만 보호막이 없어 떼로 몰려옵니다. 레인저에게 강하며, 범위 공격 무기와 타워로 수를 줄일 수 있습니다.",

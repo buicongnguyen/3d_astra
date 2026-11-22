@@ -14,6 +14,7 @@ const arg = (name, fallback) => { const i = process.argv.indexOf(name); return i
 const OUT = arg("--out", ".tmp/hud-audit");
 const ONLY = arg("--only", "");
 const MODES = (arg("--modes", "skirmish,mission,defence")).split(",");
+const scale = Number(arg("--scale", "100"));
 const LANG = arg("--lang", ""); // e.g. ko or vi: picked on the start screen before the match
 export const PHONES = {
   portrait390: { width: 390, height: 844, mobile: true },
@@ -91,6 +92,11 @@ try {
     for (const mode of MODES) {
       const t = await openPage(browser, size);
       const { page } = t;
+      if (scale !== 100) await page.addInitScript(n => {
+        const key = "frontier-command.settings.v1";
+        const settings = JSON.parse(localStorage.getItem(key) || '{"version":1}');
+        localStorage.setItem(key, JSON.stringify({ ...settings, uiScale: n }));
+      }, scale);
       await t.goto(); await t.ready();
       if (LANG) { await page.selectOption("#language", LANG); await page.waitForFunction((l) => document.documentElement.lang === l, LANG, { timeout: 20000 }); }
       await startMatch(t, mode);

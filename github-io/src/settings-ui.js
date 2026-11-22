@@ -1,5 +1,5 @@
 import { SOUND_TESTS } from "./audio-mix.js";
-import { PRESETS, defaults, normalize } from "./settings.js";
+import { PRESETS, TEAM_PALETTES, UI_SCALES, defaults, normalize, palette } from "./settings.js";
 import { portrait } from "./portraits.js";
 import { icon } from "./icons.js";
 
@@ -22,14 +22,23 @@ export class SettingsUI {
         this.tab = button.dataset.tab;
         this.paint();
       }
+      if (button.dataset.teamPalette) {
+        this.draft.teamPalette = button.dataset.teamPalette;
+        this.preview();
+      }
+      if (button.dataset.uiScale) {
+        this.draft.uiScale = Number(button.dataset.uiScale);
+        this.preview();
+      }
       if (button.dataset.color) {
+        this.draft.teamPalette = "custom";
         this.draft[button.dataset.team] = button.dataset.color;
         this.preview();
       }
       if (button.dataset.do === "cancel") this.close(false);
       if (
         button.dataset.do === "apply" &&
-        this.draft.playerColor !== this.draft.enemyColor
+        (this.draft.teamPalette !== "custom" || this.draft.playerColor !== this.draft.enemyColor)
       )
         this.close(true);
       if (button.dataset.do === "reset") {
@@ -38,6 +47,7 @@ export class SettingsUI {
         this.paint();
       }
       if (button.dataset.do === "contrast") {
+        this.draft.teamPalette = "custom";
         this.draft.playerColor = "gold";
         this.draft.enemyColor = "violet";
         this.preview();
@@ -113,8 +123,11 @@ export class SettingsUI {
     // Checkboxes stay real inputs (keyboard, forms, tests); CSS draws them as switches.
     const toggle = (key, label) =>
       `<label class="setting-row">${label}<input type="checkbox" role="switch" data-setting="${key}" ${this.draft[key] ? "checked" : ""}><span class="switch-state" aria-hidden="true">${this.draft[key] ? "On" : "Off"}</span></label>`;
-    const army = `${toggle("autocast", "Auto-cast abilities")}<p class="settings-note">Your units use their abilities on their own in a fight, as rival armies do. Off: you give the order from the command card.</p>${toggle("groupPace", "Group pace")}<p class="settings-note">A group you move keeps together at its fighters' pace, with Medics and Engineers walking behind them. Off: every unit walks at its own speed.</p><div class="army-preview"><div class="preview-unit player">${portrait("tank", "friendly", "preview-art")}<b>● YOUR FORCE</b></div><div class="preview-unit enemy">${portrait("tank", "hostile", "preview-art")}<b>◆ ENEMY FORCE</b></div></div><p class="settings-note">Paint preview · neutral armor stays unchanged. Team symbols remain distinct.</p><button data-do="contrast" class="contrast-button">${icon("shield")}<span>High contrast · Gold / Violet</span></button>${swatches("playerColor")}${swatches("enemyColor")}`;
-    const graphics = `<label class="setting-row">Graphics quality<select data-setting="quality"><option value="eco" ${this.draft.quality === "eco" ? "selected" : ""}>Eco</option><option value="high" ${this.draft.quality === "high" ? "selected" : ""}>High</option></select></label>${toggle("detail", "Decorative vegetation")}${toggle("waterMotion", "Animate water")}${toggle("combatMotion", "Animate combat effects")}<label class="setting-row">Damage numbers<select data-setting="damageNumbers" aria-label="Damage numbers">${[["focus", "Bosses & Defence"], ["all", "All"], ["off", "Off"]].map(([value, label]) => `<option value="${value}" ${this.draft.damageNumbers === value ? "selected" : ""}>${label}</option>`).join("")}</select></label>${toggle("showFps", "Show FPS")}<p class="settings-note">Eco limits pixel density and shadow cost. Bridges, water and terrain obstacles remain visible at every setting. Reduced motion is respected.</p>`;
+    const paletteLabels = { protanopia: "Protanopia", deuteranopia: "Deuteranopia", tritanopia: "Tritanopia" };
+    const teamOptions = Object.keys(TEAM_PALETTES).map(id => `<button type="button" data-team-palette="${id}">${paletteLabels[id]}</button>`).join("");
+    const scaleOptions = UI_SCALES.map(n => `<button type="button" data-ui-scale="${n}">${n}%</button>`).join("");
+    const army = `${toggle("autocast", "Auto-cast abilities")}<p class="settings-note">Your units use their abilities on their own in a fight, as rival armies do. Off: you give the order from the command card.</p>${toggle("groupPace", "Group pace")}<p class="settings-note">A group you move keeps together at its fighters' pace, with Medics and Engineers walking behind them. Off: every unit walks at its own speed.</p><div class="army-preview"><div class="preview-unit player">${portrait("tank", "friendly", "preview-art")}<b>● YOUR FORCE</b></div><div class="preview-unit enemy">${portrait("tank", "hostile", "preview-art")}<b>◆ ENEMY FORCE</b></div></div><p class="settings-note">Paint preview · neutral armor stays unchanged. Team symbols remain distinct.</p><button data-do="contrast" class="contrast-button">${icon("shield")}<span>High contrast · Gold / Violet</span></button><fieldset class="access-options"><legend>Team palette</legend>${teamOptions}</fieldset>${swatches("playerColor")}${swatches("enemyColor")}`;
+    const graphics = `<fieldset class="access-options"><legend>Interface size</legend>${scaleOptions}</fieldset><label class="setting-row">Graphics quality<select data-setting="quality"><option value="eco" ${this.draft.quality === "eco" ? "selected" : ""}>Eco</option><option value="high" ${this.draft.quality === "high" ? "selected" : ""}>High</option></select></label>${toggle("detail", "Decorative vegetation")}${toggle("waterMotion", "Animate water")}${toggle("combatMotion", "Animate combat effects")}<label class="setting-row">Damage numbers<select data-setting="damageNumbers" aria-label="Damage numbers">${[["focus", "Bosses & Defence"], ["all", "All"], ["off", "Off"]].map(([value, label]) => `<option value="${value}" ${this.draft.damageNumbers === value ? "selected" : ""}>${label}</option>`).join("")}</select></label>${toggle("showFps", "Show FPS")}<p class="settings-note">Eco limits pixel density and shadow cost. Bridges, water and terrain obstacles remain visible at every setting. Reduced motion is respected.</p>`;
     const musicChoice = [["recorded", "Recorded + adaptive"], ["adaptive", "Adaptive only"], ["off", "Off"]].map(([value, label]) => `<option value="${value}" ${this.draft.music === value ? "selected" : ""}>${label}</option>`).join("");
     const audio = `${toggle("muted", "Mute all sound")}<label class="setting-row">Music<select data-setting="music" aria-label="Music">${musicChoice}</select></label><p class="settings-note">Recorded music plays on menus and briefings and downloads on first play. The adaptive score follows every battle.</p><label class="setting-row">Master volume<input aria-label="Master volume" type="range" min="0" max="1" step=".05" data-setting="masterVolume" value="${this.draft.masterVolume}"></label><label class="setting-row">Music volume<input aria-label="Music volume" type="range" min="0" max="1" step=".05" data-setting="musicVolume" value="${this.draft.musicVolume}"></label><label class="setting-row">Effects volume<input aria-label="Effects volume" type="range" min="0" max="1" step=".05" data-setting="sfxVolume" value="${this.draft.sfxVolume}"></label>${toggle("ambient", "River and wind ambience")}${toggle("quietMode", "Quiet mode: no unit voices")}<div class="sound-tests"><h3>Sound test</h3>${Object.entries(SOUND_TESTS).map(([name,label])=>`<button type="button" data-sound-test="${name}">${label}</button>`).join("")}</div><p class="settings-note">Ambience is quietest away from water. Sound pauses with the match.</p>`;
     this.root.innerHTML = `<section class="settings-panel panel" role="dialog" aria-modal="true" aria-labelledby="settings-title"><header><div class="settings-heading"><span class="eyebrow">COMMANDER PREFERENCES</span><h2 id="settings-title">Make it yours.</h2></div><label class="language-choice" title="Language / Ngôn ngữ">${icon("globe")}<span class="visually-hidden" translate="no">Language / Ngôn ngữ</span><select data-setting="language" aria-label="Language / Ngôn ngữ" translate="no"><option value="en">English</option><option value="vi">Tiếng Việt</option><option value="ko" lang="ko">한국어</option></select></label><button data-do="cancel" class="settings-close" aria-label="Close settings">${icon("close")}</button></header><nav role="tablist" aria-label="Settings tabs">${Object.entries(TABS).map(([t, label]) => `<button role="tab" id="settings-tab-${t}" data-tab="${t}" aria-selected="${t === this.tab}" aria-controls="settings-body" tabindex="${t === this.tab ? 0 : -1}">${label}</button>`).join("")}</nav><div class="settings-body" id="settings-body" role="tabpanel" aria-labelledby="settings-tab-${this.tab}">${this.tab === "army" ? army : this.tab === "graphics" ? graphics : audio}</div><p id="palette-warning" role="status"></p><p class="settings-version"><span>Version</span> <span translate="no">${VERSION}${BUILD_DATE ? ` · ${BUILD_DATE}` : ""}</span><span class="settings-copyright" translate="no">© 2026 Bui Cong Nguyen, Solluxlabs.com · All rights reserved</span></p><footer><button data-do="reset" class="ghost">Defaults</button><button data-do="cancel" class="secondary">Cancel</button><button data-do="apply" class="primary">Apply settings</button></footer></section>`;
@@ -123,20 +136,23 @@ export class SettingsUI {
     this.root.querySelector(`[data-tab="${this.tab}"]`).focus();
   }
   preview() {
+    for (const b of this.root.querySelectorAll("[data-team-palette]")) b.setAttribute("aria-pressed", String(this.draft.teamPalette === b.dataset.teamPalette));
+    for (const b of this.root.querySelectorAll("[data-ui-scale]")) b.setAttribute("aria-pressed", String(this.draft.uiScale === Number(b.dataset.uiScale)));
+    const colors = palette(this.draft);
     this.root.style.setProperty(
       "--preview-player",
-      PRESETS[this.draft.playerColor],
+      colors[0],
     );
     this.root.style.setProperty(
       "--preview-enemy",
-      PRESETS[this.draft.enemyColor],
+      colors[1],
     );
     for (const b of this.root.querySelectorAll("[data-color]"))
       b.setAttribute(
         "aria-pressed",
-        String(this.draft[b.dataset.team] === b.dataset.color),
+        String(this.draft.teamPalette === "custom" && this.draft[b.dataset.team] === b.dataset.color),
       );
-    const same = this.draft.playerColor === this.draft.enemyColor;
+    const same = this.draft.teamPalette === "custom" && this.draft.playerColor === this.draft.enemyColor;
     this.root.querySelector('[data-do="apply"]').disabled = same;
     this.root.querySelector("#palette-warning").textContent = same
       ? "Choose different colors for your army and the enemy."

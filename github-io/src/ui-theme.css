@@ -728,3 +728,21 @@ input:focus-visible {
     linear-gradient(var(--holo-c), var(--holo-c)) right bottom / var(--holo-corner) 2px no-repeat,
     linear-gradient(var(--holo-c), var(--holo-c)) right bottom / 2px var(--holo-corner) no-repeat;
 }
+
+/* Keep touch targets in physical CSS pixels at compact menu scales. The phone battle
+   dock uses its audited dimensions at every preference. */
+:root { --interface-scale: 1; }
+.access-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.access-options button { min-width: 44px; min-height: 44px; }
+.access-options button[aria-pressed="true"] { box-shadow: inset 0 -3px var(--gold, #edc76f); }
+#briefing .briefing-setup, .settings-panel, #modal-content { zoom: var(--interface-scale); }
+:root:not(.compact-ui) :is(.topbar, .bottom-dock) { zoom: var(--interface-scale); }
+:root.compact-ui :is(.settings-panel, #modal-content, #briefing) :is(button, select) {
+  min-height: max(44px, calc(44px / var(--interface-scale)));
+  min-width: max(44px, calc(44px / var(--interface-scale)));
+}
+
+.settings-backdrop .settings-panel {
+  max-width: min(100%, calc((100vw - 16px) / var(--interface-scale)));
+  max-height: calc((100dvh - 16px) / var(--interface-scale));
+}
