@@ -234,8 +234,6 @@ export class WorldView {
     this.shake = new CameraShake();
     this.hitStop = 0;
     this.cameraCue = false;
-    this.shakePosition = new THREE.Vector3();
-    this.shakeRotation = new THREE.Quaternion();
     this.teamTemplates = new Map();
     this.buildingTops = new Map();
     this.fogClock = 0;
@@ -1309,7 +1307,7 @@ export class WorldView {
       old.mesh.geometry.dispose();old.mesh.material.dispose();
     }
   }
-  shakeEnabled() { return this.settings.screenShake !== false && this.feelEnabled(); }
+  shakeEnabled() { return false; }
   feelEnabled() { return this.settings.combatMotion !== false && !this.reducedMotion.matches && !this.cameraCue; }
   onScreen(event) {
     const p = new THREE.Vector3(event.x, 0, event.z).project(this.camera);
@@ -1692,26 +1690,11 @@ export class WorldView {
     for (const o of this.resourceObjects.values()) this.batches.collect(o);
     this.batches.end();
     this.scene.matrixWorldAutoUpdate = false;
-    // Shake only during drawing: picking, panning and UI projections use the stable camera.
-    const shaking = this.shake.trauma > 0;
-    if (shaking) {
-      this.shakePosition.copy(this.camera.position);
-      this.shakeRotation.copy(this.camera.quaternion);
-      this.camera.translateX(this.shake.offset.x);
-      this.camera.translateY(this.shake.offset.y);
-      this.camera.rotateZ(this.shake.offset.roll);
-      this.camera.updateMatrixWorld();
-    }
     // Draw only the part not under an open dock panel (setCoverOpen); setSize() resets the viewport.
     const drawn = this.drawHeight || this.height;
     this.renderer.setViewport(0, this.height - drawn, this.width, drawn);
     try { this.renderer.render(this.scene, this.camera); }
     finally {
-      if (shaking) {
-        this.camera.position.copy(this.shakePosition);
-        this.camera.quaternion.copy(this.shakeRotation);
-        this.camera.updateMatrixWorld();
-      }
       this.scene.matrixWorldAutoUpdate = true;
     }
     this.activity.draw(sim,dt,selected,hover);
@@ -1746,8 +1729,6 @@ export class WorldView {
     this.shake = new CameraShake();
     this.hitStop = 0;
     this.cameraCue = false;
-    this.shakePosition = new THREE.Vector3();
-    this.shakeRotation = new THREE.Quaternion();
     for (const o of this.resourceObjects.values()) {
       this.scene.remove(o);
       if (o.userData.shared) continue; // Blender clusters share the loaded template's data.

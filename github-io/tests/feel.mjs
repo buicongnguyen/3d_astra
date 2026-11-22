@@ -23,21 +23,18 @@ await suite('feel', async () => {
       });
       result.push({type,pixels:(max-min)*v.renderer.domElement.getBoundingClientRect().height/2,scale:v.objects.get(e.id).userData.readabilityScale});
     }
-    // A scheduled Barrage is resolved by the real simulation event path. The shake it adds is
-    // recorded here: it lasts 0.28 s, so on a slow runner (a few frames a second) it can start and
-    // end inside one frame and no poll would ever see the offset move.
-    const add=v.shake.add.bind(v.shake);
-    window.__shakeAdded=0;
-    v.shake.add=(...a)=>{add(...a);window.__shakeAdded=Math.max(window.__shakeAdded,v.shake.trauma);};
+    const event = v.event.bind(v);
+    v.event = (e, sim) => {
+      event(e, sim);
+      if (e.type === 'strike') window.__strikeTrauma = v.shake.trauma;
+    };
     s.strikes=[{at:s.time,x:0,z:0,team:0,by:null,damage:1,radius:4}];
     return result;
   });
   console.log('Default phone unit heights',JSON.stringify(sizes));
   for(const r of sizes) assert.ok(r.pixels>=28-1e-9,`${r.type}: ${r.pixels}px at scale ${r.scale}`);
-  // The strike reached the shake through the event path, then settled (how trauma turns into an
-  // offset frame by frame is covered by camera-shake.test.js).
-  await page.waitForFunction(()=>window.__shakeAdded>0);
-  await page.waitForFunction(()=>window.__frontier.view.shake.trauma===0);
+  await page.waitForFunction(() => window.__strikeTrauma !== undefined);
+  assert.equal(await page.evaluate(() => window.__strikeTrauma), 0);
   const checks = await page.evaluate(() => {
     const f=window.__frontier,v=f.view,s=f.sim;
     const stable=v.camera.position.clone(), rotation=v.camera.quaternion.clone();

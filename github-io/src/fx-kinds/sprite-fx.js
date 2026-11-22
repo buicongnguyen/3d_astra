@@ -18,7 +18,8 @@ export function spriteImpact(fx, kind, at, power, anchor, delay = 0, scale = 1) 
   if (!sprites?.ready) return false;
   const sheet = IMPACT_SHEET[kind];
   if (!sheet) return false;
-  const size = readable(impactSize(kind, power) * scale, MIN_PX[kind] || IMPACT_PX, upp(fx));
+  const heavy = ['shell', 'rocket', 'artillery', 'bomb', 'firebomb'].includes(kind);
+  const size = readable(impactSize(kind, power) * scale, MIN_PX[kind] || IMPACT_PX, upp(fx)) * (heavy ? 1.5 : 1);
   const p = sprites.take(sheet, at.x, at.y + size * (kind === "flak" || kind === "beam" ? 0 : 0.2), at.z, size, anchor, false);
   if (!p) return false;
   p.age = -delay;
@@ -26,11 +27,13 @@ export function spriteImpact(fx, kind, at, power, anchor, delay = 0, scale = 1) 
   if (tint) { p.r = tint[0]; p.g = tint[1]; p.b = tint[2]; }
   // The last frames are blurry grey smoke: end the one-shot a little early so it does not smear over units.
   if (kind !== "beam" && kind !== "flak") { p.count = Math.max(1, p.count - 3); p.fade = 0.22; }
-  if (!fx.motion) { p.start = 2; p.count = Math.max(1, p.count - 2); p.a = 0.85; } // reduced motion: no white flash frames, a calmer tint
+  const bright = fx.allowFlash();
+  if (!bright) { p.start = 3; p.count = Math.max(1, p.count - 3); p.a = 0.85; } // reduced motion: no white flash frames, a calmer tint
+  else if (heavy) p.hotCore = true;
   else if (kind === "flak") p.rot = (fx.rng() - 0.5) * 0.6;
   p.life = p.count / Math.max(1, p.fps); // the shortened or stepped one-shot ends on its last frame
   const extra = IMPACT_EXTRA[kind];
-  if (extra && fx.motion) {
+  if (extra && bright) {
     const q = sprites.take(extra[0], at.x, at.y + size * extra[1] * 0.2, at.z, size * extra[1], anchor, false);
     if (q) { q.age = -delay; q.count = Math.max(1, q.count - 3); q.fade = 0.22; q.life = q.count / Math.max(1, q.fps); }
   }
@@ -41,6 +44,7 @@ export function spriteImpact(fx, kind, at, power, anchor, delay = 0, scale = 1) 
 export function spriteMuzzle(fx, from, ux, uy, uz, row, anchor, scale = 1) {
   const sprites = fx.sprites;
   if (!sprites?.ready || !fx.motion) return false;
+  if (!fx.allowFlash()) return true;
   const size = readable(2.7 * scale, 30, upp(fx));
   const inlet = SHEETS.muzzle.inlet, back = (0.5 - inlet) * size;
   const p = sprites.take("muzzle", from.x + ux * back, from.y + uy * back, from.z + uz * back, size, anchor, true);
@@ -102,7 +106,7 @@ export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = fa
   const sprites = fx.sprites;
   if (!sprites?.ready || !fx.motion) return false;
   const len = Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z) || 1;
-  const size = Math.max(5, 80 * upp(fx)), sheet = SHEETS.tracer;
+  const size = Math.max(6, 100 * upp(fx)), sheet = SHEETS.tracer;
   const p = sprites.take("tracer", from.x, from.y, from.z, size, anchor, true);
   if (!p) return false;
   const life = Math.max(0.06, travel);
@@ -113,9 +117,10 @@ export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = fa
     const t = sprites.take("tracer", from.x, from.y, from.z, size, anchor, true);
     if (!t) break;
     t.mode = ORIENTED; t.ax = ux; t.ay = uy; t.az = uz; t.vx = p.vx; t.vy = p.vy; t.vz = p.vz; t.start = p.start; t.count = 4; t.loop = true; t.fps = 20;
-    t.life = life; t.age = -delay - k * 0.035; t.fade = 0.2; t.sy = 1.6; t.a = k === 1 ? 0.6 : 0.35;
+    t.life = life; t.age = -delay - k * Math.max(0.035, (0.25 - life) / 2); t.fade = 0.2; t.sy = 1.6; t.a = k === 1 ? 0.6 : 0.35;
   }
   // The muzzle spark sits at (0.23, 0.5) of its cell.
+  if (!fx.allowFlash()) return true;
   const back = (0.5 - sheet.muzzleAt) * size;
   const m = sprites.take("tracer", from.x + ux * back, from.y + uy * back, from.z + uz * back, size * 0.8, anchor, true);
   if (m) { m.mode = ORIENTED; m.ax = ux; m.ay = uy; m.az = uz; m.start = TRACER_FRAMES.muzzle; m.count = 4; m.age = -delay; }
@@ -126,6 +131,7 @@ export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = fa
 export function spriteSpark(fx, at, anchor, delay = 0, scale = 1) {
   const sprites = fx.sprites;
   if (!sprites?.ready) return false;
+  if (!fx.allowFlash()) return true;
   const p = sprites.take("tracer", at.x, at.y + 0.3, at.z, Math.max(4.4, 90 * upp(fx)) * scale, anchor, false);
   if (!p) return false;
   p.start = TRACER_FRAMES.hit; p.count = 4; p.age = -delay;

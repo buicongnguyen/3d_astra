@@ -32,7 +32,7 @@ export function defaults(coarse = false) {
     waterMotion: true,
     combatMotion: true,
     // Screen shake on the biggest blasts (a Command core falling, a Barrage landing). Off = steady camera.
-    screenShake: true,
+    screenShake: false,
     // Floating damage numbers (AAA round 2, W2-E): "focus" = bosses and Frontier Defence, "all", or "off".
     damageNumbers: "focus",
     ambient: true,

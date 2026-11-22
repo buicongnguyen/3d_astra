@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased: Round A
+
+### A1 — Combat readability
+
+Heavy impacts are larger, tracer trails last longer, and healing and repair have distinct symbols. The battle camera stays steady during strikes and building collapses.
+
 ## 0.26.0: AAA round 3 (proposed release notes)
 
 Proposed, not released: nothing is pushed or deployed until the owner says "deploy". Every item below has its detail section further down ("Unreleased: AAA round 3") and a results file in `docs/aaa/results/round3/`.

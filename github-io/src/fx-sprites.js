@@ -134,7 +134,7 @@ export class FxSprites {
     batch.items.push(p);
     p.x = x; p.y = lifted ? y : y + this.fx.ground(x, z); p.z = z; p.vx = p.vy = p.vz = 0; p.age = 0; p.life = def.loop ? 1 : def.frames / Math.max(1, def.fps);
     p.s0 = p.s1 = size; p.rot = 0; p.spin = 0; p.r = p.g = p.b = p.a = 1; p.def = def; p.start = 0; p.count = def.frames; p.fps = def.fps; p.loop = def.loop;
-    p.mode = BILLBOARD; p.ax = 1; p.ay = 0; p.az = 0; p.sx = p.sy = 1; p.tiles = 0; p.scroll = 0; p.scrollSpeed = 0; p.once = false; p.anchor = anchor; p.decal = false; p.calm = !this.fx.motion; p.fade = 0.06; p.drag = 0;
+    p.hotCore = false; p.mode = BILLBOARD; p.ax = 1; p.ay = 0; p.az = 0; p.sx = p.sy = 1; p.tiles = 0; p.scroll = 0; p.scrollSpeed = 0; p.once = false; p.anchor = anchor; p.decal = false; p.calm = !this.fx.motion; p.fade = 0.06; p.drag = 0;
     if (p.calm) p.fps *= 0.6;
     this.stats.spawned++;
     return p;
@@ -194,7 +194,8 @@ export class FxSprites {
         P[o * 3] = p.x; P[o * 3 + 1] = p.y; P[o * 3 + 2] = p.z;
         // Out over the last `fade` of the life; loops ease in over the first moments.
         const out = Math.min(1, (p.life - p.age) / Math.max(0.05, p.life * p.fade)), inn = p.loop ? Math.min(1, p.age / 0.08) : 1;
-        C[o * 4] = p.r; C[o * 4 + 1] = p.g; C[o * 4 + 2] = p.b; C[o * 4 + 3] = p.a * out * inn;
+        const boost = p.hotCore && p.age * p.fps < 3 ? 1.24 : 1;
+        C[o * 4] = p.r * boost; C[o * 4 + 1] = p.g * boost; C[o * 4 + 2] = p.b * boost; C[o * 4 + 3] = p.a * out * inn;
         const d = p.def;
         R[o * 4] = d.x; R[o * 4 + 1] = d.y; R[o * 4 + 2] = d.fw; R[o * 4 + 3] = d.fh;
         E[o * 4] = d.cols; E[o * 4 + 1] = FRAME.a; E[o * 4 + 2] = FRAME.b; E[o * 4 + 3] = FRAME.mix;

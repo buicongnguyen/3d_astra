@@ -47,6 +47,14 @@ function atlas() {
     (x, y, d) => Math.max(0, 1 - d) ** 0.9 * (0.75 + 0.25 * Math.sin(x * 9 + y * 7) * Math.cos(y * 11 - x * 5)),
     (x, y, d) => Math.min(1, Math.max(Math.exp(-((x / 0.07) ** 2)) * (1 - Math.abs(y)), Math.exp(-((y / 0.07) ** 2)) * (1 - Math.abs(x))) + Math.exp(-((d / 0.28) ** 2))),
   ];
+  shapes.push(
+    (x, y) => Math.max(Math.abs(x), Math.abs(y)) < 0.78 && Math.min(Math.abs(x), Math.abs(y)) < 0.23 ? 1 : 0,
+    (x, y) => {
+      const head = Math.hypot(x - 0.3, y - 0.3) < 0.38 && !(x > 0.24 && y > 0.24);
+      const handle = Math.abs(x - y) < 0.21 && x + y > -1.15 && x + y < 0.65;
+      return head || handle ? 1 : 0;
+    },
+  );
   shapes.forEach((shape, cell) => {
     for (let py = 0; py < size; py++)
       for (let px = 0; px < size; px++) {
@@ -265,6 +273,7 @@ export class Effects {
     this.burning = []; // damaged entities drawn this frame (smoke and fire), refilled in place
     this.emitShare = 1; // their shared emission budget (see update)
     this.time = 0;
+    this.nextFlash = -Infinity;
     this.root = new THREE.Group();
     this.root.add(this.decals.mesh, this.smoke.mesh, this.glow.mesh, this.debrisMesh, this.rockets.mesh, this.ordnance.mesh);
     view.scene.add(this.root);
@@ -292,10 +301,16 @@ export class Effects {
     const t = this.view.terrain;
     return t?.plateaus?.length ? t.heightAt(x, z) : 0;
   }
+  allowFlash() {
+    if (!this.motion || this.time < this.nextFlash) return false;
+    this.nextFlash = this.time + 0.34;
+    return true;
+  }
   // -- particle helpers
   particle(layer, o) {
     const p = Object.assign(layer.spawn(this.rng), o);
     p.age = -(o.delay || 0);
+    if (layer === this.glow && p.cell === CELL.flare && !this.allowFlash()) p.c0 = [0.75, 0.46, 0.19, 0.26];
     // On maps with plateaus every effect is lifted to the ground under it.
     const t = this.view.terrain;
     if (t?.plateaus?.length && !o.lifted && Number.isFinite(o.x) && Number.isFinite(o.z)) p.y = (o.y || 0) + t.heightAt(o.x, o.z);
@@ -524,7 +539,11 @@ export class Effects {
     const kind = style.kind, m = this.motion;
     if (kind === "support") {
       // Engineer: cool white beam. Harvester repair: warm welding sparks. Medic: green.
-      const engineer = e.weapon === "engineer", tint = e.weapon === "repair" ? [1, 0.78, 0.4, 0.9] : engineer ? [0.75, 0.9, 1, 0.9] : [0.5, 1, 0.75, 0.9];
+      const engineer = e.weapon === "engineer", tint = e.weapon === "repair" || engineer ? [1, 0.69, 0.22, 0.95] : [0.5, 1, 0.75, 0.9];
+      const repair = engineer || e.weapon === "repair";
+      const glyphSize = Math.max(1.2, 16 * (this.view.unitsPerPixel || 0.1));
+      this.particle(this.smoke, { ...land, y: land.y + glyphSize, cell: repair ? CELL.wrench : CELL.cross,
+        rot: 0, s0: glyphSize, s1: glyphSize, life: 0.8, c0: tint, c1: [tint[0], tint[1], tint[2], 0], anchor });
       // R3-X heal: a soft, wide beam that eases in under a thin bright core, and sparkles rising slowly off the patient.
       const mid = { lifted: true, x: (from.x + to.x) / 2, y: (from.y + to.y) / 2, z: (from.z + to.z) / 2, mode: STRETCH, ax: dir.x / len, ay: dir.y / len, az: dir.z / len, length: len, cell: CELL.glow, anchor };
       this.particle(this.glow, { ...mid, s0: 0.6, s1: 0.45, life: 0.55, fadeIn: m ? 0.12 : 0, c0: [tint[0], tint[1], tint[2], 0.45], c1: [...tint.slice(0, 3), 0] });
@@ -534,8 +553,8 @@ export class Effects {
           vx: m ? (this.rng() - 0.5) * 0.35 : 0, vy: m ? 0.9 + this.rng() * 0.6 : 0, drag: 0.6, life: 0.8 + this.rng() * 0.3, s0: 0.42, s1: 0.08, cell: CELL.flare,
           c0: tint, c1: [...tint.slice(0, 3), 0], anchor, delay: i * 0.06, fadeIn: 0.08 });
       // R3-FX: the mint heal-sparkle sheet loops over the patient for as long as the beam lasts.
-      spriteHeal(this, { x: land.x, y: land.y - 0.5, z: land.z }, tint, anchor, 0.9);
-      spriteHealBeam(this, from, to, dir.x / len, dir.y / len, dir.z / len, anchor, null, 0.8); // R3-FX2: the heal-beam strip along the connection
+      if (!repair) spriteHeal(this, { x: land.x, y: land.y - 0.5, z: land.z }, tint, anchor, 0.9);
+      if (!repair) spriteHealBeam(this, from, to, dir.x / len, dir.y / len, dir.z / len, anchor, null, 0.8); // R3-FX2: the heal-beam strip along the connection
       return;
     }
     const power = style.hit ?? hitPower(e.weapon, kind);
@@ -847,7 +866,7 @@ export class Effects {
       const r = 2.6;
       this.explosion({ x: e.x, y: 1.8, z: e.z }, 2, anchor);
       this.addDebris({ x: e.x, y: 2.2, z: e.z }, 12, anchor, 1.35, 4);
-      for (const [delay, k] of [[0.3, 0.8], [0.6, 0.95], [0.9, 0.75], [1.25, 0.85], [1.6, 0.7]]) {
+      for (const [delay, k] of [[0.47, 1.15], [1.08, 1.35]]) {
         const a = this.rng() * Math.PI * 2, d = this.rng() * r;
         this.timeline.push({ at: this.time + delay, run: () => {
           const at = { x: e.x + Math.cos(a) * d, y: 0.8 + this.rng() * 2, z: e.z + Math.sin(a) * d };
