@@ -459,6 +459,8 @@
 /* Landscape phones: the modes keep their icons (above the name, still 46 px), the flavour strip steps aside,
    and the rows are slimmer; the map's footer is two rows, endings then chronicles. */
 @media (orientation: landscape) and (max-height: 520px) {
+  /* Put missions directly below the mode switch. The rank card follows the list on short screens. */
+  :root.compact-ui #briefing.campaign-view #campaign-setup { order: -1; }
   :root.compact-ui #briefing.campaign-view .setup-head { display: none; }
   :root.compact-ui #briefing.campaign-view .mode-switch { gap: 5px; }
   :root.compact-ui #briefing.campaign-view .mode-switch button { grid-template-columns: auto; grid-template-rows: auto auto; row-gap: 2px; align-content: center; min-height: 46px; padding: 3px 2px; }
