@@ -138,9 +138,9 @@ test("threat arrows: an off-screen hit on the player's unit puts one arrow on th
 test("death looks: blast, seared or ballistic by the killing weapon, settled after the frame's events, from the pools", () => {
   assert.equal(deathLookOf({ kind: "rifle" }), DEATH_LOOK.ballistic);
   assert.equal(deathLookOf({ kind: "cannon" }), DEATH_LOOK.blast);
-  assert.equal(deathLookOf({ kind: "rocket", look: "rocket" }), DEATH_LOOK.blast);
-  assert.equal(deathLookOf({ kind: "rocket", look: "rail" }), DEATH_LOOK.seared, "the Watcher's rail sears");
-  assert.equal(deathLookOf({ kind: "rifle", look: "beam" }), DEATH_LOOK.seared);
+  assert.equal(deathLookOf({ kind: "rocket", look: "rocket" }), DEATH_LOOK.ballistic);
+  assert.equal(deathLookOf({ kind: "rocket", look: "rail" }), DEATH_LOOK.ballistic, "the precision rail has no burning payload");
+  assert.equal(deathLookOf({ kind: "rifle", look: "beam" }), DEATH_LOOK.ballistic);
   assert.equal(deathLookOf({ kind: "rifle", look: "flame" }), DEATH_LOOK.seared);
   assert.equal(deathLookOf(null), DEATH_LOOK.ballistic);
   const { sim } = staged();
@@ -152,7 +152,7 @@ test("death looks: blast, seared or ballistic by the killing weapon, settled aft
   const die = (id, kind, x = 0, z = 0) => { const d = { id, look: 0, kind, x, z, team: 0, object: body(kind) }; view.dying.push(d); return d; };
   // The death event comes first, the killing shot after it (sim/combat.js): the look waits for update().
   const a = die(11, "infantry");
-  looks.event({ type: "shot", weapon: "stalker", unit: "stalker", target: 11, tx: 0, tz: 0 }, sim);
+  looks.event({ type: "shot", weapon: "scorcher", unit: "scorcher", target: 11, tx: 0, tz: 0 }, sim);
   const b = die(12, "vehicle", 20, 0);
   looks.event({ type: "shot", weapon: "tank", unit: "tank", target: 12, tx: 20, tz: 0, heavy: true }, sim);
   const c = die(13, "infantry", 40, 0); // shot by a rifle a second ago

@@ -91,24 +91,22 @@ test('Anti-tank rocket: a slower readable flight (sound in step), an arc, a ribb
   for (const [target, impact] of [[tank, 'armour'], [man, 'soft']]) {
     const fx = fxWith(), sim = { entities: [], isVisible: () => true, get: (id) => (id === target.id ? target : null) };
     fx.frameSim = sim;
-    const aim = { from: { x: 0, y: 1.8, z: 0 }, to: { x: 10, y: 1, z: 0 }, land: { x: 10, y: 1, z: 0 }, ux: 1, uy: 0, uz: 0, len: 10, sx: 0, sz: 1, nx: 1, nz: 0, travel: style.life, anchor: null, power: 0.75, style, color: [1, 0.8, 0.5, 1] };
+    const aim = { from: { x: 0, y: 1.8, z: 0 }, to: { x: 10, y: 1, z: 0 }, land: { x: 10, y: 1, z: 0 }, ux: 1, uy: 0, uz: 0, len: 10, sx: 0, sz: 1, nx: 1, nz: 0, travel: style.life, anchor: {direct:true,target:target.id,targetWidth:1.6}, power: 0.75, style, color: [1, 0.8, 0.5, 1] };
     LOOKS.rocket.spawn(fx, { weapon: 'antitank', target: target.id }, fx.rng, aim);
     const p = fx.projectiles[0];
     assert.equal(p.impact, impact);
     assert.ok(p.arc > 0 && p.body === 1);
-    const glowBefore = fx.glow.items.length;
     let maxY = 0;
     for (let t = 0; t < style.life - 0.02; t += 1 / 60) { fx.update(sim, 1 / 60); if (fx.projectiles[0]) maxY = Math.max(maxY, fx.rockets.mesh.instanceMatrix.array[13]); }
     assert.equal(fx.rockets.drawn, 1, 'one body in flight');
     assert.ok(maxY > 1.8, 'the flight arcs above the straight line');
     assert.ok(fx.smoke.items.length >= 10, 'a ribbon trail');
-    const sparksBefore = fx.glow.items.length;
-    for (let i = 0; i < 6; i++) fx.update(sim, 1 / 60);
+    while (fx.projectiles.length) fx.update(sim, 1 / 60);
     assert.equal(fx.projectiles.length, 0, 'landed');
     assert.equal(fx.rockets.drawn, 0);
     assert.equal(fx.rockets.mesh.visible, false);
-    if (impact === 'armour') assert.ok(fx.debris.length >= 3, 'metal chips off the armour');
-    assert.ok(fx.glow.items.length > Math.min(glowBefore, sparksBefore), 'a flash at the hit');
+    assert.ok(fx.glow.items.some(p=>p.priorityHit && p.s0 <= .8), 'a compact contact spark');
+    assert.equal(fx.decals.items.length,0,'a direct anti-tank hit leaves no scorch');
     assert.ok(!fx.glow.items.some((g) => g.owner), 'the flame halo is released');
   }
   // A killing shot flies at the old speed, so it lands on the wreck while it is still there.

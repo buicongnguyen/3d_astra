@@ -40,7 +40,8 @@ test("every weapon class that has a sprite impact maps to an existing sheet", ()
   }
   assert.equal(impactKind("shell"), "shell"); assert.equal(impactKind("lob"), "artillery"); assert.equal(impactKind("missile"), "rocket");
   assert.equal(impactKind("bomb"), "bomb"); assert.equal(impactKind("flak"), "flak"); assert.equal(impactKind("tracer"), null);
-  assert.equal(IMPACT_SHEET.artillery, "artillery"); assert.equal(IMPACT_SHEET.firebomb, "bomb"); assert.equal(IMPACT_SHEET.missile, "missile");
+  assert.equal(IMPACT_SHEET.artillery, "artillery"); assert.equal(IMPACT_SHEET.firebomb, "rocket"); assert.equal(IMPACT_SHEET.missile, "flak");
+  for(const sheet of Object.values(IMPACT_SHEET)) assert.ok(!["tank","bomb","missile"].includes(sheet), "no baked impact rings");
 });
 
 test("blend modes follow the README: smoke, scorch and mixed blasts normal, bright effects additive", () => {

@@ -8,8 +8,8 @@
 import * as THREE from "three";
 import { SHEETS, frameAt, atlasFile, atlasSize, DECAL, POOL, SCORCH_FRAMES, CRATER_FRAMES } from "./fx-sprites-data.js";
 
-const BILLBOARD = 0, GROUND = 1, ORIENTED = 2;
-export { BILLBOARD, GROUND, ORIENTED };
+const OCCLUDED = -1, BILLBOARD = 0, GROUND = 1, ORIENTED = 2;
+export { OCCLUDED, BILLBOARD, GROUND, ORIENTED };
 
 const VERTEX = `
 attribute vec3 iPos; attribute vec4 iColor; attribute vec4 iRect; attribute vec4 iFrame; attribute vec3 iSize; attribute vec3 iAxis; attribute vec4 iExtra;
@@ -39,7 +39,8 @@ void main() {
   vec3 world;
   // Camera-facing sprites are pulled toward the (orthographic) camera by about their own size, like the glow pool: a
   // blast centred in a hull draws in front of it instead of being clipped, without moving on screen.
-  if (iSize.z < 0.5 || iSize.z > 1.5) world = iPos + right * r.x + up * r.y + forward * (iSize.x * 0.45 + 0.4);
+  if (iSize.z < -0.5) world = iPos + right * r.x + up * r.y - forward * 0.6;
+  else if (iSize.z < 0.5 || iSize.z > 1.5) world = iPos + right * r.x + up * r.y + forward * (iSize.x * 0.45 + 0.4);
   else world = iPos + vec3(r.x, 0.0, r.y);
   gl_Position = projectionMatrix * viewMatrix * vec4(world, 1.0);
 }`;
@@ -208,6 +209,7 @@ export class FxSprites {
       items.length = keep;
       const previous = batch.drawn;
       batch.drawn = drawn;
+      batch.mesh.visible = drawn > 0;
       if (!drawn) { if (!previous && batch.sent) continue; S[2] = 0; S[0] = 0; C[3] = 0; drawn = 1; } // one invisible instance keeps the shader warm
       if (!(dt > 0) && drawn === previous && batch.sent) continue; // a still frame (paused or frozen): keep what was sent
       batch.sent = true;

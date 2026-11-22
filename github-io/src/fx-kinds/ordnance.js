@@ -8,7 +8,7 @@
 // meets the ground on the tick the strike resolves.
 import { CELL, STRETCH, GROUND } from "./cells.js";
 import { CLASS_LOOK } from "./weapon-class.js";
-import { spriteImpact, spriteTrailPuff, spriteHead, spritesReady } from "./sprite-fx.js";
+import { spriteImpact, spriteHead, spriteTrailPuff, spritesReady } from "./sprite-fx.js";
 import { impactKind } from "../fx-sprites-data.js";
 
 // Per-instance colours of the bodies (above 1 glows) and the trail / halo / burst palettes (shared arrays).
@@ -97,7 +97,7 @@ export function stepRounds(fx, dt, visible) {
     if (t < 1) {
       r.roll += r.spin * dt;
       const length = r.body * fx.bodyScale * (1 + r.grow * t);
-      if (seen) { fx.ordnance.add(P.x, P.y, P.z, ux, uy, uz, r.roll, length, r.color); if (r.cls === "shell" || r.cls === "lob" || r.cls === "missile") spriteHead(fx, r.cls === "missile" ? "missile" : "shell", P.x, P.y, P.z, ux, uy, uz, length * 1.7); } // R3-FX2: the projectile-heads art on the body
+      if (seen && !(fx.touchTier && spriteHead(fx, r.cls === "missile" ? "missile" : "shell", P.x,P.y,P.z, ux,uy,uz, length, r.anchor))) fx.ordnance.add(P.x, P.y, P.z, ux, uy, uz, r.roll, length, r.color);
       if (r.haloSize > 0 || r.fire) {
         let h = r.halo;
         if (!h || h.owner !== r.token) {
@@ -125,8 +125,9 @@ export function stepRounds(fx, dt, visible) {
 
 function trail(fx, r, dt, eco, ux, uy, uz, length) {
   const look = CLASS_LOOK[r.cls], cls = r.cls;
+  if (fx.budget < 1 && cls !== "bomb") return;
   const sprite = spritesReady(fx) && cls !== "bomb";
-  const gap = cls === "bomb" ? (r.fire ? 0.05 : 0) : sprite ? (cls === "missile" ? 0.045 : 0.05) * (eco ? 1.7 : 1) : (look?.trailGap || 0) * (eco ? 1.6 : 1);
+  const gap = 1.65 * (cls === "bomb" ? (r.fire ? 0.05 : 0) : sprite ? (cls === "missile" ? 0.045 : 0.05) * (eco ? 1.7 : 1) : (look?.trailGap || 0) * (eco ? 1.6 : 1));
   if (!gap) return;
   r.trail += dt;
   const lifeK = eco ? CLASS_LOOK.ecoTrail : 1, tail = length * 0.5;
@@ -188,8 +189,7 @@ export function airBurst(fx, at, anchor, power = 1) {
   const calm = !fx.motion;
   // R3-FX: the flak-burst sheet is the burst (a missile or shell meeting a flyer); the sparks below stay.
   const sheet = spriteImpact(fx, "missile", { x: at.x, y: at.y - fx.ground(at.x, at.z), z: at.z }, power, anchor, 0, 1);
-  if (!sheet) sprite(fx, fx.glow, at.x, at.y, at.z, anchor, CELL.flare, 2.4 * power, 3 * power, 0.1, calm ? PAL.calm : PAL.flash, calm ? PAL.calmEnd : PAL.flashEnd);
-  if (!calm && !sheet) sprite(fx, fx.glow, at.x, at.y, at.z, anchor, CELL.ring, 0.4, 2.6 * power, 0.2, PAL.ring, PAL.ringEnd);
+  if (!sheet) sprite(fx, fx.glow, at.x, at.y, at.z, anchor, CELL.flare, 2.4 * power, 3 * power, 0.1, !calm && fx.allowFlash() ? PAL.flash : PAL.calm, PAL.calmEnd);
   if (!sheet) { const s = sprite(fx, fx.smoke, at.x, at.y, at.z, anchor, CELL.puff, 0.5, 1.5 * power, 0.9, PAL.flakBlack, PAL.flakBlackEnd, 0.03); s.drag = 1.5; s.vy = calm ? 0 : 0.3; }
   if (calm) return;
   for (let i = 0, n = fx.count(6); i < n; i++) {
@@ -203,12 +203,6 @@ export function airBurst(fx, at, anchor, power = 1) {
 // A shell's extra impact (R3-X, owner 2026-11-22): a big star flash (soft and warm with reduced motion) and a ring of
 // sparks thrown out flat around the hit, from the glow pool.
 const RING_SPARKS = 10;
-function shellImpact(fx, at, anchor) {
-  const calm = !fx.motion, y = at.y + fx.ground(at.x, at.z) + 0.4;
-  sprite(fx, fx.glow, at.x, y, at.z, anchor, CELL.flare, 5.2, 6.2, 0.13, calm ? PAL.calm : PAL.flash, calm ? PAL.calmEnd : PAL.flashEnd);
-  if (calm) return;
-  shellSparks(fx, at, anchor);
-}
 function shellSparks(fx, at, anchor) {
   const y = at.y + fx.ground(at.x, at.z) + 0.4;
   for (let i = 0, n = fx.count(RING_SPARKS); i < n; i++) {
@@ -218,14 +212,12 @@ function shellSparks(fx, at, anchor) {
   }
 }
 
-// A dark scorch ring opening on the ground around a heavy impact (normal blended, in the decal pool).
-function scorchRing(fx, x, z, size, anchor) {
-  const p = fx.emit(fx.decals, x, 0.06, z, anchor);
-  p.mode = GROUND; p.cell = CELL.ring; p.s0 = size * 0.4; p.s1 = size; p.life = 2.4; p.hold = 0.35; p.c0 = PAL.scorchRing; p.c1 = PAL.scorchRingEnd; p.rot = fx.rng() * 6.28;
-}
-
 export function landRound(fx, r, ux, uz) {
   const at = r.air ? r.to : r.land, anchor = r.anchor;
+  if (anchor?.direct && r.cls !== "flak") {
+    fx.contactHit(r.land, anchor);
+    return;
+  }
   switch (r.cls) {
     case "flak": flakBurst(fx, r.to, anchor); return;
     case "missile": if (r.air) { airBurst(fx, r.to, anchor, 0.8); return; } fx.hit(at, r.power, anchor, "rocket"); return;
@@ -242,11 +234,7 @@ export function landRound(fx, r, ux, uz) {
       // shell, artillery: the heavy hit, a bright ring and a scorch ring; in the air (a shell at a flyer) a burst instead.
       if (r.air) { airBurst(fx, r.to, anchor, 0.7); return; }
       fx.hit(at, r.power, anchor, r.walker ? "walker" : impactKind(r.cls) || "shell");
-      // R3-FX: with the sheets loaded the blast, its shockwave and the scorch are the sprite and its decal (fx.hit); no extra flash or ring on top.
-      if (spritesReady(fx)) { if (r.cls === "shell" && fx.motion) shellSparks(fx, at, anchor); if (r.cls === "lob") fx.dust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.3, 1.3); return; }
-      if (fx.motion) sprite(fx, fx.glow, at.x, at.y + 0.3, at.z, anchor, CELL.ring, 0.5, r.cls === "lob" ? 4.2 : 4.4, 0.24, PAL.ring, PAL.ringEnd);
-      if (r.cls === "shell") shellImpact(fx, at, anchor);
-      scorchRing(fx, at.x, at.z, r.cls === "lob" ? 4.4 : 4.2, anchor);
+      if (r.cls === "shell" && fx.motion) shellSparks(fx, at, anchor);
       if (r.cls === "lob") fx.dust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.3, 1.3);
     }
   }

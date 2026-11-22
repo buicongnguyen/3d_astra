@@ -20,13 +20,13 @@ import { crit, resisted } from "./fx-kinds/counter.js";
 import { RocketBodies } from "./fx-kinds/rocket-body.js";
 import { ROCKET } from "./fx-kinds/rocket.js";
 // R3-X: weapon effect classes, the ordnance bodies (one instanced draw) and their flights.
-import { weaponClass } from "./fx-kinds/weapon-class.js";
+import { groundSplashRadius, weaponClass } from "./fx-kinds/weapon-class.js";
 import { OrdnanceBodies } from "./fx-kinds/ordnance-body.js";
 import { launch, stepRounds, stepStrikes, warnRing, flakBurst, airBurst } from "./fx-kinds/ordnance.js";
 import { LOOKS as MOOD_LOOKS } from "./mission-looks.js";
 // R3-FX: the Codex weapon sprite sheets (two pooled instanced batches), played for impacts, muzzle flashes, trails, jets, heals and decals.
 import { FxSprites } from "./fx-sprites.js";
-import { spriteImpact, spriteMuzzle, spriteHeal, spriteHealBeam, spriteTracer, spriteSpark, spriteHead, spriteTrailPuff, spritesReady } from "./fx-kinds/sprite-fx.js";
+import { spriteHead, spriteImpact, spriteMuzzle, spriteSpark, spriteTrailPuff, spritesReady } from "./fx-kinds/sprite-fx.js";
 import { impactKind } from "./fx-sprites-data.js";
 
 // Procedural sprite atlas: one 128 px cell per shape, white with alpha.
@@ -100,9 +100,15 @@ uniform sampler2D map;
 varying vec2 vUv; varying vec4 vColor;
 void main() {
   vec4 t = texture2D(map, vUv);
-  float a = vColor.a * t.a;
+  float a = abs(vColor.a) * t.a;
   if (a < 0.004) discard;
-  gl_FragColor = vec4(vColor.rgb * t.rgb, a);
+  #ifdef MIXED_FX
+    // Premultiplied normal and additive share one blend state. An additive
+    // instance contributes RGB while preserving all of the destination.
+    gl_FragColor = vec4(vColor.rgb * t.rgb * a, vColor.a < 0.0 ? 0.0 : a);
+  #else
+    gl_FragColor = vec4(vColor.rgb * t.rgb, a);
+  #endif
 }`;
 
 // The pools keep their capacity, but only the live prefix needs to cross to the
@@ -121,7 +127,7 @@ function resetParticle(p, rng) {
   p.rot = rng() * 6.28; p.spin = 0; p.c0 = WARM.flash; p.c1 = WARM.ember; p.mode = BILLBOARD;
   p.ax = 0; p.ay = 1; p.az = 0; p.length = 0; p.cell = CELL.glow; p.drag = 0; p.gravity = 0; p.floor = -10;
   p.hold = 0; p.fadeIn = 0; p.anchor = null; p.lifted = false; p.delay = 0; p.hitScorch = false;
-  p.owner = 0; // the token of a rocket that moves this record each frame (its flame halo); 0 when the record is reused
+  p.priorityHit = false; p.owner = 0; // the token of a rocket that moves this record each frame (its flame halo); 0 when the record is reused
   return p;
 }
 
@@ -170,9 +176,9 @@ class Layer {
     this.items.push(p);
     return p;
   }
-  update(dt, visible) {
-    let keep = 0, drawn = 0;
-    const P = this.pos.array, C = this.color.array, A = this.axis.array, S = this.size.array;
+  update(dt, visible, target = this, offset = 0, additive = false) {
+    let keep = 0, drawn = offset;
+    const P = target.pos.array, C = target.color.array, A = target.axis.array, S = target.size.array;
     for (const p of this.items) {
       p.age += dt;
       if (p.age >= p.life) { this.free.push(p); continue; }
@@ -188,15 +194,21 @@ class Layer {
       const fade = p.fadeIn > 0 ? Math.min(1, p.age / p.fadeIn) : 1;
       P[drawn * 3] = p.x; P[drawn * 3 + 1] = p.y; P[drawn * 3 + 2] = p.z;
       for (let j = 0; j < 4; j++) C[drawn * 4 + j] = p.c0[j] + (p.c1[j] - p.c0[j]) * k;
-      C[drawn * 4 + 3] *= fade;
+      C[drawn * 4 + 3] *= additive ? -fade : fade;
       const len = p.length ? p.length : 0;
       A[drawn * 4] = p.ax * len; A[drawn * 4 + 1] = p.ay * len; A[drawn * 4 + 2] = p.az * len; A[drawn * 4 + 3] = p.mode;
       S[drawn * 3] = p.s0 + (p.s1 - p.s0) * (1 - (1 - t) ** 2); S[drawn * 3 + 1] = p.rot; S[drawn * 3 + 2] = p.cell;
       drawn++;
     }
     this.items.length = keep;
+    if (target !== this) {
+      this.drawn = drawn - offset;
+      this.mesh.visible = false;
+      return drawn;
+    }
     const previous = this.drawn;
     this.drawn = drawn;
+    this.mesh.visible = drawn > 0;
     if (!drawn) {
       // Keep the invisible instance so shaders stay warm, without uploading the
       // same empty pools every frame. Clear it once when the last effect ends.
@@ -234,6 +246,7 @@ const ROOF = { hq: 5.2, barracks: 3.8, foundry: 4.4, relay: 3.6, tower: 3.8 };
 export class Effects {
   constructor(view) {
     this.view = view;
+    this.touchTier = globalThis.matchMedia?.("(pointer: coarse)").matches === true;
     // The random source of the weapon kinds (src/fx-kinds): a seeded generator (the view reseeds it in reset()).
     this.rng = mulberry32(1482);
     this.texture = atlas();
@@ -245,6 +258,13 @@ export class Effects {
     this.decals = new Layer(64, THREE.NormalBlending, 1, this.texture);
     this.smoke = new Layer(420, THREE.NormalBlending, 5, this.texture);
     this.glow = new Layer(900, THREE.AdditiveBlending, 6, this.texture);
+    if (this.touchTier) {
+      this.phoneBatch = new Layer(64+420+900, THREE.CustomBlending, 5, this.texture);
+      const mat = this.phoneBatch.material;
+      mat.defines = { MIXED_FX: 1 };
+      mat.blendSrc = THREE.OneFactor;
+      mat.blendDst = THREE.OneMinusSrcAlphaFactor;
+    }
     this.smoke.share = this.glow.share = () => this.budget;
     this.debrisMesh = new THREE.InstancedMesh(
       new THREE.DodecahedronGeometry(0.16, 0),
@@ -276,6 +296,7 @@ export class Effects {
     this.nextFlash = -Infinity;
     this.root = new THREE.Group();
     this.root.add(this.decals.mesh, this.smoke.mesh, this.glow.mesh, this.debrisMesh, this.rockets.mesh, this.ordnance.mesh);
+    if (this.phoneBatch) this.root.add(this.phoneBatch.mesh);
     view.scene.add(this.root);
     this.dummy = new THREE.Object3D();
     // R3-FX: the weapon sprite sheets load when a battle starts (match-flow.js restart); until they have, the procedural effects are the fallback.
@@ -290,13 +311,18 @@ export class Effects {
       return v;
     };
     this.sphere = new THREE.Sphere();
+    this.nextCount = -1;
+    this.particleCap = 24;
+    this.particlePools = [this.glow, this.smoke, this.decals, { items: this.debris, free: this.debrisFree }];
+    this.priorityCounts = new Uint16Array(5);
+    this.selectedHits = new Set();
   }
   get debrisCapacity() { return this.view.lowPower ? 32 : 96; }
   get motion() { return this.view.activity.combat.motion; }
-  get budget() { return this.view.lowPower ? 0.5 : 1; }
+  get budget() { return this.view.lowPower || this.touchTier ? 0.6 : 1; }
   // The frame governor (governor.js) thins cosmetic emission on slow frames: calm 3/4, still 1/2.
   get governed() { const level = this.view.motionLevel; return level === 0 ? 0.5 : level === 1 ? 0.75 : 1; }
-  count(n) { return Math.max(1, Math.round(n * this.budget * this.governed)); }
+  count(n) { return Math.max(1, Math.round(n * 0.5 * this.budget * this.governed)); }
   ground(x, z) {
     const t = this.view.terrain;
     return t?.plateaus?.length ? t.heightAt(x, z) : 0;
@@ -337,7 +363,7 @@ export class Effects {
       const a = this.rng() * Math.PI * 2, e = this.rng() * 0.9 + 0.1, v = this.motion ? speed[0] + this.rng() * (speed[1] - speed[0]) : 0;
       const dir = { x: Math.cos(a) * e, y: Math.sqrt(1 - e * e) + up, z: Math.sin(a) * e };
       this.particle(layer, { ...o, x: at.x, y: at.y, z: at.z, vx: dir.x * v, vy: dir.y * v, vz: dir.z * v,
-        life: o.life * (0.8 + this.rng() * 0.4), ...(typeof o.extra === "function" ? o.extra(i) : {}) });
+        life: 0.7 * o.life * (0.8 + this.rng() * 0.4), ...(typeof o.extra === "function" ? o.extra(i) : {}) });
     }
   }
   sparks(at, n, anchor, power = 1) {
@@ -376,8 +402,17 @@ export class Effects {
       d.x = at.x; d.y = at.y + base; d.z = at.z; d.ground = base;
       d.vx = Math.cos(a) * v; d.vy = (3 + this.rng() * 4) * power; d.vz = Math.sin(a) * v;
       d.rx = this.rng() * 6; d.ry = this.rng() * 6; d.spin = (this.rng() - 0.5) * 14; d.age = 0;
-      d.life = 1.6 + this.rng() * 1.2; d.scale = (0.45 + this.rng() * 0.75) * Math.sqrt(power);
-      d.anchor = anchor; d.trail = i < trails ? 0 : -1;
+      d.life = 1.12 + this.rng() * 0.84; d.scale = (0.45 + this.rng() * 0.75) * Math.sqrt(power);
+      if (this.touchTier) {
+        const chip = this.emit(this.smoke, d.x, d.y, d.z, anchor, true);
+        chip.cell = CELL.scorch; chip.s0 = d.scale*0.52; chip.s1 = chip.s0*0.6;
+        chip.vx = d.vx; chip.vy = d.vy; chip.vz = d.vz; chip.gravity = 16;
+        chip.floor = base+0.08; chip.drag = 1.5; chip.life = d.life*0.7; chip.spin = d.spin;
+        chip.c0 = [0.31,0.26,0.2,1]; chip.c1 = [0.15,0.14,0.12,0];
+        this.debrisFree.push(d);
+        continue;
+      }
+      d.anchor = anchor; d.trail = i < trails && this.budget === 1 ? 0 : -1;
       this.debris.push(d);
     }
   }
@@ -404,12 +439,18 @@ export class Effects {
     return p;
   }
   shockwave(at, size, anchor) {
-    this.decal(at, size, 0.45, anchor, CELL.ring, [1, 0.78, 0.5, 0.75], this.glow, size * 0.15, { hold: 0, y: 0.1 });
+    if (!this.motion) return;
+    // Uneven, separated clumps skim the ground as the blast displaces dust.
+    for (let i = 0, n = this.count(8); i < n; i++) {
+      const angle = (i + this.rng()*0.65) * Math.PI*2 / n, speed = size * (0.5 + this.rng()*0.25);
+      this.particle(this.smoke, { x: at.x, y: 0.2, z: at.z, vx: Math.cos(angle)*speed, vz: Math.sin(angle)*speed,
+        vy: 0.3, drag: 1.4, s0: 0.45, s1: 1.2, cell: CELL.puff, life: 0.5, c0: this.dustColor(0.55), c1: this.dustColor(0), anchor });
+    }
   }
   explosion(at, scale, anchor, heavy = true) {
     const m = this.motion;
     this.particle(this.glow, { ...at, cell: CELL.flare, s0: 3.6 * scale, s1: 4.4 * scale, life: 0.16, c0: WARM.flash, c1: [1, 0.6, 0.2, 0], anchor });
-    this.particle(this.glow, { ...at, s0: 4.2 * scale, s1: 5.5 * scale, life: 0.22, c0: [1, 0.72, 0.38, 0.9], c1: [1, 0.35, 0.08, 0], anchor });
+    this.particle(this.glow, { ...at, s0: 4.2 * scale, s1: 5.5 * scale, life: 0.176, c0: [1, 0.72, 0.38, 0.9], c1: [1, 0.35, 0.08, 0], anchor });
     this.burst(this.glow, this.count(8), at, { life: 0.6, s0: 1.1 * scale, s1: 3 * scale, drag: 3.5, c0: WARM.fire, c1: WARM.ember, anchor,
       spin: 1.5 }, [1.5 * scale, 4 * scale], 0.5);
     // Normal-blended fire body: stays saturated on bright ground where additive light washes out.
@@ -423,11 +464,35 @@ export class Effects {
     this.decal(at, 3.4 * scale, 12, anchor);
     if (heavy) this.addDebris(at, 7, anchor, scale, 2);
   }
+  contactHit(at, anchor) {
+    // A glint on the material, a couple of tiny chips, and dust only on the ground.
+    this.particle(this.glow, { ...at, cell: CELL.flare, life: 0.075, s0: Math.min(0.56, (anchor?.targetWidth || 1.2) / 2), s1: 0.2, priorityHit: true,
+      c0: WARM.flash, c1: WARM.sparkEnd, anchor });
+    if (!this.motion) return;
+    this.sparks(at, 2, anchor, 0.32);
+    if (at.y < 2.2) this.dust({ ...at, y: 0.14 }, 1, anchor, 0.28, 0.26);
+  }
+  precisionShot(from, to, land, travel, anchor) {
+    const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z;
+    const len = Math.hypot(dx, dy, dz) || 1;
+    const moving = this.motion, life = moving ? travel : 0.075;
+    const body = { ...from, lifted: true, mode: STRETCH, ax: dx/len, ay: dy/len, az: dz/len,
+      length: moving ? Math.min(1.15, len) : len, cell: CELL.glow, life, anchor };
+    if (moving) Object.assign(body, { vx: dx/life, vy: dy/life, vz: dz/life });
+    else Object.assign(body, { x: (from.x+to.x)/2, y: (from.y+to.y)/2, z: (from.z+to.z)/2 });
+    this.particle(this.glow, { ...from, cell: CELL.flare, s0: 0.7, s1: 0.24, life: 0.055,
+      c0: WARM.flash, c1: WARM.sparkEnd, anchor });
+    const width = 0.11;
+    this.particle(this.smoke, { ...body, s0: width*1.4, s1: width*1.4, c0: [0.38,0.19,0.08,0.9], c1: [0.38,0.19,0.08,0.75] });
+    this.particle(this.glow, { ...body, s0: width, s1: width, c0: WARM.flash, c1: [1,0.85,0.55,0.85] });
+    this.timeline.push({ at: this.time + (moving ? travel : 0), run: () => this.contactHit(land, anchor) });
+  }
   // A shell or rocket landing. Small arms (power 0) stay light: a spark and now and then a
   // dust puff. Tank shells, artillery and rockets (power from combat-feedback.js hitPower)
   // throw a white flash, a fireball rolling into smoke, sparks, dirt, debris chunks that arc
   // and bounce, a brief hot glow on the ground and a scorch that fades over ~14 s.
   hit(at, power, anchor, kind = "shell") {
+    if (anchor?.direct) { this.contactHit(at, anchor); return; }
     if (power === true) power = 1;
     // R3-X: a hit high above the ground (a round meeting a flyer) bursts in the air: no dust, scorch or ground glow under it.
     // (`at.y` is above the local ground here, as for every particle that is not `lifted`.)
@@ -442,9 +507,9 @@ export class Effects {
       return;
     }
     if (aloft) { airBurst(this, { x: at.x, y: at.y + this.ground(at.x, at.z), z: at.z }, anchor, Math.min(1.2, 0.5 + power * 0.5)); return; }
-    const s = power, m = this.motion, top = { x: at.x, y: at.y + 0.35, z: at.z };
-    // R3-FX: the blast is a sprite (tank shell, rocket, artillery or bomb sheet) and the scorch a decal; sparks, dust, debris and the ring stay procedural.
-    if (spriteImpact(this, kind, at, s, anchor)) {
+    const s = Math.min(power, (anchor?.targetWidth ?? Infinity) * 2 / 4.6), m = this.motion, top = { x: at.x, y: at.y + 0.35, z: at.z };
+    // Keep the blast within two target widths with or without sprites.
+    if (spriteImpact(this, kind, at, power, anchor)) {
       this.dust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.1 * s, 1.1);
       this.sparks(top, 8, anchor, s);
       this.addDebris(at, Math.round(4 * s), anchor, 0.85 * s, s >= 1 ? 2 : 0);
@@ -453,7 +518,7 @@ export class Effects {
     }
     // Reduced motion / combat motion off: a soft warm flare instead of the white-hot star (no flashing).
     this.particle(this.glow, { ...top, cell: CELL.flare, s0: 3.8 * s, s1: 4.6 * s, life: 0.12, c0: m ? WARM.flash : [1, 0.8, 0.5, 0.45], c1: [1, 0.6, 0.2, 0], anchor });
-    this.particle(this.glow, { ...top, s0: 3.2 * s, s1: 4.2 * s, life: 0.22, c0: [1, 0.76, 0.42, 0.95], c1: [1, 0.35, 0.08, 0], anchor });
+    this.particle(this.glow, { ...top, s0: 3.2 * s, s1: 4.2 * s, life: 0.176, c0: [1, 0.76, 0.42, 0.95], c1: [1, 0.35, 0.08, 0], anchor });
     // Fireball: a normal-blended body (stays saturated on bright ground) and additive licks.
     this.burst(this.smoke, this.count(7), top, { life: 0.8, s0: 1.3 * s, s1: 3.3 * s, drag: 3.2, cell: CELL.puff,
       c0: [1, 0.6, 0.18, 0.96], c1: [0.22, 0.18, 0.16, 0], anchor, spin: 1, gravity: -1.6 }, [1.3 * s, 3.2 * s], 0.75);
@@ -465,9 +530,9 @@ export class Effects {
     this.dust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.1 * s, 1.1);
     this.sparks(top, 8, anchor, s);
     this.addDebris(at, Math.round(4 * s), anchor, 0.85 * s, s >= 1 ? 2 : 0);
-    if (m && s >= 0.9) this.shockwave(at, 5.2 * s, anchor);
+
     // Hot ground: an orange glow that cools in about a second, then the scorch.
-    this.decal(at, 2.2 * s, 1.2, anchor, CELL.glow, [1, 0.45, 0.1, 0.85], this.glow, 1.7 * s, { hold: 0.15, y: 0.08 });
+    this.decal(at, 2.2 * s, 0.96, anchor, CELL.glow, [1, 0.45, 0.1, 0.85], this.glow, 1.7 * s, { hold: 0.15, y: 0.08 });
     this.scorch(at, 2.6 * s, anchor);
   }
   // An Anti-tank rocket landing (src/fx-kinds/rocket.js), shaped by its target. On armour: a white-hot star,
@@ -475,6 +540,7 @@ export class Effects {
   // building (20 damage): a smaller burst. (ux, uz) is the rocket's heading, so the sparks fly back at the shooter's side.
   rocketImpact(p, ux = 0, uz = 0) {
     const at = p.land || p.to, anchor = p.anchor, top = { x: at.x, y: at.y + 0.2, z: at.z };
+    if (anchor?.direct) { this.contactHit(at, anchor); return; }
     if (p.impact !== "armour") {
       this.particle(this.glow, { ...top, cell: CELL.flare, s0: 1.6, s1: 2, life: 0.1, c0: WARM.flash, c1: [1, 0.6, 0.2, 0], anchor });
       this.hit(at, 0.45, anchor, "rocket");
@@ -490,7 +556,6 @@ export class Effects {
         ax: vx / l, ay: vy / l, az: vz / l, length: 0.5, s0: 0.08, s1: 0.04, cell: CELL.streak, c0: [1, 0.95, 0.75, 1], c1: WARM.sparkEnd, floor: 0.05, anchor });
     }
     this.addDebris(at, 3, anchor, 0.7, 1);
-    this.particle(this.glow, { ...top, cell: CELL.ring, s0: 0.6, s1: 3.2, life: 0.22, c0: [1, 0.85, 0.55, 0.8], c1: [1, 0.6, 0.2, 0], anchor });
   }
   // How brightly the rocket bodies are lit: the mission look's sun strength (night 0.42, storm 0.5), softened.
   rocketLight() {
@@ -529,43 +594,34 @@ export class Effects {
       this.particle(this.glow, { ...from, cell: CELL.flare, s0: flash, s1: flash * 1.2, life: heavy ? 0.11 : 0.06, c0: WARM.flash, c1: [1, 0.55, 0.15, 0], anchor });
     }
     if (sim.isVisible({ x: e.tx, z: e.tz })) {
-      const anchor = { x: e.tx, z: e.tz }, power = style.hit ?? hitPower(e.weapon, style.kind);
+      const anchor = { x: e.tx, z: e.tz, target: e.target, targetWidth: 2 * (sim?.get?.(e.target)?.radius || 0.75), direct: !groundSplashRadius(e, sim) }, power = style.hit ?? hitPower(e.weapon, style.kind);
       this.timeline.push({ at: this.time + style.life, run: () => this.hit(land, power, anchor, impactKind(weaponClass(e, style)) || (style.kind === "rocket" ? "rocket" : "shell")) });
     }
   }
   shot(e, sim) {
     const { style, nx, nz, from, to, land } = this.aim(e, sim);
     const dir = { x: to.x - from.x, y: to.y - from.y, z: to.z - from.z }, len = Math.hypot(dir.x, dir.y, dir.z) || 1;
-    const travel = style.life, anchor = { ...e, shot: true };
+    const travel = style.life, anchor = { ...e, shot: true, targetWidth: 2 * (sim?.get?.(e.target)?.radius || 0.75), direct: !groundSplashRadius(e, sim) };
     const kind = style.kind, m = this.motion;
     if (kind === "support") {
       // Engineer: cool white beam. Harvester repair: warm welding sparks. Medic: green.
       const engineer = e.weapon === "engineer", tint = e.weapon === "repair" || engineer ? [1, 0.69, 0.22, 0.95] : [0.5, 1, 0.75, 0.9];
       const repair = engineer || e.weapon === "repair";
-      const glyphSize = Math.max(1.2, 16 * (this.view.unitsPerPixel || 0.1));
-      this.particle(this.smoke, { ...land, y: land.y + glyphSize, cell: repair ? CELL.wrench : CELL.cross,
-        rot: 0, s0: glyphSize, s1: glyphSize, life: 0.8, c0: tint, c1: [tint[0], tint[1], tint[2], 0], anchor });
-      // R3-X heal: a soft, wide beam that eases in under a thin bright core, and sparkles rising slowly off the patient.
-      const mid = { lifted: true, x: (from.x + to.x) / 2, y: (from.y + to.y) / 2, z: (from.z + to.z) / 2, mode: STRETCH, ax: dir.x / len, ay: dir.y / len, az: dir.z / len, length: len, cell: CELL.glow, anchor };
-      this.particle(this.glow, { ...mid, s0: 0.6, s1: 0.45, life: 0.55, fadeIn: m ? 0.12 : 0, c0: [tint[0], tint[1], tint[2], 0.45], c1: [...tint.slice(0, 3), 0] });
-      this.particle(this.glow, { ...mid, s0: 0.16, s1: 0.08, life: 0.4, c0: tint, c1: [...tint.slice(0, 3), 0] });
-      for (let i = 0, n = this.count(6); i < n; i++)
-        this.particle(this.glow, { ...land, x: land.x + (this.rng() - 0.5) * 0.9, z: land.z + (this.rng() - 0.5) * 0.9, y: land.y - 0.4 + this.rng() * 0.5,
-          vx: m ? (this.rng() - 0.5) * 0.35 : 0, vy: m ? 0.9 + this.rng() * 0.6 : 0, drag: 0.6, life: 0.8 + this.rng() * 0.3, s0: 0.42, s1: 0.08, cell: CELL.flare,
-          c0: tint, c1: [...tint.slice(0, 3), 0], anchor, delay: i * 0.06, fadeIn: 0.08 });
-      // R3-FX: the mint heal-sparkle sheet loops over the patient for as long as the beam lasts.
-      if (!repair) spriteHeal(this, { x: land.x, y: land.y - 0.5, z: land.z }, tint, anchor, 0.9);
-      if (!repair) spriteHealBeam(this, from, to, dir.x / len, dir.y / len, dir.z / len, anchor, null, 0.8); // R3-FX2: the heal-beam strip along the connection
+      const width = anchor.targetWidth, glyphSize = Math.min(width * 0.72, 0.86);
+      this.particle(this.smoke, { ...land, y: land.y + width*0.55, cell: repair ? CELL.wrench : CELL.cross,
+        rot: 0, s0: glyphSize, s1: glyphSize, life: 0.48,
+        c0: [tint[0], tint[1], tint[2], 0.58], c1: [tint[0], tint[1], tint[2], 0], anchor });
+      const beamWidth = Math.min(0.16, width * 0.15);
+      this.particle(this.glow, { lifted: true, x: (from.x+to.x)/2, y: (from.y+to.y)/2, z: (from.z+to.z)/2,
+        mode: STRETCH, ax: dir.x/len, ay: dir.y/len, az: dir.z/len, length: len, cell: CELL.glow, anchor,
+        s0: beamWidth, s1: beamWidth * 0.7, life: 0.34, c0: [tint[0],tint[1],tint[2],0.55], c1: [tint[0],tint[1],tint[2],0] });
+      return;
+    }
+    if ((e.unit || e.weapon) === "ranger" && anchor.direct) {
+      this.precisionShot(from, to, land, travel, anchor);
       return;
     }
     const cls = weaponClass(e, style);
-    if (m && !e.tAir && cls === "tracer") {
-      // One quiet pressure ring per volley, timed to the landing. Normal blending
-      // keeps its ochre edge visible on sand without another additive flash.
-      const diameter = Math.max(3.2, 32 * (this.view.unitsPerPixel || 0));
-      this.decal(land, diameter, 0.42, anchor, CELL.ring, [0.48, 0.33, 0.18, 0.76],
-        this.decals, diameter * 0.28, { delay: travel, hold: 0.18, y: 0.13 });
-    }
     const power = style.hit ?? hitPower(e.weapon, kind);
     // A weapon with its own look (src/fx-kinds): the kind draws the muzzle, the rounds and the landing.
     const look = m && style.look ? LOOKS[style.look] : null;
@@ -584,7 +640,7 @@ export class Effects {
       c1: [1, 0.55, 0.15, 0], anchor });
     this.particle(this.glow, { ...from, s0: flash * 1.5, s1: flash * 1.8, life: cannon ? 0.14 : 0.08, c0: [1, 0.72, 0.35, 0.7],
       c1: [1, 0.4, 0.1, 0], anchor });
-    if ((cannon || rocket) && m) {
+    if ((cannon || rocket) && m && this.budget === 1) {
       const back = rocket ? -1 : 1;
       for (let i = 0; i < this.count(shell ? 5 : 3); i++)
         this.particle(this.smoke, { lifted: true, x: from.x - (rocket ? nx * 1.4 : 0), y: from.y, z: from.z - (rocket ? nz * 1.4 : 0),
@@ -595,9 +651,6 @@ export class Effects {
       if (cannon && e.weapon !== "tower" && !e.sAir) this.dust({ x: from.x, y: 0.25, z: from.z }, 1, anchor, 0.8, 0.8);
     }
     // R3-FX: a sprite muzzle flash, turned along the barrel (large for a Tank and the Breaker, medium for other cannons and rockets).
-    // R3-FX2: a tracer round is the streak sheet flying to the target (warm, or cyan for a cyan tracer), with its muzzle spark.
-    const color0 = style.color ?? [1, 0.9, 0.6, 1];
-    if (!cannon && !rocket && m && cls === "tracer") spriteTracer(this, from, to, dir.x / len, dir.y / len, dir.z / len, travel, anchor, color0[2] > color0[0] + 0.15);
     if ((cannon || rocket) && m) spriteMuzzle(this, from, dir.x / len, dir.y / len, dir.z / len, e.weapon === "tank" || cls === "lob" ? "large" : "medium", anchor);
     // Projectile: a streak (and shell/rocket glow) flying to the target; reduced motion
     // shows a brief static tracer along the whole path instead.
@@ -749,7 +802,7 @@ export class Effects {
     // R3-FX: the artillery-blast sheet (sized to the damage radius) replaces the procedural fireball; the crater is a decal.
     if (spriteImpact(this, "bomb", { x: e.x, y: 0.3, z: e.z }, 1, anchor, 0, Math.max(0.8, r / 5))) {
       this.sparks({ x: e.x, y: 1.2, z: e.z }, 10, anchor, 1.6);
-      this.decal({ x: e.x, z: e.z }, r * 2.5, 0.5, anchor, CELL.ring, [1, 0.8, 0.5, 0.8], this.glow, r * 0.4, { hold: 0, y: 0.12 });
+      this.shockwave(e, r * 2, anchor);
       this.dust({ x: e.x, y: 0.3, z: e.z }, 5, anchor, 1.6, 1.6);
       this.addDebris({ x: e.x, y: 0.8, z: e.z }, 10, anchor, 1.45, 3);
       this.scorch({ x: e.x, z: e.z }, r * 1.1, anchor, true);
@@ -758,7 +811,7 @@ export class Effects {
     this.explosion({ x: e.x, y: 0.9, z: e.z }, 2.1, anchor, true);
     this.burst(this.smoke, this.count(8), { x: e.x, y: 1.4, z: e.z }, { life: m ? 1.5 : 0.8, s0: 1.8, s1: 4.6, drag: 1.2, cell: CELL.puff,
       c0: [1, 0.56, 0.16, 0.96], c1: [0.18, 0.15, 0.13, 0], anchor, gravity: m ? -4.5 : 0, spin: 0.6 }, [0.5, 1.6], 2.6);
-    this.decal({ x: e.x, z: e.z }, r * 2.5, 0.5, anchor, CELL.ring, [1, 0.8, 0.5, 0.8], this.glow, r * 0.4, { hold: 0, y: 0.12 });
+    this.shockwave(e, r * 2, anchor);
     this.decal({ x: e.x, z: e.z }, r * 0.9, 1.4, anchor, CELL.glow, [1, 0.42, 0.08, 0.9], this.glow, r * 0.7, { hold: 0.2, y: 0.08 });
     this.dust({ x: e.x, y: 0.3, z: e.z }, 7, anchor, 1.6, 1.6);
     this.addDebris({ x: e.x, y: 0.8, z: e.z }, 10, anchor, 1.45, 3);
@@ -819,15 +872,15 @@ export class Effects {
     this.dust({ x: r.x, y: 0.3, z: r.z }, 3, anchor, 1, 1);
   }
   impact(e) {
-    const at = { x: e.x, y: e.building ? 2.2 : 1.1, z: e.z }, anchor = { x: e.x, z: e.z, team: e.team };
+    const at = { x: e.x, y: e.building ? 2.2 : 1.1, z: e.z }, anchor = { x: e.x, z: e.z, team: e.team, target: e.seed };
     if (e.shield) {
       // Shield: a cyan ripple shell and flash where the round is stopped.
-      this.particle(this.glow, { ...at, cell: CELL.ring, s0: e.building ? 2 : 1.1, s1: e.building ? 4.4 : 2.4, life: 0.3,
+      this.particle(this.glow, { ...at, priorityHit: true, cell: CELL.glow, s0: 0.75, s1: 0.35, life: 0.3,
         c0: [0.55, 0.92, 1, 0.9], c1: [0.35, 0.75, 1, 0], anchor, delay: 0.05 });
       this.particle(this.glow, { ...at, s0: 1.3, s1: 1.8, life: 0.14, c0: [0.5, 0.9, 1, 0.55], c1: [0.4, 0.8, 1, 0], anchor, delay: 0.05 });
     } else {
       this.sparks(at, 4, anchor, 0.7);
-      this.particle(this.smoke, { ...at, vy: this.motion ? 0.8 : 0, s0: 0.4, s1: 1.2, life: 0.6, cell: CELL.puff,
+      this.particle(this.smoke, { ...at, priorityHit: true, vy: this.motion ? 0.8 : 0, s0: 0.4, s1: 1.2, life: 0.6, cell: CELL.puff,
         c0: [0.35, 0.34, 0.32, 0.45], c1: [0.4, 0.4, 0.4, 0], anchor, delay: 0.05 });
     }
   }
@@ -873,12 +926,12 @@ export class Effects {
       // Collapse: staged blasts across the footprint, a rolling dust wall, a smoke column,
       // debris and a large scorch; the model itself sinks in WorldView.
       const r = 2.6;
-      this.explosion({ x: e.x, y: 1.8, z: e.z }, 2, anchor);
+      this.explosion({ x: e.x, y: 1.26, z: e.z }, 1.35, anchor);
       this.addDebris({ x: e.x, y: 2.2, z: e.z }, 12, anchor, 1.35, 4);
-      for (const [delay, k] of [[0.47, 1.15], [1.08, 1.35]]) {
+      for (const [delay, k] of [[0.47, 0.8], [1.08, 0.94]]) {
         const a = this.rng() * Math.PI * 2, d = this.rng() * r;
         this.timeline.push({ at: this.time + delay, run: () => {
-          const at = { x: e.x + Math.cos(a) * d, y: 0.8 + this.rng() * 2, z: e.z + Math.sin(a) * d };
+          const at = { x: e.x + Math.cos(a) * d, y: 0.56 + this.rng() * 1.4, z: e.z + Math.sin(a) * d };
           this.explosion(at, k, anchor, false);
           this.addDebris(at, 3, anchor, 0.9 * k, 1);
         } });
@@ -907,7 +960,7 @@ export class Effects {
           anchor, spin: 0.25 }) });
       this.decal(anchor, 9, 20, anchor);
     } else if (e.heavy) {
-      this.explosion({ x: e.x, y: 0.9, z: e.z }, 1.15, anchor);
+      this.explosion({ x: e.x, y: 0.63, z: e.z }, 0.8, anchor);
       this.decal({ x: e.x, z: e.z }, 2.2, 1.4, anchor, CELL.glow, [1, 0.45, 0.1, 0.85], this.glow, 1.8, { hold: 0.2, y: 0.08 });
     }
     else {
@@ -927,7 +980,7 @@ export class Effects {
     if (!em) this.emitters.set(e.id, (em = { fire: this.rng(), smoke: this.rng(), seen: 0, licks: 0, vent: 0 }));
     em.seen = this.time;
     const building = e.kind === "building", h = building ? ROOF[e.type] || 3.8 : 1.3;
-    const spread = building ? e.radius * 0.5 : 0.35, m = this.motion, rate = dt * this.budget * this.governed * this.emitShare;
+    const spread = building ? e.radius * 0.35 : 0.245, m = this.motion, rate = dt * this.budget * this.governed * this.emitShare;
     if (!this.onScreen(e, building ? h + 4 : 3)) return;
     if (state !== BURNING) {
       // Smoking: a steady dark-grey plume from two fixed vents on the roof.
@@ -947,19 +1000,19 @@ export class Effects {
     while (em.fire >= 1) {
       em.fire -= 1;
       const a = this.rng() * 6.28, d = this.rng() * spread;
-      const x = e.x + Math.cos(a) * d, y = h * (building ? 0.7 + this.rng() * 0.3 : 0.6 + this.rng() * 0.3), z = e.z + Math.sin(a) * d;
-      const vy = m ? 1.4 + this.rng() * 1.2 : 0, vx = m ? (this.rng() - 0.5) * 0.4 : 0, life = 0.55 + this.rng() * 0.35;
+      const x = e.x + Math.cos(a) * d, y = 0.7 * h * (building ? 0.7 + this.rng() * 0.3 : 0.6 + this.rng() * 0.3), z = e.z + Math.sin(a) * d;
+      const vy = m ? 0.7 * (1.4 + this.rng() * 1.2) : 0, vx = m ? (this.rng() - 0.5) * 0.4 : 0, life = 0.55 + this.rng() * 0.35;
       const p = this.emit(this.smoke, x, y, z, e);
       p.vy = vy; p.vx = vx; p.life = life; p.spin = 2; p.cell = CELL.puff;
-      p.s0 = building ? 2.1 : 0.8; p.s1 = building ? 0.6 : 0.3; p.c0 = PAL.flame; p.c1 = PAL.flameEnd; p.hold = 0.25;
+      p.s0 = building ? 1.47 : 0.56; p.s1 = building ? 0.42 : 0.21; p.c0 = PAL.flame; p.c1 = PAL.flameEnd; p.hold = 0.25;
       if (++em.licks % (building ? 2 : 3) === 0) {
         const g = this.emit(this.glow, x, y, z, e);
-        g.vy = vy; g.vx = vx; g.life = life; g.spin = 2; g.s0 = building ? 1.5 : 0.65; g.s1 = 0.3; g.c0 = PAL.lick; g.c1 = PAL.lickEnd;
+        g.vy = vy; g.vx = vx; g.life = life; g.spin = 2; g.s0 = building ? 1.05 : 0.455; g.s1 = 0.3; g.c0 = PAL.lick; g.c1 = PAL.lickEnd;
       }
       if (building && m && em.licks % 4 === 0) {
         // Embers drifting up out of the fire.
         const k = this.emit(this.glow, x, y + 0.4, z, e);
-        k.vy = 2.2 + this.rng() * 1.4; k.vx = (this.rng() - 0.5) * 1.2; k.vz = (this.rng() - 0.5) * 1.2; k.drag = 0.6;
+        k.vy = 1.54 + this.rng() * 0.98; k.vx = (this.rng() - 0.5) * 0.65; k.vz = (this.rng() - 0.5) * 0.65; k.drag = 0.6;
         k.life = 0.9 + this.rng() * 0.5; k.s0 = 0.18; k.s1 = 0.06; k.cell = CELL.flare; k.c0 = PAL.ember; k.c1 = PAL.emberEnd;
       }
     }
@@ -997,7 +1050,45 @@ export class Effects {
       p.cell = CELL.puff; p.c0 = PAL.wreckSmoke; p.c1 = PAL.wreckSmokeEnd; p.fadeIn = 0.2; p.spin = 0.35;
     }
   }
-  update(sim, dt) {
+  // Cull the least visible detail first and reserve the selected target's hit.
+  trimParticles(sim, selected) {
+    if (this.sprites.batches && this.particlePools.length === 4)
+      this.particlePools.push(this.sprites.batches.normal, this.sprites.batches.add);
+    if (this.time >= this.nextCount) {
+      let units = 0;
+      for (const e of sim.entities) {
+        if (e.kind === "unit" && e.hp > 0 && sim.isVisible(e) && this.onScreen(e, e.radius || 1)) units++;
+      }
+      this.particleCap = Math.max(12, Math.ceil(units * 2.4 * this.budget));
+      this.nextCount = this.time + 0.25;
+    }
+    let excess = this.projectiles.length + this.rounds.length - this.particleCap;
+    for (const pool of this.particlePools) excess += pool.items.length;
+    if (excess <= 0) return;
+    const bins = this.priorityCounts;
+    bins.fill(0);
+    this.selectedHits.clear();
+    const focus = this.view.focus || { x: 0, z: 0 }, near = (this.view.zoom || 40) * 0.35;
+    for (const pool of this.particlePools) for (const p of pool.items) {
+      const target = p.anchor?.target;
+      const selectedHit = selected?.has(target) && (p.priorityHit || p.hotCore || p.def?.name === "flak") && !this.selectedHits.has(target);
+      if (selectedHit) this.selectedHits.add(target);
+      const close = (p.x-focus.x)**2 + (p.z-focus.z)**2 < near*near;
+      p.priority = selectedHit ? 4 : (close ? 2 : 0) + (!p.decal && (p.s0 || p.scale || 0) >= 0.45 ? 1 : 0);
+      bins[p.priority]++;
+    }
+    for (let i = 0; i < 4; i++) { bins[i] = Math.min(excess, bins[i]); excess -= bins[i]; }
+    for (const pool of this.particlePools) {
+      let keep = 0;
+      for (const p of pool.items) {
+        if (p.priority < 4 && bins[p.priority] > 0) {
+          bins[p.priority]--; p.owner = 0; pool.free.push(p);
+        } else pool.items[keep++] = p;
+      }
+      pool.items.length = keep;
+    }
+  }
+  update(sim, dt, selected) {
     this.time += dt;
     this.frameSim = sim;
     this.seen.clear();
@@ -1024,7 +1115,7 @@ export class Effects {
       }
       const tail = p.body ? 0.62 * p.body * bodyScale : 0;
       if (p.body && !p.step) p.step = Math.hypot(p.to.x - p.from.x, p.to.y - p.from.y, p.to.z - p.from.z) / p.travel * ROCKET.trailGap;
-      if (p.rocket && dt > 0) {
+      if (p.rocket && dt > 0 && this.budget === 1) {
         p.trail += dt;
         // R3-FX: with the sheets loaded the rocket's trail is smoke-trail sprite puffs, fewer and bigger (Eco: fewer still).
         const sprite = spritesReady(this), gap = sprite ? (this.view.lowPower ? 0.075 : 0.05) : p.body ? ROCKET.trailGap : 0.025;
@@ -1051,7 +1142,7 @@ export class Effects {
           h.owner = p.token = p.token || ++this.rocketTokens;
         }
         h.x = x - ux * tail * 1.25; h.y = y - uy * tail * 1.25; h.z = z - uz * tail * 1.25;
-        if (visible(p.anchor)) { this.rockets.add(x, y, z, ux, uy, uz, p.roll, p.body * bodyScale, p.color); spriteHead(this, "rocket", x, y, z, ux, uy, uz, 1.9 * p.body * bodyScale); }
+        if (visible(p.anchor) && !(this.touchTier && spriteHead(this, "rocket", x,y,z, ux,uy,uz, p.body * bodyScale, p.anchor))) this.rockets.add(x, y, z, ux, uy, uz, p.roll, p.body * bodyScale, p.color);
       }
       if (t >= 1) {
         this.projectiles.splice(i, 1);
@@ -1080,7 +1171,7 @@ export class Effects {
       const e = this.burning[i];
       load += damageState(e) !== BURNING ? 13 : e.kind === "building" ? 31 : 15; // live puffs each emitter keeps
     }
-    this.emitShare = Math.min(1, 220 / Math.max(1, load));
+    this.emitShare = Math.min(0.5, 110 / Math.max(1, load));
     if (dt > 0) for (let i = 0; i < this.burning.length; i++) this.burn(this.burning[i], damageState(this.burning[i]), dt);
     // Vehicle wrecks smoulder: a thin dark plume until they sink away.
     const dying = this.view.dying;
@@ -1092,9 +1183,22 @@ export class Effects {
       this.depositLive.set(r.id, live);
     }
     for (const [id, em] of this.emitters) if (this.time - em.seen > 1) this.emitters.delete(id);
-    this.decals.update(dt, visible);
-    this.smoke.update(dt, visible);
-    this.glow.update(dt, visible);
+    this.trimParticles(sim, selected);
+    if (this.phoneBatch) {
+      const batch = this.phoneBatch;
+      let count = this.decals.update(dt, visible, batch);
+      count = this.smoke.update(dt, visible, batch, count);
+      count = this.glow.update(dt, visible, batch, count, true);
+      batch.mesh.visible = count > 0;
+      batch.mesh.geometry.instanceCount = count;
+      if (dt > 0 || count !== batch.drawn)
+        for (const a of batch.attrs) uploadPrefix(a, count);
+      batch.drawn = count;
+    } else {
+      this.decals.update(dt, visible);
+      this.smoke.update(dt, visible);
+      this.glow.update(dt, visible);
+    }
     this.sprites.update(dt, visible);
     let n = 0;
     const t = this.view.terrain, plateaus = t?.plateaus?.length;
@@ -1131,6 +1235,7 @@ export class Effects {
     }
     const previous = this.debrisDrawn;
     this.debrisDrawn = drawn;
+    this.debrisMesh.visible = drawn > 0;
     if (!drawn) {
       if (!previous) return;
       this.dummy.scale.setScalar(0);
@@ -1147,6 +1252,7 @@ export class Effects {
     return this.glow.items.length + this.smoke.items.length + this.decals.items.length + this.debris.length + this.projectiles.length + this.rounds.length + this.sprites.active;
   }
   clear() {
+    this.nextCount = -1;
     for (const layer of [this.decals, this.smoke, this.glow]) layer.clear();
     this.sprites.clear();
     for (const d of this.debris) this.debrisFree.push(d);
@@ -1168,6 +1274,7 @@ export class Effects {
     for (const layer of [this.decals, this.smoke, this.glow]) layer.dispose();
     this.debrisMesh.geometry.dispose();
     this.debrisMesh.material.dispose();
+    this.phoneBatch?.dispose();
     this.rockets.dispose();
     this.ordnance.dispose();
     this.sprites.dispose();

@@ -1,3 +1,4 @@
+import { DEFINITIONS } from "../data.js";
 // Weapon effect classes (AAA round 3, R3-X "slow and beautiful, but cheap"). Every shot event maps to ONE
 // class, and the class decides how heavy and how slow its drawing is: the heavier the weapon, the slower and
 // showier the round. Pure data (no three.js): the effects (src/fx.js, this folder) and the audio (R3-U) can
@@ -21,6 +22,14 @@ import { weaponStyle } from "../visual-style.js";
 
 // The ids are R3-U's (src/audio-logic.js WEAPON_CLASSES), so a sound and a look always name the same class.
 export const WEAPON_CLASSES = Object.freeze(["tracer", "shell", "lob", "flak", "beam", "flamer", "heal", "missile", "bomb", "strafe"]);
+
+// Defence crew upgrades can change splash on the live shooter. The unit id
+// distinguishes flyers and faction vehicles which reuse another unit's weapon key.
+export function groundSplashRadius(event, sim) {
+  if (event.tAir || event.type === "support") return 0;
+  const source = sim?.get?.(event.source) || DEFINITIONS[event.unit] || DEFINITIONS[event.weapon];
+  return source?.splash_radius > 0 && source.splash_damage > 0 ? source.splash_radius : 0;
+}
 
 // The weapon keys (visual-style.json `weapons`) drawn as an artillery lob rather than a direct shell.
 const ARTILLERY = new Set(["breaker"]);

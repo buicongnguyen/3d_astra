@@ -128,7 +128,7 @@ test('Hawk: missiles corkscrew at a flyer; at the ground a strafing burst walks 
   const fx = fxWith(), sim = simWith();
   fx.frameSim = sim;
   LOOKS.pods.spawn(fx, { weapon: 'ranger', target: 7, tAir: 3.6 }, fx.rng, aim(0.3, { to: { x: 12, y: 4.6, z: 2 } }));
-  assert.equal(fx.rounds.length, 2);
+  assert.equal(fx.rounds.length, fx.count(2));
   assert.ok(fx.rounds.every((r) => r.cls === 'missile' && r.weave > 0));
   const p = {};
   place(fx.rounds[0], 0.3, p);
@@ -186,21 +186,18 @@ test('a flyer shot down bursts in the air (no scorch under it), then trails smok
   assert.ok(fx.decals.items.length >= 1, 'the crash leaves a scorch');
 });
 
-test('a normal ground volley queues one pooled ring at arrival, including at phone zoom', () => {
-  for (const [unit, altitude, motion, expected] of [
-    ['ranger', 0, true, 1], ['vanguard', 0, true, 1],
-    ['ranger', 4, true, 0], ['ranger', 0, false, 0], ['medic', 0, true, 0],
-  ]) {
-    const fx = fxWith(true), sim = simWith();
-    fx.view.activity.combat.motion = motion;
-    fx.view.unitsPerPixel = 0.2;
-    const e = shot(unit, { type: unit === 'medic' ? 'support' : 'shot', x: 1, z: 3, tx: 8, tz: 5, team: 0, tAir: altitude });
-    fx.shot(e, sim);
-    const rings = fx.decals.items.filter(p => p.mode === 2 && p.cell === 2);
-    assert.equal(rings.length, expected, unit);
-    if (expected) {
-      assert.equal(rings[0].age, -weaponStyle(e).life);
-      assert.ok(rings[0].s1 >= 32 * fx.view.unitsPerPixel);
+test('weapon hits leave no flat ring, on the ground, in the air or with reduced motion', () => {
+  for (const unit of ['ranger','vanguard','tank','glider','antitank','tower','rampart','walker','shade','watcher']) {
+    for (const motion of [true,false]) {
+      const fx = fxWith(true), sim = simWith();
+      fx.view.activity.combat.motion = motion;
+      const e = shot(unit,{x:1,z:3,tx:8,tz:5,team:0,target:7});
+      fx.shot(e,sim);
+      for (let i=0;i<22;i++) {
+        fx.update(sim,0.05);
+        assert.ok(![...fx.glow.items,...fx.decals.items].some(p=>p.cell===2 && p.mode===2),unit);
+        if(unit==='ranger') assert.equal(fx.decals.items.length,0);
+      }
     }
   }
 });

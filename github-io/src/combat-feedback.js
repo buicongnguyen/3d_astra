@@ -1,5 +1,6 @@
 // Presentation only: critical damage never adds damage-over-time or obstacles.
 import { weaponStyle } from './visual-style.js';
+import { groundSplashRadius } from './fx-kinds/weapon-class.js';
 import { CELL } from './fx-kinds/cells.js';
 
 // Damage states drawn by the 3D effects (src/fx.js): completed buildings smoke below half
@@ -211,18 +212,21 @@ export class DamageNumbers {
 // for that. Every effect comes from the existing pools in src/fx.js: no new mesh, no new draw call.
 export const DEATH_LOOK = { ballistic: 1, blast: 2, seared: 3 };
 export const DEATH_CHAR = [0.24, 0.2, 0.18]; // a seared body: charred, a little warmer than the wreck tint
-const SEARING = new Set(['beam', 'rail', 'twin-pulse', 'flame', 'hose']);
+const SEARING = new Set(['flame']);
+const PRECISION = new Set(['rocket', 'rail', 'beam', 'hose', 'plough', 'bomb', 'twin-pulse']);
+const BULLET = { kind: 'rifle' };
 const BLASTING = new Set(['bomb', 'firebomb', 'plough', 'pods', 'rocket', 'twin-heavy']);
 const STRIKE_STYLE = { kind: 'cannon', look: 'strike', color: [1, 0.7, 0.3, 1] };
 // The look a shot of this style gives the unit it kills.
 export function deathLookOf(style) {
   if (!style) return DEATH_LOOK.ballistic;
+  if (PRECISION.has(style.look)) return DEATH_LOOK.ballistic;
   if (SEARING.has(style.look)) return DEATH_LOOK.seared;
   if (style.kind === 'cannon' || style.kind === 'rocket' || BLASTING.has(style.look)) return DEATH_LOOK.blast;
   return DEATH_LOOK.ballistic;
 }
 // Seconds a remembered shot still names the killer; zones (splash, barrages) only count in their own frame.
-const REMEMBER = 4, ZONE_SLOTS = 8, SPLASH = 3;
+const REMEMBER = 4, ZONE_SLOTS = 8;
 
 export class DeathLooks {
   constructor(view) {
@@ -236,11 +240,13 @@ export class DeathLooks {
   }
   event(ev, sim) {
     if (ev.type === 'shot' && ev.target != null) {
-      const style = weaponStyle(ev);
+      const base = weaponStyle(ev);
+      const radius = groundSplashRadius(ev, sim);
+      const style = radius || base.look === 'flame' ? base : BULLET;
       let r = this.last.get(ev.target);
       if (!r) this.last.set(ev.target, (r = this.free.pop() || { style: null, at: 0 }));
       r.style = style; r.at = sim.time;
-      if (Number.isFinite(ev.tx) && deathLookOf(style) === DEATH_LOOK.blast && (ev.heavy || style.kind === 'cannon')) this.zone(ev.tx, ev.tz, SPLASH, style, sim.time);
+      if (Number.isFinite(ev.tx) && deathLookOf(style) === DEATH_LOOK.blast && radius) this.zone(ev.tx, ev.tz, radius, style, sim.time);
     } else if (ev.type === 'strike' && Number.isFinite(ev.x)) this.zone(ev.x, ev.z, (ev.radius || 4) + 0.5, STRIKE_STYLE, sim.time);
   }
   zone(x, z, r, style, at) {

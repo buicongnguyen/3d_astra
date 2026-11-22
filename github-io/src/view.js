@@ -1638,8 +1638,8 @@ export class WorldView {
       updateBar(bar, e, dt, inbound);
       if (!inbound) u.flash = Math.max(0, (u.flash || 0)-realDt);
       const flash = !inbound && u.flash > 0 && this.settings.combatMotion !== false && !this.reducedMotion.matches;
-      u.ring.userData.flash = bar.userData.flash = flash ? 1 : 0;
-      if (flash) { u.ring.visible = bar.visible = true; u.ring.userData.appear = 1; }
+      bar.userData.flash = flash ? 1 : 0;
+      if (flash) bar.visible = true;
 
     }
     for (const [id, object] of this.objects)
@@ -1678,7 +1678,7 @@ export class WorldView {
     }
     this.bosses.update(sim, dt);
     this.updateDying(sim, dt);
-    this.fx.update(sim, dt);
+    this.fx.update(sim, dt, selected);
     this.tactics.update(sim, dt, selected);
     this.plugins.update(sim, dt);
     // Story missions: a ground ring at each capture point.

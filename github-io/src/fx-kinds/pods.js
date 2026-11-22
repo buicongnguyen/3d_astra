@@ -5,7 +5,7 @@
 import { CELL, STRETCH } from "./cells.js";
 import { flare, smokePuff } from "./common.js";
 import { launch } from "./ordnance.js";
-import { spriteSpark, spriteTracer } from "./sprite-fx.js";
+import { spriteSpark } from "./sprite-fx.js";
 import { CLASS_LOOK } from "./weapon-class.js";
 
 const TRACER = [1, 0.9, 0.55, 1], TRACER_END = [1, 0.7, 0.35, 0.7], SPURT_FLASH = [1, 0.85, 0.5, 0.9], SPURT_END = [1, 0.5, 0.2, 0];
@@ -38,7 +38,6 @@ function strafe(fx, ev, rng, a) {
     // The strike: a spark flick where it hits and a dust spurt off the ground (the last one under the target, at `travel`).
     // Delayed pooled sprites, no timer or closure per round.
     // R3-FX: the muzzle-flash sheet on each burst, and the needle sparks of the beam-impact sheet where each round strikes.
-    spriteTracer(fx, from, { x: tx, y: ty, z: tz }, vx / l, vy / l, vz / l, flight, anchor, false, delay);
     spriteSpark(fx, { x: tx, y: ty - fx.ground(tx, tz), z: tz }, anchor, delay + flight, i === n - 1 ? 1.5 : 1.1);
     const last = i === n - 1, s = fx.emit(fx.glow, tx, ty, tz, anchor, true);
     s.s0 = last ? 0.9 : 0.7; s.s1 = last ? 1.1 : 0.9; s.life = 0.08; s.c0 = SPURT_FLASH; s.c1 = SPURT_END; s.age = -(delay + flight);

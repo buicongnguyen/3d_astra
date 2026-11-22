@@ -119,12 +119,26 @@ test('new weapon voices exist and are picked by unit', () => {
   for (const n of ['shot:mg', 'shot:laser', 'shot:pod', 'shot:flame', 'impact:crit']) assert.ok(BANK[n], n);
 });
 
-test('a counter hit flares gold (a flare and a ring), a resisted hit only puffs grey', () => {
+test('a counter hit flares gold, a resisted hit only puffs grey', () => {
   const fx = fxWith(seeded(9)), at = { x: 1, y: 1, z: 1 };
   fx.counterHit(at, null, true);
   const gold = fx.glow.items.filter((p) => p.cell === 5 && p.c0[0] === 1 && p.c0[2] < 0.6).length;
-  assert.ok(gold >= 1 && fx.glow.items.some((p) => p.cell === 2), 'gold flare and ring');
+  assert.ok(gold >= 1 && !fx.glow.items.some((p) => p.cell === 2), 'gold flare without a ring');
   const fy = fxWith(seeded(9)); fy.counterHit(at, null, false);
   assert.equal(fy.glow.items.filter((p) => p.cell === 5).length, 0);
   assert.ok(fy.smoke.items.length >= 1);
+});
+
+
+test('splash art follows live ground damage including crew upgrades and shared weapon ids',async () => {
+  const {groundSplashRadius} = await import('../src/fx-kinds/weapon-class.js');
+  for (const unit of ['ranger','glider','antitank','tower','rampart','shade','watcher','stalker'])
+    assert.equal(groundSplashRadius({unit,weapon:'tank'}),0,unit);
+  for (const unit of ['tank','breaker','walker','hawk','balloon','scorcher','gunner'])
+    assert.ok(groundSplashRadius({unit,weapon:'ranger'}) > 0,unit);
+  const tower={splash_radius:2,splash_damage:4}, live={get:()=>tower};
+  assert.equal(groundSplashRadius({unit:'tower',source:1},live),2);
+  assert.equal(groundSplashRadius({unit:'tower',source:1,tAir:1},live),0);
+  tower.splash_damage=0;
+  assert.equal(groundSplashRadius({unit:'tank',source:1},live),0);
 });

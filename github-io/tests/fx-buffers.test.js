@@ -37,7 +37,7 @@ test('debris clears its last visible instance once and reuses the pool after exp
   const fx = create(), attribute = fx.debrisMesh.instanceMatrix;
   const version = attribute.version;
   fx.update(sim,.1); assert.equal(attribute.version,version);
-  fx.addDebris({x:0,y:1,z:0},2,null); fx.update(sim,.1);
+  fx.addDebris({x:0,y:1,z:0},4,null); fx.update(sim,.1);
   assert.equal(fx.debrisMesh.count,2);
   assert.deepEqual(attribute.updateRanges,[{start:0,count:32}]);
   attribute.clearUpdateRanges();
