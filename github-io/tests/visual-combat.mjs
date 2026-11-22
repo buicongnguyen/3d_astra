@@ -8,7 +8,7 @@ try{
   for(const viewport of [{width:1280,height:800},{width:390,height:844},{width:844,height:390}]){
     const mobile=viewport.width<1000,page=await browser.newPage({viewport,hasTouch:mobile,isMobile:mobile,deviceScaleFactor:1});
     const errors=[];page.on('pageerror',e=>errors.push(e.message));
-    await page.goto((process.env.TEST_URL||'http://127.0.0.1:4180/')+'?test=1');
+    await page.goto((process.env.TEST_URL||'http://127.0.0.1:4180/')+'?test=1', {waitUntil:'domcontentloaded',timeout:90000});
     await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});
     await page.locator('#start').click();
     await page.evaluate(()=>{
