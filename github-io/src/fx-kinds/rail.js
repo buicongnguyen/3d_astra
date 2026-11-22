@@ -3,6 +3,7 @@
 // from the muzzle forward (beam.js beamLine).
 import { ring, glow, sparks, fade } from "./common.js";
 import { chargeGlow, beamLine } from "./beam.js";
+import { spriteBeamImpact } from "./sprite-fx.js";
 
 const HOT = [0.9, 1, 0.92, 1];
 export default {
@@ -13,6 +14,7 @@ export default {
     ring(fx, from, 0.3, 1.2, c, 0.2, anchor, travel);
     beamLine(fx, rng, a, HOT, 0.07, 0.2, travel);
     beamLine(fx, rng, a, c, 0.2, 0.26, travel);
+    spriteBeamImpact(fx, { x: to.x, y: to.y - fx.ground(to.x, to.z), z: to.z }, c, anchor, travel); // R3-FX: the beam-impact sheet at the hit
     ring(fx, to, 0.4, 2, c, 0.3, anchor, travel + 0.03);
     glow(fx, to, 1.2, [c[0], c[1], c[2], 0.75], 0.16, anchor, travel + 0.02);
     sparks(fx, rng, to, 4, anchor, 0.6, HOT, fade(c), travel);

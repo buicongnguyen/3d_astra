@@ -149,3 +149,11 @@ UI kit design: Codex/OpenAI, owner-commissioned.
 - **Drone:** `generate_factions.py -- drone` (Wardens paint `ArmorWardens`, four materials).
 - **Iron Sovereign:** `node tools/port-boss-model.mjs <Tank_game_3D>/public/models/boss-walker.glb public/models/ironsovereign.glb --parts tools/boss-parts/ironsovereign.json`. This uses palette `sovereign3`: a brass hull, crimson fittings, umber feet. The round-2 `sovereign` palette is kept, so the old port can still be reproduced.
 - **Night glow on every building:** every building has an emissive `Window*` or `Lamp*` material. The Relay and Tower keep their floodlight `Lamp`s. A `Window` costs one draw per building type on screen, plus one in the High shadow pass.
+
+## Weapon VFX sprite sheets (AAA round 3, R3-FX)
+
+VFX sprite sheets: Codex/OpenAI, owner-commissioned.
+
+- Source: `3d_astra/codex-vfx/` (README: frame order, FPS, loops, attachment points, blend modes). Eleven 4x4 sheets, 512 px (desktop) and `-phone` 256 px.
+- Packed by `python tools/pack-fx-atlas.py <codex-vfx dir>` into ONE atlas per tier, lossless-alpha WebP: `public/fx/fx-atlas.webp` (1536x2048, 418 KB) and `public/fx/fx-atlas-phone.webp` (768x1024, 205 KB). Sheet order and the 3-wide grid are `SHEET_NAMES` / `GRID_COLS` in `src/fx-sprites-data.js`.
+- Runtime: `src/fx-sprites.js` (two pooled instanced batches, normal and additive: +2 draws), recipes in `src/fx-kinds/sprite-fx.js`. Loaded when a battle starts (`match-flow.js` restart), never on the title. The phone/Eco tier loads the 256 px atlas (3 MB of GPU memory; desktop 12.6 MB, no mipmaps). The service worker keeps `fx/*.webp` on first fetch. `?sprites=0` keeps the procedural effects.

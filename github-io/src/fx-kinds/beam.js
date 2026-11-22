@@ -4,6 +4,7 @@
 // fades from the muzzle forward (beamLine). Everything from the glow pool, through the allocation-free emit path.
 import { CELL, STRETCH } from "./cells.js";
 import { ring, glow, sparks, fade } from "./common.js";
+import { spriteBeamImpact } from "./sprite-fx.js";
 
 const HOT = [1, 1, 1, 1], HOT_DIM = [1, 1, 1, 0.4];
 export const BEAM_SEGMENTS = 5;
@@ -37,6 +38,8 @@ export default {
     // A hot white core over a coloured sheath.
     beamLine(fx, rng, a, HOT, width * 0.45, life, travel);
     beamLine(fx, rng, a, c0, width, life, travel);
+    // R3-FX: the beam-impact sheet (cyan-white flare and needle sparks) at the target, at the exact hit time.
+    spriteBeamImpact(fx, { x: to.x, y: to.y - fx.ground(to.x, to.z), z: to.z }, c0, anchor, travel);
     ring(fx, to, 0.3, style.ring ?? 1.5, c0, 0.26, anchor, travel + 0.02);
     glow(fx, to, 0.9, [c0[0], c0[1], c0[2], 0.7], 0.14, anchor, travel);
     sparks(fx, rng, to, 3, anchor, 0.5, HOT, fade(c0), travel);

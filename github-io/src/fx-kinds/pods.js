@@ -5,6 +5,7 @@
 import { CELL, STRETCH } from "./cells.js";
 import { flare, smokePuff } from "./common.js";
 import { launch } from "./ordnance.js";
+import { spriteImpact, spriteMuzzle } from "./sprite-fx.js";
 import { CLASS_LOOK } from "./weapon-class.js";
 
 const TRACER = [1, 0.9, 0.55, 1], TRACER_END = [1, 0.7, 0.35, 0.7], SPURT_FLASH = [1, 0.85, 0.5, 0.9], SPURT_END = [1, 0.5, 0.2, 0];
@@ -36,6 +37,9 @@ function strafe(fx, ev, rng, a) {
     p.s0 = p.s1 = 0.11; p.life = flight; p.cell = CELL.streak; p.c0 = a.color || TRACER; p.c1 = TRACER_END; p.age = -delay; p.rot = rng() * 6.28;
     // The strike: a spark flick where it hits and a dust spurt off the ground (the last one under the target, at `travel`).
     // Delayed pooled sprites, no timer or closure per round.
+    // R3-FX: the muzzle-flash sheet on each burst, and the needle sparks of the beam-impact sheet where each round strikes.
+    spriteMuzzle(fx, from, a.ux, a.uy, a.uz, "small", anchor, 1.1);
+    spriteImpact(fx, "beam", { x: tx, y: ty - fx.ground(tx, tz), z: tz }, 1, anchor, delay + flight, i === n - 1 ? 0.7 : 0.45);
     const last = i === n - 1, s = fx.emit(fx.glow, tx, ty, tz, anchor, true);
     s.s0 = last ? 0.9 : 0.7; s.s1 = last ? 1.1 : 0.9; s.life = 0.08; s.c0 = SPURT_FLASH; s.c1 = SPURT_END; s.age = -(delay + flight);
     const d = fx.emit(fx.smoke, last ? land.x : tx, fx.ground(last ? land.x : tx, last ? land.z : tz) + 0.25, last ? land.z : tz, anchor, true);

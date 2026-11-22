@@ -6,6 +6,7 @@
 // building a smaller burst (src/fx.js rocketImpact). View only: the simulation applied the damage when the
 // shot event was raised; nothing here moves a pin.
 import { flare, smokePuff } from "./common.js";
+import { spriteMuzzle } from "./sprite-fx.js";
 
 export const ROCKET = Object.freeze({
   arc: 0.05,       // arc height per metre of range (capped at `arcMax` metres)
@@ -27,6 +28,7 @@ export default {
     // A killing shot flies at the old speed, so it lands while the wreck is still there to be hit.
     const travel = alive ? a.travel : Math.min(a.travel, ROCKET.quick);
     flare(fx, from, 1, undefined, 0.07, anchor);
+    spriteMuzzle(fx, from, a.ux, a.uy, a.uz, "medium", anchor, 0.9); // R3-FX: a muzzle-flash sheet at the launcher
     fx.particle(fx.glow, { ...from, s0: 1.4, s1: 1.7, life: 0.09, c0: [1, 0.72, 0.35, 0.7], c1: [1, 0.4, 0.1, 0], anchor });
     // Back-blast: a puff of smoke thrown out behind the launcher.
     for (let i = 0, n = fx.count(3); i < n; i++)
