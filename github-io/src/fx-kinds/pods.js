@@ -42,7 +42,7 @@ function strafe(fx, ev, rng, a) {
     const last = i === n - 1, s = fx.emit(fx.glow, tx, ty, tz, anchor, true);
     s.s0 = last ? 0.9 : 0.7; s.s1 = last ? 1.1 : 0.9; s.life = 0.08; s.c0 = SPURT_FLASH; s.c1 = SPURT_END; s.age = -(delay + flight);
     const d = fx.emit(fx.smoke, last ? land.x : tx, fx.ground(last ? land.x : tx, last ? land.z : tz) + 0.25, last ? land.z : tz, anchor, true);
-    d.cell = CELL.puff; d.vy = 1.6; d.drag = 2.4; d.life = 0.8; d.s0 = 0.35 * SHOT_SCALE; d.s1 = 1.4 * SHOT_SCALE; d.c0 = fx.dustColor(0.55); d.c1 = fx.dustColor(0); d.age = -(delay + flight); d.spin = 0.6;
+    d.cell = CELL.puff; d.vy = 1.6; d.drag = 2.4; d.life = 0.8; d.s0 = 0.35 * SHOT_SCALE; d.s1 = 1.4 * SHOT_SCALE; d.c0 = fx.dustColor(0.55,d.x,d.z); d.c1 = fx.dustColor(0,d.x,d.z); d.age = -(delay + flight); d.spin = 0.6;
   }
 }
 

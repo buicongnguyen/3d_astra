@@ -17,18 +17,23 @@ export const spritesReady = (fx) => !!(fx.sprites && fx.sprites.ready);
 export function spriteImpact(fx, kind, at, power, anchor, delay = 0, scale = 1) {
   const sprites = fx.sprites;
   if (!sprites?.ready) return false;
-  const sheet = IMPACT_SHEET[kind];
-  if (!sheet) return false;
   const heavy = ['shell', 'walker', 'rocket', 'artillery', 'bomb', 'firebomb'].includes(kind);
+  const variant = heavy ? fx.rng() : 0;
+  const primary = IMPACT_SHEET[kind];
+  if (!primary) return false;
+  const sheet = heavy && variant < 0.33 ? (primary === "rocket" ? "artillery" : "rocket") : primary;
   const uncappedSize = readable(impactSize(kind, power) * scale, MIN_PX[kind] || IMPACT_PX, upp(fx)) * (heavy ? 1.22 : 1);
   const width = anchor?.targetWidth;
-  const size = width ? Math.min(uncappedSize, width * (kind === "beam" ? 0.5 : kind === "flak" ? 1.1 : 2)) : uncappedSize;
-  const p = sprites.take(sheet, at.x, at.y + size * (kind === "flak" || kind === "beam" ? 0 : 0.09), at.z, size, anchor, false);
+  const variedSize = uncappedSize * (heavy ? 0.8 + 0.4 * fx.rng() : 1);
+  const size = width ? Math.min(variedSize, width * (kind === "beam" ? 0.5 : kind === "flak" ? 1.1 : 2)) : variedSize;
+  const p = sprites.take(sheet, at.x, at.y, at.z, size, anchor, false);
   if (!p) return false;
   if (heavy) {
     p.mode = OCCLUDED; // Hulls and troops in front retain their silhouettes.
     p.a = 0.8;
-    p.fps *= 1.25; // Same number of art frames, 20% shorter visible life.
+    p.splash = true;
+    p.rot = (fx.rng() - 0.5) * 0.8;
+    p.fps = 50; // Three bright poses within 60 ms, cooling into smoke by 160 ms.
   }
   p.age = -delay;
   const tint = TINT[kind]; // each blast its own colour: a rocket hot yellow-white, artillery dusty, a bomb deep red-orange
@@ -52,7 +57,7 @@ export function spriteMuzzle(fx, from, ux, uy, uz, row, anchor, scale = 1) {
   const inlet = SHEETS.muzzle.inlet, back = (0.5 - inlet) * size;
   const p = sprites.take("muzzle", from.x + ux * back, from.y + uy * back, from.z + uz * back, size, anchor, true);
   if (!p) return false;
-  p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.start = (MUZZLE_ROW[row] ?? 1) * 4; p.count = 4;
+  p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.start = (MUZZLE_ROW[row] ?? 1) * 4; p.count = 4; p.life = 0.05; p.fps = 80;
   return true;
 }
 
@@ -96,7 +101,6 @@ export function spriteBeamImpact(fx, at, c0, anchor, delay) {
 export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = false, delay = 0) {
   const sprites = fx.sprites;
   if (!sprites?.ready || !fx.motion) return false;
-  const len = Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z) || 1;
   const size = Math.max(6, 100 * upp(fx)) * SHOT_SCALE, sheet = SHEETS.tracer;
   const p = sprites.take("tracer", from.x, from.y, from.z, size, anchor, true);
   if (!p) return false;
@@ -107,7 +111,7 @@ export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = fa
   if (!fx.allowFlash()) return true;
   const back = (0.5 - sheet.muzzleAt) * size;
   const m = sprites.take("tracer", from.x + ux * back, from.y + uy * back, from.z + uz * back, size * 0.8, anchor, true);
-  if (m) { m.a = SHOT_SCALE; m.mode = ORIENTED; m.ax = ux; m.ay = uy; m.az = uz; m.start = TRACER_FRAMES.muzzle; m.count = 4; m.age = -delay; }
+  if (m) { m.a = SHOT_SCALE; m.mode = ORIENTED; m.ax = ux; m.ay = uy; m.az = uz; m.start = TRACER_FRAMES.muzzle; m.count = 4; m.age = -delay; m.fps = 80; m.life = 0.05; }
   return true;
 }
 
@@ -118,7 +122,7 @@ export function spriteSpark(fx, at, anchor, delay = 0, scale = 1) {
   if (!fx.allowFlash()) return true;
   const p = sprites.take("tracer", at.x, at.y + 0.3, at.z, Math.min(0.65 * scale, (anchor?.targetWidth || 1.3) * 0.5), anchor, false);
   if (!p) return false;
-  p.a = SHOT_SCALE; p.start = TRACER_FRAMES.hit; p.count = 4; p.age = -delay;
+  p.a = SHOT_SCALE; p.start = TRACER_FRAMES.hit; p.count = 4; p.fps = 80; p.life = 0.05; p.age = -delay;
   return true;
 }
 

@@ -337,7 +337,10 @@ export class Effects {
   particle(layer, o) {
     const p = Object.assign(layer.spawn(this.rng), o);
     p.age = -(o.delay || 0);
-    if (layer === this.glow && p.cell === CELL.flare && !this.allowFlash()) p.c0 = [0.75, 0.46, 0.19, 0.26];
+    if (layer === this.glow && p.cell === CELL.flare) {
+      if (p.anchor?.shot) p.life = Math.min(p.life, .05);
+      if (!this.allowFlash()) p.c0 = [0.75, 0.46, 0.19, 0.26];
+    }
     // On maps with plateaus every effect is lifted to the ground under it.
     const t = this.view.terrain;
     if (t?.plateaus?.length && !o.lifted && Number.isFinite(o.x) && Number.isFinite(o.z)) p.y = (o.y || 0) + t.heightAt(o.x, o.z);
@@ -362,7 +365,7 @@ export class Effects {
     for (let i = 0; i < n; i++) {
       const a = this.rng() * Math.PI * 2, e = this.rng() * 0.9 + 0.1, v = this.motion ? speed[0] + this.rng() * (speed[1] - speed[0]) : 0;
       const dir = { x: Math.cos(a) * e, y: Math.sqrt(1 - e * e) + up, z: Math.sin(a) * e };
-      this.particle(layer, { ...o, x: at.x, y: at.y, z: at.z, vx: dir.x * v, vy: dir.y * v, vz: dir.z * v,
+      this.particle(layer, { ...o, x: at.x, y: at.y, z: at.z, vx: dir.x * v + (this.motion && layer === this.smoke ? .23 : 0), vy: dir.y * v, vz: dir.z * v,
         life: 0.7 * o.life * (0.8 + this.rng() * 0.4), ...(typeof o.extra === "function" ? o.extra(i) : {}) });
     }
   }
@@ -376,22 +379,28 @@ export class Effects {
         c0: WARM.spark, c1: WARM.sparkEnd, floor: 0.05, anchor });
     }
   }
-  // R3-X: the map's dust colour as a shared [r, g, b, alpha] array (alpha 0 for fade-outs, else the puff alpha), cached per map.
-  dustColor(alpha = 0.55) {
-    const id = this.view.terrain?.id;
-    if (!this.dustCache || this.dustCache.id !== id) {
-      const [r, g, b] = rgba(parseInt(themeFor(id).dust.slice(1), 16));
-      this.dustCache = { id, on: [r, g, b, 0.55], off: [r, g, b, 0] };
+  dustColor(alpha = 0.55, x, z) {
+    const terrain = this.view.terrain, id = terrain?.id;
+    const surface = x == null ? "dust" : terrain?.at?.(x,z) || "dust";
+    if (!this.dustCache || this.dustCache.id !== id)
+      this.dustCache = {id, colors: new Map()};
+    let pair = this.dustCache.colors.get(surface);
+    if (!pair) {
+      const theme = themeFor(id);
+      const hex = theme[surface] || (surface === "snow" ? "#d9e7e7" : theme.dust);
+      const [r,g,b] = rgba(parseInt(hex.slice(1),16));
+      pair = [[r,g,b,.55], [r,g,b,0]];
+      this.dustCache.colors.set(surface,pair);
     }
-    return alpha > 0 ? this.dustCache.on : this.dustCache.off;
+    return pair[alpha > 0 ? 0 : 1];
   }
   hitDust(at, n, anchor, size = 1, life = 1.1) {
-    this.dust(at, n, anchor, size * SHOT_SCALE, life);
+    this.dust({x: at.x, y: .06, z: at.z}, n, anchor, size * SHOT_SCALE * (.8 + .4*this.rng()), life);
   }
   dust(at, n, anchor, size = 1, life = 1.1) {
-    const [r, g, b] = rgba(parseInt(themeFor(this.view.terrain.id).dust.slice(1), 16));
-    this.burst(this.smoke, this.count(n), at, { life, s0: 0.6 * size, s1: 2.2 * size, drag: 2.5, cell: CELL.puff,
-      c0: [r, g, b, 0.55], c1: [r, g, b, 0], floor: 0.1, anchor, spin: (this.rng() - 0.5) * 0.6 }, [0.8 * size, 2 * size], 0.2);
+    this.burst(this.smoke, this.count(n), at, { life, s0: .6*size, s1: 2.2*size, drag: 2.5, cell: CELL.puff,
+      c0: this.dustColor(.55,at.x,at.z), c1: this.dustColor(0,at.x,at.z), floor: .04, anchor,
+      spin: (this.rng()-.5)*.6 }, [.8*size,2*size], .2);
   }
   // Chunks thrown by a blast: they arc, bounce on the ground (plateaus included), tumble to a
   // stop and shrink away. `trails` gives the first few a thin smoke trail while airborne.
@@ -443,15 +452,12 @@ export class Effects {
   }
   explosion(at, scale, anchor, heavy = true) {
     const m = this.motion;
-    this.particle(this.glow, { ...at, cell: CELL.flare, s0: 3.6 * scale, s1: 4.4 * scale, life: 0.16, c0: WARM.flash, c1: [1, 0.6, 0.2, 0], anchor });
-    this.particle(this.glow, { ...at, s0: 4.2 * scale, s1: 5.5 * scale, life: 0.176, c0: [1, 0.72, 0.38, 0.9], c1: [1, 0.35, 0.08, 0], anchor });
-    this.burst(this.glow, this.count(8), at, { life: 0.6, s0: 1.1 * scale, s1: 3 * scale, drag: 3.5, c0: WARM.fire, c1: WARM.ember, anchor,
-      spin: 1.5 }, [1.5 * scale, 4 * scale], 0.5);
+    this.particle(this.glow, { ...at, cell: CELL.flare, s0: 3.6 * scale, s1: 4.4 * scale, life: 0.05, c0: WARM.flash, c1: [1, 0.6, 0.2, 0], anchor });
     // Normal-blended fire body: stays saturated on bright ground where additive light washes out.
-    this.burst(this.smoke, this.count(7), at, { life: 0.95, s0: 1.2 * scale, s1: 3.2 * scale, drag: 3, cell: CELL.puff,
+    this.burst(this.smoke, this.count(7), at, { life: 0.24, s0: 1.2 * scale, s1: 3.2 * scale, drag: 3, cell: CELL.puff,
       c0: [1, 0.6, 0.18, 0.95], c1: [0.2, 0.17, 0.15, 0], anchor, spin: 1, gravity: -1.2 }, [1.2 * scale, 3.2 * scale], 0.6);
     this.burst(this.smoke, this.count(6), { ...at, y: at.y + 0.3 }, { life: m ? 2.4 : 1, s0: 1.1 * scale, s1: 3.8 * scale, drag: 1.4,
-      cell: CELL.puff, c0: [0.2, 0.19, 0.18, 0.78], c1: [0.36, 0.35, 0.34, 0], fadeIn: 0.12, delay: 0.06, anchor, gravity: -0.6,
+      cell: CELL.puff, c0: [0.2, 0.19, 0.18, 0.50], c1: [0.36, 0.35, 0.34, 0], fadeIn: 0.12, delay: 0.06, anchor, gravity: -0.6,
       spin: 0.4 }, [0.6 * scale, 1.6 * scale], 1.2);
     this.sparks(at, heavy ? 10 : 5, anchor, scale);
     this.decal(at, 3.4 * scale, 12, anchor);
@@ -459,10 +465,10 @@ export class Effects {
   }
   contactHit(at, anchor) {
     // A glint on the material, a couple of tiny chips, and dust only on the ground.
-    this.particle(this.glow, { ...at, cell: CELL.flare, life: 0.075, s0: Math.min(0.56, (anchor?.targetWidth || 1.2) / 2), s1: 0.2, priorityHit: true,
+    this.particle(this.glow, { ...at, cell: CELL.flare, life: 0.045, s0: Math.min(0.56, (anchor?.targetWidth || 1.2) / 2), s1: 0.2, priorityHit: true,
       c0: WARM.flash, c1: WARM.sparkEnd, anchor });
     if (!this.motion) return;
-    this.sparks(at, 2, anchor, 0.32);
+    this.sparks(at, 1 + Math.floor(this.rng()*3), anchor, 0.32);
     if (at.y < 2.2) this.hitDust({ ...at, y: 0.14 }, 1, anchor, 0.45, 0.26);
   }
   precisionShot(from, to, land, travel, anchor) {
@@ -494,39 +500,35 @@ export class Effects {
     if (!(power > 0)) {
       // R3-FX: a rifle round that lands throws the needle sparks of the beam-impact sheet, small (Eco: every other round).
       if (!aloft && (!this.view.lowPower || this.rng() < 0.5)) spriteSpark(this, at, anchor);
-      this.particle(this.glow, { ...at, s0: 0.5, s1: 0.7, life: 0.07, c0: [1, 0.9, 0.6, 0.9], c1: [1, 0.5, 0.2, 0], anchor });
+      this.particle(this.glow, { ...at, s0: 0.5, s1: 0.7, life: 0.05, c0: [1, 0.9, 0.6, 0.9], c1: [1, 0.5, 0.2, 0], anchor });
       this.sparks(at, 3, anchor, 0.45);
       // R3-X tracers: every rifle round that reaches the ground kicks a small dust puff (Eco: every other one).
       if (!aloft && this.rng() < (this.view.lowPower ? 0.5 : 1)) this.hitDust({ x: at.x, y: 0.25, z: at.z }, 1, anchor, 0.45, 0.7);
       return;
     }
     if (aloft) { airBurst(this, { x: at.x, y: at.y + this.ground(at.x, at.z), z: at.z }, anchor, Math.min(1.2, 0.5 + power * 0.5)); return; }
-    const s = Math.min(power, (anchor?.targetWidth ?? Infinity) * 2 / 4.6), m = this.motion, top = { x: at.x, y: at.y + 0.35, z: at.z };
+    const s = Math.min(power, (anchor?.targetWidth ?? Infinity) * 2 / 4.6), m = this.motion, top = { ...at };
     // Keep the blast within two target widths with or without sprites.
     if (spriteImpact(this, kind, at, power, anchor)) {
       this.hitDust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.1 * s, 1.1);
       this.sparks(top, 8, anchor, s);
       this.addDebris(at, Math.round(4 * s), anchor, 0.85 * s, s >= 1 ? 2 : 0);
-      this.scorch(at, 2.6 * s, anchor, kind === "artillery" || kind === "bomb" || kind === "firebomb");
+      this.scorch(at, 1.4 * s, anchor, kind === "artillery" || kind === "bomb" || kind === "firebomb");
       return;
     }
     // Reduced motion / combat motion off: a soft warm flare instead of the white-hot star (no flashing).
-    this.particle(this.glow, { ...top, cell: CELL.flare, s0: 3.8 * s, s1: 4.6 * s, life: 0.12, c0: m ? WARM.flash : [1, 0.8, 0.5, 0.45], c1: [1, 0.6, 0.2, 0], anchor });
-    this.particle(this.glow, { ...top, s0: 3.2 * s, s1: 4.2 * s, life: 0.176, c0: [1, 0.76, 0.42, 0.95], c1: [1, 0.35, 0.08, 0], anchor });
+    this.particle(this.glow, { ...top, cell: CELL.flare, s0: 3.8 * s, s1: 4.6 * s, life: 0.05, c0: m ? WARM.flash : [1, 0.8, 0.5, 0.45], c1: [1, 0.6, 0.2, 0], anchor });
     // Fireball: a normal-blended body (stays saturated on bright ground) and additive licks.
-    this.burst(this.smoke, this.count(7), top, { life: 0.8, s0: 1.3 * s, s1: 3.3 * s, drag: 3.2, cell: CELL.puff,
+    this.burst(this.smoke, this.count(7), top, { life: 0.24, s0: 1.3 * s, s1: 3.3 * s, drag: 3.2, cell: CELL.puff,
       c0: [1, 0.6, 0.18, 0.96], c1: [0.22, 0.18, 0.16, 0], anchor, spin: 1, gravity: -1.6 }, [1.3 * s, 3.2 * s], 0.75);
-    this.burst(this.glow, this.count(5), top, { life: 0.5, s0: 1.1 * s, s1: 2.7 * s, drag: 3.5, c0: WARM.fire, c1: WARM.ember, anchor,
-      spin: 1.5 }, [1.4 * s, 3.4 * s], 0.6);
     this.burst(this.smoke, this.count(4), { x: at.x, y: at.y + 0.7, z: at.z }, { life: m ? 2.1 : 0.9, s0: 1 * s, s1: 3.6 * s, drag: 1.4,
-      cell: CELL.puff, c0: [0.19, 0.18, 0.17, 0.74], c1: [0.38, 0.37, 0.36, 0], fadeIn: 0.1, delay: 0.1, anchor, gravity: -0.8,
+      cell: CELL.puff, c0: [0.19, 0.18, 0.17, 0.52], c1: [0.38, 0.37, 0.36, 0], fadeIn: 0.1, delay: 0.1, anchor, gravity: -0.8,
       spin: 0.4 }, [0.6 * s, 1.4 * s], 1.1);
     this.hitDust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.1 * s, 1.1);
     this.sparks(top, 8, anchor, s);
     this.addDebris(at, Math.round(4 * s), anchor, 0.85 * s, s >= 1 ? 2 : 0);
-    // Hot ground: an orange glow that cools in about a second, then the scorch.
-    this.decal(at, 2.2 * s, 0.96, anchor, CELL.glow, [1, 0.45, 0.1, 0.85], this.glow, 1.7 * s, { hold: 0.15, y: 0.08 });
-    this.scorch(at, 2.6 * s, anchor);
+    // The fading scorch marks this splash hit.
+    this.scorch(at, 1.4 * s, anchor);
   }
   // An Anti-tank rocket landing (src/fx-kinds/rocket.js), shaped by its target. On armour: a white-hot star,
   // the usual heavy hit, a fan of sparks thrown back off the plate, a few metal chips and a ring. On infantry or a
@@ -584,7 +586,7 @@ export class Effects {
     const { style, from, land } = this.aim(e, sim), heavy = style.kind === "cannon" || style.kind === "rocket";
     if (sim.isVisible({ x: e.x, z: e.z })) {
       const anchor = { x: e.x, z: e.z }, flash = heavy ? 1.4 : 0.7;
-      this.particle(this.glow, { ...from, cell: CELL.flare, s0: flash, s1: flash * 1.2, life: heavy ? 0.11 : 0.06, c0: WARM.flash, c1: [1, 0.55, 0.15, 0], anchor });
+      this.particle(this.glow, { ...from, cell: CELL.flare, s0: flash, s1: flash * 1.2, life: 0.05, c0: WARM.flash, c1: [1, 0.55, 0.15, 0], anchor });
     }
     if (sim.isVisible({ x: e.tx, z: e.tz })) {
       const anchor = { x: e.tx, z: e.tz, target: e.target, targetWidth: 2 * (sim?.get?.(e.target)?.radius || 0.75), direct: !groundSplashRadius(e, sim) }, power = style.hit ?? hitPower(e.weapon, style.kind);
@@ -629,9 +631,9 @@ export class Effects {
     const shell = cls === "shell";
     // Muzzle: star flare, hot glow and (for heavy weapons) a smoke puff drifting forward.
     const flash = (cannon ? (e.weapon === "tank" ? 1.9 : 1.4) : rocket ? 1 : 0.7) * (shell ? 1.45 : 1);
-    this.particle(this.glow, { ...from, cell: CELL.flare, s0: flash, s1: flash * 1.2, life: cannon ? 0.11 : 0.06, c0: m ? WARM.flash : [1, 0.8, 0.5, 0.45],
+    this.particle(this.glow, { ...from, cell: CELL.flare, s0: flash, s1: flash * 1.2, life: 0.05, c0: m ? WARM.flash : [1, 0.8, 0.5, 0.45],
       c1: [1, 0.55, 0.15, 0], anchor });
-    this.particle(this.glow, { ...from, s0: flash * 1.5, s1: flash * 1.8, life: cannon ? 0.14 : 0.08, c0: [1, 0.72, 0.35, 0.7],
+    this.particle(this.glow, { ...from, s0: flash * 1.5, s1: flash * 1.8, life: 0.05, c0: [1, 0.72, 0.35, 0.7],
       c1: [1, 0.4, 0.1, 0], anchor });
     if ((cannon || rocket) && m && this.budget === 1) {
       const back = rocket ? -1 : 1;
@@ -788,7 +790,7 @@ export class Effects {
     if (e.type !== 'salvage' && this.motion) shimmer(this, e, this.rng, tint, anchor); // the decloak shimmer
   }
   strike(e) {
-    // A Barrage shell landing: one heavy blast and a shockwave out to the damage radius.
+    // A Barrage shell landing throws debris around a crater.
     // A heavy blast, a fire column climbing out of it, dirt thrown wide, a ring out to the
     // damage radius, a shower of debris and a wide crater scorch.
     const anchor = { x: e.x, z: e.z, team: e.team }, r = e.radius || 4, m = this.motion;
@@ -863,16 +865,19 @@ export class Effects {
     this.dust({ x: r.x, y: 0.3, z: r.z }, 3, anchor, 1, 1);
   }
   impact(e) {
-    const at = { x: e.x, y: e.building ? 2.2 : 1.1, z: e.z }, anchor = { x: e.x, z: e.z, team: e.team, target: e.seed };
+    const altitude = this.frameSim?.get?.(e.seed)?.fly || 0;
+    const at = { x: e.x, y: altitude + (e.building ? 2.2 : 1.1), z: e.z }, anchor = { x: e.x, z: e.z, team: e.team, target: e.seed };
     if (e.shield) {
-      // Shield: a cyan ripple shell and flash where the round is stopped.
-      this.particle(this.glow, { ...at, priorityHit: true, cell: CELL.glow, s0: 0.75, s1: 0.35, life: 0.3,
-        c0: [0.55, 0.92, 1, 0.9], c1: [0.35, 0.75, 1, 0], anchor, delay: 0.05 });
-      this.particle(this.glow, { ...at, s0: 1.3, s1: 1.8, life: 0.14, c0: [0.5, 0.9, 1, 0.55], c1: [0.4, 0.8, 1, 0], anchor, delay: 0.05 });
+      this.particle(this.glow, { ...at, priorityHit: true, cell: CELL.glow, s0: 0.75, s1: 0.35, life: 0.05,
+        c0: [0.55,0.92,1,0.9], c1: [0.35,0.75,1,0], anchor, delay: 0.05 });
     } else {
       this.sparks(at, 4, anchor, 0.7);
-      this.particle(this.smoke, { ...at, priorityHit: true, vy: this.motion ? 0.8 : 0, s0: 0.4 * SHOT_SCALE, s1: 1.2 * SHOT_SCALE, life: 0.6, cell: CELL.puff,
-        c0: [0.35, 0.34, 0.32, 0.45], c1: [0.4, 0.4, 0.4, 0], anchor, delay: 0.05 });
+      if (altitude) {
+        this.particle(this.glow, { ...at, priorityHit:true, cell:CELL.flare, s0:.36,s1:.15,life:.045,c0:WARM.flash,c1:WARM.sparkEnd,anchor });
+      } else {
+        this.particle(this.smoke, { x:e.x,y:.06,z:e.z, priorityHit:true, vx:this.motion ? .2 : 0, vy:this.motion ? .5 : 0,
+          s0:.4*SHOT_SCALE, s1:1.2*SHOT_SCALE, life:.32, cell:CELL.puff, c0:this.dustColor(.55,e.x,e.z), c1:this.dustColor(0,e.x,e.z), anchor, delay:.05 });
+      }
     }
   }
   // R3-X: a flyer shot down bursts where it flies (a flash, a puff of black smoke, sparks and chips), not on the

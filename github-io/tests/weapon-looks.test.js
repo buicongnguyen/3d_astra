@@ -157,7 +157,28 @@ test('gun contact keeps a quarter-width dust puff and shield hits emit no ring',
   const fx=fxWith(seeded(7));
   fx.hit({x:1,y:.9,z:1},0,null);
   const dust=fx.smoke.items.filter(p=>p.cell===1);
-  assert.ok(dust.some(p=>Math.abs(p.s1 - 2.2*.45/4)<1e-9));
+  assert.ok(dust.some(p=>p.s1 >= 2.2*.45/4*.8 && p.s1 <= 2.2*.45/4*1.2));
   fx.impact({x:1,z:1,shield:true});
   assert.ok(!fx.glow.items.some(p=>p.cell===2));
+});
+
+
+test('F6 direct contacts, blast cores and dust stay grounded on each local surface', () => {
+  const fx = fxWith(seeded(13));
+  fx.view.terrain={id:'riverlands', plateaus:[{}], heightAt:()=>3, at:x=>x<0?'sand':x>0?'snow':'grass'};
+  const ground=[];
+  for(const x of [-2,0,2]){
+    fx.contactHit({x,y:.9,z:1},{direct:true,targetWidth:.8,shot:true});
+    const mark=fx.glow.items.findLast(p=>p.priorityHit);
+    assert.ok(mark.life>=.03&&mark.life<=.06);
+    assert.ok(Math.abs(mark.y-3.9)<1e-9);
+    const dust=fx.smoke.items.at(-1);
+    assert.ok(Math.abs(dust.y-3.06)<1e-9);
+    assert.ok(dust.c0[3]<.6);
+    ground.push(dust.c0.slice(0,3));
+  }
+  assert.equal(new Set(ground.map(rgb=>rgb.join(','))).size,3);
+  assert.equal(fx.decals.items.length,0);
+  fx.hit({x:0,y:.9,z:1},1,{direct:false,shot:true,targetWidth:2});
+  assert.ok(fx.decals.items.some(p=>p.hitScorch));
 });

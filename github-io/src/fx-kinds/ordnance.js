@@ -182,18 +182,18 @@ export function flakBurst(fx, at, anchor, n = CLASS_LOOK.flak.bursts, spread = C
     // R3-FX: the flak-burst sheet (a cluster of soot puffs with orange flashes): the first at the hit, the next ones a beat later and smaller.
     if (sheets && spriteImpact(fx, "flak", { x, y: y - fx.ground(x, z), z }, power, anchor, delay, i ? 0.7 : 1)) continue;
     const bright = !calm && fx.allowFlash();
-    sprite(fx, fx.glow, x, y, z, anchor, CELL.flare, 2 * power, 2.6 * power, 0.14, bright ? PAL.flakFire : PAL.calm, bright ? PAL.flakFireEnd : PAL.calmEnd, delay);
+    sprite(fx, fx.glow, x, y, z, anchor, CELL.flare, 2 * power, 2.6 * power, 0.05, bright ? PAL.flakFire : PAL.calm, bright ? PAL.flakFireEnd : PAL.calmEnd, delay);
     const s = sprite(fx, fx.smoke, x, y, z, anchor, CELL.puff, 0.8 * power, 2.4 * power, 1.2 + fx.rng() * 0.4, PAL.flakBlack, PAL.flakBlackEnd, delay);
     s.drag = 1.5; s.vy = calm ? 0 : 0.35; s.spin = (fx.rng() - 0.5) * 1.2; s.fadeIn = 0.04;
   }
 }
 
-// A sharp burst in the air (a missile meeting a flyer): a white star, a quick ring, sparks and a dark puff. No ground marks.
+// A sharp burst in the air (a missile meeting a flyer): a white star, sparks and a dark puff. No ground marks.
 export function airBurst(fx, at, anchor, power = 1) {
   const calm = !fx.motion;
   // R3-FX: the flak-burst sheet is the burst (a missile or shell meeting a flyer); the sparks below stay.
   const sheet = spriteImpact(fx, "missile", { x: at.x, y: at.y - fx.ground(at.x, at.z), z: at.z }, power, anchor, 0, 1);
-  if (!sheet) sprite(fx, fx.glow, at.x, at.y, at.z, anchor, CELL.flare, 2.4 * power, 3 * power, 0.1, !calm && fx.allowFlash() ? PAL.flash : PAL.calm, PAL.calmEnd);
+  if (!sheet) sprite(fx, fx.glow, at.x, at.y, at.z, anchor, CELL.flare, 2.4 * power, 3 * power, 0.05, !calm && fx.allowFlash() ? PAL.flash : PAL.calm, PAL.calmEnd);
   if (!sheet) { const s = sprite(fx, fx.smoke, at.x, at.y, at.z, anchor, CELL.puff, 0.5, 1.5 * power, 0.9, PAL.flakBlack, PAL.flakBlackEnd, 0.03); s.drag = 1.5; s.vy = calm ? 0 : 0.3; }
   if (calm) return;
   for (let i = 0, n = fx.count(6); i < n; i++) {
@@ -235,7 +235,7 @@ export function landRound(fx, r, ux, uz) {
       return;
     }
     default: {
-      // shell, artillery: the heavy hit, a bright ring and a scorch ring; in the air (a shell at a flyer) a burst instead.
+      // shell, artillery: the heavy hit and a scorch; in the air (a shell at a flyer) a burst instead.
       if (r.air) { airBurst(fx, r.to, anchor, 0.7); return; }
       fx.hit(at, r.power, anchor, r.walker ? "walker" : impactKind(r.cls) || "shell");
       if (r.cls === "shell" && fx.motion) shellSparks(fx, at, anchor);

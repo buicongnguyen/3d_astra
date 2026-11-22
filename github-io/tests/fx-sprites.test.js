@@ -107,3 +107,27 @@ test("tracer atlas uses one quarter of the live size and glow after the screen-s
   }
   for(const name of Object.values(IMPACT_SHEET))assert.ok(!['tank','bomb','missile'].includes(name));
 });
+
+
+test('F6 blast variants use the seeded cosmetic stream, normal blend and the target height',async () => {
+  const {spriteImpact,spriteMuzzle} = await import('../src/fx-kinds/sprite-fx.js');
+  const {mulberry32}=await import('../src/rng.js');
+  function run(seed){
+    const seen=[];
+    const fx={motion:true,allowFlash:()=>true,rng:mulberry32(seed),view:{unitsPerPixel:.1},sprites:{ready:true,take(name,x,y,z,size){
+      const p={name,x,y,z,size,count:16,fps:SHEETS[name].fps,a:1};
+      seen.push(p);return p;
+    }}};
+    for(let i=0;i<16;i++) spriteImpact(fx,'shell',{x:1,y:.95,z:0},1,{targetWidth:2});
+    spriteMuzzle(fx,{x:0,y:1,z:0},1,0,0,'medium',null);
+    const muzzle=seen.pop();assert.equal(muzzle.life,.05);
+    for(const p of seen) {
+      assert.equal(p.y,.95);assert.ok(p.size<=4);assert.equal(SHEETS[p.name].blend,'normal');
+      assert.ok(p.splash && p.hotCore && p.fps>=50 && p.life<=.3);
+      assert.ok(Math.abs(p.rot)<=.41);
+    }
+    return seen.map(({name,rot,size})=>[name,rot,size]);
+  }
+  const sample=run(1482);assert.deepEqual(sample,run(1482));
+  assert.notDeepEqual(sample,run(1483));assert.equal(new Set(sample.map(p=>p[0])).size,2);
+});
