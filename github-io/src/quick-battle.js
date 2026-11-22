@@ -115,10 +115,25 @@ export function setupQuickBattle(S, A) {
     const slot = $("title-actions");
     if (!slot) return;
     slot.innerHTML = `<button type="button" id="quick-battle" class="quick-battle">${icon("bolt")}<span class="quick-text"><strong>Quick battle</strong><small>Ready base · 1 rival</small></span></button>`;
+    let training = null;
+    if (!readSave() && !Object.keys(S.campaign?.cleared || {}).length && !hasDefenceWin(S.defenceProgress || loadDefence())) {
+      training = document.createElement("button");
+      training.type = "button";
+      training.className = "quick-battle";
+      training.id = "start-training";
+      training.innerHTML = `${icon("flag")}<span class="quick-text"><strong>Start here</strong><small>Training</small></span>`;
+      training.addEventListener("click", () => {
+        if (Z.started) return;
+        S.playMode = "training";
+        A.previewBattle();
+        $("start").onclick?.();
+      });
+      slot.prepend(training);
+    }
     slot.hidden = false;
     const button = $("quick-battle"), start = $("start");
     // Usable exactly when Start is (not while the first models load or after a failed load).
-    const sync = () => { button.disabled = start.disabled && !S.loadFailed; };
+    const sync = () => { button.disabled = start.disabled && !S.loadFailed; if (training) training.disabled = start.disabled; };
     sync();
     new MutationObserver(sync).observe(start, { attributes: true, attributeFilter: ["disabled"] });
     button.addEventListener("click", startQuick);

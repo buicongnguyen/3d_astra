@@ -134,3 +134,6 @@
   .compact-ui #briefing:not(.campaign-view) .quick-text small { display: none; }
   .compact-ui #briefing:not(.campaign-view) .quick-text strong { font-size: 14px; line-height: 1.1; }
 }
+
+#title-actions:has(#start-training) { display: flex; flex-wrap: wrap; gap: 4px; }
+#title-actions #start-training { border-color: var(--kit-gold, #edc76f); }

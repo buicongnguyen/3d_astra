@@ -144,8 +144,14 @@ export function setupMatchFlow(S, A) {
   }
 
   // The title card of a mission, Chronicle mission or Defence level as it begins (a tutorial and a skirmish have none).
+  function showBaseObjective() {
+    showTitleCard({ title: "Establish your economy", briefing: { place: "Your Harvesters are mining. Train more at the Command core, then build a Barracks." } });
+  }
+  A.showBaseObjective = showBaseObjective;
+
   function openTitleCard() {
     hideTitleCard();
+    if (!S.sim.missionDef && S.playMode === "skirmish") { showBaseObjective(); return; }
     if (S.sim.missionDef && S.playMode !== "training" && (!S.query?.has("test") || S.query.has("titlecard"))) showTitleCard(S.sim.missionDef);
   }
 
@@ -249,10 +255,8 @@ export function setupMatchFlow(S, A) {
     A.syncAutocast();
     startEconomy();
     // A story mission opens with its own first line instead of the general hint.
-    if (S.playMode !== "campaign" && S.playMode !== "defence") A.notice(
-      S.playMode !== "training"
-        ? "Your Harvesters are mining. Train more at the Command core, then build a Barracks."
-        : S.touchInput
+    if (S.playMode === "training") A.notice(
+      S.touchInput
           ? "Tap Workers, then tap amber crystals. Drag to pan; pinch to zoom."
           : "Select Harvesters, then right-click amber crystals to start your economy.",
     );

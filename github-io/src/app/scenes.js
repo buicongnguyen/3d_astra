@@ -19,7 +19,7 @@ import "../openings.css";
 import { $ } from "./dom.js";
 import { SCENES, FLASHES, TITLE_BEAT_SECONDS, sceneLineSeconds } from "../story/scenes.js";
 import { motionOff } from "./preferences.js";
-import { OPENINGS, openingPlan, openingPose } from "../story/openings.js";
+import { OPENINGS, baseOpening, openingPlan, openingPose } from "../story/openings.js";
 import { titleCardFor } from "../story/mission-intros.js";
 import { hideTitleCard } from "./title-card.js";
 import { MISSIONS } from "../story/missions.js";
@@ -129,8 +129,9 @@ export function setupScenes(S, A) {
 
   // A campaign mission that just began opens with its fly-in (see the header for when it does not).
   function maybeOpening() {
-    const def = S.sim?.missionDef;
-    if (!def || !OPENINGS[def.id] || opened.has(def.id) || S.playMode !== "campaign" || !Z.started || Z.paused || Z.modalType) return false;
+    const skirmish = S.playMode === "skirmish" && !S.sim?.missionDef;
+    const def = skirmish ? { id: S.quick ? "quick" : "skirmish", title: S.quick ? "Quick battle" : "Skirmish" } : S.sim?.missionDef;
+    if (!def || opened.has(def.id) || (!skirmish && (S.playMode !== "campaign" || !OPENINGS[def.id])) || !Z.started || Z.paused || Z.modalType) return false;
     if (S.sim.time > 0.3 || S.sim.result || (S.query?.has("test") && !S.query.has("opening"))) return false;
     // Calm like the title cover (app/cover.js): reduced motion or "Animate combat effects" off skip it; Eco
     // graphics alone (the phones' default) keep it, a camera move costs no extra drawing.
@@ -142,7 +143,8 @@ export function setupScenes(S, A) {
   function playOpening(def = S.sim?.missionDef) {
     if (!def || play || !Z.started || (Z.modalType && Z.modalType !== "scene") || !S.view) return false;
     const home = { x: S.view.focus.x, z: S.view.focus.z, zoom: S.view.zoom };
-    const plan = openingPlan(def, home, { baseZoom: S.view.defaultZoom, maxZoom: S.view.maxZoom || 88 });
+    const base = def.id === "skirmish" || def.id === "quick";
+    const plan = base ? baseOpening(home, def.id === "quick") : openingPlan(def, home, { baseZoom: S.view.defaultZoom, maxZoom: S.view.maxZoom || 88 });
     if (!plan) return false;
     opened.add(def.id);
     S.touchControls?.reset();
@@ -165,7 +167,7 @@ export function setupScenes(S, A) {
     openingBox.classList.remove("on"); void openingBox.offsetWidth; openingBox.classList.add("on");
     // The title reads in the opening itself; the match's own card would only repeat it.
     hideTitleCard();
-    liftFog();
+    if (!base) liftFog();
     // Phones: the strip under the (hidden) dock is drawn too, so the fly-in fills the letterbox.
     play.coverOpen = S.view.coverOpen;
     S.view.setCoverOpen?.(false);
@@ -281,6 +283,7 @@ export function setupScenes(S, A) {
     S.keys.clear();
     if (!keepScreen && Z.modalType === "scene") Z.close(!!S.sim.result);
     for (const event of p.later) { A.missionUI.say(event.who, event.text); if (S.sim.result) A.missionUI.endMatch(); }
+    if (!keepScreen && p.sim === S.sim && ["skirmish", "quick"].includes(p.opening?.id)) A.showBaseObjective?.();
     if (p.back?.isConnected && !p.back.closest?.("[hidden]") && !p.back.disabled) p.back.focus?.({ preventScroll: true });
     for (const fn of p.then) fn();
   }

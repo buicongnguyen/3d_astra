@@ -62,6 +62,13 @@ export function openingPlan(def, home, { baseZoom = 38, maxZoom = 88 } = {}) {
   return { id: def.id, frames: row.frames, seconds, from: { x: start.x, z: start.z, zoom }, to: { x: home.x, z: home.z, zoom: home.zoom ?? baseZoom }, drift: row.drift || [0, 0] };
 }
 
+// The skirmish camera starts just beyond the base and returns to the captured home pose.
+export function baseOpening(home, quick = false) {
+  return { id: quick ? "quick" : "skirmish", frames: "camp", seconds: 3.4,
+    from: { x: home.x * 0.88, z: home.z * 0.88, zoom: home.zoom * 1.12 },
+    to: { ...home }, drift: [0, 0] };
+}
+
 // The camera at `t` seconds into `plan`: a slow drift on the landmark (zooming in a little), then the glide home.
 export function openingPose(plan, t) {
   const hold = plan.seconds * OPENING_HOLD, [dx, dz] = plan.drift;

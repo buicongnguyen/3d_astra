@@ -2,6 +2,10 @@
 
 ## Unreleased: Round A
 
+### A5 — First minute
+
+Fresh profiles can launch Training directly. Quick battle and Skirmish open with a skippable base fly-in and an economy objective.
+
 ### A4 — World edge
 
 Biome-coloured foothills extend past the playable cliff and follow night and storm lighting.

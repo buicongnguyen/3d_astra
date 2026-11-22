@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { MISSIONS } from "../src/story/missions.js";
 import { Simulation } from "../src/simulation.js";
-import { OPENINGS, OPENING_SECONDS, OPENING_FRAMES, openingStart, openingPlan, openingPose } from "../src/story/openings.js";
+import { OPENINGS, OPENING_SECONDS, OPENING_FRAMES, baseOpening, openingStart, openingPlan, openingPose } from "../src/story/openings.js";
 import { MAP_TEXT, ENDING_HINTS } from "../src/story/campaign-map.js";
 import { ENDING_IDS, DECISIONS } from "../src/story/choices.js";
 import { storyStrings } from "../tools/story-strings.mjs";
@@ -106,4 +106,14 @@ test("campaign map: decision marks, ending hints and the phone layout rules", ()
   for (const [, px] of block.matchAll(/min-height: (\d+)px/g)) assert.ok(Number(px) >= 44, `min-height ${px}px`);
   assert.match(block, /campaign-view \.mode-switch button > \.icon \{ display: block;/);
   assert.doesNotMatch(block, /\.mode-switch button(:not\([^)]*\))?\s*\{[^}]*display: none/, "no mode button is hidden");
+});
+
+test("skirmish and quick fly-ins end on the captured player camera", () => {
+  const home = { x: -24, z: 32, zoom: 38 };
+  for (const quick of [true, false]) {
+    const plan = baseOpening(home, quick);
+    assert.ok(plan.seconds >= 3 && plan.seconds <= 4);
+    assert.deepEqual(openingPose(plan, plan.seconds), home);
+    assert.notDeepEqual(openingPose(plan, 0), home);
+  }
 });
