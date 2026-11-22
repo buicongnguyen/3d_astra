@@ -13,6 +13,7 @@ function setup() {
     const e=new Event(type,{cancelable:true});
     Object.assign(e,{clientX:x,clientY:y,pointerId:id,pointerType});
     canvas.dispatchEvent(e);
+    return e;
   };
   return {controls,send,captures,taps,boxes};
 }
@@ -47,4 +48,16 @@ test('background reset clears capture and ignores a late finger release',()=>{
   assert.equal(f.captures.size,0);
   f.send('pointerdown',50,50,1,'mouse');f.send('pointerup',50,50,1,'mouse');
   assert.equal(f.taps.length,0,'mouse input remains separate');
+});
+
+test('only a handled battlefield tap suppresses its native compatibility click',()=>{
+  const f=setup();
+  f.send('pointerdown'); f.send('pointerup');
+  assert.equal(f.send('touchend').defaultPrevented,true);
+  assert.equal(f.send('touchend').defaultPrevented,false);
+  f.send('pointerdown'); f.send('pointercancel');
+  assert.equal(f.send('touchend').defaultPrevented,false);
+  f.send('pointerdown'); f.send('pointerup',150,50);
+  assert.equal(f.send('touchend').defaultPrevented,false);
+  assert.deepEqual(f.taps,[[50,50]]);
 });
