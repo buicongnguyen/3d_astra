@@ -138,7 +138,7 @@ await suite("defence-deck", async () => {
       s.command({ team: 0, type: "padBuild", pad: pad.id, crew: "ranger" });
       s.command({ team: 0, type: "padUpgrade", building: s.towerOn(pad.id).id });
       const t = s.towerOn(pad.id); f.view.focusOn(t.x, t.z); f.select([t.id]); f.step(0.05);
-      if (document.documentElement.classList.contains("compact-ui")) { document.documentElement.dataset.dock = "actions"; }
+      if (document.documentElement.classList.contains("compact-ui")) { document.documentElement.dataset.dock = "selection"; }
     });
     await page.waitForSelector("#commands .defence-stats");
     const sheet = await page.evaluate(() => { const st = document.querySelector("#commands .defence-stats"), r = st.getBoundingClientRect(), c = document.querySelector("#commands").getBoundingClientRect(); return { text: st.textContent, inView: r.bottom <= c.bottom + 1 && r.top >= c.top - 1, aim: document.querySelector(".defence-aim small").textContent, tiles: [...document.querySelectorAll("#commands .command-tile")].map((b) => { const q = b.getBoundingClientRect(); return [Math.round(q.width), Math.round(q.height)]; }) }; });

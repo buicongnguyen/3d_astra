@@ -1,0 +1,511 @@
+/* Command console kit on every screen (AAA round 3, owner 2026-11-22: "more professional and modern").
+   Source: Codex's interface kit (3d_astra/codex-ui-kit, owner-commissioned); tokens in ui-kit.css. Loaded last
+   (main.js), after the phone HUD, the cover and Quick battle, so equal selectors here win. Results and the
+   before/after table: docs/aaa/results/round3/kit.md.
+     - Chamfered dark glass: the upper-left and lower-right corners are cut (6 px controls, 8 px panels, 12 px
+       dialogs), edges are 1 px kit lines drawn with the kit's SVG frames (src/art/ui/), no rounded corners.
+     - One gold primary action per screen, flat gold with a fine light edge; no orange glow.
+     - States: hover lifts to 116 %, pressed moves 2 px down on the pressed ink, disabled keeps a solid surface
+       and a readable label, focus is a 2 px #97F4FF ring outside the control, selected adds the cyan edge and a
+       2 px bottom rail.
+     - Interactive controls draw their chamfer with a corner-cut background and the frame image instead of
+       clip-path, so the outside focus ring is never clipped. Passive panels use clip-path.
+   The painted cover and campaign art stay. Text keeps 11 px minimum (12 px on desktop menus), taps 44 px. */
+
+/* ---------- 0. The older theme tokens point at the kit ---------- */
+:root {
+  --ink-0: #020713;
+  --ink-1: #091522;
+  --ink-2: #0c202e;
+  --ink-3: #102638;
+  --ink-4: #193248;
+  --line-1: rgba(65, 100, 121, 0.55);
+  --line-2: #416479;
+  --text-1: #f1f6f3;
+  --text-2: #bcced9;
+  --text-3: #a3b8c6;
+  --gold-1: #ffdf9c;
+  --gold-2: #ffd17b;
+  --gold-3: #efb75c;
+  --gold-ink: #281b09;
+  --gold-line: #ffdf9c;
+  --panel-bg: linear-gradient(180deg, #102638, #091723);
+  --panel-edge: 0 0 0 1px #416479;
+  --shadow-l: var(--kit-dialog-shadow);
+  --r-s: 0px;
+  --r-m: 0px;
+  --r-l: 0px;
+  --tip-bg: rgba(9, 23, 36, 0.97);
+  --tip-edge: #416479;
+  --holo-1: #83deeb;
+  --holo-2: #83deeb;
+  --holo-line: #416479;
+  --holo-line-strong: #83deeb;
+  --holo-glass: linear-gradient(180deg, rgba(16, 38, 56, 0.97), rgba(9, 23, 35, 0.97));
+  --holo-glass-solid: linear-gradient(180deg, #102638, #091723);
+  --holo-glow: var(--kit-dialog-shadow);
+  --holo-blur: blur(6px);
+  --holo-c: transparent;
+  /* Corner cuts of the interactive faces (6 px legs = 4.24 px along the 135 degree gradient). */
+  --kit-cut-d: 4.24px;
+}
+/* The R3-M corner brackets give way to the kit's chamfered frames. */
+:root,
+#briefing .briefing-setup,
+#briefing .mode-switch button,
+#briefing .briefing-rule,
+#briefing.campaign-view .briefing-hero,
+.settings-panel,
+#modal.result-wide .modal,
+#modal.debrief-wide .modal { --holo-brackets: linear-gradient(transparent, transparent); }
+.cover-loading .cover-load-orb { --holo-brackets: linear-gradient(transparent, transparent); }
+
+/* ---------- 1. Focus: one ring, outside the face ---------- */
+:root button:focus-visible,
+:root select:focus-visible,
+:root a:focus-visible,
+:root input:focus-visible,
+:root [tabindex]:focus-visible {
+  outline: 2px solid var(--kit-focus);
+  outline-offset: 2px;
+  box-shadow: var(--kit-glow);
+}
+:root :is(.command-tile, .ability-tile, #unit-list button, .work-strip button, .stance-control button):focus-visible { outline-offset: -3px; }
+
+/* ---------- 2. Buttons: primary (gold), secondary, ghost, danger ---------- */
+/* Every kit face: the corner-cut background in --face over the border box, the frame image in --frame. */
+:root :is(.primary, .secondary, .ghost, .pause-settings, .danger, .kit-face, .settings-close, .contrast-button, .comms-toggle, .defence-perks-toggle,
+  #briefing .mode-switch button, #briefing .stage-list button, #briefing .difficulty-buttons button, .defence-variants button,
+  .settings-panel [role="tablist"] button, .quick-battle, .title-actions > button, #continue,
+  .decision-orders button, .mb-foot button, .result-actions button, .debrief-actions button) {
+  --face: var(--kit-control);
+  --frame: url("./art/ui/frame-button.svg");
+  border: 1px solid transparent;
+  border-image: var(--frame) 7 / 7px / 0 stretch;
+  border-radius: 0;
+  background: linear-gradient(135deg, transparent var(--kit-cut-d), var(--face) var(--kit-cut-d) calc(100% - var(--kit-cut-d)), transparent calc(100% - var(--kit-cut-d))) border-box;
+  box-shadow: none;
+  text-shadow: none;
+  color: var(--kit-text);
+  transition: filter 0.12s, transform 0.08s;
+}
+:root :is(.primary, #briefing #start) {
+  --face: var(--kit-gold);
+  --frame: url("./art/ui/frame-button-gold.svg");
+  color: var(--kit-gold-text);
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+:root .primary .icon { color: var(--kit-gold-text); }
+:root :is(.ghost) { --face: var(--kit-ghost); --frame: url("./art/ui/frame-button-ghost.svg"); color: var(--kit-text); }
+:root :is(.danger) { --face: var(--kit-danger); --frame: url("./art/ui/frame-button-danger.svg"); color: var(--kit-danger-text); }
+/* Hover 116 %, pressed 2 px down on the pressed ink, disabled solid and readable. */
+:root :is(.primary, .secondary, .ghost, .pause-settings, .danger, .kit-face, .settings-close, .contrast-button, .comms-toggle, .defence-perks-toggle,
+  #briefing .mode-switch button, #briefing .stage-list button, #briefing .difficulty-buttons button, .defence-variants button,
+  .settings-panel [role="tablist"] button, .quick-battle, .title-actions > button, #continue,
+  .decision-orders button, .mb-foot button, .result-actions button, .debrief-actions button):hover:not(:disabled) { filter: brightness(1.16); }
+:root :is(.secondary, .ghost, .pause-settings, .kit-face, .settings-close, .contrast-button, .comms-toggle, .defence-perks-toggle,
+  #briefing .mode-switch button, #briefing .stage-list button, #briefing .difficulty-buttons button, .defence-variants button,
+  .settings-panel [role="tablist"] button, .quick-battle, .title-actions > button, #continue,
+  .decision-orders button, .mb-foot button:not(.primary), .result-actions button:not(.primary), .debrief-actions button:not(.primary)):active:not(:disabled) { --face: var(--kit-pressed); transform: translateY(2px); }
+:root .primary:active:not(:disabled) { --face: var(--kit-gold-pressed); transform: translateY(2px); }
+:root .danger:active:not(:disabled) { --face: #4a2a33; transform: translateY(2px); }
+:root :is(.primary, .secondary, .ghost, .pause-settings, .danger, .kit-face, .quick-battle, #continue,
+  #briefing .mode-switch button, #briefing .stage-list button, .defence-variants button, .decision-orders button):disabled {
+  --face: var(--kit-disabled);
+  --frame: url("./art/ui/frame-button-disabled.svg");
+  color: var(--kit-disabled-text);
+  filter: none;
+  opacity: 1;
+}
+:root .primary:disabled .icon { color: var(--kit-disabled-text); }
+/* Selected / pressed toggles: the cyan edge and a 2 px rail along the bottom. */
+:root :is(#briefing .mode-switch button[aria-pressed="true"], #briefing .stage-list button[aria-current="true"], #briefing .difficulty-buttons button[aria-pressed="true"],
+  .defence-variants button[aria-pressed="true"], .settings-panel [role="tablist"] button[aria-selected="true"], .kit-face[aria-pressed="true"]) {
+  --face: var(--kit-pressed);
+  --frame: url("./art/ui/frame-button-active.svg");
+  background:
+    linear-gradient(var(--kit-cyan), var(--kit-cyan)) left 12px bottom 1px / calc(100% - 24px) var(--kit-rail) no-repeat,
+    linear-gradient(135deg, transparent var(--kit-cut-d), var(--face) var(--kit-cut-d) calc(100% - var(--kit-cut-d)), transparent calc(100% - var(--kit-cut-d))) border-box;
+  color: var(--kit-text);
+  box-shadow: none;
+}
+
+/* ---------- 3. Panels and dialogs: chamfered glass ---------- */
+:root .modal,
+:root .compact-ui .modal,
+:root #modal.result-wide .modal,
+:root #modal.debrief-wide .modal,
+:root .settings-panel,
+:root .field-guide {
+  border: 1px solid transparent;
+  border-image: url("./art/ui/frame-panel.svg") 9 / 9px / 0 stretch;
+  border-radius: 0;
+  clip-path: var(--kit-cut-panel);
+  background: linear-gradient(180deg, #102638, #091723);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+:root .modal-backdrop { background: rgba(2, 7, 19, 0.72); backdrop-filter: blur(6px); }
+:root .settings-backdrop { background: rgba(2, 7, 19, 0.74); }
+:root .modal .eyebrow,
+:root .settings-panel .eyebrow,
+:root .field-guide .eyebrow,
+:root #briefing .briefing-copy .eyebrow,
+:root .result-card .eyebrow {
+  color: var(--kit-cyan);
+  font: 700 12px/1.25 var(--font-ui);
+  letter-spacing: 0.14em;
+  text-shadow: none;
+}
+:root :is(.settings-panel, #briefing .briefing-copy) .eyebrow::before { width: 14px; height: 1px; background: var(--kit-cyan); box-shadow: none; }
+:root .modal h2,
+:root .compact-ui .modal h2 { color: var(--kit-text); text-shadow: none; }
+:root .modal p { color: var(--kit-text-2); }
+
+/* ---------- 4. Selects and fields ---------- */
+:root :is(.field select, .language-choice select, .settings-panel select, .field-guide select, #briefing .briefing-setup select) {
+  border: 1px solid var(--kit-line);
+  border-radius: 0;
+  clip-path: none;
+  background: var(--kit-control) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2383DEEB' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center / 16px;
+  color: var(--kit-text);
+  box-shadow: none;
+}
+:root :is(.field select, .language-choice select, .settings-panel select, .field-guide select, #briefing .briefing-setup select):hover:not(:disabled) { border-color: var(--kit-cyan); }
+:root :is(.field select, .settings-panel select):disabled { border-color: var(--kit-disabled-edge); background-color: var(--kit-disabled); color: var(--kit-disabled-text); opacity: 1; }
+:root .field select option,
+:root .language-choice select option,
+:root .settings-panel select option { background: #0c202e; color: #f1f6f3; }
+:root #briefing .field > span,
+:root .settings-panel .field > span { color: var(--kit-text-2); letter-spacing: 0.12em; }
+:root .language-choice > .icon { color: var(--kit-cyan); }
+
+/* ---------- 5. Title cover: setup panel, mode cards, Quick battle, rank chip ---------- */
+:root #briefing .briefing-setup {
+  border: 1px solid transparent;
+  border-image: url("./art/ui/frame-panel.svg") 9 / 9px / 0 stretch;
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(16, 38, 56, 0.97), rgba(9, 23, 35, 0.97));
+  box-shadow: var(--kit-dialog-shadow);
+}
+:root:not(.compact-ui) #briefing .briefing-setup { clip-path: var(--kit-cut-panel); }
+:root #briefing .briefing-copy,
+:root #briefing .briefing-rule {
+  border-radius: 0;
+}
+:root:not(.compact-ui) #briefing:not(.campaign-view) .briefing-copy {
+  border: 1px solid transparent;
+  border-image: url("./art/ui/frame-panel.svg") 9 / 9px / 0 stretch;
+  clip-path: var(--kit-cut-panel);
+  background: linear-gradient(180deg, rgba(16, 38, 56, 0.95), rgba(9, 23, 35, 0.95));
+  box-shadow: none;
+}
+:root #briefing .briefing-rule {
+  border: 1px solid var(--kit-line-ghost);
+  background: rgba(9, 21, 34, 0.9);
+}
+:root #briefing .briefing-rule span { color: var(--kit-cyan); }
+:root #briefing h2 { text-shadow: 0 2px 12px rgba(2, 7, 19, 0.8); }
+:root .setup-head > span { color: var(--kit-cyan); }
+:root .setup-head > span:last-child { color: var(--kit-text-2); }
+:root .setup-head .live-dot { background: var(--kit-success); box-shadow: none; }
+:root .setup-head { border-color: var(--kit-line-ghost); }
+/* Mode cards: the kit's mode card. The chosen one keeps the cyan edge and rail; its icon turns gold. */
+:root #briefing .mode-switch button::before { display: none; }
+:root #briefing .mode-switch button > .icon { color: var(--kit-cyan); filter: none; }
+:root #briefing .mode-switch button > small { color: var(--kit-text-2); }
+:root #briefing .mode-switch button[aria-pressed="true"] > .icon { color: var(--kit-gold); filter: none; }
+:root #briefing .mode-switch button[aria-pressed="true"] > small { color: var(--kit-text-2); }
+:root #briefing .mode-switch button > span { color: var(--kit-text); }
+/* Start: the one gold action, flat, no orange glow and no sheen. */
+/* The pinned Start keeps its solid backing (list rows slide under it, never show through), in the panel's ink. */
+:root #briefing .briefing-setup { --start-backing: #0a1926; }
+:root #briefing #start,
+:root #briefing #start:not(:disabled),
+:root #briefing #start:disabled { border-radius: 0; box-shadow: 0 0 0 24px var(--start-backing); }
+:root #briefing #start::after { display: none; }
+:root #briefing #start:disabled[aria-busy="true"] { --face: var(--kit-disabled); color: var(--kit-disabled-text); }
+/* Quick battle: a secondary tile with the bolt in gold (the start of a match is still Start's job). */
+:root .quick-battle { --face: var(--kit-control); }
+:root .quick-battle .icon { color: var(--kit-gold); filter: none; }
+:root .quick-battle small,
+:root .quick-battle .quick-text small { color: var(--kit-text-2); }
+/* Rank chip: a passive panel. */
+:root .rank-chip,
+:root #rank-chip {
+  border: 1px solid var(--kit-line-ghost);
+  border-radius: 0;
+  clip-path: var(--kit-cut-button);
+  background: var(--kit-ghost);
+  box-shadow: none;
+}
+:root .rank-bar { border-radius: 0; background: var(--kit-track); }
+:root .lesson-list li,
+:root #briefing .lesson-list li { border-radius: 0; border-color: var(--kit-line-ghost); background: var(--kit-ghost); }
+
+/* ---------- 6. Settings ---------- */
+:root .settings-panel > header::after { background: var(--kit-line); box-shadow: none; }
+:root .settings-panel [role="tablist"] { border: 0; background: none; gap: var(--kit-s2); }
+:root .settings-panel [role="tablist"] button[aria-selected="true"] { box-shadow: none; }
+:root .setting-row { border-color: var(--kit-line-ghost); }
+:root .setting-row,
+:root .settings-panel .setting-row { border-radius: 0; }
+/* The kit switch: a pill track, On in green-teal with a mint knob; the 44 px hit area stays. */
+:root .setting-row input[type="checkbox"] {
+  border-radius: 999px;
+  background: var(--kit-track);
+  background-clip: padding-box;
+  box-shadow: inset 0 0 0 1px #7894a2;
+}
+:root .setting-row input[type="checkbox"]::after { background: #bcced9; }
+:root .setting-row input[type="checkbox"]:checked { background-image: none; background-color: #27625d; box-shadow: inset 0 0 0 1px var(--kit-success); }
+:root .setting-row input[type="checkbox"]:checked::after { background: var(--kit-success); }
+:root .setting-row input[type="range"] { accent-color: var(--kit-cyan); }
+:root .settings-panel .settings-close { width: 44px; height: 44px; }
+:root .settings-version,
+:root .settings-copyright { color: var(--kit-text-2); }
+
+/* ---------- 7. Help, field guide, mission briefing, decisions ---------- */
+:root .controls-grid kbd,
+:root .modal kbd {
+  border: 1px solid var(--kit-line);
+  border-radius: var(--kit-chip-radius);
+  background: var(--kit-control);
+  color: var(--kit-text);
+  box-shadow: none;
+}
+:root .help-note { color: var(--kit-text-2) !important; }
+/* Speaker portraits: a round frame in the kit's cyan line (the kit's story dialogue). */
+:root :is(.decision-speaker, .mb-who) :is(img, .portrait, .portrait-art) { border-radius: 50%; }
+:root .decision-orders button {
+  --face: var(--kit-control);
+  text-align: left;
+  border-left: 0;
+  background:
+    linear-gradient(var(--kit-cyan), var(--kit-cyan)) left top / var(--kit-warning-rail) 100% no-repeat,
+    linear-gradient(135deg, transparent var(--kit-cut-d), var(--face) var(--kit-cut-d) calc(100% - var(--kit-cut-d)), transparent calc(100% - var(--kit-cut-d))) border-box;
+}
+:root .decision-orders button kbd,
+:root .decision-orders button .decision-key { border-radius: var(--kit-chip-radius); }
+
+/* ---------- 8. Toasts, notices, radio line, hints ---------- */
+:root:not(.compact-ui) #notice {
+  border: 1px solid transparent;
+  border-image: url("./art/ui/frame-toast.svg") 7 / 7px / 0 stretch;
+  border-radius: 0;
+  clip-path: var(--kit-cut-button);
+  background: linear-gradient(90deg, var(--kit-success) 0 var(--kit-warning-rail), transparent var(--kit-warning-rail)), var(--kit-hud-ink);
+  color: var(--kit-text);
+  box-shadow: none;
+}
+:root:not(.compact-ui) #notice:is(.alert, .warning, .danger) { background: linear-gradient(90deg, var(--kit-warning) 0 var(--kit-warning-rail), transparent var(--kit-warning-rail)), var(--kit-hud-ink); }
+:root:not(.compact-ui) #dialogue-card,
+:root #fight-hint,
+:root #mode-banner,
+:root .rank-toast {
+  border: 1px solid transparent;
+  border-image: url("./art/ui/frame-toast.svg") 7 / 7px / 0 stretch;
+  border-radius: 0;
+  clip-path: var(--kit-cut-button);
+  box-shadow: none;
+}
+:root:not(.compact-ui) #dialogue-card { background: linear-gradient(90deg, var(--kit-cyan) 0 var(--kit-warning-rail), transparent var(--kit-warning-rail)), var(--kit-hud-ink); }
+:root #fight-hint,
+:root #mode-banner { background: var(--kit-hud-ink); color: var(--kit-text); }
+
+/* ---------- 9. Objectives card and tooltips ---------- */
+:root #mission-objectives,
+:root .mission.panel {
+  border: 1px solid transparent;
+  border-image: url("./art/ui/frame-panel.svg") 9 / 9px / 0 stretch;
+  border-radius: 0;
+  clip-path: var(--kit-cut-panel);
+  background: var(--kit-hud-ink);
+  box-shadow: none;
+}
+:root #mission-objectives .panel-label { color: var(--kit-cyan); border-color: var(--kit-line-ghost); }
+:root .objective-num { border-radius: var(--kit-chip-radius); border-color: var(--kit-line); background: var(--kit-control); color: var(--kit-text); }
+:root .objective.complete .objective-num { border-color: var(--kit-success); color: var(--kit-success); }
+:root #order-tip,
+:root #hover-label,
+:root .roster-tip {
+  border: 1px solid transparent;
+  border-image: url("./art/ui/frame-toast.svg") 7 / 7px / 0 stretch;
+  border-radius: 0;
+  clip-path: var(--kit-cut-button);
+  background: var(--tip-bg);
+  color: var(--kit-text);
+  box-shadow: none;
+}
+
+/* ---------- 10. Command card: tiles, abilities, stance, level-up ---------- */
+:root :is(.command-tile, .ability-tile, .stance-control button, .upgrade-actions button, .order-buttons button, #queue button, .idle-row button) {
+  --face: var(--kit-control);
+  --frame: url("./art/ui/frame-button.svg");
+  border: 1px solid transparent;
+  border-image: var(--frame) 7 / 7px / 0 stretch;
+  border-radius: 0;
+  background: linear-gradient(135deg, transparent var(--kit-cut-d), var(--face) var(--kit-cut-d) calc(100% - var(--kit-cut-d)), transparent calc(100% - var(--kit-cut-d))) border-box;
+  box-shadow: none;
+  color: var(--kit-text);
+}
+:root :is(.command-tile, .ability-tile, .stance-control button, .upgrade-actions button, .order-buttons button, #queue button, .idle-row button):hover:not(:disabled) { filter: brightness(1.16); }
+:root :is(.command-tile, .ability-tile, .stance-control button, .upgrade-actions button, .order-buttons button, #queue button, .idle-row button):active:not(:disabled) { --face: var(--kit-pressed); transform: translateY(2px); }
+:root :is(.command-tile, .upgrade-actions button, .order-buttons button, .idle-row button):disabled,
+:root .command-tile.state-locked {
+  --face: var(--kit-disabled);
+  --frame: url("./art/ui/frame-button-disabled.svg");
+  color: var(--kit-disabled-text);
+  filter: none;
+  opacity: 1;
+}
+:root :is(.stance-control button[aria-pressed="true"], .ability-tile.active, .order-buttons button[aria-pressed="true"], .command-tile.selected) {
+  --face: var(--kit-pressed);
+  --frame: url("./art/ui/frame-button-active.svg");
+  background:
+    linear-gradient(var(--kit-cyan), var(--kit-cyan)) left 8px bottom 1px / calc(100% - 16px) var(--kit-rail) no-repeat,
+    linear-gradient(135deg, transparent var(--kit-cut-d), var(--face) var(--kit-cut-d) calc(100% - var(--kit-cut-d)), transparent calc(100% - var(--kit-cut-d))) border-box;
+}
+/* Hotkey letter: a small chip in the top-right corner, the kit's caption type. */
+:root :is(.command-tile, .ability-tile, .upgrade-actions button, .order-buttons button, .stance-control button) kbd {
+  border: 1px solid var(--kit-line);
+  border-radius: 2px;
+  background: var(--kit-ghost);
+  color: var(--kit-text-2);
+  box-shadow: none;
+  font: 700 11px/1 var(--font-ui);
+}
+/* Cost line: alloy in gold, energy in the kit's cyan; a locked tile names what it needs with the lock. */
+:root .command-tile small { color: var(--kit-text-2); }
+:root .command-tile .alloy-text { color: var(--kit-gold); }
+:root .command-tile .energy-text { color: var(--kit-cyan); }
+:root .command-tile.state-locked small.tile-state { color: var(--kit-warning); }
+:root .command-tile.state-locked small.tile-state::before {
+  content: "";
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  margin-right: 3px;
+  vertical-align: -1px;
+  background: currentColor;
+  -webkit-mask: url("./art/ui/glyph-lock.svg") center / contain no-repeat;
+  mask: url("./art/ui/glyph-lock.svg") center / contain no-repeat;
+}
+:root .ability-tile.cooling .ability-status { color: var(--kit-text-2); }
+:root .ability-tile.is-ready { box-shadow: none; }
+
+/* ---------- 11. Results, MVP and rank toast ---------- */
+:root #modal.result-wide .modal,
+:root #modal.debrief-wide .modal { background: linear-gradient(180deg, #102638, #091723); }
+:root .result-banner { border-color: var(--kit-line-ghost); background: linear-gradient(90deg, color-mix(in srgb, var(--tone) 12%, transparent), transparent 70%); }
+:root .result-grid .stat {
+  border: 1px solid var(--kit-line-ghost);
+  border-radius: 0;
+  clip-path: var(--kit-cut-button);
+  background: var(--kit-ghost);
+  box-shadow: none;
+}
+:root .result-grid .stat span { color: var(--kit-text-2); }
+:root .result-emblem img { filter: none; }
+:root :is(.mvp-card, .result-mvp, .rank-toast, .rank-up) {
+  border-radius: 0;
+  clip-path: var(--kit-cut-panel);
+  box-shadow: none;
+}
+
+/* ---------- 12. Desktop battle HUD: top bar, resource chips, dock, minimap ---------- */
+:root:not(.compact-ui) .topbar {
+  background: var(--kit-hud-ink);
+  border-bottom: 1px solid var(--kit-line-ghost);
+  box-shadow: none;
+}
+:root:not(.compact-ui):not(.in-briefing) .topbar .resource {
+  border: 1px solid var(--kit-line-ghost);
+  border-radius: var(--kit-chip-radius);
+  background: var(--kit-ghost);
+}
+:root:not(.compact-ui) .topbar .resource > .icon { color: var(--kit-cyan); }
+:root:not(.compact-ui) .topbar .resource small { color: var(--kit-text-2); }
+:root:not(.compact-ui) .icon-button { border-radius: 0; }
+:root:not(.compact-ui) .icon-button:hover { background: var(--kit-control); border-color: var(--kit-line); }
+/* The dock's chamfer is painted (corner-cut background), not clipped: the group tabs hang above the selection panel. */
+:root:not(.compact-ui) .bottom-dock .panel {
+  border: 1px solid transparent;
+  border-image: url("./art/ui/frame-panel.svg") 9 / 9px / 0 stretch;
+  border-radius: 0;
+  clip-path: none;
+  background: linear-gradient(135deg, transparent 5.66px, rgba(12, 30, 45, 0.97) 5.66px calc(100% - 5.66px), transparent calc(100% - 5.66px)) border-box;
+  box-shadow: none;
+}
+:root:not(.compact-ui) .bottom-dock .panel-label { color: var(--kit-cyan); border-color: var(--kit-line-ghost); }
+:root:not(.compact-ui) .panel-label > span:last-child { color: var(--kit-text-2); }
+:root .sel-portrait,
+:root #selection-info .portrait { border-radius: 0; }
+
+/* ---------- 13. Story: mission briefing card, speaker portraits, radio line ---------- */
+/* The kit's story dialogue: a round speaker portrait on a fine ring in the speaker's faction colour. */
+:root .cast-portrait { border-radius: 50%; box-shadow: 0 0 0 2px var(--faction, var(--kit-success)); }
+:root .cast-portrait.large { box-shadow: 0 0 0 2px var(--faction, var(--kit-success)), var(--kit-dialog-shadow); }
+:root .cast-portrait.small { box-shadow: 0 0 0 1.5px var(--faction, var(--kit-success)); }
+:root:not(.compact-ui) .mb-card {
+  border: 1px solid transparent;
+  border-image: url("./art/ui/frame-panel.svg") 9 / 9px / 0 stretch;
+  clip-path: var(--kit-cut-panel);
+}
+:root .mb-card { border-radius: 0; background: linear-gradient(180deg, #102638, #091723); box-shadow: none; }
+:root .mb-head { border-color: var(--kit-line-ghost); }
+:root .mb-head .eyebrow,
+:root .mb-orders h3,
+:root .debrief h3 { color: var(--kit-cyan); }
+:root .mb-who strong { color: var(--kit-cyan); }
+:root .mb-who span { color: var(--kit-text-2); }
+:root .mb-foot { border-color: var(--kit-line-ghost); }
+:root .mb-orders ul li::before { border-radius: 0; background: var(--kit-success); transform: rotate(45deg); }
+:root .mission-briefing { background: rgba(2, 7, 19, 0.86); }
+:root .decision-speaker strong,
+:root .decision-who strong { color: var(--kit-cyan); }
+:root .decision-note { color: var(--kit-text-2); }
+
+/* ---------- 14. Results: MVP and rank cards in the kit (one gold action stays the primary) ---------- */
+:root .mvp-card {
+  border: 1px solid transparent;
+  border-image: url("./art/ui/frame-panel-gold.svg") 9 / 9px / 0 stretch;
+  border-radius: 0;
+  clip-path: var(--kit-cut-panel);
+  background: linear-gradient(90deg, rgba(255, 209, 123, 0.12), transparent 70%), var(--kit-ghost);
+  box-shadow: none;
+}
+:root .mvp-label { border-radius: 2px; box-shadow: none; }
+:root .mvp-portrait { box-shadow: none; }
+:root .rank-toast { border-color: var(--kit-line); background: var(--kit-ghost); }
+:root .rank-toast.rank-up { border-color: var(--kit-gold-edge); background: linear-gradient(90deg, rgba(255, 209, 123, 0.12), transparent 70%), var(--kit-ghost); }
+:root .rank-toast.rank-up .rank-emblem { box-shadow: none; }
+:root .result-card .result-banner { margin-inline: calc(-1 * var(--mp, 28px)); }
+:root .so-close { border-radius: 0; clip-path: var(--kit-cut-button); box-shadow: none; }
+
+/* ---------- 15. Campaign list and map frame, Defence menu ---------- */
+:root #briefing.campaign-view .briefing-hero {
+  border-color: var(--kit-line);
+  border-radius: 0;
+  box-shadow: none;
+}
+:root .cmap-choice,
+:root .cmap-ending,
+:root .cmap-chronicles button { border-radius: 0; }
+:root .act-title { color: var(--kit-cyan); }
+:root #briefing .stage-list button .stage-num,
+:root #briefing .stage-list button > b:first-child { border-radius: 50%; }
+:root .defence-best,
+:root .defence-perks { border-radius: 0; }
+/* Narrow phones: two stat columns, so labels break between words ("OPERATI ON TIME" at 320 px before). */
+@media (max-width: 359px) {
+  :root .result-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  :root .result-grid .stat span { overflow-wrap: normal; letter-spacing: 0.06em; }
+}
+/* Landscape phones: mission rows 44 px, so the first mission clears the pinned Start without the column jumping to
+   its act heading (briefing.js revealPick; the kit frame had left it 1 px short). */
+@media (orientation: landscape) and (max-height: 520px) {
+  :root.compact-ui #briefing.campaign-view .stage-list button { min-height: 44px; padding-block: 2px; }
+}

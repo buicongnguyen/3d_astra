@@ -13,14 +13,8 @@ export function setupSelection(S, A) {
     S.selected = new Set(ids);
     S.lastSelectionKey = "";
     A.updateUI();
-    if (document.documentElement.classList.contains("compact-ui")) {
-      const es = selectedEntities();
-      A.dockTab(
-        es.length === 1 && (es[0].trains || es[0].type === "worker" || (es[0].kind === 'building' && !es[0].complete))
-          ? "actions"
-          : "selection",
-      );
-    }
+    // Phones: one context panel shows the selection and every action it has (owner, 2026-11-22).
+    if (document.documentElement.classList.contains("compact-ui")) A.dockTab("selection");
     A.tone(650);
     S.audio?.bark?.("select", selectedEntities()); // R3-U: a unit voice chirp (rate-limited, quiet mode mutes it)
   }
@@ -90,7 +84,7 @@ export function setupSelection(S, A) {
           .filter((e) => e.type === "worker")
           .map((e) => e.id),
       );
-      A.dockTab("actions");
+      A.dockTab("selection");
     };
 
     $("select-army").onclick = () => {

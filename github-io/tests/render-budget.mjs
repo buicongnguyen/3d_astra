@@ -134,6 +134,8 @@ const scenarios = [
   // and Three Roads with both armour squads bought Combined (one gold-trim draw, stars in the atlas draw).
   {name:'wide-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:88, focus:[-3,0], reveal:true, army:60, triangles:380000}, // the whole map in view: 351,390 triangles on the base build
   {name:'groups-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, groups:3},
+  // Round 3 kit pass: battle-eco with the army selected, the phone's context panel open over the bottom of the frame.
+  {name:'battle-dock-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, select:true},
   {name:'combined-defence-eco', defence:'d-crossroads', mobile:true, zoom:92, focus:[0,0], reveal:true, wave:120, towers:10, zoneTowers:4, armour:2, combined:true, triangles:600000, compose:500, carrierEvery:20, unlockAfter:'d-longcrossing'},
   // R3 map variety: large-map-high on the heaviest new map, Twin Rivers (160 m, two rivers, four bridges, two fords),
   // three rivals, fog lifted. Measured with the other 160 m maps on 2026-11-22 (large-map-high on Expanse: 218 draws):
@@ -170,6 +172,11 @@ Object.assign(limits, {'weapons-mix-eco':131}); // R3-X: 128 draws on 2026-11-22
 // 182 -> 198, air-battle-eco 117 -> 121, battle-expanded-full-eco 149 -> 153, groups-battle-eco 108 -> 112; weapons-mix-eco 132
 // with every class). Lines that the HUD pushed over: measured + 3. Desktop scenes are unchanged.
 Object.assign(limits, {'three-rivals-eco':163, 'three-factions-eco':201, 'air-battle-eco':124, 'battle-expanded-full-eco':156, 'groups-battle-eco':115, 'weapons-mix-eco':135});
+// Round 3 kit pass (owner: crop): the phone frame is no longer drawn under the opaque tab strip or an open dock panel
+// (hud.js coverFollowsDock). The see-through top bar keeps the map under it, and that strip is where most of the HUD's
+// extra draws come from, so the lines move little (2026-11-22, wave-3 build -> kit build: three-rivals-eco 160 -> 158,
+// three-factions-eco 198 -> 196, battle-eco 111 -> 111; battle-dock-eco 171 -> 169, with 221 of 844 px rows not shaded).
+Object.assign(limits, {'three-rivals-eco':161, 'three-factions-eco':199, 'battle-dock-eco':172});
 for (const s of scenarios) if (s.name === 'three-rivals-eco') s.triangles = 330000; // 303,222 -> 324,494 triangles with the HUD's taller phone frame
 try {
   for (const scenario of scenarios) {
@@ -324,6 +331,9 @@ try {
         v.controlGroups = new Map(Array.from({length:scenario.groups}, (_, k) => [String(k + 1), mine.slice(k * 8, k * 8 + 8)]));
       }
       if (scenario.combined) for (const e of s.entities) if (e.squad && e.team === 0) e.combined = true;
+      // Round 3 kit pass `select: true`: the player's army selected, so the phone dock panel is open; one UI tick (step(0))
+      // lets the HUD cut the drawing under its opaque part (app/hud.js coverFollowsDock, view.js setCoverCrop).
+      if (scenario.select) { f.select(s.entities.filter(e => e.kind === 'unit' && e.team === 0 && e.type !== 'worker').map(e => e.id)); f.step(0); }
       // Data-driven units: a 2 m grid centred on `near`.
       for (const {type, team = 1, count = 1, near = [0, 0]} of scenario.spawn || []) {
         const cols = Math.ceil(Math.sqrt(count)), rows = Math.ceil(count / cols);

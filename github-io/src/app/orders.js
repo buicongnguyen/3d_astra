@@ -80,7 +80,7 @@ export function setupOrders(S, A) {
       clearMode();
       S.blockedBuildType = type;
       A.notice(missing);
-      if (document.documentElement.classList.contains('compact-ui')) A.dockTab('actions');
+      if (document.documentElement.classList.contains('compact-ui')) A.dockTab('selection');
       A.updateUI();
       return;
     }
@@ -98,7 +98,7 @@ export function setupOrders(S, A) {
     $("confirm-build").disabled = true;
     S.view.preview.visible = false;
     S.view.preview.scale.set(D[type].radius, 1, D[type].radius);
-    if (document.documentElement.classList.contains('compact-ui')) A.dockTab('actions');
+    if (document.documentElement.classList.contains('compact-ui')) A.dockTab('selection');
     A.updateUI();
   }
 

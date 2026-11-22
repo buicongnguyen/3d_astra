@@ -55,7 +55,7 @@ export function createInput(c) {
       S.defenceSpot = null;
       if (t) A.setSelection([t.id]);
       // Phones: stay on the card with the new tower's Upgrade and Sell.
-      if (root.classList.contains("compact-ui")) A.dockTab("actions");
+      if (root.classList.contains("compact-ui")) A.dockTab("selection");
     }
     A.updateUI();
   }
@@ -70,7 +70,7 @@ export function createInput(c) {
         S.defenceDepot = false;
         if (made) A.setSelection(made.units.map((e) => e.id));
         // Phones: stay on the card with the squad's Guard and Hold the road.
-        if (root.classList.contains("compact-ui")) A.dockTab("actions");
+        if (root.classList.contains("compact-ui")) A.dockTab("selection");
       }
     } else if (squad && (id === "rank2" || id === "assault" || id === "bulwark")) {
       if (S.sim.command({ team: 0, type: "armourUpgrade", squad, ...(id === "rank2" ? {} : { branch: id }) })) A.tone(id === "rank2" ? 760 : 880, 0.14);
@@ -175,7 +175,7 @@ export function createInput(c) {
     A.tone(520, 0.06);
     // R3-E: a new pick opens a collapsed landscape dock again.
     c.setDockMin?.(false);
-    if (root.classList.contains("compact-ui")) A.dockTab("actions");
+    if (root.classList.contains("compact-ui")) A.dockTab("selection");
     A.updateUI();
     return true;
   }

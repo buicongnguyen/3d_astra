@@ -42,7 +42,7 @@ await suite("air", async () => {
       f.step(0.1);
       return b.id;
     });
-    await dock("actions");
+    await dock("selection");
     const tile = page.locator('#commands [data-action="kite"]');
     await tile.waitFor({ state: "visible", timeout: TIMEOUT.step });
     const tileBox = await tile.boundingBox();
@@ -140,7 +140,7 @@ await suite("air", async () => {
       f.select([hq.id]);
       f.step(0.1);
     });
-    await dock("actions");
+    await dock("selection");
     const flak = page.locator('#commands [data-action="flak"]');
     await flak.waitFor({ state: "visible", timeout: TIMEOUT.step });
     assert.match(await flak.textContent(), /Anti-air guns/);

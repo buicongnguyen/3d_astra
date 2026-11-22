@@ -4,6 +4,8 @@
 //     after the models are in, then cross-fade in. Calm (reduced motion) never fetches them.
 //   - The live layer draws; planet labels give way to the logo, the briefing and the panel.
 //   - 11 px text, 44 px taps, no sideways scroll; the campaign map and Settings wear the same holo frame.
+//   - Kit pass (owner, 2026-11-22): on phones the battle dock is one context panel (Selection + Map tabs); every
+//     order and action of a group, a Harvester and the Command core is one tap on the Selection tab.
 //   - Owner rule (2026-11-21): nothing is tidied away. Every control the title menu, the skirmish setup and
 //     Settings showed on r3-base (tests/fixtures/r3-base-menu-controls.json) is still there and directly
 //     clickable, with no menu, drawer or tab to open first.
@@ -161,6 +163,44 @@ await suite("cover-ui", async () => {
     for (const key of base[name].settings) {
       assert.ok(settingsNow.includes(key), `${name}: settings control ${key} still shown`);
       assert.equal(await reachable(page, key), "ok", `${name}: settings ${key} directly clickable`);
+    }
+    // Kit pass (owner, 2026-11-22): on phones the battle dock is one context panel. Two tabs (Selection, Map), no
+    // Actions tab; for a group, a Harvester and the Command core every order and action is on the Selection tab,
+    // each one tap (a row wider than the dock scrolls inside itself, nothing sits behind a menu or a drawer).
+    if (size.mobile) {
+      await page.evaluate(() => document.querySelector(".settings-panel [data-do=\"cancel\"]")?.click());
+      await t.tap('.mode-switch [data-mode="skirmish"]');
+      await t.tap("#start");
+      await page.waitForFunction(() => window.__frontier.started, null, { timeout: TIMEOUT.models });
+      await page.evaluate(() => { window.__frontier.hold = true; });
+      const tabs = await page.evaluate(() => [...document.querySelectorAll("#dock-tabs [data-dock]")].map((b) => b.dataset.dock));
+      assert.deepEqual(tabs, ["selection", "map"], `${name}: dock tabs`);
+      for (const pick of ["army", "worker", "core"]) {
+        await page.evaluate((pick) => {
+          const f = window.__frontier, own = f.sim.own(0);
+          const ids = pick === "army" ? own.filter((e) => e.kind === "unit" && e.type !== "worker").map((e) => e.id) : [own.find((e) => e.type === (pick === "core" ? "hq" : "worker")).id];
+          f.select(ids); f.step(0);
+        }, pick);
+        await page.waitForTimeout(150);
+        assert.equal(await page.evaluate(() => document.documentElement.dataset.dock), "selection", `${name} ${pick}: the Selection tab is open`);
+        const actions = await page.evaluate(() => [...document.querySelectorAll(".bottom-dock :is(#commands button, #upgrade-actions button, .order-buttons button)")]
+          .filter((e) => e.getClientRects().length && getComputedStyle(e).visibility !== "hidden" && !e.closest("[hidden]")).map((e) => e.dataset.action || e.dataset.ability || e.dataset.stance || e.id || (e.dataset.level !== undefined ? "level" : e.textContent.trim())));
+        assert.ok(actions.length >= (pick === "core" ? 3 : 4), `${name} ${pick}: actions on the panel (${actions.join(", ")})`);
+        for (const key of actions) {
+          const where = await page.evaluate((key) => {
+            const e = [...document.querySelectorAll(".bottom-dock :is(#commands button, #upgrade-actions button, .order-buttons button)")].find((b) => (b.dataset.action || b.dataset.ability || b.dataset.stance || b.id || (b.dataset.level !== undefined ? "level" : b.textContent.trim())) === key);
+            e.scrollIntoView({ block: "nearest", inline: "nearest" });
+            const r = e.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+            if (r.width < 43.5 || r.height < 43.5) return `small ${Math.round(r.width)}x${Math.round(r.height)}`;
+            if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return "off screen";
+            const hit = document.elementFromPoint(x, y);
+            return hit && (hit === e || e.contains(hit)) ? "ok" : `covered by ${hit?.id || hit?.className}`;
+          }, key);
+          assert.equal(where, "ok", `${name} ${pick}: ${key} one tap on the Selection tab`);
+        }
+        assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${name} ${pick}: no sideways page scroll`);
+      }
+      await shot(page, `cover-ui-${name}-dock`);
     }
     assert.deepEqual(t.errors, [], `${name}: page errors`);
     await page.close();

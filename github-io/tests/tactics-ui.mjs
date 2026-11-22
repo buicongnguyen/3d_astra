@@ -44,6 +44,8 @@ try {
       .map(e => [e.textContent.trim().slice(0, 30), parseFloat(getComputedStyle(e).fontSize)]).filter(([, size]) => size < 11), scope);
     // Visible controls that leave the viewport or their panel, are covered, or are under 44 px on touch.
     const badControls = (selector, panel = null) => page.locator(selector).evaluateAll((elements, [touch, panel]) => elements.filter(e => e.getClientRects().length).map(e => {
+      // Phones: the context panel's action row scrolls sideways inside itself; each control is checked once in view.
+      if (e.closest('#commands')) e.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       const r = e.getBoundingClientRect(), host = panel ? document.querySelector(panel).getBoundingClientRect() : { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
       const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
       return { id: e.id || e.dataset.ability || e.dataset.stance || e.textContent.trim().slice(0, 20), w: Math.round(r.width), h: Math.round(r.height),
@@ -98,7 +100,7 @@ try {
       f.select([ids.v1, ids.v2, ids.ranger, ids.breaker]);
       return ids;
     });
-    await dock('actions');
+    await dock('selection');
     const tiles = page.locator('#commands .ability-tile');
     assert.deepEqual(await tiles.evaluateAll(bs => bs.map(b => b.dataset.ability)), ['shieldwall', 'focus', 'barrage'], `${name}: one tile per distinct ability`);
     assert.deepEqual(await tiles.evaluateAll(bs => bs.map(b => [b.querySelector('.ability-name').textContent, b.querySelector('.ability-status').textContent, b.disabled, !!b.querySelector('svg')])),
@@ -138,7 +140,7 @@ try {
     assert.equal(await page.locator('[data-ability="focus"]').isDisabled(), false, 'other abilities stay ready');
     // A Medic's pulse with nobody hurt is refused with a reason, and not spent.
     await frontier(ids => window.__frontier.select([ids.medic]), ids);
-    await dock('actions');
+    await dock('selection');
     assert.equal(await page.locator('.stance-control').count(), 0, 'an unarmed unit has no stance switch');
     await press('[data-ability="triage"]');
     assert.equal(await page.locator('#notice').innerText(), 'No injured infantry in range.');
@@ -146,7 +148,7 @@ try {
 
     // ---- Stance: the switch sends the command; a mixed selection shows as mixed.
     await frontier(ids => window.__frontier.select([ids.v1, ids.v2, ids.ranger, ids.breaker]), ids);
-    await dock('actions');
+    await dock('selection');
     await press('[data-stance="hold"]');
     assert.deepEqual(await frontier(ids => [ids.v1, ids.v2, ids.ranger, ids.breaker].map(id => window.__frontier.sim.get(id).stance), ids), ['hold', 'hold', 'hold', 'hold']);
     assert.equal(await frontier(() => window.__frontier.sim.commandLog.at(-1).type), 'stance', 'through the command door');
@@ -187,7 +189,7 @@ try {
     }
     assert.ok(spots.near && spots.far, `${name}: aim points on screen ${JSON.stringify(spots)}`);
     const aimTile = '[data-ability="barrage"]';
-    const startAim = async () => { await dock('actions'); await press(aimTile); await until(() => window.__frontier.mode === 'barrage'); };
+    const startAim = async () => { await dock('selection'); await press(aimTile); await until(() => window.__frontier.mode === 'barrage'); };
     await startAim();
     assert.match(await page.locator('#mode-banner').innerText(), touch ? /^BARRAGE · Tap a target inside the ring$/ : /^BARRAGE · Click a target inside the ring · Esc to cancel$/);
     assert.ok(await page.locator(aimTile).evaluate(b => b.classList.contains('active')), 'the tile stays lit while aiming');

@@ -16,7 +16,7 @@ export function setupInputKeyboard(S, A) {
     };
     if(id==='build') {
       if(!es.some(u=>u.type==='worker')) choose(own.filter(u=>u.type==='worker').sort((a,b)=>a.orders.length-b.orders.length).slice(0,1));
-      if(A.selectedEntities().some(u=>u.type==='worker')) {A.clearMode();A.dockTab('actions');A.notice('BUILD: Q Relay · E Barracks · R Foundry · T Tower · Y Core');}
+      if(A.selectedEntities().some(u=>u.type==='worker')) {A.clearMode();A.dockTab('selection');A.notice('BUILD: Q Relay · E Barracks · R Foundry · T Tower · Y Core');}
     } else if(['move','attackmove','patrol','attack','support','context','rally'].includes(id)) A.enterMode(id);
     else if(id.startsWith('stance-')) A.setStance(id.slice(7), true);
     else if(id==='stop') {A.clearMode();A.sendOrder([...S.selected],{type:'stop'});A.notice('Orders cleared.');}

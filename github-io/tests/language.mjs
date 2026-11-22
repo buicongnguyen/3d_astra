@@ -25,7 +25,7 @@ await suite('language',async()=>{
    Object.assign(s.players[0],{alloy:10000,energy:10000});
    f.select([s.own(0).find(e=>e.type==='hq').id]);
   });
-  if(mobile)await click('button[data-dock="actions"]');
+  if(mobile)await click('button[data-dock="selection"]');
   await click('[data-action="worker"]');
   await page.waitForFunction(()=>document.querySelector('#commands [data-action="worker"]').textContent.includes('Thợ mỏ'));
   const saved=await page.evaluate(()=>{const f=window.__frontier,h=f.sim.own(0).find(e=>e.type==='hq');return {id:h.id,queue:h.queue.map(q=>q.id),alloy:f.sim.players[0].alloy};});
@@ -50,7 +50,7 @@ await suite('language',async()=>{
     await page.evaluate(type=>{
      const f=window.__frontier,s=f.sim,e=s.own(0).find(e=>e.type===type)||s.spawn(type,0,-10,20);f.select([e.id]);
     },type);
-    if(mobile)await click('button[data-dock="actions"]');
+    if(mobile)await click('button[data-dock="selection"]');
     await page.waitForTimeout(80);
     const labels=await page.locator('#commands [data-action] > span').evaluateAll(nodes=>nodes.map(e=>({text:e.textContent,fits:e.scrollWidth<=e.clientWidth+1})));
     assert.ok(labels.every(e=>e.fits),JSON.stringify({size,type,labels}));
@@ -82,7 +82,7 @@ await suite('language',async()=>{
   // Visible text under 11 px, text cut off by its own box, or text outside the screen.
   const layout=scope=>page.evaluate(scope=>[...document.querySelectorAll(scope+' :is(p,span,strong,small,em,h1,h2,h3,label,li,b,button)')]
    .filter(e=>e.getClientRects().length&&[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim())&&!e.closest('.brand,.visually-hidden'))
-   .map(e=>{const r=e.getBoundingClientRect(),c=getComputedStyle(e);return {text:e.textContent.trim().slice(0,32),size:parseFloat(c.fontSize),cut:c.overflowX!=='visible'&&e.scrollWidth>e.clientWidth+1,off:r.left<-1||r.right>innerWidth+1};})
+   .map(e=>{if(e.closest('#commands'))e.scrollIntoView({block:'nearest',inline:'nearest'}); /* phones: the context panel's action row scrolls sideways */ const r=e.getBoundingClientRect(),c=getComputedStyle(e);return {text:e.textContent.trim().slice(0,32),size:parseFloat(c.fontSize),cut:c.overflowX!=='visible'&&e.scrollWidth>e.clientWidth+1,off:r.left<-1||r.right>innerWidth+1};})
    .filter(e=>e.size<11||e.cut||e.off),scope);
   const fits=async(scope,label)=>{
    assert.deepEqual(await layout(scope),[],name+' '+label+': Vietnamese text is readable and fits');
