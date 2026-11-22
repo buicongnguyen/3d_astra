@@ -323,9 +323,9 @@ export class WorldView {
   applyTheme() {
     const style=themeFor(this.terrain.id),light=lightFor(this.terrain.id);
     this.scene.background.set(style.sky);this.scene.fog.color.set(style.sky);
-    this.ambientLight.color.set(style.ambient);this.ambientLight.groundColor.set(style.bounce);
+    this.ambientLight.color.set(style.ambient).lerp(new THREE.Color("#c4dded"), 0.22);this.ambientLight.groundColor.set(style.bounce);
     this.ambientLight.intensity=light.ambient;
-    this.sun.color.set(style.sun);this.sun.intensity=light.sun;
+    this.sun.color.set(style.sun).lerp(new THREE.Color("#ffe0b2"), 0.28);this.sun.intensity=light.sun;
     this.renderer.toneMappingExposure=light.exposure;
     // W2-C: the grade (and a lighter fog-of-war colour for the Ashen map) come from look-grade.json.
     const themeId=lookOf(this.terrain.id),fog=fogOverride(themeId)??style.fog;
@@ -335,7 +335,7 @@ export class WorldView {
     this.fogRGB=[1,3,5].map(i=>parseInt(fog.slice(i,i+2),16));
     this.tintFog();
     // The map's own daylight, which a mission look (night, storm: mission-look-view.js) blends away from.
-    this.baseLight={sky:style.sky,fog,ambient:style.ambient,bounce:style.bounce,sun:style.sun,ambientI:light.ambient,sunI:light.sun,exposure:light.exposure};
+    this.baseLight={sky:style.sky,fog,ambient:this.ambientLight.color.getHex(),bounce:style.bounce,sun:this.sun.color.getHex(),ambientI:light.ambient,sunI:light.sun,exposure:light.exposure};
     this.mood?.themeChanged();
     if(this.wallParts){this.wallParts[0].material.color.set(style.wall);this.wallParts[1].material.color.set(style.glow);this.wallParts[1].material.emissive.set(style.glow);}
     this.applyAssetTheme();

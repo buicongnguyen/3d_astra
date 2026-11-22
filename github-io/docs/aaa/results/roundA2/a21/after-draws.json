@@ -1,0 +1,242 @@
+[
+ {
+  "device": "phone",
+  "id": "classic",
+  "map": "classic",
+  "mood": null,
+  "calls": 21,
+  "zoom": 31
+ },
+ {
+  "device": "phone",
+  "id": "riverlands",
+  "map": "riverlands",
+  "mood": null,
+  "calls": 34,
+  "zoom": 31
+ },
+ {
+  "device": "phone",
+  "id": "basin",
+  "map": "basin",
+  "mood": null,
+  "calls": 14,
+  "zoom": 31
+ },
+ {
+  "device": "phone",
+  "id": "expanse",
+  "map": "expanse",
+  "mood": null,
+  "calls": 20,
+  "zoom": 31
+ },
+ {
+  "device": "phone",
+  "id": "dunes",
+  "map": "dunes",
+  "mood": null,
+  "calls": 13,
+  "zoom": 31
+ },
+ {
+  "device": "phone",
+  "id": "woodlands",
+  "map": "woodlands",
+  "mood": null,
+  "calls": 20,
+  "zoom": 31
+ },
+ {
+  "device": "phone",
+  "id": "highlands",
+  "map": "highlands",
+  "mood": null,
+  "calls": 13,
+  "zoom": 31
+ },
+ {
+  "device": "phone",
+  "id": "heartland",
+  "map": "heartland",
+  "mood": null,
+  "calls": 14,
+  "zoom": 31
+ },
+ {
+  "device": "phone",
+  "id": "dryreach",
+  "map": "dryreach",
+  "mood": null,
+  "calls": 13,
+  "zoom": 31
+ },
+ {
+  "device": "phone",
+  "id": "twinrivers",
+  "map": "twinrivers",
+  "mood": null,
+  "calls": 27,
+  "zoom": 31
+ },
+ {
+  "device": "phone",
+  "id": "ironback",
+  "map": "ironback",
+  "mood": null,
+  "calls": 13,
+  "zoom": 31
+ },
+ {
+  "device": "phone",
+  "id": "crownmesa",
+  "map": "crownmesa",
+  "mood": null,
+  "calls": 14,
+  "zoom": 31
+ },
+ {
+  "device": "phone",
+  "id": "steppe",
+  "map": "steppe",
+  "mood": null,
+  "calls": 14,
+  "zoom": 31
+ },
+ {
+  "device": "phone",
+  "id": "m08-the-quiet-vault",
+  "map": "classic",
+  "mood": "night",
+  "calls": 44,
+  "zoom": 31
+ },
+ {
+  "device": "phone",
+  "id": "m06-copper-harvest",
+  "map": "basin",
+  "mood": "storm",
+  "calls": 26,
+  "zoom": 31
+ },
+ {
+  "device": "desktop",
+  "id": "classic",
+  "map": "classic",
+  "mood": null,
+  "calls": 37,
+  "zoom": 38
+ },
+ {
+  "device": "desktop",
+  "id": "riverlands",
+  "map": "riverlands",
+  "mood": null,
+  "calls": 62,
+  "zoom": 38
+ },
+ {
+  "device": "desktop",
+  "id": "basin",
+  "map": "basin",
+  "mood": null,
+  "calls": 26,
+  "zoom": 38
+ },
+ {
+  "device": "desktop",
+  "id": "expanse",
+  "map": "expanse",
+  "mood": null,
+  "calls": 32,
+  "zoom": 38
+ },
+ {
+  "device": "desktop",
+  "id": "dunes",
+  "map": "dunes",
+  "mood": null,
+  "calls": 25,
+  "zoom": 38
+ },
+ {
+  "device": "desktop",
+  "id": "woodlands",
+  "map": "woodlands",
+  "mood": null,
+  "calls": 25,
+  "zoom": 38
+ },
+ {
+  "device": "desktop",
+  "id": "highlands",
+  "map": "highlands",
+  "mood": null,
+  "calls": 13,
+  "zoom": 38
+ },
+ {
+  "device": "desktop",
+  "id": "heartland",
+  "map": "heartland",
+  "mood": null,
+  "calls": 18,
+  "zoom": 38
+ },
+ {
+  "device": "desktop",
+  "id": "dryreach",
+  "map": "dryreach",
+  "mood": null,
+  "calls": 21,
+  "zoom": 38
+ },
+ {
+  "device": "desktop",
+  "id": "twinrivers",
+  "map": "twinrivers",
+  "mood": null,
+  "calls": 41,
+  "zoom": 38
+ },
+ {
+  "device": "desktop",
+  "id": "ironback",
+  "map": "ironback",
+  "mood": null,
+  "calls": 17,
+  "zoom": 38
+ },
+ {
+  "device": "desktop",
+  "id": "crownmesa",
+  "map": "crownmesa",
+  "mood": null,
+  "calls": 18,
+  "zoom": 38
+ },
+ {
+  "device": "desktop",
+  "id": "steppe",
+  "map": "steppe",
+  "mood": null,
+  "calls": 16,
+  "zoom": 38
+ },
+ {
+  "device": "desktop",
+  "id": "m08-the-quiet-vault",
+  "map": "classic",
+  "mood": "night",
+  "calls": 88,
+  "zoom": 38
+ },
+ {
+  "device": "desktop",
+  "id": "m06-copper-harvest",
+  "map": "basin",
+  "mood": "storm",
+  "calls": 38,
+  "zoom": 38
+ }
+]

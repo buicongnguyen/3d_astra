@@ -26,7 +26,7 @@ import { CELL, GRID, drawAtlas } from "./building-decals-atlas.js";
 
 const CAPACITY = 2048, TRACKS = 96, DUSTS = 12, POOL = TRACKS + DUSTS;
 const GLOW = 32; // added to a cell id: drawn as light (additive)
-export const MODE = { still: 0, blink: 1, progress: 2, scroll: 3, pulse: 4, chase: 5, track: 6, rotate: 7, night: 8, blueprint: 9, dust: 10 };
+export const MODE = { still: 0, blink: 1, progress: 2, scroll: 3, pulse: 4, chase: 5, track: 6, rotate: 7, night: 8, blueprint: 9, dust: 10, halo: 11 };
 const LIGHT = { red: 0xff6a3d, amber: 0xffc46b, warm: 0xffd9a0, white: 0xffffff, mauve: 0xd9a8ff, ice: 0xbfe6ff, ember: 0xff8a3a };
 // World faces (outward x, z) and the tangent u runs along.
 const FACE = { S: [0, 1, 1, 0], E: [1, 0, 0, -1], W: [-1, 0, 0, 1] };
@@ -106,6 +106,11 @@ void main() {
     vTint = vec3(1.0);
   #endif
   vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+  if (aData.y == ${MODE.halo}.0) {
+    mvPosition = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
+    mvPosition.xy += position.xy * aData.w;
+    mvPosition.z += 0.14;
+  }
   gl_Position = projectionMatrix * mvPosition;
   #include <fog_vertex>
 }`;
@@ -267,9 +272,22 @@ export class BuildingDecalsView {
       const x = bx * cos + bz * sin, z = -bx * sin + bz * cos;
       ext.minX = Math.min(ext.minX, x); ext.maxX = Math.max(ext.maxX, x); ext.minZ = Math.min(ext.minZ, z); ext.maxZ = Math.max(ext.maxZ, z);
     }
+    // Anchor the halo to a real roof emitter, including asymmetric relays.
+    let emitter = null;
+    if (type === "hq" || type === "relay") {
+      const point = new THREE.Vector3();
+      template.traverse(part => {
+        if (!part.isMesh || !/^(TeamGlow|Energy)/.test(part.material?.name)) return;
+        const vertices = part.geometry.attributes.position;
+        for (let i = 0; i < vertices.count; i++) {
+          point.fromBufferAttribute(vertices, i).applyMatrix4(part.matrixWorld);
+          if (!emitter || point.y > emitter.y) (emitter ??= new THREE.Vector3()).copy(point);
+        }
+      });
+    }
     template.position.copy(saved[0]); template.quaternion.copy(saved[1]); template.scale.copy(saved[2]);
     template.updateMatrixWorld(true);
-    const result = { wall, ext };
+    const result = { wall, ext, emitter };
     this.placements.set(key, result);
     return result;
   }
@@ -331,6 +349,11 @@ export class BuildingDecalsView {
       this.records.set(e.id, rec);
       // Walls: model space -> world (position, the model's turn and scale).
       scratch.b.compose(o.position, scratch.q.setFromAxisAngle(UP, angle), scratch.s.copy(model.scale));
+      if (place.emitter) {
+        const centre = scratch.v.copy(place.emitter).applyMatrix4(scratch.b);
+        scratch.m.makeTranslation(centre.x, centre.y, centre.z);
+        this.put(i++, scratch.m, team, CELL.beacon + GLOW, MODE.halo, 0, r * 0.95);
+      }
       for (const { matrix, spec } of place.wall) {
         if (spec.role === "bar" && !D[e.type]?.trains?.length) continue;
         scratch.m.multiplyMatrices(scratch.b, matrix);

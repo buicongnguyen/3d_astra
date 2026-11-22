@@ -1,11 +1,49 @@
 import * as THREE from "three";
-import { themeFor } from "./visual-style.js";
+import { lookOf, themeFor } from "./visual-style.js";
 
 // The map edge: a cliff skirt under the playable square and the land or sea far below it,
 // fading into the haze colour the scene clears to. One unlit, vertex-coloured mesh (one draw,
 // no shadows, no textures); the shading is baked for the fixed sun and camera.
 export const CLIFF = 7;
 const REACH = 190;
+
+// Pale dust or moisture gathers by the ridge, cooling to a deeper colour overhead.
+const SKY = {
+  classic: ["#e6aa77", "#647995"], riverlands: ["#b5dbcf", "#5388a4"],
+  basin: ["#e6bc91", "#7792a2"], expanse: ["#c2dfc6", "#658da2"],
+  dunes: ["#efd29e", "#7897ad"], woodlands: ["#b5d2bd", "#527d95"],
+  highlands: ["#bfaaa1", "#6a788d"],
+};
+
+function skyMaterial(terrain, geometry) {
+  const [horizon, zenith] = SKY[lookOf(terrain.id)] ?? SKY.riverlands;
+  const sky = { horizon: new THREE.Color(horizon), zenith: new THREE.Color(zenith) };
+  const material = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false });
+  material.userData.sky = { ...sky, dayHorizon: sky.horizon.clone(), dayZenith: sky.zenith.clone() };
+  const pos = geometry.attributes.position, skyData = new Float32Array(pos.count * 3);
+  for (let i = 0; i < pos.count - 3; i++) {
+    const distance = Math.max(Math.abs(pos.getX(i)), Math.abs(pos.getZ(i))) - terrain.half;
+    skyData[i * 3 + 2] = THREE.MathUtils.smoothstep(distance, 14, 35);
+  }
+  // One far-plane triangle completes the sky wherever the horizon mesh ends.
+  skyData.set([-1, -1, -1, 3, -1, -1, -1, 3, -1], skyData.length - 9);
+  geometry.setAttribute("skyData", new THREE.BufferAttribute(skyData, 3));
+  material.onBeforeCompile = shader => {
+    shader.uniforms.uHorizon = { value: sky.horizon };
+    shader.uniforms.uZenith = { value: sky.zenith };
+    shader.vertexShader = shader.vertexShader.replace("#include <common>",
+      "#include <common>\nattribute vec3 skyData; varying vec3 vAtmosphere;")
+      .replace("#include <project_vertex>", `#include <project_vertex>
+        if (skyData.z < 0.0) gl_Position = vec4(skyData.xy, 0.999999, 1.0);
+        vAtmosphere = vec3(gl_Position.xy / gl_Position.w, abs(skyData.z));`);
+    shader.fragmentShader = shader.fragmentShader.replace("#include <common>",
+      "#include <common>\nuniform vec3 uHorizon, uZenith; varying vec3 vAtmosphere;")
+      .replace("#include <color_fragment>", `#include <color_fragment>
+        float altitude = smoothstep(-0.7, 1.1, vAtmosphere.y + 0.12 * vAtmosphere.x);
+        diffuseColor.rgb = mix(diffuseColor.rgb, mix(uHorizon, uZenith, altitude), vAtmosphere.z);`);
+  };
+  return material;
+}
 
 export function createMapEdge(terrain) {
   const theme = themeFor(terrain.id), half = terrain.half, p = [], c = [];
@@ -72,10 +110,13 @@ export function createMapEdge(terrain) {
       quad(pt(a, 14, summit(a)), pt(b, 14, summit(b)), pt(b, 28, -CLIFF), pt(a, 28, -CLIFF), crest, crest, far, far);
     }
   }
+  // The triangle's shader sets its clip position; keep its world bounds on the far edge.
+  p.push(...corner(REACH, -1, -1), ...corner(REACH, 1, -1), ...corner(REACH, -1, 1));
+  c.push(...haze, ...haze, ...haze);
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(p), 3));
   geometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array(c), 3));
-  const mesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false }));
+  const mesh = new THREE.Mesh(geometry, skyMaterial(terrain, geometry));
   mesh.name = "backdrop";
   mesh.matrixAutoUpdate = false;
   mesh.frustumCulled = false;
@@ -94,6 +135,16 @@ export function edgeColor(rgb, lo, hi, k, out = [0, 0, 0]) {
 export function tintEdge(mesh, edge, k) {
   const attribute = mesh?.geometry?.attributes.color;
   if (!attribute) return;
+  const sky = mesh.material?.userData.sky;
+  if (sky) {
+    sky.horizon.copy(sky.dayHorizon);
+    sky.zenith.copy(sky.dayZenith);
+    if (edge && k > 0) {
+      const shade = new THREE.Color();
+      sky.horizon.lerp(shade.set(edge.high), k);
+      sky.zenith.lerp(shade.set(edge.low), k);
+    }
+  }
   const day = (mesh.userData.dayColors ??= attribute.array.slice()), out = attribute.array;
   if (!edge || !(k > 0)) out.set(day);
   else {
