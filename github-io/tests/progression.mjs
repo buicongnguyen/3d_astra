@@ -51,7 +51,7 @@ try {
       await click('[data-level]');await step(21);await click('[data-level]');await step(31);
       await click('[data-action="tank"]');await step(21);
       assert.ok(await page.evaluate(()=>window.__frontier.sim.own(0).some(e=>e.type==='tank')));
-      await select('tank');await tab('selection');await click('#field-guide');
+      await select('tank');await tab('selection');await click(mobile ? '#touch-guide' : '#field-guide');
       assert.match(await page.locator('#guide-detail').innerText(),/Requires level 3 Foundry/);
       await click('#guide-close');
       await page.screenshot({path:`test-results/heavy-${mobile?'mobile':'desktop'}.png`});

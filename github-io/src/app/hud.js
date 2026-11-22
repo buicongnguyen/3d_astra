@@ -123,8 +123,8 @@ export function setupHud(S, A) {
   const dockResize = new ResizeObserver(invalidateCover);
   for (const element of [dock, tabs, $("stage")]) dockResize.observe(element);
   const dockState = new MutationObserver(invalidateCover);
-  for (const element of [document.documentElement, dock, tabs])
-    dockState.observe(element, { attributes: true, attributeFilter: ["class", "hidden"] });
+  for (const element of [document.documentElement, dock, tabs, dock.querySelector(".selection-panel")])
+    dockState.observe(element, { attributes: true, attributeFilter: ["class", "hidden", "data-dock"] });
   window.addEventListener("resize", invalidateCover);
   window.addEventListener("scroll", invalidateCover, { passive: true, capture: true });
 
@@ -140,7 +140,9 @@ export function setupHud(S, A) {
       view.canvasRect = canvas;
       const panel = dock.getBoundingClientRect(), strip = tabs.getBoundingClientRect();
       const top = Math.min(strip.height ? strip.top : canvas.bottom, panel.height > 1 ? panel.top : canvas.bottom);
-      cachedCrop = Math.max(0, Math.round(canvas.bottom - top));
+      // Floating controls can expose playable terrain between buttons anywhere in the dock.
+      const floating = getComputedStyle(dock).getPropertyValue("--floating-controls").trim() === "1";
+      cachedCrop = floating ? 0 : Math.max(0, Math.round(canvas.bottom - top));
       coverDirty = false;
     }
     view.setCoverCrop(cachedCrop);

@@ -29,7 +29,7 @@ try {
     },ids);
     await page.waitForFunction(()=>document.querySelector('.selection-activity').textContent==='Attacking');
     await page.evaluate(id=>window.__frontier.select([id]),ids.unit);
-    await page.locator('#field-guide').click();
+    await page.locator(mobile ? '#touch-guide' : '#field-guide').click();
     assert.match(await page.locator('.field-guide article').innerText(),/Automatically attacks visible enemies/);
     assert.match(await page.locator('.field-guide article').innerText(),/Move orders override combat/);
     await page.locator('#guide-close').click();

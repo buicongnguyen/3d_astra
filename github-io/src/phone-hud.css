@@ -673,3 +673,137 @@
   }
   :root.compact-ui .selection-panel .selection-hidden { margin-block-start: 0; }
 }
+
+/* Portrait combat orders and stances share the lower row. The ability stays next to
+   the selected unit and its cooldown. Cards with extra orders or upgrades keep their full layout. */
+@media (max-width: 540px) and (orientation: portrait) {
+  :root.compact-ui:not(.in-briefing) .touch-controls {
+    width: min(calc(100% - var(--hud-left) - var(--hud-right)), 294px);
+    right: auto;
+  }
+  :root.compact-ui.dialogue-open:not(.in-briefing):not(.scene-open):not(.construction-open) #stage > #mode-controls {
+    bottom: calc(var(--band) + var(--dialogue-h, 44px) + 6px);
+  }
+  :root.compact-ui.dock-actions:not(.in-briefing):not(.in-defence):not(.no-units):not(.many-orders):not(.construction-open)[data-dock="selection"]:has(.selection-panel.has-entity:not(.has-roster)):has(#commands.tactics-card > .stance-control):not(:has(#commands > button:nth-of-type(2), #upgrade-actions > button)) {
+    --dock-height: calc(99px + var(--dock-line, 0px));
+    --stance-width: max(132px, 37%);
+    --ability-width: clamp(52px, 15vw, 76px);
+    & .command-deck { position: relative; }
+    & .command-deck > .selection-panel { height: 100%; padding: 0; }
+    & .selection-panel #selection-info { margin-right: calc(92px + var(--ability-width)); padding-inline: 4px; }
+    & .selection-panel .order-buttons {
+      position: absolute; left: 0; bottom: 0; width: calc(100% - var(--stance-width));
+      display: grid; grid-template-columns: repeat(4, minmax(44px, 1fr)); gap: 0;
+      margin: 0; padding: 0;
+    }
+    & .order-buttons #field-guide { display: none; } /* The same guide stays in the touch row. */
+    & .order-buttons button { min-width: 44px; padding: 1px; }
+    & .command-panel, & .command-panel #commands { position: static; padding: 0; margin: 0; height: 0; min-height: 0; overflow: visible; }
+    & #commands > .ability-tile { position: absolute; right: 90px; top: 1px; width: var(--ability-width); padding-inline: 1px; min-width: 44px; }
+    & #commands > .stance-control {
+      position: absolute; right: 0; bottom: 0; width: var(--stance-width); height: 44px;
+      display: grid; grid-template-columns: repeat(3, minmax(44px, 1fr)); gap: 0;
+    }
+    & #commands .stance-control button { width: 100%; min-width: 44px; padding: 1px; }
+  }
+  /* The commander's field guide takes a single tap target alongside the three abilities. */
+  :root.compact-ui.in-defence.dock-actions:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(#commands [data-defence-hero]) {
+    --dock-height: 103px;
+    & .command-deck { position: relative; }
+    & .selection-panel .order-buttons { position: absolute; left: 2px; bottom: 2px; width: 48px; padding: 0; margin: 0; }
+    & .selection-panel .order-buttons button { padding-inline: 1px; min-width: 44px; }
+    & .command-deck > .command-panel { padding: 0 2px 2px 52px; }
+    & .selection-panel #selection-info { margin-right: 154px; padding-inline: 2px; }
+  }
+}
+
+@media (max-width: 540px) and (orientation: portrait) {
+  /* Each panel paints its own content, so navigation sits alongside the status
+     card and the battlefield remains clickable between the control groups. */
+  :root.compact-ui.dock-actions:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity:not(.has-roster)) {
+    & .bottom-dock { --floating-controls: 1; }
+    & .command-deck, & .command-deck > .selection-panel, & .command-deck > .command-panel {
+      background: transparent; border-color: transparent; border-image: none; box-shadow: none; pointer-events: none;
+    }
+    & .selection-panel #selection-info { background: var(--kit-hud-ink); }
+    & .selection-panel #selection-info, & .selection-panel button, & .command-panel button, & #commands, & #upgrade-actions { pointer-events: auto; }
+  }
+}
+@media (max-width: 340px) and (orientation: portrait) {
+  :root.compact-ui:not(.in-briefing) .touch-controls { width: 274px; gap: 2px; }
+  :root.compact-ui:not(.in-briefing) .touch-controls > button { padding: 1px; gap: 0; }
+  :root.compact-ui:not(.in-briefing) .touch-controls > button > span { max-width: 100%; font: 700 11px/11px var(--font-ui); white-space: normal; }
+  :root.compact-ui:not(.in-briefing) .topbar .resource { height: 15px; padding-inline: 2px; gap: 2px; }
+  :root.compact-ui:not(.in-briefing) .topbar :is(.resource strong, #clock) { font-size: 11px; line-height: 15px; }
+  :root.compact-ui:not(.in-briefing) .topbar #clock { height: 15px; padding-inline: 2px; }
+  :root.compact-ui:not(.in-briefing) .topbar::before { align-self: center; height: 30px; }
+}
+
+@media (max-width: 340px) and (orientation: portrait) {
+  /* At 320px the left side of the top bar can hold both the economy and a
+     selected unit's two-line readout. Keep contextual terrain information in the dock. */
+  :root.compact-ui.dock-actions:not(.in-briefing):not(.no-units):not(.many-orders):not(.construction-open)[data-dock="selection"]:has(.selection-panel.has-entity:not(.has-roster)):not(:has(.selection-hidden, .high-ground, .in-ford, .in-air)):has(#commands.tactics-card, #commands > button[data-action], #commands [data-defence-hero]) {
+    --telemetry-width: calc(100vw - var(--hud-left) - var(--hud-right) - 180px);
+    & .topbar { grid-template-rows: 11px 33px; }
+    & .topbar::before { display: none; }
+    & .topbar .resource-bar {
+      position: fixed; top: var(--hud-top); left: var(--hud-left); display: flex; align-items: center;
+      gap: 3px; height: 16px; width: max-content; max-width: var(--telemetry-width); padding: 0; background: var(--kit-hud-ink);
+    }
+    & .topbar .resource { position: static; align-self: center; height: 16px; padding: 0; gap: 1px; }
+    & .topbar .resource .icon { width: 11px; height: 11px; flex-basis: 11px; }
+
+    & .topbar #pause { align-items: start; padding-top: 5px; }
+    & .topbar #clock { position: fixed; top: calc(var(--hud-top) + 25px); right: var(--hud-right); width: 44px; padding: 0; height: 15px; text-align: center; pointer-events: none; z-index: 1; }
+    & .bottom-dock, & .command-deck, & .selection-panel { clip-path: none; transform: none; filter: none; backdrop-filter: none; overflow: visible; }
+    & .selection-panel #selection-info {
+      position: fixed; top: calc(var(--hud-top) + 17px); left: var(--hud-left); z-index: 5;
+      width: max-content; max-width: var(--telemetry-width); height: auto; margin: 0; padding: 0 1px;
+    }
+    & .selection-panel .entity-details { display: flex; flex-direction: column; gap: 0; padding: 0; }
+    & .selection-panel .selection-heading { display: flex; position: fixed; bottom: calc(var(--safe-bottom) + 57px); left: var(--hud-left); max-width: calc(100vw - 175px); background: var(--kit-hud-ink); }
+    & .selection-panel .selection-heading h3 { margin: 0; padding-inline: 3px; font-size: 11px; line-height: 12px; }
+    & .selection-panel .unit-metrics { display: flex; gap: 3px; }
+    & .selection-panel .unit-metrics > div { display: grid; gap: 0; padding: 0; line-height: 12px; background: none; }
+    & .selection-panel .unit-metrics :is(dt,dd) { margin: 0; font-size: 11px; line-height: 12px; }
+  }
+}
+
+@media (max-width: 340px) and (orientation: portrait) {
+  :root.compact-ui.in-defence.dock-actions:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(#commands [data-defence-hero]):has(#defence-hero:not([hidden])) {
+    --dock-height: 46px;
+    & #defence-bar { padding-block: 1px; min-height: 46px; }
+    & #defence-bar button { height: 44px; }
+    & .bottom-dock .minimap-panel:not(:has(#defence-map-size[aria-expanded="true"])) { width: 136px; bottom: var(--safe-bottom); }
+    & .minimap-panel:not(:has(#defence-map-size[aria-expanded="true"])) #minimap { width: 48px; }
+    & .selection-panel .order-buttons { bottom: 0; left: 0; width: 44px; }
+    & .command-deck > .command-panel { position: absolute; inset: auto 136px 0 44px; margin: 0; padding: 0; }
+    & .command-panel #commands { gap: 0; }
+    & .command-panel #commands .defence-ability { flex: 1 1 0; min-width: 44px; padding-inline: 1px; white-space: normal; }
+    /* The Hero button already selects and focuses the commander in one tap. */
+    & #commands [data-defence-hero="focus"] { display: none; }
+    & .selection-panel .selection-heading { top: calc(var(--hud-top) + 1px); left: calc(var(--hud-left) + 40px); bottom: auto; max-width: calc(var(--telemetry-width) - 40px); }
+  }
+}
+
+@media (max-width: 340px) and (orientation: portrait) {
+  /* A Harvester keeps its construction row. Support units use that row for their ability. */
+  :root.compact-ui.dock-actions:not(.in-briefing):not(.in-defence):not(.no-units):not(.many-orders):not(.construction-open)[data-dock="selection"]:has(.selection-panel.has-entity:not(.has-roster)):not(:has(.selection-hidden, .high-ground, .in-ford, .in-air, #commands .stance-control)):has(#commands > button) {
+    --dock-height: 99px;
+    & .command-deck { position: relative; }
+    & .command-deck > .selection-panel { height: 100%; padding: 0; }
+    & .selection-panel .order-buttons {
+      position: absolute; top: 1px; left: 0; display: flex; width: auto; margin: 0; padding: 0; gap: 0;
+    }
+    & .order-buttons button { width: 44px; min-width: 44px; padding: 1px; }
+    & .order-buttons #field-guide { display: none; }
+    & .command-deck > .command-panel { position: absolute; left: 0; bottom: 0; width: 100%; margin: 0; padding: 0; }
+    & .selection-panel .selection-heading { bottom: calc(var(--safe-bottom) + 101px); }
+    & .command-deck > .command-panel:has(#commands.tactics-card) { width: 80px; }
+    & .command-deck > .command-panel:has([data-action]) { width: 220px; max-width: 100%; }
+    & #commands:has([data-action]) { gap: 0; }
+    & #commands .command-tile small { font-size: 11px; white-space: normal; line-height: 12px; }
+    &:has(#commands [data-action]) .selection-heading { bottom: calc(var(--safe-bottom) + 12px); left: calc(var(--hud-left) + 224px); max-width: calc(100vw - var(--hud-left) - var(--hud-right) - 224px); }
+    & #commands.tactics-card > .ability-tile { width: 78px; min-width: 44px; }
+  }
+}

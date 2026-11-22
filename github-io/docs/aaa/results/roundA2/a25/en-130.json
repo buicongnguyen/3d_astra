@@ -1,0 +1,519 @@
+{
+ "portrait390/skirmish": {
+  "early": 0.85625,
+  "none": {
+   "share": 0.85625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.825,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": {
+   "share": 0.75,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [
+    "#mission-toggle x div.command-deck 44x44"
+   ],
+   "sideScroll": false
+  },
+  "building": {
+   "share": 0.7,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ },
+ "portrait390/mission": {
+  "early": 0.85375,
+  "none": {
+   "share": 0.85375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.8225,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": {
+   "share": 0.7475,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [
+    "#mission-toggle x div.command-deck 44x44"
+   ],
+   "sideScroll": false
+  },
+  "building": {
+   "share": 0.6975,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ },
+ "portrait390/defence": {
+  "early": 0.875,
+  "none": {
+   "share": 0.875,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.80625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.7725,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ },
+ "portrait360/skirmish": {
+  "early": 0.82625,
+  "none": {
+   "share": 0.82625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.78625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": {
+   "share": 0.695,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [
+    "#mission-toggle x div.command-deck 44x44"
+   ],
+   "sideScroll": false
+  },
+  "building": {
+   "share": 0.645,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ },
+ "portrait360/mission": {
+  "early": 0.82375,
+  "none": {
+   "share": 0.82375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.78375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": {
+   "share": 0.6925,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [
+    "#mission-toggle x div.command-deck 44x44"
+   ],
+   "sideScroll": false
+  },
+  "building": {
+   "share": 0.6425,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ },
+ "portrait360/defence": {
+  "early": 0.86875,
+  "none": {
+   "share": 0.86875,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.81375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.71875,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ },
+ "landscape844/skirmish": {
+  "early": 0.81625,
+  "none": {
+   "share": 0.81625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.6825,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": {
+   "share": 0.63875,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "building": {
+   "share": 0.6825,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ },
+ "landscape844/mission": {
+  "early": 0.81625,
+  "none": {
+   "share": 0.81625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.6825,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": {
+   "share": 0.63875,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "building": {
+   "share": 0.7125,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ },
+ "landscape844/defence": {
+  "early": 0.88125,
+  "none": {
+   "share": 0.88125,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.7525,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.7525,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ },
+ "landscape740/skirmish": {
+  "early": 0.79625,
+  "none": {
+   "share": 0.79625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.65,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": {
+   "share": 0.60375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "building": {
+   "share": 0.63375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ },
+ "landscape740/mission": {
+  "early": 0.79625,
+  "none": {
+   "share": 0.79625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.65,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": {
+   "share": 0.60375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "building": {
+   "share": 0.6825,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ },
+ "landscape740/defence": {
+  "early": 0.84125,
+  "none": {
+   "share": 0.84125,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.70875,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.70875,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ },
+ "small320/skirmish": {
+  "early": 0.77375,
+  "none": {
+   "share": 0.77375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.76,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": {
+   "share": 0.50625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [
+    "#mission-toggle x div.command-deck 44x44"
+   ],
+   "sideScroll": false
+  },
+  "building": {
+   "share": 0.50625,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ },
+ "small320/mission": {
+  "early": 0.77,
+  "none": {
+   "share": 0.77,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.76,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": {
+   "share": 0.5025,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [
+    "#mission-toggle x div.command-deck 44x44"
+   ],
+   "sideScroll": false
+  },
+  "building": {
+   "share": 0.5025,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ },
+ "small320/defence": {
+  "early": 0.8125,
+  "none": {
+   "share": 0.8125,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "one": {
+   "share": 0.78375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "mixed": null,
+  "building": {
+   "share": 0.6375,
+   "small": [],
+   "cut": [],
+   "taps": [],
+   "overlaps": [],
+   "sideScroll": false
+  },
+  "errors": {}
+ }
+}

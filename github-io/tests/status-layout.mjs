@@ -91,7 +91,11 @@ try{
   const inspect=async()=>page.evaluate(()=>{
    const elements=[...document.querySelectorAll('.unit-metrics dd,#queue button,.selection-activity,.order-buttons button:not([hidden])')].filter(e=>e.getClientRects().length);
    // Desktop orders sit on the command card; compact layouts keep them under Selection.
-   return elements.map(e=>{const r=e.getBoundingClientRect(),host=e.closest('.selection-panel,.command-panel').getBoundingClientRect();return {text:e.textContent,queue:e.parentElement.id==='queue',top:r.top,bottom:r.bottom,w:r.width,h:r.height,oneLine:e.scrollWidth<=e.clientWidth+1,fits:r.top>=host.top&&r.bottom<=host.bottom+1&&r.left>=host.left&&r.right<=host.right+1,hit:e.tagName!=='BUTTON'||e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))};});
+   return elements.map(e=>{
+    const fixedStats=e.closest('.unit-metrics') && getComputedStyle(e.closest('#selection-info')).position==='fixed';
+    const host=(fixedStats ? document.querySelector('.topbar') : e.closest('.selection-panel,.command-panel')).getBoundingClientRect();
+    const r=e.getBoundingClientRect();
+    return {text:e.textContent,queue:e.parentElement.id==='queue',top:r.top,bottom:r.bottom,w:r.width,h:r.height,oneLine:e.scrollWidth<=e.clientWidth+1,fits:r.top>=host.top&&r.bottom<=host.bottom+1&&r.left>=host.left&&r.right<=host.right+1,hit:e.tagName!=='BUTTON'||e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))};});
   });
   let cells=await inspect();assert.ok(cells.every(c=>c.fits&&c.oneLine&&c.hit),JSON.stringify(cells));
   const queue=cells.filter(c=>c.queue);assert.equal(queue.length,5);assert.ok(queue.every(c=>c.h>=44&&c.w>=44&&c.top===queue[0].top),'queue stays on one row');

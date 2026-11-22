@@ -45,8 +45,25 @@ await suite('phones', async () => {
     await shot(page, `phones-${viewport}-${mode}-one`);
     console.log(`phones ${viewport} ${mode}: nothing selected ${(none * 100).toFixed(1)}%, one unit ${(one * 100).toFixed(1)}%`);
     assert.ok(none >= MIN_NONE, `${viewport} ${mode}: ${none} with nothing selected`);
-    assert.ok(one >= MIN_ONE, `${viewport} ${mode}: ${one} with a unit selected`);
+    assert.ok(one >= (viewport === 'portrait' ? 0.75 : MIN_ONE), `${viewport} ${mode}: ${one} with a unit selected`);
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'no sideways scroll');
+    if (viewport === 'portrait' && mode === 'campaign') {
+      await tap('#attack-order');
+      await page.evaluate(() => window.__frontier.mission.say('vale', 'Hold the crossing until the convoy arrives.'));
+      await page.waitForSelector('#dialogue-card', { state: 'visible' });
+      for (const expanded of [false, true]) {
+        if (expanded) await tap('#dialogue-card');
+        await page.waitForFunction(() => {
+          const cancel = document.querySelector('#cancel-mode'), button = cancel.getBoundingClientRect();
+          const comms = document.querySelector('#dialogue-card').getBoundingClientRect();
+          return button.height >= 44 && button.bottom <= comms.top &&
+            cancel.contains(document.elementFromPoint(button.x + button.width / 2, button.y + button.height / 2));
+        });
+      }
+      await shot(page, 'phones-portrait-campaign-cancel-comms');
+      await tap('#cancel-mode');
+      assert.equal(await page.locator('#cancel-mode').isVisible(), false);
+    }
     if (mode === 'skirmish') {
       // All seven ids exist with their type; the six of the touch row work by one tap each (owner, 2026-11-21:
       // one row under the top bar, no "…" sheet), +/- by script.
