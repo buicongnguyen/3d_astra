@@ -151,7 +151,10 @@ export function setupMatchFlow(S, A) {
 
   function openTitleCard() {
     hideTitleCard();
-    if (!S.sim.missionDef && S.playMode === "skirmish") { showBaseObjective(); return; }
+    if (!S.sim.missionDef && S.playMode === "skirmish") {
+      if (!S.query?.has("test") || S.query.has("opening") || S.query.has("titlecard")) showBaseObjective();
+      return;
+    }
     if (S.sim.missionDef && S.playMode !== "training" && (!S.query?.has("test") || S.query.has("titlecard"))) showTitleCard(S.sim.missionDef);
   }
 
