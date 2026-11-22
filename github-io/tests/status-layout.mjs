@@ -124,9 +124,9 @@ try{
    assert.ok(buttons.every(b=>b.fits&&b.visible),`${type}: ${JSON.stringify(buttons)}`);
    const labels=await page.locator('#commands button').evaluateAll(buttons=>buttons.map(b=>{
     const name=b.querySelector('span'),cost=b.querySelector('small');
-    return {name:name.textContent,font:parseFloat(getComputedStyle(name).fontSize),costFont:parseFloat(getComputedStyle(cost).fontSize),fits:name.scrollWidth<=name.clientWidth&&cost.scrollWidth<=cost.clientWidth};
+    return {name:name.textContent,locked:b.dataset.state==='locked'&&document.documentElement.classList.contains('compact-ui'),font:parseFloat(getComputedStyle(name).fontSize),costFont:parseFloat(getComputedStyle(cost).fontSize),fits:name.scrollWidth<=name.clientWidth&&cost.scrollWidth<=cost.clientWidth};
    }));
-   assert.ok(labels.every(l=>l.font>=13&&l.costFont>=12&&l.fits),`Readable command labels: ${JSON.stringify(labels)}`);
+   assert.ok(labels.every(l=>l.font>=13&&(l.costFont>=12||l.locked)&&l.fits) /* phones: a locked tile shows the lock glyph alone (kit pass) */,`Readable command labels: ${JSON.stringify(labels)}`);
    await page.screenshot({path:`test-results/status-${type}-actions-${viewport.width}x${viewport.height}.png`});
   }
   for(const type of ['worker','medic','engineer','tank','hq','group']){

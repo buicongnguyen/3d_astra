@@ -28,7 +28,15 @@ export function setupCommandCard(S, A) {
       tipButton.removeAttribute('title');
     }
     $('order-tip').hidden = !tipButton?.dataset.tip;
-    if (tipButton) $('order-tip').textContent = tipButton.dataset.tip;
+    if (tipButton) {
+      // The kit's tooltip: the name on top, then its role, then the cost line of a production tile. Translated
+      // pages keep the one translated line (the catalogue holds the whole sentence).
+      const tip = $('order-tip'), parts = tipButton.dataset.tip.split(' · '), key = parts[0].length <= 2 ? parts.shift() : null;
+      const cost = tipButton.matches('.command-tile') ? tipButton.querySelector('small')?.textContent.trim() : '';
+      if ((document.documentElement.lang || 'en').startsWith('en') && parts.length > 1) {
+        tip.replaceChildren(...[[`${parts[0]}${key ? ` · ${key}` : ''}`, 'tip-title'], [parts.slice(1).join(' · '), 'tip-role'], ...(cost ? [[cost, 'tip-cost']] : [])].map(([text, cls]) => { const s = document.createElement('span'); s.className = cls; s.textContent = text; return s; }));
+      } else tip.textContent = tipButton.dataset.tip;
+    }
   }
 
   let constructionUI;

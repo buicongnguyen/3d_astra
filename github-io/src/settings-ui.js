@@ -46,6 +46,8 @@ export class SettingsUI {
     this.root.addEventListener("input", (e) => {
       const key = e.target.dataset.setting;
       if (!key) return;
+      const state = e.target.type === "checkbox" ? e.target.nextElementSibling : null;
+      if (state?.classList.contains("switch-state")) state.textContent = e.target.checked ? "On" : "Off";
       this.draft[key] =
         e.target.type === "checkbox"
           ? e.target.checked
@@ -110,7 +112,7 @@ export class SettingsUI {
         .join("")}</div></fieldset>`;
     // Checkboxes stay real inputs (keyboard, forms, tests); CSS draws them as switches.
     const toggle = (key, label) =>
-      `<label class="setting-row">${label}<input type="checkbox" role="switch" data-setting="${key}" ${this.draft[key] ? "checked" : ""}></label>`;
+      `<label class="setting-row">${label}<input type="checkbox" role="switch" data-setting="${key}" ${this.draft[key] ? "checked" : ""}><span class="switch-state" aria-hidden="true">${this.draft[key] ? "On" : "Off"}</span></label>`;
     const army = `${toggle("autocast", "Auto-cast abilities")}<p class="settings-note">Your units use their abilities on their own in a fight, as rival armies do. Off: you give the order from the command card.</p>${toggle("groupPace", "Group pace")}<p class="settings-note">A group you move keeps together at its fighters' pace, with Medics and Engineers walking behind them. Off: every unit walks at its own speed.</p><div class="army-preview"><div class="preview-unit player">${portrait("tank", "friendly", "preview-art")}<b>● YOUR FORCE</b></div><div class="preview-unit enemy">${portrait("tank", "hostile", "preview-art")}<b>◆ ENEMY FORCE</b></div></div><p class="settings-note">Paint preview · neutral armor stays unchanged. Team symbols remain distinct.</p><button data-do="contrast" class="contrast-button">${icon("shield")}<span>High contrast · Gold / Violet</span></button>${swatches("playerColor")}${swatches("enemyColor")}`;
     const graphics = `<label class="setting-row">Graphics quality<select data-setting="quality"><option value="eco" ${this.draft.quality === "eco" ? "selected" : ""}>Eco</option><option value="high" ${this.draft.quality === "high" ? "selected" : ""}>High</option></select></label>${toggle("detail", "Decorative vegetation")}${toggle("waterMotion", "Animate water")}${toggle("combatMotion", "Animate combat effects")}${toggle("screenShake", "Screen shake")}<label class="setting-row">Damage numbers<select data-setting="damageNumbers" aria-label="Damage numbers">${[["focus", "Bosses & Defence"], ["all", "All"], ["off", "Off"]].map(([value, label]) => `<option value="${value}" ${this.draft.damageNumbers === value ? "selected" : ""}>${label}</option>`).join("")}</select></label>${toggle("showFps", "Show FPS")}<p class="settings-note">Eco limits pixel density and shadow cost. Bridges, water and terrain obstacles remain visible at every setting. Reduced motion is respected.</p>`;
     const musicChoice = [["recorded", "Recorded + adaptive"], ["adaptive", "Adaptive only"], ["off", "Off"]].map(([value, label]) => `<option value="${value}" ${this.draft.music === value ? "selected" : ""}>${label}</option>`).join("");

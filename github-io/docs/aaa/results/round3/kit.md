@@ -70,3 +70,68 @@ The target of 8 was **not** reached.
 - **Modal frame:** it still draws as a thick segmented band (the reviewer's top fix). The cause is not found yet.
 - **Phone action row:** it scrolls sideways. The reviewer prefers wrapping, but wrapping would grow the dock.
 - **Captions and hotkey badges:** some are under 11 px (estimated). Help and field-guide palette. Tooltip layout. Settings tabs and switch On/Off text. Defence wave bar chips.
+
+## Second correction round (coordinator, 2026-11-22)
+
+### What changed
+- **Modal frame (root cause).** The frame SVGs had a viewBox but no intrinsic size. As a border-image, each SVG was scaled to the whole dialog, so its 1 px stroke drew several px thick and the 9 px slices cut it into segments.
+  - Every `src/art/ui/frame-*.svg` now has `width="64" height="64"`, so the frame is a precise 1 px edge.
+  - Dialogs use the panel frame (8 px chamfer).
+- **Phone action row: every action is in view.**
+  - The tiles share the row equally (44 px minimum). Each shows its glyph or portrait over one short line: cost, state, or stance name. The full name is in the tooltip and the accessible name.
+  - A locked tile shows the lock glyph only.
+  - At 390 px, six or seven tiles fit without scrolling.
+  - In landscape:
+    - the row wraps;
+    - unit orders sit in one row of five;
+    - a building's Rally sits beside its heading, with its queue on the row below.
+  - Dock heights are unchanged from round 1 (161 px in portrait).
+- **Small text.** A script measured title, settings, campaign, help, field guide and pause on all three viewports. Desktop menu text was raised to 12 px. What remains under 12 px on desktop is battle-HUD text at 11 px, which the rule allows. Phones have nothing under 11 px.
+- **Kit restyle:**
+  - Help: the group and shortcut buttons, and the key chips.
+  - Field guide: glass surface, kit buttons, cyan headings.
+  - Desktop tooltip: name on top, then role, then cost. In vi and ko it stays as one translated line.
+  - Settings switches now say On or Off; added "On" to vi.json and ko.json.
+  - Defence bar and chips: kit panel and chips.
+  - Korean font re-cut (797 characters).
+- **Merges and docs.** Merged `r3/ci-robust` (a1389b7). Added the CHANGELOG subsection.
+
+### Checks
+- **`npm test`:** 0 fail (the Korean font test fails until the font is re-cut).
+- **Render budget, full run:** passes. battle-eco 111, three-rivals 158, three-factions 196, battle-dock-eco 169.
+- **Phone HUD audit:** `tools/phone-hud-audit.mjs --lang vi` and `--lang ko` report 0 issues in every case.
+  - **Cost:** at 320×568 the clear-scene share with one unit selected is 49.8%; the HUD pass measured 59.6%. The context panel adds its action row.
+- **Browser suites:** all of these pass on the final build: cover-ui, ui-quality, status-layout, layout-f, mobile, mobile-controls, mobile-gestures, mobile-construction, phones, selection, hotkeys, tactics-ui, language, fullscreen, defence, defence-onboarding, defence-zones, missions, title, campaign, story, choices, chronicles, rank, quick-battle, readability, squad-orders, army-depth, improvements, offline, abilities, air, progression, activity, defence-deck, openings, ceremony and sovereign-walks.
+  - The final CSS fixes (landscape layout, construction card) were re-run on the suites they affect.
+- **Test changes for the icon tiles:**
+  - Locked tiles may show only the glyph (status-layout).
+  - Elements inside the action row are measured once they are scrolled into view.
+
+### Fresh reviewer, final scores
+
+The before column was re-scored by this reviewer and is calibrated differently from round 1.
+
+| Family | Before | After |
+|---|---|---|
+| Title | 7 | 7.5 |
+| Campaign | 7 | 7.5 |
+| Defence menu | 7 | 7.5 |
+| Settings | 7 | 8 |
+| Pause | 7.5 | 8 |
+| Help | 6.5 | 7 |
+| Field guide | 6.5 | 7 |
+| Story | 7 | 8 |
+| Toasts and objectives | 7 | 7.5 |
+| Tooltip | 6.5 | 7 |
+| Desktop HUD | 6.5 | 7 |
+| Phone HUD | 5.5 | 7.5 |
+| Results | 7 | 7.5 |
+| Defence HUD | 5.5 | 6 |
+
+**Target of 7.5 on every family: not met** for Help, Field guide, Tooltip and Desktop HUD (7 each) and Defence HUD (6).
+
+### Still open
+- **Defence HUD dock:** it still uses its own text tiles; in landscape "Reinforce" and "Field commander" overlap.
+- **Landscape menus:** on Title and the Defence menu, Start crowds the Quick battle tile.
+- **Desktop small text:** command-card and hotkey badges, objectives, and the tooltip body (about 9–11 px).
+- **Results in landscape and at 320 px:** the actions fall below the fold.
