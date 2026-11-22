@@ -1,7 +1,7 @@
 import './construction-ui.css';
 import {translate} from './i18n.js';
 
-// Keep mobile construction feedback together in the Actions dock. The existing
+// Keep mobile construction feedback together in the phone's context panel (Selection tab; it was the Actions dock). The existing
 // placement buttons are moved, not duplicated, so mouse and touch share handlers.
 export function createConstructionUI(definitions, { retry, back }) {
   const host = document.querySelector('.command-panel');
@@ -28,7 +28,7 @@ export function createConstructionUI(definitions, { retry, back }) {
     update({ sim, selected, mode, type, point, blockedType, failure, started, paused, touch }) {
       const placing = mode === 'build';
       const visible = document.documentElement.classList.contains('compact-ui') &&
-        document.documentElement.dataset.dock === 'actions' && started && !sim.result && (placing || blockedType);
+        document.documentElement.dataset.dock === 'selection' && started && !sim.result && (placing || blockedType);
       card.hidden = !visible;
       host.classList.toggle('construction-open', !!visible);
       document.documentElement.classList.toggle('construction-open', !!visible);

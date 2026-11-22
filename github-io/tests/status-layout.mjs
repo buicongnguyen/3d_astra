@@ -6,7 +6,7 @@ const browser=await chromium.launch({headless:true,executablePath:process.platfo
 try{
  for(const viewport of [{width:1920,height:1080},{width:1280,height:800},{width:1024,height:768},{width:320,height:568},{width:390,height:844},{width:667,height:375},{width:844,height:390},{width:768,height:1024}]){
   const mobile=viewport.width<1000;
-  const workHost=mobile?'#production-status':'#queue';
+  const workHost='#queue'; // phones: the queue shows once, in the context panel (kit pass)
   const page=await browser.newPage({viewport,isMobile:mobile,hasTouch:mobile,deviceScaleFactor:mobile?3:1});
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const click=async selector=>page.locator(selector)[mobile?'tap':'click']();
@@ -42,7 +42,7 @@ try{
    const f=window.__frontier,s=f.sim;s.aiEnabled=false;s.tick=()=>{};s.players[0].alloy=10000;s.players[0].energy=10000;
    const h=s.own(0).find(e=>e.type==='hq');f.select([h.id]);
   });
-  if(mobile)await click('button[data-dock=actions]');
+  if(mobile)await click('button[data-dock=selection]');
   const commandLayout=()=>page.evaluate(()=>[...document.querySelectorAll('#commands [data-action],#upgrade-actions button')].map(e=>{const r=e.getBoundingClientRect();return [e.textContent,r.x,r.y,r.width,r.height];}));
   const idleCommands=await commandLayout();
   await page.evaluate(()=>{const f=window.__frontier,h=f.sim.own(0).find(e=>e.type==='hq');for(let i=0;i<5;i++)f.sim.enqueue(h.id,'worker');h.queue[0].elapsed=4;f.step(0);});
@@ -78,8 +78,8 @@ try{
    if(viewport.width===1280){
     const job=await page.locator('#queue .work-job').first().elementHandle();
     await page.setViewportSize({width:900,height:600});
-    await click('button[data-dock=actions]');
-    await page.locator('#production-status .work-job').first().waitFor({state:'visible'});
+    await click('button[data-dock=selection]');
+    await page.locator('#queue .work-job').first().waitFor({state:'visible'});
     await page.setViewportSize(viewport);
     await page.waitForFunction(()=>document.querySelector('#production-status').hidden);
     assert.equal(await job.evaluate(e=>e.isConnected),true,'resize preserves the selection queue');
@@ -99,7 +99,7 @@ try{
   const before=await page.evaluate(()=>window.__frontier.sim.players[0].alloy);
   await click('#queue button[data-cancel="4"] .work-cancel');assert.equal(await page.evaluate(()=>window.__frontier.sim.players[0].alloy),before+50);
   for(let i=0;i<4;i++)await click('#queue button[data-cancel="0"] .work-cancel');
-  if(mobile)await click('button[data-dock=actions]');
+  if(mobile)await click('button[data-dock=selection]');
   assert.deepEqual(await commandLayout(),idleCommands,'cancellation does not shift commands');
   await page.evaluate(()=>{const f=window.__frontier,h=f.sim.own(0).find(e=>e.type==='hq');f.sim.upgradeBuilding(h.id);f.step(0);});
   assert.deepEqual(await commandLayout(),idleCommands,'upgrading preserves command order and positions');
@@ -113,17 +113,20 @@ try{
    await page.evaluate(({type,unit})=>{const f=window.__frontier,e=f.sim.own(0).find(e=>e.type===type);for(let i=0;i<5;i++)f.sim.enqueue(e.id,unit);f.step(0);},{type,unit});
    assert.deepEqual(await commandLayout(),layout,`${type} queue preserves commands`);
    const buttons=await page.evaluate(()=>{
-    const panel=document.querySelector('.command-panel').getBoundingClientRect();
+    // Phones (kit pass): one context panel; its action row scrolls sideways inside itself, so each tile is checked
+    // once scrolled into the row, as a player would.
+    const panel=document.querySelector(document.documentElement.classList.contains('compact-ui')?'.command-deck':'.command-panel').getBoundingClientRect();
     return [...document.querySelectorAll('#commands button,#upgrade-actions button,#production-status button')].filter(e=>e.getClientRects().length).map(e=>{
+     e.scrollIntoView({block:'nearest',inline:'nearest'});
      const r=e.getBoundingClientRect();return {text:e.textContent,fits:r.left>=panel.left&&r.right<=panel.right&&r.top>=panel.top&&r.bottom<=panel.bottom,visible:[[.1,.1],[.5,.5],[.9,.9]].every(([x,y])=>e.contains(document.elementFromPoint(r.x+r.width*x,r.y+r.height*y)))};
     });
    });
    assert.ok(buttons.every(b=>b.fits&&b.visible),`${type}: ${JSON.stringify(buttons)}`);
    const labels=await page.locator('#commands button').evaluateAll(buttons=>buttons.map(b=>{
     const name=b.querySelector('span'),cost=b.querySelector('small');
-    return {name:name.textContent,font:parseFloat(getComputedStyle(name).fontSize),costFont:parseFloat(getComputedStyle(cost).fontSize),fits:name.scrollWidth<=name.clientWidth&&cost.scrollWidth<=cost.clientWidth};
+    return {name:name.textContent,locked:b.dataset.state==='locked'&&document.documentElement.classList.contains('compact-ui'),font:parseFloat(getComputedStyle(name).fontSize),costFont:parseFloat(getComputedStyle(cost).fontSize),fits:name.scrollWidth<=name.clientWidth&&cost.scrollWidth<=cost.clientWidth};
    }));
-   assert.ok(labels.every(l=>l.font>=13&&l.costFont>=12&&l.fits),`Readable command labels: ${JSON.stringify(labels)}`);
+   assert.ok(labels.every(l=>l.font>=13&&(l.costFont>=12||l.locked)&&l.fits) /* phones: a locked tile shows the lock glyph alone (kit pass) */,`Readable command labels: ${JSON.stringify(labels)}`);
    await page.screenshot({path:`test-results/status-${type}-actions-${viewport.width}x${viewport.height}.png`});
   }
   for(const type of ['worker','medic','engineer','tank','hq','group']){

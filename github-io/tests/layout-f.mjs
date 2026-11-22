@@ -49,7 +49,9 @@ const AUDIT = ({ touch, scope, fixed }) => {
     if (r.width <= 1 || r.height <= 1) continue;
     const id = e.id || e.dataset.mode || e.dataset.tab || e.dataset.dock || e.className.toString().split(' ')[0] || e.textContent.trim().slice(0, 16);
     if (touch && (r.height < 43.5 || r.width < 43.5)) out.targets.push(`${id} ${Math.round(r.width)}x${Math.round(r.height)}`);
-    const scrolls = (() => { for (let p = e.parentElement; p && p !== document.body; p = p.parentElement) { const o = getComputedStyle(p).overflowY; if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight + 1) return true; } return false; })();
+    const scrolls = (() => { for (let p = e.parentElement; p && p !== document.body; p = p.parentElement) { const o = getComputedStyle(p).overflowY; if ((o === 'auto' || o === 'scroll') && p.scrollHeight > p.clientHeight + 1) return true;
+      // The phone context panel's action row scrolls sideways inside itself (kit pass, owner 2026-11-22).
+      const x = getComputedStyle(p).overflowX; if ((x === 'auto' || x === 'scroll') && p.scrollWidth > p.clientWidth + 1) return true; } return false; })();
     if (scrolls) { /* reachable by scrolling its own panel */ }
     else if (r.left < -1 || r.top < -1 || r.right > innerWidth + 1 || r.bottom > innerHeight + 1) out.outside.push(`${id} ${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.right)},${Math.round(r.bottom)}`);
     else if (!e.closest('.settings-panel, .modal, .mission-briefing, .field-guide, #campaign-setup, .briefing-setup, .briefing') && !hit(e, r)) out.outside.push(`${id} covered`);
@@ -130,7 +132,7 @@ try {
     await dockTab('selection');
     await check('5-sel-worker', 'body', fixed);
     await select(['barracks']);
-    await dockTab('actions');
+    await dockTab('selection');
     await check('6-sel-barracks', 'body', fixed);
     if (landscapePhone) {
       // The worst normal case: a building selected with its command card open, objectives collapsed.
@@ -141,7 +143,7 @@ try {
     }
     await select(['ranger', 'vanguard']);
     await check('7-sel-army', 'body', fixed);
-    await dockTab('actions');
+    await dockTab('selection');
     await check('7b-tactics-card', 'body', fixed);
     if (touch) {
       // The objectives chip opens and closes the list.

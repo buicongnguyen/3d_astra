@@ -2,6 +2,19 @@
 
 ## Unreleased: AAA round 3
 
+### Command console kit on every screen; one context panel on phones (owner request)
+- **Every screen in the kit's look.** This covers menus, campaign, Defence menu, Settings, pause, help, field guide, story cards, decisions, toasts, objectives, tooltips, command tiles, results, and the desktop and Defence HUDs.
+  - Corners are chamfered and edges are 1 px.
+  - There is one flat gold primary action per screen.
+  - Selected controls show a cyan edge and a 2 px bottom rail; focus shows a cyan ring.
+  - Speaker portraits are round.
+  - Settings switches say On / Off.
+  - Desktop tooltips show the name, then the role, then the cost.
+  - The styles are in `src/kit-skin.css`, with the frames in `src/art/ui/`.
+- **Phones: Selection and Actions are one panel.** The Selection tab shows the unit or building, its orders and all its actions in one row, each one tap. The tiles share the row equally: an icon over the cost, state or name. Build, train, abilities, stance and level-up are all there. The dock is not taller anywhere: 161 px for groups, units, Harvesters and buildings at 390×844.
+- **Phones draw less.** Nothing is drawn under the open dock or the tab strip; the map still shows under the see-through top bar. Render-budget scenario `battle-dock-eco` added.
+- Results, scores and heights: `docs/aaa/results/round3/kit.md`.
+
 ### R3 map variety: six new Skirmish maps
 - **Six styles, like a real map pool** (all in the Skirmish battlefield picker with their size; a one-line idea as the option's tooltip; names and lines in Vietnamese and Korean):
   - **Golden Heart** (128 m, copper basin look): a ring of four crags around a rich heart (four 5,000 alloy and four 3,000 energy deposits, worth more than both camps' fields together) with roads in from every camp.

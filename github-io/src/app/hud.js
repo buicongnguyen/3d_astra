@@ -69,7 +69,9 @@ export function setupHud(S, A) {
     requestAnimationFrame(() => S.view?.resize());
   }
 
+  // Phones (owner, 2026-11-22): Selection and Actions are one context panel, so "actions" opens it too.
   function dockTab(name) {
+    if (name === "actions") name = "selection";
     document.documentElement.dataset.dock = name;
     for (const button of $("dock-tabs").querySelectorAll("button"))
       button.setAttribute("aria-pressed", String(button.dataset.dock === name));
@@ -112,32 +114,33 @@ export function setupHud(S, A) {
       .padStart(2, "0")}`;
   }
 
-  // Portrait phones run the canvas on under the dock to the tab strip (view.js, --view-cover). The part under
-  // an open dock is not drawn at all, which is only right while the dock covers the whole of it; the dock now
-  // grows to what it shows (nothing selected: the tab strip alone, one unit: a short card; mobile.css and
-  // landscape-hud.css set --dock-height per state), so the strip is drawn whenever the dock is shorter than
-  // the cover. Read from the dock's real height, and only when what decides it changes.
-  let coverKey = "";
-  function coverFollowsDock(es) {
+  // Portrait phones run the canvas on under the dock and the tab strip (view.js, --view-cover). Only the part under
+  // opaque HUD is cut from the drawing (owner, 2026-11-22: crop): the open dock panel, or the tab strip when no panel
+  // is open, so the map still shows under the see-through top bar. The dock's height follows what it shows (a
+  // status line, a queue, the Defence states), so the line is measured on every UI tick (about 7 a second) and
+  // the view changes only when it moves.
+  function coverFollowsDock() {
     const view = S.view;
-    if (!view?.setCoverOpen) return;
-    const root = document.documentElement;
-    const key = `${root.dataset.dock}/${es.length ? (es.some((u) => u.kind === "unit") ? (es.length > 1 ? "units" : "unit") : "building") : "none"}/${root.classList.contains("many-orders")}/${root.classList.contains("compact-ui")}/${innerWidth}x${innerHeight}`;
-    if (key === coverKey) return;
-    coverKey = key;
+    if (!view?.setCoverCrop || Z.modalType === "scene") return; // a story scene draws the whole frame (scenes.js)
     if (!(view.cover > 0)) { view.setCoverOpen(true); return; }
-    const dock = document.querySelector(".bottom-dock");
-    view.setCoverOpen(dock.offsetHeight >= view.cover - 0.5);
+    const canvas = view.renderer.domElement.getBoundingClientRect(), dock = document.querySelector(".bottom-dock").getBoundingClientRect();
+    const tabs = $("dock-tabs").getBoundingClientRect();
+    const top = Math.min(tabs.height ? tabs.top : canvas.bottom, dock.height > 1 ? dock.top : canvas.bottom);
+    const crop = Math.max(0, Math.round(canvas.bottom - top));
+    view.setCoverCrop(crop);
+    view.setCoverOpen(crop > 0);
   }
 
   let lastInfoHtml = null;
   // A unit roster wider than its row fades out at the right edge (more to scroll) instead of
   // ending in a portrait cut in half; the fade goes once the row is scrolled to its end.
+  // The phone context panel's action row (#commands) fades the same way when it scrolls sideways.
   function rosterFade() {
-    const list = $("unit-list");
-    if (!list) return;
-    if (!list.dataset.fadeBound) { list.dataset.fadeBound = "1"; list.addEventListener("scroll", rosterFade, { passive: true }); }
-    list.classList.toggle("more-right", list.scrollLeft + list.clientWidth < list.scrollWidth - 2);
+    for (const list of [$("unit-list"), $("commands")]) {
+      if (!list) continue;
+      if (!list.dataset.fadeBound) { list.dataset.fadeBound = "1"; list.addEventListener("scroll", rosterFade, { passive: true }); }
+      list.classList.toggle("more-right", list.scrollLeft + list.clientWidth < list.scrollWidth - 2);
+    }
   }
 
   function updateUI() {
@@ -210,7 +213,6 @@ export function setupHud(S, A) {
     const orderCount = [...document.querySelectorAll('.order-buttons button')].filter(b => !b.hidden).length;
     document.documentElement.classList.toggle('many-orders', orderCount > 5);
     document.documentElement.classList.toggle('wide-orders', orderCount > 6);
-    coverFollowsDock(es);
     $("command-context").title = `Command core technology ${S.sim.techLevel()} / 3`;
     const hasCore = S.sim.own(0).some((b) => b.type === "hq");
     const signature = `${hasCore}/${es.map((e) => e.id).join(",")}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${p.flak}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2" || q.type === "flak")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}/${e?.trains?.some((k) => D[k]?.flying) ? `${S.sim.airCount(0)}:${S.sim.airCap(0)}` : ""}`;
@@ -278,6 +280,11 @@ export function setupHud(S, A) {
             ? "Select a structure, then place it on clear terrain."
             : S.touchInput ? "Enable Queue to chain orders. Use Army or Box to select a group." : "Hold Shift to queue orders. Ctrl + 1–9 saves a group.";
     }
+    // Phones: the context panel adds its row of actions (tiles, abilities, stance, level-up) when the selection
+    // has any; the unit roster then folds into the count in the heading (owner, 2026-11-22).
+    document.documentElement.classList.toggle("dock-actions", !!$("commands").querySelector("button") || !!$("upgrade-actions").querySelector("button"));
+    coverFollowsDock();
+    if ($("commands").dataset.fadeKey !== S.lastSelectionKey) { $("commands").dataset.fadeKey = S.lastSelectionKey; requestAnimationFrame(rosterFade); }
     for (const button of $("commands").querySelectorAll("[data-action]")) {
       const unavailable =
         !Z.started ||

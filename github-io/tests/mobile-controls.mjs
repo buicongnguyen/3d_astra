@@ -14,6 +14,8 @@ try {
   // Raw screen taps and hit tests deliberately avoid Playwright's automatic scrolling.
   const inspect = async selector => {
     const buttons = await page.locator(selector).evaluateAll(elements => elements.filter(e => e.getClientRects().length).map(e => {
+      // The phone context panel's action row scrolls sideways inside itself: each button is checked once in view.
+      if (e.closest('#commands')) e.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       const r = e.getBoundingClientRect();
       const visible = [[.1,.1],[.5,.5],[.9,.9]].every(([x,y]) => e.contains(document.elementFromPoint(r.x+r.width*x, r.y+r.height*y)));
       return { text: e.textContent.trim(), x:r.x, y:r.y, w:r.width, h:r.height, visible, fits:r.x>=0 && r.y>=0 && r.right<=innerWidth+1 && r.bottom<=innerHeight+1 };
@@ -44,7 +46,7 @@ try {
       // Landscape has Info & stats in the touch row (owner, 2026-11-21); portrait has it in the dock too.
       if (await page.locator('#field-guide').isVisible()) await tap('#field-guide'); else await tap('#touch-guide');
       await inspect('#guide-close'); await tap('#guide-close');
-      await tap('button[data-dock="actions"]');
+      await tap('button[data-dock="selection"]');
       if(type!=='medic') await inspect('#commands button');
       if(['hq','barracks','foundry'].includes(type)) await inspect('#upgrade-actions button');
     }

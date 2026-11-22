@@ -231,7 +231,7 @@ try {
   await read(() => window.__frontier.view.focusOn(-25, 24));
   await tapPoint(await worldPoint(-25, 24, 1));
   await tap('[data-action="worker"]');
-  await tap('[data-dock="selection"]');
+  await tap('button[data-dock="selection"]');
   await tap('#queue [data-cancel="0"]');
   assert.equal(
     await read(
@@ -368,9 +368,9 @@ try {
     await layout(label);
     await tap('[data-action="relay"]');
     await tap("#cancel-mode");
-    await tap('[data-dock="map"]');
+    await tap('button[data-dock="map"]');
     await tap("#home");
-    await tap('[data-dock="selection"]');
+    await tap('button[data-dock="selection"]');
     await screenshot(label);
   }
   await read(() => {

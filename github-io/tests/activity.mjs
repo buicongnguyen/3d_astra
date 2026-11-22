@@ -20,7 +20,7 @@ try{
     });
     await page.waitForFunction(()=>window.__frontier.view.activity.snapshot.buildings.length>0);
     const before=await page.evaluate(()=>window.__frontier.sim.players[0].alloy);
-    const b=page.locator(`${mobile?'#production-status':'#queue'} [data-job]`).first();await b.waitFor({state:'visible'});
+    const b=page.locator(`#queue [data-job]`).first();await b.waitFor({state:'visible'});
     const box=await b.boundingBox();assert.ok(box.width>=44 && box.height>=44 && box.y+box.height<=viewport.height,'cancel button fits');
     await page.screenshot({path:`test-results/activity-production-${viewport.width}.png`});
     await b[mobile?'tap':'click']();

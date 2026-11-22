@@ -104,7 +104,7 @@ await suite("defence-onboarding", async () => {
     // ---- Landscape: the Actions panel is at most 22% of the view width and collapses to one button.
     if (viewport === "landscape") {
       await page.evaluate(() => { const f = window.__frontier, t = f.sim.towerOn(f.sim.missionDef.defence.pads[1].id); f.select([t.id]); });
-      await o.tap('#dock-tabs [data-dock="actions"]');
+      await o.tap('#dock-tabs [data-dock="selection"]');
       await page.waitForFunction(() => document.querySelector(".command-panel")?.offsetWidth > 0);
       const cover = await page.evaluate(() => {
         const W = innerWidth, boxes = [".command-panel", "#dock-tabs", "#defence-dock-toggle"].map((s) => document.querySelector(s).getBoundingClientRect()).filter((r) => r.width);

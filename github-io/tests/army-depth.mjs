@@ -59,7 +59,7 @@ await suite("army-depth", async () => {
       f.select(s.armourUnits(1).map((e) => e.id));
       f.view.focusOn(s.armourUnits(1)[0].x, s.armourUnits(1)[0].z);
     });
-    if (mobile) await page.evaluate(() => document.querySelector("#dock-tabs [data-dock=\"actions\"]")?.click());
+    if (mobile) await page.evaluate(() => document.querySelector("#dock-tabs [data-dock=\"selection\"]")?.click());
     await page.waitForSelector('#commands [data-defence-armour="combined"]:not(:disabled)', { timeout: TIMEOUT.step });
     const tile = await page.evaluate(() => {
       const t = document.querySelector('#commands [data-defence-armour="combined"]'), b = t.getBoundingClientRect();

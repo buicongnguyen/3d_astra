@@ -170,9 +170,9 @@ export function setupModals(S, A) {
     }
     if (S.touchInput) {
       $("modal-content").querySelector(".controls-grid").innerHTML =
-        "<span>Select a unit / structure</span><kbd>Tap it</kbd><span>Move / gather / attack</span><kbd>Select, then tap target</kbd><span>Pan the battlefield</span><kbd>Drag one finger</kbd><span>Zoom / pan together</span><kbd>Pinch / two fingers</kbd><span>Select multiple units</span><kbd>Box, then drag</kbd><span>Select your forces</span><kbd>Workers / Army</kbd><span>Queue multiple orders</span><kbd>Enable Queue</kbd><span>Use an ability / set a stance</span><kbd>Select soldiers, then Actions</kbd><span>Place a structure</span><kbd>Tap location → Build here</kbd><span>Change HUD panel</span><kbd>Selection / Actions / Map</kbd>";
+        "<span>Select a unit / structure</span><kbd>Tap it</kbd><span>Move / gather / attack</span><kbd>Select, then tap target</kbd><span>Pan the battlefield</span><kbd>Drag one finger</kbd><span>Zoom / pan together</span><kbd>Pinch / two fingers</kbd><span>Select multiple units</span><kbd>Box, then drag</kbd><span>Select your forces</span><kbd>Workers / Army</kbd><span>Queue multiple orders</span><kbd>Enable Queue</kbd><span>Use an ability / set a stance</span><kbd>Select soldiers, then tap the ability</kbd><span>Place a structure</span><kbd>Tap location → Build here</kbd><span>Change HUD panel</span><kbd>Selection / Map</kbd>";
       $("modal-content").querySelector(".help-note").textContent =
-        "Tap Workers, then tap amber or blue deposits to gather. Tap a building to train units in Actions. Use Move or Attack-move in Selection, then tap a destination. To set a rally point, select a production building and tap ground. Eco graphics reduces rendering cost on phones.";
+        "Tap Workers, then tap amber or blue deposits to gather. Selection shows what you picked and all it can do: tap a building, then a unit to train it; tap units, then Move or Attack-move and a destination. To set a rally point, select a production building and tap ground. Eco graphics reduces rendering cost on phones.";
     }
   }
 

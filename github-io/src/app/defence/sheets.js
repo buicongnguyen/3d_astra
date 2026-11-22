@@ -236,14 +236,14 @@ export function createSheets(c) {
     const foe = FACTIONS[S.sim.missionDef.factions?.[1]];
     if (spot || depot) {
       $("selection-info").innerHTML = spot
-        ? `<div class="selection-empty defence-panel" data-zone="${spot.zone}">${icon("tower")}<div><h3>${zoneName(spot.zone)}</h3><p>A crew can stand anywhere on the marked field, clear of the road.</p><p>Pick a crew in Actions.</p></div></div>`
-        : `<div class="selection-empty defence-panel" data-depot>${icon("tank")}<div><h3>Armour depot</h3><p>Buy a squad of tanks in Actions, then tap the map to send it.</p></div></div>`;
+        ? `<div class="selection-empty defence-panel" data-zone="${spot.zone}">${icon("tower")}<div><h3>${zoneName(spot.zone)}</h3><p>A crew can stand anywhere on the marked field, clear of the road.</p><p>Pick a crew.</p></div></div>`
+        : `<div class="selection-empty defence-panel" data-depot>${icon("tank")}<div><h3>Armour depot</h3><p>Buy a squad of tanks, then tap the map to send it.</p></div></div>`;
       return;
     }
     $("selection-info").innerHTML = pad
-      ? `<div class="selection-empty defence-panel" data-pad="${pad.id}" data-high="${pad.high || "ground"}">${icon("tower")}<div><h3>${pad.high === "rim" ? "Rim pad" : pad.high === "deep" ? "Deep pad" : "Ground pad"}</h3><p>${PAD_NOTE[pad.high || "ground"]}</p><p>Pick a crew in Actions.</p></div></div>`
+      ? `<div class="selection-empty defence-panel" data-pad="${pad.id}" data-high="${pad.high || "ground"}">${icon("tower")}<div><h3>${pad.high === "rim" ? "Rim pad" : pad.high === "deep" ? "Deep pad" : "Ground pad"}</h3><p>${PAD_NOTE[pad.high || "ground"]}</p><p>Pick a crew.</p></div></div>`
       : bridge !== null
-        ? `<div class="selection-empty defence-panel" data-bridge="${bridge}">${icon("barrage")}<div><h3>${bridge < 0 ? "West bridge" : "East bridge"}</h3><p>Blow it in Actions: the waves on this road turn to another crossing.</p></div></div>`
+        ? `<div class="selection-empty defence-panel" data-bridge="${bridge}">${icon("barrage")}<div><h3>${bridge < 0 ? "West bridge" : "East bridge"}</h3><p>Blow it: the waves on this road turn to another crossing.</p></div></div>`
         : `<div class="selection-empty defence-panel">${icon("shield")}<div><h3>${S.sim.missionDef.title}</h3><p>${foe ? `<span>${foe.name}</span> · ` : ""}<span>Wave</span> <b translate="no">${st.endless ? st.wave : `${st.wave}/${st.waves}`}</b> · <b translate="no">${st.lives}</b> <span>lives</span></p><p>${S.sim.missionDef.defence.zones?.length ? "Tap a pad or a marked field to crew a tower." : "Tap a pad beside the road to crew a tower."}</p></div></div>`;
   }
   Object.assign(c, { crewTile, padSheet, zoneSheet, zoneWhy, armourSheet, depotSheet, towerSheet, nextAim, statsBlock, heroSheet, bridgeSheet, bridgeNote, emptySheet, sheet, burst, info });

@@ -86,7 +86,7 @@ await suite("abilities", async () => {
     // ---- Ready pulse: both tiles pulse when the selection shows them ready, then glow.
     const [rangerId, breakerId] = ids;
     await frontier((ids) => window.__frontier.select(ids), ids);
-    await dock("actions");
+    await dock("selection");
     await until(() => document.querySelectorAll("#commands .ability-tile").length === 2);
     for (const id of ["focus", "barrage"]) assert.deepEqual(await tile(id), { pulse: true, ready: true, cooling: false, disabled: false }, `${viewport}: ${id} pulses when ready`);
     // The pulse lasts about 2 s, which a slow CI runner can outlast before this line runs: check the
@@ -115,7 +115,7 @@ await suite("abilities", async () => {
       spots.far ||= await screenOf(breaker.x + Math.cos(a) * (breaker.range + 4), breaker.z + Math.sin(a) * (breaker.range + 4));
     }
     assert.ok(spots.near && spots.far, `${viewport}: aim points on screen ${JSON.stringify(spots)}`);
-    await dock("actions");
+    await dock("selection");
     await tap('[data-ability="barrage"]');
     await until(() => window.__frontier.mode === "barrage");
     const aim = () => frontier((style) => window.__frontier.view.tactics.snapshot().filter((m) => m.style === style), AIM);
@@ -168,7 +168,7 @@ await suite("abilities", async () => {
     await until(() => document.documentElement.classList.contains("motion-off"));
     // The clock is held so a slow runner cannot use up the 3 s cooldown before the tile is checked.
     await frontier((id) => { const f = window.__frontier, s = f.sim, e = s.get(id); f.hold = true; e.abilityAt = s.time + 3; f.select([id]); }, rangerId);
-    await dock("actions");
+    await dock("selection");
     await until(() => document.querySelector('[data-ability="focus"]')?.classList.contains("cooling"));
     await frontier(() => window.__frontier.step(4));
     await until(() => document.querySelector('[data-ability="focus"]')?.classList.contains("ready-pulse"));

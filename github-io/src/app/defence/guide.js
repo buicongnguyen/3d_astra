@@ -68,8 +68,8 @@ export function createGuide(c) {
     }
     let el = step === 3 ? $("defence-call") : $("commands").querySelector('[data-defence-crew="ranger"]:not(:disabled)') || $("commands").querySelector("[data-defence-crew]:not(:disabled)") || $("commands").querySelector("[data-defence-crew]");
     let r = el?.getBoundingClientRect();
-    // A phone on another tab: the Actions tab first.
-    if (step === 2 && (!r || !r.width)) { el = document.querySelector('#dock-tabs [data-dock="actions"]'); r = el?.getBoundingClientRect(); }
+    // A phone on the Map tab: the Selection tab first (it holds the crews; owner, 2026-11-22).
+    if (step === 2 && (!r || !r.width)) { el = document.querySelector('#dock-tabs [data-dock="selection"]'); r = el?.getBoundingClientRect(); }
     if (!r || !r.width) return null;
     return { x: r.left - stage.left - 4, y: r.top - stage.top - 4, w: r.width + 8, h: r.height + 8, round: false, el };
   }

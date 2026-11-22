@@ -337,3 +337,250 @@
   :root.compact-ui:not(.in-briefing).objectives-open #mission-objectives { left: var(--edge-left); width: min(284px, calc(100% - var(--side-width) - 40px)); }
   :root.compact-ui:not(.in-briefing) #idle-chips { left: calc(var(--edge-left) + 44px + var(--hud-pad)); }
 }
+
+/* ================= 6. One context panel (owner, 2026-11-22) =================
+   Phones have two dock tabs, Selection and Map (Actions is gone). The Selection tab is one panel: the selection's
+   heading and stats, its orders, and every action of what is selected (abilities and stance, the build menu,
+   training and the level-up) as one row, one tap each. The unit roster folds into the count in the heading while
+   actions show, so the dock never grows past its r3-wave-3 height. A row wider than the dock scrolls sideways
+   inside itself (every button stays directly tappable); nothing goes behind a sub-menu. The queue shows once,
+   in the selection part (#queue); the command panel's copy (#production-status) is hidden here. */
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-deck {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  border: 1px solid transparent;
+  border-image: var(--kit-frame-panel);
+  clip-path: var(--kit-cut-panel);
+  background: var(--kit-panel);
+  pointer-events: auto;
+}
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-deck > .panel {
+  border: 0;
+  border-image: none;
+  clip-path: none;
+  background: none;
+  box-shadow: none;
+}
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-deck > .selection-panel { flex: 1 1 auto; height: auto; min-height: 0; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"]:not(.dock-actions) .command-deck > .command-panel { display: none; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"].dock-actions:not(.construction-open) .command-deck > .command-panel {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--kit-gutter);
+  height: auto;
+  padding: 0 12px 4px;
+  overflow: hidden;
+}
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel > :is(.panel-label, #command-hint, #production-status) { display: none; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  gap: var(--kit-gutter);
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands::-webkit-scrollbar { display: none; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands:empty { display: none; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > :is(.tactical-hint, .structure-hint) { display: none; }
+/* Tiles: 44 px tall, as wide as their label; name over cost (or state), the hotkey letter hidden on touch. */
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button,
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .stance-control button {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 76px;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 3px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1px;
+  font: 700 12px/1.15 var(--font-ui);
+  white-space: nowrap;
+}
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button > :is(.icon, img, .portrait-art, .unit-art) { display: none; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands :is(kbd, .action-key) { display: none; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button > :is(span, small) { display: block; max-width: none; overflow: visible; font-size: 12px; line-height: 14px; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button > span:first-of-type,
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button > .ability-name { font-size: 13px; line-height: 15px; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .stance-control {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--kit-gutter);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .stance-control button { flex-direction: row; gap: 4px; min-width: 64px; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .stance-control button .icon { width: 14px; height: 14px; }
+/* The level-up closes the row; its cost under its name. */
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #upgrade-actions { display: flex; flex: 0 0 auto; margin: 0; padding: 0; border: 0; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #upgrade-actions:empty { display: none; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #upgrade-actions button {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  width: auto;
+  min-width: 84px;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 3px 10px;
+  font: 700 12px/1.15 var(--font-ui);
+  white-space: nowrap;
+}
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #upgrade-actions button :is(.sep, kbd) { display: none; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #upgrade-actions button .up-cost { font-size: 11px; color: var(--kit-text-2); }
+/* The roster folds into the heading's count while actions show. */
+:root.compact-ui:not(.in-briefing)[data-dock="selection"].dock-actions .selection-panel .selection-scroll { display: none; }
+/* Placing a building: the construction card takes the whole panel. */
+:root.compact-ui:not(.in-briefing)[data-dock="selection"].construction-open .command-deck > .selection-panel { display: none; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"].construction-open .command-deck > .command-panel { display: flex; flex: 1 1 auto; flex-direction: column; padding: 10px 12px; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel.construction-open { background: none; border: 0; }
+
+@media (max-aspect-ratio: 1.35) {
+  /* Heights: units add one 48 px action row and drop the 52 px roster (a group: 165 -> 161 px; one unit 161 px
+     instead of 113 + a 202 px Actions tab). Buildings keep the 202 px dock they had. */
+  :root.compact-ui.dock-actions:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity) { --dock-roster: 0px; --dock-act: 48px; --dock-height: calc(var(--unit-dock) + var(--dock-orders, 0px) + var(--dock-line, 0px) + var(--dock-act)); }
+}
+/* A building: only its own order (Rally) stays, at the end of the row of its work queue; the unit orders it cannot
+   give are not drawn, and Info & stats is the touch row's Info (one tap, the same guide). Five queued jobs and Rally
+   fit a 320 px phone. The dock is the unit card's height plus the action row (161 px, was 202). */
+:root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel .order-buttons > button:not(#rally-order) { display: none; }
+@media (max-aspect-ratio: 1.35) {
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: var(--kit-gutter);
+    align-content: start;
+  }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > * { grid-column: 1 / -1; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > #queue { grid-column: 1; align-self: center; min-width: 0; margin: 0; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > #queue:is(:empty, [hidden]) { display: none; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > .order-buttons { grid-column: 2; display: flex; gap: var(--kit-gutter); }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > :is(#queue:empty, #queue[hidden]) + .order-buttons { grid-column: 1 / -1; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > .order-buttons > button { flex: 0 0 auto; min-width: 44px; padding: 0 6px; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > #queue { display: flex; flex-wrap: nowrap; gap: var(--kit-gutter); overflow: hidden; }
+  :root.compact-ui.no-units.dock-actions:not(.in-briefing):not(.in-defence)[data-dock="selection"]:has(.selection-panel.has-entity) { --dock-height: 161px; }
+}
+/* Landscape: the side dock keeps its width; the action row scrolls inside it. */
+@media (min-aspect-ratio: 1.35) {
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-deck { width: 100%; min-width: 0; height: auto; }
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-deck > .panel { width: 100%; min-width: 0; max-width: 100%; }
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"].dock-actions:not(.construction-open) .command-deck > .command-panel { padding: 0 6px 6px; }
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"]:has(.selection-panel:not(.has-entity)) .command-deck { display: none; }
+}
+/* More actions to the right: the row fades out at its end (hud.js rosterFade), as the roster does. */
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands.more-right {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), rgba(0, 0, 0, 0.25));
+  mask-image: linear-gradient(90deg, #000 calc(100% - 28px), rgba(0, 0, 0, 0.25));
+}
+/* Two tabs now: Selection, the panel used most, is the wider one. */
+:root.compact-ui:not(.in-briefing) #dock-tabs > [data-dock="selection"] { flex-grow: 1.4; }
+/* Placing a building: the construction card gets the 202 px it had on the Actions tab. */
+@media (max-aspect-ratio: 1.35) {
+  :root.compact-ui.construction-open:not(.in-briefing)[data-dock="selection"] { --dock-height: 202px !important; }
+}
+/* Defence's collapsed dock (the 44 px button alone) wins over the context panel. */
+:root.compact-ui.in-defence.defence-dock-min:not(.in-briefing) .command-deck { display: none; }
+/* Second correction round (coordinator 2026-11-22): every action in view without hunting. Tiles share the row
+   equally (44 px minimum) as the kit's phone command: glyph over one short line (cost, state or stance name); the
+   full name stays in the tooltip and the accessible name. Six or seven tiles fit a 390 px phone without scrolling. */
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button,
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .stance-control button {
+  flex: 1 1 0;
+  min-width: 44px;
+  padding: 3px 2px;
+  gap: 2px;
+  flex-direction: column;
+}
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .stance-control { flex: 3 1 0; min-width: 0; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button > :is(.icon, svg),
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .stance-control button .icon { display: block; width: 18px; height: 18px; flex: 0 0 18px; color: var(--kit-cyan); }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button > :is(.portrait-art, .portrait, img) { display: block; --size: 22px; width: 22px; height: 22px; flex: 0 0 22px; }
+:root.compact-ui:not(.in-briefing):not(.in-defence)[data-dock="selection"] .command-panel #commands > .command-tile > span:first-of-type,
+:root.compact-ui:not(.in-briefing):not(.in-defence)[data-dock="selection"] .command-panel #commands > .ability-tile > .ability-name { display: none; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button > :is(small, .ability-status),
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .stance-control button > span { font: 700 12px/14px var(--font-ui); white-space: nowrap; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .command-tile.state-locked small.tile-state::before { display: none; }
+/* A locked tile shows the lock glyph alone (its requirement is in the tooltip and the accessible name), so
+   "Needs L2" never overflows a narrow tile. */
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .command-tile.state-locked small.tile-state { font-size: 0; line-height: 13px; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .command-tile.state-locked small.tile-state::before { display: inline-block; width: 12px; height: 12px; margin: 0; }
+/* Landscape: the side dock is narrow, so the action row wraps to a second row instead of running off its edge. */
+@media (min-aspect-ratio: 1.35) {
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands { flex-wrap: wrap; height: auto; overflow: visible; -webkit-mask-image: none; mask-image: none; }
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button { flex: 1 0 calc(25% - 3px); }
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .stance-control { flex: 1 0 100%; }
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"].dock-actions:not(.construction-open) .command-deck > .command-panel { flex-wrap: wrap; }
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #upgrade-actions { flex: 1 0 100%; }
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #upgrade-actions button { flex: 1 1 auto; }
+}
+@media (min-aspect-ratio: 1.35) {
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .stance-control button > span { display: none; }
+}
+/* Defence keeps its own crew sheet tiles (names at 12 px; tests/defence-zones.mjs). */
+:root.compact-ui.in-defence:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button > :is(small, .ability-status) { font-size: 12px; }
+:root.compact-ui.in-defence:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button > span:first-of-type { font-size: 12px; }
+/* Landscape too: a building's queue and Rally share one row (the side dock stays short). */
+@media (min-aspect-ratio: 1.35) {
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--kit-gutter); align-content: start; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > * { grid-column: 1 / -1; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > #queue { grid-column: 1; display: flex; gap: var(--kit-gutter); overflow: hidden; margin: 0; min-width: 0; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > #queue:is(:empty, [hidden]) { display: none; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > .order-buttons { grid-column: 2; display: flex; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > :is(#queue:empty, #queue[hidden]) + .order-buttons { grid-column: 1 / -1; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > .order-buttons > button { flex: 0 0 auto; min-width: 44px; padding: 0 8px; }
+}
+/* (The lock glyph is drawn by the tile itself; its "Needs L2" line is not drawn, so no 0 px text remains.) */
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .command-tile.state-locked small.tile-state { display: none; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .command-tile.state-locked::after {
+  content: ""; display: block; width: 12px; height: 12px; background: var(--kit-warning);
+  -webkit-mask: url("./art/ui/glyph-lock.svg") center / contain no-repeat; mask: url("./art/ui/glyph-lock.svg") center / contain no-repeat;
+}
+@media (min-aspect-ratio: 1.35) {
+  /* A queue takes its own row in the narrow side dock (five jobs fit 224 px); Rally follows it. */
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > #queue { grid-column: 1 / -1; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > .order-buttons { grid-column: 1 / -1; }
+  /* Unit orders in one row of five (they were 3 + 2), which pays for the action row's second line. */
+  :root.compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"] .selection-panel .order-buttons { grid-template-columns: repeat(auto-fit, minmax(44px, 1fr)) !important; gap: 0; }
+  :root.compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"] .selection-panel .order-buttons button { padding: 2px 1px; font-size: 11px; line-height: 1.1; min-width: 0; }
+}
+@media (min-aspect-ratio: 1.35) {
+  /* Building: Rally sits beside the heading, the queue gets the row under it (the side dock fits 667 x 375). */
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > #selection-info { grid-column: 1; grid-row: 1; min-width: 0; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > .order-buttons,
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > :is(#queue:empty, #queue[hidden]) + .order-buttons { grid-column: 2; grid-row: 1; align-self: start; margin-top: 4px; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > #queue { grid-row: 2; }
+  /* The stance switch shares the row with the ability tiles; the level-up shares the tiles' row. */
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands .stance-control { flex: 3 1 132px; }
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > button { flex: 1 0 44px; }
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #upgrade-actions { flex: 0 0 auto; }
+}
+@media (min-aspect-ratio: 1.35) {
+  /* Beside Rally the stats keep one line each: the third (ATK) folds under the heading's level badge. */
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity .unit-metrics { display: flex; flex-wrap: wrap; column-gap: 8px; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity .unit-metrics > div { flex: 0 0 auto; }
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity .unit-metrics dd { white-space: nowrap; }
+}
+@media (min-aspect-ratio: 1.35) {
+  /* Five queued jobs (5 x 44 px) fit the 222 px row edge to edge. */
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .selection-panel.has-entity > #queue { gap: 0; }
+}
+/* Placing a building: only the construction card shows in the panel (the tiles come back after). */
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel.construction-open > :is(#commands, #upgrade-actions) { display: none; }

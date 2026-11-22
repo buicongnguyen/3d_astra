@@ -94,29 +94,27 @@ try {
       return art ? getComputedStyle(art).backgroundImage : ''; });
     assert.match(portraitArt, /portraits/, `${name} portrait art`);
     if (touch) {
+      // One context panel (kit pass, owner 2026-11-22): the selection and its actions share the Selection tab.
       for (const type of ['hq', 'barracks', 'worker']) {
-        for (const tab of ['selection', 'actions']) {
-          await page.evaluate(type => { const f = window.__frontier; f.select([f.sim.own(0).find(e => e.type === type).id]); }, type);
-          await press(`button[data-dock="${tab}"]`);
-          // Orders, upgrades and queue jobs are fixed controls; only the tile grid and roster may scroll.
-          const dock = await page.evaluate(tab => { const panel = document.querySelector(tab === 'selection' ? '.selection-panel' : '.command-panel'), p = panel.getBoundingClientRect();
-            const fixed = [...panel.querySelectorAll('.order-buttons button, #upgrade-actions button, .work-strip button, #commands')].filter(b => b.getClientRects().length);
-            const clipped = fixed.map(b => b.getBoundingClientRect()).filter(r => r.bottom > p.bottom - 1 || r.top < p.top);
-            return { overflow: panel.scrollHeight > panel.clientHeight + 1, clipped: clipped.length }; }, tab);
-          assert.deepEqual(dock, { overflow: false, clipped: 0 }, `${name} ${type} ${tab} dock`);
-        }
+        await page.evaluate(type => { const f = window.__frontier; f.select([f.sim.own(0).find(e => e.type === type).id]); }, type);
+        await press('button[data-dock="selection"]');
+        // Orders, upgrades, queue jobs and the action row are fixed controls inside the panel; only the action row
+        // and the roster may scroll (sideways, inside themselves).
+        const dock = await page.evaluate(() => { const panel = document.querySelector('.command-deck'), p = panel.getBoundingClientRect();
+          const fixed = [...panel.querySelectorAll('.order-buttons button, #upgrade-actions button, .work-strip button, #commands')].filter(b => b.getClientRects().length);
+          const clipped = fixed.map(b => b.getBoundingClientRect()).filter(r => r.bottom > p.bottom - 1 || r.top < p.top);
+          const sel = document.querySelector('.selection-panel');
+          return { overflow: sel.scrollHeight > sel.clientHeight + 1, clipped: clipped.length, actions: !!panel.querySelector('#commands button') }; });
+        assert.deepEqual(dock, { overflow: false, clipped: 0, actions: true }, `${name} ${type} dock`);
       }
-      // An idle queue shows the PRODUCTION heading in its slot; starting a job must not move the tiles.
+      // Starting a job adds it to the queue beside the building's orders; the action row must not move.
       if (viewport.width < viewport.height) {
         await page.evaluate(() => { const f = window.__frontier; f.select([f.sim.own(0).find(e => e.type === 'barracks').id]); });
-        await press('button[data-dock="actions"]');
+        await press('button[data-dock="selection"]');
         const tileTop = () => page.evaluate(() => document.querySelector('#commands [data-action]').getBoundingClientRect().top);
-        const idle = await page.evaluate(() => [getComputedStyle(document.querySelector('.command-panel > .panel-label')).display, document.querySelector('#command-label').textContent].join());
-        assert.equal(idle, 'flex,PRODUCTION', `${name} idle heading`);
         const before = await tileTop();
         await page.evaluate(() => { const s = window.__frontier.sim; s.players[0].alloy = 500; s.enqueue(s.own(0).find(e => e.type === 'barracks').id, 'vanguard'); });
-        await page.locator('#production-status [data-job]').waitFor({ state: 'visible' });
-        assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.command-panel > .panel-label')).display), 'none');
+        await page.locator('#queue [data-job]').waitFor({ state: 'visible' });
         assert.ok(Math.abs(await tileTop() - before) < 1, `${name} tiles stay put when a job starts`);
       }
     }

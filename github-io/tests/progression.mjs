@@ -17,7 +17,7 @@ try {
     try {
       await page.goto(base+'?test=1');await page.waitForFunction(()=>window.__frontier?.view.modelsReady);
       await click('#start');await page.evaluate(()=>{const s=window.__frontier.sim;s.aiEnabled=false;Object.assign(s.players[0],{alloy:5000,energy:5000});});
-      await select('hq');await tab('selection');await click('#field-guide');
+      await select('hq');await tab('selection');await click(mobile?'#touch-guide':'#field-guide'); // phones: the touch row's Info (the context panel drops the building's copy)
       assert.equal(await page.locator('.field-guide').isVisible(),true);
       assert.equal(await page.evaluate(()=>window.__frontier.paused),true);
       await page.locator('#guide-entry').selectOption('engineer');assert.match(await page.locator('#guide-detail').innerText(),/18 HP/);
@@ -25,10 +25,10 @@ try {
       if(mobile){await page.setViewportSize({width:844,height:390});await page.screenshot({path:'test-results/progression-landscape-guide.png'});}
       await click('#guide-close');await page.waitForFunction(()=>!window.__frontier.paused);
       if(mobile)await page.setViewportSize({width:390,height:844});
-      await tab('actions');await click('[data-level]');await click(`${mobile?'#production-status':'#queue'} [data-cancel-level]`);
+      await tab('selection');await click('[data-level]');await click(`#queue [data-cancel-level]`);
       assert.equal(await page.evaluate(()=>window.__frontier.sim.players[0].alloy),5000);
       await click('[data-level]');await step(21);assert.equal(await page.evaluate(()=>window.__frontier.sim.techLevel()),2);
-      await select('barracks');await tab('actions');await click('[data-action="medic"]');
+      await select('barracks');await tab('selection');await click('[data-action="medic"]');
       await page.waitForFunction(()=>window.__frontier.sim.events.some(e=>e.text?.includes('Upgrade Barracks')) || document.body.innerText.includes('Upgrade Barracks'));
       await click('[data-level]');await step(21);await click('[data-action="medic"]');await step(13);
       assert.equal(await page.evaluate(()=>window.__frontier.sim.own(0).filter(e=>e.type==='medic').length),1);
@@ -42,8 +42,8 @@ try {
       await page.waitForFunction(()=>window.__frontier.sim.own(0).find(e=>e.type==='medic').orders[0]?.type==='support');
       await step(2);assert.ok(await page.evaluate(()=>window.__frontier.sim.own(0).find(e=>e.type==='ranger').hp>20));
       await page.screenshot({path:`test-results/progression-${mobile?'mobile':'desktop'}-support.png`});
-      await select('hq');await tab('actions');await click('[data-level]');await step(31);assert.equal(await page.evaluate(()=>window.__frontier.sim.techLevel()),3);
-      await select('barracks');await tab('actions');await click('[data-action="antitank"]');await step(15);
+      await select('hq');await tab('selection');await click('[data-level]');await step(31);assert.equal(await page.evaluate(()=>window.__frontier.sim.techLevel()),3);
+      await select('barracks');await tab('selection');await click('[data-action="antitank"]');await step(15);
       assert.ok(await page.evaluate(()=>window.__frontier.sim.own(0).some(e=>e.type==='antitank')));
       await page.evaluate(()=>{const s=window.__frontier.sim;s.spawn('foundry',0,-9,34);s.spawn('relay',0,-4,34);s.nav.rebuild(s.entities);});
       await select('foundry');await click('[data-action="tank"]');

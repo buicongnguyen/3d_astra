@@ -132,7 +132,7 @@ test('every new tactics string has a Vietnamese entry', () => {
     'Battle tank promoted to rank 2', 'Rank 3', rankTitle(1), 'Auto-cast abilities',
     'Your units use their abilities on their own in a fight, as rival armies do. Off: you give the order from the command card.',
     'Abilities: ', ' use the ability tiles of the selected soldiers and vehicles; Barrage then asks for a target area.',
-    'Use an ability / set a stance', 'Select soldiers, then Actions',
+    'Use an ability / set a stance', 'Select soldiers, then tap the ability',
     ...Object.values(STANCE_INFO).flatMap((i) => [i.label, `${i.title} · ${i.key}`, `Stance: ${i.label}`]),
     ...hotkeys.commands.filter((k) => k.id.startsWith('stance-')).map((k) => k.label),
     ...abilityGroups(s, units, 9).flatMap((g) => [g.name, `E · ${g.name} · ${g.description}`])];

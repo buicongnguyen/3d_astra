@@ -861,6 +861,15 @@ export class WorldView {
     this.coverOpen = open;
     this.updateCamera();
   }
+  // Phones (round 3 kit pass): how much of the bottom cover is under opaque HUD right now (px from the canvas
+  // bottom: the dock panel, or the tab strip when no panel is open). Only that much is cut from the drawing, so the
+  // map still shows under see-through bars and the gaps above them. Defaults to the whole cover.
+  setCoverCrop(px) {
+    const crop = Number.isFinite(px) ? Math.max(0, px) : null;
+    if (crop === (this.coverCrop ?? null)) return;
+    this.coverCrop = crop;
+    this.updateCamera();
+  }
   // The part of the canvas that shows the map right now, in client pixels (minimap outline).
   visibleRect() {
     const r = this.renderer.domElement.getBoundingClientRect();
@@ -868,7 +877,8 @@ export class WorldView {
   }
   updateCamera() {
     const frame = this.frameHeight || this.height, aspect = this.width / frame, perPixel = this.zoom / frame;
-    const shown = this.coverOpen === false ? this.cover || 0 : 0;
+    const cover = this.cover || 0, crop = Math.min(cover, this.coverCrop ?? cover);
+    const shown = this.coverOpen === false ? cover : cover - crop;
     this.drawHeight = this.height - (this.cover || 0) + shown;
     this.camera.left = (-this.zoom * aspect) / 2;
     this.camera.right = (this.zoom * aspect) / 2;

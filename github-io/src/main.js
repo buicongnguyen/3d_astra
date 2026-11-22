@@ -57,6 +57,8 @@ import "./phone-hud.css";
 import { registerOffline } from "./app/offline.js";
 import { setupCover } from "./app/cover.js";
 import { setupQuickBattle } from "./quick-battle.js";
+// The command console kit on every screen (round 3 kit pass): loaded after every other stylesheet.
+import "./kit-skin.css";
 
 renderShell();
 // S is the shared state; A is what each module offers the others (functions and widgets).

@@ -49,8 +49,8 @@ try{
     await page.waitForFunction(()=>getComputedStyle(document.querySelector('#notice')).visibility==='hidden');
     await page.screenshot({path:`test-results/construction-warning-${viewport.width}x${viewport.height}.png`});
     if(index===0){
-      await tap('[data-dock="map"]');assert.equal(await page.locator('#mode-controls').evaluate(e=>e.parentElement.id),'stage');
-      await tap('[data-dock="actions"]');assert.equal(await page.locator('#mode-controls').evaluate(e=>e.parentElement.id),'construction-status');
+      await tap('button[data-dock="map"]');assert.equal(await page.locator('#mode-controls').evaluate(e=>e.parentElement.id),'stage');
+      await tap('button[data-dock="selection"]');assert.equal(await page.locator('#mode-controls').evaluate(e=>e.parentElement.id),'construction-status');
     }
     const valid=await point('valid');await page.touchscreen.tap(valid.x,valid.y);
     await page.waitForFunction(()=>!document.querySelector('#confirm-build').disabled);await inspect();
@@ -64,15 +64,15 @@ try{
       await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{id:1,x:b.x+b.width/2,y:b.y+b.height/2}]});
       await page.waitForTimeout(450);
       await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await cdp.detach();
-      await page.waitForFunction(()=>!!document.querySelector('#production-status [data-kind="site"]'));
+      await page.waitForFunction(()=>!!document.querySelector('#queue [data-kind="site"]'));
     }else await tap('#confirm-build');
     const site=await page.evaluate(()=>[...window.__frontier.selected][0]);
-    assert.ok(await page.locator('#production-status [data-kind="site"]').isVisible());
+    assert.ok(await page.locator('#queue [data-kind="site"]').isVisible());
     assert.ok(await page.locator('[data-action="breaker"]').isDisabled(),'training stays in place while construction finishes');
     await page.evaluate(id=>{const f=window.__frontier;for(let i=0;i<12&&f.sim.get(id).progress===0;i++)f.step(3);f.step(2);},site);
-    const progress=Number(await page.locator('#production-status [data-kind="site"]').getAttribute('data-progress'));assert.ok(progress>0&&progress<1);
+    const progress=Number(await page.locator('#queue [data-kind="site"]').getAttribute('data-progress'));assert.ok(progress>0&&progress<1);
     await page.evaluate(()=>{const f=window.__frontier;f.sim.issue(f.sim.own(0).filter(e=>e.type==='worker').map(e=>e.id),{type:'stop'});f.step(0);});
-    assert.match(await page.locator('#production-status [data-kind="site"]').getAttribute('aria-label'),/Needs Harvester/);
+    assert.match(await page.locator('#queue [data-kind="site"]').getAttribute('aria-label'),/Needs Harvester/);
     assert.ok(await panel.isHidden(),'routine progress does not replace the commands');
     await page.screenshot({path:`test-results/construction-progress-${viewport.width}x${viewport.height}.png`});
     if(index===layouts.length-1){
@@ -80,7 +80,7 @@ try{
       assert.ok(await panel.isHidden());assert.ok(await page.locator('[data-action="breaker"]').isEnabled());
     }else{
       const before=await page.evaluate(()=>window.__frontier.sim.players[0].alloy);
-      await tap('#production-status [data-kind="site"] .work-cancel');assert.ok(await panel.isHidden());
+      await tap('#queue [data-kind="site"] .work-cancel');assert.ok(await panel.isHidden());
       assert.equal(await page.evaluate(()=>window.__frontier.sim.players[0].alloy),before+150,'site cancellation retains the 75% refund');
     }
     console.log(`Construction feedback, placement, progress and controls passed: ${viewport.width}x${viewport.height}`);

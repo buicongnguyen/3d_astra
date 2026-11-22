@@ -28,7 +28,7 @@ export async function koreanChecks(browser) {
       .filter((e) => e.getClientRects().length && e.getBoundingClientRect().width > 2 && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim()) && !e.closest('.brand,.visually-hidden'))
       .map((e) => { const r = e.getBoundingClientRect(), c = getComputedStyle(e);
         // Inside a scrolling list an item may sit beyond the edge until scrolled to; measure against the list.
-        const box = e.closest('.cmap-scroll,[data-scroll],.mode-switch') ? null : r;
+        const box = e.closest('.cmap-scroll,[data-scroll],.mode-switch,#commands') ? null : r; // #commands: the phone context panel's action row (kit pass)
         return { text: e.textContent.trim().slice(0, 32), size: parseFloat(c.fontSize), cut: c.overflowX !== 'visible' && e.scrollWidth > e.clientWidth + 1, off: !!box && (box.left < -1 || box.right > innerWidth + 1) }; })
       .filter((e) => e.size < 11 || e.cut || e.off), scope);
     // Touch targets under 44 px (40 px wide for icon-width tiles, as tests/ui-quality.mjs).
@@ -92,7 +92,7 @@ export async function koreanChecks(browser) {
     await page.evaluate(() => { const f = window.__frontier, s = f.sim; f.hold = true; s.aiEnabled = false; Object.assign(s.players[0], { alloy: 5000, energy: 5000 }); });
     for (const type of ['hq', 'worker', 'barracks']) {
       await page.evaluate((type) => { const f = window.__frontier, s = f.sim, e = s.own(0).find((e) => e.type === type) || s.spawn(type, 0, -10, 20); f.select([e.id]); }, type);
-      if (touch) await press('button[data-dock="actions"]');
+      if (touch) await press('button[data-dock="selection"]');
       await page.waitForTimeout(150);
       const tiles = await page.locator('#commands [data-action]').evaluateAll((nodes) => nodes.filter((e) => e.getClientRects().length).map((e) => {
         const parts = [...e.querySelectorAll(':scope > span, :scope > small')].filter((p) => p.getClientRects().length);
