@@ -72,7 +72,7 @@ try{
     assert.equal(await page.evaluate(id=>window.__frontier.sim.get(id).orders[0].type,targets.unit),'attack');
    }
    await page.evaluate(()=>{const f=window.__frontier;f.select([f.sim.own(0).find(e=>e.type==='barracks').id]);});
-   if(mobile)await page.locator('button[data-dock="selection"]').tap();
+   if(mobile && await page.locator("html").getAttribute("data-dock") !== "selection")await page.locator('button[data-dock="selection"]').tap();
    await page.locator(mobile?'#touch-guide':'#field-guide').click(); // phones: the touch row's Info (as progression.mjs)
    assert.match(await page.locator('.field-guide article').innerText(),new RegExp(Object.keys(JSON.parse(fs.readFileSync(new URL('../src/maps.json',import.meta.url),'utf8'))).length+' skirmish maps')); // 13 since R3 map variety
    assert.match(await page.locator('.field-guide article').innerText(),/last Command core is destroyed/);

@@ -36,7 +36,7 @@ try {
     const shot = async label => { for (const dir of shotDirs) await page.screenshot({ path: `${dir}/${dir === 'test-results' ? 'tactics-ui-' : ''}${name}-${label}.png` }); };
     const frontier = (fn, arg) => page.evaluate(fn, arg);
     const until = (fn, arg) => page.waitForFunction(fn, arg, { timeout: TIMEOUT });
-    const dock = async tab => { if (touch) await press(`button[data-dock="${tab}"]`); };
+    const dock = async tab => { if (touch && await page.locator("html").getAttribute("data-dock") !== tab) await press(`button[data-dock="${tab}"]`); };
     const marks = style => frontier(style => window.__frontier.view.tactics.snapshot().filter(m => m.style === style), style);
     const mode = () => frontier(() => window.__frontier.mode);
     const smallText = scope => page.evaluate(scope => [...document.querySelectorAll(`${scope} :is(p, span, strong, small, em, h2, h3, label, li, b, button)`)]

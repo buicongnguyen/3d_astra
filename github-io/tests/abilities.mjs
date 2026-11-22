@@ -22,7 +22,7 @@ await suite("abilities", async () => {
     page.setDefaultTimeout(TIMEOUT.step);
     const frontier = (fn, arg) => page.evaluate(fn, arg);
     const until = (fn, arg, timeout = TIMEOUT.step) => page.waitForFunction(fn, arg, { timeout });
-    const dock = async (tab) => { if (mobile) { await tap(`button[data-dock="${tab}"]`); await page.waitForTimeout(100); } };
+    const dock = async (tab) => { if (mobile && await page.locator("html").getAttribute("data-dock") !== tab) { await tap(`button[data-dock="${tab}"]`); await page.waitForTimeout(100); } };
     const motionOff = () => frontier(() => document.documentElement.classList.contains("motion-off"));
     const running = (selector = null) => frontier((selector) => document.getAnimations().filter((a) => a instanceof CSSAnimation && a.playState === "running" &&
       (!selector || a.effect?.target?.matches?.(selector))).map((a) => `${a.animationName} on ${a.effect?.target?.className || a.effect?.target?.tagName}`), selector);

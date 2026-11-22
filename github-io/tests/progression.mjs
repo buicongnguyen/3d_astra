@@ -10,8 +10,8 @@ try {
     const page=await context.newPage(),errors=[];
     page.on('pageerror',e=>errors.push(e.message));
     page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
-    const click=async selector=>{const item=page.locator(selector);await item.scrollIntoViewIfNeeded();if(mobile)await item.tap();else await item.click();};
-    const tab=async name=>{if(mobile)await click(`button[data-dock="${name}"]`);};
+    const click=async selector=>{const item=page.locator(selector);if(mobile)await item.tap();else await item.click();};
+    const tab=async name=>{if(mobile && await page.locator("html").getAttribute("data-dock") !== name)await click(`button[data-dock="${name}"]`);};
     const select=async type=>{await page.evaluate(type=>{const f=window.__frontier;f.select([f.sim.own(0).find(e=>e.type===type).id]);},type);await page.waitForTimeout(150);};
     const step=async n=>{await page.evaluate(n=>window.__frontier.step(n),n);await page.waitForTimeout(100);};
     try {

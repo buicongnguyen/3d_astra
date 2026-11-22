@@ -227,7 +227,7 @@ await suite("story: scenes, the 15-mission campaign map, the defence missions an
     assert.match(await page.locator(".map-heading h1").textContent(), new RegExp(`Mission ${at(id) + 1} · Wings over Copper`));
     // The Command core's tiles: Harvester, Flak, Kite, Hawk.
     await page.evaluate(() => { const f = window.__frontier, hq = f.sim.own(0).find((e) => e.type === "hq"); f.select([hq.id]); f.step(0.05); });
-    if (mobile) { await tap('#dock-tabs [data-dock="selection"]'); await page.waitForTimeout(120); }
+    if (mobile && await page.locator("html").getAttribute("data-dock") !== "selection") { await tap('#dock-tabs [data-dock="selection"]'); await page.waitForTimeout(120); }
     const flak = page.locator('#commands [data-action="flak"]');
     await flak.waitFor({ state: "visible", timeout: TIMEOUT.step });
     assert.match(await flak.textContent(), /Anti-air guns/);
