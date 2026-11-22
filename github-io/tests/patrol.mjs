@@ -27,7 +27,7 @@ try {
     });
     const select = async list => {
       await page.evaluate(ids => window.__frontier.select(ids), list);
-      if (mobile) await click('button[data-dock="selection"]');
+      if (mobile && await page.locator("html").getAttribute("data-dock") !== "selection") await click('button[data-dock="selection"]');
       await page.waitForTimeout(150);
     };
     const orders = id => page.evaluate(id => window.__frontier.sim.get(id).orders, id);

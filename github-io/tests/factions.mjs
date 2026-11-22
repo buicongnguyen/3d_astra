@@ -161,7 +161,7 @@ await suite("factions", async () => {
     assert.ok(!state.units.includes(want.missing) && state.buildable.includes(want.building), `${faction}: own roster and building (${state.units}; ${state.buildable})`);
     // The build menu: the faction's building is the sixth tile, with no letter key, and every tile fits.
     await page.evaluate(() => { const f = window.__frontier; f.select([f.sim.own(0).find((e) => e.type === "worker").id]); });
-    if (mobile) await tap('#dock-tabs [data-dock="selection"]');
+    if (mobile && await page.locator("html").getAttribute("data-dock") !== "selection") await tap('#dock-tabs [data-dock="selection"]');
     await page.waitForSelector(`#commands [data-action="${want.building}"]`, { state: "attached", timeout: TIMEOUT.step });
     if (mobile) {
       // On a phone the Actions dock scrolls inside its fixed height; the sixth tile is still a full-size tap target.
