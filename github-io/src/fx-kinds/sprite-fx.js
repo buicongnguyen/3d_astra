@@ -11,6 +11,8 @@ const MIN_PX = { shell: 54, rocket: 54, artillery: 72, bomb: 80, firebomb: 70, m
 // The four fireball sheets (VFX2) have their own palettes; only the firebomb is shaded (yellower) and flak greyed.
 const TINT = { firebomb: [1, 0.92, 0.6], flak: [0.8, 0.8, 0.85] };
 const upp = (fx) => fx.view.unitsPerPixel || 0.1;
+// A quarter-size round must still be seen on a phone: its painted core keeps this width and opacity.
+export const TRACER_MIN_PX = 1.5, TRACER_ALPHA = 0.75;
 export const spritesReady = (fx) => !!(fx.sprites && fx.sprites.ready);
 
 // A blast of `kind` (shell | rocket | artillery | bomb | flak | beam) at `at` (y above the ground), starting after `delay` seconds.
@@ -113,11 +115,13 @@ export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = fa
   if (!p) return false;
   const life = Math.max(0.06, travel);
   p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.vx = (to.x - from.x) / life; p.vy = (to.y - from.y) / life; p.vz = (to.z - from.z) / life;
-  p.start = cyan ? TRACER_FRAMES.cyan : TRACER_FRAMES.warm; p.count = 4; p.loop = true; p.fps = 20; p.life = life; p.age = -delay; p.fade = 0.08; p.sy = 1.6; p.a = SHOT_SCALE;
+  p.start = cyan ? TRACER_FRAMES.cyan : TRACER_FRAMES.warm; p.count = 4; p.loop = true; p.fps = 20; p.life = life; p.age = -delay; p.fade = 0.08; p.sy = 1.6; p.a = TRACER_ALPHA;
   if (dimensions) {
     // Specialised weapons used a shorter procedural round in Round A.
     p.sx = dimensions.length * SHOT_SCALE / size;
-    p.sy = dimensions.width * SHOT_SCALE / (size * 0.15);
+    // Never thinner than TRACER_MIN_PX on screen, and in the weapon's own colour (lifted so dark tints still read).
+    p.sy = Math.max(dimensions.width * SHOT_SCALE, TRACER_MIN_PX * upp(fx)) / (size * 0.15);
+    if (dimensions.color) { p.r = Math.min(1, 0.25 + dimensions.color[0]); p.g = Math.min(1, 0.25 + dimensions.color[1]); p.b = Math.min(1, 0.25 + dimensions.color[2]); }
     return true;
   }
   // The muzzle spark sits at (0.23, 0.5) of its cell.
@@ -190,6 +194,6 @@ export function spriteHead(fx, kind, x, y, z, ux, uy, uz, size, anchor) {
   if (!sprites?.ready) return false;
   const p = sprites.take("heads", x, y, z, Math.max(size, 22 * upp(fx)) * SHOT_SCALE, anchor, true);
   if (!p) return false;
-  p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.a = SHOT_SCALE; p.start = HEAD_FRAME[kind] ?? 0; p.count = 1; p.fps = 0; p.once = true; p.life = 1; p.fade = 0.0001; p.age = 0;
+  p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.a = TRACER_ALPHA; p.start = HEAD_FRAME[kind] ?? 0; p.count = 1; p.fps = 0; p.once = true; p.life = 1; p.fade = 0.0001; p.age = 0;
   return true;
 }

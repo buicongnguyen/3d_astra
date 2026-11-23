@@ -3,7 +3,7 @@
 // Brace shockwave, Rush and Ram dust wake, Overdrive exhaust, Crossfire muzzle storm, Steady aim glint,
 // and the decloak shimmer (the `reveal` event, `shimmer` below). Pooled particles only, random numbers from `rng`.
 import { CELL } from "./cells.js";
-import { flare, ring, sparks, fade } from "./common.js";
+import { flare, sparks, fade } from "./common.js";
 
 const dustAt = (fx, rng, x, z, anchor, size, n = 1) => { for (let i = 0; i < n; i++) fx.dust({ x: x + (rng() - 0.5) * 0.8, y: 0.25, z: z + (rng() - 0.5) * 0.8 }, 1, anchor, size, 0.9); };
 
@@ -31,10 +31,9 @@ export const MOMENTS = {
       flare(fx, { x: e.x + Math.cos(a) * 0.9, y: 1.1 + rng() * 0.3, z: e.z + Math.sin(a) * 0.9 }, 0.55, [tint[0], tint[1], tint[2], 0.95], 0.12, anchor, i * 0.025);
     }
   },
-  // Steady aim: a small cold glint at the Stalker's eye and a thin ring.
+  // Steady aim: a small cold glint at the Stalker's eye (no ring: owner, 2026-11-23).
   steadyaim(fx, e, rng, tint, anchor) {
     flare(fx, { x: e.x, y: 1.5, z: e.z }, 1.1, [1, 0.95, 1, 1], 0.3, anchor);
-    ring(fx, { x: e.x, y: 1.5, z: e.z }, 0.3, 1.4, [tint[0], tint[1], tint[2], 0.8], 0.4, anchor);
   },
 };
 // Decloak: a shimmer rising from the revealed unit, pale violet sheets that fade as they lift.
