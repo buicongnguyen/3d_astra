@@ -16,6 +16,9 @@
 .cmap-met.unmet, .cmap-none { color: var(--text-2, #9fb0a8); }
 .cmap-ngplus { justify-self: start; min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid rgba(240, 193, 90, 0.7); background: rgba(240, 193, 90, 0.16); color: #f6dca0; font: 700 14px/1 var(--font-ui); cursor: pointer; }
 .cmap-ngplus:hover, .cmap-ngplus:focus-visible { background: rgba(240, 193, 90, 0.3); }
+/* Phones keep the first screen short: the archive is one line (the achievement count); veterans show in the briefing. */
 @media (max-width: 640px), (orientation: landscape) and (max-height: 520px) {
+  .cmap-archive { padding: 8px 12px; margin-top: 6px; }
   .cmap-archive .cmap-row { grid-template-columns: 1fr; gap: 4px; }
+  .cmap-archive .cmap-chips, .cmap-archive .cmap-row:not(:first-child) { display: none; }
 }

@@ -1,6 +1,18 @@
 # Campaign plan: faces, carry-over and reasons to return (2026-11-24)
 
-> **Status: plan only, awaiting owner approval.** Nothing here is built. It replaces the open parts of
+> **Status 2026-11-24 (end of the first execution pass, branch claude/campaign-round5, not pushed):**
+> C0 baseline, C1 pacing, C2 veteran squad, C3 enemy heroes (Sol m04, Hale m07, Maren m10) with surrender decisions,
+> C4 consequences (spared heroes help in m09 and m12; ending now needs 3 of 6 merciful choices), C5 archive block on
+> the campaign map, C6a two campaign-only hill maps (`highridge`, `gunhills`, no mission uses them yet), C6b troop
+> trucks (enemy drop trucks in m07 and m11, reinforcement trucks in m10 and m12), C6c balloon, drone and kite detail,
+> C7 achievements (13), optional-objective counts and New Game+ are built and tested.
+> **Not done:** new story missions on the new maps (a Gun Hill draft is saved as `results/campaign/m06c-gun-hill-draft.patch`:
+> adding a mission breaks about a dozen layout, opening-camera and title-card tests that assume 17 missions, so it needs
+> a pass of its own), more staged scenes and voice tones (C5.1, C5.2), medal cosmetic rewards (C7.3), a per-mission
+> challenge beyond the existing optional objectives (C7.1), portrait atlas for the redrawn models, a real-phone test.
+> The original text below is the plan as approved; read "not done" above as the open list.
+>
+> *(Original status line:)* Plan only, awaiting owner approval. Nothing here was built when it was written. It replaces the open parts of
 > [PLAN_CAMPAIGN_HEROES_PRISONERS_2026-11-16.md](PLAN_CAMPAIGN_HEROES_PRISONERS_2026-11-16.md) and the
 > unfinished items of [STAGE_4_STORY.md](STAGE_4_STORY.md) and stage 5 of
 > [../AAA_PLAN_2026-11.md](../AAA_PLAN_2026-11.md).

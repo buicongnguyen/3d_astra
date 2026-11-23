@@ -1,0 +1,153 @@
+diff --git a/github-io/src/locales/story-ko.json b/github-io/src/locales/story-ko.json
+index 1a66e46..33ff4b0 100644
+--- a/github-io/src/locales/story-ko.json
++++ b/github-io/src/locales/story-ko.json
+@@ -857,6 +857,23 @@
+     "You let me walk my crews out of the storm. The Veil sends two hundred energy, and my records.": "내 승조원들을 폭풍에서 내보내 줬군요. 장막이 에너지 이백과 내 기록을 보냅니다.",
+     "A troop truck is crossing toward the base. Shoot it before it unloads: the squad dies with the truck.": "수송 트럭이 기지로 접근하고 있습니다. 병력을 내리기 전에 쏘세요. 트럭이 파괴되면 분대도 함께 죽습니다.",
+     "A truck with six soldiers is on its way to the front. They will meet you at the muster point.": "병사 여섯 명을 실은 트럭이 전선으로 오고 있습니다. 집결 지점에서 합류합니다.",
++    "Gun Hill": "포대 언덕",
++    "Highridge, day 33": "높은 능선, 33일째",
++    "Highridge has a hill between our camp and Hale's, wide enough for a gun line. Whoever holds it shoots down at the other.": "높은 능선에는 우리 야영지와 헤일의 야영지 사이에 포대를 세울 만큼 넓은 언덕이 있습니다. 그곳을 차지한 쪽이 상대를 내려다보며 쏩니다.",
++    "Units on high ground see farther and hit harder. A tower on that hill outranges anything walking up to it.": "고지의 유닛은 더 멀리 보고 더 세게 칩니다. 그 언덕의 타워는 올라오는 어떤 것보다 사거리가 깁니다.",
++    "Build two Sentinel towers on the hill north-east of your camp. Send a unit up first: you cannot build on ground you have not seen.": "야영지 북동쪽 언덕에 감시 타워 두 개를 지으세요. 먼저 유닛을 올려 보내세요. 보지 못한 땅에는 지을 수 없습니다.",
++    "A shooter on the hill gains range and damage against targets below. Fire up at it and you lose both.": "언덕 위의 사수는 아래 목표에 대해 사거리와 피해가 늘어납니다. 위로 쏘면 둘 다 잃습니다.",
++    "Three Ashfall waves come up the ramps. Hold the ridge until the third one breaks.": "애시폴의 파도 세 번이 경사로를 오릅니다. 세 번째가 무너질 때까지 능선을 지키세요.",
++    "Build two Sentinel towers on the hill": "언덕에 감시 타워 두 개 짓기",
++    "Hold Highridge until the third wave breaks": "세 번째 파도가 무너질 때까지 높은 능선 지키기",
++    "Finish in under 8 minutes": "8분 안에 완료",
++    "Send a Ranger up the ramp first, Commander, then build on the hill.": "먼저 레인저를 경사로로 올려 보낸 뒤 언덕에 지으세요, 지휘관.",
++    "My column is on the ridge road. Your hill will not stop me.": "내 부대가 능선 길에 있다. 네 언덕으로는 나를 막지 못한다.",
++    "That is the last column, and the biggest. Keep the guns on the hill firing.": "마지막이자 가장 큰 부대입니다. 언덕의 포를 계속 쏘게 하세요.",
++    "The ridge is ours. High ground wins fights before they start.": "능선은 우리 것입니다. 고지는 싸움이 시작되기 전에 이깁니다.",
++    "The hill guns did half the work. I will mark the ramps for the next camp we build.": "언덕의 포가 절반을 해냈습니다. 다음 야영지를 위해 경사로를 표시해 두겠습니다.",
++    "Hale lost a column on a hill he could have taken. He will not make that mistake twice.": "헤일은 차지할 수 있었던 언덕에서 부대 하나를 잃었습니다. 같은 실수를 두 번 하지 않을 겁니다.",
++    "They took the ridge and fired down on us. Next time the guns go up first.": "그들이 능선을 차지하고 우리를 내려다보며 쐈습니다. 다음에는 포를 먼저 올립니다.",
+     "Meridian": "메리디언",
+     "Ashfall": "애시폴",
+     "Sunward": "선워드",
+diff --git a/github-io/src/locales/story-vi.json b/github-io/src/locales/story-vi.json
+index 0bb4297..9f3ab30 100644
+--- a/github-io/src/locales/story-vi.json
++++ b/github-io/src/locales/story-vi.json
+@@ -856,6 +856,23 @@
+     "You spared my crews at the siege. Ashfall sends three hundred alloy. I am not a man who forgets.": "Bạn tha cho các tổ của tôi trong cuộc vây. Ashfall gửi ba trăm hợp kim. Tôi không phải người hay quên.",
+     "You let me walk my crews out of the storm. The Veil sends two hundred energy, and my records.": "Bạn để tôi dẫn các tổ ra khỏi cơn bão. Veil gửi hai trăm năng lượng, và cả hồ sơ của tôi.",
+     "A troop truck is crossing toward the base. Shoot it before it unloads: the squad dies with the truck.": "Một xe chở quân đang tiến về căn cứ. Bắn nó trước khi nó dỡ quân: cả tiểu đội chết theo xe.",
+-    "A truck with six soldiers is on its way to the front. They will meet you at the muster point.": "Một xe chở sáu lính đang đến tiền tuyến. Họ sẽ gặp bạn ở điểm tập kết."
++    "A truck with six soldiers is on its way to the front. They will meet you at the muster point.": "Một xe chở sáu lính đang đến tiền tuyến. Họ sẽ gặp bạn ở điểm tập kết.",
++    "Gun Hill": "Đồi Pháo",
++    "Highridge, day 33": "Dải Cao, ngày 33",
++    "Highridge has a hill between our camp and Hale's, wide enough for a gun line. Whoever holds it shoots down at the other.": "Dải Cao có một ngọn đồi giữa trại ta và trại của Hale, đủ rộng cho một tuyến pháo. Ai giữ nó sẽ bắn xuống đối phương.",
++    "Units on high ground see farther and hit harder. A tower on that hill outranges anything walking up to it.": "Quân trên cao nhìn xa và đánh mạnh hơn. Một tháp trên đồi bắn xa hơn mọi thứ đang leo lên.",
++    "Build two Sentinel towers on the hill north-east of your camp. Send a unit up first: you cannot build on ground you have not seen.": "Xây hai tháp Lính gác trên đồi phía đông bắc trại. Hãy đưa một đơn vị lên trước: không thể xây trên nơi chưa thấy.",
++    "A shooter on the hill gains range and damage against targets below. Fire up at it and you lose both.": "Xạ thủ trên đồi được thêm tầm và sát thương lên mục tiêu bên dưới. Bắn ngược lên thì mất cả hai.",
++    "Three Ashfall waves come up the ramps. Hold the ridge until the third one breaks.": "Ba đợt Ashfall sẽ leo lên các dốc. Giữ dải cao cho đến khi đợt thứ ba tan.",
++    "Build two Sentinel towers on the hill": "Xây hai tháp Lính gác trên đồi",
++    "Hold Highridge until the third wave breaks": "Giữ Dải Cao đến khi đợt thứ ba tan",
++    "Finish in under 8 minutes": "Hoàn thành trong dưới 8 phút",
++    "Send a Ranger up the ramp first, Commander, then build on the hill.": "Hãy đưa một Xạ thủ lên dốc trước, Chỉ huy, rồi xây trên đồi.",
++    "My column is on the ridge road. Your hill will not stop me.": "Đoàn của tôi đang trên đường dải cao. Ngọn đồi của bạn không cản được tôi.",
++    "That is the last column, and the biggest. Keep the guns on the hill firing.": "Đó là đoàn cuối cùng và lớn nhất. Giữ các khẩu pháo trên đồi bắn liên tục.",
++    "The ridge is ours. High ground wins fights before they start.": "Dải cao thuộc về ta. Địa thế cao thắng trận trước khi nó bắt đầu.",
++    "The hill guns did half the work. I will mark the ramps for the next camp we build.": "Các khẩu pháo trên đồi làm nửa việc. Tôi sẽ đánh dấu các dốc cho trại tiếp theo.",
++    "Hale lost a column on a hill he could have taken. He will not make that mistake twice.": "Hale mất một đoàn trên ngọn đồi lẽ ra ông ta chiếm được. Ông ta sẽ không mắc lỗi đó hai lần.",
++    "They took the ridge and fired down on us. Next time the guns go up first.": "Họ chiếm dải cao và bắn xuống ta. Lần sau các khẩu pháo phải lên trước."
+   }
+ }
+diff --git a/github-io/src/story/campaign-map.js b/github-io/src/story/campaign-map.js
+index b08864c..e641cfc 100644
+--- a/github-io/src/story/campaign-map.js
++++ b/github-io/src/story/campaign-map.js
+@@ -38,6 +38,7 @@ export const MAP_ANCHORS = {
+   "m05-the-verdant-pact": { wide: [89, 49.5], strip: [89, 49.5], label: "a", landmark: "Forest crossing" },
+   "m06-copper-harvest": { wide: [73.4, 57.5], strip: [73.4, 59], label: "b", landmark: "Crystal relay in copper basin" },
+   "m06b-wings-over-copper": { wide: [57.8, 49.5], strip: [57.8, 49.5], label: "a", landmark: "Airfield at rim" },
++  "m06c-gun-hill": { wide: [65.6, 53], strip: [65.6, 54], label: "a", landmark: "Ridge fort on a hill" },
+   "m07-copper-siege": { wide: [42.2, 57.5], strip: [42.2, 59], label: "b", landmark: "Walled mining town" },
+   "m07b-hold-the-valley": { wide: [26.6, 49.5], strip: [26.6, 49.5], label: "a", landmark: "Narrow gorge" },
+   "m08-the-quiet-vault": { wide: [11, 57.5], strip: [11, 59], label: "b", landmark: "Sealed stone vault" },
+diff --git a/github-io/src/story/missions.js b/github-io/src/story/missions.js
+index a801dc2..1abf447 100644
+--- a/github-io/src/story/missions.js
++++ b/github-io/src/story/missions.js
+@@ -670,6 +670,66 @@ export const MISSIONS = [
+     design: "The first air raid, 9 to 12 minutes against one Ashfall AI that stays home (rules.ai \"home\": the script sends every raid). rules.air: the Command core offers Kite, Hawk and Flak. The player starts with the usual camp, 600 alloy, the Copper refinery in the relay yard 19 m from the core (2000 HP, 2400 on Story; it must not fall), a tower beside it and two more Harvesters. Three raids come from the balloon yard on the east rim: 2 Ember balloons at 1:40, 2 Kites and 2 balloons with 6 ground troops at 4:00, and 3 balloons and a Kite with 6 ground troops at 6:30. The first flyer over the copper works plays the scene first-balloon. Intended: Rangers (and Anti-tank soldiers at a level 2 Barracks) beside the refinery, the core to level 2 and Flak so the towers join in, Hawks optional at level 3. After 8 minutes the yard is revealed (3000 HP, two towers, 4 Scrappers, 3 Rangers and an Anti-tank soldier, 45 m from the Ashfall core) and one more balloon goes for the camp. The objective bot wins at about 8:30 on every difficulty (it has a large army by then); medals follow it. Mission 3's alloy changes one Hale line. The client shows an anti-air hint when the first flyer appears and the player has nothing that hits air.",
+   },
+ 
++  {
++    id: "m06c-gun-hill",
++    act: 2,
++    title: "Gun Hill",
++    map: "highridge",
++    enemies: 1, speed: "relaxed", alliance: "ffa",
++    factions: { 1: "ashfall" },
++    rules: { ai: "home", playerBase: true, enemyBase: true, rosters: true },
++    bonus: { alloy: 300, energy: 100 },
++    briefing: {
++      place: "Highridge, day 33",
++      lines: [
++        { who: "vale", text: "Highridge has a hill between our camp and Hale's, wide enough for a gun line. Whoever holds it shoots down at the other." },
++        { who: "okoro", text: "Units on high ground see farther and hit harder. A tower on that hill outranges anything walking up to it." },
++      ],
++      intel: [
++        "Build two Sentinel towers on the hill north-east of your camp. Send a unit up first: you cannot build on ground you have not seen.",
++        "A shooter on the hill gains range and damage against targets below. Fire up at it and you lose both.",
++        "Three Ashfall waves come up the ramps. Hold the ridge until the third one breaks.",
++      ],
++    },
++    regions: { hill: { x: -16, z: 10, r: 11 }, ramp: { x: -4, z: 1, r: 7 } },
++    setup: [
++      { spawn: "worker", team: 0, at: { x: -30, z: 30 }, count: 2 },
++      { resources: { alloy: 700, energy: 200 } },
++    ],
++    objectives: [
++      { id: "guns", text: "Build two Sentinel towers on the hill", type: "build", building: "tower", count: 2 },
++      { id: "hold", text: "Hold Highridge until the third wave breaks", type: "survive", seconds: 330 },
++      { id: "fast", text: "Finish in under 8 minutes", type: "timeUnder", seconds: 480, optional: true },
++    ],
++    win: ["guns", "hold"],
++    lose: [{ type: "coreLost" }, { type: "time", seconds: 900 }],
++    triggers: [
++      { when: { time: 4 }, do: [{ say: { who: "vale", text: "Send a Ranger up the ramp first, Commander, then build on the hill." } }, { ping: "hill" }] },
++      { when: { time: 75 }, do: [
++        { say: { who: "hale", text: "My column is on the ridge road. Your hill will not stop me." } },
++        { music: "tense" },
++        { wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "enemyBase", target: "hill" } },
++      ] },
++      { when: { time: 160 }, do: [
++        { wave: { team: 1, units: { vanguard: 5, ranger: 3, breaker: 1 }, from: "enemyBase", target: "hill" } },
++      ] },
++      { when: { time: 245 }, do: [
++        { say: { who: "okoro", text: "That is the last column, and the biggest. Keep the guns on the hill firing." } },
++        { music: "battle" },
++        { wave: { team: 1, units: { tank: 1, vanguard: 5, ranger: 3 }, from: "enemyBase", target: "hill" } },
++      ] },
++      { when: { objective: "hold", is: "done" }, do: [{ music: "calm" }, { say: { who: "vale", text: "The ridge is ours. High ground wins fights before they start." } }] },
++    ],
++    debrief: {
++      win: [
++        { who: "okoro", text: "The hill guns did half the work. I will mark the ramps for the next camp we build." },
++        { who: "vale", text: "Hale lost a column on a hill he could have taken. He will not make that mistake twice." },
++      ],
++      lose: [{ who: "vale", text: "They took the ridge and fired down on us. Next time the guns go up first." }],
++    },
++    medals: { gold: { seconds: 420 }, silver: { seconds: 600 } },
++    design: "A short hold-the-high-ground lesson on the campaign map Highridge: about 6 minutes. The player builds two towers on the hill and holds it through three scripted waves (4+2, 5+3+Breaker, Tank+5+3) from a home-ruled Ashfall AI.",
++  },
+   {
+     id: "m07-copper-siege",
+     act: 2,
+diff --git a/github-io/tools/mission-check.mjs b/github-io/tools/mission-check.mjs
+index f9fe403..d630a0a 100644
+--- a/github-io/tools/mission-check.mjs
++++ b/github-io/tools/mission-check.mjs
+@@ -67,6 +67,8 @@ const MISSION_TARGETS = {
+   // Mission 4 (campaign C3): with Captain Sol at the east oasis the bot wins from about 6:00; earlier, not harder.
+   // Mission 10 (campaign C6b): the reinforcement truck at 1:30 lets the bot win from about 6:00; earlier, not harder.
+   "m10-obsidian-storm": { win: [330, 1200], earliest: 300 },
++  // Mission 6c (campaign C6): a 5.5-minute hold; the survive timer decides, so the bot wins at 330 s.
++  "m06c-gun-hill": { win: [300, 1200], earliest: 300, passive: 200 },
+   "m04-three-way-dunes": { passive: 300, win: [330, 1200], earliest: 300 },
+   // Mission 9 (R3-I, round 3): since the south exits (R3-L) the bot reaches Sol's camp about 20 s sooner, and the
+   // win is the 3-minute plateau hold after that, so it lands near 6:45, not 7:10. Earlier, not harder.
