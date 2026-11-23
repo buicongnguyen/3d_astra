@@ -33,7 +33,7 @@ const base = {
 const make = (mission = base) => new Simulation({ map: mission.map, ai: false, mission });
 
 test('the three decisions follow the story rules', () => {
-  assert.deepEqual(Object.keys(DECISIONS).sort(), ['m03-alloy', 'm05-pact', 'm10-veil']);
+  assert.deepEqual(Object.keys(DECISIONS).sort(), ['m03-alloy', 'm04-sol', 'm05-pact', 'm07-hale', 'm10-maren', 'm10-veil']);
   for (const d of Object.values(DECISIONS)) {
     assert.ok(Object.hasOwn(CAST, d.who), `${d.id}: speaker`);
     assert.ok(d.prompt.length < 140, d.id);
@@ -59,21 +59,23 @@ test('the three decisions follow the story rules', () => {
   for (const m of MISSIONS) walk(m, m.id);
 });
 
-test('endingFor: two or more merciful answers share the Keystone; missing answers use the defaults', () => {
+test('endingFor: half or more of the merciful answers (3 of 6) share the Keystone; missing answers use the defaults', () => {
   const table = [
     [null, 'meridian-line'],
     [{}, 'meridian-line'],
     [{ decisions: {} }, 'meridian-line'],
     [{ decisions: firm }, 'meridian-line'],
     [{ decisions: { 'm03-alloy': 'return' } }, 'meridian-line'],
-    [{ decisions: { 'm03-alloy': 'return', 'm05-pact': 'share' } }, 'open-frontier'],
-    [{ decisions: { 'm03-alloy': 'return', 'm10-veil': 'spare' } }, 'open-frontier'],
-    [{ decisions: { 'm05-pact': 'share', 'm10-veil': 'spare', 'm03-alloy': 'keep' } }, 'open-frontier'],
+    [{ decisions: { 'm03-alloy': 'return', 'm05-pact': 'share' } }, 'meridian-line'],
+    [{ decisions: { 'm03-alloy': 'return', 'm10-veil': 'spare', 'm05-pact': 'share' } }, 'open-frontier'],
+    [{ decisions: { 'm03-alloy': 'return', 'm05-pact': 'share', 'm04-sol': 'accept' } }, 'open-frontier'],
+    [{ decisions: { 'm04-sol': 'accept', 'm07-hale': 'accept', 'm10-maren': 'accept' } }, 'open-frontier'],
+    [{ decisions: { 'm05-pact': 'share', 'm10-veil': 'spare', 'm03-alloy': 'keep' } }, 'meridian-line'],
     [{ decisions: mercy }, 'open-frontier'],
     [{ decisions: { 'm03-alloy': 'nonsense', 'm05-pact': 'share' } }, 'meridian-line'],
   ];
   for (const [progress, ending] of table) assert.equal(endingFor(progress), ending, JSON.stringify(progress));
-  assert.equal(mercyCount(mercy), 3); assert.equal(mercyCount(null), 0);
+  assert.equal(mercyCount(mercy), 6); assert.equal(mercyCount(null), 0);
   assert.equal(answerFor('m05-pact', null), 'drive'); assert.equal(answerFor('m05-pact', { 'm05-pact': 'share' }), 'share'); assert.equal(answerFor('nope', {}), undefined);
   for (const e of Object.values(ENDINGS)) {
     assert.deepEqual(e.cards.map((c) => c.who), ['vale', 'sol', 'hale', 'maren', 'echo'], e.id);
@@ -111,7 +113,8 @@ test('resolveMission settles earlier answers and the ending; untouched missions 
   // A decision's own `if`s stay for the match.
   assert.ok(ifs(resolveMission(byId('m03-the-ashen-line'), { decisions: mercy })));
   // The defaults keep missions 7 and 9 exactly as they were before 0.19a.
-  assert.ok(!ifs(resolveMission(m07)) && !ifs(resolveMission(m09)));
+  // (Mission 7 now asks its own surrender question, so only the foreign `if`s must be gone.)
+  assert.ok(!JSON.stringify(resolveMission(m07)).includes('"flag":"m03-alloy"') && !ifs(resolveMission(m09)));
 });
 
 test('a decision holds only its own trigger until the decide command; answers are logged and replay to the same hash', () => {

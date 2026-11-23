@@ -28,7 +28,7 @@ export const optionOf = (id, option) => DECISIONS[id]?.options.find((o) => o.id 
 // Merciful answers in the campaign so far, defaults included.
 export const mercyCount = (decisions = null) => Object.keys(DECISIONS).filter((id) => optionOf(id, answerFor(id, decisions))?.mercy).length;
 
-// Neither ending is good or bad: two or more merciful choices share the Keystone, fewer keep it Meridian's.
+// Neither ending is good or bad: half or more of the merciful choices share the Keystone, fewer keep it Meridian's.
 export const ENDINGS = Object.freeze({
   "open-frontier": {
     id: "open-frontier",
@@ -56,7 +56,10 @@ export const ENDINGS = Object.freeze({
   },
 });
 export const ENDING_IDS = Object.keys(ENDINGS);
-export const endingFor = (progress = null) => (mercyCount(progress?.decisions) >= 2 ? "open-frontier" : "meridian-line");
+// Half of the campaign's decisions, rounded up (3 of 6 since the heroes of campaign C3): the story's three choices
+// and the three surrender choices count alike.
+export const MERCY_FOR_OPEN = Math.ceil(Object.keys(DECISIONS).length / 2);
+export const endingFor = (progress = null) => (mercyCount(progress?.decisions) >= MERCY_FOR_OPEN ? "open-frontier" : "meridian-line");
 
 // A Faction Chronicle is finished once its last mission is won (src/campaign.js recordChronicleClear).
 export const chronicleDone = (progress, id) => progress?.chronicles?.[id]?.done === true;

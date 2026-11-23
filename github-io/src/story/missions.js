@@ -329,6 +329,7 @@ export const MISSIONS = [
       oasisEast: { x: 24, z: 16, r: 8 },
     },
     setup: [
+      { spawn: "ranger", team: 2, at: "oasisEast", tag: "heroSol", name: "Captain Sol", hero: "sol" },
       { capturePoint: "oasisNorth", label: "North oasis", gives: { alloy: 2 } },
       { capturePoint: "oasisCentre", label: "Centre oasis", gives: { alloy: 2 } },
       { capturePoint: "oasisEast", label: "East oasis", gives: { alloy: 2 } },
@@ -345,6 +346,16 @@ export const MISSIONS = [
     win: ["hold"],
     lose: [{ type: "coreLost" }, { type: "time", seconds: 1200 }],
     triggers: [
+      // Campaign C3: Captain Sol, an enemy hero. Below 35% health it yields; the Commander accepts or finishes it.
+      { when: { tagHpBelow: { tag: "heroSol", percent: 35 } }, do: [
+        { surrender: "heroSol" },
+        { say: { who: "sol", text: "Enough! My riders yield, Commander. Name your terms." } },
+        { decide: "m04-sol" },
+        { if: { flag: "m04-sol", is: "accept" }, capture: "heroSol" },
+        { if: { flag: "m04-sol", is: "accept" }, say: { who: "sol", text: "Then we are even. I will not forget it, Commander." } },
+        { if: { flag: "m04-sol", is: "finish" }, finish: "heroSol" },
+        { if: { flag: "m04-sol", is: "finish" }, say: { who: "sol", text: "So be it. My wells will remember." } },
+      ] },
       { when: { time: 6 }, do: [{ say: { who: "vale", text: "The centre oasis is closest. Take it first, then choose north or east." } }, { ping: "oasisCentre" }] },
       { when: { pointOwned: { point: "oasisCentre", team: 0 } }, do: [
         { say: { who: "sol", text: "Nothing personal, Commander. My gardens need that light as much as yours." } },
@@ -368,6 +379,16 @@ export const MISSIONS = [
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
       { when: { time: 70 }, do: [{ say: { who: "vale", text: "One Ashfall scout on the dunes. It is looking at us, not the oases. Your guard can send it home." } }, { wave: { team: 1, units: { vanguard: 1 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
     ],
+    decisions: {
+      "m04-sol": {
+        who: "vale",
+        prompt: "Captain Sol has lowered her weapons and her riders have stopped. She is asking for terms. What do we do?",
+        options: [
+          { id: "accept", label: "Accept the surrender", effect: "Sol leaves the dunes. She will remember it.", mercy: true },
+          { id: "finish", label: "Finish the fight", effect: "Her riders break and scatter. No mercy asked, none given.", mercy: false, default: true },
+        ],
+      },
+    },
     debrief: {
       win: [
         { who: "vale", text: "Two oases lit. But Hale and Sol left the field side by side, and they were talking." },
@@ -693,6 +714,18 @@ export const MISSIONS = [
     win: ["survive"],
     lose: [{ type: "coreLost" }, { type: "tagLost", tag: "basinRelay" }],
     triggers: [
+      // Hale joins the second wave at the west pass
+      { when: { time: 200 }, do: [{ spawn: "tank", team: 1, at: "westPass", tag: "heroHale", name: "Commander Hale", hero: "hale" }, { say: { who: "hale", text: "I am coming myself, Commander." } }] },
+      // Campaign C3: Commander Hale, an enemy hero. Below 35% health it yields; the Commander accepts or finishes it.
+      { when: { tagHpBelow: { tag: "heroHale", percent: 35 } }, do: [
+        { surrender: "heroHale" },
+        { say: { who: "hale", text: "My machines are spent, Commander. I yield the field." } },
+        { decide: "m07-hale" },
+        { if: { flag: "m07-hale", is: "accept" }, capture: "heroHale" },
+        { if: { flag: "m07-hale", is: "accept" }, say: { who: "hale", text: "A debt, then. I will repay it." } },
+        { if: { flag: "m07-hale", is: "finish" }, finish: "heroHale" },
+        { if: { flag: "m07-hale", is: "finish" }, say: { who: "hale", text: "Then I will not be taking orders from you." } },
+      ] },
       { when: { time: 5 }, do: [{ say: { who: "vale", text: "You have about three minutes before the first wave. Towers east of the relay, Commander." } }, { camera: "relayYard" }] },
       { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Here they come, both armies together. Hold the line at the towers." } }, { music: "battle" }] },
       { when: { time: 200 }, do: [
@@ -725,6 +758,16 @@ export const MISSIONS = [
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
       { when: { time: 70 }, do: [{ say: { who: "vale", text: "Two Pact scouts on the road, checking our towers before the siege. Let the towers answer." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
     ],
+    decisions: {
+      "m07-hale": {
+        who: "vale",
+        prompt: "Hale has cut his engines and signalled that he yields. His crews are waiting for your word. What do we do?",
+        options: [
+          { id: "accept", label: "Accept the surrender", effect: "Hale leaves the siege. The Ashfall crews stand down.", mercy: true },
+          { id: "finish", label: "Finish the fight", effect: "His battery falls silent. The siege goes on without him.", mercy: false, default: true },
+        ],
+      },
+    },
     debrief: {
       win: [
         { who: "vale", text: "The siege is broken and the map is out. Captain Sol has stopped answering Hale's calls." },
@@ -991,6 +1034,7 @@ export const MISSIONS = [
       solRoad: { x: -44, z: 46, r: 6 },
     },
     setup: [
+      { spawn: "antitank", team: 3, at: "damperWest", tag: "heroMaren", name: "Ilse Maren", hero: "maren" },
       { spawn: "relay", team: 3, at: "damperWest", tag: "damper", name: "Veil damper", hp: 6000, hpByDifficulty: { veteran: 2200 } },
       { spawn: "relay", team: 3, at: "damperSouth", tag: "damper", name: "Veil damper", hp: 6000, hpByDifficulty: { veteran: 2200 } },
       { spawn: "relay", team: 3, at: "damperMid", tag: "damper", name: "Veil damper", hp: 6000, hpByDifficulty: { veteran: 2200 } },
@@ -1021,6 +1065,16 @@ export const MISSIONS = [
     win: ["dampers", "crown"],
     lose: [{ type: "coreLost" }],
     triggers: [
+      // Campaign C3: Ilse Maren, an enemy hero. Below 35% health it yields; the Commander accepts or finishes it.
+      { when: { tagHpBelow: { tag: "heroMaren", percent: 35 } }, do: [
+        { surrender: "heroMaren" },
+        { say: { who: "maren", text: "The storm has turned against us. The Veil yields, Commander." } },
+        { decide: "m10-maren" },
+        { if: { flag: "m10-maren", is: "accept" }, capture: "heroMaren" },
+        { if: { flag: "m10-maren", is: "accept" }, say: { who: "maren", text: "You are kinder than I was told. Thank you." } },
+        { if: { flag: "m10-maren", is: "finish" }, finish: "heroMaren" },
+        { if: { flag: "m10-maren", is: "finish" }, say: { who: "maren", text: "Then the Veil will not forget this." } },
+      ] },
       { when: { time: 6 }, do: [{ say: { who: "vale", text: "The west and south dampers are a short march from camp. The centre one is the hard one." } }, { ping: "damperWest" }, { ping: "damperSouth" }] },
       { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Three armies, three directions. Towers on every side, Commander, and a reserve in the middle." } }, { music: "battle" }] },
       { when: { enter: "damperWest", team: 0 }, do: [{ say: { who: "maren", text: "Our first camp stood here, Commander. One relay woke and the storm took it in a night. Please stop." } }] },
@@ -1056,6 +1110,14 @@ export const MISSIONS = [
     ],
     // The third Commander decision (0.19a). Its answer changes Maren's words in the finale.
     decisions: {
+      "m10-maren": {
+        who: "vale",
+        prompt: "Ilse Maren has lowered her guard at the west damper and the Veil crews have stopped. What do we do?",
+        options: [
+          { id: "accept", label: "Accept the surrender", effect: "Maren walks her crews out. The Veil will remember it.", mercy: true },
+          { id: "finish", label: "Finish the fight", effect: "The west damper falls. The Veil fights on.", mercy: false, default: true },
+        ],
+      },
       "m10-veil": {
         who: "maren",
         prompt: "My crews are still inside the dampers, Commander. Will you let them walk out before you break the rest?",

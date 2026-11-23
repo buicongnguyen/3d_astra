@@ -19,6 +19,8 @@ import { RANK_XP, RANK_BONUS } from "./tactics.js";
 const CAPTURE_SECONDS = 5;
 // Capture points and objectives are checked this often (seconds); triggers every tick.
 const CHECK = 0.25;
+// Enemy heroes (campaign C3): health and damage against their unit type, and the health share they give up at.
+export const HERO_HEALTH = 1.6, HERO_DAMAGE = 0.8, HERO_YIELD = 35;
 
 const fighter = (e) => e.kind === "unit" && e.type !== "worker" && e.damage > 0 && e.hp > 0;
 
@@ -89,7 +91,7 @@ export const missions = {
     }
     return { x: place.x, z: place.z };
   },
-  missionSpawn({ spawn, team = 0, at, count = 1, countByDifficulty, tag, name, hp, hpByDifficulty, speed, complete = true, exact = false, rank = 0, xp = 0, veteran = false, slot = 0 }) {
+  missionSpawn({ spawn, team = 0, at, count = 1, countByDifficulty, tag, name, hp, hpByDifficulty, speed, complete = true, exact = false, rank = 0, xp = 0, veteran = false, slot = 0, hero = null }) {
     // exact: the script names this very type (a Breaker battery stays Breakers on an Ashfall roster).
     if (!exact) spawn = this.typeFor(team,spawn);
     count = countByDifficulty?.[this.difficulty] ?? count;
@@ -111,6 +113,13 @@ export const missions = {
         e.baseHp = e.maxHp; e.maxHp = Math.round(e.maxHp * (1 + RANK_BONUS * e.rank)); e.hp = e.maxHp;
       }
       if (hp) { e.hp = e.maxHp = hp; this.setBaseHp(e); }
+      // An enemy hero (campaign C3): a named commander, tougher and a little softer-hitting than its unit type.
+      // It gives up below HERO_YIELD of its health when the script says so ({ surrender: tag }).
+      if (hero && d.kind === "unit" && team > 0) {
+        e.hero = hero;
+        e.hp = e.maxHp = Math.round(e.maxHp * HERO_HEALTH); this.setBaseHp(e);
+        e.damage = Math.round(e.damage * HERO_DAMAGE * 100) / 100;
+      }
       if (speed) e.speed = speed;
       made.push(e);
     }
@@ -303,6 +312,17 @@ export const missions = {
       }
     } else if (a.spawn) this.missionSpawn(a);
     else if (a.reveal) { const o = this.mission.objectives[a.reveal]; if (o?.hidden) { o.hidden = false; this.events.push({ type: "objective", id: a.reveal, state: "revealed" }); } }
+    // Enemy heroes (campaign C3). surrender: the tagged hero stops fighting and calls out; capture: it leaves the
+    // field in the player's hands (a mercy); finish: it falls.
+    else if (a.surrender) {
+      for (const e of this.tagged(a.surrender)) {
+        if (e.surrendered) continue;
+        e.surrendered = true; e.heroDamage = e.damage; e.damage = 0; e.orders = [];
+        this.events.push({ type: "surrender", id: e.id, hero: e.hero || null, team: e.team, x: e.x, z: e.z });
+      }
+    }
+    else if (a.capture) { for (const e of this.tagged(a.capture)) { e.hp = 0; this.events.push({ type: "captured", hero: e.hero || null, team: e.team, x: e.x, z: e.z }); } }
+    else if (a.finish) { for (const e of this.tagged(a.finish)) this.applyDamage(e, e.hp + (e.shield || 0) + 1, 0, null); }
     else if (a.complete) this.setObjective(a.complete, "done");
     else if (a.fail) this.setObjective(a.fail, "failed");
     else if (a.give) for (const [type, amount] of Object.entries(a.give)) { this.players[0][type] += amount; this.missionBank(0, type, amount); }
