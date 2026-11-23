@@ -69,3 +69,19 @@ test("surrender answers count toward the ending: half of the six decisions open 
   assert.equal(endingFor({ decisions: all }), "open-frontier");
   assert.equal(endingFor({ decisions: { "m04-sol": "accept", "m07-hale": "accept" } }), "meridian-line");
 });
+
+test("sparing Hale and Maren brings help in the finale and a line in its briefing; Sol's mercy pays in mission 9", () => {
+  const alloyAt = (id, decisions, seconds) => {
+    const def = byId(id);
+    const s = new Simulation({ map: def.map, enemyCount: def.enemies, mission: resolveMission(def, { cleared: {}, decisions }) });
+    for (let i = 0; i < seconds * 20; i++) s.tick(0.05);
+    return { alloy: s.mission.banked?.alloy ?? s.players[0].alloy, energy: s.players[0].energy, def: resolveMission(def, { cleared: {}, decisions }) };
+  };
+  const none = alloyAt("m12-frontiers-end", {}, 10), both = alloyAt("m12-frontiers-end", { "m07-hale": "accept", "m10-maren": "accept" }, 10);
+  assert.ok(both.def.briefing.lines.some((l) => /spared Hale/.test(l.text)) && both.def.briefing.lines.some((l) => /Maren's crews/.test(l.text)));
+  assert.ok(!none.def.briefing.lines.some((l) => /spared Hale/.test(l.text)));
+  assert.ok(both.energy - none.energy >= 150, "energy gift");
+  assert.ok(both.alloy - none.alloy >= 250, "alloy gift");
+  const sol = resolveMission(byId("m09-a-debt-in-the-dunes"), { cleared: {}, decisions: { "m04-sol": "accept" } });
+  assert.ok(sol.briefing.lines.some((l) => /Captain Sol ride out/.test(l.text)));
+});

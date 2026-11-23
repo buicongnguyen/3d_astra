@@ -892,6 +892,7 @@ export const MISSIONS = [
     briefing: {
       place: "Amber Dunes, day 41",
       lines: [
+        { if: { flag: "m04-sol", is: "accept" }, who: "vale", text: "Because you let Captain Sol ride out of the dunes, the Caravan will send alloy when we reach her camp." },
         { who: "sol", text: "Commander. I left the Pact this morning. By noon Hale's guns were on my camp. I am asking for help." },
         { who: "vale", text: "Her camp is in the south-east. Ashfall holds the north-east. If her beacon falls, the Caravan scatters." },
         { who: "echo", text: "Two camps that share power last longer. This one has counted it many times." },
@@ -964,6 +965,8 @@ export const MISSIONS = [
         // turned its win into a defeat (0.19a check).
         { if: { flag: "m05-pact", is: "drive" }, say: { who: "sol", text: "You came. You warned me and I did not listen. The Caravan pays its debts. We ride with you." } },
         { if: { flag: "m05-pact", is: "share" }, say: { who: "sol", text: "You came. You shared the forest light when you did not have to. The Caravan pays its debts twice." } },
+        { if: { flag: "m04-sol", is: "accept" }, say: { who: "sol", text: "You let me ride out of the dunes. I remember. The Caravan sends two hundred alloy and every Rider it has." } },
+        { if: { flag: "m04-sol", is: "accept" }, give: { alloy: 200 } },
         { spawn: "vanguard", team: 0, at: "solCamp", count: 4, tag: "sunward" },
         { spawn: "rider", team: 0, at: "solCamp", count: 3, tag: "sunward" },
         { spawn: "breaker", team: 0, at: "solCamp", count: 1, tag: "sunward" },
@@ -1252,6 +1255,8 @@ export const MISSIONS = [
     briefing: {
       place: "Frontier Expanse, the Keystone, day 55",
       lines: [
+        { if: { flag: "m07-hale", is: "accept" }, who: "vale", text: "Because you spared Hale at the siege, Ashfall will send 300 alloy at the start." },
+        { if: { flag: "m10-maren", is: "accept" }, who: "vale", text: "Because you let Maren's crews walk out of the storm, the Veil will send 200 energy at the start." },
         { who: "vale", text: "This is the last one, Commander. Hale's draw engine sits on the Keystone, north of the centre ford." },
         { who: "echo", text: "Break the engine and I can tune the Keystone for every camp. Yes: I. This one has decided to be someone." },
         { who: "sol", text: "Ashfall, Wardens and the Veil will hit you together first. Stand through that, then we go north." },
@@ -1298,6 +1303,13 @@ export const MISSIONS = [
     win: ["stand", "engine"],
     lose: [{ type: "coreLost" }, { type: "time", seconds: 1500 }],
     triggers: [
+      // Campaign C4: what the Commander did with a yielding hero comes back as help at the end.
+      { when: { time: 8 }, do: [
+        { if: { flag: "m07-hale", is: "accept" }, say: { who: "hale", text: "You spared my crews at the siege. Ashfall sends three hundred alloy. I am not a man who forgets." } },
+        { if: { flag: "m07-hale", is: "accept" }, give: { alloy: 300 } },
+        { if: { flag: "m10-maren", is: "accept" }, say: { who: "maren", text: "You let me walk my crews out of the storm. The Veil sends two hundred energy, and my records." } },
+        { if: { flag: "m10-maren", is: "accept" }, give: { energy: 200 } },
+      ] },
       { when: { time: 5 }, do: [{ say: { who: "vale", text: "Three armies will arrive inside four minutes. Towers and Rangers first. Nothing leaves camp yet." } }, { music: "tense" }] },
       { when: { event: "incoming" }, once: true, do: [{ say: { who: "sol", text: "Here they come, from three sides! Caravan, stand with Meridian. Not one step back." } }, { music: "battle" }] },
       { when: { objective: "stand", is: "done" }, do: [
