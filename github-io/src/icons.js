@@ -1,4 +1,5 @@
 const paths = {
+  theme: '<path d="M12 3a9 9 0 1 0 0 18c1.7 0 2.4-1.1 2-2.3-.5-1.6.5-2.7 2-2.7h2.2c1.6 0 2.8-1.2 2.8-3C21 7 17 3 12 3Z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10.5" cy="7.5" r="1"/><circle cx="15" cy="8" r="1"/>',
   medic: '<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/>',
   engineer: '<path d="M14 4a6 6 0 0 0-7 8L2 17a3 3 0 0 0 5 5l5-5a6 6 0 0 0 8-7l-4 4-4-4z"/>',
   logo: '<path d="M12 2 22 20H2Z"/><path d="m12 9 5 9H7Z"/>',

@@ -1,0 +1,67 @@
+/* Walnut theme (owner, 2026-11-23): warm mid-tone wood, neither dark mode nor bright. It redefines the kit tokens, so
+   every screen follows; the rules below only cover faces that hard-code the navy glass. Switch: theme-switch.js. */
+:root[data-ui-theme="walnut"] {
+  --kit-space: #3a281b; --kit-ghost: #57402c; --kit-hud: #5e452f; --kit-control: #6d5038;
+  --kit-panel: linear-gradient(180deg, #6f523a, #5a412d);
+  --kit-hud-ink: rgba(82, 59, 40, .97);
+  --kit-pressed: #7d5d42; --kit-disabled: #5a4634; --kit-disabled-edge: #7d644b; --kit-disabled-text: #dccab2;
+  --kit-line: #b08b5e; --kit-line-ghost: #80603f; --kit-track: #3f2d1f;
+  --kit-text: #fff6e8; --kit-text-2: #f0dfc6; --kit-cyan: #f3cf88; --kit-focus: #ffe9b8;
+  --kit-dialog-shadow: 0 12px 32px rgba(36, 22, 12, .5); --kit-glow: 0 0 8px rgba(243, 207, 136, .25);
+  --kit-frame-button: url("./art/ui/walnut/frame-button.svg") 7 / 7px / 0 stretch;
+  --kit-frame-button-active: url("./art/ui/walnut/frame-button-active.svg") 7 / 7px / 0 stretch;
+  --kit-frame-panel: url("./art/ui/walnut/frame-panel.svg") 9 / 9px / 0 stretch;
+  --kit-frame-toast: url("./art/ui/walnut/frame-toast.svg") 7 / 7px / 0 stretch;
+  --ink-0: #3a281b; --ink-1: #57402c; --ink-2: #6d5038; --ink-3: #6f523a; --ink-4: #7d5d42;
+  --line-1: rgba(176, 139, 94, .6); --line-2: #b08b5e;
+  --text-1: #fff6e8; --text-2: #f0dfc6; --text-3: #e3cfb2;
+  --walnut-grain: repeating-linear-gradient(92deg, rgba(50, 31, 17, .09) 0 2px, transparent 2px 7px, rgba(255, 226, 180, .035) 7px 8px, transparent 8px 15px);
+  --walnut-face: var(--walnut-grain), linear-gradient(180deg, #6f523a, #5a412d);
+  --panel-bg: var(--walnut-face); --panel-edge: 0 0 0 1px #b08b5e;
+  --tip-bg: rgba(74, 53, 36, .98); --tip-edge: #b08b5e;
+  --holo-1: #f3cf88; --holo-2: #f3cf88; --holo-line: #b08b5e; --holo-line-strong: #f3cf88;
+  --holo-glass: var(--walnut-face); --holo-glass-solid: var(--walnut-face);
+  --mint: #cfe3a6; --dim: #dcc8ab; --line: rgba(240, 214, 176, .24); --panel: rgba(91, 66, 45, .97); --cyan: #f3cf88;
+  background: #3a281b;
+}
+:root[data-ui-theme="walnut"] :is(.topbar, .panel, .modal, .settings-panel, #briefing .briefing-setup, #briefing .briefing-copy, #modal.debrief-wide .modal, #modal.result-wide .modal, .mb-card) {
+  background: var(--walnut-face) !important;
+  color: var(--kit-text);
+}
+:root[data-ui-theme="walnut"] .topbar { background: var(--walnut-grain), linear-gradient(180deg, #5d432e, #4d3625) !important; border-bottom-color: #8d6c49 !important; }
+:root[data-ui-theme="walnut"] :is(.modal-backdrop, .settings-backdrop) { background: rgba(44, 29, 18, .66); }
+:root[data-ui-theme="walnut"] :is(.field select, .settings-panel select) { background-color: var(--kit-control); color: var(--kit-text); }
+:root[data-ui-theme="walnut"] :is(.field select, .settings-panel select) option { background: #5a412d; color: #fff6e8; }
+:root[data-ui-theme="walnut"] #briefing .field > span,
+:root[data-ui-theme="walnut"] #briefing .setup-label { color: #f0dfc6; }
+html:root[data-ui-theme="walnut"] #briefing .mode-switch button[data-mode]:not([aria-pressed="true"]) { color: #fff6e8; background: #6d5038; border-color: #b08b5e !important; }
+html:root[data-ui-theme="walnut"] #briefing .mode-switch button[data-mode]:not([aria-pressed="true"]) > .icon { color: #f3cf88; }
+html:root[data-ui-theme="walnut"] #briefing .mode-switch button[data-mode]:not([aria-pressed="true"]) > small { color: #ecd9bd; }
+html:root[data-ui-theme="walnut"] #briefing .mode-switch button[data-mode]:hover:not([aria-pressed="true"]):not(:disabled) { background: #7d5d42; }
+
+:root[data-ui-theme="walnut"] #briefing .briefing-rule { background: #57402c !important; border-color: #8d6c49 !important; }
+:root[data-ui-theme="walnut"] :is(.rank-chip, #rank-chip) { background: #57402c !important; }
+:root[data-ui-theme="walnut"] :is(.quick-battle, .title-actions > button) { --face: #6d5038; }
+:root[data-ui-theme="walnut"] .quick-battle .icon { color: #f3cf88; }
+:root[data-ui-theme="walnut"] .quick-battle small { color: #ecd9bd; }
+
+:root[data-ui-theme="walnut"] .setting-row { background: #57402c !important; border-color: #8d6c49 !important; }
+:root[data-ui-theme="walnut"] .settings-panel > footer { background: #4d3625 !important; border-color: #8d6c49 !important; }
+:root[data-ui-theme="walnut"] .briefing-setup::after, :root[data-ui-theme="walnut"] #briefing .start-bar { background: transparent; }
+
+/* The kit frames, recoloured to brass (generated from kit-skin.css's --frame rules). */
+:root[data-ui-theme="walnut"] :is(.primary, .secondary, .ghost, .pause-settings, .danger, .kit-face, .settings-close, .contrast-button, .comms-toggle, .defence-perks-toggle,
+  #briefing .mode-switch button, #briefing .stage-list button, #briefing .difficulty-buttons button, .defence-variants button,
+  .settings-panel [role="tablist"] button, .quick-battle, .title-actions > button, #continue,
+  .decision-orders button, .mb-foot button, .result-actions button, .debrief-actions button) { --frame: url("./art/ui/walnut/frame-button.svg"); }
+:root[data-ui-theme="walnut"] :is(.primary, #briefing #start) { --frame: url("./art/ui/walnut/frame-button-gold.svg"); }
+:root[data-ui-theme="walnut"] :is(.ghost) { --frame: url("./art/ui/walnut/frame-button-ghost.svg"); }
+:root[data-ui-theme="walnut"] :is(.danger) { --frame: url("./art/ui/walnut/frame-button-danger.svg"); }
+:root[data-ui-theme="walnut"] :is(.primary, .secondary, .ghost, .pause-settings, .danger, .kit-face, .quick-battle, #continue,
+  #briefing .mode-switch button, #briefing .stage-list button, .defence-variants button, .decision-orders button):disabled { --frame: url("./art/ui/walnut/frame-button-disabled.svg"); }
+:root[data-ui-theme="walnut"] :is(#briefing .mode-switch button[aria-pressed="true"], #briefing .stage-list button[aria-current="true"], #briefing .difficulty-buttons button[aria-pressed="true"],
+  .defence-variants button[aria-pressed="true"], .settings-panel [role="tablist"] button[aria-selected="true"], .kit-face[aria-pressed="true"]) { --frame: url("./art/ui/walnut/frame-button-active.svg"); }
+:root[data-ui-theme="walnut"] :is(.command-tile, .ability-tile, .stance-control button, .upgrade-actions button, .order-buttons button, #queue button, .idle-row button) { --frame: url("./art/ui/walnut/frame-button.svg"); }
+:root[data-ui-theme="walnut"] :is(.command-tile, .upgrade-actions button, .order-buttons button, .idle-row button):disabled,
+:root[data-ui-theme="walnut"] .command-tile.state-locked { --frame: url("./art/ui/walnut/frame-button-disabled.svg"); }
+:root[data-ui-theme="walnut"] :is(.stance-control button[aria-pressed="true"], .ability-tile.active, .order-buttons button[aria-pressed="true"], .command-tile.selected) { --frame: url("./art/ui/walnut/frame-button-active.svg"); }

@@ -59,6 +59,9 @@ import { setupCover } from "./app/cover.js";
 import { setupQuickBattle } from "./quick-battle.js";
 // The command console kit on every screen (round 3 kit pass): loaded after every other stylesheet.
 import "./kit-skin.css";
+import "./menu-pro.css";
+import "./theme-walnut.css";
+import "./theme-switch.js";
 
 renderShell();
 // S is the shared state; A is what each module offers the others (functions and widgets).

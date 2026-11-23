@@ -26,7 +26,7 @@ const listControls = (scope) => [...document.querySelectorAll(`${scope} :is(butt
 
 async function screens(t) {
   const { page } = t;
-  const menu = await page.evaluate(listControls, "#briefing");
+  const menu = await page.evaluate(listControls, ":is(#briefing, .top-actions)"); // Full screen sits in the top bar
   await t.tap("#briefing-settings");
   await page.locator(".settings-panel").waitFor({ state: "visible", timeout: TIMEOUT.step });
   const settings = await page.evaluate(listControls, ".settings-panel");
@@ -140,7 +140,7 @@ await suite("cover-ui", async () => {
     await shot(page, `cover-ui-${name}`);
 
     // Nothing tidied away: every r3-base control of the menu and the skirmish setup is one click away.
-    const menuNow = await page.evaluate(listControls, "#briefing");
+    const menuNow = await page.evaluate(listControls, ":is(#briefing, .top-actions)");
     for (const key of base[name].menu) {
       assert.ok(menuNow.includes(key), `${name}: menu control ${key} still shown`);
       assert.equal(await reachable(page, key), "ok", `${name}: ${key} directly clickable`);
