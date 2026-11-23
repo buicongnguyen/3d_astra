@@ -87,9 +87,10 @@ test("Wings over Copper resolves with and without earlier decisions: only Hale's
 
 // Recorded in 0.19b, with the Story hull adjustment for Hold the River and corrected hold times in M04 and M10.
 // Mission 3 changed on purpose with the Iron Vanguard boss (docs/aaa/BOSSES.md): spawn, objective, scene and lines.
+// 2026-11-23 (owner): m03 again for the Iron Vanguard's story health, 26,000 to 9,000.
 test("the original missions resolve to their recorded checksums on all decision paths", () => {
   const BEFORE = {
-    "m01-first-light": "704a79da", "m02-first-contact": "bd4705a7", "m02b-hold-the-river": "9845060f", "m03-the-ashen-line": "74d794d9",
+    "m01-first-light": "704a79da", "m02-first-contact": "bd4705a7", "m02b-hold-the-river": "9845060f", "m03-the-ashen-line": "472f992c",
     "m04-three-way-dunes": "37f5e2f5", "m05-the-verdant-pact": "7fb6c6de", "m06-copper-harvest": "3fc2796d", "m07-copper-siege": "5150bb0e",
     "m08-the-quiet-vault": "03ed22ef", "m09-a-debt-in-the-dunes": "3f6f6e86", "m10-obsidian-storm": "981e1315", "m11-cut-the-draw": "81571e1d", "m12-frontiers-end": "ecf29c01",
     // AAA round 3 (R3-I, campaign pacing): first-contact probes in 10 base missions, m03 (towers objective, gold 750 s) and m04 retuned after the south exits.

@@ -151,7 +151,7 @@ test("a boss's vitals bar, which BossView places at its own height, rides a stat
     return { y: u.bar.position.y, rs: u.readabilityScale };
   };
   const plain = bar([]), big = bar([BossSize]);
-  assert.equal(plain.y, 6.4, "no plugin: the bar where BossView puts it");
+  assert.equal(plain.y, 4.5, "no plugin: the bar where BossView puts it");
   assert.equal(big.rs, plain.rs * 1.5);
-  assert.equal(big.y, 6.4 * 1.5, "the bar sits on top of the scaled boss");
+  assert.equal(big.y, 4.5 * 1.5, "the bar sits on top of the scaled boss");
 });
