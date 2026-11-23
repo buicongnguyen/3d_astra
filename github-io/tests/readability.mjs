@@ -108,7 +108,7 @@ await suite('readability', async () => {
     assert.equal(await page.evaluate(() => [...document.querySelectorAll('.threat-arrow')].filter((a) => Number(a.style.opacity) > 0).length), 0, 'faded');
     await page.evaluate((id) => { const s = window.__frontier.sim; s.get(id).hp = 0; }, far);
 
-    // 4. Death looks: a shell, a beam and a rifle each kill one of three soldiers (the shot follows the death, as in sim/combat.js).
+    // 4. A shell blasts, flame sears, and both a precision beam and a rifle leave ballistic wrecks.
     await page.evaluate(({ mine, foes }) => {
       const f = window.__frontier, s = f.sim, v = f.view;
       v.zoomBy(24 - v.zoom); v.focusOn(-3, 6);
@@ -121,12 +121,14 @@ await suite('readability', async () => {
       kill(mine[0], foes[0], 'tank', 'tank');
       kill(mine[1], stalker.id, 'stalker', 'stalker');
       kill(mine[3], foes[1], 'ranger', 'ranger');
+      const scorcher = s.spawn('scorcher', 1, -6, -4);
+      kill(mine[4], scorcher.id, 'scorcher', 'scorcher');
     }, army);
     await frames(page, 2);
     await page.waitForTimeout(250);
     await snap(page, `death-looks-${viewport}`);
     const counts = await page.evaluate(() => window.__frontier.view.plugins.list.find((x) => 'zones' in x).counts.slice(1));
-    assert.deepEqual(counts, [1, 1, 1], `${viewport}: one ballistic, one blast, one seared (${counts})`);
+    assert.deepEqual(counts, [2, 1, 1], `${viewport}: two ballistic, one blast, one seared (${counts})`);
 
     assert.equal(await page.evaluate(() => document.scrollingElement.scrollWidth > innerWidth + 1), false, `${viewport}: no sideways scroll`);
     assert.deepEqual(errors, [], `${viewport}: browser errors`);

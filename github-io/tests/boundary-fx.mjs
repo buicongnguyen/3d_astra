@@ -52,8 +52,11 @@ try{
     // Long waits advance effect and wreck timers without rendering (CI renders in software).
     const advance=(dt=1/60)=>{v.updateDying(s,dt);v.fx.update(s,dt);};
     const hq=s.own(0).find(e=>e.type==='hq'),tank=s.spawn('tank',1,hq.x+9,hq.z-8),barracks=s.spawn('barracks',1,hq.x+16,hq.z-2);
+    // Size the stress encounter for the live-particle cap (2.4 per visible unit).
+    for(let row=0;row<10;row++)for(let col=0;col<10;col++)
+      s.spawn('ranger',0,hq.x+3+col,hq.z-10+row);
     const squad=[0,1,2].map(i=>s.spawn('ranger',0,hq.x+4+i*2,hq.z-6));
-    s.nav.rebuild(s.entities);v.focusOn(hq.x+9,hq.z-5);frame();
+    s.nav.rebuild(s.entities);v.focusOn(hq.x+9,hq.z-5);frame(.26);
     f.select(squad.map(e=>e.id));frame();frame();
     const ring=v.objects.get(squad[0].id).userData.ring,bar=v.objects.get(squad[0].id).userData.bar;
     const selection={ring:ring.visible,bar:bar.visible};
