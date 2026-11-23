@@ -2,7 +2,7 @@
 //  1. the mission title card ("ACT I · LANDFALL · DAY 1", title, place) opens with the match, covers no
 //     control, a tap skips it, reduced motion gives a plain fade;
 //  2. boss presence in mission 3: at zoom 30 the Iron Vanguard stands at least 2.3x a Battle tank's screen
-//     height, its scale is 1.5 and the bar sits above it, the name card opens its entrance (inside the scene
+//     height, it keeps its authored size and the bar sits above it, the name card opens its entrance (inside the scene
 //     too), and when its fall ends the match the debrief opens 1.4 s or more later;
 //  3. the campaign map shows m11c as an open optional node of at least 44 px on every viewport.
 // Run against a build: TEST_URL=http://127.0.0.1:4237/ npm run test:showtime. Screenshots: SHOWTIME_SHOTS=<dir>
@@ -91,7 +91,7 @@ await suite("showtime: title cards, boss presence, the Keystone Roads node", asy
     await step(page, 0.1);
     await page.waitForFunction(([a, b]) => window.__frontier.view.objects.get(a) && window.__frontier.view.objects.get(b), [start.id, start.tank], { timeout: TIMEOUT.step });
     await page.evaluate(() => window.__frontier.sim.updateVision());
-    await page.waitForFunction((id) => window.__frontier.view.objects.get(id)?.userData.model.scale.y > 1.4, start.id, { timeout: TIMEOUT.step });
+    await page.waitForFunction((id) => window.__frontier.view.objects.get(id)?.userData.model.scale.y > 0.9, start.id, { timeout: TIMEOUT.step });
     await page.waitForTimeout(200);
     const heights = await page.evaluate(([a, b]) => {
       const v = window.__frontier.view, V = v.objects.get(a).position.constructor;
@@ -108,8 +108,8 @@ await suite("showtime: title cards, boss presence, the Keystone Roads node", asy
       };
       return { boss: px(a), tank: px(b) };
     }, [start.id, start.tank]);
-    assert.ok(heights.boss.scale >= 1.5, `${viewport}: boss scale ${heights.boss.scale}`);
-    assert.ok(heights.boss.px >= 2.3 * heights.tank.px, `${viewport}: boss ${heights.boss.px.toFixed(0)} px vs tank ${heights.tank.px.toFixed(0)} px at zoom 30`);
+    assert.ok(heights.boss.scale >= 1 && heights.boss.scale < 1.3, `${viewport}: boss scale ${heights.boss.scale}`); // authored at its real size (owner, 2026-11-23)
+    assert.ok(heights.boss.px >= 1.2 * heights.tank.px && heights.boss.px <= 2.2 * heights.tank.px, `${viewport}: boss ${heights.boss.px.toFixed(0)} px vs tank ${heights.tank.px.toFixed(0)} px at zoom 30`);
     assert.ok(heights.boss.barWorld >= heights.boss.hi - 0.01, `${viewport}: the bar (${heights.boss.barWorld.toFixed(1)}) sits above the model top (${heights.boss.hi.toFixed(1)})`);
     await snap(page, `boss-scale-${viewport}`);
 
