@@ -135,7 +135,7 @@ export class FxSprites {
     batch.items.push(p);
     p.x = x; p.y = lifted ? y : y + this.fx.ground(x, z); p.z = z; p.vx = p.vy = p.vz = 0; p.age = 0; p.life = def.loop ? 1 : def.frames / Math.max(1, def.fps);
     p.s0 = p.s1 = size; p.rot = 0; p.spin = 0; p.r = p.g = p.b = p.a = 1; p.def = def; p.start = 0; p.count = def.frames; p.fps = def.fps; p.loop = def.loop;
-    p.splash = false; p.hotCore = false; p.mode = BILLBOARD; p.ax = 1; p.ay = 0; p.az = 0; p.sx = p.sy = 1; p.tiles = 0; p.scroll = 0; p.scrollSpeed = 0; p.once = false; p.anchor = anchor; p.decal = false; p.calm = !this.fx.motion; p.fade = 0.06; p.drag = 0;
+    p.priorityHit = false; p.splash = false; p.hotCore = false; p.mode = BILLBOARD; p.ax = 1; p.ay = 0; p.az = 0; p.sx = p.sy = 1; p.tiles = 0; p.scroll = 0; p.scrollSpeed = 0; p.once = false; p.anchor = anchor; p.decal = false; p.calm = !this.fx.motion; p.fade = 0.06; p.drag = 0;
     if (p.calm) p.fps *= 0.6;
     this.stats.spawned++;
     return p;

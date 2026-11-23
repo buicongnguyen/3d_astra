@@ -8,6 +8,7 @@
 //   power         how hard the landing hits (src/combat-feedback.js hitPower, or style.hit)
 //   style, color  the weapon style (src/visual-style.js) and its tracer colour (faction tinted for shared weapons)
 // Everything here draws from the existing pools (no new draw call). Random numbers only through `rng`.
+import { spriteTracer } from "./sprite-fx.js";
 import { CELL, STRETCH, SHOT_SCALE } from "./cells.js";
 
 const FLASH = [1, 0.96, 0.82, 1], FLASH_END = [1, 0.55, 0.15, 0];
@@ -31,6 +32,8 @@ export function tracer(fx, a, rng, { side = 0, delay = 0, width = 0.15, length =
   const fx0 = a.from.x + a.sx * o, fz0 = a.from.z + a.sz * o, tx = a.to.x + a.sx * o, tz = a.to.z + a.sz * o;
   const dx = tx - fx0, dy = a.to.y - a.from.y, dz = tz - fz0, len = Math.hypot(dx, dy, dz) || 1, life = Math.max(0.04, a.travel / speed);
   const col = c0 || a.color, end = c1 || fade(col, 0.8);
+  if (fx.sprites?.ready && spriteTracer(fx,{x:fx0,y:a.from.y,z:fz0},{x:tx,y:a.to.y,z:tz},
+    dx/len,dy/len,dz/len,life,a.anchor,col[2]>col[0],delay,{length:Math.min(length,len),width})) return;
   const p = fx.particle(fx.glow, { lifted: true, x: fx0, y: a.from.y, z: fz0, vx: dx / life, vy: dy / life, vz: dz / life, mode: STRETCH,
     ax: dx / len, ay: dy / len, az: dz / len, opacity: SHOT_SCALE, length: Math.min(length, len) * SHOT_SCALE, s0: width * SHOT_SCALE, s1: width * SHOT_SCALE, life, cell: CELL.streak, c0: col, c1: end, anchor: a.anchor, delay, rot: rng() * 6.28 });
   if (head) fx.particle(fx.glow, { lifted: true, x: fx0, y: a.from.y, z: fz0, vx: dx / life, vy: dy / life, vz: dz / life, opacity: SHOT_SCALE, s0: head * SHOT_SCALE, s1: head * SHOT_SCALE, life, c0: col, c1: end, anchor: a.anchor, delay, rot: rng() * 6.28 });

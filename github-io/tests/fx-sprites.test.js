@@ -40,7 +40,7 @@ test("every weapon class that has a sprite impact maps to an existing sheet", ()
   }
   assert.equal(impactKind("shell"), "shell"); assert.equal(impactKind("lob"), "artillery"); assert.equal(impactKind("missile"), "rocket");
   assert.equal(impactKind("bomb"), "bomb"); assert.equal(impactKind("flak"), "flak"); assert.equal(impactKind("tracer"), null);
-  assert.equal(IMPACT_SHEET.artillery, "artillery"); assert.equal(IMPACT_SHEET.firebomb, "artillery"); assert.equal(IMPACT_SHEET.missile, "flak");
+  assert.equal(IMPACT_SHEET.artillery, "artillery"); assert.equal(IMPACT_SHEET.firebomb, "bomb"); assert.equal(IMPACT_SHEET.missile, "missile");
 });
 
 test("blend modes follow the README: smoke, scorch and mixed blasts normal, bright effects additive", () => {
@@ -105,11 +105,11 @@ test("tracer atlas uses one quarter of the live size and glow after the screen-s
     assert.equal(records.at(-1).size,Math.max(1.5,22*unitsPerPixel)/4);
     assert.equal(records.at(-1).a,.25);
   }
-  for(const name of Object.values(IMPACT_SHEET))assert.ok(!['tank','bomb','missile'].includes(name));
+
 });
 
 
-test('F6 blast variants use the seeded cosmetic stream, normal blend and the target height',async () => {
+test('F7 restores each blast palette at quarter live size and preserves F6 timing',async () => {
   const {spriteImpact,spriteMuzzle} = await import('../src/fx-kinds/sprite-fx.js');
   const {mulberry32}=await import('../src/rng.js');
   function run(seed){
@@ -118,7 +118,11 @@ test('F6 blast variants use the seeded cosmetic stream, normal blend and the tar
       const p={name,x,y,z,size,count:16,fps:SHEETS[name].fps,a:1};
       seen.push(p);return p;
     }}};
-    for(let i=0;i<16;i++) spriteImpact(fx,'shell',{x:1,y:.95,z:0},1,{targetWidth:2});
+    for (const [kind, floor] of [['shell',54],['rocket',54],['artillery',72],['bomb',80]]) {
+      spriteImpact(fx,kind,{x:1,y:.95,z:0},1,{targetWidth:2});
+      assert.equal(seen.at(-1).name, IMPACT_SHEET[kind]);
+      assert.equal(seen.at(-1).size, Math.min(4, readable(impactSize(kind,1),floor,.1)*1.5/4));
+    }
     spriteMuzzle(fx,{x:0,y:1,z:0},1,0,0,'medium',null);
     const muzzle=seen.pop();assert.equal(muzzle.life,.05);
     for(const p of seen) {
@@ -129,5 +133,36 @@ test('F6 blast variants use the seeded cosmetic stream, normal blend and the tar
     return seen.map(({name,rot,size})=>[name,rot,size]);
   }
   const sample=run(1482);assert.deepEqual(sample,run(1482));
-  assert.notDeepEqual(sample,run(1483));assert.equal(new Set(sample.map(p=>p[0])).size,2);
+  assert.notDeepEqual(sample,run(1483));assert.equal(new Set(sample.map(p=>p[0])).size,4);
+});
+
+test("painted support and direct missile contact stay within the unit silhouette budget", async () => {
+  const { spriteSupport, spriteImpact } = await import("../src/fx-kinds/sprite-fx.js");
+  const { Effects } = await import("../src/fx.js");
+  const records = [];
+  const fx = {
+    motion: true, allowFlash: () => true, view: { unitsPerPixel: 0.12 },
+    sprites: { ready: true, take(name, x, y, z, size) {
+      const record = { name, size };
+      records.push(record);
+      return record;
+    } }
+  };
+  const from = { x: 0, y: 1, z: 0 }, to = { x: 8, y: 1, z: 0 };
+  const anchor = { targetWidth: 1.4, direct: true };
+  for (const repair of [false, true]) {
+    records.length = 0;
+    assert.ok(spriteSupport(fx, from, to, { x: 8, y: 0, z: 0 }, 8, anchor, [1,1,1], repair));
+    assert.deepEqual(records.map(p => p.name), repair ? ["beamCyan"] : ["healBeam", "heal"]);
+    assert.equal(records[0].sx, 8);
+    assert.ok(records[0].sy <= 0.16);
+    if (!repair) assert.ok(records[1].size <= anchor.targetWidth);
+  }
+  assert.ok(spriteImpact(fx, "missile", to, 1, anchor));
+  const hit = records.at(-1);
+  assert.equal(hit.name, "missile");
+  assert.ok(hit.priorityHit && !hit.splash);
+  assert.equal(hit.life, 0.05);
+  assert.ok(hit.size <= 0.5 * anchor.targetWidth);
+  assert.equal(Effects.prototype.dustColor.call(fx, 1, 0, 0)[3], 0.35);
 });

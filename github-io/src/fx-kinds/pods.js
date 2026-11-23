@@ -5,7 +5,7 @@
 import { CELL, STRETCH, SHOT_SCALE } from "./cells.js";
 import { flare, smokePuff } from "./common.js";
 import { launch } from "./ordnance.js";
-import { spriteSpark } from "./sprite-fx.js";
+import { spriteSpark, spriteTracer } from "./sprite-fx.js";
 import { CLASS_LOOK } from "./weapon-class.js";
 
 const TRACER = [1, 0.9, 0.55, 1], TRACER_END = [1, 0.7, 0.35, 0.7], SPURT_FLASH = [1, 0.85, 0.5, 0.9], SPURT_END = [1, 0.5, 0.2, 0];
@@ -32,9 +32,11 @@ function strafe(fx, ev, rng, a) {
     const vx = (tx - from.x) / flight, vy = (ty - from.y) / flight, vz = (tz - from.z) / flight, l = Math.hypot(vx, vy, vz) || 1;
     const m = fx.emit(fx.glow, from.x, from.y, from.z, anchor, true);
     m.cell = CELL.flare; m.s0 = 0.55; m.s1 = 0.65; m.life = 0.05; m.c0 = TRACER; m.c1 = SPURT_END; m.age = -delay;
-    const p = fx.emit(fx.glow, from.x, from.y, from.z, anchor, true);
-    p.vx = vx; p.vy = vy; p.vz = vz; p.mode = STRETCH; p.ax = vx / l; p.ay = vy / l; p.az = vz / l; p.length = Math.min(1.8, l * flight) * SHOT_SCALE;
-    p.opacity = SHOT_SCALE; p.s0 = p.s1 = 0.11 * SHOT_SCALE; p.life = flight; p.cell = CELL.streak; p.c0 = a.color || TRACER; p.c1 = TRACER_END; p.age = -delay; p.rot = rng() * 6.28;
+    if (!spriteTracer(fx,from,{x:tx,y:ty,z:tz},vx/l,vy/l,vz/l,flight,anchor,false,delay)) {
+      const p = fx.emit(fx.glow, from.x, from.y, from.z, anchor, true);
+      p.vx = vx; p.vy = vy; p.vz = vz; p.mode = STRETCH; p.ax = vx / l; p.ay = vy / l; p.az = vz / l; p.length = Math.min(1.8, l * flight) * SHOT_SCALE;
+      p.opacity = SHOT_SCALE; p.s0 = p.s1 = 0.11 * SHOT_SCALE; p.life = flight; p.cell = CELL.streak; p.c0 = a.color || TRACER; p.c1 = TRACER_END; p.age = -delay; p.rot = rng() * 6.28;
+    }
     // The strike: a spark flick where it hits and a dust spurt off the ground (the last one under the target, at `travel`).
     // Delayed pooled sprites, no timer or closure per round.
     // R3-FX: the muzzle-flash sheet on each burst, and the needle sparks of the beam-impact sheet where each round strikes.

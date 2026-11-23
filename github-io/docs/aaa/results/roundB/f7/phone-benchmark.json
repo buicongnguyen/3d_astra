@@ -1,0 +1,207 @@
+{
+  "viewport": [
+    390,
+    844
+  ],
+  "cpuThrottle": 4,
+  "trials": [
+    {
+      "trial": 1,
+      "units": 12,
+      "frames": 247,
+      "frameP95ms": 33.30000000000018,
+      "drawsP95": 98,
+      "particlesP95": 200,
+      "particlesPeak": 211,
+      "eco": true,
+      "revision": "round-a"
+    },
+    {
+      "trial": 1,
+      "units": 300,
+      "frames": 94,
+      "frameP95ms": 116.60000000000036,
+      "drawsP95": 102,
+      "particlesP95": 786,
+      "particlesPeak": 828,
+      "eco": true,
+      "revision": "round-a"
+    },
+    {
+      "trial": 1,
+      "units": 12,
+      "frames": 217,
+      "frameP95ms": 50,
+      "drawsP95": 97,
+      "particlesP95": 17,
+      "particlesPeak": 18,
+      "eco": true,
+      "revision": "f6"
+    },
+    {
+      "trial": 1,
+      "units": 300,
+      "frames": 94,
+      "frameP95ms": 116.89999999999964,
+      "drawsP95": 96,
+      "particlesP95": 273,
+      "particlesPeak": 520,
+      "eco": true,
+      "revision": "f6"
+    },
+    {
+      "trial": 1,
+      "units": 12,
+      "frames": 224,
+      "frameP95ms": 33.5,
+      "drawsP95": 97,
+      "particlesP95": 17,
+      "particlesPeak": 25,
+      "eco": true,
+      "revision": "f7-opt"
+    },
+    {
+      "trial": 1,
+      "units": 300,
+      "frames": 90,
+      "frameP95ms": 116.69999999999982,
+      "drawsP95": 97,
+      "particlesP95": 275,
+      "particlesPeak": 506,
+      "eco": true,
+      "revision": "f7-opt"
+    },
+    {
+      "trial": 2,
+      "units": 12,
+      "frames": 231,
+      "frameP95ms": 33.599999999999454,
+      "drawsP95": 97,
+      "particlesP95": 17,
+      "particlesPeak": 25,
+      "eco": true,
+      "revision": "f7-opt"
+    },
+    {
+      "trial": 2,
+      "units": 300,
+      "frames": 91,
+      "frameP95ms": 133.10000000000036,
+      "drawsP95": 97,
+      "particlesP95": 272,
+      "particlesPeak": 511,
+      "eco": true,
+      "revision": "f7-opt"
+    },
+    {
+      "trial": 2,
+      "units": 12,
+      "frames": 239,
+      "frameP95ms": 33.399999999999636,
+      "drawsP95": 98,
+      "particlesP95": 196,
+      "particlesPeak": 206,
+      "eco": true,
+      "revision": "round-a"
+    },
+    {
+      "trial": 2,
+      "units": 300,
+      "frames": 92,
+      "frameP95ms": 83.5,
+      "drawsP95": 102,
+      "particlesP95": 789,
+      "particlesPeak": 835,
+      "eco": true,
+      "revision": "round-a"
+    },
+    {
+      "trial": 2,
+      "units": 12,
+      "frames": 239,
+      "frameP95ms": 33.399999999999636,
+      "drawsP95": 97,
+      "particlesP95": 17,
+      "particlesPeak": 25,
+      "eco": true,
+      "revision": "f6"
+    },
+    {
+      "trial": 2,
+      "units": 300,
+      "frames": 89,
+      "frameP95ms": 116.90000000000009,
+      "drawsP95": 97,
+      "particlesP95": 287,
+      "particlesPeak": 511,
+      "eco": true,
+      "revision": "f6"
+    },
+    {
+      "trial": 3,
+      "units": 12,
+      "frames": 184,
+      "frameP95ms": 66.5,
+      "drawsP95": 97,
+      "particlesP95": 17,
+      "particlesPeak": 25,
+      "eco": true,
+      "revision": "f6"
+    },
+    {
+      "trial": 3,
+      "units": 300,
+      "frames": 92,
+      "frameP95ms": 116.60000000000036,
+      "drawsP95": 97,
+      "particlesP95": 291,
+      "particlesPeak": 508,
+      "eco": true,
+      "revision": "f6"
+    },
+    {
+      "trial": 3,
+      "units": 12,
+      "frames": 244,
+      "frameP95ms": 33.29999999999927,
+      "drawsP95": 97,
+      "particlesP95": 16,
+      "particlesPeak": 25,
+      "eco": true,
+      "revision": "f7-opt"
+    },
+    {
+      "trial": 3,
+      "units": 300,
+      "frames": 93,
+      "frameP95ms": 100,
+      "drawsP95": 97,
+      "particlesP95": 295,
+      "particlesPeak": 507,
+      "eco": true,
+      "revision": "f7-opt"
+    },
+    {
+      "trial": 3,
+      "units": 12,
+      "frames": 247,
+      "frameP95ms": 33.099999999999454,
+      "drawsP95": 98,
+      "particlesP95": 193,
+      "particlesPeak": 204,
+      "eco": true,
+      "revision": "round-a"
+    },
+    {
+      "trial": 3,
+      "units": 300,
+      "frames": 90,
+      "frameP95ms": 100.19999999999982,
+      "drawsP95": 102,
+      "particlesP95": 762,
+      "particlesPeak": 829,
+      "eco": true,
+      "revision": "round-a"
+    }
+  ]
+}

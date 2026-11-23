@@ -6,7 +6,7 @@ import { OCCLUDED, ORIENTED } from "../fx-sprites.js";
 import { IMPACT_SHEET, impactSize, readable, SHEETS, MUZZLE_ROW, TRACER_FRAMES, HEAD_FRAME } from "../fx-sprites-data.js";
 
 const IMPACT_PX = 54;      // an impact cell is never smaller than this on screen (a tank shell's blast reads at 24-64 px)
-const MIN_PX = { shell: 54, rocket: 54, artillery: 72, bomb: 80, firebomb: 70, missile: 46, flak: 56, beam: 40 };
+const MIN_PX = { shell: 54, rocket: 54, artillery: 72, bomb: 80, firebomb: 70, missile: 46, flak: 44, beam: 40 };
 
 // The four fireball sheets (VFX2) have their own palettes; only the firebomb is shaded (yellower) and flak greyed.
 const TINT = { firebomb: [1, 0.92, 0.6], flak: [0.8, 0.8, 0.85] };
@@ -18,14 +18,12 @@ export function spriteImpact(fx, kind, at, power, anchor, delay = 0, scale = 1) 
   const sprites = fx.sprites;
   if (!sprites?.ready) return false;
   const heavy = ['shell', 'walker', 'rocket', 'artillery', 'bomb', 'firebomb'].includes(kind);
-  const variant = heavy ? fx.rng() : 0;
-  const primary = IMPACT_SHEET[kind];
-  if (!primary) return false;
-  const sheet = heavy && variant < 0.33 ? (primary === "rocket" ? "artillery" : "rocket") : primary;
-  const uncappedSize = readable(impactSize(kind, power) * scale, MIN_PX[kind] || IMPACT_PX, upp(fx)) * (heavy ? 1.22 : 1);
+  const sheet = IMPACT_SHEET[kind];
+  if (!sheet) return false;
+  const uncappedSize = readable(impactSize(kind, power) * scale, MIN_PX[kind] || IMPACT_PX, upp(fx)) * (heavy && kind !== "walker" ? 1.5 : 1) * SHOT_SCALE;
   const width = anchor?.targetWidth;
-  const variedSize = uncappedSize * (heavy ? 0.8 + 0.4 * fx.rng() : 1);
-  const size = width ? Math.min(variedSize, width * (kind === "beam" ? 0.5 : kind === "flak" ? 1.1 : 2)) : variedSize;
+  const maxWidths = anchor?.direct || kind === "beam" ? 0.5 : kind === "flak" ? 1.1 : 2;
+  const size = width ? Math.min(uncappedSize, width * maxWidths) : uncappedSize;
   const p = sprites.take(sheet, at.x, at.y, at.z, size, anchor, false);
   if (!p) return false;
   if (heavy) {
@@ -34,6 +32,15 @@ export function spriteImpact(fx, kind, at, power, anchor, delay = 0, scale = 1) 
     p.splash = true;
     p.rot = (fx.rng() - 0.5) * 0.8;
     p.fps = 50; // Three bright poses within 60 ms, cooling into smoke by 160 ms.
+  }
+  if (kind === "missile" && anchor?.direct) {
+    // A guided hit on one flyer uses only the small painted spark at contact.
+    p.count = 4;
+    p.fps = 80;
+    p.priorityHit = true;
+    p.a = fx.allowFlash() ? 0.8 : 0.35;
+    p.life = 0.05;
+    return true;
   }
   p.age = -delay;
   const tint = TINT[kind]; // each blast its own colour: a rocket hot yellow-white, artillery dusty, a bomb deep red-orange
@@ -53,7 +60,7 @@ export function spriteMuzzle(fx, from, ux, uy, uz, row, anchor, scale = 1) {
   const sprites = fx.sprites;
   if (!sprites?.ready || !fx.motion) return false;
   if (!fx.allowFlash()) return true;
-  const size = 1.1 * scale;
+  const size = readable(2.7 * scale, 30, upp(fx)) * SHOT_SCALE;
   const inlet = SHEETS.muzzle.inlet, back = (0.5 - inlet) * size;
   const p = sprites.take("muzzle", from.x + ux * back, from.y + uy * back, from.z + uz * back, size, anchor, true);
   if (!p) return false;
@@ -76,7 +83,7 @@ export function spriteTrailPuff(fx, x, y, z, size, life, anchor, alpha = 0.8) {
 export function spriteJet(fx, from, ux, uy, uz, reach, life, anchor, delay = 0) {
   const sprites = fx.sprites;
   if (!sprites?.ready || !fx.motion) return false;
-  const size = Math.max(1, reach * 1.3);
+  const size = Math.max(reach * 2.1, readable(4,96,upp(fx))) * SHOT_SCALE;
   const inlet = SHEETS.flame.inlet, back = (0.5 - inlet) * size;
   const p = sprites.take("flame", from.x + ux * back, from.y + uy * back, from.z + uz * back, size, anchor, true);
   if (!p) return false;
@@ -97,8 +104,8 @@ export function spriteBeamImpact(fx, at, c0, anchor, delay) {
 // ---- VFX2 (heavy-read effects): tracers, beam lines, heal beam, stomp, projectile heads.
 
 // A streak flying muzzle -> aim (the tracer-streak sheet, warm or cyan, its four poses cycling), the muzzle spark at the muzzle and
-// the hit spark where it lands, exactly `travel` seconds later. The streak is about 12-16 screen px thick, whatever the zoom.
-export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = false, delay = 0) {
+// the hit spark where it lands, exactly `travel` seconds later. The live dimensions are quartered after the screen-space floor.
+export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = false, delay = 0, dimensions = null) {
   const sprites = fx.sprites;
   if (!sprites?.ready || !fx.motion) return false;
   const size = Math.max(6, 100 * upp(fx)) * SHOT_SCALE, sheet = SHEETS.tracer;
@@ -107,6 +114,12 @@ export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = fa
   const life = Math.max(0.06, travel);
   p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.vx = (to.x - from.x) / life; p.vy = (to.y - from.y) / life; p.vz = (to.z - from.z) / life;
   p.start = cyan ? TRACER_FRAMES.cyan : TRACER_FRAMES.warm; p.count = 4; p.loop = true; p.fps = 20; p.life = life; p.age = -delay; p.fade = 0.08; p.sy = 1.6; p.a = SHOT_SCALE;
+  if (dimensions) {
+    // Specialised weapons used a shorter procedural round in Round A.
+    p.sx = dimensions.length * SHOT_SCALE / size;
+    p.sy = dimensions.width * SHOT_SCALE / (size * 0.15);
+    return true;
+  }
   // The muzzle spark sits at (0.23, 0.5) of its cell.
   if (!fx.allowFlash()) return true;
   const back = (0.5 - sheet.muzzleAt) * size;
@@ -117,12 +130,30 @@ export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = fa
 
 // The warm hit spark of a rifle round (the tracer sheet), centred on `at` (y above the ground).
 export function spriteSpark(fx, at, anchor, delay = 0, scale = 1) {
-  const sprites = fx.sprites;
-  if (!sprites?.ready) return false;
-  if (!fx.allowFlash()) return true;
-  const p = sprites.take("tracer", at.x, at.y + 0.3, at.z, Math.min(0.65 * scale, (anchor?.targetWidth || 1.3) * 0.5), anchor, false);
+  if (!fx.sprites?.ready) return false;
+  const size = Math.min(Math.max(4.4,90*upp(fx))*SHOT_SCALE*scale, (anchor?.targetWidth || 3)*.5);
+  const p = fx.sprites.take("tracer",at.x,at.y,at.z,size,anchor,false);
   if (!p) return false;
-  p.a = SHOT_SCALE; p.start = TRACER_FRAMES.hit; p.count = 4; p.fps = 80; p.life = 0.05; p.age = -delay;
+  p.a = fx.allowFlash() ? .8 : .35;
+  p.priorityHit = true;
+  p.start = TRACER_FRAMES.hit; p.count = 4; p.fps = 80; p.life = .05; p.age = -delay;
+  return true;
+}
+
+export function spriteSupport(fx, from, to, dir, len, anchor, tint, repair) {
+  if (!fx.sprites?.ready || !fx.motion) return false;
+  const strip = repair ? "beamCyan" : "healBeam";
+  const line = fx.sprites.take(strip,(from.x+to.x)/2,(from.y+to.y)/2,(from.z+to.z)/2,1,anchor,true);
+  if (!line) return false;
+  line.mode=ORIENTED; line.ax=dir.x/len; line.ay=dir.y/len; line.az=dir.z/len;
+  line.sx=len; line.sy=Math.min(.16,anchor.targetWidth*.15,Math.max(.9,24*upp(fx))*SHOT_SCALE);
+  line.tiles=Math.max(1,len/(8*line.sy)); line.scrollSpeed=-1.4; line.life=.34;
+  line.a=.55; line.r=tint[0]; line.g=tint[1]; line.b=tint[2];
+  if (!repair) {
+    const size=Math.min(anchor.targetWidth*.72,readable(3.6,70,upp(fx))*SHOT_SCALE);
+    const mark=fx.sprites.take("heal",to.x,to.y+.3,to.z,size,anchor,true);
+    if(mark){mark.life=.34;mark.a=.45;mark.fade=.45;}
+  }
   return true;
 }
 
@@ -131,7 +162,7 @@ export function spriteSpark(fx, at, anchor, delay = 0, scale = 1) {
 export function spriteBeamLine(fx, from, to, ux, uy, uz, kind, width, life, anchor, delay, tint = null) {
   const sprites = fx.sprites;
   if (!sprites?.ready) return false;
-  const len = Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z) || 1, w = Math.min(width, 0.32);
+  const len = Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z) || 1, w = Math.max(width,20 * upp(fx)) * SHOT_SCALE;
   const strip = kind === "magenta" ? "beamMagenta" : "beamCyan", cap = kind === "magenta" ? "capMagenta" : "capCyan", end = kind === "magenta" ? "endMagenta" : "endCyan";
   const line = sprites.take(strip, (from.x + to.x) / 2, (from.y + to.y) / 2, (from.z + to.z) / 2, 1, anchor, true);
   if (!line) return false;
@@ -148,8 +179,8 @@ export function spriteBeamLine(fx, from, to, ux, uy, uz, kind, width, life, anch
 export function spriteStomp(fx, at, anchor, scale = 1) {
   const sprites = fx.sprites;
   if (!sprites?.ready || !fx.motion) return false;
-  const size = 2.6 * scale;
-  const p = sprites.take("stomp", at.x, at.y + size * 0.1, at.z, size, anchor, false);
+  const size = readable(8 * scale,90,upp(fx)) * SHOT_SCALE;
+  const p = sprites.take("stomp", at.x, at.y, at.z, size, anchor, false);
   return !!p;
 }
 

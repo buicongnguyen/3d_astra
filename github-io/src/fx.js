@@ -26,7 +26,7 @@ import { launch, stepRounds, stepStrikes, warnRing, flakBurst, airBurst } from "
 import { LOOKS as MOOD_LOOKS } from "./mission-looks.js";
 // R3-FX: the Codex weapon sprite sheets (two pooled instanced batches), played for impacts, muzzle flashes, trails, jets, heals and decals.
 import { FxSprites } from "./fx-sprites.js";
-import { spriteTracer, spriteHead, spriteImpact, spriteMuzzle, spriteSpark, spriteTrailPuff, spritesReady } from "./fx-kinds/sprite-fx.js";
+import { spriteSupport, spriteTracer, spriteHead, spriteImpact, spriteMuzzle, spriteSpark, spriteTrailPuff, spritesReady } from "./fx-kinds/sprite-fx.js";
 import { impactKind } from "./fx-sprites-data.js";
 
 // Procedural sprite atlas: one 128 px cell per shape, white with alpha.
@@ -379,7 +379,7 @@ export class Effects {
         c0: WARM.spark, c1: WARM.sparkEnd, floor: 0.05, anchor });
     }
   }
-  dustColor(alpha = 0.55, x, z) {
+  dustColor(alpha = 0.35, x, z) {
     const terrain = this.view.terrain, id = terrain?.id;
     const surface = x == null ? "dust" : terrain?.at?.(x,z) || "dust";
     if (!this.dustCache || this.dustCache.id !== id)
@@ -389,17 +389,18 @@ export class Effects {
       const theme = themeFor(id);
       const hex = theme[surface] || (surface === "snow" ? "#d9e7e7" : theme.dust);
       const [r,g,b] = rgba(parseInt(hex.slice(1),16));
-      pair = [[r,g,b,.55], [r,g,b,0]];
+      pair = [[r,g,b,.35], [r,g,b,0]];
       this.dustCache.colors.set(surface,pair);
     }
     return pair[alpha > 0 ? 0 : 1];
   }
   hitDust(at, n, anchor, size = 1, life = 1.1) {
-    this.dust({x: at.x, y: .06, z: at.z}, n, anchor, size * SHOT_SCALE * (.8 + .4*this.rng()), life);
+    this.dust({x: at.x, y: .06, z: at.z}, n, anchor, size * (.8 + .4*this.rng()), life);
   }
   dust(at, n, anchor, size = 1, life = 1.1) {
+    size *= SHOT_SCALE;
     this.burst(this.smoke, this.count(n), at, { life, s0: .6*size, s1: 2.2*size, drag: 2.5, cell: CELL.puff,
-      c0: this.dustColor(.55,at.x,at.z), c1: this.dustColor(0,at.x,at.z), floor: .04, anchor,
+      c0: this.dustColor(.35,at.x,at.z), c1: this.dustColor(0,at.x,at.z), floor: .04, anchor,
       spin: (this.rng()-.5)*.6 }, [.8*size,2*size], .2);
   }
   // Chunks thrown by a blast: they arc, bounce on the ground (plateaus included), tumble to a
@@ -465,10 +466,13 @@ export class Effects {
   }
   contactHit(at, anchor) {
     // A glint on the material, a couple of tiny chips, and dust only on the ground.
-    this.particle(this.glow, { ...at, cell: CELL.flare, life: 0.045, s0: Math.min(0.56, (anchor?.targetWidth || 1.2) / 2), s1: 0.2, priorityHit: true,
-      c0: WARM.flash, c1: WARM.sparkEnd, anchor });
+    const painted = spriteSpark(this, at, anchor);
+    if (!painted) {
+      this.particle(this.glow, { ...at, cell: CELL.flare, life: 0.045, s0: Math.min(0.56, (anchor?.targetWidth || 1.2) / 2), s1: 0.2,
+        priorityHit: true, c0: WARM.flash, c1: WARM.sparkEnd, anchor });
+      if (this.motion) this.sparks(at, 1 + Math.floor(this.rng() * 3), anchor, 0.32);
+    }
     if (!this.motion) return;
-    this.sparks(at, 1 + Math.floor(this.rng()*3), anchor, 0.32);
     if (at.y < 2.2) this.hitDust({ ...at, y: 0.14 }, 1, anchor, 0.45, 0.26);
   }
   precisionShot(from, to, land, travel, anchor) {
@@ -511,7 +515,7 @@ export class Effects {
     // Keep the blast within two target widths with or without sprites.
     if (spriteImpact(this, kind, at, power, anchor)) {
       this.hitDust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.1 * s, 1.1);
-      this.sparks(top, 8, anchor, s);
+      // The painted blast already carries its own flash and debris specks.
       this.addDebris(at, Math.round(4 * s), anchor, 0.85 * s, s >= 1 ? 2 : 0);
       this.scorch(at, 1.4 * s, anchor, kind === "artillery" || kind === "bomb" || kind === "firebomb");
       return;
@@ -603,16 +607,18 @@ export class Effects {
       const engineer = e.weapon === "engineer", tint = e.weapon === "repair" || engineer ? [1, 0.69, 0.22, 0.95] : [0.5, 1, 0.75, 0.9];
       const repair = engineer || e.weapon === "repair";
       const width = anchor.targetWidth, glyphSize = Math.min(width * 0.72, 0.86);
-      this.particle(this.smoke, { ...land, y: land.y + width*0.55, cell: repair ? CELL.wrench : CELL.cross,
+      const painted = spriteSupport(this,from,to,dir,len,anchor,tint,repair);
+      if (!painted || repair) this.particle(this.smoke, { ...land, y: land.y + width*0.55, cell: repair ? CELL.wrench : CELL.cross,
         rot: 0, s0: glyphSize, s1: glyphSize, life: 0.48,
         c0: [tint[0], tint[1], tint[2], 0.58], c1: [tint[0], tint[1], tint[2], 0], anchor });
+      if (painted) return;
       const beamWidth = Math.min(0.16, width * 0.15);
       this.particle(this.glow, { lifted: true, x: (from.x+to.x)/2, y: (from.y+to.y)/2, z: (from.z+to.z)/2,
         mode: STRETCH, ax: dir.x/len, ay: dir.y/len, az: dir.z/len, length: len, cell: CELL.glow, anchor,
         s0: beamWidth, s1: beamWidth * 0.7, life: 0.34, c0: [tint[0],tint[1],tint[2],0.55], c1: [tint[0],tint[1],tint[2],0] });
       return;
     }
-    if ((e.unit || e.weapon) === "ranger" && anchor.direct) {
+    if (anchor.direct && ((e.unit || e.weapon) === "ranger" || (!style.look && weaponClass(e,style) === "tracer"))) {
       this.precisionShot(from, to, land, travel, anchor);
       return;
     }
@@ -876,7 +882,7 @@ export class Effects {
         this.particle(this.glow, { ...at, priorityHit:true, cell:CELL.flare, s0:.36,s1:.15,life:.045,c0:WARM.flash,c1:WARM.sparkEnd,anchor });
       } else {
         this.particle(this.smoke, { x:e.x,y:.06,z:e.z, priorityHit:true, vx:this.motion ? .2 : 0, vy:this.motion ? .5 : 0,
-          s0:.4*SHOT_SCALE, s1:1.2*SHOT_SCALE, life:.32, cell:CELL.puff, c0:this.dustColor(.55,e.x,e.z), c1:this.dustColor(0,e.x,e.z), anchor, delay:.05 });
+          s0:.4*SHOT_SCALE, s1:1.2*SHOT_SCALE, life:.32, cell:CELL.puff, c0:this.dustColor(.35,e.x,e.z), c1:this.dustColor(0,e.x,e.z), anchor, delay:.05 });
       }
     }
   }
@@ -922,31 +928,22 @@ export class Effects {
       // Collapse: staged blasts across the footprint, a rolling dust wall, a smoke column,
       // debris and a large scorch; the model itself sinks in WorldView.
       const r = 2.6;
-      this.explosion({ x: e.x, y: 1.26, z: e.z }, 1.35, anchor);
+      anchor.targetWidth = r*2;
+      const collapse = (at, size, heavy) => {
+        if (!spriteImpact(this,"bomb",at,size,anchor)) this.explosion(at,size,anchor,heavy);
+      };
+      collapse({ x:e.x,y:1.26,z:e.z },1.35,true);
       this.addDebris({ x: e.x, y: 2.2, z: e.z }, 12, anchor, 1.35, 4);
       for (const [delay, k] of [[0.47, 0.8], [1.08, 0.94]]) {
         const a = this.rng() * Math.PI * 2, d = this.rng() * r;
         this.timeline.push({ at: this.time + delay, run: () => {
           const at = { x: e.x + Math.cos(a) * d, y: 0.56 + this.rng() * 1.4, z: e.z + Math.sin(a) * d };
-          this.explosion(at, k, anchor, false);
+          collapse(at,k,false);
           this.addDebris(at, 3, anchor, 0.9 * k, 1);
         } });
       }
-      // The collapse raises a big dust cloud: a wall rolling outward and a dome rising over the ruin.
-      this.timeline.push({ at: this.time + 0.25, run: () => {
-        const [r0, g0, b0] = rgba(parseInt(themeFor(this.view.terrain.id).dust.slice(1), 16));
-        const n = this.count(18), m = this.motion;
-        for (let i = 0; i < n; i++) {
-          const a = (i / n) * Math.PI * 2 + this.rng() * 0.3, v = m ? 2.6 + this.rng() * 1.4 : 0;
-          this.particle(this.smoke, { x: e.x + Math.cos(a) * 1.8, y: 0.5, z: e.z + Math.sin(a) * 1.8, vx: Math.cos(a) * v,
-            vy: 0.4, vz: Math.sin(a) * v, drag: 1, life: 3 + this.rng(), s0: 1.8, s1: 5.4, cell: CELL.puff,
-            c0: [r0, g0, b0, 0.78], c1: [r0, g0, b0, 0], anchor, fadeIn: 0.2, spin: 0.3 });
-        }
-        for (let i = 0, dome = this.count(8); i < dome; i++)
-          this.particle(this.smoke, { x: e.x + (this.rng() - 0.5) * 2.4, y: 1 + this.rng(), z: e.z + (this.rng() - 0.5) * 2.4,
-            vy: m ? 1 + this.rng() * 0.8 : 0.1, vx: m ? (this.rng() - 0.5) * 0.8 : 0, vz: m ? (this.rng() - 0.5) * 0.8 : 0, drag: 0.5,
-            life: 3.6 + this.rng(), s0: 2.4, s1: 6.8, cell: CELL.puff, c0: [r0 * 0.9, g0 * 0.9, b0 * 0.9, 0.72], c1: [r0, g0, b0, 0],
-            anchor, fadeIn: 0.3, spin: 0.2, delay: i * 0.08 });
+      this.timeline.push({ at: this.time+.25, run: () => {
+        this.hitDust({x:e.x,y:.06,z:e.z},8,anchor,2.45,.65);
       } });
       for (let i = 0; i < 12; i++)
         this.timeline.push({ at: this.time + 0.2 + i * 0.2, run: () => this.particle(this.smoke, { x: e.x + (this.rng() - 0.5) * 2.4,
@@ -1136,7 +1133,7 @@ export class Effects {
           h.owner = p.token = p.token || ++this.rocketTokens;
         }
         h.x = x - ux * tail * 1.25; h.y = y - uy * tail * 1.25; h.z = z - uz * tail * 1.25;
-        if (visible(p.anchor) && !(this.touchTier && spriteHead(this, "rocket", x,y,z, ux,uy,uz, 1.9 * p.body * bodyScale, p.anchor))) this.rockets.add(x, y, z, ux, uy, uz, p.roll, p.body * bodyScale * SHOT_SCALE, p.color);
+        if (visible(p.anchor) && !spriteHead(this, "rocket", x,y,z, ux,uy,uz, 1.9 * p.body * bodyScale, p.anchor)) this.rockets.add(x, y, z, ux, uy, uz, p.roll, p.body * bodyScale * SHOT_SCALE, p.color);
       }
       if (t >= 1) {
         this.projectiles.splice(i, 1);

@@ -42,8 +42,8 @@ export default {
       beamLine(fx, rng, a, c0, width, life, travel);
     }
     // R3-FX: the beam-impact sheet (cyan-white flare and needle sparks) at the target, at the exact hit time.
-    spriteBeamImpact(fx, { x: to.x, y: to.y - fx.ground(to.x, to.z), z: to.z }, c0, anchor, travel);
-    glow(fx, to, 0.9, [c0[0], c0[1], c0[2], 0.7], 0.14, anchor, travel);
+    if (!spriteBeamImpact(fx, { x: to.x, y: to.y - fx.ground(to.x, to.z), z: to.z }, c0, anchor, travel))
+      glow(fx, to, 0.225, [c0[0], c0[1], c0[2], 0.7], 0.05, anchor, travel);
     sparks(fx, rng, to, 3, anchor, 0.5, HOT, fade(c0), travel);
   },
 };

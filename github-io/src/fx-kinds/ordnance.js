@@ -98,7 +98,7 @@ export function stepRounds(fx, dt, visible) {
       const length = r.body * fx.bodyScale * (1 + r.grow * t);
       if (seen) {
         const scale = r.cls === "bomb" ? 1 : SHOT_SCALE;
-        const atlas = fx.touchTier && r.cls !== "bomb" && spriteHead(fx, r.cls === "missile" ? "missile" : "shell", P.x,P.y,P.z,ux,uy,uz,length*1.7,r.anchor);
+        const atlas = r.cls !== "bomb" && spriteHead(fx, r.cls === "missile" ? "missile" : "shell", P.x,P.y,P.z,ux,uy,uz,length*1.7,r.anchor);
         if (!atlas) fx.ordnance.add(P.x,P.y,P.z,ux,uy,uz,r.roll,length*scale,r.color,scale);
       }
       if (r.haloSize > 0 || r.fire) {
@@ -219,6 +219,7 @@ function shellSparks(fx, at, anchor) {
 export function landRound(fx, r, ux, uz) {
   const at = r.air ? r.to : r.land, anchor = r.anchor;
   if (anchor?.direct && r.cls !== "flak") {
+    if (r.cls === "missile" && r.air && spriteImpact(fx, "missile", r.land, r.power, anchor)) return;
     fx.contactHit(r.land, anchor);
     return;
   }
@@ -238,8 +239,8 @@ export function landRound(fx, r, ux, uz) {
       // shell, artillery: the heavy hit and a scorch; in the air (a shell at a flyer) a burst instead.
       if (r.air) { airBurst(fx, r.to, anchor, 0.7); return; }
       fx.hit(at, r.power, anchor, r.walker ? "walker" : impactKind(r.cls) || "shell");
-      if (r.cls === "shell" && fx.motion) shellSparks(fx, at, anchor);
-      if (r.cls === "lob") fx.hitDust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.3, 1.3);
+      if (r.cls === "shell" && fx.motion && !spritesReady(fx)) shellSparks(fx, at, anchor);
+      if (r.cls === "lob" && !spritesReady(fx)) fx.hitDust({ x: at.x, y: 0.3, z: at.z }, 2, anchor, 1.3, 1.3);
     }
   }
 }
