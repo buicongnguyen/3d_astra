@@ -8,6 +8,7 @@ import { Navigation } from "./navigation.js";
 import { progression } from "./progression.js";
 import { AI_SPEEDS, aiPace, coalitionPlan } from "./ai-plan.js";
 import { Terrain, reflect } from "./terrain.js";
+import { addClusters, richStart } from "./sim/rich-economy.js";
 import { commands } from "./commands.js";
 import { snapshot, restore } from "./snapshot.js";
 import { vision } from "./sim/vision.js";
@@ -157,6 +158,8 @@ export class Simulation {
       .map(e => [e.id, { id: e.id, team: e.team, x: e.x, z: e.z }])));
     this.scoutIndex = this.players.map(() => 0);
     this.nav.rebuild(this.entities);
+    // Phone-length matches (plan G1): only with the rule, so a Simulation without it is unchanged.
+    if (field && !mission && this.rules?.economy === "rich") addClusters(this);
     this.updateVision();
     this.playerBonus = playerBonus;
     if (playerBonus) this.reinforce(playerBonus);
@@ -164,6 +167,7 @@ export class Simulation {
     this.skirmishPoints = {};
     if (this.capturePointsOn) this.initSkirmishPoints();
     if (mission) this.initMission(mission);
+    if (field && this.rules?.economy === "rich" && this.rules.quick !== "on") { richStart(this); this.nav.rebuild(this.entities); this.updateVision(); }
     // Names the player's own faction (Meridian keeps its original line). Missions, Defence levels and
     // chronicles open with their own first line (some have no base or Harvesters at all).
     if (!mission) this.message(openingLine(this.factions[0]));

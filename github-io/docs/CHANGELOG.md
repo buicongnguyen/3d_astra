@@ -2,6 +2,11 @@
 
 ## Unreleased: Round A.2
 
+### Phone-length matches (owner request)
+- You start with 6 Harvesters and 600 alloy in Skirmish and campaign missions with a base. Rivals keep 4 and 450.
+- Skirmish maps get a full resource cluster (at least 2 alloy + 1 blue) about every 40 m: 9 on the smallest maps, up to 25 on the largest. No deposit is removed.
+- Bot matrix (6 maps, 2 attack timings), wins out of 12 before -> after: 1v1 Relaxed 12 -> 12, Normal 12 -> 12; 1v2 Relaxed 8 -> 9, Normal 6 -> 7. Median 1v1 Normal 5.8 -> 5.2 min.
+
 ### Alloy expansions
 
 Five skirmish expansion sites now have a second alloy outcrop within reach of the same Command core. The additional deposits keep their own IDs so older command logs still address the same units.
