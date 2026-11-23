@@ -206,6 +206,7 @@ await suite("defence-zones", async () => {
       s.defence.wave = def.waves.length - 1;
       s.startWave();
       f.step(16);
+      f.hold = true; // Preserve the fight while slow devices capture both views.
       f.select([]);
     });
     await page.waitForTimeout(400);

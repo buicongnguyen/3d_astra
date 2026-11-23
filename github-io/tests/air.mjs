@@ -77,7 +77,10 @@ await suite("air", async () => {
     await page.waitForTimeout(300);
     const look = await page.evaluate(async (id) => {
       const f = window.__frontier, o = f.view.objects.get(id), u = o.userData, spin = u.air.spins[0].node.quaternion.clone();
-      await new Promise((r) => setTimeout(r, 250));
+      // Wait for a rendered rotor turn. At 20×, a single frame can exceed 250 ms.
+      const deadline = performance.now() + 10000;
+      while (u.air.spins[0].node.quaternion.angleTo(spin) <= 0.01 && performance.now() < deadline)
+        await new Promise(requestAnimationFrame);
       return { lift: u.model.position.y, shadow: u.contactShadow.visible, shadowY: u.contactShadow.position.y, spins: u.air.spins.length,
         turned: u.air.spins[0].node.quaternion.angleTo(spin) > 0.01, castsShadow: u.model.children.some((c) => c.castShadow), ring: u.ring.position.y };
     }, kite.id);

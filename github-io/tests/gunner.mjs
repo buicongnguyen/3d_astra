@@ -52,7 +52,7 @@ await suite("gunner", async () => {
       const target = s.spawn("ranger", 1, 6, 0);
       v.update(s, 0, new Set(), null);
       const plugin = v.plugins.list.find((p) => "born" in p && "kicks" in p);
-      const draws = () => { v.update(s, 0.016, new Set(), null); return v.renderer.info.render.calls; };
+      const draws = () => { v.update(s, 0, new Set(), null); return v.renderer.info.render.calls; };
       const before = draws(), builtBefore = !!plugin.mesh;
       s.applyStatus(target, "pinned", 5);
       const during = draws();

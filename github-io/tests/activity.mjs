@@ -57,16 +57,19 @@ try{
         h.hp=h.maxHp*.2;h.shield=0;
         const tank=s.spawn('tank',0,h.x+5,h.z+4);tank.hp=tank.maxHp*.2;tank.shield=0;
         s.updateVision();v.focusOn(h.x+2,h.z+5);v.zoom=44;v.updateCamera();f.select([h.id]);v.update(s,0,f.selected,null);
-        return {building:h.id,tank:tank.id,burning:v.activity.snapshot.burning,calls:v.renderer.info.render.calls};
+        return {building:h.id,tank:tank.id,burning:v.activity.snapshot.burning};
       });
       assert.ok(fx.burning.includes(fx.building)&&fx.burning.includes(fx.tank),'critical buildings and vehicles burn');
       await page.screenshot({path:`test-results/combat-burning-${viewport.width}.png`});
       const repair=await page.evaluate(fx=>{
-        const f=window.__frontier,s=f.sim,v=f.view;s.get(fx.building).hp=s.get(fx.building).maxHp;v.update(s,0,f.selected,null);
-        return {burning:v.activity.snapshot.burning,calls:v.renderer.info.render.calls};
+        const f=window.__frontier,s=f.sim,v=f.view;
+        v.update(s,0,f.selected,null);
+        const before=v.renderer.info.render.calls;
+        s.get(fx.building).hp=s.get(fx.building).maxHp;v.update(s,0,f.selected,null);
+        return {burning:v.activity.snapshot.burning,before,calls:v.renderer.info.render.calls};
       },fx);
       assert.ok(!repair.burning.includes(fx.building),'repair stops fire');
-      assert.equal(repair.calls,fx.calls,'fire adds no 3D draw calls');
+      assert.equal(repair.calls,repair.before,'fire adds no 3D draw calls');
       await page.evaluate(id=>{const f=window.__frontier;f.sim.applyDamage(f.sim.get(id),10000,1);f.step(0);},fx.tank);
       await page.waitForFunction(()=>window.__frontier.view.activity.snapshot.combat.some(e=>e.type==='death'&&e.heavy));
       await page.screenshot({path:`test-results/combat-destruction-${viewport.width}.png`});
