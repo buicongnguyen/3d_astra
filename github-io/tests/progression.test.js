@@ -13,12 +13,14 @@ const message = s => s.events.filter(e=>e.type==='message').at(-1)?.text;
 // adding one never changes these counts. Bosses (balance.json `bosses`, sim/bosses.js) are units too,
 // but no building trains them.
 const classicCounts=defs=>{
-  const c=Object.entries(defs).filter(([,d])=>d.roster!=='expanded');
+  // Wild creatures (round 4: tamed or guarding a nest, never trained) belong to no roster either.
+  const c=Object.entries(defs).filter(([,d])=>d.roster!=='expanded'&&!d.creature);
   return {units:c.filter(([,d])=>d.kind==='unit'&&!d.boss).length,defence:c.filter(([,d])=>d.defence).map(([t])=>t),flyers:c.filter(([,d])=>d.flying).length,buildings:c.filter(([,d])=>d.kind==='building').length};
 };
 const CLASSIC={units:21,defence:['carrier'],flyers:4,buildings:9};
 // Only a style goes without a shield: the Scrapper, and Ashfall's workshop units (the Rampart).
-const shielded=(type,d)=>d.shield > 0 || type === 'scrapper' || d.workshop === 'ashfall';
+// Round 4: wild creatures (the Dune Wyrm and its nest guards) wear hide, not a shield.
+const shielded=(type,d)=>d.shield > 0 || type === 'scrapper' || d.workshop === 'ashfall' || !!d.creature;
 test('the Classic roster: twenty-one units (four of them flyers, one the Defence troop carrier) and nine buildings',()=>{
   assert.deepEqual(classicCounts(D),CLASSIC);
 });

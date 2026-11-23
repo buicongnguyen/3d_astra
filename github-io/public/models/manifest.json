@@ -339,6 +339,24 @@
       "review": "pending owner review (round 3)",
       "source": "tools/blender/generate_bosses.py ironsovereign2 (redrawn at about 1.5 tanks, owner request 2026-11-23)",
       "animation": "Runtime parts (src/boss-view.js BOSS_PARTS): two tripods of legs, turret, cannon, light gun and core; no baked clips; the relay shield and the phase-2 core glow are drawn at runtime"
+    },
+    {
+      "name": "wyrm",
+      "file": "wyrm.glb",
+      "triangles": 3056,
+      "kind": "unit",
+      "budget": 3200,
+      "review": "pending owner review (F8 creature art)",
+      "animation": "Runtime articulated parts (foreleg pivots); no baked clips"
+    },
+    {
+      "name": "wyrmling",
+      "file": "wyrmling.glb",
+      "triangles": 2500,
+      "kind": "unit",
+      "budget": 2600,
+      "review": "pending owner review (F8 creature art)",
+      "animation": "Runtime articulated parts (foreleg pivots); no baked clips"
     }
   ]
 }

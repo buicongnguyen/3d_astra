@@ -131,6 +131,18 @@ export function setupMinimap(S, A) {
         ctx.stroke();
       }
     }
+    // Wild frontier (round 4): the Wyrm nest (sand ring, once explored) and a sandstorm (warning orange, then sand), seen by every side.
+    const wild = S.sim.wild;
+    for (const nest of wild?.nests || []) {
+      if (!S.sim.isExplored(nest)) continue;
+      ctx.lineWidth = nest.elder ? 3 : 2; ctx.strokeStyle = nest.elder ? "#ffd27a" : "#e6b26a"; ctx.setLineDash([3, 2]);
+      ctx.beginPath(); ctx.arc(px(nest.x), pz(nest.z), Math.max(nest.elder ? 5 : 4, (nest.r / MAP_SIZE) * w), 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    }
+    for (const s of wild?.storms || []) {
+      if (S.sim.time >= s.until) continue;
+      ctx.fillStyle = S.sim.time < s.at ? "rgba(255,138,61,.45)" : "rgba(230,178,106,.55)";
+      ctx.beginPath(); ctx.arc(px(s.x), pz(s.z), Math.max(5, (s.r / MAP_SIZE) * w), 0, Math.PI * 2); ctx.fill();
+    }
     // Escort and "reach" destinations: a pulsing gold ring with a centre dot, drawn over fog.
     for (const d of missionDestinations(S.sim)) {
       const cx = px(d.x), cy = pz(d.z), radius = Math.max(5, (d.r / MAP_SIZE) * w) + Math.sin(performance.now() / 300) * 1.2;
@@ -284,6 +296,7 @@ export function setupMinimap(S, A) {
         // The event's own timestamp: a busy main thread must not stretch the double-tap window.
         lastTap = { t: e.timeStamp, x: e.clientX, y: e.clientY };
         if (S.mode === "barrage") A.fireBarrage(p);
+        else if (S.mode === "weather") A.fireWeather(p);
         else if (S.mode && S.mode !== "build") {
           if (A.commandAt(p, null, e.shiftKey||S.queueOrders, S.mode) !== false) A.clearMode();
         } else S.view.focusOn(p.x, p.z);

@@ -55,3 +55,7 @@
   color: #fff;
 }
 .rule-help { font: 500 12px/1.35 var(--font-ui); color: var(--text-3); }
+
+/* Round 4: a rule that plays only on some battlefields (Wild frontier: Amber Dunes) is greyed out on the others. */
+.rule-row.rule-off-map .rule-buttons, .rule-row.rule-off-map .rule-name { opacity: 0.55; }
+

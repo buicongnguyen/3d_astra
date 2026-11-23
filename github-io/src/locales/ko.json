@@ -1337,7 +1337,37 @@
     "Enemy scouts sighted! Meet them at your tower.": "적 정찰병 발견! 타워에서 맞서세요.",
     "A Scout Runner is on the road! Catch it for bonus alloy.": "정찰 주자가 길에 나타났습니다! 잡으면 보너스 합금을 받습니다.",
     "Scout Runner caught: bonus alloy!": "정찰 주자 포획: 보너스 합금!",
-    "The Scout Runner got away. No lives lost.": "정찰 주자가 달아났습니다. 잃은 생명은 없습니다."
+    "The Scout Runner got away. No lives lost.": "정찰 주자가 달아났습니다. 잃은 생명은 없습니다.",
+    "Elder Wyrm": "장로 웜",
+    "Dune Wyrm": "듄 웜",
+    "Tamed desert creature": "길들인 사막 생물",
+    "Wild frontier. A sand-armoured wyrm tamed at its nest: 640 HP, a 26-damage bite every 1.1 s that hits vehicles 1.4× harder. It cannot be trained: clear the nest's Wyrmlings and hold the nest for 30 seconds. Ambush on its own: it dives under the sand and bursts up beneath the nearest enemy tank. The ground ripples for 1.5 seconds first, so a tank that moves off dodges it.": "야생 변경. 둥지에서 길들인 모래 갑옷 웜: 체력 640, 1.1초마다 26 피해를 주는 물기, 차량에는 1.4배 피해. 훈련할 수 없습니다. 둥지의 새끼 웜을 처치하고 둥지를 30초 동안 지키세요. 매복은 자동으로 발동합니다. 모래 속으로 들어가 가장 가까운 적 전차 아래에서 솟아오릅니다. 먼저 땅이 1.5초 동안 일렁이므로 전차가 움직이면 피할 수 있습니다.",
+    "Dune Wyrm: tamed at the nest. It dives and bursts up under the nearest enemy tank; the ground ripples first.": "듄 웜: 둥지에서 길들입니다. 모래 속으로 들어가 가장 가까운 적 전차 아래에서 솟아오르며, 먼저 땅이 일렁입니다.",
+    "Ambush": "매복",
+    "Dive under the sand and burst up beneath the nearest enemy vehicle within 22 m after 1.5 s: 150 damage within 3 m. Casts on its own.": "모래 속으로 들어가 1.5초 뒤 22m 안의 가장 가까운 적 차량 아래에서 솟아오릅니다: 3m 안에 150 피해. 자동 발동.",
+    "Wyrmling": "새끼 웜",
+    "Nest guard": "둥지 경비",
+    "Wild frontier. A young wyrm that guards the Dune Wyrm nest. It bites anything that comes within 8 m of the nest and never leaves it. Clear all three to start taming the nest.": "야생 변경. 듄 웜의 둥지를 지키는 어린 웜입니다. 둥지 8m 안에 들어오는 모든 것을 물고 둥지를 떠나지 않습니다. 셋 모두 처치하면 둥지를 길들이기 시작합니다.",
+    "The Wyrm nest is clear: hold it for 30 seconds to tame a Dune Wyrm.": "웜 둥지를 비웠습니다: 30초 동안 지켜 듄 웜을 길들이세요.",
+    "A Dune Wyrm joins your expedition.": "듄 웜이 원정대에 합류했습니다.",
+    "An enemy has tamed the Dune Wyrm.": "적이 듄 웜을 길들였습니다.",
+    "You hold the Weather Spire: the Sandstorm power arms in 15 seconds.": "기상 첨탑을 확보했습니다: 15초 뒤 모래폭풍을 쓸 수 있습니다.",
+    "An enemy holds the Weather Spire: expect a sandstorm.": "적이 기상 첨탑을 차지했습니다: 모래폭풍에 대비하세요.",
+    "Sandstorm called: it lands in 3 seconds.": "모래폭풍 호출: 3초 뒤 도착합니다.",
+    "Enemy sandstorm incoming: it lands in 3 seconds.": "적 모래폭풍 접근: 3초 뒤 도착합니다.",
+    "Sandblind": "모래 실명",
+    "An enemy holds the Weather Spire.": "적이 기상 첨탑을 차지했습니다.",
+    "Spire": "첨탑",
+    "Sandstorm": "모래폭풍",
+    "Take Spire": "첨탑 점령",
+    "Sandstorm power": "모래폭풍 능력",
+    "Sandstorm: hold the Weather Spire, then tap here and tap the map. Enemies inside fire 30% slower and see 4 m; your units inside are hidden.": "모래폭풍: 기상 첨탑을 지킨 뒤 여기를 누르고 지도를 누르세요. 안의 적은 발사가 30% 느려지고 시야가 4m로 줄며, 안의 아군은 숨겨집니다.",
+    "Hold the Weather Spire to call a sandstorm.": "기상 첨탑을 지키면 모래폭풍을 부를 수 있습니다.",
+    "SANDSTORM · Tap a spot on the map": "모래폭풍 · 지도에서 지점을 누르세요",
+    "SANDSTORM · Click a spot on the map · Esc to cancel": "모래폭풍 · 지도에서 지점을 클릭 · Esc로 취소",
+    "The Sandstorm is not ready.": "모래폭풍이 아직 준비되지 않았습니다.",
+    "Wild frontier": "야생 변경",
+    "Amber Dunes: hold the Weather Spire for a Sandstorm; tame the Dune Wyrm.": "앰버 사구: 기상 첨탑을 지켜 모래폭풍을 부르고 듄 웜을 길들이세요."
   },
   "patterns": [
     [
@@ -2179,6 +2209,9 @@
     [
       "^Pledge a Daily order for \\+(\\d+) XP on a win, once a day\\. It never changes a battle\\.$",
       "일일 명령을 서약하면 승리할 때 하루 한 번 +{1} 경험치를 얻습니다. 전투에는 영향이 없습니다."
-    ]
+    ],
+    ["^Sandstorm recharging: (\\d+) s\\.$", "모래폭풍 재충전 중: {1}초."],
+    ["^A Battle rule for Amber Dunes\\. Hold the Weather Spire near the centre to call a Sandstorm with the one Sandstorm button: after a (\\d+) s warning that every side sees, enemies inside fire 30% slower and see only (\\d+) m for (\\d+) s, and your units inside are hidden from them\\. It recharges in (\\d+) s; a new holder waits (\\d+) s\\.$", "앰버 사구 전투 규칙. 중앙 근처의 기상 첨탑을 지키면 모래폭풍 버튼 하나로 폭풍을 부를 수 있습니다. 모든 진영이 보는 {1}초 경고 뒤, 안의 적은 발사가 30% 느려지고 {3}초 동안 시야가 {2}m로 줄며 안의 아군은 숨겨집니다. 재충전 {4}초, 새 점령자는 {5}초 기다립니다."],
+    ["^Clear the (\\d+) Wyrmlings at the nest, then keep only your units in it for (\\d+) s to tame a Dune Wyrm \\(at most (\\d+) per side\\)\\. The nest regrows its guards (\\d+) s later\\. Relaxed rivals never use the Spire or the nest; Normal rivals only late in a match\\.$", "둥지의 새끼 웜 {1}마리를 처치한 뒤 {2}초 동안 아군만 둥지에 두면 듄 웜을 길들입니다(진영당 최대 {3}마리). 둥지 경비는 {4}초 뒤 다시 자랍니다. 느긋한 경쟁자는 첨탑과 둥지를 쓰지 않고, 보통 경쟁자는 경기 후반에만 씁니다."]
   ]
 }

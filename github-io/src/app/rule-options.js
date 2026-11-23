@@ -37,4 +37,16 @@ export const RULE_OPTIONS = [
     default: "100",
     badge: "New",
   },
+  // Wild frontier (AAA round 4, P1 desert test): a Weather Spire and a Dune Wyrm nest. Off is the default
+  // (no rule key, so every pin stays); the sim only plays it on a Wild land (P1: Amber Dunes,
+  // balance.json `wild_frontier.lands`), and `maps` greys the row out on any other battlefield.
+  {
+    id: "wild",
+    label: "Wild frontier",
+    help: "Amber Dunes: hold the Weather Spire for a Sandstorm; tame the Dune Wyrm.",
+    values: [{ id: "off", label: "Off" }, { id: "on", label: "On" }],
+    default: "off",
+    badge: "New",
+    maps: ["dunes"],
+  },
 ];

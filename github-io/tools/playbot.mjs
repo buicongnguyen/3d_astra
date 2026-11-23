@@ -89,7 +89,7 @@ export class PlayBot {
     // An attack that was wiped out teaches caution: the next one waits for eight more fighters.
     if (this.party && this.party.filter((id) => s.get(id)).length < this.party.length / 3) { this.attackAt += 8; this.party = null; }
     // No march while an attack warning is fresh or enemies stand near the core.
-    const raid = s.time < this.alarm || s.entities.some((e) => e.hp > 0 && e.kind === "unit" && s.hostile(team, e.team) && s.isVisible(e, team) && Math.hypot(e.x - hq.x, e.z - hq.z) < 30);
+    const raid = s.time < this.alarm || s.entities.some((e) => e.hp > 0 && e.kind === "unit" && e.team >= 0 && s.hostile(team, e.team) && s.isVisible(e, team) && Math.hypot(e.x - hq.x, e.z - hq.z) < 30);
     if (fighters.length >= this.attackAt && s.time >= this.attackAfter && !raid && !fighters.some((e) => e.orders.length)) {
       s.updateKnownCores(team);
       // With no core in sight (an expansion the AI built out of view) the army sweeps the map.
@@ -164,7 +164,7 @@ export class ObjectiveBot extends PlayBot {
   // Armed enemies the player can see near a spot.
   threats(at, radius, unitsOnly = false) {
     const s = this.sim;
-    return s.entities.filter((e) => e.hp > 0 && s.hostile(this.team, e.team) && e.damage > 0 && (!unitsOnly || e.kind === "unit") && gap(e, at) <= radius && s.isVisible(e, this.team));
+    return s.entities.filter((e) => e.hp > 0 && e.team >= 0 && s.hostile(this.team, e.team) && e.damage > 0 && (!unitsOnly || e.kind === "unit") && gap(e, at) <= radius && s.isVisible(e, this.team));
   }
   // Required objectives the player can see and has not finished.
   open() {

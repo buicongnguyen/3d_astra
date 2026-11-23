@@ -14,7 +14,7 @@ import { readSave } from "../savegame.js";
 import { teamColors } from "../faction-colors.js";
 import { DEFENCE_LEVELS, defenceLevel } from "../defence/levels.js";
 import { RULE_OPTIONS } from "./rule-options.js";
-import { ruleValue, withRule, rulesKey, activeRules } from "./rules-store.js";
+import { ruleValue, withRule, rulesKey, activeRules, rulesForMap } from "./rules-store.js";
 
 export function setupBriefing(S, A) {
   const Z = S.screen;
@@ -156,7 +156,7 @@ export function setupBriefing(S, A) {
   }
 
   // The rules a match built from the setup now would get: the chosen ones for a skirmish, none otherwise (as createSim in main.js).
-  const skirmishRules = () => (S.playMode === "skirmish" && !S.mission ? S.rules : null);
+  const skirmishRules = () => (S.playMode === "skirmish" && !S.mission ? rulesForMap(S.rules, S.mapId) : null);
 
   // The "Battle rules" row of the skirmish setup (app/rule-options.js): a segmented control per rule,
   // drawn into #skirmish-setup when the page binds (the markup in app/shell.js stays as it is).
@@ -165,8 +165,12 @@ export function setupBriefing(S, A) {
     return `<div class="rule-rows" id="battle-rules" role="group" aria-labelledby="battle-rules-title"><span class="rule-title" id="battle-rules-title">Battle rules</span>${RULE_OPTIONS.map(row).join("")}</div>`;
   }
   function syncRules() {
-    for (const row of document.querySelectorAll("#battle-rules .rule-row"))
+    for (const row of document.querySelectorAll("#battle-rules .rule-row")) {
       for (const button of row.querySelectorAll("[data-rule-value]")) button.setAttribute("aria-pressed", String(button.dataset.ruleValue === ruleValue(S.rules, row.dataset.rule)));
+      // A rule that only plays on some battlefields (round 4 Wild frontier: Amber Dunes) greys out elsewhere.
+      const maps = RULE_OPTIONS.find((o) => o.id === row.dataset.rule)?.maps;
+      row.classList.toggle("rule-off-map", !!maps && !maps.includes($("scenario")?.value || S.mapId));
+    }
   }
 
   function previewBattle() {
