@@ -92,6 +92,7 @@ export function setupInputPointer(S, A) {
       A.fireBarrage(point);
       return;
     }
+    if (S.mode === "weather") { A.fireWeather(point); return; }
     if (S.mode) {
       if (A.commandAt(point, ["support","context","attack","attackmove","repair","rally"].includes(S.mode) ? target : null, S.queueOrders, S.mode) !== false) A.clearMode();
       return;
@@ -216,6 +217,7 @@ export function setupInputPointer(S, A) {
         });
       }
       if (S.mode === "barrage") A.refreshAim(S.view.point(e.clientX, e.clientY));
+      if (S.mode === "weather") A.aimWeather(S.view.point(e.clientX, e.clientY));
       if (S.mode === "build") {
         const aim = S.view.point(e.clientX, e.clientY),
           p = aim && (S.sim.findPlacement(S.buildType, 0, aim.x, aim.z) || aim);
@@ -266,6 +268,7 @@ export function setupInputPointer(S, A) {
         A.fireBarrage(point);
         return;
       }
+      if (S.mode === "weather") { A.fireWeather(point); return; }
       if (S.mode) {
         if (A.commandAt(point, ["support","context","attack","attackmove","repair","rally"].includes(S.mode) ? S.view.pick(e.clientX,e.clientY,S.sim) : null, e.shiftKey||S.queueOrders, S.mode) !== false) A.clearMode();
         return;

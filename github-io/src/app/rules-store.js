@@ -48,3 +48,12 @@ export function saveRules(rules, store = storage()) {
     return false;
   }
 }
+
+// The rules a match on battlefield `mapId` gets: a rule that plays only on some maps (`maps`, round 4 Wild frontier:
+// Amber Dunes) is left out elsewhere, so it never reaches that match's options, save or hash. null when none is left.
+export function rulesForMap(rules, mapId) {
+  const active = activeRules(rules);
+  if (!active) return null;
+  const out = Object.fromEntries(Object.entries(active).filter(([id]) => { const maps = optionOf(id)?.maps; return !maps || maps.includes(mapId); }));
+  return Object.keys(out).length ? out : null;
+}

@@ -91,7 +91,9 @@
     "test:rank": "node tests/rank.mjs",
     "test:audio-juice": "node tests/audio-juice.mjs",
     "test:quick-battle": "node tests/quick-battle.mjs",
-    "test:quick-battle-check": "node tests/quick-battle-check.mjs"
+    "test:quick-battle-check": "node tests/quick-battle-check.mjs",
+    "test:wild-desert": "node tests/wild-desert.mjs",
+    "bench:wild": "node tools/wild-bench.mjs --jobs 3"
   },
   "dependencies": {
     "three": "0.185.1"

@@ -81,7 +81,7 @@ test("H3: spawn hooks see every spawn after the faction traits, in module order"
 });
 
 test("H4: step hooks run once per tick in their own order, whatever the list order", () => {
-  const calls = [];
+  const calls = [], shipped = STEP.length;
   withModules([
     { id: "late", order: 20, step: () => calls.push("late") },
     { id: "early", order: 10, step: () => calls.push("early") },
@@ -93,7 +93,7 @@ test("H4: step hooks run once per tick in their own order, whatever the list ord
   });
   assert.throws(() => setContentModules([{ id: "x", order: 1, step() {} }, { id: "y", order: 1, step() {} }]), /order 1 is already used/);
   assert.throws(() => setContentModules([{ id: "x", step() {} }]), /numeric order/);
-  assert.equal(STEP.length, 0, "a refused list changes nothing");
+  assert.equal(STEP.length, shipped, "a refused list changes nothing");
 });
 
 test("H7/H8: a damage factor is the last factor; only the shot's own target tags the shot", () => {

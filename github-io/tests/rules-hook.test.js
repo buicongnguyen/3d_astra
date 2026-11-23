@@ -9,13 +9,15 @@ import { skirmishSides } from "../src/factions.js";
 import { resolveMission } from "../src/story/choices.js";
 import { MISSIONS } from "../src/story/missions.js";
 import { setupDebugHooks } from "../src/app/debug-hooks.js";
+import { rulesForMap } from "../src/app/rules-store.js";
 
 function createSimFrom(S) {
   const text = clientFile("main.js", { plain: false });
   const start = text.indexOf("const createSim = () => {"), end = text.indexOf("\n};", start);
   assert.ok(start >= 0 && end > start, "createSim is in src/main.js");
   class Recorder { constructor(options) { this.options = options; } }
-  return new Function("Simulation", "S", "skirmishSides", "resolveMission", "matchLook", `${text.slice(start, end + 3)}\nreturn createSim;`)(Recorder, S, skirmishSides, resolveMission, () => null);
+  // Round 4: createSim passes the rules through rulesForMap (a map-limited rule, Wild frontier, stays off other maps).
+  return new Function("Simulation", "S", "skirmishSides", "resolveMission", "matchLook", "rulesForMap", `${text.slice(start, end + 3)}\nreturn createSim;`)(Recorder, S, skirmishSides, resolveMission, () => null, rulesForMap);
 }
 const setup = (extra) => ({ mission: null, playMode: "skirmish", playerFaction: "sunward", enemyFaction: "veil", enemyCount: 1, mapId: "dunes", aiSpeed: "normal", alliance: "ffa", bonus: null, campaign: null, settings: { campaignDifficulty: "standard" }, ...extra });
 
@@ -30,6 +32,11 @@ test("createSim without S.rules passes no rules key; with them, passes them as t
   const ruled = createSim().options;
   assert.deepEqual(ruled.rules, { roster: "expanded" });
   assert.deepEqual(Object.keys(ruled), [...Object.keys(plain), "rules"], "the other options are untouched");
+  // Round 4: the Wild frontier rule reaches an Amber Dunes match only.
+  S.rules = { wild: "on" };
+  assert.deepEqual(createSim().options.rules, { wild: "on" });
+  S.mapId = "classic";
+  assert.equal("rules" in createSim().options, false);
   // A campaign mission is built the same way: no rules key unless they are set.
   const story = setup({ mission: MISSIONS[0], playMode: "campaign" });
   assert.equal("rules" in createSimFrom(story)().options, false);

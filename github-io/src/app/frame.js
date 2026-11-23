@@ -209,6 +209,7 @@ export function setupFrame(S, A) {
       A.updateUI();
       A.minimap();
       A.uiExtrasTick();
+      A.wildTick?.();
       uiClock = 0.15;
     }
     if (S.governed)

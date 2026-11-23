@@ -23,7 +23,8 @@ export const aiCounter = {
       if (!e || e.hp <= 0) seen.delete(id);
     }
     for (const e of this.entities) {
-      if (e.hp <= 0 || e.type === "worker" || e.kind === "wall" || !this.hostile(team, e.team)) continue;
+      // Wild nest guards (team < 0, round 4) are not the enemy army: they never shape the counter-build.
+      if (e.hp <= 0 || e.type === "worker" || e.kind === "wall" || e.team < 0 || !this.hostile(team, e.team)) continue;
       if (seen.has(e.id) || !this.isVisible(e, team)) continue;
       if (seen.size >= MAX_SEEN) break;
       seen.set(e.id, e.type);

@@ -149,6 +149,20 @@ Proposed, not released: nothing is pushed or deployed until the owner says "depl
 - **Layout.** Desktop: the left command column (mode cards, mission list, Start) as on the title screen; the map large in the centre with the decisions legend in its header, the endings and the four chronicle cards in one row under it, and the briefing as a glass panel (title and story on the left, rivals and objective on the right). The list scrolls the picked mission into view above Start. Tablets: the map full width, endings beside the chronicles, the same briefing panel, the four modes in one row. Phones in portrait: the painting full bleed, the four modes (Training too) in one row, five missions above Start at 390×844 (three before); landscape: the strip beside a narrower setup column. Every control stays one tap away (`tests/cover-ui.mjs`).
 - Fix: on phones in portrait, opening Campaign no longer scrolls the whole start screen (and the map) away to reveal the picked mission.
 - Tests: `tests/campaign-map-art.test.js` (+4: anchors, fallback, 44 px spacing on the smallest boards, lazy art and CSS rules); `tests/story.mjs` counts relays from the mission list (17). Results and before/after screenshots: `docs/aaa/results/round3/map.md`.
+## Unreleased: Round 4 Wild Frontier
+
+Plan: `docs/aaa/AAA_ROUND4_PLAN.md`. Results: `docs/aaa/results/round4/p1.md`.
+
+### R4-P1: the desert test on Amber Dunes (waiting for the owner's verdict)
+- **A new Battle rule, "Wild frontier" (Off by default).** It plays on Amber Dunes only; elsewhere the row is greyed out and the rule never reaches the match. Off keeps every match exactly as before.
+- **The Weather Spire.** A capture ring with a sandstone spire at the centre of the map (with capture points on it is the crossroads ring itself, so incomes and every rival's opening stay as they were). Whoever holds it gets one power, the **Sandstorm**: one tap on the always-visible Sandstorm button, one tap on the map (or the minimap). Every side sees a 3-second orange warning sweep on the ground and the minimap, then for 18 seconds enemies inside fire 30% slower and see only 4 m, and your units inside are hidden from them. It recharges in 90 seconds; a new holder waits 15 seconds.
+- **The Dune Wyrm nest.** Three Wyrmlings guard a nest in the south-west corner and bite anything that comes close. Clear them and keep only your units in the nest for 30 seconds: a **Dune Wyrm** joins you (one per side). Its one ability, **Ambush**, casts on its own: it dives under the sand, the ground ripples for 1.5 seconds under the nearest enemy vehicle, then it bursts up for 150 damage. A vehicle that moves off dodges it. The nest regrows its guards 150 seconds later.
+- **Rivals by speed.** Relaxed rivals never call a storm or tame the Wyrm. Normal rivals do so only late and rarely (from 10 and 15 minutes). Fast and Relentless rivals use both fully.
+- **Art.** The Dune Wyrm and Wyrmling come from the Blender kit (`tools/blender/generate_wyrm.py`, five materials, 3,124 and 2,442 triangles, pending owner review) with portrait cells. The Spire, the nest, the storm and the ripple are drawn by a view plugin in at most 3 draws on screen.
+- **Field guide** pages for both creatures explain the rule. All new text is in Vietnamese (Korean to follow when `ko.json` lands).
+- Fixed in review: guards never rank up, and the rivals' counter-build and "join the fight" ignore them.
+
+## Unreleased: AAA round 3
 
 ### R3-F: Warm kit and distinct silhouettes (art 1)
 - **Warm palette.** The near-black gunmetal armour that covered about 60% of every model is now a glossy warm sand. Tracks, boots and joints stay a warm dark umber, the infantry suit is a warm taupe, and foundations are warm concrete. Team paint is unchanged. On the 13 core models the armour got about 3.8 times brighter, and the share of near-black armour pixels fell from 57% to 24%.

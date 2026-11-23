@@ -1,5 +1,9 @@
 // Tuning constants shared by the simulation systems.
 export const NEUTRAL = -1;
+// Wild creatures (AAA round 4, Wild frontier; sim/content/wild-frontier.js): nest guards belong to no
+// side. Every side may fight them (sim.hostile(team, WILD_TEAM) is true), but they pick their own
+// targets (the module's step), never through the generic targeting (sim.hostile(WILD_TEAM, x) is false).
+export const WILD_TEAM = -2;
 // The slimmest unit body: the radius used to push a larger unit through a gap it cannot otherwise leave.
 export const SQUEEZE = 0.55;
 // How far beyond its sight an idle fighter follows an enemy from the spot it guards.

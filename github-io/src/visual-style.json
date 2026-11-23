@@ -44,6 +44,8 @@
     "ironvanguard":{"height":3.4,"reach":2.6,"life":0.12,"kind":"rifle","look":"hose","color":[1,0.55,0.15,1],"hit":0.35},
     "ironsovereign":{"height":3.6,"reach":2.8,"life":0.12,"kind":"rifle","look":"hose","color":[0.7,0.95,1,1],"hit":0.35},
     "rampart":{"height":1.5,"reach":2.2,"life":0.22,"kind":"cannon","look":"plough","color":[1,0.7,0.3,1],"hit":0.9},
-    "ironsovereign2":{"height":3.6,"reach":2.8,"life":0.12,"kind":"rifle","look":"hose","color":[0.7,0.95,1,1],"hit":0.35}
+    "ironsovereign2":{"height":3.6,"reach":2.8,"life":0.12,"kind":"rifle","look":"hose","color":[0.7,0.95,1,1],"hit":0.35},
+    "wyrm":{"height":0.9,"reach":1.6,"life":0.18,"kind":"cannon","look":"plough","color":[1,0.74,0.36,1],"hit":0.8},
+    "wyrmling":{"height":0.6,"reach":1,"life":0.12,"kind":"rifle","look":"pellets","color":[1,0.8,0.5,1]}
   }
 }

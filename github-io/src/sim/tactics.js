@@ -33,7 +33,8 @@ export const BUILT_IN_ABILITIES = [...Object.keys(TIMED), "barrage", "burnline",
 // Burning ground kept at once (sim.zones); the oldest goes first.
 const MAX_ZONES = 16;
 // Only fighting units earn ranks: not workers, bosses, buildings or walls.
-const earnsRanks = (e) => e.kind === "unit" && !e.boss && e.type !== "worker" && !!e.damage;
+// Wild creatures (WILD_TEAM, round 4) never rank up: a nest guard stays as tough as the field guide says.
+const earnsRanks = (e) => e.kind === "unit" && !e.boss && e.type !== "worker" && !!e.damage && e.team >= 0;
 
 export const tactics = {
   // Called when `victim` dies to a hit from entity `by`.

@@ -29,6 +29,7 @@ import { BuildingDecalsView } from "./building-decals-view.js";
 import { ThreatArrows } from "./threat-arrows.js";
 import { DeathLooks } from "./combat-feedback.js";
 import { RankPaintView } from "./profile-rank.js";
+import { WildView } from "./wild-view.js";
 
 export const HOOKS = ["dress", "scaleFor", "frameScaleFor", "event", "update", "reset"];
 
@@ -70,4 +71,5 @@ export const VIEW_PLUGINS = [
   ThreatArrows, // R3-K: off-screen threat arrows (DOM, no draw)
   DeathLooks, // R3-K: three death looks by damage type (effect pools, no draw)
   RankPaintView, // R3-R: the picked paint scheme on the player's units (instanceColor tint, no draw)
+  WildView, // R4-P1: Weather Spire, nest ring, sandstorm and Ambush ripples (only in a Wild frontier match)
 ];

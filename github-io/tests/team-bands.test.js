@@ -15,7 +15,7 @@ test('every combat model has projected team paint that can join its GLB paint ba
     addTeamBands(scene, type);
     const stripes = [];
     scene.traverse(part => { if (part.name.endsWith('_TeamBand')) stripes.push(part); });
-    assert.ok(stripes.length, type);
+    assert.ok(stripes.length || def.creature, type); // a creature wears its authored team crest instead
     for (const { geometry, material } of stripes) {
       assert.match(material.name, /^Team(?:\.|$)/);
       assert.ok(geometry.attributes.position.count >= 3, type);
