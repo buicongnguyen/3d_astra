@@ -262,6 +262,7 @@
     "Frontier's End": "Tận cùng biên cương",
     "Three allied commanders: an assault force, a raider and a siege corps. Expect attacks from every side.": "Ba chỉ huy liên minh gồm quân xung kích, tập kích và công thành. Hãy chuẩn bị chống địch từ mọi hướng.",
     "Objectives": "Mục tiêu",
+    "Your veterans": "Quân kỳ cựu của bạn",
     "Mission objectives": "Mục tiêu nhiệm vụ",
     "Establish your economy": "Phát triển kinh tế",
     "Assign Harvesters to resources": "Cho thợ mỏ khai thác tài nguyên",
@@ -1895,6 +1896,10 @@
     [
       "^(.+) promoted to rank (\\d)$",
       "{1} được thăng bậc {2}"
+    ]
+    ,[
+      "^(.+) has fallen$",
+      "{1} đã ngã xuống"
     ],
     [
       "^Rank (\\d)$",

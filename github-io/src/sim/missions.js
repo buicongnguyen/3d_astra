@@ -1,6 +1,7 @@
 import { difficultyRules, difficultySpeed, objectiveText } from "../difficulty.js";
 import { DEFINITIONS as D, distance } from "../data.js";
 import { resolveMission, flagMatches } from "../story/choices.js";
+import { RANK_XP, RANK_BONUS } from "./tactics.js";
 
 // Campaign missions (format: docs/MISSIONS.md). A mission is plain data given to the
 // Simulation; this system applies its setup, tracks capture points and objectives, fires
@@ -69,6 +70,13 @@ export const missions = {
       const core = this.own(side).find((e) => e.type === "hq") || this.knownCores[side === 0 ? 1 : 0]?.values().next().value;
       return core ? { x: core.x, z: core.z, r: 10 } : { x: 0, z: 0, r: 10 };
     }
+    // The campaign squad's muster: 11 m from the player's core toward the middle of the map.
+    if (at === "playerFront") {
+      const core = this.own(0).find((e) => e.type === "hq");
+      if (!core) return { x: 0, z: 0, r: 8 };
+      const len = Math.hypot(core.x, core.z) || 1;
+      return { x: core.x - (core.x / len) * 11, z: core.z - (core.z / len) * 11, r: 8 };
+    }
     const region = this.missionDef.regions?.[at];
     return region ? { r: 6, ...region } : { x: 0, z: 0, r: 6 };
   },
@@ -81,7 +89,7 @@ export const missions = {
     }
     return { x: place.x, z: place.z };
   },
-  missionSpawn({ spawn, team = 0, at, count = 1, countByDifficulty, tag, name, hp, hpByDifficulty, speed, complete = true, exact = false }) {
+  missionSpawn({ spawn, team = 0, at, count = 1, countByDifficulty, tag, name, hp, hpByDifficulty, speed, complete = true, exact = false, rank = 0, xp = 0, veteran = false, slot = 0 }) {
     // exact: the script names this very type (a Breaker battery stays Breakers on an Ashfall roster).
     if (!exact) spawn = this.typeFor(team,spawn);
     count = countByDifficulty?.[this.difficulty] ?? count;
@@ -93,10 +101,15 @@ export const missions = {
     const place = this.missionPlace(at, team), made = [];
     for (let i = 0; i < count; i++) {
       // A single building stands exactly on its place; everything else takes the nearest free spot.
-      const spot = d.kind === "building" && count === 1 ? place : this.missionSpot(place, i, d.radius || 0.7);
+      const spot = d.kind === "building" && count === 1 ? place : this.missionSpot(place, i + slot, d.radius || 0.7);
       const e = this.spawn(spawn, team, spot.x, spot.z, complete, exact);
       if (tag) e.tag = tag;
-      if (name) e.name = name;
+      if (name && !veteran) e.name = name;
+      // A veteran from the campaign squad (story/squad.js): its rank, experience and name come with it.
+      if (veteran && rank > 0) {
+        e.rank = Math.min(rank, RANK_XP.length); e.xp = Math.max(xp, RANK_XP[e.rank - 1]); e.squadName = name;
+        e.baseHp = e.maxHp; e.maxHp = Math.round(e.maxHp * (1 + RANK_BONUS * e.rank)); e.hp = e.maxHp;
+      }
       if (hp) { e.hp = e.maxHp = hp; this.setBaseHp(e); }
       if (speed) e.speed = speed;
       made.push(e);

@@ -1,4 +1,5 @@
 import { DIFFICULTY_LABELS, objectiveText } from "./difficulty.js";
+import { DEFINITIONS as DEFS } from "./data.js";
 // Story mission interface: the briefing overlay, the in-match dialogue box with its Comms log,
 // the mission objectives list and the debrief. It only shows what the mission engine emits
 // (src/sim/missions.js); it never changes the match. Story text is written into the page as
@@ -37,7 +38,7 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
     <header class="mb-head"><span class="eyebrow" id="mb-place"></span><h2 id="mb-title"><small id="mb-number"></small><span id="mb-name"></span></h2></header>
     <div class="mb-body" id="mb-body">
       <div class="mb-speech" id="mb-speech"><div id="mb-portrait"></div><div class="mb-words"><div class="mb-who"><strong id="mb-speaker"></strong><span id="mb-role"></span></div><p id="mb-line" aria-live="polite"></p></div></div>
-      <div class="mb-orders" id="mb-orders" hidden><section><h3>Intel</h3><ul id="mb-intel"></ul></section><section><h3>Objectives</h3><ol id="mb-objectives"></ol></section></div>
+      <div class="mb-orders" id="mb-orders" hidden><section><h3>Intel</h3><ul id="mb-intel"></ul></section><section><h3>Objectives</h3><ol id="mb-objectives"></ol></section><section class="mb-squad" id="mb-squad" hidden><h3>Your veterans</h3><ul id="mb-squad-list"></ul></section></div>
     </div>
     <footer class="mb-foot"><button class="secondary" id="mb-back">Back</button><span class="mb-step" id="mb-step" aria-hidden="true"></span><button class="secondary" id="mb-skip">Skip</button><button class="primary" id="mb-next">Next</button></footer>
   </div>`;
@@ -92,6 +93,10 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
     q("mb-number").textContent = label || `MISSION ${two(index + 1)}`;
     q("mb-name").textContent = mission.title;
     q("mb-portrait").dataset.who = "";
+    // The veteran squad (story/squad.js) that joins this mission, named, with its rank in stars.
+    const squad = Array.isArray(mission.squad) ? mission.squad : [];
+    q("mb-squad").hidden = !squad.length;
+    q("mb-squad-list").innerHTML = squad.map((m) => `<li><b aria-hidden="true">${"★".repeat(Math.min(3, m.rank))}</b> <span>${esc(m.name)}</span> <em>${esc(DEFS[m.type]?.name || m.type)}</em></li>`).join("");
     q("mb-intel").innerHTML = (mission.briefing.intel || []).map((text) => `<li>${esc(text)}</li>`).join("");
     // An objective that waits on a decision made in this mission (an `if` left by resolveMission) is not known yet.
     q("mb-objectives").innerHTML = mission.objectives.filter((o) => !o.hidden && !o.if)

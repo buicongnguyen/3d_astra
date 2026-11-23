@@ -9,6 +9,7 @@
 // mission, and `if: { ending }`, are settled before the match by resolveMission from the
 // campaign progress, so the trimmed mission is what the match saves and replays.
 import { MISSIONS } from "./missions.js";
+import { carrySquad } from "./squad.js";
 
 // Every decision of the campaign by id: { mission, who, prompt, options }.
 export const DECISIONS = Object.freeze(Object.fromEntries(MISSIONS.flatMap((m) =>
@@ -105,5 +106,5 @@ export function resolveMission(def, progress = null) {
   for (const [key, value] of Object.entries(parts)) if (value !== def[key]) out = { ...out, [key]: value };
   if (briefLines !== def.briefing?.lines) out = { ...out, briefing: { ...def.briefing, lines: briefLines } };
   if (win !== def.debrief?.win || lose !== def.debrief?.lose) out = { ...out, debrief: { ...def.debrief, win, lose } };
-  return out;
+  return carrySquad(out, progress);
 }

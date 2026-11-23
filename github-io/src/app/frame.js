@@ -186,6 +186,7 @@ export function setupFrame(S, A) {
       else if (event.type === "missionEnd") { /* The debrief opens from sim.result (showResult). */ }
       else if (event.type === "decision" || event.type === "decided") { /* The card follows sim.mission.pending (above). */ }
       else if (event.type === "scene") { /* Started above, before the events are read. */ }
+      else if (event.type === "death" && event.squad && event.team === 0) { if (Z.started) A.notice(`${event.squad} has fallen`); S.view.event(event, S.sim); }
       else if (event.type === "promote") { if (event.team === 0 && Z.started) promoted(event); S.view.event(event, S.sim); }
       else S.view.event(event, S.sim);
     }

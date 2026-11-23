@@ -100,7 +100,7 @@ export const progression = {
       this.traitDeath(t,team);
       // H13: content modules' death hooks (sim/content.js).
       if (ON_DEATH.length) this.contentDeath(t,team,by);
-      this.events.push({type:'death',x:t.x,z:t.z,team:t.team,building:t.kind === 'building' || t.kind === 'wall',heavy:!!t.mechanical,core:t.type==='hq',seed:t.id,direction:by !== null && this.get(by) ? Math.atan2(t.x-this.get(by).x,t.z-this.get(by).z) : t.angle});
+      this.events.push({type:'death',...(t.squadName?{squad:t.squadName}:{}),x:t.x,z:t.z,team:t.team,building:t.kind === 'building' || t.kind === 'wall',heavy:!!t.mechanical,core:t.type==='hq',seed:t.id,direction:by !== null && this.get(by) ? Math.atan2(t.x-this.get(by).x,t.z-this.get(by).z) : t.angle});
       if (t.kind === 'building' || t.kind === 'wall') this.nav.rebuild(this.entities);
       // A boss's marks go with it; its own event follows the death (sim/bosses.js).
       if (t.boss) this.bossDown(t);

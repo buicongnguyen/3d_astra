@@ -258,6 +258,7 @@
     "Frontier's End": "변경의 끝",
     "Three allied commanders: an assault force, a raider and a siege corps. Expect attacks from every side.": "동맹을 맺은 지휘관 셋: 돌격대, 습격대, 공성 부대입니다. 사방에서 오는 공격에 대비하세요.",
     "Objectives": "목표",
+    "Your veterans": "내 베테랑 부대",
     "Mission objectives": "임무 목표",
     "Establish your economy": "경제 구축",
     "Assign Harvesters to resources": "채굴기를 자원에 배치",
@@ -2076,6 +2077,10 @@
     [
       "^(.+) promoted to rank (\\d)$",
       "{1}: 계급 {2}(으)로 진급"
+    ]
+    ,[
+      "^(.+) has fallen$",
+      "{1} 전사"
     ],
     [
       "^Rank (\\d)$",

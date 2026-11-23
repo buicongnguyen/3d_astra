@@ -6,6 +6,7 @@ import { DIFFICULTIES, difficultyId } from "./difficulty.js";
 // start the story from mission 1.
 import { MISSIONS } from "./story/missions.js";
 import { resolveMission, endingFor, ENDINGS, chronicleDone } from "./story/choices.js";
+import { squadFrom, validSquad } from "./story/squad.js";
 import { CHRONICLES, chronicleById } from "./story/chronicles.js";
 
 export { MISSIONS, resolveMission, endingFor };
@@ -28,6 +29,7 @@ const isRecord = (v) => !!v && typeof v === "object" && !Array.isArray(v);
 //   decisions?: { [decisionId]: optionId },      since 0.19a, written on a mission win
 //   endingsSeen?: [endingId],                    since 0.19a, written when the finale is won
 //   chronicles?: { [id]: { cleared, done, best } }, since 0.20, kept as stored (see recordIn)
+//   squad?: [{ type, name, rank, xp }],         since campaign C2, up to 6 ranked survivors of the last won main mission
 //   ...any other field a newer version wrote is kept as it is.
 // }
 // Fields other than `cleared` appear only once something was recorded, so older progress reads
@@ -48,6 +50,8 @@ export function loadProgress(store = storage()) {
     if (Array.isArray(data.endingsSeen)) progress.endingsSeen = [...new Set(data.endingsSeen.filter((id) => Object.hasOwn(ENDINGS, id)))];
     else delete progress.endingsSeen;
     if (!isRecord(data.chronicles)) delete progress.chronicles;
+    if (Array.isArray(data.squad)) progress.squad = validSquad(data.squad);
+    else delete progress.squad;
     return progress;
   } catch {
     return { cleared: {} };
@@ -86,6 +90,14 @@ export function recordClear(progress, index, time, medal = "bronze", difficulty 
 export function recordDecisions(progress, flags) {
   const answers = Object.entries(flags || {}).filter(([, option]) => typeof option === "string");
   return answers.length ? { ...progress, decisions: { ...progress.decisions, ...Object.fromEntries(answers) } } : progress;
+}
+// The veteran squad a won main-campaign mission leaves (story/squad.js); it replaces the earlier one.
+export function recordSquad(progress, entities, missionId) {
+  const squad = squadFrom(entities, missionId);
+  if (!squad.length && !progress.squad) return progress;
+  const next = { ...progress };
+  if (squad.length) next.squad = squad; else delete next.squad;
+  return next;
 }
 export function recordEnding(progress, ending) {
   if (!Object.hasOwn(ENDINGS, ending)) return progress;

@@ -2,7 +2,7 @@
 import { showTitleCard, hideTitleCard } from "./title-card.js";
 import emblemUrl from "../art/emblem.webp";
 import { $ } from "./dom.js";
-import { recordDecisions, recordEnding, endingFor, resolveMission, saveProgress, missionById, missionsOf, recordIn, bestIn } from "../campaign.js";
+import { recordDecisions, recordSquad, recordEnding, endingFor, resolveMission, saveProgress, missionById, missionsOf, recordIn, bestIn } from "../campaign.js";
 import { MODE_KEY } from "./state.js";
 import { enemyFactionOf, playerFactionOf, matchLook } from "../factions.js";
 import { Simulation } from "../simulation.js";
@@ -100,6 +100,7 @@ export function setupMatchFlow(S, A) {
     if (win) {
       S.campaign = recordIn(S.campaign, c, n, S.sim.mission?.clock ?? S.sim.time, S.sim.mission?.medal || "bronze", S.sim.difficulty);
       if (main) S.campaign = recordDecisions(S.campaign, S.sim.flags);
+      if (main && !S.sim.defence && S.sim.missionDef?.rules?.playerBase !== false) S.campaign = recordSquad(S.campaign, S.sim.entities, m.id);
       if (main && last) { ending = endingFor(S.campaign); S.campaign = recordEnding(S.campaign, ending); }
       saveProgress(S.campaign);
       S.stagePick = last ? n : n + 1;

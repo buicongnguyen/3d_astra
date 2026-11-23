@@ -50,6 +50,7 @@ export function selectionStatus(sim, entities) {
     ? `<div class="selection-hidden anti-air" title="${ANTI_AIR_ON_HINT}">${icon('tower')}<span>${ANTI_AIR_ON}</span></div>`
     : `<div class="selection-hidden anti-air" title="${ANTI_AIR_OFF_HINT}">${icon('tower')}<span>${ANTI_AIR_OFF}</span></div>`;
   return `<div class="entity-details"><div class="selection-heading"><span class="sel-portrait ${side}" aria-hidden="true">${!group && hasPortrait(e.type) ? portrait(e.type, side) : icon(group ? 'people' : e.icon || e.type)}</span><h3 title="${group ? name : e.description}">${name}</h3>${e.kind==='building'&&!group?`<span class="selection-level">L${e.level}</span>`:''}${!group&&e.kind==='unit'?rankBadge(e.rank):''}</div>
+    ${!group && e.team === 0 && e.squadName ? `<p class="selection-faction squad-name">${"★".repeat(Math.min(3, e.rank || 1))} ${e.squadName}</p>` : ""}
     ${!group && e.team > 0 ? `<p class="selection-faction">${FACTIONS[sim.missionDef?.factions?.[e.team] || sim.factions?.[e.team]]?.name || ""}</p>` : ""}
     <dl class="unit-metrics" aria-label="Selected object stats">
     ${metric('HP',`${number(hp)}/${number(maxHp)}`,`Health ${Math.ceil(hp)} of ${maxHp}`,['hp',ratio(hp,maxHp)])}
