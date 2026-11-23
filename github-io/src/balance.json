@@ -411,8 +411,9 @@
       "icon": "crosshair",
       "required_level": 2,
       "mechanical_bonus": 6,
+      "air_scale": 0.6667,
       "hits_air": true,
-      "description": "Shoulder-fired rockets deal 120 damage to mechanical units (Battle tanks and Breakers), or 20 to infantry and buildings, every 2.4s, at the same 12 m range as a tank. No splash. Fragile against close assault; protect with Vanguards. Medics heal this soldier. Requires level 2 Barracks.",
+      "description": "Shoulder-fired rockets deal 120 damage to mechanical units (Battle tanks and Breakers), 80 to flyers, or 20 to infantry and buildings, every 2.4s, at the same 12 m range as a tank. No splash. Fragile against close assault; protect with Vanguards. Medics heal this soldier. Requires level 2 Barracks.",
       "ability": {
         "id": "lockon",
         "name": "Lock-on",

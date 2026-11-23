@@ -125,7 +125,7 @@ export const combat = {
         t,
         this.attackValue(e) * scale *
           (e.counter && e.counter === t.class ? e.counter_bonus || 1.6 : 1) *
-          (t.mechanical ? (e.mechanical_bonus || 1) * (e.buff?.mech || 1) : 1) *
+          (t.mechanical ? (e.mechanical_bonus || 1) * (e.buff?.mech || 1) * (t.flying && e.air_scale ? e.air_scale : 1) : 1) *
           (t.kind === "building" ? e.building_bonus || 1 : 1) *
           (t.flying && e.kind === "building" ? AIR.flak_bonus : 1) *
           this.heightDamage(e, t) *
