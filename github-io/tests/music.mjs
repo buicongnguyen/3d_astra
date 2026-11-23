@@ -30,7 +30,7 @@ async function routeMusic(page, { missing = [] } = {}) {
 const state = (page) => page.evaluate(() => window.__frontier.music?.state() ?? null);
 const names = (requests) => requests.map((url) => new URL(url).pathname.split("/").pop());
 // A plain tap on the start screen's heading: a gesture that presses no button.
-const firstTap = (page, tap) => tap("#briefing-title");
+const firstTap = async (page, tap) => tap((await page.locator(".briefing-hero:visible").count()) ? ".briefing-hero:visible" : "#stage"); // the cover art: a gesture that presses no button
 
 await suite("music", async () => {
   // ---------------------------------------------------------------- recorded + adaptive (default)

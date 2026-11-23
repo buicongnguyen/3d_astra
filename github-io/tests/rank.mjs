@@ -46,7 +46,7 @@ await suite("rank", async () => {
     // ---- A fresh profile: rank 1 on the title, defaults picked, the next unlock locked.
     assert.equal((await rank(page)).rank, 1, `${viewport}: a fresh profile is rank 1`);
     assert.match(await chipText(page), /Rank 1(?!\d).*Recruit/, `${viewport}: the title chip shows rank 1`);
-    assert.ok(await page.locator("#rank-chip").isVisible(), `${viewport}: the chip is on the title`);
+    assert.ok(await page.locator("#rank-chip, #top-rank").evaluateAll((els) => els.some((e) => e.getClientRects().length > 0)), `${viewport}: the rank is on the title (setup panel, or the top bar on PC)`);
     assert.deepEqual(await paintButtons(page), [{ id: "factory", pressed: "true", disabled: false }, { id: "sand", pressed: "false", disabled: true }], `${viewport}: Factory picked, Sand locked`);
     assert.deepEqual(await tiny(page, "#rank-chip"), [], `${viewport}: chip text under 11 px`);
     assert.deepEqual(await tiny(page, "#rank-unlocks"), [], `${viewport}: picker text under 11 px`);

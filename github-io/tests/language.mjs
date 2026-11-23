@@ -25,7 +25,7 @@ await suite('language',async()=>{
    Object.assign(s.players[0],{alloy:10000,energy:10000});
    f.select([s.own(0).find(e=>e.type==='hq').id]);
   });
-  if(mobile)await click('button[data-dock="selection"]');
+  if(mobile)await page.evaluate(() => document.querySelector('button[data-dock="selection"]').click());
   await click('[data-action="worker"]');
   await page.waitForFunction(()=>document.querySelector('#commands [data-action="worker"]').textContent.includes('Thợ mỏ'));
   const saved=await page.evaluate(()=>{const f=window.__frontier,h=f.sim.own(0).find(e=>e.type==='hq');return {id:h.id,queue:h.queue.map(q=>q.id),alloy:f.sim.players[0].alloy};});

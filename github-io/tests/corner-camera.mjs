@@ -10,7 +10,7 @@ try {
     await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});
     await page.locator('#scenario').selectOption(map);await page.locator('#start').click();
     const half=await page.evaluate(()=>{const f=window.__frontier;f.sim.aiEnabled=false;return f.sim.terrain.half;});
-    if(mobile)await page.locator('[data-dock="map"]').tap();
+    if(mobile)await page.evaluate(() => document.querySelector('button[data-dock="map"]').click());
     for(const [sx,sz] of [[-1,-1],[1,-1],[-1,1],[1,1]]) {
       if(mobile) {
         const r=await page.locator('#minimap').boundingBox();

@@ -58,7 +58,7 @@ try {
     const screenOf = (x, z) => frontier(([x, z]) => {
       const v = window.__frontier.view, canvas = v.renderer.domElement, r = canvas.getBoundingClientRect(), p = v.project(x, z);
       const at = { x: p.x + r.x, y: p.y + r.y }, edge = document.documentElement.classList.contains('compact-ui') ? 72 : 14;
-      return at.x > r.left + 14 && at.x < r.right - edge && at.y > r.top + 14 && at.y < r.bottom - 14 && document.elementFromPoint(at.x, at.y) === canvas ? at : null;
+      return at.x > r.left + 14 && at.x < r.right - edge && at.y > r.top + 14 && at.y < r.bottom - edge && document.elementFromPoint(at.x, at.y) === canvas ? at : null; // phones ignore taps in the 72 px edge band (input-pointer.js edgeProbe)
     }, [x, z]);
 
     await page.goto(`${base}?test=1`);
@@ -104,7 +104,7 @@ try {
     const tiles = page.locator('#commands .ability-tile');
     assert.deepEqual(await tiles.evaluateAll(bs => bs.map(b => b.dataset.ability)), ['shieldwall', 'focus', 'barrage'], `${name}: one tile per distinct ability`);
     assert.deepEqual(await tiles.evaluateAll(bs => bs.map(b => [b.querySelector('.ability-name').textContent, b.querySelector('.ability-status').textContent, b.disabled, !!b.querySelector('svg')])),
-      [['Shield wall', 'Ready 2/2', false, true], ['Rapid fire', 'Ready', false, true], ['Barrage', 'Ready', false, true]], `${name}: name, glyph and state`);
+      [[touch ? 'Shield' : 'Shield wall', 'Ready 2/2', false, true], [touch ? 'Rapid' : 'Rapid fire', 'Ready', false, true], ['Barrage', 'Ready', false, true]], `${name}: name, glyph and state`);
     assert.deepEqual(await page.locator('.stance-control button').evaluateAll(bs => bs.map(b => `${b.dataset.stance}:${b.getAttribute('aria-pressed')}`)), ['guard:true', 'hold:false', 'aggressive:false'], `${name}: Guard is the default stance`);
     if (!touch) {
       assert.deepEqual(await tiles.evaluateAll(bs => bs.map(b => [b.dataset.hotkey, b.title.split(' · ')[0]])), [['E', 'E'], ['T', 'T'], ['Y', 'Y']], 'tile keys shown in the tooltips');
@@ -180,6 +180,7 @@ try {
     const breaker = await frontier(ids => { const e = window.__frontier.sim.get(ids.breaker); return { x: e.x, z: e.z, range: e.ability.range, radius: e.ability.radius }; }, ids);
     await frontier(b => window.__frontier.view.focusOn(b.x, b.z), breaker);
     // Screen points inside and outside the Breaker's reach that the HUD does not cover.
+    await dock('selection'); // the points are chosen with the same HUD that stands over the field while aiming
     const spots = { near: null, far: null };
     for (let i = 0; i < 16 && !(spots.near && spots.far); i++) {
       const a = i * Math.PI / 8;

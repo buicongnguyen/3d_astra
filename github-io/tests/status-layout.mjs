@@ -18,7 +18,7 @@ try{
    // Phase F: in phone landscape the chip sits beside the button rail. Round 3 HUD pass: in portrait it ends the
    // tab row at the bottom, beside the Selection / Actions / Map tabs; on landscape phones from 840 px the touch row
    // joins the top band and the chip takes the corner under it.
-   const besideTabs=Math.abs(toggle.y-tabs.y)<=1&&toggle.x>=tabs.x+tabs.width;
+   const besideTabs=!!tabs&&Math.abs(toggle.y-tabs.y)<=1&&toggle.x>=tabs.x+tabs.width; // landscape phones have no tab row
    const underRow=viewport.width>=840&&viewport.width>viewport.height&&toggle.y>=controls.y+controls.height;
    assert.ok(toggle.height>=44&&(toggle.y+toggle.height<=controls.y||toggle.x>=controls.x+controls.width||besideTabs||underRow),'Objectives is above, beside or under the touch controls, or ends the tab row');
    await click('#mission-toggle');
@@ -42,7 +42,7 @@ try{
    const f=window.__frontier,s=f.sim;s.aiEnabled=false;s.tick=()=>{};s.players[0].alloy=10000;s.players[0].energy=10000;
    const h=s.own(0).find(e=>e.type==='hq');f.select([h.id]);
   });
-  if(mobile)await click('button[data-dock=selection]');
+  if(mobile)await page.evaluate(() => document.querySelector('button[data-dock="selection"]').click());
   const commandLayout=()=>page.evaluate(()=>[...document.querySelectorAll('#commands [data-action],#upgrade-actions button')].map(e=>{const r=e.getBoundingClientRect();return [e.textContent,r.x,r.y,r.width,r.height];}));
   const idleCommands=await commandLayout();
   await page.evaluate(()=>{const f=window.__frontier,h=f.sim.own(0).find(e=>e.type==='hq');for(let i=0;i<5;i++)f.sim.enqueue(h.id,'worker');h.queue[0].elapsed=4;f.step(0);});
@@ -67,7 +67,7 @@ try{
      order:map.right+12<=panel.left&&Math.abs(panel.right-card.left)<=1,
      orders:document.querySelector('.order-buttons').parentElement.classList.contains('command-panel'),
      jobs:document.querySelectorAll('#queue .work-job').length,duplicate:document.querySelector('#production-status').hidden,
-     contained:controls.every(e=>{const r=e.getBoundingClientRect();return r.left>=card.left&&r.right<=card.right&&r.top>=card.top&&r.bottom<=card.bottom;}),
+     contained:controls.every(e=>{const r=e.getBoundingClientRect(),home=e.closest('.order-buttons')?deck:card;return r.left>=home.left-1&&r.right<=home.right+1&&r.top>=home.top&&r.bottom<=home.bottom;}), // the order icons of a building sit under its summary, inside the console
      clear:[[innerWidth/2,card.top-40],[innerWidth-300,80],[card.right+12,innerHeight-24],[map.right+4,innerHeight-24]].every(([x,y])=>!!document.elementFromPoint(x,y)?.closest('#world'))};
    });
    assert.ok(layout.corners&&layout.compact&&layout.centered&&layout.statusbar&&layout.order&&layout.orders&&layout.contained&&layout.duplicate&&layout.clear,JSON.stringify(layout));assert.equal(layout.jobs,5);
@@ -78,7 +78,7 @@ try{
    if(viewport.width===1280){
     const job=await page.locator('#queue .work-job').first().elementHandle();
     await page.setViewportSize({width:900,height:600});
-    await click('button[data-dock=selection]');
+    await page.evaluate(() => document.querySelector('button[data-dock="selection"]').click());
     await page.locator('#queue .work-job').first().waitFor({state:'visible'});
     await page.setViewportSize(viewport);
     await page.waitForFunction(()=>document.querySelector('#production-status').hidden);
@@ -87,13 +87,13 @@ try{
     assert.equal(await page.evaluate(()=>document.querySelector('.order-buttons').parentElement.className),'command-panel panel','orders return to the command card');
    }
   }
-  if(mobile)await click('button[data-dock=selection]');
+  if(mobile)await page.evaluate(() => document.querySelector('button[data-dock="selection"]').click());
   const inspect=async()=>page.evaluate(()=>{
    const elements=[...document.querySelectorAll('.unit-metrics dd,#queue button,.selection-activity,.order-buttons button:not([hidden])')].filter(e=>e.getClientRects().length);
    // Desktop orders sit on the command card; compact layouts keep them under Selection.
    return elements.map(e=>{
     const fixedStats=e.closest('.unit-metrics') && getComputedStyle(e.closest('#selection-info')).position==='fixed';
-    const host=(fixedStats ? document.querySelector('.topbar') : e.closest('.selection-panel,.command-panel')).getBoundingClientRect();
+    const host=(fixedStats ? document.querySelector('.topbar') : (e.closest('.order-buttons')&&!e.closest('.selection-panel')?e.closest('.command-deck'):e.closest('.selection-panel,.command-panel'))).getBoundingClientRect(); // a building's order icons sit under its summary, inside the console
     const r=e.getBoundingClientRect();
     return {text:e.textContent,queue:e.parentElement.id==='queue',top:r.top,bottom:r.bottom,w:r.width,h:r.height,oneLine:e.scrollWidth<=e.clientWidth+1,fits:r.top>=host.top&&r.bottom<=host.bottom+1&&r.left>=host.left&&r.right<=host.right+1,hit:e.tagName!=='BUTTON'||e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))};});
   });
@@ -103,7 +103,7 @@ try{
   const before=await page.evaluate(()=>window.__frontier.sim.players[0].alloy);
   await click('#queue button[data-cancel="4"] .work-cancel');assert.equal(await page.evaluate(()=>window.__frontier.sim.players[0].alloy),before+50);
   for(let i=0;i<4;i++)await click('#queue button[data-cancel="0"] .work-cancel');
-  if(mobile)await click('button[data-dock=selection]');
+  if(mobile)await page.evaluate(() => document.querySelector('button[data-dock="selection"]').click());
   assert.deepEqual(await commandLayout(),idleCommands,'cancellation does not shift commands');
   await page.evaluate(()=>{const f=window.__frontier,h=f.sim.own(0).find(e=>e.type==='hq');f.sim.upgradeBuilding(h.id);f.step(0);});
   assert.deepEqual(await commandLayout(),idleCommands,'upgrading preserves command order and positions');

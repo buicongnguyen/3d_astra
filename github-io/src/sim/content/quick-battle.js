@@ -102,18 +102,20 @@ function sendScouts(sim) {
   sim.message("Enemy scouts sighted! Meet them at your tower.");
 }
 
-// "Full army": a test-friendly battle. Your base already has a Barracks, Foundry, relay and tower, and two of
+// "Full army": a test-friendly battle. Your base already has a Barracks, Foundry, three Supply relays and a tower, and two of
 // every ground unit stand ready; mixed enemy squads attack from 0:10 and then every 35 s.
 export const ARENA = Object.freeze({
   base: Object.freeze([
     Object.freeze({ slot: "barracks", ahead: 4, side: -14 }),
     Object.freeze({ slot: "foundry", ahead: 4, side: 14 }),
     Object.freeze({ slot: "relay", ahead: -8, side: 10 }),
+    Object.freeze({ slot: "relay", ahead: -8, side: -10 }),
+    Object.freeze({ slot: "relay", ahead: -14, side: 4 }),
     Object.freeze({ slot: "tower", ahead: 24, side: 0 }),
   ]),
   army: Object.freeze(["vanguard", "ranger", "breaker", "medic", "engineer", "tank", "antitank"]),
   squad: Object.freeze(["vanguard", "ranger", "tank", "antitank", "breaker"]),
-  hawks: 2, alloy: 350, firstWave: 10, every: 35, waves: 8, waveDistance: 44,
+  hawks: 2, alloy: 350, firstWave: 25, every: 35, waves: 8, waveDistance: 44,
 });
 export const isArena = (sim) => sim.rules?.quick === "arena" && !sim.mission;
 function buildArena(sim) {
@@ -139,7 +141,7 @@ function buildArena(sim) {
   }
   sim.players[PLAYER].alloy += ARENA.alloy;
   sim.updateVision();
-  sim.message("Full army ready. Enemy squads attack in a few seconds.");
+  sim.message("Full army ready. Enemy squads attack in about 25 seconds.");
 }
 function sendArenaWave(sim) {
   const a = axes(sim);

@@ -103,7 +103,7 @@ export function stepRounds(fx, dt, visible) {
       }
       if (r.haloSize > 0 || r.fire) {
         let h = r.halo;
-        if (!h || h.owner !== r.token) {
+        if ((!h || h.owner !== r.token) && dt > 0) { // a paused frame spawns nothing
           h = r.halo = fx.emit(fx.glow, P.x, P.y, P.z, r.anchor, true);
           h.life = r.travel + 1; h.s0 = h.s1 = r.fire ? 1.1 : r.haloSize;
           if (r.cls !== "bomb") { h.s0 *= SHOT_SCALE; h.s1 *= SHOT_SCALE; h.opacity = SHOT_SCALE; }
@@ -111,7 +111,7 @@ export function stepRounds(fx, dt, visible) {
           h.owner = r.token = ++fx.rocketTokens; // one token counter with the rockets: halo owners never collide
         }
         const back = length * 0.45;
-        h.x = P.x - ux * back; h.y = P.y - uy * back; h.z = P.z - uz * back;
+        if (h && h.owner === r.token) { h.x = P.x - ux * back; h.y = P.y - uy * back; h.z = P.z - uz * back; }
       }
       if (m && dt > 0) trail(fx, r, dt, eco, ux, uy, uz, length);
       rounds[keep++] = r;

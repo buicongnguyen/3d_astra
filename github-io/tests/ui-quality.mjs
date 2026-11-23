@@ -110,7 +110,7 @@ try {
       // Starting a job adds it to the queue beside the building's orders; the action row must not move.
       if (viewport.width < viewport.height) {
         await page.evaluate(() => { const f = window.__frontier; f.select([f.sim.own(0).find(e => e.type === 'barracks').id]); });
-        await press('button[data-dock="selection"]');
+        await page.evaluate(() => document.querySelector('button[data-dock="selection"]').click());
         const tileTop = () => page.evaluate(() => document.querySelector('#commands [data-action]').getBoundingClientRect().top);
         const before = await tileTop();
         await page.evaluate(() => { const s = window.__frontier.sim; s.players[0].alloy = 500; s.enqueue(s.own(0).find(e => e.type === 'barracks').id, 'vanguard'); });

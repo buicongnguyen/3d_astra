@@ -8,7 +8,7 @@ export default {
   id: "flame",
   spawn(fx, ev, rng, a) {
     const { from, ux, uy, uz, sx, sz, anchor, len, travel } = a;
-    if (spriteJet(fx, from, ux, uy, uz, Math.min(len, 3.6), 0.7 + travel * 0.5, anchor)) {
+    if (spriteJet(fx, from, ux, uy, uz, len, 0.7 + travel * 0.5, anchor)) {
       onLand(fx, a, () => fx.hit(a.land, 1, anchor, "firebomb"));
       return;
     }
@@ -25,7 +25,7 @@ export default {
     smokePuff(fx, rng, from, ux * 1.2, uz * 1.2, anchor, 1.3, [0.18, 0.17, 0.16, 0.45], 0.8, 0.12);
     // R3-X: the cone's hot core, a tongue of flame that widens as it reaches out (two stretched glow quads), and a
     // few more embers drifting up out of it.
-    const reach = Math.min(len, 3.6) * 0.25;
+    const reach = len;
     for (const [w, col, life] of [[0.5, CORE, 0.16], [1.1, FLAME, 0.22]]) {
       const p = fx.emit(fx.glow, from.x + ux * reach * 0.5, from.y + uy * reach * 0.5, from.z + uz * reach * 0.5, anchor, true);
       p.mode = STRETCH; p.ax = ux; p.ay = uy; p.az = uz; p.length = reach; p.cell = CELL.streak; p.s0 = w * 0.1; p.s1 = w * 0.25; p.life = life; p.c0 = col; p.c1 = FLAME_END; p.rot = rng() * 6.28;

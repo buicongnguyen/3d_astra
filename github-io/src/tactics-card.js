@@ -6,19 +6,21 @@ import { ABILITY_KEYS, STANCES, STANCE_INFO, abilityGroups, abilityStatus, shoul
 // cooldown sweep and seconds) and a three-way stance switch. The markup is rebuilt only when
 // the selection changes; update() refreshes cooldowns and the pressed stance in place.
 
-// Desktop has three free tile keys. A portrait phone shows two rows of two tiles, a landscape
-// phone (card docked at the side) three rows of one.
-export const abilityLimit = (compact, side = false) => (compact && !side ? 4 : ABILITY_KEYS.length);
+export const abilityLimit = () => 99; // every ability stays visible; only the first ones have a key letter
+
+// Phones: short words for long ability names, and a symbol alone where the shape says it (the full name stays in aria-label).
+const PHONE_NAME = { "Rapid fire": "Rapid", "Triage pulse": "Heal", "Shield wall": "Shield", "Field repair": "Repair" };
+const PHONE_SYMBOL = new Set(["Shield wall", "Field repair"]);
 
 export function tacticsCardHTML(sim, entities, { compact = false, side = false, keys = true } = {}) {
   const tiles = abilityGroups(sim, entities, abilityLimit(compact, side)).map((g, i) => {
     const key = keys ? ABILITY_KEYS[i] : null;
-    return `<button class="ability-tile" data-ability="${g.id}"${key ? ` data-hotkey="${key}"` : ""} aria-label="${g.name}" title="${key ? `${key} · ` : ""}${g.name} · ${g.description}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${icon(g.icon)}<span class="ability-name">${g.name}</span><small class="ability-status"></small><i class="ability-sweep" aria-hidden="true"></i></button>`;
+    return `<button class="ability-tile${compact && PHONE_SYMBOL.has(g.name) ? " symbol-only" : ""}" data-ability="${g.id}"${key ? ` data-hotkey="${key}"` : ""} aria-label="${g.name}" title="${key ? `${key} · ` : ""}${g.name} · ${g.description}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${icon(g.icon)}<span class="ability-name">${compact ? PHONE_NAME[g.name] || g.name : g.name}</span><small class="ability-status"></small><i class="ability-sweep" aria-hidden="true"></i></button>`;
   }).join("");
   const stance = entities.some(takesStance)
     ? `<div class="stance-control" role="group" aria-label="Stance">${STANCES.map((id) => {
         const s = STANCE_INFO[id];
-        return `<button data-stance="${id}" aria-pressed="false" title="${s.title}${keys ? ` · ${s.key}` : ""}">${icon(s.icon)}<span>${compact && !side && id === "aggressive" ? "Chase" : s.label}</span>${keys ? `<kbd>${s.key}</kbd>` : ""}</button>`;
+        return `<button data-stance="${id}" aria-pressed="false" title="${s.title}${keys ? ` · ${s.key}` : ""}">${icon(s.icon)}<span>${compact && id === "aggressive" ? "Chase" : s.label}</span>${keys ? `<kbd>${s.key}</kbd>` : ""}</button>`;
       }).join("")}</div>`
     : "";
   return tiles + stance;
@@ -54,7 +56,7 @@ export function updateTacticsCard(root, sim, entities, { compact = false, side =
       if (!g) continue;
       const sweep = g.fraction.toFixed(3);
       if (tile.dataset.cd !== sweep) { tile.dataset.cd = sweep; tile.style.setProperty("--cd", sweep); }
-      const narrowGroup = compact && !side && groups.length >= 4 && g?.count > 1 && g.ready > 0;
+      const narrowGroup = groups.length >= 4 && g?.count > 1 && g.ready > 0;
       setText(tile.querySelector(".ability-status"), narrowGroup ? `${g.ready}/${g.count}` : abilityStatus(g));
     }
   }

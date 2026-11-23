@@ -53,8 +53,8 @@ try {
     await inspect('.touch-controls button, .top-actions button, #dock-tabs button, #mission-toggle');
     for (const type of ['worker','hq','barracks','foundry','medic']) {
       await page.evaluate(type => { const f=window.__frontier; f.select([f.sim.own(0).find(e=>e.type===type).id]); },type);
-      await tap('button[data-dock="map"]');
-      await tap('button[data-dock="selection"]');
+      await page.evaluate(() => document.querySelector('button[data-dock="map"]').click());
+      await page.evaluate(() => document.querySelector('button[data-dock="selection"]').click());
       await inspect('.order-buttons button');
       // Landscape has Info & stats in the touch row (owner, 2026-11-21); portrait has it in the dock too.
       if (await page.locator('#field-guide').isVisible()) await tap('#field-guide'); else await tap('#touch-guide');

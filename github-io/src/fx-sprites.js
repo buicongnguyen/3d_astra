@@ -180,7 +180,7 @@ export class FxSprites {
       for (let i = 0; i < items.length; i++) {
         const p = items[i];
         if (!p.once) p.age += dt;
-        else if (p.age > 0) { p.anchor = null; batch.free.push(p); continue; } // drawn once, the frame it was put
+        else if (p.age > 0 && dt > 0) { p.anchor = null; batch.free.push(p); continue; } // paused (dt 0): the frame stays as drawn // drawn once, the frame it was put
         if (p.age >= p.life) { p.anchor = null; batch.free.push(p); continue; }
         items[keep++] = p;
         if (p.age < 0) continue; // delayed start

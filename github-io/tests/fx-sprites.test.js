@@ -100,7 +100,7 @@ test("tracer atlas uses one quarter of the live size and glow after the screen-s
     assert.equal(streak.size,Math.max(6,100*unitsPerPixel)/4);
     assert.ok(Math.abs(streak.sy*streak.size*.15-4*unitsPerPixel)<1e-9,"4 px core");
     assert.equal(streak.a,.95); assert.equal(records.length,4,"one round, two fading trail copies and one muzzle cue");
-    assert.equal(streak.vx*streak.life,12);
+    assert.ok(Math.abs(streak.x+streak.vx*streak.life+streak.sx*streak.size/2-12)<1e-9,"the nose lands on the target");
     spriteHead(fx,'shell',0,0,0,1,0,0,1.5);
     assert.equal(records.at(-1).size,20*unitsPerPixel);
     assert.equal(records.at(-1).a,.95);

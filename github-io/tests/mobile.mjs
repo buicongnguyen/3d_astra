@@ -96,7 +96,7 @@ const layout = async (label) => {
       scroll: document.documentElement.scrollWidth,
       world: { x: r.x, y: r.y, width: r.width, height: r.height },
       pixelRatio: window.__frontier.view.renderer.getPixelRatio(),
-      controls: controls.map((s) => {
+      controls: controls.filter((s) => s !== "#dock-tabs" || document.querySelector(s).getClientRects().length).map((s) => { // landscape phones have no dock tabs
         const e = document.querySelector(s),
           b = e.getBoundingClientRect();
         return {
@@ -231,7 +231,7 @@ try {
   await read(() => window.__frontier.view.focusOn(-25, 24));
   await tapPoint(await worldPoint(-25, 24, 1));
   await tap('[data-action="worker"]');
-  await tap('button[data-dock="selection"]');
+  await page.evaluate(() => document.querySelector('button[data-dock="selection"]').click());
   await tap('#queue [data-cancel="0"]');
   assert.equal(
     await read(
@@ -368,9 +368,9 @@ try {
     await layout(label);
     await tap('[data-action="relay"]');
     await tap("#cancel-mode");
-    await tap('button[data-dock="map"]');
+    await page.evaluate(() => document.querySelector('button[data-dock="map"]').click());
     await tap("#home");
-    await tap('button[data-dock="selection"]');
+    await page.evaluate(() => document.querySelector('button[data-dock="selection"]').click());
     await screenshot(label);
   }
   await read(() => {

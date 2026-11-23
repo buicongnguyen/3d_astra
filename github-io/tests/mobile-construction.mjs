@@ -49,8 +49,8 @@ try{
     await page.waitForFunction(()=>getComputedStyle(document.querySelector('#notice')).visibility==='hidden');
     await page.screenshot({path:`test-results/construction-warning-${viewport.width}x${viewport.height}.png`});
     if(index===0){
-      await tap('button[data-dock="map"]');assert.equal(await page.locator('#mode-controls').evaluate(e=>e.parentElement.id),'stage');
-      await tap('button[data-dock="selection"]');assert.equal(await page.locator('#mode-controls').evaluate(e=>e.parentElement.id),'construction-status');
+      await page.evaluate(() => document.querySelector('button[data-dock="map"]').click());assert.equal(await page.locator('#mode-controls').evaluate(e=>e.parentElement.id),'stage');
+      await page.evaluate(() => document.querySelector('button[data-dock="selection"]').click());assert.equal(await page.locator('#mode-controls').evaluate(e=>e.parentElement.id),'construction-status');
     }
     const valid=await point('valid');await page.touchscreen.tap(valid.x,valid.y);
     await page.waitForFunction(()=>!document.querySelector('#confirm-build').disabled);await inspect();

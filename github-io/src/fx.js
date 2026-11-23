@@ -1128,11 +1128,11 @@ export class Effects {
         p.roll += ROCKET.spin * dt;
         // The flame halo: one pooled glow sprite per rocket, moved to the nozzle every frame.
         let h = p.halo;
-        if (!h || h.owner !== p.token) {
+        if ((!h || h.owner !== p.token) && dt > 0) { // a paused frame spawns nothing
           h = p.halo = this.particle(this.glow, { lifted: true, x, y, z, opacity: SHOT_SCALE, s0: 1.15 * p.body * SHOT_SCALE, s1: 1.15 * p.body * SHOT_SCALE, life: p.travel + 1, c0: PAL.halo, c1: PAL.halo, anchor: p.anchor });
           h.owner = p.token = p.token || ++this.rocketTokens;
         }
-        h.x = x - ux * tail * 1.25; h.y = y - uy * tail * 1.25; h.z = z - uz * tail * 1.25;
+        if (h && h.owner === p.token) { h.x = x - ux * tail * 1.25; h.y = y - uy * tail * 1.25; h.z = z - uz * tail * 1.25; }
         if (visible(p.anchor) && !spriteHead(this, "rocket", x,y,z, ux,uy,uz, 1.9 * p.body * bodyScale, p.anchor)) this.rockets.add(x, y, z, ux, uy, uz, p.roll, p.body * bodyScale * SHOT_SCALE, p.color);
       }
       if (t >= 1) {
@@ -1174,7 +1174,7 @@ export class Effects {
       this.depositLive.set(r.id, live);
     }
     for (const [id, em] of this.emitters) if (this.time - em.seen > 1) this.emitters.delete(id);
-    this.trimParticles(sim, selected);
+    if (dt > 0) this.trimParticles(sim, selected); // a paused frame trims nothing: its effects stay as drawn
     if (this.phoneBatch) {
       const batch = this.phoneBatch;
       let count = this.decals.update(dt, visible, batch);

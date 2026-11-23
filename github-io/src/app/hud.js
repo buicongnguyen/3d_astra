@@ -75,6 +75,12 @@ export function setupHud(S, A) {
     document.documentElement.dataset.dock = name;
     for (const button of $("dock-tabs").querySelectorAll("button"))
       button.setAttribute("aria-pressed", String(button.dataset.dock === name));
+    const toggle = $("map-toggle"); // landscape phones: the minimap's own button replaces the Selection / Map tabs
+    if (toggle) {
+      toggle.setAttribute("aria-pressed", String(name === "map"));
+      toggle.setAttribute("aria-label", name === "map" ? "Shrink map" : "Enlarge map");
+      toggle.title = toggle.getAttribute("aria-label");
+    }
   }
 
   // The notice line (#notice): routine notices and alerts share it with a priority (message-queue.js).
@@ -285,7 +291,7 @@ export function setupHud(S, A) {
             const lockNote = t.choice ? " Choosing it locks the other branch for this match." : t.state === "locked" ? ` ${t.sub}.` : "";
             const priced = t.state === "ready" || t.state === "locked" ? `, ${d.cost[0]} alloy${d.cost[1] ? ` and ${d.cost[1]} energy` : ""}` : `, ${t.sub}`;
             // A sixth tile (a faction's own building in the build menu) has no letter left: click or tap it.
-            return `<button class="command-tile${t.research ? " research-tile" : ""}${t.partial ? " partial" : ""} state-${t.state}" data-action="${t.action}" data-state="${t.state}"${key ? ` data-hotkey="${key}"` : ""}${t.state === "busy" ? ` style="--p:${(t.progress || 0).toFixed(3)}"` : ""} aria-label="${t.label}${priced}" title="${key ? `${key} · ` : ""}${d.name} · ${d.description}${lockNote}${d.flying ? ` · ${airNote(S.sim, 0)}` : ""}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${hasPortrait(t.type) ? portrait(t.type) : icon(d.icon || t.type)}<span>${t.label}</span>${sub}</button>`;
+            return `<button class="command-tile${t.research ? " research-tile" : ""}${t.partial ? " partial" : ""} state-${t.state}" data-action="${t.action}" data-state="${t.state}"${key ? ` data-hotkey="${key}"` : ""}${t.state === "busy" ? ` style="--p:${(t.progress || 0).toFixed(3)}"` : ""} aria-label="${t.label}${priced}" title="${key ? `${key} · ` : ""}${d.name} · ${d.description}${lockNote}${d.flying ? ` · ${airNote(S.sim, 0)}` : ""}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${hasPortrait(t.type) ? portrait(t.type) : icon(d.icon || t.type)}<span>${t.label === "Anti-tank soldier" ? "Anti-tank" : t.label}</span>${sub}</button>`; // the long name keeps its full text in the tooltip
           })
           .join("") || tactics || (structure ? `<p class="structure-hint">${e.description}</p>` : e?.kind==='building' ? '' :
         `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : hasCore ? "Your expedition is ready" : "Your Command core is down"}</strong><p>${e ? (S.touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : hasCore ? "Select the Command core to train Harvesters, or the Barracks to grow your army." : "Gather your remaining forces and hold on."}</p></div>`);
@@ -439,6 +445,7 @@ export function setupHud(S, A) {
           event.target instanceof Element && !event.target.closest('#mission-toggle, #mission-objectives')) setObjectivesOpen(false);
     });
 
+    $("map-toggle").onclick = () => { dockTab(document.documentElement.dataset.dock === "map" ? "selection" : "map"); updateUI(); };
     $("dock-tabs").onclick = (event) => {
       const button = event.target.closest("[data-dock]");
       if (button) { dockTab(button.dataset.dock); updateUI(); }

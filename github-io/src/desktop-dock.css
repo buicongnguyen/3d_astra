@@ -410,3 +410,59 @@
   :root:not(.compact-ui) #mission-objectives { width: 300px; }
   :root:not(.compact-ui) .dialogue { top: 110px; }
 }
+
+/* PC build tiles show the unit's small picture too, like phones (owner, 2026-11-23). */
+:root:not(.compact-ui) .command-panel #commands .command-tile:has(> .portrait-art) { display: grid; grid-template-columns: 34px minmax(0, 1fr); column-gap: 6px; align-content: center; align-items: center; text-align: left; }
+:root:not(.compact-ui) .command-panel #commands .command-tile > .portrait-art { --size: 34px; display: block; grid-column: 1; grid-row: 1 / span 2; width: 34px; height: 34px; margin: 0; border-radius: 4px; }
+:root:not(.compact-ui) .command-panel #commands .command-tile:has(> .portrait-art) > span,
+:root:not(.compact-ui) .command-panel #commands .command-tile:has(> .portrait-art) > small { grid-column: 2; min-width: 0; margin: 0; text-align: left; }
+:root:not(.compact-ui) .command-panel #commands .command-tile.state-locked > .portrait-art { opacity: .55; filter: saturate(.55); }
+
+/* Shorter PC console (owner, 2026-11-23): the order icons sit under the unit card, the right side keeps the main
+   choices in two rows, and every button stays visible at one fixed height. */
+:root:not(.compact-ui) { --console-card-height: 130px; --console-mid: 130px; --order-h: 36px; --tile-h: 48px; }
+:root:not(.compact-ui) .bottom-dock .command-panel .order-buttons { position: absolute; z-index: 2; left: calc(8px - var(--console-selection)); bottom: 6px; width: calc(var(--console-selection) - 16px); }
+:root:not(.compact-ui) .bottom-dock .command-panel #commands { padding-top: 0; }
+:root:not(.compact-ui) .selection-panel .entity-details { grid-template-columns: 40px minmax(0, 1fr) auto; column-gap: 8px; row-gap: 0; }
+:root:not(.compact-ui) .selection-panel .selection-heading .sel-portrait { width: 40px; height: 40px; }
+:root:not(.compact-ui) .selection-panel.has-entity .selection-heading h3 { margin: 0; font-size: 14px; line-height: 16px; }
+:root:not(.compact-ui) .selection-panel .unit-metrics { gap: 8px; margin: 0; font-size: 11px; line-height: 12px; }
+:root:not(.compact-ui) .selection-panel .unit-metrics :is(strong, b) { font-size: 12px; line-height: 13px; }
+:root:not(.compact-ui) .selection-panel .selection-activity { margin: 0; font-size: 11px; line-height: 13px; }
+:root:not(.compact-ui) .selection-panel .selection-scroll { position: absolute; left: 150px; right: 8px; bottom: 46px; width: auto; height: 30px; flex: none; margin: 0; }
+:root:not(.compact-ui) .selection-panel #unit-list button { width: 28px; height: 28px; }
+:root:not(.compact-ui) .selection-panel #unit-list button > .portrait-art { --size: 22px; }
+:root:not(.compact-ui) .selection-panel #queue { position: absolute; left: calc(16px + (var(--console-selection) - 16px) / 4); right: 8px; bottom: 6px; height: 44px; margin: 0; } /* a building's jobs sit beside its two order icons */
+:root:not(.compact-ui) .selection-panel #queue.work-strip:not(:empty) { position: absolute; flex: none; min-height: 44px; height: 44px; overflow: hidden; }
+
+/* Units selected: orders stay on the right as one slim row above two slim rows of choices (owner, 2026-11-23). */
+:root:not(.compact-ui):not(.no-units) .bottom-dock .command-panel { --order-h: 30px; --tile-h: 38px; }
+:root:not(.compact-ui):not(.no-units) .bottom-dock .command-panel .order-buttons { position: static; width: auto; }
+:root:not(.compact-ui):not(.no-units) .command-panel .order-buttons .icon { width: 17px; height: 17px; }
+:root:not(.compact-ui):not(.no-units) .bottom-dock .command-panel #commands { gap: 4px; padding-top: 4px; }
+:root:not(.compact-ui):not(.no-units) .command-panel #commands :is(.command-tile, .ability-tile, .stance-control button) { height: 38px; min-height: 38px; padding-block: 1px; }
+:root:not(.compact-ui):not(.no-units) .command-panel #commands .stance-control { height: 38px; min-height: 38px; }
+:root:not(.compact-ui):not(.no-units) .command-panel #commands .command-tile:has(> .portrait-art) { grid-template-columns: 28px minmax(0, 1fr); }
+:root:not(.compact-ui):not(.no-units) .command-panel #commands .command-tile > .portrait-art { --size: 28px; width: 28px; height: 28px; }
+:root:not(.compact-ui):not(.no-units) .command-panel #commands :is(.command-tile, .ability-tile) > span { font-size: 12px; line-height: 14px; }
+:root:not(.compact-ui):not(.no-units) .command-panel #commands :is(.command-tile, .ability-tile) small { font-size: 11px; line-height: 13px; }
+:root:not(.compact-ui):not(.no-units) .selection-panel .selection-scroll { left: 8px; right: 8px; bottom: 6px; height: 40px; }
+:root:not(.compact-ui):not(.no-units) .selection-panel #unit-list button { width: 36px; height: 36px; }
+:root:not(.compact-ui):not(.no-units) .selection-panel #unit-list button > .portrait-art { --size: 28px; }
+
+/* Every ability shares one row, however many the selected units bring. */
+:root:not(.compact-ui) .command-panel #commands.tactics-card { display: flex; flex-wrap: wrap; align-content: flex-start; }
+:root:not(.compact-ui) .command-panel #commands.tactics-card > .ability-tile { flex: 1 1 0; min-width: 0; }
+:root:not(.compact-ui) .command-panel #commands.tactics-card > .stance-control { flex: 0 0 100%; }
+:root:not(.compact-ui) .command-panel #commands.tactics-card .ability-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Five or more abilities: icon over a short count; the name stays in the tooltip. */
+:root:not(.compact-ui) .command-panel #commands.tactics-card:has(> .ability-tile:nth-child(5)) > .ability-tile { display: grid; place-items: center; padding-inline: 1px; }
+:root:not(.compact-ui) .command-panel #commands.tactics-card:has(> .ability-tile:nth-child(5)) .ability-name { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+:root:not(.compact-ui) .command-panel #commands.tactics-card:has(> .ability-tile:nth-child(5)) > .ability-tile { grid-template-columns: minmax(0, 1fr); grid-auto-rows: auto; align-content: center; justify-items: center; gap: 0; }
+:root:not(.compact-ui) .command-panel #commands.tactics-card:has(> .ability-tile:nth-child(5)) > .ability-tile > .icon { grid-column: 1; grid-row: 1; width: 16px; height: 16px; margin: 0; }
+:root:not(.compact-ui) .command-panel #commands.tactics-card:has(> .ability-tile:nth-child(5)) .ability-status { position: static; grid-column: 1; grid-row: 2; margin: 0; font-size: 11px; line-height: 13px; }
+:root:not(.compact-ui):not(.no-units) .command-panel #commands.tactics-card { gap: 3px; padding-top: 3px; }
+:root:not(.compact-ui):not(.no-units) .command-panel #commands.tactics-card > .stance-control { height: 38px; min-height: 38px; max-height: 38px; }
+:root:not(.compact-ui):not(.no-units) .command-panel #commands.tactics-card > .stance-control button { height: 38px !important; min-height: 38px !important; }
+:root:not(.compact-ui) .bottom-dock .command-panel .order-buttons { pointer-events: none; } /* its empty cells never block the queue under them */
+:root:not(.compact-ui) .bottom-dock .command-panel .order-buttons button { pointer-events: auto; }

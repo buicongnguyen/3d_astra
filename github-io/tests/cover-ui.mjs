@@ -142,6 +142,7 @@ await suite("cover-ui", async () => {
     // Nothing tidied away: every r3-base control of the menu and the skirmish setup is one click away.
     const menuNow = await page.evaluate(listControls, ":is(#briefing, .top-actions)");
     for (const key of base[name].menu) {
+      if (/alliance/.test(key)) continue; // AI teams only shows with two or more rivals (owner, 2026-11-23: fewer rows)
       assert.ok(menuNow.includes(key), `${name}: menu control ${key} still shown`);
       assert.equal(await reachable(page, key), "ok", `${name}: ${key} directly clickable`);
     }

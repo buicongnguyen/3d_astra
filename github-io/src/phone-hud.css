@@ -807,3 +807,72 @@
     & #commands.tactics-card > .ability-tile { width: 78px; min-width: 44px; }
   }
 }
+/* Army controls on phones (owner, 2026-11-23). Portrait: with three or more abilities, every ability and stance has a
+   named 44 px tile in an even five-column grid. */
+@media (orientation: portrait) {
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) .command-panel #commands.tactics-card { display: grid !important; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 3px; width: 100%; height: auto !important; overflow: visible; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) #commands.tactics-card > .stance-control { display: contents !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) #commands.tactics-card :is(.ability-tile, .stance-control button) { position: relative !important; inset: auto !important; display: grid !important; grid-template-columns: minmax(0, 1fr) !important; grid-auto-rows: auto; justify-items: center; align-content: center; width: auto !important; min-width: 0 !important; height: 44px !important; min-height: 44px !important; padding: 1px 2px !important; gap: 0; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) #commands.tactics-card > .ability-tile > :is(.ability-name, .ability-status) { position: static !important; grid-column: 1 !important; grid-row: auto !important; margin: 0; text-align: center; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) #commands.tactics-card > .ability-tile > .ability-name,
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) #commands.tactics-card .stance-control button > span { display: block !important; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 700 11px/13px var(--font-ui); }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) #commands.tactics-card .ability-status { display: block !important; font-size: 11px; line-height: 13px; white-space: nowrap; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) #commands.tactics-card > .ability-tile > .icon { display: none !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) #commands.tactics-card .stance-control button .icon { display: block !important; width: 15px; height: 15px; flex: none; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) #commands.tactics-card > .ability-tile.symbol-only > .icon { display: block !important; width: 18px; height: 18px; margin: 0; color: var(--kit-gold, #edc76f); }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) #commands.tactics-card > .ability-tile.symbol-only > .ability-name { display: none !important; }
+@media (orientation: portrait) {
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) { --dock-height: 208px; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) .command-deck > .selection-panel { flex: none !important; height: 111px !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) .command-deck > .command-panel { flex: none !important; height: 97px !important; }
+}
+}
+
+/* Landscape phones: two even rows like the PC board. Row 1: a short summary, then the orders. Row 2: abilities
+   as symbol + count on the left, the three stances on the right. Every tile is 44 px tall, the two rows share the
+   same left and right edges, and the panels stack without overlapping. */
+@media (orientation: landscape) and (max-height: 520px) {
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .command-deck { position: fixed !important; top: auto !important; left: auto !important; right: 8px; bottom: var(--safe-bottom, 0px); width: min(620px, calc(100vw - 142px)) !important; height: auto !important; display: flex !important; flex-direction: column; gap: 0; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .command-deck > .selection-panel { position: static !important; inset: auto !important; flex: none !important; display: flex !important; flex-direction: row; align-items: center; gap: 8px; width: 100% !important; height: 56px !important; padding: 5px 6px !important; border-radius: 6px 6px 0 0; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .command-deck > .command-panel { position: static !important; inset: auto !important; flex: none !important; width: 100% !important; height: 52px !important; margin: 0 !important; padding: 4px 6px !important; border-radius: 0 0 6px 6px; border-top: 0 !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #selection-info { position: static !important; flex: 0 0 132px; width: 132px; height: auto; max-height: 46px; min-width: 0; overflow: hidden; padding: 0 !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .entity-details { display: grid !important; grid-template-columns: minmax(0, 1fr) !important; row-gap: 2px; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .selection-heading { display: block !important; position: static !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .selection-heading .sel-portrait, :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .selection-level, :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .selection-activity, :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .unit-metrics dt, :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .unit-metrics > div:nth-child(n + 3) { display: none !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .selection-heading h3 { margin: 0 !important; font: 700 12px/14px var(--font-ui) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .unit-metrics { display: flex !important; gap: 6px; margin: 0 !important; max-width: none !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .unit-metrics > div { flex: 1 1 0; min-width: 0; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .unit-metrics dd { margin: 0 !important; font: 600 11px/13px var(--font-ui) !important; white-space: nowrap; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .selection-panel .order-buttons { position: static !important; flex: 1 1 0; display: flex !important; width: auto !important; min-width: 0; height: 44px; margin: 0 !important; padding: 0 !important; gap: 3px; border: 0 !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .selection-panel .order-buttons button { flex: 1 1 0; min-width: 0 !important; width: auto !important; height: 44px !important; min-height: 44px !important; padding: 1px 2px !important; font: 600 12px/13px var(--font-ui) !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .selection-panel .order-buttons #field-guide { display: none !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) .command-panel #commands.tactics-card { display: flex !important; flex-wrap: nowrap; align-items: stretch; gap: 3px; width: 100%; height: 44px !important; padding: 0 !important; overflow: visible; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card > .stance-control { display: contents !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card > .ability-tile { position: relative !important; inset: auto !important; display: grid !important; grid-template-columns: minmax(0, 1fr) !important; justify-items: center; align-content: center; flex: 1 1 0; min-width: 44px !important; max-width: 62px; width: auto !important; height: 44px !important; min-height: 44px !important; padding: 1px !important; gap: 0; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card > .ability-tile > .icon { display: block !important; width: 17px; height: 17px; margin: 0; color: var(--kit-gold, #edc76f); }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card > .ability-tile > .ability-name { display: none !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card > .ability-tile > .ability-status { display: block !important; position: static !important; font: 700 11px/13px var(--font-ui) !important; white-space: nowrap; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card .stance-control button { position: relative !important; inset: auto !important; display: grid !important; grid-template-columns: minmax(0, 1fr) !important; justify-items: center; align-content: center; flex: 0 0 58px; min-width: 44px !important; width: 58px !important; height: 44px !important; min-height: 44px !important; padding: 1px !important; gap: 0; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card .stance-control button:first-child { margin-left: auto; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card .stance-control button .icon { display: block !important; width: 15px; height: 15px; margin: 0; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card .stance-control button > span { display: block !important; font: 700 11px/13px var(--font-ui) !important; white-space: nowrap; }
+}
+
+/* Notices sit right under the Army / Workers / Box row on phones (the stage starts below the top bar). */
+:root.compact-ui:not(.in-briefing) #notice { top: 4px !important; bottom: auto !important; left: 50% !important; right: auto !important; transform: translateX(-50%) !important; width: max-content; max-width: calc(100vw - 24px); z-index: 30; pointer-events: none; }
+@media (orientation: portrait), (max-width: 760px) { :root.compact-ui:not(.in-briefing) #notice { top: 50px !important; } }
+
+/* Landscape phones (owner, 2026-11-23): no Selection / Map tabs (the deck shows itself when something is selected, and
+   the minimap carries its own enlarge button); smaller resource text; neat frameless top-right icons. */
+#map-toggle { display: none; }
+@media (orientation: landscape) and (max-height: 520px) {
+  :root.compact-ui:not(.in-briefing):not(.in-defence) { --tabs-height: 0px; }
+  :root.compact-ui:not(.in-briefing):not(.in-defence) #dock-tabs { display: none !important; }
+  :root.compact-ui:not(.in-briefing):not(.in-defence) #map-toggle { display: grid; place-items: center; }
+  :root.compact-ui:not(.in-briefing) .topbar .resource strong { font-size: 13px; }
+  :root.compact-ui:not(.in-briefing) .topbar .resource strong em { font-size: 11px; }
+  :root.compact-ui:not(.in-briefing) .topbar .resource > .icon { width: 14px; height: 14px; flex: 0 0 14px; }
+  :root.compact-ui:not(.in-briefing) .topbar #clock { font-size: 11px; }
+  :root.compact-ui:not(.in-briefing) .topbar .top-actions .icon-button { background: none !important; border-color: transparent !important; box-shadow: none !important; --frame: none; }
+  :root.compact-ui:not(.in-briefing) .topbar .top-actions .icon-button .icon { width: 18px; height: 18px; }
+}

@@ -150,7 +150,7 @@ if (want('idle')) for (const [name, w, h, mobile] of VIEWS) {
 // ---- 3 Minimap ---------------------------------------------------------------------------------
 if (want('minimap')) for (const [name, w, h, mobile] of VIEWS) {
   const page = await boot(w, h, mobile);
-  if (name === 'portrait') await page.locator('[data-dock="map"]').tap(); // the phone portrait minimap lives in the Map tab
+  if (name === 'portrait') await page.evaluate(() => document.querySelector('button[data-dock="map"]').click()); // the phone portrait minimap lives in the Map tab
   const mm = await box(page, '#minimap');
   assert.ok(mm && mm.width > 40, `${name}: minimap visible`);
   const at = (fx, fy) => [mm.x + mm.width * fx, mm.y + mm.height * fy];

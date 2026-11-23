@@ -142,7 +142,7 @@ await suite("terrain", async () => {
     await shot(page, `terrain-ramp-${viewport}`);
     // Back to the hidden unit, selected, for the closing screenshot (mark and card line).
     await page.evaluate(({ id, p }) => { const f = window.__frontier; f.view.focusOn(p.x, p.z + 3); f.view.zoom = 26; f.select([id]); f.step(0.05); }, setup);
-    if (mobile && await page.locator("html").getAttribute("data-dock") !== "selection") await tap('button[data-dock="selection"]');
+    if (mobile && await page.locator("html").getAttribute("data-dock") !== "selection") await page.evaluate(() => document.querySelector('button[data-dock="selection"]').click());
     await page.evaluate(frames);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${viewport}: no sideways scroll`);
     await shot(page, `terrain-dunes-${viewport}`);
@@ -199,7 +199,7 @@ await suite("terrain", async () => {
     });
     assert.ok(ford.inFord && ford.cls && /^In the ford/.test(ford.line) && ford.fits && ford.size >= 11, `${viewport}: ford card line ${JSON.stringify(ford)}`);
     assert.ok(ford.tile === "In the ford" && ford.disabled, `${viewport}: ford ability tile ${JSON.stringify(ford)}`);
-    if (mobile && await page.locator("html").getAttribute("data-dock") !== "selection") await tap('button[data-dock="selection"]');
+    if (mobile && await page.locator("html").getAttribute("data-dock") !== "selection") await page.evaluate(() => document.querySelector('button[data-dock="selection"]').click());
     await page.waitForTimeout(200);
     await shot(page, `terrain-ford-${viewport}`);
     assert.deepEqual(errors, [], `${viewport}: page errors`);

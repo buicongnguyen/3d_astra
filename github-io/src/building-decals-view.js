@@ -35,7 +35,9 @@ const FACE = { S: [0, 1, 1, 0], E: [1, 0, 0, -1], W: [-1, 0, 0, 1] };
 // width, height (world units for a building of radius 2.5; scaled with the radius), then options:
 // m mode, p phase, glow, team (tinted by the team colour), color, role ("bar": production progress,
 // "door": flashes when a unit leaves).
-const w = (cell, face, u, v, wd, ht, o = {}) => ({ cell: CELL[cell], face, u, v, wd, ht, ...o });
+// Beacons are drawn at half their listed size (owner, 2026-11-23): small roof lights, not big yellow balls.
+const BEACON_SCALE = 0.5;
+const w = (cell, face, u, v, wd, ht, o = {}) => { const k = cell === "beacon" ? BEACON_SCALE : 1; return { cell: CELL[cell], face, u, v, wd: wd * k, ht: ht * k, ...o }; };
 const PRODUCER = [
   w("door", "S", 0, 0.14, 1.7, 0.4, { glow: true, m: MODE.pulse, role: "door", color: LIGHT.warm }),
   w("bar", "S", 0, 0.52, 1.25, 0.32, { glow: true, m: MODE.progress, role: "bar", team: true }),
@@ -356,7 +358,7 @@ export class BuildingDecalsView {
       if (place.emitter) {
         const centre = scratch.v.copy(place.emitter).applyMatrix4(scratch.b);
         scratch.m.makeTranslation(centre.x, centre.y, centre.z);
-        this.put(i++, scratch.m, team, CELL.beacon + GLOW, MODE.halo, 0, r * 0.95);
+        this.put(i++, scratch.m, team, CELL.beacon + GLOW, MODE.halo, 0, r * 0.95 * BEACON_SCALE);
       }
       for (const { matrix, spec } of place.wall) {
         if (spec.role === "bar" && !D[e.type]?.trains?.length) continue;

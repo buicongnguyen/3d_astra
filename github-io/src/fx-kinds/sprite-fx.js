@@ -15,6 +15,13 @@ const upp = (fx) => fx.view.unitsPerPixel || 0.1;
 // (its art fills about a quarter of the cell height), whatever the zoom.
 export const TRACER_MIN_PX = 4, TRACER_LENGTH_PX = 34, TRACER_ALPHA = 0.95, HEAD_CELL_PX = 20, HEAD_LENGTH_PX = 30;
 // Two fainter copies follow each bullet, so it reads as a moving streak; phones keep one.
+// A streak starts with its tail at the muzzle and ends with its nose on the target, so it shows the true attack distance.
+function fitFlight(p, size, from, to, ux, uy, uz) {
+  const dist = Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z) || 1, half = Math.min(p.sx * size, dist) / 2, k = (dist - 2 * half) / dist;
+  p.x = from.x + ux * half; p.y = from.y + uy * half; p.z = from.z + uz * half;
+  p.vx *= k; p.vy *= k; p.vz *= k;
+  return { x: p.x, y: p.y, z: p.z };
+}
 function tracerTrail(fx, p, size, anchor, from, ux, uy, uz, delay) {
   p.r = (p.r ?? 1) * 2; p.g = (p.g ?? 1) * 2; p.b = (p.b ?? 1) * 1.25; // lifts the painted streak to a bright, slightly orange gold
   for (let k = 1, n = fx.view.lowPower ? 1 : 2; k <= n; k++) {
@@ -102,11 +109,12 @@ export function spriteTrailPuff(fx, x, y, z, size, life, anchor, alpha = 0.8) {
 export function spriteJet(fx, from, ux, uy, uz, reach, life, anchor, delay = 0) {
   const sprites = fx.sprites;
   if (!sprites?.ready || !fx.motion) return false;
-  const size = Math.max(reach * 2.1, readable(4,96,upp(fx))) * SHOT_SCALE;
-  const inlet = SHEETS.flame.inlet, back = (0.5 - inlet) * size;
+  // The painted tongue runs from the muzzle to the target, so the fire always matches the real attack distance.
+  const inlet = SHEETS.flame.inlet, size = Math.max(0.8, reach / (0.95 - inlet)), back = (0.5 - inlet) * size;
+  const thick = Math.min(1.25, Math.max(0.55, reach * 0.34, 14 * upp(fx)));
   const p = sprites.take("flame", from.x + ux * back, from.y + uy * back, from.z + uz * back, size, anchor, true);
   if (!p) return false;
-  p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.life = life; p.age = -delay; p.fade = 0.3; p.a = 0.95;
+  p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.sy = thick / (size * 0.6); p.life = life; p.age = -delay; p.fade = 0.3; p.a = 0.95;
   return true;
 }
 
@@ -151,12 +159,14 @@ export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = fa
     p.sx = Math.min(Math.max(dimensions.length * SHOT_SCALE, TRACER_LENGTH_PX * upp(fx)), shotLength) / size;
     // In the weapon's own colour (lifted so dark tints still read).
     if (dimensions.color) { p.r = Math.min(1, 0.25 + dimensions.color[0]); p.g = Math.min(1, 0.25 + dimensions.color[1]); p.b = Math.min(1, 0.25 + dimensions.color[2]); }
-    tracerTrail(fx, p, size, anchor, from, ux, uy, uz, delay);
-    bulletCore(fx, from, p, ux, uy, uz, anchor, delay, dimensions.color);
+    const start = fitFlight(p, size, from, to, ux, uy, uz);
+    tracerTrail(fx, p, size, anchor, start, ux, uy, uz, delay);
+    bulletCore(fx, start, p, ux, uy, uz, anchor, delay, dimensions.color);
     return true;
   }
-  tracerTrail(fx, p, size, anchor, from, ux, uy, uz, delay);
-  bulletCore(fx, from, p, ux, uy, uz, anchor, delay);
+  const start = fitFlight(p, size, from, to, ux, uy, uz);
+  tracerTrail(fx, p, size, anchor, start, ux, uy, uz, delay);
+  bulletCore(fx, start, p, ux, uy, uz, anchor, delay);
   // The muzzle spark sits at (0.23, 0.5) of its cell.
   if (!fx.allowFlash()) return true;
   const back = (0.5 - sheet.muzzleAt) * size;

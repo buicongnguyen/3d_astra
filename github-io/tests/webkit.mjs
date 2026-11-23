@@ -27,7 +27,7 @@ try {
   await page.locator("#start").tap();
   await page.waitForFunction(()=>window.__frontier.sim.time > .2 && window.__frontier.view.renderer.info.render.calls > 0,{timeout:15000});
   await page.locator('[data-action="worker"]').tap();
-  if (await page.locator("html").getAttribute("data-dock") !== "selection") await page.locator('button[data-dock="selection"]').tap();
+  if (await page.locator("html").getAttribute("data-dock") !== "selection") await page.evaluate(() => document.querySelector('button[data-dock="selection"]').click());
   await page.locator('#queue [data-cancel="0"]').tap();
   await page.locator("#select-workers").tap();
   const point = await page.evaluate(() => {
@@ -66,7 +66,7 @@ try {
     path: fileURLToPath(new URL("webkit-portrait.png", output)),
   });
   await page.setViewportSize({ width: 844, height: 390 });
-  await page.locator('[data-dock="map"]').tap();
+  await page.evaluate(() => document.querySelector('button[data-dock="map"]').click());
   await page.locator("#home").tap();
   assert.equal(
     await page.evaluate(
