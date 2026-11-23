@@ -143,6 +143,7 @@ try {
     await phone.screenshot({path: `test-results/campaign-${viewport.width}x${viewport.height}.png`});
     await phone.locator('[data-mode="skirmish"]').tap();
     await phone.locator('#skirmish-setup').waitFor({state: 'visible'});
+    await phone.selectOption('#enemy-count', '2'); // AI teams only shows with two or more rivals
     for (const id of ['#ai-speed', '#alliance', '#enemy-count']) {
       const r = await phone.locator(id).boundingBox();
       assert.ok(r.height >= 44 && r.x >= 0 && r.x + r.width <= viewport.width, `${id} fits ${viewport.width}x${viewport.height}`);

@@ -30,14 +30,14 @@ export function setupQuickBattle(S, A) {
   const buildSim = A.createSim;
   A.createSim = () => {
     const chosen = quickRules(S.rules, false);
-    S.rules = quickRules(chosen, S.quick && S.playMode === "skirmish");
+    S.rules = quickRules(chosen, S.playMode === "skirmish" && S.quick);
     try { return buildSim(); } finally { S.rules = chosen; }
   };
   // Back to the title ends the Quick battle (the menu shows the player's own setup again).
   const newGame = A.newGame;
   A.newGame = (...args) => { S.quick = false; return newGame(...args); };
 
-  function startQuick() {
+  function startQuick(kind = true) {
     const button = $("quick-battle");
     if (!button || button.disabled || Z.started) return;
     const player = isPlayerFaction($("player-faction").value) ? $("player-faction").value : "meridian";
@@ -45,7 +45,7 @@ export function setupQuickBattle(S, A) {
     // models), so they hold the Quick battle setup for that one call and get the player's back at once.
     const quick = { scenario: QUICK_SETUP.map, "enemy-count": String(QUICK_SETUP.enemyCount), "ai-speed": QUICK_SETUP.aiSpeed, alliance: QUICK_SETUP.alliance, "enemy-faction": quickRival(player) };
     const before = Object.fromEntries(Object.keys(quick).map((id) => [id, $(id).value]));
-    S.quick = true;
+    S.quick = kind;
     S.playMode = "skirmish";
     try {
       for (const [id, value] of Object.entries(quick)) $(id).value = value;
@@ -54,6 +54,7 @@ export function setupQuickBattle(S, A) {
       for (const [id, value] of Object.entries(before)) $(id).value = value;
     }
     // Start's own handler: assets, audio and beginMatch, as a tap on Start would (never the campaign briefing).
+    if (kind === "arena") S.view.preloadModels?.(["hawk"]); // every faction's Full army has two Hawks
     $("start").onclick?.();
   }
 
@@ -131,15 +132,22 @@ export function setupQuickBattle(S, A) {
       slot.prepend(training);
     }
     slot.hidden = false;
+    const arena = document.createElement("button");
+    arena.type = "button";
+    arena.className = "quick-battle";
+    arena.id = "full-army-battle";
+    arena.innerHTML = `${icon("crosshair")}<span class="quick-text"><strong>Full army battle</strong><small>All units · Foundry ready</small></span>`;
+    $("quick-battle").after(arena);
     const button = $("quick-battle"), start = $("start");
     // Usable exactly when Start is (not while the first models load or after a failed load).
-    const sync = () => { button.disabled = start.disabled && !S.loadFailed; if (training) training.disabled = start.disabled; };
+    const sync = () => { button.disabled = arena.disabled = start.disabled && !S.loadFailed; if (training) training.disabled = start.disabled; };
     sync();
     new MutationObserver(sync).observe(start, { attributes: true, attributeFilter: ["disabled"] });
-    button.addEventListener("click", startQuick);
+    button.addEventListener("click", () => startQuick());
+    arena.addEventListener("click", () => startQuick("arena"));
     // A saved Quick battle continues as one ("Play again" replays it); the saved rules say so.
     $("continue")?.addEventListener("click", () => {
-      try { S.quick = JSON.parse(readSave()?.text || "null")?.options?.rules?.quick === "on"; } catch { S.quick = false; }
+      try { const rule = JSON.parse(readSave()?.text || "null")?.options?.rules?.quick; S.quick = rule === "arena" ? "arena" : rule === "on"; } catch { S.quick = false; }
     });
   };
 }

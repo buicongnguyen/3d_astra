@@ -152,6 +152,7 @@ export function setupBriefing(S, A) {
     }
     if(S.playMode === "training"){ $("briefing-title").textContent="Commander training"; $("briefing-text").textContent="Learn selection, movement, harvesting, construction, production, attack and withdrawal in eight guided steps. Training supplies replenish. Leave or replay whenever you like."; }
     if (!$("start").disabled && !S.loadFailed) $("start").textContent = S.playMode === "training" ? "Start training" : inCampaign ? `Start mission ${S.stagePick + 1}` : "Start";
+    $("briefing").classList.toggle("skirmish-plain", S.playMode === "skirmish"); // its setup controls already say everything the story card did
     if (S.playMode === "defence") A.renderDefenceMenu?.();
   }
 

@@ -1,4 +1,4 @@
-import { SHOT_SCALE } from "./cells.js";
+import { SHOT_SCALE, CELL, STRETCH } from "./cells.js";
 // The recipes that play the weapon VFX sprites (src/fx-sprites.js) for each weapon class (AAA round 3, R3-FX). Each one returns
 // true when it drew (the sprites have loaded) so the caller can skip the procedural fallback it replaces, and false when they
 // have not (or never will): the old effects then run as before. View only; sizes in metres, never smaller than `px` CSS pixels.
@@ -11,8 +11,25 @@ const MIN_PX = { shell: 54, rocket: 54, artillery: 72, bomb: 80, firebomb: 70, m
 // The four fireball sheets (VFX2) have their own palettes; only the firebomb is shaded (yellower) and flak greyed.
 const TINT = { firebomb: [1, 0.92, 0.6], flak: [0.8, 0.8, 0.85] };
 const upp = (fx) => fx.view.unitsPerPixel || 0.1;
-// A quarter-size round must still be seen on a phone: its painted core keeps this width and opacity.
-export const TRACER_MIN_PX = 1.5, TRACER_ALPHA = 0.75;
+// Rounds keep the full painted VFX2 look at a fixed thin screen size: the bullet core is 2.25 CSS px, a shell or rocket body 2.5 px
+// (its art fills about a quarter of the cell height), whatever the zoom.
+export const TRACER_MIN_PX = 4, TRACER_LENGTH_PX = 34, TRACER_ALPHA = 0.95, HEAD_CELL_PX = 20, HEAD_LENGTH_PX = 30;
+// Two fainter copies follow each bullet, so it reads as a moving streak; phones keep one.
+function tracerTrail(fx, p, size, anchor, from, ux, uy, uz, delay) {
+  p.r = (p.r ?? 1) * 2; p.g = (p.g ?? 1) * 2; p.b = (p.b ?? 1) * 1.25; // lifts the painted streak to a bright, slightly orange gold
+  for (let k = 1, n = fx.view.lowPower ? 1 : 2; k <= n; k++) {
+    const t = fx.sprites.take("tracer", from.x, from.y, from.z, size, anchor, true);
+    if (!t) break;
+    t.mode = ORIENTED; t.ax = ux; t.ay = uy; t.az = uz; t.vx = p.vx; t.vy = p.vy; t.vz = p.vz; t.start = p.start; t.count = 4; t.loop = true; t.fps = 20;
+    t.life = p.life; t.age = -delay - k * 0.035; t.fade = 0.2; t.sx = p.sx; t.sy = p.sy; t.r = p.r; t.g = p.g; t.b = p.b; t.a = k === 1 ? 0.5 : 0.28; t.snap = true;
+  }
+}
+// A bright additive core rides on every bullet, so a short flight is still seen as a hot streak.
+const BULLET_CORE_PX = 7, BULLET_CORE_LENGTH_PX = 36;
+function bulletCore(fx, from, p, ux, uy, uz, anchor, delay, color) {
+  const u = upp(fx), w = BULLET_CORE_PX * u, c = color ? [Math.min(1, .7 + color[0]), Math.min(1, .7 + color[1]), Math.min(1, .7 + color[2]), 1] : [1, .82, .42, 1];
+  fx.particle(fx.glow, { lifted: true, x: from.x, y: from.y, z: from.z, vx: p.vx, vy: p.vy, vz: p.vz, mode: STRETCH, ax: ux, ay: uy, az: uz, length: Math.min(BULLET_CORE_LENGTH_PX * u, p.shotLength), s0: w, s1: w, life: p.life, cell: CELL.streak, c0: c, c1: c, anchor, delay });
+}
 export const spritesReady = (fx) => !!(fx.sprites && fx.sprites.ready);
 
 // A blast of `kind` (shell | rocket | artillery | bomb | flak | beam) at `at` (y above the ground), starting after `delay` seconds.
@@ -93,6 +110,18 @@ export function spriteJet(fx, from, ux, uy, uz, reach, life, anchor, delay = 0) 
   return true;
 }
 
+// A small red fire tongue at a gun's muzzle for one round (the Vanguard): stopping short of its target, gone in 0.1 s.
+export function spriteFlameFlick(fx, from, ux, uy, uz, anchor, delay = 0, dist = 2) {
+  const sprites = fx.sprites;
+  if (!sprites?.ready || !fx.motion) return false;
+  const size = Math.min(1.5, Math.max(0.8, dist * 0.9)), back = (0.5 - SHEETS.flame.inlet) * size;
+  const p = sprites.take("flame", from.x + ux * back, from.y + uy * back, from.z + uz * back, size, anchor, true);
+  if (!p) return false;
+  p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.sy = 0.7; p.start = 5; p.count = 4; p.loop = true; p.snap = true; p.fps = 40; p.life = 0.1; p.age = -delay; p.fade = 0.45; p.a = 1;
+  p.r = 1.35; p.g = 0.36; p.b = 0.18;
+  return true;
+}
+
 // The cyan contact flare of a beam or rail at its target (y above the ground), exactly `delay` seconds after the shot (when the line
 // lands), tinted toward the weapon's colour (the sheet is cyan-white, so a green rail shades it green and a cyan beam leaves it alone).
 export function spriteBeamImpact(fx, at, c0, anchor, delay) {
@@ -111,19 +140,23 @@ export function spriteTracer(fx, from, to, ux, uy, uz, travel, anchor, cyan = fa
   const sprites = fx.sprites;
   if (!sprites?.ready || !fx.motion) return false;
   const size = Math.max(6, 100 * upp(fx)) * SHOT_SCALE, sheet = SHEETS.tracer;
+  const shotLength = Math.hypot(to.x - from.x, to.y - from.y, to.z - from.z) * 0.7; // a round never looks longer than its flight
   const p = sprites.take("tracer", from.x, from.y, from.z, size, anchor, true);
   if (!p) return false;
   const life = Math.max(0.06, travel);
   p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.vx = (to.x - from.x) / life; p.vy = (to.y - from.y) / life; p.vz = (to.z - from.z) / life;
-  p.start = cyan ? TRACER_FRAMES.cyan : TRACER_FRAMES.warm; p.count = 4; p.loop = true; p.fps = 20; p.life = life; p.age = -delay; p.fade = 0.08; p.sy = 1.6; p.a = TRACER_ALPHA;
+  p.start = cyan ? TRACER_FRAMES.cyan : TRACER_FRAMES.warm; p.count = 4; p.loop = true; p.fps = 20; p.life = life; p.age = -delay; p.fade = 0.08; p.sx = Math.min(TRACER_LENGTH_PX * upp(fx), shotLength) / size; p.sy = TRACER_MIN_PX * upp(fx) / (size * 0.15); p.a = TRACER_ALPHA; p.snap = true; p.shotLength = shotLength;
   if (dimensions) {
     // Specialised weapons used a shorter procedural round in Round A.
-    p.sx = dimensions.length * SHOT_SCALE / size;
-    // Never thinner than TRACER_MIN_PX on screen, and in the weapon's own colour (lifted so dark tints still read).
-    p.sy = Math.max(dimensions.width * SHOT_SCALE, TRACER_MIN_PX * upp(fx)) / (size * 0.15);
+    p.sx = Math.min(Math.max(dimensions.length * SHOT_SCALE, TRACER_LENGTH_PX * upp(fx)), shotLength) / size;
+    // In the weapon's own colour (lifted so dark tints still read).
     if (dimensions.color) { p.r = Math.min(1, 0.25 + dimensions.color[0]); p.g = Math.min(1, 0.25 + dimensions.color[1]); p.b = Math.min(1, 0.25 + dimensions.color[2]); }
+    tracerTrail(fx, p, size, anchor, from, ux, uy, uz, delay);
+    bulletCore(fx, from, p, ux, uy, uz, anchor, delay, dimensions.color);
     return true;
   }
+  tracerTrail(fx, p, size, anchor, from, ux, uy, uz, delay);
+  bulletCore(fx, from, p, ux, uy, uz, anchor, delay);
   // The muzzle spark sits at (0.23, 0.5) of its cell.
   if (!fx.allowFlash()) return true;
   const back = (0.5 - sheet.muzzleAt) * size;
@@ -189,11 +222,13 @@ export function spriteStomp(fx, at, anchor, scale = 1) {
 }
 
 // The head of a round in flight (shell, rocket or missile art, pointing along its heading), drawn this frame only.
-export function spriteHead(fx, kind, x, y, z, ux, uy, uz, size, anchor) {
+export function spriteHead(fx, kind, x, y, z, ux, uy, uz, size, anchor, scale = 1) {
   const sprites = fx.sprites;
   if (!sprites?.ready) return false;
-  const p = sprites.take("heads", x, y, z, Math.max(size, 22 * upp(fx)) * SHOT_SCALE, anchor, true);
+  const cell = HEAD_CELL_PX * scale * upp(fx);
+  const p = sprites.take("heads", x, y, z, cell, anchor, true);
   if (!p) return false;
+  p.sx = HEAD_LENGTH_PX / HEAD_CELL_PX; p.r = 1.8; p.g = 1.05; p.b = 0.55; // a hot orange round
   p.mode = ORIENTED; p.ax = ux; p.ay = uy; p.az = uz; p.a = TRACER_ALPHA; p.start = HEAD_FRAME[kind] ?? 0; p.count = 1; p.fps = 0; p.once = true; p.life = 1; p.fade = 0.0001; p.age = 0;
   return true;
 }

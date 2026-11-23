@@ -87,7 +87,7 @@ await suite("offline", async () => {
     // The first tap on the start screen plays the start screen's cue (title, or campaign when the
     // Campaign view is showing); the worker stores it in fc-music.
     const cueTrack = /\/music\/(title|campaign)\.m4a\?v=\d+$/;
-    await page.tap("#briefing-title");
+    await page.tap(".mode-switch [aria-pressed=true]"); // Skirmish has no headline to tap
     await poll(page, async (source) => {
       if (!(await caches.keys()).includes("fc-music")) return false;
       const urls = (await (await caches.open("fc-music")).keys()).map((r) => r.url);

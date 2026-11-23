@@ -291,7 +291,9 @@ export function stepStrikes(fx, sim, dt) {
     const g = fx.ground(s.x, s.z), x = s.x - dx * k * 5, z = s.z - dz * k * 5, y = g + 0.8 + look.height * k * k;
     // Heading: forward and steeply down (the derivative of the fall).
     const ux = dx * 5, uy = -2 * look.height * k, uz = dz * 5;
-    fx.ordnance.add(x, y, z, ux, uy, uz, s.at * 7, look.body * SHOT_SCALE, BODY.barrage, SHOT_SCALE);
+    // The falling shell uses the painted round.
+    const ul = Math.hypot(ux, uy, uz) || 1;
+    if (!spriteHead(fx, "shell", x, y, z, ux / ul, uy / ul, uz / ul, look.body, st.anchor, 1)) fx.ordnance.add(x, y, z, ux, uy, uz, s.at * 7, look.body * SHOT_SCALE, BODY.barrage, SHOT_SCALE);
     if (fx.motion && dt > 0) {
       st.trail += dt;
       const gap = 0.035 * (eco ? 1.6 : 1);
@@ -301,7 +303,7 @@ export function stepStrikes(fx, sim, dt) {
         q.vy = 0.2; q.drag = 1.2; q.life = 0.6 * (eco ? CLASS_LOOK.ecoTrail : 1); q.s0 = 0.35; q.s1 = 1.1; q.cell = CELL.puff;
         q.c0 = PAL.lobSmoke; q.c1 = PAL.lobSmokeEnd; q.spin = 0.5;
         const h = fx.emit(fx.glow, x, y + 0.3, z, st.anchor, true);
-        h.life = 0.06; h.opacity = SHOT_SCALE; h.s0 = 1.4 * SHOT_SCALE; h.s1 = 1.2 * SHOT_SCALE; h.c0 = PAL.haloHot; h.c1 = PAL.halo;
+        h.life = 0.08; h.opacity = 0.75; h.s0 = 0.8; h.s1 = 0.55; h.c0 = PAL.haloHot; h.c1 = PAL.halo;
       }
     }
   }

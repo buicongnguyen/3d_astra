@@ -146,3 +146,19 @@
   .compact-ui #briefing:not(.campaign-view) .briefing-setup:has(#start-training) #start { grid-column: span 2; }
   .compact-ui #title-actions:has(#start-training) .icon { display: none; }
 }
+
+/* The quick-start buttons share one row, so a third never drops onto the rank card. */
+#title-actions:not([hidden]):has(#full-army-battle) { display: grid; grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; }
+#title-actions:has(#full-army-battle) > button { min-width: 0; min-height: 48px; padding-inline: 6px; }
+#title-actions:has(#full-army-battle) .quick-text strong { white-space: normal; overflow-wrap: normal; font-size: 12px; line-height: 1.1; }
+
+/* Skirmish: the logo and the setup controls are enough, so the repeated intro card goes. */
+#briefing.skirmish-plain .briefing-copy { display: none !important; }
+#title-actions:has(#full-army-battle) > button > svg { display: none; }
+
+/* Landscape phones: the quick buttons take their own row in the scrolling setup, so they never cover it. */
+@media (orientation: landscape) and (max-height: 520px) {
+  :root.compact-ui #briefing:not(.campaign-view) .briefing-setup > #title-actions:not([hidden]) { order: 0; grid-column: 1 / -1 !important; width: 100%; justify-self: stretch; position: static; align-self: auto; margin: 0; }
+  :root.compact-ui #briefing:not(.campaign-view) .briefing-setup:has(.title-actions:not([hidden])) #start { grid-column: 1 / -1 !important; width: 100%; justify-self: stretch; }
+  :root.compact-ui #briefing:not(.campaign-view) #title-actions .quick-battle { box-shadow: inset 0 1px 0 rgba(200, 245, 255, 0.22), inset 3px 0 0 #83deeb; }
+}

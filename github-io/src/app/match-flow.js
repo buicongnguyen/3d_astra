@@ -257,6 +257,7 @@ export function setupMatchFlow(S, A) {
     S.governor.reset();
     S.tutorial = null;
     S.activeStage = S.playMode === "campaign" ? S.stagePick : null;
+    S.view.fx?.sprites?.start(); // The menu path built its match with restart(false), which loads no weapon sprites.
     Z.begin();
     $("briefing").hidden = true;
     document.documentElement.classList.remove("in-briefing");
@@ -325,6 +326,7 @@ export function setupMatchFlow(S, A) {
       if (!S.mission) { $("enemy-faction").value = S.enemyFaction; $("player-faction").value = S.playerFaction; }
       if (index >= 0) { S.campaignId = found.campaign; S.stagePick = index; }
       const resumed = await restart(false, true);
+      S.view.fx?.sprites?.start();
       if (resumed === false) return;
       S.activeStage = index >= 0 ? index : null;
       S.view.setTerrain(S.sim.terrain);

@@ -1172,7 +1172,7 @@ export class WorldView {
       if (hasEmblem(faction)) {
         let top = this.buildingTops.get(e.type);
         if (top === undefined) this.buildingTops.set(e.type, (top = new THREE.Box3().setFromObject(model).max.y));
-        const size = Math.min(2.8, Math.max(1.4, e.radius * 1)),
+        const size = Math.min(2.8, Math.max(1.4, e.radius * 1)) / 4, // owner: a quarter size, a small mark over the roof
           emblem = createEmblem(faction, e.team, this.colors[e.team], size);
         emblem.position.y = top + size * 0.55;
         root.add(emblem);

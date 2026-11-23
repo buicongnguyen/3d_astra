@@ -35,7 +35,7 @@ export const quickRival = (player) => (player === "ashfall" ? "meridian" : "ashf
 // The rules a match is built with: the setup's own without `quick`, plus `quick` for a Quick battle.
 export function quickRules(rules, quick) {
   const { quick: _drop, ...rest } = rules || {};
-  if (quick) return { quick: "on" };
+  if (quick) return { quick: quick === "arena" ? "arena" : "on" };
   return Object.keys(rest).length ? rest : null;
 }
 
@@ -102,13 +102,79 @@ function sendScouts(sim) {
   sim.message("Enemy scouts sighted! Meet them at your tower.");
 }
 
+// "Full army": a test-friendly battle. Your base already has a Barracks, Foundry, relay and tower, and two of
+// every ground unit stand ready; mixed enemy squads attack from 0:10 and then every 35 s.
+export const ARENA = Object.freeze({
+  base: Object.freeze([
+    Object.freeze({ slot: "barracks", ahead: 4, side: -14 }),
+    Object.freeze({ slot: "foundry", ahead: 4, side: 14 }),
+    Object.freeze({ slot: "relay", ahead: -8, side: 10 }),
+    Object.freeze({ slot: "tower", ahead: 24, side: 0 }),
+  ]),
+  army: Object.freeze(["vanguard", "ranger", "breaker", "medic", "engineer", "tank", "antitank"]),
+  squad: Object.freeze(["vanguard", "ranger", "tank", "antitank", "breaker"]),
+  hawks: 2, alloy: 350, firstWave: 10, every: 35, waves: 8, waveDistance: 44,
+});
+export const isArena = (sim) => sim.rules?.quick === "arena" && !sim.mission;
+function buildArena(sim) {
+  const a = axes(sim);
+  if (!a) return;
+  for (const b of ARENA.base) {
+    const type = sim.typeFor(PLAYER, b.slot), x = a.home.x + a.fx * b.ahead + a.sx * b.side, z = a.home.z + a.fz * b.ahead + a.sz * b.side;
+    const spot = type && sim.findPlacement(type, PLAYER, x, z, 10);
+    if (spot) sim.spawn(type, PLAYER, spot.x, spot.z, true, true);
+  }
+  sim.nav.rebuild(sim.entities);
+  ARENA.army.forEach((slot, i) => {
+    const type = sim.typeFor(PLAYER, slot);
+    for (let n = 0; type && n < 2; n++) {
+      const ahead = 15 + n * 3, side = (i - (ARENA.army.length - 1) / 2) * 3;
+      const p = standAt(sim, a.home.x + a.fx * ahead + a.sx * side, a.home.z + a.fz * ahead + a.sz * side, 1);
+      if (p) sim.spawn(type, PLAYER, p.x, p.z).angle = Math.atan2(a.fx, a.fz);
+    }
+  });
+  for (let n = 0; n < ARENA.hawks; n++) {
+    const side = n ? 5 : -5, x = a.home.x + a.fx * 11 + a.sx * side, z = a.home.z + a.fz * 11 + a.sz * side;
+    sim.spawn("hawk", PLAYER, x, z).angle = Math.atan2(a.fx, a.fz);
+  }
+  sim.players[PLAYER].alloy += ARENA.alloy;
+  sim.updateVision();
+  sim.message("Full army ready. Enemy squads attack in a few seconds.");
+}
+function sendArenaWave(sim) {
+  const a = axes(sim);
+  if (!a) return;
+  const ids = [];
+  ARENA.squad.forEach((slot, i) => {
+    const type = sim.typeFor(RIVAL, slot);
+    for (let n = 0; type && n < 2; n++) {
+      const ahead = ARENA.waveDistance + n * 3, side = (i - 2) * 3;
+      const p = standAt(sim, a.home.x + a.fx * ahead + a.sx * side, a.home.z + a.fz * ahead + a.sz * side, 1);
+      if (!p) continue;
+      const e = sim.spawn(type, RIVAL, p.x, p.z);
+      e.angle = Math.atan2(-a.fx, -a.fz);
+      ids.push(e.id);
+    }
+  });
+  if (!ids.length) return;
+  sim.issue(ids, { type: "attackmove", x: a.home.x, z: a.home.z });
+  sim.events.push({ type: "incoming", team: PLAYER, x: a.home.x + a.fx * ARENA.waveDistance, z: a.home.z + a.fz * ARENA.waveDistance, count: ids.length, quick: true });
+}
+
 export const quickBattle = {
   id: "quick-battle",
   aiRules: [{
     id: "quick-battle",
     run(sim, team) {
-      if (team !== RIVAL || !isQuick(sim)) return;
+      if (team !== RIVAL) return;
       const you = sim.players[PLAYER], rival = sim.players[RIVAL];
+      if (isArena(sim)) {
+        if (!you.quickBase) { you.quickBase = true; buildArena(sim); }
+        rival.arenaWaves ||= 0;
+        if (rival.arenaWaves < ARENA.waves && sim.time >= ARENA.firstWave + rival.arenaWaves * ARENA.every - 1e-9) { rival.arenaWaves += 1; sendArenaWave(sim); }
+        return;
+      }
+      if (!isQuick(sim)) return;
       if (!you.quickBase) { you.quickBase = true; buildOutpost(sim); }
       if (!rival.quickScouts && sim.time >= QUICK.scoutAt - 1e-9) { rival.quickScouts = true; sendScouts(sim); }
     },

@@ -92,18 +92,18 @@ test("tracer atlas uses one quarter of the live size and glow after the screen-s
   const { spriteTracer, spriteHead } = await import("../src/fx-kinds/sprite-fx.js");
   for (const unitsPerPixel of [.02,.2]) {
     const records=[];
-    const fx={motion:true,allowFlash:()=>true,view:{unitsPerPixel},sprites:{ready:true,take(sheet,x,y,z,size){
+    const fx={particle(){},motion:true,allowFlash:()=>true,view:{unitsPerPixel},sprites:{ready:true,take(sheet,x,y,z,size){
       const p={sheet,size,a:1};records.push(p);return p;
     }}};
     spriteTracer(fx,{x:0,y:0,z:0},{x:12,y:0,z:0},1,0,0,.2,null);
     const [streak]=records;
     assert.equal(streak.size,Math.max(6,100*unitsPerPixel)/4);
-    assert.equal(streak.sy,1.6);
-    assert.equal(streak.a,.75); assert.equal(records.length,2,"one moving round and one muzzle cue");
+    assert.ok(Math.abs(streak.sy*streak.size*.15-4*unitsPerPixel)<1e-9,"4 px core");
+    assert.equal(streak.a,.95); assert.equal(records.length,4,"one round, two fading trail copies and one muzzle cue");
     assert.equal(streak.vx*streak.life,12);
     spriteHead(fx,'shell',0,0,0,1,0,0,1.5);
-    assert.equal(records.at(-1).size,Math.max(1.5,22*unitsPerPixel)/4);
-    assert.equal(records.at(-1).a,.75);
+    assert.equal(records.at(-1).size,20*unitsPerPixel);
+    assert.equal(records.at(-1).a,.95);
   }
 
 });
@@ -170,7 +170,7 @@ test("painted support and direct missile contact stay within the unit silhouette
 test("a specialised tracer keeps its weapon colour and at least 1.5 px of painted width on a phone", async () => {
   const { spriteTracer } = await import("../src/fx-kinds/sprite-fx.js");
   const unitsPerPixel = 0.0634, records = [];
-  const fx = { motion: true, allowFlash: () => true, view: { unitsPerPixel }, sprites: { ready: true, take(sheet, x, y, z, size) { const p = { sheet, size, a: 1, r: 1, g: 1, b: 1 }; records.push(p); return p; } } };
+  const fx = { particle() {}, motion: true, allowFlash: () => true, view: { unitsPerPixel }, sprites: { ready: true, take(sheet, x, y, z, size) { const p = { sheet, size, a: 1, r: 1, g: 1, b: 1 }; records.push(p); return p; } } };
   spriteTracer(fx, { x: 0, y: 0, z: 0 }, { x: 12, y: 0, z: 0 }, 1, 0, 0, 0.2, null, false, 0, { length: 2, width: 0.08, color: [0.1, 0.9, 0.2, 1] });
   const [p] = records;
   assert.ok(p.sy * p.size * 0.15 >= 1.5 * unitsPerPixel - 1e-9, "painted width");
