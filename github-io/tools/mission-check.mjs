@@ -65,6 +65,8 @@ const MISSION_TARGETS = {
   "m02-first-contact": { passive: 300, win: [360, 1200] },
   "m03-the-ashen-line": { passive: 300 },
   // Mission 4 (campaign C3): with Captain Sol at the east oasis the bot wins from about 6:00; earlier, not harder.
+  // Mission 10 (campaign C6b): the reinforcement truck at 1:30 lets the bot win from about 6:00; earlier, not harder.
+  "m10-obsidian-storm": { win: [330, 1200], earliest: 300 },
   "m04-three-way-dunes": { passive: 300, win: [330, 1200], earliest: 300 },
   // Mission 9 (R3-I, round 3): since the south exits (R3-L) the bot reaches Sol's camp about 20 s sooner, and the
   // win is the 3-minute plateau hold after that, so it lands near 6:45, not 7:10. Earlier, not harder.

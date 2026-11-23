@@ -25,6 +25,7 @@ function declaredModels(match, factions) {
   const scan = (o) => {
     if (!o || typeof o !== 'object') return;
     if (typeof o.spawn === 'string') named.add(o.spawn);
+    if (o.truck) { named.add('carrier'); for (const type of Object.keys(o.truck.units || {})) named.add(type); }
     if (o.wave?.units) for (const type of Object.keys(o.wave.units)) named.add(type);
     if (Array.isArray(o.unlock)) for (const type of o.unlock) named.add(type);
     for (const v of Array.isArray(o) ? o : Object.values(o)) scan(v);

@@ -714,6 +714,11 @@ export const MISSIONS = [
     win: ["survive"],
     lose: [{ type: "coreLost" }, { type: "tagLost", tag: "basinRelay" }],
     triggers: [
+      // Campaign C6b: a troop truck drives a squad in behind the line. Break it before it unloads and the squad dies with it.
+      { when: { time: 380 }, do: [
+        { say: { who: "vale", text: "A troop truck is crossing toward the base. Shoot it before it unloads: the squad dies with the truck." } },
+        { truck: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "westPass", to: "playerFront", then: "playerBase", tag: "truckA", name: "Troop truck" } },
+      ] },
       // Hale joins the second wave at the west pass
       { when: { time: 200 }, do: [{ spawn: "tank", team: 1, at: "westPass", tag: "heroHale", name: "Commander Hale", hero: "hale" }, { say: { who: "hale", text: "I am coming myself, Commander." } }] },
       // Campaign C3: Commander Hale, an enemy hero. Below 35% health it yields; the Commander accepts or finishes it.
@@ -1068,6 +1073,11 @@ export const MISSIONS = [
     win: ["dampers", "crown"],
     lose: [{ type: "coreLost" }],
     triggers: [
+      // Campaign C6b: reinforcements by troop truck, no orders needed.
+      { when: { time: 90 }, do: [
+        { say: { who: "okoro", text: "A truck with six soldiers is on its way to the front. They will meet you at the muster point." } },
+        { truck: { team: 0, units: { vanguard: 3, ranger: 3 }, from: "playerBase", to: "playerFront", tag: "truckHelp", name: "Supply truck" } },
+      ] },
       // Campaign C3: Ilse Maren, an enemy hero. Below 35% health it yields; the Commander accepts or finishes it.
       { when: { tagHpBelow: { tag: "heroMaren", percent: 35 } }, do: [
         { surrender: "heroMaren" },
@@ -1200,6 +1210,11 @@ export const MISSIONS = [
     win: ["west", "mid", "north"],
     lose: [{ type: "coreLost" }, { type: "time", seconds: 1200 }],
     triggers: [
+      // Campaign C6b: a troop truck drives a squad in behind the line. Break it before it unloads and the squad dies with it.
+      { when: { time: 420 }, do: [
+        { say: { who: "vale", text: "A troop truck is crossing toward the base. Shoot it before it unloads: the squad dies with the truck." } },
+        { truck: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", to: "playerFront", then: "playerBase", tag: "truckA", name: "Troop truck" } },
+      ] },
       { when: { time: 5 }, do: [{ say: { who: "vale", text: "The clock is running, Commander. Build as you march. The middle conduit is nearest the ford." } }, { ping: "conduitMid" }, { music: "tense" }] },
       { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Wardens and Ashfall together, on our camp. Hold with towers. The army keeps moving." } }] },
       { when: { enter: "bridge", team: 0 }, do: [{ say: { who: "sol", text: "Ford ahead. Go over in one group, Commander. A thin line gets cut in the water." } }] },
@@ -1303,6 +1318,11 @@ export const MISSIONS = [
     win: ["stand", "engine"],
     lose: [{ type: "coreLost" }, { type: "time", seconds: 1500 }],
     triggers: [
+      // Campaign C6b: reinforcements by troop truck, no orders needed.
+      { when: { time: 45 }, do: [
+        { say: { who: "okoro", text: "A truck with six soldiers is on its way to the front. They will meet you at the muster point." } },
+        { truck: { team: 0, units: { vanguard: 3, ranger: 3 }, from: "playerBase", to: "playerFront", tag: "truckHelp", name: "Supply truck" } },
+      ] },
       // Campaign C4: what the Commander did with a yielding hero comes back as help at the end.
       { when: { time: 8 }, do: [
         { if: { flag: "m07-hale", is: "accept" }, say: { who: "hale", text: "You spared my crews at the siege. Ashfall sends three hundred alloy. I am not a man who forgets." } },

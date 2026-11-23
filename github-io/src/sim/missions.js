@@ -165,6 +165,27 @@ export const missions = {
       for (const o of def.objectives) if (this.flagIs(o.if)) this.stepObjective(o, m.objectives[o.id], CHECK);
     }
     for (let i = 0; i < (def.triggers || []).length; i++) this.stepTrigger(def.triggers[i], i);
+    this.stepTrucks();
+  },
+  // Troop trucks (campaign C6b): a carrier drives to its drop point, lets its squad out, then drives home and leaves.
+  // A truck destroyed on the way takes its squad with it (the squad is only made at the drop).
+  stepTrucks() {
+    for (const e of this.entities) {
+      const t = e.truck;
+      if (!t || e.hp <= 0) continue;
+      if (!t.done) {
+        if (distance(e, t.to) > 3.5) continue;
+        t.done = true;
+        const made = [];
+        for (const [type, count] of Object.entries(t.units)) {
+          const n = e.team > 0 ? waveCount(count, difficultyRules(this).wave, D[this.typeFor(e.team, type)]) : count;
+          for (const u of this.missionSpawn({ spawn: type, team: e.team, at: { x: e.x, z: e.z, r: 3 }, count: n })) made.push(u.id);
+        }
+        if (e.team > 0 && made.length && t.then) this.issue(made, { type: "attackmove", x: t.then.x, z: t.then.z });
+        this.events.push({ type: "unload", team: e.team, x: e.x, z: e.z, count: made.length });
+        this.issue([e.id], { type: "move", x: t.back.x, z: t.back.z });
+      } else if (distance(e, t.back) <= 3.5) e.hp = 0;
+    }
   },
   // An `if` on one of this mission's own decisions (answers in this.flags); none always passes.
   flagIs(cond) {
@@ -323,6 +344,17 @@ export const missions = {
     }
     else if (a.capture) { for (const e of this.tagged(a.capture)) { e.hp = 0; this.events.push({ type: "captured", hero: e.hero || null, team: e.team, x: e.x, z: e.z }); } }
     else if (a.finish) { for (const e of this.tagged(a.finish)) this.applyDamage(e, e.hp + (e.shield || 0) + 1, 0, null); }
+    else if (a.truck) {
+      const t = a.truck, team = t.team ?? 1;
+      if (!this.players[team] || this.players[team].eliminated) return;
+      const from = this.missionPlace(t.from ?? (team > 0 ? "enemyBase" : "playerFront"), team), to = this.missionPlace(t.to ?? (team > 0 ? "playerFront" : "playerFront"), team);
+      const then = t.then ? this.missionPlace(t.then, team) : null;
+      const [truck] = this.missionSpawn({ spawn: "carrier", team, at: from, exact: true, tag: t.tag, name: t.name });
+      if (!truck) return;
+      truck.truck = { units: t.units, to: { x: to.x, z: to.z }, back: { x: from.x, z: from.z }, then: then && { x: then.x, z: then.z } };
+      this.issue([truck.id], { type: "move", x: to.x, z: to.z });
+      if (team > 0) this.events.push({ type: "incoming", team: 0, x: from.x, z: from.z, count: 1 });
+    }
     else if (a.complete) this.setObjective(a.complete, "done");
     else if (a.fail) this.setObjective(a.fail, "failed");
     else if (a.give) for (const [type, amount] of Object.entries(a.give)) { this.players[0][type] += amount; this.missionBank(0, type, amount); }

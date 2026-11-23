@@ -85,3 +85,22 @@ test("sparing Hale and Maren brings help in the finale and a line in its briefin
   const sol = resolveMission(byId("m09-a-debt-in-the-dunes"), { cleared: {}, decisions: { "m04-sol": "accept" } });
   assert.ok(sol.briefing.lines.some((l) => /Captain Sol ride out/.test(l.text)));
 });
+
+test("a friendly troop truck drives to the muster point, unloads six soldiers and leaves; a destroyed enemy truck never unloads", () => {
+  const def = byId("m10-obsidian-storm");
+  const s = new Simulation({ map: def.map, enemyCount: def.enemies, mission: resolveMission(def, null) });
+  const before = s.own(0).filter((e) => e.kind === "unit").length;
+  let unloaded = 0;
+  for (let i = 0; i < 20 * 140; i++) { s.tick(0.05); for (const e of s.events) if (e.type === "unload" && e.team === 0) unloaded += e.count; s.events.length = 0; }
+  assert.equal(unloaded, 6);
+  assert.ok(s.own(0).filter((e) => e.kind === "unit" && e.type !== "carrier").length >= before + 6 - 1);
+  const e = new Simulation({ map: def.map, enemyCount: def.enemies, mission: resolveMission(def, null) });
+  e.tick(0.05);
+  e.missionAction({ truck: { team: 1, units: { vanguard: 3 }, from: "enemyBase", to: "playerFront", tag: "t" } });
+  const truck = e.tagged("t")[0];
+  assert.ok(truck && truck.truck);
+  truck.hp = 0;
+  let any = 0;
+  for (let i = 0; i < 20 * 120; i++) { e.tick(0.05); for (const ev of e.events) if (ev.type === "unload" && ev.team === 1) any++; e.events.length = 0; }
+  assert.equal(any, 0);
+});

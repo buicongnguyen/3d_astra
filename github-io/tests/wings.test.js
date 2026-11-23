@@ -88,14 +88,15 @@ test("Wings over Copper resolves with and without earlier decisions: only Hale's
 // Recorded in 0.19b, with the Story hull adjustment for Hold the River and corrected hold times in M04 and M10.
 // Mission 3 changed on purpose with the Iron Vanguard boss (docs/aaa/BOSSES.md): spawn, objective, scene and lines.
 // 2026-11-23 (owner): m03 again for the Iron Vanguard's story health, 26,000 to 9,000.
+// 2026-11-24 (campaign C6b): troop trucks in m07, m10, m11 and m12.
 // 2026-11-24 (campaign C4): m09 and m12 gained lines and gifts for spared heroes.
 // 2026-11-24 (campaign C3): m04, m07 and m10 each gained an enemy hero and its surrender decision.
 // 2026-11-24 (campaign C1, pacing): m03 siphons 6000 to 4200 HP and new gold/silver times; m06 quota 8000/2600 to 7200/2300 and new medals.
 test("the original missions resolve to their recorded checksums on all decision paths", () => {
   const BEFORE = {
     "m01-first-light": "704a79da", "m02-first-contact": "bd4705a7", "m02b-hold-the-river": "9845060f", "m03-the-ashen-line": "586533a5",
-    "m04-three-way-dunes": "bc04bb3e", "m05-the-verdant-pact": "7fb6c6de", "m06-copper-harvest": "00ea9e9e", "m07-copper-siege": "0d8bbc2b",
-    "m08-the-quiet-vault": "03ed22ef", "m09-a-debt-in-the-dunes": "1e9ce9ec", "m10-obsidian-storm": "7f8eb4b1", "m11-cut-the-draw": "81571e1d", "m12-frontiers-end": "742dfcac",
+    "m04-three-way-dunes": "bc04bb3e", "m05-the-verdant-pact": "7fb6c6de", "m06-copper-harvest": "00ea9e9e", "m07-copper-siege": "e1b6c7fd",
+    "m08-the-quiet-vault": "03ed22ef", "m09-a-debt-in-the-dunes": "1e9ce9ec", "m10-obsidian-storm": "90d0a3ee", "m11-cut-the-draw": "3c9cdfeb", "m12-frontiers-end": "feffc2e5",
     // AAA round 3 (R3-I, campaign pacing): first-contact probes in 10 base missions, m03 (towers objective, gold 750 s) and m04 retuned after the south exits.
     // AAA round 2 (W2-F): the new optional mission, recorded when it was added.
     "m11c-hold-the-keystone-roads": "8b3c253d",
