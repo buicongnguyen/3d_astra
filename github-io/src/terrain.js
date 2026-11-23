@@ -3,7 +3,9 @@ import MAP_CONFIG from './maps.json' with { type: 'json' };
 import balance from './balance.json' with { type: 'json' };
 // Frontier Defence maps (src/defence/maps.json) are built like the others but never offered in Skirmish.
 import DEFENCE_MAPS from './defence/maps.json' with { type: 'json' };
-const ALL_MAPS = { ...MAP_CONFIG, ...DEFENCE_MAPS };
+// Campaign-only battlefields (src/campaign-maps.json, "campaign": true): in no Skirmish list, MAPS or fingerprint of the old maps.
+import CAMPAIGN_MAPS from './campaign-maps.json' with { type: 'json' };
+export const ALL_MAPS = { ...MAP_CONFIG, ...DEFENCE_MAPS, ...CAMPAIGN_MAPS };
 // Height rules (Stage 3): plateau_height, high_range, high_damage, low_damage, hidden_depth, high_vision.
 export const TERRAIN = balance.terrain;
 export const MAPS = Object.fromEntries(Object.entries(MAP_CONFIG).map(([id,m])=>[id,`${m.name} · ${m.size}×${m.size}`]));

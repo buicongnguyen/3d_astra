@@ -1,0 +1,47 @@
+{
+  "highridge": {
+    "name": "Highridge",
+    "size": 128,
+    "river": false,
+    "offset": 12,
+    "campaign": true,
+    "look": "highlands",
+    "biome": "highland",
+    "dressing": 0.8,
+    "sites": [[-54, -8], [-8, 54]],
+    "flank": [20, 36],
+    "rocks": [],
+    "deposits": [
+      ["alloy", -21, 6, 3000],
+      ["energy", -11, 15, 2250],
+      ["alloy", 0, 0, 3000],
+      ["energy", -2, -22, 2000]
+    ],
+    "plateaus": [
+      {"shape": "disc", "x": -16, "z": 10, "r": 13.5, "mirror": true, "ramps": [{"angle": 129, "width": 8}, {"angle": -51, "width": 8}, {"angle": 200, "width": 8}]}
+    ]
+  },
+  "gunhills": {
+    "name": "Gunhills",
+    "size": 160,
+    "river": false,
+    "offset": 24,
+    "campaign": true,
+    "look": "dunes",
+    "biome": "desert",
+    "dressing": 0.8,
+    "sites": [[-66, -10], [-10, 66]],
+    "flank": [34, 26],
+    "rocks": [],
+    "deposits": [
+      ["alloy", -7, 5, 4000],
+      ["energy", 4, -8, 3000],
+      ["alloy", -38, -30, 2500],
+      ["energy", -30, 22, 2000]
+    ],
+    "plateaus": [
+      {"shape": "disc", "x": 0, "z": 0, "r": 17, "ramps": [{"angle": 135, "width": 8}, {"angle": -45, "width": 8}, {"angle": 45, "width": 8}, {"angle": 225, "width": 8}]},
+      {"shape": "disc", "x": -12, "z": 44, "r": 10, "mirror": true, "ramps": [{"angle": -90, "width": 7}, {"angle": 180, "width": 7}]}
+    ]
+  }
+}
