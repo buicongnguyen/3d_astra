@@ -72,8 +72,8 @@ export const MAP_TEXT = {
   decisions: "Decisions",
   // R3-G: a relay that holds a decision not taken yet, and what each ending asks of the decisions.
   decisionAhead: "A decision waits here",
-  hintOpen: "2+ merciful choices",
-  hintMeridian: "0-1 merciful choices",
+  hintOpen: "3+ merciful choices",
+  hintMeridian: "0-2 merciful choices",
   shortOpen: "Open Frontier",
   shortMeridian: "Meridian Line",
 };

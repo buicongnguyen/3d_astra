@@ -91,7 +91,7 @@ test("campaign map: decision marks, ending hints and the phone layout rules", ()
   assert.match(ui, /decisionsAhead\(progress, n\.m\.id\)\.length \? `<i class="cmap-ahead"/, "an unanswered decision marks its relay");
   assert.match(ui, /class="cmap-hint"/, "each ending names what leads there");
   assert.ok(ENDING_IDS.every((id) => ENDING_HINTS[id]?.hint && ENDING_HINTS[id]?.short), "a hint and a short name for every ending");
-  assert.equal(ENDING_HINTS["open-frontier"].hint, "2+ merciful choices", "the rule endingFor applies (src/story/choices.js)");
+  assert.equal(ENDING_HINTS["open-frontier"].hint, "3+ merciful choices", "the rule endingFor applies (src/story/choices.js)");
   assert.ok(Object.keys(DECISIONS).length >= 2);
   // The new words reach the story catalogue (story-vi.json is checked complete by story-vi.test.js).
   const texts = new Set(storyStrings().map((s) => s.text)), vi = JSON.parse(readFileSync(new URL("../src/locales/story-vi.json", import.meta.url), "utf8")).messages;

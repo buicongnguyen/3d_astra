@@ -66,7 +66,7 @@ await suite("openings: mission fly-ins, the campaign map, jumpBoss", async () =>
     const map = await mapLayout(page);
     assert.deepEqual(map.ahead, ["m10-obsidian-storm"], `${viewport}: the relay still holding a decision is marked`);
     assert.deepEqual(map.marks, ["mercy", "firm"], `${viewport}: answered decisions keep their marks`);
-    assert.deepEqual(map.hints, ["2+ merciful choices", "0-1 merciful choices"], `${viewport}: ending hints`);
+    assert.deepEqual(map.hints, ["3+ merciful choices", "0-2 merciful choices"], `${viewport}: ending hints`);
     assert.equal(map.endings.length, 2, `${viewport}: both endings are named`);
     assert.equal(map.chronicles.length, 4, `${viewport}: every chronicle card keeps a label`);
     assert.deepEqual(map.small, [], `${viewport}: text under 11 px`);
