@@ -12,10 +12,11 @@ import { Simulation } from "../src/simulation.js";
 import { SOVEREIGN_WALKS } from "../src/story/sovereign-mission.js";
 import { LONG, pin } from "./lib/golden.mjs";
 
+// Re-recorded 2026-11-23 (owner): the Sovereign's health cut from 44,000 to 15,000 (story 12,000, veteran 14,000).
 const PINS = {
-  sandbox: ["426f2994", "4c64b853"],
-  phase: ["51a52825", "152f0327"],
-  mission: { 120: "43b0f276", 330: "20e8572d", 600: "3610cd29" },
+  sandbox: ["2d29faa8", "a5a27277"],
+  phase: ["fbb61775", "91dae137"],
+  mission: { 120: "51e858c1", 330: "a7172562", 600: "206c37c5" },
 };
 
 function sandbox(relays) {

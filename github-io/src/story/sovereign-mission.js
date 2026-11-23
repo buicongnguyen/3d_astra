@@ -103,7 +103,7 @@ export const SOVEREIGN_WALKS = {
       { spawn: "relay", team: 1, at: "relayEast", tag: "ward", name: "Ashfall relay", hp: 4000, hpByDifficulty: { story: 3000 } },
       { spawn: "relay", team: 1, at: "relaySouth", tag: "ward", name: "Ashfall relay", hp: 4000, hpByDifficulty: { story: 3000 } },
       { reveal: "relays" },
-      { spawn: "ironsovereign2", team: 1, at: "gate", tag: "sovereign", exact: true, hpByDifficulty: { story: 34000, veteran: 40000 } },
+      { spawn: "ironsovereign2", team: 1, at: "gate", tag: "sovereign", exact: true, hpByDifficulty: { story: 12000, veteran: 14000 } },
       { wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "gate", target: "line" } },
       { ping: "gate" },
       { music: "tense" },

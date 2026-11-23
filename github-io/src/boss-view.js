@@ -165,7 +165,7 @@ export class BossView {
     model.traverse((o) => { if (o.name === "BossCore") core = o; });
     root.userData.boss = { armL: find("BossArmL"), armR: find("BossArmR"), gun: find("BossGun"), cannon: find("BossCannon"), legA: find("BossLegA"), legB: find("BossLegB"), core, recoil: [0, 0, 0, 0], raise: 0, glow: 0, id: e.id };
     for (const arm of [root.userData.boss.armL, root.userData.boss.armR, root.userData.boss.cannon, root.userData.boss.legA, root.userData.boss.legB]) if (arm) arm.userData.base = arm.position.clone();
-    root.userData.bar.position.y = 6.4;
+    root.userData.bar.position.y = 4.5;
     root.userData.bar.userData.base *= 1.6;
   }
   event(event, sim) {
@@ -217,21 +217,21 @@ export class BossView {
         const kick = Math.max(u.recoil[side], u.recoil[side + 1]);
         arm.rotation.x = -0.22 * u.raise;
         arm.position.copy(arm.userData.base);
-        if (motion && kick > 0) arm.position.z -= Math.sin((kick / 0.16) * Math.PI) * 0.22;
+        if (motion && kick > 0) arm.position.z -= Math.sin((kick / 0.16) * Math.PI) * 0.1;
       }
       // The Sovereign: the cannon kicks back per shell; two tripods of legs step in turn (a lift and a
       // sweep along the heading), their stride following the ground covered (the main loop's gait).
       if (u.cannon) {
         u.cannon.position.copy(u.cannon.userData.base);
         const kick = u.recoil[0];
-        if (motion && kick > 0) u.cannon.position.z -= Math.sin((kick / 0.16) * Math.PI) * 0.5;
+        if (motion && kick > 0) u.cannon.position.z -= Math.sin((kick / 0.16) * Math.PI) * 0.22;
       }
       if (u.legA) {
         const g = o.userData.gait || 0, ph = o.userData.stride || 0;
         for (const [leg, k] of [[u.legA, 0], [u.legB, Math.PI]]) {
           const c = Math.cos(ph * 0.55 + k);
           leg.position.copy(leg.userData.base);
-          if (motion) { leg.position.z += Math.sin(ph * 0.55 + k) * 0.5 * g; leg.position.y += Math.max(0, c) * 0.35 * g; }
+          if (motion) { leg.position.z += Math.sin(ph * 0.55 + k) * 0.24 * g; leg.position.y += Math.max(0, c) * 0.16 * g; }
         }
       }
       for (let i = 0; i < 4; i++) u.recoil[i] = Math.max(0, u.recoil[i] - dt);

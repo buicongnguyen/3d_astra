@@ -276,10 +276,10 @@
     {
       "name": "ironvanguard",
       "file": "ironvanguard.glb",
-      "triangles": 2228,
+      "triangles": 2912,
       "boss": "iron-vanguard",
       "budget": 3000,
-      "source": "Tank_game_3D public/models/boss-quad-mech.glb (same owner), ported by tools/port-boss-model.mjs",
+      "source": "tools/blender/generate_bosses.py ironvanguard (redrawn at about 1.5 tanks, owner request 2026-11-23)",
       "animation": "Runtime parts (src/boss-view.js): legs, torso, arms, light gun and core; no baked clips"
     },
     {
@@ -304,11 +304,11 @@
     {
       "name": "ironsovereign",
       "file": "ironsovereign.glb",
-      "triangles": 1904,
+      "triangles": 2548,
       "boss": "iron-sovereign",
       "budget": 2800,
       "review": "pending owner review (round 3)",
-      "source": "Tank_game_3D public/models/boss-walker.glb (same owner), ported by tools/port-boss-model.mjs --parts tools/boss-parts/ironsovereign.json",
+      "source": "tools/blender/generate_bosses.py ironsovereign (redrawn at about 1.5 tanks, owner request 2026-11-23)",
       "animation": "Runtime parts (src/boss-view.js BOSS_PARTS): two tripods of legs, turret, cannon, light gun and core; no baked clips"
     },
     {
@@ -333,11 +333,11 @@
     {
       "name": "ironsovereign2",
       "file": "ironsovereign2.glb",
-      "triangles": 1904,
+      "triangles": 2548,
       "boss": "iron-sovereign-2",
       "budget": 2800,
       "review": "pending owner review (round 3)",
-      "source": "Tank_game_3D public/models/boss-walker.glb (same owner), ported by tools/port-boss-model.mjs --parts tools/boss-parts/ironsovereign2.json (the Iron Sovereign's port under its own root name; re-port it whenever the Sovereign's palette changes)",
+      "source": "tools/blender/generate_bosses.py ironsovereign2 (redrawn at about 1.5 tanks, owner request 2026-11-23)",
       "animation": "Runtime parts (src/boss-view.js BOSS_PARTS): two tripods of legs, turret, cannon, light gun and core; no baked clips; the relay shield and the phase-2 core glow are drawn at runtime"
     }
   ]

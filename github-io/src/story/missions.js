@@ -239,7 +239,7 @@ export const MISSIONS = [
       { spawn: "tower", team: 1, at: { x: 40, z: 7 }, hp: 2000 },
       // The boss (docs/aaa/BOSSES.md) is the north siphon's guard (it replaced that siphon's tower): powered
       // down in the salvage yard until it is hurt or troops come within 14 m.
-      { spawn: "ironvanguard", team: 1, at: "vanguardYard", tag: "ironVanguard", exact: true, hpByDifficulty: { story: 26000 } },
+      { spawn: "ironvanguard", team: 1, at: "vanguardYard", tag: "ironVanguard", exact: true, hpByDifficulty: { story: 9000 } },
     ],
     objectives: [
       { id: "siphons", text: "Destroy the three Ashfall siphons", type: "destroyTag", tag: "siphon" },

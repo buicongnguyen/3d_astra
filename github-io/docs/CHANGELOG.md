@@ -28,6 +28,10 @@ Portrait battle controls leave more of the field visible with a unit selected. T
 
 ## Unreleased: Round A
 
+### Smaller, better-looking bosses (owner request)
+- The Iron Vanguard and Iron Sovereign are redrawn in Blender (`tools/blender/generate_bosses.py`) so they no longer tower over the base: the Iron Vanguard is about 40% of its old height and the six-legged Iron Sovereign a quarter of its old width, a little over a tank. Portraits are updated.
+- Campaign boss health is about a third: Iron Vanguard 32,000 to 11,000 (Story 9,000), Iron Sovereign in The Sovereign Walks 44,000 to 15,000 (Story 12,000, Veteran 14,000). The Defence Sovereign keeps its 10,000. The golden pins for those two missions are re-recorded for this change only.
+
 ### A7 — Large battles
 
 Repeated blocked routes reuse navigation results until the battlefield changes. The frame loop budgets catch-up time, and health bars, selection rings and ground shadows share draw calls in crowded battles.
