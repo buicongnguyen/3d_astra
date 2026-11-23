@@ -46,13 +46,13 @@ export const validSquad = (value) => Array.isArray(value)
 
 // Story missions with a Command core and no fixed squad take the veterans. Defence missions, the no-base
 // strike (m08) and Faction Chronicles do not.
-export const carriesSquad = (def) => !!def && !def.defence && !def.noCarry && def.rules?.playerBase !== false
-  && MISSIONS.some((m) => m.id === def.id) && MISSIONS[0].id !== def.id;
+export const carriesSquad = (def, progress = null) => !!def && !def.defence && !def.noCarry && def.rules?.playerBase !== false
+  && MISSIONS.some((m) => m.id === def.id) && (MISSIONS[0].id !== def.id || (progress?.ngPlus || 0) > 0);
 
 // The mission with the squad added to its setup: one entry per member, standing by the Command core.
 export function carrySquad(def, progress) {
   const squad = validSquad(progress?.squad);
-  if (!squad.length || !carriesSquad(def)) return def;
+  if (!squad.length || !carriesSquad(def, progress)) return def;
   const entries = squad.map((m, slot) => ({ slot, spawn: m.type, team: 0, at: "playerFront", exact: true, name: m.name, rank: m.rank, xp: m.xp, veteran: true }));
   return { ...def, setup: [...(def.setup || []), ...entries], squad };
 }

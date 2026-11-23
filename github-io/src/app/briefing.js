@@ -4,7 +4,7 @@ import { saveSettings } from "../settings.js";
 import { $ } from "./dom.js";
 import { AI_SPEEDS } from "../ai-plan.js";
 import { MAPS } from "../terrain.js";
-import { MISSIONS, ACTS, missionById, missionsOf, nextIn, chronicleUnlocked } from "../campaign.js";
+import { MISSIONS, ACTS, missionById, missionsOf, nextIn, chronicleUnlocked, startNewGamePlus, saveProgress } from "../campaign.js";
 import { chronicleListHTML, chronicleMissionsHTML, chronicleLabel, chronicleTitle, rowState } from "../chronicles-ui.js";
 import DEFENCE_MAPS from "../defence/maps.json" with { type: "json" };
 import { icon } from "../icons.js";
@@ -272,6 +272,8 @@ export function setupBriefing(S, A) {
     // chronicle card opens that chronicle.
     $("campaign-map").onclick = (event) => {
       if (Z.started) return;
+      const plus = event.target.closest("[data-ngplus]");
+      if (plus) { if (window.confirm("Start New Game+? Clears, decisions and medals reset. Veterans, achievements and endings seen stay.")) { S.campaign = startNewGamePlus(S.campaign); saveProgress(S.campaign); S.stagePick = 0; renderCampaign(); previewBattle(); } return; }
       const ending = event.target.closest("[data-ending]");
       if (ending) { A.showEpilogue(ending.dataset.ending); return; }
       const chronicle = event.target.closest("[data-chronicle]");

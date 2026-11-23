@@ -7,6 +7,7 @@ import { DIFFICULTIES, difficultyId } from "./difficulty.js";
 import { MISSIONS } from "./story/missions.js";
 import { resolveMission, endingFor, ENDINGS, chronicleDone } from "./story/choices.js";
 import { squadFrom, validSquad } from "./story/squad.js";
+import { recordAchievements } from "./story/achievements.js";
 import { CHRONICLES, chronicleById } from "./story/chronicles.js";
 
 export { MISSIONS, resolveMission, endingFor };
@@ -29,6 +30,9 @@ const isRecord = (v) => !!v && typeof v === "object" && !Array.isArray(v);
 //   decisions?: { [decisionId]: optionId },      since 0.19a, written on a mission win
 //   endingsSeen?: [endingId],                    since 0.19a, written when the finale is won
 //   chronicles?: { [id]: { cleared, done, best } }, since 0.20, kept as stored (see recordIn)
+//   optional?: { [missionId]: n },              since campaign C7, optional objectives done at best
+//   earned?: [achievementId],                   since campaign C7, every achievement ever reached (story/achievements.js)
+//   ngPlus?: n,                                 since campaign C7, how many New Game+ runs were started
 //   squad?: [{ type, name, rank, xp }],         since campaign C2, up to 6 ranked survivors of the last won main mission
 //   ...any other field a newer version wrote is kept as it is.
 // }
@@ -50,6 +54,12 @@ export function loadProgress(store = storage()) {
     if (Array.isArray(data.endingsSeen)) progress.endingsSeen = [...new Set(data.endingsSeen.filter((id) => Object.hasOwn(ENDINGS, id)))];
     else delete progress.endingsSeen;
     if (!isRecord(data.chronicles)) delete progress.chronicles;
+    if (isRecord(data.optional)) progress.optional = Object.fromEntries(Object.entries(data.optional).filter(([, n]) => Number.isFinite(n) && n >= 0));
+    else delete progress.optional;
+    if (Array.isArray(data.earned)) progress.earned = [...new Set(data.earned.filter((id) => typeof id === "string"))];
+    else delete progress.earned;
+    if (Number.isFinite(data.ngPlus) && data.ngPlus > 0) progress.ngPlus = Math.floor(data.ngPlus);
+    else delete progress.ngPlus;
     if (Array.isArray(data.squad)) progress.squad = validSquad(data.squad);
     else delete progress.squad;
     return progress;
@@ -97,6 +107,19 @@ export function recordSquad(progress, entities, missionId) {
   if (!squad.length && !progress.squad) return progress;
   const next = { ...progress };
   if (squad.length) next.squad = squad; else delete next.squad;
+  return next;
+}
+// Optional objectives a won mission completed (the best count is kept), then the achievements that reaches.
+export function recordOptional(progress, missionId, count) {
+  const old = progress.optional?.[missionId] || 0;
+  const next = count > old ? { ...progress, optional: { ...progress.optional, [missionId]: count } } : progress;
+  return recordAchievements(next);
+}
+// New Game+ (plan C7.4): the campaign starts again from mission one with the veteran squad, the achievements,
+// the endings seen and the chronicles kept; clears, decisions and optional counts are reset.
+export function startNewGamePlus(progress) {
+  const next = { cleared: {}, ngPlus: (progress.ngPlus || 0) + 1 };
+  for (const key of ["squad", "earned", "endingsSeen", "chronicles"]) if (progress[key] !== undefined) next[key] = progress[key];
   return next;
 }
 export function recordEnding(progress, ending) {

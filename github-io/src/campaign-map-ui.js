@@ -22,6 +22,9 @@ import { MISSIONS, ACTS, isCleared, isUnlocked, bestMedal, nextMission } from ".
 import { MAP_NODES, STRIP_NODES, MAP_ANCHORS, MAP_ART, MAP_TEXT, ENDING_HINTS } from "./story/campaign-map.js";
 import { DECISIONS, ENDINGS, ENDING_IDS, optionOf } from "./story/choices.js";
 import { chronicleCardsHTML } from "./chronicles-ui.js";
+import { achievementsFor } from "./story/achievements.js";
+import { DEFINITIONS as DEFS } from "./data.js";
+import "./campaign-archive.css";
 
 const esc = (text) => String(text ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 // The layout that shows the strip panorama (kept equal to the media rules in campaign-map.css).
@@ -51,6 +54,27 @@ export function routeLegs(points) {
 }
 // Act plates: Act 3 in the painting's calm top-left corner, Acts 2 and 1 at the left edge of their bands.
 const ACT_AT = { 3: 1.6, 2: 33.5, 1: 68.5 };
+
+// The archive under the map (plan C5.3 and C7): achievements, the veteran squad and the commanders met, in one
+// block with no sub-menus; New Game+ is a plain button once every main mission is cleared.
+const COMMANDERS = [["m04-sol", "Captain Sol"], ["m07-hale", "Commander Hale"], ["m10-maren", "Ilse Maren"]];
+export function archiveHTML(progress) {
+  const ach = achievementsFor(progress), done = ach.filter((a) => a.done).length;
+  const chips = ach.map((a) => `<span class="cmap-chip ${a.done ? "done" : "todo"}" title="${esc(a.how)}${a.done ? "" : ` · ${a.have}/${a.need}`}"><i aria-hidden="true">${a.done ? "✓" : "○"}</i>${esc(a.title)}</span>`).join("");
+  const squad = (progress?.squad || []).map((m) => `<span class="cmap-vet"><b aria-hidden="true">${"★".repeat(Math.min(3, m.rank))}</b> ${esc(m.name)} <em>${esc(DEFS[m.type]?.name || m.type)}</em></span>`).join("");
+  const met = COMMANDERS.map(([id, name]) => {
+    const answer = progress?.decisions?.[id];
+    return `<span class="cmap-met ${answer === "accept" ? "spared" : answer === "finish" ? "beaten" : "unmet"}">${esc(name)} <em>${answer === "accept" ? "Spared" : answer === "finish" ? "Defeated" : "Not met yet"}</em></span>`;
+  }).join("");
+  const allDone = MISSIONS.every((m, i) => /^m\d+[a-z]-/.test(m.id) || isCleared(progress, i));
+  const plus = allDone ? `<button type="button" class="cmap-ngplus" data-ngplus>New Game+${progress?.ngPlus ? ` · run ${progress.ngPlus + 1}` : ""}</button>` : "";
+  return `<div class="cmap-archive" role="group" aria-label="Archive">
+    <div class="cmap-row"><span class="cmap-label">${esc("Achievements")} <b>${done} / ${ach.length}</b></span><span class="cmap-chips">${chips}</span></div>
+    <div class="cmap-row"><span class="cmap-label">${esc("Your veterans")}</span><span class="cmap-chips">${squad || `<span class="cmap-none">${esc("None yet. Rank up units and win a mission.")}</span>`}</span></div>
+    <div class="cmap-row"><span class="cmap-label">${esc("Commanders met")}</span><span class="cmap-chips">${met}</span></div>
+    ${plus}
+  </div>`;
+}
 
 // `campaign`: "main" or the Faction Chronicle chosen (0.20); a chronicle's card is marked and no relay is picked.
 export function campaignMapHTML({ progress, pick = 0, campaign = "main" }) {
@@ -94,6 +118,7 @@ export function campaignMapHTML({ progress, pick = 0, campaign = "main" }) {
     <div class="cmap-frame"><div class="cmap-board"><div class="cmap-layer">${art}${route("at")}${route("strip")}${nodes.map(node).join("")}</div><span class="cmap-vignette" aria-hidden="true"></span>${acts}</div></div>
     <div class="cmap-foot">
       <div class="cmap-endings"><span class="cmap-label">${esc(MAP_TEXT.endings)}</span>${endings}</div>
+      ${campaign === "main" ? archiveHTML(progress) : ""}
       ${chronicleCardsHTML({ progress, campaign })}
     </div>
   </div>`;

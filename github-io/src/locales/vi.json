@@ -65,7 +65,6 @@
     "Mirror": "Đối xứng",
     "Mixed": "Hỗn hợp",
     "Shades are hidden until they strike. Towers and Command cores reveal them.": "Bóng ma ẩn mình cho đến khi ra đòn. Tháp pháo và Sở chỉ huy làm chúng lộ diện.",
-
     "The Wardens": "Đội Wardens",
     "workers": "công nhân",
     "melee infantry": "bộ binh cận chiến",
@@ -78,7 +77,6 @@
     "Ashfall Combine": "Liên hợp Ashfall",
     "Sunward Caravan": "Đoàn Lữ hành Sunward",
     "Veil Survey": "Đoàn Khảo sát Veil",
-
     "Sound test": "Thử âm thanh",
     "Unit ready": "Đơn vị sẵn sàng",
     "Research done": "Nghiên cứu hoàn tất",
@@ -87,7 +85,6 @@
     "Objective failed": "Mục tiêu thất bại",
     "Mission won": "Nhiệm vụ thắng lợi",
     "Mission lost": "Nhiệm vụ thất bại",
-
     "Story": "Cốt truyện",
     "Standard": "Tiêu chuẩn",
     "Veteran": "Kỳ cựu",
@@ -96,7 +93,6 @@
     "Smaller waves, gentler enemies and more starting alloy.": "Ít quân địch hơn, sát thương nhẹ hơn và thêm hợp kim ban đầu.",
     "The original campaign balance.": "Độ cân bằng gốc của chiến dịch.",
     "Larger waves, stronger enemies and faster AI.": "Nhiều quân địch hơn, sát thương mạnh hơn và AI nhanh hơn.",
-
     "Select / box select": "Chọn / chọn khung",
     "Left-click / drag": "Nhấp trái / kéo",
     "Add to selection / queue order": "Thêm vào vùng chọn / xếp hàng lệnh",
@@ -728,7 +724,6 @@
     "Set rally point": "Đặt điểm tập kết",
     "Upgrade building": "Nâng cấp công trình",
     "Cancel last job / site": "Hủy việc cuối / công trình",
-    "Next idle Harvester": "Thợ mỏ nhàn rỗi kế tiếp",
     "Select Harvesters": "Chọn Thợ mỏ",
     "Select buildings": "Chọn công trình",
     "Next Command core": "Sở chỉ huy kế tiếp",
@@ -1249,7 +1244,6 @@
     "Level 3: recruits arrive as veterans": "Cấp 3: tân binh ra trận đã là cựu binh",
     "War for the Meridian Frontier": "Cuộc chiến vì Biên cương Meridian",
     "Command uplink": "Kênh chỉ huy",
-    "Sector 07": "Khu vực 07",
     "Frostline Reach": "Vùng Băng Giá",
     "Contested": "Đang tranh chấp",
     "Under siege": "Bị vây hãm",
@@ -1382,73 +1376,293 @@
     "The Sandstorm is not ready.": "Bão cát chưa sẵn sàng.",
     "Wild frontier": "Miền hoang dã",
     "Amber Dunes: hold the Weather Spire for a Sandstorm; tame the Dune Wyrm.": "Đồi cát Hổ Phách: giữ Tháp thời tiết để gọi Bão cát; thuần Rồng cát.",
-    "On": "Bật"
+    "Achievements": "Thành tựu",
+    "Commanders met": "Chỉ huy đã gặp",
+    "Spared": "Được tha",
+    "Defeated": "Bị đánh bại",
+    "Not met yet": "Chưa gặp",
+    "None yet. Rank up units and win a mission.": "Chưa có. Thăng cấp quân và thắng một nhiệm vụ.",
+    "First victory": "Chiến thắng đầu tiên",
+    "Clear the first mission": "Hoàn thành nhiệm vụ đầu tiên",
+    "Act 1 complete": "Hoàn thành Hồi 1",
+    "Clear every Act 1 mission": "Hoàn thành mọi nhiệm vụ Hồi 1",
+    "Act 2 complete": "Hoàn thành Hồi 2",
+    "Clear every Act 2 mission": "Hoàn thành mọi nhiệm vụ Hồi 2",
+    "Act 3 complete": "Hoàn thành Hồi 3",
+    "Clear every Act 3 mission": "Hoàn thành mọi nhiệm vụ Hồi 3",
+    "Gold standard": "Chuẩn vàng",
+    "Win gold medals in 5 missions": "Giành huy chương vàng ở 5 nhiệm vụ",
+    "Hard road": "Đường gian nan",
+    "Clear 5 missions on Veteran": "Hoàn thành 5 nhiệm vụ ở mức Kỳ cựu",
+    "The decider": "Người quyết định",
+    "Answer all six decisions": "Trả lời cả sáu quyết định",
+    "Mercy": "Lòng thương",
+    "Accept all three surrenders": "Chấp nhận cả ba lần đầu hàng",
+    "No quarter": "Không khoan nhượng",
+    "Finish all three yielding commanders": "Kết liễu cả ba chỉ huy đầu hàng",
+    "Both endings": "Cả hai cái kết",
+    "See both endings": "Xem cả hai cái kết",
+    "Full squad": "Biệt đội đầy đủ",
+    "Keep six veterans at once": "Giữ sáu quân kỳ cựu cùng lúc",
+    "Going further": "Đi xa hơn",
+    "Complete 10 optional objectives": "Hoàn thành 10 mục tiêu tùy chọn",
+    "Chronicler": "Người ghi biên niên",
+    "Finish a Faction Chronicle": "Hoàn thành một Biên niên phe",
+    "New Game+": "Chơi lại +"
   },
   "patterns": [
-    ["^(\\d{1,2}) Jan$", "{1} thg 1"],
-    ["^(\\d{1,2}) Feb$", "{1} thg 2"],
-    ["^(\\d{1,2}) Mar$", "{1} thg 3"],
-    ["^(\\d{1,2}) Apr$", "{1} thg 4"],
-    ["^(\\d{1,2}) May$", "{1} thg 5"],
-    ["^(\\d{1,2}) Jun$", "{1} thg 6"],
-    ["^(\\d{1,2}) Jul$", "{1} thg 7"],
-    ["^(\\d{1,2}) Aug$", "{1} thg 8"],
-    ["^(\\d{1,2}) Sep$", "{1} thg 9"],
-    ["^(\\d{1,2}) Oct$", "{1} thg 10"],
-    ["^(\\d{1,2}) Nov$", "{1} thg 11"],
-    ["^(\\d{1,2}) Dec$", "{1} thg 12"],
-    ["^RANK (\\d+) / (\\d+)$", "HẠNG {1} / {2}"],
-    ["^Rank (\\d+), (\\d+ alloy)$", "Hạng {1}, {2}"],
-    ["^Rank (\\d+): (.+)$", "Hạng {1}: {2}"],
-    ["^Next rank: (.+)$", "Hạng tiếp theo: {1}"],
-    ["^New squad: (\\d+) tanks at the depot$", "Tiểu đội mới: {1} xe tăng ở kho"],
-    ["^This zone holds (\\d+) towers\\.$", "Khu này chứa tối đa {1} tháp."],
-    ["^All (\\d+) armour squads are in the field\\.$", "Cả {1} tiểu đội thiết giáp đã ra trận."],
-    ["^Defence · (.+)$", "Phòng thủ · {1}"],
-    ["^Endless · (.+)$", "Vô tận · {1}"],
-    ["^Daily · (.+)$", "Hằng ngày · {1}"],
-    ["^Best: (\\d+) waves held$", "Kỷ lục: chặn được {1} đợt"],
-    ["^Best: (\\d+)$", "Kỷ lục: {1}"],
-    ["^(\\d+) waves held$", "Chặn được {1} đợt"],
-    ["^Buy (.+) for (\\d+) stars$", "Mua {1} với {2} sao"],
-    ["^(.+): owned$", "{1}: đã có"],
-    ["^The charge goes off in (\\d+) s\\. Anyone on the bridge is thrown to the bank\\.$", "Thuốc nổ sẽ nổ sau {1} giây. Ai đứng trên cầu sẽ bị hất vào bờ."],
-    ["^Bridge builders at work: pontoon (\\d+)% done\\.$", "Thợ bắc cầu đang làm: cầu phao xong {1}%."],
-    ["^Barrage: shell a spot within (\\d+) m, (\\d+) damage over ([\\d.]+) m$", "Pháo kích: bắn một điểm trong {1} m, {2} sát thương trên {3} m"],
-    ["^Reinforce: three Vanguards hold the road for (\\d+) s$", "Tiếp viện: ba lính Tiên phong giữ con đường trong {1} giây"],
-    ["^(\\d+) lives$", "{1} mạng"],
-    ["^(\\d+) waves$", "{1} đợt"],
-    ["^(\\d+) of 3 stars$", "{1} trên 3 sao"],
-    ["^tier (\\d+)$", "bậc {1}"],
-    ["^TIER (\\d+) / 3$", "BẬC {1} / 3"],
-    ["^Upgrade to tier (\\d+), (\\d+ alloy)$", "Nâng lên bậc {1}, {2}"],
-    ["^Tier (\\d+): (\\d+) damage, (\\d+) m$", "Bậc {1}: {2} sát thương, {3} m"],
-    ["^Sell for (\\d+ alloy)$", "Bán lấy {1}"],
-    ["^Sell: (\\d+) alloy back$", "Bán: hoàn lại {1} hợp kim"],
-    ["^DEFENCE · LEVEL (\\d+) / (\\d+)$", "PHÒNG THỦ · MÀN {1} / {2}"],
-    ["^DEFENCE · LEVEL (\\d+) · HELD$", "PHÒNG THỦ · MÀN {1} · ĐÃ GIỮ"],
-    ["^DEFENCE · LEVEL (\\d+) · BROKEN$", "PHÒNG THỦ · MÀN {1} · ĐÃ VỠ"],
-    ["^Deals ([\\d.]+)× damage to melee infantry\\.$", "Gây {1}× sát thương lên bộ binh cận chiến."],
-    ["^Deals ([\\d.]+)× damage to ranged infantry\\.$", "Gây {1}× sát thương lên bộ binh tầm xa."],
-    ["^Deals ([\\d.]+)× damage to siege units\\.$", "Gây {1}× sát thương lên đơn vị công thành."],
-    ["^Deals ([\\d.]+)× damage to armored units\\.$", "Gây {1}× sát thương lên đơn vị thiết giáp."],
-    ["^Deals ([\\d.]+)× damage to antiarmor infantry\\.$", "Gây {1}× sát thương lên bộ binh chống tăng."],
-    ["^Deals ([\\d.]+)× damage to support units\\.$", "Gây {1}× sát thương lên đơn vị hỗ trợ."],
-    ["^Deals ([\\d.]+)× damage to workers\\.$", "Gây {1}× sát thương lên công nhân."],
-
-    ["^Finish within (\\d+) seconds$", "Hoàn thành trong {1} giây"],
-    ["^(Ashfall|Sunward|Wardens|Veil) command is online\\. Assign Harvesters to the amber alloy deposits\\.$", "Bộ chỉ huy {1} đã sẵn sàng. Cho Thợ mỏ khai thác tinh thể hợp kim màu vàng."],
-    ["^Enemy command has been eliminated\\. (Ashfall|Sunward|Wardens|Veil) command holds the valley\\.$", "Đã phá hủy bộ chỉ huy địch. Bộ chỉ huy {1} làm chủ thung lũng."],
-    ["^(.+) counters your (.+)\\. Pull them back and bring (.+)\\.$", "{1} khắc chế {2} của bạn. Hãy rút {2} về và dùng {3}."],
-    ["^(.+) counters your (.+)\\. Pull them back\\.$", "{1} khắc chế {2} của bạn. Hãy rút {2} về."],
-    ["^Your (.+) counters (.+)\\. Let it lead the fight\\.$", "{1} của bạn khắc chế {2}. Hãy để {1} dẫn đầu trận đánh."],
-    ["^Your (.+) beats (.+)$", "{1} của bạn khắc chế {2}"],
-    ["^(.+) beats (.+): use (.+)$", "{1} khắc chế {2}: dùng {3}"],
-    ["^(.+) beats (.+): pull back$", "{1} khắc chế {2}: rút về"],
-    ["^(.+) is ready on your (.+)\\. Select it and press ([A-Z]): (.+)$", "{1} của {2} đã sẵn sàng. Chọn {2} rồi nhấn {3}: {4}"],
-    ["^(.+) is ready on your (.+)\\. Select it and tap its tile: (.+)$", "{1} của {2} đã sẵn sàng. Chọn {2} rồi chạm vào ô kỹ năng: {3}"],
-    ["^(.+) is ready\\. Press ([A-Z]): (.+)$", "{1} đã sẵn sàng. Nhấn {2}: {3}"],
-    ["^(.+) is ready\\. Tap its tile: (.+)$", "{1} đã sẵn sàng. Chạm vào ô kỹ năng: {2}"],
+    [
+      "^(\\d{1,2}) Jan$",
+      "{1} thg 1"
+    ],
+    [
+      "^(\\d{1,2}) Feb$",
+      "{1} thg 2"
+    ],
+    [
+      "^(\\d{1,2}) Mar$",
+      "{1} thg 3"
+    ],
+    [
+      "^(\\d{1,2}) Apr$",
+      "{1} thg 4"
+    ],
+    [
+      "^(\\d{1,2}) May$",
+      "{1} thg 5"
+    ],
+    [
+      "^(\\d{1,2}) Jun$",
+      "{1} thg 6"
+    ],
+    [
+      "^(\\d{1,2}) Jul$",
+      "{1} thg 7"
+    ],
+    [
+      "^(\\d{1,2}) Aug$",
+      "{1} thg 8"
+    ],
+    [
+      "^(\\d{1,2}) Sep$",
+      "{1} thg 9"
+    ],
+    [
+      "^(\\d{1,2}) Oct$",
+      "{1} thg 10"
+    ],
+    [
+      "^(\\d{1,2}) Nov$",
+      "{1} thg 11"
+    ],
+    [
+      "^(\\d{1,2}) Dec$",
+      "{1} thg 12"
+    ],
+    [
+      "^RANK (\\d+) / (\\d+)$",
+      "HẠNG {1} / {2}"
+    ],
+    [
+      "^Rank (\\d+), (\\d+ alloy)$",
+      "Hạng {1}, {2}"
+    ],
+    [
+      "^Rank (\\d+): (.+)$",
+      "Hạng {1}: {2}"
+    ],
+    [
+      "^Next rank: (.+)$",
+      "Hạng tiếp theo: {1}"
+    ],
+    [
+      "^New squad: (\\d+) tanks at the depot$",
+      "Tiểu đội mới: {1} xe tăng ở kho"
+    ],
+    [
+      "^This zone holds (\\d+) towers\\.$",
+      "Khu này chứa tối đa {1} tháp."
+    ],
+    [
+      "^All (\\d+) armour squads are in the field\\.$",
+      "Cả {1} tiểu đội thiết giáp đã ra trận."
+    ],
+    [
+      "^Defence · (.+)$",
+      "Phòng thủ · {1}"
+    ],
+    [
+      "^Endless · (.+)$",
+      "Vô tận · {1}"
+    ],
+    [
+      "^Daily · (.+)$",
+      "Hằng ngày · {1}"
+    ],
+    [
+      "^Best: (\\d+) waves held$",
+      "Kỷ lục: chặn được {1} đợt"
+    ],
+    [
+      "^Best: (\\d+)$",
+      "Kỷ lục: {1}"
+    ],
+    [
+      "^(\\d+) waves held$",
+      "Chặn được {1} đợt"
+    ],
+    [
+      "^Buy (.+) for (\\d+) stars$",
+      "Mua {1} với {2} sao"
+    ],
+    [
+      "^(.+): owned$",
+      "{1}: đã có"
+    ],
+    [
+      "^The charge goes off in (\\d+) s\\. Anyone on the bridge is thrown to the bank\\.$",
+      "Thuốc nổ sẽ nổ sau {1} giây. Ai đứng trên cầu sẽ bị hất vào bờ."
+    ],
+    [
+      "^Bridge builders at work: pontoon (\\d+)% done\\.$",
+      "Thợ bắc cầu đang làm: cầu phao xong {1}%."
+    ],
+    [
+      "^Barrage: shell a spot within (\\d+) m, (\\d+) damage over ([\\d.]+) m$",
+      "Pháo kích: bắn một điểm trong {1} m, {2} sát thương trên {3} m"
+    ],
+    [
+      "^Reinforce: three Vanguards hold the road for (\\d+) s$",
+      "Tiếp viện: ba lính Tiên phong giữ con đường trong {1} giây"
+    ],
+    [
+      "^(\\d+) lives$",
+      "{1} mạng"
+    ],
+    [
+      "^(\\d+) waves$",
+      "{1} đợt"
+    ],
+    [
+      "^(\\d+) of 3 stars$",
+      "{1} trên 3 sao"
+    ],
+    [
+      "^tier (\\d+)$",
+      "bậc {1}"
+    ],
+    [
+      "^TIER (\\d+) / 3$",
+      "BẬC {1} / 3"
+    ],
+    [
+      "^Upgrade to tier (\\d+), (\\d+ alloy)$",
+      "Nâng lên bậc {1}, {2}"
+    ],
+    [
+      "^Tier (\\d+): (\\d+) damage, (\\d+) m$",
+      "Bậc {1}: {2} sát thương, {3} m"
+    ],
+    [
+      "^Sell for (\\d+ alloy)$",
+      "Bán lấy {1}"
+    ],
+    [
+      "^Sell: (\\d+) alloy back$",
+      "Bán: hoàn lại {1} hợp kim"
+    ],
+    [
+      "^DEFENCE · LEVEL (\\d+) / (\\d+)$",
+      "PHÒNG THỦ · MÀN {1} / {2}"
+    ],
+    [
+      "^DEFENCE · LEVEL (\\d+) · HELD$",
+      "PHÒNG THỦ · MÀN {1} · ĐÃ GIỮ"
+    ],
+    [
+      "^DEFENCE · LEVEL (\\d+) · BROKEN$",
+      "PHÒNG THỦ · MÀN {1} · ĐÃ VỠ"
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to melee infantry\\.$",
+      "Gây {1}× sát thương lên bộ binh cận chiến."
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to ranged infantry\\.$",
+      "Gây {1}× sát thương lên bộ binh tầm xa."
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to siege units\\.$",
+      "Gây {1}× sát thương lên đơn vị công thành."
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to armored units\\.$",
+      "Gây {1}× sát thương lên đơn vị thiết giáp."
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to antiarmor infantry\\.$",
+      "Gây {1}× sát thương lên bộ binh chống tăng."
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to support units\\.$",
+      "Gây {1}× sát thương lên đơn vị hỗ trợ."
+    ],
+    [
+      "^Deals ([\\d.]+)× damage to workers\\.$",
+      "Gây {1}× sát thương lên công nhân."
+    ],
+    [
+      "^Finish within (\\d+) seconds$",
+      "Hoàn thành trong {1} giây"
+    ],
+    [
+      "^(Ashfall|Sunward|Wardens|Veil) command is online\\. Assign Harvesters to the amber alloy deposits\\.$",
+      "Bộ chỉ huy {1} đã sẵn sàng. Cho Thợ mỏ khai thác tinh thể hợp kim màu vàng."
+    ],
+    [
+      "^Enemy command has been eliminated\\. (Ashfall|Sunward|Wardens|Veil) command holds the valley\\.$",
+      "Đã phá hủy bộ chỉ huy địch. Bộ chỉ huy {1} làm chủ thung lũng."
+    ],
+    [
+      "^(.+) counters your (.+)\\. Pull them back and bring (.+)\\.$",
+      "{1} khắc chế {2} của bạn. Hãy rút {2} về và dùng {3}."
+    ],
+    [
+      "^(.+) counters your (.+)\\. Pull them back\\.$",
+      "{1} khắc chế {2} của bạn. Hãy rút {2} về."
+    ],
+    [
+      "^Your (.+) counters (.+)\\. Let it lead the fight\\.$",
+      "{1} của bạn khắc chế {2}. Hãy để {1} dẫn đầu trận đánh."
+    ],
+    [
+      "^Your (.+) beats (.+)$",
+      "{1} của bạn khắc chế {2}"
+    ],
+    [
+      "^(.+) beats (.+): use (.+)$",
+      "{1} khắc chế {2}: dùng {3}"
+    ],
+    [
+      "^(.+) beats (.+): pull back$",
+      "{1} khắc chế {2}: rút về"
+    ],
+    [
+      "^(.+) is ready on your (.+)\\. Select it and press ([A-Z]): (.+)$",
+      "{1} của {2} đã sẵn sàng. Chọn {2} rồi nhấn {3}: {4}"
+    ],
+    [
+      "^(.+) is ready on your (.+)\\. Select it and tap its tile: (.+)$",
+      "{1} của {2} đã sẵn sàng. Chọn {2} rồi chạm vào ô kỹ năng: {3}"
+    ],
+    [
+      "^(.+) is ready\\. Press ([A-Z]): (.+)$",
+      "{1} đã sẵn sàng. Nhấn {2}: {3}"
+    ],
+    [
+      "^(.+) is ready\\. Tap its tile: (.+)$",
+      "{1} đã sẵn sàng. Chạm vào ô kỹ năng: {2}"
+    ],
     [
       "^PLACE (.+)$",
       "ĐẶT {1}"
@@ -1802,11 +2016,11 @@
       "Tập {1} / {2}{3}"
     ],
     [
-      "^Loading (.+)\u2026 (\\d+)%$",
-      "\u0110ang t\u1ea3i {1}\u2026 {2}%"
+      "^Loading (.+)… (\\d+)%$",
+      "Đang tải {1}… {2}%"
     ],
     [
-      "^Loading (\\d+) of (\\d+)\u2026$",
+      "^Loading (\\d+) of (\\d+)…$",
       "Đang tải {1}/{2}…"
     ],
     [
@@ -1896,8 +2110,8 @@
     [
       "^(.+) promoted to rank (\\d)$",
       "{1} được thăng bậc {2}"
-    ]
-    ,[
+    ],
+    [
       "^(.+) has fallen$",
       "{1} đã ngã xuống"
     ],
@@ -1937,34 +2151,121 @@
       "^Shots from the front do (\\d+(?:\\.\\d+)?)× damage and shots from behind (\\d+(?:\\.\\d+)?)×; shots from the side do full damage. Flank it.$",
       "Đạn bắn từ phía trước gây {1} lần sát thương, từ phía sau {2} lần; đạn từ bên hông gây sát thương đầy đủ. Hãy đánh vòng sườn."
     ],
-    ["^ACT (I{1,3})$", "HỒI {1}"],
-    ["^DAY (\\d+)$", "NGÀY {1}"],
-    ["^NIGHT (\\d+)$", "ĐÊM {1}"],
-    ["^(.+) CHRONICLE$", "BIÊN NIÊN {1}"],
-    ["^FRONTIER DEFENCE$", "PHÒNG THỦ BIÊN CƯƠNG"],
-    ["^Hold all (\\d+) waves\\.$", "Giữ vững cả {1} đợt."],
-    ["^Finish with (\\d+) lives or more \\(you kept (\\d+)\\)\\.$", "Kết thúc với {1} mạng trở lên (bạn còn {2})."],
-    ["^Wave (\\d+) cost the most lives:$", "Đợt {1} làm mất nhiều mạng nhất:"],
-    ["^Following (.+)$", "Đi theo {1}"],
-    ["^Air limit: (\\d+) of (\\d+) flyers; (\\d+) with a level (\\d+) Command core$", "Giới hạn trên không: {1} trên {2} mục tiêu bay; {3} khi Sở chỉ huy cấp {4}"],
-    ["^Air limit: (\\d+) of (\\d+) flyers$", "Giới hạn trên không: {1} trên {2} mục tiêu bay"],
-    ["^You field at most (\\d+) flyers at a level 1 Command core, (\\d+) at level 2 and (\\d+) at level 3, counting those in production; computer opponents field at most (\\d+)\\.$", "Bạn có tối đa {1} mục tiêu bay khi Sở chỉ huy cấp 1, {2} khi cấp 2 và {3} khi cấp 3, tính cả số đang sản xuất; đối thủ máy có tối đa {4}."],
-    ["^(\\d+) / (\\d+) merciful$", "{1} / {2} khoan dung"],
-    ["^You gathered (\\d+) resources in (\\d+) minutes?\\.$", "Bạn thu được {1} tài nguyên trong {2} phút."],
-    ["^You trained (\\d+) units?\\.$", "Bạn đã huấn luyện {1} đơn vị."],
-    ["^You lost (\\d+) units and defeated (\\d+)\\.$", "Bạn mất {1} đơn vị và hạ được {2}."],
-    ["^You lost (\\d+) buildings\\.$", "Bạn mất {1} công trình."],
-    ["^You held (\\d+) of (\\d+) waves\\.$", "Bạn đã giữ được {1} trên {2} đợt."],
-    ["^You completed (\\d+) of (\\d+) objectives\\.$", "Bạn đã hoàn thành {1} trên {2} mục tiêu."],
-    ["^The enemy core was down to (\\d+)% health\\.$", "Sở chỉ huy địch chỉ còn {1}% máu."],
-    ["^Rank (\\d\\d)$", "Bậc {1}"],
-    ["^(\\d+) / (\\d+) XP$", "{1} / {2} XP"],
-    ["^(\\d+) XP$", "{1} XP"],
-    ["^\\+(\\d+) XP$", "+{1} XP"],
-    ["^Unlocks at rank (\\d+)$", "Mở khóa ở bậc {1}"],
-    ["^Pledge a Daily order for \\+(\\d+) XP on a win, once a day\\. It never changes a battle\\.$", "Cam kết một lệnh trong ngày để nhận +{1} XP khi thắng, mỗi ngày một lần. Không bao giờ thay đổi trận đánh."],
-    ["^Sandstorm recharging: (\\d+) s\\.$", "Bão cát đang nạp lại: {1} giây."],
-    ["^A Battle rule for Amber Dunes\\. Hold the Weather Spire near the centre to call a Sandstorm with the one Sandstorm button: after a (\\d+) s warning that every side sees, enemies inside fire 30% slower and see only (\\d+) m for (\\d+) s, and your units inside are hidden from them\\. It recharges in (\\d+) s; a new holder waits (\\d+) s\\.$", "Một luật trận cho Đồi cát Hổ Phách. Giữ Tháp thời tiết gần trung tâm để gọi Bão cát bằng nút Bão cát: sau {1} giây cảnh báo mà mọi phe đều thấy, địch trong bão bắn chậm hơn 30% và chỉ thấy {2} m trong {3} giây, còn quân của bạn trong bão được che giấu. Bão nạp lại sau {4} giây; người giữ mới phải chờ {5} giây."],
-    ["^Clear the (\\d+) Wyrmlings at the nest, then keep only your units in it for (\\d+) s to tame a Dune Wyrm \\(at most (\\d+) per side\\)\\. The nest regrows its guards (\\d+) s later\\. Relaxed rivals never use the Spire or the nest; Normal rivals only late in a match\\.$", "Diệt {1} Rồng cát non ở tổ, rồi chỉ để quân của bạn trong tổ {2} giây để thuần một Rồng cát (tối đa {3} con mỗi phe). Tổ mọc lại lính canh sau {4} giây. Đối thủ Chậm không bao giờ dùng Tháp hay tổ; đối thủ Thường chỉ dùng muộn trong trận."]
+    [
+      "^ACT (I{1,3})$",
+      "HỒI {1}"
+    ],
+    [
+      "^DAY (\\d+)$",
+      "NGÀY {1}"
+    ],
+    [
+      "^NIGHT (\\d+)$",
+      "ĐÊM {1}"
+    ],
+    [
+      "^(.+) CHRONICLE$",
+      "BIÊN NIÊN {1}"
+    ],
+    [
+      "^FRONTIER DEFENCE$",
+      "PHÒNG THỦ BIÊN CƯƠNG"
+    ],
+    [
+      "^Hold all (\\d+) waves\\.$",
+      "Giữ vững cả {1} đợt."
+    ],
+    [
+      "^Finish with (\\d+) lives or more \\(you kept (\\d+)\\)\\.$",
+      "Kết thúc với {1} mạng trở lên (bạn còn {2})."
+    ],
+    [
+      "^Wave (\\d+) cost the most lives:$",
+      "Đợt {1} làm mất nhiều mạng nhất:"
+    ],
+    [
+      "^Following (.+)$",
+      "Đi theo {1}"
+    ],
+    [
+      "^Air limit: (\\d+) of (\\d+) flyers; (\\d+) with a level (\\d+) Command core$",
+      "Giới hạn trên không: {1} trên {2} mục tiêu bay; {3} khi Sở chỉ huy cấp {4}"
+    ],
+    [
+      "^Air limit: (\\d+) of (\\d+) flyers$",
+      "Giới hạn trên không: {1} trên {2} mục tiêu bay"
+    ],
+    [
+      "^You field at most (\\d+) flyers at a level 1 Command core, (\\d+) at level 2 and (\\d+) at level 3, counting those in production; computer opponents field at most (\\d+)\\.$",
+      "Bạn có tối đa {1} mục tiêu bay khi Sở chỉ huy cấp 1, {2} khi cấp 2 và {3} khi cấp 3, tính cả số đang sản xuất; đối thủ máy có tối đa {4}."
+    ],
+    [
+      "^(\\d+) / (\\d+) merciful$",
+      "{1} / {2} khoan dung"
+    ],
+    [
+      "^You gathered (\\d+) resources in (\\d+) minutes?\\.$",
+      "Bạn thu được {1} tài nguyên trong {2} phút."
+    ],
+    [
+      "^You trained (\\d+) units?\\.$",
+      "Bạn đã huấn luyện {1} đơn vị."
+    ],
+    [
+      "^You lost (\\d+) units and defeated (\\d+)\\.$",
+      "Bạn mất {1} đơn vị và hạ được {2}."
+    ],
+    [
+      "^You lost (\\d+) buildings\\.$",
+      "Bạn mất {1} công trình."
+    ],
+    [
+      "^You held (\\d+) of (\\d+) waves\\.$",
+      "Bạn đã giữ được {1} trên {2} đợt."
+    ],
+    [
+      "^You completed (\\d+) of (\\d+) objectives\\.$",
+      "Bạn đã hoàn thành {1} trên {2} mục tiêu."
+    ],
+    [
+      "^The enemy core was down to (\\d+)% health\\.$",
+      "Sở chỉ huy địch chỉ còn {1}% máu."
+    ],
+    [
+      "^Rank (\\d\\d)$",
+      "Bậc {1}"
+    ],
+    [
+      "^(\\d+) / (\\d+) XP$",
+      "{1} / {2} XP"
+    ],
+    [
+      "^(\\d+) XP$",
+      "{1} XP"
+    ],
+    [
+      "^\\+(\\d+) XP$",
+      "+{1} XP"
+    ],
+    [
+      "^Unlocks at rank (\\d+)$",
+      "Mở khóa ở bậc {1}"
+    ],
+    [
+      "^Pledge a Daily order for \\+(\\d+) XP on a win, once a day\\. It never changes a battle\\.$",
+      "Cam kết một lệnh trong ngày để nhận +{1} XP khi thắng, mỗi ngày một lần. Không bao giờ thay đổi trận đánh."
+    ],
+    [
+      "^Sandstorm recharging: (\\d+) s\\.$",
+      "Bão cát đang nạp lại: {1} giây."
+    ],
+    [
+      "^A Battle rule for Amber Dunes\\. Hold the Weather Spire near the centre to call a Sandstorm with the one Sandstorm button: after a (\\d+) s warning that every side sees, enemies inside fire 30% slower and see only (\\d+) m for (\\d+) s, and your units inside are hidden from them\\. It recharges in (\\d+) s; a new holder waits (\\d+) s\\.$",
+      "Một luật trận cho Đồi cát Hổ Phách. Giữ Tháp thời tiết gần trung tâm để gọi Bão cát bằng nút Bão cát: sau {1} giây cảnh báo mà mọi phe đều thấy, địch trong bão bắn chậm hơn 30% và chỉ thấy {2} m trong {3} giây, còn quân của bạn trong bão được che giấu. Bão nạp lại sau {4} giây; người giữ mới phải chờ {5} giây."
+    ],
+    [
+      "^Clear the (\\d+) Wyrmlings at the nest, then keep only your units in it for (\\d+) s to tame a Dune Wyrm \\(at most (\\d+) per side\\)\\. The nest regrows its guards (\\d+) s later\\. Relaxed rivals never use the Spire or the nest; Normal rivals only late in a match\\.$",
+      "Diệt {1} Rồng cát non ở tổ, rồi chỉ để quân của bạn trong tổ {2} giây để thuần một Rồng cát (tối đa {3} con mỗi phe). Tổ mọc lại lính canh sau {4} giây. Đối thủ Chậm không bao giờ dùng Tháp hay tổ; đối thủ Thường chỉ dùng muộn trong trận."
+    ]
   ]
 }

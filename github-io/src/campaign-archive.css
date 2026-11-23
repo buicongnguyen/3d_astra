@@ -1,0 +1,21 @@
+/* The archive under the campaign map (campaign-map-ui.js archiveHTML): achievements, veterans, commanders met. */
+.cmap-archive { display: grid; gap: 10px; margin-top: 10px; padding: 12px 14px; border: 1px solid rgba(160, 200, 190, 0.22); border-radius: 12px; background: rgba(8, 18, 22, 0.62); }
+.cmap-archive .cmap-row { display: grid; grid-template-columns: minmax(96px, 150px) minmax(0, 1fr); gap: 8px 12px; align-items: start; }
+.cmap-archive .cmap-label { font: 600 12px/1.4 var(--font-ui); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2, #9fb0a8); }
+.cmap-archive .cmap-label b { color: var(--text-1, #e8f1ed); font-weight: 700; margin-left: 4px; }
+.cmap-chips { display: flex; flex-wrap: wrap; gap: 6px 8px; }
+.cmap-chip, .cmap-vet, .cmap-met, .cmap-none { display: inline-flex; align-items: baseline; gap: 6px; padding: 4px 10px; border-radius: 999px; font: 500 13px/1.4 var(--font-ui); color: var(--text-1, #e8f1ed); background: rgba(255, 255, 255, 0.06); }
+.cmap-chip.todo { color: var(--text-2, #9fb0a8); opacity: 0.75; }
+.cmap-chip.done { background: rgba(90, 200, 150, 0.18); }
+.cmap-chip i { font-style: normal; color: #7fe0b0; }
+.cmap-chip.todo i { color: var(--text-2, #9fb0a8); }
+.cmap-vet b { color: #f0c15a; letter-spacing: 1px; }
+.cmap-vet em, .cmap-met em { font-style: normal; font-size: 12px; color: var(--text-2, #9fb0a8); }
+.cmap-met.spared { background: rgba(90, 200, 150, 0.18); }
+.cmap-met.beaten { background: rgba(230, 120, 100, 0.18); }
+.cmap-met.unmet, .cmap-none { color: var(--text-2, #9fb0a8); }
+.cmap-ngplus { justify-self: start; min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid rgba(240, 193, 90, 0.7); background: rgba(240, 193, 90, 0.16); color: #f6dca0; font: 700 14px/1 var(--font-ui); cursor: pointer; }
+.cmap-ngplus:hover, .cmap-ngplus:focus-visible { background: rgba(240, 193, 90, 0.3); }
+@media (max-width: 640px), (orientation: landscape) and (max-height: 520px) {
+  .cmap-archive .cmap-row { grid-template-columns: 1fr; gap: 4px; }
+}

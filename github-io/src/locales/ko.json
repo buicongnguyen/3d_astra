@@ -1375,7 +1375,40 @@
     "SANDSTORM · Click a spot on the map · Esc to cancel": "모래폭풍 · 지도에서 지점을 클릭 · Esc로 취소",
     "The Sandstorm is not ready.": "모래폭풍이 아직 준비되지 않았습니다.",
     "Wild frontier": "야생 변경",
-    "Amber Dunes: hold the Weather Spire for a Sandstorm; tame the Dune Wyrm.": "앰버 사구: 기상 첨탑을 지켜 모래폭풍을 부르고 듄 웜을 길들이세요."
+    "Amber Dunes: hold the Weather Spire for a Sandstorm; tame the Dune Wyrm.": "앰버 사구: 기상 첨탑을 지켜 모래폭풍을 부르고 듄 웜을 길들이세요.",
+    "Achievements": "업적",
+    "Commanders met": "만난 지휘관",
+    "Spared": "살려 둠",
+    "Defeated": "격파됨",
+    "Not met yet": "아직 만나지 못함",
+    "None yet. Rank up units and win a mission.": "아직 없습니다. 유닛을 진급시키고 임무에서 승리하세요.",
+    "First victory": "첫 승리",
+    "Clear the first mission": "첫 임무 완료",
+    "Act 1 complete": "1막 완료",
+    "Clear every Act 1 mission": "1막 임무를 모두 완료",
+    "Act 2 complete": "2막 완료",
+    "Clear every Act 2 mission": "2막 임무를 모두 완료",
+    "Act 3 complete": "3막 완료",
+    "Clear every Act 3 mission": "3막 임무를 모두 완료",
+    "Gold standard": "금메달 기준",
+    "Win gold medals in 5 missions": "임무 5개에서 금메달 획득",
+    "Hard road": "험한 길",
+    "Clear 5 missions on Veteran": "베테랑 난이도로 임무 5개 완료",
+    "The decider": "결정하는 자",
+    "Answer all six decisions": "여섯 가지 결정에 모두 답하기",
+    "Mercy": "자비",
+    "Accept all three surrenders": "세 번의 굴복 모두 받아들이기",
+    "No quarter": "무자비",
+    "Finish all three yielding commanders": "굴복한 지휘관 셋을 모두 처치",
+    "Both endings": "두 가지 결말",
+    "See both endings": "두 결말을 모두 보기",
+    "Full squad": "가득 찬 분대",
+    "Keep six veterans at once": "베테랑 여섯을 동시에 유지",
+    "Going further": "더 멀리",
+    "Complete 10 optional objectives": "선택 목표 10개 완료",
+    "Chronicler": "연대기 기록자",
+    "Finish a Faction Chronicle": "진영 연대기 하나 완료",
+    "New Game+": "뉴 게임+"
   },
   "patterns": [
     [
@@ -2077,8 +2110,8 @@
     [
       "^(.+) promoted to rank (\\d)$",
       "{1}: 계급 {2}(으)로 진급"
-    ]
-    ,[
+    ],
+    [
       "^(.+) has fallen$",
       "{1} 전사"
     ],
@@ -2222,8 +2255,17 @@
       "^Pledge a Daily order for \\+(\\d+) XP on a win, once a day\\. It never changes a battle\\.$",
       "일일 명령을 서약하면 승리할 때 하루 한 번 +{1} 경험치를 얻습니다. 전투에는 영향이 없습니다."
     ],
-    ["^Sandstorm recharging: (\\d+) s\\.$", "모래폭풍 재충전 중: {1}초."],
-    ["^A Battle rule for Amber Dunes\\. Hold the Weather Spire near the centre to call a Sandstorm with the one Sandstorm button: after a (\\d+) s warning that every side sees, enemies inside fire 30% slower and see only (\\d+) m for (\\d+) s, and your units inside are hidden from them\\. It recharges in (\\d+) s; a new holder waits (\\d+) s\\.$", "앰버 사구 전투 규칙. 중앙 근처의 기상 첨탑을 지키면 모래폭풍 버튼 하나로 폭풍을 부를 수 있습니다. 모든 진영이 보는 {1}초 경고 뒤, 안의 적은 발사가 30% 느려지고 {3}초 동안 시야가 {2}m로 줄며 안의 아군은 숨겨집니다. 재충전 {4}초, 새 점령자는 {5}초 기다립니다."],
-    ["^Clear the (\\d+) Wyrmlings at the nest, then keep only your units in it for (\\d+) s to tame a Dune Wyrm \\(at most (\\d+) per side\\)\\. The nest regrows its guards (\\d+) s later\\. Relaxed rivals never use the Spire or the nest; Normal rivals only late in a match\\.$", "둥지의 새끼 웜 {1}마리를 처치한 뒤 {2}초 동안 아군만 둥지에 두면 듄 웜을 길들입니다(진영당 최대 {3}마리). 둥지 경비는 {4}초 뒤 다시 자랍니다. 느긋한 경쟁자는 첨탑과 둥지를 쓰지 않고, 보통 경쟁자는 경기 후반에만 씁니다."]
+    [
+      "^Sandstorm recharging: (\\d+) s\\.$",
+      "모래폭풍 재충전 중: {1}초."
+    ],
+    [
+      "^A Battle rule for Amber Dunes\\. Hold the Weather Spire near the centre to call a Sandstorm with the one Sandstorm button: after a (\\d+) s warning that every side sees, enemies inside fire 30% slower and see only (\\d+) m for (\\d+) s, and your units inside are hidden from them\\. It recharges in (\\d+) s; a new holder waits (\\d+) s\\.$",
+      "앰버 사구 전투 규칙. 중앙 근처의 기상 첨탑을 지키면 모래폭풍 버튼 하나로 폭풍을 부를 수 있습니다. 모든 진영이 보는 {1}초 경고 뒤, 안의 적은 발사가 30% 느려지고 {3}초 동안 시야가 {2}m로 줄며 안의 아군은 숨겨집니다. 재충전 {4}초, 새 점령자는 {5}초 기다립니다."
+    ],
+    [
+      "^Clear the (\\d+) Wyrmlings at the nest, then keep only your units in it for (\\d+) s to tame a Dune Wyrm \\(at most (\\d+) per side\\)\\. The nest regrows its guards (\\d+) s later\\. Relaxed rivals never use the Spire or the nest; Normal rivals only late in a match\\.$",
+      "둥지의 새끼 웜 {1}마리를 처치한 뒤 {2}초 동안 아군만 둥지에 두면 듄 웜을 길들입니다(진영당 최대 {3}마리). 둥지 경비는 {4}초 뒤 다시 자랍니다. 느긋한 경쟁자는 첨탑과 둥지를 쓰지 않고, 보통 경쟁자는 경기 후반에만 씁니다."
+    ]
   ]
 }
