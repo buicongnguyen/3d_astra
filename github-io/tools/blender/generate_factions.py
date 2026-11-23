@@ -223,6 +223,34 @@ def drone(a):
   box(a,'Shield_stripes','Team',(.15,.14,.66),(sign*.92,-.3,1.24),rot=(0,sign*.12,0),bevel=.03)
   box(a,'Barrel_emitters','Steel',(.14,.62,.13),(sign*.62,-.56,1.06))
   sail(a,'Tail_fins','Team',[(.4,1.0),(.62,.8),(.62,1.12)],(sign*.22,0,0),depth=.05)
+ # Round 5 detail pass (still the same four materials, same parts and pivots): sewn-panel seams on the
+ # shell, a lit rim along the halo, an iris and bolts on the eye, a brow visor, vents on the back,
+ # grooves on the tower shields, and a finned thruster with a ring and three lit hover pads below.
+ def shell_pt(az,el,lift=1.012):
+  ce=math.cos(el);return (.64*ce*math.cos(az)*lift,.6*ce*math.sin(az)*lift,1.36+.56*math.sin(el)*lift)
+ for az in [math.radians(d) for d in (-35,-145,40,140)]:
+  a.part('Panel_seams','Steel').tube([shell_pt(az,math.radians(e)) for e in (-10,25,55,80)],.016,seg=3)
+ a.part('Halo_rimlight','TeamGlow').torus(.9,.026,loc=(0,.02,1.285),rot=(.08,0,0),seg=20,ring=3)
+ for i in range(3):
+  ang=math.pi/2+i*math.tau/3;c,sn=math.cos(ang),math.sin(ang)
+  box(a,'Halo_lights','TeamGlow',(.09,.09,.05),(c*.7,sn*.7,1.3),rot=(0,0,ang),bevel=0)
+ # Eye: a Steel iris ring and a dark pupil pin on the lens, four bolts round the rim, a brow visor above.
+ a.part('Eye_iris','Steel').torus(.125,.018,loc=(0,-.71,1.4),rot=(R,0,0),seg=12,ring=3)
+ cyl(a,'Eye_pupil','Steel',.045,.05,(0,-.72,1.4),rot=(R,0,0),seg=8)
+ for k in range(4):
+  ang=math.pi/4+k*R;cyl(a,'Eye_bolts','Steel',.026,.05,(math.cos(ang)*.3,-.6,1.4+math.sin(ang)*.3),rot=(R,0,0),seg=5)
+ box(a,'Eye_visor',a.armor,(.52,.16,.06),(0,-.5,1.72),rot=(.38,0,0),bevel=.015)
+ for z,y in ((1.4,.6),(1.52,.585),(1.64,.55)):
+  box(a,'Back_vents','Steel',(.36,.04,.035),(0,y,z),rot=(-(z-1.36)*.9,0,0),bevel=0)
+ for sign in [-1,1]:
+  for z in (1.04,1.44):
+   box(a,'Shield_grooves','Steel',(.02,.5,.04),(sign*.975,-.14,z),rot=(0,sign*.12,0),bevel=0)
+ for k in range(4):
+  ang=k*R+math.pi/4;box(a,'Thruster_fins','Steel',(.04,.2,.15),(math.cos(ang)*.31,math.sin(ang)*.31,.7),rot=(0,0,ang),bevel=0)
+ a.part('Thruster_ring','Steel').torus(.3,.02,loc=(0,0,.78),seg=12,ring=3)
+ for i in range(3):
+  ang=math.pi/2+i*math.tau/3+math.pi/3;c,sn=math.cos(ang),math.sin(ang)
+  cyl(a,'Hover_pads','TeamGlow',.07,.04,(c*.72,sn*.72,1.12),seg=6)
 def walker(a):
  legs(a,.65,1.8,True)
  box(a,'Hip_bridge','Steel',(1.65,.65,.35),(0,0,1.85),bevel=.1)

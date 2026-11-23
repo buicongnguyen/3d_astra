@@ -163,7 +163,7 @@
     {
       "name": "drone",
       "file": "drone.glb",
-      "triangles": 2516,
+      "triangles": 3536,
       "faction": "wardens",
       "kind": "unit",
       "budget": 4500,
