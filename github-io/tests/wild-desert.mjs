@@ -145,7 +145,8 @@ await suite("wild-desert", async () => {
     // The strip: four frames side by side (a GIF-like sequence for the results page).
     const strip = await browser.newPage({ viewport: { width: 1600, height: 420 } });
     await strip.setContent(`<body style="margin:0;background:#120c08;display:flex;gap:6px;padding:6px">${frames.map((p) => `<img src="data:image/png;base64,${readFileSync(p).toString("base64")}" style="height:400px;width:auto;max-width:394px;object-fit:cover">`).join("")}</body>`);
-    await strip.screenshot({ path: `${OUT}/wild-desert-strip-${viewport}.png` });
+    // A results picture only: a very large page can fail to capture on a slow runner, and that says nothing about the game.
+    await strip.screenshot({ path: `${OUT}/wild-desert-strip-${viewport}.png` }).catch((error) => console.log(`strip skipped: ${error.message}`));
     await strip.close();
 
     assert.deepEqual(errors, [], `${viewport}: page errors`);

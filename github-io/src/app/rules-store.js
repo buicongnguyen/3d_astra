@@ -52,8 +52,8 @@ export function saveRules(rules, store = storage()) {
 // The rules a match on battlefield `mapId` gets: a rule that plays only on some maps (`maps`, round 4 Wild frontier:
 // Amber Dunes) is left out elsewhere, so it never reaches that match's options, save or hash. null when none is left.
 export function rulesForMap(rules, mapId) {
-  const active = activeRules(rules);
-  if (!active) return null;
-  const out = Object.fromEntries(Object.entries(active).filter(([id]) => { const maps = optionOf(id)?.maps; return !maps || maps.includes(mapId); }));
+  if (!rules) return null;
+  // A rule at its default or tied to other maps is dropped: rules with no setup row (Quick battle, a test's look) pass through.
+  const out = Object.fromEntries(Object.entries(rules).filter(([id, value]) => { const option = optionOf(id); return !option || (value !== option.default && (!option.maps || option.maps.includes(mapId))); }));
   return Object.keys(out).length ? out : null;
 }

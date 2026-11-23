@@ -37,7 +37,7 @@ await suite('portraits',async()=>{
     },order);
     assert.deepEqual(result.dimensions,[[768,192*Math.ceil(order.length/4)],[768,192*Math.ceil(order.length/4)]]);
     assert.equal(result.size,`400% ${Math.ceil(order.length/4)*100}%`);assert.equal(result.maskSize,result.size);
-    assert.equal(result.last,'0% 100%');
+    assert.equal(result.last,`${+(((order.length-1)%4)/3*100).toFixed(4)}% 100%`);
     for(let layer=0;layer<2;layer++)for(let i=0;i<order.length;i++)assert.ok(result.coverage[layer][i]>20,`${viewport}: ${order[i]} layer ${layer} is populated`);
     await shot(page,`approved-portraits-${viewport}`);
     assert.deepEqual(errors,[]);assert.deepEqual(badResponses,[]);
