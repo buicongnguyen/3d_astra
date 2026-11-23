@@ -38,6 +38,7 @@ R90 = math.pi / 2
 FORWARD = (R90, 0, 0)   # cylinder axis along Y
 ACROSS = (0, R90, 0)    # cylinder axis along X
 BUDGET = 1500
+BUDGETS = {'balloon': 2500}  # the Ember balloon carries a gored envelope, rigging and a basket
 
 # name: (faction that builds it, short role)
 CATALOG = {
@@ -83,6 +84,17 @@ def patch(a, name, mat, centre, radii, az, el, size, spin=0.0):
     q = n.to_track_quat('Z', 'Y')
     rot = (q.to_matrix().to_4x4() @ Matrix.Rotation(spin, 4, 'Z')).to_euler('XYZ')
     box(a, name, mat, size, tuple(p), rot=tuple(rot), bevel=0)
+
+
+def belt(a, name, mat, r, z, height=.06, seg=16, r2=None, parent=None, at=(0, 0)):
+    """An open ribbon around the Z axis (a hoop, strap or load tape): two triangles per segment."""
+    bm = a.part(name, mat, parent).bm
+    r2 = r if r2 is None else r2
+    lo = [bm.verts.new((at[0] + r * math.cos(k * math.tau / seg), at[1] + r * math.sin(k * math.tau / seg), z - height / 2)) for k in range(seg)]
+    hi = [bm.verts.new((at[0] + r2 * math.cos(k * math.tau / seg), at[1] + r2 * math.sin(k * math.tau / seg), z + height / 2)) for k in range(seg)]
+    for k in range(seg):
+        j = (k + 1) % seg
+        bm.faces.new((lo[k], lo[j], hi[j], hi[k]))
 
 
 def rotor(a, pivot, count, length, chord, mat='Steel', hub=.07, pitch=.16):
@@ -180,46 +192,103 @@ def hawk(a):
         beam(a, 'Skids', 'Steel', (s * .5, -1.0, .035), (s * .5, .9, .035), .07)
 
 
+def gored_envelope(a, centre, radii, gores=12, per_gore=3, rings=11, amp=.04, accent=3):
+    """Hot-air envelope sewn from gores: an ellipsoid whose surface dips at every seam, so the panel
+    lines catch the light. Every `accent`-th gore is Hazard cloth, the rest Team (two meshes)."""
+    cx, cy, cz = centre
+    rx, ry, rz = radii
+    seg = gores * per_gore
+    team = a.part('Envelope', 'Team').bm
+    trim = a.part('Envelope_stripes', 'Hazard').bm
+    th = [math.radians(160 - (160 - 17) * i / (rings - 1)) for i in range(rings)]  # bottom to top
+    grid = []
+    for t in th:
+        row = []
+        for k in range(seg):
+            phi = k * math.tau / seg
+            dip = 1 - amp * math.sin(t) * (.5 + .5 * math.cos(gores * phi))
+            row.append((cx + rx * dip * math.sin(t) * math.cos(phi), cy + ry * dip * math.sin(t) * math.sin(phi),
+                        cz + rz * math.cos(t)))
+        grid.append(row)
+    for bm, want in ((team, False), (trim, True)):
+        made = {}
+
+        def vert(i, k):
+            key = (i, k % seg)
+            if key not in made:
+                made[key] = bm.verts.new(grid[i][k % seg])
+            return made[key]
+        for i in range(rings - 1):
+            for k in range(seg):
+                if ((k // per_gore) % accent == 0) != want:
+                    continue
+                bm.faces.new((vert(i, k), vert(i, k + 1), vert(i + 1, k + 1), vert(i + 1, k)))
+
+
 def balloon(a):
-    """Ashfall bomber: patched envelope, scrap gondola, burner with a flickering flame, bomb rack."""
+    """Ashfall bomber: a gored envelope with load-tape bands and patches, rope rigging to a wicker-and-iron
+    gondola, a burner whose ember glow lights the throat, sandbags, lanterns and a bomb rack."""
     a.pivot('hover', (0, 0, 0))
     centre, radii = (0, 0, 2.9), (1.15, 1.15, 1.32)
-    a.part('Envelope', 'Team').sphere(radii, loc=centre, seg=14, rings=10)
-    # Mismatched patches and a strapped band: salvage, asymmetric.
-    patches = [(-.4, .25, 'Hazard', (.62, .5, .05), .3), (1.9, -.1, 'Armor', (.55, .6, .05), -.2),
-               (3.0, .55, 'Medical', (.42, .42, .05), .5), (.9, .7, 'Hazard', (.38, .48, .05), .1),
-               (4.3, .1, 'Armor', (.5, .4, .05), .7), (2.6, -.45, 'Hazard', (.4, .36, .05), -.4)]
+    gored_envelope(a, centre, radii)
+    patches = [(1.9, -.1, 'Armor', (.46, .5, .05), -.2), (3.0, .55, 'Medical', (.36, .36, .05), .5),
+               (4.3, .1, 'Armor', (.4, .34, .05), .7), (-.4, .25, 'Hazard', (.5, .42, .05), .3)]
     for az, el, mat, size, spin in patches:
         patch(a, 'Patches', mat, centre, radii, az, el, size, spin)
-    a.part('Envelope_band', 'Steel').torus(1.16, .045, loc=(0, 0, 2.62), seg=16, ring=3)
-    # R3-W: a crown vent cap and four team streamers hanging from the band (a festival-bomber silhouette).
-    cyl(a, 'Vent_cap', 'Steel', .34, .14, (0, 0, 4.2), seg=10, r2=.22, bevel=0)
+    # Load tapes: a Steel equator band, two thin umber bands above it, and a crown vent cap with a ring.
+    belt(a, 'Envelope_band', 'Steel', 1.13, 2.62, .1, 24)
+    belt(a, 'Load_tape', 'Undercarriage', 1.07, 3.42, .08, 24)
+    belt(a, 'Load_tape', 'Undercarriage', .76, 3.98, .07, 24)
+    cyl(a, 'Vent_cap', 'Steel', .34, .14, (0, 0, 4.2), seg=12, r2=.22, bevel=0)
     for k in range(4):
         ang = k * R90 + .4
         c, sn = math.cos(ang), math.sin(ang)
         box(a, 'Streamers', 'Team', (.05, .16, .7), (c * 1.19, sn * 1.19, 2.2), rot=(0, 0, ang), bevel=0, taper=(1, .3))
-    cyl(a, 'Skirt', 'Armor', .36, .32, (0, 0, 1.66), seg=12, r2=.6, bevel=.01)
-    # Rigging lines from the skirt to the gondola corners.
+    cyl(a, 'Skirt', 'Armor', .36, .32, (0, 0, 1.66), seg=14, r2=.6, bevel=.01)
+    belt(a, 'Skirt_ring', 'Steel', .44, 1.5, .07, 14, r2=.46)
+    # Ember glow inside the throat, lit from below by the burner (Flame keeps its orange on every team).
+    cyl(a, 'Ember_glow', 'Flame', .3, .03, (0, 0, 1.78), seg=12, bevel=0)
+    # Rope rigging: eight load ropes from the equator band to the gondola rim, four short stays from the
+    # skirt ring, and TeamGlow lanterns where the stays meet the rim.
+    for k in range(8):
+        ang = k * math.pi / 4 + math.pi / 8
+        top = (1.12 * math.cos(ang), 1.12 * math.sin(ang), 2.58)
+        cx_, cy_ = (.5 if math.cos(ang) > 0 else -.5), (.44 if math.sin(ang) > 0 else -.44)
+        beam(a, 'Rigging', 'Undercarriage', top, (cx_, cy_, 1.0), .03)
     for sx in (-1, 1):
         for sy in (-1, 1):
             beam(a, 'Rigging', 'Undercarriage', (sx * .3, sy * .3, 1.52), (sx * .46, sy * .4, .96), .035)
-    # Burner on a steel yoke; the flame pivot is the nozzle.
+            box(a, 'Lanterns', 'TeamGlow', (.1, .1, .12), (sx * .5, sy * .44, 1.08), bevel=0)
+    # Burner on a steel yoke with a coil; the flame pivot is the nozzle.
     for sx in (-1, 1):
         beam(a, 'Burner_yoke', 'Steel', (sx * .44, 0, .98), (sx * .1, 0, 1.16), .05)
     cyl(a, 'Burner', 'Steel', .14, .2, (0, 0, 1.12), seg=10, r2=.1, bevel=.01)
+    belt(a, 'Burner_coil', 'Undercarriage', .145, 1.12, .05, 10, r2=.12)
     flame = a.pivot('flicker_flame', (0, 0, 1.22))
     cyl(a, 'Flame', 'Flame', .16, .5, (0, 0, .25), seg=8, r2=.02, bevel=0, parent=flame)
     cyl(a, 'Flame', 'Flame', .09, .36, (.04, .03, .4), seg=6, r2=.01, bevel=0, parent=flame)
-    # Scrap gondola: welded box, mismatched side plates, a tall crooked stack.
+    # Gondola: a woven basket (umber hoops over a sand-plate body), steel corner posts and rim,
+    # mismatched side plates, a crooked stack, a banded fuel drum, sandbags and a lamp.
     box(a, 'Gondola', 'Armor', (.96, .86, .52), (0, 0, .66), bevel=.05, taper=(1.1, 1.1))
+    for z in (.5, .66, .82):
+        box(a, 'Wicker_hoops', 'Undercarriage', (1.0, .9, .04), (0, 0, z), bevel=0)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            beam(a, 'Corner_posts', 'Steel', (sx * .5, sy * .44, .42), (sx * .54, sy * .47, .98), .05)
     box(a, 'Gondola_rim', 'Steel', (1.12, 1.0, .08), (0, 0, .95), bevel=.02)
     box(a, 'Side_plates', 'Team', (.06, .5, .34), (-.52, -.08, .68), rot=(0, -.06, .1), bevel=.012)
     box(a, 'Side_plates', 'Hazard', (.5, .06, .3), (.12, -.47, .66), rot=(0, .12, 0), bevel=.012)
     box(a, 'Side_plates', 'Steel', (.06, .44, .28), (.53, .12, .64), rot=(0, .08, -.08), bevel=.012)
+    for sx in (-1, 1):
+        a.part('Sandbags', 'Undercarriage').sphere((.1, .08, .12), loc=(sx * .6, .3, .52), seg=6, rings=4)
+        a.part('Sandbags', 'Undercarriage').sphere((.1, .08, .12), loc=(sx * .6, -.2, .54), seg=6, rings=4)
+        beam(a, 'Sandbag_ties', 'Steel', (sx * .56, .3, .66), (sx * .6, .3, .6), .02)
     cyl(a, 'Exhaust_stack', 'Undercarriage', .065, .8, (.36, .3, 1.24), rot=(.12, .1, 0), seg=8, bevel=0)
     cyl(a, 'Stack_cap', 'Steel', .1, .07, (.4, .35, 1.65), rot=(.12, .1, 0), seg=8, bevel=0)
     a.part('Pennant', 'Hazard').prism([(0, 0), (.42, .1), (0, .22)], .02, loc=(.42, .36, 1.5), rot=(R90, 0, .5), axis='Z', bevel=0, seg=1)
     cyl(a, 'Fuel_drum', 'Hazard', .14, .34, (-.24, .2, 1.15), seg=10, bevel=.01)
+    for z in (1.07, 1.24):
+        belt(a, 'Fuel_drum_bands', 'Steel', .15, z, .035, 10, at=(-.24, .2))
     box(a, 'Lamp_front', 'TeamGlow', (.2, .04, .07), (0, -.47, .84), bevel=0)
     # Bomb rack under the gondola.
     box(a, 'Bomb_rack', 'Steel', (.86, .14, .07), (0, 0, .36), bevel=.012)
@@ -323,16 +392,17 @@ def build_all(names=None, export=True, manifest=False, keep=False):
         a = Asset(name, root, ao_distance=.5, grime_height=.45, ao_samples=40, ground=False)
         BUILDERS[name](a)
         tris = count(a)
-        if tris > BUDGET or '--parts' in sys.argv:
+        budget = BUDGETS.get(name, BUDGET)
+        if tris > budget or '--parts' in sys.argv:
             parts = {f'{k[0]}/{k[1]}': sum(len(f.verts) - 2 for f in s.bm.faces) for k, s in a.shapes.items()}
             print('AIR_PARTS', name, json.dumps(dict(sorted(parts.items(), key=lambda kv: -kv[1]))), flush=True)
-        if tris > BUDGET:
-            raise RuntimeError(f'{name}: {tris} triangles > {BUDGET}')
+        if tris > budget:
+            raise RuntimeError(f'{name}: {tris} triangles > {budget}')
         a.finish()
         if export:
             a.export(OUT / f'{name}.glb')
         info = describe(a)
-        info.update(triangles=a.triangles(), budget=BUDGET, faction=CATALOG[name][0], spin=SPIN[name],
+        info.update(triangles=a.triangles(), budget=budget, faction=CATALOG[name][0], spin=SPIN[name],
                     bytes=(OUT / f'{name}.glb').stat().st_size if export else None)
         report[name] = info
         print('AIR_ASSET', name, info['triangles'], flush=True)
@@ -344,7 +414,7 @@ def build_all(names=None, export=True, manifest=False, keep=False):
         path = OUT / 'manifest.json'
         data = json.loads(path.read_text(encoding='utf-8'))
         # In place (the portrait atlas order follows the manifest), flagged for the owner (round 3, R3-W).
-        fresh = {n: {'name': n, 'file': f'{n}.glb', 'triangles': r['triangles'], 'air': True, 'budget': BUDGET,
+        fresh = {n: {'name': n, 'file': f'{n}.glb', 'triangles': r['triangles'], 'air': True, 'budget': BUDGETS.get(n, BUDGET),
                      'animation': 'Runtime spin_*/flicker_* pivots and hover bob; no baked clips',
                      'review': 'pending owner review (round 3)'} for n, r in report.items()}
         data['assets'] = [fresh.pop(e['name'], e) for e in data['assets']] + list(fresh.values())
@@ -358,7 +428,7 @@ if __name__ == '__main__':
     args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
     for o in list(bpy.context.scene.objects):
         bpy.data.objects.remove(o)
-    build_all(manifest='--manifest' in args)
+    build_all([n for n in args if n in CATALOG] or None, manifest='--manifest' in args)
     if '--blend' in args:
         # A separate pass keeps all four models side by side for editing.
         build_all(keep=True)

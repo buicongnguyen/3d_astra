@@ -247,9 +247,9 @@
     {
       "name": "balloon",
       "file": "balloon.glb",
-      "triangles": 1400,
+      "triangles": 2440,
       "air": true,
-      "budget": 1500,
+      "budget": 2500,
       "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips",
       "review": "pending owner review (round 3)"
     },
