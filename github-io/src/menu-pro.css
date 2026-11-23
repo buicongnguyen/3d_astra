@@ -1,0 +1,76 @@
+/* Title menu, final layer (owner, 2026-11-23): one clear "Game mode" choice of four equal tiles, the chosen
+   one unmistakable; Full screen is a small icon beside the language picker. Loaded after kit-skin.css. */
+#briefing .setup-label {
+  margin: 2px 0 -2px;
+  color: #9fc3d1;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+html:root #briefing .mode-switch {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 6px !important;
+}
+html:root #briefing .mode-switch button[data-mode] {
+  position: relative;
+  grid-column: auto !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  min-height: 78px;
+  padding: 8px 4px !important;
+  text-align: center;
+  color: #d8e8ee;
+  background: rgba(10, 30, 40, .72);
+  border: 1px solid rgba(127, 200, 225, .28) !important;
+  box-shadow: none !important;
+  transition: background-color .14s ease, border-color .14s ease;
+}
+html:root #briefing .mode-switch button[data-mode]::before { display: none; }
+html:root #briefing .mode-switch button[data-mode] > .icon { display: block; width: 20px; height: 20px; margin: 0; color: #8fd8ec; filter: none; }
+html:root #briefing .mode-switch button[data-mode] > span { max-width: 100%; font-size: 14px; line-height: 1.15; overflow-wrap: anywhere; }
+html:root #briefing .mode-switch button[data-mode] > small { max-width: 100%; color: #a9c5d0; font-size: 11px; line-height: 1.15; }
+html:root #briefing .mode-switch button[data-mode]:hover:not([aria-pressed="true"]):not(:disabled) { background: rgba(24, 56, 70, .9); border-color: rgba(127, 220, 245, .62) !important; }
+html:root #briefing .mode-switch button[data-mode][aria-pressed="true"] {
+  color: #1b1405;
+  background: linear-gradient(180deg, #ffdf94, #f7b84a);
+  border-color: #ffe7ad !important;
+}
+html:root #briefing .mode-switch button[data-mode][aria-pressed="true"] > .icon,
+html:root #briefing .mode-switch button[data-mode][aria-pressed="true"] > small { color: #3b2905; filter: none; }
+html:root #briefing .mode-switch button[data-mode]:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+@media (max-width: 760px), (max-height: 520px) {
+  html:root #briefing .mode-switch button[data-mode] { min-height: 56px; padding: 5px 2px !important; }
+  html:root #briefing .mode-switch button[data-mode] > span { font-size: 12px; }
+  html:root #briefing .mode-switch button[data-mode] > small { display: none; }
+  html:root #briefing .mode-switch button[data-mode] > .icon { width: 18px; height: 18px; }
+}
+/* Landscape phones: the tiles become one slim row, the setup fills the freed cell, and the read-only rank card
+   makes room for the pinned actions (rank still shows on the results screen). */
+@media (max-height: 520px) and (orientation: landscape) {
+  #briefing .setup-label { display: none; }
+  html:root #briefing .mode-switch button[data-mode] { flex-direction: row; gap: 5px; min-height: 44px; }
+  html:root #briefing .briefing-setup > .rank-chip { display: none; }
+  html:root #briefing #skirmish-setup #alliance { width: 100%; }
+  html:root #briefing #skirmish-setup .field:has(#alliance) { grid-column: 1 / -1; }
+}
+
+html:root #briefing .mode-switch button[data-mode] > span { color: inherit; }
+html:root #briefing .mode-switch button[data-mode][aria-pressed="true"] > span { color: #1b1405; text-shadow: none; }
+/* Phone top bar: every control fits when the language picker gives up its spare width. */
+@media (max-width: 480px) {
+  html:root.in-briefing #language { width: 84px !important; min-width: 0 !important; padding-left: 6px !important; padding-right: 20px !important; }
+  .in-briefing .top-actions { gap: 0; }
+  .in-briefing .top-actions .icon-button { width: 44px; min-width: 44px; }
+}
+/* The narrowest phones: six one-tap controls take the whole bar; the logo and globe give way. */
+@media (max-width: 384px) {
+  .in-briefing .topbar .brand, .in-briefing .topbar > a, .in-briefing .language-choice > .icon { display: none !important; }
+  html:root.in-briefing #language { width: 58px !important; padding-left: 4px !important; padding-right: 14px !important; }
+}

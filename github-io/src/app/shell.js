@@ -20,7 +20,7 @@ export function renderShell() {
       <div class="resource energy" title="Energy — harvested from blue deposits">${icon("energy")}<span><strong id="energy">150</strong><small>ENERGY</small></span></div>
       <div class="resource population" title="Used + queued population / capacity">${icon("people")}<span><strong id="population">7 <em>/ 15</em></strong><small>POPULATION</small></span></div>
     </div>
-    <div class="top-actions"><button id="briefing-settings" class="icon-button menu-only" title="Settings" aria-label="Settings">${icon("gear")}</button><span id="clock">00:00</span><button id="fullscreen-top" class="icon-button" data-fullscreen aria-pressed="false" title="Full screen" aria-label="Full screen">${icon("expand")}</button><button id="audio" class="icon-button" title="Mute sound" aria-label="Mute sound">${icon("volume")}</button><button id="help" class="icon-button" title="Controls" aria-label="Show controls">${icon("help")}</button><button id="pause" class="icon-button" title="Pause · Space" aria-label="Pause game">${icon("pause")}</button></div>
+    <div class="top-actions"><button id="theme-toggle" class="icon-button menu-only" type="button" title="Dark theme" aria-label="Dark theme">${icon("theme")}</button><button id="fullscreen" class="icon-button menu-only" data-fullscreen aria-pressed="false" title="Full screen" aria-label="Full screen">${icon("expand")}</button><button id="briefing-settings" class="icon-button menu-only" title="Settings" aria-label="Settings">${icon("gear")}</button><span id="clock">00:00</span><button id="fullscreen-top" class="icon-button" data-fullscreen aria-pressed="false" title="Full screen" aria-label="Full screen">${icon("expand")}</button><button id="audio" class="icon-button" title="Mute sound" aria-label="Mute sound">${icon("volume")}</button><button id="help" class="icon-button" title="Controls" aria-label="Show controls">${icon("help")}</button><button id="pause" class="icon-button" title="Pause · Space" aria-label="Pause game">${icon("pause")}</button></div>
   </header>
   <main id="stage">
     <div id="world"></div><div id="training-marker" hidden aria-hidden="true">◎</div><aside id="training" hidden><button id="training-toggle" aria-expanded="true">Training</button><div id="training-card" class="panel"><strong id="training-title"></strong><p id="training-copy"></p><small>Training supplies replenish · no AI attacks</small><div><button id="training-focus">Focus target</button><button id="training-exit">Leave training</button></div></div></aside>
@@ -61,11 +61,12 @@ export function renderShell() {
         <div class="setup-head" aria-hidden="true"><span><i class="live-dot"></i> Command uplink</span><span>Sector 07</span></div>
         <div id="title-actions" class="title-actions" hidden></div>
         <button id="continue" class="secondary continue-launch" hidden></button>
+        <div class="setup-label">Game mode</div>
         <div class="mode-switch" role="group" aria-label="Game mode">
           <button data-mode="campaign" aria-pressed="false">${icon("logo")}<span>Campaign</span><small>${MISSIONS.length} missions</small></button>
           <button data-mode="skirmish" aria-pressed="true">${icon("crosshair")}<span>Skirmish</span><small>Custom battle</small></button>
           <button data-mode="defence" aria-pressed="false">${icon("tower")}<span>Defence</span><small>Hold the road</small></button>
-          <button data-mode="training" aria-pressed="false">${icon("flag")}<span>Training</span><small>Start here</small></button>
+          <button data-mode="training" aria-pressed="false">${icon("flag")}<span>Training</span><small>The basics</small></button>
         </div>
         <div class="briefing-tools" id="skirmish-setup">
           <label class="field field-wide"><span>Battlefield</span><select id="scenario" aria-label="Battlefield">${["riverlands", ...Object.keys(MAPS).filter(id => id !== "riverlands")].map(id => `<option value="${id}"${MAP_BLURBS[id] ? ` title="${MAP_BLURBS[id]}"` : ""}>${MAPS[id]}</option>`).join("")}</select></label>
@@ -78,7 +79,7 @@ export function renderShell() {
         <div id="campaign-setup" hidden></div>
         <div id="defence-setup" hidden></div>
         <div id="training-setup" hidden><ol class="lesson-list" aria-label="Training lessons">${TRAINING_STEPS.map(step => `<li>${step.title}</li>`).join("")}</ol></div>
-        <button id="fullscreen" class="secondary fullscreen-launch" data-fullscreen aria-pressed="false">${icon("expand")}<span class="fs-text" aria-hidden="true">Full screen</span><span class="visually-hidden">Full screen</span></button>
+
         <div id="campaign-difficulty" hidden><div class="difficulty-buttons" role="group" aria-label="Campaign difficulty"><button data-difficulty="story" aria-pressed="false">Story</button><button data-difficulty="standard" aria-pressed="true">Standard</button><button data-difficulty="veteran" aria-pressed="false">Veteran</button></div><p id="difficulty-description"></p></div>
         <button id="start" class="primary" disabled>Preparing expedition…</button>
       </div>
