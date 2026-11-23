@@ -219,9 +219,9 @@ export const MISSIONS = [
       vanguardYard: { x: -4, z: -30, r: 8 },
     },
     setup: [
-      { spawn: "relay", team: 1, at: "siphonWest", tag: "siphon", name: "Ashfall siphon", hp: 6000 },
-      { spawn: "relay", team: 1, at: "siphonNorth", tag: "siphon", name: "Ashfall siphon", hp: 6000 },
-      { spawn: "relay", team: 1, at: "siphonEast", tag: "siphon", name: "Ashfall siphon", hp: 6000 },
+      { spawn: "relay", team: 1, at: "siphonWest", tag: "siphon", name: "Ashfall siphon", hp: 4200 },
+      { spawn: "relay", team: 1, at: "siphonNorth", tag: "siphon", name: "Ashfall siphon", hp: 4200 },
+      { spawn: "relay", team: 1, at: "siphonEast", tag: "siphon", name: "Ashfall siphon", hp: 4200 },
       { spawn: "vanguard", team: 1, at: { x: -33, z: -20 }, count: 3 },
       { spawn: "ranger", team: 1, at: { x: -42, z: -21 }, count: 1 },
       { spawn: "vanguard", team: 1, at: { x: -10, z: -36 }, count: 3 },
@@ -297,7 +297,7 @@ export const MISSIONS = [
       lose: [{ who: "vale", text: "He kept to his schedule and we did not keep to ours. Regroup at the river." }],
     },
     // R3-I (round 3): gold 720 -> 750 s; after the south exits the objective bot wins at about 12:15 on Standard and Veteran.
-    medals: { gold: { seconds: 750 }, silver: { seconds: 1000 } },
+    medals: { gold: { seconds: 600 }, silver: { seconds: 840 } },
     design: "About 10 minutes against one Relaxed AI (first wave near 3:30, then every 90 seconds). The player starts with two towers and a wall guard of 3 Rangers and 3 Vanguards. The west and east siphons (6000 HP) each have a hardened tower and 4 guards; the north one has 5 guards and the Iron Vanguard (docs/aaa/BOSSES.md), a salvaged Builder war machine powered down in the yard 11 m from it (32000 HP, 26000 on Story: about a 2 minute fight for the army the objective bot has there, 24-27 units). It wakes when troops come within 14 m or hit it, plays its entrance scene, and fights within 12 m of its yard: a marked four-gun burst at the biggest group every ~13 s (units on Guard or Aggressive step out 1.5 s into the 3 s warning), a light gun, a 4-second open core after each burst. Hale's camp has two hardened towers and 5 guards (8 before round 3, R3-I: after the south exits the objective bot lost to them). Intended: break the first wave at the walls, take the west and east siphons, then the north one and the Iron Vanguard together. Twist: entering the north siphon reveals that Hale feeds a fleet in orbit and calls a 5-unit counter-attack (7 before round 3). Round 3 pacing: the towers objective asks for four towers standing (the camp starts with two, so it costs two towers); no probe here (the starting guard chased one out of the towers' cover and a passive player lost 7 units to the first wave), and gold is 12:30 (12:00 before). The enemy core is optional: destroying it removes Ashfall but its tagged siphons and the boss stay standing, so they must still be destroyed.",
   },
 
@@ -514,7 +514,7 @@ export const MISSIONS = [
     ],
     objectives: [
       { id: "first", text: "Bank 3000 alloy for the first charge", type: "collect", alloy: 3000 },
-      { id: "full", text: "Bank 8000 alloy and 2600 energy in total", type: "collect", alloy: 8000, energy: 2600, hidden: true },
+      { id: "full", text: "Bank 7200 alloy and 2300 energy in total", type: "collect", alloy: 7200, energy: 2300, hidden: true },
       { id: "seam", text: "Hold the copper seam for 1 minute", type: "hold", points: ["seam"], need: 1, seconds: 60, optional: true },
       { id: "fast", text: "Finish in under 15 minutes", type: "timeUnder", seconds: 900, optional: true },
     ],
@@ -551,7 +551,7 @@ export const MISSIONS = [
       ],
       lose: [{ who: "vale", text: "The storm caught us with the relay half fed. We lost the charge, and a season with it." }],
     },
-    medals: { gold: { seconds: 690 }, silver: { seconds: 960 } },
+    medals: { gold: { seconds: 560 }, silver: { seconds: 800 } },
     design: "Delivery quota in about 11 minutes against one AI that plays Relaxed for 4 minutes and Normal after. Intended: go to 14-16 Harvesters fast, defend them with towers and an army that goes out to meet raiders, and expand to the north-west seam (capture point pays 3 alloy a second). The quota comes in two steps (3000 alloy, then 8000 alloy and 2600 energy in total) so the story beat lands at the first: crystals grow near a live relay. Scripted raids of 6 units hit the seam (at the first step) and the home yard (10:00). The 20-minute storm limit is generous; gold needs a clean economy. Since 0.19b two Veil scouts (Watchers, a setup garrison) watch the basin from the north-west rim, out of every road: Okoro spots them at 3:20 and Vale names them if the player goes close (the Veil appears before mission 10). The plan asked for a fight at a ford here, but the Copper Basin has no river (and mission 7 shares the map), so the ford is not used.",
   },
 
