@@ -343,19 +343,19 @@
     {
       "name": "wyrm",
       "file": "wyrm.glb",
-      "triangles": 3124,
+      "triangles": 3056,
       "kind": "unit",
       "budget": 3200,
-      "review": "pending owner review (round 4)",
+      "review": "pending owner review (F8 creature art)",
       "animation": "Runtime articulated parts (foreleg pivots); no baked clips"
     },
     {
       "name": "wyrmling",
       "file": "wyrmling.glb",
-      "triangles": 2442,
+      "triangles": 2500,
       "kind": "unit",
       "budget": 2600,
-      "review": "pending owner review (round 4)",
+      "review": "pending owner review (F8 creature art)",
       "animation": "Runtime articulated parts (foreleg pivots); no baked clips"
     }
   ]

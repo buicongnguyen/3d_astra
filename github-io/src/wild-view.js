@@ -11,10 +11,12 @@
 //                          scrolling sand (an open cylinder, one shader, no texture): about 2x overdraw
 //                          inside the storm, 1x on Eco (the wall's inner face is skipped)
 //   Ripple (Ambush)     1  per diving Wyrm, only for its 1.5 s
+//   Emergence           1  per surfacing Wyrm during the first half second (hole, soft sand and grit)
 //   Aim preview         1  only while the player aims the Sandstorm
 // The nest guards' sand tint is a copy of the Wyrmling's team template for the wild side (WILD_TEAM).
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { themeFor } from "./visual-style.js";
 import { WILD_TEAM } from "./sim/constants.js";
 import { WILD, wildLand, spireOf } from "./sim/content/wild-frontier.js";
 
@@ -110,11 +112,83 @@ function spireMesh() {
   return mesh;
 }
 
+// One draw during the 0.5 s emergence, replacing the diving ripple. The first quad lies
+// on the ground. The remaining quads are camera-facing sand puffs and small ballistic grains.
+function ambushMesh(dust, motion, eco, seed) {
+  const positions = [], uvs = [], seeds = [], indices = [];
+  const count = motion ? (eco ? 8 : 12) : 0;
+  for (let i = 0; i <= count; i++) {
+    const angle = i * 2.39996 + seed, phase = (i * .61803) % 1;
+    for (const [u, v] of [[0,0], [1,0], [1,1], [0,1]]) {
+      positions.push(u - .5, v - .5, 0); uvs.push(u, v);
+      seeds.push(i === 0 ? 0 : (i % 2 ? 1 : 2), Math.cos(angle), Math.sin(angle), phase);
+    }
+    const j = 4 * i;
+    indices.push(j, j + 1, j + 2, j, j + 2, j + 3);
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setAttribute("launch", new THREE.Float32BufferAttribute(seeds, 4));
+  geometry.setIndex(indices);
+  const material = new THREE.ShaderMaterial({
+    uniforms: { age: { value: 0 }, sand: { value: new THREE.Color(dust).convertLinearToSRGB() } },
+    transparent: true, depthWrite: false,
+    vertexShader: `
+      attribute vec4 launch; uniform float age;
+      varying vec2 p; varying float kind; varying float fade; varying float variant;
+      void main() {
+        p = uv * 2.0 - 1.0; kind = launch.x; variant = launch.w;
+        vec4 mv;
+        if (kind < .5) {
+          float spread = .83 + .17 * smoothstep(0.0, .12, age);
+          mv = modelViewMatrix * vec4(position.x * 4.4 * spread, .13, -position.y * 3.6 * spread, 1.0);
+          fade = 1.0 - smoothstep(.24, .50, age);
+        } else {
+          float t = max(0.0, age - .045 * variant);
+          float dist = .96 + t * (3.3 + 3.4 * variant);
+          float h = max(.10, .18 + (7.2 + 2.8 * variant) * t - 16.0 * t * t);
+          mv = modelViewMatrix * vec4(launch.y * dist, h, launch.z * dist, 1.0);
+          if (kind < 1.5) mv.xy += position.xy * vec2(1.06, 1.32) * (.73 + .72 * t);
+          else mv.xy += vec2(position.x * .27 + .39 * position.y * launch.y, position.y * .67);
+          fade = smoothstep(0.0, .035, t) * (1.0 - smoothstep(.21 + .06 * variant, .46, age));
+        }
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: `
+      uniform vec3 sand; varying vec2 p; varying float kind; varying float fade; varying float variant;
+      void main() {
+        float r = length(p);
+        float a; vec3 color;
+        if (kind < .5) {
+          float edge = r + .045 * sin(12.0*p.x + 5.0*p.y)*cos(10.0*p.y);
+          a = .89 * (1.0 - smoothstep(.74, 1.0, edge));
+          color = mix(vec3(.055,.036,.027), sand * .45, smoothstep(.40, .86, edge));
+        } else if (kind < 1.5) {
+          float edge = r + .13 * sin(p.x*8.0+variant*10.0)*cos(p.y*6.0);
+          a = .35 * (1.0 - smoothstep(.28, .93, edge));
+          color = mix(sand, vec3(1.0,.90,.69), .64 + .22 * p.y);
+        } else {
+          a = .35 * (1.0 - smoothstep(.57,.97, r));
+          color = mix(sand, vec3(1.0,.91,.72), .74);
+        }
+        if (a * fade < .008) discard;
+        gl_FragColor = vec4(color, a * fade);
+      }`,
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.name = "Wyrm emergence";
+  mesh.frustumCulled = false;
+  mesh.renderOrder = 4;
+  return mesh;
+}
+
 export class WildView {
   constructor(view) {
     this.view = view;
     this.built = null;
     this.ripples = new Map();
+    this.emerging = new Map();
     this.time = 0;
     // The player's aim (app/wild-ui.js): { x, z } or null.
     view.wildAim = null;
@@ -127,7 +201,12 @@ export class WildView {
     for (const o of this.built.objects) { this.view.scene.remove(o); o.geometry?.dispose(); o.material?.dispose(); }
     for (const r of this.ripples.values()) { this.view.scene.remove(r.mesh); r.mesh.geometry.dispose(); r.mesh.material.dispose(); }
     this.ripples.clear();
+    for (const b of this.emerging.values()) this.disposeBurst(b.mesh);
+    this.emerging.clear();
     this.built = null;
+  }
+  disposeBurst(mesh) {
+    mesh.removeFromParent(); mesh.geometry.dispose(); mesh.material.dispose();
   }
   ground(x, z) {
     const t = this.view.terrain;
@@ -219,12 +298,30 @@ export class WildView {
     // Ripples under a diving Wyrm's target, until it bursts up.
     for (const [id, r] of this.ripples) {
       if (sim.time < r.at && sim.get(id)?.burrow) {
+        // The player can normally see their own cloaked unit. Hide its surface silhouette during the dive.
+        const root = v.objects.get(id);
+        if (root) root.visible = false;
+        r.mesh.visible = sim.isVisible(r.mesh.position);
         r.mesh.material.uniforms.uFill.value = 1 - (r.at - sim.time) / r.delay;
         r.mesh.material.uniforms.uPulse.value = still ? 1 : 0.5 + 0.5 * Math.sin(this.time * 14);
         continue;
       }
       v.scene.remove(r.mesh); r.mesh.geometry.dispose(); r.mesh.material.dispose();
       this.ripples.delete(id);
+    }
+    // The normal entity pose is freshly calculated each frame before this hook. Only displace
+    // its model: targeting, health bars and the ground shadow keep their usual coordinates.
+    for (const [id, burst] of this.emerging) {
+      const age = Math.max(0, sim.time - burst.at), t = age / .5, e = sim.get(id);
+      if (age >= .5 || !e) { this.disposeBurst(burst.mesh); this.emerging.delete(id); continue; }
+      burst.mesh.material.uniforms.age.value = age;
+      burst.mesh.visible = sim.isVisible(burst.anchor);
+      const root = v.objects.get(id);
+      if (!root?.visible || v.reducedMotion?.matches || v.settings.combatMotion === false) continue;
+      const u = root.userData;
+      const rise = -2.8 * (1 - Math.min(1, t / .53)) ** 2;
+      const crest = .34 * Math.sin(Math.PI * Math.max(0, (t - .20) / .80));
+      u.model.position.y += (rise + crest) * u.readabilityScale;
     }
   }
   event(ev, sim) {
@@ -241,9 +338,13 @@ export class WildView {
       fx?.dust?.({ x: ev.x, y: 0.3, z: ev.z }, 6, { x: ev.x, z: ev.z, team: ev.team }, 1.2);
     } else if (ev.kind === "ambush") {
       const anchor = { x: ev.x, z: ev.z, team: ev.team };
-      fx?.dust?.({ x: ev.x, y: 0.4, z: ev.z }, 14, anchor, 1.8, 1.4);
-      fx?.shockwave?.({ x: ev.x, z: ev.z }, ev.radius * 2, anchor);
-      fx?.addDebris?.({ x: ev.x, y: 0.5, z: ev.z }, 8, anchor, 1.2);
+      const old = this.emerging.get(ev.id);
+      if (old) this.disposeBurst(old.mesh);
+      const motion = !this.view.reducedMotion?.matches && this.view.settings.combatMotion !== false;
+      const mesh = ambushMesh(themeFor(sim.terrain.id).dust, motion, this.view.lowPower, ev.id);
+      mesh.position.set(ev.x, this.view.terrain.heightAt(ev.x, ev.z), ev.z);
+      this.view.scene.add(mesh);
+      this.emerging.set(ev.id, { at: sim.time, mesh, anchor });
     } else if (ev.kind === "stormStart") {
       fx?.dust?.({ x: ev.x, y: 0.6, z: ev.z }, 16, { x: ev.x, z: ev.z, team: ev.team }, 3, 1.6);
     } else if (ev.kind === "tamed") {
