@@ -144,6 +144,22 @@ def kite(a):
         beam(a, 'Skids', 'Steel', (s * .26, -.3, .025), (s * .26, .36, .025), .05)
 
 
+    # Round 5 detail pass: an inset seam outline and glowing corner beacons on the sail, a seam hoop on the
+    # pod, an iris and bolts on the lens, a belly sensor dome between the skids and a tail beacon.
+    pts = [(0, -.62), (.54, -.04), (0, .52), (-.54, -.04)]
+    for p0, p1 in zip(pts, pts[1:] + pts[:1]):
+        beam(a, 'Sail_seams', 'Steel', (p0[0], p0[1], 1.05), (p1[0], p1[1], 1.05), .028)
+    for p0 in ((0, -.88), (0, .76)):
+        box(a, 'Sail_beacons', 'TeamGlow', (.1, .1, .04), (p0[0], p0[1], 1.05), bevel=0)
+    a.part('Pod_seam', 'Steel').torus(.32, .016, loc=(0, .2, .6), rot=(R90, 0, 0), seg=16, ring=3)
+    a.part('Lens_iris', 'Steel').torus(.1, .015, loc=(0, -.585, .62), rot=(R90, 0, 0), seg=12, ring=3)
+    for k in range(4):
+        ang = math.pi / 4 + k * R90
+        box(a, 'Lens_bolts', 'Steel', (.045, .06, .045), (math.cos(ang) * .185, -.55, .62 + math.sin(ang) * .185), bevel=0)
+    a.part('Belly_dome', 'Glass').sphere(.12, loc=(0, -.02, .36), seg=8, rings=4)
+    box(a, 'Tail_beacon', 'TeamGlow', (.08, .08, .06), (0, 1.9, .46), bevel=0)
+
+
 def hawk(a):
     """Meridian gunship: armoured fuselage, glass nose, twin ducted lift fans, two gun pods."""
     a.pivot('hover', (0, 0, 0))

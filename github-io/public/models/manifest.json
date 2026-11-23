@@ -229,7 +229,7 @@
     {
       "name": "kite",
       "file": "kite.glb",
-      "triangles": 950,
+      "triangles": 1298,
       "air": true,
       "budget": 1500,
       "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips",
