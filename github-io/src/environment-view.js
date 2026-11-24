@@ -91,7 +91,8 @@ export class EnvironmentView {
     // Lakes (campaign maps): a ring of water from the island's foot to just past the shore, deep in the middle of
     // the ring and pale at both edges, its fords raised to a pale gravel bar under shallow water with white riffle edges.
     for (const lake of lakes) {
-      const inner = Math.max(0.01, lake.inner - 0.6), outer = lake.r + 0.6;
+      // Inside, the water runs 1.2 m under the island's cliff rock, so no cut bank shows between them from the far side.
+      const inner = Math.max(0.01, lake.inner - 1.2), outer = lake.r + 0.6;
       const ring = new THREE.RingGeometry(inner, outer, 128, 12), positions = ring.attributes.position;
       const colors = new Float32Array(positions.count * 3), mid = (inner + outer) / 2, width = (outer - inner) / 2;
       for (let i = 0; i < positions.count; i++) {
