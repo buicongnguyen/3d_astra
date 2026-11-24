@@ -8,10 +8,19 @@ import { FACTIONS } from "./story/world.js";
 // colour always wins a clash, and no two teams ever share a colour.
 export const factionOf = (mission, team) => FACTIONS[mission?.factions?.[team]] || null;
 
+// The player's own team wears its faction's colour when the player commands another faction (a Faction
+// Chronicle, or a skirmish "Your faction") and has kept the default colour: Ashfall's base is coral, not
+// Meridian mint. A colour the player picked in Settings always wins.
+const ownFaction = (settings, mission) => {
+  const faction = factionOf(mission, 0);
+  return faction && faction.id !== "meridian" && (settings.playerColor || "mint") === "mint" && PRESETS[faction.color] ? faction : null;
+};
+
 export function teamColors(settings, mission = null) {
   const base = palette(settings);
   if (Object.hasOwn(TEAM_PALETTES, settings.teamPalette) || !mission?.factions) return base;
-  const out = [base[0], null, null, null], used = new Set([base[0]]);
+  const own = ownFaction(settings, mission), first = own ? PRESETS[own.color] : base[0];
+  const out = [first, null, null, null], used = new Set([first]);
   for (let team = 1; team < out.length; team++) {
     const wanted = PRESETS[factionOf(mission, team)?.color];
     if (wanted && !used.has(wanted)) { out[team] = wanted; used.add(wanted); }
@@ -31,5 +40,6 @@ export function teamColors(settings, mission = null) {
 // team colour.
 export function teamGlows(settings, mission = null) {
   if (Object.hasOwn(TEAM_PALETTES, settings.teamPalette)) return palette(settings);
-  return teamColors(settings, mission).map((color, team) => (team > 0 && factionOf(mission, team)?.glow) || color);
+  const own = ownFaction(settings, mission);
+  return teamColors(settings, mission).map((color, team) => (team > 0 ? factionOf(mission, team)?.glow : own?.glow) || color);
 }

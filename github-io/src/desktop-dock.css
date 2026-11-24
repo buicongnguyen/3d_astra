@@ -29,7 +29,7 @@
 :root:not(.compact-ui) .resource strong em { font-size: 13px; }
 :root:not(.compact-ui) .resource small { margin-top: 1px; font-size: 8px; }
 :root:not(.compact-ui) .top-actions { gap: 4px; }
-:root:not(.compact-ui) .icon-button { width: 36px; height: 36px; }
+:root:not(.compact-ui) .icon-button { width: 40px; height: 40px; }
 :root:not(.compact-ui) #clock { margin-right: 6px; }
 :root:not(.compact-ui) .top-actions #fps { margin-right: 4px; font: 11px Consolas, monospace; color: #8a9c91; white-space: nowrap; }
 :root:not(.compact-ui) .statusbar { display: none; }
@@ -93,6 +93,11 @@
 }
 :root:not(.compact-ui) .minimap-panel .panel-label button {
   pointer-events: auto;
+  /* Focus base: a 36 px mouse target (desktop rule, tests/defence.mjs), not the 21 px glyph box. */
+  display: inline-grid;
+  place-items: center;
+  min-width: 36px;
+  min-height: 36px;
   border-radius: 3px;
   background: #0d1a18cc;
 }
@@ -248,6 +253,7 @@
 }
 :root:not(.compact-ui) .command-panel .order-buttons .icon { display: block; width: 20px; height: 20px; }
 :root:not(.compact-ui) .command-panel .order-buttons .order-label {
+  font-size: 11px; /* read by screen readers and the text audit: never under 11 px */
   position: absolute;
   width: 1px;
   height: 1px;

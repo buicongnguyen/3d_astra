@@ -131,22 +131,19 @@ export function setupQuickBattle(S, A) {
     const slot = $("title-actions");
     if (!slot) return;
     slot.innerHTML = `<button type="button" id="quick-battle" class="quick-battle">${icon("bolt")}<span class="quick-text"><strong>Quick battle</strong><small>Ready base · 1 rival</small></span></button>`;
-    let training = null;
-    // New players only: gone once Training is completed too (it sat beside the Training mode button with the same name).
+    // New players (re-score 2026-11-25): Training had two buttons on the title, a "Start here · First lesson"
+    // tile and the Training mode button. Modes are never hidden (owner: no hidden buttons), so the duplicate
+    // tile is gone and the Training mode button itself carries the "Start here" badge until Training is done
+    // or the player has played anything. One way in, one tap from the mode row right under the quick row.
     let trained = false; try { trained = !!localStorage.getItem("frontier-training-complete"); } catch {}
-    if (!trained && !readSave() && !Object.keys(S.campaign?.cleared || {}).length && !hasDefenceWin(S.defenceProgress || loadDefence())) {
-      training = document.createElement("button");
-      training.type = "button";
-      training.className = "quick-battle";
-      training.id = "start-training";
-      training.innerHTML = `${icon("flag")}<span class="quick-text"><strong>Start here</strong><small>First lesson</small></span>`;
-      training.addEventListener("click", () => {
-        if (Z.started) return;
-        S.playMode = "training";
-        A.previewBattle();
-        $("start").onclick?.();
-      });
-      slot.prepend(training);
+    const newPlayer = !trained && !readSave() && !Object.keys(S.campaign?.cleared || {}).length && !hasDefenceWin(S.defenceProgress || loadDefence());
+    const trainingMode = document.querySelector('.mode-switch [data-mode="training"]');
+    if (newPlayer && trainingMode && !trainingMode.querySelector(".start-here-badge")) {
+      trainingMode.classList.add("start-here");
+      const badge = document.createElement("b");
+      badge.className = "start-here-badge";
+      badge.textContent = "Start here";
+      trainingMode.append(badge);
     }
     slot.hidden = false;
     const arena = document.createElement("button");
@@ -157,7 +154,7 @@ export function setupQuickBattle(S, A) {
     $("quick-battle").after(arena);
     const button = $("quick-battle"), start = $("start");
     // Usable exactly when Start is (not while the first models load or after a failed load).
-    const sync = () => { button.disabled = arena.disabled = start.disabled && !S.loadFailed; if (training) training.disabled = start.disabled; };
+    const sync = () => { button.disabled = arena.disabled = start.disabled && !S.loadFailed; };
     sync();
     new MutationObserver(sync).observe(start, { attributes: true, attributeFilter: ["disabled"] });
     button.addEventListener("click", () => startQuick());

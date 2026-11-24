@@ -19,7 +19,7 @@ import { RECORD, pin } from "./lib/golden.mjs";
 const PINS = {
   quick: { 20: "f4a9bba2", 60: "6b227e40" },
   // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
-  firstWatch: { 60: "2b5708e9" },
+  firstWatch: { 60: "d4d60351" },
 };
 
 const quickMatch = () => new Simulation({ map: QUICK_SETUP.map, aiSpeed: QUICK_SETUP.aiSpeed, enemyCount: QUICK_SETUP.enemyCount, alliance: QUICK_SETUP.alliance, capturePoints: true, factions: skirmishSides("meridian", quickRival("meridian"), 1, QUICK_SETUP.map), rules: { quick: "on" } });

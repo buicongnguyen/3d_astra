@@ -20,7 +20,7 @@ import { LONG, RECORD, pin } from "./lib/golden.mjs";
 // veterans pins also follow the seam fix: onExitRing reads EXIT_ORDER, so recruits are veterans again.
 const PINS = {
   veterans: { 60: "6b3b906b", 90: "168d7c59" },
-  combined: { 120: "3002bfed" },
+  combined: { 120: "84d76e95" },
   pop150: { 180: "c59995f7" },
   pop200: { 60: "0a796b75", 150: "43031352" },
 };

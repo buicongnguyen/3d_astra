@@ -16,5 +16,5 @@ test("m11c Hold the Keystone Roads, DefenceBot, the whole mission", LONG, () => 
   pin("w2f m11c full", play(1500), PIN_FULL);
 });
 // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
-const PIN_120 = { wave: 2, lives: 20, result: "timeout", hash: "89b9a64c" };
-const PIN_FULL = { wave: 10, lives: 17, result: "victory", hash: "b9c69675" };
+const PIN_120 = { wave: 2, lives: 20, result: "timeout", hash: "17daacde" };
+const PIN_FULL = { wave: 10, lives: 17, result: "victory", hash: "0deb4eff" };

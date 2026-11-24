@@ -176,11 +176,13 @@ export function setupHud(S, A) {
       pop = S.sim.population(0);
     $("alloy").textContent = Math.floor(p.alloy).toLocaleString();
     $("energy").textContent = Math.floor(p.energy).toLocaleString();
+    // A mission with no supply source (no Command core or relay, e.g. m08's strike team) has a cap of 0:
+    // show the head count alone instead of "20 / 0", and never flag it as full.
     $("population").innerHTML =
-      `${pop.used}${pop.reserved ? `<span class="reserved">+${pop.reserved}</span>` : ""} <em>/ ${pop.cap}</em>`;
+      `${pop.used}${pop.reserved ? `<span class="reserved">+${pop.reserved}</span>` : ""}${pop.cap > 0 ? ` <em>/ ${pop.cap}</em>` : ""}`;
     $("population").classList.toggle(
       "at-cap",
-      pop.used + pop.reserved >= pop.cap,
+      pop.cap > 0 && pop.used + pop.reserved >= pop.cap,
     );
     // A fast match says so beside the clock (Settings → Game speed, Shift+Space); Defence has its bar button.
     const speed = S.sim.defence ? 1 : A.getSpeed?.() ?? 1;

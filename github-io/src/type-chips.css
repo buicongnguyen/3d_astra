@@ -26,11 +26,30 @@
 :root:not(.compact-ui) .selection-panel.has-chips #selection-info :is(.unit-metrics, .selection-activity) { visibility: hidden; }
 :root:not(.compact-ui) .selection-panel.has-chips .type-chips { position: relative; z-index: 1; height: 40px; margin: -46px 0 6px 48px; }
 :root:not(.compact-ui) .selection-panel.has-chips .type-chips button { height: 40px; min-width: 48px; }
+/* Seven unit types fit the PC panel too (a mouse target: 38 px at least, the desktop rule is 36): none scrolls out of view. */
+:root:not(.compact-ui) .selection-panel.has-chips .type-chips { gap: 3px; }
+:root:not(.compact-ui) .selection-panel.has-chips .type-chips button { flex: 1 1 0; min-width: 38px; padding: 0 3px; gap: 2px; }
+:root:not(.compact-ui) .selection-panel.has-chips .type-chips button > svg.icon { width: 18px; height: 18px; }
 
 /* Landscape phones (the two-row board, phone-hud.css): the row takes the summary's place before the orders. */
 @media (orientation: landscape) and (max-height: 520px) {
   :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips #selection-info { display: none !important; }
-  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips .type-chips { flex: 0 1 auto; max-width: 52%; height: 44px; margin: 0; gap: 3px; }
-  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips .type-chips button { min-width: 46px; padding: 0 4px; gap: 2px; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips .type-chips { flex: 0 1 auto; max-width: 54%; height: 44px; margin: 0; gap: 3px; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips .type-chips button { min-width: 44px; padding: 0 2px; gap: 2px; }
   :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips .type-chips button > svg.icon { width: 18px; height: 18px; }
+}
+
+/* Portrait phones: a single unit keeps Map and the objectives flag in its header row (phone-hud.css), but a mixed
+   selection gives that row to the chips. Map and the flag then stand just above the dock's top-right corner (the
+   idle buttons move up one step), so the whole chip row is free and no chip sits under them. */
+@media (max-width: 540px) and (orientation: portrait) {
+  :root.compact-ui:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity.has-chips) {
+    & #dock-tabs, & #mission-toggle { bottom: calc(var(--safe-bottom) + var(--dock-height) + 4px); }
+    & #idle-chips { bottom: calc(var(--safe-bottom) + var(--dock-height) + 52px); }
+    &.objectives-open #mission-objectives { bottom: calc(var(--safe-bottom) + var(--dock-height) + 52px); }
+    /* Chips share the row evenly (44 px at least), so seven unit types fit a 390 px phone without scrolling. */
+    & .selection-panel.has-chips .type-chips { gap: 3px; }
+    & .selection-panel.has-chips .type-chips button { flex: 1 1 0; min-width: 44px; padding: 0 2px; gap: 2px; }
+    & .selection-panel.has-chips .type-chips button > svg.icon { width: 20px; height: 20px; }
+  }
 }

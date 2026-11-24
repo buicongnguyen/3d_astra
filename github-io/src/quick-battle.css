@@ -137,7 +137,7 @@
 
 #title-actions:not([hidden]):has(#start-training) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
 .compact-ui #briefing.campaign-view .mode-switch { order: -3; }
-.compact-ui #briefing.campaign-view #title-actions { order: 1; }
+.compact-ui #briefing.campaign-view #title-actions { order: -4; }
 #title-actions #start-training { border-color: var(--kit-gold, #edc76f); }
 
 #title-actions:has(#start-training) button { width: 100%; min-width: 0; }
@@ -161,4 +161,13 @@
   :root.compact-ui #briefing:not(.campaign-view) .briefing-setup > #title-actions:not([hidden]) { order: 0; grid-column: 1 / -1 !important; width: 100%; justify-self: stretch; position: static; align-self: auto; margin: 0; }
   :root.compact-ui #briefing:not(.campaign-view) .briefing-setup:has(.title-actions:not([hidden])) #start { grid-column: 1 / -1 !important; width: 100%; justify-self: stretch; }
   :root.compact-ui #briefing:not(.campaign-view) #title-actions .quick-battle { box-shadow: inset 0 1px 0 rgba(200, 245, 255, 0.22), inset 3px 0 0 #83deeb; }
+}
+
+/* New players: the Training mode button is the one way to the first lesson (quick-battle.js), marked "Start here". */
+.mode-switch [data-mode="training"].start-here { position: relative; border-color: var(--kit-gold, #edc76f); box-shadow: inset 0 0 0 1px rgba(237, 199, 111, 0.55); }
+.mode-switch [data-mode="training"].start-here > .icon { display: none; }
+.mode-switch [data-mode="training"].start-here > .start-here-badge {
+  order: -1; display: block; max-width: 100%; margin: 0 auto 2px; padding: 0 6px; border-radius: 7px;
+  background: var(--kit-gold, #edc76f); color: #2a1a06; font: 800 11px/12px var(--font-ui, sans-serif);
+  white-space: normal; overflow-wrap: normal; text-align: center; pointer-events: none; /* "Cho người mới" takes two lines */
 }

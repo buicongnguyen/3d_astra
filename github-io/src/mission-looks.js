@@ -32,6 +32,12 @@ export const LOOKS = {
     // AAA round 3 (R3-D): the moon and stars over the void, the map edge and void in black-blue, a cool
     // moonlit rim, and the night grade (look-grade.json `looks.night`).
     moon: true, stars: true, edge: { low: "#01030b", high: "#1c2f62" }, rim: "#8fb0ff",
+    // Re-score 2026-11-25: units were hard to read on m08's dark ground; every model's rim is 2.4x stronger at
+    // night (mission-look-view.js setRimBoost), so silhouettes carry a moonlit edge and team-coloured rims.
+    rimBoost: 2.4,
+    // ...and every model lights 22% of its own colour (look-grade.js RIM.lift): units, the Vault Sentinel and
+    // buildings read against the black-blue ground; terrain, water and sky are not models and stay dark.
+    modelLift: 0.22,
   },
   // Dark, heavy cloud, a grey-green gloom, and lightning on a schedule.
   storm: {

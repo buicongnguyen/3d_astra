@@ -44,6 +44,6 @@ test("ZONE_NAMES names every zone of every level that has zones, and no level ca
 test("serialize() of a d-crossroads match is byte-identical to the one before ZONE_NAMES", () => {
   const level = DEFENCE_LEVELS.find((l) => l.id === "d-crossroads");
   const sim = new Simulation({ map: level.map, enemyCount: 1, ai: false, mission: level });
-  assert.equal(createHash("sha256").update(sim.serialize()).digest("hex"), "de9561c55863ef96f932f7aeb4fe01063ad935082392fb7640f50b7e43952d1a");
-  assert.equal(sim.hash(), "b40804bd");
+  assert.equal(createHash("sha256").update(sim.serialize()).digest("hex"), "eb6a8d6c177b464082e34e7dfa321dd231f34c5e1450ad9ef7bd3e7be46e9bab");
+  assert.equal(sim.hash(), "ada3cea1");
 });

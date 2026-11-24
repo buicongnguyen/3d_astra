@@ -33,7 +33,7 @@ test(`the ObjectiveBot for ${SECONDS} s`, async (t) => {
 const DEFENCE = { "m02b-hold-the-river": { wave: 4, lives: 20, hash: "11165d27" },
   // W2-F m11c Hold the Keystone Roads (new mission; same run as golden-w2f.test.js): added by the Wave 2 integrator.
   // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
-  "m11c-hold-the-keystone-roads": { wave: 2, lives: 20, hash: "89b9a64c" } };
+  "m11c-hold-the-keystone-roads": { wave: 2, lives: 20, hash: "17daacde" } };
 test(`the DefenceBot on a story mission for ${SECONDS} s`, async (t) => {
   for (const [id, end] of Object.entries(DEFENCE))
     await t.test(id, () => {

@@ -19,12 +19,12 @@ const outcome = (r) => ({ result: r.result, stars: r.stars, lives: r.lives, towe
 // the end: crew initial, tier, branch initial and rank (tools/defence-bot.mjs).
 const LEVELS = {
   // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
-  "d-gorge": { options: {}, end: { result: "victory", stars: 3, lives: 20, towers: "r3mr3mr3b3s1r3b3s1a3b1t3s1b1", hash: "0ed15140" } },
+  "d-gorge": { options: {}, end: { result: "victory", stars: 3, lives: 20, towers: "r3mr3mr3b3s1r3b3s1a3b1t3s1b1", hash: "019e046e" } },
   // Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
   // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
   // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
-  "d-bridges, demolishing a bridge": { level: "d-bridges", options: { demolish: true }, end: { result: "victory", stars: 3, lives: 19, towers: "r3r3r3r3r3r3r3b2a3s1t1a1t1", hash: "a01ff6be" } },
-  "d-crossroads": { options: {}, long: true, end: { result: "victory", stars: 3, lives: 20, towers: "b3s3b3s3a3t3b3a3s3b3t3b3s2", hash: "e3a92389" } },
+  "d-bridges, demolishing a bridge": { level: "d-bridges", options: { demolish: true }, end: { result: "victory", stars: 3, lives: 19, towers: "r3r3r3r3r3r3r3b2a3s1t1a1t1", hash: "0ada0b67" } },
+  "d-crossroads": { options: {}, long: true, end: { result: "victory", stars: 3, lives: 20, towers: "b3s3b3s3a3t3b3a3s3b3t3b3s2", hash: "a2c94153" } },
 };
 test("the DefenceBot on Standard", async (t) => {
   for (const [name, p] of Object.entries(LEVELS))
@@ -34,7 +34,7 @@ test("the DefenceBot on Standard", async (t) => {
 // Endless on Gorge Road with the level's own seed (as check:defence plays it), stopped once 12 waves
 // are held: the generated waves, their growth and the bot's long game.
 // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
-const ENDLESS = { held: 12, wave: 12, lives: 20, hash: "4670c751" };
+const ENDLESS = { held: 12, wave: 12, lives: 20, hash: "c5e6a432" };
 test("Endless on Gorge Road to wave 12", LONG, () => {
   const gorge = level("d-gorge");
   const r = playDefence(defenceVariant(gorge, { variant: "endless", seed: seedOf(gorge.id) }), { limit: 6000, maxWaves: 12 });
