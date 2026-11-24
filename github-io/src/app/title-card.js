@@ -3,6 +3,7 @@
 // takes a tap (a tap skips it), it sits clear of the dock, the dialogue and the tool rows, and a scene
 // hides it. Under reduced motion it only fades. Data: src/story/mission-intros.js.
 import "../title-card.css";
+import { reducedMotion } from "../reduced-motion.js";
 import { titleCardFor } from "../story/mission-intros.js";
 import { motionOff } from "./preferences.js";
 
@@ -28,7 +29,7 @@ export function showTitleCard(def, host = document.getElementById("world") || do
   card.querySelector(".tc-title").textContent = info.title;
   if (info.place) card.querySelector(".tc-place").textContent = info.place;
   // Reduced motion: no slide, only a short opacity fade in and out (a transition, since motion-off silences animations).
-  const calm = motionOff() || matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  const calm = motionOff() || reducedMotion();
   if (calm) card.classList.add("calm");
   card.addEventListener("pointerdown", (e) => { e.stopPropagation(); hideTitleCard(); });
   host.append(card);

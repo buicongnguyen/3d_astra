@@ -71,3 +71,24 @@ test("the sheet: seven sections in one row, no dropdowns, live apply, no Apply /
   for (const gone of ['id="help"', 'id="fullscreen"', 'id="fullscreen-top"', 'id="theme-toggle"']) assert.ok(!shell.includes(gone), `${gone} left the top bar`);
   assert.match(shell, /id="pause"[^]*id="audio"[^]*id="briefing-settings"/, "match bar: pause, sound, settings");
 });
+
+test("phase 2 keys: defaults, old saves and the reduced-motion override", async () => {
+  const { reducedFor, motionOffFor, CAMERA_PITCH } = await import("../src/settings.js");
+  const d = defaults(false), phone = defaults(true);
+  assert.deepEqual([d.cameraAngle, d.cameraTurn, d.zoomSpeed, d.minimapSide, d.healthBars, d.alerts, d.textSize, d.reducedMotion, d.haptics],
+    ["standard", 0, 1, "left", "hurt", "all", "s", "system", true]);
+  assert.equal(d.frameCap, 0, "a PC draws at the display's rate");
+  assert.equal(phone.frameCap, 60, "a phone caps at 60");
+  const old = normalize({ version: 1, music: "off" }, true);
+  assert.deepEqual([old.cameraTurn, old.healthBars, old.frameCap, old.music], [0, "hurt", 60, "off"], "an old save gets the defaults");
+  const s = normalize({ version: 1, cameraAngle: "top", cameraTurn: 270, zoomSpeed: 5, minimapSide: "right", healthBars: "always", alerts: "important", frameCap: 30, textSize: "l", reducedMotion: "on", haptics: false });
+  assert.deepEqual([s.cameraAngle, s.cameraTurn, s.zoomSpeed, s.minimapSide, s.healthBars, s.alerts, s.frameCap, s.textSize, s.reducedMotion, s.haptics],
+    ["top", 270, 2, "right", "always", "important", 30, "l", "on", false]);
+  const bad = normalize({ version: 1, cameraAngle: "side", cameraTurn: 45, frameCap: 144, textSize: "xl", reducedMotion: true });
+  assert.deepEqual([bad.cameraAngle, bad.cameraTurn, bad.frameCap, bad.textSize, bad.reducedMotion], ["standard", 0, 0, "s", "system"]);
+  assert.deepEqual([reducedFor({ reducedMotion: "system" }, true), reducedFor({ reducedMotion: "off" }, true), reducedFor({ reducedMotion: "on" }, false)], [true, false, true]);
+  assert.equal(motionOffFor({ ...d, reducedMotion: "on" }, false), true, "On calms decorative motion");
+  // The Standard preset is the designed view (CAMERA_OFFSET 25, 51, 43 looks down 45.7 degrees).
+  assert.ok(Math.abs(Math.atan2(51, Math.hypot(25, 43)) * 180 / Math.PI - CAMERA_PITCH.standard) < 0.1);
+  assert.ok(CAMERA_PITCH.low < CAMERA_PITCH.standard && CAMERA_PITCH.standard < CAMERA_PITCH.top);
+});

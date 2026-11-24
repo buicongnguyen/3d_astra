@@ -16,6 +16,7 @@
 // layers. Eco graphics alone keeps the cover alive (phones default to Eco); while it runs, #briefing.cover-live
 // re-enables the cover's own CSS animations under :root.motion-off.
 import "../cover.css";
+import { reducedMotionQuery } from "../reduced-motion.js";
 import { $ } from "./dom.js";
 import { FRAMES, LAYERS, SHAPES, WORLDS, layerBox, layerUrl } from "./cover-layers.js";
 
@@ -39,7 +40,7 @@ export function setupCover(A = {}, S = {}) {
   if (!briefing || !hero) return {};
   const art = hero.querySelector(".briefing-art img");
   const root = document.documentElement;
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  const reduced = reducedMotionQuery;
   const calm = () => reduced.matches || S.settings?.combatMotion === false;
 
   const stack = document.createElement("div");

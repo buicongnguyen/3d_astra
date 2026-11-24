@@ -320,3 +320,12 @@
 
 /* Copyright notice under the version (owner, 2026-11-21). */
 .settings-copyright { display: block; }
+
+/* Settings → Assist → Text size (phase 2): reading text grows apart from the interface size. "s" is the design
+   (already the 11 px floor), "m" and "l" scale notices, dialogue, objectives, dialog paragraphs and notes. */
+:root[data-text-size="m"] :is(#notice, #dialogue-text, #mission-objectives .objective > span, #modal-content > p, .help-note, .settings-note) { zoom: 1.12; }
+:root[data-text-size="l"] :is(#notice, #dialogue-text, #mission-objectives .objective > span, #modal-content > p, .help-note, .settings-note) { zoom: 1.25; }
+
+/* Settings → Display → Minimap side (desktop dock): the map in the right corner, the command deck beside it. */
+:root.minimap-right:not(.compact-ui) .bottom-dock .minimap-panel { left: auto; right: 0; }
+:root.minimap-right:not(.compact-ui) .command-deck { left: auto; right: max(calc(var(--console-map) + 12px), calc(50% - var(--console-deck) / 2)); }

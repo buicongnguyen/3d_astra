@@ -86,6 +86,26 @@ await suite("settings-sheet", async () => {
     await tap("#modal [data-restart]");
     await page.waitForFunction(() => window.__frontier.started && !window.__frontier.paused, null, { timeout: TIMEOUT.models });
     assert.equal(await page.locator("#modal [data-confirmed]").count(), 0);
+    // Phase 2: the camera turns in quarter steps and tilts by preset (outside Defence), live.
+    await openSettings(page, "camera", { touch });
+    const height = () => page.evaluate(() => { const v = window.__frontier.view; return v.camera.position.y - v.focus.y; });
+    const designed = await height();
+    await choose(page, "cameraTurn", "90", { touch });
+    await page.waitForFunction(() => Math.abs(window.__frontier.view.yaw - Math.PI / 2) < 1e-6, null, { timeout: TIMEOUT.step });
+    await choose(page, "cameraAngle", "top", { touch });
+    await page.waitForFunction((h) => window.__frontier.view.camera.position.y - window.__frontier.view.focus.y > h + 5, designed, { timeout: TIMEOUT.step });
+    await shot(page, `settings-sheet-${viewport}-camera`);
+    await choose(page, "cameraAngle", "standard", { touch });
+    await choose(page, "cameraTurn", "0", { touch });
+    await page.waitForFunction((h) => { const v = window.__frontier.view; return v.yaw === 0 && Math.abs(v.camera.position.y - v.focus.y - h) < 1e-6; }, designed, { timeout: TIMEOUT.step });
+    // Assist: text size and reduced motion land on <html> for CSS and the views.
+    await openSettings(page, "access", { touch });
+    await choose(page, "textSize", "l", { touch });
+    await choose(page, "reducedMotion", "on", { touch });
+    assert.deepEqual(await page.evaluate(() => [document.documentElement.dataset.textSize, document.documentElement.dataset.reducedMotion, document.documentElement.classList.contains("motion-off"), window.__frontier.view.reducedMotion.matches]), ["l", "on", true, true], `${viewport}: Assist`);
+    await choose(page, "textSize", "s", { touch });
+    await choose(page, "reducedMotion", "system", { touch });
+    await closeSettings(page, { touch });
     assert.deepEqual(errors, [], `${viewport}: no page errors`);
     await page.close();
   }

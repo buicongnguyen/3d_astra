@@ -48,6 +48,26 @@ export function defaults(coarse = false) {
     // Camera pan speed (keys, screen edges): a multiplier, 0.5 to 2. Edge scrolling is a mouse thing.
     panSpeed: 1,
     edgeScroll: true,
+    // Phase 2 (2026-11-24). Camera: look-down preset and a turn in quarter steps (Frontier Defence keeps its
+    // own framing), zoom sensitivity for the wheel and the pinch.
+    cameraAngle: "standard",
+    cameraTurn: 0,
+    zoomSpeed: 1,
+    // Desktop dock: the minimap in the left or right corner.
+    minimapSide: "left",
+    // Vitals bars: "hurt" (damaged units, the selection and the hovered unit; as before), "always", "selected".
+    healthBars: "hurt",
+    // Toasts: "all", or "important" (attack warnings, losses and objectives; routine news stays in the log).
+    alerts: "all",
+    // Frame cap in frames a second (0 = the display's own rate). Phones default to 60: a 120 Hz phone halves
+    // its GPU work and battery draw for no visible loss in an RTS; PCs draw at the display rate.
+    frameCap: coarse ? 60 : 0,
+    // Short vibrations on phones for attack warnings and losses (navigator.vibrate; nothing elsewhere).
+    haptics: true,
+    // Reading text (notices, dialogue, objectives, dialogs) apart from the interface size: s = as designed.
+    textSize: "s",
+    // "system" follows the device's reduced-motion choice; "on" always calms motion; "off" never does.
+    reducedMotion: "system",
     // Floating damage numbers (AAA round 2, W2-E): "focus" = bosses and Frontier Defence, "all", or "off".
     damageNumbers: "focus",
     ambient: true,
@@ -84,6 +104,17 @@ export function normalize(value, coarse = false) {
   for (const key of ["muted", "waterMotion", "combatMotion", "unitMotion", "ambient", "detail", "showFps", "autocast", "confirmRestart", "edgeScroll"])
     if (typeof value[key] === "boolean") d[key] = value[key];
   if (Number.isFinite(value.panSpeed)) d.panSpeed = Math.max(0.5, Math.min(2, value.panSpeed));
+  if (Number.isFinite(value.zoomSpeed)) d.zoomSpeed = Math.max(0.5, Math.min(2, value.zoomSpeed));
+  const pick = (key, allowed) => { if (allowed.includes(value[key])) d[key] = value[key]; };
+  pick("cameraAngle", ["low", "standard", "top"]);
+  pick("cameraTurn", [0, 90, 180, 270]);
+  pick("minimapSide", ["left", "right"]);
+  pick("healthBars", ["hurt", "always", "selected"]);
+  pick("alerts", ["all", "important"]);
+  pick("frameCap", [0, 30, 60]);
+  pick("textSize", ["s", "m", "l"]);
+  pick("reducedMotion", ["system", "on", "off"]);
+  if (typeof value.haptics === "boolean") d.haptics = value.haptics;
   if (typeof value.groupPace === "boolean") d.groupPace = value.groupPace;
   if (typeof value.quietMode === "boolean") d.quietMode = value.quietMode;
   return d;
@@ -112,7 +143,12 @@ export function saveSettings(value, storage) {
 // `:root.motion-off` (app/preferences.js): decorative motion stops with Eco graphics, with combat
 // motion off or when the system asks for reduced motion. Later effects rely on the same class.
 export const motionOffFor = (settings, reducedMotion = false) =>
-  !!reducedMotion || settings?.quality === "eco" || settings?.combatMotion === false;
+  reducedFor(settings, reducedMotion) || settings?.quality === "eco" || settings?.combatMotion === false;
+// Settings → Assist → Reduced motion over the device's choice: "on" / "off" win, "system" follows it.
+export const reducedFor = (settings, system = false) =>
+  settings?.reducedMotion === "on" ? true : settings?.reducedMotion === "off" ? false : !!system;
+// Camera look-down presets (degrees above the ground); 46 is the designed view (view.js CAMERA_OFFSET).
+export const CAMERA_PITCH = Object.freeze({ low: 36, standard: 45.7, top: 60 });
 export const palette = (settings) => {
   if (Object.hasOwn(TEAM_PALETTES, settings.teamPalette)) return [...TEAM_PALETTES[settings.teamPalette]];
   const chosen = [PRESETS[settings.playerColor], PRESETS[settings.enemyColor]];

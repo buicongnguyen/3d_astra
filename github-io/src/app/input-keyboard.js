@@ -85,6 +85,8 @@ export function setupInputKeyboard(S, A) {
         e.preventDefault();if(!e.repeat)A.useGroup(key,e.ctrlKey,e.shiftKey);return;
       }
       if(e.ctrlKey&&key==='a') {e.preventDefault();if(!e.repeat)runShortcut('all');return;}
+      // Settings → Camera → Turn by keyboard: Page Up / Page Down (Q and E are command keys here).
+      if(key==='pageup'||key==='pagedown') {e.preventDefault();if(!e.repeat)A.turnCamera(key==='pageup'?-1:1);return;}
       if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) {e.preventDefault();S.keys.add(key);return;}
       const tile=ACTION_KEYS.includes(key.toUpperCase()) ? document.querySelector(`#commands [data-hotkey="${key.toUpperCase()}"]`) : null;
       if(tile&&!S.mode) {e.preventDefault();if(!e.repeat&&!tile.disabled)tile.click();return;}

@@ -17,6 +17,7 @@
 // module fills with its functions; nothing is global.
 // Everything it needs from the always-loaded app arrives as `deps` (app/defence-entry.js): a
 // shared import would make the bundler split those modules, and their CSS, into a new chunk.
+import { reducedMotion } from "../reduced-motion.js";
 import "../defence-ui.css";
 import { createPadsView } from "./defence/pads-view.js";
 import { createBar } from "./defence/bar.js";
@@ -37,7 +38,7 @@ export function createDefenceUI(S, A, deps) {
   const c = {
     S, A, Z, root, deps, ui, key,
     kbd: (k) => (k ? `<kbd class="action-key">${k}</kbd>` : ""),
-    motionOff: () => root.classList.contains("motion-off") || matchMedia("(prefers-reduced-motion: reduce)").matches,
+    motionOff: () => root.classList.contains("motion-off") || reducedMotion(),
     phone: () => root.classList.contains("compact-ui"),
     // The squad number when the selection is one armour squad (some or all of its tanks), else null.
     selectedSquad: (es) => (es.length && es.every((e) => e.squad && e.team === 0 && e.squad === es[0].squad) ? es[0].squad : null),

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { reducedMotionQuery } from "./reduced-motion.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { CROSSINGS } from "./terrain.js";
 import { ROCKS } from "./data.js";
@@ -33,7 +34,7 @@ export class EnvironmentView {
   constructor(scene, terrain, assets, fog = null) {
     this.scene = scene;
     this.fog = fog;
-    this.reducedMotion = matchMedia("(prefers-reduced-motion:reduce)");
+    this.reducedMotion = reducedMotionQuery;
     this.terrain = terrain;
     this.root = new THREE.Group();
     this.decor = new THREE.Group();

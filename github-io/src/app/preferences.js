@@ -31,13 +31,19 @@ export function setupPreferences(S, A) {
   function syncMotion() {
     document.documentElement.toggleAttribute("data-large-ui", S.settings.uiScale > 100);
     document.documentElement.style.setProperty("--interface-scale", String((S.settings.uiScale || 100) / 100));
-    document.documentElement.classList.toggle("motion-off", motionOffFor(S.settings, reducedMotion.matches));
+    const root = document.documentElement;
+    root.dataset.reducedMotion = S.settings.reducedMotion || "system";
+    root.classList.toggle("motion-off", motionOffFor(S.settings, reducedMotion.matches));
+    // Phase 2 display choices that are pure CSS: reading-text size and the desktop minimap corner.
+    root.dataset.textSize = S.settings.textSize || "s";
+    root.classList.toggle("minimap-right", S.settings.minimapSide === "right");
   }
 
   // The sheet applies every change at once (a slider up to once a frame), so the costly steps run only when a
   // setting they read changed: re-translating the page on a language change, re-tinting the world when
   // anything but the cheap keys below changed.
-  const CHEAP = new Set(["masterVolume", "musicVolume", "sfxVolume", "muted", "quietMode", "music", "panSpeed", "edgeScroll", "confirmRestart", "autocast", "groupPace", "showFps"]);
+  const CHEAP = new Set(["masterVolume", "musicVolume", "sfxVolume", "muted", "quietMode", "music", "panSpeed", "edgeScroll", "confirmRestart", "autocast", "groupPace", "showFps",
+    "cameraAngle", "cameraTurn", "zoomSpeed", "minimapSide", "alerts", "frameCap", "haptics", "textSize"]);
   let applied = null, storageWarned = false;
   function applyPreferences(value) {
     const before = applied;
@@ -101,7 +107,13 @@ export function setupPreferences(S, A) {
   // The skirmish battle rules chosen on the setup screen (S.rules, app/rule-options.js) are remembered
   // between visits in their own key; the settings record keeps a fixed set of keys.
   const rememberRules = () => saveRules(S.rules);
-  Object.assign(A, { settingsUI, localization, applyPreferences, motionOff, rememberRules });
+  // A quarter turn of the camera (Page Up / Page Down), stored like the sheet's Turn row.
+  function turnCamera(step) {
+    if (S.sim?.defence) { A.notice("Frontier Defence frames the roads itself."); return; }
+    const turn = (((S.settings.cameraTurn || 0) + step * 90) % 360 + 360) % 360;
+    applyPreferences({ ...S.settings, cameraTurn: turn });
+  }
+  Object.assign(A, { settingsUI, localization, applyPreferences, motionOff, rememberRules, turnCamera });
   return function bind() {
     syncStoryLanguage();
     syncMotion();

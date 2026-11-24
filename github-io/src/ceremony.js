@@ -14,6 +14,7 @@
 // onMatchEnd(fn): R3-R (commander rank) and later packages listen here. fn gets one summary object per
 // finished match, after its results screen is on the page.
 import "./ceremony.css";
+import { reducedMotionQuery } from "./reduced-motion.js";
 import { portrait, hasPortrait } from "./portraits.js";
 import { CEREMONY, matchEndListenerCount, mvpCardHTML, portraitTypeOf, lossHTML, countFrames, countText } from "./ceremony-rules.js";
 
@@ -26,7 +27,7 @@ export function createCeremony(S, A) {
   const state = { phase: null, t: 0, steps: [], done: null, stamps: 0, lastStamp: null, presented: 0, played: 0, timers: [], frames: [], tag: null };
   // Motion off = calm, as the title cover reads it (R3-M, app/cover.js): reduced motion, or "Animate combat
   // effects" off. Eco quality alone (the phone default) keeps the ceremony: it is a few seconds of 2D.
-  const reduced = typeof matchMedia === "function" ? matchMedia("(prefers-reduced-motion: reduce)") : null;
+  const reduced = reducedMotionQuery;
   const motionOff = () => !!reduced?.matches || S.settings?.combatMotion === false;
   const allowed = () => !S.query?.has("test") || S.query.has("ceremony");
   const animated = () => allowed() && !motionOff();
