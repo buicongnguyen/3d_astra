@@ -1,7 +1,7 @@
 // One-tap type chips (owner, 2026-11-24): a mixed selection shows a flat row of chips, one per unit type
 // (its role glyph and count). Tapping a chip narrows the selection to that type in one tap; tapping the
 // lit chip again brings the whole group back. No menu, no second step; on phones the row takes the place
-// of the group heading and its totals, so the fixed dock never grows (desktop: in place of the roster).
+// of the group heading and its totals, so the fixed dock never grows (desktop: in place of the totals line).
 import { $ } from "./dom.js";
 import { chipModel, chipsHTML } from "../type-chips-model.js";
 import "../type-chips.css";

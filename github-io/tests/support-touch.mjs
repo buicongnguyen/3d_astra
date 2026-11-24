@@ -102,4 +102,4 @@ await suite('support-touch', async () => {
     assert.deepEqual(errors, []);
     await page.close();
   }
-});
+}, { browser });

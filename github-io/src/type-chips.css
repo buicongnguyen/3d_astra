@@ -21,10 +21,11 @@
 :root.compact-ui .selection-panel.has-chips #selection-info :is(.selection-heading, .unit-metrics, .selection-activity) { display: none; }
 :root.compact-ui .selection-panel.has-chips .type-chips { flex: 0 0 auto; margin: 0 0 2px; }
 
-/* Desktop: in place of the one-card-per-unit roster. */
-:root:not(.compact-ui) .selection-panel.has-chips .selection-scroll { display: none; }
-:root:not(.compact-ui) .selection-panel.has-chips .type-chips { position: absolute; left: 8px; right: 8px; bottom: 6px; height: 40px; }
-:root:not(.compact-ui) .selection-panel.has-chips .type-chips button { height: 40px; }
+/* Desktop: in place of the group's totals line (HP, Shield, ATK, status), beside the group icon; the unit
+   roster below stays (one card per unit, to pick a single unit). */
+:root:not(.compact-ui) .selection-panel.has-chips #selection-info :is(.unit-metrics, .selection-activity) { visibility: hidden; }
+:root:not(.compact-ui) .selection-panel.has-chips .type-chips { position: relative; z-index: 1; height: 40px; margin: -46px 0 6px 48px; }
+:root:not(.compact-ui) .selection-panel.has-chips .type-chips button { height: 40px; min-width: 48px; }
 
 /* Landscape phones (the two-row board, phone-hud.css): the row takes the summary's place before the orders. */
 @media (orientation: landscape) and (max-height: 520px) {

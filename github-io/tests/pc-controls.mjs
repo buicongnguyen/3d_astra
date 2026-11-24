@@ -78,7 +78,9 @@ try {
   await select([worker,ranger]);await hit(resource,'right');await orders(worker,['gather']);await orders(ranger,['move'],'fighters do not inherit worker jobs');
   await hit(site,'right');await orders(worker,['build']);await orders(ranger,['move']);
   await select([medic,engineer,ranger]);await hit(tank,'right');await orders(engineer,['support']);await orders(medic,['move'],'invalid healer target still replaces old order');await orders(ranger,['move']);
-  await hit(enemy,'right');await orders(medic,['move']);await orders(engineer,['move']);await orders(ranger,['attack']);
+  // 2026-11-24 (support units hold the rear): on an enemy, Medics and Engineers follow the fighters from behind
+  // (an escort Support order, sim/escort.js) instead of walking onto the enemy's spot. The frozen Godot twin still moves.
+  await hit(enemy,'right');await orders(medic,[godot?'move':'support'],'healer follows the fighters');await orders(engineer,[godot?'move':'support'],'engineer follows the fighters');await orders(ranger,['attack']);
   await select([hq]);await click(await mini(),'right');assert.ok((await entity(hq)).rally,'production building rally works on minimap');
   await select([worker]);const funds=(await state()).alloy;
   await keys('q');assert.ok((await state()).mode);await click(ground,'right');assert.equal((await state()).mode,'');assert.equal((await state()).alloy,funds,'cancel placement spends nothing');
