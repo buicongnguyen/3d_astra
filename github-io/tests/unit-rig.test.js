@@ -95,6 +95,35 @@ test("unit rig: a riding Rider keeps its legs still and rolls by distance; a sto
   assert.ok(Math.abs(stomp.lean) < 1e-9, "no run lean");
 });
 
+test("unit rig (creature round): the Acid Hound trots on diagonal pairs; the Vault Sentinel stomps and kneels only when the view says", async () => {
+  const { RIG_INFANTRY, KNEELERS, GAIT } = await import("../src/unit-rig.js");
+  const fs = await import("node:fs");
+  for (const t of ["acidhound", "vaultsentinel"]) { assert.ok(RIG_INFANTRY.has(t), t); assert.ok(!KNEELERS.has(t), `${t} is not a kneeler`); }
+  assert.equal(GAIT.acidhound, "trot"); assert.equal(GAIT.vaultsentinel, "stomp");
+  const nodes = (name) => {
+    const data = fs.readFileSync(new URL(`../public/models/${name}.glb`, import.meta.url));
+    return JSON.parse(data.subarray(20, 20 + data.readUInt32LE(12)).toString()).nodes;
+  };
+  // view.js tags each leg_* subtree with its own hip and knee; the suffix picks the phase (as in view.js).
+  const right = (n) => /_R(\d*)$/.test(n);
+  const hound = nodes("acidhound"), legs = hound.filter((n) => n.name.startsWith("leg_"));
+  assert.equal(legs.length, 4);
+  const at = (name) => legs.find((n) => n.name === name).translation; // glTF: +Z is the front
+  const same = (a, b) => right(a) === right(b);
+  // Diagonals share a phase: front left with hind right, front right with hind left.
+  assert.ok(same("leg_L", "leg_hindR_L") && same("leg_R", "leg_hindL_R") && !same("leg_L", "leg_R"));
+  assert.ok(at("leg_L")[2] > 0 && at("leg_hindR_L")[2] < 0 && Math.sign(at("leg_L")[0]) === -Math.sign(at("leg_hindR_L")[0]), "leg_L and leg_hindR_L are diagonal");
+  for (const leg of legs) assert.ok(leg.children.some((i) => /^Knee/.test(hound[i].name)), `${leg.name}: a Knee_* mesh marks the bend`);
+  const sentinel = nodes("vaultsentinel"), hips = sentinel.filter((n) => n.name.startsWith("leg_"));
+  assert.deepEqual(hips.map((n) => n.name).sort(), ["leg_L", "leg_R"]);
+  for (const hip of hips) assert.ok(hip.children.some((i) => /^Knee/.test(sentinel[i].name)), `${hip.name}: Knee_cap`);
+  // A trotting hound runs (wider swing) but its body never pitches.
+  const rig = infantry(), m = new Float32Array(4);
+  for (let i = 0; i < 90; i++) stepInfantry(rig, m, { speed: 7, base: 7, scale: 1, legLength: 0.58, moving: true, attacking: false, dt: 1 / 60, rich: true, gait: "trot", kneels: false });
+  assert.ok(Math.abs(m[1] - 0.6 * rig.gait) < 1e-6, "full trot swing");
+  assert.ok(Math.abs(rig.lean) < 1e-9 && m[3] === 1, "no run lean");
+});
+
 test("unit rig: wheels are found as round islands; concentric rim and tyre share one axle and radius", async () => {
   const THREE = await import("three");
   const { mergeGeometries } = await import("three/addons/utils/BufferGeometryUtils.js");

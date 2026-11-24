@@ -87,7 +87,8 @@ test('portrait generation preserves legacy cells and appends every approved fact
   const manifest = JSON.parse(read('public/models/manifest.json')).assets, assets = manifest.filter(a => a.faction);
   // R3-J (round 3): 29 cells before, then the 7 missing types and the reserved ironsovereign2 (37).
   // R4-P1 (round 4): the Dune Wyrm and the Wyrmling go before the reserved last cell (39).
-  assert.equal(new Set(order).size, 39);
+  // Creature round: Acid Hound and Vault Sentinel appended after the reserved cell (41).
+  assert.equal(new Set(order).size, 41);
   assert.deepEqual(new Set(order.slice(13, 25)), new Set(assets.map(a => a.name)));
   // R3-F (round 3) reworked the approved faction models; they wait for the owner again.
   for (const asset of assets) assert.ok(['approved by owner 2026-11-11', 'pending owner review (round 3)'].includes(asset.review), asset.name);

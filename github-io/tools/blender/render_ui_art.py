@@ -29,7 +29,8 @@ PORTRAITS = ['worker', 'vanguard', 'ranger', 'breaker', 'medic', 'engineer', 'ta
              'hq', 'relay', 'barracks', 'foundry', 'tower',
              'scrapper', 'scorcher', 'salvageyard', 'rider', 'wagon', 'waystation', 'drone', 'walker', 'pylon', 'shade', 'watcher', 'veilrelay',
              'kite', 'hawk', 'balloon', 'glider',
-             'carrier', 'ironvanguard', 'gunner', 'stalker', 'ironsovereign', 'workshop', 'rampart', 'wyrm', 'wyrmling', 'ironsovereign2']
+             'carrier', 'ironvanguard', 'gunner', 'stalker', 'ironsovereign', 'workshop', 'rampart', 'wyrm', 'wyrmling', 'ironsovereign2',
+             'acidhound', 'vaultsentinel']
 # R3-J: a cell that reuses another model's render (R3-H's second Sovereign shares the Sovereign model).
 SAME_MODEL = {'ironsovereign2': 'ironsovereign'}
 CELL, COLS = 192, 4
