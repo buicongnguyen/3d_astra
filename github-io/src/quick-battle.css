@@ -137,7 +137,10 @@
 
 #title-actions:not([hidden]):has(#start-training) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
 .compact-ui #briefing.campaign-view .mode-switch { order: -3; }
-.compact-ui #briefing.campaign-view #title-actions { order: -4; }
+.compact-ui #briefing.campaign-view #title-actions { order: 1; }
+/* A brand-new player (Training still shows its "Start here" badge) finds Quick battle and Full army right under
+   the campaign map; once anything is played the mission list comes first again (3+ missions above Start). */
+.compact-ui #briefing.campaign-view:has([data-mode="training"].start-here) #title-actions { order: -4; }
 #title-actions #start-training { border-color: var(--kit-gold, #edc76f); }
 
 #title-actions:has(#start-training) button { width: 100%; min-width: 0; }
