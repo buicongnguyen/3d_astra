@@ -1,5 +1,6 @@
 import { RANK_BONUS, STANCES } from "./sim/tactics.js";
 import { FORD_SHORT } from "./terrain-labels.js";
+import { DIVE, diveTarget } from "./sim/content/kite-dive.js";
 
 // Interface logic for veterancy, stances and unit abilities (rules: sim/tactics.js).
 // Pure functions over simulation state: no DOM, no rendering, so node:test covers them.
@@ -56,7 +57,11 @@ export function abilityGroups(sim, entities, max = ABILITY_KEYS.length) {
     const wait = Math.max(0, (e.abilityAt || 0) - sim.time);
     // Charged but wading the ford (sim/traits.js inFord): not ready until it reaches the bank.
     if (wait <= 0 && sim.inFord?.(e)) g.ford++;
-    else if (wait <= 0) g.ready++;
+    else if (wait <= 0) {
+      g.ready++;
+      // Kite Dive (sim/content/kite-dive.js): how many ready Kites have an enemy vehicle in reach.
+      if (a.id === DIVE && diveTarget(sim, e, a)) g.targets = (g.targets || 0) + 1;
+    }
     g.wait = Math.min(g.wait, wait);
   }
   // Two abilities with the same order (data may not give one) keep a fixed place: by id.
@@ -68,9 +73,13 @@ export function abilityGroups(sim, entities, max = ABILITY_KEYS.length) {
     .map((g) => ({ ...g, fraction: g.ready || g.ford || !(g.cooldown > 0) ? 0 : Math.min(1, g.wait / g.cooldown) }));
 }
 
-// What the tile says under the ability name: "Ready", "Ready 2/3", "In the ford" or the seconds left.
-export function abilityStatus(group) {
+// What the tile says under the ability name: "Ready", "Ready 2/3", "In the ford", "No vehicle near" or the seconds left.
+// `compact` (phones): the short form where the tile is narrow.
+export const NO_VEHICLE = "No vehicle near", NO_VEHICLE_SHORT = "No vehicle";
+export function abilityStatus(group, { compact = false } = {}) {
   if (!group.ready && group.ford) return FORD_SHORT;
+  // A Dive with nothing to dive into says so (tapping it does nothing).
+  if (group.ready && group.id === DIVE && !group.targets) return compact ? NO_VEHICLE_SHORT : NO_VEHICLE;
   if (!group.ready) return `${Math.max(1, Math.ceil(group.wait))}s`;
   return group.count > 1 ? `Ready ${group.ready}/${group.count}` : "Ready";
 }

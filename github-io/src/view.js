@@ -10,7 +10,7 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Terrain } from "./terrain.js";
 import { ActivityView } from "./activity-view.js";
 import { mulberry32 } from "./rng.js";
-import { Effects } from "./fx.js";
+import { Effects, DIVE_SECONDS } from "./fx.js";
 import { startFlash, stepFlash, HIT_FLASH } from "./combat-feedback.js";
 import { SelectionBatches, createRing, updateRing, createBar, updateBar, setTeamColor, createMarker, createRally, updateRally } from "./selection-view.js";
 import { CaptureRings, DestinationMarkers } from "./capture-view.js";
@@ -1547,7 +1547,8 @@ export class WorldView {
     this.objects.delete(event.seed);
     for (const part of [o.userData.ring, o.userData.bar, o.userData.contactShadow]) part.visible = false;
     if (this.dying.length >= FEEL.wreckCap) this.disposeEntity(this.dying.shift().object);
-    const kind = event.building ? 'building' : o.userData.air ? 'air' : event.heavy ? 'vehicle' : 'infantry';
+    // A Kite's Dive (sim/content/kite-dive.js) flies its model into the vehicle and is gone at the blast.
+    const kind = event.dive && o.userData.air && Number.isFinite(event.tx) ? 'dive' : event.building ? 'building' : o.userData.air ? 'air' : event.heavy ? 'vehicle' : 'infantry';
     const model = o.userData.model;
     if (o.userData.flashLit) this.setFlashTint(o.userData, false);
     if (o.userData.emblem) o.userData.emblem.visible = false;
@@ -1555,7 +1556,7 @@ export class WorldView {
     // Wrecks lose their paint, team colour and lights so a dead tank reads as dead at a
     // glance: every part is tinted burnt per instance (same batches, no extra draws) and
     // glowing parts go dark.
-    if (kind !== 'infantry') {
+    if (kind !== 'infantry' && kind !== 'dive') {
       model.traverse?.((part) => {
         if (!part.isMesh) return;
         const glow = part.material?.emissive && part.material.emissiveIntensity > 0 && part.material.emissive.getHex() !== 0;
@@ -1566,7 +1567,8 @@ export class WorldView {
     // R3-K: `look` (combat-feedback.js DEATH_LOOK) is settled by the DeathLooks plugin once the frame's
     // killing shot is known (0 until then); `id` lets it find the shot.
     this.dying.push({ id: event.seed, look: 0, baseY: o.position.y, object: o, kind, team: event.team, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1), lift: model.position?.y ?? 0,
-      life: { building: 2.8, vehicle: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, air: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, infantry: 1.6 }[kind], baseAngle: model.rotation.y, direction: event.direction ?? model.rotation.y });
+      life: { building: 2.8, vehicle: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, air: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, infantry: 1.6, dive: DIVE_SECONDS }[kind], baseAngle: model.rotation.y, direction: event.direction ?? model.rotation.y,
+      ...(kind === 'dive' ? { tx: event.tx, tz: event.tz } : null) });
   }
   // Hit flash (combat-feedback.js stepFlash): every model part shares one tint array that the
   // batches copy into instanceColor, so a flash costs no material, batch or draw call. Off
@@ -1601,6 +1603,14 @@ export class WorldView {
         o.position.set(d.x + Math.sin(t * 61) * shake, d.baseY - heavy((t - 0.35) / 2.35) * 5.6, d.z + Math.cos(t * 53) * shake);
         m.rotation.z = d.tilt * heavy((t - 0.4) / 2.2) * 0.26;
         m.rotation.x = d.tilt * heavy((t - 0.4) / 2.2) * 0.11;
+      } else if (d.kind === 'dive') {
+        // Kite Dive: nose down and straight into the vehicle, faster as it falls (src/fx.js draws the streak and blast).
+        const k = clamp01(t / d.life) ** 2;
+        o.position.x = d.x + (d.tx - d.x) * k;
+        o.position.z = d.z + (d.tz - d.z) * k;
+        m.position.y = d.lift * (1 - k);
+        m.rotation.y = d.direction;
+        m.rotation.x = 0.9 * ease(t / (d.life * 0.4));
       } else if (d.kind === 'air') {
         // A shot-down flyer drops from its altitude, turning and rolling, then settles as a wreck.
         const fall = clamp01(t / 0.9);

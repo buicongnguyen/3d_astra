@@ -85,7 +85,7 @@ export const tactics = {
     if (!this.abilityReady(e)) return false;
     const a = e.ability;
     // H15: a content module's ability first (sim/content.js: a generic timed buff or an instant effect).
-    if (ABILITIES[a.id]) { if (!this.contentAbility(e, a, point)) return false; }
+    if (ABILITIES[a.id]) { const done = this.contentAbility(e, a, point); if (!done) return false; if (done !== true) point = done; }
     else if (TIMED[a.id]) {
       this.endBuff(e);
       const change = TIMED[a.id](e, a), undo = {};

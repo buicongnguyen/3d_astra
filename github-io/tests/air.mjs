@@ -99,13 +99,56 @@ await suite("air", async () => {
     });
     await page.evaluate(() => window.__frontier.step(0.05));
     const card = page.locator("#selection-info .in-air");
-    await card.waitFor({ state: "visible", timeout: TIMEOUT.step });
+    // Phones: a unit with an ability shows its tactics card in the dock, which hides the activity line
+    // (phone-hud.css); the Kite has Dive since 2026-11-24, so there the line is only in the DOM (and its tooltip).
+    const compact = await page.evaluate(() => document.documentElement.matches(".compact-ui.dock-actions"));
+    await card.waitFor({ state: compact ? "attached" : "visible", timeout: TIMEOUT.step });
     assert.match(await card.textContent(), /Air/);
     assert.match(await page.locator("#selection-info h3").textContent(), /Kite scout/);
     let report = await audit(page, ".selection-panel", mobile);
     assert.deepEqual(report.small, [], `${viewport}: small text on the card`);
     assert.equal(report.wide, false, `${viewport}: no sideways scroll`);
     await shot(page, `air-kite-${viewport}`);
+
+    // 4b. Kite Dive (sim/content/kite-dive.js): the tile says "No vehicle near" and does nothing; with an enemy
+    // tank 6 m off, one tap crashes the Kite into it (the tank loses 260, the Kite is gone).
+    await page.evaluate((id) => {
+      const f = window.__frontier, s = f.sim, e = s.get(id), hq = s.own(0).find((b) => b.type === "hq");
+      e.x = hq.x + 10; e.z = hq.z - 12; e.orders = [];
+      f.view.focusOn(e.x, e.z);
+      f.select([id]);
+      f.step(0.3);
+    }, kite.id);
+    const diveTile = page.locator('#commands [data-ability="dive"]').first();
+    await diveTile.waitFor({ state: "visible", timeout: TIMEOUT.step });
+    await page.waitForFunction(() => /No vehicle/.test(document.querySelector('#commands [data-ability="dive"] .ability-status')?.textContent || ""), null, { timeout: TIMEOUT.step });
+    const clipped = await page.evaluate(() => { const n = document.querySelector('#commands [data-ability="dive"] .ability-status'); return n.scrollWidth > n.clientWidth + 1 ? `${n.textContent} ${n.scrollWidth}>${n.clientWidth}` : ""; });
+    assert.equal(clipped, "", `${viewport}: the Dive status fits its tile`);
+    const diveBox = await diveTile.boundingBox();
+    if (mobile) assert.ok(diveBox.height >= 44 && diveBox.width >= 40, `${viewport}: Dive tile ${Math.round(diveBox.width)}x${Math.round(diveBox.height)}`);
+    await diveTile[mobile ? "tap" : "click"]();
+    assert.equal(await page.evaluate((id) => window.__frontier.sim.get(id)?.hp, kite.id), 90, `${viewport}: no vehicle near, the Kite stays`);
+    report = await audit(page, "#commands", mobile);
+    assert.deepEqual(report.small, [], `${viewport}: small text on the Dive tile`);
+    await shot(page, `air-dive-none-${viewport}`);
+    const tank = await page.evaluate((id) => {
+      const f = window.__frontier, s = f.sim, e = s.get(id);
+      const t = s.spawn("tank", 1, e.x + 6, e.z, true, true);
+      t.stance = "hold";
+      s.visible[0].fill(1);
+      f.step(0.3);
+      return { id: t.id, health: t.hp + t.shield };
+    }, kite.id);
+    await page.waitForFunction(() => /Ready/.test(document.querySelector('#commands [data-ability="dive"] .ability-status')?.textContent || ""), null, { timeout: TIMEOUT.step });
+    await page.locator('#commands [data-ability="dive"]').first()[mobile ? "tap" : "click"]();
+    const dived = await page.evaluate(([kid, tid]) => {
+      const f = window.__frontier, s = f.sim, t = s.get(tid);
+      f.step(0.1);
+      return { kite: !!s.get(kid), tank: t ? t.hp + t.shield : 0 };
+    }, [kite.id, tank.id]);
+    assert.ok(!dived.kite && tank.health - dived.tank >= 250, `${viewport}: the Kite dived into the tank ${JSON.stringify({ before: tank.health, ...dived })}`);
+    await page.waitForTimeout(250);
+    await shot(page, `air-dive-${viewport}`);
 
     // 5. A Hawk strafes ground troops (who cannot answer), then enemy Rangers shoot it down.
     const fight = await page.evaluate(async () => {

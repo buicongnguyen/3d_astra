@@ -13,6 +13,7 @@ const match = () => new Simulation({ map: "dunes", aiSpeed: "normal", factions: 
 // Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
 // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
 // Re-recorded 2026-11-24 (support health only for a human team 0): a computer-played team 0 (aiPlayer) keeps the computer's support health, so AI-against-AI matches are back to their faction depth / roster values.
-const PINS = { 180: "706784b9", 600: "ecedc0dd" };
+// Re-recorded 2026-11-24 (Kite scout sight 18 -> 32 m and its manual Dive, docs/CHANGELOG.md "Kite scout: twice the sight, and Dive"): at Normal the computer's Kites keep 18 m, which their saved state now records against the 32 m definition, so the 600 s hash moved (180 s did not).
+const PINS = { 180: "706784b9", 600: "eee24134" };
 test("Field command, Meridian against Ashfall, 180 s", () => pin("w2d field 180", run(match(), 180), PINS[180]));
 test("Field command, Meridian against Ashfall, 600 s", LONG, () => pin("w2d field 600", run(match(), 600), PINS[600]));

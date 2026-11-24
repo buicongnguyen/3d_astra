@@ -2,6 +2,12 @@
 
 ## Unreleased: Round A.2
 
+### Kite scout: twice the sight, and Dive (owner request)
+- The Kite scout sees 32 m (was 18 m), about twice a soldier, so you see the enemy coming from far away. It still reveals hidden units only within 8 m. A computer Kite sees that far only in a Fast or Relentless skirmish; on Relaxed, Normal, story missions and Defence it keeps 18 m.
+- New ability **Dive** (tap the tile; never auto-cast, so Auto-cast does not throw your scouts away): the Kite crashes into the nearest enemy vehicle within 10 m for 260 damage, 40% to enemies within 2 m of it (a quarter of that to infantry and buildings), and is lost. Two Kites leave a Battle tank on 100 health, three destroy it. With no vehicle near, the tile reads "No vehicle near" (phones: "No vehicle") and a tap does nothing. A streak from the Kite into the vehicle, a blast and a falling whine. New glyph: an arrow diving onto a tank. Vietnamese and Korean text. Computer Kites dive only in a Fast or Relentless skirmish.
+- Golden pins re-recorded (reason: Kites see 32 m, so their side's fog, which is in the hashed state, opens further; Fast/Relentless computer Kites may dive): golden-skirmish highlands x2 Relentless 180/300 s and riverlands x2 Fast 300 s, golden-expanded Veil 500, golden-r3h mission 330/600 (the player's Kites in The Sovereign Walks), golden-r4p1 fast 420, golden-w2d 600 (a Normal computer Kite's 18 m is now saved against the 32 m definition). Defence and the other story pins did not move.
+- Difficulty gate (`tools/difficulty-check.mjs`, bot wins, before -> after): every 1v1 and 1v2 row unchanged against Meridian, against Veil (`--enemy veil`) and with the Field plan and Expanded roster. `check:missions`: every target met; only m11d The Sovereign Walks changed (objective bot 504 -> 491 s, 17 -> 14 units lost, gold). `check:defence`: identical.
+
 ### Faction roster: four new units, Full army per faction, Quick battle rivals, Wild frontier on more maps
 - Sunward workshop (Waystation, Expanded roster): **Lance buggy**, a fast tank hunter (170 HP / 30 shield, speed 5.8, 18 damage every 1.8 s at 11 m, 3.5x to vehicles, picks tanks and siege first; 140 alloy / 60 energy, 2 supply). Infantry and Anti-tank soldiers beat it.
 - Wardens workshop (Shield pylon level 2, Expanded roster): **Bulwark**, a two-legged shield walker (420 HP / 180 shield back after 3 s, 14 damage every 0.9 s at 7 m, 1.6x to close assault; 175 / 80, 3 supply). Its ward plate: your other units within 6 m take 15% less damage (no stacking).

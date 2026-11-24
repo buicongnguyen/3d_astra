@@ -111,6 +111,8 @@ const paths = {
   chevrons: '<path d="M5 10l7-5 7 5M5 15l7-5 7 5M5 20l7-5 7 5" stroke-width="2.3"/>',
   engine: '<rect x="7" y="2.5" width="10" height="9" rx="1.2"/><path d="M12 11.5V16"/><circle cx="12" cy="18.5" r="3"/><path d="M4 7h3M17 7h3M9.5 5.5v3M14.5 5.5v3"/>',
   crew: '<path d="M14.5 3.5a4.5 4.5 0 0 0-4.3 5.8L3.5 16a2.1 2.1 0 0 0 3 3l6.7-6.7a4.5 4.5 0 0 0 5.8-4.3l-2.6 2.6-2.8-.6-.6-2.8z"/><path d="M18.5 15v6M15.5 18h6" stroke-width="2.2"/>',
+  // Kite Dive (2026-11-24): an arrow diving onto a small tank. Only the Dive tile uses it.
+  dive: '<rect x="8" y="16.5" width="13.5" height="5" rx="2.2"/><path d="M11.5 16.5v-2.8h6v2.8M17.5 15h4"/><path d="M2.5 2.5 10 10" stroke-width="2.3"/><path class="pf" d="M12.8 12.8 7.3 11.9 11.9 7.3z"/>',
 };
 export function icon(name, cls = "") {
   return `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.logo}</svg>`;

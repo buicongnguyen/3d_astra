@@ -359,7 +359,7 @@ Story: all targets met, every run identical to before. Standard: all targets met
 
 Numbers in `balance.json` (`air` and the four flyer definitions). Flyers are trained at the Command core,
 the only building with room for them under the phone's four-tile card: Kite scout (all sides, core L2,
-75/25, unarmed, sees 18 m, reveals hidden units within 8 m), Hawk gunship (Meridian, L3, 225/125,
+75/25, unarmed, sees 32 m since 2026-11-24 (was 18 m), reveals hidden units within 8 m, Dive into a vehicle), Hawk gunship (Meridian, L3, 225/125,
 13 per 0.7 s at 8 m, light splash, 1.5× to close assault, hits air), Ember balloon (Ashfall, L2, 200/100,
 38 per 2.8 s at 4 m, half within 3 m, 1.5× to buildings, ground only), Swift glider (Sunward, L2, 150/60,
 speed 7.4, 2× to Harvesters, ground only). All are mechanical, so Anti-tank rockets are the hard answer.
@@ -405,6 +405,31 @@ the skirmish hash `d071360b`, are unchanged (`tests/wings.test.js` pins the othe
 - **Wings over Copper** (objective bot, seconds): Story 507, Standard 508, Veteran 508, all gold; passive
   and generic targets met. The bot builds a large army while the AI stays home, so it is fast; a person
   should take 9 to 12 minutes (8 minutes of raids, then the yard).
+
+### Kite scout: 32 m sight and Dive (2026-11-24)
+
+Owner: "the kite should see a larger distance, maybe 2 times normal ... The kite can suicide into
+vehicles?" Numbers in `balance.json` `definitions.kite`; rules in `src/sim/content/kite-dive.js`.
+
+- **Sight 18 → 32 m** (ground units see 14 to 16 m, so about 2×). Hidden units are still revealed only
+  within 8 m: a wider reveal would make the Veil's Shade, Stalker and moth easy to strip from far away,
+  and the Kite already has to fly close to find them. A computer side's Kite sees 32 m only in a Fast or
+  Relentless skirmish; on Relaxed and Normal, in story missions, chronicles and Defence it keeps 18 m
+  (`ai_vision`). With every computer Kite at 32 m the Field-plan gate lost one Relaxed 1v2 match (9 → 8).
+- **Dive** (manual only; Auto-cast never fires it): the Kite crashes into the nearest enemy vehicle it
+  can see within 10 m (a living enemy ground unit with `mechanical`: Tank, Walker, Breaker, Scorcher,
+  Supply wagon, Sentinel drone, Rampart, Lancer, Bulwark, Carrier, the iron bosses) and is lost. 260
+  damage to the vehicle; enemies within 2 m of it take 40% of that (104), infantry and buildings a
+  quarter of the splash (26). No vehicle in reach: nothing happens and the tile reads "No vehicle near".
+- **Duels** (`tests/kite-dive.test.js`): a Battle tank (520 + 100 shield): two Kites leave it on 100,
+  three destroy it, also through Composite plating II (3 × 260 × 0.81 = 632 > 620). Three Kites cost
+  225 / 75 against the tank's 275 / 125, and each must fly within 10 m, where Rangers and Anti-tank
+  soldiers shoot it. A Walker (700 + 150) takes four.
+- **Computer:** dives only in a Fast or Relentless skirmish (the signature rule), never on Relaxed or
+  Normal, in story missions or Defence. The computer builds one Kite at a time as a spotter, so dives
+  are rare even there.
+- **Cost of sight:** `updateVision` with 24 Kites on the map, 0.20 → 0.24 ms per call (it runs every
+  0.25 s of game time); the fog texture is the same size.
 
 ## Bosses: the Iron Vanguard in mission 3
 
