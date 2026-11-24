@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { openHelp } from './lib/settings-sheet.mjs';
 
 // Start screen, settings and dock quality: rendered art loads, nothing overflows, text stays
 // readable, touch targets stay 44 px, the HUD waits behind the start screen, and fixed-height
@@ -48,7 +49,7 @@ try {
     });
     assert.deepEqual(start, { art: true, emblem: true, briefing: true, hudVisible: [], overflow: false }, name);
     assert.deepEqual(await smallText('#briefing'), [], `${name} start text`);
-    assert.deepEqual(await controls('#start, #briefing-settings, #language, .top-actions button'), [], `${name} start controls`);
+    assert.deepEqual(await controls('#start, #briefing-settings, .top-actions button'), [], `${name} start controls`);
     for (const [mode, section] of [['training', '#training-setup'], ['campaign', '#campaign-setup'], ['skirmish', '#skirmish-setup']]) {
       await press(`[data-mode="${mode}"]`);
       const state = await page.evaluate(([mode, section]) => ({
@@ -59,23 +60,30 @@ try {
       assert.deepEqual(await controls('.mode-switch button, #start'), [], `${name} ${mode} controls`);
     }
 
-    // Settings: fits the viewport, tabs follow the tab pattern, Escape returns focus to the gear.
+    // Settings: fits the viewport, seven section tabs in one row (the tab pattern), Escape returns focus to the gear.
     await press('#briefing-settings');
     const sheet = await page.evaluate(() => { const r = document.querySelector('.settings-panel').getBoundingClientRect(), f = document.querySelector('.settings-panel footer').getBoundingClientRect();
       return { fits: r.left >= -1 && r.top >= -1 && r.right <= innerWidth + 1 && r.bottom <= innerHeight + 1 && f.bottom <= r.bottom + 1,
         tabs: [...document.querySelectorAll('[role=tab]')].map(t => `${t.dataset.tab}:${t.getAttribute('aria-selected')}`), focus: document.activeElement.dataset.tab,
-        swatchRows: new Set([...document.querySelectorAll('[data-team="playerColor"]')].map(b => Math.round(b.getBoundingClientRect().top))).size };
+        tabRows: new Set([...document.querySelectorAll('[role=tab]')].map(t => Math.round(t.getBoundingClientRect().top))).size };
     });
-    assert.deepEqual(sheet, { fits: true, tabs: ['army:true', 'graphics:false', 'audio:false'], focus: 'army', swatchRows: viewport.width > 600 ? 1 : 2 }, `${name} settings`);
+    assert.deepEqual(sheet, { fits: true, tabs: ['audio:true', 'game:false', 'camera:false', 'display:false', 'controls:false', 'access:false', 'language:false'], focus: 'audio', tabRows: 1 }, `${name} settings`);
     assert.deepEqual(await smallText('.settings-panel'), [], `${name} settings text`);
     assert.deepEqual(await controls('.settings-panel footer button, .settings-close, .settings-panel [role=tab]'), [], `${name} settings controls`);
     await page.keyboard.press('ArrowRight');
-    assert.equal(await page.evaluate(() => document.activeElement.dataset.tab + ':' + document.querySelector('[data-tab=graphics]').getAttribute('aria-selected')), 'graphics:true');
+    assert.equal(await page.evaluate(() => document.activeElement.dataset.tab + ':' + document.querySelector('[data-tab=game]').getAttribute('aria-selected')), 'game:true');
+    // Every section: readable text and 44 px controls that stay on screen (segmented rows, swatches, sliders).
+    for (const tab of ['audio', 'game', 'camera', 'display', 'controls', 'access', 'language']) {
+      await press(`#settings-tab-${tab}`);
+      assert.deepEqual(await smallText('.settings-panel'), [], `${name} settings ${tab} text`);
+      assert.deepEqual(await page.locator('.settings-body button, .settings-body input').evaluateAll((els, touch) => els.filter(e => e.getClientRects().length).map(e => { const r = e.getBoundingClientRect(); return { id: e.dataset.value || e.dataset.do || e.dataset.setting || e.dataset.color || e.textContent.trim().slice(0, 16), small: touch && (r.height < 44 || r.width < 40), spill: e.tagName === 'BUTTON' && e.scrollWidth > e.clientWidth + 1 }; }).filter(c => c.small || c.spill), touch), [], `${name} settings ${tab} controls`);
+    }
+    await press('#settings-tab-game');
     await page.keyboard.press('Escape');
     assert.equal(await page.evaluate(() => [document.querySelector('.settings-backdrop').hidden, document.activeElement.id].join()), 'true,briefing-settings', `${name} settings close`);
 
-    // Help opens above the start screen, not behind it.
-    await press('#help');
+    // Help (Settings → Controls → Help) opens above the start screen, not behind it.
+    await openHelp(page, { touch });
     assert.ok(await page.evaluate(() => { const b = document.querySelector('#modal [data-resume]'); b.scrollIntoView({ block: 'center' });
       const r = b.getBoundingClientRect(); return b.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)); }), `${name} help above the start screen`);
     await press('#modal [data-resume]');

@@ -41,8 +41,13 @@ export function defaults(coarse = false) {
     combatMotion: true,
     // Unit motion (unit-rig.js): knees, run lean, kneel-to-fire, hull rock, turret scan, stowed artillery barrels.
     unitMotion: true,
-    // Screen shake on the biggest blasts (a Command core falling, a Barrage landing). Off = steady camera.
-    screenShake: false,
+    // (screenShake was dropped 2026-11-24: Round A A1 took the camera shake out, so the key did nothing.
+    // Old saves that still carry it load fine; normalize() ignores it.)
+    // Settings sheet (2026-11-24): ask before Restart / New game drops a battle in progress.
+    confirmRestart: true,
+    // Camera pan speed (keys, screen edges): a multiplier, 0.5 to 2. Edge scrolling is a mouse thing.
+    panSpeed: 1,
+    edgeScroll: true,
     // Floating damage numbers (AAA round 2, W2-E): "focus" = bosses and Frontier Defence, "all", or "off".
     damageNumbers: "focus",
     ambient: true,
@@ -76,8 +81,9 @@ export function normalize(value, coarse = false) {
     d.masterVolume = Math.max(0, Math.min(1, value.masterVolume));
   for (const key of ["musicVolume", "sfxVolume"])
     if (Number.isFinite(value[key])) d[key] = Math.max(0, Math.min(1, value[key]));
-  for (const key of ["muted", "waterMotion", "combatMotion", "unitMotion", "screenShake", "ambient", "detail", "showFps", "autocast"])
+  for (const key of ["muted", "waterMotion", "combatMotion", "unitMotion", "ambient", "detail", "showFps", "autocast", "confirmRestart", "edgeScroll"])
     if (typeof value[key] === "boolean") d[key] = value[key];
+  if (Number.isFinite(value.panSpeed)) d.panSpeed = Math.max(0.5, Math.min(2, value.panSpeed));
   if (typeof value.groupPace === "boolean") d.groupPace = value.groupPace;
   if (typeof value.quietMode === "boolean") d.quietMode = value.quietMode;
   return d;

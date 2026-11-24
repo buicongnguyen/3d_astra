@@ -47,7 +47,7 @@ try{
    await page.waitForFunction(()=>Math.abs(window.__frontier.view.focus.x-64)<2);
    await page.locator('#home').click();await page.waitForFunction(()=>Math.abs(window.__frontier.view.focus.x+44)<2);
    await page.evaluate(()=>window.__frontier.view.focusOn(65,-60));
-   await page.locator('#pause').click();await page.locator('[data-restart]').click();
+   await page.locator('#pause').click();await page.locator('[data-restart]').click();await page.locator('[data-confirmed="restart"]').click();
    await page.waitForFunction(()=>Math.abs(window.__frontier.view.focus.x+44)<2&&Math.abs(window.__frontier.view.focus.z-43)<2);
    assert.equal(await page.evaluate(()=>window.__frontier.sim.enemyCount),3,'restart retains selected opponents');
    const targets=await page.evaluate(()=>{

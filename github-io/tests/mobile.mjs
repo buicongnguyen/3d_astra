@@ -87,7 +87,8 @@ const layout = async (label) => {
       "#box-select",
       "#touch-guide",
       "#pause",
-      "#help",
+      "#audio",
+      "#briefing-settings",
       "#dock-tabs",
     ];
     return {
@@ -339,17 +340,23 @@ try {
     await page.locator("#box-select").getAttribute("aria-pressed"),
     "false",
   );
-  // The Eco/High badge is not drawn on touch devices (W1-D); its click handler still toggles.
-  assert.equal(await read(() => getComputedStyle(document.querySelector("#quality")).display), "none");
-  await read(() => document.querySelector("#quality").click());
+  // Graphics quality is a segmented row in Settings → Display (the hidden top-bar Eco/High button is gone);
+  // the match holds while the sheet is open and runs again when it closes.
+  assert.equal(await read(() => document.querySelector("#quality")), null);
+  await tap("#briefing-settings");
+  assert.equal(await read(() => window.__frontier.paused), true, "the sheet holds the match on a phone");
+  await tap("#settings-tab-display");
+  await tap('.settings-panel [data-setting="quality"][data-value="high"]');
   await page.waitForFunction(() => !window.__frontier.view.lowPower);
-  await read(() => document.querySelector("#quality").click());
+  await tap('.settings-panel [data-setting="quality"][data-value="eco"]');
   await page.waitForFunction(() => window.__frontier.view.lowPower);
+  await tap('.settings-panel [data-do="done"]');
+  assert.equal(await read(() => window.__frontier.paused), false, "closing the sheet resumes the match");
   await tap("#pause");
   assert.equal(await read(() => window.__frontier.paused), true);
-  await tap("[data-resume]");
-  await tap("#help");
+  await tap("[data-help]");
   assert.match(await page.locator(".controls-grid").innerText(), /Pinch/);
+  await tap("[data-resume]"); // help closes back to the pause menu
   await tap("[data-resume]");
 
   for (const [width, height, label] of [

@@ -172,11 +172,11 @@ test("D2: a fast frame runs at most six ticks, and ×1 is untouched", () => {
 
 test("D2: Shift+Space is checked before Space pauses, and the grid keeps G", () => {
   const keys = readFileSync(new URL("../src/app/input-keyboard.js", import.meta.url), "utf8");
-  const shift = keys.indexOf("e.shiftKey && S.sim?.defence"), pause = keys.indexOf("A.togglePause()", keys.indexOf("if(key===' '"));
+  const shift = keys.indexOf("e.shiftKey && Z.started"), pause = keys.indexOf("A.togglePause()", keys.indexOf("if(key===' '"));
   assert.ok(shift > 0 && shift < pause);
   assert.match(keys, /key==='g'&&!e\.repeat\)S\.view\.grid\.visible/);
   const hot = JSON.parse(readFileSync(new URL("../src/hotkeys.json", import.meta.url), "utf8"));
-  assert.deepEqual(hot.commands.find((c) => c.id === "speed"), { id: "speed", label: "Fast-forward (Defence)", key: "Shift+Space" });
+  assert.deepEqual(hot.commands.find((c) => c.id === "speed"), { id: "speed", label: "Game speed (fast-forward)", key: "Shift+Space" });
   assert.equal(hot.commands.find((c) => c.id === "pause").key, "Space");
 });
 

@@ -4,6 +4,7 @@ import {translate,addMessages} from '../src/i18n.js';
 import {MISSIONS} from '../src/story/missions.js';
 import {launchBrowser,openPage,testUrl,suite,TIMEOUT} from './lib/harness.mjs';
 import {koreanChecks} from './language-ko.mjs';
+import * as sheet from './lib/settings-sheet.mjs';
 fs.mkdirSync('test-results', {recursive:true});
 const browser=await launchBrowser();
 await suite('language',async()=>{
@@ -12,12 +13,14 @@ await suite('language',async()=>{
   const click=selector=>page.locator(selector)[mobile?'tap':'click']();
   await page.goto(testUrl('','http://127.0.0.1:4191/'), {timeout: TIMEOUT.models});
   await page.waitForFunction(()=>window.__frontier?.view.modelsReady);
-  await page.selectOption('#language','vi');
+  await sheet.setLanguage(page,'vi',{touch:mobile});
   await page.waitForFunction(()=>document.querySelector('#start').textContent==='Bắt đầu');
   assert.equal(await page.locator('html').getAttribute('lang'),'vi');
   await page.reload();
   await page.waitForFunction(()=>window.__frontier?.view.modelsReady&&document.querySelector('#start').textContent==='Bắt đầu');
-  assert.equal(await page.locator('#language').inputValue(),'vi','language survives reload');
+  await sheet.openSettings(page,'language',{touch:mobile});
+  assert.equal(await sheet.chosen(page,'language'),'vi','language survives reload');
+  await sheet.closeSettings(page,{touch:mobile});
   await page.screenshot({path:'test-results/language-start-'+(mobile?'mobile':'desktop')+'.png'});
   await click('#start');
   await page.evaluate(()=>{
@@ -29,20 +32,19 @@ await suite('language',async()=>{
   await click('[data-action="worker"]');
   await page.waitForFunction(()=>document.querySelector('#commands [data-action="worker"]').textContent.includes('Thợ mỏ'));
   const saved=await page.evaluate(()=>{const f=window.__frontier,h=f.sim.own(0).find(e=>e.type==='hq');return {id:h.id,queue:h.queue.map(q=>q.id),alloy:f.sim.players[0].alloy};});
+  // Pause → Settings → Language: the choice applies at once (no Apply), the match stays paused.
   await click('#pause');await click('[data-settings]');
-  await page.selectOption('[data-setting="language"]','en');
-  await click('.settings-panel footer [data-do="cancel"]');
-  assert.equal(await page.locator('html').getAttribute('lang'),'vi','Cancel discards the language draft');
-  await click('[data-settings]');
-  await page.selectOption('[data-setting="language"]','en');
-  await click('[data-do="apply"]');
+  await click('#settings-tab-language');
+  await sheet.choose(page,'language','en',{touch:mobile});
   await page.waitForFunction(()=>document.documentElement.lang==='en');
+  assert.equal(await page.evaluate(()=>window.__frontier.paused),true,'the match stays paused under the sheet');
+  await click('[data-do="done"]');
   assert.ok((await page.locator('[data-resume]').textContent()).includes('Resume operation'));
   await click('[data-resume]');
   assert.equal(await page.locator('#commands [data-action="worker"] span').textContent(),'Harvester');
   assert.deepEqual(await page.evaluate(()=>{const f=window.__frontier,h=f.sim.own(0).find(e=>e.type==='hq');return {id:h.id,queue:h.queue.map(q=>q.id),alloy:f.sim.players[0].alloy};}),saved,'language changes preserve active production and resources');
-  await click('#pause');await click('[data-settings]');
-  await page.selectOption('[data-setting="language"]','vi');await click('[data-do="apply"]');await click('[data-resume]');
+  await click('#pause');await click('[data-settings]');await click('#settings-tab-language');
+  await sheet.choose(page,'language','vi',{touch:mobile});await click('[data-do="done"]');await click('[data-resume]');
   const sizes=mobile?[{width:320,height:568},{width:390,height:844},{width:844,height:390}]:[{width:1280,height:800},{width:1024,height:768}];
   for(const size of sizes) {
    await page.setViewportSize(size);
@@ -94,14 +96,14 @@ await suite('language',async()=>{
    assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),name+' '+label+': no horizontal scroll');
   };
   const setLanguage=async value=>{
-   await press('#pause');await press('[data-settings]');
-   await page.selectOption('[data-setting="language"]',value);
-   await press('[data-do="apply"]');await press('[data-resume]');
+   await press('#pause');await press('[data-settings]');await press('#settings-tab-language');
+   await sheet.choose(page,'language',value,{touch});
+   await press('[data-do="done"]');await press('[data-resume]');
    await page.waitForFunction(value=>document.documentElement.lang===value,value);
   };
   await page.goto(testUrl('','http://127.0.0.1:4191/'), {timeout: TIMEOUT.models});
   await page.waitForFunction(()=>window.__frontier?.view.modelsReady&&!document.querySelector('#start').disabled,null,{timeout:90000});
-  await page.selectOption('#language','vi');
+  await sheet.setLanguage(page,'vi',{touch});
   await press('[data-mode="campaign"]');
   // The story catalog is a separate download: the list turns Vietnamese when it arrives.
   await page.waitForFunction(title=>document.querySelector('.act-title strong')?.textContent===title,vi('Landfall'));

@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import { translate, addMessages } from '../src/i18n.js';
 import { MISSIONS } from '../src/story/missions.js';
 import { openPage, testUrl, TIMEOUT, VIEWPORTS } from './lib/harness.mjs';
+import { openSettings, choose, chosen, closeSettings } from './lib/settings-sheet.mjs';
 
 addMessages(JSON.parse(fs.readFileSync(new URL('../src/locales/story-ko.json', import.meta.url), 'utf8')), 'ko');
 const ko = (text) => translate(text, 'ko');
@@ -43,20 +44,23 @@ export async function koreanChecks(browser) {
 
     await page.goto(testUrl('', 'http://127.0.0.1:4191/'), { timeout: TIMEOUT.models });
     await page.waitForFunction(() => window.__frontier?.view.modelsReady && !document.querySelector('#start').disabled, null, { timeout: TIMEOUT.models });
-    // One choice in the picker; the start screen turns Korean and the choice is saved.
-    assert.ok(await page.locator('#language option[value="ko"]').count(), 'the picker offers 한국어');
-    assert.equal(await page.locator('#language option[value="ko"]').textContent(), '한국어');
-    await page.selectOption('#language', 'ko');
+    // One choice in Settings → Language; the start screen turns Korean and the choice is saved.
+    await openSettings(page, 'language', { touch });
+    assert.equal(await page.locator('.settings-panel [data-setting="language"][data-value="ko"]').innerText(), '한국어', 'the sheet offers 한국어');
+    await choose(page, 'language', 'ko', { touch });
+    await closeSettings(page, { touch });
     await page.waitForFunction((t) => document.querySelector('#start').textContent === t, ko('Start'));
     assert.equal(await page.locator('html').getAttribute('lang'), 'ko');
     await page.reload({ timeout: TIMEOUT.models });
     await page.waitForFunction((t) => window.__frontier?.view.modelsReady && document.querySelector('#start').textContent === t, ko('Start'), { timeout: TIMEOUT.models });
-    assert.equal(await page.locator('#language').inputValue(), 'ko', 'Korean survives a reload');
+    await openSettings(page, 'language', { touch });
+    assert.equal(await chosen(page, 'language'), 'ko', 'Korean survives a reload');
+    await closeSettings(page, { touch });
     // The Hangul font is the bundled subset, fetched only now.
     assert.ok(await page.evaluate(async () => { await document.fonts.load('700 16px "Frontier KR"', '한국어'); return document.fonts.check('700 16px "Frontier KR"', '한국어'); }), `${name}: Frontier KR loaded`);
     assert.ok(await page.evaluate(() => performance.getEntriesByType('resource').some((r) => /noto-sans-kr-subset/.test(r.name))), `${name}: the Korean font file was fetched`);
     await page.waitForTimeout(200);
-    await fits('#briefing', 'title', '#start, #briefing-settings, #language, .mode-switch button');
+    await fits('#briefing', 'title', '#start, #briefing-settings, .mode-switch button');
     await shot('title');
 
     // Skirmish setup.
@@ -78,12 +82,15 @@ export async function koreanChecks(browser) {
     await shot('defence');
 
     // Settings.
-    await press('#briefing-settings');
-    await page.waitForSelector('.settings-panel');
-    assert.equal(await page.locator('[data-setting="language"]').inputValue(), 'ko');
-    await fits('.settings-panel', 'settings', '.settings-panel footer button, .settings-close, .settings-panel [role=tab]');
+    // Settings: every section reads in Korean and fits.
+    await openSettings(page, null, { touch });
+    for (const tab of ['audio', 'game', 'camera', 'display', 'controls', 'access', 'language']) {
+      await press(`#settings-tab-${tab}`);
+      await fits('.settings-panel', `settings ${tab}`, '.settings-panel footer button, .settings-close, .settings-panel [role=tab], .settings-body button');
+    }
+    assert.equal(await chosen(page, 'language'), 'ko');
     await shot('settings');
-    await press('.settings-panel footer [data-do="cancel"]');
+    await closeSettings(page, { touch });
 
     // A Skirmish match: the HQ and a Harvester's command tiles.
     await press('[data-mode="skirmish"]');

@@ -60,7 +60,10 @@ try {
   });
   assert.equal(webgl.glError,0); assert.equal(webgl.contextLost,false);
   assert.ok(webgl.colors>8 && webgl.canvas.height>200,'WebGL draws nonuniform game pixels');
-  await page.locator("#help").tap();
+  // Help: Settings → Controls → Help (the match-bar Help button moved into the sheet).
+  await page.locator("#briefing-settings").tap();
+  await page.locator("#settings-tab-controls").tap();
+  await page.locator('.settings-panel [data-do="help"]').tap();
   await page.locator("[data-resume]").tap();
   await page.screenshot({
     path: fileURLToPath(new URL("webkit-portrait.png", output)),

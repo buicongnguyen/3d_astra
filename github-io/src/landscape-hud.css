@@ -187,7 +187,6 @@
    3. Portrait: the dialogue chip (mission-ui.css) and the fight/intro hint sit in the dock band, above
       the Defence bar when it stands there: bottom = --band, the plan's bottom-band contract.
    4. The Eco/High badge is not drawn on touch devices (Settings has the choice). */
-.touch-ui #quality { display: none; }
 .compact-ui:not(.in-briefing) .touch-controls #zoom-in,
 .compact-ui:not(.in-briefing) .touch-controls #zoom-out { display: none; }
 

@@ -6,72 +6,89 @@ import { icon } from "./icons.js";
 // Injected by vite.config.js; absent under node:test.
 const VERSION = typeof __APP_VERSION__ === "undefined" ? "dev" : __APP_VERSION__,
   BUILD_DATE = typeof __BUILD_DATE__ === "undefined" ? "" : __BUILD_DATE__;
-const TABS = { army: "Army", graphics: "Graphics", audio: "Audio" };
+
+// The unified settings sheet (2026-11-24, owner-approved): one sheet opened from the gear (title bar and
+// match bar) or Pause → Settings. Seven sections in one segmented tab row, so every setting is one tap
+// away once the sheet is open; segmented buttons instead of dropdowns; every change applies and saves at
+// once (no Apply / Cancel). Full screen, theme and language live here only.
+export const SECTIONS = [
+  ["audio", "Sound", "volume"],
+  ["game", "Game", "flag"],
+  ["camera", "Camera", "map"],
+  ["display", "Display", "theme"],
+  ["controls", "Controls", "move"],
+  ["access", "Assist", "people"],
+  ["language", "Language", "globe"],
+];
+const LANGUAGES = [["en", "English", "en"], ["vi", "Tiếng Việt", "vi"], ["ko", "한국어", "ko"]];
+const coarse = () => typeof matchMedia === "function" && matchMedia("(pointer:coarse)").matches;
+const pressed = (on) => `aria-pressed="${on ? "true" : "false"}"`;
+
 export class SettingsUI {
-  constructor({ get, apply, enter, leave, soundTest }) {
-    Object.assign(this, { get, apply, enter, leave, soundTest });
+  // `extras` reaches the parts of the app that are not stored settings: the match speed, full screen,
+  // the UI theme and the Help dialog. Every member is optional, so tests can build the sheet bare.
+  constructor({ get, apply, enter, leave, soundTest, extras = {} }) {
+    Object.assign(this, { get, apply, enter, leave, soundTest, extras });
+    this.tab = "audio";
     this.root = document.createElement("div");
     this.root.className = "settings-backdrop";
     this.root.hidden = true;
     document.body.append(this.root);
     this.root.addEventListener("click", (e) => {
+      if (e.target === this.root) { this.close(); return; }
       const button = e.target.closest("button");
-      if (!button) return;
+      if (!button || button.getAttribute("aria-disabled") === "true") return;
       if (button.dataset.soundTest) this.soundTest?.(button.dataset.soundTest);
-      if (button.dataset.tab) {
-        this.tab = button.dataset.tab;
-        this.paint();
-      }
-      if (button.dataset.teamPalette) {
-        this.draft.teamPalette = button.dataset.teamPalette;
-        this.preview();
-      }
-      if (button.dataset.uiScale) {
-        this.draft.uiScale = Number(button.dataset.uiScale);
-        this.preview();
+      if (button.dataset.tab) { this.tab = button.dataset.tab; this.paint(); return; }
+      if (button.dataset.setting && button.dataset.value !== undefined) {
+        const { setting, value } = button.dataset;
+        this.set(setting, /^-?\d+(\.\d+)?$/.test(value) ? Number(value) : value);
       }
       if (button.dataset.color) {
-        this.draft.teamPalette = "custom";
-        this.draft[button.dataset.team] = button.dataset.color;
-        this.preview();
+        const team = button.dataset.team, other = team === "playerColor" ? "enemyColor" : "playerColor";
+        const next = { ...this.get(), teamPalette: "custom", [team]: button.dataset.color };
+        // Your army and the enemy never share a colour: picking the other side's colour swaps the two.
+        if (next[other] === next[team]) next[other] = this.get()[team];
+        this.commit(next);
       }
-      if (button.dataset.do === "cancel") this.close(false);
-      if (
-        button.dataset.do === "apply" &&
-        (this.draft.teamPalette !== "custom" || this.draft.playerColor !== this.draft.enemyColor)
-      )
-        this.close(true);
+      if (button.dataset.do === "contrast") this.commit({ ...this.get(), teamPalette: "custom", playerColor: "gold", enemyColor: "violet" });
+      if (button.dataset.do === "speed") { this.extras.speed?.set(Number(button.dataset.speed)); this.refresh(); }
+      if (button.dataset.do === "theme") { this.extras.theme?.set(button.dataset.theme); this.refresh(); }
+      if (button.dataset.do === "fullscreen") this.extras.fullscreen?.toggle(button);
+      if (button.dataset.do === "help") { this.close(); this.extras.help?.(); }
+      if (button.dataset.do === "close" || button.dataset.do === "done") this.close();
       if (button.dataset.do === "reset") {
-        // The skirmish faction is a battle choice, not a setting this dialog shows: it survives a reset.
-        this.draft = { ...defaults(matchMedia("(pointer:coarse)").matches), playerFaction: this.draft.playerFaction };
-        this.paint();
-      }
-      if (button.dataset.do === "contrast") {
-        this.draft.teamPalette = "custom";
-        this.draft.playerColor = "gold";
-        this.draft.enemyColor = "violet";
-        this.preview();
+        // Defaults keep the skirmish faction (a battle choice, not shown here) and the language (resetting
+        // it would leave a Vietnamese or Korean player in front of English they may not read).
+        const now = this.get();
+        this.commit({ ...defaults(coarse()), playerFaction: now.playerFaction, language: now.language });
+        this.status("Defaults restored.");
       }
     });
+    // Switches and sliders: a switch applies on change, a slider while it moves (one apply a frame).
     this.root.addEventListener("input", (e) => {
       const key = e.target.dataset.setting;
+      if (!key || e.target.type !== "range") return;
+      this.pendingRange = { key, value: Number(e.target.value) };
+      this.rangeFrame ??= requestAnimationFrame(() => {
+        this.rangeFrame = null;
+        const pending = this.pendingRange;
+        this.pendingRange = null;
+        if (pending) this.set(pending.key, pending.value, { quiet: true });
+      });
+    });
+    this.root.addEventListener("change", (e) => {
+      const key = e.target.dataset.setting;
       if (!key) return;
-      const state = e.target.type === "checkbox" ? e.target.nextElementSibling : null;
-      if (state?.classList.contains("switch-state")) state.textContent = e.target.checked ? "On" : "Off";
-      this.draft[key] =
-        e.target.type === "checkbox"
-          ? e.target.checked
-          : e.target.type === "range"
-            ? Number(e.target.value)
-            : e.target.value;
-      this.preview();
+      if (e.target.type === "checkbox") this.set(key, e.target.checked);
+      else if (e.target.type === "range") { this.pendingRange = null; this.set(key, Number(e.target.value)); }
     });
     this.root.addEventListener("keydown", (e) => {
       e.stopPropagation();
       const tab = e.target.closest?.("[role=tab]");
       if (tab && ["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)) {
         e.preventDefault();
-        const names = Object.keys(TABS), at = names.indexOf(this.tab);
+        const names = SECTIONS.map(([id]) => id), at = names.indexOf(this.tab);
         this.tab = e.key === "Home" ? names[0] : e.key === "End" ? names.at(-1)
           : names[(at + (e.key === "ArrowRight" ? 1 : names.length - 1)) % names.length];
         this.paint();
@@ -79,88 +96,122 @@ export class SettingsUI {
       }
       if (e.key === "Escape") {
         e.preventDefault();
-        this.close(false);
+        this.close();
       }
       if (e.key === "Tab") {
-        const nodes = [
-          ...this.root.querySelectorAll("button:not(:disabled),input,select"),
-        ].filter((n) => n.offsetParent !== null);
-        const first = nodes[0],
-          last = nodes.at(-1);
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
+        const nodes = [...this.root.querySelectorAll("button:not(:disabled),input,select")].filter((n) => n.offsetParent !== null);
+        const first = nodes[0], last = nodes.at(-1);
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
       }
     });
   }
   get active() {
     return !this.root.hidden;
   }
-  open() {
+  open(tab) {
     if (this.active) return;
     this.focus = document.activeElement;
     this.state = this.enter();
-    this.draft = { ...this.get() };
-    this.tab = "army";
+    if (tab && SECTIONS.some(([id]) => id === tab)) this.tab = tab;
     this.root.hidden = false;
     document.querySelector("#app").inert = true;
     this.paint();
   }
+  // One setting changed: normalise, apply (which also saves) and update the pressed states in place.
+  set(key, value, { quiet = false } = {}) {
+    this.commit({ ...this.get(), [key]: value }, { quiet });
+  }
+  commit(next, { quiet = false } = {}) {
+    this.apply(normalize(next, coarse()));
+    this.refresh();
+    if (!quiet) this.status("Saved on this device.");
+  }
+  status(text) {
+    const line = this.root.querySelector("#settings-status");
+    if (line) line.textContent = text;
+  }
+  sections(s) {
+    const touch = coarse();
+    const toggle = (key, label, note = "") =>
+      `<label class="setting-row">${label}<input type="checkbox" role="switch" data-setting="${key}" ${s[key] ? "checked" : ""}><span class="switch-state" aria-hidden="true">${s[key] ? "On" : "Off"}</span></label>${note ? `<p class="settings-note">${note}</p>` : ""}`;
+    const seg = (key, label, options, note = "") =>
+      `<div class="setting-row seg-row"><span class="seg-label" id="seg-${key}">${label}</span><div class="seg" role="group" aria-labelledby="seg-${key}" data-setting-group="${key}" style="--n:${options.length}">${options.map(([value, text]) =>
+        `<button type="button" class="kit-face" data-setting="${key}" data-value="${value}" ${pressed(String(s[key]) === String(value))}>${text}</button>`).join("")}</div></div>${note ? `<p class="settings-note">${note}</p>` : ""}`;
+    const slider = (key, label, min, max, step) =>
+      `<label class="setting-row slider-row">${label}<input aria-label="${label}" type="range" min="${min}" max="${max}" step="${step}" data-setting="${key}" value="${s[key]}"></label>`;
+    const extras = this.extras;
+
+    const audio = `${toggle("muted", "Mute all sound")}${seg("music", "Music", [["recorded", "Recorded"], ["adaptive", "Adaptive"], ["off", "Off"]], "Recorded music plays on menus and briefings and downloads on first play. The adaptive score follows every battle.")}${slider("masterVolume", "Master volume", 0, 1, 0.05)}${slider("musicVolume", "Music volume", 0, 1, 0.05)}${slider("sfxVolume", "Effects volume", 0, 1, 0.05)}${toggle("ambient", "River and wind ambience")}${toggle("quietMode", "Quiet mode: no unit voices")}<div class="sound-tests"><h3>Sound test</h3>${Object.entries(SOUND_TESTS).map(([name, label]) => `<button type="button" data-sound-test="${name}">${label}</button>`).join("")}</div>`;
+
+    // Game speed is this match's (it starts at ×1 and drops back to ×1 at story scenes and decisions);
+    // ×3 needs a mouse, like the Defence bar.
+    const inMatch = !!extras.speed?.available?.(), speed = extras.speed?.get?.() ?? 1;
+    const speeds = touch ? [1, 2] : [1, 2, 3];
+    const speedRow = `<div class="setting-row seg-row"><span class="seg-label" id="seg-speed">Game speed</span><div class="seg" role="group" aria-labelledby="seg-speed" style="--n:${speeds.length}">${speeds.map((n) =>
+      `<button type="button" class="kit-face" data-do="speed" data-speed="${n}" ${pressed(inMatch && speed === n)} ${inMatch ? "" : 'aria-disabled="true"'} translate="no">×${n}</button>`).join("")}</div></div><p class="settings-note">${inMatch ? "Only the clock runs faster: every battle plays out the same. Story scenes and decisions return to ×1." : "Set during a battle. Every battle starts at ×1."}</p>`;
+    const game = `${speedRow}${toggle("confirmRestart", "Confirm Restart and New game", "Asks before a battle in progress is thrown away.")}${seg("damageNumbers", "Damage numbers", [["focus", "Bosses"], ["all", "All"], ["off", "Off"]], "Bosses: floating numbers on bosses and in Frontier Defence only.")}`;
+
+    const camera = `${slider("panSpeed", "Pan speed", 0.5, 2, 0.25)}${touch ? "" : toggle("edgeScroll", "Scroll at screen edges", "Moving the mouse to an edge of the battlefield pans the camera.")}`;
+
+    const fs = extras.fullscreen;
+    const fullscreenRow = fs?.supported?.()
+      ? `<div class="setting-row">Full screen<button type="button" class="secondary seg-single" data-do="fullscreen" ${pressed(fs.active?.())}>${fs.active?.() ? "Exit" : "Enter"}</button></div>`
+      : `<p class="settings-note">${fs?.standalone?.() ? "Full screen: you are playing in a home-screen web app without the browser bars." : "Full screen: on iPhone, open the game in Safari, tap Share → Add to Home Screen and launch it from that icon."}</p>`;
+    const theme = extras.theme?.get?.() ?? "walnut";
+    const themeRow = `<div class="setting-row seg-row"><span class="seg-label" id="seg-theme">Theme</span><div class="seg" role="group" aria-labelledby="seg-theme" style="--n:2"><button type="button" class="kit-face" data-do="theme" data-theme="walnut" ${pressed(theme === "walnut")}>Walnut</button><button type="button" class="kit-face" data-do="theme" data-theme="dark" ${pressed(theme === "dark")}>Dark</button></div></div>`;
+    const display = `${fullscreenRow}${themeRow}${seg("quality", "Graphics quality", [["eco", "Eco"], ["high", "High"]], "Eco limits pixel density and shadow cost. Bridges, water and terrain obstacles remain visible at every setting.")}${seg("uiScale", "Interface size", UI_SCALES.map((n) => [n, `${n}%`]))}${toggle("detail", "Decorative vegetation")}${toggle("waterMotion", "Animate water")}${toggle("unitMotion", "Unit motion")}${toggle("showFps", "Show FPS")}`;
+
+    const controls = `<div class="setting-row">Controls and shortcuts<button type="button" class="secondary seg-single" data-do="help">${icon("help")}<span>Help</span></button></div>${toggle("autocast", "Auto-cast abilities", "Your units use their abilities on their own in a fight, as rival armies do. Off: you give the order from the command card.")}${toggle("groupPace", "Group pace", "A group you move keeps together at its fighters' pace, with Medics and Engineers walking behind them. Off: every unit walks at its own speed.")}`;
+
+    const swatches = (team) => `<div class="swatch-row"><span class="seg-label">${team === "playerColor" ? "Your army" : "Enemy army"}</span><div class="swatches" style="--count:${Object.keys(PRESETS).length}">${Object.entries(PRESETS).map(([id, color]) =>
+      `<button type="button" data-team="${team}" data-color="${id}" aria-label="${team === "playerColor" ? "Your" : "Enemy"} ${id}" title="${id}" ${pressed(s.teamPalette === "custom" && s[team] === id)} style="--swatch:${color}"><i></i></button>`).join("")}</div></div>`;
+    const paletteLabels = { custom: "Custom", protanopia: "Protan", deuteranopia: "Deutan", tritanopia: "Tritan" };
+    const access = `<div class="army-preview" aria-hidden="true"><div class="preview-unit player">${portrait("tank", "friendly", "preview-art")}<b>● YOU</b></div><div class="preview-unit enemy">${portrait("tank", "hostile", "preview-art")}<b>◆ ENEMY</b></div></div>${seg("teamPalette", "Team colours", Object.entries(paletteLabels), "Protan, Deutan and Tritan are palettes for colour-blind players. Team symbols stay distinct.")}${swatches("playerColor")}${swatches("enemyColor")}<button type="button" data-do="contrast" class="contrast-button">${icon("shield")}<span>High contrast · Gold / Violet</span></button>${toggle("combatMotion", "Animate combat effects", "Off also stops decorative motion. The system's reduced-motion choice is respected.")}`;
+
+    const language = `<div class="language-options" role="group" aria-label="Language / Ngôn ngữ / 언어" translate="no">${LANGUAGES.map(([id, label, lang]) =>
+      `<button type="button" class="kit-face" data-setting="language" data-value="${id}" lang="${lang}" ${pressed(s.language === id)}>${icon("globe")}<span>${label}</span></button>`).join("")}</div><p class="settings-version"><span>Version</span> <span translate="no">${VERSION}${BUILD_DATE ? ` · ${BUILD_DATE}` : ""}</span><span class="settings-copyright" translate="no">© 2026 Bui Cong Nguyen, Solluxlabs.com · All rights reserved</span></p>`;
+    return { audio, game, camera, display, controls, access, language };
+  }
   paint() {
-    const swatches = (team) =>
-      `<fieldset><legend>${team === "playerColor" ? "Your army" : "Enemy army"}</legend><div class="swatches" style="--count:${Object.keys(PRESETS).length}">${Object.entries(
-        PRESETS,
-      )
-        .map(
-          ([id, color]) =>
-            `<button data-team="${team}" data-color="${id}" aria-label="${team === "playerColor" ? "Your" : "Enemy"} ${id}" aria-pressed="false" style="--swatch:${color}"><i></i><span>${id}</span></button>`,
-        )
-        .join("")}</div></fieldset>`;
-    // Checkboxes stay real inputs (keyboard, forms, tests); CSS draws them as switches.
-    const toggle = (key, label) =>
-      `<label class="setting-row">${label}<input type="checkbox" role="switch" data-setting="${key}" ${this.draft[key] ? "checked" : ""}><span class="switch-state" aria-hidden="true">${this.draft[key] ? "On" : "Off"}</span></label>`;
-    const paletteLabels = { protanopia: "Protanopia", deuteranopia: "Deuteranopia", tritanopia: "Tritanopia" };
-    const teamOptions = Object.keys(TEAM_PALETTES).map(id => `<button type="button" data-team-palette="${id}">${paletteLabels[id]}</button>`).join("");
-    const scaleOptions = UI_SCALES.map(n => `<button type="button" data-ui-scale="${n}">${n}%</button>`).join("");
-    const army = `${toggle("autocast", "Auto-cast abilities")}<p class="settings-note">Your units use their abilities on their own in a fight, as rival armies do. Off: you give the order from the command card.</p>${toggle("groupPace", "Group pace")}<p class="settings-note">A group you move keeps together at its fighters' pace, with Medics and Engineers walking behind them. Off: every unit walks at its own speed.</p><div class="army-preview"><div class="preview-unit player">${portrait("tank", "friendly", "preview-art")}<b>● YOUR FORCE</b></div><div class="preview-unit enemy">${portrait("tank", "hostile", "preview-art")}<b>◆ ENEMY FORCE</b></div></div><p class="settings-note">Paint preview · neutral armor stays unchanged. Team symbols remain distinct.</p><button data-do="contrast" class="contrast-button">${icon("shield")}<span>High contrast · Gold / Violet</span></button><fieldset class="access-options"><legend>Team palette</legend>${teamOptions}</fieldset>${swatches("playerColor")}${swatches("enemyColor")}`;
-    const graphics = `<fieldset class="access-options"><legend>Interface size</legend>${scaleOptions}</fieldset><label class="setting-row">Graphics quality<select data-setting="quality"><option value="eco" ${this.draft.quality === "eco" ? "selected" : ""}>Eco</option><option value="high" ${this.draft.quality === "high" ? "selected" : ""}>High</option></select></label>${toggle("detail", "Decorative vegetation")}${toggle("waterMotion", "Animate water")}${toggle("combatMotion", "Animate combat effects")}${toggle("unitMotion", "Unit motion")}<label class="setting-row">Damage numbers<select data-setting="damageNumbers" aria-label="Damage numbers">${[["focus", "Bosses & Defence"], ["all", "All"], ["off", "Off"]].map(([value, label]) => `<option value="${value}" ${this.draft.damageNumbers === value ? "selected" : ""}>${label}</option>`).join("")}</select></label>${toggle("showFps", "Show FPS")}<p class="settings-note">Eco limits pixel density and shadow cost. Bridges, water and terrain obstacles remain visible at every setting. Reduced motion is respected.</p>`;
-    const musicChoice = [["recorded", "Recorded + adaptive"], ["adaptive", "Adaptive only"], ["off", "Off"]].map(([value, label]) => `<option value="${value}" ${this.draft.music === value ? "selected" : ""}>${label}</option>`).join("");
-    const audio = `${toggle("muted", "Mute all sound")}<label class="setting-row">Music<select data-setting="music" aria-label="Music">${musicChoice}</select></label><p class="settings-note">Recorded music plays on menus and briefings and downloads on first play. The adaptive score follows every battle.</p><label class="setting-row">Master volume<input aria-label="Master volume" type="range" min="0" max="1" step=".05" data-setting="masterVolume" value="${this.draft.masterVolume}"></label><label class="setting-row">Music volume<input aria-label="Music volume" type="range" min="0" max="1" step=".05" data-setting="musicVolume" value="${this.draft.musicVolume}"></label><label class="setting-row">Effects volume<input aria-label="Effects volume" type="range" min="0" max="1" step=".05" data-setting="sfxVolume" value="${this.draft.sfxVolume}"></label>${toggle("ambient", "River and wind ambience")}${toggle("quietMode", "Quiet mode: no unit voices")}<div class="sound-tests"><h3>Sound test</h3>${Object.entries(SOUND_TESTS).map(([name,label])=>`<button type="button" data-sound-test="${name}">${label}</button>`).join("")}</div><p class="settings-note">Ambience is quietest away from water. Sound pauses with the match.</p>`;
-    this.root.innerHTML = `<section class="settings-panel panel" role="dialog" aria-modal="true" aria-labelledby="settings-title"><header><div class="settings-heading"><span class="eyebrow">COMMANDER PREFERENCES</span><h2 id="settings-title">Make it yours.</h2></div><label class="language-choice" title="Language / Ngôn ngữ">${icon("globe")}<span class="visually-hidden" translate="no">Language / Ngôn ngữ</span><select data-setting="language" aria-label="Language / Ngôn ngữ" translate="no"><option value="en">English</option><option value="vi">Tiếng Việt</option><option value="ko" lang="ko">한국어</option></select></label><button data-do="cancel" class="settings-close" aria-label="Close settings">${icon("close")}</button></header><nav role="tablist" aria-label="Settings tabs">${Object.entries(TABS).map(([t, label]) => `<button role="tab" id="settings-tab-${t}" data-tab="${t}" aria-selected="${t === this.tab}" aria-controls="settings-body" tabindex="${t === this.tab ? 0 : -1}">${label}</button>`).join("")}</nav><div class="settings-body" id="settings-body" role="tabpanel" aria-labelledby="settings-tab-${this.tab}">${this.tab === "army" ? army : this.tab === "graphics" ? graphics : audio}</div><p id="palette-warning" role="status"></p><p class="settings-version"><span>Version</span> <span translate="no">${VERSION}${BUILD_DATE ? ` · ${BUILD_DATE}` : ""}</span><span class="settings-copyright" translate="no">© 2026 Bui Cong Nguyen, Solluxlabs.com · All rights reserved</span></p><footer><button data-do="reset" class="ghost">Defaults</button><button data-do="cancel" class="secondary">Cancel</button><button data-do="apply" class="primary">Apply settings</button></footer></section>`;
-    this.root.querySelector('[data-setting="language"]').value = this.draft.language;
-    this.preview();
+    const s = this.get();
+    const body = this.sections(s)[this.tab];
+    this.root.innerHTML = `<section class="settings-panel panel" role="dialog" aria-modal="true" aria-labelledby="settings-title"><header><div class="settings-heading"><span class="eyebrow">COMMANDER PREFERENCES</span><h2 id="settings-title">Settings</h2></div><button type="button" data-do="close" class="settings-close" aria-label="Close settings">${icon("close")}</button></header><nav role="tablist" aria-label="Settings sections" style="--tabs:${SECTIONS.length}">${SECTIONS.map(([t, label, glyph]) => `<button type="button" role="tab" id="settings-tab-${t}" data-tab="${t}" aria-selected="${t === this.tab}" aria-controls="settings-body" tabindex="${t === this.tab ? 0 : -1}" title="${label}">${icon(glyph)}<span class="tab-label">${label}</span>${t === "language" ? `<span class="tab-code" aria-hidden="true" translate="no">${s.language.toUpperCase()}</span>` : ""}</button>`).join("")}</nav><div class="settings-body" id="settings-body" role="tabpanel" aria-labelledby="settings-tab-${this.tab}" data-section="${this.tab}">${body}</div><footer><button type="button" data-do="reset" class="ghost">Defaults</button><p id="settings-status" role="status">Changes save as you go.</p><button type="button" data-do="done" class="primary">Done</button></footer></section>`;
+    this.refresh();
     this.root.querySelector(`[data-tab="${this.tab}"]`).focus();
   }
-  preview() {
-    for (const b of this.root.querySelectorAll("[data-team-palette]")) b.setAttribute("aria-pressed", String(this.draft.teamPalette === b.dataset.teamPalette));
-    for (const b of this.root.querySelectorAll("[data-ui-scale]")) b.setAttribute("aria-pressed", String(this.draft.uiScale === Number(b.dataset.uiScale)));
-    const colors = palette(this.draft);
-    this.root.style.setProperty(
-      "--preview-player",
-      colors[0],
-    );
-    this.root.style.setProperty(
-      "--preview-enemy",
-      colors[1],
-    );
-    for (const b of this.root.querySelectorAll("[data-color]"))
-      b.setAttribute(
-        "aria-pressed",
-        String(this.draft.teamPalette === "custom" && this.draft[b.dataset.team] === b.dataset.color),
-      );
-    const same = this.draft.teamPalette === "custom" && this.draft.playerColor === this.draft.enemyColor;
-    this.root.querySelector('[data-do="apply"]').disabled = same;
-    this.root.querySelector("#palette-warning").textContent = same
-      ? "Choose different colors for your army and the enemy."
-      : "Preferences are saved on this browser when you apply.";
-  }
-  close(commit) {
+  // Pressed states, switches, colours and the full-screen label follow the stored settings.
+  refresh() {
     if (!this.active) return;
-    if (commit) this.apply(normalize(this.draft, matchMedia("(pointer:coarse)").matches));
+    const s = this.get();
+    for (const b of this.root.querySelectorAll("button[data-setting][data-value]"))
+      b.setAttribute("aria-pressed", String(String(s[b.dataset.setting]) === b.dataset.value));
+    for (const input of this.root.querySelectorAll('input[type="checkbox"][data-setting]')) {
+      input.checked = !!s[input.dataset.setting];
+      const state = input.nextElementSibling;
+      if (state?.classList.contains("switch-state")) state.textContent = input.checked ? "On" : "Off";
+    }
+    for (const b of this.root.querySelectorAll("[data-color]"))
+      b.setAttribute("aria-pressed", String(s.teamPalette === "custom" && s[b.dataset.team] === b.dataset.color));
+    const speed = this.extras.speed?.get?.() ?? 1, inMatch = !!this.extras.speed?.available?.();
+    for (const b of this.root.querySelectorAll("[data-speed]")) b.setAttribute("aria-pressed", String(inMatch && Number(b.dataset.speed) === speed));
+    const theme = this.extras.theme?.get?.();
+    for (const b of this.root.querySelectorAll("[data-theme]")) b.setAttribute("aria-pressed", String(b.dataset.theme === theme));
+    const colors = palette(s);
+    this.root.style.setProperty("--preview-player", colors[0]);
+    this.root.style.setProperty("--preview-enemy", colors[1]);
+  }
+  // Full screen changed (the request is asynchronous): the row's label follows.
+  fullscreenChanged(active) {
+    const b = this.root.querySelector('[data-do="fullscreen"]');
+    if (!b) return;
+    b.textContent = active ? "Exit" : "Enter";
+    b.setAttribute("aria-pressed", String(!!active));
+  }
+  close() {
+    if (!this.active) return;
+    if (this.rangeFrame) { cancelAnimationFrame(this.rangeFrame); this.rangeFrame = null; }
+    if (this.pendingRange) { const p = this.pendingRange; this.pendingRange = null; this.set(p.key, p.value, { quiet: true }); }
     this.root.hidden = true;
     document.querySelector("#app").inert = false;
     this.leave(this.state);

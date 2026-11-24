@@ -1,14 +1,11 @@
 /* Start screen: Blender key art with the briefing, mode cards and match setup. Every control and
    label stays HTML, so it scales, translates and remains accessible. Art: tools/blender/render_ui_art.py. */
 
-/* While the briefing is open, in-game controls and readouts are hidden; Settings and the language
-   picker live in the top bar instead. */
+/* While the briefing is open, in-game controls and readouts are hidden; the top bar keeps sound and Settings. */
 .in-briefing #notice,
 .in-briefing .resource-bar,
 .in-briefing #clock,
 .in-briefing #pause,
-.in-briefing #fullscreen-top,
-.in-briefing #quality,
 .in-briefing .map-heading,
 .in-briefing .sector-status,
 .in-briefing #mission-toggle,

@@ -20,6 +20,7 @@
     "test:mobile-construction": "node tests/mobile-construction.mjs",
     "test:webkit": "node tests/webkit.mjs",
     "test:improvements": "node tests/improvements.mjs",
+    "test:settings-sheet": "node tests/settings-sheet.mjs",
     "test:progression": "node tests/progression.mjs",
     "test:stages": "node tests/stages.mjs",
     "test:corners": "node tests/corner-camera.mjs",

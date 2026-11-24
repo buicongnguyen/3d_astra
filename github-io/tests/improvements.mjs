@@ -62,21 +62,21 @@ try {
         assert.equal(await read(() => window.__frontier.started), false);
         await click("#briefing-settings");
       }
+      // The sheet applies and saves every change at once (no Apply / Cancel). The two armies never share a
+      // colour: picking the other side's colour swaps them.
+      await click("#settings-tab-access");
+      const paint = () => read(() => [window.__frontier.settings.playerColor, window.__frontier.settings.enemyColor]);
       await click('[data-team="playerColor"][data-color="gold"]');
+      assert.deepEqual(await paint(), ["gold", "coral"], "a colour applies at once");
       await click('[data-team="enemyColor"][data-color="gold"]');
-      assert.equal(await page.locator('[data-do="apply"]').isDisabled(), true);
-      await click('[data-team="enemyColor"][data-color="violet"]');
-      await snap("settings");
-      await click('footer [data-do="cancel"]');
-      assert.equal(
-        await read(() => window.__frontier.settings.playerColor),
-        "mint",
-      );
-      assert.equal(await read(() => window.__frontier.started), false);
-      await click("#briefing-settings");
+      assert.deepEqual(await paint(), ["coral", "gold"], "the other side's colour swaps the two");
       await click('[data-team="playerColor"][data-color="gold"]');
       await click('[data-team="enemyColor"][data-color="violet"]');
-      await click('[data-do="apply"]');
+      assert.deepEqual(await paint(), ["gold", "violet"]);
+      assert.equal(await read(() => JSON.parse(localStorage.getItem("frontier-command.settings.v1")).playerColor), "gold", "saved as you go");
+      await snap("settings");
+      assert.equal(await read(() => window.__frontier.started), false);
+      await click('[data-do="done"]');
       assert.equal(
         await read(() => window.__frontier.settings.playerColor),
         "gold",
@@ -132,13 +132,13 @@ try {
       );
       await click("#pause");
       await click("[data-settings]");
-      await click('[data-tab="graphics"]');
-      await page.selectOption('[data-setting="quality"]', "eco");
+      await click('[data-tab="display"]');
+      await click('[data-setting="quality"][data-value="eco"]');
       await page.locator('[data-setting="waterMotion"]').uncheck();
       await page.locator('[data-setting="detail"]').uncheck();
       await click('[data-tab="audio"]');
       await page.locator('[data-setting="muted"]').check();
-      await click('[data-do="apply"]');
+      await click('[data-do="done"]');
       assert.equal(
         await read(() => window.__frontier.paused),
         true,
@@ -157,10 +157,10 @@ try {
         false,
       );
       await click("[data-settings]");
-      await click('[data-tab="graphics"]');
+      await click('[data-tab="display"]');
       await page.locator('[data-setting="waterMotion"]').check();
       await page.locator('[data-setting="detail"]').check();
-      await click('[data-do="apply"]');
+      await click('[data-do="done"]');
       await click("[data-resume]");
       assert.equal(await read(() => window.__frontier.paused), false);
       await page.emulateMedia({ reducedMotion: "reduce" });
@@ -182,7 +182,7 @@ try {
         await read(() => document.documentElement.scrollWidth <= innerWidth),
         true,
       );
-      await click('footer [data-do="cancel"]');
+      await click('[data-do="done"]');
       await click("[data-resume]");
       if (mobile) await page.setViewportSize({ width: 390, height: 844 });
       // Repeated settings and match resets must not accumulate GPU resources.
@@ -194,7 +194,7 @@ try {
       for (let i = 0; i < 5; i++) {
         await click("#pause");
         await click("[data-settings]");
-        await click('footer [data-do="cancel"]');
+        await click('[data-do="done"]');
         await click("[data-resume]");
         await read(() => window.__frontier.restart());
         await page.waitForFunction(

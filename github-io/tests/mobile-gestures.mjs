@@ -76,8 +76,9 @@ try {
  }
  // Native settings controls remain usable; touch handling is scoped to the battlefield.
  await page.locator('#pause').tap();await page.locator('[data-settings]').tap();
- await page.locator('[data-setting="language"]').selectOption('vi');
- await page.locator('[data-do="apply"]').tap();
+ await page.locator('#settings-tab-language').tap();
+ await page.locator('.settings-panel [data-setting="language"][data-value="vi"]').tap();
+ await page.locator('[data-do="done"]').tap();
  await page.waitForFunction(()=>document.documentElement.lang==='vi');
  assert.deepEqual(errors,[]);
  console.log((safari?'WebKit':'Chromium')+': safe edges, taps, interruptions, resume and settings passed. OS gestures need a physical iPhone.');

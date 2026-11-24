@@ -123,7 +123,7 @@ await suite("openings: mission fly-ins, the campaign map, jumpBoss", async () =>
     if (viewport === "desktop") {
       // Reduced motion: no fly-in (the title card alone tells the mission).
       await page.emulateMedia({ reducedMotion: "reduce" });
-      await tap("#pause"); await tap("[data-new-game]");
+      await tap("#pause"); await tap("[data-new-game]"); await tap('[data-confirmed="new-game"]');
       await page.locator("#briefing").waitFor({ state: "visible", timeout: TIMEOUT.step });
       await beginMission(ctx, "m02-first-contact");
       assert.equal(await noOpening(page), false, "reduced motion: no opening");

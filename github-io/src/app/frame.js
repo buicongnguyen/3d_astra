@@ -103,8 +103,9 @@ export function setupFrame(S, A) {
     // test moves time with step() alone and a slow machine cannot run the clock on between its checks.
     // S.defenceGuideHold (app/defence/guide.js): the Defence first-build guide's steps 1 and 2 wait on the clock too.
     const running = Z.started && !Z.paused && !S.sim.result && !S.testHold && !S.defenceGuideHold;
-    // D2: the clock's pace, 1 in everything but a Defence match; a scene or a decision puts it back to 1.
-    const pace = fastForward.pace({ sim: S.sim, started: Z.started, defence: !!S.sim.defence, forced: MUSIC_HOLDS.includes(Z.modalType) || !!A.sceneActive?.() || !!S.sim.mission?.pending });
+    // D2: the clock's pace (×1, ×2, ×3: the Defence bar, Shift+Space or Settings → Game speed, any match);
+    // a scene or a decision puts it back to 1.
+    const pace = fastForward.pace({ sim: S.sim, started: Z.started, allowed: true, forced: MUSIC_HOLDS.includes(Z.modalType) || !!A.sceneActive?.() || !!S.sim.mission?.pending });
     if (running) {
       S.accumulator += dt * pace;
       let ticks = 0;
@@ -142,14 +143,14 @@ export function setupFrame(S, A) {
     A.missionUI.tick(running ? dt : 0);
     A.sceneTick?.(dt);
     if (!Z.modalType) {
-      const speed = dt * S.view.zoom * 0.65;
+      const speed = dt * S.view.zoom * 0.65 * (S.settings.panSpeed || 1);
       let dx =
         (S.keys.has("d") || S.keys.has("arrowright") ? 1 : 0) -
         (S.keys.has("a") || S.keys.has("arrowleft") ? 1 : 0);
       let dy =
         (S.keys.has("w") || S.keys.has("arrowup") ? 1 : 0) -
         (S.keys.has("s") || S.keys.has("arrowdown") ? 1 : 0);
-      if (S.pointer.inside && Z.started && !S.drag && !S.mode) {
+      if (S.pointer.inside && Z.started && !S.drag && !S.mode && S.settings.edgeScroll !== false) {
         const r = S.view.renderer.domElement.getBoundingClientRect();
         if (S.pointer.x < r.left + 8) dx--;
         if (S.pointer.x > r.right - 8) dx++;
@@ -228,14 +229,21 @@ export function setupFrame(S, A) {
     }
   }
 
-  // The speed control (the Defence bar, Shift+Space and the help list): the next speed, ×3 on a fine pointer only.
+  // The speed control (the Defence bar, Shift+Space, the help list and Settings): the next speed, ×3 on a fine pointer only.
   function cycleSpeed() {
-    if (!S.sim?.defence || !Z.started) return fastForward.speed;
+    if (!Z.started || S.sim.result) return fastForward.speed;
     const speed = fastForward.cycle(!S.touchInput);
     A.notice(`Speed ×${speed}`);
     return speed;
   }
-  Object.assign(A, { focusHome, syncPointOwners, frame, cycleSpeed, getSpeed });
+  // Settings → Game speed sets it directly (×3 only with a fine pointer, as cycleSpeed).
+  function setMatchSpeed(speed) {
+    if (!Z.started || S.sim.result) return fastForward.speed;
+    const next = speed === 3 && S.touchInput ? 2 : [1, 2, 3].includes(speed) ? speed : 1;
+    fastForward.set(next);
+    return next;
+  }
+  Object.assign(A, { focusHome, syncPointOwners, frame, cycleSpeed, getSpeed, setMatchSpeed });
   return function bind() {
     window.addEventListener("online", () => { airFor = null; });
     for (const type of ["pointerdown", "wheel", "keydown"])

@@ -1,6 +1,5 @@
 /* The language picker itself is styled in ui-theme.css. */
 :root[lang="vi"] .unit-metrics dt { white-space: nowrap; }
-:root[lang="vi"]:not(.compact-ui) .top-actions #quality { width: auto; max-width: 74px; padding: 0 5px; }
 :root[lang="vi"]:not(.compact-ui) .command-panel .tactical-hint p { line-height: 1.25; }
 
 /* Korean (한국어). None of the game's faces has Hangul, so Korean text uses "Frontier KR": Noto Sans KR
@@ -24,7 +23,6 @@
 :root[lang="ko"] body { font-family: var(--font-ui); }
 /* Same room as Vietnamese for the graphics button and the unit stat labels. */
 :root[lang="ko"] .unit-metrics dt { white-space: nowrap; }
-:root[lang="ko"]:not(.compact-ui) .top-actions #quality { width: auto; max-width: 74px; padding: 0 5px; white-space: nowrap; }
 /* Hangul is not split at any letter: keep words whole and break only between them. Uppercase and wide
    tracking (English banners) do nothing for Hangul and only spread it out. */
 :root[lang="ko"] body { word-break: keep-all; overflow-wrap: anywhere; }

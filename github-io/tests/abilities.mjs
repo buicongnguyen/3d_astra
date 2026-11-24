@@ -164,7 +164,9 @@ await suite("abilities", async () => {
     assert.equal(await frontier(() => window.__frontier.sim.players[0].autocast), false, "auto-cast stays off");
 
     // ---- Motion off: Eco sets the class live; a pulse then runs no animation at all.
-    await frontier(() => document.getElementById("quality").click());
+    await frontier((q) => { // Settings → Display → Graphics quality (the top-bar Eco button is gone)
+      document.getElementById("briefing-settings").click(); document.getElementById("settings-tab-display").click();
+      document.querySelector(`.settings-panel [data-setting="quality"][data-value="${q}"]`).click(); document.querySelector('.settings-panel [data-do="done"]').click(); }, "eco");
     await until(() => document.documentElement.classList.contains("motion-off"));
     // The clock is held so a slow runner cannot use up the 3 s cooldown before the tile is checked.
     await frontier((id) => { const f = window.__frontier, s = f.sim, e = s.get(id); f.hold = true; e.abilityAt = s.time + 3; f.select([id]); }, rangerId);
@@ -175,7 +177,9 @@ await suite("abilities", async () => {
     assert.deepEqual(await running(), [], `${viewport}: no CSS animation runs under motion-off`);
     assert.equal((await tile("focus")).ready, true, "the steady glow stays");
     await frontier(() => { window.__frontier.hold = false; });
-    await frontier(() => document.getElementById("quality").click());
+    await frontier((q) => { // Settings → Display → Graphics quality (the top-bar Eco button is gone)
+      document.getElementById("briefing-settings").click(); document.getElementById("settings-tab-display").click();
+      document.querySelector(`.settings-panel [data-setting="quality"][data-value="${q}"]`).click(); document.querySelector('.settings-panel [data-do="done"]').click(); }, "high");
     await until(() => !document.documentElement.classList.contains("motion-off"));
 
     await noSideScroll("end");
