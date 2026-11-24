@@ -35,9 +35,10 @@ const AI = {
   "riverlands x2 fast": { options: { map: "riverlands", enemyCount: 2, aiSpeed: "fast" }, at: { 60: "5948dbf7", 180: "a80c9e11", 300: "7f9a6072" }, end: "running 300" },
   // basin x3 fast, 300 s: Re-recorded 2026-11-24: Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x (not 6x) to flyers (commits 5e4c07c, 2e293ea) change long AI matches.
   "basin x3 fast": { options: { map: "basin", enemyCount: 3, aiSpeed: "fast" }, at: { 60: "abede88b", 180: "4f8a69db", 300: "97d65aed" }, end: "running 300" },
-  "riverlands x3 normal, Sunward against mixed rivals": { options: { map: "riverlands", enemyCount: 3, aiSpeed: "normal", factions: skirmishSides("sunward", "mixed", 3, "riverlands"), capturePoints: true }, at: { 60: "498523ba", 180: "51d0e53f", 300: "51d0e53f" }, end: "defeat 154" },
-  "dunes x1 normal, Ashfall against Veil": { options: { map: "dunes", enemyCount: 1, aiSpeed: "normal", factions: skirmishSides("ashfall", "veil", 1, "dunes"), capturePoints: true }, at: { 60: "fbdd5fcc", 180: "b36a3f1e", 300: "82d11644" }, end: "running 300" },
+  "riverlands x3 normal, Sunward against mixed rivals": { options: { map: "riverlands", enemyCount: 3, aiSpeed: "normal", factions: skirmishSides("sunward", "mixed", 3, "riverlands"), capturePoints: true }, at: { 60: "1891bd2a", 180: "fe33e60d", 300: "fe33e60d" }, end: "defeat 154" },
+  "dunes x1 normal, Ashfall against Veil": { options: { map: "dunes", enemyCount: 1, aiSpeed: "normal", factions: skirmishSides("ashfall", "veil", 1, "dunes"), capturePoints: true }, at: { 60: "97ebb1f4", 180: "9053dd00", 300: "866bafba" }, end: "running 300" },
 };
+// Re-recorded 2026-11-24 (roster): the Veil and Wardens Command cores also train their new flyers (Veil moth, Halo interceptor), and an Expanded Shield pylon trains the Bulwark: new trains lists in the hashed state, and AI play that can field them.
 const SHORT = [60, 180], LATE = 300;
 const ending = (sim) => `${sim.result || "running"} ${Math.round(sim.time)}`;
 

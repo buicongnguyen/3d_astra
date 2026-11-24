@@ -5,6 +5,7 @@
 // Usage: node tools/difficulty-check.mjs [--rules '{"aiPlan":"field","roster":"expanded"}'] [--jobs 3]
 //   --speeds relaxed,normal,fast,relentless   --maps classic,riverlands,dunes   --attack-at 12,16,20,24
 //   --setups 1v1,1v2,1v2ffa   1v2 is "United against you" (coalition); 1v2ffa is two rivals free-for-all
+//   --enemy veil      every rival plays this faction (default Meridian, as before)
 //   --no-points       no capture points (the skirmish screen always has them, as tools/skirmish-bench.mjs)
 //   --cap 2400        seconds of game time before a match is stopped (a timeout counts as not a win)
 //   --json out.json   the rows and summaries (no wall-clock field)
@@ -18,13 +19,14 @@ import { PlayBot } from './playbot.mjs';
 const args = process.argv.slice(2), arg = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback), list = (name, fallback) => arg(name, fallback).split(',');
 const CAP = Number(arg('--cap', 2400)), TICK = 0.05;
 const RULES = args.includes('--rules') ? JSON.parse(arg('--rules')) : null;
+const ENEMY = arg('--enemy', null);
 const JOBS = Math.max(1, Number(arg('--jobs', 1)) || 1), MARGIN = Number(arg('--margin', 1));
 const SETUPS = { '1v1': { enemyCount: 1, alliance: 'ffa' }, '1v2': { enemyCount: 2, alliance: 'coalition' }, '1v2ffa': { enemyCount: 2, alliance: 'ffa' } };
 const setups = list('--setups', '1v1,1v2'), speeds = list('--speeds', 'relaxed,normal,fast,relentless');
 const matches = setups.flatMap((setup) => speeds.flatMap((speed) => list('--maps', 'classic,riverlands,dunes').flatMap((map) => list('--attack-at', '12,16,20,24').map(Number).map((attackAt) => ({ setup, speed, map, attackAt })))));
 
 function play({ setup, speed, map, attackAt }) {
-  const s = new Simulation({ map, aiSpeed: speed, capturePoints: !args.includes('--no-points'), ...SETUPS[setup], ...(RULES ? { rules: RULES } : {}) });
+  const s = new Simulation({ map, aiSpeed: speed, capturePoints: !args.includes('--no-points'), ...SETUPS[setup], ...(RULES ? { rules: RULES } : {}), ...(ENEMY ? { factions: { 1: ENEMY, 2: ENEMY } } : {}) });
   const bot = new PlayBot(s, { attackAt });
   while (s.time < CAP && !s.result) {
     bot.step(); s.tick(TICK);

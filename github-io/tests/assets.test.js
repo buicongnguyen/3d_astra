@@ -56,7 +56,8 @@ test('scenery provides the assets the views look up by name, with mergeable mesh
 test('approved faction models satisfy export, topology and silhouette-rig budgets',()=>{
   const manifest=JSON.parse(readFileSync(new URL('../public/models/manifest.json',import.meta.url),'utf8'));
   const candidates=manifest.assets.filter(a=>a.faction);
-  assert.equal(candidates.length,12);
+  // Roster 2026-11-24 added four (Lance buggy, Bulwark, Veil moth, Halo interceptor; tools/blender/generate_roster.py).
+  assert.equal(candidates.length,16);
   for(const asset of candidates){
     const json=gltf(asset.name),names=runtimeNames(json);
     const triangles=json.meshes.reduce((n,m)=>n+m.primitives.reduce((k,p)=>k+(p.indices===undefined?json.accessors[p.attributes.POSITION].count:json.accessors[p.indices].count)/3,0),0);
@@ -84,16 +85,19 @@ test('portrait generation preserves legacy cells and appends every approved fact
   assert.deepEqual(order.slice(0, 13), ['worker','vanguard','ranger','breaker','medic','engineer','tank','antitank','hq','relay','barracks','foundry','tower']);
   const blender = JSON.parse(read('tools/blender/render_ui_art.py').match(/PORTRAITS = (\[[\s\S]*?\])/)[1].replaceAll("'", '"'));
   assert.deepEqual(blender, order);
-  const manifest = JSON.parse(read('public/models/manifest.json')).assets, assets = manifest.filter(a => a.faction);
+  const manifest = JSON.parse(read('public/models/manifest.json')).assets, assets = manifest.filter(a => a.faction && !a.roster);
   // R3-J (round 3): 29 cells before, then the 7 missing types and the reserved ironsovereign2 (37).
   // R4-P1 (round 4): the Dune Wyrm and the Wyrmling go before the reserved last cell (39).
-  assert.equal(new Set(order).size, 39);
+  // Roster 2026-11-24: lancer, bulwark, moth and halo, also before the reserved last cell (43).
+  assert.equal(new Set(order).size, 43);
+  assert.deepEqual(order.slice(38, 42), ['lancer', 'bulwark', 'moth', 'halo']);
+  assert.deepEqual(manifest.filter(a => a.roster).map(a => a.name), ['lancer', 'bulwark', 'moth', 'halo']);
   assert.deepEqual(new Set(order.slice(13, 25)), new Set(assets.map(a => a.name)));
   // R3-F (round 3) reworked the approved faction models; they wait for the owner again.
   for (const asset of assets) assert.ok(['approved by owner 2026-11-11', 'pending owner review (round 3)'].includes(asset.review), asset.name);
   // 0.18: the four flyers are appended after the faction cells (manifest entries marked air, no faction).
   assert.deepEqual(order.slice(25, 29), ['kite', 'hawk', 'balloon', 'glider']);
-  assert.deepEqual(manifest.filter(a => a.air).map(a => a.name), order.slice(25, 29));
+  assert.deepEqual(manifest.filter(a => a.air && !a.roster).map(a => a.name), order.slice(25, 29));
 });
 
 test('flyer models keep the air contract: hover bob, spin or flicker pivots, a triangle budget', () => {

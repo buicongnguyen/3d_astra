@@ -26,7 +26,9 @@ test("Stalkers against a heal-ball, one Steady aim cast: hashes at 30 and 60 s",
   run(s, 10);
   assert.equal(s.command({ team: 0, type: "ability", ids: [st[0].id] }), true);
   const at30 = run(s, 30), at60 = run(s, 60);
-  pin("w1c 30 s", at30, "5a9948a5");
-  pin("w1c 60 s", at60, "4678ef0e");
+  // Re-recorded 2026-11-24 (roster): the Veil Command core's trains list gains the Veil moth (hashed state; no
+  // flyer is trained here, ai: false).
+  pin("w1c 30 s", at30, "daecb43b");
+  pin("w1c 60 s", at60, "f48c398e");
   assert.ok(s.events !== undefined);
 });

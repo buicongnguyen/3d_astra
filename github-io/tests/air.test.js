@@ -18,9 +18,9 @@ function quiet(options = {}) {
 const put = (s, type, team, x, z) => { const e = s.spawn(type, team, x, z, true, true); s.updateVision(); return e; };
 const lastMessage = (s) => s.events.filter((e) => e.type === 'message').at(-1)?.text;
 
-test('flyers are four units of class air; every faction keeps at least two unit types that hit air', () => {
+test('flyers are six units of class air (roster 2026-11-24 added the Veil moth and the Halo interceptor); every faction keeps at least two unit types that hit air', () => {
   const flyers = Object.entries(D).filter(([, d]) => d.flying).map(([type]) => type);
-  assert.deepEqual(flyers.sort(), ['balloon', 'glider', 'hawk', 'kite']);
+  assert.deepEqual(flyers.sort(), ['balloon', 'glider', 'halo', 'hawk', 'kite', 'moth']);
   for (const type of flyers) assert.equal(D[type].class, 'air');
   for (const faction of Object.keys(FACTION_RULES)) {
     const s = new Simulation({ ai: false, factions: { 0: faction } });

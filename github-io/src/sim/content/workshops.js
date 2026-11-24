@@ -11,7 +11,8 @@
 //             `want` is read in order, the first entry whose `if` holds gives the wanted count (an entry
 //             with no `if` always holds); `max` caps the units alive plus queued. `if` keys, all of which
 //             must hold: seenInfantry (share of the seen enemy army, from the AI's intel, once it has
-//             seen at least 4), seenSupport / seenAntiarmor / seenTowers (counts seen), after (seconds).
+//             seen at least 4), seenSupport / seenAntiarmor / seenTowers / seenMech (counts seen;
+//             seenMech = ground vehicles, roster 2026-11-24), after (seconds).
 //             Intel is only kept by Normal and faster AIs (sim/ai-counter.js), as for the counter-picks.
 //             `role` is read by W2-D's placement, not here.
 import { DEFINITIONS as D } from "../../data.js";
@@ -23,13 +24,14 @@ const MIN_SEEN = 4;
 
 // What the AI believes the enemy fields (its intel memory, id -> type), as counts.
 function seen(sim, team) {
-  const mix = { total: 0, infantry: 0, support: 0, antiarmor: 0, towers: 0 };
+  const mix = { total: 0, infantry: 0, support: 0, antiarmor: 0, towers: 0, mech: 0 };
   for (const type of (sim.intel[team] || new Map()).values()) {
     const d = D[type];
     if (!d) continue;
     if (d.kind === "building") { if (type === "tower") mix.towers++; continue; }
     mix.total++;
     if (!d.flying && !d.mechanical) mix.infantry++;
+    if (!d.flying && d.mechanical) mix.mech++;
     if (d.class === "support") mix.support++;
     if (d.class === "antiarmor") mix.antiarmor++;
   }
@@ -44,6 +46,7 @@ function holds(cond, sim, mix) {
       : key === "seenSupport" ? mix.support >= need
       : key === "seenAntiarmor" ? mix.antiarmor >= need
       : key === "seenTowers" ? mix.towers >= need
+      : key === "seenMech" ? mix.mech >= need
       : key === "after" ? sim.time >= need
       : false;
     if (!ok) return false;

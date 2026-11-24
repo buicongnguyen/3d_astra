@@ -17,11 +17,12 @@ const classicCounts=defs=>{
   const c=Object.entries(defs).filter(([,d])=>d.roster!=='expanded'&&!d.creature);
   return {units:c.filter(([,d])=>d.kind==='unit'&&!d.boss).length,defence:c.filter(([,d])=>d.defence).map(([t])=>t),flyers:c.filter(([,d])=>d.flying).length,buildings:c.filter(([,d])=>d.kind==='building').length};
 };
-const CLASSIC={units:21,defence:['carrier'],flyers:4,buildings:9};
+// Roster 2026-11-24: the Veil moth and the Halo interceptor (faction flyers, Classic roster) make 23 and 6.
+const CLASSIC={units:23,defence:['carrier'],flyers:6,buildings:9};
 // Only a style goes without a shield: the Scrapper, and Ashfall's workshop units (the Rampart).
 // Round 4: wild creatures (the Dune Wyrm and its nest guards) wear hide, not a shield.
 const shielded=(type,d)=>d.shield > 0 || type === 'scrapper' || d.workshop === 'ashfall' || !!d.creature;
-test('the Classic roster: twenty-one units (four of them flyers, one the Defence troop carrier) and nine buildings',()=>{
+test('the Classic roster: twenty-three units (six of them flyers, one the Defence troop carrier) and nine buildings',()=>{
   assert.deepEqual(classicCounts(D),CLASSIC);
 });
 test('an Expanded-only definition is left out of the Classic counts; only Ashfall workshop units may skip the shield',()=>{
@@ -31,7 +32,7 @@ test('an Expanded-only definition is left out of the Classic counts; only Ashfal
     fixtureshop:{name:'Fixture workshop',kind:'building',shield:40,roster:'expanded',description:'A test building.'},
   };
   assert.deepEqual(classicCounts(fixture),CLASSIC);
-  assert.equal(classicCounts({...fixture,fixturegun:{...fixture.fixturegun,roster:undefined}}).units,22,'without the flag it would count');
+  assert.equal(classicCounts({...fixture,fixturegun:{...fixture.fixturegun,roster:undefined}}).units,24,'without the flag it would count');
   assert.equal(shielded('fixtureram',{kind:'unit',shield:0,workshop:'ashfall'}),true);
   assert.equal(shielded('fixturegun',{kind:'unit',shield:0,workshop:'meridian'}),false);
 });

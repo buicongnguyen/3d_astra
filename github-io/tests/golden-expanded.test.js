@@ -14,7 +14,8 @@ import { run } from "./lib/sim.js";
 import { LONG, RECORD, pin } from "./lib/golden.mjs";
 
 const match = (faction, aiSpeed) => new Simulation({ map: "dunes", enemyCount: 1, aiSpeed, factions: skirmishSides(faction, "mirror", 1, "dunes"), capturePoints: true, aiPlayer: true, rules: { roster: "expanded" } });
-const PINS = { meridian: { 300: "6036d277", 600: "5ec489b1" }, veil: { 300: "af50d623", 500: "7b343294" } };
+const PINS = { meridian: { 300: "6036d277", 600: "5ec489b1" }, veil: { 300: "daec4f26", 500: "7dbc3d37" } };
+// Re-recorded 2026-11-24 (roster): the Veil and Wardens Command cores also train their new flyers (Veil moth, Halo interceptor), and an Expanded Shield pylon trains the Bulwark: new trains lists in the hashed state, and AI play that can field them.
 // Re-recorded 2026-11-24: Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x (not 6x) to flyers (commits 5e4c07c, 2e293ea) change long AI matches.
 const count = (sim, type) => sim.entities.filter((e) => e.type === type).length;
 

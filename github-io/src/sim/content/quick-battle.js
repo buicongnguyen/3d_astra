@@ -13,6 +13,8 @@
 // QUICK.scoutAt on (the rival thinks every 2.5 to 4 s), so it needs no per-tick hook. State, only in
 // a Quick battle: `quickBase` on your player record and `quickScouts` on the rival's, once each
 // moment has happened (saved, so a restored match plays on exactly as it would have).
+import { workshopUnitsOf } from "../../factions.js";
+
 export const QUICK = Object.freeze({
   // When the scouts appear, and how far from your core (metres) along the line to the enemy core.
   scoutAt: 32,
@@ -30,8 +32,20 @@ export const QUICK = Object.freeze({
 // The Quick battle setup. Relaxed: the owner finds two rivals hard already, so this one is a fun,
 // winnable first fight (tests/quick-battle-check.mjs: the test bot wins every faction pairing).
 export const QUICK_SETUP = Object.freeze({ map: "riverlands", enemyCount: 1, aiSpeed: "relaxed", alliance: "ffa" });
-// The rival: Ashfall's raiders, or Meridian when you command Ashfall.
-export const quickRival = (player) => (player === "ashfall" ? "meridian" : "ashfall");
+// The rival (faction roster, 2026-11-24): the Quick battles rotate through the other factions so every
+// army gets met, still Relaxed and still winnable (tests/quick-battle-check.mjs plays every pairing).
+// The first one is Ashfall's raiders (Meridian when you command Ashfall), as before; `played` is how many
+// Quick battles this profile has started (src/quick-battle.js keeps the count), so the choice is
+// deterministic: Ashfall, Sunward, Wardens, Veil, then round again.
+export const QUICK_RIVALS = Object.freeze(["ashfall", "sunward", "wardens", "veil", "meridian"]);
+export function quickRivals(player) {
+  const first = player === "ashfall" ? "meridian" : "ashfall";
+  return [first, ...QUICK_RIVALS.filter((id) => id !== first && id !== player)];
+}
+export const quickRival = (player, played = 0) => {
+  const list = quickRivals(player), n = Number.isFinite(played) && played > 0 ? Math.floor(played) : 0;
+  return list[n % list.length];
+};
 // The rules a match is built with: the setup's own without `quick`, plus `quick` for a Quick battle.
 export function quickRules(rules, quick) {
   const { quick: _drop, ...rest } = rules || {};
@@ -113,10 +127,20 @@ export const ARENA = Object.freeze({
     Object.freeze({ slot: "relay", ahead: -14, side: 4 }),
     Object.freeze({ slot: "tower", ahead: 24, side: 0 }),
   ]),
+  // Slots resolve through your faction (sim.typeFor); a slot your faction excludes (the Wardens have no
+  // Medic or Engineer) is skipped. Then two of each of your faction's workshop units, and two of your
+  // faction's own flyer (Hawks for Meridian; roster 2026-11-24, it was Hawks for every faction).
   army: Object.freeze(["vanguard", "ranger", "breaker", "medic", "engineer", "tank", "antitank"]),
   squad: Object.freeze(["vanguard", "ranger", "tank", "antitank", "breaker"]),
   hawks: 2, alloy: 350, firstWave: 25, every: 35, waves: 8, waveDistance: 44,
 });
+// Your Full army: the base slots your faction has, as your faction's units, then its workshop units.
+export function arenaArmy(sim) {
+  const faction = sim.factionFor(PLAYER), slots = ARENA.army.filter((slot) => !faction.exclude?.includes(slot));
+  return [...slots.map((slot) => sim.typeFor(PLAYER, slot)), ...workshopUnitsOf(sim.factionId(PLAYER))];
+}
+// Your faction's own flyer (the first one its Command core trains), Hawks when it has none.
+export const arenaFlyer = (sim) => sim.factionFor(PLAYER).extra?.hq?.[0] || "hawk";
 export const isArena = (sim) => sim.rules?.quick === "arena" && !sim.mission;
 function buildArena(sim) {
   const a = axes(sim);
@@ -127,17 +151,18 @@ function buildArena(sim) {
     if (spot) sim.spawn(type, PLAYER, spot.x, spot.z, true, true);
   }
   sim.nav.rebuild(sim.entities);
-  ARENA.army.forEach((slot, i) => {
-    const type = sim.typeFor(PLAYER, slot);
+  const types = arenaArmy(sim);
+  types.forEach((type, i) => {
     for (let n = 0; type && n < 2; n++) {
-      const ahead = 15 + n * 3, side = (i - (ARENA.army.length - 1) / 2) * 3;
+      const ahead = 15 + n * 3, side = (i - (types.length - 1) / 2) * 3;
       const p = standAt(sim, a.home.x + a.fx * ahead + a.sx * side, a.home.z + a.fz * ahead + a.sz * side, 1);
       if (p) sim.spawn(type, PLAYER, p.x, p.z).angle = Math.atan2(a.fx, a.fz);
     }
   });
+  const flyer = arenaFlyer(sim);
   for (let n = 0; n < ARENA.hawks; n++) {
     const side = n ? 5 : -5, x = a.home.x + a.fx * 11 + a.sx * side, z = a.home.z + a.fz * 11 + a.sz * side;
-    sim.spawn("hawk", PLAYER, x, z).angle = Math.atan2(a.fx, a.fz);
+    sim.spawn(flyer, PLAYER, x, z, true, true).angle = Math.atan2(a.fx, a.fz);
   }
   sim.players[PLAYER].alloy += ARENA.alloy;
   sim.updateVision();

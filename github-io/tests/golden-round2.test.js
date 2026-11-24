@@ -36,4 +36,5 @@ test("m11c Hold the Keystone Roads, DefenceBot, 120 s", () => {
 // R3-A (AAA round 3) moved it: the Field command census and economy (old "4cce2935", R3-A "e4913c66").
 // Difficulty guard (Wave 1b, owner 2026-11-21): census from 300 s and no field economy, so 300 s is back to r3-base
 // ("4cce2935"); then south exits (owner, R3-L) + difficulty guard on the merged tree: "f94f7658".
-const ARENA_300 = "f94f7658";
+// Re-recorded 2026-11-24 (roster): the Veil and Wardens Command cores also train their new flyers (Veil moth, Halo interceptor), and an Expanded Shield pylon trains the Bulwark: new trains lists in the hashed state, and AI play that can field them. (round2 arena: team 3 is Veil)
+const ARENA_300 = "c2dcd73e";

@@ -1179,6 +1179,23 @@
     "Ram tank": "충각 전차",
     "Ashfall. A welded plough tank that leads a Scrapper swarm head-on: 650 HP and no shield, 34 damage every 1.3 s at 4 m, double to buildings and walls. Shots from the front do 0.6× damage, shots from behind 1.5×, from the side normal: flank it. Ram: charge at double speed for 2.5 seconds, and the first contact deals 80 extra damage. Trained at the Salvage yard.": "애시폴. 스크래퍼 무리를 이끌고 정면 돌파하는 용접 쟁기 전차: 체력 650, 보호막 없음, 사거리 4m에서 1.3초마다 피해 34, 건물과 벽에 두 배. 정면 사격은 0.6× 피해, 후면 사격은 1.5×, 측면은 보통입니다. 측면을 노리세요. 충각: 2.5초 동안 두 배 속도로 돌진하며 첫 충돌 시 추가 피해 80. 고철 야적장에서 생산합니다.",
     "Rampart: tough from the front, weak from behind. Hit it from the side or rear.": "램파트: 정면은 단단하고 후면은 약합니다. 측면이나 후면을 공격하세요.",
+    "Lance buggy": "작살 버기",
+    "Fast tank hunter": "고속 전차 사냥꾼",
+    "Sunward workshop. A fast desert buggy with a harpoon-rocket rack: 18 damage every 1.8 s at 11 m, 3.5× to vehicles (63), and it picks tanks and siege machines first. Quicker still on roads and sand. It is a vehicle itself: Anti-tank soldiers, Gunners and close-assault troops beat it. It cannot hit flyers. Trained at the Waystation.": "선워드 작업장. 작살 로켓 발사대를 단 빠른 사막 버기: 11m에서 1.8초마다 18 피해, 차량에는 3.5배(63)이며 전차와 공성 기계를 먼저 노립니다. 도로와 모래 위에서는 더 빠릅니다. 자신도 차량이라 대전차병, 기관총조, 근접 돌격 부대에 약합니다. 비행체를 공격할 수 없습니다. 중간 기지에서 훈련합니다.",
+    "Lance buggy: a fast harpoon buggy that hunts tanks. Infantry and Anti-tank rockets beat it.": "작살 버기: 전차를 사냥하는 빠른 작살 버기. 보병과 대전차 로켓에 약합니다.",
+    "Shield walker": "방패 보행기",
+    "Wardens workshop. A two-legged shield machine that walks at the front of the line: 420 HP and a 180 shield that returns 3 seconds after a hit. Its ward plate covers the squad: your other units within 6 m take 15% less damage (wards do not stack). A light gun, 14 damage every 0.9 s at 7 m, 1.6× to close-assault troops. Anti-tank soldiers, Watchers and Lance buggies cut it down. Trained at a level 2 Shield pylon.": "워든 작업장. 전열 앞에서 걷는 두 다리 방패 기계: HP 420, 피격 3초 후 돌아오는 보호막 180. 수호판이 분대를 덮어 6m 안의 다른 아군이 받는 피해가 15% 줄어듭니다(하나만 적용). 경기관포로 7m에서 0.9초마다 14 피해, 근접 돌격 부대에는 1.6배. 대전차병, 와처, 작살 버기에 약합니다. 2레벨 보호막 파일런에서 훈련합니다.",
+    "Bulwark: a shield walker. Your units within 6 m of it take 15% less damage.": "방벽형: 방패 보행기. 주변 6m 안의 아군이 받는 피해가 15% 줄어듭니다.",
+    "Veil moth": "베일 나방",
+    "Cloaked air hunter": "은신 공중 사냥꾼",
+    "Veil. A silent moth-winged flyer: hidden while it has not fired for 3 seconds, and it shoots the Rangers and rocket teams that could bring it down first: 12 damage every 1.2 s at 7 m. It cannot hit flyers. Kites within 8 m, towers and Command cores within 9 m, and anything within 4 m reveal it. Trained at a level 2 Command core.": "베일. 소리 없는 나방 날개 비행체: 3초 동안 사격하지 않으면 숨고, 자신을 격추할 수 있는 레인저와 로켓 팀을 먼저 쏩니다. 7m에서 1.2초마다 12 피해. 비행체를 공격할 수 없습니다. 8m 안의 카이트, 9m 안의 타워와 지휘 코어, 4m 안의 모든 유닛이 정체를 드러냅니다. 2레벨 지휘 코어에서 훈련합니다.",
+    "Veil moth: a hidden flyer that hunts Rangers. Kites, towers and anything within 4 m reveal it.": "베일 나방: 레인저를 사냥하는 은신 비행체. 카이트, 타워, 4m 안의 모든 유닛이 정체를 드러냅니다.",
+    "Halo interceptor": "헤일로 요격기",
+    "Air interceptor": "공중 요격기",
+    "Wardens. A ring-shielded interceptor that guards the sky: 10 damage every 0.8 s at 9 m, 2.5× to flyers, and its shield returns 3 seconds after a hit. Weak against ground armies; the computer builds it only once it has seen enemy flyers. Rangers and Anti-tank rockets bring it down. Trained at a level 2 Command core.": "워든. 하늘을 지키는 고리 보호막 요격기: 9m에서 0.8초마다 10 피해, 비행체에는 2.5배이며 보호막은 피격 3초 후 돌아옵니다. 지상군에는 약하며, 컴퓨터는 적 비행체를 본 뒤에만 만듭니다. 레인저와 대전차 로켓에 격추됩니다. 2레벨 지휘 코어에서 훈련합니다.",
+    "Halo interceptor: hunts enemy flyers; weak against ground armies.": "헤일로 요격기: 적 비행체를 사냥하고 지상군에는 약합니다.",
+    "Ward plate": "수호판",
+    "Dry lands: hold the Weather Spire for a Sandstorm; tame the Dune Wyrm.": "건조 지대: 기상 첨탑을 지켜 모래폭풍을 부르고 듄 웜을 길들이세요.",
     "Ram": "충각",
     "Charge at double speed for 2.5 seconds; the first hit deals 80 extra damage.": "2.5초 동안 두 배 속도로 돌진합니다. 첫 타격 시 추가 피해 80.",
     "Expanded roster: Outrider drill": "확장 편성: 기동 정찰 훈련",
@@ -1379,7 +1396,6 @@
     "SANDSTORM · Click a spot on the map · Esc to cancel": "모래폭풍 · 지도에서 지점을 클릭 · Esc로 취소",
     "The Sandstorm is not ready.": "모래폭풍이 아직 준비되지 않았습니다.",
     "Wild frontier": "야생 변경",
-    "Amber Dunes: hold the Weather Spire for a Sandstorm; tame the Dune Wyrm.": "앰버 사구: 기상 첨탑을 지켜 모래폭풍을 부르고 듄 웜을 길들이세요.",
     "Achievements": "업적",
     "Commanders met": "만난 지휘관",
     "Spared": "살려 둠",
@@ -1415,6 +1431,10 @@
     "New Game+": "뉴 게임+"
   },
   "patterns": [
+    [
+      "^Your other units within ([\\d.]+) m of it take (\\d+)% less damage\\. Wards do not stack\\.$",
+      "주변 {1}m 안의 다른 아군이 받는 피해가 {2}% 줄어듭니다. 수호판 효과는 하나만 적용됩니다."
+    ],
     [
       "^(\\d{1,2}) Jan$",
       "1월 {1}일"
@@ -2264,8 +2284,8 @@
       "모래폭풍 재충전 중: {1}초."
     ],
     [
-      "^A Battle rule for Amber Dunes\\. Hold the Weather Spire near the centre to call a Sandstorm with the one Sandstorm button: after a (\\d+) s warning that every side sees, enemies inside fire 30% slower and see only (\\d+) m for (\\d+) s, and your units inside are hidden from them\\. It recharges in (\\d+) s; a new holder waits (\\d+) s\\.$",
-      "앰버 사구 전투 규칙. 중앙 근처의 기상 첨탑을 지키면 모래폭풍 버튼 하나로 폭풍을 부를 수 있습니다. 모든 진영이 보는 {1}초 경고 뒤, 안의 적은 발사가 30% 느려지고 {3}초 동안 시야가 {2}m로 줄며 안의 아군은 숨겨집니다. 재충전 {4}초, 새 점령자는 {5}초 기다립니다."
+      "^A Battle rule for the dry lands: Amber Dunes, Dry Reach, Golden Heart and Copper Basin\\. Hold the Weather Spire near the centre to call a Sandstorm with the one Sandstorm button: after a (\\d+) s warning that every side sees, enemies inside fire 30% slower and see only (\\d+) m for (\\d+) s, and your units inside are hidden from them\\. It recharges in (\\d+) s; a new holder waits (\\d+) s\\.$",
+      "건조 지대(호박빛 사구, 메마른 땅, 황금 심장, 구리 분지)의 전투 규칙. 중앙 근처의 기상 첨탑을 지키면 모래폭풍 버튼 하나로 폭풍을 부를 수 있습니다. 모든 진영이 보는 {1}초 경고 뒤, 안의 적은 발사가 30% 느려지고 {3}초 동안 시야가 {2}m로 줄며 안의 아군은 숨겨집니다. 재충전 {4}초, 새 점령자는 {5}초 기다립니다."
     ],
     [
       "^Clear the (\\d+) Wyrmlings at the nest, then keep only your units in it for (\\d+) s to tame a Dune Wyrm \\(at most (\\d+) per side\\)\\. The nest regrows its guards (\\d+) s later\\. Relaxed rivals never use the Spire or the nest; Normal rivals only late in a match\\.$",

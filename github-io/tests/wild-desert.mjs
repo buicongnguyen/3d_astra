@@ -29,6 +29,9 @@ await suite("wild-desert", async () => {
     await page.waitForSelector(row);
     await page.selectOption("#scenario", "classic");
     await page.waitForFunction((row) => document.querySelector(row).classList.contains("rule-off-map"), row);
+    // Roster 2026-11-24: the other dry lands (Dry Reach, Golden Heart, Copper Basin) are Wild lands too.
+    await page.selectOption("#scenario", "dryreach");
+    await page.waitForFunction((row) => !document.querySelector(row).classList.contains("rule-off-map"), row);
     await page.selectOption("#scenario", "dunes");
     await page.waitForFunction((row) => !document.querySelector(row).classList.contains("rule-off-map") && window.__frontier.sim.terrain.id === "dunes", row);
     const buttons = await page.evaluate((row) => [...document.querySelectorAll(`${row} [data-rule-value]`)].map((b) => { const r = b.getBoundingClientRect(); return { id: b.dataset.ruleValue, w: r.width, h: r.height }; }), row);
