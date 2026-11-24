@@ -4,11 +4,15 @@ import {translate,addMessages} from '../src/i18n.js';
 import {MISSIONS} from '../src/story/missions.js';
 import {launchBrowser,openPage,testUrl,suite,TIMEOUT} from './lib/harness.mjs';
 import {koreanChecks} from './language-ko.mjs';
+import {inShard,shardLabel} from './lib/shard.mjs';
 import * as sheet from './lib/settings-sheet.mjs';
 fs.mkdirSync('test-results', {recursive:true});
 const browser=await launchBrowser();
-await suite('language',async()=>{
+// Six units of work (CI splits them over two jobs with `shard: i/2`, tests/lib/shard.mjs): the English/Vietnamese
+// settings on desktop (0) and phone (1), the Vietnamese story at 1280x800 (2), 390x844 (3) and 844x390 (4), Korean (5).
+await suite('language'+shardLabel,async()=>{
  for(const mobile of [false,true]) {
+  if(!inShard(mobile?1:0))continue;
   const {page,errors}=await openPage(browser,mobile?'portrait':{width:1280,height:800});
   const click=selector=>page.locator(selector)[mobile?'tap':'click']();
   await page.goto(testUrl('','http://127.0.0.1:4191/'), {timeout: TIMEOUT.models});
@@ -53,7 +57,8 @@ await suite('language',async()=>{
      const f=window.__frontier,s=f.sim,e=s.own(0).find(e=>e.type===type)||s.spawn(type,0,-10,20);f.select([e.id]);
     },type);
     if(mobile)assert.equal(await page.locator('html').getAttribute('data-dock'),'selection');
-    await page.waitForTimeout(80);
+    // Wait for the tiles of this selection to settle (a slow runner can read them mid-rebuild), then measure once.
+    await page.waitForFunction(()=>{const s=[...document.querySelectorAll('#commands [data-action] > span')];return s.length&&s.every(e=>e.scrollWidth<=e.clientWidth+1);},null,{timeout:TIMEOUT.step}).catch(()=>{});
     const labels=await page.locator('#commands [data-action] > span').evaluateAll(nodes=>nodes.map(e=>({text:e.textContent,fits:e.scrollWidth<=e.clientWidth+1})));
     assert.ok(labels.every(e=>e.fits),JSON.stringify({size,type,labels}));
    }
@@ -80,7 +85,8 @@ await suite('language',async()=>{
  const says=m1.triggers.filter(t=>t.do.some(a=>a.say));
  const firstSay=says.filter(t=>t.when.time!==undefined).sort((a,b)=>a.when.time-b.when.time)[0].do.find(a=>a.say).say;
  const laterSay=says.at(-1).do.find(a=>a.say).say;
- for(const [name,viewport,touch] of [['desktop',{width:1280,height:800},false],['portrait',{width:390,height:844},true],['landscape',{width:844,height:390},true]]) {
+ for(const [unit,[name,viewport,touch]] of [['desktop',{width:1280,height:800},false],['portrait',{width:390,height:844},true],['landscape',{width:844,height:390},true]].entries()) {
+  if(!inShard(2+unit))continue;
   const {page,errors}=await openPage(browser,{...viewport,mobile:touch},{deviceScaleFactor:touch?2:1,timeout:20000});
   const press=async selector=>{const target=page.locator(selector).first();if(touch)await target.tap();else await target.click();await page.waitForTimeout(120);};
   const text=selector=>page.locator(selector).first().innerText();
@@ -175,5 +181,5 @@ await suite('language',async()=>{
   await page.close();
  }
  // ---- Korean (한국어): picker, saved choice, Hangul font and the main screens (tests/language-ko.mjs).
- await koreanChecks(browser);
+ if(inShard(5))await koreanChecks(browser);
 },{browser});
