@@ -2,6 +2,7 @@ import { DEFINITIONS as D, hyp, clamp } from "../data.js";
 import { TOWERS_PER_SUPPORT } from "./constants.js";
 import { AIR } from "../factions.js";
 import { formationSlots, squadRole, stepAside, TRAIL } from "./formation.js";
+import { escortOrder, isFighter } from "./escort.js";
 
 // Orders, production queues and construction: the actions a team can take. Mixed into Simulation (see simulation.js).
 export const orders = {
@@ -19,6 +20,7 @@ export const orders = {
         "stop",
         "support",
         "repair",
+        "escort",
       ].includes(order.type)
     )
       return;
@@ -32,6 +34,8 @@ export const orders = {
     const size = Math.ceil(Math.sqrt(ids.length));
     // R3-B group pace (sim/formation.js): only a UI order with `pace: "group"` takes formation slots.
     const squad = order.pace === "group" && ["move", "attackmove"].includes(order.type) && ids.length > 1 ? this.squadFormation(ids, order) : null;
+    // Escort (sim/escort.js): support units follow the given fighters, behind them; others ignore it.
+    if (order.type === "escort") return this.issueEscort(ids, order, append);
     for (const id of ids) {
       const e = this.get(id);
       if (!e || e.kind !== "unit" || !e.complete) continue;
@@ -113,6 +117,26 @@ export const orders = {
       const aside = o.trail && !append ? stepAside(this, e, squad) : null;
       if (aside) e.orders.push({ ...o, x: aside.x, z: aside.z, aside: true });
       if (o.type !== "stop" && e.orders.length < 32) e.orders.push(o);
+    }
+    // Idle support units beside the fighters of a player's group order come along (sim/escort.js).
+    if (order.pace === "group" && ["move", "attackmove", "attack"].includes(order.type) && !append) this.enlistSupport(ids, order);
+  },
+  // `{type: "escort", members: [fighter ids], x?, z?}`: each support unit among `ids` follows those fighters.
+  issueEscort(ids, order, append) {
+    const fighters = (Array.isArray(order.members) ? order.members : []).map((id) => this.get(id)).filter(isFighter);
+    if (!fighters.length) return;
+    let cx = 0, cz = 0;
+    for (const f of fighters) { cx += f.x; cz += f.z; }
+    cx /= fighters.length; cz /= fighters.length;
+    let hx = Number.isFinite(order.x) ? order.x - cx : 0, hz = Number.isFinite(order.z) ? order.z - cz : -1;
+    const len = hyp(hx, hz) || 1;
+    for (const id of ids) {
+      const e = this.get(id);
+      if (!e || e.kind !== "unit" || !e.complete || !e.support) continue;
+      const own = fighters.filter((f) => f.team === e.team), o = own.length && escortOrder(this, e, own, hx / len, hz / len);
+      if (!o) continue;
+      if (!append) { e.working = false; e.orders = []; e.path = []; e.target = null; e.pathClock = 0; e.stalled = 0; e.moveSample = null; }
+      if (e.orders.length < 32) e.orders.push(o);
     }
   },
   enqueue(buildingId, type) {
@@ -306,6 +330,11 @@ export const orders = {
     e.target = null;
     e.work = 0;
     if (done?.squad && e.support && !e.orders.length) this.squadFollow(e, done);
+    // A Harvester sent to build or repair from the interface goes back to its last deposit afterwards.
+    if (done?.resume && e.type === "worker" && !e.orders.length) {
+      const r = this.get(e.resource);
+      if (r?.kind === "resource" && r.amount > 0) e.orders.push({ type: "gather", target: r.id, resourceType: r.type });
+    }
   },
   // R3-B: the formation of a group-paced order, or null when fewer than two units can take it.
   squadFormation(ids, order) {
@@ -322,14 +351,10 @@ export const orders = {
   },
   // A support unit that reached its slot follows the nearest fighter of its squad it can tend, so it
   // keeps healing or repairing it (the `support` order, progression.js).
+  // It then stays behind the fighters (sim/escort.js): ranged or heavy fighters before melee ones.
   squadFollow(e, done) {
-    let best = null, bestD = Infinity;
-    for (const id of done.members) {
-      const t = this.get(id);
-      if (!t || squadRole(t) === "support" || !this.supportValid(e, t)) continue;
-      const d = hyp(t.x - e.x, t.z - e.z);
-      if (d < bestD) { best = t; bestD = d; }
-    }
-    if (best) e.orders.push({ type: "support", target: best.id });
+    const fighters = done.members.map((id) => this.get(id)).filter((t) => isFighter(t) && t.team === e.team);
+    const o = fighters.some((t) => this.supportValid(e, t)) ? escortOrder(this, e, fighters, done.hx, done.hz) : null;
+    if (o) e.orders.push(o);
   },
 };

@@ -80,6 +80,7 @@
     "test:night-storm": "node tests/night-storm.mjs",
     "test:defence-onboarding": "node tests/defence-onboarding.mjs",
     "test:squad-orders": "node tests/squad-orders.mjs",
+    "test:support-touch": "node tests/support-touch.mjs",
     "test:army-depth": "node tests/army-depth.mjs",
     "test:ai-census-check": "node tests/ai-census-check.mjs",
     "check:difficulty": "node tools/difficulty-check.mjs --jobs 3",

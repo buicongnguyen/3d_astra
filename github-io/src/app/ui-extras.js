@@ -22,7 +22,8 @@ export const BEAT_SLOWDOWN = 0.3;
 export const BOSS_BEAT_PAN = 0.7, BOSS_BEAT_HOLD = 1.2;
 
 const isIdleWorker = (u) => u.type === "worker" && !u.orders.length;
-const isIdleArmy = (u) => u.kind === "unit" && u.type !== "worker" && !u.orders.length;
+// A Medic or Engineer mending someone nearby (its healing beat is running) is busy, not idle.
+const isIdleArmy = (u) => u.kind === "unit" && u.type !== "worker" && !u.orders.length && !(u.support && u.cooldown > 0);
 
 // Which of the player's unit types beat or lose to an enemy type, from balance.json
 // (`counter` = the type a unit is strong against, `mechanical_bonus` = strong against vehicles).

@@ -49,7 +49,9 @@ try{
   await page.keyboard.press('F3');await page.locator('#repair-order').click();
   assert.equal(await page.locator('#repair-order').getAttribute('class'),'active');
   p=await screen(ids.hx,ids.hz,2);await page.mouse.click(p.x,p.y);
-  assert.ok(await page.evaluate(id=>{const f=window.__frontier;return [...f.selected].every(u=>f.sim.get(u).orders[0]?.type==='repair'&&f.sim.get(u).orders[0].target===id);},ids.hq));
+  // 2026-11-24: a repair sends at most the crew that can work on it (2, progression.js REPAIR.crew), nearest first.
+  const crew=await page.evaluate(id=>{const f=window.__frontier,sel=[...f.selected];return {n:sel.length,on:sel.filter(u=>f.sim.get(u).orders[0]?.type==='repair'&&f.sim.get(u).orders[0].target===id).length};},ids.hq);
+  assert.equal(crew.on,Math.min(2,crew.n),'the Repair button sends the nearest two Harvesters: '+JSON.stringify(crew));
   assert.equal(await page.locator('#mode-banner').isHidden(),true);
   assert.deepEqual(errors,[]);
   console.log('Rally button, flag and deposit rally; Harvester repair by right-click and Repair button passed.');

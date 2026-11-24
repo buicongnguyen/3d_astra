@@ -69,12 +69,20 @@ export function setupSelection(S, A) {
     setSelection(next);
   }
 
+  // The Army button (and its key): fighters only. Harvesters keep mining, and Medics, Engineers and wagons
+  // follow the army on their own (sim/escort.js); tap one, or its chip in the selection card, to order it.
+  function armyIds() {
+    const own = S.sim.own(0).filter((e) => e.kind === "unit" && e.type !== "worker");
+    const fighters = own.filter((e) => !e.support);
+    return (fighters.length ? fighters : own).map((e) => e.id);
+  }
+
   function selectHome() {
     const own = S.sim.own(0), hq = own.find((e) => e.type === "hq");
     setSelection(hq ? [hq.id] : own.filter((e) => e.kind === "unit" && e.type !== "worker").map((e) => e.id));
   }
 
-  Object.assign(A, { selectedEntities, renderGroupStrip, setSelection, focusSelection, useGroup, selectScreenType, groupMembers, selectHome });
+  Object.assign(A, { armyIds, selectedEntities, renderGroupStrip, setSelection, focusSelection, useGroup, selectScreenType, groupMembers, selectHome });
   return function bind() {
     $("select-workers").onclick = () => {
       A.clearMode();
@@ -89,12 +97,7 @@ export function setupSelection(S, A) {
 
     $("select-army").onclick = () => {
       A.clearMode();
-      setSelection(
-        S.sim
-          .own(0)
-          .filter((e) => e.kind === "unit" && e.type !== "worker")
-          .map((e) => e.id),
-      );
+      setSelection(armyIds());
     };
 
     $("clear-selection").onclick = () => {

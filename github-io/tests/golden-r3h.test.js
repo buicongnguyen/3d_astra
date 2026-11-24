@@ -16,7 +16,8 @@ import { LONG, pin } from "./lib/golden.mjs";
 const PINS = {
   sandbox: ["2d29faa8", "a5a27277"],
   phase: ["fbb61775", "91dae137"],
-  mission: { 120: "51e858c1", 330: "a7172562", 600: "206c37c5" },
+  // Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
+  mission: { 120: "51e858c1", 330: "a7172562", 600: "a1e20e06" },
 };
 
 function sandbox(relays) {

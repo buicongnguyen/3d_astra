@@ -16,8 +16,8 @@ import { LONG, RECORD, pin } from "./lib/golden.mjs";
 // Re-recorded 2026-11-23 (owner): several Wyrm nests, two Wyrms per side, Elder nests.
 const PINS = {
   // Re-recorded 2026-11-24: Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x (not 6x) to flyers (commits 5e4c07c, 2e293ea) change long AI matches.
-  // fast 180 and 420 s: Re-recorded 2026-11-24 (faction depth): Fast and Relentless skirmish AIs now take either/or doctrines and cast the faction signature abilities (sim/content/doctrines.js, signatures.js); Relaxed, Normal and story pins are unchanged.
-  fast: { 180: "3b6c0dd3", 420: "dc4e591d" },
+  // fast 180 and 420 s: Re-recorded 2026-11-24 (integration of faction depth + support units): Fast/Relentless AIs take doctrines and cast signature abilities, and Medic/Engineer/Supply wagon health rose (95 + 55 shield, 150, 340).
+  fast: { 180: "3b6c0dd3", 420: "d778a4c9" },
   sandbox: { 40: "84c9ae8a" },
 };
 const RULES = { wild: "on" };

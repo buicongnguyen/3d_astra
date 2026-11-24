@@ -35,7 +35,7 @@ export function setupInputKeyboard(S, A) {
       }
     } else if(id==='idle')A.cycleIdle('worker');
     else if(id==='idle-army')A.cycleIdle('army');
-    else if(id==='army')choose(own.filter(u=>u.kind==='unit'&&u.type!=='worker'));
+    else if(id==='army')choose(A.armyIds().map(id=>S.sim.get(id)));
     else if(id==='workers')choose(own.filter(u=>u.type==='worker'));
     else if(id==='buildings')choose(own.filter(u=>u.kind==='building'));
     else if(['hq','barracks','foundry'].includes(id))choose(own.filter(u=>u.type===id),true);

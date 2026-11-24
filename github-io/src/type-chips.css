@@ -1,0 +1,36 @@
+/* One-tap type chips (src/app/type-chips.js): a flat row, one chip per unit type, 44 px tall on phones. */
+.type-chips { display: flex; gap: 4px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; min-width: 0; }
+.type-chips::-webkit-scrollbar { display: none; }
+.type-chips[hidden] { display: none !important; }
+.type-chips button {
+  position: relative; flex: 0 0 auto; min-width: 52px; height: 44px; margin: 0; padding: 0 7px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  border: 1px solid rgba(146, 235, 197, 0.38); border-radius: 6px; background: rgba(10, 20, 19, 0.72);
+  color: var(--team-friendly, #92ebc5); font-size: 14px; font-weight: 700; line-height: 1;
+}
+.type-chips button > svg.icon { width: 22px; height: 22px; flex: none; }
+.type-chips button > svg.icon.role-medic { color: #ff5d57; }
+.type-chips button > b { font-size: 14px; color: #f4fff8; font-variant-numeric: tabular-nums; }
+.type-chips button:hover, .type-chips button:focus-visible { border-color: var(--team-friendly, #92ebc5); }
+.type-chips button.active { border-color: #f2c46b; background: rgba(242, 196, 107, 0.2); box-shadow: inset 0 0 0 1px rgba(242, 196, 107, 0.55); }
+.type-chips button.active > b { color: #ffe6a8; }
+.type-chips .vitals { position: absolute; left: 3px; right: 3px; bottom: 2px; height: 3px; border-radius: 1px; background: #0a1413; }
+.type-chips .vitals::before { content: ""; position: absolute; inset: 0 auto 0 0; width: calc(var(--hp, 1) * 100%); border-radius: 1px; background: hsl(calc(var(--hp, 1) * 118) 66% 52%); }
+
+/* Phones: the row takes the place of the group heading and its totals (the dock keeps its height). */
+:root.compact-ui .selection-panel.has-chips #selection-info :is(.selection-heading, .unit-metrics, .selection-activity) { display: none; }
+:root.compact-ui .selection-panel.has-chips .type-chips { flex: 0 0 auto; margin: 0 0 2px; }
+
+/* Desktop: in place of the group's totals line (HP, Shield, ATK, status), beside the group icon; the unit
+   roster below stays (one card per unit, to pick a single unit). */
+:root:not(.compact-ui) .selection-panel.has-chips #selection-info :is(.unit-metrics, .selection-activity) { visibility: hidden; }
+:root:not(.compact-ui) .selection-panel.has-chips .type-chips { position: relative; z-index: 1; height: 40px; margin: -46px 0 6px 48px; }
+:root:not(.compact-ui) .selection-panel.has-chips .type-chips button { height: 40px; min-width: 48px; }
+
+/* Landscape phones (the two-row board, phone-hud.css): the row takes the summary's place before the orders. */
+@media (orientation: landscape) and (max-height: 520px) {
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips #selection-info { display: none !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips .type-chips { flex: 0 1 auto; max-width: 52%; height: 44px; margin: 0; gap: 3px; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips .type-chips button { min-width: 46px; padding: 0 4px; gap: 2px; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips .type-chips button > svg.icon { width: 18px; height: 18px; }
+}

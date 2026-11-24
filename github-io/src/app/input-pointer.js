@@ -80,9 +80,31 @@ export function setupInputPointer(S, A) {
     $("box-select").setAttribute("aria-pressed", "false");
   }
 
+  // Touch picking (owner, 2026-11-24): a fingertip covers a Medic at default zoom, so a tap within
+  // TOUCH_PICK px of one of your units picks it before the ground, a building or an enemy, and tapping the
+  // same spot again steps through the units standing there. A tap right on an enemy with units selected
+  // still attacks, and a tap right on a damaged building with Harvesters selected still repairs it.
+  const TOUCH_PICK = 26;
+  let tapCycle = null;
+  function touchTarget(x, y) {
+    let target = S.view.pick(x, y, S.sim, 24);
+    if (S.mode && S.mode !== "support") return target;
+    const near = S.view.ownUnitsNear(x, y, S.sim, TOUCH_PICK);
+    if (!near.length) return target;
+    const direct = S.view.pickDirect && target;
+    const workers = A.selectedEntities().some((e) => e.type === "worker");
+    if (direct && S.selected.size && target.team > 0 && target.kind === "unit") return target;
+    if (direct && workers && target.team === 0 && target.kind === "building" && (!target.complete || target.hp < target.maxHp || target.type === "hq")) return target;
+    if (direct && target.team === 0 && target.kind === "unit") { const i = near.indexOf(target); if (i > 0) near.unshift(...near.splice(i, 1)); else if (i < 0) near.unshift(target); }
+    const now = performance.now(), again = tapCycle && Math.hypot(tapCycle.x - x, tapCycle.y - y) <= 16 && now - tapCycle.time < 2500 && near.some((e) => e.id === tapCycle.id);
+    target = again ? near[(near.findIndex((e) => e.id === tapCycle.id) + 1) % near.length] : near[0];
+    tapCycle = { x, y, time: now, id: target.id };
+    return target;
+  }
+
   function touchTap(x, y) {
     const point = S.view.point(x, y),
-      target = S.view.pick(x, y, S.sim, 24);
+      target = touchTarget(x, y);
     if (!point) return;
     if (S.mode === "build") {
       A.showBuildPoint(point);

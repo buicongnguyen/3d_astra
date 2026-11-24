@@ -2,6 +2,7 @@ import { DEFINITIONS as D, distance } from "../data.js";
 import { MINERS_PER_DEPOSIT } from "./constants.js";
 import { fieldPlan } from "../ai-plan.js";
 import balance from "../balance.json" with { type: "json" };
+import { enemyNear } from "./auto-repair.js";
 
 // The Energy grid doctrine's factor (sim/content/doctrines.js).
 const GRID = balance.doctrines.hq.options.grid.energy;
@@ -46,7 +47,8 @@ export const economy = {
   updateWorker(e, o, dt) {
     const t = this.get(o.target);
     if (o.type === "repair") {
-      if (!this.repair(e, t, dt)) this.finish(e);
+      // An automatic repair (sim/auto-repair.js) stops as soon as an enemy comes near the building.
+      if ((o.auto && t && this.ticks % 10 === e.id % 10 && enemyNear(this, e.team, t)) || !this.repair(e, t, dt)) this.finish(e);
       return;
     }
     if (o.type === "build") {

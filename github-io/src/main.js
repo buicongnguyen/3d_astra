@@ -30,6 +30,7 @@ import { setupHud } from "./app/hud.js";
 import { setupPreferences } from "./app/preferences.js";
 import { setupSound } from "./app/sound.js";
 import { setupSelection } from "./app/selection.js";
+import { setupTypeChips } from "./app/type-chips.js";
 import { setupOrders } from "./app/orders.js";
 import { setupAbilities } from "./app/abilities.js";
 import { setupCommandCard } from "./app/command-card.js";
@@ -208,7 +209,7 @@ Object.assign(A, { createSim, loadAssets, ensureMatchModels: (onReady) => {
 // original order of same-type listeners (visibilitychange: audio, autosave; pointerdown: touch
 // mode, then camera-pan cancel) and of the top-bar buttons.
 const SETUP = [
-  ["hud", setupHud], ["preferences", setupPreferences], ["sound", setupSound], ["selection", setupSelection],
+  ["hud", setupHud], ["preferences", setupPreferences], ["sound", setupSound], ["selection", setupSelection], ["type-chips", setupTypeChips],
   ["orders", setupOrders], ["abilities", setupAbilities], ["command-card", setupCommandCard], ["minimap", setupMinimap],
   ["input-pointer", setupInputPointer], ["input-keyboard", setupInputKeyboard], ["modals", setupModals],
   ["briefing", setupBriefing], ["match-flow", setupMatchFlow], ["frame", setupFrame], ["ui-extras", setupUiExtras], ["choices", setupChoices], ["scenes", setupScenes], ["debug-hooks", setupDebugHooks],
@@ -218,7 +219,7 @@ const SETUP = [
   ["quick-battle", setupQuickBattle],
   ["wild", setupWildUi],
 ];
-const BIND = ["preferences", "hud", "input-pointer", "sound", "frame", "modals", "briefing", "match-flow", "selection",
+const BIND = ["preferences", "hud", "input-pointer", "sound", "frame", "modals", "briefing", "match-flow", "selection", "type-chips",
   "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "choices", "scenes", "debug-hooks", "defence", "rank", "quick-battle"];
 const binds = Object.fromEntries(SETUP.map(([name, setup]) => [name, setup(S, A)]));
 // The start screen shows the battle chosen there, so the first simulation is built from it.

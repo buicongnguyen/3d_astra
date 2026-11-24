@@ -27,7 +27,8 @@ test("Expanded plus Field command, four AI factions, 300 s", LONG, () => {
 
 const heroic = (id) => { const r = playDefence(defenceVariant(DEFENCE_LEVELS.find((l) => l.id === id), { variant: "heroic" }), {}); return { result: r.result, lives: r.lives, wave: r.wave, hash: r.sim.hash() }; };
 test("Heroic d-gorge", () => pin("round2 heroic d-gorge", heroic("d-gorge"), { result: "victory", lives: 2, wave: 6, hash: "d78d0600" }));
-test("Heroic d-longcrossing", () => pin("round2 heroic d-longcrossing", heroic("d-longcrossing"), { result: "victory", lives: 5, wave: 6, hash: "9752f7e0" }));
+// Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
+test("Heroic d-longcrossing", () => pin("round2 heroic d-longcrossing", heroic("d-longcrossing"), { result: "victory", lives: 5, wave: 6, hash: "76950a8a" }));
 
 test("m11c Hold the Keystone Roads, DefenceBot, 120 s", () => {
   const r = playDefence(resolveMission(HOLD_THE_ROADS, null), { difficulty: "standard", limit: 120 });
@@ -36,4 +37,5 @@ test("m11c Hold the Keystone Roads, DefenceBot, 120 s", () => {
 // R3-A (AAA round 3) moved it: the Field command census and economy (old "4cce2935", R3-A "e4913c66").
 // Difficulty guard (Wave 1b, owner 2026-11-21): census from 300 s and no field economy, so 300 s is back to r3-base
 // ("4cce2935"); then south exits (owner, R3-L) + difficulty guard on the merged tree: "f94f7658".
-const ARENA_300 = "f94f7658";
+// Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders ("f94f7658" -> "42bae522").
+const ARENA_300 = "42bae522";

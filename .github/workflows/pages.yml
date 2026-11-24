@@ -139,9 +139,10 @@ jobs:
           # AAA round 3 (R3-E): Defence onboarding (guided first build, badges, discs, narrow landscape dock, next-star hint).
           - name: r3-e
             scripts: defence-onboarding
-          # AAA round 3 (R3-B): squad orders (group pace, follow tether, phone group strip).
+          # AAA round 3 (R3-B): squad orders (group pace, follow tether, phone group strip); support units on
+          # phones (2026-11-24: touch pick prefers own units, type chips, Army = fighters).
           - name: r3-b
-            scripts: squad-orders
+            scripts: squad-orders support-touch
           # AAA round 3 (R3-C): the Army size row (200 desktop-only) and the Combined armour step.
           - name: r3-c
             scripts: army-depth
