@@ -47,7 +47,8 @@ export class EnvironmentView {
     this.bridges = new Map();
     // Everything drawn here lies inside the map; the area beyond the edge stays empty.
     // The old boulder obstacles are concrete walls now, drawn as entities (view.js).
-    if (!terrain.river) return;
+    const lakes = terrain.lakes || [];
+    if (!terrain.river && !lakes.length) return;
     // Clear, saturated water in the map's own colours: deep in mid-stream, pale over the
     // shallows and foam-white where it meets the banks. No metalness: without an environment
     // map it only greyed the colour.
@@ -87,6 +88,34 @@ export class EnvironmentView {
       if (river.z) plane.translate(0, -river.z, 0);
       return plane;
     });
+    // Lakes (campaign maps): a ring of water from the island's foot to just past the shore, deep in the middle of
+    // the ring and pale at both edges, its fords raised to a pale gravel bar under shallow water with white riffle edges.
+    for (const lake of lakes) {
+      const inner = Math.max(0.01, lake.inner - 0.6), outer = lake.r + 0.6;
+      const ring = new THREE.RingGeometry(inner, outer, 128, 12), positions = ring.attributes.position;
+      const colors = new Float32Array(positions.count * 3), mid = (inner + outer) / 2, width = (outer - inner) / 2;
+      for (let i = 0; i < positions.count; i++) {
+        // The ring lies in x/y: world x = x, world z = -y.
+        const wx = lake.x + positions.getX(i), wz = lake.z - positions.getY(i);
+        // The distance outside the nearest ford strip (negative inside it).
+        let edge = Infinity;
+        for (const f of lake.fords) {
+          const dx = wx - lake.x, dz = wz - lake.z, perp = Math.abs(dx * f.dz - dz * f.dx);
+          if (dx * f.dx + dz * f.dz > 0) edge = Math.min(edge, perp - f.half);
+        }
+        const bank = Math.abs(Math.hypot(positions.getX(i), positions.getY(i)) - mid) / width; // 0 mid-ring, 1 at the edges
+        if (edge <= 0) positions.setZ(i, 0.12);
+        if (edge <= -1) c.copy(ford).lerp(gravel, 0.82).lerp(foam, i % 2 ? 0.12 : 0.3).multiplyScalar(1.15);
+        else if (edge <= 0) c.copy(foam).multiplyScalar(1.3);
+        else if (bank > 0.85) c.copy(shallow).lerp(foam, 0.6);
+        else if (bank > 0.6) c.copy(shallow);
+        else c.copy(deep).lerp(shallow, bank > 0.25 ? 0.3 : 0);
+        c.toArray(colors, i * 3);
+      }
+      ring.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      ring.translate(lake.x, -lake.z, 0);
+      planes.push(ring);
+    }
     const waterGeometry = planes.length === 1 ? planes[0] : mergeGeometries(planes, false);
     if (planes.length > 1) for (const plane of planes) plane.dispose();
     this.water = new THREE.Mesh(waterGeometry, waterMat);
@@ -117,6 +146,8 @@ export class EnvironmentView {
     this.normalTexture = new THREE.CanvasTexture(normalCanvas);
     this.normalTexture.wrapS = this.normalTexture.wrapT = THREE.RepeatWrapping;
     this.normalTexture.repeat.set(20, 2);
+    // A lake ring's UVs span its outer diameter (about 50 m): the same ~8 m ripple tile as the rivers.
+    if (!terrain.rivers.length) this.normalTexture.repeat.set(6, 6);
     waterMat.normalMap = this.normalTexture;
     waterMat.normalScale.set(0.55, 0.55);
     const add = (name, x, z, scale = 1, target = this.root) => {
@@ -149,6 +180,7 @@ export class EnvironmentView {
       return seed / 4294967296;
     };
     for (const river of terrain.rivers) for (const c of river.fords) this.fordMarks(c, theme, river.z);
+    for (const lake of lakes) for (const f of lake.fords) this.lakeFordMarks(lake, f, theme);
     // Batch repeated meshes by source primitive: decoration adds a fixed number of draw calls.
     const instances = (name, transforms, target = this.decor) => {
       const source = assets.getObjectByName("asset_" + name);
@@ -211,19 +243,29 @@ export class EnvironmentView {
       dummy.updateMatrix();
       transforms.reed.push(dummy.matrix.clone());
     }
-    for (const [x, z] of [
+    // Reeds ring each lake's shore (not on its fords).
+    for (const lake of lakes)
+      for (let i = 0; i < 90; i++) {
+        const a = (i / 90) * Math.PI * 2, d = lake.r + 0.6 + rand() * 1.4, x = lake.x + Math.cos(a) * d, z = lake.z + Math.sin(a) * d;
+        if (lake.fords.some((f) => Math.cos(a) * f.dx + Math.sin(a) * f.dz > 0 && Math.abs(Math.cos(a) * f.dz - Math.sin(a) * f.dx) * d < f.half + 1.5)) continue;
+        dummy.position.set(x, 0, z);
+        dummy.scale.setScalar(0.6 + rand() * 0.5);
+        dummy.updateMatrix();
+        transforms.reed.push(dummy.matrix.clone());
+      }
+    for (const [x, z] of terrain.river ? [
       [-30, 29],
       [-31, 30],
       [30, -29],
       [31, -30],
-    ]) {
+    ] : []) {
       dummy.position.set(x, 0, z);
       dummy.scale.setScalar(0.75);
       dummy.updateMatrix();
       transforms.crate.push(dummy.matrix.clone());
     }
     for (const [name, list] of Object.entries(transforms))
-      instances(name, list);
+      if (list.length || terrain.river) instances(name, list);
     // One bounded pool for movement dust and ford spray. Combat effects live in fx.js.
     this.positions = new Float32Array(64 * 3);
     this.positions.fill(10000);
@@ -292,6 +334,54 @@ export class EnvironmentView {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.name = "ford-marks";
     if (riverZ) mesh.position.z = riverZ;
+    mesh.receiveShadow = true;
+    this.root.add(mesh);
+    this.owned.push(geometry, material);
+  }
+  // A lake ford's marks in the style of the river fords' (one merged vertex-coloured mesh, one draw): banded posts
+  // down both edges of the strip from the island's foot to the shore, a cairn at each shore corner, flat cobbles.
+  lakeFordMarks(lake, f, theme) {
+    const parts = [], color = new THREE.Color(), matrix = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+    let seed = 991 + Math.round(f.angle);
+    const rand = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+    // Local frame: u runs out along the ford, v across it. World = lake centre + u * (dx, dz) + v * (-dz, dx).
+    const at = (u, v) => [lake.x + u * f.dx - v * f.dz, lake.z + u * f.dz + v * f.dx];
+    const piece = (geometry, hex, u, y, v, sx, sy, sz, turn = 0) => {
+      const g = geometry.index ? geometry.toNonIndexed() : geometry;
+      if (g !== geometry) geometry.dispose();
+      g.deleteAttribute("uv");
+      const [x, z] = at(u, v);
+      g.applyMatrix4(matrix.compose(new THREE.Vector3(x, y, z), q.setFromEuler(e.set(0, turn, 0)), new THREE.Vector3(sx, sy, sz)));
+      color.set(hex);
+      const colors = new Float32Array(g.attributes.position.count * 3);
+      for (let i = 0; i < colors.length; i += 3) color.toArray(colors, i);
+      g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      parts.push(g);
+    };
+    const wood = theme.wood, band = "#ffe9a8", stone = `#${new THREE.Color(theme.rock).lerp(new THREE.Color(theme.dust), 0.35).getHexString()}`;
+    const from = lake.inner + 0.8, to = lake.r - 0.6;
+    for (const side of [-1, 1]) {
+      const v = side * (f.half - 0.4);
+      for (let u = from; u <= to + 0.01; u += (to - from) / 4) {
+        piece(new THREE.CylinderGeometry(0.15, 0.17, 1.1, 6), wood, u, 0.45, v, 1, 1, 1);
+        piece(new THREE.CylinderGeometry(0.17, 0.17, 0.32, 6), band, u, 0.95, v, 1, 1, 1);
+        piece(new THREE.ConeGeometry(0.19, 0.18, 6), band, u, 1.2, v, 1, 1, 1);
+      }
+      const v2 = side * (f.half + 0.3), u2 = lake.r + 1.3;
+      piece(new THREE.DodecahedronGeometry(0.5), stone, u2, 0.2, v2, 1.1, 0.55, 1, rand() * 6);
+      piece(new THREE.DodecahedronGeometry(0.36), stone, u2, 0.62, v2 + 0.05, 1, 0.6, 1, rand() * 6);
+      piece(new THREE.DodecahedronGeometry(0.22), band, u2, 0.9, v2, 1, 0.8, 1, rand() * 6);
+    }
+    for (let i = 0; i < 28; i++) {
+      const u = from + rand() * (to - from), v = (rand() - 0.5) * (f.half * 2 - 2.2), s = 0.22 + rand() * 0.2;
+      piece(new THREE.DodecahedronGeometry(1), stone, u, 0.06, v, s * 1.3, s * 0.4, s, rand() * 6);
+    }
+    const geometry = mergeGeometries(parts, false);
+    for (const p of parts) p.dispose();
+    const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, flatShading: true });
+    if (this.fog) fogAware(material, this.fog);
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.name = "ford-marks";
     mesh.receiveShadow = true;
     this.root.add(mesh);
     this.owned.push(geometry, material);

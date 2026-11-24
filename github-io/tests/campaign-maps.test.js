@@ -16,12 +16,13 @@ const hillOf = (t) => t.plateaus.reduce((a, b) => (b.r > a.r ? b : a));
 const startOf = (id) => { const s = new Simulation({ map: id, enemyCount: 1, ai: false }); return { s, hq: s.entities.find((e) => e.type === "hq" && e.team === 0) }; };
 
 test("campaign maps exist, are flagged and stay out of Skirmish", () => {
-  assert.deepEqual(IDS.sort(), ["gunhills", "highridge"]);
+  // Mirror Lake (2026-11 map variety): the first map with a lake, an island hill in the middle of it.
+  assert.deepEqual(IDS.sort(), ["gunhills", "highridge", "mirrorlake"]);
   for (const id of IDS) {
     assert.equal(CAMPAIGN[id].campaign, true, id);
     assert.ok(!(id in MAPS) && !(id in MAP_BLURBS), `${id} must not be in the Skirmish picker`);
     assert.equal(new Terrain(id).id, id, "still buildable by id");
-    assert.ok(["highlands", "dunes"].includes(lookOf(id)), `${id} look`);
+    assert.ok(["highlands", "dunes", "riverlands"].includes(lookOf(id)), `${id} look`);
     assert.equal(themeFor(id), themeFor(CAMPAIGN[id].look));
     assert.equal(flavourFor(id), flavourFor(CAMPAIGN[id].look));
   }

@@ -827,6 +827,15 @@ export class WorldView {
       }
       groundGeometry.computeVertexNormals();
     }
+    // A lake bed (campaign maps "lakes"): cut 0.5 deep like a river's, from 1 m outside the water, level across fords.
+    if (this.terrain.lakes?.length) {
+      const p = groundGeometry.attributes.position;
+      for (let i = 0; i < p.count; i++) {
+        const depth = this.terrain.lakeBed(p.getX(i), -p.getY(i));
+        if (depth > 0) p.setZ(i, Math.min(p.getZ(i), -depth));
+      }
+      groundGeometry.computeVertexNormals();
+    }
     // Plateau cliffs: lit rock faces and a bright lip, merged into the ground (same material and
     // texture, vertex-coloured), so height reads from the game camera at no extra draw.
     const relief = buildPlateauRelief(this.terrain);
