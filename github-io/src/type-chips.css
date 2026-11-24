@@ -34,8 +34,8 @@
 /* Landscape phones (the two-row board, phone-hud.css): the row takes the summary's place before the orders. */
 @media (orientation: landscape) and (max-height: 520px) {
   :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips #selection-info { display: none !important; }
-  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips .type-chips { flex: 0 1 auto; max-width: 52%; height: 44px; margin: 0; gap: 3px; }
-  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips .type-chips button { min-width: 46px; padding: 0 4px; gap: 2px; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips .type-chips { flex: 0 1 auto; max-width: 54%; height: 44px; margin: 0; gap: 3px; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips .type-chips button { min-width: 44px; padding: 0 2px; gap: 2px; }
   :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:not(#x) .selection-panel.has-chips .type-chips button > svg.icon { width: 18px; height: 18px; }
 }
 

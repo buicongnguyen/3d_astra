@@ -943,12 +943,11 @@
 @media (min-aspect-ratio: 1.35) {
   :root.compact-ui.in-defence:not(.in-briefing)[data-dock="selection"]:has(#commands .defence-stats) {
     & #commands > .command-tile > :is(.icon, .portrait-art, .portrait, svg) { display: none !important; }
-    & #commands > .command-tile { display: flex !important; flex-direction: column; align-items: center; justify-content: center; height: auto !important; min-height: 44px; padding: 2px 3px !important; gap: 1px; }
-    & #commands > .command-tile > span { font: 700 11px/13px var(--font-ui) !important; white-space: nowrap; }
-    & #commands > .command-tile > small { display: block !important; font: 600 11px/12px var(--font-ui) !important; white-space: nowrap; }
+    & #commands > .command-tile { display: flex !important; flex-direction: column; align-items: center; justify-content: center; height: auto !important; min-height: 44px; padding: 2px 1px !important; gap: 1px; }
+    & #commands > .command-tile > span { font: 700 12px/13px var(--font-ui) !important; white-space: nowrap; letter-spacing: -0.1px; }
+    & #commands > .command-tile > small { display: block !important; font: 600 12px/13px var(--font-ui) !important; white-space: nowrap; }
     & .selection-panel.has-entity :is(.unit-metrics, .selection-activity) { display: none !important; }
     & .command-deck > .selection-panel.has-entity { height: 40px !important; min-height: 0 !important; }
-    & #commands .defence-stats p { font-size: 11px; line-height: 14px; }
   }
 }
 @media (max-aspect-ratio: 1.35) {

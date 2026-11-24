@@ -168,6 +168,6 @@
 .mode-switch [data-mode="training"].start-here > .icon { display: none; }
 .mode-switch [data-mode="training"].start-here > .start-here-badge {
   order: -1; display: block; max-width: 100%; margin: 0 auto 2px; padding: 0 6px; border-radius: 7px;
-  background: var(--kit-gold, #edc76f); color: #2a1a06; font: 800 11px/14px var(--font-ui, sans-serif);
-  white-space: nowrap; overflow: hidden; text-overflow: clip; pointer-events: none;
+  background: var(--kit-gold, #edc76f); color: #2a1a06; font: 800 11px/12px var(--font-ui, sans-serif);
+  white-space: normal; overflow-wrap: normal; text-align: center; pointer-events: none; /* "Cho người mới" takes two lines */
 }
