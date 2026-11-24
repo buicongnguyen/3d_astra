@@ -23,8 +23,12 @@ export const OPENINGS = {
   "m01-first-light": { at: "oldRelay", frames: "objective", zoom: 1.45, drift: [-5, 3], seconds: 4.6 },
   "m02-first-contact": { at: "bridgehead", frames: "bridge", zoom: 1.3, drift: [6, 0], seconds: 4.6 },
   "m02b-hold-the-river": { at: { x: 22, z: -18 }, frames: "bridge", zoom: 1.15, drift: [-8, 0], seconds: 4.8 },
+  // Map variety: over the east water of Mirror Lake, drifting west across the island toward the camp's ford.
+  "m02c-mirror-lake": { at: "island", offset: [22, -4], frames: "plateau", zoom: 1.5, drift: [-6, 6], seconds: 5 },
   "m03-the-ashen-line": { at: "vanguardYard", frames: "camp", zoom: 1.25, drift: [4, 4], seconds: 5 },
   "m04-three-way-dunes": { at: "oasisCentre", frames: "objective", zoom: 1.7, drift: [-4, -4], seconds: 4.8 },
+  // Map variety: over Hale's outpost beyond the canyon's north mouth, drifting toward the road down to the squad.
+  "m04b-canyon-run": { at: "outpost", offset: [-6, 4], frames: "camp", zoom: 1.4, drift: [-6, 4], seconds: 5 },
   "m05-the-verdant-pact": { at: "bridgeNorth", frames: "bridge", zoom: 1.3, drift: [0, 6], seconds: 5 },
   "m06-copper-harvest": { at: "seam", frames: "objective", zoom: 1.4, drift: [5, -3], seconds: 4.8 },
   "m06b-wings-over-copper": { at: "yard", frames: "camp", zoom: 1.4, drift: [-6, 2], seconds: 4.8 },
@@ -38,7 +42,8 @@ export const OPENINGS = {
   "m10-obsidian-storm": { at: "crown", offset: [10, -8], frames: "plateau", zoom: 1.6, drift: [3, 5], seconds: 5.2 },
   // Campaign C6: high over the crown hill of Gun Hills and its three Warden towers.
   "m10b-crown-hill": { at: "crown", offset: [14, 6], frames: "plateau", zoom: 1.5, drift: [-5, 5], seconds: 5 },
-  "m11-cut-the-draw": { at: "bridge", offset: [-10, 6], frames: "bridge", zoom: 1.4, drift: [-6, 0], seconds: 4.8 },
+  // Map variety: Twin Rivers since 2026-11, high over the west ford of the south river, drifting across it.
+  "m11-cut-the-draw": { at: "bridge", offset: [2, -8], frames: "bridge", zoom: 1.4, drift: [0, -6], seconds: 4.8 },
   "m11c-hold-the-keystone-roads": { at: { x: 4, z: -44 }, frames: "road", zoom: 1.2, drift: [0, 8], seconds: 5 },
   // R3-H: high over the ford's north-west bank, where the Sovereign crosses (clear of m01/m04/m11 starts), drifting toward the player's line and its two forward towers.
   "m11d-the-sovereign-walks": { at: "ford", offset: [-7, -6], frames: "road", zoom: 1.5, drift: [-5, 3], seconds: 5 },

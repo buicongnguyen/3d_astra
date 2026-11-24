@@ -43,5 +43,30 @@
       {"shape": "disc", "x": 0, "z": 0, "r": 17, "ramps": [{"angle": 135, "width": 8}, {"angle": -45, "width": 8}, {"angle": 45, "width": 8}, {"angle": 225, "width": 8}]},
       {"shape": "disc", "x": -12, "z": 44, "r": 10, "mirror": true, "ramps": [{"angle": -90, "width": 7}, {"angle": 180, "width": 7}]}
     ]
+  },
+  "mirrorlake": {
+    "name": "Mirror Lake",
+    "size": 128,
+    "river": false,
+    "offset": 12,
+    "campaign": true,
+    "look": "riverlands",
+    "dressing": 0.8,
+    "sites": [],
+    "flank": [34, 34],
+    "rocks": [],
+    "roads": [[[-31, 30], [-19, 19]]],
+    "deposits": [
+      ["alloy", 0, 6, 2500],
+      ["alloy", -32, -4, 2500],
+      ["energy", -6, 34, 2000],
+      ["alloy", -40, -40, 2500]
+    ],
+    "plateaus": [
+      {"shape": "disc", "x": 0, "z": 0, "r": 12, "ramps": [{"angle": 135, "width": 7}, {"angle": -45, "width": 7}, {"angle": 45, "width": 7}, {"angle": 225, "width": 7}]}
+    ],
+    "lakes": [
+      {"x": 0, "z": 0, "r": 26, "island": 13.5, "fords": [{"angle": 135, "width": 7}, {"angle": -45, "width": 7}, {"angle": 45, "width": 7}, {"angle": 225, "width": 7}]}
+    ]
   }
 }

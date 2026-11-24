@@ -22,7 +22,8 @@ test("every mission has a README anchor on both paintings, and the nodes sit exa
     assert.equal(a.wide[0], a.strip[0], m.id);
   }
   // README spot checks: #1, #8 and #17.
-  assert.deepEqual(MAP_ANCHORS["m01-first-light"].wide, [12, 82.5]);
+  // Map variety: Act 1 holds seven relays since Mirror Lake and Canyon Run, 13.3% apart from 10% (README had m01 at 12, 82.5).
+  assert.deepEqual(MAP_ANCHORS["m01-first-light"].wide, [10, 78]);
   // Campaign C6: Act 2 holds seven missions since Gun Hill, so its relays sit 13.3% apart (README had 15.6%).
   assert.deepEqual(MAP_ANCHORS["m06b-wings-over-copper"].strip, [63.3, 49.5]);
   // Act 3 holds seven missions since Crown Hill (m10b): 13.3% apart, m12 on the upper row.

@@ -38,7 +38,8 @@ const mapOf = (m, key = m.map + m.enemies + JSON.stringify(m.rules || {})) => bl
 const STORY_IDS = ["m01-first-light", "m02-first-contact", "m03-the-ashen-line", "m04-three-way-dunes", "m05-the-verdant-pact", "m06-copper-harvest",
   "m07-copper-siege", "m08-the-quiet-vault", "m09-a-debt-in-the-dunes", "m10-obsidian-storm", "m11-cut-the-draw", "m12-frontiers-end"];
 test("mission ids are unique, stable and in order, and the basic fields are sound", () => {
-  assert.deepEqual(MISSIONS.map((m) => m.id), ["m01-first-light", "m02-first-contact", "m02b-hold-the-river", "m03-the-ashen-line", "m04-three-way-dunes", "m05-the-verdant-pact",
+  // Map variety (2026-11-24): Mirror Lake (m02c) after Hold the River, Canyon Run (m04b) after Three-Way Dunes.
+  assert.deepEqual(MISSIONS.map((m) => m.id), ["m01-first-light", "m02-first-contact", "m02b-hold-the-river", "m02c-mirror-lake", "m03-the-ashen-line", "m04-three-way-dunes", "m04b-canyon-run", "m05-the-verdant-pact",
     "m06-copper-harvest", "m06b-wings-over-copper", "m06c-gun-hill", "m07-copper-siege", "m07b-hold-the-valley", "m08-the-quiet-vault", "m09-a-debt-in-the-dunes", "m10-obsidian-storm", "m10b-crown-hill", "m11-cut-the-draw", "m11c-hold-the-keystone-roads", "m11d-the-sovereign-walks", "m12-frontiers-end"]);
   assert.deepEqual(MISSIONS.map((m) => m.id).filter((id) => STORY_IDS.includes(id)), STORY_IDS, "the story missions keep their order");
   assert.equal(new Set(MISSIONS.map((m) => m.id)).size, MISSIONS.length);
@@ -46,7 +47,8 @@ test("mission ids are unique, stable and in order, and the basic fields are soun
     assert.match(m.id, /^m\d{2}[a-z]?-[a-z-]+$/, m.id);
     // Numbers never go down along the campaign, so the list reads in story order.
     if (i) assert.ok(m.id.slice(0, 4) >= MISSIONS[i - 1].id.slice(0, 4), `${m.id} after ${MISSIONS[i - 1].id}`);
-    assert.ok(maps[m.map] && !!maps[m.map].defence === !!m.defence, `${m.id}: map ${m.map}`);
+    // A Defence map carries a Defence-rules mission, except Canyon Run (m04b, map variety): a no-base field mission there.
+    assert.ok(maps[m.map] && (!!maps[m.map].defence === !!m.defence || (m.id === "m04b-canyon-run" && m.rules.playerBase === false)), `${m.id}: map ${m.map}`);
     assert.ok(Object.hasOwn(AI_SPEEDS, m.speed), `${m.id}: speed ${m.speed}`);
     assert.ok([1, 2, 3].includes(m.enemies) && ["ffa", "coalition"].includes(m.alliance) && [1, 2, 3].includes(m.act), m.id);
     assert.ok(m.title && m.briefing.place && m.briefing.lines.length && m.briefing.intel.length && m.debrief.win.length && m.debrief.lose.length, m.id);

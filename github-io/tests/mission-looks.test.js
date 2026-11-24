@@ -19,6 +19,11 @@ test("m08 and cv1 are night, m10 is storm, m06 gathers a storm from the start (f
   assert.equal(missionLook(sim("m06-copper-harvest", 1000)).k, 1);
   assert.equal(missionLook(sim("m01-first-light")), null);
 });
+test("map variety: Gun Hill is a night battle and the Canyon Run a dusk drive (from the table, not a mission field)", () => {
+  assert.equal(missionLook(sim("m06c-gun-hill")).name, "night");
+  assert.equal(missionLook(sim("m04b-canyon-run")).name, "dusk");
+  assert.equal(missionLook(sim("m06c-gun-hill", 200)).k, 1);
+});
 test("new content may carry its own look; the table wins for existing ids", () => {
   assert.equal(missionLook(sim("new", 0, { look: "dusk" })).name, "dusk");
   assert.equal(missionLook(sim("m08-the-quiet-vault", 0, { look: "dusk" })).name, "night");

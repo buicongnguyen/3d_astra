@@ -30,11 +30,15 @@ export function mapLayout(missions) {
 // plate takes ("a" above, "b" below, "r" right: the top-left corner keeps the act title), chosen to keep the plate off the route and off the landmark.
 export const MAP_ART = { wide: { w: 2560, h: 1440 }, strip: { w: 2560, h: 900 } };
 export const MAP_ANCHORS = {
-  "m01-first-light": { wide: [12, 82.5], strip: [12, 82], label: "b", landmark: "Landing pad in meadow" },
-  "m02-first-contact": { wide: [30.5, 84], strip: [30.5, 84.5], label: "b", landmark: "Outpost at river bend" },
-  "m02b-hold-the-river": { wide: [49, 82.5], strip: [49, 82], label: "b", landmark: "Twin river bridges" },
-  "m03-the-ashen-line": { wide: [67.5, 84], strip: [67.5, 84.5], label: "b", landmark: "Burnt defensive trench" },
-  "m04-three-way-dunes": { wide: [86, 82.5], strip: [86, 82], label: "b", landmark: "Three desert tracks" },
+  // Map variety (2026-11-24): Act 1 holds seven relays since Mirror Lake (m02c) and Canyon Run (m04b), 13.3% apart
+  // like Acts 2 and 3, zigzagging 78% / 86% so neighbours keep 44 px on the 318 px phone board (README had 18.5%).
+  "m01-first-light": { wide: [10, 78], strip: [10, 78], label: "b", landmark: "Landing pad in meadow" },
+  "m02-first-contact": { wide: [23.3, 86], strip: [23.3, 86], label: "b", landmark: "Outpost at river bend" },
+  "m02b-hold-the-river": { wide: [36.7, 78], strip: [36.7, 78], label: "b", landmark: "Twin river bridges" },
+  "m02c-mirror-lake": { wide: [50, 86], strip: [50, 86], label: "b", landmark: "Island lake below the river bridges" },
+  "m03-the-ashen-line": { wide: [63.3, 78], strip: [63.3, 78], label: "b", landmark: "Burnt defensive trench" },
+  "m04-three-way-dunes": { wide: [76.7, 86], strip: [76.7, 86], label: "b", landmark: "Three desert tracks" },
+  "m04b-canyon-run": { wide: [90, 78], strip: [90, 78], label: "b", landmark: "Amber canyon road north of the dunes" },
   "m05-the-verdant-pact": { wide: [90, 49.5], strip: [90, 49.5], label: "a", landmark: "Forest crossing" },
   "m06-copper-harvest": { wide: [76.7, 57.5], strip: [76.7, 59], label: "b", landmark: "Crystal relay in copper basin" },
   "m06b-wings-over-copper": { wide: [63.3, 49.5], strip: [63.3, 49.5], label: "a", landmark: "Airfield at rim" },

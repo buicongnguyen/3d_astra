@@ -139,6 +139,27 @@ export function paintGround(ctx, terrain, size, random) {
       }
     }
   }
+  // Lakes (campaign maps): the same wet sand and broken foam line round the shore and the island's foot.
+  for (const lake of terrain.lakes || []) {
+    const foam = rgb(themeFor(terrain.id).foam), shallow = rgb(themeFor(terrain.id).shallow);
+    const cx = size / 2 + lake.x * scale, cz = size / 2 + lake.z * scale;
+    for (const [radius, out] of [[lake.r, 1], ...(lake.inner ? [[lake.inner, -1]] : [])]) {
+      const r0 = radius * scale, r1 = (radius + out * 1.6) * scale;
+      const wet = ctx.createRadialGradient(cx, cz, Math.min(r0, r1), cx, cz, Math.max(r0, r1));
+      wet.addColorStop(out > 0 ? 0 : 1, tint(shallow, 0.5));
+      wet.addColorStop(out > 0 ? 1 : 0, tint(shallow, 0));
+      ctx.fillStyle = wet;
+      ctx.beginPath(); ctx.arc(cx, cz, Math.max(r0, r1), 0, Math.PI * 2); ctx.arc(cx, cz, Math.min(r0, r1), 0, Math.PI * 2, true); ctx.fill();
+      ctx.strokeStyle = tint(foam, 0.8);
+      ctx.lineWidth = Math.max(1.5, scale * 0.16);
+      const steps = Math.round((2 * Math.PI * radius * scale) / (18 * k));
+      for (let i = 0; i < steps; i++) {
+        if (random() < 0.25) continue;
+        const a0 = (i / steps) * Math.PI * 2, a1 = a0 + (12 * k) / (radius * scale), rr = (radius + out * (0.3 + random() * 0.6)) * scale;
+        ctx.beginPath(); ctx.arc(cx, cz, rr, a0, a1); ctx.stroke();
+      }
+    }
+  }
 }
 
 // The kill zone at a ramp (16.2): attackers must climb here under the guns on top, so the lower

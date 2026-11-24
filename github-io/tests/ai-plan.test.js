@@ -110,7 +110,9 @@ test('campaign: the story missions in three acts on real maps, unlocked in order
   assert.ok(MISSIONS.length >= 14, `${MISSIONS.length} missions`);
   assert.deepEqual(ACTS.map(a => a.act), [1, 2, 3]);
   for (const m of MISSIONS) {
-    assert.ok(m.defence ? DEFENCE_MAPS[m.map]?.defence : MAPS[m.map] || ALL_MAPS[m.map]?.campaign, m.map); assert.ok(AI_SPEEDS[m.speed]);
+    // Canyon Run (m04b, map variety) is a no-base field mission on the Defence map Amber Canyon.
+    const fieldOnDefenceMap = DEFENCE_MAPS[m.map]?.defence && m.rules.playerBase === false;
+    assert.ok(m.defence ? DEFENCE_MAPS[m.map]?.defence : MAPS[m.map] || ALL_MAPS[m.map]?.campaign || fieldOnDefenceMap, m.map); assert.ok(AI_SPEEDS[m.speed]);
     assert.ok(ACTS.some(a => a.act === m.act), `${m.id} belongs to an act`);
   }
   assert.equal(new Set(MISSIONS.map(m => m.id)).size, MISSIONS.length, 'mission ids are unique');

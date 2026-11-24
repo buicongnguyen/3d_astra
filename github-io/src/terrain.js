@@ -72,6 +72,32 @@ export class Terrain {
     this.water = custom
       ? this.rivers.flatMap((r) => r.gaps.map(([left, right]) => ({ left, right, top: r.z - 3, bottom: r.z + 3 })))
       : this.river ? waterRects.map((r,i)=>({...r,left:i===0 ? -this.half:r.left,right:i===3 ? this.half:r.right})) : [];
+    // lakes (campaign maps, 2026-11 map variety): [{ x, z, r, island, fords: [{ angle, width }] }]. A round lake of
+    // radius r; with `island` the water is a ring from that radius out (a plateau sits inside it). Each ford is a
+    // shallow strip `width` wide running from the middle out along `angle` (degrees, like plateau ramps): wadeable.
+    this.lakes = (this.lakes || []).map((l) => ({ x: l.x, z: l.z, r: l.r, inner: l.island || 0,
+      fords: (l.fords || []).map((f) => { const a = (f.angle * Math.PI) / 180; return { angle: f.angle, half: f.width / 2, dx: Math.cos(a), dz: Math.sin(a) }; }) }));
+  }
+  // The ford of a lake whose strip holds a circle of radius r at (x, z) entirely, or null.
+  lakeFord(l, x, z, r = 0) {
+    const dx = x - l.x, dz = z - l.z;
+    for (const f of l.fords) if (dx * f.dx + dz * f.dz > 0 && Math.abs(dx * f.dz - dz * f.dx) < f.half - r) return f;
+    return null;
+  }
+  // How deep the drawn ground is cut under lake water at (x, z): 0.5 m inside, easing to 0 a metre beyond the
+  // shore (as a river bank does), 0 on a ford. View only (view.js); the rules read lakeWater.
+  lakeBed(x, z) {
+    let depth = 0;
+    for (const l of this.lakes) {
+      const d = hyp(x - l.x, z - l.z), s = Math.min(l.r + 1 - d, l.inner ? d - (l.inner - 1) : Infinity);
+      if (s > 0 && !this.lakeFord(l, x, z)) depth = Math.max(depth, 0.5 * Math.min(1, s));
+    }
+    return depth;
+  }
+  // True when a circle of radius r at (x, z) touches a lake's open water (its fords are wadeable).
+  lakeWater(l, x, z, r = 0) {
+    const d = hyp(x - l.x, z - l.z);
+    return d < l.r + r && d > l.inner - r && !this.lakeFord(l, x, z, r);
   }
   // A river band: its crossings (west to east), its fords and the open water between them.
   makeRiver(z, crossings) {
@@ -95,6 +121,12 @@ export class Terrain {
     // Cliff faces read as stone and ramps as road (ground paint, scenery, Sunward's road bonus).
     if (this.plateaus.length) { if (this.onRamp(x, z)) return "road"; if (this.cliff(x, z)) return "stone"; }
     if (this.id === "classic") return "dirt";
+    // A lake: open water, its fords, and a sandy shore 2.5 m wide around it.
+    for (const l of this.lakes) {
+      const d = hyp(x - l.x, z - l.z);
+      if (d <= l.r && d >= l.inner) return this.lakeFord(l, x, z) ? "ford" : "water";
+      if (d > l.r && d < l.r + 2.5) return "sand";
+    }
     const river = this.river ? this.riverNear(z, 5) : null;
     // Defence maps: the enemy road is painted, and none of the skirmish roads or boulders are there.
     if (this.defence && !river) return this.onRoute(x, z) ? "road" : this.ground(x, z);
@@ -159,13 +191,15 @@ export class Terrain {
   inWater(x, z, r) {
     const water = this.water;
     for (let i = 0; i < water.length; i++) if (overlaps(x, z, r, water[i])) return true;
+    const lakes = this.lakes;
+    for (let i = 0; i < lakes.length; i++) if (this.lakeWater(lakes[i], x, z, r)) return true;
     return false;
   }
   canTraverse(a, b, r = 0.55) {
     if (!(Number.isFinite(a.x) && Number.isFinite(a.z) && Number.isFinite(b.x) && Number.isFinite(b.z) && Number.isFinite(r)) || r < 0) return false;
     if (!this.canStand(a.x, a.z, r) || !this.canStand(b.x, b.z, r))
       return false;
-    if (!this.water.length && !this.plateaus.length) return true;
+    if (!this.water.length && !this.plateaus.length && !this.lakes.length) return true;
     const steps = Math.max(
       1,
       Math.ceil(hyp(b.x - a.x, b.z - a.z) / 0.4),
@@ -190,6 +224,11 @@ export class Terrain {
       const approach = river.crossings.some((c) => Math.abs(x - c.x) < c.half + r + 1.5);
       if (Math.abs(z - river.z) < (approach ? 7 : 5.5) + r)
         return "Keep river banks and crossing approaches clear.";
+    }
+    // A lake's shore stays clear 2 m out, so no building closes a ford's landing.
+    for (const l of this.lakes) {
+      const d = hyp(x - l.x, z - l.z);
+      if (d < l.r + 2 + r && d > l.inner - 1 - r) return "Keep river banks and crossing approaches clear.";
     }
     return "";
   }

@@ -118,7 +118,7 @@ Note (tuning pass, 2026-11-10): every mission AI now opens Relaxed and some step
 |---|---|---|---|---|---|
 | 9 | `m09-a-debt-in-the-dunes` | Amber Dunes | 1 Normal, with Sunward help | Reach Sol's camp, protect its beacon, destroy the Ashfall core | Hale sends Warden machines at your own camp; Sol's second column arrives |
 | 10 | `m10-obsidian-storm` | Obsidian Highlands | 3 Normal, allied | Destroy three Veil dampers, then hold the Crown relay | Maren explains her fear; three armies converge on the Crown |
-| 11 | `m11-cut-the-draw` | Frontier Expanse | 2 Normal, allied | Cut three conduits in 20 minutes | The first cut pulls the Wardens onto the next conduit; the second sends them at your camp |
+| 11 | `m11-cut-the-draw` | Twin Rivers (Frontier Expanse before the 2026-11 map variety pass) | 2 Normal, allied | Cut three conduits in 20 minutes | The first cut pulls the Wardens onto the next conduit; the second sends them at your camp |
 | 12 | `m12-frontiers-end` | Frontier Expanse | 3 Fast, allied | Survive the first offensive, destroy the draw engine | Maren stands the Veil down at half health; the coalition slows and Veil troops join you |
 
 ### What each mission teaches or tests

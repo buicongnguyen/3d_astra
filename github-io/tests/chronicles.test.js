@@ -222,7 +222,8 @@ test("progress: chronicles unlock after Act 1, open in order, record per chronic
   }
   // The main campaign reads exactly as before.
   assert.equal(missionsOf("main"), MISSIONS);
-  assert.equal(nextIn(act1), missionIndex(CHRONICLES[0].unlockAfter) + 1);
+  // The next main mission after Act 1 skips an optional side mission (Canyon Run, m04b, since the map variety pass).
+  assert.equal(nextIn(act1), MISSIONS.findIndex((m, i) => i > missionIndex(CHRONICLES[0].unlockAfter) && !m.optional));
   assert.deepEqual(missionsOf("nope"), []);
 });
 

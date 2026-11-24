@@ -25,7 +25,8 @@ test("m06's storm gathers over the first 90 s, holds, and breaks in full at 16:0
   assert.equal(rampAt([[10, 0.2], [20, 1]], 0), 0.2);
   assert.ok(Math.abs(rampAt([[10, 0.2], [20, 1]], 15) - 0.6) < 1e-12);
   // the table still holds only existing ids or the Chronicle (no field on any mission definition)
-  assert.deepEqual(Object.keys(MISSION_LOOKS).sort(), ["cv1-night-count", "m06-copper-harvest", "m08-the-quiet-vault", "m10-obsidian-storm"]);
+  // Map variety (2026-11-24): Gun Hill (m06c) at night and Canyon Run (m04b) at dusk joined the table.
+  assert.deepEqual(Object.keys(MISSION_LOOKS).sort(), ["cv1-night-count", "m04b-canyon-run", "m06-copper-harvest", "m06c-gun-hill", "m08-the-quiet-vault", "m10-obsidian-storm"]);
 });
 
 test("the night grade has blue-black shadows and less saturation; other looks fall back to the theme", () => {
