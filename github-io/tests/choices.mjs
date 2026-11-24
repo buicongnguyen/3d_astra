@@ -158,6 +158,13 @@ await suite("choices: campaign map, choice card and epilogue", async () => {
   assert.match(await page.locator("#mb-objectives").innerText(), /open the Keystone to every camp/, "the finale's last objective follows the ending");
   await tap("#mb-next");
   await page.waitForFunction(() => window.__frontier.started && document.querySelector("#modal").hidden, null, { timeout: TIMEOUT.models });
+  // Creature round (2026-11-24): holding the first line ("stand") stages the Veil stepping off Hale's line
+  // (veil-turns), as in play, well before the end; it is skipped here, then the rest is won.
+  await page.evaluate(() => { const f = window.__frontier; f.sim.setObjective("stand", "done"); f.step(0.1); });
+  await page.waitForFunction(() => window.__frontier.scene().open, null, { timeout: TIMEOUT.step });
+  assert.equal((await page.evaluate(() => window.__frontier.scene())).id, "veil-turns", "holding the line stages the Veil's turn");
+  await page.evaluate(() => window.__frontier.skipScene());
+  await page.waitForFunction(() => !window.__frontier.scene().open, null, { timeout: TIMEOUT.step });
   await page.evaluate(() => { const s = window.__frontier.sim; for (const id of s.missionDef.win) s.setObjective(id, "done"); });
   // The ending beat plays first (0.19b): the open-frontier scene, then the debrief.
   await page.waitForFunction(() => window.__frontier.scene().open, null, { timeout: TIMEOUT.step });
