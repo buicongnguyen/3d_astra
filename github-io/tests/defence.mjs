@@ -289,7 +289,7 @@ await suite("defence", async () => {
 
     // Mid-wave on Gorge Road with towers of all three tiers.
     await stageWave(page, 13);
-    await page.waitForTimeout(400);
+    await page.waitForFunction(() => window.__frontier.sim.entities.filter((e) => e.team === 1 && e.hp > 0).length > 0, null, { timeout: TIMEOUT.step }).catch(() => {});
     assert.ok(await page.evaluate(() => window.__frontier.sim.entities.filter((e) => e.team === 1 && e.hp > 0).length > 0), `${viewport}: enemies on the road`);
     await shot(page, `defence-gorge-wave-${viewport}`);
     await noSideScroll(page, `${viewport} gorge`);
@@ -334,7 +334,7 @@ await suite("defence", async () => {
     await tap('#commands [data-defence-act="demolish"]');
     await page.waitForFunction(() => window.__frontier.sim.crossings?.[-22]?.state === "fuse", null, { timeout: TIMEOUT.step });
     await page.evaluate(() => window.__frontier.step(1));
-    await page.waitForTimeout(300);
+    await page.waitForFunction(() => window.__frontier.view.scene.getObjectByName("defence-fuse")?.visible, null, { timeout: TIMEOUT.step }).catch(() => {});
     assert.ok(await page.evaluate(() => window.__frontier.view.scene.getObjectByName("defence-fuse")?.visible), `${viewport}: the fuse light`);
     await shot(page, `defence-fuse-${viewport}`);
     await page.evaluate(() => window.__frontier.step(2.2));
@@ -357,7 +357,7 @@ await suite("defence", async () => {
     // Twin Bridges mid-wave.
     await page.evaluate(() => { const s = window.__frontier.sim; for (const e of s.entities) if (e.team === 1) e.hp = 0; window.__frontier.step(0.05); });
     await stageWave(page, 9);
-    await page.waitForTimeout(400);
+    await page.waitForFunction(() => window.__frontier.sim.entities.filter((e) => e.team === 1 && e.hp > 0).length > 0, null, { timeout: TIMEOUT.step }).catch(() => {});
     assert.ok(await page.evaluate(() => window.__frontier.sim.entities.filter((e) => e.team === 1 && e.hp > 0).length > 0), `${viewport}: enemies at the bridges`);
     await shot(page, `defence-bridges-wave-${viewport}`);
     await noSideScroll(page, `${viewport} bridges`);
@@ -374,7 +374,7 @@ await suite("defence", async () => {
         await page.waitForFunction((id) => window.__frontier.sim.missionDef?.id === id, id);
         await startPicked(page, tap);
         await stageWave(page, id === "d-switchback" ? 16 : 11);
-        await page.waitForTimeout(500);
+        await page.waitForFunction(() => window.__frontier.sim.entities.filter((e) => e.team === 1 && e.hp > 0).length > 0, null, { timeout: TIMEOUT.step }).catch(() => {});
         assert.ok(await page.evaluate(() => window.__frontier.sim.entities.filter((e) => e.team === 1 && e.hp > 0).length > 0), `${viewport} ${id}: enemies on the road`);
         await shot(page, `defence-${id.slice(2)}-wave-${viewport}`);
         await noSideScroll(page, `${viewport} ${id}`);

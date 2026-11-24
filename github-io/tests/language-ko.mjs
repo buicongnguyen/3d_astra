@@ -119,7 +119,7 @@ export async function koreanChecks(browser) {
       f.hold = false;
     });
     await page.waitForFunction(() => document.querySelector('#modal .result-card') && !document.querySelector('#modal').hidden, null, { timeout: TIMEOUT.models });
-    await page.waitForTimeout(600);
+    await page.waitForFunction(() => /[가-힣]/.test(document.querySelector('#modal').innerText), null, { timeout: TIMEOUT.step }).catch(() => {});
     assert.match(await page.locator('#modal').innerText(), /[가-힣]/, `${name}: results in Korean`);
     await fits('#modal', 'results', '#modal .result-actions button, #modal .debrief-actions button');
     await shot('results');

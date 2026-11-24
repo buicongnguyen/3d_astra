@@ -211,7 +211,7 @@ await suite("defence-zones", async () => {
       f.hold = true; // Preserve the fight while slow devices capture both views.
       f.select([]);
     });
-    await page.waitForTimeout(400);
+    await page.waitForFunction(() => window.__frontier.sim.entities.filter((e) => e.team === 1 && e.hp > 0).length > 0, null, { timeout: 20000 }).catch(() => {});
     assert.ok(await page.evaluate(() => window.__frontier.sim.entities.filter((e) => e.team === 1 && e.hp > 0).length > 0), `${viewport}: enemies on the roads`);
     await shot(page, `defence-zones-wave-${viewport}`);
     // The overview shows the whole valley.
