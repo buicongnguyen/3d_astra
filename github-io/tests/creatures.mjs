@@ -112,8 +112,9 @@ await suite("creatures: campaign dens and the Vault Sentinel", async () => {
     await page.waitForFunction((id) => !!window.__frontier.view.objects.get(id), g0.id, { timeout: TIMEOUT.step });
     await shot(page, `creatures-sentinel-dormant-${viewport}`);
     // The squad walks up; nobody fights it until the Commander orders the attack (through the player's own order path).
+    // Okoro stays where he is: bringing him to the vault door completes "vault" and plays echo-wakes first.
     await page.evaluate(({ x, z }) => {
-      const s = window.__frontier.sim, squad = s.own(0).filter((e) => e.kind === "unit");
+      const s = window.__frontier.sim, squad = s.own(0).filter((e) => e.kind === "unit" && e.tag !== "okoro");
       squad.forEach((e, i) => { e.x = x + 6 + (i % 5) * 1.3; e.z = z + 5 + Math.floor(i / 5) * 1.3; e.orders = []; e.post = null; });
       for (const e of s.entities) if (e.team === 1 && e.kind === "unit") e.hp = 0;
       s.updateVision();
