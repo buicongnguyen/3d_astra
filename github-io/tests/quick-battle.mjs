@@ -52,6 +52,8 @@ await suite("quick-battle", async () => {
       });
       assert.deepEqual([match.quick, match.rules, match.speed, match.map, match.enemies, match.rival], [true, { quick: "on" }, "relaxed", "riverlands", 1, "ashfall"], `${viewport}: ${JSON.stringify(match)}`);
       assert.deepEqual(match.playerRules, { roster: "expanded" }, `${viewport}: the player's own rules are kept`);
+      // Roster 2026-11-24: the count of Quick battles picks the next rival (Sunward after this Ashfall one).
+      assert.equal(await page.evaluate(() => localStorage.getItem("frontier-quick-battles")), "1", `${viewport}: the Quick battle is counted`);
       const fight = await page.evaluate(() => {
         const f = window.__frontier, s = f.sim;
         let combat = null;

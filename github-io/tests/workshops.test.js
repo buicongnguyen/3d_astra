@@ -12,6 +12,9 @@ import { MISSIONS } from "../src/story/missions.js";
 import { run } from "./lib/sim.js";
 
 const EXP = { roster: "expanded" };
+// The fixtures stand in for the Wardens workshop units: the real Bulwark (roster 2026-11-24, tests/roster.test.js)
+// is left out of this process so the fixtures keep the Shield pylon's two tiles.
+delete D.bulwark;
 D.fxwarden1 = { ...D.drone, name: "Fixture one", workshop: "wardens", roster: "expanded", required_level: 1, cost: [110, 40], ai: { role: "line", want: [{ if: { seenInfantry: 0.6 }, n: 2 }, { n: 1 }], max: 2 } };
 D.fxwarden3 = { ...D.drone, name: "Fixture three", workshop: "wardens", roster: "expanded", required_level: 3, cost: [140, 50], ai: { role: "back", want: [{ n: 1 }], max: 1 } };
 D.fxmeridian = { ...D.ranger, name: "Fixture meridian", workshop: "meridian", roster: "expanded", required_level: 1, ai: { role: "line", want: [{ n: 1 }], max: 1 } };

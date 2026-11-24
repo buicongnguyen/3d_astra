@@ -37,5 +37,5 @@ test("m11c Hold the Keystone Roads, DefenceBot, 120 s", () => {
 // R3-A (AAA round 3) moved it: the Field command census and economy (old "4cce2935", R3-A "e4913c66").
 // Difficulty guard (Wave 1b, owner 2026-11-21): census from 300 s and no field economy, so 300 s is back to r3-base
 // ("4cce2935"); then south exits (owner, R3-L) + difficulty guard on the merged tree: "f94f7658".
-// Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders ("f94f7658" -> "42bae522").
-const ARENA_300 = "42bae522";
+// Re-recorded 2026-11-24 (integration of faction depth + support units + faction roster): Fast/Relentless AIs take doctrines and cast signature abilities; Medic/Engineer/Supply wagon health rose; Veil/Wardens cores train the new flyers and an Expanded Shield pylon trains the Bulwark (new trains lists and AI play). ("42bae522" -> "e2e10192")
+const ARENA_300 = "e2e10192";

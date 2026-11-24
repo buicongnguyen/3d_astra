@@ -4,8 +4,9 @@
 // top of its forward-flight nose-down; with motion off or reduced motion every angle eases back to level.
 export const AIR_MOTION = Object.freeze({
   // radians of bank per radian-per-second of turn, the cap, and how fast the bank follows (1/s)
-  bank: { kite: 0.32, hawk: 0.3, glider: 0.42, balloon: 0, other: 0.3 },
-  bankMax: { kite: 0.42, hawk: 0.38, glider: 0.62, balloon: 0, other: 0.38 },
+  // (roster 2026-11-24: the Veil moth glides into deep banks; the Halo ring hovers nearly level)
+  bank: { kite: 0.32, hawk: 0.3, glider: 0.42, balloon: 0, moth: 0.45, halo: 0.2, other: 0.3 },
+  bankMax: { kite: 0.42, hawk: 0.38, glider: 0.62, balloon: 0, moth: 0.6, halo: 0.26, other: 0.38 },
   bankRate: 4,
   // radians of pitch per metre-per-second of climb (nose up is negative rotation.x), the cap, the follow rate
   climb: 0.22, pitchMax: 0.3, pitchRate: 5,

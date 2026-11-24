@@ -14,8 +14,9 @@ import { run } from "./lib/sim.js";
 import { LONG, RECORD, pin } from "./lib/golden.mjs";
 
 const match = (faction, aiSpeed) => new Simulation({ map: "dunes", enemyCount: 1, aiSpeed, factions: skirmishSides(faction, "mirror", 1, "dunes"), capturePoints: true, aiPlayer: true, rules: { roster: "expanded" } });
-// meridian 300/600 and veil 300/500: Re-recorded 2026-11-24 (integration of faction depth + support units): Fast/Relentless AIs take doctrines and cast signature abilities, and Medic/Engineer/Supply wagon health rose (95 + 55 shield, 150, 340).
-const PINS = { meridian: { 300: "07081722", 600: "c002b7d3" }, veil: { 300: "f2e8d149", 500: "31d089ac" } };
+// meridian 300/600: Re-recorded 2026-11-24 (integration of faction depth + support units): Fast/Relentless AIs take doctrines and cast signature abilities, and Medic/Engineer/Supply wagon health rose (95 + 55 shield, 150, 340).
+// veil 300/500: Re-recorded 2026-11-24 (integration of faction depth + support units + faction roster): Fast/Relentless AIs take doctrines and cast signature abilities; Medic/Engineer/Supply wagon health rose; Veil/Wardens cores train the new flyers and an Expanded Shield pylon trains the Bulwark (new trains lists and AI play).
+const PINS = { meridian: { 300: "07081722", 600: "c002b7d3" }, veil: { 300: "c731093e", 500: "17f49734" } };
 // Re-recorded 2026-11-24: Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x (not 6x) to flyers (commits 5e4c07c, 2e293ea) change long AI matches.
 const count = (sim, type) => sim.entities.filter((e) => e.type === type).length;
 

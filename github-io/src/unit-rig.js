@@ -18,12 +18,13 @@ import * as THREE from "three";
 // Every infantry type has the same two leg pivots (leg_L / leg_R at the hip): the Meridian troops with
 // Boot/Leg_suit/Shin, the Gunner with Knee_pad, the faction walkers with Upper_leg/Knee/Shin/Boot.
 export const RIG_INFANTRY = new Set(["ranger", "worker", "vanguard", "medic", "engineer", "antitank", "gunner",
-  "scrapper", "shade", "stalker", "watcher", "rider", "walker"]);
+  "scrapper", "shade", "stalker", "watcher", "rider", "walker", "bulwark"]);
 // Ranged shooters kneel to fire when they stand still.
 export const KNEELERS = new Set(["ranger", "antitank", "gunner", "stalker", "watcher"]);
-// How the legs move: a Rider sits on its bike (legs still, wheels roll); the Walker stomps (heavy, no run).
-export const GAIT = { rider: "ride", walker: "stomp" };
-export const RIG_HULL = new Set(["tank", "breaker", "scorcher"]);
+// How the legs move: a Rider sits on its bike (legs still, wheels roll); the Walker and the Bulwark stomp (heavy, no run).
+export const GAIT = { rider: "ride", walker: "stomp", bulwark: "stomp" };
+// Hulls pitch on their suspension and roll their Wheels* (the Lance buggy is a wheeled hull, like the Scorcher).
+export const RIG_HULL = new Set(["tank", "breaker", "scorcher", "lancer"]);
 export const isRigType = (type) => RIG_INFANTRY.has(type) || RIG_HULL.has(type);
 export const REST_MOTION = [0, 0, 0, 1];
 export const BONE = { body: 0, legL: 1, legR: 2, hull: 3, wheel: 5, none: 9 };

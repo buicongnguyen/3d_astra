@@ -19,8 +19,20 @@ import { DEFINITIONS as D } from "./data.js";
 import { hasPortrait, portrait } from "./portraits.js";
 import { loadDefence, hasDefenceWin } from "./defence/progress.js";
 import { firstWatch, rosterOf } from "./defence/first-watch.js";
-import { isPlayerFaction } from "./factions.js";
+import { isPlayerFaction, FACTION_RULES, workshopUnitsOf } from "./factions.js";
 import { QUICK_SETUP, quickRival, quickRules } from "./sim/content/quick-battle.js";
+
+// How many Quick battles this browser has started: the rival rotates by it (sim/content/quick-battle.js
+// quickRival). A per-viewer convenience: without storage every Quick battle meets the first rival.
+export const QUICK_COUNT_KEY = "frontier-quick-battles";
+export function quickPlayed() {
+  try { const n = Number(localStorage.getItem(QUICK_COUNT_KEY)); return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0; } catch { return 0; }
+}
+function countQuick() {
+  try { localStorage.setItem(QUICK_COUNT_KEY, String(quickPlayed() + 1)); } catch {}
+}
+
+const sideFlyer = (id) => FACTION_RULES[id]?.extra?.hq?.[0] || "hawk";
 
 export function setupQuickBattle(S, A) {
   const Z = S.screen;
@@ -43,7 +55,7 @@ export function setupQuickBattle(S, A) {
     const player = isPlayerFaction($("player-faction").value) ? $("player-faction").value : "meridian";
     // The preview is rebuilt from the setup controls (briefing.js previewBattle: terrain, colours,
     // models), so they hold the Quick battle setup for that one call and get the player's back at once.
-    const quick = { scenario: QUICK_SETUP.map, "enemy-count": String(QUICK_SETUP.enemyCount), "ai-speed": QUICK_SETUP.aiSpeed, alliance: QUICK_SETUP.alliance, "enemy-faction": quickRival(player) };
+    const quick = { scenario: QUICK_SETUP.map, "enemy-count": String(QUICK_SETUP.enemyCount), "ai-speed": QUICK_SETUP.aiSpeed, alliance: QUICK_SETUP.alliance, "enemy-faction": kind === "arena" ? quickRival(player) : quickRival(player, quickPlayed()) };
     const before = Object.fromEntries(Object.keys(quick).map((id) => [id, $(id).value]));
     S.quick = kind;
     S.playMode = "skirmish";
@@ -54,8 +66,11 @@ export function setupQuickBattle(S, A) {
       for (const [id, value] of Object.entries(before)) $(id).value = value;
     }
     // Start's own handler: assets, audio and beginMatch, as a tap on Start would (never the campaign briefing).
-    if (kind === "arena") S.view.preloadModels?.(["hawk"]); // every faction's Full army has two Hawks
+    // The Full army has two of your faction's own flyer (Hawks for Meridian) and of its workshop units.
+    if (kind === "arena") S.view.preloadModels?.([sideFlyer(player), ...workshopUnitsOf(player)]);
     $("start").onclick?.();
+    // The next Quick battle meets the next rival.
+    if (kind !== "arena") countQuick();
   }
 
   // ---------- First watch: level 1 for a new Defence player ----------

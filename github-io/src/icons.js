@@ -72,6 +72,12 @@ const paths = {
   glider: '<path fill="currentColor" d="M12 2.5c1 0 1.4 1.5 1.4 4v2.3l9.1 3.4v1.8l-9.1-1.2-.5 5.6 2.6 1.6v1.5H8.5V20l2.6-1.6-.5-5.6-9.1 1.2v-1.8l9.1-3.4V6.5c0-2.5.4-4 1.4-4z"/>',
   flak: '<path d="M8.5 13.5 17 3.5M11.5 15 20 5" stroke-width="2.4"/><path fill="currentColor" d="M4.5 12h8.5l2 4.2H2.5z"/><path d="M2 21h17M6 16.2V21M12 16.2V21"/>',
   wyrm: '<path d="M2.5 19.5c3 2.5 7 .5 6.5-3.5s2.5-6.5 6-5.5 4.5 3.5 7 1.5" stroke-width="3.2"/><circle cx="19" cy="6" r="3" fill="currentColor"/><path d="M21.5 4.5 23 3"/>',
+  // Roster 2026-11-24: Lance buggy (a buggy with a raised harpoon), Bulwark (a tower shield on two legs),
+  // Veil moth (wings), Halo interceptor (a ring round a core).
+  harpoon: '<path d="M9 10.5 21 3.5" stroke-width="2.2"/><path fill="currentColor" d="M21.8 3 17.6 3.6l1.9 3.2z"/><path fill="currentColor" d="M2 13.5 4.5 10h9l2.5 3.5z"/><circle cx="5.5" cy="17.5" r="3"/><circle cx="16" cy="17.5" r="3"/><path d="M8.5 17.5h4.5"/>',
+  ward: '<path fill="currentColor" d="M6 2.5h12v9c0 3.2-2.7 5.5-6 6.5-3.3-1-6-3.3-6-6.5z"/><path d="M9 17v4.5M15 17v4.5M7 21.5h4M13 21.5h4"/>',
+  moth: '<path fill="currentColor" d="M11 6.5C8 2.5 2.5 2 1.5 4.5 1 7 4 11 10.5 12 4.5 13 3 17 4.5 19s5.5-1 6.5-5zM13 6.5c3-4 8.5-4.5 9.5-2 .5 2.5-2.5 6.5-9 7.5 6 1 7.5 5 6 7s-5.5-1-6.5-5z"/><path d="M12 5v15M10 2.5 12 5l2-2.5" stroke-width="1.8"/>',
+  halo: '<ellipse cx="12" cy="12" rx="10" ry="5" stroke-width="2.2"/><circle cx="12" cy="12" r="3.2" fill="currentColor"/><path d="M12 15.2V21M8.5 21h7"/>',
   // Orders, stances and abilities with one meaning each.
   guard: '<path class="pf" d="M12 2a5 5 0 0 1 5 5c0 3.6-5 8.5-5 8.5S7 10.6 7 7a5 5 0 0 1 5-5z"/><circle cx="12" cy="7" r="1.6"/><ellipse cx="12" cy="18.5" rx="9" ry="3.2"/>',
   chase: '<circle cx="18.5" cy="5.5" r="3.4"/><path d="M3.5 20.5 13.5 10.5"/><path class="pf" d="M8.5 9h7v7z"/>',

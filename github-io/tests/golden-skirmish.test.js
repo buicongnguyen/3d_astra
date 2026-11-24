@@ -36,10 +36,11 @@ const AI = {
   "riverlands x2 fast": { options: { map: "riverlands", enemyCount: 2, aiSpeed: "fast" }, at: { 60: "5948dbf7", 180: "2ad3ddcc", 300: "52b52e32" }, end: "running 300" },
   // basin x3 fast, 300 s: Re-recorded 2026-11-24: Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x (not 6x) to flyers (commits 5e4c07c, 2e293ea) change long AI matches.
   "basin x3 fast": { options: { map: "basin", enemyCount: 3, aiSpeed: "fast" }, at: { 60: "abede88b", 180: "7cbb444e", 300: "b7492107" }, end: "running 300" },
-  "riverlands x3 normal, Sunward against mixed rivals": { options: { map: "riverlands", enemyCount: 3, aiSpeed: "normal", factions: skirmishSides("sunward", "mixed", 3, "riverlands"), capturePoints: true }, at: { 60: "498523ba", 180: "51d0e53f", 300: "51d0e53f" }, end: "defeat 154" },
-  // Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
-  "dunes x1 normal, Ashfall against Veil": { options: { map: "dunes", enemyCount: 1, aiSpeed: "normal", factions: skirmishSides("ashfall", "veil", 1, "dunes"), capturePoints: true }, at: { 60: "fbdd5fcc", 180: "b36a3f1e", 300: "a35ac176" }, end: "running 300" },
+  "riverlands x3 normal, Sunward against mixed rivals": { options: { map: "riverlands", enemyCount: 3, aiSpeed: "normal", factions: skirmishSides("sunward", "mixed", 3, "riverlands"), capturePoints: true }, at: { 60: "1891bd2a", 180: "fe33e60d", 300: "fe33e60d" }, end: "defeat 154" },
+  // riverlands x3 Sunward against mixed and dunes Ashfall against Veil: Re-recorded 2026-11-24 (integration of faction depth + support units + faction roster): Fast/Relentless AIs take doctrines and cast signature abilities; Medic/Engineer/Supply wagon health rose; Veil/Wardens cores train the new flyers and an Expanded Shield pylon trains the Bulwark (new trains lists and AI play).
+  "dunes x1 normal, Ashfall against Veil": { options: { map: "dunes", enemyCount: 1, aiSpeed: "normal", factions: skirmishSides("ashfall", "veil", 1, "dunes"), capturePoints: true }, at: { 60: "97ebb1f4", 180: "9053dd00", 300: "da1bd628" }, end: "running 300" },
 };
+// Re-recorded 2026-11-24 (roster): the Veil and Wardens Command cores also train their new flyers (Veil moth, Halo interceptor), and an Expanded Shield pylon trains the Bulwark: new trains lists in the hashed state, and AI play that can field them.
 const SHORT = [60, 180], LATE = 300;
 const ending = (sim) => `${sim.result || "running"} ${Math.round(sim.time)}`;
 

@@ -540,3 +540,31 @@ Doctrines (`src/sim/content/doctrines.js`, data in `balance.json` `doctrines`). 
 | Foundry | Tuned engines: ground vehicles and drones ×1.15 speed (0/150) | Repair crews: vehicles 5 s out of combat mend 1.5%/s (50/150) |
 
 Difficulty gate (`node tools/difficulty-check.mjs --jobs 4 --compare`, the bot buys no doctrine, so the AI's gain is measured alone), bot wins of 12: 1v1 Relaxed 12 → 12, Normal 12 → 12, Fast 11 → 11, Relentless 11 → 11; 1v2 Relaxed 7 → 7, Normal 2 → 2, Fast 0 → 0, Relentless 1 → 0 (Dunes, attack at 20: the one match that flipped). `npm run check:missions`: all targets met, every row identical to before.
+
+## Faction roster (2026-11-24): Lance buggy, Bulwark, Veil moth, Halo interceptor
+Gaps closed: Sunward and Wardens had no workshop unit, Veil and Wardens no flyer (Wardens: 6 roster slots, now 8). Definitions in balance.json; the only new code is the Bulwark's ward (`src/sim/content/ward.js`, a `taken` hook), the workshop AI condition `seenMech`, and the Halo rule in `aiAirChoice` (built only after enemy flyers were seen).
+
+| Unit | Faction / host | HP / shield | Attack | Cost, supply | Role |
+|---|---|---|---|---|---|
+| Lance buggy `lancer` | Sunward workshop, Waystation L1 | 170 / 30, speed 5.8 | 18 per 1.8 s at 11 m, x3.5 vehicles, prefers armor then siege | 140 / 60, 2 | fast tank hunter |
+| Bulwark `bulwark` | Wardens workshop, Shield pylon L2 | 420 / 180 (back after 3 s), speed 3 | 14 per 0.9 s at 7 m, x1.6 close assault | 175 / 80, 3 | ward: other own units within 6 m take x0.85 |
+| Veil moth `moth` | Veil flyer, Command core L2 | 150 / 40, speed 5.6, fly 3.4 | 12 per 1.2 s at 7 m, no air, prefers ranged then antiarmor | 160 / 80, 2 | cloaked air hunter |
+| Halo interceptor `halo` | Wardens flyer, Command core L2 | 240 / 120 (back after 3 s), speed 5, fly 4 | 10 per 0.8 s at 9 m, x2.5 flyers | 175 / 85, 2 | air interceptor |
+
+Equal-cost duels (`tests/lib/duel.mjs`, 10 battles, Expanded rules; mean, won). Gated ones are in `tests/roster.test.js` (3 offsets).
+
+| Duel | Mean | Won |
+|---|---:|---:|
+| Lance buggy vs Battle tank / Scorcher / Gunner | +0.30 / +0.66 / +0.61 | 9 / 10 / 10 |
+| Lance buggy vs Walker / Rampart | -0.54 / -0.56 | 0 / 0 |
+| Lance buggy vs Anti-tank / Vanguard | -0.89 / -0.85 | 0 / 0 |
+| Bulwark vs Battle tank / Vanguard / Anti-tank | +0.27 / -0.42 / -0.72 | 8 / 0 / 0 |
+| Bulwark + 5 Drones vs 7 Drones | +0.77 | 10 |
+| Bulwark + 4 Vanguards vs 7 Vanguards | -0.35 | 0 |
+| Veil moth vs Ranger / Vanguard | -0.63 / +1.00 | 0 / 10 |
+| Halo vs Hawk / Balloon / Glider | +0.78 / +1.00 / +1.00 | 10 / 10 / 10 |
+| Halo vs Ranger | -0.44 | 0 |
+
+The Bulwark loses alone (it is a support piece): its worth shows in a line (+0.77 for a drone line at about equal value). Tuning: the first Bulwark (11 damage per 1 s, no counter, 190 / 90) lost to Vanguards at -0.80; it got 14 per 0.9 s, x1.6 close assault and 175 / 80. Moth against Hawk or Glider is a stalemate (0.00): the moth cannot hit air and nothing detects it there; detection (Kites, towers, 4 m) is its counter.
+
+Difficulty gate (`node tools/difficulty-check.mjs`, 3 maps x 4 attack timings, 12 matches per row; before at b854e66 -> after): every row of 1v1 and 1v2 at all four speeds is unchanged against Meridian, against Sunward, Wardens and Veil with `--rules '{"roster":"expanded"}'`, and against Wardens and Veil Classic; the one difference is Veil Expanded 1v2 Relaxed 6 -> 7 bot wins. The computer fields the new units rarely and late (AI against AI on Dunes, Expanded, Fast: one Bulwark by 881 s, one Lance buggy by 656 s), because the workshop units are wanted only from intel (Relaxed keeps none) and the Halo only after enemy flyers. Quick battle check (`tests/quick-battle-check.mjs`, now every rival of the rotation): 240 of 240 won.

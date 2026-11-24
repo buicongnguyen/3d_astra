@@ -47,7 +47,9 @@ test("the definition is the briefed one: Veil workshop unit, Expanded only, leve
   assert.equal(d.faction, undefined);
   assert.equal(d.flying, undefined);
   // `prefers` belongs to the Stalker alone among the Classic roster; nothing else changes for the older units.
-  for (const [type, def] of Object.entries(D)) if (!def.roster) assert.equal(def.prefers, undefined, `${type} has no target preference`);
+  // Roster 2026-11-24: the Veil moth (a flyer that hunts the units that hit air) is the one other unit with it.
+  assert.deepEqual(D.moth.prefers, ["ranged", "antiarmor"]);
+  for (const [type, def] of Object.entries(D)) if (!def.roster && type !== "moth") assert.equal(def.prefers, undefined, `${type} has no target preference`);
 });
 
 test("absent from every Classic roster: no faction trains it, no build menu lists it, and the sim has no Stalker", () => {

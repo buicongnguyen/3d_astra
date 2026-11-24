@@ -1182,6 +1182,23 @@
     "Ram tank": "Xe tăng húc",
     "Ashfall. A welded plough tank that leads a Scrapper swarm head-on: 650 HP and no shield, 34 damage every 1.3 s at 4 m, double to buildings and walls. Shots from the front do 0.6× damage, shots from behind 1.5×, from the side normal: flank it. Ram: charge at double speed for 2.5 seconds, and the first contact deals 80 extra damage. Trained at the Salvage yard.": "Ashfall. Xe tăng lưỡi cày hàn ghép dẫn đầu đàn Scrapper xông thẳng vào trận: 650 máu và không có khiên, 34 sát thương mỗi 1,3 giây ở tầm 4 m, gấp đôi lên công trình và tường. Đạn bắn từ phía trước chỉ gây 0,6 lần sát thương, từ phía sau 1,5 lần, từ bên hông như thường: hãy đánh vòng sườn. Húc: lao tới với tốc độ gấp đôi trong 2,5 giây, cú chạm đầu tiên gây thêm 80 sát thương. Huấn luyện tại Bãi thu hồi.",
     "Rampart: tough from the front, weak from behind. Hit it from the side or rear.": "Xe húc Rampart: chắc phía trước, yếu phía sau. Hãy đánh từ bên hông hoặc phía sau.",
+    "Lance buggy": "Xe săn tăng",
+    "Fast tank hunter": "Thợ săn tăng tốc độ cao",
+    "Sunward workshop. A fast desert buggy with a harpoon-rocket rack: 18 damage every 1.8 s at 11 m, 3.5× to vehicles (63), and it picks tanks and siege machines first. Quicker still on roads and sand. It is a vehicle itself: Anti-tank soldiers, Gunners and close-assault troops beat it. It cannot hit flyers. Trained at the Waystation.": "Xưởng Sunward. Chiếc xe sa mạc nhanh mang giàn phóng lao-rocket: 18 sát thương mỗi 1,8 giây ở 11 m, gấp 3,5 lần lên xe cơ giới (63), và ưu tiên bắn xe tăng cùng cỗ máy công thành. Càng nhanh hơn trên đường và cát. Bản thân nó cũng là xe cơ giới: lính chống tăng, tổ súng máy và quân cận chiến đánh bại nó. Không bắn được máy bay. Huấn luyện tại Trạm dừng chân.",
+    "Lance buggy: a fast harpoon buggy that hunts tanks. Infantry and Anti-tank rockets beat it.": "Xe săn tăng: chiếc xe phóng lao nhanh chuyên săn xe tăng. Bộ binh và rocket chống tăng đánh bại nó.",
+    "Shield walker": "Cỗ máy khiên hai chân",
+    "Wardens workshop. A two-legged shield machine that walks at the front of the line: 420 HP and a 180 shield that returns 3 seconds after a hit. Its ward plate covers the squad: your other units within 6 m take 15% less damage (wards do not stack). A light gun, 14 damage every 0.9 s at 7 m, 1.6× to close-assault troops. Anti-tank soldiers, Watchers and Lance buggies cut it down. Trained at a level 2 Shield pylon.": "Xưởng Wardens. Cỗ máy khiên hai chân đi đầu hàng quân: 420 HP và khiên 180 hồi lại 3 giây sau mỗi lần trúng đòn. Tấm khiên hộ vệ che cả tổ: các đơn vị khác của bạn trong 6 m chịu ít hơn 15% sát thương (không cộng dồn). Súng nhẹ, 14 sát thương mỗi 0,9 giây ở 7 m, gấp 1,6 lần lên quân cận chiến. Lính chống tăng, Lính quan sát và Xe săn tăng hạ được nó. Huấn luyện tại Trụ khiên cấp 2.",
+    "Bulwark: a shield walker. Your units within 6 m of it take 15% less damage.": "Thành lũy: cỗ máy khiên. Các đơn vị của bạn trong 6 m quanh nó chịu ít hơn 15% sát thương.",
+    "Veil moth": "Bướm Veil",
+    "Cloaked air hunter": "Thợ săn trên không ẩn hình",
+    "Veil. A silent moth-winged flyer: hidden while it has not fired for 3 seconds, and it shoots the Rangers and rocket teams that could bring it down first: 12 damage every 1.2 s at 7 m. It cannot hit flyers. Kites within 8 m, towers and Command cores within 9 m, and anything within 4 m reveal it. Trained at a level 2 Command core.": "Veil. Máy bay cánh bướm lặng lẽ: ẩn mình khi chưa bắn trong 3 giây, và ưu tiên bắn các Xạ thủ cùng đội rocket có thể hạ nó: 12 sát thương mỗi 1,2 giây ở 7 m. Không bắn được máy bay. Diều trinh sát trong 8 m, tháp pháo và Lõi chỉ huy trong 9 m, và mọi đơn vị trong 4 m sẽ làm nó lộ diện. Huấn luyện tại Lõi chỉ huy cấp 2.",
+    "Veil moth: a hidden flyer that hunts Rangers. Kites, towers and anything within 4 m reveal it.": "Bướm Veil: máy bay ẩn hình săn Xạ thủ. Diều trinh sát, tháp pháo và mọi đơn vị trong 4 m làm nó lộ diện.",
+    "Halo interceptor": "Máy bay đánh chặn Halo",
+    "Air interceptor": "Đánh chặn trên không",
+    "Wardens. A ring-shielded interceptor that guards the sky: 10 damage every 0.8 s at 9 m, 2.5× to flyers, and its shield returns 3 seconds after a hit. Weak against ground armies; the computer builds it only once it has seen enemy flyers. Rangers and Anti-tank rockets bring it down. Trained at a level 2 Command core.": "Wardens. Máy bay đánh chặn có vòng khiên canh giữ bầu trời: 10 sát thương mỗi 0,8 giây ở 9 m, gấp 2,5 lần lên máy bay, và khiên hồi lại 3 giây sau mỗi lần trúng đòn. Yếu trước quân mặt đất; máy chỉ chế tạo nó khi đã thấy máy bay địch. Xạ thủ và rocket chống tăng hạ được nó. Huấn luyện tại Lõi chỉ huy cấp 2.",
+    "Halo interceptor: hunts enemy flyers; weak against ground armies.": "Máy bay đánh chặn Halo: săn máy bay địch, yếu trước quân mặt đất.",
+    "Ward plate": "Tấm khiên hộ vệ",
+    "Dry lands: hold the Weather Spire for a Sandstorm; tame the Dune Wyrm.": "Vùng đất khô: giữ Tháp thời tiết để gọi Bão cát; thuần Rồng cát.",
     "Ram": "Húc",
     "Charge at double speed for 2.5 seconds; the first hit deals 80 extra damage.": "Lao tới với tốc độ gấp đôi trong 2,5 giây; cú đánh đầu tiên gây thêm 80 sát thương.",
     "Expanded roster: Outrider drill": "Binh chủng Mở rộng: chiến thuật kỵ binh du kích",
@@ -1382,7 +1399,6 @@
     "SANDSTORM · Click a spot on the map · Esc to cancel": "BÃO CÁT · Nhấp một điểm trên bản đồ · Esc để hủy",
     "The Sandstorm is not ready.": "Bão cát chưa sẵn sàng.",
     "Wild frontier": "Miền hoang dã",
-    "Amber Dunes: hold the Weather Spire for a Sandstorm; tame the Dune Wyrm.": "Đồi cát Hổ Phách: giữ Tháp thời tiết để gọi Bão cát; thuần Rồng cát.",
     "Achievements": "Thành tựu",
     "Commanders met": "Chỉ huy đã gặp",
     "Spared": "Được tha",
@@ -1454,6 +1470,10 @@
     "Invalid choice.": "Lựa chọn không hợp lệ."
   },
   "patterns": [
+    [
+      "^Your other units within ([\\d.]+) m of it take (\\d+)% less damage\\. Wards do not stack\\.$",
+      "Các đơn vị khác của bạn trong {1} m quanh nó chịu ít hơn {2}% sát thương. Khiên hộ vệ không cộng dồn."
+    ],
     [
       "^(\\d{1,2}) Jan$",
       "{1} thg 1"
@@ -2303,8 +2323,8 @@
       "Bão cát đang nạp lại: {1} giây."
     ],
     [
-      "^A Battle rule for Amber Dunes\\. Hold the Weather Spire near the centre to call a Sandstorm with the one Sandstorm button: after a (\\d+) s warning that every side sees, enemies inside fire 30% slower and see only (\\d+) m for (\\d+) s, and your units inside are hidden from them\\. It recharges in (\\d+) s; a new holder waits (\\d+) s\\.$",
-      "Một luật trận cho Đồi cát Hổ Phách. Giữ Tháp thời tiết gần trung tâm để gọi Bão cát bằng nút Bão cát: sau {1} giây cảnh báo mà mọi phe đều thấy, địch trong bão bắn chậm hơn 30% và chỉ thấy {2} m trong {3} giây, còn quân của bạn trong bão được che giấu. Bão nạp lại sau {4} giây; người giữ mới phải chờ {5} giây."
+      "^A Battle rule for the dry lands: Amber Dunes, Dry Reach, Golden Heart and Copper Basin\\. Hold the Weather Spire near the centre to call a Sandstorm with the one Sandstorm button: after a (\\d+) s warning that every side sees, enemies inside fire 30% slower and see only (\\d+) m for (\\d+) s, and your units inside are hidden from them\\. It recharges in (\\d+) s; a new holder waits (\\d+) s\\.$",
+      "Một luật trận cho vùng đất khô: Đồi cát Hổ Phách, Vùng Khô Hạn, Trái tim Vàng và Lòng chảo Đồng. Giữ Tháp thời tiết gần trung tâm để gọi Bão cát bằng nút Bão cát: sau {1} giây cảnh báo mà mọi phe đều thấy, địch trong bão bắn chậm hơn 30% và chỉ thấy {2} m trong {3} giây, còn quân của bạn trong bão được che giấu. Bão nạp lại sau {4} giây; người giữ mới phải chờ {5} giây."
     ],
     [
       "^Clear the (\\d+) Wyrmlings at the nest, then keep only your units in it for (\\d+) s to tame a Dune Wyrm \\(at most (\\d+) per side\\)\\. The nest regrows its guards (\\d+) s later\\. Relaxed rivals never use the Spire or the nest; Normal rivals only late in a match\\.$",

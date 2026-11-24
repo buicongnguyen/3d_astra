@@ -40,6 +40,19 @@ export const AIR_PARTS = {
     engines: [{ at: [0, 0.86, -0.92], size: 0.55 }],
     tips: [[1.9, 1.86, -0.66], [-1.9, 1.86, -0.66]],
   },
+  // roster 2026-11-24 (tools/blender/generate_roster.py). The moth is silent: no disc, only its team-lit eyes.
+  moth: {
+    discs: [],
+    red: [1.78, 0.77, 0.36], green: [-1.78, 0.77, 0.36], strobe: [0, 0.45, -1.27],
+    engines: [{ at: [0, 0.53, 0.62], size: 0.4, team: true }],
+    tips: [[1.78, 0.77, 0.36], [-1.78, 0.77, 0.36]],
+  },
+  halo: {
+    discs: [{ at: [0, 0.25, 0], r: 0.95 }],
+    red: [1.31, 0.61, 0], green: [-1.31, 0.61, 0], strobe: [0, 0.97, 0],
+    engines: [{ at: [0, 0.05, 0], size: 0.55 }],
+    tips: [[1.22, 0.35, 0], [-1.22, 0.35, 0]],
+  },
 };
 export const AIR_LIFE = Object.freeze({
   capacity: 256,

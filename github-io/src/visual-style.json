@@ -46,6 +46,10 @@
     "rampart":{"height":1.5,"reach":2.2,"life":0.22,"kind":"cannon","look":"plough","color":[1,0.7,0.3,1],"hit":0.9},
     "ironsovereign2":{"height":3.6,"reach":2.8,"life":0.12,"kind":"rifle","look":"hose","color":[0.7,0.95,1,1],"hit":0.35},
     "wyrm":{"height":0.9,"reach":1.6,"life":0.18,"kind":"cannon","look":"plough","color":[1,0.74,0.36,1],"hit":0.8},
-    "wyrmling":{"height":0.6,"reach":1,"life":0.12,"kind":"rifle","look":"pellets","color":[1,0.8,0.5,1]}
+    "wyrmling":{"height":0.6,"reach":1,"life":0.12,"kind":"rifle","look":"pellets","color":[1,0.8,0.5,1]},
+    "lancer":{"height":2.19,"reach":0.83,"life":0.45,"kind":"rocket","look":"rocket","color":[1,0.82,0.5,1],"hit":0.6},
+    "bulwark":{"height":2.12,"reach":1.64,"life":0.12,"kind":"rifle","look":"burst","color":[0.62,0.86,1,1]},
+    "moth":{"height":0.5,"reach":0.79,"life":0.2,"kind":"rifle","look":"beam","color":[0.84,0.56,1,0.95],"beamLife":0.2,"beamWidth":0.1,"ring":0.8},
+    "halo":{"height":0.3,"reach":1.45,"life":0.09,"kind":"rifle","look":"twin-tracer","color":[0.45,1,0.9,1]}
   }
 }

@@ -10,6 +10,8 @@
 // APPEND-ONLY: add new rules at the end, never edit or reorder the ones above.
 // To change a default for new setups (the owner's decision O1 for the roster), change the
 // `default` here: the sim's own default and every bench stay Classic.
+import BALANCE from "../balance.json" with { type: "json" };
+
 export const RULE_OPTIONS = [
   {
     id: "roster",
@@ -43,10 +45,11 @@ export const RULE_OPTIONS = [
   {
     id: "wild",
     label: "Wild frontier",
-    help: "Amber Dunes: hold the Weather Spire for a Sandstorm; tame the Dune Wyrm.",
+    help: "Dry lands: hold the Weather Spire for a Sandstorm; tame the Dune Wyrm.",
     values: [{ id: "off", label: "Off" }, { id: "on", label: "On" }],
     default: "off",
     badge: "New",
-    maps: ["dunes"],
+    // Every Wild land (roster 2026-11-24: Amber Dunes, Dry Reach, Golden Heart and Copper Basin).
+    maps: Object.keys(BALANCE.wild_frontier.lands),
   },
 ];

@@ -57,7 +57,9 @@ export const aiCounter = {
       !count((e) => e.type === "kite") && this.time >= (this.aiKiteAt?.[team] ?? 0) && room("kite")) return "kite";
     if (this.time > pace.upgradeAt) {
       const own = (this.factionFor(team).extra?.hq || []).find((type) => hq.trains?.includes(type));
-      if (own && hq.level >= (D[own].required_level || 1) && count((e) => e.flying && e.damage > 0) < AIR.ai_cap && room(own)) return own;
+      // An interceptor (counter: "air", the Wardens' Halo) answers enemy flyers only: none before one has been seen.
+      const answers = own && D[own].counter === "air";
+      if (own && hq.level >= (D[own].required_level || 1) && count((e) => e.flying && e.damage > 0) < AIR.ai_cap && room(own) && (!answers || this.seenMix(team).air > 0)) return own;
     }
     return null;
   },

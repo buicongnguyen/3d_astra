@@ -357,6 +357,50 @@
       "budget": 2600,
       "review": "pending owner review (F8 creature art)",
       "animation": "Runtime articulated parts (foreleg pivots); no baked clips"
+    },
+    {
+      "name": "lancer",
+      "file": "lancer.glb",
+      "triangles": 3356,
+      "kind": "unit",
+      "budget": 3500,
+      "review": "pending owner review (roster 2026-11-24)",
+      "animation": "Runtime articulated parts; no baked clips",
+      "faction": "sunward",
+      "roster": "2026-11-24"
+    },
+    {
+      "name": "bulwark",
+      "file": "bulwark.glb",
+      "triangles": 3524,
+      "kind": "unit",
+      "budget": 4500,
+      "review": "pending owner review (roster 2026-11-24)",
+      "animation": "Runtime articulated parts; no baked clips",
+      "faction": "wardens",
+      "roster": "2026-11-24"
+    },
+    {
+      "name": "moth",
+      "file": "moth.glb",
+      "triangles": 1416,
+      "air": true,
+      "budget": 1500,
+      "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips",
+      "review": "pending owner review (roster 2026-11-24)",
+      "faction": "veil",
+      "roster": "2026-11-24"
+    },
+    {
+      "name": "halo",
+      "file": "halo.glb",
+      "triangles": 1420,
+      "air": true,
+      "budget": 1500,
+      "animation": "Runtime spin_*/flicker_* pivots and hover bob; no baked clips",
+      "review": "pending owner review (roster 2026-11-24)",
+      "faction": "wardens",
+      "roster": "2026-11-24"
     }
   ]
 }

@@ -1,7 +1,8 @@
 // First-minute hooks check (AAA round 3, R3-Q). No browser: the test bots play the new content.
 //  - Quick battle: the bot (tools/playbot.mjs) plays the one-tap setup (Relaxed, one rival of another
-//    faction) as each of the five factions, on Riverlands (the Quick battle map) and on Classic and
-//    Dunes, with four attack thresholds. Every match must be won (owner: two rivals are already hard,
+//    faction) as each of the five factions against every rival of its Quick battle rotation (roster
+//    2026-11-24: Ashfall, Sunward, Wardens, Veil, Meridian), on Riverlands (the Quick battle map) and on
+//    Classic and Dunes, with four attack thresholds. Every match must be won (owner: two rivals are already hard,
 //    so this one is a fun, winnable 1v1), and the first combat must come by 45 s.
 //  - First watch: the Defence bot plays Gorge Road's new-player variant on every difficulty. The first
 //    combat must come by 60 s, the bot must still reach the level's target stars, and on Standard its
@@ -12,7 +13,7 @@ import { Simulation } from "../src/simulation.js";
 import { PlayBot } from "../tools/playbot.mjs";
 import { DefenceBot } from "../tools/defence-bot.mjs";
 import { skirmishSides } from "../src/factions.js";
-import { QUICK_SETUP, quickRival } from "../src/sim/content/quick-battle.js";
+import { QUICK_SETUP, quickRivals } from "../src/sim/content/quick-battle.js";
 import { DEFENCE_LEVELS } from "../src/defence/levels.js";
 import { firstWatchLevel } from "../src/defence/first-watch.js";
 
@@ -23,8 +24,8 @@ const firstShot = (s, e) => e.type === "shot" && (e.team === 0 || s.get(e.target
 const failures = [];
 const started = Date.now();
 
-function quick(player, map, attackAt) {
-  const s = new Simulation({ map, aiSpeed: QUICK_SETUP.aiSpeed, enemyCount: QUICK_SETUP.enemyCount, alliance: QUICK_SETUP.alliance, capturePoints: true, factions: skirmishSides(player, quickRival(player), 1, map), rules: { quick: "on" } });
+function quick(player, rival, map, attackAt) {
+  const s = new Simulation({ map, aiSpeed: QUICK_SETUP.aiSpeed, enemyCount: QUICK_SETUP.enemyCount, alliance: QUICK_SETUP.alliance, capturePoints: true, factions: skirmishSides(player, rival, 1, map), rules: { quick: "on" } });
   const bot = new PlayBot(s, { attackAt });
   let combat = null;
   while (s.time < CAP && !s.result) {
@@ -33,7 +34,7 @@ function quick(player, map, attackAt) {
     for (const e of s.events) { bot.see(e); if (combat === null && firstShot(s, e)) combat = s.time; }
     s.events.length = 0;
   }
-  return { player, rival: quickRival(player), map, attackAt, result: s.result || "timeout", seconds: Math.round(s.time), combat: combat === null ? null : Math.round(combat * 10) / 10 };
+  return { player, rival, map, attackAt, result: s.result || "timeout", seconds: Math.round(s.time), combat: combat === null ? null : Math.round(combat * 10) / 10 };
 }
 
 function defence(level, difficulty) {
@@ -51,11 +52,11 @@ function defence(level, difficulty) {
 }
 
 const rows = [];
-for (const player of FACTIONS) for (const map of [QUICK_SETUP.map, "classic", "dunes"]) for (const attackAt of [12, 16, 20, 24]) {
-  const r = quick(player, map, attackAt);
+for (const player of FACTIONS) for (const rival of quickRivals(player)) for (const map of [QUICK_SETUP.map, "classic", "dunes"]) for (const attackAt of [12, 16, 20, 24]) {
+  const r = quick(player, rival, map, attackAt);
   rows.push(r);
   if (r.result !== "victory") failures.push(`Quick battle ${player} vs ${r.rival} on ${map} (attack at ${attackAt}): ${r.result} at ${r.seconds} s`);
-  if (r.combat === null || r.combat > QUICK_LIMIT) failures.push(`Quick battle ${player} on ${map}: first combat at ${r.combat} s (limit ${QUICK_LIMIT})`);
+  if (r.combat === null || r.combat > QUICK_LIMIT) failures.push(`Quick battle ${player} vs ${rival} on ${map}: first combat at ${r.combat} s (limit ${QUICK_LIMIT})`);
 }
 const gorge = DEFENCE_LEVELS[0], fw = firstWatchLevel(), defenceRows = [];
 for (const difficulty of ["story", "standard", "veteran"]) {

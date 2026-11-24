@@ -13,6 +13,7 @@ const OWN = {
   gunner: "mg", stalker: "sniper", carrier: "carrier", rampart: "tankside",
   ironvanguard: "tankside", ironsovereign: "tankside", ironsovereign2: "tankside",
   kite: "kite", hawk: "gunship", balloon: "balloon", glider: "glider", wyrm: "wyrm", wyrmling: "wyrm",
+  lancer: "harpoon", bulwark: "ward", moth: "moth", halo: "halo",
 };
 const UPGRADE = { upgrade: "dmgup", upgrade2: "dmgup", plating: "armor", plating2: "armor", flak: "flak" };
 

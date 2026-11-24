@@ -24,6 +24,7 @@ import { scoutRunner } from "./scout-runner.js";
 import { wildFrontier } from "./wild-frontier.js";
 import { signatures } from "./signatures.js";
 import { doctrines } from "./doctrines.js";
+import { ward } from "./ward.js";
 
 export const CONTENT = [
   suppression,
@@ -43,4 +44,5 @@ export const CONTENT = [
   wildFrontier,
   signatures,
   doctrines,
+  ward,
 ];
