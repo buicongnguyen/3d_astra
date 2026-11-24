@@ -13,6 +13,7 @@ import { commands } from "./commands.js";
 import { snapshot, restore } from "./snapshot.js";
 import { vision } from "./sim/vision.js";
 import { orders } from "./sim/orders.js";
+import { escort } from "./sim/escort.js";
 import { movement } from "./sim/movement.js";
 import { combat } from "./sim/combat.js";
 import { economy } from "./sim/economy.js";
@@ -470,7 +471,7 @@ export class Simulation {
   }
 }
 
-Object.assign(Simulation.prototype, factionRules, traits, height, points, expansion, air, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot, defence, bosses);
+Object.assign(Simulation.prototype, factionRules, traits, height, points, expansion, air, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot, defence, bosses, escort);
 // H1: the content seams and the status core, then every content module's own methods (a name clash throws).
 Object.assign(Simulation.prototype, content, effects);
 installContentMixins(Simulation.prototype, { abilities: BUILT_IN_ABILITIES });

@@ -4,6 +4,7 @@ import { AUTOSAVE_SECONDS } from "../savegame.js";
 import { pointLabel } from "../mission-ui.js";
 import { setMusicMood } from "../music.js";
 import { airModelsFor } from "../model-roster.js";
+import { autoRepairJobs } from "../sim/auto-repair.js";
 import { MUSIC_HOLDS } from "./screens.js";
 import { FastForward, MAX_TICKS_PER_FRAME, tickBudgetSpent } from "../governor.js";
 
@@ -115,6 +116,8 @@ export function setupFrame(S, A) {
         S.matchStats.before(S.sim);
         const heard = S.sim.events.length;
         S.sim.tick(0.05);
+        // Idle Harvesters repair damaged buildings at the base when no enemy is near (sim/auto-repair.js).
+        if (S.sim.ticks % 20 === 0) for (const job of autoRepairJobs(S.sim, 0)) S.sim.command({ team: 0, type: "order", ids: job.ids, order: { type: "repair", target: job.target, auto: true, resume: true } });
         S.matchStats.after(S.sim);
         S.tutorial?.update(S.sim,[...S.selected]);
         S.accumulator -= 0.05;

@@ -175,9 +175,14 @@ export const progression = {
   updateSupport(e,dt) {
     const o = e.orders[0];
     if (!o) this.assist(e,this.supportTarget(e),dt);
-    else if (o.type === 'support') {
+    // Behind the front (sim/escort.js): following the fighters it was sent or came along with.
+    else if (o.type === 'support' && o.escort) {
+      if (!this.escortStep(e,o,dt)) this.finish(e);
+    } else if (o.type === 'support') {
       if (!this.assist(e,this.get(o.target),dt,true)) this.finish(e);
     } else if (['move','attackmove'].includes(o.type)) {
+      // A group-paced march: hold behind the fighters until the formation slot is safely behind them.
+      if (o.squad && !o.aside && this.squadGuard(e,o,dt)) return;
       const ally = o.type === 'attackmove' && this.supportTarget(e);
       if (ally) this.assist(e,ally,dt);
       else if (this.move(e,o,dt,1.2)) this.finish(e);

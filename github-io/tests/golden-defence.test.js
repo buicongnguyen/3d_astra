@@ -19,7 +19,8 @@ const outcome = (r) => ({ result: r.result, stars: r.stars, lives: r.lives, towe
 // the end: crew initial, tier, branch initial and rank (tools/defence-bot.mjs).
 const LEVELS = {
   "d-gorge": { options: {}, end: { result: "victory", stars: 3, lives: 20, towers: "r3mr3r3b3s1r3b3s1a3b2t3s1b1", hash: "3f391c5e" } },
-  "d-bridges, demolishing a bridge": { level: "d-bridges", options: { demolish: true }, end: { result: "victory", stars: 3, lives: 18, towers: "r3r3r3r3r3r3r3b1a3s1t1a2t1", hash: "d3c0f7a1" } },
+  // Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
+  "d-bridges, demolishing a bridge": { level: "d-bridges", options: { demolish: true }, end: { result: "victory", stars: 3, lives: 18, towers: "r3r3r3r3r3r3r3b1a3s1t1a2t1", hash: "f50677e3" } },
   "d-crossroads": { options: {}, long: true, end: { result: "victory", stars: 2, lives: 15, towers: "b3s3b3s3a3t3b3a3s3b3t3s1b3", hash: "c77144f6" } },
 };
 test("the DefenceBot on Standard", async (t) => {

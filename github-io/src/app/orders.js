@@ -1,6 +1,8 @@
 // Targeting modes, building placement and the order sent for a click or tap.
 import { $ } from "./dom.js";
 import { DEFINITIONS as D } from "../data.js";
+import { REPAIR } from "../progression.js";
+import { isFighter } from "../sim/escort.js";
 
 // R3-B: the high-ground hint (numbers from balance.json terrain: high_range 2, high_damage 1.2).
 export const HIGH_GROUND_HINT = "High ground: +2 m range, +20% damage";
@@ -120,7 +122,7 @@ export function setupOrders(S, A) {
     if (forced === 'repair') {
       const workers = units.filter(e => S.sim.repairValid(e,target));
       if (!workers.length || target.hp >= target.maxHp) { $("mode-banner").textContent = 'REPAIR · Choose a damaged building'; return false; }
-      sendOrder(workers.map(e => e.id),{type:'repair',target:target.id},append);
+      sendOrder(repairCrew(workers,target).map(e => e.id),{type:'repair',target:target.id,resume:true},append);
       S.view.marker(target.x,target.z); A.tone(440); return true;
     }
     if (forced === 'attack') {
@@ -156,8 +158,13 @@ export function setupOrders(S, A) {
     if ((!forced || forced==='attackmove') && (target?.team > 0 || target?.kind === 'wall') && S.sim.isVisible(target))
       order = { type: "attack", target: target.id };
     if(order.type==='attack'){
-      sendOrder(units.filter(e=>e.damage>0).map(e=>e.id),order,append);
-      sendOrder(units.filter(e=>!(e.damage>0)).map(e=>e.id),{type:'move',...point},append);
+      const fighters=units.filter(e=>e.damage>0);
+      sendOrder(fighters.map(e=>e.id),order,append);
+      // Medics, Engineers and wagons follow the fighters from behind (sim/escort.js) instead of walking
+      // onto the enemy's spot; other unarmed units (and support without fighters) still move there.
+      const escorts=units.filter(e=>e.support&&fighters.some(isFighter));
+      if(escorts.length)sendOrder(escorts.map(e=>e.id),{type:'escort',members:fighters.filter(isFighter).map(e=>e.id),x:target.x,z:target.z},append);
+      sendOrder(units.filter(e=>!(e.damage>0)&&!escorts.includes(e)).map(e=>e.id),{type:'move',...point},append);
       S.view.marker(point.x,point.z,0xef9f75);A.tone(440);return;
     }
     if (
@@ -170,8 +177,11 @@ export function setupOrders(S, A) {
       const job = (w) => target.kind === "resource" ? "gather" : !target.complete ? "build"
         : target.type === "hq" && (w.carry > 0 || target.hp >= target.maxHp) ? "deliver" : "repair";
       const workers = units.filter((e) => e.type === "worker");
+      // A repair needs at most a crew of two (progression.js REPAIR.crew): the nearest go, the rest carry on.
+      // After building or repairing, Harvesters go back to their last deposit (`resume`, sim/orders.js finish).
+      const repairing = repairCrew(workers.filter((w) => job(w) === "repair"), target);
       for (const type of ["gather", "build", "deliver", "repair"])
-        sendOrder(workers.filter((w) => job(w) === type).map((e) => e.id), { type, target: target.id }, append);
+        sendOrder((type === "repair" ? repairing : workers.filter((w) => job(w) === type)).map((e) => e.id), { type, target: target.id, ...(type === "build" || type === "repair" ? { resume: true } : {}) }, append);
       // Soldiers right-clicking a damaged friendly building pitch in and repair it; otherwise they just move.
       const fixers = target.kind === "building" && target.complete && target.hp < target.maxHp
         ? units.filter((e) => e.type !== "worker" && S.sim.repairValid(e, target)) : [];
@@ -223,6 +233,8 @@ export function setupOrders(S, A) {
     const previousEvents = S.sim.events.length;
     const b = worker && S.sim.command({ team: 0, type: "build", worker: worker.id, building: S.buildType, x: point.x, z: point.z });
     if (b) {
+      // The builder goes back to its last deposit once the site is done (sim/orders.js finish, `resume`).
+      S.sim.command({ team: 0, type: "order", ids: [worker.id], order: { type: "build", target: b.id, resume: true } });
       clearMode();
       A.setSelection([b.id]);
       highGroundHint(b);
@@ -242,12 +254,28 @@ export function setupOrders(S, A) {
     A.notice(HIGH_GROUND_HINT);
   }
 
+  // The Harvesters a repair needs: the nearest, up to the crew size less those already on it.
+  function repairCrew(workers, target) {
+    const busy = S.sim.own(0).filter((w) => !workers.includes(w) && w.orders[0]?.type === "repair" && w.orders[0].target === target.id).length;
+    const d = (w) => Math.hypot(w.x - target.x, w.z - target.z);
+    return [...workers].sort((a, b) => d(a) - d(b) || a.id - b.id).slice(0, Math.max(0, REPAIR.crew - busy));
+  }
+
   // Harvesters start mining on their own, except in Training, which teaches the order.
   // Every player action goes through sim.command (see commands.js).
   function sendOrder(ids, order, append = false) {
     // R3-B group pace: a move or attack-move of two or more units keeps together, fighters in front and
     // support units behind (sim/formation.js). The only place the flag is set; Settings > Army turns it off.
-    if (S.settings?.groupPace !== false && ids.length > 1 && (order.type === "move" || order.type === "attackmove")) order = { ...order, pace: "group" };
+    const marching = order.type === "move" || order.type === "attackmove";
+    if (S.settings?.groupPace !== false && ids.length > 1 && (marching || order.type === "attack")) order = { ...order, pace: "group" };
+    // Group pace off: support units in a mixed group still never lead; they follow the fighters (sim/escort.js).
+    else if (marching && ids.length > 1 && !append) {
+      const es = ids.map((id) => S.sim.get(id)), fighters = es.filter(isFighter), escorts = es.filter((e) => e?.support);
+      if (fighters.length && escorts.length) {
+        sendOrder(escorts.map((e) => e.id), { type: "escort", members: fighters.map((e) => e.id), x: order.x, z: order.z });
+        ids = ids.filter((id) => !escorts.some((e) => e.id === id));
+      }
+    }
     const sent = S.sim.command({ team: 0, type: "order", ids, order, append });
     if (sent !== false && ids.length) S.audio?.order(order.type, S.sim); // radio reply (rate-limited in audio-logic.js)
     return sent;

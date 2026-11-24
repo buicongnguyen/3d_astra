@@ -14,7 +14,8 @@ import { run } from "./lib/sim.js";
 import { LONG, RECORD, pin } from "./lib/golden.mjs";
 
 const match = (faction, aiSpeed) => new Simulation({ map: "dunes", enemyCount: 1, aiSpeed, factions: skirmishSides(faction, "mirror", 1, "dunes"), capturePoints: true, aiPlayer: true, rules: { roster: "expanded" } });
-const PINS = { meridian: { 300: "6036d277", 600: "5ec489b1" }, veil: { 300: "af50d623", 500: "7b343294" } };
+// Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
+const PINS = { meridian: { 300: "07081722", 600: "c002b7d3" }, veil: { 300: "055f728d", 500: "df076558" } };
 // Re-recorded 2026-11-24: Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x (not 6x) to flyers (commits 5e4c07c, 2e293ea) change long AI matches.
 const count = (sim, type) => sim.entities.filter((e) => e.type === type).length;
 

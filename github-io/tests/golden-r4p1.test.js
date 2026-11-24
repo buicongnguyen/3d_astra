@@ -16,7 +16,8 @@ import { LONG, RECORD, pin } from "./lib/golden.mjs";
 // Re-recorded 2026-11-23 (owner): several Wyrm nests, two Wyrms per side, Elder nests.
 const PINS = {
   // Re-recorded 2026-11-24: Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x (not 6x) to flyers (commits 5e4c07c, 2e293ea) change long AI matches.
-  fast: { 180: "5be4f942", 420: "1c33b176" },
+  // Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
+  fast: { 180: "5be4f942", 420: "a077c5d1" },
   sandbox: { 40: "84c9ae8a" },
 };
 const RULES = { wild: "on" };

@@ -1,6 +1,7 @@
 import { DEFINITIONS as D, distance } from "../data.js";
 import { MINERS_PER_DEPOSIT } from "./constants.js";
 import { fieldPlan } from "../ai-plan.js";
+import { enemyNear } from "./auto-repair.js";
 
 // The directions a trained unit tries around its building (R3-L, exitPoint): 32 directions sorted by their
 // angle from south (+z, the side facing the default camera); of two equal angles east (+x, also toward the
@@ -42,7 +43,8 @@ export const economy = {
   updateWorker(e, o, dt) {
     const t = this.get(o.target);
     if (o.type === "repair") {
-      if (!this.repair(e, t, dt)) this.finish(e);
+      // An automatic repair (sim/auto-repair.js) stops as soon as an enemy comes near the building.
+      if ((o.auto && t && this.ticks % 10 === e.id % 10 && enemyNear(this, e.team, t)) || !this.repair(e, t, dt)) this.finish(e);
       return;
     }
     if (o.type === "build") {

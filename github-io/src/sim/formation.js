@@ -131,8 +131,11 @@ export function squadInfo(sim, o) {
 // The speed a unit on a group order walks at (traits.js moveSpeed): its own speed when it is in combat,
 // flies, or is far from the group; otherwise the group pace, and a support unit that would pass the
 // fighters slows further so it stays behind them.
+// The unit escort.js is moving behind the fighters this step (it walks at its own speed); not state.
+let FREE = null;
+export function freeStep(e) { FREE = e; }
 export function groupSpeed(sim, e, o) {
-  if (e.flying || !(o.cap > 0)) return e.speed;
+  if (e === FREE || e.flying || !(o.cap > 0)) return e.speed;
   // (A support unit's cooldown is its healing beat, not a shot: it keeps the pace while it mends.)
   if ((e.cooldown > 0 && !e.support) || sim.time - (e.hitAt ?? -99) < COMBAT) return e.speed;
   const info = squadInfo(sim, o);

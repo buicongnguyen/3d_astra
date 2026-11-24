@@ -358,6 +358,7 @@ export function setupHud(S, A) {
       if (card.dataset.rank !== rank) card.dataset.rank = rank;
     }
     A.renderGroupStrip();
+    A.updateChips?.();
     // Desktop shares the selection queue; mobile retains a queue in each tab.
     A.productionUI.update(document.documentElement.classList.contains('compact-ui') && es.length===1?e:null, !Z.started || Z.paused || !!S.sim.result);
     A.selectionWorkUI.update(es.length===1?e:null, !Z.started || Z.paused || !!S.sim.result);

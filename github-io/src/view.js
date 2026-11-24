@@ -1095,6 +1095,19 @@ export class WorldView {
     const air = e?.flying && this.objects.get(e.id)?.userData.air;
     return air ? (air.y ?? this.terrain.heightAt(e.x, e.z) + air.fly) + air.top * 0.4 : fallback;
   }
+  // Touch: the player's own units whose drawn centre lies within `radius` px of the tap (or whose body
+  // does, for big ones), nearest first. A phone tap prefers these over the ground, a building or an enemy.
+  ownUnitsNear(clientX, clientY, sim, radius = 26) {
+    const rect = this.renderer.domElement.getBoundingClientRect(), x = clientX - rect.left, y = clientY - rect.top;
+    const found = [];
+    for (const e of sim.entities) {
+      if (e.team !== 0 || e.kind !== "unit" || !(e.hp > 0) || !this.objects.has(e.id)) continue;
+      const p = this.project(e.x, e.z, e.flying ? this.liftOf(e) : 0.9), d = Math.hypot(p.x - x, p.y - y);
+      const r = Math.max(radius, (e.radius + 0.4) / this.unitsPerPixel);
+      if (d <= r) found.push({ e, d: d / r });
+    }
+    return found.sort((a, b) => a.d - b.d || a.e.id - b.e.id).map((f) => f.e);
+  }
   pick(clientX, clientY, sim, minRadius = 14) {
     const rect = this.renderer.domElement.getBoundingClientRect(),
       x = clientX - rect.left,
@@ -1105,6 +1118,7 @@ export class WorldView {
     const candidates = sim.entities.filter(e => e.hp > 0 && sim.isVisible(e) && this.objects.has(e.id));
     const meshes = candidates.map(e => this.objects.get(e.id).userData.model);
     const hits = this.raycaster.intersectObjects(meshes,true);
+    this.pickDirect = false;
     // A unit under the pointer wins over a building the same ray also crosses (a Harvester parked
     // at a Refinery, infantry in front of a Factory), as in most RTS games.
     let building = null;
@@ -1113,10 +1127,10 @@ export class WorldView {
       while (node && !meshes.includes(node)) node = node.parent;
       if (!node) continue;
       const e = candidates[meshes.indexOf(node)];
-      if (e.kind === "unit") return e;
+      if (e.kind === "unit") { this.pickDirect = true; return e; }
       building ||= e;
     }
-    if (building) return building;
+    if (building) { this.pickDirect = true; return building; }
     let best = null,
       score = Infinity;
     for (const e of [...sim.entities, ...sim.resources]) {
