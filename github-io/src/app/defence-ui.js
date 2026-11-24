@@ -18,7 +18,6 @@
 // Everything it needs from the always-loaded app arrives as `deps` (app/defence-entry.js): a
 // shared import would make the bundler split those modules, and their CSS, into a new chunk.
 import "../defence-ui.css";
-import { PHONE_ZOOM } from "./defence/constants.js";
 import { createPadsView } from "./defence/pads-view.js";
 import { createBar } from "./defence/bar.js";
 import { createSheets } from "./defence/sheets.js";
@@ -77,17 +76,19 @@ export function createDefenceUI(S, A, deps) {
     // W1-F: a phone opens at road zoom over the first spawn and follows the wave; a desktop keeps its free camera.
     ui.viewMode = "free"; ui.saved = null; ui.follow = { set: false, pauseUntil: 0, x: 0, z: 0, zoom: 0 };
     ui.cardQueue = []; ui.cardWave = -1; closeCard();
+    // Phones (2026-11-24): the camera turns and zooms so every road and pad fits the clear battlefield
+    // (app/defence/framing.js); it is fitted on the first frame the match shows, when the HUD has its size.
+    S.view.setYaw(0);
+    ui.frame = null; ui.clear = null; ui.framed = false; ui.framePending = false;
     if (phone()) {
-      const first = S.sim.defenceWave(0)?.groups?.[0], pt = first && S.sim.missionDef.defence.routes[first.route]?.[0];
-      S.view.zoom = Math.min(cam.zoom, PHONE_ZOOM);
-      if (pt) S.view.focusOn(pt.x, pt.z);
-      S.view.updateCamera();
       ui.viewMode = "follow";
+      ui.framePending = true;
     }
     ui.leaks = {};
     setDockMin(false);
     // R3-E: a profile with no Defence win gets the guided first build (it moves the camera to its pad).
     const guided = guideStart();
+    if (ui.framePending) c.reframe();
     paintView();
     // The skirmish opening line ("assign Harvesters") does not apply here.
     S.sim.events = S.sim.events.filter((e) => e.type !== "message");
@@ -100,6 +101,7 @@ export function createDefenceUI(S, A, deps) {
     ui.bar.hidden = !Z.started;
     if (S.view.maxZoom == null) S.view.maxZoom = S.sim.missionDef.defence.camera.maxZoom;
     updateBar();
+    if (ui.framePending && Z.started) c.reframe();
     if (Z.started) announce();
     sheet(es);
     info(es);
@@ -117,12 +119,25 @@ export function createDefenceUI(S, A, deps) {
     if (ui.aim) setAim(null);
     if (ui.bar) ui.bar.hidden = true;
     root.style.removeProperty("--defence-bar-h");
+    if (ui.barW) { root.style.removeProperty("--defence-bar-w"); ui.barW = 0; }
     closeCard();
     if (ui.intel) { ui.intel.hidden = true; ui.intelKey = ""; }
     delete $("commands").dataset.tier;
     if (ui.guide) guideStop();
     root.classList.remove("defence-dock-min");
+    ui.frame = null; ui.clear = null; ui.framePending = false;
+    S.view?.setYaw?.(0);
   }
+  // A phone turned or resized mid-match: fit the roads to the new screen (after the HUD has settled).
+  let resizeTimer = 0;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (!S.sim?.defence || !Z.started) return;
+      if (phone()) { ui.framePending = true; c.reframe(); }
+      else if (S.view?.yaw) { S.view.setYaw(0); ui.frame = null; ui.clear = null; }
+    }, 300);
+  });
 
   return { begin, hud, idle, tap, result, setOverview, event, get pads() { return ui.pads; }, get aim() { return ui.aim; } };
 }

@@ -65,6 +65,7 @@ export const PAD_NOTE = {
 export const ROUTE_LABEL = { main: "Road", west: "West bridge", ford: "Ford", east: "East bridge" };
 export const FLOAT_SECONDS = 1.6; // the "+N" over a carrier lost with its squad
 export const PICK_RADIUS = 26; // px: the nearest pad within this distance of a tap is picked
+export const TOUCH_PICK_RADIUS = 32; // px: the same on touch (a 64 px circle, over the 44 px tap target)
 // Build zones (0.23): the flat paint of their open cells, and the pads a zone without `max` keeps room for.
 export const ZONE_COLOR = 0xa8f0c0, ZONE_PADS = 6;
 // ms after a battlefield tap during which a click at the same spot on the command card is its ghost.

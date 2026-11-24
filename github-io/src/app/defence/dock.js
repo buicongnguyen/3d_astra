@@ -12,7 +12,8 @@ export function createDock(c) {
     const b = document.createElement("button");
     b.id = "defence-dock-toggle";
     b.type = "button";
-    b.addEventListener("click", () => { setDockMin(!root.classList.contains("defence-dock-min")); A.updateUI(); });
+    // The battlefield it frees (or takes back) is fitted again (bar.js reframe; Free camera keeps its place).
+    b.addEventListener("click", () => { setDockMin(!root.classList.contains("defence-dock-min")); A.updateUI(); c.reframe?.(); });
     dock.prepend(b);
     ui.dockToggle = b;
     paint(root.classList.contains("defence-dock-min"));

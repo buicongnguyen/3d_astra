@@ -120,11 +120,19 @@ await suite("defence-deck", async () => {
     if (!phone) { await tap("#defence-overview"); }
     await shot(page, `defence-deck-bar-${viewport}`);
 
-    // ---- Phone framing: road zoom over the first spawn, then the front of the wave.
+    // ---- Phone framing (2026-11-24, app/defence/framing.js): the camera turns and zooms so every road and pad fits the
+    // battlefield no HUD covers, never further out than 5 px per metre; then Follow moves only when the wave front leaves the middle.
     if (phone) {
       await page.evaluate(() => { const f = window.__frontier; f.hold = true; });
-      const z = await page.evaluate(() => window.__frontier.view.zoom);
-      assert.ok(z <= 55 + 0.01, `phone opens at road zoom (${z})`);
+      const fit = await page.evaluate(() => {
+        const f = window.__frontier, v = f.view, s = f.sim, canvas = v.renderer.domElement, r = canvas.getBoundingClientRect(), def = s.missionDef.defence;
+        const pts = [...Object.values(def.routes).flat(), ...def.pads];
+        const out = pts.filter((p) => { const q = v.project(p.x, p.z, v.terrain.heightAt(p.x, p.z)), x = q.x + r.left, y = q.y + r.top; return !(x >= r.left && x <= r.right && y >= r.top && y <= r.top + (v.drawHeight || v.height)) || document.elementFromPoint(x, y) !== canvas; });
+        return { zoom: v.zoom, max: (v.frameHeight || v.height) / 5, out: out.length, total: pts.length };
+      });
+      const z = fit.zoom;
+      assert.ok(z <= fit.max + 0.01, `phone opens no further out than 5 px per metre (${z} > ${fit.max})`);
+      assert.equal(fit.out, 0, `${viewport}: ${fit.out} of ${fit.total} road points and pads off screen or under the HUD at the opening view`);
       // The 28 px rule (tests/feel.mjs) in Defence at that zoom: a Vanguard on the road.
       const px = await page.evaluate(() => { const f = window.__frontier, s = f.sim, v = f.view, a = s.missionDef.defence.routes.main[1]; const e = s.spawn("vanguard", 1, a.x, a.z, true, true); v.focusOn(e.x, e.z); f.step(0.05); v.update(s, 0.016, f.selected, null, 1); let min = Infinity, max = -Infinity; v.objects.get(e.id).userData.model.traverse((o) => { if (!o.isMesh) return; o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox; for (const x of [b.min.x, b.max.x]) for (const y of [b.min.y, b.max.y]) for (const zz of [b.min.z, b.max.z]) { const p = o.position.clone().set(x, y, zz).applyMatrix4(o.matrixWorld).project(v.camera); min = Math.min(min, p.y); max = Math.max(max, p.y); } }); e.hp = 0; return (max - min) * v.renderer.domElement.getBoundingClientRect().height / 2; });
       console.log(`${viewport}: a Vanguard is ${px.toFixed(1)} px tall at zoom ${z}`);
