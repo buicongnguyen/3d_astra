@@ -64,7 +64,7 @@ void main(){
   gl_FragColor = vec4(uColor * (0.85 + 0.3 * v), a);
 }`;
 
-function disc(color, renderOrder = 3) {
+export function disc(color, renderOrder = 3) {
   const material = new THREE.ShaderMaterial({
     uniforms: { uColor: { value: new THREE.Color(color) }, uArcColor: { value: new THREE.Color(SAND) }, uFill: { value: 0 }, uHaze: { value: 0 }, uArc: { value: 0 }, uPulse: { value: 0 }, uTime: { value: 0 } },
     vertexShader: DISC_VERTEX, fragmentShader: DISC_FRAGMENT, transparent: true, depthWrite: false,

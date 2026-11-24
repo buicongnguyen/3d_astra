@@ -82,5 +82,6 @@ test("every probe walks from open ground to the camp, with a short line that has
 // Golden: mission 4 (probe, softened Sunward waves) for 120 s with the objective bot.
 // 2026-11-24 (campaign C3, enemy heroes): m04 now holds Captain Sol, a hero Rider at the east oasis; old ded7f19b.
 test("golden: mission 4 with its probe for 120 s", () => {
-  pin("r3i m04 120", missionMatch(MISSIONS.find((m) => m.id === "m04-three-way-dunes")).run(120), "2774fe6f");
+  // Re-recorded in the creature round (2026-11-24): mission 4 gained its optional Dune Wyrm nest (three Wyrmlings on the field).
+  pin("r3i m04 120", missionMatch(MISSIONS.find((m) => m.id === "m04-three-way-dunes")).run(120), "894297ef");
 });

@@ -142,6 +142,32 @@ A campaign mission may carry a `defence` block (the format of the Frontier Defen
 
 The campaign has 16 missions since *Hold the Keystone Roads* (m11c, AAA round 2); it had 15 since *Wings over Copper* (0.18.3). Ids are stable; an inserted mission takes the id of the one before it with a letter (`m02b-…`). A player who cleared all twelve keeps everything open and finds the new ones next (a mission opens when it or the one before it is cleared). The campaign map lays out its nodes from the list (`mapLayout` in `src/story/campaign-map.js`; an act of six, Act 2 now, widens from 12–86% to 11–89% so neighbours stay 15% apart); missions under the Defence rules have square relays. `RESERVED_IDS` in `src/story/defence-missions.js` is empty.
 
+## Creatures in the campaign (creature round, 2026-11-24)
+
+Optional creature encounters, off every critical path: a player who leaves them alone plays the mission as before
+(`src/sim/content/campaign-creatures.js`; everything it spawns takes ids from its own range, so other entities keep
+their ids). Two setup steps and two objective types:
+
+- `{ den: id, at, guard, count, countByDifficulty?, tame?, elder?, reward? }`: guards on the wild side (WILD_TEAM)
+  that bite anything within 8 m of the den and never leave it. Cleared, the den pays `reward` at once, or with `tame`
+  it opens: the player's fighters alone in it for 30 s tame that creature (`elder`: 1.5x health, 1.4x bite).
+  Objective `{ type: "den", den: id, optional: true }`.
+- `{ guardian: type, at, tag, name? }`: a dormant guardian on no side (NEUTRAL). Nobody fights it until the player
+  orders an attack on it; hurt, it wakes and fights within 10 m of its post; at 40% health (20% on Veteran) it
+  kneels for 3 s, untouchable, then joins the player. Objective `{ type: "guardian", tag, optional: true }`.
+  Trigger events `guardianWake`, `guardianKneel`, `guardianJoin`.
+
+| Mission | Encounter | Where | Reward |
+|---|---|---|---|
+| m02 First Contact | Acid Hound den (4 hounds, 3 on Story) | south bank (0, 40) | 150 alloy |
+| m04 Three-Way Dunes | Dune Wyrm nest (3 Wyrmlings) | empty north-west corner (-40, -40) | a Dune Wyrm |
+| m08 The Quiet Vault | Vault Sentinel (3600 HP) | behind the vault door (-42, -42) | it joins the squad |
+| m09 A Debt in the Dunes | Elder Wyrm nest (5 Wyrmlings, 4 on Story) | north-west, off the Warden Rise road (-44, -30) | an Elder Wyrm |
+
+Story parts in the same round: Sol on the open channel in m05 (before the first joint attack, and when the circuit is
+read), and the Veil's turn in m12 (scene `veil-turns` after the first offensive; with Maren spared in m10, Teo Lind
+lends two Stalkers).
+
 ## Wings over Copper: the first air raid (0.18.3)
 
 Mission 8, `m06b-wings-over-copper`, Act 2 on the Copper Basin, day 32 (after Copper Harvest, before Copper Siege). `rules: { ai: "home", playerBase: true, enemyBase: true, rosters: true, air: true }`: the Ashfall AI builds and defends but never attacks (the script sends every raid), and `air` lets the player's Command core offer Kite, Hawk (level 3) and Flak (level 2). It is the only story mission with `air`, so it is where the campaign teaches air:

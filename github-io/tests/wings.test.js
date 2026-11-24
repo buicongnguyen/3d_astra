@@ -95,10 +95,12 @@ test("Wings over Copper resolves with and without earlier decisions: only Hale's
 // 2026-11-24 (campaign C1, pacing): m03 siphons 6000 to 4200 HP and new gold/silver times; m06 quota 8000/2600 to 7200/2300 and new medals.
 test("the original missions resolve to their recorded checksums on all decision paths", () => {
   const BEFORE = {
-    "m01-first-light": "704a79da", "m02-first-contact": "bd4705a7", "m02b-hold-the-river": "9845060f", "m03-the-ashen-line": "586533a5",
-    "m04-three-way-dunes": "bc04bb3e", "m05-the-verdant-pact": "7fb6c6de", "m06-copper-harvest": "00ea9e9e", "m07-copper-siege": "e1b6c7fd",
-    "m08-the-quiet-vault": "03ed22ef", "m09-a-debt-in-the-dunes": "1e9ce9ec", "m10-obsidian-storm": "90d0a3ee", "m11-cut-the-draw": "3c9cdfeb", "m12-frontiers-end": "feffc2e5",
+    "m01-first-light": "704a79da", "m02-first-contact": "0223006d", "m02b-hold-the-river": "9845060f", "m03-the-ashen-line": "586533a5",
+    "m04-three-way-dunes": "7b11bc96", "m05-the-verdant-pact": "1cfc2cff", "m06-copper-harvest": "00ea9e9e", "m07-copper-siege": "e1b6c7fd",
+    "m08-the-quiet-vault": "a750b7e8", "m09-a-debt-in-the-dunes": "4884ad1c", "m10-obsidian-storm": "90d0a3ee", "m11-cut-the-draw": "3c9cdfeb", "m12-frontiers-end": "2aadeadc",
     // AAA round 3 (R3-I, campaign pacing): first-contact probes in 10 base missions, m03 (towers objective, gold 750 s) and m04 retuned after the south exits.
+    // Creature round (2026-11-24): optional creature dens in m02 (Acid Hounds), m04 and m09 (Wyrm nests), the Vault
+    // Sentinel in m08, Sol's lines in m05 and the Veil's turn (scene, Stalkers if Maren was spared) in m12.
     // AAA round 2 (W2-F): the new optional mission, recorded when it was added.
     "m11c-hold-the-keystone-roads": "8b3c253d",
   };

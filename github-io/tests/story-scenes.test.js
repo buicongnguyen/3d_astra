@@ -59,12 +59,13 @@ test("every scene is played by a mission, and its camera targets are places on t
   // The six big moments: missions 1, 4, 8, 10, 11 and the finale (one scene per ending), plus the
   // first balloon (Wings over Copper) and the Iron Vanguard's entrance in mission 3 (docs/aaa/BOSSES.md).
   assert.deepEqual([...new Set(uses.map((u) => u.m.id))], ["m01-first-light", "m03-the-ashen-line", "m04-three-way-dunes", "m06b-wings-over-copper", "m08-the-quiet-vault", "m10-obsidian-storm", "m11-cut-the-draw", "m11d-the-sovereign-walks", "m12-frontiers-end"]);
-  const finale = uses.filter((u) => u.m.id === "m12-frontiers-end");
+  // The creature round added the Veil's turn (veil-turns) to the finale for every ending; the ending scenes still branch.
+  const finale = uses.filter((u) => u.m.id === "m12-frontiers-end" && u.id !== "veil-turns");
   assert.deepEqual(finale.map((u) => u.if?.ending).sort(), [...ENDING_IDS].sort(), "the finale's scene branches by ending");
   for (const ending of ENDING_IDS) {
     const progress = ending === "open-frontier" ? { decisions: { "m03-alloy": "return", "m05-pact": "share", "m10-veil": "spare" } } : null;
     const scenes = actions(resolveMission(MISSIONS.at(-1), progress)).filter((a) => a.scene).map((a) => a.scene);
-    assert.deepEqual(scenes, [ending === "open-frontier" ? "keystone-open" : "keystone-held"], ending);
+    assert.deepEqual(scenes, ["veil-turns", ending === "open-frontier" ? "keystone-open" : "keystone-held"], ending);
   }
   for (const { m, id } of [...uses, ...chronicleUses]) {
     const s = new Simulation({ map: m.map, enemyCount: m.enemies, ai: false, mission: { id: "blank", rules: m.rules, objectives: [], win: [] } }), edge = s.terrain.half - 6;

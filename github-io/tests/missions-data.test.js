@@ -14,7 +14,7 @@ import CAMPAIGN_MAPS from "../src/campaign-maps.json" with { type: "json" };
 
 const D = balance.definitions;
 const NAMED = ["playerBase", "enemyBase"];
-const OBJECTIVES = ["destroyCores", "destroyTag", "hold", "survive", "escort", "collect", "build", "reach", "timeUnder", "waves"];
+const OBJECTIVES = ["destroyCores", "destroyTag", "hold", "survive", "escort", "collect", "build", "reach", "timeUnder", "waves", "den", "guardian"]; // den / guardian: the creature round (sim/content/campaign-creatures.js)
 // A mission under the Defence rules (0.19b) plays on a Defence map; every other one on a skirmish map.
 // Campaign-only maps (campaign C6: highridge, gunhills) are story battlefields too.
 const maps = { ...skirmishMaps, ...DEFENCE_MAPS, ...CAMPAIGN_MAPS };
@@ -106,8 +106,11 @@ test("objectives, regions, tags and types all resolve", () => {
       if (l.type === "time") assert.ok(l.seconds > 0, m.id);
     }
     for (const s of m.setup || []) {
-      assert.ok(s.spawn || s.capturePoint || s.resources, `${m.id}: unknown setup step ${JSON.stringify(s)}`);
+      assert.ok(s.spawn || s.capturePoint || s.resources || s.den || s.guardian, `${m.id}: unknown setup step ${JSON.stringify(s)}`);
       if (s.capturePoint) region(s.capturePoint, "capturePoint");
+      // Creature round: a den names its guard (and the creature it tames); a guardian is a creature type.
+      if (s.den) { place(s.at, "den " + s.den); type(s.guard, "unit", "den " + s.den); if (s.tame) type(s.tame, "unit", "den " + s.den); assert.ok(m.objectives.some((o) => o.type === "den" && o.den === s.den), `${m.id}: den ${s.den} has no objective`); }
+      if (s.guardian) { place(s.at, "guardian"); type(s.guardian, "unit", "guardian"); assert.ok(D[s.guardian].creature, `${m.id}: guardian ${s.guardian} is not a creature`); }
     }
     for (const s of spawns(m)) {
       type(s.spawn, null, "spawn");
@@ -127,7 +130,7 @@ test("objectives, regions, tags and types all resolve", () => {
       if (w.tagDead) tag(w.tagDead, "trigger");
       if (w.count) type(w.count.type, null, "trigger");
       if (w.pointOwned) assert.ok(points.has(w.pointOwned.point), `${m.id}: trigger on point ${w.pointOwned.point}`);
-      if (w.event) assert.ok(["incoming", "built", "levelup", "bossWake"].includes(w.event), `${m.id}: trigger on event ${w.event}`);
+      if (w.event) assert.ok(["incoming", "built", "levelup", "bossWake", "guardianWake", "guardianKneel", "guardianJoin"].includes(w.event), `${m.id}: trigger on event ${w.event}`);
       // Boss beats (sim/bosses.js) only in a mission that fields a boss; stages are 2 (two thirds) and 3 (one third).
       if (w.event === "bossWake" || w.bossStage !== undefined) assert.ok(spawns(m).some((x) => D[x.spawn]?.boss), `${m.id}: a boss trigger without a boss`);
       if (w.bossStage !== undefined) assert.ok([2, 3].includes(w.bossStage), `${m.id}: bossStage ${w.bossStage}`);

@@ -220,7 +220,8 @@ function stepNest(sim, nest) {
 }
 
 // A Wyrm under the sand stays hidden; when its ripple is over it bursts up and bites everything near.
-function stepWyrms(sim, land, think) {
+// Exported for the campaign's tamed Wyrms (sim/content/campaign-creatures.js), which pass { creature: "wyrm" }.
+export function stepWyrms(sim, land, think) {
   const a = D[land.creature].ability;
   for (const e of sim.entities) {
     if (e.type !== land.creature || e.hp <= 0) continue;

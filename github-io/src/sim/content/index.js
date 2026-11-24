@@ -22,6 +22,7 @@ import { barracksVeterans } from "./barracks-veterans.js";
 import { quickBattle } from "./quick-battle.js";
 import { scoutRunner } from "./scout-runner.js";
 import { wildFrontier } from "./wild-frontier.js";
+import { campaignCreatures } from "./campaign-creatures.js";
 
 export const CONTENT = [
   suppression,
@@ -39,4 +40,5 @@ export const CONTENT = [
   quickBattle,
   scoutRunner,
   wildFrontier,
+  campaignCreatures,
 ];

@@ -118,6 +118,7 @@ export const MISSIONS = [
       bridgeFoot: { x: -22, z: 9, r: 6 },
       bridgehead: { x: -22, z: -14, r: 8 },
       eastRoad: { x: 24, z: -10, r: 6 },
+      houndDen: { x: 0, z: 40, r: 8 },
     },
     setup: [
       { capturePoint: "oldRelay", label: "Builder relay", gives: { energy: 1 } },
@@ -139,6 +140,9 @@ export const MISSIONS = [
       // A light picket on the far side of the ford.
       { spawn: "vanguard", team: 1, at: { x: 2, z: -9 }, count: 3 },
       { spawn: "ranger", team: 1, at: { x: -1, z: -11 }, count: 2 },
+      // Creature round: an Acid Hound den on the south bank, the first creatures the expedition meets. Off every
+      // road (30 m from the camp, 29 m from the Ashfall line of march); clearing it pays a Builder salvage cache.
+      { den: "houndDen", at: "houndDen", guard: "acidhound", count: 4, countByDifficulty: { story: 3 }, reward: { alloy: 150 } },
     ],
     objectives: [
       { id: "foundry", text: "Build a Foundry", type: "build", building: "foundry", count: 1 },
@@ -146,11 +150,16 @@ export const MISSIONS = [
       { id: "core", text: "Destroy the Ashfall Command core", type: "destroyCores" },
       { id: "light", text: "Keep the Builder relay for 1 minute", type: "hold", points: ["oldRelay"], need: 1, seconds: 60, optional: true },
       { id: "fast", text: "Finish in under 15 minutes", type: "timeUnder", seconds: 900, optional: true },
+      { id: "hounds", text: "Clear the Acid Hound den on the south bank", type: "den", den: "houndDen", optional: true },
     ],
     win: ["foundry", "bridgehead", "core"],
     lose: [{ type: "coreLost" }],
     triggers: [
       { when: { time: 5 }, do: [{ say: { who: "vale", text: "Their first attack will take a few minutes. Use them: more Harvesters, then the Foundry." } }] },
+      // Creature round: the Acid Hound den (optional).
+      { when: { time: 40 }, do: [{ say: { who: "vale", text: "Something has made a den on the south bank. Pack animals that spit acid. They stay close to it, so leave them be or clear it." } }, { ping: "houndDen" }] },
+      { when: { enter: "houndDen", team: 0 }, do: [{ say: { who: "okoro", text: "Acid Hounds! Their spit eats metal. Keep the Breakers back and let the Rangers shoot from range." } }] },
+      { when: { objective: "hounds", is: "done" }, do: [{ say: { who: "okoro", text: "The den is clear. They were nesting on Builder crates: one hundred and fifty alloy, only a little chewed." } }] },
       { when: { objective: "foundry", is: "done" }, do: [
         { say: { who: "okoro", text: "Foundry is hot. And Commander, look: when our relay lit, theirs went dim. Same second." } },
       ] },
@@ -321,15 +330,20 @@ export const MISSIONS = [
         "Hold any two of the three oasis relays for one minute in a row.",
         "Ashfall and Sunward are enemies of each other too. A point they fight over is weakly held.",
         "An owned oasis pays alloy every second.",
+        "A Dune Wyrm nest lies in the empty north-west corner. Clear its Wyrmlings and hold it for 30 seconds to tame a Wyrm, or leave it alone.",
       ],
     },
     regions: {
       oasisNorth: { x: -10, z: -26, r: 8 },
       oasisCentre: { x: 2, z: -2, r: 8 },
       oasisEast: { x: 24, z: 16, r: 8 },
+      wyrmNest: { x: -40, z: -40, r: 8 },
     },
     setup: [
       { spawn: "ranger", team: 2, at: "oasisEast", tag: "heroSol", name: "Captain Sol", hero: "sol" },
+      // Creature round: a Dune Wyrm nest in the free north-west corner, 30 m from the nearest oasis and 15 m from any
+      // deposit. Optional: clear its three Wyrmlings, then hold it for 30 s to tame a Dune Wyrm.
+      { den: "wyrmNest", at: "wyrmNest", guard: "wyrmling", count: 3, tame: "wyrm" },
       { capturePoint: "oasisNorth", label: "North oasis", gives: { alloy: 2 } },
       { capturePoint: "oasisCentre", label: "Centre oasis", gives: { alloy: 2 } },
       { capturePoint: "oasisEast", label: "East oasis", gives: { alloy: 2 } },
@@ -342,6 +356,7 @@ export const MISSIONS = [
       { id: "hold", text: "Hold two oasis relays for 1 minute", type: "hold", points: ["oasisNorth", "oasisCentre", "oasisEast"], need: 2, seconds: 60 },
       { id: "all", text: "Hold all three oases for 30 seconds", type: "hold", points: ["oasisNorth", "oasisCentre", "oasisEast"], need: 3, seconds: 30, optional: true },
       { id: "fast", text: "Finish in under 13 minutes", type: "timeUnder", seconds: 780, optional: true },
+      { id: "wyrm", text: "Tame the Dune Wyrm in the north-west nest", type: "den", den: "wyrmNest", optional: true },
     ],
     win: ["hold"],
     lose: [{ type: "coreLost" }, { type: "time", seconds: 1200 }],
@@ -375,6 +390,9 @@ export const MISSIONS = [
         { wave: { team: 2, units: { vanguard: 2, ranger: 2 }, from: "enemyBase", target: "oasisCentre" } },
       ] },
       { when: { time: 960 }, do: [{ say: { who: "vale", text: "Four minutes of daylight left. Two oases, one minute in a row. Now, Commander." } }] },
+      // Creature round: the Wyrm nest (optional).
+      { when: { enter: "wyrmNest", team: 0 }, do: [{ say: { who: "sol", text: "You are walking into a Wyrm nest, Commander. The Caravan rides around those. Then again, we never had your guns." } }] },
+      { when: { objective: "wyrm", is: "done" }, do: [{ say: { who: "okoro", text: "It is following us! A Dune Wyrm, Commander. It dives under tanks. Please never point it at me." } }] },
       { when: { objective: "hold", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Tuned! Both oases are steady. I wish I knew why the others keep going dim." } }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
       { when: { time: 70 }, do: [{ say: { who: "vale", text: "One Ashfall scout on the dunes. It is looking at us, not the oases. Your guard can send it home." } }, { wave: { team: 1, units: { vanguard: 1 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
@@ -474,6 +492,9 @@ export const MISSIONS = [
       ] },
       { when: { enter: "relaySite", team: 0 }, do: [{ say: { who: "vale", text: "Relay site in view. Clear the Sunward guards before the crawler rolls in." } }] },
       { when: { objective: "escort", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Core is in. Oh. Commander, the relays are not separate machines. It is one circuit." } }] },
+      // Creature round (Sunward story): Sol on the open channel, before the first joint attack and when the circuit is read.
+      { when: { time: 150 }, do: [{ say: { who: "sol", text: "Meridian, hear me. Children in my wagons carry water from wells your relays starve. Count them before you count our dead." } }] },
+      { when: { objective: "escort", is: "done" }, do: [{ say: { who: "sol", text: "One circuit? Then my wells did not fail because of you. Hale told me otherwise. I will be asking him why." } }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
       { when: { time: 70 }, do: [{ say: { who: "vale", text: "A Pact scout in the trees, Commander. It came to look at the crawler. Show it the guns instead." } }, { wave: { team: 1, units: { vanguard: 1 }, from: { x: -6, z: 6 }, target: { x: -40, z: 40 }, probe: true } }] },
     ],
@@ -872,6 +893,7 @@ export const MISSIONS = [
         "No base and no reinforcements. If the squad or Okoro is lost, the mission fails.",
         "Three Ashfall jammers keep the vault door shut. Destroy all three.",
         "Medics heal Okoro. The guards do not leave their posts, so choose your fights.",
+        "A Builder guardian sleeps behind the vault door. It fights only if you attack it. Beat it and it kneels and joins you.",
       ],
     },
     regions: {
@@ -881,6 +903,7 @@ export const MISSIONS = [
       jamNorth: { x: -8, z: -40, r: 7 },
       depot: { x: 8, z: 18, r: 7 },
       vaultGate: { x: -38, z: -38, r: 8 },
+      sentinelPost: { x: -42, z: -42, r: 7 },
     },
     setup: [
       { spawn: "vanguard", team: 0, at: { x: -27, z: 29 }, count: 7, tag: "squad" },
@@ -911,12 +934,16 @@ export const MISSIONS = [
       { spawn: "ranger", team: 1, at: { x: -22, z: -37 }, count: 1 },
       { spawn: "foundry", team: 1, at: "depot", tag: "depot", name: "Ashfall depot", hp: 800 },
       { spawn: "ranger", team: 1, at: { x: 13, z: 20 }, count: 2 },
+      // Creature round: the vault's own guardian, asleep in the corner behind the door. Nobody fights it unless the
+      // Commander orders an attack on it: a test fight that ends with it kneeling and joining the squad.
+      { guardian: "vaultsentinel", at: "sentinelPost", tag: "sentinel", name: "Vault Sentinel", facing: 0.8 },
     ],
     objectives: [
       { id: "jam", text: "Destroy the three Ashfall jammers", type: "destroyTag", tag: "jammer" },
       { id: "vault", text: "Bring Okoro to the vault door", type: "escort", tag: "okoro", to: "vaultGate" },
       { id: "out", text: "Bring Okoro back to the landing site", type: "escort", tag: "okoro", to: "landing", hidden: true },
       { id: "depot", text: "Destroy the Ashfall depot", type: "destroyTag", tag: "depot", optional: true },
+      { id: "sentinel", text: "Pass the Vault Sentinel's test", type: "guardian", tag: "sentinel", optional: true },
     ],
     win: ["jam", "vault", "out"],
     lose: [{ type: "armyLost" }, { type: "tagLost", tag: "okoro" }],
@@ -937,6 +964,14 @@ export const MISSIONS = [
       ] },
       { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "The whole camp is awake. Do not stand and fight, Commander. Get Okoro out the way you came." } }] },
       { when: { objective: "depot", is: "done" }, do: [{ say: { who: "vale", text: "Their depot is burning. Hale's next march will start a day late. Well done." } }] },
+      // Creature round: the Vault Sentinel's test (optional).
+      { when: { enter: "sentinelPost", team: 0 }, do: [
+        { say: { who: "okoro", text: "A Builder guardian. It is not asleep, Commander, it is waiting. The old door notes say it tests whoever comes." } },
+        { say: { who: "vale", text: "It will not move unless we strike it. Your call. Order an attack on it if you want the test." } },
+      ] },
+      { when: { event: "guardianWake" }, do: [{ scene: "vault-sentinel" }] },
+      { when: { event: "guardianKneel" }, do: [{ say: { who: "okoro", text: "Stop shooting! It is kneeling. I think we passed." } }] },
+      { when: { event: "guardianJoin" }, do: [{ say: { who: "vale", text: "The guardian is walking with the squad. Keep it next to Okoro and let it take the hits." } }] },
       { when: { objective: "out", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "We are out. And ECHO came with us. It is in my slate, counting my files." } }] },
     ],
     debrief: {
@@ -974,6 +1009,7 @@ export const MISSIONS = [
         "If the Caravan beacon is destroyed, the mission fails. Reach the camp early.",
         "The dune plateau north of Sol's camp looks down on Hale's road. Units deep on its top cannot be seen from below.",
         "Hale has the Keystone key. Expect machines that are not Ashfall's own.",
+        "An Elder Wyrm nests in the north-west, west of the Warden Rise road. Five Wyrmlings guard it. Tame it if you can spare a strong group.",
       ],
     },
     regions: {
@@ -984,6 +1020,7 @@ export const MISSIONS = [
       ashfallGate: { x: 22, z: -22, r: 9 },
       wardenRise: { x: -20, z: -50, r: 7 },
       southRoad: { x: 0, z: 52, r: 6 },
+      elderNest: { x: -44, z: -30, r: 8 },
     },
     setup: [
       { spawn: "relay", team: 0, at: "solCamp", tag: "caravan", name: "Caravan beacon", hp: 2000 },
@@ -1010,6 +1047,9 @@ export const MISSIONS = [
       { spawn: "vanguard", team: 1, at: { x: 21, z: -20.5 }, count: 4 },
       { spawn: "ranger", team: 1, at: { x: 25, z: -20 }, count: 3 },
       { spawn: "breaker", team: 1, at: { x: 19, z: -25 }, count: 1 },
+      // Creature round: an Elder Wyrm nest in the empty north-west, 20 m off the Warden Rise road. Optional: five
+      // Wyrmlings, then 30 s to tame an Elder Wyrm (1.5x health, 1.4x bite).
+      { den: "elderNest", at: "elderNest", guard: "wyrmling", count: 5, countByDifficulty: { story: 4 }, tame: "wyrm", elder: true },
     ],
     objectives: [
       { id: "link", text: "Reach Captain Sol's camp", type: "reach", region: "solGate" },
@@ -1017,6 +1057,7 @@ export const MISSIONS = [
       { id: "core", text: "Destroy the Ashfall Command core", type: "destroyCores", optional: true },
       { id: "shellers", text: "Destroy the Breakers shelling the Caravan", type: "destroyTag", tag: "shellers", optional: true },
       { id: "fast", text: "Finish in under 16 minutes", type: "timeUnder", seconds: 960, optional: true },
+      { id: "elder", text: "Tame the Elder Wyrm in the north-west nest", type: "den", den: "elderNest", optional: true },
     ],
     win: ["link", "ridge"],
     lose: [{ type: "coreLost" }, { type: "tagLost", tag: "caravan" }],
@@ -1062,6 +1103,9 @@ export const MISSIONS = [
       ] },
       { when: { objective: "ridge", is: "done" }, do: [{ music: "calm" }, { say: { who: "sol", text: "The dunes are quiet. First time in a month. Where do we go next, Commander?" } }] },
       { when: { objective: "core", is: "done" }, do: [{ say: { who: "vale", text: "Their camp is down as well. Hale will have to find his fuel somewhere else." } }] },
+      // Creature round: the Elder Wyrm nest (optional).
+      { when: { enter: "elderNest", team: 0 }, do: [{ say: { who: "sol", text: "That is the old one's nest. My grandmother named it. Five young ones guard it, and they bite hard." } }] },
+      { when: { objective: "elder", is: "done" }, do: [{ say: { who: "sol", text: "The Elder Wyrm rides with you. In forty years nobody has tamed it. The Caravan will sing about this." } }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
       { when: { time: 70 }, do: [{ say: { who: "vale", text: "Ashfall scouts on the sand, two of them, looking for our camp. Let the guard see them off." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
     ],
@@ -1471,6 +1515,13 @@ export const MISSIONS = [
         { spawn: "medic", team: 0, at: "solRoad", count: 2, tag: "sunward" },
         { give: { alloy: 400, energy: 200 } },
         { ping: "keystone" }, { camera: "keystone" },
+      ] },
+      // Creature round (Veil story): the Veil steps off Hale's line, staged. Spared, Maren also lends two Stalkers;
+      // the default answer (finish) changes the words only, so the objective bot's match is unchanged.
+      { when: { objective: "stand", is: "done" }, do: [
+        { scene: "veil-turns" },
+        { if: { flag: "m10-maren", is: "accept" }, say: { who: "lind", text: "You spared the Archivist. Two of my Stalkers are yours, Commander. They shoot healers first." } },
+        { if: { flag: "m10-maren", is: "accept" }, spawn: "stalker", team: 0, at: "westBank", count: 2, exact: true, tag: "veil" },
       ] },
       { when: { enter: "approach", team: 0 }, do: [
         { say: { who: "hale", text: "Commander. You would do the same for forty thousand of yours. Do not tell me otherwise." } },

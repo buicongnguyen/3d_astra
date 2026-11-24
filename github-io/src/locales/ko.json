@@ -1412,7 +1412,16 @@
     "Complete 10 optional objectives": "선택 목표 10개 완료",
     "Chronicler": "연대기 기록자",
     "Finish a Faction Chronicle": "진영 연대기 하나 완료",
-    "New Game+": "뉴 게임+"
+    "New Game+": "뉴 게임+",
+    "Acid Hound": "산성 하운드",
+    "Pack creature": "무리 생물",
+    "Campaign creature. A fast pack hunter that lairs in dens and bites anything that comes within 8 m. Its acid spit eats armour: 1.6× damage to vehicles, and half damage to units within 1.5 m of the bitten one. Fight a pack from range and do not send tanks in alone.": "캠페인 생물. 굴에 사는 빠른 무리 사냥꾼으로, 8 m 안에 들어오는 것은 무엇이든 뭅니다. 산성 침이 장갑을 녹입니다. 차량에 1.6× 피해를 주고, 물린 대상 1.5 m 안의 유닛에게 절반 피해를 줍니다. 무리는 멀리서 상대하고 전차를 혼자 들여보내지 마세요.",
+    "Vault Sentinel": "보관고 파수꾼",
+    "Builder guardian": "건설자 수호자",
+    "Campaign guardian. A Builder construct of stone and bronze that keeps the Quiet Vault. It sleeps until you attack it, then fights near its post. Beat it fairly and it kneels, then joins your squad for the rest of the mission: a heavy blade that hits everything within 2 m of its target.": "캠페인 수호자. 고요한 보관고를 지키는 돌과 청동의 건설자 구조물입니다. 공격하기 전까지 잠들어 있다가, 공격받으면 제자리 근처에서 싸웁니다. 정정당당히 이기면 무릎을 꿇은 뒤 임무가 끝날 때까지 분대에 합류합니다. 무거운 칼날이 대상 2 m 안의 모든 것을 칩니다.",
+    "Campaign creature": "캠페인 생물",
+    "The Elder Wyrm joins your expedition.": "장로 웜이 원정대에 합류합니다.",
+    "The Vault Sentinel rises and joins your squad.": "보관고 파수꾼이 일어나 분대에 합류합니다."
   },
   "patterns": [
     [
@@ -2270,6 +2279,18 @@
     [
       "^Clear the (\\d+) Wyrmlings at the nest, then keep only your units in it for (\\d+) s to tame a Dune Wyrm \\(at most (\\d+) per side\\)\\. The nest regrows its guards (\\d+) s later\\. Relaxed rivals never use the Spire or the nest; Normal rivals only late in a match\\.$",
       "둥지의 새끼 웜 {1}마리를 처치한 뒤 {2}초 동안 아군만 둥지에 두면 듄 웜을 길들입니다(진영당 최대 {3}마리). 둥지 경비는 {4}초 뒤 다시 자랍니다. 느긋한 경쟁자는 첨탑과 둥지를 쓰지 않고, 보통 경쟁자는 경기 후반에만 씁니다."
+    ],
+    [
+      "^Acid Hounds lair in dens off the main roads of some missions\\. A pack bites anything within (\\d+) m of its den and never leaves it\\. Clearing a den is always optional, and some dens hide salvage\\.$",
+      "산성 하운드는 몇몇 임무에서 주요 도로를 벗어난 굴에 삽니다. 무리는 굴 {1} m 안의 모든 것을 물고 굴을 떠나지 않습니다. 굴 소탕은 언제나 선택이며, 어떤 굴에는 회수품이 숨겨져 있습니다."
+    ],
+    [
+      "^It sleeps until you order an attack on it, then fights within (\\d+) m of its post\\. At (\\d+)% health \\((\\d+)% on Veteran\\) it kneels, and a few seconds later it joins your squad for the rest of the mission\\. The test is optional\\.$",
+      "공격을 명령하기 전까지 잠들어 있다가, 공격받으면 제자리 {1} m 안에서 싸웁니다. 체력이 {2}%(베테랑은 {3}%)가 되면 무릎을 꿇고, 몇 초 뒤 임무가 끝날 때까지 분대에 합류합니다. 이 시험은 선택입니다."
+    ],
+    [
+      "^In the campaign, Dune Wyrm nests wait off the roads in Three-Way Dunes and A Debt in the Dunes\\. Clear the Wyrmlings, then keep your troops in the nest for (\\d+) s\\. Taming one is always optional\\.$",
+      "캠페인에서는 삼파전 사구와 사구의 빚 임무의 길에서 벗어난 곳에 듄 웜 둥지가 있습니다. 새끼 웜을 처치한 뒤 부대를 둥지 안에 {1}초 동안 두세요. 길들이기는 언제나 선택입니다."
     ]
   ]
 }

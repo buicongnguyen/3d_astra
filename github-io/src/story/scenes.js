@@ -139,6 +139,27 @@ export const SCENES = {
       { wait: 0.5 },
     ],
   },
+  // Mission 8 (creature round): the Commander strikes the vault's guardian and it rises for its test.
+  "vault-sentinel": {
+    letterbox: true,
+    beats: [
+      { camera: { at: "sentinelPost", zoom: 0.8, seconds: 1.8 } },
+      { fx: { flash: "relay" } },
+      { shake: 0.4 },
+      { title: { text: "Vault Sentinel", sub: "Builder guardian" } },
+      { say: { who: "okoro", text: "It is standing up. Commander, do not try to destroy it. Show it we can fight, and it should kneel." } },
+    ],
+  },
+  // Mission 12 (creature round, Veil story): after the first offensive the Veil steps off Hale's line.
+  "veil-turns": {
+    letterbox: true,
+    beats: [
+      { camera: { at: "westBank", zoom: 1, seconds: 2 } },
+      { say: { who: "maren", text: "Commander. The Veil has read Hale's engine for a week. Every reading says the same: it empties the Lattice." } },
+      { say: { who: "lind", text: "Teo Lind, Veil Shades. Half my crews walked off his line this morning. The rest are watching what you do next." } },
+      { say: { who: "vale", text: "Then let them watch. Every Shade who stands aside today is one gun fewer at the engine." } },
+    ],
+  },
 };
 
 // How long a line stays up in a scene: shorter than in play (the match waits), long enough to read.
