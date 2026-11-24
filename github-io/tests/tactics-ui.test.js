@@ -147,7 +147,9 @@ test('every new tactics string has a Vietnamese entry', () => {
 });
 
 // ---- Ability UI from data (AAA round 2, W1-C)
-const TODAY = { shieldwall: ['shield', 0], focus: ['rapid', 1], barrage: ['barrage', 2], lockon: ['crosshair', 3], overdrive: ['bolt', 4], triage: ['medic', 5], fortify: ['engineer', 6], rush: ['bolt', 7], dash: ['bolt', 8], burnline: ['barrage', 9], brace: ['hold', 10], mark: ['crosshair', 11] };
+// 2026-11-24: one meaning per glyph (Overdrive a gauge, Rush/Dash chevrons, Brace its own legs, Lock-on and Mark
+// apart from Attack-move's crosshair).
+const TODAY = { shieldwall: ['shield', 0], focus: ['rapid', 1], barrage: ['barrage', 2], lockon: ['lockon', 3], overdrive: ['gauge', 4], triage: ['medic', 5], fortify: ['engineer', 6], rush: ['dash', 7], dash: ['dash', 8], burnline: ['flame', 9], brace: ['brace', 10], mark: ['bullseye', 11] };
 
 test('data seam: the 12 built-in abilities keep their exact icon, order and aimed flag', () => {
   assert.deepEqual(ABILITY_ORDER, Object.keys(TODAY));
@@ -172,7 +174,7 @@ test('data seam: a fixture ability brings its icon, aimed flag, order and tint; 
   assert.deepEqual(groups.map((g) => g.id), ['barrage', 'fixture', 'overdrive', 'bare']);
   const fixture = groups[1], bare = groups[3];
   assert.deepEqual([fixture.icon, fixture.aimed, fixture.order], ['hidden', true, 2.5]);
-  assert.deepEqual([bare.icon, bare.aimed, bare.order], ['bolt', false, ABILITY_ORDER.length]);
+  assert.deepEqual([bare.icon, bare.aimed, bare.order], ['star', false, ABILITY_ORDER.length]);
   assert.deepEqual(abilityTint(a.ability), [0.1, 0.2, 0.3]);
   assert.equal(abilityTint({ tint: [1, 'x', 0] }), null);
 });

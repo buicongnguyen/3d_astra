@@ -6,6 +6,7 @@ import { TRAINING_STEPS } from "../tutorial.js";
 import { createMissionUI } from "../mission-ui.js";
 import { hasPortrait, portrait } from "../portraits.js";
 import { icon } from "../icons.js";
+import { roleIcon, isHealerGlyph } from "../role-icons.js";
 import { selectionStatus } from "../selection-status.js";
 import { tacticalUnits, clampRank } from "../tactics-ui.js";
 import { tacticsCardHTML, updateTacticsCard } from "../tactics-card.js";
@@ -242,13 +243,16 @@ export function setupHud(S, A) {
     const signature = `${hasCore}/${es.map((e) => e.id).join(",")}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${p.flak}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2" || q.type === "flak")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}/${e?.trains?.some((k) => D[k]?.flying) ? `${S.sim.airCount(0)}:${S.sim.airCap(0)}` : ""}`;
     if (S.lastSelectionKey !== signature) {
       S.lastSelectionKey = signature;
+      // Phones: a bold role glyph instead of the 3D portrait, which is unreadable at roster size (role-icons.js).
+      const phone = document.documentElement.classList.contains("compact-ui");
+      const roleArt = (type, extra = "") => icon(roleIcon(type), `role-icon${isHealerGlyph(type) ? " role-medic" : ""}${extra}`);
       $("unit-list").innerHTML =
         es.length > 1
           ? es
               .slice(0, 18)
               .map(
                 (u) =>
-                  `<button data-select="${u.id}" title="${u.name}">${hasPortrait(u.type) ? portrait(u.type, u.team === 0 ? "friendly" : "hostile") : icon(u.icon || u.type)}<i class="vitals"></i></button>`,
+                  `<button data-select="${u.id}" title="${u.name}">${phone && u.kind === "unit" ? roleArt(u.type, u.team === 0 ? "" : " hostile") : hasPortrait(u.type) ? portrait(u.type, u.team === 0 ? "friendly" : "hostile") : icon(u.icon || u.type)}<i class="vitals"></i></button>`,
               )
               .join("") +
             (es.length > 18 ? `<span>+${es.length - 18}</span>` : "")
@@ -282,7 +286,7 @@ export function setupHud(S, A) {
             const key = ACTION_KEYS[index];
             if (t.action === "research" || t.action === "back") {
               const open = t.action === "research";
-              return `<button class="command-tile branch-tile" data-action="${t.action}" data-state="ready" data-hotkey="${key}" aria-label="${open ? "Research: pick one of two upgrades for this match" : "Back"}" title="${key} · ${open ? "Research · pick Damage +10% or Armor +12% for this match; the other branch then stays locked" : "Back"}"><kbd class="action-key">${key}</kbd>${icon(open ? "bolt" : "stop")}<span>${open ? "Research" : "Back"}</span>${open ? `<small>${t.sub}</small>` : ""}</button>`;
+              return `<button class="command-tile branch-tile" data-action="${t.action}" data-state="ready" data-hotkey="${key}" aria-label="${open ? "Research: pick one of two upgrades for this match" : "Back"}" title="${key} · ${open ? "Research · pick Damage +10% or Armor +12% for this match; the other branch then stays locked" : "Back"}"><kbd class="action-key">${key}</kbd>${icon(open ? "research" : "stop")}<span>${open ? "Research" : "Back"}</span>${open ? `<small>${t.sub}</small>` : ""}</button>`;
             }
             const d = D[t.type];
             const cost = `<b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}`;
@@ -292,7 +296,7 @@ export function setupHud(S, A) {
             const priced = t.state === "ready" || t.state === "locked" ? `, ${d.cost[0]} alloy${d.cost[1] ? ` and ${d.cost[1]} energy` : ""}` : `, ${t.sub}`;
             // A sixth tile (a faction's own building in the build menu) has no letter left: click or tap it.
             const cat = t.research ? "upgrade" : d.kind === "building" ? "build" : d.kind === "unit" ? "train" : "upgrade";
-            return `<button class="command-tile cat-${cat}${t.research ? " research-tile" : ""}${t.partial ? " partial" : ""} state-${t.state}" data-action="${t.action}" data-state="${t.state}"${key ? ` data-hotkey="${key}"` : ""}${t.state === "busy" ? ` style="--p:${(t.progress || 0).toFixed(3)}"` : ""} aria-label="${t.label}${priced}" title="${key ? `${key} · ` : ""}${d.name} · ${d.description}${lockNote}${d.flying ? ` · ${airNote(S.sim, 0)}` : ""}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${hasPortrait(t.type) ? portrait(t.type) : icon(d.icon || t.type)}<span>${t.label === "Anti-tank soldier" ? "Anti-tank" : t.label}</span>${sub}${d.kind === "building" && d.icon ? `<i class="tile-badge" aria-hidden="true">${icon(d.icon)}</i>` : ""}</button>`; // the long name keeps its full text in the tooltip; buildings carry their own symbol as a badge (the pictures look alike at phone size)
+            return `<button class="command-tile cat-${cat}${t.research ? " research-tile" : ""}${t.partial ? " partial" : ""} state-${t.state}" data-action="${t.action}" data-state="${t.state}"${key ? ` data-hotkey="${key}"` : ""}${t.state === "busy" ? ` style="--p:${(t.progress || 0).toFixed(3)}"` : ""} aria-label="${t.label}${priced}" title="${key ? `${key} · ` : ""}${d.name} · ${d.description}${lockNote}${d.flying ? ` · ${airNote(S.sim, 0)}` : ""}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${phone && d.kind === "unit" ? roleArt(t.type) : hasPortrait(t.type) ? portrait(t.type) : icon(roleIcon(t.type))}<span>${t.label === "Anti-tank soldier" ? "Anti-tank" : t.label}</span>${sub}${d.kind === "building" && d.icon ? `<i class="tile-badge" aria-hidden="true">${icon(d.icon)}</i>` : ""}</button>`; // the long name keeps its full text in the tooltip; buildings carry their own symbol as a badge (the pictures look alike at phone size)
           })
           .join("") || tactics || (structure ? `<p class="structure-hint">${e.description}</p>` : e?.kind==='building' ? '' :
         `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : hasCore ? "Your expedition is ready" : "Your Command core is down"}</strong><p>${e ? (S.touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : hasCore ? "Select the Command core to train Harvesters, or the Barracks to grow your army." : "Gather your remaining forces and hold on."}</p></div>`);

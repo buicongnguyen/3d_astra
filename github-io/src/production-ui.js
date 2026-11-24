@@ -1,4 +1,5 @@
 import {icon} from './icons.js';
+import {roleIcon} from './role-icons.js';
 import {buildingActivity} from './activity.js';
 import './production-ui.css';
 
@@ -22,7 +23,7 @@ export function createWorkStrip(host, definitions, {getSim, canAct, refresh}) {
         if(job.kind==='train'){button.dataset.job=job.ref.id;button.dataset.cancel=i;}
         if(job.kind==='site')button.dataset.cancelBuild=e.id;
         if(job.kind==='level')button.dataset.cancelLevel='';
-        button.innerHTML=`${icon(job.kind==='level'?'shield':definitions[job.type].icon||job.type)}<span class="work-blocks" aria-hidden="true">${'<i></i>'.repeat(10)}</span><span class="work-cancel" aria-hidden="true">×</span>`;
+        button.innerHTML=`${icon(job.kind==='level'?'levelup':roleIcon(job.type))}<span class="work-blocks" aria-hidden="true">${'<i></i>'.repeat(10)}</span><span class="work-cancel" aria-hidden="true">×</span>`;
         button.onclick=()=>{
           if(!canAct() || getSim()!==sim || sim.get(e.id)!==e) return;
           if(job.kind==='train'){

@@ -56,3 +56,17 @@
 /* Phones: 2 px icon strokes (1.5 px broke up at 15-19 px); the smallest glyphs a little more. */
 :root.compact-ui .icon { stroke-width: 2; }
 :root.compact-ui :is(.stance-control, .tile-badge, .cmap-legend) .icon { stroke-width: 2.2; }
+
+/* Phone readability pass 2 (2026-11-24). Glyph parts marked "pf" (move/stop/patrol heads, stance and ability
+   glyphs) fill on phones, where a 2 px outline alone breaks up at 16-20 px; desktop keeps its line icons. */
+:root.compact-ui .icon .pf { fill: currentColor; }
+/* Role glyphs (role-icons.js) replace the unit portraits on phone train tiles and in the selection roster:
+   23 px under the tile's job rail, in the train job colour; the healer's cross stays red, but only on the healer's own tile. */
+:root.compact-ui:not(.in-briefing) #commands > .command-tile > svg.icon.role-icon,
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > .command-tile > svg.icon.role-icon {
+  display: block; width: 23px; height: 23px; flex: 0 0 23px; margin: 5px auto -3px; color: var(--cat-train, #7fd8c4);
+}
+:root.compact-ui #unit-list button > svg.icon.role-icon { display: block; width: 24px; height: 24px; margin: auto; color: var(--team-friendly, #92ebc5); }
+:root.compact-ui #unit-list button > svg.icon.role-icon.hostile { color: var(--team-hostile, #ef7660); }
+:root.compact-ui :is(#commands, #unit-list) svg.icon.role-icon.role-medic { color: #ff5d57 !important; }
+:root.compact-ui .work-strip svg.icon, :root.compact-ui #queue .work-job svg.icon { stroke-width: 2.2; }

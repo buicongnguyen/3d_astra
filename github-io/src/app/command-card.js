@@ -84,7 +84,7 @@ export function setupCommandCard(S, A) {
 
     $("stop-order").onclick = () => A.runShortcut('stop');
 
-    $("stop-order").insertAdjacentHTML('afterend', `<button id="repair-order" hidden title="Repair a damaged building (or right-click it) · costs a quarter of its price for a full repair">${icon("engineer","desk")}<span class="order-label">Repair</span></button><button id="rally-order" hidden title="Rally point: new units gather here; on a deposit, new Harvesters start mining · L">${icon("flag","desk")}<span class="order-label">Rally</span> <kbd>L</kbd></button>`);
+    $("stop-order").insertAdjacentHTML('afterend', `<button id="repair-order" hidden title="Repair a damaged building (or right-click it) · costs a quarter of its price for a full repair">${icon("engineer","desk")}<span class="order-label">Repair</span></button><button id="rally-order" hidden title="Rally point: new units gather here; on a deposit, new Harvesters start mining · L">${icon("rally","desk")}<span class="order-label">Rally</span> <kbd>L</kbd></button>`);
 
     $("repair-order").onclick = () => A.enterMode('repair');
 

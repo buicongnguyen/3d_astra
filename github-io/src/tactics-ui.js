@@ -10,14 +10,16 @@ export { STANCES };
 export const ABILITY_KEYS = ["E", "T", "Y"];
 // Fixed display order, so the same army always gets the same tile under the same key.
 export const ABILITY_ORDER = ["shieldwall", "focus", "barrage", "lockon", "overdrive", "triage", "fortify", "rush", "dash", "burnline", "brace", "mark"];
-export const ABILITY_ICONS = { shieldwall: "shield", focus: "rapid", barrage: "barrage", lockon: "crosshair", overdrive: "bolt", triage: "medic", fortify: "engineer", rush: "bolt", dash: "bolt", burnline: "barrage", brace: "hold", mark: "crosshair" };
+// One meaning per glyph (2026-11-24): the bolt stays the energy resource, the shield stays Shield wall, Hold
+// stance keeps its anchor and Attack-move its crosshair.
+export const ABILITY_ICONS = { shieldwall: "shield", focus: "rapid", barrage: "barrage", lockon: "lockon", overdrive: "gauge", triage: "medic", fortify: "engineer", rush: "dash", dash: "dash", burnline: "flame", brace: "brace", mark: "bullseye" };
 // Abilities that need a point on the ground.
 export const AIMED = new Set(["barrage"]);
 // Ability data (balance.json `ability`) may carry its own `icon`, `aimed`, card `order` and `tint`, so a
 // new unit's ability needs no edit to the tables above or to the view tables (AAA round 2, W1-C). The
 // tables stay as the defaults: today's 12 abilities keep their icons, order and tints exactly, and an
-// ability that has neither data nor a table entry draws the bolt, last on the card, not aimed.
-export const abilityIcon = (a) => a.icon ?? ABILITY_ICONS[a.id] ?? "bolt";
+// ability that has neither data nor a table entry draws the star, last on the card, not aimed.
+export const abilityIcon = (a) => a.icon ?? ABILITY_ICONS[a.id] ?? "star";
 export const abilityAimed = (a) => a.aimed ?? AIMED.has(a.id);
 export function abilityOrder(a) {
   if (Number.isFinite(a.order)) return a.order;
@@ -27,9 +29,9 @@ export function abilityOrder(a) {
 // The ability's colour for rings and flashes, as [r, g, b] from 0 to 1, or null when it names none.
 export const abilityTint = (a) => (Array.isArray(a.tint) && a.tint.length >= 3 && a.tint.slice(0, 3).every(Number.isFinite) ? a.tint.slice(0, 3) : null);
 export const STANCE_INFO = {
-  guard: { label: "Guard", key: "[", icon: "shield", title: "Guard: answer threats nearby, then return to the post" },
+  guard: { label: "Guard", key: "[", icon: "guard", title: "Guard: answer threats nearby, then return to the post" },
   hold: { label: "Hold", key: "]", icon: "hold", title: "Hold position: fire from the spot, never chase" },
-  aggressive: { label: "Aggressive", key: "\\", icon: "attack", title: "Aggressive: chase enemies freely" },
+  aggressive: { label: "Aggressive", key: "\\", icon: "chase", title: "Aggressive: chase enemies freely" },
 };
 
 const alive = (e) => !!e && e.kind === "unit" && e.hp > 0;

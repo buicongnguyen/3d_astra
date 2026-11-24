@@ -49,7 +49,7 @@ test("definition: an Ashfall workshop ram tank, shield-less, Expanded roster onl
   assert.deepEqual(d.ai, { role: "front", want: [{ if: { seenTowers: 1 }, n: 2 }, { if: { after: 150 }, n: 1 }], max: 2 });
   assert.ok(d.intro.startsWith("Rampart:"));
   assert.equal(d.ability.id, "ram", "one ability, and it is the only one");
-  assert.deepEqual([d.ability.cooldown, d.ability.duration, d.ability.speed, d.ability.contact, d.ability.icon], [30, 2.5, 2, 80, "bolt"]);
+  assert.deepEqual([d.ability.cooldown, d.ability.duration, d.ability.speed, d.ability.contact, d.ability.icon], [30, 2.5, 2, 80, "dash"]);
 });
 
 test("absent from every Classic roster, build menu, mission and Chronicle", () => {
