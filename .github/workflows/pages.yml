@@ -179,6 +179,9 @@ jobs:
           # AAA round 4 (R4-P1): the Wild frontier desert test (rule row, one-tap Weather button, aimed Sandstorm, Dune Wyrm Ambush, nest) at three viewports.
           - name: r4-p1
             scripts: wild-desert
+          # Creature round: campaign dens (Acid Hounds in m02, the Wyrm nest in m04) and the Vault Sentinel in m08 at two viewports.
+          - name: creatures
+            scripts: creatures
     defaults:
       run:
         working-directory: github-io

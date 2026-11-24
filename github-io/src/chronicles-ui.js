@@ -1,7 +1,7 @@
 // Faction Chronicles on the start screen (0.20): four cards in the campaign map's footer (faction
-// colour and emblem, lead portrait, three relay pips, a locked state that names the mission that
+// colour and emblem, lead portrait, one relay pip per mission, a locked state that names the mission that
 // opens it) and the same choices as a list section in the setup column, which stays the keyboard
-// and screen-reader structure. Choosing a chronicle shows its three missions in that list.
+// and screen-reader structure. Choosing a chronicle shows its four missions in that list.
 // Pure HTML strings; app/briefing.js wires the clicks. Text 11 px or more and 44 px taps
 // (src/chronicles.css).
 import "./chronicles.css";
@@ -53,7 +53,7 @@ export function chronicleListHTML({ progress, campaign = "main" }) {
   return `<section class="act chron-section" aria-labelledby="act-chronicles"><h3 class="chron-title" id="act-chronicles"><strong>${esc(MAP_TEXT.chronicles)}</strong></h3><p class="chron-note">${esc(MAP_TEXT.chroniclesNote)}</p><ol class="stage-list chron-list" aria-label="${esc(MAP_TEXT.chronicles)}">${CHRONICLES.map(row).join("")}</ol></section>`;
 }
 
-// The setup column while a chronicle is chosen: its heading, its three missions and the way back.
+// The setup column while a chronicle is chosen: its heading, its four missions and the way back.
 // `card(mission, index)` draws a mission row the way the main campaign does (app/briefing.js).
 export function chronicleMissionsHTML({ progress, campaign, card }) {
   const c = chronicleById(campaign);

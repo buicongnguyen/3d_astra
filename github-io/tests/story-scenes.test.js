@@ -7,6 +7,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { Simulation } from "../src/simulation.js";
 import { MISSIONS } from "../src/story/missions.js";
+import { CHRONICLES } from "../src/story/chronicles.js";
 import { SCENES, FLASHES, sceneSeconds, sceneLines, beatSeconds } from "../src/story/scenes.js";
 import { HOLD_THE_RIVER, HOLD_THE_VALLEY, RESERVED_IDS } from "../src/story/defence-missions.js";
 import { CAST } from "../src/story/world.js";
@@ -25,6 +26,8 @@ const story = JSON.parse(readFileSync(new URL("../src/locales/story-vi.json", im
 const actions = (m) => (m.triggers || []).flatMap((t) => t.do || []);
 // Every (mission, scene id) pair, including the variants an ending settles.
 const uses = MISSIONS.flatMap((m) => actions(m).filter((a) => a.scene).map((a) => ({ m, id: a.scene, if: a.if })));
+// Faction Chronicles round 2 (2026-11-24): the Wardens' fourth mission plays a scene of its own.
+const chronicleUses = CHRONICLES.flatMap((c) => c.missions).flatMap((m) => actions(m).filter((a) => a.scene).map((a) => ({ m, id: a.scene, if: a.if })));
 const run = (s, seconds, seen = []) => advance(s, seconds, { seen });
 
 test("scene data: known beats, cast speakers, short lines with Vietnamese, under 20 seconds", () => {
@@ -51,18 +54,20 @@ test("scene data: known beats, cast speakers, short lines with Vietnamese, under
 });
 
 test("every scene is played by a mission, and its camera targets are places on that mission's map", () => {
-  assert.deepEqual([...new Set(uses.map((u) => u.id))].sort(), Object.keys(SCENES).sort(), "each scene has a mission and each scene action a scene");
+  assert.deepEqual([...new Set([...uses, ...chronicleUses].map((u) => u.id))].sort(), Object.keys(SCENES).sort(), "each scene has a mission and each scene action a scene");
+  assert.deepEqual(chronicleUses.map((u) => [u.m.id, u.id]), [["cw4-without-a-key", "sovereign-at-the-rise"]]);
   // The six big moments: missions 1, 4, 8, 10, 11 and the finale (one scene per ending), plus the
   // first balloon (Wings over Copper) and the Iron Vanguard's entrance in mission 3 (docs/aaa/BOSSES.md).
   assert.deepEqual([...new Set(uses.map((u) => u.m.id))], ["m01-first-light", "m03-the-ashen-line", "m04-three-way-dunes", "m06b-wings-over-copper", "m08-the-quiet-vault", "m10-obsidian-storm", "m11-cut-the-draw", "m11d-the-sovereign-walks", "m12-frontiers-end"]);
-  const finale = uses.filter((u) => u.m.id === "m12-frontiers-end");
+  // The creature round added the Veil's turn (veil-turns) to the finale for every ending; the ending scenes still branch.
+  const finale = uses.filter((u) => u.m.id === "m12-frontiers-end" && u.id !== "veil-turns");
   assert.deepEqual(finale.map((u) => u.if?.ending).sort(), [...ENDING_IDS].sort(), "the finale's scene branches by ending");
   for (const ending of ENDING_IDS) {
     const progress = ending === "open-frontier" ? { decisions: { "m03-alloy": "return", "m05-pact": "share", "m10-veil": "spare" } } : null;
     const scenes = actions(resolveMission(MISSIONS.at(-1), progress)).filter((a) => a.scene).map((a) => a.scene);
-    assert.deepEqual(scenes, [ending === "open-frontier" ? "keystone-open" : "keystone-held"], ending);
+    assert.deepEqual(scenes, ["veil-turns", ending === "open-frontier" ? "keystone-open" : "keystone-held"], ending);
   }
-  for (const { m, id } of uses) {
+  for (const { m, id } of [...uses, ...chronicleUses]) {
     const s = new Simulation({ map: m.map, enemyCount: m.enemies, ai: false, mission: { id: "blank", rules: m.rules, objectives: [], win: [] } }), edge = s.terrain.half - 6;
     for (const beat of SCENES[id].beats.filter((b) => b.camera)) {
       const p = typeof beat.camera.at === "string" ? m.regions?.[beat.camera.at] : beat.camera.at;

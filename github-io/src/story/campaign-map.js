@@ -74,7 +74,8 @@ export const MAP_TEXT = {
   endings: "Endings",
   unseen: "Not reached yet",
   chronicles: "Faction Chronicles",
-  chroniclesNote: "The same war, told by each faction. They open after Act 1.",
+  // Chronicles round 2 (2026-11-24): the four open at different points of the campaign (was "They open after Act 1.").
+  chroniclesNote: "The same war, told by each faction. Each opens as you meet its people.",
   decisions: "Decisions",
   // R3-G: a relay that holds a decision not taken yet, and what each ending asks of the decisions.
   decisionAhead: "A decision waits here",

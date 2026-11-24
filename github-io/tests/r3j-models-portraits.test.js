@@ -26,8 +26,8 @@ test('R3-J: every unit and building type has a portrait cell, and the atlas, ren
   const types = Object.entries(balance.definitions).filter(([, d]) => d.kind === 'unit' || d.kind === 'building').map(([t]) => t);
   assert.ok(types.length >= 36, types.length);
   for (const type of types) assert.ok(order.includes(type), `${type} has no portrait cell`);
-  // Reserved for R3-H's second Sovereign (same model, so the same render), in the last cell.
-  assert.equal(order.at(-1), 'ironsovereign2');
+  // Reserved for R3-H's second Sovereign (same model, so the same render); the creature round appends the Acid Hound and Vault Sentinel after it.
+  assert.deepEqual(order.slice(-3), ['ironsovereign2', 'acidhound', 'vaultsentinel']);
   assert.equal(new Set(order).size, order.length);
   // Every other cell is rendered from its own committed model.
   for (const type of order.filter((t) => t !== 'ironsovereign2')) assert.ok(manifest.some((a) => a.name === type), `${type}: no model`);

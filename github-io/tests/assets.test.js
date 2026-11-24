@@ -88,9 +88,11 @@ test('portrait generation preserves legacy cells and appends every approved fact
   const manifest = JSON.parse(read('public/models/manifest.json')).assets, assets = manifest.filter(a => a.faction && !a.roster);
   // R3-J (round 3): 29 cells before, then the 7 missing types and the reserved ironsovereign2 (37).
   // R4-P1 (round 4): the Dune Wyrm and the Wyrmling go before the reserved last cell (39).
-  // Roster 2026-11-24: lancer, bulwark, moth and halo, also before the reserved last cell (43).
-  assert.equal(new Set(order).size, 43);
+  // Roster 2026-11-24: lancer, bulwark, moth and halo before the reserved cell (ironsovereign2); creature round:
+  // Acid Hound and Vault Sentinel after it (45 cells, 12 rows).
+  assert.equal(new Set(order).size, 45);
   assert.deepEqual(order.slice(38, 42), ['lancer', 'bulwark', 'moth', 'halo']);
+  assert.deepEqual(order.slice(42), ['ironsovereign2', 'acidhound', 'vaultsentinel']);
   assert.deepEqual(manifest.filter(a => a.roster).map(a => a.name), ['lancer', 'bulwark', 'moth', 'halo']);
   assert.deepEqual(new Set(order.slice(13, 25)), new Set(assets.map(a => a.name)));
   // R3-F (round 3) reworked the approved faction models; they wait for the owner again.

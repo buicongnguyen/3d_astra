@@ -1,12 +1,15 @@
-// Faction Chronicles (release 0.20): four short campaigns of three missions each, played *as*
-// that faction, telling the same war from its side. Plain mission data in the format of
+// Faction Chronicles (release 0.20): four short campaigns of four missions each (three until chronicles
+// round 2, 2026-11-24, which added a fourth with a hero or a boss), played *as* that faction, telling the
+// same war from its side. Plain mission data in the format of
 // docs/MISSIONS.md (section "Faction Chronicles"); story in docs/WORLD.md.
 //
 // - factions[0] is the chronicle's own faction and rules.rosters is on, so the player commands
 //   that faction's units, buildings and trait (src/factions.js normalizedFactions).
 // - Each chronicle has its lead (a CAST id with a portrait) and the form of address its people
 //   use for the player instead of "Commander".
-// - A chronicle opens when the main mission `unlockAfter` is cleared; its missions open in order.
+// - A chronicle opens when the main mission `unlockAfter` is cleared (staggered since round 2: Ashfall after
+//   mission 4, Sunward after 6, Wardens after 8, Veil after 10, each after its lead's story is met), or when
+//   the saved progress already shows it started; its missions open in order (src/campaign.js).
 // - Finishing a chronicle adds its lead's line to the finale (the `chronicle` filter on m12's
 //   closing lines, settled by resolveMission in src/story/choices.js).
 // - `check` holds the targets `npm run check:missions -- --chronicle <id>` asks of the bots
@@ -26,7 +29,7 @@ export const CHRONICLES = [
     lead: "hale",
     address: "Foreman",
     unlockAfter: "m04-three-way-dunes",
-    summary: "The salvage fleet's war, from the ash plains to the scrapyard gorge.",
+    summary: "The salvage fleet's war, from the ash plains to the scrapyard gorge and the toll road.",
     missions: [
       {
         id: "ca1-cold-berths",
@@ -260,7 +263,102 @@ export const CHRONICLES = [
         },
         medals: { gold: { lives: 18 }, silver: { lives: 10 } },
         check: { story: 3, standard: 2, veteran: 1 },
-        design: "The chronicle's last mission is a Frontier Defence level on Gorge Road, played with the Ashfall roster (Scorchers crew the Breaker mortars) against ten Meridian columns: shielded Vanguards with Medics, Rangers, Breakers and Battle tanks. Waves are smaller than the Ashfall swarm of the Defence mode because each Meridian unit is tougher. The DefenceBot must reach its stars; an empty field must lose.",
+        design: "A Frontier Defence level on Gorge Road, played with the Ashfall roster (Scorchers crew the Breaker mortars) against ten Meridian columns: shielded Vanguards with Medics, Rangers, Breakers and Battle tanks. Waves are smaller than the Ashfall swarm of the Defence mode because each Meridian unit is tougher. The DefenceBot must reach its stars; an empty field must lose.",
+      },
+      // Chronicles round 2 (2026-11-24): a fourth mission per chronicle, each with a hero or a boss.
+      {
+        id: "ca4-the-toll-road",
+        chronicle: "ashfall",
+        title: "The Toll Road",
+        map: "woodlands",
+        enemies: 1, speed: "relaxed", alliance: "ffa",
+        factions: { 0: "ashfall", 1: "sunward" },
+        bonus: { alloy: 200, energy: 100, tower: true },
+        rules: { ai: "home", playerBase: true, enemyBase: true, rosters: true },
+        briefing: {
+          place: "Verdant Crossing, day 46",
+          lines: [
+            { who: "hale", text: "Foreman. Captain Sol rides with Meridian now, and this morning she put a toll on the forest road." },
+            { who: "hale", text: "Our spare berth cores travel that road. Two toll camps stand on it, and Sol herself waits at the forest relay." },
+            { who: "hale", text: "Break the camps, then bring the Captain to terms. Not to her knees. To terms. I may need her again." },
+          ],
+          intel: [
+            "Destroy the two Sunward toll camps north of the river, then make Captain Sol yield at the forest relay.",
+            "Captain Sol is tougher than a Rider. Hurt her badly enough and she gives up instead of falling.",
+            "A salvage truck brings Scrappers to the front at 2:30. Its squad is lost if the truck is destroyed.",
+          ],
+        },
+        regions: {
+          tollRoad: { x: -26, z: -20, r: 8 },
+          tollBridge: { x: -2, z: -14, r: 8 },
+          bridgeSouth: { x: -2, z: 10, r: 8 },
+          forestRelay: { x: -48, z: -46, r: 8 },
+        },
+        setup: [
+          { spawn: "barracks", team: 1, at: "tollRoad", tag: "toll", name: "Sunward toll camp", hp: 7000 },
+          { spawn: "barracks", team: 1, at: "tollBridge", tag: "toll", name: "Sunward toll camp", hp: 7000 },
+          { spawn: "tower", team: 1, at: { x: -21, z: -10 } },
+          { spawn: "vanguard", team: 1, at: { x: -19, z: -14 }, count: 5 },
+          { spawn: "ranger", team: 1, at: { x: -23, z: -12 }, count: 3 },
+          { spawn: "tower", team: 1, at: { x: -6, z: -16 } },
+          { spawn: "vanguard", team: 1, at: { x: -2, z: -21 }, count: 5 },
+          { spawn: "ranger", team: 1, at: { x: 3, z: -23 }, count: 3 },
+          // Captain Sol (campaign C3 hero rules): a tougher Rider who yields below 35% (no decision in a chronicle: Hale lets her go).
+          { spawn: "ranger", team: 1, at: "forestRelay", tag: "heroSol", name: "Captain Sol", hero: "sol" },
+          { spawn: "vanguard", team: 1, at: { x: -53, z: -41 }, count: 4 },
+          { spawn: "ranger", team: 1, at: { x: -44, z: -50 }, count: 2 },
+          { spawn: "tower", team: 1, at: { x: -42, z: -42 } },
+          { spawn: "vanguard", team: 0, at: { x: -54, z: 59 }, count: 4 },
+          { spawn: "ranger", team: 0, at: { x: -50, z: 56 }, count: 3 },
+        ],
+        objectives: [
+          { id: "tolls", text: "Destroy the two Sunward toll camps", type: "destroyTag", tag: "toll" },
+          { id: "sol", text: "Make Captain Sol yield at the forest relay", type: "destroyTag", tag: "heroSol", hidden: true },
+          { id: "core", text: "Destroy the Sunward Command core", type: "destroyCores", optional: true },
+          { id: "fast", text: "Finish in under 13 minutes", type: "timeUnder", seconds: 780, optional: true },
+        ],
+        win: ["tolls", "sol"],
+        lose: [{ type: "coreLost" }, { type: "time", seconds: 1260 }],
+        triggers: [
+          { when: { time: 5 }, do: [{ say: { who: "hale", text: "The bridge camp is nearest, Foreman. Cross at the south bridge and start there." } }, { ping: "tollBridge" }] },
+          { when: { event: "incoming" }, once: true, do: [{ say: { who: "hale", text: "Riders on our road. It seems the Captain collects her tolls in person. Towers, please." } }] },
+          // A troop truck (campaign C6b) for the player: the fleet's Scrappers drive down from the camp to the front.
+          { when: { time: 150 }, do: [
+            { say: { who: "hale", text: "The fleet has sent a salvage truck of Scrappers, Foreman. Let it reach the front." } },
+            { truck: { team: 0, units: { vanguard: 4, ranger: 2 }, from: "playerBase", to: "playerFront", tag: "truckFleet", name: "Salvage truck" } },
+          ] },
+          { when: { time: 120 }, do: [{ wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "playerBase" } }] },
+          { when: { time: 330 }, do: [{ wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "playerBase" } }] },
+          { when: { time: 540 }, do: [{ wave: { team: 1, units: { vanguard: 4, ranger: 2, breaker: 1 }, from: "enemyBase", target: "playerBase" } }] },
+          { when: { time: 780 }, do: [{ wave: { team: 1, units: { vanguard: 4, ranger: 3, breaker: 1 }, from: "enemyBase", target: "playerBase" } }] },
+          { when: { enter: "bridgeSouth", team: 0 }, do: [
+            { say: { who: "sol", text: "Director's Foreman! Every wagon on this road pays the Caravan. Yours too." } },
+            { say: { who: "hale", text: "I pay what I owe, Captain. A toll on berth cores I do not owe." } },
+          ] },
+          { when: { tagDead: "toll" }, do: [
+            { say: { who: "hale", text: "Both camps are down. The Captain waits at the forest relay. Bring her to terms, Foreman." } },
+            { reveal: "sol" }, { ping: "forestRelay" }, { camera: "forestRelay" }, { music: "battle" },
+            { wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "forestRelay" } },
+          ] },
+          { when: { tagHpBelow: { tag: "heroSol", percent: 35 } }, do: [
+            { surrender: "heroSol" },
+            { say: { who: "sol", text: "Enough! The road is open, Foreman. Tell your Director the Caravan has paid its toll." } },
+            { say: { who: "hale", text: "Let her ride home, Foreman. Ashfall keeps its debts as well as she keeps hers." } },
+            { capture: "heroSol" },
+          ] },
+          { when: { time: 690 }, do: [{ say: { who: "hale", text: "Eleven minutes. The cores are waiting at the river, Foreman, and so am I." } }] },
+          { when: { objective: "sol", is: "done" }, do: [{ music: "calm" }, { say: { who: "hale", text: "The road is ours and the Captain rode home. I would rather owe her a courtesy than a funeral." } }] },
+        ],
+        debrief: {
+          win: [
+            { who: "hale", text: "The cores crossed the forest tonight, Foreman. Three hundred berths stay warm for another month." },
+            { who: "hale", text: "Sol will come back with Meridian beside her. When she does, she will remember who let her go." },
+          ],
+          lose: [{ who: "hale", text: "The toll stands and the cores wait at the river. We try the road again at dawn, Foreman." }],
+        },
+        medals: { gold: { seconds: 480 }, silver: { seconds: 680 } },
+        check: { passive: 240, win: [270, 1200], earliest: 270 },
+        design: "Chronicles round 2: the Ashfall chronicle's fourth mission, about 9 minutes on Verdant Crossing after Sol has left the Pact (between main missions 9 and 10). The Sunward camp builds and defends but never attacks on its own (rules.ai \"home\"); scripted columns of 5, 5, 7 and 8 come at 2:00, 5:30, 9:00 and 13:00. Two toll camps (Barracks, 7000 HP) stand north of the river with a tower and 8 guards each. Captain Sol (a hero: 1.6x health, 0.8x damage) waits at the forest relay with a tower and 6 guards; her objective appears when both camps fall, with a 5-unit column racing there. Below 35% health she yields and Hale lets her ride home (no decision: chronicles ask none). A friendly troop truck brings 4 Scrappers and 2 Rangers to the front at 2:30. A 21-minute limit ends a stalled match.",
       },
     ],
   },
@@ -272,8 +370,8 @@ export const CHRONICLES = [
     faction: "sunward",
     lead: "sol",
     address: "Wagon-master",
-    unlockAfter: "m04-three-way-dunes",
-    summary: "The Caravan's war: dry wells, the three-way dunes and the Verdant road.",
+    unlockAfter: "m06-copper-harvest",
+    summary: "The Caravan's war: dry wells, the three-way dunes, the Verdant road, guns on the wagons.",
     missions: [
       {
         id: "cs1-dry-wells",
@@ -507,6 +605,103 @@ export const CHRONICLES = [
         check: { passive: 240, win: [360, 1260], earliest: 360 },
         design: "The main campaign's mission 5 from Sol's side, about 12 minutes against one Relaxed Meridian AI (Normal from 8:00) on Verdant Crossing. Two Meridian road camps (Barracks, 4800 HP) stand north of the river, each with a tower and 8-9 guards. Intended: cross the south bridge, break the bridge camp, then the road camp, and ride to the forest relay (a 6-unit Meridian column races there). Twist at the relay: Okoro explains that the relays are one circuit, which starts Sol's doubt about the Pact. 3 Vanguards and 3 Riders start beside the camp; a 23-minute limit ends a stalled match.",
       },
+      {
+        id: "cs4-guns-on-the-caravan",
+        chronicle: "sunward",
+        title: "Guns on the Caravan",
+        map: "dunes",
+        enemies: 1, speed: "relaxed", alliance: "ffa",
+        factions: { 0: "sunward", 1: "ashfall" },
+        bonus: { alloy: 200, energy: 100, tower: true },
+        rules: { ai: "home", playerBase: true, enemyBase: true, rosters: true },
+        briefing: {
+          place: "Amber Dunes, day 41",
+          lines: [
+            { who: "sol", text: "Wagon-master, I left the Pact at dawn. By noon Hale's Breakers were on the ridge, shelling our wagon circle." },
+            { who: "sol", text: "The wagons hold the children and the seed stores. If the circle's beacon falls, the Caravan scatters for good." },
+            { who: "sol", text: "Silence the battery on the ridge. And if the Director comes himself, I would like a word with him." },
+          ],
+          intel: [
+            "Keep the Caravan beacon in the south-east standing. If it falls, the mission fails.",
+            "Destroy the Breaker battery on the dune ridge north of the wagons.",
+            "Director Hale leads a column in a Battle tank. Beat him down and he will yield.",
+          ],
+        },
+        regions: {
+          solCamp: { x: 37, z: 36, r: 9 },
+          duneRidge: { x: 30, z: -4, r: 8 },
+          ashfallGate: { x: 22, z: -22, r: 9 },
+          southRoad: { x: 0, z: 52, r: 6 },
+        },
+        setup: [
+          { spawn: "relay", team: 0, at: "solCamp", tag: "caravan", name: "Caravan beacon", hp: 3000 },
+          { spawn: "tower", team: 0, at: { x: 31, z: 31 } },
+          { spawn: "tower", team: 0, at: { x: 41, z: 28 } },
+          { spawn: "vanguard", team: 0, at: { x: 33, z: 38 }, count: 3 },
+          { spawn: "ranger", team: 0, at: { x: 40, z: 31 }, count: 2 },
+          { spawn: "ranger", team: 0, at: { x: -30, z: 30 }, count: 3 },
+          { spawn: "breaker", team: 1, at: "duneRidge", count: 3, tag: "shellers", exact: true },
+          { spawn: "vanguard", team: 1, at: { x: 26, z: -2 }, count: 5 },
+          { spawn: "tower", team: 1, at: { x: 20, z: -1 } },
+          { spawn: "tower", team: 1, at: { x: 26, z: -10 } },
+          { spawn: "ranger", team: 1, at: { x: 19, z: -4 }, count: 3 },
+          { spawn: "tower", team: 1, at: { x: 29, z: -28 } },
+          { spawn: "tower", team: 1, at: { x: 37, z: -25 } },
+          { spawn: "vanguard", team: 1, at: { x: 32, z: -26 }, count: 5 },
+          { spawn: "ranger", team: 1, at: { x: 34, z: -30 }, count: 3 },
+        ],
+        objectives: [
+          { id: "battery", text: "Destroy the Breaker battery on the dune ridge", type: "destroyTag", tag: "shellers" },
+          { id: "hale", text: "Make Director Hale yield", type: "destroyTag", tag: "heroHale", hidden: true },
+          { id: "fast", text: "Finish in under 13 minutes", type: "timeUnder", seconds: 780, optional: true },
+        ],
+        win: ["battery", "hale"],
+        lose: [{ type: "coreLost" }, { type: "tagLost", tag: "caravan" }, { type: "time", seconds: 1260 }],
+        triggers: [
+          { when: { time: 5 }, do: [{ say: { who: "sol", text: "The battery is on the ridge, north of the wagons. Ride up the west slope, Wagon-master." } }, { ping: "duneRidge" }] },
+          { when: { time: 120 }, do: [
+            { say: { who: "hale", text: "Captain Sol. A pact is a schedule. You broke it. I am sorry for what follows." } },
+            { wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "ashfallGate", target: "solCamp" } },
+          ] },
+          { when: { event: "incoming" }, once: true, do: [{ say: { who: "sol", text: "Scrappers on the wagon road! Riders to the circle, and keep the children's wagons shut." } }] },
+          // A troop truck (campaign C6b): the Caravan's own wagon comes back from the south wells with Riders.
+          { when: { time: 240 }, do: [
+            { say: { who: "sol", text: "Our wagon from the south wells is back, and full of Riders. Make room at the circle!" } },
+            { truck: { team: 0, units: { ranger: 3, vanguard: 2 }, from: "southRoad", to: "solCamp", tag: "truckWells", name: "Supply truck" } },
+          ] },
+          // Director Hale (campaign C3 hero rules) takes the field at 6:00 with an escort; below 35% he yields and Sol lets him walk.
+          { when: { time: 360 }, do: [
+            { spawn: "tank", team: 1, at: "ashfallGate", tag: "heroHale", name: "Director Hale", hero: "hale" },
+            { say: { who: "hale", text: "I am coming myself, Captain. Some accounts are settled in person." } },
+            { reveal: "hale" }, { ping: "ashfallGate" }, { music: "battle" },
+            { spawn: "vanguard", team: 1, at: "ashfallGate", count: 4 },
+            { spawn: "breaker", team: 1, at: "ashfallGate", count: 1, slot: 4 },
+            { wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "ashfallGate", target: "solCamp" } },
+          ] },
+          { when: { time: 420 }, do: [{ say: { who: "vale", text: "Captain Sol, this is Meridian. Our Commander is on the road to you. Hold until noon." } }] },
+          { when: { time: 540 }, do: [{ wave: { team: 1, units: { vanguard: 4, ranger: 2, breaker: 1 }, from: "ashfallGate", target: "solCamp" } }] },
+          { when: { time: 690 }, do: [{ wave: { team: 1, units: { vanguard: 4, ranger: 3, breaker: 1 }, from: "enemyBase", target: "solCamp" } }] },
+          { when: { tagHpBelow: { tag: "caravan", percent: 50 } }, do: [{ say: { who: "sol", text: "The beacon is cracking! Wagon-master, if it falls my people have no road home." } }, { ping: "solCamp" }] },
+          { when: { tagHpBelow: { tag: "heroHale", percent: 35 } }, do: [
+            { surrender: "heroHale" },
+            { say: { who: "hale", text: "Enough, Captain. My machines are spent. I yield the ridge." } },
+            { say: { who: "sol", text: "Go home, Director. Count your sleepers, and tell them a Sunward captain let you walk." } },
+            { capture: "heroHale" },
+          ] },
+          { when: { objective: "battery", is: "done" }, do: [{ say: { who: "sol", text: "The shelling has stopped. The children are climbing out of the wagons. Now, the Director." } }] },
+          { when: { objective: "hale", is: "done" }, do: [{ music: "calm" }, { say: { who: "sol", text: "The ridge is ours and the Director walks home. Meridian's dust is on the south road." } }] },
+        ],
+        debrief: {
+          win: [
+            { who: "sol", text: "The wagons are whole and Hale went home on foot. A Sunward captain pays every debt, even the ones nobody asked for." },
+            { who: "sol", text: "Meridian's Commander came, as promised. The Caravan rides with them now, until the Keystone is safe." },
+          ],
+          lose: [{ who: "sol", text: "The circle is broken. The Caravan scatters into the deep dunes. We have done it before. I hate it every time." }],
+        },
+        medals: { gold: { seconds: 480 }, silver: { seconds: 680 } },
+        check: { passive: 240, win: [300, 1200], earliest: 300 },
+        design: "Chronicles round 2: the Sunward chronicle's fourth mission, the morning of the main campaign's mission 9 seen from the Caravan, about 9 minutes on the Amber Dunes. Ashfall builds and defends but never attacks on its own (rules.ai \"home\"); scripted columns hit the wagon circle at 2:00, 6:00 (with Hale), 9:00 and 11:30. The Caravan beacon (3000 HP) in the south-east has two towers and 5 guards, and the mission fails if it falls; 3 Riders start by the main camp. The Breaker battery (3 Breakers) sits on the dune ridge with two towers and 8 guards. At 6:00 Director Hale (a hero Battle tank: 1.6x health, 0.8x damage) takes the field at the Ashfall gate with a 5-unit guard; below 35% he yields and Sol lets him walk (no decision: chronicles ask none). A troop truck from the south wells brings 5 Sunward units to the circle at 4:00. A 21-minute limit ends a stalled match.",
+      },
     ],
   },
 
@@ -517,8 +712,8 @@ export const CHRONICLES = [
     faction: "wardens",
     lead: "echo",
     address: "Warden-prime",
-    unlockAfter: "m04-three-way-dunes",
-    summary: "The Lattice's guardians: standing orders, a key in the wrong hand, the river.",
+    unlockAfter: "m08-the-quiet-vault",
+    summary: "The Lattice's guardians: standing orders, a key in the wrong hand, the river, no key at all.",
     missions: [
       {
         id: "cw1-standing-orders",
@@ -670,6 +865,7 @@ export const CHRONICLES = [
           win: [
             { who: "echo", text: "You obeyed, Warden-prime, and you counted. One hundred and eight relays, and one key in the wrong hand." },
             { who: "echo", text: "A door is opening in the ash plains. Someone is asking it nicely. This one may soon have company." },
+            { who: "rask", text: "I am Juno Rask, and I mend your Walkers. I watched from the rim. You fired at nobody you did not have to." },
           ],
           lose: [{ who: "echo", text: "Meridian holds the Crown. The grey coat is not pleased. This one is not sure what it feels." }],
         },
@@ -740,6 +936,7 @@ export const CHRONICLES = [
           { when: { time: 260 }, do: [{ say: { who: "vale", text: "Wardens on every crossing. ECHO, can you reach them?" } }] },
           { when: { time: 270 }, do: [{ say: { who: "echo", text: "This one is trying. Warden-prime: the grey coat is draining the garden. Count the crystals. Then decide." } }] },
           { when: { time: 520 }, do: [{ say: { who: "hale", text: "Battle tanks on both bridges. Anti-tank posts at the far ends, guardians." } }] },
+          { when: { time: 400 }, do: [{ say: { who: "rask", text: "Juno here, on the south bank. I count the crystals with you. Twelve dark since dawn." } }] },
           { when: { objective: "hold", is: "done" }, do: [{ say: { who: "echo", text: "You held. Forty crystals by the river have gone to dust while you did. This one is sorry." } }] },
         ],
         debrief: {
@@ -751,7 +948,100 @@ export const CHRONICLES = [
         },
         medals: { gold: { lives: 18 }, silver: { lives: 10 } },
         check: { story: 3, standard: 2, veteran: 1 },
-        design: "The chronicle's last mission is a Frontier Defence level on Twin Bridges with the Wardens roster (Drones crew the nests, no Medics to borrow) against ten Meridian columns on three routes, the main campaign's mission 11 seen from the river. Waves are a little smaller than the Sunward level of the Defence mode because Meridian units are tougher. The DefenceBot must reach its stars; an empty field must lose.",
+        design: "A Frontier Defence level on Twin Bridges with the Wardens roster (Drones crew the nests, no Medics to borrow) against ten Meridian columns on three routes, the main campaign's mission 11 seen from the river. Waves are a little smaller than the Sunward level of the Defence mode because Meridian units are tougher. The DefenceBot must reach its stars; an empty field must lose.",
+      },
+      {
+        id: "cw4-without-a-key",
+        chronicle: "wardens",
+        title: "Without a Key",
+        map: "expanse",
+        enemies: 1, speed: "relaxed", alliance: "ffa",
+        factions: { 0: "wardens", 1: "ashfall" },
+        rules: { ai: "home", playerBase: true, enemyBase: true, rosters: true },
+        briefing: {
+          place: "Frontier Expanse, day 53",
+          lines: [
+            { who: "echo", text: "Warden-prime. The draw engine is cut and the key is silent. For the first time in 412 years, nobody holds us." },
+            { who: "rask", text: "Hale wants you back. He has given the Iron Sovereign legs, and he is walking it to the Warden Rise." },
+            { who: "echo", text: "Break the relays that shield it, then break half its armour. It is one of the old machines. It will turn home." },
+          ],
+          intel: [
+            "The Iron Sovereign marches on your Command core and stops to fight anything in its way.",
+            "Three Ashfall relays shield it. While one stands, your shots barely scratch it. Break all three first.",
+            "Break half of its armour and it turns back north. The ground turns red before each attack: step out.",
+          ],
+        },
+        regions: {
+          gate: { x: 21, z: -37, r: 6 },
+          ford: { x: -2, z: 6, r: 7 },
+          line: { x: -22, z: 18, r: 8 },
+          relayWest: { x: -24, z: -30, r: 7 },
+          relayEast: { x: 30, z: -12, r: 7 },
+          relaySouth: { x: 10, z: 22, r: 7 },
+          wardenRise: { x: -40, z: 38, r: 6 },
+        },
+        setup: [
+          { spawn: "vanguard", team: 1, at: { x: -21, z: -27 }, count: 3 },
+          { spawn: "ranger", team: 1, at: { x: -27, z: -33 }, count: 2 },
+          { spawn: "vanguard", team: 1, at: { x: 27, z: -9 }, count: 3 },
+          { spawn: "ranger", team: 1, at: { x: 33, z: -15 }, count: 2 },
+          { spawn: "vanguard", team: 1, at: { x: 13, z: 19 }, count: 2 },
+          { spawn: "tower", team: 0, at: { x: -18, z: 24 } },
+          { spawn: "tower", team: 0, at: { x: -28, z: 24 } },
+          { spawn: "vanguard", team: 0, at: "wardenRise", count: 4 },
+          { spawn: "ranger", team: 0, at: { x: -30, z: 32 }, count: 4 },
+          { spawn: "antitank", team: 0, at: { x: -34, z: 34 }, count: 2 },
+          { resources: { alloy: 900, energy: 350 } },
+        ],
+        objectives: [
+          { id: "relays", text: "Break the three Ashfall relays that shield the Sovereign", type: "destroyTag", tag: "ward", hidden: true },
+          { id: "sovereign", text: "Break half of the Iron Sovereign's armour", type: "destroyTag", tag: "sovereign", hidden: true },
+          { id: "fast", text: "Finish in under 13 minutes", type: "timeUnder", seconds: 780, optional: true },
+        ],
+        win: ["relays", "sovereign"],
+        lose: [{ type: "coreLost" }, { type: "time", seconds: 1260 }],
+        triggers: [
+          { when: { time: 5 }, do: [{ say: { who: "rask", text: "Two towers on the line and a squad behind them. Build while it is still far away, Warden-prime." } }, { camera: "line" }] },
+          { when: { time: 100 }, do: [{ wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "gate", target: "line" } }] },
+          { when: { event: "incoming" }, once: true, do: [{ say: { who: "echo", text: "Diggers on the road to the Rise. Standing order two still holds: guard what guards the Lattice." } }] },
+          // At 4:00 the relays wake and the Sovereign (boss engine III: march, ward, phases) walks at once.
+          { when: { time: 240 }, do: [
+            { spawn: "relay", team: 1, at: "relayWest", tag: "ward", name: "Ashfall relay", hp: 4500, hpByDifficulty: { story: 3000 } },
+            { spawn: "relay", team: 1, at: "relayEast", tag: "ward", name: "Ashfall relay", hp: 4500, hpByDifficulty: { story: 3000 } },
+            { spawn: "relay", team: 1, at: "relaySouth", tag: "ward", name: "Ashfall relay", hp: 4500, hpByDifficulty: { story: 3000 } },
+            { reveal: "relays" },
+            { spawn: "ironsovereign2", team: 1, at: "gate", tag: "sovereign", exact: true, hpByDifficulty: { story: 12000, veteran: 14000 } },
+            { wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "gate", target: "line" } },
+            { ping: "gate" }, { music: "tense" },
+          ] },
+          { when: { event: "bossWake" }, do: [{ scene: "sovereign-at-the-rise" }] },
+          { when: { time: 255 }, do: [{ say: { who: "echo", text: "The relays woke with it. The south one stands by the old pump, alone. Start there, Warden-prime." } }, { ping: "relaySouth" }] },
+          { when: { tagHpBelow: { tag: "ward", percent: 50 } }, do: [{ say: { who: "rask", text: "That relay is failing. When the last one goes dark, its shield goes with it." } }] },
+          { when: { objective: "relays", is: "done" }, do: [
+            { reveal: "sovereign" },
+            { say: { who: "rask", text: "Last relay down, and its shield is gone. Everything on it now, Warden-prime. The knees first." } },
+            { say: { who: "hale", text: "Guardians, you were mine nine days ago. Stand aside, and the Sovereign walks past you." } },
+            { say: { who: "echo", text: "This one counted your nine days, grey coat. They are over." } },
+          ] },
+          // Half its armour gone (boss stage 2): the Sovereign plants itself, and the Wardens have done what they came for.
+          { when: { bossStage: 2 }, do: [
+            { say: { who: "rask", text: "It has stopped! Half its plating is gone. Look at it, it is turning north." } },
+            { say: { who: "echo", text: "Let it go. The Wardens do not chase. They guard." } },
+            { complete: "sovereign" },
+          ] },
+          { when: { time: 720 }, do: [{ say: { who: "echo", text: "Twelve minutes. The Sovereign is eleven hundred steps from the Rise. This one is counting them." } }] },
+          { when: { objective: "sovereign", is: "done" }, do: [{ music: "calm" }, { say: { who: "hale", text: "It turns home. Very well. Tomorrow it walks on Meridian instead." } }] },
+        ],
+        debrief: {
+          win: [
+            { who: "echo", text: "The Sovereign walked home, Warden-prime. Nobody ordered you to stand. You stood. This one has written it down." },
+            { who: "rask", text: "Four hundred years of orders, and the first thing they chose was to guard. I could have told Hale that." },
+          ],
+          lose: [{ who: "echo", text: "It walked through the Rise. Rest and mend, Warden-prime. Without a key, every choice is yours. Even this one." }],
+        },
+        medals: { gold: { seconds: 480 }, silver: { seconds: 680 } },
+        check: { passive: 240, win: [300, 1200], earliest: 300 },
+        design: "Chronicles round 2: the Wardens chronicle's fourth mission, the day between the main campaign's missions 11 and 11d, about 8 to 9 minutes on the Frontier Expanse. The key fell silent when Meridian cut the draw (mission 11), so the Wardens choose for themselves; Hale walks the Iron Sovereign (ironsovereign2, the boss of The Sovereign Walks: march, ward relays, phases; 15000 HP, Story 12000, Veteran 14000) at the Warden Rise to take them back. Ashfall never attacks on its own (rules.ai \"home\"): a 5-unit probe at 1:40, then at 4:00 three relays (4500 HP, Story 3000) wake with the Sovereign and a 5-unit escort. The Wardens need not kill it: at half health (boss stage 2) it plants itself and the mission is won, and it walks on Meridian the next day (mission 11d). The player starts with 900 alloy, two towers on the line and 13 units (6 Drones, 5 Wardens, 2 Anti-tank). Juno Rask, the Wardens' mechanic, speaks with ECHO. A 21-minute limit ends a stalled match.",
       },
     ],
   },
@@ -763,8 +1053,8 @@ export const CHRONICLES = [
     faction: "veil",
     lead: "maren",
     address: "Surveyor",
-    unlockAfter: "m04-three-way-dunes",
-    summary: "The Survey keeps the relays dark: a night count, one circuit, the dampers.",
+    unlockAfter: "m10-obsidian-storm",
+    summary: "The Survey keeps the relays dark: a night count, one circuit, the dampers, a second Vanguard.",
     missions: [
       {
         id: "cv1-night-count",
@@ -821,6 +1111,7 @@ export const CHRONICLES = [
         lose: [{ type: "armyLost" }, { type: "time", seconds: 1200 }],
         triggers: [
           { when: { time: 4 }, do: [{ say: { who: "maren", text: "The west beacon is closest, Surveyor. It has a tower. Let the Shades go first." } }, { ping: "beaconWest" }, { music: "tense" }] },
+          { when: { time: 12 }, do: [{ say: { who: "lind", text: "Teo Lind, Shades captain. Seven Shades, five Rangers, two Watchers, three Medics. All here, Surveyor." } }] },
           { when: { enter: "beaconWest", team: 0 }, do: [{ say: { who: "maren", text: "They have not seen us. The Builders' records call this the quiet hour. Use it." } }] },
           { when: { enter: "beaconNorth", team: 0 }, do: [{ say: { who: "maren", text: "Our first camp stood here. One relay woke and the storm took it in a night. Please, be quick." } }] },
           { when: { enter: "beaconMid", team: 0 }, do: [{ say: { who: "maren", text: "That beacon has a tower. Watchers first, so the Rangers can see what they shoot." } }] },
@@ -990,12 +1281,100 @@ export const CHRONICLES = [
           win: [
             { who: "maren", text: "The crews are home. And then the Crown lit, Surveyor, and the sky stayed clear. No storm." },
             { who: "maren", text: "In thirty years I never once saw that. I have written it down. Now I must decide what the Veil does with it." },
+            { who: "lind", text: "Every crew is out, Archivist. I counted them twice, the way you taught me." },
           ],
           lose: [{ who: "maren", text: "The dampers are gone and our crews are scattered. I hope the sky stays clear. I do not know any more." }],
         },
         medals: { gold: { seconds: 600 }, silver: { seconds: 840 } },
         check: { passive: 240, win: [540, 1300], earliest: 540 },
         design: "The main campaign's mission 10 from inside the dampers: about 12 minutes against two Relaxed allied AIs (Meridian and Sunward, Normal from 15:00) on the Obsidian Highlands. The Veil camp holds three dampers (4500 HP; the mission fails if all three fall), two towers and 6 guards. The Meridian battery (3 Breakers) sits at the plateau centre with two towers and 8 guards. Intended: break the first joint attack at home, then strike the battery with a strong force while towers hold the dampers, and keep the camp alive to 9:00. Scripted columns hit the north damper at 4:00 and the south damper at 7:00. Twist: ECHO answers Maren at the dampers, and after the win she has seen the Crown light without a storm.",
+      },
+      {
+        id: "cv4-the-second-vanguard",
+        chronicle: "veil",
+        title: "The Second Vanguard",
+        map: "highlands",
+        enemies: 1, speed: "relaxed", alliance: "ffa",
+        factions: { 0: "veil", 1: "ashfall" },
+        bonus: { alloy: 200, energy: 100, tower: true },
+        rules: { ai: "home", playerBase: true, enemyBase: true, rosters: true },
+        briefing: {
+          place: "Obsidian Highlands, day 50",
+          lines: [
+            { who: "maren", text: "Surveyor. Hale's draw engine will pull every relay at once. The record says that is the storm that ends camps." },
+            { who: "lind", text: "His crews raised two draw masts on the plateau. And they dug something out of a trench to guard them." },
+            { who: "maren", text: "The record lists six Builder Vanguards. Meridian broke the first. Break the masts, and the second, and come home." },
+          ],
+          intel: [
+            "Destroy the two Ashfall draw masts and the second Iron Vanguard that guards the middle one.",
+            "The Iron Vanguard wakes when your troops come close. The ground turns red before each burst: step out of it.",
+            "Its core opens after each burst. That is when Watchers and Shades hurt it most.",
+          ],
+        },
+        regions: {
+          mastWest: { x: -58, z: 0, r: 8 },
+          mastMid: { x: 8, z: -22, r: 8 },
+          vanguardYard: { x: 16, z: -14, r: 6 },
+          landing: { x: -44, z: 46, r: 6 },
+        },
+        setup: [
+          { spawn: "relay", team: 1, at: "mastWest", tag: "mast", name: "Ashfall draw mast", hp: 9000 },
+          { spawn: "relay", team: 1, at: "mastMid", tag: "mast", name: "Ashfall draw mast", hp: 9000 },
+          { spawn: "vanguard", team: 1, at: { x: -56, z: 2 }, count: 5 },
+          { spawn: "ranger", team: 1, at: { x: -60, z: -5 }, count: 3 },
+          { spawn: "tower", team: 1, at: { x: -53, z: -3 } },
+          { spawn: "vanguard", team: 1, at: { x: 5, z: -18 }, count: 6 },
+          { spawn: "ranger", team: 1, at: { x: -2, z: -20 }, count: 3 },
+          { spawn: "tower", team: 1, at: { x: 2, z: -28 } },
+          { spawn: "tower", team: 1, at: { x: 13, z: -25 } },
+          // The boss (docs/aaa/BOSSES.md): a second Builder Vanguard, powered down in the yard by the middle mast.
+          { spawn: "ironvanguard", team: 1, at: "vanguardYard", tag: "ironVanguard", exact: true, hpByDifficulty: { story: 9000 } },
+          { spawn: "vanguard", team: 0, at: "landing", count: 5 },
+          { spawn: "ranger", team: 0, at: { x: -40, z: 50 }, count: 3 },
+          { spawn: "antitank", team: 0, at: { x: -50, z: 52 }, count: 2 },
+          { spawn: "medic", team: 0, at: { x: -36, z: 44 }, count: 2 },
+        ],
+        objectives: [
+          { id: "masts", text: "Destroy the two Ashfall draw masts", type: "destroyTag", tag: "mast" },
+          { id: "vanguard", text: "Destroy the second Iron Vanguard", type: "destroyTag", tag: "ironVanguard" },
+          { id: "fast", text: "Finish in under 14 minutes", type: "timeUnder", seconds: 840, optional: true },
+        ],
+        win: ["masts", "vanguard"],
+        lose: [{ type: "coreLost" }, { type: "time", seconds: 1320 }],
+        triggers: [
+          { when: { time: 5 }, do: [{ say: { who: "lind", text: "The west mast is closest and lightly held. The machine sleeps by the middle one. West first, Surveyor." } }, { ping: "mastWest" }] },
+          { when: { event: "incoming" }, once: true, do: [{ say: { who: "maren", text: "Ashfall columns on the camp road. Keep a guard at home, Surveyor. The record room is all we have." } }] },
+          { when: { time: 150 }, do: [{ wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "playerBase" } }] },
+          { when: { time: 360 }, do: [{ wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "playerBase" } }] },
+          { when: { time: 570 }, do: [{ wave: { team: 1, units: { vanguard: 4, ranger: 2, breaker: 1 }, from: "enemyBase", target: "playerBase" } }] },
+          { when: { time: 810 }, do: [{ wave: { team: 1, units: { vanguard: 4, ranger: 3, breaker: 1 }, from: "enemyBase", target: "playerBase" } }] },
+          { when: { enter: "mastWest", team: 0 }, do: [{ say: { who: "lind", text: "West mast in sight. They have not seen us yet. The Shades go first." } }] },
+          { when: { tagHpBelow: { tag: "mast", percent: 50 } }, do: [{ say: { who: "maren", text: "That mast is failing. Every one we break is a relay that will not be pulled awake tonight." } }] },
+          // The second Vanguard: lines when it wakes, at each health stage and when it falls (no staged scene: that is the first one's).
+          { when: { event: "bossWake" }, do: [
+            { music: "battle" },
+            { say: { who: "lind", text: "It is awake. Twelve metres of Builder iron. Out of the red, all of you!" } },
+            { say: { who: "maren", text: "Watch its core, Surveyor. The record says it opens after every burst." } },
+          ] },
+          { when: { bossStage: 2 }, do: [{ say: { who: "lind", text: "Its plating is cracking. It fires sooner now, but the red still gives us time." } }] },
+          { when: { bossStage: 3 }, do: [
+            { say: { who: "hale", text: "Veil? That machine cost me a month. You have chosen a strange night to wake up, Archivist." } },
+            { say: { who: "maren", text: "I woke thirty years ago, Director. Tonight I am only keeping the sky quiet." } },
+          ] },
+          { when: { tagDead: "ironVanguard" }, do: [{ say: { who: "lind", text: "The second Vanguard is down. Four left in the record, and nobody has found them. Good." } }] },
+          { when: { time: 720 }, do: [{ say: { who: "maren", text: "Twelve minutes. Meridian cuts the draw in two days. I want these masts gone before then." } }] },
+          { when: { objective: "masts", is: "done" }, do: [{ say: { who: "maren", text: "Both masts are silent. The draw cannot pull the plateau now." } }] },
+        ],
+        debrief: {
+          win: [
+            { who: "maren", text: "The masts are dust and the second Vanguard sleeps for good. I wrote down every name tonight. All of them alive." },
+            { who: "lind", text: "Meridian cuts the draw on the Expanse soon. When they do, Archivist, we stand down. You promised." },
+          ],
+          lose: [{ who: "maren", text: "The machine holds the plateau. Bring the squad home, Teo. We try again before the draw begins." }],
+        },
+        medals: { gold: { seconds: 540 }, silver: { seconds: 760 } },
+        check: { passive: 240, win: [270, 1260], earliest: 270 },
+        design: "Chronicles round 2: the Veil chronicle's fourth mission, between the main campaign's missions 10 and 11, about 10 minutes on the Obsidian Highlands. Ashfall builds and defends but never attacks on its own (rules.ai \"home\"); scripted columns of 5, 5, 7 and 8 hit the camp at 2:30, 6:00, 9:30 and 13:30. Two draw masts (9000 HP) stand west (a tower and 8 guards) and in the middle (two towers and 9 guards), and a second Iron Vanguard (the boss of The Ashen Line: 11000 HP, Story 9000) sleeps in a yard 10 m from the middle mast; it wakes when troops come within 14 m or hit it. The player starts with 5 Shades, 3 Rangers, 2 Watchers and 2 Medics. Intended: the west mast first, then the middle one and the machine together. Teo Lind, the Veil's Shades captain, speaks with Maren. A 22-minute limit ends a stalled match.",
       },
     ],
   },

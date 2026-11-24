@@ -1523,7 +1523,16 @@
     "Reduced motion": "Giảm chuyển động",
     "System": "Theo máy",
     "Off also stops decorative motion.": "Tắt cũng dừng chuyển động trang trí.",
-    "Frontier Defence frames the roads itself.": "Phòng thủ biên cương tự căn khung các con đường."
+    "Frontier Defence frames the roads itself.": "Phòng thủ biên cương tự căn khung các con đường.",
+    "Acid Hound": "Chó Axit",
+    "Pack creature": "Thú săn theo bầy",
+    "Campaign creature. A fast pack hunter that lairs in dens and bites anything that comes within 8 m. Its acid spit eats armour: 1.6× damage to vehicles, and half damage to units within 1.5 m of the bitten one. Fight a pack from range and do not send tanks in alone.": "Sinh vật chiến dịch. Một thú săn theo bầy, nhanh nhẹn, sống trong hang và cắn mọi thứ đến gần trong 8 m. Nước bọt axit của nó ăn mòn giáp: gây 1,6 lần sát thương lên xe, và nửa sát thương lên các đơn vị trong vòng 1,5 m quanh mục tiêu bị cắn. Hãy đánh bầy từ xa và đừng cho xe tăng xông vào một mình.",
+    "Vault Sentinel": "Lính gác Hầm",
+    "Builder guardian": "Người gác Kiến Tạo",
+    "Campaign guardian. A Builder construct of stone and bronze that keeps the Quiet Vault. It sleeps until you attack it, then fights near its post. Beat it fairly and it kneels, then joins your squad for the rest of the mission: a heavy blade that hits everything within 2 m of its target.": "Người gác chiến dịch. Một cỗ máy đá và đồng của Kiến Tạo canh giữ Hầm kín lặng im. Nó ngủ cho đến khi bạn tấn công, rồi chiến đấu gần vị trí của nó. Đánh bại nó một cách sòng phẳng, nó sẽ quỳ xuống rồi theo phân đội của bạn đến hết nhiệm vụ: một lưỡi kiếm nặng đánh trúng mọi thứ trong vòng 2 m quanh mục tiêu.",
+    "Campaign creature": "Sinh vật chiến dịch",
+    "The Elder Wyrm joins your expedition.": "Rồng cát Trưởng lão gia nhập đoàn viễn chinh của bạn.",
+    "The Vault Sentinel rises and joins your squad.": "Lính gác Hầm đứng dậy và gia nhập phân đội của bạn."
   },
   "patterns": [
     [
@@ -2401,6 +2410,18 @@
     [
       "^Needs L(\\d+)\\.$",
       "Cần cấp {1}."
+    ],
+    [
+      "^Acid Hounds lair in dens off the main roads of some missions\\. A pack bites anything within (\\d+) m of its den and never leaves it\\. Clearing a den is always optional, and some dens hide salvage\\.$",
+      "Chó Axit sống trong các hang nằm ngoài những con đường chính của một số nhiệm vụ. Một bầy cắn mọi thứ trong vòng {1} m quanh hang và không bao giờ rời hang. Dọn hang luôn là tùy chọn, và một số hang có giấu đồ trục vớt."
+    ],
+    [
+      "^It sleeps until you order an attack on it, then fights within (\\d+) m of its post\\. At (\\d+)% health \\((\\d+)% on Veteran\\) it kneels, and a few seconds later it joins your squad for the rest of the mission\\. The test is optional\\.$",
+      "Nó ngủ cho đến khi bạn ra lệnh tấn công nó, rồi chiến đấu trong vòng {1} m quanh vị trí của nó. Còn {2}% máu ({3}% ở mức Kỳ cựu) nó sẽ quỳ xuống, và vài giây sau nó theo phân đội của bạn đến hết nhiệm vụ. Thử thách này là tùy chọn."
+    ],
+    [
+      "^In the campaign, Dune Wyrm nests wait off the roads in Three-Way Dunes and A Debt in the Dunes\\. Clear the Wyrmlings, then keep your troops in the nest for (\\d+) s\\. Taming one is always optional\\.$",
+      "Trong chiến dịch, các tổ Rồng cát nằm ngoài đường đi ở Ba phe trên đồi cát và Món nợ giữa đồi cát. Diệt các Rồng cát non, rồi giữ quân trong tổ {1} giây. Thuần rồng luôn là tùy chọn."
     ]
   ]
 }

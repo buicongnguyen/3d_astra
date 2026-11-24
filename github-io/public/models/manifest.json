@@ -401,6 +401,24 @@
       "review": "pending owner review (roster 2026-11-24)",
       "faction": "wardens",
       "roster": "2026-11-24"
+    },
+    {
+      "name": "acidhound",
+      "file": "acidhound.glb",
+      "triangles": 1366,
+      "kind": "unit",
+      "budget": 1400,
+      "review": "pending owner review (creature round)",
+      "animation": "Shader-bones rig (src/unit-rig.js, GAIT trot): leg_L + leg_hindR_L and leg_R + leg_hindL_R swing as diagonal pairs, Knee_* bends; no baked clips"
+    },
+    {
+      "name": "vaultsentinel",
+      "file": "vaultsentinel.glb",
+      "triangles": 3084,
+      "kind": "unit",
+      "budget": 3200,
+      "review": "pending owner review (creature round)",
+      "animation": "Shader-bones rig (src/unit-rig.js, GAIT stomp): leg_L / leg_R hips with Knee_cap knees, infantry KNEEL pose when it yields (set by the view); no baked clips"
     }
   ]
 }

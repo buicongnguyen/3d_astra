@@ -78,6 +78,9 @@ const paths = {
   ward: '<path fill="currentColor" d="M6 2.5h12v9c0 3.2-2.7 5.5-6 6.5-3.3-1-6-3.3-6-6.5z"/><path d="M9 17v4.5M15 17v4.5M7 21.5h4M13 21.5h4"/>',
   moth: '<path fill="currentColor" d="M11 6.5C8 2.5 2.5 2 1.5 4.5 1 7 4 11 10.5 12 4.5 13 3 17 4.5 19s5.5-1 6.5-5zM13 6.5c3-4 8.5-4.5 9.5-2 .5 2.5-2.5 6.5-9 7.5 6 1 7.5 5 6 7s-5.5-1-6.5-5z"/><path d="M12 5v15M10 2.5 12 5l2-2.5" stroke-width="1.8"/>',
   halo: '<ellipse cx="12" cy="12" rx="10" ry="5" stroke-width="2.2"/><circle cx="12" cy="12" r="3.2" fill="currentColor"/><path d="M12 15.2V21M8.5 21h7"/>',
+  // Creature round: an Acid Hound's head with a dripping jaw; the Vault Sentinel's shield with its core.
+  hound: '<path d="M3 13.5 7.5 7l2 2.5h5l2-4 1.5 4.5 3 1.5-2.5 3.5h-5L9 18H5z" stroke-width="2"/><circle cx="16.5" cy="10.5" r="1.2" fill="currentColor"/><path d="M14 15.5v3M17 15v2.2" stroke-width="2"/>',
+  sentinel: '<path d="M12 2.5 20 6v6c0 5-3.6 8.2-8 9.5C7.6 20.2 4 17 4 12V6z" stroke-width="2"/><circle cx="12" cy="11.5" r="3" fill="currentColor"/><path d="M12 2.5v4M12 16.5v4"/>',
   // Orders, stances and abilities with one meaning each.
   guard: '<path class="pf" d="M12 2a5 5 0 0 1 5 5c0 3.6-5 8.5-5 8.5S7 10.6 7 7a5 5 0 0 1 5-5z"/><circle cx="12" cy="7" r="1.6"/><ellipse cx="12" cy="18.5" rx="9" ry="3.2"/>',
   chase: '<circle cx="18.5" cy="5.5" r="3.4"/><path d="M3.5 20.5 13.5 10.5"/><path class="pf" d="M8.5 9h7v7z"/>',

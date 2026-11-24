@@ -28,6 +28,9 @@ function declaredModels(match, factions) {
     if (o.truck) { named.add('carrier'); for (const type of Object.keys(o.truck.units || {})) named.add(type); }
     if (o.wave?.units) for (const type of Object.keys(o.wave.units)) named.add(type);
     if (Array.isArray(o.unlock)) for (const type of o.unlock) named.add(type);
+    // Creature dens and guardians (sim/content/campaign-creatures.js): the guards, the tamed creature, the guardian.
+    if (typeof o.den === 'string') { named.add(o.guard); if (o.tame) named.add(o.tame); }
+    if (typeof o.guardian === 'string') named.add(o.guardian);
     for (const v of Array.isArray(o) ? o : Object.values(o)) scan(v);
   };
   if (def) { scan(def.setup); scan(def.triggers); }

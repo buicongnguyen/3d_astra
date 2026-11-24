@@ -1,4 +1,5 @@
 // 0.20 "Chronicles": the four Faction Chronicles (src/story/chronicles.js) against the engine and
+// (chronicles round 2, 2026-11-24: a fourth mission each with a hero or a boss, staggered unlocks, two new cast)
 // the story rules, their progress (src/campaign.js), and the finale lines they add to mission 12
 // (resolveMission in src/story/choices.js). Bot play: npm run check:missions -- --chronicle all.
 // Browser checks: tests/chronicles.mjs.
@@ -33,7 +34,8 @@ const make = (m, difficulty = "standard") => new Simulation({ map: m.map, enemyC
 const memory = (value) => { const store = new Map(value === undefined ? [] : [["frontier-campaign-v2", JSON.stringify(value)]]); return { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) }; };
 const clearMain = (count) => MISSIONS.slice(0, count).reduce((p, _, i) => recordClear(p, i, 300 + i), { cleared: {} });
 
-test("four chronicles of three missions, each played as its own faction with rosters on", () => {
+// Round 2 (2026-11-24): four missions each (was three), the fourth with a hero who yields or a boss.
+test("four chronicles of four missions, each played as its own faction with rosters on", () => {
   assert.deepEqual(CHRONICLE_IDS, ["ashfall", "sunward", "wardens", "veil"]);
   const ids = new Set([...MISSIONS.map((m) => m.id), ...DEFENCE_LEVELS.map((l) => l.id)]);
   for (const c of CHRONICLES) {
@@ -42,7 +44,10 @@ test("four chronicles of three missions, each played as its own faction with ros
     assert.ok(CAST[c.lead] && hasCast(c.lead) && CAST[c.lead].faction === c.faction, `${c.id}: lead ${c.lead} has a portrait and belongs to the faction`);
     assert.ok(c.address && c.address !== "Commander" && c.title && c.summary, `${c.id}: address, title, summary`);
     assert.ok(missionIndex(c.unlockAfter) >= 0, `${c.id}: unlockAfter ${c.unlockAfter}`);
-    assert.equal(c.missions.length, 3, `${c.id}: three missions`);
+    assert.equal(c.missions.length, 4, `${c.id}: four missions`);
+    // The fourth reuses the campaign's hero rules (a named enemy who yields) or a boss (docs/aaa/BOSSES.md).
+    const fourth = c.missions[3], used = [...spawns(fourth)];
+    assert.ok(used.some((sp) => sp.hero || D[sp.spawn]?.boss), `${c.id}: the fourth mission has a hero or a boss`);
     for (const m of c.missions) {
       assert.ok(!ids.has(m.id), `${m.id}: unique id`); ids.add(m.id);
       assert.equal(m.chronicle, c.id, `${m.id}: chronicle`);
@@ -54,6 +59,8 @@ test("four chronicles of three missions, each played as its own faction with ros
       for (let team = 1; team <= m.enemies; team++) assert.ok(FACTIONS[m.factions[team]] && m.factions[team] !== c.faction, `${m.id}: team ${team} faction`);
       assert.ok(m.title && m.briefing.place && m.briefing.lines.length && m.briefing.intel.length && m.debrief.win.length && m.debrief.lose.length && m.design, m.id);
       assert.ok(!m.decisions, `${m.id}: chronicles ask no decisions`);
+      // A hero who yields is let go by the script itself (surrender, then capture in the same trigger): no decision to ask.
+      for (const t of m.triggers) if (t.do.some((a) => a.surrender)) assert.ok(t.do.some((a) => a.capture === t.do.find((x) => x.surrender).surrender), `${m.id}: a yielding hero is let go`);
       // A chronicle briefing never calls its own player "Commander" (that is Meridian's player; "their Commander" is fine).
       for (const l of m.briefing.lines) assert.doesNotMatch(l.text.replace(/their Commander/g, ""), /\bCommander\b/, `${m.id} briefing: ${l.text}`);
       if (m.medals?.gold?.seconds) assert.ok(m.medals.gold.seconds < m.medals.silver.seconds, `${m.id}: medals`);
@@ -162,6 +169,39 @@ test("Chronicle starting squads and mast health follow the selected difficulty",
   }
 });
 
+// Round 2 (2026-11-24): the fourth missions use the campaign's hero rules (C3) and bosses without a
+// Commander decision: a hero below 35% yields and the script lets them go; the Wardens' Sovereign only
+// has to lose half its armour.
+test("round 2: Sol and Hale yield and leave the field; the Wardens win when the Sovereign loses half its armour", () => {
+  const until = (s, seconds, seen = []) => { for (let i = 0; i < seconds * 20; i++) { s.tick(0.05); seen.push(...s.events); s.events.length = 0; } return seen; };
+  for (const [id, tag, cast, wait] of [["ca4-the-toll-road", "heroSol", "sol", 1], ["cs4-guns-on-the-caravan", "heroHale", "hale", 362]]) {
+    const s = make(ALL.find((m) => m.id === id));
+    until(s, 0.1);
+    for (const camp of s.tagged("toll")) camp.hp = 0; // ca4: Sol's objective shows once both toll camps are down
+    until(s, wait);
+    const h = s.tagged(tag)[0];
+    assert.ok(h && h.team === 1 && h.hero === cast, `${id}: ${cast} is on the field`);
+    h.hp = Math.floor(h.maxHp * 0.3);
+    const seen = until(s, 1);
+    assert.equal(s.tagged(tag).length, 0, `${id}: ${cast} has left the field`);
+    assert.ok(seen.some((e) => e.type === "surrender" && e.hero === cast) && seen.some((e) => e.type === "captured" && e.hero === cast), `${id}: surrender, then captured`);
+    assert.equal(s.mission.pending, undefined, `${id}: no decision asked`);
+    s.missionDef.objectives.filter((o) => o.tag === tag).forEach((o) => assert.equal(s.mission.objectives[o.id].state, "done", `${id}: ${o.id} done`));
+  }
+  const w = make(ALL.find((m) => m.id === "cw4-without-a-key"));
+  until(w, 242); // the Sovereign and its relays come at 4:00
+  const boss = w.tagged("sovereign")[0];
+  assert.ok(boss && w.tagged("ward").length === 3, "the Sovereign walks with three relays");
+  for (const r of w.tagged("ward")) r.hp = 0;
+  until(w, 1);
+  assert.equal(w.mission.objectives.relays.state, "done");
+  boss.hp = Math.floor(boss.maxHp * 0.45);
+  until(w, 2);
+  assert.equal(w.mission.objectives.sovereign.state, "done", "half its armour is enough");
+  assert.equal(w.result, "victory");
+  assert.ok(w.tagged("sovereign").length === 1, "it walks home: the Wardens never kill it");
+});
+
 test("Defence missions pass the Defence data checks", () => {
   for (const m of ALL.filter((x) => x.defence)) {
     const d = m.defence, s = make(m), t = s.terrain;
@@ -184,20 +224,40 @@ test("Defence missions pass the Defence data checks", () => {
   }
 });
 
-test("progress: chronicles unlock after Act 1, open in order, record per chronicle and keep every field", () => {
+// Round 2 (2026-11-24): the chronicles open one by one (Ashfall after mission 4, Sunward after 6, Wardens
+// after 8, Veil after 10: each once the player has met its people), not all after Act 1 as in 0.20.
+test("progress: chronicles unlock in turn, open in order, record per chronicle and keep every field", () => {
   const empty = loadProgress(memory());
   for (const c of CHRONICLES) {
     assert.equal(chronicleUnlocked(empty, c.id), false);
-    assert.equal(unlockedIn(empty, c.id, 0), false, `${c.id}: locked before Act 1 ends`);
+    assert.equal(unlockedIn(empty, c.id, 0), false, `${c.id}: locked on a new campaign`);
   }
-  const act1 = clearMain(missionIndex(CHRONICLES[0].unlockAfter) + 1);
-  assert.equal(chronicleUnlocked(clearMain(3), "sunward"), false, "three missions are not enough");
-  for (const c of CHRONICLES) {
-    assert.equal(chronicleUnlocked(act1, c.id), true);
-    assert.deepEqual([0, 1, 2].map((i) => unlockedIn(act1, c.id, i)), [true, false, false], `${c.id}: in order`);
-    assert.equal(nextIn(act1, c.id), 0);
+  assert.deepEqual(CHRONICLES.map((c) => c.unlockAfter), ["m04-three-way-dunes", "m06-copper-harvest", "m08-the-quiet-vault", "m10-obsidian-storm"]);
+  const at = CHRONICLES.map((c) => missionIndex(c.unlockAfter));
+  assert.ok(at.every((i, k) => i >= 0 && !MISSIONS[i].optional && (k === 0 || i > at[k - 1])), "staggered on main missions, in story order");
+  for (const [k, c] of CHRONICLES.entries()) {
+    assert.equal(chronicleUnlocked(clearMain(at[k]), c.id), false, `${c.id}: not before ${c.unlockAfter}`);
+    const open = clearMain(at[k] + 1);
+    assert.equal(chronicleUnlocked(open, c.id), true, `${c.id}: open after ${c.unlockAfter}`);
+    for (const later of CHRONICLES.slice(k + 1)) assert.equal(chronicleUnlocked(open, later.id), false, `${later.id}: still locked after ${c.unlockAfter}`);
+    assert.deepEqual([0, 1, 2, 3].map((i) => unlockedIn(open, c.id, i)), [true, false, false, false], `${c.id}: in order`);
+    assert.equal(nextIn(open, c.id), 0);
   }
-  let p = { ...act1, decisions: { "m03-alloy": "return" }, endingsSeen: ["meridian-line"], future: { keep: true } };
+  const act1 = clearMain(at[0] + 1);
+  assert.equal(chronicleUnlocked(clearMain(3), "ashfall"), false, "three missions are not enough");
+  // Never take content away: a save from 0.20 (every chronicle opened after mission 4) that shows a chronicle
+  // started or finished keeps it open, with its next mission; a record with no mission of that chronicle does not.
+  const old = { ...act1, chronicles: { veil: { cleared: ["cv1-night-count"], done: false }, wardens: { cleared: [], done: true } } };
+  assert.deepEqual([chronicleUnlocked(old, "veil"), unlockedIn(old, "veil", 1), unlockedIn(old, "veil", 2), nextIn(old, "veil")], [true, true, false, 1]);
+  assert.equal(chronicleUnlocked(old, "wardens"), true, "a finished chronicle stays open");
+  assert.equal(chronicleUnlocked(old, "sunward"), false, "an untouched chronicle waits for its mission");
+  assert.equal(chronicleUnlocked({ ...act1, chronicles: { veil: { cleared: ["cs1-dry-wells", "nope"] } } }, "veil"), false, "only the chronicle's own missions count");
+  // A 0.20 save that finished a chronicle's three missions stays done (its finale line stays) and opens the new fourth.
+  const three = { ...act1, chronicles: { ashfall: { cleared: CHRONICLES[0].missions.slice(0, 3).map((m) => m.id), done: true } } };
+  assert.deepEqual([chronicleDone(three, "ashfall"), chronicleCount(three, "ashfall"), unlockedIn(three, "ashfall", 3), nextIn(three, "ashfall")], [true, 3, true, 3]);
+  assert.equal(recordIn(three, "ashfall", 3, 500).chronicles.ashfall.done, true);
+  let p = { ...clearMain(at[1] + 1), decisions: { "m03-alloy": "return" }, endingsSeen: ["meridian-line"], future: { keep: true } };
+  const base = p;
   p = recordIn(p, "sunward", 0, 610, "silver", "standard");
   assert.deepEqual(p.chronicles.sunward.cleared, ["cs1-dry-wells"]);
   assert.equal(p.chronicles.sunward.done, false);
@@ -206,10 +266,13 @@ test("progress: chronicles unlock after Act 1, open in order, record per chronic
   p = recordIn(p, "sunward", 0, 700, "gold", "veteran");
   assert.deepEqual(bestIn(p, "sunward", 0), { time: 610, medal: "gold", difficulty: "veteran" }, "best time and best medal, each on its own");
   p = recordIn(recordIn(p, "sunward", 1, 500), "sunward", 2, 800);
+  assert.equal(p.chronicles.sunward.done, false, "three of four missions do not finish a chronicle");
+  assert.deepEqual([unlockedIn(p, "sunward", 3), nextIn(p, "sunward")], [true, 3]);
+  p = recordIn(p, "sunward", 3, 560);
   assert.equal(p.chronicles.sunward.done, true);
   assert.equal(chronicleDone(p, "sunward"), true);
-  assert.equal(nextIn(p, "sunward"), 2, "a finished chronicle points at its last mission");
-  assert.deepEqual([p.decisions, p.endingsSeen, p.future, p.cleared], [act1.decisions ?? { "m03-alloy": "return" }, ["meridian-line"], { keep: true }, act1.cleared], "a chronicle win keeps every other field");
+  assert.equal(nextIn(p, "sunward"), 3, "a finished chronicle points at its last mission");
+  assert.deepEqual([p.decisions, p.endingsSeen, p.future, p.cleared], [{ "m03-alloy": "return" }, ["meridian-line"], { keep: true }, base.cleared], "a chronicle win keeps every other field");
   // A main win keeps the chronicles; a load keeps them exactly.
   const q = recordClear(p, 5, 400);
   assert.deepEqual(q.chronicles, p.chronicles);

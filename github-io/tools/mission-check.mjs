@@ -62,7 +62,8 @@ const MISSION_TARGETS = {
   // and its objective bot may win as early as it likes.
   "m01-first-light": { passive: 300, win: [120, 540], earliest: 120, objectiveAnyTime: true },
   // Mission 2: on the Ashfall roster after three tuning passes the bot wins from about 6:30.
-  "m02-first-contact": { passive: 300, win: [360, 1200] },
+  // Creature round (2026-11-24): the bot banks the hound den's alloy and wins sooner (317 s; 367 s before), so the window opens at 300 s.
+  "m02-first-contact": { passive: 300, win: [300, 1200] },
   "m03-the-ashen-line": { passive: 300 },
   // Mission 4 (campaign C3): with Captain Sol at the east oasis the bot wins from about 6:00; earlier, not harder.
   // Mission 10 (campaign C6b): the reinforcement truck at 1:30 lets the bot win from about 6:00; earlier, not harder.

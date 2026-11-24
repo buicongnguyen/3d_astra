@@ -138,6 +138,9 @@ export const missions = {
       const place = this.missionPlace(step.capturePoint);
       this.mission.points[step.capturePoint] = { x: place.x, z: place.z, r: place.r, owner: step.owner ?? null, taker: null, since: 0, gives: step.gives || null };
     } else if (step.resources) Object.assign(this.players[0], step.resources);
+    // Creature dens and vault guardians (sim/content/campaign-creatures.js).
+    else if (step.den) this.initDen(step);
+    else if (step.guardian) this.initGuardian(step);
   },
   tagged(tag) {
     return this.entities.filter((e) => e.tag === tag && e.hp > 0);
@@ -258,6 +261,13 @@ export const missions = {
       done = s.have >= o.count;
     } else if (o.type === "reach") done = this.own(0).some((e) => fighter(e) && inside(e, o.region));
     else if (o.type === "waves") s.have = this.defence?.cleared ?? 0; // done by defenceResult()
+    // Creature round: a den cleared or tamed; a guardian that has joined (or fails when it falls first).
+    else if (o.type === "den") done = this.denDone(o.den);
+    else if (o.type === "guardian") {
+      const g = this.tagged(o.tag);
+      if (!g.length) return this.setObjective(o.id, "failed");
+      done = g.some((e) => e.team === 0);
+    }
     if (done) this.setObjective(o.id, "done");
   },
   missionCondition(when) {

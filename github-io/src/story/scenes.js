@@ -104,6 +104,19 @@ export const SCENES = {
       { say: { who: "hale", text: "Three conduits cut. My schedule has lost a day, Commander. The engine on the Keystone has not." } },
     ],
   },
+  // Wardens Chronicle, Without a Key (chronicles round 2): the Iron Sovereign walks on the Warden Rise.
+  "sovereign-at-the-rise": {
+    letterbox: true,
+    beats: [
+      { camera: { at: "gate", zoom: 0.9, seconds: 2.2 } },
+      { fx: { flash: "alarm" } },
+      { shake: 0.5 },
+      { title: { text: "Iron Sovereign", sub: "Walking siege fortress" } },
+      { say: { who: "rask", text: "There it is, out of the north. Six legs, every one of them Builder work. Hale only taught it to walk." } },
+      { camera: { at: "line", zoom: 1.1, seconds: 1.8 } },
+      { say: { who: "echo", text: "It is one of the old machines, Warden-prime. It has no key either. It only has orders." } },
+    ],
+  },
   // Mission 12, the ending beat. Two or more merciful orders: the Keystone opens to every camp.
   "keystone-open": {
     letterbox: true,
@@ -124,6 +137,27 @@ export const SCENES = {
       { say: { who: "echo", text: "The engine is silent. Tuning the Keystone. One hundred and eight relays are answering." } },
       { say: { who: "vale", text: "Meridian towers on every road to the Keystone. It is ours to guard now, Commander." } },
       { wait: 0.5 },
+    ],
+  },
+  // Mission 8 (creature round): the Commander strikes the vault's guardian and it rises for its test.
+  "vault-sentinel": {
+    letterbox: true,
+    beats: [
+      { camera: { at: "sentinelPost", zoom: 0.8, seconds: 1.8 } },
+      { fx: { flash: "relay" } },
+      { shake: 0.4 },
+      { title: { text: "Vault Sentinel", sub: "Builder guardian" } },
+      { say: { who: "okoro", text: "It is standing up. Commander, do not try to destroy it. Show it we can fight, and it should kneel." } },
+    ],
+  },
+  // Mission 12 (creature round, Veil story): after the first offensive the Veil steps off Hale's line.
+  "veil-turns": {
+    letterbox: true,
+    beats: [
+      { camera: { at: "westBank", zoom: 1, seconds: 2 } },
+      { say: { who: "maren", text: "Commander. The Veil has read Hale's engine for a week. Every reading says the same: it empties the Lattice." } },
+      { say: { who: "lind", text: "Teo Lind, Veil Shades. Half my crews walked off his line this morning. The rest are watching what you do next." } },
+      { say: { who: "vale", text: "Then let them watch. Every Shade who stands aside today is one gun fewer at the engine." } },
     ],
   },
 };

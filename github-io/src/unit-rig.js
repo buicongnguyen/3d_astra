@@ -17,12 +17,17 @@ import * as THREE from "three";
 // (a portrait, a stray non-instanced copy) shows the model exactly as modelled.
 // Every infantry type has the same two leg pivots (leg_L / leg_R at the hip): the Meridian troops with
 // Boot/Leg_suit/Shin, the Gunner with Knee_pad, the faction walkers with Upper_leg/Knee/Shin/Boot.
+// Creature round: the Acid Hound is a quadruped on the same two bones. Each `leg_*` empty is its own hip
+// (and Knee_* mesh) per vertex; the suffix picks the phase (/_R\d*$/ = right, else left), so its
+// diagonal pairs leg_L + leg_hindR_L and leg_R + leg_hindL_R trot together. The Vault Sentinel is a
+// biped golem (the view sets its kneel when it yields; it is not a KNEELER).
 export const RIG_INFANTRY = new Set(["ranger", "worker", "vanguard", "medic", "engineer", "antitank", "gunner",
-  "scrapper", "shade", "stalker", "watcher", "rider", "walker", "bulwark"]);
+  "scrapper", "shade", "stalker", "watcher", "rider", "walker", "bulwark", "acidhound", "vaultsentinel"]);
 // Ranged shooters kneel to fire when they stand still.
 export const KNEELERS = new Set(["ranger", "antitank", "gunner", "stalker", "watcher"]);
-// How the legs move: a Rider sits on its bike (legs still, wheels roll); the Walker and the Bulwark stomp (heavy, no run).
-export const GAIT = { rider: "ride", walker: "stomp", bulwark: "stomp" };
+// How the legs move: a Rider sits on its bike (legs still, wheels roll); the Walker, the Bulwark and the Sentinel
+// stomp (heavy, no run); the Hound trots (runs, but its body never pitches: its legs would come off the body).
+export const GAIT = { rider: "ride", walker: "stomp", bulwark: "stomp", vaultsentinel: "stomp", acidhound: "trot" };
 // Hulls pitch on their suspension and roll their Wheels* (the Lance buggy is a wheeled hull, like the Scorcher).
 export const RIG_HULL = new Set(["tank", "breaker", "scorcher", "lancer"]);
 export const isRigType = (type) => RIG_INFANTRY.has(type) || RIG_HULL.has(type);
@@ -112,9 +117,9 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 // classic swing: no knees, no run lean, no kneel, no flinch).
 export function stepInfantry(rig, motion, { speed, base, scale, legLength, moving, attacking, dt, rich, kneels = true, gait = "walk" }) {
   if (gait === "ride") return stepRide(rig, motion, { speed, moving, dt, rich, scale });
-  const stomp = gait === "stomp";
+  const stomp = gait === "stomp", trot = gait === "trot";
   const run = rich && !stomp ? smooth(0.72, 0.95, speed / Math.max(0.1, base)) : 0;
-  const amp = stomp ? 0.3 : rich ? 0.36 + 0.24 * run : 0.46;
+  const amp = stomp ? 0.3 : trot ? (rich ? 0.42 + 0.18 * run : 0.46) : rich ? 0.36 + 0.24 * run : 0.46;
   const pace = Math.min(1, speed / 1.2);
   if (dt > 0) {
     rig.gait = approach(rig.gait, pace, 10, dt);
@@ -124,13 +129,13 @@ export function stepInfantry(rig, motion, { speed, base, scale, legLength, movin
     rig.phase = (rig.phase + (speed * dt * Math.PI) / Math.max(0.05, reach)) % (Math.PI * 200);
     rig.kneel = approach(rig.kneel, rich && kneels && attacking && !moving && speed < 0.05 ? 1 : 0, 15, dt);
     rig.flinch = Math.max(0, rig.flinch - dt * 4.5);
-    rig.lean = approach(rig.lean, run * 0.17 * rig.gait, 6, dt);
+    rig.lean = approach(rig.lean, trot ? 0 : run * 0.17 * rig.gait, 6, dt);
   }
   const swing = amp * rig.gait;
   motion[0] = rig.phase;
   motion[1] = swing;
   motion[2] = rig.kneel;
-  const flinch = rich ? Math.sin(rig.flinch * Math.PI) * 0.22 : 0;
+  const flinch = rich ? Math.sin(rig.flinch * Math.PI) * (trot ? 0.08 : 0.22) : 0;
   motion[3] = 1 + rig.lean + rig.kneel * 0.12 - flinch;
   // Body height: a straight stance leg lowers the hip by L (1 - cos(angle)); feet stay on the ground.
   const angle = swing * Math.sin(rig.phase);

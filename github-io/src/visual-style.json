@@ -50,6 +50,8 @@
     "lancer":{"height":2.19,"reach":0.83,"life":0.45,"kind":"rocket","look":"rocket","color":[1,0.82,0.5,1],"hit":0.6},
     "bulwark":{"height":2.12,"reach":1.64,"life":0.12,"kind":"rifle","look":"burst","color":[0.62,0.86,1,1]},
     "moth":{"height":0.5,"reach":0.79,"life":0.2,"kind":"rifle","look":"beam","color":[0.84,0.56,1,0.95],"beamLife":0.2,"beamWidth":0.1,"ring":0.8},
-    "halo":{"height":0.3,"reach":1.45,"life":0.09,"kind":"rifle","look":"twin-tracer","color":[0.45,1,0.9,1]}
+    "halo":{"height":0.3,"reach":1.45,"life":0.09,"kind":"rifle","look":"twin-tracer","color":[0.45,1,0.9,1]},
+    "acidhound":{"height":0.5,"reach":0.9,"life":0.12,"kind":"rifle","look":"pellets","color":[0.55,1,0.25,1]},
+    "vaultsentinel":{"height":1.6,"reach":1.8,"life":0.18,"kind":"cannon","look":"plough","color":[0.4,0.95,0.9,1],"hit":0.9}
   }
 }

@@ -96,6 +96,7 @@
     "test:quick-battle-check": "node tests/quick-battle-check.mjs",
     "test:wild-desert": "node tests/wild-desert.mjs",
     "bench:wild": "node tools/wild-bench.mjs --jobs 3",
+    "test:creatures": "node tests/creatures.mjs",
     "test:faction-depth": "node tests/faction-depth.mjs"
   },
   "dependencies": {

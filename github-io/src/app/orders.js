@@ -155,7 +155,7 @@ export function setupOrders(S, A) {
       return;
     }
     let order = { type: forced || "move", ...point };
-    if ((!forced || forced==='attackmove') && (target?.team > 0 || target?.kind === 'wall') && S.sim.isVisible(target))
+    if ((!forced || forced==='attackmove') && (target?.team > 0 || target?.kind === 'wall' || (target?.team < 0 && target.kind === 'unit')) && S.sim.isVisible(target))
       order = { type: "attack", target: target.id };
     if(order.type==='attack'){
       const fighters=units.filter(e=>e.damage>0);

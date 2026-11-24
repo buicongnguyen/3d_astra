@@ -10,7 +10,7 @@ export const PORTRAIT_ORDER = ["worker", "vanguard", "ranger", "breaker", "medic
   "scrapper", "scorcher", "salvageyard", "rider", "wagon", "waystation", "drone", "walker", "pylon", "shade", "watcher", "veilrelay",
   "kite", "hawk", "balloon", "glider",
   "carrier", "ironvanguard", "gunner", "stalker", "ironsovereign", "workshop", "rampart", "wyrm", "wyrmling",
-  "lancer", "bulwark", "moth", "halo", "ironsovereign2"];
+  "lancer", "bulwark", "moth", "halo", "ironsovereign2", "acidhound", "vaultsentinel"];
 
 // A rendered Blender portrait. Team paint is white in the atlas; the mask layer tints it with
 // the side's army colour (friendly by default), so portraits follow the player's palette.

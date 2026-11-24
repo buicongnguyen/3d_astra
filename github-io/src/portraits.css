@@ -1,4 +1,4 @@
-/* Rendered unit and building portraits from a 4x10 atlas (R3-J: 37 cells, PORTRAIT_ROWS in portraits.js). The <i> layer multiplies the army
+/* Rendered unit and building portraits from a 4x12 atlas (R3-J: 37 cells; roster + creature round: 45, PORTRAIT_ROWS in portraits.js). The <i> layer multiplies the army
    colour into the white team paint, masked to exactly the painted parts. */
 .portrait-art {
   --size: 40px;
@@ -10,8 +10,8 @@
   height: var(--size);
   isolation: isolate;
   background: url("./art/portraits.webp") no-repeat;
-  background-size: 400% 1100%;
-  background-position: calc(var(--px) * 100% / 3) calc(var(--py) * 100% / 10);
+  background-size: 400% 1200%;
+  background-position: calc(var(--px) * 100% / 3) calc(var(--py) * 100% / 11);
   vertical-align: middle;
 }
 .portrait-art.hostile { --tint: var(--team-hostile, #ef7660); }
@@ -22,8 +22,8 @@
   mix-blend-mode: multiply;
   -webkit-mask: url("./art/portrait-mask.webp") no-repeat;
   mask: url("./art/portrait-mask.webp") no-repeat;
-  -webkit-mask-size: 400% 1100%;
-  mask-size: 400% 1100%;
-  -webkit-mask-position: calc(var(--px) * 100% / 3) calc(var(--py) * 100% / 10);
-  mask-position: calc(var(--px) * 100% / 3) calc(var(--py) * 100% / 10);
+  -webkit-mask-size: 400% 1200%;
+  mask-size: 400% 1200%;
+  -webkit-mask-position: calc(var(--px) * 100% / 3) calc(var(--py) * 100% / 11);
+  mask-position: calc(var(--px) * 100% / 3) calc(var(--py) * 100% / 11);
 }

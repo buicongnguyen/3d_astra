@@ -1772,6 +1772,8 @@ export class WorldView {
         if (u.rig?.kind === "infantry") {
           lift = stepInfantry(u.rig, u.rig.motion, { speed, base: D[e.type].speed || 3, scale: u.readabilityScale, legLength: u.rig.legLength,
             moving: !!e.moving, attacking: !!e.attacking, dt, rich: this.richMotion, kneels: KNEELERS.has(e.type), gait: GAIT[e.type] });
+          // A guardian on its knees (sim/content/campaign-creatures.js) holds the kneel pose.
+          if (e.knelt) { u.rig.motion[2] = 1; u.rig.motion[3] = 1.12; }
         } else if (u.rig?.kind === "hull") {
           const pitch = stepHull(u.rig, u.rig.motion, { speed, moving: !!e.moving, dt, rich: this.richMotion, scale: u.readabilityScale });
           if (u.turret) {
