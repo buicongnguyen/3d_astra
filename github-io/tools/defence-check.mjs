@@ -15,7 +15,9 @@ import { seedOf } from "../src/sim/defence.js";
 import { playDefence } from "./defence-bot.mjs";
 import { hasHeroic } from "../src/defence/heroic.js";
 
-const HEROIC_LIVES_LEFT = 2, HEROIC_GREEDY_LOSE = 5;
+// HEROIC_GREEDY_LOSE was 5; 4 since 2026-11-24 (defence pads): the longer reach of the short-range crews lets
+// single-crew play hold one more Heroic level (still lost on 4 of 7). Relaxed only, never tightened.
+const HEROIC_LIVES_LEFT = 2, HEROIC_GREEDY_LOSE = 4;
 
 // Endless runs stop here (they are scored, not won); the bot must hold at least ENDLESS_MIN.
 const ENDLESS_CAP = 40, ENDLESS_MIN = 15;
