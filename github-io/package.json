@@ -10,6 +10,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test tests/*.test.js",
     "test:ci-local": "node tests/ci-local.mjs",
+    "test:changed": "node tests/changed.mjs",
     "check:missions": "node tools/mission-check.mjs",
     "check:defence": "node tools/defence-check.mjs",
     "test:browser": "node tests/browser.mjs",
