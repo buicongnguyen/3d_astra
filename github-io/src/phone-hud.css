@@ -881,3 +881,9 @@
   :root.compact-ui:not(.in-briefing) .topbar .top-actions .icon-button { background: none !important; border-color: transparent !important; box-shadow: none !important; --frame: none; }
   :root.compact-ui:not(.in-briefing) .topbar .top-actions .icon-button .icon { width: 18px; height: 18px; }
 }
+/* Portrait, a building selected: #commands is 44 px tall with 4 px top padding, so its 44 px tiles lost their bottom
+   4 px (price and lock clipped above the Selection / Map tabs). No top padding here: the tiles fit exactly. */
+@media (orientation: portrait), (max-width: 760px) {
+  /* production-ui.css sets 4 px through .command-panel:has(#production-status:not([hidden])) (two ids), hence the :has here. */
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .command-panel:is(:has(#production-status), :not(:has(#production-status))) #commands { padding-top: 0; }
+}
