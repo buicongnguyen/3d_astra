@@ -39,6 +39,8 @@ export function defaults(coarse = false) {
     music: "recorded",
     waterMotion: true,
     combatMotion: true,
+    // Unit motion (unit-rig.js): knees, run lean, kneel-to-fire, hull rock, turret scan, stowed artillery barrels.
+    unitMotion: true,
     // Screen shake on the biggest blasts (a Command core falling, a Barrage landing). Off = steady camera.
     screenShake: false,
     // Floating damage numbers (AAA round 2, W2-E): "focus" = bosses and Frontier Defence, "all", or "off".
@@ -74,7 +76,7 @@ export function normalize(value, coarse = false) {
     d.masterVolume = Math.max(0, Math.min(1, value.masterVolume));
   for (const key of ["musicVolume", "sfxVolume"])
     if (Number.isFinite(value[key])) d[key] = Math.max(0, Math.min(1, value[key]));
-  for (const key of ["muted", "waterMotion", "combatMotion", "screenShake", "ambient", "detail", "showFps", "autocast"])
+  for (const key of ["muted", "waterMotion", "combatMotion", "unitMotion", "screenShake", "ambient", "detail", "showFps", "autocast"])
     if (typeof value[key] === "boolean") d[key] = value[key];
   if (typeof value.groupPace === "boolean") d.groupPace = value.groupPace;
   if (typeof value.quietMode === "boolean") d.quietMode = value.quietMode;

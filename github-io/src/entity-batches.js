@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { rigDepthMaterial, REST_MOTION } from "./unit-rig.js";
 
 // Units, buildings and deposits are clones that share geometry and materials,
 // so each model part can be drawn for every copy in one instanced call. The cloned meshes
@@ -12,6 +13,13 @@ export function adoptBatchedParts(root) {
   root.traverse((o) => {
     if (o.isMesh && !o.isInstancedMesh) o.layers.set(SOURCE_LAYER);
   });
+}
+
+// Dispose a rigged batch's old geometry wrapper without touching the template's shared buffers.
+export function releaseWrapper(wrapper) {
+  for (const name of Object.keys(wrapper.attributes)) if (name !== "aMotion") wrapper.deleteAttribute(name);
+  wrapper.setIndex(null);
+  wrapper.dispose();
 }
 
 export class EntityBatches {
@@ -36,7 +44,8 @@ export class EntityBatches {
       if (!mesh.geometry.boundingSphere) mesh.geometry.computeBoundingSphere();
       const bounds = mesh.geometry.boundingSphere; // part geometry sits in model space, offset from the origin
       batch = { key, mesh: null, count: 0, capacity: 0, reach: bounds.center.length() + bounds.radius,
-        dirtyStart: Infinity, dirtyEnd: 0,
+        dirtyStart: Infinity, dirtyEnd: 0, motionStart: Infinity, motionEnd: 0,
+        rig: !!mesh.geometry.getAttribute("aRig"), geometry: null,
         min: new THREE.Vector3(), max: new THREE.Vector3() };
       this.batches.set(key, batch);
     }
@@ -45,7 +54,21 @@ export class EntityBatches {
   }
   grow(batch, source) {
     const capacity = Math.max(16, batch.capacity * 2);
-    const next = new THREE.InstancedMesh(source.geometry, source.material, capacity);
+    // Shader bones (unit-rig.js): a rigged part carries a per-instance pose (aMotion). Two batches may
+    // draw the same geometry (team paint per team), so each batch draws a geometry wrapper that shares
+    // the vertex buffers and adds only its pose attribute. Growing makes a new wrapper; the old one is
+    // stripped down to its pose and disposed, so the renderer frees exactly that GPU buffer (and its
+    // vertex array states) and never the shared vertex data.
+    const old = batch.geometry;
+    if (batch.rig) {
+      const g = new THREE.BufferGeometry();
+      for (const [name, attribute] of Object.entries(source.geometry.attributes)) g.setAttribute(name, attribute);
+      g.setIndex(source.geometry.index);
+      for (const group of source.geometry.groups) g.addGroup(group.start, group.count, group.materialIndex);
+      g.boundingSphere = source.geometry.boundingSphere;
+      batch.geometry = g;
+    }
+    const next = new THREE.InstancedMesh(batch.geometry || source.geometry, source.material, capacity);
     next.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     next.name = `batch:${source.material.name || source.geometry.type}`;
     // Culled as a group: end() fits a bounding sphere around this frame's instances, so an
@@ -59,12 +82,23 @@ export class EntityBatches {
     // compiles one shader variant.
     next.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 3).fill(1), 3);
     next.instanceColor.setUsage(THREE.DynamicDrawUsage);
+    let motion = null;
+    if (batch.rig) {
+      motion = new THREE.InstancedBufferAttribute(new Float32Array(capacity * 4), 4);
+      for (let i = 0; i < capacity; i++) motion.array.set(REST_MOTION, i * 4);
+      motion.setUsage(THREE.DynamicDrawUsage);
+      if (batch.mesh) motion.array.set(batch.motion.array.subarray(0, batch.count * 4));
+      batch.geometry.setAttribute("aMotion", motion);
+      batch.motion = motion;
+      next.customDepthMaterial = rigDepthMaterial(); // shadows take the pose too
+    }
     if (batch.mesh) {
       next.instanceMatrix.array.set(batch.mesh.instanceMatrix.array.subarray(0, batch.count * 16));
       next.instanceColor.array.set(batch.mesh.instanceColor.array.subarray(0, batch.count * 3));
       this.group.remove(batch.mesh);
       batch.mesh.dispose(); // instance buffers only; geometry and material belong to the templates
     }
+    if (old) releaseWrapper(old);
     batch.mesh = next;
     batch.capacity = capacity;
     this.group.add(next);
@@ -91,6 +125,14 @@ export class EntityBatches {
         break;
       }
     }
+    if (batch.rig) {
+      const pose = mesh.userData.motion ?? REST_MOTION, poses = batch.motion.array, m = batch.count * 4;
+      if (poses[m] !== Math.fround(pose[0]) || poses[m + 1] !== Math.fround(pose[1]) || poses[m + 2] !== Math.fround(pose[2]) || poses[m + 3] !== Math.fround(pose[3])) {
+        poses[m] = pose[0]; poses[m + 1] = pose[1]; poses[m + 2] = pose[2]; poses[m + 3] = pose[3];
+        batch.motionStart = Math.min(batch.motionStart, m);
+        batch.motionEnd = m + 4;
+      }
+    }
     const tint = mesh.userData.tint ?? WHITE, colors = batch.mesh.instanceColor.array, c = batch.count * 3;
     if (colors[c] !== Math.fround(tint[0]) || colors[c + 1] !== Math.fround(tint[1]) || colors[c + 2] !== Math.fround(tint[2])) {
       colors[c] = tint[0]; colors[c + 1] = tint[1]; colors[c + 2] = tint[2];
@@ -105,6 +147,8 @@ export class EntityBatches {
       batch.count = 0;
       batch.dirtyStart = Infinity;
       batch.dirtyEnd = 0;
+      batch.motionStart = Infinity;
+      batch.motionEnd = 0;
     }
     this.used.length = 0;
     this.cull = !!camera;
@@ -156,13 +200,26 @@ export class EntityBatches {
         mesh.instanceMatrix.addUpdateRange(start, end - start);
         mesh.instanceMatrix.needsUpdate = true;
       }
+      if (batch.motionEnd > batch.motionStart) {
+        let start = batch.motionStart, end = batch.motionEnd;
+        for (const range of batch.motion.updateRanges) {
+          start = Math.min(start, range.start);
+          end = Math.max(end, range.start + range.count);
+        }
+        batch.motion.clearUpdateRanges();
+        batch.motion.addUpdateRange(start, end - start);
+        batch.motion.needsUpdate = true;
+      }
     }
   }
   get drawCount() {
     return this.used.length;
   }
   dispose() {
-    for (const batch of this.batches.values()) batch.mesh?.dispose();
+    for (const batch of this.batches.values()) {
+      batch.mesh?.dispose();
+      if (batch.geometry) releaseWrapper(batch.geometry);
+    }
     this.group.removeFromParent();
     this.batches.clear();
     this.used.length = 0;

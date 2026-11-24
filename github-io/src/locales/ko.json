@@ -151,6 +151,7 @@
     "High": "높음",
     "Decorative vegetation": "장식용 초목",
     "Animate water": "물 애니메이션",
+    "Unit motion": "유닛 동작",
     "Animate combat effects": "전투 효과 애니메이션",
     "Screen shake": "화면 흔들림",
     "Eco limits pixel density and shadow cost. Bridges, water and terrain obstacles remain visible at every setting. Reduced motion is respected.": "절약 모드는 픽셀 밀도와 그림자 부담을 줄입니다. 다리, 물, 지형 장애물은 모든 설정에서 보입니다. 동작 줄이기 설정을 따릅니다.",

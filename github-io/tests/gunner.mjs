@@ -37,13 +37,13 @@ await suite("gunner", async () => {
       });
       return {
         pixels: (max - min) * v.renderer.domElement.getBoundingClientRect().height / 2, scale: root.userData.readabilityScale,
-        fallback: m.name === "FallbackFlyer", legs: root.userData.legs.length, rig: !!root.userData.barrel, id: e.id,
+        fallback: m.name === "FallbackFlyer", legs: root.userData.rig?.kind, rig: !!root.userData.barrel, id: e.id,
       };
     });
     console.log(viewport, "Gunner at the start zoom:", JSON.stringify(size));
     assert.ok(size.pixels >= 28 - 1e-9, `${viewport}: the Gunner is ${size.pixels.toFixed(1)} px tall`);
     assert.equal(size.fallback, false, "the full model, not the stand-in");
-    assert.equal(size.legs, 2, "one leg pivot pair for the whole team");
+    assert.equal(size.legs, "infantry", "the legs bend in the body batch (shader bones, unit-rig.js)");
     assert.equal(size.rig, true, "the barrel rig");
 
     // 2. The pin icon: a pinned unit adds exactly one draw call, and none without a status.

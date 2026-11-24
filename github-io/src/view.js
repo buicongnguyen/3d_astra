@@ -23,7 +23,7 @@ import { fogAware } from "./fog-aware.js";
 import { teamColors, teamGlows, factionOf } from "./faction-colors.js";
 import { createEmblem, hasEmblem, recolorEmblems } from "./emblems.js";
 import { isHarvesting } from "./activity.js";
-import { EntityBatches, adoptBatchedParts, SOURCE_LAYER } from "./entity-batches.js";
+import { EntityBatches, adoptBatchedParts, SOURCE_LAYER, releaseWrapper } from "./entity-batches.js";
 import { BossView, bossTemplates, recolorBossPaint } from "./boss-view.js";
 import { cacheTransforms } from "./transform-cache.js";
 import { AmbientLife } from "./ambient-life.js";
@@ -32,6 +32,7 @@ import { ViewPlugins } from "./view-plugins.js";
 import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, setRimTier } from "./look-grade.js";
 import { MissionLook } from "./mission-look-view.js";
 import { airMotion } from "./air-motion.js";
+import { RIG_INFANTRY, RIG_HULL, KNEELERS, GAIT, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach } from "./unit-rig.js";
 import {
   EnvironmentView,
   optimizeEnvironment,
@@ -50,6 +51,10 @@ export const RIG_PART = /^(Main_cannon|Muzzle_brake|Barrel|Cannon|Muzzle|Turret_
 // Pivots kept as their own nodes: walking legs, and the flyers' rotors (spin_*) and burner flame (flicker_*).
 const MOVING_PART = /^(leg_|spin_|flicker_)/;
 // Flyers: rotor axes, a scratch quaternion, and where the altitude looks for higher ground (a rim ahead).
+// Unit motion: barrels that move with the unit's state (BarrelRig turns about its trunnion), in radians
+// of elevation from the modelled pose. The Breaker stows its gun on the move; the Scorcher carries its
+// nozzle low and lifts it to burn.
+const STOWS = new Map([["breaker", { move: -0.3, park: 0, fire: 0.12 }], ["scorcher", { move: -0.18, park: -0.18, fire: 0.12 }]]);
 const AXIS_Y = new THREE.Vector3(0, 1, 0), AXIS_Z = new THREE.Vector3(0, 0, 1), SPIN = new THREE.Quaternion();
 const FLY_SAMPLES = [[2.5, 0], [-2.5, 0], [0, 2.5], [0, -2.5]];
 // The left and right rotors of a flyer are the same part mirrored in place: after baking, the right
@@ -103,8 +108,8 @@ const KEEP_FINISH = /^(Team|Glass|Lamp|Energy)/;
 // Roughness and metalness remain per vertex; mixed groups mask the environment lookup by finish.
 const bakedShared = new Map();
 const reflects = (m) => m.metalness >= 0.5 || m.roughness <= 0.25;
-export function bakedMaterial(reflective, mixed = false) {
-  const key = mixed ? "mixed" : reflective;
+export function bakedMaterial(reflective, mixed = false, rig = false) {
+  const key = (mixed ? "mixed" : String(reflective)) + (rig ? "|rig" : "");
   if (bakedShared.has(key)) return bakedShared.get(key);
   const m = new THREE.MeshStandardMaterial({ name: mixed ? "BakedMixed" : reflective ? "BakedReflect" : "Baked", vertexColors: true, roughness: 1, metalness: reflective ? 1 : 0 });
   m.onBeforeCompile = (shader) => {
@@ -122,23 +127,25 @@ export function bakedMaterial(reflective, mixed = false) {
     rimShader(shader); // W2-C: the warm Fresnel rim (look-grade.js); Team parts get their own colour below
   };
   m.customProgramCacheKey = () => `baked-finish|${key}|${gradeKey()}`;
+  if (rig) addRig(m); // unit-rig.js: shader bones (the Ranger's legs, the tank's hull)
   bakedShared.set(key, m);
   return m;
 }
 // `compact` (flyers, 0.18): small craft seen from far above, so each rigid group bakes into ONE mesh,
 // glass included and metal and paint together (the reflective material if any part reflects).
 export function bakeFinishes(root, { compact = false } = {}) {
+  const rigOf = (o) => !!o.geometry.getAttribute("aRig");
   const groups = new Map();
   root.traverse((o) => {
     const m = o.material;
     if (!o.isMesh || Array.isArray(m) || !m.isMeshStandardMaterial || (compact ? /^(Team|Lamp|Energy|Flame)/ : KEEP_FINISH).test(m.name) || m.map || (m.transparent && !compact) || (m.emissive?.getHex() && !(compact && m.name.startsWith("Glass")))) return;
-    const key = o.parent.uuid;
-    if (!groups.has(key)) groups.set(key, { parent: o.parent, reflective: reflects(m), meshes: [] });
+    const key = o.parent.uuid + (rigOf(o) ? "|rig" : "");
+    if (!groups.has(key)) groups.set(key, { parent: o.parent, reflective: reflects(m), rig: rigOf(o), meshes: [] });
     const group = groups.get(key);
     group.reflective ||= reflects(m);
     group.meshes.push(o);
   });
-  for (const { parent, reflective, meshes } of groups.values()) {
+  for (const { parent, reflective, rig, meshes } of groups.values()) {
     if (meshes.length < 2) continue;
     const parts = meshes.map((o) => {
       const g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
@@ -152,7 +159,7 @@ export function bakeFinishes(root, { compact = false } = {}) {
         finish[i * 2] = m.roughness;
         finish[i * 2 + 1] = m.metalness;
       }
-      for (const name of Object.keys(g.attributes)) if (name !== "position" && name !== "normal") g.deleteAttribute(name);
+      for (const name of Object.keys(g.attributes)) if (name !== "position" && name !== "normal" && name !== "aRig") g.deleteAttribute(name);
       g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
       g.setAttribute("finish", new THREE.BufferAttribute(finish, 2));
       return g;
@@ -161,7 +168,7 @@ export function bakeFinishes(root, { compact = false } = {}) {
     parts.forEach((g) => g.dispose());
     if (!merged) continue;
     for (const o of meshes) parent.remove(o);
-    const mesh = new THREE.Mesh(merged, bakedMaterial(reflective, !compact && reflective && meshes.some(o => !reflects(o.material))));
+    const mesh = new THREE.Mesh(merged, bakedMaterial(reflective, !compact && reflective && meshes.some(o => !reflects(o.material)), rig));
     mesh.name = "baked";
     parent.add(mesh);
   }
@@ -574,19 +581,39 @@ export class WorldView {
           if (flyer) gltf.scene.traverse((o) => { if (o.isMesh && o.material.name.startsWith("Team") && !o.material.name.startsWith("TeamGlow")) teamPaint ||= o.material; });
           let pivot = null;
           gltf.scene.traverse((o) => { if (o.name.startsWith("Turret_pivot")) pivot = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld); });
+          // Shader bones (unit-rig.js): a rigged infantry type folds its leg pivots into the body
+          // (each vertex knows its hip and knee); a rigged hull type marks hull against tracks and wheels.
+          const rigInfantry = RIG_INFANTRY.has(type), rigHull = RIG_HULL.has(type);
+          let hipY = 0, hullPivot = null, bikeWheels = [], hullWheels = [];
+          const knees = new Map(); // leg pivot -> knee height (the Knee / Knee_pad part's middle; else half the hip)
+          if (rigInfantry) gltf.scene.traverse((o) => {
+            if (!o.name.startsWith("leg_")) return;
+            const hip = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld).y, knee = new THREE.Box3();
+            hipY = Math.max(hipY, hip);
+            o.traverse((c) => { if (c.isMesh && /^Knee/.test(c.name)) knee.expandByObject(c); });
+            knees.set(o, knee.isEmpty() ? hip * 0.5 : (knee.min.y + knee.max.y) / 2);
+          });
+          if (rigInfantry) gltf.scene.traverse((o) => { if (o.isMesh && /^Tyres/.test(o.name)) bikeWheels = tagWheels(o.geometry.clone().applyMatrix4(o.matrixWorld)); });
+          if (rigHull) {
+            const box = new THREE.Box3();
+            gltf.scene.traverse((o) => { if (o.isMesh && /^(Tracks|Wheels)/.test(o.name)) box.expandByObject(o); });
+            hullPivot = box.isEmpty() ? new THREE.Vector3(0, 0.6, 0) : box.getCenter(new THREE.Vector3());
+            gltf.scene.traverse((o) => { if (o.isMesh && /^Wheels/.test(o.name)) hullWheels = tagWheels(o.geometry.clone().applyMatrix4(o.matrixWorld)); });
+          }
           gltf.scene.traverse((o) => {
             // Leg pivots, and the flyers' spinning rotors and flickering burner flame (0.18), stay
             // separate nodes so they can move per instance inside their batches.
-            if (MOVING_PART.test(o.name)) {
+            if (MOVING_PART.test(o.name) && !(rigInfantry && o.name.startsWith("leg_"))) {
               const leg = o.clone(true);
               o.matrixWorld.decompose(leg.position, leg.quaternion, leg.scale);
               template.add(leg);
               legs.push(leg);
             }
             if (!o.isMesh) return;
-            let parent = o.parent;
+            let parent = o.parent, legPivot = null;
             while (parent) {
-              if (MOVING_PART.test(parent.name)) return;
+              if (rigInfantry && parent.name.startsWith("leg_")) legPivot = parent;
+              else if (MOVING_PART.test(parent.name)) return;
               parent = parent.parent;
             }
             // Keep the existing named Blender cannon pieces articulated while
@@ -600,18 +627,42 @@ export class WorldView {
               target.set(key, { material: glowAsPaint ? teamPaint : o.material, geometries: [] });
             const geometry = o.geometry.clone().applyMatrix4(o.matrixWorld);
             if (rigged && pivot) geometry.translate(-pivot.x, 0, -pivot.z);
+            if (target === buckets && legPivot) {
+              const hip = new THREE.Vector3().setFromMatrixPosition(legPivot.matrixWorld);
+              tagBone(geometry, /_R(\d*)$/.test(legPivot.name) ? BONE.legR : BONE.legL, hip.y, knees.get(legPivot), hip.z);
+            } else if (target === buckets && rigInfantry && /^(Tyres|Spoked_rims|Spokes)/.test(o.name) && tagWheels(geometry, bikeWheels).length) { /* the Rider's wheels */ }
+            // Guns and turrets of infantry (BarrelRig / TurretRig nodes) lean and kneel with the body.
+            else if (rigInfantry) tagBone(geometry, BONE.body, hipY, hipY * 0.5, 0);
+            else if (target === buckets && rigHull && /^Wheel/.test(o.name) && tagWheels(geometry, hullWheels).length) { /* road wheels and hubs */ }
+            else if (target === buckets && rigHull) tagBone(geometry, /^(Tracks|Wheel)/.test(o.name) ? BONE.none : BONE.hull, hullPivot.y, 0, hullPivot.z);
             target.get(key).geometries.push(geometry);
           });
           for (const { material, geometries } of buckets.values()) {
             const combined = mergeGeometries(geometries, false);
-            if (combined) template.add(new THREE.Mesh(combined, material));
+            if (combined) {
+              const part = new THREE.Mesh(combined, material);
+              if (combined.getAttribute("aRig")) {
+                // Poses reach a little past the rest silhouette (a stride, a kneel): pad the bounds.
+                combined.computeBoundingSphere();
+                combined.boundingSphere.radius += 0.35;
+              }
+              template.add(part);
+            }
             geometries.forEach((g) => g.dispose());
           }
+          template.userData.rig = rigInfantry ? "infantry" : rigHull ? "hull" : null;
+          template.userData.legLength = hipY;
+          if (hullPivot) template.userData.hullPivot = [hullPivot.y, hullPivot.z];
           const barrel=new THREE.Group();barrel.name='BarrelRig';
           for(const {material,geometries} of barrelBuckets.values()){
             const combined=mergeGeometries(geometries,false);
             if(combined)barrel.add(new THREE.Mesh(combined,material));
             geometries.forEach(g=>g.dispose());
+          }
+          // The barrel's hinge (trunnion) for a raised or stowed barrel: the rear of the barrel, at its mid height.
+          if (barrel.children.length) {
+            const box = new THREE.Box3().setFromObject(barrel);
+            barrel.userData.trunnion = [(box.min.y + box.max.y) / 2, box.min.z];
           }
           if(pivot){
             const turret=new THREE.Group();turret.name='TurretRig';turret.position.set(pivot.x,0,pivot.z);
@@ -631,10 +682,11 @@ export class WorldView {
             const variant = template.clone(true);
             variant.traverse((o) => {
               if (!o.isMesh) return;
-              const name = o.material.name;
-              const key = `${name.startsWith("Team") ? team : "shared"}:${name}`;
+              const name = o.material.name, rig = !!o.geometry.getAttribute("aRig");
+              const key = `${name.startsWith("Team") ? team : "shared"}:${name}${rig ? "|rig" : ""}`;
               if (!materials.has(key)) {
-                // The baked material is one shared program for every model; it is never cloned.
+                // The baked material is one shared program for every model; it is never cloned
+                // (bakeFinishes already gave rigged parts the rigged baked material).
                 const m = name.startsWith("Baked") ? o.material : o.material.clone();
                 if (name.startsWith("Team")) {
                   m.color.setHex(this.colors[team]);
@@ -645,6 +697,8 @@ export class WorldView {
                     this.pulsing.push({ m, base: 0.8, depth: 0.3, rate: 2.2, phase: team * 1.3 });
                   }
                 } else if (name.startsWith("Energy")) this.pulsing.push({ m, base: m.emissiveIntensity, depth: 0.35, rate: 3.1, phase: 0 });
+                // Last, so the rig wraps the rim patch and its program key ("…|rig").
+                if (rig && !name.startsWith("Baked")) addRig(m);
                 materials.set(key, m);
               }
               o.material = materials.get(key);
@@ -683,6 +737,51 @@ export class WorldView {
       this.environment.still = this.motionLevel === 0;
     }
     this.applyReflections();
+    await this.warmRig(types);
+  }
+  // Shader warm-up for rigged units (unit-rig.js): one tiny, never-culled instance of every rigged
+  // part, drawn once behind the loading screen with the real scene (lights, fog, shadow pass), so the
+  // first Ranger or Tank on screen compiles nothing (main and shadow-pass depth programs alike).
+  // Not compileAsync: its readiness poll throws (uncaught, in a timer) when a scene material is
+  // disposed or rebuilt while it waits, as on a Defence level switch. The rigged
+  // materials are shared (bakedMaterial, per-team clones kept with the templates), so a rebuilt match
+  // reuses these programs.
+  async warmRig(types) {
+    if (this.contextLost) return;
+    const seen = new Set(), group = new THREE.Group(), wrappers = [];
+    const tiny = new THREE.Matrix4().makeScale(1e-5, 1e-5, 1e-5).setPosition(this.focus.x, -50, this.focus.z);
+    for (const type of types) for (let team = 0; team < this.colors.length; team++) {
+      this.teamTemplates.get(`${type}-${team}`)?.traverse((o) => {
+        if (!o.isMesh || !o.geometry.getAttribute("aRig")) return;
+        const key = `${o.material.id}:${o.castShadow ? 1 : 0}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        const g = new THREE.BufferGeometry();
+        for (const [name, attribute] of Object.entries(o.geometry.attributes)) g.setAttribute(name, attribute);
+        g.setIndex(o.geometry.index);
+        g.setAttribute("aMotion", new THREE.InstancedBufferAttribute(new Float32Array([0, 0, 0, 1]), 4));
+        const warm = new THREE.InstancedMesh(g, o.material, 1);
+        warm.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array([1, 1, 1]), 3);
+        warm.setMatrixAt(0, tiny);
+        warm.customDepthMaterial = rigDepthMaterial();
+        warm.castShadow = o.castShadow;
+        warm.receiveShadow = true;
+        warm.frustumCulled = false;
+        group.add(warm);
+        wrappers.push(g);
+      });
+    }
+    if (!group.children.length) return;
+    this.scene.add(group);
+    try {
+      if (!this.contextLost) this.renderer.render(this.scene, this.camera);
+    } catch { /* a warm-up never blocks loading */ }
+    finally {
+      this.scene.remove(group);
+      for (const warm of group.children) warm.dispose();
+      wrappers.forEach(releaseWrapper);
+    }
+    this.rigWarmed = (this.rigWarmed || 0) + group.children.length;
   }
   createTerrain() {
     cosmetic = mulberry32(1482);
@@ -1184,6 +1283,16 @@ export class WorldView {
       if (o.name.startsWith("leg_"))
         root.userData.legs.push({ node: o, base: o.quaternion.clone() });
     });
+    // Shader bones (unit-rig.js): every rigged part of this unit reads one shared pose (the batches
+    // copy it into their per-instance aMotion), as every part shares one tint.
+    if (model.userData.rig) {
+      const motion = new Float32Array([0, 0, 0, 1]);
+      model.traverse((o) => { if (o.isMesh && o.geometry.getAttribute("aRig")) o.userData.motion = motion; });
+      root.userData.rig = { kind: model.userData.rig, motion, phase: (e.id * 0.7) % 6.28, gait: 0, kneel: 0, flinch: 0, lean: 0,
+        vs: 0, pitch: 0, pitchV: 0, squat: 0, legLength: model.userData.legLength || 0.95, hullPivot: model.userData.hullPivot || [0.6, 0] };
+    }
+    if (root.userData.turret) root.userData.turretBase = root.userData.turret.position.clone();
+    root.userData.elevation = 0; root.userData.drift = 0;
     // Per-entity anchors feed the two shared selection batches.
     const side = e.team >= 0 ? this.colors[e.team] : 0xb8b2a4; // walls are neutral grey
     const ring = createRing(e.radius, side);
@@ -1341,6 +1450,7 @@ export class WorldView {
         const o = this.objects.get(event.seed);
         if (o) {
           o.userData.flash = FEEL.flashSeconds;
+          if (o.userData.rig?.kind === "infantry") o.userData.rig.flinch = 1; // unit-rig.js: a small hit flinch
           // The model flashes too (per-instance tint), timed below to the round's arrival.
           startFlash(o.userData, 0, event.shield);
           o.userData.flashX = event.x; o.userData.flashZ = event.z;
@@ -1520,6 +1630,9 @@ export class WorldView {
     this.scatter?.update(dt, lively && this.settings.waterMotion !== false);
     // Idle troops breathe only at full quality and full motion: it re-poses every idle unit.
     const breathing = lively && this.motionLevel === 2 && !this.lowPower;
+    // Settings > Unit motion (unit-rig.js): knees, run lean, kneel-to-fire, flinch, hull rock, turret scan,
+    // stowed artillery barrels and the Hawk's hover drift. Off keeps the classic leg swing.
+    this.richMotion = lively && this.settings.unitMotion !== false;
     const kicking = this.activity.combat.motion;
     const alive = new Set();
     // Interpolate only from a snapshot taken exactly one tick before the current state;
@@ -1560,7 +1673,9 @@ export class WorldView {
       if(u.turret){
         // Vehicles: the hull keeps its heading while the turret swings to the target (turn-rate limited, shortest way).
         if(e.moving||u.hullYaw===undefined)u.hullYaw=m.rotation.y;else m.rotation.y=u.hullYaw;
-        const aim=e.attacking?e.angle-m.rotation.y:0,diff=Math.atan2(Math.sin(aim-u.turret.rotation.y),Math.cos(aim-u.turret.rotation.y));
+        // Unit motion: parked and idle, the turret scans slowly about ±25 degrees; moving, it settles forward.
+        const scan=this.richMotion&&e.kind==="unit"&&!e.moving?Math.sin(this.lifeClock*0.35+e.id*1.3)*0.44:0;
+        const aim=e.attacking?e.angle-m.rotation.y:scan,diff=Math.atan2(Math.sin(aim-u.turret.rotation.y),Math.cos(aim-u.turret.rotation.y));
         const step=this.activity.combat.motion&&!this.reducedMotion.matches?3*dt:Math.PI;
         u.turret.rotation.y+=Math.max(-step,Math.min(step,diff));
       }
@@ -1572,7 +1687,17 @@ export class WorldView {
         const rig=o.userData.barrel;
         if(u.turret){
           rig.rotation.y=0;
-          rig.position.set(0,0,-(this.activity.combat.motion?Math.sin(u.recoil/.22*Math.PI)*.18:0));
+          const kick=this.activity.combat.motion?Math.sin(u.recoil/.22*Math.PI)*.18:0;
+          const hinge=rig.userData.trunnion;
+          if(hinge&&STOWS.has(e.type)){
+            // Unit motion (artillery): the barrel lowers and stows on the move, stands as modelled when
+            // parked and lifts a little to fire. It turns about its trunnion; the recoil runs along it.
+            const pose=STOWS.get(e.type),want=!this.richMotion?0:e.attacking?pose.fire:e.moving?pose.move:pose.park;
+            u.elevation=dt>0?approach(u.elevation,want,3,dt):u.elevation;
+            const a=-u.elevation,c=Math.cos(a),s=Math.sin(a),[ty,tz]=hinge;
+            rig.rotation.x=a;
+            rig.position.set(0,ty-ty*c+tz*s+kick*s,tz-ty*s-tz*c-kick*c);
+          }else rig.position.set(0,0,-kick);
         }else{
         rig.rotation.y=e.type==='tower'?e.angle-m.rotation.y:0;
         const kick=this.activity.combat.motion?Math.sin(o.userData.recoil/.22*Math.PI)*.18:0;
@@ -1591,7 +1716,19 @@ export class WorldView {
           u.stride += speed * dt * (u.legs.length ? 2.5 : 3.4);
         } else if (!p) u.gait = pace;
         lift = u.legs.length ? Math.abs(Math.sin(u.stride)) * 0.07 * u.gait : Math.sin(u.stride * 2.1) * 0.016 * u.gait;
-        if (breathing && u.gait === 0 && u.legs.length) squash = Math.sin(this.lifeClock * 2.1 + e.id * 1.7) * 0.012;
+        if (u.rig?.kind === "infantry") {
+          lift = stepInfantry(u.rig, u.rig.motion, { speed, base: D[e.type].speed || 3, scale: u.readabilityScale, legLength: u.rig.legLength,
+            moving: !!e.moving, attacking: !!e.attacking, dt, rich: this.richMotion, kneels: KNEELERS.has(e.type), gait: GAIT[e.type] });
+        } else if (u.rig?.kind === "hull") {
+          const pitch = stepHull(u.rig, u.rig.motion, { speed, moving: !!e.moving, dt, rich: this.richMotion, scale: u.readabilityScale });
+          if (u.turret) {
+            // The turret rides the hull's pitch and squat about the same pivot, then turns in the hull's frame.
+            const [cy, cz] = u.rig.hullPivot, b = u.turretBase, oy = b.y - cy, oz = b.z - cz, c = Math.cos(pitch), s = Math.sin(pitch);
+            u.turret.rotation.x = pitch;
+            u.turret.position.set(b.x, cy + oy * c - oz * s - u.rig.squat, cz + oy * s + oz * c);
+          }
+        }
+        if (breathing && u.gait === 0 && (u.legs.length || u.rig?.kind === "infantry")) squash = Math.sin(this.lifeClock * 2.1 + e.id * 1.7) * 0.012;
         if (kicking && u.kick > 0) back = Math.sin((u.kick / 0.16) * Math.PI) * u.kickSize;
       } else if (e.kind === "building") {
         // A finished building settles with a small bounce.
@@ -1610,7 +1747,11 @@ export class WorldView {
         lift += air;
         // R3-W (air-motion.js): bank into turns and lift the nose on a climb, on top of the forward-flight nose-down.
         airMotion(u.air, e.type, m.rotation.y, u.air.y ?? 0, dt, lively && this.settings.combatMotion !== false);
-        m.rotation.x = Math.min(1, u.gait) * 0.14 + u.air.pitch;
+        // Unit motion (Hawk): a deeper nose-down in forward flight, level at the hover, where it drifts slowly about its heading.
+        const hawk = this.richMotion && e.type === "hawk";
+        m.rotation.x = Math.min(1, u.gait) * (hawk ? 0.22 : 0.14) + u.air.pitch;
+        if (dt > 0) u.drift = approach(u.drift, hawk && !e.moving && !e.attacking ? Math.sin(this.lifeClock * 0.3 + e.id) * 0.35 : 0, 1.5, dt);
+        m.rotation.y += u.drift;
         u.ring.position.y = air + 0.12;
         u.bar.position.y = u.air.barY + air;
       }
