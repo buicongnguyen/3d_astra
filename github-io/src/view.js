@@ -32,7 +32,7 @@ import { ViewPlugins } from "./view-plugins.js";
 import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, setRimTier } from "./look-grade.js";
 import { MissionLook } from "./mission-look-view.js";
 import { airMotion } from "./air-motion.js";
-import { RIG_INFANTRY, RIG_HULL, BONE, tagBone, addRig, rigDepthMaterial, stepInfantry, stepHull, approach } from "./unit-rig.js";
+import { RIG_INFANTRY, RIG_HULL, KNEELERS, GAIT, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach } from "./unit-rig.js";
 import {
   EnvironmentView,
   optimizeEnvironment,
@@ -51,8 +51,10 @@ export const RIG_PART = /^(Main_cannon|Muzzle_brake|Barrel|Cannon|Muzzle|Turret_
 // Pivots kept as their own nodes: walking legs, and the flyers' rotors (spin_*) and burner flame (flicker_*).
 const MOVING_PART = /^(leg_|spin_|flicker_)/;
 // Flyers: rotor axes, a scratch quaternion, and where the altitude looks for higher ground (a rim ahead).
-// Unit motion: artillery whose barrel stows on the move (BarrelRig turns about its trunnion).
-const STOWS = new Set(["breaker"]);
+// Unit motion: barrels that move with the unit's state (BarrelRig turns about its trunnion), in radians
+// of elevation from the modelled pose. The Breaker stows its gun on the move; the Scorcher carries its
+// nozzle low and lifts it to burn.
+const STOWS = new Map([["breaker", { move: -0.3, park: 0, fire: 0.12 }], ["scorcher", { move: -0.18, park: -0.18, fire: 0.12 }]]);
 const AXIS_Y = new THREE.Vector3(0, 1, 0), AXIS_Z = new THREE.Vector3(0, 0, 1), SPIN = new THREE.Quaternion();
 const FLY_SAMPLES = [[2.5, 0], [-2.5, 0], [0, 2.5], [0, -2.5]];
 // The left and right rotors of a flyer are the same part mirrored in place: after baking, the right
@@ -582,12 +584,21 @@ export class WorldView {
           // Shader bones (unit-rig.js): a rigged infantry type folds its leg pivots into the body
           // (each vertex knows its hip and knee); a rigged hull type marks hull against tracks and wheels.
           const rigInfantry = RIG_INFANTRY.has(type), rigHull = RIG_HULL.has(type);
-          let hipY = 0, hullPivot = null;
-          if (rigInfantry) gltf.scene.traverse((o) => { if (o.name.startsWith("leg_")) hipY = Math.max(hipY, new THREE.Vector3().setFromMatrixPosition(o.matrixWorld).y); });
+          let hipY = 0, hullPivot = null, bikeWheels = [], hullWheels = [];
+          const knees = new Map(); // leg pivot -> knee height (the Knee / Knee_pad part's middle; else half the hip)
+          if (rigInfantry) gltf.scene.traverse((o) => {
+            if (!o.name.startsWith("leg_")) return;
+            const hip = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld).y, knee = new THREE.Box3();
+            hipY = Math.max(hipY, hip);
+            o.traverse((c) => { if (c.isMesh && /^Knee/.test(c.name)) knee.expandByObject(c); });
+            knees.set(o, knee.isEmpty() ? hip * 0.5 : (knee.min.y + knee.max.y) / 2);
+          });
+          if (rigInfantry) gltf.scene.traverse((o) => { if (o.isMesh && /^Tyres/.test(o.name)) bikeWheels = tagWheels(o.geometry.clone().applyMatrix4(o.matrixWorld)); });
           if (rigHull) {
             const box = new THREE.Box3();
-            gltf.scene.traverse((o) => { if (o.isMesh && /^Tracks/.test(o.name)) box.expandByObject(o); });
+            gltf.scene.traverse((o) => { if (o.isMesh && /^(Tracks|Wheels)/.test(o.name)) box.expandByObject(o); });
             hullPivot = box.isEmpty() ? new THREE.Vector3(0, 0.6, 0) : box.getCenter(new THREE.Vector3());
+            gltf.scene.traverse((o) => { if (o.isMesh && /^Wheels/.test(o.name)) hullWheels = tagWheels(o.geometry.clone().applyMatrix4(o.matrixWorld)); });
           }
           gltf.scene.traverse((o) => {
             // Leg pivots, and the flyers' spinning rotors and flickering burner flame (0.18), stay
@@ -618,9 +629,12 @@ export class WorldView {
             if (rigged && pivot) geometry.translate(-pivot.x, 0, -pivot.z);
             if (target === buckets && legPivot) {
               const hip = new THREE.Vector3().setFromMatrixPosition(legPivot.matrixWorld);
-              tagBone(geometry, /_R$/.test(legPivot.name) ? BONE.legR : BONE.legL, hip.y, hip.y * 0.5, hip.z);
-            } else if (target === buckets && rigInfantry) tagBone(geometry, BONE.body, hipY, hipY * 0.5, 0);
-            else if (target === buckets && rigHull) tagBone(geometry, /^(Tracks|Wheels)/.test(o.name) ? BONE.none : BONE.hull, hullPivot.y, 0, hullPivot.z);
+              tagBone(geometry, /_R(\d*)$/.test(legPivot.name) ? BONE.legR : BONE.legL, hip.y, knees.get(legPivot), hip.z);
+            } else if (target === buckets && rigInfantry && /^(Tyres|Spoked_rims|Spokes)/.test(o.name) && tagWheels(geometry, bikeWheels).length) { /* the Rider's wheels */ }
+            // Guns and turrets of infantry (BarrelRig / TurretRig nodes) lean and kneel with the body.
+            else if (rigInfantry) tagBone(geometry, BONE.body, hipY, hipY * 0.5, 0);
+            else if (target === buckets && rigHull && /^Wheel/.test(o.name) && tagWheels(geometry, hullWheels).length) { /* road wheels and hubs */ }
+            else if (target === buckets && rigHull) tagBone(geometry, /^(Tracks|Wheel)/.test(o.name) ? BONE.none : BONE.hull, hullPivot.y, 0, hullPivot.z);
             target.get(key).geometries.push(geometry);
           });
           for (const { material, geometries } of buckets.values()) {
@@ -1678,7 +1692,7 @@ export class WorldView {
           if(hinge&&STOWS.has(e.type)){
             // Unit motion (artillery): the barrel lowers and stows on the move, stands as modelled when
             // parked and lifts a little to fire. It turns about its trunnion; the recoil runs along it.
-            const want=!this.richMotion?0:e.attacking?0.12:e.moving?-0.3:0;
+            const pose=STOWS.get(e.type),want=!this.richMotion?0:e.attacking?pose.fire:e.moving?pose.move:pose.park;
             u.elevation=dt>0?approach(u.elevation,want,3,dt):u.elevation;
             const a=-u.elevation,c=Math.cos(a),s=Math.sin(a),[ty,tz]=hinge;
             rig.rotation.x=a;
@@ -1704,9 +1718,9 @@ export class WorldView {
         lift = u.legs.length ? Math.abs(Math.sin(u.stride)) * 0.07 * u.gait : Math.sin(u.stride * 2.1) * 0.016 * u.gait;
         if (u.rig?.kind === "infantry") {
           lift = stepInfantry(u.rig, u.rig.motion, { speed, base: D[e.type].speed || 3, scale: u.readabilityScale, legLength: u.rig.legLength,
-            moving: !!e.moving, attacking: !!e.attacking, dt, rich: this.richMotion });
+            moving: !!e.moving, attacking: !!e.attacking, dt, rich: this.richMotion, kneels: KNEELERS.has(e.type), gait: GAIT[e.type] });
         } else if (u.rig?.kind === "hull") {
-          const pitch = stepHull(u.rig, u.rig.motion, { speed, moving: !!e.moving, dt, rich: this.richMotion });
+          const pitch = stepHull(u.rig, u.rig.motion, { speed, moving: !!e.moving, dt, rich: this.richMotion, scale: u.readabilityScale });
           if (u.turret) {
             // The turret rides the hull's pitch and squat about the same pivot, then turns in the hull's frame.
             const [cy, cz] = u.rig.hullPivot, b = u.turretBase, oy = b.y - cy, oz = b.z - cz, c = Math.cos(pitch), s = Math.sin(pitch);

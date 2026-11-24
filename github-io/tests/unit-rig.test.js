@@ -72,3 +72,40 @@ test("rigged batches: growing frees only the old pose buffer, never the shared v
   assert.equal(batch.geometry.getAttribute("aMotion"), batch.motion);
   assert.equal(batch.motion.count, 64);
 });
+
+test("unit rig: every infantry type is rigged; only ranged shooters kneel; Rider rides, Walker stomps", async () => {
+  const { RIG_INFANTRY, KNEELERS, GAIT, RIG_HULL } = await import("../src/unit-rig.js");
+  const fs = await import("node:fs");
+  const balance = JSON.parse(fs.readFileSync(new URL("../src/balance.json", import.meta.url), "utf8")).definitions;
+  for (const t of ["ranger", "worker", "vanguard", "medic", "engineer", "antitank", "gunner", "scrapper", "shade", "stalker", "watcher", "rider", "walker"]) assert.ok(RIG_INFANTRY.has(t), t);
+  for (const t of KNEELERS) assert.ok(balance[t].range >= 9, `${t} is a ranged shooter`);
+  for (const t of ["worker", "medic", "engineer", "vanguard", "rider", "walker"]) assert.ok(!KNEELERS.has(t), `${t} does not kneel`);
+  assert.equal(GAIT.rider, "ride"); assert.equal(GAIT.walker, "stomp");
+  for (const t of ["tank", "breaker", "scorcher"]) assert.ok(RIG_HULL.has(t), t);
+});
+
+test("unit rig: a riding Rider keeps its legs still and rolls by distance; a stomping Walker never runs", () => {
+  const ride = infantry(), m = new Float32Array(4);
+  for (let i = 0; i < 60; i++) stepInfantry(ride, m, { speed: 6.4, base: 6.4, scale: 1, legLength: 1.15, moving: true, attacking: false, dt: 1 / 60, rich: true, gait: "ride" });
+  assert.equal(m[1], 0, "no leg swing");
+  assert.ok(Math.abs(m[0] - 6.4) < 1e-6, "x = metres driven");
+  const stomp = infantry();
+  for (let i = 0; i < 60; i++) stepInfantry(stomp, m, { speed: 1.9, base: 1.9, scale: 1, legLength: 1.8, moving: true, attacking: true, dt: 1 / 60, rich: true, gait: "stomp", kneels: false });
+  assert.ok(Math.abs(m[1] - 0.3 * stomp.gait) < 1e-6, "fixed stomp swing");
+  assert.ok(Math.abs(stomp.lean) < 1e-9, "no run lean");
+});
+
+test("unit rig: wheels are found as round islands; concentric rim and tyre share one axle and radius", async () => {
+  const THREE = await import("three");
+  const { mergeGeometries } = await import("three/addons/utils/BufferGeometryUtils.js");
+  const { tagWheels, BONE } = await import("../src/unit-rig.js");
+  const wheel = (z, r) => new THREE.CylinderGeometry(r, r, 0.2, 12).rotateZ(Math.PI / 2).translate(0.8, 0.5, z);
+  const g = mergeGeometries([wheel(1, 0.4), wheel(1, 0.25), wheel(-1, 0.4), new THREE.BoxGeometry(0.1, 0.1, 1.2).translate(0, 1.5, 0)]);
+  const wheels = tagWheels(g);
+  assert.equal(new Set(wheels.map((w) => w.c[1].toFixed(2))).size, 2);
+  const a = g.getAttribute("aRig"), seen = new Set();
+  for (let i = 0; i < a.count; i++) seen.add(`${a.getX(i)}|${a.getZ(i).toFixed(3)}|${a.getW(i).toFixed(2)}`);
+  assert.ok(seen.has(`${BONE.wheel}|2.500|1.00`) && seen.has(`${BONE.wheel}|2.500|-1.00`), [...seen].join(" "));
+  assert.ok(seen.has(`${BONE.none}|0.000|0.00`), "the box is not a wheel");
+  assert.equal(seen.size, 3);
+});
