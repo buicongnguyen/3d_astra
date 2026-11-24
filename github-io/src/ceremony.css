@@ -209,3 +209,21 @@
 @media (prefers-reduced-motion: reduce) {
   .ceremony-live .stamp-target, .ceremony-live .mvp-card, .ceremony-live .loss-tip { animation: none !important; }
 }
+/* Landscape phones: the result card is only ~360 px tall, so the tip squeezed into the buttons and lost its bottom
+   edge. One compact block, "So close." inline, and a gap above the buttons. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .loss-tip { display: block; margin: 8px 0 10px; padding: 6px 10px; }
+  .so-close { display: inline; font-size: 16px; margin-right: 6px; }
+  .loss-near { font-size: 12px; }
+  .loss-tip-line { display: inline; font-size: 12px; line-height: 1.35; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  /* The rest of the card fits above the buttons too (the Commander XP strip peeked out under them). */
+  :root.compact-ui #modal .result-card .result-banner { padding-top: 10px; padding-bottom: 6px; }
+  :root.compact-ui #modal .result-card .result-emblem img { width: 40px; height: 40px; }
+  :root.compact-ui #modal .result-card h2 { margin: 2px 0; font-size: 22px; line-height: 1.1; }
+  :root.compact-ui #modal .result-card .result-headline p { font-size: 12px; line-height: 1.3; }
+  :root.compact-ui #modal .result-card .result-grid { margin: 6px 0 2px; gap: 6px; }
+  :root.compact-ui #modal .result-card .result-grid .stat { padding-block: 4px; min-height: 0; }
+  :root.compact-ui #modal .result-card .result-grid .stat strong { font-size: 18px; }
+}

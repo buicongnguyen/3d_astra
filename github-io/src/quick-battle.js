@@ -117,12 +117,14 @@ export function setupQuickBattle(S, A) {
     if (!slot) return;
     slot.innerHTML = `<button type="button" id="quick-battle" class="quick-battle">${icon("bolt")}<span class="quick-text"><strong>Quick battle</strong><small>Ready base · 1 rival</small></span></button>`;
     let training = null;
-    if (!readSave() && !Object.keys(S.campaign?.cleared || {}).length && !hasDefenceWin(S.defenceProgress || loadDefence())) {
+    // New players only: gone once Training is completed too (it sat beside the Training mode button with the same name).
+    let trained = false; try { trained = !!localStorage.getItem("frontier-training-complete"); } catch {}
+    if (!trained && !readSave() && !Object.keys(S.campaign?.cleared || {}).length && !hasDefenceWin(S.defenceProgress || loadDefence())) {
       training = document.createElement("button");
       training.type = "button";
       training.className = "quick-battle";
       training.id = "start-training";
-      training.innerHTML = `${icon("flag")}<span class="quick-text"><strong>Start here</strong><small>Training</small></span>`;
+      training.innerHTML = `${icon("flag")}<span class="quick-text"><strong>Start here</strong><small>First lesson</small></span>`;
       training.addEventListener("click", () => {
         if (Z.started) return;
         S.playMode = "training";

@@ -7,6 +7,7 @@ import { MAPS } from "../terrain.js";
 import { MISSIONS, ACTS, missionById, missionsOf, nextIn, chronicleUnlocked, startNewGamePlus, saveProgress } from "../campaign.js";
 import { chronicleListHTML, chronicleMissionsHTML, chronicleLabel, chronicleTitle, rowState } from "../chronicles-ui.js";
 import DEFENCE_MAPS from "../defence/maps.json" with { type: "json" };
+import CAMPAIGN_MAPS from "../campaign-maps.json" with { type: "json" };
 import { icon } from "../icons.js";
 import { medalBadge, clock as missionClock } from "../mission-ui.js";
 import { campaignMapHTML, missionChoices } from "../campaign-map-ui.js";
@@ -41,7 +42,8 @@ export function setupBriefing(S, A) {
   }
 
   // A campaign mission under the Defence rules (0.19b) names its Defence map.
-  const mapName = (id) => (MAPS[id] || DEFENCE_MAPS[id]?.name || String(id)).split(" · ")[0];
+  // Campaign-only maps (highridge, gunhills) carry their own names too: the mission row read "gunhills" before.
+  const mapName = (id) => (MAPS[id] || DEFENCE_MAPS[id]?.name || CAMPAIGN_MAPS[id]?.name || String(id)).split(" · ")[0];
 
   function updateHeading() {
     const stage = Z.started ? S.activeStage : S.playMode === "campaign" ? S.stagePick : null;
