@@ -137,11 +137,13 @@ await suite("creatures: campaign dens and the Vault Sentinel", async () => {
     }, g0.id);
     assert.deepEqual(kneel, { knelt: true, team: -1, state: "kneel" }, `${viewport}: below 40% it kneels and nobody may hit it`);
     await step(page, 0.1);
-    await page.waitForTimeout(300);
+    // Slow runners (CI) draw a frame later than a fixed wait allows: wait for the pose itself.
+    await page.waitForFunction((id) => window.__frontier.view.objects.get(id)?.userData.rig?.motion?.[2] === 1, g0.id, { timeout: TIMEOUT.step }).catch(() => {});
     assert.equal(await page.evaluate((id) => window.__frontier.view.objects.get(id)?.userData.rig?.motion?.[2], g0.id), 1, "the view holds the kneel pose");
     await shot(page, `creatures-sentinel-kneel-${viewport}`);
     await step(page, 3.5);
-    await page.waitForTimeout(300);
+    // The redraw in the player's colours rebuilds the model; on a slow runner it lands after a fixed 300 ms.
+    await page.waitForFunction((id) => window.__frontier.view.objects.get(id)?.userData.team === 0, g0.id, { timeout: TIMEOUT.step }).catch(() => {});
     const joined = await page.evaluate((id) => { const f = window.__frontier, g = f.sim.get(id), o = f.view.objects.get(id); return { team: g.team, state: g.guardian.state, drawnTeam: o?.userData.team, objective: f.sim.missionStatus().find((x) => x.id === "sentinel")?.state }; }, g0.id);
     assert.deepEqual(joined, { team: 0, state: "joined", drawnTeam: 0, objective: "done" }, `${viewport}: it joins and is redrawn in the player's colours`);
     await shot(page, `creatures-sentinel-joined-${viewport}`);
