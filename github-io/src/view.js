@@ -82,6 +82,11 @@ const SUN_OFFSET = new THREE.Vector3(-25, 55, 20);
 const CAMERA_OFFSET = new THREE.Vector3(25, 51, 43);
 // How deep (in world units, per unit of zoom) half the view reaches across the ground.
 const VIEW_DEPTH = (0.5 * CAMERA_OFFSET.length()) / CAMERA_OFFSET.y;
+// The camera may turn about the vertical axis (View.yaw, radians; 0 = the usual view from the south-east).
+// Frontier Defence on phones turns it so the long axis of the roads runs along the screen's long side
+// (app/defence/framing.js). Height, distance and the 46 degree look-down never change.
+const UP_AXIS = new THREE.Vector3(0, 1, 0);
+const turnedOffset = new THREE.Vector3();
 const ECO_ZOOM = 31;
 // Shadow camera basis, as Matrix4.lookAt builds it (looking from SUN_OFFSET, up +Y).
 const LIGHT_Z = SUN_OFFSET.clone().normalize();
@@ -225,6 +230,7 @@ export class WorldView {
     // A little closer than before 0.14 (42 / 34), so units and height read from the start.
     this.defaultZoom = this.lowPower ? ECO_ZOOM : 38;
     this.zoom = this.defaultZoom;
+    this.yaw = 0;
     this.raycaster = new THREE.Raycaster();
     // Picking hits the cloned model parts, which the batches draw (entity-batches.js).
     this.raycaster.layers.enable(SOURCE_LAYER);
@@ -990,7 +996,7 @@ export class WorldView {
     this.camera.right = (this.zoom * aspect) / 2;
     this.camera.top = this.zoom / 2 + (this.coverTop || 0) * perPixel;
     this.camera.bottom = -this.zoom / 2 - shown * perPixel;
-    this.camera.position.copy(this.focus).add(CAMERA_OFFSET);
+    this.camera.position.copy(this.focus).add(this.yaw ? turnedOffset.copy(CAMERA_OFFSET).applyAxisAngle(UP_AXIS, this.yaw) : CAMERA_OFFSET);
     this.camera.lookAt(this.focus);
     this.camera.updateProjectionMatrix();
     this.camera.updateMatrixWorld();
@@ -1037,6 +1043,13 @@ export class WorldView {
     up.y = 0;
     up.normalize();
     this.pan(right.x * dx + up.x * dy, right.z * dx + up.z * dy);
+  }
+  // Turn the camera about the vertical axis through the focus (radians, 0 = the usual view).
+  setYaw(yaw) {
+    const next = Number.isFinite(yaw) ? yaw : 0;
+    if (next === this.yaw) return;
+    this.yaw = next;
+    this.updateCamera();
   }
   zoomBy(delta) {
     // A match may allow a wider view (Frontier Defence's Overview sets maxZoom; reset clears it).
@@ -1911,6 +1924,7 @@ export class WorldView {
     );
     this.zoom = this.defaultZoom;
     this.maxZoom = null;
+    this.yaw = 0;
     this.updateCamera();
     this.fogClock = 0;
     this.plugins.reset();

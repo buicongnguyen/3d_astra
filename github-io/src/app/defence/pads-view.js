@@ -2,7 +2,7 @@
 // their towers (dressEntity), bridges / pontoons / fuse lights, and the range ring.
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { TIER_TINT, RANK_TINT, HERO_TINT, PAD_COLOR, TIER_PAD, PICK_RADIUS, ZONE_COLOR, ZONE_PADS, BRIDGE_RADIUS, PONTOON_LENGTH } from "./constants.js";
+import { TIER_TINT, RANK_TINT, HERO_TINT, PAD_COLOR, TIER_PAD, PICK_RADIUS, TOUCH_PICK_RADIUS, ZONE_COLOR, ZONE_PADS, BRIDGE_RADIUS, PONTOON_LENGTH } from "./constants.js";
 import { GUIDE_PAD } from "./constants.js";
 
 export function createPadsView(c) {
@@ -92,7 +92,8 @@ export function createPadsView(c) {
   }
   function nearestPad(x, y) {
     const rect = S.view.renderer.domElement.getBoundingClientRect();
-    let best = null, bestD = PICK_RADIUS;
+    // A finger is wider than a mouse pointer: touch takes the nearest pad a little further out (still the nearest one).
+    let best = null, bestD = S.touchInput ? TOUCH_PICK_RADIUS : PICK_RADIUS;
     for (const p of allPads()) {
       const s = S.view.project(p.x, p.z, S.view.terrain.heightAt(p.x, p.z) + 0.2);
       const d = Math.hypot(s.x + rect.left - x, s.y + rect.top - y);

@@ -2,6 +2,7 @@
 // view chips, the follow camera, the wave intel strip, the new-enemy card, carrier moments, notices.
 import { TRAITS, ELITE_TRAITS, waveAffixes, waveTraits, traitsOf, counterCrews, waveTypes } from "../../defence/traits.js";
 import { CREW_LABEL, ROUTE_LABEL, FLOAT_SECONDS, VIEWS, VIEW_ICON, VIEW_TITLE, FOLLOW_HOLD_MS, CARD_MS } from "./constants.js";
+import { frameRoutes, routeShape, clearRect, followShift, focusShift } from "./framing.js";
 
 export function createBar(c) {
   const { S, A, Z, root, ui, key, phone, selectedSquad } = c;
@@ -67,10 +68,70 @@ export function createBar(c) {
   function setOverview(on) {
     const cam = S.sim.missionDef.defence.camera;
     ui.overview = on;
-    S.view.maxZoom = cam.maxZoom;
+    // Phones: the Overview is the fitted framing (every road and pad in the clear battlefield, framing.js).
+    if (on && phone() && ui.frame) { applyFrame(ui.frame); $("defence-overview")?.setAttribute("aria-pressed", "true"); return; }
+    S.view.maxZoom = phone() && ui.frame ? Math.max(cam.maxZoom, Math.ceil(ui.frame.zoom)) : cam.maxZoom;
     S.view.zoom = on ? cam.maxZoom : cam.zoom;
     if (on) S.view.focusOn(cam.x, cam.z); else S.view.updateCamera();
     $("defence-overview")?.setAttribute("aria-pressed", String(on));
+  }
+  // ---------------------------------------------------------------- Phone framing (framing.js)
+  // The battlefield no HUD band covers, in canvas px: the drawn canvas less the top bar, the Defence bar, the dock
+  // and the other panels over it (corner widgets under 5 % of it are left to a pan).
+  const COVERS = [".topbar", "#defence-bar", "#defence-intel", ".command-deck", "#dock-tabs", ".minimap-panel", ".touch-controls", "#defence-dock-toggle", "#idle-chips", "#mission-toggle"];
+  const ALWAYS = new Set(["defence-bar", "defence-intel"]);
+  function clearArea() {
+    const v = S.view, canvas = v.renderer.domElement.getBoundingClientRect(), vis = v.visibleRect();
+    const covers = [];
+    for (const el of document.querySelectorAll(COVERS.join(","))) {
+      if (el.hidden || el.closest("[hidden]")) continue;
+      const cs = getComputedStyle(el), r = el.getBoundingClientRect();
+      if (cs.display === "none" || cs.visibility === "hidden" || r.width < 2 || r.height < 2) continue;
+      covers.push({ left: r.left, top: r.top, right: r.right, bottom: r.bottom, always: ALWAYS.has(el.id) });
+    }
+    // The notice lane (phone-hud.css: top left, at most two lines of a 340 px toast) is kept free too, so an alert
+    // never sits on the spawn the moment a wave comes in. In landscape it is beside the Defence bar, already cut.
+    const notice = $("notice"), stage = $("stage")?.getBoundingClientRect();
+    if (notice && stage && !ui.guide) {
+      const cs = getComputedStyle(notice), top = stage.top + (parseFloat(cs.top) || 0), left = stage.left + (parseFloat(cs.left) || 0);
+      covers.push({ left, top, right: Math.min(left + 340, vis.right), bottom: top + 44, always: true });
+    }
+    const rect = clearRect({ left: vis.left, top: vis.top, right: vis.right, bottom: vis.bottom }, covers);
+    const local = (r, pad = 0) => ({ left: r.left - canvas.left - pad, top: r.top - canvas.top - pad, right: r.right - canvas.left + pad, bottom: r.bottom - canvas.top + pad });
+    // The small panels left inside it (the minimap, a corner button): the framing keeps roads and pads out from under them.
+    const avoid = covers.filter((r) => r.left < rect.right && r.right > rect.left && r.top < rect.bottom && r.bottom > rect.top).map((r) => local(r, 6));
+    return { clear: local(rect), avoid };
+  }
+  // The framing that fits every road and pad of the level into the clear battlefield on this screen.
+  function fitFrame() {
+    const v = S.view, def = S.sim.missionDef.defence;
+    const { clear, avoid } = clearArea(), { points, samples, flow } = routeShape(def, S.sim.defence?.zonePads || []);
+    const focusPx = v.project(v.focus.x, v.focus.z, 0);
+    const frame = frameRoutes({ points, samples, flow, clear, avoid, frameHeight: v.frameHeight || v.height, focusPx });
+    frame.zoom = Math.max(22, frame.zoom);
+    frame.near.zoom = Math.max(22, frame.near.zoom);
+    ui.clear = clear;
+    return (ui.frame = frame);
+  }
+  function applyFrame(frame) {
+    const v = S.view, cam = S.sim.missionDef.defence.camera;
+    v.setYaw(frame.yaw);
+    v.maxZoom = Math.max(cam.maxZoom, Math.ceil(frame.zoom));
+    v.zoom = frame.zoom;
+    v.focusOn(frame.focus.x, frame.focus.z);
+  }
+  // Phones: fit the roads to the screen now (the first frame of the match, and after a turn or resize).
+  function reframe() {
+    if (!S.sim?.defence || !phone() || !Z.started || root.classList.contains("in-briefing")) return false;
+    ui.framePending = false;
+    const frame = fitFrame(), v = S.view;
+    // Overview shows every road; the opening and Follow views stop at a readable zoom (framing.js MIN_PX_PER_METRE).
+    const near = { yaw: frame.yaw, ...frame.near };
+    if (ui.viewMode === "overview") applyFrame(frame);
+    else if (ui.viewMode !== "free" || !ui.framed) applyFrame(near);
+    else v.setYaw(frame.yaw);
+    ui.framed = true;
+    return true;
   }
   // The view button (W1-F): Follow -> Overview -> Free. A phone opens on Follow, a desktop on Free; a desktop skips Follow (its first tap is the Overview, as before).
   const VIEW_NOTE = { follow: "Following the wave.", overview: "Overview: the whole valley.", free: "Free camera." };
@@ -108,7 +169,15 @@ export function createBar(c) {
     const v = S.view, now = performance.now();
     if (ui.follow.set && (Math.abs(v.focus.x - ui.follow.x) > 0.02 || Math.abs(v.focus.z - ui.follow.z) > 0.02 || Math.abs(v.zoom - ui.follow.zoom) > 0.01)) ui.follow.pauseUntil = now + FOLLOW_HOLD_MS;
     const target = now < ui.follow.pauseUntil ? null : frontOfWave();
-    if (target) {
+    if (target && ui.clear) {
+      // Phones: the fitted view already shows the roads, so the camera moves only when the front of the wave
+      // leaves the middle of the clear battlefield, and just enough to bring it back (framing.js followShift).
+      const q = v.project(target.x, target.z, v.terrain.heightAt(target.x, target.z)), shift = followShift(q, ui.clear);
+      if (shift.x || shift.y) {
+        const k = 1 - Math.exp(-dt * 2.5), d = focusShift(v.yaw || 0, shift.x * k, shift.y * k, (v.frameHeight || v.height) / v.zoom);
+        v.focusOn(v.focus.x + d.x, v.focus.z + d.z);
+      }
+    } else if (target) {
       const k = 1 - Math.exp(-dt * 2.5);
       v.focusOn(v.focus.x + (target.x - v.focus.x) * k, v.focus.z + (target.z - v.focus.z) * k);
     }
@@ -135,6 +204,9 @@ export function createBar(c) {
     // Bottom-band contract with W1-D: the bar's height plus its 8 px gap while it sits at the foot of a portrait phone.
     const foot = phone() && matchMedia("(orientation: portrait)").matches && !ui.bar.hidden;
     if (foot) root.style.setProperty("--defence-bar-h", `${ui.bar.offsetHeight + 8}px`); else root.style.removeProperty("--defence-bar-h");
+    // Landscape phones: notices and the wave intel sit beside the bar, in the same band (phone-hud.css, defence-ui.css).
+    const barW = ui.bar.hidden ? 0 : ui.bar.offsetWidth;
+    if (barW !== ui.barW) { ui.barW = barW; if (barW) root.style.setProperty("--defence-bar-w", `${barW}px`); else root.style.removeProperty("--defence-bar-w"); }
     updateCard();
     ui.bar.querySelector(".lives").classList.toggle("low", st.lives <= 5);
     // The commander: picked from the bar; while it is down, the seconds until it is back.
@@ -271,5 +343,5 @@ export function createBar(c) {
     else if (!ui.seen.hero && hero && d.hero) A.notice("The commander is back on the field.");
     ui.seen = { wave: d.wave, cleared: d.cleared, lives: d.lives, crossings, hero };
   }
-  Object.assign(c, { ensureBar, setOverview, nextView, setView, paintView, frontOfWave, frame, updateBar, set, ensureIntel, updateIntel, queueCards, closeCard, updateCard, event, announce });
+  Object.assign(c, { reframe, fitFrame, applyFrame, ensureBar, setOverview, nextView, setView, paintView, frontOfWave, frame, updateBar, set, ensureIntel, updateIntel, queueCards, closeCard, updateCard, event, announce });
 }
