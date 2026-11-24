@@ -42,12 +42,13 @@ export const MAP_ANCHORS = {
   "m07-copper-siege": { wide: [36.7, 49.5], strip: [36.7, 49.5], label: "a", landmark: "Walled mining town" },
   "m07b-hold-the-valley": { wide: [23.3, 57.5], strip: [23.3, 59], label: "b", landmark: "Narrow gorge" },
   "m08-the-quiet-vault": { wide: [10, 49.5], strip: [10, 49.5], label: "a", landmark: "Sealed stone vault" },
-  "m09-a-debt-in-the-dunes": { wide: [11, 16], strip: [11, 18], label: "r", landmark: "Northern dune field" },
-  "m10-obsidian-storm": { wide: [26.6, 24], strip: [26.6, 25], label: "b", landmark: "Volcanic storm highlands" },
-  "m11-cut-the-draw": { wide: [42.2, 16], strip: [42.2, 18], label: "a", landmark: "Sage canyon draw" },
-  "m11c-hold-the-keystone-roads": { wide: [57.8, 24], strip: [57.8, 25], label: "b", landmark: "Ancient crossroads" },
-  "m11d-the-sovereign-walks": { wide: [73.4, 16], strip: [73.4, 18], label: "a", landmark: "Giant footprints + 3 towers" },
-  "m12-frontiers-end": { wide: [89, 24], strip: [89, 25], label: "b", landmark: "Huge cyan-gold Keystone" },
+  "m09-a-debt-in-the-dunes": { wide: [10, 16], strip: [10, 18], label: "r", landmark: "Northern dune field" },
+  "m10-obsidian-storm": { wide: [23.3, 24], strip: [23.3, 25], label: "b", landmark: "Volcanic storm highlands" },
+  "m10b-crown-hill": { wide: [36.7, 16], strip: [36.7, 18], label: "a", landmark: "Gun Hills crown between the camps" },
+  "m11-cut-the-draw": { wide: [50, 24], strip: [50, 25], label: "b", landmark: "Sage canyon draw" },
+  "m11c-hold-the-keystone-roads": { wide: [63.3, 16], strip: [63.3, 18], label: "a", landmark: "Ancient crossroads" },
+  "m11d-the-sovereign-walks": { wide: [76.7, 24], strip: [76.7, 25], label: "b", landmark: "Giant footprints + 3 towers" },
+  "m12-frontiers-end": { wide: [90, 16], strip: [90, 18], label: "a", landmark: "Huge cyan-gold Keystone" },
 };
 // Node positions for one painting: the README anchor, or (a future mission without one yet) mapLayout's place.
 export function mapNodes(missions, art = "wide") {

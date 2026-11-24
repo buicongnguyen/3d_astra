@@ -36,6 +36,8 @@ export const OPENINGS = {
   "m08-the-quiet-vault": { at: "vaultGate", frames: "objective", zoom: 1.6, drift: [-4, -4], seconds: 5.4 },
   "m09-a-debt-in-the-dunes": { at: "solCamp", frames: "camp", zoom: 1.4, drift: [-6, -2], seconds: 4.8 },
   "m10-obsidian-storm": { at: "crown", offset: [10, -8], frames: "plateau", zoom: 1.6, drift: [3, 5], seconds: 5.2 },
+  // Campaign C6: high over the crown hill of Gun Hills and its three Warden towers.
+  "m10b-crown-hill": { at: "crown", offset: [14, 6], frames: "plateau", zoom: 1.5, drift: [-5, 5], seconds: 5 },
   "m11-cut-the-draw": { at: "bridge", offset: [-10, 6], frames: "bridge", zoom: 1.4, drift: [-6, 0], seconds: 4.8 },
   "m11c-hold-the-keystone-roads": { at: { x: 4, z: -44 }, frames: "road", zoom: 1.2, drift: [0, 8], seconds: 5 },
   // R3-H: high over the ford's north-west bank, where the Sovereign crosses (clear of m01/m04/m11 starts), drifting toward the player's line and its two forward towers.

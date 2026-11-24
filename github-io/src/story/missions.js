@@ -1218,6 +1218,71 @@ export const MISSIONS = [
   },
 
   {
+    id: "m10b-crown-hill",
+    act: 3,
+    // A side mission (campaign C6, like m06c): it opens after Obsidian Storm and never locks Cut the Draw.
+    optional: true,
+    title: "Crown Hill",
+    map: "gunhills",
+    enemies: 1, speed: "relaxed", alliance: "ffa",
+    factions: { 1: "wardens" },
+    rules: { ai: "home", playerBase: true, enemyBase: true, rosters: true },
+    bonus: { alloy: 300, energy: 150 },
+    briefing: {
+      place: "Gun Hills, day 49",
+      lines: [
+        { who: "echo", text: "The crown hill is held. Every road to the Keystone passes under its guns." },
+        { who: "vale", text: "ECHO's towers sit on the big hill in the middle. Shooting up at them, we lose range and damage." },
+        { who: "okoro", text: "Breakers lob shells over the rim. Bring them, and come up more than one ramp at once." },
+      ],
+      intel: [
+        "Destroy the three Warden towers on the crown hill in the middle of the map.",
+        "Then build a Sentinel tower of your own on the crown and keep it standing.",
+        "Firing uphill costs range and damage. Breakers and an attack up several ramps help.",
+      ],
+    },
+    regions: { crown: { x: 0, z: 0, r: 13 } },
+    setup: [
+      { spawn: "worker", team: 0, at: { x: -42, z: 42 }, count: 2 },
+      { resources: { alloy: 900, energy: 300 } },
+      { spawn: "tower", team: 1, at: { x: 0, z: 7 }, tag: "crown" },
+      { spawn: "tower", team: 1, at: { x: 6, z: -4 }, tag: "crown" },
+      { spawn: "tower", team: 1, at: { x: -6, z: -4 }, tag: "crown" },
+      { spawn: "ranger", team: 1, at: { x: 2, z: 1 }, count: 3 },
+      { spawn: "tank", team: 1, at: { x: -2, z: 1 } },
+    ],
+    objectives: [
+      { id: "crown", text: "Destroy the three Warden towers on the crown", type: "destroyTag", tag: "crown" },
+      { id: "flag", text: "Build a Sentinel tower on the crown", type: "build", building: "tower", count: 1, region: "crown" },
+      { id: "fast", text: "Finish in under 12 minutes", type: "timeUnder", seconds: 720, optional: true },
+    ],
+    win: ["crown", "flag"],
+    lose: [{ type: "coreLost" }, { type: "time", seconds: 1500 }],
+    triggers: [
+      { when: { time: 5 }, do: [{ say: { who: "vale", text: "Scout the ramps first. A Breaker below the rim can still reach the towers." } }, { ping: "crown" }] },
+      { when: { time: 300 }, do: [
+        { say: { who: "echo", text: "Intruders below the crown. Sending a patrol." } },
+        { wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "playerBase" } },
+      ] },
+      { when: { objective: "crown", is: "done" }, do: [
+        { music: "tense" },
+        { say: { who: "echo", text: "The crown is lost. Retaking it." } },
+        { say: { who: "okoro", text: "Get a tower up on the crown now, before their column climbs the ramps." } },
+        { wave: { team: 1, units: { vanguard: 4, ranger: 3, tank: 1 }, from: "enemyBase", target: "crown" } },
+      ] },
+      { when: { objective: "flag", is: "done" }, do: [{ music: "calm" }] },
+    ],
+    debrief: {
+      win: [
+        { who: "okoro", text: "The crown is ours. Every road to the Keystone is under our guns now." },
+        { who: "vale", text: "We took the hill the hard way, and we kept it." },
+      ],
+      lose: [{ who: "vale", text: "Shooting uphill wore us down. Next time, more Breakers and more ramps." }],
+    },
+    medals: { gold: { seconds: 600 }, silver: { seconds: 900 } },
+    design: "An optional side mission (campaign C6) on the campaign map Gun Hills, about 8 to 12 minutes. Three Warden towers, 3 Rangers (Drones) and a Tank (Walker) hold the central hill (r 17, four ramps); the player fires uphill (less range and damage), so Breakers and a wide attack help. A patrol hits the camp at 5:00. When the towers fall a counter-wave goes for the crown, and the player must raise one tower inside region crown. Home-ruled Wardens AI.",
+  },
+  {
     id: "m11-cut-the-draw",
     act: 3,
     title: "Cut the Draw",

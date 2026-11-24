@@ -68,6 +68,8 @@ const MISSION_TARGETS = {
   // Mission 10 (campaign C6b): the reinforcement truck at 1:30 lets the bot win from about 6:00; earlier, not harder.
   "m10-obsidian-storm": { win: [330, 1200], earliest: 300 },
   // Mission 6c (campaign C6): a 5.5-minute hold; the survive timer decides, so the bot wins at 330 s.
+  // Mission 10b (campaign C6): an uphill assault, then one tower on the crown; the objective bot wins at about 4:10 (a short phone match).
+  "m10b-crown-hill": { win: [200, 1200], earliest: 200, passive: 300 },
   "m06c-gun-hill": { win: [300, 1200], earliest: 300, passive: 200 },
   "m04-three-way-dunes": { passive: 300, win: [330, 1200], earliest: 300 },
   // Mission 9 (R3-I, round 3): since the south exits (R3-L) the bot reaches Sol's camp about 20 s sooner, and the

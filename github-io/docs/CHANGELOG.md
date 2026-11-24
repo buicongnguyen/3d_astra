@@ -4,6 +4,7 @@
 
 ### Campaign round 5: Gun Hill and test repairs
 - New optional Act 2 mission Gun Hill (m06c) on the campaign map Highridge: build two Sentinel towers on your hill (only towers inside the hill count) and hold it for 5:30; an optional Ashfall gun nest on the far hill. Act 2 relays on the campaign map now sit 13.3% apart.
+- New optional Act 3 mission Crown Hill (m10b) on the campaign map Gun Hills: break three Warden towers on the central hill (firing uphill), then raise your own tower there against a counter-wave. Act 3 relays now sit 13.3% apart.
 - Golden pins re-recorded (reason: Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x to flyers): golden-expanded Veil 500 s, golden-r4p1 fast 420 s, golden-skirmish basin x3 fast 300 s, golden-w2d 600 s.
 - Landscape phones: the map enlarge button sits above the minimap, no longer on it (drags anywhere on the map move the camera). Portrait phones: alerts drop below a targeting prompt. PC command tiles: small text 12 px. Archive under the campaign map: its own row on desktop.
 

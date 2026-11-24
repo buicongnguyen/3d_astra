@@ -26,7 +26,7 @@ const fnv = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h 
 
 test("Wings over Copper sits after Copper Harvest in Act 2 on the Copper Basin, with air on", () => {
   const i = MISSIONS.indexOf(WINGS);
-  assert.equal(MISSIONS.length, 18);
+  assert.equal(MISSIONS.length, 19);
   assert.equal(MISSIONS[i - 1].id, "m06-copper-harvest");
   assert.equal(MISSIONS[i + 1].id, "m06c-gun-hill", "Gun Hill (campaign C6) sits between Wings and the siege");
   assert.equal(MISSIONS[i + 2].id, "m07-copper-siege");

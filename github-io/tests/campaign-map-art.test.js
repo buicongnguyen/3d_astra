@@ -25,7 +25,8 @@ test("every mission has a README anchor on both paintings, and the nodes sit exa
   assert.deepEqual(MAP_ANCHORS["m01-first-light"].wide, [12, 82.5]);
   // Campaign C6: Act 2 holds seven missions since Gun Hill, so its relays sit 13.3% apart (README had 15.6%).
   assert.deepEqual(MAP_ANCHORS["m06b-wings-over-copper"].strip, [63.3, 49.5]);
-  assert.deepEqual(MAP_ANCHORS["m12-frontiers-end"].strip, [89, 25]);
+  // Act 3 holds seven missions since Crown Hill (m10b): 13.3% apart, m12 on the upper row.
+  assert.deepEqual(MAP_ANCHORS["m12-frontiers-end"].strip, [90, 18]);
   assert.deepEqual(MAP_ART, { wide: { w: 2560, h: 1440 }, strip: { w: 2560, h: 900 } });
 });
 

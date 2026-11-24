@@ -227,7 +227,8 @@ export class ObjectiveBot extends PlayBot {
       const ward = s.own(team).find((e) => e.kind === "building" && this.wards.has(e.tag) && gap(e, hq) < 40);
       if (ward) home = { x: (hq.x + ward.x) / 2, z: (hq.z + ward.z) / 2 };
       // Towers asked on a hill (campaign C6): the army holds the hill, so the builders can see it.
-      const hill = open.find((o) => o.type === "build" && o.region);
+      // Only once no field objective is left (Crown Hill: the towers on the crown fall first).
+      const hill = !open.some((o) => ["reach", "hold", "destroyTag", "destroyCores", "escort"].includes(o.type)) && open.find((o) => o.type === "build" && o.region);
       if (hill) { const r = s.missionPlace(hill.region); home = { x: r.x, z: r.z }; }
     }
     const field = open.filter((o) => ["reach", "hold", "destroyTag", "destroyCores", "escort"].includes(o.type));
