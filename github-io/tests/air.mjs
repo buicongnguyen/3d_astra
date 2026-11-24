@@ -55,7 +55,7 @@ await suite("air", async () => {
       if (!k) throw new Error("Kite not trained");
       return { id: k.id, x: k.x, z: k.z };
     }, core);
-    assert.deepEqual(await page.locator("#commands [data-action]").evaluateAll((t) => t.map((b) => b.dataset.action)), ["worker", "flak", "kite", "hawk"], `${viewport}: the core's four tiles`);
+    assert.deepEqual(await page.locator("#commands [data-action]").evaluateAll((t) => t.map((b) => b.dataset.action)), ["worker", "flak", "kite", "hawk", ...(viewport === "portrait" ? [] : ["doctrine", "doctrine"])], `${viewport}: the core's four tiles, then its doctrine pair (faction depth; portrait phones show it beside Rally once it can be picked)`);
 
     // 2. Straight over the river (z = 0) to the far bank; a ground unit could not stand where it passes.
     const flight = await page.evaluate((k) => {

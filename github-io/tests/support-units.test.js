@@ -52,6 +52,9 @@ test("the player's Medics, Engineers and Supply wagons are sturdier; the compute
     assert.deepEqual(stats(s.spawn(type, 0, -30, 0, true, true)), mine, `player ${type}`);
     assert.deepEqual(stats(s.spawn(type, 1, 30, 0, true, true)), theirs, `computer ${type}`);
   }
+  // A team 0 the computer plays (aiPlayer, AI against AI) is a computer side: the old values.
+  const ai = new Simulation({ map: "basin", aiPlayer: true });
+  assert.deepEqual(stats(ai.spawn("medic", 0, -30, 0, true, true)), [75, 75, 30, 30], "computer-played team 0");
   // Saved: a player Medic keeps its health through a save and load.
   const medic = s.entities.find((e) => e.type === "medic" && e.team === 0);
   const loaded = restore(Simulation, s.serialize()).get(medic.id);

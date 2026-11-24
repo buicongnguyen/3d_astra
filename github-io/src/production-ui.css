@@ -41,7 +41,9 @@
    dock, portrait phones in the order row beside Rally (hud.js doctrineRow), so the training row keeps every tile. */
 .command-tile.doctrine-second{position:relative;overflow:visible!important}
 .command-tile>.doctrine-or{position:absolute;left:calc(-1 * var(--or-gap,2px));top:1px;transform:translate(-50%,-50%);z-index:3;min-width:20px;padding:1px 4px;border-radius:9px;background:#f2c46b;color:#2a1a0c;font:800 11px/13px var(--font-ui);text-align:center;text-transform:uppercase;pointer-events:none;box-shadow:0 1px 3px rgba(0,0,0,.45)}
-:root:not(.compact-ui):has(.command-panel #commands > .doctrine-tile) .bottom-dock{--tile-h:44px;--console-card-height:calc(3 * 44px + 2 * 4px + 14px);--console-mid:var(--console-card-height)}
+/* On the root, not the dock: the boss bar and other HUD above the console read the same height. */
+:root:not(.compact-ui):has(.command-panel #commands > .doctrine-tile){--console-card-height:calc(3 * 44px + 2 * 4px + 14px);--console-mid:calc(3 * 44px + 2 * 4px + 14px)}
+:root:not(.compact-ui):has(.command-panel #commands > .doctrine-tile) .bottom-dock{--tile-h:44px}
 :root:not(.compact-ui) .command-panel #commands>.doctrine-tile:not(.doctrine-second){grid-column:1}
 :root:not(.compact-ui) .bottom-dock .command-panel:has(#commands > .doctrine-tile) .upgrade-actions{position:absolute;right:8px;bottom:7px;width:var(--slot);margin:0}
 /* Phones: a doctrine tile reads sideways, the glyph left of its label and price. */
@@ -50,9 +52,9 @@
 :root.compact-ui:not(.in-briefing):not(.in-defence)[data-dock="selection"] .command-panel #commands>.command-tile.doctrine-tile.doctrine-tile>span:first-of-type,
 :root.compact-ui .doctrine-row .doctrine-tile>span{display:block;min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:700 11.5px/14px var(--font-ui);letter-spacing:-.1px}
 /* Phones clip every tile (status-layout: text never spills onto a neighbour), so there the "or" chip sits inside the
-   second tile, at its left edge, and the words start after it. */
-:root.compact-ui #commands>.doctrine-tile.doctrine-second{overflow:hidden!important;padding-left:27px!important}
-:root.compact-ui #commands>.doctrine-tile.doctrine-second>.doctrine-or{left:3px;top:50%;transform:translateY(-50%);min-width:0;padding:1px 3px;box-shadow:none}
+   second tile, in its bottom-right corner beside the price, where it covers no words in any language ("HOẶC", "또는"). */
+:root.compact-ui #commands>.doctrine-tile.doctrine-second{overflow:hidden!important}
+:root.compact-ui #commands>.doctrine-tile.doctrine-second>.doctrine-or{left:auto;top:auto;right:3px;bottom:3px;transform:none;min-width:0;padding:1px 4px;box-shadow:none}
 :root.compact-ui .doctrine-tile>small{grid-column:2;font:700 11px/13px var(--font-ui)!important;white-space:nowrap}
 :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands>.command-tile.doctrine-tile{flex:1 0 calc(50% - 3px)}
 /* Portrait phones: the pair fills the order row to the right of Rally. */
@@ -66,8 +68,9 @@
 .doctrine-row .command-tile.state-done>span,.doctrine-row .command-tile.state-done>.tile-state,.doctrine-row .command-tile.state-done>.icon{color:#92ebc5!important}
 :root.compact-ui .doctrine-row .doctrine-tile.state-locked>small.tile-state{font:700 11px/13px var(--font-ui)!important}
 /* Landscape phones: the side dock's tiles are narrow, so the words take the glyph's room (Vietnamese labels are long);
-   the label is 13 px like every other tile name there (status-layout "Readable command labels"). */
-@media (min-aspect-ratio: 1.35){:root.compact-ui .command-panel #commands>.doctrine-tile{grid-template-columns:minmax(0,1fr)!important}:root.compact-ui .command-panel #commands>.doctrine-tile>.icon{display:none!important}:root.compact-ui .command-panel #commands>.doctrine-tile>small{grid-column:1}:root.compact-ui .command-panel #commands>.doctrine-tile>span{font-size:13px!important;line-height:15px!important;letter-spacing:0!important}}
+   the label is 13 px like every other tile name there (status-layout "Readable command labels") and may take two lines,
+   so a Vietnamese label ("Hành quân +12%") fits the half-width tile without making the side dock taller. */
+@media (min-aspect-ratio: 1.35){:root.compact-ui .command-panel #commands>.doctrine-tile{grid-template-columns:minmax(0,1fr)!important}:root.compact-ui .command-panel #commands>.doctrine-tile>.icon{display:none!important}:root.compact-ui .command-panel #commands>.doctrine-tile>small{grid-column:1}:root.compact-ui .command-panel #commands>.doctrine-tile>span{font-size:13px!important;line-height:13px!important;letter-spacing:0!important;white-space:normal!important;text-overflow:clip!important;overflow-wrap:anywhere;display:-webkit-box!important;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2}}
 /* Desktop building tiles below the large layout: a smaller picture (24 px) so the name and the "Needs L2" line keep
    about 90 px; Linux and Android fonts run about 8% wider than Windows' (CI run 45350601918: "Needs L2" did not fit
    beside a 34 px picture in a 127 px tile). */

@@ -225,13 +225,13 @@ await suite("story: scenes, the 15-mission campaign map, the defence missions an
     await tap("#mb-skip"); await tap("#mb-next");
     await page.waitForFunction(() => window.__frontier.started && document.querySelector("#modal").hidden, null, { timeout: TIMEOUT.models });
     assert.match(await page.locator(".map-heading h1").textContent(), new RegExp(`Mission ${at(id) + 1} · Wings over Copper`));
-    // The Command core's tiles: Harvester, Flak, Kite, Hawk.
+    // The Command core's tiles: Harvester, Flak, Kite, Hawk (then its doctrine pair, faction depth 2026-11-24).
     await page.evaluate(() => { const f = window.__frontier, hq = f.sim.own(0).find((e) => e.type === "hq"); f.select([hq.id]); f.step(0.05); });
     if (mobile && await page.locator("html").getAttribute("data-dock") !== "selection") { await tap('#dock-tabs [data-dock="selection"]'); await page.waitForTimeout(120); }
     const flak = page.locator('#commands [data-action="flak"]');
     await flak.waitFor({ state: "visible", timeout: TIMEOUT.step });
     assert.match(await flak.textContent(), /Anti-air guns/);
-    assert.deepEqual(await page.locator("#commands [data-action]").evaluateAll((t) => t.map((b) => b.dataset.action)), ["worker", "flak", "kite", "hawk"]);
+    assert.deepEqual(await page.locator("#commands [data-action]").evaluateAll((t) => t.map((b) => b.dataset.action)), ["worker", "flak", "kite", "hawk", ...(viewport === "portrait" ? [] : ["doctrine", "doctrine"])]);
     if (mobile) assert.ok((await flak.boundingBox()).height >= 44, "Flak tile 44 px");
     // Fast-forward to the first raid; the scene starts on its own once a flyer reaches the copper works.
     await page.evaluate(() => {

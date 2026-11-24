@@ -39,6 +39,8 @@ test("m11c Hold the Keystone Roads, DefenceBot, 120 s", () => {
 // Difficulty guard (Wave 1b, owner 2026-11-21): census from 300 s and no field economy, so 300 s is back to r3-base
 // ("4cce2935"); then south exits (owner, R3-L) + difficulty guard on the merged tree: "f94f7658".
 // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
-// Re-recorded 2026-11-24 (integration of faction depth + support units + faction roster): Fast/Relentless AIs take doctrines and cast signature abilities; Medic/Engineer/Supply wagon health rose; Veil/Wardens cores train the new flyers and an Expanded Shield pylon trains the Bulwark (new trains lists and AI play). ("42bae522" -> "674ca6a0")
+// Re-recorded 2026-11-24 (support health only for a human team 0): a computer-played team 0 (aiPlayer) keeps the computer's support health, so AI-against-AI matches are back to their faction depth / roster values.
+// Re-recorded 2026-11-24 (integration of faction depth + support units + faction roster): Fast/Relentless AIs take doctrines and cast signature abilities; Medic/Engineer/Supply wagon health rose; Veil/Wardens cores train the new flyers and an Expanded Shield pylon trains the Bulwark (new trains lists and AI play). ("42bae522" -> "c2dcd73e")
 // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
-const ARENA_300 = "674ca6a0";
+// Re-recorded 2026-11-24 (support health only for a human team 0): a computer-played team 0 (aiPlayer) keeps the computer's support health, so AI-against-AI matches are back to their faction depth / roster values.
+const ARENA_300 = "c2dcd73e";

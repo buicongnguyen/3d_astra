@@ -17,7 +17,8 @@ const match = (faction, aiSpeed) => new Simulation({ map: "dunes", enemyCount: 1
 // meridian 300/600: Re-recorded 2026-11-24 (integration of faction depth + support units): Fast/Relentless AIs take doctrines and cast signature abilities, and Medic/Engineer/Supply wagon health rose (95 + 55 shield, 150, 340).
 // veil 300/500: Re-recorded 2026-11-24 (integration of faction depth + support units + faction roster): Fast/Relentless AIs take doctrines and cast signature abilities; Medic/Engineer/Supply wagon health rose; Veil/Wardens cores train the new flyers and an Expanded Shield pylon trains the Bulwark (new trains lists and AI play).
 // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
-const PINS = { meridian: { 300: "5880ad69", 600: "b2caabe9" }, veil: { 300: "81875c0a", 500: "ed15532d" } };
+// Re-recorded 2026-11-24 (support health only for a human team 0): a computer-played team 0 (aiPlayer) keeps the computer's support health, so AI-against-AI matches are back to their faction depth / roster values.
+const PINS = { meridian: { 300: "6036d277", 600: "5ec489b1" }, veil: { 300: "c8f9bc34", 500: "a953cd12" } };
 // Re-recorded 2026-11-24: Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x (not 6x) to flyers (commits 5e4c07c, 2e293ea) change long AI matches.
 const count = (sim, type) => sim.entities.filter((e) => e.type === type).length;
 
