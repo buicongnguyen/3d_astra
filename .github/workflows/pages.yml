@@ -172,6 +172,9 @@ jobs:
           # AAA round 3 (R3-Q): first-minute hooks (one-tap Quick battle, First watch roster and Scout Runner), and the bot check (wins, first combat by 45 / 60 s).
           - name: r3-q
             scripts: quick-battle quick-battle-check
+          # Faction depth (2026-11-24): the either/or doctrine tiles (pick one, the other locks) and the faction signature ability tiles, at three viewports.
+          - name: depth
+            scripts: faction-depth
           # AAA round 4 (R4-P1): the Wild frontier desert test (rule row, one-tap Weather button, aimed Sandstorm, Dune Wyrm Ambush, nest) at three viewports.
           - name: r4-p1
             scripts: wild-desert

@@ -9,7 +9,7 @@ import { ABILITY_KEYS, STANCES, STANCE_INFO, abilityGroups, abilityStatus, shoul
 export const abilityLimit = () => 99; // every ability stays visible; only the first ones have a key letter
 
 // Phones: short words for long ability names, and a symbol alone where the shape says it (the full name stays in aria-label).
-const PHONE_NAME = { "Rapid fire": "Rapid", "Triage pulse": "Heal", "Shield wall": "Shield", "Field repair": "Repair" };
+const PHONE_NAME = { "Rapid fire": "Rapid", "Triage pulse": "Heal", "Shield wall": "Shield", "Field repair": "Repair", "Shadow strike": "Strike", "Shield link": "Link" };
 const PHONE_SYMBOL = new Set(["Shield wall", "Field repair"]);
 
 export function tacticsCardHTML(sim, entities, { compact = false, side = false, keys = true } = {}) {

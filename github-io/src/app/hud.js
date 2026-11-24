@@ -235,12 +235,12 @@ export function setupHud(S, A) {
     // Desktop hides unit-only orders while only buildings are selected.
     document.documentElement.classList.toggle('no-units', !es.some(u => u.kind === 'unit'));
     // Two rows of orders on phones: 6 sit as 3 + 3 (was 4 + 2), 7 or 8 as four columns.
-    const orderCount = [...document.querySelectorAll('.order-buttons button')].filter(b => !b.hidden).length;
+    const orderCount = [...document.querySelectorAll('.order-buttons > button')].filter(b => !b.hidden).length;
     document.documentElement.classList.toggle('many-orders', orderCount > 5);
     document.documentElement.classList.toggle('wide-orders', orderCount > 6);
     $("command-context").title = `Command core technology ${S.sim.techLevel()} / 3`;
     const hasCore = S.sim.own(0).some((b) => b.type === "hq");
-    const signature = `${hasCore}/${es.map((e) => e.id).join(",")}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${p.flak}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2" || q.type === "flak")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}/${e?.trains?.some((k) => D[k]?.flying) ? `${S.sim.airCount(0)}:${S.sim.airCap(0)}` : ""}`;
+    const signature = `${hasCore}/${es.map((e) => e.id).join(",")}/${p.doctrine ? JSON.stringify(p.doctrine) : ""}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${p.flak}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2" || q.type === "flak")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}/${e?.trains?.some((k) => D[k]?.flying) ? `${S.sim.airCount(0)}:${S.sim.airCap(0)}` : ""}`;
     if (S.lastSelectionKey !== signature) {
       S.lastSelectionKey = signature;
       // Phones: a bold role glyph instead of the 3D portrait, which is unreadable at roster size (role-icons.js).
@@ -280,14 +280,21 @@ export function setupHud(S, A) {
         : actions.length
         ? `${ready} AVAILABLE`
         : structure ? `LEVEL ${e.level}` : "TACTICAL";
+      // Portrait phones: the doctrine pair sits in the order row beside Rally (wide, with its words), so the one row of training tiles keeps every tile in view.
+      const portraitPhone = phone && !sideDock.matches, cardTiles = portraitPhone ? tiles.filter((t) => !t.doctrine) : tiles;
+      // There the locked pair (below level 2) stays off the row, which it would share with the production queue for the whole early game.
+      const row = doctrineRow(), rowHtml = portraitPhone ? tiles.filter((t) => t.doctrine && t.state !== "locked").map((t) => doctrineTileHTML(t, null)).join(`<i class="doctrine-or-sep" aria-hidden="true">or</i>`) : "";
+      row.innerHTML = rowHtml;
+      row.hidden = !rowHtml;
       $("commands").innerHTML =
-        tiles
+        cardTiles
           .map((t, index) => {
             const key = ACTION_KEYS[index];
             if (t.action === "research" || t.action === "back") {
               const open = t.action === "research";
               return `<button class="command-tile branch-tile" data-action="${t.action}" data-state="ready" data-hotkey="${key}" aria-label="${open ? "Research: pick one of two upgrades for this match" : "Back"}" title="${key} · ${open ? "Research · pick Damage +10% or Armor +12% for this match; the other branch then stays locked" : "Back"}"><kbd class="action-key">${key}</kbd>${icon(open ? "research" : "stop")}<span>${open ? "Research" : "Back"}</span>${open ? `<small>${t.sub}</small>` : ""}</button>`;
             }
+            if (t.doctrine) return doctrineTileHTML(t, key);
             const d = D[t.type];
             const cost = `<b class="alloy-text">${d.cost[0]}</b>${d.cost[1] ? ` <b class="energy-text">/ ${d.cost[1]}</b>` : ""}`;
             // Done and researching tiles never show a price; locked tiles show what they need.
@@ -314,14 +321,14 @@ export function setupHud(S, A) {
     document.documentElement.classList.toggle("dock-actions", !!$("commands").querySelector("button") || !!$("upgrade-actions").querySelector("button"));
     coverFollowsDock();
     if ($("commands").dataset.fadeKey !== S.lastSelectionKey) { $("commands").dataset.fadeKey = S.lastSelectionKey; requestAnimationFrame(rosterFade); }
-    for (const button of $("commands").querySelectorAll("[data-action]")) {
+    for (const button of document.querySelectorAll("#commands [data-action], #doctrine-row [data-action]")) {
       const unavailable =
         !Z.started ||
         Z.paused ||
         S.sim.result;
       button.disabled = !!unavailable || (e?.kind==='building' && (!e.complete || !!e.levelJob)) || button.dataset.state === "busy" || button.dataset.state === "done";
       // Can't afford (HUD contrast, 2026-11-24): the tile stays tappable; the short resource is marked.
-      const cost = button.dataset.state === "ready" && D[button.dataset.action]?.cost, p = S.sim.players[0];
+      const cost = button.dataset.state === "ready" && (button.dataset.cost ? button.dataset.cost.split(",").map(Number) : D[button.dataset.action]?.cost), p = S.sim.players[0];
       const shortA = !!cost && p.alloy < cost[0], shortE = !!cost && p.energy < (cost[1] || 0);
       button.classList.toggle("poor", shortA || shortE);
       button.classList.toggle("short-alloy", shortA);
@@ -363,7 +370,7 @@ export function setupHud(S, A) {
     A.selectionWorkUI.update(es.length===1?e:null, !Z.started || Z.paused || !!S.sim.result);
     const levelButton=$('upgrade-actions').querySelector('[data-level]');
     if(levelButton)levelButton.disabled=!Z.started||Z.paused||!!S.sim.result||!e.complete||!!e.levelJob||e.queue.length>0||e.level>=3;
-    for (const b of document.querySelectorAll(".order-buttons button"))
+    for (const b of document.querySelectorAll(".order-buttons > button"))
       b.disabled = !Z.started || Z.paused || (!["field-guide", "rally-order"].includes(b.id) && !es.some((u) => u.kind === "unit"));
     for (const b of document.querySelectorAll(".touch-controls button"))
       b.disabled = !Z.started || Z.paused || !!S.sim.result;
@@ -469,4 +476,27 @@ export function setupHud(S, A) {
 
     $("training-exit").onclick=()=>{S.playMode="skirmish";A.newGame();};
   };
+}
+
+// Doctrines (research-tiles.js doctrineTiles): both options side by side, an "or" between them; one tap picks.
+function doctrineTileHTML(t, key) {
+  const [ca, ce] = t.cost, price = `<b class="alloy-text">${ca}</b>${ce ? ` <b class="energy-text">/ ${ce}</b>` : ""}`;
+  const sub = t.state === "done" ? `<small class="tile-state"><i aria-hidden="true">✓</i> ${t.sub}</small>` : t.sub ? `<small class="tile-state">${t.sub}</small>` : `<small>${price}</small>`;
+  const priced = t.state === "done" ? t.sub : `${ca} alloy and ${ce} energy`;
+  const note = t.state === "done" ? "Chosen for this match." : t.state === "locked" ? `${t.sub}.` : "Pick one for this match: the other then stays locked.";
+  return `<button class="command-tile cat-upgrade research-tile doctrine-tile state-${t.state}${t.pair === 1 ? " doctrine-second" : ""}" data-action="doctrine" data-pick="${t.pick}" data-state="${t.state}" data-cost="${ca},${ce}"${key ? ` data-hotkey="${key}"` : ""} aria-label="${t.name} · ${t.label} · ${priced}" title="${key ? `${key} · ` : ""}${t.name} · ${t.description} · ${note}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${icon(t.icon)}<span>${t.label}</span>${sub}${t.pair === 1 ? `<i class="doctrine-or" aria-hidden="true">or</i>` : ""}</button>`;
+}
+// The portrait phones' home for the doctrine pair: a row inside the order buttons, made once.
+function doctrineRow() {
+  let row = document.getElementById("doctrine-row");
+  if (!row) {
+    row = document.createElement("div");
+    row.id = "doctrine-row";
+    row.className = "doctrine-row";
+    row.hidden = true;
+    // A tap goes through the command card's own handler (app/command-card.js), as a tile there would.
+    row.addEventListener("click", (event) => { const button = event.target.closest("[data-action]"); if (button && !button.disabled) document.getElementById("commands").onclick?.({ target: button }); });
+    document.querySelector(".order-buttons")?.append(row);
+  }
+  return row;
 }

@@ -99,6 +99,12 @@ export function setupCommandCard(S, A) {
       const type = button.dataset.action;
       // The research tile opens a choice sheet of two exclusive upgrades; Back or a choice closes it.
       if (type === "research" || type === "back") { S.researchOpen = type === "research"; A.tone(); A.updateUI(); return; }
+      // A doctrine tile picks its option at once (sim/content/doctrines.js); the other option then locks.
+      if (type === "doctrine") {
+        const b = A.selectedEntities()[0];
+        if (b) { S.sim.command({ team: 0, type: "doctrine", building: b.id, pick: button.dataset.pick }); A.tone(); A.updateUI(); }
+        return;
+      }
       if (type === "upgrade" || type === "plating") S.researchOpen = false;
       if (D[type].kind === "building") A.enterBuild(type);
       else {
