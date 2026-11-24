@@ -741,8 +741,9 @@ export class WorldView {
   }
   // Shader warm-up for rigged units (unit-rig.js): one tiny, never-culled instance of every rigged
   // part, drawn once behind the loading screen with the real scene (lights, fog, shadow pass), so the
-  // first Ranger or Tank on screen compiles nothing. compileAsync lets the driver compile the main
-  // programs in parallel first; the one render then adds the shadow-pass depth programs. The rigged
+  // first Ranger or Tank on screen compiles nothing (main and shadow-pass depth programs alike).
+  // Not compileAsync: its readiness poll throws (uncaught, in a timer) when a scene material is
+  // disposed or rebuilt while it waits, as on a Defence level switch. The rigged
   // materials are shared (bakedMaterial, per-team clones kept with the templates), so a rebuilt match
   // reuses these programs.
   async warmRig(types) {
@@ -773,7 +774,6 @@ export class WorldView {
     if (!group.children.length) return;
     this.scene.add(group);
     try {
-      await this.renderer.compileAsync?.(this.scene, this.camera);
       if (!this.contextLost) this.renderer.render(this.scene, this.camera);
     } catch { /* a warm-up never blocks loading */ }
     finally {
