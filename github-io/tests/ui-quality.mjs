@@ -17,6 +17,11 @@ const devices = [
   ['small', { width: 320, height: 568 }, true],
   ['landscape', { width: 844, height: 390 }, true],
 ];
+// Text size on the start screen and in every settings section is also audited by tests/layout-f.mjs
+// (its rule "small": any visible text under 11 px, a superset of the tags read here) at 1440x900,
+// 390x844 and 844x390 (layout-f "desktop", "portrait", "landscape"; CI groups layout-desktop and
+// layout-mobile). Here it is checked only where layout-f does not look: 320x568 (2026-11-25, test speed).
+const TEXT_AUDITED_BY_LAYOUT_F = new Set(['desktop', 'phone', 'landscape']);
 try {
   for (const [name, viewport, touch] of devices) {
     const page = await browser.newPage({ viewport, isMobile: touch, hasTouch: touch, deviceScaleFactor: touch ? 2 : 1 });
@@ -48,7 +53,7 @@ try {
         overflow: document.documentElement.scrollWidth > innerWidth + 1 || document.querySelector('#briefing').scrollWidth > document.querySelector('#briefing').clientWidth + 1 };
     });
     assert.deepEqual(start, { art: true, emblem: true, briefing: true, hudVisible: [], overflow: false }, name);
-    assert.deepEqual(await smallText('#briefing'), [], `${name} start text`);
+    if (!TEXT_AUDITED_BY_LAYOUT_F.has(name)) assert.deepEqual(await smallText('#briefing'), [], `${name} start text`);
     assert.deepEqual(await controls('#start, #briefing-settings, .top-actions button'), [], `${name} start controls`);
     for (const [mode, section] of [['training', '#training-setup'], ['campaign', '#campaign-setup'], ['skirmish', '#skirmish-setup']]) {
       await press(`[data-mode="${mode}"]`);
@@ -75,7 +80,7 @@ try {
     // Every section: readable text and 44 px controls that stay on screen (segmented rows, swatches, sliders).
     for (const tab of ['audio', 'game', 'camera', 'display', 'controls', 'access', 'language']) {
       await press(`#settings-tab-${tab}`);
-      assert.deepEqual(await smallText('.settings-panel'), [], `${name} settings ${tab} text`);
+      if (!TEXT_AUDITED_BY_LAYOUT_F.has(name)) assert.deepEqual(await smallText('.settings-panel'), [], `${name} settings ${tab} text`);
       assert.deepEqual(await page.locator('.settings-body button, .settings-body input').evaluateAll((els, touch) => els.filter(e => e.getClientRects().length).map(e => { const r = e.getBoundingClientRect(); return { id: e.dataset.value || e.dataset.do || e.dataset.setting || e.dataset.color || e.textContent.trim().slice(0, 16), small: touch && (r.height < 44 || r.width < 40), spill: e.tagName === 'BUTTON' && e.scrollWidth > e.clientWidth + 1 }; }).filter(c => c.small || c.spill), touch), [], `${name} settings ${tab} controls`);
     }
     await press('#settings-tab-game');

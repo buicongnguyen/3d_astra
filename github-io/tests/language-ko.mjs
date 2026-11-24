@@ -9,6 +9,8 @@ import fs from 'node:fs';
 import { translate, addMessages } from '../src/i18n.js';
 import { MISSIONS } from '../src/story/missions.js';
 import { openPage, testUrl, TIMEOUT, VIEWPORTS } from './lib/harness.mjs';
+// Under the CI-like 20x CPU slow-down a phone tap on the menu can take over 20 s to dispatch (as in missions.mjs).
+const STEP = Number(process.env.SLOW_CPU) > 1 ? 60000 : TIMEOUT.step;
 import { openSettings, choose, chosen, closeSettings } from './lib/settings-sheet.mjs';
 
 addMessages(JSON.parse(fs.readFileSync(new URL('../src/locales/story-ko.json', import.meta.url), 'utf8')), 'ko');
@@ -18,7 +20,7 @@ const OUT = process.env.KO_SHOTS || 'test-results';
 export async function koreanChecks(browser) {
   fs.mkdirSync(OUT, { recursive: true });
   for (const [name, viewport] of Object.entries(VIEWPORTS)) {
-    const { page, errors } = await openPage(browser, viewport, { deviceScaleFactor: viewport.mobile ? 2 : 1, timeout: TIMEOUT.step });
+    const { page, errors } = await openPage(browser, viewport, { deviceScaleFactor: viewport.mobile ? 2 : 1, timeout: STEP });
     const touch = !!viewport.mobile;
     const size = `${viewport.width}x${viewport.height}`;
     const press = async (selector) => { const t = page.locator(selector).first(); if (touch) await t.tap(); else await t.click(); await page.waitForTimeout(150); };
@@ -119,7 +121,7 @@ export async function koreanChecks(browser) {
       f.hold = false;
     });
     await page.waitForFunction(() => document.querySelector('#modal .result-card') && !document.querySelector('#modal').hidden, null, { timeout: TIMEOUT.models });
-    await page.waitForTimeout(600);
+    await page.waitForFunction(() => /[가-힣]/.test(document.querySelector('#modal').innerText), null, { timeout: TIMEOUT.step }).catch(() => {});
     assert.match(await page.locator('#modal').innerText(), /[가-힣]/, `${name}: results in Korean`);
     await fits('#modal', 'results', '#modal .result-actions button, #modal .debrief-actions button');
     await shot('results');

@@ -20,6 +20,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { pickShard, shardLabel } from './lib/shard.mjs';
 
 const record = process.argv.indexOf('--record');
 const label = record >= 0 ? process.argv[record + 1] : 'current';
@@ -158,6 +159,9 @@ const scenarios = [
   {name:'wild-storm-eco', map:'dunes', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rules:{wild:'on'}, wild:[-3,-8]},
   {name:'wild-battle-eco', map:'dunes', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rules:{wild:'on'}, wild:[-3,-8], spawn:[{type:'wyrm', team:0, count:1, near:[-6,10]}]},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
+// CI runs the scenarios in three jobs (pages.yml `shard: i/3`, tests/lib/shard.mjs): every third scenario each.
+if (!process.env.RENDER_ONLY) scenarios.splice(0, scenarios.length, ...pickShard(scenarios));
+console.log(`render-budget${shardLabel}: ${scenarios.length} scenarios (${scenarios.map(s => s.name).join(', ')})`);
 const results = [];
 const limits = {'base-high':160, 'river-overview-high':190, 'large-map-high':240, 'battle-eco':120, 'three-rivals-eco':150, 'three-factions-eco':185, 'defence-wave-eco':120, 'air-battle-eco':118, 'defence-river-eco':135, 'defence-carrier-eco':142, 'boss-battle-eco':120, 'defence-big-eco':112};
 // Limits of scenarios added in AAA round 2: one new line per package right below this comment,
@@ -592,5 +596,5 @@ try {
     console.log(JSON.stringify(summary));
     await page.close();
   }
-  fs.writeFileSync(`${output}/report.json`, JSON.stringify(results, null, 2));
+  fs.writeFileSync(`${output}/report${shardLabel ? `-${process.env.TEST_SHARD.replace('/', 'of')}` : ''}.json`, JSON.stringify(results, null, 2));
 } finally { await browser.close(); }

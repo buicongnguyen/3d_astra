@@ -160,13 +160,22 @@ await suite("terrain", async () => {
     await page.waitForFunction(() => window.__frontier.modelsReady && window.__frontier.sim.terrain.id === "riverlands", null, { timeout: TIMEOUT.models });
     await tap("#start");
     await page.waitForFunction(() => window.__frontier.started, null, { timeout: TIMEOUT.step });
-    const spots = await page.evaluate(async () => {
+    await page.evaluate(async () => {
       const f = window.__frontier, s = f.sim, v = f.view;
       s.visible[0].fill(1); s.explored[0].fill(1);
       f.select([]);
       v.focusOn(-11, 0); v.zoom = 40;
       f.step(0.05);
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    });
+    // The minimap redraws on its own beat (a fast machine can read it before its first paint after
+    // the reveal: all pixels 0): wait for the ford tick, then read everything once.
+    await page.waitForFunction(() => {
+      const s = window.__frontier.sim, mm = document.getElementById("minimap"), k = (v) => (v + s.terrain.half) / s.terrain.size;
+      return Math.min(...[...mm.getContext("2d").getImageData(Math.round(k(-2) * mm.width), Math.round(k(0) * mm.height), 1, 1).data].slice(0, 3)) > 180;
+    }, null, { timeout: TIMEOUT.step }).catch(() => {});
+    const spots = await page.evaluate(() => {
+      const f = window.__frontier, s = f.sim, v = f.view;
       const r = v.renderer.domElement.getBoundingClientRect(), at = (x, z) => { const q = v.project(x, z, 0); return { x: r.left + q.x, y: r.top + q.y }; };
       const mm = document.getElementById("minimap"), ctx = mm.getContext("2d"), k = (v) => (v + s.terrain.half) / s.terrain.size;
       const pixel = (x, z) => [...ctx.getImageData(Math.round(k(x) * mm.width), Math.round(k(z) * mm.height), 1, 1).data].slice(0, 3);

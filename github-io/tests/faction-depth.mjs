@@ -72,7 +72,7 @@ await suite("faction-depth", async () => {
     // ---- One tap picks; the other option leaves; the price is paid.
     const energy = await frontier(() => window.__frontier.sim.players[0].energy);
     await page.locator('.doctrine-tile[data-pick="drill"]').first()[mobile ? "tap" : "click"]();
-    await page.waitForTimeout(300);
+    await page.waitForFunction(() => window.__frontier.sim.players[0].doctrine?.barracks === "drill", null, { timeout: TIMEOUT.step }).catch(() => {});
     assert.deepEqual(await frontier(() => window.__frontier.sim.players[0].doctrine), { barracks: "drill" });
     assert.equal(await frontier(() => window.__frontier.sim.players[0].energy), energy - 175);
     seen = await tiles();
@@ -98,7 +98,7 @@ await suite("faction-depth", async () => {
     for (const a of abilities) assert.ok(a.top && a.w >= 43.5 && a.h >= 37.5, `${viewport} ${a.id}: uncovered, large enough ${JSON.stringify(a)}`);
     // Pressing Spur on casts it (one press, no aiming).
     await page.locator('#commands [data-ability="spurs"]').first()[mobile ? "tap" : "click"]();
-    await page.waitForTimeout(200);
+    await page.waitForFunction((id) => window.__frontier.sim.get(id).abilityAt > window.__frontier.sim.time, ids[0], { timeout: TIMEOUT.step }).catch(() => {});
     assert.ok(await frontier((id) => window.__frontier.sim.get(id).abilityAt > window.__frontier.sim.time, ids[0]), `${viewport}: Spur on was used`);
     await shot(page, `faction-depth-abilities-${viewport}`);
 

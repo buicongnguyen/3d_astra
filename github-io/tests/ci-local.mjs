@@ -8,6 +8,10 @@
 //                                               opposite race: a check read before a frame has drawn)
 //   npm run test:ci-local -- --no-build         test the dist/ already built
 //   npm run test:ci-local -- --no-unit          skip `npm test`
+//   npm run test:ci-local -- --suites=a,b grp   only these suites of the named groups (tests/changed.mjs uses it)
+//   npm run test:ci-local -- --no-browser       unit tests only
+//
+// Groups run longest first (their order in pages.yml); a group with `shard: i/n` passes TEST_SHARD.
 //
 // Env: CI_LOCAL_PORT (default 4231), CI_LOCAL_LANES (default 4), SLOW_CPU (default 20; see
 // tests/lib/ci-like.mjs for the calibration), CI_LOCAL_TIMEOUT minutes per suite (default 30, CI's
@@ -32,6 +36,8 @@ const fast = argv.includes("--fast");
 const build = !argv.includes("--no-build");
 const unit = !argv.includes("--no-unit");
 const wanted = argv.filter((a) => !a.startsWith("--"));
+const onlySuites = argv.find((a) => a.startsWith("--suites="))?.slice(9).split(",").filter(Boolean);
+const browserSuites = !argv.includes("--no-browser");
 const port = Number(process.env.CI_LOCAL_PORT || 4231);
 const lanes = Math.max(1, Number(process.env.CI_LOCAL_LANES || 4));
 const slow = fast ? 0 : Number(process.env.SLOW_CPU || 20);
@@ -62,12 +68,17 @@ if (unknown.length) {
   console.error(`Unknown group(s): ${unknown.join(", ")}. Groups: ${all.map((g) => g.name).join(" ")}`);
   process.exit(2);
 }
-const groups = wanted.length ? all.filter((g) => wanted.includes(g.name)) : all;
+const groups = (wanted.length ? all.filter((g) => wanted.includes(g.name)) : all)
+  .map((g) => (onlySuites ? { ...g, scripts: g.scripts.filter((s) => onlySuites.includes(s)) } : g))
+  .filter((g) => g.scripts.length);
 
 if (unit) {
+  const started = Date.now();
   console.log("Unit tests (npm test)…");
   if ((await run(node, ["--test", "tests/*.test.js"])) !== 0) { console.error("Unit tests failed: no browser suites run."); process.exit(1); }
+  console.log(`Unit tests passed (${Math.round((Date.now() - started) / 1000)}s)`);
 }
+if (!browserSuites) process.exit(0);
 if (build) {
   console.log("Building (vite build)…");
   if ((await run(node, [VITE, "build"])) !== 0) { console.error("Build failed: nothing tested."); process.exit(1); }
@@ -99,7 +110,7 @@ function runSuite(group, script, log) {
   return new Promise((resolve) => {
     const m = (scripts[`test:${script}`] || "").match(/^node (\S+\.mjs)$/);
     if (!m) { log.end(`test:${script} is not "node tests/<file>.mjs"\n`); return resolve(false); }
-    const child = spawn(node, [...(slow > 1 ? ["--import", preload] : []), m[1]], { cwd: ROOT, env: { ...env, LAYOUT_ONLY: group.layoutOnly } });
+    const child = spawn(node, [...(slow > 1 ? ["--import", preload] : []), m[1]], { cwd: ROOT, env: { ...env, LAYOUT_ONLY: group.layoutOnly, TEST_SHARD: group.shard } });
     running.add(child);
     child.stdout.pipe(log, { end: false });
     child.stderr.pipe(log, { end: false });
@@ -113,6 +124,7 @@ function runSuite(group, script, log) {
 
 const results = [];
 const queue = [...groups];
+const browserStart = Date.now();
 async function lane() {
   for (let g; (g = queue.shift()); ) {
     for (const script of g.scripts) {
@@ -128,5 +140,6 @@ async function lane() {
 await Promise.all(Array.from({ length: lanes }, lane));
 
 const failed = results.filter((r) => !r.pass);
-console.log(`\n${results.length - failed.length}/${results.length} passed${failed.length ? `; failed: ${failed.map((r) => `${r.group}/${r.script}`).join(", ")}` : ""}`);
+console.log(`\nBrowser suites: ${Math.round((Date.now() - browserStart) / 1000)}s in ${lanes} lane(s)`);
+console.log(`${results.length - failed.length}/${results.length} passed${failed.length ? `; failed: ${failed.map((r) => `${r.group}/${r.script}`).join(", ")}` : ""}`);
 process.exit(failed.length ? 1 : 0);

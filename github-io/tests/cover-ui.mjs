@@ -203,7 +203,7 @@ await suite("cover-ui", async () => {
           const ids = pick === "army" ? own.filter((e) => e.kind === "unit" && e.type !== "worker").map((e) => e.id) : [own.find((e) => e.type === (pick === "core" ? "hq" : "worker")).id];
           f.select(ids); f.step(0);
         }, pick);
-        await page.waitForTimeout(150);
+        await page.waitForFunction(() => document.documentElement.dataset.dock === "selection", null, { timeout: 20000 }).catch(() => {});
         assert.equal(await page.evaluate(() => document.documentElement.dataset.dock), "selection", `${name} ${pick}: the Selection tab is open`);
         const actions = await page.evaluate(() => [...document.querySelectorAll(".bottom-dock :is(#commands button, #upgrade-actions button, .order-buttons button)")]
           .filter((e) => e.getClientRects().length && getComputedStyle(e).visibility !== "hidden" && !e.closest("[hidden]")).map((e) => e.dataset.action || e.dataset.ability || e.dataset.stance || e.id || (e.dataset.level !== undefined ? "level" : e.textContent.trim())));

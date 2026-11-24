@@ -1,0 +1,98 @@
+{
+  "about": [
+    "Which checks cover which files, for `npm run test:changed` (tests/changed.mjs). Paths are relative to github-io/;",
+    "a path outside github-io/ starts with ../ (for example ../.github/**). Globs: ** any folders, * within a name, {a,b} either.",
+    "Every rule whose files match a changed path adds its suites (browser suites by script name, `npm run test:<name>`)",
+    "and its checks (npm scripts). \"suites\": \"all\" means the whole CI matrix. A changed browser suite tests/<name>.mjs",
+    "always runs itself. A changed path that no rule matches runs the whole matrix (safe default), and",
+    "tests/test-map.test.js fails while any file under src/, public/ or tests/ matches no rule: add the new file here.",
+    "The `always` suites run on every change as a smoke check. CI ignores this file: it always runs the full matrix."
+  ],
+  "always": ["browser", "title"],
+  "rules": [
+    {
+      "name": "docs and notes (nothing to run)",
+      "files": ["**/*.md", "../*.md", "../docs/**", "../skills/**", "../music-lab/**", "../LICENSE", "docs/**", "public/prompt/**", "tools/blender/**", "tools/*.py", "tools/{look-shots,kit-shots,fx-strips,review-wyrms,perf-ab,perf-phone,vfx-phone-bench,first-visit,phone-hud-audit,render-audio,port-boss-model,faction-bench,faction-matrix,skirmish-bench,high-ground-bench,wild-bench,first-contact,baseline-diff,defence-coverage}.mjs", "tools/boss-parts/**"],
+      "suites": [],
+      "checks": []
+    },
+    {
+      "name": "build, workflow, shared test code, test hooks and the frame loop (everything)",
+      "files": ["package.json", "package-lock.json", "vite.config.js", "index.html", "../.github/**", "../.gitattributes", "../.gitignore", ".gitignore", "tests/lib/{harness,ci-like,ci-matrix,settings-sheet,client-source,client-wiring}.mjs", "tests/lib/client-source.js", "tests/ci-local.mjs", "tests/serve-build.mjs", "src/main.js", "src/app/{frame,state,debug-hooks,match-flow,shell,screens,dom,preferences}.js", "src/settings-ui.js", "src/settings.js", "src/i18n.js", "src/view.js", "src/view-plugins.js", "src/style.css", "src/ui-kit.css", "src/ui-theme.css", "src/kit-skin.css", "src/theme-walnut.css", "src/theme-switch.js", "src/fonts/**", "tools/sw.template.js"],
+      "suites": "all",
+      "checks": []
+    },
+    {
+      "name": "test tooling with its own check",
+      "files": ["tests/changed.mjs", "tests/test-map.json", "tests/*.test.js", "tests/lib/{sim.js,golden.mjs,duel.mjs,map-fingerprint.mjs,sovereign.mjs}", "tests/fixtures/r3-base-menu-controls.json"],
+      "suites": [],
+      "checks": []
+    },
+    {
+      "name": "the shard helper (suites split over CI jobs)",
+      "files": ["tests/lib/shard.mjs"],
+      "suites": ["render-budget", "language"],
+      "checks": []
+    },
+    {
+      "name": "rules: the simulation, data and saves",
+      "files": ["src/sim/**", "src/simulation.js", "src/snapshot.js", "src/savegame.js", "src/balance.json", "src/data.js", "src/factions.js", "src/rng.js", "src/commands.js", "src/navigation.js", "src/terrain.js", "src/maps.json", "src/ai-plan.js", "src/difficulty.js", "src/model-roster.js", "src/match-stats.js", "src/activity.js", "src/abilities*.js", "src/ceremony-rules.js", "src/audio-logic.js", "src/type-chips-model.js", "tools/{playbot,mission-check,chronicle-check,defence-bot,defence-check,ai-census-check,difficulty-check}.mjs", "tools/story-strings.mjs"],
+      "suites": ["auto-combat", "harvesters", "missions", "defence", "quick-battle-check", "ai-census-check", "defence-heroic-check", "factions", "terrain", "squad-orders", "creatures", "boss", "air", "sovereign-walks", "stages", "new-game", "army-depth", "workshops", "gunner", "faction-depth", "wild-desert", "patrol", "repair-rally", "activity", "golden-full"],
+      "checks": ["check:missions", "check:defence"]
+    },
+    {
+      "name": "story, campaign and chronicles",
+      "files": ["src/story/**", "src/mission-text.js", "src/mission-ui.js", "src/mission-ui.css", "src/mission-look*.js", "src/mission-looks.js", "src/campaign*.js", "src/campaign*.css", "src/campaign-maps.json", "src/chronicles*", "src/choices.css", "src/scenes.css", "src/openings.css", "src/title-card.css", "src/unit-intros.js", "src/cast-portraits.js", "src/app/{briefing,choices,scenes,title-card}.js", "src/art/campaign/**"],
+      "suites": ["story", "missions", "choices", "chronicles", "openings", "campaign", "language", "showtime", "boss", "creatures", "sovereign-walks", "sovereign", "progression", "tutorial"],
+      "checks": ["check:missions", "check:missions -- --chronicle all"]
+    },
+    {
+      "name": "Frontier Defence",
+      "files": ["src/defence/**", "src/app/defence/**", "src/app/defence-*.js", "src/defence-*.css", "src/defence-readability-view.js"],
+      "suites": ["defence", "defence-zones", "defence-deck", "defence-heroic", "defence-heroic-check", "defence-onboarding", "air", "render-budget", "sovereign", "ceremony", "golden-full"],
+      "checks": ["check:defence"]
+    },
+    {
+      "name": "words: locales",
+      "files": ["src/locales/**", "src/field-guide.js"],
+      "suites": ["language", "chronicles", "choices", "music", "campaign", "rank", "layout-f", "status-layout"],
+      "checks": []
+    },
+    {
+      "name": "screens and HUD layout (CSS, docks, panels, touch)",
+      "files": ["src/*.css", "src/app/{hud,command-card,selection,type-chips,ui-extras,modals,loading,cover,cover-layers,rule-options,rules-store,wild-ui,minimap}.js", "src/selection-status.js", "src/production-ui.js", "src/construction-ui.js", "src/tactics-card.js", "src/tactics-ui.js", "src/research-tiles.js", "src/touch-controls.js", "src/message-queue.js", "src/icons.js", "src/role-icons.js", "src/emblems.js", "src/status-view.js", "src/results-ui.js", "src/boss-ui.js", "src/rank-ui.js", "src/chronicles-ui.js", "src/campaign-map-ui.js", "src/quick-battle.js", "src/fullscreen.js", "src/reduced-motion.js", "src/art/ui/**", "src/art/cover/**", "src/art/*.{svg,webp}", "src/portraits.js"],
+      "suites": ["layout-f", "status-layout", "ui-quality", "phones", "readability", "mobile", "mobile-controls", "ui-extras", "messages", "cover-ui", "settings-sheet", "language", "tactics-ui", "mobile-construction", "support-touch", "faction-depth", "progression", "ceremony", "quick-battle", "rank", "portraits", "fullscreen"],
+      "checks": []
+    },
+    {
+      "name": "drawing: world view, units, effects, models",
+      "files": ["src/*-view.js", "src/entity-batches.js", "src/fx.js", "src/fx-*.{js,json}", "src/fx-kinds/**", "src/ground-paint.js", "src/scatter.js", "src/look-grade.*", "src/night-sky.js", "src/unit-rig.js", "src/governor.js", "src/transform-cache.js", "src/ambient-life.js", "src/ambience.js", "src/plateau-relief.js", "src/terrain-labels.js", "src/map-edge.js", "src/team-bands.js", "src/threat-arrows.js", "src/visual-style.*", "src/faction-colors.js", "src/camera-shake.js", "src/combat-feedback.js", "src/air-motion.js", "src/air-hint.js", "src/fog-aware.js", "src/building-decals-atlas.js", "src/elite-view.js", "public/models/**", "public/fx/**", "public/portraits/**"],
+      "suites": ["render-budget", "visual-combat", "feel", "model-loading", "ambient-life", "boundary-fx", "night-storm", "readability", "factions", "terrain", "air", "creatures", "boss", "wild-desert", "corners", "portraits", "selection"],
+      "checks": []
+    },
+    {
+      "name": "sound and music",
+      "files": ["src/audio*.js", "src/sfx*.js", "src/music*.js", "src/app/sound.js", "public/music/**", "tests/fixtures/music/**"],
+      "suites": ["audio", "audio-juice", "music", "offline"],
+      "checks": []
+    },
+    {
+      "name": "orders and input",
+      "files": ["src/app/{orders,input-keyboard,input-pointer,abilities}.js", "src/hotkeys.*", "src/ability-hints.js", "src/follow-tether-view.js"],
+      "suites": ["hotkeys", "pc-controls", "selection", "mobile-controls", "mobile-gestures", "patrol", "repair-rally", "squad-orders", "support-touch", "tactics-ui", "mobile-construction", "abilities", "auto-combat"],
+      "checks": []
+    },
+    {
+      "name": "first run, tutorial, progression, rank",
+      "files": ["src/tutorial*", "src/progression.*", "src/profile-rank.js", "src/rank.css", "src/ceremony.*", "src/quick-battle.css"],
+      "suites": ["tutorial", "progression", "rank", "ceremony", "quick-battle", "improvements"],
+      "checks": []
+    },
+    {
+      "name": "offline and the service worker",
+      "files": ["src/app/offline.js", "public/manifest.webmanifest", "public/favicon.svg"],
+      "suites": ["offline", "cover-ui", "music"],
+      "checks": []
+    }
+  ]
+}
