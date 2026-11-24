@@ -25,7 +25,7 @@ export function renderShell() {
   <main id="stage">
     <div id="world"></div><div id="training-marker" hidden aria-hidden="true">◎</div><aside id="training" hidden><button id="training-toggle" aria-expanded="true">Training</button><div id="training-card" class="panel"><strong id="training-title"></strong><p id="training-copy"></p><small>Training supplies replenish · no AI attacks</small><div><button id="training-focus">Focus target</button><button id="training-exit">Leave training</button></div></div></aside>
     <div class="map-heading"><span class="eyebrow"><i class="live-dot"></i> <span id="operation-label">OPERATION 01 / SKIRMISH</span></span><h1>Outpost Meridian<span>.</span></h1><p>THE ASHEN FRONTIER <span>·</span> SECTOR 07</p></div>
-    <button id="mission-toggle" aria-expanded="false" aria-controls="mission-objectives">${icon("flag")} Objectives</button>
+    <button id="mission-toggle" aria-expanded="false" aria-controls="mission-objectives">${icon("objectives")} Objectives</button>
     <aside id="mission-objectives" class="mission panel" aria-label="Mission objectives"><div class="panel-label">MISSION OBJECTIVES <span>01—03</span></div><div class="objective" id="obj-economy"><span class="objective-num">01</span><span>Establish your economy<small>Assign Harvesters to resources</small></span></div><div class="objective" id="obj-army"><span class="objective-num">02</span><span>Mobilize a strike force<small>Field 8 combat units</small></span></div><div class="objective" id="obj-win"><span class="objective-num">03</span><span>Break their command<small>Destroy all enemy Command cores</small></span></div></aside>
     <div class="sector-status"><span class="eyebrow">TACTICAL UPLINK</span><span><i class="live-dot"></i> <span id="uplink">STANDBY</span></span></div>
     <div id="notice" role="status" aria-live="polite"></div>
@@ -34,8 +34,8 @@ export function renderShell() {
     <nav class="touch-controls" aria-label="Touch battlefield controls">
       <button id="select-army" title="Select all combat units">${icon("people")}<span>Army</span></button>
       <button id="select-workers" title="Select all Harvesters">${icon("worker")}<span>Workers</span></button>
-      <button id="box-select" aria-pressed="false" aria-label="Box select" title="Box select">${icon("expand")}<span>Box</span></button>
-      <button id="queue-orders" aria-pressed="false" aria-label="Queue orders" title="Queue orders">${icon("flag")}<span>Queue</span></button>
+      <button id="box-select" aria-pressed="false" aria-label="Box select" title="Box select">${icon("box")}<span>Box</span></button>
+      <button id="queue-orders" aria-pressed="false" aria-label="Queue orders" title="Queue orders">${icon("queue")}<span>Queue</span></button>
       <button id="clear-selection" aria-label="Clear selection" title="Clear selection">${icon("close")}<span>Clear</span></button>
       <button id="touch-guide" type="button" aria-label="Info & stats" title="Info & stats">${icon("info")}<span>Info</span></button>
       <button id="zoom-in" aria-label="Zoom in">+</button><button id="zoom-out" aria-label="Zoom out">−</button>
@@ -91,7 +91,7 @@ export function renderShell() {
       <section class="command-panel panel"><div class="panel-label"><span id="command-label">COMMAND CENTER</span><span id="command-context">ACTIONS</span></div><div id="commands"></div><div id="upgrade-actions" class="upgrade-actions"></div><div id="command-hint">Select a unit or structure to issue commands.</div><div id="order-tip" aria-hidden="true" hidden></div></section>
       </div>
     </div>
-    <nav id="dock-tabs" aria-label="Command panels"><button data-dock="selection" aria-pressed="true">${icon("people")} Selection</button><button data-dock="map" aria-pressed="false">${icon("flag")} Map</button></nav>
+    <nav id="dock-tabs" aria-label="Command panels"><button data-dock="selection" aria-pressed="true">${icon("people")} Selection</button><button data-dock="map" aria-pressed="false">${icon("map")} Map</button></nav>
     <div class="statusbar"><span><i class="live-dot"></i> <span id="status-text">EXPEDITION SYSTEMS INITIALIZING</span></span><span>WASD pan <b>·</b> Scroll zoom <b>·</b> Right-click command <b>·</b> <button id="controls-link">? Controls</button></span><span id="fps">— FPS</span></div>
   </main>
   <div id="modal" class="modal-backdrop" hidden><section class="modal panel" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div id="modal-content"></div></section></div>

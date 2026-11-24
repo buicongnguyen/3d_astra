@@ -291,7 +291,8 @@ export function setupHud(S, A) {
             const lockNote = t.choice ? " Choosing it locks the other branch for this match." : t.state === "locked" ? ` ${t.sub}.` : "";
             const priced = t.state === "ready" || t.state === "locked" ? `, ${d.cost[0]} alloy${d.cost[1] ? ` and ${d.cost[1]} energy` : ""}` : `, ${t.sub}`;
             // A sixth tile (a faction's own building in the build menu) has no letter left: click or tap it.
-            return `<button class="command-tile${t.research ? " research-tile" : ""}${t.partial ? " partial" : ""} state-${t.state}" data-action="${t.action}" data-state="${t.state}"${key ? ` data-hotkey="${key}"` : ""}${t.state === "busy" ? ` style="--p:${(t.progress || 0).toFixed(3)}"` : ""} aria-label="${t.label}${priced}" title="${key ? `${key} · ` : ""}${d.name} · ${d.description}${lockNote}${d.flying ? ` · ${airNote(S.sim, 0)}` : ""}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${hasPortrait(t.type) ? portrait(t.type) : icon(d.icon || t.type)}<span>${t.label === "Anti-tank soldier" ? "Anti-tank" : t.label}</span>${sub}</button>`; // the long name keeps its full text in the tooltip
+            const cat = t.research ? "upgrade" : d.kind === "building" ? "build" : d.kind === "unit" ? "train" : "upgrade";
+            return `<button class="command-tile cat-${cat}${t.research ? " research-tile" : ""}${t.partial ? " partial" : ""} state-${t.state}" data-action="${t.action}" data-state="${t.state}"${key ? ` data-hotkey="${key}"` : ""}${t.state === "busy" ? ` style="--p:${(t.progress || 0).toFixed(3)}"` : ""} aria-label="${t.label}${priced}" title="${key ? `${key} · ` : ""}${d.name} · ${d.description}${lockNote}${d.flying ? ` · ${airNote(S.sim, 0)}` : ""}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${hasPortrait(t.type) ? portrait(t.type) : icon(d.icon || t.type)}<span>${t.label === "Anti-tank soldier" ? "Anti-tank" : t.label}</span>${sub}${d.kind === "building" && d.icon ? `<i class="tile-badge" aria-hidden="true">${icon(d.icon)}</i>` : ""}</button>`; // the long name keeps its full text in the tooltip; buildings carry their own symbol as a badge (the pictures look alike at phone size)
           })
           .join("") || tactics || (structure ? `<p class="structure-hint">${e.description}</p>` : e?.kind==='building' ? '' :
         `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : hasCore ? "Your expedition is ready" : "Your Command core is down"}</strong><p>${e ? (S.touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : hasCore ? "Select the Command core to train Harvesters, or the Barracks to grow your army." : "Gather your remaining forces and hold on."}</p></div>`);
@@ -315,6 +316,12 @@ export function setupHud(S, A) {
         Z.paused ||
         S.sim.result;
       button.disabled = !!unavailable || (e?.kind==='building' && (!e.complete || !!e.levelJob)) || button.dataset.state === "busy" || button.dataset.state === "done";
+      // Can't afford (HUD contrast, 2026-11-24): the tile stays tappable; the short resource is marked.
+      const cost = button.dataset.state === "ready" && D[button.dataset.action]?.cost, p = S.sim.players[0];
+      const shortA = !!cost && p.alloy < cost[0], shortE = !!cost && p.energy < (cost[1] || 0);
+      button.classList.toggle("poor", shortA || shortE);
+      button.classList.toggle("short-alloy", shortA);
+      button.classList.toggle("short-energy", shortE);
     }
     // A research in progress counts up on its tile.
     const busy = $("commands").querySelector('[data-state="busy"]');

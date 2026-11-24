@@ -1,0 +1,58 @@
+/* HUD contrast (owner 2026-11-24: "the colour of the buttons is not different from the menu board"). Walnut theme,
+   in a match only. Measured before: tile face #6d5038 on panel #6f523a -> #5a412d, 1.03:1, with a 1 px #b08b5e edge
+   (2.67:1). Now the dock panels are darker, the buttons lighter with a 2 px brass edge, every tile carries a rail in
+   the colour of its job, and ready / can't afford / locked / busy look different.
+   Jobs: build amber, train mint, upgrade green, ability orange (orders and stance keep the cream edge only). */
+:root[data-ui-theme="walnut"] {
+  --hud-panel: linear-gradient(180deg, #4a3424, #382619);
+  --hud-face: #85633f;
+  --hud-face-hi: #96734d;
+  --cat-build: #ffd27a; --cat-train: #7fd8c4; --cat-upgrade: #a6e07a; --cat-ability: #ff9a66;
+  --hud-short: #ff8a5c;
+}
+:root[data-ui-theme="walnut"]:not(.in-briefing) #app :is(.bottom-dock .panel, .topbar) { background: var(--walnut-grain), var(--hud-panel) !important; }
+
+:root[data-ui-theme="walnut"]:not(.in-briefing) :is(.bottom-dock, .topbar) :is(.command-tile, .ability-tile, .stance-control button, .upgrade-actions button, .order-buttons button, #queue button, .idle-row button) {
+  --face: var(--hud-face);
+  --frame: url("./art/ui/walnut/frame-button-hud.svg");
+  background:
+    linear-gradient(var(--rail, transparent), var(--rail, transparent)) left 7px top 2px / calc(100% - 14px) 3px no-repeat,
+    linear-gradient(180deg, rgba(255, 236, 200, .10), transparent 45%, rgba(0, 0, 0, .16)) border-box,
+    linear-gradient(135deg, transparent var(--kit-cut-d), var(--face) var(--kit-cut-d) calc(100% - var(--kit-cut-d)), transparent calc(100% - var(--kit-cut-d))) border-box;
+}
+:root[data-ui-theme="walnut"]:not(.in-briefing) .bottom-dock #commands .command-tile.cat-build { --rail: var(--cat-build); }
+:root[data-ui-theme="walnut"]:not(.in-briefing) .bottom-dock #commands .command-tile.cat-train { --rail: var(--cat-train); }
+:root[data-ui-theme="walnut"]:not(.in-briefing) .bottom-dock :is(#commands .command-tile.cat-upgrade, #commands .command-tile.branch-tile, #upgrade-actions button) { --rail: var(--cat-upgrade); }
+:root[data-ui-theme="walnut"]:not(.in-briefing) .bottom-dock #commands .ability-tile { --rail: var(--cat-ability); }
+:root[data-ui-theme="walnut"]:not(.in-briefing) .bottom-dock #commands .command-tile.cat-build > .icon { color: var(--cat-build); }
+:root[data-ui-theme="walnut"]:not(.in-briefing) .bottom-dock #commands .ability-tile > .icon { color: var(--cat-ability); }
+
+/* Can't afford: still tappable (the game explains why), the short resource turns red-orange and the picture fades. */
+:root[data-ui-theme="walnut"]:not(.in-briefing) .bottom-dock #commands .command-tile.poor { --face: #6a4d33; }
+:root[data-ui-theme="walnut"]:not(.in-briefing) .bottom-dock #commands .command-tile.poor > :is(.portrait-art, .portrait, img, .icon) { filter: saturate(.55) brightness(.85); }
+:root[data-ui-theme="walnut"]:not(.in-briefing) .bottom-dock #commands .command-tile.short-alloy .alloy-text,
+:root[data-ui-theme="walnut"]:not(.in-briefing) .bottom-dock #commands .command-tile.short-energy .energy-text { color: var(--hud-short) !important; }
+
+/* Locked: a dark, flat tile with a grey picture; its rail goes. */
+:root[data-ui-theme="walnut"]:not(.in-briefing) .bottom-dock #commands :is(.command-tile.state-locked, .command-tile:disabled:not(.state-busy)) {
+  --face: #3f2c1e; --rail: transparent;
+  --frame: url("./art/ui/walnut/frame-button-disabled.svg");
+}
+:root[data-ui-theme="walnut"]:not(.in-briefing) .bottom-dock #commands .command-tile.state-locked > :is(.portrait-art, .portrait, img, .icon) { filter: grayscale(1) brightness(.75); opacity: .7; }
+
+/* Selected / active: the gold active frame and a gold rail. */
+:root[data-ui-theme="walnut"]:not(.in-briefing) .bottom-dock :is(#commands .stance-control button[aria-pressed="true"], #commands .ability-tile.active, #commands .command-tile.selected, .order-buttons button[aria-pressed="true"]) {
+  --face: var(--hud-face-hi); --rail: var(--kit-gold, #f3cf88);
+  --frame: url("./art/ui/walnut/frame-button-active.svg");
+}
+
+/* Build tiles: the building's own symbol in the top-left corner, so Relay, Barracks, Foundry, Tower and Core
+   differ at a glance (their 22 px pictures look alike on a phone). */
+:root .command-tile { position: relative; }
+:root .command-tile > .tile-badge { position: absolute; left: 3px; top: 4px; display: grid; place-items: center; width: 16px; height: 16px; border-radius: 4px; background: rgba(40, 26, 16, .85); color: var(--cat-build, #ffd27a); pointer-events: none; }
+:root .command-tile > .tile-badge .icon { width: 12px; height: 12px; stroke-width: 2.2; }
+:root:not(.compact-ui) .command-tile > .tile-badge { left: auto; right: 4px; top: auto; bottom: 4px; }
+:root .command-tile.state-locked > .tile-badge { color: #b9a58a; }
+/* Phones: 2 px icon strokes (1.5 px broke up at 15-19 px); the smallest glyphs a little more. */
+:root.compact-ui .icon { stroke-width: 2; }
+:root.compact-ui :is(.stance-control, .tile-badge, .cmap-legend) .icon { stroke-width: 2.2; }

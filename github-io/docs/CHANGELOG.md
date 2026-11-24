@@ -2,6 +2,11 @@
 
 ## Unreleased: Round A.2
 
+### HUD buttons stand out (owner request)
+- In a match the dock panels are darker and every button lighter with a 2 px brass edge (was 1.03:1 face against panel). Each tile carries a rail in the colour of its job: build amber, train mint, upgrade green, ability orange; the active stance or ability a gold rail.
+- Tiles you cannot afford show the short price in red-orange and a faded picture (still tappable); locked tiles are dark and grey.
+- Build tiles carry the building's own symbol as a corner badge. Box select, Queue, the Map tab and Objectives have their own symbols (no longer Fullscreen's corners or the Rally flag). Icon strokes are 2 px on phones.
+
 ### Campaign round 5: Gun Hill and test repairs
 - New optional Act 2 mission Gun Hill (m06c) on the campaign map Highridge: build two Sentinel towers on your hill (only towers inside the hill count) and hold it for 5:30; an optional Ashfall gun nest on the far hill. Act 2 relays on the campaign map now sit 13.3% apart.
 - New optional Act 3 mission Crown Hill (m10b) on the campaign map Gun Hills: break three Warden towers on the central hill (firing uphill), then raise your own tower there against a counter-wave. Act 3 relays now sit 13.3% apart.

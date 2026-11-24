@@ -47,6 +47,12 @@ const paths = {
   rapid: '<path d="M3 7h11l3 5-3 5H3M7 7l3 5-3 5M19 8l2 4-2 4"/>',
   barrage: '<circle cx="12" cy="15" r="6"/><path d="M12 2v9m-3-3 3 3 3-3M12 13v4m-2-2h4"/>',
   hold: '<path d="M12 3v18M7 8l5-5 5 5M5 14a7 7 0 0 0 14 0M3 14h4m10 0h4"/>',
+  // HUD contrast pass (2026-11-24): one meaning per symbol on phones. Box select (a dashed box with a pointer, not
+  // Fullscreen's corners), Queue (a numbered list, not the Rally flag), Map (a folded map) and Objectives (a checklist).
+  box: '<path d="M4 4h3M10 4h3M16 4h2v2M4 7v3M4 13v3M4 18v2h3M18 9v2" stroke-dasharray="0"/><path d="M12 12l8 3.2-3.4 1.2-1.2 3.4z"/>',
+  queue: '<path d="M10 6h10M10 12h10M10 18h10"/><path d="M4 5l1.5-1V8M3.5 11.2c.4-.8 2.6-.9 2.6.4 0 1-2.6 1.6-2.6 2.9h2.8M3.6 17c.6-.6 2.5-.5 2.5.6 0 .7-.7.9-1.3.9.8 0 1.5.3 1.5 1.1 0 1.2-2.1 1.3-2.8.5"/>',
+  map: '<path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z"/><path d="M9 4v13.5M15 6.5V20"/>',
+  objectives: '<path d="M10 6h10M10 12h10M10 18h10"/><path d="m3.5 6 1.5 1.5L8 4.5M3.5 12l1.5 1.5L8 10.5M3.5 18l1.5 1.5L8 16.5"/>',
   // Eye with a slash: hidden from below (selection card, tactics-view mark).
   hidden: '<path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.6"/><path d="M4 20 20 4"/>',
 };
