@@ -41,6 +41,9 @@ export function defaults(coarse = false) {
     combatMotion: true,
     // Unit motion (unit-rig.js): knees, run lean, kneel-to-fire, hull rock, turret scan, stowed artillery barrels.
     unitMotion: true,
+    // Weather (2026-11-25): storm missions' rain, gloom, close fog and lightning. View only (mission-looks.js
+    // viewLook): Off shows the map's own sky and keeps night and dusk; battles play out the same.
+    weather: true,
     // (screenShake was dropped 2026-11-24: Round A A1 took the camera shake out, so the key did nothing.
     // Old saves that still carry it load fine; normalize() ignores it.)
     // Settings sheet (2026-11-24): ask before Restart / New game drops a battle in progress.
@@ -101,7 +104,7 @@ export function normalize(value, coarse = false) {
     d.masterVolume = Math.max(0, Math.min(1, value.masterVolume));
   for (const key of ["musicVolume", "sfxVolume"])
     if (Number.isFinite(value[key])) d[key] = Math.max(0, Math.min(1, value[key]));
-  for (const key of ["muted", "waterMotion", "combatMotion", "unitMotion", "ambient", "detail", "showFps", "autocast", "confirmRestart", "edgeScroll"])
+  for (const key of ["muted", "waterMotion", "combatMotion", "unitMotion", "weather", "ambient", "detail", "showFps", "autocast", "confirmRestart", "edgeScroll"])
     if (typeof value[key] === "boolean") d[key] = value[key];
   if (Number.isFinite(value.panSpeed)) d.panSpeed = Math.max(0.5, Math.min(2, value.panSpeed));
   if (Number.isFinite(value.zoomSpeed)) d.zoomSpeed = Math.max(0.5, Math.min(2, value.zoomSpeed));

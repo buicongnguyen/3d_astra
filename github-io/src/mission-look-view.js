@@ -11,9 +11,9 @@
 //   - WEATHER (mission-looks.js) for the storm ambience bed (ambience.js).
 // Eco gets the same palette, moon, stars and rain, without the cloud shade and without the flash lift of
 // the lights. Motion-off (reduced motion, or the motion setting at 0) turns the lightning off and holds the
-// rain, stars and clouds still.
+// rain, stars and clouds still. Settings > Display > Weather Off drops the storm look entirely (viewLook).
 import * as THREE from "three";
-import { LOOKS, missionLook, flashAt, WEATHER } from "./mission-looks.js";
+import { LOOKS, viewLook, flashAt, WEATHER } from "./mission-looks.js";
 import { installGrade, RIM } from "./look-grade.js";
 import GRADE from "./look-grade.json" with { type: "json" };
 import { lookOf } from "./visual-style.js";
@@ -42,7 +42,8 @@ export class MissionLook {
   // so the look applies again on the next frame.
   themeChanged() { this.key = null; this.grade = null; this.edgeKey = null; }
   update(sim) {
-    const look = missionLook(sim);
+    // Settings > Display > Weather Off drops a storm look (live: the next frame puts the map's daylight back).
+    const look = viewLook(sim, this.view.settings);
     if (!look && !this.active) {
       if (WEATHER.name) Object.assign(WEATHER, { name: null, storm: 0, flash: 0 });
       if (this.sky) this.sky.update(null, 0, 0, true);

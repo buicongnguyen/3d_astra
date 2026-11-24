@@ -82,6 +82,17 @@ export function missionLook(sim) {
   return { name, k };
 }
 
+// Settings > Display > Weather (2026-11-25): the looks that are weather rather than a time of day. With the
+// setting Off the view drops them (rain, cloud shade, storm gloom and close fog, lightning, the rain bed and
+// thunder) and shows the map's own sky; night and dusk stay. View only like the looks themselves: no mission
+// storm reaches the sim, so outcomes and golden pins do not move. (The Wild frontier Sandstorm is a sim power,
+// drawn by wild-view.js as a marked zone, and stays on screen: it is gameplay, not weather dressing.)
+export const WEATHER_LOOKS = new Set(["storm"]);
+export function viewLook(sim, settings) {
+  const look = missionLook(sim);
+  return look && settings?.weather === false && WEATHER_LOOKS.has(look.name) ? null : look;
+}
+
 // A piecewise-linear strength: [[seconds, k], ...] in time order.
 export function rampAt(points, t) {
   if (!(t > points[0][0])) return points[0][1];
