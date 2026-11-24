@@ -49,7 +49,7 @@ try {
   await page.locator('#start').click();
   b = await battle(page);
   assert.deepEqual([b.enemies, b.speed, b.coalition, b.towers], [2, 'fast', true, 0], 'no campaign bonus in skirmish');
-  await page.locator('#pause').click(); await page.locator('[data-new-game]').click();
+  await page.locator('#pause').click(); await page.locator('[data-new-game]').click(); await page.locator('[data-confirmed="new-game"]').click();
   await page.locator('#briefing').waitFor({state: 'visible'});
 
   // Campaign: every story mission listed (14 since 0.19b); mission 1 open, the rest locked.

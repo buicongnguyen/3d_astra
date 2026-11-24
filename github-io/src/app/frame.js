@@ -7,6 +7,8 @@ import { airModelsFor } from "../model-roster.js";
 import { autoRepairJobs } from "../sim/auto-repair.js";
 import { MUSIC_HOLDS } from "./screens.js";
 import { FastForward, MAX_TICKS_PER_FRAME, tickBudgetSpent } from "../governor.js";
+import { CAMERA_PITCH } from "../settings.js";
+import { reducedMotion } from "../reduced-motion.js";
 
 // Fast-forward (Frontier Defence, AAA round 2 W1-F): module-local, not in app/state.js. The speed is
 // 1, 2 or 3 and only feeds the clock that drives the fixed 0.05 s ticks, so a match played at any
@@ -23,9 +25,18 @@ export function setupFrame(S, A) {
   let frameCount = 0;
   let frameTime = 0;
   let coveredRedraw = 0;
+  // Settings → Game → Alerts "Important": routine news (sim messages, promotions, a point taken) skips the toast;
+  // attack warnings, losses and objectives always show.
+  const routine = (text) => { if (S.settings.alerts !== "important") A.notice(text); };
+  // Settings → Controls → Haptics: a short buzz on a phone for warnings and losses (no-op without vibrate,
+  // on a PC, or under reduced motion).
+  const buzz = (pattern) => {
+    if (!S.settings.haptics || !S.touchInput || reducedMotion() || typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return;
+    try { navigator.vibrate(pattern); } catch { /* blocked by the browser: silent */ }
+  };
   function promoted(event) {
     const unit = S.sim.get(event.id);
-    A.notice(`${unit?.name || "Unit"} promoted to rank ${event.rank}`);
+    routine(`${unit?.name || "Unit"} promoted to rank ${event.rank}`);
     A.tone(990, 0.16);
   }
 
@@ -41,6 +52,7 @@ export function setupFrame(S, A) {
     if (incomingBatch === batch) return;
     incomingBatch = batch;
     A.alert("Enemy attack incoming!");
+    buzz([60, 60, 60]);
     A.tone(300, 0.3);
   }
 
@@ -50,6 +62,7 @@ export function setupFrame(S, A) {
     if (S.sim.time >= attackedAt && S.sim.time - attackedAt < 10) return;
     attackedAt = S.sim.time;
     A.alert("Under attack!");
+    buzz(80);
     S.pings.push({ x: event.x, z: event.z, at: S.sim.time });
   }
 
@@ -64,8 +77,8 @@ export function setupFrame(S, A) {
   function pointAlert(event) {
     const name = pointLabel(S.sim.missionDef, event.name), before = pointOwners.get(event.name) ?? null;
     pointOwners.set(event.name, event.owner);
-    if (event.owner === 0) { A.notice(`${name} captured`); }
-    else A.alert(before === 0 ? `${name} lost` : `${name} taken by the enemy`);
+    if (event.owner === 0) { routine(`${name} captured`); }
+    else { A.alert(before === 0 ? `${name} lost` : `${name} taken by the enemy`); buzz(80); }
     S.pings.push({ x: event.x, z: event.z, at: S.sim.time });
   }
 
@@ -86,6 +99,10 @@ export function setupFrame(S, A) {
 
   function frame(now) {
     requestAnimationFrame(frame);
+    // Settings → Display → Frame cap (30 / 60; 0 = the display's rate): a frame that comes too soon is skipped
+    // whole, so its time counts into the next one (the 2 ms slack keeps a 60 Hz display at 60 under a 60 cap).
+    const cap = S.settings.frameCap;
+    if (cap && now - timePrevious < 1000 / cap - 2) return;
     const elapsed = Math.max(0, (now - timePrevious) / 1000),
       dt = Math.min(elapsed, 0.25);
     timePrevious = now;
@@ -98,14 +115,21 @@ export function setupFrame(S, A) {
     // The decision card and a story scene hold the match but the music plays on (screens.js MUSIC_HOLDS).
     S.audio?.update(elapsed, { sim: S.sim, settings: S.settings, started: Z.started, paused: (S.audioPaused = Z.paused && !MUSIC_HOLDS.includes(Z.modalType)), hidden: document.hidden, mapId: S.mapId, screen: A.musicScreen(), inBattle: !!S.sim.defence?.active });
     A.refreshHover();
+    // Settings → Camera (angle preset, quarter turns). Frontier Defence keeps its own framing (app/defence/framing.js
+    // turns the camera on phones and its math assumes the designed look-down), so the choice waits outside it.
+    if (S.view && !S.sim.defence) {
+      S.view.setPitch?.(CAMERA_PITCH[S.settings.cameraAngle] ?? null);
+      S.view.setYaw?.(((S.settings.cameraTurn || 0) * Math.PI) / 180);
+    } else S.view?.setPitch?.(null);
     // A story mission waiting for a Commander decision (also after loading a save) shows its card.
     if (Z.started && !Z.paused && !S.sim.result && S.sim.mission?.pending) A.openDecision();
     // S.testHold (browser tests only, window.__frontier.hold): draw but do not advance the match, so a
     // test moves time with step() alone and a slow machine cannot run the clock on between its checks.
     // S.defenceGuideHold (app/defence/guide.js): the Defence first-build guide's steps 1 and 2 wait on the clock too.
     const running = Z.started && !Z.paused && !S.sim.result && !S.testHold && !S.defenceGuideHold;
-    // D2: the clock's pace, 1 in everything but a Defence match; a scene or a decision puts it back to 1.
-    const pace = fastForward.pace({ sim: S.sim, started: Z.started, defence: !!S.sim.defence, forced: MUSIC_HOLDS.includes(Z.modalType) || !!A.sceneActive?.() || !!S.sim.mission?.pending });
+    // D2: the clock's pace (×1, ×2, ×3: the Defence bar, Shift+Space or Settings → Game speed, any match);
+    // a scene or a decision puts it back to 1.
+    const pace = fastForward.pace({ sim: S.sim, started: Z.started, allowed: true, forced: MUSIC_HOLDS.includes(Z.modalType) || !!A.sceneActive?.() || !!S.sim.mission?.pending });
     if (running) {
       S.accumulator += dt * pace;
       let ticks = 0;
@@ -145,14 +169,14 @@ export function setupFrame(S, A) {
     A.missionUI.tick(running ? dt : 0);
     A.sceneTick?.(dt);
     if (!Z.modalType) {
-      const speed = dt * S.view.zoom * 0.65;
+      const speed = dt * S.view.zoom * 0.65 * (S.settings.panSpeed || 1);
       let dx =
         (S.keys.has("d") || S.keys.has("arrowright") ? 1 : 0) -
         (S.keys.has("a") || S.keys.has("arrowleft") ? 1 : 0);
       let dy =
         (S.keys.has("w") || S.keys.has("arrowup") ? 1 : 0) -
         (S.keys.has("s") || S.keys.has("arrowdown") ? 1 : 0);
-      if (S.pointer.inside && Z.started && !S.drag && !S.mode) {
+      if (S.pointer.inside && Z.started && !S.drag && !S.mode && S.settings.edgeScroll !== false) {
         const r = S.view.renderer.domElement.getBoundingClientRect();
         if (S.pointer.x < r.left + 8) dx--;
         if (S.pointer.x > r.right - 8) dx++;
@@ -173,7 +197,7 @@ export function setupFrame(S, A) {
       A.factionEvent(event);
       if (event.type === "impact" && event.team === 0 && Z.started) underAttack(event);
       if (Z.started) S.audio?.event(event, S.sim);
-      if (event.type === "message") (RAID_WARNING.test(event.text) ? A.alert : A.notice)(event.text);
+      if (event.type === "message") { if (RAID_WARNING.test(event.text)) { A.alert(event.text); buzz([60, 60, 60]); } else routine(event.text); }
       else if (event.type === "incoming") { if (event.team === 0) incomingAlert(event, events); }
       // Frontier Defence troop carriers (0.22): the drop and the "+N" of a carrier lost with its squad.
       else if (event.type === "drop" || event.type === "carrierDown") { if (Z.started) A.defenceEvent?.(event); }
@@ -189,7 +213,7 @@ export function setupFrame(S, A) {
       else if (event.type === "missionEnd") { /* The debrief opens from sim.result (showResult). */ }
       else if (event.type === "decision" || event.type === "decided") { /* The card follows sim.mission.pending (above). */ }
       else if (event.type === "scene") { /* Started above, before the events are read. */ }
-      else if (event.type === "death" && event.squad && event.team === 0) { if (Z.started) A.notice(`${event.squad} has fallen`); S.view.event(event, S.sim); }
+      else if (event.type === "death" && event.squad && event.team === 0) { if (Z.started) { A.notice(`${event.squad} has fallen`); buzz(120); } S.view.event(event, S.sim); }
       else if (event.type === "promote") { if (event.team === 0 && Z.started) promoted(event); S.view.event(event, S.sim); }
       else S.view.event(event, S.sim);
     }
@@ -231,14 +255,21 @@ export function setupFrame(S, A) {
     }
   }
 
-  // The speed control (the Defence bar, Shift+Space and the help list): the next speed, ×3 on a fine pointer only.
+  // The speed control (the Defence bar, Shift+Space, the help list and Settings): the next speed, ×3 on a fine pointer only.
   function cycleSpeed() {
-    if (!S.sim?.defence || !Z.started) return fastForward.speed;
+    if (!Z.started || S.sim.result) return fastForward.speed;
     const speed = fastForward.cycle(!S.touchInput);
     A.notice(`Speed ×${speed}`);
     return speed;
   }
-  Object.assign(A, { focusHome, syncPointOwners, frame, cycleSpeed, getSpeed });
+  // Settings → Game speed sets it directly (×3 only with a fine pointer, as cycleSpeed).
+  function setMatchSpeed(speed) {
+    if (!Z.started || S.sim.result) return fastForward.speed;
+    const next = speed === 3 && S.touchInput ? 2 : [1, 2, 3].includes(speed) ? speed : 1;
+    fastForward.set(next);
+    return next;
+  }
+  Object.assign(A, { focusHome, syncPointOwners, frame, cycleSpeed, getSpeed, setMatchSpeed });
   return function bind() {
     window.addEventListener("online", () => { airFor = null; });
     for (const type of ["pointerdown", "wheel", "keydown"])

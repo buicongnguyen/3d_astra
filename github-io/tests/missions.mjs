@@ -388,7 +388,7 @@ try {
 
     // ---- A save this version cannot read is removed, with a message.
     await press('#pause');
-    await press('[data-new-game]');
+    await press('[data-new-game]'); await press('[data-confirmed="new-game"]');
     await page.locator('#briefing').waitFor({ state: 'visible' });
     assert.equal(await page.locator('#continue').isVisible(), true);
     await page.evaluate(() => { const save = JSON.parse(localStorage.getItem('frontier-save-v1')); const data = JSON.parse(save.text); data.version = 999; save.text = JSON.stringify(data); localStorage.setItem('frontier-save-v1', JSON.stringify(save)); });
@@ -407,7 +407,7 @@ try {
     assert.doesNotMatch(await page.locator('.map-heading h1').innerText(), /Mission/);
     await press('#pause');
     assert.deepEqual(await page.evaluate(() => { const s = JSON.parse(localStorage.getItem('frontier-save-v1')); return [s.mode, s.missionId]; }), ['skirmish', null]);
-    await press('[data-new-game]');
+    await press('[data-new-game]'); await press('[data-confirmed="new-game"]');
     assert.match(await page.locator('#continue').innerText(), /Continue\s+.+ · 00:\d\d/);
     await press('[data-mode="training"]');
     await press('#start');

@@ -107,7 +107,7 @@ await suite("audio-juice", async () => {
     await page.locator('[data-setting="quietMode"]').scrollIntoViewIfNeeded();
     await shot(page, `audio-juice-${viewport}`);
     await o.tap('[data-setting="quietMode"]');
-    await o.tap('[data-do="apply"]');
+    await o.tap('[data-do="done"]');
     const quiet = await page.evaluate(async () => {
       const f = window.__frontier, a = f.audio, ids = f.sim.own(0).filter((e) => e.kind === "unit").map((e) => e.id);
       const before = a.barks;

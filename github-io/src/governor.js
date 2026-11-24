@@ -102,8 +102,9 @@ export class Governor {
 // 0.05 s, so a replayed command log reaches the same state tick for tick. This class holds the speed
 // and the rules around it, free of the DOM, so they can be tested without a browser:
 //   - ×3 is for a fine pointer (a PC); a phone cycles ×1 and ×2;
-//   - a match that starts (a new simulation), a screen that is not a Defence match, a story scene
-//     and a decision card all put the speed back to ×1;
+//   - a match that starts (a new simulation), the menu, a story scene and a decision card all put the
+//     speed back to ×1 (since the settings sheet of 2026-11-24 every match may run fast, not just Defence;
+//     the caller passes allowed: false where it may not);
 //   - on a touch device whose frames stay over the governor's budget for two seconds in a row the
 //     speed drops to ×1 (the caller shows a toast).
 export const FAST_SPEEDS = [1, 2, 3];
@@ -139,9 +140,9 @@ export class FastForward {
   }
   // The pace for this frame. `forced`: a story scene or a decision is up (they hold the match and put
   // the speed back to ×1 for good, so the match carries on at normal speed after them).
-  pace({ sim, started, defence, forced = false }) {
+  pace({ sim, started, defence = true, allowed = defence, forced = false }) {
     if (sim !== this.sim) { this.sim = sim; this.set(1); }
-    if (!started || !defence || forced) { if (this.speed !== 1) this.set(1); return 1; }
+    if (!started || !allowed || forced) { if (this.speed !== 1) this.set(1); return 1; }
     return this.speed;
   }
   // One frame of play at a fast pace: `interval` seconds since the last frame, `work` main-thread

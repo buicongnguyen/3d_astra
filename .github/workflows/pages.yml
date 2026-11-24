@@ -53,7 +53,7 @@ jobs:
           - name: mobile
             scripts: mobile mobile-controls mobile-gestures fullscreen
           - name: settings
-            scripts: improvements campaign offline
+            scripts: improvements campaign offline settings-sheet
           - name: story
             scripts: missions tactics-ui
           # Split from "story": the four suites together ran 27 to 30 minutes on the runner (the cap).

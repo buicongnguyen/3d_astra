@@ -74,6 +74,7 @@ await suite("quick-battle", async () => {
       await page.evaluate(() => { window.__frontier.hold = false; });
       await o.tap("#pause");
       await o.tap("[data-new-game]");
+      await o.tap('[data-confirmed="new-game"]');
       await page.waitForFunction(() => !window.__frontier.started && !document.querySelector("#briefing").hidden, null, { timeout: TIMEOUT.step });
       const back = await page.evaluate(() => ({ quick: window.__frontier.quick, rules: window.__frontier.rules, simRules: window.__frontier.sim.rules || null, setup: Object.fromEntries(["scenario", "enemy-count", "ai-speed", "enemy-faction", "player-faction"].map((id) => [id, document.getElementById(id).value])) }));
       assert.deepEqual(back, { quick: false, rules: { roster: "expanded" }, simRules: { roster: "expanded" }, setup }, `${viewport}: the menu is the player's own again`);

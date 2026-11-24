@@ -148,7 +148,6 @@ function boot() {
     S.view.controlGroups = S.groups;
     S.view.onContextLost = A.graphicsLost;
     S.view.onContextRestored = A.graphicsRestored;
-    $("quality").textContent = S.view.lowPower ? "Eco" : "High";
   } catch (error) {
     initFailed(error);
     return;

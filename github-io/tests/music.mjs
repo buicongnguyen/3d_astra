@@ -110,16 +110,16 @@ await suite("music", async () => {
     // Switching to Recorded + adaptive in Settings starts the title cue.
     await tap("#briefing-settings");
     await tap("#settings-tab-audio");
-    await page.selectOption('[data-setting="music"]', "recorded");
-    await tap('[data-do="apply"]');
+    await tap('.settings-panel [data-setting="music"][data-value="recorded"]');
+    await tap('[data-do="done"]');
     await page.waitForFunction(() => { const m = window.__frontier.music.state(); return m.cue === "title" && m.playing; }, null, { timeout: TIMEOUT.step });
     await page.waitForFunction(() => window.__frontier.audio.music.active === false, null, { timeout: 5000 });
 
     // Off: no recorded cue, no adaptive score, the music bus at zero; the tracks are forgotten.
     await tap("#briefing-settings");
     await tap("#settings-tab-audio");
-    await page.selectOption('[data-setting="music"]', "off");
-    await tap('[data-do="apply"]');
+    await tap('.settings-panel [data-setting="music"][data-value="off"]');
+    await tap('[data-do="done"]');
     await page.waitForFunction(() => { const a = window.__frontier.audio, m = a.recorded.state(); return m.cue === null && m.decoded.length === 0 && !a.music.active && a.levels.music === 0; }, null, { timeout: 5000 });
     assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("frontier-command.settings.v1")).music), "off", "the setting is saved");
     assert.deepEqual(errors, [], "no page errors");
@@ -157,31 +157,31 @@ await suite("music", async () => {
     await ready();
     await tap("#briefing-settings");
     await tap("#settings-tab-audio");
+    // Music is a segmented row (no dropdown): one 44 px button per choice.
     const row = await page.evaluate(() => {
-      const select = document.querySelector('[data-setting="music"]'), label = select.closest(".setting-row");
+      const buttons = [...document.querySelectorAll('.settings-panel [data-setting="music"]')], label = buttons[0].closest(".setting-row");
       label.scrollIntoView({ block: "center" });
-      const r = label.getBoundingClientRect(), s = select.getBoundingClientRect();
-      return { h: r.height, sh: s.height, sw: s.width, right: r.right, font: parseFloat(getComputedStyle(label).fontSize), selectFont: parseFloat(getComputedStyle(select).fontSize), family: getComputedStyle(select).fontFamily,
-        options: [...select.options].map((o) => o.textContent), value: select.value, overflow: document.documentElement.scrollWidth > innerWidth, width: innerWidth };
+      const r = label.getBoundingClientRect(), s = buttons.map((b) => b.getBoundingClientRect());
+      return { h: r.height, sh: Math.min(...s.map((b) => b.height)), sw: Math.min(...s.map((b) => b.width)), right: Math.max(r.right, ...s.map((b) => b.right)), font: parseFloat(getComputedStyle(label.querySelector(".seg-label")).fontSize), selectFont: Math.min(...buttons.map((b) => parseFloat(getComputedStyle(b).fontSize))), family: getComputedStyle(buttons[0]).fontFamily,
+        options: buttons.map((b) => b.textContent), value: buttons.find((b) => b.getAttribute("aria-pressed") === "true")?.dataset.value, overflow: document.documentElement.scrollWidth > innerWidth, width: innerWidth };
     });
-    assert.deepEqual(row.options, ["Recorded + adaptive", "Adaptive only", "Off"]);
-    assert.equal(row.value, "recorded", "default: Recorded + adaptive");
-    assert.ok(row.h >= 44 && row.sh >= 32, `${viewport}: Music row is a 44 px target (${row.h}, select ${row.sh})`);
+    assert.deepEqual(row.options, ["Recorded", "Adaptive", "Off"]);
+    assert.equal(row.value, "recorded", "default: Recorded (+ the adaptive score in matches)");
+    assert.ok(row.h >= 44 && row.sh >= 44 && row.sw >= 44, `${viewport}: Music buttons are 44 px targets (${row.sh}x${row.sw})`);
     assert.ok(row.font >= 11 && row.selectFont >= 11, `${viewport}: text size ${row.font}/${row.selectFont}`);
     assert.ok(!/system-ui/.test(row.family), `${viewport}: font ${row.family}`);
     assert.ok(row.right <= row.width && !row.overflow, `${viewport}: no sideways scroll`);
     await page.waitForTimeout(300);
     await shot(page, `music-settings-${viewport}`);
-    await tap('[data-do="cancel"]');
-    await page.selectOption("#language", "vi");
-    await tap("#briefing-settings");
+    await tap("#settings-tab-language");
+    await tap('.settings-panel [data-setting="language"][data-value="vi"]');
     await tap("#settings-tab-audio");
-    await page.waitForFunction(() => document.querySelector('[data-setting="music"]')?.closest(".setting-row").textContent.trim().startsWith("Âm nhạc"), null, { timeout: TIMEOUT.step });
-    const vi = await page.evaluate(() => [...document.querySelector('[data-setting="music"]').options].map((o) => o.textContent));
-    assert.deepEqual(vi, ["Nhạc thu âm + nhạc trận", "Chỉ nhạc trận", "Tắt"], `Vietnamese options: ${vi}`);
-    const viRow = await page.evaluate(() => { const select = document.querySelector('[data-setting="music"]'), r = select.getBoundingClientRect(); return { right: r.right, panel: select.closest(".settings-panel").getBoundingClientRect().right, overflow: document.documentElement.scrollWidth > innerWidth }; });
+    await page.waitForFunction(() => document.querySelector('.settings-panel [data-setting="music"]')?.closest(".setting-row").textContent.trim().startsWith("Âm nhạc"), null, { timeout: TIMEOUT.step });
+    const vi = await page.evaluate(() => [...document.querySelectorAll('.settings-panel [data-setting="music"]')].map((b) => b.textContent));
+    assert.deepEqual(vi, ["Nhạc thu âm", "Nhạc trận", "Tắt"], `Vietnamese options: ${vi}`);
+    const viRow = await page.evaluate(() => { const select = document.querySelector('.settings-panel [data-setting="music"][data-value="off"]'), r = select.getBoundingClientRect(); return { right: r.right, panel: select.closest(".settings-panel").getBoundingClientRect().right, overflow: document.documentElement.scrollWidth > innerWidth }; });
     assert.ok(!viRow.overflow && viRow.right <= viRow.panel + 0.5, `${viewport} vi: the Music choice fits (${JSON.stringify(viRow)})`);
-    if (viewport === "portrait") { await page.evaluate(() => document.querySelector('[data-setting="music"]').closest(".setting-row").scrollIntoView({ block: "center" })); await shot(page, "music-settings-portrait-vi"); }
+    if (viewport === "portrait") { await page.evaluate(() => document.querySelector('.settings-panel [data-setting="music"]').closest(".setting-row").scrollIntoView({ block: "center" })); await shot(page, "music-settings-portrait-vi"); }
     assert.deepEqual(errors, [], `${viewport}: no page errors`);
     await page.close();
   }

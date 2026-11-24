@@ -139,7 +139,10 @@ try {
   assert.equal(await page.evaluate(() => window.__frontier.paused), true);
   await page.keyboard.press("Space");
   assert.equal(await page.evaluate(() => window.__frontier.paused), false);
-  await page.getByRole("button", { name: "Show controls" }).click();
+  // Help: Settings → Controls → Help (the match-bar Help button moved into the settings sheet).
+  await page.getByRole("button", { name: "Settings", exact: true }).click();
+  await page.getByRole("tab", { name: "Controls" }).click();
+  await page.getByRole("button", { name: "Help", exact: true }).click();
   assert.equal(await page.locator("#modal").isVisible(), true);
   await page.getByRole("button", { name: "Return to the frontier" }).click();
   await page.evaluate(() => {

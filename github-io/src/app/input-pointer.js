@@ -182,7 +182,7 @@ export function setupInputPointer(S, A) {
           (-dx * S.view.unitsPerPixel),
           (dy * S.view.unitsPerPixel),
         );
-        if (ratio !== 1) S.view.zoomBy(S.view.zoom * (ratio - 1));
+        if (ratio !== 1) S.view.zoomBy(S.view.zoom * (ratio - 1) * (S.settings.zoomSpeed || 1)); // Settings → Camera → Zoom sensitivity
       },
     });
     canvas.addEventListener("contextmenu", (e) => {
@@ -336,7 +336,7 @@ export function setupInputPointer(S, A) {
       "wheel",
       (e) => {
         e.preventDefault();
-        S.view.zoomBy(Math.sign(e.deltaY) * 2.5);
+        S.view.zoomBy(Math.sign(e.deltaY) * 2.5 * (S.settings.zoomSpeed || 1));
       },
       { passive: false },
     );

@@ -1,3 +1,4 @@
+import { setLanguage } from './lib/settings-sheet.mjs';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -164,7 +165,7 @@ try {
   assert.deepEqual(rows.map(r => r.label), ['Music volume', 'Effects volume']);
   for (const r of rows) { assert.ok(r.h >= 44, `${r.k} row is a 44 px target (${r.h})`); assert.ok(r.font >= 11, `${r.k} text size`); }
   await page.evaluate(() => { for (const [k, v] of [['musicVolume', '0.25'], ['sfxVolume', '0']]) { const i = document.querySelector(`[data-setting="${k}"]`); i.value = v; i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true })); } });
-  await page.click('[data-do="apply"]');
+  await page.click('[data-do="done"]');
   const saved = await page.evaluate(() => ({ s: window.__frontier.settings, music: window.__frontier.audio.levels.music, sfx: window.__frontier.audio.levels.sfx, enabled: window.__frontier.audio.sfx.enabled }));
   assert.equal(saved.s.musicVolume, 0.25); assert.equal(saved.s.sfxVolume, 0);
   assert.equal(saved.sfx, 0); assert.equal(saved.enabled, false, 'Effects at zero silences effects');
@@ -173,7 +174,7 @@ try {
   await page.waitForFunction(() => window.__frontier?.settings, null, { timeout: 120000 });
   const again = await page.evaluate(() => ({ m: window.__frontier.settings.musicVolume, e: window.__frontier.settings.sfxVolume }));
   assert.deepEqual(again, { m: 0.25, e: 0 }, 'volumes survive a reload');
-  await page.selectOption('#language', 'vi');
+  await setLanguage(page, 'vi', { touch: false });
   await page.click('#start');
   await page.click('#pause');
   await page.click('[data-settings]');

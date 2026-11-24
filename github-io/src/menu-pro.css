@@ -61,16 +61,10 @@ html:root #briefing .mode-switch button[data-mode]:focus-visible { outline: 2px 
 
 html:root #briefing .mode-switch button[data-mode] > span { color: inherit; }
 html:root #briefing .mode-switch button[data-mode][aria-pressed="true"] > span { color: #1b1405; text-shadow: none; }
-/* Phone top bar: every control fits when the language picker gives up its spare width. */
+/* Phone top bar on the menu: sound and Settings (language, theme and full screen moved into the sheet). */
 @media (max-width: 480px) {
-  html:root.in-briefing #language { width: 84px !important; min-width: 0 !important; padding-left: 6px !important; padding-right: 20px !important; }
   .in-briefing .top-actions { gap: 0; }
   .in-briefing .top-actions .icon-button { width: 44px; min-width: 44px; }
-}
-/* The narrowest phones: six one-tap controls take the whole bar; the logo and globe give way. */
-@media (max-width: 384px) {
-  .in-briefing .topbar .brand, .in-briefing .topbar > a, .in-briefing .language-choice > .icon { display: none !important; }
-  html:root.in-briefing #language { width: 58px !important; padding-left: 4px !important; padding-right: 14px !important; }
 }
 
 /* One row per choice (owner, 2026-11-23): short labels beside the control; a value that explains itself has none. */

@@ -1,3 +1,4 @@
+import { openHelp } from './lib/settings-sheet.mjs';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -66,12 +67,12 @@ try {
 
     // ---- Auto-cast: on by default on touch devices, off on desktop; a switch in Settings.
     assert.equal(await frontier(() => window.__frontier.settings.autocast), touch, `${name}: auto-cast default`);
-    await press('#briefing-settings');
+    await press('#briefing-settings'); await press('#settings-tab-controls');
     const toggle = page.locator('[data-setting="autocast"]');
     assert.equal(await toggle.isChecked(), touch, `${name}: the switch shows the default`);
     assert.deepEqual(await smallText('.settings-panel'), [], `${name} settings text`);
     assert.deepEqual(await badControls('.setting-row:has([data-setting="autocast"])'), [], `${name} auto-cast switch`);
-    await press('.settings-panel footer [data-do="cancel"]');
+    await press('.settings-panel footer [data-do="done"]');
 
     await press('#start');
     await until(() => window.__frontier.started);
@@ -79,9 +80,9 @@ try {
       `${name}: the match is told at its start`);
     // Changed in Settings mid-match: saved with the other settings and sent to the match.
     const setAutocast = async on => {
-      await press('#pause'); await press('[data-settings]');
+      await press('#pause'); await press('[data-settings]'); await press('#settings-tab-controls');
       if (await toggle.isChecked() !== on) { if (touch) await toggle.tap(); else await toggle.click(); }
-      await press('[data-do="apply"]'); await press('[data-resume]');
+      await press('[data-do="done"]'); await press('[data-resume]');
       await until(() => !window.__frontier.paused);
     };
     await setAutocast(!touch);
@@ -169,7 +170,7 @@ try {
       await press('#modal [data-shortcut="stance-hold"]');
       assert.equal(await frontier(ids => window.__frontier.sim.get(ids.v1).stance, ids), 'hold', 'a help entry runs its command');
     } else {
-      await press('#help');
+      await openHelp(page, { touch });
       assert.match(await page.locator('#modal-content').innerText(), /Use an ability \/ set a stance/);
       assert.deepEqual(await smallText('#modal-content'), [], `${name} help text`);
       await press('#modal [data-resume]');
@@ -291,7 +292,7 @@ try {
 
     // ---- A loaded save is told the setting again.
     await frontier(() => { const f = window.__frontier; f.sim.players[0].autocast = true; f.save(); });
-    await press('#pause'); await press('[data-new-game]');
+    await press('#pause'); await press('[data-new-game]'); await press('[data-confirmed="new-game"]');
     await page.locator('#continue').waitFor({ state: 'visible' });
     await press('#continue');
     await until(() => window.__frontier.started && window.__frontier.paused);

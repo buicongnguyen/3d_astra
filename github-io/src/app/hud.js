@@ -182,7 +182,9 @@ export function setupHud(S, A) {
       "at-cap",
       pop.used + pop.reserved >= pop.cap,
     );
-    $("clock").textContent = formatTime(S.sim.time);
+    // A fast match says so beside the clock (Settings → Game speed, Shift+Space); Defence has its bar button.
+    const speed = S.sim.defence ? 1 : A.getSpeed?.() ?? 1;
+    $("clock").textContent = speed > 1 ? `${formatTime(S.sim.time)} ×${speed}` : formatTime(S.sim.time);
     $("uplink").textContent = S.sim.result
       ? "OPERATION COMPLETE"
       : !Z.started

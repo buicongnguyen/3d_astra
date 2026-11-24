@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { setLanguage, openHelp } from './lib/settings-sheet.mjs';
 
 // Phase F layout audit. For every screen on every viewport: no visible text under 11 px, touch
 // targets at least 44 px, nothing clipped off the screen, no sideways scroll. Phone landscape
@@ -103,7 +104,7 @@ try {
     await ready();
     await page.waitForTimeout(600);
     if (language === 'vi') {
-      await page.evaluate(() => { const s = document.querySelector('#language'); s.value = 'vi'; s.dispatchEvent(new Event('change', { bubbles: true })); });
+      await setLanguage(page, 'vi', { touch });
       await page.waitForTimeout(500);
     }
 
@@ -113,7 +114,10 @@ try {
     await check('2-campaign', '#briefing');
     await press('[data-mode="skirmish"]');
     await press('#briefing-settings');
-    await check('3-settings', '.settings-panel', ['.settings-panel']);
+    for (const tab of ['audio', 'game', 'camera', 'display', 'controls', 'access', 'language']) {
+      await press(`#settings-tab-${tab}`);
+      await check(`3-settings-${tab}`, '.settings-panel', ['.settings-panel']);
+    }
     await page.keyboard.press('Escape');
 
     // ---- Skirmish HUD: nothing selected, a worker group, a building, a combat group.
@@ -158,7 +162,7 @@ try {
     await press(touch ? '#pause' : '.brand');
     await check('8-pause', '#modal', ['.modal']);
     await press('#modal [data-resume]');
-    await press('#help');
+    await openHelp(page, { touch });
     await check('9-help', '#modal', ['.modal']);
     await press('#modal [data-resume]');
 
@@ -184,7 +188,7 @@ try {
       await page.waitForTimeout(300);
     }
     // ---- Campaign mission: briefing overlay, HUD, debrief.
-    await press(touch ? '#pause' : '.brand'); await press('#modal [data-new-game]');
+    await press(touch ? '#pause' : '.brand'); await press('#modal [data-new-game]'); await press('#modal [data-confirmed="new-game"]');
     await page.waitForTimeout(300);
     await press('[data-mode="campaign"]');
     await press('#start');

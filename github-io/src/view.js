@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { reducedMotionQuery } from "./reduced-motion.js";
 import { addTeamBands } from "./team-bands.js";
 import { CORE_MODEL_TYPES } from "./model-roster.js";
 import { CameraShake, FEEL } from "./camera-shake.js";
@@ -324,7 +325,7 @@ export class WorldView {
     // The observer covers window resizes too; resize() itself ignores an unchanged size.
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(container);
-    this.reducedMotion = matchMedia("(prefers-reduced-motion:reduce)");
+    this.reducedMotion = reducedMotionQuery; // Settings → Assist → Reduced motion over the device (src/reduced-motion.js)
     this.reducedMotion.addEventListener("change", () =>
       this.environment?.configure(this.settings),
     );
@@ -1005,7 +1006,8 @@ export class WorldView {
     this.camera.right = (this.zoom * aspect) / 2;
     this.camera.top = this.zoom / 2 + (this.coverTop || 0) * perPixel;
     this.camera.bottom = -this.zoom / 2 - shown * perPixel;
-    this.camera.position.copy(this.focus).add(this.yaw ? turnedOffset.copy(CAMERA_OFFSET).applyAxisAngle(UP_AXIS, this.yaw) : CAMERA_OFFSET);
+    const offset = this.cameraOffset || CAMERA_OFFSET;
+    this.camera.position.copy(this.focus).add(this.yaw ? turnedOffset.copy(offset).applyAxisAngle(UP_AXIS, this.yaw) : offset);
     this.camera.lookAt(this.focus);
     this.camera.updateProjectionMatrix();
     this.camera.updateMatrixWorld();
@@ -1019,7 +1021,8 @@ export class WorldView {
     // VIEW_DEPTH x zoom deep), then snap its centre to whole shadow texels in light space so
     // shadow edges do not shimmer while the camera pans.
     // (The strip under a phone's dock reaches nearer the camera: grow the depth to match.)
-    const half = Math.min(130, this.zoom * Math.hypot(aspect / 2, VIEW_DEPTH * (this.height / frame)) + 6),
+    const depth = this.cameraOffset ? (0.5 * this.cameraOffset.length()) / this.cameraOffset.y : VIEW_DEPTH;
+    const half = Math.min(130, this.zoom * Math.hypot(aspect / 2, depth * (this.height / frame)) + 6),
       shadow = this.sun.shadow.camera;
     if (shadow.right !== half) {
       Object.assign(shadow, { left: -half, right: half, top: half, bottom: -half });
@@ -1052,6 +1055,20 @@ export class WorldView {
     up.y = 0;
     up.normalize();
     this.pan(right.x * dx + up.x * dy, right.z * dx + up.z * dy);
+  }
+  // Settings → Camera → Angle: the look-down in degrees above the ground, at the same distance from the focus
+  // (null or the designed 45.7 = CAMERA_OFFSET). Frontier Defence keeps the designed view (its framing math).
+  setPitch(degrees) {
+    const next = Number.isFinite(degrees) && Math.abs(degrees - 45.7) > 0.05 ? degrees : null;
+    if (next === (this.pitch ?? null)) return;
+    this.pitch = next;
+    if (next === null) this.cameraOffset = null;
+    else {
+      const length = CAMERA_OFFSET.length(), a = (next * Math.PI) / 180;
+      const flat = new THREE.Vector3(CAMERA_OFFSET.x, 0, CAMERA_OFFSET.z).normalize();
+      this.cameraOffset = flat.multiplyScalar(length * Math.cos(a)).setY(length * Math.sin(a));
+    }
+    this.updateCamera();
   }
   // Turn the camera about the vertical axis through the focus (radians, 0 = the usual view).
   setYaw(yaw) {
@@ -1804,8 +1821,11 @@ export class WorldView {
       }
       updateRing(u.ring, selected.has(e.id), hover?.id === e.id, sim.time, dt, this.unitsPerPixel);
       const bar = u.bar;
+      // Settings → Display → Health bars: "hurt" (damaged units; the default), "always", "selected" (the
+      // selection and the hovered unit only). Defence's twelve-weakest limit holds in every mode.
+      const barMode = this.settings.healthBars, listed = !bars || e.team === 0 || bars.has(e.id);
       bar.visible =
-        selected.has(e.id) || hover?.id === e.id || ((e.hp < e.maxHp || e.shield < e.maxShield) && (!bars || e.team === 0 || bars.has(e.id)));
+        selected.has(e.id) || hover?.id === e.id || (barMode !== "selected" && listed && (barMode === "always" || e.hp < e.maxHp || e.shield < e.maxShield));
       if (bar.visible) {
         bar.quaternion.copy(this.camera.quaternion);
         bar.scale.set(bar.userData.base * this.barScale, bar.userData.base * this.barScale * this.barTall, 1);

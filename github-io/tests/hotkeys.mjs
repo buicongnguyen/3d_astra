@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {launchBrowser,openPage,testUrl,suite,TIMEOUT} from './lib/harness.mjs';
 import {checkClientWiring} from './lib/client-wiring.mjs';
+import {openHelp} from './lib/settings-sheet.mjs';
 const browser=await launchBrowser();
 const {page,errors}=await openPage(browser,{width:1280,height:800});
 const selected=()=>page.evaluate(()=>[...window.__frontier.selected]);
@@ -85,20 +86,20 @@ await suite('hotkeys',async()=>{
   await press('b');assert.deepEqual(await selected(),selection);await page.locator('#keyboard-test-input').evaluate(e=>e.remove());
   const preserved=await page.evaluate(()=>['p','l'].map(key=>{const e=new KeyboardEvent('keydown',{key,code:'Key'+key.toUpperCase(),ctrlKey:true,bubbles:true,cancelable:true});document.body.dispatchEvent(e);return !e.defaultPrevented;}));
   assert.deepEqual(preserved,[true,true]);await press('Quote');await press('Backslash');
-  // PC commands live in help (?), not in a panel over the battlefield; running one closes help.
+  // PC commands live in help (? or Settings → Controls → Help), not in a panel over the battlefield; running one closes help.
   assert.equal(await page.locator('#pc-shortcuts').count(),0);
-  await page.locator('#help').click();await page.locator('#modal [data-shortcut="workers"]').click();
+  await openHelp(page,{touch:false});await page.locator('#modal [data-shortcut="workers"]').click();
   assert.equal(await page.locator('#modal').isHidden(),true);assert.deepEqual(await selected(),ids.workers);
-  await page.locator('#help').click();await page.locator('#modal [data-group="3"]').click({modifiers:['Control']});
+  await openHelp(page,{touch:false});await page.locator('#modal [data-group="3"]').click({modifiers:['Control']});
   assert.equal(await page.locator('#modal').isHidden(),true);
   assert.equal(await page.locator('#group-strip [data-group="3"]').textContent(),`3${ids.workers.length}`,'saved group appears as a console tab');
   await press('x');await page.evaluate(()=>window.__frontier.select([]));
   await page.locator('#group-strip [data-group="3"]').click();assert.deepEqual(await selected(),ids.workers,'tab recalls its group');
-  await page.locator('#help').click();assert.equal(await page.locator('#modal [data-group="3"]').getAttribute('data-count'),String(ids.workers.length));
+  await openHelp(page,{touch:false});assert.equal(await page.locator('#modal [data-group="3"]').getAttribute('data-count'),String(ids.workers.length));
   await page.locator('#modal [data-resume]').click();
   await page.screenshot({path:'test-results/pc-hotkeys.png'});assert.deepEqual(errors,[]);
   for(const viewport of [{width:960,height:540},{width:844,height:390},{width:800,height:500}]){
-    await page.setViewportSize(viewport);await page.locator('#help').click();
+    await page.setViewportSize(viewport);await openHelp(page,{touch:false});
     const fits=await page.locator('#modal .control-group-buttons button').evaluateAll(bs=>bs.every(b=>{const r=b.getBoundingClientRect();return r.x>=0&&r.right<=innerWidth&&r.bottom<=innerHeight;}));
     assert.ok(fits,`control groups fit ${viewport.width}x${viewport.height}`);
     await page.locator('#modal [data-resume]').click();

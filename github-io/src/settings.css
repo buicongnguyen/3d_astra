@@ -58,10 +58,11 @@
 .settings-close .icon { width: 18px; height: 18px; }
 .settings-close:hover { background: var(--ink-4); }
 
-/* Tabs: a segmented control. */
+/* Seven sections in one segmented row (owner: no hidden or grouped buttons; every setting one tap away once
+   the sheet is open). Icon over an 11 px label; the label may take two lines in Vietnamese. */
 .settings-panel nav {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--tabs, 7), minmax(0, 1fr));
   gap: 4px;
   margin: 0 20px;
   padding: 4px;
@@ -70,13 +71,22 @@
   border: 1px solid var(--line-1);
 }
 .settings-panel nav button {
-  min-height: 44px;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 4px 2px;
   border: 0;
   border-radius: calc(var(--r-m) - 3px);
   background: none;
-  font: 700 15px var(--font-display);
+  font: 700 12px/1.1 var(--font-ui);
   color: var(--text-2);
 }
+.settings-panel nav button .icon { width: 18px; height: 18px; }
+.settings-panel nav .tab-label { max-width: 100%; overflow-wrap: anywhere; text-align: center; }
+.settings-panel nav .tab-code { display: none; }
 .settings-panel nav button[aria-selected="true"] {
   background: linear-gradient(180deg, rgba(255, 199, 94, 0.24), rgba(255, 199, 94, 0.1));
   box-shadow: inset 0 0 0 1px var(--gold-line);
@@ -90,24 +100,52 @@
   padding: 16px 20px 8px;
 }
 
-/* Army colours. */
+/* Segmented rows: the label, then one button per choice (no dropdowns). */
+.seg-row { flex-wrap: wrap; }
+.seg-label { font: 600 15px var(--font-ui); color: var(--text-1); }
+.seg {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr));
+  gap: 4px;
+  flex: 1 1 260px;
+  max-width: 340px;
+  margin-left: auto;
+}
+.seg button, .seg-single {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 2px 6px;
+  font: 700 13px/1.15 var(--font-ui);
+  white-space: normal;
+}
+.setting-row > .seg-single { display: inline-flex; flex: 0 0 auto; width: auto; align-items: center; justify-content: center; gap: 6px; min-width: 112px; margin-left: auto; }
+.seg-single .icon { width: 18px; height: 18px; }
+.seg button[aria-disabled="true"] { opacity: 0.55; cursor: not-allowed; }
+.language-options { display: grid; gap: 8px; }
+.language-options button { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 16px; font: 700 17px var(--font-ui); text-align: left; }
+.language-options button .icon { width: 20px; height: 20px; }
+.settings-body .settings-version { margin-top: 18px; padding: 0; text-align: left; }
+/* Army colours: a small paint preview and two compact rows of swatches (44 px circles, names in the tooltip
+   and the accessible name), so the Assist section fits a phone without scrolling far. */
 .army-preview {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 .preview-unit {
-  display: grid;
-  justify-items: center;
-  gap: 6px;
-  padding: 12px 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 8px;
   border: 1px solid var(--line-1);
   border-radius: var(--r-m);
   background: radial-gradient(ellipse at 50% 40%, rgba(120, 170, 180, 0.22), rgba(6, 18, 24, 0.9) 70%);
   color: var(--preview-player);
 }
 .preview-unit.enemy { color: var(--preview-enemy); }
-.preview-unit .portrait-art { --size: 96px; filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.5)); }
+.preview-unit .portrait-art { --size: 48px; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5)); }
 .preview-unit.player .portrait-art { --tint: var(--preview-player); }
 .preview-unit.enemy .portrait-art { --tint: var(--preview-enemy); }
 .preview-unit b {
@@ -121,7 +159,7 @@
   gap: 8px;
   width: 100%;
   min-height: 46px;
-  margin-top: 10px;
+  margin: 10px 0;
   border: 1px solid var(--line-2);
   border-radius: var(--r-m);
   background: rgba(21, 50, 63, 0.7);
@@ -129,23 +167,11 @@
   color: var(--text-1);
 }
 .contrast-button .icon { width: 18px; height: 18px; color: var(--gold-2); }
-.settings-panel fieldset {
-  margin: 16px 0 4px;
-  padding: 0;
-  border: 0;
-}
-.settings-panel legend {
-  margin-bottom: 8px;
-  font: 700 12px var(--font-ui);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-3);
-}
-/* One row of colours on wide panels, two balanced rows on phones. */
+.swatch-row { display: grid; gap: 6px; padding: 8px 0; }
 .swatches {
   display: grid;
   grid-template-columns: repeat(var(--count, 9), minmax(0, 1fr));
-  gap: 6px;
+  gap: 4px;
 }
 @media (max-width: 600px) {
   .swatches { grid-template-columns: repeat(5, minmax(0, 1fr)); }
@@ -153,42 +179,27 @@
 .swatches button {
   position: relative;
   display: grid;
-  justify-items: center;
-  gap: 5px;
-  min-height: 64px;
-  padding: 8px 4px 6px;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
   border: 1px solid var(--line-1);
   border-radius: var(--r-m);
   background: rgba(15, 37, 48, 0.8);
-  font: 600 12px var(--font-ui);
-  color: var(--text-2);
-  text-transform: capitalize;
 }
 .swatches i {
   display: block;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   background: var(--swatch);
   box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.25), inset 0 2px 3px rgba(255, 255, 255, 0.45), 0 0 0 2px rgba(0, 0, 0, 0.35);
 }
 .swatches button[aria-pressed="true"] {
   border-color: var(--swatch);
-  background: color-mix(in srgb, var(--swatch) 18%, rgba(15, 37, 48, 0.9));
-  color: #fff;
+  background: color-mix(in srgb, var(--swatch) 22%, rgba(15, 37, 48, 0.9));
+  box-shadow: inset 0 0 0 2px var(--swatch);
 }
-.swatches button[aria-pressed="true"]::after {
-  content: "";
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--swatch);
-  box-shadow: 0 0 8px var(--swatch);
-}
-
 /* Rows, switches and sliders. */
 .setting-row {
   display: flex;
@@ -201,7 +212,6 @@
   font: 600 15px var(--font-ui);
   color: var(--text-1);
 }
-.setting-row select { min-width: 140px; }
 .setting-row input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
@@ -238,26 +248,30 @@
   min-width: 120px;
   accent-color: var(--gold-2);
 }
-.settings-note,
-#palette-warning {
+#settings-status { margin: 0; font: 400 12px/1.3 var(--font-ui); color: var(--text-3); text-align: center; }
+.settings-note {
   margin: 10px 0;
   font: 400 13px/1.5 var(--font-ui);
   color: var(--text-3);
 }
-#palette-warning { margin: 0; padding: 8px 20px 0; }
-.settings-version { margin: 0; padding: 4px 20px 8px; font: 400 11px/1.4 var(--font-ui); color: var(--text-3); text-align: right; }
+/* Range rows keep 44 px of height for the thumb (they measured 38 px before the sheet redesign). */
+.slider-row input[type="range"] { min-height: 44px; }
+.settings-version { margin: 0; font: 400 11px/1.4 var(--font-ui); color: var(--text-3); }
 .settings-panel > footer {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
   gap: 8px;
   padding: 12px 20px 18px;
   border-top: 1px solid var(--line-1);
   background: rgba(4, 14, 20, 0.35);
 }
-.settings-panel > footer button { min-height: 48px; }
+.settings-panel > footer button { min-height: 48px; min-width: 96px; }
 
-/* Pause menu entry to these settings. */
-.pause-settings { width: 100%; margin-top: 10px; }
+/* Pause menu: Settings and Help side by side under the battle actions. */
+.pause-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.pause-settings { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 44px; }
+.pause-settings .icon { width: 18px; height: 18px; }
 
 @media (max-width: 600px), (max-height: 600px) {
   .settings-backdrop { padding: 0; place-items: stretch; }
@@ -271,28 +285,25 @@
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
   }
-  .settings-panel > header {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas: "heading close" "language language";
-    gap: 10px 8px;
-    padding: 14px 16px 10px;
-  }
-  .settings-heading { grid-area: heading; }
-  .settings-close { grid-area: close; }
-  .settings-panel > header .language-choice { grid-area: language; }
-  .settings-panel > header .language-choice select { flex: 1; width: auto; }
-  .settings-panel h2 { font-size: 24px; }
-  .settings-panel nav { margin: 0 16px; }
-  .settings-body { padding: 14px 16px 8px; }
-  .settings-panel > footer { padding: 10px 16px 12px; }
-  #palette-warning { padding: 6px 16px 0; }
-  .settings-version { padding: 2px 16px 6px; }
-  .preview-unit .portrait-art { --size: 80px; }
+  .settings-panel > header { padding: 10px 12px 8px; }
+  .settings-panel .settings-heading .eyebrow { display: none; }
+  /* Phones: the Language tab shows the language in use (EN / VI / KO) under the globe; its name stays as
+     the tab's accessible text (one word of eight letters does not fit a 50 px tab at 11 px). */
+  .settings-panel nav [data-tab="language"] .tab-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .settings-panel nav [data-tab="language"] .tab-code { display: block; }
+  .settings-panel h2 { margin: 0; font-size: 22px; }
+  .settings-panel nav { margin: 0 6px; padding: 3px; gap: 2px; }
+  .settings-panel nav button { padding: 3px 1px; font-size: 11px; }
+  .settings-body { padding: 10px 12px 8px; }
+  .settings-panel > footer { padding: 8px 12px 10px; }
+  .seg { flex-basis: 100%; max-width: none; }
+  .seg-row { gap: 6px 12px; }
 }
-@media (max-width: 380px) {
-  .settings-panel > footer { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .settings-panel > footer [data-do="apply"] { grid-column: 1 / -1; order: -1; }
+/* 320 px: seven 40 px tabs hold their icon only; the name stays as the button's accessible text. */
+@media (max-width: 359px) {
+  .settings-panel nav .tab-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .settings-panel nav button { min-height: 46px; }
+  #settings-status { display: none; }
 }
 
 .map-legend .friendly {
@@ -309,3 +320,12 @@
 
 /* Copyright notice under the version (owner, 2026-11-21). */
 .settings-copyright { display: block; }
+
+/* Settings → Assist → Text size (phase 2): reading text grows apart from the interface size. "s" is the design
+   (already the 11 px floor), "m" and "l" scale notices, dialogue, objectives, dialog paragraphs and notes. */
+:root[data-text-size="m"] :is(#notice, #dialogue-text, #mission-objectives .objective > span, #modal-content > p, .help-note, .settings-note) { zoom: 1.12; }
+:root[data-text-size="l"] :is(#notice, #dialogue-text, #mission-objectives .objective > span, #modal-content > p, .help-note, .settings-note) { zoom: 1.25; }
+
+/* Settings → Display → Minimap side (desktop dock): the map in the right corner, the command deck beside it. */
+:root.minimap-right:not(.compact-ui) .bottom-dock .minimap-panel { left: auto; right: 0; }
+:root.minimap-right:not(.compact-ui) .command-deck { left: auto; right: max(calc(var(--console-map) + 12px), calc(50% - var(--console-deck) / 2)); }

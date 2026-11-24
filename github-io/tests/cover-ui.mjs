@@ -17,6 +17,21 @@ import { launchBrowser, openPage, suite, shot, VIEWPORTS, TIMEOUT } from "./lib/
 const SIZES = { ...VIEWPORTS, hd: { width: 1920, height: 1080 }, tablet: { width: 768, height: 1024, mobile: true } };
 const ART = { desktop: "keyart-desktop", hd: "keyart-desktop", portrait: "keyart-portrait", landscape: "keyart-landscape", tablet: "keyart-portrait" };
 const FIXTURE = new URL("./fixtures/r3-base-menu-controls.json", import.meta.url);
+// The unified settings sheet (2026-11-24, owner-approved) moved some r3-base controls: full screen and the
+// language left the menu for the sheet, the three tabs became seven sections, Apply / Cancel became Done /
+// close (changes apply at once). Each moved control is still one tap away once the sheet is open: the map
+// gives its section (null: on every section) and its key there.
+const MOVED = {
+  "#fullscreen": ["display", '[data-do="fullscreen"]'],
+  '[data-setting="language"]': ["language", '[data-setting="language"]'],
+  '[data-do="cancel"]': [null, '[data-do="close"]'],
+  '[data-do="apply"]': [null, '[data-do="done"]'],
+  "#settings-tab-army": [null, "#settings-tab-access"],
+  "#settings-tab-graphics": [null, "#settings-tab-display"],
+  '[data-setting="autocast"]': ["controls", '[data-setting="autocast"]'],
+};
+const ACCESS = /^\[data-do="contrast"\]$|^\[aria-label="(Your|Enemy) /;
+const homeOf = (key) => MOVED[key] ?? (ACCESS.test(key) ? ["access", key] : [null, key]);
 
 // Every visible control of a screen, keyed by something stable.
 const listControls = (scope) => [...document.querySelectorAll(`${scope} :is(button, select, input, [role="tab"])`)]
@@ -143,6 +158,7 @@ await suite("cover-ui", async () => {
     const menuNow = await page.evaluate(listControls, ":is(#briefing, .top-actions)");
     for (const key of base[name].menu) {
       if (/alliance/.test(key)) continue; // AI teams only shows with two or more rivals (owner, 2026-11-23: fewer rows)
+      if (MOVED[key]) continue; // in the settings sheet now (checked below)
       assert.ok(menuNow.includes(key), `${name}: menu control ${key} still shown`);
       assert.equal(await reachable(page, key), "ok", `${name}: ${key} directly clickable`);
     }
@@ -160,16 +176,21 @@ await suite("cover-ui", async () => {
     await t.tap("#briefing-settings");
     await page.locator(".settings-panel").waitFor({ state: "visible", timeout: TIMEOUT.step });
     assert.match(await page.evaluate(() => getComputedStyle(document.querySelector(".settings-panel")).backgroundImage), /linear-gradient/, `${name}: settings holo glass`);
-    const settingsNow = await page.evaluate(listControls, ".settings-panel");
-    for (const key of base[name].settings) {
-      assert.ok(settingsNow.includes(key), `${name}: settings control ${key} still shown`);
+    const moved = [...new Set([...base[name].settings, ...base[name].menu.filter((key) => MOVED[key])])];
+    for (const old of moved) {
+      const [tab, key] = homeOf(old);
+      if (tab) await t.tap(`#settings-tab-${tab}`);
+      // Full screen shows as a row only where the browser has the API; elsewhere the section explains it.
+      if (key === '[data-do="fullscreen"]' && !(await page.evaluate(() => document.fullscreenEnabled))) continue;
+      const settingsNow = await page.evaluate(listControls, ".settings-panel");
+      assert.ok(settingsNow.includes(key), `${name}: settings control ${key} (was ${old}) still shown`);
       assert.equal(await reachable(page, key), "ok", `${name}: settings ${key} directly clickable`);
     }
     // Kit pass (owner, 2026-11-22): on phones the battle dock is one context panel. Two tabs (Selection, Map), no
     // Actions tab; for a group, a Harvester and the Command core every order and action is on the Selection tab,
     // each one tap (a row wider than the dock scrolls inside itself, nothing sits behind a menu or a drawer).
     if (size.mobile) {
-      await page.evaluate(() => document.querySelector(".settings-panel [data-do=\"cancel\"]")?.click());
+      await page.evaluate(() => document.querySelector(".settings-panel [data-do=\"done\"]")?.click());
       await t.tap('.mode-switch [data-mode="skirmish"]');
       await t.tap("#start");
       await page.waitForFunction(() => window.__frontier.started, null, { timeout: TIMEOUT.models });

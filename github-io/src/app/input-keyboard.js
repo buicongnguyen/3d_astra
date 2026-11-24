@@ -45,7 +45,7 @@ export function setupInputKeyboard(S, A) {
     else if(id==='focus')A.focusSelection();
     else if(id==='queue')$('queue-orders').click();
     else if(id==='info')A.showGuide(e?.type);
-    else if(id==='speed'){if(S.sim.defence)A.cycleSpeed();else A.notice('Fast-forward is for Frontier Defence.');}
+    else if(id==='speed')A.cycleSpeed();
     else if(id==='zoom-in')S.view.zoomBy(-4);
     else if(id==='zoom-out')S.view.zoomBy(4);
     A.updateUI();
@@ -76,8 +76,8 @@ export function setupInputKeyboard(S, A) {
         if(!Z.started && e.target instanceof Element && e.target.closest('button'))return;
         // Inside a modal, Space activates the focused button natively.
         if(Z.modalType && e.target instanceof Element && e.target.closest('#modal button'))return;
-        // Frontier Defence: Shift+Space cycles the fast-forward speed (Space alone still pauses; G keeps the grid).
-        if(e.shiftKey && S.sim?.defence && Z.started && !Z.modalType && !Z.paused && !S.sim.result) {e.preventDefault();if(!e.repeat) {A.cycleSpeed();A.updateUI();}return;}
+        // Shift+Space cycles the game speed in any match (Space alone still pauses; G keeps the grid).
+        if(e.shiftKey && Z.started && !Z.modalType && !Z.paused && !S.sim.result) {e.preventDefault();if(!e.repeat) {A.cycleSpeed();A.updateUI();}return;}
         e.preventDefault();if(!e.repeat) {S.keys.clear();if(Z.modalType==='pause')A.closeModal();else if(!Z.modalType)A.togglePause();}return;
       }
       if(Z.modalType||!Z.started||Z.paused||S.sim.result)return;
@@ -85,6 +85,8 @@ export function setupInputKeyboard(S, A) {
         e.preventDefault();if(!e.repeat)A.useGroup(key,e.ctrlKey,e.shiftKey);return;
       }
       if(e.ctrlKey&&key==='a') {e.preventDefault();if(!e.repeat)runShortcut('all');return;}
+      // Settings → Camera → Turn by keyboard: Page Up / Page Down (Q and E are command keys here).
+      if(key==='pageup'||key==='pagedown') {e.preventDefault();if(!e.repeat)A.turnCamera(key==='pageup'?-1:1);return;}
       if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) {e.preventDefault();S.keys.add(key);return;}
       const tile=ACTION_KEYS.includes(key.toUpperCase()) ? document.querySelector(`#commands [data-hotkey="${key.toUpperCase()}"]`) : null;
       if(tile&&!S.mode) {e.preventDefault();if(!e.repeat&&!tile.disabled)tile.click();return;}

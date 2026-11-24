@@ -11,11 +11,11 @@ export function setupModals(S, A) {
   let modalReturnFocus = null;
 
   function setModalOpen(open) {
-    // The top bar is a sibling of the modal: everything in it goes inert except sound, Help and Pause.
+    // The top bar is a sibling of the modal: everything in it goes inert except sound, Settings and Pause.
     const modal = $("modal"), main = document.querySelector("main");
     modal.classList.remove("debrief-wide", "result-wide");
     const behind = [main, document.querySelector(".brand"), document.querySelector(".resource-bar"),
-      ...[...document.querySelector(".top-actions").children].filter((node) => !["audio", "help", "pause"].includes(node.id))];
+      ...[...document.querySelector(".top-actions").children].filter((node) => !["audio", "briefing-settings", "pause"].includes(node.id))];
     if (open) {
       if (modal.hidden) modalReturnFocus = document.activeElement;
       for (const node of behind) if (node) node.inert = true;
@@ -73,6 +73,8 @@ export function setupModals(S, A) {
 
   function showFullscreenHelp(reason) {
     if (S.sim.result || Z.modalType === "graphics") return;
+    // Asked from the settings sheet: a toast, so the sheet stays where it is.
+    if (A.settingsUI?.active) { A.notice(reason === 'exit' ? 'Could not leave full screen. Use your browser’s exit control or press Esc on a keyboard.' : 'This browser could not enter full screen.'); return; }
     S.touchControls?.reset();
     S.drag = null;
     S.pointer.inside = false;
@@ -108,6 +110,7 @@ export function setupModals(S, A) {
         else if (button.id === 'fullscreen') button.innerHTML = `${icon(active ? 'collapse' : 'expand')}<span class="fs-text" aria-hidden="true">${label}</span><span class="visually-hidden">${label}</span>`;
         else button.innerHTML = `${icon(active ? 'collapse' : 'expand')}<span>${label}</span>`;
       }
+      A.settingsUI?.fullscreenChanged(active);
     },
   });
 
@@ -143,9 +146,18 @@ export function setupModals(S, A) {
     A.autosave();
     setModalOpen(true);
     $("modal-content").innerHTML =
-      `<span class="eyebrow">TACTICAL PAUSE</span><h2 id="modal-title">Hold your position.</h2><p>The battlefield is paused. Take a moment to plan your next move.</p><button class="primary" data-resume>Resume operation ${icon("play")}</button><button class="secondary" data-new-game>New game / choose map</button><button class="secondary" data-restart>Restart this map</button><button class="secondary fullscreen-launch" data-fullscreen></button><button class="pause-settings" data-settings>Settings · army, graphics & sound</button>`;
-    fullscreen.refresh();
+      `<span class="eyebrow">TACTICAL PAUSE</span><h2 id="modal-title">Hold your position.</h2><p>The battlefield is paused. Take a moment to plan your next move.</p><button class="primary" data-resume>Resume operation ${icon("play")}</button><button class="secondary" data-new-game>New game / choose map</button><button class="secondary" data-restart>Restart this map</button><div class="pause-row"><button class="pause-settings" data-settings>${icon("gear")}<span>Settings</span></button><button class="pause-settings" data-help>${icon("help")}<span>Help</span></button></div>`;
     $("modal").querySelector("[data-resume]").focus();
+  }
+
+  // Restart / New game in the pause menu throw the battle away: with Settings → Game → "Confirm Restart and
+  // New game" (on by default) the pause card asks first. Finished matches (debriefs) never ask.
+  function confirmLeave(kind) {
+    if (!S.settings.confirmRestart || !Z.started || S.sim.result || Z.modalType !== "pause") return false;
+    const restart = kind === "restart";
+    $("modal-content").innerHTML = `<span class="eyebrow">TACTICAL PAUSE</span><h2 id="modal-title">${restart ? "Restart this map?" : "Leave this battle?"}</h2><p>This battle's progress will be lost.</p><button class="primary" data-confirmed="${kind}">${restart ? "Restart" : "New game"}</button><button class="secondary" data-confirm-back>Keep playing</button>`;
+    $("modal").querySelector("[data-confirm-back]").focus();
+    return true;
   }
 
   function showHelp() {
@@ -194,12 +206,15 @@ export function setupModals(S, A) {
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
     });
 
-    $("fullscreen").onclick = (event) => toggleFullscreenFrom(event.currentTarget);
-    // Top bar (owner, one tap in play): hidden where full screen cannot exist (an installed web app, or a
-    // browser without the API such as iPhone Safari), where it would only open the help card.
-    const top = $("fullscreen-top");
-    top.onclick = (event) => toggleFullscreenFrom(event.currentTarget);
-    top.hidden = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true || !(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+    // Full screen lives in Settings → Display only (2026-11-24). The row shows where the API exists and the
+    // game is not an installed web app; elsewhere the sheet says how to get the bars out of the way.
+    const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    A.fullscreenInfo = {
+      standalone,
+      supported: () => !standalone() && !!(document.fullscreenEnabled || document.webkitFullscreenEnabled),
+      active: () => !!(document.fullscreenElement || document.webkitFullscreenElement),
+      toggle: (button) => toggleFullscreenFrom(button),
+    };
 
     fullscreen.refresh();
 
@@ -216,8 +231,6 @@ export function setupModals(S, A) {
       if (!Z.paused) togglePause();
     });
 
-    $("help").onclick = showHelp;
-
     $("controls-link").onclick = showHelp;
 
     $("modal").onclick = (event) => {
@@ -233,9 +246,14 @@ export function setupModals(S, A) {
         return;
       }
       if (event.target.closest("[data-settings]")) A.settingsUI.open();
+      if (event.target.closest("[data-help]")) showHelp();
       if (event.target.closest("[data-resume]")) closeModal();
-      if (event.target.closest("[data-restart]")) A.restart();
-      if (event.target.closest("[data-new-game]")) A.newGame();
+      if (event.target.closest("[data-confirm-back]")) showPause();
+      const confirmed = event.target.closest("[data-confirmed]")?.dataset.confirmed;
+      if (confirmed === "restart") A.restart();
+      if (confirmed === "new-game") A.newGame();
+      if (event.target.closest("[data-restart]") && !confirmLeave("restart")) A.restart();
+      if (event.target.closest("[data-new-game]") && !confirmLeave("new-game")) A.newGame();
       if (event.target.closest("[data-next-mission]")) A.nextMissionNow();
       // Commander decisions and the finale's epilogue (app/choices.js).
       const order = event.target.closest("[data-decide]");
