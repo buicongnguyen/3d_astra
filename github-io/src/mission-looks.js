@@ -57,6 +57,10 @@ export const MISSION_LOOKS = {
   "m08-the-quiet-vault": "night", // "Ashen Frontier, night 38"
   "cv1-night-count": "night", // the Night Count Chronicle
   "m10-obsidian-storm": "storm",
+  // Map variety (2026-11-24): Gun Hill is fought at night (the basin run m06/m06b/m07 is all daylight), and
+  // the Canyon Run drives through Amber Canyon in a long red-gold evening.
+  "m06c-gun-hill": "night",
+  "m04b-canyon-run": "dusk",
   // R3-D: the storm gathers from the first second (cloud, fog and rain thicken over 90 s), then the surge
   // storm Vale warns of breaks in full at 16:00 (it was all-or-nothing at 16:00 before).
   "m06-copper-harvest": { look: "storm", ramp: [[0, 0.35], [90, 0.75], [960, 0.75], [980, 1]] },

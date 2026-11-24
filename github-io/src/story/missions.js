@@ -187,6 +187,82 @@ export const MISSIONS = [
   HOLD_THE_RIVER,
 
   {
+    id: "m02c-mirror-lake",
+    act: 1,
+    // A side mission (map variety, 2026-11-24) on the campaign map Mirror Lake: it opens after Hold the River and
+    // never locks The Ashen Line.
+    optional: true,
+    title: "Mirror Lake",
+    map: "mirrorlake",
+    enemies: 1, speed: "relaxed", alliance: "ffa",
+    factions: { 1: "ashfall" },
+    rules: { ai: "home", playerBase: true, enemyBase: true, rosters: true },
+    bonus: { alloy: 200, energy: 100 },
+    briefing: {
+      place: "Mirror Lake, day 7",
+      lines: [
+        { who: "okoro", text: "There is a Builder relay on the island in Mirror Lake. From there it can hear every relay in the valley." },
+        { who: "vale", text: "Ashfall got there first. Four fords cross the lake to the island, and the water on them is knee deep." },
+      ],
+      intel: [
+        "Destroy the Ashfall gun on the island, raise a Sentinel tower of your own there, then hold the island relay for one minute.",
+        "Open water stops every unit. Cross on a ford: the posts mark its edges.",
+        "The island is high ground. Units and towers on top see farther and hit harder than units on the fords below.",
+      ],
+    },
+    regions: {
+      island: { x: 0, z: 0, r: 8 },
+      westFord: { x: -14, z: 14, r: 7 },
+      eastFord: { x: 14, z: -14, r: 7 },
+    },
+    setup: [
+      { spawn: "worker", team: 0, at: { x: -40, z: 28 }, count: 2 },
+      { resources: { alloy: 600, energy: 200 } },
+      { capturePoint: "island", label: "Island relay", gives: { energy: 1 } },
+      { spawn: "tower", team: 1, at: { x: 4, z: -3 }, tag: "islandGun", name: "Island gun" },
+      { spawn: "vanguard", team: 1, at: { x: 2, z: 2 }, count: 3 },
+      { spawn: "ranger", team: 1, at: { x: -3, z: -1 }, count: 2 },
+    ],
+    objectives: [
+      { id: "gun", text: "Destroy the Ashfall gun on the island", type: "destroyTag", tag: "islandGun" },
+      { id: "tower", text: "Build a Sentinel tower on the island", type: "build", building: "tower", count: 1, region: "island" },
+      { id: "island", text: "Hold the island relay for 1 minute", type: "hold", points: ["island"], need: 1, seconds: 60, hidden: true },
+      { id: "fast", text: "Finish in under 10 minutes", type: "timeUnder", seconds: 600, optional: true },
+    ],
+    win: ["gun", "tower", "island"],
+    lose: [{ type: "coreLost" }, { type: "time", seconds: 1200 }],
+    triggers: [
+      { when: { objective: "gun", is: "done" }, do: [{ say: { who: "okoro", text: "Their gun is down. Put a tower of ours up there, and I can tune the relay under its cover." } }] },
+      { when: { objective: "tower", is: "done" }, do: [
+        { reveal: "island" }, { ping: "island" },
+        { say: { who: "okoro", text: "Tower up. Now keep the relay for one minute while I tune it." } },
+        { wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "island" } },
+      ] },
+      { when: { time: 5 }, do: [{ say: { who: "vale", text: "The relay is in the middle of the lake. The ford nearest our camp runs straight to the island." } }, { ping: "westFord" }, { ping: "island" }] },
+      { when: { enter: "westFord", team: 0 }, do: [{ say: { who: "okoro", text: "The tower on the island can see the whole ford. Cross in one group and climb the ramp together." } }] },
+      { when: { pointOwned: { point: "island", team: 0 } }, do: [
+        { say: { who: "hale", text: "That relay is mine, Meridian. Get off my island." } },
+        { music: "tense" },
+        { wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "enemyBase", target: "island" } },
+      ] },
+      { when: { time: 240 }, do: [
+        { say: { who: "vale", text: "Ashfall is wading over from the far shore. Keep a few guns on the island." } },
+        { wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "island" } },
+      ] },
+      { when: { objective: "island", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "The island relay is ours. Listen: every relay in the valley, humming on one line." } }] },
+    ],
+    debrief: {
+      win: [
+        { who: "vale", text: "The island is ours, and every road round the lake runs under its guns." },
+        { who: "okoro", text: "The relays are talking to each other, Commander. All of them. I want to know what they say." },
+      ],
+      lose: [{ who: "vale", text: "Ashfall kept the island. Next time we cross together, and we bring more guns." }],
+    },
+    medals: { gold: { seconds: 330 }, silver: { seconds: 470 } },
+    design: "An optional side mission (map variety, 2026-11-24) on the campaign map Mirror Lake, the first map with a lake: a ring of water 12.5 m wide round an island hill (24 m across, four ramps), crossed by four wadeable fords that line up with the ramps. About 6 minutes against a home-ruled Relaxed Ashfall AI. An Ashfall gun tower, 3 Vanguards and 2 Rangers hold the island; the player wades a ford, breaks the gun, raises a Sentinel tower of their own on the island (the high ground lesson of Gun Hill, early) and then holds the island relay for a minute. Columns wade over from the far shore: 6 units on the first capture, 5 at 4:00 and 5 when the hold starts. The objective bot wins at 4:15-5:10; gold 5:30, silver about 1.4 times that.",
+  },
+
+  {
     id: "m03-the-ashen-line",
     act: 1,
     title: "The Ashen Line",
@@ -398,6 +474,107 @@ export const MISSIONS = [
     },
     medals: { gold: { seconds: 630 }, silver: { seconds: 870 } },
     design: "Hold-two-of-three in about 10 minutes. Two Relaxed AIs fight each other as well as the player; Ashfall guards the north oasis and Sunward the east one with 5 units each, and the centre is open. Intended: take the centre and one more oasis, split the army between them and send half home when the camp is attacked. Each first capture calls a 4-6 unit scripted attack from the faction that cares about that oasis (Sunward's 4, 5 before round 3). Round 3 pacing: one Ashfall scout probes the camp at 1:10. Twist at 5:00: Hale and Sol agree a truce on the radio and attack the centre together (8 units, 9 before round 3; R3-I: after the south exits the Veteran objective bot lost), which sets up the Pact. A 20-minute limit keeps the player from turtling.",
+  },
+
+  {
+    id: "m04b-canyon-run",
+    act: 1,
+    // A side mission (map variety, 2026-11-24) on the Defence map Amber Canyon, played as a field mission with no
+    // base: it opens after Three-Way Dunes and never locks The Verdant Pact.
+    optional: true,
+    title: "Canyon Run",
+    map: "canyon",
+    enemies: 1, speed: "relaxed", alliance: "ffa",
+    factions: { 1: "ashfall" },
+    rules: { ai: false, playerBase: false, enemyBase: true, rosters: true },
+    briefing: {
+      place: "Amber Canyon, day 17",
+      lines: [
+        { who: "okoro", text: "The last parts of my tuning core are coming up from the landing site in two supply crawlers." },
+        { who: "vale", text: "The only road north runs through Amber Canyon, and Hale's raiders hold its bends. No base today, Commander." },
+      ],
+      intel: [
+        "Four supply crawlers come up the canyon in two pairs. Bring them to the north mouth; if a pair is lost, the mission fails.",
+        "Raiders hold three bends of the road. Clear each one before the crawlers roll up.",
+        "Medics heal the crawlers. The cliff tops cannot be climbed.",
+        "Hale's outpost beyond the north mouth shells the road north. Burn it too.",
+      ],
+    },
+    regions: {
+      start: { x: 0, z: 40, r: 6 },
+      southBend: { x: -3, z: 16, r: 7 },
+      midBend: { x: 3, z: -4, r: 7 },
+      northBend: { x: -3, z: -24, r: 7 },
+      exit: { x: 0, z: -41, r: 7 },
+      outpost: { x: 36, z: -41, r: 6 },
+    },
+    setup: [
+      { spawn: "vanguard", team: 0, at: { x: -2, z: 34 }, count: 4, tag: "squad" },
+      { spawn: "ranger", team: 0, at: { x: 3, z: 36 }, count: 3, tag: "squad" },
+      { spawn: "medic", team: 0, at: { x: 0, z: 37 }, count: 2, tag: "squad" },
+      { spawn: "breaker", team: 0, at: { x: -4, z: 38 }, count: 1, tag: "squad" },
+      { spawn: "hq", team: 1, at: "outpost", tag: "outpost", name: "Ashfall outpost", hp: 3000 },
+      { spawn: "tower", team: 1, at: { x: 42, z: -35 } },
+      { spawn: "vanguard", team: 1, at: { x: -3, z: 14 }, count: 4 },
+      { spawn: "ranger", team: 1, at: { x: 2, z: 12 }, count: 2 },
+      { spawn: "tower", team: 1, at: { x: 6, z: -7 } },
+      { spawn: "vanguard", team: 1, at: { x: 2, z: -2 }, count: 4, countByDifficulty: { veteran: 3 } },
+      { spawn: "ranger", team: 1, at: { x: 5, z: -10 }, count: 3, countByDifficulty: { veteran: 2 } },
+      { spawn: "vanguard", team: 1, at: { x: -3, z: -22 }, count: 3 },
+      { spawn: "breaker", team: 1, at: { x: -5, z: -28 }, count: 1 },
+      { spawn: "tower", team: 1, at: { x: -6, z: -38 } },
+      { spawn: "vanguard", team: 1, at: { x: 3, z: -40 }, count: 3 },
+    ],
+    objectives: [
+      // The crawlers come up from the landing site in two pairs (1:00 and 3:20); each pair is its own escort.
+      { id: "escort", text: "Bring the first two crawlers to the north mouth", type: "escort", tag: "convoy", to: "exit", hidden: true },
+      { id: "escort2", text: "Bring the last two crawlers to the north mouth", type: "escort", tag: "convoy2", to: "exit", hidden: true },
+      { id: "outpost", text: "Burn the Ashfall outpost beyond the north mouth", type: "destroyTag", tag: "outpost", hidden: true },
+      { id: "fast", text: "Finish in under 8 minutes", type: "timeUnder", seconds: 480, optional: true },
+    ],
+    win: ["escort", "escort2", "outpost"],
+    lose: [{ type: "armyLost" }, { type: "tagLost", tag: "convoy" }, { type: "tagLost", tag: "convoy2" }, { type: "time", seconds: 900 }],
+    triggers: [
+      { when: { time: 4 }, do: [{ say: { who: "vale", text: "Four crawlers, one road, raiders on every bend. Clear the bends before the crawlers arrive." } }, { ping: "southBend" }, { music: "tense" }] },
+      { when: { time: 60 }, do: [
+        { say: { who: "okoro", text: "The first two crawlers are entering the canyon now. Two more follow in a few minutes." } },
+        { spawn: "worker", team: 0, at: "start", tag: "convoy", name: "Supply crawler", count: 2, hp: 700, hpByDifficulty: { story: 1000 }, speed: 1.4 },
+        { reveal: "escort" }, { ping: "start" },
+      ] },
+      { when: { time: 200 }, do: [
+        { say: { who: "okoro", text: "The last two crawlers are in the canyon. Bring them home too, please." } },
+        { spawn: "worker", team: 0, at: "start", tag: "convoy2", name: "Supply crawler", count: 2, hp: 700, hpByDifficulty: { story: 1000 }, speed: 1.4 },
+        { reveal: "escort2" }, { ping: "start" },
+      ] },
+      { when: { enter: "southBend", team: 0 }, do: [{ say: { who: "okoro", text: "The crawlers cannot fight back. Keep them behind the squad, please." } }] },
+      { when: { enter: "midBend", team: 0 }, do: [
+        { say: { who: "hale", text: "Meridian in my canyon. Outpost guard, down the road. Nothing gets through." } },
+        { wave: { team: 1, units: { vanguard: 3, ranger: 1 }, from: "enemyBase", target: "midBend" } },
+        { say: { who: "vale", text: "Raiders coming down from the north. Hold the middle bend until they break." } },
+      ] },
+      // Raiders keep coming down the road every 75 s from 2:30 until the outpost burns (a wave from a fallen outpost is refused).
+      { when: { time: 150 }, repeat: 75, do: [{ wave: { team: 1, units: { vanguard: 2, ranger: 1 }, from: "enemyBase", target: "midBend" } }] },
+      { when: { time: 200 }, do: [{ wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "midBend" } }] },
+      { when: { enter: "northBend", team: 0 }, do: [{ say: { who: "vale", text: "A Breaker on the north bend shells the road. Rush it before the crawlers come up." } }] },
+      { when: { time: 300 }, do: [
+        { say: { who: "hale", text: "Every raider I have, to the north mouth. Nothing leaves my canyon." } },
+        { wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "enemyBase", target: "exit" } },
+      ] },
+      { when: { tagHpBelow: { tag: "convoy", percent: 50 } }, do: [{ say: { who: "okoro", text: "A crawler is badly hit! Medics to the crawlers, please." } }] },
+      { when: { objective: "outpost", is: "done" }, do: [{ music: "calm" }, { say: { who: "vale", text: "The outpost is burning. No more raiders from that corner." } }] },
+      { when: { objective: "escort2", is: "done" }, do: [{ say: { who: "okoro", text: "The crawlers are through the canyon. Now I can finish the tuning core." } }, { reveal: "outpost" }, { ping: "outpost" },
+        { say: { who: "vale", text: "The crawlers brought three Vanguards, a Breaker crew and a Medic. Use them on the outpost." } },
+        { spawn: "vanguard", team: 0, at: "exit", count: 3, tag: "squad" }, { spawn: "breaker", team: 0, at: "exit", count: 1, tag: "squad" }, { spawn: "medic", team: 0, at: "exit", count: 1, tag: "squad" }] },
+    ],
+    debrief: {
+      win: [
+        { who: "okoro", text: "Every part arrived. The tuning core will be ready before we reach the forest." },
+        { who: "vale", text: "Hale lost his canyon and a night's sleep. Next stop, the Verdant Crossing." },
+      ],
+      lose: [{ who: "vale", text: "The crawlers are lost in the canyon. Okoro will have to build the core again from scratch." }],
+    },
+    medals: { gold: { seconds: 360 }, silver: { seconds: 500 } },
+    design: "An optional side mission (map variety, 2026-11-24) on the Frontier Defence map Amber Canyon, played as an ordinary no-base field mission at dusk: a 20 m wide floor between two cliff walls that cannot be climbed, and the painted Defence road winding up it. About 6 minutes. Fixed squad (4 Vanguards, 3 Rangers, 2 Medics, a Breaker); losing the whole squad fails. The Ashfall AI is off: pickets hold three bends (4, 5 with a tower, 4 with a Breaker) and the north mouth (a tower and 2), Hale's outpost core and a tower stand beyond it (optional; it is what lets the scripted columns come from enemyBase). The crawlers (700 HP, Story 1000, slow) come up from the south mouth in two pairs, at 1:00 and 3:20; each pair is an escort objective and losing a pair fails. When the second pair is through, 3 Vanguards, a Breaker and a Medic arrive and the outpost (3000 HP) must burn. Raids from the outpost: 4 when the squad reaches the middle bend, 3 every 75 s from 2:30 and 6 at 5:00. The objective bot wins at about 5:25 (Story 5:32, Veteran 6:19 with a smaller middle picket); gold 6:00, silver 8:20.",
   },
 
   // ───────────────────────── ACT 2: THE PACT ─────────────────────────
@@ -1286,48 +1463,53 @@ export const MISSIONS = [
     id: "m11-cut-the-draw",
     act: 3,
     title: "Cut the Draw",
-    map: "expanse",
+    // Map variety (2026-11-24): moved from Frontier Expanse (m11d and m12 are fought there too) to Twin Rivers.
+    map: "twinrivers",
     enemies: 2, speed: "relaxed", alliance: "coalition",
     factions: { 1: "ashfall", 2: "wardens" },
     bonus: { alloy: 200, energy: 100, tower: true },
     rules: { ai: true, playerBase: true, enemyBase: true, unlock: ["rider"], rosters: true },
     briefing: {
-      place: "Frontier Expanse, day 52",
+      place: "Twin Rivers, day 52",
       lines: [
         { who: "echo", text: "The draw has begun. Three conduits carry it to the Keystone. In twenty minutes the Lattice is empty." },
         { who: "vale", text: "Cut all three conduits and the draw stops. Each one you cut slows it and buys the Lattice time." },
-        { who: "sol", text: "The river has three crossings, Commander. My scouts say the ford in the middle is the lightest guarded." },
+        { who: "sol", text: "Two rivers, Commander, each with two fords and two bridges. My scouts say the ford nearest our camp is the lightest guarded." },
       ],
       intel: [
         "You have 20 minutes to cut the west, middle and north conduits.",
-        "All three conduits are north of the river. Cross at the centre ford or the east bridge.",
+        "The west and middle conduits stand between the two rivers. The north conduit is across the far river.",
         "The north conduit stands beside the Ashfall camp. Leave it for last and bring Breakers.",
       ],
     },
+    // Twin Rivers: the player's camp south-west, Ashfall north-east, the Wardens south-east behind the ridge.
+    // The middle conduit sits between the rivers, the west one in the empty north-west, the north one by Ashfall.
     regions: {
-      bridge: { x: -2, z: 6, r: 7 },
-      conduitWest: { x: -46, z: -44, r: 8 },
-      conduitMid: { x: -10, z: -24, r: 8 },
-      conduitNorth: { x: 26, z: -62, r: 8 },
+      bridge: { x: -16, z: 28, r: 7 },
+      conduitWest: { x: -44, z: -6, r: 8 },
+      conduitMid: { x: 2, z: -8, r: 8 },
+      conduitNorth: { x: 12, z: -48, r: 8 },
       solRoad: { x: -40, z: 38, r: 6 },
     },
     setup: [
       { spawn: "relay", team: 1, at: "conduitWest", tag: "conduitWest", name: "West conduit", hp: 6000, hpByDifficulty: { veteran: 4200 } },
       { spawn: "relay", team: 1, at: "conduitMid", tag: "conduitMid", name: "Middle conduit", hp: 6000, hpByDifficulty: { veteran: 4200 } },
       { spawn: "relay", team: 1, at: "conduitNorth", tag: "conduitNorth", name: "North conduit", hp: 6000, hpByDifficulty: { veteran: 4200 } },
-      { spawn: "vanguard", team: 1, at: { x: -13, z: -19 }, count: 5 },
-      { spawn: "ranger", team: 1, at: { x: -6, z: -28 }, count: 3 },
-      { spawn: "vanguard", team: 1, at: { x: 22, z: -58 }, count: 6 },
-      { spawn: "ranger", team: 1, at: { x: 30, z: -65 }, count: 4 },
-      { spawn: "breaker", team: 1, at: { x: 21, z: -65 }, count: 2 },
+      { spawn: "vanguard", team: 1, at: { x: -2, z: -4 }, count: 5 },
+      { spawn: "ranger", team: 1, at: { x: 6, z: -12 }, count: 3 },
+      { spawn: "vanguard", team: 1, at: { x: 10, z: -42 }, count: 6 },
+      { spawn: "ranger", team: 1, at: { x: 18, z: -52 }, count: 4 },
+      { spawn: "breaker", team: 1, at: { x: 9, z: -55 }, count: 2 },
       { spawn: "tower", team: 1, at: { x: 40, z: -40 } },
       { spawn: "tower", team: 1, at: { x: 47, z: -37 } },
       { spawn: "vanguard", team: 1, at: { x: 43, z: -38 }, count: 5 },
       { spawn: "ranger", team: 1, at: { x: 45, z: -42 }, count: 4 },
-      { spawn: "tower", team: 1, at: { x: -41, z: -41 } },
-      { spawn: "tower", team: 1, at: { x: -5, z: -21 } },
-      { spawn: "tower", team: 1, at: { x: 31, z: -59 } },
-      { spawn: "vanguard", team: 1, at: { x: -44, z: -39 }, count: 3 },
+      { spawn: "tower", team: 1, at: { x: -39, z: -2 } },
+      { spawn: "tower", team: 1, at: { x: 7, z: -6 } },
+      { spawn: "tower", team: 1, at: { x: 17, z: -45 } },
+      { spawn: "vanguard", team: 1, at: { x: -41, z: -1 }, count: 3 },
+      // Twin Rivers: the Wardens reach the camp across the west ford, so a Meridian tower already covers its landing.
+      { spawn: "tower", team: 0, at: { x: -22, z: 33 } },
       { spawn: "vanguard", team: 0, at: "solRoad", count: 4, tag: "sunward" },
       { spawn: "antitank", team: 0, at: { x: -37, z: 41 }, count: 2, tag: "sunward" },
       { resources: { alloy: 900, energy: 350 } },
@@ -1352,8 +1534,8 @@ export const MISSIONS = [
       { when: { tagDead: "conduitMid" }, do: [
         { say: { who: "echo", text: "One conduit cut. The draw is slower by a third. This one can feel the fields breathe." } },
         { say: { who: "hale", text: "Wardens, to the west conduit. Guard it with everything." } },
-        { spawn: "tank", team: 1, at: { x: -50, z: -39 }, count: 1 },
-        { spawn: "ranger", team: 1, at: { x: -43, z: -49 }, count: 3 },
+        { spawn: "tank", team: 1, at: { x: -50, z: -2 }, count: 1 },
+        { spawn: "ranger", team: 1, at: { x: -41, z: -12 }, count: 3 },
       ] },
       { when: { tagDead: "conduitWest" }, do: [
         { say: { who: "okoro", text: "West conduit is scrap! The crystals near it have stopped fading." } },
@@ -1372,7 +1554,7 @@ export const MISSIONS = [
       // The draw stops (scene: src/story/scenes.js), before the debrief.
       { when: { tagDead: "conduitNorth" }, do: [{ music: "calm" }, { scene: "draw-cut" }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
-      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Ashfall scouts on the expanse, two of them. Hale wants to know how many we brought." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: -6, z: 6 }, target: { x: -40, z: 40 }, probe: true } }] },
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Ashfall scouts between the rivers, two of them. Hale wants to know how many we brought." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: -16, z: 12 }, target: { x: -40, z: 40 }, probe: true } }] },
     ],
     debrief: {
       win: [
@@ -1382,7 +1564,7 @@ export const MISSIONS = [
       lose: [{ who: "echo", text: "The Lattice is empty. This one will sleep now. It was good to have company." }],
     },
     medals: { gold: { seconds: 960 }, silver: { seconds: 1140 } },
-    design: "A 20-minute race, expected about 15 minutes, against two allied AIs (Relaxed for 8 minutes, then Normal). The player starts with 900 alloy, the bonus tower and 6 Sunward units. Each conduit has 6000 HP and a tower; the middle one has 8 guards, the west one 3 (and after the first cut a Battle tank and 3 Rangers: bring Anti-tank soldiers), the north one 12 beside the Ashfall camp, which has its own 9 guards and 2 towers. Intended: break the first joint attack near 4:00 at home, cross between attacks, cut the middle conduit, then the west one, and use Sol's 6 reinforcements at 10:00 for the north one. When the west conduit falls, a 7-unit Warden wave with a Battle tank goes for the player's camp, so the home towers matter. Each conduit is its own objective so the list shows progress.",
+    design: "On Twin Rivers since the 2026-11 map variety pass (it was on Frontier Expanse, where m11d and m12 are also fought): two rivers, each with two fords and two bridges, and a ridge that splits each bank, so the Wardens' camp beside the player's is reached only through the middle band. The middle conduit stands between the rivers, the west one in the empty north-west and the north one beside the Ashfall camp. A 20-minute race, expected about 15 minutes, against two allied AIs (Relaxed for 8 minutes, then Normal). The player starts with 900 alloy, the bonus tower and 6 Sunward units. Each conduit has 6000 HP and a tower; the middle one has 8 guards, the west one 3 (and after the first cut a Battle tank and 3 Rangers: bring Anti-tank soldiers), the north one 12 beside the Ashfall camp, which has its own 9 guards and 2 towers. Intended: break the first joint attack near 4:00 at home, cross between attacks, cut the middle conduit, then the west one, and use Sol's 6 reinforcements at 10:00 for the north one. When the west conduit falls, a 7-unit Warden wave with a Battle tank goes for the player's camp, so the home towers matter. Each conduit is its own objective so the list shows progress.",
   },
 
   // Defence rules in story form, optional (AAA round 2, W2-F): the keystone roads, with the first Gunner teams.

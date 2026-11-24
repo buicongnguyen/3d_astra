@@ -127,7 +127,8 @@ const routeDist = (p, routes) => Math.min(...Object.values(routes).flatMap((pts)
 const make = (m, difficulty = "standard") => new Simulation({ map: m.map, enemyCount: 1, ai: false, mission: m, difficulty });
 
 test("the defence missions sit in the campaign with stable ids, on Defence maps, with 6 to 8 waves", () => {
-  assert.equal(MISSIONS.length, 19, "fifteen plus the optional Hold the Keystone Roads (m11c), The Sovereign Walks (m11d, R3-H), Gun Hill (m06c) and Crown Hill (m10b, campaign C6)");
+  // Map variety (2026-11-24): two more optional side missions, Mirror Lake (m02c) and Canyon Run (m04b), both in Act 1.
+  assert.equal(MISSIONS.length, 21, "fifteen plus the optional Hold the Keystone Roads (m11c), The Sovereign Walks (m11d, R3-H), Gun Hill (m06c), Crown Hill (m10b, campaign C6), Mirror Lake (m02c) and Canyon Run (m04b)");
   assert.equal(MISSIONS.indexOf(HOLD_THE_RIVER), MISSIONS.findIndex((m) => m.id === "m02-first-contact") + 1, "Hold the River follows First Contact");
   assert.equal(MISSIONS.indexOf(HOLD_THE_VALLEY), MISSIONS.findIndex((m) => m.id === "m07-copper-siege") + 1, "Hold the Valley follows Copper Siege");
   assert.deepEqual(DEFENCE_MISSIONS.map((m) => [m.id, m.act]), [["m02b-hold-the-river", 1], ["m07b-hold-the-valley", 2]]);
@@ -231,8 +232,9 @@ test("progress keyed by id: a finished twelve-mission campaign keeps everything 
   const store = { getItem: () => JSON.stringify(all12) };
   const loaded = loadProgress(store);
   assert.deepEqual(loaded.cleared, all12.cleared, "the stored clears load unchanged");
-  // Gun Hill (m06c, campaign C6) opens after Wings over Copper (m06b), which these older clears do not include.
-  assert.deepEqual(MISSIONS.map((_, i) => isUnlocked(loaded, i)), MISSIONS.map((m) => m.id !== "m06c-gun-hill"), "every mission is open but Gun Hill");
+  // Gun Hill (m06c, campaign C6) opens after Wings over Copper (m06b) and Mirror Lake (m02c, map variety) after Hold the
+  // River (m02b), which these older clears do not include; Canyon Run (m04b) follows Three-Way Dunes, which they do.
+  assert.deepEqual(MISSIONS.map((_, i) => isUnlocked(loaded, i)), MISSIONS.map((m) => m.id !== "m06c-gun-hill" && m.id !== "m02c-mirror-lake"), "every mission is open but Gun Hill and Mirror Lake");
   assert.deepEqual(MISSIONS.map((m, i) => isCleared(loaded, i)), MISSIONS.map((m) => STORY.includes(m)), "the new ones wait to be played");
   assert.equal(MISSIONS[nextMission(loaded)].id, "m02b-hold-the-river", "the first new mission is next");
   // Halfway: clears up to mission 3 (before the new mission existed) keep missions 3 and 4 open.

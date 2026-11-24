@@ -75,6 +75,15 @@ const MISSION_TARGETS = {
   // Mission 9 (R3-I, round 3): since the south exits (R3-L) the bot reaches Sol's camp about 20 s sooner, and the
   // win is the 3-minute plateau hold after that, so it lands near 6:45, not 7:10. Earlier, not harder.
   "m09-a-debt-in-the-dunes": { win: [390, 1200] },
+  // Mission 11 (map variety, 2026-11-24): on Twin Rivers (was Frontier Expanse) the bot wins near 6:45 instead of
+  // 8:10 (Story 6:43 for 6:52, Veteran 6:28 for 6:22) and loses fewer units. Earlier, not harder.
+  "m11-cut-the-draw": { win: [380, 1200] },
+  // Mirror Lake (m02c, map variety): wade a ford, break the island gun, raise a tower, hold the relay a minute; the
+  // objective bot wins at 4:15-5:10 (Story 4:43, Veteran 6:38): a short phone match, gentle like the rest of Act 1.
+  "m02c-mirror-lake": { win: [240, 1200], earliest: 240, passive: 300 },
+  // Canyon Run (m04b, map variety): no base; four crawlers in two pairs (1:00 and 3:20) up Amber Canyon, then the
+  // outpost. The second pair cannot arrive before about 4:40, so the bot wins at about 5:25 (Story 5:32, Veteran 6:19).
+  "m04b-canyon-run": { win: [300, 1200], earliest: 300 },
 };
 const standardTargets = (index) => ({ ...BASE_TARGETS, ...MISSION_TARGETS[MISSIONS[index]?.id] });
 
