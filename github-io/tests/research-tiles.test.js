@@ -12,7 +12,9 @@ function setup(level = 1) {
   b.complete = true; b.progress = 1; b.level = level;
   return { s, b };
 }
-const view = (s, b, choosing) => productionTiles(s, b, { choosing }).tiles.map((t) => `${t.action}:${t.label}:${t.state}${t.sub ? ':' + t.sub : ''}`);
+// Doctrine tiles (the either/or pair, 2026-11-24) are checked in tests/faction-depth.test.js; these views leave them out.
+const noDoctrine = (t) => !t.doctrine;
+const view = (s, b, choosing) => productionTiles(s, b, { choosing }).tiles.filter(noDoctrine).map((t) => `${t.action}:${t.label}:${t.state}${t.sub ? ':' + t.sub : ''}`);
 
 test('before the choice the Foundry shows one Research slot; locked items name the level they need', () => {
   const { s, b } = setup();
@@ -56,7 +58,7 @@ test('Flak is a one-off Command core research: locked below L2, then researching
   const s = new Simulation({ ai: false });
   s.players[0].alloy = s.players[0].energy = 5000;
   const hq = s.own(0).find((e) => e.type === 'hq');
-  const tile = () => productionTiles(s, hq).tiles.map((t) => `${t.action}:${t.label}:${t.state}${t.sub ? ':' + t.sub : ''}`);
+  const tile = () => productionTiles(s, hq).tiles.filter(noDoctrine).map((t) => `${t.action}:${t.label}:${t.state}${t.sub ? ':' + t.sub : ''}`);
   // The core is the airfield (0.18): four tiles, as many as a phone shows.
   assert.deepEqual(tile(), ['worker:Harvester:ready', 'flak:Anti-air guns:locked:Needs L2', 'kite:Kite scout:locked:Needs L2', 'hawk:Hawk gunship:locked:Needs L3']);
   assert.equal(s.enqueue(hq.id, 'flak'), false);

@@ -22,6 +22,8 @@ import { barracksVeterans } from "./barracks-veterans.js";
 import { quickBattle } from "./quick-battle.js";
 import { scoutRunner } from "./scout-runner.js";
 import { wildFrontier } from "./wild-frontier.js";
+import { signatures } from "./signatures.js";
+import { doctrines } from "./doctrines.js";
 
 export const CONTENT = [
   suppression,
@@ -39,4 +41,6 @@ export const CONTENT = [
   quickBattle,
   scoutRunner,
   wildFrontier,
+  signatures,
+  doctrines,
 ];

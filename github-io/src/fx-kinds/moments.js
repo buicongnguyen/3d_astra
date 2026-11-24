@@ -31,6 +31,17 @@ export const MOMENTS = {
       flare(fx, { x: e.x + Math.cos(a) * 0.9, y: 1.1 + rng() * 0.3, z: e.z + Math.sin(a) * 0.9 }, 0.55, [tint[0], tint[1], tint[2], 0.95], 0.12, anchor, i * 0.025);
     }
   },
+  // Spur on (Supply wagon): hooves kick up a ring of dust around the wagon.
+  spurs(fx, e, rng, tint, anchor) {
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; dustAt(fx, rng, e.x + Math.cos(a) * 2.2, e.z + Math.sin(a) * 2.2, anchor, 0.9); }
+  },
+  // Shield link (Sentinel drone): a bright cold flare over the drone, sparks running out to the linked shields.
+  shieldlink(fx, e, rng, tint, anchor) {
+    flare(fx, { x: e.x, y: 1.8, z: e.z }, 1.4, [0.85, 0.97, 1, 1], 0.3, anchor);
+    sparks(fx, rng, { x: e.x, y: 1.4, z: e.z }, 6, anchor, 0.9, [tint[0], tint[1], tint[2], 1], [tint[0], tint[1], tint[2], 0]);
+  },
+  // Shadow strike (Shade): the decloak shimmer and a short lunge of dust.
+  shadowstrike(fx, e, rng, tint, anchor) { shimmer(fx, e, rng, tint, anchor); dustAt(fx, rng, e.x, e.z, anchor, 0.7, 2); },
   // Steady aim: a small cold glint at the Stalker's eye (no ring: owner, 2026-11-23).
   steadyaim(fx, e, rng, tint, anchor) {
     flare(fx, { x: e.x, y: 1.5, z: e.z }, 1.1, [1, 0.95, 1, 1], 0.3, anchor);

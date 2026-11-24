@@ -1,6 +1,10 @@
 import { DEFINITIONS as D, distance } from "../data.js";
 import { MINERS_PER_DEPOSIT } from "./constants.js";
 import { fieldPlan } from "../ai-plan.js";
+import balance from "../balance.json" with { type: "json" };
+
+// The Energy grid doctrine's factor (sim/content/doctrines.js).
+const GRID = balance.doctrines.hq.options.grid.energy;
 
 // The directions a trained unit tries around its building (R3-L, exitPoint): 32 directions sorted by their
 // angle from south (+z, the side facing the default camera); of two equal angles east (+x, also toward the
@@ -149,7 +153,9 @@ export const economy = {
         return;
       }
       if (e.carryType) {
-        this.players[e.team][e.carryType] += e.carry;
+        // Energy grid doctrine (sim/content/doctrines.js): a lazy key, absent in every match without the pick.
+        const grid = e.carryType === "energy" ? this.players[e.team].doctrine?.hq === "grid" : false;
+        this.players[e.team][e.carryType] += grid ? Math.round(e.carry * GRID) : e.carry;
         this.missionBank(e.team, e.carryType, e.carry);
       }
       if (e.carry > 0) this.events.push({ type: "deliver", x: e.x, z: e.z, tx: depot.x, tz: depot.z, team: e.team, resource: e.carryType, seed: e.id });

@@ -4,6 +4,9 @@
 // Tile states: "ready" (can be ordered), "locked" (needs a level of the selected building: "Needs L2"
 // is on the tile), "busy" (researching, with progress) and "done" (in effect, never shown with a price).
 import { DEFINITIONS as D } from "./data.js";
+import balance from "./balance.json" with { type: "json" };
+
+const DOCTRINES = balance.doctrines;
 
 export const BRANCHES = {
   weapons: {
@@ -65,6 +68,20 @@ export function flakTile(sim, b, lock = "") {
   return Object.assign(tile, { state: lock ? "locked" : "ready", sub: lock || null });
 }
 
+// Doctrines (sim/content/doctrines.js): the either/or pair of a Command core, Barracks or Foundry, both
+// tiles on the card at once (one tap picks, the other locks: no sub-menu). Before the building's level
+// they show "Needs L2"; once one is picked, a single "done" tile names it.
+//   { doctrine: true, building, pick, label, name, icon, cost, state, sub, pair: 0 | 1 }
+export function doctrineTiles(sim, b) {
+  const spec = DOCTRINES[b.type];
+  if (!spec || b.team !== 0) return [];
+  const chosen = sim.players[b.team].doctrine?.[b.type];
+  const tile = (pick, extra) => { const o = spec.options[pick]; return { doctrine: true, type: "doctrine", action: "doctrine", building: b.type, pick, label: o.label, name: o.name, icon: o.icon, cost: o.cost, description: o.description, ...extra }; };
+  if (chosen) return [tile(chosen, { state: "done", sub: "Active" })];
+  const lock = (b.level || 1) < spec.level ? `Needs L${spec.level}` : "";
+  return Object.keys(spec.options).map((pick, pair) => tile(pick, { state: lock ? "locked" : "ready", sub: lock || null, pair }));
+}
+
 // The tiles for one selected building of the player. `choosing` is true while the research choice is open.
 export function productionTiles(sim, b, { choosing = false } = {}) {
   const tiles = [];
@@ -103,5 +120,6 @@ export function productionTiles(sim, b, { choosing = false } = {}) {
     const lock = b.team === 0 ? levelLock(type) : "";
     tiles.push({ type, action: type, label: D[type].name, state: lock ? "locked" : "ready", sub: lock || null });
   }
+  tiles.push(...doctrineTiles(sim, b));
   return { tiles, choosing: false };
 }
