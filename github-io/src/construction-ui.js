@@ -33,7 +33,9 @@ export function createConstructionUI(definitions, { retry, back }) {
       host.classList.toggle('construction-open', !!visible);
       document.documentElement.classList.toggle('construction-open', !!visible);
       if (!visible) {
-        document.documentElement.classList.remove('construction-notice-repeated');
+        // toggle(…, false), not remove(): remove() rewrites the class attribute even when the class is absent, and
+        // this runs on every HUD tick; each rewrite is a mutation for every observer of <html> (app/cover.js).
+        document.documentElement.classList.toggle('construction-notice-repeated', false);
         if (controls.parentElement === card) stage.append(controls);
         return;
       }

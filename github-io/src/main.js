@@ -225,5 +225,20 @@ const binds = Object.fromEntries(SETUP.map(([name, setup]) => [name, setup(S, A)
 ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction, playerFaction: S.playerFaction } = A.battleSetup());
 S.sim = createSim();
 for (const name of BIND) binds[name]();
-boot();
+// The 3D world (terrain, scatter, environment map) is the heaviest step of the start: about 0.5 s on a fast PC,
+// far more on a slow phone or a CI runner (15 s of a 19 s start with the CPU slowed 20x). Built right here it held
+// the first paint (a blank page instead of the loading card) and the page's load event (its fonts and cover art
+// finish only after it), so it waits for that load event: on a slow connection 0.8 s at most after the first
+// frame (the loading card is up by then), and 3 s in a tab opened in the background, where frames do not run.
+let booted = false;
+const bootOnce = () => {
+  if (booted) return;
+  booted = true;
+  boot();
+};
+// Here, not in bootOnce: it registers the service worker from a load listener, which must exist before load fires.
 registerOffline(A, S.query, () => modelsForMatch(S.sim));
+if (document.readyState === "complete") setTimeout(bootOnce, 0);
+else addEventListener("load", () => setTimeout(bootOnce, 0), { once: true });
+requestAnimationFrame(() => setTimeout(bootOnce, 800));
+setTimeout(bootOnce, 3000);

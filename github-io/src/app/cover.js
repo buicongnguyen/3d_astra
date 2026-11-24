@@ -388,9 +388,16 @@ export function setupCover(A = {}, S = {}) {
   document.addEventListener("visibilitychange", wake);
   art?.addEventListener("load", wake);
   // Settings changes toggle :root.motion-off / .compact-ui; the reduced-motion preference can change live.
-  new MutationObserver(wake).observe(root, { attributes: true, attributeFilter: ["class"] });
+  // Only a real change wakes it: classList.add/remove rewrite the attribute even when nothing changes, and a
+  // wake re-measures the page (forced layout, label placement), so a HUD writing the same classes every tick
+  // used to keep a slow machine's main thread busy on the menu.
+  const changedOnly = (read) => {
+    let seen = read();
+    return () => { const now = read(); if (now === seen) return; seen = now; wake(); };
+  };
+  new MutationObserver(changedOnly(() => root.className)).observe(root, { attributes: true, attributeFilter: ["class"] });
   reduced.addEventListener?.("change", wake);
-  new MutationObserver(wake).observe(briefing, { attributes: true, attributeFilter: ["hidden", "class"] });
+  new MutationObserver(changedOnly(() => `${briefing.hidden}|${briefing.className}`)).observe(briefing, { attributes: true, attributeFilter: ["hidden", "class"] });
   requestAnimationFrame(wake);
   return { measure, wake, frame: () => frame, layers: () => layersState };
 }

@@ -13,6 +13,10 @@ export function setupMinimap(S, A) {
     minimapFog = null;
 
   function minimap() {
+    // The title and briefing screens cover the HUD: nobody sees the minimap there, and drawing it six times a
+    // second cost a slow machine more than the rest of the menu's frame (2026-11-24, CI-like runs). The first HUD
+    // tick of a match draws it.
+    if (document.documentElement.classList.contains("in-briefing")) return;
     const {size:MAP_SIZE,half:HALF,grid:GRID}=S.sim.terrain;
     const c = $("minimap"),
       ctx = c.getContext("2d"),
