@@ -39,13 +39,25 @@ function behindFront(run, seconds) {
   return least;
 }
 
-test("Medics, Engineers and Supply wagons are sturdier; their prices stay", () => {
-  // Before: Medic 75 + 30 shield, Engineer 100 + 30, Supply wagon 240 + 30 (+43%, +38%, +37% in total).
-  assert.deepEqual([D.medic.hp, D.medic.shield, D.medic.cost], [95, 55, [100, 50]]);
-  assert.deepEqual([D.engineer.hp, D.engineer.shield, D.engineer.cost], [150, 30, [125, 50]]);
-  assert.deepEqual([D.wagon.hp, D.wagon.shield, D.wagon.cost], [340, 30, [150, 75]]);
+test("the player's Medics, Engineers and Supply wagons are sturdier; the computer's keep the old values; prices stay", () => {
+  // Owner rule: the buff must not make the computer stronger, so it is the player's side (team 0) only.
+  // Player: Medic 95 + 55 shield, Engineer 150 + 30, Supply wagon 340 + 30. Computer (the old values):
+  // Medic 75 + 30, Engineer 100 + 30, Supply wagon 240 + 30.
+  assert.deepEqual([D.medic.hp, D.medic.shield, D.medic.player_hp, D.medic.player_shield, D.medic.cost], [75, 30, 95, 55, [100, 50]]);
+  assert.deepEqual([D.engineer.hp, D.engineer.shield, D.engineer.player_hp, D.engineer.cost], [100, 30, 150, [125, 50]]);
+  assert.deepEqual([D.wagon.hp, D.wagon.shield, D.wagon.player_hp, D.wagon.cost], [240, 30, 340, [150, 75]]);
+  const s = new Simulation({ ai: false, map: "basin" });
+  const stats = (e) => [e.hp, e.maxHp, e.shield, e.maxShield];
+  for (const [type, mine, theirs] of [["medic", [95, 95, 55, 55], [75, 75, 30, 30]], ["engineer", [150, 150, 30, 30], [100, 100, 30, 30]], ["wagon", [340, 340, 30, 30], [240, 240, 30, 30]]]) {
+    assert.deepEqual(stats(s.spawn(type, 0, -30, 0, true, true)), mine, `player ${type}`);
+    assert.deepEqual(stats(s.spawn(type, 1, 30, 0, true, true)), theirs, `computer ${type}`);
+  }
+  // Saved: a player Medic keeps its health through a save and load.
+  const medic = s.entities.find((e) => e.type === "medic" && e.team === 0);
+  const loaded = restore(Simulation, s.serialize()).get(medic.id);
+  assert.deepEqual(stats(loaded), [95, 95, 55, 55]);
   // A Stalker's Steady aim (95 through shields) still drops a Medic in one shot: it is the healer hunter.
-  assert.ok(D.medic.hp <= D.stalker.damage);
+  assert.ok(D.medic.player_hp <= D.stalker.damage && D.medic.hp <= D.stalker.damage);
 });
 
 test("attack-move with the whole group: support stays behind the front, heals, and survives", () => {

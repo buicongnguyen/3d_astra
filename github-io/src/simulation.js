@@ -239,6 +239,10 @@ export class Simulation {
       work: 0,
       working: false,
     };
+    // Support units the player fields (team 0) are sturdier than the computer's (owner rule: the
+    // support health buff must not make the computer stronger): balance.json player_hp / player_shield.
+    if (team === 0 && d.player_hp) { e.maxHp = d.player_hp; e.hp = complete ? d.player_hp : 1; }
+    if (team === 0 && d.player_shield) { e.maxShield = d.player_shield; e.shield = complete ? d.player_shield : 0; }
     if (d.trains) e.trains = this.resolvedTrains(team,d.trains);
     this.traitSpawn(e);
     this.entities.push(e);

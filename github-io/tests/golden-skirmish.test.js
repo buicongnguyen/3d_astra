@@ -32,13 +32,17 @@ test("the idle all-Meridian match after 60 s", async (t) => {
 const AI = {
   "classic x1 normal": { options: { map: "classic", enemyCount: 1, aiSpeed: "normal" }, at: { 60: "baf36c17", 180: "8095a061", 300: "f117790c" }, end: "victory 211" },
   // highlands x2 relentless coalition, riverlands x2 fast and basin x3 fast, 180 and 300 s: Re-recorded 2026-11-24 (integration of faction depth + support units): Fast/Relentless AIs take doctrines and cast signature abilities, and Medic/Engineer/Supply wagon health rose (95 + 55 shield, 150, 340).
-  "highlands x2 relentless coalition": { options: { map: "highlands", enemyCount: 2, aiSpeed: "relentless", alliance: "coalition" }, at: { 60: "0aaa724a", 180: "822729ea", 300: "2284dd7a" }, end: "running 300" },
-  "riverlands x2 fast": { options: { map: "riverlands", enemyCount: 2, aiSpeed: "fast" }, at: { 60: "5948dbf7", 180: "2ad3ddcc", 300: "52b52e32" }, end: "running 300" },
+  // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
+  "highlands x2 relentless coalition": { options: { map: "highlands", enemyCount: 2, aiSpeed: "relentless", alliance: "coalition" }, at: { 60: "0aaa724a", 180: "7dc8a3a1", 300: "8cdd5c63" }, end: "running 300" },
+  // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
+  "riverlands x2 fast": { options: { map: "riverlands", enemyCount: 2, aiSpeed: "fast" }, at: { 60: "5948dbf7", 180: "2ad3ddcc", 300: "5f5edb45" }, end: "running 300" },
   // basin x3 fast, 300 s: Re-recorded 2026-11-24: Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x (not 6x) to flyers (commits 5e4c07c, 2e293ea) change long AI matches.
-  "basin x3 fast": { options: { map: "basin", enemyCount: 3, aiSpeed: "fast" }, at: { 60: "abede88b", 180: "7cbb444e", 300: "b7492107" }, end: "running 300" },
+  // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
+  "basin x3 fast": { options: { map: "basin", enemyCount: 3, aiSpeed: "fast" }, at: { 60: "abede88b", 180: "7cbb444e", 300: "94093bb2" }, end: "running 300" },
   "riverlands x3 normal, Sunward against mixed rivals": { options: { map: "riverlands", enemyCount: 3, aiSpeed: "normal", factions: skirmishSides("sunward", "mixed", 3, "riverlands"), capturePoints: true }, at: { 60: "1891bd2a", 180: "fe33e60d", 300: "fe33e60d" }, end: "defeat 154" },
   // riverlands x3 Sunward against mixed and dunes Ashfall against Veil: Re-recorded 2026-11-24 (integration of faction depth + support units + faction roster): Fast/Relentless AIs take doctrines and cast signature abilities; Medic/Engineer/Supply wagon health rose; Veil/Wardens cores train the new flyers and an Expanded Shield pylon trains the Bulwark (new trains lists and AI play).
-  "dunes x1 normal, Ashfall against Veil": { options: { map: "dunes", enemyCount: 1, aiSpeed: "normal", factions: skirmishSides("ashfall", "veil", 1, "dunes"), capturePoints: true }, at: { 60: "97ebb1f4", 180: "9053dd00", 300: "da1bd628" }, end: "running 300" },
+  // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
+  "dunes x1 normal, Ashfall against Veil": { options: { map: "dunes", enemyCount: 1, aiSpeed: "normal", factions: skirmishSides("ashfall", "veil", 1, "dunes"), capturePoints: true }, at: { 60: "97ebb1f4", 180: "9053dd00", 300: "34a72052" }, end: "running 300" },
 };
 // Re-recorded 2026-11-24 (roster): the Veil and Wardens Command cores also train their new flyers (Veil moth, Halo interceptor), and an Expanded Shield pylon trains the Bulwark: new trains lists in the hashed state, and AI play that can field them.
 const SHORT = [60, 180], LATE = 300;

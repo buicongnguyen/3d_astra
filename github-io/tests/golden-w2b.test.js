@@ -10,12 +10,15 @@ import { LONG, pin } from "./lib/golden.mjs";
 const EXPECTED = {
   "d-gorge": { result: "victory", lives: 2, stars: 1, wave: 6, hash: "d78d0600" },
   // Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
-  "d-longcrossing": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "76950a8a" },
-  "d-bridges": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "037ec059" },
+  // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
+  "d-longcrossing": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "9752f7e0" },
+  // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
+  "d-bridges": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "8e866709" },
   "d-switchback": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "0c5cf82f" },
   "d-fordwood": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "9a5d93d8" },
   // Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
-  "d-canyon": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "822967bb" },
+  // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
+  "d-canyon": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "d783b0f8" },
   "d-crossroads": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "a4f9cce5" },
 };
 const play = (id) => {

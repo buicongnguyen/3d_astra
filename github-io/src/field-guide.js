@@ -20,7 +20,7 @@ export const AIR_GUIDE = `<p>Flyer: it flies straight over water, walls and clif
 export function entryHTML(type, sim = null, team = 0) {
   const base = D[type], d = sim && base.trains ? {...base,trains:sim.resolvedTrains(team,base.trains)} : base;
   return `<div class="guide-hero">${portrait(type)}<h2>${d.name}</h2></div><p>${d.description}</p>
-    <h3>Base stats · level 1</h3><dl><dt>HP / shield</dt><dd>${d.hp} / ${d.shield}</dd>
+    <h3>Base stats · level 1</h3><dl><dt>HP / shield</dt><dd>${d.player_hp ?? d.hp} / ${d.player_shield ?? d.shield}</dd>
     <dt>Attack</dt><dd>${d.damage || 0}${d.damage ? ` per hit · every ${d.interval}s · range ${d.range}` : ' · cannot attack'}</dd>
     <dt>Cost</dt><dd>${d.cost[0]} alloy / ${d.cost[1]} energy</dd><dt>Time</dt><dd>${d.time}s</dd>
     ${d.pop ? `<dt>Supply / speed</dt><dd>${d.pop} / ${d.speed}</dd>` : ''}</dl>
