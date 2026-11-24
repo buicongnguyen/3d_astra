@@ -89,6 +89,19 @@ const paths = {
   research: '<path d="M8.5 2.5h7M10 2.5v6.5l-5.2 9.3A2 2 0 0 0 6.6 21h10.8a2 2 0 0 0 1.8-2.7L14 9V2.5"/><path class="pf" d="M7.4 14h9.2l2 3.8a1.6 1.6 0 0 1-1.4 2.3H6.8a1.6 1.6 0 0 1-1.4-2.3z"/>',
   // Eye with a slash: hidden from below (selection card, tactics-view mark).
   hidden: '<path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.6"/><path d="M4 20 20 4"/>',
+  // Faction signature abilities (2026-11-24): the wagon's Spur on (a horseshoe), the drone's Shield link
+  // (two linked shields) and the Shade's Shadow strike (three claw slashes).
+  horseshoe: '<path d="M6.5 20.5V11a5.5 5.5 0 0 1 11 0v9.5" stroke-width="3.2"/><path d="M4.5 20.5h4M15.5 20.5h4"/><circle class="pf" cx="8.4" cy="12" r="0.7"/><circle class="pf" cx="15.6" cy="12" r="0.7"/>',
+  linkshield: '<path class="pf" d="M8 3.5l5 1.8v4.2c0 3.2-2 5.4-5 6.8-3-1.4-5-3.6-5-6.8V5.3z"/><path d="M16 8l5 1.8V14c0 3.2-2 5.4-5 6.8-3-1.4-5-3.6-5-6.8"/><path d="M11 12.5h6" stroke-width="2"/>',
+  claw: '<path d="M5 20.5C8.5 15 11.5 9 13 3.5M10 21c3.2-5 5.8-10 7-15.5M15 21.2c2.4-3.8 4.2-7.6 5-11.7" stroke-width="2.3"/>',
+  // Doctrines (2026-11-24): Energy grid (a battery), Reserves (an arrow coming back), Field rations (a
+  // marching boot), Drill (rank chevrons), Tuned engines (a piston) and Repair crews (a spanner and a plus).
+  battery: '<rect x="3" y="7" width="16" height="10" rx="1.6"/><path d="M21 10.5v3" stroke-width="2.4"/><path class="pf" d="M5.5 9.5h4v5h-4zM10.5 9.5h4v5h-4z"/>',
+  refund: '<path d="M4 12a8 8 0 1 0 2.6-5.9"/><path d="M3.5 3.5v4.5H8"/><path class="pf" d="M12 7.5l3.2 4.5L12 16.5 8.8 12z"/>',
+  boot: '<path class="pf" d="M7 3h5v8.5l6.8 2.6c1.3.5 2.2 1.7 2.2 3.1V19H3.5v-4.5L7 12z"/><path d="M3.5 21.5h17.5"/>',
+  chevrons: '<path d="M5 10l7-5 7 5M5 15l7-5 7 5M5 20l7-5 7 5" stroke-width="2.3"/>',
+  engine: '<rect x="7" y="2.5" width="10" height="9" rx="1.2"/><path d="M12 11.5V16"/><circle cx="12" cy="18.5" r="3"/><path d="M4 7h3M17 7h3M9.5 5.5v3M14.5 5.5v3"/>',
+  crew: '<path d="M14.5 3.5a4.5 4.5 0 0 0-4.3 5.8L3.5 16a2.1 2.1 0 0 0 3 3l6.7-6.7a4.5 4.5 0 0 0 5.8-4.3l-2.6 2.6-2.8-.6-.6-2.8z"/><path d="M18.5 15v6M15.5 18h6" stroke-width="2.2"/>',
 };
 export function icon(name, cls = "") {
   return `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.logo}</svg>`;

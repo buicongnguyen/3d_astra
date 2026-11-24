@@ -519,3 +519,24 @@ Definition `ironsovereign`: 10,000 HP, 300 shield, speed 1.2, light gun 10 per 1
 Duel gates, Sunward Riders at 1,500 against each foe, 10 battles, Expanded minus Classic: Vanguard +0.27, Scrapper +0.36, Shade +0.31, Ranger 0.00. Expanded bench: docs/aaa/results/round2/w2a.md. No Wave-1 economy field was changed.
 ## Field command (W2-D)
 Opt-in AI plan, `rules.aiPlan = "field"` (final numbers, second pass). Against a turtling PlayBot (Meridian), AI Ashfall/Sunward, 3 maps x Normal/Fast, 900 s (11 of 12 cells read): Tank or Walker by 600 s in 10 of 11 (before 0 of 12; the miss is Sunward on Dunes Normal at 729 s); 5+ combat types by 900 s in 11 of 11 on the Classic roster (before 3 or 4); 6+ under Expanded in 8 of 12 (target 10 of 12, not met); median unspent energy about 200, rows 15 to 631 (before 1,800 to 2,200). Field round robin (120 matches) scores: Meridian 65, Ashfall 77, Sunward 19, Wardens 27, Veil 63; Field plus Expanded: 58, 77, 23, 29, 63. PlayBot win rate vs Field at Normal: 86% (Classic AI, same runs: 90%), above the 35 to 75% band; Classic was not tuned (owner decision O2). Think p99 1.253 ms (Classic scene) against 1.267 ms (+1.1%). See docs/aaa/results/round2/w2d.md.
+
+## Faction depth: signature abilities and doctrines (2026-11-24)
+Owner-approved answer to the AAA re-score (Factions 5.0, Depth 5.0): one signature ability per faction unit with no micro chores, and either/or upgrades that give energy a sink while keeping matches short.
+
+Signature abilities (`src/sim/content/signatures.js`, numbers in each unit's `ability`). All auto-cast; the player's side follows the Auto setting (on by default on phones), the computer's side casts them only in a skirmish at Fast or Relentless.
+
+| Unit (faction) | Ability | Effect | Cooldown | Auto-cast when |
+|---|---|---|---|---|
+| Supply wagon (Sunward) | Spur on | allies within 7 m move ×1.3 for 5 s (status `spurred`) | 30 s | 3+ friendly fighters within 7 m and a seen enemy within 16 m |
+| Sentinel drone (Wardens) | Shield link | it and allies within 6 m regain 40 shield at once | 30 s | 2+ shields within 6 m (its own counts) below half |
+| Shade (Veil) | Shadow strike | ×1.4 speed for 4 s; the first hit deals +60 damage, once | 25 s | hidden, with a seen enemy ground unit within 9 m |
+
+Doctrines (`src/sim/content/doctrines.js`, data in `balance.json` `doctrines`). At level 2, one pick per building for the match; instant, no queue. The computer picks only in a Fast or Relentless skirmish, once it has its pick's energy plus 250 to spare (so the Tank or Walker it saves for is never delayed: `tests/field-command.test.js`). Raiders take Reserves and Field rations, sieges Repair crews, everyone else Energy grid, Drill and Tuned engines.
+
+| Building | Option A | Option B |
+|---|---|---|
+| Command core | Energy grid: energy deliveries ×1.25 (50/100) | Reserves: a lost fighter returns 30% of its alloy (0/150) |
+| Barracks | Field rations: infantry ×1.12 speed (0/125) | Drill: Barracks recruits arrive one rank higher (0/175) |
+| Foundry | Tuned engines: ground vehicles and drones ×1.15 speed (0/150) | Repair crews: vehicles 5 s out of combat mend 1.5%/s (50/150) |
+
+Difficulty gate (`node tools/difficulty-check.mjs --jobs 4 --compare`, the bot buys no doctrine, so the AI's gain is measured alone), bot wins of 12: 1v1 Relaxed 12 → 12, Normal 12 → 12, Fast 11 → 11, Relentless 11 → 11; 1v2 Relaxed 7 → 7, Normal 2 → 2, Fast 0 → 0, Relentless 1 → 0 (Dunes, attack at 20: the one match that flipped). `npm run check:missions`: all targets met, every row identical to before.

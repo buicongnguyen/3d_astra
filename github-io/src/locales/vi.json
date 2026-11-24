@@ -1412,7 +1412,43 @@
     "Complete 10 optional objectives": "Hoàn thành 10 mục tiêu tùy chọn",
     "Chronicler": "Người ghi biên niên",
     "Finish a Faction Chronicle": "Hoàn thành một Biên niên phe",
-    "New Game+": "Chơi lại +"
+    "New Game+": "Chơi lại +",
+    "Spur on": "Thúc ngựa",
+    "Allies within 7 m move 30% faster for 5 seconds. Casts on its own when the army is near enemies.": "Quân ta trong 7 m di chuyển nhanh hơn 30% trong 5 giây. Tự dùng khi quân đội ở gần địch.",
+    "Shield link": "Liên kết khiên",
+    "At once, this drone and allies within 6 m regain 40 shield. Casts on its own when shields nearby run low.": "Ngay lập tức, máy bay này và quân ta trong 6 m hồi 40 khiên. Tự dùng khi khiên quanh đó sắp cạn.",
+    "Shadow strike": "Đòn bóng tối",
+    "Lunge 40% faster for 4 seconds; the first hit deals 60 extra damage. Casts on its own from hiding.": "Lao tới nhanh hơn 40% trong 4 giây; đòn đầu tiên gây thêm 60 sát thương. Tự dùng khi đang ẩn.",
+    "Spurred": "Được thúc",
+    "Strike": "Đòn",
+    "Link": "Liên kết",
+    "Energy grid": "Lưới năng lượng",
+    "Field rations": "Khẩu phần dã chiến",
+    "Drill": "Thao luyện",
+    "Tuned engines": "Động cơ tinh chỉnh",
+    "Repair crews": "Tổ sửa chữa",
+    "Energy +25%": "Năng lượng +25%",
+    "Loss refund": "Hoàn khi mất",
+    "March +12%": "Hành quân +12%",
+    "Rank +1": "Hạng +1",
+    "Engines +15%": "Động cơ +15%",
+    "Self-repair": "Tự sửa",
+    "Harvesters bring back 25% more energy for the rest of the match.": "Thợ mỏ mang về thêm 25% năng lượng đến hết trận.",
+    "Every fighter you lose returns 30% of its alloy cost.": "Mỗi quân chiến đấu bị mất hoàn lại 30% hợp kim của nó.",
+    "Infantry move 12% faster: those in the field now and every new one.": "Bộ binh di chuyển nhanh hơn 12%: cả quân đang ở chiến trường lẫn quân mới.",
+    "Fighters the Barracks trains arrive one rank higher: +8% damage and health.": "Quân do Doanh trại huấn luyện ra trận cao hơn một hạng: +8% sát thương và máu.",
+    "Vehicles and drones move 15% faster: those in the field now and every new one.": "Xe và máy bay canh gác di chuyển nhanh hơn 15%: cả xe đang ở chiến trường lẫn xe mới.",
+    "Vehicles out of combat for 5 seconds mend 1.5% of their health each second.": "Xe ngoài giao tranh 5 giây tự hồi 1.5% máu mỗi giây.",
+    "Energy grid online: Harvesters bring back 25% more energy.": "Lưới năng lượng hoạt động: Thợ mỏ mang về thêm 25% năng lượng.",
+    "Reserves ready: every fighter lost returns 30% of its alloy.": "Quân dự bị sẵn sàng: mỗi quân chiến đấu bị mất hoàn lại 30% hợp kim.",
+    "Field rations issued: infantry move 12% faster.": "Đã phát khẩu phần dã chiến: bộ binh di chuyển nhanh hơn 12%.",
+    "Drill begins: new Barracks recruits arrive one rank higher.": "Bắt đầu thao luyện: tân binh mới của Doanh trại ra trận cao hơn một hạng.",
+    "Engines tuned: vehicles move 15% faster.": "Đã tinh chỉnh động cơ: xe di chuyển nhanh hơn 15%.",
+    "Repair crews ready: vehicles mend themselves out of combat.": "Tổ sửa chữa sẵn sàng: xe tự sửa khi ngoài giao tranh.",
+    "or": "hoặc",
+    "Chosen for this match.": "Đã chọn cho trận này.",
+    "Pick one for this match: the other then stays locked.": "Chọn một cho trận này: lựa chọn kia sẽ bị khóa.",
+    "Invalid choice.": "Lựa chọn không hợp lệ."
   },
   "patterns": [
     [
@@ -2270,6 +2306,22 @@
     [
       "^Clear the (\\d+) Wyrmlings at the nest, then keep only your units in it for (\\d+) s to tame a Dune Wyrm \\(at most (\\d+) per side\\)\\. The nest regrows its guards (\\d+) s later\\. Relaxed rivals never use the Spire or the nest; Normal rivals only late in a match\\.$",
       "Diệt {1} Rồng cát non ở tổ, rồi chỉ để quân của bạn trong tổ {2} giây để thuần một Rồng cát (tối đa {3} con mỗi phe). Tổ mọc lại lính canh sau {4} giây. Đối thủ Chậm không bao giờ dùng Tháp hay tổ; đối thủ Thường chỉ dùng muộn trong trận."
+    ],
+    [
+      "^(.+) doctrine already chosen\\.$",
+      "Đã chọn học thuyết cho {1}."
+    ],
+    [
+      "^Upgrade (.+) to level (\\d+) to choose (.+)\\.$",
+      "Nâng {1} lên cấp {2} để chọn {3}."
+    ],
+    [
+      "^Finish building the (.+) first\\.$",
+      "Hãy xây xong {1} trước."
+    ],
+    [
+      "^Needs L(\\d+)\\.$",
+      "Cần cấp {1}."
     ]
   ]
 }

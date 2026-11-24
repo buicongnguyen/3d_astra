@@ -2,6 +2,12 @@
 
 ## Unreleased: Round A.2
 
+### Faction depth: signature abilities and either/or doctrines (owner approved)
+- Every faction's own ground unit now has an ability, cast on its own (no button needed on phones): Supply wagon (Sunward) **Spur on**, allies within 7 m move 30% faster for 5 s (cooldown 30 s); Sentinel drone (Wardens) **Shield link**, it and allies within 6 m regain 40 shield at once (30 s); Shade (Veil) **Shadow strike**, from hiding it lunges 40% faster for 4 s and its first hit deals 60 extra damage (25 s). Computer sides use them only in a Fast or Relentless skirmish.
+- Doctrines: at level 2 the Command core, Barracks and Foundry each offer two upgrades for the match, side by side; one tap picks and the other locks. Paid mostly in energy (the energy sink): Command core Energy grid (+25% energy, 50/100) or Reserves (30% of a lost fighter's alloy back, 0/150); Barracks Field rations (infantry +12% speed, 0/125) or Drill (recruits one rank higher, 0/175); Foundry Tuned engines (vehicles +15% speed, 0/150) or Repair crews (vehicles mend 1.5%/s out of combat, 50/150). Portrait phones show the pair in the order row beside Rally; computer sides take doctrines only in a Fast or Relentless skirmish.
+- Golden pins re-recorded (reason: Fast and Relentless skirmish AIs now take doctrines and cast the signature abilities): golden-skirmish highlands x2 Relentless, riverlands x2 Fast and basin x3 Fast at 180 and 300 s; golden-expanded Veil 300 and 500 s; golden-r4p1 fast 180 and 420 s. Relaxed, Normal, Defence and story pins did not move.
+- Difficulty gate (`tools/difficulty-check.mjs`, bot wins out of 12, before -> after): 1v1 Relaxed 12 -> 12, Normal 12 -> 12, Fast 11 -> 11, Relentless 11 -> 11; 1v2 Relaxed 7 -> 7, Normal 2 -> 2, Fast 0 -> 0, Relentless 1 -> 0 (within the gate's margin). `check:missions`: every row identical.
+
 ### HUD buttons stand out (owner request)
 - In a match the dock panels are darker and every button lighter with a 2 px brass edge (was 1.03:1 face against panel). Each tile carries a rail in the colour of its job: build amber, train mint, upgrade green, ability orange; the active stance or ability a gold rail.
 - Tiles you cannot afford show the short price in red-orange and a faded picture (still tappable); locked tiles are dark and grey.

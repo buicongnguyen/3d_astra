@@ -1412,7 +1412,43 @@
     "Complete 10 optional objectives": "선택 목표 10개 완료",
     "Chronicler": "연대기 기록자",
     "Finish a Faction Chronicle": "진영 연대기 하나 완료",
-    "New Game+": "뉴 게임+"
+    "New Game+": "뉴 게임+",
+    "Spur on": "박차",
+    "Allies within 7 m move 30% faster for 5 seconds. Casts on its own when the army is near enemies.": "7 m 안의 아군이 5초 동안 30% 더 빨리 이동합니다. 군대가 적 가까이 있으면 스스로 사용합니다.",
+    "Shield link": "보호막 연결",
+    "At once, this drone and allies within 6 m regain 40 shield. Casts on its own when shields nearby run low.": "즉시 이 드론과 6 m 안의 아군이 보호막을 40 회복합니다. 주변 보호막이 낮아지면 스스로 사용합니다.",
+    "Shadow strike": "그림자 일격",
+    "Lunge 40% faster for 4 seconds; the first hit deals 60 extra damage. Casts on its own from hiding.": "4초 동안 40% 더 빨리 돌진하고, 첫 공격이 피해를 60 더 줍니다. 숨어 있을 때 스스로 사용합니다.",
+    "Spurred": "박차 받음",
+    "Strike": "일격",
+    "Link": "연결",
+    "Energy grid": "에너지망",
+    "Field rations": "야전 식량",
+    "Drill": "교련",
+    "Tuned engines": "엔진 조율",
+    "Repair crews": "수리반",
+    "Energy +25%": "에너지 +25%",
+    "Loss refund": "손실 환급",
+    "March +12%": "행군 +12%",
+    "Rank +1": "계급 +1",
+    "Engines +15%": "엔진 +15%",
+    "Self-repair": "자가 수리",
+    "Harvesters bring back 25% more energy for the rest of the match.": "남은 경기 동안 채굴기가 에너지를 25% 더 가져옵니다.",
+    "Every fighter you lose returns 30% of its alloy cost.": "잃은 전투 유닛마다 합금 비용의 30%를 돌려받습니다.",
+    "Infantry move 12% faster: those in the field now and every new one.": "보병이 12% 더 빨리 이동합니다. 지금 전장에 있는 보병과 새 보병 모두.",
+    "Fighters the Barracks trains arrive one rank higher: +8% damage and health.": "병영에서 훈련한 전투 유닛이 한 계급 높게 나옵니다. 피해와 체력 +8%.",
+    "Vehicles and drones move 15% faster: those in the field now and every new one.": "차량과 드론이 15% 더 빨리 이동합니다. 지금 전장에 있는 것과 새것 모두.",
+    "Vehicles out of combat for 5 seconds mend 1.5% of their health each second.": "5초 동안 전투에서 벗어난 차량은 매초 체력의 1.5%를 회복합니다.",
+    "Energy grid online: Harvesters bring back 25% more energy.": "에너지망 가동: 채굴기가 에너지를 25% 더 가져옵니다.",
+    "Reserves ready: every fighter lost returns 30% of its alloy.": "예비대 준비: 잃은 전투 유닛마다 합금의 30%를 돌려받습니다.",
+    "Field rations issued: infantry move 12% faster.": "야전 식량 지급: 보병이 12% 더 빨리 이동합니다.",
+    "Drill begins: new Barracks recruits arrive one rank higher.": "교련 시작: 병영의 새 신병이 한 계급 높게 나옵니다.",
+    "Engines tuned: vehicles move 15% faster.": "엔진 조율 완료: 차량이 15% 더 빨리 이동합니다.",
+    "Repair crews ready: vehicles mend themselves out of combat.": "수리반 준비: 차량이 전투 밖에서 스스로 수리합니다.",
+    "or": "또는",
+    "Chosen for this match.": "이번 경기에 선택됨.",
+    "Pick one for this match: the other then stays locked.": "이번 경기에 하나를 고르세요. 다른 하나는 잠깁니다.",
+    "Invalid choice.": "잘못된 선택입니다."
   },
   "patterns": [
     [
@@ -2270,6 +2306,22 @@
     [
       "^Clear the (\\d+) Wyrmlings at the nest, then keep only your units in it for (\\d+) s to tame a Dune Wyrm \\(at most (\\d+) per side\\)\\. The nest regrows its guards (\\d+) s later\\. Relaxed rivals never use the Spire or the nest; Normal rivals only late in a match\\.$",
       "둥지의 새끼 웜 {1}마리를 처치한 뒤 {2}초 동안 아군만 둥지에 두면 듄 웜을 길들입니다(진영당 최대 {3}마리). 둥지 경비는 {4}초 뒤 다시 자랍니다. 느긋한 경쟁자는 첨탑과 둥지를 쓰지 않고, 보통 경쟁자는 경기 후반에만 씁니다."
+    ],
+    [
+      "^(.+) doctrine already chosen\\.$",
+      "{1}의 교리는 이미 골랐습니다."
+    ],
+    [
+      "^Upgrade (.+) to level (\\d+) to choose (.+)\\.$",
+      "{3}을(를) 고르려면 {1}을(를) 레벨 {2}(으)로 업그레이드하세요."
+    ],
+    [
+      "^Finish building the (.+) first\\.$",
+      "먼저 {1} 건설을 끝내세요."
+    ],
+    [
+      "^Needs L(\\d+)\\.$",
+      "레벨 {1} 필요."
     ]
   ]
 }
