@@ -192,7 +192,7 @@ export function setupBriefing(S, A) {
       $("hover-label").hidden = true;
       if (terrain) S.view?.setTerrain(S.sim.terrain);
       S.view?.setMission(S.look);
-      document.documentElement.style.setProperty("--team-hostile", teamColors(S.settings, S.look)[1]);
+      { const tc = teamColors(S.settings, S.look); document.documentElement.style.setProperty("--team-hostile", tc[1]); document.documentElement.style.setProperty("--team-friendly", tc[0]); }
       S.selected.clear();
       S.rememberedBuildings.clear();
       S.rememberedResources.clear();

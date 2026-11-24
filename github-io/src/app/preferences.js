@@ -4,7 +4,7 @@ import { $ } from "./dom.js";
 import { SettingsUI } from "../settings-ui.js";
 import { icon } from "../icons.js";
 import { localizeDOM, loadLocale, loadStory } from "../i18n.js";
-import { motionOffFor, palette, saveSettings } from "../settings.js";
+import { motionOffFor, saveSettings } from "../settings.js";
 import { teamColors } from "../faction-colors.js";
 import { saveRules } from "./rules-store.js";
 import { getTheme, setTheme } from "../theme-switch.js";
@@ -64,7 +64,7 @@ export function setupPreferences(S, A) {
     $("audio").title = S.muted ? "Enable sound" : "Mute sound";
     document.documentElement.style.setProperty(
       "--team-friendly",
-      palette(S.settings)[0],
+      teamColors(S.settings, S.look)[0],
     );
     document.documentElement.style.setProperty(
       "--team-hostile",

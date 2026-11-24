@@ -8,13 +8,13 @@ const LOADERS = {
 const NAMES = {vi: 'Vietnamese', ko: 'Korean'};
 let language = 'en';
 const normalize = text => text.trim().replace(/\s+/g, ' ').toLowerCase();
-const catalogs = Object.fromEntries(Object.keys(LOADERS).map(lang => [lang, {messages: new Map(), patterns: [], cache: new Map(), locale: null, story: null}]));
+const catalogs = Object.fromEntries(Object.keys(LOADERS).map(lang => [lang, {messages: new Map(), cased: new Map(), patterns: [], cache: new Map(), locale: null, story: null}]));
 // Each catalog is its own chunk: English players never download them. Browsers fetch one when
 // that language is first shown (loadLocale); Node (unit tests) loads them all up front so
 // translate() stays synchronous everywhere.
 function install(lang, catalog) {
   const c = catalogs[lang];
-  for (const [key, value] of Object.entries(catalog.messages)) c.messages.set(normalize(key), value);
+  for (const [key, value] of Object.entries(catalog.messages)) { c.messages.set(normalize(key), value); c.cased.set(key, value); }
   c.patterns = catalog.patterns.map(([source, target]) => [new RegExp(source, 'i'), target]);
   c.cache.clear();
 }
@@ -78,7 +78,9 @@ export function translate(text, locale = language, depth = 0) {
   if (!c || depth > 6 || !text || !/[a-z]/i.test(text)) return text;
   const {messages, patterns, cache} = c;
   if (cache.has(text)) return cache.get(text);
-  const source = text.trim(), exact = messages.get(normalize(source));
+  // A key written in exactly this case wins over the case-insensitive match: the boss state "OVERDRIVE"
+  // ("QUÁ TẢI") and the ability "Overdrive" ("Tăng tốc") are different words in Vietnamese.
+  const source = text.trim(), exact = c.cased.get(source.replace(/\s+/g, ' ')) ?? messages.get(normalize(source));
   let result = exact;
   if (exact && source === source.toUpperCase() && /[A-Z]{2}/.test(source)) result = exact.toUpperCase();
   if (result === undefined) {

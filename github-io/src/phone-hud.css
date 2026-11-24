@@ -913,3 +913,70 @@
   :root.compact-ui:not(.in-briefing) #stage > #notice { left: var(--edge-left, 8px) !important; max-width: min(340px, calc(100% - var(--side-width, 236px) - 32px)) !important; }
 }
 :root.compact-ui:not(.in-briefing) #stage:has(> #defence-guide:not([hidden])) > #notice { top: 136px !important; max-width: min(300px, calc(100% - 16px)) !important; }
+
+/* Ability names on phones (re-score 2026-11-25): a name never ends in "…". Portrait tiles give it two lines over the
+   charge count; landscape tiles (53-62 px) show the short phone name (tactics-card.js PHONE_NAME) over the status,
+   which was shown alone ("Ready 2/2"). Symbol-only tiles (Shield, Repair) keep their glyph. */
+@media (orientation: portrait) {
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) #commands.tactics-card > .ability-tile > .ability-name {
+    white-space: normal !important; text-overflow: clip !important; overflow-wrap: normal; word-break: normal; hyphens: none;
+    display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+    font: 700 11px/12px var(--font-ui) !important;
+  }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) #commands.tactics-card .ability-status { line-height: 12px; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card > .ability-tile:not(.symbol-only) > .icon { display: none !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card > .ability-tile:not(.symbol-only) > .ability-name {
+    display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+    max-width: 100%; white-space: normal !important; text-overflow: clip !important; overflow-wrap: normal; text-align: center;
+    position: static !important; font: 700 11px/12px var(--font-ui) !important; color: var(--kit-gold, #edc76f);
+  }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card > .ability-tile > .ability-status { font: 600 11px/12px var(--font-ui) !important; }
+}
+
+/* Defence tower card (re-score 2026-11-25). Landscape: the 184 px side sheet clipped every tile's second line (tier,
+   cost, sell value, aim mode) under its picture and covered the Next-wave card; the tiles drop the picture so both
+   lines fit 44 px, and the stats line (HP / Shield / ATK labels with their values cut off) gives way to the
+   tower's own stats below. Portrait: the stats were cut after two lines and Info & stats was squashed into an empty
+   bar under the heading; the dock grows one row for the stats and Info & stats is a 44 px button beside the name. */
+@media (min-aspect-ratio: 1.35) {
+  :root.compact-ui.in-defence:not(.in-briefing)[data-dock="selection"]:has(#commands .defence-stats) {
+    & #commands > .command-tile > :is(.icon, .portrait-art, .portrait, svg) { display: none !important; }
+    & #commands > .command-tile { display: flex !important; flex-direction: column; align-items: center; justify-content: center; height: auto !important; min-height: 44px; padding: 2px 3px !important; gap: 1px; }
+    & #commands > .command-tile > span { font: 700 11px/13px var(--font-ui) !important; white-space: nowrap; }
+    & #commands > .command-tile > small { display: block !important; font: 600 11px/12px var(--font-ui) !important; white-space: nowrap; }
+    & .selection-panel.has-entity :is(.unit-metrics, .selection-activity) { display: none !important; }
+    & .command-deck > .selection-panel.has-entity { height: 40px !important; min-height: 0 !important; }
+    & #commands .defence-stats p { font-size: 11px; line-height: 14px; }
+  }
+}
+@media (max-aspect-ratio: 1.35) {
+  :root.compact-ui.in-defence.no-units:not(.in-briefing)[data-dock="selection"]:has(.selection-panel.has-entity):has(#commands .defence-stats) {
+    --dock-height: 157px;
+    & .command-panel #commands { flex-wrap: wrap; row-gap: 2px; height: auto !important; max-height: none !important; overflow: visible !important; }
+    & .command-panel #commands > .command-tile { flex: 1 1 0; }
+    & #commands .defence-stats { flex: 1 0 100%; padding: 0 4px; }
+    & #commands .defence-stats p { font-size: 12px; line-height: 15px; }
+    & .selection-panel #selection-info { margin-right: 50px; }
+    & .selection-panel .order-buttons { position: absolute; top: 6px; right: 6px; width: 44px; height: 44px; margin: 0; padding: 0; border: 0; display: flex; }
+    & .selection-panel .order-buttons > button:not(#field-guide) { display: none; }
+    & .selection-panel .order-buttons #field-guide { display: grid; place-items: center; width: 44px; height: 44px; min-height: 44px; padding: 0; }
+    & .selection-panel .order-buttons #field-guide .order-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    & .selection-panel .order-buttons #field-guide > .icon { display: block !important; width: 20px; height: 20px; color: var(--kit-cyan); }
+    & .command-deck > .selection-panel { flex: none !important; height: 63px !important; }
+    & .command-deck > .command-panel { flex: none !important; height: 92px !important; overflow: visible; }
+  }
+}
+
+/* A lone train tile (an HQ that trains Harvesters only, e.g. a Chronicle core without air) kept growing to ~70% of the
+   card on phones; a training tile is never wider than a normal tile of a full row (re-score 2026-11-25). */
+:root.compact-ui:not(.in-briefing):not(.in-defence)[data-dock="selection"] .command-panel #commands > .command-tile.cat-train { max-width: 116px; }
+
+/* Vietnamese and Korean touch-row labels ("Thông tin", "Quân đội") ran past their 44-50 px buttons and were cut at the
+   screen edge: they may take two short lines at 11 px under a slightly smaller glyph (re-score 2026-11-25). */
+:root:is([lang="vi"], [lang="ko"]).compact-ui:not(.in-briefing) .touch-controls > button { padding-inline: 1px; gap: 1px; }
+:root:is([lang="vi"], [lang="ko"]).compact-ui:not(.in-briefing) .touch-controls > button > span {
+  display: block; max-width: 100%; font: 700 11px/12px var(--font-ui); white-space: normal; overflow-wrap: normal; text-align: center;
+}
+:root:is([lang="vi"], [lang="ko"]).compact-ui:not(.in-briefing) .touch-controls > button > .icon { width: 18px; height: 18px; }

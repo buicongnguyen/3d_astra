@@ -110,3 +110,24 @@ test("First watch: new data for level 1 only, the roster, and a Scout Runner tha
   for (const [, size] of css.matchAll(/font:\s*\d+\s+(\d+)px/g)) assert.ok(Number(size) >= 11, `font ${size}px`);
   for (const [, size] of css.matchAll(/font-size:\s*(\d+)px/g)) assert.ok(Number(size) >= 11, `font-size ${size}px`);
 });
+
+// Full army fairness (review 2026-11-25: one real-time Meridian run lost an attack-move at 0:03 while
+// the others won). Headless, every faction's Full army is worth about the same and an attack-move of
+// the whole army onto the rival core at 0:03 or 0:10 (an app tap on an unseen core is an attack-move)
+// wins for every faction (.tmp bench: 42-54 s for Meridian, 30-54 s for the others).
+test("Full army: every faction's army is worth about the same and an early attack-move wins", () => {
+  const worth = (e) => (D[e.type]?.cost?.[0] || 0) + (D[e.type]?.cost?.[1] || 0);
+  const values = {};
+  for (const player of ["meridian", "ashfall", "sunward", "wardens", "veil"]) for (const at of [3, 10]) {
+    const s = new Simulation({ map: QUICK_SETUP.map, aiSpeed: QUICK_SETUP.aiSpeed, enemyCount: 1, alliance: QUICK_SETUP.alliance, capturePoints: true, factions: skirmishSides(player, quickRival(player), 1, QUICK_SETUP.map), rules: { quick: "arena" } });
+    const army = () => s.entities.filter((e) => e.team === 0 && e.kind === "unit" && e.hp > 0 && e.type !== "worker");
+    while (s.time < at) { s.tick(TICK); s.events.length = 0; }
+    values[player] = army().reduce((n, e) => n + worth(e), 0);
+    const core = s.entities.find((e) => e.team === 1 && e.type === "hq");
+    s.command({ team: 0, type: "order", ids: army().map((e) => e.id), order: { type: "attackmove", x: core.x, z: core.z } });
+    while (s.time < 90 && !s.result) { s.tick(TICK); s.events.length = 0; }
+    assert.equal(s.result, "victory", `${player} vs ${quickRival(player)}, attack-move at ${at} s: ${s.result || "no result"} at ${Math.round(s.time)} s`);
+  }
+  const all = Object.values(values), low = Math.min(...all), high = Math.max(...all);
+  assert.ok(high / low < 1.15, `army values within 15%: ${JSON.stringify(values)}`);
+});

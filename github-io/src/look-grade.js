@@ -69,8 +69,14 @@ export const RIM = {
   strength: { value: GRADE.rim.strength.high },
   power: { value: GRADE.rim.power },
   color: new THREE.Color(GRADE.rim.color),
+  // A mission look's lift for models only (0 by day): each model lights a share of its own colour, so units and
+  // buildings stay readable on a night map while the ground, sky and water keep the dark (mission-look-view.js).
+  lift: { value: 0 },
 };
-export const setRimTier = (eco) => { RIM.strength.value = eco ? GRADE.rim.strength.eco : GRADE.rim.strength.high; };
+// `boost` is the mission look's rim lift (mission-look-view.js: night units keep a readable moonlit edge).
+let rimEco = false, rimBoost = 1;
+export const setRimTier = (eco) => { rimEco = !!eco; RIM.strength.value = (rimEco ? GRADE.rim.strength.eco : GRADE.rim.strength.high) * rimBoost; };
+export const setRimBoost = (boost = 1) => { rimBoost = boost > 0 ? boost : 1; setRimTier(rimEco); };
 
 // Adds the rim to a MeshStandardMaterial's shader. `color` is a THREE.Color: a Team material passes its team
 // colour (the uniform is per material); the baked body material passes nothing and gets the warm RIM colour.
@@ -79,11 +85,12 @@ export function rimShader(shader, color = null) {
   shader.uniforms.uRimStrength = RIM.strength;
   shader.uniforms.uRimPower = RIM.power;
   shader.uniforms.uRimColor = { value: color || RIM.color };
+  shader.uniforms.uModelLift = RIM.lift;
   shader.fragmentShader = shader.fragmentShader
-    .replace("#include <common>", "#include <common>\nuniform float uRimStrength;\nuniform float uRimPower;\nuniform vec3 uRimColor;")
+    .replace("#include <common>", "#include <common>\nuniform float uRimStrength;\nuniform float uRimPower;\nuniform vec3 uRimColor;\nuniform float uModelLift;")
     .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
 	{ float rimF = pow( 1.0 - clamp( normalize( normal ).z, 0.0, 1.0 ), uRimPower );
-	totalEmissiveRadiance += uRimColor * ( rimF * uRimStrength * ${color ? "1.4" : "1.0"} ); }`);
+	totalEmissiveRadiance += uRimColor * ( rimF * uRimStrength * ${color ? "1.4" : "1.0"} ) + diffuseColor.rgb * uModelLift; }`);
 }
 export function addTeamRim(material, hex) {
   const color = new THREE.Color(hex), before = material.onBeforeCompile;

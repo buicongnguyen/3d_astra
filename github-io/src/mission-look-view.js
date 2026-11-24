@@ -14,7 +14,7 @@
 // rain, stars and clouds still. Settings > Display > Weather Off drops the storm look entirely (viewLook).
 import * as THREE from "three";
 import { LOOKS, viewLook, flashAt, WEATHER } from "./mission-looks.js";
-import { installGrade, RIM } from "./look-grade.js";
+import { installGrade, RIM, setRimBoost } from "./look-grade.js";
 import GRADE from "./look-grade.json" with { type: "json" };
 import { lookOf } from "./visual-style.js";
 import { tintEdge } from "./map-edge.js";
@@ -114,6 +114,10 @@ export class MissionLook {
     // The warm rim turns moonlit (team rims keep their team colour).
     RIM.color.copy(RIM_DAY);
     if (def?.rim) RIM.color.lerp(target.set(def.rim), k);
+    // Units and buildings read at night (re-score 2026-11-25, m08): the rim on every model grows with the look's
+    // `rimBoost`, a moonlit edge on each silhouette; the ground, sky and grade keep the dark night mood.
+    setRimBoost(1 + ((def?.rimBoost ?? 1) - 1) * k);
+    RIM.lift.value = (def?.modelLift ?? 0) * k;
     // The map edge and void: one upload when the strength moves by a step (a storm's ramp is slow).
     const edgeKey = def?.edge ? `${gradeLook}|${Math.round(k * 50)}` : "day";
     if (edgeKey !== this.edgeKey) {
