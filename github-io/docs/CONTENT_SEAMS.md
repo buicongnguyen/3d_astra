@@ -126,7 +126,9 @@ id that a module registers, `useAbility` calls `use(sim, e, a, point)`:
   A buff never saves or restores health, shield, ranks or timers (`BUFF_PROTECTED` in
   `sim/content.js`; `hp`, `maxHp`, `baseHp`, `shield`, `rank`, ...): a promotion during the buff must
   keep its health. Changing one throws; use `guard` or a status' `taken` instead.
-- `{}` (none of the above): an **instant** ability; `use()` did the work.
+- `{}` (none of the above): an **instant** ability; `use()` did the work. `{ at: { x, z } }` is an
+  instant ability that names the point it acted on: the `ability` event carries it as `tx`/`tz` (the
+  Kite's Dive names the vehicle it hit, `sim/content/kite-dive.js`).
 - `use()` always reads the unit's own figures: when the unit casts again while its buff still runs (a
   cooldown shorter than the duration), that buff comes off first, as for the built-in timed abilities,
   and goes back on unchanged when `use()` answers `false` or `{}`. A timed buff needs a duration of more

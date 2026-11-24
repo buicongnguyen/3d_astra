@@ -57,7 +57,7 @@ export function updateTacticsCard(root, sim, entities, { compact = false, side =
       const sweep = g.fraction.toFixed(3);
       if (tile.dataset.cd !== sweep) { tile.dataset.cd = sweep; tile.style.setProperty("--cd", sweep); }
       const narrowGroup = groups.length >= 4 && g?.count > 1 && g.ready > 0;
-      setText(tile.querySelector(".ability-status"), narrowGroup ? `${g.ready}/${g.count}` : abilityStatus(g));
+      setText(tile.querySelector(".ability-status"), narrowGroup ? `${g.ready}/${g.count}` : abilityStatus(g, { compact }));
     }
   }
   const control = root.querySelector(".stance-control");

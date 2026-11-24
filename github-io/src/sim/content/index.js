@@ -26,6 +26,7 @@ import { signatures } from "./signatures.js";
 import { doctrines } from "./doctrines.js";
 import { ward } from "./ward.js";
 import { campaignCreatures } from "./campaign-creatures.js";
+import { kiteDive } from "./kite-dive.js";
 
 export const CONTENT = [
   suppression,
@@ -47,4 +48,5 @@ export const CONTENT = [
   doctrines,
   ward,
   campaignCreatures,
+  kiteDive,
 ];

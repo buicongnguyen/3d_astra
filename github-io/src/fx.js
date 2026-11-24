@@ -28,6 +28,9 @@ import { LOOKS as MOOD_LOOKS } from "./mission-looks.js";
 import { FxSprites } from "./fx-sprites.js";
 import { spriteSupport, spriteTracer, spriteHead, spriteImpact, spriteMuzzle, spriteSpark, spriteTrailPuff, spritesReady } from "./fx-kinds/sprite-fx.js";
 import { impactKind } from "./fx-sprites-data.js";
+// Kite Dive (sim/content/kite-dive.js): how long the Kite takes to fall into the vehicle (src/view.js flies its
+// model; the blast lands at the end).
+export const DIVE_SECONDS = 0.32;
 
 // Procedural sprite atlas: one 128 px cell per shape, white with alpha.
 function atlas() {
@@ -778,6 +781,17 @@ export class Effects {
       const target = { x: e.tx, z: e.tz, team: e.team };
       this.decal({ x: e.tx, z: e.tz }, 2.6, 1.2, target, CELL.ring, [...tint, 0.95], this.glow, 5, { hold: 0.4, y: 0.1 });
       this.particle(this.glow, { x: e.tx, y: 1.6, z: e.tz, cell: CELL.flare, s0: 1.6, s1: 0.3, life: 0.5, c0: [1, 1, 1, 0.9], c1: [...tint, 0], anchor: target });
+    } else if (e.ability === 'dive' && Number.isFinite(e.tx)) {
+      // Kite Dive: a hot streak from the Kite's height down into the vehicle, then the blast on it.
+      const fly = 3.5, from = { x: e.x, y: this.ground(e.x, e.z) + fly, z: e.z }, to = { x: e.tx, y: this.ground(e.tx, e.tz) + 0.7, z: e.tz };
+      const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z, len = Math.hypot(dx, dy, dz) || 1, target = { x: e.tx, z: e.tz, team: e.team };
+      if (this.motion) this.particle(this.glow, { ...from, lifted: true, vx: dx / DIVE_SECONDS, vy: dy / DIVE_SECONDS, vz: dz / DIVE_SECONDS, mode: STRETCH, ax: dx / len, ay: dy / len, az: dz / len,
+        length: Math.min(3, len), s0: 0.32, s1: 0.22, life: DIVE_SECONDS, cell: CELL.streak, c0: [...tint, 1], c1: [1, 0.95, 0.8, 0.6], anchor });
+      this.particle(this.glow, { ...from, lifted: true, cell: CELL.flare, s0: 1.2, s1: 0.3, life: 0.2, c0: [1, 1, 1, 0.8], c1: [...tint, 0], anchor });
+      this.timeline.push({ at: this.time + DIVE_SECONDS, run: () => {
+        this.explosion({ x: to.x, y: 0.7, z: to.z }, 1.1, target, true);
+        this.dust({ x: to.x, y: 0.3, z: to.z }, 4, target, 1.2, 1.2);
+      } });
     } else if (e.ability === 'barrage') {
       // The launch: a flash and a streak climbing out of the Breaker.
       this.particle(this.glow, { x: e.x, y: 1.8, z: e.z, cell: CELL.flare, s0: 2.2, s1: 2.6, life: 0.14, c0: WARM.flash, c1: [1, 0.55, 0.15, 0], anchor });
@@ -924,6 +938,8 @@ export class Effects {
   death(e) {
     const anchor = { x: e.x, z: e.z, team: e.team };
     const flyer = !e.building ? this.view.objects?.get?.(e.seed) : null;
+    // A Kite's Dive has no burst in the air: its streak and blast come with the ability event.
+    if (e.dive) return;
     if (flyer?.userData?.air) { this.airKill(e, flyer); return; }
     if (e.building) {
       // Collapse: staged blasts across the footprint, a rolling dust wall, a smoke column,

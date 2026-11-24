@@ -211,8 +211,9 @@ export const content = {
   //   { change: { key: value }, guard?, damage?, mech?, duration? } a timed buff for `duration`
   //   (default: the ability data's `duration`); every changed key is put back when it ends, and a key
   //   the unit did not have before is deleted, so the unit's keys are what they were before the cast;
-  //   {} (no change, guard, damage or mech): an instant ability (use() did the work).
-  // Returns true when the ability was used (useAbility then sets the cooldown and the event).
+  //   {} (no change, guard, damage or mech): an instant ability (use() did the work); { at: { x, z } }
+  //   also names the point it acted on, for the ability event's tx/tz.
+  // Returns true, or that point, when the ability was used (useAbility then sets the cooldown and the event).
   contentAbility(e, a, point) {
     // As for the built-in timed abilities, use() reads the unit's own figures: a buff still running (a
     // cooldown shorter than its duration) comes off first, and goes back on when this cast starts none.
@@ -222,7 +223,8 @@ export const content = {
     const r = ABILITIES[a.id].use(this, e, a, point);
     if (!r) { putBack(); return false; }
     const timed = r.change !== undefined || r.guard !== undefined || r.damage !== undefined || r.mech !== undefined;
-    if (!timed) { putBack(); return true; }
+    // An instant ability may name the point it acted on (`at`: { x, z }); the ability event carries it.
+    if (!timed) { putBack(); return r.at && Number.isFinite(r.at.x) && Number.isFinite(r.at.z) ? r.at : true; }
     // Without a length the buff would never end (its `until` would be NaN).
     const seconds = r.duration ?? a.duration;
     if (!(Number.isFinite(seconds) && seconds > 0)) throw new Error(`Ability "${a.id}": a timed buff needs a duration of more than 0 s (the ability data's or use()'s)`);
