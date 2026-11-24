@@ -155,6 +155,9 @@ await suite("offline", async () => {
     const during = await cacheKeys(page);
     assert.ok(during.includes(oldShell) && during.includes("fc-shell-testbuild2"), `both builds cached while open: ${during}`);
     assert.equal(await page.evaluate(() => !document.querySelector("#start").disabled), true, "the open page is untouched");
+    // 2026-11-24: the open page says so in a small toast (not tapped here: the hand-over below is the closed-tab path).
+    await page.waitForSelector("#update-toast", { state: "visible", timeout: TIMEOUT.step });
+    assert.match(await page.locator("#update-toast").innerText(), /New version · tap to reload/);
 
     // Reopen: the new worker activates and the old shell cache is removed; models are kept (same hash).
     // The waiting worker takes over once no game page is open. A closed page can stay a client for a

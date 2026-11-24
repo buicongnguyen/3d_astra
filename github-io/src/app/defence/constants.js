@@ -6,8 +6,16 @@ export const TIER_TINT = { 1: [1.08, 0.94, 0.8], 2: [0.92, 0.99, 1.1], 3: [1.25,
 export const RANK_TINT = { 1: [1.34, 1.18, 0.7], 2: [1.45, 1.3, 0.86] };
 // The commander's gold trim, on every part of its model.
 export const HERO_TINT = [1.9, 1.38, 0.34];
-// Pad colours: plain ground, rim (seen from the road), deep (hidden from it), and the picked pad.
-export const PAD_COLOR = { ground: [0.86, 0.8, 0.66], rim: [1.0, 0.56, 0.2], deep: [0.4, 0.55, 1.05], picked: [1.6, 1.42, 0.62] };
+// Pad colours: plain ground, rim (seen from the road), deep (hidden from it), the picked pad and (PC) the
+// empty pad under the mouse. 2026-11-24: ground is a warm stone, not near-white, so the brass build-spot
+// marker on top reads as "build here" rather than a decoration.
+export const PAD_COLOR = { ground: [0.46, 0.42, 0.36], rim: [0.95, 0.52, 0.2], deep: [0.38, 0.5, 0.95], picked: [1.6, 1.42, 0.62], hover: [0.95, 0.86, 0.62] };
+// The build-spot marker on every empty pad (pads-view.js): a brass ring and a small tower glyph, one
+// instanced draw. Its per-instance colours: plain, under the mouse, picked, and the guide's pad.
+export const MARK_COLOR = { idle: [1.0, 0.72, 0.28], hover: [1.35, 1.08, 0.5], picked: [1.5, 1.3, 0.62], guide: [0.6, 1.5, 1.15] };
+// The marker's glow (emissive intensity): a gentle pulse until the first pad of the match is crewed,
+// then steady. Never a pulse under reduced motion.
+export const MARK_GLOW = { base: 0.45, pulse: 0.5, speed: 0.0032 };
 // A crewed pad shows its garrison's tier around the tower's foot: bronze, steel, gold.
 export const TIER_PAD = { 1: [0.8, 0.46, 0.22], 2: [0.72, 0.84, 0.95], 3: [1.5, 1.08, 0.2] };
 // Short crew names for the tiles (the full garrison name is in garrisons.json).

@@ -30,6 +30,7 @@ export const HOLD_THE_RIVER = {
       { who: "vale", text: "No base today, Commander. Crew towers on the pads beside the roads and stop every column." },
     ],
     intel: [
+      "Defence: no base — crew the pads beside the road. Each pad takes one tower.",
       "Columns walk the roads over the west bridge, the ford and the east bridge. Each unit that gets through costs a life.",
       "Tap a pad to crew a tower: Rangers reach far, Breakers hit crowds, Anti-tank crews stop vehicles.",
       "The ford slows everything that wades it. A tower beside it gets more shots.",
@@ -53,7 +54,7 @@ export const HOLD_THE_RIVER = {
       { id: "n7", x: 5, z: -19 }, { id: "n8", x: -10, z: -19 },
       { id: "s1", x: -30, z: 12 }, { id: "s2", x: -11, z: 9 }, { id: "s3", x: 11, z: 9 },
       { id: "s4", x: 30, z: 12 }, { id: "s5", x: -6, z: 26 }, { id: "s6", x: 14, z: 26 },
-      { id: "s7", x: 0, z: 36 }, { id: "s8", x: 20, z: 34 },
+      { id: "s7", x: 0, z: 36 }, { id: "s8", x: 17, z: 32 },
     ],
     crews: ["ranger", "breaker", "antitank"],
     waves: [
@@ -129,11 +130,11 @@ export const HOLD_THE_VALLEY = {
       { id: "g1", x: -27.7, z: -27.9 }, { id: "g2", x: -20.5, z: -40.5 }, { id: "g3", x: 4.7, z: -25.8 },
       { id: "g4", x: -3.9, z: -12.8 }, { id: "g5", x: 10.9, z: -13.2 }, { id: "g6", x: -11.5, z: 10.1 },
       { id: "g7", x: 6, z: 13 }, { id: "g8", x: -4.5, z: 22.2 }, { id: "g9", x: 22.2, z: 18.4 },
-      { id: "g10", x: 13.5, z: 42.5 },
-      { id: "r1", x: -7.9, z: -34, high: "rim" }, { id: "d1", x: -10.4, z: -40.4, high: "deep" },
-      { id: "r2", x: -15.3, z: -14.5, high: "rim" }, { id: "d2", x: -19.4, z: -9.5, high: "deep" },
+      { id: "g10", x: 14.5, z: 39.5 },
+      { id: "r1", x: -7.9, z: -34, high: "rim" }, { id: "d1", x: -11.4, z: -38.9, high: "deep" },
+      { id: "r2", x: -15.3, z: -14.5, high: "rim" }, { id: "d2", x: -13.4, z: -6.5, high: "deep" },
       { id: "r3", x: 7.8, z: -1, high: "rim" }, { id: "d3", x: 14.6, z: -1.4, high: "deep" },
-      { id: "r4", x: 3.8, z: 27.1, high: "rim" }, { id: "d4", x: -0.5, z: 32.4, high: "deep" },
+      { id: "r4", x: 3.8, z: 27.1, high: "rim" }, { id: "d4", x: -1.5, z: 30.4, high: "deep" },
     ],
     crews: ["ranger", "breaker", "antitank"],
     waves: [

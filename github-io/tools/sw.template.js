@@ -13,8 +13,9 @@
 //                                   (the page versions the URL with ?v=<bytes>). manifest.json is
 //                                   network first; a fresh copy drops tracks it no longer lists.
 //
-// A new worker installs in the background and waits (no skipWaiting): an open match keeps the
-// files it started with, and the new version takes over the next time the game is opened.
+// A new worker installs in the background and waits: an open match keeps the files it started with,
+// and the new version takes over the next time the game is opened, or at once when the player taps
+// the page's "New version · tap to reload" toast (the page posts "skipWaiting", 2026-11-24).
 const BUILD = "__BUILD__";
 const MODELS = "__MODELS__";
 const PRECACHE = __PRECACHE__;
@@ -59,6 +60,7 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("message", (event) => {
   const data = event.data;
   if (data === "version") event.source?.postMessage({ type: "version", build: BUILD, models: MODELS });
+  if (data === "skipWaiting") self.skipWaiting();
   // The page lists its models once it has loaded; any the first visit did not pass through
   // this worker are fetched now, so the next visit (even offline) has all of them.
   if (data?.type === "models") {

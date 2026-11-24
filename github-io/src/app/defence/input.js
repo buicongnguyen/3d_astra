@@ -16,8 +16,22 @@ export function createInput(c) {
     const a = c[which];
     S.view.tactics?.showAim([hero], a.range, which === "barrage" ? a.radius : 2.5, null, false);
   }
+  // "Crew a pad" (2026-11-24): the best empty pad is picked as if tapped, and its crews open.
+  function crewPad() {
+    const pad = c.bestPad?.();
+    if (!pad) return;
+    S.defencePad = pad.id;
+    S.defenceBridge = null;
+    S.defenceSpot = null;
+    S.defenceDepot = false;
+    A.setSelection([]);
+    // A phone's framed camera already shows every pad; a desktop camera moves to it.
+    if (!phone()) S.view.focusOn(pad.x, pad.z);
+    picked();
+  }
   function act(action, el) {
     if (!Z.started || Z.paused || S.sim.result) return;
+    if (action === "crew-pad") { crewPad(); return; }
     if (action === "demolish") {
       const x = Number(el.dataset.crossing);
       if (S.sim.command({ team: 0, type: "demolish", crossing: x })) A.tone(220, 0.2);
@@ -179,5 +193,5 @@ export function createInput(c) {
     A.updateUI();
     return true;
   }
-  Object.assign(c, { setAim, act, branch, heroAct, build, armourAct, tap, picked });
+  Object.assign(c, { crewPad, setAim, act, branch, heroAct, build, armourAct, tap, picked });
 }

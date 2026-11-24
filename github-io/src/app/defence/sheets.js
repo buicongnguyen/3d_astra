@@ -8,11 +8,13 @@ export function createSheets(c) {
   // Called across modules: bound when every module exists.
   const setAim = (...a) => c.setAim(...a);
   const zoneName = (zone) => ZONE_NAMES[S.sim.missionDef.id]?.[zone] || "Build zone";
+  // Reach in metres to one decimal (short-reach crews gain half metres per tier since 2026-11-24).
+  const metres = (r) => Math.round(r * 10) / 10;
   // ---------------------------------------------------------------- Command card sheets
   function crewTile(crew, index) {
     const type = S.sim.crewType(crew), g = GARRISONS.crews[crew], cost = S.sim.buildCost(crew), k = key(index);
     const stats = S.sim.garrisonStats(crew, 1);
-    return `<button class="command-tile defence-crew" data-defence-crew="${crew}" data-tier="1"${k ? ` data-hotkey="${k}"` : ""} aria-label="${g.name}, ${cost} alloy" title="${k ? `${k} · ` : ""}${g.name} · ${CREW_ROLE[crew]} · ${cost} alloy · ${Math.round(stats.range)} m">${kbd(k)}${hasPortrait(type) ? portrait(type) : icon(D[type]?.icon || "tower")}<span>${CREW_LABEL[crew]}</span><small><b class="alloy-text" translate="no">${cost}</b></small></button>`;
+    return `<button class="command-tile defence-crew" data-defence-crew="${crew}" data-tier="1"${k ? ` data-hotkey="${k}"` : ""} aria-label="${g.name}, ${cost} alloy" title="${k ? `${k} · ` : ""}${g.name} · ${CREW_ROLE[crew]} · ${cost} alloy · ${metres(stats.range)} m">${kbd(k)}${hasPortrait(type) ? portrait(type) : icon(D[type]?.icon || "tower")}<span>${CREW_LABEL[crew]}</span><small><b class="alloy-text" translate="no">${cost}</b></small></button>`;
   }
   function padSheet(pad) {
     const def = S.sim.missionDef.defence;
@@ -72,12 +74,12 @@ export function createSheets(c) {
     const rank = t.branchRank || 0, ranks = t.branch ? g.branches[t.branch].ranks?.length || 0 : 0, nextRank = t.branch ? S.sim.rankOf(t.crew, t.branch, rank) : null;
     $("command-label").textContent = "GARRISON";
     $("command-context").textContent = choose ? "CHOOSE ONE" : ranks ? `RANK ${rank} / ${ranks}` : `TIER ${t.tier} / 3`;
-    const info = `<button class="command-tile defence-info" data-defence-act="focus" data-tier="${t.tier}"${t.branch ? ` data-branch="${t.branch}"` : ""} data-hotkey="${key(0)}" title="${key(0)} · ${g.name} · tier ${t.tier}${branchName ? ` · ${branchName}` : ""} · ${Math.round(t.range)} m">${kbd(key(0))}${hasPortrait(type) ? portrait(type) : icon("tower")}<span>${CREW_LABEL[t.crew]}</span><small>${branchName ? `<b>${branchName}</b>${rank ? `<i class="defence-rank-pips" data-rank="${rank}">${"<i></i>".repeat(rank)}</i>` : ""}` : `<span>Tier</span> <b translate="no">${t.tier}</b>`}</small></button>`;
+    const info = `<button class="command-tile defence-info" data-defence-act="focus" data-tier="${t.tier}"${t.branch ? ` data-branch="${t.branch}"` : ""} data-hotkey="${key(0)}" title="${key(0)} · ${g.name} · tier ${t.tier}${branchName ? ` · ${branchName}` : ""} · ${metres(t.range)} m">${kbd(key(0))}${hasPortrait(type) ? portrait(type) : icon("tower")}<span>${CREW_LABEL[t.crew]}</span><small>${branchName ? `<b>${branchName}</b>${rank ? `<i class="defence-rank-pips" data-rank="${rank}">${"<i></i>".repeat(rank)}</i>` : ""}` : `<span>Tier</span> <b translate="no">${t.tier}</b>`}</small></button>`;
     // Tier 3 without a branch: the two branches side by side, gold like the tier they crown.
     const rankTile = `<button class="command-tile defence-rank" data-defence-act="rank" data-tier="3" data-rank="${rank}" data-hotkey="${key(1)}" ${nextRank ? "" : "disabled"} aria-label="${nextRank ? `Rank ${rank + 1}, ${nextRank.cost} alloy` : "Top rank"}" title="${key(1)} · ${nextRank ? `Rank ${rank + 1}: ${RANK_TEXT[t.branch]?.[rank] || ""} · ${nextRank.cost} alloy` : "Top rank"}">${kbd(key(1))}${icon("rapid")}<span>${nextRank ? "Rank up" : "Top rank"}</span><small>${nextRank ? `<b class="alloy-text" translate="no">${nextRank.cost}</b>` : icon("check")}</small></button>`;
     const middle = ranks ? rankTile : choose
       ? Object.entries(g.branches).map(([id, b], i) => `<button class="command-tile defence-branch" data-defence-branch="${id}" data-tier="3" data-hotkey="${key(i + 1)}" aria-label="${b.name}, ${b.cost} alloy" title="${key(i + 1)} · ${b.name}: ${BRANCH_TEXT[id]} · ${b.cost} alloy">${kbd(key(i + 1))}${icon(i ? "crosshair" : "bolt")}<span>${b.name}</span><small><b class="alloy-text" translate="no">${b.cost}</b></small></button>`).join("")
-      : `<button class="command-tile defence-upgrade" data-defence-act="upgrade" data-tier="${top ? 3 : t.tier + 1}" data-hotkey="${key(1)}" ${top ? "disabled" : ""} aria-label="${top ? "Top tier" : `Upgrade to tier ${t.tier + 1}, ${cost} alloy`}" title="${key(1)} · ${top ? "Top tier" : `Tier ${t.tier + 1}: ${Math.round(next.damage)} damage, ${Math.round(next.range)} m · ${cost} alloy`}">${kbd(key(1))}${icon("bolt")}<span>${top ? "Top tier" : "Upgrade"}</span><small>${top ? icon("check") : `<b class="alloy-text" translate="no">${cost}</b>`}</small></button>`;
+      : `<button class="command-tile defence-upgrade" data-defence-act="upgrade" data-tier="${top ? 3 : t.tier + 1}" data-hotkey="${key(1)}" ${top ? "disabled" : ""} aria-label="${top ? "Top tier" : `Upgrade to tier ${t.tier + 1}, ${cost} alloy`}" title="${key(1)} · ${top ? "Top tier" : `Tier ${t.tier + 1}: ${Math.round(next.damage)} damage, ${metres(next.range)} m · ${cost} alloy`}">${kbd(key(1))}${icon("bolt")}<span>${top ? "Top tier" : "Upgrade"}</span><small>${top ? icon("check") : `<b class="alloy-text" translate="no">${cost}</b>`}</small></button>`;
     const sellKey = key(choose ? 3 : 2), aimKey = key(choose ? 4 : 3), aimNow = t.aim || "near", tiles = choose ? 5 : 4;
     const aimTile = `<button class="command-tile defence-aim" data-defence-aim="${nextAim(t)}" data-hotkey="${aimKey}" title="${aimKey} · Aim: ${AIM_TEXT[aimNow]} Tap to change." aria-label="Aim: ${AIM_LABEL[aimNow]}">${kbd(aimKey)}${icon("crosshair")}<span>Aim</span><small>${AIM_LABEL[aimNow]}</small></button>`;
     $("commands").innerHTML = `<i hidden data-defence-sheet data-tiles="${tiles}" data-key="t:${t.id}:${t.tier}:${t.branch || ""}:${rank}:${t.aim || ""}"></i>${info}${middle}
@@ -93,12 +95,12 @@ export function createSheets(c) {
   function statsBlock(t, choose) {
     const sim = S.sim, now = sim.garrisonStats(t.crew, t.tier, t.team, t.branch || null, t.branchRank || 0), dps = (s) => s.damage / s.interval;
     const num = (n, d = 0) => `<b translate="no">${(Math.round(n * 10 ** d) / 10 ** d).toString()}</b>`;
-    const line1 = `${num(dps(now), 0)} <span>dps</span> · ${num(now.range, 0)} <span>m</span> · ×${num(now.mechanical_bonus || 1, 1)} <span>vs armour</span> · <span>Air</span>: <span>${now.hits_air ? "yes" : "no"}</span>`;
+    const line1 = `${num(dps(now), 0)} <span>dps</span> · ${num(now.range, 1)} <span>m</span> · ×${num(now.mechanical_bonus || 1, 1)} <span>vs armour</span> · <span>Air</span>: <span>${now.hits_air ? "yes" : "no"}</span>`;
     let next = null;
     if (!t.branch && t.tier < 3) next = sim.garrisonStats(t.crew, t.tier + 1, t.team);
     else if (t.branch && sim.rankOf(t.crew, t.branch, t.branchRank || 0)) next = sim.garrisonStats(t.crew, 3, t.team, t.branch, (t.branchRank || 0) + 1);
     const sign = (n) => (n >= 0 ? "+" : "−");
-    const line2 = next && !choose ? `<p><span>Next</span>: ${sign(dps(next) - dps(now))}${num(Math.abs(dps(next) - dps(now)), 0)} <span>dps</span> · ${sign(next.range - now.range)}${num(Math.abs(next.range - now.range), 0)} <span>m</span> · ${sign(next.maxHp - now.maxHp)}${num(Math.abs(next.maxHp - now.maxHp), 0)} <span>HP</span></p>` : "";
+    const line2 = next && !choose ? `<p><span>Next</span>: ${sign(dps(next) - dps(now))}${num(Math.abs(dps(next) - dps(now)), 0)} <span>dps</span> · ${sign(next.range - now.range)}${num(Math.abs(next.range - now.range), 1)} <span>m</span> · ${sign(next.maxHp - now.maxHp)}${num(Math.abs(next.maxHp - now.maxHp), 0)} <span>HP</span></p>` : "";
     return `<div class="defence-stats" data-defence-stats><p>${line1}</p>${line2}</div>`;
   }
   function heroSheet(hero) {
@@ -134,12 +136,40 @@ export function createSheets(c) {
     $("command-label").textContent = "DEFENCE";
     $("command-context").textContent = "PADS";
     const zones = !!S.sim.missionDef.defence.zones?.length, guided = !!c.guideActive?.();
+    // 2026-11-24: one tap picks the best empty pad and opens its crews (no base in Defence: the pads are
+    // the whole build). Off when every pad is crewed.
+    const free = !!c.freePad?.();
+    const crewPad = `<button class="command-tile defence-crew-pad" data-defence-act="crew-pad" data-hotkey="${key(0)}"${free ? "" : " disabled"} aria-label="Crew a pad" title="${key(0)} · Crew a pad: picks the best empty pad beside the road and opens its crews">${kbd(key(0))}${icon("tower")}<span>Crew a pad</span><small>${free ? icon("arrow") : icon("check")}</small></button>`;
     // R3-E: the guided first build takes over the hint while it runs.
-    $("commands").innerHTML = guided ? `<i hidden data-defence-sheet data-key="none:g"></i><div class="tactical-hint defence-hint" data-guide-hint>${icon("tower")}<strong>Your first tower</strong><p>Tap the glowing pad beside the road, then pick a crew.</p></div>`
-      : `<i hidden data-defence-sheet data-key="none"></i><div class="tactical-hint defence-hint">${icon("tower")}<strong>Crew the pads</strong><p>${zones ? "Tap a pad, or anywhere in a marked field, then pick a crew. Tap a tower to upgrade or sell it." : "Tap a pad beside the road, then pick a crew. Tap a tower to upgrade or sell it."}</p></div>`;
+    $("commands").innerHTML = guided ? `<i hidden data-defence-sheet data-key="none:g:${free}"></i>${crewPad}<div class="tactical-hint defence-hint" data-guide-hint>${icon("tower")}<strong>Your first tower</strong><p>Tap the glowing pad beside the road, then pick a crew.</p></div>`
+      : `<i hidden data-defence-sheet data-key="none:${free}"></i>${crewPad}<div class="tactical-hint defence-hint">${icon("tower")}<strong>Crew the pads</strong><p>${zones ? "Tap a pad, or anywhere in a marked field, then pick a crew. Tap a tower to upgrade or sell it." : "No base here: tap a pad beside the road, then pick a crew. Tap a tower to upgrade or sell it."}</p></div>`;
     $("command-hint").textContent = "";
   }
+  // Phones: with nothing picked the dock is folded away (the road stays in view), so "Crew a pad" is a
+  // small button of its own in the free bottom-right corner (2026-11-24). Made at the start of a match
+  // (so the phone framing keeps the pads out from under it), shown only while nothing is picked.
+  function ensureCrewFab() {
+    if (ui.crewFab?.isConnected) return ui.crewFab;
+    const b = document.createElement("button");
+    b.type = "button";
+    b.id = "defence-crew-fab";
+    b.hidden = true;
+    b.setAttribute("aria-label", "Crew a pad");
+    b.title = "Crew a pad: picks the best empty pad beside the road and opens its crews";
+    b.innerHTML = `${icon("tower")}<span>Crew a pad</span>`;
+    b.addEventListener("click", () => { if (Z.started && !Z.paused && !S.sim.result) c.crewPad?.(); });
+    $("stage").append(b);
+    ui.crewFab = b;
+    return b;
+  }
+  function paintCrewFab(es) {
+    const b = ui.crewFab;
+    if (!b?.isConnected) return;
+    const show = c.phone() && Z.started && !S.sim.result && !es.length && !S.defencePad && S.defenceBridge === null && !S.defenceSpot && !S.defenceDepot && !ui.aim && !!c.freePad?.();
+    if (b.hidden === show) b.hidden = !show;
+  }
   function sheet(es) {
+    paintCrewFab(es);
     const tower = es.length === 1 && es[0].crew && es[0].team === 0 ? es[0] : null, hero = es.length === 1 && es[0].hero ? es[0] : null, squad = selectedSquad(es);
     if (tower) S.defencePad = tower.pad;
     // Anything else picked, or the picked pad's tower deselected: no pad.
@@ -151,7 +181,7 @@ export function createSheets(c) {
     // 0.23: a spot in a build zone, an armour squad, the armour depot.
     const spot = !es.length && !pad && bridge === null ? S.defenceSpot : null, depot = !es.length && !pad && !spot && bridge === null && S.defenceDepot && !!S.sim.armourRules();
     const lead = squad ? S.sim.armourUnits(squad)[0] : null;
-    const k = tower ? `t:${tower.id}:${tower.tier}:${tower.branch || ""}:${tower.branchRank || 0}:${tower.aim || ""}` : hero ? `h:${hero.id}:${ui.aim || ""}` : squad ? `a:${squad}:${S.sim.armourModeOf(squad)}:${es.length}:${lead?.squadRank || 1}${lead?.squadBranch || ""}${lead?.combined ? "+c" : ""}` : pad ? `p:${pad.id}` : bridge !== null ? `b:${bridge}:${S.sim.crossingState(bridge)}` : spot ? `z:${spot.zone}:${spot.x}:${spot.z}` : depot ? "d" : c.guideActive?.() ? "none:g" : "none";
+    const k = tower ? `t:${tower.id}:${tower.tier}:${tower.branch || ""}:${tower.branchRank || 0}:${tower.aim || ""}` : hero ? `h:${hero.id}:${ui.aim || ""}` : squad ? `a:${squad}:${S.sim.armourModeOf(squad)}:${es.length}:${lead?.squadRank || 1}${lead?.squadBranch || ""}${lead?.combined ? "+c" : ""}` : pad ? `p:${pad.id}` : bridge !== null ? `b:${bridge}:${S.sim.crossingState(bridge)}` : spot ? `z:${spot.zone}:${spot.x}:${spot.z}` : depot ? "d" : `${c.guideActive?.() ? "none:g" : "none"}:${!!c.freePad?.()}`;
     const marker = $("commands").querySelector("[data-defence-sheet]");
     if (marker?.dataset.key !== k) {
       $("commands").classList.remove("tactics-card");
@@ -246,5 +276,5 @@ export function createSheets(c) {
         ? `<div class="selection-empty defence-panel" data-bridge="${bridge}">${icon("barrage")}<div><h3>${bridge < 0 ? "West bridge" : "East bridge"}</h3><p>Blow it: the waves on this road turn to another crossing.</p></div></div>`
         : `<div class="selection-empty defence-panel">${icon("shield")}<div><h3>${S.sim.missionDef.title}</h3><p>${foe ? `<span>${foe.name}</span> · ` : ""}<span>Wave</span> <b translate="no">${st.endless ? st.wave : `${st.wave}/${st.waves}`}</b> · <b translate="no">${st.lives}</b> <span>lives</span></p><p>${S.sim.missionDef.defence.zones?.length ? "Tap a pad or a marked field to crew a tower." : "Tap a pad beside the road to crew a tower."}</p></div></div>`;
   }
-  Object.assign(c, { crewTile, padSheet, zoneSheet, zoneWhy, armourSheet, depotSheet, towerSheet, nextAim, statsBlock, heroSheet, bridgeSheet, bridgeNote, emptySheet, sheet, burst, info });
+  Object.assign(c, { ensureCrewFab, crewTile, padSheet, zoneSheet, zoneWhy, armourSheet, depotSheet, towerSheet, nextAim, statsBlock, heroSheet, bridgeSheet, bridgeNote, emptySheet, sheet, burst, info });
 }

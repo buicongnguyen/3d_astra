@@ -8,18 +8,22 @@ import { playDefence } from "../tools/defence-bot.mjs";
 import { LONG, pin } from "./lib/golden.mjs";
 
 const EXPECTED = {
-  "d-gorge": { result: "victory", lives: 2, stars: 1, wave: 6, hash: "d78d0600" },
+  // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
+  "d-gorge": { result: "victory", lives: 3, stars: 1, wave: 6, hash: "c6eb7580" },
   // Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
   // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
-  "d-longcrossing": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "9752f7e0" },
+  // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
+  "d-longcrossing": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "920ae008" },
   // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
-  "d-bridges": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "8e866709" },
-  "d-switchback": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "0c5cf82f" },
-  "d-fordwood": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "9a5d93d8" },
+  // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
+  "d-bridges": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "896a245e" },
+  "d-switchback": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "9422ae3b" },
+  "d-fordwood": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "00cb6f5d" },
   // Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
   // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
-  "d-canyon": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "d783b0f8" },
-  "d-crossroads": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "a4f9cce5" },
+  // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
+  "d-canyon": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "46329cc3" },
+  "d-crossroads": { result: "victory", lives: 5, stars: 1, wave: 6, hash: "5d866cc1" },
 };
 const play = (id) => {
   const r = playDefence(defenceVariant(DEFENCE_LEVELS.find((l) => l.id === id), { variant: "heroic" }), {});
