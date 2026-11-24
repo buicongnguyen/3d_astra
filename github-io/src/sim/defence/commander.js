@@ -17,6 +17,8 @@ export const commander = {
     e.name = c.name;
     e.hp = e.maxHp = Math.round(D[type].hp * c.hp);
     this.setBaseHp(e);
+    // Its own shield (owner, 2026-11-25: 500, was the tank's 100); it recharges like any unit shield.
+    if (c.shield > 0) e.shield = e.maxShield = c.shield;
     e.damage = D[type].damage * c.damage;
     e.interval = D[type].interval * c.interval;
     e.speed = c.speed;

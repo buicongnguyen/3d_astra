@@ -56,7 +56,7 @@
       } }
   },
   "commander": {
-    "name": "Field commander", "slot": "tank", "hp": 1.8, "damage": 0.8, "speed": 4.2, "interval": 1, "respawn": 20,
+    "name": "Field commander", "slot": "tank", "hp": 1.8, "shield": 500, "damage": 0.8, "speed": 4.2, "interval": 1, "respawn": 20,
     "barrage": { "cooldown": 40, "range": 20, "delay": 1.5, "radius": 4.5, "damage": 110 },
     "reinforce": { "cooldown": 35, "range": 20, "count": 3, "slot": "vanguard", "seconds": 20 }
   },

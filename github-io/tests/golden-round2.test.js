@@ -27,16 +27,16 @@ test("Expanded plus Field command, four AI factions, 300 s", LONG, () => {
 
 const heroic = (id) => { const r = playDefence(defenceVariant(DEFENCE_LEVELS.find((l) => l.id === id), { variant: "heroic" }), {}); return { result: r.result, lives: r.lives, wave: r.wave, hash: r.sim.hash() }; };
 // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
-test("Heroic d-gorge", () => pin("round2 heroic d-gorge", heroic("d-gorge"), { result: "victory", lives: 3, wave: 6, hash: "c6eb7580" }));
+test("Heroic d-gorge", () => pin("round2 heroic d-gorge", heroic("d-gorge"), { result: "victory", lives: 3, wave: 6, hash: "c282f490" }));
 // Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
 // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
 // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
-test("Heroic d-longcrossing", () => pin("round2 heroic d-longcrossing", heroic("d-longcrossing"), { result: "victory", lives: 5, wave: 6, hash: "920ae008" }));
+test("Heroic d-longcrossing", () => pin("round2 heroic d-longcrossing", heroic("d-longcrossing"), { result: "victory", lives: 5, wave: 6, hash: "a87e6430" }));
 
 test("m11c Hold the Keystone Roads, DefenceBot, 120 s", () => {
   const r = playDefence(resolveMission(HOLD_THE_ROADS, null), { difficulty: "standard", limit: 120 });
   // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
-  pin("round2 m11c 120", { wave: r.wave, lives: r.lives, hash: r.sim.hash() }, { wave: 2, lives: 20, hash: "89b9a64c" });
+  pin("round2 m11c 120", { wave: r.wave, lives: r.lives, hash: r.sim.hash() }, { wave: 2, lives: 20, hash: "17daacde" });
 });
 // R3-A (AAA round 3) moved it: the Field command census and economy (old "4cce2935", R3-A "e4913c66").
 // Difficulty guard (Wave 1b, owner 2026-11-21): census from 300 s and no field economy, so 300 s is back to r3-base
