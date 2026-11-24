@@ -44,3 +44,31 @@ test("settings: Unit motion defaults on and survives a save", () => {
   assert.equal(normalize({ version: 1, unitMotion: false }).unitMotion, false);
   assert.equal(normalize({ version: 1 }).unitMotion, true);
 });
+
+test("rigged batches: growing frees only the old pose buffer, never the shared vertex data", async () => {
+  const THREE = await import("three");
+  const { EntityBatches } = await import("../src/entity-batches.js");
+  const { tagBone } = await import("../src/unit-rig.js");
+  const geometry = tagBone(new THREE.BoxGeometry(1, 1, 1), 0, 0.95, 0.47, 0);
+  const material = new THREE.MeshStandardMaterial();
+  const batches = new EntityBatches(new THREE.Scene());
+  const parts = Array.from({ length: 40 }, () => { const m = new THREE.Mesh(geometry, material); m.updateMatrixWorld(); return m; });
+  const released = [];
+  batches.begin();
+  batches.add(parts[0]);
+  let wrapper = [...batches.batches.values()][0].geometry;
+  const watch = (g) => g.addEventListener("dispose", () => released.push(Object.keys(g.attributes).concat(g.index ? ["index"] : [])));
+  watch(wrapper);
+  for (let i = 1; i < 40; i++) {
+    batches.add(parts[i]);
+    const now = [...batches.batches.values()][0].geometry;
+    if (now !== wrapper) { wrapper = now; watch(now); }
+  }
+  batches.end();
+  assert.equal(released.length, 2, "16 -> 32 -> 64: two old wrappers released");
+  for (const names of released) assert.deepEqual(names, ["aMotion"]);
+  assert.ok(geometry.getAttribute("position") && geometry.getAttribute("aRig"), "the template keeps its vertex data");
+  const batch = [...batches.batches.values()][0];
+  assert.equal(batch.geometry.getAttribute("aMotion"), batch.motion);
+  assert.equal(batch.motion.count, 64);
+});

@@ -15,6 +15,13 @@ export function adoptBatchedParts(root) {
   });
 }
 
+// Dispose a rigged batch's old geometry wrapper without touching the template's shared buffers.
+export function releaseWrapper(wrapper) {
+  for (const name of Object.keys(wrapper.attributes)) if (name !== "aMotion") wrapper.deleteAttribute(name);
+  wrapper.setIndex(null);
+  wrapper.dispose();
+}
+
 export class EntityBatches {
   constructor(scene) {
     this.group = new THREE.Group();
@@ -48,9 +55,12 @@ export class EntityBatches {
   grow(batch, source) {
     const capacity = Math.max(16, batch.capacity * 2);
     // Shader bones (unit-rig.js): a rigged part carries a per-instance pose (aMotion). Two batches may
-    // draw the same geometry (team paint per team), so each gets its own geometry wrapper that shares
-    // the vertex buffers and adds only its pose attribute.
-    if (batch.rig && !batch.geometry) {
+    // draw the same geometry (team paint per team), so each batch draws a geometry wrapper that shares
+    // the vertex buffers and adds only its pose attribute. Growing makes a new wrapper; the old one is
+    // stripped down to its pose and disposed, so the renderer frees exactly that GPU buffer (and its
+    // vertex array states) and never the shared vertex data.
+    const old = batch.geometry;
+    if (batch.rig) {
       const g = new THREE.BufferGeometry();
       for (const [name, attribute] of Object.entries(source.geometry.attributes)) g.setAttribute(name, attribute);
       g.setIndex(source.geometry.index);
@@ -88,6 +98,7 @@ export class EntityBatches {
       this.group.remove(batch.mesh);
       batch.mesh.dispose(); // instance buffers only; geometry and material belong to the templates
     }
+    if (old) releaseWrapper(old);
     batch.mesh = next;
     batch.capacity = capacity;
     this.group.add(next);
@@ -205,7 +216,10 @@ export class EntityBatches {
     return this.used.length;
   }
   dispose() {
-    for (const batch of this.batches.values()) batch.mesh?.dispose();
+    for (const batch of this.batches.values()) {
+      batch.mesh?.dispose();
+      if (batch.geometry) releaseWrapper(batch.geometry);
+    }
     this.group.removeFromParent();
     this.batches.clear();
     this.used.length = 0;
