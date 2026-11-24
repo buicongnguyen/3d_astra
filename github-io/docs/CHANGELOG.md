@@ -7,6 +7,12 @@
 - Tiles you cannot afford show the short price in red-orange and a faded picture (still tappable); locked tiles are dark and grey.
 - Build tiles carry the building's own symbol as a corner badge. Box select, Queue, the Map tab and Objectives have their own symbols (no longer Fullscreen's corners or the Rally flag). Icon strokes are 2 px on phones.
 
+### Map variety
+- Cut the Draw (m11) is fought on Twin Rivers instead of Frontier Expanse (the battlefield of m11d and the finale): two conduits between the rivers, the north one across the far river by the Ashfall camp, a Meridian tower at the west ford. The objective bot wins sooner on every difficulty.
+- Gun Hill (m06c) is a night battle.
+- New campaign map Mirror Lake, the first with a lake: a ring of water round an island hill, four wadeable fords lined up with its ramps (terrain `lakes`; old maps unchanged).
+- New optional Act 1 missions: Mirror Lake (m02c, after Hold the River: break the island gun, raise a tower there, hold the relay a minute) and Canyon Run (m04b, after Three-Way Dunes, at dusk: no base, bring four supply crawlers up Amber Canyon in two pairs, then burn Hale's outpost). Act 1 relays now sit 13.3% apart.
+
 ### Campaign round 5: Gun Hill and test repairs
 - New optional Act 2 mission Gun Hill (m06c) on the campaign map Highridge: build two Sentinel towers on your hill (only towers inside the hill count) and hold it for 5:30; an optional Ashfall gun nest on the far hill. Act 2 relays on the campaign map now sit 13.3% apart.
 - New optional Act 3 mission Crown Hill (m10b) on the campaign map Gun Hills: break three Warden towers on the central hill (firing uphill), then raise your own tower there against a counter-wave. Act 3 relays now sit 13.3% apart.
