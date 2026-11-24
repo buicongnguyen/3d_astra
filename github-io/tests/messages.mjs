@@ -28,6 +28,22 @@ const coveredBy = (page, selector) => page.evaluate((selector) => {
   return el.contains(top) ? null : (top?.id || top?.className || top?.tagName || "nothing");
 }, selector);
 
+// Phones (owner, 2026-11-24): notices and alerts are concise and sit in the top-left lane, never over the middle of
+// the battlefield: left edge within 20 px of the screen's (plus a left rail), top in the upper 40 %, not into the middle
+// third across, at most two 16 px lines, and clear of the top bar, touch row, idle buttons, targeting prompt and minimap.
+async function inLane(page, name, size, also = []) {
+  const n = await box(page, "#notice");
+  assert.ok(n, `${name}: notice drawn`);
+  assert.ok(n.x <= 76, `${name}: notice starts at the left (x ${n.x})`);
+  // Top third; under a landscape targeting prompt (390 px tall screen) it starts just below it, still in the top 40 %.
+  assert.ok(n.y < size.height * 0.4, `${name}: notice near the top (y ${n.y} of ${size.height})`);
+  assert.ok(n.right <= size.width * 2 / 3 + 1 || n.bottom <= size.height / 3, `${name}: notice reaches the middle of the battlefield ${JSON.stringify(n)}`);
+  assert.ok(n.h <= 46, `${name}: notice is at most two lines (${n.h} px)`);
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("#notice")).textAlign), "left", `${name}: left-aligned`);
+  for (const sel of [".topbar", ".touch-controls", "#idle-chips", ".minimap-panel", "#mission-toggle", ...also]) assert.equal(overlap(n, await box(page, sel)), false, `${name}: notice over ${sel}`);
+  return n;
+}
+
 const browser = await launchBrowser();
 await suite("messages", async () => {
   for (const [name, viewport] of VIEWS) {
@@ -64,6 +80,7 @@ await suite("messages", async () => {
     for (const selector of ["#notice", "#fight-hint .fh-text"])
       assert.ok(await page.evaluate((s) => parseFloat(getComputedStyle(document.querySelector(s)).fontSize) >= 11, selector), `${name}: ${selector} text 11 px or more`);
     if (mobile) {
+      await inLane(page, `${name} alert`, size);
       // Never over the middle third of the screen (the band where the fight usually is).
       assert.ok(hint.bottom <= size.height / 3 || hint.y >= size.height * 0.33, `${name}: hint ${JSON.stringify(hint)} outside the dock band of ${size.height} (W1-D: phone hints sit in the dock band, bottom left)`);
       assert.ok(hint.h <= 46, `${name}: hint is a thin line (${hint.h} px)`);
@@ -83,6 +100,15 @@ await suite("messages", async () => {
     await page.waitForTimeout(300);
     if (alertAge < 4000) assert.match(await page.locator("#notice").textContent(), /Under attack/, `${name}: alert replaced by a routine notice`);
     await page.waitForFunction(() => document.querySelector("#notice").textContent === "Orders cleared.", null, { timeout: TIMEOUT.step });
+    if (mobile) {
+      await page.evaluate(() => window.__frontier.sim.events.push({ type: "message", text: "Harvester needs a completed Command core to deliver cargo. Finish or build one, then order delivery." }));
+      await page.waitForFunction(() => /Harvester needs/.test(document.querySelector("#notice").textContent) && getComputedStyle(document.querySelector("#notice")).opacity === "1", null, { timeout: TIMEOUT.step });
+      await page.waitForTimeout(300);
+      await inLane(page, `${name} long notice`, size);
+      await shot(page, `messages-${name}-long`);
+      await page.evaluate(() => window.__frontier.sim.events.push({ type: "message", text: "Orders cleared." }));
+      await page.waitForFunction(() => document.querySelector("#notice").textContent === "Orders cleared.", null, { timeout: TIMEOUT.step });
+    }
     const log = await page.evaluate(() => window.__noticeLog);
     const at = (text) => log.find((e) => e.text === text)?.t;
     assert.ok(at("Orders cleared.") - at("Under attack!") >= 4400, `${name}: the alert stayed its full time: ${JSON.stringify(log)}`);
@@ -101,6 +127,7 @@ await suite("messages", async () => {
     await page.waitForFunction(() => /Enemy attack incoming/.test(document.querySelector("#notice").textContent) && getComputedStyle(document.querySelector("#notice")).opacity === "1", null, { timeout: TIMEOUT.step });
     await page.waitForTimeout(400); // the notice line moves with a 0.25 s transition
     assert.equal(overlap(await box(page, "#mode-banner"), await box(page, "#notice")), false, `${name}: alert over the targeting prompt`);
+    if (mobile) await inLane(page, `${name} targeting`, size, ["#mode-banner"]);
     assert.equal(await coveredBy(page, "#notice"), null, `${name}: alert covered during targeting`);
     await page.evaluate(() => { document.querySelector("#mode-banner").hidden = true; });
 
@@ -147,6 +174,7 @@ await suite("messages", async () => {
     assert.equal(overlap(line, hint2), false, `${name}: hint over the dialogue line ${JSON.stringify(hint2)} ${JSON.stringify(line)}`);
     assert.equal(overlap(alert2, hint2), false, `${name}: hint over the alert with a dialogue line`);
     if (mobile) assert.ok(hint2.bottom <= size.height / 3 || hint2.y >= size.height * 0.33, `${name}: hint in the middle third with a dialogue line`);
+    if (mobile) await inLane(page, `${name} dialogue`, size, [".dialogue", "#fight-hint"]);
     await shot(page, `messages-${name}-dialogue`);
 
     assert.deepEqual(errors, [], `${name}: page errors`);

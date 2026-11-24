@@ -887,3 +887,30 @@
   /* production-ui.css sets 4 px through .command-panel:has(#production-status:not([hidden])) (two ids), hence the :has here. */
   :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"] .command-panel:is(:has(#production-status), :not(:has(#production-status))) #commands { padding-top: 0; }
 }
+
+/* ===== Messages on phones (owner, 2026-11-24): "the message often appears in the centre of the screen; it should be
+   concise and near the top left to avoid blocking the view." Every notice and alert (#notice) sits in one lane at the top
+   left, as on PC: a compact line of 12 px text, at most two lines, left-aligned, as wide as its text and never wider than
+   340 px. Portrait: under the Army / Workers row (in Defence, where that row is gone, under the top bar). Landscape: under
+   the objectives flag and idle buttons; in Defence, in the band beside the Defence bar (no extra battlefield covered).
+   A targeting prompt (#mode-banner) or the first-build guide card pushes it down instead of being covered.
+   tests/messages.mjs checks the lane: top left, out of the middle third, clear of every bar, button and the minimap. */
+:root.compact-ui:not(.in-briefing) #stage > #notice {
+  top: 50px !important; bottom: auto !important; left: var(--edge-left, 8px) !important; right: auto !important;
+  transform: none !important; margin: 0 !important; width: max-content !important; max-width: min(340px, calc(100% - 16px)) !important;
+  padding: 5px 10px 5px 12px !important; font-size: 12px !important; line-height: 16px !important; text-align: left !important; white-space: normal !important;
+  display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; z-index: 30;
+}
+:root.compact-ui.in-defence:not(.in-briefing) #stage > #notice { top: 8px !important; }
+@media (max-aspect-ratio: 1.35) {
+  :root.compact-ui:not(.in-briefing) #stage:has(> #mode-banner:not([hidden])) > #notice { top: 124px !important; }
+}
+@media (orientation: landscape) and (max-height: 520px) {
+  :root.compact-ui:not(.in-briefing) #stage > #notice { top: 54px !important; left: calc(var(--edge-left, 8px) + var(--rail-width, 0px)) !important; max-width: min(340px, calc(100% - var(--side-width, 236px) - var(--rail-width, 0px) - 32px)) !important; }
+  :root.compact-ui:not(.in-briefing) #stage:has(> #mode-banner:not([hidden])) > #notice { top: 92px !important; }
+  :root.compact-ui.in-defence:not(.in-briefing) #stage > #notice { top: 6px !important; left: var(--edge-left, 8px) !important; max-width: calc(50% - var(--defence-bar-w, 380px) / 2 - 16px) !important; }
+}
+@media (orientation: landscape) and (max-height: 520px) and (min-aspect-ratio: 1.35) and (min-width: 840px) {
+  :root.compact-ui:not(.in-briefing) #stage > #notice { left: var(--edge-left, 8px) !important; max-width: min(340px, calc(100% - var(--side-width, 236px) - 32px)) !important; }
+}
+:root.compact-ui:not(.in-briefing) #stage:has(> #defence-guide:not([hidden])) > #notice { top: 136px !important; max-width: min(300px, calc(100% - 16px)) !important; }

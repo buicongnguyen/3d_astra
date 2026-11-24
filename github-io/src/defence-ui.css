@@ -505,3 +505,15 @@
     overflow-wrap: anywhere;
   }
 }
+
+/* Phones (2026-11-24): nothing of the Defence HUD floats over the middle of the battlefield.
+   Landscape: the wave intel joins the top band, right of the bar (the notice lane is left of it, phone-hud.css), so the
+   battlefield under the bar stays clear for the fitted roads (app/defence/framing.js). The new-enemy card sits top left,
+   under the notice lane, in both orientations. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .compact-ui #defence-intel { top: 6px; left: calc(50% + var(--defence-bar-w, 380px) / 2 + 6px); right: auto; transform: none; align-items: flex-start; max-width: calc(50% - var(--defence-bar-w, 380px) / 2 - 64px); }
+  .compact-ui #defence-intel .intel-line, .compact-ui #defence-intel .intel-routes, .compact-ui #defence-intel .intel-traits { justify-content: flex-start; }
+  .compact-ui #defence-card { top: 64px; }
+}
+.compact-ui #defence-card { left: var(--edge-left, 8px); top: 56px; transform: none; max-width: min(340px, calc(100% - 16px)); animation-name: defence-card-in-left; }
+@keyframes defence-card-in-left { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: none; } }
