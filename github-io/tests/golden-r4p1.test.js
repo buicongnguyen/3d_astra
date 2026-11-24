@@ -15,7 +15,8 @@ import { LONG, RECORD, pin } from "./lib/golden.mjs";
 
 // Re-recorded 2026-11-23 (owner): several Wyrm nests, two Wyrms per side, Elder nests.
 const PINS = {
-  fast: { 180: "5be4f942", 420: "9e866cf6" },
+  // Re-recorded 2026-11-24: Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x (not 6x) to flyers (commits 5e4c07c, 2e293ea) change long AI matches.
+  fast: { 180: "5be4f942", 420: "1c33b176" },
   sandbox: { 40: "84c9ae8a" },
 };
 const RULES = { wild: "on" };

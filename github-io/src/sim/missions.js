@@ -253,7 +253,8 @@ export const missions = {
       s.have = Math.min(o.alloy ? b.alloy / o.alloy : 1, o.energy ? b.energy / o.energy : 1);
       done = s.have >= 1;
     } else if (o.type === "build") {
-      s.have = this.own(0).filter((e) => e.type === o.building && e.complete).length;
+      // o.region (campaign C6): only buildings inside that region count, e.g. towers on a hill.
+      s.have = this.own(0).filter((e) => e.type === o.building && e.complete && (!o.region || inside(e, o.region))).length;
       done = s.have >= o.count;
     } else if (o.type === "reach") done = this.own(0).some((e) => fighter(e) && inside(e, o.region));
     else if (o.type === "waves") s.have = this.defence?.cleared ?? 0; // done by defenceResult()

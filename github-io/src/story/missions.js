@@ -671,6 +671,72 @@ export const MISSIONS = [
   },
 
   {
+    id: "m06c-gun-hill",
+    act: 2,
+    // A side mission (like m11c): it opens after Wings over Copper and never locks Copper Siege.
+    optional: true,
+    title: "Gun Hill",
+    map: "highridge",
+    enemies: 1, speed: "relaxed", alliance: "ffa",
+    factions: { 1: "ashfall" },
+    rules: { ai: "home", playerBase: true, enemyBase: true, rosters: true },
+    bonus: { alloy: 300, energy: 100 },
+    briefing: {
+      place: "Highridge, day 33",
+      lines: [
+        { who: "vale", text: "Highridge has a hill between our camp and Hale's, wide enough for a gun line. Whoever holds it shoots down at the other." },
+        { who: "okoro", text: "Units on high ground see farther and hit harder. A tower on that hill outranges anything walking up to it." },
+      ],
+      intel: [
+        "Build two Sentinel towers on the hill between your camp and the centre. Send a unit up first: you cannot build on ground you have not seen.",
+        "A shooter on the hill gains range and damage against targets below. Fire up at it and you lose both.",
+        "Three Ashfall waves come up the ramps. Hold the ridge until the third one breaks.",
+        "Hale keeps a gun nest on the far hill. Taking it means firing uphill: bring more than it has.",
+      ],
+    },
+    regions: { hill: { x: -16, z: 10, r: 11 }, ramp: { x: -4, z: 1, r: 7 } },
+    setup: [
+      { spawn: "worker", team: 0, at: { x: -30, z: 30 }, count: 2 },
+      { resources: { alloy: 700, energy: 200 } },
+      // The mirror hill holds an Ashfall gun nest: the optional goal, taken by firing uphill (the hard way).
+      { spawn: "tower", team: 1, at: { x: 16, z: -10 }, tag: "nest" },
+      { spawn: "ranger", team: 1, at: { x: 13, z: -7 }, count: 2 },
+    ],
+    objectives: [
+      { id: "guns", text: "Build two Sentinel towers on the hill", type: "build", building: "tower", count: 2, region: "hill" },
+      { id: "hold", text: "Hold Highridge until the third wave breaks", type: "survive", seconds: 330 },
+      { id: "nest", text: "Destroy the Ashfall gun nest on the far hill", type: "destroyTag", tag: "nest", optional: true },
+    ],
+    win: ["guns", "hold"],
+    lose: [{ type: "coreLost" }, { type: "time", seconds: 900 }],
+    triggers: [
+      { when: { time: 4 }, do: [{ say: { who: "vale", text: "Send a Ranger up the ramp first, Commander, then build on the hill." } }, { ping: "hill" }] },
+      { when: { time: 75 }, do: [
+        { say: { who: "hale", text: "My column is on the ridge road. Your hill will not stop me." } },
+        { music: "tense" },
+        { wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "enemyBase", target: "hill" } },
+      ] },
+      { when: { time: 160 }, do: [
+        { wave: { team: 1, units: { vanguard: 5, ranger: 3, breaker: 1 }, from: "enemyBase", target: "hill" } },
+      ] },
+      { when: { time: 245 }, do: [
+        { say: { who: "okoro", text: "That is the last column, and the biggest. Keep the guns on the hill firing." } },
+        { music: "battle" },
+        { wave: { team: 1, units: { tank: 1, vanguard: 5, ranger: 3 }, from: "enemyBase", target: "hill" } },
+      ] },
+      { when: { objective: "hold", is: "done" }, do: [{ music: "calm" }, { say: { who: "vale", text: "The ridge is ours. High ground wins fights before they start." } }] },
+    ],
+    debrief: {
+      win: [
+        { who: "okoro", text: "The hill guns did half the work. I will mark the ramps for the next camp we build." },
+        { who: "vale", text: "Hale lost a column on a hill he could have taken. He will not make that mistake twice." },
+      ],
+      lose: [{ who: "vale", text: "They took the ridge and fired down on us. Next time the guns go up first." }],
+    },
+    medals: { gold: { seconds: 360 }, silver: { seconds: 600 } },
+    design: "An optional side mission (campaign C6) on the campaign map Highridge, about 6 minutes. The player builds two towers on their hill (the build objective counts only towers inside region hill) and holds it for 5:30 through three scripted waves (4+2, 5+3+Breaker, Tank+5+3) from a home-ruled Ashfall AI. The mirror hill holds an Ashfall tower and 2 Rangers: destroying it is optional and means firing uphill. Gold needs both towers up before the hold ends (the mission ends at 5:30 at the earliest).",
+  },
+  {
     id: "m07-copper-siege",
     act: 2,
     title: "Copper Siege",

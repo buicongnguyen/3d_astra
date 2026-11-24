@@ -861,6 +861,8 @@
 /* Notices sit right under the Army / Workers / Box row on phones (the stage starts below the top bar). */
 :root.compact-ui:not(.in-briefing) #notice { top: 4px !important; bottom: auto !important; left: 50% !important; right: auto !important; transform: translateX(-50%) !important; width: max-content; max-width: calc(100vw - 24px); z-index: 30; pointer-events: none; }
 @media (orientation: portrait), (max-width: 760px) { :root.compact-ui:not(.in-briefing) #notice { top: 50px !important; } }
+/* While a targeting prompt shows (#mode-banner at 52 px on portrait phones), alerts drop below it instead of covering it. */
+@media (orientation: portrait), (max-width: 760px) { :root.compact-ui:not(.in-briefing):has(#mode-banner:not([hidden])) #notice { top: 124px !important; } }
 
 /* Landscape phones (owner, 2026-11-23): no Selection / Map tabs (the deck shows itself when something is selected, and
    the minimap carries its own enlarge button); smaller resource text; neat frameless top-right icons. */
@@ -869,6 +871,9 @@
   :root.compact-ui:not(.in-briefing):not(.in-defence) { --tabs-height: 0px; }
   :root.compact-ui:not(.in-briefing):not(.in-defence) #dock-tabs { display: none !important; }
   :root.compact-ui:not(.in-briefing):not(.in-defence) #map-toggle { display: grid; place-items: center; }
+  /* It sits just above the minimap's top-left corner, not on the map: a drag that starts anywhere on the map moves the camera. */
+  :root.compact-ui:not(.in-briefing):not(.in-defence) .minimap-panel { overflow: visible; clip-path: none; }
+  :root.compact-ui:not(.in-briefing):not(.in-defence) #map-toggle { position: absolute; left: 0; bottom: calc(100% + 4px); top: auto; right: auto; margin: 0; z-index: 6; }
   :root.compact-ui:not(.in-briefing) .topbar .resource strong { font-size: 13px; }
   :root.compact-ui:not(.in-briefing) .topbar .resource strong em { font-size: 11px; }
   :root.compact-ui:not(.in-briefing) .topbar .resource > .icon { width: 14px; height: 14px; flex: 0 0 14px; }

@@ -22,3 +22,10 @@
   .cmap-archive .cmap-row { grid-template-columns: 1fr; gap: 4px; }
   .cmap-archive .cmap-chips, .cmap-archive .cmap-row:not(:first-child) { display: none; }
 }
+/* Desktop footer (campaign-map.css .cmap-foot, endings | chronicles): the archive takes its own full-width row under
+   them, so the four chronicle cards keep their column; short windows keep only the achievements row. */
+:root:not(.compact-ui) #campaign-map .cmap-foot > .cmap-archive { grid-column: 1 / -1; grid-row: 2; margin-top: 0; padding: 8px 12px; gap: 6px; }
+:root:not(.compact-ui) #campaign-map .cmap-archive .cmap-chip { padding: 2px 8px; font-size: 12px; }
+@media (max-height: 900px) {
+  :root:not(.compact-ui) #campaign-map .cmap-archive .cmap-row:not(:first-child) { display: none; }
+}

@@ -2,6 +2,11 @@
 
 ## Unreleased: Round A.2
 
+### Campaign round 5: Gun Hill and test repairs
+- New optional Act 2 mission Gun Hill (m06c) on the campaign map Highridge: build two Sentinel towers on your hill (only towers inside the hill count) and hold it for 5:30; an optional Ashfall gun nest on the far hill. Act 2 relays on the campaign map now sit 13.3% apart.
+- Golden pins re-recorded (reason: Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x to flyers): golden-expanded Veil 500 s, golden-r4p1 fast 420 s, golden-skirmish basin x3 fast 300 s, golden-w2d 600 s.
+- Landscape phones: the map enlarge button sits above the minimap, no longer on it (drags anywhere on the map move the camera). Portrait phones: alerts drop below a targeting prompt. PC command tiles: small text 12 px. Archive under the campaign map: its own row on desktop.
+
 ### Wild frontier: more Wyrm nests (owner request)
 - The Battle rule on Amber Dunes now has a home nest behind each main camp and contested Elder nests in the free corners (five guards, a larger and stronger Elder Wyrm). Up to two Wyrms per side. The Wyrm art is redrawn with a darker hide, rounded jaw and team crest. The rule stays Off by default.
 

@@ -191,11 +191,26 @@ export class ObjectiveBot extends PlayBot {
       this.towers = open.some((o) => o.type === "survive") ? 6 : 4;
       // The building an objective asks for comes before the usual build order.
       const sites = s.own(this.team).some((e) => e.kind === "building" && !e.complete);
-      for (const o of open)
-        if (hq && !sites && o.type === "build" && this.own(o.building).length < o.count && s.canPay(this.team, D[o.building].cost)) { this.build(o.building, hq); break; }
+      for (const o of open) {
+        if (!hq || sites || o.type !== "build" || !s.canPay(this.team, D[o.building].cost)) continue;
+        // A build objective with a region (campaign C6: towers on a hill) counts and places only inside it;
+        // the army stands there first (lead: home post), since nobody builds on ground out of sight.
+        if (o.region) { const r = s.missionPlace(o.region); if (this.own(o.building).filter((e) => gap(e, r) <= r.r).length < o.count && this.buildIn(o.building, r)) break; continue; }
+        if (this.own(o.building).length < o.count) { this.build(o.building, hq); break; }
+      }
       super.step();
     }
     this.lead(open);
+  }
+  buildIn(type, r) {
+    const s = this.sim, builder = this.crew().find((w) => !w.orders.some((o) => o.type === "build"));
+    if (!builder) return false;
+    for (let i = 0; i < 8; i++) {
+      const angle = (this.placed++ * 2.4) % (Math.PI * 2), d = (i % 3) * r.r * 0.3;
+      const spot = s.findPlacement(type, this.team, r.x + Math.cos(angle) * d, r.z + Math.sin(angle) * d, r.r * 0.5);
+      if (spot && gap(spot, r) <= r.r - 1 && s.command({ team: this.team, type: "build", worker: builder.id, building: type, x: spot.x, z: spot.z })) return true;
+    }
+    return false;
   }
   lead(open) {
     const s = this.sim, team = this.team;
@@ -211,6 +226,9 @@ export class ObjectiveBot extends PlayBot {
       home = { x: hq.x - (hq.x / d) * 9, z: hq.z - (hq.z / d) * 9 };
       const ward = s.own(team).find((e) => e.kind === "building" && this.wards.has(e.tag) && gap(e, hq) < 40);
       if (ward) home = { x: (hq.x + ward.x) / 2, z: (hq.z + ward.z) / 2 };
+      // Towers asked on a hill (campaign C6): the army holds the hill, so the builders can see it.
+      const hill = open.find((o) => o.type === "build" && o.region);
+      if (hill) { const r = s.missionPlace(hill.region); home = { x: r.x, z: r.z }; }
     }
     const field = open.filter((o) => ["reach", "hold", "destroyTag", "destroyCores", "escort"].includes(o.type));
     const stay = !field.length || open.some((o) => o.type === "survive");

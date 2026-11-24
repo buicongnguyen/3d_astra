@@ -28,6 +28,8 @@ export const OPENINGS = {
   "m05-the-verdant-pact": { at: "bridgeNorth", frames: "bridge", zoom: 1.3, drift: [0, 6], seconds: 5 },
   "m06-copper-harvest": { at: "seam", frames: "objective", zoom: 1.4, drift: [5, -3], seconds: 4.8 },
   "m06b-wings-over-copper": { at: "yard", frames: "camp", zoom: 1.4, drift: [-6, 2], seconds: 4.8 },
+  // Campaign C6: over the player's hill on Highridge, drifting down its ramp toward the camp.
+  "m06c-gun-hill": { at: "hill", offset: [-4, -8], frames: "plateau", zoom: 1.5, drift: [-5, 5], seconds: 4.8 },
   "m07-copper-siege": { at: "eastRoad", frames: "road", zoom: 1.35, drift: [-3, -6], seconds: 5 },
   "m07b-hold-the-valley": { at: { x: -25.6, z: -38.3 }, frames: "road", zoom: 1.1, drift: [6, 5], seconds: 4.8 },
   // The void beyond the vault's corner shows the night sky and its moon (R3-D seam).

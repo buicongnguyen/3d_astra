@@ -10,7 +10,9 @@ import { launchBrowser, openPage, suite, shot } from './lib/harness.mjs';
 // Round 3 HUD pass (2026-11-22): full-bleed battlefield, one-row portrait top bar, glass pills with the map between
 // them, the touch row in the top band on wide landscape phones: 84.6 / 74.0 % portrait and 81.6 / 71.4 % landscape
 // (docs/aaa/results/round3/hud.md). The floors rise with them.
-const MIN_NONE = 0.78, MIN_ONE = 0.68;
+// MIN_ONE 0.68 -> 0.65 (2026-11-24): the landscape command board is two even rows so every ability stays visible
+// (owner, no hidden buttons; 1c235b2); with a unit selected 65.9% of the landscape screen still shows the battlefield.
+const MIN_NONE = 0.78, MIN_ONE = 0.65;
 const browser = await launchBrowser();
 const SHARE = () => {
   const portrait = innerWidth < innerHeight, cols = portrait ? 20 : 40, rows = portrait ? 40 : 20, canvas = document.querySelector('#world canvas:not(.activity-overlay)');

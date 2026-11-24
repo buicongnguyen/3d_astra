@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {Simulation} from '../src/simulation.js';
 import {AI_SPEEDS} from '../src/ai-plan.js';
 import {MISSIONS, ACTS, loadProgress, saveProgress, isUnlocked, isCleared, recordClear, nextMission, bestTime, bestMedal} from '../src/campaign.js';
-import {MAPS} from '../src/terrain.js';
+import {MAPS, ALL_MAPS} from '../src/terrain.js';
 import DEFENCE_MAPS from '../src/defence/maps.json' with {type: 'json'};
 const step = (s, n) => { for (let i = 0; i < n * 20; i++) s.tick(.05); };
 const messages = s => s.events.filter(e => e.type === 'message').map(e => e.text);
@@ -110,7 +110,7 @@ test('campaign: the story missions in three acts on real maps, unlocked in order
   assert.ok(MISSIONS.length >= 14, `${MISSIONS.length} missions`);
   assert.deepEqual(ACTS.map(a => a.act), [1, 2, 3]);
   for (const m of MISSIONS) {
-    assert.ok(m.defence ? DEFENCE_MAPS[m.map]?.defence : MAPS[m.map], m.map); assert.ok(AI_SPEEDS[m.speed]);
+    assert.ok(m.defence ? DEFENCE_MAPS[m.map]?.defence : MAPS[m.map] || ALL_MAPS[m.map]?.campaign, m.map); assert.ok(AI_SPEEDS[m.speed]);
     assert.ok(ACTS.some(a => a.act === m.act), `${m.id} belongs to an act`);
   }
   assert.equal(new Set(MISSIONS.map(m => m.id)).size, MISSIONS.length, 'mission ids are unique');

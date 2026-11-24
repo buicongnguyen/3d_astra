@@ -13,7 +13,8 @@ import { launchBrowser, openPage, shot, suite, TIMEOUT } from "./lib/harness.mjs
 import { MISSIONS } from "../src/story/missions.js";
 
 const KEY = "frontier-campaign-v2", ids = MISSIONS.map((m) => m.id), ID = "m03-the-ashen-line";
-const progress = { cleared: Object.fromEntries(ids.slice(0, 6).map((id, i) => [id, { time: 400, medal: ["gold", "silver", "bronze"][i % 3], difficulty: "standard" }])), decisions: { "m03-alloy": "return", "m05-pact": "drive" } };
+const progress = { cleared: Object.fromEntries(ids.slice(0, 6).map((id, i) => [id, { time: 400, medal: ["gold", "silver", "bronze"][i % 3], difficulty: "standard" }])), decisions: { "m03-alloy": "return", "m04-sol": "accept", "m05-pact": "drive" } };
+// Campaign C3: Sol's surrender (m04-sol) is answered here; Hale (m07) and Maren with the Veil (m10) still wait.
 
 const mapLayout = (page) => page.evaluate(() => {
   const shown = (e) => { const r = e.getBoundingClientRect(), st = getComputedStyle(e); return r.width > 0 && r.height > 0 && st.display !== "none" && st.visibility !== "hidden"; };
@@ -64,8 +65,8 @@ await suite("openings: mission fly-ins, the campaign map, jumpBoss", async () =>
     await page.locator("#campaign-map .cmap").waitFor({ state: "visible", timeout: TIMEOUT.step });
     await page.waitForTimeout(300);
     const map = await mapLayout(page);
-    assert.deepEqual(map.ahead, ["m10-obsidian-storm"], `${viewport}: the relay still holding a decision is marked`);
-    assert.deepEqual(map.marks, ["mercy", "firm"], `${viewport}: answered decisions keep their marks`);
+    assert.deepEqual(map.ahead, ["m07-copper-siege", "m10-obsidian-storm"], `${viewport}: the relay still holding a decision is marked`);
+    assert.deepEqual(map.marks, ["mercy", "mercy", "firm"], `${viewport}: answered decisions keep their marks`);
     assert.deepEqual(map.hints, ["3+ merciful choices", "0-2 merciful choices"], `${viewport}: ending hints`);
     assert.equal(map.endings.length, 2, `${viewport}: both endings are named`);
     assert.equal(map.chronicles.length, 4, `${viewport}: every chronicle card keeps a label`);

@@ -445,7 +445,7 @@
 :root:not(.compact-ui):not(.no-units) .command-panel #commands .command-tile:has(> .portrait-art) { grid-template-columns: 28px minmax(0, 1fr); }
 :root:not(.compact-ui):not(.no-units) .command-panel #commands .command-tile > .portrait-art { --size: 28px; width: 28px; height: 28px; }
 :root:not(.compact-ui):not(.no-units) .command-panel #commands :is(.command-tile, .ability-tile) > span { font-size: 12px; line-height: 14px; }
-:root:not(.compact-ui):not(.no-units) .command-panel #commands :is(.command-tile, .ability-tile) small { font-size: 11px; line-height: 13px; }
+:root:not(.compact-ui):not(.no-units) .command-panel #commands :is(.command-tile, .ability-tile) small { font-size: 12px; line-height: 13px; }
 :root:not(.compact-ui):not(.no-units) .selection-panel .selection-scroll { left: 8px; right: 8px; bottom: 6px; height: 40px; }
 :root:not(.compact-ui):not(.no-units) .selection-panel #unit-list button { width: 36px; height: 36px; }
 :root:not(.compact-ui):not(.no-units) .selection-panel #unit-list button > .portrait-art { --size: 28px; }

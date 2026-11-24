@@ -33,7 +33,8 @@ const AI = {
   "classic x1 normal": { options: { map: "classic", enemyCount: 1, aiSpeed: "normal" }, at: { 60: "baf36c17", 180: "8095a061", 300: "f117790c" }, end: "victory 211" },
   "highlands x2 relentless coalition": { options: { map: "highlands", enemyCount: 2, aiSpeed: "relentless", alliance: "coalition" }, at: { 60: "0aaa724a", 180: "b20629ec", 300: "85a06f36" }, end: "running 300" },
   "riverlands x2 fast": { options: { map: "riverlands", enemyCount: 2, aiSpeed: "fast" }, at: { 60: "5948dbf7", 180: "a80c9e11", 300: "7f9a6072" }, end: "running 300" },
-  "basin x3 fast": { options: { map: "basin", enemyCount: 3, aiSpeed: "fast" }, at: { 60: "abede88b", 180: "4f8a69db", 300: "8a63c4a4" }, end: "running 300" },
+  // basin x3 fast, 300 s: Re-recorded 2026-11-24: Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x (not 6x) to flyers (commits 5e4c07c, 2e293ea) change long AI matches.
+  "basin x3 fast": { options: { map: "basin", enemyCount: 3, aiSpeed: "fast" }, at: { 60: "abede88b", 180: "4f8a69db", 300: "97d65aed" }, end: "running 300" },
   "riverlands x3 normal, Sunward against mixed rivals": { options: { map: "riverlands", enemyCount: 3, aiSpeed: "normal", factions: skirmishSides("sunward", "mixed", 3, "riverlands"), capturePoints: true }, at: { 60: "498523ba", 180: "51d0e53f", 300: "51d0e53f" }, end: "defeat 154" },
   "dunes x1 normal, Ashfall against Veil": { options: { map: "dunes", enemyCount: 1, aiSpeed: "normal", factions: skirmishSides("ashfall", "veil", 1, "dunes"), capturePoints: true }, at: { 60: "fbdd5fcc", 180: "b36a3f1e", 300: "82d11644" }, end: "running 300" },
 };

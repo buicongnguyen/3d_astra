@@ -9,6 +9,7 @@ const match = () => new Simulation({ map: "dunes", aiSpeed: "normal", factions: 
 // Difficulty guard (Wave 1b, owner 2026-11-21): no field economy, census/join/scouting from 300 s at first (180 "80fb27d8" = r3-base,
 // 600 "b422139c"). Then south exits (owner, R3-L) + difficulty guard on the merged tree (census from 480 s): 180
 // "706784b9", 600 "440a467c".
-const PINS = { 180: "706784b9", 600: "440a467c" };
+// Re-recorded 2026-11-24 (600 s): Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x (not 6x) to flyers (commits 5e4c07c, 2e293ea).
+const PINS = { 180: "706784b9", 600: "ecedc0dd" };
 test("Field command, Meridian against Ashfall, 180 s", () => pin("w2d field 180", run(match(), 180), PINS[180]));
 test("Field command, Meridian against Ashfall, 600 s", LONG, () => pin("w2d field 600", run(match(), 600), PINS[600]));

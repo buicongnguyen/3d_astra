@@ -16,11 +16,13 @@ async function noSideScroll(page, where) {
   const { scroll, width } = await page.evaluate(() => ({ scroll: document.scrollingElement.scrollWidth, width: innerWidth }));
   assert.ok(scroll <= width + 1, `${where}: page scrolls sideways (${scroll} > ${width})`);
 }
+// The PC command board (1c235b2) uses 38 px tiles beside a unit selection: a mouse target, so desktop asks 36 px; touch keeps 44 px.
 async function bigEnough(locator, where) {
+  const tall = where.startsWith("desktop") ? 36 : 44;
   for (const b of await locator.all()) {
     await b.waitFor({ state: "visible", timeout: TIMEOUT.step });
     const box = await b.boundingBox();
-    assert.ok(box && box.height >= 44 && box.width >= 44, `${where}: ${box?.width}x${box?.height}`);
+    assert.ok(box && box.height >= tall && box.width >= 44, `${where}: ${box?.width}x${box?.height}`);
   }
 }
 // Text under 12 px inside a container (the 11 px hotkey letters on desktop tiles under 11 px).

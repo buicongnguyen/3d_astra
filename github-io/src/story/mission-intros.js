@@ -15,6 +15,7 @@ export const MISSION_INTROS = {
   "m05-the-verdant-pact": { kicker: "ACT II", day: "DAY 22" },
   "m06-copper-harvest": { kicker: "ACT II", day: "DAY 30" },
   "m06b-wings-over-copper": { kicker: "ACT II", day: "DAY 32" },
+  "m06c-gun-hill": { kicker: "ACT II", day: "DAY 33" },
   "m07-copper-siege": { kicker: "ACT II", day: "DAY 34" },
   "m07b-hold-the-valley": { kicker: "ACT II", day: "DAY 36" },
   "m08-the-quiet-vault": { kicker: "ACT II", day: "NIGHT 38" },

@@ -121,7 +121,9 @@ const scenarios = [
   // AAA round 3 (R3-W): battle-eco with the round-3 air cap in play, 8 flyers per side (all four types), and six
   // Anti-tank rockets in flight. Rocket bodies are one instanced draw and the air life (rotor blur, nav lights, engine
   // glow) another; contrails and the ribbon use the effect pools.
-  {name:'air-battle', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rockets:6,
+  // Campaign C6c: the redrawn Ember balloon (2440 tris) and Kite (1298) add about 5.5k triangles here (309.6k -> 315.2k):
+  // detail, not an instancing leak, so this scene has its own cap.
+  {name:'air-battle', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rockets:6, triangles:320000,
     air:[['kite',0],['hawk',0],['balloon',0],['glider',0],['kite',0],['hawk',0],['balloon',0],['glider',0],['kite',1],['hawk',1],['balloon',1],['glider',1],['kite',1],['hawk',1],['balloon',1],['glider',1]]},
   // AAA round 3 (R3-L): the player's base on the phone with a second Barracks, a Relay and a Tower: building
   // decals and gate details are one instanced draw (no shadow pass).

@@ -27,8 +27,10 @@ async function size(locator) {
   assert.ok(box, `visible: ${await locator.evaluate((el) => el.outerHTML.slice(0, 120)).catch(() => "?")}`);
   return box;
 }
+// The PC command board (1c235b2) uses 38 px tiles beside a unit selection: a mouse target, so desktop asks 36 px; touch keeps 44 px.
 async function bigEnough(locator, where) {
-  for (const b of await locator.all()) { const box = await size(b); assert.ok(box.height >= 44 && box.width >= 44, `${where}: ${box.width}x${box.height}`); }
+  const tall = where.startsWith("desktop") ? 36 : 44;
+  for (const b of await locator.all()) { const box = await size(b); assert.ok(box.height >= tall && box.width >= 44, `${where}: ${box.width}x${box.height}`); }
 }
 // Text under 12 px inside a container.
 async function tinyText(page, selector) {

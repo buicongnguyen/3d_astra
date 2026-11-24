@@ -65,7 +65,8 @@ await suite("army-depth", async () => {
       const t = document.querySelector('#commands [data-defence-armour="combined"]'), b = t.getBoundingClientRect();
       return { w: b.width, h: b.height, sub: t.querySelector("small").textContent.trim(), name: t.querySelector("span").textContent, cost: t.dataset.cost, hint: document.querySelector("#command-hint").textContent };
     });
-    assert.ok(tile.w >= 44 && tile.h >= 44, `${viewport}: Combined tile ${tile.w}x${tile.h}`);
+    // Touch keeps 44 px; the PC command board (1c235b2) uses 38 px tiles for the mouse.
+    assert.ok(tile.w >= 44 && tile.h >= (mobile ? 44 : 36), `${viewport}: Combined tile ${tile.w}x${tile.h}`);
     assert.equal(tile.name, "Combined");
     assert.equal(tile.cost, "320");
     assert.ok(tile.sub.length <= 10, `${viewport}: sub-line "${tile.sub}"`);

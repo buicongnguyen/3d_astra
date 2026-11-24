@@ -127,12 +127,13 @@ const routeDist = (p, routes) => Math.min(...Object.values(routes).flatMap((pts)
 const make = (m, difficulty = "standard") => new Simulation({ map: m.map, enemyCount: 1, ai: false, mission: m, difficulty });
 
 test("the defence missions sit in the campaign with stable ids, on Defence maps, with 6 to 8 waves", () => {
-  assert.equal(MISSIONS.length, 17, "fifteen plus the optional Hold the Keystone Roads (m11c) and The Sovereign Walks (m11d, R3-H)");
+  assert.equal(MISSIONS.length, 18, "fifteen plus the optional Hold the Keystone Roads (m11c), The Sovereign Walks (m11d, R3-H) and Gun Hill (m06c, campaign C6)");
   assert.equal(MISSIONS.indexOf(HOLD_THE_RIVER), MISSIONS.findIndex((m) => m.id === "m02-first-contact") + 1, "Hold the River follows First Contact");
   assert.equal(MISSIONS.indexOf(HOLD_THE_VALLEY), MISSIONS.findIndex((m) => m.id === "m07-copper-siege") + 1, "Hold the Valley follows Copper Siege");
   assert.deepEqual(DEFENCE_MISSIONS.map((m) => [m.id, m.act]), [["m02b-hold-the-river", 1], ["m07b-hold-the-valley", 2]]);
   assert.deepEqual(RESERVED_IDS, [], "Wings over Copper took the last reserved id");
   assert.equal(MISSIONS.findIndex((m) => m.id === "m06b-wings-over-copper"), MISSIONS.findIndex((m) => m.id === "m06-copper-harvest") + 1, "Wings over Copper follows Copper Harvest");
+  assert.equal(MISSIONS.findIndex((m) => m.id === "m06c-gun-hill"), MISSIONS.findIndex((m) => m.id === "m06b-wings-over-copper") + 1, "Gun Hill follows Wings over Copper");
   for (const m of DEFENCE_MISSIONS) {
     const d = m.defence;
     assert.ok(DEFENCE_MAPS[m.map]?.defence, m.id);
@@ -230,7 +231,8 @@ test("progress keyed by id: a finished twelve-mission campaign keeps everything 
   const store = { getItem: () => JSON.stringify(all12) };
   const loaded = loadProgress(store);
   assert.deepEqual(loaded.cleared, all12.cleared, "the stored clears load unchanged");
-  assert.deepEqual(MISSIONS.map((_, i) => isUnlocked(loaded, i)), MISSIONS.map(() => true), "every mission is open");
+  // Gun Hill (m06c, campaign C6) opens after Wings over Copper (m06b), which these older clears do not include.
+  assert.deepEqual(MISSIONS.map((_, i) => isUnlocked(loaded, i)), MISSIONS.map((m) => m.id !== "m06c-gun-hill"), "every mission is open but Gun Hill");
   assert.deepEqual(MISSIONS.map((m, i) => isCleared(loaded, i)), MISSIONS.map((m) => STORY.includes(m)), "the new ones wait to be played");
   assert.equal(MISSIONS[nextMission(loaded)].id, "m02b-hold-the-river", "the first new mission is next");
   // Halfway: clears up to mission 3 (before the new mission existed) keep missions 3 and 4 open.
@@ -250,7 +252,8 @@ test("the campaign map lays out every mission in its act band, in order, with ro
   for (const act of [1, 2, 3]) {
     const list = MISSIONS.filter((m) => m.act === act).map((m) => MAP_NODES[m.id]), band = ACT_BANDS[act];
     for (const p of list) assert.ok(p.y > band.top + 6 && p.y < band.bottom - 6 && p.x >= 10 && p.x <= 90, `act ${act}: ${JSON.stringify(p)}`);
-    for (let i = 1; i < list.length; i++) assert.ok(Math.abs(list[i].x - list[i - 1].x) >= 15, `act ${act}: nodes ${i - 1} and ${i} too close`);
+    // 13% apart at least (seven Act 2 missions since Gun Hill); the 44 px phone rule is in campaign-map-art.test.js.
+    for (let i = 1; i < list.length; i++) assert.ok(Math.abs(list[i].x - list[i - 1].x) >= 13, `act ${act}: nodes ${i - 1} and ${i} too close`);
     // Act 2 runs back west.
     assert.ok(act === 2 ? list[0].x > list.at(-1).x : list[0].x < list.at(-1).x);
   }

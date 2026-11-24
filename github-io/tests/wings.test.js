@@ -26,9 +26,10 @@ const fnv = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h 
 
 test("Wings over Copper sits after Copper Harvest in Act 2 on the Copper Basin, with air on", () => {
   const i = MISSIONS.indexOf(WINGS);
-  assert.equal(MISSIONS.length, 17);
+  assert.equal(MISSIONS.length, 18);
   assert.equal(MISSIONS[i - 1].id, "m06-copper-harvest");
-  assert.equal(MISSIONS[i + 1].id, "m07-copper-siege");
+  assert.equal(MISSIONS[i + 1].id, "m06c-gun-hill", "Gun Hill (campaign C6) sits between Wings and the siege");
+  assert.equal(MISSIONS[i + 2].id, "m07-copper-siege");
   assert.deepEqual([WINGS.act, WINGS.map, WINGS.factions[1]], [2, "basin", "ashfall"]);
   assert.equal(WINGS.rules.air, true);
   assert.deepEqual(WINGS.win, ["raids", "yard"]);
@@ -38,8 +39,8 @@ test("Wings over Copper sits after Copper Harvest in Act 2 on the Copper Basin, 
   assert.ok(air.filter((w) => w.units.kite > 0).length >= 2, "Kite spotters");
   // The 15-node campaign map keeps every node in its band, 15% apart.
   const act2 = MISSIONS.filter((m) => m.act === 2).map((m) => MAP_NODES[m.id]);
-  assert.equal(act2.length, 6);
-  for (let k = 1; k < act2.length; k++) assert.ok(Math.abs(act2[k].x - act2[k - 1].x) >= 15);
+  assert.equal(act2.length, 7);
+  for (let k = 1; k < act2.length; k++) assert.ok(Math.abs(act2[k].x - act2[k - 1].x) >= 13);
   assert.ok(act2.every((p) => p.x >= 10 && p.x <= 90));
 });
 
