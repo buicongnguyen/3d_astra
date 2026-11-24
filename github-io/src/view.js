@@ -23,7 +23,7 @@ import { fogAware } from "./fog-aware.js";
 import { teamColors, teamGlows, factionOf } from "./faction-colors.js";
 import { createEmblem, hasEmblem, recolorEmblems } from "./emblems.js";
 import { isHarvesting } from "./activity.js";
-import { EntityBatches, adoptBatchedParts, SOURCE_LAYER } from "./entity-batches.js";
+import { EntityBatches, adoptBatchedParts, SOURCE_LAYER, releaseWrapper } from "./entity-batches.js";
 import { BossView, bossTemplates, recolorBossPaint } from "./boss-view.js";
 import { cacheTransforms } from "./transform-cache.js";
 import { AmbientLife } from "./ambient-life.js";
@@ -32,7 +32,7 @@ import { ViewPlugins } from "./view-plugins.js";
 import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, setRimTier } from "./look-grade.js";
 import { MissionLook } from "./mission-look-view.js";
 import { airMotion } from "./air-motion.js";
-import { RIG_INFANTRY, RIG_HULL, BONE, tagBone, addRig, stepInfantry, stepHull, approach } from "./unit-rig.js";
+import { RIG_INFANTRY, RIG_HULL, BONE, tagBone, addRig, rigDepthMaterial, stepInfantry, stepHull, approach } from "./unit-rig.js";
 import {
   EnvironmentView,
   optimizeEnvironment,
@@ -723,6 +723,51 @@ export class WorldView {
       this.environment.still = this.motionLevel === 0;
     }
     this.applyReflections();
+    await this.warmRig(types);
+  }
+  // Shader warm-up for rigged units (unit-rig.js): one tiny, never-culled instance of every rigged
+  // part, drawn once behind the loading screen with the real scene (lights, fog, shadow pass), so the
+  // first Ranger or Tank on screen compiles nothing. compileAsync lets the driver compile the main
+  // programs in parallel first; the one render then adds the shadow-pass depth programs. The rigged
+  // materials are shared (bakedMaterial, per-team clones kept with the templates), so a rebuilt match
+  // reuses these programs.
+  async warmRig(types) {
+    if (this.contextLost) return;
+    const seen = new Set(), group = new THREE.Group(), wrappers = [];
+    const tiny = new THREE.Matrix4().makeScale(1e-5, 1e-5, 1e-5).setPosition(this.focus.x, -50, this.focus.z);
+    for (const type of types) for (let team = 0; team < this.colors.length; team++) {
+      this.teamTemplates.get(`${type}-${team}`)?.traverse((o) => {
+        if (!o.isMesh || !o.geometry.getAttribute("aRig")) return;
+        const key = `${o.material.id}:${o.castShadow ? 1 : 0}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        const g = new THREE.BufferGeometry();
+        for (const [name, attribute] of Object.entries(o.geometry.attributes)) g.setAttribute(name, attribute);
+        g.setIndex(o.geometry.index);
+        g.setAttribute("aMotion", new THREE.InstancedBufferAttribute(new Float32Array([0, 0, 0, 1]), 4));
+        const warm = new THREE.InstancedMesh(g, o.material, 1);
+        warm.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array([1, 1, 1]), 3);
+        warm.setMatrixAt(0, tiny);
+        warm.customDepthMaterial = rigDepthMaterial();
+        warm.castShadow = o.castShadow;
+        warm.receiveShadow = true;
+        warm.frustumCulled = false;
+        group.add(warm);
+        wrappers.push(g);
+      });
+    }
+    if (!group.children.length) return;
+    this.scene.add(group);
+    try {
+      await this.renderer.compileAsync?.(this.scene, this.camera);
+      if (!this.contextLost) this.renderer.render(this.scene, this.camera);
+    } catch { /* a warm-up never blocks loading */ }
+    finally {
+      this.scene.remove(group);
+      for (const warm of group.children) warm.dispose();
+      wrappers.forEach(releaseWrapper);
+    }
+    this.rigWarmed = (this.rigWarmed || 0) + group.children.length;
   }
   createTerrain() {
     cosmetic = mulberry32(1482);
