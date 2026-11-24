@@ -2,6 +2,17 @@
 
 ## Unreleased: Round A.2
 
+### Faction roster: four new units, Full army per faction, Quick battle rivals, Wild frontier on more maps
+- Sunward workshop (Waystation, Expanded roster): **Lance buggy**, a fast tank hunter (170 HP / 30 shield, speed 5.8, 18 damage every 1.8 s at 11 m, 3.5x to vehicles, picks tanks and siege first; 140 alloy / 60 energy, 2 supply). Infantry and Anti-tank soldiers beat it.
+- Wardens workshop (Shield pylon level 2, Expanded roster): **Bulwark**, a two-legged shield walker (420 HP / 180 shield back after 3 s, 14 damage every 0.9 s at 7 m, 1.6x to close assault; 175 / 80, 3 supply). Its ward plate: your other units within 6 m take 15% less damage (no stacking).
+- Veil flyer (Command core level 2): **Veil moth**, hidden while it holds fire, shoots Rangers and rocket teams first (150 / 40, 12 damage every 1.2 s at 7 m; 160 / 80). Wardens flyer: **Halo interceptor**, 2.5x damage to flyers, weak against ground (240 / 120, 10 every 0.8 s at 9 m; 175 / 85); the computer builds it only after it has seen enemy flyers. Every faction now has its own flyer; the Wardens roster has 8 slots like the others.
+- Blender models (tools/blender/generate_roster.py, 1416 to 3524 triangles), portraits, role glyphs, weapon looks, Vietnamese and Korean text, field guide ward line. Balance numbers: docs/BALANCE.md "Faction roster (2026-11-24)".
+- Full army battle: your faction's own units (the Wardens no longer get Medics and Engineers), two of each workshop unit, and two of your faction's own flyer (it was Hawks for everyone).
+- Quick battle: the rival rotates Ashfall, Sunward, Wardens, Veil (Meridian when you play another faction), counted per browser; still Relaxed, and the test bot wins all 240 pairings.
+- Wild frontier: the rule now also plays on Dry Reach, Golden Heart and Copper Basin (balance.json `wild_frontier.lands`); every nest is standable and reachable from every camp (tests/roster.test.js).
+- Golden pins re-recorded (reason: the Veil and Wardens Command cores train the new flyers and an Expanded Shield pylon trains the Bulwark, so their trains lists in the hashed state and Veil/Wardens AI play change): golden-skirmish Sunward mixed and Ashfall against Veil, golden-w1a, golden-w1c, golden-expanded Veil, golden-round2 300 s.
+- Difficulty gate (`tools/difficulty-check.mjs`, new `--enemy`): bot wins unchanged in every 1v1 and 1v2 row against Meridian, against Sunward / Wardens / Veil with the Expanded roster, and against Wardens / Veil Classic (only change: Veil Expanded 1v2 Relaxed 6 -> 7 bot wins).
+
 ### HUD buttons stand out (owner request)
 - In a match the dock panels are darker and every button lighter with a 2 px brass edge (was 1.03:1 face against panel). Each tile carries a rail in the colour of its job: build amber, train mint, upgrade green, ability orange; the active stance or ability a gold rail.
 - Tiles you cannot afford show the short price in red-orange and a faded picture (still tappable); locked tiles are dark and grey.
