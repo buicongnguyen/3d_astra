@@ -19,7 +19,8 @@ addMessages(storyKo, 'ko');
 const hangul = /[가-힣]/;
 const tokens = (text, pattern) => (text.match(pattern) || []).sort().join(' ');
 // English proper names and their one Korean form (LOCALIZATION.md glossary).
-const NAMES = { Meridian: '메리디언', Ashfall: '애시폴', Sunward: '선워드', Wardens: '워든', Okoro: '오코로', Hale: '헤일', Maren: '마렌', Vale: '베일' };
+// Chronicles round 2 (2026-11-24): Juno Rask (Wardens) and Teo Lind (Veil) joined the cast.
+const NAMES = { Meridian: '메리디언', Ashfall: '애시폴', Sunward: '선워드', Wardens: '워든', Okoro: '오코로', Hale: '헤일', Maren: '마렌', Vale: '베일', Juno: '주노', Rask: '라스크', Teo: '테오', Lind: '린드' };
 // Values that may stay without Hangul: symbols, numbers and kept Latin marks only.
 const NO_HANGUL_OK = /^[\s\d{}·:/%+×x–—.,()\[\]#?!✓▲●◆→←↑↓-]*(ECHO|HQ|AI|FPS|MVP|m|L\d|I{1,3}|IV|Q|E|R|T|Y|WASD|Esc|Tab|Shift|Ctrl)?[\s\d{}·:/%+×x–—.,()\[\]#?!✓▲●◆→←↑↓-]*$/;
 
@@ -47,7 +48,7 @@ test('ko.json has exactly the messages and patterns of vi.json', () => {
 
 // Proper names alone have no Vietnamese entry (Vietnamese keeps them in Latin letters); Korean
 // writes them in Hangul, so story-ko.json carries these extra name-only entries.
-const NAME_ONLY = ['Meridian', 'Ashfall', 'Sunward', 'Wardens', 'Veil', 'Mira Vale', 'Vale', 'Tobi Okoro', 'Okoro', 'Corvin Hale', 'Hale', 'Tamsin Sol', 'Sol', 'Ilse Maren', 'Maren'];
+const NAME_ONLY = ['Meridian', 'Ashfall', 'Sunward', 'Wardens', 'Veil', 'Mira Vale', 'Vale', 'Tobi Okoro', 'Okoro', 'Corvin Hale', 'Hale', 'Tamsin Sol', 'Sol', 'Ilse Maren', 'Maren', 'Juno Rask', 'Teo Lind'];
 test('story-ko.json has exactly the entries of story-vi.json, plus the names', () => {
   assert.deepEqual(Object.keys(storyKo.messages), [...Object.keys(storyVi.messages), ...NAME_ONLY]);
 });

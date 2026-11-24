@@ -104,6 +104,19 @@ export const SCENES = {
       { say: { who: "hale", text: "Three conduits cut. My schedule has lost a day, Commander. The engine on the Keystone has not." } },
     ],
   },
+  // Wardens Chronicle, Without a Key (chronicles round 2): the Iron Sovereign walks on the Warden Rise.
+  "sovereign-at-the-rise": {
+    letterbox: true,
+    beats: [
+      { camera: { at: "gate", zoom: 0.9, seconds: 2.2 } },
+      { fx: { flash: "alarm" } },
+      { shake: 0.5 },
+      { title: { text: "Iron Sovereign", sub: "Walking siege fortress" } },
+      { say: { who: "rask", text: "There it is, out of the north. Six legs, every one of them Builder work. Hale only taught it to walk." } },
+      { camera: { at: "line", zoom: 1.1, seconds: 1.8 } },
+      { say: { who: "echo", text: "It is one of the old machines, Warden-prime. It has no key either. It only has orders." } },
+    ],
+  },
   // Mission 12, the ending beat. Two or more merciful orders: the Keystone opens to every camp.
   "keystone-open": {
     letterbox: true,

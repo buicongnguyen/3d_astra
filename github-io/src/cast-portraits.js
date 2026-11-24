@@ -68,6 +68,25 @@ const DRAW = {
     <circle cx="42" cy="42" r="5.5" fill="#fff" fill-opacity=".18" stroke="#e3e7ee" stroke-width="2"/><circle cx="54" cy="42" r="5.5" fill="#fff" fill-opacity=".18" stroke="#e3e7ee" stroke-width="2"/><path d="M47.5 42 h1" stroke="#e3e7ee" stroke-width="2"/>
     ${mouth("M44 52 Q48 50 52 52")}
     <path d="M24 62 C22 34 34 26 48 25" fill="none" stroke="#d9dde6" stroke-width="1.5" stroke-dasharray="3 3"/>`,
+  // Charcoal hood behind short black hair, violet scarf pulled down, a small seer lens at one ear.
+  lind: (hex) => `${field(hex)}<path d="M24 76 C18 26 78 26 72 76Z" fill="#2c2a36" stroke="${INK}" stroke-width="2"/>
+    ${shoulders("#34323f")}<path d="M30 72 L44 97 M66 72 L52 97" stroke="#d9dde6" stroke-width="1.5" opacity=".8"/>
+    ${neck("#5a3a26")}<path d="M30 63 Q48 75 66 63 L67 72 Q48 84 29 72Z" fill="${hex}" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
+    ${head("#6b4429")}
+    <path d="M33 38 C32 22 64 22 63 38 C59 31 54 29 48 29 C42 29 37 31 33 38Z" fill="#141217" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M38 37 l7 0 M51 37 l7 0" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>${eyes(42)}${mouth("M44 51 Q49 53 53 50")}
+    <circle cx="64" cy="42" r="4" fill="${hex}" stroke="${INK}" stroke-width="1.5"/><circle cx="64" cy="42" r="1.6" fill="#fff"/>`,
+  // Cropped copper-red hair under a band of Warden lights, blue coveralls with the three circles, a spanner, freckles.
+  rask: (hex) => `${field(hex)}${shoulders("#3f6fc4")}<path d="M38 68 V97 M58 68 V97" stroke="#2a4f94" stroke-width="3"/>
+    <g fill="none" stroke="#c8f1ff" stroke-width="1.6"><circle cx="40" cy="80" r="2.4"/><circle cx="35" cy="88" r="2.4"/><circle cx="45" cy="88" r="2.4"/></g>
+    <path d="M70 63 L80 90" stroke="#9aa7b0" stroke-width="4" stroke-linecap="round"/><circle cx="69" cy="61" r="4" fill="none" stroke="#9aa7b0" stroke-width="3"/>
+    ${neck("#c9a083")}${head("#e2b996")}
+    <path d="M32 40 C29 18 67 18 64 40 C62 30 57 26 50 27 C46 31 39 30 35 31 C33 34 32 37 32 40Z" fill="#c4572a" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
+    <rect x="33" y="30" width="30" height="4" rx="2" fill="#16263f" stroke="${INK}" stroke-width="1.2"/>
+    <g fill="#c8f1ff"><circle cx="39" cy="32" r="1.3"/><circle cx="48" cy="32" r="1.3"/><circle cx="57" cy="32" r="1.3"/></g>
+    <path d="M38 37 l7 0 M51 35 l7 -1" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>${eyes(42)}
+    <g fill="#b0703f" opacity=".7"><circle cx="38" cy="47" r=".9"/><circle cx="41" cy="48" r=".9"/><circle cx="55" cy="48" r=".9"/><circle cx="58" cy="47" r=".9"/></g>
+    ${mouth("M42 50 Q48 55 55 49")}`,
   // No human face: twelve soft lights around a pale lens over a dark relay stone.
   echo: (hex) => {
     let lights = "";

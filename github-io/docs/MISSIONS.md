@@ -261,38 +261,38 @@ Defence maps (`src/defence/maps.json`, `defence: true`) have no bases, deposits 
 
 ## Faction Chronicles (0.20)
 
-Four short campaigns of three missions each, played *as* another faction, tell the main war from that side (`src/story/chronicles.js`; story lines for review in `docs/aaa/review/story-lines.md`, "Chronicles").
+Four short campaigns of four missions each (three until chronicles round 2, 2026-11-24, which added a fourth with a hero who yields or a boss), played *as* another faction, tell the main war from that side (`src/story/chronicles.js`; story lines for review in `docs/aaa/review/story-lines.md`, "Chronicles").
 
 ```js
 {
   id: "sunward", title: "The Long Road", faction: "sunward",
   lead: "sol",                       // a CAST id with a portrait; speaks most lines and the finale line
   address: "Wagon-master",           // how the chronicle's people address the player (never "Commander")
-  unlockAfter: "m04-three-way-dunes", // the main mission that opens it (the end of Act 1)
+  unlockAfter: "m06-copper-harvest", // the main mission that opens it (staggered: m04, m06, m08, m10)
   summary: "...",
-  missions: [ /* three mission definitions */ ],
+  missions: [ /* four mission definitions */ ],
 }
 ```
 
 | Chronicle | Played as | Lead · address | Missions |
 |---|---|---|---|
-| `ashfall` *Salvage Rights* | Ashfall | Hale · Foreman | Cold Berths (classic), Lights Out (riverlands), The Scrapyard Gorge (Defence, Gorge Road) |
-| `sunward` *The Long Road* | Sunward | Sol · Wagon-master | Dry Wells (dunes), Three-Way Dunes (dunes), The Verdant Road (woodlands) |
-| `wardens` *ECHO's Key* | Wardens | ECHO · Warden-prime | Standing Orders (expanse), A Grey Coat (highlands), Hold the River (Defence, Twin Bridges) |
-| `veil` *The Quiet Survey* | Veil | Maren · Surveyor | Night Count (highlands, no base), One Circuit (woodlands), Inside the Dampers (highlands) |
+| `ashfall` *Salvage Rights* (after m04) | Ashfall | Hale · Foreman | Cold Berths (classic), Lights Out (riverlands), The Scrapyard Gorge (Defence, Gorge Road), The Toll Road (woodlands; Captain Sol yields) |
+| `sunward` *The Long Road* (after m06) | Sunward | Sol · Wagon-master | Dry Wells (dunes), Three-Way Dunes (dunes), The Verdant Road (woodlands), Guns on the Caravan (dunes; Director Hale yields, a troop truck) |
+| `wardens` *ECHO's Key* (after m08) | Wardens | ECHO · Warden-prime | Standing Orders (expanse), A Grey Coat (highlands), Hold the River (Defence, Twin Bridges), Without a Key (expanse; the Iron Sovereign boss, won at half its armour; scene `sovereign-at-the-rise`) |
+| `veil` *The Quiet Survey* (after m10) | Veil | Maren · Surveyor | Night Count (highlands, no base), One Circuit (woodlands), Inside the Dampers (highlands), The Second Vanguard (highlands; a second Iron Vanguard boss) |
 
 **Mission data.** The usual shape, plus:
 - `chronicle`: the chronicle id.
 - `factions[0]`: the chronicle's own faction, with `rules.rosters: true`. The simulation then gives team 0 that roster (units, faction building, trait; `normalizedFactions` in `src/factions.js`). Spawns and waves keep slot names (`vanguard` is a Shade for a Veil team 0). Enemies may be Meridian.
 - Every field mission has a `time` lose condition, so a passive player always loses.
 - `check`: the checker's targets. A field mission has `{ passive, win: [from, to], earliest }` (seconds). A Defence mission (a `defence` block, as in "Frontier Defence levels") has `{ story, standard, veteran }` stars for the DefenceBot.
-- Only the existing objective kinds and triggers are used; chronicles ask no decisions.
+- Only the existing objective kinds and triggers are used; chronicles ask no decisions. A hero (round 2) yields by the C3 rules and the same trigger lets them go (`surrender`, then `capture`), so no Commander choice is asked.
 
-**Progress** (`progress.chronicles`, kept as stored on load like every field): `{ [chronicleId]: { cleared: [missionId], done, best: { [missionId]: { time, medal, difficulty } } } }`, written on a chronicle win only. A chronicle opens when its `unlockAfter` main mission is cleared; inside it the first mission is open and each next one opens when the one before is cleared. `done` is set when all three are cleared. Readers in `src/campaign.js` work for any campaign id (`"main"` or a chronicle id): `missionsOf`, `clearedIn`, `unlockedIn`, `bestIn`, `nextIn`, `recordIn`; `missionById(id)` returns `{ campaign, index, mission }` for chronicle missions too, so a chronicle save continues (`mode: "campaign"`, its mission id).
+**Progress** (`progress.chronicles`, kept as stored on load like every field): `{ [chronicleId]: { cleared: [missionId], done, best: { [missionId]: { time, medal, difficulty } } } }`, written on a chronicle win only. A chronicle opens when its `unlockAfter` main mission is cleared, or when the saved progress already shows it started (a cleared mission of its own) or `done` (round 2: unlocks never take content away from a 0.20 save); inside it the first mission is open and each next one opens when the one before is cleared. `done` is set when all four are cleared (a 0.20 save that finished three stays `done`, and its fourth mission is open). Readers in `src/campaign.js` work for any campaign id (`"main"` or a chronicle id): `missionsOf`, `clearedIn`, `unlockedIn`, `bestIn`, `nextIn`, `recordIn`; `missionById(id)` returns `{ campaign, index, mission }` for chronicle missions too, so a chronicle save continues (`mode: "campaign"`, its mission id).
 
 **Finale.** `if: { chronicle: id }` may sit on any entry `if` accepts; `resolveMission` settles it before the match: it passes once that chronicle is `done`. Mission 12's debrief has one such line per chronicle, by its lead. Lines only: a squad would change the finale's knife-edge balance, and the plan allows one only if the checker passes with and without it. With no chronicle finished the finale resolves byte-identically to 0.19a.
 
-**Interface.** The campaign map's footer shows four chronicle cards (faction colour and emblem, lead portrait, three relay pips, a locked state naming the opening mission); the setup list repeats them under the acts for the keyboard and screen readers. Choosing one lists its three missions; the header reads `CHRONICLE · Sunward · 2/3`, the briefing and debrief `CHRONICLE · 2/3`. A chronicle's Defence mission plays with the Defence interface but keeps the campaign header and debrief.
+**Interface.** The campaign map's footer shows four chronicle cards (faction colour and emblem, lead portrait, one relay pip per mission, a locked state naming the opening mission); the setup list repeats them under the acts for the keyboard and screen readers. Choosing one lists its four missions; the header reads `CHRONICLE · Sunward · 2/4`, the briefing and debrief `CHRONICLE · 2/4`. A chronicle's Defence mission plays with the Defence interface but keeps the campaign header and debrief.
 
 **Checks.** `npm run check:missions -- --chronicle <id|all> [--only cs1] [--difficulty story|veteran] [--jobs 1]` (`tools/chronicle-check.mjs`): the ObjectiveBot must win inside `check.win` and a passive player must lose, not before `check.passive`; a Defence mission's DefenceBot must reach its stars and an empty field must lose. Unit tests: `tests/chronicles.test.js`; browser: `npm run test:chronicles`.
 

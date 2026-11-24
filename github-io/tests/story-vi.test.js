@@ -14,9 +14,10 @@ const main = read('vi.json'), story = read('story-vi.json');
 const lower = (text) => text.trim().replace(/\s+/g, ' ').toLowerCase();
 const mainKeys = new Set(Object.keys(main.messages).map(lower));
 // Proper names are the same in both languages.
-const NAMES = ['Meridian', 'Ashfall', 'Sunward', 'Veil', 'Wardens', 'Vale', 'Okoro', 'Hale', 'Sol', 'Maren', 'ECHO'];
+// Chronicles round 2 (2026-11-24) added two cast members: Juno Rask (Wardens) and Teo Lind (Veil).
+const NAMES = ['Meridian', 'Ashfall', 'Sunward', 'Veil', 'Wardens', 'Vale', 'Okoro', 'Hale', 'Sol', 'Maren', 'ECHO', 'Juno', 'Rask', 'Teo', 'Lind'];
 // Strings that are only a proper name, so they have no entry and read the same.
-const SAME = new Set(['Meridian', 'Ashfall', 'Sunward', 'Wardens', 'Mira Vale', 'Tobi Okoro', 'Corvin Hale', 'Tamsin Sol', 'Ilse Maren', 'ECHO', 'Okoro']);
+const SAME = new Set(['Meridian', 'Ashfall', 'Sunward', 'Wardens', 'Mira Vale', 'Tobi Okoro', 'Corvin Hale', 'Tamsin Sol', 'Ilse Maren', 'ECHO', 'Okoro', 'Juno Rask', 'Teo Lind']);
 const strings = storyStrings();
 addMessages(story);
 

@@ -1,8 +1,10 @@
 // 0.20 "Chronicles" in the browser: the four Faction Chronicle cards on the campaign map (locked
-// before Act 1 ends, open after, relay pips), the list section, choosing a chronicle (its three
-// missions, the "CHRONICLE · Sunward · 2/3" header, the briefing), starting a Sunward and a Veil
+// before their main mission, open after, relay pips), the list section, choosing a chronicle (its four
+// missions, the "CHRONICLE · Sunward · 2/4" header, the briefing), starting a Sunward and a Veil
 // mission (team 0 fields that faction's roster), Continue restoring a chronicle save, a chronicle's
-// Defence mission and its last win, Vietnamese, at the three standard viewports. Text 11 px or
+// Defence mission, its fourth mission and that last win, Vietnamese, at the three standard viewports.
+// Chronicles round 2 (2026-11-24): four missions each, and the chronicles open in turn (Ashfall after
+// mission 4, Sunward 6, Wardens 8, Veil 10); a save that shows a chronicle started keeps it open. Text 11 px or
 // more, taps 44 px or more and no sideways scroll. Screenshots go to test-results/chronicles-*.
 // CHRONICLES_ALL=1 also starts the first mission of the Ashfall and Wardens chronicles (screenshots).
 import assert from "node:assert/strict";
@@ -12,10 +14,11 @@ import { CHRONICLES } from "../src/story/chronicles.js";
 
 const KEY = "frontier-campaign-v2", SETTINGS = "frontier-command.settings.v1";
 const progressWith = (count, extra = {}) => ({ cleared: Object.fromEntries(MISSIONS.slice(0, count).map((m, i) => [m.id, { time: 300 + i * 30, medal: "silver", difficulty: "standard" }])), ...extra });
-// Act 1 ends with the mission that opens the chronicles (its place moves as missions are inserted).
-const ACT1 = MISSIONS.findIndex((m) => m.id === CHRONICLES[0].unlockAfter) + 1;
+// Main missions cleared to open a chronicle (their places move as missions are inserted). ACT1 opens Ashfall only.
 const chron = (id) => CHRONICLES.find((c) => c.id === id);
-const cleared = (id, n) => ({ cleared: chron(id).missions.slice(0, n).map((m) => m.id), done: n === 3, best: Object.fromEntries(chron(id).missions.slice(0, n).map((m) => [m.id, { time: 400, medal: "gold", difficulty: "standard" }])) });
+const opens = (id) => MISSIONS.findIndex((m) => m.id === chron(id).unlockAfter) + 1;
+const ACT1 = opens("ashfall");
+const cleared = (id, n) => ({ cleared: chron(id).missions.slice(0, n).map((m) => m.id), done: n === chron(id).missions.length, best: Object.fromEntries(chron(id).missions.slice(0, n).map((m) => [m.id, { time: 400, medal: "gold", difficulty: "standard" }])) });
 const ROSTER = { sunward: "rider", veil: "shade", ashfall: "scrapper", wardens: "drone" };
 
 // Visible text under `scope` smaller than 11 px, visible buttons smaller than 44 px or outside the
@@ -76,11 +79,14 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
     clean(await audit(page, "#campaign-map"), `${viewport} locked map`);
     await shot(page, `chronicles-map-locked-${viewport}`);
 
-    // 2. Act 1 cleared, one Sunward mission won: every card open, Sunward's first pip lit.
-    await load(progressWith(ACT1, { chronicles: { sunward: cleared("sunward", 1), veil: cleared("veil", 3) } }));
+    // 2. Act 1 cleared and a 0.20 save that had started Sunward and finished the Veil: Ashfall opens by its
+    // mission, Sunward and the Veil stay open by the save (never taken away), Wardens waits for The Quiet Vault.
+    await load(progressWith(ACT1, { chronicles: { sunward: cleared("sunward", 1), veil: cleared("veil", 4) } }));
     await campaign();
-    const open = await page.evaluate(() => ({ cards: [...document.querySelectorAll(".chron-card")].map((c) => [c.dataset.chronicle, c.disabled, [...c.querySelectorAll(".chron-pips i.on")].length, c.classList.contains("done")]) }));
-    assert.deepEqual(open.cards, [["ashfall", false, 0, false], ["sunward", false, 1, false], ["wardens", false, 0, false], ["veil", false, 3, true]]);
+    const open = await page.evaluate(() => ({ cards: [...document.querySelectorAll(".chron-card")].map((c) => [c.dataset.chronicle, c.disabled, [...c.querySelectorAll(".chron-pips i.on")].length, c.classList.contains("done")]), pips: document.querySelectorAll(".chron-card .chron-pips i").length, wardens: document.querySelector('.chron-card[data-chronicle="wardens"]').title }));
+    assert.deepEqual(open.cards, [["ashfall", false, 0, false], ["sunward", false, 1, false], ["wardens", true, 0, false], ["veil", false, 4, true]]);
+    assert.equal(open.pips, 16, "four pips per chronicle");
+    assert.equal(open.wardens, `Clear ${MISSIONS[opens("wardens") - 1].title} to unlock`);
     clean(await audit(page, "#campaign-map"), `${viewport} open map`);
     clean(await audit(page, "#campaign-setup"), `${viewport} list with chronicles`);
     await shot(page, `chronicles-map-open-${viewport}`);
@@ -90,14 +96,14 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
     await page.locator(".chron-missions").waitFor({ state: "visible" });
     const pick = await page.evaluate(() => ({ chronicle: window.__frontier.chronicle, rows: [...document.querySelectorAll('#campaign-setup [data-stage]')].map((b) => [b.dataset.mission, b.disabled]), picked: document.querySelector(".chron-card.picked")?.dataset.chronicle }));
     assert.deepEqual(pick.chronicle, { campaign: "sunward", pick: 1, active: null });
-    assert.deepEqual(pick.rows, [["cs1-dry-wells", false], ["cs2-three-way-dunes", false], ["cs3-verdant-road", true]]);
+    assert.deepEqual(pick.rows, [["cs1-dry-wells", false], ["cs2-three-way-dunes", false], ["cs3-verdant-road", true], ["cs4-guns-on-the-caravan", true]]);
     assert.equal(pick.picked, "sunward");
-    assert.equal(await label(), "CHRONICLE · Sunward · 2/3");
+    assert.equal(await label(), "CHRONICLE · Sunward · 2/4");
     assert.match(await page.locator(".map-heading h1").innerText(), /Sunward · Three-Way Dunes/);
     clean(await audit(page, "#campaign-setup"), `${viewport} chronicle list`);
     if (viewport === "desktop") await shot(page, "chronicles-list-sunward-desktop");
     await begin(viewport === "landscape" ? null : `chronicles-briefing-sunward-${viewport}`);
-    assert.equal(await label(), "CHRONICLE · Sunward · 2/3", "the header while playing");
+    assert.equal(await label(), "CHRONICLE · Sunward · 2/4", "the header while playing");
     const sunward = await play("sunward", viewport === "landscape" ? null : `chronicles-play-sunward-${viewport}`);
     assert.equal(sunward.mission, "cs2-three-way-dunes");
     assert.ok(sunward.own.includes("rider"), `${viewport}: Sunward Riders on the field`);
@@ -115,9 +121,9 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
     assert.deepEqual(resumed, { chronicle: { campaign: "sunward", pick: 1, active: 1 }, faction: "sunward", mission: "cs2-three-way-dunes" });
     if (viewport === "desktop") {
       await page.waitForFunction(() => document.querySelector("#operation-label").textContent.includes("BIÊN NIÊN"), null, { timeout: TIMEOUT.step });
-      assert.equal(await label(), "BIÊN NIÊN · Sunward · 2/3");
+      assert.equal(await label(), "BIÊN NIÊN · Sunward · 2/4");
       await shot(page, "chronicles-continue-vi-desktop");
-    } else assert.equal(await label(), "CHRONICLE · Sunward · 2/3");
+    } else assert.equal(await label(), "CHRONICLE · Sunward · 2/4");
 
     // The cards and the list in Vietnamese (desktop): locked text and pips read in Vietnamese.
     if (viewport === "desktop") {
@@ -135,12 +141,12 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
       await page.evaluate((k) => { const s = JSON.parse(localStorage.getItem(k) || "{}"); s.language = "en"; localStorage.setItem(k, JSON.stringify(s)); }, SETTINGS);
     }
 
-    // 5. Veil: the first mission, no base, on the Veil roster.
-    await load(progressWith(ACT1));
+    // 5. Veil (open once Obsidian Storm is cleared): the first mission, no base, on the Veil roster.
+    await load(progressWith(opens("veil")));
     await campaign();
     await tap(mobile ? '.chron-entry[data-chronicle="veil"]' : '.chron-card[data-chronicle="veil"]');
     await page.locator(".chron-missions").waitFor({ state: "visible" });
-    assert.equal(await label(), "CHRONICLE · Veil · 1/3");
+    assert.equal(await label(), "CHRONICLE · Veil · 1/4");
     await begin(viewport === "landscape" ? null : `chronicles-briefing-veil-${viewport}`);
     const veil = await play("veil", viewport === "landscape" ? null : `chronicles-play-veil-${viewport}`);
     assert.equal(veil.mission, "cv1-night-count");
@@ -149,24 +155,25 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
     await page.close();
   }
 
-  // 6. Desktop: the Ashfall chronicle's Defence mission plays in the campaign, and its win finishes the
-  // chronicle (debrief, progress), then the list shows it done and the main campaign is one tap away.
+  // 6. Desktop: the Ashfall chronicle's Defence mission (3/4) plays in the campaign and its win leads on to the
+  // fourth mission (round 2); the fourth mission's win finishes the chronicle (debrief, progress), then the list
+  // shows it done and the main campaign is one tap away.
   const { page, goto, ready, tap, errors } = await openPage(browser, "desktop");
   await goto();
   await page.evaluate(([k, v]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); }, [KEY, progressWith(ACT1, { chronicles: { ashfall: cleared("ashfall", 2) } })]);
   await page.reload(); await ready();
   await tap('[data-mode="campaign"]');
   await tap('.chron-card[data-chronicle="ashfall"]');
-  assert.equal(await page.evaluate(() => document.querySelector("#operation-label").textContent), "CHRONICLE · Ashfall · 3/3");
-  const finale = chron("ashfall").missions[2].defence;
-  assert.equal(await page.locator("#briefing-rivals").textContent(), `${finale.lives} lives · ${finale.waves.length} waves`);
+  assert.equal(await page.evaluate(() => document.querySelector("#operation-label").textContent), "CHRONICLE · Ashfall · 3/4");
+  const gorge = chron("ashfall").missions[2].defence;
+  assert.equal(await page.locator("#briefing-rivals").textContent(), `${gorge.lives} lives · ${gorge.waves.length} waves`);
   await tap("#start");
   await page.locator("#mission-briefing").waitFor({ state: "visible" });
-  assert.equal(await page.locator("#mb-number").innerText(), "CHRONICLE · 3/3");
+  assert.equal(await page.locator("#mb-number").innerText(), "CHRONICLE · 3/4");
   await tap("#mb-skip"); await tap("#mb-next");
   await page.waitForFunction(() => window.__frontier.started && document.querySelector("#modal").hidden, null, { timeout: TIMEOUT.models });
   assert.equal(await page.evaluate(() => !!window.__frontier.sim.defence && window.__frontier.sim.factions[0]), "ashfall");
-  assert.equal(await page.evaluate(() => document.querySelector("#operation-label").textContent), "CHRONICLE · Ashfall · 3/3", "the campaign header, not the Defence one");
+  assert.equal(await page.evaluate(() => document.querySelector("#operation-label").textContent), "CHRONICLE · Ashfall · 3/4", "the campaign header, not the Defence one");
   await page.waitForFunction(() => document.documentElement.classList.contains("in-defence"), null, { timeout: TIMEOUT.step });
   await page.evaluate(() => window.__frontier.step(35));
   await page.waitForTimeout(400);
@@ -174,8 +181,31 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
   // Every wave beaten: the simulation decides the win on its next tick (sim/defence.js defenceResult).
   await page.evaluate(() => { const s = window.__frontier.sim, d = s.defence; d.wave = d.cleared = s.missionDef.defence.waves.length; d.active = false; d.queue.length = 0; for (const e of s.entities) if (e.team === 1) e.hp = 0; });
   await page.locator(".debrief").waitFor({ state: "visible", timeout: TIMEOUT.step });
+  const gorgeWin = await page.evaluate(() => ({ eyebrow: document.querySelector(".debrief .eyebrow").textContent, end: document.querySelector(".debrief-end")?.textContent || "", next: !!document.querySelector(".debrief-actions .primary[data-next-mission]") }));
+  assert.deepEqual(gorgeWin, { eyebrow: "CHRONICLE · 3/4 · COMPLETE", end: "", next: true }, "the Defence mission is no longer the last: Next mission");
+  const after = await page.evaluate((k) => JSON.parse(localStorage.getItem(k)).chronicles.ashfall, KEY);
+  assert.deepEqual([after.done, after.cleared], [false, chron("ashfall").missions.slice(0, 3).map((m) => m.id)]);
+
+  // The fourth mission (a hero who yields): its briefing, then a win finishes the chronicle.
+  await goto();
+  await page.evaluate(([k, v]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); }, [KEY, progressWith(ACT1, { chronicles: { ashfall: cleared("ashfall", 3) } })]);
+  await page.reload(); await ready();
+  await tap('[data-mode="campaign"]');
+  await tap('.chron-card[data-chronicle="ashfall"]');
+  assert.equal(await page.evaluate(() => document.querySelector("#operation-label").textContent), "CHRONICLE · Ashfall · 4/4");
+  await tap("#start");
+  await page.locator("#mission-briefing").waitFor({ state: "visible" });
+  assert.equal(await page.locator("#mb-number").innerText(), "CHRONICLE · 4/4");
+  await shot(page, "chronicles-briefing-ashfall-4-desktop");
+  await tap("#mb-skip"); await tap("#mb-next");
+  await page.waitForFunction(() => window.__frontier.started && document.querySelector("#modal").hidden, null, { timeout: TIMEOUT.models });
+  const fourth = await page.evaluate(() => { const s = window.__frontier.sim; return { mission: s.missionDef.id, faction: s.factions[0], sol: s.tagged("heroSol").map((e) => e.hero) }; });
+  assert.deepEqual(fourth, { mission: chron("ashfall").missions[3].id, faction: "ashfall", sol: ["sol"] });
+  // Its winning objectives done: the simulation decides the win on its next check.
+  await page.evaluate(() => { const s = window.__frontier.sim; for (const id of s.missionDef.win) s.setObjective(id, "done"); });
+  await page.locator(".debrief").waitFor({ state: "visible", timeout: TIMEOUT.step });
   const debrief = await page.evaluate(() => ({ eyebrow: document.querySelector(".debrief .eyebrow").textContent, end: document.querySelector(".debrief-end")?.textContent, primary: document.querySelector(".debrief-actions .primary")?.hasAttribute("data-new-game") }));
-  assert.equal(debrief.eyebrow, "CHRONICLE · 3/3 · COMPLETE");
+  assert.equal(debrief.eyebrow, "CHRONICLE · 4/4 · COMPLETE");
   assert.match(debrief.end || "", /Chronicle complete/);
   assert.equal(debrief.primary, true, "the last win leads back to the campaign screen");
   const stored = await page.evaluate((k) => JSON.parse(localStorage.getItem(k)).chronicles.ashfall, KEY);
@@ -196,7 +226,7 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
   if (process.env.CHRONICLES_ALL) for (const viewport of ["desktop", "portrait"]) for (const id of ["ashfall", "wardens"]) {
     const p = await openPage(browser, viewport);
     await p.goto();
-    await p.page.evaluate(([k, v]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); }, [KEY, progressWith(ACT1)]);
+    await p.page.evaluate(([k, v]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); }, [KEY, progressWith(opens(id))]);
     await p.page.reload(); await p.ready();
     await p.tap('[data-mode="campaign"]');
     await p.tap(`.chron-entry[data-chronicle="${id}"]`);

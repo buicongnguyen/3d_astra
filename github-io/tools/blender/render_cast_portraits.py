@@ -387,9 +387,65 @@ def echo(hex_):
     sphere(centre + Vector((-0.1, -0.35, 0.12)), (0.07, 0.04, 0.07), mat('#ffffff', 0.1, emit=6), seg=12)
 
 
-CAST_BUILD = {'commander': commander, 'vale': vale, 'okoro': okoro, 'hale': hale, 'sol': sol, 'maren': maren, 'echo': echo}
+def lind(hex_):
+    # Teo Lind (Veil field captain, chronicles round 2): charcoal hooded jacket with silver piping, violet scarf
+    # pulled down to the chin, short black hair, a small violet seer lens over one ear.
+    skin = '#6b4429'
+    body('#3d3a4a', skin, 1.0)
+    # the hood is down: folded behind the neck and shoulders
+    sphere((0, 0.3, 0.72), (0.62, 0.36, 0.3), mat('#2c2a36', 0.7))
+    for s in (-1, 1):
+        curve([(s * 0.14, -0.47, 0.5), (s * 0.32, -0.5, 0.15), (s * 0.48, -0.44, -0.22)], 0.014, mat('#d9dde6', 0.3, 0.8))
+    torus((0, -0.06, 0.6), 0.32, 0.13, mat(hex_, 0.75), scale=(1.15, 1, 0.75))
+    sphere((-0.22, -0.38, 0.4), (0.16, 0.1, 0.18), mat(hex_, 0.75))
+    head(skin)
+    hair = mat('#141217', 0.55)
+    h = sphere((0, 0.05, 1.18), (0.48, 0.48, 0.5), hair)
+    cut(h, 1.4, tilt=0.55)
+    sphere((0, 0.02, 1.58), (0.34, 0.3, 0.12), hair)
+    eyes('#2a1a10', size=0.95, z=1.1, lid=0.18, look=(-0.012, 0))
+    brows('#141217', z=1.25, tilt=0.15, arch=0.015, thick=0.019)
+    mouth('smirk', '#4a2024', w=0.1)
+    # seer lens over the right ear
+    sphere((0.48, -0.06, 1.1), (0.06, 0.05, 0.09), mat('#2a2633', 0.4, 0.3))
+    torus((0.48, -0.13, 1.14), 0.06, 0.016, mat('#d9dde6', 0.2, 0.9), rot=(math.pi / 2, 0, 0.4))
+    sphere((0.48, -0.14, 1.14), (0.05, 0.012, 0.05), mat(hex_, 0.1, emit=3), seg=16)
+
+
+def rask(hex_):
+    # Juno Rask (the Wardens' mechanic, chronicles round 2): cropped copper-red hair under a band of pale blue
+    # Warden lights, freckles, patched blue coveralls with the three-circle emblem, a spanner over one shoulder.
+    skin = '#e2b996'
+    body('#3f6fc4', skin, 1.02)
+    for s in (-1, 1):
+        box((s * 0.22, -0.44, 0.15), (0.08, 0.05, 0.85), mat('#2a4f94', 0.6), rot=(0, 0, s * 0.05), bevel=0.02)
+    box((0.42, -0.47, 0.05), (0.2, 0.03, 0.16), mat('#5d86d6', 0.7), rot=(0, 0, -0.15), bevel=0.01)
+    for (x, z) in ((-0.34, 0.3), (-0.42, 0.16), (-0.26, 0.16)):
+        torus((x, -0.5, z), 0.045, 0.012, mat('#c8f1ff', 0.3, emit=1.5), rot=(math.pi / 2, 0, 0))
+    curve([(0.5, -0.1, 0.62), (0.68, -0.3, 0.3), (0.82, -0.42, -0.05)], 0.035, mat('#9aa7b0', 0.3, 0.9))
+    torus((0.48, -0.08, 0.66), 0.07, 0.025, mat('#9aa7b0', 0.3, 0.9), rot=(math.pi / 2, 0, 0.6))
+    head(skin)
+    hair = mat('#c4572a', 0.55)
+    h = sphere((0, 0.05, 1.18), (0.5, 0.5, 0.5), hair)
+    cut(h, 1.32, tilt=0.3)
+    for i in range(6):
+        a = -0.9 + i * 0.36
+        sphere((math.sin(a) * 0.36, face_y(math.sin(a) * 0.36, 1.36) - 0.02, 1.36), (0.08, 0.06, 0.07), hair, seg=16)
+    curve([(-0.47, 0.0, 1.3), (0, -0.46, 1.43), (0.47, 0.0, 1.3)], 0.03, mat('#16263f', 0.4))
+    for x in (-0.22, 0.0, 0.22):
+        sphere((x, face_y(x, 1.42) - 0.06, 1.42), (0.03, 0.02, 0.03), mat('#c8f1ff', 0.1, emit=5), seg=12)
+    eyes('#4a6b3a', size=1.0, z=1.08)
+    brows('#a8461f', z=1.24, tilt=-0.1, arch=0.03, thick=0.018, raise_r=0.04)
+    mouth('grin', w=0.12, z=0.86)
+    for s in (-1, 1):
+        for k in range(3):
+            sphere((s * (0.2 + k * 0.05), face_y(s * (0.2 + k * 0.05), 0.97) - 0.012, 0.97 + (k % 2) * 0.03), (0.012, 0.006, 0.012), mat('#b0703f', 0.7), seg=8)
+
+
+CAST_BUILD = {'commander': commander, 'vale': vale, 'okoro': okoro, 'hale': hale, 'sol': sol, 'maren': maren, 'echo': echo,
+              'lind': lind, 'rask': rask}
 HEX = {'commander': '#92ebc5', 'vale': '#92ebc5', 'okoro': '#92ebc5', 'hale': '#ef7660', 'sol': '#f3b33f',
-       'maren': '#9a7df0', 'echo': '#6cc7ff'}
+       'maren': '#9a7df0', 'echo': '#6cc7ff', 'lind': '#9a7df0', 'rask': '#6cc7ff'}
 
 
 def reset():

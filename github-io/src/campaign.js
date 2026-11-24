@@ -152,9 +152,16 @@ export function missionById(id) {
 export { CHRONICLES, chronicleById, chronicleDone };
 const chronicleRecord = (progress, id) => (isRecord(progress?.chronicles?.[id]) ? progress.chronicles[id] : {});
 const chronicleCleared = (progress, id) => (Array.isArray(chronicleRecord(progress, id).cleared) ? chronicleRecord(progress, id).cleared.filter((x) => typeof x === "string") : []);
-// A chronicle opens once its `unlockAfter` main mission (the end of Act 1) is cleared.
-export const chronicleUnlocked = (progress, id) => { const c = chronicleById(id), i = c ? missionIndex(c.unlockAfter) : -1; return i >= 0 && isCleared(progress, i); };
-// Missions cleared in a chronicle, 0 to 3, counted against today's mission list.
+// A chronicle opens once its `unlockAfter` main mission is cleared (staggered since chronicles round 2,
+// 2026-11-24: Ashfall after mission 4, Sunward after 6, Wardens after 8, Veil after 10). A chronicle the
+// saved progress already shows started (a cleared mission) or finished stays open: unlocks never take
+// content away from a save made when every chronicle opened after mission 4.
+export const chronicleUnlocked = (progress, id) => {
+  const c = chronicleById(id), i = c ? missionIndex(c.unlockAfter) : -1;
+  if (i >= 0 && isCleared(progress, i)) return true;
+  return !!c && (chronicleRecord(progress, id).done === true || chronicleCleared(progress, id).some((m) => c.missions.some((x) => x.id === m)));
+};
+// Missions cleared in a chronicle, 0 to 4, counted against today's mission list.
 export const chronicleCount = (progress, id) => { const done = new Set(chronicleCleared(progress, id)); return (chronicleById(id)?.missions || []).filter((m) => done.has(m.id)).length; };
 
 // One reading of progress for any campaign ("main" or a chronicle id), by index in that campaign.

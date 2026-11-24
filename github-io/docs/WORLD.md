@@ -77,6 +77,8 @@ Full entries, with portrait briefs for the artist and two sample lines each, are
 | `sol` | Tamsin Sol | Captain of the Sunward Caravan, rival then ally | Proud, generous, sharp at a bargain | Warm and direct: water, roads, debts, guests |
 | `maren` | Ilse Maren | Archivist of the Veil Survey | Gentle, frightened of repeating one terrible night | Quiet; quotes records; asks rather than threatens |
 | `echo` | ECHO | Caretaker mind of the Lattice | Patient, literal, glad of company | Counts things; says "this one" until the finale, then "I" |
+| `rask` | Juno Rask | Mechanic who tends the Wardens (Wardens chronicle) | Brisk, practical, fond of old machines | Quick and plain, workshop words; talks to Wardens by their numbers |
+| `lind` | Teo Lind | Field captain of the Veil Shades (Veil chronicle) | Quiet, dry, loyal to Maren | Few words, field reports; calls Maren "Archivist" and counts his squad |
 
 **Hale's motive.** The Ashfall fleet is in orbit with forty thousand people asleep and the reactors failing. A full draw at the Keystone would keep them alive for a year. Tuning the Keystone would feed them for good, but it needs time and it needs him to trust three strangers and a machine. He can count a year; he cannot count a promise. He is wrong, and he is not a villain. The story ends with Meridian sending him the power anyway.
 
@@ -150,14 +152,14 @@ Two or more merciful orders lead to **The Open Frontier**: the Keystone is share
 
 ## Faction Chronicles (0.20)
 
-Four short campaigns tell the same war from the other camps (data: `src/story/chronicles.js`; format in [MISSIONS.md](MISSIONS.md)). They open after mission 4. In a chronicle the player commands that faction, and its people never say "Commander":
+Four short campaigns tell the same war from the other camps (data: `src/story/chronicles.js`; format in [MISSIONS.md](MISSIONS.md)). Each opens once the player has met its people: Ashfall after mission 4, Sunward after 6, Wardens after 8 (ECHO wakes), Veil after 10 (Maren); a save that already started one keeps it open. In a chronicle the player commands that faction, and its people never say "Commander":
 
-| Chronicle | Lead | The player is | Its three missions |
+| Chronicle | Lead | The player is | Its four missions |
 |---|---|---|---|
-| Ashfall: *Salvage Rights* | Hale | his Foreman | Cold Berths (day 3: raider camps strip the wrecks), Lights Out (day 4: mission 1's relay from Hale's side), The Scrapyard Gorge (day 44: holding the berth cores against Meridian columns) |
-| Sunward: *The Long Road* | Sol | her Wagon-master | Dry Wells (day 11: Ashfall pumps on the oases), Three-Way Dunes (mission 4 from Sol's side, the truce), The Verdant Road (day 22: the Pact's north road; Okoro's "one circuit" starts Sol's doubt) |
-| Wardens: *ECHO's Key* | ECHO | Warden-prime | Standing Orders (day 18: ECHO, still asleep, keeps the Keystone quiet), A Grey Coat (day 40: Hale holds the key; "obey, but count"), Hold the River (day 52: the river against Meridian while the crystals fade) |
-| Veil: *The Quiet Survey* | Maren | her Surveyor | Night Count (night 9: Ashfall beacons on the plateau), One Circuit (day 22: the forest relay's records), Inside the Dampers (mission 10 from inside; the Crown lights with no storm) |
+| Ashfall: *Salvage Rights* | Hale | his Foreman | Cold Berths (day 3: raider camps strip the wrecks), Lights Out (day 4: mission 1's relay from Hale's side), The Scrapyard Gorge (day 44: holding the berth cores against Meridian columns), The Toll Road (day 46: Sol's toll on the forest road; she yields and Hale lets her go) |
+| Sunward: *The Long Road* | Sol | her Wagon-master | Dry Wells (day 11: Ashfall pumps on the oases), Three-Way Dunes (mission 4 from Sol's side, the truce), The Verdant Road (day 22: the Pact's north road; Okoro's "one circuit" starts Sol's doubt), Guns on the Caravan (day 41: mission 9's morning; Hale comes himself, yields, and Sol lets him walk) |
+| Wardens: *ECHO's Key* | ECHO | Warden-prime | Standing Orders (day 18: ECHO, still asleep, keeps the Keystone quiet), A Grey Coat (day 40: Hale holds the key; "obey, but count"), Hold the River (day 52: the river against Meridian while the crystals fade), Without a Key (day 53: the key is silent; the Wardens choose to stand against the Iron Sovereign, and Juno Rask, their mechanic, speaks for them) |
+| Veil: *The Quiet Survey* | Maren | her Surveyor | Night Count (night 9: Ashfall beacons on the plateau), One Circuit (day 22: the forest relay's records), Inside the Dampers (mission 10 from inside; the Crown lights with no storm), The Second Vanguard (day 50: Teo Lind's Shades break Hale's draw masts and a second Builder Vanguard) |
 
 A finished chronicle adds one line by its lead to the finale's closing lines. Enemies who speak in a chronicle (Vale and Okoro for Meridian, Hale, Sol) keep their own voices; Meridian's people still call their own leader "Commander".
 
