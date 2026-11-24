@@ -24,10 +24,11 @@ export function showTitleCard(def, host = document.getElementById("world") || do
   card = document.createElement("div");
   card.id = "title-card";
   card.setAttribute("role", "status");
-  card.innerHTML = `${info.kicker ? `<span class="tc-kicker"></span>` : ""}<strong class="tc-title"></strong>${info.place ? `<span class="tc-place"></span>` : ""}`;
+  card.innerHTML = `${info.kicker ? `<span class="tc-kicker"></span>` : ""}<strong class="tc-title"></strong>${info.place ? `<span class="tc-place"></span>` : ""}${info.rule ? `<span class="tc-rule"></span>` : ""}`;
   if (info.kicker) card.querySelector(".tc-kicker").textContent = info.kicker;
   card.querySelector(".tc-title").textContent = info.title;
   if (info.place) card.querySelector(".tc-place").textContent = info.place;
+  if (info.rule) card.querySelector(".tc-rule").textContent = info.rule;
   // Reduced motion: no slide, only a short opacity fade in and out (a transition, since motion-off silences animations).
   const calm = motionOff() || reducedMotion();
   if (calm) card.classList.add("calm");

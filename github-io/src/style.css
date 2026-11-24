@@ -970,3 +970,14 @@ button kbd {
 :root.motion-off *::after {
   animation: none !important;
 }
+
+/* 2026-11-24: a new version is waiting (app/offline.js). Small and non-blocking, in the top-left notice
+   lane under the top bar; a tap saves, lets the new version take over and reloads. 44 px tall, 13 px text. */
+#update-toast {
+  position: fixed; z-index: 60; left: max(12px, env(safe-area-inset-left)); top: calc(env(safe-area-inset-top) + 92px);
+  min-height: 44px; padding: 8px 14px; border-radius: 8px; border: 1px solid #ffc75e;
+  background: rgba(16, 30, 30, 0.94); color: #fff3d6; font: inherit; font-size: 13px; font-weight: 700; line-height: 1.3;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); cursor: pointer;
+}
+#update-toast:disabled { opacity: 0.7; cursor: progress; }
+.compact-ui #update-toast { top: calc(env(safe-area-inset-top) + 56px); left: max(8px, env(safe-area-inset-left)); }

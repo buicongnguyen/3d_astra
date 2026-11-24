@@ -59,6 +59,7 @@ export function createDefenceUI(S, A, deps) {
     if (!S.sim?.defence) return;
     buildPads();
     ensureBar();
+    c.ensureCrewFab();
     const mapSize = $("defence-map-size");
     mapSize.setAttribute("aria-expanded", "false");
     mapSize.onclick = () => mapSize.setAttribute("aria-expanded", String(mapSize.getAttribute("aria-expanded") !== "true"));
@@ -97,7 +98,8 @@ export function createDefenceUI(S, A, deps) {
     A.updateUI();
   }
   function hud(es) {
-    if (!ui.pads || ui.pads.def !== S.sim.missionDef.defence || ui.pads.terrain !== S.view.terrain) buildPads();
+    // Cheap when nothing changed: buildPads keeps the pads while the match, view, terrain and scene are the same.
+    buildPads();
     ensureBar();
     ui.bar.hidden = !Z.started;
     if (S.view.maxZoom == null) S.view.maxZoom = S.sim.missionDef.defence.camera.maxZoom;
@@ -120,11 +122,13 @@ export function createDefenceUI(S, A, deps) {
     if (ui.aim) setAim(null);
     if (ui.bar) ui.bar.hidden = true;
     root.style.removeProperty("--defence-bar-h");
+    root.style.removeProperty("--defence-intel-h"); ui.intelH = 0;
     if (ui.barW) { root.style.removeProperty("--defence-bar-w"); ui.barW = 0; }
     closeCard();
     if (ui.intel) { ui.intel.hidden = true; ui.intelKey = ""; }
     delete $("commands").dataset.tier;
     if (ui.guide) guideStop();
+    if (ui.crewFab) ui.crewFab.hidden = true;
     root.classList.remove("defence-dock-min");
     ui.frame = null; ui.clear = null; ui.framePending = false;
     S.view?.setYaw?.(0);

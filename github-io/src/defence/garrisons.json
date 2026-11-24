@@ -1,5 +1,5 @@
 {
-  "about": "Frontier Defence garrison towers: a Sentinel tower with one of the army's own units as its crew. Stats come from that unit (balance.json) scaled here; tiers are instant. mech scales damage against machines (armour), on top of the unit's own mechanical bonus. At tier 3 a tower can take one of two branches (0.21): damage, interval, mech and splash multiply; range and reveal add; splash_damage replaces the share; slow, mark and burn are on-hit effects. The commander, the perks and demolition (0.21) are tuned here too. 0.24: each branch has two ranks (ranks: cost and effects; hp multiplies, splash_add adds blast metres, pierce is the share of a shield a shot passes, burst fires shots gap seconds apart, slow_radius and mark_radius spread the effect); a crew may carry its own hp factor (the front line); repair: a garrison not hit for delay seconds mends rate of its health a second; armour.rank2 and armour.branches are the squad upgrades; endless.hp is the Endless hull growth a wave from wave 10.",
+  "about": "Frontier Defence garrison towers: a Sentinel tower with one of the army's own units as its crew. Stats come from that unit (balance.json) scaled here; tiers are instant. mech scales damage against machines (armour), on top of the unit's own mechanical bonus. At tier 3 a tower can take one of two branches (0.21): damage, interval, mech and splash multiply; range and reveal add; splash_damage replaces the share; slow, mark and burn are on-hit effects. The commander, the perks and demolition (0.21) are tuned here too. 0.24: each branch has two ranks (ranks: cost and effects; hp multiplies, splash_add adds blast metres, pierce is the share of a shield a shot passes, burst fires shots gap seconds apart, slow_radius and mark_radius spread the effect); a crew may carry its own hp factor (the front line); repair: a garrison not hit for delay seconds mends rate of its health a second; armour.rank2 and armour.branches are the squad upgrades; endless.hp is the Endless hull growth a wave from wave 10. 2026-11 (defence pads): a crew may carry tier_range, the metres each tier adds in place of tiers[].range, so short-reach crews (Rangers, Mortar, Tank post, Flame trap) gain more reach per upgrade and cover the road from pads set back from it (tools/defence-coverage.mjs measures it).",
   "sell": 0.6,
   "bounty": 0.1,
   "repair": { "delay": 6, "rate": 0.04 },
@@ -11,14 +11,14 @@
     { "damage": 2.0, "range": 2, "hp": 1.75, "interval": 0.9 }
   ],
   "crews": {
-    "ranger": { "name": "Ranger nest", "slot": "ranger", "cost": [70, 65, 110], "damage": 1.9, "range": 3, "interval": 1, "mech": 0.3,
+    "ranger": { "name": "Ranger nest", "slot": "ranger", "cost": [70, 65, 110], "damage": 1.9, "range": 4, "tier_range": [0, 1.5, 3.5], "interval": 1, "mech": 0.3,
       "branches": {
         "marksman": { "name": "Marksman", "cost": 150, "damage": 2.1, "interval": 1.5, "range": 2,
           "ranks": [{ "cost": 140, "damage": 1.15, "pierce": 0.5, "hp": 1.1 }, { "cost": 190, "damage": 1.1, "pierce": 1, "mech": 2, "range": 1, "hp": 1.1 }] },
         "suppressor": { "name": "Suppressor", "cost": 130, "damage": 0.9, "slow": { "factor": 0.55, "seconds": 1.6 },
           "ranks": [{ "cost": 120, "slow": { "factor": 0.45, "seconds": 2.2 }, "hp": 1.1 }, { "cost": 170, "slow": { "factor": 0.4, "seconds": 2.6 }, "slow_radius": 2.5, "damage": 1.2, "hp": 1.1 }] }
       } },
-    "breaker": { "name": "Breaker mortar", "slot": "breaker", "hp": 1.2, "cost": [110, 85, 140], "damage": 1.6, "range": 4, "interval": 1.1, "splash": 1.25, "mech": 0.4,
+    "breaker": { "name": "Breaker mortar", "slot": "breaker", "hp": 1.2, "cost": [110, 85, 140], "damage": 1.6, "range": 4.5, "tier_range": [0, 1.5, 3.5], "interval": 1.1, "splash": 1.25, "mech": 0.4,
       "branches": {
         "cluster": { "name": "Cluster", "cost": 170, "splash": 1.6, "splash_damage": 0.6,
           "ranks": [{ "cost": 150, "splash": 1.2, "hp": 1.1 }, { "cost": 200, "splash": 1.15, "splash_damage": 0.8, "damage": 1.1, "hp": 1.1 }] },
@@ -39,14 +39,14 @@
         "fareye": { "name": "Far-eye", "cost": 120, "reveal": 12, "range": 3,
           "ranks": [{ "cost": 110, "reveal": 6, "range": 1, "hp": 1.1 }, { "cost": 160, "damage": 1.3, "pierce": 0.5, "range": 1, "hp": 1.1 }] }
       } },
-    "tank": { "name": "Tank emplacement", "slot": "tank", "hp": 1.5, "cost": [150, 110, 170], "damage": 1.6, "range": 1, "interval": 1.3, "splash": 0, "mech": 1.8, "counter": false,
+    "tank": { "name": "Tank emplacement", "slot": "tank", "hp": 1.5, "cost": [150, 110, 170], "damage": 1.6, "range": 2, "tier_range": [0, 1.5, 3.5], "interval": 1.3, "splash": 0, "mech": 1.8, "counter": false,
       "branches": {
         "breacher": { "name": "Breacher", "cost": 180, "damage": 1.5, "mech": 1.4,
           "ranks": [{ "cost": 150, "mech": 1.2, "hp": 1.25 }, { "cost": 200, "damage": 1.15, "mech": 1.1, "hp": 1.25 }] },
         "shrapnel": { "name": "Shrapnel", "cost": 170, "splash_radius": 3, "splash_damage": 0.5,
           "ranks": [{ "cost": 150, "splash_add": 1, "hp": 1.2 }, { "cost": 200, "splash_damage": 0.7, "damage": 1.1, "hp": 1.2 }] }
       } },
-    "scorcher": { "name": "Scorcher flame trap", "type": "scorcher", "hp": 1.5, "cost": [100, 80, 130], "damage": 0.7, "range": 1, "interval": 1, "mech": 0.4,
+    "scorcher": { "name": "Scorcher flame trap", "type": "scorcher", "hp": 1.5, "cost": [100, 80, 130], "damage": 0.7, "range": 2, "tier_range": [0, 1.5, 3], "interval": 1, "mech": 0.4,
       "burn": { "dps": 8, "radius": 2.5, "seconds": 3, "every": 1.5 },
       "branches": {
         "inferno": { "name": "Inferno", "cost": 150, "burn": { "dps": 1.8 },

@@ -78,7 +78,7 @@ export function createBar(c) {
   // ---------------------------------------------------------------- Phone framing (framing.js)
   // The battlefield no HUD band covers, in canvas px: the drawn canvas less the top bar, the Defence bar, the dock
   // and the other panels over it (corner widgets under 5 % of it are left to a pan).
-  const COVERS = [".topbar", "#defence-bar", "#defence-intel", ".command-deck", "#dock-tabs", ".minimap-panel", ".touch-controls", "#defence-dock-toggle", "#idle-chips", "#mission-toggle"];
+  const COVERS = [".topbar", "#defence-bar", "#defence-intel", ".command-deck", "#dock-tabs", ".minimap-panel", ".touch-controls", "#defence-dock-toggle", "#idle-chips", "#mission-toggle", "#defence-crew-fab"];
   const ALWAYS = new Set(["defence-bar", "defence-intel"]);
   function clearArea() {
     const v = S.view, canvas = v.renderer.domElement.getBoundingClientRect(), vis = v.visibleRect();
@@ -204,6 +204,10 @@ export function createBar(c) {
     // Bottom-band contract with W1-D: the bar's height plus its 8 px gap while it sits at the foot of a portrait phone.
     const foot = phone() && matchMedia("(orientation: portrait)").matches && !ui.bar.hidden;
     if (foot) root.style.setProperty("--defence-bar-h", `${ui.bar.offsetHeight + 8}px`); else root.style.removeProperty("--defence-bar-h");
+    // 2026-11-24: the radio line on a portrait phone sits in the same band as the Next wave card; it is lifted by
+    // the card's height so it never covers it (defence-ui.css, --defence-intel-h).
+    const intelH = foot && ui.intel && !ui.intel.hidden ? ui.intel.offsetHeight + 6 : 0;
+    if (intelH !== ui.intelH) { ui.intelH = intelH; if (intelH) root.style.setProperty("--defence-intel-h", `${intelH}px`); else root.style.removeProperty("--defence-intel-h"); }
     // Landscape phones: notices and the wave intel sit beside the bar, in the same band (phone-hud.css, defence-ui.css).
     const barW = ui.bar.hidden ? 0 : ui.bar.offsetWidth;
     if (barW !== ui.barW) { ui.barW = barW; if (barW) root.style.setProperty("--defence-bar-w", `${barW}px`); else root.style.removeProperty("--defence-bar-w"); }

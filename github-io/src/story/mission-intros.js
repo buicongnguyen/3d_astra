@@ -54,10 +54,14 @@ export const MISSION_INTROS = {
 };
 
 // What the card shows for a mission definition: { kicker, title, place }, or null without a title.
+// The line a campaign Defence mission's title card adds under its place.
+export const DEFENCE_RULE = "Defence: no base — crew the pads beside the road";
 export function titleCardFor(def) {
   if (!def?.title) return null;
   const row = MISSION_INTROS[def.id], place = def.briefing?.place || "";
   const act = row?.kicker?.startsWith("ACT ") ? ACTS.find((a) => a.act === def.act)?.title : "";
   const kicker = row ? [row.kicker, act?.toUpperCase(), row.day].filter(Boolean).join(" · ") : "";
-  return { kicker, title: def.title, place };
+  // 2026-11-24: a campaign mission under the Defence rules says so on its card (no base, pads only).
+  const rule = def.rules?.mode === "defence" && def.act ? DEFENCE_RULE : "";
+  return { kicker, title: def.title, place, rule };
 }

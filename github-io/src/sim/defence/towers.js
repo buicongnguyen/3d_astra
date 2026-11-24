@@ -71,7 +71,8 @@ export const towers = {
       name: g.name,
       damage: d.damage * g.damage * t.damage,
       interval: d.interval * (g.interval ?? 1) * t.interval,
-      range: d.range + g.range + t.range,
+      // A short-reach crew may add its own metres a tier (garrisons.json tier_range) in place of the shared tiers[].range.
+      range: d.range + g.range + (g.tier_range?.[tier - 1] ?? t.range),
       shot: d.shot || type,
       maxHp: Math.round(D.tower.hp * (GARRISONS.hp ?? 1) * t.hp * (g.hp ?? 1)),
       maxShield: D.tower.shield,

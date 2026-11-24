@@ -96,9 +96,11 @@ test("Wings over Copper resolves with and without earlier decisions: only Hale's
 // 2026-11-24 (campaign C4): m09 and m12 gained lines and gifts for spared heroes.
 // 2026-11-24 (campaign C3): m04, m07 and m10 each gained an enemy hero and its surrender decision.
 // 2026-11-24 (campaign C1, pacing): m03 siphons 6000 to 4200 HP and new gold/silver times; m06 quota 8000/2600 to 7200/2300 and new medals.
+// 2026-11-24 (defence pads): m02b's intel opens with "Defence: no base — crew the pads beside the road" and pad s8 moved
+// 3.6 m nearer the east road (20, 34 to 17, 32) so short-reach crews there cover the road; old 9845060f.
 test("the original missions resolve to their recorded checksums on all decision paths", () => {
   const BEFORE = {
-    "m01-first-light": "704a79da", "m02-first-contact": "0223006d", "m02b-hold-the-river": "9845060f", "m03-the-ashen-line": "586533a5",
+    "m01-first-light": "704a79da", "m02-first-contact": "0223006d", "m02b-hold-the-river": "1b4bbcf9", "m03-the-ashen-line": "586533a5",
     "m04-three-way-dunes": "7b11bc96", "m05-the-verdant-pact": "1cfc2cff", "m06-copper-harvest": "00ea9e9e", "m07-copper-siege": "e1b6c7fd",
     "m08-the-quiet-vault": "a750b7e8", "m09-a-debt-in-the-dunes": "4884ad1c", "m10-obsidian-storm": "90d0a3ee", "m11-cut-the-draw": "214fd6b9", "m12-frontiers-end": "2aadeadc",
     // AAA round 3 (R3-I, campaign pacing): first-contact probes in 10 base missions, m03 (towers objective, gold 750 s) and m04 retuned after the south exits.
