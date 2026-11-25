@@ -34,7 +34,7 @@ import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, setRimTier 
 import { MissionLook } from "./mission-look-view.js";
 import { airMotion, airParts, poseAirParts } from "./air-motion.js";
 import { groundY, MARKER_LIFT } from "./ground-y.js";
-import { RIG_INFANTRY, RIG_HULL, KNEELERS, GAIT, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach, BARREL_POSES, newGun, fireBarrel, stepBarrel, poseBarrel, RECOIL, barrelKick, bodyKick, kickSize, poseTurretOnHull, swingLegs } from "./unit-rig.js";
+import { RIG_INFANTRY, RIG_HULL, KNEELERS, STANCE, GAIT, hitFlinch, FALL, fallFor, infantryFall, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach, BARREL_POSES, newGun, fireBarrel, stepBarrel, poseBarrel, RECOIL, barrelKick, bodyKick, kickSize, poseTurretOnHull, swingLegs } from "./unit-rig.js";
 import {
   EnvironmentView,
   optimizeEnvironment,
@@ -1340,8 +1340,9 @@ export class WorldView {
     if (model.userData.rig) {
       const motion = new Float32Array([0, 0, 0, 1]);
       model.traverse((o) => { if (o.isMesh && o.geometry.getAttribute("aRig")) o.userData.motion = motion; });
-      root.userData.rig = { kind: model.userData.rig, motion, phase: (e.id * 0.7) % 6.28, gait: 0, kneel: 0, flinch: 0, lean: 0,
-        vs: 0, pitch: 0, pitchV: 0, squat: 0, legLength: model.userData.legLength || 0.95, hullPivot: model.userData.hullPivot || [0.6, 0] };
+      root.userData.rig = { kind: model.userData.rig, motion, phase: (e.id * 0.7) % 6.28, gait: 0, kneel: 0, flinch: 0, flinchV: 0, roll: 0, rollV: 0, tilt: 0, lean: 0,
+        vs: 0, pitch: 0, pitchV: 0, squat: 0, legLength: model.userData.legLength || 0.95, hullPivot: model.userData.hullPivot || [0.6, 0],
+        stance: STANCE[e.type] || null, ride: GAIT[e.type] === "ride" };
     }
     if (root.userData.turret) root.userData.turretBase = root.userData.turret.position.clone();
     // Artillery barrels (unit-rig.js BARREL_POSES) start in their resting pose: no run-in on spawn.
@@ -1503,7 +1504,16 @@ export class WorldView {
         const o = this.objects.get(event.seed);
         if (o) {
           o.userData.flash = FEEL.flashSeconds;
-          if (o.userData.rig?.kind === "infantry") o.userData.rig.flinch = 1; // unit-rig.js: a small hit flinch
+          // W4 (unit-rig.js hitFlinch): infantry jerk away from the hit, vehicles rock on their suspension, both by the
+          // share of health the hit took (since the last frame) and from the shooter's side. Unit motion only.
+          const rig = o.userData.rig, e = rig && this.richMotion ? sim.get(event.seed) : null;
+          if (e) {
+            const pool = e.maxHp + (e.maxShield || 0), now = e.hp + (e.shield || 0), seen = o.userData.hpSeen ?? now;
+            const by = Number.isFinite(e.hitBy) ? sim.get(e.hitBy) : null;
+            const from = by ? Math.atan2(by.x - e.x, by.z - e.z) : e.angle;
+            hitFlinch(rig, pool > 0 ? (seen - now) / pool : 0, from, o.userData.model.rotation.y, rig.kind === "hull" ? "hull" : "infantry");
+            o.userData.hpSeen = now;
+          }
           // The model flashes too (per-instance tint), timed below to the round's arrival.
           startFlash(o.userData, 0, event.shield);
           o.userData.flashX = event.x; o.userData.flashZ = event.z;
@@ -1569,8 +1579,8 @@ export class WorldView {
     // R3-K: `look` (combat-feedback.js DEATH_LOOK) is settled by the DeathLooks plugin once the frame's
     // killing shot is known (0 until then); `id` lets it find the shot.
     this.dying.push({ id: event.seed, look: 0, baseY: o.position.y, object: o, kind, team: event.team, age: 0, x: o.position.x, z: o.position.z, tilt: (event.seed % 2 ? 1 : -1), lift: model.position?.y ?? 0,
-      life: { building: 2.8, vehicle: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, air: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, infantry: 1.6, dive: DIVE_SECONDS }[kind], baseAngle: model.rotation.y, direction: event.direction ?? model.rotation.y,
-      ...(kind === 'dive' ? { tx: event.tx, tz: event.tz } : null) });
+      life: { building: 2.8, vehicle: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, air: this.lowPower ? FEEL.ecoWreckSeconds : FEEL.wreckSeconds, infantry: this.lowPower ? FALL.ecoLife : FALL.life, dive: DIVE_SECONDS }[kind], baseAngle: model.rotation.y, direction: event.direction ?? model.rotation.y,
+      ...(kind === 'dive' ? { tx: event.tx, tz: event.tz } : null), ...(kind === 'infantry' ? { fall: o.userData.rig?.ride ? 'twist' : fallFor(event.seed), pose: { pitch: 0, roll: 0, yaw: 0, kneel: 0, drop: 0, size: 1 }, size: model.scale.x } : null) });
   }
   // Hit flash (combat-feedback.js stepFlash): every model part shares one tint array that the
   // batches copy into instanceColor, so a flash costs no material, batch or draw call. Off
@@ -1649,9 +1659,16 @@ export class WorldView {
         m.rotation.x = -ease((t - 0.25) / 0.7) * 1.3;
         o.position.y = d.baseY - ease(t / 0.9) * 0.25 - ease((t - 0.9) / 0.7) * 1.0;
       } else {
-        m.rotation.y = d.direction;
-        m.rotation.x = -ease(t / FEEL.fallSeconds) * 1.45;
-        o.position.y = d.baseY - ease((t - 0.9) / 0.7) * 1.2;
+        // W4 (unit-rig.js infantryFall): thrown back, dropped to the knees and slumped forward, or twisted onto
+        // its side (chosen from the unit's id; a Rider's bike always tips over), then it lies still and sinks.
+        // Motion off: the last pose, no sink.
+        const f = infantryFall(d.pose, d.fall, t, d.life, motion, d.tilt), rig = o.userData.rig;
+        m.rotation.y = d.direction + f.yaw;
+        m.rotation.x = f.pitch;
+        m.rotation.z = f.roll;
+        o.position.y = d.baseY - f.drop;
+        m.scale.setScalar(d.size * f.size);
+        if (rig?.kind === 'infantry') { rig.motion[1] = 0; rig.motion[2] = f.kneel; rig.motion[3] = 1 + f.kneel * 0.12; }
       }
     }
   }
@@ -1718,6 +1735,7 @@ export class WorldView {
       alive.add(e.id);
       const u=o.userData;
       u.recoil=Math.max(0,u.recoil-dt);u.kick=Math.max(0,u.kick-dt);
+      if (u.rig) u.hpSeen = e.hp + (e.shield || 0); // the flinch's damage share (event 'impact') counts from here
       if (u.flashWait >= 0 || u.flashLeft > 0 || u.flashLit) this.stepHitFlash(u, e, dt);
       // Walls are neutral and see nothing: keep them drawn once explored, like the minimap does.
       o.visible = e.kind === "wall" ? sim.isExplored(e) : sim.isVisible(e);
@@ -1792,7 +1810,7 @@ export class WorldView {
         lift = u.legs.length ? Math.abs(Math.sin(u.stride)) * 0.07 * u.gait : Math.sin(u.stride * 2.1) * 0.016 * u.gait;
         if (u.rig?.kind === "infantry") {
           lift = stepInfantry(u.rig, u.rig.motion, { speed, base: D[e.type].speed || 3, scale: u.readabilityScale, legLength: u.rig.legLength,
-            moving: !!e.moving, attacking: !!e.attacking, dt, rich: this.richMotion, kneels: KNEELERS.has(e.type), gait: GAIT[e.type] });
+            moving: !!e.moving, attacking: !!e.attacking, dt, rich: this.richMotion, kneels: KNEELERS.has(e.type), gait: GAIT[e.type], stance: u.rig.stance });
           // A guardian on its knees (sim/content/campaign-creatures.js) holds the kneel pose.
           if (e.knelt) { u.rig.motion[2] = 1; u.rig.motion[3] = 1.12; }
         } else if (u.rig?.kind === "hull") {
@@ -1820,7 +1838,7 @@ export class WorldView {
         const air = this.stepFlyer(u, o.position.x, o.position.z, o.position.y, dt, lively);
         lift += air;
         // R3-W (air-motion.js): bank into turns and lift the nose on a climb, on top of the forward-flight nose-down.
-        airMotion(u.air, e.type, m.rotation.y, u.air.y ?? 0, dt, lively && this.settings.combatMotion !== false);
+        airMotion(u.air, e.type, m.rotation.y, u.air.y ?? 0, dt, lively && this.settings.combatMotion !== false, o.position.x, o.position.z);
         // Unit motion (Hawk): a deeper nose-down in forward flight, level at the hover, where it drifts slowly about its heading.
         const hawk = this.richMotion && e.type === "hawk";
         m.rotation.x = Math.min(1, u.gait) * (hawk ? 0.22 : 0.14) + u.air.pitch;
@@ -1833,7 +1851,8 @@ export class WorldView {
       m.scale.set(1 + squash * 0.5, (e.complete ? 1 : 0.15 + e.progress * 0.85) + squash, 1 + squash * 0.5);
       m.scale.multiplyScalar(u.readabilityScale * frame);
       if (frame !== 1 || u.barRest !== undefined) this.scaleBar(u, frame);
-      m.rotation.z = u.air ? u.air.bank : isHarvesting(sim,e) && !this.reducedMotion.matches ? Math.sin(sim.time*7+e.id)*0.045 : 0;
+      // A rigged unit rolls with its flinch, a stomp's sway or a hit's rock (unit-rig.js rig.tilt).
+      m.rotation.z = u.air ? u.air.bank : isHarvesting(sim,e) && !this.reducedMotion.matches ? Math.sin(sim.time*7+e.id)*0.045 : u.rig ? u.rig.tilt || 0 : 0;
       swingLegs(u.legs, u.stride, u.gait);
       updateRing(u.ring, selected.has(e.id), hover?.id === e.id, sim.time, dt, this.unitsPerPixel);
       const bar = u.bar;

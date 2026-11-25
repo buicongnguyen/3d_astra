@@ -3,6 +3,8 @@ import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { adoptBatchedParts } from "./entity-batches.js";
 import { FEEL } from "./camera-shake.js";
 import { BOSSES } from "./sim/bosses.js";
+import { stepTripods } from "./unit-rig.js";
+const TRIPODS = { az: 0, ay: 0, bz: 0, by: 0, dip: 0 };
 
 // Bosses on the battlefield (rules: src/sim/bosses.js, docs/aaa/BOSSES.md): the model with its moving
 // parts, the danger-zone marks on the ground, gun glow and recoil, the core lit only while exposed,
@@ -227,11 +229,14 @@ export class BossView {
         if (motion && kick > 0) u.cannon.position.z -= Math.sin((kick / 0.16) * Math.PI) * 0.22;
       }
       if (u.legA) {
-        const g = o.userData.gait || 0, ph = o.userData.stride || 0;
-        for (const [leg, k] of [[u.legA, 0], [u.legB, Math.PI]]) {
-          const c = Math.cos(ph * 0.55 + k);
-          leg.position.copy(leg.userData.base);
-          if (motion) { leg.position.z += Math.sin(ph * 0.55 + k) * 0.24 * g; leg.position.y += Math.max(0, c) * 0.16 * g; }
+        // W4 (unit-rig.js stepTripods): the tripods step in turn with planted feet (the sweep matches the ground
+        // covered at the model's drawn scale) and the body dips as each lands. view.js advances the stride by
+        // speed x dt x 3.4 for a model without leg_* pivots.
+        const m = o.userData.model, t = stepTripods(TRIPODS, o.userData.stride || 0, o.userData.gait || 0, 3.4, m.scale.z || 1);
+        u.legA.position.copy(u.legA.userData.base); u.legB.position.copy(u.legB.userData.base);
+        if (motion) {
+          u.legA.position.z += t.az; u.legA.position.y += t.ay; u.legB.position.z += t.bz; u.legB.position.y += t.by;
+          m.position.y -= t.dip;
         }
       }
       for (let i = 0; i < 4; i++) u.recoil[i] = Math.max(0, u.recoil[i] - dt);

@@ -25,6 +25,15 @@ export const RIG_INFANTRY = new Set(["ranger", "worker", "vanguard", "medic", "e
   "scrapper", "shade", "stalker", "watcher", "rider", "walker", "bulwark", "acidhound", "vaultsentinel"]);
 // Ranged shooters kneel to fire when they stand still.
 export const KNEELERS = new Set(["ranger", "antitank", "gunner", "stalker", "watcher"]);
+// W4 (2026-11-25): how each shooter sets itself to fire, standing still. kneel: the kneel blend it goes down to
+// (1 = the full kneel; the heavy walkers only drop into a braced half-crouch, feet apart, knees bent); lean: the
+// body's extra pitch at that pose (radians, + = hunched forward over the gun, - = rocked back under a launcher).
+// Every KNEELER kneels fully; the gunner team hunches over its machine gun, the sniper settles over its scope.
+export const STANCE = Object.freeze({
+  ranger: Object.freeze({ kneel: 1, lean: 0 }), watcher: Object.freeze({ kneel: 1, lean: 0.04 }),
+  gunner: Object.freeze({ kneel: 1, lean: 0.17 }), antitank: Object.freeze({ kneel: 1, lean: -0.06 }), stalker: Object.freeze({ kneel: 1, lean: 0.12 }),
+  walker: Object.freeze({ kneel: 0.3, lean: 0.07 }), bulwark: Object.freeze({ kneel: 0.42, lean: 0.12 }),
+});
 // How the legs move: a Rider sits on its bike (legs still, wheels roll); the Walker, the Bulwark and the Sentinel
 // stomp (heavy, no run); the Hound trots (runs, but its body never pitches: its legs would come off the body).
 export const GAIT = { rider: "ride", walker: "stomp", bulwark: "stomp", vaultsentinel: "stomp", acidhound: "trot" };
@@ -159,44 +168,108 @@ const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a
 // Per frame for a Ranger. `rig` holds the state, `motion` is the shared per-instance array.
 // speed: ground speed from the fixed step (m/s); base: the type's top speed; scale: the model's
 // drawn scale; legLength: hip height in model units; rich: the "Unit motion" setting (off = the
-// classic swing: no knees, no run lean, no kneel, no flinch).
-export function stepInfantry(rig, motion, { speed, base, scale, legLength, moving, attacking, dt, rich, kneels = true, gait = "walk" }) {
+// classic swing: no knees, no run lean, no kneel, no flinch); stance: STANCE[type] (how it sets
+// itself to fire; `kneels` alone means the full kneel). Besides `motion` and the returned lift, it
+// leaves rig.tilt: the model's roll (radians) this frame, the flinch's sideways jerk and a stomp's sway.
+export function stepInfantry(rig, motion, { speed, base, scale, legLength, moving, attacking, dt, rich, kneels = true, gait = "walk", stance = null }) {
   if (gait === "ride") return stepRide(rig, motion, { speed, moving, dt, rich, scale });
   const stomp = gait === "stomp", trot = gait === "trot";
   const run = rich && !stomp ? smooth(0.72, 0.95, speed / Math.max(0.1, base)) : 0;
   const amp = stomp ? 0.3 : trot ? (rich ? 0.42 + 0.18 * run : 0.46) : rich ? 0.36 + 0.24 * run : 0.46;
   const pace = Math.min(1, speed / 1.2);
+  const set = stance || (kneels ? FULL_KNEEL : null);
   if (dt > 0) {
     rig.gait = approach(rig.gait, pace, 10, dt);
     if (pace === 0 && rig.gait < 0.03) rig.gait = 0;
     // Planted feet: one half-cycle covers exactly the ground a straight leg sweeps (2 L sin A).
     const reach = 2 * legLength * scale * Math.sin(amp);
     rig.phase = (rig.phase + (speed * dt * Math.PI) / Math.max(0.05, reach)) % (Math.PI * 200);
-    rig.kneel = approach(rig.kneel, rich && kneels && attacking && !moving && speed < 0.05 ? 1 : 0, 15, dt);
-    rig.flinch = Math.max(0, rig.flinch - dt * 4.5);
+    rig.kneel = approach(rig.kneel, rich && set && attacking && !moving && speed < 0.05 ? set.kneel : 0, 15, dt);
     rig.lean = approach(rig.lean, trot ? 0 : run * 0.17 * rig.gait, 6, dt);
   }
+  stepFlinch(rig, dt, rich);
   const swing = amp * rig.gait;
   motion[0] = rig.phase;
   motion[1] = swing;
   motion[2] = rig.kneel;
-  const flinch = rich ? Math.sin(rig.flinch * Math.PI) * (trot ? 0.08 : 0.22) : 0;
-  motion[3] = 1 + rig.lean + rig.kneel * 0.12 - flinch;
+  const brace = set ? (rig.kneel / set.kneel) * set.lean : 0;
+  // A trotting Hound barely pitches (its legs would come off the body); it rolls instead.
+  motion[3] = 1 + rig.lean + rig.kneel * 0.12 + brace + (trot ? rig.flinch * 0.35 : rig.flinch);
+  rig.tilt = rig.roll;
   // Body height: a straight stance leg lowers the hip by L (1 - cos(angle)); feet stay on the ground.
   const angle = swing * Math.sin(rig.phase);
-  return -legLength * scale * (1 - Math.cos(angle)) * 0.85;
+  let lift = -legLength * scale * (1 - Math.cos(angle)) * 0.85;
+  if (stomp && rich && rig.gait > 0) {
+    // Heavy walk (W4): each footfall (the legs at full spread, |sin phase| = 1) lands with a dip of the body and a
+    // nod, and the weight sways over the stance leg once a cycle. All of it rides the stride phase, which only
+    // the ground actually covered advances, so a stopped walker stands still and the feet never slide.
+    const beat = stompBeat(rig.phase), g = rig.gait;
+    lift -= beat * STOMP.dip * legLength * scale * g;
+    motion[3] += beat * STOMP.nod * g;
+    rig.tilt += Math.cos(rig.phase) * STOMP.sway * g;
+  }
+  return lift;
+}
+const FULL_KNEEL = Object.freeze({ kneel: 1, lean: 0 });
+// Heavy walk: dip (leg lengths) and nod (radians) at each footfall, sway (radians) over the stance leg, and
+// beat: how much of the stride (radians of phase) after a footfall the dip lasts.
+export const STOMP = Object.freeze({ dip: 0.05, nod: 0.035, sway: 0.04, beat: 0.9 });
+// 0 between steps, rising to 1 and back within STOMP.beat radians of stride after each footfall.
+export function stompBeat(phase) {
+  const f = (((phase - Math.PI / 2) % Math.PI) + Math.PI) % Math.PI;
+  return f < STOMP.beat ? Math.sin((f / STOMP.beat) * Math.PI) : 0;
+}
+// Hit flinch (W4, 2026-11-25): a damped spring per unit, kicked by the unit's own impact events (view.js event;
+// the Field Guide's 3D view on Fire). rig.flinch is the body's pitch offset (- = jerked back) and rig.roll the
+// model's sideways jerk, both radians; both spring back to 0. infantry / roll: the biggest jerk (radians) for a
+// heavy hit; hull / hullRoll: a vehicle's rock on its suspension (stepHull's spring). hz, damping: the infantry spring.
+export const FLINCH = Object.freeze({ infantry: 0.26, roll: 0.1, hull: 0.07, hullRoll: 0.05, hz: 3.2, damping: 0.45 });
+// How hard a hit lands from the share of the unit's whole health (hp + shield) it took: a scratch still shows.
+export const hitScale = (share) => Math.min(1, 0.3 + Math.max(0, share || 0) * 6);
+// A spring released from rest with velocity v peaks near v / w x PEAK (damping about 0.4): the kick for a peak.
+const PEAK = 0.62, HULL_W = 2 * Math.PI * 2.2, HULL_Z = 0.35;
+// Kick `rig` for a hit that took `share` of its health from the direction `from` (radians, the world heading
+// from the unit toward the shooter, the same convention as the unit's `angle`) while it faces `facing`.
+// A hit from the front jerks it back, one from behind forward, one from the side rolls it away.
+export function hitFlinch(rig, share, from, facing, kind = "infantry") {
+  const k = hitScale(share), d = from - facing, along = Math.cos(d), across = Math.sin(d);
+  if (kind === "hull") {
+    rig.pitchV += -along * k * FLINCH.hull * (HULL_W / PEAK);
+    rig.rollV = (rig.rollV || 0) + across * k * FLINCH.hullRoll * (HULL_W / PEAK);
+  } else {
+    const w = 2 * Math.PI * FLINCH.hz;
+    rig.flinchV = (rig.flinchV || 0) - along * k * FLINCH.infantry * (w / PEAK);
+    rig.rollV = (rig.rollV || 0) + across * k * FLINCH.roll * (w / PEAK);
+  }
+  return rig;
+}
+// One semi-implicit spring step of the flinch (pitch) and roll offsets; off (rich false) holds them at 0.
+function stepFlinch(rig, dt, rich) {
+  if (!rich || !Number.isFinite(rig.flinch)) { rig.flinch = 0; rig.flinchV = 0; rig.roll = 0; rig.rollV = 0; return; }
+  if (!(dt > 0)) return;
+  // Sub-steps of at most 1/60 s keep the spring's jerk the same size at 30 fps (a long step damps it away) and
+  // let a slow frame (up to 0.25 s) settle it in real time.
+  const w = 2 * Math.PI * FLINCH.hz, z = FLINCH.damping, n = Math.min(16, Math.ceil(dt * 60 - 1e-6)), h = Math.min(dt, 0.25) / n;
+  rig.flinchV ||= 0; rig.roll ||= 0; rig.rollV ||= 0;
+  for (let i = 0; i < n; i++) {
+    rig.flinchV += (-(w * w) * rig.flinch - 2 * z * w * rig.flinchV) * h;
+    rig.flinch += rig.flinchV * h;
+    rig.rollV += (-(w * w) * rig.roll - 2 * z * w * rig.rollV) * h;
+    rig.roll += rig.rollV * h;
+  }
 }
 // A Rider: the legs stay on the pegs, the wheels roll with the ground covered, and it leans into speed.
 function stepRide(rig, motion, { speed, moving, dt, rich, scale }) {
   if (dt > 0) {
     rig.phase = (rig.phase + (speed * dt) / Math.max(0.1, scale)) % 600;
     rig.lean = approach(rig.lean, rich && moving ? Math.min(1, speed / 6) * 0.08 : 0, 4, dt);
-    rig.flinch = Math.max(0, rig.flinch - dt * 4.5);
   }
+  stepFlinch(rig, dt, rich);
   motion[0] = rig.phase;
   motion[1] = 0;
   motion[2] = 0;
-  motion[3] = 1 + rig.lean - (rich ? Math.sin(rig.flinch * Math.PI) * 0.12 : 0);
+  motion[3] = 1 + rig.lean + rig.flinch * 0.5;
+  rig.tilt = rig.roll;
   return 0;
 }
 // Load time: wheels inside one merged mesh (a hull's road wheels, a Rider's two wheels). Vertices are
@@ -267,12 +340,21 @@ export function stepHull(rig, motion, { speed, moving, dt, rich, scale = 1 }) {
     rig.vs = vs;
     const target = rich ? Math.max(-0.07, Math.min(0.07, -accel * 0.03)) : 0;
     // Spring: f = 2.2 Hz, damping 0.35 (a visible rock that settles in under a second).
-    const w = 2 * Math.PI * 2.2, z = 0.35, h = Math.min(dt, 0.05);
-    rig.pitchV += (-(w * w) * (rig.pitch - target) - 2 * z * w * rig.pitchV) * h;
-    rig.pitch += rig.pitchV * h;
+    // W4: sub-steps of at most 1/60 s, up to 0.25 s a frame (a hit's rock keeps its size at 30 fps and settles in
+    // real time on a slow frame); a hit (hitFlinch) also rocks
+    // the vehicle sideways on the same spring.
+    const w = HULL_W, z = HULL_Z, n = Math.min(16, Math.ceil(dt * 60 - 1e-6)), h = Math.min(dt, 0.25) / n;
+    rig.roll ||= 0; rig.rollV ||= 0;
+    for (let i = 0; i < n; i++) {
+      rig.pitchV += (-(w * w) * (rig.pitch - target) - 2 * z * w * rig.pitchV) * h;
+      rig.pitch += rig.pitchV * h;
+      rig.rollV += (-(w * w) * rig.roll - 2 * z * w * rig.rollV) * h;
+      rig.roll += rig.rollV * h;
+    }
     rig.squat = approach(rig.squat, rich && moving ? 0.035 : 0, 5, dt);
   }
-  if (!rich) { rig.pitch = 0; rig.pitchV = 0; }
+  if (!rich) { rig.pitch = 0; rig.pitchV = 0; rig.roll = 0; rig.rollV = 0; }
+  rig.tilt = rig.roll || 0;
   motion[0] = rig.phase;
   motion[1] = 0;
   motion[2] = rig.squat;
@@ -300,4 +382,54 @@ export function swingLegs(legs, stride, gait) {
     leg.node.quaternion.copy(leg.base);
     if (gait > 0) leg.node.rotateX(Math.sin(stride + i * Math.PI) * 0.46 * gait);
   }
+}
+
+// Infantry deaths (W4, 2026-11-25; view.js updateDying, the plain "ballistic" look). Each fallen trooper picks one
+// of three falls from its id, so a squad cut down together does not drop in step: "back" (thrown back off its
+// feet, the old fall), "knees" (the legs give, it drops to its knees through the kneel pose, then slumps forward
+// onto its face) and "twist" (spun half round by the hit, it topples onto its side). After the fall it lies still,
+// then sinks into the ground over FALL.sink seconds and is gone at `life`. animate false (combat motion off or
+// reduced motion): the fall's last pose at once and no sink (same end state, nothing moves).
+export const FALLS = Object.freeze(["back", "knees", "twist"]);
+// depth: how far it sinks (world units); shrink: the share of its size it loses meanwhile (a back-fallen rifle points
+// up a metre: sinking alone left it standing out of the sand).
+export const FALL = Object.freeze({ life: 2.4, ecoLife: 1.8, sink: 0.7, depth: 1.3, shrink: 0.7 });
+export const fallFor = (seed) => FALLS[((Math.imul((seed | 0) + 0x9e37, 0x85ebca6b) >>> 13) % 3 + 3) % 3];
+// Writes out = { pitch, roll, yaw, kneel, drop, size } for a fall of `kind` at age t (seconds) and returns it.
+// pitch: rotation.x (+ = forward onto the face), roll: rotation.z, yaw: extra turn, kneel: the rig's kneel blend,
+// drop: how far the body has sunk (world units), size: its scale factor (1 until it sinks), side: +1 / -1 (which
+// way a twist or roll goes).
+export function infantryFall(out, kind, t, life, animate, side = 1) {
+  const T = animate ? t : 1e3, e = (x) => 1 - (1 - Math.min(1, Math.max(0, x))) ** 3;
+  out.pitch = 0; out.roll = 0; out.yaw = 0; out.kneel = 0;
+  if (kind === "knees") { out.kneel = e(T / 0.28); out.pitch = e((T - 0.3) / 0.55) * 1.38; }
+  else if (kind === "twist") { out.yaw = side * e(T / 0.5) * 0.9; out.roll = side * e((T - 0.12) / 0.55) * 1.42; out.pitch = -e(T / 0.5) * 0.18; }
+  else out.pitch = -e(T / 0.5) * 1.45;
+  const sink = animate ? e((t - (life - FALL.sink)) / FALL.sink) : 0;
+  out.drop = sink * FALL.depth; out.size = 1 - sink * FALL.shrink;
+  return out;
+}
+
+// The Iron Sovereign's two leg tripods (boss-view.js; W4 2026-11-25: in real play its 0.8 m/s march only moved
+// them a few centimetres, so they read as frozen). Tripod A lifts and swings forward while the stride phase
+// runs 0..PI and lands at PI (the dust and camera thump in boss-presence-view.js fall on the same multiples of
+// PI); tripod B does the same half a cycle later. On the ground a tripod slides back exactly as fast as the body
+// moves on, so its feet stay planted: half a cycle covers PI / rate metres of ground (view.js: stride +=
+// speed x dt x rate), so the sweep is +/- half of that in model units (divide by the model's scale), up to maxSweep.
+// Writes out = { az, ay, bz, by } (model-unit offsets of tripods A and B) and the body's dip at each landing.
+// maxSweep: the sweep's cap (model units): further out, the rigid tripods' hips leave the dome (at the 0.8 m/s march
+// the planted sweep is about 0.64, so the feet slip a little, a fifth of a step, rather than the legs come apart).
+export const TRIPOD = Object.freeze({ lift: 0.22, dip: 0.05, beat: 0.8, maxSweep: 0.5 });
+// A tripod's fore-aft offset: an eased swing forward (-amp to +amp) in the air, a straight-line slide back on the ground.
+function tripodZ(stride, amp) {
+  const s = ((stride % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+  return s < Math.PI ? -Math.cos(s) * amp : amp - (2 * amp * (s - Math.PI)) / Math.PI;
+}
+export function stepTripods(out, stride, gait, rate, scale) {
+  const g = Math.min(1, gait * 4), amp = Math.min(TRIPOD.maxSweep, Math.PI / rate / 2 / Math.max(0.05, scale)) * g;
+  out.az = tripodZ(stride, amp); out.bz = tripodZ(stride + Math.PI, amp);
+  out.ay = Math.max(0, Math.sin(stride)) * TRIPOD.lift * g; out.by = Math.max(0, -Math.sin(stride)) * TRIPOD.lift * g;
+  const f = ((stride % Math.PI) + Math.PI) % Math.PI;
+  out.dip = f < TRIPOD.beat ? Math.sin((f / TRIPOD.beat) * Math.PI) * TRIPOD.dip * g : 0;
+  return out;
 }

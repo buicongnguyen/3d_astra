@@ -112,6 +112,38 @@ try{
       await page.screenshot({path:`test-results/visual-after-damaged-buildings-${viewport.width}.png`});
       await page.evaluate(()=>{window.restoreBuildings();const f=window.__frontier,v=f.view;v.focusOn(-6,18);v.zoom=52;v.updateCamera();});
     }
+    if(!baseline){
+      // W4 animation pass (src/unit-rig.js): driven by the real events. An impact flinches a trooper and rocks a
+      // tank (no extra draw), both settle; a death plays a fall (the body lies down, then is gone at its life end);
+      // with reduced motion there is no flinch and the fall shows its last pose at once. Few long steps only.
+      const anim=await page.evaluate(()=>{
+        const f=window.__frontier,s=f.sim,v=f.view,step=(dt)=>window.renderVisual(s,dt,f.selected,null);
+        v.motionLevel=2;
+        const units=s.entities.filter(e=>e.kind==='unit'),a=units.find(e=>e.team===0);
+        const [r,r2]=units.filter(e=>e.team===1&&e.type==='ranger'),t=units.find(e=>e.team===1&&e.type==='tank');
+        step(1/60);const calls=v.renderer.info.render.calls;
+        const hit=(e)=>{e.hitBy=a.id;e.hp-=e.maxHp*.3;v.event({type:'impact',x:e.x,z:e.z,team:1,shield:false,seed:e.id},s);};
+        hit(r);hit(t);step(.06);
+        const ri=v.objects.get(r.id).userData.rig,ti=v.objects.get(t.id).userData.rig,size=(g,k)=>Math.abs(g[k])+Math.abs(g.roll);
+        const flinch={inf:size(ri,'flinch'),hull:size(ti,'pitch'),calls:v.renderer.info.render.calls};
+        for(let i=0;i<3;i++)step(.5);
+        const settled={inf:size(ri,'flinch'),hull:size(ti,'pitch')};
+        const kill=(e)=>{s.entities=s.entities.filter(x=>x!==e);s.lookup?.delete?.(e.id);v.event({type:'death',x:e.x,z:e.z,team:1,heavy:false,seed:e.id,direction:0},s);return v.dying.find(d=>d.id===e.id);};
+        const d=kill(r);step(1.2);
+        const m=d.object.userData.model,lying=Math.abs(m.rotation.x)+Math.abs(m.rotation.z),fall=d.fall;
+        step(1.5);const gone=!v.dying.includes(d);
+        document.documentElement.dataset.reducedMotion='on';step(1/60);
+        hit(r2);step(1/60);const calm=size(v.objects.get(r2.id).userData.rig,'flinch');
+        const d2=kill(r2);step(.05);const m2=d2.object.userData.model,still=Math.abs(m2.rotation.x)+Math.abs(m2.rotation.z),sunk=d2.object.position.y-d2.baseY;
+        delete document.documentElement.dataset.reducedMotion;step(1/60);
+        return {calls,flinch,settled,lying,fall,gone,calm,still,sunk,fall2:d2.fall};
+      });
+      assert.ok(anim.flinch.inf>0.05&&anim.flinch.hull>0.01,`an impact flinches the trooper and rocks the tank ${JSON.stringify(anim)}`);
+      assert.equal(anim.flinch.calls,anim.calls,'the flinch adds no draw call');
+      assert.ok(anim.settled.inf<0.01&&anim.settled.hull<0.01,`both settle ${JSON.stringify(anim)}`);
+      assert.ok(anim.lying>1.2&&anim.gone,`the trooper falls (${anim.fall}) and is gone at its life end ${JSON.stringify(anim)}`);
+      assert.ok(anim.calm<1e-9&&anim.still>1.2&&anim.sunk===0,`reduced motion: no flinch, the last pose at once (${anim.fall2}) ${JSON.stringify(anim)}`);
+    }
     const metrics=await page.evaluate(async()=>{
       const f=window.__frontier,v=f.view,s=f.sim,frames=[];let calls=0,triangles=0;
       for(let i=0;i<65;i++){
