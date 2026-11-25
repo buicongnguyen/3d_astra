@@ -63,7 +63,7 @@ Rules: numbers, `{1}` placeholders, `·`, `—`, key names (Q, E, WASD, Shift…
 
 ## Extending translations
 
-Add exact English pairs to messages in **both** vi.json and ko.json (and the story catalogs for story text). Use an anchored regular expression in patterns for dynamic text and {1}, {2}, etc. for captured values; ko.json keeps the same patterns in the same order as vi.json. Put specific patterns before general ones; avoid matching a common word anywhere inside a sentence.
+Add exact English pairs to messages in **both** vi.json and ko.json (and the story catalogs for story text). Spoken unit replies and announcer lines (github-io/src/voice-lines.json) are subtitled from vi.json / ko.json too: a new or reworded line needs both entries (tests/voice-captions.test.js checks every take); story lines keep the story catalogs. Use an anchored regular expression in patterns for dynamic text and {1}, {2}, etc. for captured values; ko.json keeps the same patterns in the same order as vi.json. Put specific patterns before general ones; avoid matching a common word anywhere inside a sentence.
 
 Keep shortcuts, entity IDs and simulation data unchanged. Do not translate resource/type keys before game logic compares them. For DOM text comparisons, compare the canonical source or its translated presentation explicitly. Text inside `translate="no"` is never translated: do not use it for names that Korean writes in Hangul.
 

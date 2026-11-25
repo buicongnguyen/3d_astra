@@ -158,9 +158,10 @@ jobs:
             scripts: progression
           - name: story-audio
             scripts: audio
-          # W3 story voices: per-mission story packs after Start, lines in order, scene lines and skip, Voices off.
+          # W3 story voices: per-mission story packs after Start, lines in order, scene lines and skip, Voices off;
+          # subtitles for unit replies and the announcer (EN/VI/KO, phone and desktop, placement, Subtitles off).
           - name: story-voices
-            scripts: story-voices
+            scripts: story-voices captions
           - name: air
             scripts: air
           # AAA round 3 (R3-M): the title cover (loading screen, key art per frame, live layer, labels, calm mode).

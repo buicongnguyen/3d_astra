@@ -13,12 +13,15 @@ import { BarkGate, LowHpWatch, ThunderWatch, barkKind, barkType, coreHealth } fr
 import { WEATHER } from "./mission-looks.js";
 import { VoicePlayer } from "./voice.js";
 import { VOICE, ackKind, announcerFor, voiceLevel } from "./voice-logic.js";
+import { captionFor, captionWindow, captionsOn } from "./voice-captions.js";
+import { DEFINITIONS } from "./data.js";
 
 const COMBAT_SOUNDS = new Set(["shot", "impact", "death", "strike"]);
 
 export class AudioDirector {
-  // `project(x, z)` -> { pan, gain } for a world point; `selected()` -> the selected entity ids.
-  constructor(context, { project = null, selected = null } = {}) {
+  // `project(x, z)` -> { pan, gain } for a world point; `selected()` -> the selected entity ids; `captions` = the
+  // subtitle box (captions-ui.js CaptionBox: show / clear / update), none in Node.
+  constructor(context, { project = null, selected = null, captions = null } = {}) {
     this.context = context;
     this.bus = createAudioBus(context);
     // The adaptive score and the recorded tracks share the music bus; the score has its own gain so
@@ -49,7 +52,12 @@ export class AudioDirector {
     this.voiceBus.gain.value = 0;
     this.voiceBus.connect(this.bus.master);
     this.voiceUntil = 0; this.voiceDucked = false; this.sfxTarget = -1; this.voiceKey = ""; this.result = null;
-    this.voice = new VoicePlayer(context, this.voiceBus, { onLine: (line, seconds) => { this.voiceUntil = Math.max(this.voiceUntil, context.currentTime + seconds); } });
+    // Subtitles follow the voice player: a caption when a reply or announcer line starts, gone when it is cut.
+    this.captions = captions; this.captionsOn = true; this.captioned = 0;
+    this.voice = new VoicePlayer(context, this.voiceBus, {
+      onLine: (line, seconds, delay) => { this.voiceUntil = Math.max(this.voiceUntil, context.currentTime + seconds); this.caption(line, seconds, delay); },
+      onStop: (line) => this.captions?.clear(line),
+    });
     this.sfx.warm();
   }
   // Settings -> bus levels. Muted or zero level also stops the scheduler (checked in update()).
@@ -65,6 +73,9 @@ export class AudioDirector {
     this.voiceBus.gain.setTargetAtTime(voice, this.context.currentTime, 0.05);
     this.voice.setEnabled(voice > 0);
     this.voice.quiet = this.quiet;
+    // Subtitles off (or nothing to hear): the caption up goes; the voice itself plays on.
+    this.captionsOn = captionsOn(settings);
+    if (!this.captionsOn) this.captions?.clear();
     this.sfxTarget = -1;
     this.applyMusicGain();
   }
@@ -95,7 +106,7 @@ export class AudioDirector {
     const unit = barkType(entities);
     if (!kind || !unit) return false;
     // W3: with the faction's voice pack loaded, units answer in words instead (voice-logic.js rate limits).
-    if (this.voiceOn()) return this.voice.ack(kind === "order" ? "move" : kind);
+    if (this.voiceOn()) return this.voice.ack(kind === "order" ? "move" : kind, unit.type);
     if (!this.sfx.enabled || !this.barkGate.allow(this.context.currentTime, this.quiet)) return false;
     const played = this.sfx.bark(kind, unit);
     if (played) this.barks++;
@@ -103,6 +114,15 @@ export class AudioDirector {
   }
   // W3: spoken lines are on when Voices is on and the player's pack has arrived.
   voiceOn() { return this.voice.scheduler.enabled && this.voice.ready(this.voice.faction); }
+  // A voice line started: its subtitle (unit replies and the announcer only: story lines are in the dialogue box,
+  // and a story line cutting in takes the caption away).
+  caption(line, seconds, delay = 0) {
+    if (!this.captions) return;
+    const caption = this.captionsOn ? captionFor(line, { faction: this.voice.faction, unitName: (type) => DEFINITIONS[type]?.name }) : null;
+    if (!caption) { this.captions.clear(); return; }
+    this.captions.show(caption, captionWindow(this.context.currentTime, seconds, delay), line);
+    this.captioned++;
+  }
   // A story line shown on screen (mission-ui.js say): its voice when it has one.
   // Returns the clip's seconds (0 = no voice); `cut`: the player moved on, the line speaking stops for this one.
   say(who, text, { cut = false } = {}) { return this.voice.scheduler.enabled ? this.voice.story(text, { cut }) : 0; }
@@ -172,6 +192,8 @@ export class AudioDirector {
     }
     this.voice.setPaused(!!(hidden || (started && paused && !sim.result)));
     this.voice.update();
+    // Subtitles run on the audio clock; back on the menus none stays up.
+    if (started) this.captions?.update(now); else this.captions?.clear();
     this.scan -= dt;
     if (this.scan <= 0) {
       this.scan = 1;

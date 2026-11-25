@@ -13,9 +13,10 @@ export { PACKS };
 export const packUrl = (name) => { const p = PACKS.packs[name]; return p ? `${p.file}?v=${p.bytes}` : null; };
 
 export class VoicePlayer {
-  // `out` = the voice bus (a GainNode); `onLine(line, seconds)` tells the director a line started (ducking).
-  constructor(context, out, { onLine = null, fetcher = (url) => fetch(url) } = {}) {
-    this.context = context; this.out = out; this.onLine = onLine; this.fetcher = fetcher;
+  // `out` = the voice bus (a GainNode); `onLine(line, seconds, delay)` tells the director a line started (ducking,
+  // subtitles: the voice is heard from now + delay for `seconds` - delay); `onStop(line)` that one was stopped early.
+  constructor(context, out, { onLine = null, onStop = null, fetcher = (url) => fetch(url) } = {}) {
+    this.context = context; this.out = out; this.onLine = onLine; this.onStop = onStop; this.fetcher = fetcher;
     this.scheduler = new VoiceScheduler(); this.picker = new TakePicker(); this.rnd = mulberry32(4242);
     this.packs = new Map(); // name -> { buffer } | { loading: Promise } | { failed: true }
     this.voice = null; // { src, gain, line }
@@ -51,8 +52,9 @@ export class VoicePlayer {
     if (!on && (cut || this.voice)) this.stop(0.02);
   }
   set quiet(v) { this.scheduler.quiet = !!v; }
-  // A unit reply ("select" | "move" | "attack") in the player's faction voice.
-  ack(kind) { return this.say({ channel: "ack", key: kind }, this.faction); }
+  // A unit reply ("select" | "move" | "attack") in the player's faction voice; `who` = the unit type speaking
+  // (its name is the subtitle's speaker).
+  ack(kind, who = null) { return this.say({ channel: "ack", key: kind, ...(who ? { who } : {}) }, this.faction); }
   // An announcer line for event key `key`.
   announce(key) { return this.say({ channel: "announcer", key }, this.faction); }
   // A story line of the current mission by its exact English text. Returns the clip's seconds when it has a
@@ -105,13 +107,14 @@ export class VoicePlayer {
     src.onended = () => { src.disconnect(); gain.disconnect(); if (this.voice === voice) this.voice = null; };
     this.voice = voice;
     this.scheduler.started(line, now, seconds);
-    this.onLine?.(line, seconds);
+    this.onLine?.(line, seconds, delay);
     return true;
   }
   stop(fade = 0.03) {
     const v = this.voice;
     if (!v) return;
     this.voice = null;
+    this.onStop?.(v.line);
     try { const t = this.context.currentTime; v.gain.gain.setTargetAtTime(0, t, fade / 3); v.src.stop(t + fade + 0.02); } catch { /* already stopped */ }
   }
   // Every frame: the next waiting line once the radio is free (nothing starts while paused).
