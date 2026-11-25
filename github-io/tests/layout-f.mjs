@@ -34,6 +34,13 @@ const allProblems = [];
 
 // Runs in the page: visible text under 11 px, touch targets, controls that leave the screen,
 // text that spills out of its own box.
+// Desktop primary taps (re-score 2026-11-25b, owner rule 44 px): the top bar's icon buttons, Focus base, the unit-type
+// chips, Comms log and the dialogue's Dismiss are 44 px on PC too; returns the ones that are not.
+const DESKTOP_TAPS = (selectors) => selectors.flatMap((sel) => {
+  const shown = [...document.querySelectorAll(sel)].filter((e) => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden');
+  if (!shown.length) return [`${sel} not shown`];
+  return shown.map((e) => { const r = e.getBoundingClientRect(); return r.width < 43.5 || r.height < 43.5 ? `${sel} "${(e.getAttribute('aria-label') || e.textContent).trim().slice(0, 16)}" ${Math.round(r.width)}x${Math.round(r.height)}` : null; }).filter(Boolean);
+});
 const AUDIT = ({ touch, scope, fixed }) => {
   const root = document.querySelector(scope) || document.body;
   const visible = e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && !e.closest('[hidden], .visually-hidden, [inert]');
@@ -161,6 +168,13 @@ try {
     await check('7-sel-army', 'body', fixed);
     await dockTab('selection');
     await check('7b-tactics-card', 'body', fixed);
+    if (!touch) {
+      // Seven unit types: the chips take the group icon's place too, so each stays 44 px wide.
+      await frontier(() => { const f = window.__frontier, s = f.sim; f.select(['vanguard', 'ranger', 'breaker', 'medic', 'tank', 'antitank', 'engineer'].map((t, i) => s.spawn(t, 0, -20 + i * 2, 12).id)); });
+      await page.waitForFunction(() => document.querySelectorAll('#type-chips button').length === 7);
+      for (const p of await page.evaluate(DESKTOP_TAPS, ['.topbar .top-actions .icon-button', '.minimap-panel .panel-label button', '#type-chips button'])) problems.push(`${name} desktop taps: ${p}`);
+      await check('7d-seven-types', 'body', fixed);
+    }
     if (touch) {
       // The objectives chip opens and closes the list.
       await press('#mission-toggle');
@@ -212,6 +226,12 @@ try {
     await page.waitForFunction(() => window.__frontier.started);
     await page.waitForTimeout(600);
     await check('12-mission-hud', 'body', fixed);
+    if (!touch) {
+      await frontier(() => window.__frontier.mission.say('Okoro', 'Relay is up. Bring the Harvesters in.'));
+      await page.locator('#dialogue-close').waitFor({ state: 'visible' });
+      for (const p of await page.evaluate(DESKTOP_TAPS, ['#comms-toggle', '#dialogue-close', '.topbar .top-actions .icon-button'])) problems.push(`${name} desktop taps: ${p}`);
+      await check('12b-mission-line', 'body', fixed);
+    }
     if (landscapePhone) {
       const share = await page.evaluate(FREE_SHARE);
       if (share < 0.55) problems.push(`${name}: free battlefield ${share.toFixed(2)} in a mission`);

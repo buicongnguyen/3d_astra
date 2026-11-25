@@ -472,3 +472,22 @@
 :root:not(.compact-ui):not(.no-units) .command-panel #commands.tactics-card > .stance-control button { height: 38px !important; min-height: 38px !important; }
 :root:not(.compact-ui) .bottom-dock .command-panel .order-buttons { pointer-events: none; } /* its empty cells never block the queue under them */
 :root:not(.compact-ui) .bottom-dock .command-panel .order-buttons button { pointer-events: auto; }
+
+/* ---------- Desktop primary taps at 44 px (re-score 2026-11-25b; owner rule 44 px, also for touch laptops) ----------
+   The top bar's icon buttons were 40 px, Focus base 36, the unit-type chips 38x40, Comms log 36 px tall and the
+   dialogue's Dismiss 32. Each is 44 px now without moving the console: the top bar grows 2 px (42 -> 44), Focus
+   base sits over the minimap's corner as before, the chips take the summary line's place 4 px taller (their row is
+   pulled up 4 px more), and with seven or more types the chips also take the group icon's place so each is 44 wide.
+   The dense command board (order row, ability and stance tiles, the unit roster) keeps its mouse-sized cells: it
+   is reached by hotkeys too, and it must stay a 172 px card (tests/tactics-ui.mjs). The "+N" after 18 roster cards
+   was 10 px text: 11 px. Checked by tests/layout-f.mjs (desktop, hd, laptop: "desktop taps"). */
+:root:not(.compact-ui):not(#x) { --top-height: 44px; }
+:root:not(.compact-ui) .topbar .top-actions .icon-button { width: 44px; height: 44px; min-width: 44px; min-height: 44px; }
+:root:not(.compact-ui) .minimap-panel .panel-label button { min-width: 44px; min-height: 44px; }
+:root:not(.compact-ui) .comms-toggle { min-height: 44px; }
+:root:not(.compact-ui) #dialogue-close { width: 44px; height: 44px; align-self: center; flex: none; }
+:root:not(.compact-ui):not(#x) .selection-panel.has-chips .type-chips { height: 44px; margin: -50px 0 6px 48px; }
+:root:not(.compact-ui):not(#x) .selection-panel.has-chips .type-chips button { height: 44px; min-width: 44px; }
+:root:not(.compact-ui):not(#x) .selection-panel.has-chips:has(.type-chips > button:nth-child(7)) .type-chips { margin-left: 0; }
+:root:not(.compact-ui) .selection-panel.has-chips:has(.type-chips > button:nth-child(7)) .sel-portrait { visibility: hidden; }
+#unit-list > span { font-size: 11px; }
