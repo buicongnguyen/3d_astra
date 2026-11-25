@@ -2,7 +2,7 @@
 //   - the title's Records tile (one tap, 44 px) opens the Records screen: 25 achievements with their progress,
 //     11 px text, 44 px taps, no sideways scroll, nothing grouped behind a menu; Close returns to the title;
 //   - today's three challenges (the date pinned with ?day=2026-11-25: Iron line, Expedition, Promotion) are
-//     direct tiles under the quick row; one tap picks the challenge's mode; a win that meets one pays +50 XP once
+//     direct tiles under the quick row; one tap picks the challenge's mode; a win that meets one pays +60 XP once
 //     and the tile reads Done back on the title;
 //   - five achievements unlock the Silverline paint (medal cosmetics): a "Reward unlocked" toast, the Records
 //     screen lists it as open, and it is one tap in the Skirmish setup's Paint row (looks only, no rule);
@@ -85,10 +85,10 @@ await suite("meta", async () => {
     await page.waitForFunction(() => !document.querySelector("#records").open, null, { timeout: TIMEOUT.step });
     assert.equal(await page.evaluate(() => !window.__frontier.started && !document.querySelector("#briefing").hidden), true, `${viewport}: back on the title`);
 
-    // ---- Medal cosmetics: five achievements (Kites, taming, the Field commander) unlock the Silverline paint.
+    // ---- Medal cosmetics: five achievements (Kites, taming, the Field commander) unlock the Silverline paint (three needed).
     const lockedPaint = page.locator('#rank-unlocks [data-rank-kind="paint"] [data-rank-item="silverline"]');
     assert.equal(await lockedPaint.isDisabled(), true, `${viewport}: Silverline locked at first`);
-    assert.match(await lockedPaint.textContent(), /5 achievements/, `${viewport}: the locked tile says how to earn it`);
+    assert.match(await lockedPaint.textContent(), /3 achievements/, `${viewport}: the locked tile says how to earn it`);
     await page.evaluate(() => { const h = window.__frontier.meta; h.record = { ...h.record, kites: 10, tamed: 1, fieldRank: 5, branchWins: ["artillery", "rally"] }; });
     await page.waitForFunction(() => /Reward unlocked/.test(document.querySelector("#meta-toast:not([hidden])")?.textContent || "") || window.__frontier.meta.info().record.meta.ach >= 5, null, { timeout: TIMEOUT.step });
     assert.equal((await meta(page)).record.meta.ach, 5, `${viewport}: five achievements`);
@@ -133,11 +133,11 @@ await suite("meta", async () => {
     await page.locator(".result-card").waitFor({ state: "visible", timeout: TIMEOUT.step });
     await page.locator("#modal .meta-earned").first().waitFor({ state: "visible", timeout: TIMEOUT.step });
     assert.match(await page.locator("#modal .meta-earned:not(.meta-earned-challenges)").textContent(), /Field victory/, `${viewport}: Field victory listed`);
-    assert.match((await page.locator("#modal .meta-earned-challenges").textContent()).replace(/\s+/g, " "), /Challenges complete.*Iron line \+50 XP/, `${viewport}: Iron line paid`);
+    assert.match((await page.locator("#modal .meta-earned-challenges").textContent()).replace(/\s+/g, " "), /Challenges complete.*Iron line \+60 XP/, `${viewport}: Iron line paid`);
     const after = await meta(page);
     assert.equal(after.record.skirmishWins, 1, `${viewport}: the win is counted`);
     assert.deepEqual(after.last.earned, ["skirmish-win"], `${viewport}: earned by this match`);
-    assert.deepEqual([after.last.challenges, after.last.xp, after.challenges.done], [["sk-lean"], 50, ["sk-lean"]], `${viewport}: the challenge is done and paid`);
+    assert.deepEqual([after.last.challenges, after.last.xp, after.challenges.done], [["sk-lean"], 60, ["sk-lean"]], `${viewport}: the challenge is done and paid`);
     assert.deepEqual(await tiny(page, "#modal .meta-earned"), [], `${viewport}: results row text`);
     await noSideScroll(page, `${viewport} results`);
     await page.locator("#modal .meta-earned").last().scrollIntoViewIfNeeded();

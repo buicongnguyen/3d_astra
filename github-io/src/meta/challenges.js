@@ -9,7 +9,9 @@
 import { fnv1a } from "../rng.js";
 
 export const CHALLENGE_KEY = "frontier-challenges-v1";
-export const CHALLENGE_XP = 50;
+// About half a typical win (~120 XP, src/profile-rank.js XP) and equal to a Daily order (PLEDGE_XP);
+// docs/aaa/REWARD_PACING.md.
+export const CHALLENGE_XP = 60;
 export const GROUPS = Object.freeze(["skirmish", "campaign", "defence"]);
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
