@@ -169,15 +169,7 @@ test("story voices: every say line of every campaign and Chronicle mission has a
   assert.deepEqual(buildStory(STORY).missions, STORY.missions, "voice-story.json is up to date with the missions");
   const ids = allMissions().map(({ m }) => m.id);
   let lines = 0;
-  // Missions whose lines are listed but not rendered yet (W9's Ember Roost): a reason, lines, and no pack yet.
-  const pending = STORY.pending || {};
-  for (const [id, why] of Object.entries(pending)) {
-    assert.ok(ids.includes(id) && String(why).length > 20, `pending ${id} has a reason`);
-    assert.ok(STORY.missions[id]?.packs.flatMap((p) => p.lines).length > 0, `pending ${id}: its lines are listed`);
-    assert.deepEqual(storyPacks(id), [], `pending ${id}: no pack in the index yet (render it, then remove the entry)`);
-  }
   for (const { m } of allMissions()) {
-    if (pending[m.id]) continue;
     const packs = STORY.missions[m.id]?.packs || [];
     const said = packs.flatMap((p) => p.lines);
     assert.ok(said.length > 0, `${m.id} has voiced lines`);

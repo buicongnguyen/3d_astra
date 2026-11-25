@@ -36,9 +36,6 @@
   "debrief": "Debrief lines are read on the result card after the match; not part of this pass. On-screen only.",
   "commander": "The Commander never speaks (CAST.commander)."
  },
- "pending": {
-  "m10e-the-ember-roost": "W9 (2026-11-26): The Ember Roost lines are listed for the voice pass; audio not rendered yet (tools/voices/make-voices.py). Captions show meanwhile."
- },
  "missions": {
   "m01-first-light": {
    "campaign": "main",
@@ -2411,71 +2408,5 @@
    ]
   }
  },
- "pending": {
-  "m02-first-contact": [
-   "East bridge charges, now. Nobody follows my crews.",
-   "He blew his own bridge! His raids must wade now.",
-   "Good. The ford is under our towers."
-  ],
-  "m03b-loose-crystal": [
-   "Harvesters first. Then claim the west wreck.",
-   "The wreck is paying! Loose crystal, still warm.",
-   "That crystal was cut by my crews. Return it.",
-   "Second salvage crew, heading for our Harvesters.",
-   "This crystal is grey. The siphon drank it dry.",
-   "Then drained ground grows nothing. Remember that."
-  ],
-  "m05-the-verdant-pact": [
-   "Supply truck from the landing! Three Rangers, one Medic."
-  ],
-  "m06-copper-harvest": [
-   "Movement on the west pass. Watch that flank!",
-   "West pass, now. Their yard stands open.",
-   "Only scouts. They saw our towers and ran."
-  ],
-  "m06d-hawk-wing": [
-   "Three Hawks, rebuilt from Hale's balloon wrecks!",
-   "Anti-tank crews guard the moorings. Ground troops first.",
-   "Anti-tank crews! Keep the Hawks back a moment.",
-   "Gunships over my moorings. Crews, aim up.",
-   "An Ember balloon is up. Hawks, take it.",
-   "A Hawk is smoking! Pull it back!",
-   "All three moorings down. The sky is ours today."
-  ],
-  "m08b-the-long-night": [
-   "West and south relays are close. Light them.",
-   "One relay lit. This one is counting the circuit.",
-   "I see your light, Commander. So do my crews.",
-   "Every light draws them. Guard the circles.",
-   "Two lights. The count is climbing.",
-   "Raiders by the glow. Both circles, hold!",
-   "Three lights! Forty relays answer. This one sees far.",
-   "Counted. Every line runs to the Keystone."
-  ],
-  "m09-a-debt-in-the-dunes": [
-   "My well crew is stuck on the south road!",
-   "Reach them in seventy-five seconds, before the drones.",
-   "Riders are fastest. Send two, Commander.",
-   "My crew is safe! Two Riders ride with you.",
-   "They walked home alone. Slow, but safe."
-  ],
-  "m09b-the-water-road": [
-   "Three wagons, one road. Clear it ahead of us.",
-   "Wardens, hold the road. No water passes.",
-   "A Warden patrol from the north. Guard the wagons.",
-   "The cistern is full. Now the east wells!",
-   "A wagon is leaking! Medics, please!",
-   "I can see the well towers. Almost home.",
-   "Water in the wells. The gardens drink tonight.",
-   "The crystal here is greener already. This one notes it."
-  ],
-  "m10-obsidian-storm": [
-   "Commander, three armies. Turn back, and nobody falls.",
-   "He is buying time. Keep on the dampers."
-  ],
-  "m11-cut-the-draw": [
-   "Fog off the rivers! Keep the army close.",
-   "The fog is lifting. Push on."
-  ]
- }
+ "pending": {}
 }
