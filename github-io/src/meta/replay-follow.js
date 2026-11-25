@@ -2,8 +2,8 @@
 // Pure and DOM-free: it reads a simulation and never writes it, so a replay still ends on its recorded hash.
 // Follow action: units that fired within FIGHT_SECONDS count as the action; KNOT metres around the busiest one
 // make the knot; the camera closes FOLLOW_RATE of the gap each second (frame-rate free); a focus more than
-// MANUAL_SLACK metres from where follow left it means the player moved the camera.
-export const FIGHT_SECONDS = 3, KNOT = 16, FOLLOW_RATE = 2.5, MANUAL_SLACK = 0.75;
+// MANUAL_SLACK metres from where follow left it means the player moved the camera (only pan and focusOn move the focus, so even a slow key or edge pan, ~0.4 m a frame, counts).
+export const FIGHT_SECONDS = 3, KNOT = 16, FOLLOW_RATE = 2.5, MANUAL_SLACK = 0.02;
 
 // The point the follow camera aims at, or null: the centre of the busiest knot of recent shooters, else of the
 // player's army (team 0 units that are not Harvesters), else of anything team 0 still has. `keep` (the last aim)
