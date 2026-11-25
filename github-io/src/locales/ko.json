@@ -515,7 +515,7 @@
     "Tap the road": "도로를 누르세요",
     "Reinforce": "증원",
     "Tap a spot inside the ring to shell it.": "원 안의 지점을 눌러 포격하세요.",
-    "Tap the road inside the ring to drop three Vanguards.": "원 안의 도로를 눌러 선봉대 셋을 투입하세요.",
+    "Tap the road inside the ring to drop the Vanguards.": "원 안의 도로를 눌러 선봉대를 투입하세요.",
     "Tap the road to send the commander. It holds there and blocks the column.": "도로를 눌러 사령관을 보내세요. 그 자리를 지키며 적 행렬을 막습니다.",
     "Bridge": "다리",
     "Standing": "건재",
@@ -1245,6 +1245,14 @@
     "A group you move keeps together at its fighters' pace, with Medics and Engineers walking behind them. Off: every unit walks at its own speed.": "이동시킨 부대가 전투 유닛의 속도에 맞춰 함께 움직이고, 의무병과 공병은 뒤따릅니다. 끄면 모든 유닛이 각자 속도로 이동합니다.",
     "Army size": "군대 규모",
     "The supply cap for every side. 200 is for desktop only.": "모든 진영의 보급 한도. 200은 데스크톱 전용입니다.",
+    "Artillery": "포병",
+    "Rank 3: pick Artillery (a wider, faster Barrage) or Rally (more, tougher Vanguards). It cannot be changed.": "3등급: 포병(더 넓고 빠른 포격) 또는 집결(더 많고 튼튼한 선봉대)을 고르세요. 변경할 수 없습니다.",
+    "a 700 shield, and Barrage hits for 160.": "보호막 700, 포격 피해 160.",
+    "Barrage every 30 s, four Vanguards, and 30% more health.": "30초마다 포격, 선봉대 넷, 체력 30% 증가.",
+    "Artillery: Barrage bursts 5.5 m wide and hits for 200.": "포병: 포격이 5.5m 범위로 터지며 피해 200.",
+    "Two shells for every Barrage, which is ready every 24 s.": "포격마다 포탄 두 발, 24초마다 준비됩니다.",
+    "Rally: five tougher Vanguards who hold for 28 s.": "집결: 더 튼튼한 선봉대 다섯이 28초 동안 버팁니다.",
+    "Six Vanguards who hit harder; Reinforce every 28 s.": "더 강하게 공격하는 선봉대 여섯, 28초마다 증원.",
     "Combined": "복합형",
     "Combined: adds the other branch, so the squad has both; it holds within 9 m of its spot.": "복합형: 다른 분기도 추가해 분대가 둘 다 갖습니다. 제자리 9m 안에서 버팁니다.",
     "Combined adds the other branch to this squad.": "복합형은 이 분대에 다른 분기를 추가합니다.",
@@ -1676,8 +1684,8 @@
       "포격: {1} m 안의 지점을 포격, {3} m 범위에 피해 {2}"
     ],
     [
-      "^Reinforce: three Vanguards hold the road for (\\d+) s$",
-      "증원: 선봉대 셋이 {1}초 동안 길을 지킵니다"
+      "^Reinforce: (\\d+) Vanguards hold the road for (\\d+) s$",
+      "증원: 선봉대 {1}명이 {2}초 동안 길을 지킵니다"
     ],
     [
       "^(\\d+) lives$",

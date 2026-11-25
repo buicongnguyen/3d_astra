@@ -515,7 +515,7 @@
     "Tap the road": "Chạm vào con đường",
     "Reinforce": "Tiếp viện",
     "Tap a spot inside the ring to shell it.": "Chạm vào một điểm trong vòng tròn để pháo kích.",
-    "Tap the road inside the ring to drop three Vanguards.": "Chạm vào con đường trong vòng tròn để thả ba lính Tiên phong.",
+    "Tap the road inside the ring to drop the Vanguards.": "Chạm vào con đường trong vòng tròn để thả lính Tiên phong.",
     "Tap the road to send the commander. It holds there and blocks the column.": "Chạm vào con đường để điều chỉ huy tới. Chỉ huy giữ vị trí đó và chặn đoàn quân.",
     "Bridge": "Cầu",
     "Standing": "Còn đứng",
@@ -1245,6 +1245,14 @@
     "A group you move keeps together at its fighters' pace, with Medics and Engineers walking behind them. Off: every unit walks at its own speed.": "Nhóm quân bạn điều đi giữ đội hình theo tốc độ của lính chiến, Quân y và Công binh đi phía sau. Tắt: mỗi đơn vị đi theo tốc độ riêng.",
     "Army size": "Quy mô quân đội",
     "The supply cap for every side. 200 is for desktop only.": "Giới hạn quân số cho mọi phe. Mức 200 chỉ dành cho máy tính.",
+    "Artillery": "Pháo đội",
+    "Rank 3: pick Artillery (a wider, faster Barrage) or Rally (more, tougher Vanguards). It cannot be changed.": "Hạng 3: chọn Pháo đội (Pháo kích rộng hơn, nhanh hơn) hoặc Tập kết (nhiều lính Tiên phong hơn, bền hơn). Không thể đổi lại.",
+    "a 700 shield, and Barrage hits for 160.": "khiên 700, và Pháo kích gây 160 sát thương.",
+    "Barrage every 30 s, four Vanguards, and 30% more health.": "Pháo kích mỗi 30 giây, bốn lính Tiên phong, và thêm 30% máu.",
+    "Artillery: Barrage bursts 5.5 m wide and hits for 200.": "Pháo đội: Pháo kích nổ rộng 5,5 m và gây 200 sát thương.",
+    "Two shells for every Barrage, which is ready every 24 s.": "Hai quả đạn cho mỗi lần Pháo kích, sẵn sàng mỗi 24 giây.",
+    "Rally: five tougher Vanguards who hold for 28 s.": "Tập kết: năm lính Tiên phong bền hơn giữ đường trong 28 giây.",
+    "Six Vanguards who hit harder; Reinforce every 28 s.": "Sáu lính Tiên phong đánh mạnh hơn; Tiếp viện mỗi 28 giây.",
     "Combined": "Kết hợp",
     "Combined: adds the other branch, so the squad has both; it holds within 9 m of its spot.": "Kết hợp: thêm nhánh còn lại để tiểu đội có cả hai; nó giữ vị trí trong phạm vi 9 m.",
     "Combined adds the other branch to this squad.": "Kết hợp thêm nhánh còn lại cho tiểu đội này.",
@@ -1676,8 +1684,8 @@
       "Pháo kích: bắn một điểm trong {1} m, {2} sát thương trên {3} m"
     ],
     [
-      "^Reinforce: three Vanguards hold the road for (\\d+) s$",
-      "Tiếp viện: ba lính Tiên phong giữ con đường trong {1} giây"
+      "^Reinforce: (\\d+) Vanguards hold the road for (\\d+) s$",
+      "Tiếp viện: {1} lính Tiên phong giữ con đường trong {2} giây"
     ],
     [
       "^(\\d+) lives$",

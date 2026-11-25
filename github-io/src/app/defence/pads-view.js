@@ -3,7 +3,7 @@
 // on their towers (dressEntity), bridges / pontoons / fuse lights, and the range ring.
 import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
-import { TIER_TINT, RANK_TINT, HERO_TINT, PAD_COLOR, MARK_COLOR, MARK_GLOW, TIER_PAD, PICK_RADIUS, TOUCH_PICK_RADIUS, ZONE_COLOR, ZONE_PADS, BRIDGE_RADIUS, PONTOON_LENGTH } from "./constants.js";
+import { TIER_TINT, RANK_TINT, HERO_TINT, HERO_RANK_TINT, HERO_BRANCH_TINT, PAD_COLOR, MARK_COLOR, MARK_GLOW, TIER_PAD, PICK_RADIUS, TOUCH_PICK_RADIUS, ZONE_COLOR, ZONE_PADS, BRIDGE_RADIUS, PONTOON_LENGTH } from "./constants.js";
 import { GUIDE_PAD } from "./constants.js";
 
 export function createPadsView(c) {
@@ -214,9 +214,11 @@ export function createPadsView(c) {
   S.view.dressEntity = function dress(o, e) {
     const u = o.userData;
     if (e.hero) {
-      u.model.traverse((part) => { if (part.isMesh) part.userData.tint = HERO_TINT; });
-      if (u.flashParts) { u.flashBase = u.flashParts.map(() => HERO_TINT); if (u.flashLit) for (const part of u.flashParts) part.userData.tint = u.flashTint; }
-      u.dressed = "hero";
+      // Commander ranks: brighter gold per rank, the branch's colour at Rank 4 and 5 (tints only).
+      const level = e.heroRank || 1, tint = (e.heroBranch && HERO_BRANCH_TINT[e.heroBranch]?.[Math.max(0, level - 4)]) || HERO_RANK_TINT[level] || HERO_TINT;
+      u.model.traverse((part) => { if (part.isMesh) part.userData.tint = tint; });
+      if (u.flashParts) { u.flashBase = u.flashParts.map(() => tint); if (u.flashLit) for (const part of u.flashParts) part.userData.tint = u.flashTint; }
+      u.dressed = `hero${e.heroRank || ""}${e.heroBranch || ""}`; // as view.js dressKey
       return;
     }
     const type = S.sim.crewType(e.crew, e.team), template = this.teamTemplates.get(`${type}-${e.team}`);

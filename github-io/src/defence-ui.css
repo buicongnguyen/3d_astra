@@ -364,6 +364,12 @@
 #commands .defence-stats b { color: var(--text-1, #f1f6f3); font-weight: 800; }
 .compact-ui #commands:has(> [data-tiles]) { padding-top: 4px; }
 .compact-ui #commands:has(> [data-tiles="5"]) .defence-stats { grid-column: span 1; }
+/* The commander's figures (commander ranks, 2026-11-25) always take the sheet's full width. */
+.compact-ui #commands:has(.defence-hero-up) > .defence-stats, #commands:has(.defence-hero-up) > .defence-stats { grid-column: 1 / -1; }
+/* PC: the commander tile drops its picture beside the rank tiles, so its name and health fit. */
+:root:not(.compact-ui) #commands:has(.defence-hero-up) > .defence-info > :is(.portrait-art, .portrait, .icon) { display: none; }
+:root:not(.compact-ui) #commands:has(.defence-hero-up) > .defence-info { grid-template-columns: minmax(0, 1fr) !important; justify-items: center; }
+:root:not(.compact-ui) #commands:has(.defence-hero-up) > .defence-info > :is(span, small) { grid-column: 1 / -1 !important; }
 :root:not(.compact-ui) #commands:has(> [data-tiles="4"]) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 :root:not(.compact-ui) #commands:has(> [data-tiles="5"]) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 :root:not(.compact-ui) #commands:has(> [data-tiles="5"]) .command-tile > span { font-size: 12px; }

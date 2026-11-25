@@ -1,5 +1,5 @@
 {
-  "about": "Frontier Defence garrison towers: a Sentinel tower with one of the army's own units as its crew. Stats come from that unit (balance.json) scaled here; tiers are instant. mech scales damage against machines (armour), on top of the unit's own mechanical bonus. At tier 3 a tower can take one of two branches (0.21): damage, interval, mech and splash multiply; range and reveal add; splash_damage replaces the share; slow, mark and burn are on-hit effects. The commander, the perks and demolition (0.21) are tuned here too. 0.24: each branch has two ranks (ranks: cost and effects; hp multiplies, splash_add adds blast metres, pierce is the share of a shield a shot passes, burst fires shots gap seconds apart, slow_radius and mark_radius spread the effect); a crew may carry its own hp factor (the front line); repair: a garrison not hit for delay seconds mends rate of its health a second; armour.rank2 and armour.branches are the squad upgrades; endless.hp is the Endless hull growth a wave from wave 10. 2026-11 (defence pads): a crew may carry tier_range, the metres each tier adds in place of tiers[].range, so short-reach crews (Rangers, Mortar, Tank post, Flame trap) gain more reach per upgrade and cover the road from pads set back from it (tools/defence-coverage.mjs measures it).",
+  "about": "Frontier Defence garrison towers: a Sentinel tower with one of the army's own units as its crew. Stats come from that unit (balance.json) scaled here; tiers are instant. mech scales damage against machines (armour), on top of the unit's own mechanical bonus. At tier 3 a tower can take one of two branches (0.21): damage, interval, mech and splash multiply; range and reveal add; splash_damage replaces the share; slow, mark and burn are on-hit effects. The commander, the perks and demolition (0.21) are tuned here too. 0.24: each branch has two ranks (ranks: cost and effects; hp multiplies, splash_add adds blast metres, pierce is the share of a shield a shot passes, burst fires shots gap seconds apart, slow_radius and mark_radius spread the effect); a crew may carry its own hp factor (the front line); repair: a garrison not hit for delay seconds mends rate of its health a second; armour.rank2 and armour.branches are the squad upgrades; endless.hp is the Endless hull growth a wave from wave 10. 2026-11 (defence pads): a crew may carry tier_range, the metres each tier adds in place of tiers[].range, so short-reach crews (Rangers, Mortar, Tank post, Flame trap) gain more reach per upgrade and cover the road from pads set back from it (tools/defence-coverage.mjs measures it). 2026-11-25 (commander ranks): commander.ranks are Rank 2 and Rank 3, then one of commander.branches with two ranks; bought in order from the commander's sheet and kept when it falls. A step sets the shield and the barrage / reinforce figures it names (barrage.shells: shells per cast, gap seconds apart; reinforce.hp and reinforce.damage: factors on each soldier dropped); hp multiplies the commander's health.",
   "sell": 0.6,
   "bounty": 0.1,
   "repair": { "delay": 6, "rate": 0.04 },
@@ -58,7 +58,17 @@
   "commander": {
     "name": "Field commander", "slot": "tank", "hp": 1.8, "shield": 500, "damage": 0.8, "speed": 4.2, "interval": 1, "respawn": 20,
     "barrage": { "cooldown": 40, "range": 20, "delay": 1.5, "radius": 4.5, "damage": 110 },
-    "reinforce": { "cooldown": 35, "range": 20, "count": 3, "slot": "vanguard", "seconds": 20 }
+    "reinforce": { "cooldown": 35, "range": 20, "count": 3, "slot": "vanguard", "seconds": 20 },
+    "ranks": [
+      { "name": "Rank 2", "cost": 180, "shield": 700, "barrage": { "damage": 160 } },
+      { "name": "Rank 3", "cost": 260, "hp": 1.3, "barrage": { "cooldown": 30 }, "reinforce": { "count": 4 } }
+    ],
+    "branches": {
+      "artillery": { "name": "Artillery",
+        "ranks": [{ "cost": 220, "barrage": { "radius": 5.5, "damage": 200 } }, { "cost": 300, "barrage": { "cooldown": 24, "shells": 2, "gap": 0.8 } }] },
+      "rally": { "name": "Rally",
+        "ranks": [{ "cost": 200, "reinforce": { "count": 5, "seconds": 28, "hp": 1.3 } }, { "cost": 280, "reinforce": { "count": 6, "cooldown": 28, "hp": 1.6, "damage": 1.25 } }] }
+    }
   },
   "armour": { "name": "Armour squad", "slot": "tank", "size": 2, "cost": 240, "cap": 2, "leash": 9, "hp": 1, "damage": 1,
     "rank2": { "name": "Rank 2", "cost": 160, "hp": 1.35, "damage": 1.1, "repair": 0.03 },

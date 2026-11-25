@@ -5,12 +5,36 @@ import { DEFINITIONS as D, hyp } from "../../data.js";
 import GARRISONS from "../../defence/garrisons.json" with { type: "json" };
 import { TEAM, SPAWN_CLEAR } from "./common.js";
 
+// The commander's figures at its rank (commander ranks, 2026-11-25): GARRISONS.commander, then every
+// step bought, in order: commander.ranks (Rank 2, Rank 3), then the ranks of its branch. A step sets
+// the shield and the Barrage / Reinforce figures it names; hp multiplies. `h` is defence.hero, whose
+// lazy `rank` (1 to 3), `branch` and `branchRank` (1 or 2) are kept when the commander falls. A
+// commander that bought nothing gets GARRISONS.commander itself.
+export function commanderStats(h) {
+  const c = GARRISONS.commander, steps = commanderSteps(h);
+  if (!steps.length) return c;
+  const out = { ...c, barrage: { ...c.barrage }, reinforce: { ...c.reinforce } };
+  for (const s of steps) {
+    if (s.hp) out.hp *= s.hp;
+    if (s.shield) out.shield = s.shield;
+    if (s.barrage) Object.assign(out.barrage, s.barrage);
+    if (s.reinforce) Object.assign(out.reinforce, s.reinforce);
+  }
+  return out;
+}
+export function commanderSteps(h) {
+  const c = GARRISONS.commander, rank = h?.rank || 1, branch = h?.branch ? c.branches?.[h.branch] : null;
+  return [...(c.ranks || []).slice(0, rank - 1), ...(branch ? branch.ranks.slice(0, h.branchRank || 0) : [])];
+}
+// Rank 1 to 5 as one number (Rank 3 plus the branch's ranks), for the sheet and the trim.
+export const commanderLevel = (h) => (h?.rank || 1) + (h?.branch ? h.branchRank || 0 : 0);
+
 export const commander = {
   // ---------------------------------------------------------------- Commander (0.21)
   // One hero on the field (defence.commander {x, z}): a gold-trimmed unit of the player's roster
   // that holds where it is sent, never chases, blocks the road, and comes back 20 s after it falls.
   spawnCommander() {
-    const def = this.defenceDef(), c = GARRISONS.commander, at = def.commander, type = this.typeFor(TEAM, c.slot);
+    const def = this.defenceDef(), c = commanderStats(this.defence.hero), at = def.commander, type = this.typeFor(TEAM, c.slot);
     const e = this.spawn(type, TEAM, at.x, at.z, true, true);
     e.hero = true;
     e.blocker = true;
@@ -27,6 +51,8 @@ export const commander = {
     const exit = def.exit;
     e.angle = Math.atan2(-(exit.x - at.x), -(exit.z - at.z));
     const h = this.defence.hero;
+    // Its ranks come back with it: the view's trim reads these lazy keys.
+    if (commanderLevel(h) > 1) { e.heroRank = commanderLevel(h); if (h.branch) e.heroBranch = h.branch; }
     if (h) { h.id = e.id; h.deadAt = null; }
     else this.defence.hero = { id: e.id, deadAt: null, barrageAt: 0, reinforceAt: 0 };
     return e;
@@ -65,12 +91,13 @@ export const commander = {
   // Barrage: the Breakers' shelling, called in by the commander. Reinforce: three Vanguards
   // dropped on the road who hold it for a while. Both within reach of the commander.
   heroCast(team, ability, x, z) {
-    const e = this.commander(), h = this.defence?.hero, c = GARRISONS.commander;
+    const e = this.commander(), h = this.defence?.hero, c = commanderStats(h);
     if (!this.defence || this.result || team !== TEAM || !e || !Number.isFinite(x) || !Number.isFinite(z)) return false;
     if (ability === "barrage") {
       const a = c.barrage;
       if (this.time < h.barrageAt - 1e-9 || hyp(x - e.x, z - e.z) > a.range || this.hiddenTop({ x, z }, team)) return false;
-      (this.strikes ||= []).push({ at: this.time + a.delay, x, z, team, by: e.id, damage: a.damage, radius: a.radius });
+      // Artillery's top rank fires a second shell `gap` seconds after the first, on the same spot.
+      for (let i = 0; i < (a.shells || 1); i++) (this.strikes ||= []).push({ at: this.time + a.delay + i * (a.gap || 0), x, z, team, by: e.id, damage: a.damage, radius: a.radius });
       h.barrageAt = this.time + a.cooldown * (this.hasPerk("gunnery") ? GARRISONS.perks.gunnery.cooldown : 1);
       this.events.push({ type: "ability", ability: "barrage", id: e.id, team, x: e.x, z: e.z, tx: x, tz: z, radius: a.radius, delay: a.delay });
       return true;
@@ -85,6 +112,9 @@ export const commander = {
         v.stance = "hold";
         v.expires = this.time + a.seconds;
         v.angle = e.angle;
+        // Rally: tougher, harder-hitting soldiers.
+        if (a.hp && a.hp !== 1) { v.hp = v.maxHp = Math.round(v.maxHp * a.hp); this.setBaseHp(v); }
+        if (a.damage && a.damage !== 1) v.damage *= a.damage;
       }
       h.reinforceAt = this.time + a.cooldown;
       this.events.push({ type: "ability", ability: "reinforce", id: e.id, team, x: e.x, z: e.z, tx: x, tz: z, radius: 2.5 });

@@ -951,7 +951,9 @@
   }
 }
 @media (max-aspect-ratio: 1.35) {
-  :root.compact-ui.in-defence.no-units:not(.in-briefing)[data-dock="selection"]:has(.selection-panel.has-entity):has(#commands .defence-stats) {
+  /* The commander's sheet with its rank tiles (commander ranks, 2026-11-25) takes the same two-row card. */
+  :root.compact-ui.in-defence.no-units:not(.in-briefing)[data-dock="selection"]:has(.selection-panel.has-entity):has(#commands .defence-stats),
+  :root.compact-ui.in-defence:not(.in-briefing)[data-dock="selection"]:has(.selection-panel.has-entity):has(#commands .defence-hero-up) {
     --dock-height: 157px;
     & .command-panel #commands { flex-wrap: wrap; row-gap: 2px; height: auto !important; max-height: none !important; overflow: visible !important; }
     & .command-panel #commands > .command-tile { flex: 1 1 0; }
@@ -965,6 +967,13 @@
     & .selection-panel .order-buttons #field-guide > .icon { display: block !important; width: 20px; height: 20px; color: var(--kit-cyan); }
     & .command-deck > .selection-panel { flex: none !important; height: 63px !important; }
     & .command-deck > .command-panel { flex: none !important; height: 92px !important; overflow: visible; }
+  }
+  /* A unit card keeps a 52 px column for the order buttons and its Info button on the left: the commander's
+     two rows use the full width, and its name steps right of the Info button. */
+  :root.compact-ui.in-defence:not(.in-briefing)[data-dock="selection"]:has(.selection-panel.has-entity):has(#commands .defence-hero-up) {
+    & .command-deck > .command-panel { padding-left: 2px !important; }
+    & .selection-panel .order-buttons { left: 6px; right: auto; }
+    & .selection-panel #selection-info { margin-right: 150px; margin-left: 46px; }
   }
 }
 

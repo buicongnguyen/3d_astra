@@ -6,6 +6,9 @@ export const TIER_TINT = { 1: [1.08, 0.94, 0.8], 2: [0.92, 0.99, 1.1], 3: [1.25,
 export const RANK_TINT = { 1: [1.34, 1.18, 0.7], 2: [1.45, 1.3, 0.86] };
 // The commander's gold trim, on every part of its model.
 export const HERO_TINT = [1.9, 1.38, 0.34];
+// Commander ranks (2026-11-25): the gold trim brightens with each rank; Artillery's turns ember red, Rally's pale gold.
+export const HERO_RANK_TINT = { 2: [2.0, 1.5, 0.45], 3: [2.1, 1.62, 0.6] };
+export const HERO_BRANCH_TINT = { artillery: [[2.1, 1.1, 0.42], [2.25, 0.95, 0.38]], rally: [[2.0, 1.85, 1.0], [2.15, 2.0, 1.25]] };
 // Pad colours: plain ground, rim (seen from the road), deep (hidden from it), the picked pad and (PC) the
 // empty pad under the mouse. 2026-11-24: ground is a warm stone, not near-white, so the brass build-spot
 // marker on top reads as "build here" rather than a decoration.
@@ -63,6 +66,14 @@ export const ARMOUR_TEXT = {
   rank2: "Rank 2: thicker armour, a little more damage, and the tanks mend between fights.",
   assault: "Assault: harder, faster guns, strong against machines and carriers; chases further.",
   bulwark: "Bulwark: much thicker armour and faster mending: holds the road far longer.",
+};
+// Commander ranks (2026-11-25): what each step adds, in a line (tests/defence-commander-ranks.test.js keeps the
+// figures in step with garrisons.json).
+export const COMMANDER_TEXT = {
+  rank2: "Rank 2: a 700 shield, and Barrage hits for 160.",
+  rank3: "Rank 3: Barrage every 30 s, four Vanguards, and 30% more health.",
+  artillery: ["Artillery: Barrage bursts 5.5 m wide and hits for 200.", "Two shells for every Barrage, which is ready every 24 s."],
+  rally: ["Rally: five tougher Vanguards who hold for 28 s.", "Six Vanguards who hit harder; Reinforce every 28 s."],
 };
 export const PAD_NOTE = {
   ground: "Ground pad",
