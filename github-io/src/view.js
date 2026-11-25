@@ -33,7 +33,7 @@ import { ViewPlugins } from "./view-plugins.js";
 import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, setRimTier } from "./look-grade.js";
 import { MissionLook } from "./mission-look-view.js";
 import { airMotion } from "./air-motion.js";
-import { RIG_INFANTRY, RIG_HULL, KNEELERS, GAIT, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach, BARREL_POSES, stepBarrel, poseBarrel } from "./unit-rig.js";
+import { RIG_INFANTRY, RIG_HULL, KNEELERS, GAIT, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach, BARREL_POSES, newGun, fireBarrel, stepBarrel, poseBarrel } from "./unit-rig.js";
 import {
   EnvironmentView,
   optimizeEnvironment,
@@ -1343,7 +1343,7 @@ export class WorldView {
     if (root.userData.turret) root.userData.turretBase = root.userData.turret.position.clone();
     // Artillery barrels (unit-rig.js BARREL_POSES) start in their resting pose: no run-in on spawn.
     const gunPose = this.richMotion !== false && BARREL_POSES.get(e.type);
-    root.userData.gun = { elevation: gunPose ? gunPose.park : 0, length: gunPose ? gunPose.rest : 1 };
+    root.userData.gun = gunPose ? newGun(gunPose.park, gunPose.rest) : newGun();
     root.userData.drift = 0;
     // Per-entity anchors feed the two shared selection batches.
     const side = e.team >= 0 ? this.colors[e.team] : 0xb8b2a4; // walls are neutral grey
@@ -1527,6 +1527,8 @@ export class WorldView {
     if(event.type==='shot' && sim.isVisible({x:event.x,z:event.z})){
       const o=this.objects.get(event.source),kind=weaponStyle(event).kind;
       if(o && kind==='cannon')o.userData.recoil=.22;
+      // Artillery (unit-rig.js SNAP): each shot snaps the barrel in, then it runs back out; a crewed tower's gun too.
+      if(o && this.activity.combat.motion && !this.reducedMotion.matches){if(o.userData.gun)fireBarrel(o.userData.gun);if(o.userData.crewGun)fireBarrel(o.userData.crewGun);}
       // Every shooter rocks back a little: hulls and rocket troops most, rifles barely.
       if(o && kind!=='support'){o.userData.kick=.16;o.userData.kickSize=kind==='rocket'?.11:kind==='cannon'?.07:.03;}
     }
@@ -1749,12 +1751,12 @@ export class WorldView {
         // A Mortar (Breaker) or Flame trap crew poses its gun like the field unit: run in at rest, out to fire.
         if (u.crewGun === undefined) {
           const rig = u.crew.getObjectByName("BarrelRig"), pose = BARREL_POSES.get(sim.crewType?.(e.crew, e.team));
-          u.crewGun = rig?.userData.trunnion && pose ? { rig, pose, elevation: this.richMotion ? pose.park : 0, length: this.richMotion ? pose.rest : 1 } : null;
+          u.crewGun = rig?.userData.trunnion && pose ? Object.assign(this.richMotion ? newGun(pose.park, pose.rest) : newGun(), { rig, pose }) : null;
         }
         const g = u.crewGun;
         if (g) {
           stepBarrel(g, g.pose, { moving: false, attacking: !!e.attacking, dt, rich: this.richMotion, instant: this.reducedMotion.matches });
-          poseBarrel(g.rig, g.rig.userData.trunnion, g.elevation, g.length, this.activity.combat.motion ? Math.sin(u.recoil / .22 * Math.PI) * .18 : 0);
+          poseBarrel(g.rig, g.rig.userData.trunnion, g.elevation, g.drawn, this.activity.combat.motion ? Math.sin(u.recoil / .22 * Math.PI) * .18 : 0);
         }
       }
       if(o.userData.barrel){
@@ -1767,7 +1769,7 @@ export class WorldView {
             // Unit motion (artillery, unit-rig.js): at rest the barrel sits a little raised and run in;
             // to fire it runs out and lifts. It turns about its trunnion; the recoil runs along it.
             stepBarrel(u.gun,pose,{moving:!!e.moving,attacking:!!e.attacking,dt,rich:this.richMotion,instant:this.reducedMotion.matches});
-            poseBarrel(rig,hinge,u.gun.elevation,u.gun.length,kick);
+            poseBarrel(rig,hinge,u.gun.elevation,u.gun.drawn,kick);
           }else rig.position.set(0,0,-kick);
         }else{
         rig.rotation.y=e.type==='tower'?e.angle-m.rotation.y:0;

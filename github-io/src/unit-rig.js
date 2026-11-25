@@ -118,13 +118,26 @@ export const BARREL_POSES = new Map([
   ["breaker", { move: 0.1, park: 0.1, fire: 0.24, rest: 0.74 }],
   ["scorcher", { move: -0.18, park: -0.18, fire: 0.12, rest: 1 }],
 ]);
-// Per frame: ease `gun` ({ elevation, length }) toward the pose for the unit's state. rich: the "Unit
-// motion" setting (off = the modelled pose); instant: reduced motion (no tween, the pose is still shown).
+// Owner 2026-11: each shot snaps the barrel in (SNAP.in seconds) then lets it run back out (SNAP.out),
+// by SNAP.depth of its length at the deepest.
+export const SNAP = Object.freeze({ in: 0.1, out: 0.4, depth: 0.22 });
+// A barrel's state: `length` eases between rest and combat; `drawn` is that length with the shot snap.
+export const newGun = (elevation = 0, length = 1) => ({ elevation, length, shot: Infinity, drawn: length });
+// The view calls this on the unit's own shot event (not under reduced motion or with combat motion off).
+export function fireBarrel(gun) { gun.shot = 0; }
+// Per frame: ease `gun` toward the pose for the unit's state and play any shot snap. rich: the "Unit
+// motion" setting (off = the modelled pose); instant: reduced motion (no tween and no snap, the pose
+// is still shown).
 export function stepBarrel(gun, pose, { moving, attacking, dt, rich, instant = false }) {
   const elevation = !rich ? 0 : attacking ? pose.fire : moving ? pose.move : pose.park;
   const length = !rich || attacking ? 1 : pose.rest;
-  if (instant) { gun.elevation = elevation; gun.length = length; }
-  else if (dt > 0) { gun.elevation = approach(gun.elevation, elevation, 3, dt); gun.length = approach(gun.length, length, 5, dt); }
+  if (instant) { gun.elevation = elevation; gun.length = length; gun.shot = Infinity; }
+  else if (dt > 0) {
+    gun.elevation = approach(gun.elevation, elevation, 3, dt); gun.length = approach(gun.length, length, 5, dt);
+    gun.shot += dt;
+  }
+  const t = gun.shot, dip = !rich ? 0 : t < SNAP.in ? t / SNAP.in : 1 - smooth(SNAP.in, SNAP.in + SNAP.out, t);
+  gun.drawn = gun.length * (1 - SNAP.depth * dip);
   return gun;
 }
 // Pose a barrel rig about its trunnion (hinge = [y, z] in the rig's frame: the barrel's rear at mid
