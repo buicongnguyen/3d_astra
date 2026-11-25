@@ -46,10 +46,15 @@ await suite("air", async () => {
     const tileBox = await tile.boundingBox();
     if (mobile) assert.ok(tileBox.height >= 44, `${viewport}: Kite tile is ${tileBox.height}px tall`);
     assert.match(await tile.textContent(), /Kite scout/);
+    // Your price (balance.json player_cost 45 / 0; the computer keeps 75 / 25): the tile, its label and its affordability.
+    assert.equal((await tile.locator("small").textContent()).trim(), "45", `${viewport}: the Kite tile shows 45 and no energy`);
+    assert.match(await tile.getAttribute("aria-label"), /, 45 alloy$/);
+    assert.equal(await tile.getAttribute("data-cost"), "45,0");
     await tile[mobile ? "tap" : "click"]();
     const kite = await page.evaluate((id) => {
       const f = window.__frontier, s = f.sim, b = s.get(id);
       if (!b.queue.some((q) => q.type === "kite")) throw new Error("Kite not queued");
+      if (s.players[0].alloy !== 4955 || s.players[0].energy !== 5000) throw new Error(`paid ${5000 - s.players[0].alloy} / ${5000 - s.players[0].energy}, not 45 / 0`);
       f.step(13);
       const k = s.own(0).find((e) => e.type === "kite");
       if (!k) throw new Error("Kite not trained");
@@ -229,6 +234,7 @@ await suite("air", async () => {
       assert.ok(entry.portrait && /Flyer: it flies straight/.test(entry.text), `${viewport}: guide ${type}`);
     }
     await page.selectOption("#guide-entry", "kite");
+    assert.match(await page.locator("#guide-detail").textContent(), /Cost45 alloy \/ 0 energyTime8s/, `${viewport}: the guide shows your Kite price and time`);
     report = await audit(page, "dialog.field-guide", mobile);
     assert.deepEqual(report.small, [], `${viewport}: small text in the guide`);
     await shot(page, `air-guide-${viewport}`);

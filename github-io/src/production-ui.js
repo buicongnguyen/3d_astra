@@ -14,7 +14,7 @@ export function createWorkStrip(host, definitions, {getSim, canAct, refresh}) {
     const sim=getSim(), activity=buildingActivity(sim,e);
     const jobs=!e.complete ? [{kind:'site',ref:e,type:e.type,progress:e.progress,blocked:activity?.waiting?activity.label:''}] : e.levelJob ?
       [{kind:'level',ref:e.levelJob,type:e.type,progress:e.levelJob.elapsed/e.levelJob.time,blocked:''}] :
-      e.queue.map(q=>({kind:'train',ref:q,type:q.type,progress:q.elapsed/definitions[q.type].time,blocked:q.blocked}));
+      e.queue.map(q=>({kind:'train',ref:q,type:q.type,progress:q.elapsed/(sim.trainTime?.(e.team,q.type) ?? definitions[q.type].time),blocked:q.blocked}));
     if(owner!==e || jobs.length!==tokens.length || jobs.some((j,i)=>j.ref!==tokens[i])) {
       owner=e; tokens=jobs.map(j=>j.ref); host.replaceChildren();
       jobs.forEach((job,i)=>{

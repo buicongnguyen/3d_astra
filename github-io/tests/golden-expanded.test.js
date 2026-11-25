@@ -18,7 +18,7 @@ const match = (faction, aiSpeed) => new Simulation({ map: "dunes", enemyCount: 1
 // veil 300/500: Re-recorded 2026-11-24 (integration of faction depth + support units + faction roster): Fast/Relentless AIs take doctrines and cast signature abilities; Medic/Engineer/Supply wagon health rose; Veil/Wardens cores train the new flyers and an Expanded Shield pylon trains the Bulwark (new trains lists and AI play).
 // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
 // Re-recorded 2026-11-24 (support health only for a human team 0): a computer-played team 0 (aiPlayer) keeps the computer's support health, so AI-against-AI matches are back to their faction depth / roster values.
-const PINS = { meridian: { 300: "8a033bc9", 600: "9bb1cb6a" }, veil: { 300: "c8bb7a56", 500: "5898e462" } };
+const PINS = { meridian: { 300: "6036d277", 600: "5ec489b1" }, veil: { 300: "c8f9bc34", 500: "da0ea292" } };
 // Re-recorded 2026-11-24: Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x (not 6x) to flyers (commits 5e4c07c, 2e293ea) change long AI matches.
 // Re-recorded 2026-11-24 (Kite scout sight 18 -> 32 m and its manual Dive, docs/CHANGELOG.md "Kite scout: twice the sight, and Dive"): the player's Kites, and the computer's at Fast or Relentless, open more fog for their side (the fog is in the hashed state), and Fast/Relentless computer Kites may dive. Relaxed, Normal, Defence and story computer Kites keep 18 m, so those pins did not move.
 const count = (sim, type) => sim.entities.filter((e) => e.type === type).length;

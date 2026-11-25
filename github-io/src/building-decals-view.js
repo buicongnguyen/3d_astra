@@ -431,7 +431,8 @@ export class BuildingDecalsView {
     for (const rec of this.records.values()) {
       if (!rec.bar.length && !rec.chase.length) continue;
       const q = rec.e.queue?.[0], d = q && D[q.type];
-      const p = d?.time ? Math.min(1, q.elapsed / d.time) : 0;
+      const t = d && (sim.trainTime?.(rec.e.team, q.type) ?? d.time); // player prices: balance.json player_time
+      const p = t ? Math.min(1, q.elapsed / t) : 0;
       const speed = q && !rec.e.levelJob ? 0.8 + 2.2 * p : 0;
       for (const s of rec.bar) if (this.data.getW(s) !== Math.fround(p)) { this.data.setW(s, p); dirty = true; }
       for (const s of rec.chase) if (this.data.getW(s) !== Math.fround(speed)) { this.data.setW(s, speed); dirty = true; }

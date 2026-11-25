@@ -242,7 +242,7 @@ export class Simulation {
     // Support units the player fields (team 0, unless the computer plays it: aiPlayer) are sturdier than
     // the computer's (owner rule: the support health buff must not make the computer stronger):
     // balance.json player_hp / player_shield.
-    const player = team === 0 && !this.aiPlayer;
+    const player = this.humanTeam(team);
     if (player && d.player_hp) { e.maxHp = d.player_hp; e.hp = complete ? d.player_hp : 1; }
     if (player && d.player_shield) { e.maxShield = d.player_shield; e.shield = complete ? d.player_shield : 0; }
     if (d.trains) e.trains = this.resolvedTrains(team,d.trains);
@@ -302,6 +302,22 @@ export class Simulation {
   maxPop() {
     const pop = this.rules?.pop;
     return pop === "150" || pop === "200" ? Number(pop) : MAX_POP;
+  }
+  // The side the person commands: team 0, unless the computer plays it (aiPlayer, AI-vs-AI checks).
+  // Coalition allies and every rival are teams 1+ and so always computer sides.
+  humanTeam(team) {
+    return team === 0 && !this.aiPlayer;
+  }
+  // Player prices (owner 2026-11-25: a cheap Kite to watch the enemy): balance.json `player_cost` /
+  // `player_time` apply to the human side only; computer sides keep `cost` / `time`, so AI play is
+  // unchanged. Every training price or training time read for a team goes through these two.
+  trainCost(team, type) {
+    const d = D[type];
+    return (d.player_cost && this.humanTeam(team) && d.player_cost) || d.cost;
+  }
+  trainTime(team, type) {
+    const d = D[type];
+    return (d.player_time && this.humanTeam(team) && d.player_time) || d.time;
   }
   canPay(team, cost) {
     const p = this.players[team];

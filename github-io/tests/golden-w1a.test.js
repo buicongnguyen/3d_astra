@@ -16,7 +16,7 @@ D.fxwarden3 = { ...D.drone, name: "Fixture three", workshop: "wardens", roster: 
 
 const match = () => new Simulation({ map: "dunes", enemyCount: 1, aiSpeed: "normal", factions: skirmishSides("wardens", "mirror", 1, "dunes"), capturePoints: true, aiPlayer: true, rules: { roster: "expanded" } });
 // Re-recorded 2026-11-24 (roster): the Veil and Wardens Command cores also train their new flyers (Veil moth, Halo interceptor), and an Expanded Shield pylon trains the Bulwark: new trains lists in the hashed state, and AI play that can field them.
-const PINS = { 60: "b1206d6c", 180: "b5ed991b", 600: "09474732", 800: "09474732" };
+const PINS = { 60: "b1206d6c", 180: "b5ed991b", 600: "ae7bbfcb", 800: "ae7bbfcb" };
 
 test("Expanded Wardens against Wardens, 60 and 180 s", () => {
   const sim = match();

@@ -198,7 +198,7 @@ export const economy = {
     const q = b.queue[0],
       d = D[q.type];
     q.elapsed += dt*(1+0.2*(b.level-1));
-    if (q.elapsed < d.time) return;
+    if (q.elapsed < this.trainTime(b.team, q.type)) return;
     if (["upgrade", "plating", "upgrade2", "plating2", "flak"].includes(q.type)) this.events.push({type:"research",team:b.team,x:b.x,z:b.z});
     // Flak (sim/air.js): towers shoot flyers. Stored only once researched.
     if (q.type === "flak") {
