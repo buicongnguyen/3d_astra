@@ -10,8 +10,10 @@ try {
     const page = await browser.newPage({viewport, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: mobile ? 3 : 1});
     const errors = []; page.on('pageerror', e => errors.push(e.message));
     const click = async selector => { await page.locator(selector)[mobile ? 'tap' : 'click'](); await page.waitForTimeout(120); };
+    // Centre the camera on each tap first: on short landscape phones (667x375) the HUD sits above the
+    // home-indicator strip, so a fixed camera put the target under the unit panel.
     const world = async point => {
-      const p = await page.evaluate(p => { const v = window.__frontier.view, q = v.project(p.x, p.z, p.height || 0), r = v.renderer.domElement.getBoundingClientRect(); return {x: q.x + r.x, y: q.y + r.y}; }, point);
+      const p = await page.evaluate(p => { const v = window.__frontier.view; v.focusOn(p.x, p.z); v.updateCamera(); const q = v.project(p.x, p.z, p.height || 0), r = v.renderer.domElement.getBoundingClientRect(); return {x: q.x + r.x, y: q.y + r.y}; }, point);
       if (mobile) await page.touchscreen.tap(p.x, p.y); else await page.mouse.click(p.x, p.y);
       await page.waitForTimeout(150);
     };
