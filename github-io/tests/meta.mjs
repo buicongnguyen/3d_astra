@@ -1,7 +1,8 @@
 // W6 replay value at 1440x900, 390x844 and 844x390 (src/meta-ui.js):
 //   - the title's Records tile (one tap, 44 px) opens the Records screen: 25 achievements with their progress,
 //     11 px text, 44 px taps, no sideways scroll, nothing grouped behind a menu; Close returns to the title;
-//   - today's three challenges (the date pinned with ?day=2026-11-25: Iron line, Expedition, Promotion) are
+//   - today's three challenges (the date pinned with ?day=2027-10-15: Iron line, Expedition, Promotion; 2026-11-25 gave
+//     that set before the variety pass added nine goals) are
 //     direct tiles under the quick row; one tap picks the challenge's mode; a win that meets one pays +60 XP once
 //     and the tile reads Done back on the title;
 //   - five achievements unlock the Silverline paint (medal cosmetics): a "Reward unlocked" toast, the Records
@@ -39,7 +40,7 @@ async function startMatch(o) {
 await suite("meta", async () => {
   for (const viewport of VIEWPORTS) {
     const o = await openPage(browser, viewport, { timeout: TIMEOUT.models }), { page, errors } = o;
-    await o.goto("day=2026-11-25");
+    await o.goto("day=2027-10-15");
     await o.ready();
 
     // ---- Today's challenges: three direct tiles; one tap picks the mode.
@@ -51,6 +52,23 @@ await suite("meta", async () => {
     const cut = await page.evaluate(() => [...document.querySelectorAll("#daily-challenges button")].filter((b) => [...b.querySelectorAll("strong, small, b")].some((t) => { const r = t.getBoundingClientRect(), o = b.getBoundingClientRect(); return r.right > o.right + 1 || r.bottom > o.bottom + 1; })).map((b) => b.dataset.challenge));
     assert.deepEqual(cut, [], `${viewport}: challenge text fits its tiles`);
     await noSideScroll(page, `${viewport} title`);
+    // Variety pass (2026-11-25b): eight days that between them show all 22 goals, each tile whole and 44 px.
+    if (viewport === "portrait") {
+      const seen = new Set();
+      for (const day of ["2026-12-01", "2026-12-02", "2026-12-03", "2026-12-05", "2026-12-06", "2026-12-14", "2026-12-17", "2026-12-26"]) {
+        const p = await openPage(browser, viewport, { timeout: TIMEOUT.models });
+        await p.goto(`day=${day}`);
+        await p.ready();
+        await p.page.locator("#daily-challenges [data-challenge]").first().waitFor({ state: "visible", timeout: TIMEOUT.step });
+        for (const id of await p.page.locator("#daily-challenges [data-challenge]").evaluateAll((b) => b.map((x) => x.dataset.challenge))) seen.add(id);
+        assert.deepEqual(await small(p.page, "#daily-challenges button"), [], `${day}: challenge taps`);
+        assert.deepEqual(await tiny(p.page, "#daily-challenges"), [], `${day}: challenge text`);
+        assert.deepEqual(await p.page.evaluate(() => [...document.querySelectorAll("#daily-challenges button")].filter((b) => [...b.querySelectorAll("strong, small, b")].some((t) => { const r = t.getBoundingClientRect(), o = b.getBoundingClientRect(); return r.right > o.right + 1 || r.bottom > o.bottom + 1 || t.scrollWidth > t.clientWidth + 1; })).map((b) => b.dataset.challenge)), [], `${day}: challenge text fits its tiles`);
+        if (day === "2026-12-14") { await p.page.locator("#daily-challenges").scrollIntoViewIfNeeded(); await shot(p.page, "meta-title-variety-portrait"); }
+        await p.page.close();
+      }
+      assert.equal(seen.size, 22, `every goal shown once in the eight days: ${[...seen]}`);
+    }
     await page.locator("#daily-challenges").scrollIntoViewIfNeeded();
     await shot(page, `meta-title-${viewport}`);
     await page.locator('#daily-challenges [data-challenge="cp-win"]').scrollIntoViewIfNeeded();

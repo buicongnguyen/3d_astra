@@ -1783,7 +1783,25 @@
     "This battle is full.": "Trận này đã đủ người.",
     "Wait for a second player to join.": "Hãy chờ người chơi thứ hai vào.",
     "Every player must be ready first.": "Mọi người chơi phải sẵn sàng trước.",
-    "The host server refused that.": "Máy chủ LAN đã từ chối yêu cầu đó."
+    "The host server refused that.": "Máy chủ LAN đã từ chối yêu cầu đó.",
+    "Master builder": "Thợ xây bậc thầy",
+    "Build 8 structures in a Skirmish win": "Xây 8 công trình trong một trận Giao tranh thắng",
+    "New colours": "Màu cờ mới",
+    "Win a Skirmish not as Meridian": "Thắng Giao tranh với phe khác Meridian",
+    "Wrecking crew": "Đội phá dỡ",
+    "Destroy 10 buildings in a Skirmish win": "Phá 10 công trình trong một trận Giao tranh thắng",
+    "Clean sweep": "Quét sạch",
+    "Win a mission losing 5 units or fewer": "Thắng một nhiệm vụ, mất tối đa 5 quân",
+    "Forced march": "Hành quân thần tốc",
+    "Win a mission within 12 minutes": "Thắng một nhiệm vụ trong 12 phút",
+    "Muster": "Tập hợp quân",
+    "Train 20 units in a mission win": "Huấn luyện 20 quân trong một nhiệm vụ thắng",
+    "Specialist": "Chuyên gia",
+    "Pick a commander branch": "Chọn nhánh cho chỉ huy",
+    "Road warden": "Người gác đường",
+    "Stop 60 enemies in a Defence win": "Chặn 60 kẻ địch trong một màn Phòng thủ thắng",
+    "Unbroken": "Bất khả xâm phạm",
+    "Win a Defence level losing no tower": "Thắng một màn Phòng thủ không mất tháp nào"
   },
   "patterns": [
     [
