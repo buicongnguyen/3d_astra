@@ -1,8 +1,13 @@
 /* Field Guide 3D view (W5, src/field-guide.js + src/unit-viewer.js). The stage is at least 220 px tall on
    phones; every control is a direct 44 px button (no sub-menu); text 11 px and up. */
-.field-guide .unit-3d { margin: 14px 0 4px; }
-.field-guide .unit-3d > h3 { margin: 0 0 8px; }
-.unit-3d-stage { position: relative; height: clamp(220px, 40dvh, 340px); border-radius: 10px; overflow: hidden;
+.field-guide .unit-3d { margin: 8px 0 4px; }
+.field-guide .unit-3d > h3 { margin: 0 0 6px; }
+/* W14: when a page opens, the small portrait, the whole stage and every button are on screen without scrolling
+   (desktop: the stage was 340 px and the buttons below the fold, so a scroll cut the portrait off; 390x844: the
+   Colour / Size row sat under the Close bar). The stage is sized to leave room for the rest. */
+.field-guide:has(.unit-3d) .guide-hero { margin: -6px 0 2px; }
+.field-guide:has(.unit-3d) .guide-hero .portrait-art { --size: 64px; }
+.unit-3d-stage { position: relative; height: clamp(220px, 30dvh, 270px); border-radius: 10px; overflow: hidden;
   border: 1px solid var(--kit-line-ghost, #3d5f63);
   background: radial-gradient(120% 90% at 50% 30%, #2a5560 0%, #143039 55%, #0a1a21 100%); }
 .unit-3d-canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; cursor: grab; }
@@ -21,6 +26,16 @@
 .field-guide .unit-3d-hint { margin: 6px 0 0; font-size: 12px; color: var(--kit-text-2, #b9cbc8); }
 /* Narrow phones: motions on one row of three, colour and size on a row of two. */
 @media (max-width: 460px) {
+  /* W14: the guide takes the phone's whole height, with a slimmer title bar and Close bar (the picker's label
+     stays for screen readers), so both rows of buttons show above Close when a page opens. */
+  .field-guide:has(.unit-3d) { height: calc(100dvh - 24px); }
+  .field-guide:has(.unit-3d) header { padding: 10px 14px; }
+  .field-guide:has(.unit-3d) header h2 { margin: 0 0 6px; font-size: 18px; }
+  .field-guide:has(.unit-3d) header label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .field-guide:has(.unit-3d) footer { padding: 8px 14px; }
+  .field-guide:has(.unit-3d) article { padding: 14px; }
+  .field-guide:has(.unit-3d) .guide-hero .portrait-art { --size: 56px; }
+  .unit-3d-stage { height: clamp(220px, 42dvh, 360px); }
   .unit-3d-controls { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .unit-3d-controls > button { grid-column: span 2; }
   .unit-3d-controls > button:nth-child(n + 4) { grid-column: span 3; }

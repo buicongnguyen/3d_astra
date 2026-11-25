@@ -21,6 +21,19 @@ try {
       assert.equal(await page.locator('.field-guide').isVisible(),true);
       assert.equal(await page.evaluate(()=>window.__frontier.paused),true);
       await page.locator('#guide-entry').selectOption('engineer');assert.match(await page.locator('#guide-detail').innerText(),/18 HP/);
+      // W14: a page opens with the small portrait, the 3D stage and both rows of its buttons on screen, above the
+      // Close bar, without scrolling (desktop 1440x960 and 1440x900, phone 390x844).
+      for(const size of mobile?[null]:[null,{width:1440,height:900}]){
+        if(size)await page.setViewportSize(size);
+        await page.waitForFunction(()=>document.querySelectorAll('.field-guide .unit-3d-controls button').length>=5);
+        const fit=await page.evaluate(()=>{const a=document.querySelector('#guide-detail'),r=a.getBoundingClientRect(),hero=document.querySelector('.field-guide .guide-hero .portrait-art').getBoundingClientRect(),
+          stage=document.querySelector('.field-guide .unit-3d-stage').getBoundingClientRect(),last=Math.max(...[...document.querySelectorAll('.field-guide .unit-3d-controls button')].map(b=>b.getBoundingClientRect().bottom)),
+          close=document.querySelector('#guide-close').getBoundingClientRect();
+          return {scroll:a.scrollTop,top:r.top,bottom:r.bottom,hero:hero.top,stage:stage.height,last,close:close.top};});
+        assert.ok(fit.scroll===0&&fit.hero>=fit.top-0.5&&fit.last<=fit.bottom+0.5&&fit.last<=fit.close,`${mobile?'390x844':size?'1440x900':'1440x960'}: guide fits ${JSON.stringify(fit)}`);
+        if(mobile)assert.ok(fit.stage>=219.5,`phone stage ${fit.stage}`);
+      }
+      if(!mobile)await page.setViewportSize({width:1440,height:960});
       await page.screenshot({path:`test-results/progression-${mobile?'mobile':'desktop'}-guide.png`});
       if(mobile){await page.setViewportSize({width:844,height:390});await page.screenshot({path:'test-results/progression-landscape-guide.png'});}
       await click('#guide-close');await page.waitForFunction(()=>!window.__frontier.paused);
