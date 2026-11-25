@@ -44,6 +44,21 @@ try{
         const hiddenRecoil=object.userData.recoil;s.visible[0].fill(1);
         return {hidden,count,paused,expired,independent,disabled,barrels,hiddenRecoil};
       });
+      // Owner 2026-11: a Breaker not fighting keeps its gun raised and run in (shorter); to fire it runs
+      // out and lifts (rotation.x < 0 raises the muzzle; scale.z is the barrel's length). No extra draws.
+      const gun=await page.evaluate(()=>{
+        const f=window.__frontier,s=f.sim,v=f.view,e=s.entities.find(x=>x.team===0&&x.type==='breaker'),rig=v.objects.get(e.id).userData.barrel;
+        const read=()=>({up:-rig.rotation.x,length:rig.scale.z,calls:v.renderer.info.render.calls});
+        e.attacking=false;e.moving=false;for(let i=0;i<40;i++)window.renderVisual(s,1/20,f.selected,null);const idle=read();
+        e.moving=true;for(let i=0;i<40;i++)window.renderVisual(s,1/20,f.selected,null);const moving=read();
+        e.moving=false;e.attacking=true;for(let i=0;i<40;i++)window.renderVisual(s,1/20,f.selected,null);const fire=read();
+        e.attacking=false;window.renderVisual(s,1/20,f.selected,null);
+        return {idle,moving,fire};
+      });
+      assert.ok(gun.idle.up>=0.09&&gun.moving.up>=0.09,`idle/moving gun never droops ${JSON.stringify(gun)}`);
+      assert.ok(gun.idle.length<0.8&&gun.moving.length<0.8&&gun.fire.length>0.98,`run in at rest, out to fire ${JSON.stringify(gun)}`);
+      assert.ok(gun.fire.up>gun.idle.up+0.1,`lifts to fire ${JSON.stringify(gun)}`);
+      assert.equal(gun.fire.calls,gun.idle.calls,'the barrel pose adds no draw call');
       assert.equal(check.hiddenRecoil,0,"recoil expires while hidden");assert.equal(check.hidden,0);assert.equal(check.count,64);assert.ok(check.paused);assert.equal(check.expired,0);assert.ok(check.independent&&check.disabled&&check.barrels>0);
     }
     await page.screenshot({path:`test-results/visual-${baseline?'before':'after'}-weapons-${viewport.width}.png`});

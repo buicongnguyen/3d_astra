@@ -39,6 +39,43 @@ test("unit rig: a hull pitches nose-up when it pulls away and settles at cruise"
   assert.ok(Math.abs(rig.pitch) < 0.005);
 });
 
+test("unit rig: the Breaker's idle gun rests raised and run in; it runs out and lifts to fire, eased", async () => {
+  const { BARREL_POSES, stepBarrel, poseBarrel } = await import("../src/unit-rig.js");
+  const pose = BARREL_POSES.get("breaker"), dt = 1 / 60;
+  // Owner 2026-11: never droops when not fighting (idle or on the move), shorter than in combat.
+  assert.ok(pose.park > 0 && pose.move > 0 && pose.fire > pose.park, JSON.stringify(pose));
+  assert.ok(pose.rest < 1);
+  const gun = { elevation: pose.park, length: pose.rest };
+  for (const moving of [false, true]) {
+    for (let i = 0; i < 120; i++) stepBarrel(gun, pose, { moving, attacking: false, dt, rich: true });
+    assert.ok(gun.elevation >= pose.park - 1e-9 && gun.length < 1, `moving ${moving}: ${JSON.stringify(gun)}`);
+  }
+  const idle = { ...gun };
+  // No pop: one frame moves only a little, and the gun reaches its firing pose within a second or so.
+  stepBarrel(gun, pose, { moving: false, attacking: true, dt, rich: true });
+  assert.ok(gun.length - idle.length < 0.03 && gun.elevation - idle.elevation < 0.01, JSON.stringify(gun));
+  for (let i = 0; i < 90; i++) stepBarrel(gun, pose, { moving: false, attacking: true, dt, rich: true });
+  assert.ok(gun.length > 0.98 && gun.length > idle.length && gun.elevation > idle.elevation + 0.1, JSON.stringify(gun));
+  // Reduced motion: the pose still changes, without the tween.
+  stepBarrel(gun, pose, { moving: false, attacking: false, dt, rich: true, instant: true });
+  assert.deepEqual(gun, { elevation: pose.park, length: pose.rest });
+  // Unit motion off: the modelled barrel (level, full length).
+  stepBarrel(gun, pose, { moving: true, attacking: false, dt, rich: false, instant: true });
+  assert.deepEqual(gun, { elevation: 0, length: 1 });
+  // The trunnion stays put whatever the elevation and length, so the barrel stays seated in the turret.
+  const THREE = await import("three");
+  const rig = new THREE.Object3D(), hinge = [1.4, 0.49];
+  for (const [e, l] of [[0.1, 0.74], [0.24, 1], [-0.18, 1]]) {
+    poseBarrel(rig, hinge, e, l, 0);
+    rig.updateMatrix();
+    const p = new THREE.Vector3(0, hinge[0], hinge[1]).applyMatrix4(rig.matrix);
+    assert.ok(Math.abs(p.y - hinge[0]) < 1e-9 && Math.abs(p.z - hinge[1]) < 1e-9, `${e} ${l}: ${p.toArray()}`);
+    // The muzzle (1.4 units ahead) rises with a positive elevation.
+    const m = new THREE.Vector3(0, hinge[0], hinge[1] + 1.4).applyMatrix4(rig.matrix);
+    assert.equal(Math.sign(m.y - hinge[0]), Math.sign(e));
+  }
+});
+
 test("settings: Unit motion defaults on and survives a save", () => {
   assert.equal(defaults().unitMotion, true);
   assert.equal(normalize({ version: 1, unitMotion: false }).unitMotion, false);

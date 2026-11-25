@@ -2,6 +2,9 @@
 
 ## Unreleased: Round A.2
 
+### Breaker gun at rest (owner report)
+- The Breaker's gun no longer droops when it is not fighting (it stowed 17° down on the move). Idle or moving it rests 6° raised with the barrels run in (74% length); to fire it runs out to full length and lifts 14°, eased both ways (no pops), recoil along the barrel as before. The barrel scales about its rear, so it stays seated in the turret. Defence Mortar crews pose the same way; reduced motion skips the tween, Unit motion off keeps the modelled gun. Same draw calls (34 phone / 78 PC in the test scene); `unit-rig.js` `BARREL_POSES`/`stepBarrel`/`poseBarrel`, checked in `tests/unit-rig.test.js` and `tests/visual-combat.mjs`.
+
 ### Re-score fixes (AAA re-score 2026-11-25)
 - Portrait phones: with a mixed selection, Map and the objectives flag stand just above the dock instead of over the unit-type chips; chips share the row evenly (seven types fit 390 px, and the PC panel too). A lone train tile (an HQ that trains only Harvesters) is never wider than a normal tile.
 - Defence tower card: landscape tiles drop their picture so tier, cost, sell value and aim mode show (the heading drops its cut-off stat labels, so the sheet stays under the Next-wave card); portrait grows one row for the tower stats ("Air: no" was cut) and Info & stats is a 44 px button beside the name (it was an empty bar).

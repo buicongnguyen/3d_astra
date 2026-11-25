@@ -109,6 +109,34 @@ export function tagBone(geometry, bone, pivotY = 0, kneeY = 0, pivotZ = 0) {
 }
 // Blend toward a target independent of frame rate: x += (target - x) * (1 - exp(-k dt)).
 export const approach = (x, target, k, dt) => x + (target - x) * (1 - Math.exp(-k * dt));
+// Unit motion: barrels that move with the unit's state (view.js BarrelRig, turned about its trunnion).
+// Elevation in radians from the modelled pose; `rest` is the barrel's length out of combat as a fraction
+// of the modelled barrel. Owner 2026-11: the Breaker's gun must not droop when it is not fighting; it
+// rests a little raised with the barrel run in (shorter), and to fire it runs out to full length and
+// lifts. The Scorcher carries its nozzle low and lifts it to burn.
+export const BARREL_POSES = new Map([
+  ["breaker", { move: 0.1, park: 0.1, fire: 0.24, rest: 0.74 }],
+  ["scorcher", { move: -0.18, park: -0.18, fire: 0.12, rest: 1 }],
+]);
+// Per frame: ease `gun` ({ elevation, length }) toward the pose for the unit's state. rich: the "Unit
+// motion" setting (off = the modelled pose); instant: reduced motion (no tween, the pose is still shown).
+export function stepBarrel(gun, pose, { moving, attacking, dt, rich, instant = false }) {
+  const elevation = !rich ? 0 : attacking ? pose.fire : moving ? pose.move : pose.park;
+  const length = !rich || attacking ? 1 : pose.rest;
+  if (instant) { gun.elevation = elevation; gun.length = length; }
+  else if (dt > 0) { gun.elevation = approach(gun.elevation, elevation, 3, dt); gun.length = approach(gun.length, length, 5, dt); }
+  return gun;
+}
+// Pose a barrel rig about its trunnion (hinge = [y, z] in the rig's frame: the barrel's rear at mid
+// height): raised by `elevation`, scaled along its own axis to `length` (the rear stays seated in the
+// turret, so no gap opens), then pushed back along that axis by `kick` (recoil). Scale lives in the
+// part's matrix, so the instanced batches draw it with no extra call.
+export function poseBarrel(rig, hinge, elevation, length, kick) {
+  const a = -elevation, c = Math.cos(a), s = Math.sin(a), ty = hinge[0], tz = hinge[1];
+  rig.rotation.x = a;
+  rig.scale.z = length;
+  rig.position.set(0, ty - ty * c + length * tz * s + kick * s, tz - ty * s - length * tz * c - kick * c);
+}
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 // Per frame for a Ranger. `rig` holds the state, `motion` is the shared per-instance array.
