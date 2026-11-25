@@ -2,6 +2,9 @@
 
 ## Unreleased: Round A.2
 
+### Cheaper Kite scout (owner 2026-11-25)
+- Kite scout costs 45 alloy and no second resource (was 75 + 25) and trains in 8 s (was 12), so a spotter is cheap to send ahead. Dive keeps 260 damage. Difficulty check (1v1 / 1v2 wins of 12, Relaxed..Relentless): 12/12/12/11 and 9/4/1/0 (were 12/12/11/11 and 7/2/0/0): no setting got harder. Golden pins re-recorded for this balance change.
+
 ### Re-score fixes (AAA re-score 2026-11-25)
 - Portrait phones: with a mixed selection, Map and the objectives flag stand just above the dock instead of over the unit-type chips; chips share the row evenly (seven types fit 390 px, and the PC panel too). A lone train tile (an HQ that trains only Harvesters) is never wider than a normal tile.
 - Defence tower card: landscape tiles drop their picture so tier, cost, sell value and aim mode show (the heading drops its cut-off stat labels, so the sheet stays under the Next-wave card); portrait grows one row for the tower stats ("Air: no" was cut) and Info & stats is a 44 px button beside the name (it was an empty bar).
