@@ -2,8 +2,9 @@
 // as /music/* (the shipped public/music/manifest.json lists no tracks until the real files land).
 // Checks: nothing under /music/ is fetched before the first gesture; the first tap on the start
 // screen fetches and loops the title cue; the next cue is prefetched while idle; Campaign switches
-// cue; a match crossfades to the adaptive score and drops the decoded loop; a result plays its sting
-// once; "Adaptive only" fetches nothing; "Off" silences both; a missing file falls back to the
+// cue; picking a faction plays its stinger over the title; a match plays only that faction's theme
+// (opened by its stinger, one theme file fetched, no other faction's file) and drops the decoded
+// title loop; a victory plays the faction's stinger once; "Adaptive only" fetches nothing; "Off" silences both; a missing file falls back to the
 // adaptive score quietly; the precache list carries no audio; the Music row meets 44 px / 11 px and
 // fits at 1440x900, 390x844 and 320x568 in English and Vietnamese.
 import assert from "node:assert/strict";
@@ -67,28 +68,39 @@ await suite("music", async () => {
     await tap('[data-mode="skirmish"]');
     await page.waitForFunction(() => window.__frontier.music.state().cue === "title", null, { timeout: TIMEOUT.step });
 
-    // A match: the recorded cue fades out while the adaptive score fades in.
+    // Audio 6.5: picking a faction plays its stinger over the title loop (which keeps playing).
+    assert.ok(names(requests).every((name) => !/^(theme|stinger)-/.test(name)), `no faction music before a pick or a match: ${names(requests)}`);
+    await page.selectOption("#player-faction", "veil");
+    await page.waitForFunction(() => window.__frontier.music.state().heard.includes("stinger-veil"), null, { timeout: TIMEOUT.step });
+    s = await state(page);
+    assert.equal(s.cue, "title", "the title loop goes on under the stinger");
+
+    // A match: the title fades out, the Veil stinger opens and the Veil theme loops; the adaptive score stays silent.
     await tap("#start");
     await page.waitForFunction(() => window.__frontier.started, null, { timeout: TIMEOUT.step });
-    await page.waitForFunction(() => { const a = window.__frontier.audio, m = a.recorded.state(); return m.want === null && m.cue === null && a.music.active; }, null, { timeout: 5000 });
-    const mid = await page.evaluate(() => ({ fading: window.__frontier.music.state().fading, score: window.__frontier.audio.scoreGain.gain.value }));
-    await page.waitForFunction(() => window.__frontier.audio.scoreGain.gain.value > 0.99 && window.__frontier.music.state().fading === 0, null, { timeout: 8000 });
-    console.log("crossfade sample:", JSON.stringify(mid));
+    await page.waitForFunction(() => { const m = window.__frontier.music.state(); return m.cue === "theme-veil" && m.playing; }, null, { timeout: TIMEOUT.step });
     s = await state(page);
-    assert.ok(!s.decoded.includes("title") && !s.decoded.includes("campaign"), `no loop decoded in a match (${s.decoded})`);
-    assert.equal(await page.evaluate(() => window.__frontier.audio.plan.adaptive), true, "the adaptive score rules the match");
-    await page.waitForFunction(() => window.__frontier.audio.music.scheduled > 0, null, { timeout: 5000 });
-    // The stings are decoded ahead while the match runs.
-    await page.waitForFunction(() => ["victory", "defeat"].every((c) => window.__frontier.music.state().decoded.includes(c)), null, { timeout: TIMEOUT.step });
+    assert.deepEqual(s.loop, { loop: true, loopStart: 0, loopEnd: 2 }, "the theme loops at the manifest's points");
+    const opened = s.heard.lastIndexOf("stinger-veil"), themed = s.heard.indexOf("theme-veil");
+    assert.ok(opened >= 0 && opened < themed && s.heard.filter((c) => c === "stinger-veil").length === 2, `the stinger opens the match (${s.heard})`);
+    assert.equal(await page.evaluate(() => window.__frontier.audio.plan.adaptive), false, "the faction theme rules the match");
+    await page.waitForFunction(() => window.__frontier.audio.music.active === false && window.__frontier.audio.scoreGain.gain.value < 0.01, null, { timeout: 8000 });
+    await page.waitForFunction(() => window.__frontier.music.state().fading === 0, null, { timeout: 8000 });
+    s = await state(page);
+    assert.ok(!s.decoded.includes("title") && !s.decoded.includes("campaign"), `no menu loop decoded in a match (${s.decoded})`);
+    // The defeat sting is decoded ahead; the shared victory sting is not needed in a faction match.
+    await page.waitForFunction(() => window.__frontier.music.state().decoded.includes("defeat"), null, { timeout: TIMEOUT.step });
+    const faction = names(requests).filter((name) => /^(theme|stinger)-/.test(name));
+    assert.deepEqual([...new Set(faction)].sort(), ["stinger-veil.m4a", "theme-veil.m4a"], `only the player's faction files are fetched: ${faction}`);
+    assert.equal(faction.filter((name) => name.startsWith("theme-")).length, 1, "one theme file per match");
 
-    // Victory: the recorded sting plays once over a fading score.
+    // Victory: the faction's stinger plays once (no loop) and the theme fades.
     await page.evaluate(() => { window.__frontier.sim.result = "victory"; });
-    await page.waitForFunction(() => { const m = window.__frontier.music.state(); return m.cue === "victory" || (m.want === "victory" && m.cue === null); }, null, { timeout: TIMEOUT.step });
+    await page.waitForFunction(() => { const m = window.__frontier.music.state(); return m.want === "stinger-veil" && (m.cue === "stinger-veil" || m.cue === null); }, null, { timeout: TIMEOUT.step });
     s = await state(page);
-    assert.equal(s.want, "victory");
-    if (s.cue) assert.equal(s.loop.loop, false, "the sting does not loop");
-    await page.waitForFunction(() => window.__frontier.audio.music.active === false, null, { timeout: 8000 });
+    if (s.cue) assert.equal(s.loop.loop, false, "the stinger does not loop");
     assert.ok(requests.every((url) => !url.includes("defence")), "the defence cue is not fetched outside Defence");
+    assert.equal(names(requests).filter((name) => /^(theme|stinger)-/.test(name)).length, faction.length, "the victory stinger was already in memory");
     assert.deepEqual(errors, [], "no page errors");
     await page.close();
   }

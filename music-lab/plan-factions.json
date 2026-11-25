@@ -1,0 +1,342 @@
+[
+ {
+  "id": "theme-meridian-s1",
+  "cue": "theme-meridian",
+  "faction": "meridian",
+  "arm": "shift 1",
+  "shift": 1.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "loopwin": [
+   58,
+   66
+  ],
+  "seeds": [
+   2601,
+   2602,
+   2603,
+   2604
+  ],
+  "caption": "hopeful frontier expedition theme, instrumental, plucked acoustic guitar melody, warm french horn, low strings, frame drums with a soft kick on every beat, bright and determined, warm and curious, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "theme-meridian-s2",
+  "cue": "theme-meridian",
+  "faction": "meridian",
+  "arm": "shift 2",
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "loopwin": [
+   58,
+   66
+  ],
+  "seeds": [
+   2601,
+   2602,
+   2603,
+   2604
+  ],
+  "caption": "hopeful frontier expedition theme, instrumental, plucked acoustic guitar melody, warm french horn, low strings, frame drums with a soft kick on every beat, bright and determined, warm and curious, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "theme-ashfall-s1",
+  "cue": "theme-ashfall",
+  "faction": "ashfall",
+  "arm": "shift 1",
+  "shift": 1.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "loopwin": [
+   58,
+   66
+  ],
+  "seeds": [
+   2601,
+   2602,
+   2603,
+   2604
+  ],
+  "caption": "driving industrial frontier march, instrumental, low brass ostinato, staccato cellos, heavy taiko and metal anvil hits on every beat, marching snare, disciplined and relentless, smoky and tense, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "theme-ashfall-s2",
+  "cue": "theme-ashfall",
+  "faction": "ashfall",
+  "arm": "shift 2",
+  "shift": 2.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "loopwin": [
+   58,
+   66
+  ],
+  "seeds": [
+   2601,
+   2602,
+   2603,
+   2604
+  ],
+  "caption": "driving industrial frontier march, instrumental, low brass ostinato, staccato cellos, heavy taiko and metal anvil hits on every beat, marching snare, disciplined and relentless, smoky and tense, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "theme-sunward-s1",
+  "cue": "theme-sunward",
+  "faction": "sunward",
+  "arm": "shift 1",
+  "shift": 1.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "loopwin": [
+   58,
+   66
+  ],
+  "seeds": [
+   2601,
+   2602,
+   2603,
+   2604
+  ],
+  "caption": "proud desert caravan theme, instrumental, plucked oud melody, bowed fiddle, goblet drum and frame drum with a soft kick on every beat, warm low strings, sunlit and proud, rolling and confident, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "theme-sunward-s2",
+  "cue": "theme-sunward",
+  "faction": "sunward",
+  "arm": "shift 2",
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "loopwin": [
+   58,
+   66
+  ],
+  "seeds": [
+   2601,
+   2602,
+   2603,
+   2604
+  ],
+  "caption": "proud desert caravan theme, instrumental, plucked oud melody, bowed fiddle, goblet drum and frame drum with a soft kick on every beat, warm low strings, sunlit and proud, rolling and confident, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "theme-wardens-s1",
+  "cue": "theme-wardens",
+  "faction": "wardens",
+  "arm": "shift 1",
+  "shift": 1.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "loopwin": [
+   58,
+   66
+  ],
+  "seeds": [
+   2601,
+   2602,
+   2603,
+   2604
+  ],
+  "caption": "cold ancient guardian machine theme, instrumental, pulsing low synth arpeggio, deep low strings, glassy bell tones, heavy taiko with a soft kick on every beat, mechanical and watchful, vast and solemn, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "theme-wardens-s2",
+  "cue": "theme-wardens",
+  "faction": "wardens",
+  "arm": "shift 2",
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "loopwin": [
+   58,
+   66
+  ],
+  "seeds": [
+   2601,
+   2602,
+   2603,
+   2604
+  ],
+  "caption": "cold ancient guardian machine theme, instrumental, pulsing low synth arpeggio, deep low strings, glassy bell tones, heavy taiko with a soft kick on every beat, mechanical and watchful, vast and solemn, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "theme-veil-s1",
+  "cue": "theme-veil",
+  "faction": "veil",
+  "arm": "shift 1",
+  "shift": 1.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "loopwin": [
+   58,
+   66
+  ],
+  "seeds": [
+   2601,
+   2602,
+   2603,
+   2604
+  ],
+  "caption": "mysterious hidden scholars theme, instrumental, soft breathy flute melody, harp arpeggios, soft marimba, low string drone, light hand percussion on every beat, quiet and watchful, curious and gentle, sparse with room to breathe, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "theme-veil-s2",
+  "cue": "theme-veil",
+  "faction": "veil",
+  "arm": "shift 2",
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 100,
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "loopwin": [
+   58,
+   66
+  ],
+  "seeds": [
+   2601,
+   2602,
+   2603,
+   2604
+  ],
+  "caption": "mysterious hidden scholars theme, instrumental, soft breathy flute melody, harp arpeggios, soft marimba, low string drone, light hand percussion on every beat, quiet and watchful, curious and gentle, sparse with room to breathe, steady tempo, steady pulse that never drops out, clean warm mix, no vocals"
+ },
+ {
+  "id": "sting-meridian",
+  "cue": "sting-meridian",
+  "faction": "meridian",
+  "arm": "shift 2",
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 20,
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "seeds": [
+   2611,
+   2612,
+   2613,
+   2614,
+   2615,
+   2616
+  ],
+  "caption": "short hopeful arrival fanfare, instrumental, warm french horn fanfare, strummed acoustic guitar, low strings, frame drum roll, bright resolving final chord, hopeful and proud, clean warm mix, no vocals"
+ },
+ {
+  "id": "sting-ashfall",
+  "cue": "sting-ashfall",
+  "faction": "ashfall",
+  "arm": "shift 2",
+  "shift": 2.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 20,
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "seeds": [
+   2611,
+   2612,
+   2613,
+   2614,
+   2615,
+   2616
+  ],
+  "caption": "short heavy arrival fanfare, instrumental, low brass blast, heavy taiko hits, metal anvil strike, staccato cellos, strong low final chord, stern and proud, clean warm mix, no vocals"
+ },
+ {
+  "id": "sting-sunward",
+  "cue": "sting-sunward",
+  "faction": "sunward",
+  "arm": "shift 2",
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 20,
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "seeds": [
+   2611,
+   2612,
+   2613,
+   2614,
+   2615,
+   2616
+  ],
+  "caption": "short proud desert arrival flourish, instrumental, plucked oud flourish, bowed fiddle, goblet drum roll, warm low strings, bright resolving final chord, proud and warm, clean warm mix, no vocals"
+ },
+ {
+  "id": "sting-wardens",
+  "cue": "sting-wardens",
+  "faction": "wardens",
+  "arm": "shift 2",
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 20,
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "seeds": [
+   2611,
+   2612,
+   2613,
+   2614,
+   2615,
+   2616
+  ],
+  "caption": "short cold machine arrival sting, instrumental, deep synth swell, glassy bell tones, heavy taiko hit, low strings, solemn resolving final chord, vast and calm, clean warm mix, no vocals"
+ },
+ {
+  "id": "sting-veil",
+  "cue": "sting-veil",
+  "faction": "veil",
+  "arm": "shift 2",
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 20,
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "seeds": [
+   2611,
+   2612,
+   2613,
+   2614,
+   2615,
+   2616
+  ],
+  "caption": "short mysterious arrival flourish, instrumental, harp glissando, soft breathy flute, soft marimba, low string swell, gentle resolving final chord, quiet and wondrous, clean warm mix, no vocals"
+ }
+]

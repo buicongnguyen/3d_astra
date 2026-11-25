@@ -66,7 +66,7 @@ test("prefetch: only the next likely cue, and only under recorded music", () => 
   assert.deepEqual(musicPrefetch("menu", "off"), []);
   for (const screen of ["menu", "campaign", "briefing", "match", "defence-calm", "victory", "defeat"])
     for (const cue of musicPrefetch(screen, "recorded")) assert.ok(RECORDED_CUES.includes(cue));
-  assert.deepEqual([...STINGS].sort(), ["defeat", "victory"]);
+  assert.deepEqual([...STINGS].filter((cue) => !cue.startsWith("stinger-")).sort(), ["defeat", "victory"]);
 });
 
 test("loop points: exact when valid, the whole buffer otherwise", () => {
@@ -99,7 +99,7 @@ test("Music setting: default, migration and bus level", () => {
   assert.equal(busLevels({ ...defaults(), music: "adaptive" }).music, busLevels(defaults()).music);
 });
 
-test("public/music stays within 2 MB (files that are present)", () => {
+test("public/music: the shared set stays within 1.5 MB and the faction music within 2.5 MB (files that are present)", () => {
   const dir = new URL("../public/music/", import.meta.url);
   assert.ok(existsSync(new URL("manifest.json", dir)), "public/music/manifest.json ships");
   const manifest = JSON.parse(readFileSync(new URL("manifest.json", dir), "utf8"));
@@ -112,8 +112,11 @@ test("public/music stays within 2 MB (files that are present)", () => {
     if (Number.isFinite(track.bytes)) assert.equal(statSync(file).size, track.bytes, `${cue}: manifest bytes match the file (they version its URL)`);
     if (!STINGS.has(cue) && Number.isFinite(track.loopEnd)) assert.ok(track.loopEnd > (track.loopStart || 0), `${cue}: loop points`);
   }
-  const total = readdirSync(dir).reduce((sum, name) => sum + statSync(new URL(name, dir)).size, 0);
-  assert.ok(total <= 2 * 1024 * 1024, `public/music is ${total} bytes (budget 2 MB)`);
+  const faction = (name) => /^(theme|stinger)-/.test(name);
+  const size = (names) => names.reduce((sum, name) => sum + statSync(new URL(name, dir)).size, 0);
+  const shared = size(readdirSync(dir).filter((name) => !faction(name))), factions = size(readdirSync(dir).filter(faction));
+  assert.ok(shared <= 1.5 * 1024 * 1024, `shared music is ${shared} bytes (budget 1.5 MB)`);
+  assert.ok(factions <= 2.5 * 1000 * 1000, `faction music is ${factions} bytes (budget 2.5 MB)`);
 });
 
 test("test fixtures stay tiny and match their manifest", () => {
@@ -122,5 +125,5 @@ test("test fixtures stay tiny and match their manifest", () => {
   assert.deepEqual(Object.keys(manifest.tracks).sort(), [...RECORDED_CUES].sort());
   let total = 0;
   for (const track of Object.values(manifest.tracks)) { const size = statSync(new URL(track.file, dir)).size; assert.equal(size, track.bytes); total += size; }
-  assert.ok(total < 64 * 1024, `fixtures ${total} bytes`);
+  assert.ok(total < 128 * 1024, `fixtures ${total} bytes`);
 });

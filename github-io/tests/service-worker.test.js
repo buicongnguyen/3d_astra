@@ -76,6 +76,13 @@ test("a recorded track is fetched once, stored on a whole (200) reply and then s
   assert.equal(w.calls.length, 1, "the second play does not touch the network");
 });
 
+test("a faction theme (Audio 6.5) follows the same rule: one network fetch, then the cache", async () => {
+  const w = boot(source);
+  for (let i = 0; i < 3; i++) await w.fire("fetch", { request: new Request(SCOPE + "music/theme-veil.m4a?v=480000") });
+  assert.equal(w.calls.length, 1, "fetched once, cached on that first fetch");
+  assert.ok(await w.store("fc-music").match(SCOPE + "music/theme-veil.m4a?v=480000"), "stored in fc-music");
+});
+
 test("a partial (206) track reply is not stored", async () => {
   const w = boot(source, { network: async () => new Response("part", { status: 206 }) });
   await w.fire("fetch", { request: new Request(SCOPE + "music/song.m4a") });

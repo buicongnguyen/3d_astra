@@ -125,7 +125,7 @@ def best_loop(y, bt, cue, dur, bpm, bpm_prior, bpm_param):
     real musical period over a lucky match). Best (L, start); start snapped to the nearest tracked beat if that costs
     < 0.01. Bars = L / (4 beats) at the measured tempo (and at the bpm-prior tempo) - whole bars expected."""
     from scipy.ndimage import uniform_filter1d
-    lo, hi = LOOPWIN[cue]
+    lo, hi = LOOPWIN[cue] if isinstance(cue, str) else cue
     F = feats(y)
     chroma, mel, rms = F
     C = chroma / (np.linalg.norm(chroma, axis=0, keepdims=True) + 1e-9)
@@ -142,7 +142,7 @@ def best_loop(y, bt, cue, dur, bpm, bpm_prior, bpm_param):
         if not b:
             continue
         bar = 4 * 60.0 / b
-        for N in range(8, 41, 4):
+        for N in range(8, 41, int(os.environ.get("BAR_STEP", "4"))):  # BAR_STEP=2 allows 18/22/26-bar loops
             L0 = N * bar
             if lo <= L0 <= hi:
                 for L in range(fr(L0 * 0.9965), fr(L0 * 1.0035) + 1):  # +-0.35 % = under a quarter beat for 16+ bars
@@ -180,7 +180,7 @@ def best_loop(y, bt, cue, dur, bpm, bpm_prior, bpm_param):
     return out
 
 
-def sting_phrase(y, oenv, bt, key):
+def sting_phrase(y, oenv, bt, key, span=(5.0, 7.4)):
     rms = librosa.feature.rms(y=y, hop_length=HOP)[0]
     db = 20 * np.log10(rms + 1e-9)
     t = librosa.frames_to_time(np.arange(len(db)), sr=SR, hop_length=HOP)
@@ -193,7 +193,7 @@ def sting_phrase(y, oenv, bt, key):
     on = librosa.onset.onset_detect(onset_envelope=oenv, sr=SR, hop_length=HOP, units="time")
     for st in on:
         L = end_t - st
-        if not (5.0 <= L <= 7.4):  # + up to 0.6 s ring-out in finalize = 8 s max
+        if not (span[0] <= L <= span[1]):  # + up to 0.6 s ring-out in finalize (5-8 s stings; faction stingers 3.4-5 s)
             continue
         f = librosa.time_to_frames(st, sr=SR, hop_length=HOP)
         strength = oenv[max(0, f - 2):f + 3].max() / (oenv.mean() + 1e-9)
@@ -241,13 +241,16 @@ def main():
         w3 = int(3 * SR)
         st = [20 * np.log10(np.sqrt(np.mean(y[i:i + w3] ** 2)) + 1e-9) for i in range(0, len(y) - w3, SR)]
         r["level_spread_db"] = round(float(np.percentile(st, 95) - np.percentile(st, 10)), 2)
-        if e["cue"] in LOOPWIN:
-            r["loop"] = best_loop(y, bt, e["cue"], dur, bm.get("bpm"), bm.get("bpm_prior"), e["bpm"])
+        win = e.get("loopwin") or LOOPWIN.get(e["cue"])
+        if win and os.environ.get("LOOPWIN"):  # size budget override, e.g. LOOPWIN=52,56.5 (faction themes, 2026-11-26)
+            win = [float(v) for v in os.environ["LOOPWIN"].split(",")]
+        if win:
+            r["loop"] = best_loop(y, bt, tuple(win), dur, bm.get("bpm"), bm.get("bpm_prior"), e["bpm"])
             if r["loop"]:
                 lp = r["loop"]
                 r["loop"].update({k + "_loop": v for k, v in dropouts(y[int(lp["start"] * SR):int(lp["end"] * SR)], 0.0, 0.0).items()})
         else:
-            r["sting"], r["end_t"] = sting_phrase(y, oenv, bt, e["key"])
+            r["sting"], r["end_t"] = sting_phrase(y, oenv, bt, e["key"], tuple(e.get("sting_len") or (5.0, 7.4)))
         out[k] = r
         print(k, json.dumps({kk: r.get(kk) for kk in ("bpm", "bpm_prior", "grid", "pulse", "lufs", "harsh", "dropouts")}, default=float), json.dumps(r.get("loop") or r.get("sting"), default=float), flush=True)
         json.dump(out, open(OUTJ, "w", encoding="utf-8"), indent=1, default=float)

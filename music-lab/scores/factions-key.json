@@ -1,0 +1,242 @@
+{
+ "ME-TA": {
+  "take": "theme-meridian-s2:2603",
+  "cue": "theme-meridian",
+  "arm": "shift 2",
+  "seed": 2603,
+  "shift": 2.0,
+  "picked": false
+ },
+ "ME-TB": {
+  "take": "theme-meridian-s1:2601",
+  "cue": "theme-meridian",
+  "arm": "shift 1",
+  "seed": 2601,
+  "shift": 1.0,
+  "picked": false
+ },
+ "ME-TC": {
+  "take": "theme-meridian-s1:2603",
+  "cue": "theme-meridian",
+  "arm": "shift 1",
+  "seed": 2603,
+  "shift": 1.0,
+  "picked": true
+ },
+ "ME-SA": {
+  "take": "sting-meridian:2612",
+  "cue": "sting-meridian",
+  "arm": "shift 2",
+  "seed": 2612,
+  "shift": 2.0,
+  "picked": false
+ },
+ "ME-SB": {
+  "take": "sting-meridian:2613",
+  "cue": "sting-meridian",
+  "arm": "shift 2",
+  "seed": 2613,
+  "shift": 2.0,
+  "picked": false
+ },
+ "ME-SC": {
+  "take": "sting-meridian:2614",
+  "cue": "sting-meridian",
+  "arm": "shift 2",
+  "seed": 2614,
+  "shift": 2.0,
+  "picked": true
+ },
+ "AS-TA": {
+  "take": "theme-ashfall-s1:2604",
+  "cue": "theme-ashfall",
+  "arm": "shift 1",
+  "seed": 2604,
+  "shift": 1.0,
+  "picked": false
+ },
+ "AS-TB": {
+  "take": "theme-ashfall-s2:2602",
+  "cue": "theme-ashfall",
+  "arm": "shift 2",
+  "seed": 2602,
+  "shift": 2.0,
+  "picked": false
+ },
+ "AS-TC": {
+  "take": "theme-ashfall-s1:2602",
+  "cue": "theme-ashfall",
+  "arm": "shift 1",
+  "seed": 2602,
+  "shift": 1.0,
+  "picked": true
+ },
+ "AS-SA": {
+  "take": "sting-ashfall:2614",
+  "cue": "sting-ashfall",
+  "arm": "shift 2",
+  "seed": 2614,
+  "shift": 2.0,
+  "picked": false
+ },
+ "AS-SB": {
+  "take": "sting-ashfall:2613",
+  "cue": "sting-ashfall",
+  "arm": "shift 2",
+  "seed": 2613,
+  "shift": 2.0,
+  "picked": false
+ },
+ "AS-SC": {
+  "take": "sting-ashfall:2612",
+  "cue": "sting-ashfall",
+  "arm": "shift 2",
+  "seed": 2612,
+  "shift": 2.0,
+  "picked": true
+ },
+ "SU-TA": {
+  "take": "theme-sunward-s1:2601",
+  "cue": "theme-sunward",
+  "arm": "shift 1",
+  "seed": 2601,
+  "shift": 1.0,
+  "picked": false
+ },
+ "SU-TB": {
+  "take": "theme-sunward-s2:2602",
+  "cue": "theme-sunward",
+  "arm": "shift 2",
+  "seed": 2602,
+  "shift": 2.0,
+  "picked": false
+ },
+ "SU-TC": {
+  "take": "theme-sunward-s1:2603",
+  "cue": "theme-sunward",
+  "arm": "shift 1",
+  "seed": 2603,
+  "shift": 1.0,
+  "picked": true
+ },
+ "SU-SA": {
+  "take": "sting-sunward:2615",
+  "cue": "sting-sunward",
+  "arm": "shift 2",
+  "seed": 2615,
+  "shift": 2.0,
+  "picked": false
+ },
+ "SU-SB": {
+  "take": "sting-sunward:2611",
+  "cue": "sting-sunward",
+  "arm": "shift 2",
+  "seed": 2611,
+  "shift": 2.0,
+  "picked": false
+ },
+ "SU-SC": {
+  "take": "sting-sunward:2612",
+  "cue": "sting-sunward",
+  "arm": "shift 2",
+  "seed": 2612,
+  "shift": 2.0,
+  "picked": true
+ },
+ "WA-TA": {
+  "take": "theme-wardens-s1:2602",
+  "cue": "theme-wardens",
+  "arm": "shift 1",
+  "seed": 2602,
+  "shift": 1.0,
+  "picked": false
+ },
+ "WA-TB": {
+  "take": "theme-wardens-s2:2603",
+  "cue": "theme-wardens",
+  "arm": "shift 2",
+  "seed": 2603,
+  "shift": 2.0,
+  "picked": false
+ },
+ "WA-TC": {
+  "take": "theme-wardens-s2:2601",
+  "cue": "theme-wardens",
+  "arm": "shift 2",
+  "seed": 2601,
+  "shift": 2.0,
+  "picked": true
+ },
+ "WA-SA": {
+  "take": "sting-wardens:2614",
+  "cue": "sting-wardens",
+  "arm": "shift 2",
+  "seed": 2614,
+  "shift": 2.0,
+  "picked": false
+ },
+ "WA-SB": {
+  "take": "sting-wardens:2616",
+  "cue": "sting-wardens",
+  "arm": "shift 2",
+  "seed": 2616,
+  "shift": 2.0,
+  "picked": false
+ },
+ "WA-SC": {
+  "take": "sting-wardens:2612",
+  "cue": "sting-wardens",
+  "arm": "shift 2",
+  "seed": 2612,
+  "shift": 2.0,
+  "picked": true
+ },
+ "VE-TA": {
+  "take": "theme-veil-s2:2602",
+  "cue": "theme-veil",
+  "arm": "shift 2",
+  "seed": 2602,
+  "shift": 2.0,
+  "picked": false
+ },
+ "VE-TB": {
+  "take": "theme-veil-s2:2603",
+  "cue": "theme-veil",
+  "arm": "shift 2",
+  "seed": 2603,
+  "shift": 2.0,
+  "picked": false
+ },
+ "VE-TC": {
+  "take": "theme-veil-s2:2601",
+  "cue": "theme-veil",
+  "arm": "shift 2",
+  "seed": 2601,
+  "shift": 2.0,
+  "picked": true
+ },
+ "VE-SA": {
+  "take": "sting-veil:2612",
+  "cue": "sting-veil",
+  "arm": "shift 2",
+  "seed": 2612,
+  "shift": 2.0,
+  "picked": false
+ },
+ "VE-SB": {
+  "take": "sting-veil:2613",
+  "cue": "sting-veil",
+  "arm": "shift 2",
+  "seed": 2613,
+  "shift": 2.0,
+  "picked": false
+ },
+ "VE-SC": {
+  "take": "sting-veil:2611",
+  "cue": "sting-veil",
+  "arm": "shift 2",
+  "seed": 2611,
+  "shift": 2.0,
+  "picked": true
+ }
+}

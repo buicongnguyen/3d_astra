@@ -77,6 +77,69 @@ defeat.m4a
     horn, soft piano, quiet and reflective, gentle not sad, ends on a soft warm held chord, clean
     warm mix, no vocals
 
+
+Faction music (added 2026-11-26, Audio 6.5)
+--------------------------------------------
+Ten more original instrumental cues: one battle theme loop and one short stinger per playable
+faction (theme-<faction>.m4a, stinger-<faction>.m4a). Generated locally on 2026-11-26 on the owner's
+RTX 4080 SUPER with ACE-Step 1.5 (XL turbo DiT "acestep-v15-xl-turbo", CPU offload, + 5 Hz LM
+"acestep-5Hz-lm-1.7B", same code repository and MIT licence as above), text-to-music only,
+chain-of-thought rewriting off. Cut to whole bars (themes, 18-26 bars, 54-56 s) or to the final
+3-4.5 s phrase (stingers), mastered and encoded to AAC 64 kbps by music-lab/tools (finalize.py).
+No vocals, no reference audio, no artist/song/album names in any prompt. The same licence basis
+applies: the model card's MIT licence and its statement that the generated music may be used
+commercially; disclosure: this music is AI-generated (ACE-Step 1.5).
+
+theme-meridian.m4a
+  seed 2603, shift 1.0, requested 96 bpm, key D major, 100 s take, 8 steps, acestep-v15-xl-turbo, instrumental=True
+  sections: [Intro] [Main theme] [Interlude] [Main theme - full] [Outro]
+  caption: hopeful frontier expedition theme, instrumental, plucked acoustic guitar melody, warm french horn, low strings, frame drums with a soft kick on every beat, bright and determined, warm and curious, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals
+
+theme-ashfall.m4a
+  seed 2602, shift 1.0, requested 112 bpm, key C minor, 100 s take, 8 steps, acestep-v15-xl-turbo, instrumental=True
+  sections: [Intro] [Main theme] [Interlude] [Main theme - full] [Outro]
+  caption: driving industrial frontier march, instrumental, low brass ostinato, staccato cellos, heavy taiko and metal anvil hits on every beat, marching snare, disciplined and relentless, smoky and tense, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals
+
+theme-sunward.m4a
+  seed 2603, shift 1.0, requested 96 bpm, key E minor, 100 s take, 8 steps, acestep-v15-xl-turbo, instrumental=True
+  sections: [Intro] [Main theme] [Interlude] [Main theme - full] [Outro]
+  caption: proud desert caravan theme, instrumental, plucked oud melody, bowed fiddle, goblet drum and frame drum with a soft kick on every beat, warm low strings, sunlit and proud, rolling and confident, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals
+
+theme-wardens.m4a
+  seed 2601, shift 2.0, requested 80 bpm, key A minor, 100 s take, 8 steps, acestep-v15-xl-turbo, instrumental=True
+  sections: [Intro] [Main theme] [Interlude] [Main theme - full] [Outro]
+  caption: cold ancient guardian machine theme, instrumental, pulsing low synth arpeggio, deep low strings, glassy bell tones, heavy taiko with a soft kick on every beat, mechanical and watchful, vast and solemn, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals
+
+theme-veil.m4a
+  seed 2601, shift 2.0, requested 80 bpm, key B minor, 100 s take, 8 steps, acestep-v15-xl-turbo, instrumental=True
+  sections: [Intro] [Main theme] [Interlude] [Main theme - full] [Outro]
+  caption: mysterious hidden scholars theme, instrumental, soft breathy flute melody, harp arpeggios, soft marimba, low string drone, light hand percussion on every beat, quiet and watchful, curious and gentle, sparse with room to breathe, steady tempo, steady pulse that never drops out, clean warm mix, no vocals
+
+stinger-meridian.m4a
+  seed 2614, shift 2.0, requested 96 bpm, key D major, 20 s take, 8 steps, acestep-v15-xl-turbo, instrumental=True
+  sections: [Intro] [Fanfare] [Outro - final chord]
+  caption: short hopeful arrival fanfare, instrumental, warm french horn fanfare, strummed acoustic guitar, low strings, frame drum roll, bright resolving final chord, hopeful and proud, clean warm mix, no vocals
+
+stinger-ashfall.m4a
+  seed 2612, shift 2.0, requested 112 bpm, key C minor, 20 s take, 8 steps, acestep-v15-xl-turbo, instrumental=True
+  sections: [Intro] [Fanfare] [Outro - final chord]
+  caption: short heavy arrival fanfare, instrumental, low brass blast, heavy taiko hits, metal anvil strike, staccato cellos, strong low final chord, stern and proud, clean warm mix, no vocals
+
+stinger-sunward.m4a
+  seed 2612, shift 2.0, requested 96 bpm, key E minor, 20 s take, 8 steps, acestep-v15-xl-turbo, instrumental=True
+  sections: [Intro] [Fanfare] [Outro - final chord]
+  caption: short proud desert arrival flourish, instrumental, plucked oud flourish, bowed fiddle, goblet drum roll, warm low strings, bright resolving final chord, proud and warm, clean warm mix, no vocals
+
+stinger-wardens.m4a
+  seed 2612, shift 2.0, requested 80 bpm, key A minor, 20 s take, 8 steps, acestep-v15-xl-turbo, instrumental=True
+  sections: [Intro] [Fanfare] [Outro - final chord]
+  caption: short cold machine arrival sting, instrumental, deep synth swell, glassy bell tones, heavy taiko hit, low strings, solemn resolving final chord, vast and calm, clean warm mix, no vocals
+
+stinger-veil.m4a
+  seed 2611, shift 2.0, requested 80 bpm, key B minor, 20 s take, 8 steps, acestep-v15-xl-turbo, instrumental=True
+  sections: [Intro] [Fanfare] [Outro - final chord]
+  caption: short mysterious arrival flourish, instrumental, harp glissando, soft breathy flute, soft marimba, low string swell, gentle resolving final chord, quiet and wondrous, clean warm mix, no vocals
+
 MIT License (ACE-Step 1.5, verbatim)
 ------------------------------------
 MIT License

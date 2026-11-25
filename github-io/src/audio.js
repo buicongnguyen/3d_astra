@@ -3,7 +3,7 @@
 // main.js calls create() after the first user gesture, then event()/update() as the match runs.
 // The decisions (caps, rate limits, ducking, intensity -> layers, distance gain) are pure functions in
 // audio-logic.js with their numbers in audio-mix.js; this file only feeds them and applies the result.
-import { CombatIntensity, CombatMix, ContactWatch, LoudDuck, RadioGate, busLevels, closeness, combatFloor, crossfade, dbToGain, engineMix, explosionSize, intensityWeight, musicPlan, musicPrefetch, musicScreen, pickMood, radioKind, screenMix, soundFor, spatialMix } from "./audio-logic.js";
+import { CombatIntensity, CombatMix, ContactWatch, LoudDuck, RadioGate, busLevels, closeness, combatFloor, crossfade, dbToGain, engineMix, explosionSize, intensityWeight, musicFaction, musicPlan, musicPrefetch, musicScreen, pickMood, stingerCue, radioKind, screenMix, soundFor, spatialMix } from "./audio-logic.js";
 import { MIX } from "./audio-mix.js";
 import { Music, createAudioBus, musicMood } from "./music.js";
 import { RecordedMusic } from "./music-recorded.js";
@@ -158,20 +158,29 @@ export class AudioDirector {
   // Recorded music or the adaptive score (musicPlan). `screen` comes from musicScreen(); the score
   // fades out over the crossfade while a recorded cue fades in, and back. Returns whether the
   // score should be scheduling (it keeps going until its fade-out ends).
-  updatePlan(dt, { screen, setting, inBattle, hidden }) {
-    const now = this.context.currentTime, plan = musicPlan({ screen, setting, loaded: (cue) => this.recorded.can(cue), inBattle });
-    this.plan = plan;
+  // `faction` = the player's faction when the match plays faction music (Audio 6.5), else null.
+  updatePlan(dt, { screen, setting, inBattle, hidden, faction = null }) {
+    const now = this.context.currentTime, plan = musicPlan({ screen, setting, loaded: (cue) => this.recorded.can(cue), inBattle, faction });
+    this.plan = plan; this.musicSetting = setting;
     if (setting !== "recorded") this.recorded.release();
     // Muted or music at zero: no recorded cue (nothing is fetched); it starts again when audible.
-    else this.recorded.play(this.levels.music > 0 ? plan.cue : null);
+    else this.recorded.play(this.levels.music > 0 ? plan.cue : null, plan.intro || null);
     if (plan.adaptive !== this.scoreOn) {
       const g = this.scoreGain.gain, fade = this.scoreOn == null ? 0.05 : MIX.recorded.crossfade;
       g.cancelScheduledValues(now); g.setValueAtTime(g.value, now); g.linearRampToValueAtTime(plan.adaptive ? 1 : 0, now + fade);
       this.scoreOn = plan.adaptive; this.scoreUntil = now + fade;
     }
     // The next likely cue is fetched while idle, a couple of seconds after things settle.
-    if (setting === "recorded" && !hidden && (this.prefetchClock -= dt) <= 0) { this.prefetchClock = 2; this.recorded.prefetch(musicPrefetch(screen, setting)); }
+    if (setting === "recorded" && !hidden && (this.prefetchClock -= dt) <= 0) { this.prefetchClock = 2; this.recorded.prefetch(musicPrefetch(screen, setting, faction)); }
     return plan.adaptive || now < this.scoreUntil;
+  }
+  // The faction's stinger when it is picked on the start screen (Audio 6.5): only under "Recorded" and
+  // while the music is audible. Returns whether it was asked for.
+  factionFlourish(faction) {
+    const own = musicFaction(faction);
+    if (!own || this.musicSetting !== "recorded" || !(this.levels.music > 0)) return false;
+    this.recorded.flourish(stingerCue(own));
+    return true;
   }
   // Called every frame; the scans are throttled (enemies once a second, engines four times).
   // `screen` is the music screen (musicScreen in audio-logic.js); without it a started match counts as "match".
@@ -211,7 +220,9 @@ export class AudioDirector {
     const mission = started ? musicMood() : "calm";
     const mood = pickMood({ result: sim.result, now: sim.time, lastCombatAt: this.lastCombatAt, incomingAt: this.incomingAt,
       enemyDistance: started ? this.enemyDistance : Infinity, missionMood: mission });
-    const score = this.updatePlan(dt, { screen: screen || musicScreen({ started, result: sim.result }), setting: settings?.music || "recorded", inBattle, hidden });
+    // Faction music in skirmish, campaign and chronicle matches; Defence keeps its own tracks.
+    const faction = started && !sim.defence ? musicFaction(sim.factions?.[0] || "meridian") : null;
+    const score = this.updatePlan(dt, { screen: screen || musicScreen({ started, result: sim.result }), setting: settings?.music || "recorded", inBattle, hidden, faction });
     // Scheduling runs only while audible: not muted, not hidden, not paused (a finished match keeps its sting),
     // and while the score is wanted or still fading out under a recorded cue.
     const on = score && this.levels.music > 0 && !hidden && !(started && paused && !sim.result);

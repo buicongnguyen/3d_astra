@@ -35,7 +35,10 @@ export const MIX = {identicalVoices:3,windowSeconds:.08,combatWindow:1,combatThr
   air: { level: 0.07 },
   // Recorded music (music-recorded.js): crossfade seconds between cues and to/from the adaptive score,
   // the loudness every track is trimmed to (from its manifest `lufs`, at most `maxTrimDb` either way),
-  // and `level`, which offsets the music bus make-up gain the synthesised score needs.
-  recorded: { crossfade: 1.2, stingFade: 0.05, targetLufs: -16, maxTrimDb: 9, level: 0.6 },
+  // and `level`, which offsets the music bus make-up gain the synthesised score needs. Faction stingers
+  // (Audio 6.5): the theme fades in `introOverlap` s before the opening stinger ends, a loop dips by
+  // `flourishDuckDb` under a stinger, and a stinger decoded more than `flourishLate` s after it was asked
+  // for is skipped (its moment has passed).
+  recorded: { crossfade: 1.2, stingFade: 0.05, targetLufs: -16, maxTrimDb: 9, level: 0.6, introOverlap: 0.4, flourishDuckDb: -9, flourishLate: 3 },
 };
 export const SOUND_TESTS = {trained:'Unit ready',research:'Research done','boom:building':'Building lost',objective:'Objective done','objective-failed':'Objective failed',win:'Mission won',lose:'Mission lost'};

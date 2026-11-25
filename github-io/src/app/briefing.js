@@ -243,6 +243,8 @@ export function setupBriefing(S, A) {
       S.settings.playerFaction = $("player-faction").value;
       saveSettings(S.settings);
       previewBattle();
+      // Audio 6.5: the faction's stinger answers the pick (under "Recorded", once audio has started).
+      S.audio?.factionFlourish?.(S.settings.playerFaction);
     };
 
     $("briefing").querySelector(".mode-switch").addEventListener("click", (event) => {
