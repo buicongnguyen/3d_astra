@@ -34,7 +34,8 @@ export function defaults(coarse = false) {
     musicVolume: 0.6,
     sfxVolume: 0.8,
     muted: false,
-    // Music: recorded tracks on menus and briefings plus the adaptive score in matches ("recorded"),
+    // Music: recorded tracks on menus and briefings and the player's faction theme in matches, with the
+    // adaptive score in Defence waves ("recorded"),
     // the adaptive score only ("adaptive", downloads no music), or none ("off").
     music: "recorded",
     waterMotion: true,

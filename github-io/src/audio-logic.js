@@ -306,9 +306,16 @@ export function busLevels(settings) {
 // The Music setting: recorded tracks where they fit plus the adaptive score in matches, the
 // adaptive score only, or no music at all.
 export const MUSIC_SETTINGS = ["recorded", "adaptive", "off"];
+// Faction music (Audio 6.5): every playable faction has a battle theme (a loop) and a 3-5 s stinger
+// (public/music/theme-ID.m4a and stinger-ID.m4a). Only the player's own faction's files are fetched.
+export const MUSIC_FACTIONS = ["meridian", "ashfall", "sunward", "wardens", "veil"];
+export const themeCue = (faction) => "theme-" + faction;
+export const stingerCue = (faction) => "stinger-" + faction;
+// The faction whose music a match plays, or null (unknown faction, or no faction music for this mode).
+export const musicFaction = (faction) => (MUSIC_FACTIONS.includes(faction) ? faction : null);
 // Recorded cues (public/music/manifest.json keys). The stings play once; the others loop.
-export const RECORDED_CUES = ["title", "campaign", "defence", "victory", "defeat"];
-export const STINGS = new Set(["victory", "defeat"]);
+export const RECORDED_CUES = ["title", "campaign", "defence", "victory", "defeat", ...MUSIC_FACTIONS.flatMap((f) => [themeCue(f), stingerCue(f)])];
+export const STINGS = new Set(["victory", "defeat", ...MUSIC_FACTIONS.map(stingerCue)]);
 // Music screens: menu (start screen: Training, Skirmish), campaign (the campaign list or map),
 // briefing (a mission briefing), match, defence-calm (Frontier Defence between waves), victory and defeat.
 const SCREEN_CUE = { menu: "title", title: "title", campaign: "campaign", briefing: "campaign", "defence-calm": "defence", victory: "victory", defeat: "defeat" };
@@ -320,21 +327,34 @@ export function musicScreen({ started = false, result = null, menuView = "skirmi
 }
 
 // What plays: `cue` is the recorded track (null = none) and `adaptive` whether the synthesised score
-// sounds. The adaptive score rules in battle; recorded music plays on menus, briefings, the campaign
-// map, Defence between waves and the result stings, when the setting allows it and the track can
-// play. `loaded(cue)` (or a Set / array of cues) = listed in the manifest and not failed; a cue that
-// cannot play falls back to the adaptive score. `inBattle` = a Defence wave is running.
-export function musicPlan({ screen = "menu", setting = "recorded", loaded = null, inBattle = false } = {}) {
+// sounds. Recorded music plays on menus, briefings, the campaign map, Defence between waves and the
+// result stings, when the setting allows it and the track can play. `loaded(cue)` (or a Set / array of
+// cues) = listed in the manifest and not failed; a cue that cannot play falls back to the adaptive
+// score. `inBattle` = a Defence wave is running.
+// `faction` (Audio 6.5) = the player's faction in a skirmish, campaign or chronicle match (null in
+// Defence and on menus): under "Recorded" the match plays that faction's theme, opened by its stinger
+// (`intro`), and a victory plays the stinger instead of the shared victory sting. Without a faction,
+// or when its theme cannot play, the adaptive score rules the match as before.
+export function musicPlan({ screen = "menu", setting = "recorded", loaded = null, inBattle = false, faction = null } = {}) {
   if (setting === "off") return { cue: null, adaptive: false };
-  const cue = screen === "defence-calm" && inBattle ? null : SCREEN_CUE[screen] || null;
   const can = typeof loaded === "function" ? loaded : (c) => !!(loaded?.has?.(c) || (Array.isArray(loaded) && loaded.includes(c)));
+  const own = setting === "recorded" ? musicFaction(faction) : null;
+  if (own && screen === "match" && !inBattle && can(themeCue(own))) return { cue: themeCue(own), adaptive: false, intro: can(stingerCue(own)) ? stingerCue(own) : null };
+  if (own && screen === "victory" && can(stingerCue(own))) return { cue: stingerCue(own), adaptive: false, intro: null };
+  const cue = screen === "defence-calm" && inBattle ? null : SCREEN_CUE[screen] || null;
   if (setting === "recorded" && cue && can(cue)) return { cue, adaptive: false };
   return { cue: null, adaptive: true };
 }
 
 // The cue worth fetching next while idle (encoded bytes only; stings are small and get decoded too).
+// A faction match already holds its stinger (it opened the match), so only the defeat sting is left.
 export const MUSIC_NEXT = { menu: ["campaign"], title: ["campaign"], campaign: ["victory", "defeat"], briefing: ["victory", "defeat"], match: ["victory", "defeat"], "defence-calm": ["victory", "defeat"], victory: ["title"], defeat: ["title"] };
-export const musicPrefetch = (screen, setting) => (setting === "recorded" ? MUSIC_NEXT[screen] || [] : []);
+export function musicPrefetch(screen, setting, faction = null) {
+  if (setting !== "recorded") return [];
+  const own = musicFaction(faction);
+  if (own && screen === "match") return [stingerCue(own), "defeat"];
+  return MUSIC_NEXT[screen] || [];
+}
 
 // Gain that brings a track to the target loudness (manifest `lufs`), times the recorded level.
 export function recordedTrim(lufs, o = MIX.recorded) {

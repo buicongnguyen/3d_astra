@@ -95,6 +95,10 @@ await suite("offline", async () => {
     }, cueTrack.source);
     const titleUrl = await page.evaluate(async (source) => (await (await caches.open("fc-music")).keys()).map((r) => r.url).find((u) => new RegExp(source).test(u)), cueTrack.source);
     const titleBytes = Number(titleUrl.match(/v=(\d+)$/)[1]);
+    // Audio 6.5: a faction theme is fetched when a match starts and stored the same way on that first fetch.
+    const themeUrl = `${origin}${prefix}music/theme-ashfall.m4a?v=${JSON.parse(readFileSync(path.join(root, "music", "manifest.json"), "utf8")).tracks["theme-ashfall"].bytes}`;
+    const themeBytes = await page.evaluate(async (url) => (await (await fetch(url)).arrayBuffer()).byteLength, themeUrl);
+    await poll(page, async (url) => !!(await (await caches.open("fc-music")).match(url)), themeUrl);
 
     const extra = `${origin}${prefix}models/faction-cache-test.glb`;
     assert.equal(await page.evaluate(async url => {
@@ -136,6 +140,7 @@ await suite("offline", async () => {
     await context.setOffline(true);
     assert.equal(await page.evaluate(async url => (await (await fetch(url)).arrayBuffer()).byteLength,extra),lateBytes,'a late faction model is served offline after one fetch');
     assert.equal(await page.evaluate(async (url) => (await (await fetch(url)).arrayBuffer()).byteLength, titleUrl), titleBytes, "a played track is served offline");
+    assert.equal(await page.evaluate(async (url) => (await (await fetch(url)).arrayBuffer()).byteLength, themeUrl), themeBytes, "a fetched faction theme is served offline");
     assert.equal(await page.evaluate(async (url) => (await (await fetch(url)).json()).tracks.title.file, `${origin}${prefix}music/manifest.json`), "title.m4a", "the music manifest is served offline");
     await page.reload();
     await page.waitForSelector("#start", { state: "visible", timeout: TIMEOUT.step });

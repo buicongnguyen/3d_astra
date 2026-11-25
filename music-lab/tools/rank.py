@@ -23,7 +23,7 @@ for k, r in S.items():
     follows = any(abs(ratio - m) < 0.04 * m for m in (0.5, 1.0, 2.0))
     # the tracker often locks onto a triplet pulse (x4/3, x2/3...); the loop still repeats at whole 4/4 bars of the requested bpm
     triplet = any(abs(ratio - m) < 0.04 * m for m in (4 / 3, 2 / 3, 3 / 4, 3 / 2, 8 / 3))
-    if r.get("loop") is not None or r["cue"] in ("title", "campaign", "defence"):
+    if "loop" in r:
         lp = r.get("loop")
         if not lp:
             out[r["cue"]].append(dict(key=k, score=0, flags=["no loop found"], **{x: r[x] for x in ("id", "arm", "seed", "shift")}))
@@ -50,7 +50,7 @@ for k, r in S.items():
         has = "start" in st
         sc = 0.35 * min(1.0, st["final_triad_share"] / 0.5) + (0.15 if st["final_top_pc_is_tonic"] else 0) + (0.2 if has else 0) \
             + (0.15 if not st["cut_by_duration"] else 0) + (0.15 if has and st.get("final_hold_db", -99) >= -12 else 0) - harsh_p - clip_p
-        if not has: flags.append("no 5-8 s ending phrase found")
+        if not has: flags.append("no ending phrase of the wanted length found")
         if st["cut_by_duration"]: flags.append("audio cut by the duration (no natural ending)")
         if not st["final_top_pc_is_tonic"]: flags.append("final chord top note is not the tonic")
         if st["final_triad_share"] < 0.35: flags.append(f"weak home-chord landing {st['final_triad_share']:.2f}")

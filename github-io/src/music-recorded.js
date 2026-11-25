@@ -13,6 +13,10 @@
 // in memory, so going back to a cue only re-decodes. The next likely cue is fetched while idle.
 // Any failure (no manifest, a missing file, a decode error) marks the cue failed and the director
 // falls back to the adaptive score without a sound or a message.
+//
+// Faction music (Audio 6.5): a match loops the player's faction theme. Its stinger is a one-shot
+// "flourish" over whatever plays: it opens the match (the theme fades in as it ends), sounds when the
+// faction is picked on the start screen (the title loop dips under it) and closes a won match.
 import { MIX } from "./audio-mix.js";
 import { RECORDED_CUES, STINGS, loopPoints, recordedTrim } from "./audio-logic.js";
 
@@ -37,6 +41,8 @@ export class RecordedMusic {
     this.want = null; // the cue the director asked for last
     this.prefetching = false;
     this.generation = 0; // bumped by release(): late fetches and decodes from before are dropped
+    this.flourishes = new Set(); // one-shot stingers sounding over the cue
+    this.heard = []; // every cue started, in order (observable in tests)
   }
 
   // The manifest, fetched once (network first: the service worker refreshes it, see sw.template.js).
@@ -113,21 +119,54 @@ export class RecordedMusic {
   }
 
   // Ask for a cue (null = silence). Called every frame by the director, so a repeat is free. The
-  // current cue fades out while the new one fades in once it is decoded.
-  play(cue) {
+  // current cue fades out while the new one fades in once it is decoded. `intro` (a stinger) plays
+  // first as a flourish and the cue fades in as it ends.
+  play(cue, intro = null) {
     if (cue === this.want) return;
     this.want = cue;
     if (this.voice && this.voice.cue !== cue) this.fadeOut(this.voice, MIX.recorded.crossfade);
     this.trim();
     if (!cue) return;
     if (this.status === "idle") this.load();
-    this.decode(cue).then((buffer) => {
-      if (buffer && this.want === cue && this.voice?.cue !== cue) this.start(cue, buffer);
+    const opening = intro ? this.flourish(intro) : Promise.resolve(0);
+    Promise.all([this.decode(cue), opening]).then(([buffer, endsAt]) => {
+      if (buffer && this.want === cue && this.voice?.cue !== cue) this.start(cue, buffer, Math.max(0, endsAt - MIX.recorded.introOverlap));
     });
   }
 
-  start(cue, buffer) {
-    const ctx = this.context, now = ctx.currentTime, track = this.manifest?.tracks[cue] || {};
+  // A stinger once over whatever plays: the cue sounding now dips by MIX.recorded.flourishDuckDb for
+  // its length. Resolves with the context time it ends at (0 when it cannot play, or decoded too late
+  // to still belong to the moment that asked for it).
+  async flourish(cue) {
+    if (!STINGS.has(cue) || this.failed.has(cue)) return 0;
+    if (this.status === "idle") this.load();
+    const asked = this.context.currentTime, generation = this.generation;
+    const buffer = await this.decode(cue);
+    const ctx = this.context, now = ctx.currentTime;
+    if (!buffer || generation !== this.generation || now - asked > MIX.recorded.flourishLate) return 0;
+    const track = this.manifest?.tracks[cue] || {}, source = ctx.createBufferSource(), gain = ctx.createGain();
+    source.buffer = buffer;
+    gain.gain.setValueAtTime(recordedTrim(track.lufs), now);
+    source.connect(gain); gain.connect(this.out);
+    const voice = { cue, source, gain };
+    this.flourishes.add(voice);
+    source.onended = () => { try { gain.disconnect(); } catch { /* already disconnected */ } this.flourishes.delete(voice); };
+    source.start(now);
+    this.heard.push(cue);
+    const ends = now + buffer.duration;
+    const under = this.voice;
+    if (under) {
+      const g = under.gain.gain, low = under.level * 10 ** (MIX.recorded.flourishDuckDb / 20);
+      g.cancelScheduledValues(now); g.setValueAtTime(g.value, now);
+      g.linearRampToValueAtTime(low, now + 0.15);
+      g.setValueAtTime(low, Math.max(now + 0.15, ends - 0.6));
+      g.linearRampToValueAtTime(under.level, ends + 0.4);
+    }
+    return ends;
+  }
+
+  start(cue, buffer, at = 0) {
+    const ctx = this.context, now = Math.max(ctx.currentTime, at), track = this.manifest?.tracks[cue] || {};
     const source = ctx.createBufferSource(), gain = ctx.createGain();
     source.buffer = buffer;
     if (!STINGS.has(cue)) {
@@ -145,6 +184,7 @@ export class RecordedMusic {
       if (this.voice === voice) this.voice = null;
     };
     source.start(now);
+    this.heard.push(cue);
     this.voice = voice;
     this.trim();
   }
@@ -188,6 +228,7 @@ export class RecordedMusic {
     if (this.status === "idle" && !this.voice && !this.bytes.size) return;
     this.want = null; this.generation++;
     if (this.voice) this.fadeOut(this.voice, 0.3);
+    for (const voice of this.flourishes) { try { voice.source.stop(); } catch { /* already stopped */ } }
     this.buffers.clear(); this.bytes.clear(); this.pending.clear(); this.failed.clear();
     this.status = "idle"; this.manifest = null; this.loading = null;
   }
@@ -202,6 +243,8 @@ export class RecordedMusic {
       gain: this.voice ? this.voice.gain.gain.value : 0,
       loop: this.voice ? { loop: this.voice.source.loop, loopStart: this.voice.source.loopStart, loopEnd: this.voice.source.loopEnd } : null,
       fading: this.fading.size,
+      flourishes: [...this.flourishes].map((v) => v.cue),
+      heard: [...this.heard],
       decoded: [...this.buffers.keys()],
       encoded: [...this.bytes.keys()],
       failed: [...this.failed],

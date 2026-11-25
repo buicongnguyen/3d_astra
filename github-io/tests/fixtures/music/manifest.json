@@ -5,6 +5,16 @@
     "campaign": { "file": "campaign.m4a", "loopStart": 0, "loopEnd": 2, "bpm": 120, "lufs": -24, "bytes": 9235 },
     "defence": { "file": "defence.m4a", "loopStart": 0, "loopEnd": 2, "bpm": 120, "lufs": -24, "bytes": 9221 },
     "victory": { "file": "victory.m4a", "bpm": 120, "lufs": -24, "bytes": 5077 },
-    "defeat": { "file": "defeat.m4a", "bpm": 120, "lufs": -24, "bytes": 5020 }
+    "defeat": { "file": "defeat.m4a", "bpm": 120, "lufs": -24, "bytes": 5020 },
+    "theme-meridian": { "file": "theme-meridian.m4a", "loopStart": 0, "loopEnd": 2, "bpm": 120, "lufs": -24, "bytes": 9254 },
+    "stinger-meridian": { "file": "stinger-meridian.m4a", "bpm": 120, "lufs": -24, "bytes": 4233 },
+    "theme-ashfall": { "file": "theme-ashfall.m4a", "loopStart": 0, "loopEnd": 2, "bpm": 120, "lufs": -24, "bytes": 9158 },
+    "stinger-ashfall": { "file": "stinger-ashfall.m4a", "bpm": 120, "lufs": -24, "bytes": 4256 },
+    "theme-sunward": { "file": "theme-sunward.m4a", "loopStart": 0, "loopEnd": 2, "bpm": 120, "lufs": -24, "bytes": 9154 },
+    "stinger-sunward": { "file": "stinger-sunward.m4a", "bpm": 120, "lufs": -24, "bytes": 4206 },
+    "theme-wardens": { "file": "theme-wardens.m4a", "loopStart": 0, "loopEnd": 2, "bpm": 120, "lufs": -24, "bytes": 9268 },
+    "stinger-wardens": { "file": "stinger-wardens.m4a", "bpm": 120, "lufs": -24, "bytes": 4016 },
+    "theme-veil": { "file": "theme-veil.m4a", "loopStart": 0, "loopEnd": 2, "bpm": 120, "lufs": -24, "bytes": 9248 },
+    "stinger-veil": { "file": "stinger-veil.m4a", "bpm": 120, "lufs": -24, "bytes": 4119 }
   }
 }
