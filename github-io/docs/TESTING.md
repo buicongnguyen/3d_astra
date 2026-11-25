@@ -112,6 +112,22 @@ Counts below were checked on 2026-11-20 against the tree at tag `r2-wave-2` plus
 ## What is not tested
 Real phones, real audio output and sound taste. Touch tests use browser emulation.
 
+## iPhone gestures (keep these rules)
+A friend's iPhone report (2026-11-25): "swiping left and right switches the app again". It was fixed in October (`ee51f0a`, notes in `docs/archive/IPHONE_TOUCH_REVIEW.md`) and came back with the 2026-11-22 HUD passes: the portrait Selection dock got a sideways-scrolling action row 24 px above the screen bottom (`2f892d5`), and the battlefield went full-bleed (`64ddb23`), with the 16 px bottom margin as the only gap. Two iOS gestures read as "switches the app":
+1. **Home-indicator swipe** along the bottom edge (iPhone X and later) switches apps. No web page can block it, so nothing the player drags sideways may start there.
+2. **Safari's back/forward swipe** from a side edge leaves the page (in-app browsers such as Messenger close it).
+
+Rules, checked by `npm run test:iphone-gestures` (WebKit with an iPhone profile locally, Chromium on CI) and `tests/touch-controls.test.js`:
+- `--home-zone` (`src/mobile.css`) is the bottom strip: 34 px or the bottom safe area, whichever is larger. `--safe-bottom` is never below it, so every bottom bar, tab, dock and the minimap starts above the strip. Position bottom HUD with `var(--safe-bottom)`, never a fixed number or a bare `env(safe-area-inset-bottom)`.
+- A sideways-scrolling row (`overflow-x: auto`: `#commands`, type chips, queue, unit list) or a drag surface (`#minimap`) must end above `--home-zone` in every HUD state. Taps may sit near the bottom; drags may not.
+- The battlefield runs under the strip, but a touch that starts below `--safe-bottom` or within `--gesture-left/right` is not a camera drag (`inEdge` in `src/app/input-pointer.js`).
+- A battlefield `touchstart` within 20 px of the left or right edge is cancelled (`SIDE_EDGE_GUARD` in `src/touch-controls.js`); the listener must stay `passive: false`. HUD buttons are not guarded (cancelling a touchstart would cancel their click).
+- `html` and `body` keep `overscroll-behavior: none`; the game surface keeps `touch-action: none`.
+- Play never adds history entries (no `pushState`, hash links or reloads during a match), so a back swipe has nowhere inside the game to go. The logo link opens Pause during a match.
+- Leaving and returning pauses the match (`blur`, `pagehide`, `visibilitychange`; `tests/mobile-gestures.mjs`).
+
+Not provable without a real iPhone: whether iOS honours a cancelled edge touchstart in every browser (Safari, in-app browsers, home-screen mode), and the exact height of the home-indicator gesture area. When a report comes in, ask for the browser, iOS version, orientation and where the finger started.
+
 ## Stage 1 additions
 
 - `test:feel`: harness-based portrait test for all eight projected unit bounds, Barrage shake/decay, disabled motion, camera cues, camera restoration and render-only hit-stop.

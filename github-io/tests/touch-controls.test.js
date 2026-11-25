@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {TouchControls} from '../src/touch-controls.js';
+import {TouchControls,inSideEdge,SIDE_EDGE_GUARD} from '../src/touch-controls.js';
 
 function setup() {
   const canvas=new EventTarget(), captures=new Set(), taps=[], boxes=[];
@@ -60,4 +60,18 @@ test('only a handled battlefield tap suppresses its native compatibility click',
   f.send('pointerdown'); f.send('pointerup',150,50);
   assert.equal(f.send('touchend').defaultPrevented,false);
   assert.deepEqual(f.taps,[[50,50]]);
+});
+// iPhone gestures (docs/TESTING.md): Safari's back swipe starts at a side edge; the battlefield cancels those touchstarts.
+test('a battlefield touchstart within 20 px of a side edge is cancelled; the middle is not',()=>{
+  assert.equal(SIDE_EDGE_GUARD,20);
+  const width=390,at=x=>inSideEdge([{clientX:x}],width);
+  assert.deepEqual([0,19,20,195,370,371,389].map(at),[true,true,false,false,false,true,true]);
+  assert.equal(inSideEdge([{clientX:200},{clientX:5}],width),true,'any new finger at an edge');
+  assert.equal(inSideEdge([],width),false);
+  const f=setup(),previous=globalThis.innerWidth;
+  globalThis.innerWidth=width;
+  try{
+    const touch=x=>{const e=new Event('touchstart',{cancelable:true});e.changedTouches=[{clientX:x,clientY:300}];f.controls.canvas.dispatchEvent(e);return e.defaultPrevented;};
+    assert.deepEqual([4,195,386].map(touch),[true,false,true]);
+  }finally{globalThis.innerWidth=previous;}
 });

@@ -2,6 +2,9 @@
 
 ## Unreleased: Round A.2
 
+### iPhone: sideways swipes stay in the game (friend's report)
+- Swiping left or right near the bottom of an iPhone could switch apps again: since the 2026-11-22 HUD passes the portrait Selection dock's sideways action row (build, train, abilities) sat 24 px above the screen bottom, inside the home-indicator strip, and the minimap 20 px. Every bottom bar now starts above a 34 px strip (or the bottom safe area if larger; `--home-zone` in `src/mobile.css`), so no sideways row, map drag or camera drag starts there; the Defence "Crew a pad" button lines up with them. A battlefield touch within 20 px of the left or right edge no longer starts Safari's back swipe. Rules in docs/TESTING.md ("iPhone gestures"); new `npm run test:iphone-gestures` (WebKit iPhone profile; Chromium on CI) checks the bottom strip in skirmish and Defence states, the edge guard and that play adds no history entries.
+
 ### Cheaper Kite scout (owner 2026-11-25)
 - Your Kite scout costs 45 alloy and no energy (was 75 + 25) and trains in 8 s (was 12), so a spotter is cheap to send ahead to watch the enemy. Dive keeps 260 damage. The computer keeps 75 / 25 and 12 s (balance.json `player_cost` / `player_time`, only for the side you command; when the computer plays your side in AI-vs-AI checks it pays the base price), so AI matches are unchanged: golden pins, the AI census and the difficulty check (1v1 / 1v2 wins of 12, Relaxed..Relentless: 12/12/11/11 and 7/2/0/0, as before) match the values before the price change. A queued Kite refunds the price paid when cancelled, also after loading a save; the tile, its label and the field guide show 45 and 8 s.
 

@@ -3,6 +3,14 @@
 export function isTouchPointer(e, fine = globalThis.matchMedia?.("(any-pointer: fine)").matches ?? false) {
   return e.pointerType !== "mouse" && !(e.pointerType === "pen" && fine);
 }
+// iPhone gestures (docs/TESTING.md, "iPhone gestures"): a finger that lands this close to the left or right
+// screen edge on the battlefield is Safari's back/forward swipe (or an in-app browser closing its page).
+// Cancelling that touchstart keeps the swipe in the game; the camera still ignores the narrower gesture margins.
+export const SIDE_EDGE_GUARD = 20;
+export function inSideEdge(touches, width, guard = SIDE_EDGE_GUARD) {
+  for (const t of touches || []) if (t.clientX < guard || t.clientX > width - guard) return true;
+  return false;
+}
 export class TouchControls {
   constructor(canvas, callbacks) {
     this.canvas = canvas;
@@ -11,6 +19,10 @@ export class TouchControls {
     this.multi = false;
     this.gesture = null;
     this.handledTouchTap = false;
+    // Must not be passive: only a cancelable touchstart keeps the browser's edge swipe from starting.
+    canvas.addEventListener("touchstart", (e) => {
+      if (e.cancelable && inSideEdge(e.changedTouches, globalThis.innerWidth ?? Infinity)) e.preventDefault();
+    }, { passive: false });
     // A tap may open a HUD button under the finger. Cancel the browser's
     // compatibility click at its touch source before it can activate that button.
     canvas.addEventListener("touchend", (e) => {

@@ -181,9 +181,13 @@ button {
   --header-height: 96px;
   --dock-height: 178px;
   --tabs-height: 48px;
-  /* Safe-area values can be zero in browser/in-app views. Keep taps above the
-     bottom gesture edge even there; a web page cannot disable iOS app switching. */
-  --safe-bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 8px));
+  /* iPhone gestures (docs/TESTING.md, "iPhone gestures"): a sideways swipe along the bottom edge switches apps
+     and a web page cannot block it. --home-zone is that strip: Apple's 34 px home-indicator area, or the
+     device's bottom safe area if larger. Safe-area values can be zero in browser and in-app views, so the floor
+     holds there too. Every bottom bar starts at --safe-bottom, above the strip, so no sideways row, map drag or
+     camera drag starts in it (the input ignores battlefield touches below --safe-bottom). */
+  --home-zone: max(34px, env(safe-area-inset-bottom, 0px));
+  --safe-bottom: max(var(--home-zone), calc(env(safe-area-inset-bottom, 0px) + 8px));
   --gesture-left: max(12px, env(safe-area-inset-left, 0px));
   --gesture-right: max(12px, env(safe-area-inset-right, 0px));
 }
