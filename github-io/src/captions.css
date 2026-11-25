@@ -1,0 +1,65 @@
+/* Subtitles for unit replies and announcer lines (captions-ui.js places it; 2026-11-25).
+   One line of dark glass at the bottom centre of the battlefield: the speaker in the faction's tint, then the
+   words. Fixed position and pointer-events: none (no layout shift, never steals a tap); the text size follows
+   Settings → Text size. Phones: 13 px words, 12 px speaker; PC: 15 / 13 px. */
+.voice-caption {
+  --vc-tint: #7fe8ff;
+  --vc-scale: 1;
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  z-index: 8;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(560px, calc(100vw - 16px));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  column-gap: 8px;
+  row-gap: 1px;
+  padding: 6px 12px 7px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-left: 3px solid var(--vc-tint);
+  background: rgba(6, 12, 20, 0.8);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  color: #f1f5f2;
+  font: 500 calc(15px * var(--vc-scale)) / 1.3 var(--font-ui);
+  text-align: left;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0s linear 0.15s;
+}
+.voice-caption.show { opacity: 1; visibility: visible; transition: opacity 0.12s ease, visibility 0s; }
+.voice-caption .vc-who {
+  flex: none;
+  color: var(--vc-tint);
+  font-weight: 700;
+  font-size: calc(13px * var(--vc-scale));
+  letter-spacing: 0.02em;
+}
+.voice-caption .vc-text { min-width: 0; overflow-wrap: anywhere; }
+:root[lang="ko"] .voice-caption .vc-text { overflow-wrap: normal; word-break: keep-all; }
+/* The announcer speaks in a tinted capital label; unit replies keep the unit's name. */
+.voice-caption[data-channel="announcer"] .vc-who { text-transform: uppercase; font-size: calc(12px * var(--vc-scale)); }
+:root[lang="ko"] .voice-caption[data-channel="announcer"] .vc-who { text-transform: none; }
+
+.voice-caption[data-faction="ashfall"] { --vc-tint: #ff9a52; }
+.voice-caption[data-faction="sunward"] { --vc-tint: #ffc75e; }
+.voice-caption[data-faction="wardens"] { --vc-tint: #9fb4ff; }
+.voice-caption[data-faction="veil"] { --vc-tint: #d2b8ff; }
+
+:root[data-text-size="m"] .voice-caption { --vc-scale: 1.12; }
+:root[data-text-size="l"] .voice-caption { --vc-scale: 1.25; }
+
+/* Phones: a little smaller, still 13 px for the words (12 px speaker). */
+.compact-ui .voice-caption { font-size: calc(13px * var(--vc-scale)); padding: 4px 9px 5px; max-width: calc(100vw - 16px); }
+.compact-ui .voice-caption .vc-who { font-size: calc(12px * var(--vc-scale)); }
+
+@media (prefers-reduced-motion: reduce) { .voice-caption, .voice-caption.show { transition: none; } }
+:root.motion-off .voice-caption, :root.motion-off .voice-caption.show { transition: none; }

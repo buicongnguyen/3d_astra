@@ -44,7 +44,7 @@ export function setupPreferences(S, A) {
   // The sheet applies every change at once (a slider up to once a frame), so the costly steps run only when a
   // setting they read changed: re-translating the page on a language change, re-tinting the world when
   // anything but the cheap keys below changed.
-  const CHEAP = new Set(["masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "voices", "muted", "quietMode", "music", "panSpeed", "edgeScroll", "confirmRestart", "autocast", "groupPace", "showFps",
+  const CHEAP = new Set(["masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "voices", "subtitles", "muted", "quietMode", "music", "panSpeed", "edgeScroll", "confirmRestart", "autocast", "groupPace", "showFps",
     "cameraAngle", "cameraTurn", "zoomSpeed", "minimapSide", "handedness", "alerts", "frameCap", "haptics", "textSize"]);
   let applied = null, storageWarned = false;
   function applyPreferences(value) {

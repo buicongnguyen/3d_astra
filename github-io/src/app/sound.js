@@ -3,6 +3,7 @@ import { MIX, SOUND_TESTS } from "../audio-mix.js";
 import { Ambience, audioPower } from "../ambience.js";
 import { musicScreen, spatialMix } from "../audio-logic.js";
 import { MUSIC_HOLDS } from "./screens.js";
+import { CaptionBox } from "../captions-ui.js";
 
 export function setupSound(S, A) {
   const Z = S.screen;
@@ -52,6 +53,8 @@ export function setupSound(S, A) {
           S.audio = new AudioDirector(context, {
             project: (x, z) => { const p = S.view.project(x, z, 0.5); return spatialMix(p.x, p.y, S.view.width, S.view.height, S.view.zoom); },
             selected: () => S.selected,
+            // Subtitles for unit replies and the announcer (captions-ui.js), above the battlefield.
+            captions: new CaptionBox(),
           });
           S.audio.applySettings(S.settings);
         }).catch(() => { audioLoading = null; });

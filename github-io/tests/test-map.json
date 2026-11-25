@@ -78,8 +78,8 @@
     },
     {
       "name": "sound and music",
-      "files": ["src/audio*.js", "src/sfx*.js", "src/music*.js", "src/voice*.js", "src/voice-*.json", "src/app/sound.js", "public/music/**", "public/voices/**", "tests/fixtures/music/**"],
-      "suites": ["audio", "audio-juice", "music", "offline", "story-voices"],
+      "files": ["src/audio*.js", "src/sfx*.js", "src/music*.js", "src/voice*.js", "src/voice-*.json", "src/app/sound.js", "src/captions-ui.js", "src/captions.css", "public/music/**", "public/voices/**", "tests/fixtures/music/**"],
+      "suites": ["audio", "audio-juice", "music", "offline", "story-voices", "captions"],
       "checks": []
     },
     {

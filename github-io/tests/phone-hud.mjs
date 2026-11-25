@@ -38,6 +38,8 @@ async function pick(page, state) {
     if (state === "none" || state === "defence") f.select([]);
     if (state === "mixed") f.select(mine.filter((e) => e.kind === "unit").map((u) => u.id));
     if (state === "building") f.select([mine.find((e) => e.type === "hq").id]);
+    // A selection speaks a unit reply; its subtitle is transient like the notice and is measured in tests/captions.mjs.
+    f.audio?.captions?.clear();
   }, state);
   await page.waitForFunction(() => {
     const n = document.querySelector("#notice");

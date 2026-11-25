@@ -88,6 +88,8 @@ export function defaults(coarse = false) {
     // W3 (2026-11-25): spoken unit replies, announcer and story lines (voice.js), and their own volume.
     voices: true,
     voiceVolume: 0.8,
+    // Subtitles for the spoken unit replies and announcer lines, in the player's language (captions-ui.js).
+    subtitles: true,
   };
 }
 export function normalize(value, coarse = false) {
@@ -128,6 +130,7 @@ export function normalize(value, coarse = false) {
   if (typeof value.groupPace === "boolean") d.groupPace = value.groupPace;
   if (typeof value.quietMode === "boolean") d.quietMode = value.quietMode;
   if (typeof value.voices === "boolean") d.voices = value.voices;
+  if (typeof value.subtitles === "boolean") d.subtitles = value.subtitles;
   return d;
 }
 export function loadSettings(coarse = false, storage) {
