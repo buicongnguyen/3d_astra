@@ -126,6 +126,10 @@ Rules, checked by `npm run test:iphone-gestures` (WebKit with an iPhone profile 
 - Play never adds history entries (no `pushState`, hash links or reloads during a match), so a back swipe has nowhere inside the game to go. The logo link opens Pause during a match.
 - Leaving and returning pauses the match (`blur`, `pagehide`, `visibilitychange`; `tests/mobile-gestures.mjs`).
 
+Both hands (W13): `tests/iphone-gestures.mjs` runs every state right- and left-handed (Settings -> Controls -> Hand mirrors the phone controls and moves the minimap right, `src/phone-handed.css`). A mirrored control keeps the rules above: bottoms on `--safe-bottom`, and nothing tappable moved into the 20 px side strip (the minimap's Home and enlarge buttons stay on its inner side when it is in the right corner).
+
+`npm run test:phone-hud` (W13, CI group "phone-hud" with iphone-gestures): HUD coverage (`tests/lib/hud-coverage.mjs`, the share of the screen the interface paints; glass by its alpha) with nothing selected, a mixed army, the Command core and in Defence at 390x844, 844x390 and 667x375 (under 30 % at the first two; at 667x375 under 40 % each and under 30 % on average), the notice settling to one line, Hand and Minimap side chosen in the sheet and kept after a reload, and the two-finger twist through CDP touch events (a rotate turns the yaw clockwise with the fingers, a pinch only zooms, Defence ignores it).
+
 Not provable without a real iPhone: whether iOS honours a cancelled edge touchstart in every browser (Safari, in-app browsers, home-screen mode), and the exact height of the home-indicator gesture area. When a report comes in, ask for the browser, iOS version, orientation and where the finger started.
 
 ## Stage 1 additions

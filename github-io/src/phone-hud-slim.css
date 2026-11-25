@@ -72,8 +72,7 @@ html:root.compact-ui[data-ui-theme]:not(.in-briefing) #app .bottom-dock .command
   background: linear-gradient(90deg, var(--kit-warning) 0 var(--kit-warning-rail), transparent var(--kit-warning-rail)), var(--slim-pill) !important;
 }
 :root.compact-ui:not(.in-briefing) #stage > #notice.settled:not(.warning) {
-  -webkit-line-clamp: 1; line-clamp: 1;
-  /* One 16 px line inside 5 px padding and the 1 px frame: the second line never peeks out of the padding. */
-  box-sizing: border-box; height: 28px !important; padding-block: 5px !important;
+  /* One line ending in "…" (a line clamp let the second line peek out of the bottom padding). */
+  display: block !important; white-space: nowrap !important; text-overflow: ellipsis; overflow: hidden;
   background: linear-gradient(90deg, var(--kit-success) 0 var(--kit-warning-rail), transparent var(--kit-warning-rail)), var(--slim-settled) !important;
 }
