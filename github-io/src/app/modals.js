@@ -192,7 +192,10 @@ export function setupModals(S, A) {
 
   const showGuide = createFieldGuide(() => {
     guidePrevious = Z.snapshot(); Z.open('guide'); S.keys.clear();
-  }, () => { Z.restore(guidePrevious); S.keys.clear(); }, () => S.sim);
+  }, () => { Z.restore(guidePrevious); S.keys.clear(); }, () => S.sim,
+  // The guide's 3D view (W5) reads the game's model cache; while it draws, the battlefield behind the guide
+  // (paused) redraws only twice a second (app/frame.js).
+  { getView: () => S.view, onViewer: (live) => { S.guide3d = live; } });
 
   Object.assign(A, { togglePause, showGuide, closeModal, showHelp, setModalOpen, showPause, graphicsLost, graphicsRestored });
   return function bind() {

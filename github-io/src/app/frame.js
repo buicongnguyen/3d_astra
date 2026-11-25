@@ -225,7 +225,8 @@ export function setupFrame(S, A) {
     // twice a second, enough to keep models and shaders warm for Start without spending GPU on frames nobody sees.
     const root = document.documentElement;
     coveredRedraw -= elapsed;
-    if (Z.started || !root.classList.contains("in-briefing") || coveredRedraw <= 0) {
+    // The Field Guide's 3D view (W5) is drawing: the paused battlefield behind the guide keeps the same slow redraw.
+    if ((!S.guide3d && (Z.started || !root.classList.contains("in-briefing"))) || coveredRedraw <= 0) {
       if (S.view.modelsReady) S.view.update(S.sim, Z.started && !Z.paused ? dt * beatScale : 0, S.selected, S.hover, renderAlpha);
       coveredRedraw = 0.5;
     }

@@ -1556,7 +1556,21 @@
     "Campaign guardian. A Builder construct of stone and bronze that keeps the Quiet Vault. It sleeps until you attack it, then fights near its post. Beat it fairly and it kneels, then joins your squad for the rest of the mission: a heavy blade that hits everything within 2 m of its target.": "캠페인 수호자. 고요한 보관고를 지키는 돌과 청동의 건설자 구조물입니다. 공격하기 전까지 잠들어 있다가, 공격받으면 제자리 근처에서 싸웁니다. 정정당당히 이기면 무릎을 꿇은 뒤 임무가 끝날 때까지 분대에 합류합니다. 무거운 칼날이 대상 2 m 안의 모든 것을 칩니다.",
     "Campaign creature": "캠페인 생물",
     "The Elder Wyrm joins your expedition.": "장로 웜이 원정대에 합류합니다.",
-    "The Vault Sentinel rises and joins your squad.": "보관고 파수꾼이 일어나 분대에 합류합니다."
+    "The Vault Sentinel rises and joins your squad.": "보관고 파수꾼이 일어나 분대에 합류합니다.",
+    "3D view": "3D 보기",
+    "Loading 3D model…": "3D 모형 불러오는 중…",
+    "Idle": "대기",
+    "Walk": "걷기",
+    "Drive": "주행",
+    "Fly": "비행",
+    "Fire": "사격",
+    "Colour": "색상",
+    "Yours": "아군",
+    "Size": "크기",
+    "Drag to turn · pinch to zoom · double-tap to reset": "끌어서 회전 · 두 손가락으로 확대/축소 · 두 번 탭하여 초기화",
+    "Drag to turn · wheel to zoom · double-click to reset": "끌어서 회전 · 휠로 확대/축소 · 더블클릭하여 초기화",
+    "3D view unavailable. Showing the portrait.": "3D 보기를 사용할 수 없습니다. 초상화를 표시합니다.",
+    "No 3D model for this entry. Showing the portrait.": "이 항목에는 3D 모형이 없습니다. 초상화를 표시합니다."
   },
   "patterns": [
     [

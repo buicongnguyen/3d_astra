@@ -1,0 +1,44 @@
+/* Field Guide 3D view (W5, src/field-guide.js + src/unit-viewer.js). The stage is at least 220 px tall on
+   phones; every control is a direct 44 px button (no sub-menu); text 11 px and up. */
+.field-guide .unit-3d { margin: 14px 0 4px; }
+.field-guide .unit-3d > h3 { margin: 0 0 8px; }
+.unit-3d-stage { position: relative; height: clamp(220px, 40dvh, 340px); border-radius: 10px; overflow: hidden;
+  border: 1px solid var(--kit-line-ghost, #3d5f63);
+  background: radial-gradient(120% 90% at 50% 30%, #2a5560 0%, #143039 55%, #0a1a21 100%); }
+.unit-3d-canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; display: block; cursor: grab; }
+.unit-3d-canvas:active { cursor: grabbing; }
+.unit-3d-fallback { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 8px; padding: 12px; text-align: center; }
+.unit-3d-fallback .portrait-art { --size: 120px; }
+.unit-3d.live .unit-3d-fallback { visibility: hidden; }
+.unit-3d.failed .unit-3d-canvas { display: none; }
+.field-guide .unit-3d-status { margin: 0; font-size: 13px; color: var(--kit-text-2, #b9cbc8); }
+.unit-3d-controls { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; margin-top: 8px; }
+.field-guide .unit-3d-controls button { min-width: 0; min-height: 44px; padding: 4px 4px; font-size: 13px; line-height: 1.15;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; overflow-wrap: anywhere; }
+.field-guide .unit-3d-controls button small { font-size: 11px; line-height: 1.1; }
+.field-guide .unit-3d-controls button[aria-pressed="true"] { --face: var(--kit-control-on, #2f6b6a); color: var(--kit-cyan, #a7f0e0); font-weight: 700; }
+.field-guide .unit-3d-controls button:disabled { opacity: 0.45; cursor: default; }
+.field-guide .unit-3d-hint { margin: 6px 0 0; font-size: 12px; color: var(--kit-text-2, #b9cbc8); }
+/* Narrow phones: motions on one row of three, colour and size on a row of two. */
+@media (max-width: 460px) {
+  .unit-3d-controls { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .unit-3d-controls > button { grid-column: span 2; }
+  .unit-3d-controls > button:nth-child(n + 4) { grid-column: span 3; }
+}
+/* Phone landscape: the guide's title and picker share one row and the 3D panel comes first, the stage beside a
+   two-column button block, so the whole 220 px stage and every button are on screen when a page opens. */
+@media (max-height: 480px) and (orientation: landscape) {
+  .field-guide:has(.unit-3d) header { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 12px; padding: 6px 14px; }
+  .field-guide:has(.unit-3d) header h2 { margin: 0; font-size: 15px; }
+  .field-guide:has(.unit-3d) header label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .field-guide:has(.unit-3d) footer { padding: 6px 14px; }
+  .field-guide:has(.unit-3d) article { display: flex; flex-direction: column; padding: 8px 14px; }
+  .field-guide article > .unit-3d { order: -1; margin-top: 0; }
+  .field-guide .unit-3d { display: grid; grid-template-columns: minmax(0, 1fr) 176px; column-gap: 8px; }
+  .field-guide .unit-3d > h3 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .field-guide .unit-3d-hint { grid-column: 1 / -1; }
+  .unit-3d-stage { height: 220px; }
+  .unit-3d-controls { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(44px, auto); align-content: start; margin-top: 0; }
+  .unit-3d-controls > button, .unit-3d-controls > button:nth-child(n + 4) { grid-column: auto; }
+  .unit-3d-controls > button:last-child { grid-column: 1 / -1; }
+}

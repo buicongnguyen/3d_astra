@@ -16,6 +16,7 @@ Status: todo / doing / done (commit).
 | W3 | Voices: unit acknowledgements, announcer (base under attack, unit lost, objective), story lines; per-faction tone; EN first, VI/KO subtitles; switchable off | Voices 2.0, Audio 6.0, Faction identity | | todo |
 | W4 | Animation pass: hit flinch, death falls/wrecks, kneel-to-fire for more infantry, mech heavy walk, air bank/landing | Animation 5.5, VFX 6.8, Polish | | todo (after W1) |
 | W5 | Faction identity: per-faction silhouettes and palettes, signature unit per faction, faction UI accent, faction music stinger (models via Codex briefs or agents) | Faction identity 4.5, Unit models | | todo (after W1 list) |
+| W5a | Field Guide 3D view of each unit: real model, orbit/zoom, Idle / Walk / Fire, team colour, Ranger for scale; lazy chunk, disposed on close | Faction identity, Unit models, UI | | done (claude/unit-viewer) |
 | W6 | Replay value: challenges (C7.1), medal cosmetics (C7.3), achievements 13 -> 25, match history and replay viewer (B2-B3) | Replay 5.3, Content | | todo |
 | W7 | Depth: second doctrine tier, special weapons plan, abilities for Hawk / Balloon / Glider | Balance & depth 5.0, Content 5.4 | | todo |
 | W8 | AI quality on Fast / Relentless only: focus fire, retreat wounded, flank, use abilities, scout with Kites; Relaxed/Normal untouched | AI quality 5.0 | | todo |

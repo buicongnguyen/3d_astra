@@ -1,3 +1,4 @@
+import * as THREE from "three";
 // Flyer motion by maths (AAA round 3, R3-W): banking into turns, nose up on a climb (down on a descent), and the
 // balloon's slow sway. View only, pure numbers on the flyer's own state (view.js prepareFlyer `air`), no
 // allocation. The view applies the result as the model's roll (rotation.z) and an extra pitch (rotation.x) on
@@ -36,4 +37,19 @@ export function airMotion(a, type, yaw, y, dt, lively) {
   a.pitch += (pitch - a.pitch) * Math.min(1, dt * AIR_MOTION.pitchRate);
   a.lastYaw = yaw; a.lastY = y;
   return a;
+}
+
+// A flyer's rotors (spin_*: props turn about Z, lift rotors about Y) and the balloon's burner flame (flicker_*),
+// found once per model; poseAirParts turns and flickers them from the flyer's clock (a.clock, seconds).
+const AXIS_Y = new THREE.Vector3(0, 1, 0), AXIS_Z = new THREE.Vector3(0, 0, 1), SPIN = new THREE.Quaternion();
+export function airParts(model, a = { spins: [], flames: [] }) {
+  model.traverse((o) => {
+    if (o.name.startsWith("spin_")) a.spins.push({ node: o, base: o.quaternion.clone(), axis: /^spin_prop/.test(o.name) ? AXIS_Z : AXIS_Y, rate: /^spin_prop/.test(o.name) ? 34 : 26 });
+    else if (o.name.startsWith("flicker_")) a.flames.push({ node: o, base: o.scale.y });
+  });
+  return a;
+}
+export function poseAirParts(a, lively) {
+  for (const s of a.spins) s.node.quaternion.copy(s.base).multiply(SPIN.setFromAxisAngle(s.axis, lively ? (a.clock * s.rate) % (Math.PI * 2) : 0.6));
+  for (const f of a.flames) f.node.scale.y = f.base * (lively ? 0.82 + 0.22 * Math.sin(a.clock * 17) + 0.1 * Math.sin(a.clock * 31 + 1.3) : 1);
 }
