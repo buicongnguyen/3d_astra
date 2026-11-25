@@ -13,7 +13,9 @@ const LAKE = CAMPAIGN.mirrorlake.lakes[0];
 const polar = (deg, d) => [Math.cos((deg * Math.PI) / 180) * d, Math.sin((deg * Math.PI) / 180) * d];
 
 test("only Mirror Lake has a lake; every other map's Terrain has none", () => {
-  for (const id of [...Object.keys(MAPS_JSON), ...Object.keys(DEFENCE), "highridge", "gunhills"]) assert.deepEqual(new Terrain(id).lakes, [], id);
+  // The W9 lands (tests/lands.test.js) are new maps built on lakes: the frozen lake, the lava pools, the isles' sea.
+  const W9 = ["snowfield", "volcano", "archipelago"];
+  for (const id of [...Object.keys(MAPS_JSON).filter((id) => !W9.includes(id)), ...Object.keys(DEFENCE), "highridge", "gunhills"]) assert.deepEqual(new Terrain(id).lakes, [], id);
   const t = new Terrain("mirrorlake");
   assert.equal(t.lakes.length, 1);
   assert.equal(t.river, false, "no river: river systems (fish, bridges, labels) stay off");

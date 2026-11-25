@@ -5,7 +5,7 @@ import maps from '../src/maps.json' with {type:'json'};
 import {defaults, palette, PRESETS} from '../src/settings.js';
 
 test('every map supports one to three independent enemies with accessible starts', () => {
-  assert.equal(Object.keys(maps).length, 13);
+  assert.equal(Object.keys(maps).length, 16); // 13 + the three W9 lands
   for (const map of Object.keys(maps)) for (const enemyCount of [1, 2, 3]) {
     const s = new Simulation({map, enemyCount, ai:false});
     assert.equal(s.players.length, enemyCount + 1);

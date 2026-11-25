@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { fnv1a, mulberry32 } from "./rng.js";
 import { ROCKS } from "./data.js";
+import { rimReach } from "./terrain.js";
 import { themeFor, lookOf } from "./visual-style.js";
 import { fogAware } from "./fog-aware.js";
 
@@ -17,10 +18,22 @@ export const blocksPerSide = () => 1;
 // Tallest point of each kind at scale 1 (world units); a Ranger is about 1.6 tall.
 export const HEIGHT = { tuft: 0.6, fern: 0.5, flower: 0.55, pebble: 0.2, rock: 0.7, bush: 0.75, sapling: 1.9, conifer: 2.0,
   cactus: 1.45, bones: 0.5, mushroom: 0.4, log: 0.36, stump: 0.4, snag: 1.8, cinder: 0.26, column: 1.0, shard: 1.0, ore: 0.8,
-  ruinBlock: 0.9, ruinPillar: 1.5, ruinFloor: 0.05, lily: 0.02 };
+  ruinBlock: 0.9, ruinPillar: 1.5, ruinFloor: 0.05, lily: 0.02,
+  // W9 lands: snow-capped pines, frosted tufts, snowy rocks, lava vents, palms and lagoon coral; and the Ancient ruins
+  // family (any land): broken arches, carved stone heads, overgrown walls and fallen column drums.
+  pine: 2.0, frost: 0.45, snowRock: 0.72, vent: 0.8, palm: 2.0, coral: 0.02,
+  ruinArch: 1.62, stoneHead: 1.15, ruinWall: 0.95, brokenColumn: 0.55 };
 export const MAX_SCALE = 1.25;
 // Kinds a unit could visibly clip through: kept out of camps and thinned on low budgets.
-export const SOLID = new Set(["rock", "bush", "sapling", "conifer", "cactus", "snag", "column", "shard", "ore", "ruinBlock", "ruinPillar", "log", "stump", "bones"]);
+export const SOLID = new Set(["rock", "bush", "sapling", "conifer", "cactus", "snag", "column", "shard", "ore", "ruinBlock", "ruinPillar", "log", "stump", "bones",
+  "pine", "snowRock", "vent", "palm", "ruinArch", "stoneHead", "ruinWall", "brokenColumn"]);
+// Kinds that lie on open water (lily pads, lagoon coral); every other kind keeps to land.
+export const WATER_KINDS = new Set(["lily", "coral"]);
+// The Ancient ruins family (W9): any map may add it with maps.json `ruins` (a density multiplier, 1 = the
+// standard hand); the three W9 lands carry it in their own recipes.
+export const RUIN_KINDS = ["ruinArch", "stoneHead", "ruinWall", "brokenColumn"];
+const RUIN_LIST = [["ruinArch", 5, ["grass", "dirt", "sand", "stone"]], ["stoneHead", 4, ["grass", "dirt", "sand", "stone"]],
+  ["ruinWall", 12, ["grass", "dirt", "sand", "stone"]], ["brokenColumn", 12, ["grass", "dirt", "sand", "stone"]]];
 const LAND = ["grass", "dirt", "sand", "stone"];
 // Per map: [kind, tries per 96 x 96 of map, surfaces it grows on]; a try on the wrong
 // surface is dropped, so real counts are lower. `rim` is the number of edge stones.
@@ -40,6 +53,20 @@ export const DRESSING = {
     ["log", 22, ["grass", "dirt"]], ["stump", 24, ["grass", "dirt"]], ["lily", 600, ["water"]], ["ruinFloor", 6, ["grass", "dirt"]], ["ruinPillar", 6, ["grass"]]] },
   highlands: { rim: 50, ruins: 1, list: [["tuft", 2400, ["grass", "dirt"]], ["column", 110, ["stone", "dirt"]], ["shard", 130, ["stone", "dirt"]], ["pebble", 520, ["stone", "dirt"]],
     ["rock", 70, LAND], ["flower", 400, ["grass"]], ["ruinFloor", 8, ["stone", "dirt"]], ["ruinPillar", 8, ["stone", "dirt"]]] },
+  // W9 lands (src/lands.js). Snow: snow-capped pines in groves, frosted tufts, snowy rocks, ice crystals (the theme's
+  // icy blooms) and old Builder stones half buried in the drifts.
+  snowfield: { rim: 46, ruins: 1, list: [["frost", 1500, ["grass", "dirt"]], ["pine", 120, ["grass", "dirt"]], ["snowRock", 70, LAND], ["pebble", 380, ["dirt", "stone", "sand"]],
+    ["shard", 40, ["stone", "dirt"]], ["stump", 14, ["grass", "dirt"]], ["ruinFloor", 6, ["grass", "dirt"]], ["ruinPillar", 6, ["grass", "dirt"]],
+    ["ruinWall", 8, LAND], ["brokenColumn", 6, LAND], ["stoneHead", 2, LAND]] },
+  // Volcano: glowing cinders and vents, basalt columns, charred snags, ember-lit obsidian shards, hardy ash tufts.
+  volcano: { rim: 50, ruins: 1, list: [["tuft", 700, ["grass"]], ["cinder", 520, ["dirt", "stone", "grass"]], ["vent", 34, ["dirt", "stone"]], ["column", 90, ["stone", "dirt"]],
+    ["snag", 40, ["grass", "dirt"]], ["shard", 60, ["stone"]], ["pebble", 420, LAND], ["rock", 50, LAND], ["ruinFloor", 6, ["dirt", "grass"]],
+    ["ruinPillar", 6, ["dirt", "grass"]], ["ruinArch", 3, ["dirt", "grass"]], ["brokenColumn", 6, LAND]] },
+  // Isles: palms on the beaches and in the grass, tropical tufts and flowers, bushes, coral heads in the lagoon,
+  // and the sunken Builder town's arches and heads on every island.
+  archipelago: { rim: 40, ruins: 1, list: [["tuft", 3600, ["grass"]], ["flower", 380, ["grass"]], ["fern", 300, ["grass"]], ["palm", 90, ["grass", "sand"]], ["bush", 50, ["grass"]],
+    ["pebble", 380, ["sand", "dirt"]], ["rock", 36, LAND], ["coral", 160, ["water"]], ["lily", 120, ["water"]], ["ruinFloor", 6, ["grass", "sand", "dirt"]],
+    ["ruinPillar", 6, ["grass", "sand"]], ["ruinArch", 5, ["grass", "sand"]], ["stoneHead", 4, ["grass", "sand"]], ["ruinWall", 8, ["grass", "sand", "dirt"]]] },
 };
 
 const rng = mulberry32;
@@ -61,7 +88,9 @@ export function planScatter(terrain, budget = 1) {
   const nearWall = (x, z, pad) => walls.some(([wx, wz, wr]) => Math.hypot(x - wx, z - wz) < wr + pad);
   const nearCamp = (x, z) => camps.some(([cx, cz]) => Math.hypot(x - cx, z - cz) < CAMP_RADIUS);
   const add = (kind, x, z, s) => props.push({ kind, x, z, s: Math.min(MAX_SCALE, s), a: r() * 6.2832, tone: r(), seed: (r() * 4294967296) >>> 0 });
-  for (const [kind, count, on] of recipe.list) {
+  // maps.json `ruins` (W9): the Ancient ruins family on any land, at that multiple of the standard hand.
+  const list = terrain.ruins > 0 ? [...recipe.list, ...RUIN_LIST.map(([kind, count, on]) => [kind, count * terrain.ruins, on])] : recipe.list;
+  for (const [kind, count, on] of list) {
     // maps.json "dressing" (R3 map variety): a lighter hand for a map with more open ground than its look's own map.
     const solid = SOLID.has(kind), n = Math.round(count * area * (solid ? Math.min(1, budget + 0.15) : budget) * (terrain.dressing || 1));
     const reach = half - (kind === "ruinFloor" ? 3.2 : 1.2);
@@ -75,6 +104,8 @@ export function planScatter(terrain, budget = 1) {
       add(kind, x, z, s);
     }
   }
+  // The ruins centrepiece (maps.json `centrepiece: "ruins"`, W9): a Builder ring on the plateau at the map's centre.
+  props.push(...centrepieceProps(terrain));
   // A broken line of rocks and shrubs just inside the edge frames the map without hiding units.
   const rim = Math.round(recipe.rim * (terrain.size / 96) * Math.min(1, budget + 0.15));
   for (let i = 0; i < rim; i++) {
@@ -93,6 +124,39 @@ export function planScatter(terrain, budget = 1) {
     }
   });
   return props;
+}
+
+// The Ancient ruins centrepiece (W9): the terrace at the map's centre (a plateau with ramps, the crossroads capture
+// ring on its top: high ground and a ring, both existing rules) dressed as a Builder shrine. Arches, pillars, walls
+// and stone heads stand on its rim, inside the cliff band where no unit stands; carved heads watch from its foot
+// between the ramps; a ring of paving lies flat under the capture ring. Seeded from the map id, view only, and
+// part of the one scatter mesh (no extra draw).
+export function centrepieceProps(terrain) {
+  if (terrain.centrepiece !== "ruins" || !terrain.plateaus?.length) return [];
+  const k = terrain.plateauAt(0, 0), p = terrain.plateaus[k];
+  if (k < 0) return [];
+  const r = rng(hashId(terrain.id) ^ 0x7e3b1e), out = [], half = terrain.half, land = ["grass", "dirt", "sand", "stone"];
+  const place = (kind, x, z, s, a) => out.push({ kind, x, z, s: Math.min(MAX_SCALE, s), a, tone: r(), seed: (r() * 4294967296) >>> 0 });
+  const clear = (x, z, pad) => !terrain.onRamp(x, z, pad) && Math.abs(x) < half - 2 && Math.abs(z) < half - 2;
+  // Distance from the centre to the rim along angle a.
+  const reach = (a) => (p.shape === "disc" ? p.r : rimReach(p, Math.cos(a), Math.sin(a)));
+  const RIM = ["ruinArch", "ruinPillar", "ruinWall", "ruinArch", "stoneHead", "ruinWall", "ruinPillar", "ruinArch"];
+  const n = Math.max(12, Math.round((2 * Math.PI * reach(0)) / 2.6));
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * 6.2832 + 0.13, d = reach(a) - 0.72, x = Math.cos(a) * d, z = Math.sin(a) * d;
+    if (!clear(x, z, 0.6) || !terrain.cliff(x, z)) continue;
+    // Arches and walls run along the rim (local x along the tangent); heads and pillars face outward (local +z).
+    const kind = RIM[i % RIM.length], along = kind === "ruinArch" || kind === "ruinWall";
+    place(kind, x, z, 0.92 + r() * 0.16, along ? a + Math.PI / 2 : a - Math.PI / 2);
+  }
+  // Carved heads and fallen drums at the foot, between the ramps, gazing out over the approaches.
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * 6.2832 + 0.39, d = reach(a) + 1.9, x = Math.cos(a) * d, z = Math.sin(a) * d;
+    if (!clear(x, z, 1.2) || terrain.cliff(x, z, 0.4) || !land.includes(terrain.at(x, z)) || terrain.inWater(x, z, 0.9)) continue;
+    place(i % 2 ? "stoneHead" : "brokenColumn", x, z, 1 + r() * 0.15, a - Math.PI / 2);
+  }
+  if (land.includes(terrain.at(0, 0))) place("ruinFloor", 0, 0, 1.2, r() * 6.2832);
+  return out;
 }
 
 const CAMERA = new THREE.Vector3(25, 51, 43).normalize(); // view.js CAMERA_OFFSET
@@ -146,6 +210,16 @@ class Mesher {
       this.tri(this.at(ox + Math.cos(a) * r, y0, oz + Math.sin(a) * r), this.at(ox + Math.cos(b) * r, y0, oz + Math.sin(b) * r), apex,
         mul(base, shade), mul(base, shade), tip, false, 0, 0, sway);
     }
+  }
+  // A box from local (x0, y0, z0) to (x1, y1, z1) (W9 ruins): flat-shaded sides, a lit top, no bottom.
+  box(x0, y0, z0, x1, y1, z1, side, top, sideTop = side) {
+    this.centre((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2);
+    const a = this.at(x0, y0, z0), b = this.at(x1, y0, z0), c = this.at(x1, y0, z1), d = this.at(x0, y0, z1);
+    const e = this.at(x0, y1, z0), f = this.at(x1, y1, z0), g = this.at(x1, y1, z1), h = this.at(x0, y1, z1);
+    const s0 = mul(side, 0.82), s1 = mul(sideTop, 0.82);
+    this.quad(a, b, f, e, side, side, sideTop, sideTop); this.quad(c, d, h, g, s0, s0, s1, s1);
+    this.quad(b, c, g, f, s0, s0, s1, s1); this.quad(d, a, e, h, side, side, sideTop, sideTop);
+    this.quad(e, f, g, h, top, top, top, top);
   }
   get vertices() { return this.p.length / 3; }
 }
@@ -320,6 +394,140 @@ const SHAPES = {
     }
     const d = 0.3;
     m.quad(ring(0, d), ring(1.57, d), ring(3.14, d), ring(4.71, d), g, g, g, g, true);
+  },
+  // ---- W9 lands -------------------------------------------------------------------------------------------
+  // A fir in three tiers, each tier snow-laden toward its peak, on a short trunk.
+  pine(m, p, C, r) {
+    const h = 1.55 + r() * 0.42, snow = mix(C.foam, C.dust, 0.25), dark = mul(C.leaf, 0.62), light = mix(C.leaf, C.leafAlt, 0.35 + p.tone * 0.3);
+    m.prism(3, 0.08, 0.06, 0, h * 0.24, mul(C.wood, 0.8), C.wood, { cap: false, sideTop: C.wood });
+    const tiers = [[0.54, 0.16, 0.56], [0.42, 0.38, 0.8], [0.3, 0.6, 1]];
+    // Each tier shades from dark needles at its rim to snow toward its peak: from the game camera every tier shows a
+    // white shoulder above a green skirt (separate cap cones were hidden under the tier above).
+    tiers.forEach(([rad, y0, y1], i) => {
+      const spin = 0.3 + i * 0.7, top = mix(light, snow, i === 2 ? 0.92 : 0.8);
+      m.cone(6, rad, h * y0, h * y1, dark, top, { spin, sway: 0.06 * (i + 1) });
+    });
+  },
+  // Frosted grass: pale blades, blue-white at the tips.
+  frost(m, p, C, r) {
+    const tip = mix(C.foam, C.dust, 0.2 + p.tone * 0.3), base = mix(C.dirt, C.leaf, 0.3);
+    for (let i = 0; i < 4; i++) {
+      const a = i * 1.57 + r() * 0.8, h = 0.24 + r() * 0.18, lean = 0.16 + r() * 0.12, c = Math.cos(a), s = Math.sin(a), w = 0.1;
+      m.tri(m.at(c * 0.04 - s * w, 0, s * 0.04 + c * w), m.at(c * 0.04 + s * w, 0, s * 0.04 - c * w), m.at(c * (0.04 + lean), h, s * (0.04 + lean)), base, base, tip, true, 0, 0, h * m.s * 0.5);
+    }
+  },
+  // A rock under a cap of snow: its sides shade from rock to white toward the top.
+  snowRock(m, p, C, r) {
+    const rad = 0.36 + r() * 0.2, h = 0.32 + r() * 0.26, side = mul(C.rock, 0.78 + p.tone * 0.2), snow = mix(C.foam, C.dust, 0.2);
+    m.prism(5, rad, rad * 0.55, 0, h, mul(side, 0.8), snow, { spin: r() * 3, tilt: 0.05, sideTop: mix(side, snow, 0.55) });
+    if (r() < 0.5) m.prism(4, rad * 0.45, rad * 0.22, 0, h * 0.5, mul(side, 0.85), snow, { ox: rad * 0.9, oz: (r() - 0.5) * 0.4, spin: r() * 3, sideTop: side });
+  },
+  // A small lava vent: a basalt cone whose open mouth glows.
+  vent(m, p, C, r) {
+    const rad = 0.5 + r() * 0.18, h = 0.42 + r() * 0.24, basalt = mul(C.stone, 0.85 + p.tone * 0.2), glow = mix(C.bloomA, C.bloomB, 0.4 + p.tone * 0.4);
+    m.prism(7, rad, rad * 0.42, 0, h, mul(basalt, 0.7), glow, { spin: r() * 3, sideTop: mix(basalt, C.bloomC, 0.35) });
+    m.cone(5, rad * 0.3, h, h + 0.12, glow, mix(C.bloomB, [1, 1, 1], 0.5), { spin: r() * 3 });
+  },
+  // A palm: a leaning trunk in four rings and a crown of drooping fronds, a coconut or two.
+  palm(m, p, C, r) {
+    const h = 1.45 + r() * 0.35, lean = 0.28 + r() * 0.2, bark = mix(C.wood, C.dust, 0.3), ring = mul(bark, 0.75);
+    let x = 0, y = 0;
+    for (let i = 0; i < 4; i++) {
+      const y1 = (h * (i + 1)) / 4, x1 = lean * ((i + 1) / 4) ** 1.6;
+      m.prism(5, 0.1 - i * 0.012, 0.09 - i * 0.012, y, y1, i % 2 ? ring : bark, bark, { ox: x, tx: x1 - x, cap: i === 3, sideTop: bark });
+      x = x1; y = y1;
+    }
+    const top = [x, h], frond = mix(C.leaf, C.leafAlt, 0.35 + p.tone * 0.3), dark = mul(C.leaf, 0.7);
+    for (let i = 0; i < 7; i++) {
+      const a = (i / 7) * 6.2832 + r() * 0.4, c = Math.cos(a), s = Math.sin(a), reach = 0.62 + r() * 0.2, droop = 0.22 + r() * 0.12, w = 0.11;
+      const root = m.at(top[0], top[1], 0), mid = m.at(top[0] + c * reach * 0.55, top[1] + 0.06, s * reach * 0.55), tip = m.at(top[0] + c * reach, top[1] - droop, s * reach);
+      const side = (k) => m.at(top[0] + c * reach * 0.5 - s * w * k, top[1] + 0.04, s * reach * 0.5 + c * w * k);
+      m.tri(root, side(1), mid, dark, frond, frond, true, 0.15, 0.2, 0.2);
+      m.tri(root, mid, side(-1), dark, frond, frond, true, 0.15, 0.2, 0.2);
+      m.tri(side(1), tip, mid, frond, frond, frond, true, 0.2, 0.3, 0.2);
+      m.tri(mid, tip, side(-1), frond, frond, frond, true, 0.2, 0.3, 0.2);
+    }
+    if (p.seed % 2) m.cone(4, 0.07, top[1] - 0.16, top[1] - 0.04, mul(C.wood, 0.8), C.wood, { ox: top[0] + 0.06, spin: 0.4 });
+  },
+  // Lagoon coral just under the surface, like the lily pads: flat rosettes in warm colours.
+  coral(m, p, C, r) {
+    const tint = [C.bloomA, C.bloomC, C.bloomB][p.seed % 3], y = -0.06 / m.s, rad = 0.16 + r() * 0.1;
+    for (let k = 0; k < 2 + (p.seed % 2); k++) {
+      const ox = (r() - 0.5) * 0.5, oz = (r() - 0.5) * 0.5, centre = m.at(ox, y, oz), shade = mix(tint, C.water, 0.55 + r() * 0.2);
+      for (let i = 0; i < 5; i++) {
+        const a = (i / 5) * 6.2832, b = ((i + 1) / 5) * 6.2832, d = rad * (0.75 + (i % 2) * 0.35);
+        m.tri(centre, m.at(ox + Math.cos(a) * d, y, oz + Math.sin(a) * d), m.at(ox + Math.cos(b) * d, y, oz + Math.sin(b) * d), mix(tint, C.water, 0.3), shade, shade, true);
+      }
+    }
+  },
+  // ---- Ancient ruins (W9, any land) --------------------------------------------------------------------------
+  // A Builder arch: two square pillars and a lintel with the Lattice inlay; some arches have lost a pillar's top
+  // and half the lintel. Ivy (the land's leaf colour) trails over one pillar.
+  ruinArch(m, p, C, r) {
+    const stone = mul(C.ruin, 0.78 + p.tone * 0.16), lit = mix(C.ruin, [1, 1, 1], 0.2), dark = mul(stone, 0.62), g = C.glow, broken = p.seed % 3 === 0;
+    const w = 0.62, t = 0.17, h = 1.24;
+    m.box(-w - t, 0, -t, -w + t, h, t, dark, lit, stone);
+    m.box(w - t, 0, -t, w + t, broken ? h * 0.55 : h, t, dark, lit, stone);
+    m.box(-w - t - 0.05, h, -t - 0.03, broken ? 0.05 : w + t + 0.05, h + 0.3, t + 0.03, stone, lit, lit);
+    m.centre(0, h + 0.15, 0);
+    const x1 = broken ? -0.05 : w;
+    m.quad(m.at(-w, h + 0.1, t + 0.035), m.at(x1, h + 0.1, t + 0.035), m.at(x1, h + 0.17, t + 0.035), m.at(-w, h + 0.17, t + 0.035), g, g, g, g, true);
+    if (broken) m.box(0.5, 0, 0.3, 0.9, 0.22, 0.6, dark, stone, stone);
+    const ivy = mix(C.leaf, C.leafAlt, 0.3 + p.tone * 0.4);
+    for (let i = 0; i < 3; i++) {
+      const y = 0.25 + i * 0.32;
+      m.tri(m.at(-w - t - 0.02, y, t + 0.02), m.at(-w + t + 0.02, y + 0.1, t + 0.02), m.at(-w + (r() - 0.5) * 0.2, y + 0.34, t + 0.04), mul(C.leaf, 0.8), ivy, ivy, true, 0, 0, 0.05);
+    }
+  },
+  // A carved stone head, half sunk in the ground, moss on its crown: a block with a brow ledge, dark eye slots,
+  // a wedge nose and the Lattice line on its forehead.
+  stoneHead(m, p, C, r) {
+    const stone = mul(C.ruin, 0.72 + p.tone * 0.16), lit = mix(C.ruin, [1, 1, 1], 0.15), dark = mul(stone, 0.58), shadow = mul(stone, 0.35);
+    const h = 0.88 + r() * 0.12;
+    m.box(-0.34, 0, -0.3, 0.34, h, 0.3, dark, lit, stone);
+    m.box(-0.38, h * 0.62, 0.22, 0.38, h * 0.7, 0.36, stone, lit, lit);
+    m.centre(0, h * 0.5, 0.4);
+    for (const side of [-1, 1]) m.quad(m.at(side * 0.08, h * 0.5, 0.305), m.at(side * 0.24, h * 0.5, 0.305), m.at(side * 0.24, h * 0.58, 0.305), m.at(side * 0.08, h * 0.58, 0.305), shadow, shadow, shadow, shadow, true);
+    m.centre(0, h * 0.4, 0.2);
+    m.tri(m.at(-0.07, h * 0.3, 0.3), m.at(0.07, h * 0.3, 0.3), m.at(0, h * 0.58, 0.4), stone, stone, lit);
+    m.tri(m.at(-0.07, h * 0.3, 0.3), m.at(0, h * 0.58, 0.4), m.at(0, h * 0.3, 0.42), dark, lit, stone);
+    m.tri(m.at(0.07, h * 0.3, 0.3), m.at(0, h * 0.3, 0.42), m.at(0, h * 0.58, 0.4), dark, stone, lit);
+    m.quad(m.at(-0.2, h * 0.2, 0.305), m.at(0.2, h * 0.2, 0.305), m.at(0.2, h * 0.24, 0.305), m.at(-0.2, h * 0.24, 0.305), shadow, shadow, shadow, shadow, true);
+    const g = C.glow;
+    m.quad(m.at(-0.16, h * 0.8, 0.305), m.at(0.16, h * 0.8, 0.305), m.at(0.16, h * 0.84, 0.305), m.at(-0.16, h * 0.84, 0.305), g, g, g, g, true);
+    const moss = mix(C.leaf, C.leafAlt, 0.4 + p.tone * 0.4);
+    m.cone(5, 0.3, h, h + 0.12, mul(C.leaf, 0.8), moss, { spin: r() * 3 });
+  },
+  // A low overgrown wall: a broken run of blocks with a gap, ivy and grass along its top.
+  ruinWall(m, p, C, r) {
+    const stone = mul(C.ruin, 0.74 + p.tone * 0.16), lit = mix(C.ruin, [1, 1, 1], 0.18), dark = mul(stone, 0.6);
+    const h0 = 0.46 + r() * 0.3;
+    m.box(-0.95, 0, -0.16, -0.12, h0, 0.16, dark, lit, stone);
+    m.box(0.12, 0, -0.16, 0.95, h0 * (0.55 + r() * 0.35), 0.16, dark, lit, stone);
+    m.box(-0.5, h0, -0.13, -0.18, h0 + 0.14, 0.13, stone, lit, lit);
+    const ivy = mix(C.leaf, C.leafAlt, 0.35 + p.tone * 0.4), base = mul(C.leaf, 0.75);
+    for (let i = 0; i < 5; i++) {
+      const x = -0.85 + i * 0.4, top = i < 2 ? h0 : h0 * 0.55;
+      m.tri(m.at(x - 0.1, top - 0.24, 0.17), m.at(x + 0.12, top - 0.2, 0.17), m.at(x + (r() - 0.5) * 0.1, top + 0.1, 0.12), base, ivy, ivy, true, 0, 0, 0.06);
+    }
+  },
+  // Fallen column drums: a fluted drum lying on its side and a broken stub upright beside it.
+  brokenColumn(m, p, C, r) {
+    const stone = mul(C.ruin, 0.76 + p.tone * 0.16), lit = mix(C.ruin, [1, 1, 1], 0.2), g = C.glow;
+    const length = 0.75 + r() * 0.35, rad = 0.22, n = 6, ends = [[], []];
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * 6.2832 + 0.26;
+      ends[0].push(m.at(-length / 2, rad + Math.sin(a) * rad, Math.cos(a) * rad));
+      ends[1].push(m.at(length / 2, rad + Math.sin(a) * rad, Math.cos(a) * rad));
+    }
+    m.centre(0, rad, 0);
+    for (let i = 0; i < n; i++) {
+      const j = (i + 1) % n, shade = i % 2 ? stone : mul(stone, 0.86);
+      m.quad(ends[0][i], ends[0][j], ends[1][j], ends[1][i], shade, shade, shade, shade);
+    }
+    for (const end of ends) for (let i = 1; i < n - 1; i++) m.tri(end[0], end[i], end[i + 1], lit, lit, lit);
+    m.prism(6, 0.24, 0.22, 0, 0.32 + r() * 0.16, mul(stone, 0.66), lit, { ox: 0.15, oz: 0.55, tilt: 0.06, sideTop: stone });
+    m.prism(6, 0.25, 0.25, 0.14, 0.18, g, g, { ox: 0.15, oz: 0.55, cap: false });
   },
   lily(m, p, C, r) {
     const pad = mix(C.leaf, C.leafAlt, p.tone), rad = 0.2 + r() * 0.1, y = -0.058 / m.s, centre = m.at(0, y, 0);
