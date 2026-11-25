@@ -27,6 +27,7 @@ import { doctrines } from "./doctrines.js";
 import { ward } from "./ward.js";
 import { campaignCreatures } from "./campaign-creatures.js";
 import { kiteDive } from "./kite-dive.js";
+import { commanderRanks } from "./commander-ranks.js";
 
 export const CONTENT = [
   suppression,
@@ -49,4 +50,5 @@ export const CONTENT = [
   ward,
   campaignCreatures,
   kiteDive,
+  commanderRanks,
 ];

@@ -254,6 +254,34 @@ await suite("defence", async () => {
     await page.waitForTimeout(250);
     await shot(page, `defence-commander-barrage-${viewport}`);
 
+    // Commander ranks (2026-11-25): Rank up sits on the commander's own sheet (no sub-menu); one tap buys
+    // the next rank, twice reaches Rank 3, where Artillery and Rally stand side by side.
+    await page.evaluate(() => { const s = window.__frontier.sim; s.players[0].alloy = Math.max(s.players[0].alloy, 1500); window.__frontier.step(0.05); });
+    await page.waitForSelector('#commands [data-defence-hero="rank"]:not([disabled])', { timeout: TIMEOUT.step });
+    await bigEnough(page.locator('#commands [data-defence-hero="rank"]'), `${viewport} commander rank tile`);
+    for (const rank of [2, 3]) {
+      await tap('#commands [data-defence-hero="rank"]');
+      await page.waitForFunction((rank) => window.__frontier.sim.defence.hero.rank === rank && document.querySelector("#command-context")?.textContent.includes(`RANK ${rank}`), rank, { timeout: TIMEOUT.step });
+      if (rank === 2) await page.waitForSelector('#commands [data-defence-hero="rank"]:not([disabled])', { timeout: TIMEOUT.step });
+    }
+    await page.waitForSelector('#commands [data-defence-hero="artillery"]:not([disabled])', { timeout: TIMEOUT.step });
+    await bigEnough(page.locator('#commands :is([data-defence-hero="artillery"], [data-defence-hero="rally"])'), `${viewport} commander branch tile`);
+    const heroCard = await page.evaluate(() => {
+      const tiles = [...document.querySelectorAll("#commands .command-tile, #commands .defence-stats")].filter((el) => el.offsetParent !== null);
+      const out = tiles.filter((el) => { const b = el.getBoundingClientRect(); return b.right > innerWidth + 1 || b.bottom > innerHeight + 1 || b.left < -1; }).map((el) => el.textContent.trim());
+      const small = [...document.querySelectorAll("#commands *")].filter((el) => el.offsetParent !== null && [...el.childNodes].some((n) => n.nodeType === 3 && n.data.trim()) && parseFloat(getComputedStyle(el).fontSize) < 11).map((el) => el.textContent);
+      const stats = document.querySelector("#commands [data-defence-stats]")?.textContent || "";
+      return { out, small, stats, shield: window.__frontier.sim.commander()?.maxShield };
+    });
+    assert.deepEqual(heroCard.out, [], `${viewport}: commander tiles off screen`);
+    assert.deepEqual(heroCard.small, [], `${viewport}: commander text under 11 px`);
+    assert.match(heroCard.stats, /160/, `${viewport}: the sheet shows Barrage's new damage`);
+    assert.equal(heroCard.shield, 700, `${viewport}: Rank 2 shield`);
+    await noSideScroll(page, `${viewport} commander ranks`);
+    await shot(page, `defence-commander-ranks-${viewport}`);
+    await tap('#commands [data-defence-hero="artillery"]');
+    await page.waitForFunction(() => window.__frontier.sim.defence.hero.branch === "artillery" && document.querySelector('#commands [data-defence-hero="rank"]'), null, { timeout: TIMEOUT.step });
+
     // Call wave: the first wave comes now, for a bonus.
     // On a slow runner the 30 s countdown can run out during the steps above (the commander walk alone
     // steps 14 s) and wave 1 then starts by itself: give the countdown time again and count from the

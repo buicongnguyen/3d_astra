@@ -1,17 +1,19 @@
 // Frontier Defence, what a tap or a click on the battlefield or on the command card does:
 // picking pads, towers, bridges, zone spots and squads, and the commands they send.
 import { GHOST_MS } from "./constants.js";
+import { commanderStats } from "../../sim/defence/commander.js";
 
 export function createInput(c) {
   const { S, A, Z, root, ui, phone, selectedSquad } = c;
-  const { GARRISONS, $ } = c.deps;
+  const { $ } = c.deps;
   // Called across modules: bound when every module exists.
   const nearestPad = (...a) => c.nearestPad(...a);
   const nearestBridge = (...a) => c.nearestBridge(...a);
   // The commander's aimed abilities: the reach ring around it until a spot is tapped.
   function setAim(which) {
     ui.aim = which;
-    const hero = S.sim.commander(), c = GARRISONS.commander;
+    // The ring follows the commander's ranks (Artillery's wider Barrage).
+    const hero = S.sim.commander(), c = commanderStats(S.sim.defence?.hero);
     if (!which || !hero) { ui.aim = null; S.view.tactics?.clearAim(); return; }
     const a = c[which];
     S.view.tactics?.showAim([hero], a.range, which === "barrage" ? a.radius : 2.5, null, false);
@@ -56,6 +58,10 @@ export function createInput(c) {
     const hero = S.sim.commander();
     if (!Z.started || Z.paused || S.sim.result || !hero) return;
     if (id === "focus") S.view.focusOn(hero.x, hero.z);
+    // Commander ranks (2026-11-25): one tap buys the next rank, or the branch tapped.
+    else if (id === "rank" || id === "artillery" || id === "rally") {
+      if (S.sim.command({ team: 0, type: "heroUpgrade", ...(id === "rank" ? {} : { branch: id }) })) A.tone(id === "rank" ? 760 : 880, 0.14);
+    } else if (id === "top") return;
     else setAim(ui.aim === id ? null : id);
     A.updateUI();
   }

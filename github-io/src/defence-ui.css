@@ -322,6 +322,9 @@
 #commands .command-tile.defence-armour-up { border: 2px solid rgba(255, 199, 94, 0.55); }
 #commands .defence-rank-pips { display: inline-flex; gap: 3px; margin-left: 4px; vertical-align: middle; }
 #commands .defence-rank-pips > i { width: 7px; height: 7px; transform: rotate(45deg); background: #ffe9a8; box-shadow: 0 0 4px rgba(255, 210, 120, 0.8); }
+/* The commander's pips ride beside its name, clear of the key badge in the tile's corner (commander ranks). */
+#commands .defence-info > span > .defence-rank-pips { gap: 2px; margin-left: 3px; }
+#commands .defence-info > span > .defence-rank-pips > i { width: 5px; height: 5px; }
 
 /* ---- AAA round 2, W1-F: speed and view buttons, trait chips, the new-enemy card, tower stats and Aim. ---- */
 #defence-speed { padding: 0 8px !important; border-color: var(--line-2, rgba(168, 214, 212, 0.24)) !important; background: rgba(255, 255, 255, 0.06) !important; }
@@ -364,6 +367,12 @@
 #commands .defence-stats b { color: var(--text-1, #f1f6f3); font-weight: 800; }
 .compact-ui #commands:has(> [data-tiles]) { padding-top: 4px; }
 .compact-ui #commands:has(> [data-tiles="5"]) .defence-stats { grid-column: span 1; }
+/* The commander's figures (commander ranks, 2026-11-25) always take the sheet's full width. */
+.compact-ui #commands:has(.defence-hero-up) > .defence-stats, #commands:has(.defence-hero-up) > .defence-stats { grid-column: 1 / -1; }
+/* PC: the commander tile drops its picture beside the rank tiles, so its name and health fit. */
+:root:not(.compact-ui) #commands:has(.defence-hero-up) > .defence-info > :is(.portrait-art, .portrait, .icon) { display: none; }
+:root:not(.compact-ui) #commands:has(.defence-hero-up) > .defence-info { grid-template-columns: minmax(0, 1fr) !important; justify-items: center; }
+:root:not(.compact-ui) #commands:has(.defence-hero-up) > .defence-info > :is(span, small) { grid-column: 1 / -1 !important; }
 :root:not(.compact-ui) #commands:has(> [data-tiles="4"]) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 :root:not(.compact-ui) #commands:has(> [data-tiles="5"]) { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 :root:not(.compact-ui) #commands:has(> [data-tiles="5"]) .command-tile > span { font-size: 12px; }

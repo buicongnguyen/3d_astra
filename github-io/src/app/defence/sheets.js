@@ -1,6 +1,7 @@
 // Frontier Defence, the command card sheets (pad, zone, tower, commander, armour, depot, bridge)
 // and the selection panel. Text only; the clicks are handled in input.js.
-import { CREW_LABEL, CREW_ROLE, BRANCH_TEXT, RANK_TEXT, ARMOUR_TEXT, PAD_NOTE, AIM_LABEL, AIM_TEXT } from "./constants.js";
+import { CREW_LABEL, CREW_ROLE, BRANCH_TEXT, RANK_TEXT, ARMOUR_TEXT, COMMANDER_TEXT, PAD_NOTE, AIM_LABEL, AIM_TEXT } from "./constants.js";
+import { commanderStats, commanderLevel } from "../../sim/defence/commander.js";
 
 export function createSheets(c) {
   const { S, A, Z, root, ui, key, kbd, motionOff, selectedSquad } = c;
@@ -103,16 +104,28 @@ export function createSheets(c) {
     const line2 = next && !choose ? `<p><span>Next</span>: ${sign(dps(next) - dps(now))}${num(Math.abs(dps(next) - dps(now)), 0)} <span>dps</span> · ${sign(next.range - now.range)}${num(Math.abs(next.range - now.range), 1)} <span>m</span> · ${sign(next.maxHp - now.maxHp)}${num(Math.abs(next.maxHp - now.maxHp), 0)} <span>HP</span></p>` : "";
     return `<div class="defence-stats" data-defence-stats><p>${line1}</p>${line2}</div>`;
   }
+  // The commander (0.21): Barrage, Reinforce, the commander itself, and (commander ranks, 2026-11-25) its next
+  // rank right on the sheet: Rank up, the two branches side by side at Rank 3, then Top rank; the figures below.
   function heroSheet(hero) {
-    const c = GARRISONS.commander;
+    const h = S.sim.defence.hero, c = commanderStats(h), level = commanderLevel(h), top = 1 + (GARRISONS.commander.ranks?.length || 0) + 2;
+    const next = S.sim.commanderNextUpgrade?.() || null, C = GARRISONS.commander;
     $("command-label").textContent = "FIELD COMMANDER";
-    $("command-context").textContent = ui.aim ? "TAP THE ROAD" : "ON THE FIELD";
+    $("command-context").textContent = ui.aim ? "TAP THE ROAD" : `RANK ${level} / ${top}`;
     const tile = (id, i, label, ic, title) => `<button class="command-tile defence-ability" data-defence-hero="${id}" data-hotkey="${key(i)}" aria-pressed="${ui.aim === id}" title="${key(i)} · ${title}">${kbd(key(i))}${icon(ic)}<span>${label}</span><small data-cooldown="${id}" translate="no"></small></button>`;
-    $("commands").innerHTML = `<i hidden data-defence-sheet data-key="h:${hero.id}:${ui.aim || ""}"></i>
-      ${tile("barrage", 0, "Barrage", "barrage", `Barrage: shell a spot within ${c.barrage.range} m, ${c.barrage.damage} damage over ${c.barrage.radius} m`)}
-      ${tile("reinforce", 1, "Reinforce", "shield", `Reinforce: three Vanguards hold the road for ${c.reinforce.seconds} s`)}
-      <button class="command-tile defence-info" data-defence-hero="focus" data-hotkey="${key(2)}" title="${key(2)} · ${c.name}">${kbd(key(2))}${hasPortrait(hero.type) ? portrait(hero.type) : icon("flag")}<span>Field commander</span><small><b translate="no">${Math.round(hero.hp)}</b></small></button>`;
-    $("command-hint").textContent = ui.aim === "barrage" ? "Tap a spot inside the ring to shell it." : ui.aim === "reinforce" ? "Tap the road inside the ring to drop three Vanguards." : "Tap the road to send the commander. It holds there and blocks the column.";
+    const upTile = (id, i, ic, label, cost, text) => `<button class="command-tile defence-hero-up" data-defence-hero="${id}" data-cost="${cost}" data-hotkey="${key(i)}" aria-label="${label}, ${cost} alloy" title="${key(i)} · ${text}">${kbd(key(i))}${icon(ic)}<span>${label}</span><small><b class="alloy-text" translate="no">${cost}</b></small></button>`;
+    const stepText = !next ? "" : next.kind === "rank" ? COMMANDER_TEXT[`rank${next.rank}`] : next.kind === "branchRank" ? COMMANDER_TEXT[next.branch]?.[next.rank - 1] : "";
+    const ups = !next ? `<button class="command-tile defence-hero-up" data-defence-hero="top" data-hotkey="${key(3)}" disabled title="${key(3)} · Top rank">${kbd(key(3))}${icon(h.branch === "rally" ? "rally" : "barrage")}<span>Top rank</span><small>${icon("check")}</small></button>`
+      : next.kind === "branch" ? Object.entries(C.branches).map(([id, b], i) => upTile(id, 3 + i, id === "rally" ? "rally" : "barrage", b.name, next.costs[id], COMMANDER_TEXT[id][0])).join("")
+      : upTile("rank", 3, "levelup", "Rank up", next.cost, stepText);
+    const tiles = next?.kind === "branch" ? 5 : 4, b = c.barrage, r = c.reinforce, num = (n) => `<b translate="no">${Math.round(n * 10) / 10}</b>`;
+    const stats = `<div class="defence-stats" data-defence-stats><p><span>Barrage</span> ${num(b.damage)}${b.shells > 1 ? ` ×${num(b.shells)}` : ""} · ${num(b.radius)} <span>m</span> · ${num(b.cooldown)} <span>s</span> · <span>Reinforce</span> ${num(r.count)} · ${num(r.seconds)} <span>s</span></p>${stepText ? `<p><span>Next</span>: <span>${stepText}</span></p>` : ""}</div>`;
+    const pips = level > 1 ? `<i class="defence-rank-pips" data-rank="${level - 1}">${"<i></i>".repeat(level - 1)}</i>` : "";
+    $("commands").innerHTML = `<i hidden data-defence-sheet data-tiles="${tiles}" data-key="h:${hero.id}:${ui.aim || ""}:${level}${h.branch || ""}"></i>
+      ${tile("barrage", 0, "Barrage", "barrage", `Barrage: shell a spot within ${b.range} m, ${b.damage} damage over ${b.radius} m`)}
+      ${tile("reinforce", 1, "Reinforce", "shield", `Reinforce: ${r.count} Vanguards hold the road for ${r.seconds} s`)}
+      <button class="command-tile defence-info" data-defence-hero="focus" data-hotkey="${key(2)}" title="${key(2)} · ${c.name}${h.branch ? ` · ${C.branches[h.branch].name}` : ""}">${kbd(key(2))}${hasPortrait(hero.type) ? portrait(hero.type) : icon("flag")}<span>Hero${pips}</span><small><b translate="no">${Math.round(hero.hp)}</b></small></button>${ups}${stats}`;
+    $("command-hint").textContent = ui.aim === "barrage" ? "Tap a spot inside the ring to shell it." : ui.aim === "reinforce" ? "Tap the road inside the ring to drop the Vanguards."
+      : next?.kind === "branch" ? "Rank 3: pick Artillery (a wider, faster Barrage) or Rally (more, tougher Vanguards). It cannot be changed." : "Tap the road to send the commander. It holds there and blocks the column.";
   }
   function bridgeSheet(x) {
     const s = S.sim, c = s.crossings?.[x], state = c?.state || "open", cost = GARRISONS.demolish.cost;
@@ -181,7 +194,7 @@ export function createSheets(c) {
     // 0.23: a spot in a build zone, an armour squad, the armour depot.
     const spot = !es.length && !pad && bridge === null ? S.defenceSpot : null, depot = !es.length && !pad && !spot && bridge === null && S.defenceDepot && !!S.sim.armourRules();
     const lead = squad ? S.sim.armourUnits(squad)[0] : null;
-    const k = tower ? `t:${tower.id}:${tower.tier}:${tower.branch || ""}:${tower.branchRank || 0}:${tower.aim || ""}` : hero ? `h:${hero.id}:${ui.aim || ""}` : squad ? `a:${squad}:${S.sim.armourModeOf(squad)}:${es.length}:${lead?.squadRank || 1}${lead?.squadBranch || ""}${lead?.combined ? "+c" : ""}` : pad ? `p:${pad.id}` : bridge !== null ? `b:${bridge}:${S.sim.crossingState(bridge)}` : spot ? `z:${spot.zone}:${spot.x}:${spot.z}` : depot ? "d" : `${c.guideActive?.() ? "none:g" : "none"}:${!!c.freePad?.()}`;
+    const k = tower ? `t:${tower.id}:${tower.tier}:${tower.branch || ""}:${tower.branchRank || 0}:${tower.aim || ""}` : hero ? `h:${hero.id}:${ui.aim || ""}:${commanderLevel(S.sim.defence.hero)}${S.sim.defence.hero?.branch || ""}` : squad ? `a:${squad}:${S.sim.armourModeOf(squad)}:${es.length}:${lead?.squadRank || 1}${lead?.squadBranch || ""}${lead?.combined ? "+c" : ""}` : pad ? `p:${pad.id}` : bridge !== null ? `b:${bridge}:${S.sim.crossingState(bridge)}` : spot ? `z:${spot.zone}:${spot.x}:${spot.z}` : depot ? "d" : `${c.guideActive?.() ? "none:g" : "none"}:${!!c.freePad?.()}`;
     const marker = $("commands").querySelector("[data-defence-sheet]");
     if (marker?.dataset.key !== k) {
       $("commands").classList.remove("tactics-card");
@@ -200,6 +213,14 @@ export function createSheets(c) {
     if (squad) { const hp = $("commands").querySelector("[data-armour-hp]"), text = String(Math.round(es.reduce((n, e) => n + e.hp, 0))); if (hp && hp.textContent !== text) hp.textContent = text; }
     for (const b of $("commands").querySelectorAll("[data-defence-branch]")) b.disabled = blocked || alloy < S.sim.branchCost(tower.crew, b.dataset.defenceBranch);
     for (const b of $("commands").querySelectorAll(".defence-armour-up[data-cost]")) b.disabled = blocked || alloy < Number(b.dataset.cost);
+    // Commander ranks: affordable steps light up (embers once, like a tower's upgrade).
+    const heroUps = hero ? [...$("commands").querySelectorAll(".defence-hero-up[data-cost]")] : [];
+    if (heroUps.length) {
+      for (const b of heroUps) b.disabled = blocked || alloy < Number(b.dataset.cost);
+      const can = heroUps.some((b) => !b.disabled);
+      if (can && !ui.affordable && !blocked) burst(heroUps.find((b) => !b.disabled));
+      ui.affordable = can;
+    }
     const rankUp = $("commands").querySelector('[data-defence-act="rank"]');
     if (rankUp && tower) {
       const r = tower.branch ? S.sim.rankOf(tower.crew, tower.branch, tower.branchRank || 0) : null, can = !!r && alloy >= r.cost;

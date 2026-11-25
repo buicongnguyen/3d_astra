@@ -11,11 +11,16 @@
 //   greedy   one crew type only (`crew`), always the best free pad, then upgrades, no commander
 //            orders (must not reach 3 stars).
 // `demolish: true` also blows the bridge on the busiest open route once (river levels).
+// `commander` (commander ranks, 2026-11-25): "off" (the default: check:defence and the golden pins buy
+// no commander rank), "late" (from the fifth wave, with the spreading done, like the armour ranks:
+// Rank 2, Rank 3, then Artillery when the next wave is big, else Rally, and its second rank, each as
+// soon as it is affordable, ahead of towers) or "first" (every commander step as soon as it is affordable, ahead of any tower).
 import { Simulation } from "../src/simulation.js";
 import { DEFINITIONS as D } from "../src/data.js";
 import { waveCount } from "../src/sim/missions.js";
 import { GARRISONS } from "../src/sim/defence.js";
 import { CROSSINGS } from "../src/terrain.js";
+import { commanderStats } from "../src/sim/defence/commander.js";
 
 const SAMPLE = 1; // metres between road samples
 const THINK = 0.5; // seconds between decisions
@@ -23,8 +28,9 @@ const THINK = 0.5; // seconds between decisions
 const BRANCH = { ranger: ["suppressor", "marksman"], breaker: ["cluster", "guided"], antitank: ["heavy", "rapid"], watcher: ["beacon", "fareye"], tank: ["breacher", "shrapnel"], scorcher: ["inferno", "firewall"] };
 
 export class DefenceBot {
-  constructor(sim, { policy = "bot", crew = "ranger", callEarly = true, demolish = false } = {}) {
+  constructor(sim, { policy = "bot", crew = "ranger", callEarly = true, demolish = false, commander = "off" } = {}) {
     this.sim = sim;
+    this.commanderPlan = commander;
     this.policy = policy;
     this.crew = crew;
     this.callEarly = callEarly;
@@ -209,6 +215,10 @@ export class DefenceBot {
     const upCost = up ? s.crewCost(up.t.crew, up.t.tier + 1) : Infinity;
     // Spread first (more towers as the waves grow), then raise the best-covering tower.
     const wanted = Math.min(this.def.pads.length + this.zoneRoom(), 3 + d.wave + this.offset);
+    // Commander ranks first (only under commander: "first"): each step as soon as it is affordable.
+    if (this.policy === "bot" && this.commanderPlan === "first" && this.upgradeCommander(alloy)) return;
+    // Under "late": the same from the fifth wave (armour ranks start then too).
+    if (this.policy === "bot" && this.commanderPlan === "late" && d.wave + this.offset >= 5 && this.upgradeCommander(alloy)) return;
     // Armour (0.23): a squad once the first towers stand, a second from the fourth wave.
     if (this.policy === "bot" && this.buyArmour(towers, alloy, cost)) return;
     if (best && (towers.length < wanted || !up)) { if (alloy >= cost) s.command(best.p.zone && !best.p.id ? { team: 0, type: "zoneBuild", zone: best.p.zone, x: best.p.x, z: best.p.z, crew } : { team: 0, type: "padBuild", pad: best.p.id, crew }); }
@@ -239,7 +249,7 @@ export class DefenceBot {
   lead(towers) {
     const s = this.sim, hero = s.commander();
     if (!hero) return;
-    const c = GARRISONS.commander;
+    const c = commanderStats(s.defence.hero);
     if (this.postClock <= 0 && towers.length) {
       this.postClock = 10;
       const weight = this.routeWeights();
@@ -277,6 +287,16 @@ export class DefenceBot {
       }
     }
   }
+  // The commander's next step when there is alloy for it; true when one was bought.
+  upgradeCommander(alloy) {
+    const s = this.sim, next = s.commanderNextUpgrade?.();
+    if (!next) return false;
+    if (next.kind === "branch") {
+      const branch = this.nextWave().reduce((a, u) => a + u.count, 0) >= 10 ? "artillery" : "rally";
+      return alloy >= next.costs[branch] && s.command({ team: 0, type: "heroUpgrade", branch });
+    }
+    return alloy >= next.cost && s.command({ team: 0, type: "heroUpgrade" });
+  }
   // Blows the bridge of the open route the coming waves use most, once, with alloy to spare.
   blowBridge() {
     const s = this.sim;
@@ -294,15 +314,15 @@ export class DefenceBot {
 }
 
 // Plays one level to the end. Returns { result, lives, stars, medal, seconds, towers, bounty, wave, held }.
-export function playDefence(level, { difficulty = "standard", policy = "bot", crew = "ranger", limit = 1500, demolish = false, maxWaves = Infinity } = {}) {
+export function playDefence(level, { difficulty = "standard", policy = "bot", crew = "ranger", limit = 1500, demolish = false, maxWaves = Infinity, commander = "off" } = {}) {
   const sim = new Simulation({ map: level.map, enemyCount: level.enemies || 1, ai: false, mission: level, difficulty });
-  const bot = new DefenceBot(sim, { policy, crew, demolish });
+  const bot = new DefenceBot(sim, { policy, crew, demolish, commander });
   for (let i = 0; i < limit * 20 && !sim.result && sim.defence.cleared < maxWaves; i++) { bot.step(0.05); sim.tick(0.05); }
   const medal = sim.result === "victory" ? sim.mission.medal : null;
   return {
     result: sim.result || "timeout", lives: sim.defence.lives, medal, stars: { gold: 3, silver: 2, bronze: 1 }[medal] || 0,
     seconds: Math.round(sim.time), wave: sim.defence.wave, held: sim.defence.cleared,
     towers: sim.entities.filter((e) => e.crew && e.hp > 0).map((e) => `${e.crew[0]}${e.tier}${e.branch ? e.branch[0] : ""}${e.branchRank || ""}`).join(""),
-    bounty: sim.defence.bounty, sim,
+    bounty: sim.defence.bounty, hero: sim.defence.hero ? `R${(sim.defence.hero.rank || 1)}${sim.defence.hero.branch ? `${sim.defence.hero.branch[0]}${sim.defence.hero.branchRank}` : ""}` : "", sim,
   };
 }
