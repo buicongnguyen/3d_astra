@@ -1585,7 +1585,36 @@
     "Falling star": "유성",
     "Land 3 Kite Dives": "카이트 급강하 3회 명중",
     "Wyrm whisperer": "웜 조련사",
-    "Tame a Dune Wyrm": "듄 웜 길들이기"
+    "Tame a Dune Wyrm": "듄 웜 길들이기",
+    "Daily challenges": "일일 도전",
+    "Challenges complete": "완료한 도전",
+    "Challenge day complete": "도전의 날 완료",
+    "Challenge days:": "도전의 날:",
+    "New goals every day. Each pays Commander XP once; all three make a challenge day, which unlocks rewards.": "매일 새로운 목표. 각 목표는 사령관 경험치를 한 번 줍니다. 세 개를 모두 끝내면 도전의 날이 되고, 보상이 해금됩니다.",
+    "Achievements, daily challenges and match history": "업적, 일일 도전, 전투 기록",
+    "Swift strike": "신속 타격",
+    "Win a Skirmish within 15 minutes": "15분 안에 교전 승리",
+    "Win a Skirmish losing 8 units or fewer": "유닛 손실 8 이하로 교전 승리",
+    "Sky scout": "하늘 정찰",
+    "Win a Skirmish with a Kite scout": "카이트 정찰기를 써서 교전 승리",
+    "Two fronts": "두 개의 전선",
+    "Win a Skirmish against 2+ AI": "AI 2명 이상 상대로 교전 승리",
+    "Destroy 40 units in a Skirmish win": "승리한 교전에서 유닛 40 처치",
+    "Expedition": "원정",
+    "Win any campaign mission": "캠페인 임무 아무거나 승리",
+    "Polished": "완벽한 마무리",
+    "Earn silver or gold in a mission": "임무에서 은메달 이상 획득",
+    "Extra mile": "한 걸음 더",
+    "Complete an optional objective": "선택 목표 1개 완료",
+    "Tactician": "전술가",
+    "Use 3 abilities in a mission win": "승리한 임무에서 능력 3회 사용",
+    "Win a Defence level": "방어전 레벨 승리",
+    "Three stars": "별 셋",
+    "Earn 3 stars on a Defence level": "방어전 레벨에서 별 3개 획득",
+    "Promotion": "진급",
+    "Raise the Field commander to Rank 3": "야전 사령관을 계급 3으로 승급",
+    "Endurance": "인내",
+    "Hold 10 waves in Endless or Daily": "무한 또는 일일에서 웨이브 10개 막기"
   },
   "patterns": [
     [
@@ -2475,6 +2504,10 @@
     [
       "^In the campaign, Dune Wyrm nests wait off the roads in Three-Way Dunes and A Debt in the Dunes\\. Clear the Wyrmlings, then keep your troops in the nest for (\\d+) s\\. Taming one is always optional\\.$",
       "캠페인에서는 삼파전 사구와 사구의 빚 임무의 길에서 벗어난 곳에 듄 웜 둥지가 있습니다. 새끼 웜을 처치한 뒤 부대를 둥지 안에 {1}초 동안 두세요. 길들이기는 언제나 선택입니다."
+    ],
+    [
+      "^Challenge complete · \\+(\\d+) XP$",
+      "도전 완료 · +{1} XP"
     ]
   ]
 }

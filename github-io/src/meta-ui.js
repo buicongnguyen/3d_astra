@@ -1,6 +1,6 @@
 // Replay value on the page (W6, docs/aaa/ROADMAP_TO_AAA_2026-11-25.md): the service record and the
 // achievements (src/meta/record.js, src/story/achievements.js) with their toast, the "Records" tile on the
-// title and the Records screen.
+// title and the Records screen, and the daily challenges (src/meta/challenges.js) as three tiles on the title.
 //
 // Every finished match (ceremony.js onMatchEnd) is described once (matchContext) and added to the record.
 // A few achievements can be reached mid-match (a Kite Dive, a tamed Wyrm, a Field commander rank): a light
@@ -18,6 +18,8 @@ import { loadDefence } from "./defence/progress.js";
 import { playerFactionOf } from "./factions.js";
 import { ACHIEVEMENTS, achievementsFor, recordMoreAchievements, goldActs, goldCount } from "./story/achievements.js";
 import { loadRecord, saveRecord, addMatch } from "./meta/record.js";
+import { CHALLENGE_XP, dailyChallenges, loadChallenges, saveChallenges, judgeChallenges } from "./meta/challenges.js";
+import { localDay } from "./profile-rank.js";
 
 const esc = (text) => String(text ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 // The campaign's thirteen carry no icon of their own (story/achievements.js); these suit them.
@@ -32,10 +34,15 @@ export function setupMeta(S, A) {
   const progress = () => S.campaign || loadProgress();
   const all = () => achievementsFor(progress(), extra());
 
+  // The daily challenges: today's three and what is done (the date is read on the page, never by a match;
+  // browser tests may pin it with ?day=YYYY-MM-DD).
+  const today = () => (/^\d{4}-\d{2}-\d{2}$/.test(S.query?.get?.("day") || "") ? S.query.get("day") : localDay());
+  let challenges = loadChallenges(today());
+
   // ---------- the summary the medal cosmetics read (src/meta/rewards.js) ----------
   function syncMeta() {
     const p = progress(), list = all();
-    record = { ...record, meta: { ...record.meta, ach: list.filter((a) => a.done).length, gold: goldCount(p), goldActs: goldActs(p) } };
+    record = { ...record, meta: { ...record.meta, ach: list.filter((a) => a.done).length, gold: goldCount(p), goldActs: goldActs(p), sets: challenges.sets } };
   }
 
   // ---------- the toast: one line at a time at the top, never over the dock or the minimap, taps pass through ----------
@@ -63,6 +70,7 @@ export function setupMeta(S, A) {
     toast.classList.add("in");
     setTimeout(nextToast, S.query?.has("test") ? 1500 : 3400);
   }
+  const challengeToast = (c) => `${icon(c.icon)}<span class="meta-toast-text"><small>Challenge complete · +${CHALLENGE_XP} XP</small><strong>${esc(c.title)}</strong></span>`;
   const achievementToast = (a) => `${icon(achIcon(a))}<span class="meta-toast-text"><small>Achievement earned</small><strong>${esc(a.title)}</strong></span>`;
 
   // ---------- earning: the campaign's live in its progress (src/campaign.js saves them), the rest in the record ----------
@@ -101,20 +109,32 @@ export function setupMeta(S, A) {
     record = addMatch(record, ctx);
     // Defence stars were just saved by the Defence result (app/defence/result.js): read them again.
     if (ctx.mode === "defence") S.defenceProgress = loadDefence();
+    // Today's challenges: each met one pays Commander XP once (rank-ui.js), all three make a challenge day.
+    const day = today(), judged = judgeChallenges(challenges, ctx, day);
+    challenges = judged.state;
+    if (judged.met.length) saveChallenges(challenges);
+    const award = judged.xp ? A.rankAward?.(judged.xp) : null;
     const earned = earn(false);
-    last = { ctx, earned: earned.map((a) => a.id) };
-    resultsRow(summary?.root, earned);
+    last = { ctx, earned: earned.map((a) => a.id), challenges: judged.met.map((c) => c.id), xp: judged.xp, set: judged.set, rankUp: !!award?.rankUp };
+    resultsRow(summary?.root, earned, judged);
+    for (const c of judged.met) showToast(challengeToast(c), "challenge");
     for (const a of earned) showToast(achievementToast(a));
+    renderChallenges();
   }
-  // A row on the results screen: what this match earned (nothing when nothing was).
-  function resultsRow(root, earned) {
-    if (!root?.isConnected || !earned.length) return;
-    root.querySelector(".meta-earned")?.remove();
-    const row = Object.assign(document.createElement("section"), { className: "meta-earned" });
-    row.setAttribute("aria-label", "Achievements earned");
-    row.innerHTML = `<span class="meta-earned-head">${icon("star")}<span>Achievements earned</span></span><ul>${earned.map((a) => `<li>${icon(achIcon(a))}<span>${esc(a.title)}</span></li>`).join("")}</ul>`;
+  // Rows on the results screen: the challenges met and the achievements earned by this match (none: no row).
+  function resultsRow(root, earned, judged = { met: [] }) {
+    if (!root?.isConnected) return;
+    root.querySelectorAll(".meta-earned").forEach((el) => el.remove());
+    const rows = [];
+    if (judged.met.length) rows.push(["meta-earned meta-earned-challenges", "Challenges complete", "check", judged.met.map((c) => `<li>${icon(c.icon)}<span>${esc(c.title)}</span> <b translate="no">+${CHALLENGE_XP} XP</b></li>`).join("") + (judged.set ? `<li class="meta-set">${icon("star")}<span>Challenge day complete</span></li>` : "")]);
+    if (earned.length) rows.push(["meta-earned", "Achievements earned", "star", earned.map((a) => `<li>${icon(achIcon(a))}<span>${esc(a.title)}</span></li>`).join("")]);
     const actions = root.querySelector(".result-actions, .debrief-actions");
-    if (actions) actions.before(row); else root.append(row);
+    for (const [cls, head, ic, items] of rows) {
+      const row = Object.assign(document.createElement("section"), { className: cls });
+      row.setAttribute("aria-label", head);
+      row.innerHTML = `<span class="meta-earned-head">${icon(ic)}<span>${head}</span></span><ul>${items}</ul>`;
+      if (actions) actions.before(row); else root.append(row);
+    }
   }
 
   // ---------- live: what the match already counts (a dive, a tamed Wyrm, a commander rank) ----------
@@ -144,6 +164,31 @@ export function setupMeta(S, A) {
     tile.innerHTML = `${icon("star")}<span class="quick-text"><strong>Records</strong><small translate="no" aria-label="${done} / ${list.length}">★ ${done} / ${list.length}</small></span>`;
   }
 
+  // ---------- today's challenges: three direct tiles under the quick row (a tap picks the mode) ----------
+  function challengeTile(c, done) {
+    return `<button type="button" class="kit-face challenge-tile${done ? " done" : ""}" data-challenge="${c.id}" data-challenge-mode="${c.mode}">${icon(done ? "check" : c.icon)}<span class="challenge-text"><strong>${esc(c.title)}</strong><small>${esc(c.goal)}</small></span><b class="challenge-reward">${done ? "Done" : `+${CHALLENGE_XP} XP`}</b></button>`;
+  }
+  function renderChallenges() {
+    const day = today();
+    if (challenges.day !== day) challenges = loadChallenges(day);
+    const slot = $("title-actions");
+    if (!slot) return;
+    let strip = $("daily-challenges");
+    if (!strip) {
+      strip = Object.assign(document.createElement("section"), { id: "daily-challenges", className: "daily-challenges" });
+      strip.setAttribute("aria-labelledby", "daily-challenges-title");
+      slot.after(strip);
+      strip.addEventListener("click", (event) => {
+        const tile = event.target.closest("[data-challenge-mode]");
+        if (!tile || Z.started) return;
+        // One tap: the mode the challenge is played in (the mode row's own button, so everything follows it).
+        document.querySelector(`#briefing .mode-switch [data-mode="${tile.dataset.challengeMode}"]`)?.click();
+      });
+    }
+    const list = dailyChallenges(challenges.day);
+    strip.innerHTML = `<h3 id="daily-challenges-title" class="challenges-head">${icon("objectives")}<span>Daily challenges</span><b translate="no">${challenges.done.length} / ${list.length}</b></h3><div class="challenge-tiles">${list.map((c) => challengeTile(c, challenges.done.includes(c.id))).join("")}</div>`;
+  }
+
   // ---------- the Records screen: a dialog over the title, like the field guide ----------
   let dialog = null, previous = null;
   function achievementsHTML() {
@@ -155,9 +200,15 @@ export function setupMeta(S, A) {
     }).join("");
     return `<section class="meta-section" aria-labelledby="records-ach"><h3 id="records-ach">${icon("star")}<span>Achievements</span> <b translate="no">${done} / ${list.length}</b></h3>${groups}</section>`;
   }
+  function recordsChallengesHTML() {
+    const list = dailyChallenges(challenges.day), done = (c) => challenges.done.includes(c.id);
+    const row = (c) => `<li class="meta-ach ${done(c) ? "done" : "todo"}" data-challenge="${c.id}">${icon(c.icon)}<span class="meta-ach-text"><strong>${esc(c.title)}</strong><small>${esc(c.goal)}</small></span>${done(c) ? `<b class="meta-ach-done">${icon("check")}</b>` : `<b class="challenge-reward" translate="no">+${CHALLENGE_XP} XP</b>`}</li>`;
+    return `<section class="meta-section" aria-labelledby="records-challenges"><h3 id="records-challenges">${icon("objectives")}<span>Daily challenges</span> <b translate="no">${challenges.done.length} / ${list.length}</b></h3>
+      <p class="meta-note"><span>New goals every day. Each pays Commander XP once; all three make a challenge day, which unlocks rewards.</span> <span>Challenge days:</span> <b translate="no">${challenges.sets}</b></p><ul class="meta-ach-list">${list.map(row).join("")}</ul></section>`;
+  }
   function recordsHTML() {
     return `<header class="records-head"><h2 id="records-title">Service record</h2><button type="button" class="kit-face records-close" data-records-close aria-label="Close records">${icon("close")}<span>Close</span></button></header>
-      <div class="records-body">${achievementsHTML()}</div>`;
+      <div class="records-body">${recordsChallengesHTML()}${achievementsHTML()}</div>`;
   }
   function openRecords() {
     if (Z.started && !S.sim.result) return;
@@ -181,15 +232,16 @@ export function setupMeta(S, A) {
 
   function info() {
     const list = all();
-    return { record: structuredClone(record), achievements: list.map((a) => ({ id: a.id, done: a.done, have: a.have, need: a.need })), done: list.filter((a) => a.done).length, total: ACHIEVEMENTS.length, last, toast: toast && !toast.hidden ? toast.textContent : null };
+    return { challenges: { ...challenges, today: dailyChallenges(challenges.day).map((c) => c.id) }, record: structuredClone(record), achievements: list.map((a) => ({ id: a.id, done: a.done, have: a.have, need: a.need })), done: list.filter((a) => a.done).length, total: ACHIEVEMENTS.length, last, toast: toast && !toast.hidden ? toast.textContent : null };
   }
 
   Object.assign(A, { metaInfo: info, openRecords, metaToast: showToast });
   // Browser tests (window.__frontier.meta): the state, and the same paths a tap or a match end takes.
-  A.metaHooks = { info, openRecords, closeRecords: () => dialog?.open && dialog.close(), matchEnded, earn, liveCheck, get record() { return record; }, set record(r) { record = r; saveRecord(r); earn(false); } };
+  A.metaHooks = { info, openRecords, closeRecords: () => dialog?.open && dialog.close(), matchEnded, earn, liveCheck, get record() { return record; }, set record(r) { record = r; saveRecord(r); earn(false); }, renderChallenges };
   return function bind() {
     // Achievements reached by older play (before W6) are remembered quietly, without a toast.
     earn(false);
+    renderChallenges();
     onMatchEnd(matchEnded);
     setInterval(liveCheck, 1000);
   };

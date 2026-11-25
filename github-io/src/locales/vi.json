@@ -1585,7 +1585,36 @@
     "Falling star": "Sao băng",
     "Land 3 Kite Dives": "Bổ nhào Diều trúng 3 lần",
     "Wyrm whisperer": "Người thuần rồng",
-    "Tame a Dune Wyrm": "Thuần hóa một Rồng cát"
+    "Tame a Dune Wyrm": "Thuần hóa một Rồng cát",
+    "Daily challenges": "Thử thách hằng ngày",
+    "Challenges complete": "Thử thách đã xong",
+    "Challenge day complete": "Hoàn thành ngày thử thách",
+    "Challenge days:": "Số ngày thử thách:",
+    "New goals every day. Each pays Commander XP once; all three make a challenge day, which unlocks rewards.": "Mục tiêu mới mỗi ngày. Mỗi mục tiêu cho kinh nghiệm chỉ huy một lần; xong cả ba là một ngày thử thách, giúp mở khóa phần thưởng.",
+    "Achievements, daily challenges and match history": "Thành tựu, thử thách hằng ngày và lịch sử trận",
+    "Swift strike": "Đòn chớp nhoáng",
+    "Win a Skirmish within 15 minutes": "Thắng Giao tranh trong 15 phút",
+    "Win a Skirmish losing 8 units or fewer": "Thắng Giao tranh, mất tối đa 8 quân",
+    "Sky scout": "Trinh sát trên không",
+    "Win a Skirmish with a Kite scout": "Thắng Giao tranh có dùng Diều trinh sát",
+    "Two fronts": "Hai mặt trận",
+    "Win a Skirmish against 2+ AI": "Thắng Giao tranh trước 2+ AI",
+    "Destroy 40 units in a Skirmish win": "Hạ 40 quân trong một trận Giao tranh thắng",
+    "Expedition": "Viễn chinh",
+    "Win any campaign mission": "Thắng một nhiệm vụ chiến dịch bất kỳ",
+    "Polished": "Hoàn hảo",
+    "Earn silver or gold in a mission": "Giành bạc hoặc vàng trong một nhiệm vụ",
+    "Extra mile": "Thêm một bước",
+    "Complete an optional objective": "Hoàn thành một mục tiêu tùy chọn",
+    "Tactician": "Nhà chiến thuật",
+    "Use 3 abilities in a mission win": "Dùng 3 kỹ năng trong một nhiệm vụ thắng",
+    "Win a Defence level": "Thắng một màn Phòng thủ",
+    "Three stars": "Ba sao",
+    "Earn 3 stars on a Defence level": "Giành 3 sao ở một màn Phòng thủ",
+    "Promotion": "Thăng cấp",
+    "Raise the Field commander to Rank 3": "Nâng Chỉ huy chiến trường lên Bậc 3",
+    "Endurance": "Bền bỉ",
+    "Hold 10 waves in Endless or Daily": "Chặn 10 đợt ở Vô tận hoặc Hằng ngày"
   },
   "patterns": [
     [
@@ -2475,6 +2504,10 @@
     [
       "^In the campaign, Dune Wyrm nests wait off the roads in Three-Way Dunes and A Debt in the Dunes\\. Clear the Wyrmlings, then keep your troops in the nest for (\\d+) s\\. Taming one is always optional\\.$",
       "Trong chiến dịch, các tổ Rồng cát nằm ngoài đường đi ở Ba phe trên đồi cát và Món nợ giữa đồi cát. Diệt các Rồng cát non, rồi giữ quân trong tổ {1} giây. Thuần rồng luôn là tùy chọn."
+    ],
+    [
+      "^Challenge complete · \\+(\\d+) XP$",
+      "Xong thử thách · +{1} XP"
     ]
   ]
 }

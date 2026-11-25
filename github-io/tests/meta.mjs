@@ -1,6 +1,9 @@
 // W6 replay value at 1440x900, 390x844 and 844x390 (src/meta-ui.js):
 //   - the title's Records tile (one tap, 44 px) opens the Records screen: 25 achievements with their progress,
 //     11 px text, 44 px taps, no sideways scroll, nothing grouped behind a menu; Close returns to the title;
+//   - today's three challenges (the date pinned with ?day=2026-11-25: Iron line, Expedition, Promotion) are
+//     direct tiles under the quick row; one tap picks the challenge's mode; a win that meets one pays +50 XP once
+//     and the tile reads Done back on the title;
 //   - an achievement reached mid-match shows its toast at the top (taps pass through, never over the dock),
 //     and a scripted Skirmish win lists "Achievements earned" on the results screen.
 // Screenshots: test-results/meta-*.png.
@@ -28,8 +31,26 @@ async function startMatch(o) {
 await suite("meta", async () => {
   for (const viewport of VIEWPORTS) {
     const o = await openPage(browser, viewport, { timeout: TIMEOUT.models }), { page, errors } = o;
-    await o.goto();
+    await o.goto("day=2026-11-25");
     await o.ready();
+
+    // ---- Today's challenges: three direct tiles; one tap picks the mode.
+    const tiles = page.locator("#daily-challenges [data-challenge]");
+    await tiles.first().waitFor({ state: "visible", timeout: TIMEOUT.step });
+    assert.deepEqual(await tiles.evaluateAll((b) => b.map((x) => x.dataset.challenge)), ["sk-lean", "cp-win", "df-rank"], `${viewport}: the day's set`);
+    assert.deepEqual(await small(page, "#daily-challenges button"), [], `${viewport}: challenge taps`);
+    assert.deepEqual(await tiny(page, "#daily-challenges"), [], `${viewport}: challenge text`);
+    const cut = await page.evaluate(() => [...document.querySelectorAll("#daily-challenges button")].filter((b) => [...b.querySelectorAll("strong, small, b")].some((t) => { const r = t.getBoundingClientRect(), o = b.getBoundingClientRect(); return r.right > o.right + 1 || r.bottom > o.bottom + 1; })).map((b) => b.dataset.challenge));
+    assert.deepEqual(cut, [], `${viewport}: challenge text fits its tiles`);
+    await noSideScroll(page, `${viewport} title`);
+    await page.locator("#daily-challenges").scrollIntoViewIfNeeded();
+    await shot(page, `meta-title-${viewport}`);
+    await page.locator('#daily-challenges [data-challenge="cp-win"]').scrollIntoViewIfNeeded();
+    await o.tap('#daily-challenges [data-challenge="cp-win"]');
+    await page.waitForFunction(() => document.querySelector('#briefing .mode-switch [data-mode="campaign"]').getAttribute("aria-pressed") === "true", null, { timeout: TIMEOUT.step });
+    await page.locator('#briefing .mode-switch [data-mode="skirmish"]').scrollIntoViewIfNeeded();
+    await o.tap('#briefing .mode-switch [data-mode="skirmish"]');
+    await page.waitForFunction(() => document.querySelector('#briefing .mode-switch [data-mode="skirmish"]').getAttribute("aria-pressed") === "true", null, { timeout: TIMEOUT.step });
 
     // ---- The Records tile and screen.
     const tile = page.locator("#records-open");
@@ -42,8 +63,9 @@ await suite("meta", async () => {
     await tile.scrollIntoViewIfNeeded();
     await o.tap("#records-open");
     await page.locator("#records[open]").waitFor({ state: "visible", timeout: TIMEOUT.step });
-    assert.equal(await page.locator("#records .meta-ach").count(), 25, `${viewport}: 25 achievements listed`);
-    assert.equal(await page.locator("#records .meta-ach.done").count(), 0, `${viewport}: none earned yet`);
+    assert.equal(await page.locator("#records [data-ach]").count(), 25, `${viewport}: 25 achievements listed`);
+    assert.equal(await page.locator("#records [data-challenge]").count(), 3, `${viewport}: today's challenges listed`);
+    assert.equal(await page.locator("#records [data-ach].done").count(), 0, `${viewport}: none earned yet`);
     assert.deepEqual(await tiny(page, "#records"), [], `${viewport}: Records text`);
     assert.deepEqual(await small(page, "#records button"), [], `${viewport}: Records taps`);
     assert.equal(await page.locator("#records details, #records [aria-haspopup], #records .more").count(), 0, `${viewport}: nothing grouped`);
@@ -75,15 +97,23 @@ await suite("meta", async () => {
     // ---- A scripted Skirmish win: "Achievements earned" on the results, and the record counts the win.
     await page.evaluate(() => { window.__frontier.hold = false; const s = window.__frontier.sim; s.tick = () => { s.result = "victory"; delete s.tick; }; });
     await page.locator(".result-card").waitFor({ state: "visible", timeout: TIMEOUT.step });
-    await page.locator("#modal .meta-earned").waitFor({ state: "visible", timeout: TIMEOUT.step });
-    assert.match(await page.locator("#modal .meta-earned").textContent(), /Field victory/, `${viewport}: Field victory listed`);
+    await page.locator("#modal .meta-earned").first().waitFor({ state: "visible", timeout: TIMEOUT.step });
+    assert.match(await page.locator("#modal .meta-earned:not(.meta-earned-challenges)").textContent(), /Field victory/, `${viewport}: Field victory listed`);
+    assert.match((await page.locator("#modal .meta-earned-challenges").textContent()).replace(/\s+/g, " "), /Challenges complete.*Iron line \+50 XP/, `${viewport}: Iron line paid`);
     const after = await meta(page);
     assert.equal(after.record.skirmishWins, 1, `${viewport}: the win is counted`);
     assert.deepEqual(after.last.earned, ["skirmish-win"], `${viewport}: earned by this match`);
+    assert.deepEqual([after.last.challenges, after.last.xp, after.challenges.done], [["sk-lean"], 50, ["sk-lean"]], `${viewport}: the challenge is done and paid`);
     assert.deepEqual(await tiny(page, "#modal .meta-earned"), [], `${viewport}: results row text`);
     await noSideScroll(page, `${viewport} results`);
-    await page.locator("#modal .meta-earned").scrollIntoViewIfNeeded();
+    await page.locator("#modal .meta-earned").last().scrollIntoViewIfNeeded();
     await shot(page, `meta-results-${viewport}`);
+
+    // ---- Back on the title: the challenge tile reads Done.
+    await o.tap(".result-actions [data-new-game]");
+    await page.waitForFunction(() => !window.__frontier.started && !document.querySelector("#briefing").hidden, null, { timeout: TIMEOUT.models });
+    await page.waitForFunction(() => document.querySelector('#daily-challenges [data-challenge="sk-lean"]')?.classList.contains("done"), null, { timeout: TIMEOUT.step });
+    assert.match(await page.locator('#daily-challenges [data-challenge="sk-lean"]').textContent(), /Done/, `${viewport}: Done on the title`);
     assert.deepEqual(errors, [], `${viewport}: no page errors`);
     await page.close();
   }

@@ -158,13 +158,24 @@ export function setupRank(S, A) {
     render();
   }
 
+  // W6: Commander XP from elsewhere (a daily challenge): saved, the chip refreshed; returns the rank change.
+  function award(xp) {
+    const before = rankOf(profile.xp);
+    if (!(xp > 0)) return { gained: 0, before: before.rank, after: before.rank, rankUp: false };
+    profile = { ...profile, xp: profile.xp + Math.round(xp) };
+    saveProfile(profile);
+    const after = rankOf(profile.xp);
+    render();
+    return { gained: Math.round(xp), before: before.rank, after: after.rank, rankUp: after.rank > before.rank };
+  }
+
   function info() {
     const r = rankOf(profile.xp);
     return { xp: profile.xp, rank: r.rank, name: r.name, next: r.next, matches: profile.matches, picks: { ...profile.picks }, paint: activePaint(), last,
       open: Object.fromEntries(KINDS.map((kind) => [kind, ITEMS[kind].filter((i) => isUnlocked(kind, i.id, r.rank)).map((i) => i.id)])), maxRank: MAX_RANK };
   }
 
-  Object.assign(A, { rankInfo: info, rankPick: pick });
+  Object.assign(A, { rankInfo: info, rankPick: pick, rankAward: award, rankRender: render });
   return function bind() {
     render();
     onMatchEnd(matchEnded);

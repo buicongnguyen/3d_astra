@@ -2,6 +2,11 @@
 
 ## Unreleased: Round A.2
 
+### Daily challenges (W6 replay value, plan C7.1)
+- Three short goals a day, one each for Skirmish, the campaign and Frontier Defence (13 in the pool: Swift strike, Iron line, Sky scout, Two fronts, Hunter; Expedition, Polished, Extra mile, Tactician; Hold the road, Three stars, Promotion, Endurance). The local date alone picks them (`src/meta/challenges.js`, fnv1a of date + group), so the same day gives the same three on every device; nothing in a match reads the clock.
+- Shown as three direct tiles under the quick row on the title (and in the Records screen); one tap picks the mode the challenge is played in. A finished match that meets one pays +50 Commander XP once (results row "Challenges complete", a toast); all three on a day count a **challenge day**, which the medal cosmetics read. Stored in `frontier-challenges-v1` (today's done list, challenge days); a new day starts fresh.
+- Tests: `tests/meta-challenges.test.js` (same date -> same set, rotation over 60 days, every test, paid once, set once a day, storage, EN/VI/KO); `tests/meta.mjs` pins `?day=2026-11-25`, checks the tiles at three viewports, a one-tap mode switch, and a win meeting Iron line.
+
 ### Achievements 13 -> 25 (W6 replay value)
 - Twelve new achievements beyond the campaign: **Golden act** (gold in every mission of an act), Skirmish (**Field victory**, **Three fronts** vs 3 AI, **Unbreakable** vs Relentless AI, **Know your enemy**: beat all five factions), Frontier Defence (**Line holder**: 15 stars, **Field marshal**: Field commander Rank 5, **Steel rain** / **Rally the line**: a Defence win with that commander branch), Kites (**Eyes in the sky**: train 10, **Falling star**: land 3 Dives) and taming (**Wyrm whisperer**). Each has an icon, EN/VI/KO text and progress where it counts up.
 - A new service record (`src/meta/record.js`, localStorage `frontier-record-v1`) keeps lifetime counters from every finished match and the W6 achievements once earned; the campaign's 13 stay in the campaign progress. Old profiles load with an empty record (nothing to migrate); corrupt data reads as fresh; counters are capped and the record stays under 4 KB.
