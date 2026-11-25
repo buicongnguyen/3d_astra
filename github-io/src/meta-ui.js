@@ -1,7 +1,8 @@
 // Replay value on the page (W6, docs/aaa/ROADMAP_TO_AAA_2026-11-25.md): the service record and the
 // achievements (src/meta/record.js, src/story/achievements.js) with their toast, the "Records" tile on the
 // title and the Records screen, the daily challenges (src/meta/challenges.js) as three tiles on the title, and
-// the medal cosmetics (src/meta/rewards.js): unlocked here, picked beside the rank items in the Skirmish setup.
+// the medal cosmetics (src/meta/rewards.js): unlocked here, picked beside the rank items in the Skirmish setup,
+// and the match history (src/meta/history.js): the last 20 finished matches, listed in the Records screen.
 //
 // Every finished match (ceremony.js onMatchEnd) is described once (matchContext) and added to the record.
 // A few achievements can be reached mid-match (a Kite Dive, a tamed Wyrm, a Field commander rank): a light
@@ -23,6 +24,13 @@ import { CHALLENGE_XP, dailyChallenges, loadChallenges, saveChallenges, judgeCha
 import { localDay } from "./profile-rank.js";
 import { MEDAL_ITEMS, MEDAL_KINDS, rewardOpen, newRewards } from "./meta/rewards.js";
 import { emblemSvg } from "./rank-ui.js";
+import { loadHistory, saveHistory, addHistory, HISTORY_CAP } from "./meta/history.js";
+import { missionById } from "./campaign.js";
+import { defenceLevel } from "./defence/levels.js";
+import { MAPS } from "./terrain.js";
+import { PLAYER_FACTIONS } from "./factions.js";
+import { formatClock } from "./results-ui.js";
+import { getLanguage, loadStory } from "./i18n.js";
 
 const esc = (text) => String(text ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 // The campaign's thirteen carry no icon of their own (story/achievements.js); these suit them.
@@ -31,6 +39,16 @@ const achIcon = (a) => CAMPAIGN_ICONS[a.id] || a.icon || "star";
 const KIND_NAMES = { paint: "Paint", emblem: "Emblem", banner: "Title banner" };
 // A reward's picture: its swatch, its emblem, or a banner flag.
 const rewardArt = (r) => (r.kind === "paint" ? `<i class="meta-swatch" style="--swatch:${r.swatch}" aria-hidden="true"></i>` : r.kind === "emblem" ? emblemSvg(r.id) : icon("flag"));
+const MODE_LABELS = { skirmish: "Skirmish", campaign: "Campaign", defence: "Defence", training: "Training" };
+const RESULT_LABELS = { victory: "Victory", defeat: "Defeat", score: "Score" };
+const factionName = (id) => (PLAYER_FACTIONS[id] || id || "").replace(/^The /, "").split(" ")[0];
+// What a history row is called: its mission or Defence level, else its map.
+function matchTitle(e) {
+  const m = e.mission && (missionById(e.mission)?.mission || defenceLevel(e.mission));
+  return m?.title || (MAPS[e.map] || e.map || "").split(" · ")[0];
+}
+// The Records screen's direct jumps to its sections (no menu: every section is also on the page).
+const JUMPS = [["records-challenges", "Challenges", "objectives"], ["records-history", "History", "queue"], ["records-ach", "Achievements", "star"], ["records-rewards", "Rewards", "flag"]];
 const GROUP_LABELS = { campaign: "Campaign", skirmish: "Skirmish", defence: "Defence", kite: "Kite scouts", wild: "Wild frontier" };
 
 export function setupMeta(S, A) {
@@ -44,6 +62,7 @@ export function setupMeta(S, A) {
   // browser tests may pin it with ?day=YYYY-MM-DD).
   const today = () => (/^\d{4}-\d{2}-\d{2}$/.test(S.query?.get?.("day") || "") ? S.query.get("day") : localDay());
   let challenges = loadChallenges(today());
+  let history = loadHistory();
 
   // ---------- the summary the medal cosmetics read (src/meta/rewards.js) ----------
   function syncMeta() {
@@ -128,6 +147,12 @@ export function setupMeta(S, A) {
     if (judged.met.length) saveChallenges(challenges);
     const award = judged.xp ? A.rankAward?.(judged.xp) : null;
     const earned = earn(false);
+    // The match history: newest first, at most HISTORY_CAP (src/meta/history.js).
+    const at = Date.now(), entry = { id: `${at.toString(36)}${(history.length % 36).toString(36)}`, at, mode: ctx.mode, map: ctx.map || "", mission: ctx.mission, player: ctx.player, rivals: [...new Set(ctx.rivals)],
+      result: ctx.scored ? "score" : ctx.win ? "victory" : "defeat", seconds: ctx.seconds, difficulty: ctx.difficulty, aiSpeed: ctx.aiSpeed, enemyCount: ctx.enemyCount, medal: ctx.medal, stars: ctx.stars, score: ctx.score,
+      stats: { killed: ctx.stats.killed, lost: ctx.stats.lost, trained: ctx.stats.trained, built: ctx.stats.built, alloy: ctx.stats.alloy, energy: ctx.stats.energy } };
+    history = addHistory(history, entry);
+    saveHistory(history);
     last = { ctx, earned: earned.map((a) => a.id), challenges: judged.met.map((c) => c.id), xp: judged.xp, set: judged.set, rankUp: !!award?.rankUp, rewards: unlocked.map((r) => `${r.kind}:${r.id}`) };
     resultsRow(summary?.root, earned, judged, unlocked);
     for (const c of judged.met) showToast(challengeToast(c), "challenge");
@@ -175,6 +200,7 @@ export function setupMeta(S, A) {
       slot.append(tile);
     }
     const list = all(), done = list.filter((a) => a.done).length;
+    tile.dataset.matches = String(history.length);
     tile.title = "Achievements, daily challenges and match history";
     tile.innerHTML = `${icon("star")}<span class="quick-text"><strong>Records</strong><small translate="no" aria-label="${done} / ${list.length}">★ ${done} / ${list.length}</small></span>`;
   }
@@ -229,9 +255,24 @@ export function setupMeta(S, A) {
     return `<section class="meta-section" aria-labelledby="records-rewards"><h3 id="records-rewards">${icon("flag")}<span>Medal rewards</span> <b translate="no">${open.length} / ${items.length}</b></h3>
       <p class="meta-note">Paint, emblems and title banners earned with medals, achievements and challenge days. Looks only: they never change a battle. Pick them in the Skirmish setup.</p><ul class="meta-ach-list">${items.map(row).join("")}</ul></section>`;
   }
+  // The last matches, newest first: result, what was played, sides, time and the key numbers.
+  function historyHTML() {
+    const row = (e) => {
+      const sides = e.mode === "skirmish" ? `<span>${esc(factionName(e.player))}</span> <span translate="no">vs</span> <span>${e.rivals.map((r) => esc(factionName(r))).join(" · ")}</span>` : "";
+      const extra = e.result === "score" ? `<span class="meta-stat"><b translate="no">${e.score ?? 0}</b> <span>Waves held</span></span>` : e.medal ? `<span class="meta-stat meta-medal-${e.medal}"><span>${{ bronze: "Bronze medal", silver: "Silver medal", gold: "Gold medal" }[e.medal]}</span></span>` : Number.isInteger(e.stars) ? `<span class="meta-stat" translate="no">${"★".repeat(e.stars)}${"☆".repeat(Math.max(0, 3 - e.stars))}</span>` : "";
+      const when = new Date(e.at), date = Number.isFinite(when.getTime()) ? when.toLocaleString(document.documentElement.lang || undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
+      return `<li class="meta-match ${e.result}" data-match="${esc(e.id)}">
+        <span class="meta-result">${icon(e.result === "defeat" ? "close" : e.result === "score" ? "chevrons" : "check")}<span>${RESULT_LABELS[e.result]}</span></span>
+        <span class="meta-match-main"><strong>${esc(matchTitle(e))}</strong><small><span>${MODE_LABELS[e.mode]}</span>${sides ? ` · ${sides}` : ""}</small><small class="meta-when" translate="no">${esc(date)} · ${formatClock(e.seconds)}</small></span>
+        <span class="meta-match-stats"><span class="meta-stat"><b translate="no">${Math.round(e.stats.killed)}</b> <span>Kills</span></span><span class="meta-stat"><b translate="no">${Math.round(e.stats.lost)}</b> <span>Units lost</span></span>${extra}</span></li>`;
+    };
+    return `<section class="meta-section" id="records-history-section" aria-labelledby="records-history"><h3 id="records-history">${icon("queue")}<span>Match history</span> <b translate="no">${history.length} / ${HISTORY_CAP}</b></h3>
+      ${history.length ? `<ol class="meta-history">${history.map(row).join("")}</ol>` : `<p class="meta-note">No matches yet. Finished matches appear here, the last 20 kept.</p>`}</section>`;
+  }
   function recordsHTML() {
     return `<header class="records-head"><h2 id="records-title">Service record</h2><button type="button" class="kit-face records-close" data-records-close aria-label="Close records">${icon("close")}<span>Close</span></button></header>
-      <div class="records-body">${recordsChallengesHTML()}${achievementsHTML()}${rewardsHTML()}</div>`;
+      <nav class="records-jump" aria-label="Records sections">${JUMPS.map(([id, label, ic]) => `<button type="button" class="kit-face" data-records-jump="${id}">${icon(ic)}<span>${label}</span></button>`).join("")}</nav>
+      <div class="records-body">${recordsChallengesHTML()}${historyHTML()}${achievementsHTML()}${rewardsHTML()}</div>`;
   }
   function openRecords() {
     if (Z.started && !S.sim.result) return;
@@ -240,13 +281,18 @@ export function setupMeta(S, A) {
       dialog.setAttribute("aria-labelledby", "records-title");
       document.body.append(dialog);
       dialog.addEventListener("click", (event) => {
-        if (event.target.closest("[data-records-close]") || event.target === dialog) dialog.close();
+        if (event.target.closest("[data-records-close]") || event.target === dialog) { dialog.close(); return; }
+        const jump = event.target.closest("[data-records-jump]");
+        if (jump) dialog.querySelector(`#${jump.dataset.recordsJump}`)?.scrollIntoView({ block: "start", behavior: document.documentElement.classList.contains("motion-off") ? "auto" : "smooth" });
       });
       dialog.addEventListener("close", () => { Z.restore(previous); S.keys?.clear?.(); $("records-open")?.focus({ preventScroll: true }); });
     }
     if (dialog.open) return;
     syncMeta();
+    history = loadHistory();
     dialog.innerHTML = recordsHTML();
+    // Mission titles are story text: their catalog loads on first use; the screen redraws when it arrives.
+    if (getLanguage() !== "en") loadStory().then(() => { if (dialog.open) { const top = dialog.querySelector(".records-body")?.scrollTop || 0; dialog.innerHTML = recordsHTML(); dialog.querySelector(".records-body").scrollTop = top; } }).catch(() => {});
     previous = Z.snapshot();
     Z.open("guide");
     dialog.showModal();
@@ -255,7 +301,7 @@ export function setupMeta(S, A) {
 
   function info() {
     const list = all();
-    return { challenges: { ...challenges, today: dailyChallenges(challenges.day).map((c) => c.id) }, record: structuredClone(record), achievements: list.map((a) => ({ id: a.id, done: a.done, have: a.have, need: a.need })), done: list.filter((a) => a.done).length, total: ACHIEVEMENTS.length, last, toast: toast && !toast.hidden ? toast.textContent : null };
+    return { history: history.map((e) => ({ ...e })), challenges: { ...challenges, today: dailyChallenges(challenges.day).map((c) => c.id) }, record: structuredClone(record), achievements: list.map((a) => ({ id: a.id, done: a.done, have: a.have, need: a.need })), done: list.filter((a) => a.done).length, total: ACHIEVEMENTS.length, last, toast: toast && !toast.hidden ? toast.textContent : null };
   }
 
   Object.assign(A, { metaInfo: info, openRecords, metaToast: showToast });

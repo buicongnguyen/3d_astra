@@ -1636,7 +1636,14 @@
     "Rewards unlocked": "해금된 보상",
     "Reward unlocked": "보상 해금",
     "Medal rewards": "훈장 보상",
-    "Paint, emblems and title banners earned with medals, achievements and challenge days. Looks only: they never change a battle. Pick them in the Skirmish setup.": "훈장, 업적, 도전의 날로 얻는 도색, 문장, 칭호입니다. 외형만 바뀌며 전투는 절대 바뀌지 않습니다. 교전 설정에서 고르세요."
+    "Paint, emblems and title banners earned with medals, achievements and challenge days. Looks only: they never change a battle. Pick them in the Skirmish setup.": "훈장, 업적, 도전의 날로 얻는 도색, 문장, 칭호입니다. 외형만 바뀌며 전투는 절대 바뀌지 않습니다. 교전 설정에서 고르세요.",
+    "Challenges": "도전",
+    "History": "전적",
+    "Rewards": "보상",
+    "Records sections": "기록 항목",
+    "Match history": "전투 기록",
+    "No matches yet. Finished matches appear here, the last 20 kept.": "아직 전투가 없습니다. 끝난 전투가 여기에 나오며 최근 20개가 보관됩니다.",
+    "Score": "점수"
   },
   "patterns": [
     [

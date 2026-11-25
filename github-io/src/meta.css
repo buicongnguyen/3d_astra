@@ -135,3 +135,34 @@
 .meta-earned .meta-swatch { width: 16px; height: 16px; }
 .meta-earned .rank-glyph { width: 16px; height: 16px; color: var(--kit-gold, #ffd17b); }
 .meta-earned .meta-hint { font-weight: 500; color: var(--kit-text-2, #bcced9); }
+
+/* ---------- Records: the section jumps (one row, direct buttons) and the match history ---------- */
+.records-jump { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 6px 18px 8px; border-bottom: 1px solid var(--kit-line-ghost, rgba(65, 100, 121, 0.6)); }
+.records-jump button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; min-height: 44px; padding: 0 6px; font: 700 13px/1.1 var(--font-ui); color: var(--kit-text, #f1f6f3); }
+.records-jump .icon { flex: none; width: 16px; height: 16px; color: var(--kit-cyan, #83deeb); }
+.records-jump span { min-width: 0; overflow-wrap: anywhere; }
+.meta-section > h3 { scroll-margin-top: 8px; }
+.meta-history { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.meta-match { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 56px; padding: 6px 10px; border: 1px solid var(--kit-line-ghost, rgba(65, 100, 121, 0.6)); background: rgba(0, 0, 0, 0.16); }
+.meta-result { display: inline-flex; align-items: center; gap: 5px; font: 800 13px/1.1 var(--font-ui); }
+.meta-result .icon { flex: none; width: 18px; height: 18px; }
+.meta-match.victory .meta-result { color: #bfe8a8; }
+.meta-match.defeat .meta-result { color: #ff9f8f; }
+.meta-match.score .meta-result { color: var(--kit-gold, #ffd17b); }
+.meta-match-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.meta-match-main strong { font: 800 14px/1.2 var(--font-ui); color: var(--kit-text, #f1f6f3); overflow-wrap: anywhere; }
+.meta-match-main small { font: 500 12px/1.3 var(--font-ui); color: var(--kit-text-2, #bcced9); overflow-wrap: anywhere; }
+.meta-match-stats { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px 10px; font: 500 12px/1.2 var(--font-ui); color: var(--kit-text-2, #bcced9); }
+.meta-stat b { font-weight: 800; color: var(--kit-text, #f1f6f3); }
+.meta-medal-gold { color: #ffd17b; } .meta-medal-silver { color: #dfe6ee; } .meta-medal-bronze { color: #e0a274; }
+.compact-ui .records-jump { padding: 6px 8px; }
+.compact-ui .records-jump button { font-size: 12px; gap: 4px; }
+@media (max-width: 480px) {
+  .records-jump .icon { display: none; }
+  .records-jump button { padding: 0 2px; font-size: 11px; }
+  .records-jump span { overflow-wrap: normal; word-break: keep-all; text-align: center; }
+  .meta-match { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "main result" "stats stats"; gap: 4px 8px; }
+  .meta-match-main { grid-area: main; }
+  .meta-result { grid-area: result; align-self: start; }
+  .meta-match-stats { grid-area: stats; justify-content: flex-start; }
+}

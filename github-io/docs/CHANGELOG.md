@@ -2,6 +2,11 @@
 
 ## Unreleased: Round A.2
 
+### Match history (W6 replay value, plan B2)
+- The last 20 finished matches (Skirmish, campaign, Chronicles, Defence; not Training) in the Records screen, newest first: result (Victory, Defeat, or a Score for Endless and Daily), mission, level or map, mode, your faction vs the rivals in a Skirmish, date and match time, kills and units lost, and the medal, stars or waves held. Stored in `frontier-history-v1` (`src/meta/history.js`): cleaned on load, capped at 20 rows (about 6 KB), silent when storage is blocked.
+- The Records screen gets a row of four direct jump buttons at the top (Challenges, History, Achievements, Rewards; each section is also on the page, nothing behind a menu).
+- Tests: `tests/meta-history.test.js` (cap, newest first, cleaning, storage); `tests/meta.mjs` checks the row after a win and the History jump at three viewports.
+
 ### Medal cosmetics (W6 replay value, plan C7.3)
 - Nine rewards earned with medals, achievements and challenge days (`src/meta/rewards.js`): paints **Laurel** (gold in all of Act 1), **Silverline** (5 achievements), **Crimson** (3 challenge days), **Obsidian** (15 achievements); emblems **Laurels** (10 gold medals) and **Medal** (10 achievements); title banners **Daily Challenger** (1 challenge day), **Golden Commander** (gold in all of Act 3), **Decorated** (20 achievements).
 - Picked in the Skirmish setup's existing Commander rows, one button each beside the rank items; a locked one is shown disabled with how to earn it. An unlock shows a toast, a "Rewards unlocked" row on the results and the reward in the Records screen ("Medal rewards", 1 / 9...).

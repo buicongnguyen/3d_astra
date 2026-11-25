@@ -6,6 +6,8 @@
 //     and the tile reads Done back on the title;
 //   - five achievements unlock the Silverline paint (medal cosmetics): a "Reward unlocked" toast, the Records
 //     screen lists it as open, and it is one tap in the Skirmish setup's Paint row (looks only, no rule);
+//   - the Records screen's match history lists the finished match (result, mode, sides, time, kills),
+//     reached with its own jump button at the top of the screen;
 //   - an achievement reached mid-match shows its toast at the top (taps pass through, never over the dock),
 //     and a scripted Skirmish win lists "Achievements earned" on the results screen.
 // Screenshots: test-results/meta-*.png.
@@ -142,6 +144,22 @@ await suite("meta", async () => {
     await page.waitForFunction(() => !window.__frontier.started && !document.querySelector("#briefing").hidden, null, { timeout: TIMEOUT.models });
     await page.waitForFunction(() => document.querySelector('#daily-challenges [data-challenge="sk-lean"]')?.classList.contains("done"), null, { timeout: TIMEOUT.step });
     assert.match(await page.locator('#daily-challenges [data-challenge="sk-lean"]').textContent(), /Done/, `${viewport}: Done on the title`);
+
+    // ---- Match history: the win is the first row; the History jump button brings it into view.
+    await page.locator("#records-open").scrollIntoViewIfNeeded();
+    await o.tap("#records-open");
+    await page.locator("#records[open]").waitFor({ state: "visible", timeout: TIMEOUT.step });
+    assert.equal(await page.locator("#records [data-match]").count(), 1, `${viewport}: one match in the history`);
+    const row = (await page.locator("#records [data-match]").first().textContent()).replace(/\s+/g, " ");
+    assert.match(row, /Victory.*Meridian Riverlands.*Skirmish.*Meridian vs Meridian.*0:0\d.*Kills.*Units lost/, `${viewport}: the row (${row})`);
+    assert.deepEqual(await small(page, "#records button"), [], `${viewport}: Records taps with history`);
+    await o.tap('#records [data-records-jump="records-history"]');
+    await page.waitForFunction(() => { const h = document.querySelector("#records-history").getBoundingClientRect(), b = document.querySelector("#records .records-body").getBoundingClientRect(); return h.top >= b.top - 2 && h.top < b.top + 60; }, null, { timeout: TIMEOUT.step });
+    assert.deepEqual(await tiny(page, "#records"), [], `${viewport}: history text`);
+    await noSideScroll(page, `${viewport} history`);
+    await shot(page, `meta-history-${viewport}`);
+    await o.tap("#records [data-records-close]");
+    await page.waitForFunction(() => !document.querySelector("#records").open, null, { timeout: TIMEOUT.step });
     assert.deepEqual(errors, [], `${viewport}: no page errors`);
     await page.close();
   }

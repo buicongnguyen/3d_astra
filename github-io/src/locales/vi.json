@@ -1636,7 +1636,14 @@
     "Rewards unlocked": "Phần thưởng đã mở",
     "Reward unlocked": "Mở khóa phần thưởng",
     "Medal rewards": "Phần thưởng huân chương",
-    "Paint, emblems and title banners earned with medals, achievements and challenge days. Looks only: they never change a battle. Pick them in the Skirmish setup.": "Màu sơn, huy hiệu và danh hiệu giành được nhờ huy chương, thành tựu và ngày thử thách. Chỉ để trang trí: không bao giờ thay đổi trận đánh. Chọn chúng trong phần thiết lập Giao tranh."
+    "Paint, emblems and title banners earned with medals, achievements and challenge days. Looks only: they never change a battle. Pick them in the Skirmish setup.": "Màu sơn, huy hiệu và danh hiệu giành được nhờ huy chương, thành tựu và ngày thử thách. Chỉ để trang trí: không bao giờ thay đổi trận đánh. Chọn chúng trong phần thiết lập Giao tranh.",
+    "Challenges": "Thử thách",
+    "History": "Lịch sử",
+    "Rewards": "Phần thưởng",
+    "Records sections": "Các mục hồ sơ",
+    "Match history": "Lịch sử trận",
+    "No matches yet. Finished matches appear here, the last 20 kept.": "Chưa có trận nào. Trận đã xong hiện ở đây, giữ 20 trận gần nhất.",
+    "Score": "Điểm"
   },
   "patterns": [
     [
