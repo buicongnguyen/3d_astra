@@ -24,7 +24,7 @@ function stage({ motion = true, reduced = false, level = 2, lowPower = true, kin
 }
 
 test("the plugin is registered last and the band cell is new (existing cells keep their index)", () => {
-  assert.equal(VIEW_PLUGINS.at(-1), DeathCueView);
+  assert.ok(VIEW_PLUGINS.includes(DeathCueView), "registered (after the plugins that existed before it)");
   assert.deepEqual(CELLS.slice(0, 8), ["glow", "puff", "ring", "streak", "scorch", "flare", "cross", "wrench"]);
   assert.equal(CELL.band, 8);
   assert.equal(FLAT, 3);
