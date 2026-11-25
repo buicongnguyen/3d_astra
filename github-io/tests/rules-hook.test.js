@@ -10,6 +10,7 @@ import { resolveMission } from "../src/story/choices.js";
 import { MISSIONS } from "../src/story/missions.js";
 import { setupDebugHooks } from "../src/app/debug-hooks.js";
 import { rulesForMap } from "../src/app/rules-store.js";
+import { rememberOptions, optionsOf } from "../src/meta/replay.js";
 
 function createSimFrom(S) {
   const text = clientFile("main.js", { plain: false });
@@ -17,7 +18,8 @@ function createSimFrom(S) {
   assert.ok(start >= 0 && end > start, "createSim is in src/main.js");
   class Recorder { constructor(options) { this.options = options; } }
   // Round 4: createSim passes the rules through rulesForMap (a map-limited rule, Wild frontier, stays off other maps).
-  return new Function("Simulation", "S", "skirmishSides", "resolveMission", "matchLook", "rulesForMap", `${text.slice(start, end + 3)}\nreturn createSim;`)(Recorder, S, skirmishSides, resolveMission, () => null, rulesForMap);
+  // W6: createSim remembers each match's options beside it, for its replay (src/meta/replay.js).
+  return new Function("Simulation", "S", "skirmishSides", "resolveMission", "matchLook", "rulesForMap", "rememberOptions", `${text.slice(start, end + 3)}\nreturn createSim;`)(Recorder, S, skirmishSides, resolveMission, () => null, rulesForMap, rememberOptions);
 }
 const setup = (extra) => ({ mission: null, playMode: "skirmish", playerFaction: "sunward", enemyFaction: "veil", enemyCount: 1, mapId: "dunes", aiSpeed: "normal", alliance: "ffa", bonus: null, campaign: null, settings: { campaignDifficulty: "standard" }, ...extra });
 
@@ -32,6 +34,8 @@ test("createSim without S.rules passes no rules key; with them, passes them as t
   const ruled = createSim().options;
   assert.deepEqual(ruled.rules, { roster: "expanded" });
   assert.deepEqual(Object.keys(ruled), [...Object.keys(plain), "rules"], "the other options are untouched");
+  const kept = createSim();
+  assert.deepEqual(optionsOf(kept), JSON.parse(JSON.stringify(kept.options)), "W6: the options are remembered as built, for the replay");
   // Round 4: the Wild frontier rule reaches an Amber Dunes match only.
   S.rules = { wild: "on" };
   assert.deepEqual(createSim().options.rules, { wild: "on" });

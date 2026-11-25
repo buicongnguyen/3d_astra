@@ -2,7 +2,8 @@
 // achievements (src/meta/record.js, src/story/achievements.js) with their toast, the "Records" tile on the
 // title and the Records screen, the daily challenges (src/meta/challenges.js) as three tiles on the title, and
 // the medal cosmetics (src/meta/rewards.js): unlocked here, picked beside the rank items in the Skirmish setup,
-// and the match history (src/meta/history.js): the last 20 finished matches, listed in the Records screen.
+// and the match history (src/meta/history.js): the last 20 finished matches, listed in the Records screen, the
+// last REPLAY_CAP with a replay (src/meta/replay.js) watched in src/replay-ui.js.
 //
 // Every finished match (ceremony.js onMatchEnd) is described once (matchContext) and added to the record.
 // A few achievements can be reached mid-match (a Kite Dive, a tamed Wyrm, a Field commander rank): a light
@@ -24,7 +25,9 @@ import { CHALLENGE_XP, dailyChallenges, loadChallenges, saveChallenges, judgeCha
 import { localDay } from "./profile-rank.js";
 import { MEDAL_ITEMS, MEDAL_KINDS, rewardOpen, newRewards } from "./meta/rewards.js";
 import { emblemSvg } from "./rank-ui.js";
-import { loadHistory, saveHistory, addHistory, HISTORY_CAP } from "./meta/history.js";
+import { loadHistory, saveHistory, addHistory, HISTORY_CAP, loadReplays, storeReplay } from "./meta/history.js";
+import { recordReplay, replayProblem, optionsOf } from "./meta/replay.js";
+import { APP_VERSION } from "./replay-ui.js";
 import { missionById } from "./campaign.js";
 import { defenceLevel } from "./defence/levels.js";
 import { MAPS } from "./terrain.js";
@@ -62,7 +65,7 @@ export function setupMeta(S, A) {
   // browser tests may pin it with ?day=YYYY-MM-DD).
   const today = () => (/^\d{4}-\d{2}-\d{2}$/.test(S.query?.get?.("day") || "") ? S.query.get("day") : localDay());
   let challenges = loadChallenges(today());
-  let history = loadHistory();
+  let history = loadHistory(), replays = {};
 
   // ---------- the summary the medal cosmetics read (src/meta/rewards.js) ----------
   function syncMeta() {
@@ -151,6 +154,9 @@ export function setupMeta(S, A) {
     const at = Date.now(), entry = { id: `${at.toString(36)}${(history.length % 36).toString(36)}`, at, mode: ctx.mode, map: ctx.map || "", mission: ctx.mission, player: ctx.player, rivals: [...new Set(ctx.rivals)],
       result: ctx.scored ? "score" : ctx.win ? "victory" : "defeat", seconds: ctx.seconds, difficulty: ctx.difficulty, aiSpeed: ctx.aiSpeed, enemyCount: ctx.enemyCount, medal: ctx.medal, stars: ctx.stars, score: ctx.score,
       stats: { killed: ctx.stats.killed, lost: ctx.stats.lost, trained: ctx.stats.trained, built: ctx.stats.built, alloy: ctx.stats.alloy, energy: ctx.stats.energy } };
+    // Its replay: a match built at tick 0 in this visit (not a loaded save) with its options remembered.
+    const replay = !S.tutorial && optionsOf(S.sim) ? recordReplay(S.sim, { app: APP_VERSION, at }) : null;
+    if (replay && storeReplay(entry.id, replay)) entry.replay = true;
     history = addHistory(history, entry);
     saveHistory(history);
     last = { ctx, earned: earned.map((a) => a.id), challenges: judged.met.map((c) => c.id), xp: judged.xp, set: judged.set, rankUp: !!award?.rankUp, rewards: unlocked.map((r) => `${r.kind}:${r.id}`) };
@@ -255,6 +261,13 @@ export function setupMeta(S, A) {
     return `<section class="meta-section" aria-labelledby="records-rewards"><h3 id="records-rewards">${icon("flag")}<span>Medal rewards</span> <b translate="no">${open.length} / ${items.length}</b></h3>
       <p class="meta-note">Paint, emblems and title banners earned with medals, achievements and challenge days. Looks only: they never change a battle. Pick them in the Skirmish setup.</p><ul class="meta-ach-list">${items.map(row).join("")}</ul></section>`;
   }
+  // A row's replay: a Watch button, or why it cannot be watched (another version recorded it).
+  function watchHTML(e) {
+    const r = e.replay ? replays[e.id] : null;
+    if (!r) return "";
+    const problem = replayProblem(r, APP_VERSION);
+    return problem ? `<small class="meta-replay-note">${esc(problem)}</small>` : `<button type="button" class="kit-face meta-watch" data-watch="${esc(e.id)}" aria-label="Watch replay">${icon("play")}<span>Watch</span></button>`;
+  }
   // The last matches, newest first: result, what was played, sides, time and the key numbers.
   function historyHTML() {
     const row = (e) => {
@@ -264,7 +277,7 @@ export function setupMeta(S, A) {
       return `<li class="meta-match ${e.result}" data-match="${esc(e.id)}">
         <span class="meta-result">${icon(e.result === "defeat" ? "close" : e.result === "score" ? "chevrons" : "check")}<span>${RESULT_LABELS[e.result]}</span></span>
         <span class="meta-match-main"><strong>${esc(matchTitle(e))}</strong><small><span>${MODE_LABELS[e.mode]}</span>${sides ? ` · ${sides}` : ""}</small><small class="meta-when" translate="no">${esc(date)} · ${formatClock(e.seconds)}</small></span>
-        <span class="meta-match-stats"><span class="meta-stat"><b translate="no">${Math.round(e.stats.killed)}</b> <span>Kills</span></span><span class="meta-stat"><b translate="no">${Math.round(e.stats.lost)}</b> <span>Units lost</span></span>${extra}</span></li>`;
+        <span class="meta-match-stats"><span class="meta-stat"><b translate="no">${Math.round(e.stats.killed)}</b> <span>Kills</span></span><span class="meta-stat"><b translate="no">${Math.round(e.stats.lost)}</b> <span>Units lost</span></span>${extra}</span>${watchHTML(e)}</li>`;
     };
     return `<section class="meta-section" id="records-history-section" aria-labelledby="records-history"><h3 id="records-history">${icon("queue")}<span>Match history</span> <b translate="no">${history.length} / ${HISTORY_CAP}</b></h3>
       ${history.length ? `<ol class="meta-history">${history.map(row).join("")}</ol>` : `<p class="meta-note">No matches yet. Finished matches appear here, the last 20 kept.</p>`}</section>`;
@@ -274,6 +287,17 @@ export function setupMeta(S, A) {
       <nav class="records-jump" aria-label="Records sections">${JUMPS.map(([id, label, ic]) => `<button type="button" class="kit-face" data-records-jump="${id}">${icon(ic)}<span>${label}</span></button>`).join("")}</nav>
       <div class="records-body">${recordsChallengesHTML()}${historyHTML()}${achievementsHTML()}${rewardsHTML()}</div>`;
   }
+  // One tap on Watch: the Records screen closes and the replay plays (src/replay-ui.js).
+  async function watchReplay(id) {
+    const replay = replays[id] || loadReplays()[id], entry = history.find((e) => e.id === id) || null;
+    const problem = replay ? replayProblem(replay, APP_VERSION) : "This replay is no longer stored.";
+    if (problem) { showToast(`${icon("close")}<span class="meta-toast-text"><strong>${esc(problem)}</strong></span>`, "error"); return problem; }
+    // The dialog's close event puts the title's screen state back: let it run before the replay starts.
+    if (dialog?.open) await new Promise((done) => { dialog.addEventListener("close", done, { once: true }); dialog.close(); });
+    const error = await A.watchReplay?.(replay, entry);
+    if (error) showToast(`${icon("close")}<span class="meta-toast-text"><strong>${esc(error)}</strong></span>`, "error");
+    return error || null;
+  }
   function openRecords() {
     if (Z.started && !S.sim.result) return;
     if (!dialog) {
@@ -282,6 +306,8 @@ export function setupMeta(S, A) {
       document.body.append(dialog);
       dialog.addEventListener("click", (event) => {
         if (event.target.closest("[data-records-close]") || event.target === dialog) { dialog.close(); return; }
+        const watchButton = event.target.closest("[data-watch]");
+        if (watchButton) { watchReplay(watchButton.dataset.watch); return; }
         const jump = event.target.closest("[data-records-jump]");
         if (jump) dialog.querySelector(`#${jump.dataset.recordsJump}`)?.scrollIntoView({ block: "start", behavior: document.documentElement.classList.contains("motion-off") ? "auto" : "smooth" });
       });
@@ -290,6 +316,7 @@ export function setupMeta(S, A) {
     if (dialog.open) return;
     syncMeta();
     history = loadHistory();
+    replays = loadReplays();
     dialog.innerHTML = recordsHTML();
     // Mission titles are story text: their catalog loads on first use; the screen redraws when it arrives.
     if (getLanguage() !== "en") loadStory().then(() => { if (dialog.open) { const top = dialog.querySelector(".records-body")?.scrollTop || 0; dialog.innerHTML = recordsHTML(); dialog.querySelector(".records-body").scrollTop = top; } }).catch(() => {});
@@ -301,12 +328,14 @@ export function setupMeta(S, A) {
 
   function info() {
     const list = all();
-    return { history: history.map((e) => ({ ...e })), challenges: { ...challenges, today: dailyChallenges(challenges.day).map((c) => c.id) }, record: structuredClone(record), achievements: list.map((a) => ({ id: a.id, done: a.done, have: a.have, need: a.need })), done: list.filter((a) => a.done).length, total: ACHIEVEMENTS.length, last, toast: toast && !toast.hidden ? toast.textContent : null };
+    return { replay: S.replay ? { status: S.replay.status, paused: S.replay.paused, speed: S.replay.speed, ticks: S.sim.ticks, total: S.replay.replay.ticks } : null, replays: Object.keys(loadReplays()), history: history.map((e) => ({ ...e })), challenges: { ...challenges, today: dailyChallenges(challenges.day).map((c) => c.id) }, record: structuredClone(record), achievements: list.map((a) => ({ id: a.id, done: a.done, have: a.have, need: a.need })), done: list.filter((a) => a.done).length, total: ACHIEVEMENTS.length, last, toast: toast && !toast.hidden ? toast.textContent : null };
   }
 
   Object.assign(A, { metaInfo: info, openRecords, metaToast: showToast });
   // Browser tests (window.__frontier.meta): the state, and the same paths a tap or a match end takes.
-  A.metaHooks = { info, openRecords, closeRecords: () => dialog?.open && dialog.close(), matchEnded, earn, liveCheck, get record() { return record; }, set record(r) { record = r; saveRecord(r); earn(false); }, renderChallenges };
+  A.metaHooks = { info, openRecords, closeRecords: () => dialog?.open && dialog.close(), matchEnded, earn, liveCheck, get record() { return record; }, set record(r) { record = r; saveRecord(r); earn(false); }, renderChallenges, watchReplay, toMenu: () => A.newGame(),
+    // Ends the match here as if it had finished (browser tests: a real end takes minutes); returns the history entry.
+    recordNow() { const at = Date.now(), id = `t${at.toString(36)}`, replay = optionsOf(S.sim) ? recordReplay(S.sim, { app: APP_VERSION, at }) : null; const stored = !!(replay && storeReplay(id, replay)); history = addHistory(history, { id, at, mode: S.playMode, map: S.sim.terrain.id, mission: S.sim.missionDef?.id ?? null, player: playerFactionOf(S.sim), rivals: [], result: "defeat", seconds: S.sim.time, stats: {}, ...(stored ? { replay: true } : {}) }); saveHistory(history); return { id, stored, ticks: replay?.ticks ?? null, hash: replay?.hash ?? null }; } };
   return function bind() {
     // Achievements reached by older play (before W6) are remembered quietly, without a toast.
     earn(false);

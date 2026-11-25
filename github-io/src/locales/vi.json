@@ -1643,7 +1643,21 @@
     "Records sections": "Các mục hồ sơ",
     "Match history": "Lịch sử trận",
     "No matches yet. Finished matches appear here, the last 20 kept.": "Chưa có trận nào. Trận đã xong hiện ở đây, giữ 20 trận gần nhất.",
-    "Score": "Điểm"
+    "Score": "Điểm",
+    "Replay": "Xem lại",
+    "REPLAY": "XEM LẠI",
+    "Watch again": "Xem lại lần nữa",
+    "Play": "Phát",
+    "Exit replay": "Thoát xem lại",
+    "Replay controls": "Điều khiển xem lại",
+    "Replay speed": "Tốc độ xem lại",
+    "Watch": "Xem",
+    "Watch replay": "Xem lại trận",
+    "This replay is damaged and cannot be played.": "Bản xem lại này bị hỏng và không phát được.",
+    "This replay is no longer stored.": "Bản xem lại này không còn được lưu.",
+    "The replay could not be loaded.": "Không tải được bản xem lại.",
+    "Replay complete: it matches the recorded match.": "Xem lại xong: khớp với trận đã ghi.",
+    "The replay drifted from the recorded match: the game's rules changed since it was recorded.": "Bản xem lại đã lệch khỏi trận đã ghi: luật chơi đã thay đổi từ khi ghi."
   },
   "patterns": [
     [
@@ -2537,6 +2551,10 @@
     [
       "^Challenge complete · \\+(\\d+) XP$",
       "Xong thử thách · +{1} XP"
+    ],
+    [
+      "^This replay was recorded with version (.+) and cannot be played in version (.+)\\.$",
+      "Bản xem lại này được ghi ở phiên bản {1} và không phát được ở phiên bản {2}."
     ]
   ]
 }

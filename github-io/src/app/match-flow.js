@@ -224,7 +224,7 @@ export function setupMatchFlow(S, A) {
   }
 
   function autosave() {
-    if (!Z.started || S.sim.result || S.playMode === "training" || S.tutorial) return false;
+    if (!Z.started || S.sim.result || S.playMode === "training" || S.tutorial || S.replay) return false;
     S.saveClock = 0;
     return writeSave({ mode: S.playMode, missionId: S.activeStage !== null ? S.sim.missionDef?.id ?? missionsOf(S.campaignId)[S.activeStage].id : S.sim.defence ? S.sim.missionDef.id : null, sim: S.sim });
   }

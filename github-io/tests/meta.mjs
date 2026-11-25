@@ -8,6 +8,10 @@
 //     screen lists it as open, and it is one tap in the Skirmish setup's Paint row (looks only, no rule);
 //   - the Records screen's match history lists the finished match (result, mode, sides, time, kills),
 //     reached with its own jump button at the top of the screen;
+//   - replays: a short real match (8 s of frames, a few orders) is stored with its command log; Watch in the
+//     history plays it back with the dock hidden and every command refused, x1 x2 x4 and pause in a 44 px bar,
+//     and it ends on the recorded hash ("matches the recorded match"); a replay from another version is listed
+//     with the reason and no Watch button;
 //   - an achievement reached mid-match shows its toast at the top (taps pass through, never over the dock),
 //     and a scripted Skirmish win lists "Achievements earned" on the results screen.
 // Screenshots: test-results/meta-*.png.
@@ -149,7 +153,7 @@ await suite("meta", async () => {
     await page.locator("#records-open").scrollIntoViewIfNeeded();
     await o.tap("#records-open");
     await page.locator("#records[open]").waitFor({ state: "visible", timeout: TIMEOUT.step });
-    assert.equal(await page.locator("#records [data-match]").count(), 1, `${viewport}: one match in the history`);
+    assert.equal(await page.locator("#records [data-match]").count(), 1, `${viewport}: one match in the history (${await page.evaluate(() => JSON.stringify(window.__frontier.meta.info().history))})`);
     const row = (await page.locator("#records [data-match]").first().textContent()).replace(/\s+/g, " ");
     assert.match(row, /Victory.*Meridian Riverlands.*Skirmish.*Meridian vs Meridian.*0:0\d.*Kills.*Units lost/, `${viewport}: the row (${row})`);
     assert.deepEqual(await small(page, "#records button"), [], `${viewport}: Records taps with history`);
@@ -160,6 +164,57 @@ await suite("meta", async () => {
     await shot(page, `meta-history-${viewport}`);
     await o.tap("#records [data-records-close]");
     await page.waitForFunction(() => !document.querySelector("#records").open, null, { timeout: TIMEOUT.step });
+    // ---- Replays: record a short real match, then watch it back to the same final hash.
+    await startMatch(o);
+    await page.evaluate(() => { const s = window.__frontier.sim, hq = s.own(0).find((e) => e.type === "hq"); s.command({ team: 0, type: "train", building: hq.id, unit: "worker" }); const army = s.own(0).filter((e) => e.kind === "unit" && e.type !== "worker"); s.command({ team: 0, type: "order", ids: army.map((e) => e.id), order: { type: "move", x: hq.x + 8, z: hq.z + 6 } }); });
+    await page.waitForFunction(() => window.__frontier.sim.time >= 6, null, { timeout: TIMEOUT.models });
+    const recorded = await page.evaluate(() => window.__frontier.meta.recordNow());
+    assert.ok(recorded.stored && recorded.ticks >= 120, `${viewport}: the replay is stored (${JSON.stringify(recorded)})`);
+    await page.evaluate(() => window.__frontier.meta.toMenu());
+    await page.waitForFunction(() => !window.__frontier.started && !document.querySelector("#briefing").hidden, null, { timeout: TIMEOUT.models });
+    await o.ready();
+    await page.locator("#records-open").scrollIntoViewIfNeeded();
+    await o.tap("#records-open");
+    const watch = page.locator(`#records [data-watch="${recorded.id}"]`);
+    await watch.waitFor({ state: "visible", timeout: TIMEOUT.step });
+    assert.deepEqual(await small(page, "#records button"), [], `${viewport}: Watch taps`);
+    await watch.scrollIntoViewIfNeeded();
+    await o.tap(`#records [data-watch="${recorded.id}"]`);
+    await page.locator("#replay-bar:not([hidden])").waitFor({ state: "visible", timeout: TIMEOUT.models });
+    await page.waitForFunction(() => window.__frontier.meta.info().replay?.ticks > 0, null, { timeout: TIMEOUT.models });
+    const viewer = await page.evaluate(() => ({ refused: window.__frontier.sim.command({ team: 0, type: "harvest" }), dock: [...document.querySelectorAll(".bottom-dock, .touch-controls, #dock-tabs")].filter((e) => e.getClientRects().length).length, modal: !document.querySelector("#modal").hidden }));
+    assert.deepEqual(viewer, { refused: false, dock: 0, modal: false }, `${viewport}: no orders in a replay, no dock, no dialog`);
+    assert.deepEqual(await small(page, "#replay-bar button"), [], `${viewport}: replay bar taps`);
+    assert.deepEqual(await tiny(page, "#replay-bar"), [], `${viewport}: replay bar text`);
+    const barInside = await page.evaluate(() => { const r = document.querySelector("#replay-bar").getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.bottom <= innerHeight; });
+    assert.ok(barInside, `${viewport}: the bar fits the screen`);
+    await noSideScroll(page, `${viewport} replay`);
+    await shot(page, `meta-replay-${viewport}`);
+    await o.tap('#replay-bar [data-replay="play"]');
+    await page.waitForFunction(() => window.__frontier.meta.info().replay?.paused === true, null, { timeout: TIMEOUT.step });
+    await o.tap('#replay-bar [data-speed="4"]');
+    await o.tap('#replay-bar [data-replay="play"]');
+    await page.waitForFunction(() => window.__frontier.meta.info().replay?.status !== "playing", null, { timeout: TIMEOUT.models });
+    const end = await page.evaluate(() => ({ ...window.__frontier.meta.info().replay, hash: window.__frontier.sim.hash(), text: document.querySelector("#replay-bar").textContent.replace(/\s+/g, " ") }));
+    assert.deepEqual([end.status, end.speed, end.ticks, end.hash], ["ok", 4, recorded.ticks, recorded.hash], `${viewport}: the replay ends on the recorded hash`);
+    assert.match(end.text, /matches the recorded match/, `${viewport}: the bar says so`);
+    await shot(page, `meta-replay-end-${viewport}`);
+    await o.tap('#replay-bar [data-replay="exit"]');
+    await page.waitForFunction(() => !window.__frontier.started && !document.querySelector("#briefing").hidden && !document.documentElement.classList.contains("replaying"), null, { timeout: TIMEOUT.models });
+    const rows = await page.evaluate(() => window.__frontier.meta.info().history.map((e) => `${e.id}:${e.result}:${e.mode}`));
+    assert.equal(rows.filter((r) => r.startsWith("t")).length, 1, `${viewport}: watching added no history row (${rows})`);
+
+    // ---- Another version's replay: listed with the reason, no Watch button.
+    await page.evaluate((id) => { const all = JSON.parse(localStorage.getItem("frontier-replays-v1")); all[id].app = "0.0.1"; localStorage.setItem("frontier-replays-v1", JSON.stringify(all)); }, recorded.id);
+    await o.ready();
+    await page.locator("#records-open").scrollIntoViewIfNeeded();
+    await o.tap("#records-open");
+    await page.locator("#records[open]").waitFor({ state: "visible", timeout: TIMEOUT.step });
+    assert.equal(await page.locator(`#records [data-watch="${recorded.id}"]`).count(), 0, `${viewport}: no Watch for another version`);
+    assert.match(await page.locator(`#records [data-match="${recorded.id}"]`).textContent(), /recorded with version 0\.0\.1/, `${viewport}: the reason is shown`);
+    await o.tap("#records [data-records-close]");
+    await page.waitForFunction(() => !document.querySelector("#records").open, null, { timeout: TIMEOUT.step });
+
     assert.deepEqual(errors, [], `${viewport}: no page errors`);
     await page.close();
   }

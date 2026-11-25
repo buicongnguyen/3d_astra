@@ -1643,7 +1643,21 @@
     "Records sections": "기록 항목",
     "Match history": "전투 기록",
     "No matches yet. Finished matches appear here, the last 20 kept.": "아직 전투가 없습니다. 끝난 전투가 여기에 나오며 최근 20개가 보관됩니다.",
-    "Score": "점수"
+    "Score": "점수",
+    "Replay": "리플레이",
+    "REPLAY": "리플레이",
+    "Watch again": "다시 보기",
+    "Play": "재생",
+    "Exit replay": "리플레이 종료",
+    "Replay controls": "리플레이 조작",
+    "Replay speed": "리플레이 속도",
+    "Watch": "보기",
+    "Watch replay": "리플레이 보기",
+    "This replay is damaged and cannot be played.": "이 리플레이는 손상되어 재생할 수 없습니다.",
+    "This replay is no longer stored.": "이 리플레이는 더 이상 저장되어 있지 않습니다.",
+    "The replay could not be loaded.": "리플레이를 불러오지 못했습니다.",
+    "Replay complete: it matches the recorded match.": "리플레이 완료: 기록된 전투와 일치합니다.",
+    "The replay drifted from the recorded match: the game's rules changed since it was recorded.": "리플레이가 기록된 전투와 달라졌습니다. 기록 후 게임 규칙이 바뀌었습니다."
   },
   "patterns": [
     [
@@ -2537,6 +2551,10 @@
     [
       "^Challenge complete · \\+(\\d+) XP$",
       "도전 완료 · +{1} XP"
+    ],
+    [
+      "^This replay was recorded with version (.+) and cannot be played in version (.+)\\.$",
+      "이 리플레이는 버전 {1}에서 기록되어 버전 {2}에서는 재생할 수 없습니다."
     ]
   ]
 }
