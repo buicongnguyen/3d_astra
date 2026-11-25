@@ -88,13 +88,19 @@ export function setupHud(S, A) {
   // The notice line (#notice): routine notices and alerts share it with a priority (message-queue.js).
   // An alert stays its full time; a routine notice that arrives meanwhile waits its turn.
   const messages = createMessageQueue();
+  const NOTICE_SETTLE_MS = 2500;
   function showMessage() {
     const now = performance.now(), current = messages.update(now), el = $("notice");
     clearTimeout(S.noticeTimeout);
+    clearTimeout(S.noticeSettle);
+    el.classList.remove("settled");
     if (!current) { el.classList.remove("show"); return; }
     el.textContent = current.text;
     el.classList.toggle("warning", current.priority >= ALERT);
     el.classList.add("show");
+    // W13: on phones a routine notice settles to one line on lighter glass once it has been read (phone-hud-slim.css);
+    // an alert stays in full.
+    if (current.priority < ALERT) S.noticeSettle = setTimeout(() => el.classList.add("settled"), NOTICE_SETTLE_MS);
     S.noticeTimeout = setTimeout(showMessage, Math.max(0, current.until - now) + 16);
   }
   function notice(text) {

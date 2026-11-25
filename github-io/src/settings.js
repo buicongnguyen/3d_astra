@@ -56,8 +56,11 @@ export function defaults(coarse = false) {
     cameraAngle: "standard",
     cameraTurn: 0,
     zoomSpeed: 1,
-    // Desktop dock: the minimap in the left or right corner.
+    // The minimap in the left or right corner (desktop dock; phones since W13, 2026-11-25).
     minimapSide: "left",
+    // W13: phones, "left" mirrors the touch controls (the dock, the button rows, Map and the flag) for left-handed
+    // players. Choosing it in the sheet also moves the minimap to the right (it can be moved back on its own).
+    handedness: "right",
     // Vitals bars: "hurt" (damaged units, the selection and the hovered unit; as before), "always", "selected".
     healthBars: "hurt",
     // Toasts: "all", or "important" (attack warnings, losses and objectives; routine news stays in the log).
@@ -115,6 +118,7 @@ export function normalize(value, coarse = false) {
   pick("cameraAngle", ["low", "standard", "top"]);
   pick("cameraTurn", [0, 90, 180, 270]);
   pick("minimapSide", ["left", "right"]);
+  pick("handedness", ["right", "left"]);
   pick("healthBars", ["hurt", "always", "selected"]);
   pick("alerts", ["all", "important"]);
   pick("frameCap", [0, 30, 60]);

@@ -115,11 +115,11 @@ export function setupFrame(S, A) {
     // The decision card and a story scene hold the match but the music plays on (screens.js MUSIC_HOLDS).
     S.audio?.update(elapsed, { sim: S.sim, settings: S.settings, started: Z.started, paused: (S.audioPaused = Z.paused && !MUSIC_HOLDS.includes(Z.modalType)), hidden: document.hidden, mapId: S.mapId, screen: A.musicScreen(), inBattle: !!S.sim.defence?.active });
     A.refreshHover();
-    // Settings → Camera (angle preset, quarter turns). Frontier Defence keeps its own framing (app/defence/framing.js
+    // Settings → Camera (angle preset, quarter turns) plus the touch twist (W13, S.cameraTwist; session only). Frontier Defence keeps its own framing (app/defence/framing.js
     // turns the camera on phones and its math assumes the designed look-down), so the choice waits outside it.
     if (S.view && !S.sim.defence) {
       S.view.setPitch?.(CAMERA_PITCH[S.settings.cameraAngle] ?? null);
-      S.view.setYaw?.(((S.settings.cameraTurn || 0) * Math.PI) / 180);
+      S.view.setYaw?.(((S.settings.cameraTurn || 0) * Math.PI) / 180 + (S.cameraTwist || 0));
     } else S.view?.setPitch?.(null);
     // A story mission waiting for a Commander decision (also after loading a save) shows its card.
     if (Z.started && !Z.paused && !S.sim.result && S.sim.mission?.pending) A.openDecision();

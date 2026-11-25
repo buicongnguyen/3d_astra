@@ -11,6 +11,28 @@ export function inSideEdge(touches, width, guard = SIDE_EDGE_GUARD) {
   for (const t of touches || []) if (t.clientX < guard || t.clientX > width - guard) return true;
   return false;
 }
+// Two-finger twist (W13): the fingers' line must turn this far (radians, 15°) before the camera turns, so a pinch or
+// a two-finger pan that wobbles never twists by accident; past it the camera follows the fingers (the first 15° are
+// a dead zone, not a jump). Fingers closer than TWIST_MIN_SPAN px are too noisy to read an angle from.
+export const TWIST_THRESHOLD = Math.PI / 12;
+export const TWIST_MIN_SPAN = 60;
+// The signed change of the fingers' angle between two snapshots, wrapped to [-pi, pi].
+export function angleDelta(from, to) {
+  let d = to - from;
+  while (d > Math.PI) d -= 2 * Math.PI;
+  while (d < -Math.PI) d += 2 * Math.PI;
+  return d;
+}
+// The twist a gesture applies this move: nothing until the turn so far passes the threshold, then the part beyond it.
+// `state` is { total, on } for the gesture; returns the radians to apply now.
+export function twistStep(state, delta, span, threshold = TWIST_THRESHOLD) {
+  if (span < TWIST_MIN_SPAN) return 0;
+  state.total += delta;
+  if (state.on) return delta;
+  if (Math.abs(state.total) < threshold) return 0;
+  state.on = true;
+  return state.total - Math.sign(state.total) * threshold;
+}
 export class TouchControls {
   constructor(canvas, callbacks) {
     this.canvas = canvas;
@@ -18,6 +40,7 @@ export class TouchControls {
     this.pointers = new Map();
     this.multi = false;
     this.gesture = null;
+    this.twist = { total: 0, on: false };
     this.handledTouchTap = false;
     // Must not be passive: only a cancelable touchstart keeps the browser's edge swipe from starting.
     canvas.addEventListener("touchstart", (e) => {
@@ -49,6 +72,7 @@ export class TouchControls {
           x: (a.x + b.x) / 2,
           y: (a.y + b.y) / 2,
           distance: Math.hypot(a.x - b.x, a.y - b.y),
+          angle: Math.atan2(b.y - a.y, b.x - a.x),
         }
       : null;
   }
@@ -71,6 +95,7 @@ export class TouchControls {
       this.multi = true;
       this.callbacks.rectangle(null);
       this.gesture = this.snapshot();
+      this.twist = { total: 0, on: false };
     }
   }
   move(e) {
@@ -84,12 +109,16 @@ export class TouchControls {
     if (Math.hypot(p.x - p.startX, p.y - p.startY) > 9) p.moved = true;
     if (this.pointers.size > 1) {
       const next = this.snapshot();
-      if (next && this.gesture)
+      if (next && this.gesture) {
         this.callbacks.panZoom(
           next.x - this.gesture.x,
           next.y - this.gesture.y,
           this.gesture.distance / Math.max(10, next.distance),
         );
+        this.twist ??= { total: 0, on: false };
+        const turn = twistStep(this.twist, angleDelta(this.gesture.angle, next.angle), Math.min(this.gesture.distance, next.distance));
+        if (turn) this.callbacks.twist?.(turn);
+      }
       this.gesture = next;
     } else if (p.moved) {
       if (this.callbacks.boxMode() && !this.multi) this.callbacks.rectangle(p);
@@ -117,6 +146,8 @@ export class TouchControls {
     }
     this.callbacks.rectangle(null);
     this.gesture = this.snapshot();
+    // A finger lifted: a new pair starts its twist from zero (the threshold again).
+    this.twist = { total: 0, on: false };
     if (!this.pointers.size) this.multi = false;
   }
   reset() {
@@ -124,6 +155,7 @@ export class TouchControls {
     this.pointers.clear();
     this.multi = false;
     this.gesture = null;
+    this.twist = { total: 0, on: false };
     for (const id of ids)
       if (this.canvas.hasPointerCapture(id))
         this.canvas.releasePointerCapture(id);

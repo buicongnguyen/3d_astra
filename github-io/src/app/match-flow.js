@@ -195,6 +195,7 @@ export function setupMatchFlow(S, A) {
     $("queue-orders").setAttribute("aria-pressed", "false");
     A.syncPointOwners();
     S.tutorial = null;
+    S.cameraTwist = 0; // W13: a new match starts untwisted
     S.view.reset();
     if (play !== false) S.view.fx?.sprites?.start(); // R3-FX: the weapon sprite sheets load when a battle starts, never on the title
     S.governor.reset();
@@ -252,6 +253,7 @@ export function setupMatchFlow(S, A) {
     setMusicMood("calm");
     S.audio?.reset();
     A.syncPointOwners();
+    S.cameraTwist = 0; // W13: a new match starts untwisted
     S.view.reset();
     A.focusHome();
     S.hover = null;

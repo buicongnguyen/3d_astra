@@ -1,0 +1,67 @@
+/* W13 (2026-11-25): minimap side and the left-handed layout on phones. Loaded last (after phone-hud-slim.css).
+   :root.minimap-right   Settings → Display → Minimap side (also the desktop dock's corner, settings.css).
+   :root.left-handed     Settings → Controls → Hand: the phone controls mirror (the dock, the touch row, Map and the
+                         objectives flag, the idle buttons). Choosing it moves the minimap right as well.
+   Every rule is scoped to a phone in a match (:root.compact-ui:not(.in-briefing)). Frontier Defence keeps its own
+   HUD (its bar, crew button and framing are centred or framed for the roads) apart from the minimap side.
+   The iPhone gesture rules hold on both sides (docs/TESTING.md "iPhone gestures"): nothing moves into the bottom
+   home-indicator strip (bottoms stay on --safe-bottom), and the side-edge guard is in the input, not in the layout.
+   tests/phone-handed.mjs checks the mirror, the minimap corner, 44 px taps and the reload. */
+
+/* ================= Landscape ================= */
+@media (min-aspect-ratio: 1.35) {
+  /* Minimap in the bottom-right corner. Its enlarge button stays above its inner (left) corner, out of the 20 px
+     side strip where Safari's back swipe starts. */
+  html:root.compact-ui.minimap-right:not(.in-briefing) .bottom-dock .minimap-panel { left: auto !important; right: var(--edge-right) !important; }
+  html:root.compact-ui.minimap-right:not(.in-briefing):not(.in-defence) .minimap-panel .panel-label { left: 0; right: auto; }
+  html:root.compact-ui.minimap-right:not(.in-briefing):not(.in-defence) .minimap-panel .panel-label button { border-radius: 0 0 10px 0; }
+
+  /* The dock: on the left for the left hand. When the minimap shares the dock's corner, the dock stands beside it. */
+  :root.compact-ui:not(.in-briefing) { --dock-inset: 0px; }
+  /* (Defence keeps its dock on the right in both hands, so there only the minimap side counts.) */
+  :root.compact-ui.minimap-right:not(.left-handed):not(.in-briefing),
+  :root.compact-ui.minimap-right.in-defence:not(.in-briefing),
+  :root.compact-ui.left-handed:not(.minimap-right):not(.in-defence):not(.in-briefing) { --dock-inset: calc(var(--mini-w) + 8px); }
+  html:root.compact-ui:not(.in-briefing):is(:not(.left-handed), .in-defence) .bottom-dock { right: calc(var(--edge-right) + var(--dock-inset)); }
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) .bottom-dock { left: calc(var(--edge-left) + var(--dock-inset)); right: auto; }
+  /* A unit's two-row tactics card (phone-hud.css) is a wide fixed deck of its own. */
+  html:root.compact-ui.dock-actions:not(.in-briefing):not(#x):not(#y)[data-dock] .bottom-dock .command-deck:has(#commands.tactics-card) { right: calc(8px + var(--dock-inset)) !important; }
+  html:root.compact-ui.left-handed.dock-actions:not(.in-briefing):not(.in-defence):not(#x):not(#y)[data-dock] .bottom-dock .command-deck:has(#commands.tactics-card) { left: calc(8px + var(--dock-inset)) !important; right: auto !important; }
+
+  /* Left hand: the flag and the idle buttons under the right-hand pill (from 840 px wide the touch row is centred
+     in the top band); narrower phones: the touch row from the right edge, then the flag and the idle buttons. */
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) #mission-toggle { left: auto !important; right: var(--edge-right) !important; }
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) #idle-chips { left: auto !important; right: calc(var(--edge-right) + 44px + var(--hud-pad, 8px)) !important; }
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence).objectives-open #mission-objectives { left: auto !important; right: var(--edge-right) !important; }
+  /* The notice lane and the dialogue strip keep the left; the dialogue clears the dock instead of the minimap. */
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence):not(.scene-open) .dialogue { left: calc(var(--edge-left) + var(--side-width) + var(--dock-inset) + 8px); }
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) #mode-controls { left: calc((100% - var(--rail-width) + var(--side-width)) / 2); }
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) #training { left: calc(var(--side-width) + var(--edge-left) + 8px); right: auto; align-items: flex-start; }
+}
+@media (min-aspect-ratio: 1.35) and (max-width: 839px) {
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) .touch-controls { left: auto !important; right: var(--edge-right) !important; }
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) #mission-toggle { right: calc(var(--edge-right) + var(--row-width) + 8px) !important; }
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) #idle-chips { right: calc(var(--edge-right) + var(--row-width) + 60px) !important; }
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence).objectives-open #mission-objectives { right: calc(var(--edge-right) + var(--row-width) + 8px) !important; }
+}
+
+/* ================= Portrait ================= */
+@media (max-aspect-ratio: 1.35) {
+  /* Defence's minimap strip (152 px: Home, the map, enlarge) in the bottom-right corner. */
+  html:root.compact-ui.minimap-right.in-defence:not(.in-briefing) .bottom-dock .minimap-panel { left: auto !important; right: var(--hud-right) !important; }
+
+  /* Left hand: the touch row from the right edge. */
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) .touch-controls { left: auto !important; right: var(--hud-right) !important; }
+  /* The tab row: the flag first, then Selection and Map. */
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) #dock-tabs { left: calc(var(--hud-left) + 44px + var(--hud-gap)) !important; right: var(--hud-right) !important; }
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) #mission-toggle { left: var(--hud-left) !important; right: auto !important; }
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence).objectives-open #mission-objectives { left: var(--hud-left) !important; right: auto !important; }
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) #idle-chips { left: var(--hud-left) !important; right: auto !important; }
+}
+/* A selection: Map and the flag stand at the card's left (in its heading row, or just above a mixed group's chips). */
+@media (max-width: 540px) and (orientation: portrait) {
+  html:root.compact-ui.left-handed:not(.in-briefing):not(.in-defence)[data-dock="selection"]:has(.selection-panel.has-entity) {
+    & #dock-tabs { left: calc(var(--hud-left) + 46px) !important; right: auto !important; }
+    & .selection-panel #selection-info { margin-right: 0; margin-left: 96px; }
+  }
+}
