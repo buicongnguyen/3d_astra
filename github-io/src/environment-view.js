@@ -5,6 +5,7 @@ import { CROSSINGS } from "./terrain.js";
 import { ROCKS } from "./data.js";
 import { themeFor } from './visual-style.js';
 import { fogAware } from "./fog-aware.js";
+import { landOf } from "./lands.js";
 export function optimizeEnvironment(assets) {
   assets.updateMatrixWorld(true);
   const original = new Set();
@@ -53,12 +54,13 @@ export class EnvironmentView {
     // Clear, saturated water in the map's own colours: deep in mid-stream, pale over the
     // shallows and foam-white where it meets the banks. No metalness: without an environment
     // map it only greyed the colour.
-    const theme = themeFor(terrain.id);
+    const theme = themeFor(terrain.id), land = landOf(terrain);
+    // W9 lands: lava glows in its own colour (rougher, a slow crust), ice water is a little glassier.
     const waterMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      roughness: 0.2,
+      roughness: land?.lava ? 0.55 : 0.2,
       metalness: 0,
-      emissive: new THREE.Color(theme.water).multiplyScalar(0.16),
+      emissive: new THREE.Color(theme.water).multiplyScalar(land?.lava ? 0.55 : 0.16),
     });
     // A real channel bed is cut into the ground; water stays below the banks. One plane per river
     // (maps.json "rivers"; the old river maps have one, at z = 0), merged: one draw for all the water.
@@ -106,6 +108,11 @@ export class EnvironmentView {
           if (dx * f.dx + dz * f.dz > 0) edge = Math.min(edge, perp - f.half);
         }
         const bank = Math.abs(Math.hypot(positions.getX(i), positions.getY(i)) - mid) / width; // 0 mid-ring, 1 at the edges
+        // A W9 isles inlet runs off the map: its ring stops at the edge (the skirt pours it over, map-edge.js).
+        if (Math.abs(wx) > terrain.half) positions.setX(i, Math.sign(wx) * terrain.half - lake.x);
+        if (Math.abs(wz) > terrain.half) positions.setY(i, lake.z - Math.sign(wz) * terrain.half);
+        // A plank bridge strip (W9 isles): the ground is level there and the bridge deck covers it; no gravel bar.
+        if (edge <= 0 && terrain.onLakeBridge(lake, wx, wz)) { c.copy(deep); c.toArray(colors, i * 3); continue; }
         if (edge <= 0) positions.setZ(i, 0.12);
         if (edge <= -1) c.copy(ford).lerp(gravel, 0.82).lerp(foam, i % 2 ? 0.12 : 0.3).multiplyScalar(1.15);
         else if (edge <= 0) c.copy(foam).multiplyScalar(1.3);
@@ -182,7 +189,20 @@ export class EnvironmentView {
       return seed / 4294967296;
     };
     for (const river of terrain.rivers) for (const c of river.fords) this.fordMarks(c, theme, river.z);
-    for (const lake of lakes) for (const f of lake.fords) this.lakeFordMarks(lake, f, theme);
+    // Every lake strip's marks (ford posts, plank bridges) in one merged mesh: one draw however many strips.
+    const strips = [];
+    for (const lake of lakes) for (const f of lake.fords) strips.push(...(f.bridge ? this.lakeBridgeParts(lake, f, theme) : this.lakeFordMarks(lake, f, theme, land)));
+    if (strips.length) {
+      const geometry = mergeGeometries(strips, false);
+      for (const p of strips) p.dispose();
+      const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, flatShading: true });
+      if (this.fog) fogAware(material, this.fog);
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.name = "ford-marks";
+      mesh.receiveShadow = true;
+      this.root.add(mesh);
+      this.owned.push(geometry, material);
+    }
     // Batch repeated meshes by source primitive: decoration adds a fixed number of draw calls.
     const instances = (name, transforms, target = this.decor) => {
       const source = assets.getObjectByName("asset_" + name);
@@ -220,7 +240,7 @@ export class EnvironmentView {
     const transforms = { bush: [], reed: [], crate: [] },
       dummy = new THREE.Object3D();
     // Decoration stays well inside the playable edge; nothing is placed on or beyond it.
-    for (let i = 0; i < 120; i++) {
+    for (let i = 0; i < (land && !land.bushes ? 0 : 120); i++) {
       const x = (rand() - 0.5) * 88,
         z = (rand() - 0.5) * 88,
         type = terrain.at(x, z);
@@ -236,7 +256,7 @@ export class EnvironmentView {
       dummy.updateMatrix();
       transforms.bush.push(dummy.matrix.clone());
     }
-    for (const river of terrain.rivers)
+    for (const river of land && !land.reeds ? [] : terrain.rivers)
     for (let i = 0; i < 60; i++) {
       const x = -44 + i * 1.48;
       if (river.crossings.some((c) => Math.abs(x - c.x) < 6)) continue;
@@ -245,8 +265,8 @@ export class EnvironmentView {
       dummy.updateMatrix();
       transforms.reed.push(dummy.matrix.clone());
     }
-    // Reeds ring each lake's shore (not on its fords).
-    for (const lake of lakes)
+    // Reeds ring each lake's shore (not on its fords). Not round lava or ice (W9 lands).
+    for (const lake of land && !land.reeds ? [] : lakes)
       for (let i = 0; i < 90; i++) {
         const a = (i / 90) * Math.PI * 2, d = lake.r + 0.6 + rand() * 1.4, x = lake.x + Math.cos(a) * d, z = lake.z + Math.sin(a) * d;
         if (lake.fords.some((f) => Math.cos(a) * f.dx + Math.sin(a) * f.dz > 0 && Math.abs(Math.cos(a) * f.dz - Math.sin(a) * f.dx) * d < f.half + 1.5)) continue;
@@ -340,9 +360,10 @@ export class EnvironmentView {
     this.root.add(mesh);
     this.owned.push(geometry, material);
   }
-  // A lake ford's marks in the style of the river fords' (one merged vertex-coloured mesh, one draw): banded posts
+  // A lake ford's marks in the style of the river fords' (merged with every other lake strip's: one draw): banded posts
   // down both edges of the strip from the island's foot to the shore, a cairn at each shore corner, flat cobbles.
-  lakeFordMarks(lake, f, theme) {
+  // Returns the parts. On ice (W9 snow) the cobbles are pale ice slabs and the posts carry red bands, like ice-road poles.
+  lakeFordMarks(lake, f, theme, land = null) {
     const parts = [], color = new THREE.Color(), matrix = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
     let seed = 991 + Math.round(f.angle);
     const rand = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
@@ -360,11 +381,11 @@ export class EnvironmentView {
       g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
       parts.push(g);
     };
-    const wood = theme.wood, band = "#ffe9a8", stone = `#${new THREE.Color(theme.rock).lerp(new THREE.Color(theme.dust), 0.35).getHexString()}`;
+    const wood = theme.wood, band = land?.ice ? "#ff5a4a" : "#ffe9a8", stone = land?.ice ? theme.foam : `#${new THREE.Color(theme.rock).lerp(new THREE.Color(theme.dust), 0.35).getHexString()}`;
     const from = lake.inner + 0.8, to = lake.r - 0.6;
     for (const side of [-1, 1]) {
       const v = side * (f.half - 0.4);
-      for (let u = from; u <= to + 0.01; u += (to - from) / 4) {
+      for (let u = from; u <= to + 0.01; u += (to - from) / (lake.r < 12 ? 2 : 4)) { // a small pond (W9 snow): three poles a side
         piece(new THREE.CylinderGeometry(0.15, 0.17, 1.1, 6), wood, u, 0.45, v, 1, 1, 1);
         piece(new THREE.CylinderGeometry(0.17, 0.17, 0.32, 6), band, u, 0.95, v, 1, 1, 1);
         piece(new THREE.ConeGeometry(0.19, 0.18, 6), band, u, 1.2, v, 1, 1, 1);
@@ -378,15 +399,54 @@ export class EnvironmentView {
       const u = from + rand() * (to - from), v = (rand() - 0.5) * (f.half * 2 - 2.2), s = 0.22 + rand() * 0.2;
       piece(new THREE.DodecahedronGeometry(1), stone, u, 0.06, v, s * 1.3, s * 0.4, s, rand() * 6);
     }
-    const geometry = mergeGeometries(parts, false);
-    for (const p of parts) p.dispose();
-    const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, flatShading: true });
-    if (this.fog) fogAware(material, this.fog);
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.name = "ford-marks";
-    mesh.receiveShadow = true;
-    this.root.add(mesh);
-    this.owned.push(geometry, material);
+    return parts;
+  }
+  // A plank bridge over a lake strip (W9 isles, `type: "bridge"`): a deck of planks across the strip from shore to
+  // shore, a kerb and a rope rail on posts down both sides. Returns the parts (merged with the ford marks: one draw).
+  lakeBridgeParts(lake, f, theme) {
+    const parts = [], color = new THREE.Color(), matrix = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
+    let seed = 1201 + Math.round(f.angle);
+    const rand = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
+    const at = (u, v) => [lake.x + u * f.dx - v * f.dz, lake.z + u * f.dz + v * f.dx];
+    // Turn about y so the local x axis runs across the strip (along v).
+    const turn = Math.atan2(-f.dx, -f.dz);
+    const piece = (geometry, hex, u, y, v, sx, sy, sz, yaw = turn) => {
+      const g = geometry.index ? geometry.toNonIndexed() : geometry;
+      if (g !== geometry) geometry.dispose();
+      g.deleteAttribute("uv");
+      const [x, z] = at(u, v);
+      g.applyMatrix4(matrix.compose(new THREE.Vector3(x, y, z), q.setFromEuler(e.set(0, yaw, 0)), new THREE.Vector3(sx, sy, sz)));
+      color.set(hex);
+      const colors = new Float32Array(g.attributes.position.count * 3);
+      for (let i = 0; i < colors.length; i += 3) color.toArray(colors, i);
+      g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      parts.push(g);
+    };
+    // From just inside the island's shore to just past the outer shore (the strips of two lakes meet over the water).
+    const from = Math.max(0.5, lake.inner - 1.2), to = lake.r + 1.2, width = f.half * 2 - 0.3;
+    const plank = new THREE.Color(theme.bridge), dark = `#${plank.clone().multiplyScalar(0.78).getHexString()}`, light = `#${plank.clone().lerp(new THREE.Color("#fff2d8"), 0.18).getHexString()}`;
+    // Where two lakes' bridges meet over shared water, the earlier lake's deck is drawn there and this one stops.
+    const earlier = this.terrain.lakes.slice(0, this.terrain.lakes.indexOf(lake));
+    const drawn = (u) => { const [x, z] = at(u, 0); return earlier.some((l) => Math.hypot(x - l.x, z - l.z) <= l.r + 1.2 && this.terrain.onLakeBridge(l, x, z)); };
+    for (let u = from; u < to; u += 0.62) {
+      if (drawn(u)) continue;
+      piece(new THREE.BoxGeometry(width + (rand() - 0.5) * 0.25, 0.09, 0.52), rand() < 0.5 ? dark : light, u, 0.07, (rand() - 0.5) * 0.12, 1, 1, 1);
+    }
+    let end = to;
+    while (end > from + 1 && drawn(end - 0.3)) end -= 0.62;
+    let start = from;
+    while (start < end - 1 && drawn(start + 0.3)) start += 0.62;
+    for (const side of [-1, 1]) {
+      const v = side * (f.half - 0.12);
+      // The kerb beam along the deck's edge.
+      piece(new THREE.BoxGeometry(0.16, 0.14, end - start), dark, (start + end) / 2, 0.16, v, 1, 1, 1, turn);
+      for (let u = start + 0.4; u <= end - 0.3; u += 3.2) {
+        piece(new THREE.CylinderGeometry(0.09, 0.11, 0.95, 5), theme.wood, u, 0.48, v, 1, 1, 1);
+        piece(new THREE.CylinderGeometry(0.12, 0.12, 0.1, 5), "#ffe9a8", u, 0.93, v, 1, 1, 1);
+      }
+      piece(new THREE.BoxGeometry(0.06, 0.06, end - start - 0.6), "#d9c39a", (start + end) / 2, 0.82, v, 1, 1, 1, turn);
+    }
+    return parts;
   }
   // Rock obstacles block movement, so they stay visible regardless of the decoration setting.
   // Each obstacle gets one Blender boulder (its satellite stones already break the outline).

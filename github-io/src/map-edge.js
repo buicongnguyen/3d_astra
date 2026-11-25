@@ -13,6 +13,8 @@ const SKY = {
   basin: ["#e6bc91", "#7792a2"], expanse: ["#c2dfc6", "#658da2"],
   dunes: ["#efd29e", "#7897ad"], woodlands: ["#b5d2bd", "#527d95"],
   highlands: ["#bfaaa1", "#6a788d"],
+  // W9 lands: a pale frost haze, a smoky ember haze over the volcano, a bright sea haze over the isles.
+  snowfield: ["#d6e8f6", "#6c8fb4"], volcano: ["#d89a78", "#6a5a78"], archipelago: ["#bfe8e6", "#4f94b8"],
 };
 
 function skyMaterial(terrain, geometry) {
@@ -55,12 +57,14 @@ export function createMapEdge(terrain) {
     c.push(...ca, ...cb, ...ccc, ...ca, ...ccc, ...cd);
   };
   const cliff = color("cliff"), deep = color("cliffDeep"), near = color("outlandNear"), far = color("outland"), haze = color("sky"),
-    water = color("water"), foam = color("foam"), lip = mix(color(terrain.id === "classic" ? "dirt" : terrain.biome === "desert" ? "sand" : terrain.biome === "highland" ? "stone" : "grass"), cliff, 0.35);
+    water = color("water"), foam = color("foam"), lip = mix(color(terrain.id === "classic" ? "dirt" : terrain.biome === "desert" ? "sand" : terrain.biome === "highland" ? "stone" : terrain.biome === "volcanic" ? "dirt" : "grass"), cliff, 0.35);
   // The river bed is cut 0.5 deep; the skirt's top edge follows it.
   // Each river band (maps.json "rivers"); the old river maps have one, at z = 0, with its ford at x = 0.
+  // A lake that runs off the map (the W9 isles' sea inlets) dips the skirt's top too; no older lake reaches the edge.
   const top = (x, z) => {
     const river = terrain.river ? terrain.riverNear(z, 4) : null;
-    return river && !river.fords.some((c) => Math.abs(x - c.x) <= c.half) ? -0.5 * Math.min(1, 4 - Math.abs(z - river.z)) : 0;
+    const bed = river && !river.fords.some((c) => Math.abs(x - c.x) <= c.half) ? -0.5 * Math.min(1, 4 - Math.abs(z - river.z)) : 0;
+    return terrain.lakes?.length ? Math.min(bed, -terrain.lakeBed(x, z)) : bed;
   };
   let hash = 0x9e3779b1 ^ terrain.size;
   const jitter = () => { hash = Math.imul(hash ^ (hash >>> 15), 0x2c1b3c6d) + 0x297a2d39 >>> 0; return (hash & 1023) / 1023; };
@@ -87,6 +91,18 @@ export function createMapEdge(terrain) {
       const edge = (z) => Math.abs(z - river.z) === 3 ? spray : bright;
       quad([x, -0.09, z0], [x, -0.09, z1], [x, -CLIFF * 0.55, z1], [x, -CLIFF * 0.55, z0], edge(z0), edge(z1), water, water);
       quad([x, -CLIFF * 0.55, z0], [x, -CLIFF * 0.55, z1], [x, -CLIFF + 0.02, z1], [x, -CLIFF + 0.02, z0], water, water, foam, foam);
+    }
+  }
+  // A lake that leaves the map (the W9 isles' inlets) spills down the skirt as a falling sheet, on every side.
+  for (const [axis, sign] of [["x", 1], ["x", -1], ["z", 1], ["z", -1]]) {
+    if (!terrain.lakes?.some((l) => (axis === "x" ? sign * l.x : sign * l.z) + l.r > half)) continue;
+    const at = (t, y) => (axis === "x" ? [sign * (half + 0.03), y, t] : [t, y, sign * (half + 0.03)]);
+    const bright = mix(water, foam, 0.35);
+    for (let t = -half; t < half; t += 1) {
+      const wet = (u) => { const [x, , z] = at(u, 0); return terrain.lakeBed(axis === "x" ? x - sign * 0.05 : x, axis === "z" ? z - sign * 0.05 : z) > 0.2; };
+      if (!wet(t) || !wet(t + 1)) continue;
+      quad(at(t, -0.09), at(t + 1, -0.09), at(t + 1, -CLIFF * 0.55), at(t, -CLIFF * 0.55), bright, bright, water, water);
+      quad(at(t, -CLIFF * 0.55), at(t + 1, -CLIFF * 0.55), at(t + 1, -CLIFF + 0.02), at(t, -CLIFF + 0.02), water, water, foam, foam);
     }
   }
   // The outland: square rings from the cliff foot out to the haze.

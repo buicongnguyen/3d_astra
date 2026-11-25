@@ -1,6 +1,7 @@
 import { SURFACES } from "./terrain.js";
 import { themeFor } from "./visual-style.js";
 import { outward } from "./plateau-relief.js";
+import { landOf } from "./lands.js";
 
 // Paints a map's ground texture once: surface colours from the theme, broad patches of the
 // theme's accent colour so no map is one flat tone, then small hand-drawn detail (grass dabs,
@@ -86,9 +87,29 @@ export function paintGround(ctx, terrain, size, random) {
   // Surface detail, drawn where that surface is.
   ctx.lineCap = "round";
   const leaf = rgb(themeFor(terrain.id).leafAlt), shade = rgb(themeFor(terrain.id).leaf);
+  // W9 lands (src/lands.js): snow is painted with wind drifts and sparkle, volcanic ash with grey flecks.
+  const paint = landOf(terrain)?.paint, foamTint = rgb(themeFor(terrain.id).foam), dustTint = rgb(themeFor(terrain.id).dust);
   for (let i = 0; i < 11000 * k * k; i++) {
     const x = random() * size, y = random() * size, pick = random(), turn = random(), type = surface(world(x), world(y));
-    if (type === "grass") {
+    if (paint === "snow" && (type === "grass" || type === "dirt")) {
+      // Wind-carved drifts: soft pale crescents all leaning one way, and a few bright glints.
+      if (i % 3 === 0) {
+        ctx.strokeStyle = pick > 0.4 ? tint(foamTint, 0.13 + pick * 0.13) : tint(dark, 0.05);
+        ctx.lineWidth = (2 + pick * 2.5) * k;
+        const length = (10 + pick * 22) * k, angle = -0.35 + (turn - 0.5) * 0.25;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.quadraticCurveTo(x + Math.cos(angle) * length * 0.5, y + Math.sin(angle) * length * 0.5 - 3 * k, x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+        ctx.stroke();
+      } else if (i % 7 === 1) {
+        ctx.fillStyle = tint(foamTint, 0.5 + pick * 0.4);
+        ctx.fillRect(x, y, 1.2 * k, 1.2 * k);
+      }
+    } else if (paint === "embers" && type === "grass") {
+      // Ash: grey and warm flecks instead of grass blades.
+      ctx.fillStyle = pick > 0.5 ? tint(dustTint, 0.18 + pick * 0.12) : tint(dark, 0.14);
+      ctx.beginPath(); ctx.ellipse(x, y, (1 + pick * 2.4) * k, (0.7 + turn) * k, turn * 3, 0, Math.PI * 2); ctx.fill();
+    } else if (type === "grass") {
       ctx.strokeStyle = pick > 0.45 ? tint(leaf, 0.2 + pick * 0.16) : tint(shade.map((v) => v * 0.6), 0.22);
       ctx.lineWidth = 1.6 * k;
       ctx.beginPath();
@@ -114,6 +135,7 @@ export function paintGround(ctx, terrain, size, random) {
       ctx.beginPath(); ctx.ellipse(x + ox, y - 0.4 * k, r * 0.85, r * 0.6, 0, 0, Math.PI * 2); ctx.fill();
     }
   }
+  if (paint === "embers") paintEmberCracks(ctx, terrain, size, random, surface);
   paintPlateaus(ctx, terrain, size);
   if (terrain.river) {
     // Wet sand, then a broken foam line where the water meets each bank.
@@ -160,6 +182,34 @@ export function paintGround(ctx, terrain, size, random) {
       }
     }
   }
+}
+
+// Volcano (W9): glowing cracks in the basalt. Each crack wanders a few metres in short zigzag steps, drawn twice:
+// a wide, faint red-orange glow and a thin hot core. Only on bare basalt and rock, never into water, lava or roads.
+export function paintEmberCracks(ctx, terrain, size, random, surface = (x, z) => terrain.at(x, z)) {
+  const k = size / 1024, scale = size / terrain.size, world = (p) => p / scale - terrain.half;
+  ctx.save();
+  ctx.lineCap = "round"; ctx.lineJoin = "round";
+  for (let i = 0; i < 120 * k * k; i++) {
+    let x = random() * size, y = random() * size;
+    if (!["dirt", "stone"].includes(surface(world(x), world(y)))) continue;
+    const points = [[x, y]], heading = random() * Math.PI * 2, steps = 3 + Math.floor(random() * 5);
+    for (let n = 0; n < steps; n++) {
+      const a = heading + (random() - 0.5) * 1.6, step = (5 + random() * 9) * k;
+      x += Math.cos(a) * step; y += Math.sin(a) * step;
+      if (!["dirt", "stone"].includes(surface(world(x), world(y)))) break;
+      points.push([x, y]);
+    }
+    if (points.length < 2) continue;
+    const width = (0.8 + random() * 1.1) * k;
+    for (const [style, w] of [["rgba(255, 92, 30, 0.22)", width * 4.2], ["rgba(255, 150, 50, 0.65)", width * 1.6], ["rgba(255, 228, 140, 0.9)", width * 0.6]]) {
+      ctx.strokeStyle = style; ctx.lineWidth = w;
+      ctx.beginPath(); ctx.moveTo(points[0][0], points[0][1]);
+      for (const [px, py] of points.slice(1)) ctx.lineTo(px, py);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
 }
 
 // The kill zone at a ramp (16.2): attackers must climb here under the guns on top, so the lower

@@ -20,6 +20,12 @@ export const LIFE = {
   dunes: { birds: { look: "vulture", count: 5, height: [12, 15], speed: [2, 2.6], soar: 0.92, radius: [9, 15] }, motes: { look: "sand", count: 120 } },
   woodlands: { birds: { look: "songbird", count: 8, height: [7, 10], speed: [3.4, 4.4], soar: 0.1, radius: [5, 9] }, fish: { count: 22 }, butterflies: { count: 28 }, dragonflies: { count: 10 }, motes: { look: "firefly", count: 70 } },
   highlands: { birds: { look: "raven", count: 6, height: [10, 13], speed: [2.6, 3.4], soar: 0.5, radius: [8, 14] }, motes: { look: "ember", count: 110 } },
+  // W9 lands (src/lands.js). Snow and ash are land weather: their motes fall in a box that follows the camera
+  // (`weather`), so the same few hundred flakes fill every view (one draw, all motion on the GPU). `count` is then
+  // the whole box's, not per 96 x 96 m.
+  snowfield: { birds: { look: "snowfinch", count: 6, height: [8, 11], speed: [3.2, 4.2], soar: 0.2, radius: [6, 10] }, motes: { look: "snow", count: 520, weather: true } },
+  volcano: { birds: { look: "crow", count: 4, height: [11, 14], speed: [2.4, 3], soar: 0.7, radius: [9, 14] }, motes: { look: "ashfall", count: 360, weather: true } },
+  archipelago: { birds: { look: "gull", count: 9, height: [9, 13], speed: [3, 4], soar: 0.55, radius: [8, 15] }, butterflies: { count: 18 }, motes: { look: "pollen", count: 50 } },
 };
 
 // Colours are sRGB, written unconverted like the other effect shaders.
@@ -31,9 +37,10 @@ const BIRDS = {
   songbird: ["#f2a53c", "#9a6230", "#3b2b1f"],
   raven: ["#272a34", "#1b1d26", "#0f1016"],
   goose: ["#8f8676", "#6f675b", "#2a2622"],
+  snowfinch: ["#f2f4f6", "#c9d3de", "#3a4250"],
 };
 // Wingspan multipliers: songbirds smaller than a soldier, vultures and hawks broad.
-const BIRD_SIZE = { crow: 0.9, gull: 1, hawk: 1.15, vulture: 1.35, songbird: 0.62, raven: 0.95, goose: 1.1 };
+const BIRD_SIZE = { crow: 0.9, gull: 1, hawk: 1.15, vulture: 1.35, songbird: 0.62, raven: 0.95, goose: 1.1, snowfinch: 0.7 };
 const MOTES = {
   ash: { colors: ["#bdb8ad", "#8f8a80"], size: [0.1, 0.16], additive: false },
   dust: { colors: ["#e2b583", "#c98f5e"], size: [0.09, 0.15], additive: false },
@@ -41,12 +48,18 @@ const MOTES = {
   pollen: { colors: ["#fff7d8", "#f4ffd0"], size: [0.07, 0.11], additive: false },
   firefly: { colors: ["#e6ff86", "#b9ff6a"], size: [0.12, 0.18], additive: true },
   ember: { colors: ["#ff9a3c", "#ff5426"], size: [0.09, 0.15], additive: true },
+  // W9 land weather: soft falling snow; on the volcano grey ash drifting down with embers rising among it.
+  snow: { colors: ["#ffffff", "#d8ecff"], size: [0.11, 0.2], additive: false },
+  ashfall: { colors: ["#b8aca4", "#ff8a34"], size: [0.09, 0.16], additive: false },
 };
+// The weather box (W9): flakes wrap within WEATHER_SPAN m of the camera's focus and fall from WEATHER_TOP m.
+export const WEATHER_SPAN = 26, WEATHER_TOP = 9;
 const BUTTERFLY_COLORS = ["#ff9a2e", "#ffd43b", "#f7f3e3", "#6ec6ff", "#ff6fb5", "#ff7a3d"];
 const DRAGONFLY_COLORS = ["#2fd1c6", "#3b8cff", "#7be04f"];
 
 const rng = mulberry32;
 const hashId = fnv1a;
+const DIRECTION = new THREE.Vector3();
 const between = (r, [a, b]) => a + (b - a) * r();
 const hex = (value) => new THREE.Color().setHex(parseInt(value.slice(1), 16), THREE.LinearSRGBColorSpace);
 
@@ -104,6 +117,14 @@ export function planLife(terrain, budget = 1) {
     }
   if (recipe.motes) {
     const look = MOTES[recipe.motes.look];
+    plan.weather = !!recipe.motes.weather;
+    // Weather motes live in a box around the camera (x, z from -1 to 1 of its half span): their count does not
+    // grow with the map, only with the device budget.
+    if (plan.weather) {
+      for (let i = 0; i < Math.round(recipe.motes.count * budget); i++)
+        plan.motes.push({ x: r() * 2 - 1, y: r(), z: r() * 2 - 1, size: between(r, look.size), rate: 0.05 + r() * 0.05, phase: r(), tone: r() });
+      return plan;
+    }
     for (let i = 0; i < scale(recipe.motes.count); i++)
       plan.motes.push({ x: (r() * 2 - 1) * (half - 8), y: r(), z: (r() * 2 - 1) * (half - 8), size: between(r, look.size),
         rate: 0.05 + r() * 0.08, phase: r(), tone: r() });
@@ -256,14 +277,26 @@ const FISH_FRAGMENT = `varying vec3 vColor; varying float vAlpha; void main() { 
 
 const MOTE_VERTEX = (kind) => `${COMMON}
 #define KIND_${kind.toUpperCase()}
-uniform float uPx; uniform vec3 uColorA, uColorB;
+uniform float uPx; uniform vec3 uColorA, uColorB; uniform vec3 uFocus;
 attribute vec4 aA; // x, y (0..1), z, size
 attribute vec4 aB; // rate, phase, tone
 varying vec3 vColor; varying float vAlpha;
 void main() {
   float t = uTime, life = fract(t * aB.x + aB.y), ph = aB.y * 6.283;
   vec3 p; float alpha;
-#if defined(KIND_ASH)
+#if defined(KIND_SNOW) || defined(KIND_ASHFALL)
+  // Land weather (W9): a box of ${WEATHER_SPAN * 2} m around the camera's focus, wrapped so it always fills the view.
+  float span = ${(WEATHER_SPAN * 2).toFixed(1)};
+  vec2 drift = vec2(sin(t * 0.5 + ph) * 0.6 + t * 0.35, cos(t * 0.4 + ph) * 0.4 + t * 0.12);
+  float wx = uFocus.x + mod(aA.x * ${WEATHER_SPAN.toFixed(1)} + drift.x - uFocus.x + span * 0.5, span) - span * 0.5;
+  float wz = uFocus.z + mod(aA.z * ${WEATHER_SPAN.toFixed(1)} + drift.y - uFocus.z + span * 0.5, span) - span * 0.5;
+  p = vec3(wx, ${WEATHER_TOP.toFixed(1)} * (1.0 - life), wz);
+  alpha = smoothstep(0.0, 0.12, life) * (1.0 - smoothstep(0.85, 1.0, life)) * 0.85;
+#if defined(KIND_ASHFALL)
+  // A third of the motes are embers rising from the ground instead of ash falling.
+  if (aB.z > 0.66) { p.y = 0.3 + life * 6.0; p.x += sin(t * 1.4 + ph) * 0.4; alpha = (1.0 - life) * smoothstep(0.0, 0.1, life); }
+#endif
+#elif defined(KIND_ASH)
   p = vec3(aA.x + sin(t * 0.3 + ph) * 1.2 + life * 4.0, 5.0 - life * 4.8, aA.z + life * 2.0);
   alpha = sin(life * 3.1416) * 0.6;
 #elif defined(KIND_DUST) || defined(KIND_SAND)
@@ -284,6 +317,9 @@ void main() {
   vColor = mix(uColorA, uColorB, aB.z);
 #if defined(KIND_EMBER)
   vColor = mix(uColorA, uColorB, life);
+#endif
+#if defined(KIND_ASHFALL)
+  vColor = aB.z > 0.66 ? uColorB : uColorA;
 #endif
   gl_PointSize = clamp(aA.w * uPx, 1.5, 14.0);
   gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
@@ -360,6 +396,8 @@ export class AmbientLife {
     scene.add(this.root);
     this.plan = planLife(terrain, budget);
     this.uniforms = { uTime: { value: 0 }, uAmp: { value: 1 }, uHalf: { value: terrain.half }, uFog: { value: fogTexture } };
+    // The camera's focus on the ground, for land weather (W9): flakes fall around it.
+    this.focus = { value: new THREE.Vector3() };
     this.level = 2;
     this.quiet = false;
     this.share = 1;
@@ -429,17 +467,21 @@ export class AmbientLife {
       g.setAttribute("aB", new THREE.BufferAttribute(B, 4));
       this.pixels = { value: 10 };
       const points = new THREE.Points(g, material(MOTE_VERTEX(plan.moteLook), MOTE_FRAGMENT,
-        { uPx: this.pixels, uColorA: { value: hex(look.colors[0]) }, uColorB: { value: hex(look.colors[1]) } },
+        { uPx: this.pixels, uColorA: { value: hex(look.colors[0]) }, uColorB: { value: hex(look.colors[1]) }, uFocus: this.focus },
         { transparent: true, depthWrite: false, blending: look.additive ? THREE.AdditiveBlending : THREE.NormalBlending }));
-      points.name = "life:motes";
+      points.name = plan.weather ? "life:weather" : "life:motes";
       points.frustumCulled = false;
       this.root.add(points);
-      register("motes", g, plan.motes, (m) => [m.x, m.z, 1.5], true);
+      // Weather flakes have no place of their own on the map: blasts never thin them.
+      const motes = register("motes", g, plan.motes, plan.weather ? null : (m) => [m.x, m.z, 1.5], true);
+      if (plan.weather) { this.weather = points; motes.weather = true; }
     }
   }
   configure(settings) {
     this.shown = settings.detail !== false;
     this.root.visible = this.shown && this.share > 0;
+    // Settings > Display > Weather Off also stops the land's snow or ash (W9), like a storm's rain.
+    if (this.weather) this.weather.visible = settings.weather !== false;
   }
   // level: 2 full, 1 calm, 0 still. quiet (reduced motion) holds everything still.
   setLevel(level) {
@@ -494,6 +536,12 @@ export class AmbientLife {
     this.uniforms.uTime.value = (this.uniforms.uTime.value + Math.min(0.05, Math.max(0, dt)) * speed) % 3600;
     this.uniforms.uAmp.value = [0, 0.45, 1][level];
     if (this.pixels) this.pixels.value = bufferHeight / Math.max(1, camera.top - camera.bottom);
+    // Land weather follows the point on the ground the camera looks at.
+    if (this.weather && camera?.isCamera) {
+      camera.getWorldDirection(DIRECTION);
+      const k = DIRECTION.y < -1e-3 ? -camera.position.y / DIRECTION.y : 0;
+      this.focus.value.set(camera.position.x + DIRECTION.x * k, 0, camera.position.z + DIRECTION.z * k);
+    }
   }
   get drawCount() {
     return this.root.children.length;

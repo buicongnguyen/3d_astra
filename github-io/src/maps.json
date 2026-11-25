@@ -375,5 +375,103 @@
       {"shape": "disc", "x": -32, "z": 10, "r": 2.6, "mirror": "quad", "decor": true},
       {"shape": "disc", "x": -10, "z": 46, "r": 2.6, "mirror": "quad", "decor": true}
     ]
+  },
+  "snowfield": {
+    "name": "Frostmere",
+    "blurb": "Frozen ponds, slow ice roads, a ruin terrace",
+    "size": 160,
+    "river": false,
+    "offset": 16,
+    "biome": "snow",
+    "symmetry": "quad",
+    "centrepiece": "ruins",
+    "sites": [],
+    "flank": [0, 52],
+    "rocks": [],
+    "roads": [],
+    "deposits": [
+      ["alloy", -34, 12, 3500],
+      ["energy", -12, 34, 2500],
+      ["alloy", -14, 52, 2400],
+      ["alloy", -66, 22, 2400],
+      ["alloy", -40, 36, 1400, "outcrop"],
+      ["alloy", -26, 22, 2500],
+      ["energy", -46, 14, 2000],
+      ["alloy", -20, 64, 2500]
+    ],
+    "plateaus": [
+      {"shape": "disc", "x": 0, "z": 0, "r": 10, "ramps": [{"angle": 0, "width": 6}, {"angle": 90, "width": 6}, {"angle": 180, "width": 6}, {"angle": 270, "width": 6}]},
+      {"shape": "rbox", "x": 0, "z": 62, "w": 24, "d": 12, "corner": 3, "mirror": true, "ramps": [{"side": "north", "at": -5, "width": 7}, {"side": "north", "at": 5, "width": 7}]},
+      {"shape": "rbox", "x": 62, "z": 0, "w": 12, "d": 24, "corner": 3, "mirror": true, "ramps": [{"side": "west", "at": -5, "width": 7}, {"side": "west", "at": 5, "width": 7}]}
+    ],
+    "lakes": [
+      {"x": 40, "z": 0, "r": 9, "fords": [{"angle": 0, "width": 5}, {"angle": 90, "width": 5}, {"angle": 180, "width": 5}, {"angle": 270, "width": 5}]},
+      {"x": -40, "z": 0, "r": 9, "fords": [{"angle": 0, "width": 5}, {"angle": 90, "width": 5}, {"angle": 180, "width": 5}, {"angle": 270, "width": 5}]},
+      {"x": 0, "z": 40, "r": 9, "fords": [{"angle": 0, "width": 5}, {"angle": 90, "width": 5}, {"angle": 180, "width": 5}, {"angle": 270, "width": 5}]},
+      {"x": 0, "z": -40, "r": 9, "fords": [{"angle": 0, "width": 5}, {"angle": 90, "width": 5}, {"angle": 180, "width": 5}, {"angle": 270, "width": 5}]}
+    ]
+  },
+  "volcano": {
+    "name": "Ember Crown",
+    "blurb": "Lava channels: hold the bridges, take the crown",
+    "size": 160,
+    "river": true,
+    "offset": 24,
+    "biome": "volcanic",
+    "symmetry": "quad",
+    "centrepiece": "ruins",
+    "sites": [],
+    "flank": [54, 0],
+    "rocks": [],
+    "rivers": [
+      {"z": -24, "crossings": [{"x": -54, "half": 5, "type": "bridge"}, {"x": -18, "half": 5, "type": "bridge"}, {"x": 18, "half": 5, "type": "bridge"}, {"x": 54, "half": 5, "type": "bridge"}]},
+      {"z": 24, "crossings": [{"x": -54, "half": 5, "type": "bridge"}, {"x": -18, "half": 5, "type": "bridge"}, {"x": 18, "half": 5, "type": "bridge"}, {"x": 54, "half": 5, "type": "bridge"}]}
+    ],
+    "roads": [],
+    "deposits": [
+      ["alloy", -7, 0, 4000],
+      ["energy", 0, 7, 3000],
+      ["alloy", -66, 8, 2500],
+      ["energy", -70, 0, 2000],
+      ["alloy", -22, 52, 2400],
+      ["alloy", -36, 40, 1400, "outcrop"]
+    ],
+    "plateaus": [
+      {"shape": "disc", "x": 0, "z": 0, "r": 11, "ramps": [{"angle": 45, "width": 7}, {"angle": 135, "width": 7}, {"angle": 225, "width": 7}, {"angle": 315, "width": 7}]}
+    ],
+    "lakes": [
+      {"x": -38, "z": 0, "r": 6},
+      {"x": 38, "z": 0, "r": 6}
+    ]
+  },
+  "archipelago": {
+    "name": "Coral Isles",
+    "blurb": "Islands linked by fords and plank bridges",
+    "size": 160,
+    "river": false,
+    "offset": 24,
+    "biome": "isles",
+    "symmetry": "quad",
+    "centrepiece": "ruins",
+    "sites": [],
+    "flank": [74, 0],
+    "rocks": [],
+    "roads": [],
+    "deposits": [
+      ["alloy", -12, 5, 3500],
+      ["energy", -5, 12, 2500],
+      ["alloy", -42, 44, 2400],
+      ["alloy", -56, 30, 1400, "outcrop"]
+    ],
+    "plateaus": [
+      {"shape": "disc", "x": 0, "z": 0, "r": 9, "ramps": [{"angle": 0, "width": 6}, {"angle": 90, "width": 6}, {"angle": 180, "width": 6}, {"angle": 270, "width": 6}]}
+    ],
+    "lakes": [
+      {"x": 0, "z": 0, "r": 53, "island": 16, "fords": [{"angle": 45, "width": 8}, {"angle": 135, "width": 8}, {"angle": 225, "width": 8}, {"angle": 315, "width": 8}, {"angle": 0, "width": 6, "type": "bridge"}, {"angle": 90, "width": 6, "type": "bridge"}, {"angle": 180, "width": 6, "type": "bridge"}, {"angle": 270, "width": 6, "type": "bridge"}]},
+      {"x": 80, "z": 0, "r": 34, "island": 11, "fords": [{"angle": 180, "width": 6, "type": "bridge"}, {"angle": 120, "width": 7}, {"angle": 240, "width": 7}]},
+      {"x": -80, "z": 0, "r": 34, "island": 11, "fords": [{"angle": 0, "width": 6, "type": "bridge"}, {"angle": 60, "width": 7}, {"angle": 300, "width": 7}]},
+      {"x": 0, "z": 80, "r": 34, "island": 11, "fords": [{"angle": 270, "width": 6, "type": "bridge"}, {"angle": 210, "width": 7}, {"angle": 330, "width": 7}]},
+      {"x": 0, "z": -80, "r": 34, "island": 11, "fords": [{"angle": 90, "width": 6, "type": "bridge"}, {"angle": 30, "width": 7}, {"angle": 150, "width": 7}]}
+    ]
   }
 }

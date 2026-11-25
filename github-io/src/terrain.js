@@ -96,8 +96,10 @@ export class Terrain {
     // lakes (campaign maps, 2026-11 map variety): [{ x, z, r, island, fords: [{ angle, width }] }]. A round lake of
     // radius r; with `island` the water is a ring from that radius out (a plateau sits inside it). Each ford is a
     // shallow strip `width` wide running from the middle out along `angle` (degrees, like plateau ramps): wadeable.
+    // W9 lands: a strip with `type: "bridge"` is a plank bridge instead, crossed at full speed like a river bridge
+    // (only the new lands use it, so every older lake builds exactly as before).
     this.lakes = (this.lakes || []).map((l) => ({ x: l.x, z: l.z, r: l.r, inner: l.island || 0,
-      fords: (l.fords || []).map((f) => { const a = (f.angle * Math.PI) / 180; return { angle: f.angle, half: f.width / 2, dx: Math.cos(a), dz: Math.sin(a) }; }) }));
+      fords: (l.fords || []).map((f) => { const a = (f.angle * Math.PI) / 180, strip = { angle: f.angle, half: f.width / 2, dx: Math.cos(a), dz: Math.sin(a) }; if (f.type === "bridge") strip.bridge = true; return strip; }) }));
   }
   // The ford of a lake whose strip holds a circle of radius r at (x, z) entirely, or null.
   lakeFord(l, x, z, r = 0) {
@@ -120,8 +122,13 @@ export class Terrain {
   inLakeFord(x, z) {
     for (const l of this.lakes) {
       const d = hyp(x - l.x, z - l.z);
-      if (d <= l.r && d >= l.inner && this.lakeFord(l, x, z)) return true;
+      if (d <= l.r && d >= l.inner && this.lakeFord(l, x, z)) return !this.onLakeBridge(l, x, z);
     }
+    return false;
+  }
+  // True when (x, z) is on a lake strip of type "bridge" (W9 lands): walked at full speed, painted as planks.
+  onLakeBridge(l, x, z) {
+    for (const f of l.fords) if (f.bridge && (x - l.x) * f.dx + (z - l.z) * f.dz > 0 && Math.abs((x - l.x) * f.dz - (z - l.z) * f.dx) < f.half) return true;
     return false;
   }
   // True when a circle of radius r at (x, z) touches a lake's open water (its fords are wadeable).
@@ -152,9 +159,13 @@ export class Terrain {
     if (this.plateaus.length) { if (this.onRamp(x, z)) return "road"; if (this.cliff(x, z)) return "stone"; }
     if (this.id === "classic") return "dirt";
     // A lake: open water, its fords, and a sandy shore 2.5 m wide around it.
+    // Every lake's water first, then the shores: where two lakes meet (the W9 isles), one's shore is the other's water.
     for (const l of this.lakes) {
       const d = hyp(x - l.x, z - l.z);
-      if (d <= l.r && d >= l.inner) return this.lakeFord(l, x, z) ? "ford" : "water";
+      if (d <= l.r && d >= l.inner) return this.lakeFord(l, x, z) ? (this.onLakeBridge(l, x, z) ? "bridge" : "ford") : "water";
+    }
+    for (const l of this.lakes) {
+      const d = hyp(x - l.x, z - l.z);
       if (d > l.r && d < l.r + 2.5) return "sand";
     }
     const river = this.river ? this.riverNear(z, 5) : null;
@@ -183,6 +194,12 @@ export class Terrain {
     const bank = this.river && !!this.riverNear(z, 8);
     if (this.biome === "woodland") return n > 1.2 && !bank ? "dirt" : "grass";
     if (this.biome === "highland") return n > 0.4 ? "stone" : n < -0.8 ? "grass" : "dirt";
+    // W9 lands (src/lands.js). The surface names keep their rules (only "road" and "sand" carry Sunward's bonus),
+    // the land's theme gives them their colour: snow is "grass" (packed blue-grey snow "dirt", rock "stone"),
+    // volcanic ash is "grass" over dark basalt "dirt" and black rock "stone", the isles are grass with sand bars.
+    if (this.biome === "snow") return n > 1.25 ? "stone" : n < -0.75 ? "dirt" : "grass";
+    if (this.biome === "volcanic") return n > 0.55 ? "stone" : n < -0.6 ? "grass" : "dirt";
+    if (this.biome === "isles") return n > 1.0 && !bank ? "sand" : n < -0.9 ? "dirt" : "grass";
     return n > 0.65 ? "sand" : n < -0.4 && !bank ? "dirt" : "grass";
   }
   // Within the 5 m wide road of a defence route (maps "routes", polylines of [x, z]).

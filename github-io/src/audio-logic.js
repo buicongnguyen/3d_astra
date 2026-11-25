@@ -60,6 +60,10 @@ export const MAP_FLAVOUR = {
   dunes: { root: 52, scale: "phrygianDominant", wave: "sawtooth", pad: "sine", cutoff: 2200, degrees: [0, 1, 0, 6], tempo: 94 },
   woodlands: { root: 55, scale: "pentatonic", wave: "sine", pad: "triangle", cutoff: 3400, degrees: [0, 2, 3, 1], tempo: 86 },
   highlands: { root: 49, scale: "minorPentatonic", wave: "sawtooth", pad: "sine", cutoff: 1700, degrees: [0, 3, 4, 2], tempo: 98 },
+  // W9 lands: a glassy, airy snowfield; a low, driving volcano; a bright, swaying lagoon.
+  snowfield: { root: 56, scale: "ionian", wave: "sine", pad: "sine", cutoff: 3600, degrees: [0, 5, 3, 4], tempo: 84 },
+  volcano: { root: 47, scale: "phrygian", wave: "sawtooth", pad: "triangle", cutoff: 1600, degrees: [0, 1, 6, 4], tempo: 100 },
+  archipelago: { root: 58, scale: "mixolydian", wave: "triangle", pad: "sine", cutoff: 3300, degrees: [0, 3, 4, 6], tempo: 90 },
 };
 // Faction motifs: scale-degree sequences (with beat lengths) that tag the enemy of a mission.
 export const FACTION_MOTIF = {

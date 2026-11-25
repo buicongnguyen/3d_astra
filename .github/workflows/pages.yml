@@ -234,6 +234,10 @@ jobs:
           # AAA round 4 (R4-P1): the Wild frontier desert test (rule row, one-tap Weather button, aimed Sandstorm, Dune Wyrm Ambush, nest) at three viewports.
           - name: r4-p1
             scripts: wild-desert
+          # W9 new lands: Frostmere, Ember Crown and Coral Isles in the picker (EN/VI/KO), their look, weather and ruins in the
+          # preview, and a phone battle on each within 10 % of the same battle's draws on Twin Rivers.
+          - name: w9-lands
+            scripts: lands
           - name: feedback
             scripts: activity
           # AAA round 2 (W0-A): every golden pin with GOLDEN_FULL=1 (300 s points, save and reload,

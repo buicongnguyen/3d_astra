@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { planScatter, buildBlocks, campSites, DRESSING, HEIGHT, MAX_SCALE, SOLID } from '../src/scatter.js';
+import { planScatter, buildBlocks, campSites, DRESSING, HEIGHT, MAX_SCALE, SOLID, WATER_KINDS } from '../src/scatter.js';
 import { createMapEdge, CLIFF } from '../src/map-edge.js';
 import { Terrain } from '../src/terrain.js';
 import { ROCKS } from '../src/data.js';
@@ -32,7 +32,7 @@ test('dressing stays inside the map, off water, roads and walls, and clear of th
       const reach = p.kind === 'ruinFloor' ? 3.05 : 0.75 * p.s;
       assert.ok(Math.abs(p.x) + reach <= terrain.half && Math.abs(p.z) + reach <= terrain.half, `${id}: ${p.kind} at ${p.x},${p.z} leaves the map`);
       const surface = terrain.at(p.x, p.z);
-      if (p.kind === 'lily') assert.equal(surface, 'water');
+      if (WATER_KINDS.has(p.kind)) assert.equal(surface, 'water');
       else assert.ok(!['water', 'ford', 'bridge', 'road'].includes(surface), `${id}: ${p.kind} on ${surface}`);
       // Every wall keeps its own footprint clear; fallen stones lean just outside it.
       for (const [x, z, r] of terrain.rocks || ROCKS) assert.ok(Math.hypot(p.x - x, p.z - z) >= r + 0.45, `${id}: ${p.kind} inside a wall`);

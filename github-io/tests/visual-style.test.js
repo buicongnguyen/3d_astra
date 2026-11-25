@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {ShotPool,shotVisible,themeFor,lightFor,weaponStyle,GROUND_KEYS} from '../src/visual-style.js';
+import {ShotPool,shotVisible,themeFor,lightFor,weaponStyle,GROUND_KEYS,lookOf} from '../src/visual-style.js';
 import {normalize,PRESETS,palette,defaults} from '../src/settings.js';
 import {teamColors,teamGlows,factionOf} from '../src/faction-colors.js';
 import {FACTIONS} from '../src/story/world.js';
@@ -30,8 +30,11 @@ test('every map has a complete, saturated palette, its own time of day and a dee
     assert.ok(sr>sb&&ab>=ar,`${id}: warm sun ${theme.sun}, cool fill ${theme.ambient}`);
     assert.ok(light.sun>light.ambient&&light.sun<=3.5&&light.ambient>=1&&light.exposure>0&&typeof light.time==='string');
   }
-  assert.equal(new Set(ids.map(id=>themeFor(id).fog)).size,7,'each map has its own fog colour');
-  assert.equal(new Set(ids.map(id=>lightFor(id).time)).size,7,'each map has its own time of day');
+  // One per land: the seven older lands and the three W9 lands (maps on a borrowed look share their land's).
+  const lands=new Set(ids.map(lookOf)).size;
+  assert.equal(lands,10);
+  assert.equal(new Set(ids.map(id=>themeFor(id).fog)).size,lands,'each land has its own fog colour');
+  assert.equal(new Set(ids.map(id=>lightFor(id).time)).size,lands,'each land has its own time of day');
 });
 test('every team colour stays readable on every ground surface of every map',()=>{
   for(const id of Object.keys(maps))for(const key of GROUND_KEYS)for(const [name,color] of Object.entries(PRESETS))
@@ -65,7 +68,7 @@ test('story missions paint enemy teams in their faction colours; skirmish keeps 
 });
 
 test('every map has a distinct valid palette and weapons have readable identities',()=>{
-  assert.equal(new Set(Object.keys(maps).map(id=>themeFor(id).sky)).size,7);
+  assert.equal(new Set(Object.keys(maps).map(id=>themeFor(id).sky)).size,new Set(Object.keys(maps).map(lookOf)).size);
   for(const id of Object.keys(maps))for(const color of Object.values(themeFor(id)))assert.match(color,/^#[0-9a-f]{6}$/i);
   assert.equal(weaponStyle({weapon:'tank'}).kind,'cannon');
   assert.equal(weaponStyle({weapon:'antitank'}).kind,'rocket');
