@@ -6,6 +6,7 @@ import { difficultyRules } from "../../difficulty.js";
 import { waveCount } from "../missions.js";
 import BALANCE from "../../balance.json" with { type: "json" };
 import GARRISONS from "../../defence/garrisons.json" with { type: "json" };
+import KINDS from "../../defence/kinds.json" with { type: "json" };
 import { TEAM, FOE, RETRY, lanePoint, nearestLeg, crossing } from "./common.js";
 
 // A small seeded generator (mulberry32): endless waves come from the seed and the wave number only.
@@ -38,8 +39,9 @@ function buildPalette(def) {
   const seen = new Map();
   for (const w of def.waves) for (const g of w.groups) for (const slot of Object.keys(g.units)) {
     if (slot === "carrier") continue;
-    const key = `${slot}|${g.faction || ""}`;
-    if (!seen.has(key)) seen.set(key, { slot, faction: g.faction || null });
+    // A wave kind (W10) is its own palette entry; groups without one keep their old key and order.
+    const key = `${slot}|${g.faction || ""}${g.kind ? `|${g.kind}` : ""}`;
+    if (!seen.has(key)) seen.set(key, { slot, faction: g.faction || null, ...(g.kind ? { kind: g.kind } : {}) });
   }
   return [...seen.values()];
 }
@@ -62,10 +64,13 @@ function buildEndlessWave(def, n) {
   let delay = 0;
   for (let k = 0; k < groups; k++) {
     const u = units[Math.floor(rnd() * units.length)], pop = D[u.slot]?.pop || 1;
-    const count = Math.max(1, Math.round(budget / groups / pop * (0.8 + rnd() * 0.4)));
+    // A wave kind (W10) spends more of the budget per unit (kinds.json endless): a few surgeons, not a crowd.
+    const weight = u.kind ? KINDS[u.kind]?.endless ?? 1 : 1;
+    const count = Math.max(1, Math.round(budget / groups / pop / weight * (0.8 + rnd() * 0.4)));
     const g = { units: { [u.slot]: count }, route: routes[Math.floor(rnd() * routes.length)], every: pop >= 3 ? 2 : 0.6, delay: Math.round(delay * 10) / 10 };
     if (hp !== 1) g.hp = hp;
     if (u.faction) g.faction = u.faction;
+    if (u.kind) g.kind = u.kind;
     // Every fourth wave on a river with demolition brings bridge builders along.
     if (def.bridges && n % 4 === 3 && k === 0) g.tag = "bridger";
     out.push(g);
@@ -145,6 +150,8 @@ export const waves = {
         const hp = (g.hp ?? 1) * (typeof def.hp === "object" ? def.hp[this.difficulty] ?? 1 : def.hp ?? 1);
         if (hp !== 1) q.hp = hp;
         if (g.tag === "bridger") q.bridger = true;
+        // Wave kinds (W10, sim/content/wave-kinds.js): every spawn of the group; a brood names its broodlings' type.
+        if (g.kind && !g.carry) { q.kind = g.kind; if (g.kind === "brood") q.brood = this.waveType(g, "vanguard"); }
         // Elite affixes (AAA round 2, W2-B, sim/content/elites.js): every `every`-th spawn of a group with `mods`.
         if (g.mods?.elite && !g.carry && i % (g.mods.every || 1) === 0) q.mods = { elite: g.mods.elite, ...(g.mods.elite === "splitter" ? { split: this.waveType(g, "vanguard") } : {}) };
         if (cargo && D[entry[0]]?.carrier) { q.cargo = cargo.slice(); q.dropLeg = g.dropLeg ?? 1; at.count += cargo.length; }
@@ -191,8 +198,10 @@ export const waves = {
           if (n - m > 0) { const u = units.get(type) || { type, count: 0 }; u.count += n - m; units.set(type, u); }
           continue;
         }
-        const carrier = !!D[type]?.carrier && ride > 0, key = carrier ? `${type}|${ride}` : type;
-        const u = units.get(key) || { type, count: 0, ...(carrier ? { carry: ride, passengers: this.waveUnits(g, g.carry, scale).map(([t]) => t) } : {}) };
+        // A wave kind (W10) gets its own entry, `kind` its id (the intel chips and the commander hint read it).
+        const kind = g.kind && !g.carry ? g.kind : null;
+        const carrier = !!D[type]?.carrier && ride > 0, key = carrier ? `${type}|${ride}` : kind ? `${type}|kind:${kind}` : type;
+        const u = units.get(key) || { type, count: 0, ...(carrier ? { carry: ride, passengers: this.waveUnits(g, g.carry, scale).map(([t]) => t) } : {}), ...(kind ? { kind } : {}) };
         u.count += n;
         units.set(key, u);
       }
@@ -230,6 +239,7 @@ export const waves = {
       if (q.hp) { e.hp = e.maxHp = Math.round(e.maxHp * q.hp); this.setBaseHp(e); }
       if (q.bridger) e.bridger = true;
       if (q.mods) this.applyElite(e, q.mods);
+      if (q.kind) this.applyWaveKind(e, q);
       // A troop carrier keeps its passengers on board (saved with it) until its drop leg.
       if (q.cargo) { e.cargo = q.cargo.slice(); e.dropLeg = q.dropLeg; if (q.hp) e.cargoHp = q.hp; }
       const next = pts[1] || pts[0];

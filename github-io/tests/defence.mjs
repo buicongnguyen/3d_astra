@@ -114,13 +114,13 @@ await suite("defence", async () => {
     await shot(page, `defence-title-${viewport}`);
     await noSideScroll(page, `${viewport} title`);
 
-    // Seven levels (Three Roads since 0.23, tests/defence-zones.mjs) with stars; the third opens with a star on the second, the rest stay locked.
+    // Ten levels (Three Roads since 0.23, tests/defence-zones.mjs; Hollow Fork, Serpent Pass and Kingfisher Bridges since W10, tests/defence-maps.mjs) with stars; the third opens with a star on the second, the rest stay locked.
     await tap('[data-mode="defence"]');
     await page.waitForSelector("#defence-setup .defence-levels");
-    assert.equal(await page.locator("#defence-setup [data-level]").count(), 7);
+    assert.equal(await page.locator("#defence-setup [data-level]").count(), 10);
     assert.equal(await page.locator('[data-level-id="d-gorge"] .stars i.on').count(), 3);
     assert.equal(await page.locator('[data-level-id="d-bridges"] .stars i.on').count(), 2);
-    assert.deepEqual(await page.locator("#defence-setup [data-level]").evaluateAll((bs) => bs.map((b) => b.disabled)), [false, false, false, true, true, true, true]);
+    assert.deepEqual(await page.locator("#defence-setup [data-level]").evaluateAll((bs) => bs.map((b) => b.disabled)), [false, false, false, true, true, true, true, true, true, true]);
     assert.equal(await page.locator('[data-level-id="d-fordwood"] .icon').count(), 1, "a lock on a closed level");
     for (const b of await page.locator("#defence-setup [data-level]").all()) assert.ok((await size(b)).height >= 44);
     assert.match(await page.locator("#start").textContent(), /Start defence/);

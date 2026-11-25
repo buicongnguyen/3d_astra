@@ -91,6 +91,12 @@ const scenarios = [
   // one merged mesh) and both armour squads. 106 draws and 478 matrix composes on 2026-11-19 (no water,
   // so fewer draws than the river levels; four more towers and tanks, so a few more composes).
   {name:'defence-big-eco', defence:'d-crossroads', mobile:true, zoom:92, focus:[0,0], reveal:true, wave:120, towers:10, zoneTowers:4, armour:2, triangles:600000, compose:500, carrierEvery:20, unlockAfter:'d-longcrossing'},
+  // W10 (Defence 6.7): the new maps with a full wave, every other unit one of the six wave kinds (tinted models
+  // and the hexagon kind rings): Hollow Fork against Gorge Road (defence-wave-eco), Kingfisher Bridges (river
+  // scenery) against Long Crossing (defence-carrier-eco) and Twin Bridges (defence-river-eco). The kinds add the ring draw
+  // (and a tinted batch split at most); the tint itself is instanceColor.
+  {name:'defence-fork-eco', defence:'d-fork', mobile:true, zoom:78, focus:[0,0], reveal:true, wave:120, towers:10, triangles:600000, kinds:true, unlockAfter:'d-crossroads'},
+  {name:'defence-kingfisher-eco', defence:'d-kingfisher', mobile:true, zoom:78, focus:[0,0], reveal:true, wave:120, towers:10, triangles:600000, kinds:true, unlockAfter:'d-serpent'},
   // AAA round 2 (W1-B): battle-eco with 8 Gunners among the 52 other units and 12 enemy units Pinned (status icons on).
   {name:'gunner-battle-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:52,
     spawn:[{type:'gunner', team:0, count:8, near:[-3,4]}], status:{id:'pinned', count:12, team:1}},
@@ -197,6 +203,11 @@ for (const k of Object.keys(limits)) limits[k] += 2;
 // A7 phone measurements with the pooled overlays and shared rigid finish batches.
 Object.assign(limits, {'army-300-eco':105, 'battle-dock-eco':100, 'defence-heroic-eco':122, 'combined-defence-eco':94});
 for (const s of scenarios) if (s.name === 'three-rivals-eco') s.triangles = 330000; // 303,222 -> 324,494 triangles with the HUD's taller phone frame
+// W10 (2026-11-26, same run): Hollow Fork 64 draws with the six kinds on half its wave (Gorge Road's defence-wave-eco 62;
+// 62 without the kinds: the rings are one draw, the tint none). Kingfisher Bridges 91 (89 without kinds): Long Crossing's
+// defence-carrier-eco is 91, Twin Bridges' defence-river-eco 78 (a Sunward wave, one bridge blown; the Warden roster's
+// Drones and Walkers add 5, as Switchback 67 over Gorge 62 shows, and two standing bridges the rest). Each line is the scene plus 4.
+Object.assign(limits, {'defence-fork-eco':68, 'defence-kingfisher-eco':95});
 Object.assign(limits, {'dunes-battle-eco':95, 'wild-storm-eco':95, 'wild-battle-eco':101}); // R4-P1 (2026-11-21: 91, 94, 100 draws): the Spire and a raging storm at most 4 over the twin; a tamed Wyrm adds its model's five material batches plus its leg batch
 try {
   for (const scenario of scenarios) {
@@ -288,6 +299,8 @@ try {
           e.angle = Math.atan2(b.x - a.x, b.z - a.z);
           if (i % 2) e.hp = e.maxHp * 0.5;
           // W2-B: `elite` makes every third wave unit an elite (the affixes in turn), for the gold rings.
+          // W10: `kinds` makes every other wave unit one of the six wave kinds, in turn.
+          if (scenario.kinds && i % 2 === 0) s.applyWaveKind(e, {kind:['shieldwall','runner','crawler','skyswarm','surgeon','brood'][(i / 2 | 0) % 6], brood:'vanguard'});
           if (scenario.elite && i % 3 === 0) s.applyElite(e, {elite:['plated','swift','splitter','volatile','banner','mender'][(i / 3 | 0) % 6], split:'vanguard'});
         }
         // The commander on the road in the middle of it all (left where it is if it is not there).

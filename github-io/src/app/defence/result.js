@@ -7,6 +7,7 @@ export function createResult(c) {
   const { S, A, Z, root, ui } = c;
   const { recordHeroic, starsFor, icon, DEFENCE_LEVELS, loadDefence, recordDefence, saveDefence, statTile, formatClock, DIFFICULTY_LABELS, recordScore, bestScore, dayKey, $ } = c.deps;
   const { D, hasHeroic } = c.deps;
+  const { boardOf, recordRun, endlessScore, boardHtml } = c.deps;
   // ---------------------------------------------------------------- Next star (R3-E)
   // One line on what earns the next star, then one tip from this match: the wave that cost the most
   // lives (bar.js counts them as they go) and the crews that counter its toughest unit; else the
@@ -82,15 +83,25 @@ export function createResult(c) {
     const sim = S.sim, def = sim.missionDef, d = sim.defence, variant = def.variant, day = dayKey(), score = d.cleared;
     const before = bestScore(loadDefence(), variant, def.id, day);
     S.defenceProgress = recordScore(loadDefence(), variant, def.id, score, day);
+    const killed = S.matchStats?.stats?.killed ?? 0;
+    // W10: an Endless run joins the map's top ten (wave, score, date, commander branch), once per match.
+    let board = "", place = 0, points = 0;
+    if (variant === "endless" && boardOf) {
+      const h = d.hero || {};
+      points = endlessScore(score, killed);
+      if (ui.boardRun !== sim) { ui.boardRun = sim; ({ progress: S.defenceProgress, place } = recordRun(S.defenceProgress, def.id, { wave: score, score: points, branch: h.branch || "", rank: h.rank || 1, date: day })); ui.boardPlace = place; }
+      else place = ui.boardPlace || 0;
+      board = `<section class="defence-records" aria-label="Endless top 10"><h3><span>Endless top 10</span> · <span>${def.title}</span></h3>${boardHtml(boardOf(S.defenceProgress, def.id), place)}</section>`;
+    }
     saveDefence(S.defenceProgress);
     const best = Math.max(before, score), record = score > before;
-    const killed = S.matchStats?.stats?.killed ?? 0;
     $("modal").classList.add("debrief-wide");
     $("modal-content").innerHTML = `<div class="debrief defence-result defence-score" data-result="score" data-variant="${variant}" data-score="${score}">
       <span class="eyebrow">${variant === "daily" ? "DEFENCE · DAILY SEED" : "DEFENCE · ENDLESS"}</span>
       <div class="debrief-head"><span class="defence-score-big" translate="no">${score}</span><div><h2 id="modal-title">${def.title}</h2><p class="debrief-result"><strong>${score === 1 ? "1 wave held" : `${score} waves held`}</strong><span>${record ? "New best!" : `Best: ${best}`}</span></p></div></div>
       <p class="debrief-difficulty">${DIFFICULTY_LABELS[sim.difficulty || "standard"]}${variant === "daily" ? ` · <span translate="no">${day}</span>` : ""}</p>
-      <div class="result-grid">${statTile(String(score), "Waves held")}${statTile(String(best), "Best")}${statTile(String(Math.round(killed)), "Enemies defeated")}${statTile(String(d.bounty), "Bounty alloy", "alloy")}${statTile(formatClock(sim.time), "Time", "time")}</div>
+      <div class="result-grid">${statTile(String(score), "Waves held")}${statTile(String(best), "Best")}${variant === "endless" ? `${statTile(String(points), "Score")}${statTile(place ? `#${place}` : "—", "Top 10 place")}` : ""}${statTile(String(Math.round(killed)), "Enemies defeated")}${statTile(String(d.bounty), "Bounty alloy", "alloy")}${statTile(formatClock(sim.time), "Time", "time")}</div>
+      ${board}
       <div class="debrief-actions"><button class="primary" data-restart><span>Try again</span>${icon("arrow")}</button><button class="secondary" data-new-game>Levels</button></div>
     </div>`;
     document.querySelector("#modal .modal").scrollTop = 0;

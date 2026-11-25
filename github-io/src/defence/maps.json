@@ -116,5 +116,49 @@
       "mideast": [[4,-60],[2,-40],[18,-26],[34,2],[22,22],[6,38],[0,50],[0,60]],
       "east": [[56,-58],[48,-36],[38,-18],[34,2],[22,22],[6,38],[0,50],[0,60]]
     }
+  },
+  "fork": {
+    "name": "Hollow Fork",
+    "size": 96,
+    "river": false,
+    "offset": 0,
+    "defence": true,
+    "look": "woodlands",
+    "biome": "woodland",
+    "sites": [],
+    "flank": [13,14],
+    "routes": {
+      "west": [[-42,-46],[-38,-30],[-24,-20],[-10,-12],[0,2],[0,20],[-8,32],[0,45]],
+      "east": [[42,-46],[38,-30],[24,-20],[10,-12],[0,2],[0,20],[-8,32],[0,45]]
+    }
+  },
+  "serpent": {
+    "name": "Serpent Pass",
+    "size": 96,
+    "river": false,
+    "offset": 0,
+    "defence": true,
+    "look": "dunes",
+    "biome": "desert",
+    "sites": [],
+    "flank": [13,14],
+    "routes": {
+      "main": [[-44,-40],[34,-40],[34,-14],[-34,-14],[-34,12],[34,12],[34,45]]
+    }
+  },
+  "kingfisher": {
+    "name": "Kingfisher Bridges",
+    "size": 96,
+    "river": true,
+    "offset": 0,
+    "defence": true,
+    "look": "riverlands",
+    "sites": [],
+    "flank": [13,14],
+    "rivers": [{"z": 0, "crossings": [{"x": -22, "half": 5, "type": "bridge"}, {"x": 22, "half": 5, "type": "bridge"}]}],
+    "routes": {
+      "west": [[0,-46],[-6,-34],[-22,-20],[-22,12],[-10,24],[0,34],[0,45]],
+      "east": [[0,-46],[6,-34],[22,-20],[22,12],[10,24],[0,34],[0,45]]
+    }
   }
 }

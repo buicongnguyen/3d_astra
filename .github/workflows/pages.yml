@@ -151,6 +151,9 @@ jobs:
           # AAA round 2 (W1-F): the Defence command deck (fast-forward through the frame loop, tower aim, chips, card).
           - name: r2-w1f
             scripts: defence-deck
+          # W10 (Defence 6.7): the three new maps on phones, wave kinds on the strip with the commander hint, the Records tab and the Endless board.
+          - name: w10-defence-maps
+            scripts: defence-maps
           # AAA round 3 (R3-Q): first-minute hooks (one-tap Quick battle, First watch roster and Scout Runner), and the bot check (wins, first combat by 45 / 60 s).
           - name: r3-q
             scripts: quick-battle quick-battle-check

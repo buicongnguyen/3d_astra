@@ -92,6 +92,7 @@
     "test:showtime": "node tests/showtime.mjs",
     "test:night-storm": "node tests/night-storm.mjs",
     "test:defence-onboarding": "node tests/defence-onboarding.mjs",
+    "test:defence-maps": "node tests/defence-maps.mjs",
     "test:squad-orders": "node tests/squad-orders.mjs",
     "test:support-touch": "node tests/support-touch.mjs",
     "test:army-depth": "node tests/army-depth.mjs",

@@ -38,8 +38,8 @@ function declaredModels(match, factions) {
   // A group of a mixed wave names its own faction: its slots resolve through that roster (0.21).
   // A carrier group's passengers (`carry`, 0.22) likewise; Endless brings carriers every fifth wave.
   for (const w of def?.defence?.waves || []) for (const g of w.groups) for (const type of [...Object.keys(g.units), ...Object.keys(g.carry || {})]) { named.add(type); const swapped = factions[g.faction]?.swap?.[type]; if (swapped) types.add(swapped); }
-  // Elite Splitters (AAA round 2, W2-B): the children are the group faction's vanguard slot, which may be named by no wave group.
-  for (const w of def?.defence?.waves || []) for (const g of w.groups) if (g.mods?.elite === 'splitter') { named.add('vanguard'); const swapped = factions[g.faction]?.swap?.vanguard; if (swapped) types.add(swapped); }
+  // Elite Splitters (AAA round 2, W2-B) and broods (W10 wave kinds): the children are the group faction's vanguard slot, which may be named by no wave group.
+  for (const w of def?.defence?.waves || []) for (const g of w.groups) if (g.mods?.elite === 'splitter' || g.kind === 'brood') { named.add('vanguard'); const swapped = factions[g.faction]?.swap?.vanguard; if (swapped) types.add(swapped); }
   // A Heroic finale boss (round 3) and its drops.
   const fin = def?.defence?.heroic?.finale; if (fin) for (const type of Object.keys(fin.units || {})) { named.add(type); for (const drop of balance.bosses?.[type]?.drops || []) named.add(typeof drop === 'string' ? drop : drop.type); }
   if (def?.defence?.endless) named.add('carrier');

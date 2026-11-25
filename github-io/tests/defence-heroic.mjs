@@ -33,7 +33,7 @@ await suite("defence-heroic", async () => {
     {
       const { page, errors, tap } = await open(viewport, { levels: { "d-gorge": { stars: 2, lives: 12, difficulty: "standard" } } });
       const tabs = await page.evaluate(() => [...document.querySelectorAll("[data-defence-variant]")].map((b) => b.dataset.defenceVariant));
-      assert.deepEqual(tabs, ["levels", "endless", "daily", "heroic"], `${viewport}: the Heroic tab sits beside the other three`);
+      assert.deepEqual(tabs, ["levels", "endless", "daily", "heroic", "records"], `${viewport}: the Heroic tab sits beside the other modes (Records since W10)`);
       await tap('[data-level-id="d-bridges"]');
       await tap('[data-defence-variant="heroic"]');
       await page.waitForFunction(() => document.querySelector('[data-defence-variant="heroic"]').getAttribute("aria-pressed") === "true");

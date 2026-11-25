@@ -29,6 +29,7 @@ import { campaignCreatures } from "./campaign-creatures.js";
 import { kiteDive } from "./kite-dive.js";
 import { commanderRanks } from "./commander-ranks.js";
 import { airStrikes } from "./air-strikes.js";
+import { waveKinds } from "./wave-kinds.js";
 
 export const CONTENT = [
   suppression,
@@ -53,4 +54,5 @@ export const CONTENT = [
   kiteDive,
   commanderRanks,
   airStrikes,
+  waveKinds,
 ];

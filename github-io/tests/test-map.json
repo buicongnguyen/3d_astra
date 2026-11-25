@@ -48,8 +48,8 @@
     },
     {
       "name": "Frontier Defence",
-      "files": ["src/defence/**", "src/app/defence/**", "src/app/defence-*.js", "src/defence-*.css", "src/defence-readability-view.js"],
-      "suites": ["defence", "defence-zones", "defence-deck", "defence-heroic", "defence-heroic-check", "defence-onboarding", "air", "render-budget", "sovereign", "ceremony", "golden-full"],
+      "files": ["src/defence/**", "src/app/defence/**", "src/app/defence-*.js", "src/defence-*.css", "src/defence-readability-view.js", "src/wave-kind-view.js", "src/sim/content/wave-kinds.js"],
+      "suites": ["defence", "defence-zones", "defence-deck", "defence-heroic", "defence-heroic-check", "defence-onboarding", "defence-maps", "air", "render-budget", "sovereign", "ceremony", "golden-full"],
       "checks": ["check:defence"]
     },
     {

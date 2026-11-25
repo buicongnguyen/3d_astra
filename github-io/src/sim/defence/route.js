@@ -97,6 +97,8 @@ export const route = {
     if (GARRISONS.repair) this.fieldRepair(dt);
     // Elites (W2-B, sim/content/elites.js): only once one has spawned.
     if (d.elites) this.stepElites();
+    // Wave kinds (W10, sim/content/wave-kinds.js): only once one has spawned.
+    if (d.kinds) this.stepWaveKinds();
     // Carriers at their stop let their passengers out (after the spawns, in entity order).
     for (const e of this.entities) if (e.cargo && e.unloadAt !== undefined && e.hp > 0 && this.time >= e.unloadAt - 1e-9) this.dropCargo(e);
     const exit = def.exit;
