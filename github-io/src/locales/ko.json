@@ -1822,7 +1822,27 @@
     "Level 3, after the first: pick one of two more.": "레벨 3, 첫 선택 후: 둘 중 하나를 더 고르세요.",
     "Strafe": "소사",
     "Flare": "신호",
-    "Bomb": "폭탄"
+    "Bomb": "폭탄",
+    "Master builder": "건설의 달인",
+    "Build 8 structures in a Skirmish win": "승리한 교전에서 건물 8개 건설",
+    "New colours": "새로운 깃발",
+    "Win a Skirmish not as Meridian": "메리디언이 아닌 진영으로 교전 승리",
+    "Wrecking crew": "철거반",
+    "Destroy 10 buildings in a Skirmish win": "승리한 교전에서 건물 10개 파괴",
+    "Clean sweep": "완승",
+    "Win a mission losing 5 units or fewer": "유닛 손실 5 이하로 임무 승리",
+    "Forced march": "강행군",
+    "Win a mission within 12 minutes": "12분 안에 임무 승리",
+    "Muster": "병력 소집",
+    "Train 20 units in a mission win": "승리한 임무에서 유닛 20 훈련",
+    "Specialist": "전문가",
+    "Pick a commander branch": "사령관 분과 선택",
+    "Road warden": "도로 수호자",
+    "Stop 60 enemies in a Defence win": "승리한 방어전에서 적 60 저지",
+    "Unbroken": "철벽",
+    "Win a Defence level losing no tower": "타워를 잃지 않고 방어전 레벨 승리",
+    "Follow action": "전투 따라가기",
+    "The camera follows the fighting, or your army": "카메라가 전투나 아군 부대를 따라갑니다"
   },
   "patterns": [
     [
@@ -2753,7 +2773,9 @@
     ],
     [
       "^Second doctrine, after (.+).$",
-      "{1} 다음의 두 번째 교리."
+      "{1} 다음의 두 번째 교리.",
+      "^Field commander, rank (\\d+), health (\\d+) of (\\d+)$",
+      "야전 사령관, 계급 {1}, 체력 {2}/{3}"
     ]
   ]
 }

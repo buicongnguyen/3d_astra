@@ -31,6 +31,17 @@ export const CHALLENGES = Object.freeze([
   { id: "df-stars", group: "defence", mode: "defence", icon: "star", title: "Three stars", goal: "Earn 3 stars on a Defence level", test: (c) => (c.stars || 0) >= 3 },
   { id: "df-rank", group: "defence", mode: "defence", icon: "levelup", title: "Promotion", goal: "Raise the Field commander to Rank 3", test: (c) => (c.hero?.level || 0) >= 3 },
   { id: "df-waves", group: "defence", mode: "defence", icon: "chevrons", title: "Endurance", goal: "Hold 10 waves in Endless or Daily", test: (c) => c.scored && (c.score || 0) >= 10 },
+  // Variety pass (re-score 2026-11-25b: 13 goals came round again within days). Each reads a number the match
+  // already counts (src/match-stats.js, meta-ui.js matchContext); none changes a battle. Appended, so old ids stay.
+  { id: "sk-builder", group: "skirmish", mode: "skirmish", icon: "wrench", title: "Master builder", goal: "Build 8 structures in a Skirmish win", test: (c) => c.win && (c.stats?.built || 0) >= 8 },
+  { id: "sk-colours", group: "skirmish", mode: "skirmish", icon: "theme", title: "New colours", goal: "Win a Skirmish not as Meridian", test: (c) => c.win && !!c.player && c.player !== "meridian" },
+  { id: "sk-wrecker", group: "skirmish", mode: "skirmish", icon: "barrage", title: "Wrecking crew", goal: "Destroy 10 buildings in a Skirmish win", test: (c) => c.win && (c.stats?.structuresDestroyed || 0) >= 10 },
+  { id: "cp-clean", group: "campaign", mode: "campaign", icon: "guard", title: "Clean sweep", goal: "Win a mission losing 5 units or fewer", test: (c) => c.win && (c.stats?.lost ?? Infinity) <= 5 },
+  { id: "cp-march", group: "campaign", mode: "campaign", icon: "boot", title: "Forced march", goal: "Win a mission within 12 minutes", test: (c) => c.win && (c.seconds ?? Infinity) <= 720 },
+  { id: "cp-muster", group: "campaign", mode: "campaign", icon: "barracks", title: "Muster", goal: "Train 20 units in a mission win", test: (c) => c.win && (c.stats?.trained || 0) >= 20 },
+  { id: "df-branch", group: "defence", mode: "defence", icon: "rally", title: "Specialist", goal: "Pick a commander branch", test: (c) => !!c.hero?.branch },
+  { id: "df-slayer", group: "defence", mode: "defence", icon: "crosshair", title: "Road warden", goal: "Stop 60 enemies in a Defence win", test: (c) => c.win && (c.stats?.killed || 0) >= 60 },
+  { id: "df-intact", group: "defence", mode: "defence", icon: "tower", title: "Unbroken", goal: "Win a Defence level losing no tower", test: (c) => c.win && !c.scored && (c.stats?.structuresLost ?? 1) === 0 },
 ]);
 export const challengeById = (id) => CHALLENGES.find((c) => c.id === id) || null;
 

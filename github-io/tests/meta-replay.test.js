@@ -140,3 +140,28 @@ test("stored replays: at most three, the newest kept, too big refused, full stor
   const blocked = { getItem() { throw new Error("no"); }, setItem() { throw new Error("no"); } };
   assert.equal(storeReplay("x", r(1), blocked), null);
 });
+
+// Follow action (src/meta/replay-follow.js, re-score 2026-11-25b): the replay camera aims at the busiest knot of
+// units that fired in the last few seconds, else at the player's army; it keeps its fight while that fight is
+// still most of the action, and it only reads the simulation (the hash is untouched).
+test("follow action aims at the fight, else the army, and keeps its fight", async () => {
+  const { actionTarget, FIGHT_SECONDS } = await import("../src/meta/replay-follow.js");
+  const sim = new Simulation({ seed: 7 });
+  const hash = sim.hash();
+  const army = sim.own(0).filter((e) => e.kind === "unit" && e.type !== "worker");
+  const calm = actionTarget(sim);
+  assert.equal(sim.hash(), hash, "it only reads the simulation");
+  const mid = army.reduce((a, e) => ({ x: a.x + e.x / army.length, z: a.z + e.z / army.length }), { x: 0, z: 0 });
+  assert.ok(calm && !calm.fight && Math.hypot(calm.x - mid.x, calm.z - mid.z) < 16, "no fighting: the player's army");
+  // Two fights: three shooters far east, five far west; the bigger one wins.
+  const east = [0, 1, 2].map((i) => sim.spawn("ranger", 1, 30 + i, -30)), west = [0, 1, 2, 3, 4].map((i) => sim.spawn("ranger", 1, -30 - i, 30));
+  for (const e of [...east, ...west]) e.shotAt = sim.time;
+  const fight = actionTarget(sim);
+  assert.ok(fight.fight && fight.x < -25 && fight.z > 25 && fight.count === 5, `the bigger fight: ${JSON.stringify(fight)}`);
+  // Kept while it is still most of the action: one more shooter east does not swing the camera.
+  sim.spawn("ranger", 1, 33, -30).shotAt = sim.time;
+  assert.ok(actionTarget(sim, fight).x < -25, "the camera keeps its fight");
+  // The west fight goes quiet: the camera moves east.
+  for (const e of west) e.shotAt = sim.time - FIGHT_SECONDS - 1;
+  assert.ok(actionTarget(sim, fight).x > 25, "a quiet fight hands over to the live one");
+});

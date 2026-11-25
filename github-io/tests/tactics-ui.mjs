@@ -105,7 +105,7 @@ try {
     const tiles = page.locator('#commands .ability-tile');
     assert.deepEqual(await tiles.evaluateAll(bs => bs.map(b => b.dataset.ability)), ['shieldwall', 'focus', 'barrage'], `${name}: one tile per distinct ability`);
     assert.deepEqual(await tiles.evaluateAll(bs => bs.map(b => [b.querySelector('.ability-name').textContent, b.querySelector('.ability-status').textContent, b.disabled, !!b.querySelector('svg')])),
-      [[touch ? 'Shield' : 'Shield wall', 'Ready 2/2', false, true], [touch ? 'Rapid' : 'Rapid fire', 'Ready', false, true], ['Barrage', 'Ready', false, true]], `${name}: name, glyph and state`);
+      [[name === 'landscape' ? 'Shield' : 'Shield wall', 'Ready 2/2', false, true], [name === 'landscape' ? 'Rapid' : 'Rapid fire', 'Ready', false, true], ['Barrage', 'Ready', false, true]], `${name}: name, glyph and state (short names on landscape phones only)`);
     assert.deepEqual(await page.locator('.stance-control button').evaluateAll(bs => bs.map(b => `${b.dataset.stance}:${b.getAttribute('aria-pressed')}`)), ['guard:true', 'hold:false', 'aggressive:false'], `${name}: Guard is the default stance`);
     if (!touch) {
       assert.deepEqual(await tiles.evaluateAll(bs => bs.map(b => [b.dataset.hotkey, b.title.split(' · ')[0]])), [['E', 'E'], ['T', 'T'], ['Y', 'Y']], 'tile keys shown in the tooltips');

@@ -20,6 +20,8 @@ const PORT = Number(process.env.LAN_BROWSER_PORT || 4574);
 const BASE = `http://127.0.0.1:${PORT}/`;
 // The phone: portrait by default; LAN_GUEST_VIEWPORT=landscape checks the other phone shape.
 const GUEST = process.env.LAN_GUEST_VIEWPORT || "portrait";
+// A long name (re-score 2026-11-25b: the phone strip showed "H… 1 ms"): the phone must show at least 8 characters of it.
+const HOST_NAME = "Hoa Nguyen Thi";
 const server = await startLanServer({ port: PORT, host: "127.0.0.1", dist: resolve("dist"), log: () => {} });
 const browser = await launchBrowser();
 
@@ -46,7 +48,7 @@ await suite("lan-play", async () => {
     await host.ready();
     await host.page.waitForFunction(() => window.__frontierLan?.panel() && document.querySelector("#lan [data-lan-host]"), null, { timeout: TIMEOUT.step });
     assert.ok(await host.page.locator("#lan-open").isVisible() || true);
-    await host.page.fill("#lan-name", "Hoa");
+    await host.page.fill("#lan-name", HOST_NAME);
     await host.page.locator("#lan-name").dispatchEvent("change");
     await host.tap("#lan [data-lan-host]");
     await host.page.waitForFunction(() => window.__frontierLan.room?.players.length === 1 && document.querySelector("#lan [data-lan-start]"), null, { timeout: TIMEOUT.step });
@@ -75,11 +77,25 @@ await suite("lan-play", async () => {
     for (const o of [host, guest]) await o.page.waitForFunction(() => { const i = window.__frontierLan.info(); return i?.go && i.ticks > 40; }, null, { timeout: TIMEOUT.models });
     const [hi, gi] = [await lan(host.page), await lan(guest.page)];
     assert.deepEqual([hi.seat, gi.seat], [0, 1]);
-    for (const [o, mine, other] of [[host, "Hoa", "Commander"], [guest, "Commander", "Hoa"]]) {
+    for (const [o, mine, other] of [[host, HOST_NAME, "Commander"], [guest, "Commander", HOST_NAME]]) {
       const text = await o.page.locator("#lan-strip").textContent();
       assert.ok(text.includes(mine) && text.includes(other), `the strip names both players: ${text}`);
       assert.deepEqual(await tiny(o.page, "#lan-strip"), [], "strip text");
     }
+    // The phone's strip: the other player's name shows at least its first 8 characters (the visible width of the name
+    // is at least the width those characters need in the strip's own font), and the strip stays clear of the top bar.
+    const phoneStrip = await guest.page.evaluate(() => {
+      const strip = document.querySelector("#lan-strip"), b = strip.querySelector(".lan-who:not(.lan-me) b"), s = getComputedStyle(b);
+      const ctx = document.createElement("canvas").getContext("2d");
+      ctx.font = `${s.fontWeight} ${s.fontSize} ${s.fontFamily}`;
+      const need = ctx.measureText(b.textContent.slice(0, 8)).width, shown = b.getBoundingClientRect().width, r = strip.getBoundingClientRect();
+      const meet = (a) => !(a.right <= r.left || a.left >= r.right || a.bottom <= r.top || a.top >= r.bottom);
+      const hits = [...document.querySelectorAll(".resource-bar, .top-actions button, .touch-controls button")].filter((e) => e.getClientRects().length && meet(e.getBoundingClientRect())).map((e) => e.id || e.className);
+      return { text: b.textContent, need: Math.round(need), shown: Math.round(shown), cut: b.scrollWidth > b.clientWidth + 1, full: shown >= b.scrollWidth - 1, hits, ping: strip.querySelector(".lan-ping").textContent, inside: r.left >= 0 && r.right <= innerWidth };
+    });
+    assert.ok(phoneStrip.full || phoneStrip.shown >= phoneStrip.need, `the phone strip shows at least 8 characters of "${HOST_NAME}": ${JSON.stringify(phoneStrip)}`);
+    assert.ok(phoneStrip.inside && /ms|—/.test(phoneStrip.ping), `the phone strip is on screen with the ping: ${JSON.stringify(phoneStrip)}`);
+    assert.deepEqual(phoneStrip.hits, [], "the phone strip covers no top-bar control");
     // Orders on both pages, through the game's command door: each page commands its own army (team 0 as it sees it).
     const order = (page, x, z) => page.evaluate(([x, z]) => { const f = window.__frontier, army = f.sim.own(0).filter((e) => e.kind === "unit" && e.type !== "worker"); return f.sim.command({ team: 0, type: "order", ids: army.map((e) => e.id), order: { type: "move", x: army[0].x + x, z: army[0].z + z } }); }, [x, z]);
     assert.equal(await order(host.page, 4, -3), true);

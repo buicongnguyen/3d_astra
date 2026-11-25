@@ -9,17 +9,18 @@ import { ABILITY_KEYS, STANCES, STANCE_INFO, abilityGroups, abilityStatus, shoul
 export const abilityLimit = () => 99; // every ability stays visible; only the first ones have a key letter
 
 // Phones: short words for long ability names, and a symbol alone where the shape says it (the full name stays in aria-label).
-// Landscape tiles are only 53-62 px wide, so every name of two words or nine letters has a short form
-// (src/locales vi.json / ko.json translate each one; tests/tactics-ui.test.js checks the list).
+// Only landscape tiles (53-62 px wide, `side`) use the short form; portrait tiles (66-72 px) give the full name two
+// lines (re-score 2026-11-25b: "Lock-on" read "Lock"). Lock-on keeps its name everywhere: it fits.
+// (src/locales vi.json / ko.json translate each one; tests/phone-hud.mjs checks every name fits in EN/VI/KO.)
 export const PHONE_NAME = { "Rapid fire": "Rapid", "Triage pulse": "Heal", "Shield wall": "Shield", "Field repair": "Repair", "Shadow strike": "Strike", "Shield link": "Link",
-  "Overdrive": "Boost", "Lock-on": "Lock", "Crossfire": "Cross", "Steady aim": "Aim", "Burn line": "Burn", "Spur on": "Spur",
+  "Overdrive": "Boost", "Crossfire": "Cross", "Steady aim": "Aim", "Burn line": "Burn", "Spur on": "Spur",
   "Strafing run": "Strafe", "Signal flare": "Flare", "Bomb drop": "Bomb" };
 const PHONE_SYMBOL = new Set(["Shield wall", "Field repair"]);
 
 export function tacticsCardHTML(sim, entities, { compact = false, side = false, keys = true } = {}) {
   const tiles = abilityGroups(sim, entities, abilityLimit(compact, side)).map((g, i) => {
     const key = keys ? ABILITY_KEYS[i] : null;
-    return `<button class="ability-tile${compact && PHONE_SYMBOL.has(g.name) ? " symbol-only" : ""}" data-ability="${g.id}"${key ? ` data-hotkey="${key}"` : ""} aria-label="${g.name}" title="${key ? `${key} · ` : ""}${g.name} · ${g.description}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${icon(g.icon)}<span class="ability-name">${compact ? PHONE_NAME[g.name] || g.name : g.name}</span><small class="ability-status"></small><i class="ability-sweep" aria-hidden="true"></i></button>`;
+    return `<button class="ability-tile${compact && PHONE_SYMBOL.has(g.name) ? " symbol-only" : ""}" data-ability="${g.id}"${key ? ` data-hotkey="${key}"` : ""} aria-label="${g.name}" title="${key ? `${key} · ` : ""}${g.name} · ${g.description}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${icon(g.icon)}<span class="ability-name">${compact && side ? PHONE_NAME[g.name] || g.name : g.name}</span><small class="ability-status"></small><i class="ability-sweep" aria-hidden="true"></i></button>`;
   }).join("");
   const stance = entities.some(takesStance)
     ? `<div class="stance-control" role="group" aria-label="Stance">${STANCES.map((id) => {

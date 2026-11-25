@@ -277,6 +277,29 @@ await suite("defence", async () => {
     assert.deepEqual(heroCard.small, [], `${viewport}: commander text under 11 px`);
     assert.match(heroCard.stats, /160/, `${viewport}: the sheet shows Barrage's new damage`);
     assert.equal(heroCard.shield, 700, `${viewport}: Rank 2 shield`);
+    // Re-score 2026-11-25b: the commander's own tile read "Hero 936" (accessible name "R Hero 936"), a bare number
+    // beside the bar's Hero button. It reads "Commander" with its rank pips and a health bar; its accessible name
+    // gives rank and health in words, and both follow a hit.
+    await page.evaluate(() => { const h = window.__frontier.sim.commander(); h.hp = Math.round(h.maxHp / 2); });
+    await page.waitForFunction(() => /health \d+ of \d+$/.test(document.querySelector("#commands .defence-commander")?.getAttribute("aria-label") || "") && (() => { const bar = document.querySelector("#commands .defence-commander .defence-hp"), fill = bar?.querySelector("i"); return !!fill && Math.abs(fill.getBoundingClientRect().width / bar.getBoundingClientRect().width - 0.5) < 0.04; })(), null, { timeout: TIMEOUT.step });
+    const commanderTile = await page.evaluate(() => {
+      const t = document.querySelector("#commands .defence-commander"), h = window.__frontier.sim.commander(), bar = t.querySelector(".defence-hp"), fill = bar.querySelector("i");
+      const r = t.getBoundingClientRect(), b = bar.getBoundingClientRect();
+      const name = t.querySelector(":scope > span"), nr = name.getBoundingClientRect();
+      return { label: t.getAttribute("aria-label"), want: `Field commander, rank 3, health ${Math.round(h.hp)} of ${Math.round(h.maxHp)}`, text: name.textContent.trim(),
+        nameFits: name.scrollWidth <= name.clientWidth + 1 && nr.left >= r.left - 1 && nr.right <= r.right + 1,
+        pips: t.querySelectorAll(".defence-rank-pips > i").length, digits: /\d{2,}/.test(t.textContent.replace(t.querySelector("kbd")?.textContent || "", "")),
+        bar: { w: Math.round(b.width), h: Math.round(b.height), inside: b.left >= r.left && b.right <= r.right && b.top >= r.top && b.bottom <= r.bottom }, fill: Math.round(fill.getBoundingClientRect().width / b.width * 100),
+        tile: [Math.round(r.width), Math.round(r.height)] };
+    });
+    assert.equal(commanderTile.label, commanderTile.want, `${viewport}: the commander tile's accessible name`);
+    assert.equal(commanderTile.text, "Commander", `${viewport}: the tile reads Commander`);
+    assert.ok(commanderTile.nameFits, `${viewport}: "Commander" is not cut: ${JSON.stringify(commanderTile)}`);
+    assert.equal(commanderTile.pips, 2, `${viewport}: two rank pips at Rank 3`);
+    assert.equal(commanderTile.digits, false, `${viewport}: no bare health number on the tile`);
+    assert.ok(commanderTile.bar.w >= 24 && commanderTile.bar.h >= 4 && commanderTile.bar.inside && Math.abs(commanderTile.fill - 50) <= 4, `${viewport}: a health bar at half: ${JSON.stringify(commanderTile)}`);
+    if (mobile) assert.ok(commanderTile.tile[0] >= 44 && commanderTile.tile[1] >= 44, `${viewport}: the commander tile is 44 px`);
+    await page.evaluate(() => { const h = window.__frontier.sim.commander(); h.hp = h.maxHp; });
     await noSideScroll(page, `${viewport} commander ranks`);
     await shot(page, `defence-commander-ranks-${viewport}`);
     await tap('#commands [data-defence-hero="artillery"]');
@@ -312,6 +335,25 @@ await suite("defence", async () => {
     assert.equal(intel.overlap, false, `${viewport}: intel clear of the bar`);
     assert.deepEqual(await tinyText(page, "#defence-intel"), [], `${viewport}: intel text under 12 px`);
     await shot(page, `defence-intel-${viewport}`);
+    // Re-score 2026-11-25b: on a portrait phone a counter hint ("Your Battle tank beats Scrapper") sat on the Next
+    // wave card. A hint and an alert at once: neither covers the card or the bar.
+    await page.evaluate(() => {
+      const f = window.__frontier, h = f.fightHint;
+      h.querySelector(".fh-text").textContent = "Your Battle tank beats Scrapper"; h.hidden = false;
+      f.alertNotice("The enemy broke through!");
+      window.__msgCover = () => {
+        const r = (s) => { const e = document.querySelector(s); return e && e.getClientRects().length && getComputedStyle(e).visibility !== "hidden" ? e.getBoundingClientRect() : null; };
+        const meet = (a, b) => !!a && !!b && !(a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom);
+        const card = r("#defence-intel"), bar = r("#defence-bar"), hint = r("#fight-hint"), notice = r("#notice");
+        return { hint: !!hint, card: !!card, covers: [["hint", hint], ["notice", notice]].filter(([, b]) => meet(b, card) || meet(b, bar)).map(([n]) => n) };
+      };
+    });
+    await page.waitForFunction(() => getComputedStyle(document.querySelector("#notice")).opacity === "1" && !window.__msgCover().covers.length, null, { timeout: TIMEOUT.step }).catch(() => {});
+    const covered = await page.evaluate(() => window.__msgCover());
+    assert.ok(covered.hint && covered.card, `${viewport}: the hint and the card both show`);
+    assert.deepEqual(covered.covers, [], `${viewport}: no message covers the Next wave card or the bar`);
+    await shot(page, `defence-intel-hint-${viewport}`);
+    await page.evaluate(() => { window.__frontier.fightHint.hidden = true; window.__frontier.clearMessages(); });
     await tap("#defence-call");
     await page.waitForFunction((n) => window.__frontier.sim.defence.wave === n + 1 && window.__frontier.sim.players[0].alloy > 0, before, { timeout: TIMEOUT.step });
 

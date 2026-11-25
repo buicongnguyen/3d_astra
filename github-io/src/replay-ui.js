@@ -7,6 +7,14 @@
 //
 // Nothing of a replay is saved, scored or recorded: the autosave, the results screen, achievements,
 // challenges and history all skip a match while S.replay is set.
+//
+// Follow action (re-score 2026-11-25b: the camera stayed where it started, so fights happened off screen):
+// on by default, the camera glides to the action, the densest knot of units that fired in the last few
+// seconds (sim entity `shotAt`), or with no fighting the player's army. A "Follow action" toggle on the bar
+// (aria-pressed) turns it off and on; any manual camera move (drag, keys, edge, minimap) is noticed as the
+// focus leaving where follow put it, and pauses follow until the toggle is pressed again. Presentation only:
+// it reads the simulation, never writes it. Jumps to key moments were left out: a replay cannot seek without
+// re-simulating from the start.
 import "./replay.css";
 import { $ } from "./app/dom.js";
 import { icon } from "./icons.js";
@@ -14,6 +22,7 @@ import { Simulation } from "./simulation.js";
 import { matchLook, enemyFactionOf, playerFactionOf } from "./factions.js";
 import { replayFeeder, replayOptions, replayProblem, TICK } from "./meta/replay.js";
 import { formatClock } from "./results-ui.js";
+import { actionTarget, FOLLOW_RATE, MANUAL_SLACK } from "./meta/replay-follow.js";
 
 export const APP_VERSION = typeof __APP_VERSION__ === "undefined" ? "dev" : __APP_VERSION__;
 export const SPEEDS = [1, 2, 4];
@@ -43,6 +52,8 @@ export function setupReplay(S, A) {
     const feeder = replayFeeder(replay), send = sendAs(sim, replay);
     S.replay = {
       replay, entry, speed: 1, paused: false, status: "playing",
+      // Follow action: on by default; `target` the point it aims at, `at` where it last left the camera.
+      follow: { on: true, target: null, at: null, next: 0 },
       // Called by the frame loop before every tick: false once the recorded end is reached.
       feed(s) {
         if (s !== sim) return true;
@@ -75,7 +86,42 @@ export function setupReplay(S, A) {
     A.updateHeading();
     $("status-text").textContent = "REPLAY";
     render();
+    startFollow();
     return null;
+  }
+
+  // ---------------------------------------------------------------- Follow action
+  let followFrame = 0, followLast = 0;
+  function startFollow() {
+    cancelAnimationFrame(followFrame);
+    followLast = performance.now();
+    followFrame = requestAnimationFrame(followStep);
+  }
+  function followStep(now) {
+    const r = S.replay;
+    if (!r) return;
+    followFrame = requestAnimationFrame(followStep);
+    const dt = Math.min(0.1, Math.max(0, (now - followLast) / 1000)), f = r.follow, view = S.view;
+    followLast = now;
+    if (!f.on || !view?.focus) return;
+    // A scripted story pan (frame.js S.cameraPan) has the camera: wait for it, and take its end as ours.
+    if (S.cameraPan) { f.at = null; return; }
+    // The player moved the camera since the last frame: follow pauses until the toggle is pressed again.
+    if (f.at && Math.hypot(view.focus.x - f.at.x, view.focus.z - f.at.z) > MANUAL_SLACK) { setFollow(false); return; }
+    if (now >= f.next) { f.target = actionTarget(S.sim, f.target); f.next = now + 250; }
+    if (!f.target) { f.at = { x: view.focus.x, z: view.focus.z }; return; }
+    const k = 1 - Math.exp(-FOLLOW_RATE * dt), x = view.focus.x + (f.target.x - view.focus.x) * k, z = view.focus.z + (f.target.z - view.focus.z) * k;
+    if (Math.hypot(x - view.focus.x, z - view.focus.z) > 0.005) view.focusOn(x, z);
+    f.at = { x: view.focus.x, z: view.focus.z };
+  }
+  function setFollow(on) {
+    const r = S.replay;
+    if (!r) return;
+    r.follow.on = on;
+    r.follow.at = null;
+    r.follow.next = 0;
+    const b = bar?.querySelector('[data-replay="follow"]');
+    if (b) b.setAttribute("aria-pressed", String(on));
   }
 
   function finishIfDone() {
@@ -94,6 +140,7 @@ export function setupReplay(S, A) {
   // Back to the title: the app state as it was before the replay, then the normal new-game path.
   function stop(toMenu = true) {
     if (!S.replay) return;
+    cancelAnimationFrame(followFrame);
     S.replay = null;
     document.documentElement.classList.remove("replaying");
     if (saved) for (const [k, v] of Object.entries(saved)) S[k] = v;
@@ -122,6 +169,7 @@ export function setupReplay(S, A) {
         if (b.dataset.replay === "play") { if (S.replay.status === "playing") { S.replay.paused = !S.replay.paused; render(); } }
         else if (b.dataset.replay === "exit") stop();
         else if (b.dataset.replay === "again") again();
+        else if (b.dataset.replay === "follow") setFollow(!S.replay.follow.on);
         else if (b.dataset.speed) { S.replay.speed = Number(b.dataset.speed); render(); }
       });
     }
@@ -136,6 +184,7 @@ export function setupReplay(S, A) {
         : `<button type="button" class="kit-face" data-replay="play" aria-pressed="${r.paused}" aria-label="${r.paused ? "Play" : "Pause"}">${icon(r.paused ? "play" : "pause")}<span>${r.paused ? "Play" : "Pause"}</span></button>`}
       <span class="replay-speeds" role="group" aria-label="Replay speed">${SPEEDS.map((x) => `<button type="button" class="kit-face" data-speed="${x}" aria-pressed="${r.speed === x}"${done ? " disabled" : ""}><span translate="no">×${x}</span></button>`).join("")}</span>
       <span class="replay-time" translate="no"><b>${formatClock(now)}</b> / ${formatClock(total)}</span>
+      <button type="button" class="kit-face replay-follow" data-replay="follow" aria-pressed="${r.follow.on}" title="The camera follows the fighting, or your army">${icon("crosshair")}<span>Follow action</span></button>
       <span class="replay-track" aria-hidden="true"><i style="width:${total ? Math.round((now / total) * 100) : 0}%"></i></span>
       ${status}
       <button type="button" class="kit-face" data-replay="exit" aria-label="Exit replay">${icon("close")}<span>Exit replay</span></button>`;

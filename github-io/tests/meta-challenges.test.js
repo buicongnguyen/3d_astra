@@ -7,9 +7,9 @@ import { translate } from "../src/i18n.js";
 
 const days = Array.from({ length: 60 }, (_, i) => new Date(Date.UTC(2026, 10, 1 + i)).toISOString().slice(0, 10));
 const ctxFor = (c) => ({
-  skirmish: { mode: "skirmish", win: true, seconds: 600, enemyCount: 2, stats: { lost: 3, kites: 1, killed: 50, abilities: 0 } },
-  campaign: { mode: "campaign", win: true, medal: "gold", optional: 1, stats: { abilities: 4, killed: 10 } },
-  defence: { mode: "defence", win: true, scored: false, stars: 3, hero: { level: 3 }, stats: {} },
+  skirmish: { mode: "skirmish", win: true, seconds: 600, enemyCount: 2, player: "wardens", stats: { lost: 3, kites: 1, killed: 50, abilities: 0, built: 9, structuresDestroyed: 12 } },
+  campaign: { mode: "campaign", win: true, seconds: 640, medal: "gold", optional: 1, stats: { abilities: 4, killed: 10, lost: 4, trained: 22 } },
+  defence: { mode: "defence", win: true, scored: false, stars: 3, hero: { level: 3, branch: "rally" }, stats: { killed: 80, structuresLost: 0 } },
 }[c.group]);
 
 test("the same date always gives the same three, one from each group", () => {
@@ -74,6 +74,20 @@ test("stored state: junk is dropped, another day's list is cleared, blocked stor
   const blocked = { getItem() { throw new Error("no"); }, setItem() { throw new Error("no"); } };
   assert.deepEqual(loadChallenges(day, blocked), freshChallenges(day));
   assert.equal(saveChallenges(freshChallenges(day), blocked), false);
+});
+
+test("the pool (variety pass, 2026-11-25b): at least 7 per group, and the new goals judge only what they say", () => {
+  for (const group of GROUPS) assert.ok(CHALLENGES.filter((c) => c.group === group).length >= 7, group);
+  assert.ok(CHALLENGES.length >= 21);
+  const by = (id) => CHALLENGES.find((c) => c.id === id);
+  assert.equal(by("sk-colours").test({ mode: "skirmish", win: true, player: "meridian", stats: {} }), false, "Meridian does not count");
+  assert.equal(by("cp-march").test({ mode: "campaign", win: true, seconds: 721, stats: {} }), false, "12 minutes is the limit");
+  assert.equal(by("df-intact").test({ mode: "defence", win: true, scored: false, stats: { structuresLost: 1 } }), false, "a lost tower breaks it");
+  assert.equal(by("df-intact").test({ mode: "defence", win: true, scored: false, stats: {} }), false, "no count, no credit");
+  assert.equal(by("df-intact").test({ mode: "defence", win: true, scored: true, stats: { structuresLost: 0 } }), false, "Endless and Daily have no win to keep");
+  // A week of days shows most of the pool, still seeded from the date alone.
+  const week = Array.from({ length: 7 }, (_, i) => dailyChallenges(`2026-12-0${i + 1}`).map((c) => c.id)).flat();
+  assert.ok(new Set(week).size >= 12, `a week shows ${new Set(week).size} different goals`);
 });
 
 test("every challenge reads in Vietnamese and Korean", () => {
