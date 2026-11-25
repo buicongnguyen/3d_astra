@@ -11,7 +11,7 @@ import { selectionStatus } from "../selection-status.js";
 import { tacticalUnits, clampRank } from "../tactics-ui.js";
 import { tacticsCardHTML, updateTacticsCard } from "../tactics-card.js";
 import { createMessageQueue, ROUTINE, ALERT } from "../message-queue.js";
-import { productionTiles, researchState, flakTile } from "../research-tiles.js";
+import { productionTiles, researchState, flakTile, buildingUnits, trainsLine } from "../research-tiles.js";
 import { updateBossBar } from "../boss-ui.js";
 import { veteranNote } from "../sim/content/barracks-veterans.js";
 import "../boss-ui.css";
@@ -244,7 +244,7 @@ export function setupHud(S, A) {
     document.documentElement.classList.toggle('wide-orders', orderCount > 6);
     $("command-context").title = `Command core technology ${S.sim.techLevel()} / 3`;
     const hasCore = S.sim.own(0).some((b) => b.type === "hq");
-    const signature = `${hasCore}/${es.map((e) => e.id).join(",")}/${p.doctrine ? JSON.stringify(p.doctrine) : ""}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${p.flak}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2" || q.type === "flak")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}/${e?.trains?.some((k) => D[k]?.flying) ? `${S.sim.airCount(0)}:${S.sim.airCap(0)}` : ""}`;
+    const signature = `${hasCore}/${es.map((e) => e.id).join(",")}/${p.doctrine ? JSON.stringify(p.doctrine) : ""}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${p.flak}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2" || q.type === "flak")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}/${e?.trains?.some((k) => D[k]?.flying) ? `${S.sim.airCount(0)}:${S.sim.airCap(0)}` : ""}/${S.sim.unlocks?.[0]?.length || 0}`;
     if (S.lastSelectionKey !== signature) {
       S.lastSelectionKey = signature;
       // Phones: a bold role glyph instead of the 3D portrait, which is unreadable at roster size (role-icons.js).
@@ -266,7 +266,17 @@ export function setupHud(S, A) {
       // (pick a branch, research it, tier II, done); locked tiles name the building level they need.
       const production = e && es.length === 1 && e.kind === "building" ? productionTiles(S.sim, e, { choosing: S.researchOpen }) : null;
       const tiles = production ? production.tiles
-        : es.some((u) => u.type === "worker") ? S.sim.buildable(0).map((type) => ({ type, action: type, label: D[type].name, state: "ready" })) : [];
+        : es.some((u) => u.type === "worker") ? S.sim.buildable(0).map((type) => ({ type, action: type, label: D[type].name, state: "ready", units: buildingUnits(S.sim, type) })) : [];
+      // Build menu on phones (owner, 2026-11-25): each building tile shows the units it trains standing at its foot,
+      // as the role glyphs of that building's own train tiles (inline SVG: nothing to download); units that need a
+      // higher building level are dimmed with the level. Up to four; more show three and "+N". The PC console keeps
+      // its fixed tile height, so there the list is in the tooltip and the accessible name only.
+      const unitStrip = (units) => {
+        if (!phone || !units?.length) return "";
+        const shown = units.length > 4 ? units.slice(0, 3) : units;
+        return `<span class="tile-units" aria-hidden="true">${shown.map((u) => `<i class="tile-unit${u.level > 1 ? " needs-level" : ""}" data-unit="${u.type}">${roleArt(u.type)}${u.level > 1 ? `<b translate="no">${u.level}</b>` : ""}</i>`).join("")}${units.length > shown.length ? `<b class="tile-units-more" translate="no">+${units.length - shown.length}</b>` : ""}</span>`;
+      };
+      $("commands").classList.toggle("with-units", phone && tiles.some((t) => t.units?.length));
       const actions = tiles.map((t) => t.action);
       const structure = es.length === 1 && e?.kind === "building" && !e.trains;
       // Fighting units without a Harvester among them: abilities and stance take the card.
@@ -307,7 +317,7 @@ export function setupHud(S, A) {
             const priced = t.state === "ready" || t.state === "locked" ? `, ${price[0]} alloy${price[1] ? ` and ${price[1]} energy` : ""}` : `, ${t.sub}`;
             // A sixth tile (a faction's own building in the build menu) has no letter left: click or tap it.
             const cat = t.research ? "upgrade" : d.kind === "building" ? "build" : d.kind === "unit" ? "train" : "upgrade";
-            return `<button class="command-tile cat-${cat}${t.research ? " research-tile" : ""}${t.partial ? " partial" : ""} state-${t.state}" data-action="${t.action}" data-state="${t.state}"${price !== d.cost ? ` data-cost="${price.join(",")}"` : ""}${key ? ` data-hotkey="${key}"` : ""}${t.state === "busy" ? ` style="--p:${(t.progress || 0).toFixed(3)}"` : ""} aria-label="${t.label}${priced}" title="${key ? `${key} · ` : ""}${d.name} · ${d.description}${lockNote}${d.flying ? ` · ${airNote(S.sim, 0)}` : ""}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${phone && d.kind === "unit" ? roleArt(t.type) : hasPortrait(t.type) ? portrait(t.type) : icon(roleIcon(t.type))}<span>${t.label === "Anti-tank soldier" ? "Anti-tank" : t.label}</span>${sub}${d.kind === "building" && d.icon ? `<i class="tile-badge" aria-hidden="true">${icon(d.icon)}</i>` : ""}</button>`; // the long name keeps its full text in the tooltip; buildings carry their own symbol as a badge (the pictures look alike at phone size)
+            return `<button class="command-tile cat-${cat}${t.research ? " research-tile" : ""}${t.partial ? " partial" : ""} state-${t.state}" data-action="${t.action}" data-state="${t.state}"${price !== d.cost ? ` data-cost="${price.join(",")}"` : ""}${key ? ` data-hotkey="${key}"` : ""}${t.state === "busy" ? ` style="--p:${(t.progress || 0).toFixed(3)}"` : ""} aria-label="${t.label}${priced}${t.units?.length ? ` · ${trainsLine(t.units)}` : ""}" title="${key ? `${key} · ` : ""}${d.name} · ${d.description}${lockNote}${d.flying ? ` · ${airNote(S.sim, 0)}` : ""}${t.units?.length ? ` · ${trainsLine(t.units)}` : ""}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${phone && d.kind === "unit" ? roleArt(t.type) : hasPortrait(t.type) ? portrait(t.type) : icon(roleIcon(t.type))}<span>${t.label === "Anti-tank soldier" ? "Anti-tank" : t.label}</span>${sub}${d.kind === "building" && d.icon ? `<i class="tile-badge" aria-hidden="true">${icon(d.icon)}</i>` : ""}${unitStrip(t.units)}</button>`; // the long name keeps its full text in the tooltip; buildings carry their own symbol as a badge (the pictures look alike at phone size)
           })
           .join("") || tactics || (structure ? `<p class="structure-hint">${e.description}</p>` : e?.kind==='building' ? '' :
         `<div class="tactical-hint">${icon("crosshair")}<strong>${e ? "Control the battlefield" : hasCore ? "Your expedition is ready" : "Your Command core is down"}</strong><p>${e ? (S.touchInput ? "Open Selection for Move, Attack-move and Support orders, then tap a target on the battlefield." : "Right-click to move or engage.<br>Attack-move to advance and fight.") : hasCore ? "Select the Command core to train Harvesters, or the Barracks to grow your army." : "Gather your remaining forces and hold on."}</p></div>`);

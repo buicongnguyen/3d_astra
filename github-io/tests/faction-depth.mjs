@@ -6,10 +6,22 @@
 //    (portrait, where the row is shared with the production queue);
 //  - the faction signature abilities: a Supply wagon, a Sentinel drone and a Shade each bring their tile
 //    (Spur on, Shield link, Shadow strike) to the tactics card;
+//  - the build menu (2026-11-25): a Harvester's building tiles show the units each building trains (Meridian, then
+//    Wardens): on phones a strip of role glyphs at the foot of the picture, matching the faction's trains list,
+//    higher-level units dimmed; the tile stays one 44 px+ target (a tap on the strip starts placing that
+//    building); the accessible name lists them on every layout (the PC tile has no room for the strip);
 //  - every tap target at least 44 px, text at least 11 px, nothing covered, no sideways scroll.
 // Rules are unit-tested in tests/faction-depth.test.js. Screenshots: test-results/faction-depth-*.png.
 import assert from "node:assert/strict";
 import { launchBrowser, openPage, suite, shot, TIMEOUT } from "./lib/harness.mjs";
+import { Simulation } from "../src/simulation.js";
+import { buildingUnits } from "../src/research-tiles.js";
+
+// What each building tile should show, from the same rules in Node (src/research-tiles.js buildingUnits).
+const expected = (faction) => {
+  const sim = new Simulation({ ai: false, factions: { 0: faction, 1: "meridian" } });
+  return Object.fromEntries(sim.buildable(0).map((type) => [type, buildingUnits(sim, type)]));
+};
 
 const browser = await launchBrowser();
 await suite("faction-depth", async () => {
@@ -42,6 +54,58 @@ await suite("faction-depth", async () => {
     await ready();
     await tap("#start");
     await page.waitForFunction(() => window.__frontier.started, null, { timeout: TIMEOUT.models });
+
+    // ---- The build menu: each building tile shows what it trains (Meridian, then the Wardens' roster).
+    for (const faction of ["meridian", "wardens"]) {
+      // The match's faction is swapped in place (the menu reads sim.factions); a fresh selection redraws the card.
+      await frontier((faction) => {
+        const f = window.__frontier, s = f.sim;
+        s.factions[0] = faction; f.hold = true; s.players[0].alloy = 900; s.players[0].energy = 600;
+        f.select([]); const w = s.own(0).find((e) => e.type === "worker"); f.select([w.id]); f.view.focusOn(w.x, w.z);
+      }, faction);
+      await dock();
+      await page.waitForFunction(() => document.querySelector('#commands [data-action="barracks"]')?.getClientRects().length);
+      const want = expected(faction);
+      const seen = await frontier(() => [...document.querySelectorAll("#commands > .command-tile[data-action]")].filter((b) => b.getClientRects().length).map((b) => {
+        const r = b.getBoundingClientRect(), strip = b.querySelector(".tile-units"), s = strip?.getBoundingClientRect();
+        const glyphs = [...b.querySelectorAll(".tile-unit")].map((u) => { const q = u.getBoundingClientRect(), at = document.elementFromPoint(q.x + q.width / 2, q.y + q.height / 2); return { type: u.dataset.unit, dim: u.classList.contains("needs-level"), opacity: parseFloat(getComputedStyle(u.querySelector("svg")).opacity), w: q.width, inTile: !!at && b.contains(at) }; });
+        const fonts = [...b.querySelectorAll("*")].filter((e) => e.getClientRects().length && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())).map((e) => parseFloat(getComputedStyle(e).fontSize));
+        return { type: b.dataset.action, aria: b.getAttribute("aria-label"), title: b.title, w: r.width, h: r.height, font: Math.min(99, ...fonts), glyphs,
+          more: b.querySelector(".tile-units-more")?.textContent || "",
+          stripInside: !s || (s.left >= r.left - 0.5 && s.right <= r.right + 0.5 && s.top >= r.top - 0.5 && s.bottom <= r.bottom + 0.5 && strip.scrollWidth <= strip.clientWidth + 1),
+          inside: r.left >= 0 && r.right <= innerWidth + 0.5 && r.top >= 0 && r.bottom <= innerHeight + 0.5 };
+      }));
+      assert.deepEqual(seen.map((t) => t.type), Object.keys(want), `${viewport} ${faction}: one tile per building`);
+      for (const t of seen) {
+        const units = want[t.type], tag = `${viewport} ${faction} ${t.type}`;
+        assert.ok(t.inside && t.stripInside, `${tag}: tile and its pictures inside the screen and the tile ${JSON.stringify(t)}`);
+        // Touch targets 44 px; the PC console's mouse tiles keep their 38 px rows.
+        assert.ok(t.w >= 44 - 0.5 && t.h >= (mobile ? 44 : 38) - 0.5, `${tag}: large enough target (${t.w}x${t.h})`);
+        assert.ok(t.font >= 11, `${tag}: text at least 11 px (${t.font})`);
+        const line = units.length ? `Trains: ${units.map((u) => (u.level > 1 ? `${u.name} (level ${u.level})` : u.name)).join(" · ")}` : "";
+        if (line) { assert.ok(t.aria.endsWith(` · ${line}`), `${tag}: the accessible name lists what it trains: ${t.aria}`); assert.ok(t.title.endsWith(line), `${tag}: so does the tooltip`); }
+        else assert.ok(!/Trains/.test(t.aria) && !t.glyphs.length, `${tag}: a building that trains nothing shows none`);
+        if (!mobile) { assert.equal(t.glyphs.length, 0, `${tag}: the PC console keeps its tile`); continue; }
+        const shown = units.length > 4 ? units.slice(0, 3) : units;
+        assert.deepEqual(t.glyphs.map((g) => g.type), shown.map((u) => u.type), `${tag}: the pictures follow the trains list`);
+        assert.equal(t.more, units.length > 4 ? `+${units.length - 3}` : "", `${tag}: "+N" for the rest`);
+        for (const [i, g] of t.glyphs.entries()) {
+          assert.equal(g.dim, shown[i].level > 1, `${tag} ${g.type}: dimmed only when it needs a higher level`);
+          if (g.dim) assert.ok(g.opacity < 0.6, `${tag} ${g.type}: dimmed (${g.opacity})`);
+          assert.ok(g.inTile, `${tag} ${g.type}: the picture is part of the tile's target`);
+        }
+      }
+      await shot(page, `faction-depth-build-tiles-${faction}-${viewport}`);
+      if (mobile && faction === "meridian") {
+        // A tap on the pictures starts placing that building, as a tap anywhere on the tile does.
+        const box = await page.locator('#commands [data-action="barracks"] .tile-units').boundingBox();
+        await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+        await page.waitForFunction(() => window.__frontier.mode === "build", null, { timeout: TIMEOUT.step });
+        await tap("#cancel-mode");
+        await page.waitForFunction(() => window.__frontier.mode !== "build", null, { timeout: TIMEOUT.step });
+      }
+    }
+    await frontier(() => { const f = window.__frontier; f.sim.factions[0] = "meridian"; f.select([]); });
 
     // ---- Below level 2: a locked pair on desktop and landscape, nothing on portrait.
     await select("barracks", 1);

@@ -2446,6 +2446,14 @@
     [
       "^In the campaign, Dune Wyrm nests wait off the roads in Three-Way Dunes and A Debt in the Dunes\\. Clear the Wyrmlings, then keep your troops in the nest for (\\d+) s\\. Taming one is always optional\\.$",
       "Trong chiến dịch, các tổ Rồng cát nằm ngoài đường đi ở Ba phe trên đồi cát và Món nợ giữa đồi cát. Diệt các Rồng cát non, rồi giữ quân trong tổ {1} giây. Thuần rồng luôn là tùy chọn."
+    ],
+    [
+      "^Trains: ([^·]+)$",
+      "Huấn luyện: {1}"
+    ],
+    [
+      "^([^·]+) \\(level (\\d+)\\)$",
+      "{1} (cấp {2})"
     ]
   ]
 }
