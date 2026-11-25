@@ -188,8 +188,11 @@ export const WEAPON_VOICE = {
   ranger: "rifle", rider: "rifle", drone: "drone", vanguard: "smg", scrapper: "scrap", shade: "silenced",
   tank: "tank", walker: "walker", breaker: "artillery", scorcher: "flame", antitank: "rocket", watcher: "rail",
   gunner: "mg", stalker: "laser", hawk: "pod", tower: "tower", medic: "support", wagon: "support", engineer: "engineer", worker: "worker", repair: "worker",
+  // W12 (2026-11-25): units that fell back to the Vanguard's SMG get their own family.
+  wyrm: "bite", wyrmling: "bite", acidhound: "spit", halo: "zap", vaultsentinel: "zap", moth: "pulse", bulwark: "mg",
+  ironvanguard: "autocannon", ironsovereign: "autocannon", ironsovereign2: "autocannon",
 };
-const REFINED = new Set(["drone", "walker", "watcher", "gunner", "stalker", "hawk"]);
+const REFINED = new Set(["drone", "walker", "watcher", "gunner", "stalker", "hawk", "halo", "moth", "bulwark", "vaultsentinel", "ironvanguard", "ironsovereign", "ironsovereign2", "wyrm", "wyrmling", "acidhound"]);
 export function weaponVoice(weapon, sourceType) {
   if (REFINED.has(sourceType) && weapon !== "repair") return WEAPON_VOICE[sourceType];
   return WEAPON_VOICE[weapon] || "smg";
@@ -209,7 +212,7 @@ export function incomingFor(event) {
   const delay = Number.isFinite(event.delay) ? event.delay : 1.5;
   return { name: "incoming:shell", delay: Math.max(0, delay - INCOMING_SECONDS) };
 }
-const HEAVY_VOICES = new Set(["tank", "walker", "artillery", "rocket", "rail", "tower", "flame", "laser", "pod"]);
+const HEAVY_VOICES = new Set(["tank", "walker", "artillery", "rocket", "rail", "tower", "flame", "laser", "pod", "autocannon"]);
 
 // Sound name, priority, rate gap and voice group for a simulation event. null = silent event.
 // `sourceType` is the shooter's unit type when known (refines the weapon voice).
@@ -260,7 +263,7 @@ export function intensityWeight(name) {
   if (name.startsWith("shot:")) return HEAVY_VOICES.has(name.slice(5)) || name === "shot:flak" ? w.heavyShot : name === "shot:support" || name === "shot:engineer" || name === "shot:worker" || name === "shot:heal" ? 0 : w.shot;
   if (name.startsWith("impact:")) return w.impact;
   if (name.startsWith("hit:")) return w.hit;
-  if (name === "boom:small") return w.death;
+  if (name === "boom:small" || name === "fall:body") return w.death;
   if (name === "boom:heavy") return w.heavyDeath;
   if (name === "boom:building" || name === "boom:core") return w.building;
   if (name === "boom:strike") return w.strike;
@@ -483,6 +486,7 @@ const VOICE_CLASS = {
   rifle: "tracer", smg: "tracer", mg: "tracer", silenced: "beam", scrap: "tracer", drone: "tracer", worker: "tracer",
   tank: "shell", walker: "shell", tower: "shell", artillery: "lob", flame: "flamer", rocket: "missile", pod: "missile",
   rail: "beam", laser: "beam", support: "heal", engineer: "heal",
+  spit: "flamer", zap: "beam", pulse: "beam", autocannon: "shell",
 };
 const BOMBERS = new Set(["glider", "balloon"]);
 export function weaponClass(event, sourceType = null) {

@@ -19,6 +19,8 @@ export function setupSound(S, A) {
     )
       return;
     lastTone = performance.now();
+    // W12: with the sound engine loaded, a button click instead of a bare beep (same pitch, same budget).
+    if (S.audio?.sfx?.click) { S.audio.sfx.click(frequency, duration); return; }
     const oscillator = S.audioContext.createOscillator(),
       gain = S.audioContext.createGain();
     oscillator.type = "sine";

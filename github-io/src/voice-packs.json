@@ -1,0 +1,776 @@
+{
+ "packs": {
+  "meridian": {
+   "file": "voices/meridian.mp3",
+   "bytes": 196653,
+   "seconds": 49.04,
+   "decoderLagMs": 0.0,
+   "clips": {
+    "ack.select.0": [
+     0.21,
+     1.307
+    ],
+    "ack.select.1": [
+     1.657,
+     1.242
+    ],
+    "ack.select.2": [
+     3.039,
+     1.259
+    ],
+    "ack.select.3": [
+     4.438,
+     1.052
+    ],
+    "ack.move.0": [
+     5.63,
+     1.11
+    ],
+    "ack.move.1": [
+     6.88,
+     1.154
+    ],
+    "ack.move.2": [
+     8.174,
+     1.243
+    ],
+    "ack.move.3": [
+     9.557,
+     1.26
+    ],
+    "ack.attack.0": [
+     10.957,
+     1.073
+    ],
+    "ack.attack.1": [
+     12.169,
+     1.253
+    ],
+    "ack.attack.2": [
+     13.563,
+     1.218
+    ],
+    "ack.attack.3": [
+     14.921,
+     1.896
+    ],
+    "ann.baseAttack.0": [
+     16.957,
+     1.423
+    ],
+    "ann.baseAttack.1": [
+     18.519,
+     1.439
+    ],
+    "ann.unitsAttack.0": [
+     20.098,
+     1.461
+    ],
+    "ann.unitLost.0": [
+     21.699,
+     0.97
+    ],
+    "ann.unitLost.1": [
+     22.809,
+     1.088
+    ],
+    "ann.buildingLost.0": [
+     24.037,
+     1.139
+    ],
+    "ann.built.0": [
+     25.315,
+     1.384
+    ],
+    "ann.built.1": [
+     26.84,
+     0.932
+    ],
+    "ann.research.0": [
+     27.912,
+     1.22
+    ],
+    "ann.unitReady.0": [
+     29.272,
+     0.873
+    ],
+    "ann.unitReady.1": [
+     30.285,
+     1.332
+    ],
+    "ann.objectiveDone.0": [
+     31.756,
+     1.299
+    ],
+    "ann.objectiveNew.0": [
+     33.195,
+     1.254
+    ],
+    "ann.objectiveFailed.0": [
+     34.589,
+     1.18
+    ],
+    "ann.incoming.0": [
+     35.908,
+     1.511
+    ],
+    "ann.wave.0": [
+     37.559,
+     1.332
+    ],
+    "ann.waveCleared.0": [
+     39.031,
+     1.747
+    ],
+    "ann.pointTaken.0": [
+     40.918,
+     1.023
+    ],
+    "ann.pointLost.0": [
+     42.082,
+     1.117
+    ],
+    "ann.contact.0": [
+     43.338,
+     0.989
+    ],
+    "ann.victory.0": [
+     44.468,
+     2.049
+    ],
+    "ann.defeat.0": [
+     46.657,
+     2.169
+    ]
+   }
+  },
+  "ashfall": {
+   "file": "voices/ashfall.mp3",
+   "bytes": 236109,
+   "seconds": 58.9,
+   "decoderLagMs": 0.0,
+   "clips": {
+    "ack.select.0": [
+     0.21,
+     1.639
+    ],
+    "ack.select.1": [
+     1.989,
+     1.358
+    ],
+    "ack.select.2": [
+     3.488,
+     1.692
+    ],
+    "ack.select.3": [
+     5.32,
+     1.912
+    ],
+    "ack.move.0": [
+     7.372,
+     1.929
+    ],
+    "ack.move.1": [
+     9.441,
+     1.339
+    ],
+    "ack.move.2": [
+     10.919,
+     1.769
+    ],
+    "ack.move.3": [
+     12.829,
+     1.997
+    ],
+    "ack.attack.0": [
+     14.965,
+     1.573
+    ],
+    "ack.attack.1": [
+     16.678,
+     1.698
+    ],
+    "ack.attack.2": [
+     18.516,
+     1.889
+    ],
+    "ack.attack.3": [
+     20.545,
+     1.475
+    ],
+    "ann.baseAttack.0": [
+     22.16,
+     1.813
+    ],
+    "ann.baseAttack.1": [
+     24.113,
+     1.539
+    ],
+    "ann.unitsAttack.0": [
+     25.792,
+     1.549
+    ],
+    "ann.unitLost.0": [
+     27.48,
+     1.728
+    ],
+    "ann.unitLost.1": [
+     29.349,
+     1.566
+    ],
+    "ann.buildingLost.0": [
+     31.054,
+     1.191
+    ],
+    "ann.built.0": [
+     32.386,
+     2.45
+    ],
+    "ann.built.1": [
+     34.976,
+     1.335
+    ],
+    "ann.research.0": [
+     36.45,
+     1.275
+    ],
+    "ann.unitReady.0": [
+     37.865,
+     1.426
+    ],
+    "ann.unitReady.1": [
+     39.431,
+     1.111
+    ],
+    "ann.objectiveDone.0": [
+     40.682,
+     1.329
+    ],
+    "ann.objectiveNew.0": [
+     42.151,
+     2.384
+    ],
+    "ann.objectiveFailed.0": [
+     44.675,
+     1.287
+    ],
+    "ann.incoming.0": [
+     46.102,
+     1.342
+    ],
+    "ann.wave.0": [
+     47.584,
+     1.784
+    ],
+    "ann.waveCleared.0": [
+     49.508,
+     1.171
+    ],
+    "ann.pointTaken.0": [
+     50.819,
+     1.128
+    ],
+    "ann.pointLost.0": [
+     52.087,
+     1.066
+    ],
+    "ann.contact.0": [
+     53.293,
+     0.97
+    ],
+    "ann.victory.0": [
+     54.403,
+     2.112
+    ],
+    "ann.defeat.0": [
+     56.655,
+     2.034
+    ]
+   }
+  },
+  "sunward": {
+   "file": "voices/sunward.mp3",
+   "bytes": 188781,
+   "seconds": 47.08,
+   "decoderLagMs": 0.0,
+   "clips": {
+    "ack.select.0": [
+     0.21,
+     1.317
+    ],
+    "ack.select.1": [
+     1.667,
+     1.09
+    ],
+    "ack.select.2": [
+     2.897,
+     1.051
+    ],
+    "ack.select.3": [
+     4.088,
+     1.047
+    ],
+    "ack.move.0": [
+     5.275,
+     0.945
+    ],
+    "ack.move.1": [
+     6.36,
+     0.987
+    ],
+    "ack.move.2": [
+     7.488,
+     1.297
+    ],
+    "ack.move.3": [
+     8.925,
+     1.177
+    ],
+    "ack.attack.0": [
+     10.241,
+     1.239
+    ],
+    "ack.attack.1": [
+     11.62,
+     1.125
+    ],
+    "ack.attack.2": [
+     12.885,
+     0.988
+    ],
+    "ack.attack.3": [
+     14.013,
+     0.923
+    ],
+    "ann.baseAttack.0": [
+     15.076,
+     1.18
+    ],
+    "ann.baseAttack.1": [
+     16.396,
+     1.406
+    ],
+    "ann.unitsAttack.0": [
+     17.942,
+     1.562
+    ],
+    "ann.unitLost.0": [
+     19.644,
+     1.115
+    ],
+    "ann.unitLost.1": [
+     20.899,
+     1.344
+    ],
+    "ann.buildingLost.0": [
+     22.383,
+     1.167
+    ],
+    "ann.built.0": [
+     23.691,
+     1.417
+    ],
+    "ann.built.1": [
+     25.247,
+     0.949
+    ],
+    "ann.research.0": [
+     26.336,
+     1.02
+    ],
+    "ann.unitReady.0": [
+     27.496,
+     1.254
+    ],
+    "ann.unitReady.1": [
+     28.891,
+     1.128
+    ],
+    "ann.objectiveDone.0": [
+     30.158,
+     0.982
+    ],
+    "ann.objectiveNew.0": [
+     31.281,
+     1.854
+    ],
+    "ann.objectiveFailed.0": [
+     33.275,
+     1.188
+    ],
+    "ann.incoming.0": [
+     34.603,
+     1.217
+    ],
+    "ann.wave.0": [
+     35.96,
+     1.22
+    ],
+    "ann.waveCleared.0": [
+     37.319,
+     1.153
+    ],
+    "ann.pointTaken.0": [
+     38.612,
+     1.366
+    ],
+    "ann.pointLost.0": [
+     40.118,
+     1.268
+    ],
+    "ann.contact.0": [
+     41.526,
+     1.246
+    ],
+    "ann.victory.0": [
+     42.913,
+     1.835
+    ],
+    "ann.defeat.0": [
+     44.888,
+     1.979
+    ]
+   }
+  },
+  "wardens": {
+   "file": "voices/wardens.mp3",
+   "bytes": 262029,
+   "seconds": 65.4,
+   "decoderLagMs": 0.0,
+   "clips": {
+    "ack.select.0": [
+     0.21,
+     1.7
+    ],
+    "ack.select.1": [
+     2.05,
+     1.848
+    ],
+    "ack.select.2": [
+     4.038,
+     2.126
+    ],
+    "ack.select.3": [
+     6.304,
+     1.744
+    ],
+    "ack.move.0": [
+     8.188,
+     1.862
+    ],
+    "ack.move.1": [
+     10.19,
+     1.569
+    ],
+    "ack.move.2": [
+     11.898,
+     1.252
+    ],
+    "ack.move.3": [
+     13.29,
+     1.619
+    ],
+    "ack.attack.0": [
+     15.049,
+     1.913
+    ],
+    "ack.attack.1": [
+     17.102,
+     1.417
+    ],
+    "ack.attack.2": [
+     18.659,
+     2.308
+    ],
+    "ack.attack.3": [
+     21.107,
+     1.616
+    ],
+    "ann.baseAttack.0": [
+     22.862,
+     2.425
+    ],
+    "ann.baseAttack.1": [
+     25.427,
+     2.0
+    ],
+    "ann.unitsAttack.0": [
+     27.567,
+     1.925
+    ],
+    "ann.unitLost.0": [
+     29.633,
+     1.653
+    ],
+    "ann.unitLost.1": [
+     31.426,
+     1.371
+    ],
+    "ann.buildingLost.0": [
+     32.937,
+     1.655
+    ],
+    "ann.built.0": [
+     34.732,
+     1.804
+    ],
+    "ann.built.1": [
+     36.676,
+     1.629
+    ],
+    "ann.research.0": [
+     38.445,
+     1.933
+    ],
+    "ann.unitReady.0": [
+     40.517,
+     1.69
+    ],
+    "ann.unitReady.1": [
+     42.347,
+     1.518
+    ],
+    "ann.objectiveDone.0": [
+     44.005,
+     1.658
+    ],
+    "ann.objectiveNew.0": [
+     45.803,
+     1.93
+    ],
+    "ann.objectiveFailed.0": [
+     47.873,
+     1.609
+    ],
+    "ann.incoming.0": [
+     49.622,
+     2.041
+    ],
+    "ann.wave.0": [
+     51.804,
+     1.953
+    ],
+    "ann.waveCleared.0": [
+     53.896,
+     1.594
+    ],
+    "ann.pointTaken.0": [
+     55.631,
+     1.526
+    ],
+    "ann.pointLost.0": [
+     57.297,
+     1.675
+    ],
+    "ann.contact.0": [
+     59.112,
+     1.674
+    ],
+    "ann.victory.0": [
+     60.926,
+     2.364
+    ],
+    "ann.defeat.0": [
+     63.43,
+     1.756
+    ]
+   }
+  },
+  "veil": {
+   "file": "voices/veil.mp3",
+   "bytes": 285837,
+   "seconds": 71.33,
+   "decoderLagMs": 0.0,
+   "clips": {
+    "ack.select.0": [
+     0.21,
+     1.986
+    ],
+    "ack.select.1": [
+     2.336,
+     2.125
+    ],
+    "ack.select.2": [
+     4.601,
+     1.68
+    ],
+    "ack.select.3": [
+     6.421,
+     2.251
+    ],
+    "ack.move.0": [
+     8.812,
+     1.998
+    ],
+    "ack.move.1": [
+     10.949,
+     2.072
+    ],
+    "ack.move.2": [
+     13.162,
+     1.683
+    ],
+    "ack.move.3": [
+     14.985,
+     1.947
+    ],
+    "ack.attack.0": [
+     17.072,
+     1.639
+    ],
+    "ack.attack.1": [
+     18.85,
+     1.997
+    ],
+    "ack.attack.2": [
+     20.987,
+     2.16
+    ],
+    "ack.attack.3": [
+     23.287,
+     2.347
+    ],
+    "ann.baseAttack.0": [
+     25.774,
+     2.67
+    ],
+    "ann.baseAttack.1": [
+     28.585,
+     2.154
+    ],
+    "ann.unitsAttack.0": [
+     30.878,
+     2.155
+    ],
+    "ann.unitLost.0": [
+     33.173,
+     1.95
+    ],
+    "ann.unitLost.1": [
+     35.262,
+     1.511
+    ],
+    "ann.buildingLost.0": [
+     36.913,
+     1.787
+    ],
+    "ann.built.0": [
+     38.84,
+     1.559
+    ],
+    "ann.built.1": [
+     40.539,
+     1.892
+    ],
+    "ann.research.0": [
+     42.571,
+     2.24
+    ],
+    "ann.unitReady.0": [
+     44.951,
+     1.824
+    ],
+    "ann.unitReady.1": [
+     46.914,
+     1.802
+    ],
+    "ann.objectiveDone.0": [
+     48.856,
+     1.674
+    ],
+    "ann.objectiveNew.0": [
+     50.67,
+     1.945
+    ],
+    "ann.objectiveFailed.0": [
+     52.755,
+     1.818
+    ],
+    "ann.incoming.0": [
+     54.713,
+     1.58
+    ],
+    "ann.wave.0": [
+     56.433,
+     1.913
+    ],
+    "ann.waveCleared.0": [
+     58.486,
+     2.041
+    ],
+    "ann.pointTaken.0": [
+     60.666,
+     1.922
+    ],
+    "ann.pointLost.0": [
+     62.728,
+     1.755
+    ],
+    "ann.contact.0": [
+     64.623,
+     1.873
+    ],
+    "ann.victory.0": [
+     66.637,
+     2.088
+    ],
+    "ann.defeat.0": [
+     68.865,
+     2.255
+    ]
+   }
+  },
+  "story-m01": {
+   "file": "voices/story-m01.mp3",
+   "bytes": 177645,
+   "seconds": 44.29,
+   "decoderLagMs": 0.0,
+   "clips": {
+    "story.0": [
+     0.21,
+     4.792
+    ],
+    "story.1": [
+     5.142,
+     4.636
+    ],
+    "story.2": [
+     9.918,
+     4.537
+    ],
+    "story.3": [
+     14.595,
+     3.492
+    ],
+    "story.4": [
+     18.228,
+     4.259
+    ],
+    "story.5": [
+     22.626,
+     5.211
+    ],
+    "story.6": [
+     27.977,
+     3.729
+    ],
+    "story.7": [
+     31.846,
+     3.729
+    ],
+    "story.8": [
+     35.715,
+     3.451
+    ],
+    "story.9": [
+     39.306,
+     4.77
+    ]
+   }
+  }
+ },
+ "about": "Generated by tools/voices/make-voices.py from src/voice-lines.json: clip [start, length] in seconds inside each MP3 sprite (already padded). Do not edit by hand.",
+ "engine": "Kokoro-82M (hexgrad, Apache-2.0), stock voices, local GPU",
+ "codec": "MP3 mono 24000 Hz 32 kbps (libmp3lame)",
+ "totalBytes": 1347054
+}

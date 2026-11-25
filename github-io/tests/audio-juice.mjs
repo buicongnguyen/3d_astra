@@ -1,10 +1,10 @@
 // Audio juice (AAA round 3, R3-U) in the browser, at 1440x900, 390x844 and 844x390:
 //   - nothing sounds (no AudioContext, no audio engine) before the first gesture;
-//   - selecting units chirps in the unit's voice, at most two barks a second however fast the clicks;
+//   - with Voices off, selecting units chirps in the unit's voice, at most two barks a second however fast the clicks;
 //   - every weapon class fires its own sound (flak, bomb release + whistle + blast, strafing run,
 //     ground-to-air missile, heal beam, artillery lob whistle) and landings add the impact size layer;
 //   - a boss stage and the phase-2 surge play their stingers; the victory stinger renders and plays;
-//   - Settings > Audio has the "Quiet mode: no unit voices" switch (44 px row, 11 px text, no
+//   - Settings > Audio has the "Quiet mode: no unit replies" switch (44 px row, 11 px text, no
 //     sideways scroll); with it on, selections and orders make no bark while the battle still sounds;
 //   - no page errors. Screenshot: test-results/audio-juice-<viewport>.png (the Audio tab).
 import assert from "node:assert/strict";
@@ -30,7 +30,8 @@ await suite("audio-juice", async () => {
     await o.tap("#start");
     await page.waitForFunction(() => window.__frontier.started && window.__frontier.audio?.context.state === "running", null, { timeout: TIMEOUT.step });
     await listen(page);
-    await page.evaluate(() => { window.__frontier.hold = true; });
+    // The chirps are what units say with Voices off (W3); tests/audio.mjs checks the spoken replies.
+    await page.evaluate(() => { const f = window.__frontier; f.hold = true; f.settings.voices = false; f.audio.applySettings(f.settings); });
 
     // Barks: a burst of selections gives one chirp; a second of clicking at most two.
     const burst = await page.evaluate(async () => {
@@ -100,7 +101,7 @@ await suite("audio-juice", async () => {
       const input = document.querySelector('[data-setting="quietMode"]'), r = input.closest(".setting-row"), box = r.getBoundingClientRect();
       return { label: r.textContent.trim().replace(/(On|Off)$/, ""), h: box.height, font: parseFloat(getComputedStyle(r).fontSize), checked: input.checked, scroll: document.scrollingElement.scrollWidth, width: innerWidth };
     });
-    assert.equal(row.label, "Quiet mode: no unit voices");
+    assert.equal(row.label, "Quiet mode: no unit replies");
     assert.ok(row.h >= 44 && row.font >= 11, `${viewport}: quiet-mode row ${row.h} px tall, ${row.font} px text`);
     assert.equal(row.checked, false, "quiet mode is off by default");
     assert.ok(row.scroll <= row.width + 1, `${viewport}: no sideways scroll`);

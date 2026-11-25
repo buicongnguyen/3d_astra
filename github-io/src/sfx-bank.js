@@ -61,6 +61,18 @@ export const BANK = {
   "shot:tower": { level: 0.6, drive: 2, room: ROOM.slap, layers: burst(2, 0.13, [crack(3400, 0, 1, 0.008), body("bp", 1200, 500, 0.04, 0, 0.9, 0.8), thump(150, 70, 0.05, 0, 0.8), ring(1320, 0.05)]) },
   // Impacts on the target (every hit) and the explosions of heavy rounds landing.
   "impact:body": { level: 0.28, layers: [body("lp", 1600, 300, 0.025, 0, 1, 0.8), thump(150, 70, 0.03, 0, 0.7), crack(4500, 0, 0.25, 0.003)] },
+  // W12 (2026-11-25): impacts by armour. Rounds on vehicles, walkers and machines ring like plate
+  // (a short metallic clang over a crack); infantry keep the soft "impact:body".
+  "impact:metal": { level: 0.3, layers: [crack(5200, 0, 0.7, 0.003), ring(2350, 0.035, 0, 0.35), ring(3470, 0.025, 0.002, 0.22), ring(1180, 0.05, 0, 0.18), body("bp", 2400, 1500, 0.012, 0, 0.6, 2.5)] },
+  // W12: an infantry fall (no blast for a soldier): cloth and gear, then the body on the ground.
+  "fall:body": { level: 0.34, layers: [body("bp", 2600, 1200, 0.03, 0, 0.5, 1.2), thump(95, 55, 0.05, 0.11, 1), body("lp", 900, 250, 0.05, 0.11, 0.8, 0.8), debris(4, 0.12, 0.12, [1800, 4200], 5, 0.25, [0.003, 0.01])] },
+  // W12 weapon voices for units that had none: creatures bite and spit acid, Warden machines fire a
+  // charged bolt (Halo, Vault sentinel), the Veil Moth a soft pulse, the iron bosses a heavy autocannon.
+  "shot:bite": { level: 0.4, layers: [body("bp", 900, 400, 0.03, 0, 1, 1.5), thump(140, 70, 0.04, 0.01, 0.8), crack(3800, 0.03, 0.5, 0.004), { k: "noise", f: "bp", f0: 500, f1: 300, glide: 0.15, q: 3, at: 0, a: 0.03, d: 0.08, dur: 0.22, g: 0.45 }] },
+  "shot:spit": { level: 0.36, layers: [{ k: "noise", f: "bp", f0: 1800, f1: 700, glide: 0.12, q: 2.5, a: 0.008, d: 0.06, dur: 0.2, g: 1 }, { k: "tone", w: "sine", f0: 420, f1: 180, glide: 0.1, a: 0.004, d: 0.05, dur: 0.15, g: 0.35 }, debris(6, 0.02, 0.12, [2500, 6000], 4, 0.3, [0.002, 0.006])] },
+  "shot:zap": { level: 0.42, room: ROOM.slap, layers: [crack(6500, 0, 0.6, 0.003), { k: "tone", w: "square", f0: 900, f1: 1800, glide: 0.05, a: 0.001, d: 0.03, dur: 0.1, g: 0.25 }, { k: "tone", w: "sine", f0: 2200, f1: 700, glide: 0.09, at: 0.01, a: 0.001, d: 0.05, dur: 0.2, g: 0.45, fm: [1.5, 2] }, body("hp", 4000, 2500, 0.03, 0, 0.4, 1)] },
+  "shot:pulse": { level: 0.34, layers: [{ k: "tone", w: "sine", f0: 640, f1: 980, glide: 0.04, a: 0.002, d: 0.04, dur: 0.14, g: 0.7, vib: [40, 0.05] }, { k: "noise", f: "bp", f0: 1400, q: 2, a: 0.004, d: 0.03, dur: 0.1, g: 0.35 }, crack(5200, 0, 0.25, 0.003)] },
+  "shot:autocannon": { level: 0.64, drive: 2.2, room: ROOM.field, layers: burst(3, 0.11, [crack(2600, 0, 1, 0.01), body("bp", 1200, 400, 0.05, 0, 1, 0.7), thump(110, 50, 0.08, 0, 1), ring(980, 0.04, 0.004, 0.12)]) },
   "impact:building": { level: 0.32, layers: [body("bp", 1000, 350, 0.04, 0, 1, 0.8), { k: "tone", w: "square", f0: 220, f1: 100, glide: 0.04, a: 0.001, d: 0.02, dur: 0.1, g: 0.2 }, debris(5, 0.01, 0.15, [1200, 4000], 4, 0.35)] },
   "impact:shield": { level: 0.3, layers: [{ k: "tone", w: "sine", f0: 1500, f1: 900, glide: 0.15, a: 0.001, d: 0.08, dur: 0.3, g: 0.6 }, { k: "tone", w: "sine", f0: 2250, f1: 1350, glide: 0.12, at: 0.005, a: 0.001, d: 0.06, dur: 0.25, g: 0.3 }, { k: "noise", f: "hp", f0: 5000, f1: 3000, a: 0.0005, d: 0.02, dur: 0.08, g: 0.3 }] },
   "hit:small": { level: 0.5, drive: 1.8, layers: blast(0.45) },

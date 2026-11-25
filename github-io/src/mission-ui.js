@@ -25,7 +25,7 @@ export function medalBadge(medal, extra = "") {
   return `<svg class="medal-badge ${medal}${extra ? ` ${extra}` : ""}" viewBox="0 0 48 56" role="img" aria-label="${MEDAL_NAMES[medal]}"><path d="M13 2h9l5 20h-9Z" fill="#2f8f86"/><path d="M35 2h-9l-5 20h9Z" fill="#3fb3a6"/><circle cx="24" cy="35" r="18" fill="${c[2]}"/><circle cx="24" cy="34" r="16" fill="${c[1]}"/><circle cx="24" cy="34" r="11.5" fill="none" stroke="${c[0]}" stroke-width="2"/><path d="m24 25 2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6-4.5-4.2 6.1-.8Z" fill="${c[0]}"/></svg>`;
 }
 
-export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLayout = () => {} }) {
+export function createMissionUI({ stage, objectivesPanel, tone = () => {}, speak = () => {}, onLayout = () => {} }) {
   // ---------------------------------------------------------------- Briefing overlay
   const overlay = document.createElement("section");
   overlay.id = "mission-briefing";
@@ -235,6 +235,7 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, onLay
 
   function say(who, text) {
     const shown = queue.push(who, text);
+    speak(who, text); // W3: the line's voice, when it has one (audio.js say)
     logDirty = true;
     renderLog();
     if (shown) { renderLine(); tone(660, 0.05); } else renderMore();

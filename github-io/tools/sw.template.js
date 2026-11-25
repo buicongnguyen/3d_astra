@@ -12,6 +12,9 @@
 //                                   stored on its first successful play and served cache-first
 //                                   (the page versions the URL with ?v=<bytes>). manifest.json is
 //                                   network first; a fresh copy drops tracks it no longer lists.
+//   voice cache  fc-voices          spoken lines (public/voices/*.mp3, W3), never precached: a pack is
+//                                   fetched when a match first needs it and served cache-first after
+//                                   (the page versions the URL with ?v=<bytes>; older versions are dropped).
 //
 // A new worker installs in the background and waits: an open match keeps the files it started with,
 // and the new version takes over the next time the game is opened, or at once when the player taps
@@ -24,6 +27,7 @@ const LAZY = __LAZY__;
 const SHELL_CACHE = `fc-shell-${BUILD}`;
 const MODEL_CACHE = `fc-models-${MODELS}`;
 const MUSIC_CACHE = "fc-music";
+const VOICE_CACHE = "fc-voices";
 const scope = self.registration.scope;
 const abs = (path) => new URL(path, scope).href;
 const MUSIC_MANIFEST = abs("music/manifest.json");
@@ -50,7 +54,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       for (const key of await caches.keys()) {
-        if (key.startsWith("fc-") && key !== SHELL_CACHE && key !== MODEL_CACHE && key !== MUSIC_CACHE) await caches.delete(key);
+        if (key.startsWith("fc-") && key !== SHELL_CACHE && key !== MODEL_CACHE && key !== MUSIC_CACHE && key !== VOICE_CACHE) await caches.delete(key);
       }
       await self.clients.claim();
     })(),
@@ -154,6 +158,27 @@ self.addEventListener("fetch", (event) => {
         const response = await fetch(request);
         // Only a whole file (200) is stored: a range reply (206) cannot be replayed.
         if (response.status === 200) event.waitUntil(cache.put(request, response.clone()));
+        return response;
+      })(),
+    );
+    return;
+  }
+  if (path.startsWith("voices/") && path.split("?")[0].endsWith(".mp3")) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(VOICE_CACHE);
+        const hit = await cache.match(request);
+        if (hit) return hit;
+        const response = await fetch(request);
+        if (response.status === 200) {
+          const copy = response.clone();
+          event.waitUntil((async () => {
+            // One version of each pack: a regenerated pack (new ?v=) replaces the old copy.
+            const bare = request.url.split("?")[0];
+            for (const key of await cache.keys()) if (key.url.split("?")[0] === bare && key.url !== request.url) await cache.delete(key);
+            await cache.put(request, copy);
+          })());
+        }
         return response;
       })(),
     );
