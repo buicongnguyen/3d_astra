@@ -2010,7 +2010,18 @@
     "Unbroken": "철벽",
     "Win a Defence level losing no tower": "타워를 잃지 않고 방어전 레벨 승리",
     "Follow action": "전투 따라가기",
-    "The camera follows the fighting, or your army": "카메라가 전투나 아군 부대를 따라갑니다"
+    "The camera follows the fighting, or your army": "카메라가 전투나 아군 부대를 따라갑니다",
+    "Install app": "앱 설치",
+    "Add Frontier Command to your Home Screen: it opens full screen and starts offline.": "Frontier Command를 홈 화면에 추가하세요. 전체 화면으로 열리고 오프라인에서도 시작됩니다.",
+    "Opens in its own window, full screen, and starts offline.": "별도 창에서 전체 화면으로 열리고 오프라인에서도 시작됩니다.",
+    "In Safari, tap Share (the square with an arrow). On newer iPhones it is in the ••• menu.": "Safari에서 공유(화살표가 있는 네모)를 누르세요. 최신 iPhone에서는 ••• 메뉴 안에 있습니다.",
+    "Choose Add to Home Screen, then Add.": "홈 화면에 추가를 고른 뒤 추가를 누르세요.",
+    "Open Frontier Command from its new icon: no browser bars, and it starts offline after this visit.": "새 아이콘으로 Frontier Command를 여세요. 브라우저 막대가 없고, 이번 방문 이후에는 오프라인에서도 시작됩니다.",
+    "In another app's browser (Facebook, Zalo, KakaoTalk…), open this page in Safari first.": "다른 앱의 브라우저(Facebook, Zalo, KakaoTalk…)라면 먼저 이 페이지를 Safari에서 여세요.",
+    "Got it": "알겠어요",
+    "Add to Home Screen": "홈 화면에 추가",
+    "Full screen: iPhone has no full-screen button for web pages. Install the app (above) to play without the browser bars.": "전체 화면: iPhone에는 웹 페이지용 전체 화면 버튼이 없습니다. 위에서 앱을 설치하면 브라우저 막대 없이 플레이할 수 있습니다.",
+    "Installed. Open Frontier Command from your apps.": "설치했습니다. 앱 목록에서 Frontier Command를 여세요."
   },
   "patterns": [
     [

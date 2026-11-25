@@ -20,6 +20,9 @@ export const SECTIONS = [
   ["access", "Assist", "people"],
   ["language", "Language", "globe"],
 ];
+// The Add to Home Screen guide's picture: Safari's Share button, the menu row and the new home-screen icon.
+// Shapes only (the steps beside it carry the words, so they translate).
+const INSTALL_PICTURE = `<svg class="install-picture" viewBox="0 0 300 112" aria-hidden="true" focusable="false"><g fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="74" height="100" rx="12" fill="#0b1a33" stroke="#5d7fa6" stroke-width="2"/><rect x="12" y="80" width="62" height="20" rx="5" fill="#16294a"/><circle cx="43" cy="90" r="11" fill="#ffc75e" opacity=".25" stroke="#ffc75e" stroke-width="2"/><path d="M38 89v6h10v-6M43 92V82M39.5 85.5 43 82l3.5 3.5" stroke="#ffc75e" stroke-width="2"/><path d="M90 56h22m-6-6 6 6-6 6" stroke="#7fe8ff" stroke-width="2.5"/><rect x="120" y="30" width="96" height="52" rx="8" fill="#0b1a33" stroke="#5d7fa6" stroke-width="2"/><rect x="128" y="36" width="80" height="12" rx="3" fill="#16294a"/><rect x="128" y="51" width="80" height="14" rx="3" fill="#2a4a2f" stroke="#92ebc5" stroke-width="1.5"/><rect x="132" y="53" width="10" height="10" rx="2" stroke="#92ebc5" stroke-width="1.5"/><path d="M137 55.5v5M134.5 58h5" stroke="#92ebc5" stroke-width="1.5"/><path d="M147 58h52" stroke="#92ebc5" stroke-width="3" opacity=".7"/><rect x="128" y="68" width="80" height="10" rx="3" fill="#16294a"/><path d="M224 56h22m-6-6 6 6-6 6" stroke="#7fe8ff" stroke-width="2.5"/><rect x="254" y="30" width="40" height="40" rx="10" fill="#020713" stroke="#5d7fa6" stroke-width="1"/></g><image href="./icons/icon-192.png" x="256" y="32" width="36" height="36" clip-path="inset(0 round 9px)"/><path d="M258 80h32" stroke="#c9d6e6" stroke-width="3" stroke-linecap="round" opacity=".6"/></svg>`;
 const LANGUAGES = [["en", "English", "en"], ["vi", "Tiếng Việt", "vi"], ["ko", "한국어", "ko"]];
 const coarse = () => typeof matchMedia === "function" && matchMedia("(pointer:coarse)").matches;
 const pressed = (on) => `aria-pressed="${on ? "true" : "false"}"`;
@@ -58,6 +61,8 @@ export class SettingsUI {
       if (button.dataset.do === "speed") { this.extras.speed?.set(Number(button.dataset.speed)); this.refresh(); }
       if (button.dataset.do === "theme") { this.extras.theme?.set(button.dataset.theme); this.refresh(); }
       if (button.dataset.do === "fullscreen") this.extras.fullscreen?.toggle(button);
+      if (button.dataset.do === "install") this.install();
+      if (button.dataset.do === "install-close") { this.installGuide = false; this.repaintBody("install"); }
       if (button.dataset.do === "help") { this.close(); this.extras.help?.(); }
       if (button.dataset.do === "close" || button.dataset.do === "done") this.close();
       if (button.dataset.do === "reset") {
@@ -160,10 +165,12 @@ export class SettingsUI {
     const fs = extras.fullscreen;
     const fullscreenRow = fs?.supported?.()
       ? `<div class="setting-row">Full screen<button type="button" class="secondary seg-single" data-do="fullscreen" ${pressed(fs.active?.())}>${fs.active?.() ? "Exit" : "Enter"}</button></div>`
-      : `<p class="settings-note">${fs?.standalone?.() ? "Full screen: you are playing in a home-screen web app without the browser bars." : "Full screen: on iPhone, open the game in Safari, tap Share → Add to Home Screen and launch it from that icon."}</p>`;
+      : `<p class="settings-note">${fs?.standalone?.() ? "Full screen: you are playing in a home-screen web app without the browser bars."
+        : extras.install?.state?.() === "ios" ? "Full screen: iPhone has no full-screen button for web pages. Install the app (above) to play without the browser bars."
+        : "Full screen: on iPhone, open the game in Safari, tap Share → Add to Home Screen and launch it from that icon."}</p>`;
     const theme = extras.theme?.get?.() ?? "walnut";
     const themeRow = `<div class="setting-row seg-row"><span class="seg-label" id="seg-theme">Theme</span><div class="seg" role="group" aria-labelledby="seg-theme" style="--n:2"><button type="button" class="kit-face" data-do="theme" data-theme="walnut" ${pressed(theme === "walnut")}>Walnut</button><button type="button" class="kit-face" data-do="theme" data-theme="dark" ${pressed(theme === "dark")}>Dark</button></div></div>`;
-    const display = `${fullscreenRow}${themeRow}${seg("quality", "Graphics quality", [["eco", "Eco"], ["high", "High"]], "Eco limits pixel density and shadow cost. Bridges, water and terrain obstacles remain visible at every setting.")}${seg("uiScale", "Interface size", UI_SCALES.map((n) => [n, `${n}%`]))}${seg("healthBars", "Health bars", [["hurt", "Hurt"], ["always", "Always"], ["selected", "Selected"]])}${seg("minimapSide", "Minimap side", [["left", "Left"], ["right", "Right"]])}${seg("frameCap", "Frame cap", [[30, "30"], [60, "60"], [0, "Max"]], "Lower caps save battery on phones.")}${seg("weather", "Weather", [[true, "On"], [false, "Off"]], "Off: no rain, storm gloom or lightning, and a clearer view; night and dusk stay. Looks only: every battle plays out the same.")}${toggle("detail", "Decorative vegetation")}${toggle("waterMotion", "Animate water")}${toggle("unitMotion", "Unit motion")}${toggle("showFps", "Show FPS")}`;
+    const display = `${this.installTile()}${fullscreenRow}${themeRow}${seg("quality", "Graphics quality", [["eco", "Eco"], ["high", "High"]], "Eco limits pixel density and shadow cost. Bridges, water and terrain obstacles remain visible at every setting.")}${seg("uiScale", "Interface size", UI_SCALES.map((n) => [n, `${n}%`]))}${seg("healthBars", "Health bars", [["hurt", "Hurt"], ["always", "Always"], ["selected", "Selected"]])}${seg("minimapSide", "Minimap side", [["left", "Left"], ["right", "Right"]])}${seg("frameCap", "Frame cap", [[30, "30"], [60, "60"], [0, "Max"]], "Lower caps save battery on phones.")}${seg("weather", "Weather", [[true, "On"], [false, "Off"]], "Off: no rain, storm gloom or lightning, and a clearer view; night and dusk stay. Looks only: every battle plays out the same.")}${toggle("detail", "Decorative vegetation")}${toggle("waterMotion", "Animate water")}${toggle("unitMotion", "Unit motion")}${toggle("showFps", "Show FPS")}`;
 
     const controls = `${touch ? toggle("haptics", "Haptics", "A short buzz for attack warnings and losses. Off under reduced motion.") : ""}<div class="setting-row">Controls and shortcuts<button type="button" class="secondary seg-single" data-do="help">${icon("help")}<span>Help</span></button></div>${toggle("autocast", "Auto-cast abilities", "Your units use their abilities on their own in a fight, as rival armies do. Off: you give the order from the command card.")}${toggle("groupPace", "Group pace", "A group you move keeps together at its fighters' pace, with Medics and Engineers walking behind them. Off: every unit walks at its own speed.")}${touch ? seg("handedness", "Hand", [["right", "Right hand"], ["left", "Left hand"]], "Left hand mirrors the phone controls: the dock, the button rows, Map and the objectives flag move to the other side, and the minimap to the right.") : ""}`;
 
@@ -175,6 +182,36 @@ export class SettingsUI {
     const language = `<div class="language-options" role="group" aria-label="Language / Ngôn ngữ / 언어" translate="no">${LANGUAGES.map(([id, label, lang]) =>
       `<button type="button" class="kit-face" data-setting="language" data-value="${id}" lang="${lang}" ${pressed(s.language === id)}>${icon("globe")}<span>${label}</span></button>`).join("")}</div><p class="settings-version"><span>Version</span> <span translate="no">${VERSION}${BUILD_DATE ? ` · ${BUILD_DATE}` : ""}</span><span class="settings-copyright" translate="no">© 2026 Bui Cong Nguyen, Solluxlabs.com · All rights reserved</span></p>`;
     return { audio, game, camera, display, controls, access, language };
+  }
+  // Platform reach (2026-11-26): the "Install app" tile at the top of Display, in the state app/install.js
+  // reports. Installed (or a browser that cannot install): no tile. iPhone / iPad: the tile opens the
+  // Share → Add to Home Screen guide in place.
+  installTile() {
+    const state = this.extras.install?.state?.() ?? "none";
+    if (state !== "prompt" && state !== "ios") return "";
+    const tile = `<button type="button" class="install-tile" data-do="install" data-install="${state}" ${state === "ios" ? `aria-expanded="${!!this.installGuide}"` : ""}><img src="./icons/icon-192.png" alt="" width="48" height="48"><span class="install-text"><b>Install app</b><small>${state === "ios" ? "Add Frontier Command to your Home Screen: it opens full screen and starts offline." : "Opens in its own window, full screen, and starts offline."}</small></span></button>`;
+    if (state !== "ios" || !this.installGuide) return tile;
+    return `${tile}<div class="install-guide" role="group" aria-label="Add to Home Screen">${INSTALL_PICTURE}<ol><li>In Safari, tap Share (the square with an arrow). On newer iPhones it is in the ••• menu.</li><li>Choose Add to Home Screen, then Add.</li><li>Open Frontier Command from its new icon: no browser bars, and it starts offline after this visit.</li></ol><p class="settings-note">In another app's browser (Facebook, Zalo, KakaoTalk…), open this page in Safari first.</p><button type="button" class="secondary seg-single" data-do="install-close">Got it</button></div>`;
+  }
+  async install() {
+    const state = this.extras.install?.state?.();
+    if (state === "ios") { this.installGuide = !this.installGuide; this.repaintBody(this.installGuide ? "install-close" : "install"); return; }
+    if (state !== "prompt") return;
+    const outcome = await this.extras.install.prompt();
+    this.repaintBody("install");
+    if (outcome === "accepted") this.status("Installed. Open Frontier Command from your apps.");
+  }
+  // The install state changed (prompt offered, app installed): repaint Display in place.
+  installChanged() {
+    if (this.active && this.tab === "display") this.repaintBody("install");
+  }
+  repaintBody(focus) {
+    if (!this.active) return;
+    const body = this.root.querySelector("#settings-body");
+    if (!body) return;
+    body.innerHTML = this.sections(this.get())[this.tab];
+    this.refresh();
+    (body.querySelector(`[data-do="${focus}"]`) || this.root.querySelector(`[data-tab="${this.tab}"]`))?.focus({ preventScroll: true });
   }
   paint() {
     const s = this.get();

@@ -1,11 +1,22 @@
 {
   "name": "Frontier Command",
   "short_name": "Frontier",
+  "description": "Command an expedition, harvest the frontier and outmanoeuvre rival forces in an original 3D real-time strategy game.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
-  "display": "standalone",
-  "background_color": "#111b1d",
-  "theme_color": "#111b1d",
-  "icons": [{ "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml" }]
+  "lang": "en",
+  "dir": "ltr",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#020713",
+  "theme_color": "#030a1b",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    { "src": "./icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
 }

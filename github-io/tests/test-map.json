@@ -111,6 +111,12 @@
       "files": ["src/app/offline.js", "public/manifest.webmanifest", "public/favicon.svg"],
       "suites": ["offline", "cover-ui", "music"],
       "checks": []
+    },
+    {
+      "name": "home-screen app (PWA): manifest, icons, launch screens, Install app tile; iPhone readiness",
+      "files": ["src/app/install.js", "public/icons/**", "public/manifest.webmanifest", "tools/icons/**", "tools/app-icons.mjs"],
+      "suites": ["pwa", "offline", "settings-sheet", "fullscreen"],
+      "checks": []
     }
   ]
 }

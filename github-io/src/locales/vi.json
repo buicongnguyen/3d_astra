@@ -2010,7 +2010,18 @@
     "Unbroken": "Bất khả xâm phạm",
     "Win a Defence level losing no tower": "Thắng một màn Phòng thủ không mất tháp nào",
     "Follow action": "Theo dõi giao tranh",
-    "The camera follows the fighting, or your army": "Camera đi theo trận đánh, hoặc theo quân của bạn"
+    "The camera follows the fighting, or your army": "Camera đi theo trận đánh, hoặc theo quân của bạn",
+    "Install app": "Cài ứng dụng",
+    "Add Frontier Command to your Home Screen: it opens full screen and starts offline.": "Thêm Frontier Command vào Màn hình chính: game mở toàn màn hình và chạy được khi không có mạng.",
+    "Opens in its own window, full screen, and starts offline.": "Mở trong cửa sổ riêng, toàn màn hình, và chạy được khi không có mạng.",
+    "In Safari, tap Share (the square with an arrow). On newer iPhones it is in the ••• menu.": "Trong Safari, chạm Chia sẻ (ô vuông có mũi tên). Trên iPhone đời mới, nút này nằm trong menu •••.",
+    "Choose Add to Home Screen, then Add.": "Chọn Thêm vào Màn hình chính, rồi chạm Thêm.",
+    "Open Frontier Command from its new icon: no browser bars, and it starts offline after this visit.": "Mở Frontier Command từ biểu tượng mới: không còn thanh trình duyệt, và từ lần sau game chạy được khi không có mạng.",
+    "In another app's browser (Facebook, Zalo, KakaoTalk…), open this page in Safari first.": "Nếu đang ở trình duyệt trong ứng dụng khác (Facebook, Zalo, KakaoTalk…), hãy mở trang này bằng Safari trước.",
+    "Got it": "Đã hiểu",
+    "Add to Home Screen": "Thêm vào Màn hình chính",
+    "Full screen: iPhone has no full-screen button for web pages. Install the app (above) to play without the browser bars.": "Toàn màn hình: iPhone không có nút toàn màn hình cho trang web. Hãy cài ứng dụng (ở trên) để chơi không có thanh trình duyệt.",
+    "Installed. Open Frontier Command from your apps.": "Đã cài. Mở Frontier Command từ danh sách ứng dụng."
   },
   "patterns": [
     [

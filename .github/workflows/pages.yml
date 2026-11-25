@@ -128,7 +128,7 @@ jobs:
           - name: story-tactics
             scripts: tactics-ui
           - name: settings
-            scripts: improvements campaign offline
+            scripts: improvements campaign offline pwa
           # 2026-11-25: split from "settings" (12.5 minutes together).
           - name: settings-sheet
             scripts: settings-sheet

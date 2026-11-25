@@ -6,11 +6,17 @@
     <meta name="theme-color" content="#030a1b" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="Frontier Command" />
+    <!-- Home-screen app (docs/PLATFORM.md): the label under the icon is short so iOS does not cut it; the
+         status bar is see-through over the night-blue game, which keeps clear of it with env(safe-area-inset-*).
+         vite.config.js adds the iOS launch screens (public/icons/splash/) after this line. -->
+    <meta name="apple-mobile-web-app-title" content="Frontier" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <meta name="copyright" content="© 2026 Bui Cong Nguyen, Solluxlabs.com. All rights reserved." />
     <meta name="description" content="Command an expedition, harvest the frontier, and outmaneuver a rival force in this original 3D real-time strategy game." />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
     <title>Frontier Command — Outpost Meridian</title>
   </head>
   <body>

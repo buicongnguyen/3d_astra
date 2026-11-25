@@ -10,6 +10,9 @@ Outputs (WebP, sRGB):
   portrait-mask.webp             same atlas; alpha marks visible team paint so the page can tint
                                  portraits with the player's chosen army colour
   emblem.webp                    512 px Frontier Command emblem on a transparent background
+  icons                          tools/icons/app-icon-art.png: 1024 px home-screen icon art (a Line tank in
+                                 front of the gold emblem) on a transparent background; tools/app-icons.mjs
+                                 puts it on the boot-splash background as the PWA / iOS icons and splashes
 No text is baked into images: every label stays HTML so it can be translated and scaled.
 The Standard view transform keeps the vivid palette (AgX desaturates it).
 """
@@ -471,14 +474,53 @@ def emblem(out):
     save_webp(load_pixels(tmp), 512, 512, out / 'emblem.webp', 88)
 
 
+def app_icon_art(out):
+    """Platform reach (2026-11-26): the home-screen icon art, rendered from the game's own tank model and
+    emblem so the installed app looks like the game. Transparent; the background is added by tools/app-icons.mjs."""
+    reset()
+    setup(1024, 1024, True, samples=96)
+    world(lin('#9fb4c8'), 1.0)
+    outer = triangle_curve('outer', 1.0, 0.72, 0.18, 0.04)
+    outer.data.materials.append(metal('EmblemGold', lin('#ffc65c'), 0.3))
+    outer.rotation_euler = (math.radians(90), 0, 0)
+    outer.scale = (2.3, 2.3, 2.3)
+    outer.location = (0, 2.4, 2.25)
+    roots, objects = import_glb('tank')
+    paint_team(objects, PLAYER)
+    lo, hi = bounds(objects)
+    size = max(hi.x - lo.x, hi.y - lo.y)
+    place(roots, objects, (0, -0.6, 0), -32, scale=4.6 / size)
+    light('SUN', 'key', 4.2, lin('#fff0d6'), rotation=(48, 0, -38), size=math.radians(5))
+    light('SUN', 'rim', 4.0, lin('#bde4ff'), rotation=(62, 0, 160), size=math.radians(10))
+    light('SUN', 'fill', 1.0, lin('#9fc3ff'), rotation=(70, 0, 55), size=math.radians(20))
+    lo, hi = bounds([outer] + objects)
+    centre = (lo + hi) / 2
+    cam = camera((centre.x - 2.2, centre.y - 12, centre.z + 3.4), (centre.x, centre.y, centre.z), ortho=1.0)
+    # Fit the art to the frame like the portraits: measure in camera space, then centre.
+    bpy.context.view_layer.update()
+    inv = cam.matrix_world.inverted()
+    pts = [inv @ (o.matrix_world @ Vector(c)) for o in [outer] + objects if o.type in ('MESH', 'CURVE') for c in o.bound_box]
+    xs, ys = [p.x for p in pts], [p.y for p in pts]
+    cam.data.ortho_scale = max(max(xs) - min(xs), max(ys) - min(ys)) * 1.04
+    right = cam.matrix_world.to_3x3() @ Vector((1, 0, 0))
+    up = cam.matrix_world.to_3x3() @ Vector((0, 1, 0))
+    cam.location += right * (max(xs) + min(xs)) / 2 + up * (max(ys) + min(ys)) / 2
+    folder = ROOT / 'tools' / 'icons' if out == ROOT / 'src' / 'art' else out
+    folder.mkdir(parents=True, exist_ok=True)
+    render(folder / 'app-icon-art.png')
+
+
 def main():
     args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
-    names = {'keyart', 'portraits', 'emblem'}
+    names = {'keyart', 'portraits', 'emblem', 'icons'}
     # Part names select what to render; any other argument is the output folder.
     folders = [a for a in args if a not in names]
     out = Path(folders[0]) if folders else ROOT / 'src' / 'art'
     out.mkdir(parents=True, exist_ok=True)
-    parts = {a for a in args if a in names} or names
+    # The icon art is asked for by name only (tools/app-icons.mjs builds the icons from it).
+    parts = {a for a in args if a in names} or names - {'icons'}
+    if 'icons' in parts:
+        app_icon_art(out)
     if 'emblem' in parts:
         emblem(out)
     if 'portraits' in parts:
