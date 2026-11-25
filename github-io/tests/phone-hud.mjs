@@ -9,6 +9,8 @@
 //      stays 44 px, text 11 px; both survive a reload.
 //   3. Two-finger twist (real touch events through CDP): a rotate turns the camera yaw, a pinch alone does not
 //      (it zooms); Defence ignores the twist.
+//   4. Ability names (re-score 2026-11-25b): every ability, in pairs and fours, in EN/VI/KO at 390x844, 844x390 and
+//      667x375: full names on portrait, short names on landscape, nothing cut, glyphs on symbol-only tiles.
 // Screenshots: test-results/phone-hud-*.png.
 import assert from "node:assert/strict";
 import { launchBrowser, openPage, suite, shot, TIMEOUT } from "./lib/harness.mjs";
@@ -208,6 +210,48 @@ await suite("phone-hud", async () => {
       await shot(page, "phone-hud-portrait-twisted");
     } else {
       assert.equal(await page.evaluate(() => window.__frontier.cameraTwist), 0, "Defence frames its roads itself: no twist");
+    }
+    assert.deepEqual(errors, []);
+    await page.close();
+  }
+
+  // ---- 4. Ability names (re-score 2026-11-25b: "Lock-on" read "Lock 33s"; one or two abilities lost the glyph) ----
+  // Every ability in the data, in pairs (the one-row card) and fours (the five-column card), in English, Vietnamese and
+  // Korean: portrait shows the full name in two lines at most, landscape the short phone name; nothing is cut or
+  // spills out of its 44 px tile, text stays 11 px, and a symbol-only tile (Shield wall, Field repair) shows its glyph.
+  const TYPES = ["vanguard", "ranger", "breaker", "medic", "engineer", "tank", "antitank", "scrapper", "scorcher", "rider", "wagon", "drone", "walker", "shade", "watcher", "kite", "gunner", "stalker", "rampart", "wyrm"];
+  for (const lang of ["en", "vi", "ko"]) for (const name of ["portrait", "landscape", "small"]) {
+    const { page, goto, ready, errors } = await openPage(browser, SIZES[name]);
+    if (lang !== "en") await page.addInitScript(([k, lang]) => { const s = JSON.parse(localStorage.getItem(k) || "{}"); s.version = 1; s.language = lang; localStorage.setItem(k, JSON.stringify(s)); }, [KEY, lang]);
+    await goto(); await ready();
+    await startMatch(page);
+    const ids = await page.evaluate((types) => types.map((t, i) => window.__frontier.sim.spawn(t, 0, -24 + (i % 5) * 2, 10 + Math.floor(i / 5) * 2).id), TYPES);
+    const groups = [...Array.from({ length: 10 }, (_, i) => ids.slice(i * 2, i * 2 + 2)), ...Array.from({ length: 5 }, (_, i) => ids.slice(i * 4, i * 4 + 4))];
+    const seen = new Set();
+    for (const group of groups) {
+      await page.evaluate((g) => window.__frontier.select(g), group);
+      await page.waitForFunction((n) => document.querySelectorAll("#commands .ability-tile").length === n && document.documentElement.dataset.dock === "selection", group.length, { timeout: TIMEOUT.step });
+      const tiles = await page.evaluate(() => [...document.querySelectorAll("#commands .ability-tile")].map((t) => {
+        const n = t.querySelector(".ability-name"), s = getComputedStyle(n), tr = t.getBoundingClientRect(), nr = n.getBoundingClientRect(), glyph = t.querySelector(".icon");
+        const shown = s.display !== "none";
+        return { id: t.dataset.ability, text: n.textContent, shown, symbol: t.classList.contains("symbol-only"), glyph: !!glyph && getComputedStyle(glyph).display !== "none" && glyph.getBoundingClientRect().width >= 14,
+          cut: shown && (n.scrollWidth > n.clientWidth + 1 || n.scrollHeight > n.clientHeight + 1), spill: shown && (nr.left < tr.left - 1 || nr.right > tr.right + 1 || nr.top < tr.top - 1 || nr.bottom > tr.bottom + 1),
+          font: parseFloat(s.fontSize), w: Math.round(tr.width), h: Math.round(tr.height) };
+      }));
+      for (const t of tiles) {
+        seen.add(t.id);
+        const where = `${lang} ${name} ${t.id} "${t.text}"`;
+        assert.ok(t.w >= 43.5 && t.h >= 43.5, `${where}: a 44 px tile (${t.w}x${t.h})`);
+        if (t.symbol) assert.ok(t.glyph && !t.shown, `${where}: the symbol-only tile shows its glyph, not a name`);
+        else assert.ok(t.shown && !t.cut && !t.spill && t.font >= 10.95, `${where}: the name fits its tile: ${JSON.stringify(t)}`);
+        if (name === "portrait" && lang === "en" && !t.symbol) assert.ok(!/^(Lock|Rapid|Heal|Boost|Cross|Aim|Burn|Spur|Strike|Link)$/.test(t.text), `${where}: portrait shows the full name`);
+      }
+    }
+    assert.equal(seen.size, TYPES.length, `${lang} ${name}: every ability was checked`);
+    if (lang === "en") {
+      await page.evaluate((g) => window.__frontier.select(g), ids.slice(0, 2));
+      await page.waitForFunction(() => document.querySelectorAll("#commands .ability-tile").length === 2, null, { timeout: TIMEOUT.step });
+      await shot(page, `phone-hud-ability-names-${name}`);
     }
     assert.deepEqual(errors, []);
     await page.close();

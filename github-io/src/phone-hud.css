@@ -924,6 +924,9 @@
     font: 700 11px/12px var(--font-ui) !important;
   }
   :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) #commands.tactics-card .ability-status { line-height: 12px; }
+  /* Full names in two lines (2026-11-25b): the rows size to the text, not the older 20 px + 20 px that pushed a
+     two-line name over the tile's top edge. */
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)):not(#x) #commands.tactics-card > .ability-tile { grid-template-rows: none !important; grid-auto-rows: auto; }
 }
 /* Portrait with one or two abilities (re-score 2026-11-25b, iPhone 13 WebKit and Chromium alike): the tiles sit in one
    row with the stances but kept the older flex column, where the glyph was hidden for every tile (Shield wall lost its
@@ -954,6 +957,8 @@
     position: static !important; font: 700 11px/12px var(--font-ui) !important; color: var(--kit-gold, #edc76f);
   }
   :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card > .ability-tile > .ability-status { font: 600 11px/12px var(--font-ui) !important; }
+  /* Two-line names (Vietnamese "Khóa mục tiêu", 2026-11-25b): rows size to the text, not 20 px + 20 px. */
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card > .ability-tile { grid-template-rows: none !important; grid-auto-rows: auto; }
 }
 
 /* Defence tower card (re-score 2026-11-25). Landscape: the 184 px side sheet clipped every tile's second line (tier,
