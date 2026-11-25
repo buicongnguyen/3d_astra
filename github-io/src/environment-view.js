@@ -279,6 +279,8 @@ export class EnvironmentView {
         if (lake.fords.some((f) => Math.cos(a) * f.dx + Math.sin(a) * f.dz > 0 && Math.abs(Math.cos(a) * f.dz - Math.sin(a) * f.dx) * d < f.half + 1.5)) continue;
         dummy.position.set(x, 0, z);
         dummy.scale.setScalar(0.6 + rand() * 0.5);
+        // A W9 isles inlet runs off the map: no reeds beyond the edge.
+        if (Math.abs(x) > terrain.half - 1 || Math.abs(z) > terrain.half - 1) continue;
         dummy.updateMatrix();
         transforms.reed.push(dummy.matrix.clone());
       }
