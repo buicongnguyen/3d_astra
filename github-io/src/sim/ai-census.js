@@ -74,7 +74,7 @@ export const aiCensus = {
     return { counts, antiAir, total, target, airFloor };
   },
   // The roles a building can fill now, each with its unit type (or none).
-  aiCensusOptions(team, b) {
+  aiCensusOptions(team, b, army = null) {
     const slots = b.type === "barracks" ? BARRACKS : b.type === "foundry" ? FOUNDRY : null;
     if (!slots) return [];
     const out = [];
@@ -83,14 +83,28 @@ export const aiCensus = {
       // The Foundry's heavy role: the faction's Tank (or Walker) once the Foundry reaches its level.
       if (role === "heavy") { const tank = this.typeFor(team, "tank"); if (this.canTrain(team, tank) && b.level >= (D[tank].required_level || 1)) type = tank; }
       if (!this.canTrain(team, type) || b.level < (D[type].required_level || 1)) continue;
+      if (role === "support" && army && !this.aiSupportUseful(team, army, type)) continue;
       out.push({ role, slot: this.slotOf(type), type });
     }
     return out;
   },
+  // A support unit (Medic, Engineer, Supply wagon) is worth training only with patients for it: a Medic
+  // needs 3 infantry fighters per Medic (this one included), an Engineer 2 vehicles per Engineer, a
+  // wagon 3 fighters of any kind. Owner 2026-11-26: the AI trained Engineers and Medics with no
+  // Breakers or soldiers to look after.
+  aiSupportUseful(team, army, type) {
+    const d = D[type];
+    if (!d) return false;
+    const slot = this.slotOf(type);
+    const mine = army.filter((e) => e.type === type).length;
+    const fits = slot === "engineer" ? (e) => e.mechanical : d.heals === "all" ? () => true : (e) => !e.mechanical;
+    const patients = army.filter((e) => e.damage > 0 && !e.flying && D[e.type]?.class !== "support" && fits(e)).length;
+    return patients >= (slot === "engineer" ? 2 : 3) * (mine + 1);
+  },
   // The slot building `b` should train: the role with the biggest shortfall it can fill, or `choice`
   // (the earlier picks) when that already fills the neediest role or nothing is short.
-  aiCensusPick(team, b, census, choice) {
-    const options = this.aiCensusOptions(team, b);
+  aiCensusPick(team, b, census, choice, army = null) {
+    const options = this.aiCensusOptions(team, b, army);
     if (!options.length) return choice;
     // Flyers seen: the Barracks trains units that hit air until the floor is met.
     if (b.type === "barracks" && census.antiAir < census.airFloor) {

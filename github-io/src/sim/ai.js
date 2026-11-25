@@ -153,8 +153,8 @@ export const ai = {
         const support = b.type === 'foundry' ? 'engineer' : 'medic';
         // Field command: a level 3 Foundry trains its heavy unit first and takes an Engineer only once one stands.
         const needs = fieldOn && b.type === 'foundry' && b.level >= 3 ? (army.some(e => this.slotOf(e.type) === 'tank') ? 1 : 0) : 2;
-        if (b.level >= 2 && army.filter(e => this.slotOf(e.type) === support).length < needs) choice = support;
-        if (census) choice = this.aiCensusPick(team, b, census, choice);
+        if (b.level >= 2 && army.filter(e => this.slotOf(e.type) === support).length < needs && this.aiSupportUseful(team, army, this.typeFor(team, support))) choice = support;
+        if (census) choice = this.aiCensusPick(team, b, census, choice, army);
         const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : ['breaker'])].map(slot => this.typeFor(team,slot)))].filter(type => this.canTrain(team,type));
         const pop = this.population(team);
         const save = b.type === 'barracks' ? Math.max(hold, fieldHold, censusSave) : 0;
