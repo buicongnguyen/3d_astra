@@ -29,7 +29,9 @@ export const KNEELERS = new Set(["ranger", "antitank", "gunner", "stalker", "wat
 // stomp (heavy, no run); the Hound trots (runs, but its body never pitches: its legs would come off the body).
 export const GAIT = { rider: "ride", walker: "stomp", bulwark: "stomp", vaultsentinel: "stomp", acidhound: "trot" };
 // Hulls pitch on their suspension and roll their Wheels* (the Lance buggy is a wheeled hull, like the Scorcher).
-export const RIG_HULL = new Set(["tank", "breaker", "scorcher", "lancer"]);
+// Unit review 2026-11-25: the Rampart (tracked, road wheels named Wheels), the Sunward Wagon and the Carrier
+// truck drove with still wheels and a rigid body; they are hulls too.
+export const RIG_HULL = new Set(["tank", "breaker", "scorcher", "lancer", "rampart", "wagon", "carrier"]);
 export const isRigType = (type) => RIG_INFANTRY.has(type) || RIG_HULL.has(type);
 export const REST_MOTION = [0, 0, 0, 1];
 export const BONE = { body: 0, legL: 1, legR: 2, hull: 3, wheel: 5, none: 9 };
@@ -113,10 +115,12 @@ export const approach = (x, target, k, dt) => x + (target - x) * (1 - Math.exp(-
 // Elevation in radians from the modelled pose; `rest` is the barrel's length out of combat as a fraction
 // of the modelled barrel. Owner 2026-11: the Breaker's gun must not droop when it is not fighting; it
 // rests a little raised with the barrel run in (shorter), and to fire it runs out to full length and
-// lifts. The Scorcher carries its nozzle low and lifts it to burn.
+// lifts. The Scorcher had the same droop (its nozzle carried 0.18 rad down, aimed into the sand at rest);
+// unit review 2026-11-25: it now carries it level and lifts a little to burn. No pose may dip a barrel
+// below its modelled line out of combat (tests/unit-rig.test.js).
 export const BARREL_POSES = new Map([
   ["breaker", { move: 0.1, park: 0.1, fire: 0.24, rest: 0.74 }],
-  ["scorcher", { move: -0.18, park: -0.18, fire: 0.12, rest: 1 }],
+  ["scorcher", { move: 0.03, park: 0.03, fire: 0.14, rest: 1 }],
 ]);
 // Owner 2026-11: each shot snaps the barrel in (SNAP.in seconds) then lets it run back out (SNAP.out),
 // by SNAP.depth of its length at the deepest.
