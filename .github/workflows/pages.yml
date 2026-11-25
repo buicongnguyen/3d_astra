@@ -194,6 +194,9 @@ jobs:
           # AAA round 3 (R3-H): The Sovereign Walks (relay shield, phase 2 surge and rail sweep) at three viewports.
           - name: r3-h
             scripts: sovereign-walks
+          # W9: The Ember Roost (the flying Ember Drake: breath mark, landing, fall) at three viewports.
+          - name: w9-drake
+            scripts: ember-drake
           # AAA round 3 (R3-B): squad orders (group pace, follow tether, phone group strip); support units on
           # phones (2026-11-24: touch pick prefers own units, type chips, Army = fighters).
           - name: r3-b

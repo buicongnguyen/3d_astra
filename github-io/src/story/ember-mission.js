@@ -111,6 +111,7 @@ export const EMBER_ROOST = {
     ],
     lose: [{ who: "vale", text: "The drake holds the Crown. We pull back to the south road and try again." }],
   },
-  medals: { gold: { seconds: 600 }, silver: { seconds: 840 } },
+  // Objective bot: Story 337 s, Standard 357 s, Veteran 400 s, all gold (docs/aaa/BOSSES.md "The Ember Drake").
+  medals: { gold: { seconds: 480 }, silver: { seconds: 660 } },
   design: "An optional Act 3 boss mission (W9) on the Obsidian Highlands, day 50, about 8 to 10 minutes against one Veil AI that never attacks on its own (rules.ai \"home\"; raids of 5 at 1:40 and 5:30 and 6 at 9:20). The player starts with the camp, a bonus tower, 900 alloy and a 14-unit squad (6 Rangers, 3 Anti-tank soldiers, 4 Vanguards, a Medic). The Ember Drake (emberdrake, 18000 HP, Story 14000, Veteran 16000; boss engine IV: flight) sleeps on the Crown relay in the middle of the map until the army comes within 16 m, it is hurt, or 3:20 passes. In the air only units that hit air reach it; its fire breath is a 16 m line marked 2 s ahead; after every second breath it flies back to the Crown, marks a 5 m wing-gust circle (3.2 s), pushes everyone in it 3 m out, and lands for 8 s, when every unit can hit it and it takes 1.75x damage. At two thirds it surges and adds a sweeping cone; at one third it breathes sooner. Intended: train Rangers and Anti-tank soldiers, walk to the Crown and fight it there; bring the Vanguards for the landings.",
 };

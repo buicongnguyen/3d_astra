@@ -135,6 +135,9 @@ const scenarios = [
   // adds two draws (the bubble and one instanced draw for every tether), none without relays.
   {name:'boss-sovereign2-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, boss:'ironsovereign2',
     spawn:[{type:'relay', team:1, near:[-14,-12]}, {type:'relay', team:1, near:[8,-14]}]},
+  // W9: the Ember Drake in the air (`flying`), marking its fire breath over battle-eco's 60 units: six rigid parts, its
+  // ember glow and the mark (the breath fire itself is one pooled draw while it burns).
+  {name:'boss-drake-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, boss:'emberdrake', flying:true},
   // AAA round 3 (R3-K): battle readability. battle-eco at the widest phone zoom (88), where every unit carries a type
   // icon (the status atlas: one draw); battle-eco at its own zoom with three Ctrl+number groups (badges, the same draw);
   // and Three Roads with both armour squads bought Combined (one gold-trim draw, stars in the atlas draw).
@@ -197,7 +200,8 @@ for (const k of Object.keys(limits)) limits[k] += 2;
 // A7 phone measurements with the pooled overlays and shared rigid finish batches.
 Object.assign(limits, {'army-300-eco':105, 'battle-dock-eco':100, 'defence-heroic-eco':122, 'combined-defence-eco':94});
 for (const s of scenarios) if (s.name === 'three-rivals-eco') s.triangles = 330000; // 303,222 -> 324,494 triangles with the HUD's taller phone frame
-Object.assign(limits, {'dunes-battle-eco':95, 'wild-storm-eco':95, 'wild-battle-eco':101}); // R4-P1 (2026-11-21: 91, 94, 100 draws): the Spire and a raging storm at most 4 over the twin; a tamed Wyrm adds its model's five material batches plus its leg batch
+Object.assign(limits, {'dunes-battle-eco':95, 'wild-storm-eco':95, 'wild-battle-eco':101});
+Object.assign(limits, {'boss-drake-eco':90}); // W9: 84 draws on 2026-11-26, as boss-battle-eco (battle-eco 76) on the same build // R4-P1 (2026-11-21: 91, 94, 100 draws): the Spire and a raging storm at most 4 over the twin; a tamed Wyrm adds its model's five material batches plus its leg batch
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -312,6 +316,7 @@ try {
         // state, set directly): the Iron Vanguard's 4.5 m four-gun burst.
         const b = s.spawn(mark.type, 1, -3, -12, true, true);
         b.bs = {phase:'warning', stage:1, cycle:0, post:{x:b.x, z:b.z}, zone:1, until:s.time + 3};
+        if (scenario.flying) { b.flying = true; b.fly = 4.8; }
         s.dangerZones = [{id:1, boss:b.id, team:1, attack:mark.attack, shape:mark.shape, x:-3, z:6, radius:mark.radius, angle:0, from:s.time - 1, at:s.time + 2, until:s.time + 3, ...mark.extra}];
       }
       for (const [i, [type, team]] of (scenario.air || []).entries())

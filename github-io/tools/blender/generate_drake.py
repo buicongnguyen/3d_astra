@@ -10,7 +10,7 @@ crest, wing edge and tail fin. Blender -Y is the front; sizes are real metres (a
 across the wings). It stands on its hind legs and forefeet when perched; in the air the runtime lifts it.
 
 Runtime contract (src/boss-view.js DRAKE_PARTS): rigid pivots Wing_L, Wing_R (flap about the body axis), Jaw (opens
-to breathe), Tail (sways), leg_L, leg_R (fold up in flight). The EmberGlow material is drawn as one always-lit
+to breathe), Tail (sways). The hind legs sit on leg_L / leg_R pivots (the unit model contract) but bake into the body. The EmberGlow material is drawn as one always-lit
 emissive mesh (eyes, throat, vents, mouth) whose brightness follows the fight. Gun mouth and core positions match
 balance.json `muzzles` and `core` (mouth at about 3 m, chest at about 1.9 m, before the runtime's flight lift).
 """
@@ -174,7 +174,7 @@ def build(manifest=False, report=False):
         data = json.loads(path.read_text(encoding='utf-8'))
         row = {'name': 'emberdrake', 'file': 'emberdrake.glb', 'triangles': a.triangles(), 'boss': 'ember-drake', 'budget': BUDGET,
                'review': 'pending owner review (W9)', 'source': 'tools/blender/generate_drake.py (frontier_kit), original design',
-               'animation': 'Runtime parts (src/boss-view.js DRAKE_PARTS): wings flap and fold, jaw opens to breathe, tail sways, hind legs tuck in flight; no baked clips; ember glow, breath and gust are drawn at runtime'}
+               'animation': 'Runtime parts (src/boss-view.js DRAKE_PARTS): wings flap and fold, jaw opens to breathe, tail sways; no baked clips; ember glow, breath and gust are drawn at runtime'}
         data['assets'] = [e for e in data['assets'] if e['name'] != 'emberdrake'] + [row]
         path.write_bytes((json.dumps(data, indent=2) + '\n').encode('utf-8'))
 

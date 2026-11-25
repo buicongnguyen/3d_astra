@@ -17,9 +17,11 @@ const TRIPODS = { az: 0, ay: 0, bz: 0, by: 0, dip: 0 };
 // picked by a node only that model has, so a later boss is one more entry (docs/aaa/BOSSES.md).
 // The Sovereign's six legs are two rigid tripods (LegsA, LegsB: one draw each) that step in turn.
 const SOVEREIGN_PARTS = [["LegsA", "BossLegA", null], ["LegsB", "BossLegB", null], ["Turret", "TurretRig", null], ["Cannon", "BossCannon", "Turret"], ["LightGun", "BossGun", "Turret"]];
-// W9, the Ember Drake (tools/blender/generate_drake.py): two wings on shoulder hinges, the jaw, the tail and the
-// hind legs, each one rigid draw moved by maths in updateDrake; its EmberGlow pieces are one lit mesh (BossEmber).
-const DRAKE_PARTS = [["Wing_L", "DrakeWingL", null], ["Wing_R", "DrakeWingR", null], ["Jaw", "DrakeJaw", null], ["Tail", "DrakeTail", null], ["leg_L", "DrakeLegL", null], ["leg_R", "DrakeLegR", null]];
+// W9, the Ember Drake (tools/blender/generate_drake.py): two wings on shoulder hinges, the jaw and the tail, each one
+// rigid draw moved by maths in updateDrake; its EmberGlow pieces are one lit mesh (BossEmber). The model's leg_L / leg_R
+// pivots are left out on purpose: the hind legs bake into the body (two draws saved: the drake costs what the Iron
+// Vanguard costs on a phone, 8 draws with its mark).
+const DRAKE_PARTS = [["Wing_L", "DrakeWingL", null], ["Wing_R", "DrakeWingR", null], ["Jaw", "DrakeJaw", null], ["Tail", "DrakeTail", null]];
 export const BOSS_PARTS = [{ marker: "LegsA", parts: SOVEREIGN_PARTS }, { marker: "Wing_L", parts: DRAKE_PARTS }];
 // How high the drake's model flies above its root (view only; the rules' e.fly is the height shots aim at).
 export const DRAKE_LIFT = 4;
@@ -226,7 +228,7 @@ export class BossView {
     if (BOSSES[e.boss]?.flight) {
       let ember = null;
       model.traverse((o) => { if (o.name === "BossEmber") ember = o; });
-      const parts = { wingL: find("DrakeWingL"), wingR: find("DrakeWingR"), jaw: find("DrakeJaw"), tail: find("DrakeTail"), legL: find("DrakeLegL"), legR: find("DrakeLegR") };
+      const parts = { wingL: find("DrakeWingL"), wingR: find("DrakeWingR"), jaw: find("DrakeJaw"), tail: find("DrakeTail") };
       for (const p of Object.values(parts)) if (p) p.userData.rest = p.rotation.clone();
       root.userData.boss.drake = { ...parts, ember, alt: e.flying ? DRAKE_LIFT : 0, beat: (e.id * 1.37) % 6.28, open: 0, fold: e.flying ? 0 : 1, heat: 0, barRest: 5 };
       model.rotation.order = "YXZ";
@@ -366,8 +368,8 @@ export class BossView {
   }
   // The Ember Drake (W9), each frame: altitude (up in the air, low while it marks its gust, down on the perch), the
   // wing beat (a glide, hard beats while it hovers low, folded on the perch), the jaw opening as the breath charges,
-  // the tail sway, the hind legs tucked in flight, the ember glow (hotter as it charges, pulsing while open) and its
-  // shadow on the ground. All maths on six rigid parts; nothing is skinned.
+  // the tail sway, the ember glow (hotter as it charges, pulsing while open) and its
+  // shadow on the ground. All maths on four rigid parts; nothing is skinned.
   updateDrake(sim, e, o, u, phase, dt, motion, charge) {
     const d = u.drake, m = o.userData.model, spec = BOSSES[e.boss], view = this.view;
     const landing = !!e.bs?.landing, perched = !e.flying;
@@ -381,18 +383,18 @@ export class BossView {
     // Nose down into a breath, level in a glide, up on the hard beats over the perch.
     m.rotation.x = perched ? 0 : (breathing ? 0.22 : charging ? 0.1 : landing ? -0.12 : 0.04) + (motion ? Math.cos(d.beat) * 0.03 : 0);
     const flap = motion ? Math.sin(d.beat) * (landing ? 0.75 : 0.5) + 0.12 : 0.15;
-    const wing = flap * (1 - d.fold) + 1.15 * d.fold;
-    if (d.wingL) { d.wingL.rotation.z = d.wingL.userData.rest.z + wing; d.wingL.rotation.y = d.wingL.userData.rest.y + 0.5 * d.fold; }
-    if (d.wingR) { d.wingR.rotation.z = d.wingR.userData.rest.z - wing; d.wingR.rotation.y = d.wingR.userData.rest.y - 0.5 * d.fold; }
+    // Folded on the perch: raised a little and swept back along the body, so they read as wings at rest.
+    const wing = flap * (1 - d.fold) + 0.55 * d.fold;
+    if (d.wingL) { d.wingL.rotation.z = d.wingL.userData.rest.z + wing; d.wingL.rotation.y = d.wingL.userData.rest.y + 1.05 * d.fold; }
+    if (d.wingR) { d.wingR.rotation.z = d.wingR.userData.rest.z - wing; d.wingR.rotation.y = d.wingR.userData.rest.y - 1.05 * d.fold; }
     if (d.jaw) d.jaw.rotation.x = d.jaw.userData.rest.x + d.open * 0.55;
     if (d.tail) { d.tail.rotation.y = d.tail.userData.rest.y + (motion ? Math.sin(view.lifeClock * 1.7 + e.id) * 0.22 : 0); d.tail.rotation.x = d.tail.userData.rest.x + (1 - d.fold) * 0.18; }
-    for (const leg of [d.legL, d.legR]) if (leg) leg.rotation.x = leg.userData.rest.x + (1 - d.fold) * 0.95;
     const open = phase === "exposed" || phase === "perched" || phase === "surge";
     d.heat += ((charging ? 1 : breathing ? 1.2 : open ? 0.7 : 0.2) - d.heat) * Math.min(1, dt * 5);
     if (d.ember) d.ember.material.emissiveIntensity = 1.2 + d.heat * (2.2 + (motion && open ? Math.sin(view.lifeClock * 8) * 0.8 : 0));
     // Its shadow on the ground, smaller the higher it flies (the shared contact-shadow blob).
     const blob = o.userData.contactShadow;
-    if (blob) { blob.visible = true; blob.scale.setScalar(e.radius * (2.4 - d.alt * 0.15)); }
+    if (blob) { blob.visible = true; blob.scale.setScalar(e.radius * (2.2 - 0.9 * d.fold - d.alt * 0.12)); }
     o.userData.bar.position.y = d.barRest + d.alt;
     // Sparks at the mouth while the breath charges; the chest flares while it is open.
     if (charge && motion && (charging || breathing) && spec?.muzzles?.length) {

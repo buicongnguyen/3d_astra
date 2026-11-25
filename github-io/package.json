@@ -96,6 +96,7 @@
     "test:cover-ui": "node tests/cover-ui.mjs",
     "test:openings": "node tests/openings.mjs",
     "test:sovereign-walks": "node tests/sovereign-walks.mjs",
+    "test:ember-drake": "node tests/ember-drake.mjs",
     "test:readability": "node tests/readability.mjs",
     "test:unit-roster": "node tests/unit-roster.mjs",
     "test:unit-viewer": "node tests/unit-viewer.mjs",
