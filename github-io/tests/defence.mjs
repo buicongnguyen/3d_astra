@@ -312,6 +312,25 @@ await suite("defence", async () => {
     assert.equal(intel.overlap, false, `${viewport}: intel clear of the bar`);
     assert.deepEqual(await tinyText(page, "#defence-intel"), [], `${viewport}: intel text under 12 px`);
     await shot(page, `defence-intel-${viewport}`);
+    // Re-score 2026-11-25b: on a portrait phone a counter hint ("Your Battle tank beats Scrapper") sat on the Next
+    // wave card. A hint and an alert at once: neither covers the card or the bar.
+    await page.evaluate(() => {
+      const f = window.__frontier, h = f.fightHint;
+      h.querySelector(".fh-text").textContent = "Your Battle tank beats Scrapper"; h.hidden = false;
+      f.alertNotice("The enemy broke through!");
+      window.__msgCover = () => {
+        const r = (s) => { const e = document.querySelector(s); return e && e.getClientRects().length && getComputedStyle(e).visibility !== "hidden" ? e.getBoundingClientRect() : null; };
+        const meet = (a, b) => !!a && !!b && !(a.right <= b.left || a.left >= b.right || a.bottom <= b.top || a.top >= b.bottom);
+        const card = r("#defence-intel"), bar = r("#defence-bar"), hint = r("#fight-hint"), notice = r("#notice");
+        return { hint: !!hint, card: !!card, covers: [["hint", hint], ["notice", notice]].filter(([, b]) => meet(b, card) || meet(b, bar)).map(([n]) => n) };
+      };
+    });
+    await page.waitForFunction(() => getComputedStyle(document.querySelector("#notice")).opacity === "1" && !window.__msgCover().covers.length, null, { timeout: TIMEOUT.step }).catch(() => {});
+    const covered = await page.evaluate(() => window.__msgCover());
+    assert.ok(covered.hint && covered.card, `${viewport}: the hint and the card both show`);
+    assert.deepEqual(covered.covers, [], `${viewport}: no message covers the Next wave card or the bar`);
+    await shot(page, `defence-intel-hint-${viewport}`);
+    await page.evaluate(() => { window.__frontier.fightHint.hidden = true; window.__frontier.clearMessages(); });
     await tap("#defence-call");
     await page.waitForFunction((n) => window.__frontier.sim.defence.wave === n + 1 && window.__frontier.sim.players[0].alloy > 0, before, { timeout: TIMEOUT.step });
 

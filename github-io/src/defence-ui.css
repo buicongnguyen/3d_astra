@@ -543,4 +543,8 @@
    --defence-intel-h to the card's height while it shows), so a story line never hides the coming wave. */
 @media (max-aspect-ratio: 1.35) {
   .compact-ui.in-defence:not(.scene-open):not(.in-briefing) .dialogue { bottom: calc(var(--band) + var(--defence-intel-h, 0px)); }
+  /* Re-score 2026-11-25b: the counter hint ("Your Battle tank beats Scrapper") sat in the same band and covered the
+     Next wave card; it rides above the card too (and above the radio chip while a line shows). */
+  .compact-ui.in-defence:not(.in-briefing) #fight-hint { bottom: calc(var(--band) + var(--defence-intel-h, 0px)); }
+  .compact-ui.in-defence.dialogue-open:not(.in-briefing):not(.scene-open) #fight-hint { bottom: calc(var(--band) + var(--defence-intel-h, 0px) + var(--dialogue-h, 44px) + 6px); }
 }
