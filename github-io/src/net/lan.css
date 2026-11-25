@@ -59,7 +59,14 @@
 .lan-ping .icon { width: 14px; height: 14px; }
 .lan-strip-compact { top: calc(env(safe-area-inset-top, 0px) + 6px); transform: none; gap: 4px; padding: 4px 6px; font-size: 11px; min-height: 32px; box-sizing: border-box; }
 .lan-strip-compact .lan-me, .lan-strip-compact .lan-vs { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-.lan-strip-compact .lan-who b { max-width: 5.5em; }
+/* Phones (re-score 2026-11-25b: "H… 1 ms" at 390 px): two short lines in the top bar's free gap, the other player's name
+   over its team dot and the ping, so the name gets the whole width (at least eight characters at 390 px). */
+.lan-strip-compact { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-areas: "name name" "dot ping"; align-content: center; align-items: center; justify-items: start; gap: 1px 4px; padding: 3px 6px; border-radius: 10px; line-height: 13px; }
+.lan-strip-compact .lan-who:not(.lan-me) { display: contents; }
+.lan-strip-compact .lan-who:not(.lan-me) b { grid-area: name; max-width: 100%; min-width: 0; }
+.lan-strip-compact .lan-who:not(.lan-me) .lan-dot { grid-area: dot; width: 8px; height: 8px; }
+.lan-strip-compact .lan-ping { grid-area: ping; }
+.lan-strip-compact .lan-gone :is(b, .lan-dot) { opacity: 0.55; text-decoration: line-through; }
 .lan-strip-compact .lan-ping .icon { display: none; }
 .lan-wait { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(2, 7, 19, 0.5); }
 .lan-wait[hidden] { display: none; }
