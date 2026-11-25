@@ -2,7 +2,7 @@
 // land (palette, light, ground, dressing, life, music) and a Skirmish map on it, plus the Ancient ruins dressing and
 // centrepiece. The checks of tests/maps-variety.test.js for the R3 maps run here on the three new maps: determinism,
 // four-way symmetry, equal starts, clear ground under every deposit, camp and ring, and routes for the widest ground
-// unit. Then the rules each land reuses: the frozen lake's ice fords wade slowly, lava is water (impassable, bridged),
+// unit. Then the rules each land reuses: the frozen ponds' ice roads wade slowly, lava is water (impassable, bridged),
 // and the isles' plank bridges (lake strips of type "bridge") are walked at full speed.
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -113,13 +113,14 @@ test("new lands: every deposit, ring and camp is reachable from every camp, also
   }
 });
 
-test("Frostmere: the frozen lake's ice roads are fords (slow, wadeable); the rest of the lake is open water", () => {
+test("Frostmere: each frozen pond's ice roads are fords (slow, wadeable); the rest of the pond is open water", () => {
   const t = new Terrain("snowfield"), s = new Simulation({ map: "snowfield", enemyCount: 1 });
-  const ice = { x: Math.cos(Math.PI / 4) * 18, z: Math.sin(Math.PI / 4) * 18 };
+  assert.equal(t.lakes.length, 4);
+  const ice = { x: 0, z: 45 };
   assert.equal(t.at(ice.x, ice.z), "ford");
   assert.ok(t.canStand(ice.x, ice.z, 0.55) && t.inLakeFord(ice.x, ice.z) && s.inFord(ice));
-  assert.equal(t.at(18, 0), "water");
-  assert.ok(!t.canStand(18, 0, 0.55));
+  assert.equal(t.at(5, 45), "water");
+  assert.ok(!t.canStand(5, 45, 0.55));
   // The ruin terrace is high ground with the crossroads ring on it.
   assert.equal(t.level(0, 0), 1);
   assert.ok(new Simulation({ map: "snowfield", capturePoints: true }).skirmishPoints.crossroads);

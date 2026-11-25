@@ -37,7 +37,7 @@
     {
       "name": "rules: the simulation, data and saves",
       "files": ["src/sim/**", "src/simulation.js", "src/snapshot.js", "src/savegame.js", "src/balance.json", "src/data.js", "src/factions.js", "src/rng.js", "src/commands.js", "src/navigation.js", "src/terrain.js", "src/maps.json", "src/ai-plan.js", "src/difficulty.js", "src/model-roster.js", "src/match-stats.js", "src/activity.js", "src/abilities*.js", "src/ceremony-rules.js", "src/audio-logic.js", "src/type-chips-model.js", "tools/{playbot,mission-check,chronicle-check,defence-bot,defence-check,ai-census-check,difficulty-check}.mjs", "tools/story-strings.mjs"],
-      "suites": ["auto-combat", "harvesters", "missions", "defence", "quick-battle-check", "ai-census-check", "defence-heroic-check", "factions", "terrain", "squad-orders", "creatures", "boss", "air", "sovereign-walks", "stages", "new-game", "army-depth", "workshops", "unit-roster", "gunner", "faction-depth", "wild-desert", "patrol", "repair-rally", "activity", "golden-full"],
+      "suites": ["auto-combat", "harvesters", "missions", "defence", "quick-battle-check", "ai-census-check", "defence-heroic-check", "factions", "terrain", "squad-orders", "creatures", "boss", "air", "sovereign-walks", "stages", "new-game", "army-depth", "workshops", "unit-roster", "gunner", "faction-depth", "wild-desert", "lands", "patrol", "repair-rally", "activity", "golden-full"],
       "checks": ["check:missions", "check:defence"]
     },
     {
@@ -73,7 +73,7 @@
     {
       "name": "drawing: world view, units, effects, models",
       "files": ["src/*-view.js", "src/entity-batches.js", "src/fx.js", "src/fx-*.{js,json}", "src/fx-kinds/**", "src/ground-paint.js", "src/scatter.js", "src/look-grade.*", "src/night-sky.js", "src/unit-rig.js", "src/governor.js", "src/transform-cache.js", "src/ambient-life.js", "src/lands.js", "src/ambience.js", "src/plateau-relief.js", "src/ground-y.js", "src/terrain-labels.js", "src/map-edge.js", "src/team-bands.js", "src/threat-arrows.js", "src/visual-style.*", "src/faction-colors.js", "src/camera-shake.js", "src/combat-feedback.js", "src/air-motion.js", "src/air-hint.js", "src/fog-aware.js", "src/building-decals-atlas.js", "src/elite-view.js", "public/models/**", "public/fx/**", "public/portraits/**"],
-      "suites": ["render-budget", "visual-combat", "feel", "model-loading", "ambient-life", "boundary-fx", "night-storm", "readability", "unit-roster", "factions", "terrain", "air", "creatures", "boss", "wild-desert", "corners", "portraits", "selection", "unit-viewer"],
+      "suites": ["render-budget", "visual-combat", "feel", "model-loading", "ambient-life", "boundary-fx", "night-storm", "readability", "unit-roster", "factions", "terrain", "air", "creatures", "boss", "wild-desert", "lands", "corners", "portraits", "selection", "unit-viewer"],
       "checks": []
     },
     {

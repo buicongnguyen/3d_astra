@@ -9,7 +9,9 @@
 //              ran past 30 minutes before R3-A). Pass: every match ends before 1800 s.
 // Usage: node tools/ai-census-check.mjs [--only census|highlands] [--jobs 3] [--json out.json] [--secs 600]
 //        (npm run test:ai-census-check runs it through tests/ai-census-check.mjs with --jobs 2: CI matrix entry r3-a)
-//        [--speed normal] [--map dunes]
+//        [--speed normal] [--map dunes] [--field-maps highlands,snowfield,...]
+//   --field-maps (W9 lands): run the Field-against-Field rows on each of these maps instead of Highlands only
+//              (same 5 pairings, same 1800 s cap; rows name their map). The default is "highlands", unchanged.
 // Exits 1 when a row fails. Rows are deterministic; --jobs only spreads them over processes.
 import fs from "node:fs";
 import path from "node:path";
@@ -23,6 +25,7 @@ import { PlayBot } from "./playbot.mjs";
 const args = process.argv.slice(2), arg = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
 const JOBS = Math.max(1, Number(arg("--jobs", 1)) || 1), ONLY = arg("--only", "census,highlands").split(",");
 const SECS = Number(arg("--secs", 600)), SPEED = arg("--speed", "normal"), MAP = arg("--map", "dunes");
+const FIELD_MAPS = arg("--field-maps", "highlands").split(",").filter(Boolean);
 const FACTIONS = ["meridian", "ashfall", "sunward", "wardens", "veil"];
 export const SEEDS = [["meridian", "wardens"], ["ashfall", "meridian"], ["wardens", "wardens"], ["meridian", "meridian"], ["veil", "wardens"]];
 export const HIGHLANDS_CAP = 1800, MIN_TYPES = 4;
@@ -49,18 +52,18 @@ export function censusRow(faction, { secs = SECS, speed = SPEED, map = MAP } = {
     fielded: Object.fromEntries([...fielded].sort((a, b) => a[0].localeCompare(b[0]))), pass: types >= MIN_TYPES && (!hasWorkshop || workshop >= 1) };
 }
 
-// One Highlands Field-against-Field match.
-export function highlandsRow([a, b], { speed = SPEED } = {}) {
-  const s = new Simulation({ map: "highlands", aiSpeed: speed, factions: { 0: a, 1: b }, capturePoints: true, aiPlayer: true, rules: { aiPlan: "field" } });
+// One Highlands Field-against-Field match (or on another map: --field-maps, W9 lands).
+export function highlandsRow([a, b], { speed = SPEED, map = "highlands" } = {}) {
+  const s = new Simulation({ map, aiSpeed: speed, factions: { 0: a, 1: b }, capturePoints: true, aiPlayer: true, rules: { aiPlan: "field" } });
   while (s.time < HIGHLANDS_CAP && !s.result) { s.tick(0.05); s.events.length = 0; }
-  return { check: "highlands", seat0: a, seat1: b, speed, result: s.result || "timeout", seconds: Math.round(s.time), pass: !!s.result };
+  return { check: "highlands", ...(map !== "highlands" ? { map } : {}), seat0: a, seat1: b, speed, result: s.result || "timeout", seconds: Math.round(s.time), pass: !!s.result };
 }
 
 const jobs = () => [
   ...(ONLY.includes("census") ? FACTIONS.map((f) => ({ kind: "census", f })) : []),
-  ...(ONLY.includes("highlands") ? SEEDS.map((p) => ({ kind: "highlands", p })) : []),
+  ...(ONLY.includes("highlands") ? FIELD_MAPS.flatMap((map) => SEEDS.map((p) => ({ kind: "highlands", p, map }))) : []),
 ];
-const play = (j) => (j.kind === "census" ? censusRow(j.f) : highlandsRow(j.p));
+const play = (j) => (j.kind === "census" ? censusRow(j.f) : highlandsRow(j.p, { map: j.map }));
 
 export async function main() {
   const list = jobs(), rows = new Array(list.length);
@@ -78,7 +81,7 @@ export async function main() {
     })));
   }
   const failed = rows.filter((r) => !r.pass);
-  console.log(JSON.stringify({ summary: "ai-census-check", rows: rows.length, passed: rows.length - failed.length, failed: failed.map((r) => r.faction || `${r.seat0}:${r.seat1}`) }));
+  console.log(JSON.stringify({ summary: "ai-census-check", rows: rows.length, passed: rows.length - failed.length, failed: failed.map((r) => r.faction || `${r.map ? `${r.map} ` : ""}${r.seat0}:${r.seat1}`) }));
   if (arg("--json")) fs.writeFileSync(arg("--json"), JSON.stringify(rows, null, 1) + "\n");
   process.exitCode = failed.length ? 1 : 0;
 }

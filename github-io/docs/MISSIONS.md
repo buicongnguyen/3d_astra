@@ -226,8 +226,12 @@ Optional `maps.json` fields let a Skirmish map leave the standard layout. A map 
 | `dressing` | Multiplier on the look's scatter density, for a map with more open ground than its look's own map. | 1 |
 | `blurb` | One line about the map: the picker option's tooltip (translated). | none |
 | plateau `mirror: "quad"` | Adds both axis mirrors to the point-mirrored copy. A plateau on an axis lists its copies itself. A plateau without ramps is a natural rock crag. | |
+| `biome` | The ground rule: `desert`, `woodland`, `highland`, and since W9 `snow`, `volcanic`, `isles` (which surfaces the ground shows; only `road` and `sand` carry Sunward's bonus). | the old mix |
+| `lakes` | `[{ x, z, r, island, fords: [{ angle, width, type }] }]`: round water (a ring round an `island`), strips from the middle out along `angle`. A strip is a ford (slow) or, with `type: "bridge"` (W9), a plank bridge walked at full speed. Lakes may overlap and may run off the map (the isles' inlets). | none |
+| `ruins` | Adds the Ancient ruins dressing (arches, heads, walls, drums) to the look's, at this multiple (W9). | 0 |
+| `centrepiece` | `"ruins"`: dresses the plateau at the map centre as a Builder shrine (W9); the terrace and the crossroads ring are the existing rules. | none |
 
-The six maps built on them (`docs/aaa/results/round3/maps.md`): Golden Heart, Dry Reach, Twin Rivers, Ironback Ridge, Crown Mesa and Open Steppe. Their data tests check determinism, four-way symmetry, equal start distances, deposits and rings on clear ground, and routes for the widest ground unit from every camp to every deposit and ring.
+The six maps built on them (`docs/aaa/results/round3/maps.md`): Golden Heart, Dry Reach, Twin Rivers, Ironback Ridge, Crown Mesa and Open Steppe. The W9 lands add Frostmere, Ember Crown and Coral Isles, each on its own land (`docs/WORLD.md` "Lands"); `tests/lands.test.js` runs the same checks on them. Their data tests check determinism, four-way symmetry, equal start distances, deposits and rings on clear ground, and routes for the widest ground unit from every camp to every deposit and ring.
 
 ## Frontier Defence levels (0.17)
 

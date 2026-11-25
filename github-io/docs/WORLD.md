@@ -163,6 +163,50 @@ Four short campaigns tell the same war from the other camps (data: `src/story/ch
 
 A finished chronicle adds one line by its lead to the finale's closing lines. Enemies who speak in a chronicle (Vale and Okoro for Meridian, Hale, Sol) keep their own voices; Meridian's people still call their own leader "Commander".
 
+## Lands, and how a mission picks one (W9, 2026-11-26)
+
+A **land** is how a battlefield looks and lives: its palette and light (`src/visual-style.json`, `themes` and `light`), its ground
+rule (`biome`, `src/terrain.js` `ground()`), its dressing (`DRESSING` in `src/scatter.js`), its creatures and weather
+(`LIFE` in `src/ambient-life.js`), its music (`MAP_FLAVOUR` in `src/audio-logic.js`) and its sky (`SKY` in `src/map-edge.js`).
+A land is keyed by the id of the Skirmish map that first used it. There are ten:
+
+| Land (look id) | Skirmish map | Biome | What is new |
+|---|---|---|---|
+| `classic`, `riverlands`, `basin`, `expanse`, `dunes`, `woodlands`, `highlands` | the seven old maps | none / `desert` / `woodland` / `highland` | (as before) |
+| `snowfield` | **Frostmere** (160 m) | `snow` | snow, packed blue-grey snow and rock; snow-laden pines, frosted tufts, ice crystals; four frozen ponds whose ice roads are lake fords (slow, wadeable) and whose open water is impassable; a ruin terrace on open snow in the middle; edge ridges; falling snow |
+| `volcano` | **Ember Crown** (160 m) | `volcanic` | dark basalt with glowing ember cracks, ash fields; vents, basalt columns, charred snags, cinders; lava channels and pools (water rules: impassable, crossed only by bridges) that glow; ash falling and embers rising |
+| `archipelago` | **Coral Isles** (160 m) | `isles` | a shallow turquoise sea (lakes) with a centre isle, four camp isles and four edge islets, linked by fords (slow) and plank bridges (a lake strip of `type: "bridge"`: full speed); palms, coral, gulls |
+
+The three new lands are listed in `src/lands.js` (`LANDS`): their view switches (land weather, lava glow, ice, reeds, the
+ground paint) live there, nothing else. No new rule was added except the lake bridge strip; every map without one builds
+exactly as before (fingerprints and golden pins unchanged).
+
+**Ancient ruins** are a dressing family any land can carry: broken arches, carved stone heads, overgrown walls and fallen
+column drums (`RUIN_KINDS` in `src/scatter.js`), drawn in the land's `ruin`, `leaf` and `glow` colours, in the one scatter
+draw. A map adds them with `"ruins": 1` (a density multiplier). A map with `"centrepiece": "ruins"` dresses the plateau at its
+centre as a Builder shrine: arches, pillars and walls on the terrace's rim (inside the cliff band, where no unit stands),
+heads at its foot between the ramps, paving under the capture ring. The shrine's rules are the old ones: the terrace is high
+ground (`plateaus`: range, damage, sight, hidden from below) and the crossroads capture ring sits on it when capture points
+are on. All three new maps have one.
+
+### How a mission picks a land and a map
+
+A mission (`src/story/missions.js`, a Chronicle, a Defence level) names its battlefield with `map: "<id>"`, an id of
+`src/maps.json` (Skirmish maps), `src/campaign-maps.json` (campaign-only layouts) or `src/defence/maps.json`. It is drawn on
+that map's land: the map's own id if it is a land (as `snowfield`), else the map's `look`.
+
+- **On a new land as it is:** `map: "snowfield"`, `"volcano"` or `"archipelago"`. Spawns, regions and waves must use positions
+  valid there (`tests/missions-data.test.js` checks every one with `nav.canStand`); the maps are 160 m, four-way symmetric,
+  camps at (±41, ±40) on Frostmere and (±49, ±48) on the other two.
+- **A new layout on a new land:** add an entry to `src/campaign-maps.json` with `"campaign": true`, `"look": "<land>"` and
+  `"biome": "<that land's biome>"` (`snow`, `volcanic`, `isles`), then its own `plateaus`, `lakes`, `rivers`, `deposits`. Keep slow or impassable water off the straight line between camps: a frozen lake across the centre made the computer's armies bleed on the ice and matches ran past 30 minutes (W9 notes).
+  The look gives the palette, light, dressing, life, weather and music; the biome gives the ground's surfaces. Frozen water
+  is a `lakes` entry with ford strips; lava is `rivers` (bridges only) or `lakes` without fords; sea is `lakes`, with
+  `{ "angle", "width", "type": "bridge" }` strips for plank bridges. Add `"ruins": 1` and `"centrepiece": "ruins"` (with a
+  plateau at the map centre) for the ruins.
+- **Moving an existing mission onto a new land** changes that mission's checksum (its map is part of every save and hash):
+  re-record its golden pin with a reason, as for any change to existing content (`docs/TESTING.md`).
+
 ## Writing rules
 
 - Lines are under 140 characters. One idea per line. No filler, no jokes about the game itself.
@@ -171,7 +215,7 @@ A finished chronicle adds one line by its lead to the finale's closing lines. En
 - Vale gives the orders and the stakes. Okoro gives the discoveries. Hale gives the other side of the argument, politely. Sol gives warmth. Maren gives doubt. ECHO gives the long view.
 - Every antagonist line should be something a decent person could say.
 - Win debriefs end on the next question. Lose debriefs are gentle and leave a way back.
-- Place names: Meridian Riverlands, Ashen Frontier, Amber Dunes, Verdant Crossing, Copper Basin, Obsidian Highlands, Frontier Expanse. Things: the Lattice, the Keystone, the Crown, the Basin relay, the Builders, the Wardens, the Pact.
+- Place names: Meridian Riverlands, Ashen Frontier, Amber Dunes, Verdant Crossing, Copper Basin, Obsidian Highlands, Frontier Expanse, Frostmere, Ember Crown, the Coral Isles. Things: the Lattice, the Keystone, the Crown, the Basin relay, the Builders, the Wardens, the Pact.
 
 ## Checks
 

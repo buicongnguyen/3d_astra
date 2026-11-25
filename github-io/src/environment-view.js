@@ -385,7 +385,7 @@ export class EnvironmentView {
     const from = lake.inner + 0.8, to = lake.r - 0.6;
     for (const side of [-1, 1]) {
       const v = side * (f.half - 0.4);
-      for (let u = from; u <= to + 0.01; u += (to - from) / 4) {
+      for (let u = from; u <= to + 0.01; u += (to - from) / (lake.r < 12 ? 2 : 4)) { // a small pond (W9 snow): three poles a side
         piece(new THREE.CylinderGeometry(0.15, 0.17, 1.1, 6), wood, u, 0.45, v, 1, 1, 1);
         piece(new THREE.CylinderGeometry(0.17, 0.17, 0.32, 6), band, u, 0.95, v, 1, 1, 1);
         piece(new THREE.ConeGeometry(0.19, 0.18, 6), band, u, 1.2, v, 1, 1, 1);

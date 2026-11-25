@@ -378,10 +378,10 @@
   },
   "snowfield": {
     "name": "Frostmere",
-    "blurb": "A frozen lake: slow ice roads to the ruin",
+    "blurb": "Frozen ponds, slow ice roads, a ruin terrace",
     "size": 160,
     "river": false,
-    "offset": 24,
+    "offset": 16,
     "biome": "snow",
     "symmetry": "quad",
     "centrepiece": "ruins",
@@ -390,19 +390,25 @@
     "rocks": [],
     "roads": [],
     "deposits": [
-      ["alloy", -36, 0, 3500],
-      ["energy", -36, 6, 2500],
+      ["alloy", -34, 12, 3500],
+      ["energy", -12, 34, 2500],
       ["alloy", -14, 52, 2400],
       ["alloy", -66, 22, 2400],
-      ["alloy", -40, 36, 1400, "outcrop"]
+      ["alloy", -40, 36, 1400, "outcrop"],
+      ["alloy", -26, 22, 2500],
+      ["energy", -46, 14, 2000],
+      ["alloy", -20, 64, 2500]
     ],
     "plateaus": [
-      {"shape": "disc", "x": 0, "z": 0, "r": 10, "ramps": [{"angle": 45, "width": 6}, {"angle": 135, "width": 6}, {"angle": 225, "width": 6}, {"angle": 315, "width": 6}]},
+      {"shape": "disc", "x": 0, "z": 0, "r": 10, "ramps": [{"angle": 0, "width": 6}, {"angle": 90, "width": 6}, {"angle": 180, "width": 6}, {"angle": 270, "width": 6}]},
       {"shape": "rbox", "x": 0, "z": 62, "w": 24, "d": 12, "corner": 3, "mirror": true, "ramps": [{"side": "north", "at": -5, "width": 7}, {"side": "north", "at": 5, "width": 7}]},
       {"shape": "rbox", "x": 62, "z": 0, "w": 12, "d": 24, "corner": 3, "mirror": true, "ramps": [{"side": "west", "at": -5, "width": 7}, {"side": "west", "at": 5, "width": 7}]}
     ],
     "lakes": [
-      {"x": 0, "z": 0, "r": 27, "island": 14, "fords": [{"angle": 45, "width": 8}, {"angle": 135, "width": 8}, {"angle": 225, "width": 8}, {"angle": 315, "width": 8}]}
+      {"x": 40, "z": 0, "r": 9, "fords": [{"angle": 0, "width": 5}, {"angle": 90, "width": 5}, {"angle": 180, "width": 5}, {"angle": 270, "width": 5}]},
+      {"x": -40, "z": 0, "r": 9, "fords": [{"angle": 0, "width": 5}, {"angle": 90, "width": 5}, {"angle": 180, "width": 5}, {"angle": 270, "width": 5}]},
+      {"x": 0, "z": 40, "r": 9, "fords": [{"angle": 0, "width": 5}, {"angle": 90, "width": 5}, {"angle": 180, "width": 5}, {"angle": 270, "width": 5}]},
+      {"x": 0, "z": -40, "r": 9, "fords": [{"angle": 0, "width": 5}, {"angle": 90, "width": 5}, {"angle": 180, "width": 5}, {"angle": 270, "width": 5}]}
     ]
   },
   "volcano": {
