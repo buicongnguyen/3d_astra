@@ -24,7 +24,7 @@ Status: todo / doing / done (commit).
 | W10 | Defence mode: more maps, enemy variety, commander abilities shown in waves, Endless leaderboard (local) | Defence 6.2 | | todo |
 | W11 | Multiplayer: 1v1 over WebRTC with lockstep (the sim is deterministic and hashed), room code to share, no server of our own beyond signalling; then co-op vs AI | Multiplayer 1.2 | | todo (owner decision: signalling service) |
 | W12 | Audio: SFX pass (weapon families, impacts by armour, UI clicks), mix ducking for voices | Audio 6.0 | | done (claude/voices): metal impacts, infantry falls, 6 new weapon voices, 13 ability casts, UI clicks, eco voice caps, voice ducking |
-| W13 | Phone HUD chrome ~35 % -> under 30 %, minimap side choice on phones, left-handed layout, two-finger camera twist | UI phone 7.3, Controls 6.9, Accessibility 6.9 | | todo |
+| W13 | Phone HUD chrome ~35 % -> under 30 %, minimap side choice on phones, left-handed layout, two-finger camera twist | UI phone 7.3, Controls 6.9, Accessibility 6.9 | | done on claude/phone-hud: HUD 12-28 % at 390x844 / 844x390 (was 16-33 %, 35-38 % with a notice), notices settle to one line, minimap side + Left hand in Settings, two-finger twist; not merged. Notes below. |
 | W14 | Small fixes from audits: lake fords slow units, Page Up/Down in help, landscape word breaks | Polish 7.1 | | done (claude/small-fixes): unreachable build sites red with the reason, lake fords slow (0.6), no mid-word breaks (layout-f checks), help lists Page Up/Down/G/Esc/?, Field Guide 3D view fits, rings and crystals on plateau tops |
 
 ## Order
@@ -40,6 +40,20 @@ Status: todo / doing / done (commit).
 - Extra (not a gate): ai-census Highlands at Fast/Relentless (Field vs Field): before 1 timeout of 10 (Relentless veil:wardens), after 1 of 10 (Fast ashfall:meridian).
 - Golden pins that move (all Fast/Relentless, AI play changed by W8; re-record): skirmish `riverlands x2 fast` 180 9b7b7eda, 300 8362467d, end "victory 270" (was running), reloaded 300 8362467d; `highlands x2 relentless coalition` 180 02b62956, 300 a63d7701, reloaded 300 a63d7701; `basin x3 fast` 180 f9ea053a, 300 20eda0b2, reloaded 300 20eda0b2; expanded `veil` (fast) 300 2b818975, 500 099ade0f; r4p1 `fast` 180 c3e66257, 420 55bd6c80. The 60 s points stay (no attack yet).
 - Found, not fixed (would move Normal pins): `nav.nearest` takes and returns grid cells, but the AI passes world metres and reads `.x` (aiRallyPoint, aiFormed, the flank waypoint). The W8 flank path converts properly; the older paths are left as they were.
+
+## W13 notes (2026-11-25)
+- Measure: `tests/lib/hud-coverage.mjs`, run in the page: every rendered element except the battlefield canvas paints a 4 px grid; a background counts by its alpha (gradients by their most opaque stop), icons / images / the minimap fully over their box, text over its line boxes, scaled by opacity; full-screen layers are left out. Before/after, notice line empty (start notice on top in brackets, before only):
+
+| Viewport | Nothing selected | Mixed army | Command core | Defence |
+|---|---|---|---|---|
+| 390x844 | 16.2 (20.7) -> 12.1 | 30.4 (35.0) -> 23.9 | 32.8 (37.3) -> 20.0 | 19.2 (21.3) -> 14.2 |
+| 844x390 | 17.1 (21.6) -> 14.2 | 32.5 (37.1) -> 27.8 | 33.4 (37.9) -> 27.7 | 23.7 (26.7) -> 15.3 |
+| 667x375 | 25.1 (31.0) -> 18.5 | 45.4 (51.3) -> 36.3 | 46.1 (52.1) -> 36.1 | 27.5 (29.9) -> 19.5 |
+
+  A two-line routine notice adds 4.5 % fresh and 3.0 % once it settles (667x375: 6.0 -> 3.9). Left hand measures the same within 0.2 (Defence slightly less). 667x375 with a selection stays over 30 %: its 236 x 214 side dock alone is a fifth of the screen; `tests/phone-hud.mjs` asserts every state under 30 % at 390x844 and 844x390, and at 667x375 each state under 40 % with the four-state mean under 30 %. The next lever there would be a shorter landscape dock (two tile rows instead of chips + orders + two tile rows), a layout change for the owner to see first.
+- What changed: the Walnut top-bar slab removed on phones (the pills of round 3 were meant to stand alone), glass dock and pills (`--slim-glass` 0.58, `--slim-pill` 0.84; buttons stay solid), 48 px landscape touch buttons, a building's portrait card without the tab row (Map + flag in its heading row), settling notices. Nothing hidden, no new sub-menu, every tap 44 px.
+- Settings: `minimapSide` (left / right, now also on phones) and `handedness` (right / left; choosing Left also sets the minimap right). Defence keeps its centred HUD in both hands apart from the minimap side.
+- Twist: `S.cameraTwist` (radians, session only) on top of Settings -> Camera -> Turn in `app/frame.js`; 15 degree dead zone, 60 px minimum span (`src/touch-controls.js` twistStep); reset by a new match or a Turn change; ignored in Defence.
 
 ## W14 notes (2026-11-25)
 - Lake fords: only Mirror Lake has lakes, so Skirmish (difficulty bot 1v1 12/12/11/11, 1v2 7/2/0/0 before and after), Defence and every golden pin are unchanged; Mirror Lake's objective bot still wins gold (294 -> 318 s, lost 4 -> 0), the generic bot is still holding at 485 s (lost 4 -> 6). No pin needs re-recording.

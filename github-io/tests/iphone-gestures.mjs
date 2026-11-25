@@ -7,7 +7,7 @@
 //      no history entries a back swipe could step through.
 // Runs in Playwright WebKit with an iPhone device profile (Chromium where WebKit is not installed, as on CI) at
 // 390x844 and 844x390, in a skirmish (nothing, a mixed group with workers, an ability group, the HQ, the Map tab)
-// and in Defence (nothing, a tower, the tower's dock). Desktop emulation cannot run iOS's own gestures: this checks
+// and in Defence (nothing, a tower, the tower's dock), right- and left-handed (W13). Desktop emulation cannot run iOS's own gestures: this checks
 // the page's side of the contract; a real iPhone is still the final word.
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
@@ -68,12 +68,18 @@ const BOTTOM = (strip) => {
 };
 
 await suite(`iphone-gestures (${engine})`, async () => {
+  // W13: both hands. Left hand mirrors the phone controls and moves the minimap right (phone-handed.css).
+  for (const hand of ['right', 'left'])
   for (const [label, size, device] of [['portrait', { width: 390, height: 844 }, 'iPhone 14'], ['landscape', { width: 844, height: 390 }, 'iPhone 14 landscape']]) {
     for (const mode of ['skirmish', 'defence']) {
       const profile = devices[device];
       const context = await browser.newContext(useWebkit
         ? { ...profile, viewport: size, screen: size }
         : { viewport: size, isMobile: true, hasTouch: true, deviceScaleFactor: 2, userAgent: profile.userAgent });
+      if (hand === 'left') await context.addInitScript(() => {
+        const key = 'frontier-command.settings.v1', s = JSON.parse(localStorage.getItem(key) || '{"version":1}');
+        localStorage.setItem(key, JSON.stringify({ ...s, version: 1, handedness: 'left', minimapSide: 'right' }));
+      });
       const page = await context.newPage();
       const errors = [];
       page.on('pageerror', (e) => errors.push(e.message));
@@ -107,8 +113,8 @@ await suite(`iphone-gestures (${engine})`, async () => {
         }, state);
         await page.waitForTimeout(400);
         const r = await page.evaluate(BOTTOM, STRIP);
-        await shot(page, `iphone-gestures-${engine.toLowerCase()}-${label}-${mode}-${state}`);
-        const where = `${engine} ${label} ${mode} ${state}`;
+        await shot(page, `iphone-gestures-${engine.toLowerCase()}-${hand}-${label}-${mode}-${state}`);
+        const where = `${engine} ${hand} hand ${label} ${mode} ${state}`;
         assert.ok(r.zone >= STRIP, `${where}: the strip is at least ${STRIP} px`);
         assert.deepEqual(r.bad, [], `${where}: nothing in the bottom ${r.zone} px drags or scrolls sideways`);
         assert.deepEqual(r.rows, [], `${where}: sideways rows and the minimap end above the bottom ${r.zone} px`);
@@ -136,7 +142,8 @@ await suite(`iphone-gestures (${engine})`, async () => {
       assert.deepEqual(history1, history0, `${label} ${mode}: no history entries or URL changes during play`);
       assert.equal(context.pages().length, 1, 'no popup or tab opened');
       assert.deepEqual(errors, []);
-      console.log(`${engine} ${label} ${mode}: bottom strip clear (${states.join(', ')}), side guard ${EDGE} px, history unchanged (${history0.length})`);
+      if (hand === 'left') assert.equal(await page.evaluate(() => document.documentElement.classList.contains('left-handed')), true, 'the left-hand layout is on');
+      console.log(`${engine} ${hand} hand ${label} ${mode}: bottom strip clear (${states.join(', ')}), side guard ${EDGE} px, history unchanged (${history0.length})`);
       await context.close();
     }
   }

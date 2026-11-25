@@ -188,6 +188,13 @@ export function setupInputPointer(S, A) {
         );
         if (ratio !== 1) S.view.zoomBy(S.view.zoom * (ratio - 1) * (S.settings.zoomSpeed || 1)); // Settings → Camera → Zoom sensitivity
       },
+      // W13: a two-finger twist turns the camera about the focus (on top of Settings → Camera → Turn; app/frame.js).
+      // Fingers turning clockwise on screen turn the map clockwise with them. Frontier Defence frames its roads itself.
+      twist: (radians) => {
+        if (S.sim?.defence) return;
+        // A larger yaw turns the picture clockwise on screen (checked in tests/phone-hud.mjs), as the fingers turned.
+        S.cameraTwist = (((S.cameraTwist || 0) + radians) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+      },
     });
     canvas.addEventListener("contextmenu", (e) => {
       e.preventDefault();

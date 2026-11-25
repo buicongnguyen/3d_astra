@@ -1,0 +1,78 @@
+/* W13 (2026-11-25): less HUD chrome on phones. Loaded last (after hud-contrast.css); every rule is scoped to a phone
+   in a match (:root.compact-ui:not(.in-briefing)), so the desktop HUD and the menus are untouched. Nothing is hidden
+   or grouped (owner rules: no hidden buttons, no two-tap actions, no More menus): the same buttons in the same places,
+   with less slab around them. Measured by tests/lib/hud-coverage.mjs (the share of the screen the HUD paints, a
+   translucent panel counting by its alpha); before/after in docs/aaa/ROADMAP_TO_AAA_2026-11-25.md "W13 notes".
+     1. The top bar is pills again: the Walnut theme had put a full-width wood slab back behind them.
+     2. Panels are glass the map shows through: the dock, the top pills and the notice line; buttons keep solid faces.
+     3. A building's card loses its Selection / Map tab row: Map and the objectives flag stand in the card's
+        heading row, as they already did for units (Selection is the tab that is open; Map is still one tap).
+     4. The notice line settles: a routine notice shows in full, then after 2.5 s shrinks to one line on lighter glass
+        (app/hud.js adds .settled); alerts stay in full. */
+
+:root.compact-ui:not(.in-briefing) {
+  /* Panel glass (the dock, the minimap frame) and pill glass (top pills, notices): warm walnut ink, the map shows through. */
+  --slim-glass: rgba(52, 36, 23, 0.58);
+  --slim-pill: rgba(70, 50, 33, 0.84);
+  --slim-settled: rgba(58, 41, 27, 0.58);
+}
+:root.compact-ui[data-ui-theme="dark"]:not(.in-briefing) {
+  --slim-glass: rgba(9, 23, 36, 0.58);
+  --slim-pill: rgba(9, 23, 36, 0.84);
+  --slim-settled: rgba(9, 23, 36, 0.58);
+}
+
+/* ---- 1. Top bar: no slab; the pills alone ---- */
+html:root.compact-ui[data-ui-theme]:not(.in-briefing) #app .topbar.topbar { background: none !important; border-bottom-color: transparent !important; box-shadow: none !important; }
+:root.compact-ui:not(.in-briefing) .topbar::before,
+:root.compact-ui:not(.in-briefing) .topbar::after { background: var(--slim-pill); }
+@media (min-aspect-ratio: 1.35) {
+  :root.compact-ui:not(.in-briefing) .topbar :is(.resource-bar, .top-actions) { background: var(--slim-pill); }
+}
+
+/* Landscape: the six touch buttons are 48 px wide (were 56-57 px); labels still fit at 11 px. */
+@media (min-aspect-ratio: 1.35) {
+  :root.compact-ui:not(.in-briefing) { --rail-width: 48px; }
+}
+@media (min-aspect-ratio: 1.35) and (min-width: 840px) {
+  :root.compact-ui:not(.in-briefing) { --row-width: min(calc(6 * 48px + 5 * 4px), calc(100vw - 2 * 242px)); }
+}
+
+/* ---- 2. Glass panels: the dock and its inner panels ---- */
+html:root.compact-ui[data-ui-theme]:not(.in-briefing) #app .bottom-dock .command-deck { background: var(--slim-glass) !important; }
+html:root.compact-ui[data-ui-theme]:not(.in-briefing) #app .bottom-dock .command-deck > .panel { background: none !important; }
+/* Text that sits straight on the glass (a building's or a unit's heading and stats) gets a backing of its own. */
+:root.compact-ui:not(.in-briefing) .bottom-dock .command-deck #selection-info:not(:empty) { background: var(--slim-pill); }
+
+/* ---- 3. A building: Map and the flag in the heading row, no tab row (portrait) ---- */
+@media (max-width: 540px) and (orientation: portrait) {
+  :root.compact-ui.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"]:has(.selection-panel.has-entity) {
+    --tabs-height: 0px;
+    --unit-tools-bottom: calc(var(--safe-bottom) + var(--dock-height) - 46px);
+    & .selection-panel #selection-info { margin-right: 96px; }
+    & .selection-panel #selection-info .sel-portrait { display: none; }
+    & .selection-panel #selection-info .entity-details { grid-template-columns: 0 minmax(0, 1fr) auto; column-gap: 2px; }
+    & .selection-panel .unit-metrics { column-gap: 4px; }
+    & .selection-panel .unit-metrics > div { display: grid; justify-items: start; align-content: start; gap: 0; line-height: 12px; }
+    & #dock-tabs { left: auto; right: calc(var(--hud-right) + 46px); bottom: var(--unit-tools-bottom); width: 44px; height: 44px; z-index: 7; }
+    & #dock-tabs [data-dock="selection"], & #dock-tabs [data-dock="map"] .icon { display: none; }
+    & #dock-tabs [data-dock="map"] { width: 44px; padding-inline: 1px; justify-content: center; }
+    & #mission-toggle { bottom: var(--unit-tools-bottom); z-index: 7; }
+    &.objectives-open #mission-objectives { bottom: calc(var(--unit-tools-bottom) + 48px); }
+    & #idle-chips { bottom: calc(var(--dock-height) + var(--safe-bottom) + var(--hud-pad)); }
+  }
+}
+
+/* ---- 4. Notices: lighter glass; a routine notice settles to one line ---- */
+:root.compact-ui:not(.in-briefing) #stage > #notice {
+  background: linear-gradient(90deg, var(--kit-success) 0 var(--kit-warning-rail), transparent var(--kit-warning-rail)), var(--slim-pill) !important;
+  transition: background-color 0.3s;
+}
+:root.compact-ui:not(.in-briefing) #stage > #notice:is(.alert, .warning, .danger) {
+  background: linear-gradient(90deg, var(--kit-warning) 0 var(--kit-warning-rail), transparent var(--kit-warning-rail)), var(--slim-pill) !important;
+}
+:root.compact-ui:not(.in-briefing) #stage > #notice.settled:not(.warning) {
+  /* One line ending in "…" (a line clamp let the second line peek out of the bottom padding). */
+  display: block !important; white-space: nowrap !important; text-overflow: ellipsis; overflow: hidden;
+  background: linear-gradient(90deg, var(--kit-success) 0 var(--kit-warning-rail), transparent var(--kit-warning-rail)), var(--slim-settled) !important;
+}

@@ -135,7 +135,11 @@ jobs:
           - name: maps
             scripts: stages corners new-game boundary-fx
           - name: mobile
-            scripts: mobile mobile-controls mobile-gestures iphone-gestures fullscreen
+            scripts: mobile mobile-controls mobile-gestures fullscreen
+          # 2026-11-25 (W13): the phone HUD (coverage, Hand, minimap side, two-finger twist) and the iPhone gesture
+          # rules, which now run in both hands (moved here from "mobile").
+          - name: phone-hud
+            scripts: phone-hud iphone-gestures
           - name: scenes
             scripts: story
           - name: layout-desktop

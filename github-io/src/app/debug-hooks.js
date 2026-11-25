@@ -19,6 +19,11 @@ export function setupDebugHooks(S, A) {
         return S.selected;
       },
       select: A.setSelection,
+      // W13: the notice line (a routine notice, an alert, clear) and the touch camera twist (radians, session only).
+      notice: (text) => A.notice(text),
+      alertNotice: (text) => A.alert(text),
+      clearMessages: () => A.clearMessages(),
+      get cameraTwist() { return S.cameraTwist || 0; },
       restart: A.restart,
       // Skirmish rules for the next match built (createSim passes S.rules to the Simulation; round 2).
       // Tests set them before restart() and clear them after (undefined or null).

@@ -37,18 +37,22 @@ export function setupPreferences(S, A) {
     // Phase 2 display choices that are pure CSS: reading-text size and the desktop minimap corner.
     root.dataset.textSize = S.settings.textSize || "s";
     root.classList.toggle("minimap-right", S.settings.minimapSide === "right");
+    // W13: the mirrored phone layout (phone-handed.css).
+    root.classList.toggle("left-handed", S.settings.handedness === "left");
   }
 
   // The sheet applies every change at once (a slider up to once a frame), so the costly steps run only when a
   // setting they read changed: re-translating the page on a language change, re-tinting the world when
   // anything but the cheap keys below changed.
   const CHEAP = new Set(["masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "voices", "muted", "quietMode", "music", "panSpeed", "edgeScroll", "confirmRestart", "autocast", "groupPace", "showFps",
-    "cameraAngle", "cameraTurn", "zoomSpeed", "minimapSide", "alerts", "frameCap", "haptics", "textSize"]);
+    "cameraAngle", "cameraTurn", "zoomSpeed", "minimapSide", "handedness", "alerts", "frameCap", "haptics", "textSize"]);
   let applied = null, storageWarned = false;
   function applyPreferences(value) {
     const before = applied;
     applied = S.settings = value;
     const changed = (key) => !before || before[key] !== value[key];
+    // A Turn picked in the sheet or with Page Up / Page Down starts from no twist (W13).
+    if (before && changed("cameraTurn")) S.cameraTwist = 0;
     syncMotion();
     if (changed("language")) {
       localization.apply(S.settings.language);
