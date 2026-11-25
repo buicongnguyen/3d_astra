@@ -83,6 +83,15 @@ export function setupFrame(S, A) {
     S.pings.push({ x: event.x, z: event.z, at: S.sim.time });
   }
 
+  // The river bridges of the view follow sim.terrain.blown in a field mission (one check per change).
+  function syncMissionBridges() {
+    const env = S.view?.environment, blown = S.sim.terrain.blown;
+    if (!env?.bridges) return;
+    const key = [...(blown || [])].join(",");
+    if (env.missionBlown === key) return;
+    env.missionBlown = key;
+    for (const [x, bridge] of env.bridges) bridge.visible = !blown?.has(x);
+  }
   function startCameraPan(x, z) {
     if (!S.view) return;
     if (S.view.reducedMotion?.matches) { S.view.focusOn(x, z); return; }
@@ -177,6 +186,8 @@ export function setupFrame(S, A) {
       else if ((S.saveClock += dt) >= AUTOSAVE_SECONDS) A.autosave();
     }
     A.missionUI.tick(running ? dt : 0);
+    // W9: a bridge a mission script blew (sim/missions.js blowBridge) goes from the river, as a Defence demolition does.
+    if (S.sim.crossings && !S.sim.defence) syncMissionBridges();
     A.sceneTick?.(dt);
     if (!Z.modalType) {
       const speed = dt * S.view.zoom * 0.65 * (S.settings.panSpeed || 1);

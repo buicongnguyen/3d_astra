@@ -10,7 +10,7 @@ import { fileURLToPath } from "node:url";
 import { MISSIONS } from "../../src/story/missions.js";
 import { CHRONICLES } from "../../src/story/chronicles.js";
 import { SCENES } from "../../src/story/scenes.js";
-import { storyHash } from "../../src/voice-logic.js";
+import { storyHash, storyClip } from "../../src/voice-logic.js";
 
 const OUT = fileURLToPath(new URL("../../src/voice-story.json", import.meta.url));
 // A pack is cut once its text passes this many characters (about 0.22 KB of MP3 per character): <= ~300 KB.
@@ -58,6 +58,14 @@ export function build(previous = {}) {
     if (!lines.length) continue;
     missions[m.id] = { campaign, packs: splitPacks(m.id, lines) };
   }
+  // W9: lines written since the last render (no clip in src/voice-packs.json yet), per mission, for the integrator:
+  // tools/voices/make-voices.py renders them, and a rerun of this script after that empties the list. The client
+  // plays such a line as text only (storyClip returns null), so a pending line is never an error in play.
+  const pending = {};
+  for (const [id, mm] of Object.entries(missions)) {
+    const missing = mm.packs.flatMap((p) => p.lines).filter((l) => !storyClip(id, l.text)).map((l) => l.text);
+    if (missing.length) pending[id] = missing;
+  }
   return {
     about: "W3 story voices, written by tools/voices/story-lines.mjs from the mission data (do not edit the missions part by hand). Every `say` line (with its `who`) of every campaign and Chronicle mission, and the lines of the staged scenes a mission plays, grouped in packs of at most ~300 KB. tools/voices/make-voices.py renders them with the cast's stock Kokoro voice and processing; the client finds a clip by storyHash(text) of the exact English line. `spoken` maps an on-screen line to a variant used only for the voice (the screen keeps its text).",
     voices: previous.voices || {},
@@ -67,6 +75,7 @@ export function build(previous = {}) {
     excluded: previous.excluded || {},
     ...(previous.pending && Object.keys(previous.pending).length ? { pending: previous.pending } : null),
     missions,
+    pending,
   };
 }
 

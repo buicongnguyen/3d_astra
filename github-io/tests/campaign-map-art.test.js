@@ -21,13 +21,11 @@ test("every mission has a README anchor on both paintings, and the nodes sit exa
     // Same horizontal place on both paintings (README: "the same horizontal mission positions").
     assert.equal(a.wide[0], a.strip[0], m.id);
   }
-  // README spot checks: #1, #8 and #17.
-  // Map variety: Act 1 holds seven relays since Mirror Lake and Canyon Run, 13.3% apart from 10% (README had m01 at 12, 82.5).
-  assert.deepEqual(MAP_ANCHORS["m01-first-light"].wide, [10, 78]);
-  // Campaign C6: Act 2 holds seven missions since Gun Hill, so its relays sit 13.3% apart (README had 15.6%).
-  assert.deepEqual(MAP_ANCHORS["m06b-wings-over-copper"].strip, [63.3, 49.5]);
-  // Act 3 holds seven missions since Crown Hill (m10b): 13.3% apart, m12 on the upper row.
-  assert.deepEqual(MAP_ANCHORS["m12-frontiers-end"].strip, [90, 18]);
+  // Spot checks. W9 (2026-11-26): 25 relays snake over four rows of seven (13.9% by 24.7%): m01 bottom left, the
+  // Keystone (m12) at the west end of the top row's middle four (the README's band layout had m01 at 12, 82.5 and m12 at 90, 18).
+  assert.deepEqual(MAP_ANCHORS["m01-first-light"].wide, [8.3, 86.6]);
+  assert.deepEqual(MAP_ANCHORS["m06b-wings-over-copper"].strip, [50, 61.9]);
+  assert.deepEqual(MAP_ANCHORS["m12-frontiers-end"].strip, [22.2, 12.5]);
   assert.deepEqual(MAP_ART, { wide: { w: 2560, h: 1440 }, strip: { w: 2560, h: 900 } });
 });
 

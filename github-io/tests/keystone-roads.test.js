@@ -72,11 +72,10 @@ test("old progress loads unchanged and clearing m11c is recorded like any missio
 
 test("the campaign map puts m11c in Act 3 (six nodes since R3-H's m11d) with 15% spacing and a node inside the board", () => {
   const act3 = MISSIONS.filter((m) => m.act === 3).map((m) => MAP_NODES[m.id]);
-  // Seven since Crown Hill (m10b, campaign C6), eight since The Ember Roost (m10e, W9): 8% apart at least (eight relays
-  // leave no room for 13% across the band); the 44 px phone rule is in campaign-map-art.test.js.
-  assert.equal(act3.length, 8);
-  for (let i = 1; i < act3.length; i++) assert.ok(Math.abs(act3[i].x - act3[i - 1].x) >= 8);
-  assert.ok(act3.every((p) => p.x >= 10 && p.x <= 90 && p.y <= 84));
+  // Nine since The Water Road (m09b, W9) and The Ember Roost (m10e): a column (13.9%) or a row (24.7%) apart; the 44 px phone rule is in campaign-map-art.test.js.
+  assert.equal(act3.length, 9);
+  for (let i = 1; i < act3.length; i++) assert.ok(Math.abs(act3[i].x - act3[i - 1].x) >= 13.8 || Math.abs(act3[i].y - act3[i - 1].y) >= 24.6);
+  assert.ok(act3.every((p) => p.x >= 8 && p.x <= 92 && p.y <= 87));
 });
 
 test("a player who crews nothing loses, and the lent Gunners pin a Scrapper group in the Standard bot run", () => {

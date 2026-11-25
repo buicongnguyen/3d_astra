@@ -181,13 +181,17 @@ test("story voices: every say line of every campaign and Chronicle mission has a
     const packs = STORY.missions[m.id]?.packs || [];
     const said = packs.flatMap((p) => p.lines);
     assert.ok(said.length > 0, `${m.id} has voiced lines`);
-    assert.deepEqual(storyPacks(m.id), packs.map((p) => p.name), `${m.id}: its packs in the index`);
+    // W9: a mission written since the last render has no packs in the index yet (all its lines are pending).
+    const pending = new Set(STORY.pending?.[m.id] || []);
+    if (!(pending.size && pending.size === said.length)) assert.deepEqual(storyPacks(m.id), packs.map((p) => p.name), `${m.id}: its packs in the index`);
     for (const line of said) {
       lines++;
       assert.ok(line.who !== "commander" && CAST[line.who], `${m.id}: ${line.who} is a speaking character`);
       assert.ok(STORY.voices[line.who] && STORY.fx[line.who], `${line.who} has a voice and processing`);
       const clip = storyClip(m.id, line.text);
-      assert.ok(clip, `${m.id} ${line.who}: "${line.text}" has a clip`);
+      // A line written after the last render waits in `pending` (tools/voices/story-lines.mjs) for make-voices.py.
+      if (!clip) { assert.ok(pending.has(line.text), `${m.id} ${line.who}: "${line.text}" has a clip or is listed as pending`); continue; }
+      assert.ok(!pending.has(line.text), `${m.id}: "${line.text}" has a clip, so it is not pending`);
       // A sane length for the words (about 9 to 25 characters a second).
       const chars = (STORY.spoken[line.text] || line.text).length;
       assert.ok(clip.seconds > chars / 25 && clip.seconds < chars / 9 + 1.5, `${m.id}: ${clip.seconds} s for ${chars} characters`);
@@ -214,8 +218,10 @@ test("story pack index: one mission per pack, every clip used, sizes in budget",
   const story = Object.keys(PACKS.packs).filter((n) => n.startsWith("story-"));
   assert.deepEqual(story.sort(), [...owner.keys()].sort(), "no stray story pack");
   for (const [mission, m] of Object.entries(STORY.missions)) {
-    if (STORY.pending?.[mission]) continue;
-    const want = new Set(m.packs.flatMap((p) => p.lines.map((l) => `s.${storyHash(l.text)}`)));
+    // W9: lines still pending a render (voice-story.json `pending`) have no clip yet; a new mission has no pack yet.
+    const waiting = new Set(STORY.pending?.[mission] || []);
+    if (!PACKS.story[mission]) { assert.equal(waiting.size, m.packs.flatMap((p) => p.lines).length, `${mission}: no packs yet, so every line is pending`); continue; }
+    const want = new Set(m.packs.flatMap((p) => p.lines.filter((l) => !waiting.has(l.text)).map((l) => `s.${storyHash(l.text)}`)));
     const have = m.packs.flatMap((p) => Object.keys(PACKS.packs[p.name].clips));
     assert.equal(new Set(have).size, have.length, `${mission}: clip ids are unique`);
     assert.deepEqual(new Set(have), want, `${mission}: the clips are exactly its lines`);

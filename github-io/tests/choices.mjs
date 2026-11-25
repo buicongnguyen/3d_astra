@@ -58,7 +58,8 @@ await suite("choices: campaign map, choice card and epilogue", async () => {
     assert.deepEqual(mid.medals, ["medal-gold", "medal-silver", "medal-bronze", "medal-gold", "medal-silver"]);
     assert.deepEqual(mid.marks, ["mercy", "firm"], "the decisions sit on missions 3 and 5");
     assert.equal(mid.chips, 2, "the list shows them too");
-    assert.equal(mid.next, "5", "the sixth relay (The Verdant Pact) is next");
+    // W9: Loose Crystal (m03b, optional) sits at index 5 now, and the next story mission skips it: Three-Way Dunes at 6.
+    assert.equal(mid.next, "6", "the seventh relay (Three-Way Dunes, after the optional Loose Crystal) is next");
     await tap('.cmap-node[data-map-stage="2"]');
     assert.equal(await page.locator('[data-stage="2"]').getAttribute("aria-current"), "true", "a relay node picks its mission");
     assert.match(await page.locator(".map-heading h1").innerText(), /Mission 3/);

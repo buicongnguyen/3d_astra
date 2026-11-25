@@ -55,7 +55,8 @@ export function routeLegs(points) {
   });
 }
 // Act plates: Act 3 in the painting's calm top-left corner, Acts 2 and 1 at the left edge of their bands.
-const ACT_AT = { 3: 1.6, 2: 33.5, 1: 68.5 };
+// W9: the relays snake over four rows (story/campaign-map.js); Act 2 and Act 1 plates sit in the gaps left of the rows.
+const ACT_AT = { 3: 1.6, 2: 46, 1: 68.5 };
 
 // The archive under the map (plan C5.3 and C7): achievements, the veteran squad and the commanders met, in one
 // block with no sub-menus; New Game+ is a plain button once every main mission is cleared.
