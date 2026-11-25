@@ -331,7 +331,7 @@ export function setupMeta(S, A) {
 
   function info() {
     const list = all();
-    return { replay: S.replay ? { status: S.replay.status, paused: S.replay.paused, speed: S.replay.speed, ticks: S.sim.ticks, total: S.replay.replay.ticks } : null, replays: Object.keys(loadReplays()), history: history.map((e) => ({ ...e })), challenges: { ...challenges, today: dailyChallenges(challenges.day).map((c) => c.id) }, record: structuredClone(record), achievements: list.map((a) => ({ id: a.id, done: a.done, have: a.have, need: a.need })), done: list.filter((a) => a.done).length, total: ACHIEVEMENTS.length, last, toast: toast && !toast.hidden ? toast.textContent : null };
+    return { replay: S.replay ? { status: S.replay.status, paused: S.replay.paused, speed: S.replay.speed, ticks: S.sim.ticks, total: S.replay.replay.ticks, follow: S.replay.follow ? { on: S.replay.follow.on, target: S.replay.follow.target && { x: S.replay.follow.target.x, z: S.replay.follow.target.z } } : null } : null, replays: Object.keys(loadReplays()), history: history.map((e) => ({ ...e })), challenges: { ...challenges, today: dailyChallenges(challenges.day).map((c) => c.id) }, record: structuredClone(record), achievements: list.map((a) => ({ id: a.id, done: a.done, have: a.have, need: a.need })), done: list.filter((a) => a.done).length, total: ACHIEVEMENTS.length, last, toast: toast && !toast.hidden ? toast.textContent : null };
   }
 
   Object.assign(A, { metaInfo: info, openRecords, metaToast: showToast });

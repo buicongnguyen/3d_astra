@@ -1801,7 +1801,9 @@
     "Road warden": "도로 수호자",
     "Stop 60 enemies in a Defence win": "승리한 방어전에서 적 60 저지",
     "Unbroken": "철벽",
-    "Win a Defence level losing no tower": "타워를 잃지 않고 방어전 레벨 승리"
+    "Win a Defence level losing no tower": "타워를 잃지 않고 방어전 레벨 승리",
+    "Follow action": "전투 따라가기",
+    "The camera follows the fighting, or your army": "카메라가 전투나 아군 부대를 따라갑니다"
   },
   "patterns": [
     [

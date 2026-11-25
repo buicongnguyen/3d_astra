@@ -1801,7 +1801,9 @@
     "Road warden": "Người gác đường",
     "Stop 60 enemies in a Defence win": "Chặn 60 kẻ địch trong một màn Phòng thủ thắng",
     "Unbroken": "Bất khả xâm phạm",
-    "Win a Defence level losing no tower": "Thắng một màn Phòng thủ không mất tháp nào"
+    "Win a Defence level losing no tower": "Thắng một màn Phòng thủ không mất tháp nào",
+    "Follow action": "Theo dõi giao tranh",
+    "The camera follows the fighting, or your army": "Camera đi theo trận đánh, hoặc theo quân của bạn"
   },
   "patterns": [
     [

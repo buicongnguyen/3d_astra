@@ -11,7 +11,8 @@
 //     reached with its own jump button at the top of the screen;
 //   - replays: a short real match (8 s of frames, a few orders) is stored with its command log; Watch in the
 //     history plays it back with the dock hidden and every command refused, x1 x2 x4 and pause in a 44 px bar,
-//     and it ends on the recorded hash ("matches the recorded match"); a replay from another version is listed
+//     and it ends on the recorded hash ("matches the recorded match"); Follow action (on by default) glides the
+//     camera to the action and a manual camera move pauses it until the toggle is tapped; a replay from another version is listed
 //     with the reason and no Watch button;
 //   - an achievement reached mid-match shows its toast at the top (taps pass through, never over the dock),
 //     and a scripted Skirmish win lists "Achievements earned" on the results screen.
@@ -214,6 +215,24 @@ await suite("meta", async () => {
     await page.keyboard.press("Space");
     await page.waitForFunction(() => { const r = window.__frontier.meta.info().replay; return r?.paused === true || r?.status !== "playing"; }, null, { timeout: TIMEOUT.step });
     const ranOut = await page.evaluate(() => window.__frontier.meta.info().replay?.status !== "playing");
+    // Follow action (re-score 2026-11-25b): on by default, a direct 44 px toggle on the bar; the camera glides to
+    // the action (no fight in this short match: the player's army, which marched away from the base). A manual
+    // camera move pauses follow; one tap on the toggle brings the camera back to the action.
+    const follow = page.locator('#replay-bar [data-replay="follow"]');
+    assert.equal(await follow.getAttribute("aria-pressed"), "true", `${viewport}: Follow action is on by default`);
+    assert.match(await follow.textContent(), /Follow action/, `${viewport}: the toggle says what it does`);
+    const onAction = () => page.waitForFunction(() => { const f = window.__frontier.meta.info().replay?.follow, v = window.__frontier.view.focus; return f?.on && f.target && Math.hypot(v.x - f.target.x, v.z - f.target.z) < 1.5; }, null, { timeout: TIMEOUT.step });
+    await onAction();
+    const army = await page.evaluate(() => { const s = window.__frontier.sim, a = s.own(0).filter((e) => e.kind === "unit" && e.type !== "worker"), hq = s.own(0).find((e) => e.type === "hq"), t = window.__frontier.meta.info().replay.follow.target; return { fromHq: Math.hypot(t.x - hq.x, t.z - hq.z), toArmy: Math.min(...a.map((e) => Math.hypot(e.x - t.x, e.z - t.z))) }; });
+    assert.ok(army.fromHq > 4 && army.toArmy < 16, `${viewport}: follow aims at the army, not the start: ${JSON.stringify(army)}`);
+    await page.evaluate(() => window.__frontier.view.pan(14, -10)); // a manual camera move (drag, keys, edge or minimap all move the focus)
+    await page.waitForFunction(() => window.__frontier.meta.info().replay?.follow?.on === false && document.querySelector('#replay-bar [data-replay="follow"]').getAttribute("aria-pressed") === "false", null, { timeout: TIMEOUT.step });
+    const moved = await page.evaluate(() => ({ x: window.__frontier.view.focus.x, z: window.__frontier.view.focus.z }));
+    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(true)))));
+    assert.deepEqual(await page.evaluate(() => ({ x: window.__frontier.view.focus.x, z: window.__frontier.view.focus.z })), moved, `${viewport}: the camera stays where the player put it`);
+    await o.tap('#replay-bar [data-replay="follow"]');
+    assert.equal(await follow.getAttribute("aria-pressed"), "true", `${viewport}: one tap turns follow back on`);
+    await onAction();
     if (!ranOut) {
       await o.tap('#replay-bar [data-speed="4"]');
       await o.tap('#replay-bar [data-replay="play"]');
