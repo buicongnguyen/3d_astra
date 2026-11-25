@@ -119,3 +119,16 @@ Model roster: model-roster.js defines a stable boot set and modelsForMatch. Worl
 Faction rules live in factions.js and balance.json.factions: typeFor, slotOf, unitRoster, buildable and resolvedTrains. Building entities keep resolved training lists. The default Meridian lists retain the original definition references, preserving snapshot slimming. Non-default faction maps are saved; missing maps load as Meridian. sim/traits.js supplies deterministic hooks for later faction packages.
 
 Faction gameplay (0.12.0): `src/sim/traits.js` holds the trait hooks (`salvage` on death, `roads` in `moveSpeed`, `selfrepair` and the Pylon and Waystation auras on a tick, `farsight` on spawn and the cloak refresh four times a second) and the per-team AI tempo (`paceFor`, `personality`). New state is created only when a faction uses it (`sim.zones` for burning ground, `sim.unlocks`, `sim.aiRaidFor`, and on entities `shotAt`, `cloaked`, `seenBy`, `shieldRate`, `markedUntil`), so an all-Meridian match serializes exactly as before and keeps its hash. A cloaked unit is hidden through `isVisible(e, team)` alone, which every renderer, the minimap, targeting and the fog-of-war sound rules already use; nothing else needs to know about cloaks. Abilities added in `src/sim/tactics.js`: timed (`rush`, `dash`, `brace`), aimed (`burnline`, which adds a zone) and targeted (`mark`). The client follows the factions of a match through `S.look` (`matchLook` in `src/factions.js`): the story mission in the campaign, or `{ factions }` in a skirmish, for team colours and building emblems. Enemy units cannot be selected; the hover label (desktop) or a tap with nothing selected (touch, shown in the notice line) names the unit and its faction.
+
+## Replay value storage (W6)
+
+Everything is local to the browser, read and written in try/catch (blocked storage lasts for the visit), cleaned on load, and never read by the simulation.
+
+| Key | Shape | Module |
+|---|---|---|
+| `frontier-record-v1` | `{ v: 1, skirmishWins, bigWins, relentlessWins, beaten: [faction], kites, dives, tamed, fieldRank, branchWins: [branch], earned: [achievementId], meta: { ach, gold, goldActs, sets } }`; a missing key reads as a fresh record (older profiles load as they are). Under 4 KB. | `src/meta/record.js` |
+| `frontier-challenges-v1` | `{ day: "YYYY-MM-DD", done: [challengeId], sets, setDay }`; another day's `done` is dropped on load. | `src/meta/challenges.js` |
+| `frontier-history-v1` | `[entry]`, newest first, at most 20 (about 6 KB). | `src/meta/history.js` |
+| `frontier-replays-v1` | `{ [historyId]: { v, save, app, at, options, ticks, hash, log: [[ticksSincePrevious, command]] } }`, the 3 newest, at most 200 KB each; the oldest goes when storage is full. A replay from another `app` version or `SAVE_VERSION` is refused with a message. | `src/meta/history.js`, `src/meta/replay.js` |
+
+The campaign's own achievements stay in `frontier-campaign-v2` (`earned`); the medal cosmetics are picked in the rank profile (`frontier-command.rank.v1`, `src/profile-rank.js`) and checked against `meta` above.

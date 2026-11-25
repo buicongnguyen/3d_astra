@@ -58,6 +58,8 @@ import "./phone-hud.css";
 import { registerOffline } from "./app/offline.js";
 import { setupCover } from "./app/cover.js";
 import { setupQuickBattle } from "./quick-battle.js";
+import { setupMeta } from "./meta-ui.js";
+import { setupReplay } from "./replay-ui.js";
 // The command console kit on every screen (round 3 kit pass): loaded after every other stylesheet.
 import "./kit-skin.css";
 import "./menu-pro.css";
@@ -66,6 +68,7 @@ import "./hud-contrast.css";
 import "./theme-switch.js";
 import { setupWildUi } from "./app/wild-ui.js";
 import { rulesForMap } from "./app/rules-store.js";
+import { rememberOptions } from "./meta/replay.js";
 
 renderShell();
 // S is the shared state; A is what each module offers the others (functions and widgets).
@@ -79,7 +82,9 @@ setupCover(A, S);
 // settled from the progress record (resolveMission, src/story/choices.js) before it starts.
 const createSim = () => {
   // Only a skirmish lets the player choose sides: Training (and the campaign) always command Meridian.
-  const sim = new Simulation({ factions: S.mission || S.playMode !== "skirmish" ? null : skirmishSides(S.playerFaction, S.enemyFaction, S.enemyCount, S.mapId), map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission ? resolveMission(S.mission, S.campaign) : null, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish", ...(S.playMode === "training" || !S.query || (S.query.has("test") && !S.query.has("rich")) ? (!S.mission && S.playMode === "skirmish" && rulesForMap(S.rules, S.mapId) ? { rules: rulesForMap(S.rules, S.mapId) } : {}) : { rules: { ...(!S.mission && S.playMode === "skirmish" ? rulesForMap(S.rules, S.mapId) : null), economy: "rich" } }) });
+  // W6: the options are remembered beside the match (meta/replay.js), so a finished match can be replayed.
+  const options = { factions: S.mission || S.playMode !== "skirmish" ? null : skirmishSides(S.playerFaction, S.enemyFaction, S.enemyCount, S.mapId), map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, playerBonus: S.bonus, mission: S.mission ? resolveMission(S.mission, S.campaign) : null, difficulty: S.settings.campaignDifficulty, capturePoints: !S.mission && S.playMode === "skirmish", ...(S.playMode === "training" || !S.query || (S.query.has("test") && !S.query.has("rich")) ? (!S.mission && S.playMode === "skirmish" && rulesForMap(S.rules, S.mapId) ? { rules: rulesForMap(S.rules, S.mapId) } : {}) : { rules: { ...(!S.mission && S.playMode === "skirmish" ? rulesForMap(S.rules, S.mapId) : null), economy: "rich" } }) };
+  const sim = rememberOptions(new Simulation(options), options);
   S.look = matchLook(S.mission, sim);
   return sim;
 };
@@ -217,9 +222,13 @@ const SETUP = [
   // R3-Q: Quick battle and First watch wrap createSim, newGame, defenceMission and defenceHud, so they come last.
   ["quick-battle", setupQuickBattle],
   ["wild", setupWildUi],
+  // W6 replay value: after Quick battle, so the Records tile joins the quick row it fills.
+  ["meta", setupMeta],
+  // W6 replay viewer: binds last, so its wraps of showResult, openDecision, playScene, togglePause and newGame see the final ones.
+  ["replay", setupReplay],
 ];
 const BIND = ["preferences", "hud", "input-pointer", "sound", "frame", "modals", "briefing", "match-flow", "selection", "type-chips",
-  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "choices", "scenes", "debug-hooks", "defence", "rank", "quick-battle"];
+  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "choices", "scenes", "debug-hooks", "defence", "rank", "quick-battle", "meta", "replay"];
 const binds = Object.fromEntries(SETUP.map(([name, setup]) => [name, setup(S, A)]));
 // The start screen shows the battle chosen there, so the first simulation is built from it.
 ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction, playerFaction: S.playerFaction } = A.battleSetup());

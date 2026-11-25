@@ -21,7 +21,7 @@ const noSideScroll = async (page, where) => {
 };
 const rank = (page) => page.evaluate(() => window.__frontier.rank());
 const chipText = (page) => page.evaluate(() => document.querySelector("#rank-chip")?.textContent.replace(/\s+/g, " ").trim() || "");
-const paintButtons = (page) => page.evaluate(() => [...document.querySelectorAll('#rank-unlocks [data-rank-kind="paint"] [data-rank-item]')].map((b) => ({ id: b.dataset.rankItem, pressed: b.getAttribute("aria-pressed"), disabled: b.disabled })));
+const paintButtons = (page) => page.evaluate(() => [...document.querySelectorAll('#rank-unlocks [data-rank-kind="paint"] [data-rank-item]:not([data-medal])')].map((b) => ({ id: b.dataset.rankItem, pressed: b.getAttribute("aria-pressed"), disabled: b.disabled })));
 // A one-tap pick: scrolled into its column, the button's centre must reach the button itself.
 async function tapItem(o, kind, id) {
   const sel = `#rank-unlocks [data-rank-kind="${kind}"] [data-rank-item="${id}"]`;

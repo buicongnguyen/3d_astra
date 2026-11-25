@@ -13,7 +13,9 @@
 export function createMatchStats() {
   let carry = new Map();
   let seen = 0;
-  const fresh = () => ({ lost: 0, killed: 0, structuresLost: 0, structuresDestroyed: 0, trained: 0, built: 0, alloy: 0, energy: 0 });
+  // W6 (replay value): kites trained, Kite Dives landed, creatures tamed and abilities used, for achievements and
+  // challenges (src/meta/record.js). Counted from the same events; nothing reaches the simulation.
+  const fresh = () => ({ lost: 0, killed: 0, structuresLost: 0, structuresDestroyed: 0, trained: 0, built: 0, alloy: 0, energy: 0, kites: 0, dives: 0, tamed: 0, abilities: 0 });
   let stats = fresh();
   // R3-V: per-unit credit on the player's side (id -> record), and the snapshot of one tick.
   let credit = new Map();
@@ -54,6 +56,7 @@ export function createMatchStats() {
       for (let i = seen; i < sim.events.length; i++) {
         const ev = sim.events[i];
         if (ev.type === "death") {
+          if (ev.dive && ev.team === 0) stats.dives++;
           const structure = !!ev.building;
           if (ev.team === 0) structure ? stats.structuresLost++ : stats.lost++;
           else {
@@ -63,7 +66,11 @@ export function createMatchStats() {
         } else if (ev.team === 0 && ev.type === "deliver") {
           const amount = carry.get(ev.seed) || 0;
           if (ev.resource === "energy") stats.energy += amount; else stats.alloy += amount;
-        } else if (ev.team === 0 && ev.type === "spawn") stats.trained++;
+        } else if (ev.team === 0 && ev.type === "spawn") {
+          stats.trained++;
+          for (const e of sim.entities) if (e.id === ev.seed) { if (e.type === "kite") stats.kites++; break; }
+        } else if (ev.team === 0 && ev.kind === "tamed" && (ev.type === "wild" || ev.type === "creature")) stats.tamed++;
+        else if (ev.team === 0 && ev.type === "ability") stats.abilities++;
         else if (ev.team === 0 && ev.type === "built") stats.built++;
       }
       seen = sim.events.length;
