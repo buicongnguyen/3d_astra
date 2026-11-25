@@ -96,6 +96,19 @@ await suite('hotkeys',async()=>{
   await press('x');await page.evaluate(()=>window.__frontier.select([]));
   await page.locator('#group-strip [data-group="3"]').click();assert.deepEqual(await selected(),ids.workers,'tab recalls its group');
   await openHelp(page,{touch:false});assert.equal(await page.locator('#modal [data-group="3"]').getAttribute('data-count'),String(ids.workers.length));
+  // W14: the list names the keys the handler binds itself (Page Up / Page Down, G, Esc, ?); clicking one runs it.
+  const extra=await page.locator('#modal [data-shortcut="turn-left"] kbd, #modal [data-shortcut="turn-right"] kbd, #modal [data-shortcut="grid"] kbd, #modal [data-shortcut="escape"] kbd, #modal [data-shortcut="help"] kbd').allInnerTexts();
+  assert.deepEqual(extra,['Page Up','Page Down','G','Esc','?']);
+  await page.screenshot({path:'test-results/pc-hotkey-help-list.png'});
+  await page.locator('#modal [data-shortcut="help"]').click();assert.equal(await page.locator('#modal').isHidden(),false,'the help entry keeps the list open');
+  await page.locator('#modal [data-shortcut="turn-right"]').click();
+  await page.waitForFunction(()=>Math.abs(window.__frontier.view.yaw-Math.PI/2)<1e-6,null,{timeout:TIMEOUT.step});
+  await press('PageUp');await page.waitForFunction(()=>Math.abs(window.__frontier.view.yaw)<1e-6,null,{timeout:TIMEOUT.step});
+  const grid=await page.evaluate(()=>window.__frontier.view.grid.visible);
+  await openHelp(page,{touch:false});await page.locator('#modal [data-shortcut="grid"]').click();
+  assert.equal(await page.evaluate(()=>window.__frontier.view.grid.visible),!grid);await press('g');
+  assert.equal(await page.evaluate(()=>window.__frontier.view.grid.visible),grid,'G still toggles the grid');
+  await openHelp(page,{touch:false});
   await page.locator('#modal [data-resume]').click();
   await page.screenshot({path:'test-results/pc-hotkeys.png'});assert.deepEqual(errors,[]);
   for(const viewport of [{width:960,height:540},{width:844,height:390},{width:800,height:500}]){
