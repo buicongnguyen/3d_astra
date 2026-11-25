@@ -1347,7 +1347,6 @@
     "Your units' colour scheme. Looks only: it never changes a battle.": "아군 유닛의 도색입니다. 외형만 바뀌며 전투에는 영향이 없습니다.",
     "Shown on your rank and your results.": "계급 표시와 결과 화면에 나타납니다.",
     "The title under your rank.": "계급 아래에 표시되는 칭호입니다.",
-    "Quiet mode: no unit voices": "조용한 모드: 유닛 음성 끄기",
     "Quick battle": "빠른 전투",
     "Ready base · 1 rival": "준비된 기지 · 적 1명",
     "Full army battle": "전군 전투",
@@ -1556,7 +1555,11 @@
     "Campaign guardian. A Builder construct of stone and bronze that keeps the Quiet Vault. It sleeps until you attack it, then fights near its post. Beat it fairly and it kneels, then joins your squad for the rest of the mission: a heavy blade that hits everything within 2 m of its target.": "캠페인 수호자. 고요한 보관고를 지키는 돌과 청동의 건설자 구조물입니다. 공격하기 전까지 잠들어 있다가, 공격받으면 제자리 근처에서 싸웁니다. 정정당당히 이기면 무릎을 꿇은 뒤 임무가 끝날 때까지 분대에 합류합니다. 무거운 칼날이 대상 2 m 안의 모든 것을 칩니다.",
     "Campaign creature": "캠페인 생물",
     "The Elder Wyrm joins your expedition.": "장로 웜이 원정대에 합류합니다.",
-    "The Vault Sentinel rises and joins your squad.": "보관고 파수꾼이 일어나 분대에 합류합니다."
+    "The Vault Sentinel rises and joins your squad.": "보관고 파수꾼이 일어나 분대에 합류합니다.",
+    "Voices": "음성",
+    "Voice volume": "음성 음량",
+    "Spoken unit replies, announcer and story lines. Downloaded when a match starts (about 200 KB).": "유닛 응답, 안내 방송, 스토리 대사(영어). 경기가 시작될 때 내려받습니다(약 200KB).",
+    "Quiet mode: no unit replies": "조용한 모드: 유닛 응답 끄기"
   },
   "patterns": [
     [

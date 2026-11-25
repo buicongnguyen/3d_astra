@@ -37,6 +37,23 @@ const R = {
   "ability:triage": [["o", "sine", 523, 523, 0.2, 0.3, 0], ["o", "sine", 659, 659, 0.2, 0.3, 0.1], ["o", "sine", 784, 784, 0.35, 0.3, 0.2]],
   "ability:fortify": [["o", "square", 110, 60, 0.12, 0.4, 0], ["n", "bandpass", 1500, 300, 0.2, 0.4, 0, 2], ["o", "triangle", 220, 440, 0.4, 0.25, 0.1]],
   // Kite Dive: a falling whine, then the blast as it hits.
+  // W12 (2026-11-25): every ability has its cast. Charges and dashes rise, buffs chime, marks lock on,
+  // ambushes and shadow strikes come in hushed, rams thud.
+  "ability:rush": [["n", "bandpass", 400, 2400, 0.35, 0.4, 0, 1.2], ["o", "sawtooth", 160, 420, 0.3, 0.14, 0], ["o", "triangle", 330, 660, 0.25, 0.2, 0.08]],
+  "ability:dash": [["n", "bandpass", 3000, 600, 0.22, 0.45, 0, 1.5], ["o", "sine", 900, 300, 0.18, 0.2, 0]],
+  "ability:spurs": [["o", "triangle", 880, 880, 0.06, 0.3, 0], ["o", "triangle", 1175, 1175, 0.06, 0.3, 0.07], ["n", "bandpass", 1800, 1200, 0.18, 0.3, 0.04, 2], ["o", "sine", 220, 160, 0.2, 0.3, 0.1]],
+  "ability:burnline": [["n", "lowpass", 300, 2400, 0.6, 0.5, 0, 0.9], ["o", "sawtooth", 90, 60, 0.5, 0.2, 0], ["n", "highpass", 4000, 6000, 0.4, 0.15, 0.1]],
+  "ability:shieldlink": [["o", "sine", 600, 600, 0.3, 0.3, 0], ["o", "sine", 900, 900, 0.3, 0.25, 0.08], ["o", "sine", 1200, 1200, 0.35, 0.2, 0.16], ["n", "bandpass", 2000, 2600, 0.4, 0.12, 0, 4]],
+  "ability:brace": [["o", "square", 140, 90, 0.1, 0.35, 0], ["n", "bandpass", 1200, 400, 0.15, 0.35, 0, 2], ["o", "square", 120, 80, 0.1, 0.3, 0.12]],
+  "ability:shadowstrike": [["n", "highpass", 6000, 2500, 0.25, 0.3, 0], ["o", "sine", 1400, 400, 0.3, 0.2, 0.05], ["n", "bandpass", 900, 300, 0.12, 0.4, 0.28, 2]],
+  "ability:mark": [["o", "square", 2200, 2200, 0.04, 0.18, 0], ["o", "square", 2200, 2200, 0.04, 0.18, 0.09], ["o", "sine", 1650, 1650, 0.2, 0.22, 0.18]],
+  "ability:crossfire": [["n", "bandpass", 3500, 2500, 0.05, 0.4, 0, 3], ["n", "bandpass", 3500, 2500, 0.05, 0.4, 0.08, 3], ["n", "bandpass", 3500, 2500, 0.05, 0.4, 0.16, 3], ["o", "triangle", 660, 990, 0.3, 0.2, 0.05]],
+  "ability:steadyaim": [["n", "lowpass", 800, 300, 0.4, 0.2, 0], ["o", "sine", 1320, 1320, 0.35, 0.22, 0.15]],
+  "ability:ram": [["o", "sawtooth", 60, 140, 0.35, 0.3, 0], ["n", "lowpass", 600, 1800, 0.35, 0.3, 0], ["o", "sine", 80, 40, 0.3, 0.6, 0.35], ["n", "bandpass", 1500, 500, 0.2, 0.4, 0.35, 1]],
+  "ability:ambush": [["n", "highpass", 3500, 1500, 0.4, 0.18, 0], ["o", "sine", 300, 300, 0.5, 0.18, 0.05], ["o", "sine", 450, 450, 0.4, 0.12, 0.2]],
+  "ability:reinforce": [["o", "triangle", 392, 392, 0.12, 0.35, 0], ["o", "triangle", 523, 523, 0.12, 0.35, 0.1], ["n", "bandpass", 300, 900, 0.6, 0.3, 0.05, 0.8], ["o", "sine", 70, 50, 0.5, 0.4, 0.15]],
+  // W12: interface clicks (app/sound.js tone): a short tick in front of the pitch, so it reads as a button.
+  "ui:click": [["n", "bandpass", 3600, 2800, 0.012, 0.5, 0, 3], ["o", "triangle", 600, 560, 0.05, 0.28, 0.004]],
   "ability:dive": [["o", "sawtooth", 1500, 220, 0.42, 0.16, 0], ["n", "bandpass", 3200, 500, 0.42, 0.18, 0, 1.5], ["o", "sine", 95, 35, 0.6, 0.6, 0.4], ["n", "lowpass", 1400, 160, 0.7, 0.5, 0.4]],
   // Moments.
   promote: [["o", "triangle", 523, 523, 0.15, 0.4, 0], ["o", "triangle", 659, 659, 0.15, 0.4, 0.1], ["o", "triangle", 784, 784, 0.15, 0.4, 0.2], ["o", "sine", 1568, 1568, 0.5, 0.35, 0.3], ["o", "sine", 4331, 4331, 0.4, 0.1, 0.3]],
@@ -50,7 +67,7 @@ const R = {
   blip: [["o", "sine", 520, 520, 0.065, 0.4, 0]],
 };
 // Priority, rate limit and group for the effects that are not simulation events.
-const EXTRA = { construct: [4, 0.15, "ui"], tap: [8, 0.03, "ui"], select: [7, 0.05, "ui"], error: [8, 0.1, "ui"], objective: [8, 0.2, "moment"], "objective-failed": [8, 0.2, "moment"], win: [10, 1, "moment"], lose: [10, 1, "moment"], blip: [7, 0.07, "ui"] };
+const EXTRA = { "ui:click": [7, 0.06, "ui"], construct: [4, 0.15, "ui"], tap: [8, 0.03, "ui"], select: [7, 0.05, "ui"], error: [8, 0.1, "ui"], objective: [8, 0.2, "moment"], "objective-failed": [8, 0.2, "moment"], win: [10, 1, "moment"], lose: [10, 1, "moment"], blip: [7, 0.07, "ui"] };
 // R3-U: bank sounds played directly (not from a sim event): priority, rate limit and group.
 const BANK_EXTRA = { "sting:victory": [10, 1, "moment"], "sting:boss": [9, 0.8, "moment"], "sting:surge": [9, 1, "moment"], "warn:lowhp": [8, 1, "moment"], thunder: [5, 0.6, "moment"] };
 // R3-U: a unit voice chirp ("bark") as a live recipe: two or three formant blips in the type's voice
@@ -124,7 +141,7 @@ export class Sfx {
   // they land). Returns the distance gain of what was heard (0 = nothing).
   event(event, sim, sourceType = null) {
     if (!this.enabled) return 0;
-    const sound = soundFor(event, sourceType);
+    const sound = refineSound(soundFor(event, sourceType), event, sim);
     if (!sound || !hasSound(sound.name)) return 0;
     const isVisible = (p) => sim.isVisible(p, 0);
     let heard = 0;
@@ -166,6 +183,18 @@ export class Sfx {
     const sting = stingerFor(event);
     if (sting && audible(event, isVisible, 0)) this.play(sting, { priority: 9, gap: 0.8, group: "moment" });
     return heard;
+  }
+  // W12: an interface click at `hz` (the old sine beeps of app/sound.js): the recipe shifted to that pitch.
+  click(hz = 520, seconds = 0.065) {
+    const k = Math.max(0.3, Math.min(3, hz / 600));
+    const recipe = R["ui:click"].map(([kind, a, f0, f1, secs, vol, delay, q]) => (kind === "o" ? [kind, a, f0 * k, f1 * k, Math.max(secs, Math.min(0.3, seconds)), vol, delay] : [kind, a, f0, f1, secs, vol, delay, q]));
+    return this.playRecipe("ui:click", recipe, { priority: 7, gap: 0.06, group: "ui", jitter: 0.01 });
+  }
+  // Phones (eco quality) keep fewer voices sounding at once: a big fight costs less audio work.
+  setVoiceCaps(eco) {
+    const scale = eco ? MIX.ecoVoices : 1;
+    this.budget.max = Math.round(MIX.maxVoices * scale);
+    this.budget.caps = Object.fromEntries(Object.entries(MIX.groupCaps).map(([g, n]) => [g, n <= 1 ? n : Math.max(1, Math.round(n * scale))]));
   }
   // R3-U: a unit voice chirp for `kind` (select | order | attack) in the voice of `unit` (an entity:
   // type, class, position). Rate limit and quiet mode are the caller's (BarkGate in audio-logic.js).
@@ -287,3 +316,11 @@ export class Sfx {
   }
 }
 export { screenMix };
+// W12: impacts by armour and infantry falls. A round on a mechanical unit rings as metal; an infantry
+// death is a fall, not a blast (vehicles and buildings keep their explosions).
+export function refineSound(sound, event, sim) {
+  if (!sound) return sound;
+  if (sound.name === "impact:body" && sim?.get?.(event.seed)?.mechanical) return { ...sound, name: "impact:metal" };
+  if (sound.name === "boom:small" && event.type === "death" && !event.heavy && !event.building) return { ...sound, name: "fall:body" };
+  return sound;
+}

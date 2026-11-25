@@ -12,7 +12,7 @@
   "rules": [
     {
       "name": "docs and notes (nothing to run)",
-      "files": ["**/*.md", "../*.md", "../docs/**", "../skills/**", "../music-lab/**", "../LICENSE", "docs/**", "public/prompt/**", "tools/blender/**", "tools/*.py", "tools/{look-shots,kit-shots,fx-strips,review-wyrms,perf-ab,perf-phone,vfx-phone-bench,first-visit,phone-hud-audit,render-audio,port-boss-model,faction-bench,faction-matrix,skirmish-bench,high-ground-bench,wild-bench,first-contact,baseline-diff,defence-coverage}.mjs", "tools/boss-parts/**"],
+      "files": ["**/*.md", "../*.md", "../docs/**", "../skills/**", "../music-lab/**", "../LICENSE", "docs/**", "public/prompt/**", "tools/blender/**", "tools/*.py", "tools/voices/**", "tools/{look-shots,kit-shots,fx-strips,review-wyrms,perf-ab,perf-phone,vfx-phone-bench,first-visit,phone-hud-audit,render-audio,port-boss-model,faction-bench,faction-matrix,skirmish-bench,high-ground-bench,wild-bench,first-contact,baseline-diff,defence-coverage}.mjs", "tools/boss-parts/**"],
       "suites": [],
       "checks": []
     },
@@ -72,7 +72,7 @@
     },
     {
       "name": "sound and music",
-      "files": ["src/audio*.js", "src/sfx*.js", "src/music*.js", "src/app/sound.js", "public/music/**", "tests/fixtures/music/**"],
+      "files": ["src/audio*.js", "src/sfx*.js", "src/music*.js", "src/voice*.js", "src/voice-*.json", "src/app/sound.js", "public/music/**", "public/voices/**", "tests/fixtures/music/**"],
       "suites": ["audio", "audio-juice", "music", "offline"],
       "checks": []
     },

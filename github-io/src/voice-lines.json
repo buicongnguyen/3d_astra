@@ -1,0 +1,163 @@
+{
+  "about": "W3 voices (2026-11-25): every spoken line, per pack. The generator (tools/voices/make-voices.py) reads this file, renders each line with a local Kokoro-82M voice (Apache-2.0), processes it per faction and writes public/voices/<pack>.mp3 plus src/voice-packs.json (clip offsets). src/voice-logic.js reads the same keys. Units: ack.select / ack.move / ack.attack (unit replies). Announcer: ann.<event>. Story: story.<id>, matched by the exact English text of a mission's `say` line.",
+  "factions": {
+    "meridian": {
+      "unitVoice": "am_michael", "announcerVoice": "af_bella", "speed": 1.0, "fx": "clean",
+      "ack": {
+        "select": ["Ready, Commander.", "Standing by.", "Meridian here.", "Go ahead."],
+        "move": ["On our way.", "Moving out.", "Copy, moving.", "Heading there now."],
+        "attack": ["Engaging.", "Weapons free.", "Taking them on.", "Target marked. Engaging."]
+      },
+      "ann": {
+        "baseAttack": ["Our base is under attack.", "The camp is taking fire."],
+        "unitsAttack": ["Our units are under fire."],
+        "unitLost": ["Unit lost.", "We lost a unit."],
+        "buildingLost": ["We lost a building."],
+        "built": ["Construction complete.", "Building ready."],
+        "research": ["Research complete."],
+        "unitReady": ["Unit ready.", "Reinforcements ready."],
+        "objectiveDone": ["Objective complete."],
+        "objectiveNew": ["Objective updated."],
+        "objectiveFailed": ["Objective failed."],
+        "incoming": ["Enemy attack incoming."],
+        "wave": ["Next wave incoming."],
+        "waveCleared": ["Wave cleared. Good work."],
+        "pointTaken": ["Point captured."],
+        "pointLost": ["We lost the point."],
+        "contact": ["Enemy sighted."],
+        "victory": ["Victory. The valley is ours."],
+        "defeat": ["We have lost, Commander. Fall back."]
+      }
+    },
+    "ashfall": {
+      "unitVoice": "bm_george", "announcerVoice": "bm_lewis", "speed": 1.05, "fx": "gritty",
+      "ack": {
+        "select": ["Combine. Report.", "On the clock.", "Awaiting schedule.", "Unit ready. Speak."],
+        "move": ["Moving. On schedule.", "Route logged.", "Relocating now.", "Marching. No delays."],
+        "attack": ["Target acquired.", "Strip it for parts.", "Firing on schedule.", "Break them down."]
+      },
+      "ann": {
+        "baseAttack": ["Base breach. Respond.", "Hostiles at the yard."],
+        "unitsAttack": ["Units under fire."],
+        "unitLost": ["Unit lost. Logged.", "One down. Logged."],
+        "buildingLost": ["Structure lost."],
+        "built": ["Construction finished. On schedule.", "Structure online."],
+        "research": ["Research filed."],
+        "unitReady": ["Unit off the line.", "Crew assigned."],
+        "objectiveDone": ["Objective met."],
+        "objectiveNew": ["Schedule revised. New objective."],
+        "objectiveFailed": ["Objective missed."],
+        "incoming": ["Enemies inbound."],
+        "wave": ["Wave inbound. Brace."],
+        "waveCleared": ["Wave broken."],
+        "pointTaken": ["Ground taken."],
+        "pointLost": ["Ground lost."],
+        "contact": ["Contact."],
+        "victory": ["Victory. The berths will hold."],
+        "defeat": ["Defeat. Pull back to the fleet."]
+      }
+    },
+    "sunward": {
+      "unitVoice": "am_fenrir", "announcerVoice": "af_heart", "speed": 1.04, "fx": "warm",
+      "ack": {
+        "select": ["Caravan's listening.", "Speak, friend.", "Ready to ride.", "What's the deal?"],
+        "move": ["Saddle up.", "On the road.", "We'll make good time.", "Following the trail."],
+        "attack": ["Collecting the debt!", "They'll pay for that!", "Charge them!", "Settle it!"]
+      },
+      "ann": {
+        "baseAttack": ["They're hitting our camp!", "The camp is under attack!"],
+        "unitsAttack": ["Our riders are under fire!"],
+        "unitLost": ["We lost a rider.", "One of ours is down."],
+        "buildingLost": ["We lost a building."],
+        "built": ["It's built. Fine work.", "Building ready."],
+        "research": ["Research done."],
+        "unitReady": ["Fresh rider ready.", "New hands ready."],
+        "objectiveDone": ["That's settled."],
+        "objectiveNew": ["New terms. New objective."],
+        "objectiveFailed": ["We failed that one."],
+        "incoming": ["Raiders on the road!"],
+        "wave": ["Next wave coming!"],
+        "waveCleared": ["Wave beaten back!"],
+        "pointTaken": ["That ground is ours."],
+        "pointLost": ["We lost that ground."],
+        "contact": ["Dust on the horizon."],
+        "victory": ["Victory! Water for everyone."],
+        "defeat": ["Defeat. The road is closed to us."]
+      }
+    },
+    "wardens": {
+      "unitVoice": "am_echo", "announcerVoice": "bf_alice", "speed": 0.96, "fx": "machine",
+      "ack": {
+        "select": ["Warden active.", "Awaiting directive.", "Key holder recognised.", "This unit listens."],
+        "move": ["Directive accepted.", "Path computed.", "Proceeding.", "Moving to marker."],
+        "attack": ["Hostile designated.", "Enforcing.", "Threat confirmed. Engaging.", "Purging target."]
+      },
+      "ann": {
+        "baseAttack": ["Alert. Base integrity threatened.", "Alert. Base under attack."],
+        "unitsAttack": ["Alert. Units under fire."],
+        "unitLost": ["Unit is offline.", "Signal lost."],
+        "buildingLost": ["Structure offline."],
+        "built": ["Construction complete.", "Structure online."],
+        "research": ["Research integrated."],
+        "unitReady": ["Unit activated.", "New unit ready."],
+        "objectiveDone": ["Directive complete."],
+        "objectiveNew": ["New directive received."],
+        "objectiveFailed": ["Directive failed."],
+        "incoming": ["Alert. Hostiles approaching."],
+        "wave": ["Alert. Wave approaching."],
+        "waveCleared": ["Wave neutralised."],
+        "pointTaken": ["Sector secured."],
+        "pointLost": ["Sector has been lost."],
+        "contact": ["Hostile detected."],
+        "victory": ["Victory. The Lattice is secure."],
+        "defeat": ["Defeat. Shutting down."]
+      }
+    },
+    "veil": {
+      "unitVoice": "af_nicole", "announcerVoice": "bf_isabella", "speed": 0.95, "fx": "hush",
+      "ack": {
+        "select": ["Yes? We're listening.", "Unseen, and ready.", "Quietly now.", "The record is open."],
+        "move": ["Into the shadows.", "Moving unseen.", "As you wish.", "We pass softly."],
+        "attack": ["If we must.", "Strike from the veil.", "Noted. Engaging.", "Forgive us. Firing."]
+      },
+      "ann": {
+        "baseAttack": ["Our camp is found. They are attacking.", "The camp is under attack."],
+        "unitsAttack": ["We are seen. Under fire."],
+        "unitLost": ["One of us is gone.", "We lost one."],
+        "buildingLost": ["We lost a building."],
+        "built": ["It is built.", "The building stands."],
+        "research": ["A new page in the record."],
+        "unitReady": ["Another joins us.", "One more, ready."],
+        "objectiveDone": ["That is done."],
+        "objectiveNew": ["Something new to do."],
+        "objectiveFailed": ["We could not do it."],
+        "incoming": ["They are coming."],
+        "wave": ["Another wave comes."],
+        "waveCleared": ["The wave is quiet now."],
+        "pointTaken": ["The ground is ours."],
+        "pointLost": ["We lost the ground."],
+        "contact": ["Eyes on the enemy."],
+        "victory": ["Victory. Let it be written."],
+        "defeat": ["Defeat. Close the record."]
+      }
+    }
+  },
+  "story": {
+    "pack": "story-m01",
+    "mission": "m01-first-light",
+    "voices": { "vale": "af_sarah", "okoro": "am_puck", "hale": "bm_fable" },
+    "fx": { "vale": "clean", "okoro": "clean", "hale": "gritty" },
+    "lines": [
+      { "who": "vale", "text": "The Harvesters know their work, Commander. Alloy builds everything, so let them cut." },
+      { "who": "okoro", "text": "Pick a Harvester and raise a Supply relay near camp. It drinks from the old Lattice." },
+      { "who": "vale", "text": "Supply relay online. Now take your squad to the Builder relay by the river." },
+      { "who": "okoro", "text": "It is waking! Four hundred years dark and it still knows its work." },
+      { "who": "hale", "text": "Meridian camp. My lights failed the moment that relay lit. Shut it down." },
+      { "who": "vale", "text": "Ashfall troops at the ford. Vanguards in front, Rangers behind, and stay in the circle." },
+      { "who": "vale", "text": "They pushed us off the relay. Clear the circle and stand in it again." },
+      { "who": "hale", "text": "I asked politely, Commander. I will not ask twice." },
+      { "who": "okoro", "text": "The relay is steady. Strange, though. Why would our light put out theirs?" },
+      { "who": "okoro", "text": "Movement on the road! One Ashfall scout, only looking. Your Vanguards can send it home." }
+    ]
+  }
+}

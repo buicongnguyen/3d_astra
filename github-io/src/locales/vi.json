@@ -1347,7 +1347,6 @@
     "Your units' colour scheme. Looks only: it never changes a battle.": "Bảng màu cho đơn vị của bạn. Chỉ để trang trí: không bao giờ thay đổi trận đánh.",
     "Shown on your rank and your results.": "Hiện trên cấp bậc và kết quả của bạn.",
     "The title under your rank.": "Danh hiệu dưới cấp bậc của bạn.",
-    "Quiet mode: no unit voices": "Chế độ yên tĩnh: tắt tiếng đơn vị",
     "Quick battle": "Trận nhanh",
     "Ready base · 1 rival": "Căn cứ sẵn · 1 đối thủ",
     "Full army battle": "Trận đủ quân",
@@ -1556,7 +1555,11 @@
     "Campaign guardian. A Builder construct of stone and bronze that keeps the Quiet Vault. It sleeps until you attack it, then fights near its post. Beat it fairly and it kneels, then joins your squad for the rest of the mission: a heavy blade that hits everything within 2 m of its target.": "Người gác chiến dịch. Một cỗ máy đá và đồng của Kiến Tạo canh giữ Hầm kín lặng im. Nó ngủ cho đến khi bạn tấn công, rồi chiến đấu gần vị trí của nó. Đánh bại nó một cách sòng phẳng, nó sẽ quỳ xuống rồi theo phân đội của bạn đến hết nhiệm vụ: một lưỡi kiếm nặng đánh trúng mọi thứ trong vòng 2 m quanh mục tiêu.",
     "Campaign creature": "Sinh vật chiến dịch",
     "The Elder Wyrm joins your expedition.": "Rồng cát Trưởng lão gia nhập đoàn viễn chinh của bạn.",
-    "The Vault Sentinel rises and joins your squad.": "Lính gác Hầm đứng dậy và gia nhập phân đội của bạn."
+    "The Vault Sentinel rises and joins your squad.": "Lính gác Hầm đứng dậy và gia nhập phân đội của bạn.",
+    "Voices": "Giọng nói",
+    "Voice volume": "Âm lượng giọng nói",
+    "Spoken unit replies, announcer and story lines. Downloaded when a match starts (about 200 KB).": "Đơn vị trả lời, giọng thông báo và lời thoại cốt truyện (tiếng Anh). Tải về khi trận đấu bắt đầu (khoảng 200 KB).",
+    "Quiet mode: no unit replies": "Chế độ yên tĩnh: đơn vị không trả lời"
   },
   "patterns": [
     [

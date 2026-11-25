@@ -33,6 +33,9 @@ try {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text().slice(0, 200)); });
+  // W3: voice packs (public/voices/*.mp3) are fetched only once a match has started.
+  const voiceRequests = [];
+  page.on('request', r => { if (/\/voices\/[\w-]+\.mp3/.test(r.url())) voiceRequests.push(r.url()); });
   await page.goto(`${base}?test=1`);
   await page.waitForFunction(() => window.__frontier?.view.modelsReady && !document.querySelector('#start').disabled, null, { timeout: 120000 });
 
@@ -40,6 +43,7 @@ try {
   assert.equal(await page.evaluate(() => window.__ac.contexts.length), 0, 'no AudioContext before the first gesture');
   assert.equal(await page.evaluate(() => !!window.__frontier.audio), false, 'no audio engine before the first gesture');
 
+  assert.deepEqual(voiceRequests, [], 'no voice pack before Start');
   await page.click('#start');
   await page.waitForFunction(() => window.__frontier.audio?.music.active && window.__frontier.audio.music.scheduled > 0, null, { timeout: 15000 });
   const ac = () => page.evaluate(() => ({ contexts: window.__ac.contexts.length, state: window.__ac.contexts[0]?.state, osc: window.__ac.oscillators, scheduled: window.__frontier.audio.music.scheduled, active: window.__frontier.audio.music.active, mood: window.__frontier.audio.music.mood, played: window.__frontier.audio.sfx.played }));
@@ -113,12 +117,35 @@ try {
   const radio = await page.evaluate(() => {
     const a = window.__frontier.audio, sim = window.__frontier.sim;
     a.radioGate.last = -Infinity; a.radioGate.byKind.clear();
+    a.voice.setEnabled(false); // the radio motif is the reply with Voices off (spoken replies carry their own squelch)
     const before = a.radios, results = [];
     for (let i = 0; i < 6; i++) results.push(a.order(i % 2 ? 'move' : 'attack', sim));
     return { added: a.radios - before, results, rendered: a.sfx.buffers.has(`radio:${sim.factions?.[0] || 'meridian'}:attack#0`) };
   });
   assert.equal(radio.added, 1, `one radio reply for a burst of orders (${radio.results})`);
   assert.equal(radio.rendered, true, 'the reply was rendered in the player faction voice');
+
+  // W3 voices: the player's pack (Meridian) arrives after Start; a reply speaks, the announcer cuts it short,
+  // a burst of selections stays one reply, music and effects dip under the line.
+  await page.evaluate(() => { const f = window.__frontier; f.audio.applySettings(f.settings); });
+  await page.waitForFunction(() => window.__frontier.audio.voice.ready('meridian'), null, { timeout: 20000 });
+  assert.deepEqual(voiceRequests.map(u => u.split('/').pop().split('?')[0]), ['meridian.mp3'], 'only the player faction pack (skirmish: no story pack)');
+  const voices = await page.evaluate(() => {
+    const f = window.__frontier, a = f.audio, v = a.voice, units = f.sim.own(0).filter(e => e.kind === 'unit');
+    v.reset();
+    const replies = Array.from({ length: 10 }, () => a.bark('select', units));
+    const reply = v.voice?.line.channel;
+    const cut = v.announce('baseAttack'), now = v.voice?.line;
+    a.applyMusicGain();
+    return { replies: replies.filter(Boolean).length, reply, cut, now, speaking: v.speaking, sfxDip: a.sfxTarget < a.levels.sfx, musicDip: a.musicTarget < a.levels.music * a.combatGain, cutCount: v.scheduler.stats.cut };
+  });
+  assert.equal(voices.replies, 1, 'ten fast selections: one spoken reply');
+  assert.equal(voices.reply, 'ack');
+  assert.ok(voices.cut && voices.now?.channel === 'announcer' && voices.now.key === 'baseAttack' && voices.cutCount === 1, `the announcer cuts the reply short (${JSON.stringify(voices)})`);
+  assert.ok(voices.speaking && voices.sfxDip && voices.musicDip, `music and effects dip under the voice (${JSON.stringify(voices)})`);
+  // A campaign line has its voice (mission 1's story pack, matched by the line's English text).
+  const told = await page.evaluate(async () => { const v = window.__frontier.audio.voice; await v.load('story-m01'); v.reset(); const said = v.story('It is waking! Four hundred years dark and it still knows its work.'); return { said, line: v.voice?.line, other: v.story('A line nobody recorded.') }; });
+  assert.ok(told.said && told.line?.channel === 'story' && told.line.index === 3 && told.other === false, `story voice (${JSON.stringify(told)})`);
 
   // Mute stops scheduling and effects; unmuting restarts it.
   await page.click('#audio');
@@ -164,6 +191,19 @@ try {
   const rows = await page.evaluate(() => ['musicVolume', 'sfxVolume'].map(k => { const input = document.querySelector(`[data-setting="${k}"]`), row = input.closest('.setting-row'), r = row.getBoundingClientRect(); return { k, h: r.height, font: parseFloat(getComputedStyle(row).fontSize), label: row.textContent.trim() }; }));
   assert.deepEqual(rows.map(r => r.label), ['Music volume', 'Effects volume']);
   for (const r of rows) { assert.ok(r.h >= 44, `${r.k} row is a 44 px target (${r.h})`); assert.ok(r.font >= 11, `${r.k} text size`); }
+  // W3: the Voices switch and its volume sit in the same section (direct toggle, 44 px, 11 px). Turning it
+  // off stops the line that is playing at once and nothing more speaks.
+  const vrows = await page.evaluate(() => ['voices', 'voiceVolume'].map(k => { const input = document.querySelector(`[data-setting="${k}"]`), row = input.closest('.setting-row'), r = row.getBoundingClientRect(); return { k, h: r.height, font: parseFloat(getComputedStyle(row).fontSize), label: row.textContent.trim(), checked: input.checked }; }));
+  assert.ok(vrows[0].label.startsWith('Voices') && vrows[0].checked, `Voices row, on by default (${JSON.stringify(vrows[0])})`);
+  assert.equal(vrows[1].label, 'Voice volume');
+  for (const r of vrows) { assert.ok(r.h >= 44, `${r.k} row is a 44 px target (${r.h})`); assert.ok(r.font >= 11, `${r.k} text size`); }
+  const playing = await page.evaluate(() => { const v = window.__frontier.audio.voice; v.reset(); return v.start({ channel: 'announcer', key: 'built', index: 0, pack: 'meridian' }) && !!v.voice; });
+  assert.ok(playing, 'a line is playing before the switch');
+  await page.locator('[data-setting="voices"]').scrollIntoViewIfNeeded();
+  await page.click('[data-setting="voices"]');
+  await page.waitForFunction(() => window.__frontier.settings.voices === false, null, { timeout: 5000 });
+  const off = await page.evaluate(() => { const a = window.__frontier.audio, v = a.voice; return { voice: !!v.voice, enabled: v.scheduler.enabled, gain: a.voiceBus.gain.value, say: v.announce('victory'), reply: v.ack('select') }; });
+  assert.deepEqual({ voice: off.voice, enabled: off.enabled, say: off.say, reply: off.reply }, { voice: false, enabled: false, say: false, reply: false }, 'Voices off: playback stops, nothing speaks');
   await page.evaluate(() => { for (const [k, v] of [['musicVolume', '0.25'], ['sfxVolume', '0']]) { const i = document.querySelector(`[data-setting="${k}"]`); i.value = v; i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true })); } });
   await page.click('[data-do="done"]');
   const saved = await page.evaluate(() => ({ s: window.__frontier.settings, music: window.__frontier.audio.levels.music, sfx: window.__frontier.audio.levels.sfx, enabled: window.__frontier.audio.sfx.enabled }));
@@ -172,8 +212,8 @@ try {
   assert.ok(saved.music > 0, 'music still has a level');
   await page.reload();
   await page.waitForFunction(() => window.__frontier?.settings, null, { timeout: 120000 });
-  const again = await page.evaluate(() => ({ m: window.__frontier.settings.musicVolume, e: window.__frontier.settings.sfxVolume }));
-  assert.deepEqual(again, { m: 0.25, e: 0 }, 'volumes survive a reload');
+  const again = await page.evaluate(() => ({ m: window.__frontier.settings.musicVolume, e: window.__frontier.settings.sfxVolume, v: window.__frontier.settings.voices }));
+  assert.deepEqual(again, { m: 0.25, e: 0, v: false }, 'volumes and Voices off survive a reload');
   await setLanguage(page, 'vi', { touch: false });
   await page.click('#start');
   await page.click('#pause');

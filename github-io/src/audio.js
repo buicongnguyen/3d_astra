@@ -11,6 +11,8 @@ import { Sfx } from "./sfx.js";
 import { airHumFor } from "./sfx-bank.js";
 import { BarkGate, LowHpWatch, ThunderWatch, barkKind, barkType, coreHealth } from "./audio-logic.js";
 import { WEATHER } from "./mission-looks.js";
+import { VoicePlayer } from "./voice.js";
+import { VOICE, ackKind, announcerFor, voiceLevel } from "./voice-logic.js";
 
 const COMBAT_SOUNDS = new Set(["shot", "impact", "death", "strike"]);
 
@@ -42,6 +44,12 @@ export class AudioDirector {
     // R3-U: unit barks (rate-limited, muted in quiet mode), the low-HP heartbeat and thunder.
     this.barkGate = new BarkGate(); this.barks = 0; this.quiet = false;
     this.lowHpWatch = new LowHpWatch(); this.coreRatio = null; this.thunderWatch = new ThunderWatch();
+    // W3: spoken lines (unit replies, announcer, story) on their own bus; music and effects dip under them.
+    this.voiceBus = context.createGain();
+    this.voiceBus.gain.value = 0;
+    this.voiceBus.connect(this.bus.master);
+    this.voiceUntil = 0; this.voiceDucked = false; this.sfxTarget = -1; this.voiceKey = ""; this.result = null;
+    this.voice = new VoicePlayer(context, this.voiceBus, { onLine: (line, seconds) => { this.voiceUntil = Math.max(this.voiceUntil, context.currentTime + seconds); } });
     this.sfx.warm();
   }
   // Settings -> bus levels. Muted or zero level also stops the scheduler (checked in update()).
@@ -50,12 +58,23 @@ export class AudioDirector {
     this.bus.sfx.gain.setTargetAtTime(this.levels.sfx, this.context.currentTime, 0.05);
     this.sfx.enabled = this.levels.sfx > 0;
     this.quiet = !!settings.quietMode;
+    this.sfx.setVoiceCaps(settings.quality === "eco");
     if (!this.sfx.enabled) { this.sfx.engine(0); this.sfx.airHum?.(0); }
+    // W3: Voices off (or muted) stops the line playing and everything waiting; quiet mode only the unit replies.
+    const voice = voiceLevel(settings);
+    this.voiceBus.gain.setTargetAtTime(voice, this.context.currentTime, 0.05);
+    this.voice.setEnabled(voice > 0);
+    this.voice.quiet = this.quiet;
+    this.sfxTarget = -1;
     this.applyMusicGain();
   }
   // Music bus = setting x busy-fight attenuation (CombatMix) x loud-event duck (LoudDuck).
   applyMusicGain() {
-    const target = this.levels.music * this.combatGain * dbToGain(this.duckDb);
+    const now = this.context.currentTime, speaking = now < this.voiceUntil;
+    // W3: effects dip under a voice line too (the bus level is otherwise the Effects setting).
+    const sfx = this.levels.sfx * (speaking ? dbToGain(VOICE.duck.sfx) : 1);
+    if (Math.abs(sfx - this.sfxTarget) > 0.002) { this.bus.sfx.gain.setTargetAtTime(sfx, now, sfx < this.sfxTarget ? VOICE.duck.attack : VOICE.duck.release); this.sfxTarget = sfx; }
+    const target = this.levels.music * this.combatGain * dbToGain(this.duckDb) * (speaking ? dbToGain(VOICE.duck.music) : 1);
     if (Math.abs(target - this.musicTarget) < 0.002) return;
     const deeper = target < this.musicTarget;
     this.bus.music.gain.setTargetAtTime(target, this.context.currentTime, deeper ? MIX.duckAttack : MIX.duckRelease);
@@ -74,13 +93,22 @@ export class AudioDirector {
   // for the most numerous unit type, at most BARK.max a second, silent in quiet mode.
   bark(kind, entities) {
     const unit = barkType(entities);
-    if (!kind || !unit || !this.sfx.enabled || !this.barkGate.allow(this.context.currentTime, this.quiet)) return false;
+    if (!kind || !unit) return false;
+    // W3: with the faction's voice pack loaded, units answer in words instead (voice-logic.js rate limits).
+    if (this.voiceOn()) return this.voice.ack(kind === "order" ? "move" : kind);
+    if (!this.sfx.enabled || !this.barkGate.allow(this.context.currentTime, this.quiet)) return false;
     const played = this.sfx.bark(kind, unit);
     if (played) this.barks++;
     return played;
   }
+  // W3: spoken lines are on when Voices is on and the player's pack has arrived.
+  voiceOn() { return this.voice.scheduler.enabled && this.voice.ready(this.voice.faction); }
+  // A story line shown on screen (mission-ui.js say): its voice when it has one.
+  say(who, text) { return this.voice.scheduler.enabled ? this.voice.story(text) : false; }
   event(event, sim) {
     if (event.type === "incoming" && event.team === 0) this.incomingAt = sim.time;
+    const key = announcerFor(event);
+    if (key) this.voice.announce(key);
     if (event.type === "say") { this.music.duckFor(Math.min(7, 1.8 + (event.text?.length || 0) / 20)); return; }
     if (!soundFor(event)) return;
     const sourceType = event.type === "shot" && event.source != null ? sim.get?.(event.source)?.type : null;
@@ -92,6 +120,8 @@ export class AudioDirector {
   order(type, sim) {
     const ids = this.selected?.();
     if (ids && sim?.get) this.bark(barkKind(type), [...ids].map((id) => sim.get(id)).filter((e) => e?.team === 0));
+    // The radio motif stays for players without spoken replies (the spoken ones carry their own squelch).
+    if (this.voiceOn() && ackKind(type)) return false;
     const kind = radioKind(type);
     if (!kind || !this.sfx.enabled || !this.radioGate.allow(kind, this.context.currentTime)) return false;
     const played = this.sfx.radio(kind, sim?.factions?.[0] || "meridian");
@@ -126,6 +156,15 @@ export class AudioDirector {
     const key = `${mapId}|${sim.missionDef?.factions?.[1] || ""}`;
     if (key !== this.key) { this.key = key; this.music.setMap(mapId, sim.missionDef?.factions?.[1] || null); }
     const live = started && !sim.result;
+    // W3: the voice packs load once a match has started (never on the title screen), then the radio runs.
+    if (started) {
+      const vkey = `${sim.factions?.[0] || "meridian"}|${sim.missionDef?.id || ""}`;
+      if (vkey !== this.voiceKey && this.voice.scheduler.enabled) { this.voiceKey = vkey; this.voice.prepare({ faction: sim.factions?.[0], missionId: sim.missionDef?.id }); }
+      if (sim.result !== this.result && (sim.result === "victory" || sim.result === "defeat")) this.voice.announce(sim.result);
+      this.result = sim.result;
+    }
+    this.voice.setPaused(!!(hidden || (started && paused && !sim.result)));
+    this.voice.update();
     this.scan -= dt;
     if (this.scan <= 0) {
       this.scan = 1;
@@ -137,6 +176,7 @@ export class AudioDirector {
       // Enemy contact: a radio call in the enemy faction's motif (first sighting, or after a quiet spell).
       if (live && !paused && this.contact.update(sim.time, seen.count) && this.sfx.enabled && this.radioGate.allow("contact", now)) {
         if (this.sfx.radio("contact", sim.factions?.[seen.team] || "meridian")) this.radios++;
+        this.voice.announce("contact");
       }
     }
     const mission = started ? musicMood() : "calm";
@@ -188,6 +228,7 @@ export class AudioDirector {
     this.combatMix.times.length = 0; this.lastCombatAt = -Infinity; this.incomingAt = -Infinity; this.enemyDistance = Infinity; this.scan = 0;
     this.intensity.reset(); this.loud.ducks.length = 0; this.contact.reset(); this.music.setCombat(0); this.sfx.engine(0); this.sfx.airHum?.(0);
     this.lowHpWatch.reset(); this.coreRatio = null;
+    this.voice.reset(); this.voiceUntil = 0; this.result = null;
   }
 }
 

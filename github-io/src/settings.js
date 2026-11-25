@@ -82,6 +82,9 @@ export function defaults(coarse = false) {
     groupPace: true,
     // R3-U: quiet mode mutes the unit voice chirps (barks) on select and order; all other sound stays.
     quietMode: false,
+    // W3 (2026-11-25): spoken unit replies, announcer and story lines (voice.js), and their own volume.
+    voices: true,
+    voiceVolume: 0.8,
   };
 }
 export function normalize(value, coarse = false) {
@@ -102,7 +105,7 @@ export function normalize(value, coarse = false) {
   if (["recorded", "adaptive", "off"].includes(value.music)) d.music = value.music;
   if (Number.isFinite(value.masterVolume))
     d.masterVolume = Math.max(0, Math.min(1, value.masterVolume));
-  for (const key of ["musicVolume", "sfxVolume"])
+  for (const key of ["musicVolume", "sfxVolume", "voiceVolume"])
     if (Number.isFinite(value[key])) d[key] = Math.max(0, Math.min(1, value[key]));
   for (const key of ["muted", "waterMotion", "combatMotion", "unitMotion", "weather", "ambient", "detail", "showFps", "autocast", "confirmRestart", "edgeScroll"])
     if (typeof value[key] === "boolean") d[key] = value[key];
@@ -120,6 +123,7 @@ export function normalize(value, coarse = false) {
   if (typeof value.haptics === "boolean") d.haptics = value.haptics;
   if (typeof value.groupPace === "boolean") d.groupPace = value.groupPace;
   if (typeof value.quietMode === "boolean") d.quietMode = value.quietMode;
+  if (typeof value.voices === "boolean") d.voices = value.voices;
   return d;
 }
 export function loadSettings(coarse = false, storage) {
