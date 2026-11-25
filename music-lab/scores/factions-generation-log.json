@@ -1,0 +1,1829 @@
+[
+ {
+  "id": "theme-meridian-s1",
+  "cue": "theme-meridian",
+  "arm": "shift 1",
+  "seed": 2601,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-meridian-s1\\cf688078-7a84-5391-545b-2bde51dac3c9.wav"
+  ],
+  "caption": "hopeful frontier expedition theme, instrumental, plucked acoustic guitar melody, warm french horn, low strings, frame drums with a soft kick on every beat, bright and determined, warm and curious, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "meridian",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 151.4,
+  "error": null
+ },
+ {
+  "id": "theme-meridian-s2",
+  "cue": "theme-meridian",
+  "arm": "shift 2",
+  "seed": 2601,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-meridian-s2\\eeadca7b-fac8-bab8-48c6-95246dd32ba1.wav"
+  ],
+  "caption": "hopeful frontier expedition theme, instrumental, plucked acoustic guitar melody, warm french horn, low strings, frame drums with a soft kick on every beat, bright and determined, warm and curious, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "meridian",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 93.3,
+  "error": null
+ },
+ {
+  "id": "theme-ashfall-s1",
+  "cue": "theme-ashfall",
+  "arm": "shift 1",
+  "seed": 2601,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-ashfall-s1\\301ce1dd-da78-bff5-a1ff-cef967122694.wav"
+  ],
+  "caption": "driving industrial frontier march, instrumental, low brass ostinato, staccato cellos, heavy taiko and metal anvil hits on every beat, marching snare, disciplined and relentless, smoky and tense, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "ashfall",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 79.6,
+  "error": null
+ },
+ {
+  "id": "theme-ashfall-s2",
+  "cue": "theme-ashfall",
+  "arm": "shift 2",
+  "seed": 2601,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-ashfall-s2\\e56cacf4-b1a2-b0cb-31df-a8a9696185b5.wav"
+  ],
+  "caption": "driving industrial frontier march, instrumental, low brass ostinato, staccato cellos, heavy taiko and metal anvil hits on every beat, marching snare, disciplined and relentless, smoky and tense, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "ashfall",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 53.1,
+  "error": null
+ },
+ {
+  "id": "theme-sunward-s1",
+  "cue": "theme-sunward",
+  "arm": "shift 1",
+  "seed": 2601,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-sunward-s1\\5a7e1baa-0642-24e5-9977-52bef00795dc.wav"
+  ],
+  "caption": "proud desert caravan theme, instrumental, plucked oud melody, bowed fiddle, goblet drum and frame drum with a soft kick on every beat, warm low strings, sunlit and proud, rolling and confident, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "sunward",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 64.5,
+  "error": null
+ },
+ {
+  "id": "theme-sunward-s2",
+  "cue": "theme-sunward",
+  "arm": "shift 2",
+  "seed": 2601,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-sunward-s2\\3cd138ae-db22-93b6-8a8d-89e0d12fc752.wav"
+  ],
+  "caption": "proud desert caravan theme, instrumental, plucked oud melody, bowed fiddle, goblet drum and frame drum with a soft kick on every beat, warm low strings, sunlit and proud, rolling and confident, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "sunward",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 70.0,
+  "error": null
+ },
+ {
+  "id": "theme-wardens-s1",
+  "cue": "theme-wardens",
+  "arm": "shift 1",
+  "seed": 2601,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-wardens-s1\\7bdb9558-06b5-f998-c50b-9a9611c7a830.wav"
+  ],
+  "caption": "cold ancient guardian machine theme, instrumental, pulsing low synth arpeggio, deep low strings, glassy bell tones, heavy taiko with a soft kick on every beat, mechanical and watchful, vast and solemn, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "wardens",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 47.0,
+  "error": null
+ },
+ {
+  "id": "theme-wardens-s2",
+  "cue": "theme-wardens",
+  "arm": "shift 2",
+  "seed": 2601,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-wardens-s2\\7e8b353e-4195-c528-30a2-606d91df6059.wav"
+  ],
+  "caption": "cold ancient guardian machine theme, instrumental, pulsing low synth arpeggio, deep low strings, glassy bell tones, heavy taiko with a soft kick on every beat, mechanical and watchful, vast and solemn, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "wardens",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 65.1,
+  "error": null
+ },
+ {
+  "id": "theme-veil-s1",
+  "cue": "theme-veil",
+  "arm": "shift 1",
+  "seed": 2601,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-veil-s1\\9a676737-248c-5f26-5cdc-502e43833316.wav"
+  ],
+  "caption": "mysterious hidden scholars theme, instrumental, soft breathy flute melody, harp arpeggios, soft marimba, low string drone, light hand percussion on every beat, quiet and watchful, curious and gentle, sparse with room to breathe, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "veil",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 66.1,
+  "error": null
+ },
+ {
+  "id": "theme-veil-s2",
+  "cue": "theme-veil",
+  "arm": "shift 2",
+  "seed": 2601,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-veil-s2\\3d5c876e-59d3-637e-4839-421e0f67490b.wav"
+  ],
+  "caption": "mysterious hidden scholars theme, instrumental, soft breathy flute melody, harp arpeggios, soft marimba, low string drone, light hand percussion on every beat, quiet and watchful, curious and gentle, sparse with room to breathe, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "veil",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 59.2,
+  "error": null
+ },
+ {
+  "id": "sting-meridian",
+  "cue": "sting-meridian",
+  "arm": "shift 2",
+  "seed": 2611,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-meridian\\07c4d1a8-081e-8497-4aff-fb3869a5f403.wav"
+  ],
+  "caption": "short hopeful arrival fanfare, instrumental, warm french horn fanfare, strummed acoustic guitar, low strings, frame drum roll, bright resolving final chord, hopeful and proud, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "meridian",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 18.9,
+  "error": null
+ },
+ {
+  "id": "sting-ashfall",
+  "cue": "sting-ashfall",
+  "arm": "shift 2",
+  "seed": 2611,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-ashfall\\c25af25b-c14f-1be2-b02c-bd0ea3adf5f7.wav"
+  ],
+  "caption": "short heavy arrival fanfare, instrumental, low brass blast, heavy taiko hits, metal anvil strike, staccato cellos, strong low final chord, stern and proud, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "ashfall",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 15.8,
+  "error": null
+ },
+ {
+  "id": "sting-sunward",
+  "cue": "sting-sunward",
+  "arm": "shift 2",
+  "seed": 2611,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-sunward\\54286b1e-2c0e-24aa-ce2b-e9b53b0c2544.wav"
+  ],
+  "caption": "short proud desert arrival flourish, instrumental, plucked oud flourish, bowed fiddle, goblet drum roll, warm low strings, bright resolving final chord, proud and warm, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "sunward",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 11.7,
+  "error": null
+ },
+ {
+  "id": "sting-wardens",
+  "cue": "sting-wardens",
+  "arm": "shift 2",
+  "seed": 2611,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-wardens\\f726fdd2-d190-5e0e-e818-bd3a7a1e3bb5.wav"
+  ],
+  "caption": "short cold machine arrival sting, instrumental, deep synth swell, glassy bell tones, heavy taiko hit, low strings, solemn resolving final chord, vast and calm, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "wardens",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 11.2,
+  "error": null
+ },
+ {
+  "id": "sting-veil",
+  "cue": "sting-veil",
+  "arm": "shift 2",
+  "seed": 2611,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-veil\\373127dd-8bb0-18cf-af27-35b451f031fd.wav"
+  ],
+  "caption": "short mysterious arrival flourish, instrumental, harp glissando, soft breathy flute, soft marimba, low string swell, gentle resolving final chord, quiet and wondrous, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "veil",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 11.0,
+  "error": null
+ },
+ {
+  "id": "theme-meridian-s1",
+  "cue": "theme-meridian",
+  "arm": "shift 1",
+  "seed": 2602,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-meridian-s1\\2f6516d3-4510-b93d-e73d-b008c5b4cb98.wav"
+  ],
+  "caption": "hopeful frontier expedition theme, instrumental, plucked acoustic guitar melody, warm french horn, low strings, frame drums with a soft kick on every beat, bright and determined, warm and curious, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "meridian",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 54.1,
+  "error": null
+ },
+ {
+  "id": "theme-meridian-s2",
+  "cue": "theme-meridian",
+  "arm": "shift 2",
+  "seed": 2602,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-meridian-s2\\5ae18059-fc3c-13fd-fff1-b35d5e6ce992.wav"
+  ],
+  "caption": "hopeful frontier expedition theme, instrumental, plucked acoustic guitar melody, warm french horn, low strings, frame drums with a soft kick on every beat, bright and determined, warm and curious, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "meridian",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 43.9,
+  "error": null
+ },
+ {
+  "id": "theme-ashfall-s1",
+  "cue": "theme-ashfall",
+  "arm": "shift 1",
+  "seed": 2602,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-ashfall-s1\\3c12f5f7-0656-54a9-52f1-d79334de571d.wav"
+  ],
+  "caption": "driving industrial frontier march, instrumental, low brass ostinato, staccato cellos, heavy taiko and metal anvil hits on every beat, marching snare, disciplined and relentless, smoky and tense, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "ashfall",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 72.7,
+  "error": null
+ },
+ {
+  "id": "theme-ashfall-s2",
+  "cue": "theme-ashfall",
+  "arm": "shift 2",
+  "seed": 2602,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-ashfall-s2\\2c723556-e5e0-fed5-0d50-43d18e1942a2.wav"
+  ],
+  "caption": "driving industrial frontier march, instrumental, low brass ostinato, staccato cellos, heavy taiko and metal anvil hits on every beat, marching snare, disciplined and relentless, smoky and tense, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "ashfall",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 47.0,
+  "error": null
+ },
+ {
+  "id": "theme-sunward-s1",
+  "cue": "theme-sunward",
+  "arm": "shift 1",
+  "seed": 2602,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-sunward-s1\\06d0bbb6-9e70-a5e5-360d-3560c4a3a5c5.wav"
+  ],
+  "caption": "proud desert caravan theme, instrumental, plucked oud melody, bowed fiddle, goblet drum and frame drum with a soft kick on every beat, warm low strings, sunlit and proud, rolling and confident, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "sunward",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 148.3,
+  "error": null
+ },
+ {
+  "id": "theme-sunward-s2",
+  "cue": "theme-sunward",
+  "arm": "shift 2",
+  "seed": 2602,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-sunward-s2\\71a50710-c31e-9449-d865-91b4c672a195.wav"
+  ],
+  "caption": "proud desert caravan theme, instrumental, plucked oud melody, bowed fiddle, goblet drum and frame drum with a soft kick on every beat, warm low strings, sunlit and proud, rolling and confident, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "sunward",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 66.1,
+  "error": null
+ },
+ {
+  "id": "theme-wardens-s1",
+  "cue": "theme-wardens",
+  "arm": "shift 1",
+  "seed": 2602,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-wardens-s1\\553ffd7f-5d9c-8b9d-b5fd-637d99be0534.wav"
+  ],
+  "caption": "cold ancient guardian machine theme, instrumental, pulsing low synth arpeggio, deep low strings, glassy bell tones, heavy taiko with a soft kick on every beat, mechanical and watchful, vast and solemn, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "wardens",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 75.2,
+  "error": null
+ },
+ {
+  "id": "theme-wardens-s2",
+  "cue": "theme-wardens",
+  "arm": "shift 2",
+  "seed": 2602,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-wardens-s2\\20960d1c-560b-fa74-c6a0-c1dba3959331.wav"
+  ],
+  "caption": "cold ancient guardian machine theme, instrumental, pulsing low synth arpeggio, deep low strings, glassy bell tones, heavy taiko with a soft kick on every beat, mechanical and watchful, vast and solemn, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "wardens",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 62.2,
+  "error": null
+ },
+ {
+  "id": "theme-veil-s1",
+  "cue": "theme-veil",
+  "arm": "shift 1",
+  "seed": 2602,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-veil-s1\\e23ccf79-9a5b-8257-dc85-c2d7511371aa.wav"
+  ],
+  "caption": "mysterious hidden scholars theme, instrumental, soft breathy flute melody, harp arpeggios, soft marimba, low string drone, light hand percussion on every beat, quiet and watchful, curious and gentle, sparse with room to breathe, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "veil",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 72.9,
+  "error": null
+ },
+ {
+  "id": "theme-veil-s2",
+  "cue": "theme-veil",
+  "arm": "shift 2",
+  "seed": 2602,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-veil-s2\\5d29f7a6-e584-1063-9d3d-aee037bd075a.wav"
+  ],
+  "caption": "mysterious hidden scholars theme, instrumental, soft breathy flute melody, harp arpeggios, soft marimba, low string drone, light hand percussion on every beat, quiet and watchful, curious and gentle, sparse with room to breathe, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "veil",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 88.3,
+  "error": null
+ },
+ {
+  "id": "sting-meridian",
+  "cue": "sting-meridian",
+  "arm": "shift 2",
+  "seed": 2612,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-meridian\\271bd3ba-fabb-dde8-b5bf-e435b1f39066.wav"
+  ],
+  "caption": "short hopeful arrival fanfare, instrumental, warm french horn fanfare, strummed acoustic guitar, low strings, frame drum roll, bright resolving final chord, hopeful and proud, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "meridian",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 22.4,
+  "error": null
+ },
+ {
+  "id": "sting-ashfall",
+  "cue": "sting-ashfall",
+  "arm": "shift 2",
+  "seed": 2612,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-ashfall\\6eca0908-909e-2fbd-0374-069eb2d3e32b.wav"
+  ],
+  "caption": "short heavy arrival fanfare, instrumental, low brass blast, heavy taiko hits, metal anvil strike, staccato cellos, strong low final chord, stern and proud, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "ashfall",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 18.7,
+  "error": null
+ },
+ {
+  "id": "sting-sunward",
+  "cue": "sting-sunward",
+  "arm": "shift 2",
+  "seed": 2612,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-sunward\\9618bf5f-51f8-512a-7691-6e9f1b7b6834.wav"
+  ],
+  "caption": "short proud desert arrival flourish, instrumental, plucked oud flourish, bowed fiddle, goblet drum roll, warm low strings, bright resolving final chord, proud and warm, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "sunward",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 22.3,
+  "error": null
+ },
+ {
+  "id": "sting-wardens",
+  "cue": "sting-wardens",
+  "arm": "shift 2",
+  "seed": 2612,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-wardens\\a458eb8e-a65c-32c0-92d5-72e0184bc3b5.wav"
+  ],
+  "caption": "short cold machine arrival sting, instrumental, deep synth swell, glassy bell tones, heavy taiko hit, low strings, solemn resolving final chord, vast and calm, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "wardens",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 18.7,
+  "error": null
+ },
+ {
+  "id": "sting-veil",
+  "cue": "sting-veil",
+  "arm": "shift 2",
+  "seed": 2612,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-veil\\eaf35eda-13bd-798f-4d97-c2fbfc546030.wav"
+  ],
+  "caption": "short mysterious arrival flourish, instrumental, harp glissando, soft breathy flute, soft marimba, low string swell, gentle resolving final chord, quiet and wondrous, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "veil",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 14.6,
+  "error": null
+ },
+ {
+  "id": "theme-meridian-s1",
+  "cue": "theme-meridian",
+  "arm": "shift 1",
+  "seed": 2603,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-meridian-s1\\ac40f112-f8f3-c111-0321-b8a865c3acd6.wav"
+  ],
+  "caption": "hopeful frontier expedition theme, instrumental, plucked acoustic guitar melody, warm french horn, low strings, frame drums with a soft kick on every beat, bright and determined, warm and curious, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "meridian",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 94.9,
+  "error": null
+ },
+ {
+  "id": "theme-meridian-s2",
+  "cue": "theme-meridian",
+  "arm": "shift 2",
+  "seed": 2603,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-meridian-s2\\d5421e0b-924e-8ecc-b186-64b6a2155f0d.wav"
+  ],
+  "caption": "hopeful frontier expedition theme, instrumental, plucked acoustic guitar melody, warm french horn, low strings, frame drums with a soft kick on every beat, bright and determined, warm and curious, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "meridian",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 80.1,
+  "error": null
+ },
+ {
+  "id": "theme-ashfall-s1",
+  "cue": "theme-ashfall",
+  "arm": "shift 1",
+  "seed": 2603,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-ashfall-s1\\57674ec6-f37c-1081-572a-6ee690c7d120.wav"
+  ],
+  "caption": "driving industrial frontier march, instrumental, low brass ostinato, staccato cellos, heavy taiko and metal anvil hits on every beat, marching snare, disciplined and relentless, smoky and tense, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "ashfall",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 128.8,
+  "error": null
+ },
+ {
+  "id": "theme-ashfall-s2",
+  "cue": "theme-ashfall",
+  "arm": "shift 2",
+  "seed": 2603,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-ashfall-s2\\d775ad67-1ee6-7748-7559-94cab5a01d2a.wav"
+  ],
+  "caption": "driving industrial frontier march, instrumental, low brass ostinato, staccato cellos, heavy taiko and metal anvil hits on every beat, marching snare, disciplined and relentless, smoky and tense, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "ashfall",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 117.0,
+  "error": null
+ },
+ {
+  "id": "theme-sunward-s1",
+  "cue": "theme-sunward",
+  "arm": "shift 1",
+  "seed": 2603,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-sunward-s1\\1ab6c707-cc02-d1cf-d46e-44b5caacb751.wav"
+  ],
+  "caption": "proud desert caravan theme, instrumental, plucked oud melody, bowed fiddle, goblet drum and frame drum with a soft kick on every beat, warm low strings, sunlit and proud, rolling and confident, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "sunward",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 124.8,
+  "error": null
+ },
+ {
+  "id": "theme-sunward-s2",
+  "cue": "theme-sunward",
+  "arm": "shift 2",
+  "seed": 2603,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-sunward-s2\\e2dbab63-68bf-8e5c-8de8-c65fde17a3fd.wav"
+  ],
+  "caption": "proud desert caravan theme, instrumental, plucked oud melody, bowed fiddle, goblet drum and frame drum with a soft kick on every beat, warm low strings, sunlit and proud, rolling and confident, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "sunward",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 416.3,
+  "error": null
+ },
+ {
+  "id": "theme-wardens-s1",
+  "cue": "theme-wardens",
+  "arm": "shift 1",
+  "seed": 2603,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-wardens-s1\\fe7bf18d-648d-f29c-5fc3-3b38b48792d0.wav"
+  ],
+  "caption": "cold ancient guardian machine theme, instrumental, pulsing low synth arpeggio, deep low strings, glassy bell tones, heavy taiko with a soft kick on every beat, mechanical and watchful, vast and solemn, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "wardens",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 240.9,
+  "error": null
+ },
+ {
+  "id": "theme-wardens-s2",
+  "cue": "theme-wardens",
+  "arm": "shift 2",
+  "seed": 2603,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-wardens-s2\\a3f33df3-181d-4db1-b88c-a0bc98856b51.wav"
+  ],
+  "caption": "cold ancient guardian machine theme, instrumental, pulsing low synth arpeggio, deep low strings, glassy bell tones, heavy taiko with a soft kick on every beat, mechanical and watchful, vast and solemn, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "wardens",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 162.9,
+  "error": null
+ },
+ {
+  "id": "theme-veil-s1",
+  "cue": "theme-veil",
+  "arm": "shift 1",
+  "seed": 2603,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-veil-s1\\4c26dc24-9eaa-90d8-d1da-2c0a9e8af3cf.wav"
+  ],
+  "caption": "mysterious hidden scholars theme, instrumental, soft breathy flute melody, harp arpeggios, soft marimba, low string drone, light hand percussion on every beat, quiet and watchful, curious and gentle, sparse with room to breathe, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "veil",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 140.3,
+  "error": null
+ },
+ {
+  "id": "theme-veil-s2",
+  "cue": "theme-veil",
+  "arm": "shift 2",
+  "seed": 2603,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-veil-s2\\bf812372-e878-6cf6-db4e-354c75fd26eb.wav"
+  ],
+  "caption": "mysterious hidden scholars theme, instrumental, soft breathy flute melody, harp arpeggios, soft marimba, low string drone, light hand percussion on every beat, quiet and watchful, curious and gentle, sparse with room to breathe, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "veil",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 276.6,
+  "error": null
+ },
+ {
+  "id": "sting-meridian",
+  "cue": "sting-meridian",
+  "arm": "shift 2",
+  "seed": 2613,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-meridian\\4c8a84c9-07dd-f831-9dd8-a5747616b980.wav"
+  ],
+  "caption": "short hopeful arrival fanfare, instrumental, warm french horn fanfare, strummed acoustic guitar, low strings, frame drum roll, bright resolving final chord, hopeful and proud, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "meridian",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 61.3,
+  "error": null
+ },
+ {
+  "id": "sting-ashfall",
+  "cue": "sting-ashfall",
+  "arm": "shift 2",
+  "seed": 2613,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-ashfall\\733816d9-baa4-8e75-fae5-17ec2d2008dc.wav"
+  ],
+  "caption": "short heavy arrival fanfare, instrumental, low brass blast, heavy taiko hits, metal anvil strike, staccato cellos, strong low final chord, stern and proud, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "ashfall",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 52.2,
+  "error": null
+ },
+ {
+  "id": "sting-sunward",
+  "cue": "sting-sunward",
+  "arm": "shift 2",
+  "seed": 2613,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-sunward\\15232026-beb9-2705-14d8-6db991532167.wav"
+  ],
+  "caption": "short proud desert arrival flourish, instrumental, plucked oud flourish, bowed fiddle, goblet drum roll, warm low strings, bright resolving final chord, proud and warm, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "sunward",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 41.6,
+  "error": null
+ },
+ {
+  "id": "sting-wardens",
+  "cue": "sting-wardens",
+  "arm": "shift 2",
+  "seed": 2613,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-wardens\\ac472ffe-c0ec-01ba-956d-415facefbf78.wav"
+  ],
+  "caption": "short cold machine arrival sting, instrumental, deep synth swell, glassy bell tones, heavy taiko hit, low strings, solemn resolving final chord, vast and calm, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "wardens",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 32.3,
+  "error": null
+ },
+ {
+  "id": "sting-veil",
+  "cue": "sting-veil",
+  "arm": "shift 2",
+  "seed": 2613,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-veil\\5b8b331e-24cd-0ab8-becc-83185970829b.wav"
+  ],
+  "caption": "short mysterious arrival flourish, instrumental, harp glissando, soft breathy flute, soft marimba, low string swell, gentle resolving final chord, quiet and wondrous, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "veil",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 55.0,
+  "error": null
+ },
+ {
+  "id": "theme-meridian-s1",
+  "cue": "theme-meridian",
+  "arm": "shift 1",
+  "seed": 2604,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-meridian-s1\\d3e3d588-f55c-8f0f-d734-f79f0d697462.wav"
+  ],
+  "caption": "hopeful frontier expedition theme, instrumental, plucked acoustic guitar melody, warm french horn, low strings, frame drums with a soft kick on every beat, bright and determined, warm and curious, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "meridian",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 209.2,
+  "error": null
+ },
+ {
+  "id": "theme-meridian-s2",
+  "cue": "theme-meridian",
+  "arm": "shift 2",
+  "seed": 2604,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-meridian-s2\\1b46779c-81ec-6e5a-0566-1c4f1dc9b056.wav"
+  ],
+  "caption": "hopeful frontier expedition theme, instrumental, plucked acoustic guitar melody, warm french horn, low strings, frame drums with a soft kick on every beat, bright and determined, warm and curious, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "meridian",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 218.5,
+  "error": null
+ },
+ {
+  "id": "theme-ashfall-s1",
+  "cue": "theme-ashfall",
+  "arm": "shift 1",
+  "seed": 2604,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\theme-ashfall-s1\\d2cd908f-71c7-82ab-66f3-b2ab6d49d899.wav"
+  ],
+  "caption": "driving industrial frontier march, instrumental, low brass ostinato, staccato cellos, heavy taiko and metal anvil hits on every beat, marching snare, disciplined and relentless, smoky and tense, builds to a fuller second half, steady tempo, steady pulse that never drops out, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Main theme]\n\n[Interlude]\n\n[Main theme - full]\n\n[Outro]",
+  "instrumental": true,
+  "shift": 1.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 100,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "ashfall",
+  "loopwin": [
+   58,
+   66
+  ],
+  "sting_len": null,
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 198.0,
+  "error": null
+ },
+ {
+  "id": "sting-meridian",
+  "cue": "sting-meridian",
+  "arm": "shift 2",
+  "seed": 2614,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-meridian\\35b9f621-fa57-9939-c273-bcea77c87886.wav"
+  ],
+  "caption": "short hopeful arrival fanfare, instrumental, warm french horn fanfare, strummed acoustic guitar, low strings, frame drum roll, bright resolving final chord, hopeful and proud, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "meridian",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 29.4,
+  "error": null
+ },
+ {
+  "id": "sting-ashfall",
+  "cue": "sting-ashfall",
+  "arm": "shift 2",
+  "seed": 2614,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-ashfall\\0c6275f5-1203-fd6d-27cd-b2aa8c7862e3.wav"
+  ],
+  "caption": "short heavy arrival fanfare, instrumental, low brass blast, heavy taiko hits, metal anvil strike, staccato cellos, strong low final chord, stern and proud, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "ashfall",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 13.3,
+  "error": null
+ },
+ {
+  "id": "sting-sunward",
+  "cue": "sting-sunward",
+  "arm": "shift 2",
+  "seed": 2614,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-sunward\\53acefec-8866-cd8b-c004-3a00479918b5.wav"
+  ],
+  "caption": "short proud desert arrival flourish, instrumental, plucked oud flourish, bowed fiddle, goblet drum roll, warm low strings, bright resolving final chord, proud and warm, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "sunward",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 14.5,
+  "error": null
+ },
+ {
+  "id": "sting-wardens",
+  "cue": "sting-wardens",
+  "arm": "shift 2",
+  "seed": 2614,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-wardens\\f137cbdc-daa4-e7a4-4b28-6378c7bc5e03.wav"
+  ],
+  "caption": "short cold machine arrival sting, instrumental, deep synth swell, glassy bell tones, heavy taiko hit, low strings, solemn resolving final chord, vast and calm, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "wardens",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 19.6,
+  "error": null
+ },
+ {
+  "id": "sting-veil",
+  "cue": "sting-veil",
+  "arm": "shift 2",
+  "seed": 2614,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-veil\\abd90479-d608-721e-cd66-9c9e545866ac.wav"
+  ],
+  "caption": "short mysterious arrival flourish, instrumental, harp glissando, soft breathy flute, soft marimba, low string swell, gentle resolving final chord, quiet and wondrous, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "veil",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 24.3,
+  "error": null
+ },
+ {
+  "id": "sting-meridian",
+  "cue": "sting-meridian",
+  "arm": "shift 2",
+  "seed": 2615,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-meridian\\82cb31b2-bcef-b6e0-8c4a-9127f303c39a.wav"
+  ],
+  "caption": "short hopeful arrival fanfare, instrumental, warm french horn fanfare, strummed acoustic guitar, low strings, frame drum roll, bright resolving final chord, hopeful and proud, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "meridian",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 34.9,
+  "error": null
+ },
+ {
+  "id": "sting-ashfall",
+  "cue": "sting-ashfall",
+  "arm": "shift 2",
+  "seed": 2615,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-ashfall\\64df1734-ab02-c03a-40a5-15f8f5d773fd.wav"
+  ],
+  "caption": "short heavy arrival fanfare, instrumental, low brass blast, heavy taiko hits, metal anvil strike, staccato cellos, strong low final chord, stern and proud, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "ashfall",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 51.9,
+  "error": null
+ },
+ {
+  "id": "sting-sunward",
+  "cue": "sting-sunward",
+  "arm": "shift 2",
+  "seed": 2615,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-sunward\\e152c61a-e74f-ba0c-a603-98cf6cd83a32.wav"
+  ],
+  "caption": "short proud desert arrival flourish, instrumental, plucked oud flourish, bowed fiddle, goblet drum roll, warm low strings, bright resolving final chord, proud and warm, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "sunward",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 28.1,
+  "error": null
+ },
+ {
+  "id": "sting-wardens",
+  "cue": "sting-wardens",
+  "arm": "shift 2",
+  "seed": 2615,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-wardens\\7c8e5e75-4270-5b28-cd39-9026ce09d67e.wav"
+  ],
+  "caption": "short cold machine arrival sting, instrumental, deep synth swell, glassy bell tones, heavy taiko hit, low strings, solemn resolving final chord, vast and calm, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "wardens",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 27.9,
+  "error": null
+ },
+ {
+  "id": "sting-veil",
+  "cue": "sting-veil",
+  "arm": "shift 2",
+  "seed": 2615,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-veil\\7f204c5e-7b9f-c595-789c-3d18192b4bee.wav"
+  ],
+  "caption": "short mysterious arrival flourish, instrumental, harp glissando, soft breathy flute, soft marimba, low string swell, gentle resolving final chord, quiet and wondrous, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "veil",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 26.4,
+  "error": null
+ },
+ {
+  "id": "sting-meridian",
+  "cue": "sting-meridian",
+  "arm": "shift 2",
+  "seed": 2616,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-meridian\\89493589-896a-24ed-a742-d3b55b23218f.wav"
+  ],
+  "caption": "short hopeful arrival fanfare, instrumental, warm french horn fanfare, strummed acoustic guitar, low strings, frame drum roll, bright resolving final chord, hopeful and proud, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "D major",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "meridian",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 27.8,
+  "error": null
+ },
+ {
+  "id": "sting-ashfall",
+  "cue": "sting-ashfall",
+  "arm": "shift 2",
+  "seed": 2616,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-ashfall\\1b690036-69ed-1455-ecbf-67448c8f052b.wav"
+  ],
+  "caption": "short heavy arrival fanfare, instrumental, low brass blast, heavy taiko hits, metal anvil strike, staccato cellos, strong low final chord, stern and proud, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 112,
+  "key": "C minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "ashfall",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 28.8,
+  "error": null
+ },
+ {
+  "id": "sting-sunward",
+  "cue": "sting-sunward",
+  "arm": "shift 2",
+  "seed": 2616,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-sunward\\e8bad0e0-6e34-c49c-f1dc-c8735455065b.wav"
+  ],
+  "caption": "short proud desert arrival flourish, instrumental, plucked oud flourish, bowed fiddle, goblet drum roll, warm low strings, bright resolving final chord, proud and warm, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 96,
+  "key": "E minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "sunward",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 22.2,
+  "error": null
+ },
+ {
+  "id": "sting-wardens",
+  "cue": "sting-wardens",
+  "arm": "shift 2",
+  "seed": 2616,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-wardens\\0d6a9ec2-46b7-e15c-a4e8-e117f1ab26b6.wav"
+  ],
+  "caption": "short cold machine arrival sting, instrumental, deep synth swell, glassy bell tones, heavy taiko hit, low strings, solemn resolving final chord, vast and calm, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "A minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "wardens",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 21.2,
+  "error": null
+ },
+ {
+  "id": "sting-veil",
+  "cue": "sting-veil",
+  "arm": "shift 2",
+  "seed": 2616,
+  "ok": true,
+  "paths": [
+   "C:\\Users\\n\\ace-step\\batches\\frontier-factions-1126\\out\\sting-veil\\7598a6eb-4eeb-ede3-1824-12728eada8ac.wav"
+  ],
+  "caption": "short mysterious arrival flourish, instrumental, harp glissando, soft breathy flute, soft marimba, low string swell, gentle resolving final chord, quiet and wondrous, clean warm mix, no vocals",
+  "lyrics": "[Intro]\n\n[Fanfare]\n\n[Outro - final chord]",
+  "instrumental": true,
+  "shift": 2.0,
+  "bpm": 80,
+  "key": "B minor",
+  "duration": 20,
+  "steps": 8,
+  "dit": "acestep-v15-xl-turbo",
+  "faction": "veil",
+  "loopwin": null,
+  "sting_len": [
+   2.8,
+   4.4
+  ],
+  "lm": "acestep-5Hz-lm-1.7B",
+  "cot": false,
+  "secs": 24.9,
+  "error": null
+ }
+]

@@ -1,0 +1,172 @@
+{
+ "theme-meridian": [
+  {
+   "key": "theme-meridian-s1:2603",
+   "picked": true,
+   "note": "weak repetition at seam 0.84"
+  },
+  {
+   "key": "theme-meridian-s2:2603",
+   "picked": false,
+   "note": "tracker reads a triplet pulse (129.1 bpm, x1.345)"
+  },
+  {
+   "key": "theme-meridian-s1:2601",
+   "picked": false,
+   "note": "weak repetition at seam 0.78"
+  }
+ ],
+ "theme-ashfall": [
+  {
+   "key": "theme-ashfall-s1:2602",
+   "picked": true,
+   "note": "level step at seam 2.25 dB"
+  },
+  {
+   "key": "theme-ashfall-s1:2604",
+   "picked": false,
+   "note": "harsh 0.053"
+  },
+  {
+   "key": "theme-ashfall-s2:2602",
+   "picked": false,
+   "note": "level step at seam 2.319999933242798 dB"
+  }
+ ],
+ "theme-sunward": [
+  {
+   "key": "theme-sunward-s1:2603",
+   "picked": true,
+   "note": "no flags from the checks"
+  },
+  {
+   "key": "theme-sunward-s1:2601",
+   "picked": false,
+   "note": "4 short quiet gaps in loop (sparse); tracker reads a triplet pulse (129.16 bpm, x1.345)"
+  },
+  {
+   "key": "theme-sunward-s2:2602",
+   "picked": false,
+   "note": "1 quiet gap(s) in loop (longest 1.72 s)"
+  }
+ ],
+ "theme-wardens": [
+  {
+   "key": "theme-wardens-s2:2601",
+   "picked": true,
+   "note": "tempo 152.11 vs requested (x1.901)"
+  },
+  {
+   "key": "theme-wardens-s1:2602",
+   "picked": false,
+   "note": "loose beat grid in loop 0.85"
+  },
+  {
+   "key": "theme-wardens-s2:2603",
+   "picked": false,
+   "note": "seam mismatch 0.77"
+  }
+ ],
+ "theme-veil": [
+  {
+   "key": "theme-veil-s2:2601",
+   "picked": true,
+   "note": "tempo 151.99 vs requested (x1.9)"
+  },
+  {
+   "key": "theme-veil-s2:2603",
+   "picked": false,
+   "note": "loose beat grid in loop 0.80"
+  },
+  {
+   "key": "theme-veil-s2:2602",
+   "picked": false,
+   "note": "loose beat grid in loop 0.71"
+  }
+ ],
+ "sting-meridian": [
+  {
+   "key": "sting-meridian:2614",
+   "picked": true,
+   "note": "no flags from the checks"
+  },
+  {
+   "key": "sting-meridian:2612",
+   "picked": false,
+   "note": "final chord top note is not the tonic"
+  },
+  {
+   "key": "sting-meridian:2613",
+   "picked": false,
+   "note": "harsh 0.038; final chord top note is not the tonic"
+  }
+ ],
+ "sting-ashfall": [
+  {
+   "key": "sting-ashfall:2612",
+   "picked": true,
+   "note": "harsh 0.033"
+  },
+  {
+   "key": "sting-ashfall:2614",
+   "picked": false,
+   "note": "harsh 0.041"
+  },
+  {
+   "key": "sting-ashfall:2613",
+   "picked": false,
+   "note": "harsh 0.044; final chord top note is not the tonic; weak home-chord landing 0.29"
+  }
+ ],
+ "sting-sunward": [
+  {
+   "key": "sting-sunward:2612",
+   "picked": true,
+   "note": "weak home-chord landing 0.33"
+  },
+  {
+   "key": "sting-sunward:2615",
+   "picked": false,
+   "note": "final chord top note is not the tonic"
+  },
+  {
+   "key": "sting-sunward:2611",
+   "picked": false,
+   "note": "harsh 0.056; ending fades early (-12.77 dB)"
+  }
+ ],
+ "sting-wardens": [
+  {
+   "key": "sting-wardens:2612",
+   "picked": true,
+   "note": "no flags from the checks"
+  },
+  {
+   "key": "sting-wardens:2614",
+   "picked": false,
+   "note": "no flags from the checks"
+  },
+  {
+   "key": "sting-wardens:2616",
+   "picked": false,
+   "note": "no flags from the checks"
+  }
+ ],
+ "sting-veil": [
+  {
+   "key": "sting-veil:2611",
+   "picked": true,
+   "note": "low-end share 0.02; final chord top note is not the tonic"
+  },
+  {
+   "key": "sting-veil:2613",
+   "picked": false,
+   "note": "final chord top note is not the tonic; weak home-chord landing 0.32"
+  },
+  {
+   "key": "sting-veil:2612",
+   "picked": false,
+   "note": "final chord top note is not the tonic; weak home-chord landing 0.29"
+  }
+ ]
+}

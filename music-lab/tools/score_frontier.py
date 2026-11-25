@@ -142,7 +142,7 @@ def best_loop(y, bt, cue, dur, bpm, bpm_prior, bpm_param):
         if not b:
             continue
         bar = 4 * 60.0 / b
-        for N in range(8, 41, 4):
+        for N in range(8, 41, int(os.environ.get("BAR_STEP", "4"))):  # BAR_STEP=2 allows 18/22/26-bar loops
             L0 = N * bar
             if lo <= L0 <= hi:
                 for L in range(fr(L0 * 0.9965), fr(L0 * 1.0035) + 1):  # +-0.35 % = under a quarter beat for 16+ bars
@@ -242,6 +242,8 @@ def main():
         st = [20 * np.log10(np.sqrt(np.mean(y[i:i + w3] ** 2)) + 1e-9) for i in range(0, len(y) - w3, SR)]
         r["level_spread_db"] = round(float(np.percentile(st, 95) - np.percentile(st, 10)), 2)
         win = e.get("loopwin") or LOOPWIN.get(e["cue"])
+        if win and os.environ.get("LOOPWIN"):  # size budget override, e.g. LOOPWIN=52,56.5 (faction themes, 2026-11-26)
+            win = [float(v) for v in os.environ["LOOPWIN"].split(",")]
         if win:
             r["loop"] = best_loop(y, bt, tuple(win), dur, bm.get("bpm"), bm.get("bpm_prior"), e["bpm"])
             if r["loop"]:

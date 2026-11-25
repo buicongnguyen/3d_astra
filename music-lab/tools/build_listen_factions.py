@@ -35,7 +35,7 @@ def card(lab, src, meta, note, sid, loop):
 
 for fid, name, hint in FACTIONS:
     parts = []
-    for kind, cue, title in (("T", f"theme-{fid}", "Battle theme (loops)"), ("S", f"stinger-{fid}", "Stinger (match start, faction pick, victory)")):
+    for kind, cue, title in (("T", f"theme-{fid}", "Battle theme (loops)"), ("S", f"sting-{fid}", "Stinger (match start, faction pick, victory)")):
         cards = []
         order = list(range(len(sl.get(cue, []))))
         random.Random(1126 + len(cue) * 7).shuffle(order)  # blind order, fixed seed: label A is not always the pick

@@ -57,9 +57,7 @@ test("prefetch in a faction match: its own stinger and the defeat sting, never a
 });
 
 const SHIPPED = JSON.parse(readFileSync(new URL("../public/music/manifest.json", import.meta.url), "utf8"));
-// TODO until the faction files land (generation waits for a free GPU): the test is reported as todo, not passed.
-const pending = MUSIC_FACTIONS.some((f) => !SHIPPED.tracks[themeCue(f)]) ? "faction music not generated yet" : false;
-test("shipped manifest: one theme loop (60-90 s) and one stinger (3-5 s) per faction, at most ~0.53 MB per match", { todo: pending }, () => {
+test("shipped manifest: one theme loop (52-90 s; 52-56 s keeps a match near 0.5 MB) and one stinger (3-5 s) per faction, about 0.5 MB per match (505 kB cap)", () => {
   const dir = new URL("../public/music/", import.meta.url);
   const manifest = SHIPPED;
   for (const f of MUSIC_FACTIONS) {
@@ -67,10 +65,10 @@ test("shipped manifest: one theme loop (60-90 s) and one stinger (3-5 s) per fac
     assert.ok(theme && stinger, `${f} listed`);
     assert.equal(theme.loop, true, `${f} theme loops`);
     const loop = theme.loopEnd - theme.loopStart;
-    assert.ok(loop >= 58 && loop <= 90, `${f} loop ${loop} s`);
+    assert.ok(loop >= 52 && loop <= 90, `${f} loop ${loop} s`);
     assert.equal(stinger.loop, false);
     assert.ok(stinger.seconds >= 2.8 && stinger.seconds <= 5.2, `${f} stinger ${stinger.seconds} s`);
     assert.equal(theme.codec, manifest.tracks.title.codec, `${f}: same codec and bitrate as the shared set`);
-    if (existsSync(new URL(theme.file, dir))) assert.ok(theme.bytes + stinger.bytes <= 530_000, `${f}: one match downloads ${theme.bytes + stinger.bytes} bytes`);
+    if (existsSync(new URL(theme.file, dir))) assert.ok(theme.bytes + stinger.bytes <= 505_000, `${f}: one match downloads ${theme.bytes + stinger.bytes} bytes`);
   }
 });
