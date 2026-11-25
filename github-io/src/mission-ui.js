@@ -25,7 +25,7 @@ export function medalBadge(medal, extra = "") {
   return `<svg class="medal-badge ${medal}${extra ? ` ${extra}` : ""}" viewBox="0 0 48 56" role="img" aria-label="${MEDAL_NAMES[medal]}"><path d="M13 2h9l5 20h-9Z" fill="#2f8f86"/><path d="M35 2h-9l-5 20h9Z" fill="#3fb3a6"/><circle cx="24" cy="35" r="18" fill="${c[2]}"/><circle cx="24" cy="34" r="16" fill="${c[1]}"/><circle cx="24" cy="34" r="11.5" fill="none" stroke="${c[0]}" stroke-width="2"/><path d="m24 25 2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6-4.5-4.2 6.1-.8Z" fill="${c[0]}"/></svg>`;
 }
 
-export function createMissionUI({ stage, objectivesPanel, tone = () => {}, speak = () => {}, onLayout = () => {} }) {
+export function createMissionUI({ stage, objectivesPanel, tone = () => {}, speak = () => 0, hush = () => {}, onLayout = () => {} }) {
   // ---------------------------------------------------------------- Briefing overlay
   const overlay = document.createElement("section");
   overlay.id = "mission-briefing";
@@ -187,6 +187,19 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, speak
     d("dialogue-more").hidden = !text;
     d("dialogue-more").textContent = text;
   }
+  // W3: a line of play is spoken when it shows in the box, so the voice and the subtitle (EN/VI/KO) stay in
+  // step; the box then holds the line at least until its voice ends. `cut`: the player moved on, so the
+  // line still speaking stops for this one.
+  function voiceLine(cut = false) {
+    const line = queue.current;
+    if (!line || line.scene || line.voiced) return;
+    line.voiced = true;
+    const seconds = Number(speak(line.who, line.text, { cut })) || 0;
+    if (seconds > 0) queue.left = Math.max(queue.left, seconds + 0.4);
+  }
+  // The player dismissed the line: the next one speaks at once, or the voice stops with the last one.
+  const dismissByPlayer = () => { if (!queue.next()) return; renderLine(); if (queue.current) voiceLine(true); else hush(); };
+  // A scene steps the line aside (app/scenes.js): the scene's own line speaks next.
   const dismiss = () => { if (queue.next()) renderLine(); };
   // Desktop: the whole card dismisses on a tap or click. Phones: the line is a one-line chip that opens on a tap
   // (the Dismiss button then clears it, a tap elsewhere on the card folds it back); a new line, a scene or the
@@ -195,9 +208,9 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, speak
   const fold = () => box.classList.remove("expanded");
   d("dialogue-card").addEventListener("click", (event) => {
     event.stopPropagation();
-    if (!compact()) { dismiss(); return; }
+    if (!compact()) { dismissByPlayer(); return; }
     if (!box.classList.contains("expanded")) box.classList.add("expanded");
-    else if (event.target.closest("#dialogue-close")) { fold(); dismiss(); }
+    else if (event.target.closest("#dialogue-close")) { fold(); dismissByPlayer(); }
     else fold();
   });
 
@@ -235,10 +248,9 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, speak
 
   function say(who, text) {
     const shown = queue.push(who, text);
-    speak(who, text); // W3: the line's voice, when it has one (audio.js say)
     logDirty = true;
     renderLog();
-    if (shown) { renderLine(); tone(660, 0.05); } else renderMore();
+    if (shown) { renderLine(); voiceLine(); tone(660, 0.05); } else renderMore();
   }
   // A scene's line (app/scenes.js): on the box at once, or only into the Comms log when skipped.
   function sceneLine(who, text, show = true) {
@@ -250,7 +262,7 @@ export function createMissionUI({ stage, objectivesPanel, tone = () => {}, speak
   // Called every frame with the play time that passed (0 while paused): no page work unless
   // the line changes.
   function tick(dt) {
-    if (dt > 0 && !box.classList.contains("expanded") && queue.tick(dt)) renderLine();
+    if (dt > 0 && !box.classList.contains("expanded") && queue.tick(dt)) { renderLine(); voiceLine(); }
   }
 
   // ---------------------------------------------------------------- Objectives

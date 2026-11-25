@@ -27,7 +27,7 @@ function airNote(sim, team) {
 export function setupHud(S, A) {
   const Z = S.screen;
   // Story missions: briefing overlay, dialogue box, objectives list and debrief (mission-ui.js).
-  const missionUI = createMissionUI({ stage: $("stage"), objectivesPanel: $("mission-objectives"), speak: (who, text) => S.audio?.say?.(who, text), tone: (frequency, duration) => (frequency === 988 ? S.audio?.sfx.play("objective") : frequency === 196 ? S.audio?.sfx.play("objective-failed") : null) ?? A.tone(frequency, duration) });
+  const missionUI = createMissionUI({ stage: $("stage"), objectivesPanel: $("mission-objectives"), speak: (who, text, o) => S.audio?.say?.(who, text, o) || 0, hush: () => S.audio?.hushStory?.(), tone: (frequency, duration) => (frequency === 988 ? S.audio?.sfx.play("objective") : frequency === 196 ? S.audio?.sfx.play("objective-failed") : null) ?? A.tone(frequency, duration) });
 
   const compactMedia = matchMedia("(max-width: 1000px), (max-height: 650px)");
 

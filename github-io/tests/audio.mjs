@@ -144,8 +144,9 @@ try {
   assert.ok(voices.cut && voices.now?.channel === 'announcer' && voices.now.key === 'baseAttack' && voices.cutCount === 1, `the announcer cuts the reply short (${JSON.stringify(voices)})`);
   assert.ok(voices.speaking && voices.sfxDip && voices.musicDip, `music and effects dip under the voice (${JSON.stringify(voices)})`);
   // A campaign line has its voice (mission 1's story pack, matched by the line's English text).
-  const told = await page.evaluate(async () => { const v = window.__frontier.audio.voice; await v.load('story-m01'); v.reset(); const said = v.story('It is waking! Four hundred years dark and it still knows its work.'); return { said, line: v.voice?.line, other: v.story('A line nobody recorded.') }; });
-  assert.ok(told.said && told.line?.channel === 'story' && told.line.index === 3 && told.other === false, `story voice (${JSON.stringify(told)})`);
+  // (Skirmish has no story pack: the line is looked up in mission 1's, loaded here by hand; tests/story-voices.mjs plays real missions.)
+  const told = await page.evaluate(async () => { const v = window.__frontier.audio.voice; await v.load('story-m01'); v.reset(); v.mission = 'm01-first-light'; const said = v.story('It is waking! Four hundred years dark and it still knows its work.'); const out = { said, line: v.voice?.line, other: v.story('A line nobody recorded.') }; v.mission = null; return out; });
+  assert.ok(told.said > 0 && told.line?.channel === 'story' && told.line.index === 's.4s9bwz' && told.other === 0, `story voice (${JSON.stringify(told)})`);
 
   // Mute stops scheduling and effects; unmuting restarts it.
   await page.click('#audio');

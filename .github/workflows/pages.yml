@@ -158,6 +158,9 @@ jobs:
             scripts: progression
           - name: story-audio
             scripts: audio
+          # W3 story voices: per-mission story packs after Start, lines in order, scene lines and skip, Voices off.
+          - name: story-voices
+            scripts: story-voices
           - name: air
             scripts: air
           # AAA round 3 (R3-M): the title cover (loading screen, key art per frame, live layer, labels, calm mode).

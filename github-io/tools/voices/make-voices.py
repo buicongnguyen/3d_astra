@@ -1,4 +1,6 @@
-"""W3 voices: render every line of src/voice-lines.json into one MP3 sprite per pack.
+"""W3 voices: render every line of src/voice-lines.json (faction replies and announcer) and of
+src/voice-story.json (story lines of every campaign and Chronicle mission, written by
+tools/voices/story-lines.mjs) into one MP3 sprite per pack.
 
 Engine: Kokoro-82M (hexgrad, Apache-2.0 weights and code), stock voices only, run locally on the GPU.
 No cloud TTS, no cloned voice. Only the processed MP3s ship (public/voices/); the engine never does.
@@ -12,8 +14,11 @@ widened by PAD on both sides so a decoder that keeps the MP3 priming (about 50 m
 Run (PowerShell, from github-io/), with a Python that has kokoro, soundfile, scipy, pyloudnorm and av,
 for example the voice_sync venv:
     & C:/Users/n/source/repos/voice_sync/engines/venv/Scripts/python.exe -I -X utf8 tools/voices/make-voices.py [--qa] [--packs meridian,story-m01]
---qa runs a Whisper round trip (faster-whisper, local) on the processed clips and writes .tmp/voices/qa.json.
-Processed WAVs for listening go to .tmp/voices/clips/<pack>/ and .tmp/voices/listen.html.
+--packs also takes "story" (every story pack) and "factions". --qa runs a Whisper large-v3 round trip
+(faster-whisper, local) on the processed clips and merges the results into .tmp/voices/qa.json.
+Processed WAVs for listening go to .tmp/voices/clips/<pack>/, .tmp/voices/listen.html (the packs built in
+this run) and .tmp/voices/listen-story.html (every story clip, by mission and character, with its WER).
+Story clips are keyed "s.<storyHash(text)>" (src/voice-logic.js storyHash, the same FNV-1a here).
 """
 import argparse, io, json, math, os, re, sys, time
 from pathlib import Path
@@ -22,6 +27,7 @@ from scipy import signal
 
 GAME = Path(__file__).resolve().parents[2]
 LINES = GAME / "src" / "voice-lines.json"
+STORY_FILE = GAME / "src" / "voice-story.json"
 OUT_AUDIO = GAME / "public" / "voices"
 OUT_INDEX = GAME / "src" / "voice-packs.json"
 WORK = GAME / ".tmp" / "voices"
@@ -191,6 +197,29 @@ def fade(x, a=0.006, b=0.03):
 
 
 # ------------------------------------------------------------------ the packs
+def story_hash(text):
+    """FNV-1a 32 bit over the UTF-16 code units, base 36 (src/voice-logic.js storyHash)."""
+    h = 0x811C9DC5
+    b = text.encode("utf-16-le")
+    for i in range(0, len(b), 2):
+        h = ((h ^ (b[i] | b[i + 1] << 8)) * 0x01000193) & 0xFFFFFFFF
+    digits, out = "0123456789abcdefghijklmnopqrstuvwxyz", ""
+    while True:
+        h, r = divmod(h, 36)
+        out = digits[r] + out
+        if not h:
+            return out
+
+
+def story_packs(story):
+    """{pack name: (mission id, [line])} in mission order."""
+    out = {}
+    for mid, m in story["missions"].items():
+        for p in m["packs"]:
+            out[p["name"]] = (mid, p["lines"])
+    return out
+
+
 def pack_lines(data, name):
     """[(clip id, text, voice, fx, kind, speed)] for one pack."""
     if name in data["factions"]:
@@ -204,8 +233,9 @@ def pack_lines(data, name):
                 out.append((f"ann.{kind}.{i}", text, f["announcerVoice"], f["fx"], "ann", f["speed"]))
         return out
     s = data["story"]
-    assert name == s["pack"], name
-    return [(f"story.{i}", line["text"], s["voices"][line["who"]], s["fx"][line["who"]], "story", 1.0) for i, line in enumerate(s["lines"])]
+    _, lines = story_packs(s)[name]
+    spoken, speed = s.get("spoken", {}), s.get("speed", {})
+    return [(f"s.{story_hash(l['text'])}", spoken.get(l["text"], l["text"]), s["voices"][l["who"]], s["fx"][l["who"]], "story", speed.get(l["who"], 1.0)) for l in lines]
 
 
 _pipes = {}
@@ -276,16 +306,61 @@ def build(name, data, rng, wav_dir):
     return {"file": f"voices/{name}.mp3", "bytes": mp3.stat().st_size, "seconds": round(len(x) / SR, 2), "decoderLagMs": round(lag / SR * 1000, 1), "clips": clips}, texts, time.time() - t0
 
 
+# British spellings the game writes and Whisper prints the American way, and words Whisper writes two ways.
+SPELL = {"recognised": "recognized", "neutralised": "neutralized", "armour": "armor", "colour": "color", "defence": "defense",
+         "honour": "honor", "metres": "meters", "metre": "meter", "harbour": "harbor", "centre": "center", "favour": "favor",
+         "grey": "gray", "ok": "okay", "realise": "realize", "organised": "organized", "theatre": "theater", "travelled": "traveled",
+         "labour": "labor", "neighbours": "neighbors", "neighbour": "neighbor", "rumour": "rumor", "apologise": "apologize",
+         "per cent": "percent", "%": " percent"}
+# Homophones of the cast's and the world's names: Whisper writes a common word for a name it does not know,
+# though the voice says the name (only true sound-alikes go here, never a different word).
+HEARD = {"hail": "hale", "hails": "hale's", "ashe": "ash", "wyrm": "worm", "birth": "berth", "sight": "site",
+         "red": "read",  # read (past tense) and red
+         "foremen": "foreman",  # one vowel apart, the same in speech
+         "writers": "riders", "writer's": "riders",  # American flapping: riders / writers
+         "pack's": "pact's"}
+
+
+def merge_compounds(a, other):
+    """Two words of one side written as one word on the other (north-west / northwest, Wagon-master)."""
+    out, i = [], 0
+    while i < len(a):
+        if i + 1 < len(a) and a[i] + a[i + 1] in other and a[i] not in other:
+            out.append(a[i] + a[i + 1]); i += 2
+        else:
+            out.append(a[i]); i += 1
+    return out
+
+
+def number_words(n):
+    from num2words import num2words
+    if 1100 <= n < 2000 and n % 100 == 0:
+        return num2words(n // 100) + " hundred"  # "eleven hundred steps"
+    return num2words(n).replace("-", " ").replace(",", "")
+
+
+def qa_words(s):
+    from num2words import num2words
+    s = s.lower().replace("’", "'").replace("—", " ").replace("-", " ")
+    s = re.sub(r"(\d),(\d{3})", r"\1\2", s)
+    for a, b in SPELL.items():
+        s = re.sub(rf"\b{re.escape(a)}\b" if a[0].isalnum() else re.escape(a), b, s)
+    s = re.sub(r"\d+", lambda m: " " + number_words(int(m.group())) + " ", s)
+    s = " ".join(HEARD.get(w, w) for w in re.sub(r"[^a-z0-9' ]", " ", s).split())
+    return s.split()
+
+
 def qa(results, wav_root):
     from faster_whisper import WhisperModel
     model = WhisperModel("large-v3", device="cuda", compute_type="float16")
-    norm = lambda s: re.sub(r"[^a-z0-9' ]", " ", s.lower().replace("recognised", "recognized").replace("neutralised", "neutralized")).split()
+    norm = qa_words
     report = {}
     for pack, (_, texts) in results.items():
         for cid, text in texts.items():
             segs, _ = model.transcribe(str(wav_root / pack / f"{cid}.wav"), language="en", beam_size=5)
             heard = " ".join(s.text for s in segs).strip()
             a, b = norm(text), norm(heard)
+            a, b = merge_compounds(a, set(b)), merge_compounds(b, set(a))
             # word error rate (Levenshtein over words)
             d = list(range(len(b) + 1))
             for i in range(1, len(a) + 1):
@@ -309,39 +384,129 @@ def listen_page(results, data):
     (WORK / "listen.html").write_text(html, encoding="utf-8")
 
 
+# Flagged by the Whisper round trip: reword the voice text (voice-story.json "spoken") or regenerate.
+FLAG_WER = 0.1
+
+
+def write_index(index):
+    """voice-packs.json: the header keys indented, one line per pack (the story packs make it long)."""
+    head = {k: v for k, v in index.items() if k != "packs"}
+    lines = ["{"]
+    for k, v in head.items():
+        lines.append(f" {json.dumps(k)}: {json.dumps(v, separators=(',', ':'))},")
+    lines.append(' "packs": {')
+    items = list(index["packs"].items())
+    for n, (k, v) in enumerate(items):
+        lines.append(f"  {json.dumps(k)}: {json.dumps(v, separators=(',', ':'))}{',' if n < len(items) - 1 else ''}")
+    lines.append(" }")
+    lines.append("}")
+    OUT_INDEX.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+
+
+def story_listen_page(data, index, qa_report):
+    """Every story clip, grouped by mission and then by character, with its voice, size and WER."""
+    from html import escape
+    s = data["story"]
+    from collections import defaultdict
+    out = ["<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width,initial-scale=1'><title>Story voices</title>",
+           "<style>:root{color-scheme:dark}body{font:15px/1.4 system-ui,sans-serif;margin:16px;background:#101418;color:#e8eef2;max-width:1100px}"
+           "h2{margin:28px 0 6px;border-top:1px solid #2a3440;padding-top:14px}h3{margin:14px 0 4px;color:#8fd8c8;font-size:15px}"
+           "table{border-collapse:collapse;width:100%}td{padding:4px 8px;border-bottom:1px solid #222b33;vertical-align:middle}"
+           "small,.m{color:#8a99a6}.bad{color:#ff9a7a}.ok{color:#8fd8a0}audio{height:32px;width:260px;max-width:60vw}"
+           "nav a{color:#8fd8c8;margin-right:10px}.sp{color:#d9c78f;font-size:13px}</style>",
+           "<h1>Frontier Command: story voices (W3)</h1>",
+           "<p class=m>Every voiced story line of every campaign and Chronicle mission, as processed before MP3 encoding. "
+           "Grouped by mission, then by character. WER = Whisper large-v3 round trip against the words the voice says.</p>"]
+    total = sum(index["packs"][n]["bytes"] for n in story_packs(s) if n in index["packs"])
+    allw = [v["wer"] for k, v in qa_report.items() if k.split("/")[0].startswith("story-")]
+    out.append(f"<p>{len(allw)} clips with QA, mean WER {np.mean(allw) if allw else 0:.3f}, flagged (&gt; {FLAG_WER}) {sum(w > FLAG_WER for w in allw)}; story packs {total // 1024} KB in all.</p>")
+    out.append("<h2>Cast</h2><table>" + "".join(f"<tr><td>{escape(w)}</td><td>{escape(v)}</td><td>{escape(s['fx'][w])}</td><td>speed {s.get('speed', {}).get(w, 1.0)}</td></tr>" for w, v in s["voices"].items()) + "</table>")
+    out.append("<nav>" + "".join(f"<a href='#{mid}'>{mid.split('-')[0]}</a>" for mid in s["missions"]) + "</nav>")
+    for mid, m in s["missions"].items():
+        sizes = ", ".join(f"{p['name']} {index['packs'].get(p['name'], {}).get('bytes', 0) // 1024} KB" for p in m["packs"])
+        n = sum(len(p["lines"]) for p in m["packs"])
+        out.append(f"<h2 id='{mid}'>{escape(mid)} <small>({escape(m['campaign'])}) {n} lines; {sizes}</small></h2>")
+        by = defaultdict(list)
+        for p in m["packs"]:
+            for l in p["lines"]:
+                by[l["who"]].append((p["name"], l))
+        for who, rows in by.items():
+            out.append(f"<h3>{escape(who)} <small>{escape(s['voices'][who])}, {escape(s['fx'][who])}</small></h3><table>")
+            for pack, l in rows:
+                cid = f"s.{story_hash(l['text'])}"
+                q = qa_report.get(f"{pack}/{cid}")
+                wer = f"<span class={'bad' if q['wer'] > FLAG_WER else 'ok'}>WER {q['wer']:.2f}</span>" if q else "<span class=m>no QA</span>"
+                heard = f"<br><small>heard: {escape(q['heard'])}</small>" if q and q["wer"] > 0 else ""
+                sp = s.get("spoken", {}).get(l["text"])
+                spn = f"<br><span class=sp>spoken: {escape(sp)}</span>" if sp else ""
+                scene = f" <small>[scene {escape(l['scene'])}]</small>" if l.get("scene") else ""
+                out.append(f"<tr><td>{escape(l['text'])}{scene}{spn}{heard}</td><td>{wer}</td><td><audio controls preload=none src='clips/{pack}/{cid}.wav'></audio></td></tr>")
+            out.append("</table>")
+    (WORK / "listen-story.html").write_text("".join(out), encoding="utf-8")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--packs", default="")
     ap.add_argument("--qa", action="store_true")
+    ap.add_argument("--qa-only", action="store_true", help="QA the clips already in .tmp/voices/clips (no rebuild)")
     args = ap.parse_args()
     data = json.loads(LINES.read_text(encoding="utf-8"))
-    names = FACTIONS + [data["story"]["pack"]]
-    chosen = [p for p in args.packs.split(",") if p] or names
+    data["story"] = json.loads(STORY_FILE.read_text(encoding="utf-8"))
+    spacks = list(story_packs(data["story"]))
+    names = FACTIONS + spacks
+    chosen = []
+    for p in [p for p in args.packs.split(",") if p] or names:
+        chosen += spacks if p == "story" else FACTIONS if p == "factions" else [p]
+    unknown = [p for p in chosen if p not in names]
+    assert not unknown, f"unknown packs {unknown}"
     OUT_AUDIO.mkdir(parents=True, exist_ok=True)
     index = json.loads(OUT_INDEX.read_text(encoding="utf-8")) if OUT_INDEX.exists() else {"packs": {}}
     results = {}
     for name in chosen:
-        rng = np.random.default_rng(sum(map(ord, name)) * 7919)
         wav_dir = WORK / "clips" / name
+        if args.qa_only:
+            results[name] = (index["packs"][name], {cid: text for cid, text, *_ in pack_lines(data, name)})
+            continue
+        rng = np.random.default_rng(sum(map(ord, name)) * 7919)
         wav_dir.mkdir(parents=True, exist_ok=True)
+        for old in wav_dir.glob("*.wav"):
+            old.unlink()
         meta, texts, secs = build(name, data, rng, wav_dir)
         results[name] = (meta, texts)
         index["packs"][name] = meta
         print(f"{name}: {len(texts)} clips, {meta['seconds']} s, {meta['bytes']} bytes, lag {meta['decoderLagMs']} ms, {secs:.1f} s", flush=True)
-    index["about"] = "Generated by tools/voices/make-voices.py from src/voice-lines.json: clip [start, length] in seconds inside each MP3 sprite (already padded). Do not edit by hand."
+    # Packs that no longer exist (a mission renamed or merged) leave the index and the folder.
+    for old in OUT_AUDIO.glob("story-*.mp3"):
+        if old.stem not in names:
+            old.unlink()
+    index["about"] = "Generated by tools/voices/make-voices.py from src/voice-lines.json and src/voice-story.json: clip [start, length] in seconds inside each MP3 sprite (already padded); `story` lists each mission's story packs. Do not edit by hand."
     index["engine"] = "Kokoro-82M (hexgrad, Apache-2.0), stock voices, local GPU"
     index["codec"] = f"MP3 mono {SR} Hz {BITRATE // 1000} kbps (libmp3lame)"
+    index["story"] = {mid: [p["name"] for p in m["packs"]] for mid, m in data["story"]["missions"].items()}
     index["packs"] = {k: index["packs"][k] for k in names if k in index["packs"]}
     index["totalBytes"] = sum(p["bytes"] for p in index["packs"].values())
-    OUT_INDEX.write_text(json.dumps(index, indent=1) + "\n", encoding="utf-8", newline="\n")
-    listen_page(results, data)
-    if args.qa:
+    order = ["about", "engine", "codec", "totalBytes", "story", "packs"]
+    index = {k: index[k] for k in order}
+    if not args.qa_only:
+        write_index(index)
+        listen_page(results, data)
+    qa_path = WORK / "qa.json"
+    report = json.loads(qa_path.read_text(encoding="utf-8")) if qa_path.exists() else {}
+    if args.qa or args.qa_only:
         rep = qa(results, WORK / "clips")
-        (WORK / "qa.json").write_text(json.dumps(rep, indent=1, ensure_ascii=False), encoding="utf-8")
-        bad = {k: v for k, v in rep.items() if v["wer"] > 0.34}
-        print(f"QA: {len(rep)} clips, mean WER {np.mean([v['wer'] for v in rep.values()]):.3f}, flagged {len(bad)}")
+        report = {k: v for k, v in report.items() if k.split("/")[0] not in results} | rep
+        live = {f"{n}/{cid}" for n in names for cid, *_ in pack_lines(data, n)}
+        report = {k: v for k, v in report.items() if k in live}
+        qa_path.write_text(json.dumps(report, indent=1, ensure_ascii=False), encoding="utf-8")
+        bad = {k: v for k, v in rep.items() if v["wer"] > FLAG_WER}
+        print(f"QA (this run): {len(rep)} clips, mean WER {np.mean([v['wer'] for v in rep.values()]):.3f}, flagged {len(bad)}")
+        sw = [v["wer"] for k, v in report.items() if k.startswith("story-")]
+        if sw:
+            print(f"QA (all story clips): {len(sw)} clips, mean WER {np.mean(sw):.4f}, flagged {sum(w > FLAG_WER for w in sw)}, max {max(sw):.3f}")
         for k, v in bad.items():
             print("  ", k, v)
+    story_listen_page(data, index, report)
 
 
 if __name__ == "__main__":

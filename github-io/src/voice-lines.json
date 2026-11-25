@@ -1,5 +1,5 @@
 {
-  "about": "W3 voices (2026-11-25): every spoken line, per pack. The generator (tools/voices/make-voices.py) reads this file, renders each line with a local Kokoro-82M voice (Apache-2.0), processes it per faction and writes public/voices/<pack>.mp3 plus src/voice-packs.json (clip offsets). src/voice-logic.js reads the same keys. Units: ack.select / ack.move / ack.attack (unit replies). Announcer: ann.<event>. Story: story.<id>, matched by the exact English text of a mission's `say` line.",
+  "about": "W3 voices (2026-11-25): every spoken line, per pack. The generator (tools/voices/make-voices.py) reads this file, renders each line with a local Kokoro-82M voice (Apache-2.0), processes it per faction and writes public/voices/<pack>.mp3 plus src/voice-packs.json (clip offsets). src/voice-logic.js reads the same keys. Units: ack.select / ack.move / ack.attack (unit replies). Announcer: ann.<event>. Story lines: src/voice-story.json.",
   "factions": {
     "meridian": {
       "unitVoice": "am_michael", "announcerVoice": "af_bella", "speed": 1.0, "fx": "clean",
@@ -141,23 +141,5 @@
         "defeat": ["Defeat. Close the record."]
       }
     }
-  },
-  "story": {
-    "pack": "story-m01",
-    "mission": "m01-first-light",
-    "voices": { "vale": "af_sarah", "okoro": "am_puck", "hale": "bm_fable" },
-    "fx": { "vale": "clean", "okoro": "clean", "hale": "gritty" },
-    "lines": [
-      { "who": "vale", "text": "The Harvesters know their work, Commander. Alloy builds everything, so let them cut." },
-      { "who": "okoro", "text": "Pick a Harvester and raise a Supply relay near camp. It drinks from the old Lattice." },
-      { "who": "vale", "text": "Supply relay online. Now take your squad to the Builder relay by the river." },
-      { "who": "okoro", "text": "It is waking! Four hundred years dark and it still knows its work." },
-      { "who": "hale", "text": "Meridian camp. My lights failed the moment that relay lit. Shut it down." },
-      { "who": "vale", "text": "Ashfall troops at the ford. Vanguards in front, Rangers behind, and stay in the circle." },
-      { "who": "vale", "text": "They pushed us off the relay. Clear the circle and stand in it again." },
-      { "who": "hale", "text": "I asked politely, Commander. I will not ask twice." },
-      { "who": "okoro", "text": "The relay is steady. Strange, though. Why would our light put out theirs?" },
-      { "who": "okoro", "text": "Movement on the road! One Ashfall scout, only looking. Your Vanguards can send it home." }
-    ]
   }
 }

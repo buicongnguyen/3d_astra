@@ -79,7 +79,7 @@
     {
       "name": "sound and music",
       "files": ["src/audio*.js", "src/sfx*.js", "src/music*.js", "src/voice*.js", "src/voice-*.json", "src/app/sound.js", "public/music/**", "public/voices/**", "tests/fixtures/music/**"],
-      "suites": ["audio", "audio-juice", "music", "offline"],
+      "suites": ["audio", "audio-juice", "music", "offline", "story-voices"],
       "checks": []
     },
     {
