@@ -2691,6 +2691,10 @@
     [
       "^(.+) left the battle\\. Their army holds its ground\\.$",
       "{1}님이 전투를 떠났습니다. 그 부대는 제자리를 지킵니다."
+    ],
+    [
+      "^Field commander, rank (\\d+), health (\\d+) of (\\d+)$",
+      "야전 사령관, 계급 {1}, 체력 {2}/{3}"
     ]
   ]
 }

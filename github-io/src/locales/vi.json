@@ -2691,6 +2691,10 @@
     [
       "^(.+) left the battle\\. Their army holds its ground\\.$",
       "{1} đã rời trận. Quân của họ vẫn giữ vị trí."
+    ],
+    [
+      "^Field commander, rank (\\d+), health (\\d+) of (\\d+)$",
+      "Chỉ huy chiến trường, bậc {1}, máu {2} trên {3}"
     ]
   ]
 }

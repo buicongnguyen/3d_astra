@@ -47,3 +47,19 @@ test("serialize() of a d-crossroads match is byte-identical to the one before ZO
   assert.equal(createHash("sha256").update(sim.serialize()).digest("hex"), "eb6a8d6c177b464082e34e7dfa321dd231f34c5e1450ad9ef7bd3e7be46e9bab");
   assert.equal(sim.hash(), "ada3cea1");
 });
+
+// Re-score 2026-11-25b: the commander's own tile reads "Commander" with rank pips and a health bar; its accessible
+// name says rank and health in words, in all three languages (the story catalog carries "Commander").
+test("the commander tile's words read in Vietnamese and Korean", async () => {
+  const { translate, addMessages } = await import("../src/i18n.js");
+  const { readFileSync } = await import("node:fs");
+  const read = (name) => JSON.parse(readFileSync(new URL(`../src/locales/${name}.json`, import.meta.url), "utf8"));
+  for (const lang of ["vi", "ko"]) { addMessages(read(lang), lang); addMessages(read(`story-${lang}`), lang); }
+  const sheets = readFileSync(new URL("../src/app/defence/sheets.js", import.meta.url), "utf8");
+  assert.match(sheets, /<span>Commander<\/span>/);
+  assert.match(sheets, /`Field commander, rank \$\{level\}, health \$\{Math\.max\(0, Math\.round\(e\.hp\)\)\} of \$\{Math\.round\(e\.maxHp\)\}`/);
+  assert.equal(translate("Field commander, rank 3, health 609 of 1217", "vi"), "Chỉ huy chiến trường, bậc 3, máu 609 trên 1217");
+  assert.equal(translate("Field commander, rank 3, health 609 of 1217", "ko"), "야전 사령관, 계급 3, 체력 609/1217");
+  assert.notEqual(translate("Commander", "vi"), "Commander");
+  assert.notEqual(translate("Commander", "ko"), "Commander");
+});

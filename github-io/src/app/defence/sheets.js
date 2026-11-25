@@ -104,6 +104,10 @@ export function createSheets(c) {
     const line2 = next && !choose ? `<p><span>Next</span>: ${sign(dps(next) - dps(now))}${num(Math.abs(dps(next) - dps(now)), 0)} <span>dps</span> · ${sign(next.range - now.range)}${num(Math.abs(next.range - now.range), 1)} <span>m</span> · ${sign(next.maxHp - now.maxHp)}${num(Math.abs(next.maxHp - now.maxHp), 0)} <span>HP</span></p>` : "";
     return `<div class="defence-stats" data-defence-stats><p>${line1}</p>${line2}</div>`;
   }
+  // The commander's own tile (re-score 2026-11-25b): "Commander", its rank pips and a health bar; it read "Hero 936",
+  // a bare number beside the bar's Hero button. The accessible name carries the rank and health in words.
+  const hpShare = (e) => Math.max(0, Math.min(100, Math.round((e.hp / (e.maxHp || 1)) * 100)));
+  const commanderLabel = (e, level) => `Field commander, rank ${level}, health ${Math.max(0, Math.round(e.hp))} of ${Math.round(e.maxHp)}`;
   // The commander (0.21): Barrage, Reinforce, the commander itself, and (commander ranks, 2026-11-25) its next
   // rank right on the sheet: Rank up, the two branches side by side at Rank 3, then Top rank; the figures below.
   function heroSheet(hero) {
@@ -123,7 +127,7 @@ export function createSheets(c) {
     $("commands").innerHTML = `<i hidden data-defence-sheet data-tiles="${tiles}" data-key="h:${hero.id}:${ui.aim || ""}:${level}${h.branch || ""}"></i>
       ${tile("barrage", 0, "Barrage", "barrage", `Barrage: shell a spot within ${b.range} m, ${b.damage} damage over ${b.radius} m`)}
       ${tile("reinforce", 1, "Reinforce", "shield", `Reinforce: ${r.count} Vanguards hold the road for ${r.seconds} s`)}
-      <button class="command-tile defence-info" data-defence-hero="focus" data-hotkey="${key(2)}" title="${key(2)} · ${c.name}${h.branch ? ` · ${C.branches[h.branch].name}` : ""}">${kbd(key(2))}${hasPortrait(hero.type) ? portrait(hero.type) : icon("flag")}<span>Hero${pips}</span><small><b translate="no">${Math.round(hero.hp)}</b></small></button>${ups}${stats}`;
+      <button class="command-tile defence-info defence-commander" data-defence-hero="focus" data-hotkey="${key(2)}" aria-label="${commanderLabel(hero, level)}" title="${key(2)} · ${c.name}${h.branch ? ` · ${C.branches[h.branch].name}` : ""}">${kbd(key(2))}${hasPortrait(hero.type) ? portrait(hero.type) : icon("flag")}<span>Commander</span><small class="defence-hp-row" aria-hidden="true">${pips}<i class="defence-hp"><i data-commander-hp style="width:${hpShare(hero)}%"></i></i></small></button>${ups}${stats}`;
     $("command-hint").textContent = ui.aim === "barrage" ? "Tap a spot inside the ring to shell it." : ui.aim === "reinforce" ? "Tap the road inside the ring to drop the Vanguards."
       : next?.kind === "branch" ? "Rank 3: pick Artillery (a wider, faster Barrage) or Rally (more, tougher Vanguards). It cannot be changed." : "Tap the road to send the commander. It holds there and blocks the column.";
   }
@@ -210,6 +214,12 @@ export function createSheets(c) {
     if (spot) { const text = refused || "Zone spot: a crew can stand here. The road stays clear."; if ($("command-hint").textContent !== text) $("command-hint").textContent = text; }
     for (const b of $("commands").querySelectorAll("[data-defence-armour=\"buy\"]")) b.disabled = blocked || !!S.sim.armourWhy(0);
     for (const b of $("commands").querySelectorAll("[data-defence-armour=\"guard\"], [data-defence-armour=\"road\"], [data-defence-armour=\"focus\"]")) b.disabled = blocked;
+    if (hero) {
+      const tile = $("commands").querySelector(".defence-commander"), bar = tile?.querySelector("[data-commander-hp]");
+      const width = `${hpShare(hero)}%`, label = commanderLabel(hero, commanderLevel(S.sim.defence.hero));
+      if (bar && bar.style.width !== width) bar.style.width = width;
+      if (tile && tile.dataset.label !== label) { tile.dataset.label = label; tile.setAttribute("aria-label", label); }
+    }
     if (squad) { const hp = $("commands").querySelector("[data-armour-hp]"), text = String(Math.round(es.reduce((n, e) => n + e.hp, 0))); if (hp && hp.textContent !== text) hp.textContent = text; }
     for (const b of $("commands").querySelectorAll("[data-defence-branch]")) b.disabled = blocked || alloy < S.sim.branchCost(tower.crew, b.dataset.defenceBranch);
     for (const b of $("commands").querySelectorAll(".defence-armour-up[data-cost]")) b.disabled = blocked || alloy < Number(b.dataset.cost);
