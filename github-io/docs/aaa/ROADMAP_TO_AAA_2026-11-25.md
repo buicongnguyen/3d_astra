@@ -1,0 +1,34 @@
+# Road to AAA (2026-11-25)
+
+Baseline: re-score 6.3 / 10 (game-aaa-scorecard, 32 parts, 2026-11-25). AAA bar here = every part 8+, none under 7.
+Rules for every item: phone first (frame budget and draw calls must not rise; perf gates in render-budget), never harder on
+Relaxed/Normal (difficulty-check, check:defence), no hidden or grouped buttons, 11 px / 44 px, EN/VI/KO, golden pins
+re-recorded only by the integrator with a reason, one agent per worktree.
+
+Status: todo / doing / done (commit).
+
+## Weakest parts first (score now -> target)
+
+| # | Work item | Parts it lifts | Now | Status |
+|---|---|---|---|---|
+| W1 | Unit review of every faction: wrong models, floating, droop, colour, readability; fixes + art wish list | Unit models 6.6, Faction identity 4.5, Animation 5.5 | | doing (claude/faction-units) |
+| W2 | Buildings on high ground drawn at the right height; plateau shape analysis | Terrain 6.8, Stability 7.6 | | doing (claude/plateau-build) |
+| W3 | Voices: unit acknowledgements, announcer (base under attack, unit lost, objective), story lines; per-faction tone; EN first, VI/KO subtitles; switchable off | Voices 2.0, Audio 6.0, Faction identity | | todo |
+| W4 | Animation pass: hit flinch, death falls/wrecks, kneel-to-fire for more infantry, mech heavy walk, air bank/landing | Animation 5.5, VFX 6.8, Polish | | todo (after W1) |
+| W5 | Faction identity: per-faction silhouettes and palettes, signature unit per faction, faction UI accent, faction music stinger (models via Codex briefs or agents) | Faction identity 4.5, Unit models | | todo (after W1 list) |
+| W6 | Replay value: challenges (C7.1), medal cosmetics (C7.3), achievements 13 -> 25, match history and replay viewer (B2-B3) | Replay 5.3, Content | | todo |
+| W7 | Depth: second doctrine tier, special weapons plan, abilities for Hawk / Balloon / Glider | Balance & depth 5.0, Content 5.4 | | todo |
+| W8 | AI quality on Fast / Relentless only: focus fire, retreat wounded, flank, use abilities, scout with Kites; Relaxed/Normal untouched | AI quality 5.0 | | todo |
+| W9 | Content: C6 missions (4 of 6-8), story scenes (2 of 8), new lands (snow / volcano / water), Ember Drake boss, Ancient ruins | Content 5.4, Campaign 6.0 | | todo |
+| W10 | Defence mode: more maps, enemy variety, commander abilities shown in waves, Endless leaderboard (local) | Defence 6.2 | | todo |
+| W11 | Multiplayer: 1v1 over WebRTC with lockstep (the sim is deterministic and hashed), room code to share, no server of our own beyond signalling; then co-op vs AI | Multiplayer 1.2 | | todo (owner decision: signalling service) |
+| W12 | Audio: SFX pass (weapon families, impacts by armour, UI clicks), mix ducking for voices | Audio 6.0 | | todo (with W3) |
+| W13 | Phone HUD chrome ~35 % -> under 30 %, minimap side choice on phones, left-handed layout, two-finger camera twist | UI phone 7.3, Controls 6.9, Accessibility 6.9 | | todo |
+| W14 | Small fixes from audits: lake fords slow units, Page Up/Down in help, landscape word breaks | Polish 7.1 | | todo |
+
+## Order
+1. Now: W1, W2 (running), W3 + W12 (audio, no overlap with view code), W6 (meta/UI, no overlap).
+2. After W1: W4, then W5 from W1's art list.
+3. Then W7 and W8 (both move golden pins: one at a time), W9, W10, W13, W14.
+4. W11 needs the owner's yes on a signalling service (free PeerJS cloud or a tiny worker).
+5. Re-score after each wave; record the score here.
