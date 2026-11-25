@@ -153,6 +153,7 @@ export const aiCounter = {
     }
   },
   aiPullBack(team, army, hq) {
+    const sharp = !!this.aiCommandFor(team)?.sharp;
     const healers = army.filter((e) => e.support && e.hp > 0), mends = this.factionFor(team).trait === "selfrepair";
     // A spot just outside the core on the unit's side of it (the core itself cannot be stood on).
     const home = (e) => {
@@ -165,7 +166,8 @@ export const aiCounter = {
       if (e.retreating) {
         if (e.hp >= e.maxHp * RECOVER) {
           e.retreating = false;
-          this.issue([e.id], { type: "stop" });
+          // W8 (sharp): healed, it rejoins its attack if that is still in the field (sim/ai-sharp.js).
+          if (!(e.aiRejoin && this.aiRejoin(team, e))) this.issue([e.id], { type: "stop" });
         } else if (!healer && !mends && (!hq || !e.orders.length || distance(e, hq) < 16)) e.retreating = false; // home: guard it
         else if (!healer && !mends && e.orders[0]?.type !== "move") this.issue([e.id], { type: "move", ...home(e) });
         continue;
@@ -174,7 +176,10 @@ export const aiCounter = {
       if (healer) {
         if (distance(e, healer) < 4) continue;
         e.retreating = true;
-        this.issue([e.id], { type: "move", x: healer.x, z: healer.z });
+        // W8 (sharp): it steps in behind the healer (away from its attack's objective) and remembers the attack to rejoin.
+        const n = sharp ? e.orders.find((o) => o.aiw)?.aiw : undefined;
+        if (n) e.aiRejoin = n;
+        this.issue([e.id], { type: "move", ...(n ? this.aiBehind(healer, n, team) : { x: healer.x, z: healer.z }) });
         continue;
       }
       // Nothing to heal it nearby: a unit already home keeps defending; one in the field goes home.

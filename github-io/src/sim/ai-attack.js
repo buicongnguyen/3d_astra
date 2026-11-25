@@ -2,6 +2,7 @@ import { DEFINITIONS as D, distance } from "../data.js";
 import { HURT } from "./ai-counter.js";
 import { AIR } from "../factions.js";
 import balance from "../balance.json" with { type: "json" };
+import { sharpSide } from "../ai-plan.js";
 
 // How the computer commands its army in the field (0.15.0). Mixed into Simulation through `ai`.
 //   gather   the wave meets at a rally point outside its base and marches only when its strength
@@ -17,10 +18,12 @@ import balance from "../balance.json" with { type: "json" };
 //   retreat  local enemy strength against ours that turns an attack   split chance of a second group (× personality)
 //   focus    focus fire     pullback  hurt units fall back            allied  coalition pushes are tracked too
 //   probe    past `wait` it marches if it has this share of the seen defence (default 0.75); past 3 × wait, always
+//   sharp    W8 (2026-11-25, Fast and Relentless skirmish only): shared focus fire, flank timing and side, wounded rejoin,
+//            Kite scouting (sim/ai-sharp.js). Missions never get it (Veteran borrows Fast's numbers, not this).
 const FIELD = {
   normal: { odds: 1.4, wait: 45, retreat: 1.3, focus: true, pullback: true, split: 1, allied: true },
-  fast: { odds: 1.35, wait: 40, retreat: 1.3, focus: true, pullback: true, split: 1, allied: true },
-  relentless: { odds: 1.25, wait: 35, retreat: 1.4, focus: true, pullback: true, split: 1, allied: true },
+  fast: { odds: 1.35, wait: 40, retreat: 1.3, focus: true, pullback: true, split: 1, allied: true, sharp: true },
+  relentless: { odds: 1.25, wait: 35, retreat: 1.4, focus: true, pullback: true, split: 1, allied: true, sharp: true },
 };
 // Story missions: Story keeps the original AI. Standard and Veteran use the field commander for a
 // lone rival's waves, pull-backs and defence, but leave the scripted coalition pushes as they were
@@ -28,7 +31,7 @@ const FIELD = {
 // On Standard a wave that is outweighed marches anyway at its longest wait (probe 0), as the
 // original waves did: holding back longer against the player's larger army let the objective bot
 // win mission 9 before its earliest time.
-const MISSION_FIELD = { story: null, standard: { ...FIELD.normal, probe: 0, allied: false }, veteran: { ...FIELD.fast, allied: false } };
+const MISSION_FIELD = { story: null, standard: { ...FIELD.normal, probe: 0, allied: false }, veteran: { ...FIELD.fast, allied: false, sharp: false } };
 // Faction personalities (balance.json ai_personalities names) bend the same rules:
 // Ashfall rushes in at lower odds and holds on longer; the Wardens wait for clear odds and give
 // ground early; Veil breaks off at even odds and likes a flank; Sunward sends raiders at Harvesters.
@@ -70,7 +73,7 @@ export const aiAttack = {
     const base = this.mission ? MISSION_FIELD[this.difficulty] : FIELD[this.aiSpeed];
     if (!base) return null;
     const p = FIELD_PERSONA[this.factionFor(team).ai] || FIELD_PERSONA.default;
-    return { ...base, odds: base.odds * p.odds, wait: base.wait * p.wait, retreat: base.retreat * p.retreat, split: base.split * p.split, to: p.to };
+    return { ...base, odds: base.odds * p.odds, wait: base.wait * p.wait, retreat: base.retreat * p.retreat, split: base.split * p.split, to: p.to, sharp: !!base.sharp && sharpSide(this, team) };
   },
   aiWarFor(team) {
     const war = (this.aiWar ||= { n: 0 });
@@ -118,6 +121,9 @@ export const aiAttack = {
     // A base under real attack fights first; the gathering resumes after.
     if (incursion) return;
     const g = war.gather;
+    // W8 (sharp): the flank went first; the main push leaves when the flank is due to arrive together with it,
+    // or at once when the flank is already fighting, falling back or gone.
+    if (g?.mainAt !== undefined) return this.aiMainAfterFlank(team, hq, wave, g, pace);
     // Who may join: free fighters and support, not already in an attack, not badly hurt, idle or walking to the rally.
     const pool = wave.filter((e) => !e.orders.some((o) => o.aiw) && e.hp >= e.maxHp * HURT &&
       (!e.orders.length || (g && e.orders[0].type === "move" && distance(e.orders[0], g) < 6)));
@@ -146,9 +152,39 @@ export const aiAttack = {
     // A second group only when the rest alone still clearly outweighs a defence it has actually seen.
     const second = theirs > 0 && here * 0.7 >= theirs * cmd.odds ? this.aiSecondGroup(team, hq, pool, core, cmd) : null;
     const main = second ? pool.filter((e) => !second.units.includes(e)) : pool;
-    this.aiLaunch(team, main, target, null);
-    if (second) this.aiLaunch(team, second.units, second.target, second.via, false);
+    // W8 (sharp): a flank by a waypoint leaves first and the main push holds at the rally for the difference in
+    // marching time, so the two hit together instead of the flank arriving late (or alone).
+    const delay = cmd.sharp && second?.via && second.target === target ? this.aiFlankDelay(main, second.units, second.via, target) : 0;
+    if (delay >= 3) {
+      const n = this.aiLaunch(team, second.units, second.target, second.via, false);
+      war.gather = { x: g.x, z: g.z, since: g.since, mainAt: this.time + delay, flank: n, tx: target.x, tz: target.z, core: target.team !== undefined ? target.id : null };
+      if (target.team !== undefined) this.events.push({ type: "incoming", team: target.team, x: hq.x, z: hq.z, count: pool.length });
+      return;
+    }
+    const mainN = this.aiLaunch(team, main, target, null);
+    if (second) { const n = this.aiLaunch(team, second.units, second.target, second.via, false); if (cmd.sharp) this.aiPair(team, mainN, n); }
     if (target.team !== undefined) this.events.push({ type: "incoming", team: target.team, x: hq.x, z: hq.z, count: pool.length });
+  },
+  // W8 (sharp): the held main push of a timed flank (aiWave). Launches the free army at the rally once the flank's
+  // time is up or the flank is fighting, falling back or gone; the two attacks are paired (they fall back together).
+  aiMainAfterFlank(team, hq, wave, g, pace) {
+    const war = this.aiWarFor(team), flank = war.attacks.find((a) => a.n === g.flank);
+    if (this.time < g.mainAt && flank && !flank.back && flank.fm === undefined) {
+      const idle = wave.filter((e) => !e.orders.length && !e.retreating && !(e.flying && !(e.damage > 0)) && distance(e, g) > GATHERED);
+      if (idle.length) this.issue(idle.map((e) => e.id), { type: "move", x: g.x, z: g.z });
+      return;
+    }
+    war.gather = null;
+    const main = wave.filter((e) => !e.orders.some((o) => o.aiw) && !e.retreating && (!e.orders.length || (e.orders[0].type === "move" && distance(e.orders[0], g) < 6)));
+    const core = g.core !== null ? this.knownCores[team].get(g.core) : null, target = core || { x: g.tx, z: g.tz };
+    if (!main.length) return;
+    const n = this.aiLaunch(team, main, target, null, false);
+    if (flank) this.aiPair(team, n, flank.n);
+    this.waveAt[team] = Math.max(this.waveAt[team], this.time + pace.waveGap * 0.5);
+  },
+  aiPair(team, a, b) {
+    const list = this.aiWar?.[team]?.attacks || [], x = list.find((t) => t.n === a), y = list.find((t) => t.n === b);
+    if (x && y) { x.pair = b; y.pair = a; }
   },
   // A base under real attack: the defenders attack-move on the threat, so each shoots what it meets
   // (and its focus rules) instead of the whole army chasing one unit. Units already heading there keep their route.
@@ -240,8 +276,16 @@ export const aiAttack = {
     const d = distance(hq, core) || 1, side = this.aiRoll(team, (this.aiWar?.n ?? 0) + 101) < 0.5 ? 1 : -1;
     const px = -(core.z - hq.z) / d, pz = (core.x - hq.x) / d, limit = this.terrain.half - 6;
     const clampTo = (v) => Math.max(-limit, Math.min(limit, v));
-    const x = clampTo((hq.x + core.x) / 2 + px * side * d * 0.35), z = clampTo((hq.z + core.z) / 2 + pz * side * d * 0.35);
-    const via = this.nav.canStand(x, z, 1) ? { x, z } : this.nav.nearest(x, z, 1);
+    const viaOn = (sd) => {
+      const x = clampTo((hq.x + core.x) / 2 + px * sd * d * 0.35), z = clampTo((hq.z + core.z) / 2 + pz * sd * d * 0.35);
+      if (this.nav.canStand(x, z, 1)) return { x, z };
+      // nav.nearest takes and returns grid cells: the sharp path converts (the older path stays as it was, for its pins).
+      if (!cmd.sharp) return this.nav.nearest(x, z, 1);
+      const c = this.nav.nearest(...this.nav.cellAt(x, z), 1);
+      return c ? this.nav.worldAt(...c) : null;
+    };
+    // W8 (sharp): both sides are weighed and the flank takes the one with fewer seen towers (a tie keeps the seeded side).
+    const via = cmd.sharp ? this.aiFlankSide(team, [viaOn(1), viaOn(-1)], side === 1 ? 0 : 1) : viaOn(side);
     return via ? { units, target: core, via } : null;
   },
   // Every think: each attack in the field picks targets, moves on when its core falls and falls back when it is losing.
@@ -252,6 +296,8 @@ export const aiAttack = {
       const members = army.filter((e) => tagged(e, a.n));
       if (!members.length) return false;
       if (a.back) return true;
+      // W8 (sharp): the paired attack fell back, so this one does too (no half of a pincer left alone).
+      const recalled = cmd.sharp && !!a.pair && war.attacks.some((p) => p.n === a.pair && p.back);
       // The target core is gone: go on to the next known core, or search. A search turns on the first core found.
       const found = a.search && this.aiNearestCore(team, centre(members));
       if (found || (a.core !== null && !this.knownCores[team].has(a.core))) {
@@ -268,14 +314,14 @@ export const aiAttack = {
       const lost = theirs ? 1 - mine / a.fm : 0, dealt = theirs ? 1 - theirs / a.ft : 0;
       // Losing: clearly outweighed here, losing much faster than the enemy, or mostly gone.
       const losing = theirs > mine * cmd.retreat || (lost >= LOSING && lost > dealt + 0.2 && theirs > mine * 0.5) || (mine < a.launch * 0.35 && theirs > mine * 0.5);
-      if (losing && distance(centre(members), hq) > FIELD_RANGE) {
+      if ((losing || recalled) && distance(centre(members), hq) > FIELD_RANGE) {
         const home = this.aiRallyPoint(hq, a);
         this.issue(members.map((e) => e.id), { type: "move", x: home.x, z: home.z, aiw: a.n });
         a.back = 1;
         this.waveAt[team] = Math.max(this.waveAt[team], this.time + this.paceFor(team).waveGap * 0.5);
         return true;
       }
-      if (cmd.focus) this.aiFocus(team, members, a);
+      if (cmd.focus) { if (cmd.sharp) this.aiFocusShared(team, members, a); else this.aiFocus(team, members, a); }
       return true;
     });
   },
