@@ -533,7 +533,7 @@
 #defence-crew-fab { display: none; }
 .compact-ui.in-defence:not(.in-briefing) #defence-crew-fab:not([hidden]) {
   display: inline-flex; align-items: center; gap: 6px; position: fixed; z-index: 12;
-  right: calc(env(safe-area-inset-right) + 8px); bottom: calc(env(safe-area-inset-bottom) + 16px);
+  right: calc(env(safe-area-inset-right) + 8px); bottom: var(--safe-bottom, 16px); /* above the home-indicator strip, level with the minimap */
   min-height: 44px; padding: 6px 14px 6px 10px; border-radius: 8px; border: 1px solid var(--gold-2, #ffc75e);
   background: rgba(46, 32, 20, 0.94); color: #fff3d6; font: inherit; font-size: 13px; font-weight: 700;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 199, 94, 0.35);

@@ -17,6 +17,7 @@
     "test:mobile": "node tests/mobile.mjs",
     "test:mobile-controls": "node tests/mobile-controls.mjs",
     "test:mobile-gestures": "node tests/mobile-gestures.mjs",
+    "test:iphone-gestures": "node tests/iphone-gestures.mjs",
     "test:fullscreen": "node tests/fullscreen.mjs",
     "test:mobile-construction": "node tests/mobile-construction.mjs",
     "test:webkit": "node tests/webkit.mjs",

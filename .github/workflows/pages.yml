@@ -127,7 +127,7 @@ jobs:
           - name: maps
             scripts: stages corners new-game boundary-fx
           - name: mobile
-            scripts: mobile mobile-controls mobile-gestures fullscreen
+            scripts: mobile mobile-controls mobile-gestures iphone-gestures fullscreen
           - name: scenes
             scripts: story
           - name: layout-desktop
