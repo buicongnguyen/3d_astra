@@ -22,7 +22,9 @@ export const isIOS = (nav = {}) => /iPhone|iPad|iPod/.test(nav.userAgent || "") 
 // Running as an installed app. "fullscreen" is what the manifest asks for; Android shows it, iOS uses standalone.
 export function isStandalone(win = globalThis) {
   const media = (q) => typeof win.matchMedia === "function" && win.matchMedia(q).matches;
-  return media("(display-mode: standalone)") || media("(display-mode: fullscreen)") || win.navigator?.standalone === true;
+  // A page put in full screen by the Fullscreen API also matches display-mode fullscreen: that is not an install.
+  const apiFullscreen = !!(win.document?.fullscreenElement || win.document?.webkitFullscreenElement);
+  return media("(display-mode: standalone)") || (media("(display-mode: fullscreen)") && !apiFullscreen) || win.navigator?.standalone === true;
 }
 
 export function createInstall(win = globalThis) {

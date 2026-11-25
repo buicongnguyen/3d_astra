@@ -48,7 +48,7 @@ await suite("music", async () => {
     await page.waitForFunction(() => { const s = window.__frontier.music?.state(); return s?.cue === "title" && s.playing; }, null, { timeout: TIMEOUT.step });
     let s = await state(page);
     assert.equal(s.context, "running", "the AudioContext runs after the first tap");
-    assert.deepEqual(s.loop, { loop: true, loopStart: 0, loopEnd: 2 }, "the title loops at the manifest's points");
+    assert.deepEqual({ ...s.loop, loopEnd: Math.round(s.loop.loopEnd * 1000) / 1000 }, { loop: true, loopStart: 0, loopEnd: 2 }, "the title loops at the manifest's points"); // Linux Chrome reports 1.99998
     assert.ok(names(requests).includes("manifest.json") && names(requests).includes("title.m4a"), `title fetched: ${names(requests)}`);
     assert.ok(requests.some((url) => url.endsWith("title.m4a?v=9202")), "the track URL carries its byte count");
     assert.equal(await page.evaluate(() => window.__frontier.started), false, "the tap did not start a match");
@@ -80,7 +80,7 @@ await suite("music", async () => {
     await page.waitForFunction(() => window.__frontier.started, null, { timeout: TIMEOUT.step });
     await page.waitForFunction(() => { const m = window.__frontier.music.state(); return m.cue === "theme-veil" && m.playing; }, null, { timeout: TIMEOUT.step });
     s = await state(page);
-    assert.deepEqual(s.loop, { loop: true, loopStart: 0, loopEnd: 2 }, "the theme loops at the manifest's points");
+    assert.deepEqual({ ...s.loop, loopEnd: Math.round(s.loop.loopEnd * 1000) / 1000 }, { loop: true, loopStart: 0, loopEnd: 2 }, "the theme loops at the manifest's points"); // Linux Chrome reports 1.99998
     const opened = s.heard.lastIndexOf("stinger-veil"), themed = s.heard.indexOf("theme-veil");
     assert.ok(opened >= 0 && opened < themed && s.heard.filter((c) => c === "stinger-veil").length === 2, `the stinger opens the match (${s.heard})`);
     assert.equal(await page.evaluate(() => window.__frontier.audio.plan.adaptive), false, "the faction theme rules the match");
