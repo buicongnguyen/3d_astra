@@ -19,7 +19,7 @@ Status: todo / doing / done (commit).
 | W5a | Field Guide 3D view of each unit: real model, orbit/zoom, Idle / Walk / Fire, team colour, Ranger for scale; lazy chunk, disposed on close | Faction identity, Unit models, UI | | done (claude/unit-viewer) |
 | W6 | Replay value: challenges (C7.1), medal cosmetics (C7.3), achievements 13 -> 25, match history and replay viewer (B2-B3) | Replay 5.3, Content | | done on claude/replay-meta (5ec39af achievements, a6e9f1b challenges, 0edc26d cosmetics, 30494b6 history, 82fa2d1 replays); not merged. Notes below. |
 | W7 | Depth: second doctrine tier, special weapons plan, abilities for Hawk / Balloon / Glider | Balance & depth 5.0, Content 5.4 | | todo |
-| W8 | AI quality on Fast / Relentless only: focus fire, retreat wounded, flank, use abilities, scout with Kites; Relaxed/Normal untouched | AI quality 5.0 | | todo |
+| W8 | AI quality on Fast / Relentless only: focus fire, retreat wounded, flank, use abilities, scout with Kites; Relaxed/Normal untouched | AI quality 5.0 | | done (claude/ai-smarter): shared focus fire with spill, wounded rejoin from behind the healer, timed and tower-aware flanks (paired retreat), Kite scouting with anti-air avoidance, Dash/Rush/Rapid fire casts; Fast/Relentless pins move (notes below) |
 | W9 | Content: C6 missions (4 of 6-8), story scenes (2 of 8), new lands (snow / volcano / water), Ember Drake boss, Ancient ruins | Content 5.4, Campaign 6.0 | | todo |
 | W10 | Defence mode: more maps, enemy variety, commander abilities shown in waves, Endless leaderboard (local) | Defence 6.2 | | todo |
 | W11 | Multiplayer: 1v1 over WebRTC with lockstep (the sim is deterministic and hashed), room code to share, no server of our own beyond signalling; then co-op vs AI | Multiplayer 1.2 | | todo (owner decision: signalling service) |
@@ -33,6 +33,13 @@ Status: todo / doing / done (commit).
 3. Then W7 and W8 (both move golden pins: one at a time), W9, W10, W13, W14.
 4. W11 needs the owner's yes on a signalling service (free PeerJS cloud or a tiny worker).
 5. Re-score after each wave; record the score here.
+
+## W8 notes (2026-11-25)
+- Gate: `sharpSide` (src/ai-plan.js) = skirmish, not Defence, Fast or Relentless, a computer side; `cmd.sharp` on the field commander. Relaxed/Normal, missions (Veteran borrows Fast's numbers with `sharp: false`) and Defence are byte-identical: `tests/ai-sharp.test.js` pins three whole Normal/Relaxed AI matches to their pre-W8 hashes; every Relaxed/Normal golden pin, `check:missions`, `check:defence` and `ai-census-check` (Normal) give the same rows as before.
+- Difficulty bot wins /12 before -> after: 1v1 12/12/11/11 -> 12/12/12/10; 1v2 7/2/0/0 -> 7/2/0/0; 1v2ffa Fast 12 -> 11, Relentless 11 -> 12. A first cut that also used the Field command cast rules under the Classic plan made the AI weaker (1v2 Fast/Relentless 0 -> 2/3): those rules hold Shield wall, Lock-on, Brace and Overdrive for the right moment, so they are up less often. Under Classic only Barrage/Burn line aiming and the three new casts are used.
+- Extra (not a gate): ai-census Highlands at Fast/Relentless (Field vs Field): before 1 timeout of 10 (Relentless veil:wardens), after 1 of 10 (Fast ashfall:meridian).
+- Golden pins that move (all Fast/Relentless, AI play changed by W8; re-record): skirmish `riverlands x2 fast` 180 9b7b7eda, 300 8362467d, end "victory 270" (was running), reloaded 300 8362467d; `highlands x2 relentless coalition` 180 02b62956, 300 a63d7701, reloaded 300 a63d7701; `basin x3 fast` 180 f9ea053a, 300 20eda0b2, reloaded 300 20eda0b2; expanded `veil` (fast) 300 2b818975, 500 099ade0f; r4p1 `fast` 180 c3e66257, 420 55bd6c80. The 60 s points stay (no attack yet).
+- Found, not fixed (would move Normal pins): `nav.nearest` takes and returns grid cells, but the AI passes world metres and reads `.x` (aiRallyPoint, aiFormed, the flank waypoint). The W8 flank path converts properly; the older paths are left as they were.
 
 ## W14 notes (2026-11-25)
 - Lake fords: only Mirror Lake has lakes, so Skirmish (difficulty bot 1v1 12/12/11/11, 1v2 7/2/0/0 before and after), Defence and every golden pin are unchanged; Mirror Lake's objective bot still wins gold (294 -> 318 s, lost 4 -> 0), the generic bot is still holding at 485 s (lost 4 -> 6). No pin needs re-recording.

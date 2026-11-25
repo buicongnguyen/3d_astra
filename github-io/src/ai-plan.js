@@ -98,3 +98,9 @@ export const coalitionPlan = {
 // mission. Every Field command path asks this first, so Classic stays exactly as it was.
 export const FIELD_PLAN = 'field';
 export const fieldPlan = (sim, team) => !sim.mission && sim.ruleOn('aiPlan') === FIELD_PLAN && (team > 0 || !!sim.aiPlayer);
+
+// W8 AI quality (2026-11-25): the sharper tactics of the "chosen-challenge" speeds. True for a computer-controlled
+// team of a skirmish (Classic or Field plan) at Fast or Relentless; never in a mission, Defence or at Relaxed/Normal,
+// which play exactly as before (owner: those must not get harder). Every W8 path asks this (or cmd.sharp) first.
+export const SHARP_SPEEDS = Object.freeze(['fast', 'relentless']);
+export const sharpSide = (sim, team) => !sim.mission && !sim.defence && SHARP_SPEEDS.includes(sim.aiSpeed) && (team > 0 || !!sim.aiPlayer);

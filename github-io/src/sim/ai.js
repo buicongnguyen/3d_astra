@@ -4,12 +4,14 @@ import { EXPAND_CREW } from "./expand.js";
 import { aiAttack } from "./ai-attack.js";
 import { AI_RULES } from "./content.js";
 import { aiCensus, censusRole } from "./ai-census.js";
+import { aiSharp } from "./ai-sharp.js";
 
 // The computer opponent's build, production and attack decisions (coalition play is in ai-plan.js,
 // field command in ai-attack.js). Mixed into Simulation (see simulation.js).
 export const ai = {
   ...aiAttack,
   ...aiCensus,
+  ...aiSharp,
   updateAI(team = 1) {
     // Tagged entities belong to the mission script (an objective, an escort): the AI never uses them.
     const own = this.own(team).filter((e) => !e.tag),
@@ -213,7 +215,10 @@ export const ai = {
     const wave = army.filter((e) => !engaged(e) && !e.pointDuty && !e.retreating);
     if (cmd && hq) this.aiWatch(team, hq, army, cmd);
     // Field command (R3-A): an idle Kite scouts (from ai_mix.from seconds, as the census), and a side that has seen no fight for four minutes goes looking for one (S7).
-    if (fieldOn && hq && !incursion && this.aiSpeed !== "relaxed") { if (this.aiCensusOn()) this.aiScout(team, army); this.aiBreakStall(team, own, hq, wave); }
+    // W8 (Fast/Relentless skirmish, both plans): Kites scout the likely enemy bases and turn back from anti-air (sim/ai-sharp.js).
+    const sharp = !!cmd?.sharp;
+    if (sharp && hq) this.aiKites(team, army, hq);
+    if (fieldOn && hq && !incursion && this.aiSpeed !== "relaxed") { if (this.aiCensusOn() && !sharp) this.aiScout(team, army); this.aiBreakStall(team, own, hq, wave); }
     if (this.coalition) {
       this.coalitionOrders(team, { hq, army, wave, incursion });
       return;
