@@ -30,6 +30,8 @@ const spy = () => {
 try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   await page.addInitScript(spy);
+  // This suite checks the adaptive score (layers, combat notes); under Recorded a match now plays the faction theme (Audio 6.5).
+  await page.addInitScript(() => { try { if (!sessionStorage.getItem('audio-test')) { sessionStorage.setItem('audio-test', '1'); localStorage.setItem('frontier-command.settings.v1', JSON.stringify({ version: 1, music: 'adaptive' })); } } catch { /* storage optional */ } });
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text().slice(0, 200)); });
