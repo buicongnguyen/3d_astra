@@ -58,6 +58,7 @@ import "./phone-hud.css";
 import { registerOffline } from "./app/offline.js";
 import { setupCover } from "./app/cover.js";
 import { setupQuickBattle } from "./quick-battle.js";
+import { setupMeta } from "./meta-ui.js";
 // The command console kit on every screen (round 3 kit pass): loaded after every other stylesheet.
 import "./kit-skin.css";
 import "./menu-pro.css";
@@ -217,9 +218,11 @@ const SETUP = [
   // R3-Q: Quick battle and First watch wrap createSim, newGame, defenceMission and defenceHud, so they come last.
   ["quick-battle", setupQuickBattle],
   ["wild", setupWildUi],
+  // W6 replay value: after Quick battle, so the Records tile joins the quick row it fills.
+  ["meta", setupMeta],
 ];
 const BIND = ["preferences", "hud", "input-pointer", "sound", "frame", "modals", "briefing", "match-flow", "selection", "type-chips",
-  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "choices", "scenes", "debug-hooks", "defence", "rank", "quick-battle"];
+  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "choices", "scenes", "debug-hooks", "defence", "rank", "quick-battle", "meta"];
 const binds = Object.fromEntries(SETUP.map(([name, setup]) => [name, setup(S, A)]));
 // The start screen shows the battle chosen there, so the first simulation is built from it.
 ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction, playerFaction: S.playerFaction } = A.battleSetup());

@@ -89,6 +89,12 @@
       "checks": []
     },
     {
+      "name": "replay value (W6): achievements, challenges, medal cosmetics, match history, replays",
+      "files": ["src/meta/**", "src/meta-ui.js", "src/meta.css"],
+      "suites": ["meta", "rank", "title", "ceremony", "quick-battle", "campaign"],
+      "checks": []
+    },
+    {
       "name": "offline and the service worker",
       "files": ["src/app/offline.js", "public/manifest.webmanifest", "public/favicon.svg"],
       "suites": ["offline", "cover-ui", "music"],

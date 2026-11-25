@@ -2,6 +2,13 @@
 
 ## Unreleased: Round A.2
 
+### Achievements 13 -> 25 (W6 replay value)
+- Twelve new achievements beyond the campaign: **Golden act** (gold in every mission of an act), Skirmish (**Field victory**, **Three fronts** vs 3 AI, **Unbreakable** vs Relentless AI, **Know your enemy**: beat all five factions), Frontier Defence (**Line holder**: 15 stars, **Field marshal**: Field commander Rank 5, **Steel rain** / **Rally the line**: a Defence win with that commander branch), Kites (**Eyes in the sky**: train 10, **Falling star**: land 3 Dives) and taming (**Wyrm whisperer**). Each has an icon, EN/VI/KO text and progress where it counts up.
+- A new service record (`src/meta/record.js`, localStorage `frontier-record-v1`) keeps lifetime counters from every finished match and the W6 achievements once earned; the campaign's 13 stay in the campaign progress. Old profiles load with an empty record (nothing to migrate); corrupt data reads as fresh; counters are capped and the record stays under 4 KB.
+- Earned achievements show a toast at the top (taps pass through it; never over the dock or minimap); a Kite Dive, a tamed Wyrm or a commander rank earn theirs mid-match, a win's on its results screen ("Achievements earned"). The match counters (`src/match-stats.js`) now also count Kites trained, Dives, creatures tamed and abilities used, from the events the simulation already sends (no simulation change, pins identical).
+- A **Records** tile in the title's quick row (one tap) opens the Records screen with all 25, grouped, with progress bars; the campaign archive counts all 25 too.
+- Tests: `tests/meta-achievements.test.js` (every condition, record migration, EN/VI/KO), `tests/meta.mjs` (new CI entry `w6`: tile, screen, toast and results row at three viewports).
+
 ### iPhone: sideways swipes stay in the game (friend's report)
 - Swiping left or right near the bottom of an iPhone could switch apps again: since the 2026-11-22 HUD passes the portrait Selection dock's sideways action row (build, train, abilities) sat 24 px above the screen bottom, inside the home-indicator strip, and the minimap 20 px. Every bottom bar now starts above a 34 px strip (or the bottom safe area if larger; `--home-zone` in `src/mobile.css`), so no sideways row, map drag or camera drag starts there; the Defence "Crew a pad" button lines up with them. A battlefield touch within 20 px of the left or right edge no longer starts Safari's back swipe. Rules in docs/TESTING.md ("iPhone gestures"); new `npm run test:iphone-gestures` (WebKit iPhone profile; Chromium on CI) checks the bottom strip in skirmish and Defence states, the edge guard and that play adds no history entries.
 

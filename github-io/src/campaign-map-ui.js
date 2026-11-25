@@ -23,6 +23,8 @@ import { MAP_NODES, STRIP_NODES, MAP_ANCHORS, MAP_ART, MAP_TEXT, ENDING_HINTS } 
 import { DECISIONS, ENDINGS, ENDING_IDS, optionOf } from "./story/choices.js";
 import { chronicleCardsHTML } from "./chronicles-ui.js";
 import { achievementsFor } from "./story/achievements.js";
+import { loadRecord } from "./meta/record.js";
+import { loadDefence } from "./defence/progress.js";
 import { DEFINITIONS as DEFS } from "./data.js";
 import "./campaign-archive.css";
 
@@ -59,7 +61,8 @@ const ACT_AT = { 3: 1.6, 2: 33.5, 1: 68.5 };
 // block with no sub-menus; New Game+ is a plain button once every main mission is cleared.
 const COMMANDERS = [["m04-sol", "Captain Sol"], ["m07-hale", "Commander Hale"], ["m10-maren", "Ilse Maren"]];
 export function archiveHTML(progress) {
-  const ach = achievementsFor(progress), done = ach.filter((a) => a.done).length;
+  // W6: all 25, the Skirmish, Defence, Kite and taming ones from the service record (src/meta/record.js).
+  const ach = achievementsFor(progress, { record: loadRecord(), defence: loadDefence() }), done = ach.filter((a) => a.done).length;
   const chips = ach.map((a) => `<span class="cmap-chip ${a.done ? "done" : "todo"}" title="${esc(a.how)}${a.done ? "" : ` · ${a.have}/${a.need}`}"><i aria-hidden="true">${a.done ? "✓" : "○"}</i>${esc(a.title)}</span>`).join("");
   const squad = (progress?.squad || []).map((m) => `<span class="cmap-vet"><b aria-hidden="true">${"★".repeat(Math.min(3, m.rank))}</b> ${esc(m.name)} <em>${esc(DEFS[m.type]?.name || m.type)}</em></span>`).join("");
   const met = COMMANDERS.map(([id, name]) => {

@@ -209,6 +209,9 @@ jobs:
           # AAA round 3 (R3-R): commander rank (fresh profile rank 1, a scripted win ranks up with "Unlocked:", the paint picked in one tap and worn in the next match).
           - name: r3-r
             scripts: rank
+          # W6 replay value: achievements toast and Records screen, daily challenge tiles, medal cosmetics, match history and the replay viewer, at three viewports.
+          - name: w6
+            scripts: meta
           # AAA round 4 (R4-P1): the Wild frontier desert test (rule row, one-tap Weather button, aimed Sandstorm, Dune Wyrm Ambush, nest) at three viewports.
           - name: r4-p1
             scripts: wild-desert

@@ -17,7 +17,15 @@ test('the tracker counts deaths, trained units and delivered cargo from events',
     { type: 'spawn', team: 0 }, { type: 'spawn', team: 1 }, { type: 'built', team: 0 },
   );
   stats.after(sim);
-  assert.deepEqual(stats.stats, { lost: 1, killed: 2, structuresLost: 1, structuresDestroyed: 1, trained: 1, built: 1, alloy: 0, energy: 0 });
+  assert.deepEqual(stats.stats, { lost: 1, killed: 2, structuresLost: 1, structuresDestroyed: 1, trained: 1, built: 1, alloy: 0, energy: 0, kites: 0, dives: 0, tamed: 0, abilities: 0 });
+  // W6: a Kite trained, a Kite Dive (its own death), a tamed Wyrm and an ability, the player's only.
+  const kite = sim.spawn('kite', 0, -20, 0, true, true);
+  stats.before(sim);
+  sim.events.push({ type: 'spawn', team: 0, seed: kite.id }, { type: 'death', team: 0, dive: true }, { type: 'death', team: 1, dive: true },
+    { type: 'wild', kind: 'tamed', team: 0 }, { type: 'creature', kind: 'tamed', team: 0 }, { type: 'wild', kind: 'tamed', team: 1 },
+    { type: 'ability', team: 0 }, { type: 'ability', team: 1 });
+  stats.after(sim);
+  assert.deepEqual([stats.stats.kites, stats.stats.dives, stats.stats.tamed, stats.stats.abilities, stats.stats.trained], [1, 1, 2, 1, 2]);
   stats.reset();
   assert.equal(stats.stats.killed, 0);
 });
