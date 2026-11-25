@@ -107,7 +107,14 @@ export class EnvironmentView {
           const dx = wx - lake.x, dz = wz - lake.z, perp = Math.abs(dx * f.dz - dz * f.dx);
           if (dx * f.dx + dz * f.dz > 0) edge = Math.min(edge, perp - f.half);
         }
-        const bank = Math.abs(Math.hypot(positions.getX(i), positions.getY(i)) - mid) / width; // 0 mid-ring, 1 at the edges
+        let bank = Math.abs(Math.hypot(positions.getX(i), positions.getY(i)) - mid) / width; // 0 mid-ring, 1 at the edges
+        // Where two lakes overlap (W9 isles), a point takes its deepest colour over every lake whose water covers it,
+        // so both rings paint the same colour there and no jagged pale seam shows where one's shore rim lies in the other.
+        for (const other of lakes) {
+          if (other === lake) continue;
+          const oi = Math.max(0.01, other.inner - 1.2), oo = other.r + 0.6, d = Math.hypot(wx - other.x, wz - other.z);
+          if (d >= oi && d <= oo) bank = Math.min(bank, Math.abs(d - (oi + oo) / 2) / ((oo - oi) / 2));
+        }
         // A W9 isles inlet runs off the map: its ring stops at the edge (the skirt pours it over, map-edge.js).
         if (Math.abs(wx) > terrain.half) positions.setX(i, Math.sign(wx) * terrain.half - lake.x);
         if (Math.abs(wz) > terrain.half) positions.setY(i, lake.z - Math.sign(wz) * terrain.half);
