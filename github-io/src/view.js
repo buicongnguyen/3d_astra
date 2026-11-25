@@ -32,9 +32,9 @@ import { defaults } from "./settings.js";
 import { ViewPlugins } from "./view-plugins.js";
 import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, setRimTier } from "./look-grade.js";
 import { MissionLook } from "./mission-look-view.js";
-import { airMotion } from "./air-motion.js";
+import { airMotion, airParts, poseAirParts } from "./air-motion.js";
 import { groundY, MARKER_LIFT } from "./ground-y.js";
-import { RIG_INFANTRY, RIG_HULL, KNEELERS, GAIT, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach, BARREL_POSES, newGun, fireBarrel, stepBarrel, poseBarrel } from "./unit-rig.js";
+import { RIG_INFANTRY, RIG_HULL, KNEELERS, GAIT, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach, BARREL_POSES, newGun, fireBarrel, stepBarrel, poseBarrel, RECOIL, barrelKick, bodyKick, kickSize, poseTurretOnHull, swingLegs } from "./unit-rig.js";
 import {
   EnvironmentView,
   optimizeEnvironment,
@@ -52,8 +52,7 @@ const mat = (color, extra = {}) =>
 export const RIG_PART = /^(Main_cannon|Muzzle_brake|Barrel|Cannon|Muzzle|Turret_head)(?![a-z])/i;
 // Pivots kept as their own nodes: walking legs, and the flyers' rotors (spin_*) and burner flame (flicker_*).
 const MOVING_PART = /^(leg_|spin_|flicker_)/;
-// Flyers: rotor axes, a scratch quaternion, and where the altitude looks for higher ground (a rim ahead).
-const AXIS_Y = new THREE.Vector3(0, 1, 0), AXIS_Z = new THREE.Vector3(0, 0, 1), SPIN = new THREE.Quaternion();
+// Flyers: where the altitude looks for higher ground (a rim ahead).
 const FLY_SAMPLES = [[2.5, 0], [-2.5, 0], [0, 2.5], [0, -2.5]];
 // The left and right rotors of a flyer are the same part mirrored in place: after baking, the right
 // one draws with the left one's geometry, so both join one batch (one draw instead of two).
@@ -1387,10 +1386,7 @@ export class WorldView {
   prepareFlyer(e, root, model, blob) {
     const air = { fly: D[e.type].fly || 3.5, y: null, spins: [], flames: [], clock: (e.id * 0.37) % 6.28, top: 1.5, barY: 0 };
     model.rotation.order = "YXZ"; // heading, then a pitch about the craft's own axis
-    model.traverse((o) => {
-      if (o.name.startsWith("spin_")) air.spins.push({ node: o, base: o.quaternion.clone(), axis: /^spin_prop/.test(o.name) ? AXIS_Z : AXIS_Y, rate: /^spin_prop/.test(o.name) ? 34 : 26 });
-      else if (o.name.startsWith("flicker_")) air.flames.push({ node: o, base: o.scale.y });
-    });
+    airParts(model, air);
     this.flyerTops ||= new Map();
     const topKey = model.name === "FallbackFlyer" ? model.name : e.type;
     let top = this.flyerTops.get(topKey);
@@ -1423,8 +1419,7 @@ export class WorldView {
     const want = high + a.fly;
     a.y = a.y === null ? want : a.y + (want - a.y) * Math.min(1, dt * 2.5);
     if (lively && dt > 0) a.clock = (a.clock + dt) % 600;
-    for (const s of a.spins) s.node.quaternion.copy(s.base).multiply(SPIN.setFromAxisAngle(s.axis, lively ? (a.clock * s.rate) % (Math.PI * 2) : 0.6));
-    for (const f of a.flames) f.node.scale.y = f.base * (lively ? 0.82 + 0.22 * Math.sin(a.clock * 17) + 0.1 * Math.sin(a.clock * 31 + 1.3) : 1);
+    poseAirParts(a, lively);
     return a.y - ground;
   }
   createResource(e) {
@@ -1532,11 +1527,11 @@ export class WorldView {
     // The shooter recoils whenever the shooter itself is in view, even if the path is fogged.
     if(event.type==='shot' && sim.isVisible({x:event.x,z:event.z})){
       const o=this.objects.get(event.source),kind=weaponStyle(event).kind;
-      if(o && kind==='cannon')o.userData.recoil=.22;
+      if(o && kind==='cannon')o.userData.recoil=RECOIL.barrel;
       // Artillery (unit-rig.js SNAP): each shot snaps the barrel in, then it runs back out; a crewed tower's gun too.
       if(o && this.activity.combat.motion && !this.reducedMotion.matches){if(o.userData.gun)fireBarrel(o.userData.gun);if(o.userData.crewGun)fireBarrel(o.userData.crewGun);}
       // Every shooter rocks back a little: hulls and rocket troops most, rifles barely.
-      if(o && kind!=='support'){o.userData.kick=.16;o.userData.kickSize=kind==='rocket'?.11:kind==='cannon'?.07:.03;}
+      if(o && kind!=='support'){o.userData.kick=RECOIL.body;o.userData.kickSize=kickSize(kind);}
     }
     if (event.type === 'death' && sim.isVisible(event)) this.beginDeath(event);
     // Blasts kill the small creatures they reach; a new match brings the full cast back.
@@ -1762,14 +1757,14 @@ export class WorldView {
         const g = u.crewGun;
         if (g) {
           stepBarrel(g, g.pose, { moving: false, attacking: !!e.attacking, dt, rich: this.richMotion, instant: this.reducedMotion.matches });
-          poseBarrel(g.rig, g.rig.userData.trunnion, g.elevation, g.drawn, this.activity.combat.motion ? Math.sin(u.recoil / .22 * Math.PI) * .18 : 0);
+          poseBarrel(g.rig, g.rig.userData.trunnion, g.elevation, g.drawn, this.activity.combat.motion ? barrelKick(u.recoil) : 0);
         }
       }
       if(o.userData.barrel){
         const rig=o.userData.barrel;
         if(u.turret){
           rig.rotation.y=0;
-          const kick=this.activity.combat.motion?Math.sin(u.recoil/.22*Math.PI)*.18:0;
+          const kick=this.activity.combat.motion?barrelKick(u.recoil):0;
           const hinge=rig.userData.trunnion,pose=BARREL_POSES.get(e.type);
           if(hinge&&pose){
             // Unit motion (artillery, unit-rig.js): at rest the barrel sits a little raised and run in;
@@ -1779,7 +1774,7 @@ export class WorldView {
           }else rig.position.set(0,0,-kick);
         }else{
         rig.rotation.y=e.type==='tower'?e.angle-m.rotation.y:0;
-        const kick=this.activity.combat.motion?Math.sin(o.userData.recoil/.22*Math.PI)*.18:0;
+        const kick=this.activity.combat.motion?barrelKick(o.userData.recoil):0;
         rig.position.set(-Math.sin(rig.rotation.y)*kick,0,-Math.cos(rig.rotation.y)*kick);
         }
       }
@@ -1804,13 +1799,11 @@ export class WorldView {
           const pitch = stepHull(u.rig, u.rig.motion, { speed, moving: !!e.moving, dt, rich: this.richMotion, scale: u.readabilityScale });
           if (u.turret) {
             // The turret rides the hull's pitch and squat about the same pivot, then turns in the hull's frame.
-            const [cy, cz] = u.rig.hullPivot, b = u.turretBase, oy = b.y - cy, oz = b.z - cz, c = Math.cos(pitch), s = Math.sin(pitch);
-            u.turret.rotation.x = pitch;
-            u.turret.position.set(b.x, cy + oy * c - oz * s - u.rig.squat, cz + oy * s + oz * c);
+            poseTurretOnHull(u.turret, u.turretBase, u.rig.hullPivot, pitch, u.rig.squat);
           }
         }
         if (breathing && u.gait === 0 && (u.legs.length || u.rig?.kind === "infantry")) squash = Math.sin(this.lifeClock * 2.1 + e.id * 1.7) * 0.012;
-        if (kicking && u.kick > 0) back = Math.sin((u.kick / 0.16) * Math.PI) * u.kickSize;
+        if (kicking && u.kick > 0) back = bodyKick(u.kick, u.kickSize);
       } else if (e.kind === "building") {
         // A finished building settles with a small bounce.
         if (e.complete && !u.built && kicking) u.pop = 0.4;
@@ -1841,12 +1834,7 @@ export class WorldView {
       m.scale.multiplyScalar(u.readabilityScale * frame);
       if (frame !== 1 || u.barRest !== undefined) this.scaleBar(u, frame);
       m.rotation.z = u.air ? u.air.bank : isHarvesting(sim,e) && !this.reducedMotion.matches ? Math.sin(sim.time*7+e.id)*0.045 : 0;
-      for (let i = 0; i < u.legs.length; i++) {
-        const leg = u.legs[i];
-        leg.node.quaternion.copy(leg.base);
-        if (u.gait > 0)
-          leg.node.rotateX(Math.sin(u.stride + i * Math.PI) * 0.46 * u.gait);
-      }
+      swingLegs(u.legs, u.stride, u.gait);
       updateRing(u.ring, selected.has(e.id), hover?.id === e.id, sim.time, dt, this.unitsPerPixel);
       const bar = u.bar;
       // Settings → Display → Health bars: "hurt" (damaged units; the default), "always", "selected" (the

@@ -279,3 +279,25 @@ export function stepHull(rig, motion, { speed, moving, dt, rich, scale = 1 }) {
   motion[3] = 1 + rig.pitch;
   return rig.pitch;
 }
+
+// Recoil (view.js shot events; the Field Guide's 3D view plays the same): a cannon's barrel runs back along
+// its axis for RECOIL.barrel seconds by up to RECOIL.travel; every shooter's body rocks back for RECOIL.body
+// seconds by its kick size (rocket troops and hulls most, rifles barely).
+export const RECOIL = Object.freeze({ barrel: 0.22, travel: 0.18, body: 0.16 });
+export const barrelKick = (t) => Math.sin((t / RECOIL.barrel) * Math.PI) * RECOIL.travel;
+export const bodyKick = (t, size) => Math.sin((t / RECOIL.body) * Math.PI) * size;
+export const kickSize = (kind) => (kind === "rocket" ? 0.11 : kind === "cannon" ? 0.07 : 0.03);
+// A turret rides its hull's pitch and squat about the hull pivot (hullPivot = [y, z]), then turns in the hull's frame.
+export function poseTurretOnHull(turret, base, hullPivot, pitch, squat) {
+  const [cy, cz] = hullPivot, oy = base.y - cy, oz = base.z - cz, c = Math.cos(pitch), s = Math.sin(pitch);
+  turret.rotation.x = pitch;
+  turret.position.set(base.x, cy + oy * c - oz * s - squat, cz + oy * s + oz * c);
+}
+// Unrigged leg pivots (legs = [{ node, base }]) swing in opposite phase with the stride.
+export function swingLegs(legs, stride, gait) {
+  for (let i = 0; i < legs.length; i++) {
+    const leg = legs[i];
+    leg.node.quaternion.copy(leg.base);
+    if (gait > 0) leg.node.rotateX(Math.sin(stride + i * Math.PI) * 0.46 * gait);
+  }
+}

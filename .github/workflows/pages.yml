@@ -106,6 +106,9 @@ jobs:
             shard: 2/2
           - name: ui-extras
             scripts: ui-extras abilities
+          # 2026-11-25 (W5): the Field Guide's 3D unit view on five viewports (~30 s locally).
+          - name: unit-viewer
+            scripts: unit-viewer
           - name: construction
             scripts: mobile-construction patrol repair-rally
           - name: defence

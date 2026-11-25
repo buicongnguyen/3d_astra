@@ -3,6 +3,8 @@ import { DEFINITIONS as D } from './data.js';
 import './progression.css';
 import { MAPS, TERRAIN } from './terrain.js';
 import { portrait } from './portraits.js';
+import { reducedMotion } from './reduced-motion.js';
+import './unit-viewer.css';
 import balance from './balance.json' with { type: 'json' };
 
 const DRILL = balance.outrider_drill; // the Rider's page explains the Expanded-roster drill (src/sim/content/outrider.js)
@@ -63,7 +65,22 @@ export function entryHTML(type, sim = null, team = 0) {
 // Expanded-only definitions (roster: "expanded") are listed only while the Roster rule is Expanded (AAA round 2, integration).
 const guideOptions = (expanded) => Object.keys(D).filter(k => D[k].kind && !D[k].boss && (expanded || D[k].roster !== "expanded")).map(k => `<option value="${k}">${D[k].name}</option>`).join("");
 
-export function createFieldGuide(onOpen,onClose,getSim = () => null) {
+// The 3D view panel (W5): one persistent element moved into each page under the hero. Its WebGL renderer
+// (src/unit-viewer.js, a lazy chunk) is made the first time a page shows while the guide is open, reused for
+// every page, and disposed when the guide closes. Without WebGL, the model or after a context loss the panel
+// keeps the 2D portrait.
+const touchHint = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+function viewerPanel() {
+  const panel = document.createElement('section');
+  panel.className = 'unit-3d';
+  panel.setAttribute('aria-label', '3D view');
+  panel.innerHTML = `<h3>3D view</h3><div class="unit-3d-stage"><div class="unit-3d-fallback"><span class="unit-3d-portrait"></span><p class="unit-3d-status" role="status">Loading 3D model…</p></div></div>
+    <div class="unit-3d-controls"><button type="button" data-view-motion="idle" aria-pressed="true">Idle</button><button type="button" data-view-motion="walk" aria-pressed="false"><span class="unit-3d-walk">Walk</span></button><button type="button" data-view-motion="fire" aria-pressed="false">Fire</button><button type="button" data-view-colour><span>Colour</span><small class="unit-3d-colour">Yours</small></button><button type="button" data-view-size aria-pressed="false"><span>Size</span><small>Ranger</small></button></div>
+    <p class="unit-3d-hint">${touchHint() ? 'Drag to turn · pinch to zoom · double-tap to reset' : 'Drag to turn · wheel to zoom · double-click to reset'}</p>`;
+  return panel;
+}
+
+export function createFieldGuide(onOpen,onClose,getSim = () => null,{ getView = () => null, onViewer = () => {} } = {}) {
   const dialog = document.createElement('dialog');
   dialog.className = 'field-guide';
   dialog.setAttribute('aria-labelledby','guide-title');
@@ -71,9 +88,65 @@ export function createFieldGuide(onOpen,onClose,getSim = () => null) {
   document.body.append(dialog);
   let team = 0;
   const pick = dialog.querySelector('select');
-  const render = () => { dialog.querySelector('article').innerHTML = entryHTML(pick.value,getSim(),team); dialog.querySelector('article').scrollTop = 0; };
-  pick.onchange = render;
   dialog.querySelector('button').onclick = () => dialog.close();
-  dialog.addEventListener('close',onClose);
-  return (type,side = 0) => { if (dialog.open) return; team = side; pick.innerHTML = guideOptions(getSim()?.ruleOn?.("roster") === "expanded"); pick.value = D[type]?.kind && !D[type].boss ? type : 'hq'; /* bosses are not trained: no entry (docs/aaa/BOSSES.md) */ render(); onOpen(); dialog.showModal(); };
+  const panel = viewerPanel(), stage = panel.querySelector('.unit-3d-stage'), status = panel.querySelector('.unit-3d-status');
+  let viewer = null, viewerModule = null;
+  const fail = (text) => { panel.classList.remove('live'); panel.classList.add('failed'); status.textContent = text; };
+  const label = (state) => {
+    const motions = viewer?.motions() || { walk: null, fire: false };
+    for (const b of panel.querySelectorAll('[data-view-motion]')) {
+      b.setAttribute('aria-pressed', String(state?.mode === b.dataset.viewMotion));
+      b.disabled = !state?.type || (b.dataset.viewMotion === 'walk' && !motions.walk) || (b.dataset.viewMotion === 'fire' && !motions.fire);
+    }
+    panel.querySelector('.unit-3d-walk').textContent = motions.walk === 'Drive' ? 'Drive' : motions.walk === 'Fly' ? 'Fly' : 'Walk';
+    if (viewer?.colour) panel.querySelector('.unit-3d-colour').textContent = viewer.colour.label;
+    panel.querySelector('[data-view-colour]').disabled = !state?.type;
+    const size = panel.querySelector('[data-view-size]');
+    size.disabled = !state?.type || state.type === 'ranger';
+    size.setAttribute('aria-pressed', String(!!state?.size));
+  };
+  const show3d = async (type) => {
+    panel.classList.remove('live', 'failed');
+    status.textContent = 'Loading 3D model…';
+    panel.querySelector('.unit-3d-portrait').innerHTML = portrait(type);
+    label(null);
+    const view = getView();
+    try {
+      viewerModule ||= await import('./unit-viewer.js');
+      if (!dialog.open || pick.value !== type) return;
+      if (!view?.teamTemplates || view.contextLost || !viewerModule.supportsWebGL()) return fail('3D view unavailable. Showing the portrait.');
+      if (!viewer) {
+        viewer = new viewerModule.UnitViewer(stage, { view, side: team, reducedMotion: reducedMotion(), onState: label,
+          onLost: () => { fail('3D view unavailable. Showing the portrait.'); closeViewer(); } });
+        viewer.startColour(team);
+        viewer.setActive(true);
+        onViewer(true);
+      }
+      const shown = await viewer.show(type);
+      if (viewer && pick.value === type) shown ? panel.classList.add('live') : fail('No 3D model for this entry. Showing the portrait.');
+    } catch (error) {
+      console.warn('3D view', error);
+      fail('3D view unavailable. Showing the portrait.');
+      closeViewer();
+    }
+  };
+  const closeViewer = () => {
+    if (!viewer) return;
+    dialog.viewerReport = viewer.dispose();
+    viewer = null;
+    onViewer(false);
+  };
+  for (const b of panel.querySelectorAll('[data-view-motion]')) b.onclick = () => viewer?.setMode(b.dataset.viewMotion);
+  panel.querySelector('[data-view-colour]').onclick = () => viewer?.cycleColour();
+  panel.querySelector('[data-view-size]').onclick = () => viewer?.toggleSize();
+  Object.defineProperty(dialog, 'viewer', { get: () => viewer }); // browser tests (tests/unit-viewer.mjs)
+  const render = () => {
+    const article = dialog.querySelector('article');
+    article.innerHTML = entryHTML(pick.value,getSim(),team);
+    article.querySelector('.guide-hero')?.after(panel);
+    article.scrollTop = 0;
+  };
+  pick.onchange = () => { render(); show3d(pick.value); };
+  dialog.addEventListener('close',() => { if (!dialog.open) closeViewer(); onClose(); });
+  return (type,side = 0) => { if (dialog.open) return; team = side; pick.innerHTML = guideOptions(getSim()?.ruleOn?.("roster") === "expanded"); pick.value = D[type]?.kind && !D[type].boss ? type : 'hq'; /* bosses are not trained: no entry (docs/aaa/BOSSES.md) */ render(); onOpen(); dialog.showModal(); show3d(pick.value); };
 }
