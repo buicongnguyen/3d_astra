@@ -35,7 +35,8 @@ await suite("terrain", async () => {
       f.view.focusOn(p.x, p.z + 3); f.view.zoom = 26;
       f.step(0.1);
       f.select([u.id]);
-      return { id: u.id, p: { x: p.x, z: p.z, r: p.r }, walls: s.entities.filter((e) => e.axis).length };
+      // r: how far the plateau reaches south (+z), e: east (+x); a disc's radius, half a side of a rounded box (hills mix).
+      return { id: u.id, p: { x: p.x, z: p.z, r: p.shape === "disc" ? p.r : p.d / 2, e: p.shape === "disc" ? p.r : p.w / 2 }, walls: s.entities.filter((e) => e.axis).length };
     });
     assert.ok(setup.walls > 0, "straight walls exist on Dunes");
     // Tap (or right-click) the middle of the plateau top: the order lands there.
@@ -83,7 +84,7 @@ await suite("terrain", async () => {
     const hidden = await page.evaluate(async ({ id, p }) => {
       const f = window.__frontier, s = f.sim, u = s.get(id);
       u.x = p.x; u.z = p.z; u.orders = []; u.stance = "hold";
-      const rim = s.spawn("ranger", 0, p.x + p.r - 2, p.z); rim.stance = "hold";
+      const rim = s.spawn("ranger", 0, p.x + p.e - 2, p.z); rim.stance = "hold";
       f.select([id]);
       f.step(0.05);
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
@@ -110,13 +111,13 @@ await suite("terrain", async () => {
       await page.evaluate(() => document.querySelector("#fight-hint .fh-close").click());
       // Barrage at the other plateau's deep top, which nobody on the team can see: refused, with the reason.
       const aim = await page.evaluate(async ({ p }) => {
-        const f = window.__frontier, s = f.sim, t = s.terrain, q = t.plateaus.find((o) => o.x !== p.x || o.z !== p.z);
-        const b = s.spawn("breaker", 0, q.x, q.z + q.r + 3); b.stance = "hold";
+        const f = window.__frontier, s = f.sim, t = s.terrain, q = t.plateaus.find((o) => o.x !== p.x || o.z !== p.z), qr = q.shape === "disc" ? q.r : q.d / 2;
+        const b = s.spawn("breaker", 0, q.x, q.z + qr + 3); b.stance = "hold";
         f.view.focusOn(q.x, q.z + 3); f.view.zoom = 26;
         f.select([b.id]);
         f.step(0.05);
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-        const v = f.view, r = v.renderer.domElement.getBoundingClientRect(), dz = q.z + q.r - 8, c = v.project(q.x, dz, t.heightAt(q.x, dz)); // a deep point 8 m inside the rim (the old centre depth): plateaus were enlarged, so the centre is out of Barrage reach from the foot
+        const v = f.view, r = v.renderer.domElement.getBoundingClientRect(), dz = q.z + qr - 8, c = v.project(q.x, dz, t.heightAt(q.x, dz)); // a deep point 8 m inside the rim (the old centre depth): plateaus were enlarged, so the centre is out of Barrage reach from the foot
         return { x: r.left + c.x, y: r.top + c.y, hidden: s.hiddenTop({ x: q.x, z: dz }, 0) };
       }, setup);
       assert.ok(aim.hidden, "the far plateau top is out of sight");

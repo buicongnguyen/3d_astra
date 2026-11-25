@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import {Terrain} from '../src/terrain.js';
+import {Terrain,rimReach} from '../src/terrain.js';
 import {buildPlateauRelief, lowerCliffBand, fogLift, mergeFogColumns} from '../src/plateau-relief.js';
 
 // The plateau rock relief (2026-11-13, "height you can see") is merged into the ground mesh:
@@ -13,7 +13,8 @@ test('maps without plateaus get no relief',()=>{
   for(const id of ['classic','riverlands','basin','expanse'])assert.equal(buildPlateauRelief(new Terrain(id)),null,id);
 });
 
-for(const id of ['dunes','woodlands','highlands']) test(`${id}: rock relief faces up and out, leaves ramps open and covers the lowered ground`,()=>{
+// Rounded boxes (dunes, woodlands, dryreach, twinrivers, ironback, crownmesa since the hills mix) and discs (highlands).
+for(const id of ['dunes','woodlands','highlands','dryreach','twinrivers','ironback','crownmesa']) test(`${id}: rock relief faces up and out, leaves ramps open and covers the lowered ground`,()=>{
   const t=new Terrain(id),g=buildPlateauRelief(t),p=g.attributes.position,n=g.attributes.normal;
   assert.deepEqual(Object.keys(g.attributes).sort(),['color','normal','position','uv'],'same attributes as the ground plane');
   g.computeBoundingBox();
@@ -52,7 +53,10 @@ for(const id of ['dunes','woodlands','highlands']) test(`${id}: rock relief face
   // The fog sheet rises over the rock next to cliffs and stays on the ground far away.
   const q=t.plateaus[0];
   assert.ok(fogLift(t,q.x,q.z)>2.4);
-  assert.equal(fogLift(t,q.x+(q.r||q.w)+12,q.z),0);
+  // 12 m out from the first plateau, in the first direction that is 6 m clear of every plateau.
+  const far=[0,1,2,3,4,5,6,7].map(k=>{const a=k*Math.PI/4,ux=Math.cos(a),uz=Math.sin(a),m=rimReach(q,ux,uz)+12;return{x:q.x+ux*m,z:q.z+uz*m};}).find(o=>Math.abs(o.x)<t.half&&Math.abs(o.z)<t.half&&t.plateaus.every(p=>t.edge(p,o.x,o.z)>6));
+  assert.ok(far,'a clear point 12 m out');
+  assert.equal(fogLift(t,far.x,far.z),0);
 });
 
 test('merged fog strips preserve heights and texture coordinates on both sides of each ridge',()=>{

@@ -86,23 +86,7 @@
       19
     ],
     "plateaus": [
-      {
-        "shape": "disc",
-        "x": -22,
-        "z": 4,
-        "r": 11.5,
-        "mirror": true,
-        "ramps": [
-          {
-            "angle": 0,
-            "width": 7
-          },
-          {
-            "angle": 180,
-            "width": 7
-          }
-        ]
-      }
+      {"shape": "rbox", "x": -23, "z": 4, "w": 22, "d": 20, "corner": 5, "mirror": true, "ramps": [{"side": "east", "at": 0, "width": 7}, {"side": "west", "at": 0, "width": 7}]}
     ],
     "walls": [
       {
@@ -139,26 +123,7 @@
       23
     ],
     "plateaus": [
-      {
-        "shape": "box",
-        "x": -17.5,
-        "z": -58,
-        "w": 25,
-        "d": 17,
-        "mirror": true,
-        "ramps": [
-          {
-            "side": "north",
-            "at": 0,
-            "width": 7
-          },
-          {
-            "side": "east",
-            "at": 0,
-            "width": 7
-          }
-        ]
-      }
+      {"shape": "rbox", "x": -18, "z": -59, "w": 24, "d": 18, "corner": 3, "mirror": true, "ramps": [{"side": "north", "at": 0, "width": 7}, {"side": "east", "at": 0, "width": 7}]}
     ],
     "walls": [
       {
@@ -250,178 +215,6 @@
       ["alloy", 0, 8, 5000],
       ["energy", 6, 6, 3000],
       ["alloy", -52, 6, 2200],
-      ["alloy", -24, 50, 3000]
-    ],
-    "roads": [
-      [[-34, 33], [-9, 9]]
-    ],
-    "plateaus": [
-      {"shape": "disc", "x": -18, "z": 0, "r": 5},
-      {"shape": "disc", "x": 18, "z": 0, "r": 5},
-      {"shape": "disc", "x": 0, "z": -18, "r": 5},
-      {"shape": "disc", "x": 0, "z": 18, "r": 5},
-      {"shape": "disc", "x": -44, "z": -16, "r": 3, "mirror": "quad"}
-    ]
-  },
-  "dryreach": {
-    "name": "Dry Reach",
-    "blurb": "Small deposits far apart: expand to win",
-    "size": 160,
-    "river": false,
-    "offset": 24,
-    "look": "dunes",
-    "biome": "desert",
-    "symmetry": "quad",
-    "sites": [],
-    "flank": [0, 34],
-    "rocks": [],
-    "roads": [],
-    "deposits": [
-      ["alloy", -62, 8, 1600],
-      ["energy", -66, 13, 1300],
-      ["alloy", -14, 62, 1600],
-      ["energy", -19, 66, 1300],
-      ["alloy", -30, 20, 1400],
-      ["alloy", 5, 0, 2000],
-      ["alloy", -28, 57, 2000],
-      ["alloy", -61, 28, 2000],
-      ["alloy", -40, 30, 2000]
-    ],
-    "plateaus": [
-      {"shape": "disc", "x": 0, "z": 34, "r": 9, "ramps": [{"angle": 0, "width": 7}, {"angle": 180, "width": 7}]},
-      {"shape": "disc", "x": 0, "z": -34, "r": 9, "ramps": [{"angle": 0, "width": 7}, {"angle": 180, "width": 7}]},
-      {"shape": "disc", "x": -24, "z": 44, "r": 3.2, "mirror": "quad"},
-      {"shape": "disc", "x": -52, "z": 26, "r": 3.2, "mirror": "quad"}
-    ]
-  },
-  "twinrivers": {
-    "name": "Twin Rivers",
-    "blurb": "Two rivers, three lanes: bridges and fords",
-    "size": 160,
-    "river": true,
-    "offset": 24,
-    "look": "riverlands",
-    "symmetry": "quad",
-    "sites": [],
-    "flank": [44, 0],
-    "rocks": [],
-    "rivers": [
-      {"z": -22, "crossings": [{"x": -50, "half": 5, "type": "bridge"}, {"x": -16, "half": 5, "type": "ford"}, {"x": 16, "half": 5, "type": "ford"}, {"x": 50, "half": 5, "type": "bridge"}]},
-      {"z": 22, "crossings": [{"x": -50, "half": 5, "type": "bridge"}, {"x": -16, "half": 5, "type": "ford"}, {"x": 16, "half": 5, "type": "ford"}, {"x": 50, "half": 5, "type": "bridge"}]}
-    ],
-    "roads": [
-      [[-50, 0], [-50, 40]]
-    ],
-    "plateaus": [
-      {"shape": "box", "x": 0, "z": 52, "w": 6, "d": 56, "mirror": true}
-    ],
-    "deposits": [
-      ["alloy", -26, 6, 2500],
-      ["energy", -62, 0, 2000],
-      ["alloy", -20, 50, 2500],
-      ["energy", -15, 56, 2000],
-      ["alloy", -66, 31, 2500],
-      ["alloy", -36, 32, 2500],
-      ["alloy", -70, 44, 2500]
-    ]
-  },
-  "ironback": {
-    "name": "Ironback Ridge",
-    "blurb": "Cliff walls: one pass, two flanks, ridge tops",
-    "size": 160,
-    "river": false,
-    "offset": 24,
-    "look": "highlands",
-    "biome": "highland",
-    "symmetry": "quad",
-    "sites": [],
-    "flank": [72, 0],
-    "rocks": [],
-    "roads": [],
-    "deposits": [
-      ["alloy", -26, 12, 2500],
-      ["energy", -20, 16, 2000],
-      ["alloy", -74, 10, 2400],
-      ["alloy", -62, 30, 2400],
-      ["alloy", -30, 60, 2400]
-    ],
-    "plateaus": [
-      {"shape": "box", "x": -36, "z": 0, "w": 60, "d": 8, "mirror": true, "ramps": [{"side": "north", "at": -14, "width": 7}, {"side": "south", "at": -14, "width": 7}, {"side": "north", "at": 18, "width": 7}, {"side": "south", "at": 18, "width": 7}]},
-      {"shape": "box", "x": 0, "z": 38, "w": 8, "d": 34, "mirror": true, "ramps": [{"side": "east", "at": 0, "width": 7}, {"side": "west", "at": 0, "width": 7}]}
-    ]
-  },
-  "crownmesa": {
-    "name": "Crown Mesa",
-    "blurb": "A rich mesa in the middle, camps on the rim",
-    "size": 160,
-    "river": false,
-    "offset": 24,
-    "look": "woodlands",
-    "biome": "woodland",
-    "symmetry": "quad",
-    "dressing": 0.85,
-    "sites": [],
-    "flank": [0, 52],
-    "rocks": [],
-    "roads": [],
-    "deposits": [
-      ["alloy", -13, 0, 4000],
-      ["alloy", 0, 13, 4000],
-      ["energy", -11, 11, 3000],
-      ["alloy", -62, 8, 2500],
-      ["energy", -66, 0, 2000],
-      ["alloy", -34, 32, 2000],
-      ["alloy", -66, 30, 2500]
-    ],
-    "plateaus": [
-      {"shape": "disc", "x": 0, "z": 0, "r": 24, "ramps": [{"angle": 45, "width": 8}, {"angle": 135, "width": 8}, {"angle": 225, "width": 8}, {"angle": 315, "width": 8}]},
-      {"shape": "disc", "x": -34, "z": 0, "r": 3.5},
-      {"shape": "disc", "x": 34, "z": 0, "r": 3.5},
-      {"shape": "disc", "x": 0, "z": -34, "r": 3.5},
-      {"shape": "disc", "x": 0, "z": 34, "r": 3.5}
-    ]
-  },
-  "steppe": {
-    "name": "Open Steppe",
-    "blurb": "Open ground and close camps: attack early",
-    "size": 128,
-    "river": false,
-    "offset": 8,
-    "look": "expanse",
-    "symmetry": "quad",
-    "sites": [],
-    "flank": [26, 0],
-    "rocks": [],
-    "deposits": [
-      ["alloy", -22, 0, 2500],
-      ["energy", 0, -22, 2000],
-      ["alloy", -50, -6, 2500]
-    ],
-    "roads": [
-      [[-30, 29], [0, 0]]
-    ],
-    "plateaus": [
-      {"shape": "disc", "x": -14, "z": 22, "r": 3, "mirror": "quad"},
-      {"shape": "disc", "x": -32, "z": 10, "r": 2.6, "mirror": "quad"},
-      {"shape": "disc", "x": -10, "z": 46, "r": 2.6, "mirror": "quad"}
-    ]
-  },
-  "heartland": {
-    "name": "Golden Heart",
-    "blurb": "A rich field in the middle, little at home",
-    "size": 128,
-    "river": false,
-    "offset": 16,
-    "look": "basin",
-    "symmetry": "quad",
-    "sites": [],
-    "flank": [22, 22],
-    "rocks": [],
-    "deposits": [
-      ["alloy", 8, 0, 5000],
-      ["alloy", 0, 8, 5000],
-      ["energy", 6, 6, 3000],
-      ["alloy", -52, 6, 2200],
       ["alloy", -24, 50, 3000],
       ["alloy", -20, 54, 1200, "outcrop"]
     ],
@@ -429,11 +222,11 @@
       [[-34, 33], [-9, 9]]
     ],
     "plateaus": [
-      {"shape": "disc", "x": -18, "z": 0, "r": 5},
-      {"shape": "disc", "x": 18, "z": 0, "r": 5},
-      {"shape": "disc", "x": 0, "z": -18, "r": 5},
-      {"shape": "disc", "x": 0, "z": 18, "r": 5},
-      {"shape": "disc", "x": -44, "z": -16, "r": 3, "mirror": "quad"}
+      {"shape": "disc", "x": -18, "z": 0, "r": 5, "decor": true},
+      {"shape": "disc", "x": 18, "z": 0, "r": 5, "decor": true},
+      {"shape": "disc", "x": 0, "z": -18, "r": 5, "decor": true},
+      {"shape": "disc", "x": 0, "z": 18, "r": 5, "decor": true},
+      {"shape": "disc", "x": -44, "z": -16, "r": 3, "mirror": "quad", "decor": true}
     ]
   },
   "dryreach": {
@@ -461,10 +254,10 @@
       ["alloy", -40, 30, 2000]
     ],
     "plateaus": [
-      {"shape": "disc", "x": 0, "z": 34, "r": 9, "ramps": [{"angle": 0, "width": 7}, {"angle": 180, "width": 7}]},
-      {"shape": "disc", "x": 0, "z": -34, "r": 9, "ramps": [{"angle": 0, "width": 7}, {"angle": 180, "width": 7}]},
-      {"shape": "disc", "x": -24, "z": 44, "r": 3.2, "mirror": "quad"},
-      {"shape": "disc", "x": -52, "z": 26, "r": 3.2, "mirror": "quad"}
+      {"shape": "rbox", "x": 0, "z": 34, "w": 20, "d": 16, "corner": 4, "ramps": [{"side": "east", "at": 0, "width": 7}, {"side": "west", "at": 0, "width": 7}]},
+      {"shape": "rbox", "x": 0, "z": -34, "w": 20, "d": 16, "corner": 4, "ramps": [{"side": "east", "at": 0, "width": 7}, {"side": "west", "at": 0, "width": 7}]},
+      {"shape": "disc", "x": -24, "z": 44, "r": 3.2, "mirror": "quad", "decor": true},
+      {"shape": "disc", "x": -52, "z": 26, "r": 3.2, "mirror": "quad", "decor": true}
     ]
   },
   "twinrivers": {
@@ -486,7 +279,7 @@
       [[-50, 0], [-50, 40]]
     ],
     "plateaus": [
-      {"shape": "box", "x": 0, "z": 52, "w": 6, "d": 56, "mirror": true}
+      {"shape": "rbox", "x": 0, "z": 52, "w": 8, "d": 56, "corner": 3, "mirror": true, "decor": true}
     ],
     "deposits": [
       ["alloy", -26, 6, 2500],
@@ -521,8 +314,8 @@
       ["alloy", -26, 64, 1400, "outcrop"]
     ],
     "plateaus": [
-      {"shape": "box", "x": -36, "z": 0, "w": 60, "d": 8, "mirror": true, "ramps": [{"side": "north", "at": -14, "width": 7}, {"side": "south", "at": -14, "width": 7}, {"side": "north", "at": 18, "width": 7}, {"side": "south", "at": 18, "width": 7}]},
-      {"shape": "box", "x": 0, "z": 38, "w": 8, "d": 34, "mirror": true, "ramps": [{"side": "east", "at": 0, "width": 7}, {"side": "west", "at": 0, "width": 7}]}
+      {"shape": "rbox", "x": -36, "z": 0, "w": 60, "d": 8, "corner": 3, "mirror": true, "ramps": [{"side": "north", "at": -14, "width": 7}, {"side": "south", "at": -14, "width": 7}, {"side": "north", "at": 18, "width": 7}, {"side": "south", "at": 18, "width": 7}]},
+      {"shape": "rbox", "x": 0, "z": 38, "w": 8, "d": 32, "corner": 3, "mirror": true, "ramps": [{"side": "east", "at": 0, "width": 7}, {"side": "west", "at": 0, "width": 7}]}
     ]
   },
   "crownmesa": {
@@ -550,11 +343,11 @@
       ["alloy", -66, 30, 2500]
     ],
     "plateaus": [
-      {"shape": "disc", "x": 0, "z": 0, "r": 24, "ramps": [{"angle": 0, "width": 8}, {"angle": 45, "width": 8}, {"angle": 90, "width": 8}, {"angle": 135, "width": 8}, {"angle": 180, "width": 8}, {"angle": 225, "width": 8}, {"angle": 270, "width": 8}, {"angle": 315, "width": 8}]},
-      {"shape": "disc", "x": -34, "z": 0, "r": 3.5},
-      {"shape": "disc", "x": 34, "z": 0, "r": 3.5},
-      {"shape": "disc", "x": 0, "z": -34, "r": 3.5},
-      {"shape": "disc", "x": 0, "z": 34, "r": 3.5}
+      {"shape": "rbox", "x": 0, "z": 0, "w": 44, "d": 44, "corner": 8, "ramps": [{"side": "east", "at": 0, "width": 8}, {"angle": 45, "width": 8}, {"side": "south", "at": 0, "width": 8}, {"angle": 135, "width": 8}, {"side": "west", "at": 0, "width": 8}, {"angle": 225, "width": 8}, {"side": "north", "at": 0, "width": 8}, {"angle": 315, "width": 8}]},
+      {"shape": "disc", "x": -34, "z": 0, "r": 3.5, "decor": true},
+      {"shape": "disc", "x": 34, "z": 0, "r": 3.5, "decor": true},
+      {"shape": "disc", "x": 0, "z": -34, "r": 3.5, "decor": true},
+      {"shape": "disc", "x": 0, "z": 34, "r": 3.5, "decor": true}
     ]
   },
   "steppe": {
@@ -578,9 +371,9 @@
       [[-30, 29], [0, 0]]
     ],
     "plateaus": [
-      {"shape": "disc", "x": -14, "z": 22, "r": 3, "mirror": "quad"},
-      {"shape": "disc", "x": -32, "z": 10, "r": 2.6, "mirror": "quad"},
-      {"shape": "disc", "x": -10, "z": 46, "r": 2.6, "mirror": "quad"}
+      {"shape": "disc", "x": -14, "z": 22, "r": 3, "mirror": "quad", "decor": true},
+      {"shape": "disc", "x": -32, "z": 10, "r": 2.6, "mirror": "quad", "decor": true},
+      {"shape": "disc", "x": -10, "z": 46, "r": 2.6, "mirror": "quad", "decor": true}
     ]
   }
 }

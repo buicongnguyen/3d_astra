@@ -6,9 +6,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Simulation } from '../src/simulation.js';
-import { Terrain, TERRAIN, ALL_MAPS } from '../src/terrain.js';
+import { Terrain, TERRAIN, ALL_MAPS, rimReach } from '../src/terrain.js';
 import { DEFINITIONS as D } from '../src/data.js';
 import { groundY, placeOnGround, GHOST_LIFT } from '../src/ground-y.js';
+// How far a plateau reaches from its centre to the south (+z) and the east (+x): its radius for a disc, half a side for a rounded box.
+const S = (p) => rimReach(p, 0, 1), E = (p) => rimReach(p, 1, 0);
 
 const H = TERRAIN.plateau_height;
 const BUILDINGS = Object.keys(D).filter((k) => D[k].kind === 'building');
@@ -17,7 +19,7 @@ const stub = () => ({ position: { x: NaN, y: NaN, z: NaN, set(x, y, z) { Object.
 
 // The terrain-valid site nearest a plateau's centre (0.5 m scan), or null when the type does not fit.
 function siteOnTop(t, p, radius) {
-  const reach = p.shape === 'disc' ? p.r : Math.max(p.w, p.d) / 2;
+  const reach = p.shape === 'disc' ? p.r : Math.max(p.w, p.d) / 2; // a box or rounded box: its longer half side
   let best = null;
   for (let dx = -reach; dx <= reach; dx += 0.5)
     for (let dz = -reach; dz <= reach; dz += 0.5) {
@@ -33,7 +35,7 @@ function siteOnTop(t, p, radius) {
 test('groundY is the render height: plateau top on high ground, 0 below and on flat maps', () => {
   const t = new Terrain('dunes'), p = t.plateaus[0];
   assert.equal(groundY(t, p.x, p.z), H);
-  assert.equal(groundY(t, p.x + p.r + 5, p.z), 0);
+  assert.equal(groundY(t, p.x + E(p) + 5, p.z), 0);
   assert.equal(groundY(new Terrain('classic'), 3, 4), 0);
   assert.equal(groundY(null, 3, 4), 0);
   assert.equal(groundY(t, NaN, 0), 0);
@@ -67,7 +69,7 @@ test('every building type placed on any plateau sits on the top, footprint flat 
 
 test('on low ground the ghost and buildings stay where they were (flat maps unchanged)', () => {
   for (const id of ['classic', 'dunes']) {
-    const t = new Terrain(id), x = t.plateaus.length ? t.plateaus[0].x : 10, z = t.plateaus.length ? t.plateaus[0].z + t.plateaus[0].r + 9 : 10;
+    const t = new Terrain(id), x = t.plateaus.length ? t.plateaus[0].x : 10, z = t.plateaus.length ? t.plateaus[0].z + S(t.plateaus[0]) + 9 : 10;
     assert.equal(t.level(x, z), 0);
     assert.equal(placeOnGround(stub(), t, x, z, GHOST_LIFT).position.y, GHOST_LIFT, id);
     assert.equal(placeOnGround(stub(), t, x, z).position.y, 0, id);
@@ -103,7 +105,7 @@ test('capture rings sit 0.1 m above the ground under them, on a plateau top too'
   const { CaptureRings } = await import('../src/capture-view.js');
   const t = new Terrain('dunes'), p = t.plateaus[0], scene = { add() {}, remove() {} };
   const rings = new CaptureRings(scene);
-  const points = { top: { x: p.x, z: p.z, r: 3 }, low: { x: p.x + p.r + 6, z: p.z, r: 3 } };
+  const points = { top: { x: p.x, z: p.z, r: 3 }, low: { x: p.x + E(p) + 6, z: p.z, r: 3 } };
   rings.update({ terrain: t, mission: { points }, capture: {}, time: 0, entities: [] }, [0x44aaff, 0xff6644], true);
   assert.ok(Math.abs(rings.rings.get('top').position.y - (H + 0.1)) < 1e-9, `top ring at ${rings.rings.get('top').position.y}`);
   assert.ok(Math.abs(rings.rings.get('low').position.y - 0.1) < 1e-9, 'low ring unchanged');

@@ -209,7 +209,7 @@ A mission's faction colours remain cosmetic until `rules.rosters: true`. With th
 
 ## Height and walls on maps (0.13.0)
 
-`maps.json` may give a map `plateaus` (`{ shape: "disc", x, z, r, ramps: [{ angle, width }] }` or `{ shape: "box", x, z, w, d, ramps: [{ side: "north"|"south"|"east"|"west", at, width }] }`, with `mirror: true` for the point-mirrored copy) and `walls` (`{ x, z, length, axis: "h"|"v", mirror }`). Mission regions and spawns must not sit on a cliff band or a ramp: `tests/missions-data.test.js` checks every one with `nav.canStand`.
+`maps.json` may give a map `plateaus` (`{ shape: "disc", x, z, r, ramps: [{ angle, width }] }` or `{ shape: "box", x, z, w, d, ramps: [{ side: "north"|"south"|"east"|"west", at, width }] }`, with `mirror: true` for the point-mirrored copy; since the hills mix (2026-11-25) also `{ shape: "rbox", x, z, w, d, corner, ramps }`, a rounded box whose sides snap to the 2 m grid and whose corners are arcs of `corner` m (3 m or more), with side ramps or `angle` ramps (where that ray leaves the box). Sharp `box` is no longer used by any map; `"decor": true` marks a plateau with no ramp that nobody is meant to climb (`tests/terrain-rbox.test.js` checks every plateau: a ramp up, or decor)) and `walls` (`{ x, z, length, axis: "h"|"v", mirror }`). Mission regions and spawns must not sit on a cliff band or a ramp: `tests/missions-data.test.js` checks every one with `nav.canStand`.
 
 ## Map layouts (R3 map variety)
 

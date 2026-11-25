@@ -18,8 +18,11 @@ const OLD = {
   riverlands: { terrain: "67ba5229", x1: "4bb4f2dd", x2: "a1baf9ce", x3: "87dac8d6", ai90: "de537b7f" },
   basin: { terrain: "4e2438a4", x1: "65dacecc", x2: "4c23cd49", x3: "68eaae55", ai90: "d83be270" },
   expanse: { terrain: "14ec7f8e", x1: "f492b49e", x2: "5cf06b5d", x3: "7d3c1878", ai90: "c2ca7d09" },
-  dunes: { terrain: "ae19ad5a", x1: "c593782e", x2: "9b7bef0e", x3: "d84260a3", ai90: "c362f122" },
-  woodlands: { terrain: "1aaa104f", x1: "e8dbe0a3", x2: "b7ae243b", x3: "d0f10431", ai90: "0a266283" },
+  // Hills mix (2026-11-25, owner: "some hills will be round, some will be rectangles"): the Dunes mesas
+  // (discs, terrain ae19ad5a, ai90 c362f122) and the Woodlands bluffs (sharp boxes, terrain 1aaa104f) are
+  // rounded boxes now. Their starts are unchanged; the Dunes 90 s AI match moved.
+  dunes: { terrain: "385899e8", x1: "c593782e", x2: "9b7bef0e", x3: "d84260a3", ai90: "1ae4e355" },
+  woodlands: { terrain: "3a446af1", x1: "e8dbe0a3", x2: "b7ae243b", x3: "d0f10431", ai90: "0a266283" },
   highlands: { terrain: "e7a6831b", x1: "654a2526", x2: "6213c64a", x3: "f6621fb4", ai90: "5595918a" },
 };
 const DEFENCE = { gorge: "ac9df034", bridges: "653c7ad6", switchback: "48d5e73f", fordwood: "54f79148", canyon: "d85e7204", longcrossing: "f4007a88", crossroads: "70449f4c" };
