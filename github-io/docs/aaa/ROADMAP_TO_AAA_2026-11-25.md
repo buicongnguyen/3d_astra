@@ -27,6 +27,17 @@ Status: todo / doing / done (commit).
 | W13 | Phone HUD chrome ~35 % -> under 30 %, minimap side choice on phones, left-handed layout, two-finger camera twist | UI phone 7.3, Controls 6.9, Accessibility 6.9 | | done on claude/phone-hud: HUD 12-28 % at 390x844 / 844x390 (was 16-33 %, 35-38 % with a notice), notices settle to one line, minimap side + Left hand in Settings, two-finger twist; not merged. Notes below. |
 | W14 | Small fixes from audits: lake fords slow units, Page Up/Down in help, landscape word breaks | Polish 7.1 | | done (claude/small-fixes): unreachable build sites red with the reason, lake fords slow (0.6), no mid-word breaks (layout-f checks), help lists Page Up/Down/G/Esc/?, Field Guide 3D view fits, rings and crystals on plateau tops |
 
+## Scores
+| Date | Build | Weighted | Plain mean | Notes |
+|---|---|---|---|---|
+| 2026-11-25 (start) | 5e3df81-era | 5.95 | 6.38 | baseline of this list ("6.3") |
+| 2026-11-25 round 2 | 95aeb83 | 6.5 | 6.8 | voices 2.0->5.0, multiplayer 1.2->4.0 (LAN), replay 5.3->6.4, animation 5.5->6.2; 22 of 32 parts still under 7 |
+
+Next (re-score ranking): small UI fixes (Defence notice over next-wave strip, commander tile label, LAN name truncation,
+desktop 44 px taps, 10 px badge, WebKit ability tiles), replay camera follows the action, voiced story for every
+mission, W7 depth (+ Full army battle is a 45-56 s walkover), visible W8 AI cues, readable deaths at phone zoom,
+faction music stingers, W10 Defence, W5 faction identity, internet 1v1.
+
 ## Order
 1. Now: W1, W2 (running), W3 + W12 (audio, no overlap with view code), W6 (meta/UI, no overlap).
 2. After W1: W4, then W5 from W1's art list.
