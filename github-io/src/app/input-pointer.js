@@ -1,5 +1,6 @@
 // Mouse and touch input: hover, drag boxes, taps, camera drag and the touch buttons.
 import { $ } from "./dom.js";
+import { placeOnGround, GHOST_LIFT } from "../ground-y.js";
 import { FACTIONS } from "../story/world.js";
 import { isTouchPointer, TouchControls } from "../touch-controls.js";
 import { CROSSING_TEXT, HIGH_GROUND_TEXT, crossingAt, onHighGround } from "../terrain-labels.js";
@@ -245,7 +246,7 @@ export function setupInputPointer(S, A) {
           p = aim && (S.sim.findPlacement(S.buildType, 0, aim.x, aim.z) || aim);
         if (p) {
           S.view.preview.visible = true;
-          S.view.preview.position.set(p.x, 0.23, p.z);
+          placeOnGround(S.view.preview, S.view.terrain, p.x, p.z, GHOST_LIFT);
           S.view.preview.material.color.setHex(
             S.sim.placement(S.buildType, 0, p.x, p.z) ? 0xef7660 : 0x92ebc5,
           );
