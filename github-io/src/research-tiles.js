@@ -5,6 +5,7 @@
 // is on the tile), "busy" (researching, with progress) and "done" (in effect, never shown with a price).
 import { DEFINITIONS as D } from "./data.js";
 import balance from "./balance.json" with { type: "json" };
+import { EXPANDED, HOST_FACTION, workshopUnitsOf } from "./factions.js";
 
 const DOCTRINES = balance.doctrines;
 
@@ -123,3 +124,17 @@ export function productionTiles(sim, b, { choosing = false } = {}) {
   tiles.push(...doctrineTiles(sim, b));
   return { tiles, choosing: false };
 }
+
+// The units a building would train for this team once built (build menu tiles, 2026-11-25): its faction's
+// roster for the building (sim.resolvedTrains: faction swaps, flyers, story unlocks, mission limits), or an
+// Expanded match's workshop units at the faction's host (sim/content/workshops.js). Research is left out;
+// `level` is the building level each unit needs (a new building starts at level 1).
+export function buildingUnits(sim, type, team = 0) {
+  const faction = sim.factionId?.(team);
+  const workshop = sim.ruleOn?.("roster") === EXPANDED && HOST_FACTION[type] === faction ? workshopUnitsOf(faction) : [];
+  const trains = workshop.length ? workshop : D[type]?.trains ? sim.resolvedTrains(team, D[type].trains) : [];
+  return trains.filter((unit) => D[unit]?.kind === "unit").map((unit) => ({ type: unit, name: D[unit].name, level: D[unit].required_level || 1 }));
+}
+// The tile's accessible line for those units: "Trains: Vanguard · Ranger · Medic (level 2)". The " · " joints
+// let each name be translated on its own (i18n.js); "(level N)" has its own pattern in the catalogs.
+export const trainsLine = (units) => units.length ? `Trains: ${units.map((u) => (u.level > 1 ? `${u.name} (level ${u.level})` : u.name)).join(" · ")}` : "";

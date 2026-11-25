@@ -2446,6 +2446,14 @@
     [
       "^In the campaign, Dune Wyrm nests wait off the roads in Three-Way Dunes and A Debt in the Dunes\\. Clear the Wyrmlings, then keep your troops in the nest for (\\d+) s\\. Taming one is always optional\\.$",
       "캠페인에서는 삼파전 사구와 사구의 빚 임무의 길에서 벗어난 곳에 듄 웜 둥지가 있습니다. 새끼 웜을 처치한 뒤 부대를 둥지 안에 {1}초 동안 두세요. 길들이기는 언제나 선택입니다."
+    ],
+    [
+      "^Trains: ([^·]+)$",
+      "훈련: {1}"
+    ],
+    [
+      "^([^·]+) \\(level (\\d+)\\)$",
+      "{1} (레벨 {2})"
     ]
   ]
 }

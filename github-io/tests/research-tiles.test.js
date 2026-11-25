@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Simulation } from '../src/simulation.js';
-import { productionTiles, researchState } from '../src/research-tiles.js';
+import { productionTiles, researchState, buildingUnits, trainsLine } from '../src/research-tiles.js';
+import { translate } from '../src/i18n.js';
+import { DEFINITIONS as D } from '../src/data.js';
+import { workshopUnitsOf } from '../src/factions.js';
 
 // A player Foundry with plenty of resources.
 function setup(level = 1) {
@@ -84,4 +87,55 @@ test('the plating branch reads as armor, and a research queued behind a unit wai
   const r = researchState(s, 0);
   assert.deepEqual([r.branch, r.state, r.waiting], ['plating', 'busy', true]);
   assert.equal(view(s, b, false)[1], 'plating:Armor +12%:busy:Waiting in queue');
+});
+
+// Build menu tiles (owner, 2026-11-25): a Harvester's building tiles show the units each building trains.
+const units = (s, type) => buildingUnits(s, type).map((u) => `${u.type}${u.level > 1 ? '@' + u.level : ''}`).join(' ');
+test('build menu: each building lists the units its faction trains there, with the level each needs', () => {
+  const expect = {
+    meridian: { barracks: 'vanguard ranger medic@2 antitank@2', foundry: 'breaker engineer@2 tank@3', hq: 'worker kite@2 hawk@3' },
+    ashfall: { barracks: 'scrapper ranger medic@2 antitank@2', foundry: 'scorcher engineer@2 tank@3', hq: 'worker kite@2 balloon@2', salvageyard: '' },
+    wardens: { barracks: 'vanguard drone antitank@2', foundry: 'breaker walker@3', hq: 'worker kite@2 halo@2', pylon: '' },
+  };
+  for (const [faction, buildings] of Object.entries(expect)) {
+    const s = new Simulation({ ai: false, factions: { 0: faction, 1: 'meridian' } });
+    for (const [type, list] of Object.entries(buildings)) assert.equal(units(s, type), list, `${faction} ${type}`);
+    // Walls of the build menu that train nothing show nothing; research (flak, upgrades) is never a unit.
+    assert.equal(units(s, 'relay'), ''); assert.equal(units(s, 'tower'), '');
+    // The same list the building gets once it stands (sim.resolvedTrains), research left out.
+    const hq = s.own(0).find((e) => e.type === 'hq');
+    assert.deepEqual(buildingUnits(s, 'hq').map((u) => u.type), hq.trains.filter((t) => D[t].kind === 'unit'));
+  }
+});
+
+test('build menu: an Expanded match shows the workshop units at the faction host; a story mission keeps its roster', () => {
+  const s = new Simulation({ ai: false, factions: { 0: 'ashfall', 1: 'meridian' }, rules: { roster: 'expanded' } });
+  assert.deepEqual(buildingUnits(s, 'salvageyard').map((u) => u.type), workshopUnitsOf('ashfall'));
+  assert.ok(buildingUnits(s, 'salvageyard').length > 0);
+  const m = new Simulation({ ai: false, factions: { 0: 'meridian', 1: 'meridian' }, rules: { roster: 'expanded' } });
+  assert.deepEqual(buildingUnits(m, 'workshop').map((u) => u.type), workshopUnitsOf('meridian'));
+  const story = new Simulation({ ai: false, mission: { id: 'fixture', rules: {}, objectives: [], setup: [], win: [], triggers: [] } });
+  assert.equal(units(story, 'hq'), 'worker', 'no flyers in a story mission without air');
+});
+
+test('build menu: the trains line reads in English, Vietnamese and Korean', () => {
+  const s = new Simulation({ ai: false });
+  const label = `Barracks, 150 alloy · ${trainsLine(buildingUnits(s, 'barracks'))}`;
+  assert.equal(label, 'Barracks, 150 alloy · Trains: Vanguard · Ranger · Medic (level 2) · Anti-tank soldier (level 2)');
+  assert.equal(trainsLine([]), '');
+  const vi = translate(label, 'vi'), ko = translate(label, 'ko');
+  assert.equal(vi, `${translate('Barracks', 'vi')}, ${translate('150 alloy', 'vi')} · Huấn luyện: ${translate('Vanguard', 'vi')} · ${translate('Ranger', 'vi')} · ${translate('Medic', 'vi')} (cấp 2) · ${translate('Anti-tank soldier', 'vi')} (cấp 2)`);
+  assert.match(ko, /^.+, .+ · 훈련: .+ · .+ · .+ \(레벨 2\) · .+ \(레벨 2\)$/);
+  // Every faction's lists translate without English left over, except the flyers' kept names (Kite, Hawk...).
+  for (const faction of ['meridian', 'ashfall', 'sunward', 'wardens', 'veil']) {
+    const f = new Simulation({ ai: false, factions: { 0: faction, 1: 'meridian' } });
+    for (const type of f.buildable(0)) {
+      const line = trainsLine(buildingUnits(f, type));
+      if (!line) continue;
+      for (const lang of ['vi', 'ko']) {
+        const out = translate(line, lang);
+        assert.ok(!/Trains|\(level/.test(out), `${faction} ${type} ${lang}: ${out}`);
+      }
+    }
+  }
 });

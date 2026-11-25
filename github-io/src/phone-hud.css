@@ -988,3 +988,51 @@
   display: block; max-width: 100%; font: 700 11px/12px var(--font-ui); white-space: normal; overflow-wrap: normal; text-align: center;
 }
 :root:is([lang="vi"], [lang="ko"]).compact-ui:not(.in-briefing) .touch-controls > button > .icon { width: 18px; height: 18px; }
+
+/* Build menu on phones (owner, 2026-11-25): a building tile shows the units it trains standing at the foot of its
+   picture (hud.js unitStrip): the role glyphs of that building's own train tiles, the ones that need a higher building
+   level dimmed with the level. The tile stays one 44 px+ button (58 px tall here); the dock grows by the same 14 px. */
+@media (max-aspect-ratio: 1.35) { :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands.with-units { height: 58px; } }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands.with-units > .command-tile { height: 58px; min-height: 58px; container-type: inline-size; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands.with-units > .command-tile > small { order: 2; }
+:root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands > .command-tile > .tile-units {
+  order: 1; display: flex; justify-content: center; align-items: center; gap: 1px; max-width: 100%; height: 14px; margin: -2px 0 0; padding: 0; pointer-events: none;
+}
+:root.compact-ui .command-tile .tile-unit { display: flex; align-items: flex-end; flex: 0 0 auto; height: 13px; }
+:root.compact-ui .command-tile .tile-unit > svg.icon { display: block; flex: 0 0 13px; width: 13px; height: 13px; color: var(--team-friendly, #92ebc5); stroke-width: 2.4; filter: drop-shadow(0 1px 0 rgba(0, 0, 0, .85)); }
+:root.compact-ui .command-tile .tile-unit.needs-level > svg.icon { opacity: .4; filter: grayscale(.6); }
+:root.compact-ui .command-tile .tile-unit > b { margin: 0 0 -2px -3px; font: 800 11px/11px var(--font-ui); letter-spacing: -0.5px; color: var(--cat-build, #ffd27a); text-shadow: 0 0 2px #000, 0 0 2px #000; }
+:root.compact-ui .command-tile .tile-units > .tile-units-more { font: 800 11px/13px var(--font-ui); color: var(--kit-text-2, #d8cdbd); }
+/* Narrow tiles (the landscape side dock, 320 px phones): the units stand shoulder to shoulder, dimmed alone (the
+   level stays in the accessible name and the tooltip); at 44 px the pictures and the price lines tighten too. */
+@container (max-width: 60px) {
+  :root.compact-ui .command-tile .tile-units { gap: 0; }
+  :root.compact-ui .command-tile .tile-unit + .tile-unit { margin-left: -1px; }
+  :root.compact-ui .command-tile .tile-unit > svg.icon { flex-basis: 12px; width: 12px; height: 12px; }
+  :root.compact-ui .command-tile .tile-unit > b { display: none; }
+}
+@container (max-width: 46px) {
+  :root.compact-ui .command-tile .tile-units { height: 12px; margin-top: -3px; }
+  :root.compact-ui .command-tile .tile-unit { height: 11px; }
+  :root.compact-ui .command-tile .tile-unit + .tile-unit { margin-left: -3px; }
+  :root.compact-ui .command-tile .tile-unit > svg.icon { flex-basis: 11px; width: 11px; height: 11px; }
+  :root.compact-ui .command-tile > .portrait-art { --size: 18px; width: 18px !important; height: 18px !important; flex-basis: 18px !important; }
+  :root.compact-ui .command-tile > small { margin-top: -2px; line-height: 11px !important; }
+}
+@media (max-aspect-ratio: 1.35) {
+  :root.compact-ui.dock-actions:not(.in-briefing):not(.no-units)[data-dock="selection"]:has(.selection-panel.has-entity):has(#commands.with-units) { --dock-act: 62px; }
+}
+/* Landscape: the side dock wraps the tiles four to a row; the wider tiles of the second row keep 44 px, their units
+   beside the picture over the price, so the dock grows by one row's 14 px only. */
+@media (min-aspect-ratio: 1.35) {
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands.with-units > .command-tile:nth-child(n+5) {
+    display: grid; grid-template-columns: 22px auto; grid-template-rows: 14px 14px; grid-template-areas: "pic units" "pic price";
+    justify-content: center; align-content: center; column-gap: 6px; row-gap: 2px; height: 44px; min-height: 44px;
+  }
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands.with-units > .command-tile:nth-child(n+5) > .portrait-art { grid-area: pic; align-self: center; }
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands.with-units > .command-tile:nth-child(n+5) > small { grid-area: price; justify-self: start; }
+  :root.compact-ui:not(.in-briefing)[data-dock="selection"] .command-panel #commands.with-units > .command-tile:nth-child(n+5) > .tile-units { grid-area: units; justify-content: flex-start; margin: 0; }
+}
+@media (max-width: 340px) and (orientation: portrait) {
+  :root.compact-ui.dock-actions:not(.in-briefing):not(.in-defence):not(.no-units):not(.many-orders):not(.construction-open)[data-dock="selection"]:has(.selection-panel.has-entity:not(.has-roster)):not(:has(.selection-hidden, .high-ground, .in-ford, .in-air, #commands .stance-control)):has(#commands > button):has(#commands.with-units) { --dock-height: 113px; }
+}
