@@ -26,6 +26,7 @@ import { expansion } from "./sim/expand.js";
 import { defence } from "./sim/defence.js";
 import { air } from "./sim/air.js";
 import { bosses } from "./sim/bosses.js";
+import { bossFlight } from "./sim/boss-flight.js";
 import { content, installContentMixins, SPAWN, STEP } from "./sim/content.js";
 import { effects } from "./sim/effects.js";
 import { BUILT_IN_ABILITIES } from "./sim/tactics.js";
@@ -503,7 +504,7 @@ export class Simulation {
   }
 }
 
-Object.assign(Simulation.prototype, factionRules, traits, height, points, expansion, air, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot, defence, bosses, escort);
+Object.assign(Simulation.prototype, factionRules, traits, height, points, expansion, air, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot, defence, bosses, bossFlight, escort);
 // H1: the content seams and the status core, then every content module's own methods (a name clash throws).
 Object.assign(Simulation.prototype, content, effects);
 installContentMixins(Simulation.prototype, { abilities: BUILT_IN_ABILITIES });

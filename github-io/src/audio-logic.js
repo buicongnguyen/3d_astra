@@ -195,8 +195,9 @@ export const WEAPON_VOICE = {
   // W12 (2026-11-25): units that fell back to the Vanguard's SMG get their own family.
   wyrm: "bite", wyrmling: "bite", acidhound: "spit", halo: "zap", vaultsentinel: "zap", moth: "pulse", bulwark: "mg",
   ironvanguard: "autocannon", ironsovereign: "autocannon", ironsovereign2: "autocannon",
+  emberdrake: "flame",
 };
-const REFINED = new Set(["drone", "walker", "watcher", "gunner", "stalker", "hawk", "halo", "moth", "bulwark", "vaultsentinel", "ironvanguard", "ironsovereign", "ironsovereign2", "wyrm", "wyrmling", "acidhound"]);
+const REFINED = new Set(["drone", "walker", "watcher", "gunner", "stalker", "hawk", "halo", "moth", "bulwark", "vaultsentinel", "ironvanguard", "ironsovereign", "ironsovereign2", "wyrm", "wyrmling", "acidhound", "emberdrake"]);
 export function weaponVoice(weapon, sourceType) {
   if (REFINED.has(sourceType) && weapon !== "repair") return WEAPON_VOICE[sourceType];
   return WEAPON_VOICE[weapon] || "smg";

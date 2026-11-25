@@ -218,6 +218,13 @@ export const movement = {
     if (a.flying || b.flying) {
       if (!a.flying !== !b.flying) return;
       const limit = this.terrain.half - 1;
+      // A flying boss (sim/boss-flight.js) is not nudged either: the other flyer takes the whole push.
+      if (a.boss || b.boss) {
+        if (a.boss && b.boss) return;
+        const u = a.boss ? b : a, sign = a.boss ? -1 : 1;
+        u.x = Math.max(-limit, Math.min(limit, u.x + sign * nx * push)); u.z = Math.max(-limit, Math.min(limit, u.z + sign * nz * push));
+        return;
+      }
       a.x = Math.max(-limit, Math.min(limit, a.x + nx * push * 0.5)); a.z = Math.max(-limit, Math.min(limit, a.z + nz * push * 0.5));
       b.x = Math.max(-limit, Math.min(limit, b.x - nx * push * 0.5)); b.z = Math.max(-limit, Math.min(limit, b.z - nz * push * 0.5));
       return;

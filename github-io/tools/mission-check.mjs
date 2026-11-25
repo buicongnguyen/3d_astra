@@ -85,6 +85,9 @@ const MISSION_TARGETS = {
   // Canyon Run (m04b, map variety): no base; four crawlers in two pairs (1:00 and 3:20) up Amber Canyon, then the
   // outpost. The second pair cannot arrive before about 4:40, so the bot wins at about 5:25 (Story 5:32, Veteran 6:19).
   "m04b-canyon-run": { win: [300, 1200], earliest: 300 },
+  // The Ember Roost (W9): the drake comes home to the Crown at 4:00 and the bot's army is waiting there, so it wins
+  // from about 6:00 (a 1.5-2 minute fight).
+  "m10e-the-ember-roost": { win: [300, 1200], earliest: 300 },
 };
 const standardTargets = (index) => ({ ...BASE_TARGETS, ...MISSION_TARGETS[MISSIONS[index]?.id] });
 

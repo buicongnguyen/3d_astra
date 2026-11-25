@@ -39,6 +39,7 @@
     "vanguard":{"height":1.4,"reach":1.2,"life":0.12,"kind":"rifle","look":"burst","color":[1,0.92,0.62,1],"tinted":true},
     "scrapper":{"height":1.2,"reach":1,"life":0.1,"kind":"rifle","look":"pellets","color":[1,0.82,0.45,1]},
     "scorcher":{"height":1.3,"reach":1.6,"life":0.18,"kind":"rifle","look":"flame","color":[1,0.72,0.24,1],"hit":0},
+    "emberdrake":{"height":6.3,"reach":2.6,"life":0.22,"kind":"rifle","look":"flame","color":[1,0.6,0.2,1],"hit":0},
     "shade":{"height":1.4,"reach":1.1,"life":0.06,"kind":"rifle","look":"beam","color":[0.86,0.76,1,0.95],"beamLife":0.12,"beamWidth":0.2,"ring":1.5},
     "drone":{"height":1.5,"reach":1,"life":0.1,"kind":"rifle","look":"twin-pulse","color":[0.45,0.78,1,1]},
     "hawk":{"height":1.2,"reach":1.2,"life":0.3,"kind":"rocket","look":"pods","color":[1,0.85,0.6,1],"hit":0.55},

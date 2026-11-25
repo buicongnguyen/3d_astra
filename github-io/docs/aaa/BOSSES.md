@@ -169,3 +169,37 @@ All fields optional; the Iron Vanguard and the Iron Sovereign use none, so their
 
 **Mission** `m11d-the-sovereign-walks` (`src/story/sovereign-mission.js`, one import and one entry in `src/story/missions.js`): see `docs/MISSIONS.md` and `docs/aaa/results/round3/h.md`.
 
+## Boss engine IV: flying bosses, and the Ember Drake (W9, 2026-11-26)
+
+A boss entry with `flight` runs its own cycle (`src/sim/boss-flight.js`, mixed into Simulation next to `bosses`); `stepBoss` hands it over on its first line, so the three walking bosses play exactly as before (their pins hold). Everything else is shared: the aim, the danger zones and auto-evade, the rounds, the light gun, stages, `phases` (surge), the 30% rule and the walk-out warning.
+
+```
+dormant (on its perch, on the ground)  --hurt, an enemy within `wake`, or `restless` s-->  takes off
+tracking (in the air) --pause--> warning --> attacking --> exposed --> tracking ...
+after every `every` attacks: landing (flies to its perch) --> warning (the wing gust round the perch) --> gust --> perched (`perch` s) --> takes off
+```
+
+- **In the air** `e.flying` is true: only units that hit air (Rangers, Anti-tank soldiers, Riders, Drones, towers with Anti-air guns...) can shoot it, and ground zones never touch it. It hangs `hover` m short of the group it aims at (so Rangers below reach it), within `leash` of its perch, and flies home with nothing in reach. `e.fly` is the height shots aim at.
+- **The landing**: over its perch it marks `flight.land`, a circle with the usual walk-out warning; when it lands, every hostile ground unit still in the circle takes the gust's damage and is pushed `knock` m straight out (half-metre steps while the ground allows; units on Guard have already stepped out). Then it is **perched**: `e.flying` false, so every unit can hit it, and it takes `taken.exposed` (the bar reads LANDED) for `perch` s.
+- **Phases wait for the air**: a stage reached on the perch or on the way down surges at take-off.
+- Events: `bossTakeoff`, `bossLanding`, `bossLand` (`seconds`), `bossGust` (`zone`, `ids` pushed), and `bossAttack` carries `area` (a copy of the zone). Mission triggers may use `{ event: "bossLand" }` (a boss mission only, `tests/missions-data.test.js`).
+- State, only on a flying boss: `e.flying`, `e.fly`, `e.bs.born`, `e.bs.breaths`, `e.bs.landing`. A flying boss is not nudged by other flyers (`separatePair`). Save and load in the air, mid-breath and on the perch play on in step (tested).
+
+| Field (`flight`) | Meaning | Ember Drake |
+|---|---|---|
+| `fly` | shot height in the air (rules) | 4.8 m |
+| `hover` | how far short of its target group it hangs | 6 m |
+| `every` | attacks between landings | 2 |
+| `perch` | seconds on the ground | 8 |
+| `restless` | wakes on its own this long after it appears | 200 s |
+| `land` | the gust: an attack with `knock` (m) | circle 5 m, 3.2 s warning, 1 round of 10, buildings x1, knock 3 m |
+
+**The Ember Drake** (`emberdrake`, `ember-drake`): 42,000 HP (Story 34,000, Veteran 38,000 in the mission), shield 300, speed 3.4, radius 2.1, not mechanical (Anti-tank rockets do their normal damage), an ember spit of 8 every 1.2 s at 12 m. Stages at 2/3 and 1/3 (pause 6, 5, 4.5 s). **Fire breath**: a line 16 m long and 3 m wide from under it through the group, marked 2 s ahead (the walk-out rule asks 1.8 s), 4 rounds of 7 over 1 s (28; Veteran 30.8 of a Ranger's 120), buildings x0.5. **Phase 2** (surge 2.5 s): the breath and a **breath sweep**, a 13 m cone of 22 degrees (3.3 s warning), 4 rounds of 7. Taken x0.7 in the air, x1.75 after an attack and on the perch. Exposed 3 s after each breath.
+
+**Story.** A Builder fire guardian that slept under the Crown relay of the Obsidian Highlands while the Veil's dampers kept the Crown dark. Mission 10 tuned the Crown and it woke; it is what burned Maren's first camp thirty years ago. Its lines are in `src/story/ember-mission.js` (scene `ember-drake`), with Vietnamese and Korean in the story catalogues.
+
+**Model** (`tools/blender/generate_drake.py`, frontier_kit, original): 2,676 triangles, burnt-sienna hide, gold belly, bronze back plates, crimson membranes, a team-painted crest, wing edge and tail fin, and an `EmberGlow` material (eyes, throat, back vents, mouth). Rigid pivots `Wing_L`, `Wing_R`, `Jaw`, `Tail` (the hind legs sit on `leg_L`/`leg_R` for the unit contract but bake into the body). `src/boss-view.js` draws it as five rigid draws plus one lit ember mesh (`BossEmber`, brightness per frame) and moves it by maths (`updateDrake`): it flies `DRAKE_LIFT` (4 m) above its root, beats its wings (faster and harder while it hovers low to land), opens its jaw as the breath charges, sways its tail, folds its wings on the perch, and its blob shadow shrinks with height. The breath is one pooled mesh (`boss-breath`, 1 draw only while it shows): flame tongues over the zone for the rounds, then a scorch fading over 3 s; the gust is a dust ring on the same mesh plus pooled dust. Shot down in the air it falls rolling for 1.3 s and the boss blasts, shake and hit-stop wait for the crash.
+
+**Cost on a phone** (`tests/render-budget.mjs` `boss-drake-eco`, the drake in the air marking its breath over battle-eco's 60 units): 84 draws, the same as `boss-battle-eco` with the Iron Vanguard (battle-eco 76) on the same build.
+
+**Mission** `m10e-the-ember-roost`: see `docs/MISSIONS.md`. `npm run check:missions --only m10e`, objective bot: Story 337 s, Standard 357 s, Veteran 400 s, all gold, 0 to 1 unit lost (`--spread` the same).

@@ -419,6 +419,16 @@
       "budget": 3200,
       "review": "pending owner review (creature round)",
       "animation": "Shader-bones rig (src/unit-rig.js, GAIT stomp): leg_L / leg_R hips with Knee_cap knees, infantry KNEEL pose when it yields (set by the view); no baked clips"
+    },
+    {
+      "name": "emberdrake",
+      "file": "emberdrake.glb",
+      "triangles": 2676,
+      "boss": "ember-drake",
+      "budget": 4600,
+      "review": "pending owner review (W9)",
+      "source": "tools/blender/generate_drake.py (frontier_kit), original design",
+      "animation": "Runtime parts (src/boss-view.js DRAKE_PARTS): wings flap and fold, jaw opens to breathe, tail sways, no baked clips; ember glow, breath and gust are drawn at runtime"
     }
   ]
 }

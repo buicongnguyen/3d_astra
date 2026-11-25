@@ -102,7 +102,8 @@ export const bosses = {
   bossTaken(e) {
     const spec = BOSSES[e.boss];
     if (!spec) return 1;
-    const taken = e.bs?.phase === "exposed" ? spec.taken.exposed : spec.taken.armored;
+    // A flying boss on its perch (sim/boss-flight.js) is as open as an exposed core.
+    const taken = e.bs?.phase === "exposed" || e.bs?.phase === "perched" ? spec.taken.exposed : spec.taken.armored;
     // Boss engine III: relays of its own team shield it (spec.ward).
     return spec.ward && e.bs?.warded ? taken * spec.ward.taken : taken;
   },
@@ -133,6 +134,8 @@ export const bosses = {
   stepBoss(e, dt) {
     const spec = BOSSES[e.boss];
     if (!spec) return;
+    // Boss engine IV (W9): a flying boss (spec.flight, the Ember Drake) runs its own cycle (sim/boss-flight.js).
+    if (spec.flight) { this.stepDrake(e, spec, dt); return; }
     const bs = (e.bs ??= { phase: "dormant", stage: 1, cycle: 0, post: { x: e.x, z: e.z } });
     const stage = 1 + (spec.stages || []).filter((f) => e.hp <= e.maxHp * f).length;
     if (stage > bs.stage) {

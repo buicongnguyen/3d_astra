@@ -37,13 +37,13 @@
     {
       "name": "rules: the simulation, data and saves",
       "files": ["src/sim/**", "src/simulation.js", "src/snapshot.js", "src/savegame.js", "src/balance.json", "src/data.js", "src/factions.js", "src/rng.js", "src/commands.js", "src/navigation.js", "src/terrain.js", "src/maps.json", "src/ai-plan.js", "src/difficulty.js", "src/model-roster.js", "src/match-stats.js", "src/activity.js", "src/abilities*.js", "src/ceremony-rules.js", "src/audio-logic.js", "src/type-chips-model.js", "tools/{playbot,mission-check,chronicle-check,defence-bot,defence-check,ai-census-check,difficulty-check}.mjs", "tools/story-strings.mjs"],
-      "suites": ["auto-combat", "harvesters", "missions", "defence", "quick-battle-check", "ai-census-check", "defence-heroic-check", "factions", "terrain", "squad-orders", "creatures", "boss", "air", "sovereign-walks", "stages", "new-game", "army-depth", "workshops", "unit-roster", "gunner", "faction-depth", "wild-desert", "lands", "patrol", "repair-rally", "activity", "golden-full"],
+      "suites": ["auto-combat", "harvesters", "missions", "defence", "quick-battle-check", "ai-census-check", "defence-heroic-check", "factions", "terrain", "squad-orders", "creatures", "boss", "air", "sovereign-walks", "ember-drake", "stages", "new-game", "army-depth", "workshops", "unit-roster", "gunner", "faction-depth", "wild-desert", "lands", "patrol", "repair-rally", "activity", "golden-full"],
       "checks": ["check:missions", "check:defence"]
     },
     {
       "name": "story, campaign and chronicles",
       "files": ["src/story/**", "src/mission-text.js", "src/mission-ui.js", "src/mission-ui.css", "src/mission-look*.js", "src/mission-looks.js", "src/campaign*.js", "src/campaign*.css", "src/campaign-maps.json", "src/chronicles*", "src/choices.css", "src/scenes.css", "src/openings.css", "src/title-card.css", "src/unit-intros.js", "src/cast-portraits.js", "src/app/{briefing,choices,scenes,title-card}.js", "src/art/campaign/**"],
-      "suites": ["story", "missions", "choices", "chronicles", "openings", "campaign", "language", "showtime", "boss", "creatures", "sovereign-walks", "sovereign", "progression", "tutorial"],
+      "suites": ["story", "missions", "choices", "chronicles", "openings", "campaign", "language", "showtime", "boss", "creatures", "sovereign-walks", "ember-drake", "sovereign", "progression", "tutorial"],
       "checks": ["check:missions", "check:missions -- --chronicle all"]
     },
     {

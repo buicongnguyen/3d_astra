@@ -72,9 +72,10 @@ test("old progress loads unchanged and clearing m11c is recorded like any missio
 
 test("the campaign map puts m11c in Act 3 (six nodes since R3-H's m11d) with 15% spacing and a node inside the board", () => {
   const act3 = MISSIONS.filter((m) => m.act === 3).map((m) => MAP_NODES[m.id]);
-  // Seven since Crown Hill (m10b, campaign C6): 13% apart at least; the 44 px phone rule is in campaign-map-art.test.js.
-  assert.equal(act3.length, 7);
-  for (let i = 1; i < act3.length; i++) assert.ok(Math.abs(act3[i].x - act3[i - 1].x) >= 13);
+  // Seven since Crown Hill (m10b, campaign C6), eight since The Ember Roost (m10e, W9): 8% apart at least (eight relays
+  // leave no room for 13% across the band); the 44 px phone rule is in campaign-map-art.test.js.
+  assert.equal(act3.length, 8);
+  for (let i = 1; i < act3.length; i++) assert.ok(Math.abs(act3[i].x - act3[i - 1].x) >= 8);
   assert.ok(act3.every((p) => p.x >= 10 && p.x <= 90 && p.y <= 84));
 });
 

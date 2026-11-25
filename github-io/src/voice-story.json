@@ -36,6 +36,9 @@
   "debrief": "Debrief lines are read on the result card after the match; not part of this pass. On-screen only.",
   "commander": "The Commander never speaks (CAST.commander)."
  },
+ "pending": {
+  "m10e-the-ember-roost": "W9 (2026-11-26): The Ember Roost lines are listed for the voice pass; audio not rendered yet (tools/voices/make-voices.py). Captions show meanwhile."
+ },
  "missions": {
   "m01-first-light": {
    "campaign": "main",
@@ -1087,6 +1090,71 @@
       {
        "who": "okoro",
        "text": "Build a tower on the crown, now, before they climb!"
+      }
+     ]
+    }
+   ]
+  },
+  "m10e-the-ember-roost": {
+   "campaign": "main",
+   "packs": [
+    {
+     "name": "story-m10e",
+     "lines": [
+      {
+       "who": "vale",
+       "text": "Rangers and Anti-tank soldiers reach it in the air. Train plenty."
+      },
+      {
+       "who": "maren",
+       "text": "Our beacons keep it off our camp, not yours. I am sorry."
+      },
+      {
+       "who": "okoro",
+       "text": "The Crown runs hot. Something big is flying home to it."
+      },
+      {
+       "who": "vale",
+       "text": "It is on the Crown. Bring the army up the road."
+      },
+      {
+       "who": "maren",
+       "text": "That is the fire that burned my camp. It remembers.",
+       "scene": "ember-drake"
+      },
+      {
+       "who": "okoro",
+       "text": "A Builder fire drake! Rangers and rockets reach it.",
+       "scene": "ember-drake"
+      },
+      {
+       "who": "vale",
+       "text": "Step off the glow. When it lands, hit it hard.",
+       "scene": "ember-drake"
+      },
+      {
+       "who": "vale",
+       "text": "It landed on the Crown! Everything on it now!"
+      },
+      {
+       "who": "okoro",
+       "text": "Its plates crack! Now it sweeps the fire wide."
+      },
+      {
+       "who": "vale",
+       "text": "Same rule. Off the glow, and keep firing."
+      },
+      {
+       "who": "maren",
+       "text": "It tires, but it breathes faster. Hold on."
+      },
+      {
+       "who": "okoro",
+       "text": "It is down. A Builder guardian. Sorry, old one."
+      },
+      {
+       "who": "maren",
+       "text": "Thirty years I kept the highlands dark for that. Thank you."
       }
      ]
     }

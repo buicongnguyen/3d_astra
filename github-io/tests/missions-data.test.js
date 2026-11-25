@@ -40,7 +40,7 @@ const STORY_IDS = ["m01-first-light", "m02-first-contact", "m03-the-ashen-line",
 test("mission ids are unique, stable and in order, and the basic fields are sound", () => {
   // Map variety (2026-11-24): Mirror Lake (m02c) after Hold the River, Canyon Run (m04b) after Three-Way Dunes.
   assert.deepEqual(MISSIONS.map((m) => m.id), ["m01-first-light", "m02-first-contact", "m02b-hold-the-river", "m02c-mirror-lake", "m03-the-ashen-line", "m04-three-way-dunes", "m04b-canyon-run", "m05-the-verdant-pact",
-    "m06-copper-harvest", "m06b-wings-over-copper", "m06c-gun-hill", "m07-copper-siege", "m07b-hold-the-valley", "m08-the-quiet-vault", "m09-a-debt-in-the-dunes", "m10-obsidian-storm", "m10b-crown-hill", "m11-cut-the-draw", "m11c-hold-the-keystone-roads", "m11d-the-sovereign-walks", "m12-frontiers-end"]);
+    "m06-copper-harvest", "m06b-wings-over-copper", "m06c-gun-hill", "m07-copper-siege", "m07b-hold-the-valley", "m08-the-quiet-vault", "m09-a-debt-in-the-dunes", "m10-obsidian-storm", "m10b-crown-hill", "m10e-the-ember-roost", "m11-cut-the-draw", "m11c-hold-the-keystone-roads", "m11d-the-sovereign-walks", "m12-frontiers-end"]);
   assert.deepEqual(MISSIONS.map((m) => m.id).filter((id) => STORY_IDS.includes(id)), STORY_IDS, "the story missions keep their order");
   assert.equal(new Set(MISSIONS.map((m) => m.id)).size, MISSIONS.length);
   MISSIONS.forEach((m, i) => {
@@ -132,9 +132,9 @@ test("objectives, regions, tags and types all resolve", () => {
       if (w.tagDead) tag(w.tagDead, "trigger");
       if (w.count) type(w.count.type, null, "trigger");
       if (w.pointOwned) assert.ok(points.has(w.pointOwned.point), `${m.id}: trigger on point ${w.pointOwned.point}`);
-      if (w.event) assert.ok(["incoming", "built", "levelup", "bossWake", "guardianWake", "guardianKneel", "guardianJoin"].includes(w.event), `${m.id}: trigger on event ${w.event}`);
+      if (w.event) assert.ok(["incoming", "built", "levelup", "bossWake", "bossLand", "guardianWake", "guardianKneel", "guardianJoin"].includes(w.event), `${m.id}: trigger on event ${w.event}`);
       // Boss beats (sim/bosses.js) only in a mission that fields a boss; stages are 2 (two thirds) and 3 (one third).
-      if (w.event === "bossWake" || w.bossStage !== undefined) assert.ok(spawns(m).some((x) => D[x.spawn]?.boss), `${m.id}: a boss trigger without a boss`);
+      if (w.event === "bossWake" || w.event === "bossLand" || w.bossStage !== undefined) assert.ok(spawns(m).some((x) => D[x.spawn]?.boss), `${m.id}: a boss trigger without a boss`);
       if (w.bossStage !== undefined) assert.ok([2, 3].includes(w.bossStage), `${m.id}: bossStage ${w.bossStage}`);
       // Story beats between Defence waves (0.19b): only in a Defence mission, within its waves.
       for (const key of ["wave", "waveStart"]) if (w[key] !== undefined) assert.ok(m.defence && w[key] >= 1 && w[key] <= m.defence.waves.length, `${m.id}: trigger on ${key} ${w[key]}`);
