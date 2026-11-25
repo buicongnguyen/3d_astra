@@ -61,6 +61,13 @@ const COMMANDS = {
 // H17: content modules' commands join the table, checked, logged and replayed like these (a name clash throws).
 mergeContentCommands(COMMANDS);
 
+// Would `c` be accepted now? The same checks as the door, without running or logging it (a LAN page asks
+// this before it queues an order for a later turn, src/net/lan-ui.js).
+export function commandAllowed(sim, c) {
+  const handler = COMMANDS[c?.type];
+  return !sim.result && !!handler && Number.isInteger(c.team) && !!sim.players[c.team] && !sim.players[c.team].eliminated && !!handler.allowed(sim, c);
+}
+
 export const commands = {
   command(c) {
     const handler = COMMANDS[c?.type];

@@ -306,7 +306,8 @@ export const ai = {
       }
       // One AI thinks per tick, so three rivals placing buildings do not land in the same step.
       if (this.aiTurn) {
-        this.updateAI(this.aiTurn);
+        // LAN play: a person's team gets no computer turn (sim/lan.js).
+        if (!this.lan || !this.lan.humans.includes(this.aiTurn)) this.updateAI(this.aiTurn);
         if (++this.aiTurn >= this.players.length) {
           this.aiTurn = 0;
           if (this.coalition) this.advanceCoalition();

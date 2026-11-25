@@ -22,7 +22,7 @@ Status: todo / doing / done (commit).
 | W8 | AI quality on Fast / Relentless only: focus fire, retreat wounded, flank, use abilities, scout with Kites; Relaxed/Normal untouched | AI quality 5.0 | | done (claude/ai-smarter): shared focus fire with spill, wounded rejoin from behind the healer, timed and tower-aware flanks (paired retreat), Kite scouting with anti-air avoidance, Dash/Rush/Rapid fire casts; Fast/Relentless pins move (notes below) |
 | W9 | Content: C6 missions (4 of 6-8), story scenes (2 of 8), new lands (snow / volcano / water), Ember Drake boss, Ancient ruins | Content 5.4, Campaign 6.0 | | todo |
 | W10 | Defence mode: more maps, enemy variety, commander abilities shown in waves, Endless leaderboard (local) | Defence 6.2 | | todo |
-| W11 | Multiplayer: 1v1 over WebRTC with lockstep (the sim is deterministic and hashed), room code to share, no server of our own beyond signalling; then co-op vs AI | Multiplayer 1.2 | | todo (owner decision: signalling service) |
+| W11 | Multiplayer: 1v1 over WebRTC with lockstep (the sim is deterministic and hashed), room code to share, no server of our own beyond signalling; then co-op vs AI | Multiplayer 1.2 | | done for LAN on claude/lan-play (owner: "can play via LAN?"): `npm run lan` host server (serves the game, relays lockstep, QR join), 1v1 and co-op vs AI, hash checks with resync from the host, pause/stall/leave handling, EN/VI/KO; see docs/LAN_PLAY.md. Internet play (WebRTC or a hosted relay) still todo |
 | W12 | Audio: SFX pass (weapon families, impacts by armour, UI clicks), mix ducking for voices | Audio 6.0 | | done (claude/voices): metal impacts, infantry falls, 6 new weapon voices, 13 ability casts, UI clicks, eco voice caps, voice ducking |
 | W13 | Phone HUD chrome ~35 % -> under 30 %, minimap side choice on phones, left-handed layout, two-finger camera twist | UI phone 7.3, Controls 6.9, Accessibility 6.9 | | done on claude/phone-hud: HUD 12-28 % at 390x844 / 844x390 (was 16-33 %, 35-38 % with a notice), notices settle to one line, minimap side + Left hand in Settings, two-finger twist; not merged. Notes below. |
 | W14 | Small fixes from audits: lake fords slow units, Page Up/Down in help, landscape word breaks | Polish 7.1 | | done (claude/small-fixes): unreachable build sites red with the reason, lake fords slow (0.6), no mid-word breaks (layout-f checks), help lists Page Up/Down/G/Esc/?, Field Guide 3D view fits, rings and crystals on plateau tops |
@@ -31,7 +31,7 @@ Status: todo / doing / done (commit).
 1. Now: W1, W2 (running), W3 + W12 (audio, no overlap with view code), W6 (meta/UI, no overlap).
 2. After W1: W4, then W5 from W1's art list.
 3. Then W7 and W8 (both move golden pins: one at a time), W9, W10, W13, W14.
-4. W11 needs the owner's yes on a signalling service (free PeerJS cloud or a tiny worker).
+4. W11 LAN play is built (no outside service). Internet play still needs the owner's yes on a signalling service (free PeerJS cloud or a tiny worker) or a hosted relay.
 5. Re-score after each wave; record the score here.
 
 ## W8 notes (2026-11-25)

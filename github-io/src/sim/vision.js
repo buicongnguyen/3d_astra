@@ -1,5 +1,6 @@
 import { hyp } from "../data.js";
 import { TERRAIN } from "../terrain.js";
+import { lanPoolVision } from "./lan.js";
 
 // What each team can see and remembers. Mixed into Simulation (see simulation.js).
 export const vision = {
@@ -62,6 +63,8 @@ export const vision = {
         for (let team = 1; team < this.players.length; team++) { seen |= this.visible[team][i]; known |= this.explored[team][i]; }
         for (let team = 1; team < this.players.length; team++) { this.visible[team][i] = seen; this.explored[team][i] = known; }
       }
+    // LAN play: allies (one side, sim/lan.js) pool what they see, as a coalition does.
+    if (this.lan) lanPoolVision(this);
     // Round 4: a sandstorm hides its ground from the holder's enemies (sim/content/wild-frontier.js).
     if (this.wild) this.wildVision();
     this.updateAirSight();

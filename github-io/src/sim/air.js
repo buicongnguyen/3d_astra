@@ -36,7 +36,7 @@ export const air = {
   // plan, every mission and every pin play exactly as before.
   airCap(team) {
     const steps = AIR.cap_by_level;
-    if (!steps || team > 0 || this.aiPlayer) return AIR.cap;
+    if (!steps || (this.lan ? !this.lan.humans.includes(team) : team > 0 || this.aiPlayer)) return AIR.cap;
     let level = 0;
     for (const e of this.entities) if (e.team === team && e.type === "hq" && e.complete && e.hp > 0 && e.level > level) level = e.level;
     return steps[Math.max(0, Math.min(steps.length, level || 1) - 1)] ?? AIR.cap;

@@ -1,0 +1,77 @@
+/* W11 LAN play (src/net/lan-ui.js): the LAN screen (a Records-style sheet), the in-match strip and the
+   waiting card. Text 11 px and up, taps 44 px and up, everything one tap (owner rules). */
+.lan-sheet .lan-body { display: grid; gap: 12px; align-content: start; }
+.lan-error { margin: 0; min-height: 0; color: #ffb4a0; font: 700 14px/1.35 var(--font-ui); }
+.lan-error:empty { display: none; }
+.lan-note { margin: 0; color: var(--kit-text-2, #b9c8cf); font: 500 13px/1.4 var(--font-ui); }
+.lan-looking { padding: 24px 0; }
+.lan-card { display: grid; gap: 10px; padding: 12px 14px; border: 1px solid var(--kit-line-ghost, rgba(65, 100, 121, 0.6)); border-radius: 10px; background: rgba(8, 20, 30, 0.55); }
+:root[data-ui-theme="walnut"] .lan-card { background: rgba(60, 40, 24, 0.35); }
+.lan-card h3 { display: flex; align-items: center; gap: 8px; margin: 0; font: 800 16px/1.2 var(--font-display, var(--font-ui)); color: var(--kit-text, #f1f6f3); }
+.lan-card h3 .icon { width: 20px; height: 20px; color: var(--kit-gold, #ffd17b); }
+.lan-card h3 b { margin-left: auto; font: 700 13px/1 var(--font-ui); color: var(--kit-text-2, #b9c8cf); }
+.lan-card p { margin: 0; font: 500 14px/1.4 var(--font-ui); color: var(--kit-text, #f1f6f3); }
+.lan-howto ol { margin: 0; padding-left: 20px; display: grid; gap: 6px; font: 500 14px/1.4 var(--font-ui); color: var(--kit-text, #f1f6f3); }
+.lan-howto code, .lan-url { font: 700 14px/1.3 ui-monospace, "Cascadia Mono", Consolas, monospace; color: #9fe9ff; overflow-wrap: anywhere; }
+.lan-field { display: grid; gap: 4px; font: 700 12px/1.2 var(--font-ui); color: var(--kit-text-2, #b9c8cf); }
+.lan-field select, .lan-field input { min-height: 44px; padding: 0 10px; border: 1px solid var(--kit-line, #3e6074); border-radius: 8px; background: #0c1c27; color: #f1f6f3; font: 600 16px/1.2 var(--font-ui); }
+.lan-name { max-width: 420px; }
+.lan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+.lan-wide { grid-column: 1 / -1; }
+.lan-seg { display: flex; flex-wrap: wrap; gap: 8px; }
+.lan-seg button { flex: 1 1 120px; min-height: 44px; padding: 0 12px; font: 700 15px/1.1 var(--font-ui); }
+.lan-seg button[aria-pressed="true"] { outline: 2px solid var(--kit-gold, #ffd17b); outline-offset: -2px; }
+.lan-choice { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+.lan-big { display: flex; align-items: center; gap: 12px; min-height: 72px; padding: 10px 14px; text-align: left; }
+.lan-big > .icon { width: 30px; height: 30px; flex: none; color: var(--kit-gold, #ffd17b); }
+.lan-big-text { display: grid; gap: 3px; }
+.lan-big-text strong { font: 800 17px/1.15 var(--font-ui); }
+.lan-big-text small { font: 600 13px/1.25 var(--font-ui); color: var(--kit-text-2, #b9c8cf); }
+.lan-joinbox { grid-template-columns: auto 1fr; align-items: center; }
+.lan-qr { width: 132px; height: 132px; background: #fff; border-radius: 6px; padding: 2px; }
+.lan-qr svg { display: block; width: 100%; height: 100%; }
+.lan-join-text { display: grid; gap: 6px; min-width: 0; }
+.lan-players { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.lan-player { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 10px; border-radius: 8px; background: rgba(255, 255, 255, 0.05); font: 600 15px/1.2 var(--font-ui); color: var(--kit-text, #f1f6f3); }
+.lan-player-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; }
+.lan-chip { padding: 3px 8px; border-radius: 99px; background: rgba(127, 232, 255, 0.14); font: 700 12px/1.2 var(--font-ui); color: #bdf3ff; }
+.lan-state { display: inline-flex; align-items: center; gap: 4px; font: 700 13px/1.2 var(--font-ui); color: var(--kit-text-2, #b9c8cf); }
+.lan-player[data-ready="true"] .lan-state { color: #9ff0b8; }
+.lan-state .icon { width: 16px; height: 16px; }
+.lan-empty { color: var(--kit-text-2, #b9c8cf); font-weight: 500; }
+.lan-summary { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0; font: 600 14px/1.3 var(--font-ui); }
+.lan-summary dt { color: var(--kit-text-2, #b9c8cf); }
+.lan-summary dd { margin: 0; color: var(--kit-text, #f1f6f3); font-weight: 800; }
+.lan-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.lan-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex: 1 1 180px; min-height: 48px; padding: 0 16px; font: 800 15px/1.1 var(--font-ui); }
+.lan-action .icon { width: 18px; height: 18px; }
+.lan-action[aria-pressed="true"] { outline: 2px solid #9ff0b8; outline-offset: -2px; }
+
+/* ---------- in the match ---------- */
+.lan-strip { position: fixed; z-index: 30; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 58px); transform: translateX(-50%); display: flex; align-items: center; gap: 8px; max-width: calc(100vw - 24px); padding: 4px 10px; border-radius: 99px; background: rgba(4, 12, 20, 0.72); border: 1px solid rgba(127, 232, 255, 0.25); color: #eef6f8; font: 700 12px/1.2 var(--font-ui); pointer-events: none; white-space: nowrap; }
+.lan-strip[hidden] { display: none; }
+.lan-who { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
+.lan-who b { max-width: 9em; overflow: hidden; text-overflow: ellipsis; }
+.lan-gone { opacity: 0.55; text-decoration: line-through; }
+.lan-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5); }
+.lan-vs { color: #9fb3bd; font-weight: 600; }
+.lan-ping { display: inline-flex; align-items: center; gap: 3px; color: #9ff0b8; }
+.lan-ping .icon { width: 14px; height: 14px; }
+.lan-strip-compact { top: calc(env(safe-area-inset-top, 0px) + 6px); transform: none; gap: 4px; padding: 4px 6px; font-size: 11px; min-height: 32px; box-sizing: border-box; }
+.lan-strip-compact .lan-me, .lan-strip-compact .lan-vs { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.lan-strip-compact .lan-who b { max-width: 5.5em; }
+.lan-strip-compact .lan-ping .icon { display: none; }
+.lan-wait { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(2, 7, 19, 0.5); }
+.lan-wait[hidden] { display: none; }
+.lan-wait-card { display: grid; gap: 12px; width: min(460px, 100%); padding: 18px; border-radius: 12px; border: 1px solid var(--kit-line, #3e6074); background: var(--kit-panel, #0d1d28); color: var(--kit-text, #f1f6f3); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5); }
+.lan-wait-card h2 { margin: 0; font: 800 20px/1.2 var(--font-display, var(--font-ui)); }
+.lan-wait-card p { margin: 0; font: 500 15px/1.4 var(--font-ui); }
+.lan-result-line { font: 600 15px/1.4 var(--font-ui); }
+.lan-result-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.lan-result-actions button { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+/* A LAN battle cannot be restarted: the pause menu's Restart is not offered (Leave is New game). */
+:root.lan-match #modal [data-restart] { display: none; }
+@media (max-width: 520px) {
+  .lan-joinbox { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+  .lan-qr { width: 156px; height: 156px; }
+}

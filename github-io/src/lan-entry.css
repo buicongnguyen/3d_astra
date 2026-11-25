@@ -1,0 +1,6 @@
+/* W11 LAN play: the "LAN play" tile in the title's quick row (src/lan-entry.js). With it the row holds four
+   tiles; on a portrait phone they sit two by two, so each keeps room for its two lines of text. */
+#briefing .lan-tile > .icon { color: #9fe9ff; }
+@media (max-width: 560px) and (orientation: portrait) {
+  #title-actions:not([hidden]):has(#full-army-battle):has(#lan-open) { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

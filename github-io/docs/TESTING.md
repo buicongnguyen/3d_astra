@@ -225,3 +225,11 @@ Render budget (`tests/render-budget.mjs`): a scenario may now be data (`spawn`, 
 - `tests/rank.test.js` (in `npm test`, 6 tests, under 0.1 s): the XP formula (played, win, Veteran, medals, Defence stars and waves held, kills, the 400 cap, Daily orders once a day), twenty rising ranks with one unlock each from rank 2, the stored profile (bad data and locked picks fall back, blocked storage is harmless), one match into the profile (rank up and its unlocks), the paint view plugin (only the player's units, Factory sets nothing, a new pick repaints), and that no pick is a battle rule or touches the sim; every rank string reads in Vietnamese and Korean.
 - `npm run test:rank` (CI matrix entry `r3-r`) at 1440x900, 390x844 and 844x390: a fresh profile shows rank 1 on the title chip with Sand paint locked; a scripted win shows "Rank up! ... Unlocked: Paint · Sand" above the result actions; back on the title the chip reads rank 2 and Sand is picked in one tap; the next match paints every player unit and no enemy, with empty match rules; a reload keeps the rank and the pick. 11 px text, 44 px taps, no sideways scroll, nothing grouped. Screenshots: `test-results/rank-*.png`.
 - `window.__frontier.rank()` reports xp, rank, picks, the active paint and the last match's XP; `rankPick(kind, id)` picks like a tap.
+
+## LAN play (W11)
+- `tests/lan-lockstep.test.js` and `tests/lan-integration.test.js` run in `npm test`. The integration test starts the
+  real host server in-process on port 4573 (`LAN_TEST_PORT`) and plays two headless players over Node's WebSocket
+  (3 minutes of 1v1, 2.5 of co-op, a forced desync and its resync, a guest leaving) in a few seconds.
+- `npm run test:lan-play` (CI group `w11`) starts the server on port 4574 (`LAN_BROWSER_PORT`) serving `dist/` (build
+  first; it does not use TEST_URL: the pages must come from the LAN server to reach its WebSocket). A desktop host
+  and a phone guest (`LAN_GUEST_VIEWPORT=landscape` for the other phone shape). Details: [LAN_PLAY.md](LAN_PLAY.md).
