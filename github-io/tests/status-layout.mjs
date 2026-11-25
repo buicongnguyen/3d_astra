@@ -93,7 +93,8 @@ try{
    // Desktop orders sit on the command card; compact layouts keep them under Selection.
    return elements.map(e=>{
     const fixedStats=e.closest('.unit-metrics') && getComputedStyle(e.closest('#selection-info')).position==='fixed';
-    const host=(fixedStats ? document.querySelector('.topbar') : (e.closest('.order-buttons')&&!e.closest('.selection-panel')?e.closest('.command-deck'):e.closest('.selection-panel,.command-panel'))).getBoundingClientRect(); // a building's order icons sit under its summary, inside the console
+    const panel=e.closest('.selection-panel,.command-panel'),boxless=panel&&getComputedStyle(panel).display==='contents'; // 667x375: a building's card is one flow in the deck (phone-hud-slim.css rule 5)
+    const host=(fixedStats ? document.querySelector('.topbar') : (e.closest('.order-buttons')&&!e.closest('.selection-panel')||boxless?e.closest('.command-deck'):panel)).getBoundingClientRect(); // a building's order icons sit under its summary, inside the console
     const r=e.getBoundingClientRect();
     return {text:e.textContent,queue:e.parentElement.id==='queue',top:r.top,bottom:r.bottom,w:r.width,h:r.height,oneLine:e.scrollWidth<=e.clientWidth+1,fits:r.top>=host.top&&r.bottom<=host.bottom+1&&r.left>=host.left&&r.right<=host.right+1,hit:e.tagName!=='BUTTON'||e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))};});
   });

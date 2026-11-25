@@ -76,3 +76,54 @@ html:root.compact-ui[data-ui-theme]:not(.in-briefing) #app .bottom-dock .command
   display: block !important; white-space: nowrap !important; text-overflow: ellipsis; overflow: hidden;
   background: linear-gradient(90deg, var(--kit-success) 0 var(--kit-warning-rail), transparent var(--kit-warning-rail)), var(--slim-settled) !important;
 }
+
+/* ---- 5. Small landscape phones (667 x 375 class): a shorter side card ----
+   With something selected the side card took about 236 x 214 px, a fifth of a 375 px tall screen (HUD 36 %).
+   Same buttons, same places, all 44 px, nothing hidden or grouped; less height:
+     a group: the chips row and the five orders sit flush, and the build tiles stand in one row of 44 px tiles
+              (icon over price; the "unlocks" hint icons give way);
+     a building: the heading is one line (name, level, HP and Shield as text with their bars), the doctrines and
+              the Upgrade button share one row.
+   tests/phone-hud.mjs holds 667 x 375 under 30 % in every state. */
+@media (orientation: landscape) and (max-height: 420px) and (max-width: 760px) {
+  /* The minimap a size smaller (118 x 94 -> 102 x 81, the same shape): it is a fifth of the screen's height here. */
+  :root.compact-ui:not(.in-briefing):not(.in-defence) { --mini-w: 102px; --mini-h: 81px; }
+  html:root.compact-ui.dock-actions:not(.in-briefing):not(.in-defence)[data-dock="selection"]:not(:has(#commands.tactics-card)):not(#x):not(#y) {
+    & .bottom-dock .command-deck > .selection-panel { padding: 0 3px 2px !important; }
+    & .bottom-dock .command-deck > .selection-panel .order-buttons { padding-top: 2px !important; }
+    & .bottom-dock .command-deck > .command-panel { padding: 0 3px 3px !important; }
+    & .command-panel #commands.with-units { display: flex !important; flex-wrap: wrap !important; gap: 2px !important; height: auto !important; max-height: none !important; }
+    & .command-panel #commands.with-units > .command-tile { flex: 1 1 0 !important; min-width: 44px !important; width: auto !important; height: 44px !important; min-height: 44px !important; padding: 2px 1px !important; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 0 !important; grid-column: auto !important; }
+    & .command-panel #commands.with-units > .command-tile > .tile-units { display: none !important; }
+    & .command-panel #commands.with-units > .command-tile > .portrait-art { width: 20px !important; height: 20px !important; margin: 0 !important; }
+    & .command-panel #commands.with-units > .command-tile > small { display: flex; flex-direction: column; align-items: center; font-size: 11px !important; line-height: 11px !important; }
+    & .command-panel #commands.with-units > .command-tile > small b { font-size: 11px !important; line-height: 11px !important; white-space: nowrap; }
+    & .command-panel #commands.with-units > .command-tile > .tile-badge { width: 13px !important; height: 13px !important; top: 1px !important; left: 1px !important; }
+  }
+  html:root.compact-ui.dock-actions.no-units:not(.in-briefing):not(.in-defence)[data-dock="selection"]:has(.selection-panel.has-entity):not(:has(#commands.tactics-card)):not(#x):not(#y) {
+    /* One flow inside the card: the heading on its own line across the card, then the tiles with Rally at the end of
+       their row, then the doctrines and Upgrade. The two inner panels give up their boxes (they are already
+       background-free glass, rule 2), so the card is as tall as its rows. */
+    & .bottom-dock .command-deck { display: flex !important; flex-flow: row wrap !important; align-content: flex-start; gap: 2px !important; padding: 2px 2px 3px !important; height: auto !important; }
+    & .bottom-dock .command-deck > :is(.selection-panel, .command-panel) { display: contents !important; }
+    & .command-deck :is(#commands, #upgrade-actions) { display: contents !important; }
+    & .command-deck :is(.panel-label, #command-hint, #order-tip) { display: none !important; }
+    & .command-deck > * , & .command-deck .selection-panel > *, & .command-deck .command-panel > * { flex: 1 1 100%; }
+    /* The heading: name and level, then HP, Shield and ATK as text over their bars; no portrait. */
+    & .selection-panel #selection-info { order: 0; flex: 1 1 100% !important; width: auto !important; height: auto !important; padding: 2px 6px 0 !important; margin: 0 !important; border-radius: 6px; }
+    & .selection-panel #selection-info .sel-portrait { display: none !important; }
+    & .selection-panel #selection-info .selection-heading { height: auto !important; min-height: 0 !important; gap: 6px !important; }
+    & .selection-panel #selection-info .selection-heading h3 { font-size: 13px !important; line-height: 16px !important; margin: 0 !important; }
+    & .selection-panel .unit-metrics { flex-wrap: wrap !important; gap: 0 8px !important; margin: 0 !important; max-width: none !important; }
+    & .selection-panel .unit-metrics > div { display: flex !important; align-items: baseline; gap: 3px !important; flex: 0 1 auto !important; padding-bottom: 4px !important; line-height: 13px !important; }
+    & .selection-panel .unit-metrics :is(dt, dd) { font-size: 11px !important; line-height: 13px !important; }
+    /* Rows of 44 px buttons. */
+    & .command-panel #commands > .command-tile { order: 1; flex: 1 1 44px !important; min-width: 44px !important; width: auto !important; height: 44px !important; min-height: 44px !important; margin: 0 !important; }
+    & .selection-panel .order-buttons { order: 2; display: flex !important; flex: 0 0 auto !important; gap: 2px !important; padding: 0 !important; margin: 0 !important; width: auto !important; height: 44px !important; position: static !important; }
+    & .selection-panel .order-buttons > button { width: 44px !important; min-width: 44px !important; height: 44px !important; min-height: 44px !important; padding: 0 2px !important; justify-content: center; }
+    & .command-panel #commands > .command-tile.doctrine-tile { order: 3; flex: 1 1 60px !important; }
+    & .command-panel #commands > :not(.command-tile) { order: 3; }
+    & .command-panel #upgrade-actions > button { order: 4; flex: 1.5 1 84px !important; min-width: 44px !important; width: auto !important; height: 44px !important; min-height: 44px !important; margin: 0 !important; padding: 2px 4px !important; }
+    & .command-panel #upgrade-actions > button :is(.up-name, .up-cost) { font-size: 11px !important; line-height: 12px !important; }
+  }
+}
