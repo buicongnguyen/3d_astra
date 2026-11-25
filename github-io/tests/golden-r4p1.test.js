@@ -20,7 +20,7 @@ const PINS = {
   // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
   // Re-recorded 2026-11-24 (support health only for a human team 0): a computer-played team 0 (aiPlayer) keeps the computer's support health, so AI-against-AI matches are back to their faction depth / roster values.
   // Re-recorded 2026-11-24 (Kite scout sight 18 -> 32 m and its manual Dive, docs/CHANGELOG.md "Kite scout: twice the sight, and Dive"): the player's Kites, and the computer's at Fast or Relentless, open more fog for their side (the fog is in the hashed state), and Fast/Relentless computer Kites may dive. Relaxed, Normal, Defence and story computer Kites keep 18 m, so those pins did not move.
-  fast: { 180: "3b6c0dd3", 420: "27b29b18" },
+  fast: { 180: "c3e66257", 420: "55bd6c80" },
   sandbox: { 40: "84c9ae8a" },
 };
 const RULES = { wild: "on" };
