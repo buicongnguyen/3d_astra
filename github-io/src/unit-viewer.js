@@ -14,8 +14,8 @@ import { FACTIONS } from "./story/world.js";
 import { PRESETS } from "./settings.js";
 import { weaponStyle } from "./visual-style.js";
 import { FEEL } from "./camera-shake.js";
-import { airParts, poseAirParts } from "./air-motion.js";
-import { KNEELERS, GAIT, BARREL_POSES, RECOIL, newGun, fireBarrel, stepBarrel, poseBarrel, stepInfantry, stepHull, approach,
+import { airParts, poseAirParts, airMotion } from "./air-motion.js";
+import { KNEELERS, STANCE, GAIT, BARREL_POSES, RECOIL, newGun, fireBarrel, stepBarrel, poseBarrel, stepInfantry, stepHull, approach,
   barrelKick, bodyKick, kickSize, poseTurretOnHull, swingLegs } from "./unit-rig.js";
 import { ORBIT, fitDistance, clampOrbit, dragOrbit, pinchZoom, wheelZoom, orbitOffset, isDoubleTap, colourCycle, motionsFor } from "./unit-viewer-math.js";
 
@@ -115,8 +115,8 @@ function motionState(type, model) {
   return {
     type, def, legs, turret, barrel, pose, air, turretBase: turret?.position.clone(),
     gun: pose ? newGun(pose.park, pose.rest) : newGun(),
-    rig: rig ? { kind: rig, motion: new Float32Array([0, 0, 0, 1]), phase: 0, gait: 0, kneel: 0, flinch: 0, lean: 0, vs: 0, pitch: 0, pitchV: 0, squat: 0,
-      legLength: model.userData.legLength || 0.95, hullPivot: model.userData.hullPivot || [0.6, 0] } : null,
+    rig: rig ? { kind: rig, motion: new Float32Array([0, 0, 0, 1]), phase: 0, gait: 0, kneel: 0, flinch: 0, flinchV: 0, roll: 0, rollV: 0, tilt: 0, lean: 0, vs: 0, pitch: 0, pitchV: 0, squat: 0,
+      legLength: model.userData.legLength || 0.95, hullPivot: model.userData.hullPivot || [0.6, 0], stance: STANCE[type] || null } : null,
     gait: 0, stride: 0, recoil: 0, kick: 0, kickSize: kickSize(weaponStyle({ unit: type, weapon: type }).kind), reload: 0.25, scan: 0, shots: 0,
     kind: weaponStyle({ unit: type, weapon: type }).kind,
     hoverClock: 0,
@@ -167,7 +167,7 @@ function stepMotion(u, root, model, preview, mode, dt) {
     lift = u.legs.length ? Math.abs(Math.sin(u.stride)) * 0.07 * u.gait : Math.sin(u.stride * 2.1) * 0.016 * u.gait;
     if (u.rig?.kind === "infantry") {
       lift = stepInfantry(u.rig, u.rig.motion, { speed, base: def.speed || 3, scale: 1, legLength: u.rig.legLength, moving, attacking, dt, rich: true,
-        kneels: KNEELERS.has(u.type), gait: GAIT[u.type] });
+        kneels: KNEELERS.has(u.type), gait: GAIT[u.type], stance: u.rig.stance });
     } else if (u.rig?.kind === "hull") {
       const pitch = stepHull(u.rig, u.rig.motion, { speed, moving, dt, rich: true, scale: 1 });
       if (u.turret) poseTurretOnHull(u.turret, u.turretBase, u.rig.hullPivot, pitch, u.rig.squat);
@@ -177,12 +177,18 @@ function stepMotion(u, root, model, preview, mode, dt) {
   if (u.rig) { preview.motion.array.set(u.rig.motion); preview.motion.needsUpdate = true; }
   swingLegs(u.legs, u.stride, u.gait);
   model.rotation.x = 0;
+  // W4: the rig's roll (a heavy walker's sway over its stance leg), as view.js applies it.
+  model.rotation.z = u.rig ? u.rig.tilt || 0 : 0;
   if (u.air) {
     u.air.clock = (u.air.clock + dt) % 600;
     poseAirParts(u.air, true);
     u.hoverClock += dt * FEEL.hoverRate;
     lift += HOVER + Math.sin(u.hoverClock) * FEEL.hoverAmplitude;
-    model.rotation.x = Math.min(1, u.gait) * (u.type === "hawk" ? 0.22 : 0.14);
+    // Fly: the same air-motion.js call as view.js, on the distance flown, so the nose dips as it speeds up and
+    // flares as it stops (the preview flies straight: no bank).
+    u.flown = (u.flown || 0) + speed * dt;
+    airMotion(u.air, u.type, 0, HOVER, dt, true, 0, u.flown);
+    model.rotation.x = Math.min(1, u.gait) * (u.type === "hawk" ? 0.22 : 0.14) + u.air.pitch;
   }
   model.position.set(0, lift, -back);
 }
