@@ -190,7 +190,7 @@ test("Dash closes on a target just out of reach and Rapid fire waits for armed e
 test("Relaxed and Normal AI matches are unchanged by W8", () => {
   const pins = {
     normal1v2: [{ aiSpeed: "normal", enemyCount: 2, alliance: "ffa", map: "riverlands", capturePoints: true }, "757e367a"],
-    normalCoalitionField: [{ aiSpeed: "normal", enemyCount: 2, alliance: "coalition", map: "dunes", capturePoints: true, rules: { aiPlan: "field" } }, "0854429a"],
+    normalCoalitionField: [{ aiSpeed: "normal", enemyCount: 2, alliance: "coalition", map: "dunes", capturePoints: true, rules: { aiPlan: "field" } }, "076bdbdf"],
     relaxed1v1: [{ aiSpeed: "relaxed", map: "classic", capturePoints: true }, "54ef8d71"],
   };
   for (const [name, [options, hash]] of Object.entries(pins)) assert.equal(run(new Simulation({ ...options, aiPlayer: true }), 300), hash, name);

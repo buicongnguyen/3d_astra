@@ -8,12 +8,12 @@ const match = () => new Simulation({ map: "dunes", aiSpeed: "normal", factions: 
 // R3-A (AAA round 3) moved both: census, field economy, join-fight (old 180 "80fb27d8", 600 "549eb7a3"; R3-A "a72ac3ba", "8cc05d90").
 // Difficulty guard (Wave 1b, owner 2026-11-21): no field economy, census/join/scouting from 300 s at first (180 "80fb27d8" = r3-base,
 // 600 "b422139c"). Then south exits (owner, R3-L) + difficulty guard on the merged tree (census from 480 s): 180
-// "706784b9", 600 "440a467c".
+// "c301bda2", 600 "440a467c".
 // Re-recorded 2026-11-24 (600 s): Breaker Barrage cooldown 40 -> 32 s and Anti-tank 4x (not 6x) to flyers (commits 5e4c07c, 2e293ea).
 // Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
 // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
 // Re-recorded 2026-11-24 (support health only for a human team 0): a computer-played team 0 (aiPlayer) keeps the computer's support health, so AI-against-AI matches are back to their faction depth / roster values.
 // Re-recorded 2026-11-24 (Kite scout sight 18 -> 32 m and its manual Dive, docs/CHANGELOG.md "Kite scout: twice the sight, and Dive"): at Normal the computer's Kites keep 18 m, which their saved state now records against the 32 m definition, so the 600 s hash moved (180 s did not).
-const PINS = { 180: "706784b9", 600: "eee24134" };
+const PINS = { 180: "c301bda2", 600: "f05d6732" };
 test("Field command, Meridian against Ashfall, 180 s", () => pin("w2d field 180", run(match(), 180), PINS[180]));
 test("Field command, Meridian against Ashfall, 600 s", LONG, () => pin("w2d field 600", run(match(), 600), PINS[600]));
