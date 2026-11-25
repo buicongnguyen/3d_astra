@@ -112,3 +112,20 @@
 .defence-levels .heroic-mark .icon { width: 14px; height: 14px; }
 .defence-levels .heroic-mark.won { background: linear-gradient(180deg, #ffd45e, #f39a2a); color: #3a2200; border-color: #ffe39a; box-shadow: 0 0 8px rgba(255, 199, 94, 0.5); }
 #start[aria-disabled="true"] { opacity: 0.55; filter: saturate(0.6); }
+
+/* W10 (Defence 6.7): the Records tab (a fifth mode button) and the Endless top ten, here and on the Endless result.
+   Flat: the table sits under the level list, no sub-menu. Text 12 px or more. */
+/* The mode grid is two columns (cover.css): the fifth button, Records, takes a whole row instead of half of one. */
+#briefing .defence-variants > [data-defence-variant="records"]:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.defence-variants button[data-defence-variant="records"] strong { color: var(--mint, #92ebc5); }
+.defence-records { margin: 8px 0; padding: 8px 10px; border: 1px solid var(--line-1, rgba(168, 214, 212, 0.24)); border-radius: var(--r-m, 12px); background: rgba(10, 28, 38, 0.6); }
+.defence-records h3 { margin: 0 0 6px; font: 800 13px/1.2 var(--font-ui); color: var(--gold-2, #ffc75e); letter-spacing: 0.02em; }
+.defence-board { width: 100%; border-collapse: collapse; font: 600 12px/1.25 var(--font-ui); color: var(--text-1, #f1f6f3); font-variant-numeric: tabular-nums; }
+.defence-board th { padding: 3px 4px; text-align: left; font: 700 12px/1.2 var(--font-ui); color: var(--text-3, #97aeab); border-bottom: 1px solid var(--line-1, rgba(168, 214, 212, 0.24)); }
+.defence-board td { padding: 4px; border-bottom: 1px solid rgba(168, 214, 212, 0.1); white-space: nowrap; }
+.defence-board td:first-child, .defence-board th:first-child { width: 2em; color: var(--gold-2, #ffc75e); font-weight: 800; }
+.defence-board td[data-branch="artillery"] { color: #ff9f6b; }
+.defence-board td[data-branch="rally"] { color: #f3e2a0; }
+.defence-board tr.new td { background: rgba(255, 199, 94, 0.16); }
+.defence-board-empty { margin: 0; font: 600 12px/1.35 var(--font-ui); color: var(--text-3, #97aeab); }
+@media (max-width: 420px) { .defence-board td:last-child, .defence-board th:last-child { font-size: 12px; padding-right: 0; } .defence-board td, .defence-board th { padding: 3px 2px; } }

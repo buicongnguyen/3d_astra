@@ -51,6 +51,9 @@ export const MISSION_INTROS = {
   "d-canyon": { kicker: "FRONTIER DEFENCE" },
   "d-longcrossing": { kicker: "FRONTIER DEFENCE" },
   "d-crossroads": { kicker: "FRONTIER DEFENCE" },
+  "d-fork": { kicker: "FRONTIER DEFENCE" },
+  "d-serpent": { kicker: "FRONTIER DEFENCE" },
+  "d-kingfisher": { kicker: "FRONTIER DEFENCE" },
 };
 
 // What the card shows for a mission definition: { kicker, title, place }, or null without a title.

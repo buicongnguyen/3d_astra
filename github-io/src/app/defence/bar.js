@@ -1,6 +1,6 @@
 // Frontier Defence, the battlefield bar and what hangs off it: lives / wave / Call wave / speed /
 // view chips, the follow camera, the wave intel strip, the new-enemy card, carrier moments, notices.
-import { TRAITS, ELITE_TRAITS, waveAffixes, waveTraits, traitsOf, counterCrews, waveTypes } from "../../defence/traits.js";
+import { TRAITS, ELITE_TRAITS, waveAffixes, waveTraits, traitsOf, counterCrews, waveTypes, KIND_IDS, kindTrait, waveKinds, waveAbility, kindCrews } from "../../defence/traits.js";
 import { CREW_LABEL, ROUTE_LABEL, FLOAT_SECONDS, VIEWS, VIEW_ICON, VIEW_TITLE, FOLLOW_HOLD_MS, CARD_MS } from "./constants.js";
 import { frameRoutes, routeShape, clearRect, followShift, focusShift } from "./framing.js";
 
@@ -12,7 +12,8 @@ export function createBar(c) {
   const picked = (...a) => c.picked(...a);
   // The same two helpers as defence/progress.js (hasSeen, recordSeen); importing that module here would split a shared chunk out of the main bundle (see the note above the deps).
   const hasSeen = (p, type) => (p.seen || []).includes(type);
-  const recordSeen = (p, types) => { const fresh = types.filter((t) => D[t] && !hasSeen(p, t)); return fresh.length ? { ...p, seen: [...(p.seen || []), ...fresh] } : p; };
+  // A wave kind's card (W10) is seen as "kind:<id>".
+  const recordSeen = (p, types) => { const fresh = types.filter((t) => (D[t] || KIND_IDS.includes(t.slice(5)) && t.startsWith("kind:")) && !hasSeen(p, t)); return fresh.length ? { ...p, seen: [...(p.seen || []), ...fresh] } : p; };
   // ---------------------------------------------------------------- Battlefield bar
   function ensureBar() {
     if (ui.bar?.isConnected) return ui.bar;
@@ -251,15 +252,19 @@ export function createBar(c) {
   }
   function updateIntel(st) {
     const el = ensureIntel(), p = Z.started && st.canCall ? S.sim.wavePreview() : null;
-    const key = p ? `${p.wave}|${p.units.map((u) => `${u.type}:${u.count}:${u.carry || 0}:${u.elite || ""}`).join(",")}|${p.routes.join(",")}` : "";
+    const key = p ? `${p.wave}|${p.units.map((u) => `${u.type}:${u.count}:${u.carry || 0}:${u.elite || ""}:${u.kind || ""}`).join(",")}|${p.routes.join(",")}` : "";
     if (key === ui.intelKey) return;
     ui.intelKey = key;
     el.hidden = !p;
     if (!p) { el.innerHTML = ""; return; }
     const many = Object.keys(S.sim.missionDef.defence.routes).length > 1;
-    const unit = (u) => `<span class="intel-unit${u.carry ? " carrier" : ""}${u.elite ? " elite" : ""}" data-type="${u.type}"${u.elite ? ` data-elite="${u.elite}"` : ""} title="${D[u.type]?.name || u.type}">${hasPortrait(u.type) ? portrait(u.type, "hostile") : icon(D[u.type]?.icon || "tank")}<b translate="no">×${u.count}</b>${u.carry ? `<small translate="no">(${u.carry})</small>` : ""}</span>`;
-    const chips = waveTraits(p.units, D).map((id) => { const t = TRAITS.find((x) => x.id === id); return `<span class="intel-chip" data-trait="${id}" title="${t.hint}">${t.label}</span>`; }).join("") + waveAffixes(p.units).map((id) => { const t = ELITE_TRAITS.find((x) => x.id === id); return `<span class="intel-chip affix" data-trait="${id}" title="${t.hint}">${t.label}</span>`; }).join("");
-    el.innerHTML = (chips ? `<span class="intel-traits">${chips}</span>` : "") + `<span class="intel-line"><span class="intel-head"><span>Next wave</span> <b translate="no">${p.wave}</b></span>${p.units.map(unit).join("")}</span>${many ? `<span class="intel-routes">${p.routes.map((r) => `<span class="intel-route" data-route="${r}">${S.sim.missionDef.defence.roads?.[r] || ROUTE_LABEL[r] || r}</span>`).join("")}</span>` : ""}`;
+    const unit = (u) => `<span class="intel-unit${u.carry ? " carrier" : ""}${u.elite ? " elite" : ""}${u.kind ? " kind" : ""}" data-type="${u.type}"${u.elite ? ` data-elite="${u.elite}"` : ""}${u.kind ? ` data-kind="${u.kind}"` : ""} title="${D[u.type]?.name || u.type}">${hasPortrait(u.type) ? portrait(u.type, "hostile") : icon(D[u.type]?.icon || "tank")}<b translate="no">×${u.count}</b>${u.carry ? `<small translate="no">(${u.carry})</small>` : ""}</span>`;
+    const chips = waveTraits(p.units, D).map((id) => { const t = TRAITS.find((x) => x.id === id); return `<span class="intel-chip" data-trait="${id}" title="${t.hint}">${t.label}</span>`; }).join("") + waveAffixes(p.units).map((id) => { const t = ELITE_TRAITS.find((x) => x.id === id); return `<span class="intel-chip affix" data-trait="${id}" title="${t.hint}">${t.label}</span>`; }).join("")
+      + waveKinds(p.units).map((id) => { const t = kindTrait(id); return `<span class="intel-chip kind" data-trait="${id}" title="${t.hint}">${t.label}</span>`; }).join("");
+    // W10: the commander ability that answers this wave (a hint tile, not a button), on levels with a commander.
+    const hint = S.sim.missionDef.defence.commander ? waveAbility(p.units, D) : null;
+    const tile = hint ? `<span class="intel-hint" data-ability="${hint.ability}"${hint.kind ? ` data-kind="${hint.kind}"` : ""} title="${hint.why}">${icon(hint.ability === "barrage" ? "barrage" : "shield")}<b>${hint.ability === "barrage" ? "Barrage" : "Reinforce"}</b><small>${hint.why}</small></span>` : "";
+    el.innerHTML = (chips || tile ? `<span class="intel-traits">${chips}${tile}</span>` : "") + `<span class="intel-line"><span class="intel-head"><span>Next wave</span> <b translate="no">${p.wave}</b></span>${p.units.map(unit).join("")}</span>${many ? `<span class="intel-routes">${p.routes.map((r) => `<span class="intel-route" data-route="${r}">${S.sim.missionDef.defence.roads?.[r] || ROUTE_LABEL[r] || r}</span>`).join("")}</span>` : ""}`;
   }
 
   // ---------------------------------------------------------------- New-enemy card (W1-F)
@@ -274,6 +279,8 @@ export function createBar(c) {
     const progress = S.defenceProgress || loadProgress(), wave = S.sim.defenceWave(d.wave - 1);
     if (!wave) return;
     for (const u of waveTypes(wave.groups, (g, slot) => S.sim.waveType(g, slot))) if (!hasSeen(progress, u.type) && !ui.cardQueue.some((c) => c.type === u.type)) ui.cardQueue.push(u);
+    // W10: a wave kind met for the first time gets its own card (seen as "kind:<id>").
+    for (const g of wave.groups) if (g.kind && KIND_IDS.includes(g.kind) && !hasSeen(progress, `kind:${g.kind}`) && !ui.cardQueue.some((c) => c.kind === g.kind)) ui.cardQueue.push({ kind: g.kind, type: S.sim.waveType(g, Object.keys(g.units)[0]) });
   }
   function closeCard() { ui.cardEl?.remove(); ui.cardEl = null; }
   function updateCard() {
@@ -285,6 +292,7 @@ export function createBar(c) {
     if (ui.cardEl || !ui.cardQueue.length) return;
     const u = ui.cardQueue.shift(), def = D[u.type];
     if (!def) return;
+    if (u.kind) { kindCard(u, def, now); return; }
     S.defenceProgress = recordSeen(S.defenceProgress || loadProgress(), [u.type]);
     saveProgress(S.defenceProgress);
     const crews = counterCrews(u, D, S.sim.missionDef.defence.crews), ids = traitsOf(u, D);
@@ -292,6 +300,22 @@ export function createBar(c) {
     ui.cardEl.id = "defence-card";
     ui.cardEl.setAttribute("role", "status");
     ui.cardEl.innerHTML = `<span class="card-art">${hasPortrait(u.type) ? portrait(u.type, "hostile") : icon(def.icon || "tank")}</span><span class="card-body"><span class="card-eyebrow">New enemy</span><strong>${def.name}</strong><span class="card-chips">${ids.map((id) => { const t = TRAITS.find((x) => x.id === id); return `<span class="intel-chip" data-trait="${id}">${t.label}</span>`; }).join("")}</span><span class="card-counter"><span>Best crews</span> ${crews.map((c) => `<b data-crew="${c}">${CREW_LABEL[c]}</b>`).join("")}</span></span>`;
+    ui.cardEl.onclick = closeCard;
+    $("stage").append(ui.cardEl);
+    ui.cardAt = now;
+  }
+
+  // The card of a wave kind (W10): its chip, what it does, the crews and the commander ability that answer it.
+  function kindCard(u, def, now) {
+    const t = kindTrait(u.kind);
+    S.defenceProgress = recordSeen(S.defenceProgress || loadProgress(), [`kind:${u.kind}`]);
+    saveProgress(S.defenceProgress);
+    const crews = kindCrews(u.kind, S.sim.missionDef.defence.crews), commander = !!S.sim.missionDef.defence.commander && t.ability;
+    ui.cardEl = document.createElement("div");
+    ui.cardEl.id = "defence-card";
+    ui.cardEl.dataset.kind = u.kind;
+    ui.cardEl.setAttribute("role", "status");
+    ui.cardEl.innerHTML = `<span class="card-art">${hasPortrait(u.type) ? portrait(u.type, "hostile") : icon(def.icon || "tank")}</span><span class="card-body"><span class="card-eyebrow">New enemy</span><strong>${t.label}</strong><span class="card-chips"><span class="intel-chip kind" data-trait="${u.kind}">${t.label}</span></span><span class="card-hint">${t.hint}</span><span class="card-counter"><span>Best crews</span> ${crews.map((c) => `<b data-crew="${c}">${CREW_LABEL[c]}</b>`).join("")}${commander ? ` <span>Hero</span> <b data-ability="${t.ability}">${t.ability === "barrage" ? "Barrage" : "Reinforce"}</b>` : ""}</span></span>`;
     ui.cardEl.onclick = closeCard;
     $("stage").append(ui.cardEl);
     ui.cardAt = now;

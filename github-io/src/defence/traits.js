@@ -95,3 +95,43 @@ export function waveTypes(groups, resolve) {
   }
   return out;
 }
+
+// ---------------------------------------------------------------- Wave kinds (W10, Defence 6.7)
+// One chip per wave kind on the wave strip (entry.kind from sim.wavePreview(); src/defence/kinds.json), drawn
+// after the affix chips, with the crews that answer it (best first) and the commander ability that does
+// (`ability`: "barrage", "reinforce" or null when only crews answer it) with its one-line reason (`why`).
+export const KIND_TRAITS = [
+  { id: "shieldwall", label: "Shield wall", hint: "Shields turn single shots aside. Blasts break the wall: Mortars, Shrapnel and Barrage.", counters: ["breaker", "scorcher"], ability: "barrage", why: "Blasts break shield walls" },
+  { id: "runner", label: "Runners", hint: "Fast and frail. Slow them with a Suppressor or block the road with Reinforce.", counters: ["ranger", "scorcher"], ability: "reinforce", why: "Block the road for runners" },
+  { id: "crawler", label: "Crawler", hint: "Armoured and slow, and slows never hold it. Anti-tank and Tank posts bring it down.", counters: ["antitank", "tank"], ability: "reinforce", why: "Hold crawlers under your guns" },
+  { id: "skyswarm", label: "Sky swarm", hint: "A cloud of light flyers. Only Rangers, Anti-tank and Watcher posts can hit them.", counters: ["ranger", "antitank"], ability: null, why: "" },
+  { id: "surgeon", label: "Surgeon", hint: "Heals every unit within 6 m every 3 s. Shoot it first, or Barrage the group.", counters: ["ranger", "breaker"], ability: "barrage", why: "Shell the surgeon and its group" },
+  { id: "brood", label: "Brood", hint: "Two broodlings walk on when it falls. Splash and flame finish them.", counters: ["breaker", "scorcher"], ability: "barrage", why: "Shell the brood as it splits" },
+];
+export const KIND_IDS = KIND_TRAITS.map((t) => t.id);
+export const kindTrait = (id) => KIND_TRAITS.find((t) => t.id === id) || null;
+// The kind chips of a wave's units, in KIND_TRAITS order, each once.
+export function waveKinds(units) {
+  return KIND_TRAITS.filter((t) => units.some((u) => u.kind === t.id)).map((t) => t.id);
+}
+// The commander ability that answers the coming wave best, for the hint tile on the wave strip:
+// { ability: "barrage" | "reinforce", why } or null. A wave kind decides first (in KIND_TRAITS order),
+// then the wave itself: healers or a crowd on foot call for Barrage, a column of machines for Reinforce.
+export function waveAbility(units, D) {
+  for (const id of waveKinds(units)) { const t = kindTrait(id); if (t.ability) return { ability: t.ability, why: t.why, kind: id }; }
+  let foot = 0, mech = 0, heal = false;
+  for (const u of units) {
+    const d = D[u.type];
+    if (!d || d.flying) continue;
+    if (d.heals || d.support > 0) heal = true;
+    if (d.mechanical) mech += u.count; else foot += u.count;
+  }
+  if (heal) return { ability: "barrage", why: "Shell the healers and their group" };
+  if (foot >= 10) return { ability: "barrage", why: "Shell the crowd on the road" };
+  if (mech >= 3) return { ability: "reinforce", why: "Hold the machines under your guns" };
+  return null;
+}
+// Up to `n` crews that answer a wave kind, among those the level offers.
+export function kindCrews(id, crews = null, n = 2) {
+  return (kindTrait(id)?.counters || []).filter((c) => !crews || crews.includes(c)).slice(0, n);
+}

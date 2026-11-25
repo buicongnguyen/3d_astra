@@ -26,6 +26,10 @@ export const HEROIC = {
   "d-canyon": { affixes: ["plated","banner"], alloy: 2600, every: [1, 1, 1, 1, 1, 1], everyOf: { splitter: 6, volatile: 3, plated: 2, swift: 2 }, stalkers: [1, 1, 1, 2, 2], finale: null },
   "d-longcrossing": { affixes: ["volatile","splitter"], alloy: 2600, every: [1, 1, 1, 1, 1, 1], everyOf: { splitter: 6, volatile: 3, plated: 2, swift: 2 }, stalkers: [1, 1, 1, 2, 2], finale: null },
   "d-crossroads": { affixes: ["mender","plated","banner"], alloy: 2600, every: [1, 1, 1, 1, 1, 1], everyOf: { splitter: 6, volatile: 3, plated: 2, swift: 2 }, stalkers: null, finale: null },
+  // W10: the three maps of Defence 6.7 (their waves carry wave kinds as well as the elite affixes).
+  "d-fork": { affixes: ["plated","volatile"], alloy: 2600, every: [1, 1, 1, 1, 1, 1], everyOf: { splitter: 6, volatile: 3, plated: 2, swift: 2 }, stalkers: null, finale: null },
+  "d-serpent": { affixes: ["swift","mender"], alloy: 2600, every: [1, 1, 1, 1, 1, 1], everyOf: { splitter: 6, volatile: 3, plated: 2, swift: 2 }, stalkers: null, finale: null },
+  "d-kingfisher": { affixes: ["banner","plated"], alloy: 2600, every: [1, 1, 1, 1, 1, 1], everyOf: { splitter: 6, volatile: 3, plated: 2, swift: 2 }, stalkers: null, finale: null },
 };
 
 export const hasHeroic = (id) => Object.hasOwn(HEROIC, id);

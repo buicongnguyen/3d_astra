@@ -7,6 +7,8 @@
 //   seen: [unitType],                        (AAA round 2 W1-F: enemy types whose new-enemy card was shown)
 //   heroic: { [levelId]: { won, lives } },   (AAA round 2 W2-B: Heroic wins, +1 star each; written once something is recorded)
 //   guided: true,                            (AAA round 3 R3-E: the guided first build was finished or skipped; written only then)
+//   board: { [levelId]: [{ wave, score, date, branch, rank }] },   (W10: the Endless top ten of each map, best first;
+//                                            written once a run is recorded; `seen` may also hold "kind:<id>" for a wave kind's card)
 // }
 // The best stars and the best lives are kept, each on its own, with the hardest difficulty cleared.
 // The 0.21 keys are written only once they hold something, so older progress reads the same.
@@ -16,6 +18,10 @@ import { hasHeroic } from "./heroic.js";
 import GARRISONS from "./garrisons.json" with { type: "json" };
 import { seedOf } from "../sim/defence.js";
 import { DEFINITIONS as D } from "../data.js";
+import KINDS from "./kinds.json" with { type: "json" };
+
+// The wave kinds a "kind:<id>" card may name (W10; kinds.json, not traits.js, so this always-loaded module stays small).
+const KIND_IDS = Object.keys(KINDS).filter((k) => k !== "about" && !KINDS[k].child);
 
 export const DEFENCE_KEY = "frontier-defence-v1";
 export const PERKS = GARRISONS.perks;
@@ -29,8 +35,8 @@ const scores = (o) => {
   return out;
 };
 // Leaves out the 0.21 keys (and `seen`) while they are empty.
-function shaped(levels, perks = [], endless = {}, daily = {}, seen = [], heroic = {}, guided = false) {
-  return { levels, ...(perks.length ? { perks } : {}), ...(Object.keys(endless).length ? { endless } : {}), ...(Object.keys(daily).length ? { daily } : {}), ...(seen.length ? { seen } : {}), ...(Object.keys(heroic).length ? { heroic } : {}), ...(guided ? { guided: true } : {}) };
+function shaped(levels, perks = [], endless = {}, daily = {}, seen = [], heroic = {}, guided = false, board = {}) {
+  return { levels, ...(perks.length ? { perks } : {}), ...(Object.keys(endless).length ? { endless } : {}), ...(Object.keys(daily).length ? { daily } : {}), ...(seen.length ? { seen } : {}), ...(Object.keys(heroic).length ? { heroic } : {}), ...(guided ? { guided: true } : {}), ...(Object.keys(board).length ? { board } : {}) };
 }
 
 export function loadDefence(store = storage()) {
@@ -47,11 +53,11 @@ export function loadDefence(store = storage()) {
     if (raw.daily && typeof raw.daily === "object")
       for (const date of Object.keys(raw.daily).filter((d) => DATE.test(d)).sort().slice(-DAILY_KEEP)) { const s = scores(raw.daily[date]); if (Object.keys(s).length) daily[date] = s; }
     // Only real unit types are kept: a hand-edited record cannot bring in a name the game does not know.
-    const seen = Array.isArray(raw.seen) ? [...new Set(raw.seen.filter((t) => typeof t === "string" && Object.hasOwn(D, t)))] : [];
+    const seen = Array.isArray(raw.seen) ? [...new Set(raw.seen.filter((t) => typeof t === "string" && (Object.hasOwn(D, t) || (t.startsWith("kind:") && KIND_IDS.includes(t.slice(5))))))] : [];
     const heroic = {};
     if (raw.heroic && typeof raw.heroic === "object")
       for (const [id, v] of Object.entries(raw.heroic)) if (hasHeroic(id) && v?.won === true && whole(v.lives, 99) !== null) heroic[id] = { won: true, lives: v.lives };
-    return shaped(out, perks, scores(raw.endless), daily, seen, heroic, raw.guided === true);
+    return shaped(out, perks, scores(raw.endless), daily, seen, heroic, raw.guided === true, readBoard(raw.board));
   } catch {
     return { levels: {} };
   }
@@ -128,3 +134,39 @@ export function recordSeen(progress, types) {
 export const hasDefenceWin = (progress) => Object.keys(progress.levels || {}).length > 0;
 export const guideWanted = (progress) => !progress.guided && !hasDefenceWin(progress);
 export const recordGuided = (progress) => (progress.guided ? progress : { ...progress, guided: true });
+
+// ---------------------------------------------------------------- Endless leaderboard (W10, Defence 6.7)
+// The ten best Endless runs of each map, kept in this browser: { wave, score, date, branch, rank } with wave the
+// waves held, score = waves held x 100 + enemies defeated, date YYYY-MM-DD, branch the commander's branch
+// ("artillery", "rally" or "" for none) and rank its rank (1 to 3). Best score first; a tie goes to more waves, then
+// to the earlier run. Anything malformed in storage is dropped, so a hand-edited record cannot break the menu.
+export const BOARD_SIZE = 10;
+export const BRANCHES = ["", "artillery", "rally"];
+export const endlessScore = (held, killed = 0) => Math.max(0, Math.floor(held)) * 100 + Math.max(0, Math.floor(killed));
+const byRank = (a, b) => b.score - a.score || b.wave - a.wave || (a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+function runOf(v) {
+  if (!v || typeof v !== "object") return null;
+  const wave = whole(v.wave, 9999), score = whole(v.score, 9999999), rank = whole(v.rank ?? 1, 3);
+  if (wave === null || score === null || !rank || typeof v.date !== "string" || !DATE.test(v.date)) return null;
+  const branch = BRANCHES.includes(v.branch ?? "") ? v.branch ?? "" : null;
+  return branch === null ? null : { wave, score, date: v.date, branch, rank };
+}
+function readBoard(raw) {
+  const out = {};
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return out;
+  for (const [id, list] of Object.entries(raw)) {
+    if (!DEFENCE_LEVELS.some((l) => l.id === id) || !Array.isArray(list)) continue;
+    const runs = list.map(runOf).filter(Boolean).sort(byRank).slice(0, BOARD_SIZE);
+    if (runs.length) out[id] = runs;
+  }
+  return out;
+}
+export const boardOf = (progress, levelId) => progress.board?.[levelId] || [];
+// One finished Endless run into the board: { progress, place } (place 1 to 10, or 0 when it did not make the top ten).
+export function recordRun(progress, levelId, run) {
+  const r = runOf({ date: dayKey(), ...run });
+  if (!r || !DEFENCE_LEVELS.some((l) => l.id === levelId)) return { progress, place: 0 };
+  const list = [...boardOf(progress, levelId), r].sort(byRank), place = list.indexOf(r) + 1;
+  if (place > BOARD_SIZE) return { progress, place: 0 };
+  return { progress: { ...progress, board: { ...(progress.board || {}), [levelId]: list.slice(0, BOARD_SIZE) } }, place };
+}

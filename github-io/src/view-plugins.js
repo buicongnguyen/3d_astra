@@ -31,6 +31,7 @@ import { DeathLooks } from "./combat-feedback.js";
 import { RankPaintView } from "./profile-rank.js";
 import { WildView } from "./wild-view.js";
 import { CreatureView } from "./creature-view.js";
+import { WaveKindView } from "./wave-kind-view.js";
 
 export const HOOKS = ["dress", "scaleFor", "frameScaleFor", "event", "update", "reset"];
 
@@ -74,4 +75,5 @@ export const VIEW_PLUGINS = [
   RankPaintView, // R3-R: the picked paint scheme on the player's units (instanceColor tint, no draw)
   WildView, // R4-P1: Weather Spire, nest ring, sandstorm and Ambush ripples (only in a Wild frontier match)
   CreatureView, // creature round: campaign den rings, acid splashes, guardian side changes (only in a mission with dens)
+  WaveKindView, // W10: Defence wave kinds, model tint (instanceColor) and a hexagon ring (one draw, only once a kind spawns)
 ];

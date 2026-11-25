@@ -165,7 +165,8 @@ export class DefenceBot {
       let carriers = 0;
       for (const [slot, n] of Object.entries(g.units)) {
         const type = s.waveType(g, slot), count = waveCount(n, scale, D[type]);
-        units.push({ type, count });
+        // A wave kind (W10) rides along for chooseCrew; nothing else reads it.
+        units.push({ type, count, ...(g.kind ? { kind: g.kind } : {}) });
         if (D[type].carrier) carriers += count;
       }
       // A carrier's passengers count as part of the wave (0.22).
@@ -181,6 +182,17 @@ export class DefenceBot {
     const crews = this.def.crews, have = (c) => towers.filter((t) => t.crew === c).length;
     // Shades: a Watcher post first, and one for every four other towers.
     if (cloaked && crews.includes("watcher") && have("watcher") * 4 <= towers.length) return "watcher";
+    // Wave kinds (W10; only the levels that name one): what the wave strip's chips advise. Flyers want
+    // crews that hit air, shield walls and broods want blasts.
+    const kinds = new Set(units.filter((u) => u.kind).map((u) => u.kind));
+    // Flyers in the next three waves count too: the alloy may all be spent before they show.
+    const s = this.sim;
+    for (let i = s.defence.wave; i < Math.min(s.waveTotal(), s.defence.wave + 3); i++) for (const g of s.defenceWave(i)?.groups || []) if (g.kind === "skyswarm") kinds.add("skyswarm");
+    if (kinds.size) {
+      const air = towers.filter((t) => ["ranger", "antitank", "watcher"].includes(t.crew)).length;
+      if (kinds.has("skyswarm") && crews.includes("ranger") && air < 3 + Math.floor(towers.length / 4)) return crews.includes("antitank") && have("antitank") < have("ranger") ? "antitank" : "ranger";
+      if ((kinds.has("shieldwall") || kinds.has("brood")) && crews.includes("breaker") && have("breaker") * 3 <= towers.length) return "breaker";
+    }
     if (mech / Math.max(1, total) > 0.3) {
       if (crews.includes("tank") && have("tank") < have("antitank")) return "tank";
       if (crews.includes("antitank")) return "antitank";

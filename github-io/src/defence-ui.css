@@ -559,3 +559,27 @@
   .compact-ui.in-defence:not(.in-briefing) #fight-hint { bottom: calc(var(--band) + var(--defence-intel-h, 0px)); }
   .compact-ui.in-defence.dialogue-open:not(.in-briefing):not(.scene-open) #fight-hint { bottom: calc(var(--band) + var(--defence-intel-h, 0px) + var(--dialogue-h, 44px) + 6px); }
 }
+
+/* W10 (Defence 6.7): wave kinds on the wave strip (chips and units ringed in the kind's colour), the commander
+   hint tile (which ability answers the coming wave; information only, never a button) and the kind card's line. */
+.intel-chip.kind[data-trait="shieldwall"] { background: #6cc4ff; }
+.intel-chip.kind[data-trait="runner"] { background: #ffe14a; }
+.intel-chip.kind[data-trait="crawler"] { background: #c8ccd8; }
+.intel-chip.kind[data-trait="skyswarm"] { background: #d58bff; }
+.intel-chip.kind[data-trait="surgeon"] { background: #6cff9a; }
+.intel-chip.kind[data-trait="brood"] { background: #ff9a55; }
+#defence-intel .intel-unit.kind { box-shadow: inset 0 0 0 2px var(--kind-ring, #6cc4ff); }
+#defence-intel .intel-unit[data-kind="shieldwall"] { --kind-ring: #6cc4ff; }
+#defence-intel .intel-unit[data-kind="runner"] { --kind-ring: #ffe14a; }
+#defence-intel .intel-unit[data-kind="crawler"] { --kind-ring: #c8ccd8; }
+#defence-intel .intel-unit[data-kind="skyswarm"] { --kind-ring: #d58bff; }
+#defence-intel .intel-unit[data-kind="surgeon"] { --kind-ring: #6cff9a; }
+#defence-intel .intel-unit[data-kind="brood"] { --kind-ring: #ff9a55; }
+#defence-intel .intel-hint { display: inline-flex; align-items: center; gap: 4px; min-height: 22px; padding: 0 8px 0 4px; border: 1px solid var(--gold-line, rgba(255, 199, 94, 0.55)); border-radius: 8px; background: rgba(255, 199, 94, 0.14); color: var(--gold-2, #ffc75e); }
+#defence-intel .intel-hint > .icon { width: 16px; height: 16px; }
+#defence-intel .intel-hint b { font: 800 12px/1 var(--font-ui); }
+#defence-intel .intel-hint small { font: 600 12px/1 var(--font-ui); color: var(--text-2, #cfe0dc); }
+#defence-card .card-hint { max-width: 300px; white-space: normal; font: 600 12px/1.3 var(--font-ui); color: var(--text-2, #cfe0dc); }
+#defence-card .card-counter b[data-ability] { background: rgba(255, 199, 94, 0.2); color: var(--gold-2, #ffc75e); }
+/* Landscape phones: the strip shares the top band, so the hint tile keeps its ability and drops the reason (its title). */
+@media (orientation: landscape) and (max-height: 520px) { .compact-ui #defence-intel .intel-hint small { display: none; } }
