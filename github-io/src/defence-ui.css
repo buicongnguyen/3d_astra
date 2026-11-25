@@ -322,6 +322,9 @@
 #commands .command-tile.defence-armour-up { border: 2px solid rgba(255, 199, 94, 0.55); }
 #commands .defence-rank-pips { display: inline-flex; gap: 3px; margin-left: 4px; vertical-align: middle; }
 #commands .defence-rank-pips > i { width: 7px; height: 7px; transform: rotate(45deg); background: #ffe9a8; box-shadow: 0 0 4px rgba(255, 210, 120, 0.8); }
+/* The commander's pips ride beside its name, clear of the key badge in the tile's corner (commander ranks). */
+#commands .defence-info > span > .defence-rank-pips { gap: 2px; margin-left: 3px; }
+#commands .defence-info > span > .defence-rank-pips > i { width: 5px; height: 5px; }
 
 /* ---- AAA round 2, W1-F: speed and view buttons, trait chips, the new-enemy card, tower stats and Aim. ---- */
 #defence-speed { padding: 0 8px !important; border-color: var(--line-2, rgba(168, 214, 212, 0.24)) !important; background: rgba(255, 255, 255, 0.06) !important; }

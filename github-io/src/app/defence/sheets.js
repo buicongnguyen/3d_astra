@@ -112,7 +112,7 @@ export function createSheets(c) {
     $("command-label").textContent = "FIELD COMMANDER";
     $("command-context").textContent = ui.aim ? "TAP THE ROAD" : `RANK ${level} / ${top}`;
     const tile = (id, i, label, ic, title) => `<button class="command-tile defence-ability" data-defence-hero="${id}" data-hotkey="${key(i)}" aria-pressed="${ui.aim === id}" title="${key(i)} · ${title}">${kbd(key(i))}${icon(ic)}<span>${label}</span><small data-cooldown="${id}" translate="no"></small></button>`;
-    const upTile = (id, i, ic, label, cost, text) => `<button class="command-tile defence-hero-up" data-defence-hero="${id}" data-cost="${cost}" data-hotkey="${key(i)}" aria-label="${label}, ${cost} alloy" title="${key(i)} · ${text} · ${cost} alloy">${kbd(key(i))}${icon(ic)}<span>${label}</span><small><b class="alloy-text" translate="no">${cost}</b></small></button>`;
+    const upTile = (id, i, ic, label, cost, text) => `<button class="command-tile defence-hero-up" data-defence-hero="${id}" data-cost="${cost}" data-hotkey="${key(i)}" aria-label="${label}, ${cost} alloy" title="${key(i)} · ${text}">${kbd(key(i))}${icon(ic)}<span>${label}</span><small><b class="alloy-text" translate="no">${cost}</b></small></button>`;
     const stepText = !next ? "" : next.kind === "rank" ? COMMANDER_TEXT[`rank${next.rank}`] : next.kind === "branchRank" ? COMMANDER_TEXT[next.branch]?.[next.rank - 1] : "";
     const ups = !next ? `<button class="command-tile defence-hero-up" data-defence-hero="top" data-hotkey="${key(3)}" disabled title="${key(3)} · Top rank">${kbd(key(3))}${icon(h.branch === "rally" ? "rally" : "barrage")}<span>Top rank</span><small>${icon("check")}</small></button>`
       : next.kind === "branch" ? Object.entries(C.branches).map(([id, b], i) => upTile(id, 3 + i, id === "rally" ? "rally" : "barrage", b.name, next.costs[id], COMMANDER_TEXT[id][0])).join("")
@@ -123,7 +123,7 @@ export function createSheets(c) {
     $("commands").innerHTML = `<i hidden data-defence-sheet data-tiles="${tiles}" data-key="h:${hero.id}:${ui.aim || ""}:${level}${h.branch || ""}"></i>
       ${tile("barrage", 0, "Barrage", "barrage", `Barrage: shell a spot within ${b.range} m, ${b.damage} damage over ${b.radius} m`)}
       ${tile("reinforce", 1, "Reinforce", "shield", `Reinforce: ${r.count} Vanguards hold the road for ${r.seconds} s`)}
-      <button class="command-tile defence-info" data-defence-hero="focus" data-hotkey="${key(2)}" title="${key(2)} · ${c.name}${h.branch ? ` · ${C.branches[h.branch].name}` : ""}">${kbd(key(2))}${hasPortrait(hero.type) ? portrait(hero.type) : icon("flag")}<span>Hero</span><small><b translate="no">${Math.round(hero.hp)}</b>${pips}</small></button>${ups}${stats}`;
+      <button class="command-tile defence-info" data-defence-hero="focus" data-hotkey="${key(2)}" title="${key(2)} · ${c.name}${h.branch ? ` · ${C.branches[h.branch].name}` : ""}">${kbd(key(2))}${hasPortrait(hero.type) ? portrait(hero.type) : icon("flag")}<span>Hero${pips}</span><small><b translate="no">${Math.round(hero.hp)}</b></small></button>${ups}${stats}`;
     $("command-hint").textContent = ui.aim === "barrage" ? "Tap a spot inside the ring to shell it." : ui.aim === "reinforce" ? "Tap the road inside the ring to drop the Vanguards."
       : next?.kind === "branch" ? "Rank 3: pick Artillery (a wider, faster Barrage) or Rally (more, tougher Vanguards). It cannot be changed." : "Tap the road to send the commander. It holds there and blocks the column.";
   }
