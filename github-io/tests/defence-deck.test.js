@@ -243,5 +243,5 @@ test("D3/D4: the DefenceBot still plays d-gorge to the same end (the module is i
   assert.ok(bot);
   const r = playDefence(GORGE, { difficulty: "standard" });
   // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
-  assert.equal(r.sim.hash(), "019e046e");
+  assert.equal(r.sim.hash(), "b8278e03");
 });

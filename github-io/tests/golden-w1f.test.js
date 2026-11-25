@@ -10,7 +10,7 @@ import { pin } from "./lib/golden.mjs";
 
 const GORGE = DEFENCE_LEVELS.find((l) => l.id === "d-gorge");
 // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
-const EXPECTED = { "wave 3": { hash: "80058f5d", aimed: 4 }, "wave 6": { hash: "d238537f", aimed: 8 } };
+const EXPECTED = { "wave 3": { hash: "80058f5d", aimed: 4 }, "wave 6": { hash: "83ed650c", aimed: 8 } };
 
 test("Gorge Road with padAim (first and strong): hashes at waves 3 and 6", () => {
   const sim = new Simulation({ map: GORGE.map, enemyCount: 1, ai: false, mission: GORGE, difficulty: "standard" });
