@@ -155,9 +155,9 @@ test("voice packs: every line has a clip, sizes fit the budget, files match the 
       for (let i = 0; i < lineCount(faction, "announcer", key); i++) assert.ok(clips[clipId("announcer", key, i)], `${faction} ann ${key} ${i}`);
     }
   }
-  assert.equal(storyClip("m01-first-light", "It is waking! Four hundred years dark and it still knows its work.")?.pack, "story-m01");
+  assert.equal(storyClip("m01-first-light", "It is waking! Four hundred years dark, and it works!")?.pack, "story-m01");
   assert.equal(storyClip("m01-first-light", "Something nobody says."), null);
-  assert.equal(storyClip(null, "It is waking! Four hundred years dark and it still knows its work."), null, "skirmish: no story");
+  assert.equal(storyClip(null, "It is waking! Four hundred years dark, and it works!"), null, "skirmish: no story");
   assert.deepEqual(packsFor({ faction: "veil", missionId: "m01-first-light" }), ["veil", "story-m01"]);
   assert.deepEqual(packsFor({ faction: "nobody" }), ["meridian"]);
   assert.deepEqual(packsFor({ faction: "ashfall", missionId: "ca1-cold-berths" }), ["ashfall", "story-ca1"]);
@@ -233,7 +233,7 @@ const settle = (player) => Promise.all([...player.packs.values()].map((p) => p.l
 test("lazy load: nothing before Start, then only the faction pack and the active mission's story packs", async () => {
   const { player, fetched } = fakePlayer();
   assert.deepEqual(fetched, [], "a new player fetches nothing");
-  assert.equal(player.story("It is waking! Four hundred years dark and it still knows its work."), 0, "no mission: no story voice");
+  assert.equal(player.story("It is waking! Four hundred years dark, and it works!"), 0, "no mission: no story voice");
   player.prepare({ faction: "meridian", missionId: "m12-frontiers-end" });
   await settle(player);
   assert.deepEqual(fetched, ["meridian.mp3", "story-m12.mp3", "story-m12-2.mp3"], "a long mission: both of its parts");
@@ -296,7 +296,7 @@ test("scheduler: story lines queue deeper than the announcer, a scene line cuts 
   assert.equal(s.dropScene()?.index, "s.scene");
   assert.equal(s.current, null);
   assert.equal(clipId("story", "story", "s.abc"), "s.abc");
-  assert.equal(storyHash("It is waking! Four hundred years dark and it still knows its work."), "4s9bwz", "the same hash as make-voices.py");
+  assert.equal(storyHash("It is waking! Four hundred years dark, and it works!"), "1spo0l7", "the same hash as make-voices.py");
 });
 
 test("W12: every unit with a weapon has its own effect family and every ability a cast", () => {

@@ -19,7 +19,8 @@ const PINS = {
   // Re-recorded 2026-11-24: sturdier support units (Medic 95 + 55 shield, Engineer 150, Supply wagon 340 health; owner request, docs/CHANGELOG.md "Support units hold the rear"); no behaviour change for AI orders.
   // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
   // Re-recorded 2026-11-24 (Kite scout sight 18 -> 32 m and its manual Dive, docs/CHANGELOG.md "Kite scout: twice the sight, and Dive"): the player's Kites, and the computer's at Fast or Relentless, open more fog for their side (the fog is in the hashed state), and Fast/Relentless computer Kites may dive. Relaxed, Normal, Defence and story computer Kites keep 18 m, so those pins did not move.
-  mission: { 120: "51e858c1", 330: "6610206c", 600: "fd25c6e7" },
+  // Re-recorded 2026-11-25 (concise story lines): text only. The hash covers the mission definition, so the shorter say lines move it; with the old lines put back the run reproduces the old pin exactly (same waves, lives, result), so play is unchanged. Old 51e858c1 / 6610206c / fd25c6e7.
+  mission: { 120: "61b6861e", 330: "f9ca1ca5", 600: "d87a06fe" },
 };
 
 function sandbox(relays) {

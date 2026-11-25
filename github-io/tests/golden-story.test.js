@@ -21,7 +21,8 @@ const find = (id) => [...MISSIONS, ...CHRONICLES.flatMap((c) => c.missions)].fin
 // R3-I (round 3, campaign pacing): m01 re-recorded for its first-contact probe, m03 for its retune; old 03e8cb2b / 59c479c0.
 // 2026-11-23 (owner): m03 re-recorded for the Iron Vanguard's health, 32,000 to 11,000 (story 9,000); old f86e00b1.
 // 2026-11-24 (campaign C1, pacing): m03 re-recorded for siphons at 4200 HP; old 57c186ff.
-const OBJECTIVE = { "m01-first-light": "64473474", "m03-the-ashen-line": "b16d4a20", "m06b-wings-over-copper": "56d5c731", "ca1-cold-berths": "c9716b32" };
+// Re-recorded 2026-11-25 (concise story lines): text only. The hash covers the mission definition, so the shorter say lines move it; with the old lines put back the run reproduces the old pin exactly (same waves, lives, result), so play is unchanged. Old m01 64473474, m03 b16d4a20, m06b 56d5c731, ca1 c9716b32, m02b 11165d27, m11c 17daacde.
+const OBJECTIVE = { "m01-first-light": "67462110", "m03-the-ashen-line": "20f108f2", "m06b-wings-over-copper": "dd931713", "ca1-cold-berths": "bd841655" };
 test(`the ObjectiveBot for ${SECONDS} s`, async (t) => {
   for (const [id, hash] of Object.entries(OBJECTIVE))
     await t.test(id, () => pin(id, missionMatch(find(id)).run(SECONDS), hash));
@@ -30,10 +31,10 @@ test(`the ObjectiveBot for ${SECONDS} s`, async (t) => {
 // Hold the River (mission 2b) is played under the Frontier Defence rules: the DefenceBot calls and
 // fights its first waves.
 // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
-const DEFENCE = { "m02b-hold-the-river": { wave: 4, lives: 20, hash: "11165d27" },
+const DEFENCE = { "m02b-hold-the-river": { wave: 4, lives: 20, hash: "336e99c8" },
   // W2-F m11c Hold the Keystone Roads (new mission; same run as golden-w2f.test.js): added by the Wave 2 integrator.
   // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
-  "m11c-hold-the-keystone-roads": { wave: 2, lives: 20, hash: "17daacde" } };
+  "m11c-hold-the-keystone-roads": { wave: 2, lives: 20, hash: "90769bd0" } };
 test(`the DefenceBot on a story mission for ${SECONDS} s`, async (t) => {
   for (const [id, end] of Object.entries(DEFENCE))
     await t.test(id, () => {

@@ -30,23 +30,7 @@
   "rask": 1.04,
   "echo": 0.92
  },
- "spoken": {
-  "Movement on the road! One Ashfall scout, only looking. Your Vanguards can send it home.": "Movement on the road! One scout from Ashfall, only looking. Your Vanguards can send it home.",
-  "Two stretches done and the relay is warming. Wading slows them, Commander. Hit them in the ford.": "Two stretches done and the relay is warming. Wading through the water slows them, Commander. Hit them at the ford.",
-  "It is following us! A Dune Wyrm, Commander. It dives under tanks. Please never point it at me.": "It is following us! A Dune Wyrm, Commander. It will dive under tanks. Please never point it at me.",
-  "Relay site in view. Clear the Sunward guards before the crawler rolls in.": "The relay site is in view. Clear the Sunward guards before the crawler rolls in.",
-  "Three raids beaten. The balloons rise from a yard on the east rim. Burn it before Hale builds more.": "Three raids, all beaten. The balloons rise from a yard on the east rim. Burn it before Hale builds more.",
-  "Ford ahead. Go over in one group, Commander. A thin line gets cut in the water.": "The ford is ahead. Go over in one group, Commander. A thin line gets cut in the water.",
-  "West conduit is scrap! The crystals near it have stopped fading.": "The west conduit is scrap! The crystals beside it have stopped fading.",
-  "The relay is dark. Fleet, report your power. Up a third? Thank you.": "The relay is dark. Fleet, report your power. Up by a third? Thank you.",
-  "The fleet has sent a salvage truck of Scrappers, Foreman. Let it reach the front.": "The fleet has sent a salvage truck, full of Scrappers, Foreman. Let it reach the front.",
-  "I pay what I owe, Captain. A toll on berth cores I do not owe.": "I pay what I owe, Captain. But a toll on my berth cores, I do not owe.",
-  "A Waystation! Shields mend three times faster beside it. My grandmother would be proud.": "Look at that Waystation! Shields mend three times faster beside it. My grandmother would be proud.",
-  "The centre oasis first, Wagon-master. Then north or east, whichever guard is weaker.": "The center oasis first, Wagon-master. Then north or east, whichever guard is weaker.",
-  "Five minutes of daylight left. Two oases, one minute. Ride, Wagon-master!": "Five minutes of daylight left. Hold two of the oases for one minute. Ride, Wagon-master!",
-  "Guardian machines? Out here? Foremen, fall back to the camp and log everything you see.": "Guardian machines? Out here? Fall back to the camp, Foremen, and log everything you see.",
-  "That beacon has a tower. Watchers first, so the Rangers can see what they shoot.": "That beacon has a tower. The Watchers first, so the Rangers can see what they shoot."
- },
+ "spoken": {},
  "excluded": {
   "briefing": "Briefing lines are read on the briefing card before Begin mission; voicing them would fetch a pack before the match starts (the lazy-load rule: nothing before Start). On-screen only.",
   "debrief": "Debrief lines are read on the result card after the match; not part of this pass. On-screen only.",
@@ -61,31 +45,31 @@
      "lines": [
       {
        "who": "vale",
-       "text": "The Harvesters know their work, Commander. Alloy builds everything, so let them cut."
+       "text": "Harvesters know their work, Commander. Let them cut alloy."
       },
       {
        "who": "okoro",
-       "text": "Pick a Harvester and raise a Supply relay near camp. It drinks from the old Lattice."
+       "text": "Pick a Harvester. Build a Supply relay near camp."
       },
       {
        "who": "vale",
-       "text": "Supply relay online. Now take your squad to the Builder relay by the river."
+       "text": "Supply relay online. Take your squad to the river."
       },
       {
        "who": "okoro",
-       "text": "It is waking! Four hundred years dark and it still knows its work."
+       "text": "It is waking! Four hundred years dark, and it works!"
       },
       {
        "who": "hale",
-       "text": "Meridian camp. My lights failed the moment that relay lit. Shut it down."
+       "text": "Meridian camp. Your relay killed my lights. Shut it down."
       },
       {
        "who": "vale",
-       "text": "Ashfall troops at the ford. Vanguards in front, Rangers behind, and stay in the circle."
+       "text": "Ashfall at the ford. Vanguards in front, Rangers behind."
       },
       {
        "who": "vale",
-       "text": "They pushed us off the relay. Clear the circle and stand in it again."
+       "text": "They pushed us off. Retake the circle."
       },
       {
        "who": "hale",
@@ -93,21 +77,21 @@
       },
       {
        "who": "okoro",
-       "text": "It is answering. Four hundred years asleep, and it is answering us, Commander.",
+       "text": "It is answering us, after four hundred years of sleep!",
        "scene": "relay-wakes"
       },
       {
        "who": "vale",
-       "text": "Every light in the Ashfall camp just went out. The same second our relay woke.",
+       "text": "Every Ashfall light died the moment our relay woke.",
        "scene": "relay-wakes"
       },
       {
        "who": "okoro",
-       "text": "The relay is steady. Strange, though. Why would our light put out theirs?"
+       "text": "Steady. But why does our light put out theirs?"
       },
       {
        "who": "okoro",
-       "text": "Movement on the road! One Ashfall scout, only looking. Your Vanguards can send it home."
+       "text": "A scout on the road! Vanguards can chase it off."
       }
      ]
     }
@@ -121,59 +105,59 @@
      "lines": [
       {
        "who": "vale",
-       "text": "Their first attack will take a few minutes. Use them: more Harvesters, then the Foundry."
+       "text": "They attack in minutes. Harvesters first, the Foundry next."
       },
       {
        "who": "vale",
-       "text": "Something has made a den on the south bank. Pack animals that spit acid. They stay close to it, so leave them be or clear it."
+       "text": "Acid spitters nest on the south bank. Leave them be."
       },
       {
        "who": "okoro",
-       "text": "Acid Hounds! Their spit eats metal. Keep the Breakers back and let the Rangers shoot from range."
+       "text": "Acid Hounds eat metal! Breakers back, Rangers at range."
       },
       {
        "who": "okoro",
-       "text": "The den is clear. They were nesting on Builder crates: one hundred and fifty alloy, only a little chewed."
+       "text": "Den clear! Builder crates inside, worth one hundred and fifty alloy."
       },
       {
        "who": "okoro",
-       "text": "Foundry is hot. And Commander, look: when our relay lit, theirs went dim. Same second."
+       "text": "The Foundry is hot! Their relay dimmed the moment we lit."
       },
       {
        "who": "vale",
-       "text": "Ashfall is on the move. Meet them at the ford, where they must bunch together."
+       "text": "Ashfall is moving. Meet them at the ford."
       },
       {
        "who": "okoro",
-       "text": "First Breaker rolling. Aim it at a crowd and keep Rangers away from its nose."
+       "text": "First Breaker rolling! Aim it at crowds."
       },
       {
        "who": "vale",
-       "text": "Their guns cover the far half of the bridge. Go over in one group, Commander, and do not stop on it."
+       "text": "Their guns cover the far side. Cross together, fast."
       },
       {
        "who": "hale",
-       "text": "You cross my river while your own camp stands empty. That is careless, Commander."
+       "text": "You cross my river and leave camp empty. Careless."
       },
       {
        "who": "okoro",
-       "text": "The bridgehead is down! The west bridge is ours, and it runs right past their back fence."
+       "text": "The bridgehead is down! The west bridge reaches their back fence."
       },
       {
        "who": "vale",
-       "text": "Ashfall holds the middle relay. Its energy is feeding their Foundry now."
+       "text": "Ashfall holds the middle relay. It feeds their Foundry."
       },
       {
        "who": "vale",
-       "text": "Twelve minutes, Commander. Every minute they stand, they build more."
+       "text": "Twelve minutes. Every minute they stand, they build."
       },
       {
        "who": "hale",
-       "text": "Keep the river. I have other camps, and less time than you think."
+       "text": "Keep the river. I have other camps."
       },
       {
        "who": "vale",
-       "text": "Two Ashfall scouts are testing our bank. The towers will greet them; keep building."
+       "text": "Two scouts test our bank. Let the towers work."
       }
      ]
     }
@@ -187,35 +171,35 @@
      "lines": [
       {
        "who": "vale",
-       "text": "Pads stand beside all three roads. Crew the ones near the crossings before the first column."
+       "text": "Tower pads line the roads. Crew those by the crossings."
       },
       {
        "who": "okoro",
-       "text": "The relay needs seven quiet stretches to tune. Hold every crossing and I will get them."
+       "text": "Seven quiet stretches will tune it. Hold every crossing!"
       },
       {
        "who": "hale",
-       "text": "Meridian camp. You hold a river that is not yours. My columns cross on the hour."
+       "text": "That river is not yours. My columns cross hourly."
       },
       {
        "who": "okoro",
-       "text": "Two stretches done and the relay is warming. Wading slows them, Commander. Hit them in the ford."
+       "text": "Two stretches done! The water slows them. Hit them at the ford."
       },
       {
        "who": "vale",
-       "text": "Scrappers come in crowds. A Breaker crew hits the whole crowd at once."
+       "text": "Scrappers come in crowds. Breakers hit them all."
       },
       {
        "who": "hale",
-       "text": "The sixth column crosses now, with Scorchers. I would rather you stood aside."
+       "text": "My sixth column crosses now, and it brings Scorchers. Stand aside."
       },
       {
        "who": "okoro",
-       "text": "One more stretch! The relay is almost in tune. I can hear it."
+       "text": "One more stretch! It is almost in tune!"
       },
       {
        "who": "vale",
-       "text": "Last column, and it brings Battle tanks. Anti-tank crews on the bridges, Commander."
+       "text": "Battle tanks last. Anti-tank crews to the bridges."
       }
      ]
     }
@@ -229,19 +213,19 @@
      "lines": [
       {
        "who": "okoro",
-       "text": "Their gun is down. Put a tower of ours up there, and I can tune the relay under its cover."
+       "text": "Their gun is down! Build a tower there for cover."
       },
       {
        "who": "okoro",
-       "text": "Tower up. Now keep the relay for one minute while I tune it."
+       "text": "The tower is up! Now hold the relay one minute."
       },
       {
        "who": "vale",
-       "text": "The relay is in the middle of the lake. The ford nearest our camp runs straight to the island."
+       "text": "The relay is on the island. The near ford leads there."
       },
       {
        "who": "okoro",
-       "text": "The tower on the island can see the whole ford. Cross in one group and climb the ramp together."
+       "text": "Their tower sees the whole ford. Cross and climb together."
       },
       {
        "who": "hale",
@@ -249,11 +233,11 @@
       },
       {
        "who": "vale",
-       "text": "Ashfall is wading over from the far shore. Keep a few guns on the island."
+       "text": "Ashfall is crossing the water. Keep guns on the island."
       },
       {
        "who": "okoro",
-       "text": "The island relay is ours. Listen: every relay in the valley, humming on one line."
+       "text": "The island is ours! The valley hums as one."
       }
      ]
     }
@@ -267,83 +251,78 @@
      "lines": [
       {
        "who": "vale",
-       "text": "No river here, Commander. The walls north of camp are your only cover. Use them."
+       "text": "No river here. Use the walls north of camp."
       },
       {
        "who": "vale",
-       "text": "Right on schedule. Hold at the walls, then follow them home while they are weak."
+       "text": "On schedule. Hold the walls, then chase them home."
       },
       {
        "who": "okoro",
-       "text": "Four towers up. Now the camp can look after itself while you go hunting."
+       "text": "Four towers up! The camp can guard itself now."
       },
       {
        "who": "okoro",
-       "text": "That siphon is huge. It could run ten camps. Where is all the power going?"
+       "text": "That siphon could run ten camps! Where does it go?"
       },
       {
        "who": "okoro",
-       "text": "Commander, the beam from this one points straight up. He is feeding something in orbit."
+       "text": "This beam points up. He is feeding something in orbit!"
       },
       {
        "who": "hale",
-       "text": "Forty thousand sleepers ride above us. Their lights fail first. Leave my siphons alone."
+       "text": "Forty thousand sleepers ride above us. Leave my siphons."
       },
       {
        "who": "hale",
-       "text": "Received, Commander. Forty thousand people will sleep warmer tonight. I will note the courtesy."
+       "text": "Received. Forty thousand will sleep warmer tonight. Noted."
       },
       {
        "who": "vale",
-       "text": "Three hundred alloy, loaded. Hale will count that loss, Commander. So will his sleepers."
+       "text": "Three hundred alloy, loaded. Hale will miss that."
       },
       {
        "who": "vale",
-       "text": "Half his siphon line is down. He will throw everything at you now. Stay together."
-      }
-     ]
-    },
-    {
-     "name": "story-m03-2",
-     "lines": [
+       "text": "Half his siphons are down. Expect everything now."
+      },
       {
        "who": "vale",
-       "text": "Eleven minutes. His next wave will have Scorchers in it. Finish the siphons."
+       "text": "Eleven minutes. Scorchers come next. Finish the siphons."
       },
       {
        "who": "okoro",
-       "text": "That is no Ashfall print, Commander. It is an old Builder war machine, and they woke it up.",
+       "text": "That is no Ashfall design! It is a Builder war machine!",
        "scene": "iron-vanguard"
       },
       {
        "who": "hale",
-       "text": "The Iron Vanguard. Nine weeks to pull it out of a trench. It guards my siphons now.",
+       "text": "The Iron Vanguard. Nine weeks to dig out.",
        "scene": "iron-vanguard"
       },
       {
        "who": "vale",
-       "text": "It marks the ground before each burst. Stay out of the red. Hit it when its core opens.",
+       "text": "It marks the ground before firing. Avoid the red.",
        "scene": "iron-vanguard"
       },
       {
        "who": "okoro",
-       "text": "Its armour is cracking! It fires sooner now, but the red on the ground still gives you the same time."
+       "text": "Its armour is cracking! It fires sooner now."
       },
       {
        "who": "hale",
-       "text": "One third of its plating left. I had hoped that machine would last the season, Commander."
+       "text": "A third of its plating left. A pity."
       },
       {
        "who": "okoro",
-       "text": "It is down! Poor old thing. When this is over I would like to see how it was put together."
+       "text": "It is down! Poor old thing."
       },
       {
        "who": "hale",
-       "text": "Nine weeks of repairs, gone in minutes. I will add it to the account."
+       "text": "Nine weeks of repairs, gone in minutes. Noted."
       },
       {
        "who": "hale",
-       "text": "You have just made a cold night colder for people who never harmed you."
+       "text": "You made a cold night colder for innocent people."
       }
      ]
     }
@@ -361,7 +340,7 @@
       },
       {
        "who": "sol",
-       "text": "Then we are even. I will not forget it, Commander."
+       "text": "Then we are even. I will not forget it."
       },
       {
        "who": "sol",
@@ -369,11 +348,11 @@
       },
       {
        "who": "vale",
-       "text": "The centre oasis is closest. Take it first, then choose north or east."
+       "text": "The centre oasis is closest. Take it first."
       },
       {
        "who": "sol",
-       "text": "Nothing personal, Commander. My gardens need that light as much as yours."
+       "text": "Nothing personal, Commander. My gardens need that light too."
       },
       {
        "who": "hale",
@@ -381,46 +360,46 @@
       },
       {
        "who": "okoro",
-       "text": "East oasis is ours. Listen to it hum! And look, the Sunward wells just lost pressure."
+       "text": "East oasis is ours! And the Sunward wells dropped."
       },
       {
        "who": "vale",
-       "text": "Attack on our camp. Keep a guard at home; the oases will not hold themselves either."
+       "text": "Our camp is under attack. Guard home and both oases."
       },
       {
        "who": "hale",
-       "text": "Captain Sol. Every relay Meridian lights, we both lose power. A truce, until they are gone?",
+       "text": "Captain Sol. Meridian drains us both. A truce?",
        "scene": "the-truce"
       },
       {
        "who": "sol",
-       "text": "I do not like you, Director. But my wells are dropping. Agreed, for today.",
+       "text": "I do not like you, Director. But agreed, for today.",
        "scene": "the-truce"
       },
       {
        "who": "vale",
-       "text": "Both columns are turning toward the centre oasis, Commander. Together.",
+       "text": "Both columns are turning toward the centre oasis. Together.",
        "scene": "the-truce"
       },
       {
        "who": "vale",
-       "text": "Four minutes of daylight left. Two oases, one minute in a row. Now, Commander."
+       "text": "Four minutes of daylight. Hold two oases one minute."
       },
       {
        "who": "sol",
-       "text": "You are walking into a Wyrm nest, Commander. The Caravan rides around those. Then again, we never had your guns."
+       "text": "A Wyrm nest! The Caravan rides around those."
       },
       {
        "who": "okoro",
-       "text": "It is following us! A Dune Wyrm, Commander. It dives under tanks. Please never point it at me."
+       "text": "A Dune Wyrm is following us! It hunts tanks!"
       },
       {
        "who": "okoro",
-       "text": "Tuned! Both oases are steady. I wish I knew why the others keep going dim."
+       "text": "Tuned! Both oases steady. Why do the others go dim?"
       },
       {
        "who": "vale",
-       "text": "One Ashfall scout on the dunes. It is looking at us, not the oases. Your guard can send it home."
+       "text": "A scout on the dunes, watching our camp."
       }
      ]
     }
@@ -434,51 +413,51 @@
      "lines": [
       {
        "who": "vale",
-       "text": "Four crawlers, one road, raiders on every bend. Clear the bends before the crawlers arrive."
+       "text": "Four crawlers, one road, raiders on every bend."
       },
       {
        "who": "okoro",
-       "text": "The first two crawlers are entering the canyon now. Two more follow in a few minutes."
+       "text": "Two crawlers entering the canyon. Two more soon."
       },
       {
        "who": "okoro",
-       "text": "The last two crawlers are in the canyon. Bring them home too, please."
+       "text": "The last two crawlers are in. Bring them home!"
       },
       {
        "who": "okoro",
-       "text": "The crawlers cannot fight back. Keep them behind the squad, please."
+       "text": "The crawlers cannot fight. Keep them behind the squad."
       },
       {
        "who": "hale",
-       "text": "Meridian in my canyon. Outpost guard, down the road. Nothing gets through."
+       "text": "Meridian in my canyon. Outpost guard, down the road."
       },
       {
        "who": "vale",
-       "text": "Raiders coming down from the north. Hold the middle bend until they break."
+       "text": "Raiders from the north. Hold the middle bend."
       },
       {
        "who": "vale",
-       "text": "A Breaker on the north bend shells the road. Rush it before the crawlers come up."
+       "text": "A Breaker shells the road from the north bend."
       },
       {
        "who": "hale",
-       "text": "Every raider I have, to the north mouth. Nothing leaves my canyon."
+       "text": "All raiders to the north mouth. Nothing leaves."
       },
       {
        "who": "okoro",
-       "text": "A crawler is badly hit! Medics to the crawlers, please."
+       "text": "A crawler is badly hit! Medics to the crawlers!"
       },
       {
        "who": "vale",
-       "text": "The outpost is burning. No more raiders from that corner."
+       "text": "The outpost is burning. No more raiders from there."
       },
       {
        "who": "okoro",
-       "text": "The crawlers are through the canyon. Now I can finish the tuning core."
+       "text": "The crawlers are through! I can finish the core now."
       },
       {
        "who": "vale",
-       "text": "The crawlers brought three Vanguards, a Breaker crew and a Medic. Use them on the outpost."
+       "text": "The crawlers brought three Vanguards, a Breaker and a Medic."
       }
      ]
     }
@@ -492,55 +471,55 @@
      "lines": [
       {
        "who": "okoro",
-       "text": "I am driving the crawler myself. Please do not let anything large shoot at me."
+       "text": "I am driving this crawler. Keep the guns off me!"
       },
       {
        "who": "vale",
-       "text": "Both Pact armies are coming at once. Leave the crawler in camp until this wave breaks."
+       "text": "Both Pact armies are coming. Keep the crawler home."
       },
       {
        "who": "vale",
-       "text": "Two Pact towers cover the far bank of the ford. Break them, or take the east bridge."
+       "text": "Two Pact towers cover the far bank. Break them."
       },
       {
        "who": "okoro",
-       "text": "Ford is clear! Crawler moving. Slowly. It only has one speed."
+       "text": "The ford is clear! Crawler moving. Slowly. One speed."
       },
       {
        "who": "okoro",
-       "text": "Crawler hull at half! A Medic would be very welcome right now, Commander."
+       "text": "Crawler hull at half! A Medic, please!"
       },
       {
        "who": "sol",
-       "text": "The forest road is Caravan ground, Commander. The Pact says I must stop you. So I will."
+       "text": "This road is Caravan ground. I must stop you."
       },
       {
        "who": "vale",
-       "text": "Then the road is ours by force. The Caravan's relay stores are ours too: two hundred alloy."
+       "text": "Then we take it by force, with two hundred alloy."
       },
       {
        "who": "sol",
-       "text": "A fair offer, and I remember fair offers. Two riders for the Pact's sake. The rest go home."
+       "text": "A fair offer. Two riders stay. The rest go home."
       },
       {
        "who": "vale",
-       "text": "Relay site in view. Clear the Sunward guards before the crawler rolls in."
+       "text": "Relay site ahead. Clear the Sunward guards first."
       },
       {
        "who": "okoro",
-       "text": "Core is in. Oh. Commander, the relays are not separate machines. It is one circuit."
+       "text": "Core is in. Oh! The relays are one circuit!"
       },
       {
        "who": "sol",
-       "text": "Meridian, hear me. Children in my wagons carry water from wells your relays starve. Count them before you count our dead."
+       "text": "Meridian, hear me. Your relays starve our children's wells."
       },
       {
        "who": "sol",
-       "text": "One circuit? Then my wells did not fail because of you. Hale told me otherwise. I will be asking him why."
+       "text": "One circuit? Then my wells were not your doing. Hale said otherwise."
       },
       {
        "who": "vale",
-       "text": "A Pact scout in the trees, Commander. It came to look at the crawler. Show it the guns instead."
+       "text": "A Pact scout in the trees. Show it our guns."
       }
      ]
     }
@@ -554,55 +533,55 @@
      "lines": [
       {
        "who": "vale",
-       "text": "Economy first today, Commander. More Harvesters, a second seam, and guards for both."
+       "text": "Economy first. More Harvesters, a second seam, guards for both."
       },
       {
        "who": "vale",
-       "text": "Ashfall attack. They will go for the Harvesters. Pull them behind your towers."
+       "text": "Ashfall wants the Harvesters. Pull them behind your towers."
       },
       {
        "who": "okoro",
-       "text": "The seam is ours. Good copper crystal. And these shards are fresh, Commander. New growth."
+       "text": "The seam is ours! These copper shards are new growth."
       },
       {
        "who": "okoro",
-       "text": "First charge is in and the relay is humming. Look at the seam: the crystals are growing!"
+       "text": "First charge is in! Look, the crystals are growing!"
       },
       {
        "who": "okoro",
-       "text": "The relays do not burn crystal. They grow it. The Lattice is a garden, Commander."
+       "text": "The relays do not burn crystal. They grow it!"
       },
       {
        "who": "hale",
-       "text": "If that relay wakes, my siphons in the basin fail. Take their Harvesters."
+       "text": "If that relay wakes, my siphons fail. Hit their Harvesters."
       },
       {
        "who": "vale",
-       "text": "Ashfall has the seam. That alloy is going to their Foundry until you take it back."
+       "text": "Ashfall has the seam. Take it back, Commander."
       },
       {
        "who": "okoro",
-       "text": "Violet coats on the north-west rim, Commander. They are watching the seam, and they are not Ashfall."
+       "text": "Violet coats on the north-west rim! Not Ashfall."
       },
       {
        "who": "vale",
-       "text": "Veil Survey scouts. They came to this world before any of us. Leave them be. We have enough enemies today."
+       "text": "Veil Survey scouts. Leave them be."
       },
       {
        "who": "vale",
-       "text": "Ten minutes gone. Storm clouds on the north rim. Raiders heading for the home seam."
+       "text": "Ten minutes gone. Raiders are heading for our seam."
       },
       {
        "who": "vale",
-       "text": "Four minutes to the storm. Every Harvester on the nearest deposit, Commander."
+       "text": "Storm in four minutes. Harvesters to the nearest deposit."
       },
       {
        "who": "okoro",
-       "text": "Quota banked! The Basin relay is awake, and the crystal fields are already thicker."
+       "text": "We made the quota, and the Basin relay is awake!"
       },
       {
        "who": "vale",
-       "text": "Ashfall scouts on the basin road, two of them. Let the guard meet them before they reach the Harvesters."
+       "text": "Two Ashfall scouts on the basin road. See them off."
       }
      ]
     }
@@ -616,62 +595,62 @@
      "lines": [
       {
        "who": "vale",
-       "text": "Rangers to the refinery, Commander. Whatever is coming will come for the copper."
+       "text": "Rangers to the refinery. Whatever comes wants the copper."
       },
       {
        "who": "okoro",
-       "text": "The lights are rising over the east rim again. Big and slow, and coming this way."
+       "text": "Lights over the east rim again! Coming this way!"
       },
       {
        "who": "hale",
-       "text": "Meridian camp. Your refinery feeds a relay that starves my fleet. My balloons will close it tonight."
+       "text": "Your refinery starves my fleet. My balloons will close it."
       },
       {
        "who": "okoro",
-       "text": "There, over the rim! A balloon with a fire under it, drifting straight at the refinery.",
+       "text": "A fire balloon, drifting at the refinery!",
        "scene": "first-balloon"
       },
       {
        "who": "vale",
-       "text": "Ember balloons. Our towers cannot aim that high. Rangers and Anti-tank soldiers can.",
+       "text": "Towers cannot reach Ember balloons. Rangers can.",
        "scene": "first-balloon"
       },
       {
        "who": "vale",
-       "text": "Research Anti-air guns at the Command core, and every tower will shoot at the sky.",
+       "text": "Research Anti-air guns at the Command core. Towers will shoot up.",
        "scene": "first-balloon"
       },
       {
        "who": "okoro",
-       "text": "Our Foundry crew drew a gunship from the Ashfall wrecks. A level 3 core can build Hawks for us."
+       "text": "We copied a gunship from Ashfall! Level 3 cores build Hawks."
       },
       {
        "who": "okoro",
-       "text": "Kites in front! Spotters. They count your guns for the balloons behind them."
+       "text": "Kites in front! They count your guns."
       },
       {
        "who": "okoro",
-       "text": "The refinery is burning! Shoot the balloons down first, Commander. I can mend the rest."
+       "text": "The refinery is burning! Shoot the balloons first!"
       },
       {
        "who": "hale",
-       "text": "You kept our alloy on the Ashen Line. I am collecting it tonight, Commander, from the air."
+       "text": "You kept our alloy. Tonight I collect it."
       },
       {
        "who": "hale",
-       "text": "You returned our alloy once. I aim at the refinery, not at your people. That is all I can offer."
+       "text": "You returned our alloy. I aim only at the refinery."
       },
       {
        "who": "vale",
-       "text": "Three raids beaten. The balloons rise from a yard on the east rim. Burn it before Hale builds more."
+       "text": "Three raids beaten. Their balloon yard is on the east rim."
       },
       {
        "who": "hale",
-       "text": "My yard is burning. Noted, Commander. Two weeks of work, gone in one evening."
+       "text": "My yard is burning. Noted. Two weeks of work, gone."
       },
       {
        "who": "okoro",
-       "text": "The yard is down! No more balloons tonight. And look, the cloth is Sunward silk."
+       "text": "No more balloons! And look, Sunward silk!"
       }
      ]
     }
@@ -685,19 +664,19 @@
      "lines": [
       {
        "who": "vale",
-       "text": "Send a Ranger up the ramp first, Commander, then build on the hill."
+       "text": "Send a Ranger up the ramp, then build on top."
       },
       {
        "who": "hale",
-       "text": "My column is on the ridge road. Your hill will not stop me."
+       "text": "My column takes the ridge road. Your hill will not help."
       },
       {
        "who": "okoro",
-       "text": "That is the last column, and the biggest. Keep the guns on the hill firing."
+       "text": "The last column is the biggest! Keep firing!"
       },
       {
        "who": "vale",
-       "text": "The ridge is ours. High ground wins fights before they start."
+       "text": "The ridge is ours. High ground wins the early fights."
       }
      ]
     }
@@ -711,7 +690,7 @@
      "lines": [
       {
        "who": "vale",
-       "text": "A troop truck is crossing toward the base. Shoot it before it unloads: the squad dies with the truck."
+       "text": "A troop truck! Shoot it before it unloads."
       },
       {
        "who": "hale",
@@ -731,56 +710,51 @@
       },
       {
        "who": "vale",
-       "text": "You have about three minutes before the first wave. Towers east of the relay, Commander."
+       "text": "Three minutes to the first wave. Build towers east."
       },
       {
        "who": "vale",
-       "text": "Here they come, both armies together. Hold the line at the towers."
+       "text": "Both armies at once. Hold at the towers."
       },
       {
        "who": "sol",
-       "text": "The Pact says your relay dries my wells, Commander. Prove me wrong or stand aside."
+       "text": "They say your relay dries my wells. Is it true?"
       },
       {
        "who": "vale",
-       "text": "Breakers on the ridge, shelling range in a moment. Sally out or they grind the towers down."
+       "text": "Breakers on the ridge! Sally out, or lose the towers."
       },
       {
        "who": "okoro",
-       "text": "The circuit map is drawing! Every relay shares one line. Vale, send it to everyone. Now!"
-      }
-     ]
-    },
-    {
-     "name": "story-m07-2",
-     "lines": [
+       "text": "Every relay shares one line! Vale, send this map out!"
+      },
       {
        "who": "vale",
-       "text": "All camps, this is Meridian. Nobody stole your power. Look at the map we are sending."
+       "text": "All camps, nobody stole your power. Read the map."
       },
       {
        "who": "hale",
-       "text": "I have seen it. It changes nothing. I need the power tonight, not the truth."
+       "text": "I have seen it. I need power, not truth."
       },
       {
        "who": "hale",
-       "text": "I have seen it. You returned our alloy on the Ashen Line, so I send fewer guns tonight. Not none."
+       "text": "I have seen it. For our alloy, fewer guns tonight."
       },
       {
        "who": "okoro",
-       "text": "The relay is cracking! Engineers on it, please, before the tuning breaks!"
+       "text": "The relay is cracking! Engineers, please, quickly!"
       },
       {
        "who": "sol",
-       "text": "Director, I read that map. If it is true, I have been fighting the wrong camp."
+       "text": "If that map is true, I fought the wrong camp."
       },
       {
        "who": "hale",
-       "text": "Then stand aside, Captain. My last wave does not need you."
+       "text": "Then stand aside, Captain. My last wave needs nobody."
       },
       {
        "who": "vale",
-       "text": "One minute, Commander. Everything you have, around the relay."
+       "text": "One minute. Everything you have, around the relay."
       },
       {
        "who": "okoro",
@@ -788,7 +762,7 @@
       },
       {
        "who": "vale",
-       "text": "Two Pact scouts on the road, checking our towers before the siege. Let the towers answer."
+       "text": "Two scouts from the Pact are testing our towers."
       }
      ]
     }
@@ -802,43 +776,43 @@
      "lines": [
       {
        "who": "vale",
-       "text": "Pads line the whole road, Commander. Crew the lower ones first. The column starts at the bottom."
+       "text": "Crew the lower pads first. They climb from below."
       },
       {
        "who": "hale",
-       "text": "Meridian. That plateau is not on your schedule. My columns will clear it by nightfall."
+       "text": "Meridian. That plateau is not on your schedule."
       },
       {
        "who": "okoro",
-       "text": "First reading! The lines bend south and west, toward the ash plains."
+       "text": "First reading! The lines bend toward the ash plains."
       },
       {
        "who": "okoro",
-       "text": "Second reading. They cross under the old Ashfall camp. Something is buried there, Commander."
+       "text": "Second reading! Something is buried under the Ashfall camp."
       },
       {
        "who": "vale",
-       "text": "A long Scrapper column on the road. Breaker crews where the road bends, please."
+       "text": "Scrappers on the road. Breaker crews where it bends."
       },
       {
        "who": "vale",
-       "text": "A Kite over the gorge. Ranger and Anti-tank crews can shoot it down. Breaker crews cannot."
+       "text": "A Kite over the gorge. Rangers and Anti-tank crews, fire!"
       },
       {
        "who": "okoro",
-       "text": "Third reading. It is a Builder vault, and the Lattice keeps a key inside it."
+       "text": "Third reading. A Builder vault, with a key inside!"
       },
       {
        "who": "hale",
-       "text": "I have counted your towers, Commander. I am sending a tank for each of them."
+       "text": "I have counted your towers. One tank for each."
       },
       {
        "who": "vale",
-       "text": "Last column. Everything Hale has left on this road. Hold the top, Commander."
+       "text": "Last column, everything Hale has left. Hold the top."
       },
       {
        "who": "okoro",
-       "text": "Balloons behind the column, the same as over the basin! Keep a Ranger crew near the top."
+       "text": "Balloons behind the column! Keep Rangers near the top."
       }
      ]
     }
@@ -852,63 +826,58 @@
      "lines": [
       {
        "who": "vale",
-       "text": "Squad is down. Nearest jammer is north of you, on the open ground. Quietly, Commander."
+       "text": "Squad is down. The nearest jammer is north. Quietly."
       },
       {
        "who": "okoro",
-       "text": "Four guards. They have not seen us. Breaker first, then Rangers, please."
+       "text": "Four guards, not looking. Breaker first, then Rangers."
       },
       {
        "who": "vale",
-       "text": "That post has a Sentinel tower. It outranges your Breaker. Rush it with Vanguards or go round."
+       "text": "That Sentinel tower outranges your Breaker. Rush it."
       },
       {
        "who": "okoro",
-       "text": "I am hit! Not badly. Fairly badly. A Medic, Commander, if one is free."
+       "text": "I am hit! Not badly. Fairly badly. A Medic?"
       },
       {
        "who": "okoro",
-       "text": "All three jammers are down. The vault is listening again. Take me to the door!"
+       "text": "All three jammers are down! To the door!"
       },
       {
        "who": "echo",
-       "text": "Door open. This one is ECHO, caretaker of the Lattice. You are the first to ask in 412 years.",
+       "text": "Door open. This one is ECHO. First visitors in 412 years.",
        "scene": "echo-wakes"
       },
       {
        "who": "echo",
-       "text": "The Builders did not fall. They left, and set the Lattice to sleep so the crystal could regrow.",
+       "text": "The Builders did not fall. They left.",
        "scene": "echo-wakes"
       },
       {
        "who": "echo",
-       "text": "A man in a grey coat took the Keystone key nine days ago. He means to draw all the power at once.",
+       "text": "A grey coat took the Keystone key. He wants all the power.",
        "scene": "echo-wakes"
-      }
-     ]
-    },
-    {
-     "name": "story-m08-2",
-     "lines": [
-      {
-       "who": "vale",
-       "text": "The whole camp is awake. Do not stand and fight, Commander. Get Okoro out the way you came."
       },
       {
        "who": "vale",
-       "text": "Their depot is burning. Hale's next march will start a day late. Well done."
+       "text": "The camp is awake. Get Okoro out."
+      },
+      {
+       "who": "vale",
+       "text": "Their depot is burning. Hale marches a day late."
       },
       {
        "who": "okoro",
-       "text": "A Builder guardian. It is not asleep, Commander, it is waiting. The old door notes say it tests whoever comes."
+       "text": "A Builder guardian! It tests everyone who comes."
       },
       {
        "who": "vale",
-       "text": "It will not move unless we strike it. Your call. Order an attack on it if you want the test."
+       "text": "It only moves when struck. Attack to take the test."
       },
       {
        "who": "okoro",
-       "text": "It is standing up. Commander, do not try to destroy it. Show it we can fight, and it should kneel.",
+       "text": "It is standing! Do not destroy it. Show strength.",
        "scene": "vault-sentinel"
       },
       {
@@ -917,11 +886,11 @@
       },
       {
        "who": "vale",
-       "text": "The guardian is walking with the squad. Keep it next to Okoro and let it take the hits."
+       "text": "The guardian walks with us. Keep it by Okoro."
       },
       {
        "who": "okoro",
-       "text": "We are out. And ECHO came with us. It is in my slate, counting my files."
+       "text": "We made it out, and ECHO came too!"
       }
      ]
     }
@@ -935,80 +904,75 @@
      "lines": [
       {
        "who": "sol",
-       "text": "My beacon is the gold light in the south-east. We can hold a while. Not a long while."
+       "text": "My beacon is the gold light. Hurry!"
       },
       {
        "who": "hale",
-       "text": "Captain Sol. A pact is a schedule. You broke it. I am sorry for what follows."
+       "text": "Captain Sol. You broke the pact. I regret this."
       },
       {
        "who": "sol",
-       "text": "You came. You warned me and I did not listen. The Caravan pays its debts. We ride with you."
+       "text": "You came. I did not listen. The Caravan pays its debts."
       },
       {
        "who": "sol",
-       "text": "You came. You shared the forest light when you did not have to. The Caravan pays its debts twice."
+       "text": "For the forest light, we pay you back twice."
       },
       {
        "who": "sol",
-       "text": "You let me ride out of the dunes. I remember. The Caravan sends two hundred alloy and every Rider it has."
+       "text": "You let me go. Take two hundred alloy, and my Riders."
       },
       {
        "who": "sol",
-       "text": "Hale's road to my camp runs under the dune plateau. Take the top, and his columns must climb to you."
+       "text": "Take the dune plateau. Hale's columns must climb to you."
       },
       {
        "who": "sol",
-       "text": "The beacon is breaking! Commander, if it falls my people have no road home."
+       "text": "The beacon is breaking! It is our road home!"
       },
       {
        "who": "sol",
-       "text": "The shelling has stopped. Children are coming out of the wagons. Thank you."
+       "text": "The shelling has stopped. The children are safe."
       },
       {
        "who": "vale",
-       "text": "Ashfall is hitting our camp too. He wants to keep us apart. Do not let him."
-      }
-     ]
-    },
-    {
-     "name": "story-m09-2",
-     "lines": [
+       "text": "Ashfall is hitting our camp too. Stay together."
+      },
       {
        "who": "vale",
-       "text": "We hold the top. Keep the troops deep on the plateau: from the sand below they cannot see us."
+       "text": "We hold the top. Keep back from the edge."
       },
       {
        "who": "hale",
-       "text": "You have met ECHO, I think. Then meet its Wardens. The key commands them now."
+       "text": "You have met ECHO. Now meet the Wardens."
       },
       {
        "who": "echo",
-       "text": "Those are the first patterns. Every unit on this world is a copy of them. This one is sorry."
+       "text": "The first patterns. Every unit copies them. This one is sorry."
       },
       {
        "who": "sol",
-       "text": "Machines on your camp road! My second column is at the south road. It is yours."
+       "text": "Machines on your road! My second column is yours."
       },
       {
        "who": "sol",
-       "text": "The dunes are quiet. First time in a month. Where do we go next, Commander?"
+       "text": "The dunes are quiet at last. What comes next?"
       },
       {
        "who": "vale",
-       "text": "Their camp is down as well. Hale will have to find his fuel somewhere else."
+       "text": "Their camp is down too. Hale needs fuel elsewhere."
       },
       {
        "who": "sol",
-       "text": "That is the old one's nest. My grandmother named it. Five young ones guard it, and they bite hard."
+       "text": "The nest of the old one. Five young ones guard it."
       },
       {
        "who": "sol",
-       "text": "The Elder Wyrm rides with you. In forty years nobody has tamed it. The Caravan will sing about this."
+       "text": "The Elder Wyrm rides with you! Nobody tamed it before!"
       },
       {
        "who": "vale",
-       "text": "Ashfall scouts on the sand, two of them, looking for our camp. Let the guard see them off."
+       "text": "Two scouts from Ashfall on the sand. See them off."
       }
      ]
     }
@@ -1022,11 +986,11 @@
      "lines": [
       {
        "who": "okoro",
-       "text": "A truck with six soldiers is on its way to the front. They will meet you at the muster point."
+       "text": "Six soldiers coming by truck to the muster point!"
       },
       {
        "who": "maren",
-       "text": "The storm has turned against us. The Veil yields, Commander."
+       "text": "The storm has turned. The Veil yields, Commander."
       },
       {
        "who": "maren",
@@ -1038,70 +1002,65 @@
       },
       {
        "who": "vale",
-       "text": "The west and south dampers are a short march from camp. The centre one is the hard one."
+       "text": "West and south dampers are close. The centre is far."
       },
       {
        "who": "vale",
-       "text": "Three armies, three directions. Towers on every side, Commander, and a reserve in the middle."
+       "text": "Three armies, three directions. Towers on every side."
       },
       {
        "who": "maren",
-       "text": "Our first camp stood here, Commander. One relay woke and the storm took it in a night. Please stop."
+       "text": "Our first camp stood here. A storm took it overnight."
       },
       {
        "who": "echo",
-       "text": "Archivist, that storm came because one relay woke alone. In tune, the Lattice makes no storms."
+       "text": "Archivist, that relay woke alone. In tune, no storms come."
       },
       {
        "who": "maren",
-       "text": "A machine would say so. I buried forty friends on this plateau. I cannot risk more."
-      }
-     ]
-    },
-    {
-     "name": "story-m10-2",
-     "lines": [
-      {
-       "who": "maren",
-       "text": "Thank you. My crews are walking out now. I will remember who opened the door."
+       "text": "A machine would say so. I buried forty friends here."
       },
       {
        "who": "maren",
-       "text": "Then I cannot stop you. I can only ask the sky to stay clear."
+       "text": "Thank you. My crews are walking out."
+      },
+      {
+       "who": "maren",
+       "text": "Then I cannot stop you. May the sky stay clear."
       },
       {
        "who": "sol",
-       "text": "Riders on the south road, Commander! Late, dusty and ready. Put us where it is worst."
+       "text": "Riders on the south road! Late, dusty and ready!"
       },
       {
        "who": "echo",
-       "text": "The Crown is free. Stand in its circle for one minute and this one will tune it."
+       "text": "The Crown is free. Hold the circle one minute."
       },
       {
        "who": "hale",
-       "text": "All commands: the plateau centre. They must not finish."
+       "text": "All commands to the plateau centre. Stop them."
       },
       {
        "who": "echo",
-       "text": "Tuning. Sixty relays are answering. Sixty-one. Hold the circle."
+       "text": "Tuning. Sixty relays answer. Sixty-one. Hold the circle."
       },
       {
        "who": "vale",
-       "text": "Fifteen minutes. Their siege corps has heavy machines now. Anti-tank soldiers to the front."
+       "text": "Fifteen minutes. Heavy machines now. Anti-tank to the front."
       },
       {
        "who": "echo",
-       "text": "Sixty-four relays in tune. Look up, Archivist. The sky is quiet.",
+       "text": "Sixty-four relays in tune. Look up, Archivist.",
        "scene": "crown-lights"
       },
       {
        "who": "maren",
-       "text": "The Crown is lit and the sky is clear. No storm. In thirty years I never once saw that.",
+       "text": "The Crown is lit, with no storm. Never before.",
        "scene": "crown-lights"
       },
       {
        "who": "vale",
-       "text": "Warden sentries are probing the storm line, two of them. The towers will see to it."
+       "text": "Two Warden sentries at the storm line. Towers will answer."
       }
      ]
     }
@@ -1115,7 +1074,7 @@
      "lines": [
       {
        "who": "vale",
-       "text": "Scout the ramps first. A Breaker below the rim can still reach the towers."
+       "text": "Scout the ramps. Breakers below can hit the towers."
       },
       {
        "who": "echo",
@@ -1127,7 +1086,7 @@
       },
       {
        "who": "okoro",
-       "text": "Get a tower up on the crown now, before their column climbs the ramps."
+       "text": "Build a tower on the crown, now, before they climb!"
       }
      ]
     }
@@ -1141,23 +1100,23 @@
      "lines": [
       {
        "who": "vale",
-       "text": "A troop truck is crossing toward the base. Shoot it before it unloads: the squad dies with the truck."
+       "text": "A troop truck! Shoot it before it unloads."
       },
       {
        "who": "vale",
-       "text": "The clock is running, Commander. Build as you march. The middle conduit is nearest the ford."
+       "text": "The clock is running. Build as you march."
       },
       {
        "who": "vale",
-       "text": "Wardens and Ashfall together, on our camp. Hold with towers. The army keeps moving."
+       "text": "Wardens and Ashfall on our camp. Towers will hold."
       },
       {
        "who": "sol",
-       "text": "Ford ahead. Go over in one group, Commander. A thin line gets cut in the water."
+       "text": "Cross the ford together. Thin lines get cut."
       },
       {
        "who": "echo",
-       "text": "One conduit cut. The draw is slower by a third. This one can feel the fields breathe."
+       "text": "One conduit cut. The draw slows by a third."
       },
       {
        "who": "hale",
@@ -1165,33 +1124,33 @@
       },
       {
        "who": "okoro",
-       "text": "West conduit is scrap! The crystals near it have stopped fading."
+       "text": "The west conduit is scrap! The crystals stopped fading."
       },
       {
        "who": "hale",
-       "text": "You have cost me a day. I have forty thousand reasons to take it back."
+       "text": "You cost me a day. I have forty thousand reasons."
       },
       {
        "who": "vale",
-       "text": "Ten minutes left. Sol is sending you her reserve. Use it for the last conduit."
+       "text": "Ten minutes. Sol sends her reserve. Last conduit."
       },
       {
        "who": "echo",
-       "text": "Four minutes. The oldest crystals are turning to dust. Please hurry, Commander."
+       "text": "Four minutes. The oldest crystals are turning to dust."
       },
       {
        "who": "echo",
-       "text": "The north conduit is dark. The Lattice is tired, but it is whole. Thank you.",
+       "text": "The north conduit is dark. The Lattice is whole.",
        "scene": "draw-cut"
       },
       {
        "who": "hale",
-       "text": "Three conduits cut. My schedule has lost a day, Commander. The engine on the Keystone has not.",
+       "text": "Three conduits cut. I lost a day. The engine did not.",
        "scene": "draw-cut"
       },
       {
        "who": "vale",
-       "text": "Ashfall scouts between the rivers, two of them. Hale wants to know how many we brought."
+       "text": "Two Ashfall scouts between the rivers. Hale counts us."
       }
      ]
     }
@@ -1205,47 +1164,47 @@
      "lines": [
       {
        "who": "vale",
-       "text": "Pads and fields on all three roads, Commander. Crew the basin first, and send armour where the line is thin."
+       "text": "Pads on all three roads. Crew the basin first."
       },
       {
        "who": "okoro",
-       "text": "Echo counts the quiet in waves. Ten of them, and the southern relays are tuned for good."
+       "text": "Hold ten waves, and the south is tuned for good!"
       },
       {
        "who": "hale",
-       "text": "Meridian. Every road to the keystone is mine until my fleet is fed. Stand aside."
+       "text": "Meridian. These roads are mine until my fleet is fed."
       },
       {
        "who": "okoro",
-       "text": "Two waves down and the relays hum. Keep the roads shut, Commander."
+       "text": "Two waves down. Keep the roads shut!"
       },
       {
        "who": "vale",
-       "text": "Two Gunner teams from the Field workshop, Commander. Put them where the Scrappers bunch up."
+       "text": "Two Gunner teams. Place them where Scrappers bunch up."
       },
       {
        "who": "sol",
-       "text": "Warden Rangers on the north road. Gunners pin them in the open, and your crews do the rest."
+       "text": "Warden Rangers on the north road. Gunners pin, crews finish."
       },
       {
        "who": "okoro",
-       "text": "Halfway. A Gunner holds a whole column in place while it is shot. Nobody enjoys being pinned."
+       "text": "Halfway! One Gunner pins a whole column in place."
       },
       {
        "who": "hale",
-       "text": "Walkers from the Wardens' yards lead this column. Bought, not borrowed. See how you like them."
+       "text": "Walkers from the Warden yards come first. Bought, not borrowed."
       },
       {
        "who": "vale",
-       "text": "Walkers outrange a Battle tank. Anti-tank crews, and flank them with armour."
+       "text": "Walkers outrange tanks. Use Anti-tank crews and flank them."
       },
       {
        "who": "echo",
-       "text": "Eight in tune. The Lattice is tired, but it is listening. Two more."
+       "text": "Eight in tune. The Lattice is listening. Two more."
       },
       {
        "who": "vale",
-       "text": "Last wave, and everything Hale has left. Hold the basin, Commander."
+       "text": "Last wave, everything Hale has left. Hold the basin."
       }
      ]
     }
@@ -1259,49 +1218,49 @@
      "lines": [
       {
        "who": "vale",
-       "text": "Two towers on the line and a squad behind them, Commander. Build up while it is still far away."
+       "text": "Two towers and a squad hold the line. Build up."
       },
       {
        "who": "okoro",
-       "text": "Ashfall crews are standing at three old relay posts. Whatever they wait for, it is coming from the north."
+       "text": "Ashfall crews wait at three old relays. Something comes north."
       },
       {
        "who": "okoro",
-       "text": "My Kite is over the north road. Whatever comes down it, we will see it first."
+       "text": "My Kite watches the north road. We see first."
       },
       {
        "who": "okoro",
-       "text": "The relays woke with it. One sits south of the river, by the old pump: that one is the easy one."
+       "text": "The relays woke with it. The south one is easiest."
       },
       {
        "who": "okoro",
-       "text": "There it is, coming down from the Keystone. Hale gave the Sovereign legs that walk, not just legs that stand.",
+       "text": "There it is! Hale gave the Sovereign walking legs!",
        "scene": "sovereign-walks"
       },
       {
        "who": "hale",
-       "text": "Meridian. My Sovereign walks to your camp, and my relays carry its shield. Nothing you own can stop it.",
+       "text": "My Sovereign walks to your camp. My relays shield it.",
        "scene": "sovereign-walks"
       },
       {
        "who": "okoro",
-       "text": "That relay is failing. When the last one goes dark, its shield goes with it."
+       "text": "That relay is failing. The last one takes the shield."
       },
       {
        "who": "okoro",
-       "text": "Last relay down! Its shield is gone. Everything on the Sovereign now, Commander."
+       "text": "Last relay down! Shield gone! Everything on the Sovereign!"
       },
       {
        "who": "hale",
-       "text": "Then it walks without a shield. It has walked through worse than you."
+       "text": "Then it walks without a shield. It has survived worse."
       },
       {
        "who": "okoro",
-       "text": "It has stopped! The core is running hot. New guns, Commander: a long rail and a ring of shells."
+       "text": "It stopped! The core runs hot. New guns too!"
       },
       {
        "who": "vale",
-       "text": "Same rule as before. Watch the red, step out, and keep shooting."
+       "text": "Same rule. Step off the red ground and keep shooting."
       },
       {
        "who": "hale",
@@ -1309,11 +1268,11 @@
       },
       {
        "who": "okoro",
-       "text": "It is down, and it will not walk again. I am sorry, old machine."
+       "text": "It is down for good. Sorry, old machine."
       },
       {
        "who": "hale",
-       "text": "My last walker. Very well, Commander. The Keystone will decide the rest."
+       "text": "My last walker. Very well. The Keystone will decide."
       }
      ]
     }
@@ -1327,54 +1286,54 @@
      "lines": [
       {
        "who": "okoro",
-       "text": "A truck with six soldiers is on its way to the front. They will meet you at the muster point."
+       "text": "Six soldiers coming by truck to the muster point!"
       },
       {
        "who": "hale",
-       "text": "You spared my crews at the siege. Ashfall sends three hundred alloy. I am not a man who forgets."
+       "text": "You spared my crews. Ashfall sends three hundred alloy."
       },
       {
        "who": "maren",
-       "text": "You let me walk my crews out of the storm. The Veil sends two hundred energy, and my records."
+       "text": "You saved my crews. The Veil sends two hundred energy."
       },
       {
        "who": "vale",
-       "text": "Three armies will arrive inside four minutes. Towers and Rangers first. Nothing leaves camp yet."
+       "text": "Three armies in four minutes. Towers and Rangers first."
       },
       {
        "who": "sol",
-       "text": "Here they come, from three sides! Caravan, stand with Meridian. Not one step back."
+       "text": "Here they come, from three sides! Caravan, stand with Meridian!"
       },
       {
        "who": "vale",
-       "text": "The first offensive is broken. Now north, across the ford, to the engine."
+       "text": "The first offensive is broken. North, to the engine."
       },
       {
        "who": "sol",
-       "text": "My heavy wagons have arrived, Commander. Breakers and a tank. Spend them well."
+       "text": "My heavy wagons are here. Spend them well, Commander."
       },
       {
        "who": "maren",
-       "text": "Commander. The Veil has read Hale's engine for a week. Every reading says the same: it empties the Lattice.",
+       "text": "A week of readings. Hale's engine empties the Lattice.",
        "scene": "veil-turns"
       },
       {
        "who": "lind",
-       "text": "Teo Lind, Veil Shades. Half my crews walked off his line this morning. The rest are watching what you do next.",
+       "text": "Teo Lind here, captain of the Veil Shades. Half my crews left his line.",
        "scene": "veil-turns"
       },
       {
        "who": "vale",
-       "text": "Then let them watch. Every Shade who stands aside today is one gun fewer at the engine.",
+       "text": "Then let them watch. Every idle Shade is one gun fewer.",
        "scene": "veil-turns"
       },
       {
        "who": "lind",
-       "text": "You spared the Archivist. Two of my Stalkers are yours, Commander. They shoot healers first."
+       "text": "You spared the Archivist. Two Stalkers are yours."
       },
       {
        "who": "hale",
-       "text": "Commander. You would do the same for forty thousand of yours. Do not tell me otherwise."
+       "text": "You would do the same for forty thousand of yours."
       }
      ]
     },
@@ -1383,64 +1342,64 @@
      "lines": [
       {
        "who": "vale",
-       "text": "Director, tuned, the Keystone feeds your fleet for good. Your way feeds it for one year."
+       "text": "Director, a tuned Keystone feeds your fleet forever."
       },
       {
        "who": "hale",
-       "text": "A year I can count. A promise I cannot. Wardens: their camp."
+       "text": "A year I can count. A promise, I cannot. Attack."
       },
       {
        "who": "maren",
-       "text": "I watched the Crown light without a storm. All Veil commands: stand down. I was wrong."
+       "text": "The Crown lit without a storm. The Veil stands down."
       },
       {
        "who": "maren",
-       "text": "You let my crews walk out of the dampers. Now I walk out of this war. All Veil commands: stand down."
+       "text": "You freed my crews. Now I leave this war."
       },
       {
        "who": "echo",
-       "text": "Thank you, Archivist. I have unlocked your old camp records. Your friends are named in them."
+       "text": "Thank you, Archivist. Your old camp records are open."
       },
       {
        "who": "echo",
-       "text": "Ten minutes of Lattice left. I can hear the far relays going quiet, one by one."
+       "text": "Ten minutes of Lattice left. Far relays go quiet."
       },
       {
        "who": "vale",
-       "text": "Four minutes, Commander. Forget the camps. Everything on the engine!"
+       "text": "Four minutes. Forget the camps. Everything on the engine!"
       },
       {
        "who": "sol",
-       "text": "Every camp broken! You are thorough, Commander. I am glad we are friends now."
+       "text": "Every camp broken! I am glad we are friends."
       },
       {
        "who": "echo",
-       "text": "The engine is silent. Tuning the Keystone. One hundred and eight relays are answering.",
+       "text": "The engine is silent. One hundred and eight relays answer.",
        "scene": "keystone-held"
       },
       {
        "who": "vale",
-       "text": "Meridian towers on every road to the Keystone. It is ours to guard now, Commander.",
+       "text": "Meridian towers on every Keystone road. Ours to guard.",
        "scene": "keystone-held"
       },
       {
        "who": "echo",
-       "text": "The engine is silent. Tuning the Keystone for every camp. One hundred and eight relays are answering.",
+       "text": "The engine is silent. Tuning the Keystone for all.",
        "scene": "keystone-open"
       },
       {
        "who": "sol",
-       "text": "Four camps, one circuit. I can see the dunes glowing from here, Commander.",
+       "text": "Four camps, one circuit. The dunes are glowing!",
        "scene": "keystone-open"
       },
       {
        "who": "echo",
-       "text": "I can see every camp from here. All of them are lit.",
+       "text": "I can see every camp from here. All lit.",
        "scene": "keystone-open"
       },
       {
        "who": "vale",
-       "text": "Their scouts come first. Two Scrappers on the road. Let the towers take them; the armies come later."
+       "text": "Two Scrapper scouts first. Let the towers take them."
       }
      ]
     }
@@ -1454,31 +1413,31 @@
      "lines": [
       {
        "who": "hale",
-       "text": "The Harvesters are cutting, Foreman. A Salvage yard first: wrecks pay better than rock."
+       "text": "Build a Salvage yard, Foreman. Wrecks pay better than rock."
       },
       {
        "who": "hale",
-       "text": "Yard standing. Every machine that falls near it is alloy for the fleet. Theirs and ours."
+       "text": "Yard standing. Every machine falling near it is alloy."
       },
       {
        "who": "hale",
-       "text": "Riders on the plain. They come for the Harvesters. Let the towers greet them."
+       "text": "Riders on the plain, after the Harvesters. Towers, please."
       },
       {
        "who": "sol",
-       "text": "Director's people! Those wrecks lay in the sand for four hundred years. Nobody owns a wreck."
+       "text": "Those wrecks lay here four hundred years. Nobody owns them!"
       },
       {
        "who": "hale",
-       "text": "Captain Sol. My sleepers own it. Foreman, carry on."
+       "text": "Captain Sol. My sleepers own them. Foreman, carry on."
       },
       {
        "who": "hale",
-       "text": "Ten minutes. The fleet reports at the hour. I would like to tell them good news."
+       "text": "Ten minutes. The fleet reports at the hour."
       },
       {
        "who": "sol",
-       "text": "Keep your wrecks, Director. The dunes are ours, and we will remember the road you took."
+       "text": "Keep your wrecks, Director. The dunes remember."
       }
      ]
     }
@@ -1492,39 +1451,39 @@
      "lines": [
       {
        "who": "hale",
-       "text": "Their camp is young, Foreman, and so are their towers. Strike before they learn the ground."
+       "text": "Their camp and towers are young, Foreman. Strike now."
       },
       {
        "who": "hale",
-       "text": "Meridian is answering. Hold at our bank, then cross while they count their losses."
+       "text": "Hold our bank, then cross while they count losses."
       },
       {
        "who": "vale",
-       "text": "Ashfall on our bank. Director, we took nothing from you. We only woke a relay."
+       "text": "Director, we took nothing. We only woke a relay."
       },
       {
        "who": "hale",
-       "text": "Then you will not miss it, Commander. Foreman, proceed."
+       "text": "Then you will not miss it. Foreman, proceed."
       },
       {
        "who": "hale",
-       "text": "Both towers down. Into the circle, Foreman. One minute, and their light goes out."
+       "text": "Both towers down. Into the circle, Foreman. One minute."
       },
       {
        "who": "hale",
-       "text": "They took the circle back. Clear it, Foreman. A schedule is a promise."
+       "text": "They retook the circle. Clear it, Foreman."
       },
       {
        "who": "hale",
-       "text": "Twelve minutes. Their Foundry will be printing Breakers soon. Finish it."
+       "text": "Twelve minutes. Their Foundry will print Breakers soon."
       },
       {
        "who": "okoro",
-       "text": "They are shutting our relay down! Commander, it is going dark. Strange: their lights should come back now."
+       "text": "They are shutting our relay down! Strange."
       },
       {
        "who": "hale",
-       "text": "The relay is dark. Fleet, report your power. Up a third? Thank you."
+       "text": "The relay is dark. Fleet power is up."
       }
      ]
     }
@@ -1538,23 +1497,23 @@
      "lines": [
       {
        "who": "hale",
-       "text": "First column in thirty seconds, Foreman. Crew the pads nearest the bottom of the road."
+       "text": "First column in thirty seconds. Crew the lowest pads."
       },
       {
        "who": "vale",
-       "text": "Ashfall towers on every bend. Director, we only want the vault records you took. Let us pass."
+       "text": "Director, we only want the vault records. Let us pass."
       },
       {
        "who": "hale",
-       "text": "Commander, you want the Keystone. So do I. The difference is that I am counting forty thousand."
+       "text": "You want the Keystone. So do I, for forty thousand."
       },
       {
        "who": "hale",
-       "text": "Heavy machines in the next columns. Anti-tank posts on the upper bends, Foreman."
+       "text": "Heavy machines come next. Put Anti-tank posts on the upper bends."
       },
       {
        "who": "hale",
-       "text": "The gorge held. The berth cores are safe for another month. Thank you, Foreman."
+       "text": "The gorge held. The cores are safe another month."
       }
      ]
     }
@@ -1568,43 +1527,43 @@
      "lines": [
       {
        "who": "hale",
-       "text": "The bridge camp is nearest, Foreman. Cross at the south bridge and start there."
+       "text": "The bridge camp is nearest. Cross the south bridge."
       },
       {
        "who": "hale",
-       "text": "Riders on our road. It seems the Captain collects her tolls in person. Towers, please."
+       "text": "Riders on our road. Towers, please, Foreman."
       },
       {
        "who": "hale",
-       "text": "The fleet has sent a salvage truck of Scrappers, Foreman. Let it reach the front."
+       "text": "A Scrapper truck from the yard. Get it through."
       },
       {
        "who": "sol",
-       "text": "Director's Foreman! Every wagon on this road pays the Caravan. Yours too."
+       "text": "Every wagon on this road pays the Caravan. Yours too."
       },
       {
        "who": "hale",
-       "text": "I pay what I owe, Captain. A toll on berth cores I do not owe."
+       "text": "I pay what I owe, Captain. Not tolls on cores."
       },
       {
        "who": "hale",
-       "text": "Both camps are down. The Captain waits at the forest relay. Bring her to terms, Foreman."
+       "text": "Both camps down. The Captain waits at the forest."
       },
       {
        "who": "sol",
-       "text": "Enough! The road is open, Foreman. Tell your Director the Caravan has paid its toll."
+       "text": "Enough! The road is open. The Caravan has paid."
       },
       {
        "who": "hale",
-       "text": "Let her ride home, Foreman. Ashfall keeps its debts as well as she keeps hers."
+       "text": "Let her ride home. Ashfall keeps its debts too."
       },
       {
        "who": "hale",
-       "text": "Eleven minutes. The cores are waiting at the river, Foreman, and so am I."
+       "text": "Eleven minutes. The cores wait at the river."
       },
       {
        "who": "hale",
-       "text": "The road is ours and the Captain rode home. I would rather owe her a courtesy than a funeral."
+       "text": "The road is ours. A courtesy beats a funeral."
       }
      ]
     }
@@ -1618,31 +1577,31 @@
      "lines": [
       {
        "who": "sol",
-       "text": "The centre oasis is the nearest, and its pump is the most lightly guarded. Start there."
+       "text": "The centre oasis is nearest and lightly guarded."
       },
       {
        "who": "sol",
-       "text": "Scrappers on the dunes, heading for our wells. Keep a guard at camp, Wagon-master."
+       "text": "Scrappers are heading for our wells. Guard the camp."
       },
       {
        "who": "sol",
-       "text": "A Waystation! Shields mend three times faster beside it. My grandmother would be proud."
+       "text": "That is a Waystation! Shields mend three times faster here."
       },
       {
        "who": "hale",
-       "text": "Caravan. These pumps run on a schedule that keeps forty thousand people alive. Leave them."
+       "text": "These pumps keep forty thousand people alive. Leave them."
       },
       {
        "who": "sol",
-       "text": "And my wells keep four thousand alive, Director. Every one of them a guest at my table."
+       "text": "My wells keep four thousand alive, Director."
       },
       {
        "who": "sol",
-       "text": "Eleven minutes, and the water is still dropping. Faster, Wagon-master."
+       "text": "Eleven minutes, and the water is still dropping. Faster!"
       },
       {
        "who": "sol",
-       "text": "All three pumps are sand. Listen: the wells are filling again."
+       "text": "All three pumps are sand. The wells are filling."
       }
      ]
     }
@@ -1656,39 +1615,39 @@
      "lines": [
       {
        "who": "sol",
-       "text": "The centre oasis first, Wagon-master. Then north or east, whichever guard is weaker."
+       "text": "Take the centre oasis first. Then the weaker guard."
       },
       {
        "who": "vale",
-       "text": "Captain Sol. We came to light relays, not to take your water. Can we talk?"
+       "text": "Captain Sol, we came for relays, not water."
       },
       {
        "who": "sol",
-       "text": "You lit an oasis and my wells dropped the same hour. Talk is cheap. Water is not."
+       "text": "You lit an oasis and my wells dropped."
       },
       {
        "who": "hale",
-       "text": "The north oasis feeds my last siphon, Captain. I will take it back."
+       "text": "The north oasis feeds my last siphon. I want it."
       },
       {
        "who": "sol",
-       "text": "Raiders on our camp. Half home, half on the oases. A caravan guards its wagons."
+       "text": "Raiders on our camp! Half home, half on the oases."
       },
       {
        "who": "hale",
-       "text": "Captain Sol. Every relay Meridian lights, we both lose power. A truce, until they are gone?"
+       "text": "Captain Sol. Meridian drains us both. A truce?"
       },
       {
        "who": "sol",
-       "text": "I do not like you, Director. But my wells are dropping. Agreed, for today."
+       "text": "I do not like you, Director. But agreed, for today."
       },
       {
        "who": "sol",
-       "text": "Five minutes of daylight left. Two oases, one minute. Ride, Wagon-master!"
+       "text": "Five minutes of light. Hold two oases one minute!"
       },
       {
        "who": "sol",
-       "text": "Two oases held. The wells are steady. And Hale owes me a truce. Interesting."
+       "text": "Both oases are ours. And Hale owes me a truce."
       }
      ]
     }
@@ -1702,35 +1661,35 @@
      "lines": [
       {
        "who": "sol",
-       "text": "The south bridge is ours to cross. The road camp beyond it is the first to fall."
+       "text": "Take the south bridge. The road camp falls first."
       },
       {
        "who": "sol",
-       "text": "Meridian is on the road to our camp. They fight cleanly. So do we."
+       "text": "Meridian is coming. They fight cleanly. So do we."
       },
       {
        "who": "hale",
-       "text": "Captain, my towers hold the bridge as agreed. The road beyond is yours."
+       "text": "My towers hold the bridge. The road is yours."
       },
       {
        "who": "sol",
-       "text": "Both camps are ash. Now the relay, Wagon-master, before their crawler."
+       "text": "Both camps are ash. Now the relay, before their crawler."
       },
       {
        "who": "okoro",
-       "text": "Sunward riders! Wait, please, listen. The core reads this relay and the river relay as one circuit."
+       "text": "Wait, listen! The core reads both relays as one circuit."
       },
       {
        "who": "okoro",
-       "text": "When one wakes, the others dim. Nobody is stealing anyone's power. It is all one machine!"
+       "text": "When one wakes, the others dim. One machine!"
       },
       {
        "who": "sol",
-       "text": "Fourteen minutes. Hale will ask why the road is still open. I would like an answer for him."
+       "text": "Fourteen minutes. Hale will ask why the road is open."
       },
       {
        "who": "sol",
-       "text": "One circuit. If that engineer is right, every well we lost was lost to the same machine."
+       "text": "One circuit. So every lost well went to one machine."
       }
      ]
     }
@@ -1744,47 +1703,47 @@
      "lines": [
       {
        "who": "sol",
-       "text": "The battery is on the ridge, north of the wagons. Ride up the west slope, Wagon-master."
+       "text": "The battery is on the north ridge. Go west."
       },
       {
        "who": "hale",
-       "text": "Captain Sol. A pact is a schedule. You broke it. I am sorry for what follows."
+       "text": "Captain Sol. You broke the pact. I regret this."
       },
       {
        "who": "sol",
-       "text": "Scrappers on the wagon road! Riders to the circle, and keep the children's wagons shut."
+       "text": "Scrappers on the wagon road! Riders to the circle!"
       },
       {
        "who": "sol",
-       "text": "Our wagon from the south wells is back, and full of Riders. Make room at the circle!"
+       "text": "The wagon from the south wells is back with Riders!"
       },
       {
        "who": "hale",
-       "text": "I am coming myself, Captain. Some accounts are settled in person."
+       "text": "I am coming myself. Some debts are paid in person."
       },
       {
        "who": "vale",
-       "text": "Captain Sol, this is Meridian. Our Commander is on the road to you. Hold until noon."
+       "text": "Captain Sol, our Commander is coming. Hold until noon."
       },
       {
        "who": "sol",
-       "text": "The beacon is cracking! Wagon-master, if it falls my people have no road home."
+       "text": "The beacon is cracking! Without it, we cannot go home."
       },
       {
        "who": "hale",
-       "text": "Enough, Captain. My machines are spent. I yield the ridge."
+       "text": "Enough, Captain. My machines are spent."
       },
       {
        "who": "sol",
-       "text": "Go home, Director. Count your sleepers, and tell them a Sunward captain let you walk."
+       "text": "Go home, Director. A Sunward captain let you walk."
       },
       {
        "who": "sol",
-       "text": "The shelling has stopped. The children are climbing out of the wagons. Now, the Director."
+       "text": "The shelling has stopped. The children are climbing out."
       },
       {
        "who": "sol",
-       "text": "The ridge is ours and the Director walks home. Meridian's dust is on the south road."
+       "text": "The ridge is ours. Meridian is on the south road."
       }
      ]
     }
@@ -1798,31 +1757,31 @@
      "lines": [
       {
        "who": "echo",
-       "text": "The middle rig is nearest the ford, Warden-prime. This one counts eight guards beside it."
+       "text": "The middle rig is nearest. This one counts eight guards."
       },
       {
        "who": "echo",
-       "text": "Diggers are coming to your camp. Standing order two: guard what guards the Lattice."
+       "text": "Diggers are coming. Standing order two: guard the Lattice."
       },
       {
        "who": "echo",
-       "text": "A Pylon. The Builders made them to shield the buildings around them. You remember well."
+       "text": "A Pylon. It shields the buildings around it."
       },
       {
        "who": "echo",
-       "text": "Three rigs. Zero rigs. The Keystone is quiet again. Thank you, Warden-prime."
+       "text": "Three rigs. Zero rigs. The Keystone is quiet. Thank you."
       },
       {
        "who": "hale",
-       "text": "Guardian machines? Out here? Foremen, fall back to the camp and log everything you see."
+       "text": "Guardian machines, out here? Foremen, fall back!"
       },
       {
        "who": "hale",
-       "text": "They obey a key, the old records say. Then the key is worth more than the drills."
+       "text": "The records say they obey a key."
       },
       {
        "who": "echo",
-       "text": "Twelve minutes. The drills are nine metres from the Keystone. Eight. Please hurry."
+       "text": "Twelve minutes. The drills are nine metres away. Eight."
       }
      ]
     }
@@ -1836,35 +1795,35 @@
      "lines": [
       {
        "who": "echo",
-       "text": "The south mast is a short march from your camp. The middle one stands beside the Crown."
+       "text": "The south mast is near your camp. Start there."
       },
       {
        "who": "echo",
-       "text": "Meridian machines, coming to your camp. They are copies of you, Warden-prime. Good copies."
+       "text": "Meridian machines are coming. Copies of you. Good copies."
       },
       {
        "who": "okoro",
-       "text": "Warden machines! Hale must have the key already. Commander, they are not fighting for themselves."
+       "text": "Warden machines! Hale must have the key already."
       },
       {
        "who": "vale",
-       "text": "Understood. Stop them anyway, and save the readings. We need to know what the Crown is."
+       "text": "Understood. Stop them anyway, and save the readings."
       },
       {
        "who": "hale",
-       "text": "Both masts down. Now the Crown, guardians. Stand in its circle and let no one near."
+       "text": "Both masts are down. Now hold the Crown, guardians."
       },
       {
        "who": "echo",
-       "text": "The Crown is asleep under your feet. Sixty relays are asleep with it. This one counts them all."
+       "text": "The Crown sleeps under you, with sixty relays."
       },
       {
        "who": "echo",
-       "text": "Eight minutes. Meridian is learning faster than the grey coat. That is good. And not good."
+       "text": "Eight minutes. Meridian learns faster than the grey coat."
       },
       {
        "who": "hale",
-       "text": "The Crown is held. The key works, then. I had hoped I would not need to know that."
+       "text": "The Crown is held. So the key works."
       }
      ]
     }
@@ -1878,7 +1837,7 @@
      "lines": [
       {
        "who": "hale",
-       "text": "First column at the ford in thirty seconds. Crew the pads on the north bank."
+       "text": "The first column reaches the ford in thirty seconds."
       },
       {
        "who": "vale",
@@ -1886,19 +1845,19 @@
       },
       {
        "who": "echo",
-       "text": "This one is trying. Warden-prime: the grey coat is draining the garden. Count the crystals. Then decide."
+       "text": "This one is trying. The grey coat drains the garden."
       },
       {
        "who": "hale",
-       "text": "Battle tanks on both bridges. Anti-tank posts at the far ends, guardians."
+       "text": "Tanks on both bridges. Put Anti-tank posts at the far ends."
       },
       {
        "who": "rask",
-       "text": "Juno here, on the south bank. I count the crystals with you. Twelve dark since dawn."
+       "text": "Juno here, south bank. Twelve crystals dark since dawn."
       },
       {
        "who": "echo",
-       "text": "You held. Forty crystals by the river have gone to dust while you did. This one is sorry."
+       "text": "You held. Forty crystals went to dust meanwhile."
       }
      ]
     }
@@ -1912,45 +1871,45 @@
      "lines": [
       {
        "who": "rask",
-       "text": "Two towers on the line and a squad behind them. Build while it is still far away, Warden-prime."
+       "text": "Two towers and a squad hold the line. Build early."
       },
       {
        "who": "echo",
-       "text": "Diggers on the road to the Rise. Standing order two still holds: guard what guards the Lattice."
+       "text": "Diggers on the road to the Rise."
       },
       {
        "who": "rask",
-       "text": "There it is, out of the north. Six legs, every one of them Builder work. Hale only taught it to walk.",
+       "text": "There, from the north! Hale taught it to walk.",
        "scene": "sovereign-at-the-rise"
       },
       {
        "who": "echo",
-       "text": "It is one of the old machines, Warden-prime. It has no key either. It only has orders.",
+       "text": "An old machine, with no key either. Only orders.",
        "scene": "sovereign-at-the-rise"
       },
       {
        "who": "echo",
-       "text": "The relays woke with it. The south one stands by the old pump, alone. Start there, Warden-prime."
+       "text": "The relays woke with it. Start with the south one."
       },
       {
        "who": "rask",
-       "text": "That relay is failing. When the last one goes dark, its shield goes with it."
+       "text": "That relay is failing. The last one takes the shield."
       },
       {
        "who": "rask",
-       "text": "Last relay down, and its shield is gone. Everything on it now, Warden-prime. The knees first."
+       "text": "Last relay down, shield gone. Hit the knees!"
       },
       {
        "who": "hale",
-       "text": "Guardians, you were mine nine days ago. Stand aside, and the Sovereign walks past you."
+       "text": "Guardians, you were mine nine days ago. Stand aside."
       },
       {
        "who": "echo",
-       "text": "This one counted your nine days, grey coat. They are over."
+       "text": "This one counted your nine days. They are over."
       },
       {
        "who": "rask",
-       "text": "It has stopped! Half its plating is gone. Look at it, it is turning north."
+       "text": "It has stopped! Half its plating is gone."
       },
       {
        "who": "echo",
@@ -1958,11 +1917,11 @@
       },
       {
        "who": "echo",
-       "text": "Twelve minutes. The Sovereign is eleven hundred steps from the Rise. This one is counting them."
+       "text": "Twelve minutes. The Sovereign is eleven hundred steps away."
       },
       {
        "who": "hale",
-       "text": "It turns home. Very well. Tomorrow it walks on Meridian instead."
+       "text": "It turns home. Tomorrow it walks on Meridian."
       }
      ]
     }
@@ -1976,39 +1935,39 @@
      "lines": [
       {
        "who": "maren",
-       "text": "The west beacon is closest, Surveyor. It has a tower. Let the Shades go first."
+       "text": "The west beacon is closest, with a tower. Shades first."
       },
       {
        "who": "lind",
-       "text": "Teo Lind, Shades captain. Seven Shades, five Rangers, two Watchers, three Medics. All here, Surveyor."
+       "text": "Teo Lind. Seven Shades, five Rangers, two Watchers, three Medics."
       },
       {
        "who": "maren",
-       "text": "They have not seen us. The Builders' records call this the quiet hour. Use it."
+       "text": "They have not seen us. This is the quiet hour."
       },
       {
        "who": "maren",
-       "text": "Our first camp stood here. One relay woke and the storm took it in a night. Please, be quick."
+       "text": "One relay woke here, and a storm took our camp."
       },
       {
        "who": "maren",
-       "text": "That beacon has a tower. Watchers first, so the Rangers can see what they shoot."
+       "text": "That beacon has a tower. Send the Watchers first."
       },
       {
        "who": "hale",
-       "text": "Who is on the plateau? Veil? You have cost me three nights of survey."
+       "text": "Veil, on my plateau? You cost me three nights."
       },
       {
        "who": "maren",
-       "text": "Director, a relay woken alone makes a storm. I have the record. Please read it."
+       "text": "Director, a relay that wakes alone makes a storm."
       },
       {
        "who": "maren",
-       "text": "Fourteen minutes. Dawn comes early on the plateau, Surveyor."
+       "text": "Fourteen minutes. Dawn comes early on the plateau."
       },
       {
        "who": "maren",
-       "text": "All three beacons are silent. The Crown sleeps. Come home, Surveyor."
+       "text": "All three beacons are silent. Come home."
       }
      ]
     }
@@ -2022,31 +1981,31 @@
      "lines": [
       {
        "who": "maren",
-       "text": "Cross by the south bridge. The bridge mast is nearer, the road mast is better guarded."
+       "text": "Take the south bridge. Its mast is nearer."
       },
       {
        "who": "maren",
-       "text": "Ashfall has noticed us. Towers by the camp, please. I would rather not lose the records room."
+       "text": "Ashfall has noticed us. Towers by the camp, please."
       },
       {
        "who": "maren",
-       "text": "Our relay is up. It listens, it does not wake anything. That is the difference."
+       "text": "Our relay is up. It listens and wakes nothing."
       },
       {
        "who": "maren",
-       "text": "Both masts are down. Now the relay, Surveyor. One minute in its circle, and I will have the records."
+       "text": "Both masts are down. Hold the relay one minute."
       },
       {
        "who": "maren",
-       "text": "Copying. The record names the river relay, the Basin relay, the Crown. It names them all as one."
+       "text": "Copying. The record names every relay as one."
       },
       {
        "who": "maren",
-       "text": "Fourteen minutes. Meridian's crawler is on the north road. I want these records before it arrives."
+       "text": "Fourteen minutes. Meridian's crawler is on the north road."
       },
       {
        "who": "maren",
-       "text": "One circuit. Every relay on Astra is one machine. Oh, Surveyor. That changes the storm."
+       "text": "One circuit. Every relay on Astra is one machine."
       }
      ]
     }
@@ -2060,31 +2019,31 @@
      "lines": [
       {
        "who": "maren",
-       "text": "The battery is at the plateau centre, beside the Crown. Towers by the dampers first, then go."
+       "text": "The battery is by the Crown. Towers first."
       },
       {
        "who": "maren",
-       "text": "They are coming for the dampers. Hold the line, Surveyor. Every minute walks a crew home."
+       "text": "They want the dampers. Every minute walks a crew home."
       },
       {
        "who": "sol",
-       "text": "Riders, to the south damper! Gently. There are people inside."
+       "text": "Riders, to the south damper! Gently, people are inside."
       },
       {
        "who": "echo",
-       "text": "Archivist. That storm came because one relay woke alone. In tune, the Lattice makes no storms."
+       "text": "Archivist, one relay waking alone made that storm."
       },
       {
        "who": "maren",
-       "text": "I buried forty friends on this plateau, machine. I cannot risk more."
+       "text": "I buried forty friends on this plateau, machine. No more."
       },
       {
        "who": "maren",
-       "text": "The battery is silent. Our crews can breathe. Now hold, Surveyor, until the last of them is out."
+       "text": "The battery is silent. Hold until the crews leave."
       },
       {
        "who": "maren",
-       "text": "Nine minutes. The crews are out. Let them have the dampers now. I want to watch the sky."
+       "text": "Nine minutes. The crews are out. Let the dampers go."
       }
      ]
     }
@@ -2098,51 +2057,51 @@
      "lines": [
       {
        "who": "lind",
-       "text": "The west mast is closest and lightly held. The machine sleeps by the middle one. West first, Surveyor."
+       "text": "The west mast is closest and lightly held."
       },
       {
        "who": "maren",
-       "text": "Ashfall columns on the camp road. Keep a guard at home, Surveyor. The record room is all we have."
+       "text": "Ashfall columns on the camp road. Keep a guard home."
       },
       {
        "who": "lind",
-       "text": "West mast in sight. They have not seen us yet. The Shades go first."
+       "text": "West mast in sight. They have not seen us."
       },
       {
        "who": "maren",
-       "text": "That mast is failing. Every one we break is a relay that will not be pulled awake tonight."
+       "text": "That mast is failing. Each keeps a relay asleep."
       },
       {
        "who": "lind",
-       "text": "It is awake. Twelve metres of Builder iron. Out of the red, all of you!"
+       "text": "It is awake. Twelve metres of iron. Get clear!"
       },
       {
        "who": "maren",
-       "text": "Watch its core, Surveyor. The record says it opens after every burst."
+       "text": "Watch the core. It opens after every burst."
       },
       {
        "who": "lind",
-       "text": "Its plating is cracking. It fires sooner now, but the red still gives us time."
+       "text": "Its plating is cracking. It fires sooner now."
       },
       {
        "who": "hale",
-       "text": "Veil? That machine cost me a month. You have chosen a strange night to wake up, Archivist."
+       "text": "Veil? That machine cost me a month, Archivist."
       },
       {
        "who": "maren",
-       "text": "I woke thirty years ago, Director. Tonight I am only keeping the sky quiet."
+       "text": "Tonight I am only keeping the sky quiet, Director."
       },
       {
        "who": "lind",
-       "text": "The second Vanguard is down. Four left in the record, and nobody has found them. Good."
+       "text": "The second Vanguard is down. Four more are still hidden."
       },
       {
        "who": "maren",
-       "text": "Twelve minutes. Meridian cuts the draw in two days. I want these masts gone before then."
+       "text": "Twelve minutes. Meridian cuts the draw in two days."
       },
       {
        "who": "maren",
-       "text": "Both masts are silent. The draw cannot pull the plateau now."
+       "text": "Both masts are silent. The plateau is safe."
       }
      ]
     }

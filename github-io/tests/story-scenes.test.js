@@ -197,11 +197,11 @@ test("story beats between waves: `wave` fires when that wave is beaten, `waveSta
   const s = make(HOLD_THE_RIVER), said = [];
   const hear = () => { for (const e of s.events) if (e.type === "say") said.push(e.text); s.events.length = 0; };
   for (let i = 0; i < 20 * 20; i++) { s.tick(0.05); hear(); }
-  assert.ok(said.some((t) => t.startsWith("Pads stand beside")), "the opening line");
-  assert.ok(!said.some((t) => t.startsWith("Meridian camp")), "nothing about wave 1 before it starts");
+  assert.ok(said.some((t) => t.startsWith("Tower pads line the roads")), "the opening line");
+  assert.ok(!said.some((t) => t.startsWith("That river is not yours")), "nothing about wave 1 before it starts");
   s.command({ team: 0, type: "waveCall" });
   for (let i = 0; i < 2; i++) { s.tick(0.05); hear(); }
-  assert.ok(said.some((t) => t.startsWith("Meridian camp")), "waveStart 1");
+  assert.ok(said.some((t) => t.startsWith("That river is not yours")), "waveStart 1");
   assert.ok(!said.some((t) => t.startsWith("Two stretches")), "wave 2 not beaten yet");
   s.defence.cleared = 2;
   s.tick(0.05); hear();

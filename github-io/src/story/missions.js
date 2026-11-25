@@ -52,20 +52,20 @@ export const MISSIONS = [
     win: ["relay", "reach", "hold"],
     lose: [{ type: "coreLost" }],
     triggers: [
-      { when: { time: 3 }, do: [{ say: { who: "vale", text: "The Harvesters know their work, Commander. Alloy builds everything, so let them cut." } }] },
-      { when: { time: 25 }, do: [{ say: { who: "okoro", text: "Pick a Harvester and raise a Supply relay near camp. It drinks from the old Lattice." } }] },
+      { when: { time: 3 }, do: [{ say: { who: "vale", text: "Harvesters know their work, Commander. Let them cut alloy." } }] },
+      { when: { time: 25 }, do: [{ say: { who: "okoro", text: "Pick a Harvester. Build a Supply relay near camp." } }] },
       { when: { objective: "relay", is: "done" }, do: [
-        { say: { who: "vale", text: "Supply relay online. Now take your squad to the Builder relay by the river." } },
+        { say: { who: "vale", text: "Supply relay online. Take your squad to the river." } },
         { camera: "oldRelay" }, { ping: "oldRelay" },
       ] },
       { when: { enter: "oldRelay", team: 0 }, do: [
-        { say: { who: "okoro", text: "It is waking! Four hundred years dark and it still knows its work." } },
-        { say: { who: "hale", text: "Meridian camp. My lights failed the moment that relay lit. Shut it down." } },
+        { say: { who: "okoro", text: "It is waking! Four hundred years dark, and it works!" } },
+        { say: { who: "hale", text: "Meridian camp. Your relay killed my lights. Shut it down." } },
         { reveal: "hold" }, { music: "tense" },
       ] },
       { when: { time: 130 }, do: [{ wave: { team: 1, units: { vanguard: 3 }, from: "enemyBase", target: "oldRelay" } }] },
-      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Ashfall troops at the ford. Vanguards in front, Rangers behind, and stay in the circle." } }] },
-      { when: { pointOwned: { point: "oldRelay", team: 1 } }, do: [{ say: { who: "vale", text: "They pushed us off the relay. Clear the circle and stand in it again." } }] },
+      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Ashfall at the ford. Vanguards in front, Rangers behind." } }] },
+      { when: { pointOwned: { point: "oldRelay", team: 1 } }, do: [{ say: { who: "vale", text: "They pushed us off. Retake the circle." } }] },
       { when: { time: 250 }, do: [
         { say: { who: "hale", text: "I asked politely, Commander. I will not ask twice." } },
         { wave: { team: 1, units: { vanguard: 2, ranger: 2 }, from: "enemyBase", target: "oldRelay" } },
@@ -74,10 +74,10 @@ export const MISSIONS = [
       { when: { objective: "hold", is: "done" }, do: [
         { scene: "relay-wakes" },
         { music: "calm" },
-        { say: { who: "okoro", text: "The relay is steady. Strange, though. Why would our light put out theirs?" } },
+        { say: { who: "okoro", text: "Steady. But why does our light put out theirs?" } },
       ] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
-      { when: { time: 70 }, do: [{ say: { who: "okoro", text: "Movement on the road! One Ashfall scout, only looking. Your Vanguards can send it home." } }, { wave: { team: 1, units: { vanguard: 1 }, from: { x: 17, z: -17 }, target: { x: -16, z: 16 }, probe: true } }] },
+      { when: { time: 70 }, do: [{ say: { who: "okoro", text: "A scout on the road! Vanguards can chase it off." } }, { wave: { team: 1, units: { vanguard: 1 }, from: { x: 17, z: -17 }, target: { x: -16, z: 16 }, probe: true } }] },
     ],
     debrief: {
       win: [
@@ -155,31 +155,31 @@ export const MISSIONS = [
     win: ["foundry", "bridgehead", "core"],
     lose: [{ type: "coreLost" }],
     triggers: [
-      { when: { time: 5 }, do: [{ say: { who: "vale", text: "Their first attack will take a few minutes. Use them: more Harvesters, then the Foundry." } }] },
+      { when: { time: 5 }, do: [{ say: { who: "vale", text: "They attack in minutes. Harvesters first, the Foundry next." } }] },
       // Creature round: the Acid Hound den (optional).
-      { when: { time: 40 }, do: [{ say: { who: "vale", text: "Something has made a den on the south bank. Pack animals that spit acid. They stay close to it, so leave them be or clear it." } }, { ping: "houndDen" }] },
-      { when: { enter: "houndDen", team: 0 }, do: [{ say: { who: "okoro", text: "Acid Hounds! Their spit eats metal. Keep the Breakers back and let the Rangers shoot from range." } }] },
-      { when: { objective: "hounds", is: "done" }, do: [{ say: { who: "okoro", text: "The den is clear. They were nesting on Builder crates: one hundred and fifty alloy, only a little chewed." } }] },
+      { when: { time: 40 }, do: [{ say: { who: "vale", text: "Acid spitters nest on the south bank. Leave them be." } }, { ping: "houndDen" }] },
+      { when: { enter: "houndDen", team: 0 }, do: [{ say: { who: "okoro", text: "Acid Hounds eat metal! Breakers back, Rangers at range." } }] },
+      { when: { objective: "hounds", is: "done" }, do: [{ say: { who: "okoro", text: "Den clear! Builder crates inside, worth one hundred and fifty alloy." } }] },
       { when: { objective: "foundry", is: "done" }, do: [
-        { say: { who: "okoro", text: "Foundry is hot. And Commander, look: when our relay lit, theirs went dim. Same second." } },
+        { say: { who: "okoro", text: "The Foundry is hot! Their relay dimmed the moment we lit." } },
       ] },
-      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Ashfall is on the move. Meet them at the ford, where they must bunch together." } }] },
-      { when: { count: { team: 0, type: "breaker", atLeast: 1 } }, do: [{ say: { who: "okoro", text: "First Breaker rolling. Aim it at a crowd and keep Rangers away from its nose." } }] },
+      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Ashfall is moving. Meet them at the ford." } }] },
+      { when: { count: { team: 0, type: "breaker", atLeast: 1 } }, do: [{ say: { who: "okoro", text: "First Breaker rolling! Aim it at crowds." } }] },
       { when: { enter: "bridgeFoot", team: 0 }, do: [
-        { say: { who: "vale", text: "Their guns cover the far half of the bridge. Go over in one group, Commander, and do not stop on it." } },
+        { say: { who: "vale", text: "Their guns cover the far side. Cross together, fast." } },
         { ping: "bridgehead" },
       ] },
       { when: { enter: "bridgehead", team: 0 }, do: [
-        { say: { who: "hale", text: "You cross my river while your own camp stands empty. That is careless, Commander." } },
+        { say: { who: "hale", text: "You cross my river and leave camp empty. Careless." } },
         { ping: "eastRoad" }, { music: "battle" },
         { wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "eastRoad", target: "playerBase" } },
       ] },
-      { when: { objective: "bridgehead", is: "done" }, do: [{ say: { who: "okoro", text: "The bridgehead is down! The west bridge is ours, and it runs right past their back fence." } }] },
-      { when: { pointOwned: { point: "oldRelay", team: 1 } }, do: [{ say: { who: "vale", text: "Ashfall holds the middle relay. Its energy is feeding their Foundry now." } }] },
-      { when: { time: 720 }, do: [{ say: { who: "vale", text: "Twelve minutes, Commander. Every minute they stand, they build more." } }] },
-      { when: { objective: "core", is: "done" }, do: [{ music: "calm" }, { say: { who: "hale", text: "Keep the river. I have other camps, and less time than you think." } }] },
+      { when: { objective: "bridgehead", is: "done" }, do: [{ say: { who: "okoro", text: "The bridgehead is down! The west bridge reaches their back fence." } }] },
+      { when: { pointOwned: { point: "oldRelay", team: 1 } }, do: [{ say: { who: "vale", text: "Ashfall holds the middle relay. It feeds their Foundry." } }] },
+      { when: { time: 720 }, do: [{ say: { who: "vale", text: "Twelve minutes. Every minute they stand, they build." } }] },
+      { when: { objective: "core", is: "done" }, do: [{ music: "calm" }, { say: { who: "hale", text: "Keep the river. I have other camps." } }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
-      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Two Ashfall scouts are testing our bank. The towers will greet them; keep building." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 17, z: -17 }, target: { x: -14, z: 12 }, probe: true } }] },
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Two scouts test our bank. Let the towers work." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 17, z: -17 }, target: { x: -14, z: 12 }, probe: true } }] },
     ],
     debrief: {
       win: [
@@ -241,24 +241,24 @@ export const MISSIONS = [
     win: ["gun", "tower", "island"],
     lose: [{ type: "coreLost" }, { type: "time", seconds: 1200 }],
     triggers: [
-      { when: { objective: "gun", is: "done" }, do: [{ say: { who: "okoro", text: "Their gun is down. Put a tower of ours up there, and I can tune the relay under its cover." } }] },
+      { when: { objective: "gun", is: "done" }, do: [{ say: { who: "okoro", text: "Their gun is down! Build a tower there for cover." } }] },
       { when: { objective: "tower", is: "done" }, do: [
         { reveal: "island" }, { ping: "island" },
-        { say: { who: "okoro", text: "Tower up. Now keep the relay for one minute while I tune it." } },
+        { say: { who: "okoro", text: "The tower is up! Now hold the relay one minute." } },
         { wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "island" } },
       ] },
-      { when: { time: 5 }, do: [{ say: { who: "vale", text: "The relay is in the middle of the lake. The ford nearest our camp runs straight to the island." } }, { ping: "westFord" }, { ping: "island" }] },
-      { when: { enter: "westFord", team: 0 }, do: [{ say: { who: "okoro", text: "The tower on the island can see the whole ford. Cross in one group and climb the ramp together." } }] },
+      { when: { time: 5 }, do: [{ say: { who: "vale", text: "The relay is on the island. The near ford leads there." } }, { ping: "westFord" }, { ping: "island" }] },
+      { when: { enter: "westFord", team: 0 }, do: [{ say: { who: "okoro", text: "Their tower sees the whole ford. Cross and climb together." } }] },
       { when: { pointOwned: { point: "island", team: 0 } }, do: [
         { say: { who: "hale", text: "That relay is mine, Meridian. Get off my island." } },
         { music: "tense" },
         { wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "enemyBase", target: "island" } },
       ] },
       { when: { time: 240 }, do: [
-        { say: { who: "vale", text: "Ashfall is wading over from the far shore. Keep a few guns on the island." } },
+        { say: { who: "vale", text: "Ashfall is crossing the water. Keep guns on the island." } },
         { wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "island" } },
       ] },
-      { when: { objective: "island", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "The island relay is ours. Listen: every relay in the valley, humming on one line." } }] },
+      { when: { objective: "island", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "The island is ours! The valley hums as one." } }] },
     ],
     debrief: {
       win: [
@@ -336,31 +336,31 @@ export const MISSIONS = [
     win: ["siphons", "vanguard"],
     lose: [{ type: "coreLost" }],
     triggers: [
-      { when: { time: 5 }, do: [{ say: { who: "vale", text: "No river here, Commander. The walls north of camp are your only cover. Use them." } }] },
-      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Right on schedule. Hold at the walls, then follow them home while they are weak." } }] },
-      { when: { objective: "towers", is: "done" }, do: [{ say: { who: "okoro", text: "Four towers up. Now the camp can look after itself while you go hunting." } }] },
-      { when: { enter: "siphonWest", team: 0 }, do: [{ say: { who: "okoro", text: "That siphon is huge. It could run ten camps. Where is all the power going?" } }] },
+      { when: { time: 5 }, do: [{ say: { who: "vale", text: "No river here. Use the walls north of camp." } }] },
+      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "On schedule. Hold the walls, then chase them home." } }] },
+      { when: { objective: "towers", is: "done" }, do: [{ say: { who: "okoro", text: "Four towers up! The camp can guard itself now." } }] },
+      { when: { enter: "siphonWest", team: 0 }, do: [{ say: { who: "okoro", text: "That siphon could run ten camps! Where does it go?" } }] },
       { when: { enter: "siphonNorth", team: 0 }, do: [
-        { say: { who: "okoro", text: "Commander, the beam from this one points straight up. He is feeding something in orbit." } },
-        { say: { who: "hale", text: "Forty thousand sleepers ride above us. Their lights fail first. Leave my siphons alone." } },
+        { say: { who: "okoro", text: "This beam points up. He is feeding something in orbit!" } },
+        { say: { who: "hale", text: "Forty thousand sleepers ride above us. Leave my siphons." } },
         { music: "battle" },
         { wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "siphonNorth" } },
         { decide: "m03-alloy" },
-        { if: { flag: "m03-alloy", is: "return" }, say: { who: "hale", text: "Received, Commander. Forty thousand people will sleep warmer tonight. I will note the courtesy." } },
+        { if: { flag: "m03-alloy", is: "return" }, say: { who: "hale", text: "Received. Forty thousand will sleep warmer tonight. Noted." } },
         { if: { flag: "m03-alloy", is: "keep" }, give: { alloy: 300 } },
-        { if: { flag: "m03-alloy", is: "keep" }, say: { who: "vale", text: "Three hundred alloy, loaded. Hale will count that loss, Commander. So will his sleepers." } },
+        { if: { flag: "m03-alloy", is: "keep" }, say: { who: "vale", text: "Three hundred alloy, loaded. Hale will miss that." } },
       ] },
-      { when: { tagHpBelow: { tag: "siphon", percent: 50 } }, do: [{ say: { who: "vale", text: "Half his siphon line is down. He will throw everything at you now. Stay together." } }] },
-      { when: { time: 660 }, do: [{ say: { who: "vale", text: "Eleven minutes. His next wave will have Scorchers in it. Finish the siphons." } }] },
+      { when: { tagHpBelow: { tag: "siphon", percent: 50 } }, do: [{ say: { who: "vale", text: "Half his siphons are down. Expect everything now." } }] },
+      { when: { time: 660 }, do: [{ say: { who: "vale", text: "Eleven minutes. Scorchers come next. Finish the siphons." } }] },
       // The Iron Vanguard: its entrance when it wakes, a line at each health stage and when it falls.
       { when: { event: "bossWake" }, do: [{ scene: "iron-vanguard" }, { music: "battle" }] },
-      { when: { bossStage: 2 }, do: [{ say: { who: "okoro", text: "Its armour is cracking! It fires sooner now, but the red on the ground still gives you the same time." } }] },
-      { when: { bossStage: 3 }, do: [{ say: { who: "hale", text: "One third of its plating left. I had hoped that machine would last the season, Commander." } }] },
+      { when: { bossStage: 2 }, do: [{ say: { who: "okoro", text: "Its armour is cracking! It fires sooner now." } }] },
+      { when: { bossStage: 3 }, do: [{ say: { who: "hale", text: "A third of its plating left. A pity." } }] },
       { when: { tagDead: "ironVanguard" }, do: [
-        { say: { who: "okoro", text: "It is down! Poor old thing. When this is over I would like to see how it was put together." } },
-        { say: { who: "hale", text: "Nine weeks of repairs, gone in minutes. I will add it to the account." } },
+        { say: { who: "okoro", text: "It is down! Poor old thing." } },
+        { say: { who: "hale", text: "Nine weeks of repairs, gone in minutes. Noted." } },
       ] },
-      { when: { objective: "siphons", is: "done" }, do: [{ music: "calm" }, { say: { who: "hale", text: "You have just made a cold night colder for people who never harmed you." } }] },
+      { when: { objective: "siphons", is: "done" }, do: [{ music: "calm" }, { say: { who: "hale", text: "You made a cold night colder for innocent people." } }] },
     ],
     // The first Commander decision (0.19a). Its answer changes Hale's 7:00 wave in mission 7.
     decisions: {
@@ -443,21 +443,21 @@ export const MISSIONS = [
         { say: { who: "sol", text: "Enough! My riders yield, Commander. Name your terms." } },
         { decide: "m04-sol" },
         { if: { flag: "m04-sol", is: "accept" }, capture: "heroSol" },
-        { if: { flag: "m04-sol", is: "accept" }, say: { who: "sol", text: "Then we are even. I will not forget it, Commander." } },
+        { if: { flag: "m04-sol", is: "accept" }, say: { who: "sol", text: "Then we are even. I will not forget it." } },
         { if: { flag: "m04-sol", is: "finish" }, finish: "heroSol" },
         { if: { flag: "m04-sol", is: "finish" }, say: { who: "sol", text: "So be it. My wells will remember." } },
       ] },
-      { when: { time: 6 }, do: [{ say: { who: "vale", text: "The centre oasis is closest. Take it first, then choose north or east." } }, { ping: "oasisCentre" }] },
+      { when: { time: 6 }, do: [{ say: { who: "vale", text: "The centre oasis is closest. Take it first." } }, { ping: "oasisCentre" }] },
       { when: { pointOwned: { point: "oasisCentre", team: 0 } }, do: [
-        { say: { who: "sol", text: "Nothing personal, Commander. My gardens need that light as much as yours." } },
+        { say: { who: "sol", text: "Nothing personal, Commander. My gardens need that light too." } },
         { wave: { team: 2, units: { vanguard: 2, ranger: 2 }, from: "enemyBase", target: "oasisCentre" } },
       ] },
       { when: { pointOwned: { point: "oasisNorth", team: 0 } }, do: [
         { say: { who: "hale", text: "The north oasis feeds my last siphon. Remove them." } },
         { wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "enemyBase", target: "oasisNorth" } },
       ] },
-      { when: { pointOwned: { point: "oasisEast", team: 0 } }, do: [{ say: { who: "okoro", text: "East oasis is ours. Listen to it hum! And look, the Sunward wells just lost pressure." } }] },
-      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Attack on our camp. Keep a guard at home; the oases will not hold themselves either." } }] },
+      { when: { pointOwned: { point: "oasisEast", team: 0 } }, do: [{ say: { who: "okoro", text: "East oasis is ours! And the Sunward wells dropped." } }] },
+      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Our camp is under attack. Guard home and both oases." } }] },
       { when: { time: 300 }, do: [
         // The truce, staged (src/story/scenes.js): Hale and Sol on the radio, both columns turning.
         { scene: "the-truce" },
@@ -465,13 +465,13 @@ export const MISSIONS = [
         { wave: { team: 1, units: { vanguard: 3, breaker: 1 }, from: "enemyBase", target: "oasisCentre" } },
         { wave: { team: 2, units: { vanguard: 2, ranger: 2 }, from: "enemyBase", target: "oasisCentre" } },
       ] },
-      { when: { time: 960 }, do: [{ say: { who: "vale", text: "Four minutes of daylight left. Two oases, one minute in a row. Now, Commander." } }] },
+      { when: { time: 960 }, do: [{ say: { who: "vale", text: "Four minutes of daylight. Hold two oases one minute." } }] },
       // Creature round: the Wyrm nest (optional).
-      { when: { enter: "wyrmNest", team: 0 }, do: [{ say: { who: "sol", text: "You are walking into a Wyrm nest, Commander. The Caravan rides around those. Then again, we never had your guns." } }] },
-      { when: { objective: "wyrm", is: "done" }, do: [{ say: { who: "okoro", text: "It is following us! A Dune Wyrm, Commander. It dives under tanks. Please never point it at me." } }] },
-      { when: { objective: "hold", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Tuned! Both oases are steady. I wish I knew why the others keep going dim." } }] },
+      { when: { enter: "wyrmNest", team: 0 }, do: [{ say: { who: "sol", text: "A Wyrm nest! The Caravan rides around those." } }] },
+      { when: { objective: "wyrm", is: "done" }, do: [{ say: { who: "okoro", text: "A Dune Wyrm is following us! It hunts tanks!" } }] },
+      { when: { objective: "hold", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Tuned! Both oases steady. Why do the others go dim?" } }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
-      { when: { time: 70 }, do: [{ say: { who: "vale", text: "One Ashfall scout on the dunes. It is looking at us, not the oases. Your guard can send it home." } }, { wave: { team: 1, units: { vanguard: 1 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "A scout on the dunes, watching our camp." } }, { wave: { team: 1, units: { vanguard: 1 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
     ],
     decisions: {
       "m04-sol": {
@@ -553,35 +553,35 @@ export const MISSIONS = [
     win: ["escort", "escort2", "outpost"],
     lose: [{ type: "armyLost" }, { type: "tagLost", tag: "convoy" }, { type: "tagLost", tag: "convoy2" }, { type: "time", seconds: 900 }],
     triggers: [
-      { when: { time: 4 }, do: [{ say: { who: "vale", text: "Four crawlers, one road, raiders on every bend. Clear the bends before the crawlers arrive." } }, { ping: "southBend" }, { music: "tense" }] },
+      { when: { time: 4 }, do: [{ say: { who: "vale", text: "Four crawlers, one road, raiders on every bend." } }, { ping: "southBend" }, { music: "tense" }] },
       { when: { time: 60 }, do: [
-        { say: { who: "okoro", text: "The first two crawlers are entering the canyon now. Two more follow in a few minutes." } },
+        { say: { who: "okoro", text: "Two crawlers entering the canyon. Two more soon." } },
         { spawn: "worker", team: 0, at: "start", tag: "convoy", name: "Supply crawler", count: 2, hp: 700, hpByDifficulty: { story: 1000 }, speed: 1.4 },
         { reveal: "escort" }, { ping: "start" },
       ] },
       { when: { time: 200 }, do: [
-        { say: { who: "okoro", text: "The last two crawlers are in the canyon. Bring them home too, please." } },
+        { say: { who: "okoro", text: "The last two crawlers are in. Bring them home!" } },
         { spawn: "worker", team: 0, at: "start", tag: "convoy2", name: "Supply crawler", count: 2, hp: 700, hpByDifficulty: { story: 1000 }, speed: 1.4 },
         { reveal: "escort2" }, { ping: "start" },
       ] },
-      { when: { enter: "southBend", team: 0 }, do: [{ say: { who: "okoro", text: "The crawlers cannot fight back. Keep them behind the squad, please." } }] },
+      { when: { enter: "southBend", team: 0 }, do: [{ say: { who: "okoro", text: "The crawlers cannot fight. Keep them behind the squad." } }] },
       { when: { enter: "midBend", team: 0 }, do: [
-        { say: { who: "hale", text: "Meridian in my canyon. Outpost guard, down the road. Nothing gets through." } },
+        { say: { who: "hale", text: "Meridian in my canyon. Outpost guard, down the road." } },
         { wave: { team: 1, units: { vanguard: 3, ranger: 1 }, from: "enemyBase", target: "midBend" } },
-        { say: { who: "vale", text: "Raiders coming down from the north. Hold the middle bend until they break." } },
+        { say: { who: "vale", text: "Raiders from the north. Hold the middle bend." } },
       ] },
       // Raiders keep coming down the road every 75 s from 2:30 until the outpost burns (a wave from a fallen outpost is refused).
       { when: { time: 150 }, repeat: 75, do: [{ wave: { team: 1, units: { vanguard: 2, ranger: 1 }, from: "enemyBase", target: "midBend" } }] },
       { when: { time: 200 }, do: [{ wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "midBend" } }] },
-      { when: { enter: "northBend", team: 0 }, do: [{ say: { who: "vale", text: "A Breaker on the north bend shells the road. Rush it before the crawlers come up." } }] },
+      { when: { enter: "northBend", team: 0 }, do: [{ say: { who: "vale", text: "A Breaker shells the road from the north bend." } }] },
       { when: { time: 300 }, do: [
-        { say: { who: "hale", text: "Every raider I have, to the north mouth. Nothing leaves my canyon." } },
+        { say: { who: "hale", text: "All raiders to the north mouth. Nothing leaves." } },
         { wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "enemyBase", target: "exit" } },
       ] },
-      { when: { tagHpBelow: { tag: "convoy", percent: 50 } }, do: [{ say: { who: "okoro", text: "A crawler is badly hit! Medics to the crawlers, please." } }] },
-      { when: { objective: "outpost", is: "done" }, do: [{ music: "calm" }, { say: { who: "vale", text: "The outpost is burning. No more raiders from that corner." } }] },
-      { when: { objective: "escort2", is: "done" }, do: [{ say: { who: "okoro", text: "The crawlers are through the canyon. Now I can finish the tuning core." } }, { reveal: "outpost" }, { ping: "outpost" },
-        { say: { who: "vale", text: "The crawlers brought three Vanguards, a Breaker crew and a Medic. Use them on the outpost." } },
+      { when: { tagHpBelow: { tag: "convoy", percent: 50 } }, do: [{ say: { who: "okoro", text: "A crawler is badly hit! Medics to the crawlers!" } }] },
+      { when: { objective: "outpost", is: "done" }, do: [{ music: "calm" }, { say: { who: "vale", text: "The outpost is burning. No more raiders from there." } }] },
+      { when: { objective: "escort2", is: "done" }, do: [{ say: { who: "okoro", text: "The crawlers are through! I can finish the core now." } }, { reveal: "outpost" }, { ping: "outpost" },
+        { say: { who: "vale", text: "The crawlers brought three Vanguards, a Breaker and a Medic." } },
         { spawn: "vanguard", team: 0, at: "exit", count: 3, tag: "squad" }, { spawn: "breaker", team: 0, at: "exit", count: 1, tag: "squad" }, { spawn: "medic", team: 0, at: "exit", count: 1, tag: "squad" }] },
     ],
     debrief: {
@@ -648,32 +648,32 @@ export const MISSIONS = [
     win: ["escort"],
     lose: [{ type: "coreLost" }, { type: "tagLost", tag: "convoy" }],
     triggers: [
-      { when: { time: 5 }, do: [{ say: { who: "okoro", text: "I am driving the crawler myself. Please do not let anything large shoot at me." } }, { camera: "crawlerStart" }] },
-      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Both Pact armies are coming at once. Leave the crawler in camp until this wave breaks." } }] },
+      { when: { time: 5 }, do: [{ say: { who: "okoro", text: "I am driving this crawler. Keep the guns off me!" } }, { camera: "crawlerStart" }] },
+      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Both Pact armies are coming. Keep the crawler home." } }] },
       { when: { enter: "bridgeSouth", team: 0 }, do: [
-        { say: { who: "vale", text: "Two Pact towers cover the far bank of the ford. Break them, or take the east bridge." } },
+        { say: { who: "vale", text: "Two Pact towers cover the far bank. Break them." } },
         { ping: "bridgeNorth" }, { ping: "eastFord" },
         { wave: { team: 2, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "bridgeSouth" } },
       ] },
-      { when: { objective: "guns", is: "done" }, do: [{ say: { who: "okoro", text: "Ford is clear! Crawler moving. Slowly. It only has one speed." } }] },
-      { when: { tagHpBelow: { tag: "convoy", percent: 50 } }, do: [{ say: { who: "okoro", text: "Crawler hull at half! A Medic would be very welcome right now, Commander." } }] },
+      { when: { objective: "guns", is: "done" }, do: [{ say: { who: "okoro", text: "The ford is clear! Crawler moving. Slowly. One speed." } }] },
+      { when: { tagHpBelow: { tag: "convoy", percent: 50 } }, do: [{ say: { who: "okoro", text: "Crawler hull at half! A Medic, please!" } }] },
       { when: { enter: "northRoad", team: 0 }, do: [
-        { say: { who: "sol", text: "The forest road is Caravan ground, Commander. The Pact says I must stop you. So I will." } },
+        { say: { who: "sol", text: "This road is Caravan ground. I must stop you." } },
         { decide: "m05-pact" },
         { if: { flag: "m05-pact", is: "drive" }, music: "battle" },
         { if: { flag: "m05-pact", is: "drive" }, wave: { team: 2, units: { vanguard: 4, ranger: 2 }, from: "eastFord", target: "northRoad" } },
         { if: { flag: "m05-pact", is: "drive" }, give: { alloy: 200 } },
-        { if: { flag: "m05-pact", is: "drive" }, say: { who: "vale", text: "Then the road is ours by force. The Caravan's relay stores are ours too: two hundred alloy." } },
-        { if: { flag: "m05-pact", is: "share" }, say: { who: "sol", text: "A fair offer, and I remember fair offers. Two riders for the Pact's sake. The rest go home." } },
+        { if: { flag: "m05-pact", is: "drive" }, say: { who: "vale", text: "Then we take it by force, with two hundred alloy." } },
+        { if: { flag: "m05-pact", is: "share" }, say: { who: "sol", text: "A fair offer. Two riders stay. The rest go home." } },
         { if: { flag: "m05-pact", is: "share" }, wave: { team: 2, units: { vanguard: 2 }, from: "eastFord", target: "northRoad" } },
       ] },
-      { when: { enter: "relaySite", team: 0 }, do: [{ say: { who: "vale", text: "Relay site in view. Clear the Sunward guards before the crawler rolls in." } }] },
-      { when: { objective: "escort", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Core is in. Oh. Commander, the relays are not separate machines. It is one circuit." } }] },
+      { when: { enter: "relaySite", team: 0 }, do: [{ say: { who: "vale", text: "Relay site ahead. Clear the Sunward guards first." } }] },
+      { when: { objective: "escort", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Core is in. Oh! The relays are one circuit!" } }] },
       // Creature round (Sunward story): Sol on the open channel, before the first joint attack and when the circuit is read.
-      { when: { time: 150 }, do: [{ say: { who: "sol", text: "Meridian, hear me. Children in my wagons carry water from wells your relays starve. Count them before you count our dead." } }] },
-      { when: { objective: "escort", is: "done" }, do: [{ say: { who: "sol", text: "One circuit? Then my wells did not fail because of you. Hale told me otherwise. I will be asking him why." } }] },
+      { when: { time: 150 }, do: [{ say: { who: "sol", text: "Meridian, hear me. Your relays starve our children's wells." } }] },
+      { when: { objective: "escort", is: "done" }, do: [{ say: { who: "sol", text: "One circuit? Then my wells were not your doing. Hale said otherwise." } }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
-      { when: { time: 70 }, do: [{ say: { who: "vale", text: "A Pact scout in the trees, Commander. It came to look at the crawler. Show it the guns instead." } }, { wave: { team: 1, units: { vanguard: 1 }, from: { x: -6, z: 6 }, target: { x: -40, z: 40 }, probe: true } }] },
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "A Pact scout in the trees. Show it our guns." } }, { wave: { team: 1, units: { vanguard: 1 }, from: { x: -6, z: 6 }, target: { x: -40, z: 40 }, probe: true } }] },
     ],
     // The second Commander decision (0.19a). Its answer changes Sol's words at the link-up in mission 9.
     decisions: {
@@ -740,28 +740,28 @@ export const MISSIONS = [
     win: ["first", "full"],
     lose: [{ type: "coreLost" }, { type: "time", seconds: 1200 }],
     triggers: [
-      { when: { time: 5 }, do: [{ say: { who: "vale", text: "Economy first today, Commander. More Harvesters, a second seam, and guards for both." } }, { ping: "seam" }] },
-      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Ashfall attack. They will go for the Harvesters. Pull them behind your towers." } }] },
-      { when: { pointOwned: { point: "seam", team: 0 } }, do: [{ say: { who: "okoro", text: "The seam is ours. Good copper crystal. And these shards are fresh, Commander. New growth." } }] },
+      { when: { time: 5 }, do: [{ say: { who: "vale", text: "Economy first. More Harvesters, a second seam, guards for both." } }, { ping: "seam" }] },
+      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Ashfall wants the Harvesters. Pull them behind your towers." } }] },
+      { when: { pointOwned: { point: "seam", team: 0 } }, do: [{ say: { who: "okoro", text: "The seam is ours! These copper shards are new growth." } }] },
       { when: { objective: "first", is: "done" }, do: [
-        { say: { who: "okoro", text: "First charge is in and the relay is humming. Look at the seam: the crystals are growing!" } },
-        { say: { who: "okoro", text: "The relays do not burn crystal. They grow it. The Lattice is a garden, Commander." } },
+        { say: { who: "okoro", text: "First charge is in! Look, the crystals are growing!" } },
+        { say: { who: "okoro", text: "The relays do not burn crystal. They grow it!" } },
         { reveal: "full" }, { music: "tense" },
-        { say: { who: "hale", text: "If that relay wakes, my siphons in the basin fail. Take their Harvesters." } },
+        { say: { who: "hale", text: "If that relay wakes, my siphons fail. Hit their Harvesters." } },
         { wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "westPass", target: "seam" } },
       ] },
-      { when: { pointOwned: { point: "seam", team: 1 } }, do: [{ say: { who: "vale", text: "Ashfall has the seam. That alloy is going to their Foundry until you take it back." } }] },
+      { when: { pointOwned: { point: "seam", team: 1 } }, do: [{ say: { who: "vale", text: "Ashfall has the seam. Take it back, Commander." } }] },
       { when: { time: 240 }, do: [{ aiSpeed: "normal" }] },
-      { when: { time: 200 }, do: [{ say: { who: "okoro", text: "Violet coats on the north-west rim, Commander. They are watching the seam, and they are not Ashfall." } }, { ping: "veilWatch" }] },
-      { when: { enter: "veilWatch", team: 0 }, do: [{ say: { who: "vale", text: "Veil Survey scouts. They came to this world before any of us. Leave them be. We have enough enemies today." } }] },
+      { when: { time: 200 }, do: [{ say: { who: "okoro", text: "Violet coats on the north-west rim! Not Ashfall." } }, { ping: "veilWatch" }] },
+      { when: { enter: "veilWatch", team: 0 }, do: [{ say: { who: "vale", text: "Veil Survey scouts. Leave them be." } }] },
       { when: { time: 600 }, do: [
-        { say: { who: "vale", text: "Ten minutes gone. Storm clouds on the north rim. Raiders heading for the home seam." } },
+        { say: { who: "vale", text: "Ten minutes gone. Raiders are heading for our seam." } },
         { wave: { team: 1, units: { vanguard: 3, ranger: 2, breaker: 1 }, from: "enemyBase", target: "relayYard" } },
       ] },
-      { when: { time: 960 }, do: [{ say: { who: "vale", text: "Four minutes to the storm. Every Harvester on the nearest deposit, Commander." } }, { music: "battle" }] },
-      { when: { objective: "full", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Quota banked! The Basin relay is awake, and the crystal fields are already thicker." } }] },
+      { when: { time: 960 }, do: [{ say: { who: "vale", text: "Storm in four minutes. Harvesters to the nearest deposit." } }, { music: "battle" }] },
+      { when: { objective: "full", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "We made the quota, and the Basin relay is awake!" } }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
-      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Ashfall scouts on the basin road, two of them. Let the guard meet them before they reach the Harvesters." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Two Ashfall scouts on the basin road. See them off." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
     ],
     debrief: {
       win: [
@@ -825,37 +825,37 @@ export const MISSIONS = [
     win: ["raids", "yard"],
     lose: [{ type: "coreLost" }, { type: "tagLost", tag: "refinery" }, { type: "time", seconds: 1200 }],
     triggers: [
-      { when: { time: 5 }, do: [{ say: { who: "vale", text: "Rangers to the refinery, Commander. Whatever is coming will come for the copper." } }, { ping: "refinery" }] },
-      { when: { time: 50 }, do: [{ say: { who: "okoro", text: "The lights are rising over the east rim again. Big and slow, and coming this way." } }, { ping: "yard" }] },
+      { when: { time: 5 }, do: [{ say: { who: "vale", text: "Rangers to the refinery. Whatever comes wants the copper." } }, { ping: "refinery" }] },
+      { when: { time: 50 }, do: [{ say: { who: "okoro", text: "Lights over the east rim again! Coming this way!" } }, { ping: "yard" }] },
       { when: { time: 100 }, do: [
-        { say: { who: "hale", text: "Meridian camp. Your refinery feeds a relay that starves my fleet. My balloons will close it tonight." } },
+        { say: { who: "hale", text: "Your refinery starves my fleet. My balloons will close it." } },
         { music: "tense" },
         { wave: { team: 1, units: { balloon: 2 }, from: "yard", target: "refinery" } },
       ] },
       // The first balloon over the copper works: a short staged scene (src/story/scenes.js).
       { when: { enter: "skyWatch", team: 1 }, do: [{ scene: "first-balloon" }] },
-      { when: { time: 170 }, do: [{ say: { who: "okoro", text: "Our Foundry crew drew a gunship from the Ashfall wrecks. A level 3 core can build Hawks for us." } }] },
+      { when: { time: 170 }, do: [{ say: { who: "okoro", text: "We copied a gunship from Ashfall! Level 3 cores build Hawks." } }] },
       { when: { time: 240 }, do: [
-        { say: { who: "okoro", text: "Kites in front! Spotters. They count your guns for the balloons behind them." } },
+        { say: { who: "okoro", text: "Kites in front! They count your guns." } },
         { wave: { team: 1, units: { kite: 2, balloon: 2 }, from: "yard", target: "refinery" } },
         { wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "enemyBase", target: "refinery" } },
       ] },
-      { when: { tagHpBelow: { tag: "refinery", percent: 50 } }, do: [{ say: { who: "okoro", text: "The refinery is burning! Shoot the balloons down first, Commander. I can mend the rest." } }, { ping: "refinery" }] },
+      { when: { tagHpBelow: { tag: "refinery", percent: 50 } }, do: [{ say: { who: "okoro", text: "The refinery is burning! Shoot the balloons first!" } }, { ping: "refinery" }] },
       { when: { time: 390 }, do: [
         // Mission 3's alloy: Hale remembers it, but the third raid still comes.
-        { if: { flag: "m03-alloy", is: "keep" }, say: { who: "hale", text: "You kept our alloy on the Ashen Line. I am collecting it tonight, Commander, from the air." } },
-        { if: { flag: "m03-alloy", is: "return" }, say: { who: "hale", text: "You returned our alloy once. I aim at the refinery, not at your people. That is all I can offer." } },
+        { if: { flag: "m03-alloy", is: "keep" }, say: { who: "hale", text: "You kept our alloy. Tonight I collect it." } },
+        { if: { flag: "m03-alloy", is: "return" }, say: { who: "hale", text: "You returned our alloy. I aim only at the refinery." } },
         { music: "battle" },
         { wave: { team: 1, units: { balloon: 3, kite: 1 }, from: "yard", target: "refinery" } },
         { wave: { team: 1, units: { vanguard: 5, antitank: 1 }, from: "enemyBase", target: "refinery" } },
       ] },
       { when: { objective: "raids", is: "done" }, do: [
         { reveal: "yard" }, { ping: "yard" },
-        { say: { who: "vale", text: "Three raids beaten. The balloons rise from a yard on the east rim. Burn it before Hale builds more." } },
+        { say: { who: "vale", text: "Three raids beaten. Their balloon yard is on the east rim." } },
         { wave: { team: 1, units: { balloon: 1 }, from: "yard", target: "playerBase" } },
       ] },
-      { when: { tagHpBelow: { tag: "balloonYard", percent: 50 } }, do: [{ say: { who: "hale", text: "My yard is burning. Noted, Commander. Two weeks of work, gone in one evening." } }] },
-      { when: { objective: "yard", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "The yard is down! No more balloons tonight. And look, the cloth is Sunward silk." } }] },
+      { when: { tagHpBelow: { tag: "balloonYard", percent: 50 } }, do: [{ say: { who: "hale", text: "My yard is burning. Noted. Two weeks of work, gone." } }] },
+      { when: { objective: "yard", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "No more balloons! And look, Sunward silk!" } }] },
     ],
     debrief: {
       win: [
@@ -908,9 +908,9 @@ export const MISSIONS = [
     win: ["guns", "hold"],
     lose: [{ type: "coreLost" }, { type: "time", seconds: 900 }],
     triggers: [
-      { when: { time: 4 }, do: [{ say: { who: "vale", text: "Send a Ranger up the ramp first, Commander, then build on the hill." } }, { ping: "hill" }] },
+      { when: { time: 4 }, do: [{ say: { who: "vale", text: "Send a Ranger up the ramp, then build on top." } }, { ping: "hill" }] },
       { when: { time: 75 }, do: [
-        { say: { who: "hale", text: "My column is on the ridge road. Your hill will not stop me." } },
+        { say: { who: "hale", text: "My column takes the ridge road. Your hill will not help." } },
         { music: "tense" },
         { wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "enemyBase", target: "hill" } },
       ] },
@@ -918,11 +918,11 @@ export const MISSIONS = [
         { wave: { team: 1, units: { vanguard: 5, ranger: 3, breaker: 1 }, from: "enemyBase", target: "hill" } },
       ] },
       { when: { time: 245 }, do: [
-        { say: { who: "okoro", text: "That is the last column, and the biggest. Keep the guns on the hill firing." } },
+        { say: { who: "okoro", text: "The last column is the biggest! Keep firing!" } },
         { music: "battle" },
         { wave: { team: 1, units: { tank: 1, vanguard: 5, ranger: 3 }, from: "enemyBase", target: "hill" } },
       ] },
-      { when: { objective: "hold", is: "done" }, do: [{ music: "calm" }, { say: { who: "vale", text: "The ridge is ours. High ground wins fights before they start." } }] },
+      { when: { objective: "hold", is: "done" }, do: [{ music: "calm" }, { say: { who: "vale", text: "The ridge is ours. High ground wins the early fights." } }] },
     ],
     debrief: {
       win: [
@@ -980,7 +980,7 @@ export const MISSIONS = [
     triggers: [
       // Campaign C6b: a troop truck drives a squad in behind the line. Break it before it unloads and the squad dies with it.
       { when: { time: 380 }, do: [
-        { say: { who: "vale", text: "A troop truck is crossing toward the base. Shoot it before it unloads: the squad dies with the truck." } },
+        { say: { who: "vale", text: "A troop truck! Shoot it before it unloads." } },
         { truck: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "westPass", to: "playerFront", then: "playerBase", tag: "truckA", name: "Troop truck" } },
       ] },
       // Hale joins the second wave at the west pass
@@ -995,37 +995,37 @@ export const MISSIONS = [
         { if: { flag: "m07-hale", is: "finish" }, finish: "heroHale" },
         { if: { flag: "m07-hale", is: "finish" }, say: { who: "hale", text: "Then I will not be taking orders from you." } },
       ] },
-      { when: { time: 5 }, do: [{ say: { who: "vale", text: "You have about three minutes before the first wave. Towers east of the relay, Commander." } }, { camera: "relayYard" }] },
-      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Here they come, both armies together. Hold the line at the towers." } }, { music: "battle" }] },
+      { when: { time: 5 }, do: [{ say: { who: "vale", text: "Three minutes to the first wave. Build towers east." } }, { camera: "relayYard" }] },
+      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Both armies at once. Hold at the towers." } }, { music: "battle" }] },
       { when: { time: 200 }, do: [
-        { say: { who: "sol", text: "The Pact says your relay dries my wells, Commander. Prove me wrong or stand aside." } },
+        { say: { who: "sol", text: "They say your relay dries my wells. Is it true?" } },
         { wave: { team: 2, units: { vanguard: 4, ranger: 2 }, from: "eastRoad", target: "relayYard" } },
       ] },
       { when: { time: 330 }, do: [
-        { say: { who: "vale", text: "Breakers on the ridge, shelling range in a moment. Sally out or they grind the towers down." } },
+        { say: { who: "vale", text: "Breakers on the ridge! Sally out, or lose the towers." } },
         { aiSpeed: "normal" },
         { spawn: "breaker", team: 1, at: "ridge", count: 3, tag: "battery", exact: true },
         { reveal: "battery" }, { ping: "ridge" },
       ] },
       { when: { time: 420 }, do: [
-        { say: { who: "okoro", text: "The circuit map is drawing! Every relay shares one line. Vale, send it to everyone. Now!" } },
-        { say: { who: "vale", text: "All camps, this is Meridian. Nobody stole your power. Look at the map we are sending." } },
+        { say: { who: "okoro", text: "Every relay shares one line! Vale, send this map out!" } },
+        { say: { who: "vale", text: "All camps, nobody stole your power. Read the map." } },
         // Mission 3's alloy: returned, Hale sends this wave without its Breaker.
-        { if: { flag: "m03-alloy", is: "keep" }, say: { who: "hale", text: "I have seen it. It changes nothing. I need the power tonight, not the truth." } },
+        { if: { flag: "m03-alloy", is: "keep" }, say: { who: "hale", text: "I have seen it. I need power, not truth." } },
         { if: { flag: "m03-alloy", is: "keep" }, wave: { team: 1, units: { vanguard: 4, antitank: 2, breaker: 1 }, from: "westPass", target: "playerBase" } },
-        { if: { flag: "m03-alloy", is: "return" }, say: { who: "hale", text: "I have seen it. You returned our alloy on the Ashen Line, so I send fewer guns tonight. Not none." } },
+        { if: { flag: "m03-alloy", is: "return" }, say: { who: "hale", text: "I have seen it. For our alloy, fewer guns tonight." } },
         { if: { flag: "m03-alloy", is: "return" }, wave: { team: 1, units: { vanguard: 4, antitank: 2 }, from: "westPass", target: "playerBase" } },
       ] },
-      { when: { tagHpBelow: { tag: "basinRelay", percent: 50 } }, do: [{ say: { who: "okoro", text: "The relay is cracking! Engineers on it, please, before the tuning breaks!" } }, { ping: "relayYard" }] },
+      { when: { tagHpBelow: { tag: "basinRelay", percent: 50 } }, do: [{ say: { who: "okoro", text: "The relay is cracking! Engineers, please, quickly!" } }, { ping: "relayYard" }] },
       { when: { time: 540 }, do: [
-        { say: { who: "sol", text: "Director, I read that map. If it is true, I have been fighting the wrong camp." } },
-        { say: { who: "hale", text: "Then stand aside, Captain. My last wave does not need you." } },
+        { say: { who: "sol", text: "If that map is true, I fought the wrong camp." } },
+        { say: { who: "hale", text: "Then stand aside, Captain. My last wave needs nobody." } },
         { wave: { team: 1, units: { vanguard: 4, ranger: 2, breaker: 1, tank: 1 }, from: "enemyBase", target: "relayYard" } },
       ] },
-      { when: { time: 600 }, do: [{ say: { who: "vale", text: "One minute, Commander. Everything you have, around the relay." } }] },
+      { when: { time: 600 }, do: [{ say: { who: "vale", text: "One minute. Everything you have, around the relay." } }] },
       { when: { objective: "survive", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Tuning complete! The relay held. You held, Commander." } }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
-      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Two Pact scouts on the road, checking our towers before the siege. Let the towers answer." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Two scouts from the Pact are testing our towers." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
     ],
     decisions: {
       "m07-hale": {
@@ -1125,12 +1125,12 @@ export const MISSIONS = [
     win: ["jam", "vault", "out"],
     lose: [{ type: "armyLost" }, { type: "tagLost", tag: "okoro" }],
     triggers: [
-      { when: { time: 4 }, do: [{ say: { who: "vale", text: "Squad is down. Nearest jammer is north of you, on the open ground. Quietly, Commander." } }, { ping: "jamWest" }, { music: "tense" }] },
-      { when: { enter: "jamWest", team: 0 }, do: [{ say: { who: "okoro", text: "Four guards. They have not seen us. Breaker first, then Rangers, please." } }] },
-      { when: { enter: "jamMid", team: 0 }, do: [{ say: { who: "vale", text: "That post has a Sentinel tower. It outranges your Breaker. Rush it with Vanguards or go round." } }] },
-      { when: { tagHpBelow: { tag: "okoro", percent: 50 } }, do: [{ say: { who: "okoro", text: "I am hit! Not badly. Fairly badly. A Medic, Commander, if one is free." } }] },
+      { when: { time: 4 }, do: [{ say: { who: "vale", text: "Squad is down. The nearest jammer is north. Quietly." } }, { ping: "jamWest" }, { music: "tense" }] },
+      { when: { enter: "jamWest", team: 0 }, do: [{ say: { who: "okoro", text: "Four guards, not looking. Breaker first, then Rangers." } }] },
+      { when: { enter: "jamMid", team: 0 }, do: [{ say: { who: "vale", text: "That Sentinel tower outranges your Breaker. Rush it." } }] },
+      { when: { tagHpBelow: { tag: "okoro", percent: 50 } }, do: [{ say: { who: "okoro", text: "I am hit! Not badly. Fairly badly. A Medic?" } }] },
       { when: { objective: "jam", is: "done" }, do: [
-        { say: { who: "okoro", text: "All three jammers are down. The vault is listening again. Take me to the door!" } },
+        { say: { who: "okoro", text: "All three jammers are down! To the door!" } },
         { ping: "vaultGate" }, { camera: "vaultGate" },
       ] },
       { when: { objective: "vault", is: "done" }, do: [
@@ -1139,17 +1139,17 @@ export const MISSIONS = [
         { reveal: "out" }, { music: "battle" }, { ping: "landing" },
         { wave: { team: 1, units: { vanguard: 5, ranger: 2 }, from: "enemyBase", target: "vaultGate" } },
       ] },
-      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "The whole camp is awake. Do not stand and fight, Commander. Get Okoro out the way you came." } }] },
-      { when: { objective: "depot", is: "done" }, do: [{ say: { who: "vale", text: "Their depot is burning. Hale's next march will start a day late. Well done." } }] },
+      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "The camp is awake. Get Okoro out." } }] },
+      { when: { objective: "depot", is: "done" }, do: [{ say: { who: "vale", text: "Their depot is burning. Hale marches a day late." } }] },
       // Creature round: the Vault Sentinel's test (optional).
       { when: { enter: "sentinelPost", team: 0 }, do: [
-        { say: { who: "okoro", text: "A Builder guardian. It is not asleep, Commander, it is waiting. The old door notes say it tests whoever comes." } },
-        { say: { who: "vale", text: "It will not move unless we strike it. Your call. Order an attack on it if you want the test." } },
+        { say: { who: "okoro", text: "A Builder guardian! It tests everyone who comes." } },
+        { say: { who: "vale", text: "It only moves when struck. Attack to take the test." } },
       ] },
       { when: { event: "guardianWake" }, do: [{ scene: "vault-sentinel" }] },
       { when: { event: "guardianKneel" }, do: [{ say: { who: "okoro", text: "Stop shooting! It is kneeling. I think we passed." } }] },
-      { when: { event: "guardianJoin" }, do: [{ say: { who: "vale", text: "The guardian is walking with the squad. Keep it next to Okoro and let it take the hits." } }] },
-      { when: { objective: "out", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "We are out. And ECHO came with us. It is in my slate, counting my files." } }] },
+      { when: { event: "guardianJoin" }, do: [{ say: { who: "vale", text: "The guardian walks with us. Keep it by Okoro." } }] },
+      { when: { objective: "out", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "We made it out, and ECHO came too!" } }] },
     ],
     debrief: {
       win: [
@@ -1239,9 +1239,9 @@ export const MISSIONS = [
     win: ["link", "ridge"],
     lose: [{ type: "coreLost" }, { type: "tagLost", tag: "caravan" }],
     triggers: [
-      { when: { time: 5 }, do: [{ say: { who: "sol", text: "My beacon is the gold light in the south-east. We can hold a while. Not a long while." } }, { ping: "solCamp" }, { camera: "solCamp" }] },
+      { when: { time: 5 }, do: [{ say: { who: "sol", text: "My beacon is the gold light. Hurry!" } }, { ping: "solCamp" }, { camera: "solCamp" }] },
       { when: { time: 150 }, do: [
-        { say: { who: "hale", text: "Captain Sol. A pact is a schedule. You broke it. I am sorry for what follows." } },
+        { say: { who: "hale", text: "Captain Sol. You broke the pact. I regret this." } },
         { wave: { team: 1, units: { vanguard: 2 }, from: "duneRidge", target: "solCamp" } },
       ] },
       { when: { time: 420 }, do: [{ aiSpeed: "normal" }] },
@@ -1252,39 +1252,39 @@ export const MISSIONS = [
         // Mission 5's pact: Sol remembers a shared forest relay. Words only: this mission is finely
         // balanced for the objective bot, and two more Riders, +200 alloy or one probe fewer each
         // turned its win into a defeat (0.19a check).
-        { if: { flag: "m05-pact", is: "drive" }, say: { who: "sol", text: "You came. You warned me and I did not listen. The Caravan pays its debts. We ride with you." } },
-        { if: { flag: "m05-pact", is: "share" }, say: { who: "sol", text: "You came. You shared the forest light when you did not have to. The Caravan pays its debts twice." } },
-        { if: { flag: "m04-sol", is: "accept" }, say: { who: "sol", text: "You let me ride out of the dunes. I remember. The Caravan sends two hundred alloy and every Rider it has." } },
+        { if: { flag: "m05-pact", is: "drive" }, say: { who: "sol", text: "You came. I did not listen. The Caravan pays its debts." } },
+        { if: { flag: "m05-pact", is: "share" }, say: { who: "sol", text: "For the forest light, we pay you back twice." } },
+        { if: { flag: "m04-sol", is: "accept" }, say: { who: "sol", text: "You let me go. Take two hundred alloy, and my Riders." } },
         { if: { flag: "m04-sol", is: "accept" }, give: { alloy: 200 } },
         { spawn: "vanguard", team: 0, at: "solCamp", count: 4, tag: "sunward" },
         { spawn: "rider", team: 0, at: "solCamp", count: 3, tag: "sunward" },
         { spawn: "breaker", team: 0, at: "solCamp", count: 1, tag: "sunward" },
         { unlock: ["rider"] },
         { give: { alloy: 300, energy: 100 } },
-        { say: { who: "sol", text: "Hale's road to my camp runs under the dune plateau. Take the top, and his columns must climb to you." } },
+        { say: { who: "sol", text: "Take the dune plateau. Hale's columns must climb to you." } },
         { reveal: "ridge" }, { ping: "ridgeTop" },
       ] },
-      { when: { tagHpBelow: { tag: "caravan", percent: 50 } }, do: [{ say: { who: "sol", text: "The beacon is breaking! Commander, if it falls my people have no road home." } }, { ping: "solCamp" }] },
-      { when: { objective: "shellers", is: "done" }, do: [{ say: { who: "sol", text: "The shelling has stopped. Children are coming out of the wagons. Thank you." } }] },
-      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Ashfall is hitting our camp too. He wants to keep us apart. Do not let him." } }] },
+      { when: { tagHpBelow: { tag: "caravan", percent: 50 } }, do: [{ say: { who: "sol", text: "The beacon is breaking! It is our road home!" } }, { ping: "solCamp" }] },
+      { when: { objective: "shellers", is: "done" }, do: [{ say: { who: "sol", text: "The shelling has stopped. The children are safe." } }] },
+      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Ashfall is hitting our camp too. Stay together." } }] },
       // The plateau taken: Hale sends the Wardens (real Warden drones under his key) and a column up the ramps.
       { when: { pointOwned: { point: "ridgeTop", team: 0 } }, do: [
-        { say: { who: "vale", text: "We hold the top. Keep the troops deep on the plateau: from the sand below they cannot see us." } },
-        { say: { who: "hale", text: "You have met ECHO, I think. Then meet its Wardens. The key commands them now." } },
-        { say: { who: "echo", text: "Those are the first patterns. Every unit on this world is a copy of them. This one is sorry." } },
+        { say: { who: "vale", text: "We hold the top. Keep back from the edge." } },
+        { say: { who: "hale", text: "You have met ECHO. Now meet the Wardens." } },
+        { say: { who: "echo", text: "The first patterns. Every unit copies them. This one is sorry." } },
         { music: "battle" }, { ping: "wardenRise" },
         { wave: { team: 1, units: { drone: 3, antitank: 1 }, from: "wardenRise", target: "ridgeTop" } },
-        { say: { who: "sol", text: "Machines on your camp road! My second column is at the south road. It is yours." } },
+        { say: { who: "sol", text: "Machines on your road! My second column is yours." } },
         { spawn: "vanguard", team: 0, at: "southRoad", count: 3, tag: "sunward" },
         { spawn: "antitank", team: 0, at: "southRoad", count: 3, tag: "sunward" },
       ] },
-      { when: { objective: "ridge", is: "done" }, do: [{ music: "calm" }, { say: { who: "sol", text: "The dunes are quiet. First time in a month. Where do we go next, Commander?" } }] },
-      { when: { objective: "core", is: "done" }, do: [{ say: { who: "vale", text: "Their camp is down as well. Hale will have to find his fuel somewhere else." } }] },
+      { when: { objective: "ridge", is: "done" }, do: [{ music: "calm" }, { say: { who: "sol", text: "The dunes are quiet at last. What comes next?" } }] },
+      { when: { objective: "core", is: "done" }, do: [{ say: { who: "vale", text: "Their camp is down too. Hale needs fuel elsewhere." } }] },
       // Creature round: the Elder Wyrm nest (optional).
-      { when: { enter: "elderNest", team: 0 }, do: [{ say: { who: "sol", text: "That is the old one's nest. My grandmother named it. Five young ones guard it, and they bite hard." } }] },
-      { when: { objective: "elder", is: "done" }, do: [{ say: { who: "sol", text: "The Elder Wyrm rides with you. In forty years nobody has tamed it. The Caravan will sing about this." } }] },
+      { when: { enter: "elderNest", team: 0 }, do: [{ say: { who: "sol", text: "The nest of the old one. Five young ones guard it." } }] },
+      { when: { objective: "elder", is: "done" }, do: [{ say: { who: "sol", text: "The Elder Wyrm rides with you! Nobody tamed it before!" } }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
-      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Ashfall scouts on the sand, two of them, looking for our camp. Let the guard see them off." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Two scouts from Ashfall on the sand. See them off." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
     ],
     debrief: {
       win: [
@@ -1362,51 +1362,51 @@ export const MISSIONS = [
     triggers: [
       // Campaign C6b: reinforcements by troop truck, no orders needed.
       { when: { time: 90 }, do: [
-        { say: { who: "okoro", text: "A truck with six soldiers is on its way to the front. They will meet you at the muster point." } },
+        { say: { who: "okoro", text: "Six soldiers coming by truck to the muster point!" } },
         { truck: { team: 0, units: { vanguard: 3, ranger: 3 }, from: "playerBase", to: "playerFront", tag: "truckHelp", name: "Supply truck" } },
       ] },
       // Campaign C3: Ilse Maren, an enemy hero. Below 35% health it yields; the Commander accepts or finishes it.
       { when: { tagHpBelow: { tag: "heroMaren", percent: 35 } }, do: [
         { surrender: "heroMaren" },
-        { say: { who: "maren", text: "The storm has turned against us. The Veil yields, Commander." } },
+        { say: { who: "maren", text: "The storm has turned. The Veil yields, Commander." } },
         { decide: "m10-maren" },
         { if: { flag: "m10-maren", is: "accept" }, capture: "heroMaren" },
         { if: { flag: "m10-maren", is: "accept" }, say: { who: "maren", text: "You are kinder than I was told. Thank you." } },
         { if: { flag: "m10-maren", is: "finish" }, finish: "heroMaren" },
         { if: { flag: "m10-maren", is: "finish" }, say: { who: "maren", text: "Then the Veil will not forget this." } },
       ] },
-      { when: { time: 6 }, do: [{ say: { who: "vale", text: "The west and south dampers are a short march from camp. The centre one is the hard one." } }, { ping: "damperWest" }, { ping: "damperSouth" }] },
-      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Three armies, three directions. Towers on every side, Commander, and a reserve in the middle." } }, { music: "battle" }] },
-      { when: { enter: "damperWest", team: 0 }, do: [{ say: { who: "maren", text: "Our first camp stood here, Commander. One relay woke and the storm took it in a night. Please stop." } }] },
+      { when: { time: 6 }, do: [{ say: { who: "vale", text: "West and south dampers are close. The centre is far." } }, { ping: "damperWest" }, { ping: "damperSouth" }] },
+      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Three armies, three directions. Towers on every side." } }, { music: "battle" }] },
+      { when: { enter: "damperWest", team: 0 }, do: [{ say: { who: "maren", text: "Our first camp stood here. A storm took it overnight." } }] },
       { when: { tagHpBelow: { tag: "damper", percent: 50 } }, do: [
-        { say: { who: "echo", text: "Archivist, that storm came because one relay woke alone. In tune, the Lattice makes no storms." } },
-        { say: { who: "maren", text: "A machine would say so. I buried forty friends on this plateau. I cannot risk more." } },
+        { say: { who: "echo", text: "Archivist, that relay woke alone. In tune, no storms come." } },
+        { say: { who: "maren", text: "A machine would say so. I buried forty friends here." } },
         { decide: "m10-veil" },
-        { if: { flag: "m10-veil", is: "spare" }, say: { who: "maren", text: "Thank you. My crews are walking out now. I will remember who opened the door." } },
+        { if: { flag: "m10-veil", is: "spare" }, say: { who: "maren", text: "Thank you. My crews are walking out." } },
         { if: { flag: "m10-veil", is: "break" }, give: { energy: 150 } },
-        { if: { flag: "m10-veil", is: "break" }, say: { who: "maren", text: "Then I cannot stop you. I can only ask the sky to stay clear." } },
+        { if: { flag: "m10-veil", is: "break" }, say: { who: "maren", text: "Then I cannot stop you. May the sky stay clear." } },
       ] },
       { when: { time: 420 }, do: [
-        { say: { who: "sol", text: "Riders on the south road, Commander! Late, dusty and ready. Put us where it is worst." } },
+        { say: { who: "sol", text: "Riders on the south road! Late, dusty and ready!" } },
         { spawn: "vanguard", team: 0, at: "solRoad", count: 4, tag: "sunward" },
         { spawn: "breaker", team: 0, at: "solRoad", count: 2, tag: "sunward" },
       ] },
       { when: { time: 840 }, do: [{ aiSpeed: "normal" }] },
       { when: { objective: "dampers", is: "done" }, do: [
-        { say: { who: "echo", text: "The Crown is free. Stand in its circle for one minute and this one will tune it." } },
+        { say: { who: "echo", text: "The Crown is free. Hold the circle one minute." } },
         { reveal: "crown" }, { camera: "crown" }, { ping: "crown" },
-        { say: { who: "hale", text: "All commands: the plateau centre. They must not finish." } },
+        { say: { who: "hale", text: "All commands to the plateau centre. Stop them." } },
         { wave: { team: 1, units: { vanguard: 3, ranger: 1 }, from: "enemyBase", target: "crown" } },
         { wave: { team: 2, units: { tank: 1, vanguard: 2 }, from: "enemyBase", target: "crown" } },
         // The Survey crews that were let go do not come back for the Crown.
         { if: { flag: "m10-veil", is: "break" }, wave: { team: 3, units: { ranger: 2, breaker: 1 }, from: "enemyBase", target: "crown" } },
       ] },
-      { when: { pointOwned: { point: "crown", team: 0 } }, do: [{ say: { who: "echo", text: "Tuning. Sixty relays are answering. Sixty-one. Hold the circle." } }] },
-      { when: { time: 900 }, do: [{ say: { who: "vale", text: "Fifteen minutes. Their siege corps has heavy machines now. Anti-tank soldiers to the front." } }] },
+      { when: { pointOwned: { point: "crown", team: 0 } }, do: [{ say: { who: "echo", text: "Tuning. Sixty relays answer. Sixty-one. Hold the circle." } }] },
+      { when: { time: 900 }, do: [{ say: { who: "vale", text: "Fifteen minutes. Heavy machines now. Anti-tank to the front." } }] },
       // The Crown lights with no storm (scene: src/story/scenes.js), before the debrief.
       { when: { objective: "crown", is: "done" }, do: [{ music: "calm" }, { scene: "crown-lights" }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
-      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Warden sentries are probing the storm line, two of them. The towers will see to it." } }, { wave: { team: 2, units: { vanguard: 2 }, from: { x: -18, z: 18 }, target: { x: -52, z: 52 }, probe: true } }] },
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Two Warden sentries at the storm line. Towers will answer." } }, { wave: { team: 2, units: { vanguard: 2 }, from: { x: -18, z: 18 }, target: { x: -52, z: 52 }, probe: true } }] },
     ],
     // The third Commander decision (0.19a). Its answer changes Maren's words in the finale.
     decisions: {
@@ -1480,7 +1480,7 @@ export const MISSIONS = [
     win: ["crown", "flag"],
     lose: [{ type: "coreLost" }, { type: "time", seconds: 1500 }],
     triggers: [
-      { when: { time: 5 }, do: [{ say: { who: "vale", text: "Scout the ramps first. A Breaker below the rim can still reach the towers." } }, { ping: "crown" }] },
+      { when: { time: 5 }, do: [{ say: { who: "vale", text: "Scout the ramps. Breakers below can hit the towers." } }, { ping: "crown" }] },
       { when: { time: 300 }, do: [
         { say: { who: "echo", text: "Intruders below the crown. Sending a patrol." } },
         { wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "playerBase" } },
@@ -1488,7 +1488,7 @@ export const MISSIONS = [
       { when: { objective: "crown", is: "done" }, do: [
         { music: "tense" },
         { say: { who: "echo", text: "The crown is lost. Retaking it." } },
-        { say: { who: "okoro", text: "Get a tower up on the crown now, before their column climbs the ramps." } },
+        { say: { who: "okoro", text: "Build a tower on the crown, now, before they climb!" } },
         { wave: { team: 1, units: { vanguard: 4, ranger: 3, tank: 1 }, from: "enemyBase", target: "crown" } },
       ] },
       { when: { objective: "flag", is: "done" }, do: [{ music: "calm" }] },
@@ -1569,36 +1569,36 @@ export const MISSIONS = [
     triggers: [
       // Campaign C6b: a troop truck drives a squad in behind the line. Break it before it unloads and the squad dies with it.
       { when: { time: 420 }, do: [
-        { say: { who: "vale", text: "A troop truck is crossing toward the base. Shoot it before it unloads: the squad dies with the truck." } },
+        { say: { who: "vale", text: "A troop truck! Shoot it before it unloads." } },
         { truck: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", to: "playerFront", then: "playerBase", tag: "truckA", name: "Troop truck" } },
       ] },
-      { when: { time: 5 }, do: [{ say: { who: "vale", text: "The clock is running, Commander. Build as you march. The middle conduit is nearest the ford." } }, { ping: "conduitMid" }, { music: "tense" }] },
-      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Wardens and Ashfall together, on our camp. Hold with towers. The army keeps moving." } }] },
-      { when: { enter: "bridge", team: 0 }, do: [{ say: { who: "sol", text: "Ford ahead. Go over in one group, Commander. A thin line gets cut in the water." } }] },
+      { when: { time: 5 }, do: [{ say: { who: "vale", text: "The clock is running. Build as you march." } }, { ping: "conduitMid" }, { music: "tense" }] },
+      { when: { event: "incoming" }, once: true, do: [{ say: { who: "vale", text: "Wardens and Ashfall on our camp. Towers will hold." } }] },
+      { when: { enter: "bridge", team: 0 }, do: [{ say: { who: "sol", text: "Cross the ford together. Thin lines get cut." } }] },
       { when: { tagDead: "conduitMid" }, do: [
-        { say: { who: "echo", text: "One conduit cut. The draw is slower by a third. This one can feel the fields breathe." } },
+        { say: { who: "echo", text: "One conduit cut. The draw slows by a third." } },
         { say: { who: "hale", text: "Wardens, to the west conduit. Guard it with everything." } },
         { spawn: "tank", team: 1, at: { x: -50, z: -2 }, count: 1 },
         { spawn: "ranger", team: 1, at: { x: -41, z: -12 }, count: 3 },
       ] },
       { when: { tagDead: "conduitWest" }, do: [
-        { say: { who: "okoro", text: "West conduit is scrap! The crystals near it have stopped fading." } },
-        { say: { who: "hale", text: "You have cost me a day. I have forty thousand reasons to take it back." } },
+        { say: { who: "okoro", text: "The west conduit is scrap! The crystals stopped fading." } },
+        { say: { who: "hale", text: "You cost me a day. I have forty thousand reasons." } },
         { ping: "conduitNorth" },
         { wave: { team: 2, units: { vanguard: 4, ranger: 2, tank: 1 }, from: "enemyBase", target: "playerBase" } },
       ] },
       { when: { time: 480 }, do: [{ aiSpeed: "normal" }] },
       { when: { time: 600 }, do: [
-        { say: { who: "vale", text: "Ten minutes left. Sol is sending you her reserve. Use it for the last conduit." } },
+        { say: { who: "vale", text: "Ten minutes. Sol sends her reserve. Last conduit." } },
         { spawn: "vanguard", team: 0, at: "solRoad", count: 4, tag: "sunward" },
         { spawn: "breaker", team: 0, at: "solRoad", count: 2, tag: "sunward" },
         { give: { alloy: 300, energy: 150 } },
       ] },
-      { when: { time: 960 }, do: [{ say: { who: "echo", text: "Four minutes. The oldest crystals are turning to dust. Please hurry, Commander." } }, { music: "battle" }] },
+      { when: { time: 960 }, do: [{ say: { who: "echo", text: "Four minutes. The oldest crystals are turning to dust." } }, { music: "battle" }] },
       // The draw stops (scene: src/story/scenes.js), before the debrief.
       { when: { tagDead: "conduitNorth" }, do: [{ music: "calm" }, { scene: "draw-cut" }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
-      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Ashfall scouts between the rivers, two of them. Hale wants to know how many we brought." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: -16, z: 12 }, target: { x: -40, z: 40 }, probe: true } }] },
+      { when: { time: 70 }, do: [{ say: { who: "vale", text: "Two Ashfall scouts between the rivers. Hale counts us." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: -16, z: 12 }, target: { x: -40, z: 40 }, probe: true } }] },
     ],
     debrief: {
       win: [
@@ -1677,21 +1677,21 @@ export const MISSIONS = [
     triggers: [
       // Campaign C6b: reinforcements by troop truck, no orders needed.
       { when: { time: 45 }, do: [
-        { say: { who: "okoro", text: "A truck with six soldiers is on its way to the front. They will meet you at the muster point." } },
+        { say: { who: "okoro", text: "Six soldiers coming by truck to the muster point!" } },
         { truck: { team: 0, units: { vanguard: 3, ranger: 3 }, from: "playerBase", to: "playerFront", tag: "truckHelp", name: "Supply truck" } },
       ] },
       // Campaign C4: what the Commander did with a yielding hero comes back as help at the end.
       { when: { time: 8 }, do: [
-        { if: { flag: "m07-hale", is: "accept" }, say: { who: "hale", text: "You spared my crews at the siege. Ashfall sends three hundred alloy. I am not a man who forgets." } },
+        { if: { flag: "m07-hale", is: "accept" }, say: { who: "hale", text: "You spared my crews. Ashfall sends three hundred alloy." } },
         { if: { flag: "m07-hale", is: "accept" }, give: { alloy: 300 } },
-        { if: { flag: "m10-maren", is: "accept" }, say: { who: "maren", text: "You let me walk my crews out of the storm. The Veil sends two hundred energy, and my records." } },
+        { if: { flag: "m10-maren", is: "accept" }, say: { who: "maren", text: "You saved my crews. The Veil sends two hundred energy." } },
         { if: { flag: "m10-maren", is: "accept" }, give: { energy: 200 } },
       ] },
-      { when: { time: 5 }, do: [{ say: { who: "vale", text: "Three armies will arrive inside four minutes. Towers and Rangers first. Nothing leaves camp yet." } }, { music: "tense" }] },
-      { when: { event: "incoming" }, once: true, do: [{ say: { who: "sol", text: "Here they come, from three sides! Caravan, stand with Meridian. Not one step back." } }, { music: "battle" }] },
+      { when: { time: 5 }, do: [{ say: { who: "vale", text: "Three armies in four minutes. Towers and Rangers first." } }, { music: "tense" }] },
+      { when: { event: "incoming" }, once: true, do: [{ say: { who: "sol", text: "Here they come, from three sides! Caravan, stand with Meridian!" } }, { music: "battle" }] },
       { when: { objective: "stand", is: "done" }, do: [
-        { say: { who: "vale", text: "The first offensive is broken. Now north, across the ford, to the engine." } },
-        { say: { who: "sol", text: "My heavy wagons have arrived, Commander. Breakers and a tank. Spend them well." } },
+        { say: { who: "vale", text: "The first offensive is broken. North, to the engine." } },
+        { say: { who: "sol", text: "My heavy wagons are here. Spend them well, Commander." } },
         { spawn: "breaker", team: 0, at: "solRoad", count: 2, tag: "sunward" },
         { spawn: "tank", team: 0, at: "solRoad", count: 1, tag: "sunward" },
         { spawn: "medic", team: 0, at: "solRoad", count: 2, tag: "sunward" },
@@ -1702,28 +1702,28 @@ export const MISSIONS = [
       // the default answer (finish) changes the words only, so the objective bot's match is unchanged.
       { when: { objective: "stand", is: "done" }, do: [
         { scene: "veil-turns" },
-        { if: { flag: "m10-maren", is: "accept" }, say: { who: "lind", text: "You spared the Archivist. Two of my Stalkers are yours, Commander. They shoot healers first." } },
+        { if: { flag: "m10-maren", is: "accept" }, say: { who: "lind", text: "You spared the Archivist. Two Stalkers are yours." } },
         { if: { flag: "m10-maren", is: "accept" }, spawn: "stalker", team: 0, at: "westBank", count: 2, exact: true, tag: "veil" },
       ] },
       { when: { enter: "approach", team: 0 }, do: [
-        { say: { who: "hale", text: "Commander. You would do the same for forty thousand of yours. Do not tell me otherwise." } },
-        { say: { who: "vale", text: "Director, tuned, the Keystone feeds your fleet for good. Your way feeds it for one year." } },
-        { say: { who: "hale", text: "A year I can count. A promise I cannot. Wardens: their camp." } },
+        { say: { who: "hale", text: "You would do the same for forty thousand of yours." } },
+        { say: { who: "vale", text: "Director, a tuned Keystone feeds your fleet forever." } },
+        { say: { who: "hale", text: "A year I can count. A promise, I cannot. Attack." } },
         { wave: { team: 2, units: { vanguard: 3, ranger: 2 }, from: "enemyBase", target: "playerBase" } },
       ] },
       { when: { time: 780 }, do: [{ wave: { team: 2, units: { vanguard: 4, ranger: 3, breaker: 2, antitank: 1, tank: 2 }, from: "enemyBase", target: "playerBase" } }] },
       { when: { tagHpBelow: { tag: "engine", percent: 50 } }, do: [
         // Mission 10's dampers: crews that were let go bring Maren over with a debt in mind.
-        { if: { flag: "m10-veil", is: "break" }, say: { who: "maren", text: "I watched the Crown light without a storm. All Veil commands: stand down. I was wrong." } },
-        { if: { flag: "m10-veil", is: "spare" }, say: { who: "maren", text: "You let my crews walk out of the dampers. Now I walk out of this war. All Veil commands: stand down." } },
-        { say: { who: "echo", text: "Thank you, Archivist. I have unlocked your old camp records. Your friends are named in them." } },
+        { if: { flag: "m10-veil", is: "break" }, say: { who: "maren", text: "The Crown lit without a storm. The Veil stands down." } },
+        { if: { flag: "m10-veil", is: "spare" }, say: { who: "maren", text: "You freed my crews. Now I leave this war." } },
+        { say: { who: "echo", text: "Thank you, Archivist. Your old camp records are open." } },
         { aiSpeed: "relaxed" },
         { spawn: "ranger", team: 0, at: "westBank", count: 4, tag: "veilFriends" },
         { spawn: "medic", team: 0, at: "westBank", count: 2, tag: "veilFriends" },
       ] },
-      { when: { time: 900 }, do: [{ say: { who: "echo", text: "Ten minutes of Lattice left. I can hear the far relays going quiet, one by one." } }] },
-      { when: { time: 1260 }, do: [{ say: { who: "vale", text: "Four minutes, Commander. Forget the camps. Everything on the engine!" } }, { ping: "keystone" }] },
-      { when: { objective: "cores", is: "done" }, do: [{ say: { who: "sol", text: "Every camp broken! You are thorough, Commander. I am glad we are friends now." } }] },
+      { when: { time: 900 }, do: [{ say: { who: "echo", text: "Ten minutes of Lattice left. Far relays go quiet." } }] },
+      { when: { time: 1260 }, do: [{ say: { who: "vale", text: "Four minutes. Forget the camps. Everything on the engine!" } }, { ping: "keystone" }] },
+      { when: { objective: "cores", is: "done" }, do: [{ say: { who: "sol", text: "Every camp broken! I am glad we are friends." } }] },
       { when: { objective: "engine", is: "done" }, do: [
         { music: "calm" },
         // The ending beat, staged by ending (src/story/scenes.js), before the debrief and epilogue.
@@ -1731,7 +1731,7 @@ export const MISSIONS = [
         { if: { ending: "open-frontier" }, scene: "keystone-open" },
       ] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
-      { when: { time: 60 }, do: [{ say: { who: "vale", text: "Their scouts come first. Two Scrappers on the road. Let the towers take them; the armies come later." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: -6, z: 6 }, target: { x: -40, z: 40 }, probe: true } }] },
+      { when: { time: 60 }, do: [{ say: { who: "vale", text: "Two Scrapper scouts first. Let the towers take them." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: -6, z: 6 }, target: { x: -40, z: 40 }, probe: true } }] },
     ],
     debrief: {
       win: [

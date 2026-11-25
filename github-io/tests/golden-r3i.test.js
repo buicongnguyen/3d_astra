@@ -43,7 +43,7 @@ test("a probe is the same few scouts on every difficulty, and it is not the miss
     assert.ok(incoming?.probe, difficulty);
     assert.equal(incoming.count, 2, `${difficulty}: unscaled`);
     assert.equal(s.entities.filter((e) => !before.has(e.id) && e.team === 1 && e.kind === "unit" && e.type !== "worker").length >= 2, true);
-    assert.ok(!said.some((t) => t.startsWith("Ashfall is on the move")), `${difficulty}: the first-wave line waits for the real wave`);
+    assert.ok(!said.some((t) => t.startsWith("Ashfall is moving")), `${difficulty}: the first-wave line waits for the real wave`);
   }
 });
 
@@ -83,5 +83,6 @@ test("every probe walks from open ground to the camp, with a short line that has
 // 2026-11-24 (campaign C3, enemy heroes): m04 now holds Captain Sol, a hero Rider at the east oasis; old ded7f19b.
 test("golden: mission 4 with its probe for 120 s", () => {
   // Re-recorded in the creature round (2026-11-24): mission 4 gained its optional Dune Wyrm nest (three Wyrmlings on the field).
-  pin("r3i m04 120", missionMatch(MISSIONS.find((m) => m.id === "m04-three-way-dunes")).run(120), "0ae451df");
+  // Re-recorded 2026-11-25 (concise story lines): text only. The hash covers the mission definition, so the shorter say lines move it; with the old lines put back the run reproduces the old pin exactly (same waves, lives, result), so play is unchanged. Old 0ae451df.
+  pin("r3i m04 120", missionMatch(MISSIONS.find((m) => m.id === "m04-three-way-dunes")).run(120), "d34c3af8");
 });

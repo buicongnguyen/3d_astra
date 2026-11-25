@@ -76,7 +76,7 @@ test("Wings over Copper resolves with and without earlier decisions: only Hale's
   const none = resolveMission(WINGS, null), mercy = resolveMission(WINGS, pick(true)), firm = resolveMission(WINGS, pick(false));
   assert.deepEqual(none, firm, "the default is the firm answer");
   const lines = (m) => actions(m).filter((a) => a.say).map((a) => a.say.text);
-  assert.ok(lines(mercy).some((t) => t.startsWith("You returned our alloy once")) && !lines(mercy).some((t) => t.startsWith("You kept our alloy")));
+  assert.ok(lines(mercy).some((t) => t.startsWith("You returned our alloy")) && !lines(mercy).some((t) => t.startsWith("You kept our alloy")));
   assert.ok(lines(firm).some((t) => t.startsWith("You kept our alloy")) && !lines(firm).some((t) => t.startsWith("You returned")));
   const rest = (m) => JSON.stringify({ ...m, triggers: m.triggers.map((t) => ({ ...t, do: t.do.filter((a) => !a.say) })) });
   assert.equal(rest(mercy), rest(firm), "waves, objectives and everything else are the same");
@@ -98,16 +98,18 @@ test("Wings over Copper resolves with and without earlier decisions: only Hale's
 // 2026-11-24 (campaign C1, pacing): m03 siphons 6000 to 4200 HP and new gold/silver times; m06 quota 8000/2600 to 7200/2300 and new medals.
 // 2026-11-24 (defence pads): m02b's intel opens with "Defence: no base — crew the pads beside the road" and pad s8 moved
 // 3.6 m nearer the east road (20, 34 to 17, 32) so short-reach crews there cover the road; old 9845060f.
+// 2026-11-25 (concise story lines): text only, every say line shorter; with the old lines put back every mission resolves to
+// its old checksum. Old m01-first-light 704a79da, m02-first-contact 0223006d, m02b-hold-the-river 1b4bbcf9, m03-the-ashen-line 586533a5, m04-three-way-dunes 7b11bc96, m05-the-verdant-pact 1cfc2cff, m06-copper-harvest 00ea9e9e, m07-copper-siege e1b6c7fd, m08-the-quiet-vault a750b7e8, m09-a-debt-in-the-dunes 4884ad1c, m10-obsidian-storm 90d0a3ee, m11-cut-the-draw 214fd6b9, m11c-hold-the-keystone-roads 8b3c253d, m12-frontiers-end 2aadeadc.
 test("the original missions resolve to their recorded checksums on all decision paths", () => {
   const BEFORE = {
-    "m01-first-light": "704a79da", "m02-first-contact": "0223006d", "m02b-hold-the-river": "1b4bbcf9", "m03-the-ashen-line": "586533a5",
-    "m04-three-way-dunes": "7b11bc96", "m05-the-verdant-pact": "1cfc2cff", "m06-copper-harvest": "00ea9e9e", "m07-copper-siege": "e1b6c7fd",
-    "m08-the-quiet-vault": "a750b7e8", "m09-a-debt-in-the-dunes": "4884ad1c", "m10-obsidian-storm": "90d0a3ee", "m11-cut-the-draw": "214fd6b9", "m12-frontiers-end": "2aadeadc",
+    "m01-first-light": "731fcbda", "m02-first-contact": "f16e7662", "m02b-hold-the-river": "db1662a2", "m03-the-ashen-line": "fafe9b59",
+    "m04-three-way-dunes": "66c29261", "m05-the-verdant-pact": "d0ad0168", "m06-copper-harvest": "06703671", "m07-copper-siege": "de1aff51",
+    "m08-the-quiet-vault": "f3593619", "m09-a-debt-in-the-dunes": "f1bdb3bc", "m10-obsidian-storm": "9ba712b1", "m11-cut-the-draw": "096baedf", "m12-frontiers-end": "0c663a5f",
     // AAA round 3 (R3-I, campaign pacing): first-contact probes in 10 base missions, m03 (towers objective, gold 750 s) and m04 retuned after the south exits.
     // Creature round (2026-11-24): optional creature dens in m02 (Acid Hounds), m04 and m09 (Wyrm nests), the Vault
     // Sentinel in m08, Sol's lines in m05 and the Veil's turn (scene, Stalkers if Maren was spared) in m12.
     // AAA round 2 (W2-F): the new optional mission, recorded when it was added.
-    "m11c-hold-the-keystone-roads": "8b3c253d",
+    "m11c-hold-the-keystone-roads": "7a8b2091",
   };
   for (const [id, sum] of Object.entries(BEFORE)) {
     const m = MISSIONS.find((x) => x.id === id);

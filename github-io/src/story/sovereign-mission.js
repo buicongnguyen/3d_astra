@@ -25,9 +25,9 @@ export const SOVEREIGN_SCENES = {
       { fx: { flash: "alarm" } },
       { shake: 0.5 },
       { title: { text: "Iron Sovereign", sub: "It walks on Meridian's line" } },
-      { say: { who: "okoro", text: "There it is, coming down from the Keystone. Hale gave the Sovereign legs that walk, not just legs that stand." } },
+      { say: { who: "okoro", text: "There it is! Hale gave the Sovereign walking legs!" } },
       { camera: { at: "line", zoom: 1.1, seconds: 1.8 } },
-      { say: { who: "hale", text: "Meridian. My Sovereign walks to your camp, and my relays carry its shield. Nothing you own can stop it." } },
+      { say: { who: "hale", text: "My Sovereign walks to your camp. My relays shield it." } },
     ],
   },
 };
@@ -87,15 +87,15 @@ export const SOVEREIGN_WALKS = {
   win: ["relays", "sovereign"],
   lose: [{ type: "coreLost" }],
   triggers: [
-    { when: { time: 5 }, do: [{ say: { who: "vale", text: "Two towers on the line and a squad behind them, Commander. Build up while it is still far away." } }] },
-    { when: { time: 90 }, do: [{ say: { who: "okoro", text: "Ashfall crews are standing at three old relay posts. Whatever they wait for, it is coming from the north." } }] },
+    { when: { time: 5 }, do: [{ say: { who: "vale", text: "Two towers and a squad hold the line. Build up." } }] },
+    { when: { time: 90 }, do: [{ say: { who: "okoro", text: "Ashfall crews wait at three old relays. Something comes north." } }] },
     // A small probe at 1:40, so the line has something to do before the big walk.
     { when: { time: 100 }, do: [{ wave: { team: 1, units: { vanguard: 3, ranger: 2 }, from: "gate", target: "line" } }] },
     // At 4:40 Okoro's Kite goes up over the north road (after the probe), so the player sees the Sovereign
     // come out of its gate in the entrance scene.
     { when: { time: 280 }, do: [
       { spawn: "kite", team: 0, at: { x: 10, z: -26 }, name: "Okoro's Kite", exact: true },
-      { say: { who: "okoro", text: "My Kite is over the north road. Whatever comes down it, we will see it first." } },
+      { say: { who: "okoro", text: "My Kite watches the north road. We see first." } },
     ] },
     // At 5:00 the relays wake and the Sovereign comes out of the north with a small escort, and walks at once.
     { when: { time: 300 }, do: [
@@ -108,25 +108,25 @@ export const SOVEREIGN_WALKS = {
       { ping: "gate" },
       { music: "tense" },
     ] },
-    { when: { time: 310 }, do: [{ say: { who: "okoro", text: "The relays woke with it. One sits south of the river, by the old pump: that one is the easy one." } }, { ping: "relaySouth" }] },
+    { when: { time: 310 }, do: [{ say: { who: "okoro", text: "The relays woke with it. The south one is easiest." } }, { ping: "relaySouth" }] },
     { when: { event: "bossWake" }, do: [{ scene: "sovereign-walks" }] },
-    { when: { tagHpBelow: { tag: "ward", percent: 50 } }, do: [{ say: { who: "okoro", text: "That relay is failing. When the last one goes dark, its shield goes with it." } }] },
+    { when: { tagHpBelow: { tag: "ward", percent: 50 } }, do: [{ say: { who: "okoro", text: "That relay is failing. The last one takes the shield." } }] },
     { when: { objective: "relays", is: "done" }, do: [
       { reveal: "sovereign" },
-      { say: { who: "okoro", text: "Last relay down! Its shield is gone. Everything on the Sovereign now, Commander." } },
-      { say: { who: "hale", text: "Then it walks without a shield. It has walked through worse than you." } },
+      { say: { who: "okoro", text: "Last relay down! Shield gone! Everything on the Sovereign!" } },
+      { say: { who: "hale", text: "Then it walks without a shield. It has survived worse." } },
     ] },
     // Phase 2 (boss engine III): at half health it plants itself, sheds two drones and changes its attacks.
     { when: { bossStage: 2 }, do: [
       { music: "battle" },
-      { say: { who: "okoro", text: "It has stopped! The core is running hot. New guns, Commander: a long rail and a ring of shells." } },
-      { say: { who: "vale", text: "Same rule as before. Watch the red, step out, and keep shooting." } },
+      { say: { who: "okoro", text: "It stopped! The core runs hot. New guns too!" } },
+      { say: { who: "vale", text: "Same rule. Step off the red ground and keep shooting." } },
       { say: { who: "hale", text: "Half a Sovereign is still a Sovereign, Commander." } },
     ] },
     { when: { tagDead: "sovereign" }, do: [
       { music: "calm" },
-      { say: { who: "okoro", text: "It is down, and it will not walk again. I am sorry, old machine." } },
-      { say: { who: "hale", text: "My last walker. Very well, Commander. The Keystone will decide the rest." } },
+      { say: { who: "okoro", text: "It is down for good. Sorry, old machine." } },
+      { say: { who: "hale", text: "My last walker. Very well. The Keystone will decide." } },
     ] },
   ],
   debrief: {

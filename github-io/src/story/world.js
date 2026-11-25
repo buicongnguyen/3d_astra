@@ -100,7 +100,7 @@ export const CAST = {
     speech: "Excited, concrete, full of numbers and small discoveries. Asks questions out loud.",
     portrait: "Bust, facing front, leaning in. Young man, brown skin, short curly hair, goggles pushed up on his forehead. Mint work vest over a cream shirt with rolled sleeves, a coil of cable on one shoulder, a glowing blue crystal in his gloved hand. Wide grin, eyebrows up.",
     samples: [
-      "It is waking! Four hundred years dark and it still knows its work.",
+      "It is waking! Four hundred years dark, and it works!",
       "Commander, look at this reading. When our relay lit, theirs went dim.",
     ],
   },
@@ -126,7 +126,7 @@ export const CAST = {
     speech: "Warm and direct. Talks about water, roads, debts and guests. Laughs before a fight.",
     portrait: "Bust, facing front, chin up. Woman in her thirties, tan skin, black braid over one shoulder, sun-lines at the eyes. Gold-and-sand long coat with a wide scarf, half-sun brooch, dust goggles hanging at her neck. Confident smile, one eyebrow raised.",
     samples: [
-      "Nothing personal, Commander. My gardens need that light as much as yours.",
+      "Nothing personal, Commander. My gardens need that light too.",
       "You warned me and I did not listen. The Caravan pays its debts. We ride with you.",
     ],
   },
@@ -153,7 +153,7 @@ export const CAST = {
     speech: "Few words, low voice, field reports. Calls Maren \"Archivist\" and counts his squad out loud.",
     portrait: "Bust, three-quarter view. Young man in his twenties, deep brown skin, short black hair, a violet scarf pulled down to his chin. Charcoal hooded field jacket with silver piping, a small violet seer lens clipped over one ear. Calm, watchful eyes, the corner of a smile.",
     samples: [
-      "West mast in sight. They have not seen us yet. The Shades go first.",
+      "West mast in sight. They have not seen us.",
       "Every crew is out, Archivist. I counted them twice, the way you taught me.",
     ],
   },
@@ -166,7 +166,7 @@ export const CAST = {
     speech: "Quick and plain, with workshop words. Talks to Wardens by their numbers and to people as equals.",
     portrait: "Bust, facing front. Woman in her late twenties, light olive skin with freckles, cropped copper-red hair. Patched blue coveralls with the three-circle emblem stitched on the chest, a band of pale blue Warden lights across her forehead, a spanner over one shoulder. Grin with one eyebrow up.",
     samples: [
-      "Two towers on the line and a squad behind them. Build while it is still far away, Warden-prime.",
+      "Two towers and a squad hold the line. Build early.",
       "Four hundred years of orders, and the first thing they chose was to guard.",
     ],
   },
