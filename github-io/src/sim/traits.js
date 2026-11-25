@@ -115,8 +115,11 @@ export const traits = {
   // cheap enough for every move step; flyers (a later `flying` flag) pass over it. A Defence
   // pontoon (terrain.pontoons, sim/defence.js) wades like the ford.
   // A map with several rivers (maps.json "rivers") may have a ford on each.
+  // A lake's ford strips (maps.json / campaign-maps.json "lakes", W14) wade the same way.
   inFord(e) {
-    if (!this.terrain.river || e.flying) return false;
+    if (e.flying) return false;
+    if (this.terrain.lakes?.length && this.terrain.inLakeFord(e.x, e.z)) return true;
+    if (!this.terrain.river) return false;
     const river = this.terrain.riverNear(e.z, FORD_WATER);
     if (!river) return false;
     // The old river (CROSSINGS) keeps its one ford and the Defence pontoons.

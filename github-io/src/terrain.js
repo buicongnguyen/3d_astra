@@ -94,6 +94,15 @@ export class Terrain {
     }
     return depth;
   }
+  // True when (x, z) wades a lake's ford strip (between the island and the shore): slow like a river ford
+  // (sim/traits.js inFord). A plain numeric test, cheap enough for every move step.
+  inLakeFord(x, z) {
+    for (const l of this.lakes) {
+      const d = hyp(x - l.x, z - l.z);
+      if (d <= l.r && d >= l.inner && this.lakeFord(l, x, z)) return true;
+    }
+    return false;
+  }
   // True when a circle of radius r at (x, z) touches a lake's open water (its fords are wadeable).
   lakeWater(l, x, z, r = 0) {
     const d = hyp(x - l.x, z - l.z);
