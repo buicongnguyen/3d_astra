@@ -115,6 +115,9 @@
 .meta-earned-challenges { border-color: #9fd38a; background: rgba(120, 190, 100, 0.12); }
 .meta-earned-challenges .meta-earned-head, .meta-earned-challenges li .icon { color: #bfe8a8; }
 .meta-earned li b { font: 800 12px/1 var(--font-ui); color: var(--kit-gold, #ffd17b); }
+/* Phones: the strip follows the mode's own setup (maps and pickers, the campaign's missions stay on the first
+   screen above Start); it is in the setup a short scroll down, never behind a menu. */
+.compact-ui #briefing .briefing-setup > #daily-challenges { order: 6; }
 /* Landscape phones: the strip is one row of three short tiles (the goal under the name). */
 @media (orientation: landscape) and (max-height: 520px) {
   .compact-ui #briefing .daily-challenges { grid-column: 1 / -1; }

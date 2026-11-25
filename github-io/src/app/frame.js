@@ -126,8 +126,8 @@ export function setupFrame(S, A) {
     // S.testHold (browser tests only, window.__frontier.hold): draw but do not advance the match, so a
     // test moves time with step() alone and a slow machine cannot run the clock on between its checks.
     // S.defenceGuideHold (app/defence/guide.js): the Defence first-build guide's steps 1 and 2 wait on the clock too.
-    // W6: a replay (src/meta-ui.js) holds the clock while its viewer is paused or finished.
-    const running = Z.started && !Z.paused && !S.sim.result && !S.testHold && !S.defenceGuideHold && !S.replay?.paused;
+    // W6: a replay (src/replay-ui.js) holds the clock while its viewer is paused or finished, and no guide holds it.
+    const running = Z.started && !Z.paused && !S.sim.result && !S.testHold && (!S.defenceGuideHold || !!S.replay) && !S.replay?.paused;
     // D2: the clock's pace (×1, ×2, ×3: the Defence bar, Shift+Space or Settings → Game speed, any match);
     // a scene or a decision puts it back to 1.
     const pace = S.replay ? S.replay.speed : fastForward.pace({ sim: S.sim, started: Z.started, allowed: true, forced: MUSIC_HOLDS.includes(Z.modalType) || !!A.sceneActive?.() || !!S.sim.mission?.pending });

@@ -16,7 +16,7 @@ Status: todo / doing / done (commit).
 | W3 | Voices: unit acknowledgements, announcer (base under attack, unit lost, objective), story lines; per-faction tone; EN first, VI/KO subtitles; switchable off | Voices 2.0, Audio 6.0, Faction identity | | todo |
 | W4 | Animation pass: hit flinch, death falls/wrecks, kneel-to-fire for more infantry, mech heavy walk, air bank/landing | Animation 5.5, VFX 6.8, Polish | | todo (after W1) |
 | W5 | Faction identity: per-faction silhouettes and palettes, signature unit per faction, faction UI accent, faction music stinger (models via Codex briefs or agents) | Faction identity 4.5, Unit models | | todo (after W1 list) |
-| W6 | Replay value: challenges (C7.1), medal cosmetics (C7.3), achievements 13 -> 25, match history and replay viewer (B2-B3) | Replay 5.3, Content | | todo |
+| W6 | Replay value: challenges (C7.1), medal cosmetics (C7.3), achievements 13 -> 25, match history and replay viewer (B2-B3) | Replay 5.3, Content | | done on claude/replay-meta (5ec39af achievements, a6e9f1b challenges, 0edc26d cosmetics, 30494b6 history, 82fa2d1 replays); not merged. Notes below. |
 | W7 | Depth: second doctrine tier, special weapons plan, abilities for Hawk / Balloon / Glider | Balance & depth 5.0, Content 5.4 | | todo |
 | W8 | AI quality on Fast / Relentless only: focus fire, retreat wounded, flank, use abilities, scout with Kites; Relaxed/Normal untouched | AI quality 5.0 | | todo |
 | W9 | Content: C6 missions (4 of 6-8), story scenes (2 of 8), new lands (snow / volcano / water), Ember Drake boss, Ancient ruins | Content 5.4, Campaign 6.0 | | todo |
@@ -32,3 +32,10 @@ Status: todo / doing / done (commit).
 3. Then W7 and W8 (both move golden pins: one at a time), W9, W10, W13, W14.
 4. W11 needs the owner's yes on a signalling service (free PeerJS cloud or a tiny worker).
 5. Re-score after each wave; record the score here.
+
+## W6 notes (2026-11-25)
+- Built: 12 new achievements (25) with toast, Records screen and results row; three daily challenges seeded from the local date (direct title tiles, +50 XP each, challenge days); nine medal cosmetics (paints, emblems, banners) picked in the Skirmish setup's Commander rows; match history (20) and a replay viewer (3 stored, x1/x2/x4, final-hash check, other versions refused). Storage keys: docs/ARCHITECTURE.md "Replay value storage (W6)".
+- Golden pins identical (no simulation change). The replay needs the options each match was built with, remembered beside it in createSim (`src/main.js`), not a save's options: a mission's AI speed is adjusted when built and some missions raise it in play.
+- Choices made without the owner (easy to change): challenges are a daily set of three (plan C7.1's per-mission challenge is not built; the brief asked for a rotating daily set); challenge XP is 50 each; a match continued from a save keeps no replay; the replay viewer has no timeline scrub or fog toggle (plan Stage 5.4 extras); unlock thresholds in `src/meta/rewards.js`.
+- Owner to check: VI/KO wording of the new strings; whether the challenge strip on the phone title pushes the mode row down too far (it sits under the quick row).
+

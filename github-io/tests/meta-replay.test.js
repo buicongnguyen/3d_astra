@@ -11,6 +11,7 @@ import { ObjectiveBot } from "../tools/playbot.mjs";
 import { packLog, unpackLog, recordReplay, replayProblem, replayFeeder, runReplay, rememberOptions, optionsOf, replayOptions, REPLAY_VERSION } from "../src/meta/replay.js";
 import { REPLAY_KEY, REPLAY_CAP, REPLAY_BYTES, storeReplay, loadReplays } from "../src/meta/history.js";
 import { SAVE_VERSION } from "../src/snapshot.js";
+import { DEFENCE_LEVELS } from "../src/defence/levels.js";
 
 // A scripted player: the same commands at the same ticks every time (as tests/save-replay.test.js).
 function play(s, seconds) {
@@ -59,6 +60,23 @@ test("a story mission on Veteran replays from its constructor options (its AI sp
   assert.equal(new Simulation(replayOptions(replay)).aiSpeed, new Simulation(options).aiSpeed);
   const r = runReplay(Simulation, JSON.parse(JSON.stringify(replay)));
   assert.equal(r.status, "ok");
+});
+
+test("a Frontier Defence level replays too: pads, a commander rank and an early wave call", () => {
+  const level = DEFENCE_LEVELS[0], options = { map: level.map, enemyCount: 1, ai: false, mission: level, difficulty: "standard" };
+  const s = built(options);
+  for (let i = 0; i < 20 * 120 && !s.result; i++) {
+    if (s.ticks === 5) s.command({ team: 0, type: "padBuild", pad: level.defence.pads[0].id, crew: "ranger" });
+    if (s.ticks === 30) s.command({ team: 0, type: "padBuild", pad: level.defence.pads[1].id, crew: "breaker" });
+    if (s.ticks === 60) s.command({ team: 0, type: "waveCall" });
+    if (s.ticks === 900) s.command({ team: 0, type: "heroUpgrade" });
+    s.tick(0.05); s.events.length = 0;
+  }
+  const replay = JSON.parse(JSON.stringify(recordReplay(s, { app: "x" })));
+  assert.ok(replay.log.length >= 3, `${replay.log.length} commands`);
+  const r = runReplay(Simulation, replay);
+  assert.equal(r.status, "ok");
+  assert.equal(r.sim.defence.wave, s.defence.wave);
 });
 
 test("a changed log drifts; the feeder applies each command on its own tick", () => {

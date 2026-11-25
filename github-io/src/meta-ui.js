@@ -57,7 +57,10 @@ const GROUP_LABELS = { campaign: "Campaign", skirmish: "Skirmish", defence: "Def
 export function setupMeta(S, A) {
   const Z = S.screen;
   let record = loadRecord();
-  const extra = () => ({ record, defence: S.defenceProgress || loadDefence() });
+  // The Defence progress, read from storage at most once a visit unless the Defence screens hold it (S.defenceProgress).
+  let defenceCache = null;
+  const defenceSeen = () => (defenceCache ??= loadDefence());
+  const extra = () => ({ record, defence: S.defenceProgress || defenceSeen() });
   const progress = () => S.campaign || loadProgress();
   const all = () => achievementsFor(progress(), extra());
 
@@ -110,7 +113,7 @@ export function setupMeta(S, A) {
   let unlocked = [];
   function earn(toastNow = true) {
     const metaBefore = record.meta;
-    record = recordMoreAchievements(progress(), record, S.defenceProgress || loadDefence()).record;
+    record = recordMoreAchievements(progress(), record, S.defenceProgress || defenceSeen()).record;
     syncMeta();
     saveRecord(record);
     const now = doneIds(), list = all().filter((a) => now.has(a.id) && !known.has(a.id));
@@ -143,7 +146,7 @@ export function setupMeta(S, A) {
     const ctx = matchContext(summary);
     record = addMatch(record, ctx);
     // Defence stars were just saved by the Defence result (app/defence/result.js): read them again.
-    if (ctx.mode === "defence") S.defenceProgress = loadDefence();
+    if (ctx.mode === "defence") S.defenceProgress = defenceCache = loadDefence();
     // Today's challenges: each met one pays Commander XP once (rank-ui.js), all three make a challenge day.
     const day = today(), judged = judgeChallenges(challenges, ctx, day);
     challenges = judged.state;
@@ -188,7 +191,7 @@ export function setupMeta(S, A) {
     if (!Z.started || Z.paused || S.sim?.result || S.replay || S.playMode === "training" || S.tutorial) return;
     const ctx = matchContext({ mode: S.activeStage !== null ? "campaign" : S.sim.defence ? "defence" : S.playMode, win: false });
     const live = addMatch(record, ctx, { live: true });
-    const reached = recordMoreAchievements(progress(), live, S.defenceProgress || loadDefence()).added;
+    const reached = recordMoreAchievements(progress(), live, S.defenceProgress || defenceSeen()).added;
     if (!reached.length) return;
     // Only the earned ids are kept now; the match's counters are added once, when it ends.
     record = { ...record, earned: [...new Set([...record.earned, ...reached])] };
@@ -208,7 +211,7 @@ export function setupMeta(S, A) {
     const list = all(), done = list.filter((a) => a.done).length;
     tile.dataset.matches = String(history.length);
     tile.title = "Achievements, daily challenges and match history";
-    tile.innerHTML = `${icon("star")}<span class="quick-text"><strong>Records</strong><small translate="no" aria-label="${done} / ${list.length}">★ ${done} / ${list.length}</small></span>`;
+    tile.innerHTML = `${icon("star")}<span class="quick-text"><strong>Records</strong><small translate="no">★ ${done} / ${list.length} · ✓ ${challenges.done.length} / 3</small></span>`;
   }
 
   // ---------- today's challenges: three direct tiles under the quick row (a tap picks the mode) ----------
