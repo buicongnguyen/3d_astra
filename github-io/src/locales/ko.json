@@ -959,13 +959,13 @@
     "Unarmed flyer that sees 32 m, about twice as far as a soldier, and over cliffs: over a plateau it opens the top to your whole side. Reveals hidden units within 8 m. Dive crashes it into an enemy vehicle. Only Rangers, Anti-tank soldiers and other units that hit air can shoot it. Trained at a level 2 Command core.": "32m 거리까지(병사의 약 두 배), 절벽 너머까지 보는 비무장 비행 유닛입니다. 고원 위를 날면 아군 전체에게 고원 위가 드러납니다. 8m 안의 숨은 유닛을 드러냅니다. 급강하로 적 차량에 돌진할 수 있습니다. 레인저, 대전차병 등 공중을 공격할 수 있는 유닛만 격추할 수 있습니다. 레벨 2 사령부에서 생산합니다.",
     "Hawk gunship": "호크 건십",
     "Air gunship": "공중 건십",
-    "Meridian. Twin-fan gunship that strafes infantry: 13 damage every 0.7 s at 8 m, a third to enemies within 1.5 m, 1.5× to close assault troops, and it shoots flyers too. Flies over water, walls and cliffs. Rangers and Anti-tank rockets bring it down. Trained at a level 3 Command core.": "메리디언. 보병을 기총 소사하는 쌍발 팬 건십: 사거리 8m, 0.7초마다 피해 13, 1.5m 안의 적에게 삼분의 일, 근접 돌격 부대에게 1.5×, 비행 유닛도 공격합니다. 물, 벽, 절벽 위를 날아갑니다. 레인저와 대전차 로켓으로 격추할 수 있습니다. 레벨 3 사령부에서 생산합니다.",
+    "Meridian. Twin-fan gunship that strafes infantry: 13 damage every 0.7 s at 8 m, a third to enemies within 1.5 m, 1.5× to close assault troops, and it shoots flyers too. Flies over water, walls and cliffs. Strafing run rakes a line of ground enemies. Rangers and Anti-tank rockets bring it down. Trained at a level 3 Command core.": "메리디언. 보병을 기총 소사하는 쌍발 팬 건십: 사거리 8m, 0.7초마다 피해 13, 1.5m 안의 적에게 삼분의 일, 근접 돌격 부대에게 1.5×, 비행 유닛도 공격합니다. 물, 벽, 절벽 위를 날아갑니다. 기총 소사로 지상 적 한 줄을 휩씁니다. 레인저와 대전차 로켓으로 격추할 수 있습니다. 레벨 3 사령부에서 생산합니다.",
     "Ember balloon": "엠버 열기구",
     "Air bomber": "공중 폭격기",
-    "Ashfall. Slow hot-air bomber: 38 damage every 2.8 s on the ground below, half to enemies within 3 m, 1.5× to buildings. It cannot hit flyers. Rangers and Anti-tank rockets bring it down. Trained at a level 2 Command core.": "애시폴. 느린 열기구 폭격기: 아래 지상에 2.8초마다 피해 38, 3m 안의 적에게 절반, 건물에 1.5×. 비행 유닛은 공격할 수 없습니다. 레인저와 대전차 로켓으로 격추할 수 있습니다. 레벨 2 사령부에서 생산합니다.",
+    "Ashfall. Slow hot-air bomber: 38 damage every 2.8 s on the ground below, half to enemies within 3 m, 1.5× to buildings. It cannot hit flyers. Signal flare lights up an area for your side. Rangers and Anti-tank rockets bring it down. Trained at a level 2 Command core.": "애시폴. 느린 열기구 폭격기: 아래 지상에 2.8초마다 피해 38, 3m 안의 적에게 절반, 건물에 1.5×. 비행 유닛은 공격할 수 없습니다. 신호탄으로 아군에게 한 지역을 밝혀 줍니다. 레인저와 대전차 로켓으로 격추할 수 있습니다. 레벨 2 사령부에서 생산합니다.",
     "Swift glider": "스위프트 글라이더",
     "Air raider": "공중 습격기",
-    "Sunward. The fastest thing on the field: 12 damage every 0.9 s at 6 m, double to Harvesters. It cannot hit flyers. Rangers and Anti-tank rockets bring it down. Trained at a level 2 Command core.": "선워드. 전장에서 가장 빠른 유닛: 사거리 6m, 0.9초마다 피해 12, 채굴기에게 두 배. 비행 유닛은 공격할 수 없습니다. 레인저와 대전차 로켓으로 격추할 수 있습니다. 레벨 2 사령부에서 생산합니다.",
+    "Sunward. The fastest thing on the field: 12 damage every 0.9 s at 6 m, double to Harvesters. It cannot hit flyers. Bomb drop hits Harvesters twice as hard. Rangers and Anti-tank rockets bring it down. Trained at a level 2 Command core.": "선워드. 전장에서 가장 빠른 유닛: 사거리 6m, 0.9초마다 피해 12, 채굴기에게 두 배. 비행 유닛은 공격할 수 없습니다. 폭탄 투하는 채굴기에게 두 배 피해를 줍니다. 레인저와 대전차 로켓으로 격추할 수 있습니다. 레벨 2 사령부에서 생산합니다.",
     "Anti-air guns": "대공포",
     "Command core research, once per match: Sentinel towers can shoot flyers and deal 1.5× damage to them. Needs a level 2 Command core. Costs 125 alloy and 75 energy.": "사령부 연구, 경기당 한 번: 센티널 타워가 비행 유닛을 공격하고 1.5× 피해를 줍니다. 레벨 2 사령부 필요. 비용: 합금 125, 에너지 75.",
     "Anti-air guns fitted. Sentinel towers now shoot flyers.": "대공포 장착 완료. 이제 센티널 타워가 비행 유닛을 공격합니다.",
@@ -1354,9 +1354,6 @@
     "The title under your rank.": "계급 아래에 표시되는 칭호입니다.",
     "Quick battle": "빠른 전투",
     "Ready base · 1 rival": "준비된 기지 · 적 1명",
-    "Full army battle": "전군 전투",
-    "All units · Foundry ready": "모든 유닛 · 주조소 준비됨",
-    "Full army ready. Enemy squads attack in about 25 seconds.": "전군 준비 완료. 약 25초 후 적 분대가 공격합니다.",
     "Enemy roster": "적 편성",
     "Scout Runner": "정찰 주자",
     "Bonus alloy": "보너스 합금",
@@ -1783,7 +1780,49 @@
     "This battle is full.": "이 전투는 인원이 찼습니다.",
     "Wait for a second player to join.": "두 번째 플레이어가 참가할 때까지 기다리세요.",
     "Every player must be ready first.": "모든 플레이어가 먼저 준비해야 합니다.",
-    "The host server refused that.": "호스트 서버가 그 요청을 거절했습니다."
+    "The host server refused that.": "호스트 서버가 그 요청을 거절했습니다.",
+    "Strafing run": "기총 소사",
+    "Rake a 14 m line from this Hawk through the nearest group of ground enemies within 12 m: 16 damage to each soldier on the line, half to vehicles. Buildings are not hit.": "이 호크에서 12m 안의 가장 가까운 지상 적 무리를 지나는 14m 직선을 소사합니다: 직선 위 병사마다 피해 16, 차량에는 절반. 건물은 맞지 않습니다.",
+    "Signal flare": "신호탄",
+    "Drop a flare on the nearest group of enemies within 14 m (or below the balloon): for 8 seconds your side sees the ground within 9 m, hidden units there are revealed, and enemies there take 15% more damage.": "14m 안의 가장 가까운 적 무리(없으면 열기구 바로 아래)에 신호탄을 떨어뜨립니다: 8초 동안 아군이 9m 안의 지상을 보고, 그곳의 은신 유닛이 드러나며, 그곳의 적은 피해를 15% 더 받습니다.",
+    "Bomb drop": "폭탄 투하",
+    "Drop a bomb on the nearest ground enemy within 6 m, Harvesters first: within 2 m, 75 damage to Harvesters, 12 to other units and 15 to buildings.": "6m 안의 가장 가까운 지상 적(채굴기 우선)에 폭탄을 떨어뜨립니다: 2m 안에서 채굴기에게 피해 75, 다른 유닛에게 12, 건물에 15.",
+    "No target near": "주변에 목표 없음",
+    "No target": "목표 없음",
+    "No target near.": "주변에 목표가 없습니다.",
+    "Strike wing": "타격 비행대",
+    "Fast flyers": "빠른 비행",
+    "Flyers move 10% faster and their abilities recharge 40% faster.": "비행 유닛이 10% 더 빠르게 움직이고 능력이 40% 더 빨리 충전됩니다.",
+    "Strike wing formed: flyers are faster and recharge their abilities sooner.": "타격 비행대 편성: 비행 유닛이 더 빠르고 능력을 더 빨리 충전합니다.",
+    "Bastion": "요새",
+    "Tough base": "튼튼한 기지",
+    "Towers and the Command core deal 25% more damage, and every building takes 20% less damage.": "포탑과 사령부의 피해가 25% 늘고, 모든 건물이 받는 피해가 20% 줄어듭니다.",
+    "Bastion raised: towers hit harder and buildings take less damage.": "요새 구축: 포탑이 더 세게 공격하고 건물이 받는 피해가 줄어듭니다.",
+    "Dig in": "참호 구축",
+    "Hold: armour": "사수: 방어",
+    "Infantry on Hold stance take 25% less damage. Set Hold where the line must stand.": "위치 사수 태세의 보병이 받는 피해가 25% 줄어듭니다. 전선을 지켜야 할 곳에 위치 사수를 설정하세요.",
+    "Dig in: infantry on Hold stance take 25% less damage.": "참호 구축: 위치 사수 태세의 보병이 받는 피해가 25% 줄어듭니다.",
+    "Shock troops": "돌격대",
+    "Siege +40%": "공성 +40%",
+    "Infantry deal 40% more damage to buildings and walls.": "보병이 건물과 벽에 주는 피해가 40% 늘어납니다.",
+    "Shock troops ready: infantry hit buildings 40% harder.": "돌격대 준비: 보병이 건물을 40% 더 세게 공격합니다.",
+    "Heavy armour": "중장갑",
+    "Armour, slow": "장갑, 느림",
+    "Vehicles take 20% less damage but move 10% slower: those in the field now and every new one.": "차량이 받는 피해가 20% 줄지만 10% 느려집니다: 지금 전장의 차량과 새 차량 모두.",
+    "Heavy armour fitted: vehicles take 20% less damage and move 10% slower.": "중장갑 장착: 차량이 받는 피해가 20% 줄고 10% 느려집니다.",
+    "Overclock": "오버클럭",
+    "Quick charge": "빠른 충전",
+    "Vehicle abilities recharge 40% faster.": "차량 능력이 40% 더 빨리 충전됩니다.",
+    "Overclock: vehicle abilities recharge 40% faster.": "오버클럭: 차량 능력이 40% 더 빨리 충전됩니다.",
+    "Full army sandbox": "전군 연습장",
+    "Every unit · try abilities": "모든 유닛 · 능력 시험",
+    "Full army sandbox: try every unit and ability. Enemy squads attack in about 25 seconds.": "전군 연습장: 모든 유닛과 능력을 시험해 보세요. 약 25초 후 적 분대가 공격합니다.",
+    "Doctrines": "교리",
+    "Level 2: pick one of two.": "레벨 2: 둘 중 하나를 고르세요.",
+    "Level 3, after the first: pick one of two more.": "레벨 3, 첫 선택 후: 둘 중 하나를 더 고르세요.",
+    "Strafe": "소사",
+    "Flare": "신호",
+    "Bomb": "폭탄"
   },
   "patterns": [
     [
@@ -2647,6 +2686,14 @@
       "둥지의 새끼 웜 {1}마리를 처치한 뒤 {2}초 동안 아군만 둥지에 두면 듄 웜을 길들입니다(진영당 최대 {3}마리). 둥지 경비는 {4}초 뒤 다시 자랍니다. 느긋한 경쟁자는 첨탑과 둥지를 쓰지 않고, 보통 경쟁자는 경기 후반에만 씁니다."
     ],
     [
+      "^(.+) second doctrine already chosen\\.$",
+      "{1}의 두 번째 교리는 이미 골랐습니다."
+    ],
+    [
+      "^Choose the first (.+) doctrine first\\.$",
+      "먼저 {1}의 첫 번째 교리를 고르세요."
+    ],
+    [
       "^(.+) doctrine already chosen\\.$",
       "{1}의 교리는 이미 골랐습니다."
     ],
@@ -2691,6 +2738,22 @@
     [
       "^(.+) left the battle\\. Their army holds its ground\\.$",
       "{1}님이 전투를 떠났습니다. 그 부대는 제자리를 지킵니다."
+    ],
+    [
+      "^Ability: (.+)$",
+      "능력: {1}"
+    ],
+    [
+      "^Recharges in (d+(?:.d+)?) s.$",
+      "{1}초 후 다시 충전됩니다."
+    ],
+    [
+      "^Second doctrine at level (d+).$",
+      "레벨 {1}에서 두 번째 교리."
+    ],
+    [
+      "^Second doctrine, after (.+).$",
+      "{1} 다음의 두 번째 교리."
     ]
   ]
 }

@@ -55,6 +55,10 @@ const R = {
   // W12: interface clicks (app/sound.js tone): a short tick in front of the pitch, so it reads as a button.
   "ui:click": [["n", "bandpass", 3600, 2800, 0.012, 0.5, 0, 3], ["o", "triangle", 600, 560, 0.05, 0.28, 0.004]],
   "ability:dive": [["o", "sawtooth", 1500, 220, 0.42, 0.16, 0], ["n", "bandpass", 3200, 500, 0.42, 0.18, 0, 1.5], ["o", "sine", 95, 35, 0.6, 0.6, 0.4], ["n", "lowpass", 1400, 160, 0.7, 0.5, 0.4]],
+  // W7 air abilities: a rattling gun run, a hissing flare that pops, a falling whistle and a thump.
+  "ability:strafe": [["n", "bandpass", 2600, 1800, 0.05, 0.45, 0, 3], ["n", "bandpass", 2600, 1800, 0.05, 0.45, 0.07, 3], ["n", "bandpass", 2600, 1800, 0.05, 0.45, 0.14, 3], ["n", "bandpass", 2600, 1800, 0.05, 0.45, 0.21, 3], ["o", "sawtooth", 180, 120, 0.35, 0.12, 0]],
+  "ability:flare": [["n", "highpass", 3000, 5000, 0.5, 0.25, 0], ["o", "sine", 700, 1400, 0.25, 0.18, 0], ["o", "triangle", 1760, 1760, 0.3, 0.2, 0.3]],
+  "ability:bomb": [["o", "sine", 1800, 500, 0.45, 0.14, 0], ["o", "sine", 90, 35, 0.6, 0.6, 0.45], ["n", "lowpass", 1200, 150, 0.6, 0.5, 0.45]],
   // Moments.
   promote: [["o", "triangle", 523, 523, 0.15, 0.4, 0], ["o", "triangle", 659, 659, 0.15, 0.4, 0.1], ["o", "triangle", 784, 784, 0.15, 0.4, 0.2], ["o", "sine", 1568, 1568, 0.5, 0.35, 0.3], ["o", "sine", 4331, 4331, 0.4, 0.1, 0.3]],
   capture: [["o", "triangle", 440, 440, 0.15, 0.4, 0], ["o", "triangle", 554, 554, 0.15, 0.4, 0.1], ["o", "triangle", 660, 660, 0.4, 0.45, 0.2]],

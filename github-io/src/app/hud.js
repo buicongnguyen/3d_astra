@@ -251,7 +251,7 @@ export function setupHud(S, A) {
     document.documentElement.classList.toggle('wide-orders', orderCount > 6);
     $("command-context").title = `Command core technology ${S.sim.techLevel()} / 3`;
     const hasCore = S.sim.own(0).some((b) => b.type === "hq");
-    const signature = `${hasCore}/${es.map((e) => e.id).join(",")}/${p.doctrine ? JSON.stringify(p.doctrine) : ""}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${p.flak}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2" || q.type === "flak")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}/${e?.trains?.some((k) => D[k]?.flying) ? `${S.sim.airCount(0)}:${S.sim.airCap(0)}` : ""}/${S.sim.unlocks?.[0]?.length || 0}`;
+    const signature = `${hasCore}/${es.map((e) => e.id).join(",")}/${p.doctrine ? JSON.stringify(p.doctrine) : ""}${p.doctrine2 ? JSON.stringify(p.doctrine2) : ""}/${p.upgrade}/${p.plating}/${p.upgrade2}/${p.plating2}/${p.flak}/${S.researchOpen}/${S.sim.own(0).filter((b) => b.queue?.some((q) => q.type === "upgrade" || q.type === "plating" || q.type === "upgrade2" || q.type === "plating2" || q.type === "flak")).length}/${e?.level}/${S.sim.techLevel()}/${S.touchInput}/${document.documentElement.classList.contains("compact-ui")}/${sideDock.matches}/${e?.trains?.some((k) => D[k]?.flying) ? `${S.sim.airCount(0)}:${S.sim.airCap(0)}` : ""}/${S.sim.unlocks?.[0]?.length || 0}`;
     if (S.lastSelectionKey !== signature) {
       S.lastSelectionKey = signature;
       // Phones: a bold role glyph instead of the 3D portrait, which is unreadable at roster size (role-icons.js).
@@ -304,7 +304,9 @@ export function setupHud(S, A) {
       // Portrait phones: the doctrine pair sits in the order row beside Rally (wide, with its words), so the one row of training tiles keeps every tile in view.
       const portraitPhone = phone && !sideDock.matches, cardTiles = portraitPhone ? tiles.filter((t) => !t.doctrine) : tiles;
       // There the locked pair (below level 2) stays off the row, which it would share with the production queue for the whole early game.
-      const row = doctrineRow(), rowHtml = portraitPhone ? tiles.filter((t) => t.doctrine && t.state !== "locked").map((t) => doctrineTileHTML(t, null)).join(`<i class="doctrine-or-sep" aria-hidden="true">or</i>`) : "";
+      // A ready pair takes the row on its own (W7: the second tier's pair stands in for the first pick's done tile there until it is chosen).
+      const rowTiles = portraitPhone ? tiles.filter((t) => t.doctrine && t.state !== "locked") : [], readyPair = rowTiles.filter((t) => t.state === "ready");
+      const row = doctrineRow(), rowHtml = (readyPair.length ? readyPair : rowTiles).map((t) => doctrineTileHTML(t, null)).join(readyPair.length ? `<i class="doctrine-or-sep" aria-hidden="true">or</i>` : "");
       row.innerHTML = rowHtml;
       row.hidden = !rowHtml;
       $("commands").innerHTML =
@@ -505,8 +507,8 @@ function doctrineTileHTML(t, key) {
   const [ca, ce] = t.cost, price = `<b class="alloy-text">${ca}</b>${ce ? ` <b class="energy-text">/ ${ce}</b>` : ""}`;
   const sub = t.state === "done" ? `<small class="tile-state"><i aria-hidden="true">✓</i> ${t.sub}</small>` : t.sub ? `<small class="tile-state">${t.sub}</small>` : `<small>${price}</small>`;
   const priced = t.state === "done" ? t.sub : `${ca} alloy and ${ce} energy`;
-  const note = t.state === "done" ? "Chosen for this match." : t.state === "locked" ? `${t.sub}.` : "Pick one for this match: the other then stays locked.";
-  return `<button class="command-tile cat-upgrade research-tile doctrine-tile state-${t.state}${t.pair === 1 ? " doctrine-second" : ""}" data-action="doctrine" data-pick="${t.pick}" data-state="${t.state}" data-cost="${ca},${ce}"${key ? ` data-hotkey="${key}"` : ""} aria-label="${t.name} · ${t.label} · ${priced}" title="${key ? `${key} · ` : ""}${t.name} · ${t.description} · ${note}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${icon(t.icon)}<span>${t.label}</span>${sub}${t.pair === 1 ? `<i class="doctrine-or" aria-hidden="true">or</i>` : ""}</button>`;
+  const note = (t.state === "done" ? "Chosen for this match." : t.state === "locked" ? `${t.sub}.` : "Pick one for this match: the other then stays locked.") + (t.next ? ` · ${t.next}` : "") + (t.after ? ` · Second doctrine, after ${t.after}.` : "");
+  return `<button class="command-tile cat-upgrade research-tile doctrine-tile state-${t.state}${t.pair === 1 ? " doctrine-second" : ""}${t.tier === 2 && t.state === "done" ? " doctrine-follow" : ""}" data-action="doctrine" data-pick="${t.pick}" data-state="${t.state}" data-cost="${ca},${ce}"${key ? ` data-hotkey="${key}"` : ""} aria-label="${t.name} · ${t.label} · ${priced}" title="${key ? `${key} · ` : ""}${t.name} · ${t.description} · ${note}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${icon(t.icon)}<span>${t.label}</span>${sub}${t.pair === 1 ? `<i class="doctrine-or" aria-hidden="true">or</i>` : ""}</button>`;
 }
 // The portrait phones' home for the doctrine pair: a row inside the order buttons, made once.
 function doctrineRow() {

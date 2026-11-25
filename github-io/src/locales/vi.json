@@ -959,13 +959,13 @@
     "Unarmed flyer that sees 32 m, about twice as far as a soldier, and over cliffs: over a plateau it opens the top to your whole side. Reveals hidden units within 8 m. Dive crashes it into an enemy vehicle. Only Rangers, Anti-tank soldiers and other units that hit air can shoot it. Trained at a level 2 Command core.": "Máy bay không vũ trang, nhìn xa 32 m, khoảng gấp đôi một người lính, và nhìn qua vách đá: bay trên một cao nguyên là mở đỉnh cho cả phe bạn. Lộ diện đơn vị ẩn trong 8 m. Bổ nhào lao nó vào một xe địch. Chỉ Xạ thủ, Chống tăng và các đơn vị bắn được mục tiêu bay mới bắn được nó. Tạo ở Sở chỉ huy cấp 2.",
     "Hawk gunship": "Pháo hạm Hawk",
     "Air gunship": "Pháo hạm trên không",
-    "Meridian. Twin-fan gunship that strafes infantry: 13 damage every 0.7 s at 8 m, a third to enemies within 1.5 m, 1.5× to close assault troops, and it shoots flyers too. Flies over water, walls and cliffs. Rangers and Anti-tank rockets bring it down. Trained at a level 3 Command core.": "Meridian. Pháo hạm hai quạt quét bộ binh: 13 sát thương mỗi 0,7 giây ở tầm 8 m, một phần ba lên địch trong 1,5 m, 1,5× lên quân cận chiến, và cũng bắn được mục tiêu bay. Bay qua nước, tường và vách đá. Xạ thủ và rốc-két Chống tăng hạ được nó. Tạo ở Sở chỉ huy cấp 3.",
+    "Meridian. Twin-fan gunship that strafes infantry: 13 damage every 0.7 s at 8 m, a third to enemies within 1.5 m, 1.5× to close assault troops, and it shoots flyers too. Flies over water, walls and cliffs. Strafing run rakes a line of ground enemies. Rangers and Anti-tank rockets bring it down. Trained at a level 3 Command core.": "Meridian. Pháo hạm hai quạt quét bộ binh: 13 sát thương mỗi 0,7 giây ở tầm 8 m, một phần ba lên địch trong 1,5 m, 1,5× lên quân cận chiến, và cũng bắn được mục tiêu bay. Bay qua nước, tường và vách đá. Quét tuyến càn một hàng địch mặt đất. Xạ thủ và rốc-két Chống tăng hạ được nó. Tạo ở Sở chỉ huy cấp 3.",
     "Ember balloon": "Khinh khí cầu Than hồng",
     "Air bomber": "Oanh tạc trên không",
-    "Ashfall. Slow hot-air bomber: 38 damage every 2.8 s on the ground below, half to enemies within 3 m, 1.5× to buildings. It cannot hit flyers. Rangers and Anti-tank rockets bring it down. Trained at a level 2 Command core.": "Ashfall. Khinh khí cầu ném bom chậm: 38 sát thương mỗi 2,8 giây xuống mặt đất bên dưới, một nửa lên địch trong 3 m, 1,5× lên công trình. Không bắn được mục tiêu bay. Xạ thủ và rốc-két Chống tăng hạ được nó. Tạo ở Sở chỉ huy cấp 2.",
+    "Ashfall. Slow hot-air bomber: 38 damage every 2.8 s on the ground below, half to enemies within 3 m, 1.5× to buildings. It cannot hit flyers. Signal flare lights up an area for your side. Rangers and Anti-tank rockets bring it down. Trained at a level 2 Command core.": "Ashfall. Khinh khí cầu ném bom chậm: 38 sát thương mỗi 2,8 giây xuống mặt đất bên dưới, một nửa lên địch trong 3 m, 1,5× lên công trình. Không bắn được mục tiêu bay. Pháo sáng soi sáng một vùng cho phe bạn. Xạ thủ và rốc-két Chống tăng hạ được nó. Tạo ở Sở chỉ huy cấp 2.",
     "Swift glider": "Tàu lượn Swift",
     "Air raider": "Đột kích trên không",
-    "Sunward. The fastest thing on the field: 12 damage every 0.9 s at 6 m, double to Harvesters. It cannot hit flyers. Rangers and Anti-tank rockets bring it down. Trained at a level 2 Command core.": "Sunward. Nhanh nhất chiến trường: 12 sát thương mỗi 0,9 giây ở tầm 6 m, gấp đôi lên Thợ mỏ. Không bắn được mục tiêu bay. Xạ thủ và rốc-két Chống tăng hạ được nó. Tạo ở Sở chỉ huy cấp 2.",
+    "Sunward. The fastest thing on the field: 12 damage every 0.9 s at 6 m, double to Harvesters. It cannot hit flyers. Bomb drop hits Harvesters twice as hard. Rangers and Anti-tank rockets bring it down. Trained at a level 2 Command core.": "Sunward. Nhanh nhất chiến trường: 12 sát thương mỗi 0,9 giây ở tầm 6 m, gấp đôi lên Thợ mỏ. Không bắn được mục tiêu bay. Thả bom đánh Thợ mỏ mạnh gấp đôi. Xạ thủ và rốc-két Chống tăng hạ được nó. Tạo ở Sở chỉ huy cấp 2.",
     "Anti-air guns": "Pháo phòng không",
     "Command core research, once per match: Sentinel towers can shoot flyers and deal 1.5× damage to them. Needs a level 2 Command core. Costs 125 alloy and 75 energy.": "Nghiên cứu ở Sở chỉ huy, một lần mỗi trận: Tháp pháo bắn được mục tiêu bay và gây 1,5× sát thương lên chúng. Cần Sở chỉ huy cấp 2. Tốn 125 hợp kim và 75 năng lượng.",
     "Anti-air guns fitted. Sentinel towers now shoot flyers.": "Đã lắp pháo phòng không. Tháp pháo giờ bắn được mục tiêu bay.",
@@ -1354,9 +1354,6 @@
     "The title under your rank.": "Danh hiệu dưới cấp bậc của bạn.",
     "Quick battle": "Trận nhanh",
     "Ready base · 1 rival": "Căn cứ sẵn · 1 đối thủ",
-    "Full army battle": "Trận đủ quân",
-    "All units · Foundry ready": "Đủ loại quân · Có sẵn Xưởng",
-    "Full army ready. Enemy squads attack in about 25 seconds.": "Toàn quân đã sẵn sàng. Địch sẽ tấn công sau khoảng 25 giây.",
     "Enemy roster": "Đội hình địch",
     "Scout Runner": "Trinh sát chạy",
     "Bonus alloy": "Hợp kim thưởng",
@@ -1783,7 +1780,49 @@
     "This battle is full.": "Trận này đã đủ người.",
     "Wait for a second player to join.": "Hãy chờ người chơi thứ hai vào.",
     "Every player must be ready first.": "Mọi người chơi phải sẵn sàng trước.",
-    "The host server refused that.": "Máy chủ LAN đã từ chối yêu cầu đó."
+    "The host server refused that.": "Máy chủ LAN đã từ chối yêu cầu đó.",
+    "Strafing run": "Quét tuyến",
+    "Rake a 14 m line from this Hawk through the nearest group of ground enemies within 12 m: 16 damage to each soldier on the line, half to vehicles. Buildings are not hit.": "Quét một đường dài 14 m từ chiếc Hawk này xuyên qua nhóm địch mặt đất gần nhất trong 12 m: 16 sát thương lên mỗi lính trên đường, một nửa lên xe. Không trúng công trình.",
+    "Signal flare": "Pháo sáng",
+    "Drop a flare on the nearest group of enemies within 14 m (or below the balloon): for 8 seconds your side sees the ground within 9 m, hidden units there are revealed, and enemies there take 15% more damage.": "Thả pháo sáng xuống nhóm địch gần nhất trong 14 m (hoặc ngay dưới khinh khí cầu): trong 8 giây phe bạn thấy mặt đất trong 9 m, quân ẩn ở đó bị lộ, và địch ở đó chịu thêm 15% sát thương.",
+    "Bomb drop": "Thả bom",
+    "Drop a bomb on the nearest ground enemy within 6 m, Harvesters first: within 2 m, 75 damage to Harvesters, 12 to other units and 15 to buildings.": "Thả bom xuống địch mặt đất gần nhất trong 6 m, ưu tiên Thợ mỏ: trong 2 m, 75 sát thương lên Thợ mỏ, 12 lên quân khác và 15 lên công trình.",
+    "No target near": "Không có mục tiêu gần",
+    "No target": "Không mục tiêu",
+    "No target near.": "Không có mục tiêu ở gần.",
+    "Strike wing": "Cánh không kích",
+    "Fast flyers": "Bay nhanh",
+    "Flyers move 10% faster and their abilities recharge 40% faster.": "Quân bay nhanh hơn 10% và kỹ năng của chúng hồi nhanh hơn 40%.",
+    "Strike wing formed: flyers are faster and recharge their abilities sooner.": "Đã lập cánh không kích: quân bay nhanh hơn và hồi kỹ năng sớm hơn.",
+    "Bastion": "Pháo đài",
+    "Tough base": "Căn cứ vững",
+    "Towers and the Command core deal 25% more damage, and every building takes 20% less damage.": "Tháp và Sở chỉ huy gây thêm 25% sát thương, và mọi công trình chịu ít hơn 20% sát thương.",
+    "Bastion raised: towers hit harder and buildings take less damage.": "Pháo đài đã dựng: tháp bắn mạnh hơn và công trình chịu ít sát thương hơn.",
+    "Dig in": "Cố thủ",
+    "Hold: armour": "Giữ: giáp",
+    "Infantry on Hold stance take 25% less damage. Set Hold where the line must stand.": "Bộ binh ở thế Giữ vị trí chịu ít hơn 25% sát thương. Đặt Giữ vị trí ở nơi phòng tuyến phải đứng vững.",
+    "Dig in: infantry on Hold stance take 25% less damage.": "Cố thủ: bộ binh ở thế Giữ vị trí chịu ít hơn 25% sát thương.",
+    "Shock troops": "Quân xung kích",
+    "Siege +40%": "Công phá +40%",
+    "Infantry deal 40% more damage to buildings and walls.": "Bộ binh gây thêm 40% sát thương lên công trình và tường.",
+    "Shock troops ready: infantry hit buildings 40% harder.": "Quân xung kích sẵn sàng: bộ binh đánh công trình mạnh hơn 40%.",
+    "Heavy armour": "Giáp nặng",
+    "Armour, slow": "Giáp, chậm",
+    "Vehicles take 20% less damage but move 10% slower: those in the field now and every new one.": "Xe chịu ít hơn 20% sát thương nhưng chậm hơn 10%: cả xe đang ở chiến trường lẫn xe mới.",
+    "Heavy armour fitted: vehicles take 20% less damage and move 10% slower.": "Đã lắp giáp nặng: xe chịu ít hơn 20% sát thương và chậm hơn 10%.",
+    "Overclock": "Ép xung",
+    "Quick charge": "Hồi nhanh",
+    "Vehicle abilities recharge 40% faster.": "Kỹ năng của xe hồi nhanh hơn 40%.",
+    "Overclock: vehicle abilities recharge 40% faster.": "Ép xung: kỹ năng của xe hồi nhanh hơn 40%.",
+    "Full army sandbox": "Sa bàn đủ quân",
+    "Every unit · try abilities": "Mọi loại quân · thử kỹ năng",
+    "Full army sandbox: try every unit and ability. Enemy squads attack in about 25 seconds.": "Sa bàn đủ quân: thử mọi loại quân và kỹ năng. Địch sẽ tấn công sau khoảng 25 giây.",
+    "Doctrines": "Học thuyết",
+    "Level 2: pick one of two.": "Cấp 2: chọn một trong hai.",
+    "Level 3, after the first: pick one of two more.": "Cấp 3, sau lựa chọn đầu: chọn thêm một trong hai.",
+    "Strafe": "Quét",
+    "Flare": "Sáng",
+    "Bomb": "Bom"
   },
   "patterns": [
     [
@@ -2647,6 +2686,14 @@
       "Diệt {1} Rồng cát non ở tổ, rồi chỉ để quân của bạn trong tổ {2} giây để thuần một Rồng cát (tối đa {3} con mỗi phe). Tổ mọc lại lính canh sau {4} giây. Đối thủ Chậm không bao giờ dùng Tháp hay tổ; đối thủ Thường chỉ dùng muộn trong trận."
     ],
     [
+      "^(.+) second doctrine already chosen\\.$",
+      "Đã chọn học thuyết thứ hai cho {1}."
+    ],
+    [
+      "^Choose the first (.+) doctrine first\\.$",
+      "Hãy chọn học thuyết đầu tiên cho {1} trước."
+    ],
+    [
       "^(.+) doctrine already chosen\\.$",
       "Đã chọn học thuyết cho {1}."
     ],
@@ -2691,6 +2738,22 @@
     [
       "^(.+) left the battle\\. Their army holds its ground\\.$",
       "{1} đã rời trận. Quân của họ vẫn giữ vị trí."
+    ],
+    [
+      "^Ability: (.+)$",
+      "Kỹ năng: {1}"
+    ],
+    [
+      "^Recharges in (d+(?:.d+)?) s.$",
+      "Hồi lại sau {1} giây."
+    ],
+    [
+      "^Second doctrine at level (d+).$",
+      "Học thuyết thứ hai ở cấp {1}."
+    ],
+    [
+      "^Second doctrine, after (.+).$",
+      "Học thuyết thứ hai, sau {1}."
     ]
   ]
 }

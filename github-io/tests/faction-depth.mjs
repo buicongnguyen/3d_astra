@@ -11,7 +11,9 @@
 //    higher-level units dimmed; the tile stays one 44 px+ target (a tap on the strip starts placing that
 //    building); the accessible name lists them on every layout (the PC tile has no room for the strip);
 //  - every tap target at least 44 px, text at least 11 px, nothing covered, no sideways scroll.
-// Rules are unit-tested in tests/faction-depth.test.js. Screenshots: test-results/faction-depth-*.png.
+//  - W7: at level 3 the second tier's pair takes the first pick's done tile place, then both show as done; the Hawk, Ember
+//    balloon and Swift glider bring their ability tiles (Strafing run, Signal flare, Bomb drop), 44 px, 11 px.
+// Rules are unit-tested in tests/faction-depth.test.js and tests/w7-depth.test.js. Screenshots: test-results/faction-depth-*.png.
 import assert from "node:assert/strict";
 import { launchBrowser, openPage, suite, shot, TIMEOUT } from "./lib/harness.mjs";
 import { Simulation } from "../src/simulation.js";
@@ -140,9 +142,33 @@ await suite("faction-depth", async () => {
     assert.deepEqual(await frontier(() => window.__frontier.sim.players[0].doctrine), { barracks: "drill" });
     assert.equal(await frontier(() => window.__frontier.sim.players[0].energy), energy - 175);
     seen = await tiles();
+    // W7: below level 3 the done tile stays alone (its tooltip says a second doctrine comes at level 3).
     assert.deepEqual(seen.map((t) => `${t.pick}:${t.state}`), ["drill:done"], `${viewport}: the pick shows as done`);
     assert.match(seen[0].text, /Rank \+1.*Active/);
+    assert.ok(seen.every((t) => t.top && t.inside), `${viewport}: the done tile in view ${JSON.stringify(seen)}`);
     await shot(page, `faction-depth-doctrine-done-${viewport}`);
+
+    // ---- W7 second tier: at level 3 the second pair takes the done tile's place (two doctrine tiles at most); one tap picks.
+    await select("barracks", 3);
+    await page.waitForFunction(() => document.querySelectorAll('.doctrine-tile[data-pick="dugin"][data-state="ready"]').length > 0, null, { timeout: TIMEOUT.step }).catch(() => {});
+    seen = await tiles();
+    assert.deepEqual(seen.map((t) => `${t.pick}:${t.state}`), ["dugin:ready", "shock:ready"], `${viewport}: the second pair`);
+    for (const t of seen) {
+      assert.ok(t.top && t.inside, `${viewport} ${t.pick}: in view and uncovered ${JSON.stringify(t)}`);
+      assert.ok(t.w >= 44 - 0.5 && t.h >= 44 - 0.5, `${viewport} ${t.pick}: 44 px target (${t.w}x${t.h})`);
+      assert.ok(t.font >= 11, `${viewport} ${t.pick}: text at least 11 px (${t.font})`);
+    }
+    assert.match(seen.find((t) => t.pick === "dugin").text, /Hold: armour.*175/);
+    assert.match(seen.find((t) => t.pick === "shock").text, /Siege \+40%.*175/);
+    await shot(page, `w7-doctrine-tier2-${viewport}`);
+    await page.locator('.doctrine-tile[data-pick="dugin"]').first()[mobile ? "tap" : "click"]();
+    await page.waitForFunction(() => window.__frontier.sim.players[0].doctrine2?.barracks === "dugin", null, { timeout: TIMEOUT.step }).catch(() => {});
+    assert.deepEqual(await frontier(() => window.__frontier.sim.players[0].doctrine2), { barracks: "dugin" });
+    await page.waitForFunction(() => document.querySelectorAll('.doctrine-tile[data-pick="dugin"][data-state="done"]').length > 0, null, { timeout: TIMEOUT.step }).catch(() => {});
+    seen = await tiles();
+    assert.deepEqual(seen.map((t) => `${t.pick}:${t.state}`), ["drill:done", "dugin:done"], `${viewport}: both picks done`);
+    assert.ok(seen.every((t) => t.top && t.inside), `${viewport}: both done tiles in view ${JSON.stringify(seen)}`);
+    await shot(page, `w7-doctrine-tier2-done-${viewport}`);
 
     // ---- The signature abilities on the tactics card.
     const ids = await frontier(() => {
@@ -165,6 +191,33 @@ await suite("faction-depth", async () => {
     await page.waitForFunction((id) => window.__frontier.sim.get(id).abilityAt > window.__frontier.sim.time, ids[0], { timeout: TIMEOUT.step }).catch(() => {});
     assert.ok(await frontier((id) => window.__frontier.sim.get(id).abilityAt > window.__frontier.sim.time, ids[0]), `${viewport}: Spur on was used`);
     await shot(page, `faction-depth-abilities-${viewport}`);
+
+    // ---- W7: Strafing run, Signal flare and Bomb drop on the tactics card; with enemies near, one press casts.
+    const air = await frontier(() => {
+      const f = window.__frontier, s = f.sim, hq = s.own(0).find((e) => e.type === "hq");
+      const x = hq.x + 6, z = hq.z - 16;
+      const ids = ["hawk", "balloon", "glider"].map((t, i) => s.spawn(t, 0, x + i * 2.5, z, true, true).id);
+      for (let i = 0; i < 4; i++) { const u = s.spawn("vanguard", 1, x + 1 + i * 1.2, z - 4); u.orders = []; u.stance = "hold"; u.damage = 0; }
+      s.updateVision();
+      f.select(ids); f.view.focusOn(x + 2, z - 2);
+      return ids;
+    });
+    await dock();
+    await page.waitForFunction(() => document.querySelectorAll("#commands .ability-tile").length >= 3, null, { timeout: TIMEOUT.step }).catch(() => {});
+    const airTiles = await frontier(() => [...document.querySelectorAll("#commands .ability-tile")].map((b) => {
+      const r = b.getBoundingClientRect(), at = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      const fonts = [...b.querySelectorAll("*")].filter((e) => e.getClientRects().length && [...e.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())).map((e) => parseFloat(getComputedStyle(e).fontSize));
+      return { id: b.dataset.ability, w: r.width, h: r.height, top: !!at && b.contains(at), font: Math.min(99, ...fonts), status: b.querySelector(".ability-status")?.textContent || "", inside: r.left >= 0 && r.right <= innerWidth + 0.5 && r.bottom <= innerHeight + 0.5 };
+    }));
+    assert.deepEqual(airTiles.map((a) => a.id).sort(), ["bomb", "flare", "strafe"], `${viewport}: one tile per air ability`);
+    for (const a of airTiles) {
+      assert.ok(a.top && a.inside && a.w >= 43.5 && a.h >= (mobile ? 43.5 : 37.5), `${viewport} ${a.id}: uncovered, large enough ${JSON.stringify(a)}`);
+      assert.ok(a.font >= 11, `${viewport} ${a.id}: text at least 11 px (${a.font})`);
+    }
+    await shot(page, `w7-air-abilities-${viewport}`);
+    await page.locator('#commands [data-ability="strafe"]').first()[mobile ? "tap" : "click"]();
+    await page.waitForFunction((id) => window.__frontier.sim.get(id).abilityAt > window.__frontier.sim.time, air[0], { timeout: TIMEOUT.step }).catch(() => {});
+    assert.ok(await frontier((id) => window.__frontier.sim.get(id).abilityAt > window.__frontier.sim.time, air[0]), `${viewport}: Strafing run was used`);
 
     assert.ok(await frontier(() => document.documentElement.scrollWidth <= innerWidth + 1), `${viewport}: no sideways scroll`);
     assert.deepEqual(errors, [], `${viewport}: no page errors`);

@@ -14,7 +14,7 @@ export function setupAbilities(S, A) {
     if (group.aimed) { enterAim(); return; }
     A.clearMode();
     if (S.sim.command({ team: 0, type: "ability", ids: group.ids })) A.tone(700, 0.1);
-    else A.notice(id === "triage" ? "No injured infantry in range." : id === "fortify" ? "No damaged vehicle or building in range." : id === "dive" ? "No vehicle near." : `${group.name} is recharging.`);
+    else A.notice(id === "triage" ? "No injured infantry in range." : id === "fortify" ? "No damaged vehicle or building in range." : id === "dive" ? "No vehicle near." : id === "strafe" || id === "bomb" || id === "flare" ? "No target near." : `${group.name} is recharging.`);
     A.updateUI();
   }
 

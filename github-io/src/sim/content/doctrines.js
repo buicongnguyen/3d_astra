@@ -18,6 +18,17 @@
 // Computer sides (difficulty guard, owner rule "never make Relaxed or Normal harder"): only a skirmish
 // AI at the Fast or Relentless speed picks doctrines (aiRules below). Relaxed and Normal AIs, and every
 // story mission and chronicle, play as before.
+//
+// Second tier (W7 depth, 2026-11-25): once a building's first doctrine is chosen and the building reaches
+// level 3 (balance.json `doctrines.<building>.tier2`), it offers a second either/or pair that changes how
+// the side fights rather than adding a few per cent:
+//   Command core  wing      flyers move `speed` x faster and their abilities recharge in `cooldown` x the time
+//                 bastion   towers and the Command core deal `tower` x damage; every building takes `armour` x
+//   Barracks      dugin     infantry on Hold stance take `hold` x damage (set Hold where the line must stand)
+//                 shock     infantry deal `building` x damage to buildings and walls
+//   Foundry       heavy     vehicles take `armour` x damage and move `speed` x (slower): a tough, slow line
+//                 overclock vehicle abilities recharge in `cooldown` x the time
+// State: `players[team].doctrine2 = { hq: "wing", ... }`, created on the first tier-2 pick (no key before).
 import balance from "../../balance.json" with { type: "json" };
 import { DEFINITIONS as D } from "../../data.js";
 import { RANK_XP, RANK_BONUS } from "../tactics.js";
@@ -35,10 +46,26 @@ export const doctrineData = (sim, team, building) => {
   const id = doctrineOf(sim, team, building);
   return id ? DOCTRINES[building].options[id] : null;
 };
+// The second tier: the pick and its data (null before it).
+export const doctrine2Of = (sim, team, building) => sim.players[team]?.doctrine2?.[building] ?? null;
+export const doctrine2Data = (sim, team, building) => {
+  const id = doctrine2Of(sim, team, building);
+  return id ? DOCTRINES[building].tier2.options[id] : null;
+};
+// Which tier option `pick` of building type `building` belongs to: { tier: 1 | 2, o, spec } or null.
+export function doctrineOption(building, pick) {
+  const spec = DOCTRINES[building];
+  if (!spec || typeof pick !== "string") return null;
+  if (Object.hasOwn(spec.options, pick)) return { tier: 1, o: spec.options[pick], spec };
+  if (spec.tier2 && Object.hasOwn(spec.tier2.options, pick)) return { tier: 2, o: spec.tier2.options[pick], spec: spec.tier2 };
+  return null;
+}
 
 // Who each doctrine touches. Infantry: on foot, not Harvesters. Vehicles: machines on the ground (drones too).
 export const infantry = (e) => e.kind === "unit" && !e.mechanical && !e.flying && !e.boss && e.type !== "worker" && e.team >= 0;
 export const vehicle = (e) => e.kind === "unit" && !!e.mechanical && !e.flying && !e.boss && e.team >= 0;
+export const flyer = (e) => e.kind === "unit" && !!e.flying && !e.boss && e.team >= 0;
+const WHO = { infantry, vehicle, flyer };
 const speedTarget = { barracks: infantry, foundry: vehicle };
 
 // Scales a unit's speed, and the speed a running buff will put back when it ends (sim/tactics.js endBuff).
@@ -53,15 +80,23 @@ function speedFactor(sim, e) {
     const o = doctrineData(sim, e.team, building);
     if (o?.speed && speedTarget[building](e)) f *= o.speed;
   }
+  if (sim.players[e.team]?.doctrine2)
+    for (const building of DOCTRINE_BUILDINGS) {
+      const o = doctrine2Data(sim, e.team, building);
+      if (o?.speed && WHO[o.who]?.(e)) f *= o.speed;
+    }
   return f;
 }
 
 // Why `team` cannot pick `pick` at building `id` now ("" when it can). Messages are for the player's side.
 export function doctrineBlock(sim, team, id, pick) {
-  const b = sim.get(id), spec = b && DOCTRINES[b.type], o = spec?.options?.[pick];
-  if (!b || b.team !== team || b.kind !== "building" || !spec || !o) return "Invalid choice.";
+  const b = sim.get(id), found = b && doctrineOption(b.type, pick);
+  if (!b || b.team !== team || b.kind !== "building" || !found) return "Invalid choice.";
+  const { tier, o, spec } = found;
   if (!b.complete) return `Finish building the ${b.name} first.`;
-  if (doctrineOf(sim, team, b.type)) return `${b.name} doctrine already chosen.`;
+  if (tier === 1 && doctrineOf(sim, team, b.type)) return `${b.name} doctrine already chosen.`;
+  if (tier === 2 && !doctrineOf(sim, team, b.type)) return `Choose the first ${b.name} doctrine first.`;
+  if (tier === 2 && doctrine2Of(sim, team, b.type)) return `${b.name} second doctrine already chosen.`;
   if ((b.level || 1) < spec.level) return `Upgrade ${b.name} to level ${spec.level} to choose ${o.name}.`;
   if (!sim.canPay(team, o.cost)) return `${sim.resourceShortage(o.cost, team)} to train/research ${o.name}.`;
   return "";
@@ -76,15 +111,25 @@ export const doctrines = {
       if (this.result) return false;
       const why = doctrineBlock(this, team, id, pick);
       if (why) { this.message(why, team); return false; }
-      const b = this.get(id), o = DOCTRINES[b.type].options[pick];
+      const b = this.get(id), { tier, o } = doctrineOption(b.type, pick);
       this.pay(team, o.cost);
-      (this.players[team].doctrine ||= {})[b.type] = pick;
+      (this.players[team][tier === 2 ? "doctrine2" : "doctrine"] ||= {})[b.type] = pick;
       // Speed doctrines reach the army already in the field.
-      if (o.speed) for (const e of this.entities) if (e.team === team && e.hp > 0 && speedTarget[b.type]?.(e)) scaleSpeed(e, o.speed);
+      const who = tier === 2 ? WHO[o.who] : speedTarget[b.type];
+      if (o.speed && who) for (const e of this.entities) if (e.team === team && e.hp > 0 && who(e)) scaleSpeed(e, o.speed);
       this.events.push({ type: "research", team, x: b.x, z: b.z });
-      this.events.push({ type: "doctrine", team, building: b.type, pick, x: b.x, z: b.z });
+      this.events.push({ type: "doctrine", team, building: b.type, pick, ...(tier === 2 ? { tier } : null), x: b.x, z: b.z });
       this.message(o.notice, team);
       return true;
+    },
+    // sim/tactics.js useAbility (only once the side has a tier-2 doctrine): the recharge factor for `e`.
+    doctrineCooldown(e) {
+      let f = 1;
+      for (const building of DOCTRINE_BUILDINGS) {
+        const o = doctrine2Data(this, e.team, building);
+        if (o?.cooldown && WHO[o.who]?.(e)) f *= o.cooldown;
+      }
+      return f;
     },
   },
   commands: {
@@ -107,6 +152,23 @@ export const doctrines = {
     e.xp = Math.max(e.xp || 0, RANK_XP[rank - 1]);
     e.maxHp = Math.round((e.baseHp ?? D[e.type].hp) * (1 + RANK_BONUS * rank));
     e.hp = e.maxHp;
+  },
+  // Tier 2: Shock troops (infantry against buildings and walls), Bastion (towers and the core hit harder).
+  hitScale(sim, e, t) {
+    const d2 = e.team >= 0 ? sim.players[e.team]?.doctrine2 : null;
+    if (!d2) return 1;
+    if (d2.barracks === "shock" && (t.kind === "building" || t.kind === "wall") && infantry(e)) return DOCTRINES.barracks.tier2.options.shock.building;
+    if (d2.hq === "bastion" && e.kind === "building") return DOCTRINES.hq.tier2.options.bastion.tower;
+    return 1;
+  },
+  // Tier 2: Bastion (buildings), Dig in (infantry on Hold), Heavy armour (vehicles) take less damage.
+  taken(sim, t) {
+    const d2 = t.team >= 0 ? sim.players[t.team]?.doctrine2 : null;
+    if (!d2) return 1;
+    if (d2.hq === "bastion" && t.kind === "building") return DOCTRINES.hq.tier2.options.bastion.armour;
+    if (d2.barracks === "dugin" && t.stance === "hold" && infantry(t)) return DOCTRINES.barracks.tier2.options.dugin.hold;
+    if (d2.foundry === "heavy" && vehicle(t)) return DOCTRINES.foundry.tier2.options.heavy.armour;
+    return 1;
   },
   // Reserves: a fighter lost pays back part of its alloy.
   onDeath(sim, t) {
@@ -140,6 +202,14 @@ export const doctrines = {
           if (!o || sim.players[team].energy < o.cost[1] + AI_ENERGY_SPARE || !afford(o.cost)) continue;
           sim.pickDoctrine(team, b.id, pick);
         }
+        // The second tier, at a level 3 building whose first doctrine is in.
+        for (const b of own) {
+          const spec = DOCTRINES[b.type]?.tier2;
+          if (!spec || !b.complete || (b.level || 1) < spec.level || !doctrineOf(sim, team, b.type) || doctrine2Of(sim, team, b.type)) continue;
+          const pick = aiPick2(b.type, role), o = spec.options[pick];
+          if (!o || sim.players[team].energy < o.cost[1] + AI_ENERGY_SPARE || !afford(o.cost)) continue;
+          sim.pickDoctrine(team, b.id, pick);
+        }
       },
     },
   ],
@@ -151,4 +221,12 @@ export function aiPick(building, role) {
   if (building === "hq") return role === "raider" ? "reserve" : "grid";
   if (building === "barracks") return role === "raider" ? "rations" : "drill";
   return role === "siege" ? "crews" : "engines";
+}
+
+// The second tier for a computer side: it never sets Hold stance, so its infantry take Shock troops; raiders
+// fly (Strike wing), everyone else builds a Bastion; sieges go Heavy armour, the rest Overclock.
+export function aiPick2(building, role) {
+  if (building === "hq") return role === "raider" ? "wing" : "bastion";
+  if (building === "barracks") return "shock";
+  return role === "siege" ? "heavy" : "overclock";
 }

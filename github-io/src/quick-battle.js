@@ -150,7 +150,7 @@ export function setupQuickBattle(S, A) {
     arena.type = "button";
     arena.className = "quick-battle";
     arena.id = "full-army-battle";
-    arena.innerHTML = `${icon("crosshair")}<span class="quick-text"><strong>Full army battle</strong><small>All units · Foundry ready</small></span>`;
+    arena.innerHTML = `${icon("crosshair")}<span class="quick-text"><strong>Full army sandbox</strong><small>Every unit · try abilities</small></span>`;
     $("quick-battle").after(arena);
     const button = $("quick-battle"), start = $("start");
     // Usable exactly when Start is (not while the first models load or after a failed load).

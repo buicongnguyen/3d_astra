@@ -12,7 +12,8 @@ export const abilityLimit = () => 99; // every ability stays visible; only the f
 // Landscape tiles are only 53-62 px wide, so every name of two words or nine letters has a short form
 // (src/locales vi.json / ko.json translate each one; tests/tactics-ui.test.js checks the list).
 export const PHONE_NAME = { "Rapid fire": "Rapid", "Triage pulse": "Heal", "Shield wall": "Shield", "Field repair": "Repair", "Shadow strike": "Strike", "Shield link": "Link",
-  "Overdrive": "Boost", "Lock-on": "Lock", "Crossfire": "Cross", "Steady aim": "Aim", "Burn line": "Burn", "Spur on": "Spur" };
+  "Overdrive": "Boost", "Lock-on": "Lock", "Crossfire": "Cross", "Steady aim": "Aim", "Burn line": "Burn", "Spur on": "Spur",
+  "Strafing run": "Strafe", "Signal flare": "Flare", "Bomb drop": "Bomb" };
 const PHONE_SYMBOL = new Set(["Shield wall", "Field repair"]);
 
 export function tacticsCardHTML(sim, entities, { compact = false, side = false, keys = true } = {}) {
