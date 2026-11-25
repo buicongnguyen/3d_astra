@@ -4,6 +4,7 @@
 
 ### Cheaper Kite scout (owner 2026-11-25)
 - Kite scout costs 45 alloy and no second resource (was 75 + 25) and trains in 8 s (was 12), so a spotter is cheap to send ahead. Dive keeps 260 damage. Difficulty check (1v1 / 1v2 wins of 12, Relaxed..Relentless): 12/12/12/11 and 9/4/1/0 (were 12/12/11/11 and 7/2/0/0): no setting got harder. Golden pins re-recorded for this balance change.
+
 ### Field commander ranks (owner request)
 - The Defence Field commander is bought up like the towers and the Armour squad, right on its own sheet (one tap, no sub-menu): **Rank 2** (180 alloy: shield 500 -> 700, Barrage 110 -> 160 damage), **Rank 3** (260: Barrage every 30 s instead of 40, Reinforce drops 4 Vanguards instead of 3, health x1.3), then one of two branches side by side, each with two ranks: **Artillery** (220: Barrage 5.5 m wide (was 4.5) for 200; 300: two shells 0.8 s apart and Barrage every 24 s) or **Rally** (200: 5 Vanguards for 28 s, health x1.3; 280: 6 Vanguards, health x1.6, damage x1.25, Reinforce every 28 s). Garrisons.json `commander.ranks` / `commander.branches`.
 - Ranks are kept when the commander falls (it comes back with them, also when a rank is bought while it is down) and in saves. The sheet heading reads RANK n / 5, a line under the tiles shows Barrage and Reinforce figures and what the next rank adds, the commander tile carries rank pips, and the commander's gold trim brightens per rank (ember red for Artillery, pale gold for Rally; tints only, no new draws). The Barrage aim ring follows the wider Artillery burst. EN/VI/KO text.
