@@ -49,13 +49,14 @@ try{
       const gun=await page.evaluate(()=>{
         const f=window.__frontier,s=f.sim,v=f.view,e=s.entities.find(x=>x.team===0&&x.type==='breaker'),rig=v.objects.get(e.id).userData.barrel;
         const read=()=>({up:-rig.rotation.x,length:rig.scale.z,calls:v.renderer.info.render.calls});
-        e.attacking=false;e.moving=false;for(let i=0;i<40;i++)window.renderVisual(s,1/20,f.selected,null);const idle=read();
-        e.moving=true;for(let i=0;i<40;i++)window.renderVisual(s,1/20,f.selected,null);const moving=read();
-        e.moving=false;e.attacking=true;for(let i=0;i<40;i++)window.renderVisual(s,1/20,f.selected,null);const fire=read();
+        e.attacking=false;e.moving=false;for(let i=0;i<2;i++)window.renderVisual(s,1,f.selected,null);const idle=read();
+        e.moving=true;for(let i=0;i<2;i++)window.renderVisual(s,1,f.selected,null);const moving=read();
+        e.moving=false;e.attacking=true;for(let i=0;i<2;i++)window.renderVisual(s,1,f.selected,null);const fire=read();
         // Owner: each shot snaps the barrel in, then it runs back out (the real shot event drives it).
+        // Few long steps (the pose eases by exp(-k dt)): 121 short frames ran past the screenshot timeout on CI's slowed CPU.
         v.event({type:'shot',weapon:'breaker',unit:'breaker',source:e.id,x:e.x,z:e.z,tx:e.x+8,tz:e.z,team:0,heavy:true},s);
-        for(let i=0;i<5;i++)window.renderVisual(s,1/50,f.selected,null);const snapped=read();
-        for(let i=0;i<15;i++)window.renderVisual(s,1/20,f.selected,null);const recovered=read();
+        window.renderVisual(s,0.1,f.selected,null);const snapped=read();
+        window.renderVisual(s,0.75,f.selected,null);const recovered=read();
         e.attacking=false;window.renderVisual(s,1/20,f.selected,null);
         return {idle,moving,fire,snapped,recovered};
       });
