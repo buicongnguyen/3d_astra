@@ -27,10 +27,12 @@ const fnv = (s) => { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h 
 test("Wings over Copper sits after Copper Harvest in Act 2 on the Copper Basin, with air on", () => {
   const i = MISSIONS.indexOf(WINGS);
   // 21 since the map variety pass added Mirror Lake (m02c) and Canyon Run (m04b) to Act 1.
-  assert.equal(MISSIONS.length, 21);
+  // 25 since the W9 side missions (m03b, m06d, m08b, m09b).
+  assert.equal(MISSIONS.length, 25);
   assert.equal(MISSIONS[i - 1].id, "m06-copper-harvest");
   assert.equal(MISSIONS[i + 1].id, "m06c-gun-hill", "Gun Hill (campaign C6) sits between Wings and the siege");
-  assert.equal(MISSIONS[i + 2].id, "m07-copper-siege");
+  assert.equal(MISSIONS[i + 2].id, "m06d-hawk-wing", "Hawk Wing (W9) follows Gun Hill");
+  assert.equal(MISSIONS[i + 3].id, "m07-copper-siege");
   assert.deepEqual([WINGS.act, WINGS.map, WINGS.factions[1]], [2, "basin", "ashfall"]);
   assert.equal(WINGS.rules.air, true);
   assert.deepEqual(WINGS.win, ["raids", "yard"]);
@@ -38,11 +40,11 @@ test("Wings over Copper sits after Copper Harvest in Act 2 on the Copper Basin, 
   const air = waves(WINGS).filter((w) => Object.keys(w.units).some((u) => D[u].flying));
   assert.ok(air.length >= 3 && air.every((w) => w.units.balloon > 0), "three balloon raids");
   assert.ok(air.filter((w) => w.units.kite > 0).length >= 2, "Kite spotters");
-  // The 15-node campaign map keeps every node in its band, 15% apart.
+  // W9: nine Act 2 relays since Hawk Wing (m06d) and The Long Night (m08b); neighbours a column (13.9%) or a row (24.7%) apart.
   const act2 = MISSIONS.filter((m) => m.act === 2).map((m) => MAP_NODES[m.id]);
-  assert.equal(act2.length, 7);
-  for (let k = 1; k < act2.length; k++) assert.ok(Math.abs(act2[k].x - act2[k - 1].x) >= 13);
-  assert.ok(act2.every((p) => p.x >= 10 && p.x <= 90));
+  assert.equal(act2.length, 9);
+  for (let k = 1; k < act2.length; k++) assert.ok(Math.abs(act2[k].x - act2[k - 1].x) >= 13.8 || Math.abs(act2[k].y - act2[k - 1].y) >= 24.6);
+  assert.ok(act2.every((p) => p.x >= 8 && p.x <= 92));
 });
 
 test("the Command core offers Kite, Hawk and Flak in Wings over Copper, and not in Copper Harvest", () => {
@@ -100,11 +102,17 @@ test("Wings over Copper resolves with and without earlier decisions: only Hale's
 // 3.6 m nearer the east road (20, 34 to 17, 32) so short-reach crews there cover the road; old 9845060f.
 // 2026-11-25 (concise story lines): text only, every say line shorter; with the old lines put back every mission resolves to
 // its old checksum. Old m01-first-light 704a79da, m02-first-contact 0223006d, m02b-hold-the-river 1b4bbcf9, m03-the-ashen-line 586533a5, m04-three-way-dunes 7b11bc96, m05-the-verdant-pact 1cfc2cff, m06-copper-harvest 00ea9e9e, m07-copper-siege e1b6c7fd, m08-the-quiet-vault a750b7e8, m09-a-debt-in-the-dunes 4884ad1c, m10-obsidian-storm 90d0a3ee, m11-cut-the-draw 214fd6b9, m11c-hold-the-keystone-roads 8b3c253d, m12-frontiers-end 2aadeadc.
+// 2026-11-26 (W9 scripted moments): data only for six missions, no golden sim pin covers them (golden-story pins m01, m03,
+// m06b, m02b, m11c and ca1; r3i pins m04): m02 the east bridge blown with its scene (a region, a trigger), m05 a
+// supply truck at 2:00, m06 a flank camera nudge (the column on Veteran only), m09 Sol's well crew (a hidden optional
+// objective, a region, four triggers, a scene), m10 Hale's taunt, m11 two fog lines. With those entries taken out every
+// mission resolves to its old checksum. Old m02-first-contact f16e7662, m05-the-verdant-pact d0ad0168,
+// m06-copper-harvest 06703671, m09-a-debt-in-the-dunes f1bdb3bc, m10-obsidian-storm 9ba712b1, m11-cut-the-draw 096baedf.
 test("the original missions resolve to their recorded checksums on all decision paths", () => {
   const BEFORE = {
-    "m01-first-light": "731fcbda", "m02-first-contact": "f16e7662", "m02b-hold-the-river": "db1662a2", "m03-the-ashen-line": "fafe9b59",
-    "m04-three-way-dunes": "66c29261", "m05-the-verdant-pact": "d0ad0168", "m06-copper-harvest": "06703671", "m07-copper-siege": "de1aff51",
-    "m08-the-quiet-vault": "f3593619", "m09-a-debt-in-the-dunes": "f1bdb3bc", "m10-obsidian-storm": "9ba712b1", "m11-cut-the-draw": "096baedf", "m12-frontiers-end": "0c663a5f",
+    "m01-first-light": "731fcbda", "m02-first-contact": "b00a97ec", "m02b-hold-the-river": "db1662a2", "m03-the-ashen-line": "fafe9b59",
+    "m04-three-way-dunes": "66c29261", "m05-the-verdant-pact": "1e0c5ca0", "m06-copper-harvest": "141e50e8", "m07-copper-siege": "de1aff51",
+    "m08-the-quiet-vault": "f3593619", "m09-a-debt-in-the-dunes": "5ac538ef", "m10-obsidian-storm": "48303bc1", "m11-cut-the-draw": "44c8c826", "m12-frontiers-end": "0c663a5f",
     // AAA round 3 (R3-I, campaign pacing): first-contact probes in 10 base missions, m03 (towers objective, gold 750 s) and m04 retuned after the south exits.
     // Creature round (2026-11-24): optional creature dens in m02 (Acid Hounds), m04 and m09 (Wyrm nests), the Vault
     // Sentinel in m08, Sol's lines in m05 and the Veil's turn (scene, Stalkers if Maren was spared) in m12.

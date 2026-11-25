@@ -2,6 +2,8 @@ import { difficultyRules, difficultySpeed, objectiveText } from "../difficulty.j
 import { DEFINITIONS as D, distance } from "../data.js";
 import { resolveMission, flagMatches } from "../story/choices.js";
 import { RANK_XP, RANK_BONUS } from "./tactics.js";
+import { CROSSINGS } from "../terrain.js";
+import { WATER as BRIDGE_WATER } from "./defence/common.js";
 
 // Campaign missions (format: docs/MISSIONS.md). A mission is plain data given to the
 // Simulation; this system applies its setup, tracks capture points and objectives, fires
@@ -191,7 +193,10 @@ export const missions = {
     }
   },
   // An `if` on one of this mission's own decisions (answers in this.flags); none always passes.
+  // W9 (scripted moments): `if: { difficulty: "veteran" }` (or a list) gates new content by difficulty, so a
+  // hostile beat can land on Veteran only. No older mission uses it, so their play is unchanged.
   flagIs(cond) {
+    if (cond && cond.difficulty !== undefined) return [].concat(cond.difficulty).includes(this.difficulty);
     return flagMatches(cond, this.flags);
   },
   // Skirmish capture points (see sim/points.js): the same ring mechanics, a small steady income.
@@ -295,6 +300,13 @@ export const missions = {
     // One decision at a time: a trigger that asks one waits while another is open.
     if (m.pending && trigger.do?.some((a) => a.decide !== undefined)) return;
     if (!this.missionCondition(trigger.when)) return;
+    // W9: `delay: seconds` fires the trigger that long after its condition first held (a call for help with
+    // a deadline). The wait mark exists only for such a trigger, so older missions save and hash as before.
+    if (trigger.delay > 0) {
+      const key = "wait:" + index;
+      m.fired[key] ??= m.clock;
+      if (m.clock - m.fired[key] < trigger.delay - 1e-9) return;
+    }
     m.fired[index] = m.clock;
     this.runActions(trigger.do || [], 0, index);
   },
@@ -375,7 +387,29 @@ export const missions = {
     // A staged scene (src/story/scenes.js, 0.19b): only an event. The client holds the match while
     // it plays, so nothing here depends on it and saves and replays are unaffected.
     else if (a.scene) this.events.push({ type: "scene", id: a.scene });
+    // W9: a scripted bridge demolition in a field mission ({ blow: x }, a river bridge's x). The span closes like
+    // a Frontier Defence demolition (sim/defence/crossings.js): anyone on it is set on the nearer bank, the river
+    // closes and the navigation grid is rebuilt; saves keep it in this.crossings, created only here.
+    else if (a.blow !== undefined) this.blowBridge(a.blow);
     else if (a.unlock) { if (this.unlockUnits(0, a.unlock)) for (const type of a.unlock) this.message(`${D[type].name} can now be trained.`); }
+  },
+  blowBridge(x) {
+    const span = CROSSINGS.find((c) => c.x === x && c.type === "bridge");
+    if (!span || !this.terrain.river || this.terrain.rivers?.length !== 1 || this.terrain.rivers[0].z !== 0 || this.crossings?.[x]?.state === "blown") return;
+    for (const e of this.entities) {
+      if (e.hp <= 0 || e.kind !== "unit" || e.flying || Math.abs(e.x - x) >= span.half + (e.radius || 0.7) || Math.abs(e.z) >= BRIDGE_WATER + (e.radius || 0.7)) continue;
+      e.z = (e.z < 0 ? -1 : 1) * (BRIDGE_WATER + (e.radius || 0.7) + 0.3);
+      e.path = [];
+      e.escape = null;
+    }
+    (this.crossings ||= {})[x] = { state: "blown", at: this.time, progress: 0 };
+    this.applyCrossings();
+    // The blast lights the span for the player for 10 s (a W7 flare's vision, no damage mark), so the scene that
+    // shows it is not looking into the fog.
+    (this.flares ||= []).push({ x, z: 0, radius: 10, until: this.time + 10, team: 0, taken: 1 });
+    this.flareVision();
+    this.events.push({ type: "demolish", x, z: 0, team: 1 });
+    this.events.push({ type: "strike", x, z: 0, radius: span.half, team: 1, victims: [] });
   },
   // Victory, defeat or null, called from settle() with which teams still stand.
   missionResult(alive) {

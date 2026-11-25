@@ -52,6 +52,8 @@ test('the three decisions follow the story rules', () => {
       if (value.if.ending !== undefined) assert.ok(ENDING_IDS.includes(value.if.ending), `${where}: ending ${value.if.ending}`);
       // A finished Faction Chronicle (0.20, tests/chronicles.test.js).
       else if (value.if.chronicle !== undefined) assert.ok(['ashfall', 'sunward', 'wardens', 'veil'].includes(value.if.chronicle), `${where}: chronicle ${value.if.chronicle}`);
+      // W9 (scripted moments): a beat gated by difficulty (a hostile flank on Veteran only), tested live by the sim.
+      else if (value.if.difficulty !== undefined) assert.ok([].concat(value.if.difficulty).every((d) => ['story', 'standard', 'veteran'].includes(d)), `${where}: difficulty ${value.if.difficulty}`);
       else assert.ok(DECISIONS[value.if.flag]?.options.some((o) => o.id === value.if.is), `${where}: ${JSON.stringify(value.if)}`);
     }
     for (const v of Object.values(value)) walk(v, where);
@@ -223,10 +225,11 @@ test('progress: older records load with their clears; every field is kept; unloc
   saveProgress(q, full);
   assert.deepEqual(loadProgress(full), q, 'saved and loaded unchanged');
   // A mission opens when it is cleared itself or the one before is: inserting a mission never locks a cleared one.
-  const gap = { cleared: { [MISSIONS[5].id]: { time: 500, medal: 'bronze' } } };
-  assert.equal(isUnlocked(gap, 5), true, 'cleared, so open');
-  assert.equal(isUnlocked(gap, 6), true, 'the one after a clear');
-  assert.equal(isUnlocked(gap, 4), false);
+  // W9: index 4 is The Ashen Line since Loose Crystal (m03b, optional) follows it at 5 (an optional clear opens nothing).
+  const gap = { cleared: { [MISSIONS[4].id]: { time: 500, medal: 'bronze' } } };
+  assert.equal(isUnlocked(gap, 4), true, 'cleared, so open');
+  assert.equal(isUnlocked(gap, 5), true, 'the one after a clear');
+  assert.equal(isUnlocked(gap, 3), false);
   assert.equal(isUnlocked(gap, 12), false);
   const siege = MISSIONS.findIndex((m) => m.id === 'm07-copper-siege');
   assert.deepEqual(missionById('m07-copper-siege'), { campaign: 'main', index: siege, mission: MISSIONS[siege] });

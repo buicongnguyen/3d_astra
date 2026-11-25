@@ -160,6 +160,78 @@ export const SCENES = {
       { say: { who: "vale", text: "Then let them watch. Every idle Shade is one gun fewer." } },
     ],
   },
+  // ── W9 story scenes (2026-11-26): six more staged moments, over old and new missions. ──
+  // Mission 2 (middle): the bridgehead falls and Hale's sappers blow the east bridge behind his crews
+  // (the mission's { blow: 22 } lands on the same tick, so the strike and the open river are on screen).
+  "east-bridge-falls": {
+    letterbox: true,
+    beats: [
+      { camera: { at: "eastBridge", zoom: 0.9, seconds: 2.2 } },
+      { fx: { flash: "alarm" } },
+      { shake: 0.5 },
+      { say: { who: "hale", text: "East bridge charges, now. Nobody follows my crews." } },
+      { camera: { at: "bridgehead", zoom: 1, seconds: 1.6 } },
+      { say: { who: "okoro", text: "He blew his own bridge! His raids must wade now." } },
+      { say: { who: "vale", text: "Good. The ford is under our towers." } },
+    ],
+  },
+  // Mission 9 (middle): at the link-up, Sol's well crew calls from the south road (a timed optional objective).
+  "well-crew": {
+    letterbox: true,
+    beats: [
+      { camera: { at: "wellCrew", zoom: 0.95, seconds: 2.2 } },
+      { fx: { flash: "alarm" } },
+      { say: { who: "sol", text: "My well crew is stuck on the south road!" } },
+      { say: { who: "sol", text: "Reach them in seventy-five seconds, before the drones." } },
+      { camera: { at: "solGate", zoom: 1, seconds: 1.6 } },
+      { say: { who: "vale", text: "Riders are fastest. Send two, Commander." } },
+    ],
+  },
+  // Loose Crystal (m03b, end): the quota is in, and the crystal by the fallen siphon has gone grey.
+  "grey-crystal": {
+    letterbox: true,
+    beats: [
+      { camera: { at: "siphonStump", zoom: 0.8, seconds: 2.4 } },
+      { fx: { flash: "dark" } },
+      { say: { who: "okoro", text: "This crystal is grey. The siphon drank it dry." } },
+      { say: { who: "vale", text: "Then drained ground grows nothing. Remember that." } },
+      { wait: 0.4 },
+    ],
+  },
+  // Hawk Wing (m06d, start): the rebuilt Hawks lift off over the squad.
+  "hawks-rise": {
+    letterbox: true,
+    beats: [
+      { camera: { at: "start", zoom: 0.8, seconds: 2.2 } },
+      { fx: { flash: "relay" } },
+      { title: { text: "Hawk Wing", sub: "Rebuilt from balloon wrecks" } },
+      { say: { who: "okoro", text: "Three Hawks, rebuilt from Hale's balloon wrecks!" } },
+      { say: { who: "vale", text: "Anti-tank crews guard the moorings. Ground troops first." } },
+    ],
+  },
+  // The Long Night (m08b, middle): the first relay lights in the dark and ECHO starts counting.
+  "first-light-at-night": {
+    letterbox: true,
+    beats: [
+      { camera: { at: "relayWest", zoom: 0.8, seconds: 2.4 } },
+      { fx: { flash: "relay" } },
+      { say: { who: "echo", text: "One relay lit. This one is counting the circuit." } },
+      { say: { who: "hale", text: "I see your light, Commander. So do my crews." } },
+      { fx: { flash: "alarm" } },
+      { say: { who: "vale", text: "Every light draws them. Guard the circles." } },
+    ],
+  },
+  // The Water Road (m09b, end): the wagons reach the dry wells and the water runs.
+  "water-road": {
+    letterbox: true,
+    beats: [
+      { camera: { at: "wells", zoom: 0.8, seconds: 2.4 } },
+      { fx: { flash: "relay" } },
+      { say: { who: "sol", text: "Water in the wells. The gardens drink tonight." } },
+      { say: { who: "echo", text: "The crystal here is greener already. This one notes it." } },
+      { wait: 0.4 },
+    ],
+  },
 };
 
 // How long a line stays up in a scene: shorter than in play (the match waits), long enough to read.

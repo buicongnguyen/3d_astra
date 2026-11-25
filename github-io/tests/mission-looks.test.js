@@ -7,8 +7,9 @@ const sim = (id, time = 0, extra = {}) => ({ missionDef: { id, ...extra }, time 
 test("every table id is a real mission or Chronicle, and no existing mission carries a look field", () => {
   const ids = new Set(MISSIONS.map((m) => m.id));
   for (const id of Object.keys(MISSION_LOOKS)) if (!id.startsWith("cv1")) assert.ok(ids.has(id), id);
-  // only new content (W2-F m11c) carries its own look
-  assert.ok(MISSIONS.every((m) => !("look" in m) || m.id === "m11c-hold-the-keystone-roads"));
+  // only new content (W2-F m11c, W9 The Long Night m08b) carries its own look
+  assert.ok(MISSIONS.every((m) => !("look" in m) || ["m11c-hold-the-keystone-roads", "m08b-the-long-night"].includes(m.id)));
+  assert.equal(MISSIONS.find((m) => m.id === "m08b-the-long-night").look, "night");
 });
 test("m08 and cv1 are night, m10 is storm, m06 gathers a storm from the start (full at 16:00)", () => {
   assert.equal(missionLook(sim("m08-the-quiet-vault")).name, "night");
@@ -23,6 +24,13 @@ test("map variety: Gun Hill is a night battle and the Canyon Run a dusk drive (f
   assert.equal(missionLook(sim("m06c-gun-hill")).name, "night");
   assert.equal(missionLook(sim("m04b-canyon-run")).name, "dusk");
   assert.equal(missionLook(sim("m06c-gun-hill", 200)).k, 1);
+});
+test("W9: river fog rolls over Cut the Draw from 3:30 and lifts by 6:30 (view only, from the table)", () => {
+  assert.equal(missionLook(sim("m11-cut-the-draw", 100)).k, 0);
+  assert.ok(missionLook(sim("m11-cut-the-draw", 300)).k > 0.8);
+  assert.equal(missionLook(sim("m11-cut-the-draw", 300)).name, "fog");
+  assert.equal(missionLook(sim("m11-cut-the-draw", 400)).k, 0);
+  assert.ok(LOOKS.fog.fogFar < 1 && !LOOKS.fog.rain && !LOOKS.fog.flash, "fog closes in, with no rain or lightning");
 });
 test("new content may carry its own look; the table wins for existing ids", () => {
   assert.equal(missionLook(sim("new", 0, { look: "dusk" })).name, "dusk");

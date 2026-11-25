@@ -26,6 +26,8 @@ export const OPENINGS = {
   // Map variety: over the east water of Mirror Lake, drifting west across the island toward the camp's ford.
   "m02c-mirror-lake": { at: "island", offset: [22, -4], frames: "plateau", zoom: 1.5, drift: [-6, 6], seconds: 5 },
   "m03-the-ashen-line": { at: "vanguardYard", frames: "camp", zoom: 1.25, drift: [4, 4], seconds: 5 },
+  // W9 side missions (src/story/side-missions.js): each opens on its own objective or the enemy's way in.
+  "m03b-loose-crystal": { at: "wreckWest", frames: "objective", zoom: 1.4, drift: [4, 4], seconds: 4.8 },
   "m04-three-way-dunes": { at: "oasisCentre", frames: "objective", zoom: 1.7, drift: [-4, -4], seconds: 4.8 },
   // Map variety: over Hale's outpost beyond the canyon's north mouth, drifting toward the road down to the squad.
   "m04b-canyon-run": { at: "outpost", offset: [-6, 4], frames: "camp", zoom: 1.4, drift: [-6, 4], seconds: 5 },
@@ -34,11 +36,14 @@ export const OPENINGS = {
   "m06b-wings-over-copper": { at: "yard", frames: "camp", zoom: 1.4, drift: [-6, 2], seconds: 4.8 },
   // Campaign C6: over the player's hill on Highridge, drifting down its ramp toward the camp.
   "m06c-gun-hill": { at: "hill", offset: [-4, -8], frames: "plateau", zoom: 1.5, drift: [-5, 5], seconds: 4.8 },
+  "m06d-hawk-wing": { at: "mooringWest", frames: "objective", zoom: 1.4, drift: [-4, 6], seconds: 4.8 },
   "m07-copper-siege": { at: "eastRoad", frames: "road", zoom: 1.35, drift: [-3, -6], seconds: 5 },
   "m07b-hold-the-valley": { at: { x: -25.6, z: -38.3 }, frames: "road", zoom: 1.1, drift: [6, 5], seconds: 4.8 },
   // The void beyond the vault's corner shows the night sky and its moon (R3-D seam).
   "m08-the-quiet-vault": { at: "vaultGate", frames: "objective", zoom: 1.6, drift: [-4, -4], seconds: 5.4 },
+  "m08b-the-long-night": { at: "relayWest", offset: [0, -8], frames: "objective", zoom: 1.5, drift: [6, 0], seconds: 5 },
   "m09-a-debt-in-the-dunes": { at: "solCamp", frames: "camp", zoom: 1.4, drift: [-6, -2], seconds: 4.8 },
+  "m09b-the-water-road": { at: "midPost", frames: "road", zoom: 1.4, drift: [-6, 2], seconds: 4.8 },
   "m10-obsidian-storm": { at: "crown", offset: [10, -8], frames: "plateau", zoom: 1.6, drift: [3, 5], seconds: 5.2 },
   // Campaign C6: high over the crown hill of Gun Hills and its three Warden towers.
   "m10b-crown-hill": { at: "crown", offset: [14, 6], frames: "plateau", zoom: 1.5, drift: [-5, 5], seconds: 5 },

@@ -17,7 +17,11 @@ test("Weather defaults to On, saves from before it load On, and only booleans ar
 
 test("Weather Off drops the storm look and keeps night and dusk", () => {
   const sim = (look, time = 30) => ({ time, missionDef: { id: "x" }, rules: { look } });
-  assert.deepEqual([...WEATHER_LOOKS], ["storm"]);
+  // W9: the river fog of m11 (a weather turn inside the mission) is weather too.
+  assert.deepEqual([...WEATHER_LOOKS], ["storm", "fog"]);
+  assert.equal(viewLook(sim("fog"), { weather: false }), null);
+  assert.equal(viewLook({ time: 300, missionDef: { id: "m11-cut-the-draw" } }, { weather: false }), null);
+  assert.equal(viewLook({ time: 300, missionDef: { id: "m11-cut-the-draw" } }, { weather: true })?.name, "fog");
   assert.equal(viewLook(sim("storm"), { weather: true })?.name, "storm");
   assert.equal(viewLook(sim("storm"), {})?.name, "storm");
   assert.equal(viewLook(sim("storm"), { weather: false }), null);

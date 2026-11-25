@@ -144,6 +144,21 @@
        "text": "The bridgehead is down! The west bridge reaches their back fence."
       },
       {
+       "who": "hale",
+       "text": "East bridge charges, now. Nobody follows my crews.",
+       "scene": "east-bridge-falls"
+      },
+      {
+       "who": "okoro",
+       "text": "He blew his own bridge! His raids must wade now.",
+       "scene": "east-bridge-falls"
+      },
+      {
+       "who": "vale",
+       "text": "Good. The ford is under our towers.",
+       "scene": "east-bridge-falls"
+      },
+      {
        "who": "vale",
        "text": "Ashfall holds the middle relay. It feeds their Foundry."
       },
@@ -328,6 +343,42 @@
     }
    ]
   },
+  "m03b-loose-crystal": {
+   "campaign": "main",
+   "packs": [
+    {
+     "name": "story-m03b",
+     "lines": [
+      {
+       "who": "vale",
+       "text": "Harvesters first. Then claim the west wreck."
+      },
+      {
+       "who": "okoro",
+       "text": "The wreck is paying! Loose crystal, still warm."
+      },
+      {
+       "who": "hale",
+       "text": "That crystal was cut by my crews. Return it."
+      },
+      {
+       "who": "vale",
+       "text": "Second salvage crew, heading for our Harvesters."
+      },
+      {
+       "who": "okoro",
+       "text": "This crystal is grey. The siphon drank it dry.",
+       "scene": "grey-crystal"
+      },
+      {
+       "who": "vale",
+       "text": "Then drained ground grows nothing. Remember that.",
+       "scene": "grey-crystal"
+      }
+     ]
+    }
+   ]
+  },
   "m04-three-way-dunes": {
    "campaign": "main",
    "packs": [
@@ -507,6 +558,10 @@
       },
       {
        "who": "okoro",
+       "text": "Supply truck from the landing! Three Rangers, one Medic."
+      },
+      {
+       "who": "okoro",
        "text": "Core is in. Oh! The relays are one circuit!"
       },
       {
@@ -566,6 +621,18 @@
       {
        "who": "vale",
        "text": "Veil Survey scouts. Leave them be."
+      },
+      {
+       "who": "vale",
+       "text": "Movement on the west pass. Watch that flank!"
+      },
+      {
+       "who": "hale",
+       "text": "West pass, now. Their yard stands open."
+      },
+      {
+       "who": "okoro",
+       "text": "Only scouts. They saw our towers and ran."
       },
       {
        "who": "vale",
@@ -677,6 +744,46 @@
       {
        "who": "vale",
        "text": "The ridge is ours. High ground wins the early fights."
+      }
+     ]
+    }
+   ]
+  },
+  "m06d-hawk-wing": {
+   "campaign": "main",
+   "packs": [
+    {
+     "name": "story-m06d",
+     "lines": [
+      {
+       "who": "okoro",
+       "text": "Three Hawks, rebuilt from Hale's balloon wrecks!",
+       "scene": "hawks-rise"
+      },
+      {
+       "who": "vale",
+       "text": "Anti-tank crews guard the moorings. Ground troops first.",
+       "scene": "hawks-rise"
+      },
+      {
+       "who": "okoro",
+       "text": "Anti-tank crews! Keep the Hawks back a moment."
+      },
+      {
+       "who": "hale",
+       "text": "Gunships over my moorings. Crews, aim up."
+      },
+      {
+       "who": "vale",
+       "text": "An Ember balloon is up. Hawks, take it."
+      },
+      {
+       "who": "okoro",
+       "text": "A Hawk is smoking! Pull it back!"
+      },
+      {
+       "who": "vale",
+       "text": "All three moorings down. The sky is ours today."
       }
      ]
     }
@@ -896,6 +1003,51 @@
     }
    ]
   },
+  "m08b-the-long-night": {
+   "campaign": "main",
+   "packs": [
+    {
+     "name": "story-m08b",
+     "lines": [
+      {
+       "who": "vale",
+       "text": "West and south relays are close. Light them."
+      },
+      {
+       "who": "echo",
+       "text": "One relay lit. This one is counting the circuit.",
+       "scene": "first-light-at-night"
+      },
+      {
+       "who": "hale",
+       "text": "I see your light, Commander. So do my crews.",
+       "scene": "first-light-at-night"
+      },
+      {
+       "who": "vale",
+       "text": "Every light draws them. Guard the circles.",
+       "scene": "first-light-at-night"
+      },
+      {
+       "who": "echo",
+       "text": "Two lights. The count is climbing."
+      },
+      {
+       "who": "vale",
+       "text": "Raiders by the glow. Both circles, hold!"
+      },
+      {
+       "who": "echo",
+       "text": "Three lights! Forty relays answer. This one sees far."
+      },
+      {
+       "who": "echo",
+       "text": "Counted. Every line runs to the Keystone."
+      }
+     ]
+    }
+   ]
+  },
   "m09-a-debt-in-the-dunes": {
    "campaign": "main",
    "packs": [
@@ -971,8 +1123,75 @@
        "text": "The Elder Wyrm rides with you! Nobody tamed it before!"
       },
       {
+       "who": "sol",
+       "text": "My well crew is stuck on the south road!",
+       "scene": "well-crew"
+      },
+      {
+       "who": "sol",
+       "text": "Reach them in seventy-five seconds, before the drones.",
+       "scene": "well-crew"
+      },
+      {
+       "who": "vale",
+       "text": "Riders are fastest. Send two, Commander.",
+       "scene": "well-crew"
+      },
+      {
+       "who": "sol",
+       "text": "My crew is safe! Two Riders ride with you."
+      },
+      {
+       "who": "sol",
+       "text": "They walked home alone. Slow, but safe."
+      },
+      {
        "who": "vale",
        "text": "Two scouts from Ashfall on the sand. See them off."
+      }
+     ]
+    }
+   ]
+  },
+  "m09b-the-water-road": {
+   "campaign": "main",
+   "packs": [
+    {
+     "name": "story-m09b",
+     "lines": [
+      {
+       "who": "sol",
+       "text": "Three wagons, one road. Clear it ahead of us."
+      },
+      {
+       "who": "hale",
+       "text": "Wardens, hold the road. No water passes."
+      },
+      {
+       "who": "vale",
+       "text": "A Warden patrol from the north. Guard the wagons."
+      },
+      {
+       "who": "sol",
+       "text": "The cistern is full. Now the east wells!"
+      },
+      {
+       "who": "sol",
+       "text": "A wagon is leaking! Medics, please!"
+      },
+      {
+       "who": "sol",
+       "text": "I can see the well towers. Almost home."
+      },
+      {
+       "who": "sol",
+       "text": "Water in the wells. The gardens drink tonight.",
+       "scene": "water-road"
+      },
+      {
+       "who": "echo",
+       "text": "The crystal here is greener already. This one notes it.",
+       "scene": "water-road"
       }
      ]
     }
@@ -1047,6 +1266,14 @@
       {
        "who": "vale",
        "text": "Fifteen minutes. Heavy machines now. Anti-tank to the front."
+      },
+      {
+       "who": "hale",
+       "text": "Commander, three armies. Turn back, and nobody falls."
+      },
+      {
+       "who": "vale",
+       "text": "He is buying time. Keep on the dampers."
       },
       {
        "who": "echo",
@@ -1137,6 +1364,14 @@
       {
        "who": "echo",
        "text": "Four minutes. The oldest crystals are turning to dust."
+      },
+      {
+       "who": "okoro",
+       "text": "Fog off the rivers! Keep the army close."
+      },
+      {
+       "who": "vale",
+       "text": "The fog is lifting. Push on."
       },
       {
        "who": "echo",
@@ -2107,5 +2342,72 @@
     }
    ]
   }
+ },
+ "pending": {
+  "m02-first-contact": [
+   "East bridge charges, now. Nobody follows my crews.",
+   "He blew his own bridge! His raids must wade now.",
+   "Good. The ford is under our towers."
+  ],
+  "m03b-loose-crystal": [
+   "Harvesters first. Then claim the west wreck.",
+   "The wreck is paying! Loose crystal, still warm.",
+   "That crystal was cut by my crews. Return it.",
+   "Second salvage crew, heading for our Harvesters.",
+   "This crystal is grey. The siphon drank it dry.",
+   "Then drained ground grows nothing. Remember that."
+  ],
+  "m05-the-verdant-pact": [
+   "Supply truck from the landing! Three Rangers, one Medic."
+  ],
+  "m06-copper-harvest": [
+   "Movement on the west pass. Watch that flank!",
+   "West pass, now. Their yard stands open.",
+   "Only scouts. They saw our towers and ran."
+  ],
+  "m06d-hawk-wing": [
+   "Three Hawks, rebuilt from Hale's balloon wrecks!",
+   "Anti-tank crews guard the moorings. Ground troops first.",
+   "Anti-tank crews! Keep the Hawks back a moment.",
+   "Gunships over my moorings. Crews, aim up.",
+   "An Ember balloon is up. Hawks, take it.",
+   "A Hawk is smoking! Pull it back!",
+   "All three moorings down. The sky is ours today."
+  ],
+  "m08b-the-long-night": [
+   "West and south relays are close. Light them.",
+   "One relay lit. This one is counting the circuit.",
+   "I see your light, Commander. So do my crews.",
+   "Every light draws them. Guard the circles.",
+   "Two lights. The count is climbing.",
+   "Raiders by the glow. Both circles, hold!",
+   "Three lights! Forty relays answer. This one sees far.",
+   "Counted. Every line runs to the Keystone."
+  ],
+  "m09-a-debt-in-the-dunes": [
+   "My well crew is stuck on the south road!",
+   "Reach them in seventy-five seconds, before the drones.",
+   "Riders are fastest. Send two, Commander.",
+   "My crew is safe! Two Riders ride with you.",
+   "They walked home alone. Slow, but safe."
+  ],
+  "m09b-the-water-road": [
+   "Three wagons, one road. Clear it ahead of us.",
+   "Wardens, hold the road. No water passes.",
+   "A Warden patrol from the north. Guard the wagons.",
+   "The cistern is full. Now the east wells!",
+   "A wagon is leaking! Medics, please!",
+   "I can see the well towers. Almost home.",
+   "Water in the wells. The gardens drink tonight.",
+   "The crystal here is greener already. This one notes it."
+  ],
+  "m10-obsidian-storm": [
+   "Commander, three armies. Turn back, and nobody falls.",
+   "He is buying time. Keep on the dampers."
+  ],
+  "m11-cut-the-draw": [
+   "Fog off the rivers! Keep the army close.",
+   "The fog is lifting. Push on."
+  ]
  }
 }

@@ -85,6 +85,13 @@ const MISSION_TARGETS = {
   // Canyon Run (m04b, map variety): no base; four crawlers in two pairs (1:00 and 3:20) up Amber Canyon, then the
   // outpost. The second pair cannot arrive before about 4:40, so the bot wins at about 5:25 (Story 5:32, Veteran 6:19).
   "m04b-canyon-run": { win: [300, 1200], earliest: 300 },
+  // W9 side missions (campaign C6, src/story/side-missions.js), short phone matches. Loose Crystal: bank 4500 alloy,
+  // the objective bot wins at about 4:27 on every difficulty. Hawk Wing: no base, three moorings, about 2:30-3:10.
+  // The Long Night: hold two of three relays 2:30 at night, about 4:50-6:00. The Water Road: two escorts, about 2:55.
+  "m03b-loose-crystal": { passive: 300, win: [200, 1200], earliest: 200 },
+  "m06d-hawk-wing": { win: [120, 1200], earliest: 120 },
+  "m08b-the-long-night": { win: [240, 1200], earliest: 240 },
+  "m09b-the-water-road": { win: [120, 1200], earliest: 120 },
 };
 const standardTargets = (index) => ({ ...BASE_TARGETS, ...MISSION_TARGETS[MISSIONS[index]?.id] });
 

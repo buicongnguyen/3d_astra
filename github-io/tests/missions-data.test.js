@@ -39,8 +39,9 @@ const STORY_IDS = ["m01-first-light", "m02-first-contact", "m03-the-ashen-line",
   "m07-copper-siege", "m08-the-quiet-vault", "m09-a-debt-in-the-dunes", "m10-obsidian-storm", "m11-cut-the-draw", "m12-frontiers-end"];
 test("mission ids are unique, stable and in order, and the basic fields are sound", () => {
   // Map variety (2026-11-24): Mirror Lake (m02c) after Hold the River, Canyon Run (m04b) after Three-Way Dunes.
-  assert.deepEqual(MISSIONS.map((m) => m.id), ["m01-first-light", "m02-first-contact", "m02b-hold-the-river", "m02c-mirror-lake", "m03-the-ashen-line", "m04-three-way-dunes", "m04b-canyon-run", "m05-the-verdant-pact",
-    "m06-copper-harvest", "m06b-wings-over-copper", "m06c-gun-hill", "m07-copper-siege", "m07b-hold-the-valley", "m08-the-quiet-vault", "m09-a-debt-in-the-dunes", "m10-obsidian-storm", "m10b-crown-hill", "m11-cut-the-draw", "m11c-hold-the-keystone-roads", "m11d-the-sovereign-walks", "m12-frontiers-end"]);
+  // W9 (2026-11-26): Loose Crystal (m03b), Hawk Wing (m06d), The Long Night (m08b) and The Water Road (m09b).
+  assert.deepEqual(MISSIONS.map((m) => m.id), ["m01-first-light", "m02-first-contact", "m02b-hold-the-river", "m02c-mirror-lake", "m03-the-ashen-line", "m03b-loose-crystal", "m04-three-way-dunes", "m04b-canyon-run", "m05-the-verdant-pact",
+    "m06-copper-harvest", "m06b-wings-over-copper", "m06c-gun-hill", "m06d-hawk-wing", "m07-copper-siege", "m07b-hold-the-valley", "m08-the-quiet-vault", "m08b-the-long-night", "m09-a-debt-in-the-dunes", "m09b-the-water-road", "m10-obsidian-storm", "m10b-crown-hill", "m11-cut-the-draw", "m11c-hold-the-keystone-roads", "m11d-the-sovereign-walks", "m12-frontiers-end"]);
   assert.deepEqual(MISSIONS.map((m) => m.id).filter((id) => STORY_IDS.includes(id)), STORY_IDS, "the story missions keep their order");
   assert.equal(new Set(MISSIONS.map((m) => m.id)).size, MISSIONS.length);
   MISSIONS.forEach((m, i) => {

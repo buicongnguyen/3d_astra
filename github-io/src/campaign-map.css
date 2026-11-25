@@ -109,6 +109,8 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
 }
 .cmap-act b { font: 800 12px/1.2 var(--font-ui); letter-spacing: 0.16em; color: var(--gold-2); }
+/* W9: with 25 relays on four rows the act plates show only their number (the list beside the map names the acts). */
+.cmap-act > span { display: none; }
 
 /* ---------- Relay pins ---------- */
 .cmap .cmap-node {
@@ -239,9 +241,11 @@
 .cmap-node.locked .cmap-title { background: rgba(3, 10, 24, 0.78); color: #a8bfcc; }
 .cmap-node.next .cmap-title { border-color: rgba(127, 232, 255, 0.7); color: #fff; box-shadow: 0 0 12px rgba(127, 232, 255, 0.35), 0 2px 8px rgba(0, 0, 0, 0.5); }
 .cmap-node.picked .cmap-title { z-index: 4; border-color: var(--gold-2); background: linear-gradient(180deg, rgba(60, 36, 8, 0.94), rgba(20, 12, 4, 0.92)); color: #fff; font-weight: 700; }
-/* Smaller boards: the picked and next missions keep their plates; the list names the rest. */
+/* W9: 25 relays on four rows leave no room for every plate on any board: the picked and next missions keep their
+   plates, a pointer over a relay shows its own, and the list beside the map names the rest. */
+.cmap-node:not(.picked, .next, :hover) .cmap-title { display: none; }
+/* Smaller boards: smaller plates and pins. */
 @container cmap (max-width: 700px) {
-  .cmap-node:not(.picked, .next) .cmap-title { display: none; }
   .cmap-node .cmap-title, .cmap-node.a1 .cmap-title { max-width: 40cqw; font-size: 11px; padding: 1px 6px; }
   /* Smaller pins (the tap stays 44 px), so the painting still shows between them; locked ones smallest. */
   .cmap-node b { width: 27px; height: 27px; border-width: 2px; font-size: 12px; }

@@ -50,6 +50,14 @@ export const LOOKS = {
     // dusk map (m06 at k 0.48) reads blue-grey, not the map's purple. k = 1 (m10) is unchanged.
     skyGather: 0.25,
   },
+  // W9 (scripted moments): river fog that rolls in and lifts again inside a mission (a weather turn, by ramp).
+  // Pale blue-grey air, the distance fog pulled in close, a soft cloud shade on High; no rain, no lightning.
+  fog: {
+    sky: "#8d9aa6", fog: "#8a97a3", ambient: "#a9b6c2", bounce: "#5d666e", sun: "#d8dee4",
+    ambientI: 0.95, sunI: 0.62, exposure: 1.0, water: "#8fa2ad", waterGlow: 0.8, glow: 1.2,
+    clouds: 1, fogNear: 0.3, fogFar: 0.52, edge: { low: "#3a434b", high: "#9aa6b0" }, rim: "#cfd8e0",
+    skyGather: 0.5,
+  },
   // A long red-gold evening for new content.
   dusk: {
     sky: "#3a1c30", fog: "#2a1630", ambient: "#c79aa8", bounce: "#6a3a30", sun: "#ffb070",
@@ -70,6 +78,9 @@ export const MISSION_LOOKS = {
   // R3-D: the storm gathers from the first second (cloud, fog and rain thicken over 90 s), then the surge
   // storm Vale warns of breaks in full at 16:00 (it was all-or-nothing at 16:00 before).
   "m06-copper-harvest": { look: "storm", ramp: [[0, 0.35], [90, 0.75], [960, 0.75], [980, 1]] },
+  // W9 (scripted moments): river fog rolls over Twin Rivers at 3:30 (Okoro calls it), thickest from 4:00 to 6:00,
+  // and lifts by 6:30 (Vale calls it). View only: vision, ranges and the outcome are unchanged.
+  "m11-cut-the-draw": { look: "fog", ramp: [[210, 0], [240, 0.85], [360, 0.85], [390, 0]] },
 };
 
 const own = (table, id) => Object.hasOwn(table, id);
@@ -93,7 +104,7 @@ export function missionLook(sim) {
 // thunder) and shows the map's own sky; night and dusk stay. View only like the looks themselves: no mission
 // storm reaches the sim, so outcomes and golden pins do not move. (The Wild frontier Sandstorm is a sim power,
 // drawn by wild-view.js as a marked zone, and stays on screen: it is gameplay, not weather dressing.)
-export const WEATHER_LOOKS = new Set(["storm"]);
+export const WEATHER_LOOKS = new Set(["storm", "fog"]);
 export function viewLook(sim, settings) {
   const look = missionLook(sim);
   return look && settings?.weather === false && WEATHER_LOOKS.has(look.name) ? null : look;

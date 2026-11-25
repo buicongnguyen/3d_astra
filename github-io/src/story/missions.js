@@ -8,6 +8,8 @@
 // medals follow the objective-aware bot's time (gold) and about 1.4 times that (silver).
 import { HOLD_THE_RIVER, HOLD_THE_VALLEY, HOLD_THE_ROADS } from "./defence-missions.js";
 import { SOVEREIGN_WALKS } from "./sovereign-mission.js";
+// W9 (campaign C6): four optional side missions in their own file, one per act gap (src/story/side-missions.js).
+import { LOOSE_CRYSTAL, HAWK_WING, LONG_NIGHT, WATER_ROAD } from "./side-missions.js";
 
 export const MISSIONS = [
   // ───────────────────────── ACT 1: LANDFALL ─────────────────────────
@@ -119,6 +121,8 @@ export const MISSIONS = [
       bridgehead: { x: -22, z: -14, r: 8 },
       eastRoad: { x: 24, z: -10, r: 6 },
       houndDen: { x: 0, z: 40, r: 8 },
+      // W9 (scripted moments): the east bridge, which Hale blows when the bridgehead falls (scene east-bridge-falls).
+      eastBridge: { x: 22, z: 0, r: 5 },
     },
     setup: [
       { capturePoint: "oldRelay", label: "Builder relay", gives: { energy: 1 } },
@@ -175,6 +179,9 @@ export const MISSIONS = [
         { wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "eastRoad", target: "playerBase" } },
       ] },
       { when: { objective: "bridgehead", is: "done" }, do: [{ say: { who: "okoro", text: "The bridgehead is down! The west bridge reaches their back fence." } }] },
+      // W9 (scripted moments): falling back, Hale's sappers blow the east bridge behind his crews. It helps the player: his
+      // raids now wade the ford under the camp's towers, and the army's road east runs along the north bank (no crossing).
+      { when: { objective: "bridgehead", is: "done" }, do: [{ blow: 22 }, { scene: "east-bridge-falls" }] },
       { when: { pointOwned: { point: "oldRelay", team: 1 } }, do: [{ say: { who: "vale", text: "Ashfall holds the middle relay. It feeds their Foundry." } }] },
       { when: { time: 720 }, do: [{ say: { who: "vale", text: "Twelve minutes. Every minute they stand, they build." } }] },
       { when: { objective: "core", is: "done" }, do: [{ music: "calm" }, { say: { who: "hale", text: "Keep the river. I have other camps." } }] },
@@ -386,6 +393,7 @@ export const MISSIONS = [
     design: "About 10 minutes against one Relaxed AI (first wave near 3:30, then every 90 seconds). The player starts with two towers and a wall guard of 3 Rangers and 3 Vanguards. The west and east siphons (6000 HP) each have a hardened tower and 4 guards; the north one has 5 guards and the Iron Vanguard (docs/aaa/BOSSES.md), a salvaged Builder war machine powered down in the yard 11 m from it (32000 HP, 26000 on Story: about a 2 minute fight for the army the objective bot has there, 24-27 units). It wakes when troops come within 14 m or hit it, plays its entrance scene, and fights within 12 m of its yard: a marked four-gun burst at the biggest group every ~13 s (units on Guard or Aggressive step out 1.5 s into the 3 s warning), a light gun, a 4-second open core after each burst. Hale's camp has two hardened towers and 5 guards (8 before round 3, R3-I: after the south exits the objective bot lost to them). Intended: break the first wave at the walls, take the west and east siphons, then the north one and the Iron Vanguard together. Twist: entering the north siphon reveals that Hale feeds a fleet in orbit and calls a 5-unit counter-attack (7 before round 3). Round 3 pacing: the towers objective asks for four towers standing (the camp starts with two, so it costs two towers); no probe here (the starting guard chased one out of the towers' cover and a passive player lost 7 units to the first wave), and gold is 12:30 (12:00 before). The enemy core is optional: destroying it removes Ashfall but its tagged siphons and the boss stay standing, so they must still be destroyed.",
   },
 
+  LOOSE_CRYSTAL,
   {
     id: "m04-three-way-dunes",
     act: 1,
@@ -668,6 +676,12 @@ export const MISSIONS = [
         { if: { flag: "m05-pact", is: "share" }, wave: { team: 2, units: { vanguard: 2 }, from: "eastFord", target: "northRoad" } },
       ] },
       { when: { enter: "relaySite", team: 0 }, do: [{ say: { who: "vale", text: "Relay site ahead. Clear the Sunward guards first." } }] },
+      // W9 (scripted moments): reinforcements by truck before the first joint attack (help only; at 2:00 the bot wins
+      // sooner and loses fewer units on every difficulty: tried at 2:00, 3:00, 3:30, 4:00 and 5:00).
+      { when: { time: 120 }, do: [
+        { say: { who: "okoro", text: "Supply truck from the landing! Three Rangers, one Medic." } },
+        { truck: { team: 0, units: { ranger: 3, medic: 1 }, from: "playerBase", to: "playerFront", tag: "truckHelp", name: "Supply truck" } },
+      ] },
       { when: { objective: "escort", is: "done" }, do: [{ music: "calm" }, { say: { who: "okoro", text: "Core is in. Oh! The relays are one circuit!" } }] },
       // Creature round (Sunward story): Sol on the open channel, before the first joint attack and when the circuit is read.
       { when: { time: 150 }, do: [{ say: { who: "sol", text: "Meridian, hear me. Your relays starve our children's wells." } }] },
@@ -754,6 +768,15 @@ export const MISSIONS = [
       { when: { time: 240 }, do: [{ aiSpeed: "normal" }] },
       { when: { time: 200 }, do: [{ say: { who: "okoro", text: "Violet coats on the north-west rim! Not Ashfall." } }, { ping: "veilWatch" }] },
       { when: { enter: "veilWatch", team: 0 }, do: [{ say: { who: "vale", text: "Veil Survey scouts. Leave them be." } }] },
+      // W9 (scripted moments): a flank shown with a camera nudge. The flanking column comes on Veteran only; on Story and
+      // Standard the same nudge finds scouts that turn back, so those difficulties are not made harder.
+      { when: { time: 330 }, do: [
+        { camera: "westPass" }, { ping: "westPass" },
+        { say: { who: "vale", text: "Movement on the west pass. Watch that flank!" } },
+        { if: { difficulty: "veteran" }, say: { who: "hale", text: "West pass, now. Their yard stands open." } },
+        { if: { difficulty: "veteran" }, wave: { team: 1, units: { vanguard: 4, ranger: 2 }, from: "westPass", target: "relayYard" } },
+        { if: { difficulty: ["story", "standard"] }, say: { who: "okoro", text: "Only scouts. They saw our towers and ran." } },
+      ] },
       { when: { time: 600 }, do: [
         { say: { who: "vale", text: "Ten minutes gone. Raiders are heading for our seam." } },
         { wave: { team: 1, units: { vanguard: 3, ranger: 2, breaker: 1 }, from: "enemyBase", target: "relayYard" } },
@@ -934,6 +957,7 @@ export const MISSIONS = [
     medals: { gold: { seconds: 360 }, silver: { seconds: 600 } },
     design: "An optional side mission (campaign C6) on the campaign map Highridge, about 6 minutes. The player builds two towers on their hill (the build objective counts only towers inside region hill) and holds it for 5:30 through three scripted waves (4+2, 5+3+Breaker, Tank+5+3) from a home-ruled Ashfall AI. The mirror hill holds an Ashfall tower and 2 Rangers: destroying it is optional and means firing uphill. Gold needs both towers up before the hold ends (the mission ends at 5:30 at the earliest).",
   },
+  HAWK_WING,
   {
     id: "m07-copper-siege",
     act: 2,
@@ -1163,6 +1187,7 @@ export const MISSIONS = [
   },
 
   // ───────────────────────── ACT 3: THE KEYSTONE ─────────────────────────
+  LONG_NIGHT,
   {
     id: "m09-a-debt-in-the-dunes",
     act: 3,
@@ -1198,6 +1223,8 @@ export const MISSIONS = [
       wardenRise: { x: -20, z: -50, r: 7 },
       southRoad: { x: 0, z: 52, r: 6 },
       elderNest: { x: -44, z: -30, r: 8 },
+      // W9 (scripted moments): Sol's well crew, stranded on the south road (a timed optional objective).
+      wellCrew: { x: 8, z: 58, r: 7 },
     },
     setup: [
       { spawn: "relay", team: 0, at: "solCamp", tag: "caravan", name: "Caravan beacon", hp: 2000 },
@@ -1235,6 +1262,7 @@ export const MISSIONS = [
       { id: "shellers", text: "Destroy the Breakers shelling the Caravan", type: "destroyTag", tag: "shellers", optional: true },
       { id: "fast", text: "Finish in under 16 minutes", type: "timeUnder", seconds: 960, optional: true },
       { id: "elder", text: "Tame the Elder Wyrm in the north-west nest", type: "den", den: "elderNest", optional: true },
+      { id: "wellcrew", text: "Reach Sol's well crew within 75 seconds", type: "reach", region: "wellCrew", optional: true, hidden: true },
     ],
     win: ["link", "ridge"],
     lose: [{ type: "coreLost" }, { type: "tagLost", tag: "caravan" }],
@@ -1283,6 +1311,18 @@ export const MISSIONS = [
       // Creature round: the Elder Wyrm nest (optional).
       { when: { enter: "elderNest", team: 0 }, do: [{ say: { who: "sol", text: "The nest of the old one. Five young ones guard it." } }] },
       { when: { objective: "elder", is: "done" }, do: [{ say: { who: "sol", text: "The Elder Wyrm rides with you! Nobody tamed it before!" } }] },
+      // W9 (scripted moments): at the link-up Sol calls for her stranded well crew (scene well-crew); reaching it within
+      // 75 s brings two Riders and 150 alloy, missing it costs nothing (the crew walks home). Help only.
+      { when: { objective: "link", is: "done" }, do: [
+        { spawn: "wagon", team: 0, at: "wellCrew", count: 2, exact: true, tag: "wellcrew", name: "Well crew" },
+        { scene: "well-crew" }, { reveal: "wellcrew" }, { ping: "wellCrew" },
+      ] },
+      { when: { objective: "link", is: "done" }, delay: 75, do: [{ fail: "wellcrew" }] },
+      { when: { objective: "wellcrew", is: "done" }, do: [
+        { say: { who: "sol", text: "My crew is safe! Two Riders ride with you." } },
+        { spawn: "rider", team: 0, at: "wellCrew", count: 2, exact: true, tag: "sunward" }, { give: { alloy: 150 } },
+      ] },
+      { when: { objective: "wellcrew", is: "failed" }, do: [{ say: { who: "sol", text: "They walked home alone. Slow, but safe." } }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
       { when: { time: 70 }, do: [{ say: { who: "vale", text: "Two scouts from Ashfall on the sand. See them off." } }, { wave: { team: 1, units: { vanguard: 2 }, from: { x: 6, z: -6 }, target: { x: -28, z: 28 }, probe: true } }] },
     ],
@@ -1297,6 +1337,7 @@ export const MISSIONS = [
     design: "The mission alongside the former rival, reworked in 0.19b as a high-ground hold, about 8 to 9 minutes: one AI, Relaxed for 7 minutes and Normal after, with Sunward troops given to the player. Sol's camp (beacon 2000 HP, two towers, 5 units) is the player's from the start; the link-up is a meeting point on the road just west of it, and reaching it adds 8 Sunward units and 300 alloy and reveals the hold: take the dune plateau north of the camp (a capture point on its top, only reachable by its east and west ramps; units more than 5 m inside the rim are hidden from the sand below) and hold it for 3 minutes. Ashfall guards the top with a tower and 6 units, and 3 Breakers stand on its east ramp (optional). Taking the top brings Hale's Wardens: real Warden drones (Sentinel drones on Hale's key) and Anti-tank soldiers climb to the plateau, and Sol's second column (3 Vanguards, 3 Anti-tank) arrives on the south road. Hale probes the camp at 2:30, raids the player's camp every 2:30 from 4:20 (with drones and Battle tanks at 9:00) and attacks the Caravan from his gate every 2:30 from 7:50. The Ashfall core is optional. Both answers to mission 5's pact change Sol's words only.",
   },
 
+  WATER_ROAD,
   {
     id: "m10-obsidian-storm",
     act: 3,
@@ -1403,6 +1444,11 @@ export const MISSIONS = [
       ] },
       { when: { pointOwned: { point: "crown", team: 0 } }, do: [{ say: { who: "echo", text: "Tuning. Sixty relays answer. Sixty-one. Hold the circle." } }] },
       { when: { time: 900 }, do: [{ say: { who: "vale", text: "Fifteen minutes. Heavy machines now. Anti-tank to the front." } }] },
+      // W9 (scripted moments): the enemy commander's taunt on the open channel (words only).
+      { when: { time: 200 }, do: [
+        { say: { who: "hale", text: "Commander, three armies. Turn back, and nobody falls." } },
+        { say: { who: "vale", text: "He is buying time. Keep on the dampers." } },
+      ] },
       // The Crown lights with no storm (scene: src/story/scenes.js), before the debrief.
       { when: { objective: "crown", is: "done" }, do: [{ music: "calm" }, { scene: "crown-lights" }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
@@ -1595,6 +1641,10 @@ export const MISSIONS = [
         { give: { alloy: 300, energy: 150 } },
       ] },
       { when: { time: 960 }, do: [{ say: { who: "echo", text: "Four minutes. The oldest crystals are turning to dust." } }, { music: "battle" }] },
+      // W9 (scripted moments): a weather turn. River fog rolls in at 3:30 and lifts by 6:30 (the look is view only:
+      // src/mission-looks.js MISSION_LOOKS, so vision, ranges and the outcome are unchanged).
+      { when: { time: 210 }, do: [{ say: { who: "okoro", text: "Fog off the rivers! Keep the army close." } }] },
+      { when: { time: 390 }, do: [{ say: { who: "vale", text: "The fog is lifting. Push on." } }] },
       // The draw stops (scene: src/story/scenes.js), before the debrief.
       { when: { tagDead: "conduitNorth" }, do: [{ music: "calm" }, { scene: "draw-cut" }] },
       // R3-I pacing: a small first contact between 1:00 and 1:40, a probe the camp beats without cost (wave.probe: not "the first attack").
