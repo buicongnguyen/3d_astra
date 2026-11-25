@@ -36,7 +36,8 @@ test("Heroic d-longcrossing", () => pin("round2 heroic d-longcrossing", heroic("
 test("m11c Hold the Keystone Roads, DefenceBot, 120 s", () => {
   const r = playDefence(resolveMission(HOLD_THE_ROADS, null), { difficulty: "standard", limit: 120 });
   // Re-recorded 2026-11-24 (defence pads): short-reach crews reach further and gain more per tier (garrisons.json tier_range: Rangers and Tank post 14/15.5/17.5 m, Mortar 12/13.5/15.5, Flame trap 7/8.5/10) and far pads moved nearer the road (Gorge d1 d2 d4 g10, Bridges s8, Canyon d1 d2); docs/CHANGELOG.md "Defence pads".
-  pin("round2 m11c 120", { wave: r.wave, lives: r.lives, hash: r.sim.hash() }, { wave: 2, lives: 20, hash: "17daacde" });
+  // Re-recorded 2026-11-25 (concise story lines): text only. The hash covers the mission definition, so the shorter say lines move it; with the old lines put back the run reproduces the old pin exactly (same waves, lives, result), so play is unchanged. Old 17daacde.
+  pin("round2 m11c 120", { wave: r.wave, lives: r.lives, hash: r.sim.hash() }, { wave: 2, lives: 20, hash: "90769bd0" });
 });
 // R3-A (AAA round 3) moved it: the Field command census and economy (old "4cce2935", R3-A "e4913c66").
 // Difficulty guard (Wave 1b, owner 2026-11-21): census from 300 s and no field economy, so 300 s is back to r3-base

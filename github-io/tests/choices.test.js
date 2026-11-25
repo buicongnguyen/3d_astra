@@ -96,8 +96,8 @@ test('resolveMission settles earlier answers and the ending; untouched missions 
   assert.deepEqual(wave7({ decisions: { 'm03-alloy': 'return' } }), { vanguard: 4, antitank: 2 }, 'returned alloy: no Breaker');
   // Mission 9 changes only Sol's words: its balance flipped with any other change (see the data's note).
   const link9 = (p) => resolveMission(m09, p).triggers.find((t) => t.when.objective === 'link').do;
-  assert.match(link9({ decisions: { 'm05-pact': 'share' } })[0].say.text, /You shared the forest light/);
-  assert.match(link9(null)[0].say.text, /You warned me/);
+  assert.match(link9({ decisions: { 'm05-pact': 'share' } })[0].say.text, /For the forest light/);
+  assert.match(link9(null)[0].say.text, /I did not listen/);
   assert.deepEqual(link9(null).slice(1), link9({ decisions: { 'm05-pact': 'share' } }).slice(1), 'the same troops either way');
   for (const [p, ending] of [[null, 'meridian-line'], [{ decisions: mercy }, 'open-frontier']]) {
     const r = resolveMission(m12, p);
@@ -108,8 +108,8 @@ test('resolveMission settles earlier answers and the ending; untouched missions 
     assert.equal(resolveMission(r, { decisions: p ? firm : mercy }), r, 'a settled mission stays as it is');
   }
   const maren = (p) => resolveMission(m12, p).triggers.find((t) => t.when.tagHpBelow?.tag === 'engine').do[0].say.text;
-  assert.match(maren({ decisions: { 'm10-veil': 'spare' } }), /You let my crews walk out/);
-  assert.match(maren(null), /I watched the Crown light/);
+  assert.match(maren({ decisions: { 'm10-veil': 'spare' } }), /You freed my crews/);
+  assert.match(maren(null), /The Crown lit without a storm/);
   // A decision's own `if`s stay for the match.
   assert.ok(ifs(resolveMission(byId('m03-the-ashen-line'), { decisions: mercy })));
   // The defaults keep missions 7 and 9 exactly as they were before 0.19a.

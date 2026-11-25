@@ -28,10 +28,10 @@ export const SCENES = {
     beats: [
       { camera: { at: "oldRelay", zoom: 0.8, seconds: 2.4 } },
       { fx: { flash: "relay" } },
-      { say: { who: "okoro", text: "It is answering. Four hundred years asleep, and it is answering us, Commander." } },
+      { say: { who: "okoro", text: "It is answering us, after four hundred years of sleep!" } },
       { camera: { at: "ford", zoom: 1, seconds: 1.8 } },
       { fx: { flash: "dark" } },
-      { say: { who: "vale", text: "Every light in the Ashfall camp just went out. The same second our relay woke." } },
+      { say: { who: "vale", text: "Every Ashfall light died the moment our relay woke." } },
       { wait: 0.5 },
     ],
   },
@@ -40,10 +40,10 @@ export const SCENES = {
     letterbox: true,
     beats: [
       { camera: { at: "oasisCentre", zoom: 1.1, seconds: 2.4 } },
-      { say: { who: "hale", text: "Captain Sol. Every relay Meridian lights, we both lose power. A truce, until they are gone?" } },
-      { say: { who: "sol", text: "I do not like you, Director. But my wells are dropping. Agreed, for today." } },
+      { say: { who: "hale", text: "Captain Sol. Meridian drains us both. A truce?" } },
+      { say: { who: "sol", text: "I do not like you, Director. But agreed, for today." } },
       { fx: { flash: "alarm" } },
-      { say: { who: "vale", text: "Both columns are turning toward the centre oasis, Commander. Together." } },
+      { say: { who: "vale", text: "Both columns are turning toward the centre oasis. Together." } },
     ],
   },
   // Mission 3 (bosses, docs/aaa/BOSSES.md): the Iron Vanguard powers up in Hale's salvage yard.
@@ -54,9 +54,9 @@ export const SCENES = {
       { fx: { flash: "alarm" } },
       { shake: 0.5 },
       { title: { text: "Iron Vanguard", sub: "Salvaged war machine" } },
-      { say: { who: "okoro", text: "That is no Ashfall print, Commander. It is an old Builder war machine, and they woke it up." } },
-      { say: { who: "hale", text: "The Iron Vanguard. Nine weeks to pull it out of a trench. It guards my siphons now." } },
-      { say: { who: "vale", text: "It marks the ground before each burst. Stay out of the red. Hit it when its core opens." } },
+      { say: { who: "okoro", text: "That is no Ashfall design! It is a Builder war machine!" } },
+      { say: { who: "hale", text: "The Iron Vanguard. Nine weeks to dig out." } },
+      { say: { who: "vale", text: "It marks the ground before firing. Avoid the red." } },
     ],
   },
   // Wings over Copper (0.18.3): the first Ember balloon drifts over the copper works.
@@ -65,9 +65,9 @@ export const SCENES = {
     beats: [
       { camera: { at: "refinery", zoom: 1.15, seconds: 2.2 } },
       { fx: { flash: "alarm" } },
-      { say: { who: "okoro", text: "There, over the rim! A balloon with a fire under it, drifting straight at the refinery." } },
-      { say: { who: "vale", text: "Ember balloons. Our towers cannot aim that high. Rangers and Anti-tank soldiers can." } },
-      { say: { who: "vale", text: "Research Anti-air guns at the Command core, and every tower will shoot at the sky." } },
+      { say: { who: "okoro", text: "A fire balloon, drifting at the refinery!" } },
+      { say: { who: "vale", text: "Towers cannot reach Ember balloons. Rangers can." } },
+      { say: { who: "vale", text: "Research Anti-air guns at the Command core. Towers will shoot up." } },
     ],
   },
   // Mission 8: the vault door opens and ECHO tells the truth.
@@ -76,9 +76,9 @@ export const SCENES = {
     beats: [
       { camera: { at: "vaultGate", zoom: 0.75, seconds: 2.4 } },
       { fx: { flash: "relay" } },
-      { say: { who: "echo", text: "Door open. This one is ECHO, caretaker of the Lattice. You are the first to ask in 412 years." } },
-      { say: { who: "echo", text: "The Builders did not fall. They left, and set the Lattice to sleep so the crystal could regrow." } },
-      { say: { who: "echo", text: "A man in a grey coat took the Keystone key nine days ago. He means to draw all the power at once." } },
+      { say: { who: "echo", text: "Door open. This one is ECHO. First visitors in 412 years." } },
+      { say: { who: "echo", text: "The Builders did not fall. They left." } },
+      { say: { who: "echo", text: "A grey coat took the Keystone key. He wants all the power." } },
       { fx: { flash: "alarm" } },
       { wait: 0.4 },
     ],
@@ -89,8 +89,8 @@ export const SCENES = {
     beats: [
       { camera: { at: "crown", zoom: 0.8, seconds: 2.4 } },
       { fx: { flash: "relay" } },
-      { say: { who: "echo", text: "Sixty-four relays in tune. Look up, Archivist. The sky is quiet." } },
-      { say: { who: "maren", text: "The Crown is lit and the sky is clear. No storm. In thirty years I never once saw that." } },
+      { say: { who: "echo", text: "Sixty-four relays in tune. Look up, Archivist." } },
+      { say: { who: "maren", text: "The Crown is lit, with no storm. Never before." } },
       { wait: 0.5 },
     ],
   },
@@ -100,8 +100,8 @@ export const SCENES = {
     beats: [
       { camera: { at: "conduitNorth", zoom: 0.85, seconds: 2.4 } },
       { fx: { flash: "dark" } },
-      { say: { who: "echo", text: "The north conduit is dark. The Lattice is tired, but it is whole. Thank you." } },
-      { say: { who: "hale", text: "Three conduits cut. My schedule has lost a day, Commander. The engine on the Keystone has not." } },
+      { say: { who: "echo", text: "The north conduit is dark. The Lattice is whole." } },
+      { say: { who: "hale", text: "Three conduits cut. I lost a day. The engine did not." } },
     ],
   },
   // Wardens Chronicle, Without a Key (chronicles round 2): the Iron Sovereign walks on the Warden Rise.
@@ -112,9 +112,9 @@ export const SCENES = {
       { fx: { flash: "alarm" } },
       { shake: 0.5 },
       { title: { text: "Iron Sovereign", sub: "Walking siege fortress" } },
-      { say: { who: "rask", text: "There it is, out of the north. Six legs, every one of them Builder work. Hale only taught it to walk." } },
+      { say: { who: "rask", text: "There, from the north! Hale taught it to walk." } },
       { camera: { at: "line", zoom: 1.1, seconds: 1.8 } },
-      { say: { who: "echo", text: "It is one of the old machines, Warden-prime. It has no key either. It only has orders." } },
+      { say: { who: "echo", text: "An old machine, with no key either. Only orders." } },
     ],
   },
   // Mission 12, the ending beat. Two or more merciful orders: the Keystone opens to every camp.
@@ -123,9 +123,9 @@ export const SCENES = {
     beats: [
       { camera: { at: "keystone", zoom: 0.75, seconds: 2.8 } },
       { fx: { flash: "relay" } },
-      { say: { who: "echo", text: "The engine is silent. Tuning the Keystone for every camp. One hundred and eight relays are answering." } },
-      { say: { who: "sol", text: "Four camps, one circuit. I can see the dunes glowing from here, Commander." } },
-      { say: { who: "echo", text: "I can see every camp from here. All of them are lit." } },
+      { say: { who: "echo", text: "The engine is silent. Tuning the Keystone for all." } },
+      { say: { who: "sol", text: "Four camps, one circuit. The dunes are glowing!" } },
+      { say: { who: "echo", text: "I can see every camp from here. All lit." } },
     ],
   },
   // Mission 12, the ending beat. Fewer merciful orders: Meridian holds the Keystone alone.
@@ -134,8 +134,8 @@ export const SCENES = {
     beats: [
       { camera: { at: "keystone", zoom: 0.75, seconds: 2.8 } },
       { fx: { flash: "relay" } },
-      { say: { who: "echo", text: "The engine is silent. Tuning the Keystone. One hundred and eight relays are answering." } },
-      { say: { who: "vale", text: "Meridian towers on every road to the Keystone. It is ours to guard now, Commander." } },
+      { say: { who: "echo", text: "The engine is silent. One hundred and eight relays answer." } },
+      { say: { who: "vale", text: "Meridian towers on every Keystone road. Ours to guard." } },
       { wait: 0.5 },
     ],
   },
@@ -147,7 +147,7 @@ export const SCENES = {
       { fx: { flash: "relay" } },
       { shake: 0.4 },
       { title: { text: "Vault Sentinel", sub: "Builder guardian" } },
-      { say: { who: "okoro", text: "It is standing up. Commander, do not try to destroy it. Show it we can fight, and it should kneel." } },
+      { say: { who: "okoro", text: "It is standing! Do not destroy it. Show strength." } },
     ],
   },
   // Mission 12 (creature round, Veil story): after the first offensive the Veil steps off Hale's line.
@@ -155,9 +155,9 @@ export const SCENES = {
     letterbox: true,
     beats: [
       { camera: { at: "westBank", zoom: 1, seconds: 2 } },
-      { say: { who: "maren", text: "Commander. The Veil has read Hale's engine for a week. Every reading says the same: it empties the Lattice." } },
-      { say: { who: "lind", text: "Teo Lind, Veil Shades. Half my crews walked off his line this morning. The rest are watching what you do next." } },
-      { say: { who: "vale", text: "Then let them watch. Every Shade who stands aside today is one gun fewer at the engine." } },
+      { say: { who: "maren", text: "A week of readings. Hale's engine empties the Lattice." } },
+      { say: { who: "lind", text: "Teo Lind here, captain of the Veil Shades. Half my crews left his line." } },
+      { say: { who: "vale", text: "Then let them watch. Every idle Shade is one gun fewer." } },
     ],
   },
 };

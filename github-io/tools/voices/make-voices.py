@@ -311,14 +311,20 @@ SPELL = {"recognised": "recognized", "neutralised": "neutralized", "armour": "ar
          "honour": "honor", "metres": "meters", "metre": "meter", "harbour": "harbor", "centre": "center", "favour": "favor",
          "grey": "gray", "ok": "okay", "realise": "realize", "organised": "organized", "theatre": "theater", "travelled": "traveled",
          "labour": "labor", "neighbours": "neighbors", "neighbour": "neighbor", "rumour": "rumor", "apologise": "apologize",
-         "per cent": "percent", "%": " percent"}
+         "per cent": "percent", "%": " percent",
+         # Whisper writes contractions for the full forms the voice says (the same sounds).
+         "i'm": "i am", "we're": "we are", "they're": "they are", "you're": "you are", "it's": "it is",
+         "that's": "that is", "don't": "do not", "can't": "cannot"}
 # Homophones of the cast's and the world's names: Whisper writes a common word for a name it does not know,
 # though the voice says the name (only true sound-alikes go here, never a different word).
 HEARD = {"hail": "hale", "hails": "hale's", "ashe": "ash", "wyrm": "worm", "birth": "berth", "sight": "site",
          "red": "read",  # read (past tense) and red
          "foremen": "foreman",  # one vowel apart, the same in speech
          "writers": "riders", "writer's": "riders",  # American flapping: riders / writers
-         "pack's": "pact's"}
+         "pack's": "pact's",
+         # Concise lines (2026-11-25): a short line gives Whisper less context for a name or a homophone.
+         "saul": "sol", "vail": "veil", "packed": "pact", "recs": "wrecks", "plane": "plain", "cruise": "crews",
+         "knights": "nights", "rex": "wrecks"}
 
 
 def merge_compounds(a, other):
