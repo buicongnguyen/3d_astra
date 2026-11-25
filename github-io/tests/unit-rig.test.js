@@ -132,6 +132,26 @@ test("unit rig: every infantry type is rigged; only ranged shooters kneel; Rider
   for (const t of ["tank", "breaker", "scorcher"]) assert.ok(RIG_HULL.has(t), t);
 });
 
+test("unit review: every ground vehicle with wheels or tracks is a hull; no barrel droops out of combat", async () => {
+  const { RIG_HULL, RIG_INFANTRY, BARREL_POSES } = await import("../src/unit-rig.js");
+  const fs = await import("node:fs");
+  const D = JSON.parse(fs.readFileSync(new URL("../src/balance.json", import.meta.url), "utf8")).definitions;
+  // A wheeled or tracked model (its GLB names a Wheels* or Tracks* node) rolls them when it drives,
+  // unless it is a Rider (wheels rolled by the infantry rig).
+  for (const [type, d] of Object.entries(D)) {
+    if (d.kind !== "unit" || d.flying || d.boss || RIG_INFANTRY.has(type)) continue;
+    const url = new URL(`../public/models/${type}.glb`, import.meta.url);
+    if (!fs.existsSync(url)) continue;
+    const glb = fs.readFileSync(url), json = JSON.parse(glb.subarray(20, 20 + glb.readUInt32LE(12)).toString());
+    if (json.nodes.some((n) => /^(Wheels|Tracks)/.test(n.name || ""))) assert.ok(RIG_HULL.has(type), `${type} has wheels or tracks: add it to RIG_HULL`);
+  }
+  // Owner 2026-11 (Breaker): a gun out of combat never points below its modelled line.
+  for (const [type, pose] of BARREL_POSES) {
+    assert.ok(pose.park >= 0 && pose.move >= 0, `${type} droops out of combat ${JSON.stringify(pose)}`);
+    assert.ok(pose.fire > pose.park, `${type} lifts to fire`);
+  }
+});
+
 test("unit rig: a riding Rider keeps its legs still and rolls by distance; a stomping Walker never runs", () => {
   const ride = infantry(), m = new Float32Array(4);
   for (let i = 0; i < 60; i++) stepInfantry(ride, m, { speed: 6.4, base: 6.4, scale: 1, legLength: 1.15, moving: true, attacking: false, dt: 1 / 60, rich: true, gait: "ride" });

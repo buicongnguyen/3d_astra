@@ -91,6 +91,7 @@
     "test:openings": "node tests/openings.mjs",
     "test:sovereign-walks": "node tests/sovereign-walks.mjs",
     "test:readability": "node tests/readability.mjs",
+    "test:unit-roster": "node tests/unit-roster.mjs",
     "test:ceremony": "node tests/ceremony.mjs",
     "test:rank": "node tests/rank.mjs",
     "test:audio-juice": "node tests/audio-juice.mjs",

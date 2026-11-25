@@ -1282,6 +1282,7 @@ export class WorldView {
     // Measure the template in the default camera projection, once per new unit.
     // A capped visual scale never changes the simulation collision radius.
     root.userData.readabilityScale = 1;
+    let modelTop = 0; // the unit's highest point (model units), for its vitals bar
     if (e.kind === 'unit') {
       const up = new THREE.Vector3().setFromMatrixColumn(this.camera.matrixWorld, 1), point = new THREE.Vector3();
       model.rotation.y = e.angle;
@@ -1292,7 +1293,9 @@ export class WorldView {
         if (!part.geometry.boundingBox) part.geometry.computeBoundingBox();
         const box = part.geometry.boundingBox;
         for (const x of [box.min.x,box.max.x]) for (const y of [box.min.y,box.max.y]) for (const z of [box.min.z,box.max.z]) {
-          const projected = point.set(x,y,z).applyMatrix4(part.matrixWorld).dot(up);
+          point.set(x,y,z).applyMatrix4(part.matrixWorld);
+          modelTop = Math.max(modelTop, point.y);
+          const projected = point.dot(up);
           min = Math.min(min,projected); max = Math.max(max,projected);
         }
       });
@@ -1353,6 +1356,9 @@ export class WorldView {
     const bar = createBar(e, side);
     root.add(bar);
     root.userData.bar = bar;
+    // A tall unit (Walker, Tank turret, Wagon awning, Carrier, Rider pennant) carries its bar just above its
+    // own top, not drawn across its body; infantry keep the standard height.
+    if (e.kind === "unit") bar.position.y = Math.max(bar.position.y, modelTop + 0.3);
     bar.position.y *= root.userData.readabilityScale;
     if (e.boss) this.bosses.dress(root, e);
     // BossView.dress puts a boss's bar at its own height: a plugin's static scale lifts it too (x1 without one).

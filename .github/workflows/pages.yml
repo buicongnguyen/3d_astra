@@ -191,8 +191,9 @@ jobs:
           - name: r2-w2b
             scripts: defence-heroic defence-heroic-check
           # AAA round 3 (R3-K): battle readability (wide-zoom type icons, group badges, threat arrows, death looks, Combined gold trim).
+          # Unit review 2026-11-25: every unit of every faction drawn right (model, ground, team colour, bar).
           - name: r3-k
-            scripts: readability
+            scripts: readability unit-roster
           - name: bosses
             scripts: boss
           # Split from "ui-extras" (Wave 1 integration): the three suites ran ~119 s locally, ~28 min estimated on the runner.
