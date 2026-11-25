@@ -93,7 +93,7 @@ await suite(`iphone-gestures (${engine})`, async () => {
       await page.waitForFunction(() => window.__frontier.started, null, { timeout: 60000 });
       const history0 = await page.evaluate(() => { window.__frontier.sim.aiEnabled = false; return { length: history.length, url: location.href }; });
 
-      const states = mode === 'skirmish' ? ['none', 'mixed', 'ability', 'building', 'map'] : ['none', 'tower', 'tower-dock'];
+      const states = mode === 'skirmish' ? ['none', 'mixed', 'ability', 'pair', 'building', 'map'] : ['none', 'tower', 'tower-dock'];
       for (const state of states) {
         await page.evaluate((state) => {
           const f = window.__frontier, s = f.sim, mine = s.own(0), units = mine.filter((e) => e.kind === 'unit');
@@ -101,6 +101,7 @@ await suite(`iphone-gestures (${engine})`, async () => {
           if (state === 'none') f.select([]);
           if (state === 'mixed') f.select(units.map((u) => u.id)); // workers + army: the build row and the type chips
           if (state === 'ability') f.select(['ranger', 'breaker', 'ranger'].map((t, i) => s.spawn(t, 0, -20 + i * 2.2, 14).id));
+          if (state === 'pair') f.select(['vanguard', 'ranger'].map((t, i) => s.spawn(t, 0, -16 + i * 2.2, 14).id)); // two abilities: one row with the stances
           if (state === 'building') f.select([mine.find((e) => e.type === 'hq').id]); // the train row
           if (state === 'map') { f.select([]); document.querySelector('button[data-dock="map"]')?.click(); }
           if (state.startsWith('tower')) {
@@ -112,6 +113,22 @@ await suite(`iphone-gestures (${engine})`, async () => {
           }
         }, state);
         await page.waitForTimeout(400);
+        if (state === 'pair') {
+          // Re-score 2026-11-25b (iPhone 13 WebKit): with one or two abilities the tiles lost their glyph and the name
+          // hugged the right edge ("Shield", "Rapid" clipped). Shield wall shows its glyph over "Ready"; Rapid fire its
+          // name, centred and whole, over "Ready".
+          await page.waitForFunction(() => document.querySelectorAll('#commands .ability-tile').length === 2, null, { timeout: TIMEOUT.step });
+          const tiles = await page.evaluate(() => [...document.querySelectorAll('#commands .ability-tile')].map((t) => {
+            const r = t.getBoundingClientRect(), n = t.querySelector('.ability-name'), g = t.querySelector('.icon'), st = t.querySelector('.ability-status');
+            const nr = n.getBoundingClientRect(), gr = g.getBoundingClientRect(), sr = st.getBoundingClientRect(), mid = (b) => (b.left + b.right) / 2;
+            return { id: t.dataset.ability, w: r.width, h: r.height, name: getComputedStyle(n).display !== 'none' ? n.textContent : null, glyph: getComputedStyle(g).display !== 'none' && gr.width >= 14,
+              off: Math.abs(mid(getComputedStyle(n).display !== 'none' ? nr : gr) - mid(r)), statusOff: Math.abs(mid(sr) - mid(r)), cut: n.scrollWidth > n.clientWidth + 1 || n.scrollHeight > n.clientHeight + 1, status: st.textContent };
+          }));
+          const [shield, rapid] = tiles;
+          assert.ok(shield.id === 'shieldwall' && shield.glyph && shield.name === null && shield.off < 3 && shield.statusOff < 3, `${engine} ${label}: Shield wall shows its glyph, centred: ${JSON.stringify(shield)}`);
+          assert.ok(rapid.id === 'focus' && rapid.name && !rapid.cut && rapid.off < 3 && rapid.statusOff < 3, `${engine} ${label}: Rapid fire shows its whole name, centred: ${JSON.stringify(rapid)}`);
+          assert.ok(tiles.every((t) => t.w >= 43.5 && t.h >= 43.5 && /Ready/.test(t.status)), `${engine} ${label}: 44 px tiles reading Ready`);
+        }
         const r = await page.evaluate(BOTTOM, STRIP);
         await shot(page, `iphone-gestures-${engine.toLowerCase()}-${hand}-${label}-${mode}-${state}`);
         const where = `${engine} ${hand} hand ${label} ${mode} ${state}`;

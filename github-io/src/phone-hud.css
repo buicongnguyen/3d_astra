@@ -925,6 +925,27 @@
   }
   :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile:nth-child(3)) #commands.tactics-card .ability-status { line-height: 12px; }
 }
+/* Portrait with one or two abilities (re-score 2026-11-25b, iPhone 13 WebKit and Chromium alike): the tiles sit in one
+   row with the stances but kept the older flex column, where the glyph was hidden for every tile (Shield wall lost its
+   symbol) and the name hugged the right edge ("Shield", "Rapid" clipped). The same centred grid as the five-column
+   card: the symbol of a symbol-only tile over its status, otherwise the name (two lines at most) over the status. */
+@media (orientation: portrait) {
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile):not(:has(#commands.tactics-card > .ability-tile:nth-child(3))):not(#x) #commands.tactics-card > .ability-tile {
+    display: grid !important; grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: none !important; grid-auto-rows: auto; justify-items: center; align-content: center;
+    text-align: center; gap: 0; padding: 1px 2px !important;
+  }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile):not(:has(#commands.tactics-card > .ability-tile:nth-child(3))):not(#x) #commands.tactics-card > .ability-tile > :is(.icon, .ability-name, .ability-status) {
+    position: static !important; grid-column: 1 !important; grid-row: auto !important; margin: 0 !important; max-width: 100%; text-align: center; justify-self: center;
+  }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile):not(:has(#commands.tactics-card > .ability-tile:nth-child(3))):not(#x) #commands.tactics-card > .ability-tile > .ability-name {
+    display: -webkit-box !important; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+    white-space: normal !important; text-overflow: clip !important; overflow-wrap: normal; word-break: normal; font: 700 11px/12px var(--font-ui) !important;
+  }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile):not(:has(#commands.tactics-card > .ability-tile:nth-child(3))):not(#x) #commands.tactics-card > .ability-tile > .ability-status { display: block !important; font: 700 11px/12px var(--font-ui) !important; white-space: nowrap; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile):not(:has(#commands.tactics-card > .ability-tile:nth-child(3))):not(#x) #commands.tactics-card > .ability-tile:not(.symbol-only) > .icon { display: none !important; }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile):not(:has(#commands.tactics-card > .ability-tile:nth-child(3))):not(#x) #commands.tactics-card > .ability-tile.symbol-only > .icon { display: block !important; width: 18px; height: 18px; flex: none; color: var(--kit-gold, #edc76f); }
+  :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card > .ability-tile):not(:has(#commands.tactics-card > .ability-tile:nth-child(3))):not(#x) #commands.tactics-card > .ability-tile.symbol-only > .ability-name { display: none !important; }
+}
 @media (orientation: landscape) and (max-height: 520px) {
   :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card > .ability-tile:not(.symbol-only) > .icon { display: none !important; }
   :root.compact-ui.dock-actions:not(.in-briefing)[data-dock="selection"]:has(#commands.tactics-card):not(#x) #commands.tactics-card > .ability-tile:not(.symbol-only) > .ability-name {
