@@ -104,7 +104,14 @@ export class AudioDirector {
   // W3: spoken lines are on when Voices is on and the player's pack has arrived.
   voiceOn() { return this.voice.scheduler.enabled && this.voice.ready(this.voice.faction); }
   // A story line shown on screen (mission-ui.js say): its voice when it has one.
-  say(who, text) { return this.voice.scheduler.enabled ? this.voice.story(text) : false; }
+  // Returns the clip's seconds (0 = no voice); `cut`: the player moved on, the line speaking stops for this one.
+  say(who, text, { cut = false } = {}) { return this.voice.scheduler.enabled ? this.voice.story(text, { cut }) : 0; }
+  // The player dismissed the last line: its voice stops.
+  hushStory() { this.voice.hushStory(); }
+  // A staged scene's line (app/scenes.js): speaks at once; the scene holds the beat for the returned seconds.
+  sceneSay(who, text) { return this.voice.scheduler.enabled ? this.voice.story(text, { scene: true }) : 0; }
+  // The scene ended or was skipped: its line stops.
+  stopScene() { this.voice.stopScene(); }
   event(event, sim) {
     if (event.type === "incoming" && event.team === 0) this.incomingAt = sim.time;
     const key = announcerFor(event);

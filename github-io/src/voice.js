@@ -1,11 +1,12 @@
 // W3 voices: playback. One MP3 "sprite" per pack (public/voices/<pack>.mp3, a faction's unit replies and
-// announcer, or a mission's story lines), fetched only when a match needs it (after the first gesture,
-// never before Start) and decoded once; a clip is one AudioBufferSourceNode reading its slice, through
+// announcer, or a mission's story lines: one pack per campaign or Chronicle mission, two parts for a long
+// one), fetched only when a match needs it (after the first gesture, never before Start: the faction pack
+// and the active mission's story packs only) and decoded once; story packs of another mission are let go; a clip is one AudioBufferSourceNode reading its slice, through
 // one gain into the voice bus. The rules (who may speak, when, what cuts what) are voice-logic.js.
 // The service worker keeps each pack on its first fetch (fc-voices in tools/sw.template.js).
 import PACKS from "./voice-packs.json" with { type: "json" };
 import { mulberry32 } from "./rng.js";
-import { STORY, TakePicker, VOICE, VoiceScheduler, clipId, lineCount, packsFor, storyLine, voiceFaction } from "./voice-logic.js";
+import { TakePicker, VOICE, VoiceScheduler, clipId, lineCount, packsFor, storyClip, storyPacks, voiceFaction } from "./voice-logic.js";
 
 export { PACKS };
 // The pack's URL, versioned by its size so a regenerated pack is fetched again.
@@ -18,13 +19,17 @@ export class VoicePlayer {
     this.scheduler = new VoiceScheduler(); this.picker = new TakePicker(); this.rnd = mulberry32(4242);
     this.packs = new Map(); // name -> { buffer } | { loading: Promise } | { failed: true }
     this.voice = null; // { src, gain, line }
-    this.faction = "meridian"; this.paused = false;
+    this.faction = "meridian"; this.mission = null; this.paused = false;
     this.loadedBytes = 0;
   }
   // The packs this match needs; others already decoded stay (a rematch is instant).
+  // Story packs of other missions are dropped (a decoded minute of speech is about 6 MB on a phone).
   prepare({ faction, missionId }) {
     this.faction = voiceFaction(faction);
-    for (const name of packsFor({ faction: this.faction, missionId })) this.load(name);
+    this.mission = missionId ?? null;
+    const keep = new Set(storyPacks(this.mission));
+    for (const name of [...this.packs.keys()]) if (name.startsWith("story-") && !keep.has(name) && !this.packs.get(name).loading) this.packs.delete(name);
+    for (const name of packsFor({ faction: this.faction, missionId: this.mission })) this.load(name);
   }
   load(name) {
     if (this.packs.has(name) || !PACKS.packs[name]) return this.packs.get(name)?.loading || null;
@@ -50,17 +55,31 @@ export class VoicePlayer {
   ack(kind) { return this.say({ channel: "ack", key: kind }, this.faction); }
   // An announcer line for event key `key`.
   announce(key) { return this.say({ channel: "announcer", key }, this.faction); }
-  // A story line by its exact English text: true when it has a voice and was played or queued.
-  story(text) {
-    const i = storyLine(text);
-    if (i < 0) return false;
-    const line = { channel: "story", key: "story", index: i }, loading = this.packs.get(STORY.pack)?.loading;
+  // A story line of the current mission by its exact English text. Returns the clip's seconds when it has a
+  // voice and was played or queued, else 0. `scene`: a staged scene's line, which speaks at once (cutting any
+  // line) and is stopped by skipping the scene; it is not voiced if its pack has not arrived yet.
+  story(text, { scene = false, cut = false } = {}) {
+    const clip = storyClip(this.mission, text);
+    if (!clip) return 0;
+    const line = { channel: "story", key: "story", index: clip.id, pack: clip.pack, ...(scene ? { scene: true, cut: true } : cut ? { cut: true } : {}) };
+    const loading = this.packs.get(clip.pack)?.loading;
     // The mission's first line can come before its pack has arrived: speak it if that takes under 3 s.
-    if (loading) { const asked = this.context.currentTime; loading.then(() => { if (this.context.currentTime - asked < 3) this.say(line, null); }); return true; }
-    return this.say(line, null);
+    if (loading && !scene) { const asked = this.context.currentTime; loading.then((ok) => { if (ok && this.context.currentTime - asked < 3) this.say(line, null); }); return clip.seconds; }
+    return this.say(line, null) ? clip.seconds : 0;
+  }
+  // A skipped scene: its line stops at once and its waiting lines are dropped.
+  stopScene() {
+    const cut = this.scheduler.dropScene();
+    if (cut || this.voice?.line.scene) this.stop(0.04);
+  }
+  // The story line speaking stops and the story lines waiting are dropped (the player dismissed the box).
+  hushStory() {
+    const s = this.scheduler;
+    s.queue = s.queue.filter((q) => q.channel !== "story");
+    if (this.voice?.line.channel === "story") { this.stop(0.04); if (s.current?.channel === "story") s.current = null; }
   }
   say(line, faction) {
-    const name = line.channel === "story" ? STORY.pack : voiceFaction(faction);
+    const name = line.channel === "story" ? line.pack : voiceFaction(faction);
     if (this.paused || !this.ready(name)) return false;
     const count = line.channel === "story" ? 1 : lineCount(faction, line.channel, line.key);
     if (line.channel !== "story" && !count) return false;

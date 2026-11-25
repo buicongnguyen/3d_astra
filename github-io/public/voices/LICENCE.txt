@@ -6,14 +6,18 @@ What these files are
 Spoken lines for the browser RTS "Frontier Command" (W3, 2026-11-25): one MP3 sprite per pack.
   meridian, ashfall, sunward, wardens, veil   unit replies (select / move / attack) and announcer
                                              lines of the player's faction
-  story-m01                                  ten story lines of campaign mission 1 (Vale, Okoro, Hale)
-The text of every line is in src/voice-lines.json; src/voice-packs.json holds the clip offsets.
+  story-<mission>[-2]                        the story lines of one campaign or Chronicle mission
+                                             (story-m01 ... story-m12, story-ca1 ... story-cv4; a long
+                                             mission has a second part, -2)
+The faction lines are in src/voice-lines.json, the story lines in src/voice-story.json;
+src/voice-packs.json holds the clip offsets.
 
 How they were made
 ------------------
 Synthesised locally on the owner's GPU with Kokoro-82M (hexgrad, https://huggingface.co/hexgrad/Kokoro-82M),
 stock voice packs only (am_michael, af_bella, bm_george, bm_lewis, am_fenrir, af_heart, am_echo,
-bf_alice, af_nicole, bf_isabella, af_sarah, am_puck, bm_fable). No cloud service, no cloned or
+bf_alice, af_nicole, bf_isabella, af_sarah, am_puck, bm_fable, af_aoede, bf_emma, am_onyx, af_kore,
+af_nova). No cloud service, no cloned or
 imitated person, no reference recording. Then processed per faction (radio band, drive, crackle,
 ring modulation, chorus, room) and encoded to MP3 (mono, 24 kHz, 32 kbps) by
 tools/voices/make-voices.py.

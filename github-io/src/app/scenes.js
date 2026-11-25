@@ -111,7 +111,8 @@ export function setupScenes(S, A) {
         return;
       }
       if (beat.shake !== undefined) { S.view.shake?.add(beat.shake, 0, S.view.shakeEnabled?.() ?? false); play.length = 0.3; return; }
-      if (beat.say) { A.missionUI.sceneLine(beat.say.who, beat.say.text); play.length = sceneLineSeconds(beat.say.text); return; }
+      // W3: a voiced line holds its beat until the voice ends (and a breath), never shorter than its reading time.
+      if (beat.say) { A.missionUI.sceneLine(beat.say.who, beat.say.text); const spoken = S.audio?.sceneSay?.(beat.say.who, beat.say.text) || 0; play.length = Math.max(sceneLineSeconds(beat.say.text), spoken ? spoken + 0.35 : 0); return; }
       if (beat.fx) {
         if (FLASHES.includes(beat.fx.flash) && !motionOff()) { flash.className = "scene-flash"; void flash.offsetWidth; flash.className = `scene-flash ${beat.fx.flash}`; }
         if (beat.fx.ping) { const p = place(beat.fx.ping); if (p) S.pings.push({ x: p.x, z: p.z, at: S.sim.time }); }
@@ -268,6 +269,8 @@ export function setupScenes(S, A) {
     if (!play) return;
     const p = play;
     play = null;
+    // W3: skipping (or any end) stops the scene's voice line; the lines of play spoken later keep theirs.
+    S.audio?.stopScene?.();
     if (skipped) for (const beat of p.scene.beats.slice(Math.max(0, p.i + 1))) if (beat.say) A.missionUI.sceneLine(beat.say.who, beat.say.text, false);
     // (A match restarted meanwhile keeps its own fresh camera.)
     if (p.sim === S.sim) { S.view.zoom = p.from.zoom; S.view.focusOn(p.from.x, p.from.z); }

@@ -4,13 +4,14 @@
 //   * unit replies never wait and never cut in: they are rate-limited so spam-tapping does not chatter;
 //   * announcer lines have a cooldown per event and wait briefly in a short queue behind another line;
 //   * the off switch (settings.voices) silences everything at once, quiet mode only the unit replies.
-// The lines themselves are in voice-lines.json (shared with the generator, tools/voices/make-voices.py);
-// voice-packs.json says where each clip sits in its pack's MP3. Audio has its own seeded generator.
+// The faction lines are in voice-lines.json (shared with the generator, tools/voices/make-voices.py), the
+// story lines in voice-story.json (generator input only, never bundled); voice-packs.json says where each
+// clip sits in its pack's MP3, and which story packs each mission has. Audio has its own seeded generator.
 import LINES from "./voice-lines.json" with { type: "json" };
+import PACKS from "./voice-packs.json" with { type: "json" };
 import { mulberry32 } from "./rng.js";
 
 export const VOICE_FACTIONS = Object.freeze(Object.keys(LINES.factions));
-export const STORY = LINES.story;
 export const CHANNELS = Object.freeze({ ack: 1, announcer: 2, story: 3 });
 export const VOICE = {
   // Unit replies: at least `gap` s apart, at most `max` in any `window` s, the same kind (select / move /
@@ -19,7 +20,11 @@ export const VOICE = {
   // Seconds before the same announcer event may speak again.
   cooldown: { baseAttack: 20, unitsAttack: 25, unitLost: 10, buildingLost: 8, built: 5, research: 5, unitReady: 14, objectiveDone: 2, objectiveNew: 3, objectiveFailed: 2, incoming: 12, wave: 6, waveCleared: 6, pointTaken: 6, pointLost: 6, contact: 30, victory: 0, defeat: 0 },
   // A waiting line is dropped after `ttl` s (story lines wait longer: they come in pairs on one tick).
-  queue: { max: 3, ttl: 4, storyTtl: 30 },
+  // Story lines may queue deeper (a trigger can say three lines at once while a fourth still plays).
+  queue: { max: 3, storyMax: 6, ttl: 4, storyTtl: 30 },
+  // A breath between two story lines that follow each other (s), so back-to-back lines never run together
+  // (only story after story: an announcer line waiting behind a story line follows at once).
+  storyGap: 0.25,
   // The announcer starts a moment after the event's own sound (the alarm or the chime plays first).
   delay: 0.3,
   // Music and effects dip under a voice line: dB, fade in / out time constants (s).
@@ -47,13 +52,27 @@ export function lineCount(faction, channel, key) {
   return 0;
 }
 // The clip id inside a pack's voice-packs.json entry.
-export const clipId = (channel, key, index) => (channel === "ack" ? `ack.${key}.${index}` : channel === "announcer" ? `ann.${key}.${index}` : `story.${index}`);
-// A story line by its exact English text (the `say` event's text); -1 if it has no voice.
-const STORY_INDEX = new Map(STORY.lines.map((line, i) => [line.text, i]));
-export const storyLine = (text) => STORY_INDEX.get(String(text ?? "")) ?? -1;
-// The voice packs a match needs: the player's faction, plus the story pack in its mission.
+// A story clip's id is its line's hash ("s.<hash>"), so the client needs no copy of the story text.
+export const clipId = (channel, key, index) => (channel === "ack" ? `ack.${key}.${index}` : channel === "announcer" ? `ann.${key}.${index}` : String(index));
+// FNV-1a (32 bit) over the UTF-16 code units of the exact English line, base 36. The generator
+// (tools/voices/make-voices.py story_hash) computes the same value.
+export function storyHash(text) {
+  let h = 0x811c9dc5;
+  const s = String(text ?? "");
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193) >>> 0;
+  return h.toString(36);
+}
+// The story packs of a mission (one, or two parts for a long one); none for skirmish and Defence levels.
+export const storyPacks = (missionId) => (missionId && PACKS.story?.[missionId]) || [];
+// A story line of a mission by its exact English text (the `say` event's text): { pack, id, seconds } or null.
+export function storyClip(missionId, text) {
+  const id = `s.${storyHash(text)}`;
+  for (const pack of storyPacks(missionId)) { const clip = PACKS.packs[pack]?.clips[id]; if (clip) return { pack, id, seconds: clip[1] }; }
+  return null;
+}
+// The voice packs a match needs: the player's faction, plus the story packs of its mission (only that one).
 export function packsFor({ faction = "meridian", missionId = null } = {}) {
-  return missionId === STORY.mission ? [voiceFaction(faction), STORY.pack] : [voiceFaction(faction)];
+  return [voiceFaction(faction), ...storyPacks(missionId)];
 }
 
 // The bark kind of an order (orders.js type) -> reply kind; null = no reply.
@@ -101,7 +120,7 @@ export class TakePicker {
 export class VoiceScheduler {
   constructor(o = VOICE) {
     this.o = o; this.enabled = true; this.quiet = false;
-    this.current = null; this.queue = []; this.acks = []; this.ackKind = new Map(); this.said = new Map();
+    this.current = null; this.storyEnd = -Infinity; this.queue = []; this.acks = []; this.ackKind = new Map(); this.said = new Map();
     this.stats = { played: 0, dropped: 0, cut: 0, queued: 0 };
   }
   // Off: drops the queue and returns the line that was playing (the caller stops it).
@@ -133,8 +152,11 @@ export class VoiceScheduler {
       if (urgent) { this.queue.length = 0; return this.cutIn(line, playing); }
     }
     // Announcer or story: cut a lower channel short, else wait behind the line that plays.
-    if (!playing || CHANNELS[playing.channel] < ch) return this.cutIn(line, playing);
-    if (this.queue.length >= o.queue.max) {
+    // A scene's line (line.cut) speaks at once: the scene holds the match and waits for it.
+    const breath = line.channel === "story" && !playing && now < this.storyEnd + (o.storyGap ?? 0);
+    if ((!playing && !breath) || (playing && CHANNELS[playing.channel] < ch) || (line.cut && line.channel === "story")) return this.cutIn(line, playing);
+    const max = line.channel === "story" ? o.queue.storyMax ?? o.queue.max : o.queue.max;
+    if (this.queue.length >= max) {
       // A full queue keeps the higher channels: a story line pushes out the oldest announcer line.
       const low = this.queue.findIndex((q) => CHANNELS[q.channel] < ch);
       if (low < 0) return this.drop();
@@ -150,18 +172,27 @@ export class VoiceScheduler {
     return { play: line, cut: playing || null };
   }
   drop() { this.stats.dropped++; return null; }
-  started(line, now, seconds) { this.current = { ...line, end: now + Math.max(0.05, seconds) }; this.stats.played++; }
+  started(line, now, seconds) { this.current = { ...line, end: now + Math.max(0.05, seconds) }; if (line.channel === "story") this.storyEnd = this.current.end; this.stats.played++; }
+  // A skipped scene: its line stops (returned to the caller) and its waiting lines are dropped.
+  dropScene() {
+    this.queue = this.queue.filter((q) => !q.scene);
+    const cut = this.current?.scene ? this.current : null;
+    if (cut) this.current = null;
+    return cut;
+  }
   // The next line waiting, once nothing plays (expired ones are dropped).
   update(now) {
     if (!this.enabled || this.busy(now)) return null;
     this.queue = this.queue.filter((q) => q.until > now);
+    // Story after story: a breath first (the announcer may not slip into it either).
+    if (this.queue[0]?.channel === "story" && now < this.storyEnd + (this.o.storyGap ?? 0)) return null;
     const next = this.queue.shift();
     if (!next) return null;
     const { until, ...line } = next;
     return line;
   }
   // A new match: nothing waits, cooldowns restart.
-  reset() { this.current = null; this.queue.length = 0; this.acks.length = 0; this.ackKind.clear(); this.said.clear(); }
+  reset() { this.current = null; this.storyEnd = -Infinity; this.queue.length = 0; this.acks.length = 0; this.ackKind.clear(); this.said.clear(); }
 }
 
 // Duck depth now (dB, <= 0) for music and effects while a voice line plays.
