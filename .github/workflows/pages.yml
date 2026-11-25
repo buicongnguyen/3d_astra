@@ -89,7 +89,7 @@ jobs:
           - name: chronicles
             scripts: chronicles
           - name: visuals
-            scripts: visual-combat
+            scripts: visual-combat death-cue
           # Split from "story": the four suites together ran 27 to 30 minutes on the runner (the cap).
           # 2026-11-25: audio and choices (13 min together) in their own groups.
           - name: story-choices

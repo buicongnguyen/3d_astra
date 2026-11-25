@@ -9,6 +9,7 @@ import { MUSIC_HOLDS } from "./screens.js";
 import { FastForward, MAX_TICKS_PER_FRAME, tickBudgetSpent } from "../governor.js";
 import { CAMERA_PITCH } from "../settings.js";
 import { reducedMotion } from "../reduced-motion.js";
+import { addLostPing } from "../death-cue-view.js";
 
 // Fast-forward (Frontier Defence, AAA round 2 W1-F): module-local, not in app/state.js. The speed is
 // 1, 2 or 3 and only feeds the clock that drives the fixed 0.05 s ticks, so a match played at any
@@ -205,6 +206,8 @@ export function setupFrame(S, A) {
     for (const event of events) {
       A.factionEvent(event);
       if (event.type === "impact" && event.team === 0 && Z.started) underAttack(event);
+      // Readable deaths (death-cue-view.js): your own unit lost leaves a short mark on the minimap.
+      if (event.type === "death" && event.team === 0 && !event.building && Z.started) addLostPing(S.pings, event, S.sim.time);
       if (Z.started) S.audio?.event(event, S.sim);
       if (event.type === "message") { if (RAID_WARNING.test(event.text)) { A.alert(event.text); buzz([60, 60, 60]); } else routine(event.text); }
       else if (event.type === "incoming") { if (event.team === 0) incomingAlert(event, events); }

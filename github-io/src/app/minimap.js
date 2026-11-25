@@ -5,6 +5,7 @@ import { teamColors } from "../faction-colors.js";
 import { missionDestinations } from "../capture-view.js";
 import { CROSSINGS } from "../terrain.js";
 import { rampTicks } from "../terrain-labels.js";
+import { LOST_PING } from "../death-cue-view.js";
 
 const OWN_PING_SECONDS = 2.5;
 
@@ -202,7 +203,21 @@ export function setupMinimap(S, A) {
       }
     for (let i = S.pings.length - 1; i >= 0; i--) {
       const ping = S.pings[i], age = S.sim.time - ping.at;
-      if (!(age >= 0 && age < (ping.own ? OWN_PING_SECONDS : 6))) { S.pings.splice(i, 1); continue; }
+      if (!(age >= 0 && age < (ping.own ? OWN_PING_SECONDS : ping.lost ? LOST_PING.seconds : 6))) { S.pings.splice(i, 1); continue; }
+      if (ping.lost) {
+        // Your unit lost (death-cue-view.js): a small cross in a closing ring, fading over its short life.
+        const fade = 1 - age / LOST_PING.seconds, x = px(ping.x), z = pz(ping.z), r = 3 + 6 * Math.max(0, 1 - age / 0.6);
+        ctx.globalAlpha = fade;
+        ctx.strokeStyle = "#1a0d0b";
+        ctx.lineWidth = 3.5;
+        ctx.beginPath(); ctx.moveTo(x - 3, z - 3); ctx.lineTo(x + 3, z + 3); ctx.moveTo(x + 3, z - 3); ctx.lineTo(x - 3, z + 3); ctx.stroke();
+        ctx.strokeStyle = "#ffd0c4";
+        ctx.lineWidth = 1.6;
+        ctx.stroke();
+        ctx.beginPath(); ctx.arc(x, z, r, 0, Math.PI * 2); ctx.stroke();
+        ctx.globalAlpha = 1;
+        continue;
+      }
       const pulse = (performance.now() / 900) % 1;
       if (ping.own) {
         // The player's own marker: cool colour, two ripples, fades out over its short life.

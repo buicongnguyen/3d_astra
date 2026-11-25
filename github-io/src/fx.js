@@ -57,6 +57,8 @@ function atlas() {
       const handle = Math.abs(x - y) < 0.21 && x + y > -1.15 && x + y < 0.65;
       return head || handle ? 1 : 0;
     },
+    // Band: a thick soft ring that still reads a few pixels wide at phone zoom (readable deaths, death-cue-view.js).
+    (x, y, d) => Math.exp(-(((d - 0.72) / 0.17) ** 2)),
   );
   shapes.forEach((shape, cell) => {
     for (let py = 0; py < size; py++)
@@ -95,7 +97,10 @@ void main() {
   else if (iAxis.w < 1.5) {
     vec3 side = normalize(cross(iAxis.xyz, forward) + vec3(1e-5, 0.0, 0.0));
     world = iPos + iAxis.xyz * q.y + side * q.x * iSize.x + forward * 0.4;
-  } else world = iPos + vec3(r.x, 0.0, r.y);
+  } else if (iAxis.w < 2.5) world = iPos + vec3(r.x, 0.0, r.y);
+  // FLAT (3): flat on the ground facing up. GROUND (2) maps the quad so it faces down and is culled from above
+  // (found 2026-11-26, readable deaths; left as it is so existing looks do not change).
+  else world = iPos + vec3(r.x, 0.0, -r.y);
   gl_Position = projectionMatrix * viewMatrix * vec4(world, 1.0);
 }`;
 const FRAGMENT = `
@@ -130,7 +135,7 @@ function resetParticle(p, rng) {
   p.rot = rng() * 6.28; p.spin = 0; p.c0 = WARM.flash; p.c1 = WARM.ember; p.mode = BILLBOARD;
   p.ax = 0; p.ay = 1; p.az = 0; p.length = 0; p.cell = CELL.glow; p.drag = 0; p.gravity = 0; p.floor = -10;
   p.opacity = 1; p.hold = 0; p.fadeIn = 0; p.anchor = null; p.lifted = false; p.delay = 0; p.hitScorch = false;
-  p.priorityHit = false; p.owner = 0; // the token of a rocket that moves this record each frame (its flame halo); 0 when the record is reused
+  p.priorityHit = false; p.keep = false; p.owner = 0; // the token of a rocket that moves this record each frame (its flame halo); 0 when the record is reused
   return p;
 }
 
@@ -1100,7 +1105,8 @@ export class Effects {
       const selectedHit = selected?.has(target) && (p.priorityHit || p.hotCore || p.def?.name === "flak") && !this.selectedHits.has(target);
       if (selectedHit) this.selectedHits.add(target);
       const close = (p.x-focus.x)**2 + (p.z-focus.z)**2 < near*near;
-      p.priority = selectedHit ? 4 : (close ? 2 : 0) + (!p.decal && (p.s0 || p.scale || 0) >= 0.45 ? 1 : 0);
+      // `keep`: a readable-death cue (death-cue-view.js), a few sprites per death that the trim never drops.
+      p.priority = selectedHit || p.keep ? 4 : (close ? 2 : 0) + (!p.decal && (p.s0 || p.scale || 0) >= 0.45 ? 1 : 0);
       bins[p.priority]++;
     }
     for (let i = 0; i < 4; i++) { bins[i] = Math.min(excess, bins[i]); excess -= bins[i]; }

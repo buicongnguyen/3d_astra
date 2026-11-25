@@ -2,6 +2,9 @@
 
 ## Unreleased: Round A.2
 
+### Readable deaths at phone zoom
+- A unit that dies now reads at a glance on a phone: the model flashes white-hot, a ring in its side's colour opens where it fell and a fainter ring stays there for a moment; soldiers are popped off their feet, machines pop and tilt with a puff of dark smoke, a shot-down flyer bursts in the air and leaves its ring where it crashes. Losing one of your own units gives a bigger double ring and a short mark on the minimap. Follows Unit motion, combat motion and reduced motion; no extra draw calls (every sprite comes from the existing effect pools). Tests: `tests/death-cue.test.js`, `npm run test:death-cue`.
+
 ### Depth: second doctrines, air abilities, Full army sandbox (W7)
 - **Second doctrine tier.** After a building's first doctrine, a level 3 Command core, Barracks or Foundry offers a second either/or pair for the match, each one a way to play rather than a few per cent: **Strike wing** (flyers 10% faster, flyer abilities recharge 40% sooner) or **Bastion** (towers and the core +25% damage, buildings take 20% less); **Dig in** (infantry on Hold stance take 25% less damage) or **Shock troops** (infantry +40% against buildings and walls); **Heavy armour** (vehicles take 20% less damage, move 10% slower) or **Overclock** (vehicle abilities recharge 40% sooner). One tap each, never more than two doctrine tiles on the card.
 - **Air abilities.** Hawk gunship **Strafing run** (a 14 m line of fire through the nearest group: 16 to each soldier, half to vehicles), Ember balloon **Signal flare** (9 m of light for 8 s: your side sees the ground, hidden units are revealed, enemies there take 15% more), Swift glider **Bomb drop** (Harvesters first: 75 to Harvesters, 12 to other units). Tiles say "No target near" when there is nothing to hit; Auto-cast uses them. Icons, sounds, effects and field guide pages (every unit page now shows its ability).
