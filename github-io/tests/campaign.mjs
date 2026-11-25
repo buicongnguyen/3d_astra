@@ -166,7 +166,7 @@ await suite('campaign difficulty',async()=>{
     await tap('[data-difficulty="veteran"]');
     assert.equal(await page.evaluate(()=>window.__frontier.sim.difficulty),'veteran');
     const dimensions=await page.locator('[data-difficulty]').evaluateAll(buttons=>buttons.map(b=>({width:b.getBoundingClientRect().width,height:b.getBoundingClientRect().height,font:parseFloat(getComputedStyle(b).fontSize)})));
-    for(const d of dimensions) assert.ok(d.width>=44&&d.height>=44&&d.font>=11,JSON.stringify(d));
+    for(const d of dimensions) assert.ok(d.width>=43.99&&d.height>=43.99&&d.font>=11,JSON.stringify(d)); // 0.01 px: sub-pixel layout measured 43.99998 on CI
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
     await page.reload();await ready();await tap('[data-mode="campaign"]');
     assert.equal(await page.locator('[data-difficulty="veteran"]').getAttribute('aria-pressed'),'true');
