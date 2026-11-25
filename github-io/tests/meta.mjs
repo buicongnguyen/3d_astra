@@ -4,6 +4,8 @@
 //   - today's three challenges (the date pinned with ?day=2026-11-25: Iron line, Expedition, Promotion) are
 //     direct tiles under the quick row; one tap picks the challenge's mode; a win that meets one pays +50 XP once
 //     and the tile reads Done back on the title;
+//   - five achievements unlock the Silverline paint (medal cosmetics): a "Reward unlocked" toast, the Records
+//     screen lists it as open, and it is one tap in the Skirmish setup's Paint row (looks only, no rule);
 //   - an achievement reached mid-match shows its toast at the top (taps pass through, never over the dock),
 //     and a scripted Skirmish win lists "Achievements earned" on the results screen.
 // Screenshots: test-results/meta-*.png.
@@ -76,6 +78,32 @@ await suite("meta", async () => {
     await o.tap("#records [data-records-close]");
     await page.waitForFunction(() => !document.querySelector("#records").open, null, { timeout: TIMEOUT.step });
     assert.equal(await page.evaluate(() => !window.__frontier.started && !document.querySelector("#briefing").hidden), true, `${viewport}: back on the title`);
+
+    // ---- Medal cosmetics: five achievements (Kites, taming, the Field commander) unlock the Silverline paint.
+    const lockedPaint = page.locator('#rank-unlocks [data-rank-kind="paint"] [data-rank-item="silverline"]');
+    assert.equal(await lockedPaint.isDisabled(), true, `${viewport}: Silverline locked at first`);
+    assert.match(await lockedPaint.textContent(), /5 achievements/, `${viewport}: the locked tile says how to earn it`);
+    await page.evaluate(() => { const h = window.__frontier.meta; h.record = { ...h.record, kites: 10, tamed: 1, fieldRank: 5, branchWins: ["artillery", "rally"] }; });
+    await page.waitForFunction(() => /Reward unlocked/.test(document.querySelector("#meta-toast:not([hidden])")?.textContent || "") || window.__frontier.meta.info().record.meta.ach >= 5, null, { timeout: TIMEOUT.step });
+    assert.equal((await meta(page)).record.meta.ach, 5, `${viewport}: five achievements`);
+    await page.locator('#rank-unlocks [data-rank-item="silverline"]:not([disabled])').waitFor({ state: "attached", timeout: TIMEOUT.step });
+    await o.tap("#records-open");
+    await page.locator("#records[open]").waitFor({ state: "visible", timeout: TIMEOUT.step });
+    assert.equal(await page.locator('#records [data-reward="paint:silverline"].done').count(), 1, `${viewport}: Records lists Silverline as open`);
+    assert.equal(await page.locator("#records [data-reward]").count(), 9, `${viewport}: every reward listed`);
+    await page.locator("#records-rewards").scrollIntoViewIfNeeded();
+    assert.deepEqual(await tiny(page, "#records"), [], `${viewport}: rewards text`);
+    await shot(page, `meta-rewards-${viewport}`);
+    await o.tap("#records [data-records-close]");
+    await page.waitForFunction(() => !document.querySelector("#records").open, null, { timeout: TIMEOUT.step });
+    const paint = page.locator('#rank-unlocks [data-rank-kind="paint"] [data-rank-item="silverline"]');
+    await paint.scrollIntoViewIfNeeded();
+    const reachable = await paint.evaluate((b) => { const r = b.getBoundingClientRect(); return b.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)); });
+    assert.ok(reachable, `${viewport}: Silverline is one tap`);
+    await o.tap('#rank-unlocks [data-rank-kind="paint"] [data-rank-item="silverline"]');
+    await page.waitForFunction(() => window.__frontier.rank().paint === "silverline", null, { timeout: TIMEOUT.step });
+    assert.deepEqual(await small(page, "#rank-unlocks button"), [], `${viewport}: picker taps`);
+    await shot(page, `meta-picker-${viewport}`);
 
     // ---- Mid-match: a counter reaches an achievement (three Kite Dives), its toast shows, taps pass through.
     await startMatch(o);

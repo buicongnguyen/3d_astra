@@ -1,6 +1,7 @@
 // Replay value on the page (W6, docs/aaa/ROADMAP_TO_AAA_2026-11-25.md): the service record and the
 // achievements (src/meta/record.js, src/story/achievements.js) with their toast, the "Records" tile on the
-// title and the Records screen, and the daily challenges (src/meta/challenges.js) as three tiles on the title.
+// title and the Records screen, the daily challenges (src/meta/challenges.js) as three tiles on the title, and
+// the medal cosmetics (src/meta/rewards.js): unlocked here, picked beside the rank items in the Skirmish setup.
 //
 // Every finished match (ceremony.js onMatchEnd) is described once (matchContext) and added to the record.
 // A few achievements can be reached mid-match (a Kite Dive, a tamed Wyrm, a Field commander rank): a light
@@ -20,11 +21,16 @@ import { ACHIEVEMENTS, achievementsFor, recordMoreAchievements, goldActs, goldCo
 import { loadRecord, saveRecord, addMatch } from "./meta/record.js";
 import { CHALLENGE_XP, dailyChallenges, loadChallenges, saveChallenges, judgeChallenges } from "./meta/challenges.js";
 import { localDay } from "./profile-rank.js";
+import { MEDAL_ITEMS, MEDAL_KINDS, rewardOpen, newRewards } from "./meta/rewards.js";
+import { emblemSvg } from "./rank-ui.js";
 
 const esc = (text) => String(text ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 // The campaign's thirteen carry no icon of their own (story/achievements.js); these suit them.
 const CAMPAIGN_ICONS = { "first-light": "flag", "act-1": "map", "act-2": "map", "act-3": "map", "gold-5": "star", "veteran-5": "shield", decider: "objectives", mercy: "linkshield", "no-quarter": "crosshair", "both-endings": "objectives", "squad-6": "people", "extras-10": "check", chronicler: "logo" };
 const achIcon = (a) => CAMPAIGN_ICONS[a.id] || a.icon || "star";
+const KIND_NAMES = { paint: "Paint", emblem: "Emblem", banner: "Title banner" };
+// A reward's picture: its swatch, its emblem, or a banner flag.
+const rewardArt = (r) => (r.kind === "paint" ? `<i class="meta-swatch" style="--swatch:${r.swatch}" aria-hidden="true"></i>` : r.kind === "emblem" ? emblemSvg(r.id) : icon("flag"));
 const GROUP_LABELS = { campaign: "Campaign", skirmish: "Skirmish", defence: "Defence", kite: "Kite scouts", wild: "Wild frontier" };
 
 export function setupMeta(S, A) {
@@ -71,19 +77,26 @@ export function setupMeta(S, A) {
     setTimeout(nextToast, S.query?.has("test") ? 1500 : 3400);
   }
   const challengeToast = (c) => `${icon(c.icon)}<span class="meta-toast-text"><small>Challenge complete · +${CHALLENGE_XP} XP</small><strong>${esc(c.title)}</strong></span>`;
+  const rewardToast = (r) => `${rewardArt(r)}<span class="meta-toast-text"><small>Reward unlocked</small><strong>${esc(KIND_NAMES[r.kind])} · ${esc(r.label)}</strong></span>`;
   const achievementToast = (a) => `${icon(achIcon(a))}<span class="meta-toast-text"><small>Achievement earned</small><strong>${esc(a.title)}</strong></span>`;
 
   // ---------- earning: the campaign's live in its progress (src/campaign.js saves them), the rest in the record ----------
   // `known` is what was already shown as earned; earn() returns (and toasts) what is new since.
   const doneIds = () => new Set(all().filter((a) => a.done).map((a) => a.id));
   let known = new Set();
+  // `unlocked` holds the medal cosmetics the last earn() opened (achievements and challenge days unlock them).
+  let unlocked = [];
   function earn(toastNow = true) {
+    const metaBefore = record.meta;
     record = recordMoreAchievements(progress(), record, S.defenceProgress || loadDefence()).record;
     syncMeta();
     saveRecord(record);
     const now = doneIds(), list = all().filter((a) => now.has(a.id) && !known.has(a.id));
     known = now;
-    if (toastNow) for (const a of list) showToast(achievementToast(a));
+    unlocked = newRewards(metaBefore, record.meta);
+    if (toastNow) { for (const a of list) showToast(achievementToast(a)); for (const r of unlocked) showToast(rewardToast(r), "reward"); }
+    // The Skirmish setup's pickers show a newly opened reward at once.
+    if (unlocked.length) A.rankRender?.();
     renderTile();
     return list;
   }
@@ -115,19 +128,21 @@ export function setupMeta(S, A) {
     if (judged.met.length) saveChallenges(challenges);
     const award = judged.xp ? A.rankAward?.(judged.xp) : null;
     const earned = earn(false);
-    last = { ctx, earned: earned.map((a) => a.id), challenges: judged.met.map((c) => c.id), xp: judged.xp, set: judged.set, rankUp: !!award?.rankUp };
-    resultsRow(summary?.root, earned, judged);
+    last = { ctx, earned: earned.map((a) => a.id), challenges: judged.met.map((c) => c.id), xp: judged.xp, set: judged.set, rankUp: !!award?.rankUp, rewards: unlocked.map((r) => `${r.kind}:${r.id}`) };
+    resultsRow(summary?.root, earned, judged, unlocked);
     for (const c of judged.met) showToast(challengeToast(c), "challenge");
     for (const a of earned) showToast(achievementToast(a));
+    for (const r of unlocked) showToast(rewardToast(r), "reward");
     renderChallenges();
   }
   // Rows on the results screen: the challenges met and the achievements earned by this match (none: no row).
-  function resultsRow(root, earned, judged = { met: [] }) {
+  function resultsRow(root, earned, judged = { met: [] }, rewards = []) {
     if (!root?.isConnected) return;
     root.querySelectorAll(".meta-earned").forEach((el) => el.remove());
     const rows = [];
-    if (judged.met.length) rows.push(["meta-earned meta-earned-challenges", "Challenges complete", "check", judged.met.map((c) => `<li>${icon(c.icon)}<span>${esc(c.title)}</span> <b translate="no">+${CHALLENGE_XP} XP</b></li>`).join("") + (judged.set ? `<li class="meta-set">${icon("star")}<span>Challenge day complete</span></li>` : "")]);
+    if (judged.met.length) rows.push(["meta-earned meta-earned-challenges", "Challenges complete", "check", judged.met.map((c) => `<li>${icon(c.icon)}<span>${esc(c.title)}</span> <b>+${CHALLENGE_XP} XP</b></li>`).join("") + (judged.set ? `<li class="meta-set">${icon("star")}<span>Challenge day complete</span></li>` : "")]);
     if (earned.length) rows.push(["meta-earned", "Achievements earned", "star", earned.map((a) => `<li>${icon(achIcon(a))}<span>${esc(a.title)}</span></li>`).join("")]);
+    if (rewards.length) rows.push(["meta-earned meta-earned-rewards", "Rewards unlocked", "flag", rewards.map((r) => `<li>${rewardArt(r)}<span>${esc(KIND_NAMES[r.kind])} · ${esc(r.label)}</span></li>`).join("") + `<li class="meta-hint"><span>Pick it in the Skirmish setup.</span></li>`]);
     const actions = root.querySelector(".result-actions, .debrief-actions");
     for (const [cls, head, ic, items] of rows) {
       const row = Object.assign(document.createElement("section"), { className: cls });
@@ -202,13 +217,21 @@ export function setupMeta(S, A) {
   }
   function recordsChallengesHTML() {
     const list = dailyChallenges(challenges.day), done = (c) => challenges.done.includes(c.id);
-    const row = (c) => `<li class="meta-ach ${done(c) ? "done" : "todo"}" data-challenge="${c.id}">${icon(c.icon)}<span class="meta-ach-text"><strong>${esc(c.title)}</strong><small>${esc(c.goal)}</small></span>${done(c) ? `<b class="meta-ach-done">${icon("check")}</b>` : `<b class="challenge-reward" translate="no">+${CHALLENGE_XP} XP</b>`}</li>`;
+    const row = (c) => `<li class="meta-ach ${done(c) ? "done" : "todo"}" data-challenge="${c.id}">${icon(c.icon)}<span class="meta-ach-text"><strong>${esc(c.title)}</strong><small>${esc(c.goal)}</small></span>${done(c) ? `<b class="meta-ach-done">${icon("check")}</b>` : `<b class="challenge-reward">+${CHALLENGE_XP} XP</b>`}</li>`;
     return `<section class="meta-section" aria-labelledby="records-challenges"><h3 id="records-challenges">${icon("objectives")}<span>Daily challenges</span> <b translate="no">${challenges.done.length} / ${list.length}</b></h3>
       <p class="meta-note"><span>New goals every day. Each pays Commander XP once; all three make a challenge day, which unlocks rewards.</span> <span>Challenge days:</span> <b translate="no">${challenges.sets}</b></p><ul class="meta-ach-list">${list.map(row).join("")}</ul></section>`;
   }
+  // Medal cosmetics: every one with what unlocks it; picking is one tap in the Skirmish setup's Commander rows.
+  function rewardsHTML() {
+    const items = MEDAL_KINDS.flatMap((kind) => MEDAL_ITEMS[kind].map((i) => ({ kind, ...i })));
+    const open = items.filter((i) => rewardOpen(i, record.meta));
+    const row = (i) => { const on = rewardOpen(i, record.meta); return `<li class="meta-ach meta-reward ${on ? "done" : "todo"}" data-reward="${i.kind}:${i.id}">${rewardArt(i)}<span class="meta-ach-text"><strong>${esc(KIND_NAMES[i.kind])} · ${esc(i.label)}</strong><small>${esc(i.how)}</small></span>${on ? `<b class="meta-ach-done">${icon("check")}</b>` : `<b class="meta-lock">${icon("lock")}</b>`}</li>`; };
+    return `<section class="meta-section" aria-labelledby="records-rewards"><h3 id="records-rewards">${icon("flag")}<span>Medal rewards</span> <b translate="no">${open.length} / ${items.length}</b></h3>
+      <p class="meta-note">Paint, emblems and title banners earned with medals, achievements and challenge days. Looks only: they never change a battle. Pick them in the Skirmish setup.</p><ul class="meta-ach-list">${items.map(row).join("")}</ul></section>`;
+  }
   function recordsHTML() {
     return `<header class="records-head"><h2 id="records-title">Service record</h2><button type="button" class="kit-face records-close" data-records-close aria-label="Close records">${icon("close")}<span>Close</span></button></header>
-      <div class="records-body">${recordsChallengesHTML()}${achievementsHTML()}</div>`;
+      <div class="records-body">${recordsChallengesHTML()}${achievementsHTML()}${rewardsHTML()}</div>`;
   }
   function openRecords() {
     if (Z.started && !S.sim.result) return;

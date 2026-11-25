@@ -11,6 +11,9 @@
 // The profile lives in localStorage under PROFILE_KEY, read and written in try/catch: blocked storage
 // keeps the rank for the visit only.
 
+import { medalItem, rewardOpen } from "./meta/rewards.js";
+import { loadRecord } from "./meta/record.js";
+
 export const PROFILE_KEY = "frontier-command.rank.v1";
 export const MAX_RANK = 20;
 
@@ -110,8 +113,16 @@ export function rankOf(xp = 0) {
   return { rank, name: RANK_NAMES[rank - 1], xp, floor, next, progress: next ? (xp - floor) / (next - floor) : 1 };
 }
 
-export const itemOf = (kind, id) => ITEMS[kind]?.find((item) => item.id === id) || null;
-export const isUnlocked = (kind, id, rank) => (itemOf(kind, id)?.rank ?? Infinity) <= rank;
+// W6: the medal cosmetics (src/meta/rewards.js) are picked beside the rank items; they unlock by the
+// service record's summary (`meta`: achievements, gold medals, gold acts, challenge days), not by rank.
+export const itemOf = (kind, id) => ITEMS[kind]?.find((item) => item.id === id) || medalItem(kind, id);
+export const currentMeta = () => loadRecord().meta;
+export function isUnlocked(kind, id, rank, meta) {
+  const item = itemOf(kind, id);
+  if (!item) return false;
+  if (item.unlock) return rewardOpen(item, meta ?? currentMeta());
+  return (item.rank ?? Infinity) <= rank;
+}
 // The items unlocked going from rank `from` to rank `to` (both inclusive of `to`, exclusive of `from`).
 export const unlocksBetween = (from, to) => RANKS.filter((r) => r.rank > from && r.rank <= to).flatMap((r) => r.unlocks);
 
@@ -119,14 +130,15 @@ const DEFAULT_PICKS = Object.freeze(Object.fromEntries(KINDS.map((kind) => [kind
 export function freshProfile() { return { xp: 0, matches: 0, picks: { ...DEFAULT_PICKS }, pledgeDay: null }; }
 
 // A clean profile from anything stored: known picks the rank has unlocked, else each kind's default.
-export function normalizeProfile(raw) {
+export function normalizeProfile(raw, meta) {
   const out = freshProfile();
   if (!raw || typeof raw !== "object") return out;
   out.xp = Number.isFinite(raw.xp) && raw.xp > 0 ? Math.floor(raw.xp) : 0;
   out.matches = Number.isInteger(raw.matches) && raw.matches > 0 ? raw.matches : 0;
   out.pledgeDay = typeof raw.pledgeDay === "string" && /^\d{4}-\d\d-\d\d$/.test(raw.pledgeDay) ? raw.pledgeDay : null;
   const { rank } = rankOf(out.xp);
-  for (const kind of KINDS) if (isUnlocked(kind, raw.picks?.[kind], rank)) out.picks[kind] = raw.picks[kind];
+  const m = meta ?? currentMeta();
+  for (const kind of KINDS) if (isUnlocked(kind, raw.picks?.[kind], rank, m)) out.picks[kind] = raw.picks[kind];
   return out;
 }
 
@@ -140,8 +152,8 @@ export function saveProfile(profile, store = storage()) {
 }
 
 // A pick (only an unlocked item changes it): a new profile.
-export function withPick(profile, kind, id) {
-  if (!isUnlocked(kind, id, rankOf(profile.xp).rank)) return profile;
+export function withPick(profile, kind, id, meta) {
+  if (!isUnlocked(kind, id, rankOf(profile.xp).rank, meta)) return profile;
   return { ...profile, picks: { ...profile.picks, [kind]: id } };
 }
 

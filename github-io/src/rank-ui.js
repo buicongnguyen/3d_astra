@@ -10,8 +10,9 @@ import { $ } from "./app/dom.js";
 import { onMatchEnd } from "./ceremony.js";
 import {
   ITEMS, KINDS, KIND_LABELS, PLEDGE_XP, MAX_RANK, rankOf, isUnlocked, itemOf, loadProfile, saveProfile, withPick,
-  recordMatch, setActivePaint, activePaint,
+  recordMatch, setActivePaint, activePaint, currentMeta,
 } from "./profile-rank.js";
+import { MEDAL_ITEMS, rewardOpen } from "./meta/rewards.js";
 
 // Emblem glyphs (24 x 24, drawn in currentColor).
 // Each glyph is path data: `fill` drawn solid, `line` drawn as a 2.2 px stroke.
@@ -21,6 +22,9 @@ const GLYPHS = {
   wings: { fill: "M12 8c-2-3-6-4.5-10-4 1 4 3.5 7 7 8-2 .3-3.6 1.2-4.5 2.6C7.8 15.6 10.4 15 12 13c1.6 2 4.2 2.6 7.5 1.6-.9-1.4-2.5-2.3-4.5-2.6 3.5-1 6-4 7-8-4-.5-8 1-10 4ZM9.8 18.5a2.2 2.2 0 1 0 4.4 0a2.2 2.2 0 1 0-4.4 0Z" },
   star: { fill: "m12 2.6 2.8 6.1 6.6.7-5 4.5 1.4 6.6L12 17.2l-5.8 3.3 1.4-6.6-5-4.5 6.6-.7z" },
   crown: { fill: "M3 8l4.5 4L12 5l4.5 7L21 8l-2 10H5zM5 19h14v2.2H5z" },
+  // W6 medal emblems (src/meta/rewards.js).
+  laurels: { line: "M8 20c-4-2.5-5.5-7.5-3.5-12.5M16 20c4-2.5 5.5-7.5 3.5-12.5M5 15.5l2.6-.4M4.3 11.5l2.5.4M5.6 7.8l2 1.2M19 15.5l-2.6-.4M19.7 11.5l-2.5.4M18.4 7.8l-2 1.2", fill: "M12 6.2l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z" },
+  medal: { fill: "M7 2h3.4L12 6l1.6-4H17l-3 7.2A6 6 0 1 1 10 9.2ZM12 11.3a3.9 3.9 0 1 0 0 7.8a3.9 3.9 0 1 0 0-7.8Z" },
   phoenix: { fill: "M12 21c-3.5-2.4-5.5-5.6-5-9.2C5 11 3.4 9.2 3 6.5c2.4 1.2 4.4 1.4 6 .8C9.6 5 10.6 3.4 12 2c1.4 1.4 2.4 3 3 5.3 1.6.6 3.6.4 6-.8-.4 2.7-2 4.5-4 5.3.5 3.6-1.5 6.8-5 9.2Z" },
 };
 export function emblemSvg(id) {
@@ -44,23 +48,27 @@ export function chipHTML(profile) {
 
 // One button per item: unlocked items, plus the next locked one of each kind as a teaser (disabled, with
 // the rank that unlocks it). Items further away are not controls yet, so nothing is tucked away.
-function itemButton(kind, item, profile, rank) {
-  const open = item.rank <= rank, picked = profile.picks[kind] === item.id;
+function itemButton(kind, item, profile, rank, meta) {
+  const open = item.unlock ? rewardOpen(item, meta) : item.rank <= rank, picked = profile.picks[kind] === item.id;
   const art = kind === "paint" ? `<i class="rank-swatch" style="--swatch:${item.swatch}" aria-hidden="true"></i>`
     : kind === "emblem" ? emblemSvg(item.id) : "";
-  return `<button type="button" data-rank-item="${item.id}" aria-pressed="${picked}"${open ? "" : ` disabled aria-disabled="true" title="Unlocks at rank ${item.rank}"`}>${art}<span class="rank-item-label">${esc(item.label)}</span>${open ? "" : `<small class="rank-lock">Rank ${item.rank}</small>`}</button>`;
+  // W6: a medal item names what unlocks it (achievements, gold medals, challenge days) instead of a rank.
+  const lock = item.unlock ? esc(item.how) : `Rank ${item.rank}`;
+  return `<button type="button" data-rank-item="${item.id}"${item.unlock ? ` data-medal="true"` : ""} aria-pressed="${picked}"${open ? "" : ` disabled aria-disabled="true" title="${item.unlock ? lock : `Unlocks at rank ${item.rank}`}"`}>${art}<span class="rank-item-label">${esc(item.label)}</span>${open ? "" : `<small class="rank-lock">${lock}</small>`}</button>`;
 }
 const HELP = {
   paint: "Your units' colour scheme. Looks only: it never changes a battle.",
   emblem: "Shown on your rank and your results.",
   banner: "The title under your rank.",
 };
-function pickerHTML(profile) {
+function pickerHTML(profile, meta = currentMeta()) {
   const { rank } = rankOf(profile.xp);
   const row = (kind) => {
     const list = ITEMS[kind], open = list.filter((i) => i.rank <= rank), next = list.find((i) => i.rank > rank);
+    // W6 medal rewards: every one is shown (a locked one says how to earn it), after the rank items.
+    const medals = MEDAL_ITEMS[kind] || [];
     const help = kind === "pledge" ? (profile.picks.pledge === "none" ? `Pledge a Daily order for +${PLEDGE_XP} XP on a win, once a day. It never changes a battle.` : itemOf("pledge", profile.picks.pledge).help) : HELP[kind];
-    return `<div class="rule-row rank-row" data-rank-kind="${kind}"><span class="rule-name">${KIND_LABELS[kind]}</span><div class="rule-buttons rank-buttons rank-kind-${kind}" role="group" aria-label="${KIND_LABELS[kind]}">${[...open, ...(next ? [next] : [])].map((item) => itemButton(kind, item, profile, rank)).join("")}</div><small class="rule-help">${help}</small></div>`;
+    return `<div class="rule-row rank-row" data-rank-kind="${kind}"><span class="rule-name">${KIND_LABELS[kind]}</span><div class="rule-buttons rank-buttons rank-kind-${kind}" role="group" aria-label="${KIND_LABELS[kind]}">${[...open, ...(next ? [next] : []), ...medals].map((item) => itemButton(kind, item, profile, rank, meta)).join("")}</div><small class="rule-help">${help}</small></div>`;
   };
   return `<span class="rule-title" id="rank-unlocks-title">Commander rank</span>${KINDS.map(row).join("")}`;
 }

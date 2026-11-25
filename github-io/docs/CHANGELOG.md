@@ -2,6 +2,12 @@
 
 ## Unreleased: Round A.2
 
+### Medal cosmetics (W6 replay value, plan C7.3)
+- Nine rewards earned with medals, achievements and challenge days (`src/meta/rewards.js`): paints **Laurel** (gold in all of Act 1), **Silverline** (5 achievements), **Crimson** (3 challenge days), **Obsidian** (15 achievements); emblems **Laurels** (10 gold medals) and **Medal** (10 achievements); title banners **Daily Challenger** (1 challenge day), **Golden Commander** (gold in all of Act 3), **Decorated** (20 achievements).
+- Picked in the Skirmish setup's existing Commander rows, one button each beside the rank items; a locked one is shown disabled with how to earn it. An unlock shows a toast, a "Rewards unlocked" row on the results and the reward in the Records screen ("Medal rewards", 1 / 9...).
+- Looks only: an item is an id, a label, a swatch/tint or glyph and its unlock. The paint is the same view tint as the rank paints (no material, no draw call); no simulation file imports a cosmetic and a match plays to the same hash with every paint (`tests/meta-rewards.test.js`). The rank profile keeps a pick only while its unlock holds (read from the service record's summary).
+- Korean: two W6 strings reworded to pass the catalog checks (no digit in "Complete an optional objective", a font-covered word for Crimson).
+
 ### Daily challenges (W6 replay value, plan C7.1)
 - Three short goals a day, one each for Skirmish, the campaign and Frontier Defence (13 in the pool: Swift strike, Iron line, Sky scout, Two fronts, Hunter; Expedition, Polished, Extra mile, Tactician; Hold the road, Three stars, Promotion, Endurance). The local date alone picks them (`src/meta/challenges.js`, fnv1a of date + group), so the same day gives the same three on every device; nothing in a match reads the clock.
 - Shown as three direct tiles under the quick row on the title (and in the Records screen); one tap picks the mode the challenge is played in. A finished match that meets one pays +50 Commander XP once (results row "Challenges complete", a toast); all three on a day count a **challenge day**, which the medal cosmetics read. Stored in `frontier-challenges-v1` (today's done list, challenge days); a new day starts fresh.
