@@ -25,7 +25,7 @@ Status: todo / doing / done (commit).
 | W11 | Multiplayer: 1v1 over WebRTC with lockstep (the sim is deterministic and hashed), room code to share, no server of our own beyond signalling; then co-op vs AI | Multiplayer 1.2 | | todo (owner decision: signalling service) |
 | W12 | Audio: SFX pass (weapon families, impacts by armour, UI clicks), mix ducking for voices | Audio 6.0 | | done (claude/voices): metal impacts, infantry falls, 6 new weapon voices, 13 ability casts, UI clicks, eco voice caps, voice ducking |
 | W13 | Phone HUD chrome ~35 % -> under 30 %, minimap side choice on phones, left-handed layout, two-finger camera twist | UI phone 7.3, Controls 6.9, Accessibility 6.9 | | todo |
-| W14 | Small fixes from audits: lake fords slow units, Page Up/Down in help, landscape word breaks | Polish 7.1 | | todo |
+| W14 | Small fixes from audits: lake fords slow units, Page Up/Down in help, landscape word breaks | Polish 7.1 | | done (claude/small-fixes): unreachable build sites red with the reason, lake fords slow (0.6), no mid-word breaks (layout-f checks), help lists Page Up/Down/G/Esc/?, Field Guide 3D view fits, rings and crystals on plateau tops |
 
 ## Order
 1. Now: W1, W2 (running), W3 + W12 (audio, no overlap with view code), W6 (meta/UI, no overlap).
@@ -33,6 +33,12 @@ Status: todo / doing / done (commit).
 3. Then W7 and W8 (both move golden pins: one at a time), W9, W10, W13, W14.
 4. W11 needs the owner's yes on a signalling service (free PeerJS cloud or a tiny worker).
 5. Re-score after each wave; record the score here.
+
+## W14 notes (2026-11-25)
+- Lake fords: only Mirror Lake has lakes, so Skirmish (difficulty bot 1v1 12/12/11/11, 1v2 7/2/0/0 before and after), Defence and every golden pin are unchanged; Mirror Lake's objective bot still wins gold (294 -> 318 s, lost 4 -> 0), the generic bot is still holding at 485 s (lost 4 -> 6). No pin needs re-recording.
+- Build reach: the ghost runs the same route check as `sim.build` (`src/build-reach.js`), cached per type, site cell, Harvester cells and nav revision; a selection with several Harvesters builds with one that can reach.
+- Word breaks: `tests/layout-f.mjs` now fails on any word split across lines (hyphen / slash breaks allowed) and runs phone landscape in Korean; it also found the tablet chronicle cards and the 1920 medal buttons.
+- Field Guide: CSS only in `src/unit-viewer.css` (the 3D viewer's JS untouched); 320x568 still needs a scroll for the second button row (stage kept at the 220 px phone minimum).
 
 ## W6 notes (2026-11-25)
 - Built: 12 new achievements (25) with toast, Records screen and results row; three daily challenges seeded from the local date (direct title tiles, +50 XP each, challenge days); nine medal cosmetics (paints, emblems, banners) picked in the Skirmish setup's Commander rows; match history (20) and a replay viewer (3 stored, x1/x2/x4, final-hash check, other versions refused). Storage keys: docs/ARCHITECTURE.md "Replay value storage (W6)".
