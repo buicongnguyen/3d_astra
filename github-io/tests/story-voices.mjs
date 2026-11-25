@@ -65,11 +65,12 @@ await suite("story voices: per-mission packs after Start, lines in order, scenes
   assert.deepEqual([...requests].sort(), ["meridian", "story-m02"], `mission 2 fetches its own pack only (${requests})`);
   const m2 = linesOf("m02-first-contact").filter((l) => !l.scene).slice(0, 3);
   for (const l of m2) await say(l.who, l.text);
-  // The match clock is held, so the dialogue box gets its play time here (as the frame loop gives it).
-  await page.evaluate(() => { window.__boxClock = setInterval(() => window.__frontier.mission.tick(0.1), 100); });
+  // The match clock is held, so the dialogue box gets its play time here (as the frame loop gives it). Big
+  // steps: under CI's 20x CPU slowing the timer fires rarely, and the box still waits for each voice to end.
+  await page.evaluate(() => { window.__boxClock = setInterval(() => window.__frontier.mission.tick(0.5), 100); });
   const ids2 = m2.map((l) => `s.${storyHash(l.text)}`);
   // (A line the mission said on its own first may speak before them: only these three are followed.)
-  await page.waitForFunction((ids) => { const mine = window.__voiceLog.filter((l) => ids.includes(l.index)); return mine.length >= ids.length && mine.every((l) => l.t1 != null); }, ids2, { timeout: 90000 });
+  await page.waitForFunction((ids) => { const mine = window.__voiceLog.filter((l) => ids.includes(l.index)); return mine.length >= ids.length && mine.every((l) => l.t1 != null); }, ids2, { timeout: 2 * TIMEOUT.models });
   await page.evaluate(() => clearInterval(window.__boxClock));
   const log2 = (await voiceLog()).filter((l) => ids2.includes(l.index));
   assert.deepEqual(log2.map((l) => l.index), ids2, "three lines play in the order they were said");
@@ -88,7 +89,7 @@ await suite("story voices: per-mission packs after Start, lines in order, scenes
   const ca = linesOf("ca1-cold-berths")[0];
   await say(ca.who, ca.text);
   await page.waitForFunction((id) => window.__frontier.audio.voice.voice?.line.index === id, `s.${storyHash(ca.text)}`, { timeout: TIMEOUT.step });
-  await page.evaluate(() => { window.__boxClock = setInterval(() => window.__frontier.mission.tick(0.1), 100); });
+  await page.evaluate(() => { window.__boxClock = setInterval(() => window.__frontier.mission.tick(0.5), 100); });
   const shown = await page.waitForFunction((en) => { const t = document.querySelector("#dialogue-text")?.textContent; return t && t !== en; }, ca.text, { timeout: TIMEOUT.step }).then(() => true, () => false);
   const box2 = await page.evaluate(() => ({ text: document.querySelector("#dialogue-text")?.textContent, lang: document.documentElement.lang, log: window.__frontier.mission.queue?.log?.length }));
   await page.evaluate(() => clearInterval(window.__boxClock));
