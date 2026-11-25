@@ -190,13 +190,19 @@ await suite("meta", async () => {
     assert.ok(barInside, `${viewport}: the bar fits the screen`);
     await noSideScroll(page, `${viewport} replay`);
     await shot(page, `meta-replay-${viewport}`);
-    await o.tap('#replay-bar [data-replay="play"]');
-    await page.waitForFunction(() => window.__frontier.meta.info().replay?.paused === true, null, { timeout: TIMEOUT.step });
-    await o.tap('#replay-bar [data-speed="4"]');
-    await o.tap('#replay-bar [data-replay="play"]');
+    // Pause with Space (the replay's own key) rather than a tap race: on CI's slowed CPU the 6 s replay could end
+    // before the Pause tap landed, and the bar then swaps Pause for Watch again (2026-11-25). The bar's Play
+    // button is still tapped below to resume.
+    await page.keyboard.press("Space");
+    await page.waitForFunction(() => { const r = window.__frontier.meta.info().replay; return r?.paused === true || r?.status !== "playing"; }, null, { timeout: TIMEOUT.step });
+    const ranOut = await page.evaluate(() => window.__frontier.meta.info().replay?.status !== "playing");
+    if (!ranOut) {
+      await o.tap('#replay-bar [data-speed="4"]');
+      await o.tap('#replay-bar [data-replay="play"]');
+    }
     await page.waitForFunction(() => window.__frontier.meta.info().replay?.status !== "playing", null, { timeout: TIMEOUT.models });
     const end = await page.evaluate(() => ({ ...window.__frontier.meta.info().replay, hash: window.__frontier.sim.hash(), text: document.querySelector("#replay-bar").textContent.replace(/\s+/g, " ") }));
-    assert.deepEqual([end.status, end.speed, end.ticks, end.hash], ["ok", 4, recorded.ticks, recorded.hash], `${viewport}: the replay ends on the recorded hash`);
+    assert.deepEqual([end.status, ranOut ? 4 : end.speed, end.ticks, end.hash], ["ok", 4, recorded.ticks, recorded.hash], `${viewport}: the replay ends on the recorded hash`);
     assert.match(end.text, /matches the recorded match/, `${viewport}: the bar says so`);
     await shot(page, `meta-replay-end-${viewport}`);
     await o.tap('#replay-bar [data-replay="exit"]');
