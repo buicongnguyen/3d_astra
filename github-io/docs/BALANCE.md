@@ -572,6 +572,40 @@ Doctrines (`src/sim/content/doctrines.js`, data in `balance.json` `doctrines`). 
 
 Difficulty gate (`node tools/difficulty-check.mjs --jobs 4 --compare`, the bot buys no doctrine, so the AI's gain is measured alone), bot wins of 12: 1v1 Relaxed 12 → 12, Normal 12 → 12, Fast 11 → 11, Relentless 11 → 11; 1v2 Relaxed 7 → 7, Normal 2 → 2, Fast 0 → 0, Relentless 1 → 0 (Dunes, attack at 20: the one match that flipped). `npm run check:missions`: all targets met, every row identical to before.
 
+## W7 depth (2026-11-25): second doctrines and air abilities
+Second doctrine tier (`src/sim/content/doctrines.js`, `balance.json` `doctrines.<building>.tier2`). After the first pick, a level 3 building offers a second either/or pair for the match. These change how a side plays rather than adding a few per cent; the computer picks only in a Fast or Relentless skirmish (never Dig in: it does not set Hold stance).
+
+| Building | Option A | Option B |
+|---|---|---|
+| Command core | Strike wing: flyers ×1.1 speed, flyer abilities recharge ×0.6 (50/200) | Bastion: towers and the core deal ×1.25, every building takes ×0.8 (100/175) |
+| Barracks | Dig in: infantry on Hold stance take ×0.75 (0/175) | Shock troops: infantry deal ×1.4 to buildings and walls (0/175) |
+| Foundry | Heavy armour: vehicles take ×0.8 and move ×0.9 (50/175) | Overclock: vehicle abilities recharge ×0.6 (0/175) |
+
+Air abilities (`src/sim/content/air-strikes.js`, numbers in each flyer's `ability`). No point needed; a player's side casts them on its own with Auto-cast (Strafing run with 2+ enemies on the line, Bomb drop with any target, Signal flare on a group of 3+); the computer only where it plays sharp (`sharpSide`: Fast or Relentless skirmish).
+
+| Flyer | Ability | Effect | Cooldown |
+|---|---|---|---|
+| Hawk gunship | Strafing run | 16 to each ground enemy within 1.3 m of a 14 m line through the nearest group within 12 m (vehicles ×0.5, buildings never) | 24 s |
+| Ember balloon | Signal flare | for 8 s its side sees the ground within 9 m of the nearest group within 14 m (or below it), hidden units there are revealed, enemies there take ×1.15 | 26 s |
+| Swift glider | Bomb drop | on the nearest ground enemy within 6 m, Harvesters first: within 2 m, 75 to Harvesters, 12 to other units, 15 to buildings | 20 s |
+
+Equal-cost duels (budget 1000, 10 battles, mean score, ability off → on, cast as Auto-cast would: `node tools/air-duels.mjs`, on `tests/lib/duel.mjs` with its new `each` hook). The first numbers (Strafing run 40 damage, Bomb drop 50 to everything in 2.5 m) flipped the counters (Hawk vs Ranger −0.57 → +0.36, Glider vs Ranger −0.55 → +0.69, Glider vs Rider −0.62 → +0.71), so they were cut until every counter still wins:
+
+| Duel | Off | On | Wins on (of 10) |
+|---|---|---|---|
+| Hawk vs Ranger | −0.57 | −0.30 | 0 |
+| Hawk vs Anti-tank | −0.86 | −0.72 | 0 |
+| Hawk vs Halo | −0.78 | −0.78 | 0 |
+| Hawk vs Vanguard / Tank / Scrapper | +1.00 | +1.00 | 10 |
+| Balloon vs Ranger | +0.49 | +0.56 | 10 |
+| Balloon vs Anti-tank | −0.74 | −0.70 | 0 |
+| Balloon vs Vanguard / Tank / Scrapper | +1.00 | +1.00 | 10 |
+| Glider vs Ranger | −0.55 | −0.29 | 1 |
+| Glider vs Rider | −0.62 | −0.47 | 0 |
+| Glider vs Vanguard / Tank / Harvester | +1.00 | +1.00 | 10 |
+
+Difficulty gate (bot wins of 12, before → after): 1v1 Relaxed 12 → 12, Normal 12 → 12, Fast 12 → 11, Relentless 9 → 9; 1v2 Relaxed 8 → 8, Normal 3 → 3, Fast 0 → 0, Relentless 0 → 0. Every Relaxed and Normal row is identical (80 of 96 rows identical; the 16 that moved are Fast/Relentless on Dunes and one on Classic). `check:missions` and `check:defence` JSON identical to before; `ai-census-check` 10/10 rows identical.
+
 ## Faction roster (2026-11-24): Lance buggy, Bulwark, Veil moth, Halo interceptor
 Gaps closed: Sunward and Wardens had no workshop unit, Veil and Wardens no flyer (Wardens: 6 roster slots, now 8). Definitions in balance.json; the only new code is the Bulwark's ward (`src/sim/content/ward.js`, a `taken` hook), the workshop AI condition `seenMech`, and the Halo rule in `aiAirChoice` (built only after enemy flyers were seen).
 

@@ -26,6 +26,10 @@ export const HIGH_GROUND_GUIDE = `Plateaus are raised rock reached by ramps. A u
 // Flyers (0.18, src/sim/air.js), from the live balance numbers (balance.json "air").
 export const AIR_GUIDE = `<p>Flyer: it flies straight over water, walls and cliffs, and passes over ground units. Only Rangers, Anti-tank soldiers and other units that hit air can shoot it; Sentinel towers can after the Anti-air guns research at the Command core (×${AIR.flak_bonus} damage to flyers). Splash, Barrage and burning ground never reach it. It sees plateau tops from low ground and opens a plateau it flies over to your whole side. It cannot take capture points. You field at most ${(AIR.cap_by_level || [AIR.cap])[0]} flyers at a level 1 Command core, ${AIR.cap_by_level?.[1] ?? AIR.cap} at level 2 and ${AIR.cap_by_level?.[2] ?? AIR.cap} at level 3, counting those in production; computer opponents field at most ${AIR.cap}.</p>`;
 
+// Doctrines (sim/content/doctrines.js), on the Command core, Barracks and Foundry pages: both tiers, from the live data.
+const doctrineList = (set) => `<ul>${Object.values(set.options).map((o) => `<li><strong>${o.name}</strong> <span>${o.description}</span></li>`).join('')}</ul>`;
+const doctrineGuide = (spec) => `<h3>Doctrines</h3><p>Level 2: pick one of two.</p>${doctrineList(spec)}${spec.tier2 ? `<p>Level 3, after the first: pick one of two more.</p>${doctrineList(spec.tier2)}` : ''}`;
+
 // Your price and training time (balance.json player_cost / player_time, the Kite): the guide is read by the
 // person, so without a match it shows the player price; in a match, the price for `team`.
 const priceOf = (sim, team, type) => sim?.trainCost ? sim.trainCost(team, type) : D[type].player_cost ?? D[type].cost;
@@ -51,6 +55,8 @@ export function entryHTML(type, sim = null, team = 0) {
     ${d.ward ? `<h3>Ward plate</h3><p>Your other units within ${d.ward.radius} m of it take ${Math.round((1 - d.ward.taken) * 100)}% less damage. Wards do not stack.</p>` : ''}
     ${d.creature ? (CAMPAIGN_GUIDE[type] || WILD_GUIDE) : ''}${type === 'wyrm' ? CAMPAIGN_WYRM : ''}
     ${d.flying ? AIR_GUIDE : ''}
+    ${d.kind === 'unit' && d.ability?.name ? `<h3>Ability: ${d.ability.name}</h3><p>${d.ability.description}</p><p>Recharges in ${d.ability.cooldown} s.</p>` : ''}
+    ${balance.doctrines[type] ? doctrineGuide(balance.doctrines[type]) : ''}
     ${d.hits_air && !d.flying ? '<p>Hits air: it can shoot flyers.</p>' : ''}
     ${d.required_level && !d.workshop ? `<p>Requires level ${d.required_level} ${d.flying ? 'Command core' : ['medic','antitank'].includes(sim?.slotOf(type) || type) ? 'Barracks' : 'Foundry'}.</p>` : ''}
     ${d.workshop && D[HOST_OF[d.workshop]] ? `<p>Expanded roster: trained at the ${D[HOST_OF[d.workshop]].name}, level ${d.required_level || 1}.</p>` : ''}

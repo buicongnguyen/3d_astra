@@ -116,7 +116,9 @@ function sendScouts(sim) {
   sim.message("Enemy scouts sighted! Meet them at your tower.");
 }
 
-// "Full army": a test-friendly battle. Your base already has a Barracks, Foundry, three Supply relays and a tower, and two of
+// "Full army": a test-friendly battle. W7 (2026-11-25): shown as the "Full army sandbox" (a showcase to try every
+// unit and ability, not a contest: the whole army takes the Relaxed rival's core in 30-55 s, and the owner rule
+// "never make Relaxed or Normal harder" keeps the rival as it is). Your base already has a Barracks, Foundry, three Supply relays and a tower, and two of
 // every ground unit stand ready; mixed enemy squads attack from 0:10 and then every 35 s.
 export const ARENA = Object.freeze({
   base: Object.freeze([
@@ -166,7 +168,7 @@ function buildArena(sim) {
   }
   sim.players[PLAYER].alloy += ARENA.alloy;
   sim.updateVision();
-  sim.message("Full army ready. Enemy squads attack in about 25 seconds.");
+  sim.message("Full army sandbox: try every unit and ability. Enemy squads attack in about 25 seconds.");
 }
 function sendArenaWave(sim) {
   const a = axes(sim);

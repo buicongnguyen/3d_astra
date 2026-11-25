@@ -1,6 +1,7 @@
 import { RANK_BONUS, STANCES } from "./sim/tactics.js";
 import { FORD_SHORT } from "./terrain-labels.js";
 import { DIVE, diveTarget } from "./sim/content/kite-dive.js";
+import { AIR_STRIKES, airTarget } from "./sim/content/air-strikes.js";
 
 // Interface logic for veterancy, stances and unit abilities (rules: sim/tactics.js).
 // Pure functions over simulation state: no DOM, no rendering, so node:test covers them.
@@ -61,6 +62,8 @@ export function abilityGroups(sim, entities, max = ABILITY_KEYS.length) {
       g.ready++;
       // Kite Dive (sim/content/kite-dive.js): how many ready Kites have an enemy vehicle in reach.
       if (a.id === DIVE && diveTarget(sim, e, a)) g.targets = (g.targets || 0) + 1;
+      // W7 air abilities (sim/content/air-strikes.js): how many ready flyers have something to hit.
+      if (AIR_STRIKES.has(a.id) && airTarget(sim, e, a)) g.targets = (g.targets || 0) + 1;
     }
     g.wait = Math.min(g.wait, wait);
   }
@@ -76,10 +79,12 @@ export function abilityGroups(sim, entities, max = ABILITY_KEYS.length) {
 // What the tile says under the ability name: "Ready", "Ready 2/3", "In the ford", "No vehicle near" or the seconds left.
 // `compact` (phones): the short form where the tile is narrow.
 export const NO_VEHICLE = "No vehicle near", NO_VEHICLE_SHORT = "No vehicle";
+export const NO_TARGET = "No target near", NO_TARGET_SHORT = "No target";
 export function abilityStatus(group, { compact = false } = {}) {
   if (!group.ready && group.ford) return FORD_SHORT;
   // A Dive with nothing to dive into says so (tapping it does nothing).
   if (group.ready && group.id === DIVE && !group.targets) return compact ? NO_VEHICLE_SHORT : NO_VEHICLE;
+  if (group.ready && AIR_STRIKES.has(group.id) && !group.targets) return compact ? NO_TARGET_SHORT : NO_TARGET;
   if (!group.ready) return `${Math.max(1, Math.ceil(group.wait))}s`;
   return group.count > 1 ? `Ready ${group.ready}/${group.count}` : "Ready";
 }

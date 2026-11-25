@@ -80,6 +80,8 @@ export const TRAIT_HANDLERS = {
           const reach = d.kind === 'unit' ? Math.max(rule.reveal_unit, d.detect || 0) : d.complete && (d.type === 'tower' || d.type === 'hq' || d.type === 'veilrelay') ? (d.reveal || rule.reveal_building) : 0;
           if (reach && distance(d, e) <= reach) seen |= 1 << d.team;
         }
+        // W7: a Signal flare reveals what stands in its light (sim/content/air-strikes.js).
+        if (sim.flares) seen |= sim.flareSeen(e);
         // Allied AIs share what they detect, as they share vision.
         if (sim.coalition && seen >> 1) for (let t = 1; t < sim.players.length; t++) seen |= 1 << t;
         if (e.cloaked && seen & ~e.seenBy & 1) sim.events.push({ type: 'reveal', x: e.x, z: e.z, team: e.team });

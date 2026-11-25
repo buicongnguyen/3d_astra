@@ -54,6 +54,8 @@ export const vision = {
           }
       }
     }
+    // W7: a Signal flare opens its ground to its side while it burns (sim/content/air-strikes.js).
+    if (this.flares) this.flareVision();
     // Frontier Defence: the player sees the whole valley (the waves' own sight rules still apply).
     if (this.defence) { this.visible[0].fill(1); this.explored[0].fill(1); }
     // Allied AIs pool what they see.

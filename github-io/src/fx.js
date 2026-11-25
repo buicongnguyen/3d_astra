@@ -792,6 +792,24 @@ export class Effects {
         this.explosion({ x: to.x, y: 0.7, z: to.z }, 1.1, target, true);
         this.dust({ x: to.x, y: 0.3, z: to.z }, 4, target, 1.2, 1.2);
       } });
+    } else if (e.ability === 'strafe' && Number.isFinite(e.tx)) {
+      // W7 Strafing run (sim/content/air-strikes.js): a walk of impact flashes and dust along the line, Hawk to far end.
+      const n = this.count(7), line = { x: (e.x + e.tx) / 2, z: (e.z + e.tz) / 2, team: e.team };
+      for (let i = 0; i < n; i++) {
+        const k = (i + 0.5) / n, x = e.x + (e.tx - e.x) * k, z = e.z + (e.tz - e.z) * k;
+        this.particle(this.glow, { x, y: 0.35, z, cell: CELL.flare, s0: 0.9, s1: 0.2, life: 0.22, c0: [1, 0.92, 0.6, 0.95], c1: [1, 0.55, 0.15, 0], anchor: line, delay: k * 0.35 });
+        if (i % 2 === 0) this.hitDust({ x, y: 0.2, z }, 1, line, 0.7, 0.7);
+      }
+    } else if (e.ability === 'flare' && Number.isFinite(e.tx)) {
+      // W7 Signal flare: a warm light ring on the ground for as long as it burns, and the flare itself hanging over it.
+      const at = { x: e.tx, z: e.tz, team: e.team }, r = e.radius || 9, life = e.duration || 8, warm = [1, 0.62, 0.3];
+      this.decal(at, r * 2.5, life, at, CELL.ring, [...warm, 0.7], this.glow, r * 2.5, { hold: 0.85, y: 0.1 });
+      this.particle(this.glow, { x: e.tx, y: 4.5, z: e.tz, cell: CELL.flare, s0: 1.6, s1: 1.1, life, c0: [1, 0.95, 0.75, 1], c1: [...warm, 0], anchor: at, vy: this.motion ? -0.35 : 0 });
+    } else if (e.ability === 'bomb' && Number.isFinite(e.tx)) {
+      // W7 Bomb drop: a small blast on the target and a puff of dirt.
+      const target = { x: e.tx, z: e.tz, team: e.team };
+      this.explosion({ x: e.tx, y: 0.6, z: e.tz }, 0.9, target, true);
+      this.dust({ x: e.tx, y: 0.3, z: e.tz }, 3, target, 1, 1);
     } else if (e.ability === 'barrage') {
       // The launch: a flash and a streak climbing out of the Breaker.
       this.particle(this.glow, { x: e.x, y: 1.8, z: e.z, cell: CELL.flare, s0: 2.2, s1: 2.6, life: 0.14, c0: WARM.flash, c1: [1, 0.55, 0.15, 0], anchor });

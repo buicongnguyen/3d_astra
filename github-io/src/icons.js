@@ -113,6 +113,16 @@ const paths = {
   crew: '<path d="M14.5 3.5a4.5 4.5 0 0 0-4.3 5.8L3.5 16a2.1 2.1 0 0 0 3 3l6.7-6.7a4.5 4.5 0 0 0 5.8-4.3l-2.6 2.6-2.8-.6-.6-2.8z"/><path d="M18.5 15v6M15.5 18h6" stroke-width="2.2"/>',
   // Kite Dive (2026-11-24): an arrow diving onto a small tank. Only the Dive tile uses it.
   dive: '<rect x="8" y="16.5" width="13.5" height="5" rx="2.2"/><path d="M11.5 16.5v-2.8h6v2.8M17.5 15h4"/><path d="M2.5 2.5 10 10" stroke-width="2.3"/><path class="pf" d="M12.8 12.8 7.3 11.9 11.9 7.3z"/>',
+  // W7 air abilities: Strafing run (a gunship nose and its line of rounds), Signal flare (a burst over the
+  // ground), Bomb drop (a falling bomb over the ground).
+  strafe: '<path class="pf" d="M21.5 2.5 19.6 10l-2.4-3-3.2-1.7z"/><path d="M3.5 20.5l2-2M7.8 16.2l2-2M12.1 11.9l2-2" stroke-width="2.4"/>',
+  flare: '<circle class="pf" cx="12" cy="8.5" r="3"/><path d="M12 2v1.8M12 13.2V15M5.5 8.5h1.8M16.7 8.5h1.8M7.4 3.9l1.3 1.3M16.6 3.9l-1.3 1.3M7.4 13.1l1.3-1.3M16.6 13.1l-1.3-1.3M3 21h18M12 17v2"/>',
+  bombdrop: '<path class="pf" d="M12 3.5c2 0 3.3 1.9 3.3 4.6v3.8a3.3 3.3 0 0 1-6.6 0V8.1c0-2.7 1.3-4.6 3.3-4.6z"/><path d="M10 3.8 8.2 2M14 3.8 15.8 2M3.5 21h17M7 18l1.5 1.5M17 18l-1.5 1.5"/>',
+  // W7 second-tier doctrines: Strike wing, Shock troops (a cracked wall), Heavy armour (plated hull), Overclock (stopwatch).
+  wing: '<path class="pf" d="M2 14.5 12 8l10 6.5-3.2 1.6L12 12l-6.8 4.1z"/><path d="M12 13v8M9 20h6"/>',
+  breach: '<path d="M3 20.5h18M3 15.5h6.5M14.5 15.5H21M3 10.5h6M15 10.5h6M6.5 10.5v5M17.5 10.5v5M7.5 15.5v5M16.5 15.5v5"/><path class="pf" d="M12 3.5l1.6 5-2 2.2 2.4 4-2.8 5.3.4-5-2-3.2 2-3z"/>',
+  armour: '<rect x="2.5" y="10.5" width="19" height="6.5" rx="2"/><path class="pf" d="M6 10.5 8.2 6h7.6l2.2 4.5z"/><path d="M6.5 13.7h11M3 20.5h18"/>',
+  overclock: '<circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5l3.6-3.6M12 6V3M9.5 2.5h5"/><path class="pf" d="M18 4.2l2.8.6-.6 2.8z"/>',
 };
 export function icon(name, cls = "") {
   return `<svg class="icon ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.logo}</svg>`;

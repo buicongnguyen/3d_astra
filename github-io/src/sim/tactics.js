@@ -115,7 +115,8 @@ export const tactics = {
       if (!patients.length) return false;
       for (const t of patients) t.hp = Math.min(t.maxHp, t.hp + a.heal);
     } else return false;
-    e.abilityAt = this.time + a.cooldown;
+    // W7: a tier-2 doctrine may shorten the recharge (sim/content/doctrines.js; only once a side has one).
+    e.abilityAt = this.time + a.cooldown * (this.players[e.team]?.doctrine2 ? this.doctrineCooldown(e) : 1);
     this.events.push({ type: "ability", ability: a.id, id: e.id, team: e.team, x: e.x, z: e.z, tx: point?.x, tz: point?.z, radius: a.radius, duration: a.duration, delay: a.delay });
     return true;
   },

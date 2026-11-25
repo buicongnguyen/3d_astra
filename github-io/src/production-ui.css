@@ -44,7 +44,8 @@
 /* On the root, not the dock: the boss bar and other HUD above the console read the same height. */
 :root:not(.compact-ui):has(.command-panel #commands > .doctrine-tile){--console-card-height:calc(3 * 44px + 2 * 4px + 14px);--console-mid:calc(3 * 44px + 2 * 4px + 14px)}
 :root:not(.compact-ui):has(.command-panel #commands > .doctrine-tile) .bottom-dock{--tile-h:44px}
-:root:not(.compact-ui) .command-panel #commands>.doctrine-tile:not(.doctrine-second){grid-column:1}
+:root:not(.compact-ui) .command-panel #commands>.doctrine-tile:not(.doctrine-second):not(.doctrine-follow){grid-column:1}
+/* W7: the second doctrine's done tile sits beside the first one, as the second of a pair does. */
 :root:not(.compact-ui) .bottom-dock .command-panel:has(#commands > .doctrine-tile) .upgrade-actions{position:absolute;right:8px;bottom:7px;width:var(--slot);margin:0}
 /* Phones: a doctrine tile reads sideways, the glyph left of its label and price. */
 :root.compact-ui .doctrine-tile{display:grid!important;grid-template-columns:16px minmax(0,1fr);grid-template-rows:auto auto;column-gap:4px;row-gap:0;align-content:center;align-items:center;justify-items:start;text-align:left;padding:2px 4px!important}

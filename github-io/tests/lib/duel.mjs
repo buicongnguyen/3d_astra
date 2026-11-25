@@ -18,6 +18,7 @@
 //     watch     ({ sim, a, b, deaths, offset, seat }) => any: a fact per battle (deaths lists each unit
 //               as it fell: { side: "a" | "b", type, id, at }, in order)
 //     limit     seconds before a battle is stopped and scored as it stands (default 150)
+//     each      (sim) => void, called before every tick (W7: a bench that casts abilities for both sides)
 //   returns { mean, wins, battles: [{ offset, seat, score, seconds, kept: { a, b }, deaths, watch? }] }
 //   (seat 0: side A spawns as team 0 at z -9; seat 1: side A spawns as team 1 at z +9)
 import { Simulation } from "../../src/simulation.js";
@@ -39,7 +40,7 @@ function roster(side, budget) {
 
 // One battle. Formation and orders are tests/balance.test.js's: rows of five, 1.9 m apart, team 0
 // spawned first, both sides attack-moving through each other's spawn.
-function battle(armyA, armyB, { offset, seat, factions, rules, watch, limit }) {
+function battle(armyA, armyB, { offset, seat, factions, rules, watch, limit, each }) {
   const teams = seat ? [armyB, armyA] : [armyA, armyB];
   const sideOf = seat ? ["b", "a"] : ["a", "b"];
   const s = new Simulation({ ai: false, map: "classic", ...(factions ? { factions: seat ? { 0: factions[1], 1: factions[0] } : { 0: factions[0], 1: factions[1] } } : {}), ...(rules ? { rules } : {}) });
@@ -61,6 +62,7 @@ function battle(armyA, armyB, { offset, seat, factions, rules, watch, limit }) {
   const note = (units, side) => { for (const u of units) if (u.hp <= 0 && !dead.has(u.id)) { dead.add(u.id); deaths.push({ side, type: u.type, id: u.id, at: Math.round(s.time * 100) / 100 }); } };
   let t = 0;
   for (; t < limit && first.some((u) => u.hp > 0) && second.some((u) => u.hp > 0); t += TICK) {
+    each?.(s);
     s.tick(TICK);
     note(first, sideOf[0]);
     note(second, sideOf[1]);
@@ -72,11 +74,11 @@ function battle(armyA, armyB, { offset, seat, factions, rules, watch, limit }) {
   return result;
 }
 
-export function duel(sideA, sideB, { budget, factions = null, offsets = OFFSETS, rules = null, watch = null, limit = 150 } = {}) {
+export function duel(sideA, sideB, { budget, factions = null, offsets = OFFSETS, rules = null, watch = null, limit = 150, each = null } = {}) {
   const size = budget ?? (isMix(sideA) ? worth(sideA) : isMix(sideB) ? worth(sideB) : 1000);
   const armyA = roster(sideA, size), armyB = roster(sideB, size);
   const battles = [];
-  for (const offset of offsets) for (const seat of [0, 1]) battles.push(battle(armyA, armyB, { offset, seat, factions, rules, watch, limit }));
+  for (const offset of offsets) for (const seat of [0, 1]) battles.push(battle(armyA, armyB, { offset, seat, factions, rules, watch, limit, each }));
   const mean = battles.reduce((n, b) => n + b.score, 0) / battles.length;
   return { mean, wins: battles.filter((b) => b.score > 0).length, battles };
 }

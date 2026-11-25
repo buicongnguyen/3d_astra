@@ -73,14 +73,24 @@ export function flakTile(sim, b, lock = "") {
 // tiles on the card at once (one tap picks, the other locks: no sub-menu). Before the building's level
 // they show "Needs L2"; once one is picked, a single "done" tile names it.
 //   { doctrine: true, building, pick, label, name, icon, cost, state, sub, pair: 0 | 1 }
+// Second tier (W7): the card keeps at most two doctrine tiles (a third pushed the PC card's last tile off the
+// screen). Below level 3 the first pick's done tile says the next pick comes at level 3; at level 3 the second
+// pair takes its place until one is chosen; then both done tiles. Tier-2 tiles carry `tier: 2`.
 export function doctrineTiles(sim, b) {
   const spec = DOCTRINES[b.type];
   if (!spec || b.team !== 0) return [];
-  const chosen = sim.players[b.team].doctrine?.[b.type];
-  const tile = (pick, extra) => { const o = spec.options[pick]; return { doctrine: true, type: "doctrine", action: "doctrine", building: b.type, pick, label: o.label, name: o.name, icon: o.icon, cost: o.cost, description: o.description, ...extra }; };
-  if (chosen) return [tile(chosen, { state: "done", sub: "Active" })];
-  const lock = (b.level || 1) < spec.level ? `Needs L${spec.level}` : "";
-  return Object.keys(spec.options).map((pick, pair) => tile(pick, { state: lock ? "locked" : "ready", sub: lock || null, pair }));
+  const p = sim.players[b.team], chosen = p.doctrine?.[b.type], chosen2 = p.doctrine2?.[b.type];
+  const tile = (set, pick, extra) => { const o = set.options[pick]; return { doctrine: true, type: "doctrine", action: "doctrine", building: b.type, pick, label: o.label, name: o.name, icon: o.icon, cost: o.cost, description: o.description, ...extra }; };
+  const pair = (set, tier) => {
+    const lock = (b.level || 1) < set.level ? `Needs L${set.level}` : "";
+    return Object.keys(set.options).map((pick, pair) => tile(set, pick, { state: lock ? "locked" : "ready", sub: lock || null, pair, ...(tier === 2 ? { tier } : null) }));
+  };
+  if (!chosen) return pair(spec, 1);
+  const done = [tile(spec, chosen, { state: "done", sub: "Active" })];
+  if (!spec.tier2) return done;
+  if (chosen2) return [...done, tile(spec.tier2, chosen2, { state: "done", sub: "Active", tier: 2 })];
+  if ((b.level || 1) < spec.tier2.level) return [{ ...done[0], next: `Second doctrine at level ${spec.tier2.level}.` }];
+  return pair(spec.tier2, 2).map((t) => ({ ...t, after: done[0].name }));
 }
 
 // The tiles for one selected building of the player. `choosing` is true while the research choice is open.
