@@ -428,6 +428,12 @@ vehicles?" Numbers in `balance.json` `definitions.kite`; rules in `src/sim/conte
 - **Computer:** dives only in a Fast or Relentless skirmish (the signature rule), never on Relaxed or
   Normal, in story missions or Defence. The computer builds one Kite at a time as a spotter, so dives
   are rare even there.
+- **Player price (2026-11-25).** Owner: "Kite should be cheap so that we can use it to observe the
+  enemy." Your side pays 45 alloy, no energy, and trains it in 8 s (`player_cost` / `player_time`);
+  every computer side keeps `cost` 75 / 25 and `time` 12, so AI-vs-AI matches, golden pins and the
+  difficulty check are unchanged. "Your side" is team 0 unless the computer plays it (`aiPlayer`):
+  `Simulation.humanTeam`, `trainCost` and `trainTime`. A queued Kite stores the price paid (`paid`),
+  so a cancel refunds it. The Defence bounty for an enemy Kite uses the computer price.
 - **Cost of sight:** `updateVision` with 24 Kites on the map, 0.20 → 0.24 ms per call (it runs every
   0.25 s of game time); the fog texture is the same size.
 

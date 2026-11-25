@@ -20,5 +20,5 @@ export function buildingActivity(sim, e) {
   }
   if (e.levelJob) return {progress:Math.min(1,e.levelJob.elapsed/e.levelJob.time), label:`Upgrade L${e.level+1}`};
   const q = e.queue[0];
-  return q ? {progress:Math.min(1,q.elapsed/D[q.type].time), label:q.blocked || D[q.type].name, waiting:!!q.blocked} : null;
+  return q ? {progress:Math.min(1,q.elapsed/(sim.trainTime?.(e.team,q.type) ?? D[q.type].time)), label:q.blocked || D[q.type].name, waiting:!!q.blocked} : null;
 }

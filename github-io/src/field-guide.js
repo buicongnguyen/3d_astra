@@ -24,12 +24,17 @@ export const HIGH_GROUND_GUIDE = `Plateaus are raised rock reached by ramps. A u
 // Flyers (0.18, src/sim/air.js), from the live balance numbers (balance.json "air").
 export const AIR_GUIDE = `<p>Flyer: it flies straight over water, walls and cliffs, and passes over ground units. Only Rangers, Anti-tank soldiers and other units that hit air can shoot it; Sentinel towers can after the Anti-air guns research at the Command core (×${AIR.flak_bonus} damage to flyers). Splash, Barrage and burning ground never reach it. It sees plateau tops from low ground and opens a plateau it flies over to your whole side. It cannot take capture points. You field at most ${(AIR.cap_by_level || [AIR.cap])[0]} flyers at a level 1 Command core, ${AIR.cap_by_level?.[1] ?? AIR.cap} at level 2 and ${AIR.cap_by_level?.[2] ?? AIR.cap} at level 3, counting those in production; computer opponents field at most ${AIR.cap}.</p>`;
 
+// Your price and training time (balance.json player_cost / player_time, the Kite): the guide is read by the
+// person, so without a match it shows the player price; in a match, the price for `team`.
+const priceOf = (sim, team, type) => sim?.trainCost ? sim.trainCost(team, type) : D[type].player_cost ?? D[type].cost;
+const timeOf = (sim, team, type) => sim?.trainTime ? sim.trainTime(team, type) : D[type].player_time ?? D[type].time;
 export function entryHTML(type, sim = null, team = 0) {
   const base = D[type], d = sim && base.trains ? {...base,trains:sim.resolvedTrains(team,base.trains)} : base;
+  const cost = priceOf(sim, team, type), price = (k) => { const c = priceOf(sim, team, k); return `${c[0]} alloy / ${c[1]} energy`; };
   return `<div class="guide-hero">${portrait(type)}<h2>${d.name}</h2></div><p>${d.description}</p>
     <h3>Base stats · level 1</h3><dl><dt>HP / shield</dt><dd>${d.player_hp ?? d.hp} / ${d.player_shield ?? d.shield}</dd>
     <dt>Attack</dt><dd>${d.damage || 0}${d.damage ? ` per hit · every ${d.interval}s · range ${d.range}` : ' · cannot attack'}</dd>
-    <dt>Cost</dt><dd>${d.cost[0]} alloy / ${d.cost[1]} energy</dd><dt>Time</dt><dd>${d.time}s</dd>
+    <dt>Cost</dt><dd>${cost[0]} alloy / ${cost[1]} energy</dd><dt>Time</dt><dd>${timeOf(sim, team, type)}s</dd>
     ${d.pop ? `<dt>Supply / speed</dt><dd>${d.pop} / ${d.speed}</dd>` : ''}</dl>
     <p>Shields absorb damage before HP. They recharge at 4/s after five seconds without damage.</p>
     ${d.kind==='building'||d.mechanical?'<p>Below 35% HP, completed buildings and vehicles show fire and smoke. Repairs clear it. This is a damage warning, not extra damage over time.</p>':''}
@@ -47,8 +52,8 @@ export function entryHTML(type, sim = null, team = 0) {
     ${d.hits_air && !d.flying ? '<p>Hits air: it can shoot flyers.</p>' : ''}
     ${d.required_level && !d.workshop ? `<p>Requires level ${d.required_level} ${d.flying ? 'Command core' : ['medic','antitank'].includes(sim?.slotOf(type) || type) ? 'Barracks' : 'Foundry'}.</p>` : ''}
     ${d.workshop && D[HOST_OF[d.workshop]] ? `<p>Expanded roster: trained at the ${D[HOST_OF[d.workshop]].name}, level ${d.required_level || 1}.</p>` : ''}
-    ${d.kind === 'building' && workshopUnitsOf(HOST_FACTION[type]).length ? `<h3>Expanded roster</h3><ul>${workshopUnitsOf(HOST_FACTION[type]).map(k => `<li>${D[k].name}${D[k].required_level ? ` · level ${D[k].required_level}` : ''}: ${D[k].cost[0]} alloy / ${D[k].cost[1]} energy</li>`).join('')}</ul>` : ''}
-    ${d.kind === 'building' ? `<h3>Building functions</h3><ul>${(d.trains || []).map(k => `<li>${D[k].name}${D[k].required_level ? ` · level ${D[k].required_level}` : ''}: ${D[k].cost[0]} alloy / ${D[k].cost[1]} energy</li>`).join('')}${d.supply ? `<li>Provides ${d.supply} supply at level 1.</li>` : ''}${type === 'tower' ? '<li>Automatically attacks visible enemies.</li>' : ''}</ul>
+    ${d.kind === 'building' && workshopUnitsOf(HOST_FACTION[type]).length ? `<h3>Expanded roster</h3><ul>${workshopUnitsOf(HOST_FACTION[type]).map(k => `<li>${D[k].name}${D[k].required_level ? ` · level ${D[k].required_level}` : ''}: ${price(k)}</li>`).join('')}</ul>` : ''}
+    ${d.kind === 'building' ? `<h3>Building functions</h3><ul>${(d.trains || []).map(k => `<li>${D[k].name}${D[k].required_level ? ` · level ${D[k].required_level}` : ''}: ${price(k)}</li>`).join('')}${d.supply ? `<li>Provides ${d.supply} supply at level 1.</li>` : ''}${type === 'tower' ? '<li>Automatically attacks visible enemies.</li>' : ''}</ul>
     <h3>Building upgrades</h3><p>L2: +25% base HP, +25 shield, 1.2× production rate.<br>L3: +50% base HP, +50 shield, 1.4× production rate, total.</p><p>Towers gain 50% / 100% base attack and 1 / 2 m range; Relays gain 5 / 10 supply. Supply is capped at 100.</p>
     <p>Command core: L2 costs 200/100; L3 costs 350/175 alloy/energy.<br>Sentinel tower: L2 costs 75/25; L3 costs 150/50.<br>Other buildings: L2 costs 100/50; L3 costs 200/100.<br>Upgrade time: 20s / 30s.</p><p>Other buildings require a completed Command core at the next level. Finish or cancel production first. Cancel an upgrade for a full refund; destruction gives no refund.</p>` : ''}
     <h3>High ground</h3><p>${HIGH_GROUND_GUIDE}</p>

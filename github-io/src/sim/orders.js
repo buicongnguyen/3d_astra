@@ -177,13 +177,15 @@ export const orders = {
       if (pl[other] || this.own(b.team).some((e) => e.queue.some((q) => q.type === other)))
         return fail(type === "upgrade" ? "Overcharged weapons are locked: Reinforced plating was chosen." : "Reinforced plating is locked: Overcharged weapons were chosen.");
     }
-    if (!this.canPay(b.team, d.cost))
-      return fail(`${this.resourceShortage(d.cost,b.team)} to train/research ${d.name}.`);
+    const cost = this.trainCost(b.team, type);
+    if (!this.canPay(b.team, cost))
+      return fail(`${this.resourceShortage(cost,b.team)} to train/research ${d.name}.`);
     const p = this.population(b.team);
     if (d.pop && p.used + p.reserved + d.pop > p.cap)
       return fail("Population limit reached. Build a Supply relay.");
-    this.pay(b.team, d.cost);
-    b.queue.push({ id: this.nextQueueId++, type, elapsed: 0 });
+    this.pay(b.team, cost);
+    // A player price (balance.json player_cost) is stored on the entry, so a cancel refunds what was paid.
+    b.queue.push(cost === d.cost ? { id: this.nextQueueId++, type, elapsed: 0 } : { id: this.nextQueueId++, type, elapsed: 0, paid: [...cost] });
     this.message(`${d.name} queued.`, b.team);
     return true;
   },
@@ -191,7 +193,9 @@ export const orders = {
     const b = this.get(id);
     if (this.result || !b || !Number.isInteger(index) || !b.queue[index])
       return false;
-    this.pay(b.team, D[b.queue[index].type].cost, -1);
+    // `paid` (entries queued at a player price); older saves without it refund today's price for this team.
+    const q = b.queue[index], paid = Array.isArray(q.paid) && q.paid.length === 2 && q.paid.every(Number.isFinite) ? q.paid : this.trainCost(b.team, q.type);
+    this.pay(b.team, paid, -1);
     b.queue.splice(index, 1);
     return true;
   },
