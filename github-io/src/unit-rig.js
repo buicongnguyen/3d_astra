@@ -109,6 +109,47 @@ export function tagBone(geometry, bone, pivotY = 0, kneeY = 0, pivotZ = 0) {
 }
 // Blend toward a target independent of frame rate: x += (target - x) * (1 - exp(-k dt)).
 export const approach = (x, target, k, dt) => x + (target - x) * (1 - Math.exp(-k * dt));
+// Unit motion: barrels that move with the unit's state (view.js BarrelRig, turned about its trunnion).
+// Elevation in radians from the modelled pose; `rest` is the barrel's length out of combat as a fraction
+// of the modelled barrel. Owner 2026-11: the Breaker's gun must not droop when it is not fighting; it
+// rests a little raised with the barrel run in (shorter), and to fire it runs out to full length and
+// lifts. The Scorcher carries its nozzle low and lifts it to burn.
+export const BARREL_POSES = new Map([
+  ["breaker", { move: 0.1, park: 0.1, fire: 0.24, rest: 0.74 }],
+  ["scorcher", { move: -0.18, park: -0.18, fire: 0.12, rest: 1 }],
+]);
+// Owner 2026-11: each shot snaps the barrel in (SNAP.in seconds) then lets it run back out (SNAP.out),
+// by SNAP.depth of its length at the deepest.
+export const SNAP = Object.freeze({ in: 0.1, out: 0.4, depth: 0.22 });
+// A barrel's state: `length` eases between rest and combat; `drawn` is that length with the shot snap.
+export const newGun = (elevation = 0, length = 1) => ({ elevation, length, shot: Infinity, drawn: length });
+// The view calls this on the unit's own shot event (not under reduced motion or with combat motion off).
+export function fireBarrel(gun) { gun.shot = 0; }
+// Per frame: ease `gun` toward the pose for the unit's state and play any shot snap. rich: the "Unit
+// motion" setting (off = the modelled pose); instant: reduced motion (no tween and no snap, the pose
+// is still shown).
+export function stepBarrel(gun, pose, { moving, attacking, dt, rich, instant = false }) {
+  const elevation = !rich ? 0 : attacking ? pose.fire : moving ? pose.move : pose.park;
+  const length = !rich || attacking ? 1 : pose.rest;
+  if (instant) { gun.elevation = elevation; gun.length = length; gun.shot = Infinity; }
+  else if (dt > 0) {
+    gun.elevation = approach(gun.elevation, elevation, 3, dt); gun.length = approach(gun.length, length, 5, dt);
+    gun.shot += dt;
+  }
+  const t = gun.shot, dip = !rich ? 0 : t < SNAP.in ? t / SNAP.in : 1 - smooth(SNAP.in, SNAP.in + SNAP.out, t);
+  gun.drawn = gun.length * (1 - SNAP.depth * dip);
+  return gun;
+}
+// Pose a barrel rig about its trunnion (hinge = [y, z] in the rig's frame: the barrel's rear at mid
+// height): raised by `elevation`, scaled along its own axis to `length` (the rear stays seated in the
+// turret, so no gap opens), then pushed back along that axis by `kick` (recoil). Scale lives in the
+// part's matrix, so the instanced batches draw it with no extra call.
+export function poseBarrel(rig, hinge, elevation, length, kick) {
+  const a = -elevation, c = Math.cos(a), s = Math.sin(a), ty = hinge[0], tz = hinge[1];
+  rig.rotation.x = a;
+  rig.scale.z = length;
+  rig.position.set(0, ty - ty * c + length * tz * s + kick * s, tz - ty * s - length * tz * c - kick * c);
+}
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 
 // Per frame for a Ranger. `rig` holds the state, `motion` is the shared per-instance array.

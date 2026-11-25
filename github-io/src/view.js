@@ -33,7 +33,7 @@ import { ViewPlugins } from "./view-plugins.js";
 import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, setRimTier } from "./look-grade.js";
 import { MissionLook } from "./mission-look-view.js";
 import { airMotion } from "./air-motion.js";
-import { RIG_INFANTRY, RIG_HULL, KNEELERS, GAIT, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach } from "./unit-rig.js";
+import { RIG_INFANTRY, RIG_HULL, KNEELERS, GAIT, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach, BARREL_POSES, newGun, fireBarrel, stepBarrel, poseBarrel } from "./unit-rig.js";
 import {
   EnvironmentView,
   optimizeEnvironment,
@@ -52,10 +52,6 @@ export const RIG_PART = /^(Main_cannon|Muzzle_brake|Barrel|Cannon|Muzzle|Turret_
 // Pivots kept as their own nodes: walking legs, and the flyers' rotors (spin_*) and burner flame (flicker_*).
 const MOVING_PART = /^(leg_|spin_|flicker_)/;
 // Flyers: rotor axes, a scratch quaternion, and where the altitude looks for higher ground (a rim ahead).
-// Unit motion: barrels that move with the unit's state (BarrelRig turns about its trunnion), in radians
-// of elevation from the modelled pose. The Breaker stows its gun on the move; the Scorcher carries its
-// nozzle low and lifts it to burn.
-const STOWS = new Map([["breaker", { move: -0.3, park: 0, fire: 0.12 }], ["scorcher", { move: -0.18, park: -0.18, fire: 0.12 }]]);
 const AXIS_Y = new THREE.Vector3(0, 1, 0), AXIS_Z = new THREE.Vector3(0, 0, 1), SPIN = new THREE.Quaternion();
 const FLY_SAMPLES = [[2.5, 0], [-2.5, 0], [0, 2.5], [0, -2.5]];
 // The left and right rotors of a flyer are the same part mirrored in place: after baking, the right
@@ -1345,7 +1341,10 @@ export class WorldView {
         vs: 0, pitch: 0, pitchV: 0, squat: 0, legLength: model.userData.legLength || 0.95, hullPivot: model.userData.hullPivot || [0.6, 0] };
     }
     if (root.userData.turret) root.userData.turretBase = root.userData.turret.position.clone();
-    root.userData.elevation = 0; root.userData.drift = 0;
+    // Artillery barrels (unit-rig.js BARREL_POSES) start in their resting pose: no run-in on spawn.
+    const gunPose = this.richMotion !== false && BARREL_POSES.get(e.type);
+    root.userData.gun = gunPose ? newGun(gunPose.park, gunPose.rest) : newGun();
+    root.userData.drift = 0;
     // Per-entity anchors feed the two shared selection batches.
     const side = e.team >= 0 ? this.colors[e.team] : 0xb8b2a4; // walls are neutral grey
     const ring = createRing(e.radius, side);
@@ -1528,6 +1527,8 @@ export class WorldView {
     if(event.type==='shot' && sim.isVisible({x:event.x,z:event.z})){
       const o=this.objects.get(event.source),kind=weaponStyle(event).kind;
       if(o && kind==='cannon')o.userData.recoil=.22;
+      // Artillery (unit-rig.js SNAP): each shot snaps the barrel in, then it runs back out; a crewed tower's gun too.
+      if(o && this.activity.combat.motion && !this.reducedMotion.matches){if(o.userData.gun)fireBarrel(o.userData.gun);if(o.userData.crewGun)fireBarrel(o.userData.crewGun);}
       // Every shooter rocks back a little: hulls and rocket troops most, rifles barely.
       if(o && kind!=='support'){o.userData.kick=.16;o.userData.kickSize=kind==='rocket'?.11:kind==='cannon'?.07:.03;}
     }
@@ -1745,21 +1746,30 @@ export class WorldView {
       // Frontier Defence: a crewed tower carries its crew (dressEntity, app/defence-ui.js), facing its
       // target; the commander wears gold trims (tints only, the batches keep their materials).
       if ((e.crew || e.hero) && u.dressed !== dressKey(e)) this.dressEntity?.(o, e);
-      if (u.crew) u.crew.rotation.y = e.angle;
+      if (u.crew) {
+        u.crew.rotation.y = e.angle;
+        // A Mortar (Breaker) or Flame trap crew poses its gun like the field unit: run in at rest, out to fire.
+        if (u.crewGun === undefined) {
+          const rig = u.crew.getObjectByName("BarrelRig"), pose = BARREL_POSES.get(sim.crewType?.(e.crew, e.team));
+          u.crewGun = rig?.userData.trunnion && pose ? Object.assign(this.richMotion ? newGun(pose.park, pose.rest) : newGun(), { rig, pose }) : null;
+        }
+        const g = u.crewGun;
+        if (g) {
+          stepBarrel(g, g.pose, { moving: false, attacking: !!e.attacking, dt, rich: this.richMotion, instant: this.reducedMotion.matches });
+          poseBarrel(g.rig, g.rig.userData.trunnion, g.elevation, g.drawn, this.activity.combat.motion ? Math.sin(u.recoil / .22 * Math.PI) * .18 : 0);
+        }
+      }
       if(o.userData.barrel){
         const rig=o.userData.barrel;
         if(u.turret){
           rig.rotation.y=0;
           const kick=this.activity.combat.motion?Math.sin(u.recoil/.22*Math.PI)*.18:0;
-          const hinge=rig.userData.trunnion;
-          if(hinge&&STOWS.has(e.type)){
-            // Unit motion (artillery): the barrel lowers and stows on the move, stands as modelled when
-            // parked and lifts a little to fire. It turns about its trunnion; the recoil runs along it.
-            const pose=STOWS.get(e.type),want=!this.richMotion?0:e.attacking?pose.fire:e.moving?pose.move:pose.park;
-            u.elevation=dt>0?approach(u.elevation,want,3,dt):u.elevation;
-            const a=-u.elevation,c=Math.cos(a),s=Math.sin(a),[ty,tz]=hinge;
-            rig.rotation.x=a;
-            rig.position.set(0,ty-ty*c+tz*s+kick*s,tz-ty*s-tz*c-kick*c);
+          const hinge=rig.userData.trunnion,pose=BARREL_POSES.get(e.type);
+          if(hinge&&pose){
+            // Unit motion (artillery, unit-rig.js): at rest the barrel sits a little raised and run in;
+            // to fire it runs out and lifts. It turns about its trunnion; the recoil runs along it.
+            stepBarrel(u.gun,pose,{moving:!!e.moving,attacking:!!e.attacking,dt,rich:this.richMotion,instant:this.reducedMotion.matches});
+            poseBarrel(rig,hinge,u.gun.elevation,u.gun.drawn,kick);
           }else rig.position.set(0,0,-kick);
         }else{
         rig.rotation.y=e.type==='tower'?e.angle-m.rotation.y:0;
