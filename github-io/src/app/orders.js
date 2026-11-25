@@ -1,6 +1,7 @@
 // Targeting modes, building placement and the order sent for a click or tap.
 import { $ } from "./dom.js";
 import { placeOnGround, GHOST_LIFT } from "../ground-y.js";
+import { buildSiteError, reachingBuilder } from "../build-reach.js";
 import { DEFINITIONS as D } from "../data.js";
 import { REPAIR } from "../progression.js";
 import { isFighter } from "../sim/escort.js";
@@ -25,6 +26,7 @@ export function setupOrders(S, A) {
     S.buildPoint = null;
     S.blockedBuildType = null;
     S.buildFailure = '';
+    S.buildHoverError = '';
     $("mode-controls").hidden = true;
     $("confirm-build").hidden = true;
     if (S.view) S.view.preview.visible = false;
@@ -221,7 +223,8 @@ export function setupOrders(S, A) {
     S.buildFailure = '';
     S.view.preview.visible = true;
     placeOnGround(S.view.preview, S.view.terrain, point.x, point.z, GHOST_LIFT);
-    const error = S.sim.placement(S.buildType, 0, point.x, point.z);
+    // W14: red, with the reason, also when no selected Harvester can walk there (src/build-reach.js).
+    const error = buildSiteError(S.sim, S.buildType, point.x, point.z, A.selectedEntities());
     S.view.preview.material.color.setHex(error ? 0xef7660 : 0x92ebc5);
     $("confirm-build").disabled = !!error;
     if (error) A.notice(error);
@@ -230,7 +233,9 @@ export function setupOrders(S, A) {
 
   function confirmBuild(point = S.buildPoint) {
     if (!point || S.mode !== "build" || Z.paused || !Z.started || S.sim.result) return;
-    const worker = A.selectedEntities().find((e) => e.type === "worker");
+    // The first selected Harvester that can walk there builds it (W14); else the first, and the sim says why not.
+    const selected = A.selectedEntities();
+    const worker = reachingBuilder(S.sim, S.buildType, point.x, point.z, selected) || selected.find((e) => e.type === "worker");
     const previousEvents = S.sim.events.length;
     const b = worker && S.sim.command({ team: 0, type: "build", worker: worker.id, building: S.buildType, x: point.x, z: point.z });
     if (b) {

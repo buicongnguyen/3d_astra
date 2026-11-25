@@ -1,5 +1,6 @@
 import './construction-ui.css';
 import {translate} from './i18n.js';
+import {buildSiteError} from './build-reach.js';
 
 // Keep mobile construction feedback together in the phone's context panel (Selection tab; it was the Actions dock). The existing
 // placement buttons are moved, not duplicated, so mouse and touch share handlers.
@@ -59,7 +60,7 @@ export function createConstructionUI(definitions, { retry, back }) {
       if (kind === 'placement' || kind === 'requirements') {
         const worker = selected.some(e => e.type === 'worker');
         const error = !worker ? 'Select a Harvester to construct this building.' :
-          (kind === 'placement' && point ? sim.placement(type, 0, point.x, point.z) : sim.constructionRequirements(card.dataset.type)) || failure;
+          (kind === 'placement' && point ? buildSiteError(sim, type, point.x, point.z, selected) : sim.constructionRequirements(card.dataset.type)) || failure;
         warning = !!error;
         message = error || (kind === 'requirements' ? 'Requirements met. Choose a location to continue.' :
           point ? `${touch ? 'Tap Build here' : 'Click the site'} to start construction.` : `${touch ? 'Tap clear ground to choose a site.' : 'Click clear ground to build.'}`);

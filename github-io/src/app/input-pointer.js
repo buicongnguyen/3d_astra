@@ -1,6 +1,7 @@
 // Mouse and touch input: hover, drag boxes, taps, camera drag and the touch buttons.
 import { $ } from "./dom.js";
 import { placeOnGround, GHOST_LIFT } from "../ground-y.js";
+import { buildSiteError } from "../build-reach.js";
 import { FACTIONS } from "../story/world.js";
 import { isTouchPointer, TouchControls } from "../touch-controls.js";
 import { CROSSING_TEXT, HIGH_GROUND_TEXT, crossingAt, onHighGround } from "../terrain-labels.js";
@@ -35,9 +36,11 @@ export function setupInputPointer(S, A) {
     S.hover = S.view.pick(x, y, S.sim);
     // Nothing under the pointer: a river crossing still gets a short label.
     const ground = !S.hover && !S.drag && !S.mode ? groundLabel(S.view.point(x, y)) : "";
-    $("hover-label").hidden = (!S.hover && !ground) || !!S.drag || !!S.mode;
-    if ((S.hover || ground) && !S.drag && !S.mode) {
-      $("hover-label").textContent = S.hover ? labelFor(S.hover) : ground;
+    // W14: aiming a building (PC), a red ghost says why beside the pointer (phones show it on the build card).
+    const site = S.mode === "build" && !S.drag ? S.buildHoverError || "" : "";
+    $("hover-label").hidden = site ? false : (!S.hover && !ground) || !!S.drag || !!S.mode;
+    if (site || ((S.hover || ground) && !S.drag && !S.mode)) {
+      $("hover-label").textContent = site || (S.hover ? labelFor(S.hover) : ground);
       const rect = S.view.renderer.domElement.getBoundingClientRect();
       $("hover-label").style.left = `${Math.min(x - rect.left + 16, S.view.width - 240)}px`;
       $("hover-label").style.top = `${y - rect.top + 20}px`;
@@ -247,9 +250,11 @@ export function setupInputPointer(S, A) {
         if (p) {
           S.view.preview.visible = true;
           placeOnGround(S.view.preview, S.view.terrain, p.x, p.z, GHOST_LIFT);
-          S.view.preview.material.color.setHex(
-            S.sim.placement(S.buildType, 0, p.x, p.z) ? 0xef7660 : 0x92ebc5,
-          );
+          // W14: red also when no selected Harvester can walk there; the hover label shows the reason
+          // (cached per cell in src/build-reach.js, so hovering costs one route search per new cell).
+          const error = buildSiteError(S.sim, S.buildType, p.x, p.z, A.selectedEntities());
+          S.view.preview.material.color.setHex(error ? 0xef7660 : 0x92ebc5);
+          if (error !== S.buildHoverError) { S.buildHoverError = error; A.updateUI(); }
         }
       }
     });

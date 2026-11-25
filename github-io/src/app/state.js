@@ -91,6 +91,7 @@ export function createState() {
     buildPoint: null,
     blockedBuildType: null,
     buildFailure: "",
+    buildHoverError: "", // W14: why the desktop hover ghost is red (src/build-reach.js), for the build card
     aimPoint: null,
     hoverPoint: null,
     hoverStale: false,

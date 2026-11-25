@@ -399,7 +399,7 @@ button kbd {
   background: #152721eb;
   border: 1px solid var(--line);
   font:
-    10px Consolas,
+    11px Consolas,
     monospace;
   padding: 8px 12px;
   border-radius: 3px;
