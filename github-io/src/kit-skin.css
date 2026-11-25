@@ -499,6 +499,11 @@
 :root #briefing .stage-list button > b:first-child { border-radius: 50%; }
 :root .defence-best,
 :root .defence-perks { border-radius: 0; }
+/* Phones: result labels break only between words, with tighter tracking so the longest word ("STRUCTURES") fits a
+   third of a 390 px card with Linux/Android fonts (CI layout-f split it mid-word, 2026-11-25). */
+@media (max-width: 480px) {
+  :root .result-grid .stat span { overflow-wrap: normal; word-break: keep-all; letter-spacing: 0.03em; }
+}
 /* Narrow phones: two stat columns, so labels break between words ("OPERATI ON TIME" at 320 px before). */
 @media (max-width: 359px) {
   :root .result-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
