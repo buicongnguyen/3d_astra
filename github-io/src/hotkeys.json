@@ -33,6 +33,11 @@
     {"id":"pause","label":"Pause / resume","key":"Space"},
     {"id":"speed","label":"Game speed (fast-forward)","key":"Shift+Space"},
     {"id":"zoom-in","label":"Zoom in","key":"+"},
-    {"id":"zoom-out","label":"Zoom out","key":"−"}
+    {"id":"zoom-out","label":"Zoom out","key":"−"},
+    {"id":"turn-left","label":"Turn camera left","key":"Page Up","listOnly":true},
+    {"id":"turn-right","label":"Turn camera right","key":"Page Down","listOnly":true},
+    {"id":"grid","label":"Show / hide grid","key":"G","listOnly":true},
+    {"id":"escape","label":"Cancel targeting / pause","key":"Esc","listOnly":true},
+    {"id":"help","label":"This keyboard list","key":"?","listOnly":true}
   ]
 }

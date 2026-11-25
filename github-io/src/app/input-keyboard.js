@@ -6,6 +6,10 @@ export function setupInputKeyboard(S, A) {
   const Z = S.screen;
   function runShortcut(id) {
     if(id==='pause') {A.togglePause();return;}
+    // W14: keys the help list names that the key handler below runs itself (hotkeys.json "listOnly").
+    if(id==='turn-left'||id==='turn-right') {A.turnCamera(id==='turn-left'?-1:1);return;}
+    if(id==='escape') {if(S.mode||S.blockedBuildType)A.clearMode();else if(Z.started&&!S.sim.result)A.togglePause();return;}
+    if(id==='help') {A.showHelp();return;}
     if(!Z.started||Z.paused||S.sim.result) return;
     const es=A.selectedEntities(),e=es[0],own=S.sim.own(0);
     const choose=(items,cycle=false)=>{
@@ -48,6 +52,7 @@ export function setupInputKeyboard(S, A) {
     else if(id==='speed')A.cycleSpeed();
     else if(id==='zoom-in')S.view.zoomBy(-4);
     else if(id==='zoom-out')S.view.zoomBy(4);
+    else if(id==='grid')S.view.grid.visible=!S.view.grid.visible;
     A.updateUI();
   }
 
@@ -90,7 +95,7 @@ export function setupInputKeyboard(S, A) {
       if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright'].includes(key)) {e.preventDefault();S.keys.add(key);return;}
       const tile=ACTION_KEYS.includes(key.toUpperCase()) ? document.querySelector(`#commands [data-hotkey="${key.toUpperCase()}"]`) : null;
       if(tile&&!S.mode) {e.preventDefault();if(!e.repeat&&!tile.disabled)tile.click();return;}
-      const binding=HOTKEYS.find(k=>k.key.split(' / ')[0].toLowerCase()===key);
+      const binding=HOTKEYS.find(k=>!k.listOnly&&k.key.split(' / ')[0].toLowerCase()===key);
       const id=key==='.'?'idle':key==='-'?'zoom-out':key==='q'&&!S.mode?'attackmove':binding?.id;
       if(id) {e.preventDefault();if(!e.repeat)runShortcut(id);return;}
       if(key==='?'){e.preventDefault();if(!e.repeat){S.keys.clear();A.showHelp();}}

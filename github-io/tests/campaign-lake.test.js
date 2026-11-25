@@ -75,3 +75,20 @@ test("both camps reach the island by a ford and each other round the lake; depos
   for (const r of s.resources) assert.ok(t.canStand(r.x, r.z, 0.5) && !t.inWater(r.x, r.z, r.radius + 1), `deposit ${r.type} at (${r.x}, ${r.z})`);
   assert.ok(s.resources.filter((r) => t.level(r.x, r.z) === 1).length === 2, "the island holds two deposits worth taking");
 });
+
+test("W14: a lake ford slows a wading unit like the river ford; open water, the island and the shore do not", async () => {
+  const { default: balance } = await import("../src/balance.json", { with: { type: "json" } });
+  const s = new Simulation({ map: "mirrorlake", enemyCount: 1, ai: false }), mid = (LAKE.island + LAKE.r) / 2;
+  const unit = s.entities.find((e) => e.type === "worker" && e.team === 0);
+  for (const f of LAKE.fords) {
+    const [x, z] = polar(f.angle, mid);
+    assert.equal(s.terrain.inLakeFord(x, z), true, `${f.angle}° ford`);
+    assert.equal(s.inFord({ ...unit, x, z }), true, `${f.angle}° wades`);
+    assert.equal(s.moveSpeed({ ...unit, x, z }), unit.speed * balance.terrain.ford_speed, `${f.angle}° slowed`);
+    assert.equal(s.inFord({ ...unit, x, z, flying: true }), false, `${f.angle}° flyers pass over`);
+  }
+  for (const [x, z] of [[0, 0], polar(0, LAKE.r + 1.5), polar(135, LAKE.r + 1.5), polar(0, mid)]) {
+    assert.equal(s.inFord({ ...unit, x, z }), false, `(${x.toFixed(1)}, ${z.toFixed(1)}) is not a ford`);
+  }
+  assert.equal(s.moveSpeed({ ...unit, x: 0, z: 0 }), unit.speed, "full speed on the island");
+});

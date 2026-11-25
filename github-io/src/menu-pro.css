@@ -33,7 +33,8 @@ html:root #briefing .mode-switch button[data-mode] {
 }
 html:root #briefing .mode-switch button[data-mode]::before { display: none; }
 html:root #briefing .mode-switch button[data-mode] > .icon { display: block; width: 20px; height: 20px; margin: 0; color: #8fd8ec; filter: none; }
-html:root #briefing .mode-switch button[data-mode] > span { max-width: 100%; overflow: visible; font-size: 13px; line-height: 1.15; white-space: normal; text-overflow: clip; overflow-wrap: anywhere; }
+/* W14: a label wraps only between words ("Campa / ign" on 844x390 before); Korean keeps its words whole too. */
+html:root #briefing .mode-switch button[data-mode] > span { max-width: 100%; overflow: visible; font-size: 13px; line-height: 1.15; white-space: normal; text-overflow: clip; overflow-wrap: normal; word-break: keep-all; hyphens: manual; }
 html:root #briefing .mode-switch button[data-mode] > small { max-width: 100%; overflow: visible; color: #a9c5d0; font-size: 11px; line-height: 1.15; white-space: normal; text-overflow: clip; }
 html:root #briefing .mode-switch button[data-mode]:hover:not([aria-pressed="true"]):not(:disabled) { background: rgba(24, 56, 70, .9); border-color: rgba(127, 220, 245, .62) !important; }
 html:root #briefing .mode-switch button[data-mode][aria-pressed="true"] {
@@ -55,6 +56,11 @@ html:root #briefing .mode-switch button[data-mode]:focus-visible { outline: 2px 
 @media (max-height: 520px) and (orientation: landscape) {
   #briefing .setup-label { display: none; }
   html:root #briefing .mode-switch button[data-mode] { flex-direction: row; gap: 5px; min-height: 44px; }
+  /* W14: the icon (or the Start here badge) goes above the label, so the label has the tile's whole width:
+     beside it, "Campaign" and "Training" broke mid-word on 844x390 (campaign view tiles are ~66 px). */
+  html:root #briefing .mode-switch button[data-mode] { flex-direction: column; gap: 2px; padding: 4px 2px !important; }
+  html:root #briefing .mode-switch button[data-mode] > .icon { width: 16px; height: 16px; flex: none; }
+  html:root #briefing.campaign-view .mode-switch button[data-mode] > span { font-size: 11px; letter-spacing: 0; }
   html:root #briefing #skirmish-setup #alliance { width: 100%; }
   html:root #briefing #skirmish-setup .field:has(#alliance) { grid-column: 1 / -1; }
 }

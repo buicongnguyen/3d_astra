@@ -33,7 +33,7 @@ import { ViewPlugins } from "./view-plugins.js";
 import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, setRimTier } from "./look-grade.js";
 import { MissionLook } from "./mission-look-view.js";
 import { airMotion, airParts, poseAirParts } from "./air-motion.js";
-import { groundY, MARKER_LIFT } from "./ground-y.js";
+import { groundY, placeOnGround, MARKER_LIFT } from "./ground-y.js";
 import { RIG_INFANTRY, RIG_HULL, KNEELERS, STANCE, GAIT, hitFlinch, FALL, fallFor, infantryFall, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach, BARREL_POSES, newGun, fireBarrel, stepBarrel, poseBarrel, RECOIL, barrelKick, bodyKick, kickSize, poseTurretOnHull, swingLegs } from "./unit-rig.js";
 import {
   EnvironmentView,
@@ -1430,7 +1430,7 @@ export class WorldView {
       const cluster = template.clone(true);
       cluster.userData.shared = true;
       cluster.rotation.y = (e.id * 2.39996) % (Math.PI * 2);
-      cluster.position.set(e.x, 0, e.z);
+      placeOnGround(cluster, this.terrain, e.x, e.z); // W14: on a plateau top too (src/ground-y.js)
       cluster.traverse((m) => {
         if (m.isMesh) m.castShadow = m.receiveShadow = true;
       });
@@ -1469,7 +1469,7 @@ export class WorldView {
       );
       group.add(crystal);
     }
-    group.position.set(e.x, 0, e.z);
+    placeOnGround(group, this.terrain, e.x, e.z);
     cacheTransforms(group);
     this.scene.add(group);
     this.resourceObjects.set(e.id, group);

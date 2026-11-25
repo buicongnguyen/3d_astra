@@ -106,8 +106,9 @@
 #briefing .challenge-tile { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; align-items: start; gap: 2px 6px; min-width: 0; min-height: 64px; padding: 6px 8px; text-align: left; cursor: pointer; }
 #briefing .challenge-tile > .icon { grid-row: 1 / 3; width: 22px; height: 22px; margin-top: 1px; color: var(--kit-gold, #ffd17b); }
 #briefing .challenge-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-#briefing .challenge-text strong { font: 800 13px/1.15 var(--font-ui); color: var(--kit-text, #f1f6f3); overflow-wrap: anywhere; }
-#briefing .challenge-text small { font: 500 11px/1.25 var(--font-ui); color: var(--kit-text-2, #bcced9); overflow-wrap: anywhere; }
+/* W14: wrap between words only ("Expedit / ion" on 844x390 before); Korean keeps its words whole too. */
+#briefing .challenge-text strong { font: 800 13px/1.15 var(--font-ui); color: var(--kit-text, #f1f6f3); overflow-wrap: normal; word-break: keep-all; hyphens: manual; }
+#briefing .challenge-text small { font: 500 11px/1.25 var(--font-ui); color: var(--kit-text-2, #bcced9); overflow-wrap: normal; word-break: keep-all; hyphens: manual; }
 #briefing .challenge-reward { grid-column: 2; justify-self: start; font: 800 11px/1.2 var(--font-ui); color: var(--kit-gold, #ffd17b); }
 #briefing .challenge-tile.done { --face: rgba(80, 140, 70, 0.55); }
 #briefing .challenge-tile.done > .icon, #briefing .challenge-tile.done .challenge-reward { color: #bfe8a8; }
@@ -122,6 +123,10 @@
 @media (orientation: landscape) and (max-height: 520px) {
   .compact-ui #briefing .daily-challenges { grid-column: 1 / -1; }
   .compact-ui #briefing .challenge-tile { min-height: 52px; padding: 4px 6px; }
+  /* W14: the tiles are ~90 px wide here: the icon sits above the name so the name has the whole width. */
+  .compact-ui #briefing .challenge-tile { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; }
+  .compact-ui #briefing .challenge-tile > .icon { grid-row: auto; width: 18px; height: 18px; }
+  .compact-ui #briefing .challenge-reward { grid-column: 1; }
 }
 
 /* ---------- medal rewards: swatches, emblems and banners in the Records screen and on the results ---------- */

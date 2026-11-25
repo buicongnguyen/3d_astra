@@ -8,6 +8,8 @@ import { setLanguage, openHelp } from './lib/settings-sheet.mjs';
 // also keeps at least 60% of the screen free battlefield during normal play, and the results
 // screens (skirmish win/lose/draw, mission debrief) show their stats and touch-sized buttons.
 // Run again in Vietnamese on phone landscape to check the longer words still fit.
+// W14 (2026-11-25): no word is broken across two lines ("Campa / ign" on 844x390): text may wrap only
+// between words, at a hyphen or a slash; phone landscape also runs in Korean.
 const base = process.env.TEST_URL || 'http://127.0.0.1:4173/';
 const only = process.env.LAYOUT_ONLY ? process.env.LAYOUT_ONLY.split(',') : null;
 fs.mkdirSync('test-results', { recursive: true });
@@ -23,6 +25,7 @@ const devices = [
   ['landscape', 844, 390, true, 'en'],
   ['landscape-vi', 844, 390, true, 'vi'],
   ['portrait-vi', 390, 844, true, 'vi'],
+  ['landscape-ko', 844, 390, true, 'ko'],
 ].filter(d => !only || only.includes(d[0]));
 assert.ok(devices.length > 0, 'at least one known layout viewport is selected');
 if (only) assert.equal(devices.length,new Set(only).size,'every selected layout viewport must be known');
@@ -34,7 +37,7 @@ const allProblems = [];
 const AUDIT = ({ touch, scope, fixed }) => {
   const root = document.querySelector(scope) || document.body;
   const visible = e => e.getClientRects().length && getComputedStyle(e).visibility !== 'hidden' && !e.closest('[hidden], .visually-hidden, [inert]');
-  const out = { small: [], targets: [], outside: [], spill: [] };
+  const out = { small: [], targets: [], outside: [], spill: [], broken: [] };
   const hasText = e => [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
   for (const e of root.querySelectorAll('*')) {
     if (!hasText(e) || !visible(e)) continue;
@@ -42,6 +45,15 @@ const AUDIT = ({ touch, scope, fixed }) => {
     if (r.width <= 1 || r.height <= 1 || e.closest('svg')) continue;
     const size = parseFloat(getComputedStyle(e).fontSize);
     if (size > 0 && size < 11) out.small.push(`${e.tagName.toLowerCase()}.${(e.className || '').toString().split(' ')[0]} "${e.textContent.trim().slice(0, 24)}" ${size}px`);
+    for (const n of e.childNodes) {
+      if (n.nodeType !== 3) continue;
+      for (const m of n.data.matchAll(/[^\s\-‐\/·]{2,}/g)) {
+        const range = document.createRange();
+        range.setStart(n, m.index); range.setEnd(n, m.index + m[0].length);
+        const tops = new Set([...range.getClientRects()].filter(q => q.width > 0.5).map(q => Math.round(q.top)));
+        if (tops.size > 1) out.broken.push(`${e.tagName.toLowerCase()}.${(e.className || '').toString().split(' ')[0]} "${m[0]}"`);
+      }
+    }
   }
   const hit = (e, r) => { const h = document.elementFromPoint(Math.min(innerWidth - 1, Math.max(0, r.x + r.width / 2)), Math.min(innerHeight - 1, Math.max(0, r.y + r.height / 2))); return h && (e.contains(h) || h.contains(e)); };
   for (const e of root.querySelectorAll('button, a[href], select, input, [role=button], [role=tab], summary')) {
@@ -93,7 +105,7 @@ try {
     const check = async (label, scope = 'body', fixed = []) => {
       const result = await page.evaluate(AUDIT, { touch, scope, fixed });
       await shot(label).catch(() => {});
-      for (const kind of ['small', 'targets', 'outside', 'spill']) if (result[kind].length) problems.push(`${name} ${label}: ${kind}: ${[...new Set(result[kind])].join(' | ')}`);
+      for (const kind of ['small', 'targets', 'outside', 'spill', 'broken']) if (result[kind].length) problems.push(`${name} ${label}: ${kind}: ${[...new Set(result[kind])].join(' | ')}`);
     };
     const ready = () => page.waitForFunction(() => window.__frontier?.view.modelsReady && !document.querySelector('#start').disabled, null, { timeout: 90000 });
     const frontier = (fn, arg) => page.evaluate(fn, arg);
@@ -103,8 +115,8 @@ try {
     await page.goto(`${base}?test=1&autoharvest`);
     await ready();
     await page.waitForTimeout(600);
-    if (language === 'vi') {
-      await setLanguage(page, 'vi', { touch });
+    if (language !== 'en') {
+      await setLanguage(page, language, { touch });
       await page.waitForTimeout(500);
     }
 

@@ -64,19 +64,22 @@
 
 /* ---- Skirmish setup: the Commander pickers (the rows reuse the Battle rules look, src/rule-options.css). ---- */
 .rank-unlocks .rank-buttons { flex-wrap: wrap; }
+/* W14: wide enough for the lock note's longest word ("achievements" broke mid-word at 1920x1080); text wraps
+   between words only. */
 .rank-unlocks .rank-buttons button {
-  flex: 1 1 84px;
+  flex: 1 1 100px;
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 2px 6px;
   min-height: 44px;
-  padding: 4px 8px;
+  padding: 4px 6px;
   font-size: 13px;
   line-height: 1.2;
   white-space: normal;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
 .rank-unlocks .rank-kind-banner button { flex-basis: 132px; }
 /* Locked (the kit's disabled look): a solid surface and a readable label, never faded out. */

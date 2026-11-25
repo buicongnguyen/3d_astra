@@ -4,7 +4,8 @@
 // card line, the reach rings and a one-time hint. River crossings: the ford's marks, the hover
 // label and tap notice, and the minimap ticks. Terrain rules you can see (16.2): the eye-slash
 // mark and card line for a unit hidden from below, its hint, Barrage refused at an unseen deep
-// top, ramp kill-zone ticks, and a unit wading the ford (card line, ability tile).
+// top, ramp kill-zone ticks, and a unit wading the ford (card line, ability tile). W14: a site on a plateau
+// without ramps shows a red ghost and the reason before the tap; deposits on a plateau top sit on it.
 // TEST_URL=http://127.0.0.1:4231/ npm run test:terrain
 import assert from "node:assert/strict";
 import { launchBrowser, openPage, suite, shot, TIMEOUT } from "./lib/harness.mjs";
@@ -221,6 +222,66 @@ await suite("terrain", async () => {
     await page.evaluate(frames);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `${viewport}: no sideways scroll`);
     await shot(page, `terrain-dunes-${viewport}`);
+    assert.deepEqual(errors, [], `${viewport}: page errors`);
+    await page.close();
+  }
+  // W14: a plateau without ramps (Heartland) cannot be reached by a Harvester. The ghost aimed at its top turns
+  // red and the build card says why before the tap (it used to show green, then refuse the order); Build here
+  // stays off on phones. A deposit drawn on a plateau top sits on it (view.js createResource used y = 0).
+  for (const viewport of ["desktop", "portrait"]) {
+    const { page, goto, ready, tap, errors, mobile } = await openPage(browser, viewport);
+    await goto();
+    await ready();
+    await tap('[data-mode="skirmish"]');
+    await page.selectOption("#scenario", "heartland");
+    await page.waitForFunction(() => window.__frontier.modelsReady && window.__frontier.sim.terrain.id === "heartland", null, { timeout: TIMEOUT.models });
+    await tap("#start");
+    await page.waitForFunction(() => window.__frontier.started, null, { timeout: TIMEOUT.step });
+    const aim = await page.evaluate(async () => {
+      const f = window.__frontier, s = f.sim, v = f.view, hq = s.own(0).find((e) => e.type === "hq"), w = s.own(0).find((e) => e.type === "worker");
+      s.visible[0].fill(1); s.explored[0].fill(1);
+      s.players[0].alloy = s.players[0].energy = 9999;
+      const p = s.terrain.plateaus.filter((q) => !(q.ramps || []).length && q.r >= 5).sort((a, b) => Math.hypot(a.x - hq.x, a.z - hq.z) - Math.hypot(b.x - hq.x, b.z - hq.z))[0];
+      // A Ranger on the top (as if dropped there) sees it, so the only thing in the way is the climb.
+      s.spawn("ranger", 0, p.x + 2, p.z + 2).stance = "hold";
+      f.select([w.id]); f.step(0.05);
+      v.focusOn(p.x, p.z); v.zoom = 26;
+      document.querySelector('[data-action="tower"]').click();
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const r = v.renderer.domElement.getBoundingClientRect(), q = v.project(p.x, p.z, v.terrain.heightAt(p.x, p.z));
+      const crystal = v.createResource({ id: -77, type: "alloy", x: p.x, z: p.z });
+      const crystalY = crystal.position.y, h = v.terrain.heightAt(p.x, p.z);
+      v.scene.remove(crystal); v.resourceObjects.delete(-77);
+      return { x: r.left + q.x, y: r.top + q.y, mode: f.mode, crystalY, h };
+    });
+    assert.equal(aim.mode, "build", `${viewport}: build mode`);
+    assert.ok(aim.h > 2 && Math.abs(aim.crystalY - aim.h) < 0.01, `${viewport}: a deposit on a plateau top sits on it ${JSON.stringify(aim)}`);
+    if (mobile) await page.touchscreen.tap(aim.x, aim.y); else await page.mouse.move(aim.x, aim.y);
+    // The reason: on the phone build card, beside the pointer on PC.
+    const where = mobile ? "construction-message" : "hover-label";
+    await page.waitForFunction((id) => window.__frontier.view.preview.visible && document.getElementById(id)?.textContent === "The Harvester cannot reach that site.", where, { timeout: TIMEOUT.step });
+    const ghost = await page.evaluate((id) => {
+      const f = window.__frontier, g = f.view.preview, { x, z } = g.position, msg = document.getElementById(id);
+      return { level: f.sim.terrain.level(x, z), placement: f.sim.placement("tower", 0, x, z), color: g.material.color.getHex(), confirm: document.getElementById("confirm-build").disabled,
+        shown: !!msg && !msg.hidden && msg.getBoundingClientRect().height > 0, size: msg && parseFloat(getComputedStyle(msg).fontSize) };
+    }, where);
+    assert.ok(ghost.level === 1 && ghost.placement === "", `${viewport}: a site the placement rule allows ${JSON.stringify(ghost)}`);
+    assert.ok(ghost.color === 0xef7660, `${viewport}: the ghost is red ${JSON.stringify(ghost)}`);
+    assert.ok(ghost.shown && ghost.size >= 11, `${viewport}: the reason is shown ${JSON.stringify(ghost)}`);
+    if (mobile) assert.ok(ghost.confirm, `${viewport}: Build here is off`);
+    await shot(page, `terrain-unreachable-site-${viewport}`);
+    // Back on open ground near the base the ghost turns green again.
+    const open = await page.evaluate(async () => {
+      const f = window.__frontier, s = f.sim, v = f.view, hq = s.own(0).find((e) => e.type === "hq");
+      const x = hq.x + (hq.x > 0 ? -10 : 10), z = hq.z + (hq.z > 0 ? -8 : 8);
+      v.focusOn(x, z); f.step(0.05);
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const r = v.renderer.domElement.getBoundingClientRect(), q = v.project(x, z, 0);
+      return { x: r.left + q.x, y: r.top + q.y };
+    });
+    if (mobile) await page.touchscreen.tap(open.x, open.y); else await page.mouse.move(open.x, open.y);
+    await page.waitForFunction((id) => window.__frontier.view.preview.material.color.getHex() === 0x92ebc5 && (id === "construction-message" || document.getElementById(id).hidden), where, { timeout: TIMEOUT.step });
+    await page.evaluate(() => document.getElementById("cancel-mode").click());
     assert.deepEqual(errors, [], `${viewport}: page errors`);
     await page.close();
   }

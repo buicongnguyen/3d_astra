@@ -2,6 +2,7 @@
 import { $ } from "./dom.js";
 import { ACTION_KEYS } from "../hotkeys.js";
 import { DEFINITIONS as D } from "../data.js";
+import { buildSiteError } from "../build-reach.js";
 import { TRAINING_STEPS } from "../tutorial.js";
 import { createMissionUI } from "../mission-ui.js";
 import { hasPortrait, portrait } from "../portraits.js";
@@ -390,11 +391,11 @@ export function setupHud(S, A) {
     for (const b of document.querySelectorAll(".touch-controls button"))
       b.disabled = !Z.started || Z.paused || !!S.sim.result;
     if (S.mode === "build" && S.buildPoint) {
-      const error = S.sim.placement(S.buildType, 0, S.buildPoint.x, S.buildPoint.z);
+      const error = buildSiteError(S.sim, S.buildType, S.buildPoint.x, S.buildPoint.z, es);
       $("confirm-build").disabled = !!error || Z.paused || !Z.started;
       S.view.preview.material.color.setHex(error ? 0xef7660 : 0x92ebc5);
     }
-    A.constructionUI.update({sim: S.sim, selected:es, mode: S.mode, type:S.buildType, point:S.buildPoint, blockedType:S.blockedBuildType, failure:S.buildFailure, started: Z.started, paused: Z.paused, touch:S.touchInput});
+    A.constructionUI.update({sim: S.sim, selected:es, mode: S.mode, type:S.buildType, point:S.buildPoint, blockedType:S.blockedBuildType, failure:S.buildFailure || (S.buildPoint ? '' : S.buildHoverError || ''), started: Z.started, paused: Z.paused, touch:S.touchInput});
     // Frontier Defence takes over the command card with its pad and tower sheets (app/defence-entry.js).
     A.defenceHud?.(es);
   }

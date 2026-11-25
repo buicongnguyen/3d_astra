@@ -84,7 +84,7 @@
     },
     {
       "name": "orders and input",
-      "files": ["src/app/{orders,input-keyboard,input-pointer,abilities}.js", "src/hotkeys.*", "src/ability-hints.js", "src/follow-tether-view.js"],
+      "files": ["src/app/{orders,input-keyboard,input-pointer,abilities}.js", "src/hotkeys.*", "src/ability-hints.js", "src/follow-tether-view.js", "src/build-reach.js"],
       "suites": ["hotkeys", "pc-controls", "selection", "mobile-controls", "mobile-gestures", "iphone-gestures", "patrol", "repair-rally", "squad-orders", "support-touch", "tactics-ui", "mobile-construction", "abilities", "auto-combat"],
       "checks": []
     },

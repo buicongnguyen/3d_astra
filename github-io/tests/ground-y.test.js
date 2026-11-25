@@ -95,3 +95,17 @@ test('a building on a plateau, finished or under construction, is reachable up a
   }
   assert.equal(L.get(b.id).complete, false);
 });
+
+// W14: capture-point rings (capture-view.js) were drawn at a fixed 0.1 m and deposits (view.js createResource)
+// at 0 m, so on a plateau top they sank inside it. Both now take the ground height (the browser half, the
+// crystals on Mirror Lake's island, is in tests/terrain.mjs).
+test('capture rings sit 0.1 m above the ground under them, on a plateau top too', async () => {
+  const { CaptureRings } = await import('../src/capture-view.js');
+  const t = new Terrain('dunes'), p = t.plateaus[0], scene = { add() {}, remove() {} };
+  const rings = new CaptureRings(scene);
+  const points = { top: { x: p.x, z: p.z, r: 3 }, low: { x: p.x + p.r + 6, z: p.z, r: 3 } };
+  rings.update({ terrain: t, mission: { points }, capture: {}, time: 0, entities: [] }, [0x44aaff, 0xff6644], true);
+  assert.ok(Math.abs(rings.rings.get('top').position.y - (H + 0.1)) < 1e-9, `top ring at ${rings.rings.get('top').position.y}`);
+  assert.ok(Math.abs(rings.rings.get('low').position.y - 0.1) < 1e-9, 'low ring unchanged');
+  rings.clear();
+});

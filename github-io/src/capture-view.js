@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { placeOnGround } from "./ground-y.js";
 
 // Capture points of a story mission: one flat ring per point. Grey while neutral, the owner's
 // army colour when owned; while a side is taking it the ring pulses and an inner arc fills
@@ -122,7 +123,9 @@ export class CaptureRings {
     this.rings.clear();
     this.source = null;
   }
-  build(points) {
+  // W14: each ring sits 0.1 m above the ground under it (src/ground-y.js), so a point on a plateau top is not
+  // drawn inside the plateau.
+  build(points, terrain) {
     this.clear();
     this.source = points;
     for (const [name, p] of Object.entries(points)) {
@@ -132,7 +135,7 @@ export class CaptureRings {
       });
       const ring = new THREE.Mesh(this.geometry, material);
       ring.rotation.x = -Math.PI / 2;
-      ring.position.set(p.x, 0.1, p.z);
+      placeOnGround(ring, terrain, p.x, p.z, 0.1);
       ring.scale.setScalar(p.r);
       ring.renderOrder = 3;
       ring.userData.owner = undefined;
@@ -146,7 +149,7 @@ export class CaptureRings {
   update(sim, colors, still) {
     const points = sim.mission ? sim.mission.points : sim.skirmishPoints;
     if (!points || !Object.keys(points).length) { if (this.rings.size) this.clear(); return; }
-    if (points !== this.source) this.build(points);
+    if (points !== this.source) this.build(points, sim.terrain);
     for (const [name, ring] of this.rings) {
       const p = points[name], u = ring.material.uniforms;
       if (!p) continue;

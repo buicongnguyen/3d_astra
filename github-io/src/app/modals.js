@@ -242,6 +242,7 @@ export function setupModals(S, A) {
       // Help lists every PC command and control group; running one returns to the battlefield.
       const shortcut = event.target.closest("[data-shortcut]"), group = event.target.closest("[data-group]");
       if ((shortcut || group) && Z.modalType === "help") {
+        if (shortcut?.dataset.shortcut === "help") return; // already open
         closeModal();
         if (shortcut) A.runShortcut(shortcut.dataset.shortcut);
         else if (Z.started && !S.sim.result) A.useGroup(group.dataset.group, event.ctrlKey || event.metaKey, event.shiftKey);
