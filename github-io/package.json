@@ -46,6 +46,7 @@
     "test:air": "node tests/air.mjs",
     "bench:factions": "node tools/faction-bench.mjs",
     "test:visual-combat": "node tests/visual-combat.mjs",
+    "test:death-cue": "node tests/death-cue.mjs",
     "test:new-game": "node tests/new-game.mjs",
     "test:boundary-fx": "node tests/boundary-fx.mjs",
     "test:repair-rally": "node tests/repair-rally.mjs",
