@@ -4,8 +4,10 @@ import assert from 'node:assert/strict';
 import { Simulation } from '../src/simulation.js';
 import { DEFINITIONS as D } from '../src/data.js';
 import { FACTION_RULES, AIR } from '../src/factions.js';
-import { TERRAIN } from '../src/terrain.js';
+import { TERRAIN, rimReach } from '../src/terrain.js';
 import { advance } from "./lib/sim.js";
+// How far a plateau reaches from its centre to the south (+z) and the east (+x): its radius for a disc, half a side for a rounded box.
+const S = (p) => rimReach(p, 0, 1), E = (p) => rimReach(p, 1, 0);
 
 const TICK = 0.05;
 const run = (s, seconds) => { advance(s, seconds, { steps: "div", stop: false, events: "leave" }); };
@@ -96,10 +98,10 @@ test('a flyer flies straight over the river, walls and a plateau, inside the map
   assert.ok(w.z > 3.7 && Math.abs(w.x + 9) < 0.01, `${w.x}, ${w.z}`);
   // Over a plateau rim (dunes) and never past the edge of the map.
   const d = quiet({ map: 'dunes' }), p = d.terrain.plateaus[0];
-  const f = put(d, 'glider', 0, p.x - p.r - 6, p.z);
-  d.issue([f.id], { type: 'move', x: p.x + p.r + 6, z: p.z });
+  const f = put(d, 'glider', 0, p.x - E(p) - 6, p.z);
+  d.issue([f.id], { type: 'move', x: p.x + E(p) + 6, z: p.z });
   run(d, 4);
-  assert.ok(Math.abs(f.z - p.z) < 0.01 && f.x > p.x + p.r);
+  assert.ok(Math.abs(f.z - p.z) < 0.01 && f.x > p.x + E(p));
   f.x = d.terrain.half - 1.5; d.issue([f.id], { type: 'move', x: d.terrain.half + 20, z: p.z });
   run(d, 1);
   assert.ok(f.x <= d.terrain.half - 1);
@@ -177,10 +179,10 @@ test('a flyer looks over a deep plateau top from low ground and opens it to its 
   const [cx, cz] = t.cellAt(p.x, p.z), centre = cz * t.grid + cx;
   assert.equal(t.cellDeep[centre], 1);
   // A Ranger on low ground at 10 m does not see the centre; a Kite at the same spot does.
-  const r = put(s, 'ranger', 0, p.x, p.z + p.r + 2);
+  const r = put(s, 'ranger', 0, p.x, p.z + S(p) + 2);
   s.updateVision();
   assert.equal(s.visible[0][centre], 0);
-  const k = put(s, 'kite', 0, p.x, p.z + p.r + 2);
+  const k = put(s, 'kite', 0, p.x, p.z + S(p) + 2);
   s.updateVision();
   assert.equal(s.visible[0][centre], 1, 'the Kite sees the top');
   assert.equal(s.levelOf(k), 0);
@@ -196,7 +198,7 @@ test('a flyer looks over a deep plateau top from low ground and opens it to its 
 
 test('the army below sees and shoots an enemy flyer over a hidden plateau cell (airSeenBy)', () => {
   const s = quiet({ map: 'dunes' }), t = s.terrain, p = t.plateaus[0];
-  const k = put(s, 'hawk', 1, p.x, p.z + p.r - 7), r = put(s, 'ranger', 0, p.x, p.z + p.r + 1.5);
+  const k = put(s, 'hawk', 1, p.x, p.z + S(p) - 7), r = put(s, 'ranger', 0, p.x, p.z + S(p) + 1.5);
   k.damage = 0;
   s.updateVision();
   const [cx, cz] = t.cellAt(k.x, k.z);

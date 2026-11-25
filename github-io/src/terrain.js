@@ -53,6 +53,27 @@ export function reflect(x, z, symmetry = "point") {
   }
   return out;
 }
+// The smallest corner radius of a rounded box plateau ("rbox"), metres.
+export const RBOX_CORNER = 3;
+// Signed distance from (x, z) to a plateau's edge, negative inside: a disc (x, z, r), a box or canyon
+// rect (x, z, w, d, sharp corners) or a rounded box (x, z, w, d, corner).
+export function plateauEdge(p, x, z) {
+  if (p.shape === "disc") return hyp(x - p.x, z - p.z) - p.r;
+  const c = p.shape === "rbox" ? p.corner : 0;
+  const dx = Math.abs(x - p.x) - p.w / 2 + c, dz = Math.abs(z - p.z) - p.d / 2 + c;
+  return hyp(Math.max(dx, 0), Math.max(dz, 0)) + Math.min(Math.max(dx, dz), 0) - c;
+}
+// How far a ray from a plateau's centre along the unit direction (dx, dz) runs before it leaves the
+// plateau (its "radius" that way): r for a disc, half a side straight out from a box's centre.
+export function rimReach(p, dx, dz) {
+  if (p.shape === "disc") return p.r;
+  // Straight out of a side: half that side (exact; a box's corners are never on these rays).
+  if (dz === 0 && Math.abs(dx) === 1) return p.w / 2;
+  if (dx === 0 && Math.abs(dz) === 1) return p.d / 2;
+  let lo = 0, hi = Math.hypot(p.w, p.d);
+  for (let i = 0; i < 48; i++) { const m = (lo + hi) / 2; if (plateauEdge(p, p.x + dx * m, p.z + dz * m) < 0) lo = m; else hi = m; }
+  return (lo + hi) / 2;
+}
 export class Terrain {
   constructor(id = "classic") {
     this.id = Object.hasOwn(ALL_MAPS, id) ? id : "classic";
@@ -250,24 +271,33 @@ export class Terrain {
     const SIDES = { north: [0, -1], south: [0, 1], east: [1, 0], west: [-1, 0] }, FLIP = { north: "south", south: "north", east: "west", west: "east" };
     const make = (p) => {
       const q = { shape: p.shape, x: p.x, z: p.z, r: p.r, w: p.w, d: p.d, ramps: [] };
+      if (p.shape === "rbox") {
+        // A rounded box (hills mix, 2026-11-25): its sides snap to the 2 m nav/vision grid, so the cliff band
+        // falls on cell edges, and its corners are arcs of radius `corner` (3 m or more, at most half a side).
+        const snap = (v) => Math.sign(v) * Math.round(Math.abs(v) / 2) * 2, x0 = snap(p.x - p.w / 2), x1 = snap(p.x + p.w / 2), z0 = snap(p.z - p.d / 2), z1 = snap(p.z + p.d / 2);
+        Object.assign(q, { x: (x0 + x1) / 2, z: (z0 + z1) / 2, w: x1 - x0, d: z1 - z0 });
+        q.corner = Math.min(Math.max(p.corner ?? RBOX_CORNER, RBOX_CORNER), q.w / 2, q.d / 2);
+      }
       for (const ramp of p.ramps || []) {
-        if (p.shape === "disc") {
-          const a = (ramp.angle * Math.PI) / 180;
-          q.ramps.push({ x: p.x + Math.cos(a) * p.r, z: p.z + Math.sin(a) * p.r, half: ramp.width / 2 });
+        if (typeof ramp.angle === "number") {
+          // A disc's ramp sits on the rim at `angle`; a rounded box's where that ray from the centre leaves it.
+          const a = (ramp.angle * Math.PI) / 180, reach = p.shape === "disc" ? p.r : rimReach(q, Math.cos(a), Math.sin(a));
+          q.ramps.push({ x: q.x + Math.cos(a) * reach, z: q.z + Math.sin(a) * reach, half: ramp.width / 2 });
         } else {
           const [nx, nz] = SIDES[ramp.side], at = ramp.at || 0;
-          q.ramps.push({ x: p.x + nx * p.w / 2 + (nz ? at : 0), z: p.z + nz * p.d / 2 + (nx ? at : 0), half: ramp.width / 2 });
+          q.ramps.push({ x: q.x + nx * q.w / 2 + (nz ? at : 0), z: q.z + nz * q.d / 2 + (nx ? at : 0), half: ramp.width / 2 });
         }
       }
       return q;
     };
     // "quad" (opt-in, R3 map variety) adds the two axis mirrors as well, for maps fair to four camps.
     const FLIP_X = { east: "west", west: "east", north: "north", south: "south" }, FLIP_Z = { north: "south", south: "north", east: "east", west: "west" };
-    const flipX = (p) => ({ ...p, x: -p.x, ramps: (p.ramps || []).map((r) => (p.shape === "disc" ? { ...r, angle: 180 - r.angle } : { ...r, side: FLIP_X[r.side], at: r.side === "north" || r.side === "south" ? -(r.at || 0) : r.at })) });
-    const flipZ = (p) => ({ ...p, z: -p.z, ramps: (p.ramps || []).map((r) => (p.shape === "disc" ? { ...r, angle: -r.angle } : { ...r, side: FLIP_Z[r.side], at: r.side === "east" || r.side === "west" ? -(r.at || 0) : r.at })) });
+    const byAngle = (r) => typeof r.angle === "number";
+    const flipX = (p) => ({ ...p, x: -p.x, ramps: (p.ramps || []).map((r) => (byAngle(r) ? { ...r, angle: 180 - r.angle } : { ...r, side: FLIP_X[r.side], at: r.side === "north" || r.side === "south" ? -(r.at || 0) : r.at })) });
+    const flipZ = (p) => ({ ...p, z: -p.z, ramps: (p.ramps || []).map((r) => (byAngle(r) ? { ...r, angle: -r.angle } : { ...r, side: FLIP_Z[r.side], at: r.side === "east" || r.side === "west" ? -(r.at || 0) : r.at })) });
     for (const p of raw) {
       list.push(make(p));
-      if (p.mirror) list.push(make({ ...p, x: -p.x, z: -p.z, ramps: (p.ramps || []).map((r) => (p.shape === "disc" ? { ...r, angle: r.angle + 180 } : { ...r, side: FLIP[r.side], at: -(r.at || 0) })) }));
+      if (p.mirror) list.push(make({ ...p, x: -p.x, z: -p.z, ramps: (p.ramps || []).map((r) => (byAngle(r) ? { ...r, angle: r.angle + 180 } : { ...r, side: FLIP[r.side], at: -(r.at || 0) })) }));
       if (p.mirror === "quad") { list.push(make(flipX(p))); list.push(make(flipZ(p))); }
     }
     this.plateaus = list;
@@ -291,11 +321,7 @@ export class Terrain {
       }
   }
   // Signed distance to a plateau's edge: negative inside.
-  edge(p, x, z) {
-    if (p.shape === "disc") return hyp(x - p.x, z - p.z) - p.r;
-    const dx = Math.abs(x - p.x) - p.w / 2, dz = Math.abs(z - p.z) - p.d / 2;
-    return hyp(Math.max(dx, 0), Math.max(dz, 0)) + Math.min(Math.max(dx, dz), 0);
-  }
+  edge(p, x, z) { return plateauEdge(p, x, z); }
   plateauAt(x, z) {
     for (let k = 0; k < this.plateaus.length; k++) if (this.edge(this.plateaus[k], x, z) < 0) return k;
     return -1;

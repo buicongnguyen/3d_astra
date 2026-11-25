@@ -198,6 +198,13 @@ export function paintPlateaus(ctx, terrain, size) {
       return;
     }
     const w = p.w + grow * 2, d = p.d + grow * 2;
+    // A rounded box grown by `grow` keeps rounded corners of radius corner + grow (square once inset past them).
+    if (p.shape === "rbox") {
+      const radius = Math.max(0, p.corner + grow) * k;
+      if (radius > 0 && ctx.roundRect) ctx.roundRect(px(p.x - w / 2), px(p.z - d / 2), w * k, d * k, radius);
+      else ctx.rect(px(p.x - w / 2), px(p.z - d / 2), w * k, d * k);
+      return;
+    }
     if (grow > 0 && ctx.roundRect) ctx.roundRect(px(p.x - w / 2), px(p.z - d / 2), w * k, d * k, grow * k);
     else ctx.rect(px(p.x - w / 2), px(p.z - d / 2), w * k, d * k);
   };

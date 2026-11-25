@@ -21,7 +21,9 @@ import { themeFor } from "./visual-style.js";
 const CAP = [[-2.4, 1], [-1.3, 1], [-0.45, 1.08], [0.02, 1.28]];
 // Face rows: [d, height fraction, stratum]. Rows a few centimetres apart switch stratum, so the
 // rock shows crisp horizontal bands instead of one smooth gradient.
-const FACE = [[0.06, 0.97, 0], [0.17, 0.86, 0], [0.2, 0.83, 1], [0.342, 0.66, 1], [0.365, 0.63, 2], [0.506, 0.44, 2], [0.528, 0.41, 3], [0.668, 0.2, 3], [0.74, 0.083, 4], [0.84, -0.04, 5]];
+// The first row starts on the cap's lip (2026-11-25; it began 4 cm out, 7 cm lower, and the low
+// ground showed through that slot straight from above).
+const FACE = [[0.02, 1, 0], [0.17, 0.86, 0], [0.2, 0.83, 1], [0.342, 0.66, 1], [0.365, 0.63, 2], [0.506, 0.44, 2], [0.528, 0.41, 3], [0.668, 0.2, 3], [0.74, 0.083, 4], [0.84, -0.04, 5]];
 export const RELIEF = { lift: 0.02, foot: 0.84, faceUV: 0.47, band: 0.8 };
 // Sun from -x, +z (view.js SUN_OFFSET): faces turned that way are lit, the others in shade.
 const SUN = new THREE.Vector2(-25, 20).normalize();
@@ -100,9 +102,30 @@ export function lowerCliffBand(geometry, terrain) {
 }
 
 // Edge columns: a point on the edge, its outward normal n and the inward step m (n on straight
-// sides and discs; the corner diagonal for box corners, whose inner outline stays square).
+// sides, discs and rounded corners; the corner diagonal for box corners, whose inner outline stays square).
 function columns(p, step = 0.4) {
   const cols = [];
+  if (p.shape === "rbox") {
+    // A rounded box (hills mix, 2026-11-25): each corner is an arc of radius p.corner (at least 3 m, so
+    // the 2.4 m cap inset never folds), each side a straight run between two arcs; every column
+    // steps inward along its own normal, like a disc's. Straight runs take a column every 0.5 m (the
+    // arcs every 0.4 m): a straight face needs no more to stay rough, and the rock costs about what
+    // the disc it replaced did.
+    const c = p.corner, hw = p.w / 2 - c, hd = p.d / 2 - c, corners = [[1, 1], [-1, 1], [-1, -1], [1, -1]];
+    const arcSteps = Math.max(4, Math.ceil((Math.PI * c) / 2 / step));
+    for (let k = 0; k < 4; k++) {
+      const [sx, sz] = corners[k], [tx, tz] = corners[(k + 1) % 4], a0 = (k * Math.PI) / 2, ox = p.x + sx * hw, oz = p.z + sz * hd;
+      for (let i = 0; i < arcSteps; i++) {
+        const a = a0 + (i / arcSteps) * (Math.PI / 2), nx = Math.cos(a), nz = Math.sin(a);
+        cols.push({ x: ox + nx * c, z: oz + nz * c, nx, nz, mx: nx, mz: nz });
+      }
+      // The straight side from this corner's arc end to the next corner's arc start.
+      const nx = Math.round(Math.cos(a0 + Math.PI / 2)), nz = Math.round(Math.sin(a0 + Math.PI / 2));
+      const x0 = ox + nx * c, z0 = oz + nz * c, x1 = p.x + tx * hw + nx * c, z1 = p.z + tz * hd + nz * c, length = Math.hypot(x1 - x0, z1 - z0), n = Math.max(1, Math.ceil(length / (step * 1.25)));
+      for (let i = 0; i < n; i++) cols.push({ x: x0 + ((x1 - x0) * i) / n, z: z0 + ((z1 - z0) * i) / n, nx, nz, mx: nx, mz: nz });
+    }
+    return cols;
+  }
   if (p.shape === "disc") {
     const n = Math.max(48, Math.ceil((2 * Math.PI * p.r) / step));
     for (let i = 0; i < n; i++) {
@@ -157,7 +180,7 @@ export function buildPlateauRelief(terrain) {
       const at = (d) => {
         if (d >= 0) return [edge(col.x + col.nx * d), edge(col.z + col.nz * d)];
         const x = col.x + col.mx * d, z = col.z + col.mz * d;
-        if (p.shape === "disc") return [x, z];
+        if (p.shape === "disc" || p.shape === "rbox") return [x, z];
         return [Math.min(Math.max(x, p.x - p.w / 2 - d), p.x + p.w / 2 + d), Math.min(Math.max(z, p.z - p.d / 2 - d), p.z + p.d / 2 + d)];
       };
       const cap = CAP.map(([d, light], j) => {

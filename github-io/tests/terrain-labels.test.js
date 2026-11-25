@@ -4,11 +4,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { MISSIONS } from '../src/story/missions.js';
-import { Terrain, TERRAIN, CROSSINGS } from '../src/terrain.js';
+import { Terrain, TERRAIN, CROSSINGS, rimReach } from '../src/terrain.js';
 import { Simulation } from '../src/simulation.js';
 import { HIGH_GROUND_TEXT, HIGH_GROUND_HINT, CROSSING_TEXT, onHighGround, crossingAt, shotSlope } from '../src/terrain-labels.js';
 import { translate } from '../src/i18n.js';
 import { fight } from '../tools/high-ground-bench.mjs';
+// How far a plateau reaches from its centre to the south (+z) and the east (+x): its radius for a disc, half a side for a rounded box.
+const S = (p) => rimReach(p, 0, 1), E = (p) => rimReach(p, 1, 0);
 
 const RIVER_MAPS = ['riverlands', 'expanse', 'woodlands'];
 
@@ -41,7 +43,7 @@ test('painted roads reach the river only at a crossing, and no bare earth touche
 
 test('high ground: who is on it, which way a shot goes, and the words for it', () => {
   const s = new Simulation({ ai: false, map: 'dunes' }), p = s.terrain.plateaus[0];
-  const top = s.spawn('ranger', 0, p.x, p.z), below = s.spawn('ranger', 1, p.x, p.z + p.r + 5);
+  const top = s.spawn('ranger', 0, p.x, p.z), below = s.spawn('ranger', 1, p.x, p.z + S(p) + 5);
   assert.equal(onHighGround(s.terrain, top), true);
   assert.equal(onHighGround(s.terrain, below), false);
   assert.equal(onHighGround(s.terrain, { kind: 'building', damage: 0, x: p.x, z: p.z }), false, 'a building that does not shoot');

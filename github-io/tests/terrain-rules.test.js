@@ -5,10 +5,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Simulation } from '../src/simulation.js';
 import { DEFINITIONS as D } from '../src/data.js';
-import { TERRAIN } from '../src/terrain.js';
+import { TERRAIN, rimReach } from '../src/terrain.js';
 import { FORD_TEXT, FORD_SHORT, HIDDEN_TEXT, HIDDEN_HINT, SIGHT_TEXT, heldPlateaus, hiddenFromBelow, onHighGround, rampTicks, selectionGround } from '../src/terrain-labels.js';
 import { abilityGroups, abilityStatus, aimState } from '../src/tactics-ui.js';
 import { translate } from '../src/i18n.js';
+// How far a plateau reaches from its centre to the south (+z) and the east (+x): its radius for a disc, half a side for a rounded box.
+const S = (p) => rimReach(p, 0, 1), E = (p) => rimReach(p, 1, 0);
 
 const near = (a, b) => Math.abs(a - b) < 1e-9;
 // A quiet field: the starting units are removed so nothing walks into the test.
@@ -76,8 +78,8 @@ test('no abilities in the ford: not ready, not cast, and the tile says why', () 
 });
 
 test('Barrage needs sight of a deep plateau top: refused in fog, allowed with a friend up there', () => {
-  const s = field('dunes'), p = s.terrain.plateaus[0], centre = { x: p.x, z: p.z + p.r - 8 }; // the old plateau centre's depth: plateaus were enlarged, so the test aims 8 m inside the rim
-  const breaker = s.spawn('breaker', 0, p.x, p.z + p.r + 3);
+  const s = field('dunes'), p = s.terrain.plateaus[0], centre = { x: p.x, z: p.z + S(p) - 8 }; // the old plateau centre's depth: plateaus were enlarged, so the test aims 8 m inside the rim
+  const breaker = s.spawn('breaker', 0, p.x, p.z + S(p) + 3);
   s.updateVision();
   assert.equal(onHighGround(s.terrain, breaker), false);
   assert.ok(Math.hypot(breaker.x - centre.x, breaker.z - centre.z) <= D.breaker.ability.range, 'in reach');
@@ -88,11 +90,11 @@ test('Barrage needs sight of a deep plateau top: refused in fog, allowed with a 
   assert.equal(aim.ok, false);
   assert.equal(aim.sight, true, 'the aim says why');
   // The rim strip is seen from below: shelling it is allowed.
-  const rim = { x: p.x, z: p.z + p.r - 1.5 };
+  const rim = { x: p.x, z: p.z + S(p) - 1.5 };
   assert.equal(s.hiddenTop(rim, 0), false);
   assert.equal(aimState(s, [breaker], rim).ok, true);
   // A friendly unit on the plateau opens the whole top to the team.
-  s.spawn('ranger', 0, p.x + p.r - 2, p.z);
+  s.spawn('ranger', 0, p.x + E(p) - 2, p.z);
   s.updateVision();
   assert.equal(s.hiddenTop(centre, 0), false);
   assert.equal(aimState(s, [breaker], centre).ok, true);
@@ -102,14 +104,14 @@ test('Barrage needs sight of a deep plateau top: refused in fog, allowed with a 
 
 test('Burn line follows the same sight rule', () => {
   const s = field('dunes', { factions: { 0: 'ashfall' } }), p = s.terrain.plateaus[0];
-  const scorcher = s.spawn('scorcher', 0, p.x, p.z + p.r + 2.5);
+  const scorcher = s.spawn('scorcher', 0, p.x, p.z + S(p) + 2.5);
   // Burn line's 7 m can't reach a deep cell from the cliff foot; a longer reach puts the rule to the test.
   scorcher.ability = { ...scorcher.ability, range: 12 };
   s.updateVision();
-  const deep = { x: p.x, z: p.z + p.r - 7 }; // 7 m inside the rim (plateaus enlarged)
+  const deep = { x: p.x, z: p.z + S(p) - 7 }; // 7 m inside the rim (plateaus enlarged)
   assert.equal(s.hiddenTop(deep, 0), true);
   assert.equal(s.useAbility(scorcher, deep), false);
-  s.spawn('ranger', 0, p.x - p.r + 2, p.z);
+  s.spawn('ranger', 0, p.x - E(p) + 2, p.z);
   s.updateVision();
   assert.equal(s.useAbility(scorcher, deep), true);
 });
@@ -124,7 +126,7 @@ test('flat maps keep the old behaviour: a fogged point in reach can be shelled',
 
 test('hidden from below: deep on a plateau, not on the rim, not where a visible enemy stands', () => {
   const s = field('dunes'), p = s.terrain.plateaus[0], q = s.terrain.plateaus[1];
-  const deep = s.spawn('ranger', 0, p.x, p.z), rim = s.spawn('ranger', 0, p.x + p.r - 2, p.z), low = s.spawn('ranger', 0, p.x, p.z + p.r + 4);
+  const deep = s.spawn('ranger', 0, p.x, p.z), rim = s.spawn('ranger', 0, p.x + E(p) - 2, p.z), low = s.spawn('ranger', 0, p.x, p.z + S(p) + 4);
   s.updateVision();
   assert.equal(onHighGround(s.terrain, rim), true, 'the rim is high ground');
   assert.equal(hiddenFromBelow(s, deep), true);
@@ -136,7 +138,7 @@ test('hidden from below: deep on a plateau, not on the rim, not where a visible 
   s.updateVision();
   assert.equal(hiddenFromBelow(s, deep), true);
   // A visible enemy on the same plateau: the top is contested, no mark.
-  const enemy = s.spawn('ranger', 1, p.x - p.r + 2, p.z);
+  const enemy = s.spawn('ranger', 1, p.x - E(p) + 2, p.z);
   s.updateVision();
   assert.equal(s.isVisible(enemy, 0), true);
   assert.deepEqual([...heldPlateaus(s, 0)].sort(), s.isVisible(far, 0) ? [0, 1] : [0]);

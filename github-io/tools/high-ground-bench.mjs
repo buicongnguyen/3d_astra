@@ -3,7 +3,7 @@
 // scenario, next to a flat-ground control with the same positions.
 //   node tools/high-ground-bench.mjs            (JSON with --json)
 import { Simulation } from "../src/simulation.js";
-import { TERRAIN } from "../src/terrain.js";
+import { TERRAIN, rimReach } from "../src/terrain.js";
 import { DEFINITIONS as D } from "../src/data.js";
 
 const GROUPS = {
@@ -15,7 +15,7 @@ const GROUPS = {
 // sent up at the plateau (attack-move to its centre), or the high group comes down.
 const STARTS = ["guard", "low-attacks", "high-attacks"];
 const GAPS = [3, 6, 9]; // metres between the cliff foot and the low group
-const SIDES = [90, 135, 45]; // degrees around the plateau where the fight happens (dunes disc, ramps at 0 and 180)
+const SIDES = [90, 135, 45]; // degrees around the plateau where the fight happens (the dunes mesa, ramps east and west)
 
 const life = (e) => Math.max(0, e.hp) + Math.max(0, e.shield || 0);
 
@@ -28,19 +28,21 @@ export function fight({ group, start, gap, side, flat = false, swap = false }) {
   for (const e of s.entities) if (e.kind === "unit") { e.hp = 0; }
   s.entities = s.entities.filter((e) => e.hp > 0);
   const a = (side * Math.PI) / 180, nx = Math.cos(a), nz = Math.sin(a), tx = -nz, tz = nx;
+  // The rim that way: a disc's radius, a rounded box's reach along that ray (its corner arc on the diagonals).
+  const reach = rimReach(p, nx, nz);
   const high = [], low = [];
   GROUPS[group].forEach((type, i) => {
     const k = i - (GROUPS[group].length - 1) / 2;
     // High group 2.5 m inside the rim, low group `gap` m beyond the cliff foot, 1.8 m apart sideways.
     // Entities act in spawn order within a tick, so `swap` also swaps who is spawned (and acts) first.
-    const hr = p.r - 2.5, lr = p.r + 1 + gap;
+    const hr = reach - 2.5, lr = reach + 1 + gap;
     const up = () => high.push(s.spawn(type, HT, p.x + nx * hr + tx * k * 1.8, p.z + nz * hr + tz * k * 1.8));
     const down = () => low.push(s.spawn(type, LT, p.x + nx * lr + tx * k * 1.8, p.z + nz * lr + tz * k * 1.8));
     if (swap) { down(); up(); } else { up(); down(); }
   });
   const all = [...high, ...low], startLife = { high: high.reduce((t, e) => t + life(e), 0), low: low.reduce((t, e) => t + life(e), 0) };
   if (start === "low-attacks") s.issue(low.map((e) => e.id), { type: "attackmove", x: p.x, z: p.z });
-  if (start === "high-attacks") s.issue(high.map((e) => e.id), { type: "attackmove", x: p.x + nx * (p.r + 1 + gap), z: p.z + nz * (p.r + 1 + gap) });
+  if (start === "high-attacks") s.issue(high.map((e) => e.id), { type: "attackmove", x: p.x + nx * (reach + 1 + gap), z: p.z + nz * (reach + 1 + gap) });
   const hits = { high: { n: 0, dmg: 0 }, low: { n: 0, dmg: 0 } }, highIds = new Set(high.map((e) => e.id));
   let t = 0;
   for (; t < 120; t += 0.05) {
