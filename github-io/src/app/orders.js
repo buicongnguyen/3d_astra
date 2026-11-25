@@ -1,5 +1,6 @@
 // Targeting modes, building placement and the order sent for a click or tap.
 import { $ } from "./dom.js";
+import { placeOnGround, GHOST_LIFT } from "../ground-y.js";
 import { DEFINITIONS as D } from "../data.js";
 import { REPAIR } from "../progression.js";
 import { isFighter } from "../sim/escort.js";
@@ -219,7 +220,7 @@ export function setupOrders(S, A) {
     S.buildPoint = point;
     S.buildFailure = '';
     S.view.preview.visible = true;
-    S.view.preview.position.set(point.x, 0.23, point.z);
+    placeOnGround(S.view.preview, S.view.terrain, point.x, point.z, GHOST_LIFT);
     const error = S.sim.placement(S.buildType, 0, point.x, point.z);
     S.view.preview.material.color.setHex(error ? 0xef7660 : 0x92ebc5);
     $("confirm-build").disabled = !!error;

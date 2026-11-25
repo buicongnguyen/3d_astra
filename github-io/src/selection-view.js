@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { groundY, MARKER_LIFT, ROUTE_LIFT } from "./ground-y.js";
 
 // Selection presentation: ground rings, vitals bars and command markers. Shader colours are
 // written unconverted (no tone mapping or colour-space transform), so team colours match
@@ -296,7 +297,7 @@ export function createMarker(hex, attack) {
   });
   const marker = new THREE.Mesh(new THREE.PlaneGeometry(3, 3), material);
   marker.rotation.x = -Math.PI / 2;
-  marker.position.y = 0.09;
+  marker.position.y = MARKER_LIFT;
   marker.renderOrder = 4;
   return marker;
 }
@@ -326,18 +327,18 @@ export function createRally() {
   group.userData = { flag, banner, base, route, key: "" };
   return group;
 }
-export function updateRally(group, building, rally, hex, time) {
+export function updateRally(group, building, rally, hex, time, terrain = null) {
   const { flag, banner, base, route } = group.userData;
   group.visible = !!rally;
   if (!rally) return;
   for (const m of [banner.material, base.material, route.material]) m.color.setHex(hex);
   base.scale.setScalar(1 + 0.12 * Math.sin(time * 4));
-  flag.position.set(rally.x, 0, rally.z);
+  flag.position.set(rally.x, groundY(terrain, rally.x, rally.z), rally.z);
   banner.rotation.y = Math.sin(time * 2.2) * 0.25;
   const key = `${building.x},${building.z},${rally.x},${rally.z}`;
   if (group.userData.key === key) return;
   group.userData.key = key;
-  route.geometry.attributes.position.array.set([building.x, 0.18, building.z, rally.x, 0.18, rally.z]);
+  route.geometry.attributes.position.array.set([building.x, groundY(terrain, building.x, building.z) + ROUTE_LIFT, building.z, rally.x, groundY(terrain, rally.x, rally.z) + ROUTE_LIFT, rally.z]);
   route.geometry.attributes.position.needsUpdate = true;
   route.computeLineDistances();
 }

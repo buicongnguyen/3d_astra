@@ -33,6 +33,7 @@ import { ViewPlugins } from "./view-plugins.js";
 import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, setRimTier } from "./look-grade.js";
 import { MissionLook } from "./mission-look-view.js";
 import { airMotion } from "./air-motion.js";
+import { groundY, MARKER_LIFT } from "./ground-y.js";
 import { RIG_INFANTRY, RIG_HULL, KNEELERS, GAIT, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach, BARREL_POSES, newGun, fireBarrel, stepBarrel, poseBarrel } from "./unit-rig.js";
 import {
   EnvironmentView,
@@ -1475,8 +1476,7 @@ export class WorldView {
   // Command confirmation on the ground: attack orders get crosshair ticks.
   marker(x, z, color = this.colors[0], attack = color !== this.colors[0]) {
     const m = createMarker(color, attack);
-    m.position.x = x;
-    m.position.z = z;
+    m.position.set(x, groundY(this.terrain, x, z) + MARKER_LIFT, z);
     this.scene.add(m);
     this.effects.push({ mesh: m, life: 0.8, max: 0.8, marker: true, team: color===this.colors[0]?0:undefined });
     while(this.effects.length>64){
@@ -1727,11 +1727,11 @@ export class WorldView {
       const m = o.userData.model;
       if (p) {
         const ix = p.x + (e.x - p.x) * alpha, iz = p.z + (e.z - p.z) * alpha;
-        o.position.set(ix, this.terrain.heightAt(ix, iz), iz);
+        o.position.set(ix, groundY(this.terrain, ix, iz), iz);
         const turn = Math.atan2(Math.sin(e.angle - p.angle), Math.cos(e.angle - p.angle));
         m.rotation.y = p.angle + turn * alpha;
       } else {
-        o.position.set(e.x, this.terrain.heightAt(e.x, e.z), e.z);
+        o.position.set(e.x, groundY(this.terrain, e.x, e.z), e.z);
         m.rotation.y = e.kind === "unit" ? e.angle : e.team === 0 ? 0 : Math.PI;
       }
       if(u.turret){
@@ -1913,7 +1913,7 @@ export class WorldView {
     }
     if (!this.rally) this.scene.add(this.rally = createRally());
     const rallying = [...selected].map((id) => sim.get(id)).find((e) => e?.team === 0 && e.kind === "building" && e.rally);
-    updateRally(this.rally, rallying, rallying?.rally, this.colors[0], sim.time);
+    updateRally(this.rally, rallying, rallying?.rally, this.colors[0], sim.time, this.terrain);
     // Update world matrices once, copy entity parts into their batches, then render without
     // a second scene-wide matrix pass.
     this.scene.updateMatrixWorld();

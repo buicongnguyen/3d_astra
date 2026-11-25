@@ -2,6 +2,9 @@
 
 ## Unreleased: Round A.2
 
+### Building on high ground shows the site (owner report)
+- Aiming a building at a plateau top showed nothing: the build ghost (the green/red site disc) was drawn at a fixed 0.23 m, 2.2 m under the plateau surface, on every map with high ground, PC and phone. It now sits on the ground under the pointer (top or low ground), and so do the order marker and the rally flag and its route (they were at 0 m). One height source for all of them and the buildings themselves (`src/ground-y.js`, Terrain.heightAt). Buildings, finished or under construction, were already drawn on the top and stay so after save/load; placement rules and golden pins are unchanged (a footprint always stays on the flat top, never over the cliff). Tests: `tests/ground-y.test.js` (every building type on every plateau of every map), `tests/terrain.mjs` (every buildable type finished and unfinished on the top and below, seen by the camera; the ghost through the real pointer/tap path on three viewports).
+
 ### iPhone: sideways swipes stay in the game (friend's report)
 - Swiping left or right near the bottom of an iPhone could switch apps again: since the 2026-11-22 HUD passes the portrait Selection dock's sideways action row (build, train, abilities) sat 24 px above the screen bottom, inside the home-indicator strip, and the minimap 20 px. Every bottom bar now starts above a 34 px strip (or the bottom safe area if larger; `--home-zone` in `src/mobile.css`), so no sideways row, map drag or camera drag starts there; the Defence "Crew a pad" button lines up with them. A battlefield touch within 20 px of the left or right edge no longer starts Safari's back swipe. Rules in docs/TESTING.md ("iPhone gestures"); new `npm run test:iphone-gestures` (WebKit iPhone profile; Chromium on CI) checks the bottom strip in skirmish and Defence states, the edge guard and that play adds no history entries.
 

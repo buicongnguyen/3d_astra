@@ -140,6 +140,81 @@ await suite("terrain", async () => {
     }, setup);
     assert.ok(ramp[0] > 170 && ramp[1] < 150 && ramp[2] < 120, `${viewport}: red ramp tick on the minimap ${JSON.stringify(ramp)}`);
     await shot(page, `terrain-ramp-${viewport}`);
+    // Building on high ground (bug 2026-11-25): every buildable type, finished and under construction, on the
+    // plateau top and on low ground stands on the drawn ground (|y - heightAt| small, its box resting there) and
+    // the camera sees it over the terrain; the build ghost aimed at the top is drawn on the top, not inside it.
+    await page.evaluate(() => {
+      // Fraction of points the camera sees over the drawn ground (a 0.1 m march along each sight line).
+      window.__seen = (points) => {
+        const f = window.__frontier, t = f.sim.terrain, cam = f.view.camera.position;
+        return points.filter((q) => {
+          const dx = q.x - cam.x, dy = q.y - cam.y, dz = q.z - cam.z, n = Math.ceil(Math.hypot(dx, dy, dz) / 0.1);
+          for (let i = 1; i < n - 3; i++) if (cam.y + (dy * i) / n < t.heightAt(cam.x + (dx * i) / n, cam.z + (dz * i) / n) - 0.01) return false;
+          return true;
+        }).length / points.length;
+      };
+    });
+    const sites = await page.evaluate(async ({ p }) => {
+      const f = window.__frontier, s = f.sim, t = s.terrain, out = [];
+      s.players[0].alloy = s.players[0].energy = 99999;
+      for (const type of s.buildable(0))
+        for (const where of ["top", "low"])
+          for (const complete of [true, false]) {
+            s.visible[0].fill(1);
+            const at = s.findPlacement(type, 0, p.x, where === "top" ? p.z : p.z + p.r + 9);
+            if (!at) { out.push({ type, where, none: s.placement(type, 0, p.x, p.z) }); continue; }
+            const e = s.spawn(type, 0, at.x, at.z, complete);
+            if (!complete) e.progress = 0.35;
+            f.view.focusOn(at.x, at.z);
+            f.step(0.05);
+            await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+            const o = f.view.objects.get(e.id), V = o.position.constructor, lo = new V(Infinity, Infinity, Infinity), hi = new V(-Infinity, -Infinity, -Infinity), c = new V();
+            o.traverse((m) => {
+              if (!m.isMesh || !m.geometry || m.name === "ContactShadow") return;
+              m.geometry.boundingBox || m.geometry.computeBoundingBox();
+              const b = m.geometry.boundingBox;
+              for (const x of [b.min.x, b.max.x]) for (const y of [b.min.y, b.max.y]) for (const z of [b.min.z, b.max.z]) { c.set(x, y, z).applyMatrix4(m.matrixWorld); lo.min(c); hi.max(c); }
+            });
+            const pts = [0.3, 0.5, 0.7].flatMap((a) => [0.3, 0.5, 0.7].map((b) => ({ x: lo.x + (hi.x - lo.x) * a, y: hi.y - 0.05, z: lo.z + (hi.z - lo.z) * b })));
+            out.push({ type, where, complete, level: t.level(at.x, at.z), h: t.heightAt(at.x, at.z), y: o.position.y, bottom: lo.y, top: hi.y, drawn: o.visible, seen: window.__seen(pts) });
+            s.entities.splice(s.entities.indexOf(e), 1);
+          }
+      s.nav.rebuild(s.entities);
+      f.step(0.05);
+      return out;
+    }, setup);
+    assert.ok(sites.filter((r) => r.where === "top" && r.level === 1).length >= 8, `${viewport}: buildings on the plateau top ${JSON.stringify(sites)}`);
+    for (const r of sites) {
+      if (r.none !== undefined) continue;
+      const label = `${viewport}: ${r.complete ? "finished" : "unfinished"} ${r.type} on the ${r.where} ${JSON.stringify(r)}`;
+      assert.equal(r.level, r.where === "top" ? 1 : 0, label);
+      assert.ok(Math.abs(r.y - r.h) < 0.01 && Math.abs(r.bottom - r.h) < 0.3 && r.top > r.h + 1, `${label}: on the drawn ground`);
+      assert.ok(r.drawn && r.seen >= 0.8, `${label}: visible`);
+    }
+    // The build ghost, through the player's own path: a Harvester, the Barracks tile, then a pointer move (PC) or a
+    // tap (phone) on the plateau top. It used a fixed 0.23 m and was drawn inside the plateau.
+    const aim = await page.evaluate(async ({ p }) => {
+      const f = window.__frontier, s = f.sim, v = f.view, w = s.own(0).find((e) => e.type === "worker");
+      f.select([w.id]); f.step(0.05);
+      v.focusOn(p.x, p.z); v.zoom = 26;
+      document.querySelector('[data-action="barracks"]').click();
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      const r = v.renderer.domElement.getBoundingClientRect(), q = v.project(p.x, p.z, v.terrain.heightAt(p.x, p.z));
+      return { x: r.left + q.x, y: r.top + q.y, mode: f.mode };
+    }, setup);
+    assert.equal(aim.mode, "build", `${viewport}: build mode`);
+    if (mobile) await page.touchscreen.tap(aim.x, aim.y); else await page.mouse.move(aim.x, aim.y);
+    await page.waitForFunction(() => window.__frontier.view.preview.visible, null, { timeout: TIMEOUT.step });
+    const ghost = await page.evaluate(() => {
+      const f = window.__frontier, g = f.view.preview, t = f.sim.terrain, { x, y, z } = g.position, R = g.scale.x;
+      const pts = [[0, 0], [0.6, 0], [-0.6, 0], [0, 0.6], [0, -0.6]].map(([a, b]) => ({ x: x + a * R, y: y + 0.045, z: z + b * R }));
+      return { level: t.level(x, z), h: t.heightAt(x, z), y, seen: window.__seen(pts), ok: !f.sim.placement("barracks", 0, x, z) };
+    });
+    assert.ok(ghost.level === 1 && ghost.ok, `${viewport}: the ghost is on a valid top site ${JSON.stringify(ghost)}`);
+    assert.ok(Math.abs(ghost.y - (ghost.h + 0.23)) < 0.01 && ghost.seen >= 0.8, `${viewport}: the ghost is drawn on the plateau top ${JSON.stringify(ghost)}`);
+    await shot(page, `terrain-build-ghost-${viewport}`);
+    await page.evaluate(() => document.getElementById("cancel-mode").click());
+    await page.waitForFunction(() => window.__frontier.mode !== "build", null, { timeout: TIMEOUT.step });
     // Back to the hidden unit, selected, for the closing screenshot (mark and card line).
     await page.evaluate(({ id, p }) => { const f = window.__frontier; f.view.focusOn(p.x, p.z + 3); f.view.zoom = 26; f.select([id]); f.step(0.05); }, setup);
     if (mobile && await page.locator("html").getAttribute("data-dock") !== "selection") await page.evaluate(() => document.querySelector('button[data-dock="selection"]').click());
