@@ -6,8 +6,9 @@ import { readMatrix } from "./lib/ci-matrix.mjs";
 
 const scripts = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8")).scripts;
 const groups = readMatrix();
-// Suites CI does not run, on purpose: webkit needs `npx playwright install webkit` (see docs/TESTING.md).
-const NOT_IN_CI = new Set(["webkit", "ci-local", "changed"]);
+// Suites CI does not run, on purpose: webkit and iphone-audit need `npx playwright install webkit` (see
+// docs/TESTING.md, docs/PLATFORM.md).
+const NOT_IN_CI = new Set(["webkit", "iphone-audit", "ci-local", "changed"]);
 
 test("the CI browser matrix is read from pages.yml", () => {
   assert.ok(groups.length >= 20, `only ${groups.length} groups read`);

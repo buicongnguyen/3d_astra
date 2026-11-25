@@ -42,7 +42,8 @@ export function setupSound(S, A) {
 
   function unlockAudio() {
     try {
-      S.audioContext ||= new AudioContext();
+      // iOS Safari before 14.5 has only the prefixed constructor.
+      S.audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
       S.ambience ||= new Ambience(S.audioContext);
       // The sound engine (audio.js, sfx.js) is its own chunk, fetched on the first gesture.
       if (!S.audio && !audioLoading) {

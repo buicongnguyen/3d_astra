@@ -3,6 +3,7 @@ import { $ } from "./dom.js";
 import { HOTKEY_HELP } from "../hotkeys.js";
 import { createFieldGuide } from "../field-guide.js";
 import { createFullscreen } from "../fullscreen.js";
+import { isStandalone } from "./install.js";
 import { icon } from "../icons.js";
 
 export function setupModals(S, A) {
@@ -83,7 +84,7 @@ export function setupModals(S, A) {
     Z.open("fullscreen");
     $("modal").classList.remove("help-wide");
     setModalOpen(true);
-    const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    const standalone = isStandalone(window);
     const message = reason === 'exit'
       ? '<p>Could not leave full screen. Use your browser’s exit control or press Esc on a keyboard.</p>'
       : standalone
@@ -211,7 +212,8 @@ export function setupModals(S, A) {
 
     // Full screen lives in Settings → Display only (2026-11-24). The row shows where the API exists and the
     // game is not an installed web app; elsewhere the sheet says how to get the bars out of the way.
-    const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    // Installed (app/install.js): standalone on iOS, fullscreen on Android as the manifest asks.
+    const standalone = () => isStandalone(window);
     A.fullscreenInfo = {
       standalone,
       supported: () => !standalone() && !!(document.fullscreenEnabled || document.webkitFullscreenEnabled),

@@ -2,6 +2,12 @@
 
 ## Unreleased: Round A.2
 
+### Home-screen app and iPhone readiness (Platform reach)
+- **Install app** tile in Settings -> Display: on Android and desktop Chrome/Edge it opens the browser's install dialog; on iPhone and iPad it shows a one-screen Share -> Add to Home Screen guide. Hidden once the game is installed. EN/VI/KO.
+- A real app icon (the game's tank in front of the gold emblem, rendered in Blender), a maskable Android icon, iOS launch screens for 18 iPhone/iPad sizes, a see-through status bar over the game, full screen when installed; still starts offline after the first visit.
+- iPhone readiness checked in WebKit on iPhone SE, 13, 15 Pro Max and iPad (emulated): first tap, audio unlock, full screen, notch and home-indicator areas, swipe gestures, WebGL context loss, texture memory. Older iOS (before 14.5) gets sound through the prefixed AudioContext. A 10-minute real-iPhone checklist and an app-store assessment are in docs/PLATFORM.md.
+- Tests: `tests/pwa.test.js`, `npm run test:pwa`, `npm run test:iphone-audit` (WebKit only, not in CI).
+
 ### Depth: second doctrines, air abilities, Full army sandbox (W7)
 - **Second doctrine tier.** After a building's first doctrine, a level 3 Command core, Barracks or Foundry offers a second either/or pair for the match, each one a way to play rather than a few per cent: **Strike wing** (flyers 10% faster, flyer abilities recharge 40% sooner) or **Bastion** (towers and the core +25% damage, buildings take 20% less); **Dig in** (infantry on Hold stance take 25% less damage) or **Shock troops** (infantry +40% against buildings and walls); **Heavy armour** (vehicles take 20% less damage, move 10% slower) or **Overclock** (vehicle abilities recharge 40% sooner). One tap each, never more than two doctrine tiles on the card.
 - **Air abilities.** Hawk gunship **Strafing run** (a 14 m line of fire through the nearest group: 16 to each soldier, half to vehicles), Ember balloon **Signal flare** (9 m of light for 8 s: your side sees the ground, hidden units are revealed, enemies there take 15% more), Swift glider **Bomb drop** (Harvesters first: 75 to Harvesters, 12 to other units). Tiles say "No target near" when there is nothing to hit; Auto-cast uses them. Icons, sounds, effects and field guide pages (every unit page now shows its ability).

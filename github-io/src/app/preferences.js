@@ -8,6 +8,7 @@ import { motionOffFor, saveSettings } from "../settings.js";
 import { teamColors } from "../faction-colors.js";
 import { saveRules } from "./rules-store.js";
 import { getTheme, setTheme } from "../theme-switch.js";
+import { createInstall } from "./install.js";
 
 // True while `:root.motion-off` is set (Eco graphics, combat motion off, or reduced motion): JS
 // effects check it the way CSS animations obey the class.
@@ -80,6 +81,8 @@ export function setupPreferences(S, A) {
       );
   }
 
+  // Home-screen install (app/install.js): the Settings → Display tile; the browser's prompt arrives once, early.
+  const install = createInstall(window);
   const settingsUI = new SettingsUI({
     get: () => S.settings,
     apply: applyPreferences,
@@ -90,6 +93,7 @@ export function setupPreferences(S, A) {
       fullscreen: { supported: () => A.fullscreenInfo?.supported() ?? false, standalone: () => A.fullscreenInfo?.standalone() ?? false, active: () => A.fullscreenInfo?.active() ?? false, toggle: (button) => A.fullscreenInfo?.toggle(button) },
       theme: { get: getTheme, set: setTheme },
       help: () => A.showHelp(),
+      install: { state: install.state, prompt: install.prompt },
     },
     enter: () => {
       const state = Z.hold();
@@ -117,7 +121,8 @@ export function setupPreferences(S, A) {
     const turn = (((S.settings.cameraTurn || 0) + step * 90) % 360 + 360) % 360;
     applyPreferences({ ...S.settings, cameraTurn: turn });
   }
-  Object.assign(A, { settingsUI, localization, applyPreferences, motionOff, rememberRules, turnCamera });
+  install.onChange(() => settingsUI.installChanged());
+  Object.assign(A, { install, settingsUI, localization, applyPreferences, motionOff, rememberRules, turnCamera });
   return function bind() {
     syncStoryLanguage();
     syncMotion();
