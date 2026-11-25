@@ -16,7 +16,8 @@ D.fxwarden3 = { ...D.drone, name: "Fixture three", workshop: "wardens", roster: 
 
 const match = () => new Simulation({ map: "dunes", enemyCount: 1, aiSpeed: "normal", factions: skirmishSides("wardens", "mirror", 1, "dunes"), capturePoints: true, aiPlayer: true, rules: { roster: "expanded" } });
 // Re-recorded 2026-11-24 (roster): the Veil and Wardens Command cores also train their new flyers (Veil moth, Halo interceptor), and an Expanded Shield pylon trains the Bulwark: new trains lists in the hashed state, and AI play that can field them.
-const PINS = { 60: "b1206d6c", 180: "7ef6ee2e", 600: "11d14808", 800: "7ec455e4" }; // hills mix 2026-11-25: Dunes mesa is a rounded rectangle; the mirror match now still runs at 800 s (seat 0 won at 431 s before)
+// Re-recorded 2026-11-26: skirmish computer sides train Medics/Engineers only with patients for them (sim/ai.js, sim/ai-census.js aiSupportUseful); Relaxed/Normal pay for the unfielded ones. Missions, Defence and every Relaxed/Normal difficulty row unchanged or easier.
+const PINS = { 60: "b1206d6c", 180: "7ef6ee2e", 600: "78328dcc", 800: "96aff7b8" }; // hills mix 2026-11-25: Dunes mesa is a rounded rectangle; the mirror match now still runs at 800 s (seat 0 won at 431 s before)
 
 test("Expanded Wardens against Wardens, 60 and 180 s", () => {
   const sim = match();

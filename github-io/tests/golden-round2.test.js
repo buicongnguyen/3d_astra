@@ -47,4 +47,5 @@ test("m11c Hold the Keystone Roads, DefenceBot, 120 s", () => {
 // Re-recorded 2026-11-24 (integration of faction depth + support units + faction roster): Fast/Relentless AIs take doctrines and cast signature abilities; Medic/Engineer/Supply wagon health rose; Veil/Wardens cores train the new flyers and an Expanded Shield pylon trains the Bulwark (new trains lists and AI play). ("42bae522" -> "c2dcd73e")
 // Re-recorded 2026-11-24 (player-only support health): the Medic/Engineer/Supply wagon health buff now applies to team 0 only; computer sides keep 75 + 30, 100, 240 (owner rule: no stronger computer).
 // Re-recorded 2026-11-24 (support health only for a human team 0): a computer-played team 0 (aiPlayer) keeps the computer's support health, so AI-against-AI matches are back to their faction depth / roster values.
-const ARENA_300 = "c2dcd73e";
+// Re-recorded 2026-11-26: skirmish computer sides train Medics/Engineers only with patients for them (sim/ai.js, sim/ai-census.js aiSupportUseful); Relaxed/Normal pay for the unfielded ones. Missions, Defence and every Relaxed/Normal difficulty row unchanged or easier.
+const ARENA_300 = "0d90b9c4";

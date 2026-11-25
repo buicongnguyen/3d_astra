@@ -1,5 +1,6 @@
 import balance from "../balance.json" with { type: "json" };
 import { DEFINITIONS as D, distance } from "../data.js";
+import { sharpSide } from "../ai-plan.js";
 import { HOST_OF, workshopUnitsOf, EXPANDED } from "../factions.js";
 
 // Field command army census (AAA round 3, R3-A). Mixed into Simulation through `ai` (sim/ai.js), and
@@ -91,7 +92,9 @@ export const aiCensus = {
   // A support unit (Medic, Engineer, Supply wagon) is worth training only with patients for it: a Medic
   // needs 3 infantry fighters per Medic (this one included), an Engineer 2 vehicles per Engineer, a
   // wagon 3 fighters of any kind. Owner 2026-11-26: the AI trained Engineers and Medics with no
-  // Breakers or soldiers to look after.
+  // Breakers or soldiers to look after. Relaxed, Normal, missions and Defence (not sharpSide) need just one patient:
+  // their idle support units drew the player's fire, and taking them all away made those AIs stronger (difficulty
+  // check 1v2 Relaxed 11/20 -> 10/20, Normal 7/20 -> 5/20), so the unfielded ones are paid for instead (sim/ai.js).
   aiSupportUseful(team, army, type) {
     const d = D[type];
     if (!d) return false;
@@ -99,7 +102,7 @@ export const aiCensus = {
     const mine = army.filter((e) => e.type === type).length;
     const fits = slot === "engineer" ? (e) => e.mechanical : d.heals === "all" ? () => true : (e) => !e.mechanical;
     const patients = army.filter((e) => e.damage > 0 && !e.flying && D[e.type]?.class !== "support" && fits(e)).length;
-    return patients >= (slot === "engineer" ? 2 : 3) * (mine + 1);
+    return sharpSide(this, team) ? patients >= (slot === "engineer" ? 2 : 3) * (mine + 1) : patients >= 1;
   },
   // The slot building `b` should train: the role with the biggest shortfall it can fill, or `choice`
   // (the earlier picks) when that already fills the neediest role or nothing is short.

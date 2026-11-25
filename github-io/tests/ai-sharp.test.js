@@ -189,7 +189,8 @@ test("Dash closes on a target just out of reach and Rapid fire waits for armed e
 // Hashes of whole AI matches (every side computer-played, 300 s) recorded on the commit before W8.
 test("Relaxed and Normal AI matches are unchanged by W8", () => {
   const pins = {
-    normal1v2: [{ aiSpeed: "normal", enemyCount: 2, alliance: "ffa", map: "riverlands", capturePoints: true }, "757e367a"],
+    // normal1v2 re-recorded 2026-11-26 (757e367a): skirmish AIs train Medics/Engineers only with patients (Relaxed/Normal pay for the unfielded ones); W8 itself is still Fast/Relentless only.
+    normal1v2: [{ aiSpeed: "normal", enemyCount: 2, alliance: "ffa", map: "riverlands", capturePoints: true }, "5df1eb0f"],
     normalCoalitionField: [{ aiSpeed: "normal", enemyCount: 2, alliance: "coalition", map: "dunes", capturePoints: true, rules: { aiPlan: "field" } }, "076bdbdf"],
     relaxed1v1: [{ aiSpeed: "relaxed", map: "classic", capturePoints: true }, "54ef8d71"],
   };

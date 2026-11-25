@@ -1,5 +1,5 @@
 import { DEFINITIONS as D, MAX_POP, distance, hyp } from "../data.js";
-import { roleOf, fieldPlan } from "../ai-plan.js";
+import { roleOf, fieldPlan, sharpSide } from "../ai-plan.js";
 import { EXPAND_CREW } from "./expand.js";
 import { aiAttack } from "./ai-attack.js";
 import { AI_RULES } from "./content.js";
@@ -8,7 +8,15 @@ import { aiSharp } from "./ai-sharp.js";
 
 // The computer opponent's build, production and attack decisions (coalition play is in ai-plan.js,
 // field command in ai-attack.js). Mixed into Simulation (see simulation.js).
+// Seconds a paid-for, unfielded support unit counts as part of the army (about an idle Medic's life in AI play).
+const GHOST_LIFE = 240;
+
 export const ai = {
+  aiGhostCount(buildings) {
+    let n = 0;
+    for (const b of buildings) if (b.aiGhosts) for (const t of b.aiGhosts) if (t > this.time) n++;
+    return n;
+  },
   ...aiAttack,
   ...aiCensus,
   ...aiSharp,
@@ -33,7 +41,10 @@ export const ai = {
     this.assignHarvesters(team);
     const hq = own.find((e) => e.type === "hq" && e.complete) || own.find(e => e.type === "hq");
     this.aiRetreat(team, army, hq);
-    const pace = this.paceFor(team), role = roleOf(this, team), persona = this.personality(team), extra = this.factionFor(team).building;
+    // Relaxed/Normal/missions: support units paid for but not fielded (see the support pick below) still count
+    // toward the army cap and the wave size while one would have lived, as the idle Medics and Engineers did.
+    const ghosts = this.aiGhostCount(own);
+    const pace0 = this.paceFor(team), pace = ghosts ? { ...pace0, minWave: Math.max(1, pace0.minWave - ghosts) } : pace0, role = roleOf(this, team), persona = this.personality(team), extra = this.factionFor(team).building;
     // A second core brings more Harvesters, trained at the core with the fewest nearby.
     const cores = own.filter((e) => e.type === "hq" && e.complete);
     const crewCap = pace.workers + EXPAND_CREW * Math.max(0, cores.length - 1);
@@ -120,7 +131,7 @@ export const ai = {
     // from ai_mix.from seconds on (difficulty guard, owner 2026-11-21: the opening plays as before, so the census adds variety, not strength).
     const census = fieldOn && this.aiCensusOn() ? this.aiCensusOf(team, own, army) : null, censusSave = census ? this.aiCensusSave(team, own, census) : 0;
     for (const b of own.filter((e) => e.complete && ["barracks", "foundry"].includes(e.type))) {
-      if (b.levelJob) continue;
+      if (b.levelJob || b.aiRestUntil > this.time) continue;
       const branch = this.researchBranch(team, role);
       if (b.type === "foundry" && !this.players[team].upgrade && !this.players[team].plating && this.time > pace.upgradeAt && vehicles >= 2 && !b.queue.length && afford(D[branch].cost) && this.enqueue(b.id, branch)) continue;
       // Skirmish AIs that counter-build also take the second tier of their branch once the Foundry is level 2.
@@ -137,7 +148,7 @@ export const ai = {
       // Army size follows the speed's curve; a base under attack may always train.
       // In skirmish, alloy piling up beyond the cap is spent anyway: a rich base that sits idle looks broken.
       const cap = pace.army && (this.mission || this.players[team].alloy < 600) ? pace.army[0] + pace.army[1] * (this.time / 60) : Infinity;
-      if (b.queue.length < 2 && (army.length + own.reduce((n, e) => n + (e.queue?.length || 0), 0) < cap || own.some((e) => e.kind === "building" && this.time - (e.hitAt ?? -99) < 10))) {
+      if (b.queue.length < 2 && (army.length + ghosts + own.reduce((n, e) => n + (e.queue?.length || 0), 0) < cap || own.some((e) => e.kind === "building" && this.time - (e.hitAt ?? -99) < 10))) {
         // One Vanguard per two Rangers; a raider AI trains two Vanguards per Ranger.
         const cycle = Math.floor(this.time/4)%3;
         let choice = b.type === 'foundry' ? 'breaker' : cycle === 0 || (role === 'raider' && cycle === 1) ? 'vanguard' : 'ranger';
@@ -153,7 +164,23 @@ export const ai = {
         const support = b.type === 'foundry' ? 'engineer' : 'medic';
         // Field command: a level 3 Foundry trains its heavy unit first and takes an Engineer only once one stands.
         const needs = fieldOn && b.type === 'foundry' && b.level >= 3 ? (army.some(e => this.slotOf(e.type) === 'tank') ? 1 : 0) : 2;
-        if (b.level >= 2 && army.filter(e => this.slotOf(e.type) === support).length < needs && this.aiSupportUseful(team, army, this.typeFor(team, support))) choice = support;
+        const supportType = this.typeFor(team, support);
+        const supportAlive = army.filter(e => this.slotOf(e.type) === support).length;
+        if (b.level >= 2 && this.canTrain(team, supportType) && supportAlive < needs) {
+          // A support unit only with patients for it (owner 2026-11-26). Relaxed, Normal, missions and Defence keep
+          // their old strength: the side pays for the support unit it would have trained and the building rests for its
+          // training time, but nothing idle walks out (the money it used to waste must not become extra fighters).
+          // Campaign missions keep their tuned AI exactly (the finale m12 is knife-edge: Standard went gold -> bronze).
+          if (this.mission || this.aiSupportUseful(team, army, supportType)) choice = support;
+          else if (!sharpSide(this, team) && supportAlive + this.aiGhostCount([b]) < needs && afford(D[supportType].cost)) {
+            const pl = this.players[team];
+            pl.alloy -= D[supportType].cost[0]; pl.energy -= D[supportType].cost[1];
+            b.aiRestUntil = this.time + D[supportType].time;
+            b.aiGhosts = [...(b.aiGhosts || []).filter((t) => t > this.time), this.time + D[supportType].time + GHOST_LIFE];
+            b.aiGhostPop = D[supportType].pop || 0;
+            continue;
+          }
+        }
         if (census) choice = this.aiCensusPick(team, b, census, choice, army);
         const choices = [...new Set([choice,...(b.type === 'barracks' ? ['ranger','vanguard'] : ['breaker'])].map(slot => this.typeFor(team,slot)))].filter(type => this.canTrain(team,type));
         const pop = this.population(team);
@@ -161,6 +188,9 @@ export const ai = {
         const affordable = choices.find(type => b.level >= (D[type].required_level || 1) && afford([D[type].cost[0] + save, D[type].cost[1]]) && pop.used+pop.reserved+D[type].pop <= pop.cap);
         // Field command: an energy-costly first pick that only lacks alloy is saved for, not replaced by the cheapest unit.
         if (fieldOn && affordable !== choices[0] && this.aiFieldWaits(team, b, choices[0], pop, save)) continue;
+        // Fast/Relentless Field command: a level 3 Foundry saves for its first heavy unit (Tank, Walker) instead of spending the energy on
+        // another Breaker (2026-11-26: without idle Engineers to buy, the Breakers drained the energy and no Tank ever came).
+        if (fieldOn && b.type === 'foundry' && affordable !== choices[0] && this.slotOf(choices[0]) === 'tank' && sharpSide(this, team) && !army.some(e => this.slotOf(e.type) === 'tank')) continue;
         if (affordable && this.enqueue(b.id,affordable) && census && censusRole(affordable)) { census.counts[censusRole(affordable)]++; census.total++; if (D[affordable].hits_air) census.antiAir++; }
       }
     }

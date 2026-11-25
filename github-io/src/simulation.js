@@ -296,6 +296,7 @@ export class Simulation {
       cap = 0;
     for (const e of this.own(team)) {
       used += e.pop || 0;
+      if (e.aiGhosts) for (const t of e.aiGhosts) if (t > this.time) used += e.aiGhostPop || 0; // sim/ai.js: unfielded support units
       if (e.complete) cap += e.supply || 0;
       for (const q of e.queue) reserved += D[q.type].pop || 0;
     }

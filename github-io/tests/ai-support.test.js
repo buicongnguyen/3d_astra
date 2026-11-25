@@ -6,8 +6,8 @@ import { Simulation } from "../src/simulation.js";
 
 const unit = (type, mechanical = false, damage = 10) => ({ type, mechanical, damage, kind: "unit" });
 
-test("aiSupportUseful: Medics need 3 infantry each, Engineers 2 vehicles each, the wagon 3 fighters", () => {
-  const s = new Simulation({ map: "classic", aiSpeed: "normal" });
+test("aiSupportUseful (Fast): Medics need 3 infantry each, Engineers 2 vehicles each, the wagon 3 fighters", () => {
+  const s = new Simulation({ map: "classic", aiSpeed: "fast" });
   assert.equal(s.aiSupportUseful(1, [], "medic"), false);
   assert.equal(s.aiSupportUseful(1, [], "engineer"), false);
   const inf = [unit("vanguard"), unit("ranger"), unit("ranger")];
@@ -20,6 +20,15 @@ test("aiSupportUseful: Medics need 3 infantry each, Engineers 2 vehicles each, t
   assert.equal(s.aiSupportUseful(1, [unit("vanguard"), ...veh], "wagon"), true);
 });
 
+test("aiSupportUseful (Normal): one patient is enough, none is not", () => {
+  const s = new Simulation({ map: "classic", aiSpeed: "normal" });
+  assert.equal(s.aiSupportUseful(1, [], "medic"), false);
+  assert.equal(s.aiSupportUseful(1, [unit("tank", true)], "medic"), false);
+  assert.equal(s.aiSupportUseful(1, [unit("ranger")], "medic"), true);
+  assert.equal(s.aiSupportUseful(1, [unit("ranger")], "engineer"), false);
+  assert.equal(s.aiSupportUseful(1, [unit("breaker", true)], "engineer"), true);
+});
+
 test("computer sides queue a Medic or Engineer only with patients (Normal and Fast, both seats, 600 s)", () => {
   for (const aiSpeed of ["normal", "fast"]) {
     const s = new Simulation({ map: "classic", aiSpeed, aiPlayer: true });
@@ -30,7 +39,7 @@ test("computer sides queue a Medic or Engineer only with patients (Normal and Fa
         const team = this.entities.find((e) => e.id === id).team;
         const army = this.entities.filter((e) => e.team === team && e.kind === "unit" && e.type !== "worker" && e.hp > 0 && e.damage > 0 && !e.flying);
         const n = army.filter((e) => (type === "engineer" ? e.mechanical : !e.mechanical)).length;
-        assert.ok(n >= (type === "engineer" ? 2 : 3), `${aiSpeed} t=${this.time.toFixed(1)} team ${team}: ${type} queued with ${n} patients`);
+        assert.ok(n >= (aiSpeed === "fast" ? (type === "engineer" ? 2 : 3) : 1), `${aiSpeed} t=${this.time.toFixed(1)} team ${team}: ${type} queued with ${n} patients`);
         checked++;
       }
       return enqueue(id, type, ...rest);
