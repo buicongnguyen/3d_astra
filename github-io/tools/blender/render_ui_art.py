@@ -1,8 +1,9 @@
 """Render the start-screen and HUD art from the exported GLB models (what the game loads).
 
 Run headless so an interactive Blender session is never affected:
-  blender --background --factory-startup --python tools/blender/render_ui_art.py -- [out_dir] [keyart] [portraits] [emblem]
-The default out_dir is src/art, where Vite fingerprints the files it bundles.
+  blender --background --factory-startup --python tools/blender/render_ui_art.py -- [out_dir] [keyart] [portraits] [emblem] [cell:<type> ...]
+The default out_dir is src/art, where Vite fingerprints the files it bundles. `cell:<type>` (W9) renders only those
+portrait cells into the existing atlas and mask (a new unit appended to PORTRAITS keeps every other cell as it was).
 
 Outputs (WebP, sRGB):
   keyart.webp / keyart-960.webp  golden-hour outpost scene for the start screen
@@ -30,7 +31,7 @@ PORTRAITS = ['worker', 'vanguard', 'ranger', 'breaker', 'medic', 'engineer', 'ta
              'scrapper', 'scorcher', 'salvageyard', 'rider', 'wagon', 'waystation', 'drone', 'walker', 'pylon', 'shade', 'watcher', 'veilrelay',
              'kite', 'hawk', 'balloon', 'glider',
              'carrier', 'ironvanguard', 'gunner', 'stalker', 'ironsovereign', 'workshop', 'rampart', 'wyrm', 'wyrmling',
-             'lancer', 'bulwark', 'moth', 'halo', 'ironsovereign2', 'acidhound', 'vaultsentinel']
+             'lancer', 'bulwark', 'moth', 'halo', 'ironsovereign2', 'acidhound', 'vaultsentinel', 'emberdrake']
 # R3-J: a cell that reuses another model's render (R3-H's second Sovereign shares the Sovereign model).
 SAME_MODEL = {'ironsovereign2': 'ironsovereign'}
 CELL, COLS = 192, 4
@@ -367,12 +368,19 @@ def keyart(out):
     save_webp(data.reshape(540, 960, 4), 960, 540, out / 'keyart-960.webp', 78)
 
 
-def portraits(out):
+def portraits(out, only=None):
     atlas = np.zeros((CELL * ROWS, CELL * COLS, 4), dtype=np.float32)
     mask_atlas = np.zeros_like(atlas)
+    if only:
+        # Only some cells: start from the atlas as it is (an atlas with fewer rows keeps its rows at the top).
+        for target, file in ((atlas, 'portraits.webp'), (mask_atlas, 'portrait-mask.webp')):
+            old = load_pixels(out / file)
+            target[CELL * ROWS - old.shape[0]:, :old.shape[1]] = old
     with tempfile.TemporaryDirectory(prefix="frontier-portraits-") as temp_dir:
         tmp = Path(temp_dir)
         for index, name in enumerate(PORTRAITS):
+            if only and name not in only:
+                continue
             for is_mask in (False, True):
                 reset()
                 setup(CELL * 2, CELL * 2, True, samples=64)
@@ -474,6 +482,10 @@ def emblem(out):
 def main():
     args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
     names = {'keyart', 'portraits', 'emblem'}
+    cells = [a[5:] for a in args if a.startswith('cell:')]
+    args = [a for a in args if not a.startswith('cell:')]
+    if cells:
+        args.append('portraits')
     # Part names select what to render; any other argument is the output folder.
     folders = [a for a in args if a not in names]
     out = Path(folders[0]) if folders else ROOT / 'src' / 'art'
@@ -482,7 +494,7 @@ def main():
     if 'emblem' in parts:
         emblem(out)
     if 'portraits' in parts:
-        portraits(out)
+        portraits(out, only=set(cells) or None)
     if 'keyart' in parts:
         keyart(out)
     print('UI art written to', out)

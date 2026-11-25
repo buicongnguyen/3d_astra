@@ -58,7 +58,7 @@ test("every scene is played by a mission, and its camera targets are places on t
   assert.deepEqual(chronicleUses.map((u) => [u.m.id, u.id]), [["cw4-without-a-key", "sovereign-at-the-rise"]]);
   // The six big moments: missions 1, 4, 8, 10, 11 and the finale (one scene per ending), plus the
   // first balloon (Wings over Copper) and the Iron Vanguard's entrance in mission 3 (docs/aaa/BOSSES.md).
-  assert.deepEqual([...new Set(uses.map((u) => u.m.id))], ["m01-first-light", "m03-the-ashen-line", "m04-three-way-dunes", "m06b-wings-over-copper", "m08-the-quiet-vault", "m10-obsidian-storm", "m11-cut-the-draw", "m11d-the-sovereign-walks", "m12-frontiers-end"]);
+  assert.deepEqual([...new Set(uses.map((u) => u.m.id))], ["m01-first-light", "m03-the-ashen-line", "m04-three-way-dunes", "m06b-wings-over-copper", "m08-the-quiet-vault", "m10-obsidian-storm", "m10e-the-ember-roost", "m11-cut-the-draw", "m11d-the-sovereign-walks", "m12-frontiers-end"]);
   // The creature round added the Veil's turn (veil-turns) to the finale for every ending; the ending scenes still branch.
   const finale = uses.filter((u) => u.m.id === "m12-frontiers-end" && u.id !== "veil-turns");
   assert.deepEqual(finale.map((u) => u.if?.ending).sort(), [...ENDING_IDS].sort(), "the finale's scene branches by ending");
@@ -133,7 +133,7 @@ const make = (m, difficulty = "standard") => new Simulation({ map: m.map, enemyC
 
 test("the defence missions sit in the campaign with stable ids, on Defence maps, with 6 to 8 waves", () => {
   // Map variety (2026-11-24): two more optional side missions, Mirror Lake (m02c) and Canyon Run (m04b), both in Act 1.
-  assert.equal(MISSIONS.length, 21, "fifteen plus the optional Hold the Keystone Roads (m11c), The Sovereign Walks (m11d, R3-H), Gun Hill (m06c), Crown Hill (m10b, campaign C6), Mirror Lake (m02c) and Canyon Run (m04b)");
+  assert.equal(MISSIONS.length, 22, "fifteen plus the optional Hold the Keystone Roads (m11c), The Sovereign Walks (m11d, R3-H), Gun Hill (m06c), Crown Hill (m10b, campaign C6), Mirror Lake (m02c), Canyon Run (m04b) and The Ember Roost (m10e, W9)");
   assert.equal(MISSIONS.indexOf(HOLD_THE_RIVER), MISSIONS.findIndex((m) => m.id === "m02-first-contact") + 1, "Hold the River follows First Contact");
   assert.equal(MISSIONS.indexOf(HOLD_THE_VALLEY), MISSIONS.findIndex((m) => m.id === "m07-copper-siege") + 1, "Hold the Valley follows Copper Siege");
   assert.deepEqual(DEFENCE_MISSIONS.map((m) => [m.id, m.act]), [["m02b-hold-the-river", 1], ["m07b-hold-the-valley", 2]]);
@@ -258,9 +258,11 @@ test("the campaign map lays out every mission in its act band, in order, with ro
   assert.deepEqual(Object.keys(MAP_NODES), MISSIONS.map((m) => m.id));
   for (const act of [1, 2, 3]) {
     const list = MISSIONS.filter((m) => m.act === act).map((m) => MAP_NODES[m.id]), band = ACT_BANDS[act];
-    for (const p of list) assert.ok(p.y > band.top + 6 && p.y < band.bottom - 6 && p.x >= 10 && p.x <= 90, `act ${act}: ${JSON.stringify(p)}`);
+    // Act 3 holds eight relays since The Ember Roost (W9): they zigzag down to its band's lower edge, 8% apart.
+    const eight = list.length > 7;
+    for (const p of list) assert.ok(p.y > band.top + 6 && p.y < band.bottom - (eight ? 1 : 6) && p.x >= 10 && p.x <= 90, `act ${act}: ${JSON.stringify(p)}`);
     // 13% apart at least (seven Act 2 missions since Gun Hill); the 44 px phone rule is in campaign-map-art.test.js.
-    for (let i = 1; i < list.length; i++) assert.ok(Math.abs(list[i].x - list[i - 1].x) >= 13, `act ${act}: nodes ${i - 1} and ${i} too close`);
+    for (let i = 1; i < list.length; i++) assert.ok(Math.abs(list[i].x - list[i - 1].x) >= (eight ? 8 : 13), `act ${act}: nodes ${i - 1} and ${i} too close`);
     // Act 2 runs back west.
     assert.ok(act === 2 ? list[0].x > list.at(-1).x : list[0].x < list.at(-1).x);
   }

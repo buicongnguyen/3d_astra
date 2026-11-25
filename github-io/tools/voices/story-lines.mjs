@@ -2,8 +2,9 @@
 // order the mission can say them (its triggers, with a staged scene's lines where the scene starts).
 // Writes src/voice-story.json, the generator's input (tools/voices/make-voices.py) and the unit test's
 // reference (tests/voice.test.js checks this list still matches the missions). Hand-kept parts of the
-// file survive a rerun: the cast's voices, processing and pace, `spoken` (a variant only for the voice, never on screen) and
-// `excluded`. Run from github-io/: node tools/voices/story-lines.mjs [--check]
+// file survive a rerun: the cast's voices, processing and pace, `spoken` (a variant only for the voice, never on screen),
+// `excluded` and `pending` (missions whose lines are listed but not rendered yet: { id: reason }; the game shows their
+// captions without a voice until tools/voices/make-voices.py renders them and the entry is removed). Run from github-io/: node tools/voices/story-lines.mjs [--check]
 import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { MISSIONS } from "../../src/story/missions.js";
@@ -64,6 +65,7 @@ export function build(previous = {}) {
     speed: previous.speed || {},
     spoken: previous.spoken || {},
     excluded: previous.excluded || {},
+    ...(previous.pending && Object.keys(previous.pending).length ? { pending: previous.pending } : null),
     missions,
   };
 }

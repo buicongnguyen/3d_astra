@@ -6,7 +6,10 @@
 import { BOSSES } from "./sim/bosses.js";
 
 // "surge" is a phase change (boss engine III, R3-H): the boss stands still while its new attacks come online.
-export const BOSS_STATES = { tracking: "ARMORED", warning: "ATTACK INBOUND", attacking: "ATTACK INBOUND", exposed: "CORE EXPOSED", surge: "OVERDRIVE" };
+// "landing" and "perched" belong to a flying boss (boss engine IV, W9): on its way down, then on the ground.
+export const BOSS_STATES = { tracking: "ARMORED", warning: "ATTACK INBOUND", attacking: "ATTACK INBOUND", exposed: "CORE EXPOSED", surge: "OVERDRIVE", landing: "LANDING", perched: "LANDED" };
+// A flying boss in the air between attacks: only anti-air reaches it, and the bar says so.
+export const AIRBORNE_STATE = "AIRBORNE";
 // A boss shielded by relays (spec.ward) says so while it is armoured, so the player knows to break them.
 export const SHIELDED_STATE = "RELAY SHIELD";
 
@@ -16,7 +19,8 @@ export function bossStatus(sim) {
   if (!e) return null;
   const spec = BOSSES[e.boss] || {};
   const warded = spec.ward ? e.bs.warded || 0 : 0;
-  return { id: e.id, name: e.name, phase: e.bs.phase, state: warded && e.bs.phase === "tracking" ? SHIELDED_STATE : BOSS_STATES[e.bs.phase], warded, stage: e.bs.stage || 1, health: Math.max(0, e.hp / e.maxHp), shield: e.maxShield ? e.shield / e.maxShield : 0, stages: spec.stages || [] };
+  const state = warded && e.bs.phase === "tracking" ? SHIELDED_STATE : spec.flight && e.flying && e.bs.phase === "tracking" ? AIRBORNE_STATE : BOSS_STATES[e.bs.phase];
+  return { id: e.id, name: e.name, phase: e.bs.phase, state, warded, stage: e.bs.stage || 1, health: Math.max(0, e.hp / e.maxHp), shield: e.maxShield ? e.shield / e.maxShield : 0, stages: spec.stages || [] };
 }
 
 let bar = null;

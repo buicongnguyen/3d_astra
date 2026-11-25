@@ -8,6 +8,7 @@
 // medals follow the objective-aware bot's time (gold) and about 1.4 times that (silver).
 import { HOLD_THE_RIVER, HOLD_THE_VALLEY, HOLD_THE_ROADS } from "./defence-missions.js";
 import { SOVEREIGN_WALKS } from "./sovereign-mission.js";
+import { EMBER_ROOST } from "./ember-mission.js";
 
 export const MISSIONS = [
   // ───────────────────────── ACT 1: LANDFALL ─────────────────────────
@@ -1503,6 +1504,8 @@ export const MISSIONS = [
     medals: { gold: { seconds: 600 }, silver: { seconds: 900 } },
     design: "An optional side mission (campaign C6) on the campaign map Gun Hills, about 8 to 12 minutes. Three Warden towers, 3 Rangers (Drones) and a Tank (Walker) hold the central hill (r 17, four ramps); the player fires uphill (less range and damage), so Breakers and a wide attack help. A patrol hits the camp at 5:00. When the towers fall a counter-wave goes for the crown, and the player must raise one tower inside region crown. Home-ruled Wardens AI.",
   },
+  // W9: the Ember Drake, the first flying boss (src/story/ember-mission.js); optional, after Crown Hill.
+  EMBER_ROOST,
   {
     id: "m11-cut-the-draw",
     act: 3,

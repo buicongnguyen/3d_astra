@@ -49,9 +49,12 @@ export const MAP_ANCHORS = {
   "m09-a-debt-in-the-dunes": { wide: [10, 16], strip: [10, 18], label: "r", landmark: "Northern dune field" },
   "m10-obsidian-storm": { wide: [23.3, 24], strip: [23.3, 25], label: "b", landmark: "Volcanic storm highlands" },
   "m10b-crown-hill": { wide: [36.7, 16], strip: [36.7, 18], label: "a", landmark: "Gun Hills crown between the camps" },
-  "m11-cut-the-draw": { wide: [50, 24], strip: [50, 25], label: "b", landmark: "Sage canyon draw" },
-  "m11c-hold-the-keystone-roads": { wide: [63.3, 16], strip: [63.3, 18], label: "a", landmark: "Ancient crossroads" },
-  "m11d-the-sovereign-walks": { wide: [76.7, 24], strip: [76.7, 25], label: "b", landmark: "Giant footprints + 3 towers" },
+  // W9 (2026-11-26): an eighth Act 3 relay. The painting has no landmark for it yet, so it sits on the highland
+  // slopes east of Crown Hill and m11, m11c and m11d moved a little to keep 44 px apart on the 318 px phone board.
+  "m10e-the-ember-roost": { wide: [47.2, 32.9], strip: [47.2, 27.4], label: "b", landmark: "Highland slopes east of the Crown (no painted landmark yet)" },
+  "m11-cut-the-draw": { wide: [55.4, 12.6], strip: [55.4, 25.1], label: "b", landmark: "Sage canyon draw" },
+  "m11c-hold-the-keystone-roads": { wide: [69.5, 12.6], strip: [69.5, 17.7], label: "a", landmark: "Ancient crossroads" },
+  "m11d-the-sovereign-walks": { wide: [78.8, 31.3], strip: [78.8, 24.7], label: "b", landmark: "Giant footprints + 3 towers" },
   "m12-frontiers-end": { wide: [90, 16], strip: [90, 18], label: "a", landmark: "Huge cyan-gold Keystone" },
 };
 // Node positions for one painting: the README anchor, or (a future mission without one yet) mapLayout's place.

@@ -42,6 +42,8 @@ export const OPENINGS = {
   "m10-obsidian-storm": { at: "crown", offset: [10, -8], frames: "plateau", zoom: 1.6, drift: [3, 5], seconds: 5.2 },
   // Campaign C6: high over the crown hill of Gun Hills and its three Warden towers.
   "m10b-crown-hill": { at: "crown", offset: [14, 6], frames: "plateau", zoom: 1.5, drift: [-5, 5], seconds: 5 },
+  // W9: over the Crown where the Ember Drake sleeps, drifting south-west toward the camp road.
+  "m10e-the-ember-roost": { at: "crown", offset: [-16, -16], frames: "objective", zoom: 1.4, drift: [-5, 5], seconds: 5 },
   // Map variety: Twin Rivers since 2026-11, high over the west ford of the south river, drifting across it.
   "m11-cut-the-draw": { at: "bridge", offset: [2, -8], frames: "bridge", zoom: 1.4, drift: [0, -6], seconds: 4.8 },
   "m11c-hold-the-keystone-roads": { at: { x: 4, z: -44 }, frames: "road", zoom: 1.2, drift: [0, 8], seconds: 5 },

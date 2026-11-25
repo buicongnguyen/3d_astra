@@ -67,6 +67,8 @@ export const MISSION_LOOKS = {
   // the Canyon Run drives through Amber Canyon in a long red-gold evening.
   "m06c-gun-hill": "night",
   "m04b-canyon-run": "dusk",
+  // W9: the Ember Roost at dusk, so the drake's embers and the breath strips glow.
+  "m10e-the-ember-roost": "dusk",
   // R3-D: the storm gathers from the first second (cloud, fog and rain thicken over 90 s), then the surge
   // storm Vale warns of breaks in full at 16:00 (it was all-or-nothing at 16:00 before).
   "m06-copper-harvest": { look: "storm", ramp: [[0, 0.35], [90, 0.75], [960, 0.75], [980, 1]] },

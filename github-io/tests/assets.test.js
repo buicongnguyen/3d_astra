@@ -89,10 +89,10 @@ test('portrait generation preserves legacy cells and appends every approved fact
   // R3-J (round 3): 29 cells before, then the 7 missing types and the reserved ironsovereign2 (37).
   // R4-P1 (round 4): the Dune Wyrm and the Wyrmling go before the reserved last cell (39).
   // Roster 2026-11-24: lancer, bulwark, moth and halo before the reserved cell (ironsovereign2); creature round:
-  // Acid Hound and Vault Sentinel after it (45 cells, 12 rows).
-  assert.equal(new Set(order).size, 45);
+  // Acid Hound and Vault Sentinel after it (45 cells, 12 rows); W9: the Ember Drake (46 cells, still 12 rows).
+  assert.equal(new Set(order).size, 46);
   assert.deepEqual(order.slice(38, 42), ['lancer', 'bulwark', 'moth', 'halo']);
-  assert.deepEqual(order.slice(42), ['ironsovereign2', 'acidhound', 'vaultsentinel']);
+  assert.deepEqual(order.slice(42), ['ironsovereign2', 'acidhound', 'vaultsentinel', 'emberdrake']);
   assert.deepEqual(manifest.filter(a => a.roster).map(a => a.name), ['lancer', 'bulwark', 'moth', 'halo']);
   assert.deepEqual(new Set(order.slice(13, 25)), new Set(assets.map(a => a.name)));
   // R3-F (round 3) reworked the approved faction models; they wait for the owner again.
