@@ -8,13 +8,13 @@
 export const MEDAL_ITEMS = Object.freeze({
   paint: [
     { id: "laurel", label: "Laurel", unlock: { goldAct: 1 }, how: "Gold in all of Act 1", tint: [0.92, 1.22, 0.62], swatch: "#b9d77a" },
-    { id: "silverline", label: "Silverline", unlock: { ach: 5 }, how: "5 achievements", tint: [1.12, 1.16, 1.22], swatch: "#d9e1ea" },
-    { id: "crimson", label: "Crimson", unlock: { sets: 3 }, how: "3 challenge days", tint: [1.4, 0.62, 0.6], swatch: "#d9645c" },
+    { id: "silverline", label: "Silverline", unlock: { ach: 3 }, how: "3 achievements", tint: [1.12, 1.16, 1.22], swatch: "#d9e1ea" },
+    { id: "crimson", label: "Crimson", unlock: { sets: 5 }, how: "5 challenge days", tint: [1.4, 0.62, 0.6], swatch: "#d9645c" },
     { id: "obsidian", label: "Obsidian", unlock: { ach: 15 }, how: "15 achievements", tint: [0.6, 0.62, 0.74], swatch: "#5c6272" },
   ],
   emblem: [
     { id: "laurels", label: "Laurels", unlock: { gold: 10 }, how: "10 gold medals", glyph: "laurels" },
-    { id: "medal", label: "Medal", unlock: { ach: 10 }, how: "10 achievements", glyph: "medal" },
+    { id: "medal", label: "Medal", unlock: { ach: 8 }, how: "8 achievements", glyph: "medal" },
   ],
   banner: [
     { id: "challenger", label: "Daily Challenger", unlock: { sets: 1 }, how: "1 challenge day" },

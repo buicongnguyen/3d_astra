@@ -31,8 +31,8 @@ test("nine rewards over paint, emblem and banner, ids unique with the rank items
 test("each unlock: achievements, gold medals, gold acts and challenge days", () => {
   assert.deepEqual(openRewards(NONE), []);
   assert.equal(openRewards(ALL).length, 9);
-  assert.equal(rewardOpen(medalItem("paint", "silverline"), { ach: 4 }), false);
-  assert.equal(rewardOpen(medalItem("paint", "silverline"), { ach: 5 }), true);
+  assert.equal(rewardOpen(medalItem("paint", "silverline"), { ach: 2 }), false);
+  assert.equal(rewardOpen(medalItem("paint", "silverline"), { ach: 3 }), true);
   assert.equal(rewardOpen(medalItem("paint", "laurel"), { goldActs: [2] }), false);
   assert.equal(rewardOpen(medalItem("paint", "laurel"), { goldActs: [1] }), true);
   assert.equal(rewardOpen(medalItem("emblem", "laurels"), { gold: 10 }), true);

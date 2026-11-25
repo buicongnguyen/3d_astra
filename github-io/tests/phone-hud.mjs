@@ -1,8 +1,8 @@
 // W13 (2026-11-25): the phone HUD in the browser.
 //   1. HUD coverage (tests/lib/hud-coverage.mjs: the share of the screen the interface paints, translucent glass by
 //      its alpha) with nothing selected, a mixed army, the Command core and in Defence, at 390x844, 844x390 and
-//      667x375, measured with the notice line empty: under 30 % in every state at 390x844 and 844x390; at 667x375 under
-//      30 % on average and under 40 % in each state (the side dock of a 375 px tall phone is a fifth of the screen).
+//      667x375, measured with the notice line empty: under 30 % in every state at every size (667x375 since the shorter
+//      small-landscape card, phone-hud-slim.css rule 5; it was 36 % with a group or a building selected).
 //      A routine notice settles to one line after 2.5 s; an alert stays in full.
 //   2. Settings → Controls → Hand and Display → Minimap side, chosen in the sheet on a phone: the touch row, the flag,
 //      Map, the idle buttons and the landscape dock mirror; the minimap takes the right corner; every HUD tap target
@@ -74,8 +74,7 @@ await suite("phone-hud", async () => {
         await pick(page, state);
         const { pct } = await page.evaluate(hudCoverage, {});
         table.push([name, state, pct]);
-        if (name !== "small") assert.ok(pct < 30, `${name} ${state}: HUD covers ${pct.toFixed(1)} % (under 30 %)`);
-        else assert.ok(pct < 40, `${name} ${state}: HUD covers ${pct.toFixed(1)} % (under 40 %)`);
+        assert.ok(pct < 30, `${name} ${state}: HUD covers ${pct.toFixed(1)} % (under 30 %)`);
         assert.deepEqual(await page.evaluate(AUDIT), [], `${name} ${state}: 44 px taps, 11 px text`);
         if (state !== "defence") await shot(page, `phone-hud-${name}-right-${state}`);
       }
