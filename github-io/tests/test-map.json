@@ -101,6 +101,12 @@
       "checks": []
     },
     {
+      "name": "LAN play (W11): lockstep net layer, host server, title tile and LAN screen",
+      "files": ["src/net/**", "src/lan-entry.js", "src/lan-entry.css", "tools/lan-server.mjs", "tools/lan-ws.mjs", "tests/lib/lan-bot.mjs"],
+      "suites": ["lan-play", "title", "meta", "quick-battle"],
+      "checks": []
+    },
+    {
       "name": "offline and the service worker",
       "files": ["src/app/offline.js", "public/manifest.webmanifest", "public/favicon.svg"],
       "suites": ["offline", "cover-ui", "music"],

@@ -8,6 +8,8 @@
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
+    "lan": "vite build && node tools/lan-server.mjs",
+    "lan:serve": "node tools/lan-server.mjs",
     "test": "node --test tests/*.test.js",
     "test:ci-local": "node tests/ci-local.mjs",
     "test:changed": "node tests/changed.mjs",
@@ -103,7 +105,8 @@
     "test:wild-desert": "node tests/wild-desert.mjs",
     "bench:wild": "node tools/wild-bench.mjs --jobs 3",
     "test:creatures": "node tests/creatures.mjs",
-    "test:faction-depth": "node tests/faction-depth.mjs"
+    "test:faction-depth": "node tests/faction-depth.mjs",
+    "test:lan-play": "node tests/lan-play.mjs"
   },
   "dependencies": {
     "three": "0.185.1"

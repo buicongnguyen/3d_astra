@@ -127,11 +127,16 @@ export function setupFrame(S, A) {
     // test moves time with step() alone and a slow machine cannot run the clock on between its checks.
     // S.defenceGuideHold (app/defence/guide.js): the Defence first-build guide's steps 1 and 2 wait on the clock too.
     // W6: a replay (src/replay-ui.js) holds the clock while its viewer is paused or finished, and no guide holds it.
+    // W11 LAN play (src/net/lan-ui.js): the pause/away hold, pings and the stall timeout, every frame.
+    S.lan?.watch();
     const running = Z.started && !Z.paused && !S.sim.result && !S.testHold && (!S.defenceGuideHold || !!S.replay) && !S.replay?.paused;
     // D2: the clock's pace (×1, ×2, ×3: the Defence bar, Shift+Space or Settings → Game speed, any match);
     // a scene or a decision puts it back to 1.
     const pace = S.replay ? S.replay.speed : fastForward.pace({ sim: S.sim, started: Z.started, allowed: true, forced: MUSIC_HOLDS.includes(Z.modalType) || !!A.sceneActive?.() || !!S.sim.mission?.pending });
     if (running) {
+      // W11 LAN play: the lockstep session runs the ticks (at x1, only when every player's turn is in).
+      if (S.lan) S.lan.frame(dt);
+      else {
       S.accumulator += dt * pace;
       let ticks = 0;
       const tickStart = performance.now();
@@ -162,6 +167,7 @@ export function setupFrame(S, A) {
         }
         // Fast-forward: at most MAX_TICKS_PER_FRAME ticks a frame; what a slow frame cannot run is dropped, not owed.
         if (pace > 1 && ticks >= MAX_TICKS_PER_FRAME) { S.accumulator = Math.min(S.accumulator, 0.05); break; }
+      }
       }
       // A scene holds the match while it plays; one called by the winning tick plays before the debrief.
       const scene = S.sim.events.find((e) => e.type === "scene");

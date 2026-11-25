@@ -29,13 +29,17 @@ import { bosses } from "./sim/bosses.js";
 import { content, installContentMixins, SPAWN, STEP } from "./sim/content.js";
 import { effects } from "./sim/effects.js";
 import { BUILT_IN_ABILITIES } from "./sim/tactics.js";
+import { lanSeats, lanHostile, lanResult } from "./sim/lan.js";
 
 export { NEUTRAL } from "./sim/constants.js";
 // The match state and its fixed 20 Hz step. Behaviour lives in the systems under sim/, mixed
 // in at the bottom of this file; this class holds setup, shared lookups and the step order.
 export class Simulation {
-  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null, mission = null, factions = null, difficulty = "standard", capturePoints = false, aiPlayer = false, rules = null } = {}) {
+  constructor({ ai = true, map = "classic", enemyCount = 1, aiSpeed = "normal", alliance = "ffa", playerBonus = null, mission = null, factions = null, difficulty = "standard", capturePoints = false, aiPlayer = false, rules = null, lan = null } = {}) {
     this.difficulty = difficultyId(difficulty);
+    // W11 LAN play (src/net/): several people command teams of one match. Kept only when set, so a match
+    // without it serializes, hashes and plays exactly as before (sim/lan.js reads it).
+    if (lan) this.lan = lanSeats(lan, enemyCount);
     // H2: skirmish rules (for example { roster: "expanded" }), kept only when one is set; read with ruleOn() (sim/content.js).
     if (rules && Object.keys(rules).length) this.rules = { ...rules };
     if (mission) aiSpeed = difficultySpeed(aiSpeed, this.difficulty);
@@ -55,7 +59,7 @@ export class Simulation {
     this.aiSpeed = Object.hasOwn(AI_SPEEDS, aiSpeed) ? aiSpeed : "normal";
     this.pace = aiPace(this.aiSpeed, !!mission);
     // A coalition of AIs shares vision and plans and never fights itself.
-    this.coalition = alliance === "coalition" && this.enemyCount > 1;
+    this.coalition = alliance === "coalition" && this.enemyCount > 1 && !this.lan;
     this.players = Array.from({ length: this.enemyCount + 1 }, () => ({
       alloy: 450,
       energy: 150,
@@ -306,6 +310,7 @@ export class Simulation {
   // The side the person commands: team 0, unless the computer plays it (aiPlayer, AI-vs-AI checks).
   // Coalition allies and every rival are teams 1+ and so always computer sides.
   humanTeam(team) {
+    if (this.lan) return this.lan.humans.includes(team);
     return team === 0 && !this.aiPlayer;
   }
   // Player prices (owner 2026-11-25: a cheap Kite to watch the enemy): balance.json `player_cost` /
@@ -328,6 +333,8 @@ export class Simulation {
     this.players[team].energy -= cost[1] * factor;
   }
   message(text, team = 0) {
+    // LAN play: each person's own messages, tagged with the team they are for (the page shows its own).
+    if (this.lan) { if (this.lan.humans.includes(team)) { this.events.push({ type: "message", text, team }); if (this.events.length > 300) this.events.splice(0, 100); } return; }
     if (team === 0) {
       this.events.push({ type: "message", text });
       if (this.events.length > 300) this.events.splice(0, 100);
@@ -341,6 +348,7 @@ export class Simulation {
   }
   // Wild creatures (WILD_TEAM, round 4) are fair game for every side but never pick a side's units through this test.
   hostile(a, b) {
+    if (this.lan) return lanHostile(this.lan, a, b);
     return a !== b && a >= 0 && (b >= 0 ? !(this.coalition && a > 0 && b > 0) : b === WILD_TEAM);
   }
   tick(dt) {
@@ -484,7 +492,8 @@ export class Simulation {
       this.updateVision();
     }
     const enemiesAlive = alive.slice(1).some(Boolean);
-    if (this.mission) this.result = this.missionResult(alive);
+    if (this.lan) this.result = lanResult(this.lan, alive);
+    else if (this.mission) this.result = this.missionResult(alive);
     else if (!alive[0] || !enemiesAlive)
       this.result =
         !alive[0] && !enemiesAlive ? "draw" : alive[0] ? "victory" : "defeat";

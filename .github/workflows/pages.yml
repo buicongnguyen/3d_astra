@@ -220,6 +220,10 @@ jobs:
           # W6 replay value: achievements toast and Records screen, daily challenge tiles, medal cosmetics, match history and the replay viewer, at three viewports.
           - name: w6
             scripts: meta
+          # W11 LAN play: the host server (tools/lan-server.mjs, port 4574, serving dist/) and two browsers, a desktop
+          # host and a phone guest: lobby, a 1v1 with orders on both sides and agreeing hashes, the waiting card, pause, forfeit.
+          - name: w11
+            scripts: lan-play
           # AAA round 4 (R4-P1): the Wild frontier desert test (rule row, one-tap Weather button, aimed Sandstorm, Dune Wyrm Ambush, nest) at three viewports.
           - name: r4-p1
             scripts: wild-desert

@@ -58,6 +58,7 @@ import "./phone-hud.css";
 import { registerOffline } from "./app/offline.js";
 import { setupCover } from "./app/cover.js";
 import { setupQuickBattle } from "./quick-battle.js";
+import { setupLan } from "./lan-entry.js"; // W11 LAN play: the title tile; the rest loads on first use (src/net/)
 import { setupMeta } from "./meta-ui.js";
 import { setupReplay } from "./replay-ui.js";
 // The command console kit on every screen (round 3 kit pass): loaded after every other stylesheet.
@@ -223,6 +224,8 @@ const SETUP = [
   ["rank", setupRank],
   // R3-Q: Quick battle and First watch wrap createSim, newGame, defenceMission and defenceHud, so they come last.
   ["quick-battle", setupQuickBattle],
+  // W11 LAN play: its tile follows the Quick battle tiles in the quick row.
+  ["lan", setupLan],
   ["wild", setupWildUi],
   // W6 replay value: after Quick battle, so the Records tile joins the quick row it fills.
   ["meta", setupMeta],
@@ -230,7 +233,7 @@ const SETUP = [
   ["replay", setupReplay],
 ];
 const BIND = ["preferences", "hud", "input-pointer", "sound", "frame", "modals", "briefing", "match-flow", "selection", "type-chips",
-  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "choices", "scenes", "debug-hooks", "defence", "rank", "quick-battle", "meta", "replay"];
+  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "choices", "scenes", "debug-hooks", "defence", "rank", "quick-battle", "lan", "meta", "replay"];
 const binds = Object.fromEntries(SETUP.map(([name, setup]) => [name, setup(S, A)]));
 // The start screen shows the battle chosen there, so the first simulation is built from it.
 ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction, playerFaction: S.playerFaction } = A.battleSetup());

@@ -16,7 +16,7 @@ One status table for everything that was planned, newest first. Last checked 202
 | AAA stage 3, Battlefield | [aaa/STAGE_3_BATTLEFIELD.md](aaa/STAGE_3_BATTLEFIELD.md) | 3.1 height and straight walls done (0.13.0); air units done (0.18.0). Cover, weather and the map rework not built | CHANGELOG |
 | AAA stage 2, Factions | [aaa/STAGE_2_FACTIONS.md](aaa/STAGE_2_FACTIONS.md) | Done (0.12.0, 0.12.1): four factions in Skirmish and the campaign, Rider unlock, faction bench. The round-robin balance target is still open | [BALANCE.md](BALANCE.md) |
 | AAA stage 1, Feel | [aaa/STAGE_1_FEEL.md](aaa/STAGE_1_FEEL.md) | Pushed; the owner's play and listening review is pending | CHANGELOG |
-| Online multiplayer | [INTERNET_MULTIPLAYER_PLAN.md](INTERNET_MULTIPLAYER_PLAN.md) | Not started; the command layer keeps it possible | |
+| Online multiplayer | [INTERNET_MULTIPLAYER_PLAN.md](INTERNET_MULTIPLAYER_PLAN.md) | LAN play built (W11: lockstep over a host server on the home network, 1v1 and co-op vs AI); internet play not started | [LAN_PLAY.md](LAN_PLAY.md) |
 | Naval maps | [naval/NAVAL_PLAN.md](naval/NAVAL_PLAN.md) | Plan only | |
 | Rebuild plan phases 0 and A to F | [REVIEW_AND_REBUILD_PLAN_2026-11.md](REVIEW_AND_REBUILD_PLAN_2026-11.md) | Done (0.2.0 to 0.9.4): rules fixes, command layer, save and replay, mission engine, veterancy and abilities, rules depth, story and campaign, the look, in-house music and sound, phone landscape, client restructure, staged loading and offline. Left from then: smaller model files and moving the other browser scripts onto the shared harness (`tests/lib/harness.mjs`) | CHANGELOG 0.2.0 to 0.9.4 |
 
