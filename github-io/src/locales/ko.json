@@ -2747,7 +2747,9 @@
     ],
     [
       "^([^·]+) \\(level (\\d+)\\)$",
-      "{1} (레벨 {2})",
+      "{1} (레벨 {2})"
+    ],
+    [
       "^Challenge complete · \\+(\\d+) XP$",
       "도전 완료 · +{1} XP"
     ],
@@ -2764,16 +2766,18 @@
       "능력: {1}"
     ],
     [
-      "^Recharges in (d+(?:.d+)?) s.$",
+      "^Recharges in (\\d+(?:\\.\\d+)?) s\\.$",
       "{1}초 후 다시 충전됩니다."
     ],
     [
-      "^Second doctrine at level (d+).$",
+      "^Second doctrine at level (\\d+)\\.$",
       "레벨 {1}에서 두 번째 교리."
     ],
     [
-      "^Second doctrine, after (.+).$",
-      "{1} 다음의 두 번째 교리.",
+      "^Second doctrine, after (.+)\\.$",
+      "{1} 다음의 두 번째 교리."
+    ],
+    [
       "^Field commander, rank (\\d+), health (\\d+) of (\\d+)$",
       "야전 사령관, 계급 {1}, 체력 {2}/{3}"
     ]

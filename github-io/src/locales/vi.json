@@ -2747,7 +2747,9 @@
     ],
     [
       "^([^·]+) \\(level (\\d+)\\)$",
-      "{1} (cấp {2})",
+      "{1} (cấp {2})"
+    ],
+    [
       "^Challenge complete · \\+(\\d+) XP$",
       "Xong thử thách · +{1} XP"
     ],
@@ -2764,16 +2766,18 @@
       "Kỹ năng: {1}"
     ],
     [
-      "^Recharges in (d+(?:.d+)?) s.$",
+      "^Recharges in (\\d+(?:\\.\\d+)?) s\\.$",
       "Hồi lại sau {1} giây."
     ],
     [
-      "^Second doctrine at level (d+).$",
+      "^Second doctrine at level (\\d+)\\.$",
       "Học thuyết thứ hai ở cấp {1}."
     ],
     [
-      "^Second doctrine, after (.+).$",
-      "Học thuyết thứ hai, sau {1}.",
+      "^Second doctrine, after (.+)\\.$",
+      "Học thuyết thứ hai, sau {1}."
+    ],
+    [
       "^Field commander, rank (\\d+), health (\\d+) of (\\d+)$",
       "Chỉ huy chiến trường, bậc {1}, máu {2} trên {3}"
     ]
