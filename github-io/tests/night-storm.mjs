@@ -57,7 +57,9 @@ await suite("night-storm: a dark-blue night with moon and stars, a storm with ra
     assert.ok(day.lum > night.lum, "the same view is brighter by day");
     assert.deepEqual(night.shown, ["sky-moon", "sky-stars"]);
     assert.ok(night.all[0] - night.all[2] < 0, `frame red minus blue ${night.all[0] - night.all[2]}`);
-    assert.ok(night.top[2] - night.top[0] > 20, `void band blue over red ${night.top[2] - night.top[0]}`);
+    // V1 terrain (2026-11-26): the band beyond the map edge is now the land's lowland under the night, not a flat navy
+    // void: blue leads red by 19.8 on CI's SwiftShader (37 on a GPU), so the line is 15 (it was 20 over the void).
+    assert.ok(night.top[2] - night.top[0] > 15, `edge band blue over red ${night.top[2] - night.top[0]}`);
     assert.ok(night.lum < 15, `luminance ${night.lum}%`);
     assert.ok(night.calls - day.calls <= 6, `night ${night.calls} draws, day ${day.calls}`);
     assert.deepEqual(errors, []);
