@@ -65,7 +65,8 @@ await suite('model-loading UI',async()=>{
   await page.selectOption('#enemy-faction','ashfall');
   await request;
   try {
-    assert.ok(downloads.slice(beforeFactionLoad).every(url => /\/(scrapper|scorcher|salvageyard)\.glb$/.test(url)),
+    // Its own models and (visual round V) its dress for the shared models, nothing else.
+    assert.ok(downloads.slice(beforeFactionLoad).every(url => /\/(scrapper|scorcher|salvageyard|dress-ashfall)\.glb$/.test(url)),
       'a faction change fetches only missing faction models');
     await page.selectOption('#enemy-faction','mirror');
     assert.ok(await page.locator('#start').isEnabled(), 'a cached roster can start during an abandoned download');

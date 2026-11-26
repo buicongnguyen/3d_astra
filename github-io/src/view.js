@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { reducedMotionQuery } from "./reduced-motion.js";
 import { addTeamBands } from "./team-bands.js";
-import { CORE_MODEL_TYPES } from "./model-roster.js";
+import { CORE_MODEL_TYPES, DRESSED_TYPES } from "./model-roster.js";
 import { CameraShake, FEEL } from "./camera-shake.js";
 const WRECK_TINT = [0.2, 0.18, 0.16]; // burnt: paint and team colour multiplied down to soot
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
@@ -250,6 +250,15 @@ export class WorldView {
     this.hitStop = 0;
     this.cameraCue = false;
     this.teamTemplates = new Map();
+    // Faction dress (visual round V, src/faction-dress.js; syncFactionDress): the parsed dress files by faction,
+    // what each team template wears, its team meshes' geometry as modelled, the dressed geometry (shared by teams of
+    // one faction), and per type what prepareModels learnt (turret ring, shader bones) to place a dress like the base.
+    this.factionDress = new Map();
+    this.dressOn = new Map();
+    this.dressBase = new WeakMap();
+    this.dressCache = new Map();
+    this.dressSkipped = new Set();
+    this.modelInfo = new Map();
     this.buildingTops = new Map();
     this.fogClock = 0;
     this.gridVisible = false;
@@ -563,6 +572,14 @@ export class WorldView {
       ...types
         .filter((type) => !this.models.has(type))
         .map(async (type) => {
+          // A faction's dress (visual round V): parsed here, put on the team templates by syncFactionDress.
+          if (type.startsWith("dress-")) {
+            const [gltf, kit] = await Promise.all([fetchModel(type), import("./faction-dress.js")]);
+            this.dressKit = kit;
+            this.factionDress.set(type.slice("dress-".length), kit.readDress(gltf.scene, THREE));
+            this.models.set(type, true);
+            return;
+          }
           const gltf = await fetchModel(type);
           gltf.scene.updateMatrixWorld(true);
           addTeamBands(gltf.scene, type);
@@ -603,6 +620,14 @@ export class WorldView {
             hullPivot = box.isEmpty() ? new THREE.Vector3(0, 0.6, 0) : box.getCenter(new THREE.Vector3());
             gltf.scene.traverse((o) => { if (o.isMesh && /^Wheels/.test(o.name)) hullWheels = tagWheels(o.geometry.clone().applyMatrix4(o.matrixWorld)); });
           }
+          // What a faction dress needs to sit and bend like this model's own parts (src/faction-dress.js rigTag).
+          const hips = {};
+          for (const [leg, knee] of knees) {
+            const hip = new THREE.Vector3().setFromMatrixPosition(leg.matrixWorld);
+            hips[/_R(\d*)$/.test(leg.name) ? "R" : "L"] ??= [hip.y, knee, hip.z];
+          }
+          this.modelInfo.set(type, { pivot: pivot ? [pivot.x, pivot.z] : null, rig: rigInfantry ? "infantry" : rigHull ? "hull" : null,
+            hipY, legs: hips, hull: hullPivot ? [hullPivot.y, hullPivot.z] : null });
           gltf.scene.traverse((o) => {
             // Leg pivots, and the flyers' spinning rotors and flickering burner flame (0.18), stay
             // separate nodes so they can move per instance inside their batches.
@@ -640,10 +665,12 @@ export class WorldView {
             else if (target === buckets && rigHull) tagBone(geometry, /^(Tracks|Wheel)/.test(o.name) ? BONE.none : BONE.hull, hullPivot.y, 0, hullPivot.z);
             target.get(key).geometries.push(geometry);
           });
+          // Team-paint meshes carry their rigid group, where a faction dress joins them (syncFactionDress).
+          const paint = (mesh, group) => { if (mesh.material.name.startsWith("Team")) mesh.userData.paint = group; return mesh; };
           for (const { material, geometries } of buckets.values()) {
             const combined = mergeGeometries(geometries, false);
             if (combined) {
-              const part = new THREE.Mesh(combined, material);
+              const part = paint(new THREE.Mesh(combined, material), "body");
               if (combined.getAttribute("aRig")) {
                 // Poses reach a little past the rest silhouette (a stride, a kneel): pad the bounds.
                 combined.computeBoundingSphere();
@@ -659,7 +686,7 @@ export class WorldView {
           const barrel=new THREE.Group();barrel.name='BarrelRig';
           for(const {material,geometries} of barrelBuckets.values()){
             const combined=mergeGeometries(geometries,false);
-            if(combined)barrel.add(new THREE.Mesh(combined,material));
+            if(combined)barrel.add(paint(new THREE.Mesh(combined,material),"barrel"));
             geometries.forEach(g=>g.dispose());
           }
           // The barrel's hinge (trunnion) for a raised or stowed barrel: the rear of the barrel, at its mid height.
@@ -671,7 +698,7 @@ export class WorldView {
             const turret=new THREE.Group();turret.name='TurretRig';turret.position.set(pivot.x,0,pivot.z);
             for(const {material,geometries} of turretBuckets.values()){
               const combined=mergeGeometries(geometries,false);
-              if(combined)turret.add(new THREE.Mesh(combined,material));
+              if(combined)turret.add(paint(new THREE.Mesh(combined,material),"turret"));
               geometries.forEach(g=>g.dispose());
             }
             turret.add(barrel);template.add(turret);
@@ -740,7 +767,96 @@ export class WorldView {
       this.environment.still = this.motionLevel === 0;
     }
     this.applyReflections();
+    this.dressDirty = true; // new templates or a new dress file: the next frame dresses what it can
     await this.warmRig(types);
+  }
+  // Faction dress (visual round V, src/faction-dress.js). Every team's templates of the fourteen shared models wear
+  // the dress of that team's faction in the sim (a mission's factions, a skirmish's sides, Defence and LAN as they
+  // set them); Meridian, and a faction whose file is not loaded yet, wear the models as modelled. The dress rides in
+  // the templates' own team meshes (same material, dressed geometry), so no batch is added; live entities swap too.
+  // Called every frame by update(): an identity check until the match's factions or the loaded files change.
+  syncFactionDress(sim) {
+    const factions = sim?.factions || null;
+    if (!this.factionDress?.size && !this.dressOn?.size) return; // no dress file loaded, nothing dressed: all Meridian
+    if (factions === this.dressFactions && !this.dressDirty) return;
+    this.dressFactions = factions;
+    this.dressDirty = false;
+    const kit = this.dressKit, swaps = new Map(), fresh = [];
+    for (let team = 0; team < this.colors.length; team++) {
+      const want = this.factionDress.has(factions?.[team]) ? factions[team] : null;
+      for (const type of DRESSED_TYPES) {
+        const key = `${type}-${team}`, template = this.teamTemplates.get(key), info = this.modelInfo.get(type);
+        if (!template || !info || (this.dressOn.get(key) ?? null) === want) continue;
+        const parts = want ? this.factionDress.get(want).get(type) : null, used = new Set();
+        template.traverse((o) => {
+          if (!o.isMesh || !o.userData.paint) return;
+          const group = o.userData.paint, cls = o.material.name.startsWith("TeamGlow") ? "TeamGlow" : "Team";
+          const base = this.dressBase.get(o) || o.geometry;
+          this.dressBase.set(o, base);
+          let next = base;
+          if (parts) {
+            const cacheKey = `${type}|${want}|${group}|${cls}`;
+            next = this.dressCache.get(cacheKey);
+            if (!next) {
+              const mine = kit.partsFor(parts, group, cls);
+              next = cls === "TeamGlow" && !mine.length ? base : kit.dressGeometry(base, mine, { THREE, BONE, info, group, cls });
+              this.dressCache.set(cacheKey, next);
+            }
+            for (const x of kit.partsFor(parts, group, cls)) used.add(x);
+            if (next.getAttribute("color")?.itemSize === 4 && kit.dressPaint(o.material)) fresh.push(o);
+          }
+          if (next !== o.geometry) {
+            swaps.set(`${o.geometry.id}:${o.material.id}`, next);
+            o.geometry = next;
+            fresh.push(o);
+          }
+        });
+        // A part with no team mesh of its class in its group would need a batch of its own: it is left off (and
+        // reported; tests/faction-dress.mjs wants none).
+        for (const x of parts || []) if (!used.has(x)) this.dressSkipped.add(`${want}:${type}:${x.group}:${x.cls}`);
+        if (want) this.dressOn.set(key, want); else this.dressOn.delete(key);
+      }
+    }
+    if (swaps.size) for (const root of [...this.objects.values(), ...this.dying.map((d) => d.object)]) root.traverse((o) => {
+      const next = o.isMesh && swaps.get(`${o.geometry.id}:${o.material.id}`);
+      if (next) { o.geometry = next; this.batches.byPart.delete(o); }
+    });
+    if (fresh.length) this.warmMeshes(fresh);
+  }
+  // Compile what a dress changed (patched team materials, RGBA geometry) behind one off-screen draw, as warmRig does
+  // for the rigged parts, so the first dressed unit on screen compiles nothing.
+  warmMeshes(meshes) {
+    if (this.contextLost) return;
+    const seen = new Set(), group = new THREE.Group(), wrappers = [];
+    const tiny = new THREE.Matrix4().makeScale(1e-5, 1e-5, 1e-5).setPosition(this.focus.x, -50, this.focus.z);
+    for (const o of meshes) {
+      const rig = !!o.geometry.getAttribute("aRig"), key = `${o.material.id}:${o.castShadow ? 1 : 0}:${o.geometry.getAttribute("color")?.itemSize}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const g = new THREE.BufferGeometry();
+      for (const [name, attribute] of Object.entries(o.geometry.attributes)) g.setAttribute(name, attribute);
+      g.setIndex(o.geometry.index);
+      if (rig) g.setAttribute("aMotion", new THREE.InstancedBufferAttribute(new Float32Array([0, 0, 0, 1]), 4));
+      const warm = new THREE.InstancedMesh(g, o.material, 1);
+      warm.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array([1, 1, 1]), 3);
+      warm.setMatrixAt(0, tiny);
+      if (rig) warm.customDepthMaterial = rigDepthMaterial();
+      warm.castShadow = o.castShadow;
+      warm.receiveShadow = true;
+      warm.frustumCulled = false;
+      group.add(warm);
+      wrappers.push(g);
+    }
+    if (!group.children.length) return;
+    this.scene.add(group);
+    try {
+      if (!this.contextLost) this.renderer.render(this.scene, this.camera);
+    } catch { /* a warm-up never blocks a match */ }
+    finally {
+      this.scene.remove(group);
+      for (const warm of group.children) warm.dispose();
+      wrappers.forEach(releaseWrapper);
+    }
   }
   // Shader warm-up for rigged units (unit-rig.js): one tiny, never-culled instance of every rigged
   // part, drawn once behind the loading screen with the real scene (lights, fog, shadow pass), so the
@@ -1688,6 +1804,7 @@ export class WorldView {
   }
   update(sim, dt, selected, hover, alpha = 1) {
     if (this.contextLost) return;
+    this.syncFactionDress(sim);
     const realDt = dt, enabled = this.feelEnabled();
     this.shake.step(realDt, enabled, this.lowPower);
     if (!enabled) this.hitStop = 0;

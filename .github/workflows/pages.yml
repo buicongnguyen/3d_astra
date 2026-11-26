@@ -211,6 +211,9 @@ jobs:
           # Unit review 2026-11-25: every unit of every faction drawn right (model, ground, team colour, bar).
           - name: r3-k
             scripts: readability unit-roster
+          # Visual round V: each faction's dress on the shared units and buildings (only the factions in play load it, no new draw).
+          - name: v-dress
+            scripts: faction-dress
           - name: bosses
             scripts: boss
           # Split from "ui-extras" (Wave 1 integration): the three suites ran ~119 s locally, ~28 min estimated on the runner.

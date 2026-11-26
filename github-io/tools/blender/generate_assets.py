@@ -9,6 +9,8 @@ Outputs public/models/<type>.glb and manifest.json. Headless runs also save
 assets/source/frontier-library.blend. Units keep the named leg pivots used for walking;
 run animate_units.py afterwards to bake the rigid-part clips used by the Godot edition.
 Shared look development and runtime naming rules are documented in frontier_kit.py.
+The four non-Meridian factions dress these models with their own parts (generate_dress.py, built on
+the builders below; visual round V): change a model here, then rebuild the dress so its parts still sit.
 """
 import json
 import math
@@ -573,7 +575,10 @@ def build_all(kinds=None, export=True, layout=True):
     if export and set(kinds) == set(UNITS + BUILDINGS):
         previous = OUT / 'manifest.json'
         if previous.exists():
-            manifest['assets'] += [entry for entry in json.loads(previous.read_text(encoding='utf-8'))['assets'] if entry['name'] not in UNITS + BUILDINGS]
+            old = json.loads(previous.read_text(encoding='utf-8'))
+            manifest['assets'] += [entry for entry in old['assets'] if entry['name'] not in UNITS + BUILDINGS]
+            # Other generators' sections (generate_dress.py's faction dress list) stay as they are.
+            manifest.update({key: value for key, value in old.items() if key not in manifest})
         (OUT / 'manifest.json').write_bytes((json.dumps(manifest, indent=2) + '\n').encode('utf-8'))  # LF on Windows too
     return built, manifest
 

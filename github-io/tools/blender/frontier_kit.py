@@ -96,6 +96,18 @@ MATERIALS = {
     'CrystalEnergy': ('#2fb0f0', 0.1, 0.2, 0.42),
     # Air units (generate_air.py): a burner flame that keeps its own colour on every team.
     'Flame': ('#ff8a2a', 0.0, 0.4, 3.0),
+    # Faction dress (generate_dress.py, visual round V): the faction's own colours on its extra parts. At runtime
+    # they ride in the team-paint mesh (src/faction-dress.js), so they share the Team finish (metal 0.25, rough
+    # 0.42); the same finish here keeps the Blender review sheets honest. Never recoloured by team.
+    'Rust': ('#c86a3c', 0.25, 0.42, 0.0),        # Ashfall: welded scrap plates
+    'Soot': ('#4a403a', 0.25, 0.42, 0.0),        # Ashfall: exhausts, spikes, masks, stripe bars
+    'Canvas': ('#f6e4b8', 0.25, 0.42, 0.0),      # Sunward: cream canvas hats, canopies, awnings
+    'Brass': ('#e8ad48', 0.25, 0.42, 0.0),       # Sunward: domes, hubs, studs
+    'Turquoise': ('#25c8b8', 0.25, 0.42, 0.0),   # Sunward: scarves, beads, tiles
+    'Ceramic': ('#f4f6f2', 0.25, 0.42, 0.0),     # Wardens: smooth white shells
+    'Seam': ('#9cf2ff', 0.25, 0.42, 0.0),        # Wardens: bright cyan seams where the group has no glow mesh
+    'Charcoal': ('#4c4757', 0.25, 0.42, 0.0),    # Veil: hoods, cloaks, spires, fins
+    'Silver': ('#d9dde8', 0.25, 0.42, 0.0),      # Veil: piping and collars
 }
 GLOWING = {'TeamGlow', 'Alloy', 'Energy', 'Lamp', 'CrystalAlloy', 'CrystalEnergy', 'Flame', 'Window'}
 # Pivots whose children move at runtime (rotors, propellers, burner flames). Like the aim rig,
@@ -511,9 +523,10 @@ class Asset:
                 o.location.y += dy
 
 
-def export_collection(collection, path):
+def export_collection(collection, path, texcoords=True):
     """Export only one collection (nested ones included) to GLB. A live session's context
-    scene is the user's, so the collection is linked into it only for the duration of the call."""
+    scene is the user's, so the collection is linked into it only for the duration of the call.
+    texcoords=False leaves TEXCOORD_0 out (the faction dress: its team paint has no texture)."""
     scene = bpy.context.scene
     linked = collection.name not in {c.name for c in scene.collection.children_recursive}
     if linked:
@@ -522,7 +535,7 @@ def export_collection(collection, path):
         with contextlib.redirect_stdout(io.StringIO()):
             bpy.ops.export_scene.gltf(filepath=str(path), export_format='GLB', collection=collection.name,
                                       export_apply=True, export_yup=True, export_animations=False,
-                                      export_extras=False)
+                                      export_extras=False, export_texcoords=texcoords)
     finally:
         if linked:
             scene.collection.children.unlink(collection)
