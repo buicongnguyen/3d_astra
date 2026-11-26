@@ -235,7 +235,11 @@ for (const s of scenarios) if (s.name === 'three-rivals-eco') s.triangles = 3300
 const V1_TRIANGLES = {'three-rivals-eco':340000, 'three-factions-eco':325000, 'defence-river-eco':610000, 'defence-carrier-eco':610000, 'air-battle':326000};
 for (const s of scenarios) if (Object.hasOwn(V1_TRIANGLES, s.name)) s.triangles = V1_TRIANGLES[s.name];
 // Visual round V: three rival factions each wear their dress (src/faction-dress.js): 313,102 -> 336,598 triangles, same 124 -> 125 draws.
-for (const s of scenarios) if (s.name === 'three-factions-eco') s.triangles = 345000;
+for (const s of scenarios) if (s.name === 'three-factions-eco') s.triangles = 352000;
+// Visual round V integration (2026-11-26, terrain + dress + unique models + signature shots on one build): three-factions-eco
+// 341,707 triangles (1 % under 345k, the dress figure before the terrain's surround): guard = measured + 3 %. 127 draws, within its limit.
+// The other guards held with room: three-rivals-eco 334,354 of 340k, air-battle 321,430 of 326k, defence-wave-eco 624,743,
+// defence-river-eco 671,073 and defence-carrier-eco 640,534 of 700k.
 // ... and the Defence waves (120 enemies, every shared type dressed), same draws: defence-wave-eco 558,261 -> 604,281, defence-river-eco
 // 599,644 -> 667,264, defence-carrier-eco 599,659 -> 635,083 triangles (main 9fbb7c6 -> dress).
 for (const s of scenarios) if (['defence-wave-eco', 'defence-river-eco', 'defence-carrier-eco'].includes(s.name)) s.triangles = 700000;
