@@ -4,6 +4,8 @@
 // in the one scatter draw, lava that glows, the isles' strip marks and plank bridges in one draw, the minimap's
 // ground in the land's colours, and a frozen 60-unit phone battle whose real WebGL draws stay within 10 % of the
 // same battle on Twin Rivers (the existing 160 m map with water and bridges). Screenshots in test-results/lands-*.
+// V1 terrain: the title screen fetches no ground detail layer (textures/ground/*) while lands are previewed; a battle
+// fetches its land's layers (at most seven) and turns the detail on; the surround beyond the edge is one mesh.
 import assert from "node:assert/strict";
 import { launchBrowser, openPage, suite, shot } from "./lib/harness.mjs";
 import * as sheet from "./lib/settings-sheet.mjs";
@@ -30,6 +32,8 @@ await suite("lands", async () => {
   {
     const { page, errors, goto, ready } = await openPage(browser, "desktop");
     page.on("console", (m) => { if (/Shader Error|THREE\.WebGLProgram: Shader/.test(m.text())) errors.push(m.text().slice(0, 200)); });
+    const titleLayers = [];
+    page.on("request", (r) => { if (/textures\/ground\//.test(r.url())) titleLayers.push(r.url()); });
     await goto();
     await ready();
     for (const [id, name] of Object.entries(LANDS)) {
@@ -59,6 +63,9 @@ await suite("lands", async () => {
       else assert.ok(look.life.includes("birds") && !look.life.includes("weather"), `${id}: gulls, no weather`);
       await shot(page, `lands-preview-${id}`);
     }
+    assert.deepEqual(titleLayers, [], "the title screen's previews fetch no ground detail layer");
+    const edge = await page.evaluate(() => { let n = 0; window.__frontier.view.scene.traverse((o) => { if (o.name === "backdrop") n++; }); return n; });
+    assert.equal(edge, 1, "the surround beyond the edge is one mesh");
     // Settings > Weather Off stops the snow (a land's weather is weather, like a storm's rain).
     await page.selectOption("#scenario", "snowfield");
     const off = await page.evaluate(() => { const v = window.__frontier.view; v.life.configure({ ...v.settings, weather: false }); const a = v.life.weather.visible; v.life.configure(v.settings); return [a, v.life.weather.visible]; });
@@ -80,6 +87,9 @@ await suite("lands", async () => {
   const draws = {};
   for (const id of ["twinrivers", ...Object.keys(LANDS)]) {
     const { page, errors, goto, ready, tap } = await openPage(browser, "portrait");
+    const layers = new Set();
+    const phoneLayerUrls = new Set();
+    page.on("request", (r) => { const m = r.url().match(/textures\/ground\/(?:256\/)?([\w-]+)\.webp/); if (m) { layers.add(m[1]); phoneLayerUrls.add(r.url()); } });
     await page.addInitScript(countDraws);
     await page.addInitScript(settings(), { quality: "eco" });
     await goto();
@@ -87,6 +97,11 @@ await suite("lands", async () => {
     await page.selectOption("#scenario", id);
     await tap("#start");
     await page.waitForFunction(() => window.__frontier.started && window.__frontier.modelsReady, null, { timeout: 120000 });
+    // The battle fetched its land's ground detail layers and the detail is on.
+    const detail = await page.evaluate(async () => { const g = window.__frontier.view.groundDetail; const on = await g.whenReady(); g.update(0, true); return { on, slots: g.slots.length, scales: g.scales }; });
+    assert.ok(detail.on && detail.slots <= 7 && layers.size > 0 && layers.size <= 7, `${id}: ground detail ${JSON.stringify(detail)}, layers ${[...layers]}`);
+    assert.equal(detail.scales, 1, `${id}: one detail scale on Eco`);
+    assert.ok([...phoneLayerUrls].every((u) => /textures\/ground\/256\//.test(u)), `${id}: a phone on Eco fetches the 256 px layers`);
     await page.evaluate(([fx, fz]) => {
       const f = window.__frontier, s = f.sim, v = f.view;
       f.hold = true; s.aiEnabled = false; s.visible[0].fill(1); s.explored[0].fill(1); s.updateVision = () => {};

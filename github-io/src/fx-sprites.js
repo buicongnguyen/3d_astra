@@ -100,6 +100,8 @@ export class FxSprites {
   start() {
     // V4: a battle is starting: the signature shots' cells go into the procedural atlas now (src/fx.js paintSignature).
     this.fx.paintSignature?.();
+    // The battle's other lazy art (the land's ground detail layers, V1 terrain) starts with the sprites.
+    this.view.onBattleStart?.();
     // ?sprites=0 keeps the procedural effects (the before/after strips and A/B draw counts use it).
     try { if (new URLSearchParams(location.search).get("sprites") === "0") { this.failed = true; return null; } } catch { /* no location */ }
     const phone = this.phone, tier = phone ? "phone" : "full";

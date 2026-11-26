@@ -19,6 +19,8 @@ import {themeFor,lightFor,lookOf,shotVisible,weaponStyle} from './visual-style.j
 import { Scatter } from "./scatter.js";
 import { createMapEdge } from "./map-edge.js";
 import { paintGround } from "./ground-paint.js";
+import { GroundDetail } from "./ground-detail.js";
+import { wearGrid } from "./worn-paths.js";
 import { buildPlateauRelief, lowerCliffBand, fogLift, mergeFogColumns } from "./plateau-relief.js";
 import { fogAware } from "./fog-aware.js";
 import { teamColors, teamGlows, factionOf } from "./faction-colors.js";
@@ -481,6 +483,8 @@ export class WorldView {
     this.lifeShare = share;
     this.life?.setShare(share);
     this.showScatter();
+    // A struggling device drops the ground detail's texture work at the governor's "still" step (half the life) and below.
+    if (this.groundDetail) this.groundDetail.enabled = share >= 1;
   }
   // Frame-time governor hooks (main.js). Motion: 2 full, 1 calm, 0 still; still also freezes
   // water ripples and dust. Render scale multiplies the quality's pixel-ratio cap.
@@ -501,6 +505,7 @@ export class WorldView {
   setQuality(level) {
     this.lowPower = level === "low";
     setRimTier(this.lowPower);
+    this.groundDetail?.setQuality(this.lowPower);
     this.applyReflections();
     this.createLife();
     this.createScatter();
@@ -919,7 +924,7 @@ export class WorldView {
     const ctx = canvas.getContext("2d");
     // Surfaces, accent patches and painted detail (ground-paint.js); seeded, so identical each build.
     // Plateaus add a lighter top, a bright lip, foot shadows and road ramps (paintPlateaus).
-    paintGround(ctx, this.terrain, groundSize, random);
+    const painted = paintGround(ctx, this.terrain, groundSize, random);
     this.groundCanvas = canvas; // the minimap draws its terrain from this (app/minimap.js)
     const texture = new THREE.CanvasTexture(canvas);
     texture.colorSpace = THREE.SRGBColorSpace;
@@ -969,6 +974,12 @@ export class WorldView {
     // ground, which z-fights and blinks, worst on phones' coarser depth buffers. The biased
     // ground always loses those ties.
     const ground = mesh(groundGeometry, mat(0xffffff, { map: texture, vertexColors: !!relief, polygonOffset: true, polygonOffsetFactor: 2, polygonOffsetUnits: 4 }));
+    // V1 terrain: tiled detail layers blended by the painted surfaces (ground-detail.js); same draw, same material.
+    // Its layers load when a battle starts (onBattleStart), never on the title screen.
+    this.groundDetail ??= new GroundDetail();
+    this.groundDetail.setTerrain(this.terrain, painted.grid, painted.cells, { lowPower: this.lowPower, wear: wearGrid(this.terrain, 256) });
+    this.groundDetail.patch(ground.material);
+    ground.name = "ground";
     ground.rotation.x = -Math.PI / 2;
     ground.castShadow = false;
     this.terrainRoot.add(ground);
@@ -976,7 +987,8 @@ export class WorldView {
     // horizon haze (map-edge.js). The old slab under the map also had a top face 5 cm below
     // the ground, which won the biased depth test and hid the ground texture on every map
     // without a river; the skirt has sides only.
-    this.terrainRoot.add(createMapEdge(this.terrain));
+    this.backdrop = createMapEdge(this.terrain, this.groundDetail);
+    this.terrainRoot.add(this.backdrop);
     // One grid line per two-unit navigation cell on every map size.
     this.grid = new THREE.GridHelper(this.terrain.size, this.terrain.grid, 0xd8d8b4, 0xa6b087);
     this.grid.position.y = 0.035;
@@ -988,6 +1000,11 @@ export class WorldView {
     // Grass, flowers, rocks, ruins and each map's own props are planned and drawn by scatter.js.
     // No raised start pads under the Command cores: a floor a few millimetres above the ground
     // z-fought with the cores' base plates and blinked on phones.
+  }
+  // A battle starts (match-flow.js, LAN and replays start the weapon sprites, which call this): the land's ground
+  // detail layers load now. view.reset() clears it, so a map picked on the title screen downloads nothing new.
+  onBattleStart() {
+    this.groundDetail?.start();
   }
   // Reflections pay off on metal, glass and crystals. Matte paint, fabric and scenery gain
   // little, and the per-pixel environment lookup is the most expensive part of the model
@@ -1068,6 +1085,8 @@ export class WorldView {
     this.canvasRect = null;
     const width = Math.max(1, this.container.clientWidth),
       height = Math.max(1, this.container.clientHeight);
+    // V1 terrain: the ground detail's tile size follows the tier and the screen's shape (a uniform: no recompile).
+    this.groundDetail?.setViewport(this.lowPower, width > height);
     // Portrait phones run the canvas on under the floating dock (CSS --view-cover, px). The camera
     // frames the uncovered part exactly as before (same scale, focus in its middle); the covered
     // strip just shows more map, so opening or closing a panel never resizes or jumps the view.
@@ -1827,6 +1846,7 @@ export class WorldView {
       this.hitStop = Math.max(0, this.hitStop-realDt);
     }
     this.environment?.update(sim, dt);
+    this.groundDetail?.update(realDt);
     this.mood?.update(sim);
     if (this.life) {
       this.life.quiet = this.reducedMotion.matches;
@@ -1837,6 +1857,9 @@ export class WorldView {
     const lively = this.motionLevel > 0 && !this.reducedMotion.matches;
     if (lively && dt > 0) {
       this.lifeClock = (this.lifeClock + Math.min(0.05, dt)) % 3600;
+      // V1 terrain: the sea's glints and the lava's glow beyond the edge (map-edge.js) move on the same clock.
+      const edge = this.backdrop?.material.userData.motion;
+      if (edge) edge.time.value = this.lifeClock;
       for (const p of this.pulsing) p.m.emissiveIntensity = p.base * (1 + p.depth * Math.sin(this.lifeClock * p.rate + p.phase));
     }
     this.scatter?.update(dt, lively && this.settings.waterMotion !== false);
@@ -2099,6 +2122,7 @@ export class WorldView {
   }
   reset() {
     this.fx.rng = mulberry32(1482); // cosmetic effects only: a fixed per-match generator (no Math.random in the sim)
+    if (this.groundDetail) this.groundDetail.started = false;
     if (this.life && this.life.aliveCount < this.life.groups.reduce((n, g) => n + g.rows.length, 0)) this.createLife();
     this.activity.reset();
     this.tactics.reset();

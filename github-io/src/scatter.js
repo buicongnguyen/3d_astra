@@ -4,6 +4,8 @@ import { ROCKS } from "./data.js";
 import { rimReach } from "./terrain.js";
 import { themeFor, lookOf } from "./visual-style.js";
 import { fogAware } from "./fog-aware.js";
+import { wearGrid } from "./worn-paths.js";
+import { landOf } from "./lands.js";
 
 // Map dressing: grass, flowers, pebbles, rocks, shrubs, small trees, Builder ruins and each
 // map's own props. Everything is planned from a seed (never the simulation's state), merged
@@ -22,18 +24,36 @@ export const HEIGHT = { tuft: 0.6, fern: 0.5, flower: 0.55, pebble: 0.2, rock: 0
   // W9 lands: snow-capped pines, frosted tufts, snowy rocks, lava vents, palms and lagoon coral; and the Ancient ruins
   // family (any land): broken arches, carved stone heads, overgrown walls and fallen column drums.
   pine: 2.0, frost: 0.45, snowRock: 0.72, vent: 0.8, palm: 2.0, coral: 0.02,
-  ruinArch: 1.62, stoneHead: 1.15, ruinWall: 0.95, brokenColumn: 0.55 };
+  ruinArch: 1.62, stoneHead: 1.15, ruinWall: 0.95, brokenColumn: 0.55,
+  // V1 terrain: reed clumps on the banks and basalt spires (volcano, highlands).
+  reed: 0.95, spire: 1.9 };
 export const MAX_SCALE = 1.25;
 // Kinds a unit could visibly clip through: kept out of camps and thinned on low budgets.
 export const SOLID = new Set(["rock", "bush", "sapling", "conifer", "cactus", "snag", "column", "shard", "ore", "ruinBlock", "ruinPillar", "log", "stump", "bones",
-  "pine", "snowRock", "vent", "palm", "ruinArch", "stoneHead", "ruinWall", "brokenColumn"]);
+  "pine", "snowRock", "vent", "palm", "ruinArch", "stoneHead", "ruinWall", "brokenColumn", "spire"]);
+// V1 terrain: kinds that grow in drifts (meadows and bare patches) instead of an even sprinkle.
+export const MEADOW = new Set(["tuft", "flower", "fern", "frost"]);
+// Groves along the playable edge (0.6-2 m in, where units seldom walk): tall kinds only on the far edges (north and
+// west, away from the camera), low kinds all round. [tall kinds, low kinds, groves per 100 m of edge].
+export const EDGE_GROVES = {
+  classic: [["snag"], ["rock", "stump", "bones"], 7],
+  riverlands: [["sapling", "conifer"], ["bush", "rock", "fern"], 9],
+  basin: [["cactus"], ["bush", "rock", "ore"], 7],
+  expanse: [["conifer", "sapling"], ["bush", "rock"], 9],
+  dunes: [["cactus"], ["rock", "bones"], 6],
+  woodlands: [["conifer", "sapling"], ["bush", "fern", "log"], 10],
+  highlands: [["spire", "column"], ["rock", "shard"], 8],
+  snowfield: [["pine"], ["snowRock", "frost"], 9],
+  volcano: [["spire", "snag"], ["column", "cinder", "vent"], 8],
+  archipelago: [["palm"], ["bush", "rock", "fern"], 8],
+};
 // Kinds that lie on open water (lily pads, lagoon coral); every other kind keeps to land.
 export const WATER_KINDS = new Set(["lily", "coral"]);
 // The Ancient ruins family (W9): any map may add it with maps.json `ruins` (a density multiplier, 1 = the
 // standard hand); the three W9 lands carry it in their own recipes.
 export const RUIN_KINDS = ["ruinArch", "stoneHead", "ruinWall", "brokenColumn"];
-const RUIN_LIST = [["ruinArch", 5, ["grass", "dirt", "sand", "stone"]], ["stoneHead", 4, ["grass", "dirt", "sand", "stone"]],
-  ["ruinWall", 12, ["grass", "dirt", "sand", "stone"]], ["brokenColumn", 12, ["grass", "dirt", "sand", "stone"]]];
+const RUIN_LIST = [["ruinArch", 7, ["grass", "dirt", "sand", "stone"]], ["stoneHead", 5, ["grass", "dirt", "sand", "stone"]],
+  ["ruinWall", 16, ["grass", "dirt", "sand", "stone"]], ["brokenColumn", 16, ["grass", "dirt", "sand", "stone"]]]; // V1 terrain: a third more tries (the families now draw from their own streams; opt-in maps only)
 const LAND = ["grass", "dirt", "sand", "stone"];
 // Per map: [kind, tries per 96 x 96 of map, surfaces it grows on]; a try on the wrong
 // surface is dropped, so real counts are lower. `rim` is the number of edge stones.
@@ -83,29 +103,40 @@ const CAMP_RADIUS = 15;
 export function planScatter(terrain, budget = 1) {
   const recipe = DRESSING[lookOf(terrain.id)] || DRESSING.classic, r = rng(hashId(terrain.id) ^ 0x5ca77e2), half = terrain.half;
   const area = (terrain.size / 96) ** 2, camps = campSites(terrain), props = [];
+  // Worn paths (worn-paths.js) stay clear of tufts, flowers and props: a 1 m wear grid over the map.
+  // Tufts, flowers and pebbles keep off the whole track; solid props only off its trodden middle.
+  const wn = Math.round(terrain.size), wear = wearGrid(terrain, wn), worn = (x, z, limit = 0.2) => wear[Math.min(wn - 1, Math.max(0, Math.floor(z + half))) * wn + Math.min(wn - 1, Math.max(0, Math.floor(x + half)))] > limit;
   // Defence maps have no boulder walls (sim: terrain.defence).
   const walls = terrain.defence ? [] : terrain.rocks || ROCKS;
   const nearWall = (x, z, pad) => walls.some(([wx, wz, wr]) => Math.hypot(x - wx, z - wz) < wr + pad);
   const nearCamp = (x, z) => camps.some(([cx, cz]) => Math.hypot(x - cx, z - cz) < CAMP_RADIUS);
-  const add = (kind, x, z, s) => props.push({ kind, x, z, s: Math.min(MAX_SCALE, s), a: r() * 6.2832, tone: r(), seed: (r() * 4294967296) >>> 0 });
+  const add = (kind, x, z, s, g = r) => props.push({ kind, x, z, s: Math.min(MAX_SCALE, s), a: g() * 6.2832, tone: g(), seed: (g() * 4294967296) >>> 0 });
+  const clump = (x, z) => { const v = valueNoise(x * 0.085 + 13, z * 0.085 - 29) * 0.7 + valueNoise(x * 0.23 - 7, z * 0.23 + 3) * 0.3; return Math.min(1, Math.max(0, (v - 0.34) / 0.3)); };
   // maps.json `ruins` (W9): the Ancient ruins family on any land, at that multiple of the standard hand.
   const list = terrain.ruins > 0 ? [...recipe.list, ...RUIN_LIST.map(([kind, count, on]) => [kind, count * terrain.ruins, on])] : recipe.list;
   for (const [kind, count, on] of list) {
+    // Each family has its own seeded stream (V1 terrain), so a change to one family never moves another.
+    const g = rng(hashId(`${terrain.id}|${kind}|${count}|${on.join()}`) ^ 0x5ca77e2);
     // maps.json "dressing" (R3 map variety): a lighter hand for a map with more open ground than its look's own map.
-    const solid = SOLID.has(kind), n = Math.round(count * area * (solid ? Math.min(1, budget + 0.15) : budget) * (terrain.dressing || 1));
+    const solid = SOLID.has(kind), drift = MEADOW.has(kind), n = Math.round(count * area * (solid ? Math.min(1, budget + 0.15) : budget) * (terrain.dressing || 1) * (drift ? 1.15 : 1));
     const reach = half - (kind === "ruinFloor" ? 3.2 : 1.2);
     for (let i = 0; i < n; i++) {
-      const x = (r() * 2 - 1) * reach, z = (r() * 2 - 1) * reach, s = 0.75 + r() * 0.5;
+      const x = (g() * 2 - 1) * reach, z = (g() * 2 - 1) * reach, s = 0.75 + g() * 0.5;
       if (!on.includes(terrain.at(x, z)) || terrain.cliff?.(x, z, 0.8) || terrain.onRamp?.(x, z, 0.8)) continue;
+      if (!WATER_KINDS.has(kind) && worn(x, z, solid ? 0.55 : 0.2)) continue;
+      // Meadow kinds gather in drifts: dense patches, thin between them (fewer triangles, a fuller look).
+      if (drift && g() > 0.18 + 0.82 * clump(x, z)) continue;
       if (nearWall(x, z, kind === "ruinFloor" ? 2.6 : 0.7)) continue;
       if ((solid || kind === "ruinFloor") && nearCamp(x, z)) continue;
       // Paving rings are wide: every part of one must lie on land.
       if (kind === "ruinFloor" && [[2.6, 0], [-2.6, 0], [0, 2.6], [0, -2.6]].some(([dx, dz]) => !LAND.includes(terrain.at(x + dx, z + dz)))) continue;
-      add(kind, x, z, s);
+      add(kind, x, z, s, g);
     }
   }
   // The ruins centrepiece (maps.json `centrepiece: "ruins"`, W9): a Builder ring on the plateau at the map's centre.
   props.push(...centrepieceProps(terrain));
+  // V1 terrain: groves along the map's edge, rocks at plateau feet and reeds on the banks (all seeded, view only).
+  props.push(...edgeGroves(terrain, budget), ...cliffFootRocks(terrain, budget), ...bankReeds(terrain, budget), ...shallowCoral(terrain, budget));
   // A broken line of rocks and shrubs just inside the edge frames the map without hiding units.
   const rim = Math.round(recipe.rim * (terrain.size / 96) * Math.min(1, budget + 0.15));
   for (let i = 0; i < rim; i++) {
@@ -156,6 +187,115 @@ export function centrepieceProps(terrain) {
     place(i % 2 ? "stoneHead" : "brokenColumn", x, z, 1 + r() * 0.15, a - Math.PI / 2);
   }
   if (land.includes(terrain.at(0, 0))) place("ruinFloor", 0, 0, 1.2, r() * 6.2832);
+  return out;
+}
+
+// Smooth value noise (seedless) for drifts and groves.
+const lattice = (x, z) => {
+  let h = Math.imul(x, 374761393) + Math.imul(z, 668265263);
+  h = Math.imul(h ^ (h >>> 13), 1274126177);
+  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
+};
+function valueNoise(x, z) {
+  const ix = Math.floor(x), iz = Math.floor(z), fx = x - ix, fz = z - iz, u = fx * fx * (3 - 2 * fx), v = fz * fz * (3 - 2 * fz);
+  const a = lattice(ix, iz), b = lattice(ix + 1, iz), c = lattice(ix, iz + 1), d = lattice(ix + 1, iz + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+
+// V1 terrain: groves in the strip just inside the map's edge (0.6 to 2 m in). Tall kinds stand only on the north and
+// west edges, the far side from the camera, so nothing tall ever stands between the camera and a unit; the south and
+// east edges take low kinds. Clear of camps, water, roads, walls, cliffs and ramps like every other prop.
+export function edgeGroves(terrain, budget = 1) {
+  const spec = EDGE_GROVES[lookOf(terrain.id)], half = terrain.half;
+  if (!spec) return [];
+  const [tall, low, per100] = spec, r = rng(hashId(terrain.id) ^ 0x6e0de), out = [], camps = campSites(terrain);
+  const walls = terrain.defence ? [] : terrain.rocks || ROCKS;
+  const groves = Math.round((8 * half / 100) * per100 * Math.min(1, budget + 0.15));
+  for (let g = 0; g < groves; g++) {
+    const side = Math.floor(r() * 4), along = (r() * 2 - 1) * (half - 3), far = side === 0 || side === 3; // 0: north (-z), 3: west (-x)
+    const members = 3 + Math.floor(r() * 4);
+    for (let k = 0; k < members; k++) {
+      const inset = 0.6 + r() * 1.4, slide = along + (r() - 0.5) * 6;
+      const x = side === 1 ? half - inset : side === 3 ? -half + inset : slide, z = side === 0 ? -half + inset : side === 2 ? half - inset : slide;
+      const kinds = far && r() < 0.65 ? tall : low, kind = kinds[Math.floor(r() * kinds.length)], s = 0.8 + r() * 0.35, a = r() * 6.2832, tone = r(), seed = (r() * 4294967296) >>> 0;
+      // Leaning palms and wide crowns need more room than their trunk: nothing may cross the edge.
+      const reach = (kind === "palm" ? 1.75 : kind === "conifer" || kind === "pine" || kind === "sapling" ? 0.95 : 0.75) * Math.min(MAX_SCALE, s);
+      if (Math.abs(x) + reach > half || Math.abs(z) + reach > half) continue;
+      if (!LAND.includes(terrain.at(x, z)) || terrain.cliff?.(x, z, 0.8) || terrain.onRamp?.(x, z, 0.8)) continue;
+      if (walls.some(([wx, wz, wr]) => Math.hypot(x - wx, z - wz) < wr + 0.7)) continue;
+      if (camps.some(([cx, cz]) => Math.hypot(x - cx, z - cz) < CAMP_RADIUS)) continue;
+      out.push({ kind, x, z, s: Math.min(MAX_SCALE, s), a, tone, seed });
+    }
+  }
+  return out;
+}
+
+// V1 terrain: small rocks at every plateau's foot, inside the outer half of the cliff band (no unit can stand there:
+// a unit's centre keeps 1 m plus its radius from the edge), never beside a ramp.
+export function cliffFootRocks(terrain, budget = 1) {
+  if (!terrain.plateaus?.length) return [];
+  const r = rng(hashId(terrain.id) ^ 0xf007), out = [], half = terrain.half, land = landOf(terrain);
+  const kind = land?.ice ? "snowRock" : "rock";
+  for (const p of terrain.plateaus) {
+    const perimeter = p.shape === "disc" ? 2 * Math.PI * p.r : 2 * (p.w + p.d), n = Math.round((perimeter / 1.7) * Math.min(1, budget + 0.2));
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * 6.2832 + r() * 0.3, dx = Math.cos(a), dz = Math.sin(a), reach = p.shape === "disc" ? p.r : rimReach(p, dx, dz);
+      const d = reach + 0.95 + r() * 0.25, x = p.x + dx * d, z = p.z + dz * d, s = 0.42 + r() * 0.22;
+      if (r() < 0.35 || Math.abs(x) > half - 1.5 || Math.abs(z) > half - 1.5) continue;
+      if (terrain.onRamp(x, z, 1.4) || terrain.inWater(x, z, 0.6) || terrain.at(x, z) === "road") continue;
+      if ((terrain.defence ? [] : terrain.rocks || ROCKS).some(([wx, wz, wr]) => Math.hypot(x - wx, z - wz) < wr + 0.9)) continue;
+      out.push({ kind: r() < 0.3 ? "pebble" : kind, x, z, s, a: r() * 6.2832, tone: r(), seed: (r() * 4294967296) >>> 0 });
+    }
+  }
+  return out;
+}
+
+// V1 terrain: reed clumps along river banks (the mud band) and lake shores, in clusters, clear of every crossing.
+// Not round lava or ice (src/lands.js `reeds`).
+export function bankReeds(terrain, budget = 1) {
+  const land = landOf(terrain);
+  if (land && !land.reeds) return [];
+  const r = rng(hashId(terrain.id) ^ 0x2eed), out = [], half = terrain.half;
+  const walls = terrain.defence ? [] : terrain.rocks || ROCKS;
+  const ok = (x, z) => Math.abs(x) < half - 1.5 && Math.abs(z) < half - 1.5 && ["mud", "sand", "grass", "dirt"].includes(terrain.at(x, z)) && !terrain.inWater(x, z, 0.25) && !terrain.onRamp?.(x, z, 1) &&
+    !walls.some(([wx, wz, wr]) => Math.hypot(x - wx, z - wz) < wr + 0.9);
+  const place = (x, z) => out.push({ kind: "reed", x, z, s: 0.8 + r() * 0.35, a: r() * 6.2832, tone: r(), seed: (r() * 4294967296) >>> 0 });
+  for (const river of terrain.rivers || [])
+    for (let x = -half + 2; x < half - 2; x += 1.1) {
+      if (river.crossings.some((c) => Math.abs(x - c.x) < c.half + 4)) continue;
+      if (valueNoise(x * 0.18 + river.z, river.z * 0.1) < 0.45 || r() > 0.75 * Math.min(1, budget + 0.2)) continue;
+      for (const side of [-1, 1]) {
+        const z = river.z + side * (3.25 + r() * 0.8), xx = x + (r() - 0.5) * 0.8;
+        if (ok(xx, z)) place(xx, z);
+      }
+    }
+  for (const lake of terrain.lakes || []) {
+    const n = Math.round((2 * Math.PI * lake.r) / 1.2);
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * 6.2832, d = lake.r + 0.35 + r() * 0.8, x = lake.x + Math.cos(a) * d, z = lake.z + Math.sin(a) * d;
+      if (valueNoise(Math.cos(a) * 3 + lake.x, Math.sin(a) * 3 + lake.z) < 0.48 || r() > 0.8 * Math.min(1, budget + 0.2)) continue;
+      if (lake.fords.some((f) => Math.cos(a) * f.dx + Math.sin(a) * f.dz > 0 && Math.abs(Math.cos(a) * f.dz - Math.sin(a) * f.dx) * d < f.half + 2)) continue;
+      if (ok(x, z)) place(x, z);
+    }
+  }
+  return out;
+}
+
+// V1 terrain: coral heads gather in the isles' shallows, a ring a metre or three inside every lagoon shore (lands
+// whose dressing has coral), in clusters, off the fords and bridges.
+export function shallowCoral(terrain, budget = 1) {
+  const recipe = DRESSING[lookOf(terrain.id)];
+  if (!recipe?.list.some(([kind]) => kind === "coral")) return [];
+  const r = rng(hashId(terrain.id) ^ 0xc0a1), out = [], half = terrain.half;
+  for (const lake of terrain.lakes || []) {
+    const n = Math.round(((2 * Math.PI * lake.r) / 2.2) * Math.min(1, budget + 0.2));
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * 6.2832 + r() * 0.2, d = lake.r - 1.1 - r() * 2.2, x = lake.x + Math.cos(a) * d, z = lake.z + Math.sin(a) * d;
+      if (valueNoise(Math.cos(a) * 4 + lake.x * 0.1, Math.sin(a) * 4 + lake.z * 0.1) < 0.5) continue;
+      if (Math.abs(x) > half - 1.2 || Math.abs(z) > half - 1.2 || terrain.at(x, z) !== "water") continue;
+      out.push({ kind: "coral", x, z, s: 0.8 + r() * 0.4, a: r() * 6.2832, tone: r(), seed: (r() * 4294967296) >>> 0 });
+    }
+  }
   return out;
 }
 
@@ -528,6 +668,22 @@ const SHAPES = {
     for (const end of ends) for (let i = 1; i < n - 1; i++) m.tri(end[0], end[i], end[i + 1], lit, lit, lit);
     m.prism(6, 0.24, 0.22, 0, 0.32 + r() * 0.16, mul(stone, 0.66), lit, { ox: 0.15, oz: 0.55, tilt: 0.06, sideTop: stone });
     m.prism(6, 0.25, 0.25, 0.14, 0.18, g, g, { ox: 0.15, oz: 0.55, cap: false });
+  },
+  // V1 terrain: a reed clump: thin tall blades, a few brown seed heads.
+  reed(m, p, C, r) {
+    const base = mul(mix(C.leaf, C.wood, 0.25), 0.7), tip = mix(C.leaf, C.leafAlt, 0.4 + p.tone * 0.4), head = mul(C.wood, 0.9);
+    for (let i = 0; i < 6; i++) {
+      const a = i * 1.047 + r() * 0.6, c = Math.cos(a), s = Math.sin(a), h = 0.55 + r() * 0.3, lean = 0.06 + r() * 0.12, w = 0.035;
+      const ox = c * 0.1, oz = s * 0.1;
+      m.tri(m.at(ox - s * w, 0, oz + c * w), m.at(ox + s * w, 0, oz - c * w), m.at(ox + c * lean, h, oz + s * lean), base, base, tip, true, 0, 0, h * m.s);
+      if (i % 3 === 0) m.prism(3, 0.03, 0.025, h * 0.92, h * 0.92 + 0.14, head, head, { ox: ox + c * lean, oz: oz + s * lean, cap: false });
+    }
+  },
+  // V1 terrain: a basalt spire: a tapered hexagonal column, a lighter broken top, a hairline glow on the volcano.
+  spire(m, p, C, r) {
+    const h = 1.2 + r() * 0.52, rock = mul(C.stone, 0.85 + p.tone * 0.2), lit = mix(C.stone, C.dust, 0.35);
+    m.prism(6, 0.36, 0.14, 0, h, mul(rock, 0.62), lit, { spin: r() * 3, tilt: 0.08, sideTop: rock });
+    if (p.seed % 2) m.prism(5, 0.2, 0.08, 0, h * 0.55, mul(rock, 0.7), lit, { ox: 0.32, oz: (r() - 0.5) * 0.3, spin: r() * 3, sideTop: rock });
   },
   lily(m, p, C, r) {
     const pad = mix(C.leaf, C.leafAlt, p.tone), rad = 0.2 + r() * 0.1, y = -0.058 / m.s, centre = m.at(0, y, 0);

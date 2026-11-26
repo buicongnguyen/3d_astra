@@ -185,7 +185,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
   // R3-FX: the weapon sprite atlases (fx/*.webp) are fetched when a battle starts and kept on first fetch, like the lazy catalogs.
-  if (LAZY.includes(path) || /^fx\/[\w-]+\.webp$/.test(path)) {
+  // V1 terrain: so are a land's ground detail layers (textures/ground/[256/]*.webp?v=<hash of the set>).
+  if (LAZY.includes(path) || /^fx\/[\w-]+\.webp$/.test(path) || /^textures\/ground\/(256\/)?[\w-]+\.webp(\?v=\w+)?$/.test(path)) {
     event.respondWith(
       (async () => {
         const cache = await caches.open(SHELL_CACHE);
