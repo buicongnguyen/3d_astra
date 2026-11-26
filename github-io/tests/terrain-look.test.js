@@ -10,7 +10,7 @@ import STYLE from "../src/visual-style.json" with { type: "json" };
 import { Terrain } from "../src/terrain.js";
 import { GROUND_LAYERS, LAYER_NAMES, LAYER_LOOK, SLOTS, SURFACE_CODE, buildSplat, usedSlots, layersFor, layerUrl, TILE_METRES, tileMetres, GROUND_DETAIL_STRENGTH, DESKTOP_GRASS_CAP } from "../src/ground-detail.js";
 import { planPaths, wearGrid, crystalFields } from "../src/worn-paths.js";
-import { SURROUND, LOWLAND, createMapEdge, CLIFF } from "../src/map-edge.js";
+import { SURROUND, LOWLAND, createMapEdge, CLIFF, LOWLAND_SLOTS, LOWLAND_TILE, AIR_REACH } from "../src/map-edge.js";
 import { planScatter, edgeGroves, cliffFootRocks, bankReeds, EDGE_GROVES, MEADOW, HEIGHT, MAX_SCALE } from "../src/scatter.js";
 import { lookOf } from "../src/visual-style.js";
 import { landOf } from "../src/lands.js";
@@ -153,6 +153,38 @@ test("the surround below the edge: a row for every land, one mesh, under the pla
   let glowing = 0;
   for (let i = 0; i < lava.count; i++) if (lava.getX(i) === 2) glowing++;
   assert.ok(glowing > 500, `volcano: ${glowing} lava vertices`);
+});
+
+test("the surround recedes: the lowland carries the land's detail layers, the shader greys it with distance, Eco reads one layer", () => {
+  // Every lowland look names two of the four broad slots (the ones Eco loads too); the sea has none.
+  for (const look of LOOKS) {
+    const ground = SURROUND[look].ground;
+    if (ground === "sea") continue;
+    const slots = LOWLAND_SLOTS[ground];
+    assert.ok(slots && slots.every((s) => s >= 0 && s < 4), `${look}: lowland slots ${slots}`);
+  }
+  for (const id of ["riverlands", "dunes", "snowfield", "volcano", "archipelago"]) {
+    const t = new Terrain(id), edge = createMapEdge(t), p = edge.geometry.attributes.position, sky = edge.geometry.attributes.skyData;
+    let grained = 0, other = 0;
+    for (let i = 0; i < p.count - 3; i++) {
+      const low = sky.getY(i);
+      if (low > 0.5) {
+        grained++;
+        assert.ok(low <= 2 + 1e-6, `${id}: low ${low}`);
+        // Only the lowland (below the cliff foot band) is grained: never the skirt or a silhouette above it.
+        assert.ok(p.getY(i) <= -CLIFF + 3.9, `${id}: grained vertex at y ${p.getY(i)}`);
+      } else other++;
+    }
+    if (id === "archipelago") assert.equal(grained, 0, "the isles' sea takes no ground grain");
+    else assert.ok(grained > 3000 && other > 1000, `${id}: ${grained} grained lowland vertices`);
+  }
+  const edgeSrc = readFileSync(new URL("../src/map-edge.js", import.meta.url), "utf8");
+  assert.ok(AIR_REACH <= 45 && /float air = smoothstep/.test(edgeSrc), "aerial perspective by distance from the edge");
+  assert.ok(LOWLAND_TILE > 1, "the lowland's grain is coarser than the field's");
+  // Eco: one detail read per pixel (the dominant broad surface), the seven-layer blend only on High.
+  const gdSrc = readFileSync(new URL("../src/ground-detail.js", import.meta.url), "utf8");
+  const eco = gdSrc.slice(gdSrc.indexOf("#else\n  // Eco (phones): one texture read"), gdSrc.indexOf("#endif", gdSrc.indexOf("#else\n  // Eco (phones): one texture read")));
+  assert.ok(eco.length > 0 && (eco.match(/gdLayer\(/g) || []).length === 4 && /else if/.test(eco), "Eco reads one layer per pixel");
 });
 
 test("denser dressing: edge groves tall only on the far edges, rocks at plateau feet where no unit stands, reeds on banks", () => {

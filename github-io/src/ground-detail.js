@@ -303,21 +303,16 @@ void gdApply(inout vec3 col) {
   float level = 1.0 - steep;
   // Derivatives in uniform control flow, before any layer branches.
   vec2 dqx = dFdx(q), dqy = dFdy(q);
+#if GD_SCALES > 1
   vec4 l0 = gdLayer(uGdL0, q, dqx, dqy, uGdLook[0], uGdMean[0], far, wa.x * level);
   vec4 l1 = gdLayer(uGdL1, q, dqx, dqy, uGdLook[1], uGdMean[1], far, wa.y * level);
   vec4 l2 = gdLayer(uGdL2, q, dqx, dqy, uGdLook[2], uGdMean[2], far, wa.z * level);
   vec4 l3 = gdLayer(uGdL3, q, dqx, dqy, uGdLook[3], uGdMean[3], far, wa.w * level);
-#if GD_SCALES > 1
   vec4 l4 = gdLayer(uGdL4, q, dqx, dqy, uGdLook[4], uGdMean[4], far, wb.x * level);
   vec4 l5 = gdLayer(uGdL5, q, dqx, dqy, uGdLook[5], uGdMean[5], far, wb.y * level);
   // The cliff layer stands on the rock faces: projected from the side (u along the face, v the world height).
   vec2 pc = mix(vGdW.xy, vGdW.zy, smoothstep(0.35, 0.65, abs(vGdN.x))) / uGdTile;
   vec4 l6 = gdLayer(uGdL6, pc, dFdx(pc), dFdy(pc), uGdLook[6], uGdMean[6], 0.0, steep);
-#else
-  // Eco (phones): the four broad surfaces only; roads, mud banks and cliff faces keep the painted ground (half the
-  // texture reads where a GPU cannot skip a branch).
-  vec4 l4 = vec4(1.0, 1.0, 1.0, 0.0), l5 = l4, l6 = l4;
-#endif
   // Height blend: where two surfaces meet, the locally brighter grain wins, so borders follow pebbles and clumps.
   float h0 = wa.x * level + l0.w * 0.35, h1 = wa.y * level + l1.w * 0.35, h2 = wa.z * level + l2.w * 0.35, h3 = wa.w * level + l3.w * 0.35;
   float h4 = wb.x * level + l4.w * 0.35, h5 = wb.y * level + l5.w * 0.35, h6 = steep + l6.w * 0.35;
@@ -328,6 +323,19 @@ void gdApply(inout vec3 col) {
   float b6 = max(h6 - top, 0.0) * step(0.004, steep);
   float bs = b0 + b1 + b2 + b3 + b4 + b5 + b6 + 1e-4;
   vec3 m = (l0.rgb * b0 + l1.rgb * b1 + l2.rgb * b2 + l3.rgb * b3 + l4.rgb * b4 + l5.rgb * b5 + l6.rgb * b6) / bs;
+#else
+  // Eco (phones): one texture read per pixel, the dominant broad surface's layer (grass, dirt, sand or stone); it fades
+  // out where two surfaces are nearly even, so a border is a soft flat seam, never a hard switch of grain. Roads, mud
+  // banks and cliff faces keep the painted ground.
+  float a1 = max(wa.x, wa.y), c1 = min(wa.x, wa.y), a2 = max(wa.z, wa.w), c2 = min(wa.z, wa.w);
+  float first = max(a1, a2), second = max(min(a1, a2), max(c1, c2));
+  vec4 l;
+  if (wa.x >= first) l = gdLayer(uGdL0, q, dqx, dqy, uGdLook[0], uGdMean[0], 0.0, 1.0);
+  else if (wa.y >= first) l = gdLayer(uGdL1, q, dqx, dqy, uGdLook[1], uGdMean[1], 0.0, 1.0);
+  else if (wa.z >= first) l = gdLayer(uGdL2, q, dqx, dqy, uGdLook[2], uGdMean[2], 0.0, 1.0);
+  else l = gdLayer(uGdL3, q, dqx, dqy, uGdLook[3], uGdMean[3], 0.0, 1.0);
+  vec3 m = mix(vec3(1.0), l.rgb, level * first * smoothstep(0.0, 0.3, first - second));
+#endif
   // Marks keep their paint crisp: very bright (lines, lips, foam) or very saturated (ember cracks, kill-zone stripes).
   float lum = dot(col, GD_LUMA);
   float sat = max(col.r, max(col.g, col.b)) - min(col.r, min(col.g, col.b));

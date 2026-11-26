@@ -22,7 +22,7 @@ const SKY = {
 // distant silhouette families and how many of each stand per 100 m of edge. All of it is the backdrop mesh: one draw.
 export const SURROUND = {
   classic: { ground: "ash", props: [["snag", 10], ["rock", 13], ["spire", 2]] },
-  riverlands: { ground: "meadow", props: [["tree", 24], ["pine", 9], ["rock", 3]] },
+  riverlands: { ground: "meadow", props: [["tree", 30], ["pine", 10], ["rock", 6]] },
   basin: { ground: "canyon", props: [["mesa", 2.4], ["rock", 12], ["bush", 8]] },
   expanse: { ground: "meadow", props: [["pine", 20], ["tree", 10], ["rock", 3]] },
   dunes: { ground: "desert", props: [["mesa", 2.2], ["rock", 12], ["bush", 5]] },
@@ -42,7 +42,15 @@ const NEAR = 40, CELL = 4;
 // Shading baked into the colours for the fixed sun (view.js SUN_OFFSET).
 const SUN = new THREE.Vector3(-25, 55, 20).normalize();
 
-function skyMaterial(terrain, geometry, kinds) {
+// V1 terrain round 2 (2026-11-26): which two ground-detail slots (src/ground-detail.js SLOTS: 0 grass, 1 dirt, 2 sand,
+// 3 stone) grain each lowland look; a lowland vertex carries 1 + its share of the second one (0 = no detail).
+export const LOWLAND_SLOTS = { meadow: [0, 1], forest: [0, 1], desert: [2, 1], canyon: [1, 2], rock: [3, 0], snow: [0, 2], lava: [1, 0], ash: [1, 0] };
+// The lowland's detail tiles this much coarser than the playable ground's (it lies 7 m down and recedes).
+export const LOWLAND_TILE = 2.5;
+// Aerial perspective: from the playable edge out to AIR_REACH m the surround darkens and greys toward the land's haze.
+export const AIR_REACH = 40;
+
+function skyMaterial(terrain, geometry, kinds, lows, detail) {
   const [horizon, zenith] = SKY[lookOf(terrain.id)] ?? SKY.riverlands;
   const sky = { horizon: new THREE.Color(horizon), zenith: new THREE.Color(zenith) };
   const material = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false });
@@ -55,26 +63,43 @@ function skyMaterial(terrain, geometry, kinds) {
   for (let i = 0; i < pos.count - 3; i++) {
     const distance = Math.max(Math.abs(pos.getX(i)), Math.abs(pos.getZ(i))) - terrain.half;
     skyData[i * 3] = kinds[i] || 0;
+    skyData[i * 3 + 1] = lows[i] || 0;
     // The near lowland keeps its own colours and melts into the haze from 30 m out (was 14-35 m: a flat void).
     skyData[i * 3 + 2] = THREE.MathUtils.smoothstep(distance, 30, 96);
   }
   // One far-plane triangle completes the sky wherever the horizon mesh ends.
   skyData.set([-1, -1, -1, 3, -1, -1, -1, 3, -1], skyData.length - 9);
   geometry.setAttribute("skyData", new THREE.BufferAttribute(skyData, 3));
+  // The lowland's grain reads the ground detail's own layers (shared uniforms: they arrive, fade and switch off with it).
+  const [slotA, slotB] = LOWLAND_SLOTS[surroundFor(terrain.id).ground] ?? [0, 1];
+  const gd = detail?.uniforms;
+  const low = {
+    uLowOn: gd ? gd.uGdOn : { value: 0 },
+    uLowTile: { get value() { return (gd ? gd.uGdTile.value : 4) * LOWLAND_TILE; } },
+    uLowA: { get value() { return gd ? gd[`uGdL${slotA}`].value : null; } },
+    uLowB: { get value() { return gd ? gd[`uGdL${slotB}`].value : null; } },
+    uLowLookA: { get value() { return gd ? gd.uGdLook.value[slotA] : OFF; } },
+    uLowLookB: { get value() { return gd ? gd.uGdLook.value[slotB] : OFF; } },
+    uLowMeanA: { get value() { return gd ? gd.uGdMean.value[slotA] : ONE; } },
+    uLowMeanB: { get value() { return gd ? gd.uGdMean.value[slotB] : ONE; } },
+    uEdgeHalf: { value: terrain.half },
+  };
   material.onBeforeCompile = shader => {
+    Object.assign(shader.uniforms, low);
     shader.uniforms.uHorizon = { value: sky.horizon };
     shader.uniforms.uZenith = { value: sky.zenith };
     shader.uniforms.uEdgeTime = motion.time;
     shader.uniforms.uEdgeLive = motion.live;
     shader.vertexShader = shader.vertexShader.replace("#include <common>",
-      "#include <common>\nattribute vec3 skyData; varying vec3 vAtmosphere; varying vec3 vEdgeW; varying float vKind;")
+      "#include <common>\nattribute vec3 skyData; varying vec3 vAtmosphere; varying vec3 vEdgeW; varying float vKind; varying float vLow;")
       .replace("#include <project_vertex>", `#include <project_vertex>
         vEdgeW = (modelMatrix * vec4(transformed, 1.0)).xyz;
         vKind = skyData.z < 0.0 ? 0.0 : skyData.x;
+        vLow = skyData.z < 0.0 ? 0.0 : skyData.y;
         if (skyData.z < 0.0) gl_Position = vec4(skyData.xy, 0.999999, 1.0);
         vAtmosphere = vec3(gl_Position.xy / gl_Position.w, abs(skyData.z));`);
     shader.fragmentShader = shader.fragmentShader.replace("#include <common>",
-      "#include <common>\nuniform vec3 uHorizon, uZenith; uniform float uEdgeTime, uEdgeLive; varying vec3 vAtmosphere; varying vec3 vEdgeW; varying float vKind;")
+      "#include <common>\nuniform vec3 uHorizon, uZenith; uniform float uEdgeTime, uEdgeLive; varying vec3 vAtmosphere; varying vec3 vEdgeW; varying float vKind; varying float vLow;\n" + LOW_GLSL)
       .replace("#include <color_fragment>", `#include <color_fragment>
         if (vKind > 0.5) {
           float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -88,12 +113,44 @@ function skyMaterial(terrain, geometry, kinds) {
             diffuseColor.rgb *= mix(1.0, 0.8 + 0.3 * sin(uEdgeTime * 1.1 + vEdgeW.x * 0.13 + vEdgeW.z * 0.17), uEdgeLive);
           }
         }
+        // Aerial perspective: the surround greys and darkens toward the haze with distance from the playable edge.
+        float air = smoothstep(1.0, ${AIR_REACH.toFixed(1)}, max(abs(vEdgeW.x), abs(vEdgeW.z)) - uEdgeHalf);
+        // The lowland's grain: the land's own detail layers at a coarser tile, softer as it recedes.
+        vec2 lq = mat2(0.7660, -0.6428, 0.6428, 0.7660) * vEdgeW.xz / uLowTile;
+        vec2 lqx = dFdx(lq), lqy = dFdy(lq);
+        if (vLow > 0.5 && uLowOn > 0.0) {
+          float t = clamp(vLow - 1.0, 0.0, 1.0);
+          vec3 m = vec3(1.0);
+          if (t < 0.98) m = lowLayer(uLowA, lq, lqx, lqy, uLowLookA, uLowMeanA);
+          if (t > 0.02) m = mix(m, lowLayer(uLowB, lq, lqx, lqy, uLowLookB, uLowMeanB), t);
+          diffuseColor.rgb *= mix(vec3(1.0), m, uLowOn * (1.0 - 0.55 * air));
+        }
+        float airLum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+        vec3 airTone = mix(uHorizon, uZenith, 0.6) * 0.55;
+        diffuseColor.rgb = mix(diffuseColor.rgb, vec3(airLum), air * 0.55);
+        diffuseColor.rgb = mix(diffuseColor.rgb * (1.0 - 0.22 * air), airTone, air * 0.3);
         float altitude = smoothstep(-0.7, 1.1, vAtmosphere.y + 0.12 * vAtmosphere.x);
         diffuseColor.rgb = mix(diffuseColor.rgb, mix(uHorizon, uZenith, altitude), vAtmosphere.z);`);
   };
-  material.customProgramCacheKey = () => "backdrop-v2";
+  material.customProgramCacheKey = () => "backdrop-v3";
   return material;
 }
+
+const OFF = new THREE.Vector4(0.2, 0, 0, 0), ONE = new THREE.Vector4(1, 1, 1, 1);
+// One detail layer as the ground shader reads it (ground-detail.js gdLayer, without the second scale): luminance ratio
+// at strength k times relative chroma, by the layer's opacity (0 until it has loaded).
+const LOW_GLSL = `
+uniform float uLowOn, uLowTile, uEdgeHalf;
+uniform sampler2D uLowA, uLowB;
+uniform vec4 uLowLookA, uLowLookB, uLowMeanA, uLowMeanB;
+vec3 lowLayer(sampler2D t, vec2 q, vec2 gx, vec2 gy, vec4 look, vec4 mean) {
+  float inv = 1.0 / mean.w;
+  vec3 c = textureGrad(t, q * inv, gx * inv, gy * inv).rgb;
+  float tl = max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 1e-4);
+  vec3 m = max(mix(1.0, tl / look.x, look.y), 0.15) * clamp((c / tl) / mean.xyz, vec3(0.25), vec3(3.0));
+  return mix(vec3(1.0), m, look.w);
+}
+`;
 
 // Smooth value noise for the lowland (seedless, the same everywhere).
 const lattice = (x, z) => {
@@ -109,15 +166,17 @@ function noise(x, z) {
 const fbm = (x, z) => noise(x, z) * 0.6 + noise(x * 2.1 + 17, z * 2.1 - 9) * 0.3 + noise(x * 4.3 - 5, z * 4.3 + 31) * 0.1;
 const smooth = (a, b, x) => THREE.MathUtils.smoothstep(x, a, b);
 
-export function createMapEdge(terrain) {
-  const theme = themeFor(terrain.id), half = terrain.half, p = [], c = [], kinds = [];
+export function createMapEdge(terrain, detail = null) {
+  const theme = themeFor(terrain.id), half = terrain.half, p = [], c = [], kinds = [], lows = [];
   const color = (key) => { const v = new THREE.Color(theme[key]); return [v.r, v.g, v.b]; };
   const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
   const mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
-  const quad = (a, b, cc, d, ca, cb, ccc, cd, kind = 0) => {
+  const quad = (a, b, cc, d, ca, cb, ccc, cd, kind = 0, low = null) => {
     p.push(...a, ...b, ...cc, ...a, ...cc, ...d);
     c.push(...ca, ...cb, ...ccc, ...ca, ...ccc, ...cd);
     kinds.push(kind, kind, kind, kind, kind, kind);
+    if (low) lows.push(low[0], low[1], low[2], low[0], low[2], low[3]);
+    else lows.push(0, 0, 0, 0, 0, 0);
   };
   const surround = surroundFor(terrain.id), sea = surround.ground === "sea" ? surround.sea : null;
   const cliff = color("cliff"), deep = color("cliffDeep"), near = color("outlandNear"), far = color("outland"), haze = color("sky"),
@@ -173,7 +232,7 @@ export function createMapEdge(terrain) {
   }
   const lowland = buildLowland(terrain, surround, sea, quad, mix, mul, color);
   if (surround.lavaRivers) buildLavaRivers(terrain, surround.lavaRivers, lowland, quad, mix, mul, color);
-  buildSilhouettes(terrain, surround, sea, p, c, kinds, mix, mul, color, lowland);
+  buildSilhouettes(terrain, surround, sea, p, c, kinds, lows, mix, mul, color, lowland);
   // The far haze: square rings from the lowland's rim out to the horizon, at the lowland's (or the sea's) level.
   const floor = sea ?? -CLIFF, rim = sea !== null ? mix(water, haze, 0.3) : mix(mix(near, far, 0.5), haze, 0.45);
   const rings = [[LOWLAND, rim], [LOWLAND + 30, mix(rim, haze, 0.6)], [REACH, haze]];
@@ -187,10 +246,11 @@ export function createMapEdge(terrain) {
   p.push(...corner(REACH, -1, -1), ...corner(REACH, 1, -1), ...corner(REACH, -1, 1));
   c.push(...haze, ...haze, ...haze);
   kinds.push(0, 0, 0);
+  lows.push(0, 0, 0);
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(p), 3));
   geometry.setAttribute("color", new THREE.BufferAttribute(new Float32Array(c), 3));
-  const mesh = new THREE.Mesh(geometry, skyMaterial(terrain, geometry, kinds));
+  const mesh = new THREE.Mesh(geometry, skyMaterial(terrain, geometry, kinds, lows, detail));
   mesh.name = "backdrop";
   mesh.matrixAutoUpdate = false;
   mesh.frustumCulled = false;
@@ -212,7 +272,10 @@ function buildLowland(terrain, surround, sea, quad, mix, mul, color) {
     // A river leaving the map runs on across the lowland (east and west: the bands run along x).
     const river = rivers.find((r) => Math.abs(z - r.z) < 6 && Math.abs(x) > half);
     const inRiver = river ? 1 - smooth(2.2, 4.4, Math.abs(z - river.z) + (noise(x * 0.2, z * 0.2) - 0.5) * 1.6) : 0;
-    let h = 0, col, k = 0;
+    // t: the share of the land's second detail layer (LOWLAND_SLOTS); `patch` lays broad patches of the land's other
+    // surfaces (bare earth in a meadow, hardpan between dunes, scree on rock, ice on snow) across the lowland.
+    let h = 0, col, k = 0, t = 0;
+    const patch = smooth(0.6, 0.78, fbm(x * 0.045 + 40, z * 0.045 - 23));
     switch (kind) {
       case "sea": {
         const shore = smooth(0, 3, d), deepness = smooth(4, 40, d + (n - 0.5) * 10);
@@ -227,6 +290,9 @@ function buildLowland(terrain, surround, sea, quad, mix, mul, color) {
         const grove = mul(leaf, kind === "forest" ? 0.45 : 0.55), meadow = mul(mix(grass, leaf, 0.35), 0.7), sunny = mul(mix(grass, leafAlt, 0.45), 0.82);
         col = mix(mix(grove, meadow, smooth(0.3, 0.55, m)), sunny, smooth(0.62, 0.85, m));
         if (n < 0.3) col = mix(col, mul(mix(dirt, grass, 0.3), 0.72), Math.min(1, (0.3 - n) * 3));
+        // Broad patches of bare earth and dry grass.
+        col = mix(col, mul(mix(dirt, sand, 0.35), 0.74), patch * 0.85);
+        t = Math.max(n < 0.3 ? Math.min(1, (0.3 - n) * 3) : 0, patch);
         break;
       }
       case "desert": {
@@ -237,12 +303,17 @@ function buildLowland(terrain, surround, sea, quad, mix, mul, color) {
         const ripple = 0.5 + 0.5 * Math.sin(x * 0.31 + z * 0.19 + n * 6);
         col = mix(col, mul(dust, 0.92), smooth(0.78, 0.97, ripple) * 0.4 * rise);
         col = mul(col, 1 - smooth(0.0, 0.25, ripple) * 0.12 * rise);
+        // Hardpan floors between the dunes.
+        t = Math.max(1 - dune, patch) * 0.9;
+        col = mix(col, mul(dirt, 0.8), patch * 0.5);
         break;
       }
       case "canyon": {
         h = rise * Math.floor((0.4 + 2.8 * n) * 2) / 2;
         col = mix(mul(dirt, 0.82), sand, smooth(0.4, 0.8, m) * 0.6);
         if (h % 1 > 0.4) col = mul(col, 1.1);
+        t = Math.max(smooth(0.4, 0.8, m) * 0.6, patch);
+        col = mix(col, mul(sand, 0.85), patch * 0.45);
         break;
       }
       case "rock": {
@@ -253,13 +324,16 @@ function buildLowland(terrain, surround, sea, quad, mix, mul, color) {
         const crack = Math.abs(noise(x * 0.09 + 21, z * 0.09 - 4) - 0.5);
         if (crack < 0.05) col = mul(col, 0.62 + crack * 6);
         else if (n > 0.66) col = mix(col, mul(dust, 0.8), (n - 0.66) * 1.5);
+        t = m > 0.62 ? Math.min(1, (m - 0.62) * 2) : 0;
         break;
       }
       case "snow": {
         h = rise * (0.6 + 1.6 * n);
         col = mix(mul(grass, 0.98), mul(dust, 0.95), smooth(0.5, 0.8, m) * 0.5);
         // Frozen hollows: pale ice sheets.
-        if (n < 0.38) { col = mix(col, mix(ford, dirt, 0.25), Math.min(1, (0.38 - n) * 3)); h *= 0.6; }
+        if (n < 0.38) { col = mix(col, mix(ford, dirt, 0.25), Math.min(1, (0.38 - n) * 3)); h *= 0.6; t = Math.min(1, (0.38 - n) * 3); }
+        // Wind-scoured patches of darker crust.
+        col = mix(col, mul(mix(stone, grass, 0.6), 0.85), patch * 0.4);
         break;
       }
       case "lava": {
@@ -267,19 +341,24 @@ function buildLowland(terrain, surround, sea, quad, mix, mul, color) {
         col = mix(mul(dirt, 0.62), mul(stone, 0.7), m);
         // Warm, lighter scoria patches; the lava rivers are ribbons laid on top (buildLavaRivers).
         if (m > 0.6) col = mix(col, mul(mix(dirt, water, 0.25), 0.8), (m - 0.6) * 1.5);
+        // Ash drifts over the basalt.
+        col = mix(col, mul(dust, 0.55), patch * 0.5);
+        t = patch;
         break;
       }
       default: { // ash
         h = rise * (0.5 + 1.8 * n);
         col = mix(mul(dirt, 0.7), mul(dust, 0.6), smooth(0.45, 0.75, m) * 0.55);
+        col = mix(col, mul(mix(grass, dirt, 0.4), 0.7), patch * 0.5);
+        t = patch;
         break;
       }
     }
     if (inRiver > 0) { col = mix(col, mix(shallow, water, inRiver), Math.min(1, inRiver * 1.4)); h *= 1 - inRiver; if (inRiver > 0.4) k = kind === "lava" ? 2 : 1; }
-    // Ambient occlusion at the cliff foot: the playable edge reads as a step down.
-    // (the plateau's shade reaches 12 m out: beyond the far edges, where the cliff hides its foot, the drop still reads).
-    col = mul(col, 0.5 + 0.5 * smooth(0, 12, d) * (0.6 + 0.4 * smooth(0, 4, d)));
-    return { h: Math.min(h, CLIFF - 3.2), col, k };
+    // The plateau's shade: a soft drop below the rim (reaching 20 m out, so it still reads beyond the far edges, where the
+    // cliff hides its own foot from the camera) and ambient occlusion right at the cliff foot.
+    col = mul(col, (0.36 + 0.64 * smooth(0, 20, d)) * (0.8 + 0.2 * smooth(0, 4, d)));
+    return { h: Math.min(h, CLIFF - 3.2), col, k, t };
   };
   const floor = sea ?? -CLIFF;
   const vertex = new Map();
@@ -288,7 +367,7 @@ function buildLowland(terrain, surround, sea, quad, mix, mul, color) {
     let v = vertex.get(key);
     if (!v) {
       const s = sample(x, z);
-      v = { pos: [x, floor + s.h, z], col: s.col, k: s.k };
+      v = { pos: [x, floor + s.h, z], col: s.col, k: s.k, low: sea === null && s.k === 0 ? 1 + s.t : 0 };
       vertex.set(key, v);
     }
     return v;
@@ -311,7 +390,7 @@ function buildLowland(terrain, surround, sea, quad, mix, mul, color) {
         const a = at(x0, z0), b = at(x0 + cell, z0), cc = at(x0 + cell, z0 + cell), d = at(x0, z0 + cell);
         const k = sea === null ? Math.max(0.62, Math.min(1.2, light(a, d, cc))) : 1;
         const wet = [a, b, cc, d].some((v) => v.k === 1) ? 1 : [a, b, cc, d].some((v) => v.k === 2) ? 2 : 0;
-        quad(a.pos, b.pos, cc.pos, d.pos, mul(a.col, k), mul(b.col, k), mul(cc.col, k), mul(d.col, k), wet);
+        quad(a.pos, b.pos, cc.pos, d.pos, mul(a.col, k), mul(b.col, k), mul(cc.col, k), mul(d.col, k), wet, wet ? null : [a.low, b.low, cc.low, d.low]);
       }
   };
   grid(half + NEAR, half, CELL);
@@ -359,7 +438,7 @@ function buildLavaRivers(terrain, perSide, lowland, quad, mix, mul, color) {
 // Distant silhouettes on the lowland: groves of trees and pines, mesas, spires, rocks, snow ridges, a volcano cone,
 // islets with palms. Low-poly, flat-shaded for the fixed sun, merged into the backdrop. Placed from the map size and
 // land alone (seeded); none reaches the playable ground's height (y <= -0.3).
-function buildSilhouettes(terrain, surround, sea, p, c, kinds, mix, mul, color, lowland) {
+function buildSilhouettes(terrain, surround, sea, p, c, kinds, lows, mix, mul, color, lowland) {
   const half = terrain.half, floor = sea ?? -CLIFF;
   let seed = 0x51ed ^ terrain.size ^ (lookOf(terrain.id).length * 977);
   const r = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
@@ -372,7 +451,7 @@ function buildSilhouettes(terrain, surround, sea, p, c, kinds, mix, mul, color, 
     // Double-sided: shade by the side that faces the sun.
     const lit = Math.abs(nx * SUN.x + ny * SUN.y + nz * SUN.z) / l, k = 0.55 + 0.6 * lit;
     p.push(...a, ...b, ...cc);
-    for (let i = 0; i < 3; i++) { c.push(col[0] * k, col[1] * k, col[2] * k); kinds.push(kind); }
+    for (let i = 0; i < 3; i++) { c.push(col[0] * k, col[1] * k, col[2] * k); kinds.push(kind); lows.push(0); }
   };
   const ring = (x, z, y, rad, n, spin = 0) => Array.from({ length: n }, (_, i) => { const a = spin + (i / n) * Math.PI * 2; return [x + Math.cos(a) * rad, y, z + Math.sin(a) * rad]; });
   const cone = (x, z, y0, rad, h, col, tip = col, n = 6, spin = 0) => {
@@ -417,21 +496,42 @@ function buildSilhouettes(terrain, surround, sea, p, c, kinds, mix, mul, color, 
       }
     },
   };
-  // Families stand in clusters along the ring: a grove centre, then members around it.
+  // Families stand in clusters of mixed sizes: a big one at the heart, smaller ones scattered in a blob around it (wider
+  // and looser further out), with an understory of the land's companions (bushes and stones under trees, small stones
+  // round rocks and spires, scree at a mesa's foot), so the edge reads as groves and outcrops, not rows.
+  const UNDER = {
+    tree: surround.ground === "snow" ? [["rock", 0.5]] : [["bush", 1.4], ["rock", 0.3]],
+    pine: surround.ground === "snow" ? [["rock", 0.6]] : [["bush", 0.9], ["rock", 0.4]],
+    rock: [["rock", 1.6]], spire: [["rock", 1.4]], snag: [["rock", 0.8]], bush: [["rock", 0.4]],
+    mesa: [["rock", 3]], ridge: [["rock", 1]], cone: [], islet: [],
+  };
   const perimeter = 8 * half;
+  const place = (family, x, z, s, big) => {
+    // Never under the playable square, never right against the cliff.
+    if (Math.max(Math.abs(x), Math.abs(z)) < half + (big ? 18 : 3.5)) return;
+    SHAPES[family](x, z, s);
+  };
   for (const [family, per100] of surround.props) {
     const big = family === "cone" || family === "mesa" || family === "islet";
-    const groups = Math.max(1, Math.round((perimeter / 100) * per100 / (big ? 1 : 4)));
+    const groups = Math.max(1, Math.round((perimeter / 100) * per100 / (big ? 1 : 5)));
     for (let g = 0; g < groups; g++) {
       const t = r() * perimeter, side = Math.floor(t / (2 * half)), along = (t % (2 * half)) - half;
       const d = big ? 26 + r() * 40 : 3.5 + Math.pow(r(), 2) * 56;
       const [ox, oz] = [[along, -half - d], [half + d, along], [-along, half + d], [-half - d, -along]][side];
-      const members = big ? 1 : 2 + Math.floor(r() * 4);
+      const members = big ? 1 : 2 + Math.floor(r() * r() * 9);
+      const spread = 2.5 + members * 0.9 + d * 0.06;
       for (let m = 0; m < members; m++) {
-        const x = ox + (m ? (r() - 0.5) * 9 : 0), z = oz + (m ? (r() - 0.5) * 9 : 0);
-        // Never under the playable square, never right against the cliff.
-        if (Math.max(Math.abs(x), Math.abs(z)) < half + (big ? 18 : 3.5)) continue;
-        SHAPES[family](x, z, 0.75 + r() * 0.5);
+        const a = r() * Math.PI * 2, rad = m ? spread * Math.sqrt(r()) : 0;
+        // The heart is the biggest; the rest shrink toward the blob's rim, each a little different.
+        const s = m ? (0.55 + r() * 0.5) * (1 - 0.25 * (rad / spread)) : 1.05 + r() * 0.35;
+        place(family, ox + Math.cos(a) * rad, oz + Math.sin(a) * rad, s, big);
+      }
+      for (const [under, per] of UNDER[family] ?? []) {
+        const count = Math.floor(per * (big ? 1 : Math.sqrt(members)) + r());
+        for (let u = 0; u < count; u++) {
+          const a = r() * Math.PI * 2, rad = big ? 11 + r() * 7 : spread * (0.4 + r() * 0.8);
+          place(under, ox + Math.cos(a) * rad, oz + Math.sin(a) * rad, 0.35 + r() * 0.35, false);
+        }
       }
     }
   }

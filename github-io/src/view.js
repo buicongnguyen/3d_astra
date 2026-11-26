@@ -866,7 +866,7 @@ export class WorldView {
     // horizon haze (map-edge.js). The old slab under the map also had a top face 5 cm below
     // the ground, which won the biased depth test and hid the ground texture on every map
     // without a river; the skirt has sides only.
-    this.backdrop = createMapEdge(this.terrain);
+    this.backdrop = createMapEdge(this.terrain, this.groundDetail);
     this.terrainRoot.add(this.backdrop);
     // One grid line per two-unit navigation cell on every map size.
     this.grid = new THREE.GridHelper(this.terrain.size, this.terrain.grid, 0xd8d8b4, 0xa6b087);
