@@ -14,7 +14,10 @@ import { shotSlope } from "./terrain-labels.js";
 // is requested. Particle and debris records are pooled: the per-frame emitters (fire, smoke,
 // trails) and the update loop allocate nothing once the pools are warm.
 
-import { CELLS, CELL, BILLBOARD, STRETCH, GROUND, SHOT_SCALE } from "./fx-kinds/cells.js";
+import { CELL, BILLBOARD, STRETCH, GROUND, SHOT_SCALE, CLASSIC_CELLS, ATLAS_COLUMNS, ATLAS_ROWS } from "./fx-kinds/cells.js";
+// V4 signature shots: each faction's own shot look (src/fx-kinds/signature.js) and the cells it paints into the atlas.
+import { SIGNATURE_CELLS } from "./fx-kinds/signature-cells.js";
+import { signatureLook, signatureShot, signaturePartial, signatureSupport, stepSignatures, clearSignatures, liveSignatures } from "./fx-kinds/signature.js";
 import { LOOKS, MOMENTS, shimmer } from "./fx-kinds/index.js";
 import { crit, resisted } from "./fx-kinds/counter.js";
 import { RocketBodies } from "./fx-kinds/rocket-body.js";
@@ -32,12 +35,15 @@ import { impactKind } from "./fx-sprites-data.js";
 // model; the blast lands at the end).
 export const DIVE_SECONDS = 0.32;
 
-// Procedural sprite atlas: one 128 px cell per shape, white with alpha.
+// Procedural sprite atlas: one 128 px cell per shape, white with alpha, ATLAS_COLUMNS cells a row (V4: two rows). The classic cells
+// are painted at once; the signature cells (src/fx-kinds/signature-cells.js) when the first battle starts (paintSignatureCells).
+const CELL_PX = 128;
+const cellOrigin = (cell) => [(cell % ATLAS_COLUMNS) * CELL_PX, Math.floor(cell / ATLAS_COLUMNS) * CELL_PX];
 function atlas() {
-  const size = 128, canvas = document.createElement("canvas");
-  canvas.width = size * CELLS.length;
-  canvas.height = size;
-  const g = canvas.getContext("2d"), image = g.createImageData(canvas.width, size);
+  const size = CELL_PX, canvas = document.createElement("canvas");
+  canvas.width = size * ATLAS_COLUMNS;
+  canvas.height = size * ATLAS_ROWS;
+  const g = canvas.getContext("2d"), image = g.createImageData(canvas.width, canvas.height);
   let s = 11;
   const rnd = () => ((s = (s * 16807) % 2147483647) / 2147483647);
   const blobs = Array.from({ length: 10 }, () => [(rnd() - 0.5) * 0.9, (rnd() - 0.5) * 0.9, 0.3 + rnd() * 0.3]);
@@ -61,10 +67,11 @@ function atlas() {
     (x, y, d) => Math.exp(-(((d - 0.72) / 0.17) ** 2)),
   );
   shapes.forEach((shape, cell) => {
+    const [ox, oy] = cellOrigin(cell);
     for (let py = 0; py < size; py++)
       for (let px = 0; px < size; px++) {
         const x = (px + 0.5) / size * 2 - 1, y = 1 - (py + 0.5) / size * 2, d = Math.hypot(x, y);
-        const i = (py * canvas.width + cell * size + px) * 4;
+        const i = ((oy + py) * canvas.width + ox + px) * 4;
         image.data[i] = image.data[i + 1] = image.data[i + 2] = 255;
         image.data[i + 3] = Math.round(255 * Math.max(0, Math.min(1, d > 1 && cell !== 3 && cell !== 5 ? 0 : shape(x, y, d))));
       }
@@ -75,14 +82,34 @@ function atlas() {
   texture.minFilter = THREE.LinearMipmapLinearFilter;
   return texture;
 }
+// The signature cells, painted into the atlas once (about 25 ms of script on a desktop): at the first battle, not on the title.
+function paintSignatureCells(texture) {
+  const canvas = texture.image, g = canvas?.getContext?.("2d");
+  if (!g) return;
+  const size = CELL_PX;
+  SIGNATURE_CELLS.forEach(({ paint, shade, clip }, k) => {
+    const cell = CLASSIC_CELLS + k, [ox, oy] = cellOrigin(cell), image = g.createImageData(size, size);
+    for (let py = 0; py < size; py++)
+      for (let px = 0; px < size; px++) {
+        const x = (px + 0.5) / size * 2 - 1, y = 1 - (py + 0.5) / size * 2, d = Math.hypot(x, y), i = (py * size + px) * 4;
+        // A body cell is white inside a dark rim (`shade`): drawn normal-blended in a faction colour it is outlined.
+        image.data[i] = image.data[i + 1] = image.data[i + 2] = Math.round(255 * (shade ? shade(x, y, d) : 1));
+        image.data[i + 3] = Math.round(255 * Math.max(0, Math.min(1, clip === false || d <= 1 ? paint(x, y, d) : 0)));
+      }
+    g.putImageData(image, ox, oy);
+  });
+  texture.needsUpdate = true;
+}
 
 const VERTEX = `
 attribute vec3 iPos; attribute vec4 iColor; attribute vec4 iAxis; attribute vec3 iSize;
-uniform float cells;
+uniform vec2 grid;
 varying vec2 vUv; varying vec4 vColor;
 void main() {
   vColor = iColor;
-  vUv = vec2((uv.x + iSize.z) / cells, uv.y);
+  // The cell's column and row in the atlas grid (row 0 at the top of the canvas: the texture is flipped).
+  float column = mod(iSize.z, grid.x), row = floor(iSize.z / grid.x + 0.001);
+  vUv = vec2((uv.x + column) / grid.x, (uv.y + grid.y - 1.0 - row) / grid.y);
   vec3 right = vec3(viewMatrix[0][0], viewMatrix[1][0], viewMatrix[2][0]);
   vec3 up = vec3(viewMatrix[0][1], viewMatrix[1][1], viewMatrix[2][1]);
   vec3 forward = vec3(viewMatrix[0][2], viewMatrix[1][2], viewMatrix[2][2]);
@@ -136,6 +163,8 @@ function resetParticle(p, rng) {
   p.ax = 0; p.ay = 1; p.az = 0; p.length = 0; p.cell = CELL.glow; p.drag = 0; p.gravity = 0; p.floor = -10;
   p.opacity = 1; p.hold = 0; p.fadeIn = 0; p.anchor = null; p.lifted = false; p.delay = 0; p.hitScorch = false;
   p.priorityHit = false; p.keep = false; p.owner = 0; // the token of a rocket that moves this record each frame (its flame halo); 0 when the record is reused
+  // V4: a flipbook over `frames` consecutive cells from `cell` at `fps` (starting at `frame`), turned `jump` radians per frame (a crackle).
+  p.frames = 0; p.fps = 0; p.frame = 0; p.jump = 0;
   return p;
 }
 
@@ -165,7 +194,7 @@ class Layer {
     this.sent = false;
     g.instanceCount = 1;
     this.material = new THREE.ShaderMaterial({
-      uniforms: { map: { value: texture }, cells: { value: CELLS.length } },
+      uniforms: { map: { value: texture }, grid: { value: new THREE.Vector2(ATLAS_COLUMNS, ATLAS_ROWS) } },
       vertexShader: VERTEX,
       fragmentShader: FRAGMENT,
       transparent: true,
@@ -205,7 +234,9 @@ class Layer {
       C[drawn * 4 + 3] *= p.opacity * (additive ? -fade : fade);
       const len = p.length ? p.length : 0;
       A[drawn * 4] = p.ax * len; A[drawn * 4 + 1] = p.ay * len; A[drawn * 4 + 2] = p.az * len; A[drawn * 4 + 3] = p.mode;
-      S[drawn * 3] = p.s0 + (p.s1 - p.s0) * (1 - (1 - t) ** 2); S[drawn * 3 + 1] = p.rot; S[drawn * 3 + 2] = p.cell;
+      let cell = p.cell, rot = p.rot;
+      if (p.frames > 1) { const f = Math.floor(p.age * p.fps) + p.frame; cell += f % p.frames; rot += f * p.jump; }
+      S[drawn * 3] = p.s0 + (p.s1 - p.s0) * (1 - (1 - t) ** 2); S[drawn * 3 + 1] = rot; S[drawn * 3 + 2] = cell;
       drawn++;
     }
     this.items.length = keep;
@@ -324,6 +355,14 @@ export class Effects {
     this.particlePools = [this.glow, this.smoke, this.decals, { items: this.debris, free: this.debrisFree }];
     this.priorityCounts = new Uint16Array(5);
     this.selectedHits = new Set();
+    this.signaturePainted = false;
+  }
+  // V4 signature shots: their cells are painted into the procedural atlas once, when the first battle starts (src/fx-sprites.js
+  // start) or at the first signature shot, whichever comes first; never on the title screen.
+  paintSignature() {
+    if (this.signaturePainted) return;
+    this.signaturePainted = true;
+    paintSignatureCells(this.texture);
   }
   get debrisCapacity() { return this.view.lowPower ? 32 : 96; }
   get motion() { return this.view.activity.combat.motion; }
@@ -620,6 +659,17 @@ export class Effects {
   // flash, or the hit landing), never the path, so fog still hides positions.
   shotPartial(e, sim) {
     if (e.type === "support" || !sim?.isVisible) return;
+    // V4: a faction's signature shot shows the same two ends in its own colours (src/fx-kinds/signature.js).
+    const sig = signatureLook(this, e, sim);
+    if (sig) {
+      this.paintSignature();
+      const { style, nx, nz, from, to, land } = this.aim(e, sim), dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z, len = Math.hypot(dx, dy, dz) || 1;
+      const ux = dx / len, uy = dy / len, uz = dz / len, h = Math.hypot(ux, uz) || 1;
+      const anchor = { targetWidth: 2 * (sim?.get?.(e.target)?.radius || 0.75), direct: !groundSplashRadius(e, sim) };
+      signaturePartial(this, e, sim, sig, { from, to, land, ux, uy, uz, len, sx: -uz / h, sz: ux / h, nx, nz, travel: style.life, anchor,
+        power: style.hit ?? hitPower(e.weapon, style.kind), style }, sim.isVisible({ x: e.x, z: e.z }), sim.isVisible({ x: e.tx, z: e.tz }));
+      return;
+    }
     const { style, from, land } = this.aim(e, sim), heavy = style.kind === "cannon" || style.kind === "rocket";
     if (style.kind === "melee") return this.swordContact(e, sim, style, false);
     if (sim.isVisible({ x: e.x, z: e.z })) {
@@ -638,6 +688,8 @@ export class Effects {
     const travel = style.life, anchor = { ...e, shot: true, targetWidth: 2 * (sim?.get?.(e.target)?.radius || 0.75), direct: !groundSplashRadius(e, sim) };
     const kind = style.kind, m = this.motion;
     if (kind === "support") {
+      // V4: the Sunward Wagon heals with golden motes (src/fx-kinds/signature.js); the others below.
+      if (m && signatureSupport(this, e, sim, { from, to, land, anchor })) return;
       // Engineer: cool white beam. Harvester repair: warm welding sparks. Medic: green.
       const engineer = e.weapon === "engineer", tint = e.weapon === "repair" || engineer ? [1, 0.69, 0.22, 0.95] : [0.5, 1, 0.75, 0.9];
       const repair = engineer || e.weapon === "repair";
@@ -651,6 +703,16 @@ export class Effects {
       this.particle(this.glow, { lifted: true, x: (from.x+to.x)/2, y: (from.y+to.y)/2, z: (from.z+to.z)/2,
         mode: STRETCH, ax: dir.x/len, ay: dir.y/len, az: dir.z/len, length: len, cell: CELL.glow, anchor,
         s0: beamWidth, s1: beamWidth * 0.7, life: 0.34, c0: [tint[0],tint[1],tint[2],0.55], c1: [tint[0],tint[1],tint[2],0] });
+      return;
+    }
+    // V4: the shooter's faction look (src/fx-kinds/signature.js): every unit of the five factions; creatures, bosses, the Iron units,
+    // bombers, flamers and the abilities keep the drawing below.
+    const sig = signatureLook(this, e, sim);
+    if (sig) {
+      this.paintSignature();
+      const ux = dir.x / len, uy = dir.y / len, uz = dir.z / len, h = Math.hypot(ux, uz) || 1;
+      signatureShot(this, e, sig, { from, to, land, ux, uy, uz, len, sx: -uz / h, sz: ux / h, nx, nz, travel, anchor, power: style.hit ?? hitPower(e.weapon, kind), style });
+      this.slope(e, to, anchor, m, m ? travel : 0);
       return;
     }
     if (anchor.direct && ((e.unit || e.weapon) === "ranger" || (!style.look && weaponClass(e,style) === "tracer"))) {
@@ -1213,6 +1275,8 @@ export class Effects {
         }
       }
     }
+    // V4: the signature orbs, rockets and wisps in flight (src/fx-kinds/signature-kinds.js), before the rocket bodies are sent.
+    stepSignatures(this, dt, visible);
     this.rockets.end(dt > 0);
     // R3-X: shells, lobs, flak, missiles and bombs (one instanced draw for all), and the Barrage shells falling onto their marks.
     this.ordnance.begin(this.rocketLight());
@@ -1309,7 +1373,7 @@ export class Effects {
     uploadPrefix(this.debrisMesh.instanceMatrix, drawn);
   }
   get active() {
-    return this.glow.items.length + this.smoke.items.length + this.decals.items.length + this.debris.length + this.projectiles.length + this.rounds.length + this.sprites.active;
+    return this.glow.items.length + this.smoke.items.length + this.decals.items.length + this.debris.length + this.projectiles.length + this.rounds.length + this.sprites.active + liveSignatures(this);
   }
   clear() {
     this.nextCount = -1;
@@ -1327,6 +1391,7 @@ export class Effects {
     this.workCursor = 0;
     this.depositLive.clear();
     this.burning.length = 0;
+    clearSignatures(this);
     this.update({ isVisible: () => false, entities: [] }, 0);
   }
   dispose() {

@@ -3,9 +3,17 @@
 // All eleven 4x4 sheets live in ONE atlas (3 sheets across, 4 down), so a whole battle's sprites need one texture and
 // two instanced draws (one per blend mode). Order and grid must match tools/pack-fx-atlas.py.
 import LAYOUT from "./fx-atlas-layout.json" with { type: "json" };
+import SIGNATURE from "./fx-kinds/signature-shots.json" with { type: "json" };
 export { LAYOUT };
 // Frame rectangles (normalised to the atlas, y from the top) come from tools/pack-fx-atlas.py; both tiers share the UVs.
-export const SHEET_NAMES = ["tank", "rocket", "artillery", "bomb", "missile", "tracer", "stomp", "heal", "flame", "flak", "beam", "muzzle", "scorch", "smoke", "beamCyan", "beamMagenta", "healBeam", "capCyan", "endCyan", "capMagenta", "endMagenta", "heads"];
+// V4 signature shots (src/fx-kinds/signature.js): the Codex codex-vfx3 sheets join when tools/pack-fx-atlas.py found them, each
+// painted sheet as its flight loop `<name>` (8 frames, looping) and its impact `<name>Hit` (8 frames, once); `lightning` (16
+// poses) and `muzzleEnergy` (rows of four) whole. All normal alpha (codex-vfx3/README.md); impacts play at 24 fps (the review of
+// 2026-11-26). Absent, the shots draw procedural cells.
+const SIGNATURE_SHEETS = Object.entries(SIGNATURE.sheets).flatMap(([name, d]) => [[name, d, true], [name + "Hit", d, false]])
+  .filter(([name]) => Object.hasOwn(LAYOUT.items, name)).map(([name, d, flight]) => [name, flight ? d.fps : 24, flight && name !== "lightning" && name !== "muzzleEnergy"]);
+export const SHEET_NAMES = ["tank", "rocket", "artillery", "bomb", "missile", "tracer", "stomp", "heal", "flame", "flak", "beam", "muzzle", "scorch", "smoke", "beamCyan", "beamMagenta", "healBeam", "capCyan", "endCyan", "capMagenta", "endMagenta", "heads",
+  ...SIGNATURE_SHEETS.map(([name]) => name)];
 // frames and fps from codex-vfx/README.md and codex-vfx2/README.md; blend: "add" only where the README asks for a glow, else normal alpha
 // (dark contours read on sand and grass). `strip` sheets are one seamless 8:1 strip that repeats along a ray.
 const S = (name, fps, loop, blend = "normal", extra = {}) => ({ name, ...LAYOUT.items[name], file: name, frames: LAYOUT.items[name].count, fps, loop, blend, ...extra });
@@ -19,6 +27,7 @@ export const SHEETS = Object.freeze({
   beamCyan: S("beamCyan", 0, true, "normal", { strip: true }), beamMagenta: S("beamMagenta", 0, true, "normal", { strip: true }), healBeam: S("healBeam", 0, true, "normal", { strip: true }),
   capCyan: S("capCyan", 16, true), endCyan: S("endCyan", 16, true), capMagenta: S("capMagenta", 16, true), endMagenta: S("endMagenta", 16, true),
   heads: S("heads", 0, false),
+  ...Object.fromEntries(SIGNATURE_SHEETS.map(([name, fps, loop]) => [name, S(name, fps, loop, "normal")])),
 });
 export const SCORCH_FRAMES = [0, 1, 2, 3], CRATER_FRAMES = [4, 5, 6, 7];
 export const MUZZLE_ROW = Object.freeze({ small: 0, medium: 1, large: 2 });

@@ -1,0 +1,94 @@
+{
+  "about": [
+    "Signature shots (V4, 2026-11-26): every unit fires its faction's look (src/fx-kinds/signature.js).",
+    "palettes: each faction's energy colours (RGB 0..1, additive glows; `deep` is the dark underlay that keeps a glow readable on snow, sand and lava).",
+    "families: the slot a unit type falls back to when its faction has no entry for the type itself (a Rider lent to Ashfall fires Ashfall's ranger look).",
+    "factions: unit type or family -> look id. A type with no entry and no family keeps its own look (creatures, bosses, Iron units, bombers, flamers, medics).",
+    "looks: kind (signature-kinds.js), palette keys, impact (signature-impacts.js) and sizes as [metres, CSS-pixel floor] pairs: a size never draws smaller than its floor at any zoom.",
+    "sheets: the Codex flipbooks (codex-vfx3/, packed by tools/pack-fx-atlas.py: flight loop `<name>` at 64 px frames, impact `<name>Hit` at 128 px), all normal alpha, fps from codex-vfx3/README.md; `head` is where the ball sits in a flight frame (put on the round), `cell` the flight quad as [metres, desktop px floor, phone px floor] (square), `hard` steps frames without cross-fading (spinners), `fade`/`grow` shape the impact, `upright` keeps the hoop within that many degrees of screen-vertical (mirrored rather than turned past it); a look without its sheet in the atlas (or before the sheets load) draws the procedural cells."
+  ],
+  "palettes": {
+    "meridian": { "core": [0.86, 1, 1], "main": [0.2, 0.95, 0.9], "deep": [0.02, 0.3, 0.34], "spark": [0.62, 1, 0.95] },
+    "ashfall": { "core": [1, 0.94, 0.72], "main": [1, 0.48, 0.12], "deep": [0.24, 0.05, 0.01], "spark": [1, 0.74, 0.32], "smoke": [0.075, 0.065, 0.06] },
+    "sunward": { "core": [1, 1, 0.86], "main": [1, 0.76, 0.22], "deep": [0.36, 0.18, 0.02], "spark": [1, 0.93, 0.56] },
+    "wardens": { "core": [0.9, 0.96, 1], "main": [0.3, 0.6, 1], "deep": [0.03, 0.08, 0.36], "spark": [0.72, 0.9, 1], "accent": [0.3, 0.95, 1] },
+    "veil": { "core": [1, 0.9, 1], "main": [0.74, 0.4, 1], "deep": [0.16, 0.03, 0.3], "spark": [0.92, 0.74, 1], "void": [0.05, 0.015, 0.09] }
+  },
+  "families": {
+    "worker": "rifle", "gunner": "rifle",
+    "vanguard": "vanguard", "bulwark": "vanguard", "scrapper": "vanguard", "shade": "vanguard",
+    "ranger": "ranger", "rider": "ranger", "drone": "ranger", "stalker": "ranger", "halo": "ranger", "moth": "ranger",
+    "tank": "tank", "walker": "tank", "rampart": "tank",
+    "tower": "tower",
+    "breaker": "breaker",
+    "antitank": "antitank", "lancer": "antitank", "watcher": "antitank"
+  },
+  "factions": {
+    "meridian": { "rifle": "m-dart", "vanguard": "m-burst", "ranger": "m-photon", "gunner": "m-stream", "tank": "m-orb", "tower": "m-orb",
+      "breaker": "m-mortar", "antitank": "m-rocket", "hawk": "m-strafe" },
+    "ashfall": { "rifle": "a-tracer", "vanguard": "a-tracer3", "ranger": "a-tracer", "scrapper": "a-slugs", "tank": "a-slug", "tower": "a-slug",
+      "rampart": "a-slug-heavy", "breaker": "a-scrapball", "antitank": "a-rocket" },
+    "sunward": { "rifle": "s-bolt", "vanguard": "s-bolt3", "ranger": "s-bolt", "rider": "s-darts", "tank": "s-disc", "tower": "s-disc",
+      "breaker": "s-disc-lob", "antitank": "s-rocket", "wagon": "s-motes" },
+    "wardens": { "rifle": "w-zap", "vanguard": "w-zap3", "ranger": "w-zap", "drone": "w-pulse", "tank": "w-ball", "walker": "w-ball",
+      "tower": "w-arc", "breaker": "w-ball-lob", "antitank": "w-rocket", "halo": "w-hoops" },
+    "veil": { "rifle": "v-crescent", "vanguard": "v-crescent2", "ranger": "v-crescent", "shade": "v-shade", "watcher": "v-rail", "stalker": "v-lance",
+      "tank": "v-void", "tower": "v-void", "breaker": "v-void-lob", "antitank": "v-rocket", "moth": "v-wisps" }
+  },
+  "looks": {
+    "m-dart": { "kind": "bolt", "impact": "pop", "length": [0.85, 22], "width": [0.12, 5], "head": [0.28, 8], "muzzle": [0.45, 10] },
+    "m-burst": { "kind": "bolt", "impact": "pop", "count": 3, "gap": 0.06, "jitter": 0.1, "length": [0.65, 16], "width": [0.12, 5], "head": [0.3, 8], "muzzle": [0.5, 10] },
+    "m-photon": { "kind": "bolt", "impact": "pop", "length": [1.7, 40], "width": [0.12, 5], "head": [0.36, 10], "muzzle": [0.55, 11] },
+    "m-stream": { "kind": "bolt", "impact": "pop", "count": 5, "gap": 0.028, "jitter": 0.14, "length": [0.55, 13], "width": [0.1, 4], "head": [0.24, 7], "muzzle": [0.42, 9] },
+    "m-strafe": { "kind": "strafe", "impact": "pop", "air": false, "count": 4, "walk": 3.2, "gap": 0.05, "length": [0.6, 15], "width": [0.12, 5], "head": [0.3, 8], "muzzle": [0.5, 10] },
+    "m-orb": { "kind": "orb", "style": "plasma", "arc": "shell", "impact": "shock", "body": [0.62, 15], "halo": [0.85, 20], "tail": [1.6, 34], "muzzle": [1.2, 22], "sheet": "orbCyan" },
+    "m-mortar": { "kind": "orb", "style": "plasma", "arc": "lob", "impact": "ringsplash", "body": [0.54, 13], "halo": [0.9, 21], "tail": [1, 22], "pulse": 0.22, "muzzle": [1.1, 20], "sheet": "orbCyan" },
+    "m-rocket": { "kind": "rocket", "trail": "glow", "exhaust": "ring", "headFrame": 2, "impact": "shock", "muzzle": [0.8, 15] },
+
+    "a-tracer": { "kind": "bolt", "impact": "ember", "length": [1.2, 28], "width": [0.12, 5], "head": [0.26, 7], "muzzle": [0.5, 10], "sparks": 2 },
+    "a-tracer3": { "kind": "bolt", "impact": "ember", "count": 3, "gap": 0.06, "jitter": 0.1, "length": [0.8, 18], "width": [0.12, 5], "head": [0.26, 7], "muzzle": [0.5, 10], "sparks": 1 },
+    "a-slugs": { "kind": "bolt", "impact": "ember", "count": 5, "gap": 0, "fan": 0.42, "speedSpread": 0.2, "length": [0.4, 10], "width": [0.17, 6], "head": [0.28, 8], "muzzle": [0.7, 14], "sparks": 3 },
+    "a-slug": { "kind": "orb", "style": "slug", "arc": "shell", "impact": "molten", "body": [0.48, 12], "halo": [0.85, 20], "tail": [1.1, 22], "muzzle": [1.3, 22], "sheet": "moltenSlug" },
+    "a-slug-heavy": { "kind": "orb", "style": "slug", "arc": "shell", "impact": "molten", "body": [0.56, 14], "halo": [0.95, 22], "tail": [1.3, 26], "muzzle": [1.5, 24], "sheet": "moltenSlug" },
+    "a-scrapball": { "kind": "orb", "style": "scrap", "arc": "lob", "impact": "molten", "body": [0.54, 13], "halo": [0.9, 21], "tail": [0.9, 18], "muzzle": [1.2, 20], "sheet": "moltenSlug" },
+    "a-rocket": { "kind": "rocket", "trail": "smoke", "headFrame": 1, "impact": "molten", "muzzle": [0.9, 16] },
+
+    "s-bolt": { "kind": "bolt", "impact": "sunpop", "length": [1.05, 26], "width": [0.12, 5], "head": [0.34, 10], "muzzle": [0.5, 10], "shimmer": 2 },
+    "s-bolt3": { "kind": "bolt", "impact": "sunpop", "count": 3, "gap": 0.06, "jitter": 0.1, "length": [0.7, 17], "width": [0.12, 5], "head": [0.32, 9], "muzzle": [0.5, 10], "shimmer": 1 },
+    "s-darts": { "kind": "bolt", "impact": "sunpop", "count": 2, "gap": 0.035, "side": 0.2, "length": [0.8, 19], "width": [0.12, 5], "head": [0.44, 13], "headCell": "starburst", "muzzle": [0.55, 11], "shimmer": 1 },
+    "s-disc": { "kind": "orb", "style": "disc", "arc": "shell", "impact": "starburst", "body": [0.72, 17], "halo": [1, 24], "muzzle": [1.2, 22], "sheet": "sunDisc" },
+    "s-disc-lob": { "kind": "orb", "style": "disc", "arc": "lob", "impact": "starburst", "body": [0.64, 15], "halo": [0.9, 21], "muzzle": [1.1, 20], "sheet": "sunDisc" },
+    "s-rocket": { "kind": "rocket", "trail": "sparkle", "headFrame": 0, "impact": "starburst", "muzzle": [0.8, 15] },
+    "s-motes": { "kind": "motes" },
+
+    "w-zap": { "kind": "zigzag", "impact": "zap", "length": [1.1, 28], "width": [0.44, 14], "muzzle": [0.5, 10] },
+    "w-zap3": { "kind": "zigzag", "impact": "zap", "count": 3, "gap": 0.06, "jitter": 0.1, "length": [0.85, 21], "width": [0.4, 13], "muzzle": [0.5, 10] },
+    "w-pulse": { "kind": "bolt", "impact": "zap", "count": 2, "gap": 0.07, "side": 0.22, "length": [0.5, 12], "width": [0.13, 5], "head": [0.34, 10], "crackle": true, "muzzle": [0.55, 11] },
+    "w-ball": { "kind": "orb", "style": "electric", "arc": "shell", "impact": "discharge", "chain": 2, "body": [0.64, 15], "halo": [0.85, 20], "muzzle": [1.3, 24], "sheet": "orbElectric" },
+    "w-ball-lob": { "kind": "orb", "style": "electric", "arc": "lob", "impact": "discharge", "chain": 1, "body": [0.54, 13], "halo": [0.9, 21], "muzzle": [1.1, 20], "sheet": "orbElectric" },
+    "w-arc": { "kind": "arc", "impact": "discharge", "chain": 1, "width": [0.5, 15], "muzzle": [1, 20], "sheet": "lightning" },
+    "w-rocket": { "kind": "rocket", "trail": "crackle", "headFrame": 2, "impact": "discharge", "chain": 1, "muzzle": [0.8, 15] },
+    "w-hoops": { "kind": "hoops", "impact": "zap", "count": 2, "gap": 0.05, "size": [0.5, 15], "muzzle": [0.5, 10], "sheet": "hoop" },
+
+    "v-crescent": { "kind": "crescent", "impact": "shards", "count": 1, "size": [0.5, 15], "spin": 24, "muzzle": [0.5, 10], "sheet": "crescent" },
+    "v-crescent2": { "kind": "crescent", "impact": "shards", "count": 2, "gap": 0.07, "side": 0.16, "size": [0.46, 14], "spin": 24, "muzzle": [0.5, 10], "sheet": "crescent" },
+    "v-shade": { "kind": "beam", "impact": "shards", "width": [0.2, 6], "shards": 4, "muzzle": [0.5, 10] },
+    "v-rail": { "kind": "beam", "impact": "shards", "width": [0.18, 5], "shards": 5, "floaters": 6, "muzzle": [0.6, 12] },
+    "v-lance": { "kind": "beam", "impact": "shards", "width": [0.12, 4], "shards": 4, "floaters": 5, "muzzle": [0.55, 11] },
+    "v-void": { "kind": "orb", "style": "void", "arc": "shell", "impact": "implode", "body": [0.6, 14], "halo": [0.95, 22], "tail": [0.9, 18], "muzzle": [1.2, 22], "sheet": "voidOrb" },
+    "v-void-lob": { "kind": "orb", "style": "void", "arc": "lob", "impact": "implode", "body": [0.52, 13], "halo": [0.85, 20], "tail": [0.8, 16], "muzzle": [1.1, 20], "sheet": "voidOrb" },
+    "v-rocket": { "kind": "rocket", "trail": "wisp", "headFrame": 2, "impact": "implode", "muzzle": [0.8, 15] },
+    "v-wisps": { "kind": "wisps", "impact": "shards", "count": 2, "size": [0.42, 12], "weave": 0.7, "muzzle": [0.45, 9] }
+  },
+  "sheets": {
+    "orbCyan": { "stem": "orb-plasma-cyan", "fps": 20, "head": [0.71, 0.52], "cell": [1.8, 32, 28], "fade": 0.15 },
+    "orbElectric": { "stem": "orb-electric-blue", "fps": 24, "head": [0.5, 0.5], "cell": [1.6, 32, 28], "hard": true, "impactMin": 28 },
+    "crescent": { "stem": "crescent-violet", "fps": 20, "head": [0.51, 0.5], "cell": [1.8, 34, 30], "hard": true },
+    "sunDisc": { "stem": "sun-disc-gold", "fps": 20, "head": [0.6, 0.5], "cell": [1.8, 34, 30] },
+    "moltenSlug": { "stem": "molten-slug", "fps": 20, "head": [0.77, 0.54], "cell": [2, 36, 32], "fade": 0.25 },
+    "voidOrb": { "stem": "void-orb", "fps": 18, "head": [0.71, 0.49], "cell": [1.8, 32, 28], "grow": 0.7 },
+    "hoop": { "stem": "ring-hoop-cyan", "fps": 20, "head": [0.61, 0.51], "cell": [1.8, 32, 28], "upright": 60 },
+    "lightning": { "stem": "lightning-arcs", "fps": 24, "ends": [0.145, 0.855], "height": [30, 22] },
+    "muzzleEnergy": { "stem": "muzzle-energy", "fps": 24, "attach": 0.23, "cell": [1.4, 28, 20], "goldPhone": 24, "rows": { "meridian": 0, "wardens": 1, "sunward": 2, "veil": 3 } }
+  }
+}
