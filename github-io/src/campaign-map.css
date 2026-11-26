@@ -336,9 +336,10 @@
   :root:not(.compact-ui) #campaign-map .cmap-foot > .cmap-ngplus { grid-column: 2; grid-row: 1; justify-self: start; }
   :root:not(.compact-ui) #campaign-map .cmap-foot > .cmap-chronicles { grid-column: 1 / -1; grid-row: 2; }
 }
-/* The heading stays one row with the Achievements button: the legend's "Decisions" word is read, not shown. */
+/* The heading stays one row with the Achievements button: the legend drops its "Decisions" word (the group is named
+   by aria-label for screen readers; each swatch names itself). */
 :root:not(.compact-ui) #campaign-map .cmap-head { gap: 4px 12px; }
-:root:not(.compact-ui) #campaign-map .cmap-head .cmap-legend > .cmap-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:root:not(.compact-ui) #campaign-map .cmap-head .cmap-legend > .cmap-label { display: none; }
 :root:not(.compact-ui) #campaign-map .chron-row { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 :root:not(.compact-ui) #campaign-map .chron-card { min-height: 46px; padding: 5px 8px; column-gap: 6px; }
 :root:not(.compact-ui) #campaign-map .chron-face .cast-portrait.small { --size: 28px; }

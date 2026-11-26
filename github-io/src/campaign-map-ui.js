@@ -109,7 +109,7 @@ export function campaignMapHTML({ progress, pick = 0, campaign = "main" }) {
     : `<span class="cmap-ending unseen ${id}" title="${esc(MAP_TEXT.unseen)}"><i aria-hidden="true"></i>${words(id)}</span>`)).join("");
   const given = mercyGiven(progress), asked = Object.keys(DECISIONS).length;
   const anyAhead = nodes.some((n) => decisionsAhead(progress, n.m.id).length);
-  const legend = anyChoice || anyAhead ? `<span class="cmap-legend"><span class="cmap-label">${esc(MAP_TEXT.decisions)}</span>${anyChoice ? `<span><i class="cmap-choice mercy" aria-hidden="true"></i>Merciful</span><span><i class="cmap-choice firm" aria-hidden="true"></i>Firm</span>` : ""}<span><i class="cmap-ahead" aria-hidden="true"></i>Ahead</span><span class="cmap-mercy">${given} / ${asked} merciful</span></span>` : "";
+  const legend = anyChoice || anyAhead ? `<span class="cmap-legend" role="group" aria-label="${esc(MAP_TEXT.decisions)}"><span class="cmap-label">${esc(MAP_TEXT.decisions)}</span>${anyChoice ? `<span><i class="cmap-choice mercy" aria-hidden="true"></i>Merciful</span><span><i class="cmap-choice firm" aria-hidden="true"></i>Firm</span>` : ""}<span><i class="cmap-ahead" aria-hidden="true"></i>Ahead</span><span class="cmap-mercy">${given} / ${asked} merciful</span></span>` : "";
   const count = campaign === "main" ? archiveCount(progress) : null;
   const art = `<picture class="cmap-art" aria-hidden="true"><source media="${STRIP_MEDIA}" srcset="${stripArt}" width="${MAP_ART.strip.w}" height="${MAP_ART.strip.h}"><img src="${wideArt}" alt="" width="${MAP_ART.wide.w}" height="${MAP_ART.wide.h}" decoding="async" draggable="false"></picture>`;
   return `<div class="cmap" role="group" aria-label="Campaign map" data-lit="${lit}">

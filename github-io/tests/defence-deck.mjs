@@ -183,7 +183,8 @@ await suite("defence-deck", async () => {
     assert.ok(card.seen?.length >= 1, "the type is recorded as seen");
     assert.deepEqual(await tiny(page, "#defence-card"), [], `${viewport}: card text under 11 px`);
     await shot(page, `defence-deck-card-${viewport}`);
-    await page.locator("#defence-card").click();
+    // A direct click: on a slow CI runner (about 1 frame/s) the card can close itself while a pointer click waits for it to be stable.
+    await page.evaluate(() => document.querySelector("#defence-card")?.click());
     await page.waitForFunction(() => !document.querySelector("#defence-card") || document.querySelector("#defence-card") !== document.querySelector("#defence-card"), null, { timeout: 2000 }).catch(() => {});
     assert.deepEqual(await tiny(page, "#defence-intel"), [], `${viewport}: intel text under 11 px`);
     await noSideScroll(page, `${viewport} deck`);
