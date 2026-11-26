@@ -116,6 +116,21 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
       // The rank bar sits on the left of the top bar, over the setup column (owner 2026-11-26).
       const at = await page.evaluate(() => ({ rank: document.querySelector("#top-rank").getBoundingClientRect().left, setup: document.querySelector("#campaign-setup").getBoundingClientRect().right }));
       assert.ok(at.rank < at.setup, `the rank bar is on the left (${at.rank} < ${at.setup})`);
+      // Owner 2026-11-27: on PC the footer is one row (endings | chronicles | New Game+) and the heading keeps the
+      // Achievements button on its row, so the map keeps the height. Checked on a second page with every main
+      // mission cleared (New Game+ showing), the fullest footer.
+      const full = await openPage(browser, "desktop");
+      await full.goto();
+      await full.page.evaluate(([k, v]) => { localStorage.clear(); localStorage.setItem(k, JSON.stringify(v)); }, [KEY, progressWith(MISSIONS.length, { endingsSeen: ["keystone-shared"] })]);
+      await full.page.reload(); await full.ready();
+      await full.tap('[data-mode="campaign"]'); await full.page.locator("#campaign-map .cmap").waitFor({ state: "visible" });
+      const rows = await full.page.evaluate(() => { const box = (s) => document.querySelector(`#campaign-map ${s}`)?.getBoundingClientRect(); const b = { title: box(".cmap-head strong"), ach: box(".cmap-archive-open.in-head"), endings: box(".cmap-endings"), chron: box(".cmap-chronicles"), ngp: box(".cmap-ngplus"), foot: box(".cmap-foot") };
+        return { width: innerWidth, ngp: !!b.ngp && b.ngp.width > 0, sameHead: Math.abs((b.title.top + b.title.bottom) / 2 - (b.ach.top + b.ach.bottom) / 2) < 12, chronBeside: b.chron.left > b.endings.right && Math.abs(b.chron.top - b.endings.top) < 2, ngpBeside: b.ngp ? b.ngp.left > b.chron.right && b.ngp.top < b.chron.bottom : false, foot: Math.round(b.foot.height) }; });
+      assert.ok(rows.ngp && rows.sameHead && rows.chronBeside, `PC footer: New Game+, heading row, chronicles beside the endings ${JSON.stringify(rows)}`);
+      if (rows.width >= 1400) assert.ok(rows.ngpBeside && rows.foot < 110, `PC footer is one row ${JSON.stringify(rows)}`);
+      clean(await audit(full.page, "#campaign-map"), "desktop full map");
+      assert.deepEqual(full.errors, [], "desktop full map: page errors");
+      await full.page.close();
     }
 
     // 3. Sunward: the card opens its three missions, the next one picked, with the chronicle header.

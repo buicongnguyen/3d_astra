@@ -311,13 +311,34 @@
 :root:not(.compact-ui) #briefing.campaign-view .briefing-hero .briefing-facts { grid-area: facts; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 10px; align-self: center; margin: 0; }
 :root:not(.compact-ui) #briefing.campaign-view .briefing-hero .briefing-facts .briefing-rule { min-width: 0; margin: 0; }
 /* The footer, one row: the two endings, then the four chronicle cards. */
-:root:not(.compact-ui) #campaign-map .cmap-foot { display: grid; grid-template-columns: minmax(330px, 1fr) minmax(0, 2fr); align-items: start; gap: 6px 14px; }
-:root:not(.compact-ui) #campaign-map .cmap-endings { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: 6px; }
+/* Owner 2026-11-27: one row on PC so the map keeps the height: endings | chronicles | New Game+ (when earned).
+   Each group keeps its small label on top; placed by column because New Game+ comes before the cards in the markup. */
+:root:not(.compact-ui) #campaign-map .cmap-foot { display: grid; grid-template-columns: max-content minmax(0, 1fr) auto; align-items: start; gap: 6px 14px; }
+:root:not(.compact-ui) #campaign-map .cmap-foot:not(:has(.cmap-ngplus)) { grid-template-columns: max-content minmax(0, 1fr); }
+:root:not(.compact-ui) #campaign-map .cmap-foot > .cmap-endings { grid-column: 1; grid-row: 1; }
+:root:not(.compact-ui) #campaign-map .cmap-foot > .cmap-chronicles { grid-column: 2; grid-row: 1; }
+:root:not(.compact-ui) #campaign-map .cmap-foot > .cmap-ngplus { grid-column: 3; grid-row: 1; align-self: end; }
+:root:not(.compact-ui) #campaign-map .cmap-endings { display: grid; grid-template-columns: repeat(2, minmax(0, 158px)); align-content: start; gap: 6px; }
 :root:not(.compact-ui) #campaign-map .cmap-endings > .cmap-label { grid-column: 1 / -1; margin: 0 0 1px; }
 :root:not(.compact-ui) #campaign-map .cmap-ending { min-width: 0; padding: 4px 10px; }
 :root:not(.compact-ui) #campaign-map .cmap-ending-name,
 :root:not(.compact-ui) #campaign-map .cmap-hint { white-space: normal; }
 :root:not(.compact-ui) #campaign-map .cmap-chronicles.chron-cards { flex: none; margin-left: 0; gap: 6px; }
+/* Narrower PC windows: the cards keep their width and New Game+ drops under the row. */
+@media (max-width: 1399px) {
+  :root:not(.compact-ui) #campaign-map .cmap-foot { grid-template-columns: max-content minmax(0, 1fr); }
+  :root:not(.compact-ui) #campaign-map .cmap-foot > .cmap-ngplus { grid-column: 1 / -1; grid-row: 2; }
+}
+/* Small PC windows (under 1240 px): the four cards need the full width, so they take the second line and New Game+
+   stands beside the endings. */
+@media (max-width: 1239px) {
+  :root:not(.compact-ui) #campaign-map .cmap-foot { grid-template-columns: max-content minmax(0, 1fr); }
+  :root:not(.compact-ui) #campaign-map .cmap-foot > .cmap-ngplus { grid-column: 2; grid-row: 1; justify-self: start; }
+  :root:not(.compact-ui) #campaign-map .cmap-foot > .cmap-chronicles { grid-column: 1 / -1; grid-row: 2; }
+}
+/* The heading stays one row with the Achievements button: the legend's "Decisions" word is read, not shown. */
+:root:not(.compact-ui) #campaign-map .cmap-head { gap: 4px 12px; }
+:root:not(.compact-ui) #campaign-map .cmap-head .cmap-legend > .cmap-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 :root:not(.compact-ui) #campaign-map .chron-row { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
 :root:not(.compact-ui) #campaign-map .chron-card { min-height: 46px; padding: 5px 8px; column-gap: 6px; }
 :root:not(.compact-ui) #campaign-map .chron-face .cast-portrait.small { --size: 28px; }

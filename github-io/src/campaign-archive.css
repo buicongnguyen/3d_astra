@@ -16,7 +16,7 @@
   :root.compact-ui #campaign-map .cmap-foot > :is(.cmap-archive-open, .cmap-ngplus) { grid-column: 1 / -1; }
 }
 /* Desktop footer (campaign-map.css .cmap-foot, endings | chronicles): New Game+ takes its own row under them. */
-:root:not(.compact-ui) #campaign-map .cmap-foot > .cmap-ngplus { grid-column: 1 / -1; }
+/* (PC: New Game+ ends the footer row, campaign-map.css.) */
 
 .cmap-ngplus { justify-self: start; min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid rgba(240, 193, 90, 0.7); background: rgba(240, 193, 90, 0.16); color: #f6dca0; font: 700 14px/1 var(--font-ui); cursor: pointer; }
 .cmap-ngplus:hover, .cmap-ngplus:focus-visible { background: rgba(240, 193, 90, 0.3); }
