@@ -15,7 +15,7 @@ Status: todo / doing / done (commit).
 | W2 | Buildings on high ground drawn at the right height; plateau shape analysis | Terrain 6.8, Stability 7.6 | | done (4207abc): ghost/markers on plateau tops; rounded-rect mesas = owner decision. Hills mix (claude/hills-mix): `rbox` plateaus on 6 Skirmish maps, 3 kept round; see "Hills mix notes" |
 | W3 | Voices: unit acknowledgements, announcer (base under attack, unit lost, objective), story lines; per-faction tone; EN first, VI/KO subtitles; switchable off | Voices 2.0, Audio 6.0, Faction identity | | done (claude/voices): replies, announcer, mission 1 story lines, 5 faction voices; owner listen pass open. Story voices (claude/story-voices): all 416 `say` lines of the 21 campaign and 16 Chronicle missions (scene lines included) in 43 per-mission packs (7.9 MB, largest 285 KB, only the active mission's fetched after Start), 8 cast voices, Whisper WER 0.007 mean / 0 flagged; briefings and debriefs stay on-screen (listen page .tmp/voices/listen-story.html) |
 | W4 | Animation pass: hit flinch, death falls/wrecks, kneel-to-fire for more infantry, mech heavy walk, air bank/landing | Animation 5.5, VFX 6.8, Polish | | done on claude/animation (hit flinch + hull rock, three seeded infantry falls, firing stances, heavy walk, Sovereign tripods, flyer dip/flare); not merged. Notes below. |
-| W5 | Faction identity: per-faction silhouettes and palettes, signature unit per faction, faction UI accent, faction music stinger (models via Codex briefs or agents) | Faction identity 4.5, Unit models | | todo (after W1 list); faction music themes + stingers done on claude/music (notes below) |
+| W5 | Faction identity: per-faction silhouettes and palettes, signature unit per faction, faction UI accent, faction music stinger (models via Codex briefs or agents) | Faction identity 4.5, Unit models | | doing: faction dress on the shared models done on claude/vkits (notes below); faction music themes + stingers done on claude/music |
 | W5a | Field Guide 3D view of each unit: real model, orbit/zoom, Idle / Walk / Fire, team colour, Ranger for scale; lazy chunk, disposed on close | Faction identity, Unit models, UI | | done (claude/unit-viewer) |
 | W6 | Replay value: challenges (C7.1), medal cosmetics (C7.3), achievements 13 -> 25, match history and replay viewer (B2-B3) | Replay 5.3, Content | | done on claude/replay-meta (5ec39af achievements, a6e9f1b challenges, 0edc26d cosmetics, 30494b6 history, 82fa2d1 replays); not merged. Notes below. |
 | W7 | Depth: second doctrine tier, special weapons plan, abilities for Hawk / Balloon / Glider | Balance & depth 5.0, Content 5.4 | | done on claude/depth-w7: level 3 second doctrine pair per building (Strike wing / Bastion, Dig in / Shock troops, Heavy armour / Overclock), Strafing run / Signal flare / Bomb drop, Full army relabelled "Full army sandbox"; special weapons plan still plan only; Fast/Relentless pins move (notes below); not merged |
@@ -64,6 +64,32 @@ faction music stingers, W10 Defence, W5 faction identity, internet 1v1.
 - Voices: new lines are in `src/voice-story.json` (`node tools/voices/story-lines.mjs`, 461 lines, 45 under the new `pending` list: new missions' packs story-m03b/m06d/m08b/m09b and the new lines of m02, m05, m06, m09, m10, m11). No audio generated; the integrator runs make-voices.py, then reruns story-lines.mjs to empty `pending`. Pending lines play as text.
 - Perf: no new models or assets; the fog look adds the existing cloud shade only on High (phones run Eco) for 3 minutes of m11.
 - Choices made without the owner: the four missions are optional side missions (like the earlier C6 ones); medal times follow the objective bot; the snake map layout and hiding the other plates; Hawk Wing's Standard bot loses 6 of 15 units (a real fight; Story loses 3).
+## W5 faction identity notes: faction dress (2026-11-26, branch claude/vkits, visual round V)
+- Built: `public/models/dress-<faction>.glb` for Ashfall, Sunward, Wardens and Veil (tools/blender/generate_dress.py on the
+  generate_assets/generate_air builders, so AO sees the body; deterministic: canonical BMesh order + a compactor that bakes own
+  colours into COLOR_0, int8 normals via KHR_mesh_quantization, no UVs). Fourteen shared models each, per the design language:
+  Ashfall gas-mask hoods, spiked scrap pauldrons, exhaust stacks, ram blades, rust cladding, hazard stripes; Sunward canvas hats,
+  turquoise scarves, canopies, brass domes, banners, solar fans, striped tents; Wardens ceramic domes, single lens eyes, halos,
+  insect legs, glow seams; Veil pointed hoods, long cloaks, crystal shards, spires, charcoal drapes. Meridian unchanged.
+- Runtime (src/faction-dress.js, lazy 3 KB chunk; WorldView.syncFactionDress): a match requires `dress-<id>` for each
+  non-Meridian faction in `sim.factions` (model-roster.js; missions with rosters, skirmish sides, Defence, LAN); each team's
+  templates merge the dress into their OWN team-paint meshes per rigid group (body/turret/barrel, leg parts with their shader
+  bones), own colours as RGBA vertex colour with alpha 0 (team material colour chunk patched once). No new batch; live entities
+  swap; a mirror shares one dressed geometry. The Field Guide 3D view shows team 0's dress (the chosen faction) for free.
+- Numbers (main 9fbb7c6 -> dress, real WebGL draws): two-faction phone battle Eco 78 -> 78, High 163 -> 163; Meridian mirror
+  battle-eco 76 -> 76, battle-high 166 -> 166, base-high 98 -> 98; Ashfall mirror 70 -> 70; three factions 124 -> 125 (culling of
+  a taller far model). Triangles: two-faction Eco 276,063 -> 288,797 (+4.6 %), High 615,273 -> 647,629 (+5.3 %); Defence waves
+  +5-11 % (lines raised with the numbers in render-budget.mjs). Per model at most +25 % (dress 90-1,152 triangles), heights
+  +0-4.5 %. Bytes per two-faction match: +340 KB Ashfall, +323 KB Sunward, +264 KB Wardens, +232 KB Veil (gzip 105/91/80/67 KB);
+  main bundle +3.4 KB; an all-Meridian match and the title screen fetch nothing new.
+- Merged codex/vanguard-sword (3350bb2): vanguard.glb regenerated from the merged generator is byte-identical to Codex's; dress
+  rebuilt on it. That commit's separate sword-arm group adds ~4 draws to every scene with Vanguards (not the dress).
+- Decided without the owner: a dress is additive (base geometry shared, so shapes cover rather than replace); own-colour parts take
+  the team paint's finish; role cues kept (Engineer keeps its hard hat, Medic's hat/dome/hood carries the red cross); infantry
+  depth may grow up to ~15 % (cloaks, stacks behind packs) while heights stay within 4.5 % and vehicle widths within 8 %;
+  Sunward has no glowing parts; portrait atlas not re-rendered (cells show Meridian, so the dress changes none; the Vanguard cell
+  changes with Codex's sword).
+
 ## W5 faction music notes (Audio 6.5, 2026-11-26, branch claude/music)
 - Built: `theme-<faction>` loops and `stinger-<faction>` one-shots in `public/music/` (ACE-Step 1.5 XL turbo, 63 takes, scored with music-lab/tools: loop repetition/seam, beat grid, loudness, harshness, home-chord landing). Picks: Meridian s1:2603, Ashfall s1:2602, Sunward s1:2603, Wardens s2:2601, Veil s2:2601; stingers seeds 2614/2612/2612/2612/2611. Blind listen page `music-lab/listen-factions/` (key in `music-lab/scores/factions-key.json`) for the owner to confirm or swap.
 - Sizes: faction music 2,480,699 bytes on the server (themes 453-467 kB, stingers 32-41 kB); one match downloads 492-501 kB. Loops are 18-26 bars (54-56 s) instead of 60 s so a match stays near 0.5 MB at the shared set's 64 kbps AAC.

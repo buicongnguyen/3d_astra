@@ -5,13 +5,16 @@
 import { Cache } from "three";
 import { CORE_MODEL_TYPES } from "../model-roster.js";
 import { DEFINITIONS } from "../data.js";
+import { PLAYER_FACTIONS } from "../factions.js";
 
 const FIRST = ["environment", "hq", "worker"];
+// What the Start button names while a file loads: a unit or building, the terrain, or a faction's dress (its name).
+const labelOf = (name) => name === "environment" ? "terrain" : name.startsWith("dress-") ? PLAYER_FACTIONS[name.slice(6)] || name : DEFINITIONS[name]?.name || name;
 
 // The files WorldView.loadModels asks for, in the order to fetch them.
 export function modelPlan(types = CORE_MODEL_TYPES) {
   const names = [...new Set([...FIRST, ...types])];
-  return names.map((name) => ({ name, label: name === "environment" ? "terrain" : DEFINITIONS[name]?.name || name, url: `${import.meta.env.BASE_URL}models/${name}.glb` }));
+  return names.map((name) => ({ name, label: labelOf(name), url: `${import.meta.env.BASE_URL}models/${name}.glb` }));
 }
 
 // Fetches every model with a small number of parallel streams and reports stage and percent.

@@ -72,7 +72,7 @@ export const progression = {
   attackValue(e) {
     return (e.damage || 0)*(this.players[e.team].upgrade && e.kind === 'unit' && e.type !== 'worker' ? (this.players[e.team].upgrade2 ? 1.1 * 1.08 : 1.1) : 1)*this.rankFactor(e)*this.damageDealt(e.team);
   },
-  applyDamage(t,damage,team,by = null) {
+  applyDamage(t,damage,team,by = null,hitWeapon = null) {
     if (t.hp <= 0 || !Number.isFinite(damage) || damage <= 0) return;
     if (by !== null) { t.hitBy = by; t.hitAt = this.time; }
     if (this.mission && t.team === 0 && team !== 0) damage *= difficultyRules(this).damage;
@@ -91,7 +91,7 @@ export const progression = {
     t.shield -= absorbed;
     t.hp -= damage-absorbed;
     if (t.hp > 0 && this.time >= (t.nextHitEffect || 0)) {
-      this.events.push({type:'impact',x:t.x,z:t.z,team:t.team,shield:absorbed > 0,building:t.kind==='building'||t.kind==='wall',seed:t.id});
+      this.events.push({type:'impact',...(hitWeapon ? {weapon:hitWeapon} : null),x:t.x,z:t.z,team:t.team,shield:absorbed > 0,building:t.kind==='building'||t.kind==='wall',seed:t.id});
       t.nextHitEffect = this.time + 0.2;
     }
     if (t.hp <= 0) {

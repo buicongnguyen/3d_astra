@@ -133,6 +133,7 @@ export const combat = {
           (HIT_SCALE.length ? this.hitScale(e, t, t === target) : 1),
         e.team,
         e.id,
+        t === target && e.type === "vanguard" ? "vanguard" : null, // identify the sword's contact cue only
       );
     // Faction teams remember when they last fired (self-repair and cloaks wait on it); firing drops a cloak at once.
     if (this.factionFor(e.team).trait) {
@@ -172,6 +173,7 @@ export const combat = {
       ...(SHOT_TAGS.length ? { tags: SHOT_TAGS.splice(0) } : null),
       source: e.id,
       target: target.id,
+      ...(e.type === "vanguard" ? { targetRadius: target.radius } : null), // the struck face survives a lethal hit
       x: e.x,
       z: e.z,
       tx: target.x,

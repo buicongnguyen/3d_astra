@@ -43,6 +43,14 @@ const clank = (at) => [{ k: "tone", w: "square", f0: 620, f1: 590, at, a: 0.001,
 export const BANK = {
   // Weapons: one voice per unit class.
   "shot:rifle": { level: 0.5, drive: 2, room: ROOM.slap, layers: rifle() },
+  // The blade sweeps up through the air, then rings briefly at the point of contact.
+  "shot:blade": { level: 0.39, layers: [
+    { k: "noise", f: "bp", f0: 450, f1: 2900, glide: 0.16, q: 1.1, a: 0.085, d: 0.05, dur: 0.22, g: 1 },
+    { k: "tone", f0: 180, f1: 530, glide: 0.15, fm: [1.5, 0.68], a: 0.07, d: 0.045, dur: 0.2, g: 0.35 },
+  ] },
+  "impact:blade": { level: 0.3, layers: [
+    body("bp", 2450, 920, 0.018, 0, 0.7, 2), ring(1360, 0.034, 0, 0.45), ring(2260, 0.025, 0.002, 0.19),
+  ] },
   "shot:smg": { level: 0.46, drive: 2, room: ROOM.slap, layers: burst(3, 0.072, rifle(3000, 0.9)) },
   "shot:silenced": { level: 0.3, layers: burst(2, 0.11, [body("lp", 1100, 500, 0.016, 0, 1), thump(240, 120, 0.02, 0, 0.6), crack(6000, 0, 0.2, 0.003), { k: "tone", w: "square", f0: 1800, at: 0.03, a: 0.0005, d: 0.004, dur: 0.02, g: 0.08 }]) },
   "shot:scrap": { level: 0.52, drive: 2.5, room: ROOM.slap, layers: [crack(2600, 0, 1, 0.01), body("bp", 1100, 500, 0.055, 0, 1, 0.6), thump(130, 60, 0.05, 0, 0.8), ring(1870, 0.08), ring(2650, 0.06, 0.003, 0.08), debris(5, 0.02, 0.12, [2000, 5000], 6, 0.25)] },

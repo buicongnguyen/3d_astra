@@ -36,7 +36,7 @@
     "stalker":{"height":1.4,"reach":2.5,"life":0.42,"kind":"rifle","look":"beam","color":[0.84,0.56,1,0.95],"beamLife":0.45,"beamWidth":0.12,"ring":0.9},
     "ranger":{"height":1.42,"reach":1.25,"life":0.14,"kind":"rifle","color":[1,0.9,0.6,1],"tinted":true},
     "worker":{"height":1.1,"reach":0.9,"life":0.14,"kind":"rifle","color":[1,0.9,0.6,1]},
-    "vanguard":{"height":1.4,"reach":1.2,"life":0.12,"kind":"rifle","look":"burst","color":[1,0.92,0.62,1],"tinted":true},
+    "vanguard":{"height":1.22,"reach":1.78,"life":0.2,"kind":"melee"},
     "scrapper":{"height":1.25,"reach":1.25,"life":0.1,"kind":"rifle","look":"pellets","color":[1,0.82,0.45,1]},
     "scorcher":{"height":1.25,"reach":1.85,"life":0.18,"kind":"rifle","look":"flame","color":[1,0.72,0.24,1],"hit":0},
     "emberdrake":{"height":6.3,"reach":2.6,"life":0.22,"kind":"rifle","look":"flame","color":[1,0.6,0.2,1],"hit":0},

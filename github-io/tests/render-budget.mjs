@@ -178,6 +178,15 @@ const scenarios = [
         {type:'shade', count:2, near:[-1.6, 6.6 * z]}, {type:'watcher', count:2, near:[1.8, 6.6 * z]},
         {type:team ? 'salvageyard' : 'waystation', near:[-7.5, 11.5 * z]}, {type:team ? 'pylon' : 'veilrelay', near:[1.5, 11.5 * z]}].map(s => ({...s, team}));
     })},
+  // Visual round V (faction dress, src/faction-dress.js): battle-eco's 60 units with the rival side Ashfall, its dress on
+  // every shared model (the five army kinds, its Barracks and Command core in the frame), at Eco and at High on the phone
+  // (`settings`), and an Ashfall mirror (`player`: the player's side Ashfall too; a picked colour, so the default mint does
+  // not hand the rival's coral to the player). The dress rides in the team-paint meshes,
+  // so each draws what the same scene drew before the dress (battle-high is the all-Meridian High twin).
+  {name:'two-factions-eco', map:'riverlands', enemies:1, faction:'ashfall', mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
+  {name:'two-factions-high', map:'riverlands', enemies:1, faction:'ashfall', settings:{quality:'high'}, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, triangles:720000},
+  {name:'battle-high', map:'riverlands', enemies:1, settings:{quality:'high'}, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, triangles:720000}, // shadow pass included: 679k on main
+  {name:'ashfall-mirror-eco', map:'riverlands', enemies:1, player:'ashfall', faction:'mirror', settings:{playerColor:'cyan'}, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 // CI runs the scenarios in three jobs (pages.yml `shard: i/3`, tests/lib/shard.mjs): every third scenario each.
 if (!process.env.RENDER_ONLY) scenarios.splice(0, scenarios.length, ...pickShard(scenarios));
@@ -217,6 +226,11 @@ for (const k of Object.keys(limits)) limits[k] += 2;
 // A7 phone measurements with the pooled overlays and shared rigid finish batches.
 Object.assign(limits, {'army-300-eco':105, 'battle-dock-eco':100, 'defence-heroic-eco':122, 'combined-defence-eco':94});
 for (const s of scenarios) if (s.name === 'three-rivals-eco') s.triangles = 330000; // 303,222 -> 324,494 triangles with the HUD's taller phone frame
+// Visual round V: three rival factions each wear their dress (src/faction-dress.js): 313,102 -> 336,598 triangles, same 124 -> 125 draws.
+for (const s of scenarios) if (s.name === 'three-factions-eco') s.triangles = 345000;
+// ... and the Defence waves (120 enemies, every shared type dressed), same draws: defence-wave-eco 558,261 -> 604,281, defence-river-eco
+// 599,644 -> 667,264, defence-carrier-eco 599,659 -> 635,083 triangles (main 9fbb7c6 -> dress).
+for (const s of scenarios) if (['defence-wave-eco', 'defence-river-eco', 'defence-carrier-eco'].includes(s.name)) s.triangles = 700000;
 // W10 (2026-11-26, same run): Hollow Fork 64 draws with the six kinds on half its wave (Gorge Road's defence-wave-eco 62;
 // 62 without the kinds: the rings are one draw, the tint none). Kingfisher Bridges 91 (89 without kinds): Long Crossing's
 // defence-carrier-eco is 91, Twin Bridges' defence-river-eco 78 (a Sunward wave, one bridge blown; the Warden roster's
@@ -225,6 +239,10 @@ Object.assign(limits, {'defence-fork-eco':68, 'defence-kingfisher-eco':95});
 Object.assign(limits, {'dunes-battle-eco':95, 'wild-storm-eco':95, 'wild-battle-eco':101}); // R4-P1 (2026-11-21: 91, 94, 100 draws): the Spire and a raging storm at most 4 over the twin; a tamed Wyrm adds its model's five material batches plus its leg batch
 Object.assign(limits, {'boss-drake-eco':90}); // W9: 84 draws on 2026-11-26, as boss-battle-eco (battle-eco 76) on the same build
 Object.assign(limits, {'faction-models-eco':97}); // visual round V: 97 draws with the round-3 models (main 9fbb7c6) and with the rebuilt ones, 2026-11-26
+// Visual round V (faction dress), 2026-11-26, same scenes on main 9fbb7c6 -> with the dress: two-factions-eco 78 -> 78,
+// two-factions-high 163 -> 163, battle-high 166 -> 166, ashfall-mirror-eco 70 -> 70 (battle-eco 76 -> 76). Then the Vanguard's sword arm
+// (codex/vanguard-sword, its own moving group) added about 4 draws to every scene with Vanguards: 81, 169, 174, 70. Lines: those + 3.
+Object.assign(limits, {'two-factions-eco':84, 'two-factions-high':172, 'battle-high':177, 'ashfall-mirror-eco':73});
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
@@ -233,6 +251,8 @@ try {
     page.on('pageerror', e => errors.push(e.message));
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
     // A later Defence level opens with a star on the one before it (src/defence/progress.js levelOpen).
+    // `settings` (visual round V): stored before the page loads, e.g. {quality:'high'} (a phone otherwise starts on Eco).
+    if (scenario.settings) await page.addInitScript(s => { try { const k = 'frontier-command.settings.v1'; localStorage.setItem(k, JSON.stringify({version:1, ...JSON.parse(localStorage.getItem(k) || '{}'), ...s})); } catch {} }, scenario.settings);
     if (scenario.unlockAfter) await page.addInitScript(ids => { try { localStorage.setItem('frontier-defence-v1', JSON.stringify({levels:Object.fromEntries([].concat(ids).map(id => [id, {stars:1, lives:5, difficulty:'standard'}]))})); } catch {} }, scenario.unlockAfter);
     await page.addInitScript(() => {
       const nativeRAF = window.requestAnimationFrame.bind(window);
@@ -248,6 +268,7 @@ try {
     } else {
       await page.selectOption('#scenario', scenario.map);
       await page.selectOption('#enemy-count', String(scenario.enemies));
+      if (scenario.player) await page.selectOption('#player-faction', scenario.player);
       if (scenario.faction) await page.selectOption('#enemy-faction', scenario.faction);
     }
     await page.waitForFunction(() => window.__frontier.modelsReady && !document.querySelector('#start').disabled, null, {timeout:90000});

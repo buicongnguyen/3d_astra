@@ -2,6 +2,15 @@ import balance from './balance.json' with {type:'json'};
 import GARRISONS from './defence/garrisons.json' with {type:'json'};
 // Every preview and match uses the core set, plus models for the factions taking part.
 export const CORE_MODEL_TYPES = Object.freeze(['hq','relay','barracks','foundry','tower','worker','vanguard','ranger','breaker','tank','antitank','medic','engineer']);
+// Faction dress (visual round V): every faction but Meridian wears its own parts on the shared models
+// (public/models/dress-<id>.glb, tools/blender/generate_dress.py; applied by src/faction-dress.js). A match loads
+// the dress of each faction in play, by the sim's factions (a mission's `factions` with rosters on, a skirmish's
+// sides, Defence and LAN as they set them); an all-Meridian match loads none.
+export const DRESS_FACTIONS = Object.freeze(['ashfall','sunward','wardens','veil']);
+export const DRESSED_TYPES = Object.freeze(['worker','vanguard','ranger','medic','engineer','antitank','breaker','tank','kite','hq','barracks','foundry','relay','tower']);
+export const dressName = (id) => `dress-${id}`;
+export const dressFactionsOf = (match = {}) => [...new Set(Object.values(match.factions || (match.missionDef?.rules?.rosters ? match.missionDef.factions : {}) || {}))]
+  .filter(id => DRESS_FACTIONS.includes(id)).sort();
 function declaredModels(match, factions) {
   const types = new Set(CORE_MODEL_TYPES);
   const ids = Object.values(match.factions || (match.missionDef?.rules?.rosters ? match.missionDef.factions : {}) || {});
@@ -55,7 +64,7 @@ function declaredModels(match, factions) {
 }
 // A saved or scripted flyer has a built-in airframe until its full model arrives.
 export function modelsForMatch(match = {}, factions = balance.factions || {}) {
-  return declaredModels(match, factions).filter(type => !balance.definitions[type]?.flying);
+  return [...declaredModels(match, factions).filter(type => !balance.definitions[type]?.flying), ...dressFactionsOf(match).map(dressName)];
 }
 // Stream scripted and saved flyers plus any that the active rosters can train.
 export function airModelsFor(match = {}, factions = balance.factions || {}) {

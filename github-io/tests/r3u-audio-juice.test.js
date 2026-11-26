@@ -18,7 +18,7 @@ import { WEATHER } from "../src/mission-looks.js";
 const D = balance.definitions;
 const shot = (unit, extra = {}) => ({ type: "shot", weapon: D[unit]?.shot || unit, unit, x: 0, z: 0, tx: 5, tz: 0, team: 0, ...extra });
 
-test("weapon classes: every armed unit has one, each of the ten classes fires its own sound", () => {
+test("weapon classes: every armed unit has one, each class fires its own sound", () => {
   for (const [type, d] of Object.entries(D)) {
     if (!(d.damage > 0) || (d.kind !== "unit" && type !== "tower")) continue;
     const cls = weaponClass(shot(type), type);
@@ -26,7 +26,7 @@ test("weapon classes: every armed unit has one, each of the ten classes fires it
     assert.ok(hasSound(soundFor(shot(type), type).name), `${type} sound`);
   }
   const sample = {
-    tracer: ["ranger", {}], shell: ["tank", {}], lob: ["breaker", {}], flak: ["tower", { tAir: 3.6 }], beam: ["watcher", {}],
+    melee: ["vanguard", {}], tracer: ["ranger", {}], shell: ["tank", {}], lob: ["breaker", {}], flak: ["tower", { tAir: 3.6 }], beam: ["watcher", {}],
     flamer: ["scorcher", {}], missile: ["antitank", {}], bomb: ["glider", {}], strafe: ["hawk", {}],
   };
   const names = new Set();
@@ -39,7 +39,7 @@ test("weapon classes: every armed unit has one, each of the ten classes fires it
   const heal = { type: "support", weapon: "medic", x: 0, z: 0, tx: 2, tz: 0, team: 0 };
   assert.equal(weaponClass(heal), "heal"); assert.equal(soundFor(heal).name, "shot:heal");
   names.add(soundFor(heal).name);
-  assert.equal(names.size, 10, `ten distinct firing sounds: ${[...names].join(", ")}`);
+  assert.equal(names.size, WEAPON_CLASSES.length, `distinct firing sounds: ${[...names].join(", ")}`);
   // A ground-to-air missile and the balloon's fire bomb get their own voices; a hawk at a flyer keeps its pods.
   assert.equal(soundFor(shot("antitank", { tAir: 3.6 }), "antitank").name, "shot:sam");
   assert.equal(soundFor(shot("hawk", { tAir: 3.6, sAir: 3.6 }), "hawk").name, "shot:pod");
@@ -47,6 +47,10 @@ test("weapon classes: every armed unit has one, each of the ten classes fires it
 });
 
 test("impacts layer by size; whistles end as the round lands; stingers exist and render", () => {
+  assert.equal(soundFor(shot("vanguard")).name, "shot:blade");
+  assert.equal(soundFor({ type: "shot" }).name, "shot:smg");
+  assert.ok(BANK["impact:blade"]);
+  assert.deepEqual(impactLayer(shot("vanguard")), { name: "impact:blade", size: "small", delay: style.weapons.vanguard.life });
   assert.equal(impactLayer(shot("ranger"), "ranger").name, "impact:small");
   assert.equal(impactLayer(shot("antitank"), "antitank").name, "impact:medium");
   assert.equal(impactLayer(shot("tank"), "tank").name, "impact:heavy");
