@@ -58,7 +58,9 @@ void main() {
 // One record shape for every sprite (pooled).
 function newRecord() {
   return { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, age: 0, life: 1, s0: 1, s1: 1, rot: 0, spin: 0, r: 1, g: 1, b: 1, a: 1, def: null, start: 0, count: 1, fps: 12, loop: false,
-    mode: BILLBOARD, ax: 1, ay: 0, az: 0, anchor: null, decal: false, calm: false, fade: 0.05, drag: 0, sx: 1, sy: 1, tiles: 0, scroll: 0, scrollSpeed: 0, once: false };
+    mode: BILLBOARD, ax: 1, ay: 0, az: 0, anchor: null, decal: false, calm: false, fade: 0.05, drag: 0, sx: 1, sy: 1, tiles: 0, scroll: 0, scrollSpeed: 0, once: false,
+    owner: 0, keep: false }; // owner: the token of a signature round that moves this sprite each frame (src/fx-kinds/signature-kinds.js),
+    // 0 when reused; keep: a round in flight the effects' particle cap lets complete its path (src/fx.js trimParticles)
 }
 
 class Batch {
@@ -95,6 +97,8 @@ export class FxSprites {
   get budget() { return this.view.lowPower ? 0.55 : 1; }
   // Loads the atlas for this quality tier (a phone or Eco gets the 256 px sheets).
   start() {
+    // V4: a battle is starting: the signature shots' cells go into the procedural atlas now (src/fx.js paintSignature).
+    this.fx.paintSignature?.();
     // ?sprites=0 keeps the procedural effects (the before/after strips and A/B draw counts use it).
     try { if (new URLSearchParams(location.search).get("sprites") === "0") { this.failed = true; return null; } } catch { /* no location */ }
     const phone = this.phone, tier = phone ? "phone" : "full";
@@ -135,7 +139,7 @@ export class FxSprites {
     batch.items.push(p);
     p.x = x; p.y = lifted ? y : y + this.fx.ground(x, z); p.z = z; p.vx = p.vy = p.vz = 0; p.age = 0; p.life = def.loop ? 1 : def.frames / Math.max(1, def.fps);
     p.s0 = p.s1 = size; p.rot = 0; p.spin = 0; p.r = p.g = p.b = p.a = 1; p.def = def; p.start = 0; p.count = def.frames; p.fps = def.fps; p.loop = def.loop;
-    p.priorityHit = false; p.snap = false; p.splash = false; p.hotCore = false; p.mode = BILLBOARD; p.ax = 1; p.ay = 0; p.az = 0; p.sx = p.sy = 1; p.tiles = 0; p.scroll = 0; p.scrollSpeed = 0; p.once = false; p.anchor = anchor; p.decal = false; p.calm = !this.fx.motion; p.fade = 0.06; p.drag = 0;
+    p.priorityHit = false; p.snap = false; p.splash = false; p.hotCore = false; p.mode = BILLBOARD; p.ax = 1; p.ay = 0; p.az = 0; p.sx = p.sy = 1; p.tiles = 0; p.scroll = 0; p.scrollSpeed = 0; p.once = false; p.anchor = anchor; p.decal = false; p.calm = !this.fx.motion; p.fade = 0.06; p.drag = 0; p.owner = 0; p.keep = false;
     if (p.calm) p.fps *= 0.6;
     this.stats.spawned++;
     return p;

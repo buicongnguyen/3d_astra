@@ -12,7 +12,7 @@
   "rules": [
     {
       "name": "docs and notes (nothing to run)",
-      "files": ["**/*.md", "../*.md", "../docs/**", "../skills/**", "../music-lab/**", "../LICENSE", "docs/**", "public/prompt/**", "tools/blender/**", "tools/*.py", "tools/voices/**", "tools/{look-shots,kit-shots,fx-strips,review-wyrms,perf-ab,perf-phone,vfx-phone-bench,first-visit,phone-hud-audit,render-audio,port-boss-model,faction-bench,faction-matrix,skirmish-bench,high-ground-bench,plateau-area,wild-bench,first-contact,baseline-diff,defence-coverage}.mjs", "tools/boss-parts/**"],
+      "files": ["**/*.md", "../*.md", "../docs/**", "../skills/**", "../music-lab/**", "../LICENSE", "docs/**", "public/prompt/**", "tools/blender/**", "tools/*.py", "tools/voices/**", "tools/{look-shots,kit-shots,fx-strips,signature-fight,signature-sheet,signature-ab,review-wyrms,perf-ab,perf-phone,vfx-phone-bench,first-visit,phone-hud-audit,render-audio,port-boss-model,faction-bench,faction-matrix,skirmish-bench,high-ground-bench,plateau-area,wild-bench,first-contact,baseline-diff,defence-coverage}.mjs", "tools/boss-parts/**"],
       "suites": [],
       "checks": []
     },

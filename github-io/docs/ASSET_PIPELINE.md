@@ -156,5 +156,34 @@ VFX sprite sheets: Codex/OpenAI, owner-commissioned.
 VFX2 heavy-read sheets (tracer-streak, beam-line strips and caps, heal-beam, missile-burst, fireball variants, flame-jet-bright, walker-stomp, projectile-heads): Codex/OpenAI, owner-commissioned.
 
 - Sources: `3d_astra/codex-vfx/` (flak, beam-impact, muzzle-flash, scorch-decals, smoke-trail) and `3d_astra/codex-vfx2/` (everything else); their READMEs give frame order, FPS, loops, attachment points and blend modes (VFX2 is normal alpha, additive only for the old muzzle and beam-impact).
-- Packed by `python tools/pack-fx-atlas.py <codex-vfx> <codex-vfx2>` into ONE atlas per tier (WebP, straight alpha): `public/fx/fx-atlas.webp` (2048x1984, 529 KB) and `public/fx/fx-atlas-phone.webp` (1024x992, 278 KB), plus `src/fx-atlas-layout.json` (frame rectangles, shared by both tiers; every sheet's name, columns and frame count).
+- Packed by `python tools/pack-fx-atlas.py <codex-vfx> <codex-vfx2> <codex-vfx3>` into ONE atlas per tier (WebP, straight alpha, skyline-packed on a 64 px grid since V4): `public/fx/fx-atlas.webp` (2048x2368, 1029 KB; 19.4 MB of texture, under the 20 MB gate in `tests/fx-sprites.test.js`) and `public/fx/fx-atlas-phone.webp` (1024x1184, 452 KB, 4.8 MB), plus `src/fx-atlas-layout.json` (frame rectangles, shared by both tiers; every sheet's name, columns and frame count). Before V4: 2048x1984 / 452 KB and 1024x992 / 238 KB. `--out <dir> --layout <json>` packs a trial elsewhere.
 - Runtime: `src/fx-sprites.js` (two pooled instanced batches, normal and additive: +2 draws; per-instance rect, frame pair, stretch and strip repeat), recipes in `src/fx-kinds/sprite-fx.js`, data and frame maths in `src/fx-sprites-data.js`. Loaded when a battle starts (`match-flow.js` restart), never on the title. The phone/Eco tier loads the 256 px atlas (4.1 MB of GPU memory; desktop 16.3 MB, no mipmaps). The service worker keeps `fx/*.webp` on first fetch. `?sprites=0` keeps the procedural effects. Regenerate strips with `tools/fx-strips.mjs` and `tools/fx-strip-montage.py`.
+
+### Signature shot sheets (V4, codex-vfx3)
+
+Codex/OpenAI, owner-commissioned (2026-11-26): nine painted flipbooks for the faction signature shots (`src/fx-kinds/signature.js`).
+Each is 512x512 RGBA, straight alpha, 4x4 cells of 128 px, plus `-phone.png` (256x256, 64 px cells, same UVs); all normal alpha;
+travel points right; frames 0-7 loop in flight, 8-15 play once on impact (codex-vfx3/README.md). The sources live untracked in
+`codex-vfx3/` at the repo root, beside `codex-vfx/` and `codex-vfx2/`.
+
+| Stem | Atlas items | Used by (look ids in `src/fx-kinds/signature-shots.json`) | FPS |
+| --- | --- | --- | ---: |
+| orb-plasma-cyan | `orbCyan` (flight, 64 px), `orbCyanHit` (impact, 128 px) | Meridian Tank, Sentinel tower, Breaker (`m-orb`, `m-mortar`): the teal comet, the flash and shock ring | 20 |
+| orb-electric-blue | `orbElectric`, `orbElectricHit` | Wardens Walker (and Tank), Breaker (`w-ball`, `w-ball-lob`): the shock ball, the branching discharge | 24 |
+| lightning-arcs | `lightning` (16 poses, 64 px) | Wardens tower arc, chain arcs, rocket crackle: one pose per arc segment, its bright ends (0.13, 0.53) and (0.87, 0.53) on the segment's ends | 24 |
+| crescent-violet | `crescent`, `crescentHit` | Veil rifles (`v-crescent`, `v-crescent2`): the turning blade, crossed slashes and crystal fragments | 20 |
+| sun-disc-gold | `sunDisc`, `sunDiscHit` | Sunward Tank, tower, Breaker (`s-disc`, `s-disc-lob`): the spinning disc, the gold starburst | 20 |
+| molten-slug | `moltenSlug`, `moltenSlugHit` | Ashfall Tank, tower, Rampart, Breaker (`a-slug`, `a-slug-heavy`, `a-scrapball`): the slug, the molten splash and embers | 20 |
+| void-orb | `voidOrb`, `voidOrbHit` | Veil Tank, tower, Breaker (`v-void`, `v-void-lob`): the dark core with its violet rim, the inward spiral | 18 |
+| ring-hoop-cyan | `hoop`, `hoopHit` | Wardens Halo (`w-hoops`): the elliptical hoop, its radial burst | 20 |
+| muzzle-energy | `muzzleEnergy` (64 px) | every non-Ashfall muzzle: one row per faction (cyan Meridian 0-3, electric blue Wardens 4-7, gold Sunward 8-11, violet Veil 12-15), attached at (0.23, 0.50), opening along the shot | 24 |
+
+- Split on purpose: a round in flight draws at about 30-50 CSS px, so the flight loops take 64 px frames (32 px on the phone
+  tier) and only the impacts keep the painted 128 px; with lightning and muzzle-energy at 64 px the nine sheets add 1.28 Mpx and
+  the desktop atlas stays under 20 MB without a second texture (which would cost a draw).
+- The packer bleeds each cell's edge colours 3 texels into its transparent gutters (the sources keep black RGB under alpha 0,
+  which bilinear filtering would turn into dark halos; the sprite atlas has no mipmaps, so a few texels are enough).
+- Placement data (where the painted head sits in a flight frame, its share of the cell, the muzzle attach point, the arc ends)
+  is the `sheets` block of `src/fx-kinds/signature-shots.json`. A look whose sheet is not in the layout (or before the atlas
+  loads, or with `?sprites=0`) draws its procedural cells (`src/fx-kinds/signature-cells.js`, the second row of the procedural
+  atlas in `src/fx.js`): dropping new sheets into `codex-vfx3/` and re-running the packer needs no code change.

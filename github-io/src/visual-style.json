@@ -24,7 +24,7 @@
     "volcano": {"sun":2.8,"ambient":1.45,"exposure":1.02,"time":"ember afternoon"},
     "archipelago": {"sun":2.8,"ambient":1.7,"exposure":1.0,"time":"lagoon noon"}
   },
-  "tints": {"veil":[0.55,1,0.7,1],"ashfall":[1,0.5,0.18,1],"wardens":[0.5,0.78,1,1],"sunward":[0.95,0.8,0.55,1]},
+  "tints": {"veil":[0.78,0.5,1,1],"ashfall":[1,0.5,0.18,1],"wardens":[0.5,0.78,1,1],"sunward":[0.95,0.8,0.55,1]},
   "weapons": {
     "rifle":{"height":1.42,"reach":1.25,"life":0.14,"kind":"rifle","color":[1,0.9,0.6,1],"tinted":true},
     "tank":{"height":1.7,"reach":2.85,"life":0.32,"kind":"cannon","color":[1,0.78,0.4,1],"tinted":true},
