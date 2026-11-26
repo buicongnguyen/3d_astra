@@ -1,4 +1,4 @@
-// Vanguard: a 3-round burst, each round a short tracer with its own muzzle flick.
+// Bulwark: a 3-round burst, each round a short tracer with its own muzzle flick.
 import { flare, tracer, onLand, sparks } from "./common.js";
 import { spriteFlameFlick } from "./sprite-fx.js";
 

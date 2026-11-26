@@ -118,7 +118,7 @@ test("every armed unit has a weapon voice; classes sound different; heavy rounds
     assert.equal(s.group, "weapon");
     voices.add(s.name);
   }
-  for (const v of ["rifle", "smg", "rocket", "tank", "artillery", "tower", "flame", "scrap", "silenced", "rail", "drone", "walker"]) assert.ok(voices.has(`shot:${v}`), v);
+  for (const v of ["rifle", "blade", "rocket", "tank", "artillery", "tower", "flame", "scrap", "silenced", "rail", "drone", "walker"]) assert.ok(voices.has(`shot:${v}`), v);
   assert.equal(weaponVoice("ranger", "drone"), "drone"); assert.equal(weaponVoice("ranger", "rider"), "rifle"); assert.equal(weaponVoice("tank", null), "tank"); assert.equal(weaponVoice("nope", null), "smg");
   // The blast lands when the round does (visual-style.json `life` is the flight time).
   for (const [voice, weapon] of [["tank", "tank"], ["artillery", "breaker"], ["rocket", "antitank"], ["tower", "tower"]]) {
