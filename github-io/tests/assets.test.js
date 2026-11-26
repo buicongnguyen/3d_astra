@@ -95,8 +95,9 @@ test('portrait generation preserves legacy cells and appends every approved fact
   assert.deepEqual(order.slice(42), ['ironsovereign2', 'acidhound', 'vaultsentinel', 'emberdrake']);
   assert.deepEqual(manifest.filter(a => a.roster).map(a => a.name), ['lancer', 'bulwark', 'moth', 'halo']);
   assert.deepEqual(new Set(order.slice(13, 25)), new Set(assets.map(a => a.name)));
-  // R3-F (round 3) reworked the approved faction models; they wait for the owner again.
-  for (const asset of assets) assert.ok(['approved by owner 2026-11-11', 'pending owner review (round 3)'].includes(asset.review), asset.name);
+  // R3-F (round 3) reworked the approved faction models; they wait for the owner again. Visual round V (2026-11-26)
+  // rebuilt all twelve to the shared kit's finish (tools/blender/generate_factions.py): pending the owner once more.
+  for (const asset of assets) assert.ok(['approved by owner 2026-11-11', 'pending owner review (round 3)', 'pending owner review (visual round V)'].includes(asset.review), asset.name);
   // 0.18: the four flyers are appended after the faction cells (manifest entries marked air, no faction).
   assert.deepEqual(order.slice(25, 29), ['kite', 'hawk', 'balloon', 'glider']);
   assert.deepEqual(manifest.filter(a => a.air && !a.roster).map(a => a.name), order.slice(25, 29));
@@ -167,6 +168,8 @@ test('R3-F faction paints, Window* glow contract on buildings, and no model gain
     gunner: 7, stalker: 7, workshop: 6, rampart: 7, carrier: 5, kite: 7, hawk: 6, balloon: 8, glider: 9 };
   for (const [name, n] of Object.entries(limit)) assert.ok(gltf(name).materials.length <= n, `${name}: ${gltf(name).materials.length} materials > ${n}`);
   const roundA = new Set(['worker', 'vanguard', 'ranger', 'medic', 'engineer', 'antitank']);
+  // Visual round V (2026-11-26) rebuilt the faction-unique models (generate_factions.py, same material limits as above).
+  const roundV = new Set(['scrapper', 'scorcher', 'salvageyard', 'rider', 'wagon', 'waystation', 'walker', 'pylon', 'shade', 'watcher', 'veilrelay']);
   for (const asset of manifest.filter(a => a.name in limit))
-    assert.equal(asset.review, roundA.has(asset.name) ? 'pending owner review (round A)' : 'pending owner review (round 3)', asset.name);
+    assert.equal(asset.review, roundA.has(asset.name) ? 'pending owner review (round A)' : roundV.has(asset.name) ? 'pending owner review (visual round V)' : 'pending owner review (round 3)', asset.name);
 });

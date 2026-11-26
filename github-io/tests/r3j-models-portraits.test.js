@@ -52,7 +52,7 @@ test('R3-J: the Drone wears the Wardens paint and keeps its hover, rig, budget a
   for (const part of ['Crest', 'Brow_band', 'Tower_shields', 'Shield_stripes']) assert.ok(nodes.some((n) => n.startsWith(part)), part);
   assert.equal(triangles(json), entry.triangles);
   assert.ok(entry.triangles <= entry.budget && entry.budget === 4500);
-  assert.equal(entry.review, 'pending owner review (round 3)');
+  assert.equal(entry.review, 'pending owner review (visual round V)'); // rebuilt in visual round V (2026-11-26)
   // The shell is no longer team paint: the team colour sits on the crest, band, stripes and fins.
   const shell = json.meshes[json.nodes.find((n) => n.name.startsWith('Smooth_shell')).mesh].primitives[0];
   assert.equal(json.materials[shell.material].name.replace(/\.\d+$/, ''), 'ArmorWardens');
@@ -94,6 +94,6 @@ test('R3-J: every building model carries a lit Window* (or the older Lamp*) for 
   for (const type of ['pylon', 'salvageyard', 'waystation', 'workshop']) {
     const win = gltf(type).materials.find((x) => x.name.startsWith('Window'));
     assert.ok(win && Math.max(...win.emissiveFactor) > 0, type);
-    assert.equal(manifest.find((a) => a.name === type).review, 'pending owner review (round 3)', type);
+    assert.equal(manifest.find((a) => a.name === type).review, type === 'workshop' ? 'pending owner review (round 3)' : 'pending owner review (visual round V)', type); // visual round V rebuilt the faction buildings
   }
 });
