@@ -151,7 +151,7 @@ export const CAST = {
     faction: "veil",
     personality: "Quiet, dry and loyal; he walks the dark roads so the Archivist never has to.",
     speech: "Few words, low voice, field reports. Calls Maren \"Archivist\" and counts his squad out loud.",
-    portrait: "Bust, three-quarter view. Young man in his twenties, deep brown skin, short black hair, a violet scarf pulled down to his chin. Charcoal hooded field jacket with silver piping, a small violet seer lens clipped over one ear. Calm, watchful eyes, the corner of a smile.",
+    portrait: "Bust, three-quarter view. Strong young pilot in his twenties, dark tousled hair under a violet hood, a violet scarf at his chin. Charcoal and violet Veil armour with glowing seams, a violet crescent blade in hand. Calm, watchful eyes.",
     samples: [
       "West mast in sight. They have not seen us.",
       "Every crew is out, Archivist. I counted them twice, the way you taught me.",
@@ -164,7 +164,7 @@ export const CAST = {
     faction: "wardens",
     personality: "Brisk, practical and fond of old machines; she trusts a sound bolt more than a promise.",
     speech: "Quick and plain, with workshop words. Talks to Wardens by their numbers and to people as equals.",
-    portrait: "Bust, facing front. Woman in her late twenties, light olive skin with freckles, cropped copper-red hair. Patched blue coveralls with the three-circle emblem stitched on the chest, a band of pale blue Warden lights across her forehead, a spanner over one shoulder. Grin with one eyebrow up.",
+    portrait: "Bust, facing front. Woman in her late twenties, short dark hair, a band of pale blue Warden lights across her forehead. Blue Warden armour with the three-circle emblem, a glowing blue photon lance over one shoulder. A bright, confident smile.",
     samples: [
       "Two towers and a squad hold the line. Build early.",
       "Four hundred years of orders, and the first thing they chose was to guard.",
