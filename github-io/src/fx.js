@@ -591,11 +591,37 @@ export class Effects {
     const to = { ...land, y: land.y + ground(tx, tz), lifted: true };
     return { style, nx, nz, from, to, land };
   }
+  // Melee has no projectile. Put a brief glint on the struck face at blade contact.
+  // At a fog boundary use the visible target's centre, so the glint cannot give away the attacker's direction.
+  swordContact(e, sim, style, showDirection) {
+    const target = sim.get?.(e.target), targetAt = { x: e.tx, z: e.tz };
+    if (!sim.isVisible(targetAt) || (target && !sim.isVisible(target))) return;
+    const radius = target?.radius ?? e.targetRadius ?? 0.65;
+    const sourceAt = { x: e.x, z: e.z };
+    const sourceWasVisible = showDirection && sim.isVisible(sim.get?.(e.source) ?? sourceAt);
+    this.timeline.push({ at: this.time + style.life, run: () => {
+      // A moving victim may have crossed a cell or cloaked during the wind-up.
+      const live = sim.get?.(e.target);
+      const point = live && Number.isFinite(live.x) && Number.isFinite(live.z) ? live : targetAt;
+      if (!sim.isVisible(point)) return;
+      const dx = point.x - e.x, dz = point.z - e.z, distance = Math.hypot(dx, dz);
+      const showFace = sourceWasVisible && sim.isVisible(sim.get?.(e.source) ?? sourceAt);
+      const inset = showFace && distance ? Math.min(radius, distance * 0.8) / distance : 0;
+      const at = { x: point.x - dx * inset, z: point.z - dz * inset, y: style.height };
+      if (!sim.isVisible(at)) return;
+      const anchor = { x: at.x, z: at.z, target: e.target, team: target?.team };
+      const moving = this.motion;
+      this.particle(this.glow, { ...at, cell: moving ? CELL.flare : CELL.glow, priorityHit: true,
+        s0: moving ? 0.8 : 0.35, s1: 0.18, life: 0.08, c0: [0.83,1,0.97,moving ? 0.95 : 0.55], c1: [0.28,0.85,0.92,0], anchor });
+      if (moving) this.sparks(at, 5, anchor, 0.48);
+    } });
+  }
   // The shooter or the target is in fog: show only the end the player can see (a muzzle
   // flash, or the hit landing), never the path, so fog still hides positions.
   shotPartial(e, sim) {
     if (e.type === "support" || !sim?.isVisible) return;
     const { style, from, land } = this.aim(e, sim), heavy = style.kind === "cannon" || style.kind === "rocket";
+    if (style.kind === "melee") return this.swordContact(e, sim, style, false);
     if (sim.isVisible({ x: e.x, z: e.z })) {
       const anchor = { x: e.x, z: e.z }, flash = heavy ? 1.4 : 0.7;
       this.particle(this.glow, { ...from, cell: CELL.flare, s0: flash, s1: flash * 1.2, life: 0.05, c0: WARM.flash, c1: [1, 0.55, 0.15, 0], anchor });
@@ -607,6 +633,7 @@ export class Effects {
   }
   shot(e, sim) {
     const { style, nx, nz, from, to, land } = this.aim(e, sim);
+    if (style.kind === "melee") return this.swordContact(e, sim, style, true);
     const dir = { x: to.x - from.x, y: to.y - from.y, z: to.z - from.z }, len = Math.hypot(dir.x, dir.y, dir.z) || 1;
     const travel = style.life, anchor = { ...e, shot: true, targetWidth: 2 * (sim?.get?.(e.target)?.radius || 0.75), direct: !groundSplashRadius(e, sim) };
     const kind = style.kind, m = this.motion;
@@ -909,6 +936,7 @@ export class Effects {
     this.dust({ x: r.x, y: 0.3, z: r.z }, 3, anchor, 1, 1);
   }
   impact(e) {
+    if (e.weapon === "vanguard") return; // its shot draws contact after the sword wind-up
     const altitude = this.frameSim?.get?.(e.seed)?.fly || 0;
     const at = { x: e.x, y: altitude + (e.building ? 2.2 : 1.1), z: e.z }, anchor = { x: e.x, z: e.z, team: e.team, target: e.seed };
     if (e.shield) {

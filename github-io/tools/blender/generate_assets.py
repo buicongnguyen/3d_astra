@@ -95,15 +95,31 @@ def infantry(a, kind):
     glow = a.part('Lights', 'TeamGlow')
     glow.box((.14, .03, .04), loc=(0, -.25, 1.7), bevel=.01, seg=1)
     right_elbow, right_wrist, left_elbow, left_wrist = GRIPS[kind]
+    sword_shoulder = (.44 * b, .01, 1.6)
+    sword_arm = a.pivot('SwordArm', sword_shoulder) if heavy else None
+    sword_elbow = a.pivot('SwordElbow', right_elbow) if heavy else None
+
+    def relative_to(point, origin):
+        return tuple(a - b for a, b in zip(point, origin))
+
     for s, _ in SIDES:
         team.box((.40 * b, .48, .25), loc=(s * .51 * b, 0, 1.72), rot=(0, s * .32, 0), bevel=.1)
         armor.box((.3 * b, .36, .1), loc=(s * .53 * b, 0, 1.57), rot=(0, s * .32, 0), bevel=.03, seg=1)
         shoulder = (s * .44 * b, .01, 1.6)
         elbow, wrist = (right_elbow, right_wrist) if s > 0 else (left_elbow, left_wrist)
-        suit.limb(shoulder, elbow, .16 * b, .18, bevel=.05, seg=1)
-        armor.limb(elbow, wrist, .19 * b, .2, bevel=.05, seg=1, taper=(.85, .85))
-        armor.box((.14, .14, .12), loc=elbow, bevel=.04, seg=1)
-        gear.box((.13, .14, .13), loc=wrist, bevel=.04, seg=1)
+        arm_suit, arm_armor, glove = suit, armor, gear
+        upper_start, upper_end = shoulder, elbow
+        if sword_arm and s > 0:
+            # Keep the pauldron on the cuirass. Each moving piece is authored in its own joint frame.
+            upper_start, upper_end = (0, 0, 0), relative_to(elbow, shoulder)
+            elbow, wrist = (0, 0, 0), relative_to(wrist, elbow)
+            arm_suit = a.part('Sword_sleeve', 'Suit', sword_arm)
+            arm_armor = a.part('Sword_vambrace', am, sword_elbow)
+            glove = a.part('Sword_glove', 'Undercarriage', sword_elbow)
+        arm_suit.limb(upper_start, upper_end, .16 * b, .18, bevel=.05, seg=1)
+        arm_armor.limb(elbow, wrist, .19 * b, .2, bevel=.05, seg=1, taper=(.85, .85))
+        arm_armor.box((.14, .14, .12), loc=elbow, bevel=.04, seg=1)
+        glove.box((.13, .14, .13), loc=wrist, bevel=.04, seg=1)
 
     helm = a.part('Helmet', helmet)
     helm.box((.46, .49, .37), loc=(0, 0, 2.02), bevel=.13, seg=2, taper=(.88, .9))
@@ -151,9 +167,16 @@ def infantry(a, kind):
         rim = [(x * 1.09, z * 1.08) for x, z in shield]
         armor.prism(rim, .06, loc=(-.6, -.37, 1.2), rot=(0, 0, .28), axis='Y', bevel=.02, seg=1)
         glow.box((.08, .03, .74), loc=(-.64, -.5, 1.2), rot=(0, 0, .28), bevel=.01, seg=1)
-        steel.box((.08, 1.05, .19), loc=(.42, -.8, 1.22), bevel=.02, taper=(1, .2), shift=(0, -.02))
-        glow.box((.035, .96, .045), loc=(.42, -.82, 1.11), bevel=.008, seg=1)
-        gear.box((.14, .18, .14), loc=(.42, -.28, 1.22), bevel=.03, seg=1)
+        # Broad face up for the game camera. The luminous fuller sits proud on both faces.
+        hilt = relative_to(right_wrist, right_elbow)
+        blade = a.part('Sword_blade', 'Steel', sword_elbow)
+        blade.prism([(-.105, -.12), (.105, -.12), (.15, -.29), (.075, -1.12), (0, -1.48),
+                     (-.13, -.97)], .075, loc=hilt, axis='Z', bevel=.014, seg=1)
+        blade.box((.39, .085, .12), loc=relative_to((.42, -.435, 1.22), right_elbow), bevel=.03, seg=1)
+        a.part('Sword_fuller', 'TeamGlow', sword_elbow).prism(
+            [(-.043, -.2), (.046, -.2), (.055, -.33), (.012, -1.12), (-.014, -1.27),
+             (-.048, -.88)], .082, loc=hilt, axis='Z', bevel=0)
+        glove.box((.115, .32, .12), loc=hilt, bevel=.025, seg=1)
     elif kind == 'worker':
         # Cargo frame on the back carrying a big amber crystal.
         cargo = a.part('Cargo', 'Alloy')
@@ -549,7 +572,14 @@ def build(kind, root):
     a = Asset(kind, root, ao_distance=.7 if infantry_unit else .5 if unit else 1.6,
               grime_height=.45 if unit else .9)
     BUILDERS[kind](a)
-    return a.finish()
+    a.finish()
+    if kind == 'vanguard':
+        # The kit bakes AO in each hinge's rest-world frame. Nest the elbow afterwards,
+        # keeping that bind pose while exposing a local joint for forward extension.
+        shoulder, elbow = a.pivots['SwordArm'], a.pivots['SwordElbow']
+        elbow.location -= shoulder.location
+        elbow.parent = shoulder
+    return a
 
 
 def build_all(kinds=None, export=True, layout=True):

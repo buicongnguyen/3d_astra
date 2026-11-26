@@ -118,7 +118,7 @@ export function spriteJet(fx, from, ux, uy, uz, reach, life, anchor, delay = 0) 
   return true;
 }
 
-// A small red fire tongue at a gun's muzzle for one round (the Vanguard): stopping short of its target, gone in 0.1 s.
+// A small red fire tongue at a gun's muzzle for one round (the Bulwark): stopping short of its target, gone in 0.1 s.
 export function spriteFlameFlick(fx, from, ux, uy, uz, anchor, delay = 0, dist = 2) {
   const sprites = fx.sprites;
   if (!sprites?.ready || !fx.motion) return false;
