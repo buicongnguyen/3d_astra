@@ -7,8 +7,10 @@ import assert from "node:assert/strict";
 import { launchBrowser, openPage, shot, suite, TIMEOUT } from "./lib/harness.mjs";
 
 const browser = await launchBrowser();
-// Breaker: barrel snap; Tank: turret; Scorcher (Ashfall) and Rider (Sunward): wheels; Hawk: air; Walker (Veil): legs.
-const DESKTOP_UNITS = ["ranger", "tank", "breaker", "scorcher", "rider", "hawk", "walker", "hq"];
+// Breaker: barrel snap; Tank: turret; Scorcher (Ashfall) and Rider (Sunward): wheels; Hawk: air; Walker (Wardens): legs.
+// Visual round V (2026-11-26) rebuilt the faction-unique models: the Supply wagon (rolling spoked wheels), the
+// Sentinel drone (hover, emitters) and the Watcher (kneeling rail rifle) are shown too.
+const DESKTOP_UNITS = ["ranger", "tank", "breaker", "scorcher", "rider", "hawk", "walker", "wagon", "drone", "watcher", "hq"];
 const PHONE_UNITS = ["ranger", "scorcher", "hawk"];
 const VIEWS = [
   { name: "desktop", size: "desktop", units: DESKTOP_UNITS, full: true },
@@ -114,16 +116,19 @@ await suite("unit-viewer", async () => {
         return s.mode === "walk" && (s.motion ? Math.abs(s.motion[0] - b.motion[0]) > 0.3 && (s.motion[1] > 0.05 || s.motion[0] > 0.3) : s.stride > b.stride + 0.3);
       }, before, { timeout: TIMEOUT.step });
       if (type === "hawk") assert.ok((await viewerState(page)).lift > 1 && s.spins > 0, "the flyer hovers with turning rotors");
-      // Fire: the unit's own firing pose and at least one shot.
-      await press(page, mobile, '[data-view-motion="fire"]');
-      await page.waitForFunction((type) => {
-        const s = document.querySelector(".field-guide").viewer.state();
-        if (s.mode !== "fire" || s.shots < 1) return false;
-        if (type === "ranger") return s.motion[2] > 0.6; // kneels to fire
-        if (type === "tank") return s.turret > 0.4; // turret swings to the target
-        if (type === "breaker") return s.barrel.elevation > 0.18; // barrel lifted and run out, snapping on each shot
-        return true;
-      }, type, { timeout: TIMEOUT.step });
+      // Fire: the unit's own firing pose and at least one shot (a healer, the Supply wagon, has no Fire).
+      if (type === "wagon") assert.equal(await page.locator('[data-view-motion="fire"]').isDisabled(), true, "the Supply wagon heals: no Fire");
+      else {
+        await press(page, mobile, '[data-view-motion="fire"]');
+        await page.waitForFunction((type) => {
+          const s = document.querySelector(".field-guide").viewer.state();
+          if (s.mode !== "fire" || s.shots < 1) return false;
+          if (type === "ranger" || type === "watcher") return s.motion[2] > 0.6; // kneels to fire
+          if (type === "tank") return s.turret > 0.4; // turret swings to the target
+          if (type === "breaker") return s.barrel.elevation > 0.18; // barrel lifted and run out, snapping on each shot
+          return true;
+        }, type, { timeout: TIMEOUT.step });
+      }
       if (spec.full && type === "breaker") await shot(page, "unit-viewer-desktop-breaker-fire");
       // Team colour cycles to another colour.
       const paint = (await viewerState(page)).paint;

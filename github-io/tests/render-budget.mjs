@@ -167,6 +167,17 @@ const scenarios = [
   {name:'dunes-battle-eco', map:'dunes', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60},
   {name:'wild-storm-eco', map:'dunes', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rules:{wild:'on'}, wild:[-3,-8]},
   {name:'wild-battle-eco', map:'dunes', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true, army:60, rules:{wild:'on'}, wild:[-3,-8], spawn:[{type:'wyrm', team:0, count:1, near:[-6,10]}]},
+  // Visual round V (2026-11-26): every faction-unique model on the phone at once, both sides: the eight unique units
+  // (two of each troop, one of each vehicle) and the four faction buildings. Their rebuild may not cost a draw
+  // (tests/visual-round-v.test.js pins each model's batches), so the line is this scene on the round-3 models.
+  {name:'faction-models-eco', map:'riverlands', enemies:1, mobile:true, zoom:30, focus:[-3,0], reveal:true,
+    spawn:[0, 1].flatMap(team => {
+      const z = team ? -1 : 1;
+      return [{type:'scrapper', count:2, near:[-8, 3 * z]}, {type:'scorcher', near:[-4.8, 3 * z]}, {type:'rider', count:2, near:[-1.8, 3 * z]},
+        {type:'wagon', near:[1.6, 3 * z]}, {type:'drone', count:2, near:[-8, 6.6 * z]}, {type:'walker', near:[-4.6, 6.6 * z]},
+        {type:'shade', count:2, near:[-1.6, 6.6 * z]}, {type:'watcher', count:2, near:[1.8, 6.6 * z]},
+        {type:team ? 'salvageyard' : 'waystation', near:[-7.5, 11.5 * z]}, {type:team ? 'pylon' : 'veilrelay', near:[1.5, 11.5 * z]}].map(s => ({...s, team}));
+    })},
 ].filter(s => !process.env.RENDER_ONLY || process.env.RENDER_ONLY.split(',').includes(s.name));
 // CI runs the scenarios in three jobs (pages.yml `shard: i/3`, tests/lib/shard.mjs): every third scenario each.
 if (!process.env.RENDER_ONLY) scenarios.splice(0, scenarios.length, ...pickShard(scenarios));
@@ -213,6 +224,7 @@ for (const s of scenarios) if (s.name === 'three-rivals-eco') s.triangles = 3300
 Object.assign(limits, {'defence-fork-eco':68, 'defence-kingfisher-eco':95});
 Object.assign(limits, {'dunes-battle-eco':95, 'wild-storm-eco':95, 'wild-battle-eco':101}); // R4-P1 (2026-11-21: 91, 94, 100 draws): the Spire and a raging storm at most 4 over the twin; a tamed Wyrm adds its model's five material batches plus its leg batch
 Object.assign(limits, {'boss-drake-eco':90}); // W9: 84 draws on 2026-11-26, as boss-battle-eco (battle-eco 76) on the same build
+Object.assign(limits, {'faction-models-eco':97}); // visual round V: 97 draws with the round-3 models (main 9fbb7c6) and with the rebuilt ones, 2026-11-26
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
