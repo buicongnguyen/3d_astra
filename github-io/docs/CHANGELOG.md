@@ -19,6 +19,7 @@
 - **Fuller dressing:** meadows grow in drifts, groves line the far edges, rocks gather at plateau feet, reeds on the river banks and lake shores, basalt spires, coral in the lagoon shallows; all in the one scatter draw and never where it could hide a unit.
 - **Water edges:** foam laps along every bank, rivers run with faint streaks, banks are wet and darker, and fords are stepping stones over shallow running water with riffles. All fords and lake strips are one draw (Twin Rivers drew four).
 - View only: every golden pin unchanged; phone draws no higher.
+- A computer without a working GPU (software WebGL: SwiftShader, llvmpipe) gets the ground detail's one-layer Eco form whatever the quality setting: the full set doubled its frame time.
 
 ### Readable deaths at phone zoom
 - A unit that dies now reads at a glance on a phone: the model flashes white-hot, a ring in its side's colour opens where it fell and a fainter ring stays there for a moment; soldiers are popped off their feet, machines pop and tilt with a puff of dark smoke, a shot-down flyer bursts in the air and leaves its ring where it crashes. Losing one of your own units gives a bigger double ring and a short mark on the minimap. Follows Unit motion, combat motion and reduced motion; no extra draw calls (every sprite comes from the existing effect pools). Tests: `tests/death-cue.test.js`, `npm run test:death-cue`.

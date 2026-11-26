@@ -179,6 +179,17 @@ export function bakeFinishes(root, { compact = false } = {}) {
   }
 }
 
+
+// True for a software WebGL rasteriser (no GPU). The debug extension may be missing: then assume hardware.
+function isSoftwareRenderer(gl) {
+  try {
+    const info = gl?.getExtension("WEBGL_debug_renderer_info");
+    const name = info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl?.getParameter(gl.RENDERER);
+    return /swiftshader|llvmpipe|softpipe|software|basic render/i.test(String(name || ""));
+  } catch {
+    return false;
+  }
+}
 export class WorldView {
   constructor(
     container,
@@ -198,6 +209,11 @@ export class WorldView {
     });
     this.renderer.setPixelRatio(Math.min(devicePixelRatio, this.lowPower ? 1 : 1.6));
     this.renderer.shadowMap.enabled = !this.lowPower;
+    // A software rasteriser (SwiftShader, llvmpipe, Microsoft Basic Render: a computer without a working GPU,
+    // and CI's runners) pays for every texture read on the CPU: the ground detail's High form (up to seven layers
+    // and a second scale per pixel) doubled the frame there (100 -> 217 ms at 1280x800 under SwiftShader). Such a
+    // renderer gets the detail's Eco form (one layer), whatever the quality setting; nothing else changes.
+    this.softwareGL = isSoftwareRenderer(this.renderer.getContext());
     // three r185 replaced PCFSoftShadowMap with PCFShadowMap (it logs a deprecation and falls back).
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -505,7 +521,7 @@ export class WorldView {
   setQuality(level) {
     this.lowPower = level === "low";
     setRimTier(this.lowPower);
-    this.groundDetail?.setQuality(this.lowPower);
+    this.groundDetail?.setQuality(this.lowPower || this.softwareGL);
     this.applyReflections();
     this.createLife();
     this.createScatter();
@@ -977,7 +993,7 @@ export class WorldView {
     // V1 terrain: tiled detail layers blended by the painted surfaces (ground-detail.js); same draw, same material.
     // Its layers load when a battle starts (onBattleStart), never on the title screen.
     this.groundDetail ??= new GroundDetail();
-    this.groundDetail.setTerrain(this.terrain, painted.grid, painted.cells, { lowPower: this.lowPower, wear: wearGrid(this.terrain, 256) });
+    this.groundDetail.setTerrain(this.terrain, painted.grid, painted.cells, { lowPower: this.lowPower || this.softwareGL, wear: wearGrid(this.terrain, 256) });
     this.groundDetail.patch(ground.material);
     ground.name = "ground";
     ground.rotation.x = -Math.PI / 2;
@@ -1086,7 +1102,7 @@ export class WorldView {
     const width = Math.max(1, this.container.clientWidth),
       height = Math.max(1, this.container.clientHeight);
     // V1 terrain: the ground detail's tile size follows the tier and the screen's shape (a uniform: no recompile).
-    this.groundDetail?.setViewport(this.lowPower, width > height);
+    this.groundDetail?.setViewport(this.lowPower || this.softwareGL, width > height);
     // Portrait phones run the canvas on under the floating dock (CSS --view-cover, px). The camera
     // frames the uncovered part exactly as before (same scale, focus in its middle); the covered
     // strip just shows more map, so opening or closing a panel never resizes or jumps the view.

@@ -150,7 +150,9 @@ await suite("defence-zones", async () => {
       assert.match(await page.locator("#command-hint").textContent(), /road/);
     }
 
-    await page.evaluate(() => { window.__frontier.hold = false; });
+    // The clock stays held through the armour steps (orders apply at once; the drive is moved with step(40)):
+    // on a slow runner a running clock let the waves end the match under the debrief before the Bulwark tap.
+    await page.evaluate(() => { window.__frontier.hold = true; });
 
     // Armour: the chip opens the depot; New squad: two tanks, picked, with the squad sheet.
     await page.evaluate(() => window.__frontier.select([]));

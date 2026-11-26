@@ -11,6 +11,10 @@ try{
     await page.goto((process.env.TEST_URL||'http://127.0.0.1:4180/')+'?test=1', {waitUntil:'domcontentloaded',timeout:90000});
     await page.waitForFunction(()=>window.__frontier?.view.modelsReady,null,{timeout:90000});
     await page.locator('#start').click();
+    // The battle's lazy art (weapon sprite atlas, signature cells, the land's ground detail layers: visual round V)
+    // loads and uploads right after Start; on CI's software renderer that first upload can hold a frame for many
+    // seconds, so wait for it before the timed checks and give each screenshot a CI-sized timeout.
+    await page.evaluate(()=>{const v=window.__frontier.view;return Promise.race([Promise.all([v.fx?.sprites?.whenReady?.(),v.groundDetail?.whenReady?.()]),new Promise(r=>setTimeout(r,60000))]);});
     await page.evaluate(()=>{
       const f=window.__frontier,s=f.sim,v=f.view;s.aiEnabled=false;s.tick=()=>{};
       s.entities=s.entities.filter(e=>e.kind==='building');
@@ -67,13 +71,13 @@ try{
       assert.equal(gun.fire.calls,gun.idle.calls,'the barrel pose adds no draw call');
       assert.equal(check.hiddenRecoil,0,"recoil expires while hidden");assert.equal(check.hidden,0);assert.equal(check.count,64);assert.ok(check.paused);assert.equal(check.expired,0);assert.ok(check.independent&&check.disabled&&check.barrels>0);
     }
-    await page.screenshot({path:`test-results/visual-${baseline?'before':'after'}-weapons-${viewport.width}.png`});
+    await page.screenshot({path:`test-results/visual-${baseline?'before':'after'}-weapons-${viewport.width}.png`,timeout:120000});
     await page.evaluate(()=>{
       const f=window.__frontier,v=f.view,s=f.sim;
       for(const [i,x] of [-12,-3,6].entries())v.event({type:'death',x,z:20,team:0,heavy:i===1,building:i===2,seed:i},s);
       window.renderVisual(s,.16,f.selected,null);
     });
-    await page.screenshot({path:`test-results/visual-${baseline?'before':'after'}-destruction-${viewport.width}.png`});
+    await page.screenshot({path:`test-results/visual-${baseline?'before':'after'}-destruction-${viewport.width}.png`,timeout:120000});
     if(!baseline){
       // Battle effects pass 2026-11: a hit flashes the unit warm white through its per-instance
       // tint (no new draw call) and restores it; damaged buildings smoke, critical ones burn.
@@ -109,7 +113,7 @@ try{
       // The renders above are queued GL work; on CI's software GL they flush for longer than a
       // screenshot may wait, so let two frames present first (evaluate has no timeout).
       await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
-      await page.screenshot({path:`test-results/visual-after-damaged-buildings-${viewport.width}.png`});
+      await page.screenshot({path:`test-results/visual-after-damaged-buildings-${viewport.width}.png`,timeout:120000});
       await page.evaluate(()=>{window.restoreBuildings();const f=window.__frontier,v=f.view;v.focusOn(-6,18);v.zoom=52;v.updateCamera();});
     }
     if(!baseline){

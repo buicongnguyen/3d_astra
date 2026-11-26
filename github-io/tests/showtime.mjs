@@ -129,9 +129,13 @@ await suite("showtime: title cards, boss presence, the Keystone Roads node", asy
     // The scene had its own title beat; a boss that wakes without a scene gets the name card.
     assert.equal(await page.locator("#boss-card").count(), 0, "no second card behind the scene");
     await page.evaluate((id) => { const f = window.__frontier; f.view.event({ type: "bossWake", id, name: "Iron Vanguard" }, f.sim); }, start.id);
-    await page.locator("#boss-card").waitFor({ state: "attached", timeout: TIMEOUT.step });
-    assert.match(await page.locator("#boss-card").innerText(), /Iron Vanguard/i);
-    assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("#boss-card")).pointerEvents), "none");
+    // Read the card in one step: on a slow runner it can time out between two separate reads.
+    const bossCard = await (await page.waitForFunction(() => {
+      const c = document.querySelector("#boss-card");
+      return c && { text: c.innerText, pointerEvents: getComputedStyle(c).pointerEvents };
+    }, null, { timeout: TIMEOUT.step })).jsonValue();
+    assert.match(bossCard.text, /Iron Vanguard/i);
+    assert.equal(bossCard.pointerEvents, "none");
 
     // The fall ends the match: focus, 1.2 s slow motion, then the debrief (1.4 s or more after the beat began).
     if (viewport === "desktop") {
