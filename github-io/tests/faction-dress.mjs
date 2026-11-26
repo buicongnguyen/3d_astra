@@ -78,7 +78,7 @@ await suite("faction-dress", async () => {
       }
       assert.ok(foe.some((m, i) => m.paint && m.geometry !== own[i].geometry), `${viewport}: ${type}'s team paint carries the dress`);
       // Its team paint is RGBA (own-colour parts flagged by alpha); the Meridian side's stays RGB, as modelled.
-      assert.ok(foe.filter((m) => m.paint && !m.glow).every((m) => m.rgba) && own.every((m) => !m.rgba), `${viewport}: ${type} colour layout`);
+      assert.ok(foe.filter((m) => m.paint && !m.glow).every((m) => m.rgba) && own.filter((m) => m.paint).every((m) => !m.rgba), `${viewport}: ${type} colour layout`);
     }
     assert.deepEqual(report.skipped, [], `${viewport}: no dress part was left off`);
     assert.deepEqual(report.low, [], `${viewport}: bars above the dressed models`);

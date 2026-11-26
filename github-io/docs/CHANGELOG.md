@@ -2,6 +2,8 @@
 
 ## Unreleased: Round A.2
 
+### Every faction looks like itself (W5, visual round V)
+- Ashfall, Sunward, the Wardens and the Veil now wear their own parts on the shared units and buildings (Harvester, Vanguard, Ranger, Medic, Engineer, Anti-tank, Breaker, Tank, Kite, Command core, Barracks, Foundry, Supply relay, Sentinel tower): gas-mask hoods, spiked pauldrons, exhaust stacks, ram blades and rust cladding; wide canvas hats, canopies, brass domes, banners and solar fans; ceramic domes, single lens eyes, halos and insect legs; pointed hoods, long cloaks, crystal shards, spires and charcoal drapes. They read by shape at phone zoom even in another colour; Meridian is unchanged. Only the factions in a match download their dress (0.23-0.34 MB each), and a battle draws no more than before. Tests: `tests/faction-dress.test.js`, `npm run test:faction-dress`, four render-budget scenes.
 ### Readable deaths at phone zoom
 - A unit that dies now reads at a glance on a phone: the model flashes white-hot, a ring in its side's colour opens where it fell and a fainter ring stays there for a moment; soldiers are popped off their feet, machines pop and tilt with a puff of dark smoke, a shot-down flyer bursts in the air and leaves its ring where it crashes. Losing one of your own units gives a bigger double ring and a short mark on the minimap. Follows Unit motion, combat motion and reduced motion; no extra draw calls (every sprite comes from the existing effect pools). Tests: `tests/death-cue.test.js`, `npm run test:death-cue`.
 ### Home-screen app and iPhone readiness (Platform reach)

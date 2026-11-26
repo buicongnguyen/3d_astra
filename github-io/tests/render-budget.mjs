@@ -217,6 +217,9 @@ Object.assign(limits, {'army-300-eco':105, 'battle-dock-eco':100, 'defence-heroi
 for (const s of scenarios) if (s.name === 'three-rivals-eco') s.triangles = 330000; // 303,222 -> 324,494 triangles with the HUD's taller phone frame
 // Visual round V: three rival factions each wear their dress (src/faction-dress.js): 313,102 -> 336,598 triangles, same 124 -> 125 draws.
 for (const s of scenarios) if (s.name === 'three-factions-eco') s.triangles = 345000;
+// ... and the Defence waves (120 enemies, every shared type dressed), same draws: defence-wave-eco 558,261 -> 604,281, defence-river-eco
+// 599,644 -> 667,264, defence-carrier-eco 599,659 -> 635,083 triangles (main 9fbb7c6 -> dress).
+for (const s of scenarios) if (['defence-wave-eco', 'defence-river-eco', 'defence-carrier-eco'].includes(s.name)) s.triangles = 700000;
 // W10 (2026-11-26, same run): Hollow Fork 64 draws with the six kinds on half its wave (Gorge Road's defence-wave-eco 62;
 // 62 without the kinds: the rings are one draw, the tint none). Kingfisher Bridges 91 (89 without kinds): Long Crossing's
 // defence-carrier-eco is 91, Twin Bridges' defence-river-eco 78 (a Sunward wave, one bridge blown; the Warden roster's
@@ -225,8 +228,9 @@ Object.assign(limits, {'defence-fork-eco':68, 'defence-kingfisher-eco':95});
 Object.assign(limits, {'dunes-battle-eco':95, 'wild-storm-eco':95, 'wild-battle-eco':101}); // R4-P1 (2026-11-21: 91, 94, 100 draws): the Spire and a raging storm at most 4 over the twin; a tamed Wyrm adds its model's five material batches plus its leg batch
 Object.assign(limits, {'boss-drake-eco':90}); // W9: 84 draws on 2026-11-26, as boss-battle-eco (battle-eco 76) on the same build
 // Visual round V (faction dress), 2026-11-26, same scenes on main 9fbb7c6 -> with the dress: two-factions-eco 78 -> 78,
-// two-factions-high 163 -> 163, battle-high 166 -> 166, ashfall-mirror-eco 70 -> 70 (battle-eco 76 -> 76). Lines: the base + 5 % at most.
-Object.assign(limits, {'two-factions-eco':81, 'two-factions-high':170, 'battle-high':170, 'ashfall-mirror-eco':73});
+// two-factions-high 163 -> 163, battle-high 166 -> 166, ashfall-mirror-eco 70 -> 70 (battle-eco 76 -> 76). Then the Vanguard's sword arm
+// (codex/vanguard-sword, its own moving group) added about 4 draws to every scene with Vanguards: 81, 169, 174, 70. Lines: those + 3.
+Object.assign(limits, {'two-factions-eco':84, 'two-factions-high':172, 'battle-high':177, 'ashfall-mirror-eco':73});
 try {
   for (const scenario of scenarios) {
     const page = await browser.newPage({viewport:scenario.mobile ? {width:390,height:844} : {width:1280,height:800},
