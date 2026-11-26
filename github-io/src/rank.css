@@ -161,7 +161,7 @@
 
 /* PC menu: rank in the top bar; the panel below drops its rank card and decorative header. */
 .top-rank { display: none; }
-:root.in-briefing:not(.compact-ui) .topbar .top-rank { display: flex; align-items: center; gap: 8px; width: 320px; min-height: 32px; max-height: 36px; margin: 0 14px 0 auto; padding: 2px 10px; overflow: hidden; }
+:root.in-briefing:not(.compact-ui) .topbar .top-rank { display: flex; align-items: center; gap: 8px; width: 320px; min-height: 32px; max-height: 36px; margin: 0 auto 0 14px; padding: 2px 10px; overflow: hidden; }
 :root.in-briefing:not(.compact-ui) .top-rank .rank-emblem { flex: 0 0 26px; width: 26px; height: 26px; }
 :root.in-briefing:not(.compact-ui) .top-rank * { font-size: max(11px, 0.72rem); line-height: 1.15; }
 :root.in-briefing:not(.compact-ui) #briefing .briefing-setup > #rank-chip,

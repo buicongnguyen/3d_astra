@@ -54,6 +54,15 @@ function matchTitle(e) {
 const JUMPS = [["records-challenges", "Challenges", "objectives"], ["records-history", "History", "queue"], ["records-ach", "Achievements", "star"], ["records-rewards", "Rewards", "flag"]];
 const GROUP_LABELS = { campaign: "Campaign", skirmish: "Skirmish", defence: "Defence", kite: "Kite scouts", wild: "Wild frontier" };
 
+// The achievement cards by group, each with its progress bar (the Records screen and the campaign archive window).
+export function achievementGroupsHTML(list) {
+  const card = (a) => `<li class="meta-ach ${a.done ? "done" : "todo"}" data-ach="${a.id}">${icon(achIcon(a))}<span class="meta-ach-text"><strong>${esc(a.title)}</strong><small>${esc(a.how)}</small></span>${a.done ? `<b class="meta-ach-done">${icon("check")}</b>` : `<span class="meta-ach-progress"><span class="meta-bar" aria-hidden="true"><i style="width:${Math.round((a.have / a.need) * 100)}%"></i></span><small translate="no">${a.have} / ${a.need}</small></span>`}</li>`;
+  return ["campaign", "skirmish", "defence", "kite", "wild"].map((g) => {
+    const items = list.filter((a) => a.group === g);
+    return items.length ? `<h4 class="meta-group">${GROUP_LABELS[g]}</h4><ul class="meta-ach-list">${items.map(card).join("")}</ul>` : "";
+  }).join("");
+}
+
 export function setupMeta(S, A) {
   const Z = S.screen;
   let record = loadRecord();
@@ -243,12 +252,7 @@ export function setupMeta(S, A) {
   let dialog = null, previous = null;
   function achievementsHTML() {
     const list = all(), done = list.filter((a) => a.done).length;
-    const card = (a) => `<li class="meta-ach ${a.done ? "done" : "todo"}" data-ach="${a.id}">${icon(achIcon(a))}<span class="meta-ach-text"><strong>${esc(a.title)}</strong><small>${esc(a.how)}</small></span>${a.done ? `<b class="meta-ach-done">${icon("check")}</b>` : `<span class="meta-ach-progress"><span class="meta-bar" aria-hidden="true"><i style="width:${Math.round((a.have / a.need) * 100)}%"></i></span><small translate="no">${a.have} / ${a.need}</small></span>`}</li>`;
-    const groups = ["campaign", "skirmish", "defence", "kite", "wild"].map((g) => {
-      const items = list.filter((a) => a.group === g);
-      return items.length ? `<h4 class="meta-group">${GROUP_LABELS[g]}</h4><ul class="meta-ach-list">${items.map(card).join("")}</ul>` : "";
-    }).join("");
-    return `<section class="meta-section" aria-labelledby="records-ach"><h3 id="records-ach">${icon("star")}<span>Achievements</span> <b translate="no">${done} / ${list.length}</b></h3>${groups}</section>`;
+    return `<section class="meta-section" aria-labelledby="records-ach"><h3 id="records-ach">${icon("star")}<span>Achievements</span> <b translate="no">${done} / ${list.length}</b></h3>${achievementGroupsHTML(list)}</section>`;
   }
   function recordsChallengesHTML() {
     const list = dailyChallenges(challenges.day), done = (c) => challenges.done.includes(c.id);

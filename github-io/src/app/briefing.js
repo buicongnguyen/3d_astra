@@ -11,6 +11,7 @@ import CAMPAIGN_MAPS from "../campaign-maps.json" with { type: "json" };
 import { icon } from "../icons.js";
 import { medalBadge, clock as missionClock } from "../mission-ui.js";
 import { campaignMapHTML, missionChoices } from "../campaign-map-ui.js";
+import { openCampaignArchive } from "../campaign-archive-ui.js";
 import { readSave } from "../savegame.js";
 import { teamColors } from "../faction-colors.js";
 import { DEFENCE_LEVELS, defenceLevel } from "../defence/levels.js";
@@ -276,6 +277,9 @@ export function setupBriefing(S, A) {
     // chronicle card opens that chronicle.
     $("campaign-map").onclick = (event) => {
       if (Z.started) return;
+      // The Achievements button: the campaign archive window (campaign-archive-ui.js), one tab each.
+      const archive = event.target.closest("[data-archive-open]");
+      if (archive) { openCampaignArchive({ progress: S.campaign, Z, opener: archive }); return; }
       const plus = event.target.closest("[data-ngplus]");
       if (plus) { if (window.confirm("Start New Game+? Clears, decisions and medals reset. Veterans, achievements and endings seen stay.")) { S.campaign = startNewGamePlus(S.campaign); saveProgress(S.campaign); S.stagePick = 0; renderCampaign(); previewBattle(); } return; }
       const ending = event.target.closest("[data-ending]");

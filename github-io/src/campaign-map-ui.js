@@ -25,7 +25,7 @@ import { chronicleCardsHTML } from "./chronicles-ui.js";
 import { achievementsFor } from "./story/achievements.js";
 import { loadRecord } from "./meta/record.js";
 import { loadDefence } from "./defence/progress.js";
-import { DEFINITIONS as DEFS } from "./data.js";
+import { icon } from "./icons.js";
 import "./campaign-archive.css";
 
 const esc = (text) => String(text ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -58,26 +58,20 @@ export function routeLegs(points) {
 // W9: the relays snake over four rows (story/campaign-map.js); Act 2 and Act 1 plates sit in the gaps left of the rows.
 const ACT_AT = { 3: 1.6, 2: 46, 1: 68.5 };
 
-// The archive under the map (plan C5.3 and C7): achievements, the veteran squad and the commanders met, in one
-// block with no sub-menus; New Game+ is a plain button once every main mission is cleared.
-const COMMANDERS = [["m04-sol", "Captain Sol"], ["m07-hale", "Commander Hale"], ["m10-maren", "Ilse Maren"]];
-export function archiveHTML(progress) {
-  // W6: all 25, the Skirmish, Defence, Kite and taming ones from the service record (src/meta/record.js).
-  const ach = achievementsFor(progress, { record: loadRecord(), defence: loadDefence() }), done = ach.filter((a) => a.done).length;
-  const chips = ach.map((a) => `<span class="cmap-chip ${a.done ? "done" : "todo"}" title="${esc(a.how)}${a.done ? "" : ` · ${a.have}/${a.need}`}"><i aria-hidden="true">${a.done ? "✓" : "○"}</i>${esc(a.title)}</span>`).join("");
-  const squad = (progress?.squad || []).map((m) => `<span class="cmap-vet"><b aria-hidden="true">${"★".repeat(Math.min(3, m.rank))}</b> ${esc(m.name)} <em>${esc(DEFS[m.type]?.name || m.type)}</em></span>`).join("");
-  const met = COMMANDERS.map(([id, name]) => {
-    const answer = progress?.decisions?.[id];
-    return `<span class="cmap-met ${answer === "accept" ? "spared" : answer === "finish" ? "beaten" : "unmet"}">${esc(name)} <em>${answer === "accept" ? "Spared" : answer === "finish" ? "Defeated" : "Not met yet"}</em></span>`;
-  }).join("");
+// The archive (plan C5.3 and C7): achievements, the veteran squad and the commanders met. Owner 2026-11-26: they
+// grew to 25 chips under the map and shrank it, so the map shows one Achievements button on top (its count) that
+// opens the archive window with a tab each (campaign-archive-ui.js). New Game+ stays a plain button under the map
+// once every main mission is cleared.
+export const archiveCount = (progress) => {
+  const ach = achievementsFor(progress, { record: loadRecord(), defence: loadDefence() });
+  return { done: ach.filter((a) => a.done).length, total: ach.length };
+};
+// The button, in the map head on desktop and tablets; landscape and portrait phones draw the head over the painting, so
+// there it sits in the footer row instead (campaign-archive.css shows one of the two).
+const archiveButton = ({ done, total }, where) => `<button type="button" class="kit-face cmap-archive-open ${where}" data-archive-open aria-haspopup="dialog">${icon("star")}<span>Achievements</span> <b translate="no">${done} / ${total}</b></button>`;
+function newGamePlusHTML(progress) {
   const allDone = MISSIONS.every((m, i) => /^m\d+[a-z]-/.test(m.id) || isCleared(progress, i));
-  const plus = allDone ? `<button type="button" class="cmap-ngplus" data-ngplus>New Game+${progress?.ngPlus ? ` · run ${progress.ngPlus + 1}` : ""}</button>` : "";
-  return `<div class="cmap-archive" role="group" aria-label="Archive">
-    <div class="cmap-row"><span class="cmap-label">${esc("Achievements")} <b>${done} / ${ach.length}</b></span><span class="cmap-chips">${chips}</span></div>
-    <div class="cmap-row"><span class="cmap-label">${esc("Your veterans")}</span><span class="cmap-chips">${squad || `<span class="cmap-none">${esc("None yet. Rank up units and win a mission.")}</span>`}</span></div>
-    <div class="cmap-row"><span class="cmap-label">${esc("Commanders met")}</span><span class="cmap-chips">${met}</span></div>
-    ${plus}
-  </div>`;
+  return allDone ? `<button type="button" class="cmap-ngplus" data-ngplus>New Game+${progress?.ngPlus ? ` · run ${progress.ngPlus + 1}` : ""}</button>` : "";
 }
 
 // `campaign`: "main" or the Faction Chronicle chosen (0.20); a chronicle's card is marked and no relay is picked.
@@ -116,13 +110,14 @@ export function campaignMapHTML({ progress, pick = 0, campaign = "main" }) {
   const given = mercyGiven(progress), asked = Object.keys(DECISIONS).length;
   const anyAhead = nodes.some((n) => decisionsAhead(progress, n.m.id).length);
   const legend = anyChoice || anyAhead ? `<span class="cmap-legend"><span class="cmap-label">${esc(MAP_TEXT.decisions)}</span>${anyChoice ? `<span><i class="cmap-choice mercy" aria-hidden="true"></i>Merciful</span><span><i class="cmap-choice firm" aria-hidden="true"></i>Firm</span>` : ""}<span><i class="cmap-ahead" aria-hidden="true"></i>Ahead</span><span class="cmap-mercy">${given} / ${asked} merciful</span></span>` : "";
+  const count = campaign === "main" ? archiveCount(progress) : null;
   const art = `<picture class="cmap-art" aria-hidden="true"><source media="${STRIP_MEDIA}" srcset="${stripArt}" width="${MAP_ART.strip.w}" height="${MAP_ART.strip.h}"><img src="${wideArt}" alt="" width="${MAP_ART.wide.w}" height="${MAP_ART.wide.h}" decoding="async" draggable="false"></picture>`;
   return `<div class="cmap" role="group" aria-label="Campaign map" data-lit="${lit}">
-    <div class="cmap-head"><span class="eyebrow">CAMPAIGN MAP</span><strong>${esc(MAP_TEXT.heading)}</strong>${legend}<span class="cmap-count">${lit} / ${MISSIONS.length} relays lit</span></div>
+    <div class="cmap-head"><span class="eyebrow">CAMPAIGN MAP</span><strong>${esc(MAP_TEXT.heading)}</strong>${legend}<span class="cmap-count">${lit} / ${MISSIONS.length} relays lit</span>${count ? archiveButton(count, "in-head") : ""}</div>
     <div class="cmap-frame"><div class="cmap-board"><div class="cmap-layer">${art}${route("at")}${route("strip")}${nodes.map(node).join("")}</div><span class="cmap-vignette" aria-hidden="true"></span>${acts}</div></div>
     <div class="cmap-foot">
       <div class="cmap-endings"><span class="cmap-label">${esc(MAP_TEXT.endings)}</span>${endings}</div>
-      ${campaign === "main" ? archiveHTML(progress) : ""}
+      ${count ? archiveButton(count, "in-foot") + newGamePlusHTML(progress) : ""}
       ${chronicleCardsHTML({ progress, campaign })}
     </div>
   </div>`;

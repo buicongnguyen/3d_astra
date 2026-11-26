@@ -122,7 +122,7 @@
 :root .primary:disabled .icon { color: var(--kit-disabled-text); }
 /* Selected / pressed toggles: the cyan edge and a 2 px rail along the bottom. */
 :root :is(#briefing .mode-switch button[aria-pressed="true"], #briefing .stage-list button[aria-current="true"], #briefing .difficulty-buttons button[aria-pressed="true"],
-  .defence-variants button[aria-pressed="true"], .settings-panel [role="tablist"] button[aria-selected="true"], .kit-face[aria-pressed="true"]) {
+  .defence-variants button[aria-pressed="true"], .settings-panel [role="tablist"] button[aria-selected="true"], .archive-tabs [role="tab"][aria-selected="true"], .kit-face[aria-pressed="true"]) {
   --face: var(--kit-pressed);
   --frame: url("./art/ui/frame-button-active.svg");
   background:

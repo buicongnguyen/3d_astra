@@ -105,14 +105,15 @@ export function setupRank(S, A) {
     chip.dataset.rank = String(rankOf(profile.xp).rank);
     chip.dataset.banner = profile.picks.banner;
     chip.innerHTML = chipHTML(profile);
-    // PC menu: the same rank sits in the top bar, which leaves the setup panel its full height.
+    // PC menu: the same rank sits in the top bar, which leaves the setup panel its full height. Owner 2026-11-26:
+    // on the left, beside the emblem and over the setup column (it was by the sound and settings buttons).
     let top = $("top-rank");
-    const actions = document.querySelector(".topbar .top-actions");
-    if (!top && actions) {
+    const brand = document.querySelector(".topbar .brand");
+    if (!top && brand) {
       top = Object.assign(document.createElement("div"), { id: "top-rank", className: "rank-chip top-rank" });
       top.setAttribute("role", "group");
       top.setAttribute("aria-label", "Commander rank");
-      actions.before(top);
+      brand.after(top);
     }
     if (top) { top.dataset.rank = chip.dataset.rank; top.dataset.banner = chip.dataset.banner; top.innerHTML = chip.innerHTML; }
   }

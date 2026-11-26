@@ -1,31 +1,38 @@
-/* The archive under the campaign map (campaign-map-ui.js archiveHTML): achievements, veterans, commanders met. */
-.cmap-archive { display: grid; gap: 10px; margin-top: 10px; padding: 12px 14px; border: 1px solid rgba(160, 200, 190, 0.22); border-radius: 12px; background: rgba(8, 18, 22, 0.62); }
-.cmap-archive .cmap-row { display: grid; grid-template-columns: minmax(96px, 150px) minmax(0, 1fr); gap: 8px 12px; align-items: start; }
-.cmap-archive .cmap-label { font: 600 12px/1.4 var(--font-ui); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-2, #9fb0a8); }
-.cmap-archive .cmap-label b { color: var(--text-1, #e8f1ed); font-weight: 700; margin-left: 4px; }
-.cmap-chips { display: flex; flex-wrap: wrap; gap: 6px 8px; }
-.cmap-chip, .cmap-vet, .cmap-met, .cmap-none { display: inline-flex; align-items: baseline; gap: 6px; padding: 4px 10px; border-radius: 999px; font: 500 13px/1.4 var(--font-ui); color: var(--text-1, #e8f1ed); background: rgba(255, 255, 255, 0.06); }
-.cmap-chip.todo { color: var(--text-2, #9fb0a8); opacity: 0.75; }
-.cmap-chip.done { background: rgba(90, 200, 150, 0.18); }
-.cmap-chip i { font-style: normal; color: #7fe0b0; }
-.cmap-chip.todo i { color: var(--text-2, #9fb0a8); }
-.cmap-vet b { color: #f0c15a; letter-spacing: 1px; }
-.cmap-vet em, .cmap-met em { font-style: normal; font-size: 12px; color: var(--text-2, #9fb0a8); }
-.cmap-met.spared { background: rgba(90, 200, 150, 0.18); }
-.cmap-met.beaten { background: rgba(230, 120, 100, 0.18); }
-.cmap-met.unmet, .cmap-none { color: var(--text-2, #9fb0a8); }
+/* The campaign archive (owner 2026-11-26): one Achievements button on the campaign map (campaign-map-ui.js) opens a
+   window with a tab each for the achievements, the veterans and the commanders met (campaign-archive-ui.js). The
+   window is the Records sheet (meta.css .records-sheet); these rules add the button, the tabs and New Game+. */
+.cmap-archive-open { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; font: 700 14px/1 var(--font-ui); color: var(--kit-text, #f1f6f3); white-space: nowrap; cursor: pointer; }
+.cmap-archive-open .icon { flex: none; width: 18px; height: 18px; color: var(--kit-gold, #ffd17b); }
+.cmap-archive-open b { font-variant-numeric: tabular-nums; color: var(--kit-gold, #ffd17b); }
+.cmap-head .cmap-archive-open { margin-left: 4px; }
+.cmap-archive-open.in-foot { display: none; }
+/* Phones draw the map head over the painting, so the button sits in the footer row there instead. */
+@media (max-width: 720px), (orientation: landscape) and (max-height: 520px) {
+  :root.compact-ui #campaign-map .cmap-archive-open.in-head { display: none; }
+  :root.compact-ui #campaign-map .cmap-archive-open.in-foot { display: inline-flex; justify-content: center; flex: 1 1 100%; }
+}
+/* Landscape phones: the footer is endings | chronicles; the button and New Game+ take their own row. */
+@media (orientation: landscape) and (max-height: 520px) {
+  :root.compact-ui #campaign-map .cmap-foot > :is(.cmap-archive-open, .cmap-ngplus) { grid-column: 1 / -1; }
+}
+/* Desktop footer (campaign-map.css .cmap-foot, endings | chronicles): New Game+ takes its own row under them. */
+:root:not(.compact-ui) #campaign-map .cmap-foot > .cmap-ngplus { grid-column: 1 / -1; }
+
 .cmap-ngplus { justify-self: start; min-height: 44px; padding: 0 18px; border-radius: 10px; border: 1px solid rgba(240, 193, 90, 0.7); background: rgba(240, 193, 90, 0.16); color: #f6dca0; font: 700 14px/1 var(--font-ui); cursor: pointer; }
 .cmap-ngplus:hover, .cmap-ngplus:focus-visible { background: rgba(240, 193, 90, 0.3); }
-/* Phones keep the first screen short: the archive is one line (the achievement count); veterans show in the briefing. */
-@media (max-width: 640px), (orientation: landscape) and (max-height: 520px) {
-  .cmap-archive { padding: 8px 12px; margin-top: 6px; }
-  .cmap-archive .cmap-row { grid-template-columns: 1fr; gap: 4px; }
-  .cmap-archive .cmap-chips, .cmap-archive .cmap-row:not(:first-child) { display: none; }
-}
-/* Desktop footer (campaign-map.css .cmap-foot, endings | chronicles): the archive takes its own full-width row under
-   them, so the four chronicle cards keep their column; short windows keep only the achievements row. */
-:root:not(.compact-ui) #campaign-map .cmap-foot > .cmap-archive { grid-column: 1 / -1; grid-row: 2; margin-top: 0; padding: 8px 12px; gap: 6px; }
-:root:not(.compact-ui) #campaign-map .cmap-archive .cmap-chip { padding: 2px 8px; font-size: 12px; }
-@media (max-height: 900px) {
-  :root:not(.compact-ui) #campaign-map .cmap-archive .cmap-row:not(:first-child) { display: none; }
+
+/* The window: three tabs, each with its count. */
+.archive-sheet .archive-tabs { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.archive-tabs [role="tab"] b { font-variant-numeric: tabular-nums; color: var(--kit-gold, #ffd17b); }
+.archive-sheet .records-body { padding-top: 10px; }
+.archive-sheet .meta-note { margin: 8px 0; }
+.archive-stars { font: 700 15px/1 var(--font-ui); letter-spacing: 1px; color: var(--kit-gold, #ffd17b); }
+.archive-met.spared { border-color: rgba(127, 224, 176, 0.7); background: rgba(90, 200, 150, 0.12); }
+.archive-met.beaten { border-color: rgba(230, 120, 100, 0.7); background: rgba(230, 120, 100, 0.12); }
+.archive-met.spared > .icon { color: #7fe0b0; background: rgba(90, 200, 150, 0.2); }
+.archive-met.beaten > .icon { color: #f0a090; background: rgba(230, 120, 100, 0.2); }
+.archive-tabs [role="tab"] b { white-space: nowrap; }
+/* Narrow phones: each tab's name over its count, so "0 / 25" never breaks. */
+@media (max-width: 520px) {
+  .archive-sheet .archive-tabs [role="tab"] { flex-direction: column; gap: 2px; padding: 4px 4px; text-align: center; }
 }

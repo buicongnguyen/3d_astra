@@ -196,6 +196,13 @@ export function setupInputPointer(S, A) {
         S.cameraTwist = (((S.cameraTwist || 0) + radians) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
       },
     });
+    // Owner 2026-11-26: a right-click on the HUD, a panel, a dialog or the menus opened Chrome's own menu (with its
+    // add-ons) instead of nothing. Right-click is a game order, so the browser menu never opens on the page; only
+    // text fields keep it (copy and paste). The canvas and the minimap still give their orders below.
+    document.addEventListener("contextmenu", (e) => {
+      if (e.target?.closest?.('input:not([type="range"]):not([type="checkbox"]):not([type="radio"]):not([type="button"]), textarea, select, [contenteditable="true"]')) return;
+      e.preventDefault();
+    });
     canvas.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       if (e.pointerType === "touch") return;

@@ -91,6 +91,33 @@ await suite("chronicles: cards, chronicle missions, rosters, Continue, Vietnames
     clean(await audit(page, "#campaign-setup"), `${viewport} list with chronicles`);
     await shot(page, `chronicles-map-open-${viewport}`);
 
+    // Owner 2026-11-26: the achievements are one button on the map (not 25 chips under it, which shrank the map); it
+    // opens the campaign archive window with a tab each (achievements, veterans, commanders met), one tap per tab.
+    // Right-click never opens the browser's own menu (with its add-ons) on the page.
+    assert.equal(await page.locator(".cmap-archive, .cmap-chip").count(), 0, `${viewport}: no achievement chips under the map`);
+    const opener = page.locator(".cmap-archive-open:visible");
+    assert.equal(await opener.count(), 1, `${viewport}: one Achievements button on the map`);
+    assert.match(await opener.textContent(), /Achievements\s*\d+ \/ \d+/);
+    await (mobile ? opener.tap() : opener.click());
+    await page.locator("#campaign-archive[open]").waitFor({ state: "visible" });
+    assert.equal(await page.locator('#campaign-archive [role="tab"]').count(), 3, `${viewport}: three tabs`);
+    assert.ok(await page.locator('#campaign-archive .meta-ach[data-ach]').count() >= 25, `${viewport}: every achievement listed`);
+    clean(await audit(page, "#campaign-archive"), `${viewport} archive: achievements`);
+    await shot(page, `chronicles-archive-${viewport}`);
+    await tap('#campaign-archive [data-archive-tab="commanders"]');
+    assert.equal(await page.locator("#campaign-archive .archive-met").count(), 3, `${viewport}: three commanders`);
+    await tap('#campaign-archive [data-archive-tab="veterans"]');
+    clean(await audit(page, "#campaign-archive"), `${viewport} archive: veterans`);
+    const menu = await page.evaluate(() => [".records-head", "#campaign-setup", ".topbar"].map((s) => { const ev = new MouseEvent("contextmenu", { bubbles: true, cancelable: true, button: 2 }); document.querySelector(s).dispatchEvent(ev); return ev.defaultPrevented; }));
+    assert.deepEqual(menu, [true, true, true], `${viewport}: right-click opens no browser menu`);
+    await tap("#campaign-archive [data-archive-close]");
+    assert.equal(await page.locator("#campaign-archive[open]").count(), 0, `${viewport}: Close shuts the archive`);
+    if (viewport === "desktop") {
+      // The rank bar sits on the left of the top bar, over the setup column (owner 2026-11-26).
+      const at = await page.evaluate(() => ({ rank: document.querySelector("#top-rank").getBoundingClientRect().left, setup: document.querySelector("#campaign-setup").getBoundingClientRect().right }));
+      assert.ok(at.rank < at.setup, `the rank bar is on the left (${at.rank} < ${at.setup})`);
+    }
+
     // 3. Sunward: the card opens its three missions, the next one picked, with the chronicle header.
     await tap('.chron-card[data-chronicle="sunward"]');
     await page.locator(".chron-missions").waitFor({ state: "visible" });
