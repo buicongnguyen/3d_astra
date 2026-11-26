@@ -18,3 +18,6 @@
 .modal .shortcut-list button:hover,.modal .control-group-buttons button:hover{border-color:var(--mint);background:#274231}
 .modal .shortcut-list kbd{flex-shrink:0;margin:0}
 #modal.help-wide .modal p{margin:6px 0;font-size:12px;line-height:1.6}
+
+/* The Focus base H badge is a PC hint (desktop-dock.css); touch layouts keep the plain icon. */
+.compact-ui #home .home-key { display: none; }

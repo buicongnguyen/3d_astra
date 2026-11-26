@@ -174,6 +174,10 @@ try {
       await page.waitForFunction(() => document.querySelectorAll('#type-chips button').length === 7);
       for (const p of await page.evaluate(DESKTOP_TAPS, ['.topbar .top-actions .icon-button', '.minimap-panel .panel-label button', '#type-chips button'])) problems.push(`${name} desktop taps: ${p}`);
       await check('7d-seven-types', 'body', fixed);
+      // Owner 2026-11-26: Focus base stands beside (or, in narrow windows, above) the minimap, never on it, and clear
+      // of the selection and command panels.
+      const home = await page.evaluate(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(), h = r('#home'), hit = (b) => b.width && b.left < h.right - 0.5 && b.right > h.left + 0.5 && b.top < h.bottom - 0.5 && b.bottom > h.top + 0.5; return { map: hit(r('#minimap')), panels: ['.selection-panel', '.command-panel'].filter((s) => hit(r(s))) }; });
+      if (home.map || home.panels.length) problems.push(`${name} Focus base covers ${home.map ? 'the minimap ' : ''}${home.panels.join(' ')}`);
     }
     if (touch) {
       // The objectives chip opens and closes the list.

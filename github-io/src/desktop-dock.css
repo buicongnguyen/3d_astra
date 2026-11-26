@@ -74,7 +74,8 @@
   backdrop-filter: none;
 }
 
-/* Minimap corner: just the map, with the home button over its top-right corner. */
+/* Minimap corner: just the map. Owner 2026-11-26: the Focus base button covered the map's top-right corner, so it
+   stands beside the map instead (rules after the .panel-label block below). */
 :root:not(.compact-ui) .bottom-dock .minimap-panel {
   position: absolute;
   left: 0;
@@ -102,6 +103,28 @@
   background: #0d1a18cc;
 }
 :root:not(.compact-ui) .minimap-panel #minimap { height: 100%; margin: 0; }
+/* Focus base beside the minimap, bottom-aligned with it, drawn as a command tile with its H badge: the whole map
+   stays visible and clickable (the label strip holds only this button on PC). */
+:root:not(.compact-ui) .minimap-panel .panel-label { top: auto; right: auto; bottom: 0; left: calc(100% + 8px); }
+:root:not(.compact-ui) .minimap-panel #home {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--kit-line, rgba(127, 232, 255, 0.35));
+  border-radius: 6px;
+  background: linear-gradient(180deg, rgba(20, 38, 44, 0.92), rgba(8, 18, 22, 0.94));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  color: var(--kit-cyan, #83deeb);
+}
+:root:not(.compact-ui) .minimap-panel #home:hover,
+:root:not(.compact-ui) .minimap-panel #home:focus-visible { border-color: var(--kit-cyan, #83deeb); background: linear-gradient(180deg, rgba(30, 58, 66, 0.95), rgba(12, 28, 34, 0.96)); }
+:root:not(.compact-ui) .minimap-panel #home .icon { width: 20px; height: 20px; transform: translate(-3px, -4px); }
+:root:not(.compact-ui) .minimap-panel #home .home-key { position: absolute; right: 4px; bottom: 2px; margin: 0; padding: 0; border: 0; background: none; box-shadow: none; font: 700 11px/12px var(--font-ui); color: var(--mint, #92ebc5); }
+/* Narrower PC windows: the selection panel starts within 52 px of the map, so the button stands on top of the map's
+   right end instead (still off the map). */
+@media (max-width: 1299px) {
+  :root:not(.compact-ui) .minimap-panel .panel-label { left: auto; right: 0; bottom: calc(100% + 6px); }
+}
 :root:not(.compact-ui) .minimap-panel .map-legend { display: none; }
 
 /* A fixed stats row and a single queue/roster row: starting work never shifts commands. */
