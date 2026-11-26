@@ -34,6 +34,7 @@ import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, setRimTier 
 import { MissionLook } from "./mission-look-view.js";
 import { airMotion, airParts, poseAirParts } from "./air-motion.js";
 import { groundY, placeOnGround, MARKER_LIFT } from "./ground-y.js";
+import { prepareVanguardArm, attachVanguardSword, followVanguardTorso, restVanguardSword, strikeVanguardSword, VANGUARD_WINDUP, VANGUARD_RECOVERY } from "./vanguard-sword.js";
 import { RIG_INFANTRY, RIG_HULL, KNEELERS, STANCE, GAIT, hitFlinch, FALL, fallFor, infantryFall, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach, BARREL_POSES, newGun, fireBarrel, stepBarrel, poseBarrel, RECOIL, barrelKick, bodyKick, kickSize, poseTurretOnHull, swingLegs } from "./unit-rig.js";
 import {
   EnvironmentView,
@@ -51,7 +52,7 @@ const mat = (color, extra = {}) =>
 // duplicate suffixes arrive sanitised by GLTFLoader ("Barrel.001" -> "Barrel001").
 export const RIG_PART = /^(Main_cannon|Muzzle_brake|Barrel|Cannon|Muzzle|Turret_head)(?![a-z])/i;
 // Pivots kept as their own nodes: walking legs, and the flyers' rotors (spin_*) and burner flame (flicker_*).
-const MOVING_PART = /^(leg_|spin_|flicker_)/;
+const MOVING_PART = /^(leg_|spin_|flicker_|SwordArm$)/;
 // Flyers: where the altitude looks for higher ground (a rim ahead).
 const FLY_SAMPLES = [[2.5, 0], [-2.5, 0], [0, 2.5], [0, -2.5]];
 // The left and right rotors of a flyer are the same part mirrored in place: after baking, the right
@@ -321,7 +322,7 @@ export class WorldView {
     // The observer covers window resizes too; resize() itself ignores an unchanged size.
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(container);
-    this.reducedMotion = reducedMotionQuery; // Settings → Assist → Reduced motion over the device (src/reduced-motion.js)
+    this.reducedMotion = reducedMotionQuery; // Settings Ã¢â€ â€™ Assist Ã¢â€ â€™ Reduced motion over the device (src/reduced-motion.js)
     this.reducedMotion.addEventListener("change", () =>
       this.environment?.configure(this.settings),
     );
@@ -607,10 +608,13 @@ export class WorldView {
             // Leg pivots, and the flyers' spinning rotors and flickering burner flame (0.18), stay
             // separate nodes so they can move per instance inside their batches.
             if (MOVING_PART.test(o.name) && !(rigInfantry && o.name.startsWith("leg_"))) {
-              const leg = o.clone(true);
-              o.matrixWorld.decompose(leg.position, leg.quaternion, leg.scale);
-              template.add(leg);
-              legs.push(leg);
+              const part = o.clone(true);
+              o.matrixWorld.decompose(part.position, part.quaternion, part.scale);
+              if (o.name === "SwordArm") template.add(prepareVanguardArm(part, hipY));
+              else {
+                template.add(part);
+                legs.push(part);
+              }
             }
             if (!o.isMesh) return;
             let parent = o.parent, legPivot = null;
@@ -700,13 +704,14 @@ export class WorldView {
                     this.pulsing.push({ m, base: 0.8, depth: 0.3, rate: 2.2, phase: team * 1.3 });
                   }
                 } else if (name.startsWith("Energy")) this.pulsing.push({ m, base: m.emissiveIntensity, depth: 0.35, rate: 3.1, phase: 0 });
-                // Last, so the rig wraps the rim patch and its program key ("…|rig").
+                // Last, so the rig wraps the rim patch and its program key ("Ã¢â‚¬Â¦|rig").
                 if (rig && !name.startsWith("Baked")) addRig(m);
                 materials.set(key, m);
               }
               o.material = materials.get(key);
-              o.castShadow = CORE_MODEL_TYPES.includes(type) || D[type]?.kind === "building";
-              o.receiveShadow = true;
+              const surface = o.name !== "SwordWave";
+              o.castShadow = surface && (CORE_MODEL_TYPES.includes(type) || D[type]?.kind === "building");
+              o.receiveShadow = surface;
             });
             adoptBatchedParts(variant);
             this.teamTemplates.set(`${type}-${team}`, variant);
@@ -1052,7 +1057,7 @@ export class WorldView {
     up.normalize();
     this.pan(right.x * dx + up.x * dy, right.z * dx + up.z * dy);
   }
-  // Settings → Camera → Angle: the look-down in degrees above the ground, at the same distance from the focus
+  // Settings Ã¢â€ â€™ Camera Ã¢â€ â€™ Angle: the look-down in degrees above the ground, at the same distance from the focus
   // (null or the designed 45.7 = CAMERA_OFFSET). Frontier Defence keeps the designed view (its framing math).
   setPitch(degrees) {
     const next = Number.isFinite(degrees) && Math.abs(degrees - 45.7) > 0.05 ? degrees : null;
@@ -1310,6 +1315,7 @@ export class WorldView {
     root.userData.readabilityScale *= pluginScale;
     root.userData.barrel=model.getObjectByName('BarrelRig');
     root.userData.turret=model.getObjectByName('TurretRig');
+    if (e.type === "vanguard") root.userData.sword = attachVanguardSword(model);
     root.userData.recoil=0;
     root.userData.kick=0;root.userData.kickSize=0;
     root.userData.gait=0;root.userData.stride=(e.id*0.7)%6.28;
@@ -1541,7 +1547,13 @@ export class WorldView {
       // Artillery (unit-rig.js SNAP): each shot snaps the barrel in, then it runs back out; a crewed tower's gun too.
       if(o && this.activity.combat.motion && !this.reducedMotion.matches){if(o.userData.gun)fireBarrel(o.userData.gun);if(o.userData.crewGun)fireBarrel(o.userData.crewGun);}
       // Every shooter rocks back a little: hulls and rocket troops most, rifles barely.
-      if(o && kind!=='support'){o.userData.kick=RECOIL.body;o.userData.kickSize=kickSize(kind);}
+      const sword = o?.userData.sword;
+      if (sword && event.unit === "vanguard") {
+        if (this.activity.combat.motion && !this.reducedMotion.matches && this.settings.unitMotion !== false) {
+          sword.sequence++;
+          sword.elapsed = -VANGUARD_WINDUP;
+        }
+      } else if(o && kind!=='support'){o.userData.kick=RECOIL.body;o.userData.kickSize=kickSize(kind);}
     }
     if (event.type === 'death' && sim.isVisible(event)) this.beginDeath(event);
     // Blasts kill the small creatures they reach; a new match brings the full cast back.
@@ -1557,6 +1569,7 @@ export class WorldView {
     const o = this.objects.get(event.seed);
     if (!o) return;
     this.objects.delete(event.seed);
+    if (o.userData.sword) restVanguardSword(o.userData.sword);
     for (const part of [o.userData.ring, o.userData.bar, o.userData.contactShadow]) part.visible = false;
     if (this.dying.length >= FEEL.wreckCap) this.disposeEntity(this.dying.shift().object);
     // A Kite's Dive (sim/content/kite-dive.js) flies its model into the vehicle and is gone at the blast.
@@ -1739,6 +1752,14 @@ export class WorldView {
       if (u.flashWait >= 0 || u.flashLeft > 0 || u.flashLit) this.stepHitFlash(u, e, dt);
       // Walls are neutral and see nothing: keep them drawn once explored, like the minimap does.
       o.visible = e.kind === "wall" ? sim.isExplored(e) : sim.isVisible(e);
+      if (u.sword && u.sword.elapsed < Infinity) {
+        const sword = u.sword;
+        sword.elapsed += dt;
+        if (!this.richMotion || !kicking || sword.elapsed >= VANGUARD_RECOVERY) {
+          restVanguardSword(sword);
+          sword.elapsed = Infinity;
+        } else if (o.visible) strikeVanguardSword(sword, sword.elapsed, sword.sequence);
+      }
       if (!o.visible) continue;
       let p = e.kind === "unit" && interpolate ? this.previous.get(e.id) : null;
       // No unit covers more than ~0.3 units per tick; a larger jump is a teleport.
@@ -1756,7 +1777,7 @@ export class WorldView {
       if(u.turret){
         // Vehicles: the hull keeps its heading while the turret swings to the target (turn-rate limited, shortest way).
         if(e.moving||u.hullYaw===undefined)u.hullYaw=m.rotation.y;else m.rotation.y=u.hullYaw;
-        // Unit motion: parked and idle, the turret scans slowly about ±25 degrees; moving, it settles forward.
+        // Unit motion: parked and idle, the turret scans slowly about Ã‚Â±25 degrees; moving, it settles forward.
         const scan=this.richMotion&&e.kind==="unit"&&!e.moving?Math.sin(this.lifeClock*0.35+e.id*1.3)*0.44:0;
         const aim=e.attacking?e.angle-m.rotation.y:scan,diff=Math.atan2(Math.sin(aim-u.turret.rotation.y),Math.cos(aim-u.turret.rotation.y));
         const step=this.activity.combat.motion&&!this.reducedMotion.matches?3*dt:Math.PI;
@@ -1822,6 +1843,10 @@ export class WorldView {
         }
         if (breathing && u.gait === 0 && (u.legs.length || u.rig?.kind === "infantry")) squash = Math.sin(this.lifeClock * 2.1 + e.id * 1.7) * 0.012;
         if (kicking && u.kick > 0) back = bodyKick(u.kick, u.kickSize);
+        if (u.sword) {
+          followVanguardTorso(u.sword, u.rig.motion);
+          back -= u.sword.lunge * u.readabilityScale;
+        }
       } else if (e.kind === "building") {
         // A finished building settles with a small bounce.
         if (e.complete && !u.built && kicking) u.pop = 0.4;
@@ -1856,7 +1881,7 @@ export class WorldView {
       swingLegs(u.legs, u.stride, u.gait);
       updateRing(u.ring, selected.has(e.id), hover?.id === e.id, sim.time, dt, this.unitsPerPixel);
       const bar = u.bar;
-      // Settings → Display → Health bars: "hurt" (damaged units; the default), "always", "selected" (the
+      // Settings Ã¢â€ â€™ Display Ã¢â€ â€™ Health bars: "hurt" (damaged units; the default), "always", "selected" (the
       // selection and the hovered unit only). Defence's twelve-weakest limit holds in every mode.
       const barMode = this.settings.healthBars, listed = !bars || e.team === 0 || bars.has(e.id);
       bar.visible =

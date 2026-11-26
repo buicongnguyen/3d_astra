@@ -189,10 +189,10 @@ export class VoiceBudget {
 // The weapon voice of a shot: the event's weapon (balance.json `shot`, else the unit type), refined
 // by the shooter's type where several units share one shot (drone, walker, watcher).
 export const WEAPON_VOICE = {
-  ranger: "rifle", rider: "rifle", drone: "drone", vanguard: "smg", scrapper: "scrap", shade: "silenced",
+  ranger: "rifle", rider: "rifle", drone: "drone", vanguard: "blade", scrapper: "scrap", shade: "silenced",
   tank: "tank", walker: "walker", breaker: "artillery", scorcher: "flame", antitank: "rocket", watcher: "rail",
   gunner: "mg", stalker: "laser", hawk: "pod", tower: "tower", medic: "support", wagon: "support", engineer: "engineer", worker: "worker", repair: "worker",
-  // W12 (2026-11-25): units that fell back to the Vanguard's SMG get their own family.
+  // W12 (2026-11-25): units that fell back to the generic SMG get their own family.
   wyrm: "bite", wyrmling: "bite", acidhound: "spit", halo: "zap", vaultsentinel: "zap", moth: "pulse", bulwark: "mg",
   ironvanguard: "autocannon", ironsovereign: "autocannon", ironsovereign2: "autocannon",
   emberdrake: "flame",
@@ -224,7 +224,7 @@ const HEAVY_VOICES = new Set(["tank", "walker", "artillery", "rocket", "rail", "
 export function soundFor(event, sourceType = null) {
   switch (event.type) {
     case "shot": {
-      const voice = weaponVoice(event.weapon || "vanguard", sourceType);
+      const voice = weaponVoice(event.weapon || event.unit, sourceType);
       // R3-U: the weapon class (weaponClass below) swaps in its own voice where the class has one
       // (flak burst, ground-to-air missile, bomb release, gunship strafing run).
       const name = classShot(event, sourceType) || `shot:${voice}`;
@@ -503,12 +503,12 @@ export function engineMix(vehicles) {
 }
 
 // ---------------------------------------------------------------- R3-U: audio juice
-// Weapon classes: the sound family a shot belongs to, the same ten classes the weapon effects draw
+// Weapon classes: the sound family a shot belongs to, the same classes the weapon effects draw
 // (R3-X), so what is seen and what is heard match. Pure: from the shot event's weapon, shooter type
 // (`sourceType`, else the event's `unit`) and whether the target flies (`tAir`).
-export const WEAPON_CLASSES = ["tracer", "shell", "lob", "flak", "beam", "flamer", "heal", "missile", "bomb", "strafe"];
+export const WEAPON_CLASSES = ["tracer", "shell", "lob", "flak", "beam", "flamer", "heal", "missile", "bomb", "strafe", "melee"];
 const VOICE_CLASS = {
-  rifle: "tracer", smg: "tracer", mg: "tracer", silenced: "beam", scrap: "tracer", drone: "tracer", worker: "tracer",
+  blade: "melee", rifle: "tracer", smg: "tracer", mg: "tracer", silenced: "beam", scrap: "tracer", drone: "tracer", worker: "tracer",
   tank: "shell", walker: "shell", tower: "shell", artillery: "lob", flame: "flamer", rocket: "missile", pod: "missile",
   rail: "beam", laser: "beam", support: "heal", engineer: "heal",
   spit: "flamer", zap: "beam", pulse: "beam", autocannon: "shell",
@@ -517,7 +517,7 @@ const BOMBERS = new Set(["glider", "balloon"]);
 export function weaponClass(event, sourceType = null) {
   if (!event) return "tracer";
   if (event.type === "support") return "heal";
-  const unit = sourceType || event.unit || null, voice = weaponVoice(event.weapon || "vanguard", unit);
+  const unit = sourceType || event.unit || null, voice = weaponVoice(event.weapon || unit, unit);
   if (BOMBERS.has(unit)) return "bomb";
   const air = Number.isFinite(event.tAir);
   if (air && (voice === "tower" || voice === "tank" || voice === "walker")) return "flak";
@@ -545,7 +545,9 @@ export function flightTime(event, sourceType = null) {
 export const IMPACT_SIZE = { tracer: "small", strafe: "small", beam: "medium", missile: "medium", flamer: "medium", shell: "heavy", lob: "heavy", bomb: "heavy" };
 export function impactLayer(event, sourceType = null) {
   if (event?.type !== "shot" || !Number.isFinite(event.tx) || !Number.isFinite(event.tz) || Number.isFinite(event.tAir)) return null;
-  const size = IMPACT_SIZE[weaponClass(event, sourceType)];
+  const cls = weaponClass(event, sourceType);
+  if (cls === "melee") return { name: "impact:blade", size: "small", delay: flightTime(event, sourceType) };
+  const size = IMPACT_SIZE[cls];
   return size ? { name: `impact:${size}`, size, delay: flightTime(event, sourceType) } : null;
 }
 // What a class adds where the round lands: a falling whistle before it (lob, bomb) and its own

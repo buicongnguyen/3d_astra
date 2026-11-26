@@ -143,9 +143,9 @@ test('splash art follows live ground damage including crew upgrades and shared w
   assert.equal(groundSplashRadius({unit:'tank',source:1},live),0);
 });
 
-test('live-quarter Vanguard tracers preserve travel and scale both axes and alpha', () => {
+test('live-quarter Bulwark tracers preserve travel and scale both axes and alpha', () => {
   const fx=fxWith(seeded(7));
-  LOOKS.burst.spawn(fx, {unit:'vanguard'}, fx.rng, aim());
+  LOOKS.burst.spawn(fx, {unit:'bulwark'}, fx.rng, aim());
   const rounds=fx.glow.items.filter(p=>p.mode===1 && p.opacity===.25);
   assert.equal(rounds.length,3);
   for (const p of rounds) {
@@ -153,6 +153,80 @@ test('live-quarter Vanguard tracers preserve travel and scale both axes and alph
     assert.ok(Math.abs(p.life*Math.hypot(p.vx,p.vy,p.vz)-Math.hypot(8,-.4,3)) < .01);
   }
 });
+test('the Vanguard leaves its muzzle quiet and sparks only on the struck face at contact', () => {
+  const shot = { type: 'shot', unit: 'vanguard', x: 1, z: 0, tx: 3, tz: 0, team: 0, target: 9 };
+  const radius = 0.75, visible = { ...sim, get: () => ({ radius, team: 1 }) };
+  for (const moving of [true, false]) {
+    const fx = fxWith(seeded(7));
+    fx.view.activity.combat.motion = moving;
+    fx.impact({ x: 3, z: 0, weapon: 'vanguard' });
+    fx.shot(shot, visible);
+    fx.update(visible, 0.19);
+    assert.equal(fx.glow.items.length + fx.smoke.items.length + fx.projectiles.length, 0);
+    fx.update(visible, 0.011);
+    assert.ok(fx.glow.items.every(p => p.anchor.x === 3 - radius && p.anchor.z === 0));
+    assert.equal(fx.projectiles.length + fx.smoke.items.length, 0);
+    assert.equal(fx.glow.items.filter(p => p.priorityHit).length, 1);
+    assert.equal(fx.glow.items.length > 1, moving, 'only the quiet contact glint remains with motion off');
+  }
+});
+
+test('a sword hit under fog only marks a visible target and conceals the direction of a hidden attacker', () => {
+  const shot = { type: 'shot', unit: 'vanguard', x: 0, z: 0, tx: 2, tz: 0, team: 1, target: 9 };
+  const visible = { ...sim, isVisible: p => p.x >= 2 };
+  const fx = fxWith(seeded(7));
+  fx.shotPartial(shot, visible);
+  fx.update(visible, 0.19);
+  fx.update(visible, 0.011);
+  assert.ok(fx.glow.items.length && fx.glow.items.every(p => p.anchor.x === 2));
+  const hidden = fxWith(seeded(8)), shooterOnly = { ...sim, isVisible: p => p.x === 0 };
+  hidden.shotPartial(shot, shooterOnly);
+  assert.equal(hidden.timeline.length + hidden.glow.items.length, 0);
+  const faded = fxWith(seeded(9)), fog = { ...sim };
+  faded.shot(shot, fog);
+  fog.isVisible = () => false;
+  faded.update(fog, 0.201);
+  assert.equal(faded.glow.items.length, 0, 'target went into fog during wind-up');
+  const mobile = fxWith(seeded(10)), victim = { x: 2, z: 0, team: 1, radius: 0.65 };
+  const cloaking = { ...sim, get: () => victim, isVisible: p => !p.cloaked };
+  mobile.shot(shot, cloaking);
+  victim.cloaked = true;
+  mobile.update(cloaking, 0.201);
+  assert.equal(mobile.glow.items.length, 0, 'a cloaked victim on a visible tile stays hidden');
+  const ambush = fxWith(seeded(11)), attacker = { x: 0, z: 0, team: 1 };
+  victim.cloaked = false;
+  const sight = { ...cloaking, get: id => id === 9 ? victim : attacker };
+  ambush.shot({ ...shot, source: 1 }, sight);
+  attacker.cloaked = true;
+  ambush.update(sight, 0.19);
+  ambush.update(sight, 0.011);
+  assert.ok(ambush.glow.items.length && ambush.glow.items.every(p => p.anchor.x === victim.x),
+    'an attacker that cloaked during the wind-up no longer identifies a side');
+});
+
+test('only the Vanguard direct hit replaces the ordinary impact particles', async () => {
+  const { Simulation } = await import('../src/simulation.js');
+  const sim = new Simulation({ ai: false });
+  const blade = sim.spawn('vanguard', 0, 0, 30), rifle = sim.spawn('ranger', 0, 0, 31);
+  const foe = sim.spawn('ranger', 1, 1.5, 30);
+  const hit = by => {
+    sim.events.length = 0;
+    foe.nextHitEffect = 0;
+    sim.hit(by, foe);
+    return sim.events.find(ev => ev.type === 'impact');
+  };
+  const health = foe.hp + foe.shield;
+  assert.equal(hit(blade).weapon, 'vanguard');
+  assert.ok(foe.hp + foe.shield < health);
+  assert.equal(blade.cooldown, blade.interval);
+  assert.equal(hit(rifle).weapon, undefined);
+  foe.hp = 1; foe.shield = 0;
+  hit(blade);
+  assert.equal(sim.get(foe.id), undefined);
+  assert.equal(sim.events.find(ev => ev.type === 'shot').targetRadius, foe.radius,
+    'a lethal strike still lands on the surface of a removed target');
+});
+
 test('gun contact keeps a quarter-width dust puff and shield hits emit no ring', () => {
   const fx=fxWith(seeded(7));
   fx.hit({x:1,y:.9,z:1},0,null);
