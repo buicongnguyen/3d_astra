@@ -284,7 +284,9 @@ def track(a, x, y, z, length, height, width, wheels=4, wheel_r=None, names=('Tra
     for i in range(wheels):
         wy = y - length / 2 + rr + i * (length - 2 * rr) / max(1, wheels - 1)
         cyl(a, n_wheels, steel, wr, .08, (x + side * (width / 2 + .03), wy, z - rr * .25), rot=ACROSS, seg=10, bevel=0, parent=parent)
-        cyl(a, n_wheels + '_hubs', belt, wr * .42, .1, (x + side * (width / 2 + .05), wy, z - rr * .25), rot=ACROSS, seg=6, bevel=0, parent=parent)
+        # Hubs are Wheel_hubs (rolling with their wheel), not Wheels*: the view measures the road-wheel radius on
+        # the last mesh named Wheels*, so a hub there would spin the wheels at the hub's radius.
+        cyl(a, 'Wheel_hubs', belt, wr * .42, .1, (x + side * (width / 2 + .05), wy, z - rr * .25), rot=ACROSS, seg=6, bevel=0, parent=parent)
 
 
 def lens_eye(a, loc, r, glow='TeamGlow', rim='Steel', names=('Eye_rim', 'Single_eye'), depth=.12, seg=18, facing=FORWARD, parent=None,

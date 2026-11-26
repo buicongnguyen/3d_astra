@@ -147,7 +147,15 @@ test("visual round V: every rig part keeps its exact name; nothing joins a gun r
       }
     } else assert.ok(!names.some((n) => n.startsWith("leg_")), `${type}: no leg pivots`);
     if (type === "rider") assert.ok(names.some((n) => /^Tyres/.test(n)) && names.some((n) => /^Spokes/.test(n)), "rider: Tyres and Spokes roll");
-    if (RIG_HULL.has(type)) assert.ok(names.some((n) => /^Wheels/.test(n)), `${type}: Wheels roll`);
+    // view.js measures a hull's wheels on the last mesh named Wheels*: exactly one, the road wheels (a hub named
+    // Wheels_hubs once set the radius and the Scorcher's wheels spun 2.4x too fast; hubs are Wheel_hubs).
+    if (RIG_HULL.has(type)) {
+      const wheels = json.nodes.filter((n) => n.mesh !== undefined && /^Wheels/.test(clean(n.name)));
+      assert.equal(wheels.length, 1, `${type}: one Wheels* mesh (${wheels.map((n) => n.name)})`);
+      const acc = json.accessors[json.meshes[wheels[0].mesh].primitives[0].attributes.POSITION];
+      const radius = (acc.max[1] - acc.min[1]) / 2;
+      assert.ok(radius > 0.15, `${type}: road wheel radius ${radius.toFixed(3)} m`);
+    }
     if (type === "scorcher") assert.ok(names.some((n) => /^Tracks/.test(n)), "scorcher: tracks");
     if (["scorcher", "walker"].includes(type)) {
       assert.ok(names.includes("Turret_pivot"), `${type}: Turret_pivot`);

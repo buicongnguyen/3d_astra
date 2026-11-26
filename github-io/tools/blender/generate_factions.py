@@ -295,10 +295,10 @@ def rider(a):
         box(a, 'Pannier_flaps', 'Team', (.22, .32, .07), (s * .3, .74, 1.05), bevel=0)
     # The solar fan: a canvas half disc behind the rider with team rays, on a brass hub; a pennant whip.
     fan = [(math.cos(t) * .64, 1.22 + math.sin(t) * .64) for t in [math.radians(d) for d in range(0, 181, 20)]]
-    prism(a, 'Sail', A, fan, .04, loc=(0, 1.0, 0), axis='Y', bevel=.01)
+    prism(a, 'Sail', 'Team', fan, .04, loc=(0, 1.0, 0), axis='Y', bevel=.01)
     for k in range(5):
         ang = math.radians(18 + k * 36)
-        limb(a, 'Sail_rays', 'Team', (math.cos(ang) * .12, .975, 1.22 + math.sin(ang) * .12), (math.cos(ang) * .6, .975, 1.22 + math.sin(ang) * .6), .05, .02, bevel=0)
+        limb(a, 'Sail_rays', A, (math.cos(ang) * .12, .975, 1.22 + math.sin(ang) * .12), (math.cos(ang) * .6, .975, 1.22 + math.sin(ang) * .6), .05, .02, bevel=0)
     cyl(a, 'Sail_hub', 'Hazard', .11, .1, (0, .97, 1.22), rot=FORWARD, seg=8, bevel=0)
     limb(a, 'Sail_post', 'Undercarriage', (0, .95, .86), (0, .97, 1.18), .06, bevel=0)
     limb(a, 'Whip', 'Hazard', (.24, .98, .9), (.3, 1.1, 2.7), .035, bevel=0)
@@ -316,7 +316,7 @@ def rider(a):
     prism(a, 'Coat_tails', 'Suit', [(-.26, .0), (.26, .0), (.3, -.36), (0, -.28), (-.3, -.36)], .06, loc=T.p((0, .2, .04)), rot=T.rot((.5, 0, 0)), axis='Y', bevel=0)
     box(a, 'Sash', 'Hazard', (.55, .4, .09), T.p((0, 0, .1)), T.rot(), bevel=.02)
     for s in (-1, 1):
-        box(a, 'Shoulder_pads', A, (.24, .34, .14), T.p((s * .3, .0, .55)), T.rot((0, s * .35, 0)), bevel=.05)
+        box(a, 'Shoulder_pads', 'Team', (.24, .34, .14), T.p((s * .3, .0, .55)), T.rot((0, s * .35, 0)), bevel=.05)
     H = Body(T.p((0, -.02, .62)), .12)
     sphere(a, 'Head', A, (.17, .18, .18), H.p((0, 0, .1)), H.rot(), seg=8, rings=6)
     torus(a, 'Scarf', 'Team', .16, .07, H.p((0, 0, -.02)), H.rot(), seg=10, ring=4)
@@ -547,9 +547,9 @@ def pylon(a):
         ang = math.pi / 4 + k * R
         m = frame((0, 0, 0), (0, 0, ang))
         a.part('Spine_seams', 'TeamGlow').tube([at(m, (.615, 0, 1.25)), at(m, (.57, 0, 1.95)), at(m, (.475, 0, 2.62)), at(m, (.355, 0, 3.25))], .025, seg=3)
-    for z, r, tilt in ((1.45, 1.02, .0), (2.25, .86, .06), (3.0, .66, -.06)):
+    for z, r, tilt in ((1.45, 1.02, .0), (2.2, .88, .06), (3.2, .62, -.06)):
         torus(a, 'Orbit_rings', 'Team', r, .1, (0, 0, z), rot=(tilt, 0, 0), seg=26, ring=6)
-    lens_eye(a, (0, -.42, 3.0), .2, seg=16)
+    lens_eye(a, (0, -.5, 2.68), .28, seg=16)
     prism(a, 'Crest', 'Team', [(.3, 3.95), (0, 4.75), (-.3, 3.95)], .12, axis='X', bevel=.02)
     for k in range(4):
         ang = math.pi / 4 + k * R
@@ -598,12 +598,12 @@ def veil_body(a, kind):
         box(a, 'Fin_edges', 'Team', (.23, .05, .05), T.p((s * .25, -.15, .79)), T.rot((0, s * 1.1, 0)), bevel=0)
     # Hood: a deep pointed cowl with a dark opening (the seer lens sits in it), a team rim and a tail.
     hood = [(-.28, -.2), (-.32, .02), (-.2, .26), (0, .44), (.2, .26), (.32, .02), (.28, -.2)]
-    prism(a, 'Hood', 'Charcoal', hood, .52, loc=T.p((0, .06, .86)), rot=T.rot((-.05, 0, 0)), axis='Y', bevel=.04, seg=2)
-    prism(a, 'Hood_tail', 'Charcoal', [(.2, .2), (.5, -.08), (.44, -.4), (.2, -.3)], .24, loc=T.p((0, 0, .86)), rot=T.rot(), axis='X', bevel=.02)
+    prism(a, 'Hood', 'Team', hood, .52, loc=T.p((0, .06, .86)), rot=T.rot((-.05, 0, 0)), axis='Y', bevel=.04, seg=2)
+    prism(a, 'Hood_tail', 'Team', [(.2, .2), (.5, -.08), (.44, -.4), (.2, -.3)], .24, loc=T.p((0, 0, .86)), rot=T.rot(), axis='X', bevel=.02)
     m = T.m @ frame((0, -.215, .86), (-.05, 0, 0))
     prism(a, 'Cowl', 'Undercarriage', [(x * .66, z * .72 - .03) for x, z in hood], .02, loc=at(m, (0, 0, 0)), rot=T.rot((-.05, 0, 0)), axis='Y', bevel=0)
     for (x0, z0), (x1, z1) in zip(hood, hood[1:]):
-        limb(a, 'Hood_trim', 'Team', at(m, (x0 * 1.02, 0, z0 * 1.02)), at(m, (x1 * 1.02, 0, z1 * 1.02)), .05, .03, bevel=0)
+        limb(a, 'Hood_trim', 'Steel', at(m, (x0 * 1.02, 0, z0 * 1.02)), at(m, (x1 * 1.02, 0, z1 * 1.02)), .05, .03, bevel=0)
     # A team stripe along the hood's ridge: the side's colour on top, seen from the game camera in any facing.
     mr = T.m @ frame((0, .06, .86), (-.05, 0, 0))
     limb(a, 'Hood_ridge', 'Team', at(mr, (0, -.24, .45)), at(mr, (0, .22, .45)), .1, .05, bevel=0)
@@ -635,7 +635,7 @@ def shade(a):
     """Veil Shade (Vanguard slot): a low, narrow hooded infiltrator; one seer lens glowing in the cowl, a crystal
     blade along the left forearm, a slim beam pistol with a crystal emitter, crystal shards on the shoulder."""
     T = veil_body(a, 'shade')
-    cyl(a, 'Seer_lens', 'Lens', .06, .04, T.p((.06, -.24, .86)), T.rot(FORWARD), seg=10, bevel=0)
+    cyl(a, 'Seer_lens', 'TeamGlow', .06, .04, T.p((.06, -.24, .86)), T.rot(FORWARD), seg=10, bevel=0)
     veil_arms(a, T, ((.36, -.24, 1.4), (.27, -.52, 1.3)), ((-.36, -.22, 1.42), (-.24, -.56, 1.32)))
     crystal(a, 'Crystal_blade', 'TeamGlow', (-.22, -.5, 1.34), (-.18, -1.14, 1.44), r=.08, sides=4, twist=.4)
     box(a, 'Blade_mount', 'Steel', (.12, .2, .1), (-.22, -.5, 1.36), bevel=.015)
@@ -655,7 +655,7 @@ def watcher(a):
     # Seer monocle: a big green lens on a silver arm in front of the right eye.
     limb(a, 'Monocle_arm', 'Steel', T.p((.22, -.14, .95)), T.p((.1, -.32, .87)), .03, bevel=0)
     cyl(a, 'Monocle_rim', 'Steel', .1, .06, T.p((.08, -.33, .86)), T.rot(FORWARD), seg=12, bevel=.01)
-    cyl(a, 'Seer_lens', 'Lens', .075, .05, T.p((.08, -.36, .86)), T.rot(FORWARD), seg=12, bevel=0)
+    cyl(a, 'Seer_lens', 'TeamGlow', .075, .05, T.p((.08, -.36, .86)), T.rot(FORWARD), seg=12, bevel=0)
     # A scroll case slung across the back, and a thin silver spire carrying three team crystals.
     cyl(a, 'Scroll_case', 'Charcoal', .085, .8, T.p((-.06, .26, .46)), T.rot((0, .7, 0)), seg=10, bevel=.015)
     for k in (-1, 1):
@@ -695,7 +695,7 @@ def veilrelay(a):
         m = frame((0, 0, 0), (0, 0, ang))
         # Each fin is folded: a charcoal blade and a shorter mauve leaf creased against it.
         fin = [(.42, .36), (1.38, .36), (1.1, 1.0), (.52, 3.3), (.42, 3.2)]
-        prism(a, 'Folded_fins', 'Charcoal', fin, .1, rot=(0, 0, ang - R), axis='X', bevel=.02)
+        prism(a, 'Folded_fins', 'Team', fin, .1, rot=(0, 0, ang - R), axis='X', bevel=.02)
         prism(a, 'Fin_leaves', A, [(.5, .5), (1.12, .5), (.94, 1.0), (.55, 2.4)], .06, rot=(0, 0, ang - R + .2), axis='X', bevel=.015)
         limb(a, 'Fin_piping', 'Steel', at(m, (1.38, 0, .38)), at(m, (1.1, 0, 1.02)), .035, bevel=0)
         limb(a, 'Fin_piping', 'Steel', at(m, (1.1, 0, 1.02)), at(m, (.52, 0, 3.32)), .035, bevel=0)
@@ -804,14 +804,23 @@ def build_all(names=None, parts=False, blend=False):
                             source='tools/blender/generate_factions.py + faction_parts.py (frontier_kit), visual round V',
                             animation='Runtime articulated parts; no baked clips'))
         print('FACTION_ASSET', name, a.triangles(), len(mats), mats, (OUT / f'{name}.glb').stat().st_size, flush=True)
-        if not blend:
-            # Free object names (leg_L, Turret_pivot, hover) for the next model, so none exports as ".001".
-            kit.clear_workspace(root)
+        # Free object names (leg_L, Turret_pivot, hover) for the next model, so none exports as ".001".
+        kit.clear_workspace(root)
     manifest = json.loads((OUT / 'manifest.json').read_text(encoding='utf-8'))
     built = {e['name']: e for e in entries}
     manifest['assets'] = [built.pop(e['name'], e) for e in manifest['assets']] + list(built.values())
     (OUT / 'manifest.json').write_bytes((json.dumps(manifest, indent=2) + '\n').encode('utf-8'))
     if blend:
+        # The library file holds every model side by side (names there may take Blender suffixes; the GLBs
+        # above were exported one model at a time, so theirs never do).
+        for name in names or CATALOG:
+            faction, kind = CATALOG[name][:2]
+            a = fp.FactionAsset(name, root, ao_distance=.7 if name in INFANTRY else .55 if kind == 'unit' else 1.3,
+                                grime_height=.45 if kind == 'unit' else .8, ao_samples=40)
+            a.armor = FACTION_ARMOR[faction]
+            BUILDERS[name](a)
+            consolidate(a)
+            a.finish()
         source = ROOT / 'assets/source'
         source.mkdir(parents=True, exist_ok=True)
         bpy.ops.wm.save_as_mainfile(filepath=str(source / 'frontier-factions.blend'))
