@@ -2,6 +2,14 @@
 
 ## Unreleased: Round A.2
 
+### Richer ground, worn tracks and a land below the edge (V1 terrain)
+- **Ground with grain:** every surface now has painted detail you can see at phone zoom (grass clumps, pebbly dirt, wind-rippled sand, cracked hardpan, rock, packed snow and ice, basalt, ash, beach, cliff strata), blended along softly broken borders and kept in each map's own colours; ramps, kill zones, ember cracks, crossings and every other mark read as before. Twelve layers painted by Codex (owner-commissioned), road and cliff generated; they load with the battle (36-64 KB a match on phones, 195-313 KB on desktop High), never on the title screen, and the light painted in them falls from the sun's side.
+- **Worn tracks** from each camp to its crystals, the nearest crystal fields and the middle of the map, with wheel ruts; grass and flowers keep off them.
+- **Beyond the edge:** no more flat void. Each land sits on its own lowland (meadows and groves, forest, dunes and mesas, copper terraces, dark rock and spires, snow with ice and pines, a basalt plain with lava rivers and a volcano, ash and dead trees) and Coral Isles stands in a sea with islets and palms. The cliff edge of the playable ground stays clear. Still one draw.
+- **Fuller dressing:** meadows grow in drifts, groves line the far edges, rocks gather at plateau feet, reeds on the river banks and lake shores, basalt spires, coral in the lagoon shallows; all in the one scatter draw and never where it could hide a unit.
+- **Water edges:** foam laps along every bank, rivers run with faint streaks, banks are wet and darker, and fords are stepping stones over shallow running water with riffles. All fords and lake strips are one draw (Twin Rivers drew four).
+- View only: every golden pin unchanged; phone draws no higher.
+
 ### Readable deaths at phone zoom
 - A unit that dies now reads at a glance on a phone: the model flashes white-hot, a ring in its side's colour opens where it fell and a fainter ring stays there for a moment; soldiers are popped off their feet, machines pop and tilt with a puff of dark smoke, a shot-down flyer bursts in the air and leaves its ring where it crashes. Losing one of your own units gives a bigger double ring and a short mark on the minimap. Follows Unit motion, combat motion and reduced motion; no extra draw calls (every sprite comes from the existing effect pools). Tests: `tests/death-cue.test.js`, `npm run test:death-cue`.
 ### Home-screen app and iPhone readiness (Platform reach)

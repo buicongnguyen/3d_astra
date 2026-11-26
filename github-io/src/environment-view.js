@@ -31,6 +31,53 @@ export function optimizeEnvironment(assets) {
   }
   for (const geometry of original) geometry.dispose();
 }
+// V1 terrain (2026-11-26): water that moves at its edges. A foam line laps along every bank and shore (broken, breathing),
+// rivers carry faint streaks downstream, riffles run across the shallow water of each ford, and lava (Ember Crown)
+// crawls with darker crust instead of foam. Driven by the `aLife` attribute (shore, flow, ford) and one time uniform;
+// the same draw, no texture. Night and storm looks still tint it through the material colour.
+export function waterLife(material, time, foam, lava = false) {
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uWaterTime = time;
+    shader.uniforms.uWaterFoam = { value: foam };
+    shader.vertexShader = "attribute vec3 aLife;\nvarying vec3 vLife;\nvarying vec3 vWaterW;\n" + shader.vertexShader
+      .replace("#include <project_vertex>", "#include <project_vertex>\nvLife = aLife;\nvWaterW = (modelMatrix * vec4(transformed, 1.0)).xyz;");
+    shader.fragmentShader = `uniform float uWaterTime;
+uniform vec3 uWaterFoam;
+varying vec3 vLife;
+varying vec3 vWaterW;
+// A sine-free hash (cheap on every GPU, and on software renderers).
+float wHash(vec2 p) { vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+float wNoise(vec2 p) {
+  vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(wHash(i), wHash(i + vec2(1.0, 0.0)), u.x), mix(wHash(i + vec2(0.0, 1.0)), wHash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+` + shader.fragmentShader.replace("#include <color_fragment>", `#include <color_fragment>
+      {
+        float t = uWaterTime, shore = vLife.x, flow = vLife.y, ford = vLife.z;
+        vec2 w = vWaterW.xz;
+#ifdef WATER_LAVA
+        // Lava: dark crust drifting slowly over the glow.
+        float crust = smoothstep(0.52, 0.78, wNoise(w * 0.55 + vec2(-t * 0.12 * flow, t * 0.03)));
+        diffuseColor.rgb *= 1.0 - crust * 0.38;
+#else
+        // Flow: faint lighter streaks travelling downstream, calmer at the banks.
+        float streak = flow > 0.01 ? wNoise(vec2(w.x * 0.9 - t * 0.85 * flow, w.y * 2.6)) * wNoise(vec2(w.x * 0.35 - t * 0.4 * flow, w.y * 1.3 + 7.0)) : 0.0;
+        diffuseColor.rgb += smoothstep(0.32, 0.62, streak) * 0.07 * flow * (1.0 - shore);
+        // Foam laps along the banks: a broken line that comes and goes.
+        float lap = 0.5 + 0.5 * sin(t * 1.25 + w.x * 0.8 + w.y * 0.6);
+        float broken = shore > 0.78 ? smoothstep(0.32, 0.62, wNoise(w * 1.4 + vec2(t * 0.25, -t * 0.18))) : 0.0;
+        float edge = smoothstep(0.80 + 0.07 * lap, 0.97, shore) * (0.45 + 0.55 * broken);
+        // Riffles: white ripples crossing the ford's shallow water, moving downstream.
+        float riffle = ford > 0.01 ? ford * smoothstep(0.62, 0.95, wNoise(vec2(w.x * 2.4 - t * 1.7 * max(flow, 0.4), w.y * 1.1))) * 0.55 : 0.0;
+        diffuseColor.rgb = mix(diffuseColor.rgb, uWaterFoam * diffuse, clamp(edge * 0.85 + riffle, 0.0, 1.0));
+#endif
+      }`);
+    if (lava) shader.fragmentShader = "#define WATER_LAVA\n" + shader.fragmentShader;
+  };
+  material.customProgramCacheKey = () => `water-life-v1|${lava ? 1 : 0}`;
+  material.needsUpdate = true;
+  return material;
+}
 export class EnvironmentView {
   constructor(scene, terrain, assets, fog = null) {
     this.scene = scene;
@@ -74,12 +121,14 @@ export class EnvironmentView {
         const f = nearFord(positions.getX(i));
         if (f && Math.abs(positions.getX(i) - f.x) <= f.half) positions.setZ(i, 0.12);
       }
-      const colors = new Float32Array(positions.count * 3);
+      const colors = new Float32Array(positions.count * 3), life = new Float32Array(positions.count * 3);
       for (let i = 0; i < positions.count; i++) {
         const f = nearFord(positions.getX(i)), bank = Math.abs(positions.getY(i)), x = f ? Math.abs(positions.getX(i) - f.x) : Infinity, half = f ? f.half : 5;
-        // The ford: a pale gravel bar under shallow water, edged across the river by white riffle
-        // lines where the deep channel spills over it, so the crossing reads from any zoom.
-        if (x <= half - 1) c.copy(ford).lerp(gravel, 0.82).lerp(foam, (positions.getX(i) + positions.getY(i)) % 2 ? 0.12 : 0.3).multiplyScalar(1.15);
+        // V1 terrain: shore (0 mid-stream, 1 at the bank), flow (rivers run), ford (shallow water over stones).
+        life.set([bank / 3, land?.lava ? 0.35 : 1, x <= half ? 1 : 0], i * 3);
+        // The ford: shallow, clear water running over a sandy bed and stepping stones (fordMarks), edged across the
+        // river by white riffle lines where the deep channel spills over it, so the crossing reads from any zoom.
+        if (x <= half - 1) c.copy(shallow).lerp(ford, 0.55).lerp(gravel, 0.22).lerp(foam, (positions.getX(i) + positions.getY(i)) % 2 ? 0.04 : 0.12).multiplyScalar(1.08);
         else if (x <= half) c.copy(foam).multiplyScalar(1.3);
         else if (bank > 2.5) c.copy(shallow).lerp(foam, 0.6);
         else if (bank > 1.5) c.copy(shallow);
@@ -87,6 +136,7 @@ export class EnvironmentView {
         c.toArray(colors, i * 3);
       }
       plane.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      plane.setAttribute("aLife", new THREE.BufferAttribute(life, 3));
       // The plane lies in x/y before the mesh turns it flat: world z is -y.
       if (river.z) plane.translate(0, -river.z, 0);
       return plane;
@@ -97,7 +147,7 @@ export class EnvironmentView {
       // Inside, the water runs 1.2 m under the island's cliff rock, so no cut bank shows between them from the far side.
       const inner = Math.max(0.01, lake.inner - 1.2), outer = lake.r + 0.6;
       const ring = new THREE.RingGeometry(inner, outer, 128, 12), positions = ring.attributes.position;
-      const colors = new Float32Array(positions.count * 3), mid = (inner + outer) / 2, width = (outer - inner) / 2;
+      const colors = new Float32Array(positions.count * 3), life = new Float32Array(positions.count * 3), mid = (inner + outer) / 2, width = (outer - inner) / 2;
       for (let i = 0; i < positions.count; i++) {
         // The ring lies in x/y: world x = x, world z = -y.
         const wx = lake.x + positions.getX(i), wz = lake.z - positions.getY(i);
@@ -118,10 +168,13 @@ export class EnvironmentView {
         // A W9 isles inlet runs off the map: its ring stops at the edge (the skirt pours it over, map-edge.js).
         if (Math.abs(wx) > terrain.half) positions.setX(i, Math.sign(wx) * terrain.half - lake.x);
         if (Math.abs(wz) > terrain.half) positions.setY(i, lake.z - Math.sign(wz) * terrain.half);
+        // V1 terrain: shore and ford for the water shader (lakes do not flow; lava crawls).
+        life.set([bank, land?.lava ? 0.2 : 0, edge <= 0 && !terrain.onLakeBridge(lake, wx, wz) ? 1 : 0], i * 3);
         // A plank bridge strip (W9 isles): the ground is level there and the bridge deck covers it; no gravel bar.
         if (edge <= 0 && terrain.onLakeBridge(lake, wx, wz)) { c.copy(deep); c.toArray(colors, i * 3); continue; }
         if (edge <= 0) positions.setZ(i, 0.12);
-        if (edge <= -1) c.copy(ford).lerp(gravel, 0.82).lerp(foam, i % 2 ? 0.12 : 0.3).multiplyScalar(1.15);
+        // An ice road stays pale ice; any other lake ford is clear shallow water over a sandy bar.
+        if (edge <= -1) (land?.ice ? c.copy(ford).lerp(gravel, 0.82).lerp(foam, i % 2 ? 0.12 : 0.3).multiplyScalar(1.15) : c.copy(shallow).lerp(ford, 0.6).lerp(gravel, 0.3).lerp(foam, i % 2 ? 0.04 : 0.12).multiplyScalar(1.08));
         else if (edge <= 0) c.copy(foam).multiplyScalar(1.3);
         else if (bank > 0.85) c.copy(shallow).lerp(foam, 0.6);
         else if (bank > 0.6) c.copy(shallow);
@@ -129,6 +182,7 @@ export class EnvironmentView {
         c.toArray(colors, i * 3);
       }
       ring.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+      ring.setAttribute("aLife", new THREE.BufferAttribute(life, 3));
       ring.translate(lake.x, -lake.z, 0);
       planes.push(ring);
     }
@@ -141,6 +195,8 @@ export class EnvironmentView {
     this.root.add(this.water);
     this.waterBase = waterGeometry.attributes.position.array.slice();
     waterMat.vertexColors = true;
+    this.waterTime = { value: 0 };
+    waterLife(waterMat, this.waterTime, new THREE.Color(theme.foam), !!land?.lava);
     const normalCanvas = document.createElement("canvas");
     normalCanvas.width = 128;
     normalCanvas.height = 128;
@@ -195,9 +251,10 @@ export class EnvironmentView {
       seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
       return seed / 4294967296;
     };
-    for (const river of terrain.rivers) for (const c of river.fords) this.fordMarks(c, theme, river.z);
-    // Every lake strip's marks (ford posts, plank bridges) in one merged mesh: one draw however many strips.
+    // Every river ford's and lake strip's marks (posts, cairns, stepping stones, plank bridges) in one merged mesh:
+    // one draw however many crossings (V1 terrain: river fords joined it; Twin Rivers drew four meshes for them).
     const strips = [];
+    for (const river of terrain.rivers) for (const c of river.fords) strips.push(...this.fordMarks(c, theme, river.z));
     for (const lake of lakes) for (const f of lake.fords) strips.push(...(f.bridge ? this.lakeBridgeParts(lake, f, theme) : this.lakeFordMarks(lake, f, theme, land)));
     if (strips.length) {
       const geometry = mergeGeometries(strips, false);
@@ -320,18 +377,19 @@ export class EnvironmentView {
     this.cursor = 0;
     this.emission = 0;
   }
-  // The ford's marks, one merged vertex-coloured mesh (one draw, no shadow pass): a line of
-  // banded marker posts down each edge of the crossing, a cairn at each corner on the banks and
-  // flat cobbles just breaking the surface between them. Always shown, like the bridges.
+  // The ford's marks (merged with every other crossing's into the one "ford-marks" mesh: one draw, no shadow pass):
+  // a line of banded marker posts down each edge of the crossing, a cairn at each corner on the banks and, V1 terrain,
+  // stepping stones across the stream in staggered rows, each with a ring of foam where the water parts round it.
+  // Returns the parts, already placed at the river's z.
   fordMarks(c, theme, riverZ = 0) {
     const parts = [], color = new THREE.Color(), matrix = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler();
-    let seed = 991;
+    let seed = 991 + Math.round(c.x * 7 + riverZ * 13);
     const rand = () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
     const piece = (geometry, hex, x, y, z, sx, sy, sz, turn = 0) => {
       const g = geometry.index ? geometry.toNonIndexed() : geometry;
       if (g !== geometry) geometry.dispose();
       g.deleteAttribute("uv");
-      g.applyMatrix4(matrix.compose(new THREE.Vector3(x, y, z), q.setFromEuler(e.set(0, turn, 0)), new THREE.Vector3(sx, sy, sz)));
+      g.applyMatrix4(matrix.compose(new THREE.Vector3(x, y, z + riverZ), q.setFromEuler(e.set(0, turn, 0)), new THREE.Vector3(sx, sy, sz)));
       color.set(hex);
       const colors = new Float32Array(g.attributes.position.count * 3);
       for (let i = 0; i < colors.length; i += 3) color.toArray(colors, i);
@@ -339,6 +397,7 @@ export class EnvironmentView {
       parts.push(g);
     };
     const wood = theme.wood, band = "#ffe9a8", stone = new THREE.Color(theme.rock).lerp(new THREE.Color(theme.dust), 0.35).getHexString();
+    const top = new THREE.Color(theme.rock).lerp(new THREE.Color(theme.dust), 0.6).getHexString(), foamHex = new THREE.Color(theme.foam).getHexString();
     for (const side of [-1, 1]) {
       const x = c.x + side * (c.half - 0.4);
       for (const z of [-2.2, 0, 2.2]) {
@@ -353,21 +412,23 @@ export class EnvironmentView {
         piece(new THREE.DodecahedronGeometry(0.22), band, cx, 0.9, cz, 1, 0.8, 1, rand() * 6);
       }
     }
-    for (let i = 0; i < 16; i++) {
-      const x = c.x + (rand() - 0.5) * (c.half * 2 - 2.2), z = (rand() - 0.5) * 5.2, s = 0.22 + rand() * 0.2;
-      piece(new THREE.DodecahedronGeometry(1), `#${stone}`, x, 0.06, z, s * 1.3, s * 0.4, s, rand() * 6);
+    // Stepping stones: staggered rows from bank to bank, flat-topped and just clear of the shallow water (world y 0.03),
+    // a foam collar round each; a few sunken pebbles between them.
+    const rows = Math.max(2, Math.round((c.half * 2 - 3) / 2.2));
+    for (let row = 0; row < rows; row++) {
+      const rx = c.x - (c.half - 1.6) + (row * (c.half * 2 - 3.2)) / Math.max(1, rows - 1), shift = row % 2 ? 0.42 : 0;
+      for (let z = -2.55 + shift; z <= 2.6; z += 0.86) {
+        const s = 0.3 + rand() * 0.1, x = rx + (rand() - 0.5) * 0.35, zz = z + (rand() - 0.5) * 0.18;
+        // A foam collar and a flat-topped stone, six-sided each (48 triangles a stone: phones draw every ford whole).
+        piece(new THREE.CylinderGeometry(s * 1.32, s * 1.4, 0.05, 6), `#${foamHex}`, x, 0.05, zz, 1, 1, 1, rand() * 6);
+        piece(new THREE.CylinderGeometry(s * 0.86, s * 1.08, 0.17, 6), `#${top}`, x, 0.09, zz, 1, 1, 1, rand() * 6);
+      }
     }
-    const geometry = mergeGeometries(parts, false);
-    for (const p of parts) p.dispose();
-    // Posts and stones stand above the fog-of-war plane: they sink into the fog colour like scenery.
-    const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, flatShading: true });
-    if (this.fog) fogAware(material, this.fog);
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.name = "ford-marks";
-    if (riverZ) mesh.position.z = riverZ;
-    mesh.receiveShadow = true;
-    this.root.add(mesh);
-    this.owned.push(geometry, material);
+    for (let i = 0; i < 10; i++) {
+      const x = c.x + (rand() - 0.5) * (c.half * 2 - 2.2), z = (rand() - 0.5) * 5.2, s = 0.18 + rand() * 0.14;
+      piece(new THREE.IcosahedronGeometry(1, 0), `#${stone}`, x, 0.04, z, s * 1.3, s * 0.4, s, rand() * 6);
+    }
+    return parts;
   }
   // A lake ford's marks in the style of the river fords' (merged with every other lake strip's: one draw): banded posts
   // down both edges of the strip from the island's foot to the shore, a cairn at each shore corner, flat cobbles.
@@ -514,6 +575,7 @@ export class EnvironmentView {
       p.needsUpdate = true;
       this.normalTexture.offset.x = sim.time * 0.018;
       this.normalTexture.offset.y = sim.time * 0.007;
+      if (this.waterTime) this.waterTime.value = sim.time % 3600;
     }
     this.particleMesh.visible = this.motion && this.settings.detail;
     if (!active || !this.particleMesh.visible) return;

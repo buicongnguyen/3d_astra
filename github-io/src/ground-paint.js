@@ -2,6 +2,8 @@ import { SURFACES } from "./terrain.js";
 import { themeFor } from "./visual-style.js";
 import { outward } from "./plateau-relief.js";
 import { landOf } from "./lands.js";
+import { SURFACE_CODE } from "./ground-detail.js";
+import { planPaths } from "./worn-paths.js";
 
 // Paints a map's ground texture once: surface colours from the theme, broad patches of the
 // theme's accent colour so no map is one flat tone, then small hand-drawn detail (grass dabs,
@@ -36,6 +38,9 @@ export function paintGround(ctx, terrain, size, random) {
   const cells = Math.min(512, size / 2), small = document.createElement("canvas");
   small.width = small.height = cells;
   const sctx = small.getContext("2d"), image = sctx.createImageData(cells, cells), data = image.data, accent = table.accent;
+  // The surface of every cell as painted (warped borders, ramps as bare ground): the ground detail's splat
+  // (ground-detail.js) is built from it, so the tiled layers follow the painted borders exactly.
+  const grid = new Uint8Array(cells * cells);
   for (let y = 0; y < cells; y++)
     for (let x = 0; x < cells; x++) {
       const wx = ((x + 0.5) / cells) * terrain.size - terrain.half, wz = ((y + 0.5) / cells) * terrain.size - terrain.half;
@@ -46,6 +51,7 @@ export function paintGround(ctx, terrain, size, random) {
         const warped = surface(wx +(noise(wx * 0.3 + 5, wz * 0.3) - 0.5) * 2.4, wz + (noise(wx * 0.3 - 9, wz * 0.3 + 4) - 0.5) * 2.4);
         if (SOFT.has(warped) && warped !== "mud") type = warped;
       }
+      grid[y * cells + x] = SURFACE_CODE[type] ?? 0;
       let [r, g, b] = table[type];
       if (SOFT.has(type)) {
         const broad = noise(wx * 0.05 + 11, wz * 0.05 - 7) * 0.65 + noise(wx * 0.13 - 3, wz * 0.13 + 19) * 0.35;
@@ -76,8 +82,9 @@ export function paintGround(ctx, terrain, size, random) {
   const scale = size / terrain.size, world = (p) => p / scale - terrain.half;
   const tint = ([r, g, b], a) => `rgba(${r | 0},${g | 0},${b | 0},${a})`;
   const light = rgb(themeFor(terrain.id).sun), dark = rgb(themeFor(terrain.id).cliffDeep);
-  // Fine grain everywhere.
-  for (let i = 0; i < 9000 * k * k; i++) {
+  // Fine grain everywhere. V1 terrain: thinner (the detail layers carry the grain in battle; this stays for the title
+  // screen's preview, the minimap and a ground whose layers are off).
+  for (let i = 0; i < 9000 * k * k * 0.55; i++) {
     const x = random() * size, y = random() * size, radius = (1 + random() * 5) * k;
     ctx.fillStyle = random() > 0.5 ? tint(light, random() * 0.07) : tint(dark, random() * 0.08);
     ctx.beginPath();
@@ -89,7 +96,9 @@ export function paintGround(ctx, terrain, size, random) {
   const leaf = rgb(themeFor(terrain.id).leafAlt), shade = rgb(themeFor(terrain.id).leaf);
   // W9 lands (src/lands.js): snow is painted with wind drifts and sparkle, volcanic ash with grey flecks.
   const paint = landOf(terrain)?.paint, foamTint = rgb(themeFor(terrain.id).foam), dustTint = rgb(themeFor(terrain.id).dust);
-  for (let i = 0; i < 11000 * k * k; i++) {
+  // V1 terrain: a third as many strokes as before, so painted blades, ripples and drifts do not double the detail layers'
+  // grain or cross its direction (texture review 2026-11-26).
+  for (let i = 0; i < 11000 * k * k * 0.34; i++) {
     const x = random() * size, y = random() * size, pick = random(), turn = random(), type = surface(world(x), world(y));
     if (paint === "snow" && (type === "grass" || type === "dirt")) {
       // Wind-carved drifts: soft pale crescents all leaning one way, and a few bright glints.
@@ -135,6 +144,8 @@ export function paintGround(ctx, terrain, size, random) {
       ctx.beginPath(); ctx.ellipse(x + ox, y - 0.4 * k, r * 0.85, r * 0.6, 0, 0, Math.PI * 2); ctx.fill();
     }
   }
+  paintPaths(ctx, terrain, size);
+  paintEdgeRim(ctx, terrain, size);
   if (paint === "embers") paintEmberCracks(ctx, terrain, size, random, surface);
   paintPlateaus(ctx, terrain, size);
   if (terrain.river) {
@@ -182,6 +193,81 @@ export function paintGround(ctx, terrain, size, random) {
       }
     }
   }
+  return { grid, cells };
+}
+
+// The playable edge (V1 terrain): with a land below the edge instead of a dark void, the border needs its own line.
+// A soft dark band 1.4 m wide inside the edge and a thin pale lip on it, like a plateau's rim; water runs under it.
+export function paintEdgeRim(ctx, terrain, size) {
+  const theme = themeFor(terrain.id), k = size / terrain.size, band = 1.4 * k, lipW = 0.22 * k;
+  const deep = rgb(theme.cliffDeep), lip = rgb(theme.dust).map((v, i) => v + (rgb(theme.sun)[i] - v) * 0.3);
+  ctx.save();
+  for (const [x, y, w, h, gx0, gy0, gx1, gy1] of [[0, 0, size, band, 0, 0, 0, band], [0, size - band, size, band, 0, size, 0, size - band],
+    [0, 0, band, size, 0, 0, band, 0], [size - band, 0, band, size, size, 0, size - band, 0]]) {
+    const g = ctx.createLinearGradient(gx0, gy0, gx1, gy1);
+    g.addColorStop(0, `rgba(${deep[0]},${deep[1]},${deep[2]},0.34)`);
+    g.addColorStop(1, `rgba(${deep[0]},${deep[1]},${deep[2]},0)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(x, y, w, h);
+  }
+  ctx.strokeStyle = `rgba(${lip[0] | 0},${lip[1] | 0},${lip[2] | 0},0.7)`;
+  ctx.lineWidth = lipW;
+  ctx.strokeRect(lipW / 2, lipW / 2, size - lipW, size - lipW);
+  ctx.restore();
+}
+
+// Worn paths (V1 terrain, worn-paths.js): a soft band of trodden earth with two darker wheel ruts along each track,
+// on open ground only (roads, water, crossings and ramps keep their own paint). Drawn into a 512 px mask first, where
+// overlapping tracks take the stronger wear (no darker blots where they cross), then laid over the ground once.
+const PATH_LAND = new Set(["grass", "dirt", "sand", "stone", "mud"]);
+export function paintPaths(ctx, terrain, size, paths = planPaths(terrain)) {
+  if (!paths.length || typeof document === "undefined") return;
+  const n = 512, s = n / terrain.size, at = (v) => (v + terrain.half) * s;
+  const mask = document.createElement("canvas");
+  mask.width = mask.height = n;
+  const m = mask.getContext("2d");
+  m.fillStyle = "#000"; m.fillRect(0, 0, n, n);
+  m.globalCompositeOperation = "lighten"; m.lineCap = "round"; m.lineJoin = "round";
+  const open = (x, z) => PATH_LAND.has(terrain.at(x, z)) && !terrain.onRamp?.(x, z, 0.6);
+  for (const p of paths)
+    for (let k = 1; k < p.points.length; k++) {
+      const [ax, az] = p.points[k - 1], [bx, bz] = p.points[k];
+      if (!open((ax + bx) / 2, (az + bz) / 2)) continue;
+      const w = Math.round(((p.wear[k - 1] + p.wear[k]) / 2) * 255);
+      if (w <= 2) continue;
+      const l = Math.hypot(bx - ax, bz - az) || 1, nx = -(bz - az) / l, nz = (bx - ax) / l;
+      m.strokeStyle = `rgb(${w},0,0)`; m.lineWidth = p.width * s;
+      m.beginPath(); m.moveTo(at(ax), at(az)); m.lineTo(at(bx), at(bz)); m.stroke();
+      m.strokeStyle = `rgb(0,${w},0)`; m.lineWidth = Math.max(1, 0.32 * s);
+      for (const side of [-1, 1]) {
+        const o = side * p.width * 0.21;
+        m.beginPath(); m.moveTo(at(ax + nx * o), at(az + nz * o)); m.lineTo(at(bx + nx * o), at(bz + nz * o)); m.stroke();
+      }
+    }
+  const soft = document.createElement("canvas");
+  soft.width = soft.height = n;
+  const sc = soft.getContext("2d", { willReadFrequently: true });
+  sc.filter = `blur(${Math.max(1, 0.3 * s).toFixed(1)}px)`;
+  sc.drawImage(mask, 0, 0);
+  sc.filter = "none";
+  const theme = themeFor(terrain.id), land = landOf(terrain);
+  const mixed = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+  // Trodden earth in the land's own colours (packed blue-grey snow on Frostmere), ruts a shade darker.
+  const worn = (land?.paint === "snow" ? mixed(rgb(theme.dirt), rgb(theme.stone), 0.35) : mixed(rgb(theme.road), rgb(theme.dirt), 0.55)).map((v) => v * 0.9);
+  const rut = worn.map((v) => v * 0.68);
+  const image = sc.getImageData(0, 0, n, n), d = image.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const a = Math.min(1, (d[i] / 255) * 0.85), r = (d[i + 1] / 255) * 0.42, alpha = 1 - (1 - a) * (1 - r);
+    if (alpha <= 0.004) { d[i + 3] = 0; continue; }
+    const t = r / (a + r);
+    d[i] = worn[0] + (rut[0] - worn[0]) * t; d[i + 1] = worn[1] + (rut[1] - worn[1]) * t; d[i + 2] = worn[2] + (rut[2] - worn[2]) * t;
+    d[i + 3] = alpha * 255;
+  }
+  sc.putImageData(image, 0, 0);
+  ctx.save();
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(soft, 0, 0, size, size);
+  ctx.restore();
 }
 
 // Volcano (W9): glowing cracks in the basalt. Each crack wanders a few metres in short zigzag steps, drawn twice:
@@ -281,6 +367,8 @@ export function paintPlateaus(ctx, terrain, size) {
     ctx.beginPath(); trace(p, 0.9); ctx.fillStyle = tint(deep, 0.45); ctx.fill();
     ctx.restore();
     ctx.beginPath(); trace(p, 1.15); ctx.lineWidth = 1.3 * k; ctx.strokeStyle = tint(deep, 0.24); ctx.stroke();
+    // V1 terrain: a soft occlusion ring all round the foot (the cliff shades the ground beside it on every side).
+    ctx.beginPath(); trace(p, 1.7); ctx.lineWidth = 2.2 * k; ctx.strokeStyle = tint(deep, 0.14); ctx.stroke();
     ctx.filter = "none";
     ctx.restore();
     ring(p, -1.2, -0.6, tint(lip, 0.4));

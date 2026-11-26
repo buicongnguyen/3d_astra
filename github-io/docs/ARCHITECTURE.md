@@ -58,6 +58,7 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 | `story/chronicles.js`, `chronicles-ui.js`, `chronicles.css` | Faction Chronicles (0.20): four three-mission campaigns played as another faction; the map cards, the list section and the chronicle headers |
 | `view.js` | Rendering, models, effects, fog, camera |
 | `scatter.js`, `map-edge.js`, `ground-paint.js`, `plateau-relief.js`, `fog-aware.js`, `visual-style.json` | Map look: palettes, lighting, dressing; plateau rock faces, lips and road ramps merged into the ground mesh |
+| `ground-detail.js`, `worn-paths.js` | V1 terrain: tiled ground detail layers blended by the painted surfaces (the land/layer table, the splat, the shader patch, battle-start loading; docs/ASSET_PIPELINE.md "Ground detail layers") and worn tracks planned from map data (painted, splatted as dirt, kept clear by the dressing). `map-edge.js` builds the surround below the edge per land (`SURROUND`) |
 | `faction-colors.js` | Faction colours for mission enemies |
 | `tactics-ui.js`, `tactics-card.js`, `tactics-view.js` | Ability tiles (ready pulse and glow), stances, Barrage aiming and impact rings, rank marks |
 | `ability-hints.js` | First-time hint per ability (shown by `app/ui-extras.js` in the fight-hint slot, remembered in localStorage) |

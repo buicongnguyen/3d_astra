@@ -3,6 +3,17 @@ import { readFileSync, readdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 
 const pkg = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
+// V1 terrain: a hash of the ground detail layers (public/textures/ground/*.webp and 256/*.webp). The game asks for each layer with
+// ?v=<this>, so a repainted set with the same file names reaches players without any code change.
+function groundTextureVersion() {
+  try {
+    const dir = new URL("./public/textures/ground/", import.meta.url), webp = (sub) => readdirSync(new URL(sub, dir)).filter((name) => name.endsWith(".webp")).map((name) => sub + name);
+    const names = [...webp(""), ...webp("256/")].sort();
+    return createHash("sha256").update(names.map((name) => name + createHash("sha256").update(readFileSync(new URL(name, dir))).digest("hex")).join()).digest("hex").slice(0, 10);
+  } catch {
+    return "";
+  }
+}
 
 // Publishes sw.js: the template in tools/ with this build's file list and version.
 function serviceWorker() {
@@ -52,6 +63,7 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10)),
+    __GROUND_TEXTURES__: JSON.stringify(groundTextureVersion()),
   },
   plugins: [serviceWorker(), iosSplash(), {
     name: "publish-recreation-prompt",

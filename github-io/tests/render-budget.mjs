@@ -206,6 +206,14 @@ for (const k of Object.keys(limits)) limits[k] += 2;
 // A7 phone measurements with the pooled overlays and shared rigid finish batches.
 Object.assign(limits, {'army-300-eco':105, 'battle-dock-eco':100, 'defence-heroic-eco':122, 'combined-defence-eco':94});
 for (const s of scenarios) if (s.name === 'three-rivals-eco') s.triangles = 330000; // 303,222 -> 324,494 triangles with the HUD's taller phone frame
+// V1 terrain (2026-11-26): the land below the map edge (the backdrop's lowland, silhouettes and lava rivers, drawn whole)
+// adds 4-5k triangles to every scene and the stepping-stone fords a few hundred; draws are unchanged in all 40 scenarios
+// (twinrivers-high 153 -> 150: its fords' marks are one mesh now). Five scenes sat within 1.4 % of their triangle guard on
+// the base build (main 9fbb7c6, p95): three-rivals-eco 328,741 of 330k, three-factions-eco 313,102 of 315k,
+// defence-river-eco 599,644 of 600k, defence-carrier-eco 599,659 of 600k, air-battle 315,793 of 320k. Each guard is now
+// that base figure + about 10k (V1: 333,241, 317,602, 603,916, 604,673, 320,293).
+const V1_TRIANGLES = {'three-rivals-eco':340000, 'three-factions-eco':325000, 'defence-river-eco':610000, 'defence-carrier-eco':610000, 'air-battle':326000};
+for (const s of scenarios) if (Object.hasOwn(V1_TRIANGLES, s.name)) s.triangles = V1_TRIANGLES[s.name];
 // W10 (2026-11-26, same run): Hollow Fork 64 draws with the six kinds on half its wave (Gorge Road's defence-wave-eco 62;
 // 62 without the kinds: the rings are one draw, the tint none). Kingfisher Bridges 91 (89 without kinds): Long Crossing's
 // defence-carrier-eco is 91, Twin Bridges' defence-river-eco 78 (a Sunward wave, one bridge blown; the Warden roster's
@@ -267,6 +275,9 @@ try {
       const s = f.sim, v = f.view;
       // R3-FX: the weapon sprite sheets (two instanced draws) load when the battle starts; measure with them loaded, as played.
       await v.fx.sprites.whenReady();
+      // V1 terrain: the land's ground detail layers load with them (same draw, more texture reads): measure with them on.
+      await v.groundDetail?.whenReady?.();
+      v.groundDetail?.update?.(0, true);
       s.aiEnabled = false;
       if (scenario.reveal) { s.visible[0].fill(1); s.explored[0].fill(1); }
       if (scenario.wave) {

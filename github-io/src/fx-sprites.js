@@ -95,6 +95,8 @@ export class FxSprites {
   get budget() { return this.view.lowPower ? 0.55 : 1; }
   // Loads the atlas for this quality tier (a phone or Eco gets the 256 px sheets).
   start() {
+    // The battle's other lazy art (the land's ground detail layers, V1 terrain) starts with the sprites.
+    this.view.onBattleStart?.();
     // ?sprites=0 keeps the procedural effects (the before/after strips and A/B draw counts use it).
     try { if (new URLSearchParams(location.search).get("sprites") === "0") { this.failed = true; return null; } } catch { /* no location */ }
     const phone = this.phone, tier = phone ? "phone" : "full";
