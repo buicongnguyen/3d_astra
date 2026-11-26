@@ -18,14 +18,14 @@
 //   wisps     the Moth: violet homing wisps weaving to the target (stepped)
 //   motes     the Sunward Wagon's heal: a golden beam, the plus in gold, golden motes rising
 import { CELL, STRETCH, SHOT_SCALE } from "./cells.js";
-import { size, quad, put, shape, flyStreak, flyPoint, sparksAt, later, sheet, SHEET } from "./signature-common.js";
+import { size, quad, put, shape, flyStreak, flyPoint, sparksAt, later, sheet, SHEET, phoneTier, flightCell } from "./signature-common.js";
 import { IMPACTS, lightning } from "./signature-impacts.js";
 import { CLASS_LOOK } from "./weapon-class.js";
 import { warnRing } from "./ordnance.js";
 import { ROCKET, armoured } from "./rocket.js";
-import { spriteMuzzle, spriteStomp, spriteBeamLine, spritesReady } from "./sprite-fx.js";
+import { spriteStomp, spriteBeamLine, spritesReady } from "./sprite-fx.js";
 import { chargeGlow, beamLine } from "./beam.js";
-import { HEAD_FRAME } from "../fx-sprites-data.js";
+import { HEAD_FRAME, SHEETS, MUZZLE_ROW } from "../fx-sprites-data.js";
 
 // How hard a round lands, as src/fx.js hit sizes its blast: power, never wider than two target widths.
 const scaleOf = (a) => Math.max(0.35, Math.min(a.power || 0.5, (a.anchor?.targetWidth ?? Infinity) * 2 / 4.6));
@@ -41,13 +41,20 @@ const impactOf = (L) => IMPACTS[L.impact] || IMPACTS.pop;
 // a Meridian ring for a heavy gun. With the Codex muzzle-energy sheet packed, its row for the faction replaces the glow.
 export function muzzle(fx, ev, a, L, P, heavy, delay = 0) {
   const from = a.from, anchor = a.anchor, v = size(fx, L.muzzle || [0.5, 10]), id = P.id;
-  if (id === "ashfall" && heavy) spriteMuzzle(fx, from, a.ux, a.uy, a.uz, "large", anchor, 1.05); // first: it shares the flash limit
-  // The painted energy flash (its faction's row), opening along the shot from the muzzle (its attach point at 0.23 of the cell).
-  const energy = sheet(fx, "muzzleEnergy"), rows = SHEET.muzzleEnergy.rows;
-  if (energy && Object.hasOwn(rows, id) && fx.allowFlash()) {
-    const cell = v * 2.2, back = (0.5 - SHEET.muzzleEnergy.attach) * cell;
-    const p = fx.sprites.take(energy, from.x + a.ux * back, from.y + a.uy * back, from.z + a.uz * back, cell, anchor, true);
-    if (p) { p.mode = 2; p.ax = a.ux; p.ay = a.uy; p.az = a.uz; p.start = rows[id] * 4; p.count = 4; p.age = -delay; p.life = 4 / p.fps; }
+  // The painted flash, opening along the shot from the muzzle: the faction's energy row (attached at 0.23 of its cell), or for
+  // Ashfall, which has no energy row, the fire muzzle sheet (attached at its inlet). A cell of 1.4 m, never under 28 CSS px on a
+  // desktop or 20 (gold 24) on a phone, no extra quartering; 24 fps, 40 where the gun refires faster than 0.2 s (review 2026-11-26).
+  const M = SHEET.muzzleEnergy, rows = M.rows, ash = id === "ashfall";
+  const name = ash ? sheet(fx, "muzzle") : Object.hasOwn(rows, id) ? sheet(fx, "muzzleEnergy") : null;
+  if (name && fx.motion && fx.allowFlash()) {
+    const u = fx.view.unitsPerPixel || 0, phone = phoneTier(fx), floor = phone ? (id === "sunward" ? M.goldPhone : M.cell[2]) : M.cell[1];
+    const cell = Math.max(M.cell[0], floor * u), back = (0.5 - (ash ? SHEETS.muzzle.inlet : M.attach)) * cell;
+    const p = fx.sprites.take(name, from.x + a.ux * back, from.y + a.uy * back, from.z + a.uz * back, cell, anchor, true);
+    if (p) {
+      p.mode = 2; p.ax = a.ux; p.ay = a.uy; p.az = a.uz; p.count = 4; p.age = -delay;
+      p.fps = (L.count || 1) > 3 ? 40 : 24;
+      p.start = ash ? MUZZLE_ROW[heavy ? "large" : "small"] * 4 : rows[id] * 4; p.life = 4 / p.fps;
+    }
   }
   fx.particle(fx.glow, { lifted: true, x: from.x, y: from.y, z: from.z, cell: CELL.flare, s0: quad("flare", v * 0.6), s1: quad("flare", v * 0.75), life: 0.05, c0: P.core, c1: P.main0, anchor, delay });
   shape(fx, fx.glow, from, CELL.glow, v, v * 1.25, heavy ? 0.1 : 0.065, P.mainSoft, P.main0, anchor, delay);
@@ -150,7 +157,8 @@ function crescent(fx, ev, a, L, P) {
     const spin = (L.spin || 20) * (i % 2 ? -1 : 1);
     if (painted) {
       // The Codex flipbook (frames 0-7: the turning blade with its afterimages, travel pointing right), its spin centre on the path.
-      flySprite(fx, painted, from, to, flight, v / SHEET.crescent.ball, SHEET.crescent.head[0], a.anchor, delay);
+      const p = flySprite(fx, painted, from, to, flight, flightCell(fx, SHEET.crescent), SHEET.crescent.head[0], a.anchor, delay);
+      if (p) p.hard = true; // spinner poses about 45 degrees apart: step, do not cross-fade
     } else {
       // The blade (outlined violet, normal blended) and its glow, spinning together.
       const body = flyPoint(fx, fx.smoke, from, to, flight, v, CELL.crescent, P.main, P.main, a.anchor, delay);
@@ -172,7 +180,8 @@ function hoops(fx, ev, a, L, P) {
     const delay = i * gap, flight = Math.max(0.05, a.travel);
     if (painted) {
       // The Codex flipbook (frames 0-7: the Halo's elliptical hoop and its wisps, travel pointing right).
-      flySprite(fx, painted, a.from, a.to, flight, v / SHEET.hoop.ball, SHEET.hoop.head[0], a.anchor, delay);
+      const p = flySprite(fx, painted, a.from, a.to, flight, flightCell(fx, SHEET.hoop), SHEET.hoop.head[0], a.anchor, delay);
+      if (p) upright(fx, p, SHEET.hoop.upright);
     } else {
       // A cyan ring hoop: the band (normal blended, for snow), its bright edge and a soft glow.
       const hoop = P.accent || P.main, soft = P.accentSoft || P.mainSoft;
@@ -301,6 +310,17 @@ function flySprite(fx, name, a, b, flight, cell, head, anchor, delay) {
   return p;
 }
 
+// Keeps a flying sprite within `limit` degrees of its painted (screen-horizontal travel) pose: the Halo's hoop is an upright
+// ellipse, and turned toward the screen's vertical it would read as a ground selection ring. Travel to the left mirrors the
+// sprite instead of turning it upside down.
+function upright(fx, p, limit) {
+  const cam = fx.view.camera;
+  if (!cam?.matrixWorld) return;
+  const m = cam.matrixWorld.elements, sx = p.ax * m[0] + p.ay * m[1] + p.az * m[2], sy = p.ax * m[4] + p.ay * m[5] + p.az * m[6];
+  const mirror = sx < 0, a = Math.atan2(sy, mirror ? -sx : sx), max = (limit * Math.PI) / 180;
+  p.mode = 0; p.sx = mirror ? -1 : 1; p.rot = (mirror ? -1 : 1) * Math.max(-max, Math.min(max, a));
+}
+
 export const KINDS = Object.freeze({ bolt, zigzag, strafe, crescent, hoops, beam, arc, orb, rocket, wisps, motes });
 
 // ---- the stepped rounds
@@ -346,13 +366,13 @@ function stretch(p, x, y, z, ux, uy, uz, back, cell, name, length, thick, c) {
 // head rides the round's path. The trail (drawOrb) still runs: black smoke off molten scrap, motes, wisps, arcs.
 function paintedOrb(fx, r, dt, painted, ux, uy, uz, pulse) {
   const { L } = r, x = P0.x, y = P0.y, z = P0.z, b = r.body;
-  const def = SHEET[L.sheet], cell = b / def.ball, back = (def.head[0] - 0.5) * cell;
+  const def = SHEET[L.sheet], cell = flightCell(fx, def), back = (def.head[0] - 0.5) * cell;
   let s = r.sprite;
   if ((!s || s.owner !== r.token) && dt > 0) {
     s = r.sprite = fx.sprites.take(painted, x, y, z, cell, r.anchor, true);
-    if (s) { s.owner = r.token; s.keep = true; s.mode = 2; s.life = r.travel + 1; s.snap = true; s.age = fx.rng() * 0.4; }
+    if (s) { s.owner = r.token; s.keep = true; s.mode = 2; s.life = r.travel + 1; s.snap = true; s.age = fx.rng() * 0.4; s.hard = !!def.hard; }
   }
-  if (s && s.owner === r.token) { s.x = x - ux * back; s.y = y - uy * back; s.z = z - uz * back; s.ax = ux; s.ay = uy; s.az = uz; s.s0 = s.s1 = cell * pulse; }
+  if (s && s.owner === r.token) { s.x = x - ux * back; s.y = y - uy * back; s.z = z - uz * back; s.ax = ux; s.ay = uy; s.az = uz; s.s0 = s.s1 = cell; }
 }
 // The procedural orb: the outlined ball (normal blended) and its glow, and each style's own parts.
 function proceduralOrb(fx, r, dt, ux, uy, uz, pulse, rot) {

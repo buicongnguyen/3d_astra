@@ -5,7 +5,7 @@
     "families: the slot a unit type falls back to when its faction has no entry for the type itself (a Rider lent to Ashfall fires Ashfall's ranger look).",
     "factions: unit type or family -> look id. A type with no entry and no family keeps its own look (creatures, bosses, Iron units, bombers, flamers, medics).",
     "looks: kind (signature-kinds.js), palette keys, impact (signature-impacts.js) and sizes as [metres, CSS-pixel floor] pairs: a size never draws smaller than its floor at any zoom.",
-    "sheets: the Codex flipbooks (codex-vfx3/, packed by tools/pack-fx-atlas.py: flight loop `<name>` at 64 px frames, impact `<name>Hit` at 128 px), all normal alpha, fps from codex-vfx3/README.md; `head` is where the ball sits in a flight frame (it is put on the round), `ball` its share of the cell; a look without its sheet in the atlas (or before the sheets load) draws the procedural cells."
+    "sheets: the Codex flipbooks (codex-vfx3/, packed by tools/pack-fx-atlas.py: flight loop `<name>` at 64 px frames, impact `<name>Hit` at 128 px), all normal alpha, fps from codex-vfx3/README.md; `head` is where the ball sits in a flight frame (put on the round), `cell` the flight quad as [metres, desktop px floor, phone px floor] (square), `hard` steps frames without cross-fading (spinners), `fade`/`grow` shape the impact, `upright` keeps the hoop within that many degrees of screen-vertical (mirrored rather than turned past it); a look without its sheet in the atlas (or before the sheets load) draws the procedural cells."
   ],
   "palettes": {
     "meridian": { "core": [0.86, 1, 1], "main": [0.2, 0.95, 0.9], "deep": [0.02, 0.3, 0.34], "spark": [0.62, 1, 0.95] },
@@ -81,14 +81,14 @@
     "v-wisps": { "kind": "wisps", "impact": "shards", "count": 2, "size": [0.42, 12], "weave": 0.7, "muzzle": [0.45, 9] }
   },
   "sheets": {
-    "orbCyan": { "stem": "orb-plasma-cyan", "fps": 20, "head": [0.66, 0.52], "ball": 0.3 },
-    "orbElectric": { "stem": "orb-electric-blue", "fps": 24, "head": [0.5, 0.5], "ball": 0.5 },
-    "crescent": { "stem": "crescent-violet", "fps": 20, "head": [0.52, 0.5], "ball": 0.55 },
-    "sunDisc": { "stem": "sun-disc-gold", "fps": 20, "head": [0.6, 0.5], "ball": 0.42 },
-    "moltenSlug": { "stem": "molten-slug", "fps": 20, "head": [0.67, 0.54], "ball": 0.3 },
-    "voidOrb": { "stem": "void-orb", "fps": 18, "head": [0.66, 0.49], "ball": 0.36 },
-    "hoop": { "stem": "ring-hoop-cyan", "fps": 20, "head": [0.6, 0.51], "ball": 0.6 },
-    "lightning": { "stem": "lightning-arcs", "fps": 24, "ends": [0.13, 0.87], "thick": 0.3 },
-    "muzzleEnergy": { "stem": "muzzle-energy", "fps": 24, "attach": 0.23, "rows": { "meridian": 0, "wardens": 1, "sunward": 2, "veil": 3 } }
+    "orbCyan": { "stem": "orb-plasma-cyan", "fps": 20, "head": [0.71, 0.52], "cell": [1.8, 32, 28], "fade": 0.15 },
+    "orbElectric": { "stem": "orb-electric-blue", "fps": 24, "head": [0.5, 0.5], "cell": [1.6, 32, 28], "hard": true, "impactMin": 28 },
+    "crescent": { "stem": "crescent-violet", "fps": 20, "head": [0.51, 0.5], "cell": [1.8, 34, 30], "hard": true },
+    "sunDisc": { "stem": "sun-disc-gold", "fps": 20, "head": [0.6, 0.5], "cell": [1.8, 34, 30] },
+    "moltenSlug": { "stem": "molten-slug", "fps": 20, "head": [0.77, 0.54], "cell": [2, 36, 32], "fade": 0.25 },
+    "voidOrb": { "stem": "void-orb", "fps": 18, "head": [0.71, 0.49], "cell": [1.8, 32, 28], "grow": 0.7 },
+    "hoop": { "stem": "ring-hoop-cyan", "fps": 20, "head": [0.61, 0.51], "cell": [1.8, 32, 28], "upright": 60 },
+    "lightning": { "stem": "lightning-arcs", "fps": 24, "ends": [0.145, 0.855], "height": [30, 22] },
+    "muzzleEnergy": { "stem": "muzzle-energy", "fps": 24, "attach": 0.23, "cell": [1.4, 28, 20], "goldPhone": 24, "rows": { "meridian": 0, "wardens": 1, "sunward": 2, "veil": 3 } }
   }
 }

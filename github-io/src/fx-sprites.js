@@ -59,7 +59,7 @@ void main() {
 function newRecord() {
   return { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, age: 0, life: 1, s0: 1, s1: 1, rot: 0, spin: 0, r: 1, g: 1, b: 1, a: 1, def: null, start: 0, count: 1, fps: 12, loop: false,
     mode: BILLBOARD, ax: 1, ay: 0, az: 0, anchor: null, decal: false, calm: false, fade: 0.05, drag: 0, sx: 1, sy: 1, tiles: 0, scroll: 0, scrollSpeed: 0, once: false,
-    owner: 0, keep: false }; // owner: the token of a signature round that moves this sprite each frame (src/fx-kinds/signature-kinds.js),
+    owner: 0, keep: false, hard: false }; // hard: frames step without cross-fading (a spinner whose poses would double up) // owner: the token of a signature round that moves this sprite each frame (src/fx-kinds/signature-kinds.js),
     // 0 when reused; keep: a round in flight the effects' particle cap lets complete its path (src/fx.js trimParticles)
 }
 
@@ -93,7 +93,8 @@ export class FxSprites {
     this.stats = { spawned: 0, recycled: 0 };
     // Nothing loads here (the view is built on the title screen): match-flow.js restart() calls start() when a battle begins.
   }
-  get phone() { return !!this.view.lowPower || Math.min(innerWidth || 1000, innerHeight || 1000) < 600; }
+  // The phone tier also where the GPU cannot hold the desktop atlas (taller than 2048 px since V4).
+  get phone() { return !!this.view.lowPower || Math.min(innerWidth || 1000, innerHeight || 1000) < 600 || (this.view.renderer?.capabilities?.maxTextureSize ?? 4096) < 4096; }
   get budget() { return this.view.lowPower ? 0.55 : 1; }
   // Loads the atlas for this quality tier (a phone or Eco gets the 256 px sheets).
   start() {
@@ -139,7 +140,7 @@ export class FxSprites {
     batch.items.push(p);
     p.x = x; p.y = lifted ? y : y + this.fx.ground(x, z); p.z = z; p.vx = p.vy = p.vz = 0; p.age = 0; p.life = def.loop ? 1 : def.frames / Math.max(1, def.fps);
     p.s0 = p.s1 = size; p.rot = 0; p.spin = 0; p.r = p.g = p.b = p.a = 1; p.def = def; p.start = 0; p.count = def.frames; p.fps = def.fps; p.loop = def.loop;
-    p.priorityHit = false; p.snap = false; p.splash = false; p.hotCore = false; p.mode = BILLBOARD; p.ax = 1; p.ay = 0; p.az = 0; p.sx = p.sy = 1; p.tiles = 0; p.scroll = 0; p.scrollSpeed = 0; p.once = false; p.anchor = anchor; p.decal = false; p.calm = !this.fx.motion; p.fade = 0.06; p.drag = 0; p.owner = 0; p.keep = false;
+    p.priorityHit = false; p.snap = false; p.splash = false; p.hotCore = false; p.mode = BILLBOARD; p.ax = 1; p.ay = 0; p.az = 0; p.sx = p.sy = 1; p.tiles = 0; p.scroll = 0; p.scrollSpeed = 0; p.once = false; p.anchor = anchor; p.decal = false; p.calm = !this.fx.motion; p.fade = 0.06; p.drag = 0; p.owner = 0; p.keep = false; p.hard = false;
     if (p.calm) p.fps *= 0.6;
     this.stats.spawned++;
     return p;
@@ -196,6 +197,7 @@ export class FxSprites {
         if (!visible(p.anchor)) continue;
         const t = p.age / p.life, o = drawn;
         frameAt(p.age, p.fps, p.start, p.count, p.loop, FRAME, p.calm ? 3 : 1);
+        if (p.hard) { FRAME.b = FRAME.a; FRAME.mix = 0; }
         P[o * 3] = p.x; P[o * 3 + 1] = p.y; P[o * 3 + 2] = p.z;
         // Out over the last `fade` of the life; loops ease in over the first moments.
         const out = Math.min(1, (p.life - p.age) / Math.max(0.05, p.life * p.fade)), inn = p.loop && !p.snap ? Math.min(1, p.age / 0.08) : 1;

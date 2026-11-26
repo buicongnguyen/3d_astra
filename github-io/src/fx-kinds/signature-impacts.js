@@ -13,7 +13,7 @@
 // Chain arcs (discharge) are drawing only: they jump to the nearest other enemy units the player can see, never deal damage
 // and never reach into fog (each arc's anchor is its segment, checked every frame like a shot's path).
 import { CELL, STRETCH } from "./cells.js";
-import { size, quad, put, shape, sparksAt, sheet, SHEET } from "./signature-common.js";
+import { size, quad, put, shape, sparksAt, sheet, SHEET, phoneTier } from "./signature-common.js";
 
 // The white-hot star of a landing (rate-limited with every flare, src/fx.js allowFlash).
 const flare = (fx, at, v, P, anchor, life = 0.06, delay = 0) =>
@@ -51,23 +51,23 @@ function scatter(fx, at, n, v, cell, c0, c1, anchor, { speed = 4, up = 2, gravit
   }
 }
 const cellNameOf = (cell) => (cell === CELL.shard ? "shard" : cell === CELL.starburst ? "starburst" : cell === CELL.flare ? "flare" : cell === CELL.orb ? "orb" : "glow");
-// How wide a heavy landing is drawn: `metres` at hit scale, never under `px` CSS pixels, and never wider than two target widths
-// (1.2 on a direct contact), as src/fx-kinds/sprite-fx.js caps the painted blasts: a phone shows a burst, not a curtain.
-function blast(fx, o, metres, px) {
-  const w = o.anchor?.targetWidth;
-  return Math.min(size(fx, [metres, px]), w ? w * (o.direct ? 1.2 : 2) : Infinity);
-}
-// The Codex impact (the `<key>Hit` item: the painted frames 8-15, played once, centred on the contact), `v` visible metres across
-// (the art fills about 0.8 of its cell). Like the painted blasts of src/fx-kinds/sprite-fx.js, it shares the real-time flash limit
-// (src/fx.js allowFlash, off with reduced motion or combat motion off): without the token it skips its two brightest frames and
-// plays a little dimmer, and with reduced motion the sprite steps calmly (src/fx-sprites.js `calm`). True when it drew.
-function sheetImpact(fx, key, at, v, anchor, delay = 0) {
+// The Codex impact (the `<key>Hit` item: the painted frames 8-15, played once at 24 fps, centred on the contact). Its cell is 1.25
+// target widths, clamped to 24-44 CSS px on a phone (28 for the Wardens' discharge) and 32-64 px on a desktop (review 2026-11-26),
+// with no extra quartering. Under 40 px the two faintest frames are dropped; the molten splash fades over its last quarter, the
+// plasma ring its last 15 %; the void implosion opens from 70 % so it never pops. Like the painted blasts of
+// src/fx-kinds/sprite-fx.js it shares the real-time flash limit (src/fx.js allowFlash, off with reduced motion or combat motion
+// off): without the token it skips its two brightest frames and plays a little dimmer. True when it drew.
+function sheetImpact(fx, key, at, o, delay = 0) {
   const name = key && sheet(fx, key + "Hit");
   if (!name) return false;
-  const p = fx.sprites.take(name, at.x, at.y, at.z, v / 0.8, anchor, true);
+  const def = SHEET[key], u = fx.view.unitsPerPixel || 0.05, phone = phoneTier(fx), w = o.anchor?.targetWidth || 2;
+  const lo = (phone ? def.impactMin || 24 : 32) * u, hi = (phone ? 44 : 64) * u, cell = Math.max(lo, Math.min(hi, 1.25 * w));
+  const p = fx.sprites.take(name, at.x, at.y, at.z, cell, o.anchor, true);
   if (!p) return false;
-  p.age = -delay; p.fade = 0.25; p.rot = (fx.rng() - 0.5) * 0.6;
-  if (!fx.allowFlash()) { p.start = 2; p.count = 6; p.a = 0.85; }
+  p.age = -delay; p.fade = def.fade ?? 0.2; p.rot = (fx.rng() - 0.5) * 0.6;
+  if (def.grow) p.s0 = cell * def.grow;
+  if (cell / u < 40) p.count = 6;
+  if (!fx.allowFlash()) { p.start = 2; p.count -= 2; p.a = 0.85; }
   p.life = p.count / Math.max(1, p.fps);
   return true;
 }
@@ -93,7 +93,9 @@ export function lightning(fx, a, b, width, life, P, anchor, delay = 0, segments 
       const qx = a.x + dx * k + sx * o, qy = a.y + dy * k + oy, qz = a.z + dz * k + sz * o;
       const ex = qx - px, ey = qy - py, ez = qz - pz, l = Math.hypot(ex, ey, ez) || 1, frame = Math.floor(fx.rng() * 4);
       // A painted bolt per segment (one of the 16 Codex poses, its two bright ends on the segment's ends) when the sheet is there.
-      const cell = name && width / L.thick, q = name && fx.sprites.take(name, (px + qx) / 2, (py + qy) / 2, (pz + qz) / 2, cell, anchor, true);
+      // Drawn 28-32 px tall on a desktop, 20-24 on a phone (never under 16), only its length stretched (review 2026-11-26).
+      const cell = name && Math.max(16, phoneTier(fx) ? L.height[1] : L.height[0]) * (fx.view.unitsPerPixel || 0.05);
+      const q = name && fx.sprites.take(name, (px + qx) / 2, (py + qy) / 2, (pz + qz) / 2, cell, anchor, true);
       if (q) {
         q.mode = 2; q.ax = ex / l; q.ay = ey / l; q.az = ez / l; q.sx = l / ((L.ends[1] - L.ends[0]) * cell); q.sy = 1;
         q.start = Math.floor(fx.rng() * 16); q.count = 1; q.fps = 0; q.life = life; q.age = -start; q.fade = 0.3;
@@ -164,7 +166,7 @@ export const IMPACTS = {
   },
   shock(fx, at, o) {
     const P = o.pal, a = o.anchor, s = o.s;
-    if (!sheetImpact(fx, o.sheet, at, blast(fx, o, 2.8 * s, 46), a) && !o.calm) {
+    if (!sheetImpact(fx, o.sheet, at, o) && !o.calm) {
       flare(fx, at, 1.6 * s, P, a);
       both(fx, at, CELL.ring, 0.4 * s, size(fx, [2.8 * s, 46]), 0.3, P, a, 0, P.main);
       shape(fx, fx.glow, at, CELL.band, 0.3 * s, size(fx, [2 * s, 32]), 0.2, P.coreDim, P.main0, a);
@@ -177,7 +179,7 @@ export const IMPACTS = {
   },
   ringsplash(fx, at, o) {
     const P = o.pal, a = o.anchor, s = o.s;
-    if (!sheetImpact(fx, o.sheet, at, blast(fx, o, 3.1 * s, 50), a) && !o.calm) {
+    if (!sheetImpact(fx, o.sheet, at, o) && !o.calm) {
       flare(fx, at, 1.8 * s, P, a);
       both(fx, at, CELL.ring, 0.5 * s, size(fx, [3.2 * s, 52]), 0.34, P, a, 0, P.main);
       both(fx, at, CELL.ring, 0.25 * s, size(fx, [2 * s, 32]), 0.26, P, a, 0.07, P.core);
@@ -212,7 +214,7 @@ export const IMPACTS = {
     // of the hull it struck), its white-hot heart, then a gout of black smoke.
     const k = Math.max(0.5, s), v = size(fx, [0.9 * k, 16]) / 0.8;
     // The painted molten splash and embers (codex-vfx3) when the sheet is there, else a rolling procedural fire body.
-    if (!sheetImpact(fx, o.sheet, at, blast(fx, o, 2.8 * s, 46), a))
+    if (!sheetImpact(fx, o.sheet, at, o))
       fx.burst(fx.smoke, fx.count(o.calm ? 3 : 7), g, { life: 0.3, s0: v * 0.55, s1: v * 1.5, drag: 3, cell: CELL.puff, c0: FIRE, c1: FIRE_END, anchor: a, spin: 1,
         gravity: -1.4 }, [1.1 * k, 2.6 * k], 0.7);
     core(fx, at, size(fx, [1 * s, 20]), P, a, 0.13);
@@ -234,7 +236,7 @@ export const IMPACTS = {
   },
   starburst(fx, at, o) {
     const P = o.pal, a = o.anchor, s = o.s;
-    if (!sheetImpact(fx, o.sheet, at, blast(fx, o, 3 * s, 48), a) && !o.calm) {
+    if (!sheetImpact(fx, o.sheet, at, o) && !o.calm) {
       flare(fx, at, 1.5 * s, P, a);
       both(fx, at, CELL.starburst, 0.9 * s, size(fx, [3.4 * s, 56]), 0.32, P, a, 0, P.core).spin = 2.2;
       const second = shape(fx, fx.glow, at, CELL.starburst, 0.6 * s, size(fx, [2.4 * s, 40]), 0.24, P.spark, P.main0, a, 0.04);
@@ -249,7 +251,7 @@ export const IMPACTS = {
   zap(fx, at, o) {
     const P = o.pal, a = o.anchor;
     core(fx, at, size(fx, [0.3, 8]), P, a);
-    if (sheetImpact(fx, o.sheet === "hoop" ? "hoop" : null, at, blast(fx, o, 0.9, 24), a)) { if (!o.aloft) puff(fx, at, a); return; }
+    if (sheetImpact(fx, o.sheet === "hoop" ? "hoop" : null, at, o)) { if (!o.aloft) puff(fx, at, a); return; }
     if (!o.calm) {
       const c = both(fx, at, CELL.crackle, size(fx, [0.36, 11]), size(fx, [0.5, 15]), 0.12, P, a, 0, P.spark);
       c.frames = 2; c.fps = 30; c.jump = 2.4;
@@ -259,7 +261,7 @@ export const IMPACTS = {
   },
   discharge(fx, at, o) {
     const P = o.pal, a = o.anchor, s = o.s;
-    if (!sheetImpact(fx, o.sheet, at, blast(fx, o, 2.9 * s, 48), a) && !o.calm) {
+    if (!sheetImpact(fx, o.sheet, at, o) && !o.calm) {
       flare(fx, at, 1.6 * s, P, a);
       for (let i = 0; i < 2; i++) {
         const c = both(fx, at, CELL.crackle, (1 - i * 0.25) * s, size(fx, [(2.6 - i * 0.7) * s, 48 - i * 12]), 0.24, P, a, i * 0.05, i ? P.main : P.spark);
@@ -276,14 +278,14 @@ export const IMPACTS = {
   shards(fx, at, o) {
     const P = o.pal, a = o.anchor;
     core(fx, at, size(fx, [0.32, 8]), P, a, 0.09);
-    if (sheetImpact(fx, o.sheet === "crescent" ? "crescent" : null, at, blast(fx, o, 0.9, 24), a)) { if (!o.aloft) puff(fx, at, a); return; }
+    if (sheetImpact(fx, o.sheet === "crescent" ? "crescent" : null, at, o)) { if (!o.aloft) puff(fx, at, a); return; }
     if (!o.calm) scatter(fx, at, o.shards || 3, size(fx, [0.22, 7]), CELL.shard, P.main, P.main0, a, { speed: 2.6, up: 2, gravity: 9, life: 0.34, layer: fx.smoke });
     if (!o.calm) scatter(fx, at, 2, size(fx, [0.18, 6]), CELL.shard, P.spark, P.main0, a, { speed: 2.2, up: 1.6, gravity: 9, life: 0.28 });
     if (!o.aloft) puff(fx, at, a);
   },
   implode(fx, at, o) {
     const P = o.pal, a = o.anchor, s = o.s, burst = 0.2;
-    if (!sheetImpact(fx, o.sheet, at, blast(fx, o, 2.8 * s, 46), a) && !o.calm) {
+    if (!sheetImpact(fx, o.sheet, at, o) && !o.calm) {
       // The collapse: a dark core and a violet rim closing in on the point, then a flash and shards bursting out of it.
       shape(fx, fx.smoke, at, CELL.orb, size(fx, [1.3 * s, 24]), 0.12 * s, burst + 0.02, P.voidSolid || P.under, P.void0 || P.under0, a);
       both(fx, at, CELL.ring, size(fx, [2.8 * s, 46]), 0.15 * s, burst, P, a, 0, P.main);

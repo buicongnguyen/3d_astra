@@ -183,7 +183,20 @@ travel points right; frames 0-7 loop in flight, 8-15 play once on impact (codex-
   the desktop atlas stays under 20 MB without a second texture (which would cost a draw).
 - The packer bleeds each cell's edge colours 3 texels into its transparent gutters (the sources keep black RGB under alpha 0,
   which bilinear filtering would turn into dark halos; the sprite atlas has no mipmaps, so a few texels are enough).
-- Placement data (where the painted head sits in a flight frame, its share of the cell, the muzzle attach point, the arc ends)
+- Sizes and placement (independent review, 2026-11-26): every painted sprite is max(its metres, a CSS-px floor), never quartered
+  by SHOT_SCALE. Flight cells are square: Meridian orb, Veil void, Halo hoop 1.8 m (floor 32 px desktop / 28 phone), Wardens orb
+  1.6 m (32/28), crescent and sun-disc 1.8 m (34/30), molten slug 2 m (36/32), at most 40 px on a phone; each is shifted back along
+  its travel so the painted head sits on the round (orb 0.21, slug 0.27, void 0.21, disc 0.10, hoop 0.11, crescent 0.01 of the
+  cell). The electric orb and the crescent step their frames without cross-fading; the Halo hoop stays within 60 degrees of
+  screen-vertical (mirrored for travel to the left). Impacts play at 24 fps, sized 1.25 target widths clamped to 24-44 px on a
+  phone (Wardens 28) and 32-64 px on a desktop; under 40 px the last two frames are dropped; molten fades over its last quarter,
+  the plasma ring 15 %, the void implosion opens from 70 %. Arcs map the core x 0.145-0.855 to the link, drawn 30 px tall on a
+  desktop and 22 on a phone. Muzzle cells max(1.4 m, 28 px desktop / 20 phone, gold 24), 24 fps (40 for a stream gun); Ashfall
+  uses the fire muzzle sheet. The phone tier also loads where `maxTextureSize` < 4096 (the desktop atlas is 2368 px tall).
+- Not taken from the review: its four-column full-resolution packing (2048x2880, 22.5 MiB) would break the 20 MB texture gate, so
+  flight loops stay at 64 px frames (they draw at 28-40 px); mipmaps stay off (they would need premultiplied packing and a shader
+  change for every sheet, existing ones included).
+- Placement data (where the painted head sits in a flight frame, the cell sizes, the muzzle attach point, the arc ends)
   is the `sheets` block of `src/fx-kinds/signature-shots.json`. A look whose sheet is not in the layout (or before the atlas
   loads, or with `?sprites=0`) draws its procedural cells (`src/fx-kinds/signature-cells.js`, the second row of the procedural
   atlas in `src/fx.js`): dropping new sheets into `codex-vfx3/` and re-running the packer needs no code change.

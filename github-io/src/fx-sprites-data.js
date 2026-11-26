@@ -8,9 +8,10 @@ export { LAYOUT };
 // Frame rectangles (normalised to the atlas, y from the top) come from tools/pack-fx-atlas.py; both tiers share the UVs.
 // V4 signature shots (src/fx-kinds/signature.js): the Codex codex-vfx3 sheets join when tools/pack-fx-atlas.py found them, each
 // painted sheet as its flight loop `<name>` (8 frames, looping) and its impact `<name>Hit` (8 frames, once); `lightning` (16
-// poses) and `muzzleEnergy` (rows of four) whole. All normal alpha (codex-vfx3/README.md). Absent, the shots draw procedural cells.
+// poses) and `muzzleEnergy` (rows of four) whole. All normal alpha (codex-vfx3/README.md); impacts play at 24 fps (the review of
+// 2026-11-26). Absent, the shots draw procedural cells.
 const SIGNATURE_SHEETS = Object.entries(SIGNATURE.sheets).flatMap(([name, d]) => [[name, d, true], [name + "Hit", d, false]])
-  .filter(([name]) => Object.hasOwn(LAYOUT.items, name)).map(([name, d, flight]) => [name, d.fps, flight && name !== "lightning" && name !== "muzzleEnergy"]);
+  .filter(([name]) => Object.hasOwn(LAYOUT.items, name)).map(([name, d, flight]) => [name, flight ? d.fps : 24, flight && name !== "lightning" && name !== "muzzleEnergy"]);
 export const SHEET_NAMES = ["tank", "rocket", "artillery", "bomb", "missile", "tracer", "stomp", "heal", "flame", "flak", "beam", "muzzle", "scorch", "smoke", "beamCyan", "beamMagenta", "healBeam", "capCyan", "endCyan", "capMagenta", "endMagenta", "heads",
   ...SIGNATURE_SHEETS.map(([name]) => name)];
 // frames and fps from codex-vfx/README.md and codex-vfx2/README.md; blend: "add" only where the README asks for a glow, else normal alpha

@@ -29,7 +29,8 @@ function fielded(faction) {
   return [...new Set(types)].filter((t) => D[t]?.damage > 0);
 }
 // Kept on purpose: the flamer, the bombers (their drops), creatures, bosses and the Iron units.
-const OWN_LOOK = new Set(["scorcher", "balloon", "glider"]);
+// The Vanguard is a sword fighter (src/vanguard-sword.js): its slash is its own look.
+const OWN_LOOK = new Set(["scorcher", "balloon", "glider", "vanguard"]);
 const NEVER = ["wyrm", "wyrmling", "acidhound", "vaultsentinel", "ironvanguard", "ironsovereign", "ironsovereign2", "emberdrake", "carrier", "kite"];
 
 function stage({ motion = true, lowPower = false, factions = { 0: "meridian", 1: "ashfall" }, mission = null, units = [] } = {}) {
@@ -79,7 +80,7 @@ test("every armed unit a faction fields fires that faction's look; the flamer an
     }
   }
   // Each faction's looks are its own: no two factions share a look for the same slot.
-  for (const slot of ["ranger", "tank", "tower", "breaker", "antitank", "vanguard"]) {
+  for (const slot of ["ranger", "tank", "tower", "breaker", "antitank", "worker"]) {
     const ids = FACTIONS.map((f) => signatureOf(f, slot)?.id);
     assert.equal(new Set(ids).size, FACTIONS.length, `${slot}: ${ids}`);
   }
@@ -177,7 +178,7 @@ test("the same seed draws the same particles", () => {
 test("a round in flight is a projectile the particle cap lets finish; its glow and landing stay trimmable", () => {
   const target = { id: 2, hp: 100, x: 10, z: 2, radius: 1.3, kind: "unit" };
   const { fx, sim } = stage({ units: [target] });
-  for (const [faction, unit] of [["meridian", "ranger"], ["meridian", "tank"], ["veil", "ranger"], ["wardens", "vanguard"]]) {
+  for (const [faction, unit] of [["meridian", "ranger"], ["meridian", "tank"], ["veil", "ranger"], ["wardens", "drone"]]) {
     sim.factions[0] = faction;
     const ev = shot(unit);
     signatureShot(fx, ev, signatureLook(fx, ev, sim), aimFor(fx, ev, sim));
@@ -230,7 +231,7 @@ test("the Codex sheets: when packed, each flight loop and impact is a sheet of i
     if (name === "lightning" || name === "muzzleEnergy") { assert.equal(SHEETS[name].frames, 16); continue; }
     assert.ok(SHEETS[name].loop && SHEETS[name].frames === 8, `${name} flight loop`);
     assert.ok(!SHEETS[name + "Hit"].loop && SHEETS[name + "Hit"].frames === 8, `${name} impact`);
-    assert.ok(def.head[0] >= 0.4 && def.head[0] <= 0.75 && def.ball > 0, name);
+    assert.ok(def.head[0] >= 0.45 && def.head[0] <= 0.8 && def.cell[0] > 0 && def.cell[1] >= def.cell[2] && def.cell[2] <= 40, name);
   }
   assert.ok(LAYOUT.width <= 2048 && LAYOUT.width / 2 <= 1024, "the phone atlas stays 1024 wide at most");
   assert.ok(LAYOUT.width * LAYOUT.height * 4 < 20e6, "and the desktop atlas under 20 MB of texture memory");

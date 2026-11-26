@@ -36,6 +36,13 @@ export const quad = (cell, visible) => visible / FILL[cell];
 // The Codex flipbooks (codex-vfx3, docs/ASSET_PIPELINE.md): a look's sheet (or its impact, `<key>Hit`) when the atlas carries it
 // and has loaded, else null (the procedural cells draw it). `SHEET` holds each sheet's placement data (head, ball, attach, rows).
 export const SHEET = DATA.sheets;
+// The phone tier (its 64 px atlas, a touch screen or Eco) takes the phone pixel floors of the sheets.
+export const phoneTier = (fx) => fx.sprites?.tier === "phone" || !!fx.touchTier;
+// A painted flight cell, square: its metres, never under its CSS-pixel floor, never over 40 px on a phone (review 2026-11-26).
+export function flightCell(fx, def) {
+  const u = fx.view.unitsPerPixel || 0, phone = phoneTier(fx), cell = Math.max(def.cell[0], (phone ? def.cell[2] : def.cell[1]) * u);
+  return phone && u ? Math.min(cell, 40 * u) : cell;
+}
 export function sheet(fx, key) {
   if (!key || !fx.sprites?.ready || fx.sprites.failed) return null;
   return SHEETS[key] ? key : null;

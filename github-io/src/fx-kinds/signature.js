@@ -14,6 +14,7 @@ import { CELL, STRETCH } from "./cells.js";
 import { DATA, PALETTES, size, quad, shape, later } from "./signature-common.js";
 import { KINDS, stepSignatures, clearSignatures, liveSignatures, muzzle, landing } from "./signature-kinds.js";
 import { IMPACTS } from "./signature-impacts.js";
+import { weaponStyle } from "../visual-style.js";
 
 export { stepSignatures, clearSignatures, liveSignatures, DATA as SIGNATURE };
 const FACTIONS = new Set(Object.keys(DATA.factions));
@@ -34,6 +35,8 @@ const RESOLVED = new Map();
 // The look of a shot: { id, look, pal } or null (no faction, or a unit that keeps its own look: creatures, bosses, Iron units...).
 export function signatureOf(faction, unit, air = false) {
   if (!faction || !unit) return null;
+  // A melee weapon (the Vanguard's sword, src/vanguard-sword.js) draws its own slash: no shot look.
+  if (weaponStyle({ unit, weapon: unit }).kind === "melee") return null;
   const key = `${faction}:${unit}:${air ? 1 : 0}`;
   let hit = RESOLVED.get(key);
   if (hit === undefined) {
