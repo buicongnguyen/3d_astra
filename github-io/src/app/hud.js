@@ -101,7 +101,9 @@ export function setupHud(S, A) {
     // W13: on phones a routine notice settles to one line on lighter glass once it has been read (phone-hud-slim.css);
     // an alert stays in full.
     if (current.priority < ALERT) S.noticeSettle = setTimeout(() => el.classList.add("settled"), NOTICE_SETTLE_MS);
-    S.noticeTimeout = setTimeout(showMessage, Math.max(0, current.until - now) + 16);
+    // Held (browser suites only, window.__frontier.holdMessages): the line waits until released.
+    const expire = () => { if (globalThis.__frontierHoldMessages) S.noticeTimeout = setTimeout(expire, 100); else showMessage(); };
+    S.noticeTimeout = setTimeout(expire, Math.max(0, current.until - now) + 16);
   }
   function notice(text) {
     // Successful work is acknowledged by its compact strip, without covering the map.

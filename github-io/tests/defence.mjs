@@ -342,6 +342,7 @@ await suite("defence", async () => {
     // wave card. A hint and an alert at once: neither covers the card or the bar.
     await page.evaluate(() => {
       const f = window.__frontier, h = f.fightHint;
+      f.holdMessages = true; // the alert outlives a slow runner until assertPcStack (or the release below) measures it
       h.querySelector(".fh-text").textContent = "Your Battle tank beats Scrapper"; h.hidden = false;
       f.alertNotice("The enemy broke through!");
       window.__msgCover = () => {
@@ -357,6 +358,7 @@ await suite("defence", async () => {
     assert.deepEqual(covered.covers, [], `${viewport}: no message covers the Next wave card or the bar`);
     // PC (owner 2026-11-27): the breach alert and the hint stack at the top left, clear of the bar and the card.
     if (viewport === "desktop") await assertPcStack(page, `${viewport} breach`, ["#notice.show", "#fight-hint:not([hidden])"]);
+    else await page.evaluate(() => { window.__frontier.holdMessages = false; });
     await shot(page, `defence-intel-hint-${viewport}`);
     await page.evaluate(() => { window.__frontier.fightHint.hidden = true; window.__frontier.clearMessages(); });
     // Re-score 2026-11-27: the wave's last enemy broke through, so the breach and the clear land on one tick. The announcer holds
