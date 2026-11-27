@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { isAllyHero } from "./sim/content/campaign-heroes.js";
+import { isSkywing } from "./sim/content/skywing.js";
 import { translate, getLanguage } from "./i18n.js";
 
 // Campaign heroes on the battlefield (2026-11-27; rules in src/sim/content/campaign-heroes.js): a gold
@@ -11,6 +12,14 @@ import { translate, getLanguage } from "./i18n.js";
 const CAPACITY = 8;
 const GOLD = 0xffc53d;
 const PLATE_LIFT = 3.1; // metres over the ground: above the vitals bar (2.55 m)
+// H1 Skywing (sim/content/skywing.js): the same ring and plate (with an ASSIST tag), its Kite drawn larger in
+// warm gold and white (a per-instance tint in the entity batches: no material or draw of its own), a lower
+// altitude while it dives (the flyer view eases to it) and the dive's blast. A flyer's plate rides higher.
+const SKY_TINT = [1.32, 1.18, 0.78];
+const SKY_SCALE = 1.35;
+const SKY_LIFT = 6.2;
+const SKY_DIVE_FLY = 1.1;
+const heroic = (sim, e) => (!!sim.mission && isAllyHero(e)) || isSkywing(e);
 
 export class HeroView {
   constructor(view) {
@@ -62,18 +71,34 @@ export class HeroView {
     b.type = "button";
     b.className = "hero-plate";
     b.dataset.id = String(e.id);
-    b.dataset.hero = e.hero;
+    b.dataset.hero = isSkywing(e) ? "skywing" : e.hero;
     b.dataset.lang = getLanguage();
     b.setAttribute("translate", "no");
     b.title = translate(`${e.name}, hero: tap to select`);
-    b.innerHTML = `<span class="hero-plate-tag"><i aria-hidden="true">★</i><b></b></span>`;
+    b.innerHTML = `<span class="hero-plate-tag"><i aria-hidden="true">★</i><b></b>${isSkywing(e) ? '<em class="hero-plate-assist"></em>' : ""}</span>`;
     b.querySelector("b").textContent = translate(e.name);
+    if (isSkywing(e)) b.querySelector("em").textContent = translate("ASSIST");
     layer.append(b);
     this.plates.set(e.id, b);
     return b;
   }
+  dress(root, e) {
+    if (!isSkywing(e)) return;
+    root.userData.skywing = true;
+    root.userData.model?.traverse?.((part) => { if (part.isMesh) part.userData.tint = SKY_TINT; });
+  }
+  scaleFor(e) {
+    return isSkywing(e) ? SKY_SCALE : 1;
+  }
+  event(ev) {
+    // Dive strike's blast (sim/content/skywing.js): a fireball and a dust ring where it landed.
+    if (ev.type !== "skystrike" || !this.view.fx) return;
+    const fx = this.view.fx, at = { x: ev.x, z: ev.z, team: ev.team };
+    fx.explosion({ x: ev.x, y: 0.7, z: ev.z }, ev.weapon === "rocket" ? 1.4 : 1.15, at, true);
+    fx.dust({ x: ev.x, y: 0.3, z: ev.z }, 5, at, 1.3, 1.2);
+  }
   update(sim, dt) {
-    const any = !!sim.mission && sim.entities.some(isAllyHero);
+    const any = sim.entities.some((e) => heroic(sim, e));
     if (!any) { this.hide(); return; }
     if (!this.mesh) this.build();
     const objects = this.view.objects, A = this.mesh.instanceMatrix.array, seen = new Set();
@@ -81,7 +106,7 @@ export class HeroView {
     let n = 0, dirty = false;
     const placed = [];
     for (const e of sim.entities) {
-      if (!isAllyHero(e) || !(e.hp > 0) || n >= CAPACITY) continue;
+      if (!heroic(sim, e) || !(e.hp > 0) || n >= CAPACITY) continue;
       const o = objects.get(e.id);
       if (!o || !o.visible) continue;
       const r = (e.radius || 0.7) * 1.75 * (o.userData?.readabilityScale || 1);
@@ -92,10 +117,13 @@ export class HeroView {
       for (let k = 0; k < 16; k++) if (A[n * 16 + k] !== Math.fround(m[k])) { dirty = true; break; }
       if (dirty || this.drawn <= n) this.mesh.setMatrixAt(n, this.dummy.matrix);
       n++;
+      // Skywing dives low, then climbs back to its cruising height (the flyer view eases between them).
+      const air = isSkywing(e) ? o.userData?.air : null;
+      if (air) { air.cruise ??= air.fly; air.fly = e.swoop && !e.swoop.done ? SKY_DIVE_FLY : air.cruise; }
       // The nameplate: over the hero's head, only while the hero is on the canvas.
       const plate = this.plateFor(e);
       if (!plate || !canvas) continue;
-      const p = this.view.project(o.position.x, o.position.z, (o.position.y || 0) + PLATE_LIFT);
+      const p = this.view.project(o.position.x, o.position.z, (o.position.y || 0) + (air ? SKY_LIFT : PLATE_LIFT));
       const inside = p.x > -40 && p.y > -20 && p.x < this.view.width + 40 && p.y < (this.view.drawHeight || this.view.height) + 20;
       plate.hidden = !inside;
       if (inside) placed.push({ plate, x: Math.round(p.x + canvas.offsetLeft), y: Math.round(p.y + canvas.offsetTop) });

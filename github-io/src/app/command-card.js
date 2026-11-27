@@ -94,6 +94,9 @@ export function setupCommandCard(S, A) {
       const ability = event.target.closest("[data-ability]"), stance = event.target.closest("[data-stance]");
       if (ability) { if (!ability.disabled) A.useAbility(ability.dataset.ability); return; }
       if (stance) { if (!stance.disabled) A.setStance(stance.dataset.stance); return; }
+      // H1 Skywing's weapon switch (sim/content/skywing.js): one tap, logged as a command.
+      const weapon = event.target.closest("[data-weapon]");
+      if (weapon) { if (!weapon.disabled) A.switchWeapon?.(weapon.dataset.weapon); return; }
       const button = event.target.closest("[data-action]");
       if (!button || button.disabled) return;
       const type = button.dataset.action;

@@ -220,6 +220,8 @@ export function setupMatchFlow(S, A) {
     if (!resume) startEconomy(play !== false);
     if(play !== false && S.playMode === "training") beginTutorial();
     if (S.sim.defence) A.defenceBegin(resume);
+    // H1/H2 Skywing: a restart buys it again when the match restarted had it (skywing-ui.js).
+    if (play !== false && !resume) A.skywingStart?.(true);
     // Mission title card (W2-F): campaign, Chronicle and Defence matches, not a resumed save; browser suites (?test) opt in with ?titlecard.
     if (play !== false && !resume) openTitleCard();
   }
@@ -279,6 +281,8 @@ export function setupMatchFlow(S, A) {
     );
     if(S.playMode === "training") beginTutorial();
     if (S.sim.defence) A.defenceBegin();
+    // H1/H2 Skywing: paid for here, as the match starts, when the briefing row says On (skywing-ui.js).
+    A.skywingStart?.(false);
     A.tone(780, 0.15);
     openTitleCard();
   }

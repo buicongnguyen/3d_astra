@@ -1,5 +1,6 @@
 import "./tactics-ui.css";
 import { icon } from "./icons.js";
+import { WEAPONS, isSkywing } from "./sim/content/skywing.js";
 import { ABILITY_KEYS, STANCES, STANCE_INFO, abilityGroups, abilityStatus, shouldPulse, stanceState, stancesInUse, takesStance } from "./tactics-ui.js";
 
 // Command-card controls for fighting units: one tile per distinct ability (name, glyph,
@@ -16,7 +17,9 @@ export const PHONE_NAME = { "Rapid fire": "Rapid", "Triage pulse": "Heal", "Shie
   "Overdrive": "Boost", "Crossfire": "Cross", "Steady aim": "Aim", "Burn line": "Burn", "Spur on": "Spur",
   "Strafing run": "Strafe", "Signal flare": "Flare", "Bomb drop": "Bomb",
   // Campaign heroes (src/sim/content/campaign-heroes.js).
-  "Hold the line": "Line", "Caravan volley": "Volley", "Iron hull": "Hull", "Damper pulse": "Damper" };
+  "Hold the line": "Line", "Caravan volley": "Volley", "Iron hull": "Hull", "Damper pulse": "Damper",
+  // H1 Skywing (src/sim/content/skywing.js).
+  "Dive strike": "Dive" };
 const PHONE_SYMBOL = new Set(["Shield wall", "Field repair"]);
 
 export function tacticsCardHTML(sim, entities, { compact = false, side = false, keys = true } = {}) {
@@ -24,6 +27,8 @@ export function tacticsCardHTML(sim, entities, { compact = false, side = false, 
     const key = keys ? ABILITY_KEYS[i] : null;
     return `<button class="ability-tile${compact && PHONE_SYMBOL.has(g.name) ? " symbol-only" : ""}" data-ability="${g.id}"${key ? ` data-hotkey="${key}"` : ""} aria-label="${g.name}" title="${key ? `${key} · ` : ""}${g.name} · ${g.description}">${key ? `<kbd class="action-key">${key}</kbd>` : ""}${icon(g.icon)}<span class="ability-name">${compact && side ? PHONE_NAME[g.name] || g.name : g.name}</span><small class="ability-status"></small><i class="ability-sweep" aria-hidden="true"></i></button>`;
   }).join("");
+  // H1 Skywing alone: its weapon switch (Sniper | Rocket, both always shown, one tap) takes the stance control's place.
+  if (entities.length && entities.every(isSkywing)) return tiles + weaponHTML(keys);
   const stance = entities.some(takesStance)
     ? `<div class="stance-control" role="group" aria-label="Stance">${STANCES.map((id) => {
         const s = STANCE_INFO[id];
@@ -31,6 +36,12 @@ export function tacticsCardHTML(sim, entities, { compact = false, side = false, 
       }).join("")}</div>`
     : "";
   return tiles + stance;
+}
+
+// H1 Skywing's weapon switch: a segmented control dressed as the stance control (the same dock sizes on every screen).
+function weaponHTML() {
+  return `<div class="stance-control weapon-control" role="group" aria-label="Weapon">${Object.values(WEAPONS).map((w) =>
+    `<button data-weapon="${w.id}" aria-pressed="false" title="${w.id === "sniper" ? "Sniper: long-range precise shots, best against soldiers" : "Rocket: lock-on rockets, extra damage to vehicles"}">${icon(w.id === "sniper" ? "sniper" : "lockon")}<span>${w.name}</span></button>`).join("")}</div>`;
 }
 
 // The source text is remembered on the node: in Vietnamese the visible text differs from it.
@@ -66,6 +77,18 @@ export function updateTacticsCard(root, sim, entities, { compact = false, side =
       const narrowGroup = groups.length >= 4 && g?.count > 1 && g.ready > 0;
       setText(tile.querySelector(".ability-status"), narrowGroup ? `${g.ready}/${g.count}` : abilityStatus(g, { compact }));
     }
+  }
+  const weapons = root.querySelector(".weapon-control");
+  if (weapons) {
+    // The weapon in hand is pressed; during the one-second switch the one being drawn shows as switching.
+    const e = entities.find(isSkywing), now = e?.weaponTo || e?.weapon;
+    for (const button of weapons.querySelectorAll("[data-weapon]")) {
+      const pressed = String(button.dataset.weapon === now);
+      if (button.getAttribute("aria-pressed") !== pressed) button.setAttribute("aria-pressed", pressed);
+      button.classList.toggle("switching", !!e?.weaponTo && button.dataset.weapon === e.weaponTo);
+      button.disabled = blocked;
+    }
+    return;
   }
   const control = root.querySelector(".stance-control");
   if (!control) return;

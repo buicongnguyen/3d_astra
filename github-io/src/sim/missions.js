@@ -24,7 +24,8 @@ const CHECK = 0.25;
 // Enemy heroes (campaign C3): health and damage against their unit type, and the health share they give up at.
 export const HERO_HEALTH = 1.6, HERO_DAMAGE = 0.8, HERO_YIELD = 35;
 
-const fighter = (e) => e.kind === "unit" && e.type !== "worker" && e.damage > 0 && e.hp > 0;
+// H1: Skywing (e.assist) never reaches, enters or holds anything for the side.
+const fighter = (e) => e.kind === "unit" && e.type !== "worker" && e.damage > 0 && e.hp > 0 && !e.assist;
 
 // Scaled wave sizes round up, except heavy machines (supply 3 or more: tanks, Walkers, Breakers),
 // which round to nearest: one Walker more is a far bigger step than one Scrapper more.
@@ -281,7 +282,7 @@ export const missions = {
   missionCondition(when) {
     const m = this.mission;
     if (when.time !== undefined) return m.clock >= when.time;
-    if (when.enter) { const p = this.missionPlace(when.enter); return this.own(when.team ?? 0).some((e) => e.kind === "unit" && distance(e, p) <= p.r); }
+    if (when.enter) { const p = this.missionPlace(when.enter); return this.own(when.team ?? 0).some((e) => e.kind === "unit" && !e.assist && distance(e, p) <= p.r); }
     if (when.objective) return m.objectives[when.objective]?.state === (when.is || "done");
     // A scripted probe (R3-I: a small first contact, wave.probe) is not "the first attack": "incoming" waits for a real wave.
     if (when.event) return this.events.slice(this.tickEvents).some((e) => e.type === when.event && (when.event !== "incoming" || (e.team === 0 && !e.probe)));
@@ -422,7 +423,7 @@ export const missions = {
     // Losing every Command core always ends a mission that gave the player a base.
     const lost = (m.rules.playerBase && !alive[0]) || lose.some((l) =>
       l.type === "coreLost" ? !alive[0]
-        : l.type === "armyLost" ? !this.own(0).some((e) => e.kind === "unit")
+        : l.type === "armyLost" ? !this.own(0).some((e) => e.kind === "unit" && !e.assist)
           : l.type === "tagLost" ? (m.fired["had:" + l.tag] ||= this.tagged(l.tag).length > 0) && !this.tagged(l.tag).length
             : l.type === "time" ? m.clock >= l.seconds : false);
     const won = !lost && def.win.every((id) => m.objectives[id]?.state === "done");

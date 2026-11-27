@@ -157,6 +157,7 @@ export function setupBriefing(S, A) {
     if (!$("start").disabled && !S.loadFailed) $("start").textContent = S.playMode === "training" ? "Start training" : inCampaign ? `Start mission ${S.stagePick + 1}` : "Start";
     $("briefing").classList.toggle("skirmish-plain", S.playMode === "skirmish"); // its setup controls already say everything the story card did
     if (S.playMode === "defence") A.renderDefenceMenu?.();
+    A.renderSkywing?.(); // H1/H2: the Skywing row and the coin chip (src/skywing-ui.js)
   }
 
   // The rules a match built from the setup now would get: the chosen ones for a skirmish, none otherwise (as createSim in main.js).

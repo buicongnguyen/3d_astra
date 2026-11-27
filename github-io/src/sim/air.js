@@ -46,7 +46,7 @@ export const air = {
     let n = 0;
     for (const e of this.entities) {
       if (e.team !== team || e.hp <= 0) continue;
-      if (e.flying) n++;
+      if (e.flying && !e.assist) n++;
       if (e.queue) for (const q of e.queue) if (D[q.type]?.flying) n++;
     }
     return n;

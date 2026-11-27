@@ -15,7 +15,7 @@ export const SQUAD_NAMES = Object.freeze([
 ]);
 
 // Campaign heroes (story/heroes.js) come back on their own and never join the squad.
-const eligibleUnit = (e) => e.team === 0 && e.kind === "unit" && e.hp > 0 && !e.boss && !e.hero && e.type !== "worker" && !!e.damage && (e.rank || 0) >= 1;
+const eligibleUnit = (e) => e.team === 0 && e.kind === "unit" && e.hp > 0 && !e.boss && !e.hero && !e.assist && e.type !== "worker" && !!e.damage && (e.rank || 0) >= 1;
 
 // The squad a won mission leaves: the best ranked survivors (rank, then experience, then id), named.
 // Units that already carry a name (earlier squad members) keep it; new names skip the ones in use.

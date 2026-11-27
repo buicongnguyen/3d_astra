@@ -74,7 +74,7 @@ export class PlayBot {
       if (b.levelJob) continue;
       if (b.level < hq.level && p.alloy > 400 && !b.queue.length) { s.command({ team, type: "upgrade", building: b.id }); continue; }
       if (b.queue.length >= 2) continue;
-      const army = s.own(team).filter((e) => e.kind === "unit" && e.type !== "worker");
+      const army = s.own(team).filter((e) => e.kind === "unit" && !e.assist && e.type !== "worker");
       // The wish list names roster slots; each faction fills a slot with its own unit (a Wardens
       // Barracks trains Drones for "ranger" and has no Medic), so slots map through typeFor.
       const unitFor = (slot) => s.typeFor(team, slot);
@@ -85,7 +85,7 @@ export class PlayBot {
       const unit = wish.map((slot) => slot && unitFor(slot)).find((type) => type && b.trains?.includes(type) && b.level >= (D[type].required_level || 1) && can(type));
       if (unit) s.command({ team, type: "train", building: b.id, unit });
     }
-    const fighters = s.own(team).filter((e) => e.kind === "unit" && e.damage > 0 && e.type !== "worker");
+    const fighters = s.own(team).filter((e) => e.kind === "unit" && !e.assist && e.damage > 0 && e.type !== "worker");
     // An attack that was wiped out teaches caution: the next one waits for eight more fighters.
     if (this.party && this.party.filter((id) => s.get(id)).length < this.party.length / 3) { this.attackAt += 8; this.party = null; }
     // No march while an attack warning is fresh or enemies stand near the core.
@@ -214,7 +214,7 @@ export class ObjectiveBot extends PlayBot {
   }
   lead(open) {
     const s = this.sim, team = this.team;
-    const units = s.own(team).filter((e) => e.kind === "unit" && e.type !== "worker" && !this.wards.has(e.tag) && !this.guards.has(e.id));
+    const units = s.own(team).filter((e) => e.kind === "unit" && !e.assist && e.type !== "worker" && !this.wards.has(e.tag) && !this.guards.has(e.id));
     const fighters = units.filter((e) => e.damage > 0), helpers = units.filter((e) => !(e.damage > 0));
     if (!fighters.length) return;
     const hq = this.own("hq")[0];

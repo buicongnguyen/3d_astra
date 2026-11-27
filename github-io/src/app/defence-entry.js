@@ -126,6 +126,7 @@ export function setupDefenceEntry(S, A) {
     if (!$("start").disabled && !S.loadFailed) $("start").textContent = variant === "endless" || variant === "records" ? "Start endless" : variant === "daily" ? "Start daily" : variant === "heroic" ? (locked ? "Locked" : "Start Heroic") : "Start defence";
     // A locked Heroic cannot be started: the variant stays visible for its teaser.
     if (variant === "heroic" && !S.loadFailed) $("start").setAttribute("aria-disabled", String(locked)); else $("start").removeAttribute("aria-disabled");
+    A.renderSkywing?.(); // H1/H2: the Skywing row (src/skywing-ui.js) after the menu was redrawn
   }
 
   // The battlefield heading while a defence level is picked or played.

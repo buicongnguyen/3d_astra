@@ -53,3 +53,15 @@
   background: rgba(60, 42, 8, 0.92);
   color: #fff6d8;
 }
+/* H1 Skywing (src/sim/content/skywing.js): the ASSIST tag on its plate. */
+.hero-plate-assist {
+  padding: 0 5px;
+  border-radius: 6px;
+  background: #ffc53d;
+  color: #2a1c02;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+}

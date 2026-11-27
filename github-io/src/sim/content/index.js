@@ -31,6 +31,7 @@ import { commanderRanks } from "./commander-ranks.js";
 import { airStrikes } from "./air-strikes.js";
 import { waveKinds } from "./wave-kinds.js";
 import { campaignHeroes } from "./campaign-heroes.js";
+import { skywing } from "./skywing.js";
 
 export const CONTENT = [
   suppression,
@@ -57,4 +58,5 @@ export const CONTENT = [
   airStrikes,
   waveKinds,
   campaignHeroes,
+  skywing,
 ];

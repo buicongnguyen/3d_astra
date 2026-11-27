@@ -47,9 +47,15 @@
       "checks": ["check:missions", "check:missions -- --chronicle all"]
     },
     {
+      "name": "Skywing assist and the coin wallet (H1/H2)",
+      "files": ["src/sim/content/skywing.js", "src/story/assist-intel.js", "src/meta/coins.js", "src/rewards-connector.js", "src/skywing-ui.js", "src/skywing-ui.css"],
+      "suites": ["skywing", "heroes", "campaign", "missions", "choices", "defence", "language", "phone-hud", "phones", "mobile"],
+      "checks": ["check:missions"]
+    },
+    {
       "name": "campaign heroes (rules, story carry, ring and nameplate)",
       "files": ["src/sim/content/campaign-heroes.js", "src/story/heroes.js", "src/hero-view.js", "src/hero-plates.css"],
-      "suites": ["heroes", "missions", "story", "choices", "campaign", "phones", "phone-hud", "render-budget"],
+      "suites": ["heroes", "skywing", "missions", "story", "choices", "campaign", "phones", "phone-hud", "render-budget"],
       "checks": ["check:missions"]
     },
     {

@@ -131,6 +131,21 @@ Named allies fight beside the player in story missions (rules: `src/sim/content/
 - Not in Frontier Defence missions (the Defence commander fights there) or Faction Chronicles. A mission settled without a progress record (`resolveMission(def, null)`: the tools' default runs, the golden pins) fields none; use `check:missions --progress file` or `--decide mercy` to play them.
 - Heroes take entity ids from their own range (3,000,000 up) and never join the veteran squad.
 
+## Skywing assist (H1, 2026-11-27)
+Skywing is an opt-in flying hero (src/sim/content/skywing.js) bought with coins (src/meta/coins.js, 60 coins) on
+the mission briefing, the skirmish setup or the Defence menu ("Skywing assist: Off / On"). It flies a Kite and
+carries a sniper rifle and a rocket launcher; the player switches between them in the field (1 s). Limits: one per
+match, no captures, no "reach"/"enter" objectives, half damage to buildings, back home 30 s after a fall, never a
+lose condition. Off is the default. Missions whose enemies field no unit that hits air are allowed (it is an
+assist); the briefing row says "No enemy here can shoot flyers." on them. `tests/skywing.test.js` keeps this list
+in step with src/story/assist-intel.js:
+
+<!-- skywing-no-anti-air:start -->
+- Story missions: none (every mission's enemies can field Rangers or another unit that hits air).
+- Faction Chronicles: none.
+- Defence levels: none.
+<!-- skywing-no-anti-air:end -->
+
 ## Staged scenes (0.19b)
 
 A scene is a short sequence (5 to 20 s) the client plays while the match is held: letterbox bars, eased camera moves, lines in the dialogue box with portraits and small screen glows. Data: `SCENES` in `src/story/scenes.js`; client: `src/app/scenes.js` (the `scene` screen in `src/app/screens.js`, which holds the match but keeps the music, like the decision card).

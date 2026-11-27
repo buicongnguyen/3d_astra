@@ -88,6 +88,8 @@ export function setupSelection(S, A) {
     $("world").addEventListener("heropick", (event) => {
       const e = S.sim.get(event.detail?.id);
       if (!Z.started || Z.paused || S.sim.result || !e || e.team !== 0) return;
+      // Frontier Defence has no unit orders: Skywing flies on its own there, so its plate only brings it into view.
+      if (S.sim.defence && e.assist) { S.view.focusOn(e.x, e.z); return; }
       setSelection([e.id]);
     });
     $("select-workers").onclick = () => {
