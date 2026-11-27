@@ -58,6 +58,7 @@
     "test:heroes": "node tests/heroes.mjs",
     "test:skywing": "node tests/skywing.mjs",
     "test:hero-mode": "node tests/hero-mode.mjs",
+    "test:skywing-land": "node tests/skywing-land.mjs",
     "test:story": "node tests/story.mjs",
     "test:chronicles": "node tests/chronicles.mjs",
     "test:missions": "node tests/missions.mjs",
