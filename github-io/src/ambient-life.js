@@ -253,24 +253,45 @@ void main() {
   gl_Position = projectionMatrix * viewMatrix * vec4(place(local * show, fwd, p), 1.0);
 }`;
 
-// Fish swim along the river channel and wrap at the map ends; a travelling wave bends the
-// body. Drawn just above the opaque water, tinted and half transparent so they read as under it.
+// Fish swim along the river channel and wrap at the map ends. Each is a small low-poly 3D fish
+// (fishGeometry: a lofted body, dorsal fin, side fins and a forked tail, 49 triangles) in one of three
+// kinds picked per instance (aB.w: 0 silver, 1 orange-and-white koi, 2 dark carp), dark on the back and pale
+// on the belly. A travelling wave bends the body, growing toward the tail; a fixed light shades the facets.
+// Drawn just above the opaque water, tinted toward it and partly transparent so they read as under it.
 const FISH_VERTEX = `${COMMON}
 attribute vec4 aA; // x, z, size, direction
-attribute vec4 aB; // speed, phase, koi
+attribute vec4 aB; // speed, phase, koi (0/1), kind (0 silver, 1 koi, 2 carp)
+attribute vec2 aPaint; // 0 belly .. 1 back, 1 = fin
 varying vec3 vColor; varying float vAlpha;
 void main() {
   float t = uTime, span = uHalf * 2.0 - 4.0, dir = aA.w;
   float x = mod(aA.x + uHalf - 2.0 + t * aB.x * dir, span) - span * 0.5;
   float z = aA.y + sin(t * 0.4 + aB.y) * 0.5;
-  vec3 p = vec3(x, -0.05, z);
+  vec3 p = vec3(x, -0.03, z);
   vec2 fwd = normalize(vec2(dir, cos(t * 0.4 + aB.y) * 0.2));
   vec3 local = position * aA.z;
-  local.x += sin(t * 9.0 + aB.y - position.z * 9.0) * 0.08 * (0.45 - position.z) * aA.z * uAmp;
+  // The swimming wave: nothing at the nose, strongest at the tail tip.
+  float k = clamp((0.42 - position.z) / 0.9, 0.0, 1.0);
+  float wave = t * 9.0 * (0.7 + 0.3 * aB.x) + aB.y - position.z * 7.0;
+  local.x += sin(wave) * 0.12 * k * k * aA.z * uAmp;
   float ford = smoothstep(4.5, 6.5, abs(x));
   float show = inside(p, 1.0) * ford;
-  vColor = mix(vec3(0.12, 0.27, 0.3), vec3(0.94, 0.54, 0.24), aB.z);
-  vAlpha = 0.6 * show * (1.0 - smoothstep(0.7, 0.85, fogAt(p)));
+  // Colours (sRGB, unconverted like the other effect shaders): back, belly and fin of each kind.
+  vec3 back = vec3(0.36, 0.46, 0.5), belly = vec3(0.84, 0.88, 0.9), fin = vec3(0.62, 0.7, 0.74);
+  if (aB.w > 1.5) { back = vec3(0.16, 0.18, 0.12); belly = vec3(0.55, 0.48, 0.3); fin = vec3(0.24, 0.24, 0.17); }
+  else if (aB.w > 0.5) {
+    back = vec3(0.97, 0.94, 0.88); belly = vec3(0.98, 0.96, 0.92); fin = vec3(1.0, 0.86, 0.72);
+    // Koi patches: orange blotches on the back, a different pattern per fish.
+    float blotch = sin(position.z * 15.0 + aB.y * 3.0) * sin(position.x * 22.0 + aB.y * 5.0 + 1.3) + 0.25 * sin(position.z * 31.0 + aB.y);
+    back = mix(back, vec3(0.95, 0.38, 0.1), step(0.05, blotch) * step(0.25, aPaint.x));
+  }
+  vec3 c = mix(mix(belly, back, aPaint.x), fin, aPaint.y);
+  // A fixed light from above and the sun side: the facets of the turned body shade.
+  vec2 right = vec2(fwd.y, -fwd.x);
+  vec3 n = normalize(vec3(right.x * normal.x + fwd.x * normal.z, normal.y, right.y * normal.x + fwd.y * normal.z));
+  float lit = 0.58 + 0.42 * abs(dot(n, normalize(vec3(0.35, 0.9, 0.25))));
+  vColor = mix(c * lit, vec3(0.12, 0.32, 0.36), 0.18);
+  vAlpha = 0.75 * show * (1.0 - smoothstep(0.7, 0.85, fogAt(p)));
   gl_Position = projectionMatrix * viewMatrix * vec4(place(local * show, fwd, p), 1.0);
 }`;
 const FISH_FRAGMENT = `varying vec3 vColor; varying float vAlpha; void main() { if (vAlpha < 0.01) discard; gl_FragColor = vec4(vColor, vAlpha); }`;
@@ -371,11 +392,36 @@ function flutterGeometry(dragonfly) {
   g.setAttribute("aEdge", new THREE.Float32BufferAttribute(edge, 1));
   return g;
 }
-function fishGeometry() {
-  const p = [0, 0, 0.42, -0.13, 0, 0.05, 0.13, 0, 0.05, -0.13, 0, 0.05, 0, 0, -0.26, 0.13, 0, 0.05,
-    0, 0, -0.22, -0.15, 0, -0.44, 0.15, 0, -0.44];
+// A low-poly fish in its local frame (+z nose, y up, metres at size 1): a lofted body of hexagonal rings, a
+// dorsal fin, two side fins and a forked tail spread flat so it reads from the high camera. Flat-shaded facets;
+// aPaint.x is 0 on the belly and 1 on the back, aPaint.y 1 on the fins.
+export const FISH_TRIANGLES = 49;
+export function fishGeometry() {
+  const pos = [], paint = [];
+  const tri = (a, b, c, fin = 0) => { for (const v of [a, b, c]) { pos.push(v[0], v[1], v[2]); paint.push(fin ? 0.6 : Math.min(1, Math.max(0, 0.5 + v[1] * 9)), fin); } };
+  // Stations along the body: z, half width, half height.
+  const stations = [[0.28, 0.08, 0.055], [0.1, 0.125, 0.078], [-0.1, 0.095, 0.06], [-0.25, 0.03, 0.022]];
+  const ring = ([z, w, h]) => [0, 1, 2, 3, 4, 5].map((i) => { const a = (i / 6) * Math.PI * 2 + Math.PI / 2; return [Math.cos(a) * w, Math.sin(a) * h, z]; });
+  const rings = stations.map(ring), nose = [0, 0.005, 0.42];
+  for (let i = 0; i < 6; i++) tri(nose, rings[0][(i + 1) % 6], rings[0][i]);
+  for (let s = 0; s < 3; s++)
+    for (let i = 0; i < 6; i++) {
+      const j = (i + 1) % 6, a = rings[s], b = rings[s + 1];
+      tri(a[i], a[j], b[j]); tri(a[i], b[j], b[i]);
+    }
+  // Dorsal fin (a raked blade on the back) and two side fins.
+  tri([0, 0.075, 0.13], [0, 0.15, -0.03], [0, 0.055, -0.12], 1);
+  tri([0.07, -0.01, 0.12], [0.2, -0.03, 0.02], [0.08, -0.02, 0.02], 1);
+  tri([-0.07, -0.01, 0.12], [-0.08, -0.02, 0.02], [-0.2, -0.03, 0.02], 1);
+  // Forked tail: two lobes, each a pair of triangles, spread from the narrow root.
+  for (const side of [-1, 1]) {
+    const root = [0.025 * side, 0, -0.24], mid = [0, 0, -0.31], tip = [0.16 * side, 0.01, -0.45], inner = [0.05 * side, 0.005, -0.37];
+    tri(root, tip, inner, 1); tri(root, inner, mid, 1);
+  }
   const g = new THREE.InstancedBufferGeometry();
-  g.setAttribute("position", new THREE.Float32BufferAttribute(p, 3));
+  g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute("aPaint", new THREE.Float32BufferAttribute(paint, 2));
+  g.computeVertexNormals();
   return g;
 }
 function instanced(geometry, rows, pick, names) {
@@ -451,9 +497,11 @@ export class AmbientLife {
     flutter(plan.butterflies, false);
     flutter(plan.dragonflies, true);
     if (plan.fish.length) {
-      const pick = (f, name) => name === "aA" ? [f.x, f.z, f.size, f.dir] : [f.speed, f.phase, f.koi, 0];
+      // Kind: the koi stay koi; the rest are silver or dark carp, picked from the phase (the seeded plan is unchanged).
+      const kind = (f) => f.koi ? 1 : (f.phase * 7.31) % 1 < 0.6 ? 0 : 2;
+      const pick = (f, name) => name === "aA" ? [f.x, f.z, f.size, f.dir] : [f.speed, f.phase, f.koi, kind(f)];
       const geometry = instanced(fishGeometry(), plan.fish, pick, [["aA", 4], ["aB", 4]]);
-      add(geometry, material(FISH_VERTEX, FISH_FRAGMENT, {}, { transparent: true, depthWrite: false, side: THREE.DoubleSide }), "life:fish");
+      add(geometry, material(FISH_VERTEX, FISH_FRAGMENT, {}, { transparent: true, side: THREE.DoubleSide }), "life:fish");
       // Same path as FISH_VERTEX, so a blast kills the fish that is actually there now.
       const span = half * 2 - 4, wrap = (a, n) => ((a % n) + n) % n;
       register("fish", geometry, plan.fish, (f, t) => [wrap(f.x + half - 2 + t * f.speed * f.dir, span) - span / 2, f.z, 0.6]);

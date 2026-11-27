@@ -147,13 +147,13 @@ export function setupHeroMode(S, A) {
       <div class="hh-actions">
         <button type="button" data-hero="ability" class="hh-ability"><i class="hh-sweep" aria-hidden="true"></i><span class="hh-ability-name"></span><kbd translate="no">Q</kbd></button>
         <button type="button" data-hero="dodge" class="hh-dodge"><i class="hh-sweep" aria-hidden="true"></i><span class="hh-dodge-name">Dodge</span><kbd translate="no">Space</kbd></button>
-        <button type="button" data-hero="fire" class="hh-fire"><span>Fire</span></button>
+        <button type="button" data-hero="fire" class="hh-fire"><span>Fire</span><kbd translate="no">F</kbd></button>
       </div>
       <div class="hh-stick" aria-hidden="true"><i class="hh-knob"></i></div>
       <div class="hh-cross" aria-hidden="true"><i class="hh-lockring"></i></div>
       <div class="hh-edges" aria-hidden="true"></div>
       <div class="hh-down" role="status" hidden><span>Hero down</span></div>
-      <p class="hh-help"><span>WASD move · Mouse aim · Click fire · Q ability · Space dodge · Tab exit</span></p>`;
+      <p class="hh-help"><span>WASD move · Mouse aim · Click/F fire · Q ability · Space dodge · Tab exit</span></p>`;
     document.body.append(root);
     for (let i = 0; i < 6; i++) { const m = document.createElement("i"); m.className = "hh-edge"; m.hidden = true; root.querySelector(".hh-edges").append(m); H.edges.push(m); }
     root.addEventListener("click", (event) => {
@@ -209,8 +209,8 @@ export function setupHeroMode(S, A) {
     root.querySelector(".hh-name").textContent = translate(e.name);
     root.querySelector(".hh-dodge-name").textContent = H.sky ? "Barrel roll" : "Dodge";
     root.querySelector(".hh-help span").textContent = H.sky
-      ? "WASD fly · Mouse aim · Click shoot · Hold to lock rockets · Wheel zoom · Q Dive · E weapon · Space roll · Tab exit"
-      : "WASD move · Mouse aim · Click fire · Q ability · Space dodge · Tab exit";
+      ? "WASD fly · Mouse aim · Click/F shoot · Hold to lock rockets · Wheel zoom · Q Dive · E weapon · Space roll · Tab exit"
+      : "WASD move · Mouse aim · Click/F fire · Q ability · Space dodge · Tab exit";
     H.button && (H.button.hidden = true);
     const v = S.view;
     v.resize();
@@ -397,11 +397,15 @@ export function setupHeroMode(S, A) {
     if (Z.paused) return;
     if (k === "escape" || k === "tab") { stop(event); if (!event.repeat) leave(); return; }
     if (k === " " || code === "Space") { stop(event); if (!event.repeat) dodge(); return; }
+    // F fires like the mouse button and aims the same way (the target under the reticle): held for a ground hero
+    // and Skywing's rocket lock, one shot per press for Skywing's sniper.
+    if (code === "KeyF" || k === "f") { stop(event); if (!event.repeat) { aimNow(); trigger(true, "key"); } return; }
     if (code === "KeyQ" || k === "q") { stop(event); if (!event.repeat) ability(); return; }
     if (code === "KeyE" || k === "e") { stop(event); if (!event.repeat) { if (H.sky) weapon(); else ability(); } return; }
   }
   function keyup(event) {
     const code = event.code, key = event.key.toLowerCase();
+    if (code === "KeyF" || key === "f") { if (H.on) { trigger(false, "key"); stop(event); } return; }
     const k = code === "KeyW" ? "w" : code === "KeyA" ? "a" : code === "KeyS" ? "s" : code === "KeyD" ? "d" : key;
     H.keys.delete(k);
   }

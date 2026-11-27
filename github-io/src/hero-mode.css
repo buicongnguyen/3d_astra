@@ -196,7 +196,14 @@ html.hero-mode #idle-chips { visibility: hidden !important; }
 }
 .hh-actions button { min-width: 120px !important; min-height: 48px !important; font-size: 14px !important; }
 .hh-sweep { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5); transform-origin: left; transform: scaleX(var(--cd, 0)); pointer-events: none; }
-.hh-fire { display: none !important; }
+/* Fire: held like the mouse button (F on the keyboard); on PC it closes the action row, on phones it is the big round tile. */
+.hh-fire {
+  background: radial-gradient(circle at 50% 40%, rgba(200, 70, 30, 0.95), rgba(110, 30, 12, 0.95)) !important;
+  border-color: #ffb08a !important;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  touch-action: none;
+}
 .hh-help {
   position: absolute;
   left: 50%;

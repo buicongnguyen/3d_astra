@@ -43,6 +43,13 @@ void main() {
   else if (iSize.z < 0.5 || iSize.z > 1.5) world = iPos + right * r.x + up * r.y + forward * (iSize.x * 0.45 + 0.4);
   else world = iPos + vec3(r.x, 0.0, r.y);
   gl_Position = projectionMatrix * viewMatrix * vec4(world, 1.0);
+  // Shine pass: under the close Hero (perspective) camera a sprite within a metre or two of the lens fades out
+  // instead of filling the screen (the RTS camera is orthographic and far: unchanged).
+  if (projectionMatrix[3][3] < 0.5) {
+    float near = smoothstep(0.9, 2.4, -(viewMatrix * vec4(iPos, 1.0)).z);
+    vColor.a *= near;
+    if (near <= 0.0) gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+  }
 }`;
 const FRAGMENT = `
 uniform sampler2D map;

@@ -56,6 +56,16 @@ try {
   assert.ok(battle.median < 300, `battle draw calls stay within the phone budget: ${JSON.stringify(battle)}`);
   await page.screenshot({ path: 'test-results/ambient-battle-390.png' });
 
+  // Shine pass: every crystal and alloy deposit draws through four shared batches (crystals per kind, one glow,
+  // one contact blob), none of them in the shadow pass.
+  const deposits = await page.evaluate(() => {
+    const v = window.__frontier.view, list = v.batches.group.children.filter(m => /^batch:CrystalField/.test(m.name));
+    return { deposits: v.resourceObjects.size, batches: list.map(m => m.name).sort(), shadows: list.filter(m => m.castShadow).length };
+  });
+  assert.ok(deposits.deposits >= 8, `deposits: ${JSON.stringify(deposits)}`);
+  assert.deepEqual(deposits.batches, ['batch:CrystalFieldAlloy', 'batch:CrystalFieldBlob', 'batch:CrystalFieldEnergy', 'batch:CrystalFieldGlow'], `crystal batches: ${JSON.stringify(deposits)}`);
+  assert.equal(deposits.shadows, 0, 'crystal deposits cast no shadows');
+
   // Governor: slow frames calm the creatures, then hold them still (the clock stops);
   // smooth frames bring the motion back. Synthetic samples keep the test deterministic.
   const governed = await page.evaluate(async () => {

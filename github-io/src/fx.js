@@ -21,6 +21,7 @@ import { signatureLook, signatureShot, signaturePartial, signatureSupport, stepS
 import { LOOKS, MOMENTS, shimmer } from "./fx-kinds/index.js";
 import { crit, resisted } from "./fx-kinds/counter.js";
 import { RocketBodies } from "./fx-kinds/rocket-body.js";
+import { CrystalFieldKit } from "./crystal-fields.js";
 import { ROCKET } from "./fx-kinds/rocket.js";
 // R3-X: weapon effect classes, the ordnance bodies (one instanced draw) and their flights.
 import { groundSplashRadius, weaponClass } from "./fx-kinds/weapon-class.js";
@@ -101,6 +102,8 @@ function paintSignatureCells(texture) {
   texture.needsUpdate = true;
 }
 
+// The longest a streak particle may draw, as a share of the view's height (VERTEX).
+export const STREAK_SCREEN = 0.6;
 const VERTEX = `
 attribute vec3 iPos; attribute vec4 iColor; attribute vec4 iAxis; attribute vec3 iSize;
 uniform vec2 grid;
@@ -120,15 +123,26 @@ void main() {
   // size: an explosion centred inside a hull or building draws in front of the wreck instead
   // of being clipped by it, without moving on screen.
   vec3 world;
+  // Shine pass: the Hero camera is a close perspective one. A particle within a metre or two of it fades out
+  // (gone inside ~0.9 m), and a streak is never longer on screen than STREAK_SCREEN of the view's height, so a
+  // spark or chip flying past the lens can no longer draw a screen-wide line. The RTS (orthographic) camera
+  // is far: neither guard changes what it shows.
+  bool perspective = projectionMatrix[3][3] < 0.5;
+  float depth = perspective ? max(-(viewMatrix * vec4(iPos, 1.0)).z, 1e-3) : 1.0;
+  float near = perspective ? smoothstep(0.9, 2.4, depth) : 1.0;
+  vColor.a *= near;
   if (iAxis.w < 0.5) world = iPos + right * r.x + up * r.y + forward * (iSize.x * 0.8 + 0.4);
   else if (iAxis.w < 1.5) {
     vec3 side = normalize(cross(iAxis.xyz, forward) + vec3(1e-5, 0.0, 0.0));
-    world = iPos + iAxis.xyz * q.y + side * q.x * iSize.x + forward * 0.4;
+    float span = length(iAxis.xyz), most = ${STREAK_SCREEN.toFixed(2)} * 2.0 * depth / projectionMatrix[1][1];
+    vec3 axis = span > most ? iAxis.xyz * (most / span) : iAxis.xyz;
+    world = iPos + axis * q.y + side * q.x * iSize.x + forward * 0.4;
   } else if (iAxis.w < 2.5) world = iPos + vec3(r.x, 0.0, r.y);
   // FLAT (3): flat on the ground facing up. GROUND (2) maps the quad so it faces down and is culled from above
   // (found 2026-11-26, readable deaths; left as it is so existing looks do not change).
   else world = iPos + vec3(r.x, 0.0, -r.y);
   gl_Position = projectionMatrix * viewMatrix * vec4(world, 1.0);
+  if (near <= 0.0) gl_Position = vec4(0.0, 0.0, 2.0, 1.0); // behind the far plane: not drawn
 }`;
 const FRAGMENT = `
 uniform sampler2D map;
@@ -689,6 +703,19 @@ export class Effects {
       this.particle(this.glow, { ...from, cell: CELL.flare, s0: 0.9, s1: 1.1, life: 0.06, c0: [1, 0.85, 0.55, 0.8], c1: [1, 0.55, 0.15, 0], anchor: { ...e, shot: true } });
       return;
     }
+    // Shine pass (item 6): the driven hero's own shot under the Hero camera flies as a big, readable round
+    // (hero-mode-view.js draws the flight); here only its muzzle flash and its landing, at the same time as always.
+    if (style.kind !== "support" && this.view.heroOwnShots?.take(e, sim, from, to, style)) {
+      const rocket = style.kind === "rocket" || style.look === "rocket" || style.look === "pods";
+      this.particle(this.glow, { ...from, cell: CELL.flare, s0: rocket ? 1.4 : 0.9, s1: rocket ? 1.7 : 1.1, life: 0.07, c0: [1, 0.9, 0.62, 0.95], c1: [1, 0.55, 0.15, 0], anchor: { ...e, shot: true } });
+      const anchor = { x: e.tx, z: e.tz, target: e.target, targetWidth: 2 * (sim?.get?.(e.target)?.radius || 0.75), direct: !groundSplashRadius(e, sim) }, power = style.hit ?? hitPower(e.weapon, style.kind);
+      this.timeline.push({ at: this.time + style.life, run: () => {
+        this.hit(land, power, anchor, impactKind(weaponClass(e, style)) || (rocket ? "rocket" : "shell"));
+        // A clear flash where the hero's round lands (the whole hit reads from the shoulder camera).
+        this.particle(this.glow, { ...land, cell: CELL.flare, s0: rocket ? 2.4 : 1.1, s1: rocket ? 3 : 1.4, life: rocket ? 0.16 : 0.09, c0: [1, 0.95, 0.8, 1], c1: [1, 0.5, 0.12, 0], anchor });
+      } });
+      return;
+    }
     const dir = { x: to.x - from.x, y: to.y - from.y, z: to.z - from.z }, len = Math.hypot(dir.x, dir.y, dir.z) || 1;
     const travel = style.life, anchor = { ...e, shot: true, targetWidth: 2 * (sim?.get?.(e.target)?.radius || 0.75), direct: !groundSplashRadius(e, sim) };
     const kind = style.kind, m = this.motion;
@@ -973,18 +1000,26 @@ export class Effects {
       if (o.type === "gather") { if (isHarvesting(sim, e)) { kind = "mine"; target = harvestTarget(sim, e); } }
       else if (o.type === "build") { target = sim.get(o.target); if (target && target.kind === "building" && !target.complete && target.hp > 0) kind = "build"; }
       if (!kind || !sim.isVisible(e)) continue;
+      const dx = target.x - e.x, dz = target.z - e.z, d = Math.hypot(dx, dz) || 1, ux = dx / d, uz = dz / d;
+      if (kind === "mine") {
+        // Shine pass: a chip of the deposit breaks off at the top of each swing of the Harvester's work tilt
+        // (view.js: sin(time * 7 + id)), every other swing in Eco.
+        const swing = Math.floor((sim.time * 7 + e.id - Math.PI / 2) / (Math.PI * 2)) * 2 + 1;
+        const swings = (this.mineSwings ||= new Map()), last = swings.get(e.id);
+        if (swings.size > 96) swings.clear();
+        if (last === undefined) { swings.set(e.id, swing); continue; }
+        if (swing === last || (this.view.lowPower && swing - last < 4)) continue;
+        swings.set(e.id, swing);
+        n++;
+        this.mineHit(e, target, ux, uz, d, { x: e.x, z: e.z, team: e.team });
+        continue;
+      }
       const left = (this.workTimers.get(e.id) ?? this.rng() * 0.25) - dt;
       if (left > 0) { this.workTimers.set(e.id, left); continue; }
       n++;
-      this.workTimers.set(e.id, (kind === "mine" ? 0.26 : 0.17) * gap * (0.8 + this.rng() * 0.4));
-      const dx = target.x - e.x, dz = target.z - e.z, d = Math.hypot(dx, dz) || 1, ux = dx / d, uz = dz / d, anchor = { x: e.x, z: e.z, team: e.team };
-      if (kind === "mine") {
-        // Chips fly off the crystal face the Harvester is working, in the deposit's own colour.
-        const energy = target.type === "energy", reach = Math.max(0.3, d - target.radius * 0.75);
-        const at = { x: e.x + ux * reach, y: 0.8 + this.rng() * 0.5, z: e.z + uz * reach };
-        this.glint(at, energy ? [0.6, 0.92, 1, 1] : [1, 0.82, 0.38, 1], energy ? [0.3, 0.7, 1, 0] : [1, 0.5, 0.12, 0], anchor, 2, 0.9);
-        this.particle(this.glow, { ...at, cell: CELL.flare, s0: 0.5, s1: 0.1, life: 0.16, c0: energy ? [0.7, 0.95, 1, 0.9] : [1, 0.9, 0.55, 0.9], c1: energy ? [0.3, 0.7, 1, 0] : [1, 0.5, 0.1, 0], anchor });
-      } else {
+      this.workTimers.set(e.id, 0.17 * gap * (0.8 + this.rng() * 0.4));
+      {
+        const anchor = { x: e.x, z: e.z, team: e.team };
         // Welding: white-hot sparks and a puff of site dust where the Harvester meets the frame.
         const reach = Math.max(0.3, d - target.radius * 0.85), at = { x: e.x + ux * reach, y: 0.9 + this.rng() * 0.8, z: e.z + uz * reach };
         this.glint(at, [1, 0.97, 0.8, 1], [1, 0.6, 0.15, 0], anchor, 3, 1);
@@ -993,6 +1028,28 @@ export class Effects {
       }
     }
     this.workCursor = total ? (this.workCursor + i) % total : 0;
+  }
+  // A Harvester's mining stroke (shine pass): a few shards of the deposit's colour pop off the crystal face,
+  // tumble and fall; a small dust puff at the foot, a short sparkle (what reads at RTS zoom) and a brief flash of
+  // the deposit's crystals (src/crystal-fields.js, through the batch's instance colour). Pools only: no new draw.
+  // Reduced motion keeps only the still sparkle and the flash.
+  mineHit(e, target, ux, uz, d, anchor) {
+    const energy = target.type === "energy", reach = Math.max(0.3, d - target.radius * 0.75);
+    const base = this.ground(e.x + ux * reach, e.z + uz * reach);
+    const at = { x: e.x + ux * reach, y: 0.75 + this.rng() * 0.35, z: e.z + uz * reach };
+    const bright = energy ? [0.62, 0.92, 1, 1] : [1, 0.8, 0.4, 1], deep = energy ? [0.25, 0.62, 0.95, 0] : [0.95, 0.48, 0.12, 0];
+    this.particle(this.glow, { ...at, cell: CELL.flare, s0: 0.38, s1: 0.08, life: 0.14, c0: [bright[0], bright[1], bright[2], 0.9], c1: deep, anchor });
+    CrystalFieldKit.flash(this.view.resourceObjects?.get(target.id), 0.8);
+    if (this.view.reducedMotion?.matches) return;
+    this.paintSignature();
+    for (let i = 0, count = this.count(3); i < count; i++) {
+      // Thrown back toward the Harvester and to the sides, up, then down under gravity, spinning.
+      const a = Math.atan2(-uz, -ux) + (this.rng() - 0.5) * 2.2, v = 1 + this.rng() * 1.4;
+      this.particle(this.smoke, { ...at, vx: Math.cos(a) * v, vy: 2.2 + this.rng() * 1.6, vz: Math.sin(a) * v, gravity: 12, drag: 0.6,
+        floor: base + 0.06, life: 0.5 + this.rng() * 0.25, hold: 0.6, cell: CELL.shard, s0: 0.15 + this.rng() * 0.07, s1: 0.1,
+        spin: (this.rng() - 0.5) * 16, c0: bright, c1: [bright[0] * 0.8, bright[1] * 0.8, bright[2] * 0.8, 0], anchor });
+    }
+    if (this.rng() < 0.6) this.dust({ x: at.x, y: 0.2, z: at.z }, 1, anchor, 0.45, 0.7);
   }
   shatter(r) {
     // A deposit running dry: its crystals burst into glints and a faint ring.

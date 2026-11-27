@@ -27,6 +27,7 @@ import { teamColors, teamGlows, factionOf } from "./faction-colors.js";
 import { createEmblem, hasEmblem, recolorEmblems } from "./emblems.js";
 import { isHarvesting } from "./activity.js";
 import { EntityBatches, adoptBatchedParts, SOURCE_LAYER, releaseWrapper } from "./entity-batches.js";
+import { CrystalFieldKit, CRYSTAL_TIME } from "./crystal-fields.js";
 import { BossView, bossTemplates, recolorBossPaint } from "./boss-view.js";
 import { cacheTransforms } from "./transform-cache.js";
 import { AmbientLife } from "./ambient-life.js";
@@ -1708,52 +1709,18 @@ export class WorldView {
     return a.y - ground;
   }
   createResource(e) {
-    const template = this.environmentAssets?.getObjectByName(`asset_crystal_${e.type}`);
-    if (template) {
-      // Shared Blender crystal cluster; each deposit gets its own stable heading.
-      const cluster = template.clone(true);
-      cluster.userData.shared = true;
-      cluster.rotation.y = (e.id * 2.39996) % (Math.PI * 2);
-      placeOnGround(cluster, this.terrain, e.x, e.z); // W14: on a plateau top too (src/ground-y.js)
-      cluster.traverse((m) => {
-        if (m.isMesh) m.castShadow = m.receiveShadow = true;
-      });
-      // Deposits retain their own fog/remaining-amount state and pick target, but
-      // repeated Blender crystal parts render through the same instanced path.
-      adoptBatchedParts(cluster);
-      cacheTransforms(cluster);
-      this.scene.add(cluster);
-      this.resourceObjects.set(e.id, cluster);
-      return cluster;
+    // Shine pass: code-built crystal clusters (src/crystal-fields.js) with a glow and a contact blob under each.
+    // All deposits share geometry and materials, so EntityBatches draws every deposit's crystals in one call per
+    // kind and the decals in one each; nothing here casts a shadow.
+    if (!this.crystalKit) {
+      this.crystalKit = new CrystalFieldKit();
+      // The night grade (mission-look-view.js) scales the glow through `base`; the shader breathes on its own.
+      for (const m of Object.values(this.crystalKit.material)) this.pulsing.push({ m, base: m.emissiveIntensity, depth: 0, rate: 0, phase: 0 });
     }
-    const group = new THREE.Group(),
-      color = e.type === "alloy" ? 0xd59d43 : 0x65c9e2;
-    const material = mat(color, {
-      metalness: 0.2,
-      emissive: color,
-      emissiveIntensity: 0.15,
-    });
-    for (let i = 0; i < 7; i++) {
-      const crystal = mesh(
-        new THREE.CylinderGeometry(
-          0,
-          0.45 + random() * 0.35,
-          1.3 + random() * 1.8,
-          5,
-        ),
-        material,
-        (random() - 0.5) * 2.5,
-        0.8,
-        (random() - 0.5) * 2.5,
-      );
-      crystal.rotation.set(
-        (random() - 0.5) * 0.6,
-        random() * 6,
-        (random() - 0.5) * 0.6,
-      );
-      group.add(crystal);
-    }
-    placeOnGround(group, this.terrain, e.x, e.z);
+    const group = this.crystalKit.create(e.type);
+    group.rotation.y = (e.id * 2.39996) % (Math.PI * 2);
+    placeOnGround(group, this.terrain, e.x, e.z); // W14: on a plateau top too (src/ground-y.js)
+    adoptBatchedParts(group);
     cacheTransforms(group);
     this.scene.add(group);
     this.resourceObjects.set(e.id, group);
@@ -2004,6 +1971,7 @@ export class WorldView {
       const edge = this.backdrop?.material.userData.motion;
       if (edge) edge.time.value = this.lifeClock;
       for (const p of this.pulsing) p.m.emissiveIntensity = p.base * (1 + p.depth * Math.sin(this.lifeClock * p.rate + p.phase));
+      CRYSTAL_TIME.value = this.lifeClock; // crystal deposits: inner pulse and glints (src/crystal-fields.js)
     }
     this.scatter?.update(dt, lively && this.settings.waterMotion !== false);
     // Idle troops breathe only at full quality and full motion: it re-poses every idle unit.
@@ -2195,6 +2163,7 @@ export class WorldView {
       const amount = o.userData.lastAmount || 0;
       o.visible = amount > 0 && sim.isExplored(r);
       o.scale.y = 0.4 + (0.6 * amount) / r.initial;
+      CrystalFieldKit.step(o, dt); // a mining hit's flash fades
       if (o.visible && !o.userData.pressed) { o.userData.pressed = true; this.scatter?.flatten(r.x, r.z, (r.radius || 1.6) + 0.6); }
     }
     this.fogClock -= dt;

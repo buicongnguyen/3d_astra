@@ -175,6 +175,22 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     // The RTS bars are under the battlefield: the top bar is not what is on top at its own spot.
     assert.equal(await page.evaluate(() => { const t = document.querySelector(".topbar").getBoundingClientRect(); return !!document.elementFromPoint(t.left + t.width / 2, t.top + 5)?.closest(".topbar"); }), false, "the top bar is covered");
     await audit(page, "desktop ground HUD");
+    // Item 4a (shine pass): a spark streak passing 0.6 m in front of the Hero camera fades out instead of drawing a
+    // line across the screen (fx.js near-camera guard and streak length cap).
+    const nearShare = await page.evaluate(() => {
+      const f = window.__frontier, v = f.view, fx = v.fx, cam = v.camera, gl = v.renderer.getContext();
+      const grab = () => { v.update(f.sim, 0, f.selected, null); const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight, px = new Uint8Array(w * h * 4); gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px); return px; };
+      const a = grab(), d = cam.position.clone();
+      cam.getWorldDirection(d);
+      fx.particle(fx.glow, { lifted: true, x: cam.position.x + d.x * 0.6, y: cam.position.y + d.y * 0.6, z: cam.position.z + d.z * 0.6, mode: 1, ax: 0.7, ay: 0.3, az: 0.64,
+        length: 0.5, s0: 0.12, s1: 0.12, life: 5, cell: 3, c0: [0.6, 0.92, 1, 1], c1: [0.6, 0.92, 1, 1], anchor: null });
+      const b = grab();
+      let changed = 0;
+      for (let i = 0; i < a.length; i += 4) if (Math.abs(a[i] - b[i]) + Math.abs(a[i + 1] - b[i + 1]) + Math.abs(a[i + 2] - b[i + 2]) > 30) changed++;
+      fx.glow.items.at(-1).life = 0;
+      return changed / (a.length / 4);
+    });
+    assert.ok(nearShare < 0.005, `a streak at the lens covers ${(nearShare * 100).toFixed(2)}% of the screen`);
     // W moves the hero (one drive command; steps move it).
     const start = await page.evaluate((id) => { const e = window.__frontier.sim.get(id); return { x: e.x, z: e.z }; }, ids.vale);
     await page.mouse.move(720, 420);
@@ -199,6 +215,22 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     await page.waitForFunction(() => window.__frontier.heroMode.info.sent.fire === "null", null, { timeout: TIMEOUT.step });
     const hp1 = await page.evaluate((id) => window.__frontier.sim.get(id)?.hp ?? 0, foe);
     assert.ok(hp1 < hp0, `the click fired: ${hp0} -> ${hp1}`);
+    // Item 5 (shine pass): the PC Fire button shows with its F key; F held fires at the same aim, release stops.
+    const fireButton = page.locator("#hero-hud .hh-fire");
+    assert.ok(await fireButton.isVisible(), "the Fire button on PC");
+    const fb = await fireButton.boundingBox();
+    assert.ok(fb.width >= 44 && fb.height >= 44, `Fire ${fb.width}x${fb.height}`);
+    assert.equal((await fireButton.locator("kbd").innerText()).trim(), "F");
+    await audit(page, "desktop ground HUD with Fire");
+    const foe2 = await enemyAhead(page, "ranger", 1.4, 0.4);
+    await page.waitForTimeout(200);
+    const at2 = await screenOf(page, foe2);
+    await page.mouse.move(at2.x, at2.y);
+    await page.waitForFunction((id) => window.__frontier.heroMode.info.target === id, foe2, { timeout: TIMEOUT.step });
+    await page.keyboard.down("f");
+    await page.waitForFunction((id) => window.__frontier.heroMode.info.sent.fire === String(id), foe2, { timeout: TIMEOUT.step });
+    await page.keyboard.up("f");
+    await page.waitForFunction(() => window.__frontier.heroMode.info.sent.fire === "null", null, { timeout: TIMEOUT.step });
     // An enemy's shot at the hero flies (a projectile with a landing check); the screenshot shows it in the air.
     const shooter = await enemyAhead(page, "tank", 7, 2);
     await page.evaluate(([s, h]) => { const t = window.__frontier.sim.get(s); t.stance = "guard"; t.orders = [{ type: "attack", target: h }]; t.cooldown = 0; }, [shooter, ids.vale]);
@@ -240,6 +272,19 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     const thp = await page.evaluate((id) => window.__frontier.sim.get(id).hp, target);
     await page.evaluate(() => window.__frontier.step(0.5));
     assert.ok(await page.evaluate(([id, hp]) => (window.__frontier.sim.get(id)?.hp ?? 0) < hp, [target, thp]), "the sniper shot hit");
+    // Item 5: an F tap fires the sniper once, at the target under the reticle.
+    const target2 = await enemyAhead(page, "ranger", 9, 1.5);
+    await page.waitForTimeout(200);
+    const p2 = await screenOf(page, target2);
+    await page.mouse.move(p2.x, p2.y);
+    await page.waitForFunction((id) => window.__frontier.heroMode.info.target === id, target2, { timeout: TIMEOUT.step });
+    const tapped = await logged(page, "heroFire");
+    await page.keyboard.press("f");
+    await page.waitForFunction((n) => window.__frontier.sim.commandLog.filter((c) => c.type === "heroFire").length > n, tapped, { timeout: TIMEOUT.step });
+    await page.waitForTimeout(300);
+    const sniperShots = await page.evaluate(() => window.__frontier.sim.commandLog.filter((c) => c.type === "heroFire"));
+    assert.equal(sniperShots.length, tapped + 1, "one sniper shot per F tap");
+    assert.deepEqual([sniperShots.at(-1).target, sniperShots.at(-1).hold], [target2, false], "at the target under the reticle");
     // The wheel zooms.
     const z0 = (await info(page)).zoom;
     await page.mouse.wheel(0, 300);
@@ -259,6 +304,9 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     await page.mouse.up();
     const last = await page.evaluate(() => window.__frontier.sim.commandLog.filter((c) => c.type === "heroFire").at(-1));
     assert.equal(last.target, tank, "the locked rocket goes at the held target");
+    // Item 6: the hero's own rocket flies in the hero look (a big body, flame and smoke), not the RTS-size round.
+    // The match clock is held: each poll steps it a little, and the frames between polls hand the shot to the view.
+    await page.waitForFunction(() => { const f = window.__frontier; if (f.view.heroOwnShots.ownDrawn.rocket > 0) return true; f.step(0.05); return false; }, null, { timeout: TIMEOUT.step, polling: 100 });
     await page.keyboard.press("Escape");
     await page.waitForFunction(() => !window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
     assert.equal(await page.evaluate(() => window.__frontier.paused), false, "Esc leaves Hero mode (no pause)");
