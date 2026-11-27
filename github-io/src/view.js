@@ -41,6 +41,7 @@ import { MissionLook } from "./mission-look-view.js";
 import { airMotion, airParts, poseAirParts } from "./air-motion.js";
 import { groundY, placeOnGround, MARKER_LIFT } from "./ground-y.js";
 import { prepareVanguardArm, attachVanguardSword, followVanguardTorso, restVanguardSword, strikeVanguardSword, VANGUARD_WINDUP, VANGUARD_RECOVERY } from "./vanguard-sword.js";
+import { skywingModel, dressSkywing, poseSkywingRig, poseSkywing, skywingTrails } from "./skywing-view.js";
 import { RIG_INFANTRY, RIG_HULL, KNEELERS, STANCE, GAIT, hitFlinch, FALL, fallFor, infantryFall, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach, BARREL_POSES, newGun, fireBarrel, stepBarrel, poseBarrel, RECOIL, barrelKick, bodyKick, kickSize, poseTurretOnHull, swingLegs } from "./unit-rig.js";
 import {
   EnvironmentView,
@@ -735,10 +736,13 @@ export class WorldView {
     const template = new THREE.Group(),
       buckets = new Map(),
       barrelBuckets = new Map(),
+      weaponBuckets = new Map(), // Skywing: weapon id -> its material buckets
       turretBuckets = new Map(), // vehicles: Turret_head* parts turn about Turret_pivot
       legs = [];
     template.userData.hover = !!gltf.scene.getObjectByName("hover");
-    const flyer = !!D[type]?.flying;
+    // Skywing's own model (skywing-view.js) is a flyer too: its team lights join its team paint, its finishes bake compact.
+    const skywing = type === "skywing";
+    const flyer = !!D[type]?.flying || skywing;
     let teamPaint = null;
     if (flyer) gltf.scene.traverse((o) => { if (o.isMesh && o.material.name.startsWith("Team") && !o.material.name.startsWith("TeamGlow")) teamPaint ||= o.material; });
     let pivot = null;
@@ -783,16 +787,20 @@ export class WorldView {
         }
       }
       if (!o.isMesh) return;
-      let parent = o.parent, legPivot = null;
+      let parent = o.parent, legPivot = null, skyPart = null;
       while (parent) {
         if (rigInfantry && parent.name.startsWith("leg_")) legPivot = parent;
+        else if (skywing && /^skywing_(wing_[LR]|arms|sniper|rocket)/.test(parent.name)) skyPart = parent;
         else if (MOVING_PART.test(parent.name)) return;
         parent = parent.parent;
       }
       // Keep the existing named Blender cannon pieces articulated while
       // still merging the barrel's materials into a compact rig.
       // (A flyer's guns stay part of its body: the whole craft kicks back when it fires.)
-      const rigged=RIG_PART.test(o.name)&&!flyer,target=rigged?(pivot&&/^Turret_head/i.test(o.name)?turretBuckets:barrelBuckets):buckets;
+      // Skywing's weapons (skywing_sniper / skywing_rocket) are groups of their own: the view shows the one in hand.
+      const weaponId = skyPart && /^skywing_(sniper|rocket)/.exec(skyPart.name)?.[1];
+      if (weaponId && !weaponBuckets.has(weaponId)) weaponBuckets.set(weaponId, new Map());
+      const rigged=RIG_PART.test(o.name)&&!flyer,target=weaponId?weaponBuckets.get(weaponId):rigged?(pivot&&/^Turret_head/i.test(o.name)?turretBuckets:barrelBuckets):buckets;
       // Flyers: their small team lights join the team paint (one team-coloured draw per craft, not two).
       const glowAsPaint = flyer && teamPaint && o.material.name.startsWith("TeamGlow");
       const key = glowAsPaint ? teamPaint.name : o.material.name;
@@ -800,7 +808,13 @@ export class WorldView {
         target.set(key, { material: glowAsPaint ? teamPaint : o.material, geometries: [] });
       const geometry = o.geometry.clone().applyMatrix4(o.matrixWorld);
       if (rigged && pivot) geometry.translate(-pivot.x, 0, -pivot.z);
-      if (target === buckets && legPivot) {
+      if (skyPart) {
+        // Skywing's shader bones (unit-rig.js): a wing folds about its hinge (x, y), arms and weapons raise about
+        // the shoulder line (y, z); both lean with the body about the hip.
+        const at = new THREE.Vector3().setFromMatrixPosition(skyPart.matrixWorld);
+        if (skyPart.name.startsWith("skywing_wing_")) tagBone(geometry, /_R\d*$/.test(skyPart.name) ? BONE.wingR : BONE.wingL, hipY, at.x, at.y);
+        else tagBone(geometry, BONE.arms, hipY, at.y, at.z);
+      } else if (target === buckets && legPivot) {
         const hip = new THREE.Vector3().setFromMatrixPosition(legPivot.matrixWorld);
         tagBone(geometry, /_R(\d*)$/.test(legPivot.name) ? BONE.legR : BONE.legL, hip.y, knees.get(legPivot), hip.z);
       } else if (target === buckets && rigInfantry && /^(Tyres|Spoked_rims|Spokes)/.test(o.name) && tagWheels(geometry, bikeWheels).length) { /* the Rider's wheels */ }
@@ -824,6 +838,16 @@ export class WorldView {
         template.add(part);
       }
       geometries.forEach((g) => g.dispose());
+    }
+    for (const [id, parts] of weaponBuckets) {
+      const group = new THREE.Group();
+      group.name = `Weapon_${id}`;
+      for (const { material, geometries } of parts.values()) {
+        const combined = mergeGeometries(geometries, false);
+        if (combined) { combined.computeBoundingSphere(); combined.boundingSphere.radius += 0.6; group.add(paint(new THREE.Mesh(combined, material), "body")); }
+        geometries.forEach((g) => g.dispose());
+      }
+      template.add(group);
     }
     template.userData.rig = rigInfantry ? "infantry" : rigHull ? "hull" : null;
     template.userData.legLength = hipY;
@@ -1542,9 +1566,19 @@ export class WorldView {
     }
     return this.teamTemplates.get(key);
   }
+  // The model an entity draws with: Skywing its own (skywing-view.js) once loaded, asked for the first time it is
+  // needed (until then the Kite it flies as); everything else its type's.
+  modelKey(e) {
+    const own = skywingModel(e);
+    if (!own) return e.type;
+    if (this.teamTemplates.has(`${own}-${e.team}`)) return own;
+    if (!this.askedSkywing && this.preloadModels) { this.askedSkywing = true; this.preloadModels([own]); }
+    return e.type;
+  }
   createEntity(e) {
     const root = new THREE.Group();
-    const template = this.teamTemplates.get(`${e.type}-${e.team}`);
+    const key = e.kind === "unit" ? this.modelKey(e) : e.type;
+    const template = this.teamTemplates.get(`${key}-${e.team}`);
     const model = e.kind === "wall" ? this.createWallModel(e) : (template || this.fallbackFlyer(e.team)).clone(true);
     root.add(model);
     // Unit disc, scaled per instance: all ground footprints share one draw.
@@ -1557,7 +1591,8 @@ export class WorldView {
     contactShadow.visible = this.lowPower;
     root.add(contactShadow);
     root.userData.contactShadow = contactShadow;
-    if (e.flying) this.prepareFlyer(e, root, model, contactShadow);
+    // Skywing keeps its flyer state on the ground too (it lands and takes off: the fly height eases to 0 and back).
+    if (e.flying || key !== e.type) this.prepareFlyer(e, root, model, contactShadow, key);
     root.userData.model = model;
     root.userData.hover = !!model.userData.hover;
     root.userData.hoverClock = e.id * FEEL.hoverPhaseStep;
@@ -1598,7 +1633,8 @@ export class WorldView {
     root.userData.gait=0;root.userData.stride=(e.id*0.7)%6.28;
     root.userData.pop=0;root.userData.built=e.complete!==false;
     root.userData.team = e.team;
-    root.userData.type = e.type;
+    root.userData.type = key;
+    if (key !== e.type) dressSkywing(root);
     root.userData.kind = e.kind;
     // Story missions and faction skirmishes: a faction emblem floats over each building (the player's
     // own faction for team 0: Meridian in the story, the skirmish choice otherwise). Crewed Defence
@@ -1669,12 +1705,12 @@ export class WorldView {
   // highest ground near it; rotors spin and the balloon's flame flickers per instance (their
   // pivots are separate nodes, see MOVING_PART); a soft blob on the ground shows where it is.
   // Every flyer's blob shares one geometry and material, so all of them are one instanced draw.
-  prepareFlyer(e, root, model, blob) {
+  prepareFlyer(e, root, model, blob, key = e.type) {
     const air = { fly: D[e.type].fly || 3.5, y: null, spins: [], flames: [], clock: (e.id * 0.37) % 6.28, top: 1.5, barY: 0 };
     model.rotation.order = "YXZ"; // heading, then a pitch about the craft's own axis
     airParts(model, air);
     this.flyerTops ||= new Map();
-    const topKey = model.name === "FallbackFlyer" ? model.name : e.type;
+    const topKey = model.name === "FallbackFlyer" ? model.name : key;
     let top = this.flyerTops.get(topKey);
     if (top === undefined) this.flyerTops.set(topKey, (top = new THREE.Box3().setFromObject(model).max.y - root.position.y));
     air.top = top;
@@ -1988,7 +2024,7 @@ export class WorldView {
     const bars = sim.defence ? weakest(sim, 12) : null;
     for (const e of sim.entities) {
       let o = this.objects.get(e.id);
-      if (e.flying && o?.userData.model.name === "FallbackFlyer" && this.models.has(e.type)) {
+      if ((e.flying && o?.userData.model.name === "FallbackFlyer" && this.models.has(e.type)) || (o && e.assist && o.userData.type !== this.modelKey(e))) {
         this.disposeEntity(o);
         o = null;
       }
@@ -2085,6 +2121,8 @@ export class WorldView {
             moving: !!e.moving, attacking: !!e.attacking, dt, rich: this.richMotion, kneels: KNEELERS.has(e.type), gait: GAIT[e.type], stance: u.rig.stance });
           // A guardian on its knees (sim/content/campaign-creatures.js) holds the kneel pose.
           if (e.knelt) { u.rig.motion[2] = 1; u.rig.motion[3] = 1.12; }
+          // Skywing (skywing-view.js): the flight blend folds or spreads its wings; no footfall bob in the air.
+          if (u.skywing) lift *= 1 - poseSkywingRig(u, e, sim, dt);
         } else if (u.rig?.kind === "hull") {
           const pitch = stepHull(u.rig, u.rig.motion, { speed, moving: !!e.moving, dt, rich: this.richMotion, scale: u.readabilityScale });
           if (u.turret) {
@@ -2129,6 +2167,7 @@ export class WorldView {
       if (frame !== 1 || u.barRest !== undefined) this.scaleBar(u, frame);
       // A rigged unit rolls with its flinch, a stomp's sway or a hit's rock (unit-rig.js rig.tilt).
       m.rotation.z = u.air ? u.air.bank : isHarvesting(sim,e) && !this.reducedMotion.matches ? Math.sin(sim.time*7+e.id)*0.045 : u.rig ? u.rig.tilt || 0 : 0;
+      if (u.skywing) { poseSkywing(u, e, m); skywingTrails(u, e, m, this.fx, dt, lively && this.settings.combatMotion !== false); }
       swingLegs(u.legs, u.stride, u.gait);
       updateRing(u.ring, selected.has(e.id), hover?.id === e.id, sim.time, dt, this.unitsPerPixel);
       const bar = u.bar;

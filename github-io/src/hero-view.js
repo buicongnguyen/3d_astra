@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { isAllyHero } from "./sim/content/campaign-heroes.js";
 import { isSkywing } from "./sim/content/skywing.js";
+import { heightOf } from "./skywing-view.js";
 import { translate, getLanguage } from "./i18n.js";
 
 // Campaign heroes on the battlefield (2026-11-27; rules in src/sim/content/campaign-heroes.js): a gold
@@ -84,7 +85,8 @@ export class HeroView {
   }
   dress(root, e) {
     if (!isSkywing(e)) return;
-    root.userData.skywing = true;
+    // Its own pilot model (skywing-view.js) carries its own colours; the Kite it flies as until that loads is gilded.
+    if (root.userData.type !== "kite") return;
     root.userData.model?.traverse?.((part) => { if (part.isMesh) part.userData.tint = SKY_TINT; });
   }
   scaleFor(e) {
@@ -119,11 +121,13 @@ export class HeroView {
       n++;
       // Skywing dives low, then climbs back to its cruising height (the flyer view eases between them).
       const air = isSkywing(e) ? o.userData?.air : null;
-      if (air) { air.cruise ??= air.fly; air.fly = e.swoop && !e.swoop.done ? SKY_DIVE_FLY : air.cruise; }
+      // Landing and taking off (sim/content/skywing.js): the height follows the glide down and the climb back.
+      if (air) { air.cruise ??= air.fly; air.fly = e.swoop && !e.swoop.done ? SKY_DIVE_FLY : air.cruise * heightOf(sim, e); }
       // The nameplate: over the hero's head, only while the hero is on the canvas.
       const plate = this.plateFor(e);
       if (!plate || !canvas) continue;
-      const p = this.view.project(o.position.x, o.position.z, (o.position.y || 0) + (air ? SKY_LIFT : PLATE_LIFT));
+      const lift = air ? PLATE_LIFT + (SKY_LIFT - PLATE_LIFT) * heightOf(sim, e) : PLATE_LIFT;
+      const p = this.view.project(o.position.x, o.position.z, (o.position.y || 0) + lift);
       const inside = p.x > -40 && p.y > -20 && p.x < this.view.width + 40 && p.y < (this.view.drawHeight || this.view.height) + 20;
       plate.hidden = !inside;
       if (inside) placed.push({ plate, x: Math.round(p.x + canvas.offsetLeft), y: Math.round(p.y + canvas.offsetTop) });
