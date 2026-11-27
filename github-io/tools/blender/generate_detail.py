@@ -242,6 +242,7 @@ FAMILY = {
     **{k: 'bosses' for k in ('ironvanguard', 'ironsovereign', 'ironsovereign2')},
     'wyrm': 'wyrm', 'wyrmling': 'wyrm', 'acidhound': 'creatures', 'vaultsentinel': 'creatures', 'emberdrake': 'drake',
     **{k: 'roster' for k in ('lancer', 'bulwark', 'moth', 'halo')},
+    'skywing': 'skywing',   # the assist hero's own model (generate_skywing.py; not a balance.json type)
 }
 MODULES = {'detail_ground': ('medic', 'engineer', 'breaker', 'gunner', 'stalker', 'rampart', 'carrier'),
            'detail_factions': ('scrapper', 'scorcher', 'rider', 'wagon', 'drone', 'walker', 'shade', 'watcher'),
@@ -253,10 +254,16 @@ BOSS_BUDGET = 12000
 
 
 def budget(kind):
+    if kind == 'skywing':
+        import generate_skywing
+        return generate_skywing.DETAIL_BUDGET
     return BOSS_BUDGET if kind in BOSSES else BUDGET
 
 
 def detail_fn(kind):
+    if kind == 'skywing':
+        import generate_skywing
+        return generate_skywing.detail
     if kind in DETAILS:
         return DETAILS[kind]
     import importlib
@@ -293,6 +300,14 @@ def build_kind(kind, root):
     if family == 'air':
         a = kit.Asset(kind, root, ao_distance=.5, grime_height=.45, ao_samples=40, ground=False)
         air.BUILDERS[kind](a)
+        base = tri_count(a)
+        add(a)
+        a.finish()
+        return a, base
+    if family == 'skywing':
+        import generate_skywing as m
+        a = m.new_asset(root)
+        m.skywing(a)
         base = tri_count(a)
         add(a)
         a.finish()

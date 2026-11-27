@@ -9,10 +9,16 @@ import * as THREE from "three";
 //   bone 1  left leg, bone 2 right leg: hip swing about (pivotY, pivotZ), knee bend below kneeY
 //   bone 3  vehicle hull: pitches about (pivotY, pivotZ) and squats (tracks and wheels stay put)
 //   bone 5  wheel: rolls about its own axle (pivotY, pivotZ) by distance x (1 / radius), kneeY holding 1 / radius
+//   bone 6  Skywing's left wing, bone 7 its right wing: aRig = (bone, hipY, hingeX, hingeY); folds about the axis
+//           through the back (model Z) at the hinge, then leans with the body about the hip
+//   bone 8  Skywing's arms and weapon: aRig = (bone, hipY, shoulderY, shoulderZ); raised about the shoulder line in
+//           flight, then leans with the body
 //   bone 9  not rigged (drawn as modelled)
 // Per instance, aMotion = (stridePhase or distance, gaitAmp, pose, 1 + lean/pitch), written by the view.
 // x is the stride phase for walkers, and the distance driven for wheeled units (a Rider, hulls).
-// pose is the kneel blend for infantry and the squat depth for hulls. The rest pose is (0, 0, 0, 1),
+// pose is the kneel blend for infantry and the squat depth for hulls. Skywing (src/skywing-view.js) never kneels:
+// its pose is minus its flight blend (0 on the ground: wings folded, arms down; -1 in the air: wings spread as
+// modelled, arms raised), so a kneel reads max(0, pose) and the flight max(0, -pose). The rest pose is (0, 0, 0, 1),
 // which is also WebGL's value for an unbound vec4 attribute, so any draw without per-instance data
 // (a portrait, a stray non-instanced copy) shows the model exactly as modelled.
 // Every infantry type has the same two leg pivots (leg_L / leg_R at the hip): the Meridian troops with
@@ -22,7 +28,7 @@ import * as THREE from "three";
 // diagonal pairs leg_L + leg_hindR_L and leg_R + leg_hindL_R trot together. The Vault Sentinel is a
 // biped golem (the view sets its kneel when it yields; it is not a KNEELER).
 export const RIG_INFANTRY = new Set(["ranger", "worker", "vanguard", "medic", "engineer", "antitank", "gunner",
-  "scrapper", "shade", "stalker", "watcher", "rider", "walker", "bulwark", "acidhound", "vaultsentinel"]);
+  "scrapper", "shade", "stalker", "watcher", "rider", "walker", "bulwark", "acidhound", "vaultsentinel", "skywing"]);
 // Ranged shooters kneel to fire when they stand still.
 export const KNEELERS = new Set(["ranger", "antitank", "gunner", "stalker", "watcher"]);
 // W4 (2026-11-25): how each shooter sets itself to fire, standing still. kneel: the kneel blend it goes down to
@@ -43,9 +49,15 @@ export const GAIT = { rider: "ride", walker: "stomp", bulwark: "stomp", vaultsen
 export const RIG_HULL = new Set(["tank", "breaker", "scorcher", "lancer", "rampart", "wagon", "carrier"]);
 export const isRigType = (type) => RIG_INFANTRY.has(type) || RIG_HULL.has(type);
 export const REST_MOTION = [0, 0, 0, 1];
-export const BONE = { body: 0, legL: 1, legR: 2, hull: 3, wheel: 5, none: 9 };
+export const BONE = { body: 0, legL: 1, legR: 2, hull: 3, wheel: 5, wingL: 6, wingR: 7, arms: 8, none: 9 };
+// Skywing's jet-wing (the model: tools/blender/generate_skywing.py): on the ground each wing turns FOLD radians
+// about the axis through the back, so its tip points down the legs; in the air the arms raise RAISE radians about
+// the shoulder line and move SHIFT to the right, so the weapon points ahead past the helmet.
+export const SKYWING_POSE = Object.freeze({ fold: 1.36, raise: 1.18, shift: 0.14 });
 // A kneeling Ranger: left foot planted forward (thigh forward, shin down), right knee on the ground.
 // Hip angles are about +X (negative swings the foot forward); knee angles bend the shin back.
+const glslFloat = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
+const FOLD = glslFloat(SKYWING_POSE.fold), RAISE = glslFloat(SKYWING_POSE.raise), SHIFT = glslFloat(SKYWING_POSE.shift);
 const GLSL = /* glsl */ `
 attribute vec4 aRig;
 attribute vec4 aMotion;
@@ -60,13 +72,26 @@ vec3 rigApply(vec3 p, bool dir) {
   if (bone > 8.5) return p;
   float lean = aMotion.w - 1.0;
   vec2 hip = dir ? vec2(0.0) : vec2(aRig.y, aRig.w);
+  if (bone > 5.5) {
+    // Skywing: the wings fold on the ground (air 0) and spread in flight (air 1); the arms raise in flight.
+    float air = max(0.0, -aMotion.z);
+    if (bone < 7.5) {
+      float a = (1.0 - air) * ${FOLD} * (bone < 6.5 ? 1.0 : -1.0), s = sin(a), c = cos(a);
+      vec2 h = dir ? vec2(0.0) : vec2(aRig.z, aRig.w), q = p.xy - h;
+      p.xy = h + vec2(q.x * c - q.y * s, q.x * s + q.y * c);
+    } else {
+      p = rigRot(p, dir ? vec2(0.0) : aRig.zw, -air * ${RAISE});
+      if (!dir) p.x += air * ${SHIFT};
+    }
+    return rigRot(p, dir ? vec2(0.0) : vec2(aRig.y, 0.0), lean);
+  }
   if (bone < 0.5) {
     p = rigRot(p, hip, lean);
-    if (!dir) p.y -= aMotion.z * aRig.y * 0.45;
+    if (!dir) p.y -= max(0.0, aMotion.z) * aRig.y * 0.45;
   } else if (bone < 2.5) {
     bool left = bone < 1.5;
     float ph = aMotion.x + (left ? 0.0 : 3.14159265);
-    float amp = aMotion.y, kneel = aMotion.z;
+    float amp = aMotion.y, kneel = max(0.0, aMotion.z);
     float hipA = mix(-sin(ph) * amp, left ? -1.1 : 0.1, kneel);
     float kneeA = mix(max(0.0, cos(ph)) * amp * 1.5, left ? 1.95 : 1.5, kneel);
     float below = smoothstep(aRig.z + 0.06, aRig.z - 0.06, position.y);

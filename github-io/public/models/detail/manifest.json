@@ -213,6 +213,14 @@
       "review": "pending owner review (H3b batch 2)"
     },
     {
+      "name": "skywing",
+      "file": "skywing.glb",
+      "triangles": 8104,
+      "base_triangles": 4048,
+      "bytes": 273688,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
       "name": "stalker",
       "file": "stalker.glb",
       "triangles": 4280,

@@ -14,7 +14,7 @@ const read = (path) => {
 const manifest = JSON.parse(readFileSync(new URL('../public/models/detail/manifest.json', import.meta.url), 'utf8'));
 const names = (json) => json.nodes.map((n) => PropertyBinding.sanitizeNodeName(n.name || ''));
 // Empties the runtime moves or looks up by name (view.js MOVING_PART, Turret_pivot, hover, the Vanguard's sword arm).
-const PIVOT = /^(leg_|spin_|flicker_|Turret_pivot|hover$|SwordArm$|SwordElbow$)/;
+const PIVOT = /^(leg_|spin_|flicker_|skywing_|Turret_pivot|hover$|SwordArm$|SwordElbow$)/;
 // Material classes that keep their own draw (view.js KEEP_FINISH, glows): a detail model may add none of them.
 const OWN_DRAW = /^(Team|Glass|Lamp|Energy|Alloy|Flame)/;
 
@@ -22,8 +22,10 @@ const OWN_DRAW = /^(Team|Glass|Lamp|Energy|Alloy|Flame)/;
 // batch 2: the rest). Bosses may go to 12k triangles, everything else 9k.
 const D = JSON.parse(readFileSync(new URL('../src/balance.json', import.meta.url), 'utf8')).definitions;
 const models = new Set(readdirSync(new URL('../public/models/', import.meta.url)).filter((f) => f.endsWith('.glb')).map((f) => f.slice(0, -4)));
-const UNIT_TYPES = Object.keys(D).filter((k) => D[k].kind === 'unit' && models.has(k)).sort();
-const budget = (name) => (D[name]?.boss ? 12000 : 9000);
+// Hero models that are not a balance.json type (Skywing's own model, tools/blender/generate_skywing.py: 15k close up).
+const HERO_MODELS = { skywing: 15000 };
+const UNIT_TYPES = [...Object.keys(D).filter((k) => D[k].kind === 'unit' && models.has(k)), ...Object.keys(HERO_MODELS)].sort();
+const budget = (name) => HERO_MODELS[name] ?? (D[name]?.boss ? 12000 : 9000);
 
 test('the detail manifest lists every unit model, one file each, within the triangle budget', () => {
   const listed = manifest.assets.map((a) => a.name).sort();
