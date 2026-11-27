@@ -2,6 +2,12 @@
 
 ## Unreleased: Round A.2
 
+### Campaign heroes
+- **Mira Vale** takes the field from mission 2, and a spared commander now sends a sworn champion for the rest of the campaign: **Sol's Outrider** (from The Verdant Pact), **Hale's Ironclad** (from The Quiet Vault) and **Maren's Watcher** (from Cut the Draw). Finishing a commander pays a one-off war chest instead (250 alloy, 300 alloy, 200 energy), and the choice says so.
+- Heroes have 2.5x health (2x on Veteran), +15% speed, +20% damage and one signature ability on the usual ability bar (Hold the line, Caravan volley, Iron hull, Damper pulse). A gold ground ring and a nameplate mark each one; one tap on the plate selects it. A fallen hero is back at the Command core 30 s later; losing one never fails a mission.
+- The Survey crawler of The Verdant Pact drives at 3.2 m/s (was 2.2), still slower than infantry.
+- EN, VI and KO. Tests: `tests/campaign-allies.test.js`, `npm run test:heroes`.
+
 ### Vietnamese story voices (phase 2)
 - With the game language set to Tiếng Việt, every voiced story line of the campaign and the Chronicles now speaks Vietnamese, saying the same words as the dialogue box (src/locales/story-vi.json). Made locally with VieNeu-TTS v3 Turbo preset voices (Apache-2.0), each person in a fitting voice of their own gender (tools/voices/vi-cast.json `story`); the faction voices are reused for Okoro (Hải Đăng), Hale (Xuân Vĩnh) and Maren (Đoan Trang). Same chain, loudness and MP3 settings as the English story packs (mono 24 kHz 32 kbps), one pack per mission like English (public/voices/vi/story-*.mp3), fetched only after Start for the mission being played. A Vietnamese pack that fails to load falls back to the English story pack. Korean keeps English audio with its text.
 

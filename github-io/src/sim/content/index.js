@@ -30,6 +30,7 @@ import { kiteDive } from "./kite-dive.js";
 import { commanderRanks } from "./commander-ranks.js";
 import { airStrikes } from "./air-strikes.js";
 import { waveKinds } from "./wave-kinds.js";
+import { campaignHeroes } from "./campaign-heroes.js";
 
 export const CONTENT = [
   suppression,
@@ -55,4 +56,5 @@ export const CONTENT = [
   commanderRanks,
   airStrikes,
   waveKinds,
+  campaignHeroes,
 ];

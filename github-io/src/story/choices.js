@@ -10,6 +10,7 @@
 // campaign progress, so the trimmed mission is what the match saves and replays.
 import { MISSIONS } from "./missions.js";
 import { carrySquad } from "./squad.js";
+import { carryHeroes } from "./heroes.js";
 
 // Every decision of the campaign by id: { mission, who, prompt, options }.
 export const DECISIONS = Object.freeze(Object.fromEntries(MISSIONS.flatMap((m) =>
@@ -109,5 +110,6 @@ export function resolveMission(def, progress = null) {
   for (const [key, value] of Object.entries(parts)) if (value !== def[key]) out = { ...out, [key]: value };
   if (briefLines !== def.briefing?.lines) out = { ...out, briefing: { ...def.briefing, lines: briefLines } };
   if (win !== def.debrief?.win || lose !== def.debrief?.lose) out = { ...out, debrief: { ...def.debrief, win, lose } };
-  return carrySquad(out, progress);
+  // The veteran squad (story/squad.js), then the campaign heroes and a finished commander's war chest (story/heroes.js).
+  return carryHeroes(carrySquad(out, progress), progress);
 }

@@ -94,6 +94,9 @@ jobs:
           # 2026-11-25: audio and choices (13 min together) in their own groups.
           - name: story-choices
             scripts: choices
+          # 2026-11-27: campaign heroes (ring, nameplate, one-tap select, ability, return) at the three viewports and in Vietnamese.
+          - name: heroes
+            scripts: heroes
           - name: status-layout
             scripts: status-layout
           # 2026-11-25: 13 minutes on the runner: two shards (desktop settings + story at 1280x800 and

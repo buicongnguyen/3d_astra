@@ -2077,7 +2077,24 @@
     "Date": "날짜",
     "Rank 1": "1등급",
     "Rank 3": "3등급",
-    "Top 10 place": "상위 10 순위"
+    "Top 10 place": "상위 10 순위",
+    "Sol's Outrider": "솔의 선발 기병",
+    "Hale's Ironclad": "헤일의 철갑전차",
+    "Maren's Watcher": "마렌의 감시자",
+    "Hold the line": "전선 사수",
+    "Vale and every ally within 8 m take 30% less damage for 6 seconds.": "베일과 8 m 안의 모든 아군이 6초 동안 받는 피해가 30% 줄어듭니다.",
+    "Caravan volley": "대상단 일제 사격",
+    "Shoot up to 4 enemies within 11 m at once: 45 damage each.": "11 m 안의 적을 최대 4명까지 한 번에 쏩니다: 각각 45 피해.",
+    "Iron hull": "강철 장갑",
+    "Take half damage for 8 seconds.": "8초 동안 받는 피해가 절반이 됩니다.",
+    "Damper pulse": "억제 파동",
+    "Enemies within 9 m move 40% slower for 5 seconds.": "9 m 안의 적이 5초 동안 40% 느려집니다.",
+    "Holding the line": "전선 사수 중",
+    "Damped": "억제됨",
+    "Line": "사수",
+    "Volley": "일제 사격",
+    "Hull": "장갑",
+    "Damper": "억제"
   },
   "patterns": [
     [
@@ -3015,6 +3032,26 @@
     [
       "^Field commander, rank (\\d+), health (\\d+) of (\\d+)$",
       "야전 사령관, 계급 {1}, 체력 {2}/{3}"
+    ],
+    [
+      "^(.+) is down: back at the Command core in (\\d+) seconds\\.$",
+      "{1}이(가) 쓰러졌습니다: {2}초 뒤 사령부로 돌아옵니다."
+    ],
+    [
+      "^(.+) is down: back in (\\d+) seconds\\.$",
+      "{1}이(가) 쓰러졌습니다: {2}초 뒤 돌아옵니다."
+    ],
+    [
+      "^(.+) is back at the Command core\\.$",
+      "{1}이(가) 사령부로 돌아왔습니다."
+    ],
+    [
+      "^(.+) is back on the field\\.$",
+      "{1}이(가) 전장에 돌아왔습니다."
+    ],
+    [
+      "^(.+), hero: tap to select$",
+      "{1}, 영웅: 눌러서 선택"
     ]
   ]
 }

@@ -47,6 +47,12 @@
       "checks": ["check:missions", "check:missions -- --chronicle all"]
     },
     {
+      "name": "campaign heroes (rules, story carry, ring and nameplate)",
+      "files": ["src/sim/content/campaign-heroes.js", "src/story/heroes.js", "src/hero-view.js", "src/hero-plates.css"],
+      "suites": ["heroes", "missions", "story", "choices", "campaign", "phones", "phone-hud", "render-budget"],
+      "checks": ["check:missions"]
+    },
+    {
       "name": "Frontier Defence",
       "files": ["src/defence/**", "src/app/defence/**", "src/app/defence-*.js", "src/defence-*.css", "src/defence-readability-view.js", "src/wave-kind-view.js", "src/sim/content/wave-kinds.js"],
       "suites": ["defence", "defence-zones", "defence-deck", "defence-heroic", "defence-heroic-check", "defence-onboarding", "defence-maps", "air", "render-budget", "sovereign", "ceremony", "golden-full"],

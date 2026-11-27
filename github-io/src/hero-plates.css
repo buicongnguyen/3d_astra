@@ -1,0 +1,55 @@
+/* Campaign heroes (src/hero-view.js): the nameplate over each hero. The button is the 44 px tap target;
+   the gold tag inside is the visible plate. No z-index: the layer paints right after the canvas, under
+   every HUD panel and dock. */
+.hero-plates {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.hero-plate {
+  position: absolute;
+  left: 0;
+  top: 0;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 4px 4px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  will-change: transform;
+}
+.hero-plate[hidden] {
+  display: none;
+}
+.hero-plate-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1.5px solid #ffc53d;
+  border-radius: 10px;
+  background: rgba(28, 20, 6, 0.84);
+  color: #ffe9b0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+.hero-plate-tag i {
+  color: #ffc53d;
+  font-size: 12px;
+  font-style: normal;
+}
+.hero-plate:hover .hero-plate-tag,
+.hero-plate:focus-visible .hero-plate-tag {
+  background: rgba(60, 42, 8, 0.92);
+  color: #fff6d8;
+}

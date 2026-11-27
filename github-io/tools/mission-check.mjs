@@ -75,7 +75,14 @@ const MISSION_TARGETS = {
   "m04-three-way-dunes": { passive: 300, win: [330, 1200], earliest: 300 },
   // Mission 9 (R3-I, round 3): since the south exits (R3-L) the bot reaches Sol's camp about 20 s sooner, and the
   // win is the 3-minute plateau hold after that, so it lands near 6:45, not 7:10. Earlier, not harder.
-  "m09-a-debt-in-the-dunes": { win: [390, 1200] },
+  // Campaign heroes (2026-11-27): with Hale finished, his war chest (300 alloy) lands here and the bot wins near 6:20. Earlier, not harder.
+  "m09-a-debt-in-the-dunes": { win: [360, 1200] },
+  // Campaign heroes (2026-11-27): the Survey crawler runs at 3.2 m/s (was 2.2), so the escort ends near 5:20 (Story 5:19)
+  // instead of 7-8:30, with Vale and Sol's Outrider beside it. Earlier, not harder.
+  "m05-the-verdant-pact": { win: [300, 1200] },
+  // Campaign heroes: Vale and the spared commanders' champions shorten the vault raid and the Sovereign's walk (about 6:30-6:50). Earlier, not harder.
+  "m08-the-quiet-vault": { win: [360, 1200] },
+  "m11d-the-sovereign-walks": { win: [360, 1200] },
   // Mission 11 (map variety, 2026-11-24): on Twin Rivers (was Frontier Expanse) the bot wins near 6:45 instead of
   // 8:10 (Story 6:43 for 6:52, Veteran 6:28 for 6:22) and loses fewer units. Earlier, not harder.
   "m11-cut-the-draw": { win: [380, 1200] },
@@ -92,7 +99,8 @@ const MISSION_TARGETS = {
   // the objective bot wins at about 4:27 on every difficulty. Hawk Wing: no base, three moorings, about 2:30-3:10.
   // The Long Night: hold two of three relays 2:30 at night, about 4:50-6:00. The Water Road: two escorts, about 2:55.
   "m03b-loose-crystal": { passive: 300, win: [200, 1200], earliest: 200 },
-  "m06d-hawk-wing": { win: [120, 1200], earliest: 120 },
+  // Campaign heroes: Vale and Sol's Outrider on the ground beside the Hawks: about 1:50 with every commander spared. Earlier, not harder.
+  "m06d-hawk-wing": { win: [100, 1200], earliest: 100 },
   "m08b-the-long-night": { win: [240, 1200], earliest: 240 },
   "m09b-the-water-road": { win: [120, 1200], earliest: 120 },
 };

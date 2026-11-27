@@ -75,7 +75,11 @@ test("the first balloon over the copper works plays first-balloon; its lines hav
 });
 
 test("Wings over Copper resolves with and without earlier decisions: only Hale's third-raid line differs", () => {
-  const none = resolveMission(WINGS, null), mercy = resolveMission(WINGS, pick(true)), firm = resolveMission(WINGS, pick(false));
+  // Campaign heroes (src/story/heroes.js): Vale fights on every path, Sol's Outrider only when her surrender was accepted.
+  const bare = (m) => { const { heroes: _h, heroCache: _c, ...rest } = m; return rest; };
+  const none = resolveMission(WINGS, null), mercy = bare(resolveMission(WINGS, pick(true))), firm = bare(resolveMission(WINGS, pick(false)));
+  assert.deepEqual(resolveMission(WINGS, pick(true)).heroes.map((h) => h.id), ["vale", "sol"]);
+  assert.deepEqual(resolveMission(WINGS, pick(false)).heroes.map((h) => h.id), ["vale"]);
   assert.deepEqual(none, firm, "the default is the firm answer");
   const lines = (m) => actions(m).filter((a) => a.say).map((a) => a.say.text);
   assert.ok(lines(mercy).some((t) => t.startsWith("You returned our alloy")) && !lines(mercy).some((t) => t.startsWith("You kept our alloy")));
@@ -108,11 +112,18 @@ test("Wings over Copper resolves with and without earlier decisions: only Hale's
 // objective, a region, four triggers, a scene), m10 Hale's taunt, m11 two fog lines. With those entries taken out every
 // mission resolves to its old checksum. Old m02-first-contact f16e7662, m05-the-verdant-pact d0ad0168,
 // m06-copper-harvest 06703671, m09-a-debt-in-the-dunes f1bdb3bc, m10-obsidian-storm 9ba712b1, m11-cut-the-draw 096baedf.
+// 2026-11-27 (campaign heroes, src/story/heroes.js): every mission from m02 on played from a progress record gains
+// `heroes` (and a finished commander's `heroCache`); with those two fields left out, m03, m06 and m12 still resolve to their
+// old checksums. Data changed on purpose: m02 Vale's briefing line; m04, m07 and m10 the surrender choices name what each
+// answer brings; m05 (Sol's line or her war chest, the Survey crawler 2.2 -> 3.2 m/s), m08, m09 and m11 a briefing line each.
+// Old m02-first-contact b00a97ec, m03-the-ashen-line fafe9b59, m04-three-way-dunes 66c29261, m05-the-verdant-pact 1e0c5ca0,
+// m06-copper-harvest 141e50e8, m07-copper-siege de1aff51, m08-the-quiet-vault f3593619, m09-a-debt-in-the-dunes 5ac538ef,
+// m10-obsidian-storm 48303bc1, m11-cut-the-draw 44c8c826, m12-frontiers-end 0c663a5f.
 test("the original missions resolve to their recorded checksums on all decision paths", () => {
   const BEFORE = {
-    "m01-first-light": "731fcbda", "m02-first-contact": "b00a97ec", "m02b-hold-the-river": "db1662a2", "m03-the-ashen-line": "fafe9b59",
-    "m04-three-way-dunes": "66c29261", "m05-the-verdant-pact": "1e0c5ca0", "m06-copper-harvest": "141e50e8", "m07-copper-siege": "de1aff51",
-    "m08-the-quiet-vault": "f3593619", "m09-a-debt-in-the-dunes": "5ac538ef", "m10-obsidian-storm": "48303bc1", "m11-cut-the-draw": "44c8c826", "m12-frontiers-end": "0c663a5f",
+    "m01-first-light": "731fcbda", "m02-first-contact": "16c97823", "m02b-hold-the-river": "db1662a2", "m03-the-ashen-line": "a4d2b4b9",
+    "m04-three-way-dunes": "3e304e81", "m05-the-verdant-pact": "adaeb01a", "m06-copper-harvest": "02a8775e", "m07-copper-siege": "2e8d5384",
+    "m08-the-quiet-vault": "8efb0d38", "m09-a-debt-in-the-dunes": "65fafe82", "m10-obsidian-storm": "34c3fafd", "m11-cut-the-draw": "774f483f", "m12-frontiers-end": "9a23a851",
     // AAA round 3 (R3-I, campaign pacing): first-contact probes in 10 base missions, m03 (towers objective, gold 750 s) and m04 retuned after the south exits.
     // Creature round (2026-11-24): optional creature dens in m02 (Acid Hounds), m04 and m09 (Wyrm nests), the Vault
     // Sentinel in m08, Sol's lines in m05 and the Veil's turn (scene, Stalkers if Maren was spared) in m12.

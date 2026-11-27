@@ -84,5 +84,7 @@ test("every probe walks from open ground to the camp, with a short line that has
 test("golden: mission 4 with its probe for 120 s", () => {
   // Re-recorded in the creature round (2026-11-24): mission 4 gained its optional Dune Wyrm nest (three Wyrmlings on the field).
   // Re-recorded 2026-11-25 (concise story lines): text only. The hash covers the mission definition, so the shorter say lines move it; with the old lines put back the run reproduces the old pin exactly (same waves, lives, result), so play is unchanged. Old 0ae451df.
-  pin("r3i m04 120", missionMatch(MISSIONS.find((m) => m.id === "m04-three-way-dunes")).run(120), "d34c3af8");
+  // Re-recorded 2026-11-27 (campaign heroes): text only. Sol's surrender choice now names what each answer brings (her
+  // Outrider, or her war chest); with the old two effect lines put back the run reproduces d34c3af8 exactly. Old d34c3af8.
+  pin("r3i m04 120", missionMatch(MISSIONS.find((m) => m.id === "m04-three-way-dunes")).run(120), "bdade140");
 });

@@ -17,6 +17,10 @@ const byId = (id) => MISSIONS.find((m) => m.id === id);
 const memory = (text) => { const store = new Map(text === undefined ? [] : [['frontier-campaign-v2', text]]); return { store, getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) }; };
 const run = (s, seconds, seen = []) => advance(s, seconds, { seen });
 const ifs = (value) => JSON.stringify(value).includes('"if"');
+// Campaign heroes (src/story/heroes.js): a mission played from a progress record gains `heroes` and a finished
+// commander's `heroCache`; every other field is the very same object.
+const plainKeys = (o) => Object.keys(o).filter((k) => k !== 'heroes' && k !== 'heroCache');
+const sameBut = (r, m) => plainKeys(r).length === plainKeys(m).length && plainKeys(m).every((k) => r[k] === m[k]);
 const mercy = Object.fromEntries(Object.values(DECISIONS).map((d) => [d.id, d.options.find((o) => o.mercy).id]));
 const firm = Object.fromEntries(Object.values(DECISIONS).map((d) => [d.id, d.options.find((o) => !o.mercy).id]));
 
@@ -90,7 +94,10 @@ test('resolveMission settles earlier answers and the ending; untouched missions 
     const own = new Set(Object.keys(m.decisions || {}));
     const foreign = JSON.stringify(m).match(/"if":\{"(flag|ending)":"([^"]+)"/g) || [];
     const settled = foreign.some((text) => text.includes('ending') || ![...own].some((id) => text.includes(id)));
-    if (!settled) for (const p of [null, { decisions: mercy }, { decisions: firm }]) assert.equal(resolveMission(m, p), m, `${m.id} unchanged`);
+    if (!settled) {
+      assert.equal(resolveMission(m, null), m, `${m.id} unchanged`);
+      for (const p of [{ decisions: mercy }, { decisions: firm }]) assert.ok(sameBut(resolveMission(m, p), m), `${m.id} unchanged but for its heroes`);
+    }
   }
   const m07 = byId('m07-copper-siege'), m09 = byId('m09-a-debt-in-the-dunes'), m12 = byId('m12-frontiers-end');
   const wave7 = (p) => resolveMission(m07, p).triggers.find((t) => t.when.time === 420).do.find((a) => a.wave).wave.units;
@@ -107,7 +114,7 @@ test('resolveMission settles earlier answers and the ending; untouched missions 
     assert.equal(r.objectives.filter((o) => o.id === 'engine').length, 1);
     assert.equal(r.objectives.find((o) => o.id === 'engine').text, ending === 'open-frontier' ? 'Destroy the draw engine and open the Keystone to every camp' : 'Destroy the Keystone draw engine');
     assert.equal(r.debrief.win.length, ending === 'open-frontier' ? 4 : 3);
-    assert.equal(resolveMission(r, { decisions: p ? firm : mercy }), r, 'a settled mission stays as it is');
+    assert.ok(sameBut(resolveMission(r, { decisions: p ? firm : mercy }), r), 'a settled mission stays as it is (heroes aside)');
   }
   const maren = (p) => resolveMission(m12, p).triggers.find((t) => t.when.tagHpBelow?.tag === 'engine').do[0].say.text;
   assert.match(maren({ decisions: { 'm10-veil': 'spare' } }), /You freed my crews/);

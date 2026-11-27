@@ -297,6 +297,7 @@ test("missionById finds main and chronicle missions", () => {
   assert.equal(chronicleById("veil").lead, "maren");
 });
 
+const bare = (m) => { const { heroes: _h, heroCache: _c, ...rest } = m; return rest; };
 test("finale: each finished chronicle adds its lead's line to mission 12; none leaves it as before", () => {
   const m12 = MISSIONS.find((m) => m.id === "m12-frontiers-end");
   const leads = Object.fromEntries(CHRONICLES.map((c) => [c.id, c.lead]));
@@ -318,9 +319,13 @@ test("finale: each finished chronicle adds its lead's line to mission 12; none l
     const all = resolveMission(m12, { decisions, chronicles: Object.fromEntries(CHRONICLE_IDS.map((id) => [id, { done: true }])) });
     assert.deepEqual(added(all, none).map((l) => l.who), ["hale", "sol", "echo", "maren"]);
     // A chronicle cleared but not done adds nothing.
-    assert.equal(JSON.stringify(resolveMission(m12, { decisions, chronicles: { veil: { cleared: ["cv1-night-count"], done: false } } })), JSON.stringify(none));
+    // Campaign heroes (src/story/heroes.js) join a mission played from a progress record: compared without them.
+    assert.equal(JSON.stringify(bare(resolveMission(m12, { decisions, chronicles: { veil: { cleared: ["cv1-night-count"], done: false } } }))), JSON.stringify(bare(none)));
   }
-  // Missions without a chronicle `if` come back as the same object.
-  for (const m of MISSIONS.filter((x) => !JSON.stringify(x).includes('"if"'))) assert.equal(resolveMission(m, { chronicles: { veil: { done: true } } }), m);
+  // Missions without a chronicle `if` come back as the same object (but for their campaign heroes).
+  for (const m of MISSIONS.filter((x) => !JSON.stringify(x).includes('"if"'))) {
+    const r = resolveMission(m, { chronicles: { veil: { done: true } } });
+    assert.ok(r === m || (Object.keys(bare(r)).length === Object.keys(m).length && Object.keys(m).every((k) => r[k] === m[k])), m.id);
+  }
   for (const m of ALL) assert.equal(resolveMission(m, null), m, `${m.id}: nothing to settle`);
 });

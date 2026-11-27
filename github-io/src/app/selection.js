@@ -84,6 +84,12 @@ export function setupSelection(S, A) {
 
   Object.assign(A, { armyIds, selectedEntities, renderGroupStrip, setSelection, focusSelection, useGroup, selectScreenType, groupMembers, selectHome });
   return function bind() {
+    // Campaign heroes (hero-view.js): one tap on a hero's nameplate selects it.
+    $("world").addEventListener("heropick", (event) => {
+      const e = S.sim.get(event.detail?.id);
+      if (!Z.started || Z.paused || S.sim.result || !e || e.team !== 0) return;
+      setSelection([e.id]);
+    });
     $("select-workers").onclick = () => {
       A.clearMode();
       setSelection(

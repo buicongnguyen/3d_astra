@@ -65,6 +65,7 @@ import { setupReplay } from "./replay-ui.js";
 // The command console kit on every screen (round 3 kit pass): loaded after every other stylesheet.
 import "./kit-skin.css";
 import "./menu-pro.css";
+import "./hero-plates.css"; // campaign heroes: the nameplates (src/hero-view.js)
 import "./theme-walnut.css";
 import "./hud-contrast.css";
 import "./phone-hud-slim.css";

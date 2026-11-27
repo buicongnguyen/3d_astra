@@ -45,6 +45,8 @@ export function setupFrame(S, A) {
   // and a counter hint sits apart (app/hud.js, message-queue.js). The same alert again only refreshes.
   // The rules' raid warning (ai.js, ai-plan.js) is an alert too.
   const RAID_WARNING = /^Scouts report enemy raiders/;
+  // A campaign hero falling (sim/content/campaign-heroes.js) is news the player must not miss: an alert too.
+  const HERO_DOWN = / is down: back (at the Command core )?in \d+ seconds\.$/;
   // A Defence wave from several spawn points warns once per point (sim/defence.js startWave):
   // one ping each, but one alert and one tone for the whole batch.
   let incomingBatch = null;
@@ -220,7 +222,7 @@ export function setupFrame(S, A) {
       // Readable deaths (death-cue-view.js): your own unit lost leaves a short mark on the minimap.
       if (event.type === "death" && event.team === 0 && !event.building && Z.started) addLostPing(S.pings, event, S.sim.time);
       if (Z.started) S.audio?.event(event, S.sim);
-      if (event.type === "message") { if (RAID_WARNING.test(event.text)) { A.alert(event.text); buzz([60, 60, 60]); } else routine(event.text); }
+      if (event.type === "message") { if (RAID_WARNING.test(event.text) || HERO_DOWN.test(event.text)) { A.alert(event.text); buzz([60, 60, 60]); } else routine(event.text); }
       else if (event.type === "incoming") { if (event.team === 0) incomingAlert(event, events); }
       // Frontier Defence troop carriers (0.22): the drop and the "+N" of a carrier lost with its squad.
       else if (event.type === "drop" || event.type === "carrierDown") { if (Z.started) A.defenceEvent?.(event); }

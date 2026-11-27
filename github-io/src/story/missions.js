@@ -108,6 +108,8 @@ export const MISSIONS = [
         { who: "vale", text: "Ashfall raided our Harvesters twice last night. Director Hale says we stole his power." },
         { who: "okoro", text: "We did not touch his lines. But a Foundry would let me build Breakers and end the raids." },
         { who: "vale", text: "Hale has dug in at the far end of the west bridge. Break that bridgehead, then take his Command core." },
+        // Campaign heroes (2026-11-27, story/heroes.js): Vale fights beside the Commander from here on.
+        { who: "vale", text: "I am taking the field myself today, Commander. Look for the gold ring." },
       ],
       intel: [
         "A Foundry needs a Barracks first. Breakers flatten grouped infantry.",
@@ -487,8 +489,8 @@ export const MISSIONS = [
         who: "vale",
         prompt: "Captain Sol has lowered her weapons and her riders have stopped. She is asking for terms. What do we do?",
         options: [
-          { id: "accept", label: "Accept the surrender", effect: "Sol leaves the dunes. She will remember it.", mercy: true },
-          { id: "finish", label: "Finish the fight", effect: "Her riders break and scatter. No mercy asked, none given.", mercy: false, default: true },
+          { id: "accept", label: "Accept the surrender", effect: "Sol leaves the dunes. Her own Outrider fights for you from The Verdant Pact on.", mercy: true },
+          { id: "finish", label: "Finish the fight", effect: "Her riders break and scatter. Her war chest, 250 alloy, is yours in The Verdant Pact.", mercy: false, default: true },
         ],
       },
     },
@@ -620,6 +622,9 @@ export const MISSIONS = [
         { who: "vale", text: "Ashfall and Sunward have signed a pact. They share scouts and they will attack together." },
         { who: "okoro", text: "I built a tuning core. If it reaches the forest relay, I can read the whole Lattice from there." },
         { who: "vale", text: "The core rides in a survey crawler. It is slow and it cannot fight. Get it across the river." },
+        // Campaign heroes: what the Commander did with Captain Sol in the dunes (story/heroes.js).
+        { if: { flag: "m04-sol", is: "accept" }, who: "sol", text: "You let me ride home, Commander. The Pact has my Caravan, but my debt is my own. My Outrider rides with you." },
+        { if: { flag: "m04-sol", is: "finish" }, who: "vale", text: "Captain Sol's war chest was left on the dunes. That is 250 alloy for the camp." },
       ],
       intel: [
         "Escort the Survey crawler to the forest relay in the north-west. If it is destroyed, the mission fails.",
@@ -636,7 +641,7 @@ export const MISSIONS = [
       relaySite: { x: -48, z: -46, r: 8 },
     },
     setup: [
-      { spawn: "worker", team: 0, at: "crawlerStart", tag: "convoy", name: "Survey crawler", hp: 800, speed: 2.2 },
+      { spawn: "worker", team: 0, at: "crawlerStart", tag: "convoy", name: "Survey crawler", hp: 800, speed: 3.2 },
       { spawn: "vanguard", team: 0, at: { x: -54, z: 59 }, count: 4, tag: "escort" },
       { spawn: "vanguard", team: 1, at: { x: -2, z: -21 }, count: 3 },
       { spawn: "ranger", team: 1, at: { x: 3, z: -23 }, count: 2 },
@@ -1057,8 +1062,8 @@ export const MISSIONS = [
         who: "vale",
         prompt: "Hale has cut his engines and signalled that he yields. His crews are waiting for your word. What do we do?",
         options: [
-          { id: "accept", label: "Accept the surrender", effect: "Hale leaves the siege. The Ashfall crews stand down.", mercy: true },
-          { id: "finish", label: "Finish the fight", effect: "His battery falls silent. The siege goes on without him.", mercy: false, default: true },
+          { id: "accept", label: "Accept the surrender", effect: "Hale leaves the siege. His own Ironclad fights for you from The Quiet Vault on.", mercy: true },
+          { id: "finish", label: "Finish the fight", effect: "His battery falls silent. His war chest, 300 alloy, is yours in A Debt in the Dunes.", mercy: false, default: true },
         ],
       },
     },
@@ -1090,6 +1095,8 @@ export const MISSIONS = [
         { who: "okoro", text: "The point where all the lines meet has a key, and the key was kept in a Builder vault on the ash plains." },
         { who: "vale", text: "Hale's camp sits beside that vault. No base tonight, Commander. One squad, in and out." },
         { who: "okoro", text: "I am coming with you. The door will only open for someone who asks it nicely." },
+        // Campaign heroes: a spared Hale keeps his word (story/heroes.js).
+        { if: { flag: "m07-hale", is: "accept" }, who: "hale", text: "A debt is a debt, Commander. My own Ironclad and its crew are yours until the Keystone. I am not." },
       ],
       intel: [
         "No base and no reinforcements. If the squad or Okoro is lost, the mission fails.",
@@ -1202,6 +1209,8 @@ export const MISSIONS = [
       place: "Amber Dunes, day 41",
       lines: [
         { if: { flag: "m04-sol", is: "accept" }, who: "vale", text: "Because you let Captain Sol ride out of the dunes, the Caravan will send alloy when we reach her camp." },
+        // Campaign heroes: Hale finished at the siege leaves his war chest behind (story/heroes.js).
+        { if: { flag: "m07-hale", is: "finish" }, who: "vale", text: "Hale's war chest from the siege reached our camp. That is 300 alloy." },
         { who: "sol", text: "Commander. I left the Pact this morning. By noon Hale's guns were on my camp. I am asking for help." },
         { who: "vale", text: "Her camp is in the south-east. Ashfall holds the north-east. If her beacon falls, the Caravan scatters." },
         { who: "echo", text: "Two camps that share power last longer. This one has counted it many times." },
@@ -1461,8 +1470,8 @@ export const MISSIONS = [
         who: "vale",
         prompt: "Ilse Maren has lowered her guard at the west damper and the Veil crews have stopped. What do we do?",
         options: [
-          { id: "accept", label: "Accept the surrender", effect: "Maren walks her crews out. The Veil will remember it.", mercy: true },
-          { id: "finish", label: "Finish the fight", effect: "The west damper falls. The Veil fights on.", mercy: false, default: true },
+          { id: "accept", label: "Accept the surrender", effect: "Maren walks her crews out. Her own Watcher fights for you from Cut the Draw on.", mercy: true },
+          { id: "finish", label: "Finish the fight", effect: "The west damper falls. Its salvage, 200 energy, is yours in Cut the Draw.", mercy: false, default: true },
         ],
       },
       "m10-veil": {
@@ -1568,6 +1577,9 @@ export const MISSIONS = [
         { who: "echo", text: "The draw has begun. Three conduits carry it to the Keystone. In twenty minutes the Lattice is empty." },
         { who: "vale", text: "Cut all three conduits and the draw stops. Each one you cut slows it and buys the Lattice time." },
         { who: "sol", text: "Two rivers, Commander, each with two fords and two bridges. My scouts say the ford nearest our camp is the lightest guarded." },
+        // Campaign heroes: what the Commander did with Ilse Maren in the storm (story/heroes.js).
+        { if: { flag: "m10-maren", is: "accept" }, who: "maren", text: "You let my crews walk out of the storm. My own Watcher will see for you now." },
+        { if: { flag: "m10-maren", is: "finish" }, who: "vale", text: "Okoro salvaged the west damper from the storm. That is 200 energy for the camp." },
       ],
       intel: [
         "You have 20 minutes to cut the west, middle and north conduits.",

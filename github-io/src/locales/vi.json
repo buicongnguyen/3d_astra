@@ -2077,7 +2077,24 @@
     "Date": "Ngày",
     "Rank 1": "Hạng 1",
     "Rank 3": "Hạng 3",
-    "Top 10 place": "Hạng trong top 10"
+    "Top 10 place": "Hạng trong top 10",
+    "Sol's Outrider": "Kỵ binh tiền trạm của Sol",
+    "Hale's Ironclad": "Thiết giáp của Hale",
+    "Maren's Watcher": "Trinh sát của Maren",
+    "Hold the line": "Giữ vững trận tuyến",
+    "Vale and every ally within 8 m take 30% less damage for 6 seconds.": "Vale và mọi đồng minh trong 8 m chịu ít hơn 30% sát thương trong 6 giây.",
+    "Caravan volley": "Loạt bắn Đoàn Lữ hành",
+    "Shoot up to 4 enemies within 11 m at once: 45 damage each.": "Bắn cùng lúc tối đa 4 kẻ địch trong 11 m: mỗi kẻ 45 sát thương.",
+    "Iron hull": "Vỏ thép",
+    "Take half damage for 8 seconds.": "Chịu một nửa sát thương trong 8 giây.",
+    "Damper pulse": "Xung giảm chấn",
+    "Enemies within 9 m move 40% slower for 5 seconds.": "Kẻ địch trong 9 m di chuyển chậm hơn 40% trong 5 giây.",
+    "Holding the line": "Đang giữ trận tuyến",
+    "Damped": "Bị giảm chấn",
+    "Line": "Giữ tuyến",
+    "Volley": "Loạt bắn",
+    "Hull": "Vỏ thép",
+    "Damper": "Giảm chấn"
   },
   "patterns": [
     [
@@ -3015,6 +3032,26 @@
     [
       "^Field commander, rank (\\d+), health (\\d+) of (\\d+)$",
       "Chỉ huy chiến trường, bậc {1}, máu {2} trên {3}"
+    ],
+    [
+      "^(.+) is down: back at the Command core in (\\d+) seconds\\.$",
+      "{1} đã ngã: {2} giây nữa sẽ trở lại Sở chỉ huy."
+    ],
+    [
+      "^(.+) is down: back in (\\d+) seconds\\.$",
+      "{1} đã ngã: {2} giây nữa sẽ trở lại."
+    ],
+    [
+      "^(.+) is back at the Command core\\.$",
+      "{1} đã trở lại Sở chỉ huy."
+    ],
+    [
+      "^(.+) is back on the field\\.$",
+      "{1} đã trở lại chiến trường."
+    ],
+    [
+      "^(.+), hero: tap to select$",
+      "{1}, anh hùng: chạm để chọn"
     ]
   ]
 }

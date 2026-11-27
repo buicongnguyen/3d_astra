@@ -14,7 +14,9 @@ export const abilityLimit = () => 99; // every ability stays visible; only the f
 // (src/locales vi.json / ko.json translate each one; tests/phone-hud.mjs checks every name fits in EN/VI/KO.)
 export const PHONE_NAME = { "Rapid fire": "Rapid", "Triage pulse": "Heal", "Shield wall": "Shield", "Field repair": "Repair", "Shadow strike": "Strike", "Shield link": "Link",
   "Overdrive": "Boost", "Crossfire": "Cross", "Steady aim": "Aim", "Burn line": "Burn", "Spur on": "Spur",
-  "Strafing run": "Strafe", "Signal flare": "Flare", "Bomb drop": "Bomb" };
+  "Strafing run": "Strafe", "Signal flare": "Flare", "Bomb drop": "Bomb",
+  // Campaign heroes (src/sim/content/campaign-heroes.js).
+  "Hold the line": "Line", "Caravan volley": "Volley", "Iron hull": "Hull", "Damper pulse": "Damper" };
 const PHONE_SYMBOL = new Set(["Shield wall", "Field repair"]);
 
 export function tacticsCardHTML(sim, entities, { compact = false, side = false, keys = true } = {}) {

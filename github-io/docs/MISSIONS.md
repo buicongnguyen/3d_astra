@@ -113,6 +113,24 @@ triggers: [ { when: { enter: "siphonNorth", team: 0 }, do: [ { say: {...} }, { d
 
 **Campaign progress** (`frontier-campaign-v2`, `src/campaign.js`): `cleared` as before, plus `decisions` (`{ [id]: option }`, written on a mission win; a loss writes nothing; replaying a mission replaces its answer), `endingsSeen` (written when the finale is won) and `chronicles` (0.20, see "Faction Chronicles" below). Every field is kept on load and on every record, older progress loads unchanged, and a mission opens when it is cleared itself or the one before it is (by mission id). `missionById(id)` returns `{ campaign, index, mission }`. The mission checker's targets are keyed by mission id (`MISSION_TARGETS` in `tools/mission-check.mjs`).
 
+## Campaign heroes (2026-11-27)
+
+Named allies fight beside the player in story missions (rules: `src/sim/content/campaign-heroes.js`; who joins where: `src/story/heroes.js`, settled by `resolveMission` from the campaign progress like the veteran squad):
+
+| Hero | Unit | From | When | Signature ability |
+|------|------|------|------|-------------------|
+| Mira Vale | Vanguard | m02 First Contact | always | Hold the line: Vale and allies within 8 m take 30% less damage for 6 s (35 s) |
+| Sol's Outrider | Rider | m05 The Verdant Pact | `m04-sol` accepted | Caravan volley: up to 4 enemies within 11 m take 45 each (25 s) |
+| Hale's Ironclad | Battle tank | m08 The Quiet Vault | `m07-hale` accepted | Iron hull: half damage for 8 s (40 s) |
+| Maren's Watcher | Watcher | m11 Cut the Draw | `m10-maren` accepted | Damper pulse: enemies within 9 m 40% slower for 5 s (30 s) |
+
+- The spared commanders stay with their camps (the story still needs them there); each sends a sworn champion. A briefing line in the first mission says so.
+- Finishing a commander instead pays a one-off war chest, named in the choice: Sol 250 alloy in m05, Hale 300 alloy in m09, Maren 200 energy in m11 (`def.heroCache`).
+- Hero rules: 2.5x the unit's health (2x on Veteran), +15% speed, +20% damage, the signature ability in place of the type's own, a gold ground ring (one instanced draw) and an HTML nameplate that selects the hero in one tap (`src/hero-view.js`).
+- A fallen hero comes back at the Command core 30 s later (no core: where it first stood), with an alert. No lose condition names a hero.
+- Not in Frontier Defence missions (the Defence commander fights there) or Faction Chronicles. A mission settled without a progress record (`resolveMission(def, null)`: the tools' default runs, the golden pins) fields none; use `check:missions --progress file` or `--decide mercy` to play them.
+- Heroes take entity ids from their own range (3,000,000 up) and never join the veteran squad.
+
 ## Staged scenes (0.19b)
 
 A scene is a short sequence (5 to 20 s) the client plays while the match is held: letterbox bars, eased camera moves, lines in the dialogue box with portraits and small screen glows. Data: `SCENES` in `src/story/scenes.js`; client: `src/app/scenes.js` (the `scene` screen in `src/app/screens.js`, which holds the match but keeps the music, like the decision card).

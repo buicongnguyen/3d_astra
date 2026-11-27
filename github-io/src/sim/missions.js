@@ -62,6 +62,9 @@ export const missions = {
     if (rules.unlock) this.unlockUnits(0, rules.unlock);
     for (const step of def.setup || []) if (this.flagIs(step.if)) this.missionSetup(step);
     this.players[0].alloy += difficultyRules(this).alloy;
+    // Campaign heroes and a finished commander's war chest (story/heroes.js, sim/content/campaign-heroes.js).
+    if (def.heroes) this.spawnHeroes(def.heroes);
+    if (def.heroCache) for (const [type, amount] of Object.entries(def.heroCache)) this.players[0][type] += amount;
     if (def.defence) this.initDefence(def.defence);
     this.nav.rebuild(this.entities);
     this.updateVision();
