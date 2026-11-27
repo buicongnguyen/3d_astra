@@ -3,7 +3,7 @@
 //   node tools/build-detail.mjs                 every kind the manifest lists
 //   node tools/build-detail.mjs medic tank      just these (merged into the manifest)
 //   --jobs 3                                    parallel Blender processes (default 3)
-// FRONTIER_BLENDER=<path> overrides the Blender binary (default: the portable 4.5.9 next to this repo's sibling projects).
+// FRONTIER_BLENDER=<path> overrides the Blender binary (default: the shared Blender 4.5.11 LTS in C:/tools/blender, see its README.txt).
 import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -13,7 +13,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const app = join(here, "..");
 const script = join(here, "blender", "generate_detail.py");
 const manifestPath = join(app, "public", "models", "detail", "manifest.json");
-const BLENDER = process.env.FRONTIER_BLENDER || "C:/Users/n/source/repos/3D_claudeopus55/.tools/blender-4.5.9-windows-x64/blender.exe";
+const BLENDER = process.env.FRONTIER_BLENDER || "C:/tools/blender/blender-4.5.11-windows-x64/blender.exe";
 
 const args = process.argv.slice(2);
 let jobs = 3;
