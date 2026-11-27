@@ -128,6 +128,7 @@ export class HeroModeView {
     this.own = Array.from({ length: OWN }, () => ({ on: false, kind: "tracer", t: 0, travel: 1, fx: 0, fy: 0, fz: 0, tx: 0, ty: 0, tz: 0, color: [1, 1, 1], seed: 0 }));
     this.ownCount = 0;
     this.ownDrawn = { tracer: 0, rocket: 0, shell: 0 };
+    this.ownTaken = { tracer: 0, rocket: 0, shell: 0 }; // every own round taken over since the start, by look (tests)
     view.heroOwnShots = this;
   }
   // fx.js: a shot event. True (and the flight is ours) when it is the driven hero's own shot under the Hero camera,
@@ -144,6 +145,7 @@ export class HeroModeView {
     Object.assign(slot, { on: true, kind: style.kind === "rocket" ? "rocket" : LOOK.kind, t: 0, travel: Math.max(0.08, style.life || 0.3), fx: from.x, fy: from.y, fz: from.z, tx: to.x, ty: to.y, tz: to.z, seed: Math.random() });
     slot.color[0] = LOOK.color[0]; slot.color[1] = LOOK.color[1]; slot.color[2] = LOOK.color[2];
     this.ownCount = this.own.reduce((n, q) => n + (q.on ? 1 : 0), 0);
+    this.ownTaken[slot.kind]++;
     return true;
   }
   build() {

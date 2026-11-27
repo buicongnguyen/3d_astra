@@ -306,7 +306,8 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     assert.equal(last.target, tank, "the locked rocket goes at the held target");
     // Item 6: the hero's own rocket flies in the hero look (a big body, flame and smoke), not the RTS-size round.
     // The match clock is held: each poll steps it a little, and the frames between polls hand the shot to the view.
-    await page.waitForFunction(() => { const f = window.__frontier; if (f.view.heroOwnShots.ownDrawn.rocket > 0) return true; f.step(0.05); return false; }, null, { timeout: TIMEOUT.step, polling: 100 });
+    // (A slow runner's frames can carry the whole short flight, so the check counts rounds taken, not one frame's drawing.)
+    await page.waitForFunction(() => { const f = window.__frontier; if (f.view.heroOwnShots.ownTaken.rocket > 0) return true; f.step(0.05); return false; }, null, { timeout: TIMEOUT.step, polling: 100 });
     await page.keyboard.press("Escape");
     await page.waitForFunction(() => !window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
     assert.equal(await page.evaluate(() => window.__frontier.paused), false, "Esc leaves Hero mode (no pause)");

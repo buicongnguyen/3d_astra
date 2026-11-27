@@ -74,6 +74,7 @@ test("the hero's own round flies in the hero look only under the Hero camera", (
   assert.equal(v.take(shot, sim, from, to, rocket), true);
   v.update(sim, 0.2);
   assert.equal(v.ownDrawn.rocket, 1, "the hero's rocket is drawn in the hero look");
+  assert.equal(v.ownTaken.rocket, 1, "counted as taken over");
   assert.equal(scene.getObjectByName("HeroRockets").count, 1);
   v.update(sim, 0.3);
   assert.equal(v.ownCount, 0, "it is gone when the effects' hit lands (the style's flight time)");
