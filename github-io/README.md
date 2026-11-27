@@ -124,7 +124,7 @@ The pipeline, look development, triangle budgets and runtime naming rules are do
 
 - Toolkit and generators: `tools/blender/frontier_kit.py`, `generate_assets.py` (units and structures), `generate_environment.py` (boulders, crystal deposits, foliage, crates, truss bridges), `animate_units.py` (Godot clips), `preview_assets.py` (review renders) and `render_ui_art.py` (start-screen key art, emblem and the portrait atlas in `src/art/`).
 - Editable sources: `assets/source/frontier-library.blend`, `riverlands-library.blend` and `animated-*.blend`. Inventories: `public/models/manifest.json` and `environment-manifest.json`.
-- Generated with **Blender 4.5.9 LTS**. The models were authored live through MCP for Blender and are reproducible headless; the committed files come from the headless run.
+- Generated with **Blender 4.5.9 LTS**; rebuilt with **Blender 5.2.5 LTS** (`C:/tools/blender/blender-5.2.5-windows-x64/blender.exe`) since 2026-11-27. The models were authored live through MCP for Blender and are reproducible headless; the committed files come from the headless run.
 - Style: bevelled hard-surface models with weighted normals, PBR materials, and ray-traced ambient occlusion, edge wear and grime baked into vertex colours. The renderer adds a reflection environment to model materials.
 - Coordinates use meters, ground-level origins, and glTF Y-up export. Material names `Team*` and `TeamGlow*` control team colors. `tests/assets.test.js` checks the runtime naming contract on every GLB.
 - Eight unit GLBs include five rigid-part Blender clips each. This renderer keeps its runtime articulated leg motion and body movement; the Godot renderer evaluates the clips.

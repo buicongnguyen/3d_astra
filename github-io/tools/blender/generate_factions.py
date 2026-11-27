@@ -1,4 +1,4 @@
-"""Faction-unique models. Headless Blender 4.5; no external assets.
+"""Faction-unique models. Headless Blender 5.2.5 LTS; no external assets.
 
   blender -b --factory-startup --python tools/blender/generate_factions.py -- [names...] [--report] [--blend]
   (generate_assets.py --factions runs the same build)

@@ -1,4 +1,4 @@
-"""The Ember Drake, the first flying boss (W9). Headless Blender 4.5; no external assets.
+"""The Ember Drake, the first flying boss (W9). Headless Blender 5.2.5 LTS; no external assets.
 
   blender -b --python tools/blender/generate_drake.py -- [--manifest] [--report]
 

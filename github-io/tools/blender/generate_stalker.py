@@ -1,4 +1,4 @@
-"""Stalker for the Veil workshop (AAA round 2, W1-C). Headless Blender 4.5; no external assets.
+"""Stalker for the Veil workshop (AAA round 2, W1-C). Headless Blender 5.2.5 LTS; no external assets.
 
   blender -b --python tools/blender/generate_stalker.py -- [--manifest] [--report]
 

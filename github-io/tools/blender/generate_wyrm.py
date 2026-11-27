@@ -1,4 +1,4 @@
-"""Dune Wyrm and Wyrmling for the Wild frontier desert test (AAA round 4, P1). Headless Blender 4.5; no external assets.
+"""Dune Wyrm and Wyrmling for the Wild frontier desert test (AAA round 4, P1). Headless Blender 5.2.5 LTS; no external assets.
 
   blender -b --python tools/blender/generate_wyrm.py -- [--manifest] [--report]
 

@@ -1,4 +1,4 @@
-"""Troop carrier for Frontier Defence waves (0.22). Headless Blender 4.5; no external assets.
+"""Troop carrier for Frontier Defence waves (0.22). Headless Blender 5.2.5 LTS; no external assets.
 
   blender -b --python tools/blender/generate_carrier.py -- [--manifest]
 

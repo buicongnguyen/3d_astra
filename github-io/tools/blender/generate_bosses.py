@@ -1,4 +1,4 @@
-"""The two campaign bosses, redrawn at a readable size (owner request, 2026-11-23). Headless Blender 4.5.
+"""The two campaign bosses, redrawn at a readable size (owner request, 2026-11-23). Headless Blender 5.2.5 LTS.
 
   blender -b --python tools/blender/generate_bosses.py -- ironvanguard|ironsovereign|ironsovereign2
 

@@ -1,4 +1,4 @@
-"""Meridian Field workshop (AAA round 2, W1-A). Headless Blender 4.5; no external assets.
+"""Meridian Field workshop (AAA round 2, W1-A). Headless Blender 5.2.5 LTS; no external assets.
 
   blender -b --python tools/blender/generate_workshop.py -- [--manifest]
 

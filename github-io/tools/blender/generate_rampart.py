@@ -1,4 +1,4 @@
-"""Rampart ram tank for the Ashfall Salvage yard (AAA round 2, W2-A). Headless Blender 4.5; no external assets.
+"""Rampart ram tank for the Ashfall Salvage yard (AAA round 2, W2-A). Headless Blender 5.2.5 LTS; no external assets.
 
   blender --background --python tools/blender/generate_rampart.py -- [--manifest]
 

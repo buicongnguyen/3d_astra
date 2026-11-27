@@ -32,7 +32,7 @@ Every mesh has POSITION, NORMAL, TEXCOORD_0 and COLOR_0; team materials remain r
 
 ## Reproduce
 
-From github-io, using the installed Blender 4.5 executable:
+From github-io, using Blender 5.2.5 LTS (C:/tools/blender/blender-5.2.5-windows-x64/blender.exe):
 
 ```
 blender --background --factory-startup --python tools/blender/generate_assets.py -- --factions

@@ -1,4 +1,4 @@
-"""Faction dress for the shared kit (visual round V, 2026-11-26). Headless Blender 4.5; no external assets.
+"""Faction dress for the shared kit (visual round V, 2026-11-26). Headless Blender 5.2.5 LTS; no external assets.
 
   blender -b --factory-startup --python tools/blender/generate_dress.py -- [factions...] [--manifest] [--report]
 

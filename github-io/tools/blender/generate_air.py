@@ -1,4 +1,4 @@
-"""Air unit models (release 0.18 "Wings", item 18.2). Headless Blender 4.5; no external assets.
+"""Air unit models (release 0.18 "Wings", item 18.2). Headless Blender 5.2.5 LTS; no external assets.
 
   blender -b --python tools/blender/generate_air.py -- [--manifest] [--blend <file.blend>]
 

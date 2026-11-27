@@ -1,4 +1,4 @@
-"""Frontier Command hard-surface asset kit for Blender 4.5 (bmesh only).
+"""Frontier Command hard-surface asset kit for Blender 5.2.5 LTS (bmesh only).
 
 The same code runs headless (`blender --background --python generate_assets.py`) and live
 inside an interactive Blender driven through MCP for Blender. It never switches the window

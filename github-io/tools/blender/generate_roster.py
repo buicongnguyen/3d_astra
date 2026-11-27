@@ -1,4 +1,4 @@
-"""Faction roster additions (roster 2026-11-24). Headless Blender 4.5; no external assets.
+"""Faction roster additions (roster 2026-11-24). Headless Blender 5.2.5 LTS; no external assets.
 
   blender -b --factory-startup --python tools/blender/generate_roster.py -- [names...] [--manifest] [--report]
 

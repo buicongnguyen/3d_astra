@@ -70,13 +70,24 @@ def main():
     except TypeError:
         scene.render.engine = 'BLENDER_EEVEE'
     scene.render.resolution_x, scene.render.resolution_y = 1600, 900
-    scene.use_nodes = greyscale
-    if greyscale:
-        nodes = scene.node_tree.nodes
-        nodes.clear()
-        src, grey, dst = nodes.new('CompositorNodeRLayers'), nodes.new('CompositorNodeRGBToBW'), nodes.new('CompositorNodeComposite')
-        scene.node_tree.links.new(src.outputs['Image'], grey.inputs['Image'])
-        scene.node_tree.links.new(grey.outputs['Val'], dst.inputs['Image'])
+    if bpy.app.version >= (5, 0):
+        # Blender 5.x: the compositor is a node group with a Group Output, switched off by clearing it
+        scene.compositing_node_group = None
+        if greyscale:
+            tree = bpy.data.node_groups.new('Greyscale', 'CompositorNodeTree')
+            tree.interface.new_socket('Image', in_out='OUTPUT', socket_type='NodeSocketColor')
+            scene.compositing_node_group = tree
+            src, grey, dst = tree.nodes.new('CompositorNodeRLayers'), tree.nodes.new('CompositorNodeRGBToBW'), tree.nodes.new('NodeGroupOutput')
+            tree.links.new(src.outputs['Image'], grey.inputs['Image'])
+            tree.links.new(grey.outputs['Val'], dst.inputs[0])
+    else:
+        scene.use_nodes = greyscale
+        if greyscale:
+            nodes = scene.node_tree.nodes
+            nodes.clear()
+            src, grey, dst = nodes.new('CompositorNodeRLayers'), nodes.new('CompositorNodeRGBToBW'), nodes.new('CompositorNodeComposite')
+            scene.node_tree.links.new(src.outputs['Image'], grey.inputs['Image'])
+            scene.node_tree.links.new(grey.outputs['Val'], dst.inputs['Image'])
     transforms = [i.identifier for i in scene.view_settings.bl_rna.properties['view_transform'].enum_items]
     scene.view_settings.view_transform = 'AgX' if 'AgX' in transforms else 'Filmic'
     world = scene.world or bpy.data.worlds.new('preview')

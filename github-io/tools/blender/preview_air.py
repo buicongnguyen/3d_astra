@@ -88,7 +88,11 @@ def portraits(tmp):
     ui = {'__file__': str(HERE / 'render_ui_art.py'), '__name__': 'render_ui_art'}
     exec(compile(source.rsplit('\nmain()', 1)[0], 'render_ui_art.py', 'exec'), ui)  # skip its main()
     cell = ui['CELL']
-    bpy.context.scene.use_nodes = False  # the greyscale sheet left its compositor on
+    # the greyscale sheet left its compositor on (Blender 5.x: clear the compositing node group)
+    if bpy.app.version >= (5, 0):
+        bpy.context.scene.compositing_node_group = None
+    else:
+        bpy.context.scene.use_nodes = False
     strip = np.zeros((cell, cell * len(AIR), 4), dtype=np.float32)
     for index, name in enumerate(AIR):
         ui['reset']()

@@ -1,4 +1,4 @@
-"""Acid Hound and Vault Sentinel (creature round). Headless Blender 4.5; no external assets.
+"""Acid Hound and Vault Sentinel (creature round). Headless Blender 5.2.5 LTS; no external assets.
 
   blender -b --python tools/blender/generate_creatures.py -- [--manifest] [--report]
 

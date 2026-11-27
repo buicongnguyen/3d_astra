@@ -1,4 +1,4 @@
-"""Gunner team for the Meridian Field workshop (AAA round 2, W1-B). Headless Blender 4.5; no external assets.
+"""Gunner team for the Meridian Field workshop (AAA round 2, W1-B). Headless Blender 5.2.5 LTS; no external assets.
 
   blender --background --python tools/blender/generate_gunner.py -- [--manifest]
 
