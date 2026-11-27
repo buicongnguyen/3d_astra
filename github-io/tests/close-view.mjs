@@ -35,6 +35,8 @@ await suite("close-view", async () => {
     await page.waitForFunction(() => window.__frontier.started, null, { timeout: TIMEOUT.step });
     // The Kite is not a core model: parse it in the background, as a match with flyers does.
     await page.evaluate(() => window.__frontier.view.preloadModels(["kite"]));
+    // Late assets (ground detail layers, effect sheets) must be in before the reference frame is drawn.
+    await page.waitForLoadState("networkidle", { timeout: TIMEOUT.models });
 
     // Each batch-1 type for both sides: one near the close camera (the centre of a dry patch near the middle of the
     // map), one 40 m away. Nothing ticks.

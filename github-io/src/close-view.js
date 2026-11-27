@@ -17,6 +17,8 @@ import { cacheTransforms } from "./transform-cache.js";
 // - Units switch back beyond radius x EXIT (hysteresis), and never while the view is off.
 // - A model wearing a faction dress (syncFactionDress) keeps its normal model: the dress fits only that.
 // While the view was never turned on, update() returns at once: normal play is untouched.
+// The files carry ?v=<bytes> from the manifest: the service worker leaves them to the HTTP cache, so a rebuilt detail
+// model never hides behind the cache-first model cache (whose name follows the normal models only).
 export const PARKED_LAYER = 2;
 export const CLOSE_RADIUS = 25;
 export const EXIT = 1.15;
@@ -62,7 +64,7 @@ export class CloseView {
   manifest() {
     this.manifestLoad ||= fetch(`${import.meta.env.BASE_URL}models/detail/manifest.json`)
       .then((r) => (r.ok ? r.json() : { assets: [] }))
-      .then((m) => { this.types = new Map(m.assets.map((a) => [a.name, a.file])); })
+      .then((m) => { this.types = new Map(m.assets.map((a) => [a.name, `${a.file}?v=${a.bytes}`])); })
       .catch((error) => { this.failed = String(error); this.types = new Map(); });
     return this.manifestLoad;
   }
@@ -102,7 +104,8 @@ export class CloseView {
   }
   consider(root, enter, exit) {
     const u = root.userData;
-    if (u.kind !== "unit" || !u.model) return;
+    // A flyer still on its stand-in airframe (FallbackFlyer, until its model arrives) has no detail partner.
+    if (u.kind !== "unit" || !u.model || u.model.name === "FallbackFlyer") return;
     const shown = this.shown.has(root);
     let want = false;
     if (this.on && root.visible) {
