@@ -122,7 +122,7 @@ Round 2's rules (`docs/aaa/AAA_ROUND2_PLAN.md` section 2) apply unless changed h
 
 ### 2.5 Art
 - Models come from `tools/blender/generate_<name>.py`, built on `frontier_kit.py`.
-- Run Blender headless with the portable build: `C:\Users\n\source\repos\3D_claudeopus55\.tools\blender-4.5.9-windows-x64\blender.exe --background --python <script> -- <args>`.
+- Run Blender headless with the shared Blender 5.2.5 LTS (since 2026-11-28; this round used the portable 4.5.9): `C:\tools\blender\blender-5.2.5-windows-x64\blender.exe --background --python <script> -- <args>`.
 - Budgets are in `docs/ASSET_PIPELINE.md`. A model may not have more materials than its nearest existing unit.
 - Bosses are ported with `tools/port-boss-model.mjs` and `tools/boss-parts/*.json`, not with Blender.
 - Every changed manifest entry gets `review: "pending owner review (round 3)"`.
