@@ -68,7 +68,8 @@ export class VoicePlayer {
   set quiet(v) { this.scheduler.quiet = !!v; }
   // A unit reply ("select" | "move" | "attack") in the player's faction voice; `who` = the unit type speaking
   // (its name is the subtitle's speaker).
-  ack(kind, who = null) { return this.say({ channel: "ack", key: kind, ...(who ? { who } : {}) }, this.faction); }
+  // `name`: a hero's own name for the subtitle (Skywing, Mira Vale), in place of its unit type's.
+  ack(kind, who = null, name = null) { return this.say({ channel: "ack", key: kind, ...(who ? { who } : {}), ...(name ? { name } : {}) }, this.faction); }
   // An announcer line for event key `key`.
   announce(key) { return this.say({ channel: "announcer", key }, this.faction); }
   // The clip a story line speaks from now: the game language's clip, or the English one when that language has

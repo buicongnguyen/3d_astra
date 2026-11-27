@@ -116,21 +116,29 @@ export const combat = {
     if (e.stance === "aggressive") e.post = { x: e.x, z: e.z };
     else if (distance(e, e.post) > 1.5) this.move(e, e.post, dt, 1.2);
   },
+  // The damage one shot of `e` does to `t` before the victim's own factors (applyDamage); `main` is true for the
+  // shot's own target (its content hooks may tag the shot). The factors multiply in this fixed order.
+  shotValue(e, t, main, scale = 1) {
+    return this.attackValue(e) * scale *
+      (e.counter && e.counter === t.class ? e.counter_bonus || 1.6 : 1) *
+      (t.mechanical ? (e.mechanical_bonus || 1) * (e.buff?.mech || 1) * (t.flying && e.air_scale ? e.air_scale : 1) : 1) *
+      (t.kind === "building" ? e.building_bonus || 1 : 1) *
+      (t.flying && e.kind === "building" ? AIR.flak_bonus : 1) *
+      this.heightDamage(e, t) *
+      // H7: content modules' damage factors, last (sim/content.js); the shot's own target may tag the shot.
+      (HIT_SCALE.length ? this.hitScale(e, t, main) : 1);
+  },
   hit(e, target) {
     // Tags start empty for every shot (sim/content.js SHOT_TAGS).
     if (SHOT_TAGS.length) SHOT_TAGS.length = 0;
+    // H3d Hero mode (sim/content/hero-mode.js): an enemy's shot at the hero the player drives flies as a projectile
+    // that can be dodged; it is checked on arrival. Every other shot stays an instant hit.
+    if (target.driven !== undefined && this.heroShot(e, target)) return;
     // Counter and anti-vehicle multipliers depend on each victim, including splash victims.
     const apply = (t, scale = 1) =>
       this.applyDamage(
         t,
-        this.attackValue(e) * scale *
-          (e.counter && e.counter === t.class ? e.counter_bonus || 1.6 : 1) *
-          (t.mechanical ? (e.mechanical_bonus || 1) * (e.buff?.mech || 1) * (t.flying && e.air_scale ? e.air_scale : 1) : 1) *
-          (t.kind === "building" ? e.building_bonus || 1 : 1) *
-          (t.flying && e.kind === "building" ? AIR.flak_bonus : 1) *
-          this.heightDamage(e, t) *
-          // H7: content modules' damage factors, last (sim/content.js); the shot's own target may tag the shot.
-          (HIT_SCALE.length ? this.hitScale(e, t, t === target) : 1),
+        this.shotValue(e, t, t === target, scale),
         e.team,
         e.id,
         t === target && e.type === "vanguard" ? "vanguard" : null, // identify the sword's contact cue only

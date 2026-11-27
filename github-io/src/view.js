@@ -649,6 +649,38 @@ export class WorldView {
     this.closeViewModule ||= import("./close-view.js").then((m) => (this.closeView ||= new m.CloseView(this)));
     return this.closeViewModule.then((close) => close.set(options || null));
   }
+  // H3a Hero mode (src/hero-mode.js): a perspective camera at the hero, with a soft distance fog. `options`
+  // { fogNear, fogFar, far } turns it on (the rig, `view.heroRig(sim, dt)`, places it every frame through
+  // placeHeroCamera); null puts the RTS camera, its framing and the fog back exactly as they were.
+  setHeroCamera(options) {
+    if (!options) {
+      if (!this.heroSaved) return;
+      const saved = this.heroSaved;
+      this.heroSaved = null;
+      this.camera = saved.camera;
+      this.scene.fog.near = saved.near; this.scene.fog.far = saved.far;
+      this.zoom = saved.zoom;
+      this.focus.copy(saved.focus);
+      this.updateCamera();
+      return;
+    }
+    if (!this.heroCamera) this.heroCamera = new THREE.PerspectiveCamera(58, 1, 0.3, 140);
+    if (!this.heroSaved) this.heroSaved = { camera: this.camera, near: this.scene.fog.near, far: this.scene.fog.far, zoom: this.zoom, focus: this.focus.clone() };
+    this.heroCamera.far = options.far || 140;
+    this.heroFog = [options.fogNear ?? 30, options.fogFar ?? 100];
+    this.scene.fog.near = this.heroFog[0]; this.scene.fog.far = this.heroFog[1];
+    this.camera = this.heroCamera;
+    this.heroEye ||= new THREE.Vector3(); this.heroLook ||= new THREE.Vector3();
+  }
+  get heroCameraOn() { return !!this.heroSaved; }
+  // The rig's pose for this frame: eye and look-at points (world), field of view in degrees.
+  placeHeroCamera(eye, look, fov) {
+    if (!this.heroSaved) return;
+    this.heroEye.set(eye.x, eye.y, eye.z);
+    this.heroLook.set(look.x, look.y, look.z);
+    if (Number.isFinite(fov)) this.heroCamera.fov = fov;
+    this.updateCamera();
+  }
   // The governor's level (governor.js LEVELS) shrinks the close-view radius on a struggling device.
   setCloseLevel(name) {
     this.closeLevel = name;
@@ -1195,7 +1227,28 @@ export class WorldView {
     const r = this.canvasRect ??= this.renderer.domElement.getBoundingClientRect();
     return { left: r.left, right: r.right, top: r.top + (this.coverTop || 0), bottom: r.top + (this.drawHeight || this.height) };
   }
+  // Hero mode: the perspective camera fills the whole canvas (no dock covers it), and the shadow box follows
+  // the look-at point.
+  updateHeroCamera() {
+    const c = this.heroCamera, aspect = this.width / this.height;
+    this.drawHeight = this.height;
+    c.aspect = aspect;
+    c.position.copy(this.heroEye);
+    c.lookAt(this.heroLook);
+    c.updateProjectionMatrix();
+    c.updateMatrixWorld();
+    // Size hints for code written for the ortho view (ambient-life point sizes): the world height seen at the look point.
+    const dist = this.heroEye.distanceTo(this.heroLook), span = 2 * dist * Math.tan((c.fov * Math.PI) / 360);
+    c.top = span / 2; c.bottom = -span / 2;
+    this.focus.set(this.heroLook.x, 0, this.heroLook.z);
+    const pixels = this.height / Math.max(1, span), grow = clamp(30 / (1.43 * pixels), 1, 1.9);
+    this.barScale = grow;
+    this.barTall = 1 + 0.35 * Math.min(1, (grow - 1) * 2);
+    this.unitsPerPixel = 1 / pixels;
+    this.placeShadow(Math.min(130, Math.max(40, dist * 2.2)));
+  }
   updateCamera() {
+    if (this.heroSaved) { this.updateHeroCamera(); return; }
     const frame = this.frameHeight || this.height, aspect = this.width / frame, perPixel = this.zoom / frame;
     const cover = this.cover || 0, crop = Math.min(cover, this.coverCrop ?? cover);
     const shown = this.coverOpen === false ? cover : cover - crop;
@@ -1220,8 +1273,10 @@ export class WorldView {
     // shadow edges do not shimmer while the camera pans.
     // (The strip under a phone's dock reaches nearer the camera: grow the depth to match.)
     const depth = this.cameraOffset ? (0.5 * this.cameraOffset.length()) / this.cameraOffset.y : VIEW_DEPTH;
-    const half = Math.min(130, this.zoom * Math.hypot(aspect / 2, depth * (this.height / frame)) + 6),
-      shadow = this.sun.shadow.camera;
+    this.placeShadow(Math.min(130, this.zoom * Math.hypot(aspect / 2, depth * (this.height / frame)) + 6));
+  }
+  placeShadow(half) {
+    const shadow = this.sun.shadow.camera;
     if (shadow.right !== half) {
       Object.assign(shadow, { left: -half, right: half, top: half, bottom: -half });
       shadow.updateProjectionMatrix();
@@ -2156,6 +2211,9 @@ export class WorldView {
     if (!this.rally) this.scene.add(this.rally = createRally());
     const rallying = [...selected].map((id) => sim.get(id)).find((e) => e?.team === 0 && e.kind === "building" && e.rally);
     updateRally(this.rally, rallying, rallying?.rally, this.colors[0], sim.time, this.terrain);
+    // H3a Hero mode: the hero camera follows the hero's drawn position (src/hero-mode.js), before the close view
+    // picks the units near its aim point.
+    if (this.heroRig) this.heroRig(sim, realDt);
     // Close view (H3b): near units swap to their detail models; nothing runs while it was never turned on.
     this.closeView?.update(sim, selected);
     // Update world matrices once, copy entity parts into their batches, then render without

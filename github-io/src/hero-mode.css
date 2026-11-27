@@ -1,0 +1,323 @@
+/* H3a Hero mode (src/hero-mode.js): the Hero mode button and the Hero mode HUD. Taps >= 44 px, text >= 11 px,
+   no system-ui. In Hero mode the battlefield fills the window over the RTS bars (their layout is untouched, so
+   leaving puts every bar back exactly as it was); the modal, the settings sheet, the notice line and the steward
+   strip stay above it. */
+:root {
+  --hh-ink: #f6ecd2;
+  --hh-panel: rgba(12, 20, 26, 0.78);
+  --hh-edge: rgba(255, 214, 120, 0.55);
+  --hh-gold: #ffc53d;
+  --hh-font: "Rajdhani", "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+}
+
+/* ---------------------------------------------------------------- the button */
+#hero-mode-btn {
+  position: fixed;
+  z-index: 14;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 14px 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--hh-edge);
+  background: linear-gradient(180deg, rgba(64, 44, 10, 0.94), rgba(30, 20, 6, 0.94));
+  color: #ffe7a6;
+  font: 700 14px/1 var(--hh-font);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 230, 160, 0.12);
+  cursor: pointer;
+  /* PC: beside the ability bar, at the left end of the command panel's top edge. */
+  right: 16px;
+  bottom: calc(var(--dock-height, 214px) + 10px);
+}
+#hero-mode-btn[hidden] { display: none; }
+#hero-mode-btn svg { width: 20px; height: 20px; color: var(--hh-gold); flex: none; }
+#hero-mode-btn:hover, #hero-mode-btn:focus-visible { border-color: var(--hh-gold); color: #fff3cf; }
+/* Phones: a floating chip over the battlefield's right edge, above the dock; it never takes a cell of the top bar or the rail. */
+/* Phones: a floating chip at the battlefield's right edge, just above the dock (src/hero-mode.js measures the dock's
+   top edge); it never takes a cell of the top bar or the rail. */
+.compact-ui #hero-mode-btn { right: max(10px, env(safe-area-inset-right)); bottom: var(--hero-btn-bottom, 260px); padding: 0 12px 0 8px; font-size: 13px; }
+.compact-ui.left-handed #hero-mode-btn { right: auto; left: max(10px, env(safe-area-inset-left)); }
+@media (orientation: landscape) and (max-height: 520px) {
+  .compact-ui #hero-mode-btn { bottom: auto; top: calc(env(safe-area-inset-top) + 58px); right: calc(max(10px, env(safe-area-inset-right)) + 64px); }
+}
+
+/* ---------------------------------------------------------------- Hero mode: the battlefield over everything */
+/* Over the top bar, the rail, the dock and the phone chips (z 24-40); the modal and the settings sheet stay on top. */
+html.hero-mode #world { position: fixed; inset: 0; z-index: 41; }
+html.hero-mode .hero-plates, html.hero-mode #fight-hint { display: none !important; }
+html.hero-mode #modal { z-index: 50; }
+html.hero-mode #notice, html.hero-mode #steward-strip, html.hero-mode .voice-caption { z-index: 43 !important; }
+html.hero-mode .voice-caption { bottom: calc(env(safe-area-inset-bottom) + 168px); }
+/* Phones: subtitles go up under the steward strip, clear of the stick and the buttons. */
+html.hero-mode.compact-ui .voice-caption { bottom: auto !important; top: calc(env(safe-area-inset-top) + 136px); }
+html.hero-mode #hero-mode-btn { display: none; }
+/* Phones: the steward strip under the hero's plate, the notices below the top row (never over the HUD). */
+:root.hero-mode.compact-ui #steward-strip { left: max(12px, env(safe-area-inset-left)); right: auto; top: calc(env(safe-area-inset-top) + 62px); }
+:root.hero-mode.compact-ui:not(.in-briefing) #stage > #notice:not(#hero-x) { position: fixed !important; top: calc(env(safe-area-inset-top) + 96px) !important; left: 50% !important; right: auto !important; transform: translateX(-50%) !important; max-width: calc(100vw - 24px) !important; z-index: 43 !important; }
+@media (orientation: landscape) and (max-height: 520px) {
+  :root.hero-mode.compact-ui:not(.in-briefing) #stage > #notice:not(#hero-x) { top: calc(env(safe-area-inset-top) + 58px) !important; }
+  :root.hero-mode.compact-ui #steward-strip { top: calc(env(safe-area-inset-top) + 56px); }
+  html.hero-mode.compact-ui .voice-caption { top: calc(env(safe-area-inset-top) + 92px); }
+}
+
+#hero-hud {
+  position: fixed;
+  inset: 0;
+  z-index: 42;
+  color: var(--hh-ink);
+  font-family: var(--hh-font);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: crosshair;
+}
+#hero-hud[hidden] { display: none; }
+#hero-hud button {
+  pointer-events: auto;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 8px;
+  border: 1px solid var(--hh-edge);
+  background: var(--hh-panel);
+  color: var(--hh-ink);
+  font: 700 13px/1.1 var(--hh-font);
+  letter-spacing: 0.03em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 12px;
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+}
+#hero-hud button svg { width: 18px; height: 18px; flex: none; }
+#hero-hud button:disabled { opacity: 0.72; cursor: default; }
+#hero-hud kbd {
+  font: 700 11px/1 var(--hh-font);
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffe7a6;
+}
+.hero-phone #hero-hud kbd { display: none; }
+
+.hh-top {
+  position: absolute;
+  left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right));
+  top: calc(env(safe-area-inset-top) + 10px);
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  pointer-events: none;
+}
+.hh-plate {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  column-gap: 6px;
+  row-gap: 5px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: var(--hh-panel);
+  border: 1px solid var(--hh-edge);
+  min-width: 170px;
+}
+.hh-star { color: var(--hh-gold); font-size: 14px; }
+.hh-name { font-size: 15px; letter-spacing: 0.03em; }
+.hh-assist { font: 700 11px/1 var(--hh-font); font-style: normal; color: #1d1405; background: var(--hh-gold); padding: 2px 5px; border-radius: 3px; }
+.hh-assist[hidden] { display: none; }
+.hh-hp { grid-column: 1 / -1; display: block; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, 0.16); overflow: hidden; }
+.hh-hp > i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #6fe08f, #c6f07a); transition: width 0.15s linear; }
+.hh-time {
+  margin: 0 auto;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: var(--hh-panel);
+  border: 1px solid rgba(140, 200, 255, 0.45);
+  font-size: 13px;
+  font-weight: 700;
+  color: #cfe9ff;
+  white-space: nowrap;
+}
+.hh-time b { color: #fff; }
+.hh-sys { display: flex; gap: 8px; }
+.hh-exit { border-color: rgba(255, 160, 120, 0.7) !important; }
+
+.hh-weapons {
+  position: absolute;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 76px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 3px;
+  border-radius: 10px;
+  background: var(--hh-panel);
+  border: 1px solid var(--hh-edge);
+}
+.hh-weapons[hidden] { display: none; }
+.hh-weapons button { border: 0 !important; background: transparent !important; min-width: 96px !important; }
+.hh-weapons button[aria-pressed="true"] { background: rgba(255, 197, 61, 0.24) !important; color: #fff3cf; box-shadow: inset 0 0 0 1px var(--hh-gold); }
+.hh-weapons button.switching { animation: hh-blink 0.5s steps(2) infinite; }
+.hh-weapons kbd { margin: 0 6px; }
+@keyframes hh-blink { 50% { opacity: 0.55; } }
+
+.hh-actions {
+  position: absolute;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 18px);
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+.hh-actions button { min-width: 120px !important; min-height: 48px !important; font-size: 14px !important; }
+.hh-sweep { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5); transform-origin: left; transform: scaleX(var(--cd, 0)); pointer-events: none; }
+.hh-fire { display: none !important; }
+.hh-help {
+  position: absolute;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 136px);
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(10, 16, 22, 0.6);
+  font-size: 12px;
+  color: #d9e4ea;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.hero-sky .hh-help { bottom: calc(env(safe-area-inset-bottom) + 134px); }
+
+.hh-cross {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.hh-cross::before, .hh-cross::after {
+  content: "";
+  position: absolute;
+  left: -11px; top: -1px; width: 22px; height: 2px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+}
+.hh-cross::after { transform: rotate(90deg); }
+.hh-cross.on-target::before, .hh-cross.on-target::after { background: #ffd36a; }
+.hh-lockring {
+  position: absolute;
+  left: -22px; top: -22px; width: 44px; height: 44px;
+  border-radius: 50%;
+  background: conic-gradient(#ff7a3a calc(var(--lock, 0) * 360deg), transparent 0);
+  -webkit-mask: radial-gradient(circle, transparent 17px, #000 18px);
+  mask: radial-gradient(circle, transparent 17px, #000 18px);
+  opacity: calc(var(--lock, 0) * 1.2);
+}
+.hh-cross.locked .hh-lockring { background: #ff5a2a; }
+
+.hh-edges { position: fixed; inset: 0; pointer-events: none; }
+.hh-edge {
+  position: absolute;
+  left: -14px; top: -10px;
+  width: 0; height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-left: 24px solid #ffcf5a;
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.8));
+}
+.hh-edge.heavy { border-left-color: #ff5a3a; }
+.hh-edge[hidden] { display: none; }
+
+.hh-down {
+  position: absolute;
+  left: 50%; top: 40%;
+  transform: translate(-50%, -50%);
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: rgba(60, 10, 10, 0.82);
+  border: 1px solid #ff8a6a;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.hh-down[hidden] { display: none; }
+
+.hh-stick { display: none; }
+
+/* ---------------------------------------------------------------- phones */
+.hero-phone #hero-hud { cursor: default; }
+.hero-phone .hh-help { display: none; }
+.hero-phone .hh-plate { min-width: 0; padding: 5px 9px; }
+.hero-phone .hh-name { font-size: 13px; }
+.hero-phone .hh-time { padding: 6px 8px; font-size: 13px; }
+.hero-phone .hh-time span { display: none; }
+.hero-phone .hh-plate { flex: 0 1 auto; min-width: 0; overflow: hidden; }
+.hero-phone .hh-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 108px; }
+.hero-phone .hh-sys button span { font-size: 12px; }
+.hero-phone .hh-sys [data-hero="pause"] span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.hero-phone .hh-actions {
+  left: auto;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: calc(env(safe-area-inset-bottom) + 18px);
+  transform: none;
+  display: grid;
+  grid-template-columns: 76px 76px;
+  grid-template-rows: 54px 76px;
+  gap: 10px;
+}
+.hero-phone .hh-actions button { min-width: 0 !important; width: 100%; padding: 0 6px; font-size: 13px !important; white-space: normal; text-align: center; }
+.hero-phone .hh-ability { grid-column: 1; grid-row: 1; }
+.hero-phone .hh-dodge { grid-column: 2; grid-row: 1; }
+.hero-phone .hh-fire {
+  display: inline-flex !important;
+  grid-column: 1 / -1;
+  grid-row: 2;
+  border-radius: 38px !important;
+  font-size: 17px !important;
+  background: radial-gradient(circle, rgba(200, 70, 30, 0.95), rgba(110, 30, 12, 0.95)) !important;
+  border-color: #ffb08a !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+/* Portrait: the weapon switch sits over the action buttons, right-aligned. */
+.hero-phone .hh-weapons { left: auto; transform: none; right: max(12px, env(safe-area-inset-right)); bottom: calc(env(safe-area-inset-bottom) + 168px); }
+.hero-phone .hh-weapons button { min-width: 84px !important; }
+.hero-phone .hh-stick {
+  display: block;
+  position: fixed;
+  left: max(28px, env(safe-area-inset-left));
+  bottom: calc(env(safe-area-inset-bottom) + 30px);
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 230, 170, 0.45);
+  background: rgba(12, 20, 26, 0.35);
+  pointer-events: none;
+}
+.hero-phone .hh-stick.live { left: -60px; top: -60px; bottom: auto; }
+.hh-knob {
+  position: absolute;
+  left: 34px; top: 34px;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: rgba(255, 220, 140, 0.55);
+  border: 2px solid rgba(255, 240, 200, 0.8);
+}
+/* Landscape phones: a lower top row, the weapon switch at the bottom centre. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .hero-phone .hh-top { top: calc(env(safe-area-inset-top) + 6px); }
+  .hero-phone .hh-weapons { right: auto; left: 50%; transform: translateX(-50%); bottom: calc(env(safe-area-inset-bottom) + 12px); }
+  .hero-phone .hh-actions { grid-template-columns: 70px 70px; grid-template-rows: 48px 70px; gap: 8px; bottom: calc(env(safe-area-inset-bottom) + 10px); }
+  .hero-phone .hh-stick { width: 104px; height: 104px; bottom: calc(env(safe-area-inset-bottom) + 14px); }
+  .hero-phone .hh-knob { left: 28px; top: 28px; width: 44px; height: 44px; }
+}

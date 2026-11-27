@@ -30,7 +30,7 @@ export function captionFor(line, { faction = "meridian", unitName = null } = {})
   const text = captionLine(line, faction);
   if (!text) return null;
   const f = voiceFaction(faction);
-  const speaker = line.channel === "announcer" ? "Announcer" : (line.who && unitName?.(line.who)) || "Unit";
+  const speaker = line.channel === "announcer" ? "Announcer" : line.name || (line.who && unitName?.(line.who)) || "Unit";
   return { text, speaker, faction: f, channel: line.channel };
 }
 

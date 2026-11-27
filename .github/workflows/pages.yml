@@ -258,6 +258,9 @@ jobs:
           # H3c: the steward runs the base for 90 s of game time (sim steps), its strip, orders kept after off.
           - name: h3c-steward
             scripts: steward
+          # H3a/H3d Hero mode: enter, move, fire, dodge and exit on PC and phones, Skywing's look-down camera, the draw budget.
+          - name: h3a-hero-mode
+            scripts: hero-mode
           # AAA round 2 (W0-A): every golden pin with GOLDEN_FULL=1 (300 s points, save and reload,
           # Three Roads, Endless to wave 12), off the 10-minute build job. It needs no browser.
           - name: golden-full

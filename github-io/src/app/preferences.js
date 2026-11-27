@@ -46,7 +46,7 @@ export function setupPreferences(S, A) {
   // setting they read changed: re-translating the page on a language change, re-tinting the world when
   // anything but the cheap keys below changed.
   const CHEAP = new Set(["masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "voices", "subtitles", "muted", "quietMode", "music", "panSpeed", "edgeScroll", "confirmRestart", "autocast", "groupPace", "showFps",
-    "cameraAngle", "cameraTurn", "zoomSpeed", "minimapSide", "handedness", "alerts", "frameCap", "haptics", "textSize"]);
+    "cameraAngle", "cameraTurn", "zoomSpeed", "minimapSide", "handedness", "alerts", "frameCap", "haptics", "textSize", "battleTime", "heroView"]);
   let applied = null, storageWarned = false;
   function applyPreferences(value) {
     const before = applied;

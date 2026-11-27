@@ -98,6 +98,9 @@ export function setupDebugHooks(S, A) {
       // closeView(false) turns it off. closeInfo: on, centre, radius, units near, detail types drawn and loaded.
       closeView: (on, x, z, radius) => S.view.setCloseView(on ? { x, z, radius } : null),
       get closeInfo() { return S.view?.closeView?.info() ?? null; },
+      // H3a/H3d Hero mode (src/hero-mode.js): enter (with a hero id, else the one the button picks), leave, and its state
+      // (on, hero, Skywing, camera yaw and zoom, the clock scale, the aim point and target, the rocket lock).
+      heroMode: { enter: (id) => A.enterHeroMode(id ?? undefined), leave: () => A.leaveHeroMode(), get info() { return A.heroInfo(); } },
     };
   }
 

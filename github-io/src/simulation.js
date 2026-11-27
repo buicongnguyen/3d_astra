@@ -393,6 +393,8 @@ export class Simulation {
     // Stepping out of a boss's danger zone comes before any order; a boss runs its own cycle (sim/bosses.js).
     if (e.evade && this.stepEvade(e, dt)) return;
     if (e.boss) { this.stepBoss(e, dt); return; }
+    // H3a Hero mode (sim/content/hero-mode.js): the hero the player drives moves and fires by its own commands.
+    if (e.driven !== undefined && this.stepDriven(e, dt)) return;
     if (e.kind === "building") {
       this.updateLevel(e,dt);
       this.updateProduction(e, dt);

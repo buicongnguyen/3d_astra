@@ -684,6 +684,11 @@ export class Effects {
   shot(e, sim) {
     const { style, nx, nz, from, to, land } = this.aim(e, sim);
     if (style.kind === "melee") return this.swordContact(e, sim, style, true);
+    // H3d: a dodgeable shot at the hero in Hero mode flies as a real projectile (hero-mode-view.js draws it): the muzzle only.
+    if (e.slow) {
+      this.particle(this.glow, { ...from, cell: CELL.flare, s0: 0.9, s1: 1.1, life: 0.06, c0: [1, 0.85, 0.55, 0.8], c1: [1, 0.55, 0.15, 0], anchor: { ...e, shot: true } });
+      return;
+    }
     const dir = { x: to.x - from.x, y: to.y - from.y, z: to.z - from.z }, len = Math.hypot(dir.x, dir.y, dir.z) || 1;
     const travel = style.life, anchor = { ...e, shot: true, targetWidth: 2 * (sim?.get?.(e.target)?.radius || 0.75), direct: !groundSplashRadius(e, sim) };
     const kind = style.kind, m = this.motion;

@@ -2119,7 +2119,20 @@
     "Sniper": "저격",
     "Rocket": "로켓",
     "Sniper: long-range precise shots, best against soldiers": "저격: 멀리서 정확하게 쏩니다. 보병에게 가장 강합니다",
-    "Rocket: lock-on rockets, extra damage to vehicles": "로켓: 유도 로켓, 차량에 추가 피해"
+    "Rocket: lock-on rockets, extra damage to vehicles": "로켓: 유도 로켓, 차량에 추가 피해",
+    "Hero mode": "영웅 모드",
+    "Dodge": "회피",
+    "Barrel roll": "회전 회피",
+    "Hero down": "영웅 쓰러짐",
+    "WASD move · Mouse aim · Click fire · Q ability · Space dodge · Tab exit": "WASD 이동 · 마우스 조준 · 클릭 사격 · Q 능력 · Space 회피 · Tab 나가기",
+    "WASD fly · Mouse aim · Click shoot · Hold to lock rockets · Wheel zoom · Q Dive · E weapon · Space roll · Tab exit": "WASD 비행 · 마우스 조준 · 클릭 사격 · 길게 눌러 로켓 고정 · 휠 확대 · Q 급강하 · E 무기 · Space 회전 · Tab 나가기",
+    "Hero mode is not available now.": "지금은 영웅 모드를 쓸 수 없습니다.",
+    "Battle time in Hero mode": "영웅 모드 전투 속도",
+    "The whole battle slows while you fight as a hero; your hero stays quick. LAN matches always play at ×1.": "영웅으로 싸우는 동안 전투 전체가 느려지고, 영웅은 빠르게 움직입니다. LAN 경기는 항상 ×1입니다.",
+    "Hero view": "영웅 시점",
+    "Shoulder": "어깨 너머",
+    "First person": "일인칭",
+    "The camera for a hero on foot in Hero mode. Skywing always looks down from above.": "영웅 모드에서 지상 영웅의 카메라입니다. 하늘날개는 항상 위에서 내려다봅니다."
   },
   "patterns": [
     [
@@ -3077,6 +3090,10 @@
     [
       "^(.+), hero: tap to select$",
       "{1}, 영웅: 눌러서 선택"
+    ],
+    [
+      "^Hero mode: fight as (.+)$",
+      "영웅 모드: {1}(으)로 싸우기"
     ]
   ]
 }

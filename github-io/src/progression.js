@@ -74,6 +74,8 @@ export const progression = {
   },
   applyDamage(t,damage,team,by = null,hitWeapon = null) {
     if (t.hp <= 0 || !Number.isFinite(damage) || damage <= 0) return;
+    // H3d: a hero mid-dodge in Hero mode takes nothing (sim/content/hero-mode.js).
+    if (t.dodgeUntil > this.time) return;
     if (by !== null) { t.hitBy = by; t.hitAt = this.time; }
     if (this.mission && t.team === 0 && team !== 0) damage *= difficultyRules(this).damage;
     if (t.buff?.guard) damage *= t.buff.guard;

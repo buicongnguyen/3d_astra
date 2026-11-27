@@ -2119,7 +2119,20 @@
     "Sniper": "Bắn tỉa",
     "Rocket": "Tên lửa",
     "Sniper: long-range precise shots, best against soldiers": "Bắn tỉa: phát bắn xa và chính xác, mạnh nhất trước bộ binh",
-    "Rocket: lock-on rockets, extra damage to vehicles": "Tên lửa: tên lửa khóa mục tiêu, thêm sát thương lên xe"
+    "Rocket: lock-on rockets, extra damage to vehicles": "Tên lửa: tên lửa khóa mục tiêu, thêm sát thương lên xe",
+    "Hero mode": "Chế độ anh hùng",
+    "Dodge": "Né",
+    "Barrel roll": "Lộn vòng",
+    "Hero down": "Anh hùng ngã",
+    "WASD move · Mouse aim · Click fire · Q ability · Space dodge · Tab exit": "WASD di chuyển · Chuột ngắm · Nhấp bắn · Q kỹ năng · Space né · Tab thoát",
+    "WASD fly · Mouse aim · Click shoot · Hold to lock rockets · Wheel zoom · Q Dive · E weapon · Space roll · Tab exit": "WASD bay · Chuột ngắm · Nhấp bắn · Giữ để khóa tên lửa · Lăn chuột phóng to · Q Bổ nhào · E vũ khí · Space lộn vòng · Tab thoát",
+    "Hero mode is not available now.": "Lúc này chưa dùng được chế độ anh hùng.",
+    "Battle time in Hero mode": "Nhịp trận trong chế độ anh hùng",
+    "The whole battle slows while you fight as a hero; your hero stays quick. LAN matches always play at ×1.": "Cả trận đánh chậm lại khi bạn chiến đấu bằng anh hùng; anh hùng của bạn vẫn nhanh. Trận LAN luôn chơi ở ×1.",
+    "Hero view": "Góc nhìn anh hùng",
+    "Shoulder": "Sau vai",
+    "First person": "Góc nhìn thứ nhất",
+    "The camera for a hero on foot in Hero mode. Skywing always looks down from above.": "Camera cho anh hùng đi bộ trong chế độ anh hùng. Cánh Trời luôn nhìn xuống từ trên cao."
   },
   "patterns": [
     [
@@ -3077,6 +3090,10 @@
     [
       "^(.+), hero: tap to select$",
       "{1}, anh hùng: chạm để chọn"
+    ],
+    [
+      "^Hero mode: fight as (.+)$",
+      "Chế độ anh hùng: chiến đấu bằng {1}"
     ]
   ]
 }

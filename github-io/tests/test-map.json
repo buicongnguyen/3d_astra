@@ -119,6 +119,12 @@
       "checks": []
     },
     {
+      "name": "H3a/H3d Hero mode: camera, controls, battle time, dodgeable projectiles (sim/content/hero-mode.js) and its HUD",
+      "files": ["src/sim/content/hero-mode.js", "src/hero-mode.js", "src/hero-mode.css", "src/hero-mode-view.js", "src/hero-aim.js", "tests/hero-mode.mjs", "tests/hero-mode.test.js"],
+      "suites": ["hero-mode", "skywing", "heroes", "steward", "close-view", "lan-play", "defence", "phone-hud", "phones", "mobile", "language", "render-budget"],
+      "checks": ["test"]
+    },
+    {
       "name": "H3c steward: the AI runs the player's base (sim/steward.js) and its strip",
       "files": ["src/sim/steward.js", "src/steward-ui.js", "src/steward-ui.css"],
       "suites": ["steward", "lan-play", "defence", "stages"],

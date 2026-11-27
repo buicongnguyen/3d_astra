@@ -158,7 +158,7 @@ export const tactics = {
     if (this.castClock > 0) return;
     this.castClock = AUTOCAST_EVERY;
     for (const e of this.entities) {
-      if (!this.abilityReady(e) || !((this.lan ? e.team > 0 && !this.lan.humans.includes(e.team) : e.team > 0 || this.aiPlayer) ? this.aiEnabled : this.players[e.team]?.autocast)) continue;
+      if (e.driven !== undefined || !this.abilityReady(e) || !((this.lan ? e.team > 0 && !this.lan.humans.includes(e.team) : e.team > 0 || this.aiPlayer) ? this.aiEnabled : this.players[e.team]?.autocast)) continue;
       const a = e.ability;
       // H16: content modules answer first: a point or true casts, false skips, undefined leaves it to the rules below.
       if (AUTOCAST.length) { const ask = this.contentAutocast(e, a); if (ask !== undefined) { if (ask) this.useAbility(e, ask === true ? null : ask); continue; } }

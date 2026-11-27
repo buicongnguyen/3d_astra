@@ -219,7 +219,7 @@ export const skywing = {
       if (sim.time >= w.end - 1e-9) delete e.swoop;
     }
     // Frontier Defence has no unit orders: Skywing hunts the nearest seen enemy and dives on its own.
-    if (sim.defence && !e.orders.length && !e.swoop) {
+    if (sim.defence && !e.orders.length && !e.swoop && e.driven === undefined) {
       s.clock = (s.clock ?? 0) - dt;
       if (s.clock <= 0) {
         s.clock = 1;

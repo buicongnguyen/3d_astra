@@ -89,9 +89,11 @@ export class MissionLook {
     if (flash) sky.lerp(target.set("#cfdcff"), 0.55 * flash);
     v.scene.background.copy(sky);
     v.scene.fog.color.copy(sky);
-    if (this.fogPlanes) {
-      v.scene.fog.near = this.fogPlanes[0] * (1 + ((def?.fogNear ?? 1) - 1) * k);
-      v.scene.fog.far = this.fogPlanes[1] * (1 + ((def?.fogFar ?? 1) - 1) * k);
+    // H3a Hero mode: the hero camera's own soft fog (view.heroFog) takes the look's factors the same way.
+    const planes = v.heroSaved && v.heroFog ? v.heroFog : this.fogPlanes;
+    if (planes) {
+      v.scene.fog.near = planes[0] * (1 + ((def?.fogNear ?? 1) - 1) * k);
+      v.scene.fog.far = planes[1] * (1 + ((def?.fogFar ?? 1) - 1) * k);
     }
     v.ambientLight.color.set(b.ambient).lerp(target.set(def ? def.ambient : b.ambient), k);
     v.ambientLight.groundColor.set(b.bounce).lerp(target.set(def ? def.bounce : b.bounce), k);

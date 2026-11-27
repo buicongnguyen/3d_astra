@@ -107,7 +107,8 @@ export class AudioDirector {
     const unit = barkType(entities);
     if (!kind || !unit) return false;
     // W3: with the faction's voice pack loaded, units answer in words instead (voice-logic.js rate limits).
-    if (this.voiceOn()) return this.voice.ack(kind === "order" ? "move" : kind, unit.type);
+    // H1: a hero answers under its own name (Skywing flies a Kite, but the caption must name Skywing, not "Kite scout").
+    if (this.voiceOn()) return this.voice.ack(kind === "order" ? "move" : kind, unit.type, unit.assist || unit.hero ? unit.name : null);
     if (!this.sfx.enabled || !this.barkGate.allow(this.context.currentTime, this.quiet)) return false;
     const played = this.sfx.bark(kind, unit);
     if (played) this.barks++;

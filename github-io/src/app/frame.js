@@ -141,10 +141,15 @@ export function setupFrame(S, A) {
     // W6: a replay (src/replay-ui.js) holds the clock while its viewer is paused or finished, and no guide holds it.
     // W11 LAN play (src/net/lan-ui.js): the pause/away hold, pings and the stall timeout, every frame.
     S.lan?.watch();
+    // H3a Hero mode (src/hero-mode.js): its input, button and the battle-time ease, before the clock moves.
+    A.heroTick?.(elapsed);
     const running = Z.started && !Z.paused && !S.sim.result && !S.testHold && (!S.defenceGuideHold || !!S.replay) && !S.replay?.paused;
     // D2: the clock's pace (×1, ×2, ×3: the Defence bar, Shift+Space or Settings → Game speed, any match);
     // a scene or a decision puts it back to 1.
-    const pace = S.replay ? S.replay.speed : fastForward.pace({ sim: S.sim, started: Z.started, allowed: true, forced: MUSIC_HOLDS.includes(Z.modalType) || !!A.sceneActive?.() || !!S.sim.mission?.pending });
+    let pace = S.replay ? S.replay.speed : fastForward.pace({ sim: S.sim, started: Z.started, allowed: true, forced: MUSIC_HOLDS.includes(Z.modalType) || !!A.sceneActive?.() || !!S.sim.mission?.pending });
+    // H3d battle time: Hero mode slows the whole battle (0.5x by default, eased over 0.3 s); the rules keep the hero quick.
+    const heroPace = S.replay ? null : A.heroPace?.();
+    if (heroPace != null) pace = heroPace;
     if (running) {
       // W11 LAN play: the lockstep session runs the ticks (at x1, only when every player's turn is in).
       if (S.lan) S.lan.frame(dt);
@@ -191,7 +196,7 @@ export function setupFrame(S, A) {
     // W9: a bridge a mission script blew (sim/missions.js blowBridge) goes from the river, as a Defence demolition does.
     if (S.sim.crossings && !S.sim.defence) syncMissionBridges();
     A.sceneTick?.(dt);
-    if (!Z.modalType) {
+    if (!Z.modalType && !A.heroModeOn?.()) {
       const speed = dt * S.view.zoom * 0.65 * (S.settings.panSpeed || 1);
       let dx =
         (S.keys.has("d") || S.keys.has("arrowright") ? 1 : 0) -
@@ -208,7 +213,7 @@ export function setupFrame(S, A) {
       }
       if (dx || dy) { S.cameraPan = null; S.view.screenPan(dx * speed, dy * speed); }
     }
-    if (S.cameraPan && Z.started && !Z.paused) {
+    if (S.cameraPan && Z.started && !Z.paused && !A.heroModeOn?.()) {
       const k = (S.cameraPan.t = Math.min(1, S.cameraPan.t + dt / 1.2)), ease = k * k * (3 - 2 * k);
       S.view.focusOn(S.cameraPan.fromX + (S.cameraPan.x - S.cameraPan.fromX) * ease, S.cameraPan.fromZ + (S.cameraPan.z - S.cameraPan.fromZ) * ease);
       if (k >= 1) S.cameraPan = null;

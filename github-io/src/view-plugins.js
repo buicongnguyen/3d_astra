@@ -34,6 +34,7 @@ import { CreatureView } from "./creature-view.js";
 import { DeathCueView } from "./death-cue-view.js";
 import { WaveKindView } from "./wave-kind-view.js";
 import { HeroView } from "./hero-view.js";
+import { HeroModeView } from "./hero-mode-view.js";
 
 export const HOOKS = ["dress", "scaleFor", "frameScaleFor", "event", "update", "reset"];
 
@@ -80,4 +81,5 @@ export const VIEW_PLUGINS = [
   DeathCueView, // readable deaths: model flash, side-coloured burst and fall ring, Unit motion pop (effect pools, no draw)
   WaveKindView, // W10: Defence wave kinds, model tint (instanceColor) and a hexagon ring (one draw, only once a kind spawns)
   HeroView, // campaign heroes: gold ground ring (one draw) and an HTML nameplate that selects in one tap (no draw)
+  HeroModeView, // H3a/H3d Hero mode: projectiles at the hero, landing rings and the reticle (3 draws, only in Hero mode)
 ];

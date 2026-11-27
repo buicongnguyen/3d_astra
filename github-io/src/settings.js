@@ -91,6 +91,9 @@ export function defaults(coarse = false) {
     voiceVolume: 0.8,
     // Subtitles for the spoken unit replies and announcer lines, in the player's language (captions-ui.js).
     subtitles: true,
+    // H3d: the battle's clock in Hero mode (0.4 / 0.5 / 0.75 / 1; LAN matches always 1), and the ground hero's camera.
+    battleTime: 0.5,
+    heroView: "shoulder",
   };
 }
 export function normalize(value, coarse = false) {
@@ -132,6 +135,8 @@ export function normalize(value, coarse = false) {
   if (typeof value.quietMode === "boolean") d.quietMode = value.quietMode;
   if (typeof value.voices === "boolean") d.voices = value.voices;
   if (typeof value.subtitles === "boolean") d.subtitles = value.subtitles;
+  pick("battleTime", [0.4, 0.5, 0.75, 1]);
+  pick("heroView", ["shoulder", "first"]);
   return d;
 }
 export function loadSettings(coarse = false, storage) {
