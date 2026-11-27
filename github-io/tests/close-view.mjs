@@ -141,6 +141,7 @@ await suite("close-view", async () => {
       const tankId = near.find((id) => s.get(id).type === "tank" && s.get(id).team === 0);
       const rangerId = near.find((id) => s.get(id).type === "ranger" && s.get(id).team === 0);
       const tank = v.objects.get(tankId).userData, ranger = v.objects.get(rangerId).userData;
+      const aim = tank.turret.rotation.y; // the turret's own aim, put back after
       tank.turret.rotation.y = 0.9;
       const hot = [3, 3, 3]; // a per-part tint, as the hit flash, wrecks and rank paint write it (entity-batches.js)
       for (const o of ranger.lod.base) o.userData.tint = hot;
@@ -155,7 +156,7 @@ await suite("close-view", async () => {
         ring: ranger.ring.visible,
       };
       for (const o of ranger.lod.base) delete o.userData.tint;
-      tank.turret.rotation.y = 0;
+      tank.turret.rotation.y = aim;
       f.select([]);
       v.update(s, 0, f.selected, null);
       out.untinted = ranger.lod.meshes.every(([, d]) => (d.userData.tint?.[0] ?? 1) === 1);
