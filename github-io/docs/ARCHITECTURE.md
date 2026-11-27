@@ -68,7 +68,7 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 | `i18n.js`, `locales/` | Text catalogue (keyed by the English string); the Vietnamese and story catalogues are separate chunks loaded when Vietnamese is shown |
 | `app/loading.js`, `app/offline.js`, `tools/sw.template.js` | Staged model download with progress; service worker registration; the worker (published as `sw.js`) |
 | `governor.js`, `entity-batches.js`, `ambient-life.js` | Frame-time governor, instanced batches, ambient life |
-| `close-view.js` | Close view (H3b): near units swap to close-up detail models (`public/models/detail/`), loaded on first use |
+| `close-view.js` | Close view (H3b): near units swap to close-up detail models (`public/models/detail/`, every unit type; built by `node tools/build-detail.mjs`), loaded on first use and then fetched whole by the service worker (`fc-detail`) for offline play; their team paint is one shared material coloured per instance |
 | `music.js` | Music and sound |
 
 **How the app modules fit together.** Each `app/` module exports `setupX(S, A)`. `S` is the shared state; `A` is what modules offer one another (functions and widgets). `setup` registers functions on `A` and builds widgets; it returns a `bind()` that attaches listeners and does one-off DOM changes. `main.js` runs all setups, then all binds in a fixed order (same-type listeners keep their order). Modules never import each other, so there are no cycles. A module that is the only user of a value keeps it as a local; everything shared lives on `S`. The hot frame loop is in `frame.js` only.

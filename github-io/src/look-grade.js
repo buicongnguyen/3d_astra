@@ -92,6 +92,25 @@ export function rimShader(shader, color = null) {
 	{ float rimF = pow( 1.0 - clamp( normalize( normal ).z, 0.0, 1.0 ), uRimPower );
 	totalEmissiveRadiance += uRimColor * ( rimF * uRimStrength * ${color ? "1.4" : "1.0"} ) + diffuseColor.rgb * uModelLift; }`);
 }
+// A close-up detail model's team paint (close-view.js): one material for every team, white, coloured per instance
+// through the batches' instance colour (entity-batches.js tint = the team colour times the part's own tint); the rim
+// takes the same instance colour, so it matches addTeamRim's (clamped: a hit flash brightens the paint, not the rim).
+export function addSharedTeamRim(material) {
+  const before = material.onBeforeCompile;
+  material.userData.sharedTeam = true; // view.js applySettings leaves it white
+  material.onBeforeCompile = (shader, renderer) => {
+    before?.call(material, shader, renderer);
+    rimShader(shader, new THREE.Color(1, 1, 1));
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nvarying vec3 vTeamRim;")
+      .replace("#include <color_vertex>", "#include <color_vertex>\n#ifdef USE_INSTANCING_COLOR\n\tvTeamRim = instanceColor.rgb;\n#else\n\tvTeamRim = vec3( 1.0 );\n#endif");
+    shader.fragmentShader = shader.fragmentShader
+      .replace("uniform vec3 uRimColor;", "uniform vec3 uRimColor;\nvarying vec3 vTeamRim;")
+      .replace("totalEmissiveRadiance += uRimColor *", "totalEmissiveRadiance += clamp( vTeamRim, 0.0, 1.0 ) *");
+  };
+  material.customProgramCacheKey = () => `team-rim-shared|${current.key}`;
+  material.needsUpdate = true;
+}
 export function addTeamRim(material, hex) {
   const color = new THREE.Color(hex), before = material.onBeforeCompile;
   material.userData.rim = color; // view.js recolours it with the team

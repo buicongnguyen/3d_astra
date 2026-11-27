@@ -1,6 +1,6 @@
 """Close-up detail models (H3b, batch 1): the normal unit plus small parts that only read up close.
 
-Headless:  blender --background --python tools/blender/generate_detail.py [-- ranger tank ...]
+Build:  node tools/build-detail.mjs [ranger tank ...]   (one headless Blender process per kind)
 
 Each detail model is the normal model built by its own generator (generate_assets.py, generate_air.py)
 with extra parts added on the same pivots, part names and materials before the kit finishes it. So the
@@ -34,7 +34,7 @@ FORWARD = (R90, 0, 0)   # cylinder axis along Y (front is -Y)
 ACROSS = (0, R90, 0)    # cylinder axis along X
 SIDES = ((-1, 'L'), (1, 'R'))
 BATCH = ['ranger', 'vanguard', 'antitank', 'tank', 'worker', 'kite']
-BUDGET = 9000  # triangles per detail model (the tank is the largest)
+BUDGET = 9000  # triangles per detail model (bosses: BOSS_BUDGET)
 
 
 def rotated(points, rz, origin):
@@ -230,62 +230,211 @@ DETAILS = {**{k: (lambda a, k=k: infantry_detail(a, k)) for k in ('ranger', 'van
 
 
 # ----------------------------------------------------------------------------- pipeline
-def build_ground(kind, root):
-    """generate_assets.build with the detail parts added before finish (same AO settings)."""
-    unit = kind in ga.UNITS
-    infantry_unit = kind in ga.GRIPS
-    a = kit.Asset(kind, root, ao_distance=.7 if infantry_unit else .5 if unit else 1.6,
-                  grime_height=.45 if unit else .9)
-    ga.BUILDERS[kind](a)
-    base = sum(len(f.verts) - 2 for s in a.shapes.values() for f in s.bm.faces)
-    DETAILS[kind](a)
+# Batch 2 detail functions live in their own modules (one per generator family), each a DETAILS dict
+# {kind: fn(asset)}. They are imported only for the kind being built: several generators change the shared
+# kit palette when imported (generate_bosses.palette, generate_drake), so tools/build-detail.mjs runs one
+# Blender process per kind.
+FAMILY = {
+    **{k: 'assets' for k in ('worker', 'vanguard', 'ranger', 'breaker', 'medic', 'engineer', 'tank', 'antitank')},
+    **{k: 'air' for k in ('kite', 'hawk', 'balloon', 'glider')},
+    **{k: 'factions' for k in ('scrapper', 'scorcher', 'rider', 'wagon', 'drone', 'walker', 'shade', 'watcher')},
+    **{k: k for k in ('gunner', 'stalker', 'rampart', 'carrier')},
+    **{k: 'bosses' for k in ('ironvanguard', 'ironsovereign', 'ironsovereign2')},
+    'wyrm': 'wyrm', 'wyrmling': 'wyrm', 'acidhound': 'creatures', 'vaultsentinel': 'creatures', 'emberdrake': 'drake',
+    **{k: 'roster' for k in ('lancer', 'bulwark', 'moth', 'halo')},
+}
+MODULES = {'detail_ground': ('medic', 'engineer', 'breaker', 'gunner', 'stalker', 'rampart', 'carrier'),
+           'detail_factions': ('scrapper', 'scorcher', 'rider', 'wagon', 'drone', 'walker', 'shade', 'watcher'),
+           'detail_air': ('hawk', 'balloon', 'glider', 'lancer', 'bulwark', 'moth', 'halo'),
+           'detail_creatures': ('ironvanguard', 'ironsovereign', 'ironsovereign2', 'wyrm', 'wyrmling', 'emberdrake',
+                                'acidhound', 'vaultsentinel')}
+BOSSES = ('ironvanguard', 'ironsovereign', 'ironsovereign2', 'emberdrake')
+BOSS_BUDGET = 12000
+
+
+def budget(kind):
+    return BOSS_BUDGET if kind in BOSSES else BUDGET
+
+
+def detail_fn(kind):
+    if kind in DETAILS:
+        return DETAILS[kind]
+    import importlib
+    for module, kinds in MODULES.items():
+        if kind in kinds:
+            fn = importlib.import_module(module).DETAILS.get(kind)
+            if fn:
+                return fn
+    raise KeyError(f'{kind}: no detail function')
+
+
+def tri_count(a):
+    return sum(len(f.verts) - 2 for s in a.shapes.values() for f in s.bm.faces)
+
+
+def build_kind(kind, root):
+    """The kind's own generator steps with the detail parts added just before the kit finishes the model (and
+    before any whole-model step: the Wyrmling's scale, a flyer's settle, the factions' part merge), so pivots,
+    part names and AO settings match the normal model. Returns (asset, base triangles)."""
+    family, add = FAMILY[kind], detail_fn(kind)
+    if family == 'assets':
+        unit = kind in ga.UNITS
+        a = kit.Asset(kind, root, ao_distance=.7 if kind in ga.GRIPS else .5 if unit else 1.6,
+                      grime_height=.45 if unit else .9)
+        ga.BUILDERS[kind](a)
+        base = tri_count(a)
+        add(a)
+        a.finish()
+        if kind == 'vanguard':
+            shoulder, elbow = a.pivots['SwordArm'], a.pivots['SwordElbow']
+            elbow.location -= shoulder.location
+            elbow.parent = shoulder
+        return a, base
+    if family == 'air':
+        a = kit.Asset(kind, root, ao_distance=.5, grime_height=.45, ao_samples=40, ground=False)
+        air.BUILDERS[kind](a)
+        base = tri_count(a)
+        add(a)
+        a.finish()
+        return a, base
+    if family == 'factions':
+        import generate_factions as gf
+        import faction_parts as fp
+        faction, k, _, _ = gf.CATALOG[kind]
+        a = fp.FactionAsset(kind, root, ao_distance=.7 if kind in gf.INFANTRY else .55 if k == 'unit' else 1.3,
+                            grime_height=.45 if k == 'unit' else .8, ao_samples=40)
+        a.armor = gf.FACTION_ARMOR[faction]
+        gf.BUILDERS[kind](a)
+        base = tri_count(a)
+        add(a)
+        gf.consolidate(a)
+        a.finish()
+        return a, base
+    if family == 'wyrm':
+        import generate_wyrm as m
+        young = kind == 'wyrmling'
+        a = kit.Asset(kind, root, ao_distance=.9, ao_samples=40)
+        m.creature(a, young)
+        base = tri_count(a)
+        add(a)   # authored at the grown Wyrm's size and scaled with it (the generator scales after building)
+        if young:
+            for shape in a.shapes.values():
+                for v in shape.bm.verts:
+                    v.co *= 0.62
+            for p in a.pivots.values():
+                p.location *= 0.62
+        a.finish()
+        return a, base
+    if family == 'roster':
+        import generate_roster as m
+        faction, _, _, minimum, flyer = m.CATALOG[kind]
+        a = kit.Asset(kind, root, ao_distance=.5 if flyer else .9, grime_height=.45 if flyer else .5, ao_samples=40,
+                      ground=not flyer)
+        a.armor = m.ARMOR[faction]
+        m.BUILDERS[kind](a)
+        m.detail(a, kind, minimum)
+        base = tri_count(a)
+        add(a)
+        if flyer:
+            m.settle(a)
+        a.finish()
+        return a, base
+    if family == 'bosses':
+        import generate_bosses as m
+        m.palette(kind)
+        a = kit.Asset(kind, root, ao_distance=.8, ao_samples=32)
+        (m.vanguard if kind == 'ironvanguard' else m.sovereign)(a)
+        base = tri_count(a)
+        add(a)
+        a.finish()
+        top = bpy.data.objects.new(kind, None)
+        a.collection.objects.link(top)
+        for o in a.collection.objects:
+            if o is not top and o.parent is None:
+                o.parent = top
+        return a, base
+    if family == 'gunner':
+        import generate_gunner as m
+        a = kit.Asset('gunner', root, ao_distance=.7, grime_height=.45)
+        m.gunner_team(a)
+    elif family == 'stalker':
+        import generate_stalker as m
+        a = kit.Asset('stalker', root, ao_distance=.9, ao_samples=40)
+        m.stalker(a)
+        n = 0
+        while tri_count(a) < m.MIN_TRIANGLES:
+            m.cyl(a, 'Rig_fasteners', 'Steel', .027, .035, ((n % 5 - 2) * .09, -.276, 1.3 + (n // 5) * .1),
+                  rot=(m.R, 0, 0), seg=6)
+            n += 1
+    elif family == 'rampart':
+        import generate_rampart as m
+        a = kit.Asset('rampart', root, ao_distance=.9, grime_height=.55)
+        m.tracks(a)
+        m.hull(a)
+        m.plough(a)
+        m.turret(a)
+    elif family == 'carrier':
+        import generate_carrier as m
+        a = kit.Asset('carrier', root, ao_distance=1, ao_samples=40)
+        m.carrier(a)
+    elif family == 'creatures':
+        import generate_creatures as m
+        a = kit.Asset(kind, root, ao_distance=.6 if kind == 'acidhound' else 1.0, ao_samples=40)
+        (m.hound if kind == 'acidhound' else m.sentinel)(a)
+    elif family == 'drake':
+        import generate_drake as m
+        a = kit.Asset('emberdrake', root, ao_distance=0.9, ao_samples=40, ground=False)
+        m.body(a)
+        m.jaw(a)
+        m.tail(a)
+        for s in (1, -1):
+            m.wing(a, s)
+            m.hind_leg(a, s)
+    else:
+        raise KeyError(kind)
+    base = tri_count(a)
+    add(a)
     a.finish()
-    if kind == 'vanguard':
-        shoulder, elbow = a.pivots['SwordArm'], a.pivots['SwordElbow']
-        elbow.location -= shoulder.location
-        elbow.parent = shoulder
     return a, base
 
 
-def build_flyer(kind, root):
-    a = kit.Asset(kind, root, ao_distance=.5, grime_height=.45, ao_samples=40, ground=False)
-    air.BUILDERS[kind](a)
-    base = air.count(a)
-    DETAILS[kind](a)
-    a.finish()
-    return a, base
+def normal_triangles():
+    data = json.loads((OUT.parent / 'manifest.json').read_text(encoding='utf-8'))
+    return {e['name']: e['triangles'] for e in data['assets']}
 
 
-def build_all(kinds=None):
+def build_all(kinds):
+    """Builds and exports each kind and prints its manifest row (DETAIL_ROW); tools/build-detail.mjs runs one
+    Blender process per kind and collects the rows into public/models/detail/manifest.json."""
     root = kit.workspace('FrontierDetail')
     kit.clear_workspace(root)
     OUT.mkdir(parents=True, exist_ok=True)
-    path = OUT / 'manifest.json'
-    manifest = json.loads(path.read_text(encoding='utf-8')) if path.exists() else {}
-    manifest.update({'generator': 'Blender Python (frontier_kit + generate_detail.py)', 'units': 'meters',
-                     'provenance': 'Original assets generated for this repository; no third-party model sources.',
-                     'note': 'Close-up detail models, loaded only by the close view (src/close-view.js).'})
-    entries = {e['name']: e for e in manifest.get('assets', [])}
-    for kind in kinds or BATCH:
-        a, base = (build_flyer if kind in air.BUILDERS else build_ground)(kind, root)
+    normal = normal_triangles()
+    rows = []
+    for kind in kinds:
+        a, base = build_kind(kind, root)
+        # The rebuilt normal part must be the shipped model: a generator that drifted would give a detail model
+        # whose silhouette no longer matches what the normal GLB draws.
+        if normal.get(kind) not in (None, base):
+            raise RuntimeError(f'{kind}: the generator builds {base} base triangles, the shipped model has {normal[kind]}')
         tris = a.triangles()
-        if tris > BUDGET:
-            raise RuntimeError(f'{kind}: {tris} triangles > {BUDGET}')
+        if tris > budget(kind):
+            raise RuntimeError(f'{kind}: {tris} triangles > {budget(kind)}')
         a.export(OUT / f'{kind}.glb')
-        entries[kind] = {'name': kind, 'file': f'{kind}.glb', 'triangles': tris, 'base_triangles': base,
-                         'bytes': (OUT / f'{kind}.glb').stat().st_size,
-                         'review': 'pending owner review (H3b batch 1)'}
-        print('DETAIL_ASSET', kind, base, tris, entries[kind]['bytes'], flush=True)
+        row = {'name': kind, 'file': f'{kind}.glb', 'triangles': tris, 'base_triangles': base,
+               'bytes': (OUT / f'{kind}.glb').stat().st_size,
+               'review': f'pending owner review (H3b batch {1 if kind in BATCH else 2})'}
+        print('DETAIL_ROW ' + json.dumps(row), flush=True)
+        rows.append(row)
         kit.clear_workspace(root)   # free the pivot names (`hover`, `leg_L`) for the next model
-    manifest['assets'] = [entries[k] for k in sorted(entries)]
-    with open(path, 'w', encoding='utf-8', newline='\n') as f:
-        f.write(json.dumps(manifest, indent=2) + '\n')
-    return manifest
+    return rows
 
 
 if __name__ == '__main__':
     args = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
     for o in list(bpy.context.scene.objects):
         bpy.data.objects.remove(o)
-    result = build_all([n for n in args if n in DETAILS] or None)
-    print('DETAIL_COMPLETE', json.dumps([(e['name'], e['triangles']) for e in result['assets']]))
+    kinds = [n for n in args if n in FAMILY]
+    if not kinds:
+        raise SystemExit('name the kinds to build (tools/build-detail.mjs runs one Blender process per kind)')
+    build_all(kinds)

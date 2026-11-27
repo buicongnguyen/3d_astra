@@ -1,3 +1,4 @@
+import { Color } from "three";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { SOURCE_LAYER } from "./entity-batches.js";
 import { cacheTransforms } from "./transform-cache.js";
@@ -14,11 +15,14 @@ import { cacheTransforms } from "./transform-cache.js";
 // - Every frame the detail copies its partner's local pose (legs, turret, barrel, sword arm, rotors), the
 //   per-part tint (hit flash, wrecks, rank paint), visibility and the shader-bone pose (unit-rig.js),
 //   so animation, team colour, selection rings and state fx work as on the normal model.
+// - Team paint is one white material per type for every team (view.js buildTemplates, look-grade.js
+//   addSharedTeamRim): the team colour rides in the instance tint, so both sides share the paint batch.
 // - Units switch back beyond radius x EXIT (hysteresis), and never while the view is off.
 // - A model wearing a faction dress (syncFactionDress) keeps its normal model: the dress fits only that.
 // While the view was never turned on, update() returns at once: normal play is untouched.
-// The files carry ?v=<bytes> from the manifest: the service worker leaves them to the HTTP cache, so a rebuilt detail
-// model never hides behind the cache-first model cache (whose name follows the normal models only).
+// The files carry ?v=<bytes> from the manifest: the service worker keeps them in their own cache (fc-detail, one version
+// per file), so a rebuilt detail model never hides behind the cache-first model cache (whose name follows the normal
+// models only). On the first use the page asks the worker to fetch all of them (precache), for offline play later.
 export const PARKED_LAYER = 2;
 export const CLOSE_RADIUS = 25;
 export const EXIT = 1.15;
@@ -64,9 +68,17 @@ export class CloseView {
   manifest() {
     this.manifestLoad ||= fetch(`${import.meta.env.BASE_URL}models/detail/manifest.json`)
       .then((r) => (r.ok ? r.json() : { assets: [] }))
-      .then((m) => { this.types = new Map(m.assets.map((a) => [a.name, `${a.file}?v=${a.bytes}`])); })
+      .then((m) => { this.types = new Map(m.assets.map((a) => [a.name, `${a.file}?v=${a.bytes}`])); this.precache(); })
       .catch((error) => { this.failed = String(error); this.types = new Map(); });
     return this.manifestLoad;
+  }
+  // After the first use, the service worker (tools/sw.template.js, fc-detail) fetches every detail model, so the close
+  // view works offline later. Only the versioned URLs this manifest names stay cached.
+  precache() {
+    const worker = typeof navigator !== "undefined" ? navigator.serviceWorker?.controller : null;
+    if (!worker || !this.types.size) return;
+    const base = new URL(`${import.meta.env.BASE_URL}models/detail/`, location.href);
+    worker.postMessage({ type: "detail", urls: [...this.types.values()].map((file) => new URL(file, base).href) });
   }
   // Detail models for every listed type whose normal model is loaded (the rest load when first needed).
   async loadLoaded() {
@@ -118,7 +130,18 @@ export class CloseView {
     }
     if (want && !shown) this.attach(root);
     else if (!want && shown) this.detach(root);
-    if (this.shown.has(root)) mirror(u.lod);
+    if (this.shown.has(root)) mirror(u.lod, this.teamColor(u.team));
+  }
+  // The team colour the shared detail paint takes per instance (linear, as the normal Team material's colour).
+  teamColor(team) {
+    const hex = this.view.colors[team] ?? 0xffffff;
+    let c = (this.colors ||= new Map()).get(team);
+    if (!c || c.hex !== hex) {
+      const color = new Color(hex);
+      c = { hex, rgb: [color.r, color.g, color.b] };
+      this.colors.set(team, c);
+    }
+    return c.rgb;
   }
   attach(root) {
     const u = root.userData, model = u.model;
@@ -192,7 +215,9 @@ function pair(src, dst, nodes, meshes, fallback) {
   const used = new Set();
   for (const d of dst.children) {
     if (d.isMesh) {
+      // A boss's parts are named (baked, BossCore, BossEmber; boss-view.js), and its core and embers have a material of their own.
       let s = src.children.find((c) => c.isMesh && !used.has(c) && c.material === d.material && c.name === d.name)
+        || (/^Boss/.test(d.name) && src.children.find((c) => c.isMesh && !used.has(c) && c.name === d.name))
         || src.children.find((c) => c.isMesh && !used.has(c) && c.material === d.material)
         || src.children.find((c) => c.isMesh && !used.has(c));
       if (s) used.add(s);
@@ -208,7 +233,7 @@ function pair(src, dst, nodes, meshes, fallback) {
   }
 }
 
-function mirror(lod) {
+function mirror(lod, team) {
   for (let i = 0; i < lod.nodes.length; i++) {
     const [s, d] = lod.nodes[i];
     d.position.copy(s.position);
@@ -221,7 +246,11 @@ function mirror(lod) {
     if (!s) continue;
     d.visible = s.visible;
     const tint = s.userData.tint;
-    if (tint) d.userData.tint = tint; else if (d.userData.tint) delete d.userData.tint;
+    if (d.material.userData.sharedTeam) {
+      // Shared team paint (view.js buildTemplates): the team colour times the part's tint (hit flash, wreck, rank paint).
+      const out = (d.userData.tint ||= [1, 1, 1]);
+      for (let k = 0; k < 3; k++) out[k] = team[k] * (tint ? tint[k] : 1);
+    } else if (tint) d.userData.tint = tint; else if (d.userData.tint) delete d.userData.tint;
   }
 }
 

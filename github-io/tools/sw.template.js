@@ -15,6 +15,10 @@
 //   voice cache  fc-voices          spoken lines (public/voices/*.mp3, W3), never precached: a pack is
 //                                   fetched when a match first needs it and served cache-first after
 //                                   (the page versions the URL with ?v=<bytes>; older versions are dropped).
+//   detail cache fc-detail          close-up detail models (public/models/detail/, H3b), never precached: the first
+//                                   time the close view is used the page lists every detail file (?v=<bytes>) and
+//                                   the worker fetches them all, so the close view works offline after that; served
+//                                   cache-first, one version per file. Their manifest is network first.
 //
 // A new worker installs in the background and waits: an open match keeps the files it started with,
 // and the new version takes over the next time the game is opened, or at once when the player taps
@@ -28,9 +32,11 @@ const SHELL_CACHE = `fc-shell-${BUILD}`;
 const MODEL_CACHE = `fc-models-${MODELS}`;
 const MUSIC_CACHE = "fc-music";
 const VOICE_CACHE = "fc-voices";
+const DETAIL_CACHE = "fc-detail";
 const scope = self.registration.scope;
 const abs = (path) => new URL(path, scope).href;
 const MUSIC_MANIFEST = abs("music/manifest.json");
+const DETAIL_MANIFEST = abs("models/detail/manifest.json");
 
 // The track URLs a music manifest refers to, exactly as music-recorded.js builds them.
 function musicUrls(manifest) {
@@ -54,7 +60,7 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       for (const key of await caches.keys()) {
-        if (key.startsWith("fc-") && key !== SHELL_CACHE && key !== MODEL_CACHE && key !== MUSIC_CACHE && key !== VOICE_CACHE) await caches.delete(key);
+        if (key.startsWith("fc-") && key !== SHELL_CACHE && key !== MODEL_CACHE && key !== MUSIC_CACHE && key !== VOICE_CACHE && key !== DETAIL_CACHE) await caches.delete(key);
       }
       await self.clients.claim();
     })(),
@@ -67,6 +73,26 @@ self.addEventListener("message", (event) => {
   if (data === "skipWaiting") self.skipWaiting();
   // The page lists its models once it has loaded; any the first visit did not pass through
   // this worker are fetched now, so the next visit (even offline) has all of them.
+  // Close view (H3b): the page lists every detail model once it first uses them; fetch the missing ones and drop
+  // versions the list no longer names.
+  if (data?.type === "detail" && Array.isArray(data.urls)) {
+    event.waitUntil(
+      (async () => {
+        const cache = await caches.open(DETAIL_CACHE);
+        const keep = new Set(data.urls.filter((href) => typeof href === "string" && href.startsWith(abs("models/detail/"))));
+        for (const key of await cache.keys()) if (key.url !== DETAIL_MANIFEST && !keep.has(key.url)) await cache.delete(key);
+        for (const href of keep) {
+          if (await cache.match(href)) continue;
+          try {
+            const response = await fetch(href);
+            if (response.ok) await cache.put(href, response);
+          } catch {
+            /* The next use tries again. */
+          }
+        }
+      })(),
+    );
+  }
   if (data?.type === "models") {
     event.waitUntil(
       (async () => {
@@ -108,6 +134,28 @@ self.addEventListener("fetch", (event) => {
     return;
   }
   const path = url.href.slice(scope.length);
+  if (path.startsWith("models/detail/")) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(DETAIL_CACHE);
+        if (url.href.split("?")[0] === DETAIL_MANIFEST) {
+          try {
+            const fresh = await fetch(request, { cache: "no-cache" });
+            if (fresh.ok) event.waitUntil(cache.put(DETAIL_MANIFEST, fresh.clone()));
+            return fresh;
+          } catch {
+            return (await cache.match(DETAIL_MANIFEST)) || Response.error();
+          }
+        }
+        const hit = await cache.match(request);
+        if (hit) return hit;
+        const response = await fetch(request);
+        if (response.status === 200) event.waitUntil(cache.put(request, response.clone()));
+        return response;
+      })(),
+    );
+    return;
+  }
   if (path.startsWith("models/") && path.endsWith(".glb")) {
     event.respondWith(
       (async () => {

@@ -2,8 +2,16 @@
   "generator": "Blender Python (frontier_kit + generate_detail.py)",
   "units": "meters",
   "provenance": "Original assets generated for this repository; no third-party model sources.",
-  "note": "Close-up detail models, loaded only by the close view (src/close-view.js).",
+  "note": "Close-up detail models, loaded only by the close view (src/close-view.js). Build: node tools/build-detail.mjs",
   "assets": [
+    {
+      "name": "acidhound",
+      "file": "acidhound.glb",
+      "triangles": 2750,
+      "base_triangles": 1366,
+      "bytes": 245972,
+      "review": "pending owner review (H3b batch 2)"
+    },
     {
       "name": "antitank",
       "file": "antitank.glb",
@@ -11,6 +19,118 @@
       "base_triangles": 3192,
       "bytes": 337116,
       "review": "pending owner review (H3b batch 1)"
+    },
+    {
+      "name": "balloon",
+      "file": "balloon.glb",
+      "triangles": 4492,
+      "base_triangles": 2440,
+      "bytes": 378804,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "breaker",
+      "file": "breaker.glb",
+      "triangles": 7234,
+      "base_triangles": 4520,
+      "bytes": 449712,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "bulwark",
+      "file": "bulwark.glb",
+      "triangles": 5918,
+      "base_triangles": 3524,
+      "bytes": 454532,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "carrier",
+      "file": "carrier.glb",
+      "triangles": 5556,
+      "base_triangles": 3368,
+      "bytes": 395612,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "drone",
+      "file": "drone.glb",
+      "triangles": 4198,
+      "base_triangles": 2456,
+      "bytes": 281660,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "emberdrake",
+      "file": "emberdrake.glb",
+      "triangles": 5572,
+      "base_triangles": 2676,
+      "bytes": 438088,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "engineer",
+      "file": "engineer.glb",
+      "triangles": 5200,
+      "base_triangles": 2940,
+      "bytes": 367120,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "glider",
+      "file": "glider.glb",
+      "triangles": 2272,
+      "base_triangles": 1148,
+      "bytes": 202136,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "gunner",
+      "file": "gunner.glb",
+      "triangles": 5832,
+      "base_triangles": 3192,
+      "bytes": 462704,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "halo",
+      "file": "halo.glb",
+      "triangles": 2728,
+      "base_triangles": 1420,
+      "bytes": 225672,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "hawk",
+      "file": "hawk.glb",
+      "triangles": 2844,
+      "base_triangles": 1444,
+      "bytes": 258528,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "ironsovereign",
+      "file": "ironsovereign.glb",
+      "triangles": 5124,
+      "base_triangles": 2548,
+      "bytes": 376692,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "ironsovereign2",
+      "file": "ironsovereign2.glb",
+      "triangles": 5124,
+      "base_triangles": 2548,
+      "bytes": 376696,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "ironvanguard",
+      "file": "ironvanguard.glb",
+      "triangles": 5900,
+      "base_triangles": 2912,
+      "bytes": 457792,
+      "review": "pending owner review (H3b batch 2)"
     },
     {
       "name": "kite",
@@ -21,12 +141,84 @@
       "review": "pending owner review (H3b batch 1)"
     },
     {
+      "name": "lancer",
+      "file": "lancer.glb",
+      "triangles": 6518,
+      "base_triangles": 3356,
+      "bytes": 492360,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "medic",
+      "file": "medic.glb",
+      "triangles": 4952,
+      "base_triangles": 2928,
+      "bytes": 340380,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "moth",
+      "file": "moth.glb",
+      "triangles": 2780,
+      "base_triangles": 1416,
+      "bytes": 224824,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "rampart",
+      "file": "rampart.glb",
+      "triangles": 8446,
+      "base_triangles": 5848,
+      "bytes": 535772,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
       "name": "ranger",
       "file": "ranger.glb",
       "triangles": 5356,
       "base_triangles": 3076,
       "bytes": 326288,
       "review": "pending owner review (H3b batch 1)"
+    },
+    {
+      "name": "rider",
+      "file": "rider.glb",
+      "triangles": 4108,
+      "base_triangles": 2428,
+      "bytes": 311484,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "scorcher",
+      "file": "scorcher.glb",
+      "triangles": 5130,
+      "base_triangles": 2624,
+      "bytes": 388472,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "scrapper",
+      "file": "scrapper.glb",
+      "triangles": 5620,
+      "base_triangles": 3044,
+      "bytes": 402520,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "shade",
+      "file": "shade.glb",
+      "triangles": 4556,
+      "base_triangles": 2820,
+      "bytes": 326580,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "stalker",
+      "file": "stalker.glb",
+      "triangles": 4280,
+      "base_triangles": 2724,
+      "bytes": 331976,
+      "review": "pending owner review (H3b batch 2)"
     },
     {
       "name": "tank",
@@ -45,12 +237,60 @@
       "review": "pending owner review (H3b batch 1)"
     },
     {
+      "name": "vaultsentinel",
+      "file": "vaultsentinel.glb",
+      "triangles": 5436,
+      "base_triangles": 3084,
+      "bytes": 397336,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "wagon",
+      "file": "wagon.glb",
+      "triangles": 4620,
+      "base_triangles": 2652,
+      "bytes": 333900,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "walker",
+      "file": "walker.glb",
+      "triangles": 6316,
+      "base_triangles": 3556,
+      "bytes": 424032,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "watcher",
+      "file": "watcher.glb",
+      "triangles": 4776,
+      "base_triangles": 2924,
+      "bytes": 359848,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
       "name": "worker",
       "file": "worker.glb",
       "triangles": 5268,
       "base_triangles": 2996,
       "bytes": 322036,
       "review": "pending owner review (H3b batch 1)"
+    },
+    {
+      "name": "wyrm",
+      "file": "wyrm.glb",
+      "triangles": 5568,
+      "base_triangles": 3056,
+      "bytes": 399576,
+      "review": "pending owner review (H3b batch 2)"
+    },
+    {
+      "name": "wyrmling",
+      "file": "wyrmling.glb",
+      "triangles": 4628,
+      "base_triangles": 2500,
+      "bytes": 338156,
+      "review": "pending owner review (H3b batch 2)"
     }
   ]
 }

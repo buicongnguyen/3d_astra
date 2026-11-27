@@ -17,14 +17,23 @@ const PIVOT = /^(leg_|spin_|flicker_|Turret_pivot|hover$|SwordArm$|SwordElbow$)/
 // Material classes that keep their own draw (view.js KEEP_FINISH, glows): a detail model may add none of them.
 const OWN_DRAW = /^(Team|Glass|Lamp|Energy|Alloy|Flame)/;
 
-test('the detail manifest lists batch 1, one file each, within the triangle budget', () => {
+// Every unit type with its own model has a detail model (batch 1: ranger, vanguard, antitank, tank, worker, kite;
+// batch 2: the rest). Bosses may go to 12k triangles, everything else 9k.
+const D = JSON.parse(readFileSync(new URL('../src/balance.json', import.meta.url), 'utf8')).definitions;
+const models = new Set(readdirSync(new URL('../public/models/', import.meta.url)).filter((f) => f.endsWith('.glb')).map((f) => f.slice(0, -4)));
+const UNIT_TYPES = Object.keys(D).filter((k) => D[k].kind === 'unit' && models.has(k)).sort();
+const budget = (name) => (D[name]?.boss ? 12000 : 9000);
+
+test('the detail manifest lists every unit model, one file each, within the triangle budget', () => {
   const listed = manifest.assets.map((a) => a.name).sort();
-  assert.deepEqual(listed, ['antitank', 'kite', 'ranger', 'tank', 'vanguard', 'worker']);
+  assert.deepEqual(listed, UNIT_TYPES);
   const files = readdirSync(new URL('../public/models/detail/', import.meta.url)).filter((f) => f.endsWith('.glb')).sort();
   assert.deepEqual(files, manifest.assets.map((a) => a.file).sort(), 'every file listed, nothing extra');
   for (const a of manifest.assets) {
-    assert.ok(a.triangles > a.base_triangles, `${a.name}: adds detail`);
-    assert.ok(a.triangles <= 9000, `${a.name}: ${a.triangles} triangles`);
+    assert.ok(a.triangles >= a.base_triangles * 1.3, `${a.name}: adds detail (${a.base_triangles} -> ${a.triangles})`);
+    assert.ok(a.triangles <= budget(a.name), `${a.name}: ${a.triangles} triangles > ${budget(a.name)}`);
+    const glb = read(`detail/${a.file}`), tris = glb.meshes.flatMap((m) => m.primitives).reduce((n, p) => n + glb.accessors[p.indices].count / 3, 0);
+    assert.equal(tris, a.triangles, `${a.name}: the manifest counts the file's triangles`);
   }
 });
 
@@ -39,6 +48,15 @@ test('every detail model keeps its normal model\'s pivots, team slots and draw c
     const own = (json) => new Set(json.materials.map((m) => m.name.replace(/\.\d+$/, '')).filter((n) => OWN_DRAW.test(n)));
     assert.deepEqual([...own(detail)].sort(), [...own(normal)].sort(), `${name}: no new team, glow or glass material`);
     assert.ok(detail.materials.every((m) => !m.doubleSided), `${name}: single-sided materials`);
+    // A glowing material keeps its own draw too (view.js bakeFinishes skips emissive finishes): only the normal model's.
+    const lit = (json) => new Set(json.materials.filter((m) => (m.emissiveFactor || []).some((c) => c > 0)).map((m) => m.name.replace(/\.\d+$/, '')));
+    const normalLit = lit(normal);
+    for (const m of lit(detail)) assert.ok(normalLit.has(m), `${name}: no new glowing material (${m})`);
+    // Every group node (pivots, boss part nodes, wing and jaw hinges) is kept under its name (MotionRoot carries the
+    // Godot edition's baked clips, tools/blender/animate_units.py; the web runtime never reads it).
+    const meshNodes = (json) => new Set(json.nodes.filter((n) => n.mesh !== undefined).map((n) => n.name));
+    const groups = (json) => { const m = meshNodes(json); return [...new Set(names(json).filter((n, i) => !m.has(json.nodes[i].name) && n !== 'MotionRoot').map((n) => n.replace(/\d+$/, '')))].sort(); };
+    assert.deepEqual(groups(detail), groups(normal), `${name}: same group nodes`);
     // Moving parts keep their names: turret and barrel parts, rotors.
     const base = (json) => new Set(names(json).map((n) => n.replace(/\d+$/, '')));
     const detailNames = base(detail);

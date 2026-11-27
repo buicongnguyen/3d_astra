@@ -11,6 +11,7 @@ import assert from "node:assert/strict";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { launchBrowser, openPage, suite, TIMEOUT } from "./lib/harness.mjs";
 
+// Batch 1 (the phone budget scene: six types, both sides, all close); every other detail type is checked one at a time.
 const TYPES = ["ranger", "vanguard", "antitank", "tank", "worker", "kite"];
 const PHONE_BUDGET = 30;
 // Redrawing one frozen frame can move a handful of edge pixels by a step or two (antialiasing on a busy GPU: up to
@@ -111,7 +112,7 @@ await suite("close-view", async () => {
     // Close view on at the patch centre: the detail files load, near units swap, far units keep the normal model.
     const info = await page.evaluate(([x, z]) => window.__frontier.closeView(true, x, z), [ids.cx, ids.cz]);
     assert.equal(info.failed, null, `${viewport}: detail files load`);
-    assert.deepEqual(info.ready, [...TYPES].sort(), `${viewport}: every batch-1 detail model is ready`);
+    assert.ok(TYPES.every((t) => info.ready.includes(t)), `${viewport}: every batch-1 detail model is ready (${info.ready})`);
     await frame();
     const close = await frame();
     const state = await page.evaluate(({ near, far }) => {
@@ -143,6 +144,7 @@ await suite("close-view", async () => {
       const tank = v.objects.get(tankId).userData, ranger = v.objects.get(rangerId).userData;
       const aim = tank.turret.rotation.y; // the turret's own aim, put back after
       tank.turret.rotation.y = 0.9;
+      const team0 = f.view.closeView.teamColor(0);
       const hot = [3, 3, 3]; // a per-part tint, as the hit flash, wrecks and rank paint write it (entity-batches.js)
       for (const o of ranger.lod.base) o.userData.tint = hot;
       f.select([rangerId]);
@@ -152,19 +154,22 @@ await suite("close-view", async () => {
       const out = {
         turret: turret.rotation.y,
         motion: rigged.length > 0 && rigged.every(([, d]) => d.userData.motion === ranger.rig.motion),
-        tint: ranger.lod.meshes.every(([, d]) => d.userData.tint?.[0] === 3),
+        // Shared team paint (one white material for both sides) carries the team colour times the tint.
+        tint: ranger.lod.meshes.every(([, d]) => Math.abs(d.userData.tint?.[0] - 3 * (d.material.userData.sharedTeam ? team0[0] : 1)) < 1e-6),
+        shared: ranger.lod.meshes.some(([, d]) => d.material.userData.sharedTeam),
         ring: ranger.ring.visible,
       };
       for (const o of ranger.lod.base) delete o.userData.tint;
       tank.turret.rotation.y = aim;
       f.select([]);
       v.update(s, 0, f.selected, null);
-      out.untinted = ranger.lod.meshes.every(([, d]) => (d.userData.tint?.[0] ?? 1) === 1);
+      out.untinted = ranger.lod.meshes.every(([, d]) => Math.abs((d.userData.tint?.[0] ?? 1) - (d.material.userData.sharedTeam ? team0[0] : 1)) < 1e-6);
       return out;
     }, ids);
     assert.ok(Math.abs(follow.turret - 0.9) < 1e-6, `${viewport}: the detail turret turns with the normal one`);
     assert.ok(follow.motion, `${viewport}: rigged detail parts read the unit's shader-bone pose`);
     assert.ok(follow.tint && follow.untinted, `${viewport}: a part tint (hit flash, wreck, rank paint) reaches the detail and clears`);
+    assert.ok(follow.shared, `${viewport}: the detail team paint is the shared (instance-coloured) material`);
     assert.ok(follow.ring, `${viewport}: the selection ring shows on a detailed unit`);
 
     // Hysteresis: in at 25 m, out past 28.75 m; the governor's rescue level shrinks the radius.
@@ -230,6 +235,65 @@ await suite("close-view", async () => {
     const changed = await differ("normal-before", "normal-after");
     console.log(`  ${viewport}: normal frame before vs after close view: ${changed} pixels differ (same-frame redraw: ${noise})`);
     assert.ok(changed <= NOISE, `${viewport}: the normal frame is unchanged after close view was on and off (${changed} pixels differ)`);
+
+    // Every other detail model (batch 2: the rest of the roster, creatures, bosses), one type at a time on the PC:
+    // a unit of each side at the close camera swaps to its detail model with every part paired, and the extra draws
+    // per type are logged. SHOTS=<dir> also writes the close-up pair unit-<type>-detail / unit-<type>-normal.
+    if (!phone) {
+      const all = await page.evaluate(async () => {
+        const base = new URL("models/detail/", location.href);
+        return (await (await fetch(new URL("manifest.json", base))).json()).assets.map((a) => a.name);
+      });
+      const rest = all.filter((t) => !TYPES.includes(t));
+      await page.evaluate((types) => window.__frontier.view.preloadModels(types), rest);
+      await page.waitForFunction((types) => types.every((t) => window.__frontier.view.models.has(t)), rest, { timeout: TIMEOUT.models });
+      const costs = {};
+      for (const type of rest) {
+        const look = await page.evaluate(async ({ type, cx, cz }) => {
+          const f = window.__frontier, s = f.sim, v = f.view, r = v.renderer;
+          s.entities = s.entities.filter((e) => e.kind !== "unit");
+          const pair = [0, 1].map((team) => { const e = s.spawn(type, team, cx + (team ? 3 : -3), cz, true, true); e.angle = Math.PI; return e.id; });
+          v.update(s, 0, f.selected, null);
+          // The model's size frames the shot (three's Box3 class, taken from a geometry's own bounding box).
+          let mesh = null;
+          v.objects.get(pair[0]).userData.model.traverse((o) => { if (!mesh && o.isMesh) mesh = o; });
+          mesh.geometry.computeBoundingBox();
+          const Box3 = mesh.geometry.boundingBox.constructor, Vector3 = mesh.geometry.boundingBox.min.constructor;
+          const size = new Box3().setFromObject(v.objects.get(pair[0]).userData.model).getSize(new Vector3()).length();
+          const count = () => { r.info.reset(); r.info.autoReset = false; v.update(s, 0, f.selected, null); const n = r.info.render.calls; r.info.autoReset = true; return n; };
+          // Flyers ride above the ground: a steeper look keeps them in frame.
+          const flying = !!s.get(pair[0]).flying, zoom = Math.min(30, Math.max(9, size * (flying ? 3 : 2.2))), pitch = flying ? 50 : 25;
+          v.setPitch(pitch); v.yaw = Math.PI; v.focusOn(cx, cz); v.zoom = zoom; v.updateCamera();
+          count();
+          const off = count();
+          const info = await f.closeView(true, cx, cz);
+          count();
+          const on = count();
+          const lods = pair.map((id) => v.objects.get(id).userData.lod);
+          return { off, on, size, zoom, pitch, failed: info.failed, ready: info.ready.includes(type),
+            shown: lods.every((l) => l?.detail.visible && l.base.every((o) => o.layers.mask === 1 << 2)),
+            unpaired: lods.reduce((n, l) => n + (l ? l.meshes.filter(([src]) => !src).length : 99), 0) };
+        }, { type, cx: ids.cx, cz: ids.cz });
+        assert.equal(look.failed, null, `${type}: detail file loads`);
+        assert.ok(look.ready && look.shown, `${type}: both sides draw their detail model (${JSON.stringify(look)})`);
+        assert.equal(look.unpaired, 0, `${type}: every detail part follows a normal part`);
+        costs[type] = look.on - look.off;
+        // Both shots in one task (no game-loop frame between them): the same camera, detail on, then off.
+        const pair = await page.evaluate(({ cx, cz, zoom, pitch, take }) => {
+          const f = window.__frontier, v = f.view, r = v.renderer;
+          const draw = () => { v.setPitch(pitch); v.yaw = Math.PI; v.focusOn(cx, cz); v.zoom = zoom; v.updateCamera(); v.update(f.sim, 0, f.selected, null); return take ? r.domElement.toDataURL("image/png") : null; };
+          const detail = draw();
+          v.closeView.set(null); // synchronous off (the hook waits for the module first)
+          v.update(f.sim, 0, f.selected, null);
+          return { detail, normal: draw(), near: f.closeInfo.near };
+        }, { cx: ids.cx, cz: ids.cz, zoom: look.zoom, pitch: look.pitch, take: !!shots });
+        assert.equal(pair.near, 0, `${type}: back to the normal model when the close view is off`);
+        if (shots) for (const k of ["detail", "normal"]) writeFileSync(`${shots}/unit-${type}-${k}-${viewport}.png`, Buffer.from(pair[k].split(",")[1], "base64"));
+        await frame();
+      }
+      const total = Object.values(costs).reduce((a, b) => a + b, 0);
+      console.log(`  ${viewport}: extra draws per type, both sides close: ${JSON.stringify(costs)} (mean ${(total / rest.length).toFixed(1)} per type, ${(total / rest.length / 2).toFixed(2)} per type and team)`);
+    }
 
     assert.deepEqual(errors, [], `${viewport}: no page errors`);
     await page.close();

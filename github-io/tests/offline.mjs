@@ -110,6 +110,23 @@ await suite("offline", async () => {
       const cache=await caches.open((await caches.keys()).find(k=>k.startsWith('fc-models-')));
       return !!(await cache.match(url));
     },extra);
+    // Close view (H3b): no detail model is cached in normal play; after its first use the page lists every detail file
+    // (close-view.js precache) and the worker fetches them all into fc-detail, so the close view works offline later.
+    assert.equal((await cacheKeys(page)).includes("fc-detail"), false, "no detail cache before the close view is used");
+    const detailUrls = await page.evaluate(async () => {
+      const base = new URL("models/detail/", location.href);
+      const m = await (await fetch(new URL("manifest.json", base))).json();
+      const urls = m.assets.map((a) => new URL(`${a.file}?v=${a.bytes}`, base).href);
+      navigator.serviceWorker.controller.postMessage({ type: "detail", urls });
+      return urls;
+    });
+    assert.ok(detailUrls.length >= 30, `${detailUrls.length} detail models listed`);
+    await poll(page, async (urls) => {
+      if (!(await caches.keys()).includes("fc-detail")) return false;
+      const cache = await caches.open("fc-detail");
+      for (const url of urls) if (!(await cache.match(url))) return false;
+      return true;
+    }, detailUrls, TIMEOUT.models);
     // Reading the build prompt must leave the cached game entry point intact.
     const promptPage = await context.newPage();
     await promptPage.goto(new URL('prompt/index.html', home).href);
@@ -142,6 +159,8 @@ await suite("offline", async () => {
     assert.equal(await page.evaluate(async (url) => (await (await fetch(url)).arrayBuffer()).byteLength, titleUrl), titleBytes, "a played track is served offline");
     assert.equal(await page.evaluate(async (url) => (await (await fetch(url)).arrayBuffer()).byteLength, themeUrl), themeBytes, "a fetched faction theme is served offline");
     assert.equal(await page.evaluate(async (url) => (await (await fetch(url)).json()).tracks.title.file, `${origin}${prefix}music/manifest.json`), "title.m4a", "the music manifest is served offline");
+    assert.ok(await page.evaluate(async (url) => (await (await fetch(url)).arrayBuffer()).byteLength > 1000, detailUrls.at(-1)), "a detail model is served offline");
+    assert.ok(await page.evaluate(async (url) => (await (await fetch(url)).json()).assets.length >= 30, `${origin}${prefix}models/detail/manifest.json`), "the detail manifest is served offline");
     await page.reload();
     await page.waitForSelector("#start", { state: "visible", timeout: TIMEOUT.step });
     await page.waitForFunction(() => !document.querySelector("#start").disabled, null, { timeout: TIMEOUT.models });

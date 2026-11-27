@@ -32,7 +32,7 @@ import { cacheTransforms } from "./transform-cache.js";
 import { AmbientLife } from "./ambient-life.js";
 import { defaults } from "./settings.js";
 import { ViewPlugins } from "./view-plugins.js";
-import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, setRimTier } from "./look-grade.js";
+import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, addSharedTeamRim, setRimTier } from "./look-grade.js";
 import { MissionLook } from "./mission-look-view.js";
 import { airMotion, airParts, poseAirParts } from "./air-motion.js";
 import { groundY, placeOnGround, MARKER_LIFT } from "./ground-y.js";
@@ -423,12 +423,12 @@ export class WorldView {
     this.colors = teamColors(settings, this.mission).map((c) => new THREE.Color(c).getHex());
     this.glows = teamGlows(settings, this.mission).map((c) => new THREE.Color(c).getHex());
     recolorEmblems(this.colors);
-    for (const [key, template] of this.teamTemplates) {
+    for (const [key, template] of [...this.teamTemplates, ...this.detailTemplates]) {
       const team = Number(key.split("-").at(-1));
       template.traverse((o) => {
         if (!o.isMesh) return;
         recolorBossPaint(o.geometry, this.colors[team]);
-        if (!o.material.name.startsWith("Team")) return;
+        if (!o.material.name.startsWith("Team") || o.material.userData.sharedTeam) return;
         o.material.color.setHex(this.colors[team]);
         o.material.userData.rim?.setHex(this.colors[team]);
         if (o.material.name.startsWith("TeamGlow"))
@@ -661,8 +661,17 @@ export class WorldView {
     addTeamBands(gltf.scene, type);
     // Bosses (boss-view.js) keep their own rigid parts: legs, torso, arms, light gun and core.
     if (D[type]?.boss) {
-      bossTemplates(gltf.scene, { colors: this.colors, glows: this.glows, bakedMaterial }).forEach((variant, team) => this.teamTemplates.set(`${type}-${team}`, variant));
-      this.models.set(type, true);
+      bossTemplates(gltf.scene, { colors: this.colors, glows: this.glows, bakedMaterial }).forEach((variant, team) => {
+        // A close-up boss (close-view.js) lights its core and embers with the normal template's own materials, so the
+        // glow boss-view.js sets on the normal model reaches the detail too.
+        if (detail) {
+          const lit = new Map();
+          this.teamTemplates.get(`${type}-${team}`)?.traverse((o) => { if (o.isMesh && /^Boss(Core|Ember)$/.test(o.name)) lit.set(o.name, o.material); });
+          variant.traverse((o) => { if (o.isMesh && lit.has(o.name)) { o.material.dispose(); o.material = lit.get(o.name); } });
+        }
+        (detail ? this.detailTemplates : this.teamTemplates).set(`${type}-${team}`, variant);
+      });
+      if (!detail) this.models.set(type, true);
       return;
     }
     // Merge stationary pieces by material, preserving the two articulated leg pivots.
@@ -794,7 +803,18 @@ export class WorldView {
       variant.traverse((o) => {
         if (!o.isMesh) return;
         const name = o.material.name, rig = !!o.geometry.getAttribute("aRig");
-        const key = `${name.startsWith("Team") ? team : "shared"}:${name}${rig ? "|rig" : ""}`;
+        // H3b: a detail model's team paint is one white material for every team, coloured per instance (close-view.js
+        // writes the team colour into the part's tint), so both sides of a type share its batch: one draw less per
+        // painted part and team. Team lights (TeamGlow: per-team emissive and pulse) stay per team.
+        const sharedPaint = detail && name.startsWith("Team") && !name.startsWith("TeamGlow");
+        const key = sharedPaint ? `detail-team:${name}${rig ? "|rig" : ""}` : `${name.startsWith("Team") ? team : "shared"}:${name}${rig ? "|rig" : ""}`;
+        if (sharedPaint && !materials.has(key)) {
+          const m = o.material.clone();
+          m.color.setRGB(1, 1, 1);
+          addSharedTeamRim(m);
+          if (rig) addRig(m);
+          materials.set(key, m);
+        }
         if (!materials.has(key)) {
           // The baked material is one shared program for every model; it is never cloned
           // (bakeFinishes already gave rigged parts the rigged baked material).
