@@ -564,7 +564,9 @@ input:focus-visible {
 .debrief .result-grid { margin-top: 14px; }
 /* The buttons stay in reach while the objectives and the closing lines scroll. */
 .modal { --mp: 28px; }
-.debrief-actions { position: sticky; bottom: 0; z-index: 1; margin: 18px calc(-1 * var(--mp)) calc(-1 * var(--mp)); padding: 12px var(--mp) var(--mp); background: linear-gradient(180deg, rgba(11, 29, 39, 0), #0b1d27 14px); }
+/* Re-score 2026-11-27: the band rests flush on the card's bottom edge (bottom = minus the padding, as Chrome pins sticky boxes to the
+   content box), so at the end of the scroll it sits below the last row instead of 10 px over it, and nothing shows under it. */
+.debrief-actions { position: sticky; bottom: calc(-1 * var(--mp)); z-index: 1; margin: 18px calc(-1 * var(--mp)) calc(-1 * var(--mp)); padding: 12px var(--mp) var(--mp); background: linear-gradient(180deg, rgba(11, 29, 39, 0), #0b1d27 14px); }
 @media (max-width: 420px) {
   .result-banner { margin: -28px -28px 0; padding: 22px 28px 14px; gap: 12px; }
   .result-card .result-emblem img { width: 64px; height: 64px; }
@@ -583,7 +585,7 @@ input:focus-visible {
   .result-card .result-headline p { font-size: 13px; line-height: 1.4; }
   .result-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
   .modal { --mp: 20px; }
-  .debrief-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); padding-top: 8px; padding-bottom: 14px; margin-bottom: -16px; }
+  .debrief-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); padding-top: 8px; padding-bottom: 14px; margin-bottom: -16px; bottom: -16px; }
   .result-grid .stat { padding: 7px 8px; gap: 2px; }
   .result-grid .stat strong { font-size: 18px; }
   .result-grid .stat span { font-size: 11px; letter-spacing: 0.02em; }

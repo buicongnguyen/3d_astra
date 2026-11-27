@@ -12,7 +12,7 @@ import { airHumFor } from "./sfx-bank.js";
 import { BarkGate, LowHpWatch, ThunderWatch, barkKind, barkType, coreHealth } from "./audio-logic.js";
 import { WEATHER } from "./mission-looks.js";
 import { VoicePlayer } from "./voice.js";
-import { VOICE, ackKind, announcerFor, voiceLevel } from "./voice-logic.js";
+import { VOICE, ackKind, announcerFor, clearedLineDue, voiceLevel } from "./voice-logic.js";
 import { captionFor, captionWindow, captionsOn } from "./voice-captions.js";
 import { DEFINITIONS } from "./data.js";
 
@@ -134,8 +134,12 @@ export class AudioDirector {
   stopScene() { this.voice.stopScene(); }
   event(event, sim) {
     if (event.type === "incoming" && event.team === 0) this.incomingAt = sim.time;
+    // Defence: a breach and the wave's clear on one tick are spoken in order (clearedLineDue): the cleared line is held in
+    // update() until the breach alert has been read, and a breach just after a clear pushes it back too.
+    if (event.type === "leak") { this.leakAt = sim.time; if (this.clearAt != null) this.clearDue = clearedLineDue(this.clearAt, this.leakAt); }
     const key = announcerFor(event);
-    if (key) this.voice.announce(key);
+    if (key === "waveCleared") { this.clearAt = sim.time; this.clearDue = clearedLineDue(sim.time, this.leakAt ?? -Infinity); }
+    else if (key) this.voice.announce(key);
     if (event.type === "say") { this.music.duckFor(Math.min(7, 1.8 + (event.text?.length || 0) / 20)); return; }
     if (!soundFor(event)) return;
     const sourceType = event.type === "shot" && event.source != null ? sim.get?.(event.source)?.type : null;
@@ -196,6 +200,9 @@ export class AudioDirector {
     if (started) {
       const vkey = `${sim.factions?.[0] || "meridian"}|${sim.missionDef?.id || ""}`;
       if (vkey !== this.voiceKey && this.voice.scheduler.enabled) { this.voiceKey = vkey; this.voice.prepare({ faction: sim.factions?.[0], missionId: sim.missionDef?.id }); }
+      // The held "Wave cleared" (see event()): spoken from the tick after the clear, once its time has come; never after the result.
+      if (this.clearAt != null && (sim.result || sim.time < this.clearAt)) this.clearAt = this.clearDue = null;
+      else if (this.clearAt != null && sim.time > this.clearAt && sim.time >= this.clearDue) { this.clearAt = this.clearDue = null; this.voice.announce("waveCleared"); }
       if (sim.result !== this.result && (sim.result === "victory" || sim.result === "defeat")) this.voice.announce(sim.result);
       this.result = sim.result;
     }
@@ -268,7 +275,7 @@ export class AudioDirector {
     this.combatMix.times.length = 0; this.lastCombatAt = -Infinity; this.incomingAt = -Infinity; this.enemyDistance = Infinity; this.scan = 0;
     this.intensity.reset(); this.loud.ducks.length = 0; this.contact.reset(); this.music.setCombat(0); this.sfx.engine(0); this.sfx.airHum?.(0);
     this.lowHpWatch.reset(); this.coreRatio = null;
-    this.voice.reset(); this.voiceUntil = 0; this.result = null;
+    this.voice.reset(); this.voiceUntil = 0; this.result = null; this.leakAt = -Infinity; this.clearAt = this.clearDue = null;
   }
 }
 

@@ -351,12 +351,14 @@ export function createBar(c) {
     const hero = !!S.sim.commander();
     if (!ui.seen) { ui.seen = { wave: d.wave, cleared: d.cleared, lives: d.lives, crossings, hero }; return; }
     const total = S.sim.waveTotal();
+    // Re-score 2026-11-27: a breach first, then the wave's end (an alert, then the routine "Wave held" that waits behind it),
+    // matching the announcer, who holds "Wave cleared" until the breach has been read (voice-logic.js clearedLineDue).
+    if (d.lives < ui.seen.lives && S.sim.time - ui.leakAt > 4) { ui.leakAt = S.sim.time; A.alert("The enemy broke through!"); }
     if (d.cleared > ui.seen.cleared && d.cleared < total) {
       // Music follows on its own: between waves (defence.active false) sound.js picks 'defence-calm'.
       A.notice("Wave held. Your towers are patched up.");
     }
     if (d.wave > ui.seen.wave && d.wave === total) A.alert("Final wave!");
-    if (d.lives < ui.seen.lives && S.sim.time - ui.leakAt > 4) { ui.leakAt = S.sim.time; A.alert("The enemy broke through!"); }
     // R3-E: lives lost per wave, for the result's next-star hint.
     if (d.lives < ui.seen.lives) (ui.leaks ||= {})[d.wave] = (ui.leaks[d.wave] || 0) + ui.seen.lives - d.lives;
     for (const [x, now] of Object.entries(crossings)) {

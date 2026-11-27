@@ -85,8 +85,10 @@ await suite("meta", async () => {
     assert.match((await tile.textContent()).replace(/\s+/g, " "), /Records.*0 \/ 25/, `${viewport}: the tile counts 0 / 25`);
     assert.deepEqual(await small(page, "#title-actions button"), [], `${viewport}: quick row taps`);
     assert.deepEqual(await tiny(page, "#title-actions"), [], `${viewport}: quick row text`);
-    const clipped = await page.evaluate(() => [...document.querySelectorAll("#title-actions button")].filter((b) => [...b.querySelectorAll("strong, small")].some((t) => t.getBoundingClientRect().right > b.getBoundingClientRect().right + 1)).map((b) => b.id));
+    const clipped = await page.evaluate(() => [...document.querySelectorAll("#title-actions button")].filter((b) => [...b.querySelectorAll("strong, small, small > span")].some((t) => t.getBoundingClientRect().right > b.getBoundingClientRect().right + 1 || t.scrollWidth > t.clientWidth + 1)).map((b) => b.id));
     assert.deepEqual(clipped, [], `${viewport}: quick row text fits its tiles`);
+    // Re-score 2026-11-27: the Records counts were clipped on desktop ("★ 0/25 · ✓ 0."): both counts are shown in full.
+    assert.match((await tile.textContent()).replace(/s+/g, " "), /✓ 0 \/ 3/, `${viewport}: the tile shows the challenge count`);
     await tile.scrollIntoViewIfNeeded();
     await o.tap("#records-open");
     await page.locator("#records[open]").waitFor({ state: "visible", timeout: TIMEOUT.step });

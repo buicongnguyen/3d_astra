@@ -35,7 +35,9 @@
 @media (orientation: portrait) { .compact-ui .meta-toast { top: calc(150px + env(safe-area-inset-top)); } }
 
 /* ---------- the Records tile shares the quick row ---------- */
-#briefing .records-tile .quick-text small { white-space: nowrap; }
+/* Re-score 2026-11-27: the two counts may wrap onto two lines (never mid-count), so a narrow tile never clips "✓ 0 / 3". */
+#briefing .records-tile .quick-text small { display: flex; flex-wrap: wrap; column-gap: 6px; }
+#briefing .records-tile .quick-text small > span { white-space: nowrap; }
 
 /* ---------- the Records screen (a dialog like the field guide) ---------- */
 .records-sheet {

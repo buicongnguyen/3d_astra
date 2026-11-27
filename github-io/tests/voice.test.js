@@ -6,7 +6,7 @@ import fs from "node:fs";
 import LINES from "../src/voice-lines.json" with { type: "json" };
 import PACKS from "../src/voice-packs.json" with { type: "json" };
 import STORY from "../src/voice-story.json" with { type: "json" };
-import { CHANNELS, TakePicker, VOICE, VOICE_FACTIONS, VoiceScheduler, ackKind, announcerFor, clipId, lineCount, packsFor, storyClip, storyHash, storyPacks, voiceLevel } from "../src/voice-logic.js";
+import { CHANNELS, TakePicker, VOICE, VOICE_FACTIONS, VoiceScheduler, ackKind, announcerFor, BREACH_HOLD, clearedLineDue, clipId, lineCount, packsFor, storyClip, storyHash, storyPacks, voiceLevel } from "../src/voice-logic.js";
 import { VoicePlayer } from "../src/voice.js";
 import { build as buildStory, allMissions } from "../tools/voices/story-lines.mjs";
 import { CAST } from "../src/story/world.js";
@@ -325,4 +325,13 @@ test("W12: impacts by armour and infantry falls", () => {
   assert.equal(refineSound({ name: "boom:small" }, { type: "death", heavy: false, building: false }, sim).name, "fall:body");
   assert.equal(refineSound({ name: "boom:small" }, { type: "death", heavy: true }, sim).name, "boom:small");
   assert.ok(hasSound("impact:metal") && hasSound("fall:body") && hasSound("ui:click"));
+});
+
+// Re-score 2026-11-27: "Wave cleared" never speaks over the breach that ended the wave.
+test("a wave cleared on a breach waits until the breach alert has been read", () => {
+  assert.equal(clearedLineDue(100), 100, "no breach: at once");
+  assert.equal(clearedLineDue(100, 80), 100, "an old breach does not hold it");
+  assert.equal(clearedLineDue(100, 100), 100 + BREACH_HOLD.after, "same tick: after the alert");
+  assert.equal(clearedLineDue(100, 98), 98 + BREACH_HOLD.after, "a breach just before");
+  assert.equal(clearedLineDue(100, 101), 101 + BREACH_HOLD.after, "a breach just after pushes it back");
 });

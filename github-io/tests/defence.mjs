@@ -290,11 +290,13 @@ await suite("defence", async () => {
         nameFits: name.scrollWidth <= name.clientWidth + 1 && nr.left >= r.left - 1 && nr.right <= r.right + 1,
         pips: t.querySelectorAll(".defence-rank-pips > i").length, digits: /\d{2,}/.test(t.textContent.replace(t.querySelector("kbd")?.textContent || "", "")),
         bar: { w: Math.round(b.width), h: Math.round(b.height), inside: b.left >= r.left && b.right <= r.right && b.top >= r.top && b.bottom <= r.bottom }, fill: Math.round(fill.getBoundingClientRect().width / b.width * 100),
-        tile: [Math.round(r.width), Math.round(r.height)] };
+        tile: [Math.round(r.width), Math.round(r.height)], clear: b.top - nr.bottom };
     });
     assert.equal(commanderTile.label, commanderTile.want, `${viewport}: the commander tile's accessible name`);
     assert.equal(commanderTile.text, "Commander", `${viewport}: the tile reads Commander`);
     assert.ok(commanderTile.nameFits, `${viewport}: "Commander" is not cut: ${JSON.stringify(commanderTile)}`);
+    // Re-score 2026-11-27: on PC the health bar sat over the foot of "Commander"; the name ends above the bar.
+    assert.ok(commanderTile.clear >= -0.5, `${viewport}: "Commander" and its health bar do not overlap: ${JSON.stringify(commanderTile)}`);
     assert.equal(commanderTile.pips, 2, `${viewport}: two rank pips at Rank 3`);
     assert.equal(commanderTile.digits, false, `${viewport}: no bare health number on the tile`);
     assert.ok(commanderTile.bar.w >= 24 && commanderTile.bar.h >= 4 && commanderTile.bar.inside && Math.abs(commanderTile.fill - 50) <= 4, `${viewport}: a health bar at half: ${JSON.stringify(commanderTile)}`);
@@ -354,6 +356,17 @@ await suite("defence", async () => {
     assert.deepEqual(covered.covers, [], `${viewport}: no message covers the Next wave card or the bar`);
     await shot(page, `defence-intel-hint-${viewport}`);
     await page.evaluate(() => { window.__frontier.fightHint.hidden = true; window.__frontier.clearMessages(); });
+    // Re-score 2026-11-27: the wave's last enemy broke through, so the breach and the clear land on one tick. The announcer holds
+    // "Wave cleared" until the "broke through" alert has been read (never both at once).
+    const held = await page.evaluate(() => {
+      const f = window.__frontier, a = f.audio, s = f.sim;
+      a.event({ type: "leak", team: 1, lives: s.defence.lives, cost: 1, x: 0, z: 0 }, s);
+      a.event({ type: "waveCleared", wave: 1, bonus: 0, team: 0 }, s);
+      const out = { now: s.time, due: a.clearDue, line: a.voice.voice?.line.key || null };
+      a.clearAt = a.clearDue = null; a.leakAt = -Infinity;
+      return out;
+    });
+    assert.ok(held.due >= held.now + 4 && held.line !== "waveCleared", `${viewport}: "Wave cleared" waits behind the breach: ${JSON.stringify(held)}`);
     await tap("#defence-call");
     await page.waitForFunction((n) => window.__frontier.sim.defence.wave === n + 1 && window.__frontier.sim.players[0].alloy > 0, before, { timeout: TIMEOUT.step });
 

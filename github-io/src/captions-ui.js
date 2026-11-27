@@ -14,6 +14,8 @@ import "./captions.css";
 const AVOID = [
   ".bottom-dock", ".minimap-panel", "#dock-tabs", "#mission-toggle", "#idle-chips", ".touch-controls", "#mode-controls",
   "#defence-bar", "#defence-intel", "#defence-card", "#boss-bar", "#dialogue", "#notice", "#mission-objectives", "#training",
+  // Re-score 2026-11-27: the fight hint (ui-extras.js) shares the phone's bottom slot; the caption stacks above it, never over it.
+  "#fight-hint",
 ].join(",");
 const GAP = 8;
 
@@ -32,6 +34,9 @@ export class CaptionBox {
     parent.append(el);
     this.who = el.querySelector(".vc-who"); this.text = el.querySelector(".vc-text");
     this.pending = null; this.shown = null; this.placedAt = -Infinity; this.count = 0;
+    // A hint that appears or goes (ui-extras.js) moves a shown caption at once, not on the next 250 ms check.
+    this.onHud = () => { if (this.shown) this.place(); };
+    addEventListener("fc-hud-changed", this.onHud);
   }
   // A line started: show `caption` ({ text, speaker, faction, channel }) from window.from until window.until
   // (audio clock seconds). Replaces whatever caption is up.
@@ -110,5 +115,5 @@ export class CaptionBox {
     el.style.left = `${(room.left + room.right) / 2}px`;
     el.style.bottom = `max(${Math.max(0, H - floor)}px, env(safe-area-inset-bottom, 0px) + ${GAP}px)`;
   }
-  remove() { this.el.remove(); }
+  remove() { removeEventListener("fc-hud-changed", this.onHud); this.el.remove(); }
 }

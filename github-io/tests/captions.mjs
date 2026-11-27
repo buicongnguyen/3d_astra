@@ -147,6 +147,24 @@ await suite("captions: replies and announcer lines subtitled on phone and deskto
     await page.close();
   }
 
+  // ---- 2b. Re-score 2026-11-27: the phone fight hint shares the bottom slot with the caption ("Ranger · are under fire" was
+  // covered by it). With a hint up, an announcer line stacks above it, never over it.
+  {
+    const { page, errors } = await open("portrait");
+    await page.evaluate(() => { const f = window.__frontier; f.clearMessages(); f.select([]); const h = f.fightHint; h.querySelector(".fh-text").textContent = "Ranger: outranges Vanguards. Keep them behind the line."; h.hidden = false; dispatchEvent(new Event("fc-hud-changed")); });
+    await page.waitForFunction(() => !window.__frontier.audio.voice.paused, null, { timeout: TIMEOUT.step });
+    await page.evaluate(async () => { const a = window.__frontier.audio; await a.context.resume(); a.voice.reset(); a.captions.clear(); a.voice.announce("unitsAttack"); });
+    await page.waitForFunction(() => document.querySelector("#voice-caption")?.classList.contains("show"), null, { timeout: TIMEOUT.step });
+    await page.evaluate(() => window.__frontier.audio.context.suspend());
+    await page.waitForFunction(() => getComputedStyle(document.querySelector("#voice-caption")).opacity === "1", null, { timeout: TIMEOUT.step });
+    const m = await measure(page, ["#fight-hint"]);
+    assert.deepEqual(m.hits, [], `portrait: the caption stacks clear of the fight hint (${m.box})`);
+    await shot(page, "captions-portrait-fight-hint");
+    await release(page);
+    assert.deepEqual(errors, []);
+    await page.close();
+  }
+
   // ---- 3. Settings → Sound → Subtitles: on by default; off keeps the voice and drops the caption; saved.
   {
     const { page, errors } = await open("portrait", { language: "ko" });

@@ -157,6 +157,8 @@ try {
     await select(['barracks']);
     await dockTab('selection');
     await check('6-sel-barracks', 'body', fixed);
+    // Re-score 2026-11-27: a building's Info and Rally stood alone at 39x36 on PC; they are 44 px squares.
+    if (!touch) for (const p of await page.evaluate(DESKTOP_TAPS, ['#field-guide', '#rally-order'])) problems.push(`${name} desktop taps: ${p}`);
     if (landscapePhone) {
       // The worst normal case: a building selected with its command card open, objectives collapsed.
       const share = await page.evaluate(FREE_SHARE);
@@ -255,6 +257,18 @@ try {
     assert.equal(debrief.stats, 6, `${name}: mission debrief stats`);
     assert.equal(debrief.next, true);
     assert.ok(debrief.buttons.every(h => h >= 44), `${name}: debrief buttons are touch sized`);
+    // Re-score 2026-11-27: the sticky action band covered the XP bar and Mira's line. Scrolled to the end, every row ends above
+    // the band, and the band sits flush on the card's bottom edge (nothing shows under it).
+    const band = await page.evaluate(() => {
+      const a = document.querySelector('.debrief-actions'), sc = [document.querySelector('.result-scroll'), document.querySelector('#modal .modal')].find(e => e && e.scrollHeight > e.clientHeight + 1);
+      if (sc) sc.scrollTop = sc.scrollHeight;
+      const ar = a.getBoundingClientRect(), mr = document.querySelector('#modal .modal').getBoundingClientRect();
+      const under = [...document.querySelectorAll('.debrief .rank-toast, .debrief .debrief-lines, .debrief .meta-earned')].filter(e => { const r = e.getBoundingClientRect(); return r.height && r.bottom > ar.top + 1 && r.top < ar.bottom; }).map(e => e.className);
+      return { under, gap: getComputedStyle(a).position === 'sticky' ? Math.round(mr.bottom - ar.bottom) : 0 };
+    });
+    assert.deepEqual(band.under, [], `${name}: debrief rows scroll clear of the action band`);
+    assert.ok(band.gap <= 2, `${name}: the action band sits on the card's bottom edge (${band.gap} px under it)`);
+    await page.evaluate(() => { for (const e of [document.querySelector('.result-scroll'), document.querySelector('#modal .modal')]) if (e) e.scrollTop = 0; });
     await check('13-debrief-win', '#modal', ['.modal']);
     assert.deepEqual(errors, [], `${name} page errors`);
     allProblems.push(...problems);

@@ -220,7 +220,7 @@ export function setupMeta(S, A) {
     const list = all(), done = list.filter((a) => a.done).length;
     tile.dataset.matches = String(history.length);
     tile.title = "Achievements, daily challenges and match history";
-    tile.innerHTML = `${icon("star")}<span class="quick-text"><strong>Records</strong><small translate="no">★ ${done} / ${list.length} · ✓ ${challenges.done.length} / 3</small></span>`;
+    tile.innerHTML = `${icon("star")}<span class="quick-text"><strong>Records</strong><small translate="no"><span>★ ${done} / ${list.length}</span> <span>✓ ${challenges.done.length} / 3</span></small></span>`;
   }
 
   // ---------- today's challenges: three direct tiles under the quick row (a tap picks the mode) ----------

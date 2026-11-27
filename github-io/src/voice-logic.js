@@ -101,6 +101,15 @@ export function announcerFor(event, { team = 0 } = {}) {
   }
 }
 
+// Re-score 2026-11-27 (Defence): a wave whose last enemy broke through ends on the same tick as the breach, and "Wave cleared"
+// spoke over the "The enemy broke through!" alert. The cleared line waits until the breach alert has been read: when a
+// breach came within `BREACH_HOLD.window` game seconds of the clear (either order), it speaks `BREACH_HOLD.after` s after the
+// breach; otherwise at once. Returns the game time at which the cleared line is due.
+export const BREACH_HOLD = Object.freeze({ window: 4, after: 4.5 });
+export function clearedLineDue(clearedAt, leakAt = -Infinity) {
+  return Math.abs(clearedAt - leakAt) <= BREACH_HOLD.window ? Math.max(clearedAt, leakAt + BREACH_HOLD.after) : clearedAt;
+}
+
 // Picks a take for a line: a seeded shuffle walked in order, never the same take twice running.
 export class TakePicker {
   constructor(seed = 20261125) { this.rnd = mulberry32(seed); this.last = new Map(); }

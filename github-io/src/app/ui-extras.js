@@ -85,10 +85,13 @@ export function setupUiExtras(S, A) {
     hintEl.querySelector(".fh-close").onclick = hideHint;
     $("stage").append(hintEl);
   }
-  function hideHint() { if (hintEl) hintEl.hidden = true; clearTimeout(hintTimer); }
+  // The voice caption (captions-ui.js) stacks clear of the hint: it hears when the hint comes or goes.
+  const hudChanged = () => dispatchEvent(new Event("fc-hud-changed"));
+  function hideHint() { if (hintEl && !hintEl.hidden) { hintEl.hidden = true; hudChanged(); } clearTimeout(hintTimer); }
   function showHint(text, seconds = [HINT_SECONDS, PHONE_HINT_SECONDS]) {
     hintEl.querySelector(".fh-text").textContent = text;
     hintEl.hidden = false;
+    hudChanged();
     clearTimeout(hintTimer);
     const compact = document.documentElement.classList.contains("compact-ui");
     hintTimer = setTimeout(hideHint, seconds[compact ? 1 : 0] * 1000);

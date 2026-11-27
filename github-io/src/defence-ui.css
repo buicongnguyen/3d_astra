@@ -330,6 +330,10 @@
 :root:not(#x):not(#y) #commands .defence-commander > small.defence-hp-row { display: flex !important; flex-direction: row !important; align-items: center; justify-content: center; gap: 4px; width: 100%; max-width: 100%; min-width: 0; margin: 0; padding: 0 2px; box-sizing: border-box; position: static !important; text-align: center; }
 /* PC tiles carry the key badge in the bottom-right corner: the bar row keeps clear of it. */
 :root:not(.compact-ui):not(#x):not(#y) #commands .defence-commander > small.defence-hp-row { padding: 0 16px 0 4px; }
+/* Re-score 2026-11-27: on PC the bar row took a full text line and its bar sat over the foot of "Commander"; the row is now only
+   as tall as the bar, so the name and the bar stack without touching. */
+:root:not(.compact-ui):not(#x):not(#y) #commands .defence-commander > small.defence-hp-row { flex: none; height: 8px; min-height: 0; line-height: 0; margin-top: 2px; }
+:root:not(.compact-ui) #commands .defence-commander > span { line-height: 15px; }
 #commands .defence-commander > small.defence-hp-row > .defence-rank-pips { flex: none; gap: 2px; margin: 0; }
 #commands .defence-commander > small.defence-hp-row > .defence-rank-pips > i { width: 5px; height: 5px; }
 #commands .defence-commander .defence-hp { position: relative; display: block; flex: 1 1 auto; min-width: 24px; max-width: 64px; height: 6px;
