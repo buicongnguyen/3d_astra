@@ -94,6 +94,10 @@ export function setupDebugHooks(S, A) {
       rankPick: (kind, id) => A.rankPick?.(kind, id),
       // R3-Q: whether the match being played (or the next one built) is a Quick battle.
       get quick() { return !!S.quick; },
+      // H3b close view: units within ~25 m of (x, z) draw their close-up detail models (resolves when the files are in);
+      // closeView(false) turns it off. closeInfo: on, centre, radius, units near, detail types drawn and loaded.
+      closeView: (on, x, z, radius) => S.view.setCloseView(on ? { x, z, radius } : null),
+      get closeInfo() { return S.view?.closeView?.info() ?? null; },
     };
   }
 

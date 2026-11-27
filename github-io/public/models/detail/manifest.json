@@ -1,0 +1,56 @@
+{
+  "generator": "Blender Python (frontier_kit + generate_detail.py)",
+  "units": "meters",
+  "provenance": "Original assets generated for this repository; no third-party model sources.",
+  "note": "Close-up detail models, loaded only by the close view (src/close-view.js).",
+  "assets": [
+    {
+      "name": "antitank",
+      "file": "antitank.glb",
+      "triangles": 5500,
+      "base_triangles": 3192,
+      "bytes": 337116,
+      "review": "pending owner review (H3b batch 1)"
+    },
+    {
+      "name": "kite",
+      "file": "kite.glb",
+      "triangles": 1914,
+      "base_triangles": 1298,
+      "bytes": 162024,
+      "review": "pending owner review (H3b batch 1)"
+    },
+    {
+      "name": "ranger",
+      "file": "ranger.glb",
+      "triangles": 5356,
+      "base_triangles": 3076,
+      "bytes": 326288,
+      "review": "pending owner review (H3b batch 1)"
+    },
+    {
+      "name": "tank",
+      "file": "tank.glb",
+      "triangles": 8844,
+      "base_triangles": 6264,
+      "bytes": 489588,
+      "review": "pending owner review (H3b batch 1)"
+    },
+    {
+      "name": "vanguard",
+      "file": "vanguard.glb",
+      "triangles": 5164,
+      "base_triangles": 2872,
+      "bytes": 318176,
+      "review": "pending owner review (H3b batch 1)"
+    },
+    {
+      "name": "worker",
+      "file": "worker.glb",
+      "triangles": 5268,
+      "base_triangles": 2996,
+      "bytes": 322036,
+      "review": "pending owner review (H3b batch 1)"
+    }
+  ]
+}

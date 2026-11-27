@@ -217,6 +217,9 @@ jobs:
           # Visual round V: each faction's dress on the shared units and buildings (only the factions in play load it, no new draw).
           - name: v-dress
             scripts: faction-dress
+          # H3b close view: near units swap to their close-up detail models; normal play draws unchanged; phone draw budget.
+          - name: h3b-close-view
+            scripts: close-view
           - name: bosses
             scripts: boss
           # Split from "ui-extras" (Wave 1 integration): the three suites ran ~119 s locally, ~28 min estimated on the runner.

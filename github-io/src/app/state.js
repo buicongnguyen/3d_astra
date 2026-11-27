@@ -110,6 +110,7 @@ export function createState() {
       S.view?.setMotionLevel(level.motion);
       S.view?.setLifeShare(level.life);
       S.view?.setRenderScale(level.scale);
+      S.view?.setCloseLevel?.(level.name);
     },
   });
   return S;

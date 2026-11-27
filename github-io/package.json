@@ -108,6 +108,7 @@
     "test:unit-roster": "node tests/unit-roster.mjs",
     "test:unit-viewer": "node tests/unit-viewer.mjs",
     "test:faction-dress": "node tests/faction-dress.mjs",
+    "test:close-view": "node tests/close-view.mjs",
     "test:ceremony": "node tests/ceremony.mjs",
     "test:rank": "node tests/rank.mjs",
     "test:audio-juice": "node tests/audio-juice.mjs",

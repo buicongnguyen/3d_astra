@@ -269,6 +269,11 @@ export class WorldView {
     this.hitStop = 0;
     this.cameraCue = false;
     this.teamTemplates = new Map();
+    // Close view (H3b, src/close-view.js, loaded on the first setCloseView): the detail templates by `${type}-${team}`
+    // and each type's shared materials, which a detail model reuses.
+    this.detailTemplates = new Map();
+    this.typeMaterials = new Map();
+    this.closeView = null;
     // Faction dress (visual round V, src/faction-dress.js; syncFactionDress): the parsed dress files by faction,
     // what each team template wears, its team meshes' geometry as modelled, the dressed geometry (shared by teams of
     // one faction), and per type what prepareModels learnt (turret ring, shader bones) to place a dress like the base.
@@ -355,6 +360,8 @@ export class WorldView {
     );
     // Round 2 view plugins (src/view-plugins.js, docs/VIEW_PLUGINS.md), built once with the view ready.
     this.plugins = new ViewPlugins(this);
+    // Dev only (H3b): ?closecam follows the selected unit with a low chase camera in close view (H3a builds Hero mode).
+    if (typeof location !== "undefined" && new URLSearchParams(location.search).has("closecam")) this.setCloseView({ chase: true });
     this.mood = new MissionLook(this);
   }
   // Each map has its own time of day: a warm key light, a cool sky fill, a warm bounce from
@@ -603,168 +610,7 @@ export class WorldView {
             return;
           }
           const gltf = await fetchModel(type);
-          gltf.scene.updateMatrixWorld(true);
-          addTeamBands(gltf.scene, type);
-          // Bosses (boss-view.js) keep their own rigid parts: legs, torso, arms, light gun and core.
-          if (D[type]?.boss) {
-            bossTemplates(gltf.scene, { colors: this.colors, glows: this.glows, bakedMaterial }).forEach((variant, team) => this.teamTemplates.set(`${type}-${team}`, variant));
-            this.models.set(type, true);
-            return;
-          }
-          // Merge stationary pieces by material, preserving the two articulated leg pivots.
-          const template = new THREE.Group(),
-            buckets = new Map(),
-            barrelBuckets = new Map(),
-            turretBuckets = new Map(), // vehicles: Turret_head* parts turn about Turret_pivot
-            legs = [];
-          template.userData.hover = !!gltf.scene.getObjectByName("hover");
-          const flyer = !!D[type]?.flying;
-          let teamPaint = null;
-          if (flyer) gltf.scene.traverse((o) => { if (o.isMesh && o.material.name.startsWith("Team") && !o.material.name.startsWith("TeamGlow")) teamPaint ||= o.material; });
-          let pivot = null;
-          gltf.scene.traverse((o) => { if (o.name.startsWith("Turret_pivot")) pivot = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld); });
-          // Shader bones (unit-rig.js): a rigged infantry type folds its leg pivots into the body
-          // (each vertex knows its hip and knee); a rigged hull type marks hull against tracks and wheels.
-          const rigInfantry = RIG_INFANTRY.has(type), rigHull = RIG_HULL.has(type);
-          let hipY = 0, hullPivot = null, bikeWheels = [], hullWheels = [];
-          const knees = new Map(); // leg pivot -> knee height (the Knee / Knee_pad part's middle; else half the hip)
-          if (rigInfantry) gltf.scene.traverse((o) => {
-            if (!o.name.startsWith("leg_")) return;
-            const hip = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld).y, knee = new THREE.Box3();
-            hipY = Math.max(hipY, hip);
-            o.traverse((c) => { if (c.isMesh && /^Knee/.test(c.name)) knee.expandByObject(c); });
-            knees.set(o, knee.isEmpty() ? hip * 0.5 : (knee.min.y + knee.max.y) / 2);
-          });
-          if (rigInfantry) gltf.scene.traverse((o) => { if (o.isMesh && /^Tyres/.test(o.name)) bikeWheels = tagWheels(o.geometry.clone().applyMatrix4(o.matrixWorld)); });
-          if (rigHull) {
-            const box = new THREE.Box3();
-            gltf.scene.traverse((o) => { if (o.isMesh && /^(Tracks|Wheels)/.test(o.name)) box.expandByObject(o); });
-            hullPivot = box.isEmpty() ? new THREE.Vector3(0, 0.6, 0) : box.getCenter(new THREE.Vector3());
-            gltf.scene.traverse((o) => { if (o.isMesh && /^Wheels/.test(o.name)) hullWheels = tagWheels(o.geometry.clone().applyMatrix4(o.matrixWorld)); });
-          }
-          // What a faction dress needs to sit and bend like this model's own parts (src/faction-dress.js rigTag).
-          const hips = {};
-          for (const [leg, knee] of knees) {
-            const hip = new THREE.Vector3().setFromMatrixPosition(leg.matrixWorld);
-            hips[/_R(\d*)$/.test(leg.name) ? "R" : "L"] ??= [hip.y, knee, hip.z];
-          }
-          this.modelInfo.set(type, { pivot: pivot ? [pivot.x, pivot.z] : null, rig: rigInfantry ? "infantry" : rigHull ? "hull" : null,
-            hipY, legs: hips, hull: hullPivot ? [hullPivot.y, hullPivot.z] : null });
-          gltf.scene.traverse((o) => {
-            // Leg pivots, and the flyers' spinning rotors and flickering burner flame (0.18), stay
-            // separate nodes so they can move per instance inside their batches.
-            if (MOVING_PART.test(o.name) && !(rigInfantry && o.name.startsWith("leg_"))) {
-              const part = o.clone(true);
-              o.matrixWorld.decompose(part.position, part.quaternion, part.scale);
-              if (o.name === "SwordArm") template.add(prepareVanguardArm(part, hipY));
-              else {
-                template.add(part);
-                legs.push(part);
-              }
-            }
-            if (!o.isMesh) return;
-            let parent = o.parent, legPivot = null;
-            while (parent) {
-              if (rigInfantry && parent.name.startsWith("leg_")) legPivot = parent;
-              else if (MOVING_PART.test(parent.name)) return;
-              parent = parent.parent;
-            }
-            // Keep the existing named Blender cannon pieces articulated while
-            // still merging the barrel's materials into a compact rig.
-            // (A flyer's guns stay part of its body: the whole craft kicks back when it fires.)
-            const rigged=RIG_PART.test(o.name)&&!flyer,target=rigged?(pivot&&/^Turret_head/i.test(o.name)?turretBuckets:barrelBuckets):buckets;
-            // Flyers: their small team lights join the team paint (one team-coloured draw per craft, not two).
-            const glowAsPaint = flyer && teamPaint && o.material.name.startsWith("TeamGlow");
-            const key = glowAsPaint ? teamPaint.name : o.material.name;
-            if (!target.has(key))
-              target.set(key, { material: glowAsPaint ? teamPaint : o.material, geometries: [] });
-            const geometry = o.geometry.clone().applyMatrix4(o.matrixWorld);
-            if (rigged && pivot) geometry.translate(-pivot.x, 0, -pivot.z);
-            if (target === buckets && legPivot) {
-              const hip = new THREE.Vector3().setFromMatrixPosition(legPivot.matrixWorld);
-              tagBone(geometry, /_R(\d*)$/.test(legPivot.name) ? BONE.legR : BONE.legL, hip.y, knees.get(legPivot), hip.z);
-            } else if (target === buckets && rigInfantry && /^(Tyres|Spoked_rims|Spokes)/.test(o.name) && tagWheels(geometry, bikeWheels).length) { /* the Rider's wheels */ }
-            // Guns and turrets of infantry (BarrelRig / TurretRig nodes) lean and kneel with the body.
-            else if (rigInfantry) tagBone(geometry, BONE.body, hipY, hipY * 0.5, 0);
-            else if (target === buckets && rigHull && /^Wheel/.test(o.name) && tagWheels(geometry, hullWheels).length) { /* road wheels and hubs */ }
-            else if (target === buckets && rigHull) tagBone(geometry, /^(Tracks|Wheel)/.test(o.name) ? BONE.none : BONE.hull, hullPivot.y, 0, hullPivot.z);
-            target.get(key).geometries.push(geometry);
-          });
-          // Team-paint meshes carry their rigid group, where a faction dress joins them (syncFactionDress).
-          const paint = (mesh, group) => { if (mesh.material.name.startsWith("Team")) mesh.userData.paint = group; return mesh; };
-          for (const { material, geometries } of buckets.values()) {
-            const combined = mergeGeometries(geometries, false);
-            if (combined) {
-              const part = paint(new THREE.Mesh(combined, material), "body");
-              if (combined.getAttribute("aRig")) {
-                // Poses reach a little past the rest silhouette (a stride, a kneel): pad the bounds.
-                combined.computeBoundingSphere();
-                combined.boundingSphere.radius += 0.35;
-              }
-              template.add(part);
-            }
-            geometries.forEach((g) => g.dispose());
-          }
-          template.userData.rig = rigInfantry ? "infantry" : rigHull ? "hull" : null;
-          template.userData.legLength = hipY;
-          if (hullPivot) template.userData.hullPivot = [hullPivot.y, hullPivot.z];
-          const barrel=new THREE.Group();barrel.name='BarrelRig';
-          for(const {material,geometries} of barrelBuckets.values()){
-            const combined=mergeGeometries(geometries,false);
-            if(combined)barrel.add(paint(new THREE.Mesh(combined,material),"barrel"));
-            geometries.forEach(g=>g.dispose());
-          }
-          // The barrel's hinge (trunnion) for a raised or stowed barrel: the rear of the barrel, at its mid height.
-          if (barrel.children.length) {
-            const box = new THREE.Box3().setFromObject(barrel);
-            barrel.userData.trunnion = [(box.min.y + box.max.y) / 2, box.min.z];
-          }
-          if(pivot){
-            const turret=new THREE.Group();turret.name='TurretRig';turret.position.set(pivot.x,0,pivot.z);
-            for(const {material,geometries} of turretBuckets.values()){
-              const combined=mergeGeometries(geometries,false);
-              if(combined)turret.add(paint(new THREE.Mesh(combined,material),"turret"));
-              geometries.forEach(g=>g.dispose());
-            }
-            turret.add(barrel);template.add(turret);
-          }else template.add(barrel);
-          bakeFinishes(template, { compact: flyer });
-          shareRotorGeometry(legs);
-          // Only Team/TeamGlow materials vary by faction. Share the other finishes
-          // so identical armour, tyres and suits can join one batch across armies.
-          const materials = new Map();
-          for (let team = 0; team < this.colors.length; team++) {
-            const variant = template.clone(true);
-            variant.traverse((o) => {
-              if (!o.isMesh) return;
-              const name = o.material.name, rig = !!o.geometry.getAttribute("aRig");
-              const key = `${name.startsWith("Team") ? team : "shared"}:${name}${rig ? "|rig" : ""}`;
-              if (!materials.has(key)) {
-                // The baked material is one shared program for every model; it is never cloned
-                // (bakeFinishes already gave rigged parts the rigged baked material).
-                const m = name.startsWith("Baked") ? o.material : o.material.clone();
-                if (name.startsWith("Team")) {
-                  m.color.setHex(this.colors[team]);
-                  addTeamRim(m, this.colors[team]); // W2-C: the team's own colour on the edge
-                  if (name.startsWith("TeamGlow")) {
-                    m.emissive.setHex(this.glows[team]);
-                    m.emissiveIntensity = 0.8;
-                    this.pulsing.push({ m, base: 0.8, depth: 0.3, rate: 2.2, phase: team * 1.3 });
-                  }
-                } else if (name.startsWith("Energy")) this.pulsing.push({ m, base: m.emissiveIntensity, depth: 0.35, rate: 3.1, phase: 0 });
-                // Last, so the rig wraps the rim patch and its program key ("Ã¢â‚¬Â¦|rig").
-                if (rig && !name.startsWith("Baked")) addRig(m);
-                materials.set(key, m);
-              }
-              o.material = materials.get(key);
-              const surface = o.name !== "SwordWave";
-              o.castShadow = surface && (CORE_MODEL_TYPES.includes(type) || D[type]?.kind === "building");
-              o.receiveShadow = surface;
-            });
-            adoptBatchedParts(variant);
-            this.teamTemplates.set(`${type}-${team}`, variant);
-          }
-          this.models.set(type, true);
+          this.buildTemplates(type, gltf);
         }),
       this.environmentAssets || fetchModel("environment").then((gltf) => {
         this.environmentAssets = gltf.scene;
@@ -795,6 +641,186 @@ export class WorldView {
     this.applyReflections();
     this.dressDirty = true; // new templates or a new dress file: the next frame dresses what it can
     await this.warmRig(types);
+  }
+  // Close view (H3b, src/close-view.js): units within `radius` (25 m) of (x, z) draw their close-up detail models.
+  // The module and the detail files load on the first call; null turns it off. Returns a promise for the loads.
+  setCloseView(options) {
+    if (!options && !this.closeView) return Promise.resolve();
+    this.closeViewModule ||= import("./close-view.js").then((m) => (this.closeView ||= new m.CloseView(this)));
+    return this.closeViewModule.then((close) => close.set(options || null));
+  }
+  // The governor's level (governor.js LEVELS) shrinks the close-view radius on a struggling device.
+  setCloseLevel(name) {
+    this.closeLevel = name;
+    this.closeView?.setLevel(name);
+  }
+  // One model's team templates (merged parts, baked finishes, team paint) from its parsed GLB. detail: the
+  // close-up version of a unit (close-view.js), kept in detailTemplates and never touching the normal ones.
+  buildTemplates(type, gltf, detail = false) {
+    gltf.scene.updateMatrixWorld(true);
+    addTeamBands(gltf.scene, type);
+    // Bosses (boss-view.js) keep their own rigid parts: legs, torso, arms, light gun and core.
+    if (D[type]?.boss) {
+      bossTemplates(gltf.scene, { colors: this.colors, glows: this.glows, bakedMaterial }).forEach((variant, team) => this.teamTemplates.set(`${type}-${team}`, variant));
+      this.models.set(type, true);
+      return;
+    }
+    // Merge stationary pieces by material, preserving the two articulated leg pivots.
+    const template = new THREE.Group(),
+      buckets = new Map(),
+      barrelBuckets = new Map(),
+      turretBuckets = new Map(), // vehicles: Turret_head* parts turn about Turret_pivot
+      legs = [];
+    template.userData.hover = !!gltf.scene.getObjectByName("hover");
+    const flyer = !!D[type]?.flying;
+    let teamPaint = null;
+    if (flyer) gltf.scene.traverse((o) => { if (o.isMesh && o.material.name.startsWith("Team") && !o.material.name.startsWith("TeamGlow")) teamPaint ||= o.material; });
+    let pivot = null;
+    gltf.scene.traverse((o) => { if (o.name.startsWith("Turret_pivot")) pivot = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld); });
+    // Shader bones (unit-rig.js): a rigged infantry type folds its leg pivots into the body
+    // (each vertex knows its hip and knee); a rigged hull type marks hull against tracks and wheels.
+    const rigInfantry = RIG_INFANTRY.has(type), rigHull = RIG_HULL.has(type);
+    let hipY = 0, hullPivot = null, bikeWheels = [], hullWheels = [];
+    const knees = new Map(); // leg pivot -> knee height (the Knee / Knee_pad part's middle; else half the hip)
+    if (rigInfantry) gltf.scene.traverse((o) => {
+      if (!o.name.startsWith("leg_")) return;
+      const hip = new THREE.Vector3().setFromMatrixPosition(o.matrixWorld).y, knee = new THREE.Box3();
+      hipY = Math.max(hipY, hip);
+      o.traverse((c) => { if (c.isMesh && /^Knee/.test(c.name)) knee.expandByObject(c); });
+      knees.set(o, knee.isEmpty() ? hip * 0.5 : (knee.min.y + knee.max.y) / 2);
+    });
+    if (rigInfantry) gltf.scene.traverse((o) => { if (o.isMesh && /^Tyres/.test(o.name)) bikeWheels = tagWheels(o.geometry.clone().applyMatrix4(o.matrixWorld)); });
+    if (rigHull) {
+      const box = new THREE.Box3();
+      gltf.scene.traverse((o) => { if (o.isMesh && /^(Tracks|Wheels)/.test(o.name)) box.expandByObject(o); });
+      hullPivot = box.isEmpty() ? new THREE.Vector3(0, 0.6, 0) : box.getCenter(new THREE.Vector3());
+      gltf.scene.traverse((o) => { if (o.isMesh && /^Wheels/.test(o.name)) hullWheels = tagWheels(o.geometry.clone().applyMatrix4(o.matrixWorld)); });
+    }
+    // What a faction dress needs to sit and bend like this model's own parts (src/faction-dress.js rigTag).
+    const hips = {};
+    for (const [leg, knee] of knees) {
+      const hip = new THREE.Vector3().setFromMatrixPosition(leg.matrixWorld);
+      hips[/_R(\d*)$/.test(leg.name) ? "R" : "L"] ??= [hip.y, knee, hip.z];
+    }
+    if (!detail) this.modelInfo.set(type, { pivot: pivot ? [pivot.x, pivot.z] : null, rig: rigInfantry ? "infantry" : rigHull ? "hull" : null,
+      hipY, legs: hips, hull: hullPivot ? [hullPivot.y, hullPivot.z] : null });
+    gltf.scene.traverse((o) => {
+      // Leg pivots, and the flyers' spinning rotors and flickering burner flame (0.18), stay
+      // separate nodes so they can move per instance inside their batches.
+      if (MOVING_PART.test(o.name) && !(rigInfantry && o.name.startsWith("leg_"))) {
+        const part = o.clone(true);
+        o.matrixWorld.decompose(part.position, part.quaternion, part.scale);
+        if (o.name === "SwordArm") template.add(prepareVanguardArm(part, hipY));
+        else {
+          template.add(part);
+          legs.push(part);
+        }
+      }
+      if (!o.isMesh) return;
+      let parent = o.parent, legPivot = null;
+      while (parent) {
+        if (rigInfantry && parent.name.startsWith("leg_")) legPivot = parent;
+        else if (MOVING_PART.test(parent.name)) return;
+        parent = parent.parent;
+      }
+      // Keep the existing named Blender cannon pieces articulated while
+      // still merging the barrel's materials into a compact rig.
+      // (A flyer's guns stay part of its body: the whole craft kicks back when it fires.)
+      const rigged=RIG_PART.test(o.name)&&!flyer,target=rigged?(pivot&&/^Turret_head/i.test(o.name)?turretBuckets:barrelBuckets):buckets;
+      // Flyers: their small team lights join the team paint (one team-coloured draw per craft, not two).
+      const glowAsPaint = flyer && teamPaint && o.material.name.startsWith("TeamGlow");
+      const key = glowAsPaint ? teamPaint.name : o.material.name;
+      if (!target.has(key))
+        target.set(key, { material: glowAsPaint ? teamPaint : o.material, geometries: [] });
+      const geometry = o.geometry.clone().applyMatrix4(o.matrixWorld);
+      if (rigged && pivot) geometry.translate(-pivot.x, 0, -pivot.z);
+      if (target === buckets && legPivot) {
+        const hip = new THREE.Vector3().setFromMatrixPosition(legPivot.matrixWorld);
+        tagBone(geometry, /_R(\d*)$/.test(legPivot.name) ? BONE.legR : BONE.legL, hip.y, knees.get(legPivot), hip.z);
+      } else if (target === buckets && rigInfantry && /^(Tyres|Spoked_rims|Spokes)/.test(o.name) && tagWheels(geometry, bikeWheels).length) { /* the Rider's wheels */ }
+      // Guns and turrets of infantry (BarrelRig / TurretRig nodes) lean and kneel with the body.
+      else if (rigInfantry) tagBone(geometry, BONE.body, hipY, hipY * 0.5, 0);
+      else if (target === buckets && rigHull && /^Wheel/.test(o.name) && tagWheels(geometry, hullWheels).length) { /* road wheels and hubs */ }
+      else if (target === buckets && rigHull) tagBone(geometry, /^(Tracks|Wheel)/.test(o.name) ? BONE.none : BONE.hull, hullPivot.y, 0, hullPivot.z);
+      target.get(key).geometries.push(geometry);
+    });
+    // Team-paint meshes carry their rigid group, where a faction dress joins them (syncFactionDress).
+    const paint = (mesh, group) => { if (mesh.material.name.startsWith("Team")) mesh.userData.paint = group; return mesh; };
+    for (const { material, geometries } of buckets.values()) {
+      const combined = mergeGeometries(geometries, false);
+      if (combined) {
+        const part = paint(new THREE.Mesh(combined, material), "body");
+        if (combined.getAttribute("aRig")) {
+          // Poses reach a little past the rest silhouette (a stride, a kneel): pad the bounds.
+          combined.computeBoundingSphere();
+          combined.boundingSphere.radius += 0.35;
+        }
+        template.add(part);
+      }
+      geometries.forEach((g) => g.dispose());
+    }
+    template.userData.rig = rigInfantry ? "infantry" : rigHull ? "hull" : null;
+    template.userData.legLength = hipY;
+    if (hullPivot) template.userData.hullPivot = [hullPivot.y, hullPivot.z];
+    const barrel=new THREE.Group();barrel.name='BarrelRig';
+    for(const {material,geometries} of barrelBuckets.values()){
+      const combined=mergeGeometries(geometries,false);
+      if(combined)barrel.add(paint(new THREE.Mesh(combined,material),"barrel"));
+      geometries.forEach(g=>g.dispose());
+    }
+    // The barrel's hinge (trunnion) for a raised or stowed barrel: the rear of the barrel, at its mid height.
+    if (barrel.children.length) {
+      const box = new THREE.Box3().setFromObject(barrel);
+      barrel.userData.trunnion = [(box.min.y + box.max.y) / 2, box.min.z];
+    }
+    if(pivot){
+      const turret=new THREE.Group();turret.name='TurretRig';turret.position.set(pivot.x,0,pivot.z);
+      for(const {material,geometries} of turretBuckets.values()){
+        const combined=mergeGeometries(geometries,false);
+        if(combined)turret.add(paint(new THREE.Mesh(combined,material),"turret"));
+        geometries.forEach(g=>g.dispose());
+      }
+      turret.add(barrel);template.add(turret);
+    }else template.add(barrel);
+    bakeFinishes(template, { compact: flyer });
+    shareRotorGeometry(legs);
+    // Only Team/TeamGlow materials vary by faction. Share the other finishes
+    // so identical armour, tyres and suits can join one batch across armies.
+    // A close-up detail model (close-view.js) shares the normal model's materials: same programs, same recolours.
+    const materials = detail ? (this.typeMaterials.get(type) || new Map()) : new Map();
+    if (!detail) this.typeMaterials.set(type, materials);
+    for (let team = 0; team < this.colors.length; team++) {
+      const variant = template.clone(true);
+      variant.traverse((o) => {
+        if (!o.isMesh) return;
+        const name = o.material.name, rig = !!o.geometry.getAttribute("aRig");
+        const key = `${name.startsWith("Team") ? team : "shared"}:${name}${rig ? "|rig" : ""}`;
+        if (!materials.has(key)) {
+          // The baked material is one shared program for every model; it is never cloned
+          // (bakeFinishes already gave rigged parts the rigged baked material).
+          const m = name.startsWith("Baked") ? o.material : o.material.clone();
+          if (name.startsWith("Team")) {
+            m.color.setHex(this.colors[team]);
+            addTeamRim(m, this.colors[team]); // W2-C: the team's own colour on the edge
+            if (name.startsWith("TeamGlow")) {
+              m.emissive.setHex(this.glows[team]);
+              m.emissiveIntensity = 0.8;
+              this.pulsing.push({ m, base: 0.8, depth: 0.3, rate: 2.2, phase: team * 1.3 });
+            }
+          } else if (name.startsWith("Energy")) this.pulsing.push({ m, base: m.emissiveIntensity, depth: 0.35, rate: 3.1, phase: 0 });
+          // Last, so the rig wraps the rim patch and its program key ("Ã¢â‚¬Â¦|rig").
+          if (rig && !name.startsWith("Baked")) addRig(m);
+          materials.set(key, m);
+        }
+        o.material = materials.get(key);
+        const surface = o.name !== "SwordWave";
+        o.castShadow = surface && (CORE_MODEL_TYPES.includes(type) || D[type]?.kind === "building");
+        o.receiveShadow = surface;
+      });
+      adoptBatchedParts(variant);
+      (detail ? this.detailTemplates : this.teamTemplates).set(`${type}-${team}`, variant);
+    }
+    if (!detail) this.models.set(type, true);
   }
   // Faction dress (visual round V, src/faction-dress.js). Every team's templates of the fourteen shared models wear
   // the dress of that team's faction in the sim (a mission's factions, a skirmish's sides, Defence and LAN as they
@@ -1472,6 +1498,8 @@ export class WorldView {
     root.userData.gait=0;root.userData.stride=(e.id*0.7)%6.28;
     root.userData.pop=0;root.userData.built=e.complete!==false;
     root.userData.team = e.team;
+    root.userData.type = e.type;
+    root.userData.kind = e.kind;
     // Story missions and faction skirmishes: a faction emblem floats over each building (the player's
     // own faction for team 0: Meridian in the story, the skirmish choice otherwise). Crewed Defence
     // towers carry none (one sprite draw each).
@@ -2108,6 +2136,8 @@ export class WorldView {
     if (!this.rally) this.scene.add(this.rally = createRally());
     const rallying = [...selected].map((id) => sim.get(id)).find((e) => e?.team === 0 && e.kind === "building" && e.rally);
     updateRally(this.rally, rallying, rallying?.rally, this.colors[0], sim.time, this.terrain);
+    // Close view (H3b): near units swap to their detail models; nothing runs while it was never turned on.
+    this.closeView?.update(sim, selected);
     // Update world matrices once, copy entity parts into their batches, then render without
     // a second scene-wide matrix pass.
     this.scene.updateMatrixWorld();
