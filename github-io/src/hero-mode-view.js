@@ -327,9 +327,11 @@ export class HeroModeView {
   roll(dt) {
     for (const [id, roll] of this.rolls) {
       roll.t += dt;
-      const model = this.view.objects.get(id)?.userData.model;
+      const u = this.view.objects.get(id)?.userData, model = u?.model;
       const k = Math.min(1, roll.t / roll.seconds);
-      if (model) model.rotation.z = k < 1 ? k * Math.PI * 2 : 0;
+      // Skywing's own model lies prone in flight: it rolls about its body (skywing-view.js poseSkywing reads it).
+      if (u?.skywing) u.skywing.roll = k < 1 ? k * Math.PI * 2 : 0;
+      else if (model) model.rotation.z = k < 1 ? k * Math.PI * 2 : 0;
       if (k >= 1) this.rolls.delete(id);
     }
   }

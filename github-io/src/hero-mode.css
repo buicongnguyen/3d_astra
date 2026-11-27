@@ -348,3 +348,22 @@ html.hero-mode #idle-chips { visibility: hidden !important; }
   .hero-phone .hh-stick { width: 104px; height: 104px; bottom: calc(env(safe-area-inset-bottom) + 14px); }
   .hero-phone .hh-knob { left: 28px; top: 28px; width: 44px; height: 44px; }
 }
+
+/* ---------------------------------------------------------------- Skywing lands and takes off (2026-11-28) */
+/* One 44 px "Land" / "Take off" button (R) beside Ability, Dodge and Fire; Dive strike greys out with its reason on foot. */
+.hh-land[hidden] { display: none !important; }
+.hh-why { margin-left: 6px; font-size: 11px; font-weight: 700; color: #ffd9a8; }
+.hh-why[hidden] { display: none; }
+.hh-ability.grounded { filter: saturate(0.35); }
+/* Phones: the button is a full-width row over Ability and Dodge; the weapon switch moves up one row in portrait. */
+.hero-phone.hero-sky .hh-actions { grid-template-rows: 48px 54px 76px; }
+.hero-phone.hero-sky .hh-land { grid-column: 1 / -1; grid-row: 1; }
+.hero-phone.hero-sky .hh-ability, .hero-phone.hero-sky .hh-dodge { grid-row: 2; }
+.hero-phone.hero-sky .hh-fire { grid-row: 3; }
+.hero-phone.hero-sky .hh-weapons { bottom: calc(env(safe-area-inset-bottom) + 232px); }
+.hero-phone .hh-ability.grounded .hh-ability-name { display: none; }
+.hero-phone .hh-why { margin: 0; font-size: 12px; line-height: 1.1; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .hero-phone.hero-sky .hh-actions { grid-template-rows: 44px 48px 70px; }
+  .hero-phone.hero-sky .hh-weapons { bottom: calc(env(safe-area-inset-bottom) + 12px); }
+}

@@ -12,13 +12,18 @@
 //   - Skywing: a look-down camera behind and above it (52 degrees), a ground reticle, Sniper (tap or click to
 //     shoot, wheel or pinch to zoom) and Rocket (hold 0.6 s on a target to lock, then it fires), the Sniper | Rocket
 //     switch on the HUD, Dive strike as its ability, a barrel roll for a dodge;
+//   - Skywing lands and takes off (owner 2026-11-28): one 44 px "Land" / "Take off" button (R) beside Ability, Dodge
+//     and Fire; it glides down to a clear spot under the reticle (sim/content/skywing.js), the camera blends from the
+//     look-down view to the shoulder view (no shake), it walks like a ground hero with the weapons it carries (a
+//     steadier, longer Sniper), dodges with the ground dash, and Dive strike greys out with "Air only" until it flies;
 //   - the close-up detail follows the aim point (20 m), with a soft distance fog; warning rings where rockets
 //     and shells land, and marks at the screen edge for shots from off screen; no camera shake anywhere.
 import "./hero-mode.css";
 import { $ } from "./app/dom.js";
 import { icon } from "./icons.js";
 import { isAllyHero } from "./sim/content/campaign-heroes.js";
-import { isSkywing, WEAPONS } from "./sim/content/skywing.js";
+import { isSkywing, isLanded, WEAPONS, LAND } from "./sim/content/skywing.js";
+import { flightOf } from "./skywing-view.js";
 import { HERO_TIME, enterCommands, leaveCommands } from "./sim/content/hero-mode.js";
 import { pickTarget, RocketLock, moveVector, battleTime, AIM } from "./hero-aim.js";
 import { translate, getLanguage } from "./i18n.js";
@@ -43,7 +48,7 @@ export function setupHeroMode(S, A) {
     on: false, id: null, sky: false, sim: null, yaw: 0, pitch: 0, zoom: 1,
     scale: 1, ease: null, aim: null, target: null, firing: false, sent: { drive: "0,0", fire: "null" },
     lock: new RocketLock(), keys: new Set(), stick: null, look: null, fell: null, pointer: null, pinch: null, touches: new Map(),
-    cursor: null, button: null, hud: null, edges: [], turn: 0,
+    cursor: null, button: null, hud: null, edges: [], turn: 0, flight: 1, grounded: null,
   };
   S.hero = H;
 
@@ -145,8 +150,9 @@ export function setupHeroMode(S, A) {
       </div>
       <div class="hh-weapons" role="group" aria-label="Weapon" hidden>${Object.values(WEAPONS).map((w) => `<button type="button" data-weapon="${w.id}" aria-pressed="false">${icon(w.id === "sniper" ? "sniper" : "lockon")}<span>${w.name}</span></button>`).join("")}<kbd translate="no">E</kbd></div>
       <div class="hh-actions">
-        <button type="button" data-hero="ability" class="hh-ability"><i class="hh-sweep" aria-hidden="true"></i><span class="hh-ability-name"></span><kbd translate="no">Q</kbd></button>
+        <button type="button" data-hero="ability" class="hh-ability"><i class="hh-sweep" aria-hidden="true"></i><span class="hh-ability-name"></span><small class="hh-why" hidden>Air only</small><kbd translate="no">Q</kbd></button>
         <button type="button" data-hero="dodge" class="hh-dodge"><i class="hh-sweep" aria-hidden="true"></i><span class="hh-dodge-name">Dodge</span><kbd translate="no">Space</kbd></button>
+        <button type="button" data-hero="land" class="hh-land" hidden><i class="hh-sweep" aria-hidden="true"></i><span class="hh-land-name">Land</span><kbd translate="no">R</kbd></button>
         <button type="button" data-hero="fire" class="hh-fire"><span>Fire</span><kbd translate="no">F</kbd></button>
       </div>
       <div class="hh-stick" aria-hidden="true"><i class="hh-knob"></i></div>
@@ -165,6 +171,7 @@ export function setupHeroMode(S, A) {
       else if (what === "pause") A.togglePause?.();
       else if (what === "ability") ability();
       else if (what === "dodge") dodge();
+      else if (what === "land") land();
     });
     // Fire is held (a ground hero keeps firing; a rocket locks while held); its own pointer events.
     const fire = root.querySelector(".hh-fire");
@@ -208,9 +215,13 @@ export function setupHeroMode(S, A) {
     root.querySelector(".hh-assist").hidden = !H.sky;
     root.querySelector(".hh-name").textContent = translate(e.name);
     root.querySelector(".hh-dodge-name").textContent = H.sky ? "Barrel roll" : "Dodge";
+    root.querySelector(".hh-land").hidden = !H.sky;
+    H.flight = H.sky ? flightOf(S.sim, e) : 0;
+    H.grounded = null;
     root.querySelector(".hh-help span").textContent = H.sky
       ? "WASD fly · Mouse aim · Click/F shoot · Hold to lock rockets · Wheel zoom · Q Dive · E weapon · Space roll · Tab exit"
       : "WASD move · Mouse aim · Click/F fire · Q ability · Space dodge · Tab exit";
+    if (H.sky) labels(e);
     H.button && (H.button.hidden = true);
     const v = S.view;
     v.resize();
@@ -259,6 +270,28 @@ export function setupHeroMode(S, A) {
     if (!isSkywing(e)) return;
     const next = id || ((e.weaponTo || e.weapon) === "sniper" ? "rocket" : "sniper");
     if (send({ type: "heroWeapon", id: e.id, weapon: next })) { A.tone?.(next === "rocket" ? 380 : 720, 0.08); H.lock.reset(); }
+  }
+  // Skywing lands under the reticle (or takes off): one command, the sim picks the clear spot nearest the aim.
+  function land() {
+    const e = hero();
+    if (!isSkywing(e) || e.hp <= 0) return;
+    const down = isLanded(e), at = H.aim;
+    if (e.skyland) return;
+    if (!down && (e.swoop || S.sim.time < (e.skyReady ?? -Infinity))) { A.notice?.(e.swoop ? "Skywing is diving." : "Skywing can land again in a moment."); return; }
+    const ok = send({ type: "skywingLand", id: e.id, land: !down, ...(!down && at ? { x: at.x, z: at.z } : null) });
+    if (ok) A.tone?.(down ? 620 : 420, 0.1);
+    else if (!down) A.notice?.("No clear spot to land here.");
+  }
+  // Skywing's HUD words for its state: the dodge (a barrel roll in the air, the dash on foot) and the help line.
+  function labels(e) {
+    const ground = isLanded(e) || e.skyland?.phase === "land";
+    if (H.grounded === ground) return;
+    H.grounded = ground;
+    const root = H.hud;
+    root.querySelector(".hh-dodge-name").textContent = ground ? "Dodge" : "Barrel roll";
+    root.querySelector(".hh-help span").textContent = ground
+      ? "WASD walk · Mouse aim · Click/F shoot · Hold to lock rockets · E weapon · R take off · Space dodge · Tab exit"
+      : "WASD fly · Mouse aim · Click/F shoot · Hold to lock rockets · Wheel zoom · Q Dive · E weapon · R land · Space roll · Tab exit";
   }
   function dodge() {
     const e = hero();
@@ -400,6 +433,7 @@ export function setupHeroMode(S, A) {
     // F fires like the mouse button and aims the same way (the target under the reticle): held for a ground hero
     // and Skywing's rocket lock, one shot per press for Skywing's sniper.
     if (code === "KeyF" || k === "f") { stop(event); if (!event.repeat) { aimNow(); trigger(true, "key"); } return; }
+    if (code === "KeyR" || k === "r") { stop(event); if (!event.repeat && H.sky) land(); return; }
     if (code === "KeyQ" || k === "q") { stop(event); if (!event.repeat) ability(); return; }
     if (code === "KeyE" || k === "e") { stop(event); if (!event.repeat) { if (H.sky) weapon(); else ability(); } return; }
   }
@@ -418,11 +452,27 @@ export function setupHeroMode(S, A) {
     const p = o.position, f = { x: Math.sin(H.yaw), z: Math.cos(H.yaw) }, r = { x: -Math.cos(H.yaw), z: Math.sin(H.yaw) };
     const groundY = v.terrain.heightAt(p.x, p.z);
     let eye, look, fov = 58;
+    const shoulder = () => {
+      // Re-score 2026-11-28: the old 8-10 degree look-down left about 45% sky on a portrait phone with the hero low;
+      // each screen now looks down far enough that the horizon sits in the top fifth to third (SHOULDER).
+      const c = SHOULDER[!phone() ? "pc" : v.height > v.width ? "portrait" : "landscape"];
+      return {
+        eye: { x: p.x - f.x * c.back + r.x * c.side, y: groundY + c.up + H.pitch * 2, z: p.z - f.z * c.back + r.z * c.side },
+        look: { x: p.x + f.x * c.ahead + r.x * c.side * 0.4, y: groundY + c.lookY - H.pitch * 1.5, z: p.z + f.z * c.ahead + r.z * c.side * 0.4 },
+        fov: c.fov,
+      };
+    };
     if (H.sky) {
       const a = (SKY_PITCH * Math.PI) / 180, dist = (phone() ? 21 : 18) * H.zoom;
       look = { x: p.x + f.x * 7, y: groundY, z: p.z + f.z * 7 };
       eye = { x: look.x - f.x * dist * Math.cos(a), y: look.y + dist * Math.sin(a) + Math.max(0, p.y - groundY) * 0.4, z: look.z - f.z * dist * Math.cos(a) };
       fov = 54 / Math.sqrt(H.zoom) * (H.zoom < 0.85 ? 0.92 : 1);
+      // Landing and taking off: an eased blend toward the shoulder view on foot (H.flight, eased in tick()).
+      const k = H.flight;
+      if (k < 0.999) {
+        const g = shoulder(), mix = (a, b) => ({ x: b.x + (a.x - b.x) * k, y: b.y + (a.y - b.y) * k, z: b.z + (a.z - b.z) * k });
+        eye = mix(eye, g.eye); look = mix(look, g.look); fov = g.fov + (fov - g.fov) * k;
+      }
     } else if (firstPerson()) {
       eye = { x: p.x + f.x * 0.55, y: groundY + 1.65, z: p.z + f.z * 0.55 };
       look = { x: p.x + f.x * 20, y: groundY + 1.1 + H.pitch * 8, z: p.z + f.z * 20 };
@@ -512,6 +562,12 @@ export function setupHeroMode(S, A) {
       if (H.fell >= FALL_HOLD) { H.hud.querySelector(".hh-down").hidden = true; leave(); }
       return;
     }
+    if (H.sky) {
+      // The camera's flight blend: the sim's glide or climb, eased again in real time (smooth, never a jump).
+      const want = flightOf(S.sim, e);
+      H.flight = Math.abs(want - H.flight) < 0.002 ? want : H.flight + (want - H.flight) * Math.min(1, dt * 5);
+      labels(e);
+    }
     if (Z.paused || Z.modalType) return;
     // PC: the cursor near the left or right edge turns the camera.
     if (!phone() && H.cursor && !H.look) {
@@ -568,12 +624,25 @@ export function setupHeroMode(S, A) {
       const shown = phone() ? PHONE_NAME[e.ability.name] || e.ability.name : e.ability.name;
       if (name.dataset.src !== shown) { name.dataset.src = shown; name.textContent = shown; ab.dataset.ability = e.ability.name; ab.setAttribute("aria-label", translate(e.ability.name)); fitName(name, ab); }
       ab.style.setProperty("--cd", (left / cd).toFixed(3));
-      ab.disabled = left > 0;
+      // Skywing's Dive strike works only in the air: greyed with its reason while it is down (or on the way).
+      const grounded = H.sky && (!e.flying || !!e.skyland);
+      const why = root.querySelector(".hh-why");
+      if (why.hidden === grounded) { why.hidden = !grounded; ab.classList.toggle("grounded", grounded); ab.title = grounded ? translate("Dive strike works only in the air") : ""; }
+      ab.disabled = left > 0 || grounded;
     } else ab.hidden = true;
     const dg = root.querySelector(".hh-dodge"), wait = Math.max(0, (e.dodgeReady ?? -Infinity) - S.sim.time);
     dg.style.setProperty("--cd", (wait / (4 * (e.driven || 1))).toFixed(3));
     dg.disabled = wait > 0;
     if (H.sky) {
+      const lb = root.querySelector(".hh-land"), ground = isLanded(e) || e.skyland?.phase === "land";
+      const name = ground ? "Take off" : "Land";
+      const span = lb.querySelector(".hh-land-name");
+      if (span.dataset.src !== name) { span.dataset.src = name; span.textContent = name; lb.setAttribute("aria-label", translate(name)); }
+      // The sweep: the glide or climb under way, else the wait before landing again.
+      const k = e.driven || 1, s = e.skyland;
+      const wait = s ? Math.max(0, s.at - S.sim.time) / Math.max(1e-6, s.at - s.t0) : !ground ? Math.max(0, (e.skyReady ?? -Infinity) - S.sim.time) / (LAND.cooldown * k) : 0;
+      lb.style.setProperty("--cd", wait.toFixed(3));
+      lb.disabled = !!s || !!e.swoop || wait > 0;
       const now = e.weaponTo || e.weapon;
       for (const b of root.querySelectorAll("[data-weapon]")) {
         const pressed = String(b.dataset.weapon === now);
@@ -597,7 +666,7 @@ export function setupHeroMode(S, A) {
     return (x - m[12]) * m[8] + (z - m[14]) * m[10] > 0;
   }
 
-  Object.assign(A, { heroTick: tick, heroPace: pace, enterHeroMode: enter, leaveHeroMode: leave, heroModeOn: () => H.on, heroInfo: () => ({ on: H.on, id: H.id, sky: H.sky, yaw: H.yaw, zoom: H.zoom, scale: H.scale, aim: H.aim, target: H.target?.id ?? null, lock: H.lock.progress, screen: H.screen || null, sent: { ...H.sent } }) });
+  Object.assign(A, { heroTick: tick, heroPace: pace, enterHeroMode: enter, leaveHeroMode: leave, heroModeOn: () => H.on, heroInfo: () => ({ on: H.on, id: H.id, sky: H.sky, flight: H.flight, yaw: H.yaw, zoom: H.zoom, scale: H.scale, aim: H.aim, target: H.target?.id ?? null, lock: H.lock.progress, screen: H.screen || null, sent: { ...H.sent } }) });
   return function bind() {
     window.addEventListener("keydown", keydown, true);
     window.addEventListener("keyup", keyup, true);

@@ -76,6 +76,8 @@ export function poseSkywing(u, e, m) {
   m.position.x += -h * sp * Math.sin(yaw);
   m.position.y += h * (1 - Math.cos(pitch));
   m.position.z += -h * sp * Math.cos(yaw);
+  // A barrel roll (hero-mode-view.js, a dodge in the air): about the body's own long axis, which runs through the hip.
+  if (s.roll) m.rotateY(s.roll);
   const hand = e.weapon || "sniper";
   for (const [id, node] of Object.entries(s.weapons)) if (node && node.visible !== (id === hand)) node.visible = id === hand;
 }
