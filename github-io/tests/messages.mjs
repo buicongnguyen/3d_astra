@@ -66,6 +66,7 @@ await suite("messages", async () => {
     // A hint and an alert in the same frame (the cloak hint and a hit on the Command core).
     await page.evaluate(() => {
       const s = window.__frontier.sim, hq = s.own(0).find((e) => e.type === "hq");
+      window.__frontier.holdMessages = true; // hint + alert outlive a slow runner until measured (assertPcStack releases)
       s.events.push({ type: "reveal", ambush: true, victim: 0 }, { type: "impact", team: 0, x: hq.x, z: hq.z, building: true, seed: 1 });
     });
     await page.waitForFunction(() => {
@@ -96,6 +97,7 @@ await suite("messages", async () => {
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, `${name}: no sideways scroll`);
     await shot(page, `messages-${name}`);
 
+    await page.evaluate(() => { window.__frontier.holdMessages = false; }); // timers run for real from here
     // A routine notice during the alert waits; it shows once the alert has had its full time.
     // Only meaningful while the alert still has time left: on a slow CI runner the checks above can
     // outlast its 4.5 s, and then the routine notice rightly shows at once.
@@ -151,7 +153,7 @@ await suite("messages", async () => {
     // point: show both again right before measuring (the same alert text only refreshes its time).
     await page.evaluate(() => {
       const f = window.__frontier, s = f.sim, hq = s.own(0).find((e) => e.type === "hq");
-      f.fightHint.hidden = false;
+      f.holdMessages = true; f.fightHint.hidden = false;
       s.events.push({ type: "incoming", team: 0, x: hq.x, z: hq.z });
     });
     await page.waitForFunction(() => /Enemy attack incoming/.test(document.querySelector("#notice").textContent) && !window.__frontier.fightHint.hidden && !document.querySelector(".dialogue").hidden, null, { timeout: TIMEOUT.step });
@@ -183,6 +185,7 @@ await suite("messages", async () => {
     if (mobile) await inLane(page, `${name} dialogue`, size, [".dialogue", "#fight-hint"]);
     // PC: the stack steps below the dialogue box on the left, still in the top-left quarter.
     else await assertPcStack(page, `${name} dialogue`, ["#notice.show", "#fight-hint:not([hidden])"]);
+    await page.evaluate(() => { window.__frontier.holdMessages = false; });
     await shot(page, `messages-${name}-dialogue`);
 
     assert.deepEqual(errors, [], `${name}: page errors`);
