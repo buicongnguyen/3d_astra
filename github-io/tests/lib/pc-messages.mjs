@@ -9,6 +9,9 @@ export const PC_HUD = [".topbar", ".map-heading", "#mission-objectives", ".minim
 
 // Asserts the stack and returns the boxes it measured. `want` lists messages that must be drawn.
 export async function assertPcStack(page, name, want = []) {
+  // The wanted messages (up to 3 s), then one frame for the stack to place them.
+  if (want.length) await page.waitForFunction((want) => want.every((q) => document.querySelector(q)), want, { timeout: 3000 }).catch(() => {});
+  await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
   const m = await page.evaluate(([msgs, hud]) => {
     const box = (el) => {
       if (!el || el.hidden) return null;

@@ -89,7 +89,8 @@ await suite("messages", async () => {
       assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("#fight-hint")).pointerEvents), "none");
     } else {
       // PC (owner 2026-11-27): the alert and the hint stack at the top left, the hint under the alert.
-      await page.waitForTimeout(300);
+      // Shown again first: on a slow runner the checks above can outlast the alert or the hint.
+      await page.evaluate(() => { const f = window.__frontier; f.fightHint.hidden = false; f.alertNotice("Under attack!"); });
       await assertPcStack(page, `${name} alert`, ["#notice.show", "#fight-hint:not([hidden])"]);
     }
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, `${name}: no sideways scroll`);
