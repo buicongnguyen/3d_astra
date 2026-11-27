@@ -21,7 +21,16 @@ import { isAllyHero } from "./sim/content/campaign-heroes.js";
 import { isSkywing, WEAPONS } from "./sim/content/skywing.js";
 import { HERO_TIME, enterCommands, leaveCommands } from "./sim/content/hero-mode.js";
 import { pickTarget, RocketLock, moveVector, battleTime, AIM } from "./hero-aim.js";
-import { translate } from "./i18n.js";
+import { translate, getLanguage } from "./i18n.js";
+import { PHONE_NAME } from "./tactics-card.js";
+// The ground shoulder camera per screen: metres behind (back), above the ground (up) and to the side of the hero, the
+// look point `ahead` m in front at `lookY` m. Look-down: PC about 13 degrees, landscape phone 19, portrait phone 30
+// (its 84-degree tall view otherwise shows mostly sky); the hero stands a little under the middle of the screen.
+export const SHOULDER = Object.freeze({
+  pc: { back: 6.2, up: 4.0, side: 1.2, ahead: 7, lookY: 0.9, fov: 56 },
+  landscape: { back: 7, up: 5.4, side: 0.6, ahead: 6, lookY: 0.8, fov: 62 },
+  portrait: { back: 7.5, up: 7.2, side: 0.4, ahead: 4, lookY: 0.5, fov: 62 },
+});
 
 export const HERO_CLOSE_RADIUS = 20;
 const SKY_PITCH = 52; // degrees down (45-60)
@@ -51,7 +60,8 @@ export function setupHeroMode(S, A) {
     b.type = "button";
     b.id = "hero-mode-btn";
     b.hidden = true;
-    b.innerHTML = `${icon("star")}<span>Hero mode</span>`;
+    // The full label on a PC; phones show the short one in a tile of the touch tool row (place()).
+    b.innerHTML = `${icon("star")}<span class="hm-full">Hero mode</span><span class="hm-short" translate="no" data-no-localize></span>`;
     b.addEventListener("click", () => enter());
     document.body.append(b);
     return (H.button = b);
@@ -61,21 +71,55 @@ export function setupHeroMode(S, A) {
     const show = list.length > 0 && !Z.paused && !Z.modalType && !S.replay;
     if (!show && !H.button) return;
     const b = button();
+    const appeared = b.hidden && show;
     if (b.hidden === show) b.hidden = !show;
     if (show) {
-      place(b);
+      place(b, appeared);
       const name = pickHero(list)?.name || "";
       const label = `Hero mode: fight as ${name}`;
-      if (b.dataset.label !== label) { b.dataset.label = label; b.title = label; }
+      if (b.dataset.label !== label) { b.dataset.label = label; b.title = label; b.setAttribute("aria-label", translate(label)); }
+      const short = getLanguage() === "en" ? "Hero" : translate("Hero (Hero mode button)");
+      const tag = b.querySelector(".hm-short");
+      if (tag.textContent !== short) tag.textContent = short;
     }
   }
-  // Portrait phones: just above the dock (or the Defence bar over it), measured twice a second.
+  // Phones (re-score 2026-11-28: the old chip above the dock covered the caption strip and the Map tab): the button
+  // is one more tile of the touch tool row (Army, Workers, Box, Queue, Clear, Info), the same size, in the next slot:
+  // under Info in the portrait column, right of Info in the landscape row (either hand). Measured twice a second;
+  // with no tool row on screen it falls back to the spot just above the dock (or the Defence bar).
   let placedAt = -1;
-  function place(b) {
+  function place(b, force = false) {
     const now = performance.now();
-    if (now - placedAt < 500) return;
+    if (!force && now - placedAt < 500) return;
     placedAt = now;
-    if (!document.documentElement.classList.contains("compact-ui") || innerWidth > innerHeight) { b.style.removeProperty("--hero-btn-bottom"); return; }
+    const root = document.documentElement;
+    const clear = () => { b.classList.remove("hero-tile"); for (const k of ["left", "top", "width", "height"]) b.style.removeProperty(k); };
+    if (!root.classList.contains("compact-ui")) { clear(); b.style.removeProperty("--hero-btn-bottom"); return; }
+    const info = document.querySelector(".touch-controls #touch-guide"), prev = document.querySelector(".touch-controls #clear-selection");
+    const shown = (el) => el && el.getClientRects().length && getComputedStyle(el).visibility !== "hidden";
+    if (shown(info) && shown(prev)) {
+      const r = info.getBoundingClientRect(), q = prev.getBoundingClientRect();
+      const row = Math.abs(r.top - q.top) < r.height / 2;
+      // The gap the row already uses between its tiles (at least 6 px).
+      const gap = Math.max(6, row ? (r.left > q.left ? r.left - q.right : q.left - r.right) : r.top - q.bottom);
+      let left = row ? (r.left >= q.left ? r.right + gap : r.left - gap - r.width) : r.left;
+      let top = row ? r.top : r.bottom + gap;
+      // A landscape row with no room before the clock and pause cluster: the slot under Info instead.
+      if (row) {
+        const end = { left, right: left + r.width, top, bottom: top + r.height };
+        const hit = [...document.querySelectorAll(".topbar .top-actions, .topbar .resource-bar")].some((el) => {
+          const o = el.getBoundingClientRect();
+          return o.width > 0 && o.left < end.right + 2 && o.right > end.left - 2 && o.top < end.bottom && o.bottom > end.top;
+        });
+        if (hit || end.left < 0 || end.right > innerWidth) { left = r.left; top = r.bottom + gap; }
+      }
+      b.classList.add("hero-tile");
+      b.style.left = `${Math.round(left)}px`; b.style.top = `${Math.round(top)}px`;
+      b.style.width = `${Math.round(r.width)}px`; b.style.height = `${Math.max(44, Math.round(r.height))}px`;
+      return;
+    }
+    clear();
+    if (innerWidth > innerHeight) { b.style.removeProperty("--hero-btn-bottom"); return; }
     let top = innerHeight;
     for (const el of document.querySelectorAll(".bottom-dock, #defence-bar, #defence-intel")) {
       const r = el.getBoundingClientRect();
@@ -380,10 +424,12 @@ export function setupHeroMode(S, A) {
       look = { x: p.x + f.x * 20, y: groundY + 1.1 + H.pitch * 8, z: p.z + f.z * 20 };
       fov = 66;
     } else {
-      const back = phone() ? 7 : 6.2, up = phone() ? 3.8 : 3.2, side = phone() ? 0.6 : 1.2;
-      eye = { x: p.x - f.x * back + r.x * side, y: groundY + up + H.pitch * 2, z: p.z - f.z * back + r.z * side };
-      look = { x: p.x + f.x * 9 + r.x * side * 0.4, y: groundY + 1.1 - H.pitch * 1.5, z: p.z + f.z * 9 + r.z * side * 0.4 };
-      fov = phone() ? 62 : 56;
+      // Re-score 2026-11-28: the old 8-10 degree look-down left about 45% sky on a portrait phone with the hero low;
+      // each screen now looks down far enough that the horizon sits in the top fifth to third (SHOULDER).
+      const c = SHOULDER[!phone() ? "pc" : v.height > v.width ? "portrait" : "landscape"];
+      eye = { x: p.x - f.x * c.back + r.x * c.side, y: groundY + c.up + H.pitch * 2, z: p.z - f.z * c.back + r.z * c.side };
+      look = { x: p.x + f.x * c.ahead + r.x * c.side * 0.4, y: groundY + c.lookY - H.pitch * 1.5, z: p.z + f.z * c.ahead + r.z * c.side * 0.4 };
+      fov = c.fov;
     }
     // Portrait screens keep at least a 52 degree wide view (a taller vertical angle, up to 84).
     const aspect = v.width / Math.max(1, v.height), minV = (2 * Math.atan(Math.tan((52 * Math.PI) / 360) / aspect) * 180) / Math.PI;
@@ -489,6 +535,16 @@ export function setupHeroMode(S, A) {
     paint(e);
   }
   // The HUD's live parts (health, cooldowns, the weapon, the lock ring, the crosshair), cheap and in place.
+  // Shrinks a tile's label from its CSS size down to 11 px until it fits inside the tile (never smaller).
+  function fitName(name, tile) {
+    name.style.removeProperty("font-size");
+    if (!phone()) return;
+    requestAnimationFrame(() => {
+      let px = parseFloat(getComputedStyle(name).fontSize) || 13;
+      const over = () => tile.scrollHeight > tile.clientHeight + 1 || name.scrollWidth > name.clientWidth + 1;
+      while (over() && px > 11) { px -= 1; name.style.fontSize = `${px}px`; }
+    });
+  }
   function paint(e) {
     const root = H.hud;
     const hp = Math.max(0, (e.hp + (e.shield || 0)) / Math.max(1, e.maxHp + (e.maxShield || 0)));
@@ -502,7 +558,11 @@ export function setupHeroMode(S, A) {
       const left = Math.max(0, (e.abilityAt ?? 0) - S.sim.time), cd = e.ability.cooldown || 1;
       ab.hidden = false;
       const name = root.querySelector(".hh-ability-name");
-      if (name.dataset.src !== e.ability.name) { name.dataset.src = e.ability.name; name.textContent = e.ability.name; }
+      // Phones: the short word the command card uses (tactics-card.js PHONE_NAME, "Hold the line" -> "Line"), so
+      // no translation wraps past two lines in the 76 x 54 tile (VI "Giữ vững trận tuyến" was four, re-score
+      // 2026-11-28); the full name stays the tile's label for screen readers and on a PC.
+      const shown = phone() ? PHONE_NAME[e.ability.name] || e.ability.name : e.ability.name;
+      if (name.dataset.src !== shown) { name.dataset.src = shown; name.textContent = shown; ab.dataset.ability = e.ability.name; ab.setAttribute("aria-label", translate(e.ability.name)); fitName(name, ab); }
       ab.style.setProperty("--cd", (left / cd).toFixed(3));
       ab.disabled = left > 0;
     } else ab.hidden = true;

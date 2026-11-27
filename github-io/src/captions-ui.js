@@ -16,6 +16,8 @@ const AVOID = [
   "#defence-bar", "#defence-intel", "#defence-card", "#boss-bar", "#dialogue", "#notice", "#mission-objectives", "#training",
   // Re-score 2026-11-27: the fight hint (ui-extras.js) shares the phone's bottom slot; the caption stacks above it, never over it.
   "#fight-hint",
+  // Re-score 2026-11-28: the Hero mode button (a tool-row tile on phones; above the dock only without that row).
+  "#hero-mode-btn:not([hidden])",
 ].join(",");
 const GAP = 8;
 

@@ -7,6 +7,9 @@
 //   portrait   the button above the dock; the stick moves, the Fire button fires, Dodge and Exit taps; Skywing's camera;
 //              the draw budget (Hero mode at most 30 draws over the normal frame), and the frame time at 4x CPU slowing.
 //   landscape  enter, the HUD fits, exit.
+//   re-score 2026-11-28: the phone button is a tile of the touch tool row overlapping nothing (caption strip, Map tab,
+//              dock, clock) in EN, VI and KO; every hero ability label fits its phone tile (>= 11 px) in EN/VI/KO,
+//              portrait and landscape; the portrait shoulder camera looks down 22-36 degrees.
 // Every HUD: taps >= 44 px, text >= 11 px, no system-ui, no sideways scroll. The match clock is held and moved only with
 // step() (CI runs at about 1 fps); transient messages are held (holdMessages).
 import assert from "node:assert/strict";
@@ -81,6 +84,66 @@ const screenOf = (page, id) => page.evaluate((id) => {
 // The camera's look-down angle, degrees below the horizon.
 const pitch = (page) => page.evaluate(() => { const m = window.__frontier.view.camera.matrixWorld.elements; const fx = -m[8], fy = -m[9], fz = -m[10]; return (Math.atan2(-fy, Math.hypot(fx, fz)) * 180) / Math.PI; });
 const logged = (page, type) => page.evaluate((type) => window.__frontier.sim.commandLog.filter((c) => c.type === type).length, type);
+
+// Re-score 2026-11-28 gap 1: the Hero mode button overlaps nothing (no other button, the Map tab, the caption strip,
+// the clock and pause cluster, the dock) and is what is on top at its own centre; its label fits at >= 11 px.
+const heroButtonClear = (page) => page.evaluate(() => {
+  const b = document.querySelector("#hero-mode-btn"), r = b.getBoundingClientRect(), hits = [];
+  for (const n of document.querySelectorAll("button, #voice-caption.show, .top-actions, .resource-bar, .bottom-dock, #dock-tabs, .minimap-panel, #idle-chips")) {
+    if (n === b || b.contains(n) || n.contains(b) || !n.getClientRects().length) continue;
+    const cs = getComputedStyle(n);
+    if (cs.visibility === "hidden" || cs.display === "none" || +cs.opacity < 0.05) continue;
+    const q = n.getBoundingClientRect();
+    if (q.width < 2 || q.height < 2) continue;
+    const x = Math.min(r.right, q.right) - Math.max(r.left, q.left), y = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
+    if (x > 0.5 && y > 0.5) hits.push(`${n.id || n.className} ${Math.round(x)}x${Math.round(y)}`);
+  }
+  const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+  if (!b.contains(top)) hits.push(`covered by ${top?.id || top?.className}`);
+  const label = [...b.querySelectorAll("span")].find((n) => n.getClientRects().length);
+  const font = parseFloat(getComputedStyle(label).fontSize);
+  if (font < 11) hits.push(`label ${font}px`);
+  if (b.scrollHeight > b.clientHeight + 1 || b.scrollWidth > b.clientWidth + 1) hits.push(`label clipped "${label.textContent}"`);
+  if (r.width < 44 || r.height < 44) hits.push(`tap ${Math.round(r.width)}x${Math.round(r.height)}`);
+  if (r.left < 0 || r.top < 0 || r.right > innerWidth || r.bottom > innerHeight) hits.push("off screen");
+  return { hits, box: [r.left, r.top, r.width, r.height].map(Math.round), label: label.textContent };
+});
+// A long caption up (as Mira Vale's m02 line), held still while measured.
+const showCaption = (page) => page.evaluate(() => { const c = window.__frontier.audio.captions; c.show({ text: "Our guns hold the ford. Cross together, fast, and keep the line.", speaker: "Mira Vale", channel: "story" }, { from: -1, until: 1e9 }); c.update(0); });
+async function assertButtonClear(page, tap, label) {
+  await showCaption(page);
+  await page.waitForFunction(() => document.querySelector("#voice-caption")?.classList.contains("show"), null, { timeout: TIMEOUT.step });
+  await page.waitForTimeout(700); // the button and the caption re-measure twice a second
+  let r = await heroButtonClear(page);
+  assert.deepEqual(r.hits, [], `${label}, hero selected: ${JSON.stringify(r)}`);
+  await page.evaluate(() => window.__frontier.select([]));
+  await page.waitForTimeout(700);
+  r = await heroButtonClear(page);
+  assert.deepEqual(r.hits, [], `${label}, nothing selected: ${JSON.stringify(r)}`);
+  if (await page.locator('#dock-tabs [data-dock="map"]').isVisible()) {
+    await tap('#dock-tabs [data-dock="map"]');
+    await page.waitForTimeout(700);
+    r = await heroButtonClear(page);
+    assert.deepEqual(r.hits, [], `${label}, Map tab open: ${JSON.stringify(r)}`);
+    await tap('#dock-tabs [data-dock="selection"]');
+  }
+  await page.evaluate(() => window.__frontier.audio.captions.clear());
+  return r;
+}
+// Gap 2: the hero HUD's ability tile label is never cut off (every campaign hero's ability and Skywing's Dive strike).
+const ABILITY_NAMES = ["Hold the line", "Caravan volley", "Iron hull", "Damper pulse", "Dive strike"];
+async function abilityLabelsFit(page, heroId, label) {
+  for (const name of ABILITY_NAMES) {
+    await page.evaluate(([id, name]) => { const f = window.__frontier, e = f.sim.get(id); e.ability = { ...e.ability, name }; f.step(0.05); }, [heroId, name]);
+    await page.waitForFunction((name) => document.querySelector("#hero-hud .hh-ability")?.dataset.ability === name, name, { timeout: TIMEOUT.step });
+    await page.waitForTimeout(150); // the fit runs on the next frame
+    const r = await page.evaluate(() => {
+      const b = document.querySelector("#hero-hud .hh-ability"), n = b.querySelector(".hh-ability-name"), t = b.getBoundingClientRect(), q = n.getBoundingClientRect();
+      return { text: n.textContent, font: parseFloat(getComputedStyle(n).fontSize), tile: [t.width, t.height].map(Math.round), clipped: q.top < t.top - 0.5 || q.bottom > t.bottom + 0.5 || q.left < t.left - 0.5 || q.right > t.right + 0.5 || n.scrollWidth > n.clientWidth + 1 };
+    });
+    assert.ok(!r.clipped && r.font >= 11, `${label} "${name}": ${JSON.stringify(r)}`);
+  }
+}
 
 const browser = await launchBrowser();
 await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywing's look-down camera and reticle, battle time and the draw budget", async () => {
@@ -211,11 +274,12 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     await page.evaluate((id) => window.__frontier.select([id]), ids.vale);
     const button = page.locator("#hero-mode-btn");
     await button.waitFor({ state: "visible", timeout: TIMEOUT.step });
-    // Above the dock, never in the top bar or the rail.
-    const geo = await page.evaluate(() => { const b = document.querySelector("#hero-mode-btn").getBoundingClientRect(), d = document.querySelector(".bottom-dock").getBoundingClientRect(), t = document.querySelector(".topbar").getBoundingClientRect(); return { b: [b.top, b.bottom, b.width, b.height], dock: d.top, top: t.bottom }; });
-    assert.ok(geo.b[1] <= geo.dock + 1 && geo.b[0] >= geo.top, `button ${JSON.stringify(geo)}`);
-    assert.ok(geo.b[2] >= 44 && geo.b[3] >= 44);
+    // Its own slot: the tile under Info in the touch tool column, overlapping nothing (caption, Map tab, dock).
+    const geo = await page.evaluate(() => { const b = document.querySelector("#hero-mode-btn").getBoundingClientRect(), i = document.querySelector("#touch-guide").getBoundingClientRect(); return { b: [b.left, b.top], info: [i.left, i.bottom] }; });
+    assert.ok(Math.abs(geo.b[0] - geo.info[0]) < 1 && geo.b[1] > geo.info[1], `the tile under Info ${JSON.stringify(geo)}`);
     await keep(page, "hero-mode-button-phone");
+    await assertButtonClear(page, tap, "portrait");
+    await page.evaluate((id) => window.__frontier.select([id]), ids.vale);
     // Normal draws at this view, for the budget below.
     const count = () => page.evaluate(() => { const f = window.__frontier, v = f.view, r = v.renderer; r.info.reset(); r.info.autoReset = false; v.update(f.sim, 0, f.selected, null); const n = r.info.render.calls; r.info.autoReset = true; return n; });
     await page.evaluate((id) => { const e = window.__frontier.sim.get(id); window.__frontier.view.focusOn(e.x, e.z); }, ids.vale);
@@ -226,6 +290,10 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     // The close-up detail around the aim point (its files load on the first use).
     await page.waitForFunction(() => window.__frontier.closeInfo?.on, null, { timeout: TIMEOUT.models });
     await audit(page, "portrait ground HUD");
+    // Gap 3: the shoulder camera looks down enough that the hero and the field fill the view (was ~10 degrees).
+    const look = await pitch(page);
+    assert.ok(look >= 22 && look <= 36, `portrait shoulder look-down ${look.toFixed(1)} degrees`);
+    await abilityLabelsFit(page, ids.vale, "portrait EN");
     // The stick: a touch drag on the left moves the hero.
     const start = await page.evaluate((id) => { const e = window.__frontier.sim.get(id); return { x: e.x, z: e.z }; }, ids.vale);
     const touch = (type, x, y, id = 11, target = "#hero-hud") => page.evaluate(([type, x, y, id, target]) => {
@@ -301,10 +369,13 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     const ids = await battle(page, tap);
     await page.evaluate((id) => window.__frontier.select([id]), ids.vale);
     await page.locator("#hero-mode-btn").waitFor({ state: "visible", timeout: TIMEOUT.step });
+    await assertButtonClear(page, tap, "landscape");
+    await page.evaluate((id) => window.__frontier.select([id]), ids.vale);
     await tap("#hero-mode-btn");
     await page.waitForFunction(() => window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
     await page.waitForTimeout(200);
     await audit(page, "landscape ground HUD");
+    await abilityLabelsFit(page, ids.vale, "landscape EN");
     await keep(page, "hero-mode-ground-landscape");
     // The hero falls: "Hero down" for about a second, then the RTS view comes back on its own.
     await page.evaluate((id) => { const f = window.__frontier, e = f.sim.get(id); f.sim.applyDamage(e, e.hp + e.shield + 999, 1, null); f.step(0.05); }, ids.vale);
@@ -319,6 +390,54 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     await tap('#hero-hud [data-hero="exit"]');
     await page.waitForFunction(() => !window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
     assert.deepEqual(errors, [], "landscape: page errors");
+    await page.close();
+  }
+  // ---------------------------------------------------------------- Vietnamese and Korean phones (re-score 2026-11-28)
+  for (const lang of ["vi", "ko"]) {
+    // DPR 3 like the re-score's phone (the game still draws at the Eco ratio 1 until the governor steps it up).
+    const { page, goto, ready, tap, errors } = await openPage(browser, "portrait", { deviceScaleFactor: 3 });
+    await goto();
+    await page.evaluate((lang) => { const k = "frontier-command.settings.v1"; localStorage.setItem(k, JSON.stringify({ ...JSON.parse(localStorage.getItem(k) || "{}"), version: 1, language: lang })); }, lang);
+    await page.reload();
+    await ready();
+    await page.waitForFunction((lang) => document.documentElement.lang === lang, lang, { timeout: TIMEOUT.step });
+    const ids = await battle(page, tap);
+    await page.evaluate((id) => window.__frontier.select([id]), ids.vale);
+    await page.locator("#hero-mode-btn").waitFor({ state: "visible", timeout: TIMEOUT.step });
+    if (lang === "vi") {
+      // Gap 4: the frame governor (off in browser tests, so fed here directly) steps the Eco pixel ratio up on smooth
+      // frames to at most 2, and back down at once when frames slow.
+      const pr = await page.evaluate(() => {
+        const f = window.__frontier, g = f.governor, r = f.view.renderer, out = { start: r.getPixelRatio(), steps: f.view.sharpSteps() };
+        g.reset();
+        for (let i = 0; i < 60 * 40; i++) g.sample(1 / 60, 3, true);
+        out.up = r.getPixelRatio();
+        for (let i = 0; i < 20 * 3; i++) g.sample(0.05, 20, true);
+        out.down = r.getPixelRatio();
+        for (let i = 0; i < 20 * 2; i++) g.sample(0.05, 20, true);
+        out.floor = r.getPixelRatio();
+        out.canvas = r.domElement.width;
+        return out;
+      });
+      assert.deepEqual({ start: pr.start, steps: pr.steps, up: pr.up }, { start: 1, steps: 4, up: 2 }, `sharpness up ${JSON.stringify(pr)}`);
+      assert.ok(pr.down < 2 && pr.floor === 1 && pr.canvas === 390, `sharpness back down ${JSON.stringify(pr)}`);
+      await page.evaluate(() => { const g = window.__frontier.governor; g.set(3); g.reset(); });
+    }
+    const r = await assertButtonClear(page, tap, `portrait ${lang}`);
+    assert.equal(r.label, lang === "vi" ? "Anh hùng" : "영웅", `${lang} short label`);
+    await page.evaluate((id) => window.__frontier.select([id]), ids.vale);
+    await tap("#hero-mode-btn");
+    await page.waitForFunction(() => window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
+    await abilityLabelsFit(page, ids.vale, `portrait ${lang}`);
+    await keep(page, `hero-mode-ability-${lang}`);
+    await page.setViewportSize({ width: 844, height: 390 });
+    await page.waitForTimeout(400);
+    await abilityLabelsFit(page, ids.vale, `landscape ${lang}`);
+    await tap('#hero-hud [data-hero="exit"]');
+    await page.waitForFunction(() => !window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
+    await page.locator("#hero-mode-btn").waitFor({ state: "visible", timeout: TIMEOUT.step });
+    await assertButtonClear(page, tap, `landscape ${lang}`);
+    assert.deepEqual(errors, [], `${lang}: page errors`);
     await page.close();
   }
 }, { browser });

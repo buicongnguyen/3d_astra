@@ -44,6 +44,21 @@
 @media (orientation: landscape) and (max-height: 520px) {
   .compact-ui #hero-mode-btn { bottom: auto; top: calc(env(safe-area-inset-top) + 58px); right: calc(max(10px, env(safe-area-inset-right)) + 64px); }
 }
+#hero-mode-btn .hm-short { display: none; }
+/* Phones (re-score 2026-11-28): one more tile of the touch tool row, in the slot after Info (src/hero-mode.js place()
+   sets left, top, width and height from that row), with the short label: icon over word, like its neighbours. */
+.compact-ui #hero-mode-btn.hero-tile {
+  right: auto; bottom: auto;
+  flex-direction: column; justify-content: center; gap: 1px;
+  min-width: 44px; min-height: 44px; padding: 1px 2px;
+  font: 700 12px/1 var(--hh-font); letter-spacing: 0.01em; text-transform: none; text-align: center;
+  white-space: normal; overflow: hidden;
+}
+/* A two-line label ("Anh hùng") and the star fit the 44 px tile: 14 + 1 + 2 x 12 + padding and border. */
+.compact-ui #hero-mode-btn.hero-tile svg { width: 14px; height: 14px; }
+.compact-ui #hero-mode-btn.hero-tile .hm-full { display: none; }
+.compact-ui #hero-mode-btn.hero-tile .hm-short { display: block; max-width: 100%; overflow-wrap: anywhere; }
+:root[lang="ko"] .compact-ui #hero-mode-btn.hero-tile .hm-short, :root[lang="ko"].compact-ui #hero-mode-btn.hero-tile .hm-short { overflow-wrap: normal; word-break: keep-all; }
 
 /* ---------------------------------------------------------------- Hero mode: the battlefield over everything */
 /* Over the top bar, the rail, the dock and the phone chips (z 24-40); the modal and the settings sheet stay on top. */
@@ -55,6 +70,8 @@ html.hero-mode .voice-caption { bottom: calc(env(safe-area-inset-bottom) + 168px
 /* Phones: subtitles go up under the steward strip, clear of the stick and the buttons. */
 html.hero-mode.compact-ui .voice-caption { bottom: auto !important; top: calc(env(safe-area-inset-top) + 136px); }
 html.hero-mode #hero-mode-btn { display: none; }
+/* The RTS idle-unit chips sat above the battlefield layer and showed through the hero HUD (landscape phones). */
+html.hero-mode #idle-chips { visibility: hidden !important; }
 /* Phones: the steward strip under the hero's plate, the notices below the top row (never over the HUD). */
 :root.hero-mode.compact-ui #steward-strip { left: max(12px, env(safe-area-inset-left)); right: auto; top: calc(env(safe-area-inset-top) + 62px); }
 :root.hero-mode.compact-ui:not(.in-briefing) #stage > #notice:not(#hero-x) { position: fixed !important; top: calc(env(safe-area-inset-top) + 96px) !important; left: 50% !important; right: auto !important; transform: translateX(-50%) !important; max-width: calc(100vw - 24px) !important; z-index: 43 !important; }
@@ -276,6 +293,9 @@ html.hero-mode #hero-mode-btn { display: none; }
   gap: 10px;
 }
 .hero-phone .hh-actions button { min-width: 0 !important; width: 100%; padding: 0 6px; font-size: 13px !important; white-space: normal; text-align: center; }
+/* The ability tile's label: at most two lines (the short phone name; hero-mode.js fitName steps it down to 11 px). */
+.hero-phone .hh-ability-name { display: block; max-width: 100%; line-height: 1.05; overflow-wrap: break-word; hyphens: none; }
+:root[lang="ko"] .hero-phone .hh-ability-name { word-break: keep-all; }
 .hero-phone .hh-ability { grid-column: 1; grid-row: 1; }
 .hero-phone .hh-dodge { grid-column: 2; grid-row: 1; }
 .hero-phone .hh-fire {

@@ -65,7 +65,7 @@ await suite("heroes: campaign heroes join, wear a gold ring and a nameplate, sel
     const t = await tile.evaluate((b) => { const r = b.getBoundingClientRect(); return { w: r.width, h: r.height, label: b.getAttribute("aria-label") }; });
     // Touch screens: a 44 px target (the PC card keeps its own tile size).
     if (viewport === "portrait" || viewport === "landscape") assert.ok(t.w >= 44 && t.h >= 44, `${viewport}: ability tile ${t.w}x${t.h}`);
-    assert.equal(t.label, vi ? "Giữ vững trận tuyến" : "Hold the line");
+    assert.equal(t.label, vi ? "Giữ trận tuyến" : "Hold the line");
     await tile[viewport === "desktop" || vi ? "click" : "tap"]();
     await page.waitForFunction((id) => { const f = window.__frontier, e = f.sim.get(id); return !!e && f.sim.hasStatus(e, "steadied") && e.abilityAt > f.sim.time; }, vale.id, { timeout: TIMEOUT.step });
     await shot(page, `heroes-ability-${viewport}`);

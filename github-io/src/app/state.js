@@ -112,6 +112,9 @@ export function createState() {
       S.view?.setRenderScale(level.scale);
       S.view?.setCloseLevel?.(level.name);
     },
+    // Phones: a sharper picture where frame time allows (governor.js SHARP, view.js setSharpness).
+    onSharp: (extra) => S.view?.setSharpness?.(extra),
+    sharpSteps: () => S.view?.sharpSteps?.() ?? 0,
   });
   return S;
 }

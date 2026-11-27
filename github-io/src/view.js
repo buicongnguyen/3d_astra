@@ -32,6 +32,9 @@ import { cacheTransforms } from "./transform-cache.js";
 import { AmbientLife } from "./ambient-life.js";
 import { defaults } from "./settings.js";
 import { ViewPlugins } from "./view-plugins.js";
+import { SHARP } from "./governor.js";
+// The governor never raises the pixel ratio past this (a DPR-3 phone draws at most 2x: 4x the Eco pixels).
+const SHARP_MAX = 2;
 import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, addSharedTeamRim, setRimTier } from "./look-grade.js";
 import { MissionLook } from "./mission-look-view.js";
 import { airMotion, airParts, poseAirParts } from "./air-motion.js";
@@ -207,7 +210,7 @@ export class WorldView {
       antialias: true,
       powerPreference: "high-performance",
     });
-    this.renderer.setPixelRatio(Math.min(devicePixelRatio, this.lowPower ? 1 : 1.6));
+    this.renderer.setPixelRatio(this.pixelRatio());
     this.renderer.shadowMap.enabled = !this.lowPower;
     // A software rasteriser (SwiftShader, llvmpipe, Microsoft Basic Render: a computer without a working GPU,
     // and CI's runners) pays for every texture read on the CPU: the ground detail's High form (up to seven layers
@@ -522,8 +525,22 @@ export class WorldView {
     this.renderer.setPixelRatio(this.pixelRatio());
     this.updateCamera();
   }
+  // The quality's cap (Eco 1, High 1.6) plus the governor's sharpness steps (setSharpness), never over the screen's
+  // own ratio or SHARP_MAX; the render scale (the governor's rescue trial) multiplies the result.
   pixelRatio() {
-    return Math.min(devicePixelRatio, this.lowPower ? 1 : 1.6) * (this.renderScale || 1);
+    const base = Math.min(devicePixelRatio, this.lowPower ? 1 : 1.6);
+    return Math.max(base, Math.min(devicePixelRatio, SHARP_MAX, base + (this.sharpness || 0))) * (this.renderScale || 1);
+  }
+  // How many governor sharpness steps (governor.js SHARP.step) still change the pixel ratio on this screen.
+  sharpSteps() {
+    const base = Math.min(devicePixelRatio, this.lowPower ? 1 : 1.6), top = Math.min(devicePixelRatio, SHARP_MAX);
+    return Math.max(0, Math.ceil((top - base) / SHARP.step - 1e-6));
+  }
+  setSharpness(extra) {
+    if (extra === (this.sharpness || 0)) return;
+    this.sharpness = extra;
+    this.renderer.setPixelRatio(this.pixelRatio());
+    this.updateCamera();
   }
   setQuality(level) {
     this.lowPower = level === "low";
@@ -659,6 +676,8 @@ export class WorldView {
       this.heroSaved = null;
       this.camera = saved.camera;
       this.scene.fog.near = saved.near; this.scene.fog.far = saved.far;
+      // The RTS fog colour is the sky colour (mission-look-view.js keeps both the same).
+      this.scene.fog.color.copy(this.scene.background);
       this.zoom = saved.zoom;
       this.focus.copy(saved.focus);
       this.updateCamera();
@@ -679,6 +698,11 @@ export class WorldView {
     this.heroEye.set(eye.x, eye.y, eye.z);
     this.heroLook.set(look.x, look.y, look.z);
     if (Number.isFinite(fov)) this.heroCamera.fov = fov;
+    // The low camera sees the horizon: distant ground fades into the backdrop's own haze colour (the colour the
+    // map-edge sky has at the horizon, tinted by mission looks), not the darker RTS sky colour, which drew a dark
+    // seam where the map meets the backdrop (re-score 2026-11-28, d08/d25).
+    const haze = this.terrainRoot?.getObjectByName("backdrop")?.material?.userData?.sky?.horizon;
+    if (haze) this.scene.fog.color.copy(haze);
     this.updateCamera();
   }
   // The governor's level (governor.js LEVELS) shrinks the close-view radius on a struggling device.

@@ -10,6 +10,12 @@
 // Eight smooth seconds step back up. Hitches over 250 ms, pauses and the first seconds after
 // a match starts are ignored.
 // `life` is the share of ambient creatures still drawn: half when still, none at rescue.
+// Sharpness (re-score 2026-11-28): phones start at the quality's pixel-ratio cap (Eco = 1, soft on a DPR-3 screen).
+// At the top level, SHARP.upAfter smooth seconds with main-thread room add one SHARP.step of pixel ratio, up to the
+// `sharpSteps()` the view allows (view.js: up to 2, never past the screen's own ratio). A second with the median over
+// 20 ms, or two in a row with p90 over 28 ms (missed frames), takes one step back at once, before any cosmetic step, and holds further
+// steps up for SHARP.hold s (doubling on each drop, to SHARP.maxHold), so it never flickers between two ratios.
+// A hitch over 250 ms (a model or shader loading) re-arms a 1 s grace.
 export const LEVELS = [
   { name: "rescue", motion: 0, scale: 0.8, life: 0 },
   { name: "still", motion: 0, scale: 1, life: 0.5 },
@@ -18,11 +24,17 @@ export const LEVELS = [
 ];
 
 const median = (values) => values[values.length >> 1];
+export const SHARP = Object.freeze({ step: 0.25, upAfter: 4, hold: 20, maxHold: 160, busy: 8 });
 
 export class Governor {
-  constructor({ onChange, downAfter = 2, upAfter = 8, grace = 3 } = {}) {
-    Object.assign(this, { onChange, downAfter, upAfter, graceSeconds: grace });
+  constructor({ onChange, onSharp, sharpSteps = () => 0, downAfter = 2, upAfter = 8, grace = 3 } = {}) {
+    Object.assign(this, { onChange, onSharp, sharpSteps, downAfter, upAfter, graceSeconds: grace });
     this.level = LEVELS.length - 1;
+    // Extra pixel-ratio steps over the quality's cap (SHARP), and the wait before the next step up.
+    this.sharp = 0;
+    this.sharpSmooth = 0;
+    this.sharpHold = 0;
+    this.sharpBackoff = SHARP.hold;
     this.intervals = [];
     this.work = [];
     this.scaleTried = false;
@@ -40,10 +52,14 @@ export class Governor {
     this.smooth = 0;
     this.grace = this.graceSeconds;
     this.trial = null;
+    this.sharpSmooth = 0;
+    // A new match measures afresh: the reached sharpness is kept (the device did not change) but has to hold up.
+    this.sharpHold = 0;
   }
   // interval: seconds since the previous frame; work: main-thread milliseconds of this frame.
   sample(interval, work, playing) {
     if (!playing || interval > 0.25) {
+      if (playing) this.grace = Math.max(this.grace, 1);
       this.intervals.length = 0;
       this.work.length = 0;
       this.clock = 0;
@@ -75,6 +91,26 @@ export class Governor {
     }
     const slow = typical > 37 || (typical > 24 && busy > 8);
     const smooth = p90 < 19;
+    this.last = { typical, busy, p90 }; // the last judged second (debug hooks, probes)
+    if (this.sharpHold > 0) this.sharpHold--;
+    // Sharpness goes first and comes back last.
+    const limit = Math.max(0, this.sharpSteps?.() ?? 0);
+    if (this.sharp > limit) this.setSharp(limit);
+    // Frames clearly slower than 60 Hz drop a step at once; a second with only some missed frames needs a second one.
+    this.sharpMiss = p90 > 28 ? (this.sharpMiss || 0) + 1 : 0;
+    if (this.sharp > 0 && (typical > 20 || this.sharpMiss >= 2)) {
+      this.setSharp(this.sharp - 1);
+      this.sharpHold = this.sharpBackoff;
+      this.sharpBackoff = Math.min(SHARP.maxHold, this.sharpBackoff * 2);
+      this.slow = 0;
+      this.smooth = 0;
+      return;
+    }
+    this.sharpSmooth = smooth && busy < SHARP.busy && this.level === LEVELS.length - 1 ? this.sharpSmooth + 1 : 0;
+    if (this.sharpSmooth >= SHARP.upAfter && this.sharpHold <= 0 && this.sharp < limit) {
+      this.setSharp(this.sharp + 1);
+      this.sharpSmooth = 0;
+    }
     this.slow = slow ? this.slow + 1 : 0;
     this.smooth = smooth ? this.smooth + 1 : 0;
     if (this.slow >= this.downAfter && this.level > 0) {
@@ -88,6 +124,11 @@ export class Governor {
     } else if (this.smooth >= this.upAfter && this.level < LEVELS.length - 1) {
       this.set(this.level + 1);
     }
+  }
+  setSharp(steps) {
+    this.sharp = steps;
+    this.sharpSmooth = 0;
+    this.onSharp?.(steps * SHARP.step, steps);
   }
   set(level) {
     this.level = level;
