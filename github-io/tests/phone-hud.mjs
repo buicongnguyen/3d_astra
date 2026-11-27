@@ -258,4 +258,48 @@ await suite("phone-hud", async () => {
     assert.deepEqual(errors, []);
     await page.close();
   }
+  // ---- 5. One top row (owner 2026-11-27: "fix the phone top bar to take less space") ----
+  // The top chrome is one 44 px bar (+ safe area); the six touch actions (Army, Workers, Box, Queue, Clear, Info) stay
+  // visible, one tap, 44 px, 11 px text, inside the screen, apart from each other, the dock, the tabs, the flag and the
+  // notice: a rail down the hand's edge on portrait phones, inside the bar's row on landscape and portrait tablets.
+  const ACTIONS = ["select-army", "select-workers", "box-select", "queue-orders", "clear-selection", "touch-guide"];
+  const TOPS = { ...SIZES, se: { width: 375, height: 667, mobile: true }, big: { width: 430, height: 932, mobile: true }, tablet: { width: 768, height: 1024, mobile: true } };
+  const topRow = (actions) => {
+    const vis = (e) => e && e.getClientRects().length && getComputedStyle(e).visibility !== "hidden" && parseFloat(getComputedStyle(e).opacity) > 0;
+    const rect = (e) => e.getBoundingClientRect();
+    let top = 0;
+    for (const e of document.querySelectorAll(".topbar .resource, .topbar .icon-button, .topbar #clock")) if (vis(e)) top = Math.max(top, rect(e).bottom);
+    const bs = actions.map((id) => { const e = document.getElementById(id); if (!vis(e)) return { id, hidden: true }; const r = rect(e);
+      const span = e.querySelector("span"), f = span ? parseFloat(getComputedStyle(span).fontSize) : 99;
+      return { id, l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height, f, cut: span ? span.scrollWidth > e.clientWidth + 1 : false, top: document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest("button")?.id }; });
+    const inline = bs.every((b) => !b.hidden && b.t < top);
+    if (inline) top = Math.max(top, ...bs.map((b) => b.b));
+    const others = [...document.querySelectorAll(".bottom-dock, #dock-tabs > button, #mission-toggle, #notice.show, #idle-chips .idle-button")].filter(vis).map((e) => ({ id: e.id || e.className, ...(({ left: l, top: t, right: r, bottom: b }) => ({ l, t, r, b }))(rect(e)) })).filter((o) => o.r - o.l > 0 && o.b - o.t > 0);
+    return { top, bs, others, W: innerWidth, H: innerHeight, safe: parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--hud-top")) || 0 };
+  };
+  const hit = (a, b) => a.l < b.r - 1 && b.l < a.r - 1 && a.t < b.b - 1 && b.t < a.b - 1;
+  for (const lang of ["en", "vi", "ko"]) for (const [name, size] of Object.entries(TOPS)) {
+    const { page, goto, ready, errors } = await openPage(browser, size);
+    if (lang !== "en") await page.addInitScript(([k, lang]) => { const s = JSON.parse(localStorage.getItem(k) || "{}"); s.version = 1; s.language = lang; localStorage.setItem(k, JSON.stringify(s)); }, [KEY, lang]);
+    await goto(); await ready();
+    await startMatch(page);
+    for (const state of ["none", "mixed", "building"]) {
+      await pick(page, state);
+      if (state === "none") await page.evaluate(() => window.__frontier.notice("Meridian is online. Assign Harvesters to the amber alloy deposits."));
+      const m = await page.evaluate(topRow, ACTIONS);
+      const where = `${lang} ${name} ${state}`;
+      assert.ok(m.top <= 46 + m.safe, `${where}: one top row, ${Math.round(m.top)} px (<= 46 + safe area)`);
+      for (const b of m.bs) {
+        assert.ok(!b.hidden, `${where}: ${b.id} visible`);
+        assert.ok(b.w >= 43.5 && b.h >= 43.5 && b.f >= 10.95 && !b.cut, `${where}: ${b.id} 44 px, 11 px text, label fits ${JSON.stringify(b)}`);
+        assert.ok(b.l >= 0 && b.r <= m.W && b.t >= 0 && b.b <= m.H, `${where}: ${b.id} on screen`);
+        assert.equal(b.top, b.id, `${where}: ${b.id} is the element under its centre (one tap)`);
+        for (const c of m.bs) if (c !== b) assert.ok(!hit(b, c), `${where}: ${b.id} apart from ${c.id}`);
+        for (const o of m.others) assert.ok(!hit(b, o), `${where}: ${b.id} clear of ${o.id} ${JSON.stringify([b, o])}`);
+      }
+      if (lang === "en" && state === "mixed") await shot(page, `phone-hud-toprow-${name}`);
+    }
+    assert.deepEqual(errors, []);
+    await page.close();
+  }
 }, { browser });

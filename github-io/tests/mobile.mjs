@@ -319,17 +319,17 @@ try {
   assert.equal(await page.locator("#mode-banner").isVisible(), false);
 
   await read(() => {
-    window.__frontier.view.focusOn(-24, 20);
+    window.__frontier.view.focusOn(-30, 20);
     window.__frontier.view.zoom = 38;
     window.__frontier.view.resize();
-  });
+  }); // -30: the base sits right of the portrait action rail (phone-topbar.css)
   await tapMore("#box-select");
   rect = await page.locator("#world canvas:not(.activity-overlay)").boundingBox();
   // Portrait phones run the canvas under the tool row and the dock: drag across the framed part.
   const cover = await read(() => ({ top: window.__frontier.view.coverTop || 0, bottom: window.__frontier.view.cover || 0 }));
   await gesture([
-    // 20 px in: phones draw the canvas to the screen edges but leave the 12 px gesture margins to the system.
-    [{ id: 1, x: rect.x + 20, y: rect.y + cover.top + 55 }],
+    // Phones draw the canvas to the screen edges but leave the 12 px gesture margins to the system.
+    [{ id: 1, x: rect.x + 70, y: rect.y + cover.top + 110 }], // 70 px in and 110 down: past the portrait action rail and the notice lane (phone-topbar.css)
     [{ id: 1, x: rect.x + rect.width - 20, y: rect.y + rect.height - cover.bottom - 10 }],
   ]);
   assert.ok(

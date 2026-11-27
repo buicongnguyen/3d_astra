@@ -75,7 +75,9 @@ await suite('phones', async () => {
       await tap('#select-workers'); assert.ok(await page.evaluate(() => [...window.__frontier.selected].every((id) => window.__frontier.sim.get(id).type === 'worker')), 'Workers selects');
       assert.equal(await page.evaluate(() => !!document.getElementById('touch-more') || !!document.getElementById('touch-sheet')), false, 'no "…" button or sheet');
       const row = await page.evaluate(() => ['select-army', 'select-workers', 'box-select', 'queue-orders', 'clear-selection', 'touch-guide'].map((id) => { const e = document.getElementById(id), r = e.getBoundingClientRect(), s = e.querySelector('span'); return { id, top: Math.round(r.top), w: Math.round(r.width), h: r.height, font: parseFloat(getComputedStyle(e).fontSize), cut: s ? s.scrollWidth > s.clientWidth + 1 : false, label: s?.textContent.length ?? 0 }; }));
-      assert.ok(Math.max(...row.map((b) => b.top)) - Math.min(...row.map((b) => b.top)) <= 2, `one row: ${JSON.stringify(row)}`); // a just-tapped button sits 1 px lower (:active)
+      // One row, or (portrait phones since 2026-11-27, phone-topbar.css) one rail down the hand's edge so the top bar is a single row.
+      const rail = await page.evaluate(() => ['select-army', 'touch-guide'].map((id) => Math.round(document.getElementById(id).getBoundingClientRect().left)));
+      assert.ok(Math.max(...row.map((b) => b.top)) - Math.min(...row.map((b) => b.top)) <= 2 || (Math.abs(rail[0] - rail[1]) <= 2 && row.every((b, i) => !i || b.top > row[i - 1].top + 40)), `one row or one rail: ${JSON.stringify(row)}`); // a just-tapped button sits 1 px lower (:active)
       assert.ok(Math.max(...row.map((b) => b.w)) - Math.min(...row.map((b) => b.w)) <= 2, `equal widths: ${JSON.stringify(row)}`);
       assert.ok(row.every((b) => b.h >= 43.5 && b.font >= 11 && !b.cut && b.label <= 10), `44 px, 11 px, labels fit: ${JSON.stringify(row)}`);
       await tap('#box-select'); assert.equal(await page.locator('#box-select').getAttribute('aria-pressed'), 'true');

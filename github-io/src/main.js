@@ -68,6 +68,7 @@ import "./menu-pro.css";
 import "./theme-walnut.css";
 import "./hud-contrast.css";
 import "./phone-hud-slim.css";
+import "./phone-topbar.css";
 import "./phone-handed.css";
 import "./theme-switch.js";
 import { setupWildUi } from "./app/wild-ui.js";

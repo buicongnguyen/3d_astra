@@ -1,0 +1,59 @@
+/* Phone top bar, one row (owner 2026-11-27: "fix the phone top bar to take less space").
+   Portrait phones had two rows on top: the resource/system bar and the Army / Workers / Box / Queue / Clear / Info row
+   (90 px). The six actions now stand as a rail down the hand's edge, right under the bar, same 44 px buttons and
+   labels, all visible and one tap; the top chrome is the single 44 px bar. Wider portrait screens (tablets, >= 600 px)
+   keep the six inside the bar's row, between the two pills. Landscape was already one row and is unchanged; PC never
+   matches (compact-ui only). Left-handed players get the rail on the right edge (phone-handed.css moves the row). */
+@media (max-aspect-ratio: 1.35) {
+  :root.compact-ui:not(.in-briefing) #world { --view-cover-top: calc(var(--header-height) + var(--hud-top)); }
+  :root.compact-ui:not(.in-briefing) .touch-controls {
+    top: 4px;
+    right: auto;
+    width: 50px !important;
+    flex-direction: column;
+    gap: 3px;
+    overflow: visible;
+    touch-action: none;
+  }
+  :root.compact-ui:not(.in-briefing) .touch-controls > :is(button, #clear-selection) {
+    flex: 0 0 44px;
+    width: 50px;
+    min-width: 50px;
+    height: 44px;
+    padding: 2px 1px;
+    gap: 2px;
+  }
+  :root.compact-ui:not(.in-briefing) .touch-controls > button > span { max-width: 100%; font: 700 11px/12px var(--font-ui); white-space: nowrap; letter-spacing: -0.2px; }
+  /* Notices and the targeting prompt move up into the space the old row used, clear of the rail on either side. */
+  :root.compact-ui:not(.in-briefing):not(.in-defence) #stage > #notice { top: 4px !important; left: calc(var(--edge-left, 8px) + 58px) !important; max-width: min(340px, calc(100% - 2 * (var(--edge-left, 8px) + 58px))) !important; }
+  :root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) #stage > #notice { left: var(--edge-left, 8px) !important; }
+  :root.compact-ui:not(.in-briefing):not(.in-defence) #stage > #mode-banner { top: 4px; left: calc(var(--edge-left, 8px) + 58px); right: 12px; width: auto; max-width: none; transform: none; }
+  :root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) #stage > #mode-banner { left: 12px; right: calc(var(--edge-right, 8px) + 58px); }
+  :root.compact-ui:not(.in-briefing):not(.in-defence) #stage:has(> #mode-banner:not([hidden])) > #notice { top: 80px !important; }
+}
+@media (max-aspect-ratio: 1.35) and (min-width: 600px) {
+  /* Tablets: the six sit in the top row itself, between the resource pill and the system pill. */
+  :root.compact-ui:not(.in-briefing) .touch-controls {
+    position: fixed;
+    top: var(--hud-top);
+    left: 260px !important;
+    right: 170px !important;
+    width: auto !important;
+    flex-direction: row;
+    justify-content: center;
+    z-index: 40;
+  }
+  :root.compact-ui:not(.in-briefing) .touch-controls > :is(button, #clear-selection) { flex: 0 1 64px; width: auto; min-width: 50px; }
+  :root.compact-ui:not(.in-briefing):not(.in-defence) #stage > #notice { left: var(--edge-left, 8px) !important; }
+  :root.compact-ui:not(.in-briefing):not(.in-defence) #stage > #mode-banner { left: 12px; right: 12px; }
+}
+@media (max-aspect-ratio: 1.35) and (max-width: 599px) and (max-height: 720px) {
+  /* Short portrait phones (iPhone SE class): the rail folds into two columns of three so it ends high on the
+     screen, clear of the hint lane and the dock band; the notice lane sits right under it. */
+  :root.compact-ui:not(.in-briefing) .touch-controls { display: grid; grid-template-columns: 50px 50px; grid-auto-rows: 44px; width: 103px !important; }
+  :root.compact-ui:not(.in-briefing):not(.in-defence) #stage > #mode-banner { left: calc(var(--edge-left, 8px) + 111px); }
+  :root.compact-ui.left-handed:not(.in-briefing):not(.in-defence) #stage > #mode-banner { left: 12px; right: calc(var(--edge-right, 8px) + 111px); }
+  /* Too narrow beside the rail: the notice lane starts right under it, at the left edge, out of the middle third. */
+  :root.compact-ui:not(.in-briefing):not(.in-defence) #stage > #notice { top: 151px !important; left: var(--edge-left, 8px) !important; max-width: calc(66vw - 16px) !important; }
+  :root.compact-ui:not(.in-briefing):not(.in-defence) #stage:has(> #mode-banner:not([hidden])) > #notice { top: 151px !important; }
+}
