@@ -178,3 +178,14 @@
 /* Hero battle (2026-11-28) makes five quick tiles: on a PC they sit three and two, so each keeps its two lines. */
 :root:not(.compact-ui) #title-actions:not([hidden]):has(#hero-battle) { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 #briefing #hero-battle > .icon { color: #ffd98a; }
+/* Portrait phones: the five tiles sit three and two with their names only (two rows, as the four did), so the
+   setup under them keeps its place above the pinned Start bar on a 320 px phone. */
+@media (max-width: 560px) and (orientation: portrait) {
+  #title-actions:not([hidden]):has(#full-army-battle):has(#hero-battle), #title-actions:not([hidden]):has(#full-army-battle):has(#hero-battle):has(#lan-open) { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  #title-actions:has(#hero-battle) .quick-text small { display: none; }
+  #title-actions:has(#hero-battle) > button { min-height: 44px; }
+}
+/* Landscape phones (the campaign view too): five tiles in one row keep their names only. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .compact-ui #title-actions:has(#hero-battle) .quick-text small { display: none; }
+}
