@@ -119,7 +119,7 @@
     "test:lan-play": "node tests/lan-play.mjs"
   },
   "dependencies": {
-    "three": "0.185.1"
+    "three": "0.187.0"
   },
   "devDependencies": {
     "vite": "8.2.2",
