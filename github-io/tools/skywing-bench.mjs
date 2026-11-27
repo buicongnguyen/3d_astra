@@ -44,7 +44,7 @@ function mission(def, withSky, difficulty) {
   for (let i = 0; i < cap / TICK && !s.result; i++) {
     bot.step();
     // Skywing escorts the army: every 2 s it attack-moves to the middle of the bot's fighters.
-    if (withSky && i % 40 === 0) {
+    if (withSky && !process.env.SKY_IDLE && i % 40 === 0) {
       const sky = s.entities.find((e) => e.assist && e.hp > 0);
       const army = s.own(0).filter((e) => e.kind === "unit" && e.type !== "worker" && !e.assist && e.damage > 0);
       if (sky && army.length && !sky.swoop) {

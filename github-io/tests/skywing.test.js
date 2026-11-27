@@ -207,6 +207,13 @@ test("the steward never orders Skywing, and Frontier Defence flies it on its own
   s.command({ team: 0, type: "skywing" });
   const e = sky(s);
   assert.equal(s.stewardMay(e), false);
+  // The computer never counter-builds against it (its intel skips Skywing).
+  e.x = 0; e.z = 0; s.explored[1]?.fill?.(1); s.updateVision();
+  for (const t of s.entities) if (t.team === 1 && t.type === "hq") { e.x = t.x - 6; e.z = t.z - 6; }
+  s.updateVision(); s.updateAirSight?.();
+  assert.equal(s.isVisible(e, 1), true, "the enemy sees Skywing");
+  s.observeEnemies(1);
+  assert.equal([...s.intel[1].keys()].includes(e.id), false, "but never counts it");
   // Defence: it finds the enemy by itself.
   const level = DEFENCE_LEVELS[0];
   const d = new Simulation({ map: level.map, enemyCount: level.enemies, aiSpeed: level.speed, alliance: level.alliance, mission: level });

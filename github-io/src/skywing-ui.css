@@ -88,3 +88,7 @@
 :is(#defence-setup, #skirmish-setup, .mb-card) .assist-rows .rule-buttons button { flex: 1 1 0; width: auto; min-width: 0; min-height: 44px; display: inline-flex; flex-direction: row; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
 /* The phone menus lay a rule row out as name | buttons; this row has no name: the buttons take the full width. */
 :is(#briefing, .mb-card) .assist-rows .rule-row > * { grid-column: 1 / -1; }
+/* The Defence menu keeps 12 px as its smallest text (tests/defence.mjs), the phone rule rows' 11 px included. */
+:root #briefing #defence-setup .assist-rows :is(.rule-help, .assist-price, .coin-chip span) { font-size: 12px; }
+/* Phones lay the top bar out as a grid (emblem | actions): the chip floats in the middle instead of taking a cell. */
+:root.compact-ui.in-briefing .topbar .coin-top { position: absolute; left: 50%; top: 50%; margin: 0; transform: translate(-50%, -50%); pointer-events: none; }

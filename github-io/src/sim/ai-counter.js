@@ -24,7 +24,9 @@ export const aiCounter = {
     }
     for (const e of this.entities) {
       // Wild nest guards (team < 0, round 4) are not the enemy army: they never shape the counter-build.
-      if (e.hp <= 0 || e.type === "worker" || e.kind === "wall" || e.team < 0 || !this.hostile(team, e.team)) continue;
+      // H1 Skywing (e.assist) is an opt-in assist: the computer never rebuilds its army to answer it (owner rule:
+      // taking help never makes a match harder).
+      if (e.hp <= 0 || e.type === "worker" || e.kind === "wall" || e.team < 0 || e.assist || !this.hostile(team, e.team)) continue;
       if (seen.has(e.id) || !this.isVisible(e, team)) continue;
       if (seen.size >= MAX_SEEN) break;
       seen.set(e.id, e.type);
