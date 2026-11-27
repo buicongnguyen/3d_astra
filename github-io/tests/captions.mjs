@@ -9,6 +9,7 @@
 // (the caption follows that clock), so slow machines cannot race it. Screenshots: test-results/captions-*.png.
 import assert from "node:assert/strict";
 import { launchBrowser, openPage, suite, shot, TIMEOUT } from "./lib/harness.mjs";
+import { assertPcStack } from "./lib/pc-messages.mjs";
 import { hudCoverage } from "./lib/hud-coverage.mjs";
 import { openSettings, closeSettings, setLanguage } from "./lib/settings-sheet.mjs";
 import { translate } from "../src/i18n.js";
@@ -100,6 +101,8 @@ async function check(page, { name, lang, phone, kind, line, shotName, budget = 3
   assert.ok(m.speaker >= 11 && m.words >= (phone ? 12.95 : 14), `${name}: text sizes ${m.words}/${m.speaker} px`);
   assert.deepEqual(await dockBox(page), line.dock, `${name}: the dock does not move when a caption shows`);
   const { pct } = await page.evaluate(hudCoverage, {});
+  // PC (owner 2026-11-27): the caption is part of the top-left message stack (src/app/message-stack.js).
+  if (!phone) await assertPcStack(page, `${name} ${lang} ${kind}`, ["#voice-caption.show"]);
   if (phone) assert.ok(pct < budget, `${name} ${lang} ${kind}: HUD covers ${pct.toFixed(1)} % with the caption up (under ${budget} %)`);
   table.push([name, lang, kind, line.base, pct, m.box]);
   if (shotName) await shot(page, shotName);

@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { assertPcStack } from './lib/pc-messages.mjs';
 
 // Phase G interface extras on desktop 1440x900, phone portrait 390x844 and phone landscape 844x390:
 //  1 training card: a click that did not start on a card button cannot fold the card away, and the
@@ -238,6 +239,8 @@ if (want('hint')) {
     assert.ok(close.width >= 44 && close.height >= 44, 'hint close target is 44 px');
     assert.ok(await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('#fight-hint .fh-text')).fontSize) >= 11));
     assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('#fight-hint')).pointerEvents), 'none', 'the hint never blocks the battlefield');
+    // PC (owner 2026-11-27): a real counter hint sits in the top-left message stack, not in the middle.
+    await assertPcStack(page, `${name} counter hint`, ['#fight-hint:not([hidden])']);
     await page.screenshot({ path: `${shots}/ui-hint-${name}.png` });
     // In page, not a pointer click: on a slow CI machine the hint can fade by itself while Playwright waits for the button to settle.
     await page.evaluate(() => document.querySelector('#fight-hint .fh-close').click());

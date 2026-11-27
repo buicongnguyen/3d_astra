@@ -8,6 +8,7 @@
 // Screenshots: test-results/defence-*.png.
 import assert from "node:assert/strict";
 import { launchBrowser, openPage, suite, shot, TIMEOUT } from "./lib/harness.mjs";
+import { assertPcStack } from "./lib/pc-messages.mjs";
 
 const browser = await launchBrowser();
 const VIEWPORTS = (process.env.DEFENCE_VIEWPORTS || "desktop,portrait,landscape").split(",");
@@ -354,6 +355,8 @@ await suite("defence", async () => {
     const covered = await page.evaluate(() => window.__msgCover());
     assert.ok(covered.hint && covered.card, `${viewport}: the hint and the card both show`);
     assert.deepEqual(covered.covers, [], `${viewport}: no message covers the Next wave card or the bar`);
+    // PC (owner 2026-11-27): the breach alert and the hint stack at the top left, clear of the bar and the card.
+    if (viewport === "desktop") await assertPcStack(page, `${viewport} breach`, ["#notice.show", "#fight-hint:not([hidden])"]);
     await shot(page, `defence-intel-hint-${viewport}`);
     await page.evaluate(() => { window.__frontier.fightHint.hidden = true; window.__frontier.clearMessages(); });
     // Re-score 2026-11-27: the wave's last enemy broke through, so the breach and the clear land on one tick. The announcer holds

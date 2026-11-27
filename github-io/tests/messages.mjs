@@ -3,6 +3,7 @@
 // Logic: src/message-queue.js (unit-tested in message-queue.test.js); drawing: app/hud.js, ui-extras.css.
 import assert from "node:assert/strict";
 import { launchBrowser, openPage, suite, shot, TIMEOUT } from "./lib/harness.mjs";
+import { assertPcStack } from "./lib/pc-messages.mjs";
 
 const VIEWS = [["desktop", "desktop"], ["portrait", "portrait"], ["landscape", "landscape"], ["small", { width: 320, height: 568, mobile: true }]];
 
@@ -86,6 +87,10 @@ await suite("messages", async () => {
       assert.ok(hint.h <= 46, `${name}: hint is a thin line (${hint.h} px)`);
       for (const sel of [".topbar", ".touch-controls", "#dock-tabs", ".bottom-dock"]) assert.equal(overlap(hint, await box(page, sel)), false, `${name}: hint over ${sel}`);
       assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector("#fight-hint")).pointerEvents), "none");
+    } else {
+      // PC (owner 2026-11-27): the alert and the hint stack at the top left, the hint under the alert.
+      await page.waitForTimeout(300);
+      await assertPcStack(page, `${name} alert`, ["#notice.show", "#fight-hint:not([hidden])"]);
     }
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, `${name}: no sideways scroll`);
     await shot(page, `messages-${name}`);
@@ -175,6 +180,8 @@ await suite("messages", async () => {
     assert.equal(overlap(alert2, hint2), false, `${name}: hint over the alert with a dialogue line`);
     if (mobile) assert.ok(hint2.bottom <= size.height / 3 || hint2.y >= size.height * 0.33, `${name}: hint in the middle third with a dialogue line`);
     if (mobile) await inLane(page, `${name} dialogue`, size, [".dialogue", "#fight-hint"]);
+    // PC: the stack steps below the dialogue box on the left, still in the top-left quarter.
+    else await assertPcStack(page, `${name} dialogue`, ["#notice.show", "#fight-hint:not([hidden])"]);
     await shot(page, `messages-${name}-dialogue`);
 
     assert.deepEqual(errors, [], `${name}: page errors`);

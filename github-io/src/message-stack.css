@@ -1,0 +1,16 @@
+/* PC message stack (app/message-stack.js; owner 2026-11-27): every transient battle message sits at the top left,
+   one under another, never in the middle of the battlefield. This file only moves them to the left edge (16 px, the
+   notice line's and the map title's edge) and drops the centring transform; message-stack.js sets each one's top.
+   Phones (.compact-ui) are untouched: they keep their own lanes (phone-hud.css, captions-ui.js). */
+:root:not(.compact-ui) #fight-hint,
+:root:not(.compact-ui) #update-toast,
+:root:not(.compact-ui) .meta-toast,
+:root:not(.compact-ui) .voice-caption {
+  left: 16px;
+  right: auto;
+  transform: none;
+}
+:root:not(.compact-ui) .voice-caption { max-width: min(520px, calc(50vw - 32px)); }
+:root:not(.compact-ui) .voice-caption { bottom: auto; top: 140px; }
+:root:not(.compact-ui) .meta-toast.in { animation-name: message-stack-in; }
+@keyframes message-stack-in { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: none; } }

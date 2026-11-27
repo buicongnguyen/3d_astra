@@ -56,6 +56,7 @@ import "./loading.css";
 import "./ui-kit.css";
 import "./phone-hud.css";
 import { registerOffline } from "./app/offline.js";
+import { setupMessageStack } from "./app/message-stack.js";
 import { setupCover } from "./app/cover.js";
 import { setupQuickBattle } from "./quick-battle.js";
 import { setupLan } from "./lan-entry.js"; // W11 LAN play: the title tile; the rest loads on first use (src/net/)
@@ -252,6 +253,8 @@ const bootOnce = () => {
 };
 // Here, not in bootOnce: it registers the service worker from a load listener, which must exist before load fires.
 registerOffline(A, S.query, () => modelsForMatch(S.sim));
+// PC: transient battle messages stack at the top left (app/message-stack.js).
+setupMessageStack();
 if (document.readyState === "complete") setTimeout(bootOnce, 0);
 else addEventListener("load", () => setTimeout(bootOnce, 0), { once: true });
 requestAnimationFrame(() => setTimeout(bootOnce, 800));

@@ -77,6 +77,11 @@ export class CaptionBox {
   place() {
     this.placedAt = performance.now();
     const W = innerWidth, H = innerHeight, el = this.el;
+    // PC: the caption is part of the top-left message stack (app/message-stack.js, message-stack.css).
+    if (!document.documentElement.classList.contains("compact-ui")) {
+      el.style.left = el.style.bottom = el.style.maxWidth = "";
+      return;
+    }
     const boxes = [];
     for (const node of document.querySelectorAll(AVOID)) {
       if (node === el || !node.getClientRects().length) continue;

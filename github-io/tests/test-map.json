@@ -18,7 +18,7 @@
     },
     {
       "name": "build, workflow, shared test code, test hooks and the frame loop (everything)",
-      "files": ["package.json", "package-lock.json", "vite.config.js", "index.html", "../.github/**", "../.gitattributes", "../.gitignore", ".gitignore", "tests/lib/{harness,ci-like,ci-matrix,settings-sheet,client-source,client-wiring,hud-coverage}.mjs", "tests/lib/client-source.js", "tests/ci-local.mjs", "tests/serve-build.mjs", "src/main.js", "src/app/{frame,state,debug-hooks,match-flow,shell,screens,dom,preferences}.js", "src/settings-ui.js", "src/settings.js", "src/i18n.js", "src/view.js", "src/view-plugins.js", "src/style.css", "src/ui-kit.css", "src/ui-theme.css", "src/kit-skin.css", "src/theme-walnut.css", "src/theme-switch.js", "src/fonts/**", "tools/sw.template.js"],
+      "files": ["package.json", "package-lock.json", "vite.config.js", "index.html", "../.github/**", "../.gitattributes", "../.gitignore", ".gitignore", "tests/lib/{harness,ci-like,ci-matrix,settings-sheet,client-source,client-wiring,hud-coverage,pc-messages}.mjs", "tests/lib/client-source.js", "tests/ci-local.mjs", "tests/serve-build.mjs", "src/main.js", "src/app/{frame,state,debug-hooks,match-flow,shell,screens,dom,preferences}.js", "src/settings-ui.js", "src/settings.js", "src/i18n.js", "src/view.js", "src/view-plugins.js", "src/style.css", "src/ui-kit.css", "src/ui-theme.css", "src/kit-skin.css", "src/theme-walnut.css", "src/theme-switch.js", "src/fonts/**", "tools/sw.template.js"],
       "suites": "all",
       "checks": []
     },
@@ -66,7 +66,7 @@
     },
     {
       "name": "screens and HUD layout (CSS, docks, panels, touch)",
-      "files": ["src/*.css", "src/app/{hud,command-card,selection,type-chips,ui-extras,modals,loading,cover,cover-layers,rule-options,rules-store,wild-ui,minimap}.js", "src/selection-status.js", "src/production-ui.js", "src/construction-ui.js", "src/tactics-card.js", "src/tactics-ui.js", "src/research-tiles.js", "src/touch-controls.js", "src/message-queue.js", "src/icons.js", "src/role-icons.js", "src/emblems.js", "src/status-view.js", "src/results-ui.js", "src/boss-ui.js", "src/rank-ui.js", "src/chronicles-ui.js", "src/campaign-map-ui.js", "src/quick-battle.js", "src/fullscreen.js", "src/reduced-motion.js", "src/art/ui/**", "src/art/cover/**", "src/art/*.{svg,webp}", "src/portraits.js"],
+      "files": ["src/*.css", "src/app/{hud,message-stack,command-card,selection,type-chips,ui-extras,modals,loading,cover,cover-layers,rule-options,rules-store,wild-ui,minimap}.js", "src/selection-status.js", "src/production-ui.js", "src/construction-ui.js", "src/tactics-card.js", "src/tactics-ui.js", "src/research-tiles.js", "src/touch-controls.js", "src/message-queue.js", "src/icons.js", "src/role-icons.js", "src/emblems.js", "src/status-view.js", "src/results-ui.js", "src/boss-ui.js", "src/rank-ui.js", "src/chronicles-ui.js", "src/campaign-map-ui.js", "src/quick-battle.js", "src/fullscreen.js", "src/reduced-motion.js", "src/art/ui/**", "src/art/cover/**", "src/art/*.{svg,webp}", "src/portraits.js"],
       "suites": ["layout-f", "status-layout", "ui-quality", "phones", "iphone-gestures", "phone-hud", "readability", "mobile", "mobile-controls", "ui-extras", "messages", "cover-ui", "settings-sheet", "language", "tactics-ui", "mobile-construction", "support-touch", "faction-depth", "progression", "ceremony", "quick-battle", "rank", "portraits", "fullscreen"],
       "checks": []
     },
