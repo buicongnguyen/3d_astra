@@ -56,6 +56,8 @@ const COMMANDS = {
   padRank: { allowed: (sim, c) => !!sim.defence && ownBuilding(sim, c.team, c.building) && !!sim.get(c.building).crew, run: (sim, c) => sim.padRank(c.team, c.building) },
   armourUpgrade: { allowed: (sim, c) => !!sim.defence && Number.isInteger(c.squad) && (c.branch === undefined || typeof c.branch === "string") && (c.combined === undefined || c.combined === true), run: (sim, c) => sim.armourUpgrade(c.team, c.squad, c.branch ?? null, c.combined === true) },
   // The Commander's answer to the decision a story mission is waiting for (sim/missions.js).
+  // H3c: the computer runs this side's base and army while the player fights as the hero (sim/steward.js).
+  steward: { allowed: (sim, c) => sim.humanTeam(c.team), run: (sim, c) => sim.setSteward(!!c.on, c.team) },
   decide: { allowed: (sim, c) => c.team === 0 && sim.canDecide?.(c.id, c.option), run: (sim, c) => sim.decide(c.id, c.option) },
 };
 // H17: content modules' commands join the table, checked, logged and replayed like these (a name clash throws).
@@ -74,6 +76,7 @@ export const commands = {
     if (this.result || !handler || !Number.isInteger(c.team) || !this.players[c.team] || this.players[c.team].eliminated) return false;
     if (!handler.allowed(this, c)) return false;
     this.commandLog.push({ tick: this.ticks, ...structuredClone(c) });
+    if (this.steward?.[c.team]) this.stewardMark(c);
     return handler.run(this, c);
   },
 };

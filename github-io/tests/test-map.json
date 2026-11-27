@@ -113,6 +113,12 @@
       "checks": []
     },
     {
+      "name": "H3c steward: the AI runs the player's base (sim/steward.js) and its strip",
+      "files": ["src/sim/steward.js", "src/steward-ui.js", "src/steward-ui.css"],
+      "suites": ["steward", "lan-play", "defence", "stages"],
+      "checks": []
+    },
+    {
       "name": "offline and the service worker",
       "files": ["src/app/offline.js", "public/manifest.webmanifest", "public/favicon.svg"],
       "suites": ["offline", "cover-ui", "music"],

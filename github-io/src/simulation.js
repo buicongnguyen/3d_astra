@@ -14,6 +14,7 @@ import { snapshot, restore } from "./snapshot.js";
 import { vision } from "./sim/vision.js";
 import { orders } from "./sim/orders.js";
 import { escort } from "./sim/escort.js";
+import { steward } from "./sim/steward.js";
 import { movement } from "./sim/movement.js";
 import { combat } from "./sim/combat.js";
 import { economy } from "./sim/economy.js";
@@ -335,6 +336,8 @@ export class Simulation {
     this.players[team].energy -= cost[1] * factor;
   }
   message(text, team = 0) {
+    // The steward (sim/steward.js) thinks for the player silently: only the usual alerts reach the screen.
+    if (this.stewardThink === team) return;
     // LAN play: each person's own messages, tagged with the team they are for (the page shows its own).
     if (this.lan) { if (this.lan.humans.includes(team)) { this.events.push({ type: "message", text, team }); if (this.events.length > 300) this.events.splice(0, 100); } return; }
     if (team === 0) {
@@ -504,7 +507,7 @@ export class Simulation {
   }
 }
 
-Object.assign(Simulation.prototype, factionRules, traits, height, points, expansion, air, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot, defence, bosses, bossFlight, escort);
+Object.assign(Simulation.prototype, factionRules, traits, height, points, expansion, air, vision, orders, movement, combat, economy, ai, aiCounter, missions, tactics, progression, coalitionPlan, commands, snapshot, defence, bosses, bossFlight, escort, steward);
 // H1: the content seams and the status core, then every content module's own methods (a name clash throws).
 Object.assign(Simulation.prototype, content, effects);
 installContentMixins(Simulation.prototype, { abilities: BUILT_IN_ABILITIES });

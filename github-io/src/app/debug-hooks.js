@@ -19,6 +19,8 @@ export function setupDebugHooks(S, A) {
         return S.selected;
       },
       select: A.setSelection,
+      // H3c: the steward runs the player's base and army (sim/steward.js), through the command door like any order.
+      steward: (on = true) => { const ok = S.sim.command({ team: 0, type: "steward", on: !!on }); A.updateUI(); return ok; },
       // W13: the notice line (a routine notice, an alert, clear) and the touch camera twist (radians, session only).
       notice: (text) => A.notice(text),
       alertNotice: (text) => A.alert(text),

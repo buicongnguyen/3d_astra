@@ -5,6 +5,7 @@ import { aiAttack } from "./ai-attack.js";
 import { AI_RULES } from "./content.js";
 import { aiCensus, censusRole } from "./ai-census.js";
 import { aiSharp } from "./ai-sharp.js";
+import { STEWARD_TOWERS, STEWARD_ALARM } from "./steward.js";
 
 // The computer opponent's build, production and attack decisions (coalition play is in ai-plan.js,
 // field command in ai-attack.js). Mixed into Simulation (see simulation.js).
@@ -22,7 +23,9 @@ export const ai = {
   ...aiSharp,
   updateAI(team = 1) {
     // Tagged entities belong to the mission script (an objective, an escort): the AI never uses them.
-    const own = this.own(team).filter((e) => !e.tag),
+    // The steward (sim/steward.js) playing a human side leaves its heroes and the units the player just ordered alone.
+    const steward = this.stewardThink === team;
+    const own = this.own(team).filter((e) => !e.tag && (!steward || e.kind !== "unit" || this.stewardMay(e))),
       workers = own.filter((e) => e.type === "worker"),
       army = own.filter((e) => e.kind === "unit" && e.type !== "worker" && !e.garrison);
     // One pass over own: structures by type (complete or not), reused by every check below this think.
@@ -88,6 +91,8 @@ export const ai = {
       ? "barracks"
       : pop.cap - pop.used - pop.reserved < (pace.counter && this.players[team].alloy >= 400 ? 10 : 5) && pop.cap < this.maxPop()
         ? "relay"
+        : steward && kinds.tower < STEWARD_TOWERS && own.some((e) => e.kind === "building" && this.time - (e.hitAt ?? -99) < STEWARD_ALARM)
+          ? "tower"
         : !kinds.foundry && this.time > pace.foundryAt * (role === "siege" ? 0.6 : 1)
           ? "foundry"
           : pace.secondBarracks && this.time > pace.secondBarracks && kinds.barracks < 2
@@ -249,7 +254,7 @@ export const ai = {
     const sharp = !!cmd?.sharp;
     if (sharp && hq) this.aiKites(team, army, hq);
     if (fieldOn && hq && !incursion && this.aiSpeed !== "relaxed") { if (this.aiCensusOn() && !sharp) this.aiScout(team, army); this.aiBreakStall(team, own, hq, wave); }
-    if (this.coalition) {
+    if (this.coalition && !steward) {
       this.coalitionOrders(team, { hq, army, wave, incursion });
       return;
     }
@@ -327,6 +332,8 @@ export const ai = {
     return true;
   },
   stepAI(dt) {
+    // The steward (sim/steward.js) runs a human side on its own Normal-pace clock, with or without rival AIs.
+    if (this.steward) this.stepSteward(dt);
     if (this.aiEnabled) {
       this.aiClock -= dt;
       if (this.aiClock <= 0) {

@@ -30,6 +30,8 @@ export const orders = {
     )
       return;
     ids = [...new Set(ids)];
+    // The steward (sim/steward.js) never orders a hero or a unit the player just ordered.
+    if (this.stewardThink !== undefined) ids = ids.filter((id) => { const e = this.get(id); return !e || e.team !== this.stewardThink || this.stewardMay(e); });
     let index = 0, refused = false;
     const size = Math.ceil(Math.sqrt(ids.length));
     // R3-B group pace (sim/formation.js): only a UI order with `pace: "group"` takes formation slots.
@@ -272,6 +274,7 @@ export const orders = {
   build(workerId, type, x, z) {
     const w = this.get(workerId);
     if (this.result || !w || w.type !== "worker") return null;
+    if (this.stewardThink === w.team && !this.stewardMay(w)) return null;
     const error = this.placement(type, w.team, x, z);
     if (error) {
       this.message(error, w.team);

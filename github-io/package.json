@@ -118,7 +118,8 @@
     "bench:wild": "node tools/wild-bench.mjs --jobs 3",
     "test:creatures": "node tests/creatures.mjs",
     "test:faction-depth": "node tests/faction-depth.mjs",
-    "test:lan-play": "node tests/lan-play.mjs"
+    "test:lan-play": "node tests/lan-play.mjs",
+    "test:steward": "node tests/steward.mjs"
   },
   "dependencies": {
     "three": "0.187.0"

@@ -10,7 +10,7 @@
 // keep their own lanes (phone-hud.css, captions-ui.js): there the inline top is cleared and nothing else changes.
 import "../message-stack.css";
 
-export const STACK = ["#notice", "#update-toast", "#fight-hint", "#meta-toast", "#voice-caption"];
+export const STACK = ["#steward-strip", "#notice", "#update-toast", "#fight-hint", "#meta-toast", "#voice-caption"];
 // Pieces on the left the stack never covers; it continues below them.
 const KEEP_CLEAR = ["#dialogue", "#defence-guide"];
 const GAP = 6, LEFT_LIMIT = 560;

@@ -1,0 +1,35 @@
+/* H3c steward strip (steward-ui.js): small, top left on PC (message stack), top right on phones; never takes taps. Text 12 px. */
+#steward-strip {
+  position: fixed;
+  left: 16px;
+  top: 64px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: rgba(10, 20, 30, 0.82);
+  border: 1px solid rgba(120, 200, 255, 0.45);
+  color: #dff2ff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#steward-strip[hidden] { display: none; }
+#steward-strip .steward-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6fd3ff;
+  box-shadow: 0 0 6px #6fd3ff;
+}
+/* Phones: the left edge holds the idle and group buttons, so the strip sits under the top-right controls. */
+.compact-ui #steward-strip {
+  left: auto;
+  right: calc(env(safe-area-inset-right, 0px) + 10px);
+  top: calc(env(safe-area-inset-top, 0px) + 52px);
+}

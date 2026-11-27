@@ -17,6 +17,7 @@ import { updateBossBar } from "../boss-ui.js";
 import { veteranNote } from "../sim/content/barracks-veterans.js";
 import "../boss-ui.css";
 import { AIR } from "../factions.js";
+import { updateStewardStrip } from "../steward-ui.js";
 
 // The flyer tiles' air line (AAA round 3, R3-W): flyers in the air and queued against the cap, and what the
 // next Command core level allows (sim/air.js airCap, balance.json air.cap_by_level).
@@ -181,6 +182,7 @@ export function setupHud(S, A) {
     renderTutorial();
     missionUI.renderObjectives(S.sim);
     updateBossBar(S.sim, Z.started);
+    updateStewardStrip(S.sim, Z.started);
     const p = S.sim.players[0],
       pop = S.sim.population(0);
     $("alloy").textContent = Math.floor(p.alloy).toLocaleString();
