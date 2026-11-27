@@ -50,6 +50,7 @@ export class CaptionBox {
   clear(line = null) {
     const mine = this.pending || this.shown;
     if (line && mine?.line && mine.line !== line) return;
+    if (line && globalThis.__frontierHoldMessages && this.shown) return; // held (browser suites): the line's end waits for until
     this.pending = null; this.shown = null;
     this.el.classList.remove("show");
   }
@@ -60,7 +61,7 @@ export class CaptionBox {
       this.pending = null;
       if (now < p.window.until) this.reveal(p);
     }
-    if (this.shown && now >= this.shown.window.until) this.clear();
+    if (this.shown && now >= this.shown.window.until && !globalThis.__frontierHoldMessages) this.clear(); // held: browser suites only
     else if (this.shown && performance.now() - this.placedAt > 250) this.place();
   }
   reveal(entry) {

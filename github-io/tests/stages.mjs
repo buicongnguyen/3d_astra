@@ -50,15 +50,17 @@ try{
    await page.locator('#pause').click();await page.locator('[data-restart]').click();await page.locator('[data-confirmed="restart"]').click();
    await page.waitForFunction(()=>Math.abs(window.__frontier.view.focus.x+44)<2&&Math.abs(window.__frontier.view.focus.z-43)<2);
    assert.equal(await page.evaluate(()=>window.__frontier.sim.enemyCount),3,'restart retains selected opponents');
-   const targets=await page.evaluate(()=>{
+   // Portrait phones (owner 2026-11-27): the touch rail (phone-topbar.css) owns the left 58 px, so the targets stand
+   // closer to the centre there; a tap point must reach the battlefield, not a HUD button.
+   const targets=await page.evaluate((spread)=>{
     const f=window.__frontier,s=f.sim;s.aiEnabled=false;
     const unit=s.spawn('ranger',0,0,20);
-    const enemies=[s.spawn('worker',2,10,20),s.spawn('worker',3,-10,20)];
+    const enemies=[s.spawn('worker',2,spread,20),s.spawn('worker',3,-spread,20)];
     for(const e of enemies){e.damage=0;e.hp=e.maxHp=10000;}
     unit.range=40;unit.cooldown=9999;
     s.updateVision();f.view.focusOn(0,20);f.select([unit.id]);
     return {unit:unit.id,enemies:enemies.map(e=>e.id)};
-   });
+   },mobile?6:10);
    await page.waitForFunction(ids=>ids.every(id=>window.__frontier.view.objects.get(id)?.visible),targets.enemies);
    assert.equal(await page.evaluate(()=>new Set(window.__frontier.view.colors).size),4);
    for(const id of targets.enemies){
@@ -66,6 +68,7 @@ try{
      const f=window.__frontier,e=f.sim.get(id),p=f.view.project(e.x,e.z,1),r=f.view.renderer.domElement.getBoundingClientRect();
      return {x:r.x+p.x,y:r.y+p.y};
     },id);
+    assert.equal(await page.evaluate(p=>document.elementFromPoint(p.x,p.y)?.parentElement?.id,point),'world',`target ${id} is clear of the HUD at ${Math.round(point.x)},${Math.round(point.y)}`);
     if(mobile)await page.touchscreen.tap(point.x,point.y);
     else await page.mouse.click(point.x,point.y,{button:'right'});
     await page.waitForFunction(({unit,id})=>window.__frontier.sim.get(unit).orders[0]?.target===id,{unit:targets.unit,id});

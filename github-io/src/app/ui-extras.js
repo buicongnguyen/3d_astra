@@ -94,7 +94,8 @@ export function setupUiExtras(S, A) {
     hudChanged();
     clearTimeout(hintTimer);
     const compact = document.documentElement.classList.contains("compact-ui");
-    hintTimer = setTimeout(hideHint, seconds[compact ? 1 : 0] * 1000);
+    const expire = () => { if (globalThis.__frontierHoldMessages) hintTimer = setTimeout(expire, 100); else hideHint(); }; // held: browser suites only
+    hintTimer = setTimeout(expire, seconds[compact ? 1 : 0] * 1000);
     nextHintAt = performance.now() + 12000;
   }
 

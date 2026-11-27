@@ -34,7 +34,7 @@ async function boot(w, h, mobile, { training = false, lang } = {}) {
   await press(training ? '[data-mode="training"]' : '[data-mode="skirmish"]');
   await press('#start');
   await page.waitForFunction(() => window.__frontier.started);
-  await page.evaluate(() => { window.__frontier.sim.aiEnabled = false; });
+  await page.evaluate(() => { window.__frontier.sim.aiEnabled = false; window.__frontier.holdMessages = true; }); // hints outlive slow runners (released by assertPcStack)
   return page;
 }
 const box = (page, sel) => page.locator(sel).boundingBox();

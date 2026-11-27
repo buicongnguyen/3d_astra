@@ -35,6 +35,10 @@ export function setupDebugHooks(S, A) {
       // Freeze the match clock (rendering goes on); tests then advance time only with step().
       get hold() { return !!S.testHold; },
       set hold(on) { S.testHold = !!on; },
+      // Browser suites only: transient messages (fight hint, voice caption) stay up past their time until released,
+      // so a slow CI runner measures them deterministically (tests/lib/pc-messages.mjs). Released, they end at once.
+      get holdMessages() { return !!globalThis.__frontierHoldMessages; },
+      set holdMessages(on) { globalThis.__frontierHoldMessages = !!on; },
       step: (seconds) => {
         for (let i = 0; i < seconds / 0.05; i++){S.tutorial?.update(S.sim,[...S.selected]);S.matchStats.before(S.sim);S.sim.tick(0.05);S.matchStats.after(S.sim);S.tutorial?.update(S.sim,[...S.selected]);}
         A.updateUI();

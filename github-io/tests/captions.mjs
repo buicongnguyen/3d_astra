@@ -47,6 +47,7 @@ async function speak(page, what) {
   const base = (await page.evaluate(hudCoverage, {})).pct, dock = await dockBox(page);
   const line = await page.evaluate(async (what) => {
     const f = window.__frontier, a = f.audio;
+    f.holdMessages = true; // a short line cannot end on a slow runner before it is measured (released by release())
     await a.context.resume();
     a.voice.reset();
     a.captions.clear();
@@ -63,7 +64,7 @@ async function speak(page, what) {
   return line;
 }
 const dockBox = (page) => page.evaluate(() => { const r = document.querySelector(".bottom-dock")?.getBoundingClientRect(); return r ? [r.left, r.top, r.width, r.height].map(Math.round) : null; });
-const release = (page) => page.evaluate(() => window.__frontier.audio.context.resume());
+const release = (page) => page.evaluate(() => { window.__frontier.holdMessages = false; return window.__frontier.audio.context.resume(); });
 
 const measure = (page, avoid) => page.evaluate((avoid) => {
   const el = document.querySelector("#voice-caption"), r = el.getBoundingClientRect(), s = getComputedStyle(el);

@@ -7,6 +7,10 @@ export const PC_MESSAGES = ["#notice.show", "#update-toast", "#fight-hint:not([h
 export const PC_HUD = [".topbar", ".map-heading", "#mission-objectives", ".minimap-panel", ".bottom-dock", "#dock-tabs", ".dialogue:not([hidden])",
   "#idle-chips", "#defence-bar", "#defence-intel", "#training", "#boss-bar", "#group-strip", ".selection-panel", "#order-tip"];
 
+// Holds transient messages (fight hint, voice caption) past their timers, so a slow runner cannot end them before
+// assertPcStack measures. Call before the message is triggered; assertPcStack releases the hold when it is done.
+export const holdMessages = (page, on = true) => page.evaluate((on) => { window.__frontier.holdMessages = on; }, on);
+
 // Asserts the stack and returns the boxes it measured. `want` lists messages that must be drawn.
 export async function assertPcStack(page, name, want = []) {
   // The wanted messages (up to 3 s), then one frame for the stack to place them.
@@ -37,5 +41,6 @@ export async function assertPcStack(page, name, want = []) {
     assert.equal(ov(m.msgs[i].b, m.msgs[j].b), false, `${name}: ${m.msgs[i].q} over ${m.msgs[j].q}`);
   // Stacked one under another in order.
   for (let i = 1; i < m.msgs.length; i++) assert.ok(m.msgs[i].b.t >= m.msgs[i - 1].b.b - 1, `${name}: ${m.msgs[i].q} under ${m.msgs[i - 1].q}`);
+  await holdMessages(page, false);
   return m;
 }
