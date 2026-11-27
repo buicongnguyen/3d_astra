@@ -252,7 +252,8 @@ await suite("close-view", async () => {
         const look = await page.evaluate(async ({ type, cx, cz }) => {
           const f = window.__frontier, s = f.sim, v = f.view, r = v.renderer;
           s.entities = s.entities.filter((e) => e.kind !== "unit");
-          const pair = [0, 1].map((team) => { const e = s.spawn(type, team, cx + (team ? 3 : -3), cz, true, true); e.angle = Math.PI; return e.id; });
+          // Skywing's own model is drawn for a Kite that is Skywing (src/skywing-view.js), not a balance type of its own.
+          const pair = [0, 1].map((team) => { const e = s.spawn(type === "skywing" ? "kite" : type, team, cx + (team ? 3 : -3), cz, true, true); if (type === "skywing") Object.assign(e, { assist: true, name: "Skywing" }); e.angle = Math.PI; return e.id; });
           v.update(s, 0, f.selected, null);
           // The model's size frames the shot (three's Box3 class, taken from a geometry's own bounding box).
           let mesh = null;
