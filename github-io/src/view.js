@@ -4,7 +4,7 @@ import { addTeamBands } from "./team-bands.js";
 import { CORE_MODEL_TYPES, DRESSED_TYPES } from "./model-roster.js";
 import { CameraShake, FEEL } from "./camera-shake.js";
 const WRECK_TINT = [0.2, 0.18, 0.16]; // burnt: paint and team colour multiplied down to soot
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { modelLoader } from "./model-decode.js"; // GLTFLoader + MeshoptDecoder, packed attributes back to floats
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { Terrain } from "./terrain.js";
@@ -581,7 +581,7 @@ export class WorldView {
     onProgress?.(loaded, total);
     const fetchModel = async (name) => {
       const url = `${import.meta.env.BASE_URL}models/${name}.glb`;
-      const loader = new GLTFLoader();
+      const loader = modelLoader();
       for (let attempt = 0; ; attempt++) {
         try {
           const gltf = await loader.loadAsync(url);

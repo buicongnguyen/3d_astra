@@ -15,6 +15,7 @@ import { weaponStyle } from "../src/visual-style.js";
 import { abilityGroups } from "../src/tactics-ui.js";
 import { duel } from "./lib/duel.mjs";
 import { run as play, aiMatch } from "./lib/sim.js";
+import { glbJson } from './lib/glb.mjs';
 
 const TICK = 0.05;
 const run = (s, seconds) => { for (let t = 0; t < seconds - 1e-9; t += TICK) s.tick(TICK); };
@@ -291,7 +292,7 @@ test("the model keeps its contract and budget, and its muzzle is where weapons.s
   assert.equal(entry.faction, undefined, "no faction flag (the approved-faction count stays 12)");
   assert.equal(entry.air, undefined);
   const data = readFileSync(new URL("../public/models/stalker.glb", import.meta.url));
-  const json = JSON.parse(data.subarray(20, 20 + data.readUInt32LE(12)).toString());
+  const json = glbJson(data);
   const tris = json.meshes.reduce((n, m) => n + m.primitives.reduce((k, p) => k + json.accessors[p.indices].count / 3, 0), 0);
   assert.equal(tris, entry.triangles);
   assert.ok(tris <= 3000 && tris >= 2600, `${tris} triangles (the infantry family is 2.8k to 3.2k; this one's budget is 3,000)`);

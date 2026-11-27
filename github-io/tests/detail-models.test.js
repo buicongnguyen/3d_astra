@@ -5,10 +5,11 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { PropertyBinding } from 'three';
 import { LEVEL_RADIUS, CLOSE_RADIUS, EXIT } from '../src/close-view.js';
+import { glbJson } from './lib/glb.mjs';
 
 const read = (path) => {
   const data = readFileSync(new URL(`../public/models/${path}`, import.meta.url));
-  return JSON.parse(data.subarray(20, 20 + data.readUInt32LE(12)).toString());
+  return glbJson(data);
 };
 const manifest = JSON.parse(readFileSync(new URL('../public/models/detail/manifest.json', import.meta.url), 'utf8'));
 const names = (json) => json.nodes.map((n) => PropertyBinding.sanitizeNodeName(n.name || ''));

@@ -1,5 +1,5 @@
 import { Color } from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { modelLoader } from "./model-decode.js";
 import { SOURCE_LAYER } from "./entity-batches.js";
 import { cacheTransforms } from "./transform-cache.js";
 
@@ -90,7 +90,7 @@ export class CloseView {
     let load = this.loads.get(type);
     if (!load) {
       const url = `${import.meta.env.BASE_URL}models/detail/${this.types.get(type)}`;
-      load = new GLTFLoader().loadAsync(url).then((gltf) => {
+      load = modelLoader().loadAsync(url).then((gltf) => {
         this.view.buildTemplates(type, gltf, true);
         this.ready.add(type);
       }).catch((error) => { this.failed = `${type}: ${error}`; });

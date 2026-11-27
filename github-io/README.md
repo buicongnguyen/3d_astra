@@ -136,7 +136,13 @@ blender --background --python /absolute/path/to/github-io/tools/blender/generate
 blender --background --python /absolute/path/to/github-io/tools/blender/generate_environment.py
 blender --background --python /absolute/path/to/github-io/tools/blender/animate_units.py
 blender --background --factory-startup --python /absolute/path/to/github-io/tools/blender/render_ui_art.py
+node tools/compress-models.mjs
 ```
+
+The shipped models are packed by `tools/compress-models.mjs` (EXT_meshopt_compression over 16-bit positions,
+normals and colours; `src/model-decode.js` restores the float attributes in the loader). Run it after any Blender
+export; `npm test` fails while a model is unpacked. `tools/build-detail.mjs` packs the detail models itself. A
+Blender script that imports a shipped model (animate_units.py) needs `node tools/compress-models.mjs --decode` first.
 
 The `.tools/` directory is ignored and is not uploaded to GitHub.
 

@@ -437,7 +437,7 @@
       "file": "dress-ashfall.glb",
       "faction": "ashfall",
       "triangles": 8848,
-      "bytes": 340232,
+      "bytes": 214836,
       "types": {
         "worker": 660,
         "vanguard": 660,
@@ -477,7 +477,7 @@
       "file": "dress-sunward.glb",
       "faction": "sunward",
       "triangles": 8464,
-      "bytes": 323228,
+      "bytes": 197872,
       "types": {
         "worker": 498,
         "vanguard": 498,
@@ -517,7 +517,7 @@
       "file": "dress-wardens.glb",
       "faction": "wardens",
       "triangles": 8192,
-      "bytes": 263516,
+      "bytes": 187716,
       "types": {
         "worker": 546,
         "vanguard": 546,
@@ -557,7 +557,7 @@
       "file": "dress-veil.glb",
       "faction": "veil",
       "triangles": 5336,
-      "bytes": 231604,
+      "bytes": 144668,
       "types": {
         "worker": 318,
         "vanguard": 310,

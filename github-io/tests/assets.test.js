@@ -4,10 +4,11 @@ import {readFileSync} from 'node:fs';
 import {PropertyBinding} from 'three';
 import {RIG_PART} from '../src/view.js';
 import balance from '../src/balance.json' with {type:'json'};
+import { glbJson } from './lib/glb.mjs';
 
 const gltf = name => {
   const data = readFileSync(new URL(`../public/models/${name}.glb`, import.meta.url));
-  return JSON.parse(data.subarray(20, 20 + data.readUInt32LE(12)).toString());
+  return glbJson(data);
 };
 // GLTFLoader strips reserved characters from node names ("Barrel.001" -> "Barrel001").
 const runtimeNames = json => json.nodes.map(n => PropertyBinding.sanitizeNodeName(n.name || ''));

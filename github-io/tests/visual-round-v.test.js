@@ -13,10 +13,11 @@ import { readFileSync } from "node:fs";
 import { PropertyBinding } from "three";
 import { RIG_PART } from "../src/view.js";
 import { RIG_INFANTRY, RIG_HULL } from "../src/unit-rig.js";
+import { glbJson } from './lib/glb.mjs';
 
 const gltf = (name) => {
   const data = readFileSync(new URL(`../public/models/${name}.glb`, import.meta.url));
-  return JSON.parse(data.subarray(20, 20 + data.readUInt32LE(12)).toString());
+  return glbJson(data);
 };
 const manifest = JSON.parse(readFileSync(new URL("../public/models/manifest.json", import.meta.url), "utf8")).assets;
 const clean = (n) => PropertyBinding.sanitizeNodeName(n || "");

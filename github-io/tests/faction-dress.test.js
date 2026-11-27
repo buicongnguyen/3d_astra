@@ -8,12 +8,13 @@ import * as THREE from 'three';
 import { DRESS_FACTIONS, DRESSED_TYPES, dressFactionsOf, modelsForMatch } from '../src/model-roster.js';
 import { dressGeometry, dressPaint, partsFor, rigTag, readDress } from '../src/faction-dress.js';
 import { BONE } from '../src/unit-rig.js';
+import { glbJson, parseModel } from './lib/glb.mjs';
 
 const MODELS = new URL('../public/models/', import.meta.url);
 const glb = (name) => {
   const data = readFileSync(new URL(`${name}.glb`, MODELS));
-  const json = JSON.parse(data.subarray(20, 20 + data.readUInt32LE(12)).toString());
-  return { json, bin: data.subarray(28 + data.readUInt32LE(12)), bytes: data.length };
+  const json = glbJson(data);
+  return { json, bytes: data.length };
 };
 const manifest = JSON.parse(readFileSync(new URL('manifest.json', MODELS), 'utf8'));
 const baseTriangles = Object.fromEntries(manifest.assets.map((a) => [a.name, a.triangles]));
@@ -116,10 +117,9 @@ test('a match loads the dress of each non-Meridian faction in play, and an all-M
 });
 
 test('the dress files parse into parts per model (three GLTFLoader), every part in a known group and class', async () => {
-  const { GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js');
   for (const faction of DRESS_FACTIONS) {
     const data = readFileSync(new URL(`dress-${faction}.glb`, MODELS));
-    const gltf = await new Promise((resolve, reject) => new GLTFLoader().parse(data.buffer.slice(data.byteOffset, data.byteOffset + data.length), '', resolve, reject));
+    const gltf = await parseModel(data);
     const parts = readDress(gltf.scene, THREE);
     assert.deepEqual([...parts.keys()], [...DRESSED_TYPES], faction);
     for (const [type, list] of parts) for (const x of list) {

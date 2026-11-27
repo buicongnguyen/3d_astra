@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { stepInfantry, stepHull, REST_MOTION } from "../src/unit-rig.js";
 import { normalize, defaults } from "../src/settings.js";
+import { glbJson } from './lib/glb.mjs';
 
 const infantry = () => ({ phase: 0, gait: 0, kneel: 0, flinch: 0, lean: 0 });
 const hull = () => ({ vs: 0, pitch: 0, pitchV: 0, squat: 0 });
@@ -142,7 +143,7 @@ test("unit review: every ground vehicle with wheels or tracks is a hull; no barr
     if (d.kind !== "unit" || d.flying || d.boss || RIG_INFANTRY.has(type)) continue;
     const url = new URL(`../public/models/${type}.glb`, import.meta.url);
     if (!fs.existsSync(url)) continue;
-    const glb = fs.readFileSync(url), json = JSON.parse(glb.subarray(20, 20 + glb.readUInt32LE(12)).toString());
+    const glb = fs.readFileSync(url), json = glbJson(glb);
     if (json.nodes.some((n) => /^(Wheels|Tracks)/.test(n.name || ""))) assert.ok(RIG_HULL.has(type), `${type} has wheels or tracks: add it to RIG_HULL`);
   }
   // Owner 2026-11 (Breaker): a gun out of combat never points below its modelled line.
@@ -170,7 +171,7 @@ test("unit rig (creature round): the Acid Hound trots on diagonal pairs; the Vau
   assert.equal(GAIT.acidhound, "trot"); assert.equal(GAIT.vaultsentinel, "stomp");
   const nodes = (name) => {
     const data = fs.readFileSync(new URL(`../public/models/${name}.glb`, import.meta.url));
-    return JSON.parse(data.subarray(20, 20 + data.readUInt32LE(12)).toString()).nodes;
+    return glbJson(data).nodes;
   };
   // view.js tags each leg_* subtree with its own hip and knee; the suffix picks the phase (as in view.js).
   const right = (n) => /_R(\d*)$/.test(n);

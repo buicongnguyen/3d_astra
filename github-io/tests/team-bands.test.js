@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { parseModel } from './lib/glb.mjs';
 import { addTeamBands } from '../src/team-bands.js';
 import { bossTemplates, recolorBossPaint } from '../src/boss-view.js';
 import balance from '../src/balance.json' with { type: 'json' };
@@ -11,7 +11,7 @@ test('every combat model has projected team paint that can join its GLB paint ba
   for (const [type, def] of Object.entries(balance.definitions)) {
     if (!['unit', 'building'].includes(def.kind)) continue;
     const bytes = await readFile(new URL('../public/models/' + type + '.glb', import.meta.url));
-    const { scene } = await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+    const { scene } = await parseModel(bytes);
     addTeamBands(scene, type);
     const stripes = [];
     scene.traverse(part => { if (part.name.endsWith('_TeamBand')) stripes.push(part); });

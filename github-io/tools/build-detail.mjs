@@ -8,6 +8,8 @@ import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { statSync } from "node:fs";
+import { compressModels } from "./compress-models.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const app = join(here, "..");
@@ -51,6 +53,10 @@ function run(kind) {
 }
 const queue = [...todo];
 await Promise.all(Array.from({ length: Math.min(jobs, queue.length) }, async () => { while (queue.length) await run(queue.shift()); }));
+
+// Pack what Blender wrote (tools/compress-models.mjs: meshopt over 16-bit attributes); the manifest keeps the packed size.
+await compressModels([...rows.keys()].map((kind) => join(app, "public", "models", "detail", `${kind}.glb`)), { log: () => {} });
+for (const [kind, row] of rows) row.bytes = statSync(join(app, "public", "models", "detail", `${kind}.glb`)).size;
 
 // Re-read before writing: another build may have finished in the meantime (rows merge by kind).
 const latest = existsSync(manifestPath) ? JSON.parse(readFileSync(manifestPath, "utf8")) : { assets: [] };

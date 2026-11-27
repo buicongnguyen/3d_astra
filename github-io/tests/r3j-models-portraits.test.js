@@ -6,9 +6,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { RIG_PART } from '../src/view.js';
 import balance from '../src/balance.json' with { type: 'json' };
+import { glbJson } from './lib/glb.mjs';
 
 const read = (name) => readFileSync(new URL(`../${name}`, import.meta.url));
-const gltf = (name) => { const data = read(`public/models/${name}.glb`); return JSON.parse(data.subarray(20, 20 + data.readUInt32LE(12)).toString()); };
+const gltf = (name) => { const data = read(`public/models/${name}.glb`); return glbJson(data); };
 const manifest = JSON.parse(read('public/models/manifest.json')).assets;
 const order = JSON.parse(read('src/portraits.js').toString().match(/PORTRAIT_ORDER = (\[[\s\S]*?\]);/)[1]);
 const lum = ([r, g, b]) => 0.2126 * r + 0.7152 * g + 0.0722 * b; // linear baseColorFactor

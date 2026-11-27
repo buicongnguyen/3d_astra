@@ -1,6 +1,8 @@
 """Bake original rigid-part mechanical unit clips for Godot's AnimationPlayer.
 Run after generate_assets.py with Blender 4.5.3 in background mode.
 No add-ons, external models, or downloaded animation libraries are used.
+Blender cannot import EXT_meshopt_compression: run `node tools/compress-models.mjs --decode` first and
+`node tools/compress-models.mjs` after (the shipped GLBs are meshopt-packed since 2026-11-27).
 """
 import bpy
 import math

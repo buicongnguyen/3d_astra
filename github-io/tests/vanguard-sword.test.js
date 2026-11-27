@@ -2,12 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { Group, Vector3 } from "three";
-import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { parseModel } from "./lib/glb.mjs";
 import { attachVanguardSword, prepareVanguardArm, strikeVanguardSword, restVanguardSword, VANGUARD_WINDUP, VANGUARD_RECOVERY } from "../src/vanguard-sword.js";
 
 test("Vanguard's wave follows the actual blade through the cut and disappears in guard and thrust", async () => {
   const bytes = await readFile(new URL("../public/models/vanguard.glb", import.meta.url));
-  const { scene } = await new GLTFLoader().parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), "");
+  const { scene } = await parseModel(bytes);
   const arm = scene.getObjectByName("SwordArm"), hip = scene.getObjectByName("leg_L").position.y;
   const model = new Group();
   model.add(prepareVanguardArm(arm, hip));
