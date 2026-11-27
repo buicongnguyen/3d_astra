@@ -185,3 +185,15 @@ test("Hero mode: real-second timings (x battle time), walking with the stick, a 
   assert.equal(back.hash(), s.hash());
   assert.equal(back.entities.find(isSkywing).landed, true);
 });
+
+test("the Full army sandbox brings one free Skywing (its own ids), the same in every run; a plain Quick battle none", () => {
+  const make = (quick) => new Simulation({ map: "riverlands", aiSpeed: "relaxed", factions: { 0: "meridian", 1: "ashfall" }, rules: { quick } });
+  const a = make("arena"), b = make("arena"), q = make("on");
+  run(a, 3); run(b, 3); run(q, 3);
+  const sky = a.entities.filter(isSkywing);
+  assert.equal(sky.length, 1, "one Skywing");
+  assert.ok(sky[0].id >= 3.5e6, "from its own id range");
+  assert.ok(!a.entities.some((e) => e.team === 0 && typeof e.hero === "string"), "no ground champion (owner: Skywing is hero mode)");
+  assert.equal(a.hash(), b.hash(), "deterministic");
+  assert.equal(q.entities.filter(isSkywing).length, 0, "Quick battle: the page calls it only for a Hero battle");
+});

@@ -128,7 +128,8 @@ test("Full army battle: each faction's own slots, workshop units and flyer; the 
     assert.equal(arenaFlyer(s), FACTION_RULES[faction].extra.hq[0]);
     step(s, 3);
     const mine = s.entities.filter((e) => e.team === 0 && e.kind === "unit");
-    const flyers = mine.filter((e) => e.flying).map((e) => e.type);
+    // Skywing comes free with the sandbox: a hero to try, not the faction's own flyers.
+    const flyers = mine.filter((e) => e.flying && !e.assist).map((e) => e.type);
     assert.deepEqual(flyers, Array(ARENA.hawks).fill(arenaFlyer(s)), `${faction} flies its own flyer`);
     if (faction === "wardens") assert.ok(!mine.some((e) => e.type === "medic" || e.type === "engineer"), "Wardens: no Medics or Engineers");
     for (const t of types) assert.ok(mine.some((e) => e.type === t), `${faction}: ${t} on the field`);

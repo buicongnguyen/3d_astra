@@ -7,6 +7,10 @@
 //    chosen skirmish setup and battle rules are left as they were: the rule is added only while the
 //    match is built (A.createSim) and never stored. "Play again" replays a Quick battle; "Main menu"
 //    ends it.
+//    "Hero battle" (owner 2026-11-28): the same gentle Quick battle with Skywing given free (no coins) that starts
+//    straight in Hero mode (the steward runs the base, battle time as set, x0.5 by default). S.quick = "hero" (the sim
+//    sees the Quick battle rule; Skywing comes by its own logged `skywing` command). "Play again" replays a Hero
+//    battle; "Main menu" ends it. The Full army sandbox brings Skywing free too (sim/content/quick-battle.js).
 // 2. "First watch": a profile that has never won a Defence level plays level 1 through the new
 //    variant in src/defence/first-watch.js (a Scout Runner worth bonus alloy), and the match opens
 //    with the level's enemy roster as a strip until the first wave sets off. Browser suites (?test)
@@ -46,6 +50,21 @@ export function setupQuickBattle(S, A) {
     try { return buildSim(); } finally { S.rules = chosen; }
   };
   // Back to the title ends the Quick battle (the menu shows the player's own setup again).
+  // Hero battle: Skywing comes free as the match starts (and again on "Play again"), then Hero mode. The briefing's
+  // Skywing assist row (skywing-ui.js, 60 coins) is not used: these heroes never cost coins. The sandbox's Skywing
+  // comes from the sim (buildArena), so the row is skipped there too.
+  const free = () => S.quick === "hero" || S.quick === "arena";
+  function heroStart() {
+    if (S.quick !== "hero" || !Z.started || !S.sim || S.sim.skywing) return;
+    if (!S.sim.command({ team: 0, type: "skywing" })) return;
+    // A restart straight from Hero mode: the old match's Hero mode ends first (its commands go to the old match only).
+    if (A.heroModeOn?.()) A.leaveHeroMode?.(true);
+    A.enterHeroMode?.(S.sim.skywing.id);
+  }
+  const wrapSkywing = () => {
+    const start = A.skywingStart;
+    A.skywingStart = (restart) => { if (!free()) start?.(restart); heroStart(); };
+  };
   const newGame = A.newGame;
   A.newGame = (...args) => { S.quick = false; return newGame(...args); };
 
@@ -67,7 +86,8 @@ export function setupQuickBattle(S, A) {
     }
     // Start's own handler: assets, audio and beginMatch, as a tap on Start would (never the campaign briefing).
     // The Full army has two of your faction's own flyer (Hawks for Meridian) and of its workshop units.
-    if (kind === "arena") S.view.preloadModels?.([sideFlyer(player), ...workshopUnitsOf(player)]);
+    if (kind === "arena") S.view.preloadModels?.([sideFlyer(player), ...workshopUnitsOf(player), "kite", "skywing"]);
+    if (kind === "hero") S.view.preloadModels?.(["kite", "skywing"]);
     $("start").onclick?.();
     // The next Quick battle meets the next rival.
     if (kind !== "arena") countQuick();
@@ -131,6 +151,7 @@ export function setupQuickBattle(S, A) {
     const slot = $("title-actions");
     if (!slot) return;
     slot.innerHTML = `<button type="button" id="quick-battle" class="quick-battle">${icon("bolt")}<span class="quick-text"><strong>Quick battle</strong><small>Ready base · 1 rival</small></span></button>`;
+    wrapSkywing();
     // New players (re-score 2026-11-25): Training had two buttons on the title, a "Start here · First lesson"
     // tile and the Training mode button. Modes are never hidden (owner: no hidden buttons), so the duplicate
     // tile is gone and the Training mode button itself carries the "Start here" badge until Training is done
@@ -151,14 +172,22 @@ export function setupQuickBattle(S, A) {
     arena.className = "quick-battle";
     arena.id = "full-army-battle";
     arena.innerHTML = `${icon("crosshair")}<span class="quick-text"><strong>Full army sandbox</strong><small>Every unit · try abilities</small></span>`;
-    $("quick-battle").after(arena);
+    // Hero battle: one more tile beside Quick battle (owner 2026-11-28), its own one tap.
+    const hero = document.createElement("button");
+    hero.type = "button";
+    hero.className = "quick-battle";
+    hero.id = "hero-battle";
+    hero.innerHTML = `${icon("star")}<span class="quick-text"><strong>Hero battle</strong><small>Free Skywing · Hero mode</small></span>`;
+    $("quick-battle").after(hero);
+    hero.after(arena);
     const button = $("quick-battle"), start = $("start");
     // Usable exactly when Start is (not while the first models load or after a failed load).
-    const sync = () => { button.disabled = arena.disabled = start.disabled && !S.loadFailed; };
+    const sync = () => { button.disabled = arena.disabled = hero.disabled = start.disabled && !S.loadFailed; };
     sync();
     new MutationObserver(sync).observe(start, { attributes: true, attributeFilter: ["disabled"] });
     button.addEventListener("click", () => startQuick());
     arena.addEventListener("click", () => startQuick("arena"));
+    hero.addEventListener("click", () => startQuick("hero"));
     // A saved Quick battle continues as one ("Play again" replays it); the saved rules say so.
     $("continue")?.addEventListener("click", () => {
       try { const rule = JSON.parse(readSave()?.text || "null")?.options?.rules?.quick; S.quick = rule === "arena" ? "arena" : rule === "on"; } catch { S.quick = false; }

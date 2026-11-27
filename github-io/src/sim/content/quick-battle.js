@@ -143,6 +143,9 @@ export function arenaArmy(sim) {
 }
 // Your faction's own flyer (the first one its Command core trains), Hawks when it has none.
 export const arenaFlyer = (sim) => sim.factionFor(PLAYER).extra?.hq?.[0] || "hawk";
+// Skywing to try (owner 2026-11-28: "Skywing is hero mode"): the Full army sandbox brings it free (no coins), so
+// Hero mode can be tried there. It takes ids from its own range (sim/content/skywing.js), so every other entity
+// keeps the id it would have had.
 export const isArena = (sim) => sim.rules?.quick === "arena" && !sim.mission;
 function buildArena(sim) {
   const a = axes(sim);
@@ -167,6 +170,7 @@ function buildArena(sim) {
     sim.spawn(flyer, PLAYER, x, z, true, true).angle = Math.atan2(a.fx, a.fz);
   }
   sim.players[PLAYER].alloy += ARENA.alloy;
+  sim.callSkywing(PLAYER);
   sim.updateVision();
   sim.message("Full army sandbox: try every unit and ability. Enemy squads attack in about 25 seconds.");
 }

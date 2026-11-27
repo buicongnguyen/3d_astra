@@ -122,7 +122,8 @@ test("Full army: every faction's army is worth about the same and an early attac
     const s = new Simulation({ map: QUICK_SETUP.map, aiSpeed: QUICK_SETUP.aiSpeed, enemyCount: 1, alliance: QUICK_SETUP.alliance, capturePoints: true, factions: skirmishSides(player, quickRival(player), 1, QUICK_SETUP.map), rules: { quick: "arena" } });
     const army = () => s.entities.filter((e) => e.team === 0 && e.kind === "unit" && e.hp > 0 && e.type !== "worker");
     while (s.time < at) { s.tick(TICK); s.events.length = 0; }
-    values[player] = army().reduce((n, e) => n + worth(e), 0);
+    // The free Skywing (2026-11-28) is an extra to try, not the faction's army.
+    values[player] = army().filter((e) => !e.assist).reduce((n, e) => n + worth(e), 0);
     const core = s.entities.find((e) => e.team === 1 && e.type === "hq");
     s.command({ team: 0, type: "order", ids: army().map((e) => e.id), order: { type: "attackmove", x: core.x, z: core.z } });
     while (s.time < 90 && !s.result) { s.tick(TICK); s.events.length = 0; }

@@ -6,6 +6,10 @@
 //              the label turns to "Take off", W walks it and a tank can now shoot it; "Take off" climbs (still hittable)
 //              and the look-down view comes back; the button waits out the cooldown; landed vs flying draws <= +5.
 //   portrait / landscape  the Land tile sits with Ability, Dodge and Fire and overlaps nothing, in EN, VI and KO.
+//   Hero battle / sandbox (owner 2026-11-28): the title's "Hero battle" tile starts the Quick battle setup straight in
+//              Hero mode with a free Skywing (no coins, even with the briefing's Skywing row On), and "Play again" does
+//              it again; the Full army sandbox brings a free Skywing (the Hero mode button shows); the quick row's five
+//              tiles are >= 44 px, text >= 11 px and never overlap, in EN, VI and KO on a PC and phones both ways.
 // Every HUD: taps >= 44 px, text >= 11 px, no system-ui. The match clock is held and moved only with step().
 import assert from "node:assert/strict";
 import { mkdirSync, copyFileSync } from "node:fs";
@@ -169,6 +173,82 @@ await suite("skywing-land", async () => {
     await page.keyboard.press("Tab");
     await page.waitForFunction(() => !window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
     assert.deepEqual(errors, [], "desktop: page errors");
+    await page.close();
+  }
+  // ---------------------------------------------------------------- Hero battle and the sandbox's free Skywing
+  {
+    const COINS = "frontier-coins-v1", w = { v: 1, coins: 100, earned: 0, spent: 0, won: [], losses: {}, hinted: [], day: null, paidAch: [] };
+    const coins = (page) => page.evaluate((k) => JSON.parse(localStorage.getItem(k) || "null")?.coins, COINS);
+    const { page, goto, ready, tap, errors } = await openPage(browser, "desktop");
+    await goto();
+    await page.evaluate(([k, v]) => localStorage.setItem(k, JSON.stringify(v)), [COINS, w]);
+    await page.reload();
+    await ready();
+    // The briefing's Skywing row On: a free hero still costs nothing.
+    const on = page.locator('[data-assist-where] [data-assist="on"]').first();
+    if (await on.count()) await on.click();
+    await tap("#hero-battle");
+    await page.waitForFunction(() => window.__frontier.started && window.__frontier.heroMode.info.on && window.__frontier.heroMode.info.sky, null, { timeout: TIMEOUT.models });
+    const hb = await page.evaluate(() => { const f = window.__frontier, s = f.sim; f.hold = true; f.holdMessages = true; return { quick: s.rules?.quick, ai: s.aiSpeed, sky: !!s.skywing, steward: s.stewardOn(0), scale: f.heroMode.info.scale }; });
+    assert.equal(hb.quick, "on", "the Quick battle setup");
+    assert.equal(hb.ai, "relaxed");
+    assert.ok(hb.sky && hb.steward, `Skywing in Hero mode, the steward on: ${JSON.stringify(hb)}`);
+    assert.equal(await coins(page), 100, "Hero battle: no coins spent");
+    await keep(page, "hero-battle-start");
+    // "Play again" (restart) is a Hero battle again.
+    await page.evaluate(() => window.__frontier.restart());
+    await page.waitForFunction(() => window.__frontier.heroMode.info.on && !!window.__frontier.sim.skywing && window.__frontier.sim.ticks < 40, null, { timeout: TIMEOUT.models });
+    assert.equal(await coins(page), 100, "Play again: still free");
+    await page.keyboard.press("Tab");
+    await page.waitForFunction(() => !window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
+    // The Full army sandbox (a fresh page) brings a free Skywing and the Hero mode button.
+    assert.deepEqual(errors, [], "hero battle: page errors");
+    await page.close();
+    const p2 = await openPage(browser, "desktop");
+    await p2.goto();
+    await p2.page.evaluate(([k, v]) => localStorage.setItem(k, JSON.stringify(v)), [COINS, w]);
+    await p2.page.reload();
+    await p2.ready();
+    await p2.tap("#full-army-battle");
+    await p2.page.waitForFunction(() => window.__frontier.started && !!window.__frontier.sim.skywing, null, { timeout: TIMEOUT.models });
+    await p2.page.locator("#hero-mode-btn").waitFor({ state: "visible", timeout: TIMEOUT.models });
+    assert.equal(await p2.page.evaluate(() => window.__frontier.sim.entities.filter((e) => e.assist).length), 1, "one free Skywing");
+    assert.equal(await coins(p2.page), 100, "sandbox: no coins spent");
+    await keep(p2.page, "sandbox-skywing");
+    assert.deepEqual(p2.errors, [], "sandbox: page errors");
+    await p2.page.close();
+  }
+  // The title's quick row: five tiles, none overlapping, >= 44 px, text >= 11 px, in EN, VI and KO on every screen.
+  for (const [viewport, lang] of [["desktop", "en"], ["desktop", "vi"], ["portrait", "ko"], ["portrait", "vi"], ["landscape", "en"], ["landscape", "ko"]]) {
+    const { page, goto, ready, errors } = await openPage(browser, viewport);
+    await goto();
+    if (lang !== "en") {
+      await page.evaluate((lang) => { const k = "frontier-command.settings.v1"; localStorage.setItem(k, JSON.stringify({ ...JSON.parse(localStorage.getItem(k) || "{}"), version: 1, language: lang })); }, lang);
+      await page.reload();
+    }
+    await ready();
+    await page.waitForTimeout(300);
+    const bad = await page.evaluate(() => {
+      const out = [], tiles = [...document.querySelectorAll("#title-actions > button")];
+      if (!tiles.some((b) => b.id === "hero-battle") || !tiles.some((b) => b.id === "quick-battle")) out.push("missing tile");
+      for (const b of tiles) {
+        b.scrollIntoView({ block: "nearest" });
+        const r = b.getBoundingClientRect();
+        if (r.width < 44 || r.height < 44) out.push(`tap ${b.id} ${Math.round(r.width)}x${Math.round(r.height)}`);
+        if (b.scrollWidth > b.clientWidth + 1 || b.scrollHeight > b.clientHeight + 1) out.push(`spill ${b.id}`);
+        for (const n of b.querySelectorAll("*")) { if (!n.getClientRects().length || ![...n.childNodes].some((c) => c.nodeType === 3 && c.textContent.trim())) continue; const cs = getComputedStyle(n); if (parseFloat(cs.fontSize) < 11) out.push(`text ${n.textContent.trim()} ${cs.fontSize}`); if (/system-ui/.test(cs.fontFamily)) out.push("system-ui"); }
+      }
+      for (let i = 0; i < tiles.length; i++) for (let j = i + 1; j < tiles.length; j++) {
+        const a = tiles[i].getBoundingClientRect(), c = tiles[j].getBoundingClientRect();
+        if (Math.min(a.right, c.right) - Math.max(a.left, c.left) > 0.5 && Math.min(a.bottom, c.bottom) - Math.max(a.top, c.top) > 0.5) out.push(`overlap ${tiles[i].id}/${tiles[j].id}`);
+      }
+      if (document.documentElement.scrollWidth > innerWidth + 1) out.push("sideways scroll");
+      return out;
+    });
+    assert.deepEqual(bad, [], `${viewport} ${lang} quick row: ${bad.join(", ")}`);
+    if (lang !== "en") assert.equal((await page.locator("#hero-battle strong").textContent()).trim(), lang === "vi" ? "Trận anh hùng" : "영웅 전투");
+    if (viewport !== "desktop" && lang !== "en") await keep(page, `title-quick-row-${viewport}-${lang}`);
+    assert.deepEqual(errors, [], `${viewport} ${lang}: page errors`);
     await page.close();
   }
   // ---------------------------------------------------------------- phones: the Land tile in EN, VI and KO
