@@ -367,3 +367,18 @@ html.hero-mode #idle-chips { visibility: hidden !important; }
   .hero-phone.hero-sky .hh-actions { grid-template-rows: 44px 48px 70px; }
   .hero-phone.hero-sky .hh-weapons { bottom: calc(env(safe-area-inset-bottom) + 12px); }
 }
+
+/* Skywing on foot (PART D): the scope tag under the reticle, flyer marks at the screen edge and in the sky. */
+.hh-scope {
+  position: absolute; left: 50%; top: 26px; transform: translateX(-50%);
+  padding: 1px 6px; border-radius: 6px; background: rgba(10, 22, 30, 0.75); border: 1px solid #83deeb;
+  color: #bff6ff; font: 800 11px/14px var(--font-ui, sans-serif); letter-spacing: 0.04em; white-space: nowrap;
+}
+.hh-scope[hidden] { display: none; }
+.hh-edge.air { border-left-color: #8fd8ff; }
+.hh-sky {
+  position: absolute; left: -11px; top: -11px; width: 22px; height: 22px; border-radius: 50%;
+  border: 2px solid #8fd8ff; box-shadow: 0 0 6px rgba(0, 0, 0, 0.8), inset 0 0 6px rgba(143, 216, 255, 0.6);
+}
+.hh-sky::after { content: ""; position: absolute; left: 5px; top: 7px; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 6px solid #8fd8ff; }
+.hh-sky[hidden] { display: none; }

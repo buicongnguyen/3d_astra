@@ -155,6 +155,37 @@ await suite("skywing-land", async () => {
     await step(page, 0.25, 4);
     await keep(page, "skyland-hero-walking");
     await page.keyboard.up("w");
+    // PART D: standing still a second brings the scope up (the tag on the reticle); a move drops it.
+    await page.waitForFunction(() => window.__frontier.heroMode.info.sent.drive === "0,0", null, { timeout: TIMEOUT.step });
+    await step(page, 0.3, 3);
+    await page.waitForFunction(() => window.__frontier.heroMode.info.scope, null, { timeout: TIMEOUT.step });
+    assert.equal(await page.evaluate((id) => window.__frontier.sim.get(id).vision, ids.sky), 18, "18 m on foot");
+    await keep(page, "skyland-scope");
+    // The air warning: an enemy Hawk 25 m away, outside sight, gets a mark; a ground unit at 25 m does not.
+    const warn = await page.evaluate((id) => {
+      const f = window.__frontier, s = f.sim, e = s.get(id);
+      // Only Skywing's own sight counts here (the Kite scout sees 32 m): the others are blinded for the check.
+      for (const o of s.own(0)) if (o !== e) o.vision = 0;
+      let x = 0, z = 0;
+      for (let k = 0; k < 16; k++) {
+        const a = (k / 16) * Math.PI * 2, px = e.x + Math.sin(a) * 25, pz = e.z + Math.cos(a) * 25;
+        if (Math.abs(px) > s.terrain.half - 4 || Math.abs(pz) > s.terrain.half - 4) continue;
+        if (Math.cos(a - (e.angle || 0)) > 0) continue; // behind the scope's cone
+        if (!s.own(0).some((o) => o !== e && o.hp > 0 && Math.hypot(o.x - px, o.z - pz) <= (o.vision || 0) + 4)) { x = px; z = pz; break; }
+      }
+      const g = s.spawn("ranger", 1, x + 2, z, true, true); g.orders = []; g.stance = "hold";
+      s.updateVision();
+      return { ground: !s.isVisible(g, 0), gid: g.id, x, z, at: [e.x, e.z, e.angle, e.vision, !!e.scope] };
+    }, ids.sky);
+    assert.ok(warn.ground, `the ground unit stays fogged ${JSON.stringify(warn)}`);
+    await page.waitForTimeout(300);
+    assert.equal((await info(page)).marks, 0, "no mark for a ground unit");
+    const hawk = await page.evaluate(([x, z]) => { const s = window.__frontier.sim, h = s.spawn("hawk", 1, x, z, true, true); h.orders = []; h.stance = "hold"; return h.id; }, [warn.x, warn.z]);
+    await page.waitForFunction(() => window.__frontier.heroMode.info.marks > 0, null, { timeout: TIMEOUT.step });
+    assert.equal(await page.evaluate((id) => window.__frontier.sim.isVisible(window.__frontier.sim.get(id), 0), hawk), false, "the hawk is not revealed to the side");
+    await keep(page, "skyland-air-warning");
+    await page.evaluate(([a, b]) => { const s = window.__frontier.sim; for (const id of [a, b]) { const t = s.get(id); if (t) t.hp = 0; } }, [hawk, warn.gid]);
+    await step(page, 0.1, 1);
     const walked = await page.evaluate(([id, a]) => { const e = window.__frontier.sim.get(id); return { d: Math.hypot(e.x - a.x, e.z - a.z), flying: e.flying }; }, [ids.sky, at]);
     assert.ok(walked.d > 1.5 && !walked.flying, `walked ${walked.d.toFixed(2)} m on foot`);
     // Take off: a climb that ground weapons still hit, then the look-down view; the button waits out the cooldown.

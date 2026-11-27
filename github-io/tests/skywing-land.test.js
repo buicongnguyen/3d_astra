@@ -5,7 +5,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { Simulation } from "../src/simulation.js";
-import { LAND, WEAPONS, isSkywing, isLanded, landSpot } from "../src/sim/content/skywing.js";
+import { LAND, SIGHT, WEAPONS, SKYWING, isSkywing, isLanded, landSpot } from "../src/sim/content/skywing.js";
 import { enterCommands } from "../src/sim/content/hero-mode.js";
 
 const TICK = 0.05;
@@ -196,4 +196,69 @@ test("the Full army sandbox brings one free Skywing (its own ids), the same in e
   assert.ok(!a.entities.some((e) => e.team === 0 && typeof e.hero === "string"), "no ground champion (owner: Skywing is hero mode)");
   assert.equal(a.hash(), b.hash(), "deterministic");
   assert.equal(q.entities.filter(isSkywing).length, 0, "Quick battle: the page calls it only for a Hero battle");
+});
+
+// PART D (owner 2026-11-28): what Skywing sees on foot. Only Skywing's own sight counts here (the base's is cut).
+const sees = (s, x, z) => !!s.visible[0][s.terrain.cellIndex(x, z)];
+function alone(map, x, z) {
+  const s = new Simulation({ map, ai: false });
+  s.entities = s.entities.filter((u) => u.kind !== "unit");
+  s.command({ team: 0, type: "skywing" });
+  const e = s.get(s.skywing.id);
+  for (const b of s.own(0)) if (b !== e) b.vision = 0;
+  e.x = x; e.z = z; e.post = { x, z }; e.angle = 0;
+  s.tick(TICK);
+  return { s, e };
+}
+test("on foot: 18 m all round by the ground rules; the scope adds 26 m in a 70-degree cone after 1 s still, gone on a move", () => {
+  const { s, e } = alone("classic", 0, 0);
+  s.updateVision();
+  assert.ok(sees(s, 21, 0), "flying: 22 m");
+  land(s, e);
+  run(s, LAND.land + 0.05);
+  assert.equal(e.vision, SIGHT.vision);
+  s.updateVision();
+  assert.ok(sees(s, 16.5, 0) && !sees(s, 21, 0), "landed: 18 m");
+  assert.ok(!sees(s, 0, 24), "no scope yet");
+  run(s, SIGHT.still + 0.1);
+  assert.equal(e.scope, true, "the scope after 1 s still");
+  s.updateVision();
+  assert.ok(sees(s, 0, 24) && sees(s, 8, 23), "26 m ahead, inside the cone");
+  assert.ok(!sees(s, 24, 0) && !sees(s, 0, -24), "not to the side or behind");
+  s.issue([e.id], { type: "move", x: 0, z: -6 });
+  run(s, 0.3);
+  assert.equal(e.scope, undefined, "a move drops it");
+  s.updateVision();
+  assert.ok(!sees(s, 0, 24), "and its sight");
+  takeOff(s, e);
+  run(s, LAND.takeoff + 0.1);
+  assert.equal(e.vision, SKYWING.vision, "flying: its own sight again");
+  assert.equal(e.stillAt, undefined);
+});
+test("on high ground a landed Skywing sees 4 m more in all", () => {
+  const { s, e } = alone("highlands", 40, -14);
+  assert.ok(s.terrain.heightAt(40, -14) > 1, "a plateau top");
+  land(s, e);
+  run(s, LAND.land + 0.05);
+  s.updateVision();
+  assert.ok(sees(s, 40 + 20.5, -14) || sees(s, 40 - 20.5, -14), "18 + 4 m from the top");
+  assert.ok(!sees(s, 40 + 24, -14) && !sees(s, 40 - 24, -14));
+});
+test("the scope replays exactly from the command log", () => {
+  const play = () => {
+    const { s, e } = alone("classic", 0, 0);
+    send(s, enterCommands(0, e.id, 0.5));
+    land(s, e, { x: 2, z: 0 });
+    run(s, 1.5);
+    s.command({ team: 0, type: "heroDrive", dx: 1, dz: 0 });
+    run(s, 0.4);
+    s.command({ team: 0, type: "heroDrive", dx: 0, dz: 0 });
+    run(s, 1);
+    s.updateVision();
+    return { s, e };
+  };
+  const a = play(), b = play();
+  assert.equal(a.e.scope, true);
+  assert.equal(a.s.hash(), b.s.hash());
+  assert.deepEqual([...a.s.visible[0]], [...b.s.visible[0]], "the same cells seen");
 });

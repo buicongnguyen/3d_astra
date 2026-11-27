@@ -51,6 +51,10 @@ export const DIVE_STRIKE = Object.freeze({ id: "skydive", name: "Dive strike", c
 // Land / take off (owner 2026-11-28): seconds in real time (x the Hero mode battle-time scale), metres.
 // walk: its speed on foot (a Ranger walks 4.2 m/s; in the air it flies SKYWING.speed).
 export const LAND = Object.freeze({ land: 1, takeoff: 1.5, cooldown: 3, reach: 6, search: 6, sniperRange: 2, walk: 4.6 });
+// Landed sight (owner 2026-11-28, PART D): `vision` m all round by the ground rules (no seeing over cliffs); after
+// standing still `still` s (real seconds x battle time: no move, no dash) the scope adds `scope` m in a `cone`-degree
+// cone along its facing; on high ground `high` m more in all (in place of the terrain's usual high-ground bonus).
+export const SIGHT = Object.freeze({ vision: 18, scope: 26, cone: 70, still: 1, high: 4 });
 
 export const isSkywing = (e) => !!e && e.assist === true;
 // Skywing on the ground (also while it climbs away on a take-off).
@@ -228,6 +232,8 @@ export const skywing = {
           e.flying = false;
           e.landed = true;
           e.speed = LAND.walk;
+          e.vision = SIGHT.vision;
+          e.stillAt = this.time;
           e.post = { x: e.x, z: e.z };
           arm(e, e.weapon);
           this.events.push({ type: "skywingLanded", id: e.id, team: e.team, x: e.x, z: e.z });
@@ -237,6 +243,8 @@ export const skywing = {
         delete e.landed;
         e.flying = true;
         e.speed = SKYWING.speed;
+        e.vision = SKYWING.vision;
+        delete e.stillAt; delete e.scope;
         e.skyReady = this.time + LAND.cooldown * (e.driven ?? 1);
         e.post = { x: e.x, z: e.z };
         arm(e, e.weapon);
@@ -244,6 +252,21 @@ export const skywing = {
       }
       if (e.driven !== undefined) e.vel = { x: (e.x - x0) / dt, z: (e.z - z0) / dt };
       return true;
+    },
+    // The scope's sight cone for `team` (sim/vision.js, at the vision step): cells within SIGHT.scope m (+ the
+    // high-ground bonus) whose bearing is within half the cone of Skywing's facing, by the same plateau rule.
+    scopeVision(team, e, low, up, bonus) {
+      const t = this.terrain, g = t.grid, sight = SIGHT.scope + bonus, half = (SIGHT.cone / 2) * (Math.PI / 180);
+      const [cx, cz] = this.nav.cellAt(e.x, e.z), r = Math.ceil(sight / 2), fa = e.angle || 0;
+      for (let z = Math.max(0, cz - r); z <= Math.min(g - 1, cz + r); z++) for (let x = Math.max(0, cx - r); x <= Math.min(g - 1, cx + r); x++) {
+        const i = z * g + x;
+        if (low && t.cellDeep[i] && !up.has(t.cellPlateau[i])) continue;
+        const wx = x * 2 - t.half + 1, wz = z * 2 - t.half + 1, d = Math.hypot(wx - e.x, wz - e.z);
+        if (d > sight) continue;
+        const b = Math.atan2(wx - e.x, wz - e.z) - fa;
+        if (d > 2 && Math.abs(Math.atan2(Math.sin(b), Math.cos(b))) > half) continue;
+        this.visible[team][i] = this.explored[team][i] = 1;
+      }
     },
     // Starts a switch to `weapon` (SWITCH_SECONDS without a shot, then the new figures). Switching back to
     // the weapon in hand during a switch cancels it.
@@ -313,6 +336,11 @@ export const skywing = {
     }
     const e = sim.get(s.id);
     if (!e || e.hp <= 0) return;
+    // On foot: the scope comes up after standing still (no move, no dash) for SIGHT.still real seconds.
+    if (e.landed && !e.skyland) {
+      if (e.moving || e.dash || e.drive) { e.stillAt = sim.time; if (e.scope) delete e.scope; }
+      else if (!e.scope && sim.time >= (e.stillAt ?? sim.time) + SIGHT.still * (e.driven ?? 1) - 1e-9) e.scope = true;
+    } else if (e.scope) delete e.scope;
     // A weapon switch finishing.
     if (e.weaponTo && sim.time >= e.weaponAt - 1e-9) { arm(e, e.weaponTo); delete e.weaponTo; delete e.weaponAt; }
     // A dive: down to the point, the blast, then the climb (the view eases the height).

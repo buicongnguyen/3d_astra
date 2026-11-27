@@ -16,6 +16,9 @@
 //     and Fire; it glides down to a clear spot under the reticle (sim/content/skywing.js), the camera blends from the
 //     look-down view to the shoulder view (no shake), it walks like a ground hero with the weapons it carries (a
 //     steadier, longer Sniper), dodges with the ground dash, and Dive strike greys out with "Air only" until it flies;
+//   - on foot (PART D): a "Scope" tag on the reticle once the sim's scope is up (sim/content/skywing.js SIGHT), a
+//     wider fog than other ground heroes, and an air warning: enemy flyers within AIR_WARN m get edge marks and a sky
+//     marker even outside sight (the hero HUD only: never the RTS view or the minimap), with a rate-limited notice;
 //   - the close-up detail follows the aim point (20 m), with a soft distance fog; warning rings where rockets
 //     and shells land, and marks at the screen edge for shots from off screen; no camera shake anywhere.
 import "./hero-mode.css";
@@ -41,6 +44,9 @@ export const HERO_CLOSE_RADIUS = 20;
 const SKY_PITCH = 52; // degrees down (45-60)
 const FALL_HOLD = 1; // real seconds on screen after the hero falls, then back to the RTS view
 const TAP_MS = 280, TAP_PX = 12;
+// Skywing on foot (PART D): the air warning's reach (m), the gap between two warnings (real ms), the camera's fog.
+export const AIR_WARN = Object.freeze({ range: 30, every: 12000 });
+const SKY_FOG = Object.freeze({ air: { fogNear: 46, fogFar: 132, far: 160 }, ground: { fogNear: 36, fogFar: 110, far: 140 } });
 
 export function setupHeroMode(S, A) {
   const Z = S.screen;
@@ -48,7 +54,7 @@ export function setupHeroMode(S, A) {
     on: false, id: null, sky: false, sim: null, yaw: 0, pitch: 0, zoom: 1,
     scale: 1, ease: null, aim: null, target: null, firing: false, sent: { drive: "0,0", fire: "null" },
     lock: new RocketLock(), keys: new Set(), stick: null, look: null, fell: null, pointer: null, pinch: null, touches: new Map(),
-    cursor: null, button: null, hud: null, edges: [], turn: 0, flight: 1, grounded: null,
+    cursor: null, button: null, hud: null, edges: [], skies: [], turn: 0, flight: 1, grounded: null, warned: 0, flyers: new Set(),
   };
   S.hero = H;
 
@@ -156,12 +162,14 @@ export function setupHeroMode(S, A) {
         <button type="button" data-hero="fire" class="hh-fire"><span>Fire</span><kbd translate="no">F</kbd></button>
       </div>
       <div class="hh-stick" aria-hidden="true"><i class="hh-knob"></i></div>
-      <div class="hh-cross" aria-hidden="true"><i class="hh-lockring"></i></div>
+      <div class="hh-cross" aria-hidden="true"><i class="hh-lockring"></i><b class="hh-scope" hidden>Scope</b></div>
       <div class="hh-edges" aria-hidden="true"></div>
       <div class="hh-down" role="status" hidden><span>Hero down</span></div>
       <p class="hh-help"><span>WASD move · Mouse aim · Click/F fire · Q ability · Space dodge · Tab exit</span></p>`;
     document.body.append(root);
     for (let i = 0; i < 6; i++) { const m = document.createElement("i"); m.className = "hh-edge"; m.hidden = true; root.querySelector(".hh-edges").append(m); H.edges.push(m); }
+    // Sky markers for enemy flyers near a landed Skywing (PART D): pooled, no draw.
+    for (let i = 0; i < 4; i++) { const m = document.createElement("i"); m.className = "hh-sky"; m.hidden = true; root.querySelector(".hh-edges").append(m); H.skies.push(m); }
     root.addEventListener("click", (event) => {
       const b = event.target.closest("button");
       if (!b) return;
@@ -225,7 +233,7 @@ export function setupHeroMode(S, A) {
     H.button && (H.button.hidden = true);
     const v = S.view;
     v.resize();
-    v.setHeroCamera(H.sky ? { fogNear: 46, fogFar: 132, far: 160 } : { fogNear: 26, fogFar: 92, far: 120 });
+    v.setHeroCamera(H.sky ? SKY_FOG[isLanded(e) ? "ground" : "air"] : { fogNear: 26, fogFar: 92, far: 120 });
     v.heroRig = rig;
     v.setCloseView({ x: e.x, z: e.z, radius: HERO_CLOSE_RADIUS });
     A.tone?.(660, 0.12);
@@ -286,7 +294,10 @@ export function setupHeroMode(S, A) {
   function labels(e) {
     const ground = isLanded(e) || e.skyland?.phase === "land";
     if (H.grounded === ground) return;
+    const first = H.grounded === null;
     H.grounded = ground;
+    // On foot a little more of the field shows than for other ground heroes (the fog eases with the camera blend).
+    if (!first && H.on) S.view.setHeroCamera(SKY_FOG[ground ? "ground" : "air"]);
     const root = H.hud;
     root.querySelector(".hh-dodge-name").textContent = ground ? "Dodge" : "Barrel roll";
     root.querySelector(".hh-help span").textContent = ground
@@ -537,7 +548,40 @@ export function setupHeroMode(S, A) {
       m.className = `hh-edge${s.heavy ? " heavy" : ""}`;
       m.style.transform = `translate(${Math.round(w / 2 + dx * k)}px, ${Math.round(h / 2 + dy * k)}px) rotate(${Math.atan2(dy, dx)}rad)`;
     }
+    // PART D: a landed Skywing is warned of enemy flyers within AIR_WARN.range m, seen or not (flyers only).
+    let k = 0;
+    const flyers = isSkywing(e) && isLanded(e) ? sim.entities.filter((t) => t.flying && t.hp > 0 && t.kind === "unit" && sim.hostile(e.team, t.team) && Math.hypot(t.x - e.x, t.z - e.z) <= AIR_WARN.range) : [];
+    for (const t of flyers) {
+      const y = v.terrain.heightAt(t.x, t.z) + (t.fly || 3.5), q = v.project(t.x, t.z, y), behind = isBehind(v.camera, t.x, t.z);
+      const inside = !behind && q.x > 0 && q.y > 0 && q.x < w && q.y < h;
+      if (inside) {
+        if (k >= H.skies.length) continue;
+        const m = H.skies[k++];
+        m.hidden = false;
+        m.style.transform = `translate(${Math.round(q.x)}px, ${Math.round(q.y)}px)`;
+        continue;
+      }
+      if (n >= H.edges.length) continue;
+      let dx = q.x - w / 2, dy = q.y - h / 2;
+      if (behind) { dx = -dx; dy = Math.abs(dy) + h; }
+      const f = Math.min((w / 2 - 28) / Math.max(1, Math.abs(dx)), (h / 2 - 28) / Math.max(1, Math.abs(dy)));
+      const m = H.edges[n++];
+      m.hidden = false;
+      m.className = "hh-edge air";
+      m.style.transform = `translate(${Math.round(w / 2 + dx * f)}px, ${Math.round(h / 2 + dy * f)}px) rotate(${Math.atan2(dy, dx)}rad)`;
+    }
     for (let i = n; i < H.edges.length; i++) if (!H.edges[i].hidden) H.edges[i].hidden = true;
+    for (let i = k; i < H.skies.length; i++) if (!H.skies[i].hidden) H.skies[i].hidden = true;
+    // A new flyer in reach: one notice and a tone, at most every AIR_WARN.every ms.
+    const now = performance.now(), fresh = flyers.some((t) => !H.flyers.has(t.id));
+    H.flyers.clear();
+    for (const t of flyers) H.flyers.add(t.id);
+    if (fresh && now - H.warned >= AIR_WARN.every) {
+      H.warned = now;
+      A.notice?.(flyers.some((t) => t.type === "hawk") ? "Hawks inbound!" : "Enemy flyers inbound!");
+      A.tone?.(300, 0.14);
+    }
+    H.airWarn = flyers.length;
   }
 
   // ---------------------------------------------------------------- every frame (app/frame.js, before the ticks)
@@ -653,6 +697,8 @@ export function setupHeroMode(S, A) {
     const cross = root.querySelector(".hh-cross");
     if (H.screen) cross.style.transform = `translate(${Math.round(H.screen.x)}px, ${Math.round(H.screen.y)}px)`;
     cross.classList.toggle("on-target", !!H.target);
+    const scope = cross.querySelector(".hh-scope"), scoped = !!(H.sky && e.scope);
+    if (scope.hidden === scoped) scope.hidden = !scoped;
     cross.style.setProperty("--lock", H.lock.progress.toFixed(2));
     cross.classList.toggle("locked", H.lock.progress >= 1);
   }
@@ -666,7 +712,8 @@ export function setupHeroMode(S, A) {
     return (x - m[12]) * m[8] + (z - m[14]) * m[10] > 0;
   }
 
-  Object.assign(A, { heroTick: tick, heroPace: pace, enterHeroMode: enter, leaveHeroMode: leave, heroModeOn: () => H.on, heroInfo: () => ({ on: H.on, id: H.id, sky: H.sky, flight: H.flight, yaw: H.yaw, zoom: H.zoom, scale: H.scale, aim: H.aim, target: H.target?.id ?? null, lock: H.lock.progress, screen: H.screen || null, sent: { ...H.sent } }) });
+  Object.assign(A, { heroTick: tick, heroPace: pace, enterHeroMode: enter, leaveHeroMode: leave, heroModeOn: () => H.on, heroInfo: () => ({ on: H.on, id: H.id, sky: H.sky, flight: H.flight, scope: !!H.hud?.querySelector(".hh-scope:not([hidden])"), airWarn: H.airWarn || 0,
+    marks: H.edges.filter((m) => !m.hidden && m.classList.contains("air")).length + H.skies.filter((m) => !m.hidden).length, yaw: H.yaw, zoom: H.zoom, scale: H.scale, aim: H.aim, target: H.target?.id ?? null, lock: H.lock.progress, screen: H.screen || null, sent: { ...H.sent } }) });
   return function bind() {
     window.addEventListener("keydown", keydown, true);
     window.addEventListener("keyup", keyup, true);

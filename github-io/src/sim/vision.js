@@ -1,6 +1,7 @@
 import { hyp } from "../data.js";
 import { TERRAIN } from "../terrain.js";
 import { lanPoolVision } from "./lan.js";
+import { SIGHT } from "./content/skywing.js";
 
 // What each team can see and remembers. Mixed into Simulation (see simulation.js).
 export const vision = {
@@ -35,7 +36,9 @@ export const vision = {
         // A flyer looks down on every plateau top (it is never "low") but gets no high-ground bonus.
         const low = high && !t.level(e.x, e.z) && !e.flying;
         const [cx, cz] = this.nav.cellAt(e.x, e.z),
-          sight = (e.kind === "building" && !e.complete ? Math.min(e.vision, e.radius + 3) : e.vision) + (high && !low && !e.flying ? TERRAIN.high_vision : 0),
+          // A landed Skywing on high ground sees SIGHT.high more in all (sim/content/skywing.js), others the terrain's bonus.
+          bonus = high && !low && !e.flying ? (e.landed ? SIGHT.high : TERRAIN.high_vision) : 0,
+          sight = (e.kind === "building" && !e.complete ? Math.min(e.vision, e.radius + 3) : e.vision) + bonus,
           r = Math.ceil(sight / 2);
         for (let z = Math.max(0, cz - r); z <= Math.min(this.terrain.grid - 1, cz + r); z++)
           for (
@@ -52,6 +55,8 @@ export const vision = {
                 z * this.terrain.grid + x
               ] = 1;
           }
+        // A landed Skywing's scope (sim/content/skywing.js): a longer cone along its facing.
+        if (e.scope) this.scopeVision(team, e, low, up, bonus);
       }
     }
     // W7: a Signal flare opens its ground to its side while it burns (sim/content/air-strikes.js).
