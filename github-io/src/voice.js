@@ -6,11 +6,11 @@
 // The service worker keeps each pack on its first fetch (fc-voices in tools/sw.template.js).
 import PACKS from "./voice-packs.json" with { type: "json" };
 import { mulberry32 } from "./rng.js";
-import { TakePicker, VOICE, VoiceScheduler, clipId, lineCount, packsFor, storyClip, storyPacks, voiceFaction } from "./voice-logic.js";
+import { TakePicker, VOICE, VoiceScheduler, clipId, factionPack, fallbackPack, lineCount, packInfo, packsFor, storyClip, storyPacks, voiceFaction } from "./voice-logic.js";
 
 export { PACKS };
 // The pack's URL, versioned by its size so a regenerated pack is fetched again.
-export const packUrl = (name) => { const p = PACKS.packs[name]; return p ? `${p.file}?v=${p.bytes}` : null; };
+export const packUrl = (name) => { const p = packInfo(name); return p ? `${p.file}?v=${p.bytes}` : null; };
 
 export class VoicePlayer {
   // `out` = the voice bus (a GainNode); `onLine(line, seconds, delay)` tells the director a line started (ducking,
@@ -20,20 +20,22 @@ export class VoicePlayer {
     this.scheduler = new VoiceScheduler(); this.picker = new TakePicker(); this.rnd = mulberry32(4242);
     this.packs = new Map(); // name -> { buffer } | { loading: Promise } | { failed: true }
     this.voice = null; // { src, gain, line }
-    this.faction = "meridian"; this.mission = null; this.paused = false;
+    this.faction = "meridian"; this.lang = "en"; this.mission = null; this.paused = false;
     this.loadedBytes = 0;
   }
   // The packs this match needs; others already decoded stay (a rematch is instant).
   // Story packs of other missions are dropped (a decoded minute of speech is about 6 MB on a phone).
-  prepare({ faction, missionId }) {
+  // `lang`: the game language; a voiced language loads its own faction pack (the English one if that fails).
+  prepare({ faction, missionId, lang = "en" }) {
     this.faction = voiceFaction(faction);
+    this.lang = lang;
     this.mission = missionId ?? null;
     const keep = new Set(storyPacks(this.mission));
     for (const name of [...this.packs.keys()]) if (name.startsWith("story-") && !keep.has(name) && !this.packs.get(name).loading) this.packs.delete(name);
-    for (const name of packsFor({ faction: this.faction, missionId: this.mission })) this.load(name);
+    for (const name of packsFor({ faction: this.faction, missionId: this.mission, lang: this.lang })) this.load(name);
   }
   load(name) {
-    if (this.packs.has(name) || !PACKS.packs[name]) return this.packs.get(name)?.loading || null;
+    if (this.packs.has(name) || !packInfo(name)) return this.packs.get(name)?.loading || null;
     const loading = (async () => {
       const response = await this.fetcher(packUrl(name));
       if (!response.ok) throw new Error(`voice pack ${name}: ${response.status}`);
@@ -42,11 +44,22 @@ export class VoicePlayer {
       const buffer = await this.context.decodeAudioData(bytes);
       this.packs.set(name, { buffer });
       return true;
-    })().catch(() => { this.packs.set(name, { failed: true }); return false; });
+    })().catch(() => {
+      this.packs.set(name, { failed: true });
+      // A language pack that is missing or broken: the faction speaks English instead.
+      const en = fallbackPack(name);
+      return en ? this.load(en) || false : false;
+    });
     this.packs.set(name, { loading });
     return loading;
   }
   ready(name) { return !!this.packs.get(name)?.buffer; }
+  // The faction pack that speaks now: the language pack once decoded, the English one if that failed.
+  voicePack(faction = this.faction) {
+    const name = factionPack(faction, this.lang), en = fallbackPack(name);
+    // (Also while it is still loading, when the English pack is already here: a language switched mid-match.)
+    return en && (this.packs.get(name)?.failed || (!this.ready(name) && this.ready(en))) ? en : name;
+  }
   setEnabled(on) {
     const cut = this.scheduler.setEnabled(on);
     if (!on && (cut || this.voice)) this.stop(0.02);
@@ -81,7 +94,7 @@ export class VoicePlayer {
     if (this.voice?.line.channel === "story") { this.stop(0.04); if (s.current?.channel === "story") s.current = null; }
   }
   say(line, faction) {
-    const name = line.channel === "story" ? line.pack : voiceFaction(faction);
+    const name = line.channel === "story" ? line.pack : this.voicePack(faction);
     if (this.paused || !this.ready(name)) return false;
     const count = line.channel === "story" ? 1 : lineCount(faction, line.channel, line.key);
     if (line.channel !== "story" && !count) return false;
@@ -92,7 +105,7 @@ export class VoicePlayer {
     return true;
   }
   start(line, cut = false) {
-    const entry = this.packs.get(line.pack), clip = PACKS.packs[line.pack]?.clips[clipId(line.channel, line.key, line.index)];
+    const entry = this.packs.get(line.pack), clip = packInfo(line.pack)?.clips[clipId(line.channel, line.key, line.index)];
     if (!entry?.buffer || !clip) return false;
     if (cut) this.stop(0.03);
     const ctx = this.context, now = ctx.currentTime, delay = line.channel === "announcer" && !cut ? VOICE.delay : 0;

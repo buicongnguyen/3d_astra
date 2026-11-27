@@ -12,6 +12,7 @@ import { airHumFor } from "./sfx-bank.js";
 import { BarkGate, LowHpWatch, ThunderWatch, barkKind, barkType, coreHealth } from "./audio-logic.js";
 import { WEATHER } from "./mission-looks.js";
 import { VoicePlayer } from "./voice.js";
+import { getLanguage } from "./i18n.js";
 import { VOICE, ackKind, announcerFor, clearedLineDue, voiceLevel } from "./voice-logic.js";
 import { captionFor, captionWindow, captionsOn } from "./voice-captions.js";
 import { DEFINITIONS } from "./data.js";
@@ -113,7 +114,7 @@ export class AudioDirector {
     return played;
   }
   // W3: spoken lines are on when Voices is on and the player's pack has arrived.
-  voiceOn() { return this.voice.scheduler.enabled && this.voice.ready(this.voice.faction); }
+  voiceOn() { return this.voice.scheduler.enabled && this.voice.ready(this.voice.voicePack()); }
   // A voice line started: its subtitle (unit replies and the announcer only: story lines are in the dialogue box,
   // and a story line cutting in takes the caption away).
   caption(line, seconds, delay = 0) {
@@ -198,8 +199,8 @@ export class AudioDirector {
     const live = started && !sim.result;
     // W3: the voice packs load once a match has started (never on the title screen), then the radio runs.
     if (started) {
-      const vkey = `${sim.factions?.[0] || "meridian"}|${sim.missionDef?.id || ""}`;
-      if (vkey !== this.voiceKey && this.voice.scheduler.enabled) { this.voiceKey = vkey; this.voice.prepare({ faction: sim.factions?.[0], missionId: sim.missionDef?.id }); }
+      const lang = getLanguage(), vkey = `${sim.factions?.[0] || "meridian"}|${sim.missionDef?.id || ""}|${lang}`;
+      if (vkey !== this.voiceKey && this.voice.scheduler.enabled) { this.voiceKey = vkey; this.voice.prepare({ faction: sim.factions?.[0], missionId: sim.missionDef?.id, lang }); }
       // The held "Wave cleared" (see event()): spoken from the tick after the clear, once its time has come; never after the result.
       if (this.clearAt != null && (sim.result || sim.time < this.clearAt)) this.clearAt = this.clearDue = null;
       else if (this.clearAt != null && sim.time > this.clearAt && sim.time >= this.clearDue) { this.clearAt = this.clearDue = null; this.voice.announce("waveCleared"); }

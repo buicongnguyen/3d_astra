@@ -32,7 +32,7 @@ async function open(viewport, settings = {}, mode = "skirmish") {
   await p.tap("#start");
   await p.page.waitForFunction(() => window.__frontier.started, null, { timeout: TIMEOUT.models });
   await p.page.evaluate(() => { const f = window.__frontier; f.sim.aiEnabled = false; f.hold = true; });
-  await p.page.waitForFunction(() => { const a = window.__frontier.audio; return a && a.voice.ready(a.voice.faction) && a.context.state === "running"; }, null, { timeout: TIMEOUT.models });
+  await p.page.waitForFunction(() => { const a = window.__frontier.audio; return a && a.voice.ready(a.voice.voicePack()) && a.context.state === "running"; }, null, { timeout: TIMEOUT.models });
   return p;
 }
 
@@ -54,7 +54,7 @@ async function speak(page, what) {
     if (what === "reply") a.bark("select", f.sim.own(0).filter((e) => e.kind === "unit"));
     else a.voice.announce(what);
     const v = a.voice.voice;
-    return v ? { ...v.line, faction: a.voice.faction } : { why: { paused: a.voice.paused, enabled: a.voice.scheduler.enabled, ready: a.voice.ready(a.voice.faction), units: f.sim.own(0).filter((e) => e.kind === "unit").length, state: a.context.state } };
+    return v ? { ...v.line, faction: a.voice.faction } : { why: { paused: a.voice.paused, enabled: a.voice.scheduler.enabled, ready: a.voice.ready(a.voice.voicePack()), units: f.sim.own(0).filter((e) => e.kind === "unit").length, state: a.context.state } };
   }, what);
   assert.ok(line && !line.why, `${what}: a voice line plays ${JSON.stringify(line?.why)}`);
   line.base = base; line.dock = dock;

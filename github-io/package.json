@@ -60,6 +60,7 @@
     "test:missions": "node tests/missions.mjs",
     "test:story-voices": "node tests/story-voices.mjs",
     "test:captions": "node tests/captions.mjs",
+    "test:voices-vi": "node tests/voices-vi.mjs",
     "test:tactics-ui": "node tests/tactics-ui.mjs",
     "test:abilities": "node tests/abilities.mjs",
     "test:tutorial": "node tests/tutorial.mjs",

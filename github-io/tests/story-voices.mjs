@@ -22,7 +22,7 @@ const browser = await launchBrowser();
 await suite("story voices: per-mission packs after Start, lines in order, scenes, Voices off", async () => {
   const { page, goto, ready, tap, errors } = await openPage(browser, "desktop");
   let requests = [];
-  page.on("request", (r) => { const m = r.url().match(/\/voices\/([\w-]+)\.mp3/); if (m) requests.push(m[1]); });
+  page.on("request", (r) => { const m = r.url().match(/\/voices\/((?:vi\/)?[\w-]+)\.mp3/); if (m) requests.push(m[1]); });
   // A fresh page with all missions open (and a language); voice requests counted from here.
   const load = async (language = "en") => {
     await goto();
@@ -84,8 +84,9 @@ await suite("story voices: per-mission packs after Start, lines in order, scenes
   await page.locator('[data-mission="ca1-cold-berths"]').waitFor({ state: "visible" });
   await tap('[data-mission="ca1-cold-berths"]');
   await begin();
-  await packsReady(["ashfall", "story-ca1"]);
-  assert.deepEqual([...requests].sort(), ["ashfall", "story-ca1"], `the Chronicle fetches its own pack only (${requests})`);
+  // Vietnamese (2026-11-27): the faction speaks from its vi pack; story lines stay English audio with VI subtitles.
+  await packsReady(["vi/ashfall", "story-ca1"]);
+  assert.deepEqual([...requests].sort(), ["story-ca1", "vi/ashfall"], `the Chronicle fetches its own pack only (${requests})`);
   const ca = linesOf("ca1-cold-berths")[0];
   await say(ca.who, ca.text);
   await page.waitForFunction((id) => window.__frontier.audio.voice.voice?.line.index === id, `s.${storyHash(ca.text)}`, { timeout: TIMEOUT.step });

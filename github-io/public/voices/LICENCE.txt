@@ -27,5 +27,15 @@ Licence basis
 Kokoro-82M model card: licence tag "apache-2.0"; the page calls the weights "Apache-licensed" (checked
 for the studio on 2026-10-21, voice_sync/LICENCE_NOTES.md). The generated audio is ours to ship.
 The engine and its phonemiser (misaki, espeak-ng fallback) are not shipped; only these MP3s are.
-English only: Kokoro has no Vietnamese or Korean voices. Vietnamese and Korean players hear the
-English lines with the on-screen text in their language.
+Kokoro has no Vietnamese or Korean voices: Korean players, and every story line in Vietnamese,
+use these English lines with the on-screen text in their language (Vietnamese unit and announcer lines: below).
+
+Vietnamese voices (voices/vi/*.mp3, added 2026-11-27): unit replies and announcer of every faction,
+generated locally with VieNeu-TTS v3 Turbo (pnnbao-ump/VieNeu-TTS-v3-Turbo, https://huggingface.co/pnnbao-ump/VieNeu-TTS-v3-Turbo,
+code https://github.com/pnnbao97/VieNeu-TTS) using its bundled preset voices only (no voice cloning):
+Hải Đăng, Xuân Vĩnh, Thái Sơn, Quốc Tuấn, Đoan Trang (units) and Mai Anh (announcer).
+Licence: Apache License 2.0 for the code, the model weights and the preset-voice assets. The model card's
+"Usage Rights & Licensing FAQ" states that audio generated with the preset voices may be used in commercial
+and monetized content without additional licence or fee, and that the preset-voice speakers consented to
+AI training and synthetic speech. Third-party component: MOSS-Audio-Tokenizer-Nano (OpenMOSS-Team), Apache-2.0.
+The engine's built-in audio watermark was left on. Only the processed MP3s ship; the engine does not.

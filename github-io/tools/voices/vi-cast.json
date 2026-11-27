@@ -1,0 +1,8 @@
+{
+ "about": "Vietnamese voice cast (VieNeu-TTS v3 Turbo preset voices) per faction: unit replies and announcer. Read by synth-vi.py and make-voices-vi.py.",
+ "meridian": {"unit": "Hải Đăng", "announcer": "Mai Anh"},
+ "ashfall": {"unit": "Xuân Vĩnh", "announcer": "Mai Anh"},
+ "sunward": {"unit": "Thái Sơn", "announcer": "Mai Anh"},
+ "wardens": {"unit": "Quốc Tuấn", "announcer": "Mai Anh"},
+ "veil": {"unit": "Đoan Trang", "announcer": "Mai Anh"}
+}

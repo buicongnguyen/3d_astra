@@ -9,6 +9,7 @@
 // clip sits in its pack's MP3, and which story packs each mission has. Audio has its own seeded generator.
 import LINES from "./voice-lines.json" with { type: "json" };
 import PACKS from "./voice-packs.json" with { type: "json" };
+import PACKS_VI from "./voice-packs-vi.json" with { type: "json" };
 import { mulberry32 } from "./rng.js";
 
 export const VOICE_FACTIONS = Object.freeze(Object.keys(LINES.factions));
@@ -70,9 +71,25 @@ export function storyClip(missionId, text) {
   for (const pack of storyPacks(missionId)) { const clip = PACKS.packs[pack]?.clips[id]; if (clip) return { pack, id, seconds: clip[1] }; }
   return null;
 }
-// The voice packs a match needs: the player's faction, plus the story packs of its mission (only that one).
-export function packsFor({ faction = "meridian", missionId = null } = {}) {
-  return [voiceFaction(faction), ...storyPacks(missionId)];
+// Spoken faction packs in other languages (unit replies and announcer, the same clip ids as the English
+// packs; tools/voices/make-voices-vi.py). Story lines stay English audio (with subtitles) in every language.
+export const VOICE_LANGS = Object.freeze({ vi: PACKS_VI });
+// The faction pack for the game language: "vi/meridian" when that language has it, else the English "meridian".
+export function factionPack(faction, lang = "en") {
+  const f = voiceFaction(faction);
+  return VOICE_LANGS[lang]?.packs?.[f] ? `${lang}/${f}` : f;
+}
+// The English pack a language pack falls back to ("vi/veil" -> "veil"), or null for an English pack.
+export const fallbackPack = (name) => (name.includes("/") ? name.slice(name.indexOf("/") + 1) : null);
+// A pack's index entry ({ file, bytes, clips }) by name, English or "<lang>/<faction>"; null if unknown.
+export function packInfo(name) {
+  const i = name.indexOf("/");
+  return (i < 0 ? PACKS.packs[name] : VOICE_LANGS[name.slice(0, i)]?.packs?.[name.slice(i + 1)]) || null;
+}
+// The voice packs a match needs: the player's faction (in the game language when it is voiced), plus the
+// story packs of its mission (only that one).
+export function packsFor({ faction = "meridian", missionId = null, lang = "en" } = {}) {
+  return [factionPack(faction, lang), ...storyPacks(missionId)];
 }
 
 // The bark kind of an order (orders.js type) -> reply kind; null = no reply.
