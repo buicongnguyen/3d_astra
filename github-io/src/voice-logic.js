@@ -63,17 +63,25 @@ export function storyHash(text) {
   for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 0x01000193) >>> 0;
   return h.toString(36);
 }
+// Spoken packs in other languages (the same clip ids as the English packs; tools/voices/make-voices-vi.py):
+// the faction packs (unit replies and announcer) and, phase 2, the story packs ("vi/story-m01": the English pack
+// names and clip ids "s.<storyHash(English text)>", saying the words of the translated dialogue box).
+export const VOICE_LANGS = Object.freeze({ vi: PACKS_VI });
 // The story packs of a mission (one, or two parts for a long one); none for skirmish and Defence levels.
-export const storyPacks = (missionId) => (missionId && PACKS.story?.[missionId]) || [];
+// With a language that voices this mission's story: its own packs ("vi/story-m01"), else the English ones.
+export function storyPacks(missionId, lang = "en") {
+  if (!missionId) return [];
+  const local = lang !== "en" && VOICE_LANGS[lang]?.story?.[missionId];
+  return local ? local.map((p) => `${lang}/${p}`) : PACKS.story?.[missionId] || [];
+}
 // A story line of a mission by its exact English text (the `say` event's text): { pack, id, seconds } or null.
-export function storyClip(missionId, text) {
+// `lang`: the clip in that language's pack when it has one (with its own length), else the English clip.
+export function storyClip(missionId, text, lang = "en") {
   const id = `s.${storyHash(text)}`;
-  for (const pack of storyPacks(missionId)) { const clip = PACKS.packs[pack]?.clips[id]; if (clip) return { pack, id, seconds: clip[1] }; }
+  for (const l of lang === "en" ? ["en"] : [lang, "en"])
+    for (const pack of storyPacks(missionId, l)) { const clip = packInfo(pack)?.clips[id]; if (clip) return { pack, id, seconds: clip[1] }; }
   return null;
 }
-// Spoken faction packs in other languages (unit replies and announcer, the same clip ids as the English
-// packs; tools/voices/make-voices-vi.py). Story lines stay English audio (with subtitles) in every language.
-export const VOICE_LANGS = Object.freeze({ vi: PACKS_VI });
 // The faction pack for the game language: "vi/meridian" when that language has it, else the English "meridian".
 export function factionPack(faction, lang = "en") {
   const f = voiceFaction(faction);
@@ -81,15 +89,15 @@ export function factionPack(faction, lang = "en") {
 }
 // The English pack a language pack falls back to ("vi/veil" -> "veil"), or null for an English pack.
 export const fallbackPack = (name) => (name.includes("/") ? name.slice(name.indexOf("/") + 1) : null);
-// A pack's index entry ({ file, bytes, clips }) by name, English or "<lang>/<faction>"; null if unknown.
+// A pack's index entry ({ file, bytes, clips }) by name, English or "<lang>/<pack>"; null if unknown.
 export function packInfo(name) {
   const i = name.indexOf("/");
   return (i < 0 ? PACKS.packs[name] : VOICE_LANGS[name.slice(0, i)]?.packs?.[name.slice(i + 1)]) || null;
 }
-// The voice packs a match needs: the player's faction (in the game language when it is voiced), plus the
-// story packs of its mission (only that one).
+// The voice packs a match needs: the player's faction and the story packs of its mission (only that one),
+// each in the game language when that language voices it.
 export function packsFor({ faction = "meridian", missionId = null, lang = "en" } = {}) {
-  return [factionPack(faction, lang), ...storyPacks(missionId)];
+  return [factionPack(faction, lang), ...storyPacks(missionId, lang)];
 }
 
 // The bark kind of an order (orders.js type) -> reply kind; null = no reply.

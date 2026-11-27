@@ -3,8 +3,8 @@
 // (a main mission, a Chronicle in Vietnamese, the finale with its two packs) and story lines go through the
 // real dialogue path (window.__frontier.mission.say, as a mission trigger does): back-to-back lines play one
 // after the other without overlap (the voice player's start/ended events are logged), the subtitle shows the
-// translated line while the English clip plays, a staged scene's line cuts in and skipping the scene stops
-// it, and Voices off silences story lines. No listening: buffer source events only.
+// translated line while the Vietnamese clip of the same words plays (phase 2: vi/story-<id>), a staged scene's
+// line cuts in and skipping the scene stops it, and Voices off silences story lines. No listening: buffer source events only.
 import assert from "node:assert/strict";
 import { launchBrowser, openPage, suite, TIMEOUT } from "./lib/harness.mjs";
 import { setLanguage } from "./lib/settings-sheet.mjs";
@@ -77,24 +77,26 @@ await suite("story voices: per-mission packs after Start, lines in order, scenes
   for (let i = 1; i < 3; i++) assert.ok(log2[i].t0 >= log2[i - 1].t1 - 0.05, `line ${i + 1} starts after line ${i} ended (no overlap: ${log2[i].t0} vs ${log2[i - 1].t1})`);
   for (const l of log2) assert.ok(l.t1 - l.t0 > 1, "each line played whole (no cut-off)");
 
-  // 2. A Chronicle in Vietnamese: the Ashfall pack and the Chronicle's story pack; the subtitle is translated.
+  // 2. A Chronicle in Vietnamese: the Ashfall pack and the Chronicle's story pack, both Vietnamese; the subtitle is
+  // translated and the line speaks from the Vietnamese story pack.
   await load("vi");
   await campaign();
   await tap('.chron-card[data-chronicle="ashfall"]');
   await page.locator('[data-mission="ca1-cold-berths"]').waitFor({ state: "visible" });
   await tap('[data-mission="ca1-cold-berths"]');
   await begin();
-  // Vietnamese (2026-11-27): the faction speaks from its vi pack; story lines stay English audio with VI subtitles.
-  await packsReady(["vi/ashfall", "story-ca1"]);
-  assert.deepEqual([...requests].sort(), ["story-ca1", "vi/ashfall"], `the Chronicle fetches its own pack only (${requests})`);
+  // Vietnamese (2026-11-27): the faction and the story speak from their vi packs (no English pack is fetched).
+  await packsReady(["vi/ashfall", "vi/story-ca1"]);
+  assert.deepEqual([...requests].sort(), ["vi/ashfall", "vi/story-ca1"], `the Chronicle fetches its own Vietnamese packs only (${requests})`);
   const ca = linesOf("ca1-cold-berths")[0];
   await say(ca.who, ca.text);
   await page.waitForFunction((id) => window.__frontier.audio.voice.voice?.line.index === id, `s.${storyHash(ca.text)}`, { timeout: TIMEOUT.step });
+  assert.equal(await page.evaluate(() => window.__frontier.audio.voice.voice?.line.pack), "vi/story-ca1", "the story line speaks Vietnamese");
   await page.evaluate(() => { window.__boxClock = setInterval(() => window.__frontier.mission.tick(0.5), 100); });
   const shown = await page.waitForFunction((en) => { const t = document.querySelector("#dialogue-text")?.textContent; return t && t !== en; }, ca.text, { timeout: TIMEOUT.step }).then(() => true, () => false);
   const box2 = await page.evaluate(() => ({ text: document.querySelector("#dialogue-text")?.textContent, lang: document.documentElement.lang, log: window.__frontier.mission.queue?.log?.length }));
   await page.evaluate(() => clearInterval(window.__boxClock));
-  assert.ok(shown, `the subtitle is in Vietnamese while the English clip plays (${JSON.stringify(box2)})`);
+  assert.ok(shown, `the subtitle is in Vietnamese while the Vietnamese clip plays (${JSON.stringify(box2)})`);
   assert.equal(await page.evaluate(() => document.documentElement.lang), "vi", "Vietnamese page");
 
   // 3. The finale: both of its story parts; a scene line cuts in, skipping the scene stops it; Voices off.

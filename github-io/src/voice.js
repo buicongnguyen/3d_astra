@@ -2,7 +2,8 @@
 // announcer, or a mission's story lines: one pack per campaign or Chronicle mission, two parts for a long
 // one), fetched only when a match needs it (after the first gesture, never before Start: the faction pack
 // and the active mission's story packs only) and decoded once; story packs of another mission are let go; a clip is one AudioBufferSourceNode reading its slice, through
-// one gain into the voice bus. The rules (who may speak, when, what cuts what) are voice-logic.js.
+// one gain into the voice bus. In a voiced language (Vietnamese) both the faction pack and the story packs come from
+// public/voices/<lang>/; a language pack that fails to load falls back to the English pack of the same name. The rules (who may speak, when, what cuts what) are voice-logic.js.
 // The service worker keeps each pack on its first fetch (fc-voices in tools/sw.template.js).
 import PACKS from "./voice-packs.json" with { type: "json" };
 import { mulberry32 } from "./rng.js";
@@ -30,8 +31,8 @@ export class VoicePlayer {
     this.faction = voiceFaction(faction);
     this.lang = lang;
     this.mission = missionId ?? null;
-    const keep = new Set(storyPacks(this.mission));
-    for (const name of [...this.packs.keys()]) if (name.startsWith("story-") && !keep.has(name) && !this.packs.get(name).loading) this.packs.delete(name);
+    const keep = new Set([...storyPacks(this.mission), ...storyPacks(this.mission, this.lang)]);
+    for (const name of [...this.packs.keys()]) if ((fallbackPack(name) ?? name).startsWith("story-") && !keep.has(name) && !this.packs.get(name).loading) this.packs.delete(name);
     for (const name of packsFor({ faction: this.faction, missionId: this.mission, lang: this.lang })) this.load(name);
   }
   load(name) {
@@ -46,7 +47,7 @@ export class VoicePlayer {
       return true;
     })().catch(() => {
       this.packs.set(name, { failed: true });
-      // A language pack that is missing or broken: the faction speaks English instead.
+      // A language pack that is missing or broken: the faction (or the story) speaks English instead.
       const en = fallbackPack(name);
       return en ? this.load(en) || false : false;
     });
@@ -70,17 +71,25 @@ export class VoicePlayer {
   ack(kind, who = null) { return this.say({ channel: "ack", key: kind, ...(who ? { who } : {}) }, this.faction); }
   // An announcer line for event key `key`.
   announce(key) { return this.say({ channel: "announcer", key }, this.faction); }
+  // The clip a story line speaks from now: the game language's clip, or the English one when that language has
+  // none, its pack failed, or it is still loading while the English pack is already here (a language switch).
+  storyClipNow(text) {
+    const local = storyClip(this.mission, text, this.lang), en = this.lang === "en" ? local : storyClip(this.mission, text);
+    if (!local || !en || local.pack === en.pack) return local || en;
+    return this.packs.get(local.pack)?.failed || (!this.ready(local.pack) && this.ready(en.pack)) ? en : local;
+  }
   // A story line of the current mission by its exact English text. Returns the clip's seconds when it has a
   // voice and was played or queued, else 0. `scene`: a staged scene's line, which speaks at once (cutting any
   // line) and is stopped by skipping the scene; it is not voiced if its pack has not arrived yet.
   story(text, { scene = false, cut = false } = {}) {
-    const clip = storyClip(this.mission, text);
+    const clip = this.storyClipNow(text);
     if (!clip) return 0;
-    const line = { channel: "story", key: "story", index: clip.id, pack: clip.pack, ...(scene ? { scene: true, cut: true } : cut ? { cut: true } : {}) };
+    const line = (c) => ({ channel: "story", key: "story", index: c.id, pack: c.pack, ...(scene ? { scene: true, cut: true } : cut ? { cut: true } : {}) });
     const loading = this.packs.get(clip.pack)?.loading;
-    // The mission's first line can come before its pack has arrived: speak it if that takes under 3 s.
-    if (loading && !scene) { const asked = this.context.currentTime; loading.then((ok) => { if (ok && this.context.currentTime - asked < 3) this.say(line, null); }); return clip.seconds; }
-    return this.say(line, null) ? clip.seconds : 0;
+    // The mission's first line can come before its pack has arrived: speak it if that takes under 3 s (from the
+    // English pack if the language pack failed meanwhile).
+    if (loading && !scene) { const asked = this.context.currentTime; loading.then((ok) => { const now = this.storyClipNow(text); if (ok && now && this.context.currentTime - asked < 3) this.say(line(now), null); }); return clip.seconds; }
+    return this.say(line(clip), null) ? clip.seconds : 0;
   }
   // A skipped scene: its line stops at once and its waiting lines are dropped.
   stopScene() {

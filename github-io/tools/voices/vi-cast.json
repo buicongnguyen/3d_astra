@@ -1,8 +1,19 @@
 {
- "about": "Vietnamese voice cast (VieNeu-TTS v3 Turbo preset voices) per faction: unit replies and announcer. Read by synth-vi.py and make-voices-vi.py.",
+ "about": "Vietnamese voice cast (VieNeu-TTS v3 Turbo preset voices) per faction: unit replies and announcer; `story`: the voice of each story speaker (phase 2, same gender as the English cast and the portrait; the phase 1 faction voice where it fits the person), `spoken`: a word respelled for the voice only (the screen keeps its text). Read by synth-vi.py and make-voices-vi.py.",
  "meridian": {"unit": "Hải Đăng", "announcer": "Mai Anh"},
  "ashfall": {"unit": "Xuân Vĩnh", "announcer": "Mai Anh"},
  "sunward": {"unit": "Thái Sơn", "announcer": "Mai Anh"},
  "wardens": {"unit": "Quốc Tuấn", "announcer": "Mai Anh"},
- "veil": {"unit": "Đoan Trang", "announcer": "Mai Anh"}
+ "veil": {"unit": "Đoan Trang", "announcer": "Mai Anh"},
+ "story": {
+  "vale": "Ngọc Huyền",
+  "okoro": "Hải Đăng",
+  "hale": "Xuân Vĩnh",
+  "sol": "Thục Đoan",
+  "maren": "Đoan Trang",
+  "lind": "Thanh Bình",
+  "rask": "Trúc Ly",
+  "echo": "Ngọc Linh"
+ },
+ "spoken": {"ECHO": "Echo"}
 }
