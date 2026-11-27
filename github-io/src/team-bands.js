@@ -39,7 +39,8 @@ export function addTeamBands(scene, type) {
     const featured = mesh.name === FEATURE_PANEL[type];
     if (!featured && !/^(Armor|Rust|Medical|Cape|Cloak|Fatigue)/.test(name)) return;
     for (let parent = mesh; parent; parent = parent.parent) {
-      if (/^(leg_|spin_|flicker_)/i.test(parent.name)) return;
+      // Skywing's weapons (generate_skywing.py) stay one baked draw each: no band of team paint on them.
+      if (/^(leg_|spin_|flicker_|skywing_(sniper|rocket))/i.test(parent.name)) return;
     }
     mesh.geometry.computeBoundingBox();
     const bounds = mesh.geometry.boundingBox.clone().applyMatrix4(mesh.matrixWorld);
