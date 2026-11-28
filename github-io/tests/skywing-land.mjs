@@ -14,6 +14,7 @@
 import assert from "node:assert/strict";
 import { mkdirSync, copyFileSync } from "node:fs";
 import { launchBrowser, openPage, shot, suite, TIMEOUT, OUTPUT } from "./lib/harness.mjs";
+import { inShard, shardLabel } from "./lib/shard.mjs";
 
 const SHOTS = process.env.SKYLAND_SHOTS || null; // a folder to copy the owner's screenshots into
 async function keep(page, name) {
@@ -76,6 +77,15 @@ async function battle(page, tap) {
   await page.waitForFunction((id) => window.__frontier.view.objects.get(id)?.userData.type === "skywing", ids.sky, { timeout: TIMEOUT.models });
   return ids;
 }
+// The Land / Take off button once it is usable (a Dive strike the computer cast, a climb or the cooldown under way on a
+// slow runner wait out in game time first).
+async function landReady(page) {
+  for (let i = 0; i < 60; i++) {
+    if (await page.evaluate(() => { const b = document.querySelector('#hero-hud [data-hero="land"]'); return !!b && !b.hidden && !b.disabled; })) return;
+    await step(page, 0.2);
+  }
+  throw new Error("the Land button stayed disabled");
+}
 const enterSky = async (page, id) => {
   await page.evaluate((id) => window.__frontier.heroMode.enter(id), id);
   await page.waitForFunction(() => window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
@@ -83,9 +93,11 @@ const enterSky = async (page, id) => {
 };
 
 const browser = await launchBrowser();
-await suite("skywing-land", async () => {
+// Four units of work (CI may split them, `shard: i/2`): desktop (0), Hero battle and the sandbox (1), phones (2),
+// the title's quick row (3).
+await suite("skywing-land" + shardLabel, async () => {
   // ---------------------------------------------------------------- desktop
-  {
+  if (inShard(0)) {
     const { page, goto, ready, tap, errors } = await openPage(browser, "desktop");
     await goto();
     await ready();
@@ -119,6 +131,7 @@ await suite("skywing-land", async () => {
     await step(page, 0.3, 5);
     assert.equal(await page.evaluate((id) => window.__frontier.view.objects.get(id).userData.skywing.weapons.rocket.visible, ids.sky), true, "the rocket in hand");
     // R lands under the reticle: one logged command with the aim point.
+    await landReady(page);
     await page.keyboard.press("r");
     const sent = await page.evaluate(() => window.__frontier.sim.commandLog.filter((c) => c.type === "skywingLand"));
     assert.equal(sent.length, 1);
@@ -189,6 +202,7 @@ await suite("skywing-land", async () => {
     const walked = await page.evaluate(([id, a]) => { const e = window.__frontier.sim.get(id); return { d: Math.hypot(e.x - a.x, e.z - a.z), flying: e.flying }; }, [ids.sky, at]);
     assert.ok(walked.d > 1.5 && !walked.flying, `walked ${walked.d.toFixed(2)} m on foot`);
     // Take off: a climb that ground weapons still hit, then the look-down view; the button waits out the cooldown.
+    await landReady(page);
     await land.click();
     await step(page, 0.1, 3);
     assert.equal(await page.evaluate(([sky, tank]) => { const s = window.__frontier.sim; return !s.get(sky).flying && s.canHit(s.get(tank), s.get(sky)); }, [ids.sky, ids.tank]), true, "hittable while it climbs");
@@ -207,7 +221,7 @@ await suite("skywing-land", async () => {
     await page.close();
   }
   // ---------------------------------------------------------------- Hero battle and the sandbox's free Skywing
-  {
+  if (inShard(1)) {
     const COINS = "frontier-coins-v1", w = { v: 1, coins: 100, earned: 0, spent: 0, won: [], losses: {}, hinted: [], day: null, paidAch: [] };
     const coins = (page) => page.evaluate((k) => JSON.parse(localStorage.getItem(k) || "null")?.coins, COINS);
     const { page, goto, ready, tap, errors } = await openPage(browser, "desktop");
@@ -250,7 +264,7 @@ await suite("skywing-land", async () => {
     await p2.page.close();
   }
   // The title's quick row: five tiles, none overlapping, >= 44 px, text >= 11 px, in EN, VI and KO on every screen.
-  for (const [viewport, lang] of [["desktop", "en"], ["desktop", "vi"], ["portrait", "ko"], ["portrait", "vi"], ["landscape", "en"], ["landscape", "ko"]]) {
+  for (const [viewport, lang] of inShard(3) ? [["desktop", "en"], ["desktop", "vi"], ["portrait", "ko"], ["portrait", "vi"], ["landscape", "en"], ["landscape", "ko"]] : []) {
     const { page, goto, ready, errors } = await openPage(browser, viewport);
     await goto();
     if (lang !== "en") {
@@ -283,7 +297,7 @@ await suite("skywing-land", async () => {
     await page.close();
   }
   // ---------------------------------------------------------------- phones: the Land tile in EN, VI and KO
-  for (const lang of ["en", "vi", "ko"]) {
+  for (const lang of inShard(2) ? ["en", "vi", "ko"] : []) {
     const { page, goto, ready, tap, errors } = await openPage(browser, "portrait", lang === "en" ? {} : { deviceScaleFactor: 3 });
     await goto();
     if (lang !== "en") {
@@ -296,6 +310,7 @@ await suite("skywing-land", async () => {
     await page.waitForFunction(() => document.documentElement.classList.contains("hero-phone"), null, { timeout: TIMEOUT.step });
     await audit(page, `portrait ${lang} flying`);
     if (lang === "en") await keep(page, "skyland-phone-flying");
+    await landReady(page);
     await tap('#hero-hud [data-hero="land"]');
     await step(page, 0.1, 8);
     await page.waitForFunction(() => window.__frontier.heroMode.info.flight < 0.01, null, { timeout: TIMEOUT.step });
@@ -306,6 +321,7 @@ await suite("skywing-land", async () => {
     await page.waitForTimeout(400);
     await audit(page, `landscape ${lang} landed`);
     if (lang === "en") await keep(page, "skyland-landscape-landed");
+    await landReady(page);
     await tap('#hero-hud [data-hero="land"]');
     await step(page, 0.2, 6);
     await page.waitForFunction(() => window.__frontier.heroMode.info.flight > 0.99, null, { timeout: TIMEOUT.step });
