@@ -2,6 +2,10 @@
 
 ## Unreleased: Round A.2
 
+### No screen-wide beam lines in Skywing / Hero view (owner 2026-11-28)
+- **Beam strips** (repair, heal and energy beams) are camera-facing cards turned along the beam. Under the perspective Hero camera they drew at their full world length even when the beam ran toward the lens, so a 5 m repair beam could cross the whole screen. They are now shortened by how much of the beam lies across the view and capped at 35% of the view's height (`STRIP_SCREEN`, src/fx-sprites.js). The RTS camera is unchanged.
+- **Harvester repairs** under the Hero camera show welding sparks and the wrench on the building, with no beam line.
+
 ### Restart starts in the normal view (owner 2026-11-28)
 - **Hero battle restart.** "Play again" or Restart after a Hero battle brings the free Skywing again but starts the match in the normal view; only the Hero battle tile itself goes straight into Hero mode. Tests: `npm run test:skywing-land`.
 

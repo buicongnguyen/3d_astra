@@ -11,6 +11,8 @@ import { SHEETS, frameAt, atlasFile, atlasSize, DECAL, POOL, SCORCH_FRAMES, CRAT
 const OCCLUDED = -1, BILLBOARD = 0, GROUND = 1, ORIENTED = 2;
 export { OCCLUDED, BILLBOARD, GROUND, ORIENTED };
 
+// The longest a beam strip may draw under the Hero camera, as a share of the view's height (VERTEX).
+export const STRIP_SCREEN = 0.35;
 const VERTEX = `
 attribute vec3 iPos; attribute vec4 iColor; attribute vec4 iRect; attribute vec4 iFrame; attribute vec3 iSize; attribute vec3 iAxis; attribute vec4 iExtra;
 uniform vec2 texel;
@@ -35,6 +37,17 @@ void main() {
   if (iSize.z > 1.5) rot += atan(dot(iAxis, up), dot(iAxis, right)); // turned along a world direction, seen from the camera
   float c = cos(rot), s = sin(rot);
   vec2 p = position.xy * iExtra.xy;
+  // A strip (beam) is a camera-facing card turned along its world direction. Under the perspective Hero camera it is
+  // shortened by how much of the beam lies across the view (a beam pointing at the lens is short on screen, as the
+  // real line would be) and never drawn longer than STRIP_SCREEN of the view's height at its depth: before, a repair
+  // or heal beam running toward the lens drew at its full world length and crossed the whole screen.
+  if (iExtra.z > 0.0 && iSize.z > 1.5 && projectionMatrix[3][3] < 0.5) {
+    float across = clamp(length(vec2(dot(iAxis, up), dot(iAxis, right))), 0.0, 1.0);
+    float depth = max(-(viewMatrix * vec4(iPos, 1.0)).z, 0.05);
+    float most = ${STRIP_SCREEN.toFixed(2)} * 2.0 * depth / projectionMatrix[1][1];
+    float full = max(iExtra.x * iSize.x * across, 1e-4);
+    p.x *= across * min(1.0, most / full);
+  }
   vec2 r = vec2(p.x * c - p.y * s, p.x * s + p.y * c) * iSize.x;
   vec3 world;
   // Camera-facing sprites are pulled toward the (orthographic) camera by about their own size, like the glow pool: a

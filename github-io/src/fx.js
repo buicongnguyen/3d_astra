@@ -740,6 +740,14 @@ export class Effects {
       const engineer = e.weapon === "engineer", tint = e.weapon === "repair" || engineer ? [1, 0.69, 0.22, 0.95] : [0.5, 1, 0.75, 0.9];
       const repair = engineer || e.weapon === "repair";
       const width = anchor.targetWidth, glyphSize = Math.min(width * 0.72, 0.86);
+      // Under the close Hero camera a Harvester's repair shows as welding sparks and the wrench on the building, with
+      // no beam line (owner 2026-11-28: the repair line looked long and could cross the screen).
+      if (e.weapon === "repair" && this.view.camera?.isPerspectiveCamera) {
+        this.particle(this.smoke, { ...land, y: land.y + width*0.55, cell: CELL.wrench, rot: 0, s0: glyphSize, s1: glyphSize, life: 0.48,
+          c0: [tint[0], tint[1], tint[2], 0.58], c1: [tint[0], tint[1], tint[2], 0], anchor });
+        this.particle(this.glow, { ...land, cell: CELL.flare, s0: 0.5, s1: 0.2, life: 0.12, c0: [1, 0.85, 0.5, 0.9], c1: [1, 0.55, 0.2, 0], anchor });
+        return;
+      }
       const painted = spriteSupport(this,from,to,dir,len,anchor,tint,repair);
       if (!painted || repair) this.particle(this.smoke, { ...land, y: land.y + width*0.55, cell: repair ? CELL.wrench : CELL.cross,
         rot: 0, s0: glyphSize, s1: glyphSize, life: 0.48,

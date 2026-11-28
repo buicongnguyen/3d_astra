@@ -120,3 +120,17 @@ test("crystal deposits: shared kit parts, no shadows, two clear kinds", () => {
   CrystalFieldKit.step(a, 1);
   assert.equal(crystals(a).userData.tint[0], 1);
 });
+
+// Owner 2026-11-28: in Skywing / Hero view a repair or heal beam could cross the whole screen. A beam strip is a
+// camera-facing card; under the perspective camera it is now shortened by how much of the beam lies across the view
+// and capped at STRIP_SCREEN of the view's height, and a Harvester's repair shows no beam at all under that camera.
+test("beam strips are foreshortened and capped under the Hero camera; no Harvester repair beam there", async () => {
+  const fs = await import("node:fs");
+  const { STRIP_SCREEN } = await import("../src/fx-sprites.js");
+  assert.ok(STRIP_SCREEN > 0 && STRIP_SCREEN <= 0.4, `cap ${STRIP_SCREEN}`);
+  const sprites = fs.readFileSync(new URL("../src/fx-sprites.js", import.meta.url), "utf8");
+  assert.match(sprites, /float across = clamp\(length\(vec2\(dot\(iAxis, up\), dot\(iAxis, right\)\)\)/);
+  assert.match(sprites, /p\.x \*= across \* min\(1\.0, most \/ full\)/);
+  const fx = fs.readFileSync(new URL("../src/fx.js", import.meta.url), "utf8");
+  assert.match(fx, /e\.weapon === "repair" && this\.view\.camera\?\.isPerspectiveCamera/);
+});
