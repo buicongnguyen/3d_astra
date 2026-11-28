@@ -29,6 +29,7 @@ import { skywingMuzzle } from "./skywing-view.js";
 // Skywing's signature looks with a hero-camera-sized muzzle (fx.shot, Hero mode), one per look.
 const HERO_MUZZLE = new WeakMap();
 import { groundSplashRadius, weaponClass } from "./fx-kinds/weapon-class.js";
+import { meleeStyle } from "./melee-styles.js";
 import { OrdnanceBodies } from "./fx-kinds/ordnance-body.js";
 import { launch, stepRounds, stepStrikes, warnRing, flakBurst, airBurst } from "./fx-kinds/ordnance.js";
 import { LOOKS as MOOD_LOOKS } from "./mission-looks.js";
@@ -688,10 +689,23 @@ export class Effects {
       const at = { x: point.x - dx * inset, z: point.z - dz * inset, y: style.height };
       if (!sim.isVisible(at)) return;
       const anchor = { x: at.x, z: at.z, target: e.target, team: target?.team };
-      const moving = this.motion;
+      const moving = this.motion, look = meleeStyle(e.unit || e.weapon).contact, [r0, g0, b0] = look.c0, [r1, g1, b1] = look.c1;
       this.particle(this.glow, { ...at, cell: moving ? CELL.flare : CELL.glow, priorityHit: true,
-        s0: moving ? 0.8 : 0.35, s1: 0.18, life: 0.08, c0: [0.83,1,0.97,moving ? 0.95 : 0.55], c1: [0.28,0.85,0.92,0], anchor });
-      if (moving) this.sparks(at, 5, anchor, 0.48);
+        s0: moving ? 0.8 : 0.35, s1: 0.18, life: 0.08, c0: [r0, g0, b0, moving ? 0.95 : 0.55], c1: [r1, g1, b1, 0], anchor });
+      if (!moving) return;
+      // Blade fighters (src/melee-styles.js): the Vanguard's white sparks, the Scrapper's rusty orange scrap sparks, the
+      // Shade's few violet ones. Pooled particles only: no draw is added.
+      if (look.glint) this.glint(at, look.glint[0], look.glint[1], anchor, look.sparks, look.power);
+      else this.sparks(at, look.sparks, anchor, look.power);
+      // The Shade leaves a short shadow behind its blade: a dark streak along the strike with a violet core, gone in 0.2 s.
+      if (look.afterimage && distance > 0.01) {
+        const ux = dx / distance, uz = dz / distance, length = Math.min(1.8, distance + 0.6);
+        const mid = { x: at.x - ux * length * 0.4, y: at.y, z: at.z - uz * length * 0.4 };
+        this.particle(this.smoke, { ...mid, mode: STRETCH, ax: ux, ay: 0, az: uz, length, cell: CELL.streak, s0: 0.42, s1: 0.6, life: 0.22,
+          c0: [0.1, 0.03, 0.17, 0.75], c1: [0.05, 0.015, 0.09, 0], anchor });
+        this.particle(this.glow, { ...mid, mode: STRETCH, ax: ux, ay: 0, az: uz, length: length * 0.9, cell: CELL.streak, s0: 0.12, s1: 0.04, life: 0.14,
+          c0: [r1, g1, b1, 0.9], c1: [r1 * 0.5, g1 * 0.3, b1, 0], anchor });
+      }
     } });
   }
   // The shooter or the target is in fog: show only the end the player can see (a muzzle
@@ -1111,7 +1125,8 @@ export class Effects {
   // glint, infantry a cloth-and-dust puff, a building stone chips. Pools only (no new draw), seeded cosmetic RNG (this.rng),
   // and at most IMPACT_CAP bursts a frame (fewer on phones and in Eco): a big battle cannot flood the pools.
   impact(e) {
-    if (e.weapon === "vanguard") return; // its shot draws contact after the sword wind-up
+    // A blade fighter (Vanguard, Scrapper, Shade: src/melee-styles.js) draws its contact after the wind-up (swordContact).
+    if (weaponStyle({ unit: e.weapon, weapon: e.weapon }).kind === "melee") return;
     // A storm of hits queues no more than a few frames' worth of bursts (the rest would be dropped by the cap anyway).
     if (this.impactPending >= IMPACT_CAP.desktop * 4) return;
     this.impactPending++;

@@ -325,6 +325,7 @@ def build_kind(kind, root):
         add(a)
         gf.consolidate(a)
         a.finish()
+        gf.nest_sword(a)   # the Scrapper's and the Shade's blade arm (both pivots on the shoulder)
         return a, base
     if family == 'wyrm':
         import generate_wyrm as m

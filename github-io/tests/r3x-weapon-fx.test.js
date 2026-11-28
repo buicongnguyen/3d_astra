@@ -21,7 +21,7 @@ const classOf = (unit, extra) => weaponClass(shot(unit, extra));
 test('weapon -> effect class: every armed unit has a class, and each family reads as its own', () => {
   for (const [type, d] of Object.entries(balance.definitions)) if (d.damage > 0) assert.ok(WEAPON_CLASSES.includes(classOf(type)), type);
   const expect = {
-    ranger: 'tracer', gunner: 'tracer', vanguard: 'melee', scrapper: 'tracer', rider: 'tracer',
+    ranger: 'tracer', gunner: 'tracer', vanguard: 'melee', scrapper: 'melee', shade: 'melee', rider: 'tracer',
     tank: 'shell', tower: 'shell', walker: 'shell', rampart: 'shell', breaker: 'lob',
     stalker: 'beam', watcher: 'beam', drone: 'tracer', scorcher: 'flamer', antitank: 'missile',
     hawk: 'strafe', glider: 'bomb', balloon: 'bomb',

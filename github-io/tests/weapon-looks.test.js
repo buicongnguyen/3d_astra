@@ -14,7 +14,7 @@ const vi = JSON.parse(readFileSync(new URL('../src/locales/vi.json', import.meta
 const styles = JSON.parse(readFileSync(new URL('../src/visual-style.json', import.meta.url), 'utf8')).weapons;
 const armed = Object.entries(balance.definitions).filter(([, d]) => d.damage > 0);
 const RIFLE_ON_PURPOSE = new Set(['ranger', 'worker']);
-const OWN_KEY = new Set(['vanguard', 'tank', 'breaker', 'antitank', 'tower']); // their weapon key is their own style
+const OWN_KEY = new Set(['vanguard', 'scrapper', 'shade', 'tank', 'breaker', 'antitank', 'tower']); // their weapon key is their own style (the three blade fighters: melee)
 
 test('every armed definition resolves to its own style, or the rifle on purpose', () => {
   assert.ok(armed.length >= 20);

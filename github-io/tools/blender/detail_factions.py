@@ -137,26 +137,31 @@ def scrapper(a):
     for x in (-.15, .15):
         cyl(a, 'Mask_vents', 'Steel', .03, .03, at(mm, (x, -.09, -.06)), frot(mm, FORWARD), seg=8, bevel=0)
 
-    # Arms: straps round the gauntlets, rivets on the elbow pads.
-    for s, elbow, wrist in ((1, (.5, -.16, 1.34), (.3, -.44, 1.22)), (-1, (-.36, -.42, 1.36), (.14, -.78, 1.27))):
+    # Arms: straps round the gauntlets, rivets on the elbow pads (the right arm swings the cleaver on SwordElbow, at the
+    # shoulder: its parts are authored from there).
+    from generate_factions import SCRAPPER_ARM, rel
+    shoulder = T.p((.44, .02, .6))
+    for s, elbow, wrist in ((1, SCRAPPER_ARM[0], SCRAPPER_ARM[1]), (-1, (-.52, -.2, 1.36), (-.4, -.5, 1.4))):
+        parent, o = ('SwordElbow', shoulder) if s > 0 else (None, (0, 0, 0))
+        elbow, wrist = rel(elbow, o), rel(wrist, o)
         for t in (.35, .6):
-            limb(a, 'Gauntlet_straps', 'Undercarriage', lerp(elbow, wrist, t), lerp(elbow, wrist, t + .07), .225, .235, bevel=0)
-        rivets(a, 'Rivets_more', 'Steel', [(elbow[0] + s * .082, elbow[1] + dy, elbow[2]) for dy in (-.04, .04)], r=.018, h=.02, rot=ACROSS)
+            limb(a, 'Gauntlet_straps', 'Undercarriage', lerp(elbow, wrist, t), lerp(elbow, wrist, t + .07), .225, .235, bevel=0, parent=parent)
+        rivets(a, 'Rivets_more', 'Steel', [(elbow[0] + s * .082, elbow[1] + dy, elbow[2]) for dy in (-.04, .04)], r=.018, h=.02, rot=ACROSS, parent=parent)
 
-    # Scattergun: a sight rail with notches, receiver bolts, a drum hub and rivets, barrel bands, heat-shield slots,
-    # a sling.
-    box(a, 'Gun_rail', 'Steel', (.045, .44, .022), (.27, -.64, 1.348), rot=(-.05, 0, 0), bevel=0)
-    for y in (-.5, -.6, -.7, -.8):
-        box(a, 'Gun_rail', 'Steel', (.06, .015, .012), (.27, y, 1.362 + (-.62 - y) * .05), bevel=0)
-    rivets(a, 'Gun_bolts', 'Steel', [(.27 + s * .087, y, 1.26) for s in (-1, 1) for y in (-.45, -.75)], r=.018, h=.02, rot=ACROSS)
-    cyl(a, 'Drum_hub', 'Steel', .045, .155, (.27, -.56, 1.06), rot=ACROSS, seg=8, bevel=0)
-    for s in (-1, 1):
-        ring_studs(a, 'Gun_bolts', 'Steel', (.27 + s * .068, -.56, 1.06), .1, 6, (0, R, 0), r=.014, h=.015)
-    for y in (-.84, -1.12):
-        cyl(a, 'Gun_bands', 'Steel', .082, .03, (.27, y, 1.28), rot=FORWARD, seg=10, bevel=0)
-    for y in (-.86, -.94, -1.02, -1.1):
-        box(a, 'Shield_slots', 'Undercarriage', (.09, .025, .008), (.27, y, 1.386), bevel=0)
-    limb(a, 'Sling', 'Undercarriage', (.36, -.24, 1.16), (.36, -.86, 1.22), .04, .015, bevel=0)
+    # Buckler: a ring of rivets and a centre boss.
+    ring_studs(a, 'Rivets_more', 'Steel', (-.6, -.4, 1.4), .14, 6, (R, 0, -.75), r=.016, h=.06)
+    # Cleaver: rivets down the face, a wire wrap on the grip, a notch row along the ground edge, a ring on the pommel.
+    h = rel(SCRAPPER_ARM[1], shoulder)
+    hilt = (h[0] - .02, h[1] - .06, h[2] + .02)
+    rivets(a, 'Cleaver_rivets', 'Steel', [(hilt[0] + x, hilt[1] + y, hilt[2] + .036) for x, y in ((.1, -.36), (.06, -.62), (.12, -.8))],
+           r=.024, h=.02, rot=(0, 0, 0), parent='SwordElbow')
+    for k in range(3):
+        y = hilt[1] + .12 - k * .065
+        cyl(a, 'Grip_wrap', 'Steel', .046, .02, (hilt[0], y, hilt[2]), rot=FORWARD, seg=6, bevel=0, parent='SwordElbow')
+    for k in range(5):
+        y = hilt[1] - .4 - k * .11
+        box(a, 'Edge_notches', 'Undercarriage', (.025, .03, .076), (hilt[0] - .1 - .01 * (k % 2), y, hilt[2]), bevel=0, parent='SwordElbow')
+    torus(a, 'Pommel_ring', 'Steel', .05, .012, (hilt[0], hilt[1] + .22, hilt[2]), rot=(0, R, 0), seg=8, ring=3, parent='SwordElbow')
 
 
 def scorcher(a):
@@ -565,31 +570,35 @@ def veil_detail(a, T):
         studs(a, 'Cloak_studs', 'Steel', mc, [(s * .3, .036, 1.55), (s * .48, .036, 1.42)], r=.022, h=.02, axis=(-R, 0, 0))
 
 
-def veil_arm_bands(a, right, left):
-    """Steel bands round each bracer and a steel cop at the elbow; right/left = (elbow, wrist)."""
-    for elbow, wrist in (right, left):
+def veil_arm_bands(a, right, left, right_parent=None):
+    """Steel bands round each bracer and a steel cop at the elbow; right/left = (elbow, wrist), the right one local to
+    right_parent's pivot when given."""
+    for (elbow, wrist), parent in ((right, right_parent), (left, None)):
         for t in (.25, .7):
-            limb(a, 'Bracer_bands', 'Steel', lerp(elbow, wrist, t), lerp(elbow, wrist, t + .07), .17, .18, bevel=0)
-        box(a, 'Elbow_cops', 'Steel', (.11, .1, .09), lerp(elbow, wrist, .02), bevel=0)
+            limb(a, 'Bracer_bands', 'Steel', lerp(elbow, wrist, t), lerp(elbow, wrist, t + .07), .17, .18, bevel=0, parent=parent)
+        box(a, 'Elbow_cops', 'Steel', (.11, .1, .09), lerp(elbow, wrist, .02), bevel=0, parent=parent)
 
 
 def shade(a):
     T = Body((0, .03, 1.1), .17)
     veil_detail(a, T)
-    veil_arm_bands(a, ((.36, -.24, 1.4), (.27, -.52, 1.3)), ((-.36, -.22, 1.42), (-.24, -.56, 1.32)))
+    from generate_factions import SHADE_ARM, rel
+    shoulder = T.p((.3, .02, .58))
+    # The right arm swings the blade on SwordElbow (at the shoulder): its bands are authored from there.
+    veil_arm_bands(a, tuple(rel(p, shoulder) for p in SHADE_ARM), ((-.36, -.22, 1.42), (-.24, -.56, 1.32)), right_parent='SwordElbow')
     # Seer lens: a steel bezel ring in the cowl.
     torus(a, 'Lens_bezel', 'Steel', .068, .012, T.p((.06, -.245, .86)), T.rot(FORWARD), seg=10, ring=3)
     # Blade mount: bolts and two small guard fins.
     rivets(a, 'Blade_bolts', 'Steel', [(-.22 + s * .062, -.5 + y, 1.36) for s in (-1, 1) for y in (-.06, .06)], r=.015, h=.015, rot=ACROSS)
     for s in (-1, 1):
         box(a, 'Blade_guard', 'Steel', (.02, .06, .1), (-.22 + s * .055, -.61, 1.37), rot=(.3, 0, 0), bevel=0)
-    # Pistol: a top rail, a grip, a trigger guard, emitter rings, side studs.
-    box(a, 'Pistol_rail', 'Steel', (.035, .28, .02), (.27, -.62, 1.41), bevel=0)
-    box(a, 'Pistol_grip', 'Undercarriage', (.07, .09, .14), (.27, -.5, 1.22), rot=(-.3, 0, 0), bevel=0)
-    box(a, 'Pistol_guard', 'Steel', (.02, .1, .02), (.27, -.58, 1.24), bevel=0)
-    for y in (-.82, -.95):
-        cyl(a, 'Emitter_rings', 'Steel', .05, .025, (.27, y, 1.35), rot=FORWARD, seg=8, bevel=0)
-    rivets(a, 'Pistol_studs', 'Steel', [(.27 + s * .052, y, 1.34) for s in (-1, 1) for y in (-.7, -.56)], r=.014, h=.015, rot=ACROSS)
+    # Blade: a silver ring on the grip, a seam down the leaf, two studs on the guard.
+    h = rel(SHADE_ARM[1], shoulder)
+    hilt = (h[0], h[1] - .05, h[2] + .02)
+    for y in (.08, .0):
+        cyl(a, 'Grip_rings', 'Steel', .036, .016, (hilt[0], hilt[1] + y, hilt[2]), rot=FORWARD, seg=6, bevel=0, parent='SwordElbow')
+    box(a, 'Blade_seam', 'Charcoal', (.012, .46, .044), (hilt[0], hilt[1] - .48, hilt[2]), bevel=0, parent='SwordElbow')
+    rivets(a, 'Guard_studs', 'Steel', [(hilt[0] + x, hilt[1] - .08, hilt[2] + .03) for x in (-.09, .09)], r=.014, h=.015, rot=(0, 0, 0), parent='SwordElbow')
     # Shoulder crystals: steel mounts at their bases.
     for base in (T.p((-.36, .14, .76)), T.p((-.28, .22, .76))):
         box(a, 'Crystal_mounts', 'Steel', (.1, .1, .04), base, T.rot(), bevel=0)

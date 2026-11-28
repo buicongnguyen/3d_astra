@@ -24,7 +24,9 @@ const clean = (n) => PropertyBinding.sanitizeNodeName(n || "");
 
 // Round 3: triangles, materials, batches (all / team-painted) and size (x across, y up, z along).
 const ROUND3 = {
-  scrapper: { tris: 2852, mats: 7, batches: 3, team: 1, size: [1.4, 2.33, 0.96] },
+  // 2026-11-28: the Scrapper and the Shade fight with blades like the Vanguard: the arm swinging the blade is its own
+  // rigid group (SwordArm, one baked batch, no team paint): Scrapper 3 -> 4 batches, the Shade 3 -> 4 (its round-3 line).
+  scrapper: { tris: 2852, mats: 7, batches: 4, team: 1, size: [1.4, 2.33, 0.96] },
   scorcher: { tris: 2336, mats: 5, batches: 4, team: 2, size: [2.35, 2.8, 3.91] },
   salvageyard: { tris: 2140, mats: 8, batches: 4, team: 2, size: [4.6, 4.08, 4.1] },
   rider: { tris: 2496, mats: 5, batches: 3, team: 1, size: [1.5, 3.24, 3.11] },
@@ -48,7 +50,7 @@ const GUN = { scorcher: ["Turret_head", "Barrel_", "Muzzle_"], walker: ["Turret_
 // The view's template: parts under a moving pivot (leg_* unless the type's legs are shader bones, spin_*, flicker_)
 // form their own group, gun parts the turret (Turret_head* with a Turret_pivot) or the barrel group; within a group
 // one mesh per material, then every plain finish (not Team/Glass/Lamp/Energy, not lit) bakes into one mesh.
-const MOVING_PART = /^(leg_|spin_|flicker_)/;
+const MOVING_PART = /^(leg_|spin_|flicker_|SwordArm$)/;
 const KEEP_FINISH = /^(Team|Glass|Lamp|Energy)/;
 function batches(type, json) {
   const parent = new Map();

@@ -199,17 +199,17 @@
     {
       "name": "scrapper",
       "file": "scrapper.glb",
-      "triangles": 5620,
-      "base_triangles": 3044,
-      "bytes": 163920,
+      "triangles": 5576,
+      "base_triangles": 3192,
+      "bytes": 171192,
       "review": "pending owner review (H3b batch 2)"
     },
     {
       "name": "shade",
       "file": "shade.glb",
-      "triangles": 4556,
-      "base_triangles": 2820,
-      "bytes": 140340,
+      "triangles": 4532,
+      "base_triangles": 2876,
+      "bytes": 147440,
       "review": "pending owner review (H3b batch 2)"
     },
     {

@@ -48,12 +48,20 @@ export const BANK = {
     { k: "noise", f: "bp", f0: 450, f1: 2900, glide: 0.16, q: 1.1, a: 0.085, d: 0.05, dur: 0.22, g: 1 },
     { k: "tone", f0: 180, f1: 530, glide: 0.15, fm: [1.5, 0.68], a: 0.07, d: 0.045, dur: 0.2, g: 0.35 },
   ] },
+  // The Scrapper's cleaver: a lower, heavier whoosh with a loose scrap rattle. The Shade's blade: a quick thin hiss.
+  "shot:cleaver": { level: 0.42, layers: [
+    { k: "noise", f: "bp", f0: 280, f1: 1500, glide: 0.17, q: 0.9, a: 0.09, d: 0.06, dur: 0.24, g: 1 },
+    { k: "tone", f0: 110, f1: 300, glide: 0.16, fm: [1.3, 0.8], a: 0.08, d: 0.05, dur: 0.22, g: 0.4 },
+    debris(4, 0.02, 0.12, [1800, 4200], 5, 0.18),
+  ] },
+  "shot:veilblade": { level: 0.33, layers: [
+    { k: "noise", f: "bp", f0: 900, f1: 4800, glide: 0.12, q: 1.6, a: 0.1, d: 0.035, dur: 0.17, g: 1 },
+    { k: "tone", w: "sine", f0: 1300, f1: 2600, glide: 0.12, a: 0.09, d: 0.03, dur: 0.15, g: 0.12 },
+  ] },
   "impact:blade": { level: 0.3, layers: [
     body("bp", 2450, 920, 0.018, 0, 0.7, 2), ring(1360, 0.034, 0, 0.45), ring(2260, 0.025, 0.002, 0.19),
   ] },
   "shot:smg": { level: 0.46, drive: 2, room: ROOM.slap, layers: burst(3, 0.072, rifle(3000, 0.9)) },
-  "shot:silenced": { level: 0.3, layers: burst(2, 0.11, [body("lp", 1100, 500, 0.016, 0, 1), thump(240, 120, 0.02, 0, 0.6), crack(6000, 0, 0.2, 0.003), { k: "tone", w: "square", f0: 1800, at: 0.03, a: 0.0005, d: 0.004, dur: 0.02, g: 0.08 }]) },
-  "shot:scrap": { level: 0.52, drive: 2.5, room: ROOM.slap, layers: [crack(2600, 0, 1, 0.01), body("bp", 1100, 500, 0.055, 0, 1, 0.6), thump(130, 60, 0.05, 0, 0.8), ring(1870, 0.08), ring(2650, 0.06, 0.003, 0.08), debris(5, 0.02, 0.12, [2000, 5000], 6, 0.25)] },
   "shot:flame": { level: 0.4, layers: [{ k: "noise", f: "lp", f0: 500, f1: 1600, glide: 0.12, q: 0.9, a: 0.03, d: 0.16, dur: 0.45, g: 1 }, { k: "noise", f: "bp", f0: 2500, q: 0.8, a: 0.01, d: 0.05, dur: 0.2, g: 0.35 }, thump(65, 50, 0.15, 0, 0.5), debris(10, 0.02, 0.3, [2500, 6000], 2, 0.25, [0.002, 0.008])] },
   "shot:rocket": { level: 0.55, drive: 1.5, room: ROOM.slap, layers: [crack(3000, 0, 0.7, 0.006), thump(320, 110, 0.025, 0, 0.6), { k: "noise", f: "bp", f0: 700, f1: 2600, glide: 0.25, q: 1.6, at: 0.01, a: 0.03, d: 0.14, dur: 0.5, g: 1.2 }, { k: "noise", f: "lp", f0: 400, f1: 900, glide: 0.3, at: 0.01, a: 0.02, d: 0.2, dur: 0.6, g: 0.5 }] },
   "shot:rail": { level: 0.5, room: ROOM.slap, layers: [crack(5200, 0, 1, 0.005), { k: "tone", w: "saw", f0: 2600, f1: 500, glide: 0.07, a: 0.001, d: 0.04, dur: 0.2, g: 0.3 }, { k: "tone", w: "sine", f0: 3400, f1: 1500, glide: 0.1, a: 0.001, d: 0.05, dur: 0.25, g: 0.2 }, body("bp", 1800, 900, 0.03, 0, 0.7, 1.2), thump(150, 80, 0.03, 0, 0.5)] },

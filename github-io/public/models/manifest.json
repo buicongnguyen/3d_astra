@@ -97,7 +97,7 @@
     {
       "name": "scrapper",
       "file": "scrapper.glb",
-      "triangles": 3044,
+      "triangles": 3192,
       "faction": "ashfall",
       "kind": "unit",
       "budget": 3200,
@@ -196,7 +196,7 @@
     {
       "name": "shade",
       "file": "shade.glb",
-      "triangles": 2820,
+      "triangles": 2876,
       "faction": "veil",
       "kind": "unit",
       "budget": 3200,

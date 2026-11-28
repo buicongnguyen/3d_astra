@@ -189,7 +189,7 @@ export class VoiceBudget {
 // The weapon voice of a shot: the event's weapon (balance.json `shot`, else the unit type), refined
 // by the shooter's type where several units share one shot (drone, walker, watcher).
 export const WEAPON_VOICE = {
-  ranger: "rifle", rider: "rifle", drone: "drone", vanguard: "blade", scrapper: "scrap", shade: "silenced",
+  ranger: "rifle", rider: "rifle", drone: "drone", vanguard: "blade", scrapper: "cleaver", shade: "veilblade", // blade fighters (src/melee-styles.js)
   tank: "tank", walker: "walker", breaker: "artillery", scorcher: "flame", antitank: "rocket", watcher: "rail",
   gunner: "mg", stalker: "laser", hawk: "pod", tower: "tower", medic: "support", wagon: "support", engineer: "engineer", worker: "worker", repair: "worker",
   // W12 (2026-11-25): units that fell back to the generic SMG get their own family.
@@ -508,7 +508,7 @@ export function engineMix(vehicles) {
 // (`sourceType`, else the event's `unit`) and whether the target flies (`tAir`).
 export const WEAPON_CLASSES = ["tracer", "shell", "lob", "flak", "beam", "flamer", "heal", "missile", "bomb", "strafe", "melee"];
 const VOICE_CLASS = {
-  blade: "melee", rifle: "tracer", smg: "tracer", mg: "tracer", silenced: "beam", scrap: "tracer", drone: "tracer", worker: "tracer",
+  blade: "melee", cleaver: "melee", veilblade: "melee", rifle: "tracer", smg: "tracer", mg: "tracer", drone: "tracer", worker: "tracer",
   tank: "shell", walker: "shell", tower: "shell", artillery: "lob", flame: "flamer", rocket: "missile", pod: "missile",
   rail: "beam", laser: "beam", support: "heal", engineer: "heal",
   spit: "flamer", zap: "beam", pulse: "beam", autocannon: "shell",

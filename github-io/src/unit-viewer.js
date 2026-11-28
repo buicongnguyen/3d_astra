@@ -14,6 +14,7 @@ import { FACTIONS } from "./story/world.js";
 import { PRESETS } from "./settings.js";
 import { weaponStyle } from "./visual-style.js";
 import { FEEL } from "./camera-shake.js";
+import { isMeleeType } from "./melee-styles.js";
 import { VANGUARD_WINDUP, attachVanguardSword, strikeVanguardSword, restVanguardSword, followVanguardTorso } from "./vanguard-sword.js";
 import { airParts, poseAirParts, airMotion } from "./air-motion.js";
 import { KNEELERS, STANCE, GAIT, BARREL_POSES, RECOIL, newGun, fireBarrel, stepBarrel, poseBarrel, stepInfantry, stepHull, approach,
@@ -115,7 +116,7 @@ function motionState(type, model) {
   const air = def.flying ? airParts(model, { spins: [], flames: [], clock: 0, hover: 0 }) : null;
   return {
     type, def, legs, turret, barrel, pose, air, turretBase: turret?.position.clone(),
-    sword: type === "vanguard" ? attachVanguardSword(model) : null,
+    sword: isMeleeType(type) ? attachVanguardSword(model, type) : null,
     gun: pose ? newGun(pose.park, pose.rest) : newGun(),
     rig: rig ? { kind: rig, motion: new Float32Array([0, 0, 0, 1]), phase: 0, gait: 0, kneel: 0, flinch: 0, flinchV: 0, roll: 0, rollV: 0, tilt: 0, lean: 0, vs: 0, pitch: 0, pitchV: 0, squat: 0,
       legLength: model.userData.legLength || 0.95, hullPivot: model.userData.hullPivot || [0.6, 0], stance: STANCE[type] || null } : null,

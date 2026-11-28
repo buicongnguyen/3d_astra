@@ -81,7 +81,8 @@ def ashfall_leg(a, side, x, hip=.92, extra=None):
 
 def scrapper(a):
     """Ashfall Scrapper (Vanguard slot): a hunched scrap brawler in a gas mask, a huge salvaged pauldron with
-    spikes, a boiler pack with twin exhaust stacks, a drum-fed scattergun and a cargo hook on a chain."""
+    spikes, a boiler pack with twin exhaust stacks, a scrap cleaver (a melee fighter, like the Vanguard it replaces), a
+    small scrap buckler on the left arm and a cargo hook on a chain."""
     A = a.armor
     ashfall_leg(a, 'L', -.23, extra=lambda p: box(a, 'Knee_plate', 'Hazard', (.25, .09, .22), (0, -.2, -.47), rot=(-.12, 0, .14), bevel=.02, parent=p))
     ashfall_leg(a, 'R', .23, extra=lambda p: box(a, 'Shin_plate', 'Steel', (.22, .07, .2), (0, -.2, -.7), rot=(-.1, 0, -.1), bevel=.015, parent=p))
@@ -131,20 +132,62 @@ def scrapper(a):
         torus(a, 'Goggle_rims', 'Steel', .088, .024, T.p((x, -.375, .96)), T.rot(FORWARD), seg=10, ring=3)
     cyl(a, 'Filter', 'Steel', .08, .2, T.p((0, -.43, .77)), T.rot((R + .55, 0, 0)), seg=10, bevel=.012)
     cyl(a, 'Filter_band', 'Hazard', .087, .05, T.p((0, -.47, .73)), T.rot((R + .55, 0, 0)), seg=10, bevel=0)
-    # Arms to the scattergun: suit sleeves, welded steel gauntlets; right hand on the grip, left under the barrel.
-    for s, elbow, wrist in ((1, (.5, -.16, 1.34), (.3, -.44, 1.22)), (-1, (-.36, -.42, 1.36), (.14, -.78, 1.27))):
+    # Arms: suit sleeves, welded steel gauntlets. The right arm swings the cleaver: it is one rigid part on the shoulder
+    # (SwordArm / SwordElbow, both at the shoulder: src/vanguard-sword.js turns it, src/melee-styles.js has the swings).
+    # The left fist is raised in guard behind a small scrap buckler.
+    for s, elbow, wrist in ((1, SCRAPPER_ARM[0], SCRAPPER_ARM[1]), (-1, (-.52, -.2, 1.36), (-.4, -.5, 1.4))):
         shoulder = T.p((s * .44, .02, .6))
-        limb(a, 'Arms', 'Suit', shoulder, elbow, .17, .19, bevel=.04)
-        limb(a, 'Gauntlets', 'Steel', elbow, wrist, .21, .22, bevel=.04, taper=(.85, .85))
-        box(a, 'Elbow_pads', 'Undercarriage', (.16, .16, .14), elbow, bevel=.035)
-        box(a, 'Gloves', 'Undercarriage', (.15, .16, .14), wrist, bevel=.035)
-    # Drum-fed scattergun: a dark receiver, a hazard drum, a stubby barrel with a heat shield and a flared muzzle.
-    box(a, 'Scattergun', 'Undercarriage', (.17, .58, .2), (.27, -.62, 1.24), rot=(-.05, 0, 0), bevel=.03)
-    box(a, 'Scattergun_stock', A, (.14, .3, .17), (.29, -.24, 1.2), rot=(.1, 0, 0), bevel=.03)
-    cyl(a, 'Drum', 'Hazard', .14, .13, (.27, -.56, 1.06), rot=ACROSS, seg=12, bevel=.015)
-    cyl(a, 'Scatter_barrel', 'Steel', .075, .44, (.27, -.98, 1.28), rot=FORWARD, seg=10, bevel=0)
-    cyl(a, 'Scatter_flare', 'Steel', .09, .12, (.27, -1.24, 1.28), rot=FORWARD, seg=10, r2=.13, bevel=0)
-    box(a, 'Heat_shield', A, (.13, .34, .03), (.27, -.96, 1.37), bevel=0)
+        parent, o = (sword_arm(a, shoulder), shoulder) if s > 0 else (None, (0, 0, 0))
+        limb(a, 'Arms', 'Suit', rel(shoulder, o), rel(elbow, o), .17, .19, bevel=.04, parent=parent)
+        limb(a, 'Gauntlets', 'Steel', rel(elbow, o), rel(wrist, o), .21, .22, bevel=.04, taper=(.85, .85), parent=parent)
+        box(a, 'Elbow_pads', 'Undercarriage', (.16, .16, .14), rel(elbow, o), bevel=.035, parent=parent)
+        box(a, 'Gloves', 'Undercarriage', (.15, .16, .14), rel(wrist, o), bevel=.035, parent=parent)
+    # The buckler: a riveted rust disc with a hazard rim strapped to the left forearm, facing out and forward.
+    cyl(a, 'Buckler', A, .2, .05, (-.6, -.4, 1.4), rot=(R, 0, -.75), seg=10, bevel=.012)
+    torus(a, 'Buckler_rim', 'Hazard', .2, .025, (-.615, -.385, 1.4), rot=(R, 0, -.75), seg=10, ring=3)
+    spike(a, 'Spikes', 'Steel', (-.62, -.38, 1.4), (-.76, -.52, 1.4), r=.05)
+    scrap_cleaver(a, SCRAPPER_ARM[1], T.p((.44, .02, .6)))
+
+
+# The Scrapper's right arm (elbow, wrist) and its cleaver, in model space.
+SCRAPPER_ARM = ((.5, -.16, 1.34), (.3, -.44, 1.22))
+
+
+def rel(p, o):
+    return tuple(x - y for x, y in zip(p, o))
+
+
+def sword_arm(a, shoulder):
+    """A blade fighter's arm pivots (src/vanguard-sword.js): SwordArm and SwordElbow both at the shoulder, so the whole
+    arm swings as one rigid part (one draw per type). nest_sword() parents the elbow to the arm after finish."""
+    a.pivot('SwordArm', shoulder)
+    a.pivot('SwordElbow', shoulder)
+    return 'SwordElbow'
+
+
+def nest_sword(a):
+    if 'SwordElbow' in a.pivots:
+        shoulder, elbow = a.pivots['SwordArm'], a.pivots['SwordElbow']
+        elbow.location -= shoulder.location
+        elbow.parent = shoulder
+
+
+def scrap_cleaver(a, hand, shoulder):
+    """A crude scrap cleaver: a broad rust plate with a ground steel edge, a sawn spine with three teeth, a hazard band,
+    on a taped grip. Broad face up for the game camera; it points forward from the right hand."""
+    A, P = a.armor, 'SwordElbow'
+    h = rel(hand, shoulder)
+    hilt = (h[0] - .02, h[1] - .06, h[2] + .02)
+    blade = [(-.07, -.1), (.09, -.1), (.2, -.26), (.22, -.88), (.12, -1.0), (-.11, -.96), (-.13, -.84), (-.08, -.3)]
+    prism(a, 'Sword_blade', A, blade, .07, loc=hilt, axis='Z', bevel=.012, parent=P)
+    edge = [(-.08, -.3), (-.13, -.84), (-.11, -.96), (-.07, -.95), (-.09, -.84), (-.045, -.32)]
+    prism(a, 'Blade_edge', 'Steel', edge, .074, loc=hilt, axis='Z', bevel=0, parent=P)
+    box(a, 'Blade_band', 'Hazard', (.3, .09, .078), (hilt[0] + .07, hilt[1] - .2, hilt[2]), bevel=0, parent=P)
+    for k, y in enumerate((-.42, -.58, -.74)):
+        spike(a, 'Blade_teeth', 'Steel', (hilt[0] + .2, hilt[1] + y, hilt[2]), (hilt[0] + .3, hilt[1] + y - .06, hilt[2]), r=.035, parent=P)
+    box(a, 'Blade_guard', 'Undercarriage', (.3, .07, .11), (hilt[0] + .01, hilt[1] - .08, hilt[2]), bevel=.015, parent=P)
+    limb(a, 'Blade_grip', 'Undercarriage', (hilt[0], hilt[1] + .16, hilt[2]), (hilt[0], hilt[1] - .06, hilt[2]), .08, .08, bevel=0, parent=P)
+    cyl(a, 'Blade_pommel', 'Steel', .05, .05, (hilt[0], hilt[1] + .18, hilt[2]), rot=FORWARD, seg=8, bevel=0, parent=P)
 
 
 def ram_blade(a, y, z, width=2.2, height=.5):
@@ -621,29 +664,49 @@ def veil_body(a, kind):
     return T
 
 
-def veil_arms(a, T, right, left, seg=2):
-    """Slim charcoal sleeves, mauve bracers, dark gloves; right/left = (elbow, wrist)."""
+def veil_arms(a, T, right, left, seg=2, sword=False):
+    """Slim charcoal sleeves, mauve bracers, dark gloves; right/left = (elbow, wrist). sword=True puts the right arm on the
+    blade fighter's shoulder pivots (sword_arm)."""
     A = a.armor
     for s, (elbow, wrist) in ((1, right), (-1, left)):
         shoulder = T.p((s * .3, .02, .58))
-        limb(a, 'Arms', 'Charcoal', shoulder, elbow, .14, .16, bevel=.03, seg=seg)
-        limb(a, 'Bracers', A, elbow, wrist, .16, .17, bevel=.03, taper=(.85, .85), seg=seg)
-        box(a, 'Gloves', 'Undercarriage', (.13, .14, .12), wrist, bevel=.03)
+        parent, o = (sword_arm(a, shoulder), shoulder) if sword and s > 0 else (None, (0, 0, 0))
+        limb(a, 'Arms', 'Charcoal', rel(shoulder, o), rel(elbow, o), .14, .16, bevel=.03, seg=seg, parent=parent)
+        limb(a, 'Bracers', A, rel(elbow, o), rel(wrist, o), .16, .17, bevel=.03, taper=(.85, .85), seg=seg, parent=parent)
+        box(a, 'Gloves', 'Undercarriage', (.13, .14, .12), rel(wrist, o), bevel=.03, parent=parent)
+
+
+SHADE_ARM = ((.36, -.24, 1.4), (.27, -.52, 1.3))
 
 
 def shade(a):
     """Veil Shade (Vanguard slot): a low, narrow hooded infiltrator; one seer lens glowing in the cowl, a crystal
-    blade along the left forearm, a slim beam pistol with a crystal emitter, crystal shards on the shoulder."""
+    blade along the left forearm, a slim dark blade with a crescent guard in the right hand (a melee fighter, like the Vanguard it replaces:
+    the right arm swings on the shoulder pivots, src/vanguard-sword.js), crystal shards on the shoulder."""
     T = veil_body(a, 'shade')
     cyl(a, 'Seer_lens', 'TeamGlow', .06, .04, T.p((.06, -.24, .86)), T.rot(FORWARD), seg=10, bevel=0)
-    veil_arms(a, T, ((.36, -.24, 1.4), (.27, -.52, 1.3)), ((-.36, -.22, 1.42), (-.24, -.56, 1.32)))
+    veil_arms(a, T, SHADE_ARM, ((-.36, -.22, 1.42), (-.24, -.56, 1.32)), sword=True)
     crystal(a, 'Crystal_blade', 'TeamGlow', (-.22, -.5, 1.34), (-.18, -1.14, 1.44), r=.08, sides=4, twist=.4)
     box(a, 'Blade_mount', 'Steel', (.12, .2, .1), (-.22, -.5, 1.36), bevel=.015)
-    box(a, 'Pistol', 'Undercarriage', (.1, .34, .14), (.27, -.62, 1.33), bevel=.02)
-    cyl(a, 'Pistol_emitter', 'Steel', .04, .26, (.27, -.9, 1.35), rot=FORWARD, seg=8, bevel=0)
-    crystal(a, 'Emitter_crystal', 'TeamGlow', (.27, -1.0, 1.35), (.27, -1.14, 1.35), r=.055, sides=4)
+    veil_blade(a, SHADE_ARM[1], T.p((.3, .02, .58)))
     crystal(a, 'Shoulder_crystals', 'TeamGlow', T.p((-.36, .14, .76)), T.p((-.5, .22, 1.12)), r=.065, sides=4)
     crystal(a, 'Shoulder_crystals', 'TeamGlow', T.p((-.28, .22, .76)), T.p((-.3, .34, 1.02)), r=.05, sides=4, twist=.5)
+
+
+def veil_blade(a, hand, shoulder):
+    """The Shade's slim blade: a long dark leaf with silver edges, a crescent guard and a wrapped grip, pointing forward
+    from the right hand, broad face up. Dark and unlit (no glow draw): the violet comes from the strike (fx.js)."""
+    P = 'SwordElbow'
+    h = rel(hand, shoulder)
+    hilt = (h[0], h[1] - .05, h[2] + .02)
+    leaf = [(-.04, -.1), (.04, -.1), (.06, -.22), (.045, -.74), (0, -.92), (-.045, -.74), (-.06, -.22)]
+    prism(a, 'Sword_blade', 'Undercarriage', leaf, .04, loc=hilt, axis='Z', bevel=.008, parent=P)
+    for s in (-1, 1):
+        edge = [(s * .06, -.22), (s * .045, -.74), (0, -.92), (s * .03, -.74), (s * .045, -.24)]
+        prism(a, 'Blade_edge', 'Steel', edge if s > 0 else edge[::-1], .044, loc=hilt, axis='Z', bevel=0, parent=P)
+    prism(a, 'Blade_guard', 'Steel', [(-.17, -.03), (-.08, -.07), (0, -.06), (.08, -.07), (.17, -.03), (.1, -.12), (0, -.11), (-.1, -.12)], .05,
+          loc=hilt, axis='Z', bevel=0, parent=P)
+    limb(a, 'Blade_grip', 'Charcoal', (hilt[0], hilt[1] + .14, hilt[2]), (hilt[0], hilt[1] - .06, hilt[2]), .06, .06, bevel=0, parent=P)
 
 
 def watcher(a):
@@ -742,7 +805,7 @@ def count(a):
 # ("<Material>_details"). That only makes the GLB smaller (each part costs a mesh, a node and five accessors): the
 # view merges all parts by material and rigid group anyway, and the baked shading is per vertex against the whole
 # model, so nothing drawn changes.
-KEEP_PART = re.compile(r'^(Main_cannon|Muzzle|Barrel|Cannon|Turret_head|Knee|Tyres|Spoked_rims|Spokes|Wheel|Tracks|Sail$|Smooth_|Crest|'
+KEEP_PART = re.compile(r'^(Sword_blade$|Main_cannon|Muzzle|Barrel|Cannon|Turret_head|Knee|Tyres|Spoked_rims|Spokes|Wheel|Tracks|Sail$|Smooth_|Crest|'
                        r'Brow_band|Tower_shields|Shield_stripes)', re.I)
 
 
@@ -798,6 +861,7 @@ def build_all(names=None, parts=False, blend=False):
         if count(a) != tris:
             raise RuntimeError(f'{name}: merging details changed the triangle count ({tris} -> {count(a)})')
         a.finish()
+        nest_sword(a)
         a.export(OUT / f'{name}.glb')
         mats = sorted({ob.data.materials[0].name for ob in a.objects})
         entries.append(dict(name=name, file=name + '.glb', triangles=a.triangles(), faction=faction, kind=kind, budget=budget, review=REVIEW,
@@ -821,6 +885,7 @@ def build_all(names=None, parts=False, blend=False):
             BUILDERS[name](a)
             consolidate(a)
             a.finish()
+            nest_sword(a)
         source = ROOT / 'assets/source'
         source.mkdir(parents=True, exist_ok=True)
         bpy.ops.wm.save_as_mainfile(filepath=str(source / 'frontier-factions.blend'))

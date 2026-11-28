@@ -177,6 +177,59 @@ try{
       assert.ok(anim.lying>1.2&&anim.gone,`the trooper falls (${anim.fall}) and is gone at its life end ${JSON.stringify(anim)}`);
       assert.ok(anim.calm<1e-9&&anim.still>1.2&&anim.sunk===0,`reduced motion: no flinch, the last pose at once (${anim.fall2}) ${JSON.stringify(anim)}`);
     }
+    if(!baseline){
+      // Blade fighters 2026-11-28 (src/melee-styles.js): the Scrapper and the Shade fight like the Vanguard. A shot event
+      // starts the wind-up (the arm swings, the body steps in), the glint lands on the struck unit at contact, no round
+      // flies, the arm is back on guard after the recovery; the swing adds no draw call. Unit motion off: no swing.
+      await page.evaluate(()=>window.__frontier.view.preloadModels(['scrapper','shade']));
+      const melee=await page.evaluate(()=>{
+        const f=window.__frontier,v=f.view,s=f.sim,step=(dt)=>window.renderVisual(s,dt,f.selected,null);
+        v.motionLevel=2;
+        const pairs=['scrapper','shade'].map((type,k)=>{
+          const a=s.spawn(type,0,-14+k*5,32,true,true),b=s.spawn('ranger',1,-14+k*5-1.6,32,true,true);
+          a.angle=-Math.PI/2;b.angle=Math.PI/2;a.cloaked=false;return [a,b];
+        });
+        v.focusOn(-12,32);v.zoom=12;v.updateCamera();
+        step(1/60);step(1/60);const calls=v.renderer.info.render.calls,projectiles=v.fx.projectiles.length;
+        const fire=()=>{for(const [a,b] of pairs)v.event({type:'shot',weapon:a.type,unit:a.type,source:a.id,target:b.id,x:a.x,z:a.z,tx:b.x,tz:b.z,team:0,heavy:false},s);};
+        const sword=(a)=>v.objects.get(a.id).userData.sword;
+        const arm=(a)=>{const w=sword(a);return Math.abs(w.arm.rotation.x)+Math.abs(w.arm.rotation.y);};
+        fire();step(0.1);
+        const windup=pairs.map(([a])=>({type:a.type,has:!!sword(a),arm:arm(a),elapsed:sword(a).elapsed}));
+        const swingCalls=v.renderer.info.render.calls;
+        window.renderVisual(s,0,f.selected,null);
+        return {calls,swingCalls,windup,projectiles,ids:pairs.map(([a,b])=>[a.id,b.id])};
+      });
+      await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+      await page.screenshot({path:`test-results/visual-after-melee-windup-${viewport.width}.png`,timeout:120000});
+      const contact=await page.evaluate((ids)=>{
+        const f=window.__frontier,v=f.view,s=f.sim,step=(dt)=>window.renderVisual(s,dt,f.selected,null);
+        // Short steps: the 0.08 s glint is born at contact (0.2 s after the shot) and would age out inside one long step.
+        const glints=ids.map(()=>0);
+        for(let i=0;i<8;i++){step(0.02);ids.forEach(([,b],k)=>{glints[k]=Math.max(glints[k],v.fx.glow.items.filter(p=>p.priorityHit&&p.anchor?.target===b).length);});if(glints.every(n=>n))break;}
+        const lunge=ids.map(([a])=>v.objects.get(a).userData.sword.lunge);
+        return {glints,lunge,projectiles:v.fx.projectiles.length};
+      },melee.ids);
+      await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+      await page.screenshot({path:`test-results/visual-after-melee-contact-${viewport.width}.png`,timeout:120000});
+      const after=await page.evaluate((ids)=>{
+        const f=window.__frontier,v=f.view,s=f.sim,step=(dt)=>window.renderVisual(s,dt,f.selected,null);
+        step(0.5);step(0.5);
+        const rest=ids.map(([a])=>{const w=v.objects.get(a).userData.sword;return {elapsed:w.elapsed,arm:Math.abs(w.arm.rotation.x)+Math.abs(w.arm.rotation.y)};});
+        const original={...v.settings};v.applySettings({...original,unitMotion:false});
+        for(const [a,b] of ids){const e=s.get(a),t=s.get(b);v.event({type:'shot',weapon:e.type,unit:e.type,source:a,target:b,x:e.x,z:e.z,tx:t.x,tz:t.z,team:0},s);}
+        step(0.1);const still=ids.map(([a])=>v.objects.get(a).userData.sword.elapsed);
+        v.applySettings(original);step(1);
+        s.entities=s.entities.filter(e=>!ids.flat().includes(e.id));v.focusOn(-6,18);v.zoom=52;v.updateCamera();step(1/60);
+        return {rest,still};
+      },melee.ids);
+      for(const w of melee.windup)assert.ok(w.has&&w.arm>0.2&&w.elapsed<0,`${w.type} winds up its blade ${JSON.stringify(melee)}`);
+      assert.equal(melee.swingCalls,melee.calls,`the blade swing adds no draw call ${JSON.stringify(melee)}`);
+      assert.ok(contact.glints.every(n=>n===1)&&contact.lunge.every(l=>l>0.1),`a glint on each struck unit at contact ${JSON.stringify(contact)}`);
+      assert.equal(contact.projectiles,melee.projectiles,'no round flies from a blade');
+      assert.ok(after.rest.every(r=>r.elapsed===Infinity&&r.arm<1e-6),`back on guard ${JSON.stringify(after)}`);
+      assert.ok(after.still.every(e=>e===Infinity),`Unit motion off: no swing ${JSON.stringify(after)}`);
+    }
     const metrics=await page.evaluate(async()=>{
       const f=window.__frontier,v=f.view,s=f.sim,frames=[];let calls=0,triangles=0;
       for(let i=0;i<65;i++){

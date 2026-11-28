@@ -29,8 +29,8 @@ function fielded(faction) {
   return [...new Set(types)].filter((t) => D[t]?.damage > 0);
 }
 // Kept on purpose: the flamer, the bombers (their drops), creatures, bosses and the Iron units.
-// The Vanguard is a sword fighter (src/vanguard-sword.js): its slash is its own look.
-const OWN_LOOK = new Set(["scorcher", "balloon", "glider", "vanguard"]);
+// The Vanguard, the Scrapper and the Shade are blade fighters (src/melee-styles.js): their slash is their own look.
+const OWN_LOOK = new Set(["scorcher", "balloon", "glider", "vanguard", "scrapper", "shade"]);
 const NEVER = ["wyrm", "wyrmling", "acidhound", "vaultsentinel", "ironvanguard", "ironsovereign", "ironsovereign2", "emberdrake", "carrier", "kite"];
 
 function stage({ motion = true, lowPower = false, factions = { 0: "meridian", 1: "ashfall" }, mission = null, units = [] } = {}) {

@@ -40,6 +40,7 @@ import { installGrade, gradeKey, fogOverride, rimShader, addTeamRim, addSharedTe
 import { MissionLook } from "./mission-look-view.js";
 import { airMotion, airParts, poseAirParts } from "./air-motion.js";
 import { groundY, placeOnGround, MARKER_LIFT } from "./ground-y.js";
+import { isMeleeType } from "./melee-styles.js";
 import { prepareVanguardArm, attachVanguardSword, followVanguardTorso, restVanguardSword, strikeVanguardSword, VANGUARD_WINDUP, VANGUARD_RECOVERY } from "./vanguard-sword.js";
 import { skywingModel, dressSkywing, poseSkywingRig, poseSkywing, skywingTrails, skywingSize, flightBlend, markMuzzle, shineOf, tagShine, addShine, SHINE, SHINE_PULSE, SKY_WALK, SKY_BOB } from "./skywing-view.js";
 import { RIG_INFANTRY, RIG_HULL, KNEELERS, STANCE, GAIT, hitFlinch, FALL, fallFor, infantryFall, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach, BARREL_POSES, newGun, fireBarrel, stepBarrel, poseBarrel, RECOIL, barrelKick, bodyKick, kickSize, poseTurretOnHull, swingLegs } from "./unit-rig.js";
@@ -782,7 +783,7 @@ export class WorldView {
       if (MOVING_PART.test(o.name) && !(rigInfantry && o.name.startsWith("leg_"))) {
         const part = o.clone(true);
         o.matrixWorld.decompose(part.position, part.quaternion, part.scale);
-        if (o.name === "SwordArm") template.add(prepareVanguardArm(part, hipY));
+        if (o.name === "SwordArm") template.add(prepareVanguardArm(part, hipY, type));
         else {
           template.add(part);
           legs.push(part);
@@ -1635,7 +1636,8 @@ export class WorldView {
     root.userData.readabilityScale *= pluginScale;
     root.userData.barrel=model.getObjectByName('BarrelRig');
     root.userData.turret=model.getObjectByName('TurretRig');
-    if (e.type === "vanguard") root.userData.sword = attachVanguardSword(model);
+    // Blade fighters (src/melee-styles.js): the Vanguard's sword, the Scrapper's cleaver, the Shade's blade.
+    if (isMeleeType(e.type)) root.userData.sword = attachVanguardSword(model, e.type);
     root.userData.recoil=0;
     root.userData.kick=0;root.userData.kickSize=0;
     root.userData.gait=0;root.userData.stride=(e.id*0.7)%6.28;
@@ -1838,7 +1840,7 @@ export class WorldView {
       if(o && this.activity.combat.motion && !this.reducedMotion.matches){if(o.userData.gun)fireBarrel(o.userData.gun);if(o.userData.crewGun)fireBarrel(o.userData.crewGun);}
       // Every shooter rocks back a little: hulls and rocket troops most, rifles barely.
       const sword = o?.userData.sword;
-      if (sword && event.unit === "vanguard") {
+      if (sword && isMeleeType(event.unit)) {
         if (this.activity.combat.motion && !this.reducedMotion.matches && this.settings.unitMotion !== false) {
           sword.sequence++;
           sword.elapsed = -VANGUARD_WINDUP;

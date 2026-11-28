@@ -1,40 +1,33 @@
 import { Group } from "three";
 import { addVanguardWave } from "./vanguard-wave.js";
 import { weaponStyle } from "./visual-style.js";
+import { meleeStyle } from "./melee-styles.js";
 
 // Seconds relative to visible contact. The effect and the victim's hit flash use the same delay.
 export const VANGUARD_WINDUP = weaponStyle({ unit: "vanguard" }).life;
 export const VANGUARD_RECOVERY = 0.38;
 
-// Shoulder yaw, shoulder pitch, elbow bend and forward weight shift (model units).
+// Shoulder yaw, shoulder pitch, elbow bend and forward weight shift (model units). The slice and thrust
+// keyframes of each blade fighter (Vanguard, Scrapper, Shade) are in src/melee-styles.js.
 const GUARD = [0, 0, 0, 0];
-const SLASH = [
-  [1.16, -0.65, -0.12, -0.07], // raise the point outside the shield
-  [-0.24, -0.39, 0.32, 0.19], // cross the target on a descending diagonal
-  [-0.94, -0.04, 0.21, 0.13],
-];
-const THRUST = [
-  [0.16, 0.68, -0.76, -0.13], // draw the elbow back while keeping the point forward
-  [-0.22, -1.23, 1.16, 0.40], // drive from the shoulder, point level with the target
-  [-0.24, -1.18, 1.14, 0.37],
-];
 
 // Mirror the hip pivot the rest of the infantry uses in its vertex shader.
-export function prepareVanguardArm(arm, hipY) {
+// `type`: the unit (src/melee-styles.js); only the Vanguard draws the lightning wave.
+export function prepareVanguardArm(arm, hipY, type = "vanguard") {
   const torso = new Group();
   torso.name = "SwordTorso";
   torso.position.y = hipY;
   arm.position.y -= hipY;
-  addVanguardWave(arm);
+  if (meleeStyle(type).wave) addVanguardWave(arm);
   torso.add(arm);
   return torso;
 }
 
-export function attachVanguardSword(model) {
+export function attachVanguardSword(model, type = "vanguard") {
   const torso = model.getObjectByName("SwordTorso");
   const arm = torso?.getObjectByName("SwordArm");
   const elbow = arm?.getObjectByName("SwordElbow");
-  return elbow ? { torso, arm, elbow, wave: elbow.getObjectByName("SwordWave"), hip: torso.position.y, lunge: 0, elapsed: Infinity, sequence: -1 } : null;
+  return elbow ? { torso, arm, elbow, wave: elbow.getObjectByName("SwordWave"), hip: torso.position.y, lunge: 0, elapsed: Infinity, sequence: -1, style: meleeStyle(type) } : null;
 }
 
 // Rigid meshes share the model's instanced draw batches. Carry the shoulder with the body's
@@ -60,7 +53,8 @@ export function restVanguardSword(sword) {
 }
 
 export function strikeVanguardSword(sword, elapsed, sequence) {
-  const [windup, contact, follow] = sequence % 2 === 0 ? SLASH : THRUST;
+  const style = sword.style || meleeStyle("vanguard");
+  const [windup, contact, follow] = sequence % 2 === 0 ? style.slash : style.thrust;
   const release = -VANGUARD_WINDUP * 0.48;
   const wave = sword.wave;
   if (wave) {
