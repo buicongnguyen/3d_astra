@@ -2,6 +2,9 @@
 
 ## Unreleased: Round A.2
 
+### No more harvesting line across the Hero sky (owner 2026-11-28)
+- The long gold or blue line across the sky in Skywing / Hero view was the HUD overlay's 2D mining beam (src/activity-view.js): a flat line from a Harvester's screen point to its deposit's, and a point behind the Hero camera projects mirrored, so the line crossed the whole sky. `view.project` now reports `behind`; under the Hero camera the 2D beam is not drawn (the 3D shards and sparkle show the mining), and badges, cargo marks and deposit outlines skip any point behind the lens. The RTS view is unchanged. Tests: `tests/activity-overlay.test.js`.
+
 ### Auto fire in Hero mode, on by default (owner 2026-11-28)
 - **Auto fire.** With no trigger held, the hero you drive shoots the nearest seen enemy in reach on its own, at its weapon's own rate, with the same choice an RTS unit's auto-attack makes (`enemy()`: the weapon's preferred targets first, a clear line of fire). Magazines, reloads, range, the scope's reach (Skywing landed and still), line of fire and sight hold exactly as for a shot by hand. Skywing's rocket locks for 0.6 s first, as a held lock does; a boarded Tank shells and a boarded Breaker lobs at the nearest enemy out to its 15 m lob. Explosive barrels are never picked, and birds are not in the match at all.
 - **Focus.** Firing at an enemy (a click, F, the Fire button, a tap; a rocket lock or a Breaker lob that starts on it) makes it the target: auto fire stays on it until it falls, or stays out of reach or sight for 3 s, or another enemy is fired at, like a right-click focus in the RTS view. While it is briefly out of reach the nearest enemy is shot meanwhile. Holding fire still aims by hand; auto fire picks up again when it is let go.

@@ -44,6 +44,7 @@ export class ActivityView {
     const c = this.ctx;
     // Compact ten-step strip (34 x 3 px cells), small enough to sit over a unit unobtrusively.
     const width=34;
+    if (p.behind) return;
     if (p.x < -width || p.x > this.view.width+width || p.y < -40 || p.y > this.view.height+40) return;
     c.fillStyle = '#0b1c20'; c.fillRect(p.x-width/2-1.5,p.y-1.5,width+3,6);
     for(let i=0;i<10;i++){
@@ -64,6 +65,7 @@ export class ActivityView {
       if(sim.isVisible(e))snapshot.combat.push({type:e.type,life:e.life,shield:!!e.shield,heavy:!!e.heavy});
     }
     snapshot.burning=burningEntities(sim,v.lowPower).map(e=>e.id);
+    const hero = !!v.heroCameraOn;
     c.globalAlpha=1;
     for(const e of sim.entities){
       if(e.hp<=0 || e.team!==0)continue;
@@ -76,8 +78,12 @@ export class ActivityView {
       if(e.type!=='worker')continue;
       const r=harvestTarget(sim,e), mining=isHarvesting(sim,e);
       if(selected.has(e.id) && r && sim.isVisible(r))targets.set(r.id,r);
-      if (mining) {
+      // The 2D mining beam is a top-down (RTS) cue. Under the Hero camera the 3D shards and sparkle (fx.js mineHit) show
+      // the work, and a flat line drawn over everything from a point behind the lens crossed the whole sky (owner
+      // 2026-11-28: "the harvesting line ... in the sky"), so none is drawn there.
+      if (mining && !hero) {
         const p = v.project(e.x,e.z,1.8), t = v.project(r.x,r.z,1.2);
+        if (p.behind || t.behind) continue;
         const steady = v.reducedMotion.matches || v.settings?.combatMotion === false || v.motionLevel === 0;
         const phase = steady ? 0.65 : (sim.time * 0.9 + e.id * 0.31) % 1;
         const tint = r.type === 'alloy' ? '#ffd178' : '#91ebff';
@@ -89,9 +95,11 @@ export class ActivityView {
         c.beginPath(); c.arc(t.x+(p.x-t.x)*phase,t.y+(p.y-t.y)*phase,2,0,Math.PI*2); c.fill();
       } else if (e.carry > 0 && e.orders[0]?.type === 'deliver') {
         const p = v.project(e.x,e.z,2.5);
-        c.fillStyle = '#203238'; c.fillRect(p.x-4,p.y-2,8,4);
-        c.fillStyle = e.carryType === 'alloy' ? '#ffd178' : '#91ebff';
-        c.fillRect(p.x-3,p.y-1,6,2);
+        if (!p.behind) {
+          c.fillStyle = '#203238'; c.fillRect(p.x-4,p.y-2,8,4);
+          c.fillStyle = e.carryType === 'alloy' ? '#ffd178' : '#91ebff';
+          c.fillRect(p.x-3,p.y-1,6,2);
+        }
       }
       if(selected.has(e.id) && (r || e.carry>0)){
         const label=mining?'Harvesting':e.orders[0]?.type==='deliver'?'Returning cargo':r?(e.moving?'To deposit':'Waiting'):'Cargo';
@@ -102,10 +110,12 @@ export class ActivityView {
     if(hover?.kind==='resource' && sim.isVisible(hover) && hover.amount>0)targets.set(hover.id,hover);
     for(const r of targets.values()){
       c.strokeStyle=r.type==='alloy'?'#ffcf75':'#8ce7ff';c.lineWidth=2.5;c.beginPath();
+      let behind=false;
       for(let i=0;i<=24;i++){
         const a=i*Math.PI/12,p=v.project(r.x+Math.cos(a)*(r.radius+.5),r.z+Math.sin(a)*(r.radius+.5),.22);
+        if(p.behind){behind=true;break;}
         if(i)c.lineTo(p.x,p.y);else c.moveTo(p.x,p.y);
-      }c.stroke();snapshot.resources.push(r.id);
+      }if(!behind)c.stroke();snapshot.resources.push(r.id);
     }
     snapshot.shots=this.shots.items.length;
     this.snapshot=snapshot;

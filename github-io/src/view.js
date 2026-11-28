@@ -1434,11 +1434,14 @@ export class WorldView {
       ? { x: clamp(p.x, -this.terrain.half+1, this.terrain.half-1), z: clamp(p.z, -this.terrain.half+1, this.terrain.half-1) }
       : null;
   }
+  // `behind`: the point lies behind a perspective camera (the Hero camera), where its screen x and y are mirrored and
+  // must not be drawn (a 2D line to it crossed the whole sky, owner 2026-11-28). The RTS camera never sets it.
   project(x, z, y = 0) {
     const p = new THREE.Vector3(x, y, z).project(this.camera);
     return {
       x: ((p.x + 1) / 2) * this.width,
       y: ((1 - p.y) / 2) * (this.drawHeight || this.height),
+      behind: p.z > 1,
     };
   }
   // The world height to aim at for an entity on screen: a flyer's drawn altitude (plus half its
