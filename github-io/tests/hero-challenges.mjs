@@ -269,7 +269,9 @@ await suite("hero-challenges" + shardLabel, async () => {
       h.cooldown = 0; s.updateVision();
       return i;
     });
-    await page.mouse.move(100, 100);
+    // Park the cursor mid-screen: in the outer 10% at either side it turns the Hero camera (hero-mode.js), and on a slow
+    // CI runner that turned the barrel right out of view.
+    { const vp = page.viewportSize(); await page.mouse.move(vp.width / 2, vp.height * 0.3); }
     await step(page, 0.1, 2);
     // The shoulder camera follows the hero smoothly (damped), so after the jump above it glides for a while; on a slow
     // runner (about 1 fps) it is still moving when the barrel is projected. Re-project and re-aim until the crosshair
