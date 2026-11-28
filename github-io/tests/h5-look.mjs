@@ -86,8 +86,12 @@ async function birdShot(page, viewport) {
   // slid off the bird before the press (a slow runner), place a flock under it again and press again.
   const count = () => page.evaluate((id) => {
     const f = window.__frontier, s = f.sim, v = f.view, e = s.get(id);
+    // Meshes outside the units and buildings: on a slow runner units arrive and their detail models stream in during
+    // the shot (CI counted 386 -> 394), so those subtrees are skipped; the birds' and the effects' meshes are counted.
+    const skip = new Set([...v.objects.values(), ...(v.dying || []).map((d) => d.object)]);
     let meshes = 0;
-    v.scene.traverse((o) => { if (o.isMesh || o.isInstancedMesh) meshes++; });
+    const walk = (o) => { if (skip.has(o)) return; if (o.isMesh || o.isInstancedMesh) meshes++; for (const c of o.children) walk(c); };
+    walk(v.scene);
     return { mag: e.mag ?? null, fires: s.commandLog.filter((c) => c.type === "heroFire").length, rows: v.birds.cards.geometry.instanceCount,
       birds: v.birds.flocks.flocks.reduce((n, fl) => n + fl.birds.length, 0), meshes, feathers: v.birds.state.feathers,
       states: v.birds.flocks.flocks.map((fl) => fl.state), startled: f.heroMode.info.startled };
