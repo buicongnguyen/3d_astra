@@ -2,19 +2,21 @@ import { SOUND_TESTS } from "./audio-mix.js";
 import { PRESETS, TEAM_PALETTES, UI_SCALES, defaults, normalize, palette } from "./settings.js";
 import { portrait } from "./portraits.js";
 import { icon } from "./icons.js";
+import { translate, loadLocale } from "./i18n.js";
 
 // Injected by vite.config.js; absent under node:test.
 const VERSION = typeof __APP_VERSION__ === "undefined" ? "dev" : __APP_VERSION__,
   BUILD_DATE = typeof __BUILD_DATE__ === "undefined" ? "" : __BUILD_DATE__;
 
 // The unified settings sheet (2026-11-24, owner-approved): one sheet opened from the gear (title bar and
-// match bar) or Pause → Settings. Seven sections in one segmented tab row, so every setting is one tap
+// match bar) or Pause → Settings. Eight sections in one segmented tab row (Hero since H7, 2026-11-28), so every setting is one tap
 // away once the sheet is open; segmented buttons instead of dropdowns; every change applies and saves at
 // once (no Apply / Cancel). Full screen, theme and language live here only.
 export const SECTIONS = [
   ["audio", "Sound", "volume"],
   ["game", "Game", "flag"],
   ["camera", "Camera", "map"],
+  ["hero", "Hero", "star"],
   ["display", "Display", "theme"],
   ["controls", "Controls", "move"],
   ["access", "Assist", "people"],
@@ -26,6 +28,9 @@ const INSTALL_PICTURE = `<svg class="install-picture" viewBox="0 0 300 112" aria
 const LANGUAGES = [["en", "English", "en"], ["vi", "Tiếng Việt", "vi"], ["ko", "한국어", "ko"]];
 const coarse = () => typeof matchMedia === "function" && matchMedia("(pointer:coarse)").matches;
 const pressed = (on) => `aria-pressed="${on ? "true" : "false"}"`;
+// The Hero tab's name: "Hero" alone is another word in the catalogues (a commander's title), so the tab carries its
+// own key and is kept out of the page translation (translate="no").
+const HERO_TAB = "Hero (Settings tab)";
 
 export class SettingsUI {
   // `extras` reaches the parts of the app that are not stored settings: the match speed, full screen,
@@ -158,11 +163,21 @@ export class SettingsUI {
     const speeds = touch ? [1, 2] : [1, 2, 3];
     const speedRow = `<div class="setting-row seg-row"><span class="seg-label" id="seg-speed">Game speed</span><div class="seg" role="group" aria-labelledby="seg-speed" style="--n:${speeds.length}">${speeds.map((n) =>
       `<button type="button" class="kit-face" data-do="speed" data-speed="${n}" ${pressed(inMatch && speed === n)} ${inMatch ? "" : 'aria-disabled="true"'} translate="no">×${n}</button>`).join("")}</div></div><p class="settings-note">${inMatch ? "Only the clock runs faster: every battle plays out the same. Story scenes and decisions return to ×1." : "Set during a battle. Every battle starts at ×1."}</p>`;
-    // H3d: Hero mode's battle time, every choice in one row.
-    const battleRow = seg("battleTime", "Battle time in Hero mode", [[0.4, "×0.4"], [0.5, "×0.5"], [0.75, "×0.75"], [1, "×1"]], "The whole battle slows while you fight as a hero; your hero stays quick. LAN matches always play at ×1.");
-    const game = `${speedRow}${battleRow}${seg("alerts", "Alerts", [["all", "All"], ["important", "Important"]], "Important: only attack warnings, losses and objectives pop up.")}${toggle("confirmRestart", "Confirm Restart and New game", "Asks before a battle in progress is thrown away.")}${seg("damageNumbers", "Damage numbers", [["focus", "Bosses"], ["all", "All"], ["off", "Off"]], "Bosses: floating numbers on bosses and in Frontier Defence only.")}`;
+    const game = `${speedRow}${seg("alerts", "Alerts", [["all", "All"], ["important", "Important"]], "Important: only attack warnings, losses and objectives pop up.")}${toggle("confirmRestart", "Confirm Restart and New game", "Asks before a battle in progress is thrown away.")}${seg("damageNumbers", "Damage numbers", [["focus", "Bosses"], ["all", "All"], ["off", "Off"]], "Bosses: floating numbers on bosses and in Frontier Defence only.")}`;
 
-    const camera = `${seg("cameraAngle", "Angle", [["low", "Low"], ["standard", "Standard"], ["top", "Top-down"]])}${seg("cameraTurn", "Turn", [[0, "0°"], [90, "90°"], [180, "180°"], [270, "270°"]], touch ? "Twist two fingers on the battlefield to turn it freely; picking a turn here resets the twist. Frontier Defence frames its roads itself." : "Page Up / Page Down turn it too. Frontier Defence frames its roads itself.")}${slider("panSpeed", "Pan speed", 0.5, 2, 0.25)}${slider("zoomSpeed", "Zoom sensitivity", 0.5, 2, 0.25)}${touch ? "" : toggle("edgeScroll", "Scroll at screen edges", "Moving the mouse to an edge of the battlefield pans the camera.")}${seg("heroView", "Hero view", [["shoulder", "Shoulder"], ["first", "First person"]], "The camera for a hero on foot in Hero mode. Skywing always looks down from above.")}`;
+    const camera = `${seg("cameraAngle", "Angle", [["low", "Low"], ["standard", "Standard"], ["top", "Top-down"]])}${seg("cameraTurn", "Turn", [[0, "0°"], [90, "90°"], [180, "180°"], [270, "270°"]], touch ? "Twist two fingers on the battlefield to turn it freely; picking a turn here resets the twist. Frontier Defence frames its roads itself." : "Page Up / Page Down turn it too. Frontier Defence frames its roads itself.")}${slider("panSpeed", "Pan speed", 0.5, 2, 0.25)}${slider("zoomSpeed", "Zoom sensitivity", 0.5, 2, 0.25)}${touch ? "" : toggle("edgeScroll", "Scroll at screen edges", "Moving the mouse to an edge of the battlefield pans the camera.")}`;
+
+    // H7 (2026-11-28): Hero mode in one section, flat segmented rows, every choice one tap. Battle time and the
+    // ground camera moved here from Game and Camera.
+    const offOn = [[false, "Off"], [true, "On"]];
+    const hero = `${seg("battleTime", "Battle time in Hero mode", [[0.4, "×0.4"], [0.5, "×0.5"], [0.75, "×0.75"], [1, "×1"]], "The whole battle slows while you fight as a hero; your hero stays quick. LAN matches always play at ×1.")}`
+      + seg("dodgeHelp", "Dodge help", offOn, "On: rifle rounds at your hero fly slower, time slows for a moment before a rocket or shell hits while your dodge is ready, and the dodge is ready again after 3 s.")
+      + seg("shotWarnings", "Shot warnings", offOn, "Rings where rockets and shells will land, and marks at the screen edge for shots from off screen.")
+      + seg("aimAssist", "Aim assist", [["off", "Off"], ["low", "Low"], ["high", "High"]], "How far from the crosshair your hero picks a target.")
+      + seg("heroView", "Camera (ground)", [["shoulder", "Shoulder"], ["first", "First person"]], "The camera for a hero on foot in Hero mode. Skywing always looks down from above.")
+      + seg("closeDetail", "Close-up detail", [["auto", "Auto"], ["on", "On"], ["off", "Off"]], "Sharper models near your hero. Auto lets a phone turn it down when the battle gets busy.")
+      + seg("skywingOffer", "Skywing before matches", offOn, "Off hides the Skywing assist offer on the setup screens. The Hero battle tile stays on the title screen.")
+      + seg("birdHint", "Bird hint from fog", offOn, "Birds take off from the fog where hidden enemies move.");
 
     const fs = extras.fullscreen;
     const fullscreenRow = fs?.supported?.()
@@ -183,7 +198,7 @@ export class SettingsUI {
 
     const language = `<div class="language-options" role="group" aria-label="Language / Ngôn ngữ / 언어" translate="no">${LANGUAGES.map(([id, label, lang]) =>
       `<button type="button" class="kit-face" data-setting="language" data-value="${id}" lang="${lang}" ${pressed(s.language === id)}>${icon("globe")}<span>${label}</span></button>`).join("")}</div><p class="settings-version"><span>Version</span> <span translate="no">${VERSION}${BUILD_DATE ? ` · ${BUILD_DATE}` : ""}</span><span class="settings-copyright" translate="no">© 2026 Bui Cong Nguyen, Solluxlabs.com · All rights reserved</span></p>`;
-    return { audio, game, camera, display, controls, access, language };
+    return { audio, game, camera, hero, display, controls, access, language };
   }
   // Platform reach (2026-11-26): the "Install app" tile at the top of Display, in the state app/install.js
   // reports. Installed (or a browser that cannot install): no tile. iPhone / iPad: the tile opens the
@@ -218,14 +233,23 @@ export class SettingsUI {
   paint() {
     const s = this.get();
     const body = this.sections(s)[this.tab];
-    this.root.innerHTML = `<section class="settings-panel panel" role="dialog" aria-modal="true" aria-labelledby="settings-title"><header><div class="settings-heading"><span class="eyebrow">COMMANDER PREFERENCES</span><h2 id="settings-title">Settings</h2></div><button type="button" data-do="close" class="settings-close" aria-label="Close settings">${icon("close")}</button></header><nav role="tablist" aria-label="Settings sections" style="--tabs:${SECTIONS.length}">${SECTIONS.map(([t, label, glyph]) => `<button type="button" role="tab" id="settings-tab-${t}" data-tab="${t}" aria-selected="${t === this.tab}" aria-controls="settings-body" tabindex="${t === this.tab ? 0 : -1}" title="${label}">${icon(glyph)}<span class="tab-label">${label}</span>${t === "language" ? `<span class="tab-code" aria-hidden="true" translate="no">${s.language.toUpperCase()}</span>` : ""}</button>`).join("")}</nav><div class="settings-body" id="settings-body" role="tabpanel" aria-labelledby="settings-tab-${this.tab}" data-section="${this.tab}">${body}</div><footer><button type="button" data-do="reset" class="ghost">Defaults</button><p id="settings-status" role="status">Changes save as you go.</p><button type="button" data-do="done" class="primary">Done</button></footer></section>`;
+    this.root.innerHTML = `<section class="settings-panel panel" role="dialog" aria-modal="true" aria-labelledby="settings-title"><header><div class="settings-heading"><span class="eyebrow">COMMANDER PREFERENCES</span><h2 id="settings-title">Settings</h2></div><button type="button" data-do="close" class="settings-close" aria-label="Close settings">${icon("close")}</button></header><nav role="tablist" aria-label="Settings sections" style="--tabs:${SECTIONS.length}">${SECTIONS.map(([t, label, glyph]) => `<button type="button" role="tab" id="settings-tab-${t}" data-tab="${t}" aria-selected="${t === this.tab}" aria-controls="settings-body" tabindex="${t === this.tab ? 0 : -1}" title="${t === "hero" ? "Hero mode" : label}">${icon(glyph)}<span class="tab-label"${t === "hero" ? ' translate="no" data-hero-tab' : ""}>${t === "hero" ? this.heroTab(s.language) : label}</span>${t === "language" ? `<span class="tab-code" aria-hidden="true" translate="no">${s.language.toUpperCase()}</span>` : ""}</button>`).join("")}</nav><div class="settings-body" id="settings-body" role="tabpanel" aria-labelledby="settings-tab-${this.tab}" data-section="${this.tab}">${body}</div><footer><button type="button" data-do="reset" class="ghost">Defaults</button><p id="settings-status" role="status">Changes save as you go.</p><button type="button" data-do="done" class="primary">Done</button></footer></section>`;
     this.refresh();
     this.root.querySelector(`[data-tab="${this.tab}"]`).focus();
+  }
+  // The Hero tab's name in `lang` (its catalogue loads on the first language change; the label follows then).
+  heroTab(lang) {
+    if (lang === "en") return "Hero";
+    const text = translate(HERO_TAB, lang);
+    if (text === HERO_TAB) { loadLocale(lang).then(() => this.refresh()).catch(() => {}); return "Hero"; }
+    return text;
   }
   // Pressed states, switches, colours and the full-screen label follow the stored settings.
   refresh() {
     if (!this.active) return;
     const s = this.get();
+    const heroTab = this.root.querySelector("[data-hero-tab]"), heroName = heroTab && this.heroTab(s.language);
+    if (heroTab && heroTab.textContent !== heroName) heroTab.textContent = heroName;
     for (const b of this.root.querySelectorAll("button[data-setting][data-value]"))
       b.setAttribute("aria-pressed", String(String(s[b.dataset.setting]) === b.dataset.value));
     for (const input of this.root.querySelectorAll('input[type="checkbox"][data-setting]')) {

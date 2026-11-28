@@ -86,7 +86,7 @@ export async function koreanChecks(browser) {
     // Settings.
     // Settings: every section reads in Korean and fits.
     await openSettings(page, null, { touch });
-    for (const tab of ['audio', 'game', 'camera', 'display', 'controls', 'access', 'language']) {
+    for (const tab of ['audio', 'game', 'camera', 'hero', 'display', 'controls', 'access', 'language']) {
       await press(`#settings-tab-${tab}`);
       await fits('.settings-panel', `settings ${tab}`, '.settings-panel footer button, .settings-close, .settings-panel [role=tab], .settings-body button');
     }

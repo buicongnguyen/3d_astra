@@ -186,6 +186,8 @@ export const skywing = {
       if (this.skywing || this.lan || this.result || !this.players[team] || this.players[team].eliminated || !this.humanTeam(team) || !WEAPONS[weapon]) return false;
       this.skywing = { team };
       const e = spawnAt(this, team, weapon);
+      // H6: a match with Skywing has cover pieces to fight from (sim/content/cover.js).
+      this.enableCover?.();
       this.events.push({ type: "skywing", id: e.id, team, x: e.x, z: e.z });
       this.message("Skywing has joined the battle.", team);
       return true;

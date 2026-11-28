@@ -109,6 +109,8 @@ export function restore(Simulation, saved) {
     sim.nav.wallsSpawned = data.nav.wallsSpawned;
     // Restore crossings before rebuilding walkable terrain.
     sim.applyCrossings?.(false);
+    // H6: the cover pieces in the save stand in the nav grid again.
+    if (sim.cover) sim.applyCover?.();
     sim.nav.rebuild(sim.entities);
     sim.nav.revision = data.nav.revision;
     return sim;

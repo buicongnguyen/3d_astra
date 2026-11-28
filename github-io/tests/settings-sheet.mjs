@@ -17,7 +17,7 @@ await suite("settings-sheet", async () => {
     // One row of seven sections; no dropdown anywhere in the sheet.
     await openSettings(page, "display", { touch });
     const tabs = await page.evaluate(() => { const t = [...document.querySelectorAll(".settings-panel [role=tab]")]; return { ids: t.map((b) => b.dataset.tab), rows: new Set(t.map((b) => Math.round(b.getBoundingClientRect().top))).size, selects: document.querySelectorAll(".settings-panel select").length }; });
-    assert.deepEqual(tabs, { ids: ["audio", "game", "camera", "display", "controls", "access", "language"], rows: 1, selects: 0 }, `${viewport}: tab row`);
+    assert.deepEqual(tabs, { ids: ["audio", "game", "camera", "hero", "display", "controls", "access", "language"], rows: 1, selects: 0 }, `${viewport}: tab row`);
 
     // Live apply: a segmented choice and a switch are stored at once, with no Apply.
     await choose(page, "quality", "eco", { touch });
@@ -43,6 +43,60 @@ await suite("settings-sheet", async () => {
     await closeSettings(page, { touch });
     await page.reload(); await ready();
     assert.equal((await stored(page)).language, "en", `${viewport}: survives a reload`);
+
+    // H7 Settings > Hero: eight flat segmented rows, every choice visible, one tap each, saved at once; 11 px text,
+    // 44 px taps and nothing wider than the sheet, in English, Vietnamese and Korean.
+    const HERO_ROWS = { battleTime: 4, dodgeHelp: 2, shotWarnings: 2, aimAssist: 3, heroView: 2, closeDetail: 3, skywingOffer: 2, birdHint: 2 };
+    for (const language of ["en", "vi", "ko"]) {
+      await openSettings(page, "language", { touch });
+      await choose(page, "language", language, { touch });
+      await page.waitForFunction((l) => document.documentElement.lang === l, language);
+      await openSettings(page, "hero", { touch });
+      const want = { en: "Hero", vi: "Anh hùng", ko: "영웅" }[language];
+      await page.waitForFunction((w) => document.querySelector("[data-hero-tab]")?.textContent === w || getComputedStyle(document.querySelector("[data-hero-tab]")).position === "absolute", want, { timeout: TIMEOUT.step });
+      const audit = await page.evaluate(() => {
+        const body = document.querySelector("#settings-body"), rows = {}, small = [], tiny = [], spill = [];
+        for (const g of body.querySelectorAll("[data-setting-group]")) rows[g.dataset.settingGroup] = g.querySelectorAll("button").length;
+        for (const b of body.querySelectorAll("button")) {
+          const r = b.getBoundingClientRect();
+          if (r.height < 44 - 0.5 || r.width < 44 - 0.5) tiny.push(`${b.dataset.setting}=${b.dataset.value} ${Math.round(r.width)}x${Math.round(r.height)}`);
+          if (b.scrollWidth > b.clientWidth + 1 || b.scrollHeight > b.clientHeight + 1) spill.push(`${b.dataset.setting}=${b.dataset.value}`);
+        }
+        for (const el of body.querySelectorAll("button, span, p, small")) {
+          if (!el.textContent.trim() || !el.offsetParent) continue;
+          const px = parseFloat(getComputedStyle(el).fontSize);
+          if (px < 11 - 0.01) small.push(`${el.textContent.trim().slice(0, 30)} ${px}px`);
+        }
+        const tab = document.querySelector("#settings-tab-hero").getBoundingClientRect();
+        return { rows, small, tiny, spill, wide: body.scrollWidth > body.clientWidth + 1, tab: [tab.width, tab.height], label: document.querySelector("[data-hero-tab]").textContent };
+      });
+      assert.deepEqual(audit.rows, HERO_ROWS, `${viewport} ${language}: the eight Hero rows, every choice shown`);
+      assert.deepEqual([audit.small, audit.tiny, audit.spill, audit.wide], [[], [], [], false], `${viewport} ${language}: 11 px text, 44 px taps, nothing spills`);
+      if (viewport !== "portrait" || language === "en") assert.equal(audit.label, want, `${viewport} ${language}: the tab's name`);
+      await shot(page, `settings-sheet-${viewport}-hero-${language}`);
+    }
+    await choose(page, "language", "en", { touch }).catch(async () => { await openSettings(page, "language", { touch }); await choose(page, "language", "en", { touch }); });
+    await openSettings(page, "hero", { touch });
+    assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#settings-body [data-setting-group]")].map((g) => [g.dataset.settingGroup, g.querySelector("[aria-pressed=true]")?.dataset.value])),
+      [["battleTime", "0.5"], ["dodgeHelp", "false"], ["shotWarnings", "true"], ["aimAssist", touch ? "high" : "low"], ["heroView", "shoulder"], ["closeDetail", "auto"], ["skywingOffer", "true"], ["birdHint", "true"]], `${viewport}: the Hero defaults`);
+    for (const [key, value] of [["battleTime", "0.75"], ["dodgeHelp", "true"], ["shotWarnings", "false"], ["aimAssist", "off"], ["heroView", "first"], ["closeDetail", "on"], ["skywingOffer", "false"], ["birdHint", "false"]])
+      await choose(page, key, value, { touch });
+    const hero = await stored(page);
+    assert.deepEqual([hero.battleTime, hero.dodgeHelp, hero.shotWarnings, hero.aimAssist, hero.heroView, hero.closeDetail, hero.skywingOffer, hero.birdHint], [0.75, true, false, "off", "first", "on", false, false], `${viewport}: one tap each, saved at once`);
+    await closeSettings(page, { touch });
+    // Skywing before matches Off: no offer on the skirmish setup; the Hero battle tile stays on the title screen.
+    await tap('[data-mode="skirmish"]');
+    assert.equal(await page.locator('.assist-rows[data-assist-where="skirmish"]').count(), 0, `${viewport}: no Skywing offer`);
+    assert.equal(await page.locator("#hero-battle").count(), 1, `${viewport}: the Hero battle tile stays`);
+    await page.reload(); await ready();
+    const kept = await stored(page);
+    assert.deepEqual([kept.dodgeHelp, kept.closeDetail, kept.birdHint], [true, "on", false], `${viewport}: kept after a reload`);
+    await openSettings(page, "hero", { touch });
+    await choose(page, "skywingOffer", "true", { touch });
+    await tap('.settings-panel [data-do="reset"]');
+    await closeSettings(page, { touch });
+    await tap('[data-mode="skirmish"]');
+    await page.locator('.assist-rows[data-assist-where="skirmish"]').waitFor({ state: "attached", timeout: TIMEOUT.step });
 
     // In a match: the gear holds the match while the sheet is open and the clock runs again after.
     await tap('[data-mode="skirmish"]');

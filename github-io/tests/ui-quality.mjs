@@ -72,13 +72,13 @@ try {
         tabs: [...document.querySelectorAll('[role=tab]')].map(t => `${t.dataset.tab}:${t.getAttribute('aria-selected')}`), focus: document.activeElement.dataset.tab,
         tabRows: new Set([...document.querySelectorAll('[role=tab]')].map(t => Math.round(t.getBoundingClientRect().top))).size };
     });
-    assert.deepEqual(sheet, { fits: true, tabs: ['audio:true', 'game:false', 'camera:false', 'display:false', 'controls:false', 'access:false', 'language:false'], focus: 'audio', tabRows: 1 }, `${name} settings`);
+    assert.deepEqual(sheet, { fits: true, tabs: ['audio:true', 'game:false', 'camera:false', 'hero:false', 'display:false', 'controls:false', 'access:false', 'language:false'], focus: 'audio', tabRows: 1 }, `${name} settings`);
     assert.deepEqual(await smallText('.settings-panel'), [], `${name} settings text`);
     assert.deepEqual(await controls('.settings-panel footer button, .settings-close, .settings-panel [role=tab]'), [], `${name} settings controls`);
     await page.keyboard.press('ArrowRight');
     assert.equal(await page.evaluate(() => document.activeElement.dataset.tab + ':' + document.querySelector('[data-tab=game]').getAttribute('aria-selected')), 'game:true');
     // Every section: readable text and 44 px controls that stay on screen (segmented rows, swatches, sliders).
-    for (const tab of ['audio', 'game', 'camera', 'display', 'controls', 'access', 'language']) {
+    for (const tab of ['audio', 'game', 'camera', 'hero', 'display', 'controls', 'access', 'language']) {
       await press(`#settings-tab-${tab}`);
       if (!TEXT_AUDITED_BY_LAYOUT_F.has(name)) assert.deepEqual(await smallText('.settings-panel'), [], `${name} settings ${tab} text`);
       assert.deepEqual(await page.locator('.settings-body button, .settings-body input').evaluateAll((els, touch) => els.filter(e => e.getClientRects().length).map(e => { const r = e.getBoundingClientRect(); return { id: e.dataset.value || e.dataset.do || e.dataset.setting || e.dataset.color || e.textContent.trim().slice(0, 16), small: touch && (r.height < 44 || r.width < 40), spill: e.tagName === 'BUTTON' && e.scrollWidth > e.clientWidth + 1 }; }).filter(c => c.small || c.spill), touch), [], `${name} settings ${tab} controls`);

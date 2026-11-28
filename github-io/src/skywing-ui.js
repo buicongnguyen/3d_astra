@@ -85,6 +85,13 @@ export function setupSkywing(S, A) {
   function renderRows() {
     renderChip();
     if (Z.started) return;
+    // H7 Settings > Hero > Skywing before matches Off: no offer row anywhere (and nothing picked). The Hero battle
+    // tile (quick-battle.js) brings its own free Skywing and stays.
+    if (S.settings?.skywingOffer === false) {
+      for (const row of document.querySelectorAll(".assist-rows[data-assist-where]")) row.remove();
+      S.assistPick = "off";
+      return;
+    }
     if (S.playMode === "skirmish") place($("skirmish-setup"), "skirmish", $("battle-rules"));
     if (S.playMode === "defence") place($("defence-setup"), "defence", $("defence-perks-toggle"));
     // The mission briefing: between its body and its buttons, so the row never scrolls out of view.

@@ -2147,7 +2147,23 @@
     "Hero view": "영웅 시점",
     "Shoulder": "어깨 너머",
     "First person": "일인칭",
-    "The camera for a hero on foot in Hero mode. Skywing always looks down from above.": "영웅 모드에서 지상 영웅의 카메라입니다. 하늘날개는 항상 위에서 내려다봅니다."
+    "The camera for a hero on foot in Hero mode. Skywing always looks down from above.": "영웅 모드에서 지상 영웅의 카메라입니다. 하늘날개는 항상 위에서 내려다봅니다.",
+    "Hero (Settings tab)": "영웅",
+    "Dodge help": "회피 도움",
+    "On: rifle rounds at your hero fly slower, time slows for a moment before a rocket or shell hits while your dodge is ready, and the dodge is ready again after 3 s.": "켬: 영웅을 노린 소총탄이 느리게 날아오고, 회피가 준비된 상태에서 로켓이나 포탄이 맞기 직전 잠시 시간이 느려지며, 회피가 3초 만에 다시 준비됩니다.",
+    "Shot warnings": "사격 경고",
+    "Rings where rockets and shells will land, and marks at the screen edge for shots from off screen.": "로켓과 포탄이 떨어질 곳의 원, 화면 밖에서 날아오는 사격을 알리는 화면 가장자리 표시.",
+    "Aim assist": "조준 보조",
+    "How far from the crosshair your hero picks a target.": "조준선에서 얼마나 떨어진 목표까지 영웅이 잡을지 정합니다.",
+    "Camera (ground)": "카메라 (지상)",
+    "Close-up detail": "근접 디테일",
+    "Auto": "자동",
+    "Sharper models near your hero. Auto lets a phone turn it down when the battle gets busy.": "영웅 주변 유닛이 더 선명해집니다. 자동이면 전투가 붐빌 때 휴대폰이 낮춥니다.",
+    "Skywing before matches": "전투 전 하늘날개",
+    "Off hides the Skywing assist offer on the setup screens. The Hero battle tile stays on the title screen.": "끄면 준비 화면의 하늘날개 지원 제안을 숨깁니다. 영웅 전투 타일은 타이틀 화면에 그대로 있습니다.",
+    "Bird hint from fog": "안개 속 새 신호",
+    "Birds take off from the fog where hidden enemies move.": "숨은 적이 움직이는 안개 속에서 새들이 날아오릅니다.",
+    "Cover blocks this location.": "엄폐물이 이 위치를 막고 있습니다."
   },
   "patterns": [
     [

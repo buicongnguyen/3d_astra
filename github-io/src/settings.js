@@ -94,6 +94,20 @@ export function defaults(coarse = false) {
     // H3d: the battle's clock in Hero mode (0.4 / 0.5 / 0.75 / 1; LAN matches always 1), and the ground hero's camera.
     battleTime: 0.5,
     heroView: "shoulder",
+    // H7 Settings > Hero (2026-11-28). Dodge help: slower rifle rounds at the hero, a reflex slow-down before a
+    // rocket or shell hits and a 3 s dodge (carried into the match by the heroMode command, so replays keep it).
+    dodgeHelp: false,
+    // Shot warnings: the landing rings and the edge marks for shots at the hero (looks only).
+    shotWarnings: true,
+    // Aim assist: "off", "low" (the PC cone) or "high" (the phone cone); the page picks the target, the command
+    // carries it.
+    aimAssist: coarse ? "high" : "low",
+    // Close-up detail near the hero camera (H5): "auto" (the governor decides on phones), "on", "off".
+    closeDetail: "auto",
+    // The Skywing assist row on the setup screens and the mission briefing (the Hero battle tile always stays).
+    skywingOffer: true,
+    // Birds rising from the fog hint at hidden enemies (H5).
+    birdHint: true,
   };
 }
 export function normalize(value, coarse = false) {
@@ -137,6 +151,9 @@ export function normalize(value, coarse = false) {
   if (typeof value.subtitles === "boolean") d.subtitles = value.subtitles;
   pick("battleTime", [0.4, 0.5, 0.75, 1]);
   pick("heroView", ["shoulder", "first"]);
+  for (const key of ["dodgeHelp", "shotWarnings", "skywingOffer", "birdHint"]) if (typeof value[key] === "boolean") d[key] = value[key];
+  pick("aimAssist", ["off", "low", "high"]);
+  pick("closeDetail", ["auto", "on", "off"]);
   return d;
 }
 export function loadSettings(coarse = false, storage) {

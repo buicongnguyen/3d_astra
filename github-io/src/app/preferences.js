@@ -46,7 +46,9 @@ export function setupPreferences(S, A) {
   // setting they read changed: re-translating the page on a language change, re-tinting the world when
   // anything but the cheap keys below changed.
   const CHEAP = new Set(["masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "voices", "subtitles", "muted", "quietMode", "music", "panSpeed", "edgeScroll", "confirmRestart", "autocast", "groupPace", "showFps",
-    "cameraAngle", "cameraTurn", "zoomSpeed", "minimapSide", "handedness", "alerts", "frameCap", "haptics", "textSize", "battleTime", "heroView"]);
+    "cameraAngle", "cameraTurn", "zoomSpeed", "minimapSide", "handedness", "alerts", "frameCap", "haptics", "textSize", "battleTime", "heroView",
+    // H7 Settings > Hero: read by the page when used (the view reads shotWarnings, closeDetail and birdHint itself).
+    "dodgeHelp", "aimAssist", "skywingOffer"]);
   let applied = null, storageWarned = false;
   function applyPreferences(value) {
     const before = applied;
@@ -64,6 +66,8 @@ export function setupPreferences(S, A) {
     $("fps").hidden = !S.settings.showFps;
     if (!before || Object.keys(value).some((key) => !CHEAP.has(key) && changed(key))) S.view?.applySettings(S.settings);
     A.syncAutocast(false);
+    // H7: Settings > Hero > Skywing before matches shows or hides the offer rows at once.
+    if (before && changed("skywingOffer")) A.renderSkywing?.();
     $("audio").innerHTML = icon(S.muted ? "muted" : "volume");
     $("audio").setAttribute("aria-label", S.muted ? "Enable sound" : "Mute sound");
     $("audio").title = S.muted ? "Enable sound" : "Mute sound";

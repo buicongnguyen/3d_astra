@@ -27,7 +27,7 @@ import { icon } from "./icons.js";
 import { isAllyHero } from "./sim/content/campaign-heroes.js";
 import { isSkywing, isLanded, WEAPONS, LAND } from "./sim/content/skywing.js";
 import { flightOf } from "./skywing-view.js";
-import { HERO_TIME, enterCommands, leaveCommands } from "./sim/content/hero-mode.js";
+import { HERO_TIME, DODGE, enterCommands, leaveCommands } from "./sim/content/hero-mode.js";
 import { pickTarget, RocketLock, moveVector, battleTime, AIM } from "./hero-aim.js";
 import { translate, getLanguage } from "./i18n.js";
 import { PHONE_NAME } from "./tactics-card.js";
@@ -47,6 +47,11 @@ const TAP_MS = 280, TAP_PX = 12;
 // Skywing on foot (PART D): the air warning's reach (m), the gap between two warnings (real ms), the camera's fog.
 export const AIR_WARN = Object.freeze({ range: 30, every: 12000 });
 const SKY_FOG = Object.freeze({ air: { fogNear: 46, fogFar: 132, far: 160 }, ground: { fogNear: 36, fogFar: 110, far: 140 } });
+// H7 Settings > Hero. Aim assist per choice: the cone (degrees) around the aim line and the snap (m) round the aim point.
+export const AIM_ASSIST = Object.freeze({ off: { cone: 0, snap: 1.2 }, low: { cone: AIM.cone, snap: AIM.snap }, high: { cone: AIM.conePhone, snap: AIM.snap } });
+// Dodge help's reflex slow-down: the clock at `scale` of the battle time for `seconds` (real) before a rocket or
+// shell hits, `gap` seconds at least between two.
+export const REFLEX = Object.freeze({ scale: 0.25, seconds: 0.4, gap: 1.2 });
 
 export function setupHeroMode(S, A) {
   const Z = S.screen;
@@ -55,6 +60,7 @@ export function setupHeroMode(S, A) {
     scale: 1, ease: null, aim: null, target: null, firing: false, sent: { drive: "0,0", fire: "null" },
     lock: new RocketLock(), keys: new Set(), stick: null, look: null, fell: null, pointer: null, pinch: null, touches: new Map(),
     cursor: null, button: null, hud: null, edges: [], skies: [], turn: 0, flight: 1, grounded: null, warned: 0, flyers: new Set(),
+    reflex: { left: 0, wait: 0, seen: new Set(), count: 0 },
   };
   S.hero = H;
 
@@ -201,7 +207,8 @@ export function setupHeroMode(S, A) {
     const e = S.sim.get(id);
     if (!e) return false;
     const scale = S.sim.lan || S.lan ? 1 : HERO_TIME.scales.includes(S.settings.battleTime) ? S.settings.battleTime : HERO_TIME.scale;
-    const [mode, steward] = enterCommands(0, id, scale);
+    // H7 Settings > Hero > Dodge help: carried by the command, so the match (and its replay) keeps it.
+    const [mode, steward] = enterCommands(0, id, scale, S.settings.dodgeHelp === true);
     if (!S.sim.command(mode)) { A.notice?.("Hero mode is not available now."); return false; }
     S.sim.command(steward);
     Object.assign(H, { on: true, id, sky: isSkywing(e), sim: S.sim, yaw: Number.isFinite(e.angle) ? e.angle : 0, pitch: 0, zoom: 1, fell: null, firing: false, target: null, aim: null });
@@ -527,14 +534,18 @@ export function setupHeroMode(S, A) {
     const f = { x: Math.sin(H.yaw), z: Math.cos(H.yaw) };
     if (!p || Math.hypot(p.x - e.x, p.z - e.z) > 60) p = { x: e.x + f.x * Math.max(6, e.range || 8), z: e.z + f.z * Math.max(6, e.range || 8) };
     H.aim = p;
-    H.target = pickTarget(S.sim, e, p, { cone: phone() ? AIM.conePhone : AIM.cone, snap: H.sky ? AIM.snap : 2.5 });
+    // H7 Settings > Hero > Aim assist: Off (only a target right under the reticle), Low (the PC cone), High (the
+    // phone cone). The pick is the page's: the heroFire command carries the target, so replays stay exact.
+    const assist = AIM_ASSIST[S.settings.aimAssist] || (phone() ? AIM_ASSIST.high : AIM_ASSIST.low);
+    H.target = pickTarget(S.sim, e, p, { cone: assist.cone, snap: Math.min(assist.snap, H.sky ? AIM.snap : 2.5) });
   }
   // Marks at the screen edge for shots at the hero from off screen.
   function edges(sim, e) {
-    const shots = sim.heroMode?.shots || [], v = S.view, w = v.width, h = v.height;
+    // H7 Settings > Hero > Shot warnings Off: no marks for incoming shots (the air warning stays).
+    const shots = S.settings.shotWarnings === false ? [] : sim.heroMode?.shots || [], v = S.view, w = v.width, h = v.height;
     let n = 0;
     for (const s of shots) {
-      if (s.target !== e.id || n >= H.edges.length) continue;
+      if (s.target !== e.id || s.blocked || n >= H.edges.length) continue;
       const from = v.objects.get(s.by)?.position, x = from ? from.x : s.sx, z = from ? from.z : s.sz;
       const q = v.project(x, z, v.terrain.heightAt(x, z) + 1);
       const behind = isBehind(v.camera, x, z);
@@ -593,6 +604,7 @@ export function setupHeroMode(S, A) {
       if (H.ease.t >= HERO_TIME.ease) { H.scale = H.ease.to; H.ease = null; }
     }
     if (H.on && (H.sim !== S.sim || !Z.started)) { leave(true); H.scale = 1; H.ease = null; }
+    reflexTick(dt);
     if (H.on && S.sim.result) leave(true);
     // A story scene or a Commander decision takes the screen: back to the RTS view first.
     if (H.on && (A.sceneActive?.() || S.sim.mission?.pending)) leave(true);
@@ -675,7 +687,7 @@ export function setupHeroMode(S, A) {
       ab.disabled = left > 0 || grounded;
     } else ab.hidden = true;
     const dg = root.querySelector(".hh-dodge"), wait = Math.max(0, (e.dodgeReady ?? -Infinity) - S.sim.time);
-    dg.style.setProperty("--cd", (wait / (4 * (e.driven || 1))).toFixed(3));
+    dg.style.setProperty("--cd", (wait / ((e.dodgeHelp ? DODGE.helped : DODGE.cooldown) * (e.driven || 1))).toFixed(3));
     dg.disabled = wait > 0;
     if (H.sky) {
       const lb = root.querySelector(".hh-land"), ground = isLanded(e) || e.skyland?.phase === "land";
@@ -703,8 +715,27 @@ export function setupHeroMode(S, A) {
     cross.classList.toggle("locked", H.lock.progress >= 1);
   }
 
+  // H7 Dodge help's reflex: a rocket or shell about to hit the hero, with the dodge ready, slows the clock to
+  // REFLEX.scale of the battle time for REFLEX.seconds (real time), once a shot and at most every REFLEX.gap s.
+  // Page time only (the sim's ticks and commands are unchanged), never in a LAN match; no camera shake.
+  function reflexTick(dt) {
+    const R = H.reflex;
+    if (R.left > 0) { R.left = Math.max(0, R.left - dt); }
+    R.wait = Math.max(0, R.wait - dt);
+    const e = H.on ? hero() : null;
+    if (!e || !e.dodgeHelp || S.sim.lan || S.lan || R.left > 0 || R.wait > 0) return;
+    const sim = S.sim, k = e.driven || 1;
+    if (sim.time < (e.dodgeReady ?? -Infinity) - 1e-9) return;
+    // The window in game time (never under one 0.05 s tick, so a frame always sees it).
+    const due = Math.max(REFLEX.seconds * REFLEX.scale * k, 0.051);
+    for (const s of sim.heroMode?.shots || []) {
+      if (s.target !== e.id || !s.heavy || s.blocked || s.air || R.seen.has(s.n)) continue;
+      const left = s.at - sim.time;
+      if (left > 0 && left <= due) { R.seen.add(s.n); R.left = REFLEX.seconds; R.wait = REFLEX.gap; R.count++; if (R.seen.size > 64) R.seen.clear(); return; }
+    }
+  }
   // The clock's pace while Hero mode is on or easing (app/frame.js), else null.
-  const pace = () => (H.on || H.ease ? H.scale : null);
+  const pace = () => (H.on || H.ease ? H.scale * (H.reflex.left > 0 ? REFLEX.scale : 1) : null);
 
   function isBehind(camera, x, z) {
     const m = camera.matrixWorld.elements;
@@ -713,6 +744,7 @@ export function setupHeroMode(S, A) {
   }
 
   Object.assign(A, { heroTick: tick, heroPace: pace, enterHeroMode: enter, leaveHeroMode: leave, heroModeOn: () => H.on, heroInfo: () => ({ on: H.on, id: H.id, sky: H.sky, flight: H.flight, scope: !!H.hud?.querySelector(".hh-scope:not([hidden])"), airWarn: H.airWarn || 0,
+    reflex: H.reflex.count, reflexOn: H.reflex.left > 0,
     marks: H.edges.filter((m) => !m.hidden && m.classList.contains("air")).length + H.skies.filter((m) => !m.hidden).length, yaw: H.yaw, zoom: H.zoom, scale: H.scale, aim: H.aim, target: H.target?.id ?? null, lock: H.lock.progress, screen: H.screen || null, sent: { ...H.sent } }) });
   return function bind() {
     window.addEventListener("keydown", keydown, true);

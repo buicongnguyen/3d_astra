@@ -133,7 +133,7 @@ try {
     await check('2-campaign', '#briefing');
     await press('[data-mode="skirmish"]');
     await press('#briefing-settings');
-    for (const tab of ['audio', 'game', 'camera', 'display', 'controls', 'access', 'language']) {
+    for (const tab of ['audio', 'game', 'camera', 'hero', 'display', 'controls', 'access', 'language']) {
       await press(`#settings-tab-${tab}`);
       await check(`3-settings-${tab}`, '.settings-panel', ['.settings-panel']);
     }

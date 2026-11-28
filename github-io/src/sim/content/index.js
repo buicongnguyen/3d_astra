@@ -33,6 +33,7 @@ import { waveKinds } from "./wave-kinds.js";
 import { campaignHeroes } from "./campaign-heroes.js";
 import { skywing } from "./skywing.js";
 import { heroMode } from "./hero-mode.js";
+import { cover } from "./cover.js";
 
 export const CONTENT = [
   suppression,
@@ -61,4 +62,5 @@ export const CONTENT = [
   campaignHeroes,
   skywing,
   heroMode,
+  cover,
 ];

@@ -215,6 +215,9 @@ export const orders = {
       return "Explore this area before building.";
     if (this.entities.some((w) => w.kind === "wall" && w.hp > 0 && hyp(x - w.x, z - w.z) < d.radius + w.radius + 0.5))
       return "A concrete wall blocks this location.";
+    // H6 cover pieces (only in a match that has them, sim/content/cover.js).
+    if (this.nav.cover?.some((o) => hyp(x - o.x, z - o.z) < d.radius + o.radius + 1.25))
+      return "Cover blocks this location.";
     if (
       this.entities.some(
         (e) =>

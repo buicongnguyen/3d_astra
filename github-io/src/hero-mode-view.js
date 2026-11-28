@@ -240,7 +240,7 @@ export class HeroModeView {
     if (!this.shots) this.build();
     // The flame's flicker and the smoke's curl hold still with reduced motion.
     if (!this.view.reducedMotion?.matches) this.time.value = (this.time.value + dt) % 600;
-    const T = this.view.terrain;
+    const T = this.view.terrain, warn = this.view.settings?.shotWarnings !== false;
     let n = 0, r = 0;
     this.rockets.begin(this.clock, 1);
     for (let i = 0; shots && i < shots.length && i < SHOTS; i++) {
@@ -274,7 +274,8 @@ export class HeroModeView {
       } else this.ribbon(n++, LOOK.kind === "shell" ? RIBBON.shell : RIBBON.tracer, hx, hy, hz, tx, ty2, tz, look.width, LOOK.color, seed);
       drawn[LOOK.kind]++;
       // The landing ring for a rocket or shell: it tightens and flashes as the round comes in.
-      if (s.heavy && !s.air && r < RINGS) {
+      // H7 Settings > Hero > Shot warnings Off hides them; a round cover stops (H6) gets none: it cannot hit.
+      if (s.heavy && !s.air && !s.blocked && warn && r < RINGS) {
         const radius = Math.max(1.3, s.splash?.r || 1.3) * (1.25 - 0.25 * k);
         this.dummy.position.set(s.x, ground + 0.1, s.z);
         this.dummy.rotation.set(0, 0, 0);

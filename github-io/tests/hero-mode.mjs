@@ -175,6 +175,17 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     // The RTS bars are under the battlefield: the top bar is not what is on top at its own spot.
     assert.equal(await page.evaluate(() => { const t = document.querySelector(".topbar").getBoundingClientRect(); return !!document.elementFromPoint(t.left + t.width / 2, t.top + 5)?.closest(".topbar"); }), false, "the top bar is covered");
     await audit(page, "desktop ground HUD");
+    // H6 cover walls: entering Hero mode placed the match's cover pieces, drawn as ONE static mesh that casts no
+    // shadow (one draw more, whatever the number of pieces), with a nav obstacle for every piece.
+    const cover = await page.evaluate(() => {
+      const f = window.__frontier, v = f.view, r = v.renderer, m = v.scene.getObjectByName("CoverWalls");
+      if (!m) return { mesh: false };
+      const calls = () => { r.info.reset(); r.render(v.scene, v.camera); return r.info.render.calls; };
+      const shown = calls(); m.visible = false; const hidden = calls(); m.visible = true;
+      return { mesh: true, pieces: f.sim.cover.length, nav: f.sim.nav.cover.length >= f.sim.cover.length, shadow: m.castShadow, extra: shown - hidden };
+    });
+    assert.ok(cover.mesh && cover.pieces >= 12 && cover.nav, `cover placed: ${JSON.stringify(cover)}`);
+    assert.deepEqual([cover.shadow, cover.extra], [false, 1], "cover: no shadow, one draw");
     // Item 4a (shine pass): a spark streak passing 0.6 m in front of the Hero camera fades out instead of drawing a
     // line across the screen (fx.js near-camera guard and streak length cap).
     const nearShare = await page.evaluate(() => {

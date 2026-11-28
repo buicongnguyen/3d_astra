@@ -2147,7 +2147,23 @@
     "Hero view": "Góc nhìn anh hùng",
     "Shoulder": "Sau vai",
     "First person": "Góc nhìn thứ nhất",
-    "The camera for a hero on foot in Hero mode. Skywing always looks down from above.": "Camera cho anh hùng đi bộ trong chế độ anh hùng. Cánh Trời luôn nhìn xuống từ trên cao."
+    "The camera for a hero on foot in Hero mode. Skywing always looks down from above.": "Camera cho anh hùng đi bộ trong chế độ anh hùng. Cánh Trời luôn nhìn xuống từ trên cao.",
+    "Hero (Settings tab)": "Anh hùng",
+    "Dodge help": "Hỗ trợ né",
+    "On: rifle rounds at your hero fly slower, time slows for a moment before a rocket or shell hits while your dodge is ready, and the dodge is ready again after 3 s.": "Bật: đạn súng trường bắn vào anh hùng bay chậm hơn, thời gian chậm lại một chút trước khi tên lửa hoặc đạn pháo trúng khi bạn sẵn sàng né, và cú né hồi lại sau 3 giây.",
+    "Shot warnings": "Cảnh báo đạn",
+    "Rings where rockets and shells will land, and marks at the screen edge for shots from off screen.": "Vòng tròn nơi tên lửa và đạn pháo sẽ rơi, và dấu ở mép màn hình cho phát bắn từ ngoài màn hình.",
+    "Aim assist": "Hỗ trợ ngắm",
+    "How far from the crosshair your hero picks a target.": "Anh hùng chọn mục tiêu cách tâm ngắm bao xa.",
+    "Camera (ground)": "Camera (mặt đất)",
+    "Close-up detail": "Chi tiết cận cảnh",
+    "Auto": "Tự động",
+    "Sharper models near your hero. Auto lets a phone turn it down when the battle gets busy.": "Mô hình sắc nét hơn quanh anh hùng. Tự động cho điện thoại giảm bớt khi trận đánh đông đúc.",
+    "Skywing before matches": "Cánh Trời trước trận",
+    "Off hides the Skywing assist offer on the setup screens. The Hero battle tile stays on the title screen.": "Tắt sẽ ẩn lời mời Trợ thủ Cánh Trời trên màn hình chuẩn bị. Ô Trận anh hùng vẫn ở màn hình chính.",
+    "Bird hint from fog": "Chim báo hiệu từ sương mù",
+    "Birds take off from the fog where hidden enemies move.": "Chim bay lên từ sương mù nơi kẻ địch ẩn nấp di chuyển.",
+    "Cover blocks this location.": "Công sự che chắn chặn vị trí này."
   },
   "patterns": [
     [

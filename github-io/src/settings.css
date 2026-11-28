@@ -58,7 +58,7 @@
 .settings-close .icon { width: 18px; height: 18px; }
 .settings-close:hover { background: var(--ink-4); }
 
-/* Seven sections in one segmented row (owner: no hidden or grouped buttons; every setting one tap away once
+/* Eight sections (Hero since H7) in one segmented row (owner: no hidden or grouped buttons; every setting one tap away once
    the sheet is open). Icon over an 11 px label; the label may take two lines in Vietnamese. */
 .settings-panel nav {
   display: grid;
@@ -292,8 +292,13 @@
   .settings-panel nav [data-tab="language"] .tab-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .settings-panel nav [data-tab="language"] .tab-code { display: block; }
   .settings-panel h2 { margin: 0; font-size: 22px; }
-  .settings-panel nav { margin: 0 6px; padding: 3px; gap: 2px; }
+  /* Eight tabs since H7 (Hero): the Controls column is at least its word wide (the longest tab name, "Controls"),
+     the other seven share the rest, so no name breaks inside a word and the row never grows past the screen. */
+  .settings-panel nav { margin: 0 4px; padding: 2px; gap: 1px; grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(min-content, 1fr) repeat(2, minmax(0, 1fr)); }
   .settings-panel nav button { padding: 3px 1px; font-size: 11px; }
+  .settings-panel nav .tab-label { overflow-wrap: normal; }
+  /* The kit's 4 px tab gap (kit-skin.css) leaves eight 44 px tabs no room on a 390 px phone. */
+  :root .settings-panel nav[role="tablist"] { gap: 2px; }
   .settings-body { padding: 10px 12px 8px; }
   .settings-panel > footer { padding: 8px 12px 10px; }
   .seg { flex-basis: 100%; max-width: none; }
@@ -303,6 +308,7 @@
 @media (max-width: 359px) {
   .settings-panel nav .tab-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .settings-panel nav button { min-height: 46px; }
+  .settings-panel nav { grid-template-columns: repeat(var(--tabs, 8), minmax(0, 1fr)); }
   #settings-status { display: none; }
 }
 

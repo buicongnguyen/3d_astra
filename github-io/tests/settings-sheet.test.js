@@ -62,9 +62,9 @@ test("every match may run fast now; scenes, decisions, menus and new matches sti
   assert.match(frame, /speed === 3 && S\.touchInput \? 2/, "×3 needs a fine pointer");
 });
 
-test("the sheet: seven sections in one row, no dropdowns, live apply, no Apply / Cancel", () => {
+test("the sheet: eight sections in one row, no dropdowns, live apply, no Apply / Cancel", () => {
   const ui = readFileSync(new URL("../src/settings-ui.js", import.meta.url), "utf8");
-  for (const id of ["audio", "game", "camera", "display", "controls", "access", "language"]) assert.match(ui, new RegExp(`\\["${id}", "`));
+  for (const id of ["audio", "game", "camera", "hero", "display", "controls", "access", "language"]) assert.match(ui, new RegExp(`\\["${id}", "`));
   assert.doesNotMatch(ui, /<select/, "segmented buttons, not dropdowns");
   assert.doesNotMatch(ui, /data-do="(apply|cancel)"/);
   const shell = readFileSync(new URL("../src/app/shell.js", import.meta.url), "utf8");
@@ -91,4 +91,39 @@ test("phase 2 keys: defaults, old saves and the reduced-motion override", async 
   // The Standard preset is the designed view (CAMERA_OFFSET 25, 51, 43 looks down 45.7 degrees).
   assert.ok(Math.abs(Math.atan2(51, Math.hypot(25, 43)) * 180 / Math.PI - CAMERA_PITCH.standard) < 0.1);
   assert.ok(CAMERA_PITCH.low < CAMERA_PITCH.standard && CAMERA_PITCH.standard < CAMERA_PITCH.top);
+});
+
+// H7 Settings > Hero (2026-11-28): the eight rows' keys, their defaults (aim assist Low on a PC, High on touch), old
+// saves, bad values, and the round trip through the device's storage. Battle time and the ground camera moved here.
+test("Hero section: keys, defaults, old saves, bad values and saving per device", async () => {
+  const { loadSettings, saveSettings, STORAGE_KEY } = await import("../src/settings.js");
+  const pc = defaults(false), touch = defaults(true);
+  assert.deepEqual([pc.battleTime, pc.dodgeHelp, pc.shotWarnings, pc.aimAssist, pc.heroView, pc.closeDetail, pc.skywingOffer, pc.birdHint],
+    [0.5, false, true, "low", "shoulder", "auto", true, true]);
+  assert.equal(touch.aimAssist, "high", "touch screens aim with more help");
+  const old = normalize({ version: 1, battleTime: 0.75, heroView: "first" }, true);
+  assert.deepEqual([old.battleTime, old.heroView, old.dodgeHelp, old.aimAssist, old.closeDetail, old.birdHint], [0.75, "first", false, "high", "auto", true], "a save from before H7");
+  const set = normalize({ version: 1, dodgeHelp: true, shotWarnings: false, aimAssist: "off", closeDetail: "off", skywingOffer: false, birdHint: false });
+  assert.deepEqual([set.dodgeHelp, set.shotWarnings, set.aimAssist, set.closeDetail, set.skywingOffer, set.birdHint], [true, false, "off", "off", false, false]);
+  const bad = normalize({ version: 1, dodgeHelp: "yes", aimAssist: "max", closeDetail: 1, birdHint: "on", battleTime: 2 });
+  assert.deepEqual([bad.dodgeHelp, bad.aimAssist, bad.closeDetail, bad.birdHint, bad.battleTime], [false, "low", "auto", true, 0.5]);
+  // Saved per device: through the same storage the sheet uses.
+  const store = new Map(), storage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)) };
+  assert.equal(saveSettings({ ...pc, dodgeHelp: true, aimAssist: "high", closeDetail: "on", birdHint: false }, storage), true);
+  assert.ok(store.has(STORAGE_KEY));
+  const back = loadSettings(false, storage);
+  assert.deepEqual([back.dodgeHelp, back.aimAssist, back.closeDetail, back.birdHint], [true, "high", "on", false]);
+  // The rows live in the Hero section only (each key once in the sheet).
+  const ui = readFileSync(new URL("../src/settings-ui.js", import.meta.url), "utf8");
+  for (const key of ["battleTime", "dodgeHelp", "shotWarnings", "aimAssist", "heroView", "closeDetail", "skywingOffer", "birdHint"])
+    assert.equal(ui.split(`seg("${key}"`).length - 1, 1, `${key}: one row`);
+});
+
+// Dodge help changes the match, so the page sends it with the heroMode command (the command log and the state carry
+// it); the reflex slow-down is page time only.
+test("Hero section choices that change the match travel in the match", () => {
+  const page = readFileSync(new URL("../src/hero-mode.js", import.meta.url), "utf8");
+  assert.match(page, /enterCommands\(0, id, scale, S\.settings\.dodgeHelp === true\)/);
+  assert.match(page, /AIM_ASSIST\[S\.settings\.aimAssist\]/);
+  assert.match(page, /S\.settings\.shotWarnings === false/);
 });

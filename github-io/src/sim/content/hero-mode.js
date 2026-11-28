@@ -3,8 +3,10 @@
 // src/hero-mode.js, the drawn projectiles and warning rings src/hero-mode-view.js.
 //
 // Commands (logged and replayed like any other, so a match in Hero mode replays tick for tick):
-//   { type: "heroMode", team, id, on, scale }  enter (on) or leave; `scale` is the battle-time scale (0.4 / 0.5 /
-//                                               0.75 / 1) the page runs the clock at; LAN matches always use 1
+//   { type: "heroMode", team, id, on, scale, help }  enter (on) or leave; `scale` is the battle-time scale (0.4 /
+//                                               0.5 / 0.75 / 1) the page runs the clock at; LAN matches always use 1;
+//                                               `help` (H7 Settings > Hero > Dodge help, only when on): rifle rounds
+//                                               at the hero fly at SHOTS.helped and the dodge is ready DODGE.helped
 //   { type: "heroDrive", team, dx, dz }         the move stick (world x/z, length <= 1; 0, 0 stops)
 //   { type: "heroFire", team, target, hold }    shoot `target` (hold: keep firing until a new heroFire), null stops
 //   { type: "heroDodge", team, dx, dz }         the dodge dash (Skywing: a barrel roll) toward dx, dz
@@ -17,19 +19,25 @@
 // part lead), checked on arrival: a miss when the hero has left the hit radius; splash still hurts near the impact.
 // Every other shot stays an instant hit, so RTS balance is unchanged. The dash gives DODGE.seconds without damage.
 //
-// State: `sim.heroMode = { teams: { [team]: { id, scale } }, shots: [...], n }`, made on the first entry and
+// Cover (H6, sim/content/cover.js): entering Hero mode places the match's cover pieces once; a ground shot at the
+// hero whose line meets a piece stops there (no hit, no splash). Lobbed shells (LOBBED) and shots to or from the
+// air pass over.
+//
+// State: `sim.heroMode = { teams: { [team]: { id, scale, help? } }, shots: [...], n }`, made on the first entry and
 // removed when no team is in Hero mode and no projectile is in flight; entity keys `driven` (the scale), `drive`,
-// `trigger`, `vel`, `dash`, `dodgeUntil`, `dodgeReady` exist only on a driven hero. A match that never uses it
+// `trigger`, `vel`, `dash`, `dodgeUntil`, `dodgeReady`, `dodgeHelp` exist only on a driven hero. A match that never uses it
 // saves and hashes exactly as before.
 import { distance, hyp } from "../../data.js";
+import { LOBBED } from "../cover.js";
 
 export const HERO_TIME = Object.freeze({ scales: Object.freeze([0.4, 0.5, 0.75, 1]), scale: 0.5, real: 0.8, ease: 0.3 });
 // Real seconds (converted to game time with the scale): no damage for `seconds`, `cooldown` between dodges,
 // `dash` metres covered.
-export const DODGE = Object.freeze({ seconds: 0.3, cooldown: 4, dash: 3.6 });
+// `helped`: the cooldown with Dodge help on (H7).
+export const DODGE = Object.freeze({ seconds: 0.3, cooldown: 4, helped: 3, dash: 3.6 });
 // Projectile speeds in m/s of game time (rifle rounds, rockets, shells), the extra hit radius around the hero,
-// and the share of the hero's motion the shooter leads by.
-export const SHOTS = Object.freeze({ fast: 28, rocket: 22, shell: 18, hit: 0.6, lead: 0.6, melee: 2.6 });
+// and the share of the hero's motion the shooter leads by. `helped`: rifle rounds with Dodge help on (H7).
+export const SHOTS = Object.freeze({ fast: 28, helped: 20, rocket: 22, shell: 18, hit: 0.6, lead: 0.6, melee: 2.6 });
 const HEAVY = new Set(["breaker", "tank", "antitank", "artillery", "mortar", "rocket", "lancer", "tower"]);
 
 export const isDriven = (e) => !!e && e.driven !== undefined;
@@ -37,16 +45,16 @@ const heroic = (e) => !!e && (!!e.assist || (typeof e.hero === "string" && e.her
 const scaleOf = (sim, scale) => (sim.lan ? 1 : HERO_TIME.scales.includes(scale) ? scale : HERO_TIME.scale);
 // The hero's move factor in game time: HERO_TIME.real of its speed in real time, never below its own speed.
 export const heroBoost = (scale) => Math.max(1, HERO_TIME.real / scale);
-// The projectile speed for a shooter's weapon.
-export function shotSpeed(e) {
+// The projectile speed for a shooter's weapon (`help`: Dodge help slows the rifle rounds).
+export function shotSpeed(e, help = false) {
   const w = e.shot || e.type;
   if (w === "antitank" || w === "rocket" || w === "lancer") return SHOTS.rocket;
-  return HEAVY.has(w) || e.splash_radius ? SHOTS.shell : SHOTS.fast;
+  return HEAVY.has(w) || e.splash_radius ? SHOTS.shell : help ? SHOTS.helped : SHOTS.fast;
 }
 
 // The commands the page sends to enter and leave (src/hero-mode.js): Hero mode and the steward together, so the
 // computer runs the base while the player fights, and hands it back with every queue and order kept.
-export const enterCommands = (team, id, scale = HERO_TIME.scale) => [{ team, type: "heroMode", id, on: true, scale }, { team, type: "steward", on: true }];
+export const enterCommands = (team, id, scale = HERO_TIME.scale, help = false) => [{ team, type: "heroMode", id, on: true, scale, ...(help ? { help: true } : null) }, { team, type: "steward", on: true }];
 export const leaveCommands = (team) => [{ team, type: "heroMode", on: false }, { team, type: "steward", on: false }];
 
 function clean(sim) {
@@ -54,7 +62,7 @@ function clean(sim) {
   if (h && !Object.keys(h.teams).length && !h.shots.length) delete sim.heroMode;
 }
 function release(e) {
-  for (const key of ["driven", "drive", "trigger", "vel", "dash", "dodgeUntil", "dodgeReady"]) delete e[key];
+  for (const key of ["driven", "drive", "trigger", "vel", "dash", "dodgeUntil", "dodgeReady", "dodgeHelp"]) delete e[key];
 }
 
 export const heroMode = {
@@ -62,7 +70,7 @@ export const heroMode = {
   order: 46, // after Skywing (45): a dive has moved the hero before its projectiles are checked
   mixin: {
     // Enters (on) or leaves Hero mode for `team` with hero `id`. False when it cannot.
-    setHeroMode(team, on, id, scale) {
+    setHeroMode(team, on, id, scale, help = false) {
       const h = this.heroMode, now = h?.teams[team];
       if (!on) {
         if (!now) return true;
@@ -77,8 +85,11 @@ export const heroMode = {
       if (!e || e.team !== team || e.hp <= 0 || e.kind !== "unit" || !heroic(e)) return false;
       if (now && now.id !== id) { const old = this.get(now.id); if (old) release(old); }
       const k = scaleOf(this, scale);
-      (this.heroMode ||= { teams: {}, shots: [], n: 0 }).teams[team] = { id, scale: k };
+      (this.heroMode ||= { teams: {}, shots: [], n: 0 }).teams[team] = { id, scale: k, ...(help ? { help: true } : null) };
       e.driven = k;
+      if (help) e.dodgeHelp = true; else delete e.dodgeHelp;
+      // H6: the match's cover pieces, placed the first time a hero is driven.
+      this.enableCover?.();
       e.orders = [];
       e.path = [];
       return true;
@@ -138,19 +149,23 @@ export const heroMode = {
       if (e.team === target.team || (e.range || 0) <= SHOTS.melee) return false;
       const h = this.heroMode;
       if (!h) return false;
-      const speed = shotSpeed(e), d = distance(e, target), travel = Math.max(0.12, d / speed);
+      const speed = shotSpeed(e, !!target.dodgeHelp), d = distance(e, target);
+      let travel = Math.max(0.12, d / speed);
       const v = target.vel || { x: 0, z: 0 };
-      const x = target.x + v.x * travel * SHOTS.lead, z = target.z + v.z * travel * SHOTS.lead;
+      let x = target.x + v.x * travel * SHOTS.lead, z = target.z + v.z * travel * SHOTS.lead;
+      // H6: a ground shot whose line meets a cover piece stops at it (sooner, with no hit and no splash).
+      const block = !e.flying && !target.flying && !LOBBED.has(e.shot || e.type) ? this.coverShot?.(e, { x, z }) : null;
+      if (block) { x = block.x; z = block.z; travel = Math.max(0.05, travel * block.t); }
       const dmg = this.shotValue(e, target, true);
       const splash = !target.flying && e.splash_radius ? { r: e.splash_radius, k: e.splash_damage } : null;
       const heavy = !!splash || HEAVY.has(e.shot || e.type);
       const n = ++h.n;
-      h.shots.push({ n, by: e.id, team: e.team, target: target.id, sx: e.x, sz: e.z, x, z, t0: this.time, at: this.time + travel, dmg, ...(splash ? { splash } : null), ...(heavy ? { heavy: true } : null), weapon: e.shot || e.type, ...(target.flying ? { air: true } : null) });
+      h.shots.push({ n, by: e.id, team: e.team, target: target.id, sx: e.x, sz: e.z, x, z, t0: this.time, at: this.time + travel, dmg, ...(splash ? { splash } : null), ...(heavy ? { heavy: true } : null), weapon: e.shot || e.type, ...(target.flying ? { air: true } : null), ...(block ? { blocked: true } : null) });
       this.events.push({
         ...(e.flying ? { sAir: e.fly } : e.gun_height ? { sAir: e.gun_height - 0.4 } : null),
         ...(target.flying ? { tAir: target.fly } : null),
         type: "shot", weapon: e.shot || e.type, unit: e.type, source: e.id, target: target.id,
-        x: e.x, z: e.z, tx: x, tz: z, team: e.team, heavy: ["breaker", "tank", "antitank"].includes(e.shot || e.type), slow: travel, heroShot: n,
+        x: e.x, z: e.z, tx: x, tz: z, team: e.team, heavy: ["breaker", "tank", "antitank"].includes(e.shot || e.type), slow: travel, heroShot: n, ...(block ? { blocked: true } : null),
       });
       if (this.factionFor(e.team).trait) e.shotAt = this.time;
       e.cooldown = e.interval * (e.fx ? this.statusFactor(e, "reload") : 1);
@@ -170,15 +185,15 @@ export const heroMode = {
       }
       e.dash = { x: x / n, z: z / n, until: this.time + DODGE.seconds * k };
       e.dodgeUntil = this.time + DODGE.seconds * k;
-      e.dodgeReady = this.time + DODGE.cooldown * k;
+      e.dodgeReady = this.time + (e.dodgeHelp ? DODGE.helped : DODGE.cooldown) * k;
       this.events.push({ type: "heroDodge", id: e.id, team, x: e.x, z: e.z, roll: !!e.flying, seconds: DODGE.seconds * k });
       return true;
     },
   },
   commands: {
     heroMode: {
-      allowed: (sim, c) => (c.on ? Number.isInteger(c.id) && (c.scale === undefined || HERO_TIME.scales.includes(c.scale)) : true),
-      run: (sim, c) => sim.setHeroMode(c.team, !!c.on, c.id, c.scale),
+      allowed: (sim, c) => (c.on ? Number.isInteger(c.id) && (c.scale === undefined || HERO_TIME.scales.includes(c.scale)) && (c.help === undefined || typeof c.help === "boolean") : true),
+      run: (sim, c) => sim.setHeroMode(c.team, !!c.on, c.id, c.scale, c.help === true),
     },
     heroDrive: {
       allowed: (sim, c) => !!sim.heroMode?.teams[c.team] && Number.isFinite(c.dx) && Number.isFinite(c.dz),
@@ -217,18 +232,18 @@ export const heroMode = {
     h.shots = h.shots.filter((s) => sim.time < s.at - 1e-9);
     for (const s of due) {
       const hero = sim.get(s.target), shooter = sim.get(s.by);
-      const hit = !!hero && hero.hp > 0 && hyp(hero.x - s.x, hero.z - s.z) <= (hero.radius || 0.6) + SHOTS.hit;
+      const hit = !s.blocked && !!hero && hero.hp > 0 && hyp(hero.x - s.x, hero.z - s.z) <= (hero.radius || 0.6) + SHOTS.hit;
       const dodged = hit && hero.dodgeUntil > sim.time;
       if (hit) sim.applyDamage(hero, s.dmg, s.team, s.by);
       // Splash near the impact: the shooter's own figures when it still stands, else the shot's damage.
-      if (s.splash) {
+      if (s.splash && !s.blocked) {
         for (const t of [...sim.entities]) {
           if (t.hp <= 0 || t.flying || (hit && t === hero) || !sim.hostile(s.team, t.team)) continue;
           if (hyp(t.x - s.x, t.z - s.z) - (t.kind === "unit" ? 0 : t.radius || 0) >= s.splash.r) continue;
           sim.applyDamage(t, (shooter ? sim.shotValue(shooter, t, false) : s.dmg) * s.splash.k, s.team, s.by);
         }
       }
-      sim.events.push({ type: "heroShotLand", n: s.n, x: s.x, z: s.z, hit: hit && !dodged, dodged, heavy: !!s.heavy, team: s.team, target: s.target, ...(s.air ? { air: true } : null) });
+      sim.events.push({ type: "heroShotLand", n: s.n, x: s.x, z: s.z, hit: hit && !dodged, dodged, heavy: !!s.heavy, team: s.team, target: s.target, ...(s.air ? { air: true } : null), ...(s.blocked ? { blocked: true } : null) });
     }
     clean(sim);
   },

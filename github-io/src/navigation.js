@@ -70,6 +70,8 @@ export class Navigation {
     this.obstacles.push(
       ...entities.filter((e) => e.hp > 0 && (e.kind === "building" || e.kind === "wall")),
     );
+    // H6 cover pieces (sim/content/cover.js): static circles, only in a match that placed them.
+    if (this.cover) this.obstacles.push(...this.cover);
     this.bucketObstacles();
     this.blocked.fill(0);
     this.looseBlocked.fill(0);
@@ -321,6 +323,8 @@ export class Navigation {
       const o = list[i];
       if (
         (ignored !== undefined && o.id === ignored) ||
+        // Cover (H6) never blocks a line of fire: only the hero's dodgeable shots meet it (sim/content/hero-mode.js).
+        o.cover ||
         distance(a, o) < o.radius + 0.2
       )
         continue;
