@@ -155,9 +155,9 @@
       "checks": ["test"]
     },
     {
-      "name": "Hero-view horizon: sky dome, far mountains or sea, the key art's planets (horizon-view.js, horizon-sky.js, art/sky atlas)",
-      "files": ["src/horizon-view.js", "src/horizon-sky.js", "src/art/sky/**", "tests/horizon.test.js"],
-      "suites": ["skywing-land", "hero-mode", "hero-challenges", "h9-board", "night-storm", "visual-combat", "death-cue", "factions", "terrain", "feel", "model-loading", "portraits", "render-budget", "phones", "mobile", "offline"],
+      "name": "Hero-view horizon: the Calm sky (dome, far mountains or sea, the key art's planets) and the Vivid space sky (nebula, glowing bodies, orbital ring and far war, meteors, sky events, the armada), the sky flash and the victory fireworks",
+      "files": ["src/horizon-view.js", "src/horizon-sky.js", "src/horizon-vivid.js", "src/sky-basis.js", "src/sky-events.js", "src/sky-war.js", "src/victory-fireworks.js", "src/art/sky/**", "tests/horizon.test.js"],
+      "suites": ["skywing-land", "hero-mode", "hero-challenges", "h9-board", "night-storm", "visual-combat", "death-cue", "factions", "terrain", "feel", "model-loading", "portraits", "render-budget", "phones", "mobile", "offline", "ceremony", "water", "settings-sheet", "pwa"],
       "checks": ["test"]
     },
     {

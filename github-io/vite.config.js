@@ -26,7 +26,10 @@ function serviceWorker() {
       const files = Object.keys(bundle).filter((name) => !name.endsWith(".md") && !name.endsWith(".map") && !/\.(m4a|mp3|ogg|opus|wav|aac|flac|webm)$/i.test(name));
       // Korean files (the UI and story catalogs and the Hangul font) are fetched only by players who pick
       // Korean, so they are not precached either: the worker keeps each one on its first fetch (LAZY).
-      const lazy = files.filter((name) => /(^|\/)(ko|story-ko)-[\w-]+\.js$|noto-sans-kr-subset[\w-]*\.woff2$/.test(name));
+      // The Vivid Hero sky's art (src/art/sky/, horizon-vivid.js) is fetched on the first Hero mode entry (the armada's
+      // only when that sky event runs), so it is lazy too (2026-11-28); the Calm sky's atlas stays precached.
+      const sky = /(^|\/)(nebula-(band|hero)|planet-(violet-giant|ice-moon|twin-moons)|shattered-|flame-strip|shockwave-ring|debris-sheet|meteor-streaks|horizon-glow|aurora-band|ring-(band|lights|glow)|war-|(cruiser|hauler|ark)-(side|descend)|engine-glow|lights-mask|landing-flare|escort-sheet|escape-craft)[\w-]*\.webp$/;
+      const lazy = files.filter((name) => /(^|\/)(ko|story-ko)-[\w-]+\.js$|noto-sans-kr-subset[\w-]*\.woff2$/.test(name) || sky.test(name));
       const precache = ["./", "manifest.webmanifest", "favicon.svg", "icons/icon-192.png", "icons/apple-touch-icon.png", ...files.filter((name) => !lazy.includes(name))];
       const models = readdirSync(new URL("./public/models/", import.meta.url)).filter((name) => name.endsWith(".glb")).sort();
       const modelHash = hash(models.map((name) => name + readFileSync(new URL("./public/models/" + name, import.meta.url)).length + hash(readFileSync(new URL("./public/models/" + name, import.meta.url)))).join());

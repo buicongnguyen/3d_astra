@@ -113,6 +113,10 @@ export function defaults(coarse = false) {
     birdHint: true,
     // How many birds: "off", "few" (a couple of small flocks and one geese V) or "many" (owner 2026-11-28: few by default).
     birds: "few",
+    // The Hero sky (owner 2026-11-28, sky-events.js): "vivid" (a dark space sky with nebula, glowing planets, an orbital
+    // ring, a far space war, meteors and one sky event a match), "burning" (vivid with the shattered planet in every
+    // sky) or "calm" (the blue day sky). Looks only.
+    heroSky: "vivid",
   };
 }
 export function normalize(value, coarse = false) {
@@ -160,6 +164,7 @@ export function normalize(value, coarse = false) {
   pick("aimAssist", ["off", "low", "high"]);
   pick("closeDetail", ["auto", "on", "off"]);
   pick("birds", ["off", "few", "many"]);
+  pick("heroSky", ["calm", "vivid", "burning"]);
   return d;
 }
 export function loadSettings(coarse = false, storage) {

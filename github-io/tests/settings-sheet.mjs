@@ -46,7 +46,8 @@ await suite("settings-sheet", async () => {
 
     // H7 Settings > Hero: nine flat segmented rows (Birds Off / Few / Many added 2026-11-28), every choice visible, one tap each, saved at once; 11 px text,
     // 44 px taps and nothing wider than the sheet, in English, Vietnamese and Korean.
-    const HERO_ROWS = { battleTime: 4, dodgeHelp: 2, shotWarnings: 2, aimAssist: 3, autoFire: 2, heroView: 2, closeDetail: 3, skywingOffer: 2, birds: 3, birdHint: 2 };
+    // (Sky: Calm / Vivid / Burning world since 2026-11-28, three short labels in one flat row)
+    const HERO_ROWS = { battleTime: 4, dodgeHelp: 2, shotWarnings: 2, aimAssist: 3, autoFire: 2, heroView: 2, closeDetail: 3, skywingOffer: 2, birds: 3, birdHint: 2, heroSky: 3 };
     for (const language of ["en", "vi", "ko"]) {
       await openSettings(page, "language", { touch });
       await choose(page, "language", language, { touch });
@@ -78,11 +79,11 @@ await suite("settings-sheet", async () => {
     await choose(page, "language", "en", { touch }).catch(async () => { await openSettings(page, "language", { touch }); await choose(page, "language", "en", { touch }); });
     await openSettings(page, "hero", { touch });
     assert.deepEqual(await page.evaluate(() => [...document.querySelectorAll("#settings-body [data-setting-group]")].map((g) => [g.dataset.settingGroup, g.querySelector("[aria-pressed=true]")?.dataset.value])),
-      [["battleTime", "0.5"], ["dodgeHelp", "false"], ["shotWarnings", "true"], ["aimAssist", touch ? "high" : "low"], ["autoFire", "true"], ["heroView", "shoulder"], ["closeDetail", "auto"], ["skywingOffer", "true"], ["birds", "few"], ["birdHint", "true"]], `${viewport}: the Hero defaults`);
-    for (const [key, value] of [["battleTime", "0.75"], ["dodgeHelp", "true"], ["shotWarnings", "false"], ["aimAssist", "off"], ["autoFire", "false"], ["heroView", "first"], ["closeDetail", "on"], ["skywingOffer", "false"], ["birds", "many"], ["birdHint", "false"]])
+      [["battleTime", "0.5"], ["dodgeHelp", "false"], ["shotWarnings", "true"], ["aimAssist", touch ? "high" : "low"], ["autoFire", "true"], ["heroView", "shoulder"], ["closeDetail", "auto"], ["skywingOffer", "true"], ["birds", "few"], ["birdHint", "true"], ["heroSky", "vivid"]], `${viewport}: the Hero defaults`);
+    for (const [key, value] of [["battleTime", "0.75"], ["dodgeHelp", "true"], ["shotWarnings", "false"], ["aimAssist", "off"], ["autoFire", "false"], ["heroView", "first"], ["closeDetail", "on"], ["skywingOffer", "false"], ["birds", "many"], ["birdHint", "false"], ["heroSky", "burning"]])
       await choose(page, key, value, { touch });
     const hero = await stored(page);
-    assert.deepEqual([hero.battleTime, hero.dodgeHelp, hero.shotWarnings, hero.aimAssist, hero.autoFire, hero.heroView, hero.closeDetail, hero.skywingOffer, hero.birds, hero.birdHint], [0.75, true, false, "off", false, "first", "on", false, "many", false], `${viewport}: one tap each, saved at once`);
+    assert.deepEqual([hero.battleTime, hero.dodgeHelp, hero.shotWarnings, hero.aimAssist, hero.autoFire, hero.heroView, hero.closeDetail, hero.skywingOffer, hero.birds, hero.birdHint, hero.heroSky], [0.75, true, false, "off", false, "first", "on", false, "many", false, "burning"], `${viewport}: one tap each, saved at once`);
     await closeSettings(page, { touch });
     // Skywing before matches Off: no offer on the skirmish setup; the Hero battle tile stays on the title screen.
     await tap('[data-mode="skirmish"]');
@@ -90,7 +91,7 @@ await suite("settings-sheet", async () => {
     assert.equal(await page.locator("#hero-battle").count(), 1, `${viewport}: the Hero battle tile stays`);
     await page.reload(); await ready();
     const kept = await stored(page);
-    assert.deepEqual([kept.dodgeHelp, kept.closeDetail, kept.birds, kept.birdHint, kept.autoFire], [true, "on", "many", false, false], `${viewport}: kept after a reload`);
+    assert.deepEqual([kept.dodgeHelp, kept.closeDetail, kept.birds, kept.birdHint, kept.autoFire, kept.heroSky], [true, "on", "many", false, false, "burning"], `${viewport}: kept after a reload`);
     await openSettings(page, "hero", { touch });
     await choose(page, "skywingOffer", "true", { touch });
     await tap('.settings-panel [data-do="reset"]');

@@ -43,6 +43,7 @@ import { HazardView } from "./hazard-view.js";
 import { ChallengeView } from "./challenge-view.js";
 import { WaterCloseView } from "./water-close-view.js";
 import { HorizonView } from "./horizon-view.js";
+import { VictoryFireworks } from "./victory-fireworks.js";
 
 export const HOOKS = ["dress", "scaleFor", "frameScaleFor", "event", "update", "reset"];
 
@@ -97,5 +98,6 @@ export const VIEW_PLUGINS = [
   HazardView, // H8: explosive crates and barrels beside the cover, one instanced batch (1 draw, only in a match with cover)
   ChallengeView, // H8: Hero challenges' view cones and markers (2 draws, only in a challenge)
   WaterCloseView, // 2026-11-28: Hero-view water (sky, ripples, glints, wading rings, downwash: shared uniforms, no draw)
-  HorizonView, // Hero-view horizon: sky dome, far mountains or sea, the key art's planets (3 draws, only in Hero mode; lazy)
+  HorizonView, // Hero-view horizon: Calm sky (3 draws) or the Vivid space sky (6 at most), only in Hero mode; lazy
+  VictoryFireworks, // a win with Hero mode used: fireworks from the pooled glow particles (+0 draws; after HorizonView)
 ];

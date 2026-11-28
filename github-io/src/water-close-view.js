@@ -30,11 +30,14 @@ export class WaterCloseView {
       this.state.rings = 0; this.state.wash = 0;
       return;
     }
-    // The sky in the water is the sky behind it: the backdrop's horizon and zenith (night and storm tint them).
+    // The sky in the water is the sky behind it: the backdrop's horizon and zenith (night and storm tint them); with the
+    // Hero sky up (horizon-sky.js), that dome's own zenith and horizon (the Vivid sky's violet and its glow band), as
+    // bright as the backdrop's, so the water keeps its light and takes the sky's colour (2026-11-28).
     const sky = (v.backdrop || v.terrainRoot?.getObjectByName("backdrop"))?.material?.userData?.sky;
+    const dome = v.horizon?.state?.on ? v.horizon.sky?.water : null;
     if (sky) {
-      U.horizon.value.copy(sky.horizon);
-      U.zenith.value.copy(sky.zenith);
+      U.horizon.value.copy(dome?.ready ? dome.horizon : sky.horizon);
+      U.zenith.value.copy(dome?.ready ? dome.zenith : sky.zenith);
       U.light.value = Math.min(1.3, Math.max(0.04, lum(sky.horizon) / Math.max(1e-4, lum(sky.dayHorizon || sky.horizon))));
     } else if (v.scene?.fog) {
       U.horizon.value.copy(v.scene.fog.color);

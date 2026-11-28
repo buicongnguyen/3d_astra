@@ -1431,6 +1431,29 @@ export class Effects {
       pool.items.length = keep;
     }
   }
+  // The pooled particle layers (decals, smoke, glow; one batch on phones): moved, faded and uploaded.
+  updatePools(dt, visible = this.visible) {
+    if (this.phoneBatch) {
+      const batch = this.phoneBatch;
+      let count = this.decals.update(dt, visible, batch);
+      count = this.smoke.update(dt, visible, batch, count);
+      count = this.glow.update(dt, visible, batch, count, true);
+      batch.mesh.visible = count > 0;
+      batch.mesh.geometry.instanceCount = count;
+      if (dt > 0 || count !== batch.drawn)
+        for (const a of batch.attrs) uploadPrefix(a, count);
+      batch.drawn = count;
+    } else {
+      this.decals.update(dt, visible);
+      this.smoke.update(dt, visible);
+      this.glow.update(dt, visible);
+    }
+  }
+  // Victory fireworks (victory-fireworks.js) go on behind the paused results card: the pooled particles move on real
+  // time there while everything else on the battlefield holds still (the view's own time is 0 while paused).
+  advancePools(dt) {
+    if (dt > 0 && this.frameSim) this.updatePools(dt);
+  }
   update(sim, dt, selected) {
     this.time += dt;
     this.frameSim = sim;
@@ -1531,21 +1554,7 @@ export class Effects {
     }
     for (const [id, em] of this.emitters) if (this.time - em.seen > 1) this.emitters.delete(id);
     if (dt > 0) this.trimParticles(sim, selected); // a paused frame trims nothing: its effects stay as drawn
-    if (this.phoneBatch) {
-      const batch = this.phoneBatch;
-      let count = this.decals.update(dt, visible, batch);
-      count = this.smoke.update(dt, visible, batch, count);
-      count = this.glow.update(dt, visible, batch, count, true);
-      batch.mesh.visible = count > 0;
-      batch.mesh.geometry.instanceCount = count;
-      if (dt > 0 || count !== batch.drawn)
-        for (const a of batch.attrs) uploadPrefix(a, count);
-      batch.drawn = count;
-    } else {
-      this.decals.update(dt, visible);
-      this.smoke.update(dt, visible);
-      this.glow.update(dt, visible);
-    }
+    this.updatePools(dt, visible);
     this.sprites.update(dt, visible);
     let n = 0;
     const t = this.view.terrain, plateaus = t?.plateaus?.length;

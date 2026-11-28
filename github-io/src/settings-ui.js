@@ -179,7 +179,9 @@ export class SettingsUI {
       + seg("closeDetail", "Close-up detail", [["auto", "Auto"], ["on", "On"], ["off", "Off"]], "Sharper models near your hero. Auto lets a phone turn it down when the battle gets busy.")
       + seg("skywingOffer", "Skywing before matches", offOn, "Off hides the Skywing assist offer on the setup screens. The Hero battle tile stays on the title screen.")
       + seg("birds", "Birds", [["off", "Off"], ["few", "Few"], ["many", "Many"]], "Few: a couple of small flocks on each battlefield. Many: flocks on every bank and roof. Looks only.")
-      + seg("birdHint", "Bird hint from fog", offOn, s.birds === "off" ? "Birds are Off, so there are no birds to give hidden enemies away." : "Birds take off from the fog where hidden enemies move.");
+      + seg("birdHint", "Bird hint from fog", offOn, s.birds === "off" ? "Birds are Off, so there are no birds to give hidden enemies away." : "Birds take off from the fog where hidden enemies move.")
+      // The Hero sky (2026-11-28): one flat row of three, short labels so they fit a phone's segment in every language.
+      + seg("heroSky", "Sky", [["calm", "Calm"], ["vivid", "Vivid"], ["burning", "Burning world"]], "Vivid: a dark space sky with a nebula, glowing planets, an orbital ring, a far space war, meteors and one sky event each match. Burning world: the shattered planet in every sky. Calm: the blue day sky. Looks only.");
 
     const fs = extras.fullscreen;
     const fullscreenRow = fs?.supported?.()

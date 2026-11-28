@@ -122,3 +122,16 @@ test("the Korean catalogs and font are not precached; the worker keeps each one 
   await w.fire("fetch", { request: new Request(url) });
   assert.equal(w.calls.filter((c) => c === url).length, 1, "the second fetch is served from the cache");
 });
+
+test("the Vivid Hero sky's art is not precached (it loads on the first Hero mode entry); the Calm sky's atlas is", async () => {
+  const names = ["index.html", "assets/app.js", "assets/sky-atlas-Aa11.webp", "assets/nebula-band-Bb22.webp", "assets/shattered-base-Cc33.webp", "assets/ring-band-Dd44.webp", "assets/war-explosions-Ee55.webp", "assets/cruiser-side-Ff66.webp", "assets/landing-flare-Gg77.webp", "assets/meteor-streaks-Hh88.webp"];
+  const w = boot(builtWorker(names));
+  await w.fire("install", {});
+  const paths = w.added.map((u) => u.slice(SCOPE.length));
+  assert.ok(paths.includes("assets/sky-atlas-Aa11.webp"), "the Calm sky's atlas stays precached");
+  for (const lazy of names.slice(3)) assert.ok(!paths.includes(lazy), lazy + " not precached");
+  const url = SCOPE + "assets/nebula-band-Bb22.webp";
+  await w.fire("fetch", { request: new Request(url) });
+  await w.fire("fetch", { request: new Request(url) });
+  assert.equal(w.calls.filter((c) => c === url).length, 1, "kept on its first fetch (offline after the first Hero sky)");
+});

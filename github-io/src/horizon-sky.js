@@ -23,22 +23,18 @@
 import * as THREE from "three";
 import { lookOf, themeFor } from "./visual-style.js";
 import { LOOKS } from "./mission-looks.js";
+import { DEG, FRONT, SUN_DIR, RADIUS, ATLAS, skyDir } from "./sky-basis.js";
+import { VividSky, VIVID_LOOK, WARM_LANDS, BAND_COLOR, HERO_CLOUDS, NEBULA_TOP, GLOW_TOP } from "./horizon-vivid.js";
 
-const DEG = Math.PI / 180;
+export { FRONT, SUN_DIR, RADIUS, ATLAS, skyDir };
 // The atlas (tools/bake-sky-atlas.py): Vite emits it with the bundle (precached like the cover art in src/art).
 export const ATLAS_URL = new URL("./art/sky/sky-atlas.webp", import.meta.url).href;
-// The bearing (yaw: direction (sin, cos) in x, z) from the player's start toward the rival's (sim HQs at (-25, 24) and
-// (25, -24)): the key art's view. Sky objects sit at fixed offsets from it, `u` degrees to the right.
-export const FRONT = (3 * Math.PI) / 4;
-// The scene's sun (view.js SUN_OFFSET): the warm glow sits on its bearing.
-export const SUN_DIR = Object.freeze(new THREE.Vector3(-25, 55, 20).normalize());
 // Clip-space depth (z / w) of the ring's layers [far, middle, near, sea]: behind every real surface (only the last 2 m
 // before a 140 m far plane are deeper), each layer 84 depth steps (24-bit) in front of the one behind it, and all of
 // them in front of the planets and the dome (z = w).
 export const DEPTHS = Object.freeze([0.99997, 0.99995, 0.99994, 0.99996]);
 export const RING_BASE = -9; // degrees: the silhouettes' feet, deep in the haze
 export const RING_HIDDEN = -6; // degrees: a view whose top edge is lower sees only haze there (no draw)
-export const RADIUS = 50; // metres: any value works (the depth is set in clip space); inside every hero far plane
 export const TRIANGLES = Object.freeze({ min: 1500, max: 4000 });
 
 // Per land (lookOf): the silhouette style, the day sky's colour overhead, the sun glow and the cloud cover (0-1).
@@ -66,12 +62,6 @@ export const LOOK_SKY = {
   dusk: { zenith: "#2a2864", glow: 0.95, glowColor: "#ff7845", cloud: 0.16, cloudLit: "#ffb08a", cloudShade: "#5a3a64", stars: 0.3, comet: 0.7, planets: 0.95, nebula: 0, day: 0.4 },
 };
 
-// The atlas (tools/bake-sky-atlas.py CELLS, 1024x512): x, y, w, h in pixels.
-export const ATLAS = Object.freeze({
-  size: [1024, 512], pad: 4,
-  ringed: [0, 0, 576, 384], storm: [576, 0, 384, 384], silver: [960, 0, 64, 64], ember: [960, 64, 64, 64],
-  dunes: [640, 384, 128, 128], amber: [768, 384, 128, 128], nebula: [0, 384, 640, 128],
-});
 // The sky's bodies, placed like the key art seen from the start toward the rival: u degrees right of FRONT, el degrees
 // above the horizon (the middle), w degrees wide (the height follows the cell). Everything stays under 11.6 degrees,
 // inside the sky a portrait phone's shoulder view shows (its top edge is about 11.8 degrees up).
@@ -87,12 +77,6 @@ export const BODIES = [
 export const NEBULA = Object.freeze({ u0: -68, u1: 72, el0: 2.2, el1: 11.2, rise: 1.6, segments: 16 });
 // The comet: its head (u, el) and the tail's direction on the sky (degrees: 0 = right, 90 = up), length in degrees.
 export const COMET = Object.freeze({ u: -2.5, el: 4.2, angle: 58, length: 11 });
-
-// A sky direction (unit vector) at `u` degrees right of FRONT and `el` degrees up.
-export function skyDir(u, el, out = new THREE.Vector3()) {
-  const yaw = FRONT - u * DEG, c = Math.cos(el * DEG);
-  return out.set(Math.sin(yaw) * c, Math.sin(el * DEG), Math.cos(yaw) * c);
-}
 
 // ------------------------------------------------------------------------------------------------ noise (seedless)
 const lattice = (x, z) => {
@@ -368,36 +352,89 @@ const DOME_FS = /* glsl */ `
 ${SKY_COMMON}
 uniform float uTime, uCloud, uStars, uComet, uFlash;
 uniform vec3 uCloudLit, uCloudShade, uCometHead, uCometTail, uCometSide;
+// The Vivid sky (horizon-vivid.js; uVivid 0 = the Calm sky, exactly as before): a dark indigo-violet gradient, the
+// nebula band twice round the sky, two hero clouds, the land's horizon glow band, and the warm flash of a big blast.
+uniform float uVivid, uFront, uNebK, uNebReady, uHeroReady, uGlowK, uGlowReady, uGlowRow;
+uniform vec3 uVLow, uVZenith, uBlast;
+uniform vec4 uHeroA, uHeroB;
+uniform sampler2D uNebulaMap, uHeroes, uGlowBand;
 varying vec3 vDir;
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float vnoise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
   return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y); }
+float tri(float t) { t = fract(t); return 1.0 - abs(1.0 - 2.0 * t); }
+vec3 srgbLin(vec3 c) { return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c)); }
+vec4 unpm(vec4 t) { return t.a > 0.002 ? vec4(srgbLin(clamp(t.rgb / t.a, 0.0, 1.0)) * t.a, t.a) : vec4(0.0); }
+// Stars (fixed on the sky, a slow twinkle).
+vec3 stars(vec3 d, float up) {
+  vec2 sc = vec2(atan(d.z, d.x), asin(d.y)) * 70.0;
+  vec2 cell = floor(sc), f = fract(sc) - 0.5;
+  float h = hash(cell);
+  if (h <= 0.88) return vec3(0.0);
+  vec2 o = vec2(hash(cell + 11.7), hash(cell + 3.1)) - 0.5;
+  float px = max(fwidth(sc.y), 1e-3), r = max(0.1, 1.1 * px);
+  float b = (1.0 - smoothstep(r * 0.4, r, length(f - o * 0.6))) * (0.35 + 0.65 * fract(h * 13.7));
+  b *= 0.75 + 0.25 * sin(uTime * (1.1 + 2.0 * fract(h * 7.3)) + h * 40.0);
+  return vec3(0.8, 0.87, 1.0) * b * uStars * up;
+}
+vec3 vividBase(vec3 d) {
+  float el = max(d.y, 0.0);
+  vec3 c = mix(uHorizon, uVLow, smoothstep(0.0, 0.075, el));
+  c = mix(c, uVZenith, smoothstep(0.05, 0.42, el));
+  vec2 h = d.xz / max(length(d.xz), 1e-4), s = normalize(uSun.xz);
+  float face = max(dot(h, s), 0.0);
+  return c + uGlow * (pow(face, 7.0) * exp(-max(d.y, -0.02) * 7.0) + 0.22 * face * face * exp(-el * 14.0));
+}
+// A placed hero cloud: H = (bearing, width (rad), its share of the sheet's width, its row's v).
+vec4 heroCloud(vec4 H, float yaw, float ev) {
+  float da = atan(sin(yaw - H.x), cos(yaw - H.x)), u = 0.5 - da / H.y;
+  vec4 t = unpm(texture2D(uHeroes, vec2(clamp(u, 0.0, 1.0) * H.z, H.w + 0.004 + 0.492 * clamp(ev, 0.0, 1.0))));
+  return t * step(0.0, u) * step(u, 1.0) * step(0.0, ev) * step(ev, 1.0);
+}
 void main() {
   vec3 d = normalize(vDir);
-  vec3 c = skyBase(d);
-  float up = smoothstep(0.004, 0.05, d.y);
+  bool vivid = uVivid > 0.5;
+  vec3 c = vivid ? vividBase(d) : skyBase(d);
+  float up = smoothstep(0.004, 0.05, d.y), neb = 0.0, band = 0.0, cover = 0.0;
+  float el = asin(clamp(d.y, -1.0, 1.0)), yaw = atan(d.x, d.z), t = (yaw - uFront) / 6.2831853;
+  if (vivid) {
+    if (uStars > 0.001 && d.y > 0.0) c += stars(d, up);
+    // The nebula band, twice round (tri: the second copy mirrored, so both joins are seamless), the second lifted a
+    // little; slow noise on the circle thins and thickens it so the repeat is not seen.
+    float ev = el / ${(NEBULA_TOP * DEG).toFixed(5)};
+    float v = ev - 0.1 * (0.5 - 0.5 * cos(yaw - uFront));
+    // (the mirror joins sit 90 degrees either side of the key art's bearing, never in its middle)
+    vec4 n = unpm(texture2D(uNebulaMap, vec2(tri(t + 0.25), clamp(v, 0.002, 0.998)))) * step(0.0, v) * step(v, 1.0);
+    vec2 ring = vec2(cos(yaw), sin(yaw)) * 2.9;
+    float dens = vnoise(ring + vec2(uTime * 0.006, el * 9.0)) * 0.7 + vnoise(ring * 2.3 + vec2(el * 21.0, -uTime * 0.01)) * 0.3;
+    float k = uNebK * uNebReady * mix(0.3, 1.35, dens);
+    c = c * (1.0 - 0.5 * n.a * k) + n.rgb * k;
+    neb = n.a * k;
+    float kh = uNebK * uHeroReady * 1.1;
+    vec4 ha = heroCloud(uHeroA, yaw, ev), hb = heroCloud(uHeroB, yaw, ev);
+    c = c * (1.0 - 0.5 * ha.a * kh) + ha.rgb * kh;
+    c = c * (1.0 - 0.5 * hb.a * kh) + hb.rgb * kh;
+    neb = max(neb, max(ha.a, hb.a) * kh);
+  }
   // A few soft clouds on a high flat layer (very little cover by day), drifting slowly.
   if (uCloud > 0.001 && d.y > 0.004) {
     vec2 p = d.xz / (d.y + 0.07) * 0.55 + vec2(uTime * 0.0045, uTime * 0.0018);
     float n = vnoise(p) * 0.62 + vnoise(p * 2.4 + 7.3) * 0.26 + vnoise(p * 5.3 - 3.1) * 0.12;
-    float cover = smoothstep(1.0 - uCloud, 1.0 - uCloud + 0.2, n) * up;
+    cover = smoothstep(1.0 - uCloud, 1.0 - uCloud + 0.2, n) * up;
     vec2 h = d.xz / max(length(d.xz), 1e-4);
     float lit = 0.5 + 0.5 * dot(h, normalize(uSun.xz));
     vec3 cc = mix(uCloudShade, uCloudLit, clamp(0.35 + 0.65 * smoothstep(0.5, 0.95, n) * (0.6 + 0.4 * lit), 0.0, 1.0));
     c = mix(c, cc + uGlow * 0.25 * lit, cover * 0.88);
   }
-  // Stars at night (fixed on the sky, a slow twinkle).
-  if (uStars > 0.001 && d.y > 0.0) {
-    vec2 sc = vec2(atan(d.z, d.x), asin(d.y)) * 70.0;
-    vec2 cell = floor(sc), f = fract(sc) - 0.5;
-    float h = hash(cell);
-    if (h > 0.88) {
-      vec2 o = vec2(hash(cell + 11.7), hash(cell + 3.1)) - 0.5;
-      float px = max(fwidth(sc.y), 1e-3), r = max(0.1, 1.1 * px);
-      float b = (1.0 - smoothstep(r * 0.4, r, length(f - o * 0.6))) * (0.35 + 0.65 * fract(h * 13.7));
-      b *= 0.75 + 0.25 * sin(uTime * (1.1 + 2.0 * fract(h * 7.3)) + h * 40.0);
-      c += vec3(0.8, 0.87, 1.0) * b * uStars * up;
-    }
+  // Stars at night (the Calm sky draws them over its clouds, as before).
+  if (!vivid && uStars > 0.001 && d.y > 0.0) c += stars(d, up);
+  if (vivid) {
+    // The land's horizon glow band (warm dusk or teal haze row), rising out of the haze.
+    float gv = clamp(el / ${(GLOW_TOP * DEG).toFixed(5)}, 0.0, 1.0);
+    vec4 g = unpm(texture2D(uGlowBand, vec2(tri(t + 0.25), uGlowRow + 0.006 + 0.488 * gv)));
+    float gk = uGlowK * uGlowReady * smoothstep(-0.003, 0.025, d.y) * step(el, ${(GLOW_TOP * DEG).toFixed(5)});
+    c = c * (1.0 - 0.6 * g.a * gk) + g.rgb * gk;
+    band = g.a * gk;
   }
   // The comet: a bright head in a soft coma, a curved white-blue dust tail and a straight faint teal ion tail.
   if (uComet > 0.001) {
@@ -419,6 +456,8 @@ void main() {
       c += add * uComet * smoothstep(0.0, 0.01, d.y);
     }
   }
+  // The sky answers the battle (sky-events.js SkyFlash): a big blast warms the glow band, the low nebula and clouds.
+  if (vivid) c += uBlast * (1.0 - smoothstep(0.0, 0.26, el)) * (0.3 + 1.2 * band + neb + 0.8 * cover) * smoothstep(-0.01, 0.01, d.y);
   // Below the horizon the open sky is the haze itself (the fog colour), lightning lifts it all.
   c = mix(uHorizon, c, smoothstep(-0.03, 0.0, d.y));
   c += vec3(0.8, 0.86, 1.0) * uFlash * 0.35;
@@ -499,23 +538,38 @@ void main() {
 
 // ------------------------------------------------------------------------------------------------ the sky itself
 const TMP = new THREE.Color(), color = (hex) => TMP.set(hex); // one scratch colour: apply() runs every frame
+const TMP2 = new THREE.Color(), TMP3 = new THREE.Color();
 const lerpN = (a, b, k) => a + (b - a) * k;
+const lum = (c) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+// The warm orange a big blast throws on the low sky (sky-events.js SkyFlash), at full strength.
+export const BLAST_COLOR = Object.freeze(new THREE.Color("#ff7a2e"));
+export const BLAST_GAIN = 0.75;
 
 export class HorizonSky {
-  constructor(view, { atlasUrl = ATLAS_URL } = {}) {
+  // atlasUrl: the key-art atlas (null: none, as in node tests); art: load the Vivid sky's sheets (default: in a page).
+  constructor(view, { atlasUrl = ATLAS_URL, art = !!atlasUrl && typeof document !== "undefined" } = {}) {
     this.view = view;
     this.root = new THREE.Group();
     this.root.name = "horizon";
     this.time = 0;
     this.terrainKey = null;
     this.atlasReady = false;
+    this.mode = "vivid";
+    this.blast = 0;
     const common = { uHorizon: { value: new THREE.Color() }, uZenith: { value: new THREE.Color() }, uGlow: { value: new THREE.Color() }, uSun: { value: SUN_DIR.clone() } };
+    const yawOf = (u) => FRONT - u * DEG, [A, B] = HERO_CLOUDS;
     this.uniforms = {
       ...common, uTime: { value: 0 }, uCloud: { value: 0.2 }, uStars: { value: 0 }, uComet: { value: 0.3 }, uFlash: { value: 0 },
       uCloudLit: { value: new THREE.Color() }, uCloudShade: { value: new THREE.Color() },
       uCometHead: { value: skyDir(COMET.u, COMET.el) }, uCometTail: { value: new THREE.Vector3() }, uCometSide: { value: new THREE.Vector3() },
       uEdgeLo: { value: new THREE.Color() }, uEdgeHi: { value: new THREE.Color() }, uEdgeK: { value: 0 }, uNightGlow: { value: 0 }, uSnow: { value: new THREE.Color("#f2f6ff") },
       uMap: { value: null }, uDay: { value: 1 }, uPlanets: { value: 1 }, uNebula: { value: 0 },
+      // The Vivid dome (horizon-vivid.js): 0 = the Calm sky.
+      uVivid: { value: 0 }, uFront: { value: FRONT }, uNebK: { value: 0 }, uNebReady: { value: 0 }, uHeroReady: { value: 0 },
+      uGlowK: { value: 0 }, uGlowReady: { value: 0 }, uGlowRow: { value: 0 }, uVLow: { value: new THREE.Color() }, uVZenith: { value: new THREE.Color() },
+      uBlast: { value: new THREE.Color(0, 0, 0) },
+      uHeroA: { value: new THREE.Vector4(yawOf(A.u), A.w * DEG, 1, 0.5) }, uHeroB: { value: new THREE.Vector4(yawOf(B.u), B.w * DEG, 0.75, 0) },
+      uNebulaMap: { value: null }, uHeroes: { value: null }, uGlowBand: { value: null },
     };
     this.cometFrame();
     const U = this.uniforms, pick = (...names) => Object.fromEntries(names.map((n) => [n, U[n]]));
@@ -523,7 +577,8 @@ export class HorizonSky {
     const domeGeo = new THREE.BufferGeometry();
     domeGeo.setAttribute("position", new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
     this.dome = this.mesh("horizon-dome", domeGeo, new THREE.ShaderMaterial({
-      uniforms: pick("uHorizon", "uZenith", "uGlow", "uSun", "uTime", "uCloud", "uStars", "uComet", "uFlash", "uCloudLit", "uCloudShade", "uCometHead", "uCometTail", "uCometSide"),
+      uniforms: pick("uHorizon", "uZenith", "uGlow", "uSun", "uTime", "uCloud", "uStars", "uComet", "uFlash", "uCloudLit", "uCloudShade", "uCometHead", "uCometTail", "uCometSide",
+        "uVivid", "uFront", "uNebK", "uNebReady", "uHeroReady", "uGlowK", "uGlowReady", "uGlowRow", "uVLow", "uVZenith", "uBlast", "uHeroA", "uHeroB", "uNebulaMap", "uHeroes", "uGlowBand"),
       vertexShader: DOME_VS, fragmentShader: DOME_FS,
       depthWrite: false, fog: false, toneMapped: false,
     }), 1001);
@@ -541,6 +596,8 @@ export class HorizonSky {
       blendSrcAlpha: THREE.OneFactor, blendDstAlpha: THREE.OneMinusSrcAlphaFactor,
     }), -1000);
     this.planets.visible = false;
+    // The Vivid sky's layers (horizon-vivid.js; their sheets load the first time a Vivid sky shows).
+    this.vivid = new VividSky(this, { art });
     view.scene.add(this.root);
     if (atlasUrl && typeof document !== "undefined") {
       new THREE.TextureLoader().load(atlasUrl, (texture) => {
@@ -548,10 +605,13 @@ export class HorizonSky {
         texture.anisotropy = 2;
         texture.needsUpdate = true;
         this.uniforms.uMap.value = texture;
+        this.uniforms.uMapReady.value = 1;
         this.atlasReady = true;
       });
     }
-    this.state = { dome: false, ring: false, planets: false, triangles: 0, style: null, sea: null, look: null };
+    // The sky's colours for the Hero-view water (water-close-view.js): its zenith and horizon, as bright as the backdrop's.
+    this.water = { horizon: new THREE.Color(), zenith: new THREE.Color(), ready: false };
+    this.state = { dome: false, ring: false, planets: false, bodies: false, meteors: false, event: false, triangles: 0, style: null, sea: null, look: null, mode: "vivid" };
   }
   mesh(name, geometry, material, order) {
     const m = new THREE.Mesh(geometry, material);
@@ -600,20 +660,29 @@ export class HorizonSky {
     return top;
   }
   // on: the hero camera is up and the horizon allowed; dt: the frame's game time (0 while paused or held).
-  update(sim, dt, on) {
+  // mode: Settings > Hero > Sky ("calm", "vivid", "burning"); plan: the match's sky (sky-events.js skyPlan) and its
+  // seed; blast: the sky flash now (0-1, sky-events.js SkyFlash); level: the governor's level name.
+  update(sim, dt, on, { mode = "vivid", plan = null, seed = "none", blast = 0 } = {}) {
     const v = this.view;
     this.root.visible = on;
-    if (!on) { this.state.dome = this.state.ring = this.state.planets = false; return; }
+    if (!on) { Object.assign(this.state, { dome: false, ring: false, planets: false, bodies: false, meteors: false, event: false, war: false }); return; }
     this.setTerrain(v.terrain);
-    const top = this.topElevation(), rescue = v.closeLevel === "rescue";
+    const top = this.topElevation(), level = v.closeLevel || "full", rescue = level === "rescue", vivid = mode !== "calm";
+    this.mode = mode;
+    if (plan) this.vivid.setPlan(plan, seed);
     this.dome.visible = true;
     // (below -6 degrees the ring is all haze, the colour the dome already gives the open sky there)
     this.ring.visible = !rescue && top > RING_HIDDEN * DEG;
-    this.planets.visible = !rescue && this.atlasReady && top > 0;
-    Object.assign(this.state, { dome: true, ring: this.ring.visible, planets: this.planets.visible, top: top / DEG });
+    this.planets.visible = !vivid && !rescue && this.atlasReady && top > 0;
     // The clock: still with reduced motion or the governor's still steps, and while the game is paused.
     const lively = (v.motionLevel ?? 2) > 0 && !v.reducedMotion?.matches;
     if (lively && dt > 0) this.time += Math.min(dt, 0.05);
+    // The Vivid layers: the governor's rescue step drops the meteors, the event and the far ring first (the bodies stay).
+    // (its own big moments, a landing flare or a bloom in orbit, ask horizon-view.js for a sky flash: flashAsk)
+    const ask = this.vivid.update({ vivid, show: top > 0, lively, level, time: this.time });
+    this.blast = vivid ? blast : 0;
+    Object.assign(this.state, { dome: true, ring: this.ring.visible, planets: this.planets.visible, top: top / DEG, mode, lively, flashAsk: ask, ...this.vivid.report() });
+    this.state.gpuBytes += this.atlasReady ? Math.round(1024 * 512 * 4 * 4 / 3) : 0;
     this.apply();
   }
   // Colours and strengths for the land and the mission look (view.mood: mission-look-view.js).
@@ -623,7 +692,7 @@ export class HorizonSky {
     const L = name ? LOOK_SKY[name] : LOOK_SKY.day, D = LOOK_SKY.day;
     const ks = def?.skyGather ? k ** def.skyGather : k;
     // The horizon is the backdrop's own haze (the hero fog's colour, tinted by the look: map-edge.js tintEdge).
-    const haze = v.backdrop?.material?.userData?.sky?.horizon;
+    const sky = v.backdrop?.material?.userData?.sky, haze = sky?.horizon;
     if (haze) U.uHorizon.value.copy(haze); else U.uHorizon.value.set(themeFor(v.terrain.id).sky);
     U.uZenith.value.set(land.zenith).lerp(color(L.zenith || land.zenith), ks);
     U.uGlow.value.set(land.glowColor).lerp(color(L.glowColor || land.glowColor), k).multiplyScalar(lerpN(land.glow, L.glow ?? land.glow, k));
@@ -637,16 +706,50 @@ export class HorizonSky {
     U.uDay.value = lerpN(D.day, L.day, k);
     U.uFlash.value = mood.flash || 0;
     U.uTime.value = this.time;
+    const vivid = this.mode !== "calm";
+    U.uVivid.value = vivid ? 1 : 0;
+    if (vivid) {
+      // The Vivid sky: dark indigo to violet on every map, darker still at night and in a storm (horizon-vivid.js).
+      const VD = VIVID_LOOK.day, VL = (name && VIVID_LOOK[name]) || VD;
+      U.uVLow.value.set(VD.low).lerp(color(VL.low), ks);
+      U.uVZenith.value.set(VD.zenith).lerp(color(VL.zenith), ks);
+      U.uZenith.value.copy(U.uVZenith.value); // (the far ring's aerial perspective follows it)
+      U.uStars.value = lerpN(VD.stars, VL.stars, k);
+      U.uNebK.value = lerpN(VD.nebula, VL.nebula, k);
+      U.uGlowK.value = lerpN(VD.band, VL.band, k);
+      U.uCloud.value = lerpN(VD.cloud, VL.cloud, ks);
+      U.uCloudLit.value.set(VD.cloudLit).lerp(color(VL.cloudLit), ks);
+      U.uCloudShade.value.set(VD.cloudShade).lerp(color(VL.cloudShade), ks);
+      U.uPlanets.value = lerpN(VD.planets, VL.planets, ks);
+      U.uGlow.value.multiplyScalar(lerpN(VD.glow, VL.glow, k));
+      const warm = (name === "dusk" && k > 0.5) || WARM_LANDS.has(lookOf(v.terrain.id));
+      U.uGlowRow.value = warm ? 0.5 : 0;
+      U.uBlast.value.copy(BLAST_COLOR).multiplyScalar(this.blast * BLAST_GAIN);
+      U.uHaze.value.copy(U.uVLow.value).lerp(U.uHorizon.value, 0.3); // the far ships' and the ring's distance haze
+      this.state.band = warm ? "warm" : "teal";
+    } else { U.uBlast.value.setRGB(0, 0, 0); this.state.band = null; }
+    // The water's sky (water-close-view.js): this dome's zenith and its horizon (the glow band's colour over the haze in
+    // a Vivid sky), each as bright as the backdrop's own (the water keeps its light; it takes the sky's hue).
+    const wz = vivid ? TMP2.copy(U.uVLow.value).lerp(U.uVZenith.value, 0.35) : TMP2.copy(U.uZenith.value);
+    const wh = vivid ? TMP3.copy(U.uHorizon.value).lerp(color(this.state.band === "warm" ? BAND_COLOR.warm : BAND_COLOR.teal), 0.45) : TMP3.copy(U.uHorizon.value);
+    const W = this.water, match = (out, c, target) => out.copy(c).multiplyScalar(Math.min(20, Math.max(0.3, lum(target) / Math.max(lum(c), 1e-4))));
+    match(W.zenith, wz, sky?.zenith || wz);
+    match(W.horizon, wh, sky?.horizon || wh);
+    W.ready = true;
     // The silhouettes take the look's edge colours (night: black-blue, storm: blue-grey) like the backdrop does.
     if (def?.edge) { U.uEdgeLo.value.set(def.edge.low); U.uEdgeHi.value.set(def.edge.high); U.uEdgeK.value = k; } else U.uEdgeK.value = 0;
     U.uNightGlow.value = name === "night" ? 0.6 * k : 0;
     this.state.look = name ? `${name}:${k.toFixed(2)}` : "day";
   }
-  // Draw calls this sky adds now (the render budget: 3 at most).
-  get draws() { return this.root.visible ? [this.dome, this.ring, this.planets].filter((m) => m.visible && (m !== this.ring || m.geometry.attributes.position)).length : 0; }
+  // Draw calls this sky adds now (Calm: 3 at most; Vivid: the dome, the ring and the Vivid layers).
+  get draws() {
+    if (!this.root.visible) return 0;
+    return [this.dome, this.ring, this.planets].filter((m) => m.visible && (m !== this.ring || m.geometry.attributes.position)).length + this.vivid.draws;
+  }
   dispose() {
     for (const m of [this.dome, this.ring, this.planets]) m.geometry.dispose();
     this.dome.material.dispose(); this.ringMaterial.dispose(); this.planets.material.dispose();
+    this.vivid.dispose();
     this.uniforms.uMap.value?.dispose();
     this.root.removeFromParent();
   }

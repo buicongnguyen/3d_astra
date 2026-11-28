@@ -13,11 +13,13 @@
 //              Hero mode with a free Skywing (no coins, even with the briefing's Skywing row On); "Play again" brings the
 //              free Skywing again but starts in the normal view; the Full army sandbox brings a free Skywing (the Hero mode button shows); the quick row's five
 //              tiles are >= 44 px, text >= 11 px and never overlap, in EN, VI and KO on a PC and phones both ways.
-//   horizon    (owner 2026-11-28, src/horizon-view.js) landed and facing the key art's bearing: the sky dome, the far ring and the
-//              planets draw (3 more draws than with the horizon off), by day and at night (screenshots skyland-horizon-day /
-//              -night); flying with the look-down camera only the dome stays; back in the RTS view the frame is pixel for pixel
-//              the frame drawn with the horizon taken out of the scene, with the same draw count. Software WebGL (CI) keeps
-//              the old sky: there it checks that nothing was built.
+//   horizon    (owner 2026-11-28, src/horizon-view.js) landed and facing the key art's bearing: the Vivid sky by default
+//              (dome, far ring, bodies, orbital layer, meteors and the event: 5-6 more draws than with the horizon off), the
+//              Calm sky (3 more), every sky event by day and some at night, the armada crossing, descending and landing, the
+//              Burning world's far war and the sky's flash (screenshots skyland-sky-*, on a landscape phone too); flying
+//              with the look-down camera only the dome stays; back in the RTS view the frame is pixel for pixel the frame
+//              drawn with the horizon taken out of the scene, with the same draw count; a win then bursts the victory
+//              fireworks (skyland-fireworks). Software WebGL (CI) keeps the old sky: there it checks that nothing was built.
 // Every HUD: taps >= 44 px, text >= 11 px, no system-ui. The match clock is held and moved only with step().
 import assert from "node:assert/strict";
 import { mkdirSync, copyFileSync } from "node:fs";
@@ -169,8 +171,38 @@ async function landedLooks(page, ids) {
   await step(page, 0.3, 5);
 }
 
-// The Hero-view horizon, landed: re-enter facing the key art's bearing (FRONT), wait for the sky and its atlas, then the
+// The Hero-view horizon, landed: re-enter facing the key art's bearing (FRONT), wait for the sky and its art, then the
 // draws with it and without it (forceOff), and the screenshots by day and at night. Hero mode stays on, landed.
+// Vivid (the default since 2026-11-28): the dome, the far ring, the bodies, the orbital layer, the meteors and the
+// match's event, 6 draws at most (Calm: 3); every sky event, day and night, the far war at its strongest (Burning world)
+// and the sky's flash, in screenshots (skyland-sky-*).
+const skyReady = () => { const h = window.__frontier.view.horizon?.state; return !!h?.dome && h.ring && (h.mode === "calm" ? h.planets : h.bodies && h.orbit && h.base && (!h.eventId || h.eventId === "shower" || h.eventArt)); };
+async function faceFront(page, id) {
+  await page.evaluate(() => window.__frontier.heroMode.leave());
+  await step(page, 0.05, 1);
+  // (the camera takes the hero's facing on entry: set it in the same turn, before the hero turns to a target again)
+  await page.evaluate(([id, a]) => { const f = window.__frontier; f.sim.get(id).angle = a; f.heroMode.enter(id); }, [id, FRONT]);
+  await page.waitForFunction(() => window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
+}
+// One sky: its setting (sky), the event forced, the look, the sky's clock (seconds); waits for its art, then a shot.
+async function sky(page, name, { mode = "vivid", event = null, look = null, time = null, flash = 0 } = {}) {
+  await page.evaluate(([mode, event, look]) => {
+    const f = window.__frontier, h = f.view.horizon;
+    h.forceSky = mode; h.forceEvent = event;
+    f.sim.rules = { ...(f.sim.rules || {}) };
+    if (look) f.sim.rules.look = look; else delete f.sim.rules.look;
+  }, [mode, event, look]);
+  await step(page, 0.05, 2);
+  await page.waitForFunction(skyReady, null, { timeout: TIMEOUT.models });
+  if (look) await page.waitForFunction((look) => (window.__frontier.view.horizon.state.look || "").startsWith(look), look, { timeout: TIMEOUT.step });
+  if (time !== null) await page.evaluate((t) => { window.__frontier.view.horizon.sky.time = t; }, time);
+  // (the flash held at its peak for the shot: its own clock stops until the shot is taken)
+  if (flash) await page.evaluate((k) => { const h = window.__frontier.view.horizon; h.flash.reset(); h.flash.trigger(k); h.flash.advance(0.3); h.flash.advance = () => {}; }, flash);
+  await page.evaluate(() => { const f = window.__frontier; f.view.update(f.sim, 0, f.selected, null); });
+  await page.waitForTimeout(200);
+  if (name) await keep(page, name);
+  return page.evaluate(() => { const h = window.__frontier.view.horizon, st = h.state; delete h.flash.advance; return { mode: st.mode, event: st.eventId, draws: st.draws, bodies: st.bodies, orbit: st.orbit, war: st.war, ships: st.ships, flare: st.flare, flash: st.flash, gpuBytes: st.gpuBytes }; });
+}
 async function horizonLanded(page, ids) {
   // Software WebGL (CI's SwiftShader) keeps the old sky: the horizon is never loaded there (horizon-view.js).
   if (await page.evaluate(() => window.__frontier.view.softwareGL)) {
@@ -179,33 +211,63 @@ async function horizonLanded(page, ids) {
     return;
   }
   const angle = await page.evaluate((id) => window.__frontier.sim.get(id).angle, ids.sky);
-  await page.evaluate(() => window.__frontier.heroMode.leave());
-  await step(page, 0.05, 1);
-  // (the camera takes the hero's facing on entry: set it in the same turn, before the hero turns to a target again)
-  await page.evaluate(([id, a]) => { const f = window.__frontier; f.sim.get(id).angle = a; f.heroMode.enter(id); }, [ids.sky, FRONT]);
+  await faceFront(page, ids.sky);
   assert.ok(Math.abs((await info(page)).yaw - FRONT) < 1e-6, "facing the key art's bearing");
-  await page.waitForFunction(() => { const h = window.__frontier.view.horizon?.state; return h?.dome && h.ring && h.planets; }, null, { timeout: TIMEOUT.models });
-  const draws = await page.evaluate(() => {
+  await page.waitForFunction(skyReady, null, { timeout: TIMEOUT.models });
+  const count = (mode) => page.evaluate((mode) => {
     const f = window.__frontier, v = f.view, r = v.renderer, n = (off) => { v.horizon.forceOff = off; r.info.reset(); r.info.autoReset = false; v.update(f.sim, 0, f.selected, null); const c = r.info.render.calls; r.info.autoReset = true; return c; };
+    v.horizon.forceSky = mode;
+    v.update(f.sim, 0, f.selected, null);
     const on = n(false), off = n(true);
     v.horizon.forceOff = false; v.update(f.sim, 0, f.selected, null);
-    return { on, off, state: { ...v.horizon.state } };
-  });
-  assert.equal(draws.on - draws.off, 3, `landed: dome, ring and planets ${JSON.stringify(draws)}`);
-  assert.ok(draws.state.triangles >= 1500 && draws.state.triangles <= 4000, `ring triangles ${draws.state.triangles}`);
-  await page.waitForTimeout(200);
-  await keep(page, "skyland-horizon-day");
-  const night = await page.evaluate(() => { const s = window.__frontier.sim; s.rules = { ...(s.rules || {}), look: "night" }; return true; });
-  assert.ok(night);
-  await step(page, 0.05, 2);
-  await page.waitForFunction(() => /^night/.test(window.__frontier.view.horizon.state.look || ""), null, { timeout: TIMEOUT.step });
-  await page.waitForTimeout(200);
-  await keep(page, "skyland-horizon-night");
-  await page.evaluate(() => { const f = window.__frontier; delete f.sim.rules.look; f.heroMode.leave(); });
+    return { on, off, state: { ...v.horizon.state, plan: null } };
+  }, mode);
+  // The default sky (Vivid, the match's own event): +5, +6 with an event that has its own draw.
+  const vivid = await count(null);
+  assert.equal(vivid.state.mode, "vivid", "Vivid by default");
+  assert.equal(vivid.on - vivid.off, 5 + (vivid.state.event ? 1 : 0), `Vivid landed: dome, ring, bodies, orbital layer, meteors (and the event) ${JSON.stringify({ on: vivid.on, off: vivid.off, event: vivid.state.eventId })}`);
+  assert.ok(vivid.state.triangles >= 1500 && vivid.state.triangles <= 4000, `ring triangles ${vivid.state.triangles}`);
+  await page.waitForFunction(skyReady, null, { timeout: TIMEOUT.models }).catch(() => {});
+  const calm = await (async () => { await sky(page, null, { mode: "calm" }); return count("calm"); })();
+  assert.equal(calm.on - calm.off, 3, `Calm: today's sky, 3 draws ${JSON.stringify({ on: calm.on, off: calm.off })}`);
+  await keep(page, "skyland-sky-calm-day");
+  // Each sky event by day; the Burning world (the far war at its strongest) and a few nights; the sky's answer to a blast.
+  const shots = [];
+  for (const event of ["shattered", "eclipse", "aurora", "shower"]) shots.push(await sky(page, `skyland-sky-${event}-day`, { event, time: 30 }));
+  shots.push(await sky(page, "skyland-sky-armada-crossing", { event: "armada", time: 6 }));
+  shots.push(await sky(page, "skyland-sky-armada-descending", { event: "armada", time: 46 }));
+  // the landing flare: the sky's clock where the first lander's flare is up
+  const flareAt = await page.evaluate(() => { const s = window.__frontier.view.horizon.sky; for (let t = 0; t < 120; t += 0.5) { s.time = t; s.update(window.__frontier.sim, 0, true, { mode: "vivid", plan: window.__frontier.view.horizon.state.plan, seed: window.__frontier.view.horizon.state.seed }); if (s.state.flare > 0.85) return t; } return 60; });
+  shots.push(await sky(page, "skyland-sky-armada-landing", { event: "armada", time: flareAt }));
+  // the far war at its strongest: the sky's clock where an explosion blooms in orbit
+  await sky(page, null, { mode: "burning" });
+  const warAt = await page.evaluate(() => { const h = window.__frontier.view.horizon, s = h.sky, U = s.uniforms.uWar.value; for (let t = 20; t < 140; t += 0.25) { s.time = t; s.update(window.__frontier.sim, 0, true, { mode: "burning", plan: h.state.plan, seed: h.state.seed }); for (let i = 0; i < U.length / 8; i++) if (U[i * 8 + 6] === 2 && U[i * 8 + 3] > 0 && U[i * 8 + 4] >= 2 && U[i * 8 + 4] <= 4) return t; } return 52; });
+  shots.push(await sky(page, "skyland-sky-burning-war", { mode: "burning", time: warAt }));
+  shots.push(await sky(page, "skyland-sky-flash", { event: "aurora", time: 30, flash: 1 }));
+  for (const event of ["shattered", "armada", "aurora"]) shots.push(await sky(page, `skyland-sky-${event}-night`, { event, look: "night", time: event === "armada" ? 40 : 30 }));
+  for (const s of shots) assert.ok(s.mode !== "calm" && s.bodies && s.orbit && s.draws <= 6, `a Vivid sky: ${JSON.stringify(s)}`);
+  assert.ok(shots.find((s) => s.event === "armada" && s.flare > 0.5), "the landing flare blooms");
+  assert.ok(shots.some((s) => s.flash > 0.5), "the sky answers");
+  assert.ok(shots.find((s) => s.mode === "burning").war === 1, "the far war at its strongest in the Burning world");
+  console.log(`  sky: Vivid +${vivid.on - vivid.off} draws (event ${vivid.state.eventId}), Calm +${calm.on - calm.off}; GPU textures up to ${(Math.max(...shots.map((s) => s.gpuBytes)) / 1048576).toFixed(1)} MB`);
+  // Back to the default sky and the hero's own facing.
+  await page.evaluate(() => { const f = window.__frontier, h = f.view.horizon; h.forceSky = null; h.forceEvent = null; delete f.sim.rules.look; f.heroMode.leave(); });
   await step(page, 0.05, 1);
   await page.evaluate(([id, a]) => { const f = window.__frontier; f.sim.get(id).angle = a; f.heroMode.enter(id); }, [ids.sky, angle]);
   await page.waitForFunction(() => window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
   await step(page, 0.05, 2);
+}
+// Victory fireworks (victory-fireworks.js): a win in a match Hero mode was used in bursts team-colour fireworks over
+// the battlefield (pooled glow particles, +0 draws); screenshots skyland-fireworks (the results card set aside to see them).
+async function fireworks(page) {
+  const before = await page.evaluate(() => window.__frontier.view.fireworks.state.bursts);
+  await page.evaluate(() => { const f = window.__frontier; f.sim.result = "victory"; });
+  for (let i = 0; i < 30; i++) { await page.evaluate(() => { const f = window.__frontier; f.view.update(f.sim, 0.05, f.selected, null); }); await page.waitForTimeout(40); }
+  const st = await page.evaluate(() => ({ ...window.__frontier.view.fireworks.state }));
+  assert.ok(st.on && st.bursts > before && st.planned >= 10, `fireworks: ${JSON.stringify(st)}`);
+  await page.evaluate(() => { const m = document.querySelector("#modal"); if (m) m.style.visibility = "hidden"; });
+  await keep(page, "skyland-fireworks");
+  await page.evaluate(() => { const m = document.querySelector("#modal"); if (m) m.style.visibility = ""; });
 }
 // Back in the RTS view: the built horizon draws nothing. The frame equals, pixel for pixel, the frame drawn with the horizon
 // taken out of the scene altogether, with the same draw count, and the backdrop has its own sky back.
@@ -366,6 +428,7 @@ await suite("skywing-land" + shardLabel, async () => {
     await page.keyboard.press("Tab");
     await page.waitForFunction(() => !window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
     await horizonRts(page);
+    await fireworks(page);
     assert.deepEqual(errors, [], "desktop: page errors");
     await page.close();
   }
@@ -470,6 +533,16 @@ await suite("skywing-land" + shardLabel, async () => {
     await page.waitForTimeout(400);
     await audit(page, `landscape ${lang} landed`);
     if (lang === "en") await keep(page, "skyland-landscape-landed");
+    // The Vivid sky on a landscape phone (its smaller bodies, the lower arch), with the shattered planet and the armada.
+    if (lang === "en" && !(await page.evaluate(() => window.__frontier.view.softwareGL))) {
+      await faceFront(page, ids.sky);
+      for (const [event, look] of [["shattered", null], ["armada", null], ["aurora", "night"]]) {
+        const s = await sky(page, `skyland-sky-landscape-${event}${look ? `-${look}` : ""}`, { event, look, time: 30 });
+        assert.ok(s.bodies && s.orbit && s.draws <= 6, `landscape phone sky: ${JSON.stringify(s)}`);
+      }
+      await page.evaluate(() => { const f = window.__frontier, h = f.view.horizon; h.forceEvent = null; h.forceSky = null; delete f.sim.rules.look; });
+      await step(page, 0.05, 2);
+    }
     await landReady(page);
     await tap('#hero-hud [data-hero="land"]');
     await step(page, 0.2, 6);
