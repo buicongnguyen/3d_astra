@@ -247,7 +247,21 @@ export const economy = {
     const deposit = b.rally?.target && this.get(b.rally.target);
     if (u.type === "worker" && deposit?.kind === "resource") this.issue([u.id], { type: "gather", target: deposit.id });
     else if (b.rally) this.issue([u.id], { type: "move", x: b.rally.x, z: b.rally.z });
+    // Owner 2026-11-28: with no rally, a player's new Harvester goes to work on its own (the AI assigns its own).
+    else if (u.type === "worker" && this.humanTeam(b.team)) this.sendToWork(u);
     this.message(`${d.name} ready.`, b.team);
+  },
+  // Owner 2026-11-28: a player's Harvester with nothing to do goes to the nearest explored deposit. The kind keeps the
+  // usual split (about one in four on energy); when no deposit of that kind is explored, the other kind. Returns the
+  // deposit, or null when none is explored (the Harvester then waits).
+  sendToWork(w) {
+    const team = w.team, workers = this.own(team).filter((e) => e.type === "worker" && e.id !== w.id);
+    const onEnergy = workers.filter((e) => e.orders[0]?.type === "gather" && e.orders[0].resourceType === "energy" || this.get(e.resource)?.type === "energy").length;
+    const prefer = onEnergy * 4 < workers.length + 1 ? "energy" : "alloy";
+    const near = (type) => this.resources.filter((r) => r.amount > 0 && (!type || r.type === type) && this.isExplored(r, team)).sort((a, b) => distance(w, a) - distance(w, b) || a.id - b.id)[0];
+    const deposit = near(prefer) || near(prefer === "energy" ? "alloy" : "energy");
+    if (deposit) this.issue([w.id], { type: "gather", target: deposit.id });
+    return deposit || null;
   },
   // Sends a team's idle Harvesters to the nearest explored deposits, one in four to energy.
   assignHarvesters(team = 0) {
@@ -263,6 +277,8 @@ export const economy = {
         .filter((r) => r.amount > 0 && r.type === type && this.isExplored(r, team))
         .sort((a, b) => distance(w, a) - distance(w, b))[0];
       if (deposit) this.issue([w.id], { type: "gather", target: deposit.id });
+      // A player's Harvester whose kind has no explored deposit takes the other kind instead of standing idle.
+      else if (this.humanTeam(team)) this.sendToWork(w);
     }
   },
 };

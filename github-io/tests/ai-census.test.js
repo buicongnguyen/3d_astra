@@ -11,8 +11,12 @@ import { censusRow } from "../tools/ai-census-check.mjs";
 const field = (opts = {}) => new Simulation({ map: "classic", aiSpeed: "normal", capturePoints: true, rules: { aiPlan: "field", roster: "expanded" }, ...opts });
 
 // The census starts at ai_mix.from (480 s, difficulty guard), so the workshop unit comes by 540 s (was 300 s).
-test("census: Field Expanded Ashfall on Dunes fields 4+ unit types and a workshop unit by 540 s", () => {
-  const r = censusRow("ashfall", { secs: 540, map: "dunes", speed: "normal" });
+// 600 s since 2026-11-28 (owner: player Harvesters go to work on their own, sendToWork): the PlayBot's new
+// Harvesters no longer wait up to 2 s for its next "harvest", the match runs differently from there, and the
+// Ashfall AI's first workshop unit (a Rampart) comes at 555 s instead of 473 s, with 7 types fielded by 540 s
+// (was 5). 600 s is the time the long check (tools/ai-census-check.mjs) uses.
+test("census: Field Expanded Ashfall on Dunes fields 4+ unit types and a workshop unit by 600 s", () => {
+  const r = censusRow("ashfall", { secs: 600, map: "dunes", speed: "normal" });
   assert.ok(r.types >= 4, `types ${r.types} ${JSON.stringify(r.fielded)}`);
   assert.ok(r.workshop >= 1, `workshop ${r.workshop} ${JSON.stringify(r.fielded)}`);
 });

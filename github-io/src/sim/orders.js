@@ -344,6 +344,9 @@ export const orders = {
     if (done?.resume && e.type === "worker" && !e.orders.length) {
       const r = this.get(e.resource);
       if (r?.kind === "resource" && r.amount > 0) e.orders.push({ type: "gather", target: r.id, resourceType: r.type });
+      // Owner 2026-11-28: a player's builder with no deposit to go back to (never mined, or its deposit ran out) goes to
+      // the nearest one instead of standing idle by the new building.
+      else if (this.humanTeam(e.team)) this.sendToWork(e);
     }
   },
   // R3-B: the formation of a group-paced order, or null when fewer than two units can take it.

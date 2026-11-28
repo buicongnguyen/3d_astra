@@ -22,7 +22,11 @@ const find = (id) => [...MISSIONS, ...CHRONICLES.flatMap((c) => c.missions)].fin
 // 2026-11-23 (owner): m03 re-recorded for the Iron Vanguard's health, 32,000 to 11,000 (story 9,000); old f86e00b1.
 // 2026-11-24 (campaign C1, pacing): m03 re-recorded for siphons at 4200 HP; old 57c186ff.
 // Re-recorded 2026-11-25 (concise story lines): text only. The hash covers the mission definition, so the shorter say lines move it; with the old lines put back the run reproduces the old pin exactly (same waves, lives, result), so play is unchanged. Old m01 64473474, m03 b16d4a20, m06b 56d5c731, ca1 c9716b32, m02b 11165d27, m11c 17daacde.
-const OBJECTIVE = { "m01-first-light": "67462110", "m03-the-ashen-line": "20f108f2", "m06b-wings-over-copper": "dd931713", "ca1-cold-berths": "bd841655" };
+// Re-recorded 2026-11-28 owner: player Harvesters go to work on their own (sendToWork). A newly trained Harvester sets off
+// at once instead of waiting for the bot's next "harvest" (idle Harvester-seconds in 120 s: m01 16 to 5, m03 24 to 10,
+// m06b 17 to 3, ca1 22 to 6; mined the same or more); with sendToWork switched off the run reproduces every old pin
+// exactly. Old m01 67462110, m03 20f108f2, m06b dd931713, ca1 bd841655.
+const OBJECTIVE = { "m01-first-light": "5543cb08", "m03-the-ashen-line": "a16f9981", "m06b-wings-over-copper": "359d84b3", "ca1-cold-berths": "dc833f02" };
 test(`the ObjectiveBot for ${SECONDS} s`, async (t) => {
   for (const [id, hash] of Object.entries(OBJECTIVE))
     await t.test(id, () => pin(id, missionMatch(find(id)).run(SECONDS), hash));

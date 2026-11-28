@@ -2,8 +2,8 @@
 // LAN_TEST_PORT, default 4573) and two headless players, each a LanClient over Node's own WebSocket with its
 // own Simulation and LanSession (src/net/), the guest showing the match from its own side (perspective.js)
 // as the page does. Scripted players (tests/lib/lan-bot.mjs) give orders on both sides.
-//   - 1v1 for 3 minutes and co-op against the computer for 2.5 minutes end on the same state hash on both
-//     pages, every 5 s check agreed, and both teams' orders ran;
+//   - 1v1 for up to 3 minutes (or to a result both pages reach at the same tick) and co-op against the computer
+//     for 2.5 minutes end on the same state hash on both pages, every 5 s check agreed, and both teams' orders ran;
 //   - a forced desync is seen by both pages, the guest continues from the host's battle, and the two agree again;
 //   - a guest leaving: 1v1 ends for the host ("opponentLeft"); in co-op the host plays on.
 import test from "node:test";
@@ -21,9 +21,13 @@ const yieldIO = () => new Promise((resolve) => setImmediate(resolve));
 
 const canonicalHash = (s) => { if (s.seat) swapTeams(s.sim, 0, s.seat); try { return s.sim.hash(); } finally { if (s.seat) swapTeams(s.sim, 0, s.seat); } };
 
+// Every connection a test opened, closed after the test even when it fails (test.afterEach below).
+const opened = new Set();
+
 // Host + guest through the lobby to a started match; resolves with both players' sessions.
 async function lobby(setup) {
   const host = new LanClient(URL_WS, { name: "Host" }), guest = new LanClient(URL_WS, { name: "Guest" });
+  opened.add(host).add(guest);
   await host.connect();
   await guest.connect();
   host.send({ t: "host", setup });
@@ -95,23 +99,39 @@ async function close(players) {
 let server;
 test.before(async () => { server = await startLanServer({ port: PORT, host: "127.0.0.1", log: () => {} }); });
 test.after(async () => { await server?.close(); });
+// A test that fails before its close() would leave the room taken, and every later test would then fail with
+// "timeout waiting for a message" in the lobby: its connections are closed here, so a failure stays its own.
+test.afterEach(async () => {
+  for (const client of opened) client.close();
+  opened.clear();
+  for (let i = 0; i < 400 && server?.room().players.length; i++) await new Promise((r) => setTimeout(r, 5));
+});
 
-test("1v1 over the LAN server: three minutes of orders on both sides end on one state hash", async () => {
+// The result of the match as the guest's page tells it (its own side is team 0 there).
+const guestView = { victory: "defeat", defeat: "victory", draw: "draw" };
+
+test("1v1 over the LAN server: up to three minutes of orders on both sides end on one state hash and one result", async () => {
   const players = await lobby({ mode: "duel", map: "riverlands", factions: ["meridian", "ashfall"] });
   const started = Date.now();
   await play(players, 3600);
   const [h, g] = players.map((p) => p.session);
-  assert.equal(h.sim.ticks, 3600);
-  assert.equal(g.sim.ticks, 3600);
+  // The match plays its three minutes, or ends sooner in one result that both pages reach at the same tick.
+  // 2026-11-28 (owner: player Harvesters go to work on their own, sendToWork): both bots' trained Harvesters now
+  // mine instead of standing idle, and the host's bot takes the guest's core at tick 2763, the same on both pages.
+  assert.equal(g.sim.ticks, h.sim.ticks, "both pages stopped at the same tick");
+  assert.ok(h.sim.ticks >= 2400, `at least two minutes of play (${h.sim.ticks} ticks)`);
+  if (h.sim.ticks < 3600) assert.ok(h.sim.result, `a match that stops before 3600 ticks has a result (tick ${h.sim.ticks})`);
+  assert.equal(g.sim.result, h.sim.result ? guestView[h.sim.result] : null, "both pages tell the same result, each from its own side");
   assert.equal(canonicalHash(h), canonicalHash(g), "the same match on both pages");
-  assert.ok(agreedChecks(players) >= 30, "every 5 s hash check agreed");
+  assert.ok(agreedChecks(players) >= Math.floor(h.sim.ticks / 120), "every 5 s hash check agreed");
   assert.deepEqual([...teamsCommanded(h.sim)].sort(), [0, 1], "both people's orders ran");
   const log = h.sim.commandLog, built = log.findIndex((c) => c.team === 1 && c.type === "build");
   assert.ok(built >= 0 && log[built + 1]?.type === "order" && log[built + 1].order.type === "build" && log[built + 1].team === 1, "the guest's build order and its builder's follow-up ran as a pair");
   assert.ok(players.every((p) => !p.events.some((e) => e.type === "desync")), "no desync");
   const seconds = (Date.now() - started) / 1000;
   const lag = h.stats.lags.length ? h.stats.lags.reduce((a, b) => a + b, 0) / h.stats.lags.length : 0;
-  console.log(`# 1v1 180 s of play in ${seconds.toFixed(1)} s; host sent ${h.stats.sent} messages, ${(h.stats.bytesOut / 180).toFixed(0)} B per played second`);
+  const played = h.sim.ticks / 20;
+  console.log(`# 1v1 ${played.toFixed(0)} s of play (${h.sim.result || "running"}) in ${seconds.toFixed(1)} s; host sent ${h.stats.sent} messages, ${(h.stats.bytesOut / played).toFixed(0)} B per played second`);
   console.log(`# guest hash ${canonicalHash(g)}; host command lag (unpaced) ${lag.toFixed(1)} ms over ${h.stats.lags.length} orders`);
   await close(players);
 });

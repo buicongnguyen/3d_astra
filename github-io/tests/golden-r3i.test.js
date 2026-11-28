@@ -86,5 +86,8 @@ test("golden: mission 4 with its probe for 120 s", () => {
   // Re-recorded 2026-11-25 (concise story lines): text only. The hash covers the mission definition, so the shorter say lines move it; with the old lines put back the run reproduces the old pin exactly (same waves, lives, result), so play is unchanged. Old 0ae451df.
   // Re-recorded 2026-11-27 (campaign heroes): text only. Sol's surrender choice now names what each answer brings (her
   // Outrider, or her war chest); with the old two effect lines put back the run reproduces d34c3af8 exactly. Old d34c3af8.
-  pin("r3i m04 120", missionMatch(MISSIONS.find((m) => m.id === "m04-three-way-dunes")).run(120), "bdade140");
+  // Re-recorded 2026-11-28 owner: player Harvesters go to work on their own (sendToWork). New Harvesters set off at once
+  // (idle Harvester-seconds in 120 s 20 to 3, mined 1820 to 1870); with sendToWork switched off the run reproduces
+  // bdade140 exactly. Old bdade140.
+  pin("r3i m04 120", missionMatch(MISSIONS.find((m) => m.id === "m04-three-way-dunes")).run(120), "d9d29872");
 });

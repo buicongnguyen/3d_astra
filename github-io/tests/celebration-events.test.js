@@ -15,8 +15,9 @@ test("a finished training job announces a spawn at the new unit", () => {
   assert.ok(ev, "spawn event emitted");
   const unit = s.get(ev.seed);
   assert.equal(ev.team, 0);
-  assert.equal(unit.x, ev.x);
-  assert.equal(unit.z, ev.z);
+  // A new Harvester sets off for a deposit in the same tick (owner 2026-11-28: Harvesters go to work on their own),
+  // so it may be one tick's walk from the spot the event names.
+  assert.ok(Math.hypot(unit.x - ev.x, unit.z - ev.z) <= 0.6, `${unit.x},${unit.z} vs ${ev.x},${ev.z}`);
 });
 
 test("a completed building and a drop-off each emit one event with position and team", () => {
