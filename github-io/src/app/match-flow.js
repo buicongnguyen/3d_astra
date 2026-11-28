@@ -85,7 +85,9 @@ export function setupMatchFlow(S, A) {
       line.innerHTML = `<span>Birds startled</span> <b translate="no">${birds}</b>`;
       footer.before(line);
     }
-    if (footer && document.documentElement.classList.contains("compact-ui")) {
+    // Every screen (2026-11-28; phones only before): the card's body scrolls and the action buttons stay pinned at its
+    // foot, so "New game" and "Replay this map" are never below the fold (1280x720 and 390x844 hid both).
+    if (footer && !footer.previousElementSibling?.classList.contains("result-scroll")) {
       const body = document.createElement("div");
       body.className = "result-scroll";
       while (footer.parentNode.firstChild !== footer) body.append(footer.parentNode.firstChild);

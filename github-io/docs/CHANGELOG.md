@@ -2,6 +2,9 @@
 
 ## Unreleased: Round A.2
 
+### Result buttons always on screen (2026-11-28)
+- The results card's body now scrolls on every screen and its action row (New game / choose map, Replay this map) stays pinned at the card's foot, with a soft fade hinting at more above. Before, the buttons fell below the fold at 1280x720 and on a 390x844 phone, and at 1440x900 once the card grew (rank-up, achievements, coins, birds startled). `npm run test:ceremony` checks the buttons are on screen on every viewport.
+
 ### Skywing can shoot at birds: scare them, never kill them (owner 2026-11-28, option A)
 - **Aim.** In Hero mode, with Skywing's Sniper in hand (in the air or on foot), a bird under the crosshair puts a small bird mark beside it, the crosshair turns sky blue and a sky-blue ring sits on the ground under the bird. An enemy (its body or the aim assist's pick) and an explosive barrel always come first; the hawk (Skywing's companion) is never a target; Birds Off leaves nothing to aim at, and birds hidden in the fog are not targets (a bird flying above the fog is, with the fog hint on). The pick casts the camera ray at each bird's drawn place, a small sphere each (`pickBird`, src/bird-life.js; `birdAim`, src/hero-aim.js), within the Sniper's reach, at most 20 birds tested a frame, and only when nothing else is under the crosshair.
 - **Fire.** The shot is the usual round: a muzzle flash, a tracer that whizzes past the bird (3 m on, a hand's width beside it, no landing hit) and one round from the magazine. It is one logged command, `heroFire` with `bird: true` and the bird's point (`x`, `z` and its height `y`), so the magazine, the reload and replays stay exact (src/sim/content/hero-mode.js `heroBirdShot`). The rules know only the point: the bird is drawn by the view and is never in the match state, so replays do not show its reaction (only the usual startle at the muzzle). The round hurts nothing. A rocket is never fired at a bird.

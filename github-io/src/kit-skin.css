@@ -578,6 +578,15 @@
 :root:not(.compact-ui) #briefing :is(.rule-badge, .rank-lock, .cover-label small) { font-size: 12px; }
 
 .result-scroll { display: contents; }
+/* Results on every screen (2026-11-28): the dialog is a column within its own max-height; the card body scrolls and the
+   action row stays pinned at the card's foot, so the buttons never fall below the fold (they did at 1280x720, on a
+   390x844 phone, and at 1440x900 once the card grew). The short-screen rules below still refine phones. */
+#modal:is(.result-wide, .debrief-wide) .modal:has(.result-scroll) { display: flex; flex-direction: column; overflow: hidden; }
+#modal:is(.result-wide, .debrief-wide) .modal:has(.result-scroll) #modal-content { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+#modal :is(.result-card, .debrief):has(> .result-scroll) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+#modal .result-scroll { display: block; flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding-right: 2px; padding-bottom: 14px;
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 16px), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 16px), transparent); }
+#modal .result-scroll + :is(.result-actions, .debrief-actions) { flex: none; position: static; }
 @media (max-height: 520px), (max-width: 359px) {
   :root.compact-ui #modal:is(.result-wide, .debrief-wide) .modal:has(.result-scroll) { overflow: hidden; }
   :root.compact-ui #modal :is(.result-card, .debrief):has(> .result-scroll) {

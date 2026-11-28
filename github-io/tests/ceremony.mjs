@@ -114,6 +114,10 @@ await suite("ceremony", async () => {
     assert.deepEqual(seen.phases, ["slow", "swing"], `${viewport}: slow motion then the camera swing play before the result (${seen.phases})`);
     assert.ok(seen.tag, `${viewport}: the MVP tag shows over the unit during the swing`);
     assert.equal(await page.locator(".result-card").getAttribute("data-result"), "victory");
+    // 2026-11-28: the action buttons stay pinned at the card's foot, on screen, whatever the card holds (they fell
+    // below the fold at 1280x720 and on a 390x844 phone).
+    const offscreen = await page.evaluate(() => [...document.querySelectorAll(".result-actions button")].filter((b) => { const r = b.getBoundingClientRect(); return r.height === 0 || r.top < 0 || r.bottom > innerHeight + 0.5; }).map((b) => b.textContent.trim()));
+    assert.deepEqual(offscreen, [], `${viewport}: result buttons on screen`);
     const card = await mvpCard(page, `${viewport} skirmish`);
     assert.equal(card.id, hero.id, `${viewport}: the unit that destroyed the core is the MVP`);
     await waitStamp(page, 1, `${viewport} skirmish`);
