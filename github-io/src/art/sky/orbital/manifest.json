@@ -1,0 +1,213 @@
+{
+  "version": 1,
+  "light": "upper-left",
+  "ring": {
+    "band": "ring-band.webp",
+    "lights": "ring-lights.webp",
+    "glow": "ring-glow.webp",
+    "size": [
+      2048,
+      128
+    ],
+    "solidRows": [
+      34,
+      103
+    ],
+    "seamlessX": true
+  },
+  "warShips": {
+    "file": "war-ships.webp",
+    "size": [
+      1024,
+      256
+    ],
+    "bytes": 59432,
+    "cell": [
+      256,
+      128
+    ],
+    "grid": [
+      4,
+      2
+    ],
+    "sides": [
+      "sleek",
+      "sleek",
+      "sleek",
+      "sleek",
+      "blocky",
+      "blocky",
+      "blocky",
+      "blocky"
+    ],
+    "engines": [
+      [
+        [
+          50,
+          67
+        ],
+        [
+          50,
+          80
+        ]
+      ],
+      [
+        [
+          50,
+          66
+        ],
+        [
+          51,
+          78
+        ]
+      ],
+      [
+        [
+          51,
+          69
+        ],
+        [
+          51,
+          80
+        ]
+      ],
+      [
+        [
+          50,
+          67
+        ],
+        [
+          51,
+          76
+        ]
+      ],
+      [
+        [
+          50,
+          65
+        ],
+        [
+          51,
+          81
+        ]
+      ],
+      [
+        [
+          50,
+          59
+        ],
+        [
+          51,
+          75
+        ]
+      ],
+      [
+        [
+          50,
+          63
+        ],
+        [
+          51,
+          79
+        ]
+      ],
+      [
+        [
+          50,
+          61
+        ],
+        [
+          50,
+          75
+        ]
+      ]
+    ]
+  },
+  "explosions": {
+    "file": "war-explosions.webp",
+    "size": [
+      1024,
+      512
+    ],
+    "bytes": 114730,
+    "cell": [
+      256,
+      256
+    ],
+    "grid": [
+      4,
+      2
+    ],
+    "frames": 8,
+    "order": "row-major"
+  },
+  "flak": {
+    "file": "war-flak.webp",
+    "size": [
+      512,
+      128
+    ],
+    "bytes": 14318,
+    "cell": [
+      128,
+      128
+    ],
+    "count": 4
+  },
+  "beams": {
+    "file": "war-beams.webp",
+    "size": [
+      512,
+      64
+    ],
+    "bytes": 1474,
+    "row": [
+      512,
+      32
+    ],
+    "rows": [
+      "violet",
+      "teal"
+    ],
+    "maxSkyWidthFraction": 0.05
+  },
+  "wreck": {
+    "file": "war-wreck.webp",
+    "size": [
+      512,
+      256
+    ],
+    "bytes": 31106,
+    "fires": [
+      [
+        223,
+        170
+      ],
+      [
+        281,
+        223
+      ]
+    ]
+  },
+  "haze": {
+    "file": "war-haze.webp",
+    "size": [
+      1024,
+      128
+    ],
+    "bytes": 7028,
+    "seamlessX": true
+  },
+  "bytesByFile": {
+    "ring-band.webp": 86532,
+    "ring-lights.webp": 23794,
+    "ring-glow.webp": 4392,
+    "war-ships.webp": 59432,
+    "war-explosions.webp": 114730,
+    "war-flak.webp": 14318,
+    "war-beams.webp": 1474,
+    "war-wreck.webp": 31106,
+    "war-haze.webp": 7028
+  },
+  "totalBytes": 342806
+}
