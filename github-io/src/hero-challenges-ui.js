@@ -93,8 +93,12 @@ export function setupHeroChallenges(S, A) {
         const b = event.target.closest("[data-hero-challenge]");
         if (b && !b.disabled) start(b.dataset.heroChallenge);
       });
-      slot.after(row);
     }
+    // PC: right under the quick row. Phones: beside today's challenges further down the setup, so the first screen
+    // keeps every setting it had above the pinned Start (tests/mobile-controls.mjs, openings.mjs).
+    const daily = $("daily-challenges"), compact = document.documentElement.classList.contains("compact-ui");
+    if (compact && daily) { if (row.nextElementSibling !== daily) daily.before(row); }
+    else if (slot.nextElementSibling !== row) slot.after(row);
     const html = `<h3 class="hc-head" id="hero-challenges-title">${icon("star")}<span>Hero challenges</span><b class="hc-total" translate="no">${Object.values(progress.best).reduce((a, b) => a + b, 0)} / ${HERO_CHALLENGES.length * 3}</b></h3><div class="hc-tiles">${HERO_CHALLENGES.map(tileHTML).join("")}</div>`;
     if (row.dataset.html !== html) { row.dataset.html = html; row.innerHTML = html; }
     row.hidden = slot.hidden;
@@ -210,6 +214,8 @@ export function setupHeroChallenges(S, A) {
     renderRow();
     const slot = $("title-actions");
     if (slot) new MutationObserver(renderRow).observe(slot, { attributes: true, attributeFilter: ["hidden"] });
+    // The layout class follows the screen (a phone turned, a window resized).
+    new MutationObserver(renderRow).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
     const go = $("start");
     if (go) new MutationObserver(renderRow).observe(go, { attributes: true, attributeFilter: ["disabled"] });
     Object.assign(A, { heroChallenges: { start, progress: () => progress, reset: () => { progress = loadProgress(); renderRow(); } } });

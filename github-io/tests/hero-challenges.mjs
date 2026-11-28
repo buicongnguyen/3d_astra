@@ -104,9 +104,10 @@ await suite("hero-challenges" + shardLabel, async () => {
     const row = await page.evaluate(() => {
       const r = document.querySelector("#hero-challenges"), q = document.querySelector("#title-actions");
       const tiles = [...(r?.querySelectorAll("[data-hero-challenge]") || [])];
-      return { shown: !!r && !r.hidden, after: q?.nextElementSibling === r, ids: tiles.map((b) => b.dataset.heroChallenge), stars: tiles.map((b) => b.querySelector(".hct-stars").textContent), names: tiles.map((b) => b.querySelector("strong").textContent.trim()) };
+      const compact = document.documentElement.classList.contains("compact-ui");
+      return { shown: !!r && !r.hidden, after: compact ? r?.nextElementSibling?.id === "daily-challenges" : q?.nextElementSibling === r, ids: tiles.map((b) => b.dataset.heroChallenge), stars: tiles.map((b) => b.querySelector(".hct-stars").textContent), names: tiles.map((b) => b.querySelector("strong").textContent.trim()) };
     });
-    assert.ok(row.shown && row.after, `${viewport} ${lang}: the row right under the quick row`);
+    assert.ok(row.shown && row.after, `${viewport} ${lang}: under the quick row (phones: beside the daily challenges)`);
     assert.deepEqual(row.ids, ["sabotage", "sniper"]);
     assert.deepEqual(row.stars, ["☆☆☆", "☆☆☆"], "no stars yet");
     if (lang === "vi") assert.deepEqual(row.names, ["Phá hoại", "Ổ bắn tỉa"]);
@@ -263,6 +264,8 @@ await suite("hero-challenges" + shardLabel, async () => {
     const aim = await page.evaluate(() => window.__aimAt);
     await page.mouse.move(aim.x, aim.y);
     await step(page, 0.1, 2);
+    // The aim is taken in the frame (about 1 fps on a CI runner): wait for it.
+    await page.waitForFunction((i) => window.__frontier.heroMode.info.barrel === i, barrel, { timeout: TIMEOUT.step }).catch(() => {});
     const aimed = await info(page);
     assert.equal(aimed.barrel, barrel, "the crosshair finds the barrel");
     assert.equal(await page.evaluate(() => document.querySelector(".hh-cross").classList.contains("on-hazard")), true, "the reticle tints");

@@ -21,8 +21,8 @@
 #briefing .hero-challenge-tile:disabled { filter: saturate(0.3) brightness(0.8); cursor: default; }
 #briefing .hero-challenge-tile > .icon { flex: 0 0 auto; width: 26px; height: 26px; padding: 4px; border-radius: 50%; background: rgba(255, 180, 60, 0.18); color: #ffc66a; }
 #briefing .hct-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
-#briefing .hct-text strong { font: 800 15px/1.1 var(--font-display); overflow-wrap: anywhere; }
-#briefing .hct-text small { font: 700 11px/14px var(--font-ui); color: #e6d6bb; overflow-wrap: anywhere; }
+#briefing .hct-text strong { font: 800 14px/1.1 var(--font-display); overflow-wrap: normal; word-break: keep-all; }
+#briefing .hct-text small { font: 700 11px/14px var(--font-ui); color: #e6d6bb; overflow-wrap: normal; }
 #briefing .hct-stars { flex: 0 0 auto; color: #ffd36a; font: 700 14px/1 var(--font-ui); letter-spacing: 1px; white-space: nowrap; }
 /* Phones: names and stars only, one row of two. */
 .compact-ui #briefing .hero-challenges { gap: 4px; }
@@ -99,4 +99,9 @@
 .hero-phone.hero-sky.hc-planting .hh-weapons { bottom: calc(env(safe-area-inset-bottom) + 286px); }
 @media (orientation: landscape) and (max-height: 520px) {
   .hero-phone.hero-sky.hc-planting .hh-weapons { bottom: calc(env(safe-area-inset-bottom) + 12px); }
+}
+/* Phones: the row sits with today's challenges in the setup's order (meta.css), below the first-screen settings. */
+.compact-ui #briefing .briefing-setup > #hero-challenges { order: 6; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .compact-ui #briefing .hero-challenges { grid-column: 1 / -1; }
 }
