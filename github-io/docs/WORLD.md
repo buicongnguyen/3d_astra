@@ -169,7 +169,8 @@ A finished chronicle adds one line by its lead to the finale's closing lines. En
 
 A **land** is how a battlefield looks and lives: its palette and light (`src/visual-style.json`, `themes` and `light`), its ground
 rule (`biome`, `src/terrain.js` `ground()`), its dressing (`DRESSING` in `src/scatter.js`), its creatures and weather
-(`LIFE` in `src/ambient-life.js`), its music (`MAP_FLAVOUR` in `src/audio-logic.js`) and its sky (`SKY` in `src/map-edge.js`).
+(`LIFE` in `src/ambient-life.js`), its music (`MAP_FLAVOUR` in `src/audio-logic.js`) and its sky (`SKY` in `src/map-edge.js`; in
+Hero mode also the horizon: `SKIES` in `src/horizon-sky.js` gives each land its far silhouettes, overhead blue, sun glow and cloud).
 A land is keyed by the id of the Skirmish map that first used it. There are ten:
 
 | Land (look id) | Skirmish map | Biome | What is new |

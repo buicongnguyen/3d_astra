@@ -155,6 +155,12 @@
       "checks": ["test"]
     },
     {
+      "name": "Hero-view horizon: sky dome, far mountains or sea, the key art's planets (horizon-view.js, horizon-sky.js, art/sky atlas)",
+      "files": ["src/horizon-view.js", "src/horizon-sky.js", "src/art/sky/**", "tests/horizon.test.js"],
+      "suites": ["skywing-land", "hero-mode", "hero-challenges", "h9-board", "night-storm", "visual-combat", "death-cue", "factions", "terrain", "feel", "model-loading", "portraits", "render-budget", "phones", "mobile", "offline"],
+      "checks": ["test"]
+    },
+    {
       "name": "H8 Hero challenges (Sabotage, Sniper nest), fight feel (magazine, headshot, spread, crouch, hit marker) and explosive hazards",
       "files": ["src/story/hero-challenges.js", "src/sim/content/hero-challenges.js", "src/hero-challenges-ui.js", "src/hero-challenges.css", "src/meta/hero-challenges.js", "src/challenge-view.js", "src/sim/hero-feel.js", "src/sim/hazards.js", "src/hazard-view.js", "tests/hero-challenges.mjs", "tests/hero-challenges.test.js", "tests/hero-feel.test.js", "tests/hazards.test.js", "tests/lib/challenge-bot.mjs"],
       "suites": ["hero-challenges", "hero-mode", "skywing-land", "skywing", "quick-battle", "golden-full", "phones", "mobile", "layout-f", "language", "render-budget", "title"],

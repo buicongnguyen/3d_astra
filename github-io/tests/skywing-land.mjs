@@ -13,12 +13,17 @@
 //              Hero mode with a free Skywing (no coins, even with the briefing's Skywing row On); "Play again" brings the
 //              free Skywing again but starts in the normal view; the Full army sandbox brings a free Skywing (the Hero mode button shows); the quick row's five
 //              tiles are >= 44 px, text >= 11 px and never overlap, in EN, VI and KO on a PC and phones both ways.
+//   horizon    (owner 2026-11-28, src/horizon-view.js) landed and facing the key art's bearing: the sky dome, the far ring and the
+//              planets draw (3 more draws than with the horizon off), by day and at night (screenshots skyland-horizon-day /
+//              -night); flying with the look-down camera only the dome stays; back in the RTS view the frame is pixel for pixel
+//              the frame drawn with the horizon taken out of the scene, with the same draw count.
 // Every HUD: taps >= 44 px, text >= 11 px, no system-ui. The match clock is held and moved only with step().
 import assert from "node:assert/strict";
 import { mkdirSync, copyFileSync } from "node:fs";
 import { launchBrowser, openPage, shot, suite, TIMEOUT, OUTPUT } from "./lib/harness.mjs";
 import { inShard, shardLabel } from "./lib/shard.mjs";
 import { SIGHT } from "../src/sim/content/skywing.js";
+import { FRONT } from "../src/horizon-sky.js";
 
 const SHOTS = process.env.SKYLAND_SHOTS || null; // a folder to copy the owner's screenshots into
 async function keep(page, name) {
@@ -163,6 +168,56 @@ async function landedLooks(page, ids) {
   await step(page, 0.3, 5);
 }
 
+// The Hero-view horizon, landed: re-enter facing the key art's bearing (FRONT), wait for the sky and its atlas, then the
+// draws with it and without it (forceOff), and the screenshots by day and at night. Hero mode stays on, landed.
+async function horizonLanded(page, ids) {
+  const angle = await page.evaluate((id) => window.__frontier.sim.get(id).angle, ids.sky);
+  await page.evaluate(() => window.__frontier.heroMode.leave());
+  await step(page, 0.05, 1);
+  // (the camera takes the hero's facing on entry: set it in the same turn, before the hero turns to a target again)
+  await page.evaluate(([id, a]) => { const f = window.__frontier; f.sim.get(id).angle = a; f.heroMode.enter(id); }, [ids.sky, FRONT]);
+  assert.ok(Math.abs((await info(page)).yaw - FRONT) < 1e-6, "facing the key art's bearing");
+  await page.waitForFunction(() => { const h = window.__frontier.view.horizon?.state; return h?.dome && h.ring && h.planets; }, null, { timeout: TIMEOUT.models });
+  const draws = await page.evaluate(() => {
+    const f = window.__frontier, v = f.view, r = v.renderer, n = (off) => { v.horizon.forceOff = off; r.info.reset(); r.info.autoReset = false; v.update(f.sim, 0, f.selected, null); const c = r.info.render.calls; r.info.autoReset = true; return c; };
+    const on = n(false), off = n(true);
+    v.horizon.forceOff = false; v.update(f.sim, 0, f.selected, null);
+    return { on, off, state: { ...v.horizon.state } };
+  });
+  assert.equal(draws.on - draws.off, 3, `landed: dome, ring and planets ${JSON.stringify(draws)}`);
+  assert.ok(draws.state.triangles >= 1500 && draws.state.triangles <= 4000, `ring triangles ${draws.state.triangles}`);
+  await page.waitForTimeout(200);
+  await keep(page, "skyland-horizon-day");
+  const night = await page.evaluate(() => { const s = window.__frontier.sim; s.rules = { ...(s.rules || {}), look: "night" }; return true; });
+  assert.ok(night);
+  await step(page, 0.05, 2);
+  await page.waitForFunction(() => /^night/.test(window.__frontier.view.horizon.state.look || ""), null, { timeout: TIMEOUT.step });
+  await page.waitForTimeout(200);
+  await keep(page, "skyland-horizon-night");
+  await page.evaluate(() => { const f = window.__frontier; delete f.sim.rules.look; f.heroMode.leave(); });
+  await step(page, 0.05, 1);
+  await page.evaluate(([id, a]) => { const f = window.__frontier; f.sim.get(id).angle = a; f.heroMode.enter(id); }, [ids.sky, angle]);
+  await page.waitForFunction(() => window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
+  await step(page, 0.05, 2);
+}
+// Back in the RTS view: the built horizon draws nothing. The frame equals, pixel for pixel, the frame drawn with the horizon
+// taken out of the scene altogether, with the same draw count, and the backdrop has its own sky back.
+async function horizonRts(page) {
+  const rts = await page.evaluate(() => {
+    const f = window.__frontier, v = f.view, r = v.renderer, sky = v.horizon.sky, parent = sky.root.parent;
+    const frame = () => { r.info.reset(); r.info.autoReset = false; v.update(f.sim, 0, f.selected, null); const calls = r.info.render.calls; r.info.autoReset = true; return { calls, png: r.domElement.toDataURL("image/png") }; };
+    const a = frame();
+    parent.remove(sky.root);
+    const b = frame();
+    parent.add(sky.root);
+    return { same: a.png === b.png, calls: [a.calls, b.calls], state: { ...v.horizon.state }, edge: v.backdrop.material.userData.motion.hero.value, hero: v.heroCameraOn };
+  });
+  assert.equal(rts.hero, false, "the RTS view");
+  assert.ok(rts.same, "the RTS frame is unchanged by the built horizon");
+  assert.equal(rts.calls[0], rts.calls[1], `RTS draws ${rts.calls}`);
+  assert.ok(!rts.state.on && rts.state.draws === 0 && rts.edge === 0, JSON.stringify(rts));
+}
+
 const browser = await launchBrowser();
 // Four units of work (CI may split them, `shard: i/2`): desktop (0), Hero battle and the sandbox (1), phones (2),
 // the title's quick row (3).
@@ -273,6 +328,7 @@ await suite("skywing-land" + shardLabel, async () => {
     await step(page, 0.1, 1);
     const walked = await page.evaluate(([id, a]) => { const e = window.__frontier.sim.get(id); return { d: Math.hypot(e.x - a.x, e.z - a.z), flying: e.flying }; }, [ids.sky, at]);
     assert.ok(walked.d > 1.5 && !walked.flying, `walked ${walked.d.toFixed(2)} m on foot`);
+    await horizonLanded(page, ids);
     // Take off: a climb that ground weapons still hit, then the look-down view; the button waits out the cooldown.
     await landReady(page);
     await land.click();
@@ -287,8 +343,11 @@ await suite("skywing-land" + shardLabel, async () => {
     await page.waitForTimeout(200);
     assert.equal(await land.isDisabled(), false, "ready again");
     assert.ok((await pitch(page)) >= 44, "back to the look-down view");
+    const flying = await page.evaluate(() => { const v = window.__frontier.view; v.update(window.__frontier.sim, 0, window.__frontier.selected, null); return { ...v.horizon.state }; });
+    assert.ok(flying.dome && !flying.ring && !flying.planets && flying.draws === 1, `flying, looking down: only the dome ${JSON.stringify(flying)}`);
     await page.keyboard.press("Tab");
     await page.waitForFunction(() => !window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
+    await horizonRts(page);
     assert.deepEqual(errors, [], "desktop: page errors");
     await page.close();
   }

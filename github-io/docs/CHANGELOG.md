@@ -2,6 +2,14 @@
 
 ## Unreleased: Round A.2
 
+### A sky, far mountains and the key art's planets in Hero mode (owner 2026-11-28)
+- **Sky.** Hero mode's low camera (landed Skywing, ground heroes, a boarded vehicle) now looks out at a vivid blue sky that pales into the horizon haze (the hero fog's own colour, so the fogged ground meets it without a seam), a warm sun glow on the sun's bearing and a few soft clouds that drift slowly. It follows the mission look: a very dark blue night with stars, a grey storm with heavy cloud and lightning, the river fog, a red-gold dusk.
+- **Far landscape.** Low-poly silhouettes in three layers ring the horizon, the farther ones bluer and hazier, shaped and coloured by the land: rolling green hills and blue ranges (Riverlands, Expanse), a pine tree line (Woodlands, Crown Mesa), desert mesas (Basin, Dunes and their maps), rocky peaks with snow caps (Highlands), snowy ranges over a frozen lake sheet (Frostmere), dark basalt and a volcano with a glowing rim (Ember Crown), ash ridges (Ashen), and open sea with distant islands all round the Coral Isles. Where a map's rivers run off the edge (east), the hills open to a sea on that side.
+- **Planets.** The title key art's worlds hang in the sky at fixed bearings, placed as on the cover when you look from your start toward the rival: the ringed river world (the big one, its ring whole, low over a valley), the storm world and the dune moon on the other side, a small dark moon, the amber and silver suns, and a comet (head, coma, a white-blue dust tail and a faint teal ion tail). By day they are a little hazed, like a daytime moon; at night they are in full colour with a violet nebula band behind them; a storm dims them behind its cloud. Reduced motion (or the governor's still steps) holds the clouds, stars and the comet's shimmer still.
+- **Cost.** Only in Hero mode, built on the first entry (a 22 KB script, 8.8 KB gzipped, and one 1024x512 atlas, 164 KB WebP, about 2.8 MB of GPU memory with mipmaps); the RTS view draws nothing new (draws and pixels unchanged). At most 3 draws: the dome (one triangle, drawn last on the far plane, so only the open sky runs its shader), the ring (1,040 to 2,346 triangles by land) and the planets (one mesh, one texture); flying Skywing looks 52 degrees down, sees no sky and keeps only the dome (+1). Measured: DRAWS_AND_TIMES.
+- **Switches.** Settings > Display > Decorative vegetation Off turns it off (the old sky comes back); the governor's rescue step keeps the dome and drops the ring and the planets. Phones get all of it. Nothing reaches the simulation: replays, saves and golden pins are unchanged.
+- Code: `src/horizon-view.js` (the plugin), `src/horizon-sky.js` (loaded on demand), `tools/bake-sky-atlas.py` (the atlas from `src/art/cover/` layers), `map-edge.js` gives way to the dome with one uniform (0 = exactly as before), and in Hero mode the night's ground-plane stars give way to the dome's own. Tests: `tests/horizon.test.js` (built only in Hero mode, nothing in the RTS view, 3 draws landed and 1 flying, never in the shadow pass or picked, the triangle budget for every land, the sea sides, the planets inside a phone's sky with the ringed world's ring clear of the hills, night/storm/dusk colours, still under reduced motion, Settings and rescue); `npm run test:skywing-land` (3 more draws landed facing the planets, only the dome flying, the RTS frame pixel for pixel the same as with the horizon taken out of the scene; screenshots `skyland-horizon-day` / `-night`).
+
 ### No more harvesting line across the Hero sky (owner 2026-11-28)
 - The long gold or blue line across the sky in Skywing / Hero view was the HUD overlay's 2D mining beam (src/activity-view.js): a flat line from a Harvester's screen point to its deposit's, and a point behind the Hero camera projects mirrored, so the line crossed the whole sky. `view.project` now reports `behind`; under the Hero camera the 2D beam is not drawn (the 3D shards and sparkle show the mining), and badges, cargo marks and deposit outlines skip any point behind the lens. The RTS view is unchanged. Tests: `tests/activity-overlay.test.js`.
 
@@ -1266,7 +1274,6 @@ The rest of the round 3 plan (docs/aaa/PLAN_ROUND3_REFINED_2026-11-13.md: releas
 - **Fix:** a unit whose model has not downloaded yet (for example offline, in a mission that needs a faction model not yet cached) is no longer drawn from a missing template, which threw an error; it appears once its model arrives.
 - Validation: 369 unit tests, all 37 browser suites locally, mission checks as above.
 
-
 ## 0.12.0: four enemy factions in Skirmish (packages 2.3 to 2.6)
 
 - **Skirmish has an "Enemy faction" choice:** Mirror (the old behaviour, still the default), Ashfall Combine, Sunward Caravan, The Wardens, Veil Survey, or Mixed (each rival a different faction, starting from one picked by the map). Rivals wear their faction's colour and emblem, and their models download only when a faction is chosen.
@@ -1346,7 +1353,6 @@ Offline sound cues at default gain (linear peak, RMS dBFS; RMS is not LUFS):
 | Mission lost | 0.349 | -31.7 |
 
 All offline sanity checks passed; no cue clips. Listening quality needs the owner. Story wins 12/12, Standard meets its original targets, Veteran wins 11/12. Veteran mission 10 remains a strict-check failure after three tuning passes. The boundary-effects test now requires a vehicle wreck at 3.3 seconds and zero wrecks after 21.7 seconds, replacing its obsolete 3.3-second cleanup deadline. CI, deployment and real-device reviews have not been performed. See aaa/IMPLEMENTATION_PROGRESS.md for current validation and outstanding packages.
-
 
 ## 0.9.4: faction emblems and research tier II
 

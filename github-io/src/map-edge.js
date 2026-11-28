@@ -56,7 +56,9 @@ function skyMaterial(terrain, geometry, kinds, lows, detail) {
   const material = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide, fog: false });
   // uEdgeTime drives the sea's glints and the lava's pulse (view.js advances it while the world is lively);
   // uEdgeLive fades them under a mission look (tintEdge), so a night sea does not sparkle in daylight colours.
-  const motion = { time: { value: 0 }, live: { value: 1 } };
+  // uEdgeHero (horizon-view.js): 1 while the Hero-view sky dome is drawn: the far-plane triangle steps aside for it and
+  // the far haze takes the horizon colour itself (no screen-space gradient for a low camera). 0 = exactly as before.
+  const motion = { time: { value: 0 }, live: { value: 1 }, hero: { value: 0 } };
   material.userData.sky = { ...sky, dayHorizon: sky.horizon.clone(), dayZenith: sky.zenith.clone() };
   material.userData.motion = motion;
   const pos = geometry.attributes.position, skyData = new Float32Array(pos.count * 3);
@@ -90,16 +92,17 @@ function skyMaterial(terrain, geometry, kinds, lows, detail) {
     shader.uniforms.uZenith = { value: sky.zenith };
     shader.uniforms.uEdgeTime = motion.time;
     shader.uniforms.uEdgeLive = motion.live;
+    shader.uniforms.uEdgeHero = motion.hero;
     shader.vertexShader = shader.vertexShader.replace("#include <common>",
-      "#include <common>\nattribute vec3 skyData; varying vec3 vAtmosphere; varying vec3 vEdgeW; varying float vKind; varying float vLow;")
+      "#include <common>\nattribute vec3 skyData; uniform float uEdgeHero; varying vec3 vAtmosphere; varying vec3 vEdgeW; varying float vKind; varying float vLow;")
       .replace("#include <project_vertex>", `#include <project_vertex>
         vEdgeW = (modelMatrix * vec4(transformed, 1.0)).xyz;
         vKind = skyData.z < 0.0 ? 0.0 : skyData.x;
         vLow = skyData.z < 0.0 ? 0.0 : skyData.y;
-        if (skyData.z < 0.0) gl_Position = vec4(skyData.xy, 0.999999, 1.0);
+        if (skyData.z < 0.0) gl_Position = uEdgeHero > 0.5 ? vec4(0.0, 0.0, 2.0, 1.0) : vec4(skyData.xy, 0.999999, 1.0);
         vAtmosphere = vec3(gl_Position.xy / gl_Position.w, abs(skyData.z));`);
     shader.fragmentShader = shader.fragmentShader.replace("#include <common>",
-      "#include <common>\nuniform vec3 uHorizon, uZenith; uniform float uEdgeTime, uEdgeLive; varying vec3 vAtmosphere; varying vec3 vEdgeW; varying float vKind; varying float vLow;\n" + LOW_GLSL)
+      "#include <common>\nuniform vec3 uHorizon, uZenith; uniform float uEdgeTime, uEdgeLive, uEdgeHero; varying vec3 vAtmosphere; varying vec3 vEdgeW; varying float vKind; varying float vLow;\n" + LOW_GLSL)
       .replace("#include <color_fragment>", `#include <color_fragment>
         if (vKind > 0.5) {
           float lum = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -129,10 +132,10 @@ function skyMaterial(terrain, geometry, kinds, lows, detail) {
         vec3 airTone = mix(uHorizon, uZenith, 0.6) * 0.55;
         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(airLum), air * 0.55);
         diffuseColor.rgb = mix(diffuseColor.rgb * (1.0 - 0.22 * air), airTone, air * 0.3);
-        float altitude = smoothstep(-0.7, 1.1, vAtmosphere.y + 0.12 * vAtmosphere.x);
+        float altitude = smoothstep(-0.7, 1.1, vAtmosphere.y + 0.12 * vAtmosphere.x) * (1.0 - uEdgeHero);
         diffuseColor.rgb = mix(diffuseColor.rgb, mix(uHorizon, uZenith, altitude), vAtmosphere.z);`);
   };
-  material.customProgramCacheKey = () => "backdrop-v3";
+  material.customProgramCacheKey = () => "backdrop-v4";
   return material;
 }
 
