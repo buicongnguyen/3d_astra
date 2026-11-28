@@ -240,6 +240,8 @@ await suite("hero-challenges" + shardLabel, async () => {
     const mag = await page.evaluate(() => { const s = window.__frontier.sim; return s.get(s.skywing.id).mag; });
     await page.keyboard.press("x");
     await step(page, 0.1, 1);
+    // The HUD draws "Reloading" in its own frame (about 1 fps on a CI runner): wait for it before reading.
+    await page.waitForFunction(() => !document.querySelector(".hh-reload").hidden, null, { timeout: TIMEOUT.step }).catch(() => {});
     const re = await page.evaluate(() => { const s = window.__frontier.sim, h = s.get(s.skywing.id); return { mag: h.mag, reloading: s.time < (h.reloadAt ?? -1), label: !document.querySelector(".hh-reload").hidden }; });
     assert.ok(mag < 5 && re.mag === 5 && re.reloading && re.label, `reload: ${mag} -> ${JSON.stringify(re)}`);
     await keep(page, "hc-reload");
@@ -252,10 +254,16 @@ await suite("hero-challenges" + shardLabel, async () => {
     await keep(page, "hc-crouched");
     // A barrel: the reticle tints, a shot sets it off.
     const barrel = await page.evaluate(() => {
-      // Six metres short of it along the camera's heading, so it sits ahead on screen.
-      const f = window.__frontier, s = f.sim, h = s.get(s.skywing.id), i = s.hazards.findIndex((z) => z[2]), yaw = f.heroMode.info.yaw;
-      const [x, z] = s.hazards[i];
-      h.x = x - Math.sin(yaw) * 6; h.z = z - Math.cos(yaw) * 6; h.angle = yaw; h.cooldown = 0; s.updateVision();
+      // The barrel is brought to where the camera looks: the ground under the middle of the view, if that lies 4-18 m
+      // from the hero (else six metres ahead along the camera's heading). The hero is not moved, so the damped camera
+      // has nothing to catch up on; on a CI runner the camera never faced a barrel placed by heading (it projected to
+      // the screen's edge, x 1272 of 1440, run after run). A new hazard list makes the view redraw the barrels.
+      const f = window.__frontier, s = f.sim, v = f.view, h = s.get(s.skywing.id), i = s.hazards.findIndex((z) => z[2]), yaw = f.heroMode.info.yaw;
+      const r = v.renderer.domElement.getBoundingClientRect(), mid = v.point(r.left + r.width / 2, r.top + r.height * 0.5, r);
+      const d = mid ? Math.hypot(mid.x - h.x, mid.z - h.z) : 0;
+      const at = mid && d >= 4 && d <= 18 ? [mid.x, mid.z] : [h.x + Math.sin(yaw) * 6, h.z + Math.cos(yaw) * 6];
+      s.hazards = s.hazards.map((z, j) => (j === i ? [at[0], at[1], ...z.slice(2)] : z));
+      h.cooldown = 0; s.updateVision();
       return i;
     });
     await page.mouse.move(100, 100);
