@@ -728,7 +728,10 @@ export class Scatter {
     });
     this.blocks = [];
     this.triangles = 0;
-    for (const { mesher, props } of buildBlocks(terrain, planScatter(terrain, budget)).values()) {
+    const planned = planScatter(terrain, budget);
+    // H5 birds (bird-life.js): the tall props (trees, ruins, spires) birds can perch on: where and how tall.
+    this.tall = planned.filter((p) => HEIGHT[p.kind] >= 1.4).map((p) => ({ x: p.x, z: p.z, h: HEIGHT[p.kind] * p.s, kind: p.kind }));
+    for (const { mesher, props } of buildBlocks(terrain, planned).values()) {
       const geometry = new THREE.BufferGeometry(), position = new THREE.BufferAttribute(new Float32Array(mesher.p), 3);
       geometry.setAttribute("position", position);
       geometry.setAttribute("normal", new THREE.BufferAttribute(new Float32Array(mesher.n), 3));

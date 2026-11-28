@@ -25,6 +25,7 @@ HERE = Path(__file__).resolve().parent
 if str(HERE) not in sys.path:
     sys.path.insert(0, str(HERE))
 import frontier_kit as kit  # noqa: E402
+kit.DETAIL_BAKE = True  # H5: edge wear, crease grime and a dust gradient in the detail models' COLOR_0
 import generate_assets as ga  # noqa: E402
 import generate_air as air  # noqa: E402
 

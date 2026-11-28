@@ -36,6 +36,9 @@ import { WaveKindView } from "./wave-kind-view.js";
 import { HeroView } from "./hero-view.js";
 import { HeroModeView } from "./hero-mode-view.js";
 import { CoverView } from "./cover-view.js";
+import { CloseLookView } from "./close-look-view.js";
+import { UnitDecalsView } from "./unit-decals-view.js";
+import { BirdView } from "./bird-view.js";
 
 export const HOOKS = ["dress", "scaleFor", "frameScaleFor", "event", "update", "reset"];
 
@@ -84,4 +87,7 @@ export const VIEW_PLUGINS = [
   HeroView, // campaign heroes: gold ground ring (one draw) and an HTML nameplate that selects in one tap (no draw)
   HeroModeView, // H3a/H3d Hero mode: projectiles at the hero, landing rings and the reticle (3 draws, only in Hero mode)
   CoverView, // H6 cover walls: every piece merged into one static mesh (1 draw, only in a match with cover)
+  CloseLookView, // H5: close-view surface detail, rim and tight shadow in Hero mode (shared uniforms, no draw)
+  UnitDecalsView, // H5: team emblems, hull stripes and unit numbers on near units in Hero mode (one draw, only in Hero mode)
+  BirdView, // H5: perched flocks that react (one card draw; in Hero mode one more per bird family near the camera)
 ];

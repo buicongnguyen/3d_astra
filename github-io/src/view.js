@@ -1294,7 +1294,8 @@ export class WorldView {
     this.barScale = grow;
     this.barTall = 1 + 0.35 * Math.min(1, (grow - 1) * 2);
     this.unitsPerPixel = 1 / pixels;
-    this.placeShadow(Math.min(130, Math.max(40, dist * 2.2)));
+    // H5 (close-look-view.js): a tighter shadow box around the look point in Hero mode.
+    this.placeShadow(this.closeShadowHalf ? this.closeShadowHalf(dist) : Math.min(130, Math.max(40, dist * 2.2)));
   }
   updateCamera() {
     if (this.heroSaved) { this.updateHeroCamera(); return; }
@@ -1632,6 +1633,7 @@ export class WorldView {
     root.userData.kick=0;root.userData.kickSize=0;
     root.userData.gait=0;root.userData.stride=(e.id*0.7)%6.28;
     root.userData.pop=0;root.userData.built=e.complete!==false;
+    root.userData.id = e.id; // H5: unit numbers (unit-decals-view.js)
     root.userData.team = e.team;
     root.userData.type = key;
     if (key !== e.type) dressSkywing(root);

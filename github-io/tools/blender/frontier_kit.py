@@ -29,6 +29,9 @@ from mathutils import Euler, Matrix, Vector, noise
 from mathutils.bvhtree import BVHTree
 
 TAU = math.tau
+# H5 close-view bake (tools/blender/generate_detail.py sets it for the close-up detail models only): stronger edge
+# wear, crease grime from the near ambient-occlusion hits and a warm dust gradient from the ground up, all in COLOR_0.
+DETAIL_BAKE = False
 SHARP = math.radians(50)
 BASE_TONE = 0.8
 # Must match the aim/recoil rig pattern in src/view.js.
@@ -480,6 +483,7 @@ class Asset:
                 basis = n.to_track_quat('Z', 'Y').to_matrix()
                 origin = p + n * (dist * 0.015 + 2e-3)
                 hit = 0.0
+                near = 0
                 for d in dirs:
                     ray = basis @ d
                     loc, hit_normal, _, t = tree.ray_cast(origin, ray, dist)
@@ -493,6 +497,8 @@ class Asset:
                         loc = t < dist or None
                     if loc is not None:
                         hit += 1 - (t / dist) ** 2 * 0.5
+                        if t < dist * 0.22:
+                            near += 1
                 ao = 1 - hit / len(dirs)
                 k = 1 - self.ao_strength * (1 - ao)
                 edge = 1 + 0.24 * w
@@ -500,6 +506,20 @@ class Asset:
                 mott = 1 + 0.035 * noise.noise(p * 1.3) + 0.02 * noise.noise(p * 5.1)
                 g = max(0.0, min(1.0, BASE_TONE * k * edge * grime * mott))
                 dust = 1 - 0.05 * (1 - smoothstep(0.0, self.grime_height, p.z)) if self.ground else 1.0
+                if DETAIL_BAKE:
+                    # Edge wear: bevels and convex rims a little brighter (paint rubbed to the primer); crease grime: where
+                    # many rays hit close by (inner corners, seams under plates) darker and a touch warm; dust: a sandy
+                    # film from the ground up to about 1.4 grime heights, strongest at the feet and tracks.
+                    crease = smoothstep(0.18, 0.62, near / len(dirs))
+                    lift = 1 + 0.16 * w * (1 - crease)
+                    h = smoothstep(0.0, self.grime_height * 1.4, p.z) if self.ground else 1.0
+                    film = 0.22 * (1 - h)
+                    base = max(0.0, min(1.0, g * lift * (1 - 0.3 * crease)))
+                    r_ = base * (1 - crease * 0.04) * (1 - film) + film * 0.74
+                    g_ = base * (1 - crease * 0.08) * (1 - film) + film * 0.66
+                    b_ = base * (1 - crease * 0.16) * (1 - film) + film * 0.52
+                    colors += [max(0.0, min(1.0, r_)), max(0.0, min(1.0, g_)), max(0.0, min(1.0, b_)), 1.0]
+                    continue
                 colors += [g, g * (0.995 * dust + 0.005), g * (0.985 * dust), 1.0]
             attr = me.color_attributes.new('Col', 'BYTE_COLOR', 'POINT')
             attr.data.foreach_set('color', colors)

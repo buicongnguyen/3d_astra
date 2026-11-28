@@ -7,6 +7,7 @@
 // A theme change that alters the grade rewrites the chunk and a program-cache key, so three recompiles.
 import * as THREE from "three";
 import GRADE from "./look-grade.json" with { type: "json" };
+import { closeDetailShader } from "./close-detail.js";
 
 const ORIGINAL = THREE.ShaderChunk.tonemapping_pars_fragment;
 const STUB = "vec3 CustomToneMapping( vec3 color ) { return color; }";
@@ -86,11 +87,13 @@ export function rimShader(shader, color = null) {
   shader.uniforms.uRimPower = RIM.power;
   shader.uniforms.uRimColor = { value: color || RIM.color };
   shader.uniforms.uModelLift = RIM.lift;
+  // H5 (close-detail.js): surface detail near the Hero camera; the same fade lifts the rim there (uCdRim).
+  const close = closeDetailShader(shader);
   shader.fragmentShader = shader.fragmentShader
-    .replace("#include <common>", "#include <common>\nuniform float uRimStrength;\nuniform float uRimPower;\nuniform vec3 uRimColor;\nuniform float uModelLift;")
+    .replace("#include <common>", `#include <common>\nuniform float uRimStrength;\nuniform float uRimPower;\nuniform vec3 uRimColor;\nuniform float uModelLift;${close ? "\nuniform float uCdRim;" : ""}`)
     .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
 	{ float rimF = pow( 1.0 - clamp( normalize( normal ).z, 0.0, 1.0 ), uRimPower );
-	totalEmissiveRadiance += uRimColor * ( rimF * uRimStrength * ${color ? "1.4" : "1.0"} ) + diffuseColor.rgb * uModelLift; }`);
+	totalEmissiveRadiance += uRimColor * ( rimF * uRimStrength * ${color ? "1.4" : "1.0"}${close ? " * ( 1.0 + uCdRim * vCdFade )" : ""} ) + diffuseColor.rgb * uModelLift; }`);
 }
 // A close-up detail model's team paint (close-view.js): one material for every team, white, coloured per instance
 // through the batches' instance colour (entity-batches.js tint = the team colour times the part's own tint); the rim

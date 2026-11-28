@@ -1,11 +1,12 @@
-// The one texture of the building decals (src/building-decals-view.js, AAA round 3, R3-L): 32 cells of
-// 128 px in an 8 x 4 grid, drawn with Canvas 2D when the first building appears (no file to load, about
-// 2 MB of GPU memory with mipmaps). Cells painted white or light grey are tinted per instance (team colour);
+// The one texture of the building decals (src/building-decals-view.js, AAA round 3, R3-L): 40 cells of
+// 128 px in an 8 x 5 grid, drawn with Canvas 2D when the first building appears (no file to load, about
+// 2.7 MB of GPU memory with mipmaps). H5 added the fifth row: lit windows, a flag, an antenna mast, a team sign,
+// the unit numbers (digits 0-9 in one cell) and a hull stripe (read by unit-decals-view.js), a wall lamp, one spare. Cells painted white or light grey are tinted per instance (team colour);
 // the others keep their own colours. Every cell keeps a 2 px clear margin so mipmaps do not bleed.
 //
 // Ground cells are calm and low in saturation; only the lights are vivid.
 
-export const GRID = { cols: 8, rows: 4, cell: 128 };
+export const GRID = { cols: 8, rows: 5, cell: 128 };
 
 // Cell ids, in grid order (row by row from the top left).
 export const CELL = {
@@ -13,7 +14,10 @@ export const CELL = {
   gauge: 8, bar: 9, door: 10, helmet: 11, gear: 12, bolt: 13, sight: 14, wrench: 15,
   apron: 16, chevron: 17, runway: 18, dust: 19, boots: 20, tread: 21, dash: 22, blueprint: 23,
   pool: 24, ashfall: 25, wardens: 26, sunward: 27, veil: 28, meridian: 29, caution: 30, ember: 31,
+  window: 32, flag: 33, mast: 34, sign: 35, digits: 36, stripe: 37, lamp: 38, spare: 39,
 };
+// The digits cell: 0-9 in 5 columns and 2 rows (0-4 on top).
+export const DIGITS = { cols: 5, rows: 2 };
 
 const S = GRID.cell;
 
@@ -166,7 +170,45 @@ const PAINT = [
     g.fillStyle = "#2a221d"; g.fillRect(59, 44, 10, 38); g.fillRect(59, 88, 10, 10);
   },
   /* ember */ (g) => { glow(g, 64, 64, 40, "rgba(255,150,60,1)", "rgba(255,90,30,0)"); },
+  // ---- H5 (fifth row) ----
+  /* window: four lit panes in a frame (glow; the shader lights some panes per building) */ (g) => {
+    for (let i = 0; i < 4; i++) {
+      const x = 10 + (i % 2) * 56, y = 12 + Math.floor(i / 2) * 54;
+      const grad = g.createLinearGradient(0, y, 0, y + 46); grad.addColorStop(0, "rgba(255,236,190,1)"); grad.addColorStop(1, "rgba(255,196,120,0.85)");
+      g.fillStyle = grad; roundRect(g, x, y, 52, 46, 4); g.fill();
+      g.fillStyle = "rgba(255,255,255,0.55)"; g.fillRect(x + 6, y + 5, 8, 34);
+    }
+  },
+  /* flag: white cloth (tinted) with a darker band and a chevron, attached at the left edge */ (g) => {
+    g.fillStyle = "#f4f4f0"; g.fillRect(4, 18, 120, 84);
+    g.fillStyle = "#b9bdbf"; g.fillRect(4, 74, 120, 14);
+    g.fillStyle = "#ffffff"; g.beginPath(); g.moveTo(30, 34); g.lineTo(64, 58); g.lineTo(98, 34); g.lineTo(98, 48); g.lineTo(64, 72); g.lineTo(30, 48); g.closePath(); g.fill();
+    g.strokeStyle = "rgba(60,64,66,0.6)"; g.lineWidth = 3; g.strokeRect(5, 19, 118, 82);
+  },
+  /* mast: a thin antenna mast with cross bars and a red tip (sways from its foot) */ (g) => {
+    g.fillStyle = "#6e6a64"; g.fillRect(58, 14, 12, 112);
+    g.fillStyle = "#9b958c"; g.fillRect(61, 14, 4, 112);
+    g.fillStyle = "#6e6a64"; for (const y of [40, 70, 98]) g.fillRect(40, y, 48, 6);
+    g.fillStyle = "#ff5a3c"; g.beginPath(); g.arc(64, 12, 9, 0, Math.PI * 2); g.fill();
+  },
+  /* sign: a team board (tinted) with an arrow and three lines of lettering marks */ (g) => {
+    roundRect(g, 6, 26, 116, 76, 10); g.fillStyle = "#eef0f0"; g.fill(); g.lineWidth = 5; g.strokeStyle = "#5b6266"; g.stroke();
+    g.fillStyle = "#3b4246"; g.beginPath(); g.moveTo(20, 64); g.lineTo(42, 44); g.lineTo(42, 56); g.lineTo(58, 56); g.lineTo(58, 72); g.lineTo(42, 72); g.lineTo(42, 84); g.closePath(); g.fill();
+    for (const [y, w] of [[46, 46], [60, 38], [74, 50]]) { roundRect(g, 66, y, w, 7, 3); g.fill(); }
+  },
+  /* digits: 0-9, white with a dark edge (tinted), 5 x 2 */ (g) => {
+    g.font = "bold 50px Arial, Helvetica, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.lineWidth = 6; g.strokeStyle = "rgba(30,30,30,0.85)"; g.fillStyle = "#ffffff";
+    for (let d = 0; d < 10; d++) { const x = (d % 5) * 25.6 + 12.8, y = Math.floor(d / 5) * 64 + 34; g.save(); g.translate(x, y); g.scale(0.5, 1); g.strokeText(String(d), 0, 0); g.fillText(String(d), 0, 0); g.restore(); }
+  },
+  /* stripe: a team chevron stripe for unit hulls (tinted) */ (g) => {
+    g.fillStyle = "#ffffff";
+    for (const x of [14, 50, 86]) { g.beginPath(); g.moveTo(x, 34); g.lineTo(x + 22, 64); g.lineTo(x, 94); g.lineTo(x + 12, 94); g.lineTo(x + 34, 64); g.lineTo(x + 12, 34); g.closePath(); g.fill(); }
+  },
+  /* lamp: a small warm wall lamp (glow) */ (g) => { glow(g, 64, 64, 46, "rgba(255,226,170,1)", "rgba(255,190,110,0)"); g.fillStyle = "#fff8e6"; g.beginPath(); g.arc(64, 64, 9, 0, Math.PI * 2); g.fill(); },
+  /* spare */ () => {},
 ];
+
 
 // Draws the atlas into a new canvas (browser only).
 export function drawAtlas(doc = globalThis.document) {

@@ -58,6 +58,8 @@ const BUTTERFLY_COLORS = ["#ff9a2e", "#ffd43b", "#f7f3e3", "#6ec6ff", "#ff6fb5",
 const DRAGONFLY_COLORS = ["#2fd1c6", "#3b8cff", "#7be04f"];
 
 const rng = mulberry32;
+// H5: the most a fish turns a second (rad).
+export const FISH_TURN = 1.1;
 const hashId = fnv1a;
 const DIRECTION = new THREE.Vector3();
 const between = (r, [a, b]) => a + (b - a) * r();
@@ -224,6 +226,8 @@ attribute vec3 aColor;
 attribute float aSide; // -1 left wing, 1 right wing, 0 body
 attribute float aEdge; // 1 at the wing rim
 varying vec3 vColor;
+varying vec3 vWing; // H5: |x| and z on the wing (metres at size 1), 1 on a wing (0 the body)
+varying float vKind; // 0 butterfly, 1 dragonfly
 vec3 flutterAt(float t) {
   float ph = aB.w;
   if (aC.x < 0.5)
@@ -250,7 +254,38 @@ void main() {
   vec3 wing = aC.x < 0.5 ? mix(aColor, aColor * 0.25, aEdge * 0.7) : mix(aColor, vec3(0.86, 0.93, 0.96), 0.72);
   vec3 body = aC.x < 0.5 ? vec3(0.16, 0.14, 0.12) : aColor;
   vColor = (aSide == 0.0 ? body : wing) * mix(1.0, 0.82, abs(sin(a)));
+  vWing = vec3(abs(position.x), position.z, aSide == 0.0 ? 0.0 : 1.0);
+  vKind = aC.x;
   gl_Position = projectionMatrix * viewMatrix * vec4(place(local * show, fwd, p), 1.0);
+}`;
+// H5: butterfly wings get a pattern (an eye spot on each forewing, a smaller one on each hindwing, dark veins and a pale
+// band), dragonfly wings are see-through with a fine vein net and a dark spot near the tip. Same draws as before; the
+// dragonflies' material blends (the wings let the water show through).
+const FLUTTER_FRAGMENT = `varying vec3 vColor; varying vec3 vWing; varying float vKind;
+void main() {
+  vec3 c = vColor; float a = 1.0;
+  if (vWing.z > 0.5) {
+    vec2 w = vWing.xy;
+    if (vKind < 0.5) {
+      float fore = step(-0.02, w.y);
+      vec2 spot = fore > 0.5 ? vec2(0.2, 0.1) : vec2(0.13, -0.12);
+      float r = length(w - spot) / (fore > 0.5 ? 1.0 : 0.75);
+      c = mix(c, c * 0.18, smoothstep(0.042, 0.034, r));                 // dark ring
+      c = mix(c, vec3(0.96, 0.95, 0.86), smoothstep(0.024, 0.016, r));    // pale eye
+      c = mix(c, vec3(0.05, 0.05, 0.08), smoothstep(0.01, 0.003, r));     // pupil
+      float ang = atan(w.y, w.x + 0.01);
+      c *= 1.0 - 0.28 * (1.0 - smoothstep(0.0, 0.05, abs(fract(ang * 1.6 + 0.5) - 0.5))) * step(0.04, w.x); // veins
+      c = mix(c, c * 1.35 + 0.08, smoothstep(0.012, 0.0, abs(w.x - 0.12)) * fore * 0.6); // pale band
+    } else {
+      vec2 g = abs(fract(w * vec2(38.0, 52.0)) - 0.5);
+      float vein = 1.0 - smoothstep(0.0, 0.12, min(g.x, g.y));
+      a = 0.3 + 0.35 * vein;
+      c = mix(vec3(0.82, 0.9, 0.94), c * 0.5, vein * 0.6);
+      float tip = smoothstep(0.025, 0.012, length(w - vec2(0.31, w.y > 0.0 ? 0.075 : -0.035)));
+      c = mix(c, vec3(0.12, 0.12, 0.16), tip); a = max(a, tip * 0.9);
+    }
+  }
+  gl_FragColor = vec4(c * a, a);
 }`;
 
 // Fish swim along the river channel and wrap at the map ends. Each is a small low-poly 3D fish
@@ -259,16 +294,14 @@ void main() {
 // on the belly. A travelling wave bends the body, growing toward the tail; a fixed light shades the facets.
 // Drawn just above the opaque water, tinted toward it and partly transparent so they read as under it.
 const FISH_VERTEX = `${COMMON}
-attribute vec4 aA; // x, z, size, direction
+attribute vec4 aA; // x, z, size, heading (H5: the wander's live state, written each frame by AmbientLife.swim)
 attribute vec4 aB; // speed, phase, koi (0/1), kind (0 silver, 1 koi, 2 carp)
 attribute vec2 aPaint; // 0 belly .. 1 back, 1 = fin
 varying vec3 vColor; varying float vAlpha;
 void main() {
-  float t = uTime, span = uHalf * 2.0 - 4.0, dir = aA.w;
-  float x = mod(aA.x + uHalf - 2.0 + t * aB.x * dir, span) - span * 0.5;
-  float z = aA.y + sin(t * 0.4 + aB.y) * 0.5;
+  float t = uTime, x = aA.x, z = aA.y;
   vec3 p = vec3(x, -0.03, z);
-  vec2 fwd = normalize(vec2(dir, cos(t * 0.4 + aB.y) * 0.2));
+  vec2 fwd = vec2(cos(aA.w), sin(aA.w));
   vec3 local = position * aA.z;
   // The swimming wave: nothing at the nose, strongest at the tail tip.
   float k = clamp((0.42 - position.z) / 0.9, 0.0, 1.0);
@@ -349,7 +382,7 @@ const MOTE_FRAGMENT = `varying vec3 vColor; varying float vAlpha;
 void main() { float d = length(gl_PointCoord - 0.5); float a = vAlpha * (1.0 - smoothstep(0.15, 0.5, d)); if (a < 0.004) discard; gl_FragColor = vec4(vColor, a); }`;
 
 // Low-poly shapes in a local frame: +z forward, +x right, y up.
-function birdGeometry() {
+export function birdGeometry() {
   const p = [], span = [], tip = [];
   const v = (x, y, z, s = 0, t = 0) => { p.push(x, y, z); span.push(s); tip.push(t); };
   const tri = (a, b, c) => { v(...a); v(...b); v(...c); };
@@ -491,7 +524,9 @@ export class AmbientLife {
       const pick = (b, name) => name === "aA" ? [b.x, b.y, b.z, b.size] : name === "aB" ? [b.rx, b.rz, b.speed, b.phase]
         : name === "aC" ? [dragonfly ? 1 : 0, dragonfly ? 46 : 16, 0, 0] : hex(b.color).toArray();
       const geometry = instanced(flutterGeometry(dragonfly), rows, pick, [["aA", 4], ["aB", 4], ["aC", 4], ["aColor", 3]]);
-      add(geometry, material(FLUTTER_VERTEX, SOLID_FRAGMENT, {}, { side: THREE.DoubleSide }), dragonfly ? "life:dragonflies" : "life:butterflies");
+      // Premultiplied blending: the butterflies stay opaque (alpha 1), the dragonflies' wings let the ground through.
+      const options = { side: THREE.DoubleSide, ...(dragonfly ? { transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor } : {}) };
+      add(geometry, material(FLUTTER_VERTEX, FLUTTER_FRAGMENT, {}, options), dragonfly ? "life:dragonflies" : "life:butterflies", dragonfly ? 1 : 0);
       register(dragonfly ? "dragonflies" : "butterflies", geometry, rows, (b) => [b.x, b.z, Math.max(b.rx, b.rz)]);
     };
     flutter(plan.butterflies, false);
@@ -499,12 +534,19 @@ export class AmbientLife {
     if (plan.fish.length) {
       // Kind: the koi stay koi; the rest are silver or dark carp, picked from the phase (the seeded plan is unchanged).
       const kind = (f) => f.koi ? 1 : (f.phase * 7.31) % 1 < 0.6 ? 0 : 2;
-      const pick = (f, name) => name === "aA" ? [f.x, f.z, f.size, f.dir] : [f.speed, f.phase, f.koi, kind(f)];
+      // H5: each fish wanders with a turn limit (swim()): its live place and heading start at the plan's.
+      // The lane is the centre line of the fish's own river (the nearest one).
+      const rivers = terrain.rivers?.length ? terrain.rivers.map((r) => r.z) : [0];
+      const laneOf = (z) => rivers.reduce((a, b) => (Math.abs(b - z) < Math.abs(a - z) ? b : a));
+      for (const f of plan.fish) Object.assign(f, { px: f.x, pz: f.z, h: f.dir > 0 ? 0 : Math.PI, aim: f.dir > 0 ? 0 : Math.PI, next: f.phase, lane: laneOf(f.z) });
+      const pick = (f, name) => name === "aA" ? [f.px, f.pz, f.size, f.h] : [f.speed, f.phase, f.koi, kind(f)];
       const geometry = instanced(fishGeometry(), plan.fish, pick, [["aA", 4], ["aB", 4]]);
+      geometry.getAttribute("aA").setUsage(THREE.DynamicDrawUsage);
       add(geometry, material(FISH_VERTEX, FISH_FRAGMENT, {}, { transparent: true, side: THREE.DoubleSide }), "life:fish");
-      // Same path as FISH_VERTEX, so a blast kills the fish that is actually there now.
-      const span = half * 2 - 4, wrap = (a, n) => ((a % n) + n) % n;
-      register("fish", geometry, plan.fish, (f, t) => [wrap(f.x + half - 2 + t * f.speed * f.dir, span) - span / 2, f.z, 0.6]);
+      // The fish's live place, so a blast kills the fish that is actually there now.
+      this.fish = register("fish", geometry, plan.fish, (f) => [f.px, f.pz, 0.6]);
+      this.wander = rng(hashId(`${terrain.id}|fish`)); // cosmetic only: never the simulation's generator
+      this.fishHalf = half;
     }
     if (plan.motes.length) {
       const look = MOTES[plan.moteLook], g = new THREE.BufferGeometry();
@@ -579,8 +621,36 @@ export class AmbientLife {
   get aliveCount() {
     return this.groups.reduce((n, g) => n + g.alive, 0);
   }
+  // H5 fish wander (lightweight-game-objects: turn-limited wander, accumulated state): each fish turns toward an aim
+  // heading at most FISH_TURN rad/s, picks a new aim every 1.5-4 s (seeded), keeps to its river (about 2 m either side of the centre line)
+  // and turns back before the map's end and the ford in the middle.
+  swim(dt) {
+    const g = this.fish;
+    if (!g || dt <= 0) return;
+    const r = this.wander, a = g.geometry.getAttribute("aA"), arr = a.array, lim = this.fishHalf - 5;
+    for (let i = 0; i < g.alive; i++) {
+      const f = g.rows[i];
+      f.next -= dt;
+      if (f.next <= 0) { f.next = 1.5 + r() * 2.5; f.aim = f.h + (r() - 0.5) * 1.6; }
+      // Keep to the lane: steer back toward it the further the fish strays; turn round at the ends and the ford.
+      const off = f.pz - f.lane, east = Math.cos(f.h) >= 0;
+      let aim = f.aim;
+      if (Math.abs(off) > 1.1) aim = Math.atan2(-Math.sign(off), east ? 0.8 : -0.8);
+      else if (Math.abs(Math.sin(aim)) > 0.55) aim = Math.atan2(Math.sign(Math.sin(aim)) * 0.55, Math.cos(aim) || 1);
+      if ((east && f.px > lim) || (!east && f.px < -lim) || (Math.abs(f.px) < 7.5 && (east ? f.px < 0 : f.px > 0) && Math.abs(f.px) > 5.5)) { aim = east ? (off > 0 ? -Math.PI + 0.25 : Math.PI - 0.25) : (off > 0 ? -0.25 : 0.25); f.aim = aim; } // turn round toward the centre line
+      let d = Math.atan2(Math.sin(aim - f.h), Math.cos(aim - f.h));
+      const turn = FISH_TURN * dt;
+      d = Math.max(-turn, Math.min(turn, d));
+      f.h += d;
+      const v = f.speed * (1 - 0.6 * Math.abs(d) / Math.max(1e-6, turn)); // slower in a tight turn
+      f.px += Math.cos(f.h) * v * dt; f.pz += Math.sin(f.h) * v * dt;
+      arr[i * 4] = f.px; arr[i * 4 + 1] = f.pz; arr[i * 4 + 3] = f.h;
+    }
+    a.clearUpdateRanges(); a.addUpdateRange(0, g.alive * 4); a.needsUpdate = true;
+  }
   update(dt, camera, bufferHeight) {
     const level = this.quiet ? 0 : this.level, speed = [0, 0.35, 1][level];
+    this.swim(Math.min(0.05, Math.max(0, dt)) * speed);
     this.uniforms.uTime.value = (this.uniforms.uTime.value + Math.min(0.05, Math.max(0, dt)) * speed) % 3600;
     this.uniforms.uAmp.value = [0, 0.45, 1][level];
     if (this.pixels) this.pixels.value = bufferHeight / Math.max(1, camera.top - camera.bottom);

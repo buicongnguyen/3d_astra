@@ -2,6 +2,7 @@ import { Color } from "three";
 import { modelLoader } from "./model-decode.js";
 import { SOURCE_LAYER } from "./entity-batches.js";
 import { cacheTransforms } from "./transform-cache.js";
+import { CREATURE_LIFE, tagCreatureLife } from "./close-detail.js";
 
 // Close view (H3b): close-up detail models for units near a close camera (the coming Hero mode, H3a).
 //
@@ -92,6 +93,8 @@ export class CloseView {
       const url = `${import.meta.env.BASE_URL}models/detail/${this.types.get(type)}`;
       load = modelLoader().loadAsync(url).then((gltf) => {
         this.view.buildTemplates(type, gltf, true);
+        // H5: the wild creatures' detail models breathe, look about and shy from the hero (close-detail.js).
+        if (CREATURE_LIFE.has(type)) for (const [key, template] of this.view.detailTemplates) if (key.startsWith(type + "-")) tagCreatureLife(template);
         this.ready.add(type);
       }).catch((error) => { this.failed = `${type}: ${error}`; });
       this.loads.set(type, load);

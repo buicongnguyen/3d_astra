@@ -25,11 +25,11 @@ import { CELL, GRID, drawAtlas } from "./building-decals-atlas.js";
 // View only: the plugin reads the simulation and never writes it.
 
 const CAPACITY = 2048, TRACKS = 96, DUSTS = 12, POOL = TRACKS + DUSTS;
-const GLOW = 32; // added to a cell id: drawn as light (additive)
-export const MODE = { still: 0, blink: 1, progress: 2, scroll: 3, pulse: 4, chase: 5, track: 6, rotate: 7, night: 8, blueprint: 9, dust: 10, halo: 11 };
+const GLOW = 64; // added to a cell id: drawn as light (additive)
+export const MODE = { still: 0, blink: 1, progress: 2, scroll: 3, pulse: 4, chase: 5, track: 6, rotate: 7, night: 8, blueprint: 9, dust: 10, halo: 11, wave: 12, sway: 13, window: 14 };
 const LIGHT = { red: 0xff6a3d, amber: 0xffc46b, warm: 0xffd9a0, white: 0xffffff, mauve: 0xd9a8ff, ice: 0xbfe6ff, ember: 0xff8a3a };
-// World faces (outward x, z) and the tangent u runs along.
-const FACE = { S: [0, 1, 1, 0], E: [1, 0, 0, -1], W: [-1, 0, 0, 1] };
+// World faces (outward x, z) and the tangent u runs along. "R" (H5) stands a decal up on the roof, facing south.
+const FACE = { S: [0, 1, 1, 0], E: [1, 0, 0, -1], W: [-1, 0, 0, 1], R: [0, 1, 1, 0] };
 
 // Wall decals of each building type: cell, face, u (-1..1 of the half width), v (0..1 of the height),
 // width, height (world units for a building of radius 2.5; scaled with the radius), then options:
@@ -38,6 +38,14 @@ const FACE = { S: [0, 1, 1, 0], E: [1, 0, 0, -1], W: [-1, 0, 0, 1] };
 // Beacons are drawn at half their listed size (owner, 2026-11-23): small roof lights, not big yellow balls.
 const BEACON_SCALE = 0.5;
 const w = (cell, face, u, v, wd, ht, o = {}) => { const k = cell === "beacon" ? BEACON_SCALE : 1; return { cell: CELL[cell], face, u, v, wd: wd * k, ht: ht * k, ...o }; };
+// H5 building life: roof parts stand on the roof (u across, d front to back, -1..1 of the half footprint), then move
+// dx m along the face and dy m up. A flag is a mast and a cloth that waves (MODE.wave, in the vertex shader); masts sway
+// from the foot (MODE.sway); windows light some panes per building, more at night (MODE.window). All in the same draw.
+const roof = (cell, u, d, wd, ht, o = {}) => ({ cell: CELL[cell], face: "R", u, v: 0, d, wd, ht, dx: 0, dy: 0, ...o });
+const flagOn = (u, d, pole = 1.7, p = 0) => [roof("mast", u, d, 0.16, pole, { m: MODE.sway, p, amp: 0.02 }),
+  roof("flag", u, d, 0.95, 0.6, { m: MODE.wave, p, team: true, dx: 0.5, dy: pole - 0.42 })];
+const mastOn = (u, d, h = 2.2, p = 0) => roof("mast", u, d, 0.2, h, { m: MODE.sway, p, amp: 0.07 });
+const windows = (face, u, v, wd = 0.7, ht = 0.5, p = 0) => w("window", face, u, v, wd, ht, { glow: true, m: MODE.window, p, color: LIGHT.warm });
 const PRODUCER = [
   w("door", "S", 0, 0.14, 1.7, 0.4, { glow: true, m: MODE.pulse, role: "door", color: LIGHT.warm }),
   w("bar", "S", 0, 0.52, 1.25, 0.32, { glow: true, m: MODE.progress, role: "bar", team: true }),
@@ -82,6 +90,21 @@ export const WALL = {
   veilrelay: [w("emblem", "S", 0, 0.42, 0.6, 0.65, { team: true }), w("gauge", "S", 0.6, 0.4, 0.4, 0.6),
     w("beacon", "S", -0.5, 0.9, 0.38, 0.38, { glow: true, m: MODE.blink, p: 0.3, color: LIGHT.mauve }), w("banner", "E", 0, 0.55, 0.5, 0.85, { team: true })],
 };
+// H5 additions per type (merged into WALL below, so the R3-L lists above stay as they were).
+const LIFE = {
+  hq: [...flagOn(-0.55, -0.35, 2.0, 0.1), mastOn(0.55, -0.3, 2.6, 0.3), windows("E", -0.5, 0.3, 0.7, 0.45, 0.2), windows("W", 0.5, 0.3, 0.7, 0.45, 0.6),
+    w("sign", "S", -0.55, 0.22, 0.6, 0.4, { team: true }), w("lamp", "S", 0.42, 0.3, 0.3, 0.3, { glow: true, m: MODE.night, color: LIGHT.warm })],
+  barracks: [...flagOn(0.5, -0.3, 1.8, 0.45), windows("E", 0, 0.42, 0.6, 0.4, 0.3), w("sign", "S", 0.6, 0.22, 0.55, 0.36, { team: true }),
+    w("lamp", "S", -0.4, 0.3, 0.28, 0.28, { glow: true, m: MODE.night, color: LIGHT.warm })],
+  foundry: [mastOn(0.5, -0.3, 2.4, 0.7), windows("W", -0.45, 0.42, 0.6, 0.4, 0.5), w("lamp", "S", 0.42, 0.3, 0.28, 0.28, { glow: true, m: MODE.night, color: LIGHT.warm })],
+  relay: [mastOn(0.3, 0, 2.2, 0.15)],
+  tower: [...flagOn(0, 0, 1.4, 0.8)],
+  workshop: [mastOn(-0.5, -0.2, 2, 0.4), w("sign", "S", 0.15, 0.24, 0.5, 0.34, { team: true })],
+  salvageyard: [mastOn(0.4, -0.3, 2.2, 0.9)],
+  waystation: [...flagOn(0.45, -0.2, 1.8, 0.2)],
+  veilrelay: [mastOn(-0.3, 0, 2, 0.55)],
+};
+for (const [type, list] of Object.entries(LIFE)) WALL[type] = [...(WALL[type] || []), ...list];
 const TYPE_FACTION = { salvageyard: "ashfall", waystation: "sunward", pylon: "wardens", veilrelay: "veil" };
 const FACTION_CELL = { ashfall: CELL.ashfall, wardens: CELL.wardens, sunward: CELL.sunward, veil: CELL.veil, meridian: CELL.meridian };
 const FLOW_FROM = new Set(["foundry", "relay"]); // energy dashes run from these to the Command core
@@ -94,6 +117,8 @@ export function nightOf(state) {
 
 const VERTEX = /* glsl */ `
 attribute vec4 aData;
+uniform float uTime;
+varying float vWave;
 varying vec2 vUv;
 varying vec4 vData;
 varying vec3 vTint;
@@ -107,7 +132,20 @@ void main() {
   #else
     vTint = vec3(1.0);
   #endif
-  vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+  vec3 pos = position;
+  vWave = 0.0;
+  if (aData.y == ${MODE.wave}.0) {
+    // A flag: the cloth ripples out of its plane, more toward the free edge (uv.x 1), and sags a little.
+    float u = uv.x, s = sin(uTime * 5.2 - u * 7.0 + aData.z * 6.283);
+    vWave = s * u;
+    pos.z += s * 0.16 * u + sin(uTime * 2.3 + aData.z * 3.0) * 0.05 * u;
+    pos.y -= 0.06 * u * u;
+  } else if (aData.y == ${MODE.sway}.0) {
+    // A mast: sways from its foot (aData.w: the tip's swing in metres; the quad's width undoes the instance scale).
+    float wd = max(1e-3, length(instanceMatrix[0].xyz));
+    pos.x += sin(uTime * 1.7 + aData.z * 6.283) * aData.w * uv.y * uv.y / wd;
+  }
+  vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(pos, 1.0);
   if (aData.y == ${MODE.halo}.0) {
     mvPosition = modelViewMatrix * instanceMatrix * vec4(0.0, 0.0, 0.0, 1.0);
     mvPosition.xy += position.xy * aData.w;
@@ -121,6 +159,7 @@ uniform sampler2D uAtlas;
 uniform float uTime;
 uniform float uStill;
 uniform float uNight;
+varying float vWave;
 varying vec2 vUv;
 varying vec4 vData;
 varying vec3 vTint;
@@ -158,6 +197,14 @@ void main() {
   }
   else if (m == ${MODE.track}) fade = clamp(1.0 - (t - val) / 20.0, 0.0, 1.0);
   else if (m == ${MODE.night}) k = 0.05 + 0.7 * uNight;
+  else if (m == ${MODE.window}) {
+    // Some panes lit per building (from its phase), a dim glow by day and warm at night; one pane now and then flickers.
+    vec2 pane = floor(clamp(vUv, 0.0, 0.999) * 2.0);
+    float h = fract(sin(dot(pane + phase * 7.13, vec2(12.9898, 78.233))) * 43758.5453);
+    float lit = step(0.32, h) * (h > 0.92 ? 0.55 + 0.45 * step(0.2, fract(t * 0.31 + h * 5.0)) : 1.0);
+    k = lit * (0.16 + 0.95 * uNight);
+  }
+  else if (m == ${MODE.wave}) k = 0.86 + 0.14 * vWave;
   else if (m == ${MODE.blueprint}) fade = val < 0.0 ? 1.0 : clamp(1.0 - (t - val) / 1.5, 0.0, 1.0);
   vec3 col = tex.rgb * vTint;
   float a = tex.a * fade;
@@ -202,6 +249,7 @@ export class BuildingDecalsView {
     atlas.anisotropy = 4;
     atlas.needsUpdate = true;
     this.uniforms = { uAtlas: { value: atlas }, uTime: { value: 0 }, uStill: { value: 0 }, uNight: { value: 0 } };
+    this.view.decalAtlas = this.uniforms; // H5: the unit decals (unit-decals-view.js) share this texture and clock
     const material = new THREE.ShaderMaterial({
       name: "BuildingDecals",
       uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, {}]),
@@ -254,6 +302,22 @@ export class BuildingDecalsView {
     const wall = [];
     for (const spec of WALL[type] || []) {
       const [fx, fz, tx, tz] = FACE[spec.face], out = toModel(fx, fz), along = toModel(tx, tz);
+      if (spec.face === "R") {
+        // H5 roof part: a ray straight down at (u, d) of the footprint finds the roof; the quad stands on it, facing out.
+        const halfA = Math.abs(along.x) * (box.max.x - box.min.x) / 2 + Math.abs(along.z) * (box.max.z - box.min.z) / 2;
+        const halfO = Math.abs(out.x) * (box.max.x - box.min.x) / 2 + Math.abs(out.z) * (box.max.z - box.min.z) / 2;
+        const origin = centre.clone().addScaledVector(along, spec.u * halfA * 0.7).addScaledVector(out, spec.d * halfO * 0.7);
+        origin.y = box.max.y + 2;
+        ray.set(origin, new THREE.Vector3(0, -1, 0));
+        ray.far = box.max.y - box.min.y + 4;
+        const hit = ray.intersectObject(template, true).find((h) => h.face && h.object.isMesh);
+        const top = hit ? hit.point.y : box.max.y;
+        const p = origin.clone().addScaledVector(along, spec.dx * size);
+        p.y = top + (spec.ht / 2 + spec.dy) * size;
+        const matrix = new THREE.Matrix4().makeBasis(along.clone().multiplyScalar(spec.wd * size), UP.clone().multiplyScalar(spec.ht * size), out.clone()).setPosition(p);
+        wall.push({ matrix, spec });
+        continue;
+      }
       const half = Math.abs(along.x) * (box.max.x - box.min.x) / 2 + Math.abs(along.z) * (box.max.z - box.min.z) / 2;
       const origin = centre.clone().addScaledVector(along, spec.u * half * 0.8).addScaledVector(out, reach);
       origin.y = box.min.y + spec.v * (box.max.y - box.min.y);
@@ -365,7 +429,7 @@ export class BuildingDecalsView {
         scratch.m.multiplyMatrices(scratch.b, matrix);
         const tint = spec.team ? team : spec.color ?? 0xffffff;
         if (spec.role) rec[spec.role].push(i);
-        this.put(i++, scratch.m, tint, spec.cell + (spec.glow ? GLOW : 0), spec.m ?? MODE.still, spec.p ?? 0, spec.role === "door" ? -100 : 0);
+        this.put(i++, scratch.m, tint, spec.cell + (spec.glow ? GLOW : 0), spec.m ?? MODE.still, spec.p ?? 0, spec.role === "door" ? -100 : spec.amp ?? 0);
       }
       // Ground in front of the gate (south, +z).
       const front = e.z + place.ext.maxZ, half = Math.max(1.2, Math.min(2.6, (place.ext.maxX - place.ext.minX) * 0.36));

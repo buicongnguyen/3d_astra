@@ -223,6 +223,9 @@ jobs:
           # H3b close view: near units swap to their close-up detail models; normal play draws unchanged; phone draw budget.
           - name: h3b-close-view
             scripts: close-view
+          # H5 close-view look: surface detail, rim, tight shadow, unit decals, creature life and birds that react.
+          - name: h5-look
+            scripts: h5-look
           - name: bosses
             scripts: boss
           # Split from "ui-extras" (Wave 1 integration): the three suites ran ~119 s locally, ~28 min estimated on the runner.

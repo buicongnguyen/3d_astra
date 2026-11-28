@@ -112,6 +112,7 @@
     "test:unit-viewer": "node tests/unit-viewer.mjs",
     "test:faction-dress": "node tests/faction-dress.mjs",
     "test:close-view": "node tests/close-view.mjs",
+    "test:h5-look": "node tests/h5-look.mjs",
     "test:ceremony": "node tests/ceremony.mjs",
     "test:rank": "node tests/rank.mjs",
     "test:audio-juice": "node tests/audio-juice.mjs",

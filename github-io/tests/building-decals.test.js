@@ -33,10 +33,10 @@ function stage() {
 }
 const decalsOf = (p) => p.mesh.count - 108; // the first 108 slots are the track and dust pools
 
-test("the atlas has one cell per id in an 8 x 4 grid, and every building type has wall decals", () => {
-  assert.deepEqual(GRID, { cols: 8, rows: 4, cell: 128 });
-  assert.equal(CELL_COUNT, 32);
-  assert.deepEqual(Object.values(CELL).sort((a, b) => a - b), [...Array(32).keys()]);
+test("the atlas has one cell per id in an 8 x 5 grid (H5: the fifth row), and every building type has wall decals", () => {
+  assert.deepEqual(GRID, { cols: 8, rows: 5, cell: 128 });
+  assert.equal(CELL_COUNT, 40);
+  assert.deepEqual(Object.values(CELL).sort((a, b) => a - b), [...Array(40).keys()]);
   for (const type of ["hq", "barracks", "foundry", "relay", "tower", "workshop", "salvageyard", "waystation", "pylon", "veilrelay"])
     assert.ok(WALL[type]?.length >= 4, `${type} has decals`);
   assert.ok(VIEW_PLUGINS.at(-1) === BuildingDecalsView || VIEW_PLUGINS.includes(BuildingDecalsView), "registered");
@@ -138,4 +138,20 @@ test("gate details lie in front of the south face, for both facings", () => {
     const chase = plugin.records.get(b.id).chase;
     for (const s of chase) { m.getMatrixAt(s, mat); p.setFromMatrixPosition(mat); assert.ok(p.z > b.z + 1, `runway light south of ${b.team}`); assert.ok(Math.abs(p.x - b.x) < 4); }
   }
+});
+
+test("H5 building life: flags wave and masts sway on the roofs, windows light up, team signs; all in the same one draw", () => {
+  const { view, sim, add, plugin } = stage();
+  add("hq", 0, 0, 0); add("barracks", 1, 20, 0);
+  plugin.update(sim, 0.016);
+  assert.equal(view.scene.children.filter((o) => o.isInstancedMesh).length, 1, "still one draw");
+  const modes = new Map(), cells = new Set();
+  for (let i = 108; i < plugin.mesh.count; i++) { const m = plugin.data.getY(i); modes.set(m, (modes.get(m) || 0) + 1); cells.add(plugin.data.getX(i) % 64); }
+  assert.ok(modes.get(MODE.wave) >= 2, "a flag on each building");
+  assert.ok(modes.get(MODE.sway) >= 3, "flag poles and antenna masts sway");
+  assert.ok(modes.get(MODE.window) >= 2, "lit windows");
+  for (const c of [CELL.flag, CELL.mast, CELL.window, CELL.sign]) assert.ok(cells.has(c), `cell ${c}`);
+  // Roof parts stand above the roof (the stage's boxes are 3 m tall).
+  const p = new THREE.Vector3(), mat = new THREE.Matrix4();
+  for (let i = 108; i < plugin.mesh.count; i++) if (plugin.data.getY(i) === MODE.wave) { plugin.mesh.getMatrixAt(i, mat); p.setFromMatrixPosition(mat); assert.ok(p.y > 3, `flag above the roof: ${p.y}`); }
 });
