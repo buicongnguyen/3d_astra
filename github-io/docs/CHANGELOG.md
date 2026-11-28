@@ -2,6 +2,10 @@
 
 ## Unreleased: Round A.2
 
+### Shots leave the gun, kneeling or standing (owner 2026-11-28)
+- **Shots at the hero** (Hero mode, Skywing on foot) started 1.1 m above the shooter's feet, below most guns. They now start at the shooter's own muzzle: its weapon's height and barrel reach (visual-style.json, as every battle shot uses).
+- **Kneel or stand.** Rangers, Anti-tank teams and gunners kneel to fire standing still and fire standing on the move. Every shot (battle and Hero mode) now starts lower by the kneel's actual drop (`kneelDrop`, src/unit-rig.js: the same maths as the shader's body bone), so a kneeling soldier fires from the knee and a walking one from the shoulder.
+
 ### No screen-wide beam lines in Skywing / Hero view (owner 2026-11-28)
 - **Beam strips** (repair, heal and energy beams) are camera-facing cards turned along the beam. Under the perspective Hero camera they drew at their full world length even when the beam ran toward the lens, so a 5 m repair beam could cross the whole screen. They are now shortened by how much of the beam lies across the view and capped at 35% of the view's height (`STRIP_SCREEN`, src/fx-sprites.js). The RTS camera is unchanged.
 - **Harvester repairs** under the Hero camera show welding sparks and the wrench on the building, with no beam line.

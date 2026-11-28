@@ -134,3 +134,31 @@ test("beam strips are foreshortened and capped under the Hero camera; no Harvest
   const fx = fs.readFileSync(new URL("../src/fx.js", import.meta.url), "utf8");
   assert.match(fx, /e\.weapon === "repair" && this\.view\.camera\?\.isPerspectiveCamera/);
 });
+
+// Owner 2026-11-28: a shot at the (landed) hero left 1.1 m above the shooter's feet, below most guns. It now starts at
+// the weapon's own muzzle height and barrel reach (visual-style.json), as every battle shot does in fx.aim.
+test("a shot at the hero starts at the shooter's muzzle height and barrel reach", () => {
+  for (const [weapon, unit] of [["rifle", "ranger"], ["tank", "tank"], ["antitank", "antitank"]]) {
+    const look = heroShotLook({ weapon }, unit, null);
+    const style = STYLE.weapons[unit] || STYLE.weapons[weapon];
+    assert.equal(look.height, style.height, `${unit} muzzle height`);
+    assert.equal(look.reach, style.reach, `${unit} barrel reach`);
+  }
+  assert.ok(heroShotLook({ weapon: "tank" }, "tank", null).height > 1.5, "a tank fires from its turret, above 1.1 m");
+});
+
+// Owner 2026-11-28: Rangers and Anti-tank teams kneel to fire standing still and fire standing on the move. The heights
+// in visual-style.json are the standing muzzle (measured on the rest pose, tests/stalker.test.js); a kneel lowers the
+// gun by the body bone's drop (kneel * hipY * 0.45 * drawn scale, unit-rig.js rigApply), and every shot starts there.
+test("a kneeling shooter's shot starts lower by the kneel's drop; standing, moving or unrigged, no drop", async () => {
+  const { kneelDrop, KNEELERS } = await import("../src/unit-rig.js");
+  assert.ok(KNEELERS.has("ranger") && KNEELERS.has("antitank"));
+  const unit = (kneel, scale = 1) => ({ readabilityScale: scale, rig: { kind: "infantry", legLength: 0.95, motion: [0, 0, kneel, 1] } });
+  assert.equal(kneelDrop(unit(0)), 0, "standing (or moving): the standing muzzle");
+  assert.ok(Math.abs(kneelDrop(unit(1)) - 0.95 * 0.45) < 1e-9, "a full kneel drops the gun 0.43 m");
+  assert.ok(Math.abs(kneelDrop(unit(0.5, 1.4)) - 0.5 * 0.95 * 0.45 * 1.4) < 1e-9, "half way down, at the drawn scale");
+  assert.equal(kneelDrop(unit(-1)), 0, "Skywing's flight blend (negative) is not a kneel");
+  assert.equal(kneelDrop({ rig: { kind: "hull", legLength: 0.95, motion: [0, 0, 1, 1] } }), 0, "a hull's squat is not a kneel");
+  assert.equal(kneelDrop({ ...unit(1), skywing: true }), 0);
+  assert.equal(kneelDrop(undefined), 0);
+});

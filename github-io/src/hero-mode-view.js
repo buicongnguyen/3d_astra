@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { weaponStyle } from "./visual-style.js";
 import { weaponClass } from "./fx-kinds/weapon-class.js";
 import { RocketBodies } from "./fx-kinds/rocket-body.js";
+import { kneelDrop } from "./unit-rig.js";
 
 // H3a/H3d Hero mode on the battlefield (rules: src/sim/content/hero-mode.js; camera and HUD: src/hero-mode.js).
 // A view plugin that only reads the simulation:
@@ -48,6 +49,10 @@ export function heroShotLook(shot, unit, faction, out = {}) {
   out.kind = cls === "missile" ? "rocket" : SHELL_CLASSES.includes(cls) ? "shell" : "tracer";
   out.cls = cls;
   out.color = style.color || [1, 0.9, 0.6, 1];
+  // The weapon's muzzle (visual-style.json, as fx.aim uses for every other shot): height above the ground and how far
+  // ahead of the unit's centre the barrel ends.
+  out.height = style.height ?? 1.1;
+  out.reach = style.reach ?? 0;
   return out;
 }
 
@@ -247,15 +252,20 @@ export class HeroModeView {
     for (let i = 0; shots && i < shots.length && i < SHOTS; i++) {
       const s = shots[i];
       const span = Math.max(1e-3, s.at - s.t0), k = Math.min(1, Math.max(0, (sim.time - s.t0) / span));
-      const from = this.view.objects.get(s.by)?.position;
-      const sx = from ? from.x : s.sx, sz = from ? from.z : s.sz;
+      const from = this.view.objects.get(s.by)?.position, shooter = sim.get?.(s.by);
+      heroShotLook(s, shooter?.type, sim.factions?.[s.team], LOOK);
+      // Owner 2026-11-28: the round leaves the shooter's own muzzle (its weapon's height and barrel reach toward the
+      // target, as fx.aim does for every battle shot), not a fixed 1.1 m above its feet.
+      const cx = from ? from.x : s.sx, cz = from ? from.z : s.sz;
+      const ddx = s.x - cx, ddz = s.z - cz, flat = Math.hypot(ddx, ddz) || 1, reach = Math.min(LOOK.reach, flat * 0.45);
+      const sx = cx + ddx / flat * reach, sz = cz + ddz / flat * reach;
       const ground = T.heightAt(s.x, s.z);
-      const sy = (from ? from.y : T.heightAt(sx, sz)) + 1.1, ty = ground + (s.air ? 3.5 : 0.9);
+      const drop = kneelDrop(this.view.objects.get(s.by)?.userData); // a kneeling Ranger fires from the knee
+      const sy = shooter?.flying && from ? from.y + 0.4 : T.heightAt(sx, sz) + LOOK.height - drop, ty = ground + (s.air ? 3.5 : 0.9);
       // A shell or rocket arcs; a rifle round flies straight.
       const arc = s.heavy ? Math.min(4, span * 3) : 0;
       const at = (q) => { P.x = sx + (s.x - sx) * q; P.z = sz + (s.z - sz) * q; P.y = sy + (ty - sy) * q + Math.sin(q * Math.PI) * arc; return P; };
       const dist = Math.hypot(s.x - sx, ty - sy, s.z - sz) || 1;
-      heroShotLook(s, sim.get?.(s.by)?.type, sim.factions?.[s.team], LOOK);
       const look = SHOT_LOOKS[LOOK.kind], seed = (s.n * 0.618) % 1;
       at(k);
       const hx = P.x, hy = P.y, hz = P.z;

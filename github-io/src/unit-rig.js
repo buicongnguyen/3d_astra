@@ -49,6 +49,15 @@ export const GAIT = { rider: "ride", walker: "stomp", bulwark: "stomp", vaultsen
 export const RIG_HULL = new Set(["tank", "breaker", "scorcher", "lancer", "rampart", "wagon", "carrier"]);
 export const isRigType = (type) => RIG_INFANTRY.has(type) || RIG_HULL.has(type);
 export const REST_MOTION = [0, 0, 0, 1];
+// How far a unit's gun has dropped below its standing muzzle (world units): the body bone sinks kneel * hipY * 0.45
+// (rigApply below) in model units, times the drawn scale. Kneeling Rangers, Anti-tank teams and gunners fire from the
+// knee standing still and from the shoulder on the move, so a shot's start follows this (fx.aim, hero-mode-view.js).
+// `u` is the unit's view root userData; 0 for anything that is not a rigged infantry unit or is standing.
+export function kneelDrop(u) {
+  const rig = u?.rig;
+  if (!rig || rig.kind !== "infantry" || u.skywing) return 0;
+  return Math.max(0, rig.motion[2]) * rig.legLength * 0.45 * (u.readabilityScale || 1);
+}
 export const BONE = { body: 0, legL: 1, legR: 2, hull: 3, wheel: 5, wingL: 6, wingR: 7, arms: 8, none: 9 };
 // Skywing's jet-wing (the model: tools/blender/generate_skywing.py): on the ground each wing turns FOLD radians
 // about the axis through the back, so its tip points down the legs; in the air the arms raise RAISE radians about

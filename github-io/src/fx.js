@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { kneelDrop } from "./unit-rig.js";
 import { mulberry32 } from "./rng.js";
 import { themeFor, weaponStyle, shotVisible } from "./visual-style.js";
 import { damagedEntities, damageState, BURNING, hitPower, scorchPlan, SCORCH } from "./combat-feedback.js";
@@ -653,7 +654,9 @@ export class Effects {
     const nx = dx / dist, nz = dz / dist, reach = Math.min(style.reach, dist * 0.45);
     const fx = e.x + nx * reach, fz = e.z + nz * reach;
     // Flyers fire and are hit at their altitude (shot events carry sAir / tAir, sim/combat.js).
-    const from = { x: fx, y: (e.sAir ? e.sAir + 0.4 : style.height) + ground(fx, fz), z: fz, lifted: true };
+    // A kneeling shooter fires from the knee: its muzzle is lower by the pose's drop (unit-rig.js kneelDrop).
+    const drop = e.sAir ? 0 : kneelDrop(this.view.objects?.get?.(e.source)?.userData);
+    const from = { x: fx, y: (e.sAir ? e.sAir + 0.4 : style.height - drop) + ground(fx, fz), z: fz, lifted: true };
     const land = { x: tx, y: (e.type === "support" || e.weapon === "tower" ? 1 : 0.95) + (e.tAir || 0), z: tz };
     const to = { ...land, y: land.y + ground(tx, tz), lifted: true };
     return { style, nx, nz, from, to, land };
