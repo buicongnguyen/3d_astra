@@ -2,6 +2,9 @@
 
 ## Unreleased: Round A.2
 
+### Barrels in front of enemies take the crosshair again (2026-11-28)
+- Since the body pick (aim at chests, not feet), the aim point jumps onto the body the camera ray meets, so an explosive barrel with an enemy or a building behind it could no longer be aimed at. Barrels now have their own ray test (`rayHazard`, src/hero-aim.js): the first intact barrel along the ray takes the crosshair when it is nearer than the body hit; with no ray hit the ground-point rule is unchanged.
+
 ### Scrapper and Shade fight with blades like the Vanguard (owner 2026-11-28)
 - **Blade fighters.** The Ashfall Scrapper and the Veil Shade (the Vanguard's slot in their factions, melee at 2 m in the rules) no longer fire a scattergun or a beam pistol. They swing a blade on the Vanguard's timing (0.2 s wind-up, contact, 0.38 s recovery), alternating a slice and a thrust, step in with the strike, draw no round, and the glint and the victim's hit flash land at blade contact (`src/melee-styles.js`, `src/vanguard-sword.js`, fx.js `swordContact`). The rules, balance, replays and the golden bench are unchanged.
   - **Scrapper:** a crude scrap cleaver (a rust plate with a ground steel edge and a sawn spine), a heavy chop from over the shoulder and a shove; rusty orange sparks; the left fist in guard behind a small scrap buckler. Sound: a low cleaver whoosh with a scrap rattle.

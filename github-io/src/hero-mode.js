@@ -35,7 +35,7 @@ import { isAllyHero } from "./sim/content/campaign-heroes.js";
 import { isSkywing, isLanded, WEAPONS, LAND } from "./sim/content/skywing.js";
 import { flightOf } from "./skywing-view.js";
 import { HERO_TIME, DODGE, enterCommands, leaveCommands } from "./sim/content/hero-mode.js";
-import { pickTarget, rayPick, bodyHeight, RocketLock, moveVector, battleTime, AIM } from "./hero-aim.js";
+import { pickTarget, rayPick, rayHazard, bodyHeight, RocketLock, moveVector, battleTime, AIM } from "./hero-aim.js";
 import { translate, getLanguage } from "./i18n.js";
 import { PHONE_NAME } from "./tactics-card.js";
 import { DEFINITIONS as D } from "./data.js";
@@ -599,14 +599,24 @@ export function setupHeroMode(S, A) {
     const assist = AIM_ASSIST[S.settings.aimAssist] || (phone() ? AIM_ASSIST.high : AIM_ASSIST.low);
     // The body under the reticle first (the camera ray against each enemy's drawn body), so a low shoulder camera aims at
     // chests, not at feet; only a ray that meets no body falls back to the ground point and the assist.
-    const ray = heroRay(v, sx, sy, rect), body = ray ? rayPick(S.sim, e, ray, (x, z) => v.terrain.heightAt(x, z), { size: (t) => drawnBody(v, t) }) : null;
+    const groundAt = (x, z) => v.terrain.heightAt(x, z), ground = p;
+    const ray = heroRay(v, sx, sy, rect), body = ray ? rayPick(S.sim, e, ray, groundAt, { size: (t) => drawnBody(v, t) }) : null;
     if (body) { p = { x: body.x, z: body.z }; H.aim = p; }
     H.body = body;
     H.target = body ? body.target : pickTarget(S.sim, e, p, { cone: assist.cone, snap: Math.min(assist.snap, H.sky ? AIM.snap : 2.5) });
-    // H8: an intact explosive barrel nearer the aim point than the target (and in reach) takes the crosshair.
-    const sim = S.sim, i = sim.hazards?.length ? hazardAt(sim.hazards, p.x, p.z, HAZARD.aim) : -1;
-    const hz = i >= 0 ? sim.hazards[i] : null, t = H.target;
-    H.barrel = hz && Math.hypot(hz[0] - e.x, hz[1] - e.z) <= (e.range || 10) + 16 && (!t || Math.hypot(hz[0] - p.x, hz[1] - p.z) < Math.hypot(t.x - p.x, t.z - p.z) - 0.2) ? i : -1;
+    // H8: an intact explosive barrel takes the crosshair when the camera ray meets it before any body (the body pick
+    // moved the aim point onto that body, so the barrel is tested on the ray itself), or, with no ray hit, when it is
+    // nearer the ground aim point than the target. In reach only.
+    const sim = S.sim, t = H.target;
+    let i = -1;
+    const onRay = ray ? rayHazard(sim.hazards, ray, groundAt, { r: HAZARD.size + 0.15 }) : null;
+    if (onRay && (!body || onRay.k < Math.hypot(body.x - ray.o.x, body.y - ray.o.y, body.z - ray.o.z))) i = onRay.i;
+    else if (!onRay && sim.hazards?.length) {
+      const g = hazardAt(sim.hazards, ground.x, ground.z, HAZARD.aim), gz = g >= 0 ? sim.hazards[g] : null;
+      if (gz && (!t || Math.hypot(gz[0] - ground.x, gz[1] - ground.z) < Math.hypot(t.x - ground.x, t.z - ground.z) - 0.2)) i = g;
+    }
+    const hz = i >= 0 ? sim.hazards[i] : null;
+    H.barrel = hz && Math.hypot(hz[0] - e.x, hz[1] - e.z) <= (e.range || 10) + 16 ? i : -1;
     // A headshot: the crosshair within the head zone of a soldier target (its head projected on screen).
     H.head = false;
     if (t && H.barrel < 0 && hasMagazine(e) && headable(t)) {

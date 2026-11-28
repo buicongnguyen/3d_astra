@@ -76,6 +76,37 @@ export function rayPick(sim, hero, ray, groundAt, { reach = AIM.reach, size = nu
   return best;
 }
 
+// The camera ray against one upright cylinder (centre x, z; radius r; from `base` up `h` m). Returns the ray distance of
+// its first point inside, or null.
+export function rayCylinder(ray, x, z, r, base, h) {
+  const { o, d } = ray, flat = Math.hypot(d.x, d.z);
+  if (flat < 1e-6) return null;
+  const px = x - o.x, pz = z - o.z, along = (px * d.x + pz * d.z) / (flat * flat);
+  const cx = o.x + d.x * along - x, cz = o.z + d.z * along - z, miss2 = cx * cx + cz * cz;
+  if (miss2 > r * r) return null;
+  const half = Math.sqrt(r * r - miss2) / flat;
+  for (const k of [along - half, along, along + half]) {
+    if (k <= 0) continue;
+    const y = o.y + d.y * k;
+    if (y >= base - 0.05 && y <= base + h + 0.05) return k;
+  }
+  return null;
+}
+// H8 explosive barrels under the body pick: the intact hazard (`list` of [x, z, intact]) the camera ray meets first, as
+// { i, k } (k: its distance along the ray), or null. The page compares k with the body hit, so a barrel in front of an
+// enemy (or of a building behind it) still takes the crosshair.
+export function rayHazard(list, ray, groundAt, { r = 0.7, h = 1.1 } = {}) {
+  if (!ray || !list?.length) return null;
+  let best = null;
+  for (let i = 0; i < list.length; i++) {
+    const z = list[i];
+    if (!z[2]) continue;
+    const k = rayCylinder(ray, z[0], z[1], r, groundAt(z[0], z[1]), h);
+    if (k !== null && (!best || k < best.k)) best = { i, k };
+  }
+  return best;
+}
+
 // Holding on a target: `update(targetId, dt)` returns the locked id once the same target was held
 // LOCK_SECONDS, else null. A new target or none starts over; `progress` is 0..1 for the lock ring.
 export class RocketLock {

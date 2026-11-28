@@ -267,7 +267,7 @@ await suite("hero-challenges" + shardLabel, async () => {
     // The aim is taken in the frame (about 1 fps on a CI runner): wait for it.
     await page.waitForFunction((i) => window.__frontier.heroMode.info.barrel === i, barrel, { timeout: TIMEOUT.step }).catch(() => {});
     const aimed = await info(page);
-    assert.equal(aimed.barrel, barrel, "the crosshair finds the barrel");
+    assert.equal(aimed.barrel, barrel, `the crosshair finds the barrel ${JSON.stringify({ target: aimed.target, aim: aimed.aim, screen: aimed.screen })}`);
     assert.equal(await page.evaluate(() => document.querySelector(".hh-cross").classList.contains("on-hazard")), true, "the reticle tints");
     await keep(page, "hc-barrel-aim");
     await page.keyboard.down("f");

@@ -108,3 +108,23 @@ test("the look: one geometry with the hazard stripes (red, orange and black), un
   const has = (c) => { for (let i = 0; i < col.length; i += 4) if (Math.abs(col[i] - c.r) < 0.02 && Math.abs(col[i + 1] - c.g) < 0.02 && Math.abs(col[i + 2] - c.b) < 0.02) return true; return false; };
   for (const name of ["red", "orange", "black"]) assert.ok(has(HAZARD_LOOK[name]), name);
 });
+
+// The body pick (hero-aim.js rayPick) moves the aim point onto the body the camera ray meets, so an explosive barrel in
+// front of an enemy or a building was never found ("the crosshair finds the barrel", CI 2026-11-28). Barrels have their
+// own ray test: the first intact one along the ray, with its distance for the page to compare with the body hit.
+test("the camera ray finds the barrel in front of a body; spent barrels and misses are ignored", async () => {
+  const { rayHazard, rayCylinder } = await import("../src/hero-aim.js");
+  const flat = () => 0;
+  // Camera 2 m up at the origin looking along +z, slightly down.
+  const len = Math.hypot(0, -0.08, 1), ray = { o: { x: 0, y: 2, z: 0 }, d: { x: 0, y: -0.08 / len, z: 1 / len } };
+  const list = [[0, 12, true], [0, 6, false], [3, 8, true]];
+  const hit = rayHazard(list, ray, flat);
+  assert.equal(hit?.i, 0, "the intact barrel on the line (the spent one in front is skipped, the one to the side missed)");
+  assert.ok(hit.k > 11 && hit.k < 13, `distance along the ray ${hit?.k}`);
+  // An enemy body behind it (20 m) is further along the ray: the barrel wins the comparison the page makes.
+  const body = rayCylinder(ray, 0, 20, 0.7, 0, 1.8);
+  assert.ok(body !== null && body > hit.k, `the soldier behind is hit too (${body}), but further along than the barrel`);
+  assert.equal(rayHazard([[0, 12, false]], ray, flat), null);
+  assert.equal(rayHazard([], ray, flat), null);
+  assert.ok(rayCylinder(ray, 0, 12, 0.7, 0, 1.1) !== null);
+});
