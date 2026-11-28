@@ -260,15 +260,23 @@ await suite("hero-challenges" + shardLabel, async () => {
     });
     await page.mouse.move(100, 100);
     await step(page, 0.1, 2);
-    await page.evaluate((i) => { const f = window.__frontier, v = f.view, [x, z] = f.sim.hazards[i]; const q = v.project(x, z, v.terrain.heightAt(x, z) + 0.4), r = v.renderer.domElement.getBoundingClientRect(); window.__aimAt = { x: q.x + r.left, y: q.y + r.top }; }, barrel);
-    const aim = await page.evaluate(() => window.__aimAt);
-    await page.mouse.move(aim.x, aim.y);
-    await step(page, 0.1, 2);
-    // The aim is taken in the frame (about 1 fps on a CI runner): wait for it.
-    await page.waitForFunction((i) => window.__frontier.heroMode.info.barrel === i, barrel, { timeout: TIMEOUT.step }).catch(() => {});
+    // The shoulder camera follows the hero smoothly (damped), so after the jump above it glides for a while; on a slow
+    // runner (about 1 fps) it is still moving when the barrel is projected. Re-project and re-aim until the crosshair
+    // holds the barrel (or the tries run out), instead of aiming once at where the barrel was.
+    // Only the first try steps the match; later tries just re-aim, so the match state the checks below expect is unchanged.
+    for (let tryNo = 0; tryNo < 4; tryNo++) {
+      const aim = await page.evaluate((i) => { const f = window.__frontier, v = f.view, [x, z] = f.sim.hazards[i]; const q = v.project(x, z, v.terrain.heightAt(x, z) + 0.4), r = v.renderer.domElement.getBoundingClientRect(); return { x: q.x + r.left, y: q.y + r.top }; }, barrel);
+      await page.mouse.move(aim.x, aim.y);
+      if (tryNo === 0) await step(page, 0.1, 2);
+      // The aim is taken in the frame: wait for it.
+      const got = await page.waitForFunction((i) => window.__frontier.heroMode.info.barrel === i, barrel, { timeout: TIMEOUT.step / 2 }).then(() => true, () => false);
+      if (got) break;
+    }
     const aimed = await info(page);
     assert.equal(aimed.barrel, barrel, `the crosshair finds the barrel ${JSON.stringify({ target: aimed.target, aim: aimed.aim, screen: aimed.screen })}`);
-    assert.equal(await page.evaluate(() => document.querySelector(".hh-cross").classList.contains("on-hazard")), true, "the reticle tints");
+    // The HUD draws the tint in its own frame (about 1 fps on a CI runner): wait for it.
+    const tinted = await page.waitForFunction(() => document.querySelector(".hh-cross").classList.contains("on-hazard"), null, { timeout: TIMEOUT.step }).then(() => true, () => false);
+    assert.equal(tinted, true, "the reticle tints");
     await keep(page, "hc-barrel-aim");
     await page.keyboard.down("f");
     for (let i = 0; i < 12 && await page.evaluate((i) => window.__frontier.sim.hazards[i][2], barrel); i++) await step(page, 0.05);
