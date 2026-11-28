@@ -120,7 +120,7 @@
     },
     {
       "name": "H5 close-view look: surface detail, rim, creature life (close-detail.js), birds that react (bird-life.js, bird-view.js, birds.glb), unit decals",
-      "files": ["src/close-detail.js", "src/close-look-view.js", "src/bird-life.js", "src/bird-view.js", "src/unit-decals-view.js", "public/models/birds.glb", "tests/h5-look.test.js", "tests/h5-look.mjs", "tools/build-birds.mjs"],
+      "files": ["src/close-detail.js", "src/close-look-view.js", "src/bird-life.js", "src/bird-view.js", "src/unit-decals-view.js", "public/models/birds.glb", "tests/h5-look.test.js", "tests/h5-look.mjs", "tests/bird-shot.test.js", "tools/build-birds.mjs"],
       "suites": ["h5-look", "hero-mode", "close-view", "creatures", "ambient-life", "render-budget", "mobile", "phones"],
       "checks": []
     },
