@@ -2211,10 +2211,25 @@
     "Crouch on: stand still by cover to take half damage.": "Bật cúi: đứng yên cạnh vật che để chỉ mất nửa sát thương.",
     "Crouch off.": "Tắt cúi.",
     "WASD move · Mouse aim · Click/F fire · X reload · C crouch · Q ability · Space dodge · Tab exit": "WASD di chuyển · Chuột ngắm · Nhấp/F bắn · X nạp đạn · C cúi · Q kỹ năng · Space né · Tab thoát",
-    "WASD walk · Mouse aim · Click/F shoot · Hold to lock rockets · E weapon · X reload · C crouch · R take off · Space dodge · Tab exit": "WASD đi bộ · Chuột ngắm · Nhấp/F bắn · Giữ để khóa tên lửa · E vũ khí · X nạp đạn · C cúi · R cất cánh · Space né · Tab thoát",
+    "WASD walk · Mouse aim · Click/F shoot · Hold to lock rockets · E weapon · X reload · C crouch · R take off · T board · Space dodge · Tab exit": "WASD đi bộ · Chuột ngắm · Nhấp/F bắn · Giữ để khóa tên lửa · E vũ khí · X nạp đạn · C cúi · R cất cánh · T lên xe · Space né · Tab thoát",
     "Patrol rifleman": "Lính tuần tra",
     "Sentry": "Lính gác",
-    "Enemy down": "Hạ gục địch"
+    "Enemy down": "Hạ gục địch",
+    "Board": "Lên xe",
+    "Get out": "Xuống xe",
+    "Board the vehicle": "Lên xe này",
+    "Leave the vehicle": "Rời xe",
+    "Land first to board a vehicle.": "Hãy hạ cánh trước rồi mới lên xe.",
+    "No Tank or Breaker of yours within reach.": "Không có Xe tăng hay Pháo binh của bạn ở gần.",
+    "Vehicle lost: Skywing bailed out.": "Mất xe: Cánh Trời đã nhảy ra.",
+    "WASD drive · Mouse aim · Click/F lob at the ring · Q ability · T leave · Tab exit": "WASD lái · Chuột ngắm · Nhấp/F bắn cầu vồng vào vòng · Q kỹ năng · T xuống xe · Tab thoát",
+    "WASD drive · Mouse aim · Click/F fire · X reload · Q ability · T leave · Tab exit": "WASD lái · Chuột ngắm · Nhấp/F bắn · X nạp đạn · Q kỹ năng · T xuống xe · Tab thoát",
+    "Out of range": "Ngoài tầm",
+    "Hold to lock": "Giữ để khóa",
+    "Blocked": "Bị chắn",
+    "Switching weapon": "Đang đổi vũ khí",
+    "Not visible": "Không thấy",
+    "Stunned": "Bị choáng"
   },
   "patterns": [
     [

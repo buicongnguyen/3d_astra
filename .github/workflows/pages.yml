@@ -272,6 +272,14 @@ jobs:
           - name: skywing-land-2
             scripts: skywing-land
             shard: 2/2
+          # H9 Skywing boards a Tank or Breaker: the Board tile (T), hull camera, turret aim, cannon fire, the Breaker's lob
+          # at its landing ring, Get out, draws (+1 at most); the phone tiles in EN/VI/KO portrait and landscape.
+          - name: h9-board-1
+            scripts: h9-board
+            shard: 1/2
+          - name: h9-board-2
+            scripts: h9-board
+            shard: 2/2
           # H8 Hero challenges: the title row (EN/VI/KO), Sabotage and Sniper nest played through by hooks on a PC (cones,
           # alarm, G to plant, result card, stars and coins), the fight feel (hit marker, kill notice, X reload, C crouch,
           # barrel tint and blast, draws of its own <= 3), the phone HUD in portrait and landscape in EN/VI/KO.

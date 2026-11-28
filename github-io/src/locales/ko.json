@@ -2211,10 +2211,25 @@
     "Crouch on: stand still by cover to take half damage.": "앉기 켬: 엄폐물 옆에 멈춰 서면 피해가 절반이 됩니다.",
     "Crouch off.": "앉기 끔.",
     "WASD move · Mouse aim · Click/F fire · X reload · C crouch · Q ability · Space dodge · Tab exit": "WASD 이동 · 마우스 조준 · 클릭/F 사격 · X 재장전 · C 앉기 · Q 능력 · Space 회피 · Tab 나가기",
-    "WASD walk · Mouse aim · Click/F shoot · Hold to lock rockets · E weapon · X reload · C crouch · R take off · Space dodge · Tab exit": "WASD 걷기 · 마우스 조준 · 클릭/F 사격 · 길게 눌러 로켓 고정 · E 무기 · X 재장전 · C 앉기 · R 이륙 · Space 회피 · Tab 나가기",
+    "WASD walk · Mouse aim · Click/F shoot · Hold to lock rockets · E weapon · X reload · C crouch · R take off · T board · Space dodge · Tab exit": "WASD 걷기 · 마우스 조준 · 클릭/F 사격 · 길게 눌러 로켓 고정 · E 무기 · X 재장전 · C 앉기 · R 이륙 · T 탑승 · Space 회피 · Tab 나가기",
     "Patrol rifleman": "순찰 소총병",
     "Sentry": "경비병",
-    "Enemy down": "적 처치"
+    "Enemy down": "적 처치",
+    "Board": "탑승",
+    "Get out": "하차",
+    "Board the vehicle": "차량에 탑승",
+    "Leave the vehicle": "차량에서 하차",
+    "Land first to board a vehicle.": "먼저 착륙해야 차량에 탈 수 있습니다.",
+    "No Tank or Breaker of yours within reach.": "가까이에 아군 전차나 브레이커가 없습니다.",
+    "Vehicle lost: Skywing bailed out.": "차량 파괴: 하늘날개가 탈출했습니다.",
+    "WASD drive · Mouse aim · Click/F lob at the ring · Q ability · T leave · Tab exit": "WASD 운전 · 마우스 조준 · 클릭/F 원 안으로 곡사 · Q 능력 · T 하차 · Tab 나가기",
+    "WASD drive · Mouse aim · Click/F fire · X reload · Q ability · T leave · Tab exit": "WASD 운전 · 마우스 조준 · 클릭/F 사격 · X 재장전 · Q 능력 · T 하차 · Tab 나가기",
+    "Out of range": "사거리 밖",
+    "Hold to lock": "길게 눌러 고정",
+    "Blocked": "사선 막힘",
+    "Switching weapon": "무기 교체 중",
+    "Not visible": "보이지 않음",
+    "Stunned": "기절"
   },
   "patterns": [
     [

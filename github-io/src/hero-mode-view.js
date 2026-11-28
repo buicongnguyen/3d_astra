@@ -219,8 +219,9 @@ export class HeroModeView {
     this.reticle.position.set(p.x, (p.y || 0) + 0.12, p.z);
     this.reticle.scale.set(s, 1, s);
     this.reticle.rotation.y = p.locked ? this.clock * 4 : (p.progress || 0) * Math.PI;
-    // H8: an explosive barrel under the crosshair tints it hazard orange.
-    this.reticleMat.color.set(p.hazard ? 0xff8a1e : p.locked ? 0xff6a3a : p.target ? 0xfff2b0 : 0xd8e6f0);
+    // H8: an explosive barrel under the crosshair tints it hazard orange. H9: the Breaker's landing ring is gold (pale
+    // when the aim is past its range and the ring sits at the edge of its reach).
+    this.reticleMat.color.set(p.hazard ? 0xff8a1e : p.lob ? (p.far ? 0xc8b48a : 0xffc24a) : p.locked ? 0xff6a3a : p.target ? 0xfff2b0 : 0xd8e6f0);
     this.reticle.visible = true;
   }
   event(ev) {

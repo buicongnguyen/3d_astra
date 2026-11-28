@@ -28,12 +28,23 @@
 //     (red for a headshot), damage numbers and a kill notice; an explosive barrel under the crosshair tints the
 //     reticle orange and a shot sets it off (sim/hazards.js); a PC-only 0.6 degree kick on the hero's own shot
 //     (never on phones, never with reduced motion).
+//   - H9 (owner 2026-11-28): landed Skywing next to the player's own Tank or Breaker (BOARD.reach m) shows one 44 px
+//     "Board" tile (T on a PC) in the action row; Hero mode then drives the vehicle (sim/content/skywing-board.js): a
+//     hull camera behind it, the turret follows the aim (view.heroAim), the Tank fires its cannon at the target under
+//     the reticle (or the ground there), the Breaker lobs at the aim point with a landing ring of its splash size out to
+//     its full range; the same tile ("Get out") or key steps Skywing out.
+//   - Why no shot (owner 2026-11-28): when the trigger cannot fire, a small tag over the reticle says why for WHY_MS:
+//     "No target", "Out of range", "Reloading", "Hold to lock" (rockets), "Blocked" (line of fire), "Switching weapon",
+//     "Not visible" (and "Stunned"). The page's own pick gives the first ones; the sim's refusals come as heroBlocked
+//     events (sim/content/hero-mode.js BLOCKED). The page follows the sim's driven id
+//     (heroModeOf), so a vehicle lost with Skywing aboard hands Hero mode back to Skywing on foot.
 import "./hero-mode.css";
 import { $ } from "./app/dom.js";
 import { icon } from "./icons.js";
 import { isAllyHero } from "./sim/content/campaign-heroes.js";
 import { isSkywing, isLanded, WEAPONS, LAND } from "./sim/content/skywing.js";
 import { flightOf } from "./skywing-view.js";
+import { boardTarget, isCrewed, pointRange } from "./sim/content/skywing-board.js";
 import { HERO_TIME, DODGE, enterCommands, leaveCommands } from "./sim/content/hero-mode.js";
 import { pickTarget, rayPick, rayHazard, bodyHeight, RocketLock, moveVector, battleTime, AIM } from "./hero-aim.js";
 import { translate, getLanguage } from "./i18n.js";
@@ -48,6 +59,13 @@ export const SHOULDER = Object.freeze({
   pc: { back: 6.2, up: 4.0, side: 1.2, ahead: 7, lookY: 0.9, fov: 56 },
   landscape: { back: 7, up: 5.4, side: 0.6, ahead: 6, lookY: 0.8, fov: 62 },
   portrait: { back: 7.5, up: 7.2, side: 0.4, ahead: 4, lookY: 0.5, fov: 62 },
+});
+// H9: the hull camera behind a driven Tank or Breaker (centred, further back and higher than the shoulder view, so the
+// whole hull and the ground ahead to its range show).
+export const HULL = Object.freeze({
+  pc: { back: 9.5, up: 5.6, side: 0, ahead: 9, lookY: 1, fov: 58 },
+  landscape: { back: 10, up: 6.8, side: 0, ahead: 8, lookY: 0.9, fov: 62 },
+  portrait: { back: 10.5, up: 9, side: 0, ahead: 6, lookY: 0.6, fov: 62 },
 });
 
 export const HERO_CLOSE_RADIUS = 20;
@@ -66,6 +84,8 @@ export const AIM_ASSIST = Object.freeze({ off: { cone: 0, snap: 1.2 }, low: { co
 export const REFLEX = Object.freeze({ scale: 0.25, seconds: 0.4, gap: 1.2 });
 // H8: the crosshair's spread ring (px, from still to on the move), the head zone round a soldier's head (px at least),
 // the hit marker and damage numbers (ms on screen), and the PC shot kick (radians, recovering in `back` s).
+// The reason tag's time on screen (real ms) after the last refusal.
+export const WHY_MS = 1200;
 export const FEEL_HUD = Object.freeze({ ring: [16, 46], head: 11, headPhone: 16, marker: 220, number: 700, feed: 2200, kick: 0.011, back: 0.14 });
 
 export function setupHeroMode(S, A) {
@@ -78,10 +98,14 @@ export function setupHeroMode(S, A) {
     reflex: { left: 0, wait: 0, seen: new Set(), count: 0 },
     // H8 fight feel (page side): the crosshair's hazard (index or -1) and head aim, PC crouch toggle, the shot kick.
     barrel: -1, head: false, crouch: false, kick: 0, hits: 0, kills: 0, heads: 0, blasts: 0, numbers: [], feedAt: 0,
+    // H9: driving a Tank or Breaker Skywing boarded; the vehicle in reach of a landed Skywing (id or null).
+    vehicle: false, near: null, boards: 0,
+    // Why the last shot could not go (the tag over the reticle), until when, and a count per reason (tests).
+    why: null, whyUntil: 0, whys: {},
   };
   S.hero = H;
 
-  const heroes = () => (S.sim && Z.started && !S.sim.result ? S.sim.own(0).filter((e) => e.kind === "unit" && e.hp > 0 && (isSkywing(e) || isAllyHero(e))) : []);
+  const heroes = () => (S.sim && Z.started && !S.sim.result ? S.sim.own(0).filter((e) => e.kind === "unit" && e.hp > 0 && (isSkywing(e) || isAllyHero(e) || isCrewed(e))) : []);
   const phone = () => !!S.touchInput;
   const firstPerson = () => S.settings.heroView === "first";
   const hero = () => (H.id === null ? null : S.sim.get(H.id));
@@ -182,10 +206,11 @@ export function setupHeroMode(S, A) {
         <button type="button" data-hero="ability" class="hh-ability"><i class="hh-sweep" aria-hidden="true"></i><span class="hh-ability-name"></span><small class="hh-why" hidden>Air only</small><kbd translate="no">Q</kbd></button>
         <button type="button" data-hero="dodge" class="hh-dodge"><i class="hh-sweep" aria-hidden="true"></i><span class="hh-dodge-name">Dodge</span><kbd translate="no">Space</kbd></button>
         <button type="button" data-hero="land" class="hh-land" hidden><i class="hh-sweep" aria-hidden="true"></i><span class="hh-land-name">Land</span><kbd translate="no">R</kbd></button>
+        <button type="button" data-hero="board" class="hh-board" hidden><span class="hh-board-name">Board</span><kbd translate="no">T</kbd></button>
         <button type="button" data-hero="fire" class="hh-fire"><span>Fire</span><kbd translate="no">F</kbd></button>
       </div>
       <div class="hh-stick" aria-hidden="true"><i class="hh-knob"></i></div>
-      <div class="hh-cross" aria-hidden="true"><i class="hh-lockring"></i><i class="hh-spread"></i><i class="hh-hitmark"></i><b class="hh-scope" hidden>Scope</b><span class="hh-mag"><span class="hh-pips"></span><b class="hh-reload" hidden>Reloading</b></span></div>
+      <div class="hh-cross" aria-hidden="true"><i class="hh-lockring"></i><i class="hh-spread"></i><i class="hh-hitmark"></i><b class="hh-scope" hidden>Scope</b><b class="hh-nofire" role="status" hidden></b><span class="hh-mag"><span class="hh-pips"></span><b class="hh-reload" hidden>Reloading</b></span></div>
       <div class="hh-dmgs" aria-hidden="true"></div>
       <div class="hh-feed" role="status"></div>
       <div class="hh-edges" aria-hidden="true"></div>
@@ -207,6 +232,7 @@ export function setupHeroMode(S, A) {
       else if (what === "ability") ability();
       else if (what === "dodge") dodge();
       else if (what === "land") land();
+      else if (what === "board") boardToggle();
     });
     // Fire is held (a ground hero keeps firing; a rocket locks while held); its own pointer events.
     const fire = root.querySelector(".hh-fire");
@@ -233,7 +259,7 @@ export function setupHeroMode(S, A) {
     if (!S.sim.command(mode)) { A.notice?.("Hero mode is not available now."); return false; }
     // H8: a Hero challenge has no base to run, so no steward (and no "AI running your base" strip).
     if (!S.sim.missionDef?.challenge) S.sim.command(steward);
-    Object.assign(H, { on: true, id, sky: isSkywing(e), sim: S.sim, yaw: Number.isFinite(e.angle) ? e.angle : 0, pitch: 0, zoom: 1, fell: null, firing: false, target: null, aim: null });
+    Object.assign(H, { on: true, id, sky: isSkywing(e), vehicle: isCrewed(e), sim: S.sim, yaw: Number.isFinite(e.angle) ? e.angle : 0, pitch: 0, zoom: 1, fell: null, firing: false, target: null, aim: null });
     H.sent = { drive: "0,0", fire: "null" };
     H.lock.reset();
     H.keys.clear();
@@ -244,33 +270,84 @@ export function setupHeroMode(S, A) {
     A.setMatchSpeed?.(1);
     H.ease = { from: H.scale, to: scale, t: 0 };
     document.documentElement.classList.add("hero-mode");
-    document.documentElement.classList.toggle("hero-sky", H.sky);
     document.documentElement.classList.toggle("hero-phone", phone());
-    const root = hud();
-    root.hidden = false;
-    root.querySelector(".hh-weapons").hidden = !H.sky;
-    root.querySelector(".hh-assist").hidden = !H.sky;
-    root.querySelector(".hh-name").textContent = translate(e.name);
-    root.querySelector(".hh-dodge-name").textContent = H.sky ? "Barrel roll" : "Dodge";
-    root.querySelector(".hh-land").hidden = !H.sky;
-    H.flight = H.sky ? flightOf(S.sim, e) : 0;
-    H.grounded = null;
-    root.querySelector(".hh-help span").textContent = H.sky
-      ? "WASD fly · Mouse aim · Click/F shoot · Hold to lock rockets · Wheel zoom · Q Dive · E weapon · Space roll · Tab exit"
-      : "WASD move · Mouse aim · Click/F fire · X reload · C crouch · Q ability · Space dodge · Tab exit";
+    hud().hidden = false;
     // H8: phones crouch on their own standing still by cover; a PC toggles it with C (off at the start).
     H.crouch = false; H.barrel = -1; H.head = false; H.kick = 0;
     S.sim.command({ team: 0, type: "heroCrouch", on: phone() ? "auto" : false });
-    if (H.sky) labels(e);
     H.button && (H.button.hidden = true);
     const v = S.view;
     v.resize();
-    v.setHeroCamera(H.sky ? SKY_FOG[isLanded(e) ? "ground" : "air"] : { fogNear: 26, fogFar: 92, far: 120 });
+    dress(e);
     v.heroRig = rig;
     v.setCloseView({ x: e.x, z: e.z, radius: HERO_CLOSE_RADIUS });
     A.tone?.(660, 0.12);
     A.updateUI?.();
     return true;
+  }
+  // The HUD and camera for the hero driven now: Skywing, a ground hero, or (H9) the Tank or Breaker Skywing boarded.
+  function dress(e) {
+    H.sky = isSkywing(e);
+    H.vehicle = isCrewed(e);
+    const root = hud(), el = document.documentElement;
+    el.classList.toggle("hero-sky", H.sky);
+    el.classList.toggle("hero-vehicle", H.vehicle);
+    el.classList.remove("hero-boardable");
+    root.querySelector(".hh-weapons").hidden = !H.sky;
+    root.querySelector(".hh-assist").hidden = !H.sky && !H.vehicle;
+    root.querySelector(".hh-name").textContent = translate(e.name);
+    root.querySelector(".hh-dodge-name").textContent = H.sky ? "Barrel roll" : "Dodge";
+    root.querySelector(".hh-dodge").hidden = H.vehicle;
+    root.querySelector(".hh-land").hidden = !H.sky;
+    root.querySelector(".hh-board").hidden = !H.vehicle;
+    setBoardName(H.vehicle ? "Get out" : "Board");
+    H.flight = H.sky ? flightOf(S.sim, e) : 0;
+    H.grounded = null;
+    H.near = null;
+    H.cam = null;
+    H.lock.reset();
+    root.querySelector(".hh-help span").textContent = H.vehicle
+      ? e.type === "breaker"
+        ? "WASD drive · Mouse aim · Click/F lob at the ring · Q ability · T leave · Tab exit"
+        : "WASD drive · Mouse aim · Click/F fire · X reload · Q ability · T leave · Tab exit"
+      : H.sky
+        ? "WASD fly · Mouse aim · Click/F shoot · Hold to lock rockets · Wheel zoom · Q Dive · E weapon · Space roll · Tab exit"
+        : "WASD move · Mouse aim · Click/F fire · X reload · C crouch · Q ability · Space dodge · Tab exit";
+    if (H.sky) labels(e);
+    const v = S.view;
+    v.heroAim = null;
+    v.setHeroCamera(H.sky ? SKY_FOG[isLanded(e) ? "ground" : "air"] : H.vehicle ? SKY_FOG.ground : { fogNear: 26, fogFar: 92, far: 120 });
+  }
+  function setBoardName(name) {
+    const tile = H.hud.querySelector(".hh-board"), span = tile.querySelector(".hh-board-name");
+    if (span.dataset.src === name) return;
+    span.dataset.src = name; span.textContent = name;
+    const label = translate(name === "Board" ? "Board the vehicle" : "Leave the vehicle");
+    tile.setAttribute("aria-label", label);
+    tile.title = label;
+  }
+  // H9: the sim drives another unit now (Skywing climbed in or out, or a lost vehicle threw it out): follow it.
+  function follow(id) {
+    const e = S.sim.get(id);
+    if (!e) return false;
+    H.id = id;
+    ceaseFire();
+    H.firing = false;
+    H.sent = { drive: "0,0", fire: "null" };
+    A.setSelection?.([id]);
+    dress(e);
+    return true;
+  }
+  // H9: T or the tile: board the Tank or Breaker in reach, or step out of the one driven.
+  function boardToggle() {
+    const e = hero();
+    if (!e || e.hp <= 0) return;
+    if (H.vehicle) { if (send({ type: "skywingBoard", board: false })) A.tone?.(520, 0.1); return; }
+    if (!isSkywing(e)) return;
+    if (!isLanded(e) || e.skyland) { A.notice?.("Land first to board a vehicle."); return; }
+    const v = boardTarget(S.sim, 0);
+    if (!v) { A.notice?.("No Tank or Breaker of yours within reach."); return; }
+    if (send({ type: "skywingBoard", board: true, vehicle: v.id })) { H.boards++; A.tone?.(360, 0.12); }
   }
   function leave(quiet = false) {
     if (!H.on) return false;
@@ -282,10 +359,12 @@ export function setupHeroMode(S, A) {
     H.firing = false;
     H.lock.reset();
     H.stick = null; H.look = null; H.pinch = null; H.touches.clear();
-    document.documentElement.classList.remove("hero-mode", "hero-sky", "hero-phone");
+    document.documentElement.classList.remove("hero-mode", "hero-sky", "hero-phone", "hero-vehicle", "hero-boardable");
     if (H.hud) H.hud.hidden = true;
     const v = S.view;
     v.heroRig = null;
+    v.heroAim = null;
+    H.vehicle = false;
     v.plugins?.list.find((p) => p.setReticle)?.setReticle(null);
     v.setHeroCamera(null);
     v.setCloseView(null);
@@ -333,7 +412,7 @@ export function setupHeroMode(S, A) {
     const root = H.hud;
     root.querySelector(".hh-dodge-name").textContent = ground ? "Dodge" : "Barrel roll";
     root.querySelector(".hh-help span").textContent = ground
-      ? "WASD walk · Mouse aim · Click/F shoot · Hold to lock rockets · E weapon · X reload · C crouch · R take off · Space dodge · Tab exit"
+      ? "WASD walk · Mouse aim · Click/F shoot · Hold to lock rockets · E weapon · X reload · C crouch · R take off · T board · Space dodge · Tab exit"
       : "WASD fly · Mouse aim · Click/F shoot · Hold to lock rockets · Wheel zoom · Q Dive · E weapon · R land · Space roll · Tab exit";
   }
   function dodge() {
@@ -350,12 +429,71 @@ export function setupHeroMode(S, A) {
     if (on) {
       H.firing = from;
       H.lock.reset();
+      if (e.weaponTo) why("Switching weapon");
+      H.lockShot = false;
       // Skywing's sniper: one shot per press, at the target under the reticle.
       if (H.sky && e.weapon === "sniper") { shoot(false); H.firing = false; }
+      // H9: a Breaker lobs at once at the ring; a Tank with nothing under the reticle shells the ground there.
+      else if (H.vehicle && (e.type === "breaker" || !H.target)) pointShot(e);
     } else if (H.firing === from || !from) {
+      // A rocket let go before the lock closed: it needs a hold.
+      if (H.sky && e.weapon === "rocket" && H.lock.progress < 1 && from !== null && !H.lockShot) why(H.target ? "Hold to lock" : pickReason(e) || "No target");
       H.firing = false;
       H.lock.reset();
     }
+  }
+  // H9: a driven vehicle's shot at the ground point under the reticle (the Breaker's ring), pulled in to its reach.
+  function lobPoint(e) {
+    const a = H.target ? { x: H.target.x, z: H.target.z } : H.aim;
+    if (!a) return null;
+    const dx = a.x - e.x, dz = a.z - e.z, d = Math.hypot(dx, dz), reach = pointRange(e);
+    if (d <= reach) return { x: a.x, z: a.z, d };
+    return { x: e.x + (dx / d) * reach, z: e.z + (dz / d) * reach, d: reach, clamped: true };
+  }
+  function pointShot(e) {
+    const p = lobPoint(e);
+    if (!p) { why("No target"); return false; }
+    const r = pickReason(e);
+    if (r) why(r);
+    H.sent.fire = "null";
+    return send({ type: "heroFire", x: Math.round(p.x * 100) / 100, z: Math.round(p.z * 100) / 100 });
+  }
+  // The reticle's tag: why the shot cannot go (shown WHY_MS after the last refusal).
+  function why(reason) {
+    if (!reason || !H.on) return;
+    H.why = reason;
+    H.whyUntil = performance.now() + WHY_MS;
+    H.whys[reason] = (H.whys[reason] || 0) + 1;
+  }
+  // The page's own reason, from its pick: a switch or reload under way, else what lies under the reticle (nothing, an
+  // enemy out of sight, or one past the weapon's reach). Null when a shot can go.
+  function pickReason(e) {
+    if (e.weaponTo) return "Switching weapon";
+    if (S.sim.time < (e.reloadAt ?? -Infinity) - 1e-9) return "Reloading";
+    if (H.vehicle && (e.type === "breaker" || !H.target)) return null;
+    const a = H.aim, sim = S.sim;
+    if (H.target) {
+      const t = H.target, reach = (t.kind !== "unit" && e.siege_range ? e.siege_range : e.range) + (t.radius || 0) + 0.5;
+      return Math.hypot(t.x - e.x, t.z - e.z) > Math.max(reach, e.scope ? 26 + (t.radius || 0) : 0) ? "Out of range" : null;
+    }
+    if (!a) return "No target";
+    // The body under the reticle at any reach, seen or not (the aim's own pick keeps to the seen ones in reach).
+    const v = S.view, any = H.ray ? rayPick({ entities: sim.entities, hostile: (p, q) => sim.hostile(p, q), isVisible: () => true, canHit: (p, q) => sim.canHit(p, q) }, e, H.ray, (x, z) => v.terrain.heightAt(x, z), { reach: 1e4, size: (t) => drawnBody(v, t) }) : null;
+    if (any) {
+      const t = any.target;
+      if (!sim.isVisible(t, e.team)) return "Not visible";
+      return Math.hypot(t.x - e.x, t.z - e.z) - (t.radius || 0) > (e.range || 0) ? "Out of range" : "No target";
+    }
+    let near = null, nd = 2.5;
+    for (const t of sim.entities) {
+      if (!(t.hp > 0) || (t.kind !== "unit" && t.kind !== "building") || !sim.hostile(e.team, t.team)) continue;
+      const d = Math.hypot(t.x - a.x, t.z - a.z) - (t.radius || 0);
+      if (d < nd) { near = t; nd = d; }
+    }
+    if (!near) return "No target";
+    if (!sim.isVisible(near, e.team)) return "Not visible";
+    if (Math.hypot(near.x - e.x, near.z - e.z) - (near.radius || 0) > (e.range || 0)) return "Out of range";
+    return "No target";
   }
   function shoot(hold) {
     const t = H.target;
@@ -366,15 +504,19 @@ export function setupHeroMode(S, A) {
       H.sent.fire = hold ? key : H.sent.fire;
       return send({ type: "heroFire", barrel: H.barrel });
     }
-    if (!t) { if (!hold) A.tone?.(260, 0.05); return false; }
+    if (!t) { if (!hold) A.tone?.(260, 0.05); why(pickReason(hero()) || "No target"); return false; }
+    const e0 = hero(), r0 = e0 ? pickReason(e0) : null;
+    if (r0) why(r0);
     // A held trigger is sent once per target (and again when the aim moves on or off its head); a single shot always
     // goes (and leaves the held state alone).
     const head = H.head ? { head: true } : null;
-    if (!hold) return send({ type: "heroFire", target: t.id, hold: false, ...head });
+    if (!hold) { const ok = send({ type: "heroFire", target: t.id, hold: false, ...head }); if (!ok) why("No target"); return ok; }
     const key = `${t.id}${H.head ? "h" : ""}`;
     if (H.sent.fire === key) return true;
     H.sent.fire = key;
-    return send({ type: "heroFire", target: t.id, hold: true, ...head });
+    const ok = send({ type: "heroFire", target: t.id, hold: true, ...head });
+    if (!ok) why("No target");
+    return ok;
   }
   // H8: top the magazine up (PC X; phones reload on their own when it runs dry).
   function reload() {
@@ -498,6 +640,8 @@ export function setupHeroMode(S, A) {
     // and Skywing's rocket lock, one shot per press for Skywing's sniper.
     if (code === "KeyF" || k === "f") { stop(event); if (!event.repeat) { aimNow(); trigger(true, "key"); } return; }
     if (code === "KeyR" || k === "r") { stop(event); if (!event.repeat && H.sky) land(); return; }
+    // H9: T boards the Tank or Breaker in reach (landed Skywing) or steps out of it.
+    if (code === "KeyT" || k === "t") { stop(event); if (!event.repeat && (H.sky || H.vehicle)) boardToggle(); return; }
     // H8: X reloads (R lands, F fires), C crouches (on a PC; RTS Stop and Context are not used in Hero mode).
     if (code === "KeyX" || k === "x") { stop(event); if (!event.repeat) reload(); return; }
     if (code === "KeyC" || k === "c") { stop(event); if (!event.repeat) crouch(); return; }
@@ -548,6 +692,12 @@ export function setupHeroMode(S, A) {
         const g = shoulder(), mix = (a, b) => ({ x: b.x + (a.x - b.x) * k, y: b.y + (a.y - b.y) * k, z: b.z + (a.z - b.z) * k });
         eye = mix(eye, g.eye); look = mix(look, g.look); fov = g.fov + (fov - g.fov) * k;
       }
+    } else if (H.vehicle) {
+      // H9: the hull camera behind the driven Tank or Breaker (first person is for heroes on foot only).
+      const c = HULL[!phone() ? "pc" : v.height > v.width ? "portrait" : "landscape"];
+      eye = { x: p.x - f.x * c.back, y: groundY + c.up + H.pitch * 2, z: p.z - f.z * c.back };
+      look = { x: p.x + f.x * c.ahead, y: groundY + c.lookY - H.pitch * 1.5, z: p.z + f.z * c.ahead };
+      fov = c.fov;
     } else if (firstPerson()) {
       eye = { x: p.x + f.x * 0.55, y: groundY + 1.65, z: p.z + f.z * 0.55 };
       look = { x: p.x + f.x * 20, y: groundY + 1.1 + H.pitch * 8, z: p.z + f.z * 20 };
@@ -565,7 +715,7 @@ export function setupHeroMode(S, A) {
     const aspect = v.width / Math.max(1, v.height), minV = (2 * Math.atan(Math.tan((52 * Math.PI) / 360) / aspect) * 180) / Math.PI;
     v.placeHeroCamera(eye, look, Math.min(84, Math.max(fov, minV)));
     // The model faces the aim (a ground hero), so the shoulder view never looks at its back walking sideways.
-    if (firstPerson() && !H.sky && o.userData.model) o.visible = false; else o.visible = sim.isVisible(e);
+    if (firstPerson() && !H.sky && !H.vehicle && o.userData.model) o.visible = false; else o.visible = sim.isVisible(e);
     // Its own health shows on the HUD: no bar or selection ring hanging in front of the camera.
     if (o.userData.bar) o.userData.bar.visible = false;
     if (o.userData.ring) o.userData.ring.visible = false;
@@ -573,7 +723,12 @@ export function setupHeroMode(S, A) {
     const t = H.target, a = H.aim;
     const reticle = v.plugins?.list.find((q) => q.setReticle);
     const hz = H.barrel >= 0 ? sim.hazards?.[H.barrel] : null;
-    if (hz) reticle?.setReticle({ x: hz[0], z: hz[1], y: v.terrain.heightAt(hz[0], hz[1]), size: 1, target: true, hazard: true, locked: false, progress: 0 });
+    // H9: the turret follows the aim (view.js turns it in the hull's frame); the Breaker's ring shows where its lob lands,
+    // its splash size, pulled in to its full range.
+    const lob = H.vehicle && e.type === "breaker" ? lobPoint(e) : null;
+    if (H.vehicle && a) v.heroAim = { id: e.id, angle: Math.atan2((t ? t.x : a.x) - e.x, (t ? t.z : a.z) - e.z) };
+    if (lob) reticle?.setReticle({ x: lob.x, z: lob.z, y: v.terrain.heightAt(lob.x, lob.z), size: (e.splash_radius || 2) / 0.62, target: !!t && !lob.clamped, lob: true, far: !!lob.clamped, locked: false, progress: 0 });
+    else if (hz) reticle?.setReticle({ x: hz[0], z: hz[1], y: v.terrain.heightAt(hz[0], hz[1]), size: 1, target: true, hazard: true, locked: false, progress: 0 });
     else if (a) reticle?.setReticle({ x: t ? t.x : a.x, z: t ? t.z : a.z, y: v.terrain.heightAt(t ? t.x : a.x, t ? t.z : a.z) + (t?.flying ? (t.fly || 3) : 0), size: t ? Math.max(0.9, (t.radius || 0.7) * 1.4) : H.sky ? 1.1 : 0.8, target: !!t, locked: H.lock.progress >= 1, progress: H.lock.progress });
     // Close-up detail around the aim point, not the camera.
     const cv = v.closeView;
@@ -601,6 +756,7 @@ export function setupHeroMode(S, A) {
     // chests, not at feet; only a ray that meets no body falls back to the ground point and the assist.
     const groundAt = (x, z) => v.terrain.heightAt(x, z), ground = p;
     const ray = heroRay(v, sx, sy, rect), body = ray ? rayPick(S.sim, e, ray, groundAt, { size: (t) => drawnBody(v, t) }) : null;
+    H.ray = ray;
     if (body) { p = { x: body.x, z: body.z }; H.aim = p; }
     H.body = body;
     H.target = body ? body.target : pickTarget(S.sim, e, p, { cone: assist.cone, snap: Math.min(assist.snap, H.sky ? AIM.snap : 2.5) });
@@ -619,7 +775,7 @@ export function setupHeroMode(S, A) {
     H.barrel = hz && Math.hypot(hz[0] - e.x, hz[1] - e.z) <= (e.range || 10) + 16 ? i : -1;
     // A headshot: the crosshair within the head zone of a soldier target (its head projected on screen).
     H.head = false;
-    if (t && H.barrel < 0 && hasMagazine(e) && headable(t)) {
+    if (t && H.barrel < 0 && !H.vehicle && hasMagazine(e) && headable(t)) {
       const q = v.project(t.x, t.z, v.terrain.heightAt(t.x, t.z) + HEAD.height * (v.objects.get(t.id)?.userData.readabilityScale || 1));
       const zone = Math.max(phone() ? FEEL_HUD.headPhone : FEEL_HUD.head, 0);
       H.head = Math.hypot(q.x + rect.left - sx, q.y + rect.top - sy) <= zone;
@@ -710,6 +866,9 @@ export function setupHeroMode(S, A) {
     if (H.on && (A.sceneActive?.() || S.sim.mission?.pending)) leave(true);
     syncButton();
     if (!H.on) return;
+    // H9: the sim may drive another unit now (boarded, stepped out, or thrown out of a lost vehicle).
+    const driven = S.sim.heroModeOf?.(0)?.id;
+    if (driven != null && driven !== H.id) follow(driven);
     const e = hero();
     // The hero fell: "Hero down" for a second, then back to the RTS view.
     if (!e || e.hp <= 0) {
@@ -745,8 +904,13 @@ export function setupHeroMode(S, A) {
     if (H.firing) {
       if (H.sky && e.weapon === "rocket") {
         const locked = H.lock.update(H.target?.id ?? null, dt);
-        if (locked !== null) { shoot(false); H.lock.reset(); A.tone?.(880, 0.08); }
-      } else if (!H.sky) shoot(true);
+        if (!H.target || e.weaponTo) { const r = pickReason(e); if (r && (performance.now() > H.whyUntil - WHY_MS * 0.5)) why(r); }
+        if (locked !== null) { shoot(false); H.lockShot = true; H.lock.reset(); A.tone?.(880, 0.08); }
+      } else if (H.vehicle && e.type === "breaker") {
+        // H9: the Breaker lobs again at the ring whenever it is ready while the trigger is held.
+        if (e.cooldown <= 0 && !e.trigger) pointShot(e);
+      } else if (H.vehicle && !H.target) ceaseFire();
+      else if (!H.sky) shoot(true);
     } else if (!H.sky || e.weapon !== "sniper") ceaseFire();
     paint(e);
   }
@@ -786,6 +950,17 @@ export function setupHeroMode(S, A) {
       if (why.hidden === grounded) { why.hidden = !grounded; ab.classList.toggle("grounded", grounded); ab.title = grounded ? translate("Dive strike works only in the air") : ""; }
       ab.disabled = left > 0 || grounded;
     } else ab.hidden = true;
+    // H9: the Board tile shows while landed Skywing has its own Tank or Breaker in reach (Leave while driving one).
+    if (!H.vehicle) {
+      const near = H.sky && isLanded(e) && !e.skyland ? boardTarget(S.sim, 0) : null, id = near?.id ?? null;
+      if (id !== H.near) {
+        H.near = id;
+        const tile = root.querySelector(".hh-board");
+        tile.hidden = id === null;
+        document.documentElement.classList.toggle("hero-boardable", id !== null);
+        if (id !== null) { setBoardName("Board"); tile.dataset.unit = near.type; }
+      }
+    }
     const dg = root.querySelector(".hh-dodge"), wait = Math.max(0, (e.dodgeReady ?? -Infinity) - S.sim.time);
     dg.style.setProperty("--cd", (wait / ((e.dodgeHelp ? DODGE.helped : DODGE.cooldown) * (e.driven || 1))).toFixed(3));
     dg.disabled = wait > 0;
@@ -829,6 +1004,10 @@ export function setupHeroMode(S, A) {
     const tag = root.querySelector(".hh-crouch"), low = !!e.crouched;
     if (tag.hidden === low) tag.hidden = !low;
     feelTick();
+    const tag2 = cross.querySelector(".hh-nofire"), showWhy = !!H.why && (performance.now() < H.whyUntil || !!globalThis.__frontierHoldMessages);
+    if (showWhy && tag2.dataset.src !== H.why) { tag2.dataset.src = H.why; tag2.textContent = H.why; }
+    if (tag2.hidden === showWhy) tag2.hidden = !showWhy;
+    if (!showWhy && H.why && performance.now() >= H.whyUntil && !globalThis.__frontierHoldMessages) H.why = null;
     const scope = cross.querySelector(".hh-scope"), scoped = !!(H.sky && e.scope);
     if (scope.hidden === scoped) scope.hidden = !scoped;
     cross.style.setProperty("--lock", H.lock.progress.toFixed(2));
@@ -839,6 +1018,7 @@ export function setupHeroMode(S, A) {
   // the hit marker (red for a headshot), a damage number over the target, a kill notice, the PC kick.
   function feelEvent(ev) {
     if (!H.on) return;
+    if (ev.type === "heroBlocked" && ev.id === H.id) { why(ev.reason); return; }
     if (ev.type === "heroHit" && ev.id === H.id) {
       H.hits++;
       if (ev.head) H.heads++;
@@ -926,7 +1106,8 @@ export function setupHeroMode(S, A) {
   Object.assign(A, { heroTick: tick, heroPace: pace, enterHeroMode: enter, leaveHeroMode: leave, heroModeOn: () => H.on, heroInfo: () => ({ on: H.on, id: H.id, sky: H.sky, flight: H.flight, scope: !!H.hud?.querySelector(".hh-scope:not([hidden])"), airWarn: H.airWarn || 0,
     barrel: H.barrel, head: H.head, crouch: H.crouch, hits: H.hits, kills: H.kills, heads: H.heads, blasts: H.blasts, kick: H.kick,
     marker: !!H.hud?.querySelector(".hh-hitmark.show"), feed: [...(H.hud?.querySelectorAll(".hh-note") || [])].map((n) => n.textContent.trim()),
-    reflex: H.reflex.count, reflexOn: H.reflex.left > 0,
+    reflex: H.reflex.count, reflexOn: H.reflex.left > 0, vehicle: H.vehicle, near: H.near, boards: H.boards,
+    why: H.hud?.querySelector(".hh-nofire:not([hidden])")?.dataset.src || null, whyText: H.hud?.querySelector(".hh-nofire:not([hidden])")?.textContent || null, whys: { ...H.whys },
     marks: H.edges.filter((m) => !m.hidden && m.classList.contains("air")).length + H.skies.filter((m) => !m.hidden).length, yaw: H.yaw, zoom: H.zoom, scale: H.scale, aim: H.aim, target: H.target?.id ?? null, lock: H.lock.progress, screen: H.screen || null, sent: { ...H.sent } }) });
   return function bind() {
     window.addEventListener("keydown", keydown, true);

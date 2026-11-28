@@ -35,6 +35,7 @@ import { skywing } from "./skywing.js";
 import { heroMode } from "./hero-mode.js";
 import { cover } from "./cover.js";
 import { heroChallenges } from "./hero-challenges.js";
+import { skywingBoard } from "./skywing-board.js";
 
 export const CONTENT = [
   suppression,
@@ -65,4 +66,5 @@ export const CONTENT = [
   heroMode,
   cover,
   heroChallenges,
+  skywingBoard,
 ];

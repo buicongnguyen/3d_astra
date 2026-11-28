@@ -432,3 +432,23 @@ html.hero-mode #idle-chips { visibility: hidden !important; }
 .hh-crouch[hidden] { display: none; }
 .hero-phone .hh-feed { top: calc(env(safe-area-inset-top) + 58px); }
 @media (prefers-reduced-motion: reduce) { .hh-spread { transition: none; } }
+
+/* ---------------------------------------------------------------- H9: Skywing boards a Tank or Breaker (2026-11-28) */
+/* One 44 px "Board" / "Leave" tile (T) in the action row: beside Land when landed Skywing has its own vehicle in reach,
+   in Dodge's place while it drives one (a vehicle has no dodge). Never grouped, never behind another press. */
+.hh-board[hidden], .hh-dodge[hidden] { display: none !important; }
+.hh-board { background: linear-gradient(180deg, rgba(64, 96, 54, 0.95), rgba(34, 58, 30, 0.95)) !important; border-color: #b9e39a !important; }
+.hero-vehicle .hh-board { background: linear-gradient(180deg, rgba(92, 70, 40, 0.95), rgba(58, 42, 22, 0.95)) !important; border-color: #f0c98a !important; }
+.hero-phone.hero-vehicle .hh-board { grid-column: 2; grid-row: 1; }
+.hero-phone.hero-sky.hero-boardable .hh-land { grid-column: 1; }
+.hero-phone.hero-sky.hero-boardable .hh-board { grid-column: 2; grid-row: 1; }
+.hero-phone .hh-board-name { display: block; max-width: 100%; line-height: 1.05; overflow-wrap: break-word; }
+:root[lang="ko"] .hero-phone .hh-board-name { word-break: keep-all; }
+
+/* Why no shot (owner 2026-11-28): a small tag over the reticle for a moment after the trigger is refused. */
+.hh-nofire {
+  position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%);
+  padding: 1px 7px; border-radius: 6px; background: rgba(40, 12, 8, 0.82); border: 1px solid #ff9a7a;
+  color: #ffd9cc; font: 800 12px/15px var(--hh-font, var(--font-ui, sans-serif)); letter-spacing: 0.02em; white-space: nowrap;
+}
+.hh-nofire[hidden] { display: none; }

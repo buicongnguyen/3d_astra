@@ -2078,7 +2078,8 @@ export class WorldView {
         if(e.moving||u.hullYaw===undefined)u.hullYaw=m.rotation.y;else m.rotation.y=u.hullYaw;
         // Unit motion: parked and idle, the turret scans slowly about Ã‚Â±25 degrees; moving, it settles forward.
         const scan=this.richMotion&&e.kind==="unit"&&!e.moving?Math.sin(this.lifeClock*0.35+e.id*1.3)*0.44:0;
-        const aim=e.attacking?e.angle-m.rotation.y:scan,diff=Math.atan2(Math.sin(aim-u.turret.rotation.y),Math.cos(aim-u.turret.rotation.y));
+        // H9: a Tank or Breaker the player drives in Hero mode turns its turret to the aim (hero-mode.js heroAim).
+        const ha=this.heroAim,aim=ha&&ha.id===e.id?ha.angle-m.rotation.y:e.attacking?e.angle-m.rotation.y:scan,diff=Math.atan2(Math.sin(aim-u.turret.rotation.y),Math.cos(aim-u.turret.rotation.y));
         const step=this.activity.combat.motion&&!this.reducedMotion.matches?3*dt:Math.PI;
         u.turret.rotation.y+=Math.max(-step,Math.min(step,diff));
       }

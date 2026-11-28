@@ -46,10 +46,19 @@ export const DODGE = Object.freeze({ seconds: 0.3, cooldown: 4, helped: 3, dash:
 // Projectile speeds in m/s of game time (rifle rounds, rockets, shells), the extra hit radius around the hero,
 // and the share of the hero's motion the shooter leads by. `helped`: rifle rounds with Dodge help on (H7).
 export const SHOTS = Object.freeze({ fast: 28, helped: 20, rocket: 22, shell: 18, hit: 0.6, lead: 0.6, melee: 2.6 });
+// Why a driven hero's trigger cannot fire (owner 2026-11-28: the reason shows as a small tag by the reticle). The sim says
+// it with a `heroBlocked` event ({ id, team, reason }) on every BLOCKED_EVERY-th tick while the trigger waits (events are
+// not saved; the tick count makes it deterministic, a few a second at most). The page adds its own reasons from its pick
+// ("No target", "Hold to lock"), src/hero-mode.js.
+export const BLOCKED = Object.freeze(["No target", "Out of range", "Reloading", "Hold to lock", "Blocked", "Switching weapon", "Not visible", "Stunned"]);
+export const BLOCKED_EVERY = 6;
 const HEAVY = new Set(["breaker", "tank", "antitank", "artillery", "mortar", "rocket", "lancer", "tower"]);
 
 export const isDriven = (e) => !!e && e.driven !== undefined;
-const heroic = (e) => !!e && (!!e.assist || (typeof e.hero === "string" && e.hero.length > 0));
+// H9: a Tank or Breaker Skywing has boarded (sim/content/skywing-board.js `rider`) is driven like a hero.
+const heroic = (e) => !!e && (!!e.assist || (typeof e.hero === "string" && e.hero.length > 0) || e.rider !== undefined);
+// H9: a driven vehicle (its hull turns with the move, its turret follows the aim: the page draws it).
+const hull = (e) => e.rider !== undefined;
 const scaleOf = (sim, scale) => (sim.lan ? 1 : HERO_TIME.scales.includes(scale) ? scale : HERO_TIME.scale);
 // The hero's move factor in game time: HERO_TIME.real of its speed in real time, never below its own speed.
 export const heroBoost = (scale) => Math.max(1, HERO_TIME.real / scale);
@@ -69,7 +78,7 @@ function clean(sim) {
   const h = sim.heroMode;
   if (h && !Object.keys(h.teams).length && !h.shots.length) delete sim.heroMode;
 }
-function release(e) {
+export function release(e) {
   for (const key of ["driven", "drive", "trigger", "vel", "dash", "dodgeUntil", "dodgeReady", "dodgeHelp", "mag", "reloadAt", "spread", "crouch", "crouched"]) delete e[key];
 }
 // H8: a scoped Sniper (Skywing on foot, still: e.scope) reaches SCOPE_REACH m at a target inside the scope's cone.
@@ -88,6 +97,8 @@ export const heroMode = {
       const h = this.heroMode, now = h?.teams[team];
       if (!on) {
         if (!now) return true;
+        // H9: Skywing steps out of the vehicle it drives first (sim/content/skywing-board.js).
+        if (this.skywing?.aboard === now.id) this.skywingLeave?.(team);
         const e = this.get(now.id);
         // The hero stays where it was left: no old order or post walks it back.
         if (e) { release(e); e.orders = []; e.post = { x: e.x, z: e.z }; }
@@ -97,7 +108,7 @@ export const heroMode = {
       }
       const e = this.get(id);
       if (!e || e.team !== team || e.hp <= 0 || e.kind !== "unit" || !heroic(e)) return false;
-      if (now && now.id !== id) { const old = this.get(now.id); if (old) release(old); }
+      if (now && now.id !== id) { if (this.skywing?.aboard === now.id) this.skywingLeave?.(team); const old = this.get(now.id); if (old) release(old); }
       const k = scaleOf(this, scale);
       (this.heroMode ||= { teams: {}, shots: [], n: 0 }).teams[team] = { id, scale: k, ...(help ? { help: true } : null) };
       e.driven = k;
@@ -135,17 +146,25 @@ export const heroMode = {
       if (crouched !== !!e.crouched) { if (crouched) e.crouched = true; else delete e.crouched; this.events.push({ type: "heroCrouched", id: e.id, on: crouched }); }
       // An explosive hazard under the reticle (H8): fired at like a target, set off by the hit.
       if (e.trigger?.barrel !== undefined) { this.heroBarrel(e); return true; }
+      // H9: a driven vehicle's shot at a ground point (the Breaker's lob, a Tank's shell where nothing stands).
+      if (e.trigger?.point) { this.heroPointShot(e); if (hull(e) && e.moving) e.angle = Math.atan2(e.vel.x, e.vel.z); return true; }
       const t = e.trigger ? this.get(e.trigger.target) : null;
       if (e.trigger && (!t || t.hp <= 0 || this.time > e.trigger.until)) delete e.trigger;
       else if (t) {
-        e.angle = Math.atan2(t.x - e.x, t.z - e.z);
-        let range = e.range + this.heightRange(e, t) + t.radius + 0.00001;
+        if (!hull(e)) e.angle = Math.atan2(t.x - e.x, t.z - e.z);
+        // H9: a Breaker shells buildings from its siege range (as combat.js fight does).
+        let range = (t.kind !== "unit" && e.siege_range ? e.siege_range : e.range) + this.heightRange(e, t) + t.radius + 0.00001;
         if (scoped(e, t)) range = Math.max(range, SCOPE_REACH + t.radius + 0.00001);
         const clear = e.flying || t.flying || this.nav.clearLine(e, t, t.id);
-        if (distance(e, t) <= range && clear && this.attackable(e.team, t) && this.isVisible(t, e.team) && (!t.flying || this.canHit(e, t))) {
+        // The first rule that stops the shot, for the reticle's tag.
+        const why = distance(e, t) > range ? "Out of range" : !this.isVisible(t, e.team) ? "Not visible" : !clear ? "Blocked"
+          : !this.attackable(e.team, t) || (t.flying && !this.canHit(e, t)) ? "No target" : null;
+        if (why) this.heroBlocked(e, why);
+        else {
           e.attacking = true;
+          if (e.cooldown > 0 || (e.fx && !this.canAct(e, "fire"))) this.heroWaiting(e);
           if (e.cooldown <= 0 && !(e.fx && !this.canAct(e, "fire"))) {
-            const head = !!e.trigger.head && hasMagazine(e) && headable(t) && (e.spread || 0) <= HEAD.spread;
+            const head = !!e.trigger.head && !hull(e) && hasMagazine(e) && headable(t) && (e.spread || 0) <= HEAD.spread;
             const before = t.hp + (t.shield || 0), d = distance(e, t), base = e.damage;
             if (head) e.damage = base * headBonus(e);
             this.hit(e, t);
@@ -155,7 +174,49 @@ export const heroMode = {
           }
         }
       } else if (e.moving) e.angle = Math.atan2(e.vel.x, e.vel.z);
+      if (t && hull(e) && e.moving) e.angle = Math.atan2(e.vel.x, e.vel.z);
       return true;
+    },
+    // The reticle's tag: why the trigger waits (BLOCKED), as an event every BLOCKED_EVERY-th tick.
+    heroBlocked(e, reason) {
+      if (this.ticks % BLOCKED_EVERY === 0) this.events.push({ type: "heroBlocked", id: e.id, team: e.team, reason });
+    },
+    // In reach and in sight but not ready: a weapon switch, a magazine reload or a status (a stun) that keeps it silent.
+    // The plain gap between two shots says nothing.
+    heroWaiting(e) {
+      if (e.fx && !this.canAct(e, "fire")) this.heroBlocked(e, "Stunned");
+      else if (e.weaponTo) this.heroBlocked(e, "Switching weapon");
+      else if (this.time < (e.reloadAt ?? -Infinity) - 1e-9) this.heroBlocked(e, "Reloading");
+    },
+    // H9: a driven vehicle's shot at a ground point (e.trigger.point): in its reach (the Breaker's siege range), the
+    // round lands at once, as every RTS shot does: the weapon's damage to the enemy standing on the point (a body
+    // within 0.3 m of it) and its splash share to every other enemy on the ground within its splash radius.
+    heroPointShot(e) {
+      const p = e.trigger.point;
+      if (this.time > e.trigger.until) { delete e.trigger; return; }
+      const d = distance(e, p);
+      if (d > (e.siege_range || e.range || 0) + 0.05) { this.heroBlocked(e, "Out of range"); return; }
+      e.attacking = true;
+      if (e.cooldown > 0 || (e.fx && !this.canAct(e, "fire"))) { this.heroWaiting(e); return; }
+      const foe = (t) => t.hp > 0 && !t.flying && (t.kind === "unit" || t.kind === "building" || t.kind === "wall") && this.hostile(e.team, t.team);
+      let direct = null, best = 0.3;
+      for (const t of this.entities) {
+        if (!foe(t)) continue;
+        const edge = hyp(t.x - p.x, t.z - p.z) - (t.radius || 0.6);
+        if (edge <= best + 1e-9) { direct = t; best = edge; }
+      }
+      const before = direct ? direct.hp + (direct.shield || 0) : 0;
+      if (direct) this.applyDamage(direct, this.shotValue(e, direct, true), e.team, e.id);
+      if (e.splash_radius) for (const t of [...this.entities]) {
+        if (t === direct || !foe(t)) continue;
+        if (hyp(t.x - p.x, t.z - p.z) - (t.kind === "unit" ? 0 : t.radius || 0) >= e.splash_radius) continue;
+        this.applyDamage(t, this.shotValue(e, t, false, e.splash_damage), e.team, e.id);
+      }
+      if (this.factionFor(e.team).trait) e.shotAt = this.time;
+      this.events.push({ type: "shot", weapon: e.shot || e.type, unit: e.type, source: e.id, target: direct?.id ?? null, x: e.x, z: e.z, tx: p.x, tz: p.z, team: e.team, heavy: true, point: true });
+      e.cooldown = e.interval * (e.fx ? this.statusFactor(e, "reload") : 1);
+      delete e.trigger;
+      this.heroAfterShot(e, direct, false, before, d);
     },
     // H8: after each shot of the driven hero: the magazine (an empty one reloads on its own), the hit marker and kill
     // notice (events only: the page draws them), and a challenge's own count (sim/content/hero-challenges.js).
@@ -197,9 +258,11 @@ export const heroMode = {
       let range = e.range + 0.6;
       if (scoped(e, at)) range = Math.max(range, SCOPE_REACH);
       const seen = !!this.visible[e.team]?.[this.terrain.cellIndex(at.x, at.z)];
-      if (distance(e, at) > range || !seen || !(e.flying || this.nav.clearLine(e, at))) return;
+      if (distance(e, at) > range) { this.heroBlocked(e, "Out of range"); return; }
+      if (!seen) { this.heroBlocked(e, "Not visible"); return; }
+      if (!(e.flying || this.nav.clearLine(e, at))) { this.heroBlocked(e, "Blocked"); return; }
       e.attacking = true;
-      if (e.cooldown > 0 || (e.fx && !this.canAct(e, "fire"))) return;
+      if (e.cooldown > 0 || (e.fx && !this.canAct(e, "fire"))) { this.heroWaiting(e); return; }
       this.events.push({ ...(e.flying ? { sAir: e.fly } : null), type: "shot", weapon: e.shot || e.type, unit: e.type, source: e.id, target: null, x: e.x, z: e.z, tx: at.x, tz: at.z, team: e.team, heavy: (e.shot || e.type) === "antitank", barrel: i });
       e.cooldown = e.interval * (e.fx ? this.statusFactor(e, "reload") : 1);
       delete e.trigger;
@@ -284,10 +347,16 @@ export const heroMode = {
       },
     },
     heroFire: {
-      allowed: (sim, c) => !!sim.heroMode?.teams[c.team] && (c.target === null || Number.isInteger(c.target) || (c.target === undefined && Number.isInteger(c.barrel))) && (c.head === undefined || typeof c.head === "boolean"),
+      allowed: (sim, c) => !!sim.heroMode?.teams[c.team] && (c.target === null || Number.isInteger(c.target) || (c.target === undefined && Number.isInteger(c.barrel)) || (c.target === undefined && Number.isFinite(c.x) && Number.isFinite(c.z))) && (c.head === undefined || typeof c.head === "boolean"),
       run: (sim, c) => {
         const e = sim.get(sim.heroMode.teams[c.team].id);
         if (!isDriven(e)) return false;
+        // H9: a driven vehicle fires at a ground point (one shot, waiting up to 1.5 real seconds for the reload).
+        if (c.target === undefined && c.barrel === undefined) {
+          if (!hull(e)) return false;
+          e.trigger = { point: { x: c.x, z: c.z }, hold: false, until: sim.time + 1.5 * e.driven };
+          return true;
+        }
         // H8: an explosive hazard (sim/hazards.js): one shot, waiting up to 1.5 real seconds for the reload.
         if (c.target === undefined) {
           const h = sim.hazards?.[c.barrel];
