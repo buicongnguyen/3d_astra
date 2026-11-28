@@ -379,12 +379,7 @@ void main() {
   // A few soft clouds on a high flat layer (very little cover by day), drifting slowly.
   if (uCloud > 0.001 && d.y > 0.004) {
     vec2 p = d.xz / (d.y + 0.07) * 0.55 + vec2(uTime * 0.0045, uTime * 0.0018);
-    float n = vnoise(p) * 0.62;
-#ifndef HZ_LITE
-    n += vnoise(p * 2.4 + 7.3) * 0.26 + vnoise(p * 5.3 - 3.1) * 0.12;
-#else
-    n += 0.19;
-#endif
+    float n = vnoise(p) * 0.62 + vnoise(p * 2.4 + 7.3) * 0.26 + vnoise(p * 5.3 - 3.1) * 0.12;
     float cover = smoothstep(1.0 - uCloud, 1.0 - uCloud + 0.2, n) * up;
     vec2 h = d.xz / max(length(d.xz), 1e-4);
     float lit = 0.5 + 0.5 * dot(h, normalize(uSun.xz));
@@ -514,7 +509,6 @@ export class HorizonSky {
     this.time = 0;
     this.terrainKey = null;
     this.atlasReady = false;
-    const lite = !!view.softwareGL;
     const common = { uHorizon: { value: new THREE.Color() }, uZenith: { value: new THREE.Color() }, uGlow: { value: new THREE.Color() }, uSun: { value: SUN_DIR.clone() } };
     this.uniforms = {
       ...common, uTime: { value: 0 }, uCloud: { value: 0.2 }, uStars: { value: 0 }, uComet: { value: 0.3 }, uFlash: { value: 0 },
@@ -530,7 +524,7 @@ export class HorizonSky {
     domeGeo.setAttribute("position", new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
     this.dome = this.mesh("horizon-dome", domeGeo, new THREE.ShaderMaterial({
       uniforms: pick("uHorizon", "uZenith", "uGlow", "uSun", "uTime", "uCloud", "uStars", "uComet", "uFlash", "uCloudLit", "uCloudShade", "uCometHead", "uCometTail", "uCometSide"),
-      vertexShader: DOME_VS, fragmentShader: DOME_FS, defines: lite ? { HZ_LITE: 1 } : {},
+      vertexShader: DOME_VS, fragmentShader: DOME_FS,
       depthWrite: false, fog: false, toneMapped: false,
     }), 1001);
     // The ring (built per land in update()).

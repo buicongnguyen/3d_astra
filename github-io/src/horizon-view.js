@@ -4,6 +4,9 @@
 // dome; the ring and the planets only while the camera can see above the far haze), 0 in the RTS view.
 //   - Off with Settings > Display > Decorative vegetation Off (the scenery switch, `detail`); the governor's rescue step
 //     keeps the dome but drops the ring and the planets; phones get all of it (it is cheap).
+//   - Off on software WebGL (view.softwareGL: SwiftShader, llvmpipe, Microsoft Basic Render, so a computer without a
+//     working GPU and CI's runners), as the ground detail drops to Eco there: such a renderer has no parallel shader
+//     compile and its three new programs stalled the first Hero mode frames for about 2 s (more on a slow CPU).
 //   - While it is on, the backdrop's own screen-space sky gives way to the dome (map-edge.js uEdgeHero), and the night
 //     sky's stars and moon (night-sky.js, drawn on the void below the map for the RTS camera, which read as dots on the
 //     ground from the hero camera) give way to the dome's own stars.
@@ -17,16 +20,23 @@ export class HorizonView {
     this.forceOff = false;
     this.state = { on: false, built: false, dome: false, ring: false, planets: false, draws: 0 };
   }
+  // The module, then its three programs compiled off the frame (KHR_parallel_shader_compile where the browser has it),
+  // so the first Hero mode frames never stall on a shader compile; the sky shows once they are ready.
   load() {
     this.loading ||= import("./horizon-sky.js").then((m) => {
-      if (!this.view.scene) return;
-      this.sky = new m.HorizonSky(this.view);
+      const v = this.view;
+      if (!v.scene) return null;
+      const sky = new m.HorizonSky(v);
+      if (v.terrain) sky.setTerrain(v.terrain);
+      sky.root.visible = false;
+      const compiled = v.renderer?.compileAsync && v.camera ? v.renderer.compileAsync(sky.root, v.camera, v.scene).catch(() => null) : null;
+      return Promise.resolve(compiled).then(() => { this.sky = sky; });
     }).catch(() => { this.loading = null; });
     return this.loading;
   }
   update(sim, dt) {
     const v = this.view;
-    const on = !!v.heroCameraOn && !!v.terrain && v.settings?.detail !== false && !this.forceOff;
+    const on = !!v.heroCameraOn && !!v.terrain && !v.softwareGL && v.settings?.detail !== false && !this.forceOff;
     if (on && !this.sky) this.load();
     this.sky?.update(sim, dt, on);
     const dome = on && !!this.sky;

@@ -16,7 +16,8 @@
 //   horizon    (owner 2026-11-28, src/horizon-view.js) landed and facing the key art's bearing: the sky dome, the far ring and the
 //              planets draw (3 more draws than with the horizon off), by day and at night (screenshots skyland-horizon-day /
 //              -night); flying with the look-down camera only the dome stays; back in the RTS view the frame is pixel for pixel
-//              the frame drawn with the horizon taken out of the scene, with the same draw count.
+//              the frame drawn with the horizon taken out of the scene, with the same draw count. Software WebGL (CI) keeps
+//              the old sky: there it checks that nothing was built.
 // Every HUD: taps >= 44 px, text >= 11 px, no system-ui. The match clock is held and moved only with step().
 import assert from "node:assert/strict";
 import { mkdirSync, copyFileSync } from "node:fs";
@@ -171,6 +172,12 @@ async function landedLooks(page, ids) {
 // The Hero-view horizon, landed: re-enter facing the key art's bearing (FRONT), wait for the sky and its atlas, then the
 // draws with it and without it (forceOff), and the screenshots by day and at night. Hero mode stays on, landed.
 async function horizonLanded(page, ids) {
+  // Software WebGL (CI's SwiftShader) keeps the old sky: the horizon is never loaded there (horizon-view.js).
+  if (await page.evaluate(() => window.__frontier.view.softwareGL)) {
+    const off = await page.evaluate(() => ({ ...window.__frontier.view.horizon.state, edge: window.__frontier.view.backdrop.material.userData.motion.hero.value }));
+    assert.ok(!off.on && !off.built && off.draws === 0 && off.edge === 0, `software WebGL: no horizon ${JSON.stringify(off)}`);
+    return;
+  }
   const angle = await page.evaluate((id) => window.__frontier.sim.get(id).angle, ids.sky);
   await page.evaluate(() => window.__frontier.heroMode.leave());
   await step(page, 0.05, 1);
@@ -203,6 +210,7 @@ async function horizonLanded(page, ids) {
 // Back in the RTS view: the built horizon draws nothing. The frame equals, pixel for pixel, the frame drawn with the horizon
 // taken out of the scene altogether, with the same draw count, and the backdrop has its own sky back.
 async function horizonRts(page) {
+  if (await page.evaluate(() => !window.__frontier.view.horizon.sky)) return; // software WebGL: never built
   const rts = await page.evaluate(() => {
     const f = window.__frontier, v = f.view, r = v.renderer, sky = v.horizon.sky, parent = sky.root.parent;
     const frame = () => { r.info.reset(); r.info.autoReset = false; v.update(f.sim, 0, f.selected, null); const calls = r.info.render.calls; r.info.autoReset = true; return { calls, png: r.domElement.toDataURL("image/png") }; };
@@ -343,8 +351,8 @@ await suite("skywing-land" + shardLabel, async () => {
     await page.waitForTimeout(200);
     assert.equal(await land.isDisabled(), false, "ready again");
     assert.ok((await pitch(page)) >= 44, "back to the look-down view");
-    const flying = await page.evaluate(() => { const v = window.__frontier.view; v.update(window.__frontier.sim, 0, window.__frontier.selected, null); return { ...v.horizon.state }; });
-    assert.ok(flying.dome && !flying.ring && !flying.planets && flying.draws === 1, `flying, looking down: only the dome ${JSON.stringify(flying)}`);
+    const flying = await page.evaluate(() => { const v = window.__frontier.view; v.update(window.__frontier.sim, 0, window.__frontier.selected, null); return { ...v.horizon.state, soft: !!v.softwareGL }; });
+    if (!flying.soft) assert.ok(flying.dome && !flying.ring && !flying.planets && flying.draws === 1, `flying, looking down: only the dome ${JSON.stringify(flying)}`);
     await page.keyboard.press("Tab");
     await page.waitForFunction(() => !window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
     await horizonRts(page);

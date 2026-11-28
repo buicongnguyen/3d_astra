@@ -189,6 +189,15 @@ test("clouds drift, stars twinkle and the comet shimmers only while motion is al
   assert.ok(Math.abs(tail.dot(head)) < 1e-6 && tail.y > 0.5, "the tail lies on the sky and rises");
 });
 
+test("software WebGL (no GPU, CI's SwiftShader) keeps the old sky: nothing is loaded", () => {
+  const v = fakeView({ hero: true }), plugin = new HorizonView(v);
+  v.softwareGL = true;
+  for (let i = 0; i < 3; i++) plugin.update({}, 0.016);
+  assert.equal(plugin.loading, null);
+  assert.equal(plugin.state.draws, 0);
+  assert.equal(v.backdrop.material.userData.motion.hero.value, 0);
+});
+
 test("Settings > Decorative vegetation Off and the governor's rescue step", async () => {
   const v = fakeView({ hero: true, settings: { detail: false } }), plugin = new HorizonView(v);
   plugin.update({}, 0.016);
