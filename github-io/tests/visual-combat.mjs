@@ -164,7 +164,7 @@ try{
         const kill=(e)=>{s.entities=s.entities.filter(x=>x!==e);s.lookup?.delete?.(e.id);v.event({type:'death',x:e.x,z:e.z,team:1,heavy:false,seed:e.id,direction:0},s);return v.dying.find(d=>d.id===e.id);};
         const d=kill(r);step(1.2);
         const m=d.object.userData.model,lying=Math.abs(m.rotation.x)+Math.abs(m.rotation.z),fall=d.fall;
-        step(1.5);const gone=!v.dying.includes(d);
+        step(3.5);const gone=!v.dying.includes(d); // FALL.life 4.5 s (owner 2026-11-28: bodies stay longer)
         document.documentElement.dataset.reducedMotion='on';step(1/60);
         hit(r2);step(1/60);const calm=size(v.objects.get(r2.id).userData.rig,'flinch');
         const d2=kill(r2);step(.05);const m2=d2.object.userData.model,still=Math.abs(m2.rotation.x)+Math.abs(m2.rotation.z),sunk=d2.object.position.y-d2.baseY;

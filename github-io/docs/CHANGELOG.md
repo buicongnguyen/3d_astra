@@ -2,6 +2,9 @@
 
 ## Unreleased: Round A.2
 
+### Fallen soldiers stay longer (owner 2026-11-28)
+- A fallen trooper now lies for about 4.5 s (3.2 s in Eco) instead of 2.4 s (1.8 s), and sinks away over 1.1 s instead of 0.7 s (`FALL`, src/unit-rig.js). Same batches, no extra draws; the dying cap still applies. Vehicle wrecks (20 s) are unchanged.
+
 ### Skywing sees further on foot (owner 2026-11-28)
 - **Landed sight 18 -> 23 m** all round, about 1.5x a soldier's (a Ranger sees 15 m, an Anti-tank team 16). The scope stays 26 m in its 70-degree cone, as far as the scoped Sniper reaches; high ground still adds 4 m. Flying sight is unchanged (22 m). Only Skywing's own sight changes, so it is easier, never harder.
 

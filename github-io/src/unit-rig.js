@@ -427,7 +427,8 @@ export function swingLegs(legs, stride, gait) {
 export const FALLS = Object.freeze(["back", "knees", "twist"]);
 // depth: how far it sinks (world units); shrink: the share of its size it loses meanwhile (a back-fallen rifle points
 // up a metre: sinking alone left it standing out of the sand).
-export const FALL = Object.freeze({ life: 2.4, ecoLife: 1.8, sink: 0.7, depth: 1.3, shrink: 0.7 });
+// Owner 2026-11-28: a fallen soldier vanished too fast (2.4 s); it now lies about twice as long and sinks more slowly.
+export const FALL = Object.freeze({ life: 4.5, ecoLife: 3.2, sink: 1.1, depth: 1.3, shrink: 0.7 });
 export const fallFor = (seed) => FALLS[((Math.imul((seed | 0) + 0x9e37, 0x85ebca6b) >>> 13) % 3 + 3) % 3];
 // Writes out = { pitch, roll, yaw, kneel, drop, size } for a fall of `kind` at age t (seconds) and returns it.
 // pitch: rotation.x (+ = forward onto the face), roll: rotation.z, yaw: extra turn, kneel: the rig's kneel blend,
