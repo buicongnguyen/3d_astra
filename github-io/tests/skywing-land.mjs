@@ -18,6 +18,7 @@ import assert from "node:assert/strict";
 import { mkdirSync, copyFileSync } from "node:fs";
 import { launchBrowser, openPage, shot, suite, TIMEOUT, OUTPUT } from "./lib/harness.mjs";
 import { inShard, shardLabel } from "./lib/shard.mjs";
+import { SIGHT } from "../src/sim/content/skywing.js";
 
 const SHOTS = process.env.SKYLAND_SHOTS || null; // a folder to copy the owner's screenshots into
 async function keep(page, name) {
@@ -243,7 +244,7 @@ await suite("skywing-land" + shardLabel, async () => {
     await page.waitForFunction(() => window.__frontier.heroMode.info.sent.drive === "0,0", null, { timeout: TIMEOUT.step });
     await step(page, 0.3, 3);
     await page.waitForFunction(() => window.__frontier.heroMode.info.scope, null, { timeout: TIMEOUT.step });
-    assert.equal(await page.evaluate((id) => window.__frontier.sim.get(id).vision, ids.sky), 18, "18 m on foot");
+    assert.equal(await page.evaluate((id) => window.__frontier.sim.get(id).vision, ids.sky), SIGHT.vision, `${SIGHT.vision} m on foot`);
     await keep(page, "skyland-scope");
     // The air warning: an enemy Hawk 25 m away, outside sight, gets a mark; a ground unit at 25 m does not.
     const warn = await page.evaluate((id) => {
