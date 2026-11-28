@@ -108,6 +108,8 @@ export function defaults(coarse = false) {
     skywingOffer: true,
     // Birds rising from the fog hint at hidden enemies (H5).
     birdHint: true,
+    // How many birds: "off", "few" (a couple of small flocks and one geese V) or "many" (owner 2026-11-28: few by default).
+    birds: "few",
   };
 }
 export function normalize(value, coarse = false) {
@@ -154,6 +156,7 @@ export function normalize(value, coarse = false) {
   for (const key of ["dodgeHelp", "shotWarnings", "skywingOffer", "birdHint"]) if (typeof value[key] === "boolean") d[key] = value[key];
   pick("aimAssist", ["off", "low", "high"]);
   pick("closeDetail", ["auto", "on", "off"]);
+  pick("birds", ["off", "few", "many"]);
   return d;
 }
 export function loadSettings(coarse = false, storage) {

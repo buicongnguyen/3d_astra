@@ -11,14 +11,16 @@ import { lookOf } from "./visual-style.js";
 // Motion levels (set by the frame-time governor in main.js): 2 full, 1 calm (slower, smaller
 // wingbeats), 0 still (the clock stops and wings rest). Reduced motion is level 0.
 
-// Counts are per 96 x 96 map area; they scale with map area and the device budget.
+// Counts are per 96 x 96 map area; they scale with map area and the device budget. Birds follow Settings > Hero > Birds
+// (BIRD_SHARE): Many is the count below, Few (the default) a third of it (two to four) and one geese V, Off none.
+// 2026-11-28: the brown birds were removed (the owner saw them as spiky shards): Basin and Woodlands fly crows.
 export const LIFE = {
   classic: { birds: { look: "crow", count: 6, height: [9, 12], speed: [2.6, 3.4], soar: 0.25, radius: [7, 13] }, motes: { look: "ash", count: 90 } },
   riverlands: { birds: { look: "gull", count: 7, height: [9, 13], speed: [3, 4], soar: 0.45, radius: [8, 14] }, fish: { count: 26 }, butterflies: { count: 14 }, dragonflies: { count: 8 }, motes: { look: "pollen", count: 50 } },
-  basin: { birds: { look: "hawk", count: 4, height: [12, 15], speed: [2.2, 2.8], soar: 0.9, radius: [10, 16] }, butterflies: { count: 6 }, motes: { look: "dust", count: 90 } },
+  basin: { birds: { look: "crow", count: 4, height: [12, 15], speed: [2.2, 2.8], soar: 0.9, radius: [10, 16] }, butterflies: { count: 6 }, motes: { look: "dust", count: 90 } },
   expanse: { geese: { flocks: 2, size: 7 }, fish: { count: 30 }, butterflies: { count: 16 }, dragonflies: { count: 8 }, motes: { look: "pollen", count: 50 } },
   dunes: { birds: { look: "vulture", count: 5, height: [12, 15], speed: [2, 2.6], soar: 0.92, radius: [9, 15] }, motes: { look: "sand", count: 120 } },
-  woodlands: { birds: { look: "songbird", count: 8, height: [7, 10], speed: [3.4, 4.4], soar: 0.1, radius: [5, 9] }, fish: { count: 22 }, butterflies: { count: 28 }, dragonflies: { count: 10 }, motes: { look: "firefly", count: 70 } },
+  woodlands: { birds: { look: "crow", count: 8, height: [7, 10], speed: [3.4, 4.4], soar: 0.1, radius: [5, 9] }, fish: { count: 22 }, butterflies: { count: 28 }, dragonflies: { count: 10 }, motes: { look: "firefly", count: 70 } },
   highlands: { birds: { look: "raven", count: 6, height: [10, 13], speed: [2.6, 3.4], soar: 0.5, radius: [8, 14] }, motes: { look: "ember", count: 110 } },
   // W9 lands (src/lands.js). Snow and ash are land weather: their motes fall in a box that follows the camera
   // (`weather`), so the same few hundred flakes fill every view (one draw, all motion on the GPU). `count` is then
@@ -65,28 +67,37 @@ const DIRECTION = new THREE.Vector3();
 const between = (r, [a, b]) => a + (b - a) * r();
 const hex = (value) => new THREE.Color().setHex(parseInt(value.slice(1), 16), THREE.LinearSRGBColorSpace);
 
+// How many of the planned birds fly at each Birds setting (the plan draws them all first, so the rest of the cast stays
+// where it was whatever the setting).
+export const BIRD_SHARE = Object.freeze({ off: () => 0, few: (n) => Math.min(n, 4, Math.max(2, Math.round(n / 3))), many: (n) => n });
+export const GEESE_FLOCKS = Object.freeze({ off: 0, few: 1, many: 2 });
 // Pure, seeded placement: the same map always gets the same cast, and tests can check bounds.
-export function planLife(terrain, budget = 1) {
+export function planLife(terrain, budget = 1, birdLevel = "few") {
+  const level = Object.hasOwn(BIRD_SHARE, birdLevel) ? birdLevel : "few";
   const recipe = LIFE[lookOf(terrain.id)] || {}, r = rng(hashId(terrain.id)), half = terrain.half;
   const scale = (n) => Math.max(0, Math.round(n * (terrain.size / 96) ** 2 * budget));
   const plan = { birds: [], fish: [], butterflies: [], dragonflies: [], motes: [], look: recipe.birds?.look || (recipe.geese ? "goose" : null), moteLook: recipe.motes?.look || null };
   const land = (x, z) => !["water", "ford", "bridge", "stone"].includes(terrain.at(x, z)) && !(terrain.level?.(x, z));
   if (recipe.birds) {
     const b = recipe.birds;
+    const keep = BIRD_SHARE[level](scale(b.count));
     for (let i = 0; i < scale(b.count); i++) {
       const radius = between(r, b.radius), reach = half - radius - 3;
-      plan.birds.push({ x: (r() * 2 - 1) * reach, y: between(r, b.height), z: (r() * 2 - 1) * reach, size: (0.9 + r() * 0.3) * BIRD_SIZE[b.look],
+      // Every bird is drawn from the generator (so the rest of the cast stays put), only `keep` of them fly.
+      const bird = { x: (r() * 2 - 1) * reach, y: between(r, b.height), z: (r() * 2 - 1) * reach, size: (0.9 + r() * 0.3) * BIRD_SIZE[b.look],
         radius, speed: between(r, b.speed) * (r() < 0.5 ? -1 : 1), phase: r() * 6.283, mode: 0,
-        flap: 9 + r() * 3, soar: b.soar, back: 0, side: 0 });
+        flap: 9 + r() * 3, soar: b.soar, back: 0, side: 0 };
+      if (i < keep) plan.birds.push(bird);
     }
   }
   if (recipe.geese) {
     // V formations crossing the map on straight lines; they shrink away before the edge.
-    for (let f = 0; f < Math.max(1, Math.round(recipe.geese.flocks * Math.min(1, budget + 0.2))); f++) {
+    const flocks = Math.max(1, Math.round(recipe.geese.flocks * Math.min(1, budget + 0.2)));
+    for (let f = 0; f < flocks; f++) {
       const dir = r() * 6.283, phase = r(), x = (r() * 2 - 1) * half * 0.3, z = (r() * 2 - 1) * half * 0.3, y = 11 + r() * 2;
       for (let k = 0; k < recipe.geese.size; k++) {
         const rank = Math.ceil(k / 2), side = k === 0 ? 0 : k % 2 ? 1 : -1;
-        plan.birds.push({ x, y: y + rank * 0.08, z, size: BIRD_SIZE.goose, radius: dir, speed: 4.2, phase, mode: 1,
+        if (f < GEESE_FLOCKS[level]) plan.birds.push({ x, y: y + rank * 0.08, z, size: BIRD_SIZE.goose, radius: dir, speed: 4.2, phase, mode: 1,
           flap: 7.5 + (k % 3) * 0.4, soar: 0.15, back: rank * 1.5, side: side * rank * 1.25 });
       }
     }
@@ -542,12 +553,13 @@ function instanced(geometry, rows, pick, names) {
 }
 
 export class AmbientLife {
-  constructor(scene, terrain, { fogTexture, budget = 1, sunShift = [25 / 55, -20 / 55] } = {}) {
+  constructor(scene, terrain, { fogTexture, budget = 1, sunShift = [25 / 55, -20 / 55], birds = "few" } = {}) {
     this.scene = scene;
     this.root = new THREE.Group();
     this.root.name = "AmbientLife";
     scene.add(this.root);
-    this.plan = planLife(terrain, budget);
+    this.birdLevel = birds;
+    this.plan = planLife(terrain, budget, birds);
     this.uniforms = { uTime: { value: 0 }, uAmp: { value: 1 }, uHalf: { value: terrain.half }, uFog: { value: fogTexture } };
     // The camera's focus on the ground, for land weather (W9): flakes fall around it.
     this.focus = { value: new THREE.Vector3() };

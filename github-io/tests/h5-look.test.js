@@ -5,11 +5,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import * as THREE from "three";
-import { planFlocks, roofFlock, BirdFlocks, birdPath, BIRD_BUDGET, BIRD_LIFE, NEVER, SPECIES } from "../src/bird-life.js";
+import { planFlocks, roofFlock, BirdFlocks, birdPath, birdBudget, BIRD_BUDGET, BIRD_FEW, BIRD_LIFE, NEVER, SPECIES } from "../src/bird-life.js";
 import { BirdView } from "../src/bird-view.js";
 import { drawDetailAtlas, closeDetailOn, closeDetailShader, tagCreatureLife, CLOSE_DETAIL, CREATURE_LIFE } from "../src/close-detail.js";
 import { unitNumber, UNIT_DECALS } from "../src/unit-decals-view.js";
-import { AmbientLife, FISH_TURN, GOOSE_LOOK } from "../src/ambient-life.js";
+import { AmbientLife, FISH_TURN, GOOSE_LOOK, planLife, LIFE } from "../src/ambient-life.js";
 import { Terrain } from "../src/terrain.js";
 import { defaults, normalize } from "../src/settings.js";
 import { VIEW_PLUGINS } from "../src/view-plugins.js";
@@ -24,29 +24,64 @@ const mapOf = (id) => {
   return { id: t.id, half: t.half, rivers: t.river ? (t.rivers?.length ? t.rivers : [{ z: 0 }]) : [], heightAt: (x, z) => t.heightAt(x, z), at: (x, z) => t.at(x, z), tall };
 };
 
-test("bird flocks are seeded per map, inside the map, within the budgets, on the right perches", () => {
+test("bird flocks are seeded per map, inside the map, within the budgets, on the right perches; crows and gulls only", () => {
   for (const id of ["riverlands", "woodlands", "classic", "expanse"]) {
     const map = mapOf(id);
     for (const touch of [false, true]) {
-      const a = planFlocks(map, { touch }), b = planFlocks(map, { touch });
-      assert.deepEqual(a, b, `${id}: same plan twice`);
-      const budget = BIRD_BUDGET[touch ? "touch" : "pc"];
-      assert.ok(a.length > 0 && a.length <= budget.flocks - budget.roofs, `${id} ${touch}: ${a.length} flocks`);
-      for (const f of a) {
-        assert.ok(SPECIES.includes(f.species));
-        assert.ok(f.birds.length >= BIRD_LIFE.flock[0] && f.birds.length <= BIRD_LIFE.flock[1]);
-        assert.ok(Math.abs(f.x) < map.half - 4 && Math.abs(f.z) < map.half - 4, `${id}: flock inside`);
-        if (f.species === "duck") assert.equal(map.at(f.x, f.z), "water", "ducks on the water");
-        if (f.species === "gull") assert.notEqual(map.at(f.x, f.z), "water", "gulls on the bank");
-        if (f.species === "songbird") assert.equal(f.kind, "tree");
+      for (const level of ["few", "many"]) {
+        const a = planFlocks(map, { touch, level }), b = planFlocks(map, { touch, level });
+        assert.deepEqual(a, b, `${id}: same plan twice`);
+        const budget = birdBudget(touch, level), size = level === "few" ? BIRD_FEW.flock : BIRD_LIFE.flock;
+        assert.ok(a.length > 0 && a.length <= budget.flocks - budget.roofs, `${id} ${touch} ${level}: ${a.length} flocks`);
+        for (const f of a) {
+          assert.ok(["crow", "gull"].includes(f.species), `${id}: ${f.species} (the brown families are gone)`);
+          assert.ok(f.birds.length >= size[0] && f.birds.length <= size[1]);
+          assert.ok(Math.abs(f.x) < map.half - 4 && Math.abs(f.z) < map.half - 4, `${id}: flock inside`);
+          if (f.species === "gull") assert.notEqual(map.at(f.x, f.z), "water", "gulls on the bank");
+        }
+        if (map.rivers.length) assert.ok(a.some((f) => f.species === "gull"), `${id}: gulls by the river`);
+        if (level === "few") {
+          assert.ok(a.length <= 2 && a.filter((f) => f.species === "crow").length <= 1 && a.filter((f) => f.species === "gull").length <= 1, `${id}: few is one crow and one gull flock`);
+          assert.ok(a.reduce((n, f) => n + f.birds.length, 0) <= 10, `${id}: few birds`);
+        }
       }
-      if (map.rivers.length) assert.ok(a.some((f) => f.species === "gull"), `${id}: gulls by the river`);
-      assert.ok(a.some((f) => f.species === "songbird"), `${id}: songbirds in the woods`);
+      assert.deepEqual(planFlocks(map, { touch, level: "off" }), [], "Off: no flocks");
     }
   }
+  assert.deepEqual(planFlocks(mapOf("riverlands")), planFlocks(mapOf("riverlands"), { level: "few" }), "Few is the default");
   // Every near bird fits the near budget: at most 20 on a PC, 10 on a phone.
-  assert.ok(BIRD_BUDGET.pc.near <= 20 && BIRD_BUDGET.touch.near <= 10);
+  assert.ok(BIRD_BUDGET.pc.near <= 20 && BIRD_BUDGET.touch.near <= 10 && birdBudget(true).near <= 10 && birdBudget(false).near <= 20);
   assert.deepEqual(roofFlock(7, 1, 4, 2, 3), roofFlock(7, 1, 4, 2, 3), "roof flocks are seeded by building");
+  assert.ok(roofFlock(7, 1, 4, 2, 3, 3).birds.length <= 3, "Few: small roof flocks");
+});
+
+test("no jumps: a landing flock is not restarted, a flying crow flock keeps its circle when a new fight starts", () => {
+  const plan = [{ species: "crow", kind: "ground", x: 0, y: 0, z: 0, birds: Array.from({ length: 4 }, (_, i) => ({ ox: i * 0.8 - 1, oy: 0, oz: 0, size: 1, phase: i * 0.2 })) }];
+  const flocks = new BirdFlocks(plan), f = flocks.flocks[0], p = {}, q = {};
+  flocks.fought(20, 0, 1);
+  flocks.startle(1, 0, 15, 1);
+  assert.deepEqual([f.cx, f.cz], [20, 0], "crows take off toward the fight");
+  // A new fight elsewhere while they fly: the circle stays (it used to jump, moving every bird at once).
+  flocks.fought(-20, 10, 5);
+  flocks.step(5.1);
+  assert.deepEqual([f.cx, f.cz], [20, 0]);
+  // Landing: a shot now does not snap the birds in the air back to their perches.
+  const t = 1 + BIRD_LIFE.minFlight + BIRD_LIFE.quiet;
+  flocks.step(t);
+  assert.equal(f.state, "landing");
+  const mid = f.birds[3].landAt + BIRD_LIFE.land * 0.5;
+  birdPath(f, f.birds[3], mid, p);
+  assert.equal(flocks.startle(1, 0, 15, mid), 0, "a landing flock settles first");
+  birdPath(f, f.birds[3], mid + 0.016, q);
+  assert.ok(Math.hypot(p.x - q.x, p.y - q.y, p.z - q.z) < 0.3, "no jump in one frame");
+  // Every bird's path is continuous through take-off, circling and landing (max step per 1/60 s).
+  const g = new BirdFlocks(plan).flocks[0], fl = new BirdFlocks(plan);
+  fl.flocks[0] = g; fl.startle(0, 0, 15, 0); fl.step(BIRD_LIFE.minFlight + BIRD_LIFE.quiet);
+  for (const bird of g.birds) {
+    let last = null, worst = 0;
+    for (let k = 0; k < 60 * 30; k++) { const r = birdPath(g, bird, k / 60, {}); if (last) worst = Math.max(worst, Math.hypot(r.x - last.x, r.y - last.y, r.z - last.z)); last = r; }
+    assert.ok(worst < 0.25, `continuous path: ${worst.toFixed(3)} m in one frame`);
+  }
 });
 
 test("a startle lifts a flock off in a ripple, nearest first; quiet brings it back down bird by bird", () => {
@@ -90,7 +125,7 @@ test("crows circle over the latest fight; other birds circle over their own perc
 // A staged view for the bird plugin (three.js objects work headless): fog hidden everywhere but x < 0.
 function birdStage(hint) {
   const t = new Terrain("riverlands");
-  const view = { scene: new THREE.Scene(), terrain: t, settings: { birdHint: hint, detail: true }, motionLevel: 2, reducedMotion: { matches: false }, fogTexture: null, objects: new Map(), scatter: { tall: [] }, lifeShare: 1 };
+  const view = { scene: new THREE.Scene(), terrain: t, settings: { birdHint: hint, detail: true, birds: "many" }, motionLevel: 2, reducedMotion: { matches: false }, fogTexture: null, objects: new Map(), scatter: { tall: [] }, lifeShare: 1 };
   const sim = { entities: [], isVisible: (p) => p.x < 0, get: () => null };
   const plugin = new BirdView(view);
   plugin.update(sim, 0.016);
@@ -209,23 +244,40 @@ test("fish wander with a turn limit and keep to their river lane", () => {
   assert.ok(life.disturb(x, z, 0.4) >= 1, "a blast hits a fish where it swims now");
 });
 
-test("birds.glb: six families, one mesh each with the wing/head attribute, within the near-bird triangle budget", async () => {
+test("birds.glb: crow, gull and the goose LOD, one mesh each with the wing/head attribute, within the near-bird budget; no brown families", async () => {
   const { scene } = await parseModel(readFileSync(new URL("../public/models/birds.glb", import.meta.url)));
   const found = new Map();
   scene.traverse((o) => { if (o.isMesh) found.set(o.name, o); });
-  for (const s of SPECIES) {
+  assert.deepEqual([...found.keys()].sort(), ["crow", "goose_lod", "gull"], "songbird, duck, hawk and the full goose left with the brown birds");
+  for (const s of ["crow", "gull"]) {
     const m = found.get(s);
-    assert.ok(m, `${s} mesh`);
     const g = m.geometry, tris = (g.index ? g.index.count : g.getAttribute("position").count) / 3;
     assert.ok(g.getAttribute("_bird") && g.getAttribute("color") && g.getAttribute("normal"), `${s} attributes`);
     assert.ok(tris >= 900 && tris <= 3000, `${s}: ${tris} triangles`);
     assert.ok(Array.isArray(m.userData.hinge) && Array.isArray(m.userData.neck), `${s} pivots`);
     assert.ok(tris * BIRD_BUDGET.pc.near <= 60000, `${s}: a full near set stays under 60k triangles`);
   }
+  assert.ok(readFileSync(new URL("../public/models/birds.glb", import.meta.url)).length < 400 * 1024, "birds.glb under 400 KB");
+});
+
+test("Settings > Hero > Birds: few by default; the ambient cast keeps its seed; no brown birds circle any map", () => {
+  assert.equal(defaults().birds, "few");
+  assert.equal(normalize({ version: 1, birds: "many" }).birds, "many");
+  assert.equal(normalize({ version: 1, birds: "lots" }).birds, "few");
+  for (const id of Object.keys(LIFE)) {
+    const t = new Terrain(id), few = planLife(t, 1), many = planLife(t, 1, "many"), off = planLife(t, 1, "off");
+    assert.deepEqual(few.butterflies, many.butterflies, `${id}: the rest of the cast stays put`);
+    assert.deepEqual(few.motes, many.motes);
+    assert.equal(off.birds.length, 0, `${id}: Off`);
+    assert.ok(few.look === "goose" ? few.birds.length === 7 : few.birds.length <= 4, `${id}: few ${few.birds.length} of ${many.birds.length}`);
+    assert.ok(!["songbird", "hawk"].includes(few.look), `${id}: ${few.look}`);
+  }
+  assert.equal(planLife(new Terrain("expanse"), 1).birds.length, 7, "Few: one geese V");
+  assert.equal(planLife(new Terrain("expanse"), 1, "many").birds.length, 14, "Many: two");
 });
 
 // The Expanse geese V: the cards in the RTS view; in Hero mode birds.glb's goose_lod in their place (one draw either way,
-// same instance rows), at most 400 triangles a goose so the 14 geese stay under 6k triangles on a phone.
+// same instance rows), at most 400 triangles a goose so even the two Vs of Birds: Many stay under 6k triangles on a phone.
 test("geese V: birds.glb goose_lod swaps in for the cards in Hero mode only, one draw, within the triangle budget", async () => {
   const { scene } = await parseModel(readFileSync(new URL("../public/models/birds.glb", import.meta.url)));
   let lod = null;
@@ -243,7 +295,7 @@ test("geese V: birds.glb goose_lod swaps in for the cards in Hero mode only, one
   const life = new AmbientLife(new THREE.Scene(), new Terrain("expanse"), { fogTexture: null });
   const birds = life.groups.find((r) => r.name === "birds"), shown = () => life.root.children.filter((m) => m.visible).map((m) => m.name);
   assert.equal(life.plan.look, "goose");
-  assert.equal(birds.rows.length, 14, "two Vs of seven");
+  assert.equal(birds.rows.length, 7, "one V of seven (Birds: Few)");
   const before = shown();
   assert.equal(life.gooseModel(null), false, "the RTS view keeps the cards");
   assert.ok(!life.geese, "no goose mesh until a model is handed over");
@@ -253,10 +305,10 @@ test("geese V: birds.glb goose_lod swaps in for the cards in Hero mode only, one
   assert.deepEqual(shown(), [...before.filter((n) => n !== "life:birds"), "life:geese"], "a swap: the same number of draws");
   assert.equal(mesh.castShadow, false);
   for (const name of ["aA", "aB", "aC"]) assert.equal(mesh.geometry.getAttribute(name), birds.geometry.getAttribute(name), `${name} shared with the cards`);
-  assert.equal(mesh.geometry.instanceCount, 14, "every goose");
-  assert.ok(mesh.geometry.instanceCount * tris <= 6000, `the V stays under 6k triangles: ${mesh.geometry.instanceCount * tris}`);
+  assert.equal(mesh.geometry.instanceCount, 7, "every goose");
+  assert.ok(14 * tris <= 6000, `even two Vs (Many) stay under 6k triangles: ${14 * tris}`);
   life.setShare(0.5);
-  assert.equal(mesh.geometry.instanceCount, 7, "the governor thins the model like the cards");
+  assert.equal(mesh.geometry.instanceCount, 4, "the governor thins the model like the cards");
   life.setShare(1);
   assert.equal(life.gooseModel(null), false);
   assert.deepEqual(shown(), before, "leaving Hero mode hands the cards back");
@@ -279,7 +331,7 @@ test("geese V: birds.glb goose_lod swaps in for the cards in Hero mode only, one
   assert.ok(loads >= 1, "Hero mode loads birds.glb");
   plugin.models = new Map([["goose_lod", lod]]);
   plugin.update(sim, 0.3);
-  assert.equal(plugin.state.geese, 14, "Hero mode: the V flies as the goose model");
+  assert.equal(plugin.state.geese, 7, "Hero mode: the V flies as the goose model");
   view.lifeShare = 0.5; plugin.update(sim, 0.3);
   assert.equal(plugin.state.geese, 0, "a thinned frame budget hands the cards back");
   view.lifeShare = 1; view.heroSaved = null; plugin.update(sim, 0.3);

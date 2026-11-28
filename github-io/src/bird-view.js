@@ -1,10 +1,11 @@
 import * as THREE from "three";
-import { BirdFlocks, BIRD_BUDGET, BIRD_LIFE, NEVER, SPECIES, SPECIES_ID, planFlocks, roofFlock } from "./bird-life.js";
+import { BirdFlocks, BIRD_LIFE, BIRD_LEVELS, NEVER, SPECIES, SPECIES_ID, birdBudget, planFlocks, roofFlock } from "./bird-life.js";
 import { birdGeometry, WING_POSE } from "./ambient-life.js";
 import { modelLoader } from "./model-decode.js";
 
 // H5 birds that react (a view plugin, docs/VIEW_PLUGINS.md; the logic is src/bird-life.js).
 // Draws:
+// How many: Settings > Hero > Birds (off / few, the default / many), applied at once (the flocks are planned again).
 //   cards   every perched and flying bird as the small low-poly card of ambient-life.js (9 triangles), all families in
 //           ONE instanced draw (colours per family from a uniform table): the RTS view and far birds in Hero mode
 //   near    in Hero mode, the flocks nearest the camera (at most BIRD_BUDGET.near birds) use the detailed bird of their
@@ -13,7 +14,7 @@ import { modelLoader } from "./model-decode.js";
 // Everything moves in the vertex shaders from one clock and a few event times per bird (birdPath in bird-life.js is the
 // same maths): take-off in a ripple, climb, circle (crows over the latest fight), glide back down, head jerks while
 // perched, folded wings at rest, flapping and gliding in the air, and birds parting around Skywing (uSky) and closing
-// up behind it. No shadow casting, no per-frame allocation; the instance data changes only when a flock is startled or
+// up behind it (the hawk that rode near Skywing went with the brown families, 2026-11-28). No shadow casting, no per-frame allocation; the instance data changes only when a flock is startled or
 // lands, or the near set changes (four times a second at most).
 // Quiet: reduced motion or the governor's still level hold the birds on their perches (no startles, no flaps).
 // Settings Display > Detail Off hides them, like the other ambient life; the governor's rescue level too.
@@ -167,7 +168,8 @@ export class BirdView {
     this.view = view;
     view.birds = this; // H5: tests and probes reach the plugin here (class names are minified in a build)
     this.touch = typeof matchMedia !== "undefined" && matchMedia("(pointer: coarse)").matches;
-    this.budget = BIRD_BUDGET[this.touch ? "touch" : "pc"];
+    this.level = "few";
+    this.budget = birdBudget(this.touch, this.level);
     this.flocks = null;
     this.cards = null;
     this.near = new Map(); // family -> { mesh, rows } (detailed birds, Hero mode)
@@ -182,7 +184,8 @@ export class BirdView {
     const v = this.view, t = v.terrain;
     if (!t) return false;
     const map = { id: t.id, half: t.half, rivers: t.river ? (t.rivers?.length ? t.rivers : [{ z: 0 }]) : [], heightAt: (x, z) => t.heightAt(x, z), at: (x, z) => t.at(x, z), tall: v.scatter?.tall || [] };
-    this.flocks = new BirdFlocks(planFlocks(map, { touch: this.touch }));
+    this.budget = birdBudget(this.touch, this.level);
+    this.flocks = new BirdFlocks(planFlocks(map, { touch: this.touch, level: this.level }));
     this.capacity = this.budget.flocks * 7 + this.budget.roofs * 5 + 1;
     const g = birdGeometry();
     const attr = (n) => new THREE.InstancedBufferAttribute(new Float32Array(this.capacity * n), n).setUsage(THREE.DynamicDrawUsage);
@@ -241,19 +244,24 @@ export class BirdView {
     if (ev.type !== "shot" || !this.flocks || !this.lively) return;
     const hint = this.view.settings?.birdHint !== false;
     const hiddenAt = (x, z) => !(sim?.isVisible?.({ x, z }) ?? true);
+    // The fight first: crows startled by this shot take off toward it (their circle is fixed at take-off).
+    if (Number.isFinite(ev.tx) && !hiddenAt(ev.tx, ev.tz)) this.flocks.fought(ev.tx, ev.tz, this.clock);
     const muzzle = hiddenAt(ev.x, ev.z);
     if (!muzzle || hint) this.state.startles += this.flocks.startle(ev.x, ev.z, BIRD_LIFE.reach.shot, this.clock, { hidden: muzzle });
     if (ev.heavy && Number.isFinite(ev.tx)) {
       const land = hiddenAt(ev.tx, ev.tz);
       if (!land || hint) this.state.startles += this.flocks.startle(ev.tx, ev.tz, BIRD_LIFE.reach.blast, this.clock, { hidden: land });
     }
-    if (Number.isFinite(ev.tx) && !hiddenAt(ev.tx, ev.tz)) this.flocks.fought(ev.tx, ev.tz, this.clock);
   }
   update(sim, dt) {
     const v = this.view;
     if (!sim?.entities || !v.terrain) return;
-    if (!this.flocks && !this.build()) return;
     const s = v.settings || {}, share = v.lifeShare ?? 1;
+    // Settings > Hero > Birds: a new level plans the flocks again; Off draws none.
+    const level = BIRD_LEVELS.includes(s.birds) ? s.birds : "few";
+    if (level !== this.level) { if (this.flocks) this.reset(); this.level = level; }
+    if (level === "off") { this.geese(share); return; }
+    if (!this.flocks && !this.build()) return;
     const shown = s.detail !== false && share > 0;
     this.lively = shown && (v.motionLevel ?? 2) > 0 && !v.reducedMotion?.matches;
     this.cards.visible = shown;
@@ -285,7 +293,7 @@ export class BirdView {
   walkers(sim, hint) {
     const reach = BIRD_LIFE.reach.unit;
     for (const f of this.flocks.flocks) {
-      if (f.state !== "perched" || f.species === "hawk") continue;
+      if (f.state !== "perched") continue;
       for (const e of sim.entities) {
         if (e.kind !== "unit" || !(e.hp > 0) || e.flying && (e.fly || 0) > 6) continue;
         if (Math.abs(e.x - f.x) > reach || Math.abs(e.z - f.z) > reach || Math.hypot(e.x - f.x, e.z - f.z) > reach) continue;
@@ -307,41 +315,17 @@ export class BirdView {
       this.roofs.add(e.id);
       const box = new THREE.Box3().setFromObject(o.userData.model);
       if (box.isEmpty()) continue;
-      const f = this.flocks.add(roofFlock(e.id, e.x, box.max.y - 0.05, e.z, e.radius || 2));
+      const f = this.flocks.add(roofFlock(e.id, e.x, box.max.y - 0.05, e.z, e.radius || 2, this.level === "many" ? 5 : 3));
       if (!this.alloc(f)) this.flocks.flocks.pop();
     }
   }
-  // Skywing in the air: birds part around it; the hawk rides the wind in wide circles near it (one flock of one,
-  // kept for the match: hidden while Skywing is on the ground or gone).
+  // Skywing in the air: birds part around it and close up behind it.
   sky(sim) {
     const sw = sim.skywing, e = sw?.id != null ? sim.get?.(sw.id) : null;
     const up = !!(e && e.hp > 0 && e.flying !== false && (e.fly || 0) > 1.5);
     const U = this.uniforms.uSky.value;
-    const h = this.hawk;
-    if (!up) {
-      U.w = 0;
-      if (h && !h.gone) { h.gone = true; this.flocks.dirty.add(h.id); }
-      return;
-    }
-    const y = this.view.terrain.heightAt(e.x, e.z) + (e.fly || 3);
-    U.set(e.x, y, e.z, 6.5);
-    if (!h) {
-      const plan = { species: "hawk", kind: "air", x: e.x + 14, y: y + 3, z: e.z, birds: [{ ox: 0, oy: 0, oz: 0, size: 1, phase: 0.31 }] };
-      const f = this.flocks.add(plan);
-      if (!this.alloc(f)) { this.flocks.flocks.pop(); return; }
-      this.hawk = f;
-    }
-    const f = this.hawk;
-    if (f.gone || f.state !== "flying") {
-      // (Re)appears: takes off from a point beside Skywing and starts circling.
-      Object.assign(f, { gone: false, state: "flying", radius: 13, climb: 0, x: e.x + 14, y: y + 3, z: e.z, cx: e.x, cz: e.z, t0: this.clock });
-      f.birds[0].start = this.clock - BIRD_LIFE.takeoff; f.birds[0].landAt = NEVER;
-      this.flocks.dirty.add(f.id);
-    }
-    f.last = this.clock;
-    // The circle follows Skywing loosely (its centre moves at most 4 m/s).
-    const dx = e.x - f.cx, dz = e.z - f.cz, d = Math.hypot(dx, dz);
-    if (d > 3) { f.cx += (dx / d) * Math.min(d, 1); f.cz += (dz / d) * Math.min(d, 1); f.y = y + 3; this.flocks.dirty.add(f.id); }
+    if (!up) { U.w = 0; return; }
+    U.set(e.x, this.view.terrain.heightAt(e.x, e.z) + (e.fly || 3), e.z, 6.5);
   }
   // Hero mode: the flocks nearest the camera get the detailed birds (up to the budget), loaded on first use.
   pickNear(allowed) {
@@ -353,7 +337,10 @@ export class BirdView {
     for (const f of this.flocks.flocks) {
       const x = f.state === "perched" ? f.x : f.cx, z = f.state === "perched" ? f.z : f.cz, y = f.state === "perched" ? f.y : f.y + f.climb;
       const d = Math.hypot(x - eye.x, y - eye.y, z - eye.z);
-      if (!f.gone && d < limit + (f.state === "perched" ? 0 : f.radius) && this.models.has(f.species)) ranked.push([d, f]);
+      // A flock already near keeps its detailed birds until it is 4 m past the limit, so a flock circling at the edge
+      // does not swap between cards and models (it blinked).
+      const keep = this.nearSet?.has(f.id) ? 4 : 0;
+      if (!f.gone && d < limit + keep + (f.state === "perched" ? 0 : f.radius) && this.models.has(f.species)) ranked.push([d - keep, f]);
     }
     ranked.sort((a, b) => a[0] - b[0] || a[1].id - b[1].id);
     const next = new Set();
@@ -445,7 +432,7 @@ export class BirdView {
     if (this.cards) { scene.remove(this.cards); this.cards.geometry.dispose(); this.cards.material.dispose(); this.cards = null; }
     for (const n of this.near.values()) { scene.remove(n.mesh); n.mesh.geometry.dispose(); n.mesh.material.dispose(); }
     this.near.clear();
-    this.flocks = null; this.nearSet = null; this.hawk = null;
+    this.flocks = null; this.nearSet = null;
     this.roofs.clear();
     this.clock = 0;
     this.state = { flocks: 0, birds: 0, flying: 0, near: 0, nearDraws: 0, startles: 0, geese: 0 };

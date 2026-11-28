@@ -4,22 +4,32 @@ import { fnv1a, mulberry32 } from "./rng.js";
 // flocks, and the reactions follow only the battle's events and positions, so a replay shows the same birds. It never
 // reads or advances the simulation's generator, and it never writes to the simulation.
 //
-//   Flocks perch: songbirds on the treetops (the scatter's tall props), gulls on the river banks, ducks on the water,
-//   crows on rocks and open ground, and more crows on the roofs of finished buildings (added as they are seen).
+//   Flocks perch: gulls on the river banks, crows on rocks and open ground, and more crows on the roofs of finished
+//   buildings (added as they are seen). How many follows Settings > Hero > Birds (BIRD_LEVELS): Few (the default) is a
+//   couple of small flocks, Many the full cast, Off none. (Songbirds, ducks and the hawk near Skywing were removed on
+//   2026-11-28: the owner saw them blink and draw as spiky shards; their models stay out of birds.glb.)
 //   A shot, a blast or a unit coming close startles a flock: ONE event per flock, and each bird's take-off time is that
 //   event's time plus a delay that grows with its distance from the source, so they lift off in a ripple, nearest
-//   first. They climb and circle (crows circle over the latest fight instead of their perch), and once it has been
-//   quiet for a while they glide back down, one after another. Every bird's flight is a closed-form path of the event
+//   first. They climb and circle (crows that take off after a fight circle over it instead of their perch: the centre
+//   is fixed at take-off, so a flying bird never jumps), and once it has been quiet for a while they glide back down,
+//   one after another; a landing flock is not startled again until it has perched (a bird never snaps back to its
+//   perch in mid-air). Every bird's flight is a closed-form path of the event
 //   times (birdPath below; bird-view.js runs the same maths in its vertex shader), so the CPU never moves a bird.
-//   One hawk rides the wind in wide circles near Skywing while Skywing is in the air.
 //   Fog-of-war hint (Settings birdHint, on by default): birds startled by something the player cannot see still take
 //   off, and flying birds are drawn above the fog, giving away hidden movement. With it off, only what the player can
 //   see startles birds, and birds over fog stay hidden.
 
 export const SPECIES = Object.freeze(["crow", "gull", "songbird", "duck", "goose", "hawk"]);
 export const SPECIES_ID = Object.freeze(Object.fromEntries(SPECIES.map((s, i) => [s, i])));
-// Budgets: flocks on a map, birds per flock, and birds drawn with the detailed model at once (Hero mode).
+// Budgets: flocks on a map (roof flocks included), birds per flock, and birds drawn with the detailed model at once
+// (Hero mode). Many: the full cast; Few (the default): one gull and one crow flock and one roof flock of 3-5 birds.
 export const BIRD_BUDGET = Object.freeze({ pc: { flocks: 18, roofs: 4, near: 20 }, touch: { flocks: 11, roofs: 2, near: 10 } });
+export const BIRD_FEW = Object.freeze({ flocks: 3, roofs: 1, flock: [3, 5], gulls: 1, crows: 1 });
+// Settings > Hero > Birds.
+export const BIRD_LEVELS = Object.freeze(["off", "few", "many"]);
+// Few keeps the device's whole near budget, so every bird close to the Hero camera is a model (a flat card that close
+// reads as a shard).
+export const birdBudget = (touch, level = "few") => level === "many" ? BIRD_BUDGET[touch ? "touch" : "pc"] : { ...BIRD_FEW, near: BIRD_BUDGET[touch ? "touch" : "pc"].near };
 export const BIRD_LIFE = Object.freeze({
   flock: [4, 7],
   // Startle reach (m) of a shot's muzzle, a heavy round's landing, a unit walking by (perched birds only).
@@ -37,17 +47,18 @@ export const BIRD_LIFE = Object.freeze({
   fightReach: 45,     // m a crow flock flies to circle over a fight
 });
 export const NEVER = 1e9;
-const TALL = new Set(["sapling", "conifer", "pine", "palm", "snag", "ruinPillar", "ruinArch", "spire", "stoneHead", "cactus"]);
 
 // `map`: { id, half, rivers: [{ z }], heightAt(x, z), at(x, z) -> surface, tall: [{ x, z, h, kind }] } (tall props from
 // the scatter). Returns the flocks (no roof flocks: those come with the buildings, addRoof).
-export function planFlocks(map, { touch = false } = {}) {
-  const budget = BIRD_BUDGET[touch ? "touch" : "pc"], r = mulberry32(fnv1a(`birds|${map.id}`));
+export function planFlocks(map, { touch = false, level = "few" } = {}) {
+  if (level === "off") return [];
+  const budget = birdBudget(touch, level), size = budget.flock || BIRD_LIFE.flock, r = mulberry32(fnv1a(`birds|${map.id}`));
+  const cap = (species) => level === "many" ? Infinity : budget[species === "gull" ? "gulls" : "crows"];
   const flocks = [], half = map.half, inside = (x, z, m = 6) => Math.abs(x) < half - m && Math.abs(z) < half - m;
   const ground = (x, z) => map.heightAt?.(x, z) ?? 0;
   const add = (species, kind, x, y, z, spread) => {
-    if (flocks.length >= budget.flocks - budget.roofs) return;
-    const n = BIRD_LIFE.flock[0] + Math.floor(r() * (BIRD_LIFE.flock[1] - BIRD_LIFE.flock[0] + 1));
+    if (flocks.length >= budget.flocks - budget.roofs || flocks.filter((f) => f.species === species).length >= cap(species)) return;
+    const n = size[0] + Math.floor(r() * (size[1] - size[0] + 1));
     const birds = [];
     for (let i = 0; i < n; i++) {
       const a = r() * Math.PI * 2, d = spread * Math.sqrt(r());
@@ -55,16 +66,7 @@ export function planFlocks(map, { touch = false } = {}) {
     }
     flocks.push({ species, kind, x, y, z, birds });
   };
-  // Songbirds on treetops: the tallest props first, spread over the map.
-  const trees = (map.tall || []).filter((t) => TALL.has(t.kind) && inside(t.x, t.z)).sort((a, b) => b.h - a.h || a.x - b.x || a.z - b.z);
-  const picked = [];
-  for (const t of trees) {
-    if (picked.length >= (trees.length > 40 ? 5 : 3)) break;
-    if (picked.some((p) => Math.hypot(p.x - t.x, p.z - t.z) < 18)) continue;
-    picked.push(t);
-    add("songbird", "tree", t.x, ground(t.x, t.z) + t.h + 0.05, t.z, 0.55);
-  }
-  // Gulls on the banks and ducks on the water of each river.
+  // Gulls on the banks of each river.
   for (const [i, river] of (map.rivers || []).entries()) {
     for (let k = 0; k < 2; k++) {
       const x = (r() * 2 - 1) * (half - 12), side = r() < 0.5 ? -1 : 1;
@@ -73,8 +75,6 @@ export function planFlocks(map, { touch = false } = {}) {
         if (inside(x, z) && map.at?.(x, z) !== "water" && map.at?.(x, z) !== "ford") { add("gull", "bank", x, ground(x, z), z, 1.8); break; }
       }
     }
-    const x = (r() * 2 - 1) * (half - 14);
-    if (map.at?.(x, river.z) === "water" && inside(x, river.z)) add("duck", "water", x, 0, river.z + (r() - 0.5) * 1.5, 1.4);
     if (i > 2) break;
   }
   // Crows on open ground and rocks.
@@ -88,8 +88,8 @@ export function planFlocks(map, { touch = false } = {}) {
 }
 
 // A roof flock of crows for a finished building (bird-view.js asks once per building, up to the budget).
-export function roofFlock(id, x, y, z, radius) {
-  const r = mulberry32(fnv1a(`roof|${id}`)), n = 3 + Math.floor(r() * 3), birds = [];
+export function roofFlock(id, x, y, z, radius, most = 5) {
+  const r = mulberry32(fnv1a(`roof|${id}`)), n = Math.min(most, 3 + Math.floor(r() * 3)), birds = [];
   for (let i = 0; i < n; i++) birds.push({ ox: (r() * 2 - 1) * radius * 0.45, oy: 0, oz: (r() * 2 - 1) * radius * 0.3, size: 0.88 + r() * 0.26, phase: r() });
   return { species: "crow", kind: "roof", x, y, z, birds };
 }
@@ -122,6 +122,8 @@ export class BirdFlocks {
       const d = Math.hypot(f.x - x, f.z - z);
       if (d > reach) continue;
       if (f.state === "flying") { if (!perchedOnly) f.last = t; continue; }
+      // A landing flock settles first: restarting its take-off would snap the birds still in the air back to the perch.
+      if (f.state === "landing") continue;
       if (perchedOnly && f.state !== "perched") continue;
       // Take off: nearest bird first, a short random hesitation each (seeded per bird).
       let near = Infinity;
@@ -138,7 +140,8 @@ export class BirdFlocks {
     }
     return n;
   }
-  // Where a flying flock circles: crows over the latest fight when it is near enough, everyone else over the perch.
+  // Where a flock circles, fixed when it takes off: crows over the latest fight when it is near enough, everyone else
+  // over the perch. (Moving the centre of a flock in the air made every bird jump: the shader places them on it.)
   centre(f, t) {
     const fresh = t - this.fight.t < BIRD_LIFE.fightAge && Math.hypot(this.fight.x - f.x, this.fight.z - f.z) < BIRD_LIFE.fightReach;
     const cx = f.species === "crow" && fresh ? this.fight.x : f.x, cz = f.species === "crow" && fresh ? this.fight.z : f.z;
@@ -152,7 +155,6 @@ export class BirdFlocks {
   step(t) {
     for (const f of this.flocks) {
       if (f.state === "flying") {
-        this.centre(f, t);
         if (t - f.last >= BIRD_LIFE.quiet && t - f.t0 >= BIRD_LIFE.minFlight) {
           f.state = "landing"; f.land = t;
           f.birds.forEach((b, i) => { b.landAt = Math.max(t, b.start + BIRD_LIFE.takeoff) + i * BIRD_LIFE.stagger; });

@@ -177,7 +177,8 @@ export class SettingsUI {
       + seg("heroView", "Camera (ground)", [["shoulder", "Shoulder"], ["first", "First person"]], "The camera for a hero on foot in Hero mode. Skywing always looks down from above.")
       + seg("closeDetail", "Close-up detail", [["auto", "Auto"], ["on", "On"], ["off", "Off"]], "Sharper models near your hero. Auto lets a phone turn it down when the battle gets busy.")
       + seg("skywingOffer", "Skywing before matches", offOn, "Off hides the Skywing assist offer on the setup screens. The Hero battle tile stays on the title screen.")
-      + seg("birdHint", "Bird hint from fog", offOn, "Birds take off from the fog where hidden enemies move.");
+      + seg("birds", "Birds", [["off", "Off"], ["few", "Few"], ["many", "Many"]], "Few: a couple of small flocks on each battlefield. Many: flocks on every bank and roof. Looks only.")
+      + seg("birdHint", "Bird hint from fog", offOn, s.birds === "off" ? "Birds are Off, so there are no birds to give hidden enemies away." : "Birds take off from the fog where hidden enemies move.");
 
     const fs = extras.fullscreen;
     const fullscreenRow = fs?.supported?.()

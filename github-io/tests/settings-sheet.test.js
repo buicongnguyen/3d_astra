@@ -98,24 +98,25 @@ test("phase 2 keys: defaults, old saves and the reduced-motion override", async 
 test("Hero section: keys, defaults, old saves, bad values and saving per device", async () => {
   const { loadSettings, saveSettings, STORAGE_KEY } = await import("../src/settings.js");
   const pc = defaults(false), touch = defaults(true);
-  assert.deepEqual([pc.battleTime, pc.dodgeHelp, pc.shotWarnings, pc.aimAssist, pc.heroView, pc.closeDetail, pc.skywingOffer, pc.birdHint],
-    [0.5, false, true, "low", "shoulder", "auto", true, true]);
+  assert.deepEqual([pc.battleTime, pc.dodgeHelp, pc.shotWarnings, pc.aimAssist, pc.heroView, pc.closeDetail, pc.skywingOffer, pc.birdHint, pc.birds],
+    [0.5, false, true, "low", "shoulder", "auto", true, true, "few"]);
+  assert.equal(touch.birds, "few", "few birds on phones too");
   assert.equal(touch.aimAssist, "high", "touch screens aim with more help");
   const old = normalize({ version: 1, battleTime: 0.75, heroView: "first" }, true);
-  assert.deepEqual([old.battleTime, old.heroView, old.dodgeHelp, old.aimAssist, old.closeDetail, old.birdHint], [0.75, "first", false, "high", "auto", true], "a save from before H7");
-  const set = normalize({ version: 1, dodgeHelp: true, shotWarnings: false, aimAssist: "off", closeDetail: "off", skywingOffer: false, birdHint: false });
-  assert.deepEqual([set.dodgeHelp, set.shotWarnings, set.aimAssist, set.closeDetail, set.skywingOffer, set.birdHint], [true, false, "off", "off", false, false]);
-  const bad = normalize({ version: 1, dodgeHelp: "yes", aimAssist: "max", closeDetail: 1, birdHint: "on", battleTime: 2 });
-  assert.deepEqual([bad.dodgeHelp, bad.aimAssist, bad.closeDetail, bad.birdHint, bad.battleTime], [false, "low", "auto", true, 0.5]);
+  assert.deepEqual([old.battleTime, old.heroView, old.dodgeHelp, old.aimAssist, old.closeDetail, old.birdHint, old.birds], [0.75, "first", false, "high", "auto", true, "few"], "a save from before H7 (and before Birds)");
+  const set = normalize({ version: 1, dodgeHelp: true, shotWarnings: false, aimAssist: "off", closeDetail: "off", skywingOffer: false, birdHint: false, birds: "off" });
+  assert.deepEqual([set.dodgeHelp, set.shotWarnings, set.aimAssist, set.closeDetail, set.skywingOffer, set.birdHint, set.birds], [true, false, "off", "off", false, false, "off"]);
+  const bad = normalize({ version: 1, dodgeHelp: "yes", aimAssist: "max", closeDetail: 1, birdHint: "on", battleTime: 2, birds: true });
+  assert.deepEqual([bad.dodgeHelp, bad.aimAssist, bad.closeDetail, bad.birdHint, bad.battleTime, bad.birds], [false, "low", "auto", true, 0.5, "few"]);
   // Saved per device: through the same storage the sheet uses.
   const store = new Map(), storage = { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)) };
-  assert.equal(saveSettings({ ...pc, dodgeHelp: true, aimAssist: "high", closeDetail: "on", birdHint: false }, storage), true);
+  assert.equal(saveSettings({ ...pc, dodgeHelp: true, aimAssist: "high", closeDetail: "on", birdHint: false, birds: "many" }, storage), true);
   assert.ok(store.has(STORAGE_KEY));
   const back = loadSettings(false, storage);
-  assert.deepEqual([back.dodgeHelp, back.aimAssist, back.closeDetail, back.birdHint], [true, "high", "on", false]);
+  assert.deepEqual([back.dodgeHelp, back.aimAssist, back.closeDetail, back.birdHint, back.birds], [true, "high", "on", false, "many"]);
   // The rows live in the Hero section only (each key once in the sheet).
   const ui = readFileSync(new URL("../src/settings-ui.js", import.meta.url), "utf8");
-  for (const key of ["battleTime", "dodgeHelp", "shotWarnings", "aimAssist", "heroView", "closeDetail", "skywingOffer", "birdHint"])
+  for (const key of ["battleTime", "dodgeHelp", "shotWarnings", "aimAssist", "heroView", "closeDetail", "skywingOffer", "birds", "birdHint"])
     assert.equal(ui.split(`seg("${key}"`).length - 1, 1, `${key}: one row`);
 });
 

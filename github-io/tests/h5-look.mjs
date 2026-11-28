@@ -6,7 +6,8 @@
 //     creature life; the flocks near the camera use the detailed birds (at most one draw per family, at most 20 / 10
 //     birds) and a shot startles a flock (one event, ripple take-off); Settings closeDetail Off and birdHint Off apply
 //     at once; leaving Hero mode hides it all again;
-//   - the Expanse geese V: cards in the RTS view (birds.glb not fetched), the goose model in Hero mode (one draw, 14 geese,
+//   - Birds: Few by default (a few small flocks of crows and gulls, no brown birds);
+//   - the Expanse geese V: cards in the RTS view (birds.glb not fetched), the goose model in Hero mode (one draw, 7 geese,
 //     at most 400 triangles each), seen on screen against the sky;
 //   - no shader error, no page error.
 // The battle clock is not needed: the checks read the plugins' state, never an animation's progress (CI draws ~1 fps);
@@ -46,7 +47,9 @@ await suite("h5-look", async () => {
 
     // RTS view: one card draw for all birds, nothing else of H5.
     let s = await state(page);
-    assert.ok(s.birds.cards && s.birds.birds > 10, `${viewport}: bird cards ${JSON.stringify(s.birds)}`);
+    // Birds: Few (the default) is a couple of small flocks, crows and gulls only.
+    assert.ok(s.birds.cards && s.birds.birds >= 3 && s.birds.birds <= 15, `${viewport}: bird cards ${JSON.stringify(s.birds)}`);
+    assert.deepEqual(await page.evaluate(() => [...new Set(window.__frontier.view.birds.flocks.flocks.map((f) => f.species))].filter((x) => !["crow", "gull"].includes(x))), [], "no brown birds");
     assert.equal(s.birds.nearMeshes, 0, `${viewport}: no detailed birds in the RTS view`);
     assert.equal(s.decals.visible, false, `${viewport}: no unit decals in the RTS view`);
     assert.equal(s.look.detail, false);
@@ -69,7 +72,7 @@ await suite("h5-look", async () => {
       put("acidhound", 1, 6, -2.2, i.yaw + Math.PI / 2); put("tank", 0, 9, -6, i.yaw + Math.PI / 2); put("ranger", 0, 5, 3.5, i.yaw - Math.PI / 2);
       s.updateVision();
       const birds = v.birds, x = e.x + fx * 10, z = e.z + fz * 10, y = v.terrain.heightAt(x, z);
-      window.__h5flocks = ["crow", "gull", "songbird"].map((sp, k) => birds.addFlock(sp, x + rx * (k - 1) * 3, y, z + rz * (k - 1) * 3, 3, 0.8));
+      window.__h5flocks = ["crow", "gull", "crow"].map((sp, k) => birds.addFlock(sp, x + rx * (k - 1) * 3, y, z + rz * (k - 1) * 3, 3, 0.8));
     });
     await page.waitForFunction(() => {
       const v = window.__frontier.view, p = (n) => ({ BirdView: v.birds, UnitDecalsView: v.unitDecals, CloseLookView: v.closeLook })[n];
@@ -111,7 +114,7 @@ await suite("h5-look", async () => {
   }
 
   // The Expanse geese V (ambient-life.js): cards in the RTS view without fetching birds.glb; in Hero mode, looking up at
-  // the V, birds.glb's goose_lod in their place (one draw, all 14 geese) and the geese show on screen (dark heads and
+  // the V, birds.glb's goose_lod in their place (one draw, all 7 geese of the one V of Birds: Few) and the geese show on screen (dark heads and
   // wings against the sky around the lead goose). The ambient clock is held (dt 0) so the V stays put on slow runners.
   {
     const { page, goto, ready, tap, errors } = await openPage(browser, "desktop", { timeout: TIMEOUT.models });
@@ -163,7 +166,7 @@ await suite("h5-look", async () => {
       const v = window.__frontier.view, life = v.life, m = life.geese.mesh, g = m.geometry;
       return { cards: life.birdCards.visible, model: m.visible, instances: g.instanceCount, triangles: (g.index ? g.index.count : g.getAttribute("position").count) / 3, plugin: v.birds.state.geese, shadow: m.castShadow };
     });
-    assert.deepEqual({ ...hero, triangles: hero.triangles <= 400 }, { cards: false, model: true, instances: 14, triangles: true, plugin: 14, shadow: false }, `geese in Hero mode: ${JSON.stringify(hero)}`);
+    assert.deepEqual({ ...hero, triangles: hero.triangles <= 400 }, { cards: false, model: true, instances: 7, triangles: true, plugin: 7, shadow: false }, `geese in Hero mode (Birds: Few, one V): ${JSON.stringify(hero)}`);
     assert.ok(glbs.length >= 1, "Hero mode fetched birds.glb");
     await page.waitForTimeout(600);
     // On screen: the lead goose's patch of sky holds dark pixels (black head and neck, brown wings).

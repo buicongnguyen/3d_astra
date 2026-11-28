@@ -452,6 +452,8 @@ export class WorldView {
       this.setQuality(settings.quality === "eco" ? "low" : "high");
     this.environment?.configure(settings);
     this.life?.configure(settings);
+    // Settings > Hero > Birds changes the flying cast: plan the ambient life again (seeded: everything else stays put).
+    if (this.life && this.life.birdLevel !== (settings.birds || "few")) this.createLife();
     this.showScatter();
   }
   // Dressing follows the "ground detail" setting and goes when the governor is rescuing frames.
@@ -502,7 +504,7 @@ export class WorldView {
   // Per-map birds, butterflies, fish and motes (ambient-life.js); fewer on Eco.
   createLife() {
     this.life?.dispose();
-    this.life = new AmbientLife(this.scene, this.terrain, { fogTexture: this.fogTexture, budget: this.lowPower ? 0.6 : 1 });
+    this.life = new AmbientLife(this.scene, this.terrain, { fogTexture: this.fogTexture, budget: this.lowPower ? 0.6 : 1, birds: this.settings?.birds || "few" });
     this.life.configure(this.settings);
     this.life.setLevel(this.motionLevel);
     this.life.setShare(this.lifeShare ?? 1);

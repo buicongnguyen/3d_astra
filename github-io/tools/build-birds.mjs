@@ -3,12 +3,13 @@
 // shoulder .. 1 at the tip, head 0/1), so one instanced draw per family flaps, folds and turns the head in the vertex
 // shader. Sources are the owner's own procedural Blender birds in sibling repos (copied, no live links):
 //   crow       3D_game_fighting/public/models/crow.glb       skinned: bind pose, parts from the dominant joint
-//   duck       3D_game_fighting/public/models/duck.glb       skinned (ducks on the rivers)
+//   duck       3D_game_fighting/public/models/duck.glb       skinned (the source of the goose, not written itself)
 //   goose      the duck, recoloured as a grey-brown goose with a black neck (the Expanse V)
-//   hawk       cute_game/public/assets/models/forest-birds.glb, forest_raptor (rigid body/head/wing_l/wing_r)
 //   gull       race3D_game/public/models/bird.glb (rigid Bird_WingL/R)
 //   goose_lod  the goose simplified to at most 400 triangles (the V formation over the Expanse, src/ambient-life.js)
-//   songbird   the crow simplified to about half its triangles (meshoptimizer) and recoloured warm orange-brown
+// Written to the file: crow, gull and goose_lod. The songbird (the crow simplified and recoloured), the duck, the hawk
+// (cute_game forest_raptor) and the full goose left the game on 2026-11-28 with the brown birds (the owner saw them as
+// spiky shards); `KEEP` lists what is written.
 // Each bird faces +z, y up, wings along x (or folded along the body), scaled to SIZE metres; the shoulder hinge and neck pivot are in
 // the mesh extras with `folded` (wings modelled along the body) (bird-view.js reads them).  node tools/build-birds.mjs   (then it packs the file: compress-models.mjs)
 import { NodeIO, Document } from "@gltf-transform/core";
@@ -25,7 +26,6 @@ const REPOS = process.env.OWNER_REPOS || "C:/Users/n/source/repos";
 const SOURCES = {
   crow: `${REPOS}/3D_game_fighting/public/models/crow.glb`,
   duck: `${REPOS}/3D_game_fighting/public/models/duck.glb`,
-  hawk: `${REPOS}/cute_game/public/assets/models/forest-birds.glb`,
   gull: [`E:/repo/race3D_game/public/models/bird.glb`, `${REPOS}/race3D_game/public/models/bird.glb`],
 };
 // Size in metres, a little over life size so a bird reads from the hero's shoulder camera: the wingspan of a bird
@@ -119,7 +119,7 @@ function shape(raw, span, recolour = null) {
   return { P, N, C, B, extras: { hinge: [+hingeX.toFixed(4), +hingeY.toFixed(4), +hingeZ.toFixed(4)], neck: [+neckY.toFixed(4), +neckZ.toFixed(4)], size: span, folded } };
 }
 
-// Fewer triangles (the songbird): meshoptimizer's simplifier on the welded mesh, the attributes follow each kept vertex.
+// Fewer triangles (the goose LOD): meshoptimizer's simplifier on the welded mesh, the attributes follow each kept vertex.
 // `ratio` of the triangles, or with `target` at most that many (a looser error bound lets it get there).
 function simplify(bird, ratio, { target = 0, error = 0.02 } = {}) {
   const n = bird.P.length / 3, key = new Map(), remap = new Uint32Array(n), uniq = [];
@@ -142,15 +142,12 @@ const source = (s) => [s].flat().find((f) => existsSync(f));
 const raw = {
   crow: await read(source(SOURCES.crow)),
   duck: await read(source(SOURCES.duck)),
-  hawk: await read(source(SOURCES.hawk), { only: /forest_raptor/ }),
   gull: await read(source(SOURCES.gull)),
 };
 const birds = {
   crow: shape(raw.crow, SIZE.crow),
   // The gull's stylised blue-grey wings become a real gull's pale grey (same shading, no blue).
   gull: shape(raw.gull, SIZE.gull, (c) => { if (c[2] < c[0] * 1.4 || c[2] < 0.06) return c; const g = Math.min(1, luma(c) * 1.25 + 0.04); return [g, g * 1.01, g * 1.04]; }),
-  hawk: shape(raw.hawk, SIZE.hawk),
-  duck: shape(raw.duck, SIZE.duck),
   // The goose: the duck's bright parts become pale grey-brown, the head and neck black with the cheek kept pale.
   goose: shape(raw.duck, SIZE.goose, (c, part, h) => {
     const l = luma(c);
@@ -158,21 +155,15 @@ const birds = {
     if (l > 0.55) return lin("#d9d2c2");
     return h > 0.6 ? lin("#6f6352") : lin("#8f8574");
   }),
-  // The songbird: the crow's dark plumage becomes a warm orange breast and brown back, its beak and legs stay.
-  songbird: simplify(shape(raw.crow, SIZE.songbird, (c, part, h) => {
-    const l = luma(c);
-    if (l > 0.35) return c; // beak, eye shine
-    if (part >= 2) return h > 0.5 ? lin("#7a4a26") : lin("#5b3a22");
-    return h < 0.45 ? lin("#f0a040") : part === 1 ? lin("#3b2b1f") : lin("#9a6230");
-  }), 0.55),
 };
 // The goose far LOD (ambient-life.js: the Expanse V formation in Hero mode): the goose at no more than GOOSE_LOD
 // triangles, so all 14 geese of the two Vs stay one cheap instanced draw on a phone.
 export const GOOSE_LOD = 400;
 birds.goose_lod = simplify(birds.goose, 0, { target: GOOSE_LOD, error: 0.2 });
 
+const KEEP = ["crow", "gull", "goose_lod"];
 const doc = new Document(), buffer = doc.createBuffer(), scene = doc.createScene("birds");
-for (const [name, b] of Object.entries(birds)) {
+for (const [name, b] of Object.entries(birds).filter(([n]) => KEEP.includes(n))) {
   const acc = (arr, type = "VEC3") => doc.createAccessor().setArray(arr).setType(type).setBuffer(buffer);
   const prim = doc.createPrimitive().setAttribute("POSITION", acc(b.P)).setAttribute("NORMAL", acc(b.N)).setAttribute("COLOR_0", acc(b.C)).setAttribute("_BIRD", acc(b.B));
   const mesh = doc.createMesh(name).addPrimitive(prim).setExtras(b.extras);
