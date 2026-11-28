@@ -18,6 +18,11 @@ import { fnv1a, mulberry32 } from "./rng.js";
 //   Fog-of-war hint (Settings birdHint, on by default): birds startled by something the player cannot see still take
 //   off, and flying birds are drawn above the fog, giving away hidden movement. With it off, only what the player can
 //   see startles birds, and birds over fog stay hidden.
+//   Birds under fire (Hero mode, owner 2026-11-28 "scare it, don't kill it"): Skywing's Sniper may aim at a bird
+//   (pickBird: the camera ray against each bird's drawn place, a small sphere each, never the hawk). The round whizzes
+//   past it (BirdFlocks.shotAt): that bird tumbles for BIRD_SHOT.tumble s and flies on, and its whole flock takes off in
+//   the ripple, nearest that bird first, circling a little away from the shooter. Nothing is ever removed or falls.
+//   Reduced motion: no tumble, the flock leaves calmly (a slow, even take-off).
 
 export const SPECIES = Object.freeze(["crow", "gull", "songbird", "duck", "goose", "hawk"]);
 export const SPECIES_ID = Object.freeze(Object.fromEntries(SPECIES.map((s, i) => [s, i])));
@@ -47,6 +52,18 @@ export const BIRD_LIFE = Object.freeze({
   fightReach: 45,     // m a crow flock flies to circle over a fight
 });
 export const NEVER = 1e9;
+// Birds under fire (Hero mode): the struck bird's tumble (s) and sideways jolt (m), how far (m) its flock's circle moves
+// away from the shooter, the calm take-off with reduced motion (delay, and the spread over the birds' phases, s), each
+// bird's hesitation in the burst (s at most: under the ripple's 0.08 s a metre, so a bird a third of a metre nearer
+// the struck one always leaves first), and
+// the pick: a sphere of `r` m per bird (times its size), never under `angle` (radians) of the view (`phone` on touch),
+// birds closer than `near` m to the camera skipped (they shrink away there), at most `most` birds tested a frame.
+export const BIRD_SHOT = Object.freeze({
+  tumble: 0.4, jolt: 0.3, away: 6, calm: [0.3, 1.2], hesitate: 0.025,
+  pick: Object.freeze({ r: 0.45, lift: 0.15, angle: 0.018, phone: 0.026, near: 2.5, most: 20 }),
+});
+// Skywing's own companion bird is never a target (it is gone since 2026-11-28; the rule stays for any that returns).
+export const UNTARGETED = Object.freeze(new Set(["hawk"]));
 
 // `map`: { id, half, rivers: [{ z }], heightAt(x, z), at(x, z) -> surface, tall: [{ x, z, h, kind }] } (tall props from
 // the scatter). Returns the flocks (no roof flocks: those come with the buildings, addRoof).
@@ -109,10 +126,46 @@ export class BirdFlocks {
     f.radius = BIRD_LIFE.circle[0] + r() * (BIRD_LIFE.circle[1] - BIRD_LIFE.circle[0]);
     f.climb = BIRD_LIFE.climb[0] + r() * (BIRD_LIFE.climb[1] - BIRD_LIFE.climb[0]);
     f.cx = plan.x; f.cz = plan.z;
-    f.birds = plan.birds.map((b) => ({ ...b, start: NEVER, landAt: NEVER }));
+    // `hit`: when a round last whizzed past the bird (Hero mode): it tumbles BIRD_SHOT.tumble s from then.
+    f.birds = plan.birds.map((b) => ({ ...b, start: NEVER, landAt: NEVER, hit: NEVER }));
+    // How far its birds sit from the perch's middle (the pick's quick test, pickBird).
+    f.spread = f.birds.reduce((m, b) => Math.max(m, Math.hypot(b.ox, b.oz)), 0) + 1;
     this.flocks.push(f);
     this.dirty.add(f.id);
     return f;
+  }
+  // Hero mode: a round whizzes past bird `i` of flock `id` at time t (bird-view.js shotBird; the sim never knows birds).
+  // A perched flock takes off in the ripple from that bird (it leaves first, at once) and circles BIRD_SHOT.away m
+  // further from the shooter (`from`, x/z; kept inside the map's `half`); a flying one stays up longer; a landing one
+  // keeps landing. The bird tumbles from t for BIRD_SHOT.tumble s (`calm`, reduced motion: no tumble, and the flock
+  // lifts off slowly and evenly instead of bursting). Returns how many birds were startled (0: no such bird); nothing is
+  // ever removed.
+  shotAt(id, i, t, { from = null, calm = false, half = Infinity } = {}) {
+    const f = this.flocks[id], hit = f?.birds[i];
+    if (!hit || UNTARGETED.has(f.species)) return 0;
+    let n = 1;
+    if (f.state === "perched") {
+      for (const b of f.birds) {
+        const d = Math.hypot(b.ox - hit.ox, b.oz - hit.oz);
+        b.start = b === hit ? t : calm ? t + BIRD_SHOT.calm[0] + b.phase * BIRD_SHOT.calm[1] : t + d * BIRD_LIFE.ripple + b.phase * BIRD_SHOT.hesitate;
+        b.landAt = NEVER;
+      }
+      if (calm) hit.start = t + BIRD_SHOT.calm[0];
+      Object.assign(f, { state: "flying", t0: t, last: t, land: NEVER, sx: f.x + hit.ox, sz: f.z + hit.oz, fog: false });
+      // Away from the shooter, the whole circle (and its wobble) kept inside the map.
+      let cx = f.x, cz = f.z;
+      if (from) {
+        const dx = f.x - from.x, dz = f.z - from.z, l = Math.hypot(dx, dz);
+        if (l > 0.01) { cx += (dx / l) * BIRD_SHOT.away; cz += (dz / l) * BIRD_SHOT.away; }
+      }
+      const edge = half - f.radius * 1.25 - 3;
+      if (edge > 0) { cx = Math.max(-edge, Math.min(edge, cx)); cz = Math.max(-edge, Math.min(edge, cz)); }
+      f.cx = cx; f.cz = cz;
+      n = f.birds.length;
+    } else if (f.state === "flying") f.last = t;
+    if (!calm) hit.hit = t;
+    this.dirty.add(f.id);
+    return n;
   }
   // A startle at (x, z) at time t: every flock within `reach` takes off (or stays up longer). `hidden`: the source is in
   // the fog of war (the view decides whether that counts, Settings birdHint). Returns the flocks startled.
@@ -164,20 +217,76 @@ export class BirdFlocks {
         const done = f.birds.every((b) => t >= b.landAt + BIRD_LIFE.land);
         if (done) {
           f.state = "perched"; f.fog = false;
-          for (const b of f.birds) { b.start = NEVER; b.landAt = NEVER; }
+          for (const b of f.birds) { b.start = NEVER; b.landAt = NEVER; b.hit = NEVER; }
           this.dirty.add(f.id);
         }
       }
     }
   }
-  get flying() { return this.flocks.filter((f) => f.state !== "perched").length; }
+  // Flocks off their perches (read every frame: a loop, no allocation).
+  get flying() { let n = 0; for (const f of this.flocks) if (f.state !== "perched") n++; return n; }
+}
+
+// Hero mode: the bird the camera ray meets first. `ray` = { o, d } (d unit length), `t` the birds' clock. Each bird is a
+// sphere of BIRD_SHOT.pick.r m (times its size, never under `angle` of the view) round its drawn place (birdPath, the
+// parting round Skywing `sky` = { x, y, z, w } included). Only flocks whose birds may lie on the ray, birds within
+// `reach` m (ground distance) of `from` and `seen(x, z, flying)`, at most BIRD_SHOT.pick.most birds, nearest flocks
+// first; never the hawk; birds within `near` m of the ray's origin are skipped (the shader shrinks them away there).
+// Returns `out` filled ({ flock, bird, species, x, y, z, k }) or null. No allocation.
+const CAND = new Int16Array(64), CAND_K = new Float32Array(64), PICK_AT = {};
+export function pickBird(list, ray, t, { from = null, reach = Infinity, seen = null, sky = null, touch = false } = {}, out = {}) {
+  const P = BIRD_SHOT.pick, o = ray.o, d = ray.d;
+  let n = 0;
+  // The flocks the ray passes: the perch sphere, and for a flock off its perch the circle's sphere too.
+  for (let fi = 0; fi < list.length && n < CAND.length; fi++) {
+    const f = list[fi];
+    if (UNTARGETED.has(f.species) || f.gone) continue;
+    if (from && Math.hypot(f.x - from.x, f.z - from.z) - f.spread > reach && (f.state === "perched" || Math.hypot(f.cx - from.x, f.cz - from.z) - f.radius * 1.25 > reach)) continue;
+    let k = sphereAlong(o, d, f.x, f.y, f.z, f.spread + 1.5);
+    if (f.state !== "perched") { const c = sphereAlong(o, d, f.cx, f.y + f.climb, f.cz, f.radius * 1.25 + 2.5); if (c !== null && (k === null || c < k)) k = c; }
+    if (k === null) continue;
+    // Insert in order of distance along the ray.
+    let j = n++;
+    while (j > 0 && CAND_K[j - 1] > k) { CAND[j] = CAND[j - 1]; CAND_K[j] = CAND_K[j - 1]; j--; }
+    CAND[j] = fi; CAND_K[j] = k;
+  }
+  let best = Infinity, tested = 0;
+  for (let c = 0; c < n && tested < P.most; c++) {
+    const f = list[CAND[c]];
+    for (let i = 0; i < f.birds.length && tested < P.most; i++) {
+      const b = f.birds[i], p = birdPath(f, b, t, PICK_AT);
+      if (sky && sky.w > 0) {
+        const dx = p.x - sky.x, dy = p.y - sky.y, dz = p.z - sky.z, l = Math.hypot(dx, dy, dz);
+        if (l < sky.w) { const k = ((sky.w - l) * 0.85) / Math.max(l, 0.05); p.x += dx * k; p.y += dy * k; p.z += dz * k; }
+      }
+      const y = p.y + P.lift * (b.size || 1);
+      if (from && Math.hypot(p.x - from.x, p.z - from.z) > reach) continue;
+      tested++;
+      const px = p.x - o.x, py = y - o.y, pz = p.z - o.z, along = px * d.x + py * d.y + pz * d.z;
+      if (along <= P.near || along >= best) continue;
+      const r = Math.max(P.r * (b.size || 1), along * (touch ? P.phone : P.angle));
+      if (px * px + py * py + pz * pz - along * along > r * r) continue;
+      if (seen && !seen(p.x, p.z, p.flying)) continue;
+      best = along;
+      out.flock = f.id; out.bird = i; out.species = f.species; out.x = p.x; out.y = y; out.z = p.z; out.k = along;
+    }
+  }
+  return best < Infinity ? out : null;
+}
+// The ray's distance to the point nearest a sphere's centre when it passes through the sphere (ahead of the origin), or null.
+function sphereAlong(o, d, x, y, z, r) {
+  const px = x - o.x, py = y - o.y, pz = z - o.z, along = px * d.x + py * d.y + pz * d.z;
+  if (along <= -r) return null;
+  return px * px + py * py + pz * pz - along * along <= r * r ? Math.max(0, along) : null;
 }
 
 // Where one bird is at time t (the same maths as bird-view.js's vertex shader; tests and the near-model choice use it).
-// Returns { x, y, z, flying } in `out`. `f` is the flock, `b` the bird.
+// Returns { x, y, z, flying, tumble } in `out` (tumble: 0..1 through a struck bird's tumble, else 0). `f` is the flock,
+// `b` the bird.
 export function birdPath(f, b, t, out = {}) {
   const px = f.x + b.ox, py = f.y + b.oy, pz = f.z + b.oz;
   const k1 = clamp01((t - b.start) / BIRD_LIFE.takeoff), k2 = clamp01((t - b.landAt) / BIRD_LIFE.land);
+  out.tumble = 0;
   if (k1 <= 0 || k2 >= 1) { out.x = px; out.y = py; out.z = pz; out.flying = false; return out; }
   const dir = b.phase < 0.5 ? 1 : -1, r = f.radius * (0.75 + 0.5 * fract(b.phase * 7.13));
   const a = b.phase * 6.2832 + dir * Math.max(0, t - b.start) * BIRD_LIFE.speed / r;
@@ -185,6 +294,9 @@ export function birdPath(f, b, t, out = {}) {
   const e1 = ease(k1), e2 = ease(k2);
   let x = px + (cx - px) * e1, y = py + (cy - py) * e1 + Math.sin(k1 * Math.PI) * 1.2, z = pz + (cz - pz) * e1;
   x += (px - x) * e2; y += (py - y) * e2 + Math.sin(k2 * Math.PI) * 0.8; z += (pz - z) * e2;
+  // A struck bird is knocked aside a little while it tumbles (sideways only: it never drops).
+  const h = (t - (b.hit ?? NEVER)) / BIRD_SHOT.tumble;
+  if (h > 0 && h < 1) { const j = Math.sin(h * Math.PI) * BIRD_SHOT.jolt; x += Math.cos(b.phase * 20) * j; z += Math.sin(b.phase * 20) * j; out.tumble = h; }
   out.x = x; out.y = y; out.z = z; out.flying = true;
   return out;
 }

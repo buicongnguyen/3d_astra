@@ -1,7 +1,9 @@
 import * as THREE from "three";
-import { BirdFlocks, BIRD_LIFE, BIRD_LEVELS, NEVER, SPECIES, SPECIES_ID, birdBudget, planFlocks, roofFlock } from "./bird-life.js";
+import { BirdFlocks, BIRD_LIFE, BIRD_LEVELS, BIRD_SHOT, NEVER, SPECIES, SPECIES_ID, birdBudget, birdPath, pickBird, planFlocks, roofFlock } from "./bird-life.js";
 import { birdGeometry, WING_POSE } from "./ambient-life.js";
 import { modelLoader } from "./model-decode.js";
+import { weaponStyle } from "./visual-style.js";
+import { CELL, BILLBOARD } from "./fx-kinds/cells.js";
 
 // H5 birds that react (a view plugin, docs/VIEW_PLUGINS.md; the logic is src/bird-life.js).
 // Draws:
@@ -18,6 +20,12 @@ import { modelLoader } from "./model-decode.js";
 // lands, or the near set changes (four times a second at most).
 // Quiet: reduced motion or the governor's still level hold the birds on their perches (no startles, no flaps).
 // Settings Display > Detail Off hides them, like the other ambient life; the governor's rescue level too.
+// Birds under fire (Hero mode, owner 2026-11-28 "scare it, don't kill it"; src/hero-mode.js aims and fires): pick() finds
+// the bird under the crosshair (bird-life.js pickBird), shotBird() makes the round whizz past it: the bird tumbles in the
+// shaders (aHit, the time of the hit: two rolls and a jolt sideways, wings flailing, BIRD_SHOT.tumble s), its flock
+// bursts off in the ripple from it, and a puff of feathers in its family's colours rises from the effects' pooled
+// particles (+0 draws). Reduced motion (or the still level): no tumble, no feathers, and the flock leaves calmly (the
+// clock runs while a flock is up, so it flies off and lands again; wings held open). No bird is ever removed.
 const SIZE_CARD = { crow: 0.9, gull: 1, songbird: 0.62, duck: 0.85, goose: 1.1, hawk: 1.15 };
 const PALETTE = { // sRGB like ambient-life.js: body, wing, tip
   crow: ["#2b2927", "#1f1e1c", "#121110"], gull: ["#f4f2ea", "#dedcd2", "#4b5054"], songbird: ["#f2a53c", "#9a6230", "#3b2b1f"],
@@ -29,6 +37,13 @@ const FLIGHT = { crow: [10, 0.25], gull: [8.5, 0.55], songbird: [15, 0.1], duck:
 const STRETCH = { crow: 1.7, songbird: 1.6, duck: 1.6, goose: 1.8 };
 export const NEAR = Object.freeze({ pc: 26, touch: 18 }); // m from the Hero camera
 const SUN = new THREE.Vector3(-25, 55, 20).normalize();
+// Feathers where a round passed, in each family's colours (two tones, as the effects draw them): black crows, white
+// and grey gulls.
+const FEATHERS = { crow: [[0.11, 0.1, 0.1], [0.21, 0.2, 0.19]], gull: [[0.96, 0.95, 0.92], [0.6, 0.62, 0.65]] };
+const FEATHER_TONES = Object.fromEntries(Object.entries(FEATHERS).map(([k, tones]) => [k, tones.map((c) => [[...c, 0.95], [...c, 0]])]));
+// The soft burst of down with them, in the family's lighter tone.
+const DOWN = Object.fromEntries(Object.entries(FEATHERS).map(([k, tones]) => [k, [[...tones[1], 0.42], [...tones[1], 0]]]));
+const SHOT_AT = {}, NEAREST = {};
 
 const COMMON = /* glsl */ `
 uniform float uTime, uAmp, uHalf, uHint;
@@ -37,6 +52,18 @@ uniform vec4 uSky;
 attribute vec4 aPerch;  // perch x, y, z, size (0: not drawn here)
 attribute vec4 aTimes;  // take-off time, landing time, phase, family
 attribute vec4 aCircle; // circle centre x, y, z, radius
+attribute float aHit;   // when a round whizzed past this bird (Hero mode): it tumbles for a moment from then
+// 0..1 through the tumble at time t, else 0.
+float tumbleAt(float t) { float h = (t - aHit) / ${BIRD_SHOT.tumble.toFixed(2)}; return h > 0.0 && h < 1.0 ? h : 0.0; }
+// The tumble: two rolls (ending level) and a pitch wobble round the bird's own middle.
+vec3 tumbleSpin(vec3 q, float h) {
+  if (h <= 0.0) return q;
+  float roll = (1.0 - (1.0 - h) * (1.0 - h)) * 12.5664, pitch = sin(h * 6.2832) * 0.55;
+  float c = cos(roll), s = sin(roll);
+  q = vec3(q.x * c - q.y * s, q.x * s + q.y * c, q.z);
+  c = cos(pitch); s = sin(pitch);
+  return vec3(q.x, q.y * c - q.z * s, q.y * s + q.z * c);
+}
 float fogAt(vec3 p) {
   vec2 uv = vec2((p.x + uHalf) / (2.0 * uHalf), (uHalf - p.z) / (2.0 * uHalf));
   return texture2D(uFog, uv).a;
@@ -57,6 +84,9 @@ vec3 birdAt(float t, out float flying, out float open) {
   p.y += sin(k1 * 3.14159) * 1.2;
   p = mix(p, perch, easeK(k2));
   p.y += sin(k2 * 3.14159) * 0.8;
+  // A struck bird is knocked aside while it tumbles (sideways only: it never drops; birdPath in bird-life.js).
+  float h = tumbleAt(t);
+  if (h > 0.0) { float j = sin(h * 3.14159) * ${BIRD_SHOT.jolt.toFixed(2)}; p.x += cos(ph * 20.0) * j; p.z += sin(ph * 20.0) * j; }
   // Skywing passing through: the birds part around it and close up behind.
   if (uSky.w > 0.0) {
     vec3 d = p - uSky.xyz;
@@ -105,9 +135,13 @@ void main() {
   birdFrame(p, fwd, flying, open);
   float fam = aTimes.w, ph = aTimes.z;
   int f = int(fam + 0.5);
-  float a = flapAngle(fam, flying, ph) * (1.0 + 0.45 * aSpan);
+  // A struck bird: wings out and flailing while it tumbles.
+  float tk = tumbleAt(uTime);
+  if (tk > 0.0) open = 1.0;
+  float a = (tk > 0.0 ? sin(uTime * 34.0 + ph * 5.0) * 0.95 : flapAngle(fam, flying, ph)) * (1.0 + 0.45 * aSpan);
   vec3 local = position * aPerch.w * uCard[f];
   if (aSpan > 0.0) { local.x *= mix(0.22, 1.0, open); float x = local.x; local.x = x * cos(a); local.y += abs(x) * sin(a); }
+  local = tumbleSpin(local, tk);
   local.y += 0.12 * aPerch.w;
   float show = birdShow(p, flying);
   vColor = mix(mix(uPal[f * 3], uPal[f * 3 + 1], step(0.01, aSpan)), uPal[f * 3 + 2], aTip) * mix(1.05, 0.8, clamp(abs(sin(a)) * aSpan, 0.0, 1.0));
@@ -128,9 +162,12 @@ void main() {
   float fam = aTimes.w, ph = aTimes.z;
   vec4 fl = uFlight[int(fam + 0.5)];
   vec3 local = position, n = normal;
+  // A struck bird: wings out and flailing while it tumbles (and the whole bird rolls, below).
+  float tk = tumbleAt(uTime);
+  float flap = tk > 0.0 ? sin(uTime * 34.0 + ph * 5.0) * 0.95 : flapAngle(fam, flying, ph);
   // Folded-wing birds spread and stretch their wings in flight; open-wing birds fold theirs back along the body when
   // perched (WING_POSE in ambient-life.js, shared with the geese V).
-  if (_bird.x != 0.0) local = wingPose(local, n, _bird, uHinge, fl.w, fl.z, open, flapAngle(fam, flying, ph));
+  if (_bird.x != 0.0) local = wingPose(local, n, _bird, uHinge, fl.w, fl.z, tk > 0.0 ? 1.0 : open, flap);
   if (_bird.z > 0.5) {
     // Head: quick jerks left and right while perched, steady in flight.
     float yaw = (1.0 - flying) * 0.65 * sin(floor(uTime * 0.9 + ph * 5.0) * 2.3 + ph * 11.0) * uAmp;
@@ -140,6 +177,7 @@ void main() {
   // A perched duck bobs on the water; a bird in the air banks into its turn.
   float bank = flying * open * (aTimes.z < 0.5 ? -0.32 : 0.32);
   local = rotZ(local, bank); n = rotZ(n, bank);
+  if (tk > 0.0) { vec3 mid = vec3(0.0, 0.12, 0.0); local = tumbleSpin(local - mid, tk) + mid; n = tumbleSpin(n, tk); }
   float show = birdShow(p, flying);
   vec3 world = place(local * aPerch.w * show, fwd, p);
   vec2 right = vec2(fwd.y, -fwd.x);
@@ -177,7 +215,19 @@ export class BirdView {
     this.clock = 0;
     this.check = 0;
     this.roofs = new Set(); // building ids with a roof flock
-    this.state = { flocks: 0, birds: 0, flying: 0, near: 0, nearDraws: 0, startles: 0, geese: 0 }; // tests and probes
+    this.state = { flocks: 0, birds: 0, flying: 0, near: 0, nearDraws: 0, startles: 0, geese: 0, shots: 0, startled: 0, feathers: 0 }; // tests and probes
+    // Birds under fire: drawn now (Birds on, detail on), the pick's reused result and fog test, the last shot's bird.
+    this.shown = false;
+    this.picked = {};
+    this.spot = { x: 0, z: 0 };
+    this.pickSim = null;
+    this.seenAt = (x, z, flying) => {
+      if (flying && this.uniforms?.uHint.value > 0) return true;
+      this.spot.x = x; this.spot.z = z;
+      return this.pickSim?.isVisible?.(this.spot) ?? true;
+    };
+    this.lastShot = { x: 0, y: 0, z: 0, species: "crow", birds: 0, flock: -1, bird: -1 };
+    this.pickOpts = { from: null, reach: 0, seen: this.seenAt, sky: null, touch: this.touch }; // reused every frame
   }
   // The map's flocks and the card mesh (once per map: reset() drops them).
   build() {
@@ -189,8 +239,9 @@ export class BirdView {
     this.capacity = this.budget.flocks * 7 + this.budget.roofs * 5 + 1;
     const g = birdGeometry();
     const attr = (n) => new THREE.InstancedBufferAttribute(new Float32Array(this.capacity * n), n).setUsage(THREE.DynamicDrawUsage);
-    this.aPerch = attr(4); this.aTimes = attr(4); this.aCircle = attr(4);
-    g.setAttribute("aPerch", this.aPerch); g.setAttribute("aTimes", this.aTimes); g.setAttribute("aCircle", this.aCircle);
+    this.aPerch = attr(4); this.aTimes = attr(4); this.aCircle = attr(4); this.aHit = attr(1);
+    this.aHit.array.fill(NEVER);
+    g.setAttribute("aPerch", this.aPerch); g.setAttribute("aTimes", this.aTimes); g.setAttribute("aCircle", this.aCircle); g.setAttribute("aHit", this.aHit);
     g.instanceCount = 0;
     this.uniforms = {
       uTime: { value: 0 }, uAmp: { value: 1 }, uHalf: { value: t.half }, uHint: { value: 1 }, uFog: { value: v.fogTexture },
@@ -228,8 +279,9 @@ export class BirdView {
       this.aPerch.setXYZW(k, f.x + b.ox, f.y + b.oy, f.z + b.oz, hidden ? 0 : b.size);
       this.aTimes.setXYZW(k, b.start, b.landAt, b.phase, fam);
       this.aCircle.setXYZW(k, f.cx, f.y + f.climb, f.cz, f.radius);
+      this.aHit.setX(k, b.hit ?? NEVER);
     });
-    for (const a of [this.aPerch, this.aTimes, this.aCircle]) a.needsUpdate = true;
+    for (const a of [this.aPerch, this.aTimes, this.aCircle, this.aHit]) a.needsUpdate = true;
   }
   // Tests and screenshots (window.__frontier.view): a flock of `species` perched at (x, y, z). Returns its id.
   addFlock(species, x, y, z, n = 6, spread = 1.4) {
@@ -240,12 +292,14 @@ export class BirdView {
     return f.id;
   }
   // Startles from the battle: a shot's muzzle, a heavy round's landing. Hidden sources count only with the bird hint.
+  // (A round past a bird, `ev.bird`, is the Hero mode page's: it calls shotBird first, then this sees the muzzle as for
+  // any shot; it is no fight for the crows to circle.)
   event(ev, sim) {
     if (ev.type !== "shot" || !this.flocks || !this.lively) return;
     const hint = this.view.settings?.birdHint !== false;
     const hiddenAt = (x, z) => !(sim?.isVisible?.({ x, z }) ?? true);
     // The fight first: crows startled by this shot take off toward it (their circle is fixed at take-off).
-    if (Number.isFinite(ev.tx) && !hiddenAt(ev.tx, ev.tz)) this.flocks.fought(ev.tx, ev.tz, this.clock);
+    if (!ev.bird && Number.isFinite(ev.tx) && !hiddenAt(ev.tx, ev.tz)) this.flocks.fought(ev.tx, ev.tz, this.clock);
     const muzzle = hiddenAt(ev.x, ev.z);
     if (!muzzle || hint) this.state.startles += this.flocks.startle(ev.x, ev.z, BIRD_LIFE.reach.shot, this.clock, { hidden: muzzle });
     if (ev.heavy && Number.isFinite(ev.tx)) {
@@ -253,8 +307,63 @@ export class BirdView {
       if (!land || hint) this.state.startles += this.flocks.startle(ev.tx, ev.tz, BIRD_LIFE.reach.blast, this.clock, { hidden: land });
     }
   }
+  // Hero mode (src/hero-mode.js aimNow): the bird under the crosshair, or null. `ray` the camera ray through it, `from`
+  // the shooter (its ground x/z) and `reach` its weapon's (ground metres). Null with Birds Off, detail off, or nothing
+  // seen in reach; never the hawk. The result is one reused object (read it before the next pick).
+  pick(ray, from, reach, sim) {
+    if (!this.flocks || !this.shown || !ray) return null;
+    this.pickSim = sim;
+    const o = this.pickOpts;
+    o.from = from; o.reach = reach; o.sky = this.uniforms.uSky.value;
+    return pickBird(this.flocks.flocks, ray, this.clock, o, this.picked);
+  }
+  // Hero mode: the hero's round (shot event `ev`, its `bird` set; tx/tz the bird's ground point, tAir its height) whizzes
+  // past the bird the page picked (`pick` = { flock, bird }; when that bird is no longer there, the one nearest the
+  // round's end within 3 m): it tumbles as the round arrives, its flock bursts off in the ripple from it and circles away
+  // from `from` (the shooter), feathers puff. Returns the bird's place and family and how many birds took off (the
+  // reused this.lastShot), or null (no bird there, Birds Off, detail off).
+  shotBird(pick, ev, from = null) {
+    if (!this.flocks || !this.shown || !ev) return null;
+    const t = this.view.terrain, ty = (t?.heightAt(ev.tx, ev.tz) ?? 0) + (ev.tAir || 0), at = SHOT_AT;
+    let f = pick ? this.flocks.flocks[pick.flock] : null, i = pick?.bird ?? -1;
+    if (f && f.birds[i]) { birdPath(f, f.birds[i], this.clock, at); if (Math.hypot(at.x - ev.tx, at.y - ty, at.z - ev.tz) > 8) f = null; } else f = null;
+    if (!f) {
+      let best = 3;
+      for (const g of this.flocks.flocks) for (let k = 0; k < g.birds.length; k++) {
+        const q = birdPath(g, g.birds[k], this.clock, NEAREST), d = Math.hypot(q.x - ev.tx, q.y - ty, q.z - ev.tz);
+        if (d < best) { best = d; f = g; i = k; }
+      }
+      if (!f) return null;
+    }
+    // The round reaches the bird after its flight (the effects' own time for it).
+    const delay = Math.min(0.3, Math.max(0.05, weaponStyle(ev)?.life ?? 0.14)), when = this.clock + delay, calm = !this.lively;
+    const n = this.flocks.shotAt(f.id, i, when, { from, calm, half: t?.half ?? Infinity });
+    if (!n) return null;
+    this.state.shots++;
+    this.state.startled += n;
+    const p = birdPath(f, f.birds[i], when, SHOT_AT), y = p.y + BIRD_SHOT.pick.lift * (f.birds[i].size || 1);
+    if (!calm) this.puff(p.x, y, p.z, f.species, delay);
+    return Object.assign(this.lastShot, { x: p.x, y, z: p.z, species: f.species, birds: n, flock: f.id, bird: i });
+  }
+  // A puff of feathers in the family's colours where the round passed, `delay` s from now: a few slow, spinning, falling
+  // feathers and a soft burst of down, on the effects' own pooled particles (no draw added, the view's generator).
+  puff(x, y, z, species, delay = 0) {
+    const fx = this.view.fx;
+    if (!fx?.particle || !fx.smoke) return;
+    const tones = FEATHER_TONES[species] || FEATHER_TONES.crow, rng = fx.rng, n = fx.count(16);
+    for (let i = 0; i < n; i++) {
+      const a = rng() * Math.PI * 2, up = 0.4 + rng() * 0.8, v = 1.1 + rng() * 1.4, [c0, c1] = tones[i % 2];
+      fx.particle(fx.smoke, { x, y, z, lifted: true, vx: Math.cos(a) * v, vy: up, vz: Math.sin(a) * v, gravity: 1.2, drag: 2.6,
+        life: 1.3 + rng() * 0.9, s0: 0.36, s1: 0.28, cell: CELL.streak, mode: BILLBOARD, rot: rng() * 6.28, spin: (rng() - 0.5) * 9,
+        c0, c1, hold: 0.55, delay, anchor: null });
+    }
+    const down = DOWN[species] || DOWN.crow;
+    fx.particle(fx.smoke, { x, y, z, lifted: true, cell: CELL.puff, s0: 0.45, s1: 1.2, life: 0.5, c0: down[0], c1: down[1], delay, anchor: null });
+    this.state.feathers += n;
+  }
   update(sim, dt) {
     const v = this.view;
+    this.shown = false;
     if (!sim?.entities || !v.terrain) return;
     const s = v.settings || {}, share = v.lifeShare ?? 1;
     // Settings > Hero > Birds: a new level plans the flocks again; Off draws none.
@@ -266,7 +375,10 @@ export class BirdView {
     this.lively = shown && (v.motionLevel ?? 2) > 0 && !v.reducedMotion?.matches;
     this.cards.visible = shown;
     if (!shown) { for (const n of this.near.values()) n.mesh.visible = false; return; }
-    if (this.lively && dt > 0) this.clock = (this.clock + Math.min(0.05, dt)) % 3000;
+    this.shown = true;
+    // Quiet (reduced motion, the still level): the clock still runs while a flock is up (one shot off its perch by the
+    // hero leaves calmly and comes back), and stops again once every bird has perched.
+    if ((this.lively || this.flocks.flying > 0) && dt > 0) this.clock = (this.clock + Math.min(0.05, dt)) % 3000;
     const U = this.uniforms;
     U.uTime.value = this.clock;
     U.uAmp.value = this.lively ? [0, 0.5, 1][v.motionLevel ?? 2] : 0;
@@ -386,6 +498,7 @@ export class BirdView {
         n.aPerch.setXYZW(k, f.x + b.ox, f.y + b.oy, f.z + b.oz, b.size);
         n.aTimes.setXYZW(k, b.start, b.landAt, b.phase, fam);
         n.aCircle.setXYZW(k, f.cx, f.y + f.climb, f.cz, f.radius);
+        n.aHit.setX(k, b.hit ?? NEVER);
         k++;
       }
       counts.set(f.species, k);
@@ -395,7 +508,7 @@ export class BirdView {
       const k = counts.get(species) || 0;
       n.mesh.geometry.instanceCount = k;
       n.mesh.visible = k > 0;
-      for (const a of [n.aPerch, n.aTimes, n.aCircle]) a.needsUpdate = true;
+      for (const a of [n.aPerch, n.aTimes, n.aCircle, n.aHit]) a.needsUpdate = true;
       near += k; draws += k > 0 ? 1 : 0;
     }
     this.state.near = near; this.state.nearDraws = draws;
@@ -409,8 +522,9 @@ export class BirdView {
     if (sg.index) g.setIndex(sg.index);
     const capacity = this.budget.near;
     const attr = (n) => new THREE.InstancedBufferAttribute(new Float32Array(capacity * n), n).setUsage(THREE.DynamicDrawUsage);
-    const n = { capacity, aPerch: attr(4), aTimes: attr(4), aCircle: attr(4) };
-    g.setAttribute("aPerch", n.aPerch); g.setAttribute("aTimes", n.aTimes); g.setAttribute("aCircle", n.aCircle);
+    const n = { capacity, aPerch: attr(4), aTimes: attr(4), aCircle: attr(4), aHit: attr(1) };
+    n.aHit.array.fill(NEVER);
+    g.setAttribute("aPerch", n.aPerch); g.setAttribute("aTimes", n.aTimes); g.setAttribute("aCircle", n.aCircle); g.setAttribute("aHit", n.aHit);
     g.instanceCount = 0;
     const x = src.userData || {};
     const material = new THREE.ShaderMaterial({
@@ -435,7 +549,7 @@ export class BirdView {
     this.flocks = null; this.nearSet = null;
     this.roofs.clear();
     this.clock = 0;
-    this.state = { flocks: 0, birds: 0, flying: 0, near: 0, nearDraws: 0, startles: 0, geese: 0 };
+    this.state = { flocks: 0, birds: 0, flying: 0, near: 0, nearDraws: 0, startles: 0, geese: 0, shots: 0, startled: 0, feathers: 0 };
   }
 }
 export { NEVER };

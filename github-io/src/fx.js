@@ -711,6 +711,7 @@ export class Effects {
   // The shooter or the target is in fog: show only the end the player can see (a muzzle
   // flash, or the hit landing), never the path, so fog still hides positions.
   shotPartial(e, sim) {
+    if (e.bird) return this.birdShot(e, sim);
     if (e.type === "support" || !sim?.isVisible) return;
     // V4: a faction's signature shot shows the same two ends in its own colours (src/fx-kinds/signature.js).
     const sig = signatureLook(this, e, sim);
@@ -734,7 +735,23 @@ export class Effects {
       this.timeline.push({ at: this.time + style.life, run: () => this.hit(land, power, anchor, impactKind(weaponClass(e, style)) || (style.kind === "rocket" ? "rocket" : "shell")) });
     }
   }
+  // Hero mode, a round past a bird (owner 2026-11-28 "scare it, don't kill it"; the bird's reaction is bird-view.js): the
+  // muzzle flash and the round, flying on 3 m past the bird and a hand's width beside and above it; no landing, no hit.
+  // The hero's own round under the Hero camera flies in its hero look (hero-mode-view.js), else a plain tracer streak.
+  birdShot(e, sim) {
+    const { style, from, to } = this.aim(e, sim);
+    to.y = this.ground(e.tx, e.tz) + (e.tAir || 0) + 0.15;
+    const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z, l = Math.hypot(dx, dy, dz) || 1, h = Math.hypot(dx, dz) || 1;
+    const past = { x: to.x + (dx / l) * 3 - (dz / h) * 0.3, y: to.y + (dy / l) * 3 + 0.12, z: to.z + (dz / l) * 3 + (dx / h) * 0.3, lifted: true };
+    this.particle(this.glow, { ...from, cell: CELL.flare, s0: 0.9, s1: 1.1, life: 0.07, c0: [1, 0.9, 0.62, 0.95], c1: [1, 0.55, 0.15, 0], anchor: null });
+    if (this.view.heroOwnShots?.take(e, sim, from, past, style)) return;
+    const ux = past.x - from.x, uy = past.y - from.y, uz = past.z - from.z, len = Math.hypot(ux, uy, uz) || 1;
+    this.particle(this.glow, { lifted: true, x: (from.x + past.x) / 2, y: (from.y + past.y) / 2, z: (from.z + past.z) / 2, mode: STRETCH,
+      ax: ux / len, ay: uy / len, az: uz / len, length: len, cell: CELL.streak, s0: 0.07, s1: 0.04, life: 0.09,
+      c0: [1, 0.92, 0.7, 0.9], c1: [1, 0.6, 0.2, 0], anchor: null });
+  }
   shot(e, sim) {
+    if (e.bird) return this.birdShot(e, sim);
     const { style, nx, nz, from, to, land } = this.aim(e, sim);
     if (style.kind === "melee") return this.swordContact(e, sim, style, true);
     // H3d: a dodgeable shot at the hero in Hero mode flies as a real projectile (hero-mode-view.js draws it): the muzzle only.

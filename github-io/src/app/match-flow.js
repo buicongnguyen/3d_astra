@@ -76,6 +76,15 @@ export function setupMatchFlow(S, A) {
     announce(mode, { mvp, added, variant, seconds });
     // Rank and MVP panels are inserted before the footer by the result listeners.
     const footer = $("modal-content").querySelector(".result-actions, .debrief-actions");
+    // Hero mode birds (2026-11-28): "Birds startled: N" when the hero scared any this match (a PC line; phones keep the
+    // card as it was).
+    const birds = A.heroBirdsStartled?.() || 0;
+    if (footer && birds > 0 && !document.documentElement.classList.contains("compact-ui")) {
+      const line = document.createElement("p");
+      line.className = "result-birds";
+      line.innerHTML = `<span>Birds startled</span> <b translate="no">${birds}</b>`;
+      footer.before(line);
+    }
     if (footer && document.documentElement.classList.contains("compact-ui")) {
       const body = document.createElement("div");
       body.className = "result-scroll";

@@ -419,6 +419,20 @@ html.hero-mode #idle-chips { visibility: hidden !important; }
 .hh-dmg.head { color: #ff7a5a; font-size: 17px; }
 .hh-dmg.kill { color: #ffd36a; }
 .hh-dmg[hidden] { display: none; }
+/* Birds (owner 2026-11-28, "scare it, don't kill it"): a small bird mark beside the crosshair while a bird is under it (the
+   crosshair turns sky blue), and "Startled!" over the bird a round whizzed past (centred, 13 px). */
+.hh-birdmark {
+  position: absolute; left: 9px; top: -27px; width: 24px; height: 14px; display: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 14'%3E%3Cpath d='M1 9C5 2 9 3 12 8C15 3 19 2 23 9C19 6.5 15 6.5 12 11.5C9 6.5 5 6.5 1 9Z' fill='%23cdeeff' stroke='%230a1620' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.85));
+}
+.hh-cross.on-bird .hh-birdmark { display: block; }
+.hh-cross.on-bird::before, .hh-cross.on-bird::after { background: #9fdcff; }
+.hh-cross.on-bird .hh-spread { border-color: rgba(159, 220, 255, 0.85); }
+/* The debrief's count (PC only): one small line above the buttons. */
+.result-birds { margin: 8px 0 0; font: 700 12px/16px var(--font-ui, sans-serif); color: #cfe6f2; letter-spacing: 0.04em; }
+.result-birds b { color: #9fdcff; font-variant-numeric: tabular-nums; }
+.hh-dmg.bird { width: 140px; margin: -9px 0 0 -70px; text-align: center; white-space: nowrap; color: #d6f1ff; font-size: 13px; letter-spacing: 0.03em; }
 /* Kill notices: a short feed under the top bar on the right (never over the buttons). */
 .hh-feed { position: absolute; right: max(12px, env(safe-area-inset-right)); top: calc(env(safe-area-inset-top) + 66px); display: flex; flex-direction: column; align-items: flex-end; gap: 4px; pointer-events: none; }
 .hh-note { margin: 0; padding: 3px 8px; border-radius: 6px; background: rgba(10, 16, 22, 0.72); border-left: 3px solid #ffd36a; font: 700 12px/16px var(--hh-font, var(--font-ui, sans-serif)); color: #f1f6f3; white-space: nowrap; }

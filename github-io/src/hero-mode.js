@@ -38,6 +38,12 @@
 //     "Not visible" (and "Stunned"). The page's own pick gives the first ones; the sim's refusals come as heroBlocked
 //     events (sim/content/hero-mode.js BLOCKED). The page follows the sim's driven id
 //     (heroModeOf), so a vehicle lost with Skywing aboard hands Hero mode back to Skywing on foot.
+//   - Birds (owner 2026-11-28, "scare it, don't kill it"): with Skywing's Sniper in hand and no enemy body, target or
+//     barrel under the crosshair, a bird the camera ray meets (bird-view.js pick, within the Sniper's reach, seen, never
+//     the hawk; nothing with Birds Off) puts a small bird mark on the crosshair. A shot is the usual round (one heroFire
+//     command with `bird`, so the magazine, the muzzle and the tracer work and replays stay exact); when it goes, the
+//     round whizzes past the bird (bird-view.js shotBird: it tumbles, its flock bursts off, feathers), a squawk, and a
+//     small "Startled!" over it. The bird itself is view-only: never in the match state, never hurt.
 import "./hero-mode.css";
 import { $ } from "./app/dom.js";
 import { icon } from "./icons.js";
@@ -46,7 +52,7 @@ import { isSkywing, isLanded, WEAPONS, LAND } from "./sim/content/skywing.js";
 import { flightOf } from "./skywing-view.js";
 import { boardTarget, isCrewed, pointRange } from "./sim/content/skywing-board.js";
 import { HERO_TIME, DODGE, enterCommands, leaveCommands } from "./sim/content/hero-mode.js";
-import { pickTarget, rayPick, rayHazard, bodyHeight, RocketLock, moveVector, battleTime, AIM } from "./hero-aim.js";
+import { pickTarget, rayPick, rayHazard, bodyHeight, birdAim, RocketLock, moveVector, battleTime, AIM } from "./hero-aim.js";
 import { translate, getLanguage } from "./i18n.js";
 import { PHONE_NAME } from "./tactics-card.js";
 import { DEFINITIONS as D } from "./data.js";
@@ -88,7 +94,7 @@ export const REFLEX = Object.freeze({ scale: 0.25, seconds: 0.4, gap: 1.2 });
 // the hit marker and damage numbers (ms on screen), and the PC shot kick (radians, recovering in `back` s).
 // The reason tag's time on screen (real ms) after the last refusal.
 export const WHY_MS = 1200;
-export const FEEL_HUD = Object.freeze({ ring: [16, 46], head: 11, headPhone: 16, marker: 220, number: 700, feed: 2200, kick: 0.011, back: 0.14 });
+export const FEEL_HUD = Object.freeze({ ring: [16, 46], head: 11, headPhone: 16, marker: 220, number: 700, feed: 2200, kick: 0.011, back: 0.14, startled: 1100 });
 
 export function setupHeroMode(S, A) {
   const Z = S.screen;
@@ -104,6 +110,9 @@ export function setupHeroMode(S, A) {
     vehicle: false, near: null, boards: 0,
     // Why the last shot could not go (the tag over the reticle), until when, and a count per reason (tests).
     why: null, whyUntil: 0, whys: {},
+    // Birds: the one under the crosshair (bird-view.js pick's reused result, or null), the one the last shot went at,
+    // the shots at birds and the birds startled this match (the debrief's count).
+    bird: null, birdPick: { flock: -1, bird: -1 }, birdShots: 0, startled: 0, birdMatch: null, birdKey: null,
   };
   S.hero = H;
 
@@ -212,7 +221,7 @@ export function setupHeroMode(S, A) {
         <button type="button" data-hero="fire" class="hh-fire"><span>Fire</span><kbd translate="no">F</kbd></button>
       </div>
       <div class="hh-stick" aria-hidden="true"><i class="hh-knob"></i></div>
-      <div class="hh-cross" aria-hidden="true"><i class="hh-lockring"></i><i class="hh-spread"></i><i class="hh-hitmark"></i><b class="hh-scope" hidden>Scope</b><b class="hh-nofire" role="status" hidden></b><span class="hh-mag"><span class="hh-pips"></span><b class="hh-reload" hidden>Reloading</b></span></div>
+      <div class="hh-cross" aria-hidden="true"><i class="hh-lockring"></i><i class="hh-spread"></i><i class="hh-hitmark"></i><i class="hh-birdmark"></i><b class="hh-scope" hidden>Scope</b><b class="hh-nofire" role="status" hidden></b><span class="hh-mag"><span class="hh-pips"></span><b class="hh-reload" hidden>Reloading</b></span></div>
       <div class="hh-dmgs" aria-hidden="true"></div>
       <div class="hh-feed" role="status"></div>
       <div class="hh-edges" aria-hidden="true"></div>
@@ -360,6 +369,7 @@ export function setupHeroMode(S, A) {
     H.keys.clear();
     H.firing = false;
     H.lock.reset();
+    H.bird = null;
     H.stick = null; H.look = null; H.pinch = null; H.touches.clear();
     document.documentElement.classList.remove("hero-mode", "hero-sky", "hero-phone", "hero-vehicle", "hero-boardable");
     if (H.hud) H.hud.hidden = true;
@@ -431,6 +441,7 @@ export function setupHeroMode(S, A) {
     if (on) {
       H.firing = from;
       H.pressAt = performance.now();
+      H.birdKey = null;
       H.lock.reset();
       if (e.weaponTo) why("Switching weapon");
       H.lockShot = false;
@@ -509,6 +520,8 @@ export function setupHeroMode(S, A) {
       H.sent.fire = hold ? key : H.sent.fire;
       return send({ type: "heroFire", barrel: H.barrel });
     }
+    // A bird under the crosshair (no enemy, no barrel): one round past it.
+    if (!t && H.bird) return birdShot(hold);
     if (!t) { if (!hold) A.tone?.(260, 0.05); why(pickReason(hero()) || "No target"); return false; }
     const e0 = hero(), r0 = e0 ? pickReason(e0) : null;
     if (r0) why(r0);
@@ -522,6 +535,32 @@ export function setupHeroMode(S, A) {
     const ok = send({ type: "heroFire", target: t.id, hold: true, ...head });
     if (!ok) why("No target");
     return ok;
+  }
+  // Birds: one round at the bird under the crosshair (its ground point and height, to the centimetre). The sim spends the
+  // round when it goes (waiting for a reload as any single shot); the bird's reaction comes with the shot event. A held
+  // trigger sends one round per bird (not one a frame): the press's own shot counts, a new bird under the crosshair gets
+  // the next, and letting go stops a round still waiting for the reload (as for a held trigger on an enemy).
+  function birdShot(hold = false) {
+    const e = hero(), b = H.bird, v = S.view;
+    if (!e || !b) return false;
+    const key = b.flock * 64 + b.bird;
+    if (hold && H.birdKey === key) return true;
+    if (S.sim.time < (e.reloadAt ?? -Infinity) - 1e-9) why("Reloading");
+    const q = (n) => Math.round(n * 100) / 100, y = Math.max(0, q(b.y - v.terrain.heightAt(b.x, b.z)));
+    const ok = send({ type: "heroFire", bird: true, x: q(b.x), z: q(b.z), y });
+    if (ok) { H.birdPick.flock = b.flock; H.birdPick.bird = b.bird; H.birdShots++; H.birdKey = key; if (hold) H.sent.fire = "bird"; }
+    return ok;
+  }
+  // The hero's own round went past a bird (the sim's shot event): the bird's reaction (bird-view.js, before the view sees
+  // the muzzle, so the ripple starts at the bird), a squawk and "Startled!" over it.
+  function birdHit(ev) {
+    const r = S.view.birds?.shotBird?.(H.birdPick, ev, hero());
+    H.birdPick.flock = -1;
+    if (!r) return;
+    if (H.birdMatch !== S.sim) { H.birdMatch = S.sim; H.startled = 0; }
+    H.startled += r.birds;
+    S.audio?.sfx?.squawk?.(r.species, r.x, r.z);
+    pop("Startled!", r.x, r.y + 0.55, r.z, "bird", FEEL_HUD.startled);
   }
   // H8: top the magazine up (PC X; phones reload on their own when it runs dry).
   function reload() {
@@ -734,6 +773,8 @@ export function setupHeroMode(S, A) {
     if (H.vehicle && a) v.heroAim = { id: e.id, angle: Math.atan2((t ? t.x : a.x) - e.x, (t ? t.z : a.z) - e.z) };
     if (lob) reticle?.setReticle({ x: lob.x, z: lob.z, y: v.terrain.heightAt(lob.x, lob.z), size: (e.splash_radius || 2) / 0.62, target: !!t && !lob.clamped, lob: true, far: !!lob.clamped, locked: false, progress: 0 });
     else if (hz) reticle?.setReticle({ x: hz[0], z: hz[1], y: v.terrain.heightAt(hz[0], hz[1]), size: 1, target: true, hazard: true, locked: false, progress: 0 });
+    // A bird under the crosshair: the ground ring under it, sky blue.
+    else if (H.bird) reticle?.setReticle({ x: H.bird.x, z: H.bird.z, y: v.terrain.heightAt(H.bird.x, H.bird.z), size: 0.8, target: false, bird: true, locked: false, progress: 0 });
     else if (a) reticle?.setReticle({ x: t ? t.x : a.x, z: t ? t.z : a.z, y: v.terrain.heightAt(t ? t.x : a.x, t ? t.z : a.z) + (t?.flying ? (t.fly || 3) : 0), size: t ? Math.max(0.9, (t.radius || 0.7) * 1.4) : H.sky ? 1.1 : 0.8, target: !!t, locked: H.lock.progress >= 1, progress: H.lock.progress });
     // Close-up detail around the aim point, not the camera.
     const cv = v.closeView;
@@ -778,6 +819,9 @@ export function setupHeroMode(S, A) {
     }
     const hz = i >= 0 ? sim.hazards[i] : null;
     H.barrel = hz && Math.hypot(hz[0] - e.x, hz[1] - e.z) <= (e.range || 10) + 16 ? i : -1;
+    // Birds: Skywing's Sniper in hand (not switching), no target and no barrel: the bird the ray meets in the Sniper's
+    // reach (the scoped one's on foot), else none (hero-aim.js birdAim). Enemies and barrels always come first.
+    H.bird = birdAim(e, H.sky && isSkywing(e), H.target, H.barrel, v.birds, ray, S.sim);
     // A headshot: the crosshair within the head zone of a soldier target (its head projected on screen).
     H.head = false;
     if (t && H.barrel < 0 && !H.vehicle && hasMagazine(e) && headable(t)) {
@@ -996,6 +1040,7 @@ export function setupHeroMode(S, A) {
     cross.style.setProperty("--spread", `${ring.toFixed(1)}px`);
     cross.classList.toggle("on-head", !!H.head);
     cross.classList.toggle("on-hazard", H.barrel >= 0);
+    cross.classList.toggle("on-bird", !!H.bird);
     const mag = cross.querySelector(".hh-mag"), magged = hasMagazine(e);
     if (mag.hidden === magged) mag.hidden = !magged;
     if (magged) {
@@ -1026,6 +1071,7 @@ export function setupHeroMode(S, A) {
   function feelEvent(ev) {
     if (!H.on) return;
     if (ev.type === "heroBlocked" && ev.id === H.id) { why(ev.reason); return; }
+    if (ev.type === "shot" && ev.bird && ev.source === H.id) { birdHit(ev); return; }
     if (ev.type === "heroHit" && ev.id === H.id) {
       H.hits++;
       if (ev.head) H.heads++;
@@ -1045,10 +1091,23 @@ export function setupHeroMode(S, A) {
   function number(ev) {
     const slot = H.numbers.find((n) => n.until < performance.now()) || H.numbers.reduce((a, b) => (b.until < a.until ? b : a));
     slot.until = performance.now() + FEEL_HUD.number;
+    slot.ms = FEEL_HUD.number;
     slot.at = { x: ev.x, z: ev.z, air: ev.air };
     slot.t0 = performance.now();
     slot.el.textContent = String(ev.dmg);
     slot.el.className = `hh-dmg${ev.head ? " head" : ""}${ev.kill ? " kill" : ""}`;
+    slot.el.hidden = false;
+  }
+  // A word over a point in the air (world x, y, z) from the same pool, rising and fading for `ms`.
+  function pop(text, x, y, z, kind, ms) {
+    const slot = H.numbers.find((n) => n.until < performance.now()) || H.numbers.reduce((a, b) => (b.until < a.until ? b : a));
+    slot.until = performance.now() + ms;
+    slot.ms = ms;
+    slot.at = { x, z, y };
+    slot.t0 = performance.now();
+    slot.el.textContent = translate(text);
+    slot.el.dataset.src = text;
+    slot.el.className = `hh-dmg ${kind}`;
     slot.el.hidden = false;
   }
   function feed(what, who = "", kind = "kill") {
@@ -1069,7 +1128,7 @@ export function setupHeroMode(S, A) {
     for (const n of H.numbers) {
       if (n.el.hidden) continue;
       if (now >= n.until && !hold) { n.el.hidden = true; continue; }
-      const k = hold ? 0.3 : (now - n.t0) / FEEL_HUD.number, y = v.terrain.heightAt(n.at.x, n.at.z) + (n.at.air ? 3.6 : 1.9) + k * 0.8;
+      const k = hold ? 0.3 : (now - n.t0) / (n.ms || FEEL_HUD.number), y = (n.at.y ?? v.terrain.heightAt(n.at.x, n.at.z) + (n.at.air ? 3.6 : 1.9)) + k * 0.8;
       const q = v.project(n.at.x, n.at.z, y), r = v.renderer.domElement.getBoundingClientRect();
       n.el.style.transform = `translate(${Math.round(q.x + r.left)}px, ${Math.round(q.y + r.top)}px)`;
       n.el.style.opacity = String(Math.max(0, 1 - k * k));
@@ -1098,6 +1157,8 @@ export function setupHeroMode(S, A) {
       if (left > 0 && left <= due) { R.seen.add(s.n); R.left = REFLEX.seconds; R.wait = REFLEX.gap; R.count++; if (R.seen.size > 64) R.seen.clear(); return; }
     }
   }
+  // Birds the hero startled this match (the debrief's "Birds startled").
+  const startled = () => (H.birdMatch === S.sim ? H.startled : 0);
   // The clock's pace while Hero mode is on or easing (app/frame.js), else null.
   const pace = () => (H.on || H.ease ? H.scale * (H.reflex.left > 0 ? REFLEX.scale : 1) : null);
 
@@ -1110,10 +1171,12 @@ export function setupHeroMode(S, A) {
   // H8: the sim's events reach the hero HUD through factionEvent (app/frame.js calls it for every event).
   const factionEvent = A.factionEvent;
   A.factionEvent = (ev) => { factionEvent?.(ev); feelEvent(ev); };
-  Object.assign(A, { heroTick: tick, heroPace: pace, enterHeroMode: enter, leaveHeroMode: leave, heroModeOn: () => H.on, heroInfo: () => ({ on: H.on, id: H.id, sky: H.sky, flight: H.flight, scope: !!H.hud?.querySelector(".hh-scope:not([hidden])"), airWarn: H.airWarn || 0,
+  Object.assign(A, { heroTick: tick, heroPace: pace, enterHeroMode: enter, leaveHeroMode: leave, heroModeOn: () => H.on, heroBirdsStartled: startled, heroInfo: () => ({ on: H.on, id: H.id, sky: H.sky, flight: H.flight, scope: !!H.hud?.querySelector(".hh-scope:not([hidden])"), airWarn: H.airWarn || 0,
     barrel: H.barrel, head: H.head, crouch: H.crouch, hits: H.hits, kills: H.kills, heads: H.heads, blasts: H.blasts, kick: H.kick,
     marker: !!H.hud?.querySelector(".hh-hitmark.show"), feed: [...(H.hud?.querySelectorAll(".hh-note") || [])].map((n) => n.textContent.trim()),
     reflex: H.reflex.count, reflexOn: H.reflex.left > 0, vehicle: H.vehicle, near: H.near, boards: H.boards,
+    bird: H.bird ? { flock: H.bird.flock, bird: H.bird.bird, species: H.bird.species } : null, birdMark: !!H.hud?.querySelector(".hh-cross.on-bird"), birdShots: H.birdShots, startled: startled(),
+    pops: [...(H.hud?.querySelectorAll(".hh-dmg.bird:not([hidden])") || [])].map((n) => n.textContent),
     why: H.hud?.querySelector(".hh-nofire:not([hidden])")?.dataset.src || null, whyText: H.hud?.querySelector(".hh-nofire:not([hidden])")?.textContent || null, whys: { ...H.whys },
     marks: H.edges.filter((m) => !m.hidden && m.classList.contains("air")).length + H.skies.filter((m) => !m.hidden).length, yaw: H.yaw, zoom: H.zoom, scale: H.scale, aim: H.aim, target: H.target?.id ?? null, lock: H.lock.progress, screen: H.screen || null, sent: { ...H.sent } }) });
   return function bind() {

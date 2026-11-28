@@ -12,6 +12,11 @@
 //   { type: "heroDodge", team, dx, dz }         the dodge dash (Skywing: a barrel roll) toward dx, dz
 //   H8 fight feel (sim/hero-feel.js): heroFire may carry `head` (the page aimed at the head) or `barrel` (the index of
 //   an explosive hazard, sim/hazards.js, in place of a target);
+//   birds (owner 2026-11-28, "scare it, don't kill it"): { type: "heroFire", team, bird: true, x, z, y } is one round
+//   at the bird the page aimed at (its ground point x/z and its height y above the ground). Birds are drawn by the view
+//   only (src/bird-life.js), never in the state: the rules know just the point. In reach (the weapon's, the scoped
+//   Sniper's), the shot goes as any other: the cooldown, the magazine round, the `shot` event (with `bird` and `tAir`
+//   = y) for the muzzle, the tracer and the sound; it hurts nothing. A blade, a driven vehicle or a rocket has none.
 //   { type: "heroReload", team }               top the magazine up now (it reloads on its own when empty)
 //   { type: "heroCrouch", team, on }           crouch on (true), off (false) or "auto" (phones): crouched while still
 //                                               beside cover, dodgeable rounds and splash do half
@@ -146,6 +151,8 @@ export const heroMode = {
       if (crouched !== !!e.crouched) { if (crouched) e.crouched = true; else delete e.crouched; this.events.push({ type: "heroCrouched", id: e.id, on: crouched }); }
       // An explosive hazard under the reticle (H8): fired at like a target, set off by the hit.
       if (e.trigger?.barrel !== undefined) { this.heroBarrel(e); return true; }
+      // A round past a bird (the view's; the rules know only the point).
+      if (e.trigger?.bird) { this.heroBirdShot(e); return true; }
       // H9: a driven vehicle's shot at a ground point (the Breaker's lob, a Tank's shell where nothing stands).
       if (e.trigger?.point) { this.heroPointShot(e); if (hull(e) && e.moving) e.angle = Math.atan2(e.vel.x, e.vel.z); return true; }
       const t = e.trigger ? this.get(e.trigger.target) : null;
@@ -270,6 +277,22 @@ export const heroMode = {
       if (this.challenge) this.challengeLoud?.(e);
       this.heroAfterShot(e, null, false, 0, distance(e, at));
     },
+    // A round past a bird (e.trigger.bird = { x, z, y }): in reach, then the shot, its cooldown and its magazine round,
+    // with no damage to anything (the view startles the bird there; it is never in the state).
+    heroBirdShot(e) {
+      const p = e.trigger.bird;
+      if (this.time > e.trigger.until) { delete e.trigger; return; }
+      e.angle = Math.atan2(p.x - e.x, p.z - e.z);
+      let range = e.range + 0.6;
+      if (scoped(e, p)) range = Math.max(range, SCOPE_REACH);
+      if (distance(e, p) > range) { this.heroBlocked(e, "Out of range"); return; }
+      e.attacking = true;
+      if (e.cooldown > 0 || (e.fx && !this.canAct(e, "fire"))) { this.heroWaiting(e); return; }
+      this.events.push({ ...(e.flying ? { sAir: e.fly } : null), type: "shot", weapon: e.shot || e.type, unit: e.type, source: e.id, target: null, x: e.x, z: e.z, tx: p.x, tz: p.z, tAir: p.y, team: e.team, heavy: false, bird: true });
+      e.cooldown = e.interval * (e.fx ? this.statusFactor(e, "reload") : 1);
+      delete e.trigger;
+      this.heroAfterShot(e, null, false, 0, distance(e, p));
+    },
     // A straight step for a driven hero: flyers inside the map, walkers only onto ground they can stand on
     // (sliding along a wall or bank on one axis when the straight step is blocked).
     heroStep(e, vx, vz, step) {
@@ -347,10 +370,17 @@ export const heroMode = {
       },
     },
     heroFire: {
-      allowed: (sim, c) => !!sim.heroMode?.teams[c.team] && (c.target === null || Number.isInteger(c.target) || (c.target === undefined && Number.isInteger(c.barrel)) || (c.target === undefined && Number.isFinite(c.x) && Number.isFinite(c.z))) && (c.head === undefined || typeof c.head === "boolean"),
+      allowed: (sim, c) => !!sim.heroMode?.teams[c.team] && (c.target === null || Number.isInteger(c.target) || (c.target === undefined && Number.isInteger(c.barrel)) || (c.target === undefined && Number.isFinite(c.x) && Number.isFinite(c.z))) && (c.head === undefined || typeof c.head === "boolean")
+        && (c.bird === undefined || (c.bird === true && c.target === undefined && c.barrel === undefined && Number.isFinite(c.x) && Number.isFinite(c.z) && Number.isFinite(c.y) && c.y >= 0)),
       run: (sim, c) => {
         const e = sim.get(sim.heroMode.teams[c.team].id);
         if (!isDriven(e)) return false;
+        // A round past a bird: one shot, waiting up to 1.5 real seconds for the reload (a ranged hero on foot or in the air).
+        if (c.bird) {
+          if (hull(e) || !hasMagazine(e) || e.weapon === "rocket") return false;
+          e.trigger = { bird: { x: c.x, z: c.z, y: c.y }, hold: false, until: sim.time + 1.5 * e.driven };
+          return true;
+        }
         // H9: a driven vehicle fires at a ground point (one shot, waiting up to 1.5 real seconds for the reload).
         if (c.target === undefined && c.barrel === undefined) {
           if (!hull(e)) return false;

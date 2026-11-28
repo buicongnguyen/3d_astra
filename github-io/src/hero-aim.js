@@ -6,6 +6,7 @@
 //   moveVector  the move stick in camera space (right, forward) to a world x/z direction
 //   battleTime  the eased clock scale while entering or leaving Hero mode
 import { HERO_TIME } from "./sim/content/hero-mode.js";
+import { SCOPE_REACH } from "./sim/hero-feel.js";
 
 export const AIM = Object.freeze({ cone: 12, conePhone: 18, snap: 3.5, reach: 2 });
 export const LOCK_SECONDS = 0.6;
@@ -105,6 +106,19 @@ export function rayHazard(list, ray, groundAt, { r = 0.7, h = 1.1 } = {}) {
     if (k !== null && (!best || k < best.k)) best = { i, k };
   }
   return best;
+}
+
+// Birds under the crosshair (owner 2026-11-28, "scare it, don't kill it"): only Skywing (`sky`) with its Sniper in hand
+// (not switching), and only when neither an enemy (`target`: its body or the assist's pick) nor an explosive barrel
+// (`barrel` >= 0) holds the crosshair: enemies and barrels always come first. Then `birds.pick(ray, hero, reach, sim)`
+// (bird-view.js) finds the bird the camera ray meets within the Sniper's reach (the scoped Sniper's on foot), or null.
+export function sniperReach(hero) {
+  const reach = (hero.range || 0) + 0.6;
+  return hero.scope && hero.weapon === "sniper" ? Math.max(reach, SCOPE_REACH) : reach;
+}
+export function birdAim(hero, sky, target, barrel, birds, ray, sim) {
+  if (!sky || !hero || target || barrel >= 0 || !ray || hero.weapon !== "sniper" || hero.weaponTo) return null;
+  return birds?.pick?.(ray, hero, sniperReach(hero), sim) || null;
 }
 
 // Holding on a target: `update(targetId, dt)` returns the locked id once the same target was held

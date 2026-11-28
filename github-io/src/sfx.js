@@ -69,9 +69,12 @@ const R = {
   win: [["o", "triangle", 523, 523, 0.18, 0.4, 0], ["o", "triangle", 659, 659, 0.18, 0.4, 0.15], ["o", "triangle", 784, 784, 0.18, 0.4, 0.3], ["o", "triangle", 1047, 1047, 0.8, 0.5, 0.45], ["o", "sine", 2093, 2093, 0.7, 0.15, 0.45]],
   lose: [["o", "triangle", 330, 330, 0.3, 0.4, 0], ["o", "triangle", 262, 262, 0.3, 0.4, 0.28], ["o", "triangle", 196, 196, 0.9, 0.5, 0.56], ["o", "sine", 98, 98, 0.9, 0.4, 0.56]],
   blip: [["o", "sine", 520, 520, 0.065, 0.4, 0]],
+  // Birds startled in Hero mode (2026-11-28): a crow's two hoarse caws, a gull's rising "kee" and falling "ow".
+  "bird:crow": [["o", "sawtooth", 560, 430, 0.15, 0.22, 0], ["n", "bandpass", 1500, 1100, 0.15, 0.32, 0, 2.5], ["o", "sawtooth", 540, 410, 0.17, 0.2, 0.21], ["n", "bandpass", 1450, 1050, 0.17, 0.3, 0.21, 2.5]],
+  "bird:gull": [["o", "triangle", 1250, 2100, 0.11, 0.3, 0], ["o", "triangle", 2050, 1150, 0.24, 0.3, 0.1], ["n", "bandpass", 2600, 1900, 0.3, 0.1, 0, 4]],
 };
 // Priority, rate limit and group for the effects that are not simulation events.
-const EXTRA = { "ui:click": [7, 0.06, "ui"], construct: [4, 0.15, "ui"], tap: [8, 0.03, "ui"], select: [7, 0.05, "ui"], error: [8, 0.1, "ui"], objective: [8, 0.2, "moment"], "objective-failed": [8, 0.2, "moment"], win: [10, 1, "moment"], lose: [10, 1, "moment"], blip: [7, 0.07, "ui"] };
+const EXTRA = { "bird:crow": [5, 0.35, "moment"], "bird:gull": [5, 0.35, "moment"], "ui:click": [7, 0.06, "ui"], construct: [4, 0.15, "ui"], tap: [8, 0.03, "ui"], select: [7, 0.05, "ui"], error: [8, 0.1, "ui"], objective: [8, 0.2, "moment"], "objective-failed": [8, 0.2, "moment"], win: [10, 1, "moment"], lose: [10, 1, "moment"], blip: [7, 0.07, "ui"] };
 // R3-U: bank sounds played directly (not from a sim event): priority, rate limit and group.
 const BANK_EXTRA = { "sting:victory": [10, 1, "moment"], "sting:boss": [9, 0.8, "moment"], "sting:surge": [9, 1, "moment"], "warn:lowhp": [8, 1, "moment"], thunder: [5, 0.6, "moment"] };
 // R3-U: a unit voice chirp ("bark") as a live recipe: two or three formant blips in the type's voice
@@ -206,6 +209,12 @@ export class Sfx {
     if (!this.enabled || !unit) return false;
     const voice = barkVoice(unit.type, unit.class), mix = this.mixAt(unit.x, unit.z);
     return this.playRecipe(`bark:${unit.type}`, barkRecipe(voice, kind), { pan: mix.pan, gain: BARK.level, priority: 7, gap: 0, group: "voice", jitter: BARK.pitchJitter });
+  }
+  // A startled bird's call (Hero mode birds) where it is: a crow's caw or a gull's cry; never quieter than half level.
+  squawk(species, x, z) {
+    if (!this.enabled) return false;
+    const mix = this.mixAt(x, z);
+    return this.play(species === "gull" ? "bird:gull" : "bird:crow", { pan: mix.pan, gain: Math.max(0.5, mix.gain) });
   }
   // R3-U: the low-HP heartbeat and the thunder crack (a moment after the flash), in the player's ear.
   lowHp() { return this.play("warn:lowhp"); }

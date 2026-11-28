@@ -211,7 +211,7 @@ export class HeroModeView {
     this.reticle.frustumCulled = false;
     scene.add(this.shots, this.rockets.mesh, this.rings, this.reticle);
   }
-  // The page's reticle: { x, z, y, size, locked, progress, target, hazard } or null to hide it.
+  // The page's reticle: { x, z, y, size, locked, progress, target, hazard, lob, far, bird } or null to hide it.
   setReticle(p) {
     if (!p) { if (this.reticle) this.reticle.visible = false; return; }
     if (!this.reticle) this.build();
@@ -221,7 +221,8 @@ export class HeroModeView {
     this.reticle.rotation.y = p.locked ? this.clock * 4 : (p.progress || 0) * Math.PI;
     // H8: an explosive barrel under the crosshair tints it hazard orange. H9: the Breaker's landing ring is gold (pale
     // when the aim is past its range and the ring sits at the edge of its reach).
-    this.reticleMat.color.set(p.hazard ? 0xff8a1e : p.lob ? (p.far ? 0xc8b48a : 0xffc24a) : p.locked ? 0xff6a3a : p.target ? 0xfff2b0 : 0xd8e6f0);
+    // A bird under the crosshair (Hero mode birds, 2026-11-28): sky blue under it.
+    this.reticleMat.color.set(p.hazard ? 0xff8a1e : p.lob ? (p.far ? 0xc8b48a : 0xffc24a) : p.locked ? 0xff6a3a : p.target ? 0xfff2b0 : p.bird ? 0x9fdcff : 0xd8e6f0);
     this.reticle.visible = true;
   }
   event(ev) {
