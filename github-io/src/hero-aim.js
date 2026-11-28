@@ -38,6 +38,44 @@ export function pickTarget(sim, hero, aim, { cone = AIM.cone, snap = AIM.snap, r
   return near && (!best || nearD < 1) ? near : best || near;
 }
 
+// Body pick (owner 2026-11-28: "in landed skywing, it seems that I have to aim at their feet"): from the low shoulder camera the
+// ground under the reticle lies far behind a soldier the reticle sits on, so the page first casts the camera ray against
+// every candidate's body, an upright cylinder of its radius (at least BODY.minRadius) and height (BODY heights, or the
+// drawn model's via `size(t)` -> { r, h, base }), and takes the nearest one the ray meets in reach. Only when the ray meets
+// no body does the ground point (pickTarget's assist) decide. `ray` = { o: {x,y,z}, d: {x,y,z} } in world metres (d unit
+// length), `groundAt(x, z)` the terrain height. Returns { target, x, y, z } (the point on the body) or null.
+export const BODY = Object.freeze({ infantry: 1.8, vehicle: 2.2, building: 3.5, flyer: 1.6, minRadius: 0.55, pad: 0.15 });
+export function bodyHeight(t) {
+  return t.kind === "building" ? BODY.building : t.flying ? BODY.flyer : t.mechanical ? BODY.vehicle : BODY.infantry;
+}
+export function rayPick(sim, hero, ray, groundAt, { reach = AIM.reach, size = null } = {}) {
+  if (!hero || !ray) return null;
+  const range = (hero.range || 0) + reach, { o, d } = ray, flat = Math.hypot(d.x, d.z);
+  let best = null, bestT = Infinity;
+  for (const t of sim.entities) {
+    if (!(t.hp > 0) || (t.kind !== "unit" && t.kind !== "building") || !sim.hostile(hero.team, t.team) || !sim.isVisible(t, hero.team)) continue;
+    if (t.flying && !sim.canHit(hero, t)) continue;
+    if (Math.hypot(t.x - hero.x, t.z - hero.z) - (t.radius || 0) > range) continue;
+    const s = size?.(t), r = Math.max(BODY.minRadius, s?.r ?? t.radius ?? 0.6) + BODY.pad, h = s?.h ?? bodyHeight(t);
+    const base = s?.base ?? groundAt(t.x, t.z) + (t.flying ? (t.fly || 3.5) - h / 2 : 0);
+    if (flat < 1e-6) continue;
+    // The ray's closest approach to the body's axis in the ground plane, then the height there.
+    const px = t.x - o.x, pz = t.z - o.z, along = (px * d.x + pz * d.z) / (flat * flat);
+    const cx = o.x + d.x * along - t.x, cz = o.z + d.z * along - t.z, miss2 = cx * cx + cz * cz;
+    if (miss2 > r * r) continue;
+    const half = Math.sqrt(r * r - miss2) / flat;
+    // Entry into the cylinder, or the first point of it within its height (a ray from above enters through the top).
+    for (const k of [along - half, along, along + half]) {
+      if (k <= 0) continue;
+      const y = o.y + d.y * k;
+      if (y < base - 0.05 || y > base + h + 0.05) continue;
+      if (k < bestT) { bestT = k; best = { target: t, x: o.x + d.x * k, y, z: o.z + d.z * k }; }
+      break;
+    }
+  }
+  return best;
+}
+
 // Holding on a target: `update(targetId, dt)` returns the locked id once the same target was held
 // LOCK_SECONDS, else null. A new target or none starts over; `progress` is 0..1 for the lock ring.
 export class RocketLock {

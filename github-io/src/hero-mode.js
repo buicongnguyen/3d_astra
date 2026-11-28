@@ -35,7 +35,7 @@ import { isAllyHero } from "./sim/content/campaign-heroes.js";
 import { isSkywing, isLanded, WEAPONS, LAND } from "./sim/content/skywing.js";
 import { flightOf } from "./skywing-view.js";
 import { HERO_TIME, DODGE, enterCommands, leaveCommands } from "./sim/content/hero-mode.js";
-import { pickTarget, RocketLock, moveVector, battleTime, AIM } from "./hero-aim.js";
+import { pickTarget, rayPick, bodyHeight, RocketLock, moveVector, battleTime, AIM } from "./hero-aim.js";
 import { translate, getLanguage } from "./i18n.js";
 import { PHONE_NAME } from "./tactics-card.js";
 import { DEFINITIONS as D } from "./data.js";
@@ -51,6 +51,8 @@ export const SHOULDER = Object.freeze({
 });
 
 export const HERO_CLOSE_RADIUS = 20;
+// The camera's follow rate (1/s): it closes 1 - e^(-k dt) of the gap to the hero's drawn position each frame.
+const CAMERA_FOLLOW = 16;
 const SKY_PITCH = 52; // degrees down (45-60)
 const FALL_HOLD = 1; // real seconds on screen after the hero falls, then back to the RTS view
 const TAP_MS = 280, TAP_PX = 12;
@@ -514,7 +516,13 @@ export function setupHeroMode(S, A) {
   function rig(sim) {
     const v = S.view, e = hero(), o = e ? v.objects.get(e.id) : null;
     if (!o) return;
-    const p = o.position, f = { x: Math.sin(H.yaw), z: Math.cos(H.yaw) }, r = { x: -Math.cos(H.yaw), z: Math.sin(H.yaw) };
+    // The camera follows a damped copy of the hero's drawn position (owner 2026-11-28: "less shaking walk"): a push from a
+    // neighbour or an uneven step never jolts the view; a jump of over 3 m (a respawn, a dive) cuts straight to it.
+    const now = performance.now(), cdt = Math.min(0.1, Math.max(0, (now - (H.camAt || now)) / 1000)), q = o.position;
+    H.camAt = now;
+    if (!H.cam || H.cam.id !== e.id || Math.hypot(q.x - H.cam.x, q.z - H.cam.z) > 3) H.cam = { id: e.id, x: q.x, y: q.y, z: q.z };
+    else { const k = 1 - Math.exp(-CAMERA_FOLLOW * cdt); H.cam.x += (q.x - H.cam.x) * k; H.cam.y += (q.y - H.cam.y) * k; H.cam.z += (q.z - H.cam.z) * k; }
+    const p = H.cam, f = { x: Math.sin(H.yaw), z: Math.cos(H.yaw) }, r = { x: -Math.cos(H.yaw), z: Math.sin(H.yaw) };
     const groundY = v.terrain.heightAt(p.x, p.z);
     let eye, look, fov = 58;
     // H8: the PC shot kick (a small look-up that settles in FEEL_HUD.back s; never on phones or with reduced motion).
@@ -589,7 +597,12 @@ export function setupHeroMode(S, A) {
     // H7 Settings > Hero > Aim assist: Off (only a target right under the reticle), Low (the PC cone), High (the
     // phone cone). The pick is the page's: the heroFire command carries the target, so replays stay exact.
     const assist = AIM_ASSIST[S.settings.aimAssist] || (phone() ? AIM_ASSIST.high : AIM_ASSIST.low);
-    H.target = pickTarget(S.sim, e, p, { cone: assist.cone, snap: Math.min(assist.snap, H.sky ? AIM.snap : 2.5) });
+    // The body under the reticle first (the camera ray against each enemy's drawn body), so a low shoulder camera aims at
+    // chests, not at feet; only a ray that meets no body falls back to the ground point and the assist.
+    const ray = heroRay(v, sx, sy, rect), body = ray ? rayPick(S.sim, e, ray, (x, z) => v.terrain.heightAt(x, z), { size: (t) => drawnBody(v, t) }) : null;
+    if (body) { p = { x: body.x, z: body.z }; H.aim = p; }
+    H.body = body;
+    H.target = body ? body.target : pickTarget(S.sim, e, p, { cone: assist.cone, snap: Math.min(assist.snap, H.sky ? AIM.snap : 2.5) });
     // H8: an intact explosive barrel nearer the aim point than the target (and in reach) takes the crosshair.
     const sim = S.sim, i = sim.hazards?.length ? hazardAt(sim.hazards, p.x, p.z, HAZARD.aim) : -1;
     const hz = i >= 0 ? sim.hazards[i] : null, t = H.target;
@@ -601,6 +614,19 @@ export function setupHeroMode(S, A) {
       const zone = Math.max(phone() ? FEEL_HUD.headPhone : FEEL_HUD.head, 0);
       H.head = Math.hypot(q.x + rect.left - sx, q.y + rect.top - sy) <= zone;
     }
+  }
+  // The camera ray through a screen point (client px), as view.point() normalises it; null without a camera.
+  function heroRay(v, sx, sy, rect) {
+    if (!v.raycaster || !v.camera) return null;
+    v.raycaster.setFromCamera({ x: ((sx - rect.left) / rect.width) * 2 - 1, y: (-(sy - rect.top) / (v.drawHeight || rect.height)) * 2 + 1 }, v.camera);
+    const r = v.raycaster.ray;
+    return { o: { x: r.origin.x, y: r.origin.y, z: r.origin.z }, d: { x: r.direction.x, y: r.direction.y, z: r.direction.z } };
+  }
+  // A unit's body as drawn: its radius and height times the drawn scale (a flyer at its drawn altitude).
+  function drawnBody(v, t) {
+    const u = v.objects.get(t.id)?.userData, k = u?.readabilityScale || 1;
+    const air = t.flying && u?.air, h = bodyHeight(t) * (t.kind === "building" ? 1 : k);
+    return { r: (t.radius || 0.6) * Math.min(k, 1.4), h, base: air ? (air.y ?? v.terrain.heightAt(t.x, t.z) + air.fly) - 0.2 : undefined };
   }
   // Marks at the screen edge for shots at the hero from off screen.
   function edges(sim, e) {

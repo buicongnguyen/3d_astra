@@ -25,15 +25,20 @@
   },
   "factions": {
     "meridian": { "rifle": "m-dart", "vanguard": "m-burst", "ranger": "m-photon", "gunner": "m-stream", "tank": "m-orb", "tower": "m-orb",
-      "breaker": "m-mortar", "antitank": "m-rocket", "hawk": "m-strafe" },
+      "breaker": "m-mortar", "antitank": "m-rocket", "hawk": "m-strafe",
+      "skywing_sniper": "m-sniper", "skywing_rocket": "m-skyrocket" },
     "ashfall": { "rifle": "a-tracer", "vanguard": "a-tracer3", "ranger": "a-tracer", "scrapper": "a-slugs", "tank": "a-slug", "tower": "a-slug",
-      "rampart": "a-slug-heavy", "breaker": "a-scrapball", "antitank": "a-rocket" },
+      "rampart": "a-slug-heavy", "breaker": "a-scrapball", "antitank": "a-rocket",
+      "skywing_sniper": "a-sniper", "skywing_rocket": "a-skyrocket" },
     "sunward": { "rifle": "s-bolt", "vanguard": "s-bolt3", "ranger": "s-bolt", "rider": "s-darts", "tank": "s-disc", "tower": "s-disc",
-      "breaker": "s-disc-lob", "antitank": "s-rocket", "wagon": "s-motes" },
+      "breaker": "s-disc-lob", "antitank": "s-rocket", "wagon": "s-motes",
+      "skywing_sniper": "s-sniper", "skywing_rocket": "s-skyrocket" },
     "wardens": { "rifle": "w-zap", "vanguard": "w-zap3", "ranger": "w-zap", "drone": "w-pulse", "tank": "w-ball", "walker": "w-ball",
-      "tower": "w-arc", "breaker": "w-ball-lob", "antitank": "w-rocket", "halo": "w-hoops" },
+      "tower": "w-arc", "breaker": "w-ball-lob", "antitank": "w-rocket", "halo": "w-hoops",
+      "skywing_sniper": "w-sniper", "skywing_rocket": "w-skyrocket" },
     "veil": { "rifle": "v-crescent", "vanguard": "v-crescent2", "ranger": "v-crescent", "shade": "v-shade", "watcher": "v-rail", "stalker": "v-lance",
-      "tank": "v-void", "tower": "v-void", "breaker": "v-void-lob", "antitank": "v-rocket", "moth": "v-wisps" }
+      "tank": "v-void", "tower": "v-void", "breaker": "v-void-lob", "antitank": "v-rocket", "moth": "v-wisps",
+      "skywing_sniper": "v-sniper", "skywing_rocket": "v-skyrocket" }
   },
   "looks": {
     "m-dart": { "kind": "bolt", "impact": "pop", "length": [0.85, 22], "width": [0.12, 5], "head": [0.28, 8], "muzzle": [0.45, 10] },
@@ -78,7 +83,17 @@
     "v-void": { "kind": "orb", "style": "void", "arc": "shell", "impact": "implode", "body": [0.6, 14], "halo": [0.95, 22], "tail": [0.9, 18], "muzzle": [1.2, 22], "sheet": "voidOrb" },
     "v-void-lob": { "kind": "orb", "style": "void", "arc": "lob", "impact": "implode", "body": [0.52, 13], "halo": [0.85, 20], "tail": [0.8, 16], "muzzle": [1.1, 20], "sheet": "voidOrb" },
     "v-rocket": { "kind": "rocket", "trail": "wisp", "headFrame": 2, "impact": "implode", "muzzle": [0.8, 15] },
-    "v-wisps": { "kind": "wisps", "impact": "shards", "count": 2, "size": [0.42, 12], "weave": 0.7, "muzzle": [0.45, 9] }
+    "v-wisps": { "kind": "wisps", "impact": "shards", "count": 2, "size": [0.42, 12], "weave": 0.7, "muzzle": [0.45, 9] },
+    "m-sniper": { "kind": "bolt", "impact": "pop", "length": [3.4, 64], "width": [0.15, 6], "head": [0.5, 13], "muzzle": [0.95, 18], "wake": 1 },
+    "a-sniper": { "kind": "bolt", "impact": "ember", "length": [3.2, 60], "width": [0.15, 6], "head": [0.44, 12], "muzzle": [0.95, 18], "sparks": 3, "wake": 1 },
+    "s-sniper": { "kind": "bolt", "impact": "sunpop", "length": [3.2, 60], "width": [0.15, 6], "head": [0.5, 13], "muzzle": [0.95, 18], "shimmer": 3, "wake": 1 },
+    "w-sniper": { "kind": "bolt", "impact": "zap", "length": [3.2, 60], "width": [0.15, 6], "head": [0.48, 13], "muzzle": [0.95, 18], "crackle": 1, "wake": 1 },
+    "v-sniper": { "kind": "bolt", "impact": "shards", "length": [3.4, 64], "width": [0.15, 6], "head": [0.48, 13], "muzzle": [0.95, 18], "shards": 3, "wake": 1 },
+    "m-skyrocket": { "kind": "rocket", "trail": "glow", "exhaust": "ring", "headFrame": 2, "impact": "shock", "muzzle": [1.1, 20], "scale": 1.3, "smoke": 1 },
+    "a-skyrocket": { "kind": "rocket", "trail": "smoke", "headFrame": 1, "impact": "molten", "muzzle": [1.1, 20], "scale": 1.3, "smoke": 1 },
+    "s-skyrocket": { "kind": "rocket", "trail": "sparkle", "headFrame": 0, "impact": "starburst", "muzzle": [1.1, 20], "scale": 1.3, "smoke": 1 },
+    "w-skyrocket": { "kind": "rocket", "trail": "crackle", "headFrame": 2, "impact": "discharge", "chain": 1, "muzzle": [1.1, 20], "scale": 1.3, "smoke": 1 },
+    "v-skyrocket": { "kind": "rocket", "trail": "wisp", "headFrame": 2, "impact": "implode", "muzzle": [1.1, 20], "scale": 1.3, "smoke": 1 }
   },
   "sheets": {
     "orbCyan": { "stem": "orb-plasma-cyan", "fps": 20, "head": [0.71, 0.52], "cell": [1.8, 32, 28], "fade": 0.15 },

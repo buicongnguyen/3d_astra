@@ -110,6 +110,13 @@ function bolt(fx, ev, a, L, P) {
       const k = (j + 1) / (shimmer + 1), at = { x: from.x + (to.x - from.x) * k, y: from.y + (to.y - from.y) * k, z: from.z + (to.z - from.z) * k };
       shape(fx, fx.glow, at, CELL.starburst, h * 0.4, h * 1.1, 0.22, P.spark, P.main0, a.anchor, delay + flight * k).spin = 3;
     }
+    // Skywing's sniper (L.wake): a thin vapour line left along the round's path, fading behind it from the muzzle on.
+    if (L.wake && fx.budget === 1) {
+      const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z, d = Math.hypot(dx, dy, dz) || 1;
+      const q = put(fx, fx.glow, (from.x + to.x) / 2, (from.y + to.y) / 2, (from.z + to.z) / 2, a.anchor);
+      q.mode = STRETCH; q.ax = dx / d; q.ay = dy / d; q.az = dz / d; q.length = d; q.cell = CELL.streak; q.rot = 0;
+      q.s0 = quad("streak", w * 0.9); q.s1 = quad("streak", w * 0.25); q.life = 0.34 * L.wake; q.age = -(delay + flight * 0.35); q.c0 = P.mainDim; q.c1 = P.main0;
+    }
     // Every round of a short burst lands with its hit; a long stream every other one.
     if (n <= 3 || i % 2 === 0) later(fx, delay + flight, () => impact(fx, to, o));
   }
@@ -463,6 +470,7 @@ function drawOrb(fx, r, dt, ux, uy, uz) {
     }
   }
 }
+const SKY_SMOKE = Object.freeze([0.78, 0.78, 0.8, 0.5]), SKY_SMOKE_END = Object.freeze([0.7, 0.7, 0.72, 0]);
 function drawRocket(fx, r, dt, ux, uy, uz, seen) {
   const { P, L } = r, x = P0.x, y = P0.y, z = P0.z, u = fx.view.unitsPerPixel || 0.05, bodyScale = Math.min(1.8, Math.max(1, 24 * u / 1.86));
   r.roll += ROCKET.spin * dt;
@@ -470,11 +478,11 @@ function drawRocket(fx, r, dt, ux, uy, uz, seen) {
   if (seen) {
     // The painted head (src/fx-sprites.js `heads`, tinted toward the faction) once the sheets have loaded, else the finned body
     // (one instanced draw for every rocket, src/fx-kinds/rocket-body.js) with its band in the faction's colour.
-    const head = spritesReady(fx) && fx.sprites.take("heads", x, y, z, 20 * u, r.anchor, true);
+    const head = spritesReady(fx) && fx.sprites.take("heads", x, y, z, 20 * u * (L.scale || 1), r.anchor, true);
     if (head) {
       head.sx = 1.5; head.r = 0.7 + P.main[0] * 0.8; head.g = 0.7 + P.main[1] * 0.8; head.b = 0.7 + P.main[2] * 0.8;
       head.mode = 2; head.ax = ux; head.ay = uy; head.az = uz; head.a = 0.95; head.start = L.headFrame ?? HEAD_FRAME.rocket; head.count = 1; head.fps = 0; head.once = true; head.life = 1; head.fade = 0.0001; head.age = 0;
-    } else fx.rockets.add(x, y, z, ux, uy, uz, r.roll, bodyScale * SHOT_SCALE, P.main);
+    } else fx.rockets.add(x, y, z, ux, uy, uz, r.roll, bodyScale * SHOT_SCALE * (L.scale || 1), P.main);
   }
   const hx = x - ux * tail, hy = y - uy * tail, hz = z - uz * tail;
   billboard(part(fx, r, 0, fx.glow, dt), hx, hy, hz, CELL.glow, "glow", size(fx, [0.4, 11]), P.mainSoft, 0);
@@ -493,7 +501,14 @@ function drawRocket(fx, r, dt, ux, uy, uz, seen) {
     if (L.trail === "smoke") {
       const q = put(fx, fx.smoke, hx, hy, hz, r.anchor);
       q.cell = CELL.puff; q.s0 = 0.25; q.s1 = 1.1; q.life = 0.6 + fx.rng() * 0.2; q.c0 = P.smokeSoft; q.c1 = P.smoke0; q.vy = 0.35; q.drag = 1.2; q.spin = 0.6; q.rot = fx.rng() * 6.28;
-    } else if (L.trail === "crackle") {
+      continue;
+    }
+    // Skywing's rockets (L.smoke): a grey smoke trail every other step under the faction's own glowing trail.
+    if (L.smoke && (r.trail2++ & 1) === 0) {
+      const q = put(fx, fx.smoke, hx, hy, hz, r.anchor);
+      q.cell = CELL.puff; q.s0 = 0.22; q.s1 = 0.95; q.life = 0.5 + fx.rng() * 0.2; q.c0 = SKY_SMOKE; q.c1 = SKY_SMOKE_END; q.vy = 0.3; q.drag = 1.2; q.spin = 0.6; q.rot = fx.rng() * 6.28;
+    }
+    if (L.trail === "crackle") {
       const q = put(fx, fx.glow, hx, hy, hz, r.anchor), a = fx.rng() * 6.28, l = size(fx, [0.5, 12]);
       let ax = -ux * 0.6 + Math.cos(a) * 0.4, ay = -uy * 0.6 + 0.2, az = -uz * 0.6 + Math.sin(a) * 0.4;
       const n = Math.hypot(ax, ay, az) || 1; ax /= n; ay /= n; az /= n;

@@ -30,7 +30,11 @@ export function shotFaction(fx, sim, team) {
 }
 
 // The unit a shot speaks for: its own type, or for a crewed Defence tower the crew's weapon (the event's `weapon`).
-const unitOf = (ev) => (ev.unit === "tower" && ev.weapon && ev.weapon !== "tower" ? ev.weapon : ev.unit || ev.weapon);
+// Skywing (sim/content/skywing.js) flies as a Kite (unarmed on its own) and fires the Ranger's or the Anti-tank's shot: its rounds
+// take its own looks (owner 2026-11-28), a long sniper tracer with a vapour wake and a bigger rocket with a smoke trail.
+const SKYWING_SHOTS = Object.freeze({ ranger: "skywing_sniper", antitank: "skywing_rocket" });
+export const skywingShot = (ev) => (ev?.unit === "kite" && SKYWING_SHOTS[ev.weapon]) || null;
+const unitOf = (ev) => skywingShot(ev) || (ev.unit === "tower" && ev.weapon && ev.weapon !== "tower" ? ev.weapon : ev.unit || ev.weapon);
 const RESOLVED = new Map();
 // The look of a shot: { id, look, pal } or null (no faction, or a unit that keeps its own look: creatures, bosses, Iron units...).
 export function signatureOf(faction, unit, air = false) {

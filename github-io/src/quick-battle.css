@@ -189,3 +189,37 @@
 @media (orientation: landscape) and (max-height: 520px) {
   .compact-ui #title-actions:has(#hero-battle) .quick-text small { display: none; }
 }
+
+/* ---------- Full army sandbox: the clock to the enemy army's next march (taps pass through) ---------- */
+#arena-march {
+  position: absolute;
+  z-index: 6;
+  top: 74px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  min-height: 32px;
+  padding: 4px 12px 4px 8px;
+  border: 1px solid #a2584a;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(56, 22, 20, 0.94), rgba(28, 12, 14, 0.94));
+  box-shadow: 0 8px 24px rgba(2, 7, 19, 0.5);
+  color: #f1f6f3;
+  font: 700 13px/16px var(--font-ui);
+  pointer-events: none;
+}
+#arena-march[hidden] { display: none; }
+#arena-march .icon { width: 16px; height: 16px; color: #ffab91; }
+#arena-march b { min-width: 3.2ch; color: #ffd17b; font: 800 15px/16px var(--font-display); font-variant-numeric: tabular-nums; }
+#arena-march.soon { border-color: #ef7660; box-shadow: 0 0 0 1px rgba(239, 118, 96, 0.5), 0 8px 24px rgba(2, 7, 19, 0.5); }
+#arena-march.soon b { color: #ff9b85; }
+.compact-ui #arena-march { min-height: 28px; padding: 3px 10px 3px 6px; font-size: 12px; }
+/* Phones: on the right, under the match buttons, clear of the notices that stack top-left (two short lines in portrait). */
+@media (orientation: portrait) {
+  .compact-ui #arena-march { top: 52px; left: auto; right: 8px; transform: none; max-width: 156px; line-height: 14px; }
+}
+@media (orientation: landscape) { .compact-ui #arena-march { top: 56px; left: auto; right: 12px; transform: none; } }

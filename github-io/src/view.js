@@ -41,7 +41,7 @@ import { MissionLook } from "./mission-look-view.js";
 import { airMotion, airParts, poseAirParts } from "./air-motion.js";
 import { groundY, placeOnGround, MARKER_LIFT } from "./ground-y.js";
 import { prepareVanguardArm, attachVanguardSword, followVanguardTorso, restVanguardSword, strikeVanguardSword, VANGUARD_WINDUP, VANGUARD_RECOVERY } from "./vanguard-sword.js";
-import { skywingModel, dressSkywing, poseSkywingRig, poseSkywing, skywingTrails } from "./skywing-view.js";
+import { skywingModel, dressSkywing, poseSkywingRig, poseSkywing, skywingTrails, skywingSize, flightBlend, markMuzzle, shineOf, tagShine, addShine, SHINE, SHINE_PULSE, SKY_WALK, SKY_BOB } from "./skywing-view.js";
 import { RIG_INFANTRY, RIG_HULL, KNEELERS, STANCE, GAIT, hitFlinch, FALL, fallFor, infantryFall, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach, BARREL_POSES, newGun, fireBarrel, stepBarrel, poseBarrel, RECOIL, barrelKick, bodyKick, kickSize, poseTurretOnHull, swingLegs } from "./unit-rig.js";
 import {
   EnvironmentView,
@@ -809,6 +809,8 @@ export class WorldView {
       if (!target.has(key))
         target.set(key, { material: glowAsPaint ? teamPaint : o.material, geometries: [] });
       const geometry = o.geometry.clone().applyMatrix4(o.matrixWorld);
+      // Skywing's shiny paint (skywing-view.js): every part carries aShine (merged buckets need one attribute set).
+      if (skywing) tagShine(geometry, o.material.name.startsWith("Team") ? shineOf(o.name) || shineOf(o.parent?.name) : 0);
       if (rigged && pivot) geometry.translate(-pivot.x, 0, -pivot.z);
       if (skyPart) {
         // Skywing's shader bones (unit-rig.js): a wing folds about its hinge (x, y), arms and weapons raise about
@@ -849,6 +851,7 @@ export class WorldView {
         if (combined) { combined.computeBoundingSphere(); combined.boundingSphere.radius += 0.6; group.add(paint(new THREE.Mesh(combined, material), "body")); }
         geometries.forEach((g) => g.dispose());
       }
+      if (skywing) markMuzzle(group); // where its rounds leave the gun (fx.js aim)
       template.add(group);
     }
     template.userData.rig = rigInfantry ? "infantry" : rigHull ? "hull" : null;
@@ -895,6 +898,7 @@ export class WorldView {
           const m = o.material.clone();
           m.color.setRGB(1, 1, 1);
           addSharedTeamRim(m);
+          if (type === "skywing") addShine(m);
           if (rig) addRig(m);
           materials.set(key, m);
         }
@@ -905,6 +909,7 @@ export class WorldView {
           if (name.startsWith("Team")) {
             m.color.setHex(this.colors[team]);
             addTeamRim(m, this.colors[team]); // W2-C: the team's own colour on the edge
+            if (type === "skywing" && !name.startsWith("TeamGlow")) addShine(m); // its visor, nozzles and wing tips glow
             if (name.startsWith("TeamGlow")) {
               m.emissive.setHex(this.glows[team]);
               m.emissiveIntensity = 0.8;
@@ -2011,6 +2016,7 @@ export class WorldView {
       const edge = this.backdrop?.material.userData.motion;
       if (edge) edge.time.value = this.lifeClock;
       for (const p of this.pulsing) p.m.emissiveIntensity = p.base * (1 + p.depth * Math.sin(this.lifeClock * p.rate + p.phase));
+      SHINE.value = SHINE_PULSE.base * (1 + SHINE_PULSE.depth * Math.sin(this.lifeClock * SHINE_PULSE.rate));
       CRYSTAL_TIME.value = this.lifeClock; // crystal deposits: inner pulse and glints (src/crystal-fields.js)
     }
     this.scatter?.update(dt, lively && this.settings.waterMotion !== false);
@@ -2121,12 +2127,15 @@ export class WorldView {
         } else if (!p) u.gait = pace;
         lift = u.legs.length ? Math.abs(Math.sin(u.stride)) * 0.07 * u.gait : Math.sin(u.stride * 2.1) * 0.016 * u.gait;
         if (u.rig?.kind === "infantry") {
-          lift = stepInfantry(u.rig, u.rig.motion, { speed, base: D[e.type].speed || 3, scale: u.readabilityScale, legLength: u.rig.legLength,
+          // Skywing on foot: its own drawn size (skywing-view.js SIZE) and its walking speed (LAND.walk) as the run.
+          const sky = u.skywing ? skywingSize(flightBlend(u, e)) : 1;
+          lift = stepInfantry(u.rig, u.rig.motion, { speed, base: u.skywing ? SKY_WALK : D[e.type].speed || 3, scale: u.readabilityScale * sky, legLength: u.rig.legLength,
             moving: !!e.moving, attacking: !!e.attacking, dt, rich: this.richMotion, kneels: KNEELERS.has(e.type), gait: GAIT[e.type], stance: u.rig.stance });
           // A guardian on its knees (sim/content/campaign-creatures.js) holds the kneel pose.
           if (e.knelt) { u.rig.motion[2] = 1; u.rig.motion[3] = 1.12; }
           // Skywing (skywing-view.js): the flight blend folds or spreads its wings; no footfall bob in the air.
-          if (u.skywing) lift *= 1 - poseSkywingRig(u, e, sim, dt);
+          // On foot a gentle bob only (owner 2026-11-28: "less shaking walk"), none with reduced motion.
+          if (u.skywing) lift *= (1 - poseSkywingRig(u, e, sim, dt)) * (this.reducedMotion.matches ? 0 : SKY_BOB);
         } else if (u.rig?.kind === "hull") {
           const pitch = stepHull(u.rig, u.rig.motion, { speed, moving: !!e.moving, dt, rich: this.richMotion, scale: u.readabilityScale });
           if (u.turret) {

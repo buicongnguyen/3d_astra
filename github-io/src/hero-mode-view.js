@@ -3,6 +3,7 @@ import { weaponStyle } from "./visual-style.js";
 import { weaponClass } from "./fx-kinds/weapon-class.js";
 import { RocketBodies } from "./fx-kinds/rocket-body.js";
 import { kneelDrop } from "./unit-rig.js";
+import { signatureOf, shotFaction, skywingShot } from "./fx-kinds/signature.js";
 
 // H3a/H3d Hero mode on the battlefield (rules: src/sim/content/hero-mode.js; camera and HUD: src/hero-mode.js).
 // A view plugin that only reads the simulation:
@@ -36,6 +37,10 @@ export const OWN_LOOKS = Object.freeze({
   rocket: { trail: 7.5, width: 0.34, flame: 1.2, flameWidth: 0.26, scale: 1.35, arc: 0.07, arcMax: 1.6 },
   shell: { trail: 2.6, width: 0.32 },
 });
+
+// Skywing's own rounds (owner 2026-11-28: "the bullet of skywing did not have visual effect like other unit"): the sniper
+// round a longer, wider tracer, the rocket a size up, both in its faction's signature colour (fx-kinds/signature-shots.json).
+export const SKYWING_OWN = Object.freeze({ tracer: { width: 1.7, trail: 1.5 }, rocket: { width: 1.2, trail: 1.25 } });
 
 // The look of one shot at the hero, from the same weapon classes and colours as the battle's effects
 // (src/fx-kinds/weapon-class.js, visual-style.json, faction tints): "tracer" for rifles, guns, beams and pulses,
@@ -130,7 +135,7 @@ export class HeroModeView {
     this.clock = 0;
     this.drawn = { tracer: 0, rocket: 0, shell: 0 }; // this frame's rounds by look (tests read it)
     // Item 6: the driven hero's own rounds (fx.js hands them over through view.heroOwnShots), a fixed pool.
-    this.own = Array.from({ length: OWN }, () => ({ on: false, kind: "tracer", t: 0, travel: 1, fx: 0, fy: 0, fz: 0, tx: 0, ty: 0, tz: 0, color: [1, 1, 1], seed: 0 }));
+    this.own = Array.from({ length: OWN }, () => ({ on: false, kind: "tracer", t: 0, travel: 1, fx: 0, fy: 0, fz: 0, tx: 0, ty: 0, tz: 0, color: [1, 1, 1], seed: 0, wide: 1, long: 1 }));
     this.ownCount = 0;
     this.ownDrawn = { tracer: 0, rocket: 0, shell: 0 };
     this.ownTaken = { tracer: 0, rocket: 0, shell: 0 }; // every own round taken over since the start, by look (tests)
@@ -147,8 +152,11 @@ export class HeroModeView {
     let slot = this.own.find((q) => !q.on);
     if (!slot) slot = this.own.reduce((a, b) => (b.t / b.travel > a.t / a.travel ? b : a));
     heroShotLook({ weapon: e.weapon, air: !!e.tAir }, e.unit, sim.factions?.[e.team], LOOK);
-    Object.assign(slot, { on: true, kind: style.kind === "rocket" ? "rocket" : LOOK.kind, t: 0, travel: Math.max(0.08, style.life || 0.3), fx: from.x, fy: from.y, fz: from.z, tx: to.x, ty: to.y, tz: to.z, seed: Math.random() });
-    slot.color[0] = LOOK.color[0]; slot.color[1] = LOOK.color[1]; slot.color[2] = LOOK.color[2];
+    Object.assign(slot, { on: true, kind: style.kind === "rocket" ? "rocket" : LOOK.kind, t: 0, travel: Math.max(0.08, style.life || 0.3), fx: from.x, fy: from.y, fz: from.z, tx: to.x, ty: to.y, tz: to.z, seed: Math.random(), wide: 1, long: 1 });
+    const sky = skywingShot(e), sig = sky ? signatureOf(shotFaction({ view: v }, sim, e.team), sky, !!e.tAir) : null;
+    const color = sig ? sig.pal.main : LOOK.color;
+    if (sig) { const k = SKYWING_OWN[slot.kind] || SKYWING_OWN.tracer; slot.wide = k.width; slot.long = k.trail; }
+    slot.color[0] = color[0]; slot.color[1] = color[1]; slot.color[2] = color[2];
     this.ownCount = this.own.reduce((n, q) => n + (q.on ? 1 : 0), 0);
     this.ownTaken[slot.kind]++;
     return true;
@@ -304,24 +312,24 @@ export class HeroModeView {
         q.t += dt;
         if (q.t >= q.travel) { q.on = false; continue; }
         live++;
-        const look = OWN_LOOKS[q.kind], k = q.t / q.travel, dist = Math.hypot(q.tx - q.fx, q.ty - q.fy, q.tz - q.fz) || 1;
+        const look = OWN_LOOKS[q.kind], k = q.t / q.travel, dist = Math.hypot(q.tx - q.fx, q.ty - q.fy, q.tz - q.fz) || 1, wide = q.wide || 1;
         const arc = q.kind === "rocket" ? Math.min(look.arcMax, dist * look.arc) : 0;
         const at = (u) => { P.x = q.fx + (q.tx - q.fx) * u; P.y = q.fy + (q.ty - q.fy) * u + Math.sin(u * Math.PI) * arc; P.z = q.fz + (q.tz - q.fz) * u; return P; };
         at(k);
         const hx = P.x, hy = P.y, hz = P.z;
-        at(Math.max(0, k - look.trail / dist));
+        at(Math.max(0, k - (look.trail * (q.long || 1)) / dist));
         const tx = P.x, ty = P.y, tz = P.z;
         if (q.kind === "rocket") {
           at(Math.max(0, k - 0.3 / dist));
           let dx = hx - P.x, dy = hy - P.y, dz = hz - P.z;
           const l = Math.hypot(dx, dy, dz) || 1;
           dx /= l; dy /= l; dz /= l;
-          this.rockets.add(hx, hy, hz, dx, dy, dz, this.clock * 13 + q.seed * 6.28, look.scale, q.color);
-          const b = 0.5 * look.scale, nx = hx - dx * b, ny = hy - dy * b, nz = hz - dz * b;
-          this.ribbon(n++, RIBBON.flame, nx, ny, nz, nx - dx * look.flame, ny - dy * look.flame, nz - dz * look.flame, look.flameWidth, q.color, q.seed);
+          this.rockets.add(hx, hy, hz, dx, dy, dz, this.clock * 13 + q.seed * 6.28, look.scale * wide, q.color);
+          const b = 0.5 * look.scale * wide, nx = hx - dx * b, ny = hy - dy * b, nz = hz - dz * b;
+          this.ribbon(n++, RIBBON.flame, nx, ny, nz, nx - dx * look.flame * wide, ny - dy * look.flame * wide, nz - dz * look.flame * wide, look.flameWidth * wide, q.color, q.seed);
           const mx = nx - dx * 0.4, my = ny - dy * 0.4, mz = nz - dz * 0.4;
-          if (Math.hypot(mx - tx, my - ty, mz - tz) > 0.2) this.ribbon(n++, RIBBON.smoke, mx, my, mz, tx, ty, tz, look.width, q.color, q.seed);
-        } else this.ribbon(n++, q.kind === "shell" ? RIBBON.shell : RIBBON.tracer, hx, hy, hz, tx, ty, tz, look.width, q.color, q.seed);
+          if (Math.hypot(mx - tx, my - ty, mz - tz) > 0.2) this.ribbon(n++, RIBBON.smoke, mx, my, mz, tx, ty, tz, look.width * wide, q.color, q.seed);
+        } else this.ribbon(n++, q.kind === "shell" ? RIBBON.shell : RIBBON.tracer, hx, hy, hz, tx, ty, tz, look.width * wide, q.color, q.seed);
         own[q.kind]++;
       }
       this.ownCount = live;

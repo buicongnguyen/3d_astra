@@ -5,6 +5,9 @@
 //              reticle: the camera blends to the shoulder view, the wings fold, Dive strike greys out with "Air only",
 //              the label turns to "Take off", W walks it and a tank can now shoot it; "Take off" climbs (still hittable)
 //              and the look-down view comes back; the button waits out the cooldown; landed vs flying draws <= +5.
+//              Landed (owner 2026-11-28): it stands a Ranger's height with its visor, nozzles and wing tips shining (one
+//              program flag, no draw), a reticle on a soldier's chest picks that soldier, and its rounds leave the gun
+//              in hand in its faction's own looks (screenshots skyland-shot-rocket / skyland-shot-sniper).
 //   portrait / landscape  the Land tile sits with Ability, Dodge and Fire and overlaps nothing, in EN, VI and KO.
 //   Hero battle / sandbox (owner 2026-11-28): the title's "Hero battle" tile starts the Quick battle setup straight in
 //              Hero mode with a free Skywing (no coins, even with the briefing's Skywing row On); "Play again" brings the
@@ -92,6 +95,73 @@ const enterSky = async (page, id) => {
   await step(page, 0.1, 2);
 };
 
+// Landed Skywing (owner 2026-11-28): its size, its shiny paint, the chest aim and its rounds from the gun.
+async function landedLooks(page, ids) {
+  // The targets ahead stay up for the whole check (and hold their fire).
+  await page.evaluate((sky) => { const s = window.__frontier.sim, h = s.get(sky); for (const e of s.entities) if (e.team === 1 && e.kind === "unit" && e.hp > 0 && Math.hypot(e.x - h.x, e.z - h.z) < 15) { e.hp = e.maxHp = 5000; e.damage = 0; } }, ids.sky);
+  const look = await page.evaluate((sky) => {
+    const f = window.__frontier, v = f.view, top = (id) => { let t = -Infinity; const m = v.objects.get(id).userData.model; m.updateWorldMatrix(true, true); m.traverse((o) => { if (!o.isMesh || !o.visible || !o.parent.visible) return; o.geometry.computeBoundingBox(); t = Math.max(t, o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld).max.y); }); return t - v.terrain.heightAt(m.getWorldPosition(m.position.clone()).x, m.getWorldPosition(m.position.clone()).z); };
+    const h = f.sim.get(sky), ranger = f.sim.entities.find((e) => e.team === 1 && e.type === "ranger" && e.hp > 0 && Math.hypot(e.x - h.x, e.z - h.z) < 11);
+    let shine = false;
+    v.objects.get(sky).userData.model.traverse((o) => { if (o.isMesh && o.geometry.getAttribute("aShine") && /shine/.test(o.material.customProgramCacheKey?.() || "")) shine = true; });
+    return { sky: top(sky), ranger: top(ranger.id), shine };
+  }, ids.sky);
+  assert.ok(Math.abs(look.sky / look.ranger - 1) < 0.12, `a Ranger's height on foot: ${JSON.stringify(look)}`);
+  assert.ok(look.shine, "the shiny team paint");
+  // A reticle on each soldier's chest picks that soldier (the body pick; not the ground far behind it).
+  const chest = (id) => page.evaluate((id) => { const f = window.__frontier, v = f.view, t = f.sim.get(id), r = v.renderer.domElement.getBoundingClientRect(), q = v.project(t.x, t.z, v.terrain.heightAt(t.x, t.z) + 1.2); return { x: q.x + r.left, y: q.y + r.top }; }, id);
+  // The three riflemen the battle set up ahead (not the rival's own, far away).
+  const rangers = await page.evaluate((sky) => { const s = window.__frontier.sim, h = s.get(sky); return s.entities.filter((e) => e.team === 1 && e.type === "ranger" && e.hp > 0 && Math.hypot(e.x - h.x, e.z - h.z) < 11).map((e) => e.id); }, ids.sky);
+  assert.equal(rangers.length, 3, "the riflemen ahead");
+  for (const id of rangers) {
+    const p = await chest(id);
+    await page.mouse.move(p.x, p.y);
+    await page.waitForFunction((id) => window.__frontier.heroMode.info.target === id, id, { timeout: TIMEOUT.step }).catch(async (err) => {
+      console.log("pick", id, JSON.stringify(p), JSON.stringify(await page.evaluate((id) => { const f = window.__frontier, i = f.heroMode.info, e = f.sim.get(i.id), t = f.sim.get(id); return { target: i.target, aim: i.aim, screen: i.screen, hero: [e.x, e.z, e.range], t: [t.x, t.z, f.sim.isVisible(t, 0)] }; }, id)));
+      throw err;
+    });
+  }
+  // Its rounds: recorded as the view gets them, drawn slowed down for the screenshots.
+  await page.evaluate((sky) => {
+    const v = window.__frontier.view, ev = v.event.bind(v), upd = v.update.bind(v);
+    window.__skyShots = []; window.__slow = 1;
+    v.event = (event, sim) => { if (event.type === "shot" && event.source === sky) window.__skyShots.push({ ...event }); return ev(event, sim); };
+    v.update = (sim, dt, ...rest) => upd(sim, dt * window.__slow, ...rest);
+  }, ids.sky);
+  const fire = async (name, weapon, target) => {
+    const p = await chest(target);
+    await page.mouse.move(p.x, p.y);
+    await page.waitForFunction((id) => window.__frontier.heroMode.info.target === id, target, { timeout: TIMEOUT.step });
+    await page.evaluate(() => { window.__skyShots.length = 0; });
+    await page.keyboard.down("f");
+    for (let i = 0; i < 80 && !(await page.evaluate(() => window.__skyShots.length)); i++) { await step(page, 0.05); if (weapon === "sniper") { await page.keyboard.up("f"); await page.keyboard.down("f"); } }
+    await page.keyboard.up("f");
+    await page.evaluate(() => { window.__slow = 0.12; });
+    await page.waitForTimeout(90);
+    await keep(page, name);
+    // The round leaves the gun in hand: its start lies within the weapon's drawn bounds (grown 0.3 m), not at a fixed height.
+    const at = await page.evaluate(([sky, weapon]) => {
+      const f = window.__frontier, v = f.view, ev = window.__skyShots[0], from = v.fx.aim(ev, f.sim).from, node = v.objects.get(sky).userData.skywing.weapons[weapon];
+      const THREE_BOX = { min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
+      node.updateWorldMatrix(true, true);
+      node.traverse((o) => { if (!o.isMesh) return; o.geometry.computeBoundingBox(); const b = o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld); for (const k of [0, 1, 2]) { THREE_BOX.min[k] = Math.min(THREE_BOX.min[k], b.min.getComponent(k)); THREE_BOX.max[k] = Math.max(THREE_BOX.max[k], b.max.getComponent(k)); } });
+      const p = [from.x, from.y, from.z];
+      return { inside: p.every((c, k) => c >= THREE_BOX.min[k] - 0.3 && c <= THREE_BOX.max[k] + 0.3), from: p, box: THREE_BOX, ev: { weapon: ev.weapon, unit: ev.unit }, taken: v.heroOwnShots.ownTaken };
+    }, [ids.sky, weapon]);
+    await page.evaluate(() => { window.__slow = 1; });
+    assert.ok(at.inside, `${weapon}: the round starts at the gun ${JSON.stringify(at)}`);
+    return at;
+  };
+  const rocket = await fire("skyland-shot-rocket", "rocket", ids.tank);
+  assert.ok(rocket.taken.rocket > 0, "the rocket flies in the hero look");
+  await page.keyboard.press("e");
+  await step(page, 0.3, 5);
+  const sniper = await fire("skyland-shot-sniper", "sniper", rangers[0]);
+  assert.ok(sniper.taken.tracer > 0, "the sniper round flies in the hero look");
+  await page.keyboard.press("e");
+  await step(page, 0.3, 5);
+}
+
 const browser = await launchBrowser();
 // Four units of work (CI may split them, `shard: i/2`): desktop (0), Hero battle and the sandbox (1), phones (2),
 // the title's quick row (3).
@@ -161,6 +231,7 @@ await suite("skywing-land" + shardLabel, async () => {
     console.log(`  desktop: draws flying ${drawsFly}, landed ${drawsLand}; Skywing's own batches ${own.sky}, the Kite's ${own.kite}`);
     assert.ok(own.sky <= own.kite, `Skywing draws ${own.sky} batches, the Kite ${own.kite}`);
     await keep(page, "skyland-hero-landed");
+    await landedLooks(page, ids);
     // W walks it like a ground hero.
     const at = await page.evaluate((id) => { const e = window.__frontier.sim.get(id); return { x: e.x, z: e.z }; }, ids.sky);
     await page.keyboard.down("w");

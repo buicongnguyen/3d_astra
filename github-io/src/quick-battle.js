@@ -24,7 +24,8 @@ import { hasPortrait, portrait } from "./portraits.js";
 import { loadDefence, hasDefenceWin } from "./defence/progress.js";
 import { firstWatch, rosterOf } from "./defence/first-watch.js";
 import { isPlayerFaction, FACTION_RULES, workshopUnitsOf } from "./factions.js";
-import { QUICK_SETUP, quickRival, quickRules } from "./sim/content/quick-battle.js";
+import { QUICK_SETUP, quickRival, quickRules, arenaNextMarch } from "./sim/content/quick-battle.js";
+import { formatClock } from "./results-ui.js";
 
 // How many Quick battles this browser has started: the rival rotates by it (sim/content/quick-battle.js
 // quickRival). A per-viewer convenience: without storage every Quick battle meets the first rival.
@@ -146,8 +147,26 @@ export function setupQuickBattle(S, A) {
     if (key !== stripKey) { strip.innerHTML = rosterHTML(sim); stripKey = key; }
     strip.hidden = false;
   }
+  // Full army sandbox (owner 2026-11-28): the enemy army waits on its side; a clock counts down to each march.
+  let march = null, marchText = "";
+  function syncArena() {
+    const sim = S.sim, next = Z.started && sim && !sim.result ? arenaNextMarch(sim) : null;
+    if (!next) { if (march) march.hidden = true; return; }
+    if (!march?.isConnected) {
+      march = document.createElement("div");
+      march.id = "arena-march";
+      march.setAttribute("role", "status");
+      march.innerHTML = `${icon("flag")}<span class="arena-march-text">Enemy army marches in</span> <b translate="no"></b>`;
+      $("stage").append(march);
+      marchText = "";
+    }
+    const text = formatClock(Math.max(0, Math.ceil(next.at - sim.time - 1e-6)));
+    if (text !== marchText) { march.querySelector("b").textContent = marchText = text; }
+    march.classList.toggle("soon", next.at - sim.time <= 10);
+    march.hidden = false;
+  }
   const defenceHud = A.defenceHud;
-  if (defenceHud) A.defenceHud = (selected) => { defenceHud(selected); syncRoster(); };
+  A.defenceHud = (selected) => { defenceHud?.(selected); syncRoster(); syncArena(); };
 
   return function bind() {
     const slot = $("title-actions");

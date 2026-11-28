@@ -18,13 +18,16 @@ import { shotSlope } from "./terrain-labels.js";
 import { CELL, BILLBOARD, STRETCH, GROUND, SHOT_SCALE, CLASSIC_CELLS, ATLAS_COLUMNS, ATLAS_ROWS } from "./fx-kinds/cells.js";
 // V4 signature shots: each faction's own shot look (src/fx-kinds/signature.js) and the cells it paints into the atlas.
 import { SIGNATURE_CELLS } from "./fx-kinds/signature-cells.js";
-import { signatureLook, signatureShot, signaturePartial, signatureSupport, stepSignatures, clearSignatures, liveSignatures } from "./fx-kinds/signature.js";
+import { signatureLook, signatureShot, signaturePartial, skywingShot, signatureSupport, stepSignatures, clearSignatures, liveSignatures } from "./fx-kinds/signature.js";
 import { LOOKS, MOMENTS, shimmer } from "./fx-kinds/index.js";
 import { crit, resisted } from "./fx-kinds/counter.js";
 import { RocketBodies } from "./fx-kinds/rocket-body.js";
 import { CrystalFieldKit } from "./crystal-fields.js";
 import { ROCKET } from "./fx-kinds/rocket.js";
 // R3-X: weapon effect classes, the ordnance bodies (one instanced draw) and their flights.
+import { skywingMuzzle } from "./skywing-view.js";
+// Skywing's signature looks with a hero-camera-sized muzzle (fx.shot, Hero mode), one per look.
+const HERO_MUZZLE = new WeakMap();
 import { groundSplashRadius, weaponClass } from "./fx-kinds/weapon-class.js";
 import { OrdnanceBodies } from "./fx-kinds/ordnance-body.js";
 import { launch, stepRounds, stepStrikes, warnRing, flakBurst, airBurst } from "./fx-kinds/ordnance.js";
@@ -657,6 +660,11 @@ export class Effects {
     // A kneeling shooter fires from the knee: its muzzle is lower by the pose's drop (unit-rig.js kneelDrop).
     const drop = e.sAir ? 0 : kneelDrop(this.view.objects?.get?.(e.source)?.userData);
     const from = { x: fx, y: (e.sAir ? e.sAir + 0.4 : style.height - drop) + ground(fx, fz), z: fz, lifted: true };
+    // Skywing (its own pilot model, skywing-view.js): the round leaves the gun in hand as drawn this frame (flying prone with
+    // the arms raised, or on foot), not a Ranger's or a Kite's fixed muzzle.
+    const sky = e.unit === "kite" ? this.view.objects?.get(e.source) : null;
+    const tip = sky?.userData.skywing ? skywingMuzzle(sky, e.weapon === "antitank" ? "rocket" : "sniper") : null;
+    if (tip) { from.x = tip.x; from.y = tip.y; from.z = tip.z; }
     const land = { x: tx, y: (e.type === "support" || e.weapon === "tower" ? 1 : 0.95) + (e.tAir || 0), z: tz };
     const to = { ...land, y: land.y + ground(tx, tz), lifted: true };
     return { style, nx, nz, from, to, land };
@@ -723,6 +731,19 @@ export class Effects {
     // Shine pass (item 6): the driven hero's own shot under the Hero camera flies as a big, readable round
     // (hero-mode-view.js draws the flight); here only its muzzle flash and its landing, at the same time as always.
     if (style.kind !== "support" && this.view.heroOwnShots?.take(e, sim, from, to, style)) {
+      // Skywing's own rounds: its signature muzzle flash at the gun and its faction's landing (fx-kinds/signature.js).
+      // Under the close camera the muzzle stays a hand's size (its CSS-pixel floor is the RTS view's, metres there).
+      const sig = skywingShot(e) ? signatureLook(this, e, sim) : null;
+      let own = sig && HERO_MUZZLE.get(sig);
+      if (sig && !own) HERO_MUZZLE.set(sig, (own = { ...sig, look: { ...sig.look, muzzle: [sig.look.kind === "rocket" ? 0.5 : 0.35, 2] } }));
+      if (own) {
+        this.paintSignature();
+        const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z, l = Math.hypot(dx, dy, dz) || 1, ux = dx / l, uy = dy / l, uz = dz / l, h = Math.hypot(ux, uz) || 1;
+        const anchor = { targetWidth: 2 * (sim?.get?.(e.target)?.radius || 0.75), direct: !groundSplashRadius(e, sim) };
+        signaturePartial(this, e, sim, own, { from, to, land, ux, uy, uz, len: l, sx: -uz / h, sz: ux / h, nx, nz, travel: style.life, anchor,
+          power: style.hit ?? hitPower(e.weapon, style.kind), style }, true, true);
+        return;
+      }
       const rocket = style.kind === "rocket" || style.look === "rocket" || style.look === "pods";
       this.particle(this.glow, { ...from, cell: CELL.flare, s0: rocket ? 1.4 : 0.9, s1: rocket ? 1.7 : 1.1, life: 0.07, c0: [1, 0.9, 0.62, 0.95], c1: [1, 0.55, 0.15, 0], anchor: { ...e, shot: true } });
       const anchor = { x: e.tx, z: e.tz, target: e.target, targetWidth: 2 * (sim?.get?.(e.target)?.radius || 0.75), direct: !groundSplashRadius(e, sim) }, power = style.hit ?? hitPower(e.weapon, style.kind);

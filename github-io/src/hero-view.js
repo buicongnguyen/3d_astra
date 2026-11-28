@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { isAllyHero } from "./sim/content/campaign-heroes.js";
 import { isSkywing } from "./sim/content/skywing.js";
-import { heightOf } from "./skywing-view.js";
+import { heightOf, skywingSize, flightBlend } from "./skywing-view.js";
 import { translate, getLanguage } from "./i18n.js";
 
 // Campaign heroes on the battlefield (2026-11-27; rules in src/sim/content/campaign-heroes.js): a gold
@@ -92,6 +92,11 @@ export class HeroView {
   scaleFor(e) {
     return isSkywing(e) ? SKY_SCALE : 1;
   }
+  // Its own pilot model: a Ranger's height on foot, a little larger in flight (skywing-view.js SIZE), following the
+  // glide down and the climb; the vitals bar rides with it. Drawing only (the sim's radius and hits are unchanged).
+  frameScaleFor(e, u) {
+    return u.skywing ? skywingSize(flightBlend(u, e)) : 1;
+  }
   event(ev) {
     // Dive strike's blast (sim/content/skywing.js): a fireball and a dust ring where it landed.
     if (ev.type !== "skystrike" || !this.view.fx) return;
@@ -111,7 +116,7 @@ export class HeroView {
       if (!heroic(sim, e) || !(e.hp > 0) || n >= CAPACITY) continue;
       const o = objects.get(e.id);
       if (!o || !o.visible) continue;
-      const r = (e.radius || 0.7) * 1.75 * (o.userData?.readabilityScale || 1);
+      const u = o.userData, r = (e.radius || 0.7) * 1.75 * (u?.readabilityScale || 1) * (u?.skywing ? skywingSize(flightBlend(u, e)) : 1);
       this.dummy.position.set(o.position.x, (o.position.y || 0) + 0.07, o.position.z);
       this.dummy.scale.set(r, 1, r);
       this.dummy.updateMatrix();

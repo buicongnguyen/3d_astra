@@ -118,8 +118,15 @@ function sendScouts(sim) {
 
 // "Full army": a test-friendly battle. W7 (2026-11-25): shown as the "Full army sandbox" (a showcase to try every
 // unit and ability, not a contest: the whole army takes the Relaxed rival's core in 30-55 s, and the owner rule
-// "never make Relaxed or Normal harder" keeps the rival as it is). Your base already has a Barracks, Foundry, three Supply relays and a tower, and two of
-// every ground unit stand ready; mixed enemy squads attack from 0:10 and then every 35 s.
+// "never make Relaxed or Normal harder" keeps the rival as it is). Your base already has a Barracks, Foundry, three
+// Supply relays and a tower, and two of every ground unit stand ready.
+// The enemy army (owner 2026-11-28: "they appear suddenly and go to attack"): eight mixed groups of ten, as before,
+// but none appears near you. Group 1 stands in formation at the muster point on the rival's half of the map from the
+// start (visible once scouted) and marches on your core at 0:30. Each later group walks in from behind the rival's
+// core at the moment its wave used to appear (1:00, 1:35, ... every 35 s), forms up at the muster point and marches
+// `gather` seconds later. The HUD counts down to every march (src/quick-battle.js). Same groups, same or later
+// times, from further away: never harder (tests/quick-battle.test.js measures first contact and the attack-move).
+// While a group waits it carries the tag "arena" (the AI never orders tagged units, sim/ai.js); marching drops it.
 export const ARENA = Object.freeze({
   base: Object.freeze([
     Object.freeze({ slot: "barracks", ahead: 4, side: -14 }),
@@ -134,8 +141,21 @@ export const ARENA = Object.freeze({
   // faction's own flyer (Hawks for Meridian; roster 2026-11-24, it was Hawks for every faction).
   army: Object.freeze(["vanguard", "ranger", "breaker", "medic", "engineer", "tank", "antitank"]),
   squad: Object.freeze(["vanguard", "ranger", "tank", "antitank", "breaker"]),
-  hawks: 2, alloy: 350, firstWave: 25, every: 35, waves: 8, waveDistance: 44,
+  hawks: 2, alloy: 350, firstWave: 25, every: 35, waves: 8,
+  // muster: metres from your core towards the rival's where a group forms up (the cores stand about 69 m apart on
+  // Riverlands, so 47 m is the rival's half). entry: metres behind the rival core where a later group walks in.
+  muster: 47, entry: 11, firstMarch: 30, gather: 20,
 });
+// When group k (0-based) is on the map and when it marches (seconds of match time).
+export const arenaEnterAt = (k) => (k <= 0 ? 0 : ARENA.firstWave + k * ARENA.every);
+export const arenaMarchAt = (k) => (k <= 0 ? ARENA.firstMarch : arenaEnterAt(k) + ARENA.gather);
+// The next march for the HUD: { at, group } or null once every group has marched (or outside the sandbox).
+export function arenaNextMarch(sim) {
+  const rival = sim?.players?.[RIVAL];
+  if (!isArena(sim) || !rival || !sim.players[PLAYER]?.quickBase) return null;
+  const k = rival.arenaWaves || 0;
+  return k < ARENA.waves ? { at: arenaMarchAt(k), group: k + 1 } : null;
+}
 // Your Full army: the base slots your faction has, as your faction's units, then its workshop units.
 export function arenaArmy(sim) {
   const faction = sim.factionFor(PLAYER), slots = ARENA.army.filter((slot) => !faction.exclude?.includes(slot));
@@ -171,31 +191,68 @@ function buildArena(sim) {
   }
   sim.players[PLAYER].alloy += ARENA.alloy;
   sim.callSkywing(PLAYER);
+  // Group 1 already stands at the muster point, in formation and facing you.
+  enterArenaGroup(sim, a, true);
+  sim.players[RIVAL].arenaIn = 1;
   sim.updateVision();
-  sim.message("Full army sandbox: try every unit and ability. Enemy squads attack in about 25 seconds.");
+  sim.message("Full army sandbox: try every unit and ability. The enemy army waits on its side and marches at 0:30.");
 }
-function sendArenaWave(sim) {
-  const a = axes(sim);
-  if (!a) return;
-  const ids = [];
+// The muster slot of squad unit (i, n): five columns of two, the front row towards you.
+function musterSlot(a, i, n) {
+  const ahead = ARENA.muster + n * 3, side = (i - 2) * 3;
+  return { x: a.home.x + a.fx * ahead + a.sx * side, z: a.home.z + a.fz * ahead + a.sz * side };
+}
+// A group comes onto the map: at its muster slots (group 1, at the start) or walking in from behind the rival core.
+function enterArenaGroup(sim, a, standing) {
   ARENA.squad.forEach((slot, i) => {
     const type = sim.typeFor(RIVAL, slot);
     for (let n = 0; type && n < 2; n++) {
-      const ahead = ARENA.waveDistance + n * 3, side = (i - 2) * 3;
-      const p = standAt(sim, a.home.x + a.fx * ahead + a.sx * side, a.home.z + a.fz * ahead + a.sz * side, 1);
+      const to = musterSlot(a, i, n);
+      const back = ARENA.entry + n * 3, side = (i - 2) * 2.5;
+      const from = standing ? to : { x: a.rival.x + a.fx * back + a.sx * side, z: a.rival.z + a.fz * back + a.sz * side };
+      const p = standAt(sim, from.x, from.z, 1);
       if (!p) continue;
       const e = sim.spawn(type, RIVAL, p.x, p.z);
       e.angle = Math.atan2(-a.fx, -a.fz);
-      ids.push(e.id);
+      e.tag = "arena";
+      if (!standing) sim.issue([e.id], { type: "move", x: to.x, z: to.z });
     }
   });
-  if (!ids.length) return;
-  sim.issue(ids, { type: "attackmove", x: a.home.x, z: a.home.z });
-  sim.events.push({ type: "incoming", team: PLAYER, x: a.home.x + a.fx * ARENA.waveDistance, z: a.home.z + a.fz * ARENA.waveDistance, count: ids.length, quick: true });
+}
+// The waiting group marches: the tag goes (the rival's own AI may use the survivors later, as before) and the
+// whole group attack-moves on your core, with the usual alarm.
+function marchArenaGroup(sim, a) {
+  const group = sim.entities.filter((e) => e.tag === "arena" && e.team === RIVAL && e.hp > 0);
+  if (!group.length) return;
+  for (const e of group) delete e.tag;
+  sim.issue(group.map((e) => e.id), { type: "attackmove", x: a.home.x, z: a.home.z });
+  const lead = group[0];
+  sim.events.push({ type: "incoming", team: PLAYER, x: lead.x, z: lead.z, count: group.length, quick: true });
+  sim.message("The enemy army is marching on your base!");
+}
+// Every tick of a sandbox match (a step hook, so a march starts exactly when the HUD clock reaches 0:00).
+function arenaStep(sim) {
+  if (!isArena(sim)) return;
+  const you = sim.players[PLAYER], rival = sim.players[RIVAL];
+  if (!you?.quickBase || !rival) return;
+  const inside = rival.arenaIn || 0;
+  if (inside < ARENA.waves && sim.time >= arenaEnterAt(inside) - 1e-9) {
+    rival.arenaIn = inside + 1;
+    const a = axes(sim);
+    if (a) enterArenaGroup(sim, a, false);
+  }
+  const k = rival.arenaWaves || 0;
+  if (k < (rival.arenaIn || 0) && sim.time >= arenaMarchAt(k) - 1e-9) {
+    rival.arenaWaves = k + 1;
+    const a = axes(sim);
+    if (a) marchArenaGroup(sim, a);
+  }
 }
 
 export const quickBattle = {
   id: "quick-battle",
+  order: 38, // the Full army sandbox's groups (before every other step hook)
+  step: arenaStep,
   aiRules: [{
     id: "quick-battle",
     run(sim, team) {
@@ -203,8 +260,6 @@ export const quickBattle = {
       const you = sim.players[PLAYER], rival = sim.players[RIVAL];
       if (isArena(sim)) {
         if (!you.quickBase) { you.quickBase = true; buildArena(sim); }
-        rival.arenaWaves ||= 0;
-        if (rival.arenaWaves < ARENA.waves && sim.time >= ARENA.firstWave + rival.arenaWaves * ARENA.every - 1e-9) { rival.arenaWaves += 1; sendArenaWave(sim); }
         return;
       }
       if (!isQuick(sim)) return;

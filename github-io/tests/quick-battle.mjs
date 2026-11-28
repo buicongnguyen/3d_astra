@@ -8,9 +8,19 @@
 //   - First watch (a fresh Defence profile, ?firstwatch): the enemy roster strip with the Scout Runner
 //     shows before wave 1, clear of the Defence bar and wave intel, 11 px text, and goes away once the
 //     wave sets off; the runner is out with wave 1.
-// Screenshots: test-results/quick-battle-<viewport>-{title,fight,roster}.png.
+//   - Full army sandbox (owner 2026-11-28): the enemy army stands in formation on its own half from the start (seen once
+//     scouted), the HUD clock "Enemy army marches in 0:30" counts down (11 px text, clear of the top bar), and at 0:30
+//     the group marches on your core while the clock turns to the next group.
+// Screenshots: test-results/quick-battle-<viewport>-{title,fight,roster,army,march}.png (QUICK_SHOTS copies them).
 import assert from "node:assert/strict";
-import { launchBrowser, openPage, suite, shot, TIMEOUT } from "./lib/harness.mjs";
+import { mkdirSync, copyFileSync } from "node:fs";
+import { launchBrowser, openPage, suite, shot as save, TIMEOUT, OUTPUT } from "./lib/harness.mjs";
+
+const SHOTS = process.env.QUICK_SHOTS || null; // a folder to copy the screenshots into
+async function shot(page, name) {
+  await save(page, name);
+  if (SHOTS) { mkdirSync(SHOTS, { recursive: true }); copyFileSync(`${OUTPUT}/${name}.png`, `${SHOTS}/${name}.png`); }
+}
 
 const browser = await launchBrowser();
 const VIEWPORTS = (process.env.QUICK_VIEWPORTS || "desktop,portrait,landscape").split(",");
@@ -78,6 +88,53 @@ await suite("quick-battle", async () => {
       await page.waitForFunction(() => !window.__frontier.started && !document.querySelector("#briefing").hidden, null, { timeout: TIMEOUT.step });
       const back = await page.evaluate(() => ({ quick: window.__frontier.quick, rules: window.__frontier.rules, simRules: window.__frontier.sim.rules || null, setup: Object.fromEntries(["scenario", "enemy-count", "ai-speed", "enemy-faction", "player-faction"].map((id) => [id, document.getElementById(id).value])) }));
       assert.deepEqual(back, { quick: false, rules: { roster: "expanded" }, simRules: { roster: "expanded" }, setup }, `${viewport}: the menu is the player's own again`);
+      assert.deepEqual(errors, [], `${viewport}: page errors`);
+      await page.close();
+    }
+
+    // ---------------- Full army sandbox: the enemy army waits on its side, then marches ----------------
+    {
+      const o = await openPage(browser, viewport, { timeout: TIMEOUT.models }), { page, errors } = o;
+      await o.goto("");
+      await o.ready();
+      await o.tap("#full-army-battle");
+      await page.waitForFunction(() => window.__frontier.started && window.__frontier.sim.players[0].quickBase, null, { timeout: TIMEOUT.models });
+      await page.evaluate(() => { window.__frontier.hold = true; window.__frontier.holdMessages = true; });
+      const army = await page.evaluate(() => {
+        const s = window.__frontier.sim, home = s.entities.find((e) => e.team === 0 && e.type === "hq"), rival = s.entities.find((e) => e.team === 1 && e.type === "hq");
+        const group = s.entities.filter((e) => e.tag === "arena" && e.team === 1 && e.hp > 0), d = (e, c) => Math.hypot(e.x - c.x, e.z - c.z);
+        return { n: group.length, ownSide: group.every((e) => d(e, rival) < d(e, home)), idle: group.every((e) => !e.orders.length), x: group.reduce((a, e) => a + e.x, 0) / group.length, z: group.reduce((a, e) => a + e.z, 0) / group.length, time: s.time };
+      });
+      assert.ok(army.n === 10 && army.ownSide && army.idle, `${viewport}: the enemy army stands in formation on its own half ${JSON.stringify(army)}`);
+      // Scouted: the whole map seen, the camera on the army.
+      await page.evaluate(({ x, z }) => { const f = window.__frontier; f.sim.explored[0].fill(1); f.sim.visible[0].fill(1); f.view.focusOn(x, z); f.step(0.05); }, army);
+      await page.waitForFunction(() => { const c = document.querySelector("#arena-march"); return c && !c.hidden; }, null, { timeout: TIMEOUT.step });
+      const chip = await page.evaluate(() => {
+        const c = document.querySelector("#arena-march"), r = c.getBoundingClientRect();
+        const bar = document.querySelector("#topbar, .topbar, #hud-top, header")?.getBoundingClientRect();
+        return { text: c.querySelector(".arena-march-text").textContent.trim(), clock: c.querySelector("b").textContent.trim(), font: parseFloat(getComputedStyle(c.querySelector(".arena-march-text")).fontSize),
+          box: { left: r.left, top: r.top, right: r.right, bottom: r.bottom }, onScreen: r.left >= 0 && r.right <= innerWidth && r.top >= 0, bar: bar ? { left: bar.left, top: bar.top, right: bar.right, bottom: bar.bottom } : null };
+      });
+      assert.equal(chip.text, "Enemy army marches in", viewport);
+      assert.match(chip.clock, /^0:(29|30)$/, `${viewport}: the clock ${chip.clock}`);
+      assert.ok(chip.font >= 11 && chip.onScreen, `${viewport}: ${JSON.stringify(chip)}`);
+      assert.ok(!overlap(chip.box, chip.bar), `${viewport}: the clock is clear of the top bar ${JSON.stringify(chip)}`);
+      await noSideScroll(page, `${viewport} sandbox`);
+      await page.waitForTimeout(400);
+      await shot(page, `quick-battle-${viewport}-army`);
+      // At 0:30 the group marches on your core; the clock moves on to the next group (1:20).
+      const march = await page.evaluate(() => {
+        const f = window.__frontier, s = f.sim, seen = [];
+        while (s.time < 30.2) { f.step(0.05); for (const e of s.events) if (e.type === "incoming" && e.quick) seen.push(s.time); }
+        const ids = s.entities.filter((e) => e.team === 1 && e.kind === "unit" && e.orders[0]?.type === "attackmove").length;
+        return { at: seen[0] ?? null, marching: ids, waiting: s.entities.filter((e) => e.tag === "arena").length, next: s.players[1].arenaWaves, time: s.time };
+      });
+      assert.ok(march.at !== null && march.at >= 30 && march.at < 30.1, `${viewport}: the march at 0:30 ${JSON.stringify(march)}`);
+      assert.ok(march.marching >= 10 && march.waiting === 0 && march.next === 1, `${viewport}: ${JSON.stringify(march)}`);
+      await page.evaluate(() => window.__frontier.step(4));
+      await page.waitForTimeout(400);
+      assert.equal(await page.evaluate(() => document.querySelector("#arena-march b").textContent.trim()), "0:46", `${viewport}: the clock counts to the next group's march at 1:20`);
+      await shot(page, `quick-battle-${viewport}-march`);
       assert.deepEqual(errors, [], `${viewport}: page errors`);
       await page.close();
     }

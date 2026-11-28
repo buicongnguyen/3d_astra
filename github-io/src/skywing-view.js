@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { isSkywing, LAND } from "./sim/content/skywing.js";
-import { approach } from "./unit-rig.js";
+import { approach, SKYWING_POSE } from "./unit-rig.js";
 import { CELL } from "./fx-kinds/cells.js";
 
 // Skywing on screen (owner 2026-11-28: "I can't see the hero below the Kite"): its own model, a pilot with a rigid
@@ -106,3 +106,84 @@ export function skywingTrails(u, e, m, fx, dt, lively) {
 
 // Landing and take-off show for LAND seconds (x battle time) in the sim; the HUD reads this for its button.
 export const LAND_TIMES = LAND;
+
+// ---- size (owner 2026-11-28: "the unit is larger than normal ... make the skywing size similar to ranger")
+// The drawn scale of Skywing's own model: the hero view's static SKY_SCALE (hero-view.js, 1.35) times this factor, which
+// follows the flight blend. On foot the pilot stands a Ranger's height (the model is 2.52 units tall, a Ranger 2.22:
+// 0.88 in all); in flight it stays a little larger (1.2 in all) so the prone flyer still reads at RTS zoom. Drawing
+// only: the sim radius, the hit rules and the picking (it rays the drawn model) are unchanged.
+export const SIZE = Object.freeze({ air: 1.2, ground: 0.88, base: 1.35 });
+export const skywingSize = (f) => (SIZE.ground + (SIZE.air - SIZE.ground) * Math.min(1, Math.max(0, f))) / SIZE.base;
+// The flight blend this frame, before poseSkywingRig ran for the first time too.
+export const flightBlend = (u, e) => u.skywing?.f ?? (e.flying ? 1 : 0);
+
+// ---- the muzzle: where its rounds leave the gun in hand (fx.js aim), from the model as drawn this frame
+// Load time (view.js buildTemplates): the weapon group's barrel tip in model space (the mean of the vertices within
+// 4 cm of its most forward point) and the shoulder line its shader bone raises it about (aRig z, w).
+export function markMuzzle(group) {
+  let best = -Infinity, rig = null;
+  const pts = [];
+  group.traverse((o) => {
+    if (!o.isMesh) return;
+    const p = o.geometry.getAttribute("position"), r = o.geometry.getAttribute("aRig");
+    for (let i = 0; i < p.count; i++) {
+      const z = p.getZ(i);
+      pts.push(p.getX(i), p.getY(i), z);
+      if (z > best) { best = z; if (r) rig = [r.getZ(i), r.getW(i)]; }
+    }
+  });
+  let x = 0, y = 0, n = 0;
+  for (let i = 0; i < pts.length; i += 3) if (pts[i + 2] > best - 0.04) { x += pts[i]; y += pts[i + 1]; n++; }
+  if (n) group.userData.muzzle = [x / n, y / n, best, ...(rig || [y / n, 0])];
+}
+const TIP = new THREE.Vector3();
+// World point of the gun's muzzle for Skywing's view object `o` (its weapon `hand`), or null before its own model.
+export function skywingMuzzle(o, hand, out = TIP) {
+  const u = o?.userData, s = u?.skywing, node = s?.weapons?.[hand] || s?.weapons?.sniper, tip = node?.userData.muzzle;
+  if (!tip || !u.model) return null;
+  // The flight raise (unit-rig.js bone 8): about the shoulder line (y, z) by -air * RAISE, then SHIFT to the right.
+  const air = Math.max(0, s.f ?? 0), a = -air * SKYWING_POSE.raise, c = Math.cos(a), sn = Math.sin(a);
+  const qy = tip[1] - tip[3], qz = tip[2] - tip[4];
+  out.set(tip[0] + air * SKYWING_POSE.shift, tip[3] + qy * c - qz * sn, tip[4] + qy * sn + qz * c);
+  u.model.updateWorldMatrix(true, false);
+  return out.applyMatrix4(u.model.matrixWorld);
+}
+
+// ---- shiny paint (owner 2026-11-28: "make some shiny paint some where to recognize it well")
+// The goggle visor, the thruster rims (nozzles), the wing tips and the wing stripes glow in the team colour with a slow
+// pulse. They are already part of the team paint (a flyer's team lights join it: one draw); each vertex carries
+// `aShine` (0 or a strength) and the team paint's shader adds diffuse x aShine x SHINE as emission: no draw, no
+// material of its own. SHINE breathes on the view's life clock (still with reduced motion).
+const SHINY = [[/^(Goggle_lens|Nozzle|Wing_tip)/, 1], [/^Wing_stripe/, 0.6], [/^Helmet_crest/, 0.45]];
+export function shineOf(name) {
+  for (const [re, k] of SHINY) if (re.test(name || "")) return k;
+  return 0;
+}
+export function tagShine(geometry, k) {
+  const n = geometry.getAttribute("position").count;
+  geometry.setAttribute("aShine", new THREE.BufferAttribute(new Float32Array(n).fill(k), 1));
+  return geometry;
+}
+export const SHINE = { value: 1.1 };
+export const SHINE_PULSE = Object.freeze({ base: 1.1, depth: 0.3, rate: 2.4 });
+export function addShine(material) {
+  const before = material.onBeforeCompile, key = material.customProgramCacheKey;
+  material.onBeforeCompile = (shader, renderer) => {
+    if (before !== THREE.Material.prototype.onBeforeCompile) before.call(material, shader, renderer);
+    shader.uniforms.uShine = SHINE;
+    shader.vertexShader = shader.vertexShader
+      .replace("#include <common>", "#include <common>\nattribute float aShine;\nvarying float vShine;")
+      .replace("#include <begin_vertex>", "#include <begin_vertex>\nvShine = aShine;");
+    shader.fragmentShader = shader.fragmentShader
+      .replace("#include <common>", "#include <common>\nvarying float vShine;\nuniform float uShine;")
+      .replace("#include <emissivemap_fragment>", "#include <emissivemap_fragment>\ntotalEmissiveRadiance += diffuseColor.rgb * vShine * uShine;");
+  };
+  material.customProgramCacheKey = () => `${key.call(material)}|shine`;
+  material.needsUpdate = true;
+  return material;
+}
+
+// ---- the walk on foot (owner 2026-11-28: "should walk more smooth, less shaking walk"): its walking speed is the
+// infantry rig's run (long strides, so the steps come less often), and the footfall bob is SKY_BOB of the infantry's.
+export const SKY_WALK = LAND.walk;
+export const SKY_BOB = 0.35;
