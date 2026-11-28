@@ -2,6 +2,9 @@
 
 ## Unreleased: Round A.2
 
+### Restart starts in the normal view (owner 2026-11-28)
+- **Hero battle restart.** "Play again" or Restart after a Hero battle brings the free Skywing again but starts the match in the normal view; only the Hero battle tile itself goes straight into Hero mode. Tests: `npm run test:skywing-land`.
+
 ### H8 Hero challenges, fight feel and explosive barrels (owner 2026-11-28)
 - **Hero challenges.** A row of challenge tiles under the title's quick row (the Hero battle tile's row): one flat tile per challenge, one tap starts it, each showing its best stars (EN/VI/KO, 44 px taps, 11 px text). Each is a plain mission (`src/story/hero-challenges.js`) run by the mission engine with its own part (`src/sim/content/hero-challenges.js`: setup step `{ challenge: true }`, objective type `challenge`, lose rule `objectiveFailed`, `rules.hero` keeps Skywing as the side), seeded and replayed exactly. Skywing is the hero, the match starts straight in Hero mode (no steward, no coins spent, no autosave). Difficulty follows Settings > Campaign difficulty.
   - **Sabotage** (Basin): Skywing on foot slips in from the south-west, unseen (cloaked for the enemy), past three patrols and two sweeping sentries with readable view cones, plants a charge on each of two signal relays (hold G, or hold the 44 px Plant tile, 2 s) and gets out at the east edge. Walls and crate stacks hide you; sandbags hide you crouched. Being seen fills a meter; full, the alarm brings a squad from the base (scaled by difficulty) and the hero is seen as any unit. Never a failure. Stars: done, no alarm, under 3:00.

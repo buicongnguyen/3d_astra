@@ -7,8 +7,8 @@
 //              and the look-down view comes back; the button waits out the cooldown; landed vs flying draws <= +5.
 //   portrait / landscape  the Land tile sits with Ability, Dodge and Fire and overlaps nothing, in EN, VI and KO.
 //   Hero battle / sandbox (owner 2026-11-28): the title's "Hero battle" tile starts the Quick battle setup straight in
-//              Hero mode with a free Skywing (no coins, even with the briefing's Skywing row On), and "Play again" does
-//              it again; the Full army sandbox brings a free Skywing (the Hero mode button shows); the quick row's five
+//              Hero mode with a free Skywing (no coins, even with the briefing's Skywing row On); "Play again" brings the
+//              free Skywing again but starts in the normal view; the Full army sandbox brings a free Skywing (the Hero mode button shows); the quick row's five
 //              tiles are >= 44 px, text >= 11 px and never overlap, in EN, VI and KO on a PC and phones both ways.
 // Every HUD: taps >= 44 px, text >= 11 px, no system-ui. The match clock is held and moved only with step().
 import assert from "node:assert/strict";
@@ -240,12 +240,12 @@ await suite("skywing-land" + shardLabel, async () => {
     assert.ok(hb.sky && hb.steward, `Skywing in Hero mode, the steward on: ${JSON.stringify(hb)}`);
     assert.equal(await coins(page), 100, "Hero battle: no coins spent");
     await keep(page, "hero-battle-start");
-    // "Play again" (restart) is a Hero battle again.
+    // "Play again" (restart, owner 2026-11-28): the free Skywing comes again, but the match begins in the normal view.
     await page.evaluate(() => window.__frontier.restart());
-    await page.waitForFunction(() => window.__frontier.heroMode.info.on && !!window.__frontier.sim.skywing && window.__frontier.sim.ticks < 40, null, { timeout: TIMEOUT.models });
+    await page.waitForFunction(() => window.__frontier.started && !!window.__frontier.sim.skywing && window.__frontier.sim.ticks < 40, null, { timeout: TIMEOUT.models });
+    await page.waitForTimeout(600);
+    assert.equal(await page.evaluate(() => window.__frontier.heroMode.info.on), false, "Play again: normal view, not Hero mode");
     assert.equal(await coins(page), 100, "Play again: still free");
-    await page.keyboard.press("Tab");
-    await page.waitForFunction(() => !window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
     // The Full army sandbox (a fresh page) brings a free Skywing and the Hero mode button.
     assert.deepEqual(errors, [], "hero battle: page errors");
     await page.close();

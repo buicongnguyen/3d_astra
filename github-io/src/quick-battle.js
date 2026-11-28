@@ -54,16 +54,18 @@ export function setupQuickBattle(S, A) {
   // Skywing assist row (skywing-ui.js, 60 coins) is not used: these heroes never cost coins. The sandbox's Skywing
   // comes from the sim (buildArena), so the row is skipped there too.
   const free = () => S.quick === "hero" || S.quick === "arena";
-  function heroStart() {
+  // Owner 2026-11-28: a restart ("Play again", Restart) keeps the free Skywing but begins in the normal view;
+  // only the Hero battle tile itself goes straight into Hero mode.
+  function heroStart(restart = false) {
     if (S.quick !== "hero" || !Z.started || !S.sim || S.sim.skywing) return;
     if (!S.sim.command({ team: 0, type: "skywing" })) return;
-    // A restart straight from Hero mode: the old match's Hero mode ends first (its commands go to the old match only).
+    // The old match's Hero mode ends first (its commands go to the old match only).
     if (A.heroModeOn?.()) A.leaveHeroMode?.(true);
-    A.enterHeroMode?.(S.sim.skywing.id);
+    if (!restart) A.enterHeroMode?.(S.sim.skywing.id);
   }
   const wrapSkywing = () => {
     const start = A.skywingStart;
-    A.skywingStart = (restart) => { if (!free()) start?.(restart); heroStart(); };
+    A.skywingStart = (restart) => { if (!free()) start?.(restart); heroStart(restart); };
   };
   const newGame = A.newGame;
   A.newGame = (...args) => { S.quick = false; return newGame(...args); };
