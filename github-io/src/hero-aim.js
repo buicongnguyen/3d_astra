@@ -5,11 +5,12 @@
 //   RocketLock  Skywing's rocket: holding on one target for LOCK_SECONDS locks it; then it fires
 //   moveVector  the move stick in camera space (right, forward) to a world x/z direction
 //   battleTime  the eased clock scale while entering or leaving Hero mode
-import { HERO_TIME } from "./sim/content/hero-mode.js";
+import { HERO_TIME, AUTO } from "./sim/content/hero-mode.js";
 import { SCOPE_REACH } from "./sim/hero-feel.js";
 
 export const AIM = Object.freeze({ cone: 12, conePhone: 18, snap: 3.5, reach: 2 });
-export const LOCK_SECONDS = 0.6;
+// The rocket lock (real seconds): the same hold as auto fire's own lock (sim/content/hero-mode.js AUTO).
+export const LOCK_SECONDS = AUTO.lock;
 
 const angleBetween = (ax, az, bx, bz) => {
   const d = Math.atan2(ax * bz - az * bx, ax * bx + az * bz);

@@ -10,6 +10,11 @@
 //   re-score 2026-11-28: the phone button is a tile of the touch tool row overlapping nothing (caption strip, Map tab,
 //              dock, clock) in EN, VI and KO; every hero ability label fits its phone tile (>= 11 px) in EN/VI/KO,
 //              portrait and landscape; the portrait shoulder camera looks down 22-36 degrees.
+//   auto fire (owner 2026-11-28, on by default): with no input the hero shoots the nearest enemy (the heroMode command
+//              carries it; an "Auto" mark over that enemy), F on another enemy makes it the focus and auto fire stays on it,
+//              the 44 px Auto tile (before Fire) switches it off and on (saved with Settings > Hero > Auto fire), and
+//              Skywing's rocket locks and fires on its own; the tile overlaps nothing on PC and phones both ways in EN, VI
+//              and KO.
 // Every HUD: taps >= 44 px, text >= 11 px, no system-ui, no sideways scroll. The match clock is held and moved only with
 // step() (CI runs at about 1 fps); transient messages are held (holdMessages).
 import assert from "node:assert/strict";
@@ -144,6 +149,44 @@ async function abilityLabelsFit(page, heroId, label) {
     assert.ok(!r.clipped && r.font >= 11, `${label} "${name}": ${JSON.stringify(r)}`);
   }
 }
+
+// Auto fire (owner 2026-11-28): the Auto tile overlaps no other HUD button, the stick ring, the weapon switch or the top
+// plate, sits on screen at >= 44 px, its label unclipped at >= 11 px, and is what is on top at its own centre.
+const autoTileClear = (page) => page.evaluate(() => {
+  const root = document.querySelector("#hero-hud"), b = root.querySelector(".hh-auto"), r = b.getBoundingClientRect(), hits = [];
+  const shown = (n) => n.getClientRects().length && getComputedStyle(n).visibility !== "hidden" && getComputedStyle(n).display !== "none";
+  for (const n of root.querySelectorAll("button, .hh-stick, .hh-weapons, .hh-plate, .hh-time")) {
+    if (n === b || b.contains(n) || n.contains(b) || !shown(n)) continue;
+    const q = n.getBoundingClientRect(), x = Math.min(r.right, q.right) - Math.max(r.left, q.left), y = Math.min(r.bottom, q.bottom) - Math.max(r.top, q.top);
+    if (x > 0.5 && y > 0.5) hits.push(`${n.dataset.hero || n.dataset.weapon || n.className} ${Math.round(x)}x${Math.round(y)}`);
+  }
+  if (r.width < 44 || r.height < 44) hits.push(`tap ${Math.round(r.width)}x${Math.round(r.height)}`);
+  if (r.left < 0 || r.top < 0 || r.right > innerWidth || r.bottom > innerHeight) hits.push("off screen");
+  for (const n of b.querySelectorAll("span, small")) { const px = parseFloat(getComputedStyle(n).fontSize); if (px < 11) hits.push(`${n.className} ${px}px`); }
+  if (b.scrollWidth > b.clientWidth + 1 || b.scrollHeight > b.clientHeight + 1) hits.push(`label clipped "${b.textContent.trim()}"`);
+  const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+  if (!b.contains(top)) hits.push(`covered by ${top?.className || top?.tagName}`);
+  return { hits, box: [r.left, r.top, r.width, r.height].map(Math.round), text: [...b.querySelectorAll("span, small")].map((n) => n.textContent.trim()).join(" "), pressed: b.getAttribute("aria-pressed") };
+});
+async function assertAutoTile(page, label, want = null) {
+  // The tile repaints in the next frame (about 1 fps on a CI runner): wait for its words first.
+  if (want) await page.waitForFunction((w) => [...document.querySelectorAll("#hero-hud .hh-auto span, #hero-hud .hh-auto small")].map((n) => n.textContent.trim()).join(" ") === w, want, { timeout: TIMEOUT.step }).catch(() => {});
+  const r = await autoTileClear(page);
+  assert.deepEqual(r.hits, [], `${label}: the Auto tile ${JSON.stringify(r)}`);
+  if (want) assert.equal(r.text, want, `${label}: the Auto tile's words`);
+  return r;
+}
+// The hero's own hits (heroHit events as the view gets them: the player's army may shoot the same enemies), taken out.
+const recordHits = (page) => page.evaluate(() => {
+  window.__heroHits = [];
+  if (window.__hitsWrapped) return;
+  const v = window.__frontier.view, ev = v.event.bind(v);
+  v.event = (event, sim) => { if (event.type === "heroHit") window.__heroHits.push({ target: event.target, auto: !!event.auto }); return ev(event, sim); };
+  window.__hitsWrapped = true;
+});
+const heroHits = (page) => page.evaluate(() => window.__heroHits.splice(0));
+const hitWhere = (page, fn, arg) => page.waitForFunction(fn, arg, { timeout: TIMEOUT.step, polling: 100 });
+const stepN = async (page, seconds, n) => { for (let k = 0; k < n; k++) { await page.evaluate((t) => window.__frontier.step(t), seconds); await page.waitForTimeout(40); } };
 
 const browser = await launchBrowser();
 await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywing's look-down camera and reticle, battle time and the draw budget", async () => {
@@ -335,6 +378,98 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     assert.deepEqual(errors, [], "desktop: page errors");
     await page.close();
   }
+  // ---------------------------------------------------------------- auto fire on a PC (owner 2026-11-28)
+  {
+    const { page, goto, ready, tap, errors } = await openPage(browser, "desktop");
+    await goto();
+    await ready();
+    const ids = await battle(page, tap);
+    assert.equal(await page.evaluate(() => window.__frontier.settings.autoFire), true, "Auto fire is on by default");
+    // A ranged hero for these checks (Mira Vale's Vanguard fights at 2 m): a Ranger dressed as Sol.
+    const sol = await page.evaluate(() => { const f = window.__frontier, r = f.sim.own(0).find((u) => u.type === "ranger" && u.hp > 0); Object.assign(r, { hero: "sol", name: "Sol" }); f.step(0.05); return r.id; });
+    await page.evaluate((id) => window.__frontier.select([id]), sol);
+    await page.locator("#hero-mode-btn").click();
+    await page.waitForFunction(() => window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
+    assert.equal(await page.evaluate(() => window.__frontier.sim.commandLog.filter((c) => c.type === "heroMode" && c.on).at(-1)?.auto), true, "the heroMode command carries it");
+    const row = await page.evaluate(() => [...document.querySelectorAll("#hero-hud .hh-actions > button")].filter((b) => b.getClientRects().length).map((b) => b.dataset.hero));
+    assert.deepEqual(row.slice(-2), ["auto", "fire"], `the Auto tile before Fire: ${row}`);
+    await assertAutoTile(page, "desktop", "Auto On");
+    // Two tough enemies ahead that hold their fire: A nearer, B farther to the side. No input: auto fire shoots A.
+    const a = await enemyAhead(page, "ranger", 4.5, -0.8), b = await enemyAhead(page, "ranger", 7.5, 2.6);
+    await page.evaluate((list) => { const s = window.__frontier.sim; for (const id of list) { const t = s.get(id); t.damage = 0; t.hp = t.maxHp = 5000; } }, [a, b]);
+    await page.mouse.move(720, 160);
+    await recordHits(page);
+    const fired = await logged(page, "heroFire");
+    await stepN(page, 0.5, 4);
+    await hitWhere(page, () => window.__heroHits.length > 0);
+    await page.waitForTimeout(200);
+    let got = await heroHits(page);
+    assert.ok(got.length && got.every((h) => h.target === a && h.auto), `auto fire shot the nearest with no input: ${JSON.stringify(got)}`);
+    assert.equal(await logged(page, "heroFire"), fired, "no trigger was sent");
+    await page.waitForFunction((id) => window.__frontier.heroMode.info.autoTarget === id && window.__frontier.heroMode.info.autoMark, a, { timeout: TIMEOUT.step });
+    await audit(page, "desktop auto fire");
+    await keep(page, "hero-auto-ground-desktop");
+    // F on B: B is the focus, and auto fire stays on it once F is let go (A is still nearer).
+    let p = await screenOf(page, b);
+    await page.mouse.move(p.x, p.y);
+    await page.waitForFunction((id) => window.__frontier.heroMode.info.target === id, b, { timeout: TIMEOUT.step });
+    await page.keyboard.down("f");
+    await page.waitForFunction((id) => window.__frontier.heroMode.info.sent.fire === String(id), b, { timeout: TIMEOUT.step });
+    await page.keyboard.up("f");
+    await page.waitForFunction((id) => window.__frontier.heroMode.info.focus === id, b, { timeout: TIMEOUT.step });
+    await page.waitForFunction(() => window.__frontier.heroMode.info.sent.fire === "null", null, { timeout: TIMEOUT.step });
+    await page.mouse.move(720, 160);
+    await heroHits(page);
+    await stepN(page, 0.5, 4);
+    await hitWhere(page, (id) => window.__heroHits.some((h) => h.target === id), b);
+    await page.waitForTimeout(200);
+    got = await heroHits(page);
+    assert.ok(got.every((h) => h.target === b && h.auto), `auto fire keeps to the focus (A is nearer): ${JSON.stringify(got)}`);
+    await page.waitForFunction((id) => window.__frontier.heroMode.info.autoTarget === id, b, { timeout: TIMEOUT.step });
+    await keep(page, "hero-auto-focus-desktop");
+    // The Auto tile: one click off (saved, logged, no more shots), one click on again.
+    await page.locator("#hero-hud .hh-auto").click();
+    await page.waitForFunction(() => window.__frontier.heroMode.info.auto === false, null, { timeout: TIMEOUT.step });
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("frontier-command.settings.v1") || "{}").autoFire);
+    assert.equal(saved, false, "saved on this device");
+    assert.ok(await page.evaluate(() => window.__frontier.sim.commandLog.some((c) => c.type === "heroAuto" && c.on === false)), "a logged heroAuto");
+    await assertAutoTile(page, "desktop off", "Auto Off");
+    await heroHits(page);
+    await stepN(page, 0.5, 4);
+    await page.waitForTimeout(300);
+    assert.deepEqual(await heroHits(page), [], "off: no shot");
+    assert.equal((await info(page)).autoMark, false, "no Auto mark while off");
+    await keep(page, "hero-auto-off-desktop");
+    await page.locator("#hero-hud .hh-auto").click();
+    await page.waitForFunction(() => window.__frontier.heroMode.info.auto === true, null, { timeout: TIMEOUT.step });
+    await stepN(page, 0.5, 4);
+    await hitWhere(page, () => window.__heroHits.some((h) => h.auto));
+    // Skywing: the rocket locks and fires on its own at a tank.
+    await page.keyboard.press("Tab");
+    await page.waitForFunction(() => !window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
+    await page.evaluate((list) => { const s = window.__frontier.sim; for (const id of list) { const t = s.get(id); if (t) t.hp = 0; } window.__frontier.step(0.05); }, [a, b]);
+    await page.evaluate(() => window.__frontier.select([]));
+    await page.locator("#hero-mode-btn").click();
+    await page.waitForFunction((id) => window.__frontier.heroMode.info.on && window.__frontier.heroMode.info.id === id, ids.sky, { timeout: TIMEOUT.step });
+    await page.locator('#hero-hud [data-weapon="rocket"]').click();
+    await stepN(page, 0.4, 3);
+    await page.waitForFunction(() => document.querySelector('#hero-hud [data-weapon="rocket"]').getAttribute("aria-pressed") === "true", null, { timeout: TIMEOUT.step });
+    const tank = await enemyAhead(page, "tank", 8, 1);
+    await page.evaluate((id) => { const t = window.__frontier.sim.get(id); t.damage = 0; t.hp = t.maxHp = 5000; }, tank);
+    await page.mouse.move(720, 160);
+    const shots = await logged(page, "heroFire");
+    await heroHits(page);
+    const rocketHit = () => page.evaluate((t) => window.__heroHits.some((h) => h.target === t && h.auto), tank);
+    for (let k = 0; k < 24 && !(await rocketHit()); k++) { await stepN(page, 0.25, 1); await page.waitForTimeout(60); }
+    assert.ok(await rocketHit(), "the rocket locked and fired on its own");
+    assert.equal(await logged(page, "heroFire"), shots, "no trigger was sent");
+    await keep(page, "hero-auto-rocket-desktop");
+    await audit(page, "desktop Skywing auto fire");
+    await assertAutoTile(page, "desktop Skywing");
+    await page.keyboard.press("Escape");
+    assert.deepEqual(errors, [], "auto fire desktop: page errors");
+    await page.close();
+  }
   // ---------------------------------------------------------------- portrait phone
   {
     const { page, goto, ready, tap, errors } = await openPage(browser, "portrait");
@@ -360,6 +495,7 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     // The close-up detail around the aim point (its files load on the first use).
     await page.waitForFunction(() => window.__frontier.closeInfo?.on, null, { timeout: TIMEOUT.models });
     await audit(page, "portrait ground HUD");
+    await assertAutoTile(page, "portrait ground", "Auto On");
     // Gap 3: the shoulder camera looks down enough that the hero and the field fill the view (was ~10 degrees).
     const look = await pitch(page);
     assert.ok(look >= 22 && look <= 36, `portrait shoulder look-down ${look.toFixed(1)} degrees`);
@@ -394,6 +530,14 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     await page.waitForFunction(() => window.__frontier.heroMode.info.sent.fire === "null", null, { timeout: TIMEOUT.step });
     assert.ok(await page.evaluate(([id, hp]) => (window.__frontier.sim.get(id)?.hp ?? 0) < hp, [foe, hp0]), "Fire hit");
     await page.waitForTimeout(200);
+    // Auto fire with no input: a tough enemy ahead, inside Mira Vale's blade reach, is struck and marked (the owner's shot).
+    const auto = await enemyAhead(page, "ranger", 1.5, 0.4);
+    await page.evaluate((id) => { const t = window.__frontier.sim.get(id); t.damage = 0; t.hp = t.maxHp = 5000; }, auto);
+    await recordHits(page);
+    await stepN(page, 0.5, 3);
+    await hitWhere(page, () => window.__heroHits.some((h) => h.auto));
+    await page.waitForFunction(() => window.__frontier.heroMode.info.autoMark, null, { timeout: TIMEOUT.step });
+    await keep(page, "hero-auto-ground-portrait");
     // The draw budget: Hero mode at most 30 draws over the normal frame at this size.
     const hero = await count();
     console.log(`  portrait: draws normal ${normal}, Hero mode ${hero} (${hero - normal >= 0 ? "+" : ""}${hero - normal}), close-up units ${(await page.evaluate(() => window.__frontier.closeInfo.near))}`);
@@ -415,6 +559,7 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     await enemyAhead(page, "tank", 9);
     await page.waitForTimeout(200);
     await audit(page, "portrait Skywing HUD");
+    await assertAutoTile(page, "portrait Skywing");
     const sky = await count();
     console.log(`  portrait: Skywing look-down draws ${sky} (normal ${normal}, ${sky - normal >= 0 ? "+" : ""}${sky - normal})`);
     assert.ok(sky - normal <= 30, `Skywing draws ${sky} vs ${normal}`);
@@ -445,6 +590,7 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     await page.waitForFunction(() => window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
     await page.waitForTimeout(200);
     await audit(page, "landscape ground HUD");
+    await assertAutoTile(page, "landscape ground", "Auto On");
     await abilityLabelsFit(page, ids.vale, "landscape EN");
     await keep(page, "hero-mode-ground-landscape");
     // The hero falls: "Hero down" for about a second, then the RTS view comes back on its own.
@@ -456,7 +602,14 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     await page.waitForFunction((id) => window.__frontier.heroMode.info.id === id, ids.sky, { timeout: TIMEOUT.step });
     await page.waitForTimeout(200);
     await audit(page, "landscape Skywing HUD");
+    await assertAutoTile(page, "landscape Skywing");
     await keep(page, "hero-mode-skywing-landscape");
+    // The tile on a phone: one tap off, one tap on.
+    await tap("#hero-hud .hh-auto");
+    await page.waitForFunction(() => window.__frontier.heroMode.info.auto === false, null, { timeout: TIMEOUT.step });
+    await tap("#hero-hud .hh-auto");
+    await page.waitForFunction(() => window.__frontier.heroMode.info.auto === true, null, { timeout: TIMEOUT.step });
+    await keep(page, "hero-auto-skywing-landscape");
     await tap('#hero-hud [data-hero="exit"]');
     await page.waitForFunction(() => !window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
     assert.deepEqual(errors, [], "landscape: page errors");
@@ -499,10 +652,15 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     await tap("#hero-mode-btn");
     await page.waitForFunction(() => window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
     await abilityLabelsFit(page, ids.vale, `portrait ${lang}`);
+    const words = { vi: "Tự động Bật", ko: "자동 켬" }[lang];
+    await page.waitForFunction((w) => [...document.querySelectorAll("#hero-hud .hh-auto span, #hero-hud .hh-auto small")].map((n) => n.textContent.trim()).join(" ") === w, words, { timeout: TIMEOUT.step });
+    await assertAutoTile(page, `portrait ${lang}`, words);
     await keep(page, `hero-mode-ability-${lang}`);
     await page.setViewportSize({ width: 844, height: 390 });
     await page.waitForTimeout(400);
     await abilityLabelsFit(page, ids.vale, `landscape ${lang}`);
+    await assertAutoTile(page, `landscape ${lang}`, words);
+    await keep(page, `hero-auto-landscape-${lang}`);
     await tap('#hero-hud [data-hero="exit"]');
     await page.waitForFunction(() => !window.__frontier.heroMode.info.on, null, { timeout: TIMEOUT.step });
     await page.locator("#hero-mode-btn").waitFor({ state: "visible", timeout: TIMEOUT.step });

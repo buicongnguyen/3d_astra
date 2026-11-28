@@ -95,8 +95,9 @@
 .hc-result .result-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .hc-result .result-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; }
 .hc-result .result-actions .icon { width: 18px; height: 18px; }
-/* Portrait: the weapon switch moves up over the taller tile stack while Plant shows. */
-.hero-phone.hero-sky.hc-planting .hh-weapons { bottom: calc(env(safe-area-inset-bottom) + 286px); }
+/* Portrait: the weapon switch moves up over the taller tile stack while Plant shows (and over the Auto tile on top of
+   the stack, hero-mode.css: 274 px of tiles, 8 + 44 px of Auto, a 12 px gap). */
+.hero-phone.hero-sky.hc-planting .hh-weapons { bottom: calc(env(safe-area-inset-bottom) + 338px); }
 @media (orientation: landscape) and (max-height: 520px) {
   .hero-phone.hero-sky.hc-planting .hh-weapons { bottom: calc(env(safe-area-inset-bottom) + 12px); }
 }

@@ -197,6 +197,9 @@ await suite("hero-challenges" + shardLabel, async () => {
     const { page, goto, ready, tap, errors } = await openPage(browser, "desktop");
     await goto();
     await ready();
+    // The fight feel below is by hand (a reload of a part-spent magazine, a barrel shot): auto fire off for it (its
+    // rules in challenges: tests/hero-auto.test.js; the Sabotage above runs with it on, the default).
+    await page.evaluate(() => { window.__frontier.settings.autoFire = false; });
     await startChallenge(page, tap, "sniper");
     assert.equal(await page.evaluate(() => window.__frontier.sim.get(window.__frontier.sim.skywing.id).flying), true, "Sniper nest starts in the air");
     const nest = await page.evaluate(() => { const p = window.__frontier.sim.missionPlace("nest"); return { x: p.x, z: p.z }; });

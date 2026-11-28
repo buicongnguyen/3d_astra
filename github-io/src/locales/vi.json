@@ -2231,7 +2231,9 @@
     "Blocked": "Bị chắn",
     "Switching weapon": "Đang đổi vũ khí",
     "Not visible": "Không thấy",
-    "Stunned": "Bị choáng"
+    "Stunned": "Bị choáng",
+    "Auto fire": "Tự bắn",
+    "On: your hero shoots the nearest enemy in range on its own. Fire at an enemy to make it the target; hold fire to aim by hand. The Auto button in Hero mode switches it too.": "Bật: anh hùng tự bắn kẻ địch gần nhất trong tầm. Bắn vào một kẻ địch để chọn nó làm mục tiêu; giữ nút bắn để tự ngắm. Nút Tự động trong chế độ anh hùng cũng bật tắt được."
   },
   "patterns": [
     [

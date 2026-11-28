@@ -20,6 +20,19 @@
 //   { type: "heroReload", team }               top the magazine up now (it reloads on its own when empty)
 //   { type: "heroCrouch", team, on }           crouch on (true), off (false) or "auto" (phones): crouched while still
 //                                               beside cover, dodgeable rounds and splash do half
+//   Auto fire (owner 2026-11-28; Settings > Hero > Auto fire and the HUD's Auto tile, on by default): heroMode may carry
+//   `auto` (true: on from the start; an old log without it plays with auto fire off), and
+//   { type: "heroAuto", team, on }             auto fire on or off
+//   { type: "heroFocus", team, target }        the enemy auto fire keeps to (sent when a rocket lock or a Breaker lob
+//                                               starts on it; every heroFire at an enemy sets it too)
+//   With auto fire on and no trigger held, the driven hero shoots on its own (heroAutoFire): the focus while it is in
+//   reach (kept AUTO.lose real seconds out of reach or sight, then dropped), else the nearest seen enemy in reach by the
+//   RTS auto-attack rule (sim/combat.js enemy: its `prefers` first, a clear line), or a scoped Sniper's pick inside the
+//   scope's cone. The weapon's own rate, magazine, reload, range and sight; Skywing's rocket locks AUTO.lock real
+//   seconds first; a Tank shells and a Breaker lobs at the nearest enemy (out to its siege range). No headshot bonus
+//   (that needs the page's aim), no explosive barrels (they are not entities), nothing while the hero is unseen (a
+//   Sabotage before the alarm), and no heroBlocked reasons. State: the team entry's `auto`, the hero's `auto`
+//   ({ id, at? }: the target it shoots, the rocket's lock time) and `focus` ({ id, lost? }).
 //
 // Battle time (H3d): the page slows the clock to `scale` (app/frame.js); the rules keep the hero quick in real
 // time: it moves at HERO_TIME.real of its own speed in real time (never slower than its own speed in game time)
@@ -57,6 +70,9 @@ export const SHOTS = Object.freeze({ fast: 28, helped: 20, rocket: 22, shell: 18
 // ("No target", "Hold to lock"), src/hero-mode.js.
 export const BLOCKED = Object.freeze(["No target", "Out of range", "Reloading", "Hold to lock", "Blocked", "Switching weapon", "Not visible", "Stunned"]);
 export const BLOCKED_EVERY = 6;
+// Auto fire: the rocket's lock (real seconds, as the page's hold: src/hero-aim.js LOCK_SECONDS) and how long a focus may
+// stay out of reach or sight before auto fire lets it go (real seconds).
+export const AUTO = Object.freeze({ lock: 0.6, lose: 3 });
 const HEAVY = new Set(["breaker", "tank", "antitank", "artillery", "mortar", "rocket", "lancer", "tower"]);
 
 export const isDriven = (e) => !!e && e.driven !== undefined;
@@ -64,6 +80,9 @@ export const isDriven = (e) => !!e && e.driven !== undefined;
 const heroic = (e) => !!e && (!!e.assist || (typeof e.hero === "string" && e.hero.length > 0) || e.rider !== undefined);
 // H9: a driven vehicle (its hull turns with the move, its turret follows the aim: the page draws it).
 const hull = (e) => e.rider !== undefined;
+// H9: the Breaker lobs (at a ground point, out to its siege range); every other weapon shoots its target.
+const lobs = (e) => hull(e) && e.type === "breaker";
+const reachOf = (e) => e.siege_range || e.range || 0;
 const scaleOf = (sim, scale) => (sim.lan ? 1 : HERO_TIME.scales.includes(scale) ? scale : HERO_TIME.scale);
 // The hero's move factor in game time: HERO_TIME.real of its speed in real time, never below its own speed.
 export const heroBoost = (scale) => Math.max(1, HERO_TIME.real / scale);
@@ -76,7 +95,7 @@ export function shotSpeed(e, help = false) {
 
 // The commands the page sends to enter and leave (src/hero-mode.js): Hero mode and the steward together, so the
 // computer runs the base while the player fights, and hands it back with every queue and order kept.
-export const enterCommands = (team, id, scale = HERO_TIME.scale, help = false) => [{ team, type: "heroMode", id, on: true, scale, ...(help ? { help: true } : null) }, { team, type: "steward", on: true }];
+export const enterCommands = (team, id, scale = HERO_TIME.scale, help = false, auto = false) => [{ team, type: "heroMode", id, on: true, scale, ...(help ? { help: true } : null), ...(auto ? { auto: true } : null) }, { team, type: "steward", on: true }];
 export const leaveCommands = (team) => [{ team, type: "heroMode", on: false }, { team, type: "steward", on: false }];
 
 function clean(sim) {
@@ -84,7 +103,7 @@ function clean(sim) {
   if (h && !Object.keys(h.teams).length && !h.shots.length) delete sim.heroMode;
 }
 export function release(e) {
-  for (const key of ["driven", "drive", "trigger", "vel", "dash", "dodgeUntil", "dodgeReady", "dodgeHelp", "mag", "reloadAt", "spread", "crouch", "crouched"]) delete e[key];
+  for (const key of ["driven", "drive", "trigger", "vel", "dash", "dodgeUntil", "dodgeReady", "dodgeHelp", "mag", "reloadAt", "spread", "crouch", "crouched", "auto", "focus"]) delete e[key];
 }
 // H8: a scoped Sniper (Skywing on foot, still: e.scope) reaches SCOPE_REACH m at a target inside the scope's cone.
 function scoped(e, t) {
@@ -98,7 +117,7 @@ export const heroMode = {
   order: 46, // after Skywing (45): a dive has moved the hero before its projectiles are checked
   mixin: {
     // Enters (on) or leaves Hero mode for `team` with hero `id`. False when it cannot.
-    setHeroMode(team, on, id, scale, help = false) {
+    setHeroMode(team, on, id, scale, help = false, auto = false) {
       const h = this.heroMode, now = h?.teams[team];
       if (!on) {
         if (!now) return true;
@@ -115,7 +134,7 @@ export const heroMode = {
       if (!e || e.team !== team || e.hp <= 0 || e.kind !== "unit" || !heroic(e)) return false;
       if (now && now.id !== id) { if (this.skywing?.aboard === now.id) this.skywingLeave?.(team); const old = this.get(now.id); if (old) release(old); }
       const k = scaleOf(this, scale);
-      (this.heroMode ||= { teams: {}, shots: [], n: 0 }).teams[team] = { id, scale: k, ...(help ? { help: true } : null) };
+      (this.heroMode ||= { teams: {}, shots: [], n: 0 }).teams[team] = { id, scale: k, ...(help ? { help: true } : null), ...(auto ? { auto: true } : null) };
       e.driven = k;
       if (help) e.dodgeHelp = true; else delete e.dodgeHelp;
       // H6: the match's cover pieces, placed the first time a hero is driven.
@@ -126,6 +145,14 @@ export const heroMode = {
     },
     heroModeOf(team = 0) {
       return this.heroMode?.teams[team] || null;
+    },
+    // Auto fire on or off for `team`'s driven hero (off forgets its target and focus). False outside Hero mode.
+    setHeroAuto(team, on) {
+      const h = this.heroMode?.teams[team];
+      if (!h) return false;
+      if (on) h.auto = true;
+      else { delete h.auto; const e = this.get(h.id); if (e) { delete e.auto; delete e.focus; } }
+      return true;
     },
     // One driven hero's tick, in place of its order behaviour (simulation.js stepEntity). Always true.
     stepDriven(e, dt) {
@@ -158,31 +185,95 @@ export const heroMode = {
       const t = e.trigger ? this.get(e.trigger.target) : null;
       if (e.trigger && (!t || t.hp <= 0 || this.time > e.trigger.until)) delete e.trigger;
       else if (t) {
+        if (e.auto) delete e.auto;
         if (!hull(e)) e.angle = Math.atan2(t.x - e.x, t.z - e.z);
-        // H9: a Breaker shells buildings from its siege range (as combat.js fight does).
-        let range = (t.kind !== "unit" && e.siege_range ? e.siege_range : e.range) + this.heightRange(e, t) + t.radius + 0.00001;
-        if (scoped(e, t)) range = Math.max(range, SCOPE_REACH + t.radius + 0.00001);
-        const clear = e.flying || t.flying || this.nav.clearLine(e, t, t.id);
         // The first rule that stops the shot, for the reticle's tag.
-        const why = distance(e, t) > range ? "Out of range" : !this.isVisible(t, e.team) ? "Not visible" : !clear ? "Blocked"
-          : !this.attackable(e.team, t) || (t.flying && !this.canHit(e, t)) ? "No target" : null;
+        const why = this.heroWhy(e, t);
         if (why) this.heroBlocked(e, why);
         else {
           e.attacking = true;
           if (e.cooldown > 0 || (e.fx && !this.canAct(e, "fire"))) this.heroWaiting(e);
           if (e.cooldown <= 0 && !(e.fx && !this.canAct(e, "fire"))) {
             const head = !!e.trigger.head && !hull(e) && hasMagazine(e) && headable(t) && (e.spread || 0) <= HEAD.spread;
-            const before = t.hp + (t.shield || 0), d = distance(e, t), base = e.damage;
-            if (head) e.damage = base * headBonus(e);
-            this.hit(e, t);
-            e.damage = base;
-            this.heroAfterShot(e, t, head, before, d);
+            this.heroHit(e, t, head);
             if (e.trigger && !e.trigger.hold) delete e.trigger;
           }
         }
-      } else if (e.moving) e.angle = Math.atan2(e.vel.x, e.vel.z);
+        // Auto fire with nothing held: the focus or the nearest enemy in reach (a hero on foot or in the air faces it).
+      } else if (!(this.heroMode?.teams[e.team]?.auto === true && this.heroAutoFire(e)) && e.moving) e.angle = Math.atan2(e.vel.x, e.vel.z);
       if (t && hull(e) && e.moving) e.angle = Math.atan2(e.vel.x, e.vel.z);
       return true;
+    },
+    // The first rule that stops a shot of the driven hero `e` at `t` (BLOCKED, for the reticle's tag), or null when it can
+    // go: its reach (H9: a Breaker shells buildings from its siege range, as combat.js fight does; H8: a scoped Sniper
+    // reaches SCOPE_REACH m inside its cone), sight, a clear line of fire and a target it may hit.
+    heroWhy(e, t) {
+      let range = (t.kind !== "unit" && e.siege_range ? e.siege_range : e.range) + this.heightRange(e, t) + t.radius + 0.00001;
+      if (scoped(e, t)) range = Math.max(range, SCOPE_REACH + t.radius + 0.00001);
+      const clear = e.flying || t.flying || this.nav.clearLine(e, t, t.id);
+      return distance(e, t) > range ? "Out of range" : !this.isVisible(t, e.team) ? "Not visible" : !clear ? "Blocked"
+        : !this.attackable(e.team, t) || (t.flying && !this.canHit(e, t)) ? "No target" : null;
+    },
+    // One shot of the driven hero at `t` (its reload ready; a headshot does the head bonus), then the magazine, the hit
+    // marker and a challenge's count (heroAfterShot).
+    heroHit(e, t, head, auto = false) {
+      const before = t.hp + (t.shield || 0), d = distance(e, t), base = e.damage;
+      if (head) e.damage = base * headBonus(e);
+      this.hit(e, t);
+      e.damage = base;
+      this.heroAfterShot(e, t, head, before, d, auto);
+    },
+    // Auto fire (see the header): the driven hero's tick with Auto on and no trigger. True when it has a target (a hero
+    // on foot or in the air then faces it; a vehicle's hull keeps turning with the move).
+    heroAutoFire(e) {
+      const k = e.driven;
+      // Unseen (a Sabotage before the alarm): a shot would give the hero away.
+      if (e.cloaked) { if (e.auto) delete e.auto; return false; }
+      const lob = lobs(e);
+      const ok = (t) => (lob ? !t.flying && this.isVisible(t, e.team) && distance(e, t) - t.radius <= reachOf(e) + 0.00001 : this.heroWhy(e, t) === null);
+      let t = null;
+      if (e.focus) {
+        const f = this.get(e.focus.id);
+        if (!f || f.hp <= 0 || !this.hostile(e.team, f.team)) delete e.focus;
+        else if (ok(f)) { t = f; if (e.focus.lost !== undefined) delete e.focus.lost; }
+        else if (e.focus.lost === undefined) e.focus.lost = this.time;
+        else if (this.time > e.focus.lost + AUTO.lose * k - 1e-9) delete e.focus;
+      }
+      // The RTS auto-attack choice (simulation.js stepEntity: enemy(e, e.range, true)); a lob needs no clear line.
+      if (!t) t = lob ? this.enemy(e, reachOf(e), false) : this.enemy(e, e.range, true) || this.scopeEnemy(e);
+      if (!t) { if (e.auto) delete e.auto; return false; }
+      if (e.auto?.id !== t.id) e.auto = { id: t.id };
+      const rocket = !hull(e) && e.weapon === "rocket";
+      // Skywing's rocket locks on first, as a held trigger does (src/hero-aim.js RocketLock), and again for each rocket.
+      if (rocket && e.auto.at === undefined) e.auto.at = this.time + AUTO.lock * k;
+      else if (!rocket && e.auto.at !== undefined) delete e.auto.at;
+      if (!hull(e)) e.angle = Math.atan2(t.x - e.x, t.z - e.z);
+      e.attacking = true;
+      if (e.cooldown > 0 || (e.fx && !this.canAct(e, "fire")) || (rocket && this.time < e.auto.at - 1e-9)) return !hull(e);
+      if (lob) {
+        const r = reachOf(e), dx = t.x - e.x, dz = t.z - e.z, d = hyp(dx, dz);
+        this.heroPointShot(e, d <= r ? { x: t.x, z: t.z } : { x: e.x + (dx / d) * r, z: e.z + (dz / d) * r }, true);
+      } else this.heroHit(e, t, false, true);
+      if (rocket && e.auto) e.auto.at = this.time + AUTO.lock * k;
+      return !hull(e);
+    },
+    // A scoped Sniper's auto target past its own range: the seen enemy inside the scope's cone within SCOPE_REACH m,
+    // ranked as combat.js preferredEnemy ranks (its `prefers` first, then the nearer, then entity order), a clear line.
+    scopeEnemy(e) {
+      if (!e.scope || e.weapon !== "sniper") return null;
+      const prefers = e.prefers || [];
+      let best = null, bestRank = Infinity, bestD = Infinity;
+      for (const t of this.entities) {
+        if (t.hp <= 0 || !this.hostile(e.team, t.team) || !this.isVisible(t, e.team)) continue;
+        if (t.flying && !this.canHit(e, t)) continue;
+        const d = distance(e, t) - t.radius;
+        if (d > SCOPE_REACH + 0.00001 || !scoped(e, t)) continue;
+        const place = prefers.indexOf(t.class), rank = place < 0 ? prefers.length : place;
+        if (rank > bestRank || (rank === bestRank && d >= bestD)) continue;
+        if (!t.flying && !this.nav.clearLine(e, t, t.id)) continue;
+        best = t; bestRank = rank; bestD = d;
+      }
+      return best;
     },
     // The reticle's tag: why the trigger waits (BLOCKED), as an event every BLOCKED_EVERY-th tick.
     heroBlocked(e, reason) {
@@ -195,16 +286,15 @@ export const heroMode = {
       else if (e.weaponTo) this.heroBlocked(e, "Switching weapon");
       else if (this.time < (e.reloadAt ?? -Infinity) - 1e-9) this.heroBlocked(e, "Reloading");
     },
-    // H9: a driven vehicle's shot at a ground point (e.trigger.point): in its reach (the Breaker's siege range), the
-    // round lands at once, as every RTS shot does: the weapon's damage to the enemy standing on the point (a body
-    // within 0.3 m of it) and its splash share to every other enemy on the ground within its splash radius.
-    heroPointShot(e) {
-      const p = e.trigger.point;
-      if (this.time > e.trigger.until) { delete e.trigger; return; }
+    // H9: a driven vehicle's shot at a ground point (e.trigger.point, or auto fire's `p`): in its reach (the Breaker's
+    // siege range), the round lands at once, as every RTS shot does: the weapon's damage to the enemy standing on the
+    // point (a body within 0.3 m of it) and its splash share to every other enemy on the ground within its splash radius.
+    heroPointShot(e, p = e.trigger.point, auto = false) {
+      if (!auto && this.time > e.trigger.until) { delete e.trigger; return; }
       const d = distance(e, p);
-      if (d > (e.siege_range || e.range || 0) + 0.05) { this.heroBlocked(e, "Out of range"); return; }
+      if (d > reachOf(e) + 0.05) { if (!auto) this.heroBlocked(e, "Out of range"); return; }
       e.attacking = true;
-      if (e.cooldown > 0 || (e.fx && !this.canAct(e, "fire"))) { this.heroWaiting(e); return; }
+      if (e.cooldown > 0 || (e.fx && !this.canAct(e, "fire"))) { if (!auto) this.heroWaiting(e); return; }
       const foe = (t) => t.hp > 0 && !t.flying && (t.kind === "unit" || t.kind === "building" || t.kind === "wall") && this.hostile(e.team, t.team);
       let direct = null, best = 0.3;
       for (const t of this.entities) {
@@ -223,14 +313,14 @@ export const heroMode = {
       this.events.push({ type: "shot", weapon: e.shot || e.type, unit: e.type, source: e.id, target: direct?.id ?? null, x: e.x, z: e.z, tx: p.x, tz: p.z, team: e.team, heavy: true, point: true });
       e.cooldown = e.interval * (e.fx ? this.statusFactor(e, "reload") : 1);
       delete e.trigger;
-      this.heroAfterShot(e, direct, false, before, d);
+      this.heroAfterShot(e, direct, false, before, d, auto);
     },
     // H8: after each shot of the driven hero: the magazine (an empty one reloads on its own), the hit marker and kill
     // notice (events only: the page draws them), and a challenge's own count (sim/content/hero-challenges.js).
-    heroAfterShot(e, t, head, before, d) {
+    heroAfterShot(e, t, head, before, d, auto = false) {
       if (t) {
         const kill = t.hp <= 0, dealt = Math.max(0, before - Math.max(0, t.hp) - Math.max(0, t.shield || 0));
-        this.events.push({ type: "heroHit", id: e.id, team: e.team, target: t.id, unit: t.type, name: t.name || null, x: t.x, z: t.z, air: !!t.flying, dmg: Math.round(dealt), head: !!head, kill, d: Math.round(d * 10) / 10 });
+        this.events.push({ type: "heroHit", id: e.id, team: e.team, target: t.id, unit: t.type, name: t.name || null, x: t.x, z: t.z, air: !!t.flying, dmg: Math.round(dealt), head: !!head, kill, d: Math.round(d * 10) / 10, ...(auto ? { auto: true } : null) });
         if (this.challenge) this.challengeShot?.(e, t, d, kill);
       }
       if (!hasMagazine(e)) return;
@@ -355,8 +445,21 @@ export const heroMode = {
   },
   commands: {
     heroMode: {
-      allowed: (sim, c) => (c.on ? Number.isInteger(c.id) && (c.scale === undefined || HERO_TIME.scales.includes(c.scale)) && (c.help === undefined || typeof c.help === "boolean") : true),
-      run: (sim, c) => sim.setHeroMode(c.team, !!c.on, c.id, c.scale, c.help === true),
+      allowed: (sim, c) => (c.on ? Number.isInteger(c.id) && (c.scale === undefined || HERO_TIME.scales.includes(c.scale)) && (c.help === undefined || typeof c.help === "boolean") && (c.auto === undefined || typeof c.auto === "boolean") : true),
+      run: (sim, c) => sim.setHeroMode(c.team, !!c.on, c.id, c.scale, c.help === true, c.auto === true),
+    },
+    heroAuto: {
+      allowed: (sim, c) => !!sim.heroMode?.teams[c.team] && typeof c.on === "boolean",
+      run: (sim, c) => sim.setHeroAuto(c.team, c.on),
+    },
+    heroFocus: {
+      allowed: (sim, c) => sim.heroMode?.teams[c.team]?.auto === true && Number.isInteger(c.target),
+      run: (sim, c) => {
+        const e = sim.get(sim.heroMode.teams[c.team].id), t = sim.get(c.target);
+        if (!isDriven(e) || !t || t.hp <= 0 || !sim.hostile(e.team, t.team)) return false;
+        e.focus = { id: t.id };
+        return true;
+      },
     },
     heroDrive: {
       allowed: (sim, c) => !!sim.heroMode?.teams[c.team] && Number.isFinite(c.dx) && Number.isFinite(c.dz),
@@ -398,6 +501,8 @@ export const heroMode = {
         if (!t || !sim.hostile(e.team, t.team)) { delete e.trigger; return c.target === null; }
         // A single shot waits up to 1.5 real seconds for the reload; a held trigger until it is let go.
         e.trigger = { target: t.id, hold: !!c.hold, until: c.hold ? Infinity : sim.time + 1.5 * e.driven, ...(c.head ? { head: true } : null) };
+        // Auto fire keeps to the enemy the player fired at once the trigger is let go (as an RTS right-click focus).
+        if (sim.heroMode.teams[c.team].auto === true) e.focus = { id: t.id };
         return true;
       },
     },

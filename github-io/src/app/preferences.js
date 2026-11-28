@@ -48,7 +48,7 @@ export function setupPreferences(S, A) {
   const CHEAP = new Set(["masterVolume", "musicVolume", "sfxVolume", "voiceVolume", "voices", "subtitles", "muted", "quietMode", "music", "panSpeed", "edgeScroll", "confirmRestart", "autocast", "groupPace", "showFps",
     "cameraAngle", "cameraTurn", "zoomSpeed", "minimapSide", "handedness", "alerts", "frameCap", "haptics", "textSize", "battleTime", "heroView",
     // H7 Settings > Hero: read by the page when used (the view reads shotWarnings, closeDetail and birdHint itself).
-    "dodgeHelp", "aimAssist", "skywingOffer"]);
+    "dodgeHelp", "aimAssist", "skywingOffer", "autoFire"]);
   let applied = null, storageWarned = false;
   function applyPreferences(value) {
     const before = applied;

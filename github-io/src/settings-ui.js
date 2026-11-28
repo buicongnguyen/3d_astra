@@ -174,6 +174,7 @@ export class SettingsUI {
       + seg("dodgeHelp", "Dodge help", offOn, "On: rifle rounds at your hero fly slower, time slows for a moment before a rocket or shell hits while your dodge is ready, and the dodge is ready again after 3 s.")
       + seg("shotWarnings", "Shot warnings", offOn, "Rings where rockets and shells will land, and marks at the screen edge for shots from off screen.")
       + seg("aimAssist", "Aim assist", [["off", "Off"], ["low", "Low"], ["high", "High"]], "How far from the crosshair your hero picks a target.")
+      + seg("autoFire", "Auto fire", offOn, "On: your hero shoots the nearest enemy in range on its own. Fire at an enemy to make it the target; hold fire to aim by hand. The Auto button in Hero mode switches it too.")
       + seg("heroView", "Camera (ground)", [["shoulder", "Shoulder"], ["first", "First person"]], "The camera for a hero on foot in Hero mode. Skywing always looks down from above.")
       + seg("closeDetail", "Close-up detail", [["auto", "Auto"], ["on", "On"], ["off", "Off"]], "Sharper models near your hero. Auto lets a phone turn it down when the battle gets busy.")
       + seg("skywingOffer", "Skywing before matches", offOn, "Off hides the Skywing assist offer on the setup screens. The Hero battle tile stays on the title screen.")

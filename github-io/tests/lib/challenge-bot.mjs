@@ -30,11 +30,12 @@ export function challengeSim(def, difficulty = "standard") {
 
 const hyp = Math.hypot;
 // Plays `def` with the bot to the end (or `limit` game seconds). Returns { sim, result, seconds }.
-export function playChallenge(def, { difficulty = "standard", style = "bold", limit = 600, scale = 0.5, crouch = true } = {}) {
+export function playChallenge(def, { difficulty = "standard", style = "bold", limit = 600, scale = 0.5, crouch = true, auto = false } = {}) {
   const s = challengeSim(def, difficulty);
   const hero = () => s.get(s.skywing?.id);
   const send = (c) => s.command({ team: 0, ...c });
-  for (const c of enterCommands(0, hero().id, scale)) s.command(c);
+  // `auto`: Hero mode with auto fire on (Settings > Hero > Auto fire), as the page enters it by default.
+  for (const c of enterCommands(0, hero().id, scale, false, auto)) s.command(c);
   if (crouch) send({ type: "heroCrouch", on: "auto" });
   const kind = def.challenge.kind;
   let leg = "in", wp = 0, point = 0, fire = null, drive = "", landing = false, checkAt = 0, safe = true, back = null;

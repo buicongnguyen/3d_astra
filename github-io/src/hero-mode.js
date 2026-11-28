@@ -44,6 +44,12 @@
 //     command with `bird`, so the magazine, the muzzle and the tracer work and replays stay exact); when it goes, the
 //     round whizzes past the bird (bird-view.js shotBird: it tumbles, its flock bursts off, feathers), a squawk, and a
 //     small "Startled!" over it. The bird itself is view-only: never in the match state, never hurt.
+//   - Auto fire (owner 2026-11-28, on by default): one 44 px "Auto" tile in the action row (beside Fire; on phones over
+//     the action tiles in portrait, left of Fire in landscape) and Settings > Hero > Auto fire switch it (the same saved
+//     setting); the sim shoots for the hero (sim/content/hero-mode.js heroAutoFire) while no trigger is held: the
+//     nearest enemy in reach, or the one the player last fired at (a rocket lock or a Breaker lob starting on an enemy
+//     sends heroFocus). A small "Auto" mark over the enemy it shoots (a page element, no draw); a driven vehicle's
+//     turret turns to it. Auto fire itself never shows a "why" tag (only a press does).
 import "./hero-mode.css";
 import { $ } from "./app/dom.js";
 import { icon } from "./icons.js";
@@ -113,6 +119,8 @@ export function setupHeroMode(S, A) {
     // Birds: the one under the crosshair (bird-view.js pick's reused result, or null), the one the last shot went at,
     // the shots at birds and the birds startled this match (the debrief's count).
     bird: null, birdPick: { flock: -1, bird: -1 }, birdShots: 0, startled: 0, birdMatch: null, birdKey: null,
+    // Auto fire as sent to the sim (the heroMode / heroAuto commands) and how often the tile switched it (tests).
+    auto: false, autoToggles: 0,
   };
   S.hero = H;
 
@@ -218,8 +226,10 @@ export function setupHeroMode(S, A) {
         <button type="button" data-hero="dodge" class="hh-dodge"><i class="hh-sweep" aria-hidden="true"></i><span class="hh-dodge-name">Dodge</span><kbd translate="no">Space</kbd></button>
         <button type="button" data-hero="land" class="hh-land" hidden><i class="hh-sweep" aria-hidden="true"></i><span class="hh-land-name">Land</span><kbd translate="no">R</kbd></button>
         <button type="button" data-hero="board" class="hh-board" hidden><span class="hh-board-name">Board</span><kbd translate="no">T</kbd></button>
+        <button type="button" data-hero="auto" class="hh-auto" aria-pressed="true" aria-label="Auto fire" title="Auto fire"><span class="hh-auto-name">Auto</span><small class="hh-auto-state">On</small></button>
         <button type="button" data-hero="fire" class="hh-fire"><span>Fire</span><kbd translate="no">F</kbd></button>
       </div>
+      <b class="hh-automark" aria-hidden="true" hidden>Auto</b>
       <div class="hh-stick" aria-hidden="true"><i class="hh-knob"></i></div>
       <div class="hh-cross" aria-hidden="true"><i class="hh-lockring"></i><i class="hh-spread"></i><i class="hh-hitmark"></i><i class="hh-birdmark"></i><b class="hh-scope" hidden>Scope</b><b class="hh-nofire" role="status" hidden></b><span class="hh-mag"><span class="hh-pips"></span><b class="hh-reload" hidden>Reloading</b></span></div>
       <div class="hh-dmgs" aria-hidden="true"></div>
@@ -244,6 +254,7 @@ export function setupHeroMode(S, A) {
       else if (what === "dodge") dodge();
       else if (what === "land") land();
       else if (what === "board") boardToggle();
+      else if (what === "auto") toggleAuto();
     });
     // Fire is held (a ground hero keeps firing; a rocket locks while held); its own pointer events.
     const fire = root.querySelector(".hh-fire");
@@ -266,12 +277,14 @@ export function setupHeroMode(S, A) {
     if (!e) return false;
     const scale = S.sim.lan || S.lan ? 1 : HERO_TIME.scales.includes(S.settings.battleTime) ? S.settings.battleTime : HERO_TIME.scale;
     // H7 Settings > Hero > Dodge help: carried by the command, so the match (and its replay) keeps it.
-    const [mode, steward] = enterCommands(0, id, scale, S.settings.dodgeHelp === true);
+    // Auto fire (Settings > Hero > Auto fire, the HUD's Auto tile): in the command too, so a replay shoots the same.
+    const auto = S.settings.autoFire !== false;
+    const [mode, steward] = enterCommands(0, id, scale, S.settings.dodgeHelp === true, S.settings.autoFire !== false);
     if (!S.sim.command(mode)) { A.notice?.("Hero mode is not available now."); return false; }
     // H8: a Hero challenge has no base to run, so no steward (and no "AI running your base" strip).
     if (!S.sim.missionDef?.challenge) S.sim.command(steward);
-    Object.assign(H, { on: true, id, sky: isSkywing(e), vehicle: isCrewed(e), sim: S.sim, yaw: Number.isFinite(e.angle) ? e.angle : 0, pitch: 0, zoom: 1, fell: null, firing: false, target: null, aim: null });
-    H.sent = { drive: "0,0", fire: "null" };
+    Object.assign(H, { on: true, id, sky: isSkywing(e), vehicle: isCrewed(e), sim: S.sim, yaw: Number.isFinite(e.angle) ? e.angle : 0, pitch: 0, zoom: 1, fell: null, firing: false, target: null, aim: null, auto });
+    H.sent = { drive: "0,0", fire: "null", focus: null };
     H.lock.reset();
     H.keys.clear();
     S.keys?.clear();
@@ -344,7 +357,7 @@ export function setupHeroMode(S, A) {
     H.id = id;
     ceaseFire();
     H.firing = false;
-    H.sent = { drive: "0,0", fire: "null" };
+    H.sent = { drive: "0,0", fire: "null", focus: null };
     A.setSelection?.([id]);
     dress(e);
     return true;
@@ -359,6 +372,32 @@ export function setupHeroMode(S, A) {
     const v = boardTarget(S.sim, 0);
     if (!v) { A.notice?.("No Tank or Breaker of yours within reach."); return; }
     if (send({ type: "skywingBoard", board: true, vehicle: v.id })) { H.boards++; A.tone?.(360, 0.12); }
+  }
+  // Auto fire on or off (the tile): the saved setting (Settings > Hero > Auto fire) and the match, one tap.
+  function toggleAuto() {
+    const on = S.settings.autoFire === false;
+    if (A.applyPreferences) A.applyPreferences({ ...S.settings, autoFire: on });
+    else S.settings.autoFire = on;
+    syncAuto();
+    H.autoToggles++;
+    A.tone?.(on ? 640 : 380, 0.06);
+  }
+  // The match follows the setting (the tile, or the sheet opened during the match).
+  function syncAuto() {
+    const want = S.settings.autoFire !== false;
+    if (!H.on || want === H.auto) return;
+    if (send({ type: "heroAuto", on: want })) H.auto = want;
+  }
+  // The enemy auto fire shoots now (the sim's pick, with no trigger held), or null.
+  function autoTarget(e = hero()) {
+    if (!H.auto || !e?.auto || e.trigger) return null;
+    const t = S.sim.get(e.auto.id);
+    return t && t.hp > 0 ? t : null;
+  }
+  // A press that starts on an enemy (a rocket lock, a Breaker lob) makes it auto fire's focus at once.
+  function focus(t) {
+    if (!H.auto || !t || H.sent.focus === t.id) return;
+    if (send({ type: "heroFocus", target: t.id })) H.sent.focus = t.id;
   }
   function leave(quiet = false) {
     if (!H.on) return false;
@@ -455,6 +494,7 @@ export function setupHeroMode(S, A) {
       // A rocket let go before the lock closed: it needs a hold.
       if (H.sky && e.weapon === "rocket" && H.lock.progress < 1 && from !== null && !H.lockShot) why(H.target ? "Hold to lock" : pickReason(e) || "No target");
       H.firing = false;
+      H.sent.focus = null;
       H.lock.reset();
     }
   }
@@ -472,6 +512,7 @@ export function setupHeroMode(S, A) {
     const r = pickReason(e);
     if (r) why(r);
     H.sent.fire = "null";
+    focus(H.target);
     return send({ type: "heroFire", x: Math.round(p.x * 100) / 100, z: Math.round(p.z * 100) / 100 });
   }
   // The reticle's tag: why the shot cannot go (shown WHY_MS after the last refusal).
@@ -770,7 +811,9 @@ export function setupHeroMode(S, A) {
     // H9: the turret follows the aim (view.js turns it in the hull's frame); the Breaker's ring shows where its lob lands,
     // its splash size, pulled in to its full range.
     const lob = H.vehicle && e.type === "breaker" ? lobPoint(e) : null;
-    if (H.vehicle && a) v.heroAim = { id: e.id, angle: Math.atan2((t ? t.x : a.x) - e.x, (t ? t.z : a.z) - e.z) };
+    // Auto fire shooting (no trigger held): the turret turns to its target.
+    const auto = H.vehicle ? autoTarget(e) : null, to = auto || t || a;
+    if (H.vehicle && to) v.heroAim = { id: e.id, angle: Math.atan2(to.x - e.x, to.z - e.z) };
     if (lob) reticle?.setReticle({ x: lob.x, z: lob.z, y: v.terrain.heightAt(lob.x, lob.z), size: (e.splash_radius || 2) / 0.62, target: !!t && !lob.clamped, lob: true, far: !!lob.clamped, locked: false, progress: 0 });
     else if (hz) reticle?.setReticle({ x: hz[0], z: hz[1], y: v.terrain.heightAt(hz[0], hz[1]), size: 1, target: true, hazard: true, locked: false, progress: 0 });
     // A bird under the crosshair: the ground ring under it, sky blue.
@@ -949,10 +992,13 @@ export function setupHeroMode(S, A) {
     const d = moveVector(right, forward, { x: -Math.cos(H.yaw), z: Math.sin(H.yaw) }, { x: Math.sin(H.yaw), z: Math.cos(H.yaw) });
     const key = `${d.x},${d.z}`;
     if (key !== H.sent.drive) { H.sent.drive = key; send({ type: "heroDrive", dx: d.x, dz: d.z }); }
+    syncAuto();
     // The weapon: held fire (a ground hero, or the Fire button), the rocket lock.
     if (H.firing) {
       if (H.sky && e.weapon === "rocket") {
         const locked = H.lock.update(H.target?.id ?? null, dt);
+        // Auto fire turns to the enemy being locked at once (it locks and fires there on its own too).
+        if (H.target && H.lock.target === H.target.id) focus(H.target);
         if (!H.target || e.weaponTo) { const r = pickReason(e); if (r && (performance.now() > H.whyUntil - WHY_MS * 0.5)) why(r); }
         if (locked !== null) { shoot(false); H.lockShot = true; H.lock.reset(); A.tone?.(880, 0.08); }
       } else if (H.vehicle && e.type === "breaker") {
@@ -1053,6 +1099,18 @@ export function setupHeroMode(S, A) {
         mag.classList.toggle("reloading", reloading);
       }
     }
+    // Auto fire: the tile's state and the mark over the enemy it shoots (the rocket's lock still closing: "locking").
+    const at = root.querySelector(".hh-auto"), on = String(H.auto);
+    if (at.dataset.on !== on) { at.dataset.on = on; at.setAttribute("aria-pressed", on); at.querySelector(".hh-auto-state").textContent = H.auto ? "On" : "Off"; }
+    const mark = root.querySelector(".hh-automark"), aimed = autoTarget(e);
+    if (aimed) {
+      const v = S.view, r = v.renderer.domElement.getBoundingClientRect(), u = v.objects.get(aimed.id)?.userData;
+      const y = v.terrain.heightAt(aimed.x, aimed.z) + (aimed.flying ? (u?.air?.fly ?? aimed.fly ?? 3.5) + 1 : bodyHeight(aimed) * Math.min(1.4, u?.readabilityScale || 1) + 0.5);
+      const q = v.project(aimed.x, aimed.z, y);
+      mark.style.transform = `translate(${Math.round(q.x + r.left)}px, ${Math.round(q.y + r.top)}px) translate(-50%, -100%)`;
+      mark.classList.toggle("locking", e.weapon === "rocket" && !H.vehicle && S.sim.time < (e.auto.at ?? -Infinity) - 1e-9);
+    }
+    if (mark.hidden === !!aimed) mark.hidden = !aimed;
     const tag = root.querySelector(".hh-crouch"), low = !!e.crouched;
     if (tag.hidden === low) tag.hidden = !low;
     feelTick();
@@ -1082,7 +1140,8 @@ export function setupHeroMode(S, A) {
       if (ev.dmg > 0) number(ev);
       if (ev.kill) { H.kills++; feed(ev.head ? "Headshot" : "Enemy down", ev.unit ? D[ev.unit]?.name || ev.name : ev.name, ev.head ? "head" : "kill"); A.tone?.(ev.head ? 980 : 760, 0.07); }
       else A.tone?.(ev.head ? 1180 : 1320, 0.025);
-      if (!phone() && !S.view.reducedMotion?.matches && S.settings.combatMotion !== false) H.kick = FEEL_HUD.kick;
+      // The kick answers the player's own trigger only (auto fire's shots never move the camera).
+      if (!ev.auto && !phone() && !S.view.reducedMotion?.matches && S.settings.combatMotion !== false) H.kick = FEEL_HUD.kick;
     } else if (ev.type === "hazardBlast" && ev.by === H.id) {
       H.blasts++;
       feed("Barrel blast", ev.kills ? `×${ev.kills}` : "", "blast");
@@ -1177,6 +1236,7 @@ export function setupHeroMode(S, A) {
     reflex: H.reflex.count, reflexOn: H.reflex.left > 0, vehicle: H.vehicle, near: H.near, boards: H.boards,
     bird: H.bird ? { flock: H.bird.flock, bird: H.bird.bird, species: H.bird.species } : null, birdMark: !!H.hud?.querySelector(".hh-cross.on-bird"), birdShots: H.birdShots, startled: startled(),
     pops: [...(H.hud?.querySelectorAll(".hh-dmg.bird:not([hidden])") || [])].map((n) => n.textContent),
+    auto: H.auto, autoTarget: H.on ? autoTarget()?.id ?? null : null, focus: H.on ? hero()?.focus?.id ?? null : null, autoToggles: H.autoToggles, autoMark: !!H.hud?.querySelector(".hh-automark:not([hidden])"),
     why: H.hud?.querySelector(".hh-nofire:not([hidden])")?.dataset.src || null, whyText: H.hud?.querySelector(".hh-nofire:not([hidden])")?.textContent || null, whys: { ...H.whys },
     marks: H.edges.filter((m) => !m.hidden && m.classList.contains("air")).length + H.skies.filter((m) => !m.hidden).length, yaw: H.yaw, zoom: H.zoom, scale: H.scale, aim: H.aim, target: H.target?.id ?? null, lock: H.lock.progress, screen: H.screen || null, sent: { ...H.sent } }) });
   return function bind() {

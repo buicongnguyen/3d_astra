@@ -2231,7 +2231,9 @@
     "Blocked": "사선 막힘",
     "Switching weapon": "무기 교체 중",
     "Not visible": "보이지 않음",
-    "Stunned": "기절"
+    "Stunned": "기절",
+    "Auto fire": "자동 사격",
+    "On: your hero shoots the nearest enemy in range on its own. Fire at an enemy to make it the target; hold fire to aim by hand. The Auto button in Hero mode switches it too.": "켬: 영웅이 사거리 안의 가장 가까운 적을 스스로 쏩니다. 적을 쏘면 그 적이 목표가 되고, 사격을 누르고 있으면 직접 조준합니다. 영웅 모드의 자동 버튼으로도 켜고 끌 수 있습니다."
   },
   "patterns": [
     [

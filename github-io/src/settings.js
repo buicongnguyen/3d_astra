@@ -102,6 +102,9 @@ export function defaults(coarse = false) {
     // Aim assist: "off", "low" (the PC cone) or "high" (the phone cone); the page picks the target, the command
     // carries it.
     aimAssist: coarse ? "high" : "low",
+    // Auto fire (owner 2026-11-28): the driven hero shoots the nearest enemy in reach on its own (a shot at an enemy
+    // makes it the target; holding fire aims by hand). Carried into the match by the heroMode / heroAuto commands.
+    autoFire: true,
     // Close-up detail near the hero camera (H5): "auto" (the governor decides on phones), "on", "off".
     closeDetail: "auto",
     // The Skywing assist row on the setup screens and the mission briefing (the Hero battle tile always stays).
@@ -153,7 +156,7 @@ export function normalize(value, coarse = false) {
   if (typeof value.subtitles === "boolean") d.subtitles = value.subtitles;
   pick("battleTime", [0.4, 0.5, 0.75, 1]);
   pick("heroView", ["shoulder", "first"]);
-  for (const key of ["dodgeHelp", "shotWarnings", "skywingOffer", "birdHint"]) if (typeof value[key] === "boolean") d[key] = value[key];
+  for (const key of ["dodgeHelp", "shotWarnings", "skywingOffer", "birdHint", "autoFire"]) if (typeof value[key] === "boolean") d[key] = value[key];
   pick("aimAssist", ["off", "low", "high"]);
   pick("closeDetail", ["auto", "on", "off"]);
   pick("birds", ["off", "few", "many"]);

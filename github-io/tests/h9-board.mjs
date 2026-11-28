@@ -10,7 +10,11 @@
 //            weapon's reach "Out of range", a press during a weapon switch "Switching weapon", a rocket tap that lets go
 //            before the lock "Hold to lock"; the tag is >= 11 px and translated (VI / KO on phones).
 //   phones   portrait EN / VI / KO, then landscape: the Board tile beside Land, then Get out in Dodge's place, every tap
-//            >= 44 px, text >= 11 px, no system-ui, nothing off screen or overlapping, the labels translated.
+//            >= 44 px, text >= 11 px, no system-ui, nothing off screen or overlapping (the Auto tile too), the labels
+//            translated.
+//   auto fire (owner 2026-11-28): the checks above run with Settings > Hero > Auto fire Off (by hand); then the Auto
+//            tile turns it on and, with no trigger, the Breaker lobs at the nearest rifleman (past its 7.5 m RTS range,
+//            inside its 15 m lob) and the Tank shells one with its turret on it.
 // Screenshots go to test-results/ (and H9_SHOTS when set). The match clock is held and moved only with step().
 import assert from "node:assert/strict";
 import { mkdirSync, copyFileSync } from "node:fs";
@@ -69,6 +73,8 @@ async function battle(page, tap) {
   const ids = await page.evaluate(() => {
     const f = window.__frontier, s = f.sim;
     f.hold = true; f.holdMessages = true; s.explored[0].fill(1);
+    // The trigger checks below are by hand: auto fire off until its own check (the Auto tile turns it on).
+    f.settings.autoFire = false;
     s.command({ team: 0, type: "skywing" });
     const e = s.get(s.skywing.id);
     e.x = 0; e.z = 0; e.post = { x: 0, z: 0 }; e.angle = 0;
@@ -250,6 +256,43 @@ await suite("h9-board" + shardLabel, async () => {
     assert.ok(drawsTank.hero - drawsFoot.hero <= 1, `Hero mode's own draws: ${drawsFoot.hero} -> ${drawsTank.hero}`);
     // (Culling alone moved it -15 to +4 between runs; the phone budget is measured with the render probe: 59 -> 54.)
     assert.ok(drawsTank.total - drawsFoot.total <= 8, `boarding: ${drawsFoot.total} -> ${drawsTank.total}`);
+    // ---------------------------------------------------------------- auto fire in the Breaker and the Tank
+    await page.locator("#hero-hud .hh-auto").click();
+    await page.waitForFunction(() => window.__frontier.heroMode.info.auto === true, null, { timeout: TIMEOUT.step });
+    const fires = () => page.evaluate(() => window.__frontier.sim.commandLog.filter((c) => c.type === "heroFire").length);
+    await until(page, (br) => window.__frontier.heroMode.info.near === br, ids.breaker, "the Breaker in reach again");
+    await page.keyboard.press("t");
+    await step(page, 0.1, 3);
+    assert.equal((await info(page)).id, ids.breaker, "in the Breaker again");
+    // Only the three riflemen near (any other enemy unit that came close is cleared), so the nearest is one of them.
+    await page.evaluate(([br, foes]) => { const s = window.__frontier.sim, b = s.get(br); for (const u of s.entities) if (u.kind === "unit" && u.hp > 0 && s.hostile(0, u.team) && !foes.includes(u.id) && Math.hypot(u.x - b.x, u.z - b.z) < 30) u.hp = 0; window.__frontier.step(0.05); }, [ids.breaker, ids.foes]);
+    await page.evaluate((br) => { window.__shots = []; const v = window.__frontier.view, ev = v.event.bind(v); v.event = (event, sim) => { if (event.type === "shot" && event.source === br) window.__shots.push({ ...event }); return ev(event, sim); }; }, ids.breaker);
+    let sent = await fires();
+    await until(page, () => window.__shots.length >= 1, null, "an auto lob", 80);
+    const autoLob = await page.evaluate(([br, foes]) => { const s = window.__frontier.sim, b = s.get(br), q = window.__shots[0], t = s.get(q.target ?? -1); return { point: q.point, foe: foes.includes(q.target), d: t ? Math.hypot(t.x - b.x, t.z - b.z) : null, type: t?.type, team: t?.team }; }, [ids.breaker, ids.foes]);
+    assert.ok(autoLob.point && autoLob.foe && autoLob.d > 7.5, `the Breaker lobbed at a rifleman on its own: ${JSON.stringify(autoLob)}`);
+    assert.equal(await fires(), sent, "no trigger was sent");
+    await keep(page, "h9-auto-breaker");
+    await page.keyboard.press("t");
+    await step(page, 0.1, 3);
+    await page.evaluate((id) => { const s = window.__frontier.sim, e = s.get(id), t = s.entities.find((u) => u.team === 0 && u.type === "tank" && u.hp > 0); t.x = e.x + 3; t.z = e.z; t.angle = 0; t.orders = []; t.path = []; }, ids.sky);
+    await until(page, (tank) => window.__frontier.heroMode.info.near === tank, ids.tank, "the tank in reach again");
+    await page.keyboard.press("t");
+    await step(page, 0.1, 3);
+    assert.equal((await info(page)).id, ids.tank, "in the tank again");
+    // The riflemen 8-9 m ahead of the tank (well inside its 12 m reach).
+    await page.evaluate(([tank, foes]) => { const s = window.__frontier.sim, v = s.get(tank); foes.forEach((id, i) => { const t = s.get(id); t.x = v.x - 3 + i * 3; t.z = v.z + 8; }); s.updateVision(); }, [ids.tank, ids.foes]);
+    await page.evaluate((tank) => { window.__shots = []; const v = window.__frontier.view, ev = v.event.bind(v); v.event = (event, sim) => { if (event.type === "shot" && event.source === tank) window.__shots.push({ ...event }); return ev(event, sim); }; }, ids.tank);
+    sent = await fires();
+    await until(page, () => window.__shots.length >= 1, null, "an auto shell", 80);
+    assert.ok(ids.foes.includes(await page.evaluate(() => window.__shots[0].target)), "the Tank shelled a rifleman on its own");
+    assert.equal(await fires(), sent, "no trigger was sent");
+    // The turret follows auto fire's target (view.heroAim, set in the frame): read once the frame has it.
+    const turretOn = () => page.evaluate((tank) => { const f = window.__frontier, e = f.sim.get(tank), t = f.sim.get(f.heroMode.info.autoTarget); if (!t) { const s = f.sim; return { none: true, auto: e.auto ?? null, trigger: e.trigger ?? null, driven: e.driven, team: s.heroModeOf(0), info: f.heroMode.info.auto, foes: s.entities.filter((u) => u.hp > 0 && s.hostile(0, u.team) && u.kind === "unit").map((u) => [u.id, u.type, +Math.hypot(u.x - e.x, u.z - e.z).toFixed(1), s.isVisible(u, 0), s.nav.clearLine(e, u, u.id)]).sort((a, b) => a[2] - b[2]).slice(0, 5), pick: s.enemy(e, e.range, true)?.id ?? null, range: e.range }; } const want = Math.atan2(t.x - e.x, t.z - e.z), aim = f.view.heroAim?.angle; return { want, aim, ok: Math.abs(Math.atan2(Math.sin(want - aim), Math.cos(want - aim))) < 0.05 }; }, ids.tank);
+    let aim = await turretOn();
+    for (let k = 0; k < 20 && !aim.ok; k++) { await page.waitForTimeout(100); if (aim.none) await step(page, 0.05); aim = await turretOn(); }
+    assert.ok(aim.ok, `the turret turns to auto fire's target: ${JSON.stringify(aim)}`);
+    await keep(page, "h9-auto-tank");
     assert.deepEqual(errors, [], "desktop: page errors");
     await page.close();
   }
