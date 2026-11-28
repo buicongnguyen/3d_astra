@@ -276,7 +276,9 @@ await suite("hero-challenges" + shardLabel, async () => {
     // holds the barrel (or the tries run out), instead of aiming once at where the barrel was.
     // Only the first try steps the match; later tries just re-aim, so the match state the checks below expect is unchanged.
     for (let tryNo = 0; tryNo < 4; tryNo++) {
-      const aim = await page.evaluate((i) => { const f = window.__frontier, v = f.view, [x, z] = f.sim.hazards[i]; const q = v.project(x, z, v.terrain.heightAt(x, z) + 0.4), r = v.renderer.domElement.getBoundingClientRect(); return { x: q.x + r.left, y: q.y + r.top }; }, barrel);
+      // Projected the way the Hero pick casts its ray (hero-mode.js heroRay: the canvas rect's width and the view's
+      // drawn height), not with view.project's own width: on a CI runner the two differed and the cursor missed.
+      const aim = await page.evaluate((i) => { const f = window.__frontier, v = f.view, [x, z] = f.sim.hazards[i], r = v.renderer.domElement.getBoundingClientRect(); const q = new v.camera.position.constructor(x, v.terrain.heightAt(x, z) + 0.4, z).project(v.camera); window.__aimDebug = { vw: v.width, vh: v.height, dh: v.drawHeight, rw: r.width, rh: r.height, rl: r.left, rt: r.top, ndc: [q.x, q.y, q.z], at: [x, z] }; return { x: r.left + ((q.x + 1) / 2) * r.width, y: r.top + ((1 - q.y) / 2) * (v.drawHeight || r.height) }; }, barrel);
       await page.mouse.move(aim.x, aim.y);
       if (tryNo === 0) await step(page, 0.1, 2);
       // The aim is taken in the frame: wait for it.
@@ -284,7 +286,7 @@ await suite("hero-challenges" + shardLabel, async () => {
       if (got) break;
     }
     const aimed = await info(page);
-    assert.equal(aimed.barrel, barrel, `the crosshair finds the barrel ${JSON.stringify({ target: aimed.target, aim: aimed.aim, screen: aimed.screen })}`);
+    assert.equal(aimed.barrel, barrel, `the crosshair finds the barrel ${JSON.stringify({ target: aimed.target, aim: aimed.aim, screen: aimed.screen, debug: await page.evaluate(() => window.__aimDebug) })}`);
     // The HUD draws the tint in its own frame (about 1 fps on a CI runner): wait for it.
     const tinted = await page.waitForFunction(() => document.querySelector(".hh-cross").classList.contains("on-hazard"), null, { timeout: TIMEOUT.step }).then(() => true, () => false);
     assert.equal(tinted, true, "the reticle tints");

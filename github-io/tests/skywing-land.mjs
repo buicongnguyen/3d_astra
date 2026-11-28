@@ -213,15 +213,25 @@ async function horizonRts(page) {
   if (await page.evaluate(() => !window.__frontier.view.horizon.sky)) return; // software WebGL: never built
   const rts = await page.evaluate(() => {
     const f = window.__frontier, v = f.view, r = v.renderer, sky = v.horizon.sky, parent = sky.root.parent;
-    const frame = () => { r.info.reset(); r.info.autoReset = false; v.update(f.sim, 0, f.selected, null); const calls = r.info.render.calls; r.info.autoReset = true; return { calls, png: r.domElement.toDataURL("image/png") }; };
+    // Pixels read straight after each draw. A few may differ between two draws of the same frame (birds, water rings
+    // and other life run on the page clock), so the guard allows 0.05% stray pixels, as the water check does; the
+    // horizon itself would change far more.
+    const gl = r.getContext(), W = gl.drawingBufferWidth, H = gl.drawingBufferHeight;
+    const frame = () => { r.info.reset(); r.info.autoReset = false; v.update(f.sim, 0, f.selected, null); const calls = r.info.render.calls; r.info.autoReset = true; const px = new Uint8Array(W * H * 4); gl.readPixels(0, 0, W, H, gl.RGBA, gl.UNSIGNED_BYTE, px); return { calls, px }; };
     const a = frame();
     parent.remove(sky.root);
     const b = frame();
     parent.add(sky.root);
-    return { same: a.png === b.png, calls: [a.calls, b.calls], state: { ...v.horizon.state }, edge: v.backdrop.material.userData.motion.hero.value, hero: v.heroCameraOn };
+    let diff = 0, lit = 0;
+    for (let i = 0; i < a.px.length; i += 4) {
+      if (a.px[i] + a.px[i + 1] + a.px[i + 2] > 12) lit++;
+      if (Math.abs(a.px[i] - b.px[i]) + Math.abs(a.px[i + 1] - b.px[i + 1]) + Math.abs(a.px[i + 2] - b.px[i + 2]) > 6) diff++;
+    }
+    // The frame was really read (not a cleared buffer): most of it is lit.
+    return { same: lit > W * H * 0.5 && diff <= W * H * 0.0005, diff, lit, of: W * H, calls: [a.calls, b.calls], state: { ...v.horizon.state }, edge: v.backdrop.material.userData.motion.hero.value, hero: v.heroCameraOn };
   });
   assert.equal(rts.hero, false, "the RTS view");
-  assert.ok(rts.same, "the RTS frame is unchanged by the built horizon");
+  assert.ok(rts.same, `the RTS frame is unchanged by the built horizon (${rts.diff} of ${rts.of} pixels differ, ${rts.lit} lit)`);
   assert.equal(rts.calls[0], rts.calls[1], `RTS draws ${rts.calls}`);
   assert.ok(!rts.state.on && rts.state.draws === 0 && rts.edge === 0, JSON.stringify(rts));
 }
