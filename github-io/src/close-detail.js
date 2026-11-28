@@ -92,7 +92,9 @@ export function drawDetailAtlas(size = ATLAS_SIZE, seed = 5150) {
 }
 
 let atlas = null;
-function atlasTexture() {
+// The atlas is made and bound only once the detail is first turned on (close-look-view.js): until then the sampler
+// holds three's empty texture, so a renderer that never shows Hero mode (the field guide's viewer) uploads nothing.
+export function atlasTexture() {
   if (atlas) return atlas;
   atlas = new THREE.DataTexture(drawDetailAtlas(), ATLAS_SIZE, ATLAS_SIZE, THREE.RGBAFormat);
   atlas.wrapS = atlas.wrapT = THREE.RepeatWrapping;
@@ -220,7 +222,6 @@ const FRAGMENT_MAIN = `
 
 // Adds the close-view detail to a MeshStandardMaterial's shader (called by look-grade.js rimShader).
 export function closeDetailShader(shader) {
-  CLOSE_DETAIL.atlas.value ||= atlasTexture();
   shader.uniforms.uCdAmount = CLOSE_DETAIL.amount;
   shader.uniforms.uCdEye = CLOSE_DETAIL.eye;
   shader.uniforms.uCdRange = CLOSE_DETAIL.range;

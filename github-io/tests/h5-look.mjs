@@ -7,7 +7,8 @@
 //     birds) and a shot startles a flock (one event, ripple take-off); Settings closeDetail Off and birdHint Off apply
 //     at once; leaving Hero mode hides it all again;
 //   - no shader error, no page error.
-// The battle clock is not needed: the checks read the plugins' state, never an animation's progress (CI draws ~1 fps).
+// The battle clock is not needed: the checks read the plugins' state, never an animation's progress (CI draws ~1 fps);
+// they wait for the detail models to arrive (slow on CI) before they assert.
 // Screenshots: test-results/h5-look-<viewport>-*.png (SHOTS=<dir> copies them there too).
 import assert from "node:assert/strict";
 import { mkdirSync, copyFileSync } from "node:fs";
@@ -70,7 +71,7 @@ await suite("h5-look", async () => {
     });
     await page.waitForFunction(() => {
       const v = window.__frontier.view, p = (n) => ({ BirdView: v.birds, UnitDecalsView: v.unitDecals, CloseLookView: v.closeLook })[n];
-      return p("BirdView").state.near > 0 && p("UnitDecalsView").state.quads > 0 && (v.closeView?.info().types || []).includes("acidhound");
+      return p("BirdView").state.near > 0 && p("UnitDecalsView").state.units >= 2 && (v.closeView?.info().types || []).includes("acidhound");
     }, null, { timeout: TIMEOUT.models });
     s = await state(page);
     assert.equal(s.look.on, true);

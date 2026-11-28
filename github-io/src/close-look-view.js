@@ -1,4 +1,4 @@
-import { CLOSE_DETAIL, closeDetailOn } from "./close-detail.js";
+import { CLOSE_DETAIL, atlasTexture, closeDetailOn } from "./close-detail.js";
 
 // H5 close-view look (a view plugin, docs/VIEW_PLUGINS.md): drives the shared close-detail uniforms (close-detail.js)
 // and the Hero mode shadow box. Nothing draws here and nothing is built.
@@ -25,6 +25,7 @@ export class CloseLookView {
   update(sim, dt) {
     const v = this.view, hero = !!v.heroCameraOn, s = v.settings || {};
     const detail = hero && closeDetailOn(s.closeDetail ?? "auto", { touch: this.touch, level: v.closeLevel || "full", eco: !!v.lowPower });
+    if (detail) CLOSE_DETAIL.atlas.value ||= atlasTexture();
     CLOSE_DETAIL.amount.value = detail ? 1 : 0;
     CLOSE_DETAIL.rim.value = hero ? CLOSE_LOOK.rim : 0;
     if (hero && v.heroEye) CLOSE_DETAIL.eye.value.copy(v.heroEye);
