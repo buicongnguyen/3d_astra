@@ -54,7 +54,9 @@ export const LAND = Object.freeze({ land: 1, takeoff: 1.5, cooldown: 3, reach: 6
 // Landed sight (owner 2026-11-28, PART D): `vision` m all round by the ground rules (no seeing over cliffs); after
 // standing still `still` s (real seconds x battle time: no move, no dash) the scope adds `scope` m in a `cone`-degree
 // cone along its facing; on high ground `high` m more in all (in place of the terrain's usual high-ground bonus).
-export const SIGHT = Object.freeze({ vision: 18, scope: 26, cone: 70, still: 1, high: 4 });
+// Owner 2026-11-28: on foot it sees about 1.5x a soldier (a Ranger sees 15 m, an Anti-tank team 16): 23 m. The scope
+// stays 26 m, as far as a scoped Sniper reaches (sim/hero-feel.js SCOPE_REACH).
+export const SIGHT = Object.freeze({ vision: 23, scope: 26, cone: 70, still: 1, high: 4 });
 
 export const isSkywing = (e) => !!e && e.assist === true;
 // Skywing on the ground (also while it climbs away on a take-off).

@@ -210,7 +210,7 @@ function alone(map, x, z) {
   s.tick(TICK);
   return { s, e };
 }
-test("on foot: 18 m all round by the ground rules; the scope adds 26 m in a 70-degree cone after 1 s still, gone on a move", () => {
+test("on foot: 23 m all round by the ground rules (1.5x a soldier); the scope adds 26 m in a 70-degree cone after 1 s still, gone on a move", () => {
   const { s, e } = alone("classic", 0, 0);
   s.updateVision();
   assert.ok(sees(s, 21, 0), "flying: 22 m");
@@ -218,18 +218,18 @@ test("on foot: 18 m all round by the ground rules; the scope adds 26 m in a 70-d
   run(s, LAND.land + 0.05);
   assert.equal(e.vision, SIGHT.vision);
   s.updateVision();
-  assert.ok(sees(s, 16.5, 0) && !sees(s, 21, 0), "landed: 18 m");
-  assert.ok(!sees(s, 0, 24), "no scope yet");
+  assert.ok(sees(s, 21.5, 0) && !sees(s, 26, 0), "landed: 23 m");
+  assert.ok(!sees(s, 0, 24.5), "no scope yet");
   run(s, SIGHT.still + 0.1);
   assert.equal(e.scope, true, "the scope after 1 s still");
   s.updateVision();
-  assert.ok(sees(s, 0, 24) && sees(s, 8, 23), "26 m ahead, inside the cone");
-  assert.ok(!sees(s, 24, 0) && !sees(s, 0, -24), "not to the side or behind");
+  assert.ok(sees(s, 0, 25) && sees(s, 8, 23.5), "26 m ahead, inside the cone");
+  assert.ok(!sees(s, 28, 0) && !sees(s, 0, -28), "not to the side or behind");
   s.issue([e.id], { type: "move", x: 0, z: -6 });
   run(s, 0.3);
   assert.equal(e.scope, undefined, "a move drops it");
   s.updateVision();
-  assert.ok(!sees(s, 0, 24), "and its sight");
+  assert.ok(!sees(s, 0, 25), "and its sight");
   takeOff(s, e);
   run(s, LAND.takeoff + 0.1);
   assert.equal(e.vision, SKYWING.vision, "flying: its own sight again");
@@ -241,8 +241,8 @@ test("on high ground a landed Skywing sees 4 m more in all", () => {
   land(s, e);
   run(s, LAND.land + 0.05);
   s.updateVision();
-  assert.ok(sees(s, 40 + 20.5, -14) || sees(s, 40 - 20.5, -14), "18 + 4 m from the top");
-  assert.ok(!sees(s, 40 + 24, -14) && !sees(s, 40 - 24, -14));
+  assert.ok(sees(s, 40 + 25.5, -14) || sees(s, 40 - 25.5, -14), "23 + 4 m from the top");
+  assert.ok(!sees(s, 40 + 29, -14) && !sees(s, 40 - 29, -14));
 });
 test("the scope replays exactly from the command log", () => {
   const play = () => {

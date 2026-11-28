@@ -2,6 +2,9 @@
 
 ## Unreleased: Round A.2
 
+### Skywing sees further on foot (owner 2026-11-28)
+- **Landed sight 18 -> 23 m** all round, about 1.5x a soldier's (a Ranger sees 15 m, an Anti-tank team 16). The scope stays 26 m in its 70-degree cone, as far as the scoped Sniper reaches; high ground still adds 4 m. Flying sight is unchanged (22 m). Only Skywing's own sight changes, so it is easier, never harder.
+
 ### Shots leave the gun, kneeling or standing (owner 2026-11-28)
 - **Shots at the hero** (Hero mode, Skywing on foot) started 1.1 m above the shooter's feet, below most guns. They now start at the shooter's own muzzle: its weapon's height and barrel reach (visual-style.json, as every battle shot uses).
 - **Kneel or stand.** Rangers, Anti-tank teams and gunners kneel to fire standing still and fire standing on the move. Every shot (battle and Hero mode) now starts lower by the kneel's actual drop (`kneelDrop`, src/unit-rig.js: the same maths as the shader's body bone), so a kneeling soldier fires from the knee and a walking one from the shoulder.
