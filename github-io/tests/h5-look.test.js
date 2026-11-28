@@ -9,7 +9,7 @@ import { planFlocks, roofFlock, BirdFlocks, birdPath, BIRD_BUDGET, BIRD_LIFE, NE
 import { BirdView } from "../src/bird-view.js";
 import { drawDetailAtlas, closeDetailOn, closeDetailShader, tagCreatureLife, CLOSE_DETAIL, CREATURE_LIFE } from "../src/close-detail.js";
 import { unitNumber, UNIT_DECALS } from "../src/unit-decals-view.js";
-import { AmbientLife, FISH_TURN } from "../src/ambient-life.js";
+import { AmbientLife, FISH_TURN, GOOSE_LOOK } from "../src/ambient-life.js";
 import { Terrain } from "../src/terrain.js";
 import { defaults, normalize } from "../src/settings.js";
 import { VIEW_PLUGINS } from "../src/view-plugins.js";
@@ -222,4 +222,66 @@ test("birds.glb: six families, one mesh each with the wing/head attribute, withi
     assert.ok(Array.isArray(m.userData.hinge) && Array.isArray(m.userData.neck), `${s} pivots`);
     assert.ok(tris * BIRD_BUDGET.pc.near <= 60000, `${s}: a full near set stays under 60k triangles`);
   }
+});
+
+// The Expanse geese V: the cards in the RTS view; in Hero mode birds.glb's goose_lod in their place (one draw either way,
+// same instance rows), at most 400 triangles a goose so the 14 geese stay under 6k triangles on a phone.
+test("geese V: birds.glb goose_lod swaps in for the cards in Hero mode only, one draw, within the triangle budget", async () => {
+  const { scene } = await parseModel(readFileSync(new URL("../public/models/birds.glb", import.meta.url)));
+  let lod = null;
+  scene.traverse((o) => { if (o.isMesh && o.name === "goose_lod") lod = o; });
+  assert.ok(lod, "goose_lod mesh in birds.glb");
+  const g = lod.geometry, tris = (g.index ? g.index.count : g.getAttribute("position").count) / 3;
+  assert.ok(tris >= 200 && tris <= 400, `goose_lod: ${tris} triangles`);
+  const side = g.getAttribute("_bird");
+  assert.ok(side && g.getAttribute("color") && g.getAttribute("normal"), "goose_lod attributes");
+  const sides = new Set(); for (let i = 0; i < side.count; i++) sides.add(side.getX(i));
+  assert.ok(sides.has(-1) && sides.has(1) && sides.has(0), "both wings and the body are tagged (the wings flap from _bird)");
+  assert.ok(Array.isArray(lod.userData.hinge) && Array.isArray(lod.userData.neck), "pivots");
+  assert.equal(GOOSE_LOOK.length, 4);
+
+  const life = new AmbientLife(new THREE.Scene(), new Terrain("expanse"), { fogTexture: null });
+  const birds = life.groups.find((r) => r.name === "birds"), shown = () => life.root.children.filter((m) => m.visible).map((m) => m.name);
+  assert.equal(life.plan.look, "goose");
+  assert.equal(birds.rows.length, 14, "two Vs of seven");
+  const before = shown();
+  assert.equal(life.gooseModel(null), false, "the RTS view keeps the cards");
+  assert.ok(!life.geese, "no goose mesh until a model is handed over");
+  assert.equal(life.gooseModel(lod), true);
+  const mesh = life.geese.mesh;
+  assert.equal(mesh.name, "life:geese");
+  assert.deepEqual(shown(), [...before.filter((n) => n !== "life:birds"), "life:geese"], "a swap: the same number of draws");
+  assert.equal(mesh.castShadow, false);
+  for (const name of ["aA", "aB", "aC"]) assert.equal(mesh.geometry.getAttribute(name), birds.geometry.getAttribute(name), `${name} shared with the cards`);
+  assert.equal(mesh.geometry.instanceCount, 14, "every goose");
+  assert.ok(mesh.geometry.instanceCount * tris <= 6000, `the V stays under 6k triangles: ${mesh.geometry.instanceCount * tris}`);
+  life.setShare(0.5);
+  assert.equal(mesh.geometry.instanceCount, 7, "the governor thins the model like the cards");
+  life.setShare(1);
+  assert.equal(life.gooseModel(null), false);
+  assert.deepEqual(shown(), before, "leaving Hero mode hands the cards back");
+  // A map without geese never builds one.
+  const other = new AmbientLife(new THREE.Scene(), new Terrain("riverlands"), { fogTexture: null });
+  assert.equal(other.gooseModel(lod), false);
+  assert.ok(!other.geese);
+
+  // BirdView: the RTS view never fetches birds.glb for the geese; Hero mode does, and Detail/governor rules hold.
+  const view = { scene: new THREE.Scene(), terrain: new Terrain("expanse"), settings: { birdHint: true, detail: true }, motionLevel: 2, reducedMotion: { matches: false }, fogTexture: null, objects: new Map(), scatter: { tall: [] }, lifeShare: 1, life: new AmbientLife(new THREE.Scene(), new Terrain("expanse"), { fogTexture: null }) };
+  const plugin = new BirdView(view);
+  let loads = 0;
+  plugin.load = () => { loads++; };
+  const sim = { entities: [], isVisible: () => true, get: () => null };
+  for (let i = 0; i < 5; i++) plugin.update(sim, 0.3);
+  assert.equal(loads, 0, "RTS view: birds.glb not fetched");
+  assert.equal(plugin.state.geese, 0);
+  view.heroSaved = true; Object.defineProperty(view, "heroCameraOn", { get: () => !!view.heroSaved }); view.heroEye = new THREE.Vector3();
+  plugin.update(sim, 0.3);
+  assert.ok(loads >= 1, "Hero mode loads birds.glb");
+  plugin.models = new Map([["goose_lod", lod]]);
+  plugin.update(sim, 0.3);
+  assert.equal(plugin.state.geese, 14, "Hero mode: the V flies as the goose model");
+  view.lifeShare = 0.5; plugin.update(sim, 0.3);
+  assert.equal(plugin.state.geese, 0, "a thinned frame budget hands the cards back");
+  view.lifeShare = 1; view.heroSaved = null; plugin.update(sim, 0.3);
+  assert.equal(plugin.state.geese, 0, "leaving Hero mode hands the cards back");
 });

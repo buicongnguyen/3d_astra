@@ -201,6 +201,80 @@ void main() {
 }`;
 const SOLID_FRAGMENT = `varying vec3 vColor; void main() { gl_FragColor = vec4(vColor, 1.0); }`;
 
+// A detailed bird's wing (public/models/birds.glb, tools/build-birds.mjs): each vertex carries _bird = (wing side -1/0/1,
+// span 0 at the shoulder .. 1 at the tip, head 0/1). Turns a wing vertex about its shoulder `hinge` (|x|, y, z): a bird
+// modelled with folded wings (folded 1) spreads them as it opens and stretches them `stretch` times longer; an open-wing
+// bird folds them back along the body at rest. Then the wingbeat `flap` (rad, + = up) about the body axis, stronger
+// toward the tip. Shared by bird-view.js (near birds in Hero mode) and the goose V below, so both flap the same way.
+export const WING_POSE = /* glsl */ `
+vec3 rotY(vec3 q, float a) { float c = cos(a), s = sin(a); return vec3(q.x * c + q.z * s, q.y, -q.x * s + q.z * c); }
+vec3 rotZ(vec3 q, float a) { float c = cos(a), s = sin(a); return vec3(q.x * c - q.y * s, q.x * s + q.y * c, q.z); }
+vec3 wingPose(vec3 local, inout vec3 n, vec3 bird, vec3 hinge, float folded, float stretch, float open, float flap) {
+  float side = bird.x;
+  vec3 h = vec3(side * hinge.x, hinge.y, hinge.z);
+  vec3 q = local - h;
+  float turn = folded > 0.5 ? -1.5708 * side * open : 1.45 * side * (1.0 - open);
+  q = rotY(q, turn); n = rotY(n, turn);
+  if (folded > 0.5) q *= mix(1.0, stretch, open);
+  else { q.xz *= mix(0.5, 1.0, open); q.x *= mix(0.45, 1.0, open); q.y += (1.0 - open) * 0.04; }
+  float a = side * flap * (0.7 + 0.5 * bird.y);
+  q = rotZ(q, a); n = rotZ(n, a);
+  return q + h;
+}`;
+
+// The Expanse geese V in Hero mode: the detailed goose (birds.glb "goose_lod", at most 400 triangles) on the same path
+// and instance rows as the cards (BIRD_PATH), the wings spread and beating from the _bird attribute (WING_POSE). One
+// instanced draw that replaces the card draw while it shows; lit by a fixed sun, fogged like the scene.
+const GOOSE_VERTEX = /* glsl */ `${COMMON}${BIRD_PATH}${WING_POSE}
+#include <fog_pars_vertex>
+uniform vec3 uHinge, uSun;
+uniform vec2 uNeck;    // neck pivot (y, z)
+uniform vec4 uLook;    // body width, body length, neck reach (rad), wing stretch
+uniform float uScale;
+attribute vec3 _bird;
+varying vec3 vColor;
+void main() {
+  vec3 p; vec2 fwd; float bank;
+  birdPath(p, fwd, bank);
+  vec3 local = position, n = normal;
+  if (_bird.x != 0.0) local = wingPose(local, n, _bird, uHinge, 1.0, uLook.w, 1.0, birdFlap(1.0));
+  else {
+    // A goose in flight: the head and neck reach forward (the model sits with its head up), the body long and slim.
+    if (_bird.z > 0.5) {
+      vec3 q = local - vec3(0.0, uNeck.x, uNeck.y);
+      float c = cos(uLook.z), s = sin(uLook.z);
+      q = vec3(q.x, q.y * c - q.z * s, q.z * c + q.y * s);
+      n = vec3(n.x, n.y * c - n.z * s, n.z * c + n.y * s);
+      local = q + vec3(0.0, uNeck.x, uNeck.y);
+    }
+    local.x *= uLook.x; local.z *= uLook.y;
+  }
+  // A goose about to brush the Hero camera shrinks away instead of filling the screen (as bird-view.js's near birds).
+  float show = inside(p, 1.0) * (1.0 - smoothstep(0.7, 0.85, fogAt(p))) * smoothstep(1.5, 4.0, distance(p, cameraPosition));
+  vec3 world = place(local * aA.w * uScale * show, fwd, p);
+  vec2 right = vec2(fwd.y, -fwd.x);
+  vec3 wn = normalize(vec3(right.x * n.x + fwd.x * n.z, n.y, right.y * n.x + fwd.y * n.z));
+  vColor = color * (0.5 + 0.62 * max(dot(wn, uSun), 0.0) + 0.12 * wn.y);
+  vec4 mvPosition = viewMatrix * vec4(world, 1.0);
+  gl_Position = projectionMatrix * mvPosition;
+  #include <fog_vertex>
+}`;
+const GOOSE_FRAGMENT = /* glsl */ `
+varying vec3 vColor;
+#include <common>
+#include <fog_pars_fragment>
+void main() {
+  gl_FragColor = vec4(vColor, 1.0);
+  #include <tonemapping_fragment>
+  #include <colorspace_fragment>
+  #include <fog_fragment>
+}`;
+const GOOSE_SUN = new THREE.Vector3(-25, 55, 20).normalize();
+// The goose of birds.glb is the duck recoloured, modelled sitting: in the V its body is this much narrower and longer, its
+// head and neck tip this far forward (rad) and its wings spread this many times their folded length, so it reads as a
+// goose in flight from below (long neck, broad wings; compared against 1, 1, 0, 1.8 in Hero mode shots).
+export const GOOSE_LOOK = Object.freeze([0.8, 1.25, 1.2, 2.4]);
+
 const SHADOW_VERTEX = `${COMMON}${BIRD_PATH}
 uniform vec2 uSun; // ground shift per unit of height, along the sun
 varying vec2 vUv; varying float vAlpha;
@@ -510,7 +584,7 @@ export class AmbientLife {
       const pick = (b, name) => name === "aA" ? [b.x, b.y, b.z, b.size] : name === "aB" ? [b.radius, b.speed, b.phase, b.mode] : [b.flap, b.soar, b.back, b.side];
       const names = [["aA", 4], ["aB", 4], ["aC", 4]];
       const birds = instanced(birdGeometry(), plan.birds, pick, names);
-      add(birds, material(BIRD_VERTEX, SOLID_FRAGMENT, { uBody: { value: colors[0] }, uWing: { value: colors[1] }, uTip: { value: colors[2] } }, { side: THREE.DoubleSide }), "life:birds");
+      this.birdCards = add(birds, material(BIRD_VERTEX, SOLID_FRAGMENT, { uBody: { value: colors[0] }, uWing: { value: colors[1] }, uTip: { value: colors[2] } }, { side: THREE.DoubleSide }), "life:birds");
       const quad = new THREE.InstancedBufferGeometry();
       quad.setAttribute("position", new THREE.Float32BufferAttribute([-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, -1, 0, 1, 1, 0, -1, 1, 0], 3));
       for (const [name] of names) quad.setAttribute(name, birds.getAttribute(name));
@@ -588,6 +662,38 @@ export class AmbientLife {
     if (group.points) group.geometry.setDrawRange(0, n);
     else group.geometry.instanceCount = n;
     if (group.shadow) group.shadow.instanceCount = n;
+    if (group.model) group.model.instanceCount = n;
+  }
+  // Hero mode (bird-view.js hands over birds.glb's "goose_lod" once it has loaded it; null hands it back): the geese V
+  // draws as the detailed goose instead of the cards. Same instance rows (shared buffers: kills, thinning and the
+  // clock apply to both), so it is a swap, never an extra draw. Built on first use; cheap to call every frame.
+  gooseModel(src, { size = 1.1 } = {}) {
+    const birds = this.groups.find((g) => g.name === "birds");
+    if (!birds || this.plan.look !== "goose") return false;
+    if (src && !this.geese) {
+      const g = new THREE.InstancedBufferGeometry(), sg = src.geometry;
+      for (const name of ["position", "normal", "color", "_bird"]) g.setAttribute(name, sg.getAttribute(name));
+      if (sg.index) g.setIndex(sg.index);
+      for (const name of ["aA", "aB", "aC"]) g.setAttribute(name, birds.geometry.getAttribute(name));
+      const x = src.userData || {};
+      const mat = new THREE.ShaderMaterial({ name: "GooseV",
+        uniforms: { ...THREE.UniformsUtils.clone(THREE.UniformsLib.fog), ...this.uniforms, uHinge: { value: new THREE.Vector3(...(x.hinge || [0, 0, 0])) },
+          uNeck: { value: new THREE.Vector2(...(x.neck || [0, 0])) }, uLook: { value: new THREE.Vector4(...GOOSE_LOOK) },
+          uSun: { value: GOOSE_SUN }, uScale: { value: 1 / size } },
+        vertexShader: GOOSE_VERTEX, fragmentShader: GOOSE_FRAGMENT, vertexColors: true, fog: true, side: THREE.DoubleSide });
+      this.materials.push(mat);
+      const mesh = new THREE.Mesh(g, mat);
+      mesh.name = "life:geese";
+      mesh.frustumCulled = false; // positions come from the shader
+      mesh.visible = false;
+      this.root.add(mesh);
+      this.geese = { mesh, on: false, triangles: (sg.index ? sg.index.count : sg.getAttribute("position").count) / 3 };
+      birds.model = g;
+      this.applyCount(birds);
+    }
+    const on = !!(src && this.geese);
+    if (this.geese && this.geese.on !== on) { this.geese.on = on; this.geese.mesh.visible = on; this.birdCards.visible = !on; }
+    return on;
   }
   // Combat kills the small creatures it reaches (birds fly above it). A dead creature swaps
   // places with the last live one in every per-instance buffer, and the draw shrinks by one.

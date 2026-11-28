@@ -6,6 +6,8 @@
 //     creature life; the flocks near the camera use the detailed birds (at most one draw per family, at most 20 / 10
 //     birds) and a shot startles a flock (one event, ripple take-off); Settings closeDetail Off and birdHint Off apply
 //     at once; leaving Hero mode hides it all again;
+//   - the Expanse geese V: cards in the RTS view (birds.glb not fetched), the goose model in Hero mode (one draw, 14 geese,
+//     at most 400 triangles each), seen on screen against the sky;
 //   - no shader error, no page error.
 // The battle clock is not needed: the checks read the plugins' state, never an animation's progress (CI draws ~1 fps);
 // they wait for the detail models to arrive (slow on CI) before they assert.
@@ -105,6 +107,83 @@ await suite("h5-look", async () => {
     await page.waitForFunction(() => !window.__frontier.view.heroCameraOn, null, { timeout: TIMEOUT.step });
     await page.waitForFunction(() => { const v = window.__frontier.view, p = (n) => ({ BirdView: v.birds, UnitDecalsView: v.unitDecals, CloseLookView: v.closeLook })[n]; return p("BirdView").state.near === 0 && !p("UnitDecalsView").mesh?.visible && !p("CloseLookView").state.on; }, null, { timeout: TIMEOUT.step });
     assert.deepEqual(errors, [], `${viewport}: errors ${errors.join(" | ")}`);
+    await page.close();
+  }
+
+  // The Expanse geese V (ambient-life.js): cards in the RTS view without fetching birds.glb; in Hero mode, looking up at
+  // the V, birds.glb's goose_lod in their place (one draw, all 14 geese) and the geese show on screen (dark heads and
+  // wings against the sky around the lead goose). The ambient clock is held (dt 0) so the V stays put on slow runners.
+  {
+    const { page, goto, ready, tap, errors } = await openPage(browser, "desktop", { timeout: TIMEOUT.models });
+    page.on("console", (m) => { if (/Shader Error|THREE\.WebGLProgram|ERROR: 0:/.test(m.text())) errors.push(m.text().slice(0, 300)); });
+    const glbs = [];
+    page.on("request", (r) => { if (/birds\.glb/.test(r.url())) glbs.push(r.url()); });
+    await goto();
+    await ready();
+    await tap('[data-mode="skirmish"]');
+    await page.selectOption("#scenario", "expanse");
+    await ready();
+    await page.evaluate(() => document.querySelector("#start").scrollIntoView({ block: "center" }));
+    await tap("#start");
+    await page.waitForFunction(() => window.__frontier.started && document.querySelector("#modal").hidden, null, { timeout: TIMEOUT.models });
+    await page.evaluate(() => {
+      const f = window.__frontier, v = f.view, life = v.life;
+      f.holdMessages = true; f.sim.aiEnabled = false; f.sim.explored[0].fill(1); f.sim.visible[0].fill(1);
+      // The lead goose of the first V (BIRD_PATH mode 1), held where the V passes closest to the map's centre.
+      const b = life.plan.birds.find((r) => r.mode === 1), half = v.terrain.half, span = half * 2 + 40, fx = Math.cos(b.radius), fz = Math.sin(b.radius);
+      const at = (t) => { const s = (((t * b.speed + b.phase * span) % span) + span) % span - span * 0.5; return { x: b.x + fx * s, y: b.y, z: b.z + fz * s }; };
+      let best = Infinity, bt = 0;
+      for (let t = 0; t < span / b.speed; t += 0.1) { const p = at(t), d = Math.hypot(p.x, p.z); if (d < best) { best = d; bt = t; } }
+      const update = life.update.bind(life);
+      life.uniforms.uTime.value = bt;
+      life.update = (dt, camera, h) => update(0, camera, h);
+      window.__lead = { ...at(bt), fx, fz };
+    });
+    await page.waitForTimeout(500);
+    const rts = await page.evaluate(() => { const v = window.__frontier.view; return { cards: v.life.birdCards.visible, built: !!v.life.geese, geese: v.birds.state.geese }; });
+    assert.deepEqual(rts, { cards: true, built: false, geese: 0 }, `geese in the RTS view: ${JSON.stringify(rts)}`);
+    assert.deepEqual(glbs, [], "the RTS view never fetches birds.glb");
+
+    const heroId = await page.evaluate(() => {
+      const f = window.__frontier, s = f.sim, e = s.own(0).find((u) => u.type === "vanguard"), g = window.__lead;
+      Object.assign(e, { hero: "vale", name: "Mira Vale", ability: { id: "holdline", name: "Hold the line", cooldown: 35, duration: 6, radius: 8, taken: 0.7, icon: "rally", order: 30 } });
+      e.x = g.x + g.fx * 12; e.z = g.z + g.fz * 12; e.orders = []; e.stance = "hold";
+      f.step(0.1);
+      return e.id;
+    });
+    await page.evaluate((id) => window.__frontier.heroMode.enter(id), heroId);
+    await page.waitForFunction(() => window.__frontier.view.heroCameraOn, null, { timeout: TIMEOUT.step });
+    // Look up at the V from ahead and below it.
+    await page.evaluate(() => {
+      const v = window.__frontier.view, place = v.placeHeroCamera.bind(v), g = window.__lead;
+      v.placeHeroCamera = (eye, look, fov) => place({ x: g.x + g.fx * 9, y: g.y - 5, z: g.z + g.fz * 9 + 1.5 }, { x: g.x - g.fx * 3, y: g.y, z: g.z - g.fz * 3 }, fov);
+    });
+    await page.waitForFunction(() => window.__frontier.view.life.geese?.on, null, { timeout: TIMEOUT.models });
+    const hero = await page.evaluate(() => {
+      const v = window.__frontier.view, life = v.life, m = life.geese.mesh, g = m.geometry;
+      return { cards: life.birdCards.visible, model: m.visible, instances: g.instanceCount, triangles: (g.index ? g.index.count : g.getAttribute("position").count) / 3, plugin: v.birds.state.geese, shadow: m.castShadow };
+    });
+    assert.deepEqual({ ...hero, triangles: hero.triangles <= 400 }, { cards: false, model: true, instances: 14, triangles: true, plugin: 14, shadow: false }, `geese in Hero mode: ${JSON.stringify(hero)}`);
+    assert.ok(glbs.length >= 1, "Hero mode fetched birds.glb");
+    await page.waitForTimeout(600);
+    // On screen: the lead goose's patch of sky holds dark pixels (black head and neck, brown wings).
+    const box = await page.evaluate(() => {
+      const v = window.__frontier.view, g = window.__lead, c = v.renderer.domElement.getBoundingClientRect();
+      const p = new (v.camera.position.constructor)(g.x, g.y + 0.3, g.z).project(v.camera);
+      return { x: c.left + (p.x + 1) / 2 * c.width - 60, y: c.top + (1 - p.y) / 2 * c.height - 60, width: 120, height: 120 };
+    });
+    const png = (await page.screenshot({ clip: box })).toString("base64");
+    const dark = await page.evaluate(async (data) => {
+      const img = new Image(); img.src = `data:image/png;base64,${data}`; await img.decode();
+      const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
+      const x = c.getContext("2d"); x.drawImage(img, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height).data; let n = 0;
+      for (let i = 0; i < d.length; i += 4) if (d[i] + d[i + 1] + d[i + 2] < 300) n++;
+      return n;
+    }, png);
+    assert.ok(dark >= 40, `the lead goose shows against the sky (${dark} dark pixels)`);
+    await keep(page, "h5-look-desktop-geese");
+    assert.deepEqual(errors, [], `geese: errors ${errors.join(" | ")}`);
     await page.close();
   }
 }, { browser });

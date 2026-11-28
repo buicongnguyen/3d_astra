@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { BirdFlocks, BIRD_BUDGET, BIRD_LIFE, NEVER, SPECIES, SPECIES_ID, planFlocks, roofFlock } from "./bird-life.js";
-import { birdGeometry } from "./ambient-life.js";
+import { birdGeometry, WING_POSE } from "./ambient-life.js";
 import { modelLoader } from "./model-decode.js";
 
 // H5 birds that react (a view plugin, docs/VIEW_PLUGINS.md; the logic is src/bird-life.js).
@@ -114,35 +114,22 @@ void main() {
 }`;
 const CARD_FRAGMENT = /* glsl */ `varying vec3 vColor; void main() { gl_FragColor = vec4(vColor, 1.0); }`;
 
-const NEAR_VERTEX = /* glsl */ `${COMMON}
+const NEAR_VERTEX = /* glsl */ `${COMMON}${WING_POSE}
 #include <fog_pars_vertex>
 uniform vec3 uHinge;   // shoulder (|x|, y, z)
 uniform vec2 uNeck;    // neck pivot (y, z)
 uniform vec3 uSun;
 attribute vec3 _bird;  // wing side, span, head
 varying vec3 vColor;
-vec3 rotY(vec3 q, float a) { float c = cos(a), s = sin(a); return vec3(q.x * c + q.z * s, q.y, -q.x * s + q.z * c); }
-vec3 rotZ(vec3 q, float a) { float c = cos(a), s = sin(a); return vec3(q.x * c - q.y * s, q.x * s + q.y * c, q.z); }
 void main() {
   vec3 p; vec2 fwd; float flying, open;
   birdFrame(p, fwd, flying, open);
   float fam = aTimes.w, ph = aTimes.z;
   vec4 fl = uFlight[int(fam + 0.5)];
   vec3 local = position, n = normal;
-  if (_bird.x != 0.0) {
-    float side = _bird.x;
-    vec3 h = vec3(side * uHinge.x, uHinge.y, uHinge.z);
-    vec3 q = local - h;
-    // Folded-wing birds spread their wings in flight; open-wing birds fold theirs back along the body when perched.
-    float turn = fl.w > 0.5 ? -1.5708 * side * open : 1.45 * side * (1.0 - open);
-    q = rotY(q, turn); n = rotY(n, turn);
-    // Folded-wing birds stretch their wings open; open-wing birds fold theirs to half length, tucked against the back.
-    if (fl.w > 0.5) q *= mix(1.0, fl.z, open);
-    else { q.xz *= mix(0.5, 1.0, open); q.x *= mix(0.45, 1.0, open); q.y += (1.0 - open) * 0.04; }
-    float a = side * flapAngle(fam, flying, ph) * (0.7 + 0.5 * _bird.y);
-    q = rotZ(q, a); n = rotZ(n, a);
-    local = q + h;
-  }
+  // Folded-wing birds spread and stretch their wings in flight; open-wing birds fold theirs back along the body when
+  // perched (WING_POSE in ambient-life.js, shared with the geese V).
+  if (_bird.x != 0.0) local = wingPose(local, n, _bird, uHinge, fl.w, fl.z, open, flapAngle(fam, flying, ph));
   if (_bird.z > 0.5) {
     // Head: quick jerks left and right while perched, steady in flight.
     float yaw = (1.0 - flying) * 0.65 * sin(floor(uTime * 0.9 + ph * 5.0) * 2.3 + ph * 11.0) * uAmp;
@@ -188,7 +175,7 @@ export class BirdView {
     this.clock = 0;
     this.check = 0;
     this.roofs = new Set(); // building ids with a roof flock
-    this.state = { flocks: 0, birds: 0, flying: 0, near: 0, nearDraws: 0, startles: 0 }; // tests and probes
+    this.state = { flocks: 0, birds: 0, flying: 0, near: 0, nearDraws: 0, startles: 0, geese: 0 }; // tests and probes
   }
   // The map's flocks and the card mesh (once per map: reset() drops them).
   build() {
@@ -289,6 +276,7 @@ export class BirdView {
     for (const id of this.flocks.dirty) { const f = this.flocks.flocks[id]; this.write(f); if (this.nearSet?.has(id)) this.nearDirty = true; }
     this.flocks.dirty.clear();
     if (this.nearDirty) this.fillNear();
+    this.geese(share);
     this.state.flocks = this.flocks.flocks.length;
     this.state.birds = this.cards.geometry.instanceCount;
     this.state.flying = this.flocks.flying;
@@ -377,11 +365,23 @@ export class BirdView {
     for (const id of new Set([...was, ...next])) this.write(this.flocks.flocks[id], next.has(id));
     this.nearDirty = true;
   }
+  // The Expanse geese V (ambient-life.js) flies as the detailed goose in Hero mode: birds.glb's goose_lod (at most 400
+  // triangles) in place of the cards, one draw either way. The RTS view keeps the cards: from its camera a goose is
+  // 12-17 CSS px across, seen from above, where the card's silhouette already reads, and it never fetches birds.glb. A
+  // thinned frame budget (governor share < 1) hands the cards back.
+  geese(share) {
+    const v = this.view, life = v.life;
+    if (life?.plan?.look !== "goose") { this.state.geese = 0; return; }
+    const want = !!(v.heroCameraOn && share >= 1);
+    if (want && !this.models) this.load();
+    const on = life.gooseModel(want ? this.models?.get("goose_lod") || null : null, { size: SIZE_CARD.goose });
+    this.state.geese = on ? life.geese.mesh.geometry.instanceCount : 0;
+  }
   load() {
     if (this.loading) return;
     this.loading = modelLoader().loadAsync(`${import.meta.env?.BASE_URL ?? "./"}models/birds.glb`).then((gltf) => {
       const models = new Map();
-      gltf.scene.traverse((o) => { if (o.isMesh && SPECIES.includes(o.name)) models.set(o.name, o); });
+      gltf.scene.traverse((o) => { if (o.isMesh && (SPECIES.includes(o.name) || o.name === "goose_lod")) models.set(o.name, o); });
       this.models = models;
     }).catch(() => { this.models = new Map(); });
   }
@@ -448,7 +448,7 @@ export class BirdView {
     this.flocks = null; this.nearSet = null; this.hawk = null;
     this.roofs.clear();
     this.clock = 0;
-    this.state = { flocks: 0, birds: 0, flying: 0, near: 0, nearDraws: 0, startles: 0 };
+    this.state = { flocks: 0, birds: 0, flying: 0, near: 0, nearDraws: 0, startles: 0, geese: 0 };
   }
 }
 export { NEVER };

@@ -7,6 +7,7 @@
 //   goose      the duck, recoloured as a grey-brown goose with a black neck (the Expanse V)
 //   hawk       cute_game/public/assets/models/forest-birds.glb, forest_raptor (rigid body/head/wing_l/wing_r)
 //   gull       race3D_game/public/models/bird.glb (rigid Bird_WingL/R)
+//   goose_lod  the goose simplified to at most 400 triangles (the V formation over the Expanse, src/ambient-life.js)
 //   songbird   the crow simplified to about half its triangles (meshoptimizer) and recoloured warm orange-brown
 // Each bird faces +z, y up, wings along x (or folded along the body), scaled to SIZE metres; the shoulder hinge and neck pivot are in
 // the mesh extras with `folded` (wings modelled along the body) (bird-view.js reads them).  node tools/build-birds.mjs   (then it packs the file: compress-models.mjs)
@@ -119,7 +120,8 @@ function shape(raw, span, recolour = null) {
 }
 
 // Fewer triangles (the songbird): meshoptimizer's simplifier on the welded mesh, the attributes follow each kept vertex.
-function simplify(bird, ratio) {
+// `ratio` of the triangles, or with `target` at most that many (a looser error bound lets it get there).
+function simplify(bird, ratio, { target = 0, error = 0.02 } = {}) {
   const n = bird.P.length / 3, key = new Map(), remap = new Uint32Array(n), uniq = [];
   for (let i = 0; i < n; i++) {
     const k = `${bird.P[i * 3].toFixed(5)},${bird.P[i * 3 + 1].toFixed(5)},${bird.P[i * 3 + 2].toFixed(5)},${bird.B[i * 3 + 2]},${bird.B[i * 3]}`;
@@ -128,7 +130,7 @@ function simplify(bird, ratio) {
   }
   const verts = new Float32Array(uniq.length * 3);
   uniq.forEach((i, j) => verts.set(bird.P.subarray(i * 3, i * 3 + 3), j * 3));
-  const [idx] = MeshoptSimplifier.simplify(remap, verts, 3, Math.floor((n * ratio) / 3) * 3, 0.02, ["LockBorder"]);
+  const [idx] = MeshoptSimplifier.simplify(remap, verts, 3, target ? target * 3 : Math.floor((n * ratio) / 3) * 3, error, target ? [] : ["LockBorder"]);
   const pick = (A) => { const o = new Float32Array(idx.length * 3); idx.forEach((v, j) => o.set(A.subarray(uniq[v] * 3, uniq[v] * 3 + 3), j * 3)); return o; };
   return { ...bird, P: pick(bird.P), N: pick(bird.N), C: pick(bird.C), B: pick(bird.B) };
 }
@@ -164,6 +166,10 @@ const birds = {
     return h < 0.45 ? lin("#f0a040") : part === 1 ? lin("#3b2b1f") : lin("#9a6230");
   }), 0.55),
 };
+// The goose far LOD (ambient-life.js: the Expanse V formation in Hero mode): the goose at no more than GOOSE_LOD
+// triangles, so all 14 geese of the two Vs stay one cheap instanced draw on a phone.
+export const GOOSE_LOD = 400;
+birds.goose_lod = simplify(birds.goose, 0, { target: GOOSE_LOD, error: 0.2 });
 
 const doc = new Document(), buffer = doc.createBuffer(), scene = doc.createScene("birds");
 for (const [name, b] of Object.entries(birds)) {
