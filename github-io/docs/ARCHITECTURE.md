@@ -68,6 +68,7 @@ Other rules modules: `data.js` (definitions, maps), `balance.json` (numbers), `p
 | `i18n.js`, `locales/` | Text catalogue (keyed by the English string); the Vietnamese and story catalogues are separate chunks loaded when Vietnamese is shown |
 | `app/loading.js`, `app/offline.js`, `tools/sw.template.js` | Staged model download with progress; service worker registration; the worker (published as `sw.js`) |
 | `governor.js`, `entity-batches.js`, `ambient-life.js` | Frame-time governor, instanced batches, ambient life |
+| `unit-rig.js`, `idle-life.js` | Shader bones (legs, body, head, hulls, wheels, Skywing wings) and the per-instance pose; idle life (idle soldiers sit, squat, stretch, look about and drill by their Barracks; view only, packed into the same pose; off under `?test` unless `&idle=1`) |
 | `close-view.js` | Close view (H3b): near units swap to close-up detail models (`public/models/detail/`, every unit type; built by `node tools/build-detail.mjs`), loaded on first use and then fetched whole by the service worker (`fc-detail`) for offline play; their team paint is one shared material coloured per instance |
 | `music.js` | Music and sound |
 

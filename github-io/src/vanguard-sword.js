@@ -2,6 +2,7 @@ import { Group } from "three";
 import { addVanguardWave } from "./vanguard-wave.js";
 import { weaponStyle } from "./visual-style.js";
 import { meleeStyle } from "./melee-styles.js";
+import { motionKneel, motionLean, motionTwist } from "./unit-rig.js";
 
 // Seconds relative to visible contact. The effect and the victim's hit flash use the same delay.
 export const VANGUARD_WINDUP = weaponStyle({ unit: "vanguard" }).life;
@@ -27,14 +28,17 @@ export function attachVanguardSword(model, type = "vanguard") {
   const torso = model.getObjectByName("SwordTorso");
   const arm = torso?.getObjectByName("SwordArm");
   const elbow = arm?.getObjectByName("SwordElbow");
-  return elbow ? { torso, arm, elbow, wave: elbow.getObjectByName("SwordWave"), hip: torso.position.y, lunge: 0, elapsed: Infinity, sequence: -1, style: meleeStyle(type) } : null;
+  return elbow ? { torso, arm, elbow, wave: elbow.getObjectByName("SwordWave"), hip: torso.position.y, shoulder: torso.position.y + arm.position.y,
+    lunge: 0, elapsed: Infinity, sequence: -1, style: meleeStyle(type) } : null;
 }
 
 // Rigid meshes share the model's instanced draw batches. Carry the shoulder with the body's
-// shader-driven hip rotation (unit-rig.js), including lean while running or flinching.
+// shader-driven hip rotation (unit-rig.js), including lean while running or flinching, and idle life's spine twist
+// (the shader turns the body by twist x smoothstep(hip, 1.7 hip, height); the shoulder takes its height's share).
 export function followVanguardTorso(sword, motion) {
-  sword.torso.rotation.x = motion[3] - 1;
-  sword.torso.position.y = sword.hip * (1 - motion[2] * 0.45);
+  const twist = motionTwist(motion), h = sword.hip, t = Math.min(1, Math.max(0, (sword.shoulder - h) / (0.7 * h)));
+  sword.torso.rotation.set(motionLean(motion), twist ? twist * t * t * (3 - 2 * t) : 0, 0);
+  sword.torso.position.y = h * (1 - motionKneel(motion) * 0.45);
 }
 
 function pose(sword, from, to, t) {

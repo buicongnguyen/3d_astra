@@ -89,7 +89,8 @@ jobs:
           - name: chronicles
             scripts: chronicles
           - name: visuals
-            scripts: visual-combat death-cue
+            # 2026-11-28: idle life (sit, squats, stretch, look, the Barracks drill) joins the combat visuals.
+            scripts: visual-combat death-cue idle-life
           # Split from "story": the four suites together ran 27 to 30 minutes on the runner (the cap).
           # 2026-11-25: audio and choices (13 min together) in their own groups.
           - name: story-choices

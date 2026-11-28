@@ -43,6 +43,8 @@ import { groundY, placeOnGround, MARKER_LIFT } from "./ground-y.js";
 import { isMeleeType } from "./melee-styles.js";
 import { prepareVanguardArm, attachVanguardSword, followVanguardTorso, restVanguardSword, strikeVanguardSword, VANGUARD_WINDUP, VANGUARD_RECOVERY } from "./vanguard-sword.js";
 import { skywingModel, dressSkywing, poseSkywingRig, poseSkywing, skywingTrails, skywingSize, flightBlend, markMuzzle, shineOf, tagShine, addShine, SHINE, SHINE_PULSE, SKY_WALK, SKY_BOB } from "./skywing-view.js";
+import { findHeads, tagHead, HEAD_EXTRA, headOf, headTag, packIdle } from "./unit-rig.js";
+import { IdleLife, IDLE } from "./idle-life.js";
 import { RIG_INFANTRY, RIG_HULL, KNEELERS, STANCE, GAIT, hitFlinch, FALL, fallFor, infantryFall, BONE, tagBone, tagWheels, addRig, rigDepthMaterial, stepInfantry, stepHull, approach, BARREL_POSES, newGun, fireBarrel, stepBarrel, poseBarrel, RECOIL, barrelKick, bodyKick, kickSize, poseTurretOnHull, swingLegs } from "./unit-rig.js";
 import {
   EnvironmentView,
@@ -199,9 +201,13 @@ function isSoftwareRenderer(gl) {
 export class WorldView {
   constructor(
     container,
-    { terrain = new Terrain(), settings = defaults(), mission = null } = {},
+    { terrain = new Terrain(), settings = defaults(), mission = null, idle = true } = {},
   ) {
     this.container = container;
+    // Idle life (src/idle-life.js): idle soldiers sit, squat, stretch, look about and drill by their Barracks. Browser
+    // tests turn it on with ?idle=1 (main.js), so their poses and measurements stay as they were.
+    this.idle = idle ? new IdleLife() : null;
+    this.idleSphere = new THREE.Sphere(new THREE.Vector3(), 3);
     this.terrain = terrain;
     this.settings = settings;
     // A story mission paints each enemy team in its faction's colour (faction-colors.js).
@@ -209,6 +215,7 @@ export class WorldView {
     this.colors = teamColors(settings, mission).map((c) => new THREE.Color(c).getHex());
     this.glows = teamGlows(settings, mission).map((c) => new THREE.Color(c).getHex());
     this.lowPower = settings.quality === "eco";
+    this.coarsePointer = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
     this.renderer = new THREE.WebGLRenderer({
       antialias: true,
       powerPreference: "high-performance",
@@ -775,8 +782,12 @@ export class WorldView {
       const hip = new THREE.Vector3().setFromMatrixPosition(leg.matrixWorld);
       hips[/_R(\d*)$/.test(leg.name) ? "R" : "L"] ??= [hip.y, knee, hip.z];
     }
+    // Idle life's head bone (unit-rig.js findHeads / tagHead): the helmet or hood of each soldier and what sits on it.
+    const underLeg = (o) => { for (let p = o.parent; p; p = p.parent) if (p.name.startsWith("leg_")) return true; return false; };
+    const heads = rigInfantry && !skywing ? findHeads(gltf.scene, type, underLeg) : null, headExtra = HEAD_EXTRA[type] || null;
+    const kneeY = knees.size ? [...knees.values()].reduce((a, b) => a + b, 0) / knees.size : hipY * 0.5;
     if (!detail) this.modelInfo.set(type, { pivot: pivot ? [pivot.x, pivot.z] : null, rig: rigInfantry ? "infantry" : rigHull ? "hull" : null,
-      hipY, legs: hips, hull: hullPivot ? [hullPivot.y, hullPivot.z] : null });
+      hipY, legs: hips, hull: hullPivot ? [hullPivot.y, hullPivot.z] : null, heads, headExtra });
     gltf.scene.traverse((o) => {
       // Leg pivots, and the flyers' spinning rotors and flickering burner flame (0.18), stay
       // separate nodes so they can move per instance inside their batches.
@@ -823,8 +834,11 @@ export class WorldView {
         const hip = new THREE.Vector3().setFromMatrixPosition(legPivot.matrixWorld);
         tagBone(geometry, /_R(\d*)$/.test(legPivot.name) ? BONE.legR : BONE.legL, hip.y, knees.get(legPivot), hip.z);
       } else if (target === buckets && rigInfantry && /^(Tyres|Spoked_rims|Spokes)/.test(o.name) && tagWheels(geometry, bikeWheels).length) { /* the Rider's wheels */ }
-      // Guns and turrets of infantry (BarrelRig / TurretRig nodes) lean and kneel with the body.
-      else if (rigInfantry) tagBone(geometry, BONE.body, hipY, hipY * 0.5, 0);
+      // Guns and turrets of infantry (BarrelRig / TurretRig nodes) lean and kneel with the body; the head's parts turn.
+      else if (rigInfantry) {
+        tagBone(geometry, BONE.body, hipY, hipY * 0.5, 0);
+        if (heads && target === buckets) tagHead(geometry, o.name, heads, hipY, headExtra);
+      }
       else if (target === buckets && rigHull && /^Wheel/.test(o.name) && tagWheels(geometry, hullWheels).length) { /* road wheels and hubs */ }
       else if (target === buckets && rigHull) tagBone(geometry, /^(Tracks|Wheel)/.test(o.name) ? BONE.none : BONE.hull, hullPivot.y, 0, hullPivot.z);
       target.get(key).geometries.push(geometry);
@@ -857,6 +871,7 @@ export class WorldView {
     }
     template.userData.rig = rigInfantry ? "infantry" : rigHull ? "hull" : null;
     template.userData.legLength = hipY;
+    template.userData.kneeY = kneeY;
     if (hullPivot) template.userData.hullPivot = [hullPivot.y, hullPivot.z];
     const barrel=new THREE.Group();barrel.name='BarrelRig';
     for(const {material,geometries} of barrelBuckets.values()){
@@ -960,7 +975,7 @@ export class WorldView {
             next = this.dressCache.get(cacheKey);
             if (!next) {
               const mine = kit.partsFor(parts, group, cls);
-              next = cls === "TeamGlow" && !mine.length ? base : kit.dressGeometry(base, mine, { THREE, BONE, info, group, cls });
+              next = cls === "TeamGlow" && !mine.length ? base : kit.dressGeometry(base, mine, { THREE, BONE, info, group, cls, headOf, headTag });
               this.dressCache.set(cacheKey, next);
             }
             for (const x of kit.partsFor(parts, group, cls)) used.add(x);
@@ -1674,7 +1689,7 @@ export class WorldView {
       model.traverse((o) => { if (o.isMesh && o.geometry.getAttribute("aRig")) o.userData.motion = motion; });
       root.userData.rig = { kind: model.userData.rig, motion, phase: (e.id * 0.7) % 6.28, gait: 0, kneel: 0, flinch: 0, flinchV: 0, roll: 0, rollV: 0, tilt: 0, lean: 0,
         vs: 0, pitch: 0, pitchV: 0, squat: 0, legLength: model.userData.legLength || 0.95, hullPivot: model.userData.hullPivot || [0.6, 0],
-        stance: STANCE[e.type] || null, ride: GAIT[e.type] === "ride" };
+        kneeY: model.userData.kneeY || (model.userData.legLength || 0.95) * 0.5, stance: STANCE[e.type] || null, ride: GAIT[e.type] === "ride" };
     }
     if (root.userData.turret) root.userData.turretBase = root.userData.turret.position.clone();
     // Artillery barrels (unit-rig.js BARREL_POSES) start in their resting pose: no run-in on spawn.
@@ -1786,6 +1801,13 @@ export class WorldView {
   }
   shakeEnabled() { return false; }
   feelEnabled() { return this.settings.combatMotion !== false && !this.reducedMotion.matches && !this.cameraCue; }
+  // Idle life: a soldier inside last frame's camera view (generous: the edge of the screen counts), always without culling.
+  idleOnScreen(at) {
+    const b = this.batches;
+    if (!b?.cull) return true;
+    this.idleSphere.center.set(at.x, at.y + 1, at.z);
+    return b.frustum.intersectsSphere(this.idleSphere);
+  }
   onScreen(event) {
     const p = new THREE.Vector3(event.x, 0, event.z).project(this.camera);
     return Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1 && Math.abs(p.z) <= 1;
@@ -2027,6 +2049,8 @@ export class WorldView {
     // Settings > Unit motion (unit-rig.js): knees, run lean, kneel-to-fire, flinch, hull rock, turret scan,
     // stowed artillery barrels and the Hawk's hover drift. Off keeps the classic leg swing.
     this.richMotion = lively && this.settings.unitMotion !== false;
+    // At most IDLE.budget soldiers act at once: fewer on phones and on Eco.
+    this.idle?.begin(dt, this.richMotion, IDLE.budget[this.lowPower || this.coarsePointer ? "phone" : "pc"]);
     const kicking = this.activity.combat.motion;
     const alive = new Set();
     // Interpolate only from a snapshot taken exactly one tick before the current state;
@@ -2117,7 +2141,7 @@ export class WorldView {
         rig.position.set(-Math.sin(rig.rotation.y)*kick,0,-Math.cos(rig.rotation.y)*kick);
         }
       }
-      let lift = 0, squash = 0, back = 0;
+      let lift = 0, squash = 0, back = 0, idleBack = 0;
       if (e.kind === "unit") {
         // The gait follows the ground actually covered this tick, so feet neither slide nor
         // march on the spot: stride length drives the leg swing, speed its size.
@@ -2139,6 +2163,16 @@ export class WorldView {
           // Skywing (skywing-view.js): the flight blend folds or spreads its wings; no footfall bob in the air.
           // On foot a gentle bob only (owner 2026-11-28: "less shaking walk"), none with reduced motion.
           if (u.skywing) lift *= (1 - poseSkywingRig(u, e, sim, dt)) * (this.reducedMotion.matches ? 0 : SKY_BOB);
+          // Idle life: the activity's pose rides the same shader bones; a squat or a seat lowers the body (its feet stay
+          // planted: the hips move back) at no draw cost.
+          else if (this.idle && !e.knelt) {
+            const pose = this.idle.unit(u.rig, e, sim, dt, this.idleOnScreen(o.position));
+            if (pose) {
+              packIdle(u.rig.motion, pose);
+              lift -= pose.drop * u.readabilityScale;
+              idleBack = pose.back * u.readabilityScale;
+            }
+          }
         } else if (u.rig?.kind === "hull") {
           const pitch = stepHull(u.rig, u.rig.motion, { speed, moving: !!e.moving, dt, rich: this.richMotion, scale: u.readabilityScale });
           if (u.turret) {
@@ -2148,6 +2182,7 @@ export class WorldView {
         }
         if (breathing && u.gait === 0 && (u.legs.length || u.rig?.kind === "infantry")) squash = Math.sin(this.lifeClock * 2.1 + e.id * 1.7) * 0.012;
         if (kicking && u.kick > 0) back = bodyKick(u.kick, u.kickSize);
+        back += idleBack;
         if (u.sword) {
           followVanguardTorso(u.sword, u.rig.motion);
           back -= u.sword.lunge * u.readabilityScale;

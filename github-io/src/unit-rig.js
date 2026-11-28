@@ -8,6 +8,10 @@ import * as THREE from "three";
 //   bone 0  infantry body: leans about the hip (pivotY, pivotZ) and drops when kneeling
 //   bone 1  left leg, bone 2 right leg: hip swing about (pivotY, pivotZ), knee bend below kneeY
 //   bone 3  vehicle hull: pitches about (pivotY, pivotZ) and squats (tracks and wheels stay put)
+//   bone 4  infantry head (idle life, 2026-11-28): aRig = (4 + 0.2 neckX, hipY, neckY, neckZ). It nods about the neck
+//           line, turns about its own vertical axis (neckX, neckZ), twists with the spine, then leans and kneels with
+//           the body. tagHead (below) gives it the helmet, crest, visor, jaw, mask and hood parts and every other
+//           island that sits on them (a close-up model's helmet trims, a merged hood's lens)
 //   bone 5  wheel: rolls about its own axle (pivotY, pivotZ) by distance x (1 / radius), kneeY holding 1 / radius
 //   bone 6  Skywing's left wing, bone 7 its right wing: aRig = (bone, hipY, hingeX, hingeY); folds about the axis
 //           through the back (model Z) at the hinge, then leans with the body about the hip
@@ -21,6 +25,10 @@ import * as THREE from "three";
 // modelled, arms raised), so a kneel reads max(0, pose) and the flight max(0, -pose). The rest pose is (0, 0, 0, 1),
 // which is also WebGL's value for an unbound vec4 attribute, so any draw without per-instance data
 // (a portrait, a stray non-instanced copy) shows the model exactly as modelled.
+// Idle life (src/idle-life.js) packs four more values into the same four floats, so the batches keep one pose
+// attribute (packIdle / readMotion, below): y = gait + 2 H (H = head yaw x 64 + nod, in PACK.angle steps), z = pose +
+// 2 L (L = the low pose, 0..1 in 1/PACK.low steps: squat, then sit), w = 1 + lean + 4 T (T = spine twist in PACK.twist
+// steps). Unpacked fields are 0, so every value written before idle life reads exactly as it did.
 // Every infantry type has the same two leg pivots (leg_L / leg_R at the hip): the Meridian troops with
 // Boot/Leg_suit/Shin, the Gunner with Knee_pad, the faction walkers with Upper_leg/Knee/Shin/Boot.
 // Creature round: the Acid Hound is a quadruped on the same two bones. Each `leg_*` empty is its own hip
@@ -56,9 +64,66 @@ export const REST_MOTION = [0, 0, 0, 1];
 export function kneelDrop(u) {
   const rig = u?.rig;
   if (!rig || rig.kind !== "infantry" || u.skywing) return 0;
-  return Math.max(0, rig.motion[2]) * rig.legLength * 0.45 * (u.readabilityScale || 1);
+  return motionKneel(rig.motion) * rig.legLength * 0.45 * (u.readabilityScale || 1);
 }
-export const BONE = { body: 0, legL: 1, legR: 2, hull: 3, wheel: 5, wingL: 6, wingR: 7, arms: 8, none: 9 };
+export const BONE = { body: 0, legL: 1, legR: 2, hull: 3, head: 4, wheel: 5, wingL: 6, wingR: 7, arms: 8, none: 9 };
+// Idle life's packed pose (see the header): angle = the head's yaw and nod step (radians; yaw up to yawMax steps, nod up
+// to nodMax), low = steps of the low pose per unit, twist = the spine twist step (radians, up to twistMax steps).
+export const PACK = Object.freeze({ angle: 0.02, yawMax: 63, nodMax: 31, low: 1000, twist: 0.005, twistMax: 120 });
+const qclamp = (x, m) => Math.max(-m, Math.min(m, Math.round(x)));
+// Adds an idle pose { yaw, nod, low, lean, twist } to a motion stepInfantry has just written (call it once a frame).
+export function packIdle(motion, pose) {
+  const yaw = qclamp(pose.yaw / PACK.angle, PACK.yawMax), nod = qclamp(pose.nod / PACK.angle, PACK.nodMax);
+  motion[1] += 2 * (yaw * 64 + nod);
+  motion[2] += 2 * Math.round(Math.min(1, Math.max(0, pose.low)) * PACK.low);
+  motion[3] += pose.lean + 4 * qclamp(pose.twist / PACK.twist, PACK.twistMax);
+  return motion;
+}
+// What the shader reads from a (packed) motion: kneel is the infantry kneel blend (pose for hulls and Skywing).
+export const motionKneel = (m) => Math.max(0, m[2] - 2 * Math.max(0, Math.floor(m[2] * 0.5)));
+export const motionLean = (m) => m[3] - 1 - 4 * Math.floor((m[3] - 1) * 0.25 + 0.5);
+export const motionTwist = (m) => Math.floor((m[3] - 1) * 0.25 + 0.5) * PACK.twist;
+export function readMotion(m, out = {}) {
+  const h = Math.floor(m[1] * 0.5), l = Math.max(0, Math.floor(m[2] * 0.5)), yaw = Math.floor(h / 64 + 0.5);
+  out.phase = m[0]; out.amp = m[1] - 2 * h; out.pose = m[2] - 2 * l; out.kneel = Math.max(0, out.pose);
+  out.low = l / PACK.low; out.lean = motionLean(m); out.twist = motionTwist(m);
+  out.yaw = yaw * PACK.angle; out.nod = (h - 64 * yaw) * PACK.angle;
+  return out;
+}
+// The low pose (idle life): 0 stands, 0.5 is the full squat (thighs LOW.thigh forward, shins LOW.shin, feet flat), 1 sits
+// on the ground with the legs out in front (the hip at LOW.sit hip heights, the legs reaching LOW.reach of their length).
+// Between 0.5 and 1 the seat drops from the squat to the ground behind the planted feet, then the legs slide out.
+// Leg shape from the hip (hipY) and the knee (kneeY): the ankle sits at 0.3 kneeY, the shin runs knee to ankle.
+// Writes out = { theta, phi, ankle } (the shader's thigh, knee and ankle angles; rigLow below must match), height (the
+// hip above the ground), drop (hipY - height), back (how far the hip sits behind the feet in a squat: the view moves the
+// body back by it, so the feet stay planted) and lean (the body's pitch: forward over a squat, back when sitting).
+export const LOW = Object.freeze({ thigh: 1.25, shin: 0.55, sit: 0.15, reach: 0.99, squatLean: 0.3, sitLean: -0.16 });
+export function lowPose(low, hipY, kneeY, out = {}) {
+  if (!(low > 0)) { out.theta = 0; out.phi = 0; out.ankle = 0; out.height = hipY; out.drop = 0; out.back = 0; out.lean = 0; return out; }
+  const ankle = kneeY * 0.3, a = hipY - kneeY, b = kneeY - ankle;
+  const s = Math.min(1, Math.max(0, low * 2)), v = Math.min(1, Math.max(0, low * 2 - 1)), sv = v * v * (3 - 2 * v);
+  const th = LOW.thigh * s, ps = LOW.shin * s;
+  const hs = ankle + a * Math.cos(th) + b * Math.cos(ps), ds = a * Math.sin(th) - b * Math.sin(ps);
+  out.back = ds;
+  if (v <= 0) { out.theta = th; out.phi = th + ps; out.ankle = -ps; out.height = hs; }
+  else {
+    const h = hs + (hipY * LOW.sit - hs) * sv, ya = ankle + (h - ankle) * sv * sv, d = ds + ((a + b) * LOW.reach - ds) * sv;
+    legIK(a, b, ya - h, d, out);
+    out.ankle = (out.theta - out.phi) * (1 - sv);
+    out.height = h;
+  }
+  out.drop = hipY - out.height;
+  out.lean = LOW.squatLean * s * (1 - sv) + LOW.sitLean * sv;
+  return out;
+}
+// Two-bone leg: thigh a, shin b, the ankle (dy, dz) from the hip (dy < 0 below it) -> theta (the thigh forward of
+// straight down) and phi (the knee bend), the knee forward.
+function legIK(a, b, dy, dz, out) {
+  const r = Math.min(Math.hypot(dy, dz), a + b), c = (x) => Math.min(1, Math.max(-1, x));
+  out.theta = Math.atan2(dz, -dy) + Math.acos(c((a * a + r * r - b * b) / (2 * a * Math.max(r, 1e-4))));
+  out.phi = Math.PI - Math.acos(c((a * a + b * b - r * r) / (2 * a * b)));
+  return out;
+}
 // Skywing's jet-wing (the model: tools/blender/generate_skywing.py): on the ground each wing turns FOLD radians
 // about the axis through the back, so its tip points down the legs; in the air the arms raise RAISE radians about
 // the shoulder line and move SHIFT to the right, so the weapon points ahead past the helmet.
@@ -67,6 +132,8 @@ export const SKYWING_POSE = Object.freeze({ fold: 1.36, raise: 1.18, shift: 0.14
 // Hip angles are about +X (negative swings the foot forward); knee angles bend the shin back.
 const glslFloat = (v) => (Number.isInteger(v) ? `${v}.0` : String(v));
 const FOLD = glslFloat(SKYWING_POSE.fold), RAISE = glslFloat(SKYWING_POSE.raise), SHIFT = glslFloat(SKYWING_POSE.shift);
+const G = Object.fromEntries(Object.entries({ ANGLE: PACK.angle, LOWSTEP: 1 / PACK.low, TWIST: PACK.twist, THIGH: LOW.thigh,
+  SHIN: LOW.shin, SIT: LOW.sit, REACH: LOW.reach }).map(([k, v]) => [k, glslFloat(v)]));
 const GLSL = /* glsl */ `
 attribute vec4 aRig;
 attribute vec4 aMotion;
@@ -75,15 +142,38 @@ vec3 rigRot(vec3 p, vec2 c, float a) {
   vec2 q = p.yz - c;
   return vec3(p.x, c.x + q.x * co - q.y * s, c.y + q.x * s + q.y * co);
 }
+// About the vertical axis through (x, z) = c; + turns the front (+z) toward +x.
+vec3 rigYaw(vec3 p, vec2 c, float a) {
+  float s = sin(a), co = cos(a);
+  vec2 q = p.xz - c;
+  return vec3(c.x + q.x * co + q.y * s, p.y, c.y - q.x * s + q.y * co);
+}
+// Idle life's low pose (unit-rig.js lowPose: keep the two in step): the (thigh, knee, ankle) angles of a leg.
+vec3 rigLow(float low, float hipY, float kneeY) {
+  float ankle = kneeY * 0.3, a = hipY - kneeY, b = kneeY - ankle;
+  float s = clamp(low * 2.0, 0.0, 1.0), v = clamp(low * 2.0 - 1.0, 0.0, 1.0), sv = v * v * (3.0 - 2.0 * v);
+  float th = ${G.THIGH} * s, ps = ${G.SHIN} * s;
+  if (v <= 0.0) return vec3(th, th + ps, -ps);
+  float hs = ankle + a * cos(th) + b * cos(ps), ds = a * sin(th) - b * sin(ps);
+  float h = mix(hs, hipY * ${G.SIT}, sv), ya = mix(ankle, h, sv * sv), d = mix(ds, (a + b) * ${G.REACH}, sv);
+  vec2 to = vec2(ya - h, d);
+  float r = min(length(to), a + b);
+  float t = atan(to.y, -to.x) + acos(clamp((a * a + r * r - b * b) / (2.0 * a * max(r, 1e-4)), -1.0, 1.0));
+  float k = 3.14159265 - acos(clamp((a * a + b * b - r * r) / (2.0 * a * b), -1.0, 1.0));
+  return vec3(t, k, (t - k) * (1.0 - sv));
+}
 // dir = true for normals: the same rotations about the origin, no translation.
 vec3 rigApply(vec3 p, bool dir) {
   float bone = aRig.x;
   if (bone > 8.5) return p;
-  float lean = aMotion.w - 1.0;
+  // The packed pose (unit-rig.js packIdle): y = gait + 2 H, z = pose + 2 L, w = 1 + lean + 4 T.
+  float hq = floor(aMotion.y * 0.5), amp = aMotion.y - 2.0 * hq;
+  float lq = max(0.0, floor(aMotion.z * 0.5)), pose = aMotion.z - 2.0 * lq, low = lq * ${G.LOWSTEP};
+  float tq = floor((aMotion.w - 1.0) * 0.25 + 0.5), lean = aMotion.w - 1.0 - 4.0 * tq, twist = tq * ${G.TWIST};
   vec2 hip = dir ? vec2(0.0) : vec2(aRig.y, aRig.w);
   if (bone > 5.5) {
     // Skywing: the wings fold on the ground (air 0) and spread in flight (air 1); the arms raise in flight.
-    float air = max(0.0, -aMotion.z);
+    float air = max(0.0, -pose);
     if (bone < 7.5) {
       float a = (1.0 - air) * ${FOLD} * (bone < 6.5 ? 1.0 : -1.0), s = sin(a), c = cos(a);
       vec2 h = dir ? vec2(0.0) : vec2(aRig.z, aRig.w), q = p.xy - h;
@@ -94,22 +184,42 @@ vec3 rigApply(vec3 p, bool dir) {
     }
     return rigRot(p, dir ? vec2(0.0) : vec2(aRig.y, 0.0), lean);
   }
+  float kneel = max(0.0, pose);
   if (bone < 0.5) {
+    // Idle life's spine twist: none at the hip, all of it from about the chest up (a smooth turn, no seam).
+    if (twist != 0.0) p = rigYaw(p, dir ? vec2(0.0) : vec2(0.0, aRig.w), twist * smoothstep(aRig.y, aRig.y * 1.7, position.y));
     p = rigRot(p, hip, lean);
-    if (!dir) p.y -= max(0.0, aMotion.z) * aRig.y * 0.45;
+    if (!dir) p.y -= kneel * aRig.y * 0.45;
   } else if (bone < 2.5) {
     bool left = bone < 1.5;
     float ph = aMotion.x + (left ? 0.0 : 3.14159265);
-    float amp = aMotion.y, kneel = max(0.0, aMotion.z);
     float hipA = mix(-sin(ph) * amp, left ? -1.1 : 0.1, kneel);
     float kneeA = mix(max(0.0, cos(ph)) * amp * 1.5, left ? 1.95 : 1.5, kneel);
+    if (low > 0.0) {
+      // Idle life: squat or sit (both legs alike); the foot turns at the ankle to stay flat while it is planted.
+      vec3 l = rigLow(low, aRig.y, aRig.z);
+      hipA -= l.x;
+      kneeA += l.y;
+      float ankle = aRig.z * 0.3;
+      p = rigRot(p, dir ? vec2(0.0) : vec2(ankle, aRig.w), l.z * smoothstep(ankle + 0.05, ankle - 0.05, position.y));
+    }
     float below = smoothstep(aRig.z + 0.06, aRig.z - 0.06, position.y);
     p = rigRot(p, dir ? vec2(0.0) : vec2(aRig.z, aRig.w), kneeA * below);
     p = rigRot(p, hip, hipA);
     if (!dir) p.y -= kneel * aRig.y * 0.45;
   } else if (bone < 3.5) {
     p = rigRot(p, hip, lean);
-    if (!dir) p.y -= aMotion.z;
+    if (!dir) p.y -= pose;
+  } else if (bone < 4.5) {
+    // The head (idle life): nod about the neck line, turn about its own axis, twist with the spine, lean and kneel.
+    float yawQ = floor(hq / 64.0 + 0.5), nod = (hq - 64.0 * yawQ) * ${G.ANGLE};
+    if (hq != 0.0) {
+      p = rigRot(p, dir ? vec2(0.0) : aRig.zw, nod);
+      p = rigYaw(p, dir ? vec2(0.0) : vec2((bone - 4.0) * 5.0, aRig.w), yawQ * ${G.ANGLE});
+    }
+    if (twist != 0.0) p = rigYaw(p, vec2(0.0), twist);
+    p = rigRot(p, dir ? vec2(0.0) : vec2(aRig.y, 0.0), lean);
+    if (!dir) p.y -= kneel * aRig.y * 0.45;
   } else if (bone < 5.5) {
     p = rigRot(p, hip, aMotion.x * aRig.z);
   }
@@ -151,6 +261,122 @@ export function tagBone(geometry, bone, pivotY = 0, kneeY = 0, pivotZ = 0) {
   for (let i = 0; i < n; i++) data.set([bone, pivotY, kneeY, pivotZ], i * 4);
   geometry.setAttribute("aRig", new THREE.BufferAttribute(data, 4));
   return geometry;
+}
+// ---- The head bone (idle life, 2026-11-28). Load time only. ----
+// Parts that turn with the head whole: the helmet family (Meridian troops), the Gunner team's crest and jaw guard, the
+// Stalker's hood and mask. HEAD_ANCHOR parts give each head its box and neck pivot (one per island: the Gunner team
+// has two heads). NOT_HEAD parts never turn with it, wherever they sit: guns, sights, packs, shoulder pieces, spires.
+export const HEAD_PART = /^(Helmet|Helmet_crest|Crest|Visor|Visor_slit|Jaw|Mask|Hood|Hood_tail|Hood_trim)\d*$/;
+const HEAD_ANCHOR = /^(Helmet|Hood)\d*$/;
+export const NOT_HEAD = /^(Shoulder|Pauldron|Spire|Antenna|Launcher|Sight|Rockets|Rifle|Scope|Barrel|Muzzle|Receiver|Grip|Tool|Cargo|Pack|Jaws|Torch|Emitter)/;
+// Models whose head is merged into their material details (tools/blender/generate_factions.py consolidate): a point
+// inside the head, whose biggest head-sized island (the hood) is the anchor.
+export const HEAD_POINT = Object.freeze({ shade: Object.freeze([0, 2.05, 0.05]), watcher: Object.freeze([0, 2.05, 0]) });
+// Extra head volumes in model space ([x0, y0, z0, x1, y1, z1]; an island inside one turns with the nearest head): the
+// Scrapper's gas-mask filter hangs below its neck line.
+export const HEAD_EXTRA = Object.freeze({ scrapper: Object.freeze([Object.freeze([-0.12, 1.58, 0.4, 0.12, 1.92, 0.76])]) });
+// An island joins a head when its middle lies in the head's box grown by these (model units; front = +z, the face side,
+// where visors, monocles and masks stand out) above the neck line, and its own box stays within `slack` of that (and
+// within `below` under the neck line: a hood's tail hangs down the back of the neck). A crown (a hat's brim, a ring round
+// the helmet) joins too, however wide: its middle within `crown` of the head's axis and above `crownUp` over the neck.
+export const HEAD_REACH = Object.freeze({ side: 0.1, front: 0.2, back: 0.1, up: 0.1, slack: 0.1, below: 0.2, crown: 0.08, crownUp: 0.2 });
+// Flat xyz positions of a mesh in model space (the template's frame).
+function modelPositions(o) {
+  const pos = o.geometry.getAttribute("position"), n = pos.count, out = new Float32Array(n * 3), v = new THREE.Vector3();
+  for (let i = 0; i < n; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(o.matrixWorld); out[i * 3] = v.x; out[i * 3 + 1] = v.y; out[i * 3 + 2] = v.z; }
+  return out;
+}
+// Islands of a triangle list (connected parts, welded by position): the island of each vertex and each island's box
+// ([x0, y0, z0, x1, y1, z1] per island in `boxes`).
+export function meshIslands(p, index, count) {
+  const parent = new Int32Array(count).map((_, i) => i);
+  const find = (i) => { while (parent[i] !== i) i = parent[i] = parent[parent[i]]; return i; };
+  const unite = (a, b) => { a = find(a); b = find(b); if (a !== b) parent[a] = b; };
+  const weld = new Map();
+  for (let i = 0; i < count; i++) {
+    const key = `${Math.round(p[i * 3] * 1e3)},${Math.round(p[i * 3 + 1] * 1e3)},${Math.round(p[i * 3 + 2] * 1e3)}`;
+    if (weld.has(key)) unite(i, weld.get(key)); else weld.set(key, i);
+  }
+  const tri = index ? index.length : count;
+  for (let t = 0; t + 2 < tri; t += 3) {
+    const a = index ? index[t] : t, b = index ? index[t + 1] : t + 1, c = index ? index[t + 2] : t + 2;
+    unite(a, b); unite(b, c);
+  }
+  const of = new Int32Array(count), ids = new Map(), boxes = [];
+  for (let i = 0; i < count; i++) {
+    const r = find(i);
+    let k = ids.get(r);
+    if (k === undefined) { ids.set(r, (k = boxes.length)); boxes.push([Infinity, Infinity, Infinity, -Infinity, -Infinity, -Infinity]); }
+    of[i] = k;
+    const box = boxes[k];
+    for (let j = 0; j < 3; j++) { const x = p[i * 3 + j]; if (x < box[j]) box[j] = x; if (x > box[j + 3]) box[j + 3] = x; }
+  }
+  return { of, boxes };
+}
+const middle = (b, j) => (b[j] + b[j + 3]) / 2;
+const inBox = (b, x, y, z) => x >= b[0] && x <= b[3] && y >= b[1] && y <= b[4] && z >= b[2] && z <= b[5];
+const boxInBox = (inner, b) => inner[0] >= b[0] && inner[1] >= b[1] && inner[2] >= b[2] && inner[3] <= b[3] && inner[4] <= b[4] && inner[5] <= b[5];
+const overlap = (a, b) => a[0] <= b[3] && b[0] <= a[3] && a[1] <= b[4] && b[1] <= a[4] && a[2] <= b[5] && b[2] <= a[5];
+// The heads of an infantry model (gltf scene, matrices current): [{ box, pivot: [neckX, neckY, neckZ], reach }], or null
+// (a model with no head part and no HEAD_POINT keeps its head on the body). `underLeg(o)`: a mesh on a leg pivot.
+export function findHeads(root, type, underLeg) {
+  const boxes = [], point = HEAD_POINT[type];
+  let best = null;
+  root.traverse((o) => {
+    if (!o.isMesh || underLeg(o) || NOT_HEAD.test(o.name)) return;
+    const anchor = HEAD_ANCHOR.test(o.name);
+    if (!anchor && !point) return;
+    const p = modelPositions(o), { boxes: found } = meshIslands(p, o.geometry.index?.array, p.length / 3);
+    for (const b of found) {
+      if (anchor) boxes.push(b.slice());
+      else if (inBox(b, ...point) && [0, 1, 2].every((j) => b[j + 3] - b[j] > 0.2 && b[j + 3] - b[j] < 0.9) &&
+        (!best || (b[3] - b[0]) * (b[4] - b[1]) * (b[5] - b[2]) > (best[3] - best[0]) * (best[4] - best[1]) * (best[5] - best[2]))) best = b.slice();
+    }
+  });
+  if (!boxes.length && best) boxes.push(best);
+  // An anchor in several pieces (a dome and a brim) is one head: merge boxes that touch.
+  for (let i = 0; i < boxes.length; i++) for (let j = boxes.length - 1; j > i; j--) {
+    if (!overlap(boxes[i], boxes[j])) continue;
+    for (let k = 0; k < 3; k++) { boxes[i][k] = Math.min(boxes[i][k], boxes[j][k]); boxes[i][k + 3] = Math.max(boxes[i][k + 3], boxes[j][k + 3]); }
+    boxes.splice(j, 1);
+    j = boxes.length;
+  }
+  if (!boxes.length) return null;
+  const R = HEAD_REACH;
+  return boxes.sort((a, b) => a[0] - b[0]).map((b) => ({
+    box: b, pivot: [middle(b, 0), b[1], middle(b, 2)],
+    reach: [b[0] - R.side, b[1], b[2] - R.back, b[3] + R.side, b[4] + R.up, b[5] + R.front],
+  }));
+}
+// Which head each vertex of a part turns with (-1: none). p: flat model-space positions; whole: a HEAD_PART (every island
+// goes to its nearest head); extra: the type's HEAD_EXTRA boxes.
+export function headOf(p, index, count, heads, whole = false, extra = null) {
+  const out = new Int16Array(count).fill(-1);
+  if (!heads?.length) return out;
+  const { of, boxes } = meshIslands(p, index, count), pick = new Int16Array(boxes.length).fill(-1), s = HEAD_REACH.slack;
+  for (let k = 0; k < boxes.length; k++) {
+    const b = boxes[k], x = middle(b, 0), y = middle(b, 1), z = middle(b, 2);
+    let near = 0;
+    for (let h = 1; h < heads.length; h++) if (Math.abs(heads[h].pivot[0] - x) < Math.abs(heads[near].pivot[0] - x)) near = h;
+    const r = heads[near].reach;
+    const h = heads[near].pivot, crown = Math.hypot(x - h[0], z - h[2]) < HEAD_REACH.crown && y > h[1] + HEAD_REACH.crownUp && b[4] < r[4] + s;
+    if (whole || crown || (inBox(r, x, y, z) && boxInBox(b, [r[0] - s, r[1] - HEAD_REACH.below, r[2] - s, r[3] + s, r[4] + s, r[5] + s])) ||
+      extra?.some((e) => boxInBox(b, e))) pick[k] = near;
+  }
+  for (let i = 0; i < count; i++) out[i] = pick[of[i]];
+  return out;
+}
+// The aRig value of a head vertex: the neck's x rides in the bone id (|x| < 2.5 stays inside the head's slot).
+export const headTag = (head, hipY) => [BONE.head + head.pivot[0] * 0.2, hipY, head.pivot[1], head.pivot[2]];
+// Load time: give a body part (already tagged BONE.body, in model space) its head vertices. Returns how many.
+export function tagHead(geometry, name, heads, hipY, extra = null) {
+  if (!heads?.length || NOT_HEAD.test(name)) return 0;
+  const pos = geometry.getAttribute("position"), rig = geometry.getAttribute("aRig"), n = pos.count, p = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { p[i * 3] = pos.getX(i); p[i * 3 + 1] = pos.getY(i); p[i * 3 + 2] = pos.getZ(i); }
+  const which = headOf(p, geometry.index?.array, n, heads, HEAD_PART.test(name), extra);
+  let tagged = 0;
+  for (let i = 0; i < n; i++) if (which[i] >= 0) { rig.array.set(headTag(heads[which[i]], hipY), i * 4); tagged++; }
+  return tagged;
 }
 // Blend toward a target independent of frame rate: x += (target - x) * (1 - exp(-k dt)).
 export const approach = (x, target, k, dt) => x + (target - x) * (1 - Math.exp(-k * dt));

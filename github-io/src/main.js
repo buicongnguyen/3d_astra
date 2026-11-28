@@ -157,7 +157,9 @@ async function loadAssets(types = modelsForMatch(S.sim)) {
 
 function boot() {
   try {
-    S.view = new WorldView($("world"), { terrain: S.sim.terrain, settings: S.settings, mission: S.look });
+    // Idle life (src/idle-life.js) stays off under ?test unless &idle=1, so the browser suites' poses and counts hold.
+    S.view = new WorldView($("world"), { terrain: S.sim.terrain, settings: S.settings, mission: S.look,
+      idle: !S.query?.has("test") || S.query.get("idle") === "1" });
     // R3-K: the group badges read the Ctrl+number groups (mutated in place, never replaced).
     S.view.controlGroups = S.groups;
     S.view.onContextLost = A.graphicsLost;

@@ -84,8 +84,9 @@ export const partsFor = (parts, group, cls) => parts.filter((x) => (x.group === 
 // The base team mesh's geometry with the dress parts appended. The base keeps every attribute it has (uv parts get
 // zeros); a team mesh's colour becomes RGBA (alpha 0 on own-colour parts) even with no part in this group, so one
 // team material never sees RGB and RGBA geometry in the same match. `info` / `pivot`: see rigTag; the turret and barrel
-// groups sit relative to the turret ring, as the base parts do.
-export function dressGeometry(base, parts, { THREE, BONE, info, group, cls }) {
+// groups sit relative to the turret ring, as the base parts do. headOf / headTag (src/unit-rig.js, idle life): a body
+// part's islands on a soldier's head (a hood, a hat, a mask) turn with the head bone (info.heads), as the base parts do.
+export function dressGeometry(base, parts, { THREE, BONE, info, group, cls, headOf = null, headTag = null }) {
   const rgba = cls === "Team", nb = base.getAttribute("position").count;
   const nd = parts.reduce((n, x) => n + x.count, 0), total = nb + nd;
   const shift = (group === "turret" || group === "barrel") && info.pivot ? info.pivot : null;
@@ -96,12 +97,13 @@ export function dressGeometry(base, parts, { THREE, BONE, info, group, cls }) {
     let at = nb;
     for (const x of parts) {
       const tag = name === "aRig" ? rigTag(info, x.group, BONE) : null;
+      const head = tag && headOf && info.heads && x.group === "body" ? headOf(x.p, x.index, x.count, info.heads, false, info.headExtra) : null;
       for (let i = 0; i < x.count; i++, at++) {
         const o = at * size;
         if (name === "position") { data[o] = x.p[i * 3] - (shift ? shift[0] : 0); data[o + 1] = x.p[i * 3 + 1]; data[o + 2] = x.p[i * 3 + 2] - (shift ? shift[1] : 0); }
         else if (name === "normal") { data[o] = x.n[i * 3]; data[o + 1] = x.n[i * 3 + 1]; data[o + 2] = x.n[i * 3 + 2]; }
         else if (name === "color") { data[o] = x.c[i * 3]; data[o + 1] = x.c[i * 3 + 1]; data[o + 2] = x.c[i * 3 + 2]; if (size === 4) data[o + 3] = x.cls === "Dress" ? 0 : 1; }
-        else if (tag) data.set(tag, o);
+        else if (tag) data.set(head && head[i] >= 0 ? headTag(info.heads[head[i]], info.hipY) : tag, o);
       }
     }
     out.setAttribute(name, new THREE.BufferAttribute(data, size));
