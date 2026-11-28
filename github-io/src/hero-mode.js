@@ -294,7 +294,7 @@ export function setupHeroMode(S, A) {
     el.classList.toggle("hero-vehicle", H.vehicle);
     el.classList.remove("hero-boardable");
     root.querySelector(".hh-weapons").hidden = !H.sky;
-    root.querySelector(".hh-assist").hidden = !H.sky && !H.vehicle;
+    root.querySelector(".hh-assist").hidden = !H.sky;
     root.querySelector(".hh-name").textContent = translate(e.name);
     root.querySelector(".hh-dodge-name").textContent = H.sky ? "Barrel roll" : "Dodge";
     root.querySelector(".hh-dodge").hidden = H.vehicle;
