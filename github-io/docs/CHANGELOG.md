@@ -2,6 +2,10 @@
 
 ## Unreleased: Round A.2
 
+### Repair and support orders (owner 2026-11-28)
+- **Harvesters stay after a repair.** A Harvester sent to repair a building (right-click or the Repair button) now stands at that building when the job is done instead of walking back to its deposit, so it is there for the next repair (Harvester auto-repair picks it up). Building a site and the automatic repairs still return the Harvester to its deposit.
+- **Right-click a Medic or Engineer to call it.** With a unit selected, right-clicking one of your Medics or Engineers sends that helper to tend the selected unit it can treat (the most hurt first); the selected unit stays where it is. A Medic still never treats vehicles and an Engineer never treats infantry; when the helper cannot treat the selection, the right-click is a move as before. Tests: `npm run test:repair-rally`.
+
 ### Cover walls (H6) and Settings > Hero (H7)
 - **Cover walls.** Matches with a hero to fight from them now have broken concrete walls (with rebar and rubble), sandbag lines and crate stacks on pallets: 22-36 per map (24 on the 96 m maps, 30 on 128 m, 36 on the large ones; 23-30 on Defence levels), 80-136 triangles each, built in code (`src/cover-view.js`) with vertex colours and a soft dark blob baked under each piece. All pieces of a match are merged into ONE static mesh (1 draw, no shadow casting, fog-of-war aware like the scatter).
 - **Placement** (`src/sim/cover.js` `planCover`) is a seeded search per map (the same map and setup give the same pieces), mirrored with the map's own symmetry in skirmish. It keeps clear of roads, bridges, fords and water, river banks and crossings, lake shores, ramps and cliffs, boulder walls, 20 m around every core, buildings, deposits, capture points, units standing there, the straight lanes between rival cores, and on Defence levels the roads, spawns, exit, pads and build zones. A piece that would cut any ground off from the rest of the nav grid (soldier or vehicle) is refused.

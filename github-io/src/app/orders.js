@@ -125,7 +125,8 @@ export function setupOrders(S, A) {
     if (forced === 'repair') {
       const workers = units.filter(e => S.sim.repairValid(e,target));
       if (!workers.length || target.hp >= target.maxHp) { $("mode-banner").textContent = 'REPAIR · Choose a damaged building'; return false; }
-      sendOrder(repairCrew(workers,target).map(e => e.id),{type:'repair',target:target.id,resume:true},append);
+      // Owner 2026-11-28: a Harvester sent to repair stays at the building afterwards (no `resume`).
+      sendOrder(repairCrew(workers,target).map(e => e.id),{type:'repair',target:target.id},append);
       S.view.marker(target.x,target.z); A.tone(440); return true;
     }
     if (forced === 'attack') {
@@ -143,6 +144,18 @@ export function setupOrders(S, A) {
       if (!helpers.length) { A.notice("Medic: select allied infantry. Engineer: select a completed building or vehicle."); return false; }
       sendOrder(helpers.map(e => e.id),{type:"support",target:target.id},append);
       return true;
+    }
+    // Owner 2026-11-28: right-clicking one of our Medics or Engineers (not in the selection) with units selected
+    // sends that helper to tend the selected unit it can treat, the most hurt first; the selection stays put.
+    if (!forced && target?.team === 0 && target.kind === "unit" && target.support && !es.includes(target)
+      && !units.some(e => S.sim.supportValid(e,target))) {
+      const patients = es.filter(e => S.sim.supportValid(target,e))
+        .sort((a,b) => a.hp/a.maxHp - b.hp/b.maxHp || Math.hypot(a.x-target.x,a.z-target.z) - Math.hypot(b.x-target.x,b.z-target.z) || a.id - b.id);
+      if (patients.length) {
+        sendOrder([target.id],{type:"support",target:patients[0].id},append);
+        S.view.marker(patients[0].x,patients[0].z); A.tone(440);
+        return true;
+      }
     }
     if (!forced && target?.team === 0) {
       const helpers = units.filter(e => S.sim.supportValid(e,target));
@@ -181,10 +194,11 @@ export function setupOrders(S, A) {
         : target.type === "hq" && (w.carry > 0 || target.hp >= target.maxHp) ? "deliver" : "repair";
       const workers = units.filter((e) => e.type === "worker");
       // A repair needs at most a crew of two (progression.js REPAIR.crew): the nearest go, the rest carry on.
-      // After building or repairing, Harvesters go back to their last deposit (`resume`, sim/orders.js finish).
+      // After building, Harvesters go back to their last deposit (`resume`, sim/orders.js finish). After a
+      // repair they stay at the building (owner 2026-11-28), where auto-repair keeps them on it.
       const repairing = repairCrew(workers.filter((w) => job(w) === "repair"), target);
       for (const type of ["gather", "build", "deliver", "repair"])
-        sendOrder((type === "repair" ? repairing : workers.filter((w) => job(w) === type)).map((e) => e.id), { type, target: target.id, ...(type === "build" || type === "repair" ? { resume: true } : {}) }, append);
+        sendOrder((type === "repair" ? repairing : workers.filter((w) => job(w) === type)).map((e) => e.id), { type, target: target.id, ...(type === "build" ? { resume: true } : {}) }, append);
       // Soldiers right-clicking a damaged friendly building pitch in and repair it; otherwise they just move.
       const fixers = target.kind === "building" && target.complete && target.hp < target.maxHp
         ? units.filter((e) => e.type !== "worker" && S.sim.repairValid(e, target)) : [];

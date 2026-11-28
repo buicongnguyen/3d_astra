@@ -53,6 +53,33 @@ try{
   const crew=await page.evaluate(id=>{const f=window.__frontier,sel=[...f.selected];return {n:sel.length,on:sel.filter(u=>f.sim.get(u).orders[0]?.type==='repair'&&f.sim.get(u).orders[0].target===id).length};},ids.hq);
   assert.equal(crew.on,Math.min(2,crew.n),'the Repair button sends the nearest two Harvesters: '+JSON.stringify(crew));
   assert.equal(await page.locator('#mode-banner').isHidden(),true);
+  // Owner 2026-11-28: a Harvester sent to repair stays at the building when the job is done.
+  const stay=await page.evaluate(id=>{
+    const f=window.__frontier,s=f.sim,b=s.get(id);
+    const crew=s.own(0).filter(w=>w.type==='worker'&&w.orders[0]?.type==='repair'&&w.orders[0].target===id);
+    b.hp=b.maxHp-2;for(let i=0;i<400&&crew.some(w=>w.orders.length);i++)f.step(0.1);
+    return crew.map(w=>({orders:w.orders.map(o=>o.type),d:Math.hypot(w.x-b.x,w.z-b.z)-b.radius}));
+  },ids.hq);
+  assert.ok(stay.length>0&&stay.every(w=>!w.orders.includes('gather')&&w.d<6),'Harvesters stay at the repaired building: '+JSON.stringify(stay));
+  // Owner 2026-11-28: with a hurt unit selected, right-clicking our Medic (or Engineer) sends it to tend that unit.
+  const tend=await page.evaluate(([hx,hz])=>{
+    const f=window.__frontier,s=f.sim;
+    const medic=s.spawn('medic',0,hx+10,hz+8,true,true),soldier=s.spawn('ranger',0,hx+14,hz+12,true,true);
+    const eng=s.spawn('engineer',0,hx+6,hz+12,true,true),tank=s.spawn('tank',0,hx+16,hz+6,true,true);
+    soldier.hp=soldier.maxHp*0.5;tank.hp=tank.maxHp*0.5;
+    f.select([soldier.id]);f.commandAt(medic.x,medic.z,medic.id);
+    const m=medic.orders[0],still=soldier.orders.length;
+    f.select([tank.id]);f.commandAt(eng.x,eng.z,eng.id);
+    const e=eng.orders[0];
+    // A Medic cannot treat a tank: the selection moves as before and the Medic is not ordered.
+    f.select([tank.id]);medic.orders=[];f.commandAt(medic.x,medic.z,medic.id);
+    return {m:[m?.type,m?.target===soldier.id],still,e:[e?.type,e?.target===tank.id],medicAfter:medic.orders.length,tankMoved:tank.orders[0]?.type};
+  },[ids.hx,ids.hz]);
+  assert.deepEqual(tend.m,['support',true],'Medic tends the selected soldier: '+JSON.stringify(tend));
+  assert.equal(tend.still,0,'the selected soldier stays put');
+  assert.deepEqual(tend.e,['support',true],'Engineer repairs the selected tank: '+JSON.stringify(tend));
+  assert.equal(tend.medicAfter,0,'a Medic is not sent to a tank');
+  assert.equal(tend.tankMoved,'move','the tank moves to the Medic as before');
   assert.deepEqual(errors,[]);
-  console.log('Rally button, flag and deposit rally; Harvester repair by right-click and Repair button passed.');
+  console.log('Rally button, flag and deposit rally; Harvester repair by right-click and Repair button; Harvesters stay after a repair; right-click a Medic or Engineer to tend the selection passed.');
 }finally{await browser.close();}
