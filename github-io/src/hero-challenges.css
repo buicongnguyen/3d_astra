@@ -1,0 +1,102 @@
+/* H8 Hero challenges (src/hero-challenges-ui.js): the title row, the Hero mode strip and Plant button, the result card.
+   Flat tiles, one tap each, 44 px and up, text 11 px and up, no system-ui (Linux CI fonts: Liberation Sans). */
+
+/* ---------- the title row: under the quick row (Quick battle, Hero battle, ...) ---------- */
+#briefing .hero-challenges { display: flex; flex-direction: column; gap: 6px; margin: 0; }
+#briefing .hero-challenges[hidden] { display: none; }
+#briefing .hc-head { display: flex; align-items: center; gap: 6px; margin: 0; color: #ffd36a; font: 800 12px/15px var(--font-ui); letter-spacing: 0.08em; text-transform: uppercase; }
+#briefing .hc-head .icon { width: 15px; height: 15px; flex: 0 0 auto; }
+#briefing .hc-head .hc-total { margin-left: auto; color: #f1f6f3; font: 800 12px/15px var(--font-ui); letter-spacing: 0; }
+#briefing .hc-tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+#briefing .hero-challenge-tile {
+  position: relative; display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 52px; padding: 5px 8px 5px 6px;
+  border: 1px solid rgba(255, 196, 92, 0.6); border-radius: 6px;
+  background: linear-gradient(100deg, rgba(96, 52, 18, 0.92), rgba(44, 28, 14, 0.94) 60%, rgba(22, 16, 10, 0.94));
+  box-shadow: inset 0 1px 0 rgba(255, 230, 170, 0.2), inset 3px 0 0 #ffb43c;
+  color: #f8f1e2; text-align: left; cursor: pointer;
+}
+#briefing .hero-challenge-tile:hover:not(:disabled) { filter: brightness(1.14); }
+#briefing .hero-challenge-tile:active:not(:disabled) { transform: translateY(2px); filter: brightness(0.92); }
+#briefing .hero-challenge-tile:focus-visible { outline: 2px solid #ffd36a; outline-offset: 2px; }
+#briefing .hero-challenge-tile:disabled { filter: saturate(0.3) brightness(0.8); cursor: default; }
+#briefing .hero-challenge-tile > .icon { flex: 0 0 auto; width: 26px; height: 26px; padding: 4px; border-radius: 50%; background: rgba(255, 180, 60, 0.18); color: #ffc66a; }
+#briefing .hct-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1 1 auto; }
+#briefing .hct-text strong { font: 800 15px/1.1 var(--font-display); overflow-wrap: anywhere; }
+#briefing .hct-text small { font: 700 11px/14px var(--font-ui); color: #e6d6bb; overflow-wrap: anywhere; }
+#briefing .hct-stars { flex: 0 0 auto; color: #ffd36a; font: 700 14px/1 var(--font-ui); letter-spacing: 1px; white-space: nowrap; }
+/* Phones: names and stars only, one row of two. */
+.compact-ui #briefing .hero-challenges { gap: 4px; }
+.compact-ui #briefing .hc-head { font-size: 11px; line-height: 14px; }
+.compact-ui #briefing .hero-challenge-tile { min-height: 44px; padding: 3px 6px 3px 4px; gap: 6px; }
+.compact-ui #briefing .hero-challenge-tile > .icon { width: 22px; height: 22px; padding: 3px; }
+.compact-ui #briefing .hct-text small { display: none; }
+.compact-ui #briefing .hct-text strong { font-size: 13px; }
+.compact-ui #briefing .hct-stars { font-size: 12px; letter-spacing: 0; }
+/* Landscape phones: no heading line (the tiles say what they are), so the launch row keeps its place. */
+@media (orientation: landscape) and (max-height: 520px) {
+  .compact-ui #briefing .hero-challenges .hc-head { display: none; }
+}
+
+/* ---------- Hero mode: the challenge strip (in the top row after the hero's plate; under the row on portrait phones) ---------- */
+.hc-strip {
+  flex: 0 1 auto; align-self: center; display: flex; align-items: center; gap: 8px; min-width: 0; padding: 5px 10px;
+  border-radius: 8px; background: rgba(10, 16, 22, 0.74); border: 1px solid rgba(255, 211, 106, 0.55);
+  color: #f1f6f3; font: 700 13px/16px var(--hh-font, var(--font-ui, sans-serif)); pointer-events: none; white-space: nowrap;
+}
+.hc-strip[hidden] { display: none; }
+.hcs-goal { overflow: hidden; text-overflow: ellipsis; min-width: 0; max-width: 340px; }
+.hcs-count { color: #ffd36a; font-variant-numeric: tabular-nums; }
+.hcs-time { color: #cfe9ff; font-variant-numeric: tabular-nums; }
+.hcs-watch { display: inline-flex; align-items: center; gap: 5px; }
+.hcs-watch[hidden] { display: none; }
+.hcs-meter { display: block; width: 46px; height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.18); overflow: hidden; }
+.hcs-meter > i { display: block; height: 100%; width: 0; background: #ffb43c; }
+.hcs-state { font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: #7fe0a0; }
+.hcs-watch[data-state="seen"] .hcs-state { color: #ffcf5a; }
+.hcs-watch[data-state="alarm"] .hcs-state { color: #ff6a5a; }
+.hcs-watch[data-state="alarm"] .hcs-meter > i { background: #ff5a3a; }
+.hero-phone .hc-strip { font-size: 12px; gap: 6px; padding: 4px 8px; }
+.hero-phone .hcs-goal { max-width: 150px; }
+.hero-phone .hcs-meter { width: 32px; }
+@media (orientation: portrait) {
+  .hero-phone .hc-strip { position: absolute; left: 0; right: 0; top: 48px; }
+  .hero-phone .hcs-goal { flex: 1 1 auto; max-width: none; }
+}
+/* A challenge's kill feed sits under the strip. */
+.hero-challenge.hero-phone .hh-feed { top: calc(env(safe-area-inset-top) + 92px); }
+
+/* ---------- the Plant button: held beside a relay (PC: hold G) ---------- */
+.hh-plant { position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(150, 96, 20, 0.95), rgba(92, 54, 10, 0.95)) !important; border-color: #ffd36a !important; touch-action: none; }
+.hh-plant[hidden] { display: none !important; }
+.hh-plant .hh-sweep { background: rgba(255, 211, 106, 0.35); transform: scaleX(calc(1 - var(--cd, 1))); }
+/* Phones: a full-width row over the others while it shows (Land's row on Skywing is the same width). */
+.hero-phone .hh-plant { grid-column: 1 / -1; }
+.hero-phone.hero-sky.hc-planting .hh-actions { grid-template-rows: 48px 48px 54px 76px; }
+.hero-phone.hero-sky.hc-planting .hh-plant { grid-row: 1; }
+.hero-phone.hero-sky.hc-planting .hh-land { grid-row: 2; }
+.hero-phone.hero-sky.hc-planting .hh-ability, .hero-phone.hero-sky.hc-planting .hh-dodge { grid-row: 3; }
+.hero-phone.hero-sky.hc-planting .hh-fire { grid-row: 4; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .hero-phone.hero-sky.hc-planting .hh-actions { grid-template-rows: 44px 44px 48px 64px; gap: 6px; }
+}
+
+/* ---------- the result card ---------- */
+.hc-result { display: flex; flex-direction: column; gap: 8px; }
+.hc-result h2 { margin: 0; }
+#modal .hc-stars-big, .hc-stars-big { margin: 0; color: #ffd36a; font: 800 34px/1 var(--font-ui); letter-spacing: 4px; text-shadow: 0 0 12px rgba(255, 196, 92, 0.5); }
+.hc-reasons { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 0; padding: 0; list-style: none; font: 700 13px/18px var(--font-ui); }
+.hc-reasons li { display: inline-flex; align-items: center; gap: 5px; }
+.hc-reasons li b { color: #ffd36a; font-size: 15px; }
+.hc-reasons li.miss { color: #9fb0bb; }
+.hc-reasons li.miss b { color: #6d7c86; }
+.hc-line { margin: 0; font: 700 14px/18px var(--font-ui); }
+.hc-best { margin-left: 6px; padding: 1px 6px; border-radius: 4px; background: #ffd36a; color: #2a1a04; font-style: normal; font-size: 12px; }
+.hc-try { color: #cfe0ea; font-weight: 400; }
+.hc-result .result-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.hc-result .result-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; }
+.hc-result .result-actions .icon { width: 18px; height: 18px; }
+/* Portrait: the weapon switch moves up over the taller tile stack while Plant shows. */
+.hero-phone.hero-sky.hc-planting .hh-weapons { bottom: calc(env(safe-area-inset-bottom) + 286px); }
+@media (orientation: landscape) and (max-height: 520px) {
+  .hero-phone.hero-sky.hc-planting .hh-weapons { bottom: calc(env(safe-area-inset-bottom) + 12px); }
+}

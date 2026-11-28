@@ -147,6 +147,8 @@ export const missions = {
     // Creature dens and vault guardians (sim/content/campaign-creatures.js).
     else if (step.den) this.initDen(step);
     else if (step.guardian) this.initGuardian(step);
+    // H8 Hero challenges (sim/content/hero-challenges.js): the hero, its cover and the mission's own state, last.
+    else if (step.challenge) this.initChallenge(step);
   },
   tagged(tag) {
     return this.entities.filter((e) => e.tag === tag && e.hp > 0);
@@ -276,6 +278,12 @@ export const missions = {
       const g = this.tagged(o.tag);
       if (!g.length) return this.setObjective(o.id, "failed");
       done = g.some((e) => e.team === 0);
+    }
+    // H8 Hero challenges: the challenge's own check (sim/content/hero-challenges.js): true, "failed" or false.
+    else if (o.type === "challenge") {
+      const r = this.challengeObjective(o, s);
+      if (r === "failed") return this.setObjective(o.id, "failed");
+      done = r === true;
     }
     if (done) this.setObjective(o.id, "done");
   },
@@ -425,7 +433,9 @@ export const missions = {
       l.type === "coreLost" ? !alive[0]
         : l.type === "armyLost" ? !this.own(0).some((e) => e.kind === "unit" && !e.assist)
           : l.type === "tagLost" ? (m.fired["had:" + l.tag] ||= this.tagged(l.tag).length > 0) && !this.tagged(l.tag).length
-            : l.type === "time" ? m.clock >= l.seconds : false);
+            : l.type === "time" ? m.clock >= l.seconds
+              // H8: an objective that failed (a convoy got away) loses the mission.
+              : l.type === "objectiveFailed" ? m.objectives[l.objective]?.state === "failed" : false);
     const won = !lost && def.win.every((id) => m.objectives[id]?.state === "done");
     if (!lost && !won) return null;
     if (won) {

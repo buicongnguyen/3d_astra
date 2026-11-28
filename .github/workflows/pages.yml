@@ -272,6 +272,18 @@ jobs:
           - name: skywing-land-2
             scripts: skywing-land
             shard: 2/2
+          # H8 Hero challenges: the title row (EN/VI/KO), Sabotage and Sniper nest played through by hooks on a PC (cones,
+          # alarm, G to plant, result card, stars and coins), the fight feel (hit marker, kill notice, X reload, C crouch,
+          # barrel tint and blast, draws of its own <= 3), the phone HUD in portrait and landscape in EN/VI/KO.
+          - name: h8-challenges-1
+            scripts: hero-challenges
+            shard: 1/3
+          - name: h8-challenges-2
+            scripts: hero-challenges
+            shard: 2/3
+          - name: h8-challenges-3
+            scripts: hero-challenges
+            shard: 3/3
           # AAA round 2 (W0-A): every golden pin with GOLDEN_FULL=1 (300 s points, save and reload,
           # Three Roads, Endless to wave 12), off the 10-minute build job. It needs no browser.
           - name: golden-full

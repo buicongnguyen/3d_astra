@@ -51,6 +51,14 @@ export function setupMatchFlow(S, A) {
     if (S.activeStage !== null) { showDebrief(win); dress("campaign"); return; }
     // The Defence screens load lazily (app/defence-entry.js): dress the result once it is on the page.
     if (S.sim.defence) { const sim = S.sim; Promise.resolve(A.defenceResult()).then(() => { if (S.sim === sim && Z.modalType === "result") dress("defence"); }); return; }
+    // H8 Hero challenges (src/hero-challenges-ui.js): stars, coins, Retry, the other challenge and the main menu.
+    if (S.sim.missionDef?.challenge && A.challengeResultHTML) {
+      $("modal").classList.add("result-wide");
+      $("modal-content").innerHTML = A.challengeResultHTML();
+      $("modal").querySelector(".primary")?.focus();
+      dress("challenge");
+      return;
+    }
     $("modal").classList.add("result-wide");
     $("modal-content").innerHTML = skirmishResultHTML({ result: S.sim.result, seconds: S.sim.time, stats: S.matchStats.stats, emblem: emblemUrl, arrow: icon("arrow"), faction: playerFactionOf(S.sim) });
     $("modal").querySelector(".primary").focus();
@@ -79,12 +87,14 @@ export function setupMatchFlow(S, A) {
   function announce(mode, { mvp = null, added = null, variant = null, seconds = S.sim.time } = {}) {
     const sim = S.sim, root = $("modal-content");
     const stars = Number(root.querySelector("[data-stars]")?.dataset.stars ?? NaN);
+    // H8: a Hero challenge's stars better than its best so far pay coins (src/meta/coins.js).
+    const newStars = mode === "challenge" ? Number(root.querySelector("[data-new-stars]")?.dataset.newStars ?? 0) || 0 : 0;
     emitMatchEnd({
       mode, result: sim.result, win: sim.result === "victory", seconds, stats: S.matchStats.stats, mvp,
       medal: mode === "campaign" && sim.result === "victory" ? sim.mission?.medal || "bronze" : null,
       stars: Number.isFinite(stars) ? stars : null, score: variant === "endless" || variant === "daily" ? sim.defence?.cleared ?? 0 : null,
       variant, difficulty: sim.difficulty || "standard", missionId: sim.missionDef?.id ?? null, campaignId: mode === "campaign" ? S.campaignId : null,
-      tutorialDone: mode === "training" ? !!S.tutorial?.done : null, ceremony: added, root,
+      tutorialDone: mode === "training" ? !!S.tutorial?.done : null, ceremony: added, root, ...(mode === "challenge" ? { newStars, challenge: sim.missionDef.challenge.id } : null),
     });
   }
 
@@ -227,7 +237,8 @@ export function setupMatchFlow(S, A) {
   }
 
   function autosave() {
-    if (!Z.started || S.sim.result || S.playMode === "training" || S.tutorial || S.replay) return false;
+    // H8: a Hero challenge (a few minutes) is never saved: Continue would resume it as a plain skirmish.
+    if (!Z.started || S.sim.result || S.playMode === "training" || S.tutorial || S.replay || S.sim.missionDef?.challenge) return false;
     S.saveClock = 0;
     return writeSave({ mode: S.playMode, missionId: S.activeStage !== null ? S.sim.missionDef?.id ?? missionsOf(S.campaignId)[S.activeStage].id : S.sim.defence ? S.sim.missionDef.id : null, sim: S.sim });
   }

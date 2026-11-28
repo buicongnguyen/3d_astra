@@ -19,7 +19,9 @@ export const SKYWING_PRICE = 60;
 // The earn table (plan H2, owner update): a story mission pays WIN + STAR per medal star when won, FIRST
 // more the first time it is won, LOSS when lost. A skirmish or Defence match pays 15 to 30 by result and
 // length. The first paid match of each day adds DAILY; each new achievement ACHIEVEMENT once.
-export const EARN = Object.freeze({ win: 40, star: 10, first: 30, loss: 25, matchWin: 20, matchLoss: 15, matchMinute: 1, matchCap: 10, daily: 20, achievement: 25 });
+export const EARN = Object.freeze({ win: 40, star: 10, first: 30, loss: 25, matchWin: 20, matchLoss: 15, matchMinute: 1, matchCap: 10, daily: 20, achievement: 25, challengeWin: 20, challengePlay: 10, challengeStar: 15 });
+// H8 Hero challenges (src/hero-challenges-ui.js): a finished challenge pays challengeWin (won) or challengePlay (lost:
+// failing blocks nothing and still pays), plus challengeStar for each star better than its best so far (`newStars`).
 // The briefing suggests Skywing after this many losses in a row on one mission.
 export const HINT_AFTER = 2;
 
@@ -70,6 +72,10 @@ export function earnings(w, summary, now = new Date()) {
       if (stars) lines.push({ id: "stars", coins: EARN.star * stars, stars });
       if (missionId && !w.won.includes(missionId)) lines.push({ id: "first", coins: EARN.first });
     } else lines.push({ id: "loss", coins: EARN.loss });
+  } else if (mode === "challenge") {
+    lines.push({ id: win ? "challengeWin" : "challengePlay", coins: win ? EARN.challengeWin : EARN.challengePlay });
+    const fresh = whole(summary.newStars);
+    if (fresh) lines.push({ id: "newStars", coins: EARN.challengeStar * fresh, stars: fresh });
   } else if (mode === "skirmish" || mode === "defence") {
     lines.push({ id: win ? "matchWin" : "matchLoss", coins: (win ? EARN.matchWin : EARN.matchLoss) + Math.min(EARN.matchCap, Math.floor(whole(seconds) / 60) * EARN.matchMinute) });
   } else return { lines: [], total: 0 };

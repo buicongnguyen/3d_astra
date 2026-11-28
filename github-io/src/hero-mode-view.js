@@ -198,7 +198,7 @@ export class HeroModeView {
     this.reticle.frustumCulled = false;
     scene.add(this.shots, this.rockets.mesh, this.rings, this.reticle);
   }
-  // The page's reticle: { x, z, y, size, locked, progress, target } or null to hide it.
+  // The page's reticle: { x, z, y, size, locked, progress, target, hazard } or null to hide it.
   setReticle(p) {
     if (!p) { if (this.reticle) this.reticle.visible = false; return; }
     if (!this.reticle) this.build();
@@ -206,7 +206,8 @@ export class HeroModeView {
     this.reticle.position.set(p.x, (p.y || 0) + 0.12, p.z);
     this.reticle.scale.set(s, 1, s);
     this.reticle.rotation.y = p.locked ? this.clock * 4 : (p.progress || 0) * Math.PI;
-    this.reticleMat.color.set(p.locked ? 0xff6a3a : p.target ? 0xfff2b0 : 0xd8e6f0);
+    // H8: an explosive barrel under the crosshair tints it hazard orange.
+    this.reticleMat.color.set(p.hazard ? 0xff8a1e : p.locked ? 0xff6a3a : p.target ? 0xfff2b0 : 0xd8e6f0);
     this.reticle.visible = true;
   }
   event(ev) {

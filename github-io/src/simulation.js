@@ -473,7 +473,8 @@ export class Simulation {
       // Frontier Defence has no cores: lives and waves decide (sim/defence.js defenceResult).
       if (this.defence) return true;
       // A mission can field the player without a base: the squad is the side.
-      if (team === 0 && this.mission && !this.mission.rules.playerBase) return this.own(0).some((e) => e.kind === "unit" && !e.assist); // H1: Skywing never keeps a side alive
+      // H1: Skywing never keeps a side alive, except in a Hero challenge (rules.hero, sim/content/hero-challenges.js).
+      if (team === 0 && this.mission && !this.mission.rules.playerBase) return this.own(0).some((e) => e.kind === "unit" && (!e.assist || this.mission.rules.hero === true));
       const cores = this.own(team).filter((e) => e.type === "hq");
       if (cores.some((e) => e.complete)) return ((p.coreLostAt = null), true);
       if (!cores.length) return false;

@@ -64,6 +64,7 @@ import { setupMeta } from "./meta-ui.js";
 import { setupReplay } from "./replay-ui.js";
 import { setupSkywing } from "./skywing-ui.js"; // H1/H2: Skywing assist and the coin wallet
 import { setupHeroMode } from "./hero-mode.js"; // H3a/H3d: Hero mode (camera, controls, battle time, dodging)
+import { setupHeroChallenges } from "./hero-challenges-ui.js";
 // The command console kit on every screen (round 3 kit pass): loaded after every other stylesheet.
 import "./kit-skin.css";
 import "./menu-pro.css";
@@ -238,11 +239,14 @@ const SETUP = [
   ["skywing", setupSkywing],
   // H3a/H3d Hero mode: its keys listen in the capture phase, before the RTS keys.
   ["hero-mode", setupHeroMode],
+  // H8 Hero challenges: the title row, the challenge match (wraps createSim, newGame, skywingStart, heroTick), its HUD
+  // strip and result card; after Hero mode, whose HUD it adds to.
+  ["hero-challenges", setupHeroChallenges],
   // W6 replay viewer: binds last, so its wraps of showResult, openDecision, playScene, togglePause and newGame see the final ones.
   ["replay", setupReplay],
 ];
 const BIND = ["preferences", "hud", "input-pointer", "sound", "frame", "modals", "briefing", "match-flow", "selection", "type-chips",
-  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "choices", "scenes", "debug-hooks", "defence", "rank", "quick-battle", "lan", "meta", "skywing", "hero-mode", "replay"];
+  "orders", "abilities", "command-card", "input-keyboard", "minimap", "ui-extras", "choices", "scenes", "debug-hooks", "defence", "rank", "quick-battle", "lan", "meta", "skywing", "hero-mode", "hero-challenges", "replay"];
 const binds = Object.fromEntries(SETUP.map(([name, setup]) => [name, setup(S, A)]));
 // The start screen shows the battle chosen there, so the first simulation is built from it.
 ({ map: S.mapId, enemyCount: S.enemyCount, aiSpeed: S.aiSpeed, alliance: S.alliance, bonus: S.bonus, mission: S.mission, faction: S.enemyFaction, playerFaction: S.playerFaction } = A.battleSetup());

@@ -382,3 +382,53 @@ html.hero-mode #idle-chips { visibility: hidden !important; }
 }
 .hh-sky::after { content: ""; position: absolute; left: 5px; top: 7px; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 6px solid #8fd8ff; }
 .hh-sky[hidden] { display: none; }
+
+/* ---------------------------------------------------------------- H8 fight feel */
+/* The spread ring (its size from --spread: tight standing still, wide on the move), head and barrel tints. */
+.hh-spread {
+  position: absolute; left: 0; top: 0; width: var(--spread, 16px); height: var(--spread, 16px);
+  transform: translate(-50%, -50%); border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.55); box-shadow: 0 0 2px rgba(0, 0, 0, 0.7);
+  transition: width 0.08s linear, height 0.08s linear;
+}
+.hh-cross.on-target .hh-spread { border-color: rgba(255, 211, 106, 0.8); }
+.hh-cross.on-head .hh-spread { border-color: #ff6a5a; border-width: 2px; }
+.hh-cross.on-hazard::before, .hh-cross.on-hazard::after { background: #ff8a1e; }
+.hh-cross.on-hazard .hh-spread { border-color: #ff8a1e; border-style: dashed; border-width: 2px; }
+/* The hit marker: four short diagonal ticks round the crosshair, red for a headshot. */
+.hh-hitmark { position: absolute; left: -13px; top: -13px; width: 26px; height: 26px; opacity: 0; transform: rotate(45deg); }
+.hh-hitmark::before, .hh-hitmark::after {
+  content: ""; position: absolute; left: 0; top: 12px; width: 26px; height: 2px;
+  background: linear-gradient(90deg, #fff 0 8px, transparent 8px 18px, #fff 18px); box-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
+}
+.hh-hitmark::after { transform: rotate(90deg); }
+.hh-hitmark.show { opacity: 1; }
+.hh-hitmark.head::before, .hh-hitmark.head::after { background: linear-gradient(90deg, #ff4a3a 0 8px, transparent 8px 18px, #ff4a3a 18px); }
+/* The magazine: pips under the crosshair, "Reloading" while it refills. */
+.hh-mag { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.hh-mag[hidden] { display: none; }
+.hh-pips { display: flex; gap: 2px; }
+.hh-pips i { display: block; width: 4px; height: 9px; border-radius: 1px; background: #fff3cf; box-shadow: 0 0 2px rgba(0, 0, 0, 0.9); }
+.hh-pips i.spent { background: rgba(255, 255, 255, 0.22); }
+.hh-reload { padding: 1px 6px; border-radius: 6px; background: rgba(10, 16, 22, 0.72); color: #ffe08a; font: 800 11px/14px var(--hh-font, var(--font-ui, sans-serif)); letter-spacing: 0.04em; white-space: nowrap; }
+.hh-reload[hidden] { display: none; }
+.hh-cross .hh-scope { top: 44px; }
+/* Damage numbers over the target, rising and fading (pooled). */
+.hh-dmgs { position: fixed; inset: 0; pointer-events: none; }
+.hh-dmg { position: absolute; left: 0; top: 0; margin: -9px 0 0 -14px; font: 800 15px/18px var(--hh-font, var(--font-ui, sans-serif)); color: #fff; text-shadow: 0 1px 2px #000, 0 0 4px rgba(0, 0, 0, 0.8); }
+.hh-dmg.head { color: #ff7a5a; font-size: 17px; }
+.hh-dmg.kill { color: #ffd36a; }
+.hh-dmg[hidden] { display: none; }
+/* Kill notices: a short feed under the top bar on the right (never over the buttons). */
+.hh-feed { position: absolute; right: max(12px, env(safe-area-inset-right)); top: calc(env(safe-area-inset-top) + 66px); display: flex; flex-direction: column; align-items: flex-end; gap: 4px; pointer-events: none; }
+.hh-note { margin: 0; padding: 3px 8px; border-radius: 6px; background: rgba(10, 16, 22, 0.72); border-left: 3px solid #ffd36a; font: 700 12px/16px var(--hh-font, var(--font-ui, sans-serif)); color: #f1f6f3; white-space: nowrap; }
+.hh-note b { color: #ffd36a; text-transform: uppercase; letter-spacing: 0.04em; }
+.hh-note.head { border-left-color: #ff6a5a; }
+.hh-note.head b { color: #ff8a7a; }
+.hh-note.blast { border-left-color: #ff8a1e; }
+.hh-note.blast b { color: #ffb070; }
+/* Crouched: a tag on the plate. */
+.hh-crouch { font: 700 11px/1 var(--hh-font); font-style: normal; color: #062014; background: #7fe0a0; padding: 2px 5px; border-radius: 3px; }
+.hh-crouch[hidden] { display: none; }
+.hero-phone .hh-feed { top: calc(env(safe-area-inset-top) + 58px); }
+@media (prefers-reduced-motion: reduce) { .hh-spread { transition: none; } }

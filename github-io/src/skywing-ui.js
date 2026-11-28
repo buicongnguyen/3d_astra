@@ -20,8 +20,10 @@ import { missionsOf } from "./campaign.js";
 import { DEFENCE_LEVELS } from "./defence/levels.js";
 
 const MODES = new Set(["campaign", "skirmish", "defence"]);
+// H8: a Hero challenge pays coins too (its own lines), though it never offers the Skywing row (Skywing is the hero).
+const PAID = new Set([...MODES, "challenge"]);
 // The debrief's line names (src/locales translate each).
-const LINE_NAMES = { win: "Mission won", stars: "Medal stars", first: "First win", loss: "Mission lost", matchWin: "Match won", matchLoss: "Match played", daily: "First match today", achievement: "New achievement" };
+const LINE_NAMES = { win: "Mission won", stars: "Medal stars", first: "First win", loss: "Mission lost", matchWin: "Match won", matchLoss: "Match played", daily: "First match today", achievement: "New achievement", challengeWin: "Challenge complete", challengePlay: "Challenge played", newStars: "New stars" };
 
 export function setupSkywing(S, A) {
   const Z = S.screen;
@@ -137,9 +139,9 @@ export function setupSkywing(S, A) {
 
   // ---------------------------------------------------------------- The debrief
   function matchEnded(summary) {
-    if (!MODES.has(summary.mode) || S.replay || S.sim?.lan) return;
+    if (!PAID.has(summary.mode) || S.replay || S.sim?.lan) return;
     const before = S.wallet;
-    const { wallet, lines, total } = settle(before, { mode: summary.mode, win: !!summary.win, missionId: summary.missionId, medal: summary.medal, seconds: summary.seconds, achievements: S.campaign?.earned || [] });
+    const { wallet, lines, total } = settle(before, { mode: summary.mode, win: !!summary.win, missionId: summary.missionId, medal: summary.medal, seconds: summary.seconds, newStars: summary.newStars || 0, achievements: S.campaign?.earned || [] });
     if (!lines.length) return;
     S.wallet = wallet;
     saveWallet(S.wallet);

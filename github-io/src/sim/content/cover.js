@@ -7,7 +7,10 @@
 // placed when Skywing is called in (sim/content/skywing.js callSkywing) or Hero mode is first entered
 // (setHeroMode), both logged commands or setup, so replays and saves rebuild the same pieces. The list is kept in
 // the state (`sim.cover`), absent until then: a match that never has a hero saves and hashes exactly as before.
+// H8: the explosive crates and barrels (sim/hazards.js) are placed with the pieces, beside them, and kept next to them
+// in the state (`sim.hazards`); only the driven hero's shots set them off (sim/content/hero-mode.js).
 import { planCover, coverCircles, coverBlock } from "../cover.js";
+import { planHazards } from "../hazards.js";
 
 export const cover = {
   id: "cover",
@@ -18,7 +21,9 @@ export const cover = {
       this.cover = planCover(this);
       this.applyCover();
       this.nav.rebuild(this.entities);
-      this.events.push({ type: "cover", n: this.cover.length });
+      // Beside the pieces, on ground still open with them in the nav grid.
+      this.hazards = planHazards(this, this.cover);
+      this.events.push({ type: "cover", n: this.cover.length, hazards: this.hazards.length });
       return true;
     },
     // The nav grid's copy of the pieces (navigation is derived: a loaded save sets it again, snapshot.js).

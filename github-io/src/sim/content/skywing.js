@@ -80,6 +80,20 @@ function arm(e, weapon) {
   e.shot = w.shot;
 }
 
+// H8 Hero challenges (sim/content/hero-challenges.js): Skywing set down on foot at once (a challenge that starts on
+// the ground), as a finished landing leaves it.
+export function groundSkywing(sim, e) {
+  delete e.skyland;
+  e.flying = false;
+  e.landed = true;
+  e.speed = LAND.walk;
+  e.vision = SIGHT.vision;
+  e.stillAt = sim.time;
+  e.post = { x: e.x, z: e.z };
+  arm(e, e.weapon);
+  return e;
+}
+
 // Turns a fresh Kite into Skywing.
 export function makeSkywing(e, weapon = DEFAULT_WEAPON) {
   e.assist = true;

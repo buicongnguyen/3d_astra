@@ -143,6 +143,12 @@
       "checks": ["test"]
     },
     {
+      "name": "H8 Hero challenges (Sabotage, Sniper nest), fight feel (magazine, headshot, spread, crouch, hit marker) and explosive hazards",
+      "files": ["src/story/hero-challenges.js", "src/sim/content/hero-challenges.js", "src/hero-challenges-ui.js", "src/hero-challenges.css", "src/meta/hero-challenges.js", "src/challenge-view.js", "src/sim/hero-feel.js", "src/sim/hazards.js", "src/hazard-view.js", "tests/hero-challenges.mjs", "tests/hero-challenges.test.js", "tests/hero-feel.test.js", "tests/hazards.test.js", "tests/lib/challenge-bot.mjs"],
+      "suites": ["hero-challenges", "hero-mode", "skywing-land", "skywing", "quick-battle", "golden-full", "phones", "mobile", "layout-f", "language", "render-budget", "title"],
+      "checks": ["test"]
+    },
+    {
       "name": "H3c steward: the AI runs the player's base (sim/steward.js) and its strip",
       "files": ["src/sim/steward.js", "src/steward-ui.js", "src/steward-ui.css"],
       "suites": ["steward", "lan-play", "defence", "stages"],

@@ -34,6 +34,7 @@ import { campaignHeroes } from "./campaign-heroes.js";
 import { skywing } from "./skywing.js";
 import { heroMode } from "./hero-mode.js";
 import { cover } from "./cover.js";
+import { heroChallenges } from "./hero-challenges.js";
 
 export const CONTENT = [
   suppression,
@@ -63,4 +64,5 @@ export const CONTENT = [
   skywing,
   heroMode,
   cover,
+  heroChallenges,
 ];

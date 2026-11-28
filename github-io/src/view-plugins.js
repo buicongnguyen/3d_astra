@@ -39,6 +39,8 @@ import { CoverView } from "./cover-view.js";
 import { CloseLookView } from "./close-look-view.js";
 import { UnitDecalsView } from "./unit-decals-view.js";
 import { BirdView } from "./bird-view.js";
+import { HazardView } from "./hazard-view.js";
+import { ChallengeView } from "./challenge-view.js";
 
 export const HOOKS = ["dress", "scaleFor", "frameScaleFor", "event", "update", "reset"];
 
@@ -90,4 +92,6 @@ export const VIEW_PLUGINS = [
   CloseLookView, // H5: close-view surface detail, rim and tight shadow in Hero mode (shared uniforms, no draw)
   UnitDecalsView, // H5: team emblems, hull stripes and unit numbers on near units in Hero mode (one draw, only in Hero mode)
   BirdView, // H5: perched flocks that react (one card draw; in Hero mode one more per bird family near the camera)
+  HazardView, // H8: explosive crates and barrels beside the cover, one instanced batch (1 draw, only in a match with cover)
+  ChallengeView, // H8: Hero challenges' view cones and markers (2 draws, only in a challenge)
 ];

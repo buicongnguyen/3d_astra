@@ -20,7 +20,14 @@
 //     wider fog than other ground heroes, and an air warning: enemy flyers within AIR_WARN m get edge marks and a sky
 //     marker even outside sight (the hero HUD only: never the RTS view or the minimap), with a rate-limited notice;
 //   - the close-up detail follows the aim point (20 m), with a soft distance fog; warning rings where rockets
-//     and shells land, and marks at the screen edge for shots from off screen; no camera shake anywhere.
+//     and shells land, and marks at the screen edge for shots from off screen; no camera shake anywhere;
+//   - H8 fight feel (rules: src/sim/hero-feel.js): the magazine as pips under the crosshair ("Reloading" while it
+//     refills; PC X tops it up, phones reload on their own when empty), the crosshair's spread ring (wide on the move,
+//     tight standing still), a headshot when the crosshair sits on a soldier's head (sent with heroFire), crouch
+//     (PC C toggles it; phones crouch on their own standing still by cover) with a "Crouched" tag, a hit marker
+//     (red for a headshot), damage numbers and a kill notice; an explosive barrel under the crosshair tints the
+//     reticle orange and a shot sets it off (sim/hazards.js); a PC-only 0.6 degree kick on the hero's own shot
+//     (never on phones, never with reduced motion).
 import "./hero-mode.css";
 import { $ } from "./app/dom.js";
 import { icon } from "./icons.js";
@@ -31,6 +38,9 @@ import { HERO_TIME, DODGE, enterCommands, leaveCommands } from "./sim/content/he
 import { pickTarget, RocketLock, moveVector, battleTime, AIM } from "./hero-aim.js";
 import { translate, getLanguage } from "./i18n.js";
 import { PHONE_NAME } from "./tactics-card.js";
+import { DEFINITIONS as D } from "./data.js";
+import { HEAD, magSize, hasMagazine, headable } from "./sim/hero-feel.js";
+import { hazardAt, HAZARD } from "./sim/hazards.js";
 // The ground shoulder camera per screen: metres behind (back), above the ground (up) and to the side of the hero, the
 // look point `ahead` m in front at `lookY` m. Look-down: PC about 13 degrees, landscape phone 19, portrait phone 30
 // (its 84-degree tall view otherwise shows mostly sky); the hero stands a little under the middle of the screen.
@@ -52,6 +62,9 @@ export const AIM_ASSIST = Object.freeze({ off: { cone: 0, snap: 1.2 }, low: { co
 // Dodge help's reflex slow-down: the clock at `scale` of the battle time for `seconds` (real) before a rocket or
 // shell hits, `gap` seconds at least between two.
 export const REFLEX = Object.freeze({ scale: 0.25, seconds: 0.4, gap: 1.2 });
+// H8: the crosshair's spread ring (px, from still to on the move), the head zone round a soldier's head (px at least),
+// the hit marker and damage numbers (ms on screen), and the PC shot kick (radians, recovering in `back` s).
+export const FEEL_HUD = Object.freeze({ ring: [16, 46], head: 11, headPhone: 16, marker: 220, number: 700, feed: 2200, kick: 0.011, back: 0.14 });
 
 export function setupHeroMode(S, A) {
   const Z = S.screen;
@@ -61,6 +74,8 @@ export function setupHeroMode(S, A) {
     lock: new RocketLock(), keys: new Set(), stick: null, look: null, fell: null, pointer: null, pinch: null, touches: new Map(),
     cursor: null, button: null, hud: null, edges: [], skies: [], turn: 0, flight: 1, grounded: null, warned: 0, flyers: new Set(),
     reflex: { left: 0, wait: 0, seen: new Set(), count: 0 },
+    // H8 fight feel (page side): the crosshair's hazard (index or -1) and head aim, PC crouch toggle, the shot kick.
+    barrel: -1, head: false, crouch: false, kick: 0, hits: 0, kills: 0, heads: 0, blasts: 0, numbers: [], feedAt: 0,
   };
   S.hero = H;
 
@@ -156,7 +171,7 @@ export function setupHeroMode(S, A) {
     root.hidden = true;
     root.innerHTML = `
       <div class="hh-top">
-        <div class="hh-plate"><span class="hh-star" aria-hidden="true">★</span><b class="hh-name" translate="no"></b><em class="hh-assist" hidden>ASSIST</em><i class="hh-hp" aria-hidden="true"><i></i></i></div>
+        <div class="hh-plate"><span class="hh-star" aria-hidden="true">★</span><b class="hh-name" translate="no"></b><em class="hh-assist" hidden>ASSIST</em><em class="hh-crouch" hidden>Crouched</em><i class="hh-hp" aria-hidden="true"><i></i></i></div>
         <div class="hh-time" role="status"><span>Battle time</span> <b translate="no"></b></div>
         <div class="hh-sys"><button type="button" data-hero="pause" aria-label="Pause">${icon("pause")}<span>Pause</span></button><button type="button" data-hero="exit" class="hh-exit">${icon("close")}<span>Exit</span><kbd translate="no">Tab</kbd></button></div>
       </div>
@@ -168,12 +183,16 @@ export function setupHeroMode(S, A) {
         <button type="button" data-hero="fire" class="hh-fire"><span>Fire</span><kbd translate="no">F</kbd></button>
       </div>
       <div class="hh-stick" aria-hidden="true"><i class="hh-knob"></i></div>
-      <div class="hh-cross" aria-hidden="true"><i class="hh-lockring"></i><b class="hh-scope" hidden>Scope</b></div>
+      <div class="hh-cross" aria-hidden="true"><i class="hh-lockring"></i><i class="hh-spread"></i><i class="hh-hitmark"></i><b class="hh-scope" hidden>Scope</b><span class="hh-mag"><span class="hh-pips"></span><b class="hh-reload" hidden>Reloading</b></span></div>
+      <div class="hh-dmgs" aria-hidden="true"></div>
+      <div class="hh-feed" role="status"></div>
       <div class="hh-edges" aria-hidden="true"></div>
       <div class="hh-down" role="status" hidden><span>Hero down</span></div>
-      <p class="hh-help"><span>WASD move · Mouse aim · Click/F fire · Q ability · Space dodge · Tab exit</span></p>`;
+      <p class="hh-help"><span>WASD move · Mouse aim · Click/F fire · X reload · C crouch · Q ability · Space dodge · Tab exit</span></p>`;
     document.body.append(root);
     for (let i = 0; i < 6; i++) { const m = document.createElement("i"); m.className = "hh-edge"; m.hidden = true; root.querySelector(".hh-edges").append(m); H.edges.push(m); }
+    // H8: damage numbers, pooled (no allocation in battle).
+    for (let i = 0; i < 5; i++) { const b = document.createElement("b"); b.className = "hh-dmg"; b.hidden = true; root.querySelector(".hh-dmgs").append(b); H.numbers.push({ el: b, until: 0, id: null }); }
     // Sky markers for enemy flyers near a landed Skywing (PART D): pooled, no draw.
     for (let i = 0; i < 4; i++) { const m = document.createElement("i"); m.className = "hh-sky"; m.hidden = true; root.querySelector(".hh-edges").append(m); H.skies.push(m); }
     root.addEventListener("click", (event) => {
@@ -210,7 +229,8 @@ export function setupHeroMode(S, A) {
     // H7 Settings > Hero > Dodge help: carried by the command, so the match (and its replay) keeps it.
     const [mode, steward] = enterCommands(0, id, scale, S.settings.dodgeHelp === true);
     if (!S.sim.command(mode)) { A.notice?.("Hero mode is not available now."); return false; }
-    S.sim.command(steward);
+    // H8: a Hero challenge has no base to run, so no steward (and no "AI running your base" strip).
+    if (!S.sim.missionDef?.challenge) S.sim.command(steward);
     Object.assign(H, { on: true, id, sky: isSkywing(e), sim: S.sim, yaw: Number.isFinite(e.angle) ? e.angle : 0, pitch: 0, zoom: 1, fell: null, firing: false, target: null, aim: null });
     H.sent = { drive: "0,0", fire: "null" };
     H.lock.reset();
@@ -235,7 +255,10 @@ export function setupHeroMode(S, A) {
     H.grounded = null;
     root.querySelector(".hh-help span").textContent = H.sky
       ? "WASD fly · Mouse aim · Click/F shoot · Hold to lock rockets · Wheel zoom · Q Dive · E weapon · Space roll · Tab exit"
-      : "WASD move · Mouse aim · Click/F fire · Q ability · Space dodge · Tab exit";
+      : "WASD move · Mouse aim · Click/F fire · X reload · C crouch · Q ability · Space dodge · Tab exit";
+    // H8: phones crouch on their own standing still by cover; a PC toggles it with C (off at the start).
+    H.crouch = false; H.barrel = -1; H.head = false; H.kick = 0;
+    S.sim.command({ team: 0, type: "heroCrouch", on: phone() ? "auto" : false });
     if (H.sky) labels(e);
     H.button && (H.button.hidden = true);
     const v = S.view;
@@ -308,7 +331,7 @@ export function setupHeroMode(S, A) {
     const root = H.hud;
     root.querySelector(".hh-dodge-name").textContent = ground ? "Dodge" : "Barrel roll";
     root.querySelector(".hh-help span").textContent = ground
-      ? "WASD walk · Mouse aim · Click/F shoot · Hold to lock rockets · E weapon · R take off · Space dodge · Tab exit"
+      ? "WASD walk · Mouse aim · Click/F shoot · Hold to lock rockets · E weapon · X reload · C crouch · R take off · Space dodge · Tab exit"
       : "WASD fly · Mouse aim · Click/F shoot · Hold to lock rockets · Wheel zoom · Q Dive · E weapon · R land · Space roll · Tab exit";
   }
   function dodge() {
@@ -334,13 +357,34 @@ export function setupHeroMode(S, A) {
   }
   function shoot(hold) {
     const t = H.target;
+    // H8: an explosive barrel under the crosshair (the reticle tints orange) takes the shot: one at a time.
+    if (H.barrel >= 0) {
+      const key = `b${H.barrel}`;
+      if (hold && H.sent.fire === key) return true;
+      H.sent.fire = hold ? key : H.sent.fire;
+      return send({ type: "heroFire", barrel: H.barrel });
+    }
     if (!t) { if (!hold) A.tone?.(260, 0.05); return false; }
-    // A held trigger is sent once per target; a single shot always goes (and leaves the held state alone).
-    if (!hold) return send({ type: "heroFire", target: t.id, hold: false });
-    const key = `${t.id}`;
+    // A held trigger is sent once per target (and again when the aim moves on or off its head); a single shot always
+    // goes (and leaves the held state alone).
+    const head = H.head ? { head: true } : null;
+    if (!hold) return send({ type: "heroFire", target: t.id, hold: false, ...head });
+    const key = `${t.id}${H.head ? "h" : ""}`;
     if (H.sent.fire === key) return true;
     H.sent.fire = key;
-    return send({ type: "heroFire", target: t.id, hold: true });
+    return send({ type: "heroFire", target: t.id, hold: true, ...head });
+  }
+  // H8: top the magazine up (PC X; phones reload on their own when it runs dry).
+  function reload() {
+    const e = hero();
+    if (!e || !hasMagazine(e)) return;
+    if (send({ type: "heroReload" })) A.tone?.(340, 0.06);
+  }
+  // H8: crouch on or off (PC C). Crouched only standing still beside cover; moving stands up.
+  function crouch() {
+    if (phone()) return;
+    H.crouch = !H.crouch;
+    if (send({ type: "heroCrouch", on: H.crouch })) { A.tone?.(H.crouch ? 300 : 420, 0.05); A.notice?.(H.crouch ? "Crouch on: stand still by cover to take half damage." : "Crouch off."); }
   }
   function ceaseFire() {
     if (H.sent.fire === "null") return;
@@ -452,6 +496,9 @@ export function setupHeroMode(S, A) {
     // and Skywing's rocket lock, one shot per press for Skywing's sniper.
     if (code === "KeyF" || k === "f") { stop(event); if (!event.repeat) { aimNow(); trigger(true, "key"); } return; }
     if (code === "KeyR" || k === "r") { stop(event); if (!event.repeat && H.sky) land(); return; }
+    // H8: X reloads (R lands, F fires), C crouches (on a PC; RTS Stop and Context are not used in Hero mode).
+    if (code === "KeyX" || k === "x") { stop(event); if (!event.repeat) reload(); return; }
+    if (code === "KeyC" || k === "c") { stop(event); if (!event.repeat) crouch(); return; }
     if (code === "KeyQ" || k === "q") { stop(event); if (!event.repeat) ability(); return; }
     if (code === "KeyE" || k === "e") { stop(event); if (!event.repeat) { if (H.sky) weapon(); else ability(); } return; }
   }
@@ -470,6 +517,8 @@ export function setupHeroMode(S, A) {
     const p = o.position, f = { x: Math.sin(H.yaw), z: Math.cos(H.yaw) }, r = { x: -Math.cos(H.yaw), z: Math.sin(H.yaw) };
     const groundY = v.terrain.heightAt(p.x, p.z);
     let eye, look, fov = 58;
+    // H8: the PC shot kick (a small look-up that settles in FEEL_HUD.back s; never on phones or with reduced motion).
+    const kick = H.kick > 0 ? H.kick : 0;
     const shoulder = () => {
       // Re-score 2026-11-28: the old 8-10 degree look-down left about 45% sky on a portrait phone with the hero low;
       // each screen now looks down far enough that the horizon sits in the top fifth to third (SHOULDER).
@@ -503,6 +552,7 @@ export function setupHeroMode(S, A) {
       look = { x: p.x + f.x * c.ahead + r.x * c.side * 0.4, y: groundY + c.lookY - H.pitch * 1.5, z: p.z + f.z * c.ahead + r.z * c.side * 0.4 };
       fov = c.fov;
     }
+    if (kick) look = { ...look, y: look.y + kick * Math.hypot(look.x - eye.x, look.z - eye.z) };
     // Portrait screens keep at least a 52 degree wide view (a taller vertical angle, up to 84).
     const aspect = v.width / Math.max(1, v.height), minV = (2 * Math.atan(Math.tan((52 * Math.PI) / 360) / aspect) * 180) / Math.PI;
     v.placeHeroCamera(eye, look, Math.min(84, Math.max(fov, minV)));
@@ -514,7 +564,9 @@ export function setupHeroMode(S, A) {
     aimNow();
     const t = H.target, a = H.aim;
     const reticle = v.plugins?.list.find((q) => q.setReticle);
-    if (a) reticle?.setReticle({ x: t ? t.x : a.x, z: t ? t.z : a.z, y: v.terrain.heightAt(t ? t.x : a.x, t ? t.z : a.z) + (t?.flying ? (t.fly || 3) : 0), size: t ? Math.max(0.9, (t.radius || 0.7) * 1.4) : H.sky ? 1.1 : 0.8, target: !!t, locked: H.lock.progress >= 1, progress: H.lock.progress });
+    const hz = H.barrel >= 0 ? sim.hazards?.[H.barrel] : null;
+    if (hz) reticle?.setReticle({ x: hz[0], z: hz[1], y: v.terrain.heightAt(hz[0], hz[1]), size: 1, target: true, hazard: true, locked: false, progress: 0 });
+    else if (a) reticle?.setReticle({ x: t ? t.x : a.x, z: t ? t.z : a.z, y: v.terrain.heightAt(t ? t.x : a.x, t ? t.z : a.z) + (t?.flying ? (t.fly || 3) : 0), size: t ? Math.max(0.9, (t.radius || 0.7) * 1.4) : H.sky ? 1.1 : 0.8, target: !!t, locked: H.lock.progress >= 1, progress: H.lock.progress });
     // Close-up detail around the aim point, not the camera.
     const cv = v.closeView;
     if (cv?.on && a) { cv.x = t ? t.x : a.x; cv.z = t ? t.z : a.z; }
@@ -538,6 +590,17 @@ export function setupHeroMode(S, A) {
     // phone cone). The pick is the page's: the heroFire command carries the target, so replays stay exact.
     const assist = AIM_ASSIST[S.settings.aimAssist] || (phone() ? AIM_ASSIST.high : AIM_ASSIST.low);
     H.target = pickTarget(S.sim, e, p, { cone: assist.cone, snap: Math.min(assist.snap, H.sky ? AIM.snap : 2.5) });
+    // H8: an intact explosive barrel nearer the aim point than the target (and in reach) takes the crosshair.
+    const sim = S.sim, i = sim.hazards?.length ? hazardAt(sim.hazards, p.x, p.z, HAZARD.aim) : -1;
+    const hz = i >= 0 ? sim.hazards[i] : null, t = H.target;
+    H.barrel = hz && Math.hypot(hz[0] - e.x, hz[1] - e.z) <= (e.range || 10) + 16 && (!t || Math.hypot(hz[0] - p.x, hz[1] - p.z) < Math.hypot(t.x - p.x, t.z - p.z) - 0.2) ? i : -1;
+    // A headshot: the crosshair within the head zone of a soldier target (its head projected on screen).
+    H.head = false;
+    if (t && H.barrel < 0 && hasMagazine(e) && headable(t)) {
+      const q = v.project(t.x, t.z, v.terrain.heightAt(t.x, t.z) + HEAD.height * (v.objects.get(t.id)?.userData.readabilityScale || 1));
+      const zone = Math.max(phone() ? FEEL_HUD.headPhone : FEEL_HUD.head, 0);
+      H.head = Math.hypot(q.x + rect.left - sx, q.y + rect.top - sy) <= zone;
+    }
   }
   // Marks at the screen edge for shots at the hero from off screen.
   function edges(sim, e) {
@@ -598,6 +661,7 @@ export function setupHeroMode(S, A) {
   // ---------------------------------------------------------------- every frame (app/frame.js, before the ticks)
   function tick(dt) {
     // The clock's ease in and out (real time).
+    if (H.kick > 0) H.kick = Math.max(0, H.kick - (FEEL_HUD.kick / FEEL_HUD.back) * dt);
     if (H.ease) {
       H.ease.t += dt;
       H.scale = battleTime(H.ease.from, H.ease.to, H.ease.t);
@@ -709,12 +773,89 @@ export function setupHeroMode(S, A) {
     const cross = root.querySelector(".hh-cross");
     if (H.screen) cross.style.transform = `translate(${Math.round(H.screen.x)}px, ${Math.round(H.screen.y)}px)`;
     cross.classList.toggle("on-target", !!H.target);
+    // H8: the spread ring, the head and barrel tints, the magazine pips, "Reloading" and the crouch tag.
+    const ring = FEEL_HUD.ring[0] + (FEEL_HUD.ring[1] - FEEL_HUD.ring[0]) * Math.max(0, Math.min(1, e.spread || 0));
+    cross.style.setProperty("--spread", `${ring.toFixed(1)}px`);
+    cross.classList.toggle("on-head", !!H.head);
+    cross.classList.toggle("on-hazard", H.barrel >= 0);
+    const mag = cross.querySelector(".hh-mag"), magged = hasMagazine(e);
+    if (mag.hidden === magged) mag.hidden = !magged;
+    if (magged) {
+      const size = magSize(e), left = e.mag ?? size, reloading = S.sim.time < (e.reloadAt ?? -Infinity) - 1e-9;
+      const pips = `${size}:${reloading ? size : left}:${reloading}`;
+      if (mag.dataset.pips !== pips) {
+        mag.dataset.pips = pips;
+        mag.querySelector(".hh-pips").innerHTML = Array.from({ length: size }, (_, i) => `<i${i < (reloading ? 0 : left) ? "" : ' class="spent"'}></i>`).join("");
+        mag.querySelector(".hh-reload").hidden = !reloading;
+        mag.classList.toggle("reloading", reloading);
+      }
+    }
+    const tag = root.querySelector(".hh-crouch"), low = !!e.crouched;
+    if (tag.hidden === low) tag.hidden = !low;
+    feelTick();
     const scope = cross.querySelector(".hh-scope"), scoped = !!(H.sky && e.scope);
     if (scope.hidden === scoped) scope.hidden = !scoped;
     cross.style.setProperty("--lock", H.lock.progress.toFixed(2));
     cross.classList.toggle("locked", H.lock.progress >= 1);
   }
 
+  // H8: the hero's own hits (sim heroHit / hazardBlast / heroReload events, read in app/frame.js through factionEvent):
+  // the hit marker (red for a headshot), a damage number over the target, a kill notice, the PC kick.
+  function feelEvent(ev) {
+    if (!H.on) return;
+    if (ev.type === "heroHit" && ev.id === H.id) {
+      H.hits++;
+      if (ev.head) H.heads++;
+      const mark = H.hud.querySelector(".hh-hitmark");
+      mark.classList.toggle("head", !!ev.head);
+      mark.classList.remove("show"); void mark.offsetWidth; mark.classList.add("show");
+      H.markUntil = performance.now() + FEEL_HUD.marker;
+      if (ev.dmg > 0) number(ev);
+      if (ev.kill) { H.kills++; feed(ev.head ? "Headshot" : "Enemy down", ev.unit ? D[ev.unit]?.name || ev.name : ev.name, ev.head ? "head" : "kill"); A.tone?.(ev.head ? 980 : 760, 0.07); }
+      else A.tone?.(ev.head ? 1180 : 1320, 0.025);
+      if (!phone() && !S.view.reducedMotion?.matches && S.settings.combatMotion !== false) H.kick = FEEL_HUD.kick;
+    } else if (ev.type === "hazardBlast" && ev.by === H.id) {
+      H.blasts++;
+      feed("Barrel blast", ev.kills ? `×${ev.kills}` : "", "blast");
+    }
+  }
+  function number(ev) {
+    const slot = H.numbers.find((n) => n.until < performance.now()) || H.numbers.reduce((a, b) => (b.until < a.until ? b : a));
+    slot.until = performance.now() + FEEL_HUD.number;
+    slot.at = { x: ev.x, z: ev.z, air: ev.air };
+    slot.t0 = performance.now();
+    slot.el.textContent = String(ev.dmg);
+    slot.el.className = `hh-dmg${ev.head ? " head" : ""}${ev.kill ? " kill" : ""}`;
+    slot.el.hidden = false;
+  }
+  function feed(what, who = "", kind = "kill") {
+    const box = H.hud.querySelector(".hh-feed");
+    const line = document.createElement("p");
+    line.className = `hh-note ${kind}`;
+    line.innerHTML = `<b></b>${who ? " <span></span>" : ""}`;
+    line.querySelector("b").textContent = translate(what);
+    if (who) line.querySelector("span").textContent = who.startsWith("×") ? who : translate(who);
+    box.prepend(line);
+    while (box.children.length > 3) box.lastElementChild.remove();
+    H.feedAt = performance.now();
+  }
+  // Damage numbers rise and fade; old notices leave; the marker clears (cheap, in place).
+  function feelTick() {
+    // Browser suites (__frontier.holdMessages) keep the marker, numbers and notices up until released.
+    const hold = !!globalThis.__frontierHoldMessages, now = performance.now(), v = S.view;
+    for (const n of H.numbers) {
+      if (n.el.hidden) continue;
+      if (now >= n.until && !hold) { n.el.hidden = true; continue; }
+      const k = hold ? 0.3 : (now - n.t0) / FEEL_HUD.number, y = v.terrain.heightAt(n.at.x, n.at.z) + (n.at.air ? 3.6 : 1.9) + k * 0.8;
+      const q = v.project(n.at.x, n.at.z, y), r = v.renderer.domElement.getBoundingClientRect();
+      n.el.style.transform = `translate(${Math.round(q.x + r.left)}px, ${Math.round(q.y + r.top)}px)`;
+      n.el.style.opacity = String(Math.max(0, 1 - k * k));
+    }
+    const mark = H.hud.querySelector(".hh-hitmark");
+    if (mark.classList.contains("show") && now >= (H.markUntil || 0) && !hold) mark.classList.remove("show");
+    const box = H.hud.querySelector(".hh-feed");
+    if (box.firstChild && now - H.feedAt > FEEL_HUD.feed && !hold) { box.lastElementChild.remove(); H.feedAt = now - FEEL_HUD.feed * 0.6; }
+  }
   // H7 Dodge help's reflex: a rocket or shell about to hit the hero, with the dodge ready, slows the clock to
   // REFLEX.scale of the battle time for REFLEX.seconds (real time), once a shot and at most every REFLEX.gap s.
   // Page time only (the sim's ticks and commands are unchanged), never in a LAN match; no camera shake.
@@ -743,7 +884,12 @@ export function setupHeroMode(S, A) {
     return (x - m[12]) * m[8] + (z - m[14]) * m[10] > 0;
   }
 
+  // H8: the sim's events reach the hero HUD through factionEvent (app/frame.js calls it for every event).
+  const factionEvent = A.factionEvent;
+  A.factionEvent = (ev) => { factionEvent?.(ev); feelEvent(ev); };
   Object.assign(A, { heroTick: tick, heroPace: pace, enterHeroMode: enter, leaveHeroMode: leave, heroModeOn: () => H.on, heroInfo: () => ({ on: H.on, id: H.id, sky: H.sky, flight: H.flight, scope: !!H.hud?.querySelector(".hh-scope:not([hidden])"), airWarn: H.airWarn || 0,
+    barrel: H.barrel, head: H.head, crouch: H.crouch, hits: H.hits, kills: H.kills, heads: H.heads, blasts: H.blasts, kick: H.kick,
+    marker: !!H.hud?.querySelector(".hh-hitmark.show"), feed: [...(H.hud?.querySelectorAll(".hh-note") || [])].map((n) => n.textContent.trim()),
     reflex: H.reflex.count, reflexOn: H.reflex.left > 0,
     marks: H.edges.filter((m) => !m.hidden && m.classList.contains("air")).length + H.skies.filter((m) => !m.hidden).length, yaw: H.yaw, zoom: H.zoom, scale: H.scale, aim: H.aim, target: H.target?.id ?? null, lock: H.lock.progress, screen: H.screen || null, sent: { ...H.sent } }) });
   return function bind() {

@@ -101,6 +101,8 @@ export function setupDebugHooks(S, A) {
       // H3a/H3d Hero mode (src/hero-mode.js): enter (with a hero id, else the one the button picks), leave, and its state
       // (on, hero, Skywing, camera yaw and zoom, the clock scale, the aim point and target, the rocket lock).
       heroMode: { enter: (id) => A.enterHeroMode(id ?? undefined), leave: () => A.leaveHeroMode(), get info() { return A.heroInfo(); } },
+      // H8 Hero challenges (src/hero-challenges-ui.js): start one by id, read the best stars, clear them.
+      heroChallenges: { start: (id) => A.heroChallenges?.start(id), get progress() { return A.heroChallenges?.progress(); }, reset: () => A.heroChallenges?.reset() },
     };
   }
 
