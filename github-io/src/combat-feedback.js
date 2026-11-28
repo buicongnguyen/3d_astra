@@ -4,15 +4,15 @@ import { groundSplashRadius } from './fx-kinds/weapon-class.js';
 import { CELL } from './fx-kinds/cells.js';
 
 // Damage states drawn by the 3D effects (src/fx.js): completed buildings smoke below half
-// health and burn (fire and smoke) below a quarter; machines burn below 35%. Infantry and
-// unfinished construction never smoke or burn.
+// health and burn (fire and smoke) below a quarter; machines trail a thin smoke below half health
+// (hit reactions, 2026-11-28) and burn below 35%. Infantry and unfinished construction never smoke or burn.
 export const DAMAGE = { smoke: .5, fire: .25, machineFire: .35 };
 export const SMOKING = 1, BURNING = 2;
 export function damageState(e) {
   if (!e.complete || !(e.hp > 0) || !(e.maxHp > 0)) return 0;
   const share = e.hp / e.maxHp;
   if (e.kind === 'building') return share < DAMAGE.fire ? BURNING : share < DAMAGE.smoke ? SMOKING : 0;
-  if (e.mechanical === true) return share < DAMAGE.machineFire ? BURNING : 0;
+  if (e.mechanical === true) return share < DAMAGE.machineFire ? BURNING : share < DAMAGE.smoke ? SMOKING : 0;
   return 0;
 }
 export function isBurning(e) {

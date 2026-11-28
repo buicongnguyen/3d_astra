@@ -1803,7 +1803,7 @@ export class WorldView {
           }
           // The model flashes too (per-instance tint), timed below to the round's arrival.
           startFlash(o.userData, 0, event.shield);
-          o.userData.flashX = event.x; o.userData.flashZ = event.z;
+          o.userData.flashX = event.x; o.userData.flashZ = event.z; o.userData.flashSeed = event.seed;
           if (this.flashBatchTime !== sim.time) { this.flashBatch.length = 0; this.flashBatchTime = sim.time; }
           this.flashBatch.push(o.userData);
         }
@@ -1814,7 +1814,7 @@ export class WorldView {
     if (event.type === 'shot' && this.flashBatchTime === sim.time && Number.isFinite(event.tx)) {
       const travel = weaponStyle(event).life;
       for (const u of this.flashBatch)
-        if (u.flashWait >= 0 && Math.hypot(u.flashX - event.tx, u.flashZ - event.tz) < 3.5) u.flashWait = travel;
+        if (u.flashWait >= 0 && Math.hypot(u.flashX - event.tx, u.flashZ - event.tz) < 3.5) { u.flashWait = travel; this.fx?.delayImpact?.(u.flashSeed, travel); }
     }
     // Rules resolve shells immediately; the existing shot event carries the landing point.
     if (FEEL.shellTrauma && event.type === 'shot' && ['tank','breaker'].includes(event.weapon) && shotVisible(event,sim))

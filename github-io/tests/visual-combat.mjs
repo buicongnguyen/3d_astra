@@ -115,6 +115,35 @@ try{
       await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
       await page.screenshot({path:`test-results/visual-after-damaged-buildings-${viewport.width}.png`,timeout:120000});
       await page.evaluate(()=>{window.restoreBuildings();const f=window.__frontier,v=f.view;v.focusOn(-6,18);v.zoom=52;v.updateCamera();});
+      // Hit reactions 2026-11-28 (src/fx.js impactBurst): a hit's material burst lands with the drawn round, not when it
+      // is fired, and reads the target: armour a white-hot glint and a ricochet, infantry a cloth-and-dust puff, a
+      // building dark masonry dust and stone chips, a shield its ring. Pooled particles only: no new draw call.
+      const hits=await page.evaluate(()=>{
+        const f=window.__frontier,v=f.view,s=f.sim,step=(dt)=>window.renderVisual(s,dt,f.selected,null);
+        const units=s.entities.filter(e=>e.kind==='unit'&&e.team===1),tank=units.find(e=>e.type==='tank'),man=units.find(e=>e.type==='ranger');
+        const shielded=units.filter(e=>e.type==='ranger')[1],b=s.entities.find(e=>e.kind==='building'&&e.team===0);
+        v.focusOn(tank.x,tank.z);v.zoom=22;v.updateCamera();
+        for(let i=0;i<6;i++)step(.5);
+        const layers=()=>[v.fx.decals,v.fx.smoke,v.fx.glow].filter(l=>l.mesh.visible).length+(v.fx.debrisMesh.visible?1:0),children=v.fx.root.children.length;
+        const calls=v.renderer.info.render.calls-layers(),reads=()=>[...v.fx.glow.items,...v.fx.smoke.items].filter(p=>p.hitRead);
+        // A shell fired at the tank in the same tick as its impact: nothing of the burst until the round arrives.
+        v.event({type:'impact',x:tank.x,z:tank.z,team:1,shield:false,seed:tank.id},s);
+        v.event({type:'shot',weapon:'tank',source:units[0].id,x:tank.x+12,z:tank.z,tx:tank.x,tz:tank.z,team:0,heavy:true,target:tank.id},s);
+        step(1/60);const early=reads().filter(p=>p.anchor?.target===tank.id).length;
+        let landed=0;for(let i=0;i<14;i++){step(.05);landed=Math.max(landed,reads().filter(p=>p.anchor?.target===tank.id).length);}
+        for(let i=0;i<4;i++)step(.5);
+        for(const [t,extra] of [[man,{}],[b,{building:true}],[shielded,{shield:true}]])v.event({type:'impact',x:t.x,z:t.z,team:t.team,seed:t.id,shield:false,building:false,...extra},s);
+        step(1/60);
+        const of=(t)=>reads().filter(p=>p.anchor?.target===t.id);
+        return {calls,litCalls:v.renderer.info.render.calls-layers(),children,childrenAfter:v.fx.root.children.length,early,landed,cloth:of(man).length,stone:of(b).length,ring:of(shielded).some(p=>p.cell===2)};
+      });
+      assert.equal(hits.early,0,`the burst waits for the round ${JSON.stringify(hits)}`);
+      assert.ok(hits.landed>0&&hits.cloth>0&&hits.stone>0&&hits.ring,`each material bursts ${JSON.stringify(hits)}`);
+      assert.equal(hits.litCalls,hits.calls,'hit reactions add no draw call (beyond the shared effect layers, drawn whenever any effect lives)');
+      assert.equal(hits.childrenAfter,hits.children,'no new effect mesh');
+      await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+      await page.screenshot({path:`test-results/visual-after-hit-reactions-${viewport.width}.png`,timeout:120000});
+      await page.evaluate(()=>{const f=window.__frontier,v=f.view;v.focusOn(-6,18);v.zoom=52;v.updateCamera();});
     }
     if(!baseline){
       // W4 animation pass (src/unit-rig.js): driven by the real events. An impact flinches a trooper and rocks a

@@ -176,7 +176,7 @@ function resetParticle(p, rng) {
   p.rot = rng() * 6.28; p.spin = 0; p.c0 = WARM.flash; p.c1 = WARM.ember; p.mode = BILLBOARD;
   p.ax = 0; p.ay = 1; p.az = 0; p.length = 0; p.cell = CELL.glow; p.drag = 0; p.gravity = 0; p.floor = -10;
   p.opacity = 1; p.hold = 0; p.fadeIn = 0; p.anchor = null; p.lifted = false; p.delay = 0; p.hitScorch = false;
-  p.priorityHit = false; p.keep = false; p.owner = 0; // the token of a rocket that moves this record each frame (its flame halo); 0 when the record is reused
+  p.priorityHit = false; p.keep = false; p.hitRead = false; p.owner = 0; // the token of a rocket that moves this record each frame (its flame halo); 0 when the record is reused
   // V4: a flipbook over `frames` consecutive cells from `cell` at `fps` (starting at `frame`), turned `jump` radians per frame (a crackle).
   p.frames = 0; p.fps = 0; p.frame = 0; p.jump = 0;
   return p;
@@ -295,6 +295,16 @@ const PAL = {
 };
 // Roof height of each building type (measured on the models), where its smoke and fire start.
 const ROOF = { hq: 5.2, barracks: 3.8, foundry: 4.4, relay: 3.6, tower: 3.8 };
+// Hit reactions (Effects.impactBurst): material bursts drawn per frame at most (phones and Eco: fewer; the frame
+// governor thins both further). Over the cap a hit keeps its model flash and flinch, only the burst is skipped.
+export const IMPACT_CAP = { desktop: 10, phone: 5 };
+// What a struck target is made of, for its burst: "shield" (the shield took the hit), "stone" (a building or wall),
+// "metal" (machines and flyers) or "cloth" (infantry and creatures).
+export function impactMaterial(e, target) {
+  if (e.shield) return "shield";
+  if (e.building) return "stone";
+  return target?.mechanical || target?.flying ? "metal" : "cloth";
+}
 
 export class Effects {
   constructor(view) {
@@ -342,6 +352,9 @@ export class Effects {
     this.strikeState = new WeakMap();
     this.bodyScale = 1;
     this.timeline = [];
+    this.impactJobs = new Map(); // seed -> this tick's material burst, which a flying shot delays (delayImpact)
+    this.impactsLeft = IMPACT_CAP.desktop;
+    this.impactPending = 0; // material bursts waiting on the timeline
     this.emitters = new Map();
     this.burning = []; // damaged entities drawn this frame (smoke and fire), refilled in place
     this.emitShare = 1; // their shared emission budget (see update)
@@ -364,6 +377,7 @@ export class Effects {
       return v;
     };
     this.sphere = new THREE.Sphere();
+    this.camDir = new THREE.Vector3(); // impactBurst: the camera's heading, reused
     this.nextCount = -1;
     this.particleCap = 24;
     this.particlePools = [this.glow, this.smoke, this.decals, { items: this.debris, free: this.debrisFree }];
@@ -1059,22 +1073,100 @@ export class Effects {
     if (this.motion) this.glint({ x: r.x, y: 0.9, z: r.z }, c0, c1, anchor, 9, 1.4);
     this.dust({ x: r.x, y: 0.3, z: r.z }, 3, anchor, 1, 1);
   }
+  // Hit reactions (2026-11-28): the sim's impact event comes when the round is FIRED (rules apply damage at once), so the
+  // material burst waits on the timeline like the hit flash (view.js delays both when the same tick's shot is drawn flying,
+  // see delayImpact). The burst then reads the target's material: a shield shimmers, armour throws sparks and a ricochet
+  // glint, infantry a cloth-and-dust puff, a building stone chips. Pools only (no new draw), seeded cosmetic RNG (this.rng),
+  // and at most IMPACT_CAP bursts a frame (fewer on phones and in Eco): a big battle cannot flood the pools.
   impact(e) {
     if (e.weapon === "vanguard") return; // its shot draws contact after the sword wind-up
-    const altitude = this.frameSim?.get?.(e.seed)?.fly || 0;
-    const at = { x: e.x, y: altitude + (e.building ? 2.2 : 1.1), z: e.z }, anchor = { x: e.x, z: e.z, team: e.team, target: e.seed };
-    if (e.shield) {
-      this.particle(this.glow, { ...at, priorityHit: true, cell: CELL.glow, s0: 0.75, s1: 0.35, life: 0.05,
-        c0: [0.55,0.92,1,0.9], c1: [0.35,0.75,1,0], anchor, delay: 0.05 });
-    } else {
-      this.sparks(at, 4, anchor, 0.7);
-      if (altitude) {
-        this.particle(this.glow, { ...at, priorityHit:true, cell:CELL.flare, s0:.36,s1:.15,life:.045,c0:WARM.flash,c1:WARM.sparkEnd,anchor });
-      } else {
-        this.particle(this.smoke, { x:e.x,y:.06,z:e.z, priorityHit:true, vx:this.motion ? .2 : 0, vy:this.motion ? .5 : 0,
-          s0:.4*SHOT_SCALE, s1:1.2*SHOT_SCALE, life:.32, cell:CELL.puff, c0:this.dustColor(.35,e.x,e.z), c1:this.dustColor(0,e.x,e.z), anchor, delay:.05 });
+    // A storm of hits queues no more than a few frames' worth of bursts (the rest would be dropped by the cap anyway).
+    if (this.impactPending >= IMPACT_CAP.desktop * 4) return;
+    this.impactPending++;
+    const job = { at: this.time, run: () => { this.impactPending--; this.impactBurst(e); } };
+    this.timeline.push(job);
+    if (Number.isFinite(e.seed)) this.impactJobs.set(e.seed, job);
+  }
+  // The shot that caused this tick's impact on `seed` flies `travel` seconds: its burst lands with it (view.js event).
+  delayImpact(seed, travel) {
+    const job = this.impactJobs.get(seed);
+    if (job && travel > 0) job.at = Math.max(job.at, this.time + travel);
+  }
+  get impactCap() { return Math.max(2, Math.round((this.view.lowPower || this.touchTier ? IMPACT_CAP.phone : IMPACT_CAP.desktop) * this.governed)); }
+  impactBurst(e) {
+    if (this.impactsLeft <= 0) return;
+    this.impactsLeft--;
+    const live = this.frameSim?.get?.(e.seed), alive = live && live.hp > 0 ? live : null;
+    // Where the target is now (it may have moved while the round flew); a dead one keeps the event's point.
+    const x = alive ? alive.x : e.x, z = alive ? alive.z : e.z, altitude = (live?.flying && live.fly) || 0;
+    const material = impactMaterial(e, live), m = this.motion, r = Math.min(3, live?.radius || (e.building ? 2.4 : 0.7));
+    const at = { x, y: altitude + (e.building ? 2.2 : 1.1), z }, anchor = { x, z, team: e.team, target: e.seed };
+    // The face toward the shooter (sim: hitBy), else a seeded side: chips and glints fly back at the shooter's side.
+    const by = live && Number.isFinite(live.hitBy) ? this.frameSim.get?.(live.hitBy) : null;
+    let ux = by ? by.x - x : this.rng() - 0.5, uz = by ? by.z - z : this.rng() - 0.5;
+    const ul = Math.hypot(ux, uz) || 1; ux /= ul; uz /= ul;
+    const face = material === "stone" ? Math.min(r * 0.6, 1.6) : r * 0.6;
+    const hit = { x: x + ux * face, y: at.y, z: z + uz * face };
+    // The burst sits inside the model's bounds (the models are drawn larger than the rules' radius): bring its points out
+    // along the line of sight toward the camera by about a body width, so the model does not hide them. Along that line
+    // nothing moves on screen (orthographic: against the view direction; perspective: toward the eye).
+    const cam = this.view.camera;
+    if (cam?.getWorldDirection && !e.building) {
+      const out = Math.max(1.2, r * 1.8), ground = this.ground(x, z);
+      for (const [p, k] of [[hit, 1], [at, 0.5]]) {
+        const d = this.camDir;
+        if (cam.isPerspectiveCamera) {
+          d.set(cam.position.x - p.x, cam.position.y - (p.y + ground), cam.position.z - p.z);
+          const l = d.length() || 1, step = Math.min(out * k, l * 0.5);
+          d.multiplyScalar(step / l);
+        } else cam.getWorldDirection(d).multiplyScalar(-out * k);
+        p.x += d.x; p.y += d.y; p.z += d.z;
       }
     }
+    if (material === "shield") {
+      // A shimmer: the shield's outline flares around the unit and a cyan glow where the round met it.
+      this.particle(this.glow, { ...at, priorityHit: true, hitRead: true, cell: CELL.ring, s0: r * 2.4, s1: m ? r * 3 : r * 2.4, life: m ? 0.26 : 0.16,
+        c0: [0.55, 0.92, 1, m ? 0.95 : 0.5], c1: [0.35, 0.75, 1, 0], anchor });
+      this.particle(this.glow, { ...hit, cell: CELL.glow, s0: 1.1, s1: 0.5, life: 0.12, c0: [0.7, 0.96, 1, 0.95], c1: [0.35, 0.75, 1, 0], anchor });
+      if (m) this.glint(hit, [0.75, 0.97, 1, 1], [0.35, 0.75, 1, 0], anchor, 2, 0.6);
+      return;
+    }
+    if (material === "metal") {
+      // Armour rings: sparks, a white-hot point on the plate and one ricochet streak glancing up and away.
+      // A glow, not a flare: the flare's one-per-340 ms flash limit (allowFlash) would dim most of a volley's hits.
+      this.particle(this.glow, { ...hit, priorityHit: true, hitRead: true, cell: CELL.glow, s0: 1.2, s1: 0.4, life: 0.1, c0: [1, 0.97, 0.8, 1], c1: [1, 0.55, 0.15, 0], anchor });
+      if (!m) return;
+      this.sparks(hit, 5, anchor, 0.9);
+      const side = (this.rng() - 0.5) * 1.6, c = Math.cos(side), s = Math.sin(side), v = 7 + this.rng() * 3;
+      const vx = (ux * c - uz * s) * v, vz = (uz * c + ux * s) * v, vy = 3 + this.rng() * 2, l = Math.hypot(vx, vy, vz) || 1;
+      this.particle(this.glow, { ...hit, hitRead: true, vx, vy, vz, gravity: 9, drag: 0.8, life: 0.22, mode: STRETCH, ax: vx / l, ay: vy / l, az: vz / l,
+        length: 1.1, s0: 0.1, s1: 0.05, cell: CELL.streak, c0: [1, 1, 0.94, 1], c1: [1, 0.75, 0.4, 0], floor: 0.05, anchor });
+      if (!altitude) this.particle(this.smoke, { x, y: 0.06, z, vx: 0.2, vy: 0.5, s0: 0.4 * SHOT_SCALE, s1: 1.2 * SHOT_SCALE, life: 0.32, cell: CELL.puff,
+        c0: this.dustColor(0.35, x, z), c1: this.dustColor(0, x, z), anchor });
+      return;
+    }
+    if (material === "stone") {
+      // Masonry: dark dust off the wall (reads on the pale walls) and a few stone chips that arc back toward the shooter and drop.
+      this.particle(this.smoke, { ...hit, priorityHit: true, hitRead: true, cell: CELL.puff, vx: m ? ux * 0.8 : 0, vy: m ? 0.4 : 0, drag: 2, s0: 1.3, s1: m ? 3 : 1.6,
+        life: 0.6, c0: [0.36, 0.34, 0.31, 0.8], c1: [0.55, 0.53, 0.5, 0], spin: 0.5, anchor });
+      if (!m) return;
+      this.paintSignature();
+      const base = this.ground(hit.x, hit.z);
+      for (let i = 0, n = this.count(4); i < n; i++) {
+        const a = Math.atan2(uz, ux) + (this.rng() - 0.5) * 1.8, v = 1.6 + this.rng() * 1.8;
+        this.particle(this.smoke, { ...hit, hitRead: i < 2, vx: Math.cos(a) * v, vy: 1.8 + this.rng() * 1.8, vz: Math.sin(a) * v, gravity: 13, drag: 0.5, floor: base + 0.06,
+          life: 0.6 + this.rng() * 0.25, hold: 0.6, cell: CELL.shard, s0: 0.3 + this.rng() * 0.12, s1: 0.18, spin: (this.rng() - 0.5) * 14,
+          c0: [0.42, 0.4, 0.37, 1], c1: [0.32, 0.3, 0.28, 0], anchor });
+      }
+      this.sparks(hit, 1, anchor, 0.5);
+      return;
+    }
+    // Infantry (cloth and webbing): a soft puff off the body, a dull glint (no metal shower) and dust kicked at the feet.
+    this.particle(this.smoke, { ...hit, priorityHit: true, hitRead: true, cell: CELL.puff, vx: m ? ux * 0.6 : 0, vy: m ? 0.35 : 0, drag: 2.4,
+      s0: 1, s1: m ? 2.1 : 1.3, life: 0.42, c0: [0.62, 0.56, 0.46, 0.8], c1: [0.7, 0.66, 0.58, 0], spin: 0.6, anchor });
+    this.particle(this.glow, { ...hit, cell: CELL.glow, s0: 0.6, s1: 0.2, life: 0.06, c0: [1, 0.9, 0.7, 0.8], c1: WARM.sparkEnd, anchor });
+    if (m && !altitude) this.particle(this.smoke, { x, y: 0.06, z, vx: -ux * 0.4, vy: 0.5, s0: 0.5 * SHOT_SCALE, s1: 1.4 * SHOT_SCALE, life: 0.36, cell: CELL.puff,
+      c0: this.dustColor(0.35, x, z), c1: this.dustColor(0, x, z), anchor });
   }
   // R3-X: a flyer shot down bursts where it flies (a flash, a puff of black smoke, sparks and chips), not on the
   // ground under it; the wreck (the unit's own model, src/view.js updateDying) then spins down trailing smoke.
@@ -1163,18 +1255,20 @@ export class Effects {
     let em = this.emitters.get(e.id);
     if (!em) this.emitters.set(e.id, (em = { fire: this.rng(), smoke: this.rng(), seen: 0, licks: 0, vent: 0 }));
     em.seen = this.time;
-    const building = e.kind === "building", h = building ? ROOF[e.type] || 3.8 : 1.3;
+    // A flyer smokes and burns where it flies, not on the ground under it.
+    const building = e.kind === "building", h = building ? ROOF[e.type] || 3.8 : 1.3 + ((e.flying && e.fly) || 0);
     const spread = building ? e.radius * 0.35 : 0.245, m = this.motion, rate = dt * this.budget * this.governed * this.emitShare;
     if (!this.onScreen(e, building ? h + 4 : 3)) return;
     if (state !== BURNING) {
-      // Smoking: a steady dark-grey plume from two fixed vents on the roof.
-      em.smoke += rate * 4.5;
+      // Smoking: a steady dark-grey plume from two fixed vents on the roof; a machine below half health a thin wisp.
+      em.smoke += rate * (building ? 4.5 : 2.2);
       while (em.smoke >= 1) {
         em.smoke -= 1;
         const a = e.id * 2.399 + (em.vent++ % 2) * Math.PI, d = spread * 0.6;
         const p = this.emit(this.smoke, e.x + Math.cos(a) * d + (this.rng() - 0.5) * 0.3, h * 0.9, e.z + Math.sin(a) * d + (this.rng() - 0.5) * 0.3, e);
         p.vy = m ? 0.9 + this.rng() * 0.5 : 0.1; p.vx = m ? 0.45 : 0; p.drag = 0.2; p.life = m ? 2.8 : 1.2;
-        p.s0 = 1.4; p.s1 = 4; p.cell = CELL.puff; p.c0 = PAL.damageSmoke; p.c1 = PAL.damageSmokeEnd; p.fadeIn = 0.2; p.spin = 0.3;
+        p.s0 = building ? 1.4 : 0.45; p.s1 = building ? 4 : 1.6; p.cell = CELL.puff; p.c0 = PAL.damageSmoke; p.c1 = PAL.damageSmokeEnd; p.fadeIn = 0.2; p.spin = 0.3;
+        if (!building) p.life *= 0.7;
         p.hold = 0.3;
       }
       return;
@@ -1258,7 +1352,8 @@ export class Effects {
       if (selectedHit) this.selectedHits.add(target);
       const close = (p.x-focus.x)**2 + (p.z-focus.z)**2 < near*near;
       // `keep`: a readable-death cue (death-cue-view.js), a few sprites per death that the trim never drops.
-      p.priority = selectedHit || p.keep ? 4 : (close ? 2 : 0) + (!p.decal && (p.s0 || p.scale || 0) >= 0.45 ? 1 : 0);
+      // `hitRead`: the one sprite that carries a hit's material burst (impactBurst; at most IMPACT_CAP a frame) goes last.
+      p.priority = selectedHit || p.keep ? 4 : p.hitRead ? 3 : (close ? 2 : 0) + (!p.decal && (p.s0 || p.scale || 0) >= 0.45 ? 1 : 0);
       bins[p.priority]++;
     }
     for (let i = 0; i < 4; i++) { bins[i] = Math.min(excess, bins[i]); excess -= bins[i]; }
@@ -1277,6 +1372,8 @@ export class Effects {
     this.frameSim = sim;
     this.seen.clear();
     const visible = this.visible;
+    this.impactJobs.clear(); // the events of the frame before have all been seen
+    this.impactsLeft = this.impactCap;
     for (let i = this.timeline.length - 1; i >= 0; i--)
       if (this.timeline[i].at <= this.time) this.timeline.splice(i, 1)[0].run();
     // Rocket bodies are lit like the scene: dimmer under a night or storm look, never black.
@@ -1355,7 +1452,7 @@ export class Effects {
     let load = 0;
     for (let i = 0; i < this.burning.length; i++) {
       const e = this.burning[i];
-      load += damageState(e) !== BURNING ? 13 : e.kind === "building" ? 31 : 15; // live puffs each emitter keeps
+      load += damageState(e) !== BURNING ? (e.kind === "building" ? 13 : 4) : e.kind === "building" ? 31 : 15; // live puffs each emitter keeps
     }
     this.emitShare = Math.min(0.5, 110 / Math.max(1, load));
     if (dt > 0) for (let i = 0; i < this.burning.length; i++) this.burn(this.burning[i], damageState(this.burning[i]), dt);
@@ -1443,6 +1540,8 @@ export class Effects {
     this.sprites.clear();
     for (const d of this.debris) this.debrisFree.push(d);
     this.debris.length = this.projectiles.length = this.timeline.length = 0;
+    this.impactJobs.clear();
+    this.impactPending = 0;
     this.rockets.begin(this.time, 1); this.rockets.end();
     for (const r of this.rounds) { r.halo = null; r.anchor = null; this.roundFree.push(r); }
     this.rounds.length = 0;
