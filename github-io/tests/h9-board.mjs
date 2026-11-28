@@ -5,7 +5,7 @@
 //            (normal rate: shells come about one interval apart); T steps Skywing out beside it, landed. Next to a
 //            Breaker, T again: the gold landing ring sits at the aim point at the Breaker's splash size and an F lobs a
 //            shell that lands there (a point beyond its 15 m reach pulls the ring in to the edge); the "Get out" tile
-//            steps out. Boarding adds at most one draw.
+//            steps out. Boarding adds no draw of its own (+1 at most).
 //   why no shot (owner 2026-11-28): a press with nothing under the reticle tags it "No target", a rifleman past the
 //            weapon's reach "Out of range", a press during a weapon switch "Switching weapon", a rocket tap that lets go
 //            before the lock "Hold to lock"; the tag is >= 11 px and translated (VI / KO on phones).
@@ -92,9 +92,19 @@ async function landed(page, id) {
   await until(page, (id) => { const e = window.__frontier.sim.get(id); return !e.swoop && !e.skyland; }, id, "no dive under way");
   assert.equal(await page.evaluate((id) => { const e = window.__frontier.sim.get(id); return window.__frontier.sim.command({ team: 0, type: "skywingLand", id, land: true, x: e.x, z: e.z }); }, id), true, "lands");
   await until(page, () => window.__frontier.heroMode.info.flight < 0.01 && !!window.__frontier.sim.get(window.__frontier.heroMode.info.id)?.landed, null, "landed");
+  // A dive on a slow runner may have carried Skywing off: the tank waits beside wherever it came down.
+  await page.evaluate((id) => { const s = window.__frontier.sim, e = s.get(id), t = s.entities.find((u) => u.team === 0 && u.type === "tank" && u.hp > 0); t.x = e.x + 3; t.z = e.z; t.angle = 0; t.orders = []; t.path = []; }, id);
+  await step(page, 0.1);
 }
 const tileShown = (page) => page.evaluate(() => { const b = document.querySelector('#hero-hud [data-hero="board"]'); return !!b && !b.hidden && b.getClientRects().length > 0; });
-const draws = (page) => page.evaluate(() => { const f = window.__frontier, v = f.view, r = v.renderer; r.info.reset(); r.info.autoReset = false; v.update(f.sim, 0, f.selected, null); const n = r.info.render.calls; r.info.autoReset = true; return n; });
+// Draws of one frame: all of them, and Hero mode's own (its shots, rings and reticle: hero-mode-view.js "Hero*" meshes).
+const draws = (page) => page.evaluate(() => {
+  const f = window.__frontier, v = f.view, r = v.renderer, orig = r.renderBufferDirect.bind(r);
+  let total = 0, hero = 0;
+  r.renderBufferDirect = (cam, scene, geo, mat, obj, group) => { total++; if (/^Hero/.test(obj.name || "")) hero++; return orig(cam, scene, geo, mat, obj, group); };
+  try { v.update(f.sim, 0, f.selected, null); } finally { r.renderBufferDirect = orig; }
+  return { total, hero };
+});
 const screenOf = (page, x, z, up = 1.2) => page.evaluate(([x, z, up]) => { const v = window.__frontier.view, r = v.renderer.domElement.getBoundingClientRect(), q = v.project(x, z, v.terrain.heightAt(x, z) + up); return { x: q.x + r.left, y: q.y + r.top }; }, [x, z, up]);
 
 const browser = await launchBrowser();
@@ -162,6 +172,9 @@ await suite("h9-board" + shardLabel, async () => {
     const cam = await page.evaluate((id) => { const f = window.__frontier, v = f.view, e = f.sim.get(id), p = v.camera.position; return { back: Math.hypot(p.x - e.x, p.z - e.z), up: p.y - v.terrain.heightAt(e.x, e.z) }; }, ids.tank);
     assert.ok(cam.back > 7 && cam.back < 13 && cam.up > 4, `hull camera ${JSON.stringify(cam)}`);
     await audit(page, "desktop tank");
+    // Draws in the tank before any shot (the shells' effects are the battle's own), against Skywing landed beside it.
+    await page.waitForTimeout(200);
+    const drawsTank = await draws(page);
     // The turret follows the aim: a cursor on the right-hand rifleman swings it there.
     const right = await page.evaluate((id) => { const t = window.__frontier.sim.get(id); return { x: t.x, z: t.z }; }, ids.foes[2]);
     let p = await screenOf(page, right.x, right.z);
@@ -182,7 +195,6 @@ await suite("h9-board" + shardLabel, async () => {
     const hurt = await page.evaluate((id) => { const t = window.__frontier.sim.get(id); return t.maxHp + t.maxShield - t.hp - t.shield; }, ids.foes[2]);
     assert.ok(hurt > 0, "the rifleman was hit");
     await keep(page, "h9-tank-fire");
-    const drawsTank = await draws(page);
     // T again: Skywing steps out beside the tank, landed, and Hero mode drives it.
     await page.keyboard.press("t");
     await step(page, 0.1, 3);
@@ -230,8 +242,11 @@ await suite("h9-board" + shardLabel, async () => {
     await tile.click();
     await step(page, 0.1, 3);
     assert.equal((await info(page)).id, ids.sky);
-    assert.ok(drawsTank - drawsFoot <= 1, `boarding adds at most one draw: ${drawsFoot} -> ${drawsTank}`);
-    console.log(`draws: landed ${drawsFoot}, in the tank ${drawsTank}`);
+    // Boarding draws nothing of its own (the hull camera frames another slice of the field, so the scene's own count
+    // moves with culling: a few draws either way; Skywing is no longer drawn).
+    console.log(`draws: landed ${JSON.stringify(drawsFoot)}, in the tank ${JSON.stringify(drawsTank)}`);
+    assert.ok(drawsTank.hero - drawsFoot.hero <= 1, `Hero mode's own draws: ${drawsFoot.hero} -> ${drawsTank.hero}`);
+    assert.ok(drawsTank.total - drawsFoot.total <= 4, `boarding: ${drawsFoot.total} -> ${drawsTank.total}`);
     assert.deepEqual(errors, [], "desktop: page errors");
     await page.close();
   }
