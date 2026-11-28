@@ -1,0 +1,288 @@
+{
+  "version": 1,
+  "made": "2026-11-28",
+  "light": "upper-left",
+  "files": [
+    {
+      "file": "planet-violet-giant.webp",
+      "size": [
+        1024,
+        1024
+      ],
+      "bytes": 103014,
+      "kind": "planet",
+      "centerPx": [
+        512,
+        512
+      ],
+      "bodyRadiusPx": 450
+    },
+    {
+      "file": "planet-ice-moon.webp",
+      "size": [
+        512,
+        512
+      ],
+      "bytes": 36762,
+      "kind": "planet",
+      "centerPx": [
+        256,
+        256
+      ],
+      "bodyRadiusPx": 225
+    },
+    {
+      "file": "planet-twin-moons.webp",
+      "size": [
+        1024,
+        512
+      ],
+      "bytes": 56554,
+      "kind": "planet-pair",
+      "centersPx": [
+        [
+          469,
+          256
+        ],
+        [
+          632,
+          330
+        ]
+      ],
+      "bodyRadiiPx": [
+        222,
+        146
+      ]
+    },
+    {
+      "file": "nebula-band.webp",
+      "size": [
+        2048,
+        256
+      ],
+      "bytes": 99606,
+      "kind": "nebula",
+      "elevationDegrees": [
+        0,
+        20
+      ],
+      "seamlessX": true,
+      "repeatDegrees": 180
+    },
+    {
+      "file": "nebula-band-phone.webp",
+      "size": [
+        1024,
+        128
+      ],
+      "bytes": 29506,
+      "kind": "nebula",
+      "elevationDegrees": [
+        0,
+        20
+      ],
+      "seamlessX": true,
+      "repeatDegrees": 180
+    },
+    {
+      "file": "nebula-hero-a.webp",
+      "size": [
+        1024,
+        256
+      ],
+      "bytes": 51014,
+      "kind": "nebula",
+      "elevationDegrees": [
+        0,
+        20
+      ],
+      "azimuthDegrees": 65
+    },
+    {
+      "file": "nebula-hero-b.webp",
+      "size": [
+        768,
+        256
+      ],
+      "bytes": 40740,
+      "kind": "nebula",
+      "elevationDegrees": [
+        0,
+        20
+      ],
+      "azimuthDegrees": 205
+    },
+    {
+      "file": "shattered-base.webp",
+      "size": [
+        1024,
+        1024
+      ],
+      "bytes": 119116,
+      "kind": "shattered",
+      "centerPx": [
+        512,
+        512
+      ],
+      "bodyRadiusPx": 450
+    },
+    {
+      "file": "shattered-glow.webp",
+      "size": [
+        1024,
+        1024
+      ],
+      "bytes": 43784,
+      "kind": "emission-mask",
+      "centerPx": [
+        512,
+        512
+      ],
+      "channel": "red",
+      "zero": "black"
+    },
+    {
+      "file": "flame-strip.webp",
+      "size": [
+        1024,
+        256
+      ],
+      "bytes": 59632,
+      "kind": "flame",
+      "seamlessX": true
+    },
+    {
+      "file": "shattered-flames.webp",
+      "size": [
+        1024,
+        1024
+      ],
+      "bytes": 107922,
+      "kind": "flames",
+      "centerPx": [
+        512,
+        512
+      ]
+    },
+    {
+      "file": "shockwave-ring.webp",
+      "size": [
+        1024,
+        1024
+      ],
+      "bytes": 42134,
+      "kind": "shockwave",
+      "centerPx": [
+        512,
+        512
+      ],
+      "ringRadiusPx": 471,
+      "ringThicknessPx": 41
+    },
+    {
+      "file": "debris-sheet.webp",
+      "size": [
+        1024,
+        256
+      ],
+      "bytes": 47414,
+      "kind": "debris",
+      "cell": [
+        160,
+        160
+      ],
+      "pad": 8,
+      "count": 6,
+      "rectsPx": [
+        [
+          0,
+          0,
+          160,
+          160
+        ],
+        [
+          160,
+          0,
+          160,
+          160
+        ],
+        [
+          320,
+          0,
+          160,
+          160
+        ],
+        [
+          480,
+          0,
+          160,
+          160
+        ],
+        [
+          640,
+          0,
+          160,
+          160
+        ],
+        [
+          800,
+          0,
+          160,
+          160
+        ]
+      ]
+    },
+    {
+      "file": "meteor-streaks.webp",
+      "size": [
+        512,
+        128
+      ],
+      "bytes": 2240,
+      "kind": "meteors",
+      "cell": [
+        512,
+        64
+      ],
+      "headsPx": [
+        [
+          479,
+          32
+        ],
+        [
+          479,
+          96
+        ]
+      ],
+      "count": 2
+    },
+    {
+      "file": "horizon-glow.webp",
+      "size": [
+        2048,
+        256
+      ],
+      "bytes": 14048,
+      "kind": "horizon",
+      "cell": [
+        2048,
+        128
+      ],
+      "rows": [
+        "warm dusk",
+        "teal haze"
+      ],
+      "seamlessX": true
+    },
+    {
+      "file": "aurora-band.webp",
+      "size": [
+        2048,
+        256
+      ],
+      "bytes": 38586,
+      "kind": "aurora",
+      "seamlessX": true
+    }
+  ]
+}
