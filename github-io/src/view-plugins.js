@@ -41,6 +41,7 @@ import { UnitDecalsView } from "./unit-decals-view.js";
 import { BirdView } from "./bird-view.js";
 import { HazardView } from "./hazard-view.js";
 import { ChallengeView } from "./challenge-view.js";
+import { WaterCloseView } from "./water-close-view.js";
 
 export const HOOKS = ["dress", "scaleFor", "frameScaleFor", "event", "update", "reset"];
 
@@ -94,4 +95,5 @@ export const VIEW_PLUGINS = [
   BirdView, // H5: perched flocks that react (one card draw; in Hero mode one more per bird family near the camera)
   HazardView, // H8: explosive crates and barrels beside the cover, one instanced batch (1 draw, only in a match with cover)
   ChallengeView, // H8: Hero challenges' view cones and markers (2 draws, only in a challenge)
+  WaterCloseView, // 2026-11-28: Hero-view water (sky, ripples, glints, wading rings, downwash: shared uniforms, no draw)
 ];

@@ -6,6 +6,11 @@ import { ROCKS } from "./data.js";
 import { themeFor } from './visual-style.js';
 import { fogAware } from "./fog-aware.js";
 import { landOf } from "./lands.js";
+import { gradeKey } from "./look-grade.js";
+import { WATER_CLOSE, WATER_CLOSE_PARS, WATER_CLOSE_COLOR, WATER_CLOSE_NORMAL, WATER_CLOSE_LIGHT, waterCloseUniforms, clearRings } from "./water-close.js";
+// The swell's height (m): 1.8 cm, as the CPU wave was (a uniform: probes can hold it at 0 to compare).
+export const SWELL = 0.018;
+export const SWELL_UNIFORM = { value: SWELL };
 export function optimizeEnvironment(assets) {
   assets.updateMatrixWorld(true);
   const original = new Set();
@@ -35,12 +40,22 @@ export function optimizeEnvironment(assets) {
 // rivers carry faint streaks downstream, riffles run across the shallow water of each ford, and lava (Ember Crown)
 // crawls with darker crust instead of foam. Driven by the `aLife` attribute (shore, flow, ford) and one time uniform;
 // the same draw, no texture. Night and storm looks still tint it through the material colour.
+// 2026-11-28: the 1.8 cm swell runs in the vertex shader on the same clock (the CPU used to rewrite and upload every
+// water vertex each frame for it), and the Hero view's water look (water-close.js) joins the same program: the RTS
+// view skips it with one uniform branch. The key carries the grade (look-grade.js), so a mid-match grade change (a
+// gathering storm) recompiles the water with everything else.
+export const WATER_PROGRAM = "water-life-v2";
 export function waterLife(material, time, foam, lava = false) {
   material.onBeforeCompile = (shader) => {
     shader.uniforms.uWaterTime = time;
     shader.uniforms.uWaterFoam = { value: foam };
-    shader.vertexShader = "attribute vec3 aLife;\nvarying vec3 vLife;\nvarying vec3 vWaterW;\n" + shader.vertexShader
-      .replace("#include <project_vertex>", "#include <project_vertex>\nvLife = aLife;\nvWaterW = (modelMatrix * vec4(transformed, 1.0)).xyz;");
+    shader.uniforms.uWaterSwell = SWELL_UNIFORM;
+    waterCloseUniforms(shader);
+    shader.vertexShader = "attribute vec3 aLife;\nuniform float uWaterTime;\nuniform float uWaterSwell;\nvarying vec3 vLife;\nvarying vec3 vWaterW;\n" + shader.vertexShader
+      .replace("#include <project_vertex>", `transformed.z += sin(transformed.x * 1.5 + transformed.y * 2.0 + uWaterTime * 1.6) * uWaterSwell;
+#include <project_vertex>
+vLife = aLife;
+vWaterW = (modelMatrix * vec4(transformed, 1.0)).xyz;`);
     shader.fragmentShader = `uniform float uWaterTime;
 uniform vec3 uWaterFoam;
 varying vec3 vLife;
@@ -51,7 +66,7 @@ float wNoise(vec2 p) {
   vec2 i = floor(p), f = fract(p), u = f * f * (3.0 - 2.0 * f);
   return mix(mix(wHash(i), wHash(i + vec2(1.0, 0.0)), u.x), mix(wHash(i + vec2(0.0, 1.0)), wHash(i + vec2(1.0, 1.0)), u.x), u.y);
 }
-` + shader.fragmentShader.replace("#include <color_fragment>", `#include <color_fragment>
+${WATER_CLOSE_PARS}` + shader.fragmentShader.replace("#include <color_fragment>", `#include <color_fragment>
       {
         float t = uWaterTime, shore = vLife.x, flow = vLife.y, ford = vLife.z;
         vec2 w = vWaterW.xz;
@@ -71,10 +86,12 @@ float wNoise(vec2 p) {
         float riffle = ford > 0.01 ? ford * smoothstep(0.62, 0.95, wNoise(vec2(w.x * 2.4 - t * 1.7 * max(flow, 0.4), w.y * 1.1))) * 0.55 : 0.0;
         diffuseColor.rgb = mix(diffuseColor.rgb, uWaterFoam * diffuse, clamp(edge * 0.85 + riffle, 0.0, 1.0));
 #endif
-      }`);
+      }${WATER_CLOSE_COLOR}`)
+      .replace("#include <normal_fragment_maps>", `#include <normal_fragment_maps>${WATER_CLOSE_NORMAL}`)
+      .replace("#include <opaque_fragment>", `${WATER_CLOSE_LIGHT}\n#include <opaque_fragment>`);
     if (lava) shader.fragmentShader = "#define WATER_LAVA\n" + shader.fragmentShader;
   };
-  material.customProgramCacheKey = () => `water-life-v1|${lava ? 1 : 0}`;
+  material.customProgramCacheKey = () => `${WATER_PROGRAM}|${lava ? 1 : 0}|${gradeKey()}`;
   material.needsUpdate = true;
   return material;
 }
@@ -193,10 +210,16 @@ export class EnvironmentView {
     this.water.position.y = -0.09;
     this.water.receiveShadow = true;
     this.root.add(this.water);
-    this.waterBase = waterGeometry.attributes.position.array.slice();
     waterMat.vertexColors = true;
     this.waterTime = { value: 0 };
-    waterLife(waterMat, this.waterTime, new THREE.Color(theme.foam), !!land?.lava);
+    this.lava = !!land?.lava;
+    waterLife(waterMat, this.waterTime, new THREE.Color(theme.foam), this.lava);
+    // Hero view (water-close.js): the banks the water shows, in shade (a river's muddy grass; a lake's sandy shore with
+    // the grass behind it), and whether the fords are ice roads. No ring of the last map carries over.
+    if (terrain.rivers.length) WATER_CLOSE.bank.value.set(theme.grass).lerp(c.set(theme.dirt), 0.2).multiplyScalar(0.55);
+    else WATER_CLOSE.bank.value.set(theme.sand).lerp(c.set(theme.grass), 0.4).multiplyScalar(0.6);
+    WATER_CLOSE.ice.value = land?.ice ? 1 : 0;
+    clearRings();
     const normalCanvas = document.createElement("canvas");
     normalCanvas.width = 128;
     normalCanvas.height = 128;
@@ -561,18 +584,8 @@ export class EnvironmentView {
     const active = sim.time !== this.lastTime;
     dt = Math.max(0, Math.min(0.25, sim.time - this.lastTime));
     this.lastTime = sim.time;
+    // The swell runs in the vertex shader on this clock (waterLife): no vertex is rewritten or uploaded here.
     if (this.motion && active) {
-      const p = this.water.geometry.attributes.position;
-      for (let i = 0; i < p.count; i++)
-        p.array[i * 3 + 2] =
-          this.waterBase[i * 3 + 2] +
-          Math.sin(
-            this.waterBase[i * 3] * 1.5 +
-              this.waterBase[i * 3 + 1] * 2 +
-              sim.time * 1.6,
-          ) *
-            0.018;
-      p.needsUpdate = true;
       this.normalTexture.offset.x = sim.time * 0.018;
       this.normalTexture.offset.y = sim.time * 0.007;
       if (this.waterTime) this.waterTime.value = sim.time % 3600;
@@ -605,6 +618,7 @@ export class EnvironmentView {
     this.particleGeometry.attributes.position.needsUpdate = true;
   }
   reset() {
+    clearRings();
     this.particles = [];
     if (this.positions) {
       this.positions.fill(10000);

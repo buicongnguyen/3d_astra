@@ -226,7 +226,8 @@ jobs:
             scripts: close-view
           # H5 close-view look: surface detail, rim, tight shadow, unit decals, creature life and birds that react.
           - name: h5-look
-            scripts: h5-look
+            # 2026-11-28: Hero-view water (sky, ripples, glints, wading rings, downwash; the RTS pixel guard), ~3 min.
+            scripts: h5-look water
           - name: bosses
             scripts: boss
           # Split from "ui-extras" (Wave 1 integration): the three suites ran ~119 s locally, ~28 min estimated on the runner.

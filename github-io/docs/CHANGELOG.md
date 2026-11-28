@@ -17,6 +17,30 @@
 ### Hold to keep firing (owner 2026-11-28)
 - **Skywing's sniper** keeps firing while F, the left mouse button or the phone Fire button is held: the press shoots at once, and a hold past 0.22 s turns into a held trigger that fires at the sniper's own rate at whatever is under the reticle, until it is let go. A quick tap is still one shot. Ground heroes already fired while held, and the rocket keeps locking and firing while held. Tests: `npm run test:hero-mode` (held F keeps firing, a tap is one shot).
 
+### Hero-view water: sky, ripples, glints and wading rings (owner 2026-11-28)
+- **Cheap first.** The water was already one mesh, one material and one draw. But every frame the CPU rewrote the height of every water vertex for a 1.8 cm swell and uploaded the whole buffer (Riverlands 679 vertices, Coral Isles about 8,400). The swell now runs in the vertex shader on the same clock, with no per-frame vertex work and no upload. Dropping the swell altogether would move every waterline by a pixel (591 changed pixels against a 144-pixel null control), so it stays on the GPU, where it costs nothing.
+- **Better up close.** In Hero mode (Skywing flying or landed, or any driven hero) the water uses the same material, draw and program (`src/water-close.js`). The look sits behind one uniform branch, so the RTS view skips it:
+  - **Ripples:** two value-noise layers with analytic gradients flow downstream on rivers and drift on lakes. They replace the tiling sine normal map and fade out where they would shimmer.
+  - **Fresnel sky:** at low angles the water turns toward the backdrop's own sky (horizon to zenith), so night and storm looks follow. The reflection is kept as bright as the lit water, so the water stays vivid.
+  - **Soft bank reflection:** a darker band runs along the far shore, where the reflected ray meets the bank.
+  - **Shallow clarity:** shallows and fords get less reflection and a lighter bed (PCs add soft caustics), so stepping stones and fish read.
+  - **Sun glints (PCs):** sharp, twinkling sparkles appear where a ripple mirrors the sun (the moon at night). None show in shadow.
+  - **Rings and downwash:** rings spread where units wade a ford (8 slots), and a downwash ring forms under Skywing when it flies low over water (`src/water-close-view.js`). Both are shared uniforms: no draw, no pool.
+- **Tiers.**
+  - PCs get everything.
+  - Phones and Eco get the Fresnel sky, bank band, shallows, one ripple layer, rings and downwash, but no second layer, caustics or glints. A PC drops to this tier when the frame governor reaches its still step.
+  - Reduced motion, Animate water Off and the governor's still step stop the water clock: still water, nothing scrolls, no rings or downwash.
+  - Lava keeps its own look, and Frostmere's ice roads stay ice.
+- **The RTS view is unchanged.** Before/after captures differ only at the null-control noise of swaying grass and reeds, and no water pixel changed. Captured views: Riverlands, Twin Rivers, Coral Isles and night at 1440x900; Riverlands and Coral Isles at 390x844. The water's program key now also carries the grade, so a mid-match grade change (a gathering storm) recompiles the water with everything else.
+- **Cost.** **+0 draws:** the same frame draws the same calls at tier 0, 1 and 2 (PC 140 landed and 119 flying; phone 60 and 55), and switching tiers compiles no new program.
+  - **Phone (390x844, DPR 3, CPU 4x).** The measure is an in-page interleaved A/B against the old cost (CPU swell plus upload, tier-0 water) with a null control. Riverlands frame times are equal within the null spread: 14.7 vs 14.6 ms and 12.0 vs 12.0 landed; 12.5-12.8 vs 12.3 and 9.5-9.7 vs 9.5 flying. Coral Isles is about 1 ms faster: 9.8-10.1 vs 10.8-10.9 ms frame, and CPU 8.1-8.3 vs 9.0-9.1 ms.
+  - **Phone render plus water update** (held view, separate builds, three interleaved runs): RTS 6.4 -> 4.9 ms, landed 8.2 -> 4.5 ms, flying 8.1 -> 6.6 ms.
+  - **Shader under SwiftShader at phone size:** tiers 0/1/2 take 48.1/48.3/49.1 ms landed and 46.0/47.2/46.6 ms flying.
+  - **PC:** frame time is equal within 0.2 ms.
+- Tests:
+  - `tests/water-close.test.js` covers tiers, one program key for every tier, no per-frame position upload, still water with motion off, rings, downwash and +0 draws.
+  - `npm run test:water` runs in the "h5-look" CI group. It covers the RTS pixel guard (forcing the look on changes the river, and the frame redrawn with it back off matches the first), +0 draws and no new program with the look on and off, the Hero tier per device, downwash, wading rings and reduced motion. Screenshots: `water-*`.
+
 ### H9 Skywing boards a Tank or a Breaker (owner 2026-11-28)
 - **Board.** Landed Skywing next to your own Battle tank or Breaker (within 4 m of its hull) shows one 44 px "Board" tile beside Land (T on a PC). Skywing climbs in and Hero mode drives the vehicle: a hull camera behind it, the turret follows the aim, the stick drives and the hull turns with the move. The **Tank** fires its cannon at the target under the reticle (or the ground there) at its normal range, damage and rate. The **Breaker** lobs its shell at the aim point, out to its full 15 m siege range, with a gold landing ring the size of its splash (pale and pulled in to the edge when you aim past its reach). Its ability tile is the vehicle's own (Overdrive, Barrage); a vehicle has no dodge.
 - **Get out.** The same tile ("Get out") or T steps Skywing out beside the vehicle, landed. The vehicle goes back to the computer (no orders: it holds where you left it and fights what comes in range). Leaving Hero mode while aboard steps out first.
