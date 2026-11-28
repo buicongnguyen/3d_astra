@@ -296,6 +296,16 @@ await suite("hero-mode: enter, move, fire, dodge and exit on PC and phone, Skywi
     const sniperShots = await page.evaluate(() => window.__frontier.sim.commandLog.filter((c) => c.type === "heroFire"));
     assert.equal(sniperShots.length, tapped + 1, "one sniper shot per F tap");
     assert.deepEqual([sniperShots.at(-1).target, sniperShots.at(-1).hold], [target2, false], "at the target under the reticle");
+    // Owner 2026-11-28: holding F keeps the sniper firing (a held trigger) until it is let go.
+    await page.evaluate(() => window.__frontier.step(0.6));
+    const hpHeld = await page.evaluate((id) => window.__frontier.sim.get(id)?.hp ?? 0, target2);
+    const held0 = await logged(page, "heroFire");
+    await page.keyboard.down("f");
+    await page.waitForFunction(([n, id]) => window.__frontier.sim.commandLog.filter((c) => c.type === "heroFire").slice(n).some((c) => c.hold === true && c.target === id), [held0, target2], { timeout: TIMEOUT.step });
+    for (let i = 0; i < 6; i++) await page.evaluate(() => window.__frontier.step(0.5));
+    await page.keyboard.up("f");
+    await page.waitForFunction((n) => window.__frontier.sim.commandLog.filter((c) => c.type === "heroFire").slice(n).some((c) => c.target === null), held0, { timeout: TIMEOUT.step });
+    assert.ok(await page.evaluate(([id, hp]) => (window.__frontier.sim.get(id)?.hp ?? 0) < hp, [target2, hpHeld]), "held F kept the sniper firing");
     // The wheel zooms.
     const z0 = (await info(page)).zoom;
     await page.mouse.wheel(0, 300);

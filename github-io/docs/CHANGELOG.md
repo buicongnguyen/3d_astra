@@ -2,6 +2,9 @@
 
 ## Unreleased: Round A.2
 
+### Hold to keep firing (owner 2026-11-28)
+- **Skywing's sniper** keeps firing while F, the left mouse button or the phone Fire button is held: the press shoots at once, and a hold past 0.22 s turns into a held trigger that fires at the sniper's own rate at whatever is under the reticle, until it is let go. A quick tap is still one shot. Ground heroes already fired while held, and the rocket keeps locking and firing while held. Tests: `npm run test:hero-mode` (held F keeps firing, a tap is one shot).
+
 ### H9 Skywing boards a Tank or a Breaker (owner 2026-11-28)
 - **Board.** Landed Skywing next to your own Battle tank or Breaker (within 4 m of its hull) shows one 44 px "Board" tile beside Land (T on a PC). Skywing climbs in and Hero mode drives the vehicle: a hull camera behind it, the turret follows the aim, the stick drives and the hull turns with the move. The **Tank** fires its cannon at the target under the reticle (or the ground there) at its normal range, damage and rate. The **Breaker** lobs its shell at the aim point, out to its full 15 m siege range, with a gold landing ring the size of its splash (pale and pulled in to the edge when you aim past its reach). Its ability tile is the vehicle's own (Overdrive, Barrage); a vehicle has no dodge.
 - **Get out.** The same tile ("Get out") or T steps Skywing out beside the vehicle, landed. The vehicle goes back to the computer (no orders: it holds where you left it and fights what comes in range). Leaving Hero mode while aboard steps out first.

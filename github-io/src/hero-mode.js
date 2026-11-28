@@ -74,6 +74,8 @@ const CAMERA_FOLLOW = 16;
 const SKY_PITCH = 52; // degrees down (45-60)
 const FALL_HOLD = 1; // real seconds on screen after the hero falls, then back to the RTS view
 const TAP_MS = 280, TAP_PX = 12;
+// A Skywing sniper press held this long (ms) turns into continuous fire (owner 2026-11-28); a quicker tap stays one shot.
+const SNIPER_HOLD_MS = 220;
 // Skywing on foot (PART D): the air warning's reach (m), the gap between two warnings (real ms), the camera's fog.
 export const AIR_WARN = Object.freeze({ range: 30, every: 12000 });
 const SKY_FOG = Object.freeze({ air: { fogNear: 46, fogFar: 132, far: 160 }, ground: { fogNear: 36, fogFar: 110, far: 140 } });
@@ -428,11 +430,14 @@ export function setupHeroMode(S, A) {
     if (!e) return;
     if (on) {
       H.firing = from;
+      H.pressAt = performance.now();
       H.lock.reset();
       if (e.weaponTo) why("Switching weapon");
       H.lockShot = false;
-      // Skywing's sniper: one shot per press, at the target under the reticle.
-      if (H.sky && e.weapon === "sniper") { shoot(false); H.firing = false; }
+      // Skywing's sniper (owner 2026-11-28: hold F or the mouse to keep firing): the press shoots at once at the target
+      // under the reticle, and while it is held the sniper keeps firing at its own rate (a held trigger, as a ground
+      // hero's); a tap is still one shot.
+      if (H.sky && e.weapon === "sniper") shoot(false);
       // H9: a Breaker lobs at once at the ring; a Tank with nothing under the reticle shells the ground there.
       else if (H.vehicle && (e.type === "breaker" || !H.target)) pointShot(e);
     } else if (H.firing === from || !from) {
@@ -911,7 +916,9 @@ export function setupHeroMode(S, A) {
         if (e.cooldown <= 0 && !e.trigger) pointShot(e);
       } else if (H.vehicle && !H.target) ceaseFire();
       else if (!H.sky) shoot(true);
-    } else if (!H.sky || e.weapon !== "sniper") ceaseFire();
+      // The sniper held past its first shot keeps firing at whatever is under the reticle.
+      else if (e.weapon === "sniper" && performance.now() - (H.pressAt || 0) > SNIPER_HOLD_MS) shoot(true);
+    } else ceaseFire();
     paint(e);
   }
   // The HUD's live parts (health, cooldowns, the weapon, the lock ring, the crosshair), cheap and in place.
