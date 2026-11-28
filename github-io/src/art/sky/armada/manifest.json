@@ -1,0 +1,289 @@
+{
+  "version": 1,
+  "light": "upper-left",
+  "ships": [
+    {
+      "id": "cruiser",
+      "faction": "meridian",
+      "lengthM": 1700,
+      "side": {
+        "file": "cruiser-side.webp",
+        "size": [
+          1024,
+          320
+        ],
+        "bytes": 67940,
+        "lightsRect": [
+          8,
+          8,
+          512,
+          160
+        ],
+        "lightsScale": 0.5,
+        "glowCell": 0,
+        "engines": [
+          [
+            28,
+            170
+          ],
+          [
+            27,
+            208
+          ]
+        ],
+        "noseRight": true
+      },
+      "descend": {
+        "file": "cruiser-descend.webp",
+        "size": [
+          768,
+          512
+        ],
+        "bytes": 51444,
+        "lightsRect": [
+          632,
+          8,
+          384,
+          256
+        ],
+        "lightsScale": 0.5,
+        "glowCell": 0,
+        "engines": [
+          [
+            27,
+            172
+          ],
+          [
+            21,
+            204
+          ]
+        ],
+        "tiltDeg": -20
+      }
+    },
+    {
+      "id": "hauler",
+      "faction": "ashfall",
+      "lengthM": 1400,
+      "side": {
+        "file": "hauler-side.webp",
+        "size": [
+          1024,
+          320
+        ],
+        "bytes": 51762,
+        "lightsRect": [
+          8,
+          280,
+          512,
+          160
+        ],
+        "lightsScale": 0.5,
+        "glowCell": 1,
+        "engines": [
+          [
+            32,
+            153
+          ],
+          [
+            30,
+            218
+          ]
+        ],
+        "noseRight": true
+      },
+      "descend": {
+        "file": "hauler-descend.webp",
+        "size": [
+          768,
+          512
+        ],
+        "bytes": 43832,
+        "lightsRect": [
+          632,
+          280,
+          384,
+          256
+        ],
+        "lightsScale": 0.5,
+        "glowCell": 1,
+        "engines": [
+          [
+            38,
+            143
+          ],
+          [
+            22,
+            180
+          ]
+        ],
+        "tiltDeg": -20
+      }
+    },
+    {
+      "id": "ark",
+      "faction": "colony",
+      "lengthM": 2400,
+      "side": {
+        "file": "ark-side.webp",
+        "size": [
+          1280,
+          384
+        ],
+        "bytes": 72650,
+        "lightsRect": [
+          8,
+          552,
+          640,
+          192
+        ],
+        "lightsScale": 0.5,
+        "glowCell": 0,
+        "engines": [
+          [
+            38,
+            211
+          ],
+          [
+            37,
+            283
+          ]
+        ],
+        "noseRight": true
+      },
+      "descend": {
+        "file": "ark-descend.webp",
+        "size": [
+          896,
+          512
+        ],
+        "bytes": 55376,
+        "lightsRect": [
+          568,
+          752,
+          448,
+          256
+        ],
+        "lightsScale": 0.5,
+        "glowCell": 0,
+        "engines": [
+          [
+            40,
+            146
+          ],
+          [
+            28,
+            185
+          ]
+        ],
+        "tiltDeg": -20
+      }
+    }
+  ],
+  "lightsMask": {
+    "file": "lights-mask.webp",
+    "size": [
+      1024,
+      1024
+    ],
+    "bytes": 31282,
+    "paddingPx": 8,
+    "notes": "Rectangles contain half-resolution full-canvas masks. Map each rectangle over the complete ship sprite."
+  },
+  "engineGlow": {
+    "file": "engine-glow.webp",
+    "size": [
+      512,
+      128
+    ],
+    "bytes": 4910,
+    "cell": [
+      256,
+      128
+    ],
+    "anchorPx": [
+      219,
+      64
+    ]
+  },
+  "landingFlare": {
+    "file": "landing-flare.webp",
+    "size": [
+      512,
+      256
+    ],
+    "bytes": 10030,
+    "groundY": 256
+  },
+  "escorts": {
+    "file": "escort-sheet.webp",
+    "size": [
+      512,
+      128
+    ],
+    "bytes": 16312,
+    "cell": [
+      128,
+      128
+    ],
+    "count": 4,
+    "factions": [
+      "meridian",
+      "meridian",
+      "ashfall",
+      "neutral"
+    ]
+  },
+  "escapeCraft": {
+    "file": "escape-craft.webp",
+    "size": [
+      512,
+      128
+    ],
+    "bytes": 20098,
+    "cell": [
+      128,
+      128
+    ],
+    "count": 4,
+    "types": [
+      "lifeboat",
+      "evacuation shuttle",
+      "utility pod",
+      "medical lifeboat"
+    ],
+    "formationCentersUV": [
+      [
+        0.22,
+        0.09
+      ],
+      [
+        0.39,
+        0.91
+      ],
+      [
+        0.68,
+        0.08
+      ],
+      [
+        0.78,
+        0.87
+      ]
+    ],
+    "relativeWidth": 0.07
+  },
+  "bytesByFile": {
+    "cruiser-side.webp": 67940,
+    "cruiser-descend.webp": 51444,
+    "hauler-side.webp": 51762,
+    "hauler-descend.webp": 43832,
+    "ark-side.webp": 72650,
+    "ark-descend.webp": 55376,
+    "lights-mask.webp": 31282,
+    "engine-glow.webp": 4910,
+    "landing-flare.webp": 10030,
+    "escort-sheet.webp": 16312,
+    "escape-craft.webp": 20098
+  },
+  "totalBytes": 425636
+}
