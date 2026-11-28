@@ -549,3 +549,20 @@ test("victory fireworks: only on a win in a match Hero mode was used in, seeded,
   assert.equal(still.particles.length, FIREWORKS.still, "reduced motion: a few glows");
   assert.ok(still.particles.every((p) => p.vx === 0 && p.vy === 0 && p.vz === 0 && p.life >= 5), "still");
 });
+
+test("a campaign mission opens with the player's fleet landing, then its own event; a new match starts the sky's clock again", async () => {
+  const v = fakeView({ hero: true, sky: "vivid" }), plugin = new HorizonView(v), sim = { ...fakeSim(), missionDef: { id: "m01" } };
+  plugin.update(sim, 0.016);
+  await plugin.loading;
+  artReady(plugin.sky);
+  plugin.update(sim, 0.016);
+  assert.equal(plugin.state.eventId, "armada", "reinforcements landing");
+  assert.equal(plugin.state.intro, true);
+  assert.equal(plugin.state.plan.fleet, "cruiser", "Meridian's own cruisers");
+  plugin.sky.time = ARMADA.intro + 1;
+  plugin.update(sim, 0.016);
+  assert.equal(plugin.state.intro, false);
+  assert.equal(plugin.state.eventId, pickEvent(skySeed(sim)), "then the mission's own seeded event");
+  plugin.update({ ...sim }, 0.016);
+  assert.ok(plugin.sky.time < 1 && plugin.state.intro, "a new match: the clock from 0, the fleet again");
+});

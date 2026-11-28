@@ -54,6 +54,8 @@ export class HorizonView {
     if (P.sim !== sim || P.mode !== mode || P.force !== this.forceEvent || P.terrain !== terrain) {
       const seed = skySeed(sim), faction = sim?.factions?.[0] ?? "meridian";
       P.plan = { ...skyPlan({ mode, terrain: v.terrain, seed, force: this.forceEvent, campaign: campaignMission(sim) }), fleet: FLEET_SHIP[faction] || "ark" };
+      // A new match starts the sky's clock again (its opening fleet, its first shockwave).
+      if (P.sim !== sim && this.sky) this.sky.time = 0;
       Object.assign(P, { sim, seed, mode, force: this.forceEvent, terrain });
     }
     return P;

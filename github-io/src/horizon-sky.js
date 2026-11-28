@@ -1,7 +1,9 @@
 // The Hero-view horizon (owner 2026-11-28: "in landed Skywing mode, maybe add some scene far away like mountain or sea or
 // blue sky with very little cloud? if that is cheap"; then "static big moons like the art at the beginning of the game",
 // a Saturn-like ring, a comet and a purple night nebula). Loaded by src/horizon-view.js on the first Hero mode entry and
-// never drawn in the RTS view. Three draws at most, all far away:
+// never drawn in the RTS view. This is the Calm sky (Settings > Hero > Sky "Calm"), three draws at most, all far away;
+// the Vivid sky (the default) keeps the dome (its uVivid branch) and the ring, and swaps the planets for the layers of
+// src/horizon-vivid.js:
 //   dome     one triangle over the whole screen, drawn last among the opaque meshes on the far plane, so only the open
 //            sky runs its shader (none of it when Skywing flies and the camera looks down). A gradient from a vivid
 //            blue overhead to the backdrop's own horizon haze (the hero fog colour, so the fogged ground meets it without
