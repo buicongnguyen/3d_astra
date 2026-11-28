@@ -2,6 +2,15 @@
 
 ## Unreleased: Round A.2
 
+### Scrapper and Shade fight with blades like the Vanguard (owner 2026-11-28)
+- **Blade fighters.** The Ashfall Scrapper and the Veil Shade (the Vanguard's slot in their factions, melee at 2 m in the rules) no longer fire a scattergun or a beam pistol. They swing a blade on the Vanguard's timing (0.2 s wind-up, contact, 0.38 s recovery), alternating a slice and a thrust, step in with the strike, draw no round, and the glint and the victim's hit flash land at blade contact (`src/melee-styles.js`, `src/vanguard-sword.js`, fx.js `swordContact`). The rules, balance, replays and the golden bench are unchanged.
+  - **Scrapper:** a crude scrap cleaver (a rust plate with a ground steel edge and a sawn spine), a heavy chop from over the shoulder and a shove; rusty orange sparks; the left fist in guard behind a small scrap buckler. Sound: a low cleaver whoosh with a scrap rattle.
+  - **Shade:** a slim dark blade with silver edges, a quick flick and a long darting lunge; a violet glint and a short shadow after-image along the strike. It stays cloaked until it strikes, as before. Sound: a thin quick hiss. Its crystal forearm blade stays.
+  - Settings > Unit motion off or reduced motion: no swing (the quiet glint only), as for the Vanguard. No camera shake.
+- **Models** (Blender 5.2.5, `tools/blender/generate_factions.py` and `detail_factions.py`): the right arm and blade are one rigid part on `SwordArm`/`SwordElbow` at the shoulder. Scrapper 3,044 -> 3,192 triangles (budget 3,200), Shade 2,820 -> 2,876; close-up models 5,576 and 4,532. Meshopt-compressed; manifests updated.
+- **Cost.** The arm is one baked batch per type (no team paint, no glow, no wave): phone fight of 12 Scrappers and 12 Shades (390x844 DPR 3, CPU 4x): 44 -> 46 draws (+1 per type), triangles 120k -> 122.6k, frame times unchanged within noise. The swing itself adds no draw (pooled particles).
+- Tests: `tests/melee-blades.test.js`; `npm run test:visual-combat` checks the wind-up, contact glint, recovery, no projectile and no swing with Unit motion off.
+
 ### Fallen soldiers stay longer (owner 2026-11-28)
 - A fallen trooper now lies for about 4.5 s (3.2 s in Eco) instead of 2.4 s (1.8 s), and sinks away over 1.1 s instead of 0.7 s (`FALL`, src/unit-rig.js). Same batches, no extra draws; the dying cap still applies. Vehicle wrecks (20 s) are unchanged.
 

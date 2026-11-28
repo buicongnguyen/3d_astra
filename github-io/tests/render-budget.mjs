@@ -251,6 +251,9 @@ Object.assign(limits, {'defence-fork-eco':68, 'defence-kingfisher-eco':95});
 Object.assign(limits, {'dunes-battle-eco':95, 'wild-storm-eco':95, 'wild-battle-eco':101}); // R4-P1 (2026-11-21: 91, 94, 100 draws): the Spire and a raging storm at most 4 over the twin; a tamed Wyrm adds its model's five material batches plus its leg batch
 Object.assign(limits, {'boss-drake-eco':90}); // W9: 84 draws on 2026-11-26, as boss-battle-eco (battle-eco 76) on the same build
 Object.assign(limits, {'faction-models-eco':97}); // visual round V: 97 draws with the round-3 models (main 9fbb7c6) and with the rebuilt ones, 2026-11-26
+// Blade fighters (2026-11-28, src/melee-styles.js): the Scrapper's and the Shade's blade arm is its own rigid group, one baked batch per
+// type: faction-models-eco 96 -> 98 on the same build (main 3cd80e8). Line: that + 3.
+Object.assign(limits, {'faction-models-eco':101});
 // Visual round V (faction dress), 2026-11-26, same scenes on main 9fbb7c6 -> with the dress: two-factions-eco 78 -> 78,
 // two-factions-high 163 -> 163, battle-high 166 -> 166, ashfall-mirror-eco 70 -> 70 (battle-eco 76 -> 76). Then the Vanguard's sword arm
 // (codex/vanguard-sword, its own moving group) added about 4 draws to every scene with Vanguards: 81, 169, 174, 70. Lines: those + 3.
