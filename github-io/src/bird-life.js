@@ -55,9 +55,9 @@ export const NEVER = 1e9;
 // Birds under fire (Hero mode): the struck bird's tumble (s) and sideways jolt (m), how far (m) its flock's circle moves
 // away from the shooter, the calm take-off with reduced motion (delay, and the spread over the birds' phases, s), each
 // bird's hesitation in the burst (s at most: under the ripple's 0.08 s a metre, so a bird a third of a metre nearer
-// the struck one always leaves first), and
-// the pick: a sphere of `r` m per bird (times its size), never under `angle` (radians) of the view (`phone` on touch),
-// birds closer than `near` m to the camera skipped (they shrink away there), at most `most` birds tested a frame.
+// the struck one always leaves first), and the pick: a sphere of `r` m per bird (times its size, `lift` m above its
+// feet), never under `angle` (radians) of the view (`phone` on touch), birds closer than `near` m to the camera skipped
+// (they shrink away there), at most `most` birds tested a frame.
 export const BIRD_SHOT = Object.freeze({
   tumble: 0.4, jolt: 0.3, away: 6, calm: [0.3, 1.2], hesitate: 0.025,
   pick: Object.freeze({ r: 0.45, lift: 0.15, angle: 0.018, phone: 0.026, near: 2.5, most: 20 }),

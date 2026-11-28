@@ -283,12 +283,17 @@ export class BirdView {
     });
     for (const a of [this.aPerch, this.aTimes, this.aCircle, this.aHit]) a.needsUpdate = true;
   }
+  // A flock with no room in the buffers is taken back, from the dirty list too (a stale id there threw every frame).
+  drop(f) {
+    this.flocks.flocks.pop();
+    this.flocks.dirty.delete(f.id);
+  }
   // Tests and screenshots (window.__frontier.view): a flock of `species` perched at (x, y, z). Returns its id.
   addFlock(species, x, y, z, n = 6, spread = 1.4) {
     if (!this.flocks && !this.build()) return -1;
     const birds = Array.from({ length: n }, (_, i) => ({ ox: Math.cos(i * 2.4) * spread * Math.sqrt((i + 0.5) / n), oy: 0, oz: Math.sin(i * 2.4) * spread * Math.sqrt((i + 0.5) / n), size: 1, phase: ((i * 0.618) % 1) }));
     const f = this.flocks.add({ species, kind: "ground", x, y, z, birds });
-    if (!this.alloc(f)) { this.flocks.flocks.pop(); return -1; }
+    if (!this.alloc(f)) { this.drop(f); return -1; }
     return f.id;
   }
   // Startles from the battle: a shot's muzzle, a heavy round's landing. Hidden sources count only with the bird hint.
@@ -428,7 +433,7 @@ export class BirdView {
       const box = new THREE.Box3().setFromObject(o.userData.model);
       if (box.isEmpty()) continue;
       const f = this.flocks.add(roofFlock(e.id, e.x, box.max.y - 0.05, e.z, e.radius || 2, this.level === "many" ? 5 : 3));
-      if (!this.alloc(f)) this.flocks.flocks.pop();
+      if (!this.alloc(f)) this.drop(f);
     }
   }
   // Skywing in the air: birds part around it and close up behind it.

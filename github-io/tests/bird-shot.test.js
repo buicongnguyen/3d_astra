@@ -203,6 +203,16 @@ test("the view: a shot bird tumbles in the shaders, its flock bursts off, feathe
   assert.equal(plugin.pick(ray, { x: gf.x, z: gf.z - 5 }, 15, sim)?.flock, gid);
 });
 
+test("a flock with no room left in the buffers is turned away cleanly (no stale row to write every frame)", () => {
+  const { plugin, sim, terrain } = stage();
+  const ids = [];
+  for (let i = 0; i < 12; i++) ids.push(plugin.addFlock("crow", i * 3 - 18, terrain.heightAt(i * 3 - 18, 0), 0, 5, 1));
+  assert.ok(ids.includes(-1), "the buffers fill up");
+  assert.doesNotThrow(() => { for (let i = 0; i < 3; i++) plugin.update(sim, 0.016); });
+  assert.equal(plugin.flocks.dirty.size, 0);
+  assert.ok(plugin.flocks.flocks.every((f) => plugin.slots[f.id]), "every flock left has its rows");
+});
+
 test("Birds Off: nothing to aim at and nothing to startle", () => {
   const { plugin, sim } = stage({ birds: "off" });
   plugin.update(sim, 0.016);

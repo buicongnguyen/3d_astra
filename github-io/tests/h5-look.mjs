@@ -49,6 +49,11 @@ async function birdShot(page, viewport) {
   });
   await page.evaluate((id) => window.__frontier.heroMode.enter(id), sky);
   await page.waitForFunction((id) => { const i = window.__frontier.heroMode.info; return i.on && i.id === id && i.sky && window.__frontier.view.heroCameraOn; }, sky, { timeout: TIMEOUT.step });
+  // Fresh flocks (Birds Off, then Few): the ones startled above may still circle past the crosshair.
+  await page.evaluate(() => { const v = window.__frontier.view; v.settings = { ...v.settings, birds: "off" }; });
+  await page.waitForFunction(() => !window.__frontier.view.birds.flocks, null, { timeout: TIMEOUT.step });
+  await page.evaluate(() => { const v = window.__frontier.view; v.settings = { ...v.settings, birds: "few" }; });
+  await page.waitForFunction(() => window.__frontier.view.birds.flocks?.flocks.length > 0, null, { timeout: TIMEOUT.step });
   const place = (at) => page.evaluate(({ x, z }) => { const v = window.__frontier.view; return v.birds.addFlock("crow", x, v.terrain.heightAt(x, z), z, 5, 1.0); }, at);
   // The reticle's ground point once the camera has settled: the same (within 5 cm) across three drawn frames (a slow
   // runner draws about one a second, so a wall-clock wait proves nothing).
@@ -57,7 +62,7 @@ async function birdShot(page, viewport) {
   async function settled() {
     for (let tryNo = 0; tryNo < 10; tryNo++) {
       const a = await aimAt(), f0 = await frame();
-      await page.waitForFunction((n) => window.__frontier.view.renderer.info.render.frame >= n + 3, f0, { timeout: TIMEOUT.step });
+      await page.waitForFunction((n) => window.__frontier.view.renderer.info.render.frame >= n + 3, f0, { timeout: TIMEOUT.models });
       const b = await aimAt();
       if (a && b && Math.hypot(a.x - b.x, a.z - b.z) < 0.05) return b;
     }
@@ -84,7 +89,8 @@ async function birdShot(page, viewport) {
     let meshes = 0;
     v.scene.traverse((o) => { if (o.isMesh || o.isInstancedMesh) meshes++; });
     return { mag: e.mag ?? null, fires: s.commandLog.filter((c) => c.type === "heroFire").length, rows: v.birds.cards.geometry.instanceCount,
-      birds: v.birds.flocks.flocks.reduce((n, fl) => n + fl.birds.length, 0), meshes, feathers: v.birds.state.feathers };
+      birds: v.birds.flocks.flocks.reduce((n, fl) => n + fl.birds.length, 0), meshes, feathers: v.birds.state.feathers,
+      states: v.birds.flocks.flocks.map((fl) => fl.state), startled: f.heroMode.info.startled };
   }, sky);
   await page.evaluate((id) => { window.__frontier.sim.get(id).cooldown = 0; }, sky);
   let before = null, fired = false;
@@ -97,7 +103,8 @@ async function birdShot(page, viewport) {
       await fire.dispatchEvent("pointerdown", { pointerId: 21, pointerType: "touch", isPrimary: true });
       await fire.dispatchEvent("pointerup", { pointerId: 21, pointerType: "touch", isPrimary: true });
     }
-    fired = await page.waitForFunction((n) => window.__frontier.sim.commandLog.filter((c) => c.type === "heroFire").length > n, before.fires, { timeout: TIMEOUT.step / 2 }).then(() => true, () => false);
+    fired = await page.waitForFunction((n) => window.__frontier.sim.commandLog.filter((c) => c.type === "heroFire").length > n, before.fires, { timeout: TIMEOUT.step }).then(() => true, () => false);
+    if (!fired) console.log(`  ${viewport}: no shot on try ${tryNo + 1}`, JSON.stringify(await page.evaluate(() => { const i = window.__frontier.heroMode.info; return { bird: i.bird, mark: i.birdMark, target: i.target, barrel: i.barrel, aim: i.aim, why: i.whys, frame: window.__frontier.view.renderer.info.render.frame, focus: document.activeElement?.tagName }; })));
   }
   assert.equal(fired, true, `${viewport}: the trigger sent a shot`);
   const cmd = await page.evaluate(() => window.__frontier.sim.commandLog.filter((c) => c.type === "heroFire").at(-1));
@@ -113,16 +120,21 @@ async function birdShot(page, viewport) {
     const hit = fl.birds.findIndex((b) => b.hit < 1e8), h = fl.birds[Math.max(0, hit)];
     const order = fl.birds.map((b) => [Math.hypot(b.ox - h.ox, b.oz - h.oz), b.start]).sort((p, q) => p[0] - q[0]);
     const pop = [...document.querySelectorAll("#hero-hud .hh-dmg.bird:not([hidden])")].map((n) => ({ text: n.textContent, px: parseFloat(getComputedStyle(n).fontSize) }));
-    return { state: fl.state, size: fl.birds.length, hit, order, startled: i.startled, pop };
+    return { flock: v.birds.lastShot.flock, state: fl.state, size: fl.birds.length, hit, order, startled: i.startled, pop };
   })) };
   assert.equal(after.mag, (before.mag ?? 5) - 1, "the round uses the magazine");
   assert.equal(after.state, "flying", "the flock takes off");
   assert.ok(after.hit >= 0, "the struck bird tumbles");
-  // Nearest the struck bird first (birds a third of a metre or more nearer always leave first; it leaves at once).
-  for (const [d, t] of after.order) for (const [d2, t2] of after.order) if (d2 >= d + 0.33) assert.ok(t2 >= t, `the ripple, nearest the struck bird first ${JSON.stringify(after.order)}`);
-  assert.ok(after.order.every(([, t]) => t >= after.order[0][1]), "the struck bird first");
+  // A perched flock bursts off whole, nearest the struck bird first (birds a third of a metre or more nearer always
+  // leave first; it leaves at once). On a very slow runner something else (a unit walking by) may have lifted that flock
+  // already: then only its struck bird counts (the ripple itself is checked in tests/bird-shot.test.js).
+  const perched = before.states[after.flock] === "perched";
+  if (perched) {
+    for (const [d, t] of after.order) for (const [d2, t2] of after.order) if (d2 >= d + 0.33) assert.ok(t2 >= t, `the ripple, nearest the struck bird first ${JSON.stringify(after.order)}`);
+    assert.ok(after.order.every(([, t]) => t >= after.order[0][1]), "the struck bird first");
+  } else console.log(`  ${viewport}: the struck flock was already up (${before.states[after.flock]}); ripple order not checked here`);
   assert.ok(after.feathers > before.feathers, "feathers");
-  assert.equal(after.startled, after.size, "its whole flock startled");
+  assert.equal(after.startled - before.startled, perched ? after.size : 1, "its whole flock startled (one bird if it was up)");
   assert.deepEqual([after.rows, after.birds], [before.rows, before.birds], "no bird removed");
   assert.equal(after.meshes, before.meshes, "no new mesh (the feathers are pooled particles)");
   assert.ok(after.pop.length === 1 && after.pop[0].text === "Startled!" && after.pop[0].px >= 11, `"Startled!" ${JSON.stringify(after.pop)}`);
@@ -131,7 +143,22 @@ async function birdShot(page, viewport) {
   // Birds Off: nothing to aim at.
   await page.evaluate(() => { const v = window.__frontier.view; v.settings = { ...v.settings, birds: "off" }; });
   await page.waitForFunction(() => { const i = window.__frontier.heroMode.info; return !i.birdMark && !i.bird && !window.__frontier.view.birds.flocks; }, null, { timeout: TIMEOUT.step });
-  await page.evaluate(() => { const f = window.__frontier, v = f.view; v.settings = { ...v.settings, birds: "few" }; f.heroMode.leave(); f.hold = false; });
+  await page.evaluate(() => { const v = window.__frontier.view; v.settings = { ...v.settings, birds: "few" }; });
+  await page.waitForFunction(() => window.__frontier.view.birds.flocks?.flocks.length > 0, null, { timeout: TIMEOUT.step });
+  // A held trigger (PC: F held past the 0.22 s tap) on a bird sends one round per bird, never one a frame.
+  if (viewport === "desktop") {
+    assert.ok((await place(await settled())) >= 0, "room for one more flock");
+    if (await mark()) {
+      const n0 = await page.evaluate(() => window.__frontier.sim.commandLog.filter((c) => c.type === "heroFire").length), f0 = await frame();
+      await page.keyboard.down("f");
+      await page.waitForTimeout(400);
+      await page.waitForFunction((n) => window.__frontier.view.renderer.info.render.frame >= n + 8, f0, { timeout: TIMEOUT.models });
+      await page.keyboard.up("f");
+      const held = await page.evaluate((n) => window.__frontier.sim.commandLog.filter((c) => c.type === "heroFire").slice(n), n0);
+      assert.ok(held.length >= 1 && held.filter((c) => c.bird).length <= 3, `held on a bird: ${held.length} heroFire over 8+ frames`);
+    }
+  }
+  await page.evaluate(() => { const f = window.__frontier; f.heroMode.leave(); f.hold = false; });
   await page.waitForFunction(() => !window.__frontier.view.heroCameraOn, null, { timeout: TIMEOUT.step });
 }
 
